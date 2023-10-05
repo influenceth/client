@@ -1,4 +1,4 @@
-import React, { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { Fragment, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import styled, { css, keyframes } from 'styled-components';
 import { Crewmate, Entity, Name } from '@influenceth/sdk';
@@ -44,6 +44,7 @@ import theme from '~/theme';
 import useStore from '~/hooks/useStore';
 import { boolAttr } from '~/lib/utils';
 import useCrewmate from '~/hooks/useCrewmate';
+import ChainTransactionContext from '~/contexts/ChainTransactionContext';
 
 const CollectionImages = {
   1: Collection1,
@@ -774,6 +775,7 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
   const isNameValid = useNameAvailability(Entity.IDS.CREWMATE);
   const { purchaseAndOrInitializeCrewmate } = useCrewManager();
   const { crew, crewmateMap, adalianRecruits, arvadianRecruits } = useCrewContext();
+  const { promptingTransaction } = useContext(ChainTransactionContext);
   const { data: priceConstants } = usePriceConstants();
 
   const [confirming, setConfirming] = useState();
@@ -1077,6 +1079,7 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
     return (adalianRecruits?.length || 0) + (arvadianRecruits?.length || 0);
   }, [adalianRecruits, arvadianRecruits]);
 
+  const disableChanges = pendingCrewmate || traitsLocked || promptingTransaction;
   return (
     <>
       <ImageryContainer src={coverImage}>
@@ -1109,7 +1112,7 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
                           <label>Crewmate Name</label>
                           {/* TODO: implement naming rules from sdk */}
                           <TextInput
-                            disabled={finalizing || !crewmate._canRename}
+                            disabled={promptingTransaction || finalizing || !crewmate._canRename}
                             initialValue={name}
                             minlength={Name.TYPES[Entity.IDS.CREWMATE].min}
                             maxlength={Name.TYPES[Entity.IDS.CREWMATE].max}
@@ -1129,13 +1132,13 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
                         <RerollContainer>
                           <RandomizeControls
                             onClick={rollBackAppearance}
-                            disabled={finalizing || appearanceSelection === 0}
+                            disabled={promptingTransaction || finalizing || appearanceSelection === 0}
                             style={{ opacity: appearanceOptions.length > 1 ? 1 : 0 }}>
                             <UndoIcon />
                           </RandomizeControls>
 
                           <RandomizeButton
-                            disabled={finalizing}
+                            disabled={promptingTransaction || finalizing}
                             lessTransparent
                             onClick={rerollAppearance}
                             style={{ width: 275 }}
@@ -1145,7 +1148,7 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
 
                           <RandomizeControls
                             onClick={rollForwardAppearance}
-                            disabled={finalizing || appearanceSelection === appearanceOptions.length - 1}
+                            disabled={promptingTransaction || finalizing || appearanceSelection === appearanceOptions.length - 1}
                             style={{ opacity: appearanceOptions.length > 1 ? 1 : 0 }}>
                             <RedoIcon />
                           </RandomizeControls>
@@ -1157,7 +1160,7 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
                         {traitsLocked
                           ? (
                             <RandomizeButton
-                              disabled={finalizing}
+                              disabled={promptingTransaction || finalizing}
                               lessTransparent
                               onClick={() => setConfirmingUnlock(true)}
                               style={{ width: 275 }}
@@ -1168,7 +1171,7 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
                           : (
                             <>
                               <RandomizeButton
-                                disabled={finalizing}
+                                disabled={promptingTransaction || finalizing}
                                 lessTransparent
                                 onClick={rerollTraits}
                                 style={{ width: 275 }}
@@ -1210,11 +1213,11 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
                       <>
                         <Trait
                           ref={animationComplete ? setRefEl : noop}
-                          onClick={(pendingCrewmate || traitsLocked || !crewmate._canReclass) ? noop : () => setToggling('class')}
+                          onClick={(disableChanges || !crewmate._canReclass) ? noop : () => setToggling('class')}
                           onMouseEnter={animationComplete ? () => setHovered('class') : noop}
                           onMouseLeave={() => setHovered()}
                           side="right"
-                          isClickable={!pendingCrewmate && !traitsLocked && crewmate._canReclass}
+                          isClickable={!disableChanges && crewmate._canReclass}
                           isToggling={toggling === 'class'}
                           isEmpty={!crewmate.Crewmate.class}>
                           <div>
@@ -1275,12 +1278,12 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
                                 <>
                                   <Trait
                                     ref={animationComplete ? setRefEl : noop}
-                                    onClick={(pendingCrewmate || traitsLocked || traitIndex > selectedTraits?.length) ? noop : () => setToggling(hoverKey)}
+                                    onClick={(disableChanges || !crewmate.Crewmate.class || traitIndex > selectedTraits?.length) ? noop : () => setToggling(hoverKey)}
                                     onMouseEnter={animationComplete ? () => setHovered(hoverKey) : noop}
                                     onMouseLeave={() => setHovered()}
                                     side={side}
                                     type={trait?.type}
-                                    isClickable={!pendingCrewmate && !traitsLocked && crewmate.Crewmate.class && traitIndex <= selectedTraits?.length}
+                                    isClickable={!disableChanges && crewmate.Crewmate.class && traitIndex <= selectedTraits?.length}
                                     isEmpty={!trait}
                                     isToggling={toggling === hoverKey}
                                     isAtRisk={toggling === 'class' || toggling < traitIndex}>
