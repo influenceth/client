@@ -11,7 +11,7 @@ import CrewCardFramed, { EmptyCrewCardFramed } from '~/components/CrewCardFramed
 import CrewLocationLabel from '~/components/CrewLocationLabel';
 import FoodStatus from '~/components/FoodStatus';
 import IconButton from '~/components/IconButton';
-import { CloseIcon, CrewIcon, PlusIcon } from '~/components/Icons';
+import { CloseIcon, CrewIcon, ManageCrewIcon, NewCrewIcon, PlusIcon } from '~/components/Icons';
 import useCrew from '~/hooks/useCrew';
 import useCrewContext from '~/hooks/useCrewContext';
 import useCrewmates from '~/hooks/useCrewmates';
@@ -206,7 +206,7 @@ const CrewDraggable = ({
 const ManageCrew = ({ altCrews, crew, isForeignCrew, manager, stage, ...props }) => {
   const createAlert = useStore(s => s.dispatchAlertLogged);
   
-  const { reorderRoster, swapCrewmates, getPendingChange } = manager;
+  const { reorderRoster, swapCrewmates } = manager;
 
   const hydratedLocation = useHydratedLocation(crew?._location);
 
@@ -356,8 +356,8 @@ const ManageCrew = ({ altCrews, crew, isForeignCrew, manager, stage, ...props })
     <>
       <ActionDialogHeader
         action={{
-          icon: <CrewIcon />, /* TODO: this has its icon */
-          label: 'Manage Crew',
+          icon: exchangeCrewId === 0 ? <NewCrewIcon /> : <ManageCrewIcon />,
+          label: exchangeCrewId === 0 ? 'Form New Crew' : 'Manage Crew',
           status: stage === actionStages.NOT_STARTED ? 'Arrange Crewmates' : undefined,
         }}
         captain={crew?._crewmates[0]}

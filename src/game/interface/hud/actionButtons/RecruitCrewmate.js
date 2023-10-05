@@ -1,7 +1,7 @@
 import { useCallback, useMemo } from 'react';
 import { useHistory } from 'react-router-dom';
 
-import { CrewmateIcon } from '~/components/Icons';  // TODO: sergey's
+import { RecruitCrewmateIcon } from '~/components/Icons';  // TODO: sergey's
 import useCrewManager from '~/hooks/useCrewManager';
 import ActionButton from './ActionButton';
 
@@ -19,11 +19,11 @@ const RecruitCrewmate = ({ crew, lot }) => {
     <ActionButton
       label="Recruit Crewmate"
       flags={{
-        attention: !pendingCrewmate && !crew?._roster?.length,
+        attention: !pendingCrewmate && !(crew?.Crew?.roster?.length > 0),
         disabled: !!pendingCrewmate,
         loading: !!pendingCrewmate,
       }}
-      icon={<CrewmateIcon />}
+      icon={<RecruitCrewmateIcon />}
       onClick={handleClick} />
   );
 };

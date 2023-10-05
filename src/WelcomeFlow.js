@@ -37,9 +37,11 @@ const Info = styled.div`
   & div {
     width: 350px;
     h4 {
-      color: white;
-      text-transform: uppercase;
       border-bottom: 1px solid #333;
+      color: white;
+      margin: 0;
+      padding-bottom: 8px;
+      text-transform: uppercase;
     }
     p {
       font-size: 17px;

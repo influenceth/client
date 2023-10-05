@@ -37,6 +37,7 @@ import { WiMoonAltWaningCrescent5 } from 'react-icons/wi';
 import { VscDebugDisconnect, VscCircle } from 'react-icons/vsc';
 
 import AdalianSVG from '~/assets/icons/AdalianIcon.svg';
+import AddRationsSVG from '~/assets/icons/AddRationsIcon.svg';
 import ArvadSVG from '~/assets/icons/ArvadIcon.svg';
 import AssignmentsSVG from '~/assets/icons/AssignmentsIcon.svg';
 import AsteroidSearchSVG from '~/assets/icons/AsteroidSearchIcon.svg';
@@ -52,6 +53,7 @@ import ColumnsSVG from '~/assets/icons/ColumnsIcon.svg';
 import CoreSampleSVG from '~/assets/icons/CoreSampleIcon.svg';
 import CrewSVG from '~/assets/icons/CrewIcon.svg';
 import CrewInventorySVG from '~/assets/icons/CrewInventoryIcon.svg';
+import CrewLocationSVG from '~/assets/icons/CrewLocationIcon.svg';
 import CrewmateSVG from '~/assets/icons/CrewmateIcon.svg';
 import CrewStorySVG from '~/assets/icons/CrewStoryIcon.svg';
 import DeltaVSVG from '~/assets/icons/DeltaVIcon.svg';
@@ -74,11 +76,14 @@ import LinkSVG from '~/assets/icons/LinkIcon.svg';
 import ListViewSVG from '~/assets/icons/ListViewIcon.svg';
 import LocationSVG from '~/assets/icons/LocationIcon.svg';
 import LockSVG from '~/assets/icons/LockIcon.svg';
+import LogoutSVG from '~/assets/icons/LogoutIcon.svg';
 import LotSearchSVG from '~/assets/icons/LotSearchIcon.svg';
+import ManageCrewSVG from '~/assets/icons/ManageCrewIcon.svg';
 import ManufactureSVG from '~/assets/icons/ManufactureIcon.svg';
 import MarketsSVG from '~/assets/icons/MarketsIcon.svg';
 import MyAssetSVG from '~/assets/icons/MyAssetIcon.svg';
 import MyAssetsSVG from '~/assets/icons/MyAssetsIcon.svg';
+import NewCrewSVG from '~/assets/icons/NewCrewIcon.svg';
 import OrbitalPeriodSVG from '~/assets/icons/OrbitalPeriodIcon.svg';
 import OrderSVG from '~/assets/icons/OrderIcon.svg';
 import OwnerSettingsSVG from '~/assets/icons/OwnerSettingsIcon.svg';
@@ -89,6 +94,7 @@ import ProductsSVG from '~/assets/icons/ProductsIcon.svg';
 import ProductionSVG from '~/assets/icons/ProductionIcon.svg';
 import PromoteSVG from '~/assets/icons/PromoteIcon.svg';
 import RadiusSVG from '~/assets/icons/RadiusIcon.svg';
+import RecruitCrewmateSVG from '~/assets/icons/RecruitCrewmateIcon.svg';
 import RefineSVG from '~/assets/icons/RefineIcon.svg';
 import ResetCameraSVG from '~/assets/icons/ResetCameraIcon.svg';
 import ResourceSVG from '~/assets/icons/ResourceIcon.svg';
@@ -97,6 +103,7 @@ import RouteSVG from '~/assets/icons/RouteIcon.svg';
 import SearchSVG from '~/assets/icons/SearchIcon.svg';
 import SemiMajorAxisSVG from '~/assets/icons/SemiMajorAxisIcon.svg';
 import ShipSVG from '~/assets/icons/ShipIcon.svg';
+import StoreSVG from '~/assets/icons/StoreIcon.svg';
 import SurfaceAreaSVG from '~/assets/icons/SurfaceAreaIcon.svg';
 import SwaySVG from '~/assets/icons/SwayIcon.svg';
 import SwayMonochromeSVG from '~/assets/icons/SwayMonoIcon.svg';
@@ -172,6 +179,7 @@ export const RotatedShipMarkerIcon = () => <ShipMarkerSVG style={{ transform: 'r
 
 // general icons
 export const AdalianIcon = () => <AdalianSVG className="icon" />;
+export const AddRationsIcon = () => <AddRationsSVG className="icon" />;
 export const ArvadIcon = () => <ArvadSVG className="icon" style={{ width: '1.94em' }} />;
 export const AssignmentsIcon = () => <AssignmentsSVG className="icon" />;
 export const AsteroidSearchIcon = () => <AsteroidSearchSVG className="icon" />;
@@ -189,7 +197,7 @@ export const ColumnsIcon = () => <ColumnsSVG className="icon" />;
 export const CoreSampleIcon = () => <CoreSampleSVG className="icon" />;
 export const CrewIcon = () => <CrewSVG className="icon" />;
 export const CrewInventoryIcon = () => <CrewInventorySVG className="icon" />;
-export const CrewLocationIcon = () => <LocationSVG className="icon" />; // TODO: this should be different
+export const CrewLocationIcon = () => <CrewLocationSVG className="icon" />; // TODO: this should be different
 export const CrewmateIcon = () => <CrewmateSVG className="icon" />;
 export const CrewStoryIcon = () => <CrewStorySVG className="icon" />;
 export const DeltaVIcon = () => <DeltaVSVG className="icon" />;
@@ -215,11 +223,14 @@ export const LinkIcon = () => <LinkSVG className="icon" />;
 export const ListViewIcon = () => <ListViewSVG className="icon" />;
 export const LocationIcon = () => <LocationSVG className="icon" />;
 export const LockIcon = () => <LockSVG className="icon" />;
+export const LogoutIcon = () => <LogoutSVG className="icon" />;
 export const LotSearchIcon = () => <LotSearchSVG className="icon" />;
+export const ManageCrewIcon = () => <ManageCrewSVG className="icon" />;
 export const ManufactureIcon = () => <ManufactureSVG className="icon" />;
 export const MarketsIcon = () => <MarketsSVG className="icon" />;
 export const MyAssetIcon = () => <MyAssetSVG className="icon" />;
 export const MyAssetsIcon = () => <MyAssetsSVG className="icon" />;
+export const NewCrewIcon = () => <NewCrewSVG className="icon" />;
 export const OrbitalPeriodIcon = () => <OrbitalPeriodSVG className="icon" />;
 export const OrderIcon = () => <OrderSVG className="icon" />;
 export const OwnerSettingsIcon = () => <OwnerSettingsSVG className="icon" />;
@@ -230,6 +241,7 @@ export const ProductsIcon = () => <ProductsSVG className="icon" />;
 export const ProductionIcon = () => <ProductionSVG className="icon" />;
 export const PromoteIcon = () => <PromoteSVG className="icon" />;
 export const RadiusIcon = () => <RadiusSVG className="icon" />;
+export const RecruitCrewmateIcon = () => <RecruitCrewmateSVG className="icon" />;
 export const RefineIcon = () => <RefineSVG className="icon" />;
 export const ResetCameraIcon = () => <ResetCameraSVG className="icon" />;
 export const ResourceIcon = () => <ResourceSVG className="icon" />;
@@ -238,6 +250,7 @@ export const RouteIcon = () => <RouteSVG className="icon" />;
 export const SearchIcon = () => <SearchSVG className="icon" />;
 export const SemiMajorAxisIcon = () => <SemiMajorAxisSVG className="icon" />;
 export const ShipIcon = () => <ShipSVG className="icon" />;
+export const StoreIcon = () => <StoreSVG className="icon" />;
 export const SurfaceAreaIcon = () => <SurfaceAreaSVG className="icon" />;
 export const SwayIcon = () => <SwaySVG className="icon" />;
 export const SwayMonochromeIcon = () => <SwayMonochromeSVG className="icon" />;
@@ -331,7 +344,6 @@ export {
   MdFirstPage as BeginningIcon,
   MdFlag as ClaimIcon,
   MdKeyboardArrowDown as CaretIcon,
-  MdOutlineLocalGroceryStore as StoreIcon,  // TODO: ...
   FaCaretDown as TriangleDownIcon,
   FaCaretUp as TriangleUpIcon,
   MdNavigateBefore as PreviousIcon,
@@ -344,7 +356,6 @@ export {
   RiAlertFill as WarningIcon,
   RiLayoutGridFill as GridIcon,
   FiLogIn as LoginIcon, // TODO: ...
-  FiLogOut as LogoutIcon, // TODO: ...
   RiSortDesc as SortIcon,
   RiTableFill as TableIcon,
   RiRouteFill as TripsIcon,
@@ -353,6 +364,5 @@ export {
   WiMoonAltWaningCrescent5 as DownloadModelIcon,
   FiCheckSquare as CheckedIcon,
   FiSquare as UncheckedIcon,
-  // FaUser as UserIcon
   BsFillPersonFill as UserIcon
 };
