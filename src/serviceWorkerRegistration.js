@@ -10,7 +10,7 @@
 // To learn more about the benefits of this model and instructions on how to
 // opt-in, read https://cra.link/PWA
 
-console.log('SW deploy 4');
+console.log('SW deploy 5');
 
 const isLocalhost = Boolean(
   window.location.hostname === 'localhost' ||
