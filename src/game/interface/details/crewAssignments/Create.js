@@ -771,7 +771,7 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
 
   const dispatchCrewAssignmentRestart = useStore((s) => s.dispatchCrewAssignmentRestart);
 
-  const isNameValid = useNameAvailability();
+  const isNameValid = useNameAvailability(Entity.IDS.CREWMATE);
   const { purchaseAndOrInitializeCrewmate } = useCrewManager();
   const { crew, crewmateMap, adalianRecruits, arvadianRecruits } = useCrewContext();
   const { data: priceConstants } = usePriceConstants();
@@ -1010,10 +1010,10 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
   }, [crewmate?.Crewmate?.class, selectedTraits, traitTally]);
 
   const confirmFinalize = useCallback(async () => {
-    if (await isNameValid(crewmate)) {
+    if (await isNameValid(name || crewmate.Name?.name, crewmate?.id)) {
       setConfirming(true);
     }
-  }, [isNameValid, crewmate]);
+  }, [isNameValid, name, crewmate.Name?.name, crewmate?.id]);
 
   const finalize = useCallback(() => {
     setConfirming(false);

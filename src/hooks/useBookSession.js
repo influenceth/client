@@ -87,16 +87,19 @@ const useBookSession = (crewId, crewmateId) => {
           storyComplete = true;
         } else {
           pathContent = story.paths.find((p) => p.id === pathId);
+
           if (!(pathContent?.linkedPaths?.length > 0)) {
             pathContent.prompt = '';
             pathContent.linkedPaths = [{ id: 'x' }];
             pathContent.isLastPage = true;
           }
+
           if (pathContent?.classObjective) {
             classObjective = pathContent?.classObjective;
           }
+
           if (pathContent?.objectives) {
-            traitObjectives.add(...pathContent?.objectives);
+            pathContent.objectives.forEach(o => traitObjectives.add(o));
           }
         }
       });

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useHistory, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import styled, { css } from 'styled-components';
 import { Address, Crewmate, Entity, Time } from '@influenceth/sdk';
 import { FaBookOpen as BioIcon } from 'react-icons/fa';
@@ -11,25 +11,17 @@ import CrewCard from '~/components/CrewCard';
 import CrewTraitIcon from '~/components/CrewTraitIcon';
 import DataReadout from '~/components/DataReadout';
 import Details from '~/components/DetailsModal';
-import Form from '~/components/Form';
-import IconButton from '~/components/IconButton';
 import {
-  CheckCircleIcon,
   ClaimIcon,
-  EditIcon,
   HexagonIcon,
   WarningOutlineIcon
 } from '~/components/Icons';
 import LogEntry from '~/components/LogEntry';
 import MarketplaceLink from '~/components/MarketplaceLink';
 import TabContainer from '~/components/TabContainer';
-import Text from '~/components/Text';
-import TextInput from '~/components/TextInput';
 import useAuth from '~/hooks/useAuth';
 // import useCrewAssignments from '~/hooks/useCrewAssignments';
 import useCrewmate from '~/hooks/useCrewmate';
-import useNameAvailability from '~/hooks/useNameAvailability';
-import useChangeName from '~/hooks/useChangeName';
 import useStore from '~/hooks/useStore';
 import { boolAttr } from '~/lib/utils';
 import useActivities from '~/hooks/useActivities';
@@ -380,11 +372,8 @@ const CrewmateDetails = () => {
   // const { data: assignmentData } = useCrewAssignments();
   const { data: crewmate } = useCrewmate(i);
   const { data: activities } = useActivities({ id: i, label: Entity.IDS.CREWMATE });
-  const isNameValid = useNameAvailability(Entity.IDS.CREWMATE);
-  const { changeName, changingName } = useChangeName({ id: Number(i), label: Entity.IDS.CREWMATE });
   const playSound = useStore(s => s.dispatchSoundRequested);
 
-  const [ newName, setNewName ] = useState('');
   const [ selectedTrait, setSelectedTrait ] = useState();
 
   const traits = useMemo(() => Crewmate.getCombinedTraits(crewmate?.Crewmate || {}), [crewmate]);
@@ -419,12 +408,6 @@ const CrewmateDetails = () => {
     }
   }, [traits, selectTrait]);
 
-  const attemptNameCrewmate = useCallback(async (name) => {
-    if (await isNameValid(name)) {
-      changeName(name);
-    }
-  }, [isNameValid]);
-
   return (
     <Details
       onCloseDestination="/crew"
@@ -449,38 +432,6 @@ const CrewmateDetails = () => {
               </CrewLabels>
               <Management>
                 <ManagementSubtitle>Management</ManagementSubtitle>
-                {/* this should be deprecated now that initialization will be required
-                {!crewmate.Name?.name && (
-                  <Form
-                    title={<><EditIcon /><span>Set Name</span></>}
-                    data-tip="Name crewmate"
-                    data-for="global"
-                    loading={boolAttr(changingName)}>
-                    <Text>
-                      A crewmate can only be named once!
-                      Names must be unique, and can only include letters, numbers, and single spaces.
-                    </Text>
-                    <NameForm>
-                      <TextInput
-                        initialValue=""
-                        minlength={Name.TYPES[Entity.IDS.CREWMATE].min}
-                        maxlength={Name.TYPES[Entity.IDS.CREWMATE].max}
-                        pattern={Name.getTypeRegex(Entity.IDS.CREWMATE)}
-                        disabled={boolAttr(changingName)}
-                        resetOnChange={i}
-                        onChange={(v) => setNewName(v)} />
-                      <IconButton
-                        data-tip="Submit"
-                        data-for="global"
-                        disabled={boolAttr(changingName)}
-                        onClick={() => attemptNameCrewmate(newName)}>
-                        <CheckCircleIcon />
-                      </IconButton>
-                    </NameForm>
-                  </Form>
-                )}
-                */}
-
                 <MarketplaceLink
                   chain={crewmate?.Nft?.chain}
                   assetType="crewmate"

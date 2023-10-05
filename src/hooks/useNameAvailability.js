@@ -4,14 +4,13 @@ import { Name } from '@influenceth/sdk';
 import api from '~/lib/api';
 import useStore from './useStore';
 
-const useNameAvailability = () => {
+const useNameAvailability = (entityType) => {
   const createAlert = useStore(s => s.dispatchAlertLogged);
 
-  const validateName = useCallback((entity, suppressAlert) => {
+  const validateName = useCallback((name, suppressAlert) => {
     let err = '';
-    let name = entity.Name?.name;
+    const standardError = Name.getNameError(name, Name.getType(entityType));
 
-    const standardError = Name.getNameError(name, Name.getType(entity.label));
     if (standardError) err = standardError;
     // TODO: move these extras to sdk? only really make sense if also true in the contract
     else if (/^ /.test(name) || / $/.test(name)) err = 'Name cannot have leading or trailing spaces.';
@@ -31,13 +30,13 @@ const useNameAvailability = () => {
     return true;
   }, [createAlert]);
 
-  const getNameAvailability = useCallback(async (entity, suppressAlert) => {
+  const getNameAvailability = useCallback(async (name, entityId, suppressAlert) => {
+    console.log(name, entityId);
     try {
-      if (!validateName(entity, suppressAlert)) return false;
-      let name = entity.Name?.name;
-      const nameCollisions = await api.getNameUse(entity.label, name);
+      if (!validateName(name, suppressAlert)) return false;
+      const nameCollisions = await api.getNameUse(entityType, name);
 
-      if (nameCollisions?.length > 0 && nameCollisions[0].id !== entity.id) {
+      if (nameCollisions?.length > 0 && nameCollisions[0].id !== entityId) {
         if (!suppressAlert) {
           createAlert({
             type: 'GenericAlert',
