@@ -188,6 +188,7 @@ const useActionButtons = () => {
             a.push(actionButtons.CoreSample);
 
             // if there is a building
+            // TODO: resourceScan is probably not required for building (i.e. habitat on AP is pre-resource-scan)
             if (lot.building) {
 
               // if it's operational...

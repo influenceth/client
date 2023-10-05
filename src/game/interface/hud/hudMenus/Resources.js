@@ -127,7 +127,7 @@ const Resources = ({ onClose }) => {
     };
   }, []);
 
-  const unpackedBonuses = useMemo(() => Asteroid.Entity.getBonuses(asteroid) || [], asteroid);
+  const unpackedBonuses = useMemo(() => Asteroid.Entity.getBonuses(asteroid) || [], [asteroid]);
   const nonzeroBonuses = useMemo(() => unpackedBonuses.filter((b) => b.level > 0), [unpackedBonuses]);
 
   return (
