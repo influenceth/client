@@ -40,7 +40,7 @@ const useNameAvailability = (entityType) => {
           createAlert({
             type: 'GenericAlert',
             level: 'warning',
-            data: { content: `"${name}" is already taken as a name.` },
+            data: { content: `The name: "${name}" is already taken.` },
             duration: 4000
           });
         }

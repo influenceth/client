@@ -871,9 +871,13 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
       c.Crewmate.class = selectedClass;
       c._canReclass = true;
     }
+
+    // Allow renaming if not yet set, otherwise set to the name set on L1
     if (!c.Name?.name) {
       c.Name = { name };
       c._canRename = true;
+    } else {
+      setName(c.Name.name);
     }
 
     // split traits selected
@@ -1081,7 +1085,7 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
   }, [adalianRecruits, arvadianRecruits]);
 
   const disableChanges = pendingCrewmate || traitsLocked || promptingTransaction;
-  
+
   const readyForSubmission = useMemo(() => {
     if (!name) return false;
     if (!selectedClass) return false;
@@ -1454,7 +1458,7 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
   );
 };
 
-// TODO: for recruit to 0, clears story session (and name?) when finalized, 
+// TODO: for recruit to 0, clears story session (and name?) when finalized,
 //  how can it match back to the new crewmate? need to set something permanent
 //  for page-state so doesn't reload
 
