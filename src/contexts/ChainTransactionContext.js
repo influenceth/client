@@ -21,16 +21,12 @@ const getNow = () => Math.floor(Date.now() / 1000);
 const customConfigs = {
   // customization of Systems configs from sdk
   ChangeName: { equalityTest: ['entity.id', 'entity.label'] },
-  ConstructionStart: { equalityTest: 'ALL' },
-  ConstructionFinish: { equalityTest: 'ALL' },
   CoreSampleStart: { equalityTest: ['asteroidId', 'crewId', 'lotId'] },
   CoreSampleFinish: { equalityTest: ['asteroidId', 'crewId', 'lotId'] },
-  Deconstruct: { equalityTest: 'ALL' },
   DeliveryStart: { equalityTest: ['asteroidId', 'crewId', 'originLotId'] },
   DeliveryFinish: { equalityTest: ['asteroidId', 'crewId', 'deliveryId', 'destLotId'] },
   ExchangeCrew: { equalityTest: true },
   ExtractionStart: { equalityTest: ['asteroidId', 'crewId', 'lotId'] },
-  ExtractionFinish: { equalityTest: 'ALL' },
   InitializeAsteroid: {
     preprocess: ({ asteroid }) => ({
       asteroid,
@@ -80,7 +76,6 @@ const customConfigs = {
     },
     equalityTest: true
   },
-  UnplanConstruction: { equalityTest: 'ALL' },
 
   // virtual multi-system wrappers
   // TODO: could do fancier conditional multisystems if that would help
@@ -129,7 +124,7 @@ export function ChainTransactionProvider({ children }) {
 
       return systemKeys.reduce((acc, systemName) => {
         const config = {
-          equalityTest: ['i'],
+          equalityTest: 'ALL',
           ...(customConfigs[systemName] || {})
         };
 

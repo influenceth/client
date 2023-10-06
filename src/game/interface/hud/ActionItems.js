@@ -136,7 +136,9 @@ const Icon = styled.div`
 `;
 
 const Status = styled.div``;
-const Label = styled.div``;
+const Label = styled.div`
+  white-space: nowrap;
+`;
 const Details = styled.div``;
 const Timing = styled.div`
   b {
@@ -465,9 +467,7 @@ const ActionItems = () => {
           )}>
           <ActionItemWrapper>
             <ActionItemContainer>
-              {filteredDisplayItems.map(({ transition, ...item }) => (
-                <ActionItem key={`${item.type}_${item.key || item.i}_${item.timestamp || item.gracePeriodEnd}`} data={item} />
-              ))}
+              {filteredDisplayItems.map((item) => <ActionItem key={item.key} data={item} />)}
             </ActionItemContainer>
           </ActionItemWrapper>
         </CollapsibleSection>
