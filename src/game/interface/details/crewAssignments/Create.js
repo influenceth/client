@@ -795,7 +795,6 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
   );
   const [selectedTraits, setSelectedTraits] = useState(bookSession?.selectedTraits || []);
   const [traitsLocked, setTraitsLocked] = useState(!!bookSession?.isComplete);
-  const [traitTally, setTraitTally] = useState(0);
 
   const [finalizing, setFinalizing] = useState();
   const [name, setName] = useState('');
@@ -920,9 +919,11 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
     bookSession
   ]);
 
-  useEffect(() => {
-    setTraitTally(crewmate.Crewmate?.coll === Crewmate.COLLECTION_IDS.ADALIAN ? 4 : 8);
-  }, [crewmate]);
+  const traitTally = useMemo(() => {
+    if (crewmate?.Crewmate?.coll === Crewmate.COLLECTION_IDS.ADALIAN) return 4;
+    if (crewmate?.Crewmate?.coll) return 8;
+    return 0;
+  });
 
   // init appearance options as desired
   useEffect(() => {
@@ -1012,10 +1013,10 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
   }, [crewmate?.Crewmate?.class, selectedTraits, traitTally]);
 
   const confirmFinalize = useCallback(async () => {
-    if (await isNameValid(name || crewmate.Name?.name, crewmate?.id)) {
+    if (await isNameValid(name || crewmate?.Name?.name, crewmate?.id)) {
       setConfirming(true);
     }
-  }, [isNameValid, name, crewmate.Name?.name, crewmate?.id]);
+  }, [isNameValid, name, crewmate?.Name?.name, crewmate?.id]);
 
   const finalize = useCallback(() => {
     setConfirming(false);
@@ -1082,6 +1083,8 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
   }, [adalianRecruits, arvadianRecruits]);
 
   const disableChanges = pendingCrewmate || traitsLocked || promptingTransaction;
+  
+  if (!crewmate) return null;
   return (
     <>
       <ImageryContainer src={coverImage}>
@@ -1446,24 +1449,19 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
   );
 };
 
-// TODO: for recruit to 0, clears story session (and name?) when finalized,
+// TODO: for recruit to 0, clears story session (and name?) when finalized, 
 //  how can it match back to the new crewmate? need to set something permanent
 //  for page-state so doesn't reload
 
 const Wrapper = ({ backLocation, crewId, crewmateId, locationId }) => {
-  const { bookSession, bookError } = useBookSession(crewId, crewmateId);
-  const { crews, crewmateMap, arvadianRecruits, loading: crewIsLoading } = useCrewContext();
+  const { book, bookSession, bookError } = useBookSession(crewId, crewmateId);
+  const { crews, crewmateMap, loading: crewIsLoading } = useCrewContext();
   const { getPendingCrewmate } = useCrewManager();
   const history = useHistory();
 
   const dispatchCrewAssignmentRestart = useStore((s) => s.dispatchCrewAssignmentRestart);
 
-  const coverImage = useMemo(() => {
-    const bookId = (crewmateId > 0 && arvadianRecruits.find((c) => c.id === crewmateId))
-      ? bookIds.ARVADIAN_RECRUITMENT
-      : bookIds.ADALIAN_RECRUITMENT;
-    return getBookCompletionImage(bookId);
-  }, [arvadianRecruits]);
+  const coverImage = useMemo(() => getBookCompletionImage(book), [book]);
 
   // for recruit of crewmateId 0, things get weird when completed
   const finalizing = useRef();
