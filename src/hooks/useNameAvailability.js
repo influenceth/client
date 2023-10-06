@@ -4,13 +4,13 @@ import { Name } from '@influenceth/sdk';
 import api from '~/lib/api';
 import useStore from './useStore';
 
-const useNameAvailability = (entityLabel) => {
+const useNameAvailability = (entityType) => {
   const createAlert = useStore(s => s.dispatchAlertLogged);
 
   const validateName = useCallback((name, suppressAlert) => {
     let err = '';
+    const standardError = Name.getNameError(name, Name.getType(entityType));
 
-    const standardError = Name.getNameError(name, Name.getType(entityLabel));
     if (standardError) err = standardError;
     // TODO: move these extras to sdk? only really make sense if also true in the contract
     else if (/^ /.test(name) || / $/.test(name)) err = 'Name cannot have leading or trailing spaces.';
@@ -26,16 +26,17 @@ const useNameAvailability = (entityLabel) => {
       }
       return false;
     }
+
     return true;
   }, [createAlert]);
 
-  const getNameAvailability = useCallback(async (name, suppressAlert) => {
+  const getNameAvailability = useCallback(async (name, entityId, suppressAlert) => {
+    console.log(name, entityId);
     try {
       if (!validateName(name, suppressAlert)) return false;
+      const nameCollisions = await api.getNameUse(entityType, name);
 
-      // TODO: ecs refactor - would it make more sense to use entityType here?
-      const nameCollisions = await api.getNameUse(entityLabel, name);
-      if (nameCollisions?.length > 0) {
+      if (nameCollisions?.length > 0 && nameCollisions[0].id !== entityId) {
         if (!suppressAlert) {
           createAlert({
             type: 'GenericAlert',

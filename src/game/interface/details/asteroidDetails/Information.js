@@ -306,10 +306,10 @@ const AsteroidInformation = ({ abundances, asteroid, isManager, isOwner }) => {
   }, [asteroid.Name?.name]);
 
   const attemptUpdateAsteroidName = useCallback(async () => {
-    if (await isNameValid(newName)) {
+    if (await isNameValid(newName, asteroid?.id)) {
       changeName(newName);
     }
-  }, [changeName, isNameValid, newName]);
+  }, [changeName, isNameValid, newName, asteroid?.id]);
 
   return (
     <Wrapper>
