@@ -457,7 +457,7 @@ const ActionItems = () => {
               <Filters>
                 <ReadyFilter tally={tallies.ready} onClick={onClickFilter('ready')} selected={selectedFilter === 'ready'} />
                 <InProgressFilter tally={tallies.progress} onClick={onClickFilter('progress')} selected={selectedFilter === 'progress'} />
-                <LinkContainer style={{ flex: 1, textAlign: 'right' }}>
+                <LinkContainer style={{ flex: 1, textAlign: 'left' }}>
                   <Link to="/listview/actionitems" onClick={(e) => e.stopPropagation()}>
                     <PopoutIcon />
                   </Link>
