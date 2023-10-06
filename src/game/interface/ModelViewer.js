@@ -100,16 +100,18 @@ export const getModelViewerSettings = (assetType, overrides = {}) => {
   // modify default settings by asset type
   if (assetType === 'building') {
     s.bloomRadius = 1;  // 0.25
-    s.bloomStrength = 5;  // 3
+    s.bloomStrength = 6;  // 3
     s.emissiveAsBloom = true;
     s.emissiveMapAsLightMap = true;
     s.enableModelLights = true;
     s.enablePostprocessing = true;
     s.envmapStrength = 0.1;
     s.floorNodeName = 'Asteroid_Terrain'; // (enforces collision detection with this node (only in y-axis direction))
-    s.maxCameraDistance = 0.1;  // NOTE: use this or simple zoom constraints, not both
-    s.initialZoom = 0.2;
-    s.keylightIntensity = 0;
+    s.maxCameraDistance = 0.2;  // NOTE: use this or simple zoom constraints, not both
+    s.initialZoom = 0.1;
+    s.enableDefaultLights = true;
+    s.keylightIntensity = 0.75;
+    s.rimlightIntensity = 0;
     s.toneMapping = LinearToneMapping;
     s.toneMappingExposure = 1;
 

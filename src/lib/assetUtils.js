@@ -26,8 +26,9 @@ const getSlug = (assetName) => {
 }
 
 const getIconUrl = (type, assetName, iconVersion, { append, w, h, f } = {}) => {
+  const environment = process.env.NODE_ENV || 'development';
   return getCloudfrontUrl(
-    `influence/goerli/images/icons/${type}/${getSlug(assetName)}${append || ''}.v${iconVersion || '1'}.png`,
+    `influence/${environment}/images/icons/${type}/${getSlug(assetName)}${append || ''}.v${iconVersion || '1'}.png`,
     { w, h, f }
   );
 }

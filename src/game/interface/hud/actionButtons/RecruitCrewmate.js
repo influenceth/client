@@ -4,6 +4,7 @@ import { useHistory } from 'react-router-dom';
 import { RecruitCrewmateIcon } from '~/components/Icons';  // TODO: sergey's
 import useCrewManager from '~/hooks/useCrewManager';
 import ActionButton from './ActionButton';
+import { nativeBool, reactBool } from '~/lib/utils';
 
 const RecruitCrewmate = ({ crew, lot }) => {
   const { getPendingCrewmate } = useCrewManager();
@@ -19,9 +20,9 @@ const RecruitCrewmate = ({ crew, lot }) => {
     <ActionButton
       label="Recruit Crewmate"
       flags={{
-        attention: !pendingCrewmate && !(crew?.Crew?.roster?.length > 0),
-        disabled: !!pendingCrewmate,
-        loading: !!pendingCrewmate,
+        attention: reactBool(!pendingCrewmate && !(crew?.Crew?.roster?.length > 0)),
+        disabled: nativeBool(!!pendingCrewmate),
+        loading: reactBool(!!pendingCrewmate),
       }}
       icon={<RecruitCrewmateIcon />}
       onClick={handleClick} />
