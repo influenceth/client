@@ -82,12 +82,8 @@ const HUD = () => {
             <ActionItems />
           </>
         )}
-        {!captain && !loading && (
-          <>
-            <LoginMenu />
-            <div style={{ flex: 1 }} />
-          </>
-        )}
+        {!captain && !loading && <LoginMenu />}
+        {!captain && <div style={{ flex: 1 }} />}
         <InfoPane />
       </LeftWrapper>
 

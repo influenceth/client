@@ -50,20 +50,20 @@ export function CrewProvider({ children }) {
 
   const crewmateMap = useMemo(() => {
     if (!crewsLoading && !crewmatesLoading) {
-      const allMyCrewmates = {};
-      (allCrewmates || []).forEach((crewmate) => allMyCrewmates[crewmate.id] = crewmate);
-      return allMyCrewmates;
+      return (allCrewmates || []).reduce((acc, crewmate) => {
+        acc[crewmate.id] = crewmate;
+        return acc;
+      }, {});
     }
     return null;  // NOTE: if change this null response, see NOTE above crewsAndCrewmatesReady
   }, [allCrewmates, crewmatesLoading]);
 
   // NOTE: this covers crewsLoading and crewmatesLoading because crewmateMap is
-  // null while either of those are true; however, make sure to include the loading
-  // states here if that ever changes
-  const crewsAndCrewmatesReady = useMemo(() => rawCrews && crewmateMap, [rawCrews, crewmateMap]);
+  // null while either of those are true
+  const crewsAndCrewmatesReady = useMemo(() => !!crewmateMap, [crewmateMap]);
 
   const crews = useMemo(() => {
-    if (!crewsAndCrewmatesReady) return [];
+    if (!crewsAndCrewmatesReady || !rawCrews) return [];
     return rawCrews.map((c) => {
       if (!!crewmateMap) {
         c._crewmates = c.Crew.roster.map((i) => crewmateMap[i]).filter((c) => !!c);
