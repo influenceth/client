@@ -54,11 +54,16 @@ export function CrewProvider({ children }) {
       (allCrewmates || []).forEach((crewmate) => allMyCrewmates[crewmate.id] = crewmate);
       return allMyCrewmates;
     }
-    return null;
+    return null;  // NOTE: if change this null response, see NOTE above crewsAndCrewmatesReady
   }, [allCrewmates, crewmatesLoading]);
 
+  // NOTE: this covers crewsLoading and crewmatesLoading because crewmateMap is
+  // null while either of those are true; however, make sure to include the loading
+  // states here if that ever changes
+  const crewsAndCrewmatesReady = useMemo(() => rawCrews && crewmateMap, [rawCrews, crewmateMap]);
+
   const crews = useMemo(() => {
-    if (!rawCrews || !crewmateMap) return [];
+    if (!crewsAndCrewmatesReady) return [];
     return rawCrews.map((c) => {
       if (!!crewmateMap) {
         c._crewmates = c.Crew.roster.map((i) => crewmateMap[i]).filter((c) => !!c);
@@ -68,7 +73,7 @@ export function CrewProvider({ children }) {
       }
       return c;
     })
-  }, [rawCrews, crewmateMap]);
+  }, [rawCrews, crewmateMap, crewsAndCrewmatesReady]);
 
   const selectedCrew = useMemo(() => {
     if (crews && crews.length > 0) {
@@ -82,10 +87,10 @@ export function CrewProvider({ children }) {
 
   // make sure a default-selected crew makes it into state
   useEffect(() => {
-    if (!crewsLoading && selectedCrew?.id !== selectedCrew) {
+    if (crewsAndCrewmatesReady && selectedCrew?.id !== selectedCrew) {
       dispatchCrewSelected(selectedCrew?.id || undefined);
     }
-  }, [crewsLoading, selectedCrewId, selectedCrew]);
+  }, [crewsAndCrewmatesReady, selectedCrewId, selectedCrew]);
 
   const captain = useMemo(() => selectedCrew?._crewmates?.[0] || null, [crewmateMap, selectedCrew]);
 
@@ -97,7 +102,7 @@ export function CrewProvider({ children }) {
       crew: selectedCrew,
       crews,
       crewmateMap,
-      loading: crewsLoading || crewmatesLoading || recruitsLoading,
+      loading: !crewsAndCrewmatesReady || recruitsLoading,
       selectCrew: dispatchCrewSelected  // TODO: this might be redundant
     }}>
       {children}

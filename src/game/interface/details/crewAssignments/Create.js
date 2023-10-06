@@ -1013,10 +1013,10 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
   }, [crewmate?.Crewmate?.class, selectedTraits, traitTally]);
 
   const confirmFinalize = useCallback(async () => {
-    if (await isNameValid(name || crewmate.Name?.name, crewmate?.id)) {
+    if (await isNameValid(name || crewmate?.Name?.name, crewmate?.id)) {
       setConfirming(true);
     }
-  }, [isNameValid, name, crewmate.Name?.name, crewmate?.id]);
+  }, [isNameValid, name, crewmate?.Name?.name, crewmate?.id]);
 
   const finalize = useCallback(() => {
     setConfirming(false);
