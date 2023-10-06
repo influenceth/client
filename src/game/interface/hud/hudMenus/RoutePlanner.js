@@ -135,17 +135,6 @@ const maxTof = minTof + 365;
 
 const simInventoryDefaults = { contents: [], mass: 0, volume: 0, reservedMass: 0, reservedVolume: 0, status: Inventory.STATUSES.AVAILABLE };
 
-const getCargoInventoryType = (shipType) => {
-  if (shipType === Ship.IDS.HEAVY_TRANSPORT) return Inventory.IDS.CARGO_LARGE;
-  if (shipType === Ship.IDS.LIGHT_TRANSPORT) return Inventory.IDS.CARGO_MEDIUM;
-  return Inventory.IDS.CARGO_SMALL; // TODO: Escape module has no cargo
-};
-const getPropellantInventoryType = (shipType) => {
-  if (Number(shipType) === Ship.IDS.HEAVY_TRANSPORT) return Inventory.IDS.PROPELLANT_LARGE;
-  if (Number(shipType) === Ship.IDS.LIGHT_TRANSPORT) return Inventory.IDS.PROPELLANT_MEDIUM;
-  if (Number(shipType) === Ship.IDS.SHUTTLE) return Inventory.IDS.PROPELLANT_SMALL;
-  return Inventory.IDS.PROPELLANT_TINY;
-};
 const getInventoriesByShipType = (shipType) => {
   const inventories = [];
   const config = Ship.TYPES[shipType];
@@ -154,7 +143,7 @@ const getInventoriesByShipType = (shipType) => {
     inventories.push({
       ...simInventoryDefaults,
       slot: config.cargoSlot,
-      inventoryType: getCargoInventoryType(shipType),
+      inventoryType: config.cargoInventoryType
     });
   }
 
@@ -162,12 +151,12 @@ const getInventoriesByShipType = (shipType) => {
     inventories.push({
       ...simInventoryDefaults,
       slot: config.propellantSlot,
-      inventoryType: getPropellantInventoryType(shipType),
+      inventoryType: config.propellantInventoryType
     });
   }
 
   return inventories;
-}
+};
 
 const RoutePlanner = () => {
   const { coarseTime } = useContext(ClockContext);

@@ -42,7 +42,7 @@ import formatters from '~/lib/formatters';
 
 const LaunchShip = ({ asteroid, lot, manager, ship, stage, ...props }) => {
   const createAlert = useStore(s => s.dispatchAlertLogged);
-  
+
   const { currentLaunch, launchStatus, startLaunch } = manager;
 
   const { crew, crewmateMap } = useCrewContext();
