@@ -1,8 +1,9 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useThrottle } from '@react-hook/throttle';
 import { useQuery } from 'react-query';
 import { Entity } from '@influenceth/sdk';
 import esb from 'elastic-builder';
+import isEqual from 'lodash/isEqual';
 
 import api from '~/lib/api';
 import useStore from '~/hooks/useStore';
@@ -192,7 +193,10 @@ filtersToQuery.ships = (filters) => {
 const useAssetSearch = (assetType, { from = 0, size = 2000 } = {}) => {
   const filters = useStore(s => s.assetSearch[assetType]?.filters);
   const sort = useStore(s => s.assetSearch[assetType]?.sort);
-  const [ query, setQuery ] = useThrottle({}, 2, true);
+
+  const [throttledFilters, setThrottledFilters] = useThrottle(filters || {}, 2, true);
+
+  useEffect(() => setThrottledFilters(filters || {}), [filters]);
 
   // asteroidsMapped use the exact same indices as asteroids (for now)
   // lotsMapped, actionitems, eventlog does not need to query ES
@@ -202,19 +206,20 @@ const useAssetSearch = (assetType, { from = 0, size = 2000 } = {}) => {
   if (esAssetType === 'actionitems') esAssetType = '';
   if (esAssetType === 'eventlog') esAssetType = '';
 
-  useEffect(() => {
+  const query = useMemo(() => {
     if (esAssetType) {
       const q = esb.requestBodySearch();
-      q.query(filtersToQuery[esAssetType](filters || {}));
+      q.query(filtersToQuery[esAssetType](throttledFilters || {}));
       if (esAssetType === 'asteroids') q.source({ excludes: [ 'AsteroidProof' ]});
       if (sort) q.sort(esb.sort(...sort));
       q.from(from);
       q.size(size);
       q.trackTotalHits(true);
 
-      setQuery(q.toJSON());
+      return q.toJSON();
     }
-  }, [ filters, from, size, sort ]);
+    return null;
+  }, [throttledFilters, from, size, sort])
 
   return useQuery(
     // TODO: convert this to 'entities' model of cache keys
