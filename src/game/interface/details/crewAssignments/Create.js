@@ -412,7 +412,7 @@ const Trait = styled.div`
     }
     return `
       & ${TipHolder} ${TipIcon} > ${UnclickableIcon} { display: block; }
-    `; 
+    `;
   }}
 `;
 
@@ -811,16 +811,15 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
 
   // derive crewmate-structured crewmate based on selections
   const crewmate = useMemo(() => {
-
     // if already finalized, return final version
     if (finalized) return mappedCrewmate;
 
     // if already pending, format from pending tx
     if (pendingCrewmate) {
       const { name, hair_color, caller_crew, crewmate, ...crewmateVars } = pendingCrewmate.vars;
-      crewmateVars.coll = pendingCrewmate.key === 'RecruitAdalian' // TODO: also handle arvadians
+      crewmateVars.coll = pendingCrewmate.key === 'RecruitAdalian'
         ? Crewmate.COLLECTION_IDS.ADALIAN
-        : arvadianRecruits.find((r) => r.Crewmate.id === crewmateVars.Crewmate.id)?.Crewmate?.coll;
+        : arvadianRecruits.find((r) => r.id === crewmateVars.id)?.Crewmate?.coll;
       crewmateVars.hairColor = hair_color;
       crewmateVars.appearance = Crewmate.packAppearance(crewmateVars);
       return {
@@ -919,10 +918,12 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
     selectedTraits,
     bookSession
   ]);
-  
-  const traitTally = crewmate
-    ? (crewmate.Crewmate.coll === Crewmate.COLLECTION_IDS.ADALIAN ? 4 : 8)
-    : 0;
+
+  const traitTally = useMemo(() => {
+    if (crewmate?.Crewmate?.coll === Crewmate.COLLECTION_IDS.ADALIAN) return 4;
+    if (crewmate?.Crewmate?.coll) return 8;
+    return 0;
+  })
 
   // init appearance options as desired
   useEffect(() => {
@@ -1012,10 +1013,10 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
   }, [crewmate?.Crewmate?.class, selectedTraits, traitTally]);
 
   const confirmFinalize = useCallback(async () => {
-    if (await isNameValid(name)) {
+    if (await isNameValid(name || crewmate.Name?.name, crewmate?.id)) {
       setConfirming(true);
     }
-  }, [isNameValid, name]);
+  }, [isNameValid, name, crewmate.Name?.name, crewmate?.id]);
 
   const finalize = useCallback(() => {
     setConfirming(false);
@@ -1159,7 +1160,7 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
                         </RerollContainer>
                       )}
 
-                      
+
                       <RerollContainer>
                         {traitsLocked
                           ? (
@@ -1246,7 +1247,7 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
                             description={(
                               <>
                                 {classObjects[crewmate.Crewmate.class]?.description}
-                                
+
                                 <MouseoverSubtitle>{classObjects[crewmate.Crewmate.class]?.name} Bonuses</MouseoverSubtitle>
                                 {classObjects[crewmate.Crewmate.class]?.abilities}
                               </>
@@ -1355,7 +1356,7 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
                   </CardContainer>
                 </CardWrapper>
 
-                {/* 
+                {/*
                 <RecruitSection>
                   {!process.env.REACT_APP_HIDE_SOCIAL && (
                     <TwitterButton onClick={shareOnTwitter}>
@@ -1379,7 +1380,7 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
               <CopyReferralLink>
                 <Button subtle><LinkIcon /> <span style={{ marginLeft: 4 }}>Copy Referral Link</span></Button>
               </CopyReferralLink>
-              
+
               <div style={{ flex: 1 }} />
               <Button subtle onClick={() => history.push(`/crew/${mappedCrewmate?.Control?.controller?.id}`)}>Go to Crew</Button>
             </>
@@ -1448,7 +1449,7 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
   );
 };
 
-// TODO: for recruit to 0, clears story session (and name?) when finalized, 
+// TODO: for recruit to 0, clears story session (and name?) when finalized,
 //  how can it match back to the new crewmate? need to set something permanent
 //  for page-state so doesn't reload
 
@@ -1459,7 +1460,7 @@ const Wrapper = ({ backLocation, crewId, crewmateId, locationId }) => {
   const history = useHistory();
 
   const dispatchCrewAssignmentRestart = useStore((s) => s.dispatchCrewAssignmentRestart);
-  
+
   const coverImage = useMemo(() => {
     const bookId = (crewmateId > 0 && arvadianRecruits.find((c) => c.id === crewmateId))
       ? bookIds.ARVADIAN_RECRUITMENT

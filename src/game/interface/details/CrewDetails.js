@@ -334,10 +334,10 @@ const CrewDetails = ({ crewId, crew, crewmates, isMyCrew, isOwnedCrew, selectCre
   }, [changingName])
 
   const saveName = useCallback(async () => {
-    if (await isNameValid(newName)) {
+    if (await isNameValid(newName, crew?.id)) {
       changeName(newName);
     }
-  }, [newName]);
+  }, [newName, crew?.id]);
 
   const onClickCrewmate = useCallback((crewmate) => () => {
     history.push(`/crewmate/${crewmate.id}`);
@@ -391,7 +391,7 @@ const CrewDetails = ({ crewId, crew, crewmates, isMyCrew, isOwnedCrew, selectCre
                   <>
                     <Button size="hugeicon" subtle disabled={boolAttr(changingName)} onClick={saveName}><CheckIcon /></Button>
                     <Button size="hugeicon" subtle disabled={boolAttr(changingName)} onClick={() => setEditing()}><CloseIcon /></Button>
-                    <TextInput 
+                    <TextInput
                       initialValue={crew.Name?.name || ''}
                       minlength={Name.TYPES[Entity.IDS.CREW].min}
                       maxlength={Name.TYPES[Entity.IDS.CREW].max}
@@ -510,7 +510,7 @@ const CrewDetails = ({ crewId, crew, crewmates, isMyCrew, isOwnedCrew, selectCre
 
             </CrewWrapper>
 
-            
+
           </CrewDetailsContainer>
           <ManagementContainer>
             {isOwnedCrew && <MyCrewStatement><MyAssetIcon /> This crew is owned by me.</MyCrewStatement>}
@@ -580,7 +580,7 @@ const CrewDetails = ({ crewId, crew, crewmates, isMyCrew, isOwnedCrew, selectCre
               null
             ]}
           />
-          
+
         </BelowFold>
       </MainContainer>
     </>

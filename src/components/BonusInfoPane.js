@@ -38,11 +38,11 @@ const BonusInfoPane = ({ referenceEl, visible }) => (
 
       <div>
         <span><BonusBar bonus={1} /></span>
-        <span>Tier 1: Small Bonus. Common probability.</span>
+        <span>Tier 1: Small Bonus. Uncommon.</span>
       </div>
       <div>
         <span><BonusBar bonus={2} /></span>
-        <span>Tier 2: Medium Bonus. Rare probability.</span>
+        <span>Tier 2: Medium Bonus. Rare.</span>
       </div>
       <div>
         <span><BonusBar bonus={3} /></span>
