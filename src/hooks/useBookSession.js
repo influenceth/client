@@ -1,30 +1,39 @@
-import { useCallback, useMemo } from 'react';
-import { Crewmate } from '@influenceth/sdk';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import adalianRecruitmentBook from '~/assets/stories/adalian-recruitment.json'
-import arvadianRecruitmentBook from '~/assets/stories/arvadian-recruitment.json'
-import useCrewContext from './useCrewContext';
-import useStore from './useStore';
+import useCrewContext from '~/hooks/useCrewContext';
+import useStore from '~/hooks/useStore';
 import { getCloudfrontUrl } from '~/lib/assetUtils';
 
 export const bookIds = {
-  ADALIAN_RECRUITMENT: 'adalian',
-  ARVADIAN_RECRUITMENT: 'arvadian'
+  ADALIAN_RECRUITMENT: 'adalian-recruitment.json',
+  ARVADIAN_RECRUITMENT: 'arvadian-recruitment.json'
+};
+
+const defaultImageWidth = 1500;
+const bookCache = {};
+
+const fetchBook = async (bookId) => {
+  if (bookId) {
+    if (!bookCache[bookId]) bookCache[bookId] = await fetch(`/stories/${bookId}`).then((r) => r.json());
+    return bookCache[bookId];
+  }
+  return null;
 };
 
 const anyOf = (mustHave, tests) => !!mustHave.find((x) => tests.includes(x));
 const allOf = (mustHave, tests) => !mustHave.find((x) => !tests.includes(x));
 
-const defaultImageWidth = 1500;
+export const getBookCompletionImage = (book, imageWidth = defaultImageWidth) => {
+  if (!book) return null;
 
-export const getBookCompletionImage = (bookId, imageWidth = defaultImageWidth) => {
-  const book = bookId === bookIds.ADALIAN_RECRUITMENT ? adalianRecruitmentBook : arvadianRecruitmentBook;
   const lastStory = book[book.length - 1];
   return getCloudfrontUrl(lastStory.completionImage || lastStory.image, { w: imageWidth });
 }
 
 const useBookSession = (crewId, crewmateId) => {
   const { adalianRecruits, arvadianRecruits, loading: crewIsLoading } = useCrewContext();
+
+  const [book, setBook] = useState();
 
   const [bookId, crewmate] = useMemo(() => {
     const adalianRecruit = adalianRecruits.find((a) => a.id === crewmateId);
@@ -47,14 +56,7 @@ const useBookSession = (crewId, crewmateId) => {
   const dispatchCrewAssignmentPathUndo = useStore(s => s.dispatchCrewAssignmentPathUndo);
   const dispatchCrewAssignmentRestart = useStore(s => s.dispatchCrewAssignmentRestart);
 
-  const book = useMemo(() => {
-    if (bookId === bookIds.ADALIAN_RECRUITMENT) {
-      return adalianRecruitmentBook;
-    } else if (bookId === bookIds.ARVADIAN_RECRUITMENT) {
-      return arvadianRecruitmentBook;
-    }
-    return null;
-  }, [bookId]);
+  useEffect(() => fetchBook(bookId).then(setBook), [bookId]);
 
   const { bookSession, storySession } = useMemo(() => {
     // console.log({ book, crewIsLoading, crewmateId, crewmate });
@@ -192,13 +194,14 @@ const useBookSession = (crewId, crewmateId) => {
   }, [crewId, crewmateId]);
 
   return useMemo(() => ({
+    book,
     bookError: error,
     bookSession,
     storySession,
     choosePath,
     undoPath,
     restart
-  }), [error, bookSession, storySession, choosePath, undoPath, restart]);
+  }), [book, error, bookSession, storySession, choosePath, undoPath, restart]);
 };
 
 export default useBookSession;
