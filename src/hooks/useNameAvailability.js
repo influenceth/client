@@ -31,7 +31,6 @@ const useNameAvailability = (entityType) => {
   }, [createAlert]);
 
   const getNameAvailability = useCallback(async (name, entityId, suppressAlert) => {
-    console.log(name, entityId);
     try {
       if (!validateName(name, suppressAlert)) return false;
       const nameCollisions = await api.getNameUse(entityType, name);

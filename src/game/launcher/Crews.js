@@ -131,6 +131,7 @@ const Crews = () => {
               }
               return (
                 <CrewCardFramed
+                  key={i}
                   borderColor={`rgba(${theme.colors.mainRGB}, 0.6)`}
                   crewCardProps={{ hideHeader: true }}
                   crewmate={crewmate}

@@ -110,6 +110,8 @@ export const getModelViewerSettings = (assetType, overrides = {}) => {
     s.maxCameraDistance = 0.1;  // NOTE: use this or simple zoom constraints, not both
     s.initialZoom = 0.2;
     s.keylightIntensity = 0;
+    s.toneMapping = LinearToneMapping;
+    s.toneMappingExposure = 1;
 
   } else if (assetType === 'resource') {
     s.background = '/textures/model-viewer/resource_skybox.hdr';
@@ -267,6 +269,7 @@ const Model = ({ url, onLoaded, onCameraUpdate, ...settings }) => {
           } else if (node.name === 'Camera') {
             predefinedCamera = node.position.clone();
           } else if (node.isMesh) {
+            console.log(node.name);
             if (node.name === settings.floorNodeName) {
               collisionFloor.current = node;
             }
