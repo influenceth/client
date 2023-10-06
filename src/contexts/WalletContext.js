@@ -75,6 +75,7 @@ export function WalletProvider({ children }) {
       const wallet = await getStarknetConnect({
         dappName: 'Influence',
         modalMode: mode,
+        projectId: 'influence',
         webWalletUrl: process.env.REACT_APP_ARGENT_WEB_WALLET_URL
       });
 

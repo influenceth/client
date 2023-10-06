@@ -1,7 +1,6 @@
-import { useContext, useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
 import { RingLoader as Loader } from 'react-spinners';
-import { Entity } from '@influenceth/sdk';
 
 import useAuth from '~/hooks/useAuth';
 import useStore from '~/hooks/useStore';
@@ -12,22 +11,19 @@ import {
   ChevronDoubleRightIcon,
   CloseIcon,
   DownloadIcon,
-  InfluenceIcon,
   LogoutIcon,
   MyAssetIcon,
-  UserIcon
+  UserIcon,
+  WalletIcon
 } from '~/components/Icons';
 import useCrewContext from '~/hooks/useCrewContext';
 import Crews from './launcher/Crews';
 import Settings from './launcher/Settings';
 import HudMenu from './interface/hud/HudMenu';
 import Store from './launcher/Store';
-import useSale from '~/hooks/useSale';
 import usePriceConstants from '~/hooks/usePriceConstants';
 import DropdownNavMenu, { NavMenuLoggedInUser } from './interface/hud/DropdownNavMenu';
 import { reactBool } from '~/lib/utils';
-import theme from '~/theme';
-import Button from '~/components/ButtonAlt';
 
 const menuPadding = 25;
 const headerHeight = 68;
@@ -306,7 +302,9 @@ const Launcher = (props) => {
 
   const [menuOpen, setMenuOpen] = useState(false);
 
-  const { account, walletIcon } = walletContext;
+  const { account } = walletContext;
+  const walletId = walletContext?.starknet?.id;
+
   const loggedIn = account && token;
 
   useEffect(() => {
@@ -330,6 +328,22 @@ const Launcher = (props) => {
       dispatchLauncherPage('account');
     }
   }, [launcherPage, loggedIn, priceConstants, priceConstantsLoading])
+
+  const menuItems = useMemo(() => {
+    const items = [{
+      onClick: logout,
+      content: <><LogoutIcon /> <label>Log Out</label></>
+    }];
+
+    if (walletId === 'argentWebWallet') {
+      items.push({
+        onClick: () => window.open(process.env.REACT_APP_ARGENT_WEB_WALLET_URL, '_blank', 'noopener,noreferrer'),
+        content: <><WalletIcon /> <label>My Wallet</label></>
+      });
+    }
+
+    return items;
+  }, [logout, walletId]);
 
   return (
     <StyledLauncher {...props}>
@@ -374,10 +388,7 @@ const Launcher = (props) => {
             <DropdownNavMenu
               header={<NavMenuLoggedInUser account={account} />}
               isOpen={menuOpen}
-              menuItems={[{
-                onClick: logout,
-                content: <><LogoutIcon /> <label>Log Out</label></>
-              }]}
+              menuItems={menuItems}
               onClickHeader={() => setMenuOpen((o) => !o)}
               onClose={() => setMenuOpen(false)}
               openerIcon={<CloseIcon />}

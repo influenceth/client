@@ -14,7 +14,8 @@ import {
   CrewIcon,
   LoginIcon,
   LogoutIcon,
-  MyAssetIcon
+  MyAssetIcon,
+  WalletIcon
 } from '~/components/Icons';
 import useAuth from '~/hooks/useAuth';
 import useActivitiesContext from '~/hooks/useActivitiesContext';
@@ -75,6 +76,8 @@ const SystemControls = () => {
 
   const [menuOpen, setMenuOpen] = useState(false);
   const [swayBalance, setSwayBalance] = useState();
+
+  const { id: walletId } = starknet;
 
   const openHelpChannel = useCallback(() => {
     window.open(process.env.REACT_APP_HELP_URL, '_blank');
@@ -140,6 +143,13 @@ const SystemControls = () => {
         onClick: login,
         content: <><LoginIcon /> <label>Log In</label></>
       })
+    }
+
+    if (token && walletId === 'argentWebWallet') {
+      items.push({
+        onClick: () => window.open(process.env.REACT_APP_ARGENT_WEB_WALLET_URL, '_blank', 'noopener,noreferrer'),
+        content: <><WalletIcon /> <label>My Wallet</label></>
+      });
     }
 
     items.push({
