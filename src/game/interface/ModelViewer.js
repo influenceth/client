@@ -269,7 +269,6 @@ const Model = ({ url, onLoaded, onCameraUpdate, ...settings }) => {
           } else if (node.name === 'Camera') {
             predefinedCamera = node.position.clone();
           } else if (node.isMesh) {
-            console.log(node.name);
             if (node.name === settings.floorNodeName) {
               collisionFloor.current = node;
             }
