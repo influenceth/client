@@ -285,8 +285,10 @@ const ManageCrew = ({ altCrews, crew, isForeignCrew, manager, stage, ...props })
         createAlert({
           type: 'GenericAlert',
           level: 'warning',
-          content: 'Crew is not under your control. You may move any owned crewmates to your own crew, '
-            + 'but other modifications are prohibited.',
+          data: { 
+            content: 'Crew is not under your control. You may move any owned crewmates to your own crew, '
+              + 'but other modifications are prohibited.'
+          },
           duration: 10000
         });
 
@@ -295,7 +297,9 @@ const ManageCrew = ({ altCrews, crew, isForeignCrew, manager, stage, ...props })
         createAlert({
           type: 'GenericAlert',
           level: 'warning',
-          content: 'You have zero remaining slots on the selected crew for this crewmate.',
+          data: {
+            content: 'You have zero remaining slots on the selected crew for this crewmate.'
+          },
           duration: 10000
         });
 

@@ -349,7 +349,7 @@ const CrewDetails = ({ crewId, crew, crewmates, isMyCrew, isOwnedCrew, selectCre
     } else {
       createAlert({
         type: 'GenericAlert',
-        content: 'Your crew must be stationed in a habitat to recruit new members.',
+        data: { content: 'Your crew must be stationed in a habitat to recruit new members.' },
         level: 'warning',
         duration: 6000
       })

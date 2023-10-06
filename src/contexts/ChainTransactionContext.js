@@ -362,7 +362,7 @@ export function ChainTransactionProvider({ children }) {
     } else {
       createAlert({
         type: 'GenericAlert',
-        content: 'Account is disconnected or contract is invalid.',
+        data: { content: 'Account is disconnected or contract is invalid.' },
         level: 'warning',
       });
     }
