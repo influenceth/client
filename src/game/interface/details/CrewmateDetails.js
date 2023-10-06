@@ -20,10 +20,8 @@ import LogEntry from '~/components/LogEntry';
 import MarketplaceLink from '~/components/MarketplaceLink';
 import TabContainer from '~/components/TabContainer';
 import useAuth from '~/hooks/useAuth';
-// import useCrewAssignments from '~/hooks/useCrewAssignments';
 import useCrewmate from '~/hooks/useCrewmate';
 import useStore from '~/hooks/useStore';
-import { nativeBool } from '~/lib/utils';
 import useActivities from '~/hooks/useActivities';
 
 const borderColor = 'rgba(200, 200, 200, 0.15)';
@@ -269,6 +267,7 @@ const Display = styled.div`
     padding-top: 20px;
   }
 `;
+
 const Description = styled.div`
   align-items: center;
   border-bottom: 1px solid ${borderColor};
@@ -359,6 +358,7 @@ const Log = styled.div`
     margin: 0 -10px;
   }
 `;
+
 const EmptyLogEntry = styled.li`
   padding-top: 50px;
   text-align: center;
@@ -426,22 +426,22 @@ const CrewmateDetails = () => {
                     {startDate.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} SA
                   </DataReadout>
                 )}
-                <DataReadout label="Class" slim inheritFontSize>{Crewmate.getClass(crewmate)?.name || '(n/a)'}</DataReadout>
-                <DataReadout label="Title" slim inheritFontSize>{Crewmate.getTitle(crewmate)?.name || '(n/a)'}</DataReadout>
-                <DataReadout label="Collection" slim inheritFontSize>{Crewmate.getCollection(crewmate)?.name || '(n/a)'}</DataReadout>
+                <DataReadout label="Class" slim inheritFontSize>{Crewmate.Entity.getClass(crewmate)?.name || '(n/a)'}</DataReadout>
+                <DataReadout label="Title" slim inheritFontSize>{Crewmate.Entity.getTitle(crewmate)?.name || '(n/a)'}</DataReadout>
+                <DataReadout label="Collection" slim inheritFontSize>{Crewmate.Entity.getCollection(crewmate)?.name || '(n/a)'}</DataReadout>
               </CrewLabels>
               <Management>
                 <ManagementSubtitle>Management</ManagementSubtitle>
                 <MarketplaceLink
                   chain={crewmate?.Nft?.chain}
                   assetType="crewmate"
-                  id={crewmate?.i}>
+                  id={crewmate?.id}>
                   {(onClick, setRefEl) => (
                     <Button
-                      disabled={nativeBool(parseInt(crewmate?.activeSlot) > -1)/* TODO: ecs refactor */}
                       setRef={setRefEl}
                       onClick={onClick}>
-                      <ClaimIcon /> {Address.areEqual(account, crewmate?.Nft?.owner) ? 'List for Sale' : 'Purchase Crew'}
+                      <ClaimIcon />
+                      {Address.areEqual(account, crewmate?.Nft?.owner) ? 'List for Sale' : 'Purchase Crew'}
                     </Button>
                   )}
                 </MarketplaceLink>

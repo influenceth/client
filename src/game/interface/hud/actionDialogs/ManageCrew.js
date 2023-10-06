@@ -43,9 +43,11 @@ const Instructions = styled.div`
   font-size: 15px;
   transition: color 500ms ease;
 `;
+
 const CrewLocation = styled(CrewLocationWrapper)`
   font-size: 15px;
 `;
+
 const Titlebar = styled.div`
   align-items: center;
   display: flex;
@@ -64,9 +66,11 @@ const Titlebar = styled.div`
     }
   }
 `;
+
 const ForeignCrewWarning = styled.span`
   color: ${p => p.theme.colors.error};
 `;
+
 const Crewmates = styled.div`
   display: flex;
   flex-direction: row;
@@ -168,17 +172,19 @@ const CrewDraggable = ({
           const index = i + orderedCrewmatesOffset;
           const interactivityProps = { isDragging };
           const crewmate = orderedCrewmates[index];
+
           if (stage === actionStages.NOT_STARTED) {
             // i can (re)move any crewmate i own (not an empty slot, not an unowned crewmate)
             if (crewmate && crewmateMap?.[crewmate.id]) {
               interactivityProps.onMouseDown = onMouseDown(index);
             }
-            
+
             // i can replace any crewmate or empty slot on MY crew
             if (!isForeignCrew) {
               interactivityProps.onMouseUp = onMouseUp(index);
             }
           }
+
           return (
             <CrewmateWrapper key={i} place={i + 1} {...interactivityProps}>
               {crewmate && (
@@ -205,7 +211,7 @@ const CrewDraggable = ({
 
 const ManageCrew = ({ altCrews, crew, isForeignCrew, manager, stage, ...props }) => {
   const createAlert = useStore(s => s.dispatchAlertLogged);
-  
+
   const { reorderRoster, swapCrewmates } = manager;
 
   const hydratedLocation = useHydratedLocation(crew?._location);
@@ -266,7 +272,7 @@ const ManageCrew = ({ altCrews, crew, isForeignCrew, manager, stage, ...props })
 
   const onMouseDown = useCallback((index) => (e) => {
     e.preventDefault();
-    
+
     setDragOffset({ x: e.nativeEvent?.offsetX, y: e.nativeEvent?.offsetY });
     setDragPosition({ x: e.clientX, y: e.clientY });
     setDragging(index);
@@ -332,7 +338,7 @@ const ManageCrew = ({ altCrews, crew, isForeignCrew, manager, stage, ...props })
     document.addEventListener('mousemove', mouseMoveHandler);
     document.querySelector('html').addEventListener('mouseup', mouseUpHandler);
     return () => {
-      document.addEventListener('mousemove', mouseMoveHandler);
+      document.removeEventListener('mousemove', mouseMoveHandler);
       document.querySelector('html').removeEventListener('mouseup', mouseUpHandler);
     }
   }, [onMouseUp]);
@@ -527,7 +533,7 @@ const TargetMyCrewWrapper = (props) => {
 const TargetForeignCrewWrapper = (props) => {
   const { data: rawCrew, isLoading: crewLoading } = useCrew(props?.crewId);
   const { data: crewmates, isLoading: crewmatesLoading } = useCrewmates(rawCrew?.Crew?.roster || []);
-  
+
   const crew = useMemo(() => {
     if (!rawCrew || !crewmates) return null;
     return {

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import LoadingAnimation from 'react-spinners/PuffLoader';
 import styled, { css } from 'styled-components';
 import pick from 'lodash/pick';
@@ -112,6 +112,7 @@ const EmblemContainer = styled.div`
   width: 3.5em;
   ${p => p.hideEmblem && 'display: none;'}
 `;
+
 const FooterStats = styled.div`
   font-size: 0.68em;
   min-width: 0;
@@ -158,6 +159,7 @@ const CrewCard = ({ crewmate, useExplicitAppearance, onClick, overlay, ...props 
 
   // make sure onLoad and onError get called by making sure they are reset to false on imageUrl change
   const [ readyToLoadUrl, setReadyToLoadUrl ] = useState(imageUrl);
+
   useEffect(() => {
     setImageFailed(false);
     setImageLoaded(false);
@@ -165,8 +167,18 @@ const CrewCard = ({ crewmate, useExplicitAppearance, onClick, overlay, ...props 
   }, [imageUrl]);
 
   useEffect(() => {
-    if (imageFailed) setImageLoaded(true)
+    if (imageFailed) setImageLoaded(true);
   }, [imageFailed]);
+
+  // TODO: make this a hook?
+  // onLoad is not reliable if, ex. the image is already cached, so we use `complete`
+  const watchImageLoad = useCallback((input) => {
+    if (!input) { return; }
+    const img = input;
+    const updateFunc = () => setImageLoaded(true);
+    img.onload = updateFunc;
+    if (img.complete) updateFunc();
+  }, [setImageLoaded]);
 
   return (
     <Card
@@ -177,10 +189,10 @@ const CrewCard = ({ crewmate, useExplicitAppearance, onClick, overlay, ...props 
       {!imageLoaded && <LoadingAnimation color={'white'} css={loadingCss} />}
       <CardImage visible={imageLoaded} applyMask={!overlay && !props.hideMask}>
         <img
+          ref={watchImageLoad}
           alt={useName}
           src={imageFailed ? silhouette : readyToLoadUrl}
-          onError={() => setImageFailed(true)}
-          onLoad={() => setImageLoaded(true)} />
+          onError={() => setImageFailed(true)} />
       </CardImage>
       <CardHeader>
         <CrewName {...props}>
