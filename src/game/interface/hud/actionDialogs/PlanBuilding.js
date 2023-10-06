@@ -10,7 +10,7 @@ import {
 import useCrewContext from '~/hooks/useCrewContext';
 import theme from '~/theme';
 import useConstructionManager from '~/hooks/useConstructionManager';
-import { boolAttr, formatTimer } from '~/lib/utils';
+import { reactBool, formatTimer } from '~/lib/utils';
 
 import { ActionDialogInner, useAsteroidAndLot } from '../ActionDialog';
 import {
@@ -196,7 +196,7 @@ const Wrapper = (props) => {
   return (
     <ActionDialogInner
       actionImage={constructionBackground}
-      isLoading={boolAttr(isLoading)}
+      isLoading={reactBool(isLoading)}
       stage={stageByActivity.plan}>
       <PlanBuilding
         asteroid={asteroid}

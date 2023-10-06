@@ -11,7 +11,7 @@ import ResourceThumbnail from '~/components/ResourceThumbnail';
 import { formatResourceAmount } from '~/game/interface/hud/actionDialogs/components';
 import useCrew from '~/hooks/useCrew';
 import useLot from '~/hooks/useLot';
-import { boolAttr, formatPrice } from '~/lib/utils';
+import { formatPrice, nativeBool } from '~/lib/utils';
 import theme from '~/theme';
 import { LocationLink } from '../listViews/components';
 import { getBuildingIcon } from '~/lib/assetUtils';
@@ -351,7 +351,7 @@ const AsteroidResourcePrices = ({ asteroid, resource }) => {
         </TableContainer>
       </Body>
 
-      <PseudoFooterButton subtle disabled={boolAttr(!selected)} onClick={onViewMarketplace}>
+      <PseudoFooterButton subtle disabled={nativeBool(!selected)} onClick={onViewMarketplace}>
         View Marketplace
       </PseudoFooterButton>
     </>

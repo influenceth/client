@@ -18,7 +18,7 @@ import theme, { hexToRGB } from '~/theme';
 import LiveTimer from '~/components/LiveTimer';
 import AsteroidBonuses from './AsteroidBonuses';
 import { getProductIcon } from '~/lib/assetUtils';
-import { boolAttr } from '~/lib/utils';
+import { nativeBool, reactBool } from '~/lib/utils';
 import useCrewContext from '~/hooks/useCrewContext';
 
 // TODO (enhancement): if these stay the same, then should just export from Information or extract to shared component vvv
@@ -535,8 +535,8 @@ const ResourceDetails = ({ abundances, asteroid, isManager }) => {
                     <>
                       <p>{scanType === 'RESOURCE' ? 'Short-range resource' : 'Long-range surface'} scan is complete. Ready to finalize.</p>
                       <Button
-                        disabled={boolAttr(scanStatus === 'FINISHING')}
-                        loading={boolAttr(scanStatus === 'FINISHING')}
+                        disabled={nativeBool(scanStatus === 'FINISHING')}
+                        loading={reactBool(scanStatus === 'FINISHING')}
                         onClick={finalizeAsteroidScan}
                         isTransaction>
                         Finalize

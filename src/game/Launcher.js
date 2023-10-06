@@ -25,7 +25,7 @@ import Store from './launcher/Store';
 import useSale from '~/hooks/useSale';
 import usePriceConstants from '~/hooks/usePriceConstants';
 import DropdownNavMenu, { NavMenuLoggedInUser } from './interface/hud/DropdownNavMenu';
-import { boolAttr } from '~/lib/utils';
+import { reactBool } from '~/lib/utils';
 import theme from '~/theme';
 import Button from '~/components/ButtonAlt';
 
@@ -368,7 +368,7 @@ const Launcher = (props) => {
         </Nav>
       </TopLeftMenu>
 
-      <TopRightMenu noPadding={boolAttr(loggedIn)}>
+      <TopRightMenu noPadding={reactBool(loggedIn)}>
         {loggedIn
           ? (
             <DropdownNavMenu

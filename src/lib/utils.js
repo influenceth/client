@@ -53,7 +53,8 @@ export const formatPrice = (sway, { minPrecision = 3, fixedPrecision } = {}) => 
 
 export const keyify = (str) => (str || '').replace(/[^a-zA-Z0-9_]/g, '');
 
-export const boolAttr = (value) => value ? 'true' : undefined;
+export const reactBool = (value) => value ? 'true' : undefined;
+export const nativeBool = (value) => Boolean(value);
 
 export const locationsArrToObj = (locations) => {
   const lotLocation = locations.find((l) => l.label === Entity.IDS.LOT);

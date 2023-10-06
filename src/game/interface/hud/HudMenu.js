@@ -25,7 +25,7 @@ import useAuth from '~/hooks/useAuth';
 import useLot from '~/hooks/useLot';
 import useStore from '~/hooks/useStore';
 import hudMenus from './hudMenus';
-import { boolAttr } from '~/lib/utils';
+import { reactBool } from '~/lib/utils';
 
 const cornerWidth = 8;
 const bumpHeightHalf = 100;
@@ -436,7 +436,7 @@ const HudMenu = ({ forceOpenMenu }) => {
           </Buttons>
         </>
       )}
-      <Panel open={open && !hidden} forcedOpen={boolAttr(forceOpenMenu)}>
+      <Panel open={open && !hidden} forcedOpen={reactBool(forceOpenMenu)}>
         <PanelInner>
           <PanelTitle>
             <span style={{ flex: 1 }}>{label}</span>

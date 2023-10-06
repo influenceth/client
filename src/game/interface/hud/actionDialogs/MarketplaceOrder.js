@@ -11,7 +11,7 @@ import useStore from '~/hooks/useStore';
 import ResourceThumbnail from '~/components/ResourceThumbnail';
 import UncontrolledTextInput, { TextInputWrapper } from '~/components/TextInputUncontrolled';
 import actionStages from '~/lib/actionStages';
-import { boolAttr, formatFixed, formatTimer } from '~/lib/utils';
+import { reactBool, formatFixed, formatTimer } from '~/lib/utils';
 import theme, { hexToRGB } from '~/theme';
 import { ActionDialogInner, useAsteroidAndLot } from '../ActionDialog';
 import {
@@ -528,8 +528,8 @@ const MarketplaceOrder = ({ asteroid, lot, manager, stage, ...props }) => {
             style={{ width: '100%' }}>
             <OrderAlert
               mode={mode}
-              insufficientBalance={boolAttr(insufficientBalance)}
-              isCancellation={boolAttr(isCancellation)}>
+              insufficientBalance={reactBool(insufficientBalance)}
+              isCancellation={reactBool(isCancellation)}>
               <div>
                 {type === 'limit' && (
                   <div style={{ fontSize: '35px', lineHeight: '30px' }}>
@@ -650,7 +650,7 @@ const Wrapper = (props) => {
   return (
     <ActionDialogInner
       actionImage={marketplaceBackground}
-      isLoading={boolAttr(isLoading)}
+      isLoading={reactBool(isLoading)}
       stage={actionStage}>
       <MarketplaceOrder
         asteroid={asteroid}

@@ -6,7 +6,7 @@ import styled from 'styled-components';
 import useAutocomplete from '~/hooks/useAutocomplete';
 import theme from '~/theme';
 import TextInput from './TextInputUncontrolled';
-import { boolAttr } from '~/lib/utils';
+import { reactBool } from '~/lib/utils';
 
 const Wrapper = styled.div`
   position: relative;
@@ -135,7 +135,7 @@ const Autocomplete = ({
           width={width}
           {...inputProps}
         />
-        <Loading isLoading={boolAttr(isLoading)}>
+        <Loading isLoading={reactBool(isLoading)}>
           <PuffLoader color={theme.colors.main} size="16" />
         </Loading>
       </span>

@@ -30,7 +30,7 @@ import useHydratedLocation from '~/hooks/useHydratedLocation';
 import useNameAvailability from '~/hooks/useNameAvailability';
 import useStore from '~/hooks/useStore';
 import formatters from '~/lib/formatters';
-import { boolAttr, locationsArrToObj } from '~/lib/utils';
+import { locationsArrToObj, nativeBool } from '~/lib/utils';
 import theme from '~/theme';
 import useEarliestActivity from '~/hooks/useEarliestActivity';
 import useAuth from '~/hooks/useAuth';
@@ -389,14 +389,14 @@ const CrewDetails = ({ crewId, crew, crewmates, isMyCrew, isOwnedCrew, selectCre
               {editing
                 ? (
                   <>
-                    <Button size="hugeicon" subtle disabled={boolAttr(changingName)} onClick={saveName}><CheckIcon /></Button>
-                    <Button size="hugeicon" subtle disabled={boolAttr(changingName)} onClick={() => setEditing()}><CloseIcon /></Button>
+                    <Button size="hugeicon" subtle disabled={nativeBool(changingName)} onClick={saveName}><CheckIcon /></Button>
+                    <Button size="hugeicon" subtle disabled={nativeBool(changingName)} onClick={() => setEditing()}><CloseIcon /></Button>
                     <TextInput
                       initialValue={crew.Name?.name || ''}
                       minlength={Name.TYPES[Entity.IDS.CREW].min}
                       maxlength={Name.TYPES[Entity.IDS.CREW].max}
                       pattern={Name.getTypeRegex(Entity.IDS.CREW)}
-                      disabled={boolAttr(changingName)}
+                      disabled={nativeBool(changingName)}
                       onChange={(v) => setNewName(v)} />
                   </>
                 )
@@ -404,7 +404,7 @@ const CrewDetails = ({ crewId, crew, crewmates, isMyCrew, isOwnedCrew, selectCre
                   <>
                     {isMyCrew && (
                       <Button size="hugeicon" subtle
-                        disabled={boolAttr(changingName)}
+                        disabled={nativeBool(changingName)}
                         onClick={() => setEditing(true)}>
                         {changingName ? <LoadingAnimation color="white" size="1em" /> : <EditIcon />}
                       </Button>

@@ -6,7 +6,7 @@ import useAssetSearch from '~/hooks/useAssetSearch';
 import useStore from '~/hooks/useStore';
 import useAsteroidColumns from '~/game/interface/details/listViews/asteroids';
 import Banner from './Banner';
-import { boolAttr } from '~/lib/utils';
+import { reactBool } from '~/lib/utils';
 
 const Showing = styled.div`
   align-items: center;
@@ -89,8 +89,8 @@ const SearchAsteroidsBanner = ({ visible }) => {
   return (
     <Banner
       headline={formatResultsTally(isLoading ? undefined : data?.total, 250000)}
-      isLoading={boolAttr(isLoading)}
-      isVisible={boolAttr(visible && !!data)}
+      isLoading={reactBool(isLoading)}
+      isVisible={reactBool(visible && !!data)}
       loadingMessage="Searching"
       wide>
       <Showing>

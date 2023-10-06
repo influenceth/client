@@ -1,7 +1,7 @@
 import styled from 'styled-components';
 
 import Button from '~/components/ButtonAlt';
-import { boolAttr } from '~/lib/utils';
+import { reactBool } from '~/lib/utils';
 import theme from '~/theme';
 
 const Wrapper = styled.div`
@@ -34,7 +34,7 @@ const Switcher = ({ buttons, buttonWidth, onChange, size, value }) => (
           key={buttonValue}
           background={buttonValue === value ? theme.colors.main : '#444'}
           width={buttonWidth}
-          flip={boolAttr(i === 0)}
+          flip={reactBool(i === 0)}
           onClick={() => onChange(buttonValue)}
           size={size || undefined}
           style={{

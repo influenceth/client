@@ -5,7 +5,7 @@ import { Crew, Crewmate, Ship } from '@influenceth/sdk';
 import travelBackground from '~/assets/images/modal_headers/Travel.png';
 import { CaretIcon, CloseIcon, ForwardIcon, ConstructShipIcon, ProcessIcon } from '~/components/Icons';
 import useCrewContext from '~/hooks/useCrewContext';
-import { boolAttr, formatTimer } from '~/lib/utils';
+import { reactBool, formatTimer } from '~/lib/utils';
 
 import {
   ActionDialogFooter,
@@ -317,7 +317,7 @@ const Wrapper = (props) => {
   return (
     <ActionDialogInner
       actionImage={travelBackground}
-      isLoading={boolAttr(isLoading)}
+      isLoading={reactBool(isLoading)}
       stage={actionStage}
       extraWide>
       <BuildShip

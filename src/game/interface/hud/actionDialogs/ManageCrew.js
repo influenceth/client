@@ -20,7 +20,7 @@ import useHydratedLocation from '~/hooks/useHydratedLocation';
 import useStore from '~/hooks/useStore';
 import actionStages from '~/lib/actionStages';
 import formatters from '~/lib/formatters';
-import { boolAttr, locationsArrToObj } from '~/lib/utils';
+import { reactBool, locationsArrToObj, nativeBool } from '~/lib/utils';
 import theme from '~/theme';
 import { ActionDialogInner } from '../ActionDialog';
 import {
@@ -186,8 +186,8 @@ const CrewDraggable = ({
                   borderColor={`rgba(${theme.colors.mainRGB}, 0.4)`}
                   crewCardProps={{ hideHeader: false, hideNameInHeader: true }}
                   crewmate={crewmate}
-                  isCaptain={boolAttr(i === 0)}
-                  noArrow={boolAttr(i > 0)}
+                  isCaptain={reactBool(i === 0)}
+                  noArrow={reactBool(i > 0)}
                   width={i === 0 ? 130 : 118} />
               )}
               {!crewmate && (
@@ -377,8 +377,8 @@ const ManageCrew = ({ altCrews, crew, isForeignCrew, manager, stage, ...props })
             style={{ width: '100%' }}>
             <CrewDraggable
               crew={crew}
-              isDragging={boolAttr(dragging >= 0)}
-              isForeignCrew={boolAttr(isForeignCrew)}
+              isDragging={reactBool(dragging >= 0)}
+              isForeignCrew={reactBool(isForeignCrew)}
               onMouseDown={onMouseDown}
               onMouseUp={onMouseUp}
               orderedCrewmates={orderedCrewmates}
@@ -396,7 +396,7 @@ const ManageCrew = ({ altCrews, crew, isForeignCrew, manager, stage, ...props })
               style={{ width: '100%' }}>
               <CrewDraggable
                 crew={exchangeCrew}
-                isDragging={boolAttr(dragging >= 0)}
+                isDragging={reactBool(dragging >= 0)}
                 onCancel={() => setExchangeCrewId()}
                 onMouseDown={onMouseDown}
                 onMouseUp={onMouseUp}
@@ -420,7 +420,7 @@ const ManageCrew = ({ altCrews, crew, isForeignCrew, manager, stage, ...props })
               <FlexSectionBlock>
                 <div style={{ marginTop: -8 }}>No other crews at this location.</div>
                 <Button
-                  disabled={boolAttr(stage !== actionStages.NOT_STARTED)}
+                  disabled={nativeBool(stage !== actionStages.NOT_STARTED)}
                   onClick={() => setExchangeCrewId(0)}
                   style={{ marginTop: 12 }}
                   subtle>
@@ -431,7 +431,7 @@ const ManageCrew = ({ altCrews, crew, isForeignCrew, manager, stage, ...props })
             {altCrews.length > 0 && (
               <FlexSectionInputBlock
                 image={<EmptyResourceImage iconOverride={<CrewIcon />} />}
-                isSelected={boolAttr(stage === actionStages.NOT_STARTED)}
+                isSelected={reactBool(stage === actionStages.NOT_STARTED)}
                 label="Crew Exchange"
                 onClick={stage === actionStages.NOT_STARTED ? () => setCrewSelectorOpen(true) : undefined}
                 sublabel={`${altCrews.length} Available Crew${altCrews.length === 1 ? '' : 's'}`}
@@ -443,7 +443,7 @@ const ManageCrew = ({ altCrews, crew, isForeignCrew, manager, stage, ...props })
       </ActionDialogBody>
 
       <ActionDialogFooter
-        disabled={boolAttr(isPristine)}
+        disabled={nativeBool(isPristine)}
         goLabel="Save Changes"
         onGo={onSaveChanges}
         stage={stage}
@@ -499,7 +499,7 @@ const Wrapper = ({ crew, loading, ...props }) => {
   return (
     <ActionDialogInner
       actionImage={crewSwapBackground}
-      isLoading={boolAttr(loading)}
+      isLoading={reactBool(loading)}
       stage={actionStage}>
       <ManageCrew
         crew={crew}

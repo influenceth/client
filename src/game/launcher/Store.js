@@ -10,7 +10,7 @@ import UncontrolledTextInput, { safeValue } from '~/components/TextInputUncontro
 import useCrewManager from '~/hooks/useCrewManager';
 import usePriceConstants from '~/hooks/usePriceConstants';
 import formatters from '~/lib/formatters';
-import { boolAttr } from '~/lib/utils';
+import { nativeBool, reactBool } from '~/lib/utils';
 import theme from '~/theme';
 
 const borderColor = `rgba(${theme.colors.mainRGB}, 0.5)`;
@@ -149,7 +149,7 @@ export const CrewmateSKU = () => {
         </Description>
         <Main>
           <UncontrolledTextInput
-            disabled={boolAttr(isPendingPurchase)}
+            disabled={nativeBool(isPendingPurchase)}
             min={1}
             onChange={(e) => setTally(e.currentTarget.value)}
             value={safeValue(tally)}
@@ -163,8 +163,8 @@ export const CrewmateSKU = () => {
           <label>Eth each</label>
         </Price>
         <Button
-          loading={boolAttr(isPendingPurchase)}
-          disabled={boolAttr(isPendingPurchase)}
+          loading={reactBool(isPendingPurchase)}
+          disabled={nativeBool(isPendingPurchase)}
           isTransaction
           onClick={onPurchaseCrewmates}
           subtle

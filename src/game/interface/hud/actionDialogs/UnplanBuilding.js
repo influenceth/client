@@ -21,7 +21,7 @@ import {
 } from './components';
 import { ActionDialogInner, useAsteroidAndLot } from '../ActionDialog';
 import actionStage from '~/lib/actionStages';
-import { boolAttr } from '~/lib/utils';
+import { reactBool } from '~/lib/utils';
 
 const UnplanWarning = styled.div`
   align-items: center;
@@ -118,7 +118,7 @@ const Wrapper = (props) => {
   return (
     <ActionDialogInner
       actionImage={constructionBackground}
-      isLoading={boolAttr(isLoading)}
+      isLoading={reactBool(isLoading)}
       stage={stageByActivity.unplan}>
       <UnplanBuilding
         asteroid={asteroid}

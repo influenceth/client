@@ -7,7 +7,7 @@ import { CloseIcon, LotSearchIcon } from '~/components/Icons';
 import useStore from '~/hooks/useStore';
 import constants from '~/lib/constants';
 import Banner from './Banner';
-import { boolAttr } from '~/lib/utils';
+import { reactBool } from '~/lib/utils';
 
 const { MAX_LOTS_RENDERED } = constants;
 
@@ -49,7 +49,7 @@ const SearchLotsBanner = ({ visible }) => {
   return (
     <Banner
       headline={formatResultsTally(isLoading ? undefined : total, maxResults)}
-      isLoading={boolAttr(isLoading)}
+      isLoading={reactBool(isLoading)}
       isVisible={visible}
       loadingMessage="Searching">
       <ActiveFilters style={{ fontSize: '90%' }}>
