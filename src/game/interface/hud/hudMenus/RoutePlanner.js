@@ -11,7 +11,7 @@ import ClockContext from '~/contexts/ClockContext';
 import useAsteroid from '~/hooks/useAsteroid';
 import useStore from '~/hooks/useStore';
 import { sampleAsteroidOrbit } from '~/lib/geometryUtils';
-import { boolAttr, formatFixed } from '~/lib/utils';
+import { reactBool, formatFixed } from '~/lib/utils';
 import { ShipImage, formatMass } from '../actionDialogs/components';
 import { Scrollable } from './components';
 import useCrewContext from '~/hooks/useCrewContext';
@@ -339,7 +339,7 @@ const RoutePlanner = () => {
     <Scrollable hasTray={hasTray} style={{ marginLeft: -12, paddingLeft: 12 }}>
 
       <ShipSelection isSimulated={ship?._simulated}>
-        <ShipImage shipType={ship?.id} simulated={boolAttr(ship?._simulated)} />
+        <ShipImage shipType={ship?.id} simulated={reactBool(ship?._simulated)} />
 
         <div>
           <SectionHeader style={{ border: 0, margin: 0 }}>Ship</SectionHeader>

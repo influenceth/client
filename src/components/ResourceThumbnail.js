@@ -6,7 +6,7 @@ import ReactTooltip from 'react-tooltip';
 import ClipCorner from '~/components/ClipCorner';
 import { getProductIcon } from '~/lib/assetUtils';
 import { hexToRGB } from '~/theme';
-import { boolAttr } from '~/lib/utils';
+import { reactBool } from '~/lib/utils';
 
 const defaultSize = '92px';
 const defaultBorderColor = '#333';
@@ -187,7 +187,7 @@ const Menu = ({ children }) => {
     setOpen(true);
   }, []);
   return (
-    <MenuWrapper onClick={onClick} open={boolAttr(open)}>
+    <MenuWrapper onClick={onClick} open={reactBool(open)}>
       {open
         ? <MenuOpenWrapper>{children(() => setOpen(false))}</MenuOpenWrapper>
         : (

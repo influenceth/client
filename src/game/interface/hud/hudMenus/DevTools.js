@@ -13,7 +13,7 @@ import theme from '~/theme';
 import { getModelViewerSettings, toneMaps } from '../../ModelViewer';
 import { HudMenuCollapsibleSection, Scrollable } from './components';
 import { getBuildingModel, getProductModel, getShipModel } from '~/lib/assetUtils';
-import { boolAttr } from '~/lib/utils';
+import { nativeBool } from '~/lib/utils';
 
 const InnerSection = styled.div`
   & > * {
@@ -236,7 +236,7 @@ const DevTools = () => {
             style={{ textTransform: 'none', width: '250px' }} />
 
           <Button
-            disabled={boolAttr(isLoading)}
+            disabled={nativeBool(isLoading)}
             onClick={handleUploadClick('model')}
             subtle>
             Upload Model
@@ -254,7 +254,7 @@ const DevTools = () => {
       <HudMenuCollapsibleSection titleText="Environment">
         <InnerSection>
           <Button
-            disabled={boolAttr(isLoading)}
+            disabled={nativeBool(isLoading)}
             onClick={handleUploadClick('bg')}
             subtle>
             Upload Skybox
@@ -267,7 +267,7 @@ const DevTools = () => {
           )}
 
           <Button
-            disabled={boolAttr(isLoading)}
+            disabled={nativeBool(isLoading)}
             onClick={handleUploadClick('env')}
             subtle>
             Upload EnvMap
@@ -292,7 +292,7 @@ const DevTools = () => {
             {settings.enablePostprocessing && (
               <div style={{ marginTop: 8 }}>
                 <Dropdown
-                  disabled={boolAttr(isLoading)}
+                  disabled={nativeBool(isLoading)}
                   initialSelection={toneMaps.find((t) => t.value === settings.toneMapping)?.value}
                   options={toneMaps}
                   onChange={onChangeToneMapping}
@@ -303,7 +303,7 @@ const DevTools = () => {
                   <Miniform>
                     <label>Tone Mapping Exposure</label>
                     <NumberInput
-                      disabled={boolAttr(isLoading)}
+                      disabled={nativeBool(isLoading)}
                       initialValue={settings.toneMappingExposure}
                       min="0.5"
                       step="0.5"
@@ -314,7 +314,7 @@ const DevTools = () => {
                 <Miniform>
                   <label>Bloom Radius</label>
                   <NumberInput
-                    disabled={boolAttr(isLoading)}
+                    disabled={nativeBool(isLoading)}
                     initialValue={settings.bloomRadius}
                     min="0"
                     step="0.05"
@@ -324,7 +324,7 @@ const DevTools = () => {
                 <Miniform>
                   <label>Bloom Strength</label>
                   <NumberInput
-                    disabled={boolAttr(isLoading)}
+                    disabled={nativeBool(isLoading)}
                     initialValue={settings.bloomStrength}
                     min="0"
                     step="0.5"
@@ -356,7 +356,7 @@ const DevTools = () => {
             <Miniform>
               <label>Env Map Strength</label>
               <NumberInput
-                disabled={boolAttr(isLoading)}
+                disabled={nativeBool(isLoading)}
                 initialValue={defaultSettings.envmapStrength}
                 min="0.1"
                 step="0.1"

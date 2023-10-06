@@ -6,7 +6,7 @@ import travelBackground from '~/assets/images/modal_headers/Travel.png';
 import { StationCrewIcon, StationPassengersIcon } from '~/components/Icons';
 import useCrewContext from '~/hooks/useCrewContext';
 import useShip from '~/hooks/useShip';
-import { boolAttr, formatTimer } from '~/lib/utils';
+import { reactBool, formatTimer } from '~/lib/utils';
 
 import {
   ActionDialogFooter,
@@ -311,7 +311,7 @@ const Wrapper = (props) => {
   return (
     <ActionDialogInner
       actionImage={travelBackground}
-      isLoading={boolAttr(isLoading)}
+      isLoading={reactBool(isLoading)}
       stage={actionStage}>
       <StationCrew
         asteroid={asteroid}

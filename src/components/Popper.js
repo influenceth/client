@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import styled from 'styled-components';
 import { VscListUnordered as PopperIcon } from 'react-icons/vsc';
+import { createPortal } from 'react-dom';
 
 import Button from '~/components/ButtonRounded';
 import useScreenSize from '~/hooks/useScreenSize';
-import { createPortal } from 'react-dom';
+import { nativeBool } from '~/lib/utils';
 
 const Wrapper = styled.div`
   position: relative;
@@ -129,7 +130,7 @@ const Poppable = ({ children, closeOnChange, closeOnClickAway = true, disabled, 
   return (
     <Wrapper>
       <Button
-        disabled={boolAttr(disabled)}
+        disabled={nativeBool(disabled)}
         onClick={handleToggle}
         buttonWidth="135px"
         {...styleProps}>

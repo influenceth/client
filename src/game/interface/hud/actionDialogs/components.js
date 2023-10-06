@@ -46,7 +46,7 @@ import TextInput from '~/components/TextInputUncontrolled';
 import useAsteroidCrewLots from '~/hooks/useAsteroidCrewLots';
 import useChainTime from '~/hooks/useChainTime';
 import api from '~/lib/api';
-import { boolAttr, formatFixed, formatTimer } from '~/lib/utils';
+import { reactBool, formatFixed, formatTimer, nativeBool } from '~/lib/utils';
 import actionStage from '~/lib/actionStages';
 import constants from '~/lib/constants';
 import { getBuildingIcon, getShipIcon } from '~/lib/assetUtils';
@@ -2288,7 +2288,7 @@ export const ResourceGridSectionInner = ({
       columns={columns}
       hasSummary
       theming={theming}
-      isSelected={boolAttr(onClick)}
+      isSelected={reactBool(onClick)}
       onClick={onClick}>
       {items.length > 0
         ? (
@@ -3210,7 +3210,7 @@ const ActionDialogStat = ({ stat: { isTimeStat, label, value, direction, tooltip
     <StatRow
       key={label}
       direction={direction}
-      isTimeStat={boolAttr(isTimeStat)}
+      isTimeStat={reactBool(isTimeStat)}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       ref={refEl}>
@@ -3291,12 +3291,12 @@ export const ActionDialogFooter = ({ buttonsLoading, disabled, finalizeLabel, go
           ? (
             <>
               <Button
-                loading={boolAttr(buttonsLoading)}
+                loading={reactBool(buttonsLoading)}
                 onClick={onClose}>Cancel</Button>
               <Button
                 isTransaction
-                disabled={boolAttr(disabled)}
-                loading={boolAttr(buttonsLoading)}
+                disabled={nativeBool(disabled)}
+                loading={reactBool(buttonsLoading)}
                 onClick={onGo}>{goLabel}</Button>
             </>
           )
@@ -3305,18 +3305,18 @@ export const ActionDialogFooter = ({ buttonsLoading, disabled, finalizeLabel, go
               ? (
                 <>
                   <Button
-                    loading={boolAttr(buttonsLoading)}
+                    loading={reactBool(buttonsLoading)}
                     onClick={onClose}>Close</Button>
                   <Button
                     isTransaction
-                    disabled={boolAttr(disabled)}
-                    loading={boolAttr(buttonsLoading)}
+                    disabled={nativeBool(disabled)}
+                    loading={reactBool(buttonsLoading)}
                     onClick={onFinalize}>{finalizeLabel || 'Accept'}</Button>
                 </>
               )
               : (
                 <Button
-                  loading={boolAttr(buttonsLoading)}
+                  loading={reactBool(buttonsLoading)}
                   onClick={onClose}>Close</Button>
               )
           )}
@@ -3329,7 +3329,7 @@ export const ActionDialogTabs = ({ tabs, selected, onSelect }) => (
   <Section>
     <Tabs>
       {tabs.map((tab, i) => (
-        <Tab key={i} onClick={() => onSelect(i)} isSelected={boolAttr(i === selected)}>
+        <Tab key={i} onClick={() => onSelect(i)} isSelected={reactBool(i === selected)}>
           {tab.icon && <TabIcon style={tab.iconStyle || {}}>{tab.icon}</TabIcon>}
           <div>{tab.label}</div>
         </Tab>

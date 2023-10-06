@@ -7,7 +7,7 @@ import { GenesisIcon } from '~/components/Icons';
 import useCrewContext from '~/hooks/useCrewContext';
 import { getCloudfrontUrl } from '~/lib/assetUtils';
 import { useEffect, useState } from 'react';
-import { boolAttr } from '~/lib/utils';
+import { nativeBool } from '~/lib/utils';
 
 const coverImage = getCloudfrontUrl('influence/production/images/stories/earth-and-the-void/1.jpg', { w: 1500 });
 
@@ -126,7 +126,7 @@ const SelectUninitializedCrewmateDialog = ({ onSelect }) => {
       rightButton={{
         label: 'Next',
         onClick: () => selected ? onSelect(selected) : null,
-        props: { disabled: boolAttr(!selected) }
+        props: { disabled: nativeBool(!selected) }
       }}
       title="Arvad Crewmates"
       subtitle={<Subtitle>Your account has <b>Arvad Crewmates</b> that can be recruited</Subtitle>}

@@ -6,7 +6,7 @@ import extractionBackground from '~/assets/images/modal_headers/Extraction.png';
 import { CoreSampleIcon, ExtractionIcon, InventoryIcon, ResourceIcon } from '~/components/Icons';
 import useCrewContext from '~/hooks/useCrewContext';
 import useExtractionManager from '~/hooks/useExtractionManager';
-import { boolAttr, formatTimer } from '~/lib/utils';
+import { reactBool, formatTimer } from '~/lib/utils';
 
 import {
   ResourceAmountSlider, ActionDialogFooter,
@@ -406,7 +406,7 @@ const Wrapper = (props) => {
   return (
     <ActionDialogInner
       actionImage={extractionBackground}
-      isLoading={boolAttr(isLoading)}
+      isLoading={reactBool(isLoading)}
       stage={actionStage}>
       <Extract
         asteroid={asteroid}

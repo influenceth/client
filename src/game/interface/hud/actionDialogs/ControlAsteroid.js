@@ -13,7 +13,7 @@ import useStore from '~/hooks/useStore';
 import useCrewContext from '~/hooks/useCrewContext';
 import actionStage from '~/lib/actionStages';
 import formatters from '~/lib/formatters';
-import { boolAttr } from '~/lib/utils';
+import { reactBool } from '~/lib/utils';
 
 import {
   ActionDialogFooter,
@@ -133,7 +133,7 @@ const Wrapper = (props) => {
   return (
     <ActionDialogInner
       actionImage={constructionBackground}
-      isLoading={boolAttr(isLoading)}
+      isLoading={reactBool(isLoading)}
       stage={stage}>
       <ControlAsteroid
         asteroid={asteroid}

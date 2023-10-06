@@ -7,7 +7,7 @@ import useCrewContext from '~/hooks/useCrewContext';
 import useDeliveryManager from '~/hooks/useDeliveryManager';
 import useLot from '~/hooks/useLot';
 import useStore from '~/hooks/useStore';
-import { boolAttr, formatTimer } from '~/lib/utils';
+import { reactBool, formatTimer } from '~/lib/utils';
 import {
   ActionDialogFooter,
   ActionDialogHeader,
@@ -307,7 +307,7 @@ const Wrapper = (props) => {
   return (
     <ActionDialogInner
       actionImage={surfaceTransferBackground}
-      isLoading={boolAttr(isLoading)}
+      isLoading={reactBool(isLoading)}
       stage={actionStage}>
       <TransferToSite
         asteroid={asteroid}

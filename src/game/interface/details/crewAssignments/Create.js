@@ -42,7 +42,7 @@ import formatters from '~/lib/formatters';
 import MouseoverInfoPane from '~/components/MouseoverInfoPane';
 import theme from '~/theme';
 import useStore from '~/hooks/useStore';
-import { boolAttr } from '~/lib/utils';
+import { reactBool } from '~/lib/utils';
 import useCrewmate from '~/hooks/useCrewmate';
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
 
@@ -1104,7 +1104,7 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
                         hideIfNoName
                         hideMask
                         noWrapName
-                        useExplicitAppearance={boolAttr(crewmate?.Crewmate?.coll === Crewmate.COLLECTION_IDS.ADALIAN)} />
+                        useExplicitAppearance={reactBool(crewmate?.Crewmate?.coll === Crewmate.COLLECTION_IDS.ADALIAN)} />
                     </div>
                   </CardContainer>
                 </CardWrapper>

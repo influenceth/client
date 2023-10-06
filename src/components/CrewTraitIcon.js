@@ -53,7 +53,7 @@ import Svg48 from '~/assets/icons/crew_traits/48.svg';
 import Svg49 from '~/assets/icons/crew_traits/49.svg';
 import Svg50 from '~/assets/icons/crew_traits/50.svg';
 import FallbackSvg from '~/assets/icons/RocketIcon.svg';
-import { boolAttr } from '~/lib/utils';
+import { reactBool } from '~/lib/utils';
 
 const innerDim = 0.54;
 const innerShift = (1 - innerDim) / 2;
@@ -91,11 +91,11 @@ const CrewTraitIcon = ({ hideHexagon, hideFallback, opaque, trait, type }) => {
   return (
     <HighlightableSvg
       className="icon"
-      highlight={boolAttr(type && type === 'impactful')}
-      hideInner={boolAttr(hideFallback && !!trait)}>
+      highlight={reactBool(type && type === 'impactful')}
+      hideInner={reactBool(hideFallback && !!trait)}>
       {!hideHexagon && (
         <>
-          <HexagonOutline opaque={boolAttr(opaque)} />
+          <HexagonOutline opaque={reactBool(opaque)} />
           <HexagonInnerHighlight />
         </>
       )}

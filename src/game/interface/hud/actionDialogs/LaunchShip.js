@@ -6,7 +6,7 @@ import travelBackground from '~/assets/images/modal_headers/Travel.png';
 import { CoreSampleIcon, ExtractionIcon, InventoryIcon, LaunchShipIcon, LocationIcon, ResourceIcon, RouteIcon, SetCourseIcon, ShipIcon, WarningOutlineIcon } from '~/components/Icons';
 import useCrewContext from '~/hooks/useCrewContext';
 import useExtractionManager from '~/hooks/useExtractionManager';
-import { boolAttr, formatFixed, formatTimer } from '~/lib/utils';
+import { reactBool, formatFixed, formatTimer } from '~/lib/utils';
 
 import {
   ActionDialogFooter,
@@ -246,7 +246,7 @@ const Wrapper = (props) => {
   return (
     <ActionDialogInner
       actionImage={travelBackground}
-      isLoading={boolAttr(isLoading)}
+      isLoading={reactBool(isLoading)}
       stage={actionStage}>
       <LaunchShip
         asteroid={asteroid}

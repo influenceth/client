@@ -23,7 +23,7 @@ import useAuth from '~/hooks/useAuth';
 // import useCrewAssignments from '~/hooks/useCrewAssignments';
 import useCrewmate from '~/hooks/useCrewmate';
 import useStore from '~/hooks/useStore';
-import { boolAttr } from '~/lib/utils';
+import { nativeBool } from '~/lib/utils';
 import useActivities from '~/hooks/useActivities';
 
 const borderColor = 'rgba(200, 200, 200, 0.15)';
@@ -438,7 +438,7 @@ const CrewmateDetails = () => {
                   id={crewmate?.i}>
                   {(onClick, setRefEl) => (
                     <Button
-                      disabled={boolAttr(parseInt(crewmate?.activeSlot) > -1)/* TODO: ecs refactor */}
+                      disabled={nativeBool(parseInt(crewmate?.activeSlot) > -1)/* TODO: ecs refactor */}
                       setRef={setRefEl}
                       onClick={onClick}>
                       <ClaimIcon /> {Address.areEqual(account, crewmate?.Nft?.owner) ? 'List for Sale' : 'Purchase Crew'}

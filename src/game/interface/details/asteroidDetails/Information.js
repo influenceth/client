@@ -35,7 +35,7 @@ import {
 import { renderDummyAsteroid } from '~/game/scene/asteroid/helpers/utils';
 import AsteroidGraphic from './components/AsteroidGraphic';
 import useNameAvailability from '~/hooks/useNameAvailability';
-import { boolAttr } from '~/lib/utils';
+import { nativeBool, reactBool } from '~/lib/utils';
 import usePriceConstants from '~/hooks/usePriceConstants';
 import useControlAsteroid from '~/hooks/useControlAsteroid';
 import useActivities from '~/hooks/useActivities';
@@ -413,11 +413,11 @@ const AsteroidInformation = ({ abundances, asteroid, isManager, isOwner }) => {
                     }}
                     onClose={() => setOpenNameChangeForm(false)}
                     title={<><EditIcon /><span>Change Name</span></>}
-                    loading={boolAttr(changingName)}>
+                    loading={reactBool(changingName)}>
                     <Text>Names must be unique, and can only include letters, numbers, and single spaces.</Text>
                     <NameForm>
                       <TextInput
-                        disabled={boolAttr(changingName)}
+                        disabled={nativeBool(changingName)}
                         initialValue=""
                         minlength={Name.TYPES[Entity.IDS.ASTEROID].min}
                         maxlength={Name.TYPES[Entity.IDS.ASTEROID].max}
@@ -426,16 +426,16 @@ const AsteroidInformation = ({ abundances, asteroid, isManager, isOwner }) => {
                       <IconButton
                         data-tip="Submit"
                         data-for="global"
-                        disabled={boolAttr(changingName)}
+                        disabled={nativeBool(changingName)}
                         onClick={attemptUpdateAsteroidName}>
                         <CheckCircleIcon />
                       </IconButton>
                     </NameForm>
                   </StaticForm>
                   <Button
-                    disabled={boolAttr(changingName)}
+                    disabled={nativeBool(changingName)}
                     isTransaction
-                    loading={boolAttr(changingName)}
+                    loading={reactBool(changingName)}
                     onClick={() => setOpenNameChangeForm(true)}>
                     Re-Name
                   </Button>
@@ -444,9 +444,9 @@ const AsteroidInformation = ({ abundances, asteroid, isManager, isOwner }) => {
 
               {isOwner && !isManager && (
                 <Button
-                  disabled={boolAttr(takingControl)}
+                  disabled={nativeBool(takingControl)}
                   isTransaction
-                  loading={boolAttr(takingControl)}
+                  loading={reactBool(takingControl)}
                   onClick={controlAsteroid}>
                   Manage Asteroid
                 </Button>
@@ -454,8 +454,8 @@ const AsteroidInformation = ({ abundances, asteroid, isManager, isOwner }) => {
 
               {isOwner && (
                 <ModelButton
-                  disabled={boolAttr(exportingModel)}
-                  loading={boolAttr(exportingModel)}
+                  disabled={nativeBool(exportingModel)}
+                  loading={reactBool(exportingModel)}
                   onClick={download3dModel}>
                   <><SmHidden>Download{' '}</SmHidden><span>3D Model</span></>
                 </ModelButton>
@@ -465,9 +465,9 @@ const AsteroidInformation = ({ abundances, asteroid, isManager, isOwner }) => {
                 <Button
                   data-tip="Purchase development rights"
                   data-for="global"
-                  disabled={boolAttr(!account || buying)}
+                  disabled={nativeBool(!account || buying)}
                   isTransaction
-                  loading={boolAttr(buying)}
+                  loading={reactBool(buying)}
                   onClick={() => {
                     buyAsteroid();
                     createReferral.mutate();

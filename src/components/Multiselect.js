@@ -4,8 +4,7 @@ import { usePopper } from 'react-popper';
 import styled from 'styled-components';
 import Button from './ButtonAlt';
 import { FiCheckSquare as CheckedIcon, FiSquare as UncheckedIcon } from 'react-icons/fi';
-import { hexToRGB } from '~/theme';
-import { boolAttr } from '~/lib/utils';
+import { nativeBool } from '~/lib/utils';
 
 const Wrapper = styled.div`
   position: relative;
@@ -120,7 +119,7 @@ const Multiselect = ({
 
       <span ref={setReferenceEl}>
         <Button
-          disabled={boolAttr(disabled)}
+          disabled={nativeBool(disabled)}
           onClick={handleToggle}
           {...styleProps}>
           {buttonIcon && <IconWrapper>{buttonIcon}</IconWrapper>}

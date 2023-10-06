@@ -78,7 +78,8 @@ export function CrewProvider({ children }) {
   const selectedCrew = useMemo(() => {
     if (crews && crews.length > 0) {
       if (selectedCrewId) {
-        return crews.find((crew) => crew.id === selectedCrewId);
+        const previouslySelected = crews.find((crew) => crew.id === selectedCrewId);
+        if (previouslySelected) return previouslySelected;
       }
       return crews.find((crew) => crew.Crew.roster.length > 0) || crews[0];
     }
@@ -90,7 +91,7 @@ export function CrewProvider({ children }) {
     if (crewsAndCrewmatesReady && selectedCrew?.id !== selectedCrew) {
       dispatchCrewSelected(selectedCrew?.id || undefined);
     }
-  }, [crewsAndCrewmatesReady, selectedCrewId, selectedCrew]);
+  }, [crewsAndCrewmatesReady, selectedCrew]);
 
   const captain = useMemo(() => selectedCrew?._crewmates?.[0] || null, [crewmateMap, selectedCrew]);
 

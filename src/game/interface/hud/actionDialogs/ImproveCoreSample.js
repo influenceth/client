@@ -8,7 +8,7 @@ import useCrewContext from '~/hooks/useCrewContext';
 import useStore from '~/hooks/useStore';
 import useCoreSampleManager from '~/hooks/useCoreSampleManager';
 import actionStage from '~/lib/actionStages';
-import { boolAttr, formatTimer } from '~/lib/utils';
+import { reactBool, formatTimer } from '~/lib/utils';
 
 import {
   ActionDialogBody,
@@ -342,7 +342,7 @@ const Wrapper = (props) => {
   return (
     <ActionDialogInner
       actionImage={coreSampleBackground}
-      isLoading={boolAttr(isLoading)}
+      isLoading={reactBool(isLoading)}
       stage={actionStage}>
       <ImproveCoreSample
         asteroid={asteroid}

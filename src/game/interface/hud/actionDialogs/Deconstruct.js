@@ -9,7 +9,7 @@ import {
 } from '~/components/Icons';
 import useCrewContext from '~/hooks/useCrewContext';
 import useConstructionManager from '~/hooks/useConstructionManager';
-import { boolAttr, formatFixed, formatTimer } from '~/lib/utils';
+import { reactBool, formatFixed, formatTimer } from '~/lib/utils';
 
 import {
   DeconstructionMaterialsSection,
@@ -204,7 +204,7 @@ const Wrapper = (props) => {
   return (
     <ActionDialogInner
       actionImage={constructionBackground}
-      isLoading={boolAttr(isLoading)}
+      isLoading={reactBool(isLoading)}
       stage={stageByActivity.deconstruct}>
       <Deconstruct
         asteroid={asteroid}
