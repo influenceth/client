@@ -35,11 +35,13 @@ const Avatar = styled.div`
     transition: opacity ${tween};
   }
 `;
+
 const AvatarFlourish = styled.div`
   display: flex;
   pointer-events: auto;
   position: relative;
 `;
+
 const StyledTriangleTip = styled(TriangleTip)`
   width: 100%;
   path { transition: stroke ${tween}; }
