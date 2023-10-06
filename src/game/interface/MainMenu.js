@@ -189,7 +189,7 @@ const MainMenu = () => {
     createAlert({
       type: 'GenericAlert',
       level: 'warning',
-      content: 'Not yet.',
+      data: { content: 'Not yet.' },
       duration: 1000
     });
   }, []);

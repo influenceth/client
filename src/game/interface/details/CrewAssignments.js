@@ -472,7 +472,7 @@ const CrewAssignments = () => {
     }
   }, [collapsedParts, playSound]);
 
-  if (!book && isError) {
+  if (!book && isError) { // TODO: if this page is ever restored, the following createAlert is no longer in correct format
     createAlert({
       type: 'GenericLoadingError',
       label: 'crew assignment collection',

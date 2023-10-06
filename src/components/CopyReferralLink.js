@@ -18,7 +18,7 @@ const CopyReferralLink = ({ children, fallbackContent }) => {
     playSound('effects.click');
     createAlert({
       type: 'GenericAlert',
-      content: 'Recruitment link copied to your clipboard.',
+      data: { content: 'Recruitment link copied to your clipboard.' },
     });
   }, [createAlert, playSound]);
 

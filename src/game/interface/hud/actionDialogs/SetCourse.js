@@ -280,7 +280,7 @@ const SetCourse = ({ origin, destination, manager, ship, stage, travelSolution, 
     if (flightStatus === 'READY' && delay <= 0) {
       createAlert({
         type: 'GenericAlert',
-        content: 'Scheduled departure time has past.',
+        data: { content: 'Scheduled departure time has past.' },
         level: 'warning',
         duration: 0,
       })

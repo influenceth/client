@@ -27,7 +27,7 @@ export function AuthProvider({ children }) {
       createAlert({
         type: 'GenericAlert',
         level: 'warning',
-        content: walletContext?.error || 'Please try again.',
+        data: { content: walletContext?.error || 'Please try again.' },
         duration: 10000
       });
     }
@@ -71,7 +71,10 @@ export function AuthProvider({ children }) {
         if (e.message === 'User abort') return;
         console.error(e);
         createAlert({
-          type: 'GenericAlert', level: 'warning', content: 'Signature verification failed.', duration: 10000
+          type: 'GenericAlert',
+          level: 'warning',
+          data: { content: 'Signature verification failed.' },
+          duration: 10000
         });
       }
 

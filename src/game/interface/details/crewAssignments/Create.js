@@ -30,21 +30,19 @@ import Details from '~/components/DetailsModal';
 import Ether from '~/components/Ether';
 import { CloseIcon, LinkIcon } from '~/components/Icons';
 import IconButton from '~/components/IconButton';
+import MouseoverInfoPane from '~/components/MouseoverInfoPane';
 import TextInput from '~/components/TextInput';
 import TriangleTip from '~/components/TriangleTip';
-import useAuth from '~/hooks/useAuth';
+import ChainTransactionContext from '~/contexts/ChainTransactionContext';
 import useBookSession, { bookIds, getBookCompletionImage } from '~/hooks/useBookSession';
 import useCrewManager from '~/hooks/useCrewManager';
 import useCrewContext from '~/hooks/useCrewContext';
 import useNameAvailability from '~/hooks/useNameAvailability';
 import usePriceConstants from '~/hooks/usePriceConstants';
-import formatters from '~/lib/formatters';
-import MouseoverInfoPane from '~/components/MouseoverInfoPane';
-import theme from '~/theme';
 import useStore from '~/hooks/useStore';
+import formatters from '~/lib/formatters';
 import { reactBool } from '~/lib/utils';
-import useCrewmate from '~/hooks/useCrewmate';
-import ChainTransactionContext from '~/contexts/ChainTransactionContext';
+import theme from '~/theme';
 
 const CollectionImages = {
   1: Collection1,
@@ -1084,6 +1082,13 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
 
   const disableChanges = pendingCrewmate || traitsLocked || promptingTransaction;
   
+  const readyForSubmission = useMemo(() => {
+    if (!name) return false;
+    if (!selectedClass) return false;
+    if (selectedTraits < traitTally) return false;
+    return true;
+  }, [name, selectedClass, selectedTraits, traitTally]);
+
   if (!crewmate) return null;
   return (
     <>
@@ -1392,7 +1397,7 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
               <div style={{ alignItems: 'center', display: 'flex', flexDirection: 'row' }}>
                 {recruitTally > 0 && <RecruitTally>Available Recruits: <b>{recruitTally}</b></RecruitTally>}
                 <Button
-                  disabled={!!pendingCrewmate}
+                  disabled={!readyForSubmission || !!pendingCrewmate}
                   loading={!!pendingCrewmate}
                   subtle
                   isTransaction

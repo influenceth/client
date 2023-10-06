@@ -19,7 +19,7 @@ const useNameAvailability = (entityType) => {
       if (!suppressAlert) {
         createAlert({
           type: 'GenericAlert',
-          content: err,
+          data: { content: err },
           level: 'warning',
           duration: 4000
         });
@@ -40,7 +40,7 @@ const useNameAvailability = (entityType) => {
           createAlert({
             type: 'GenericAlert',
             level: 'warning',
-            content: `"${name}" is already taken as a name.`,
+            data: { content: `"${name}" is already taken as a name.` },
             duration: 4000
           });
         }
