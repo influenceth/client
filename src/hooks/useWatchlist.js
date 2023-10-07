@@ -15,7 +15,7 @@ const useWatchlist = () => {
 
   const ids = useMemo(() => {
     if (watchlist.data) {
-      return watchlist.data.map(w => w.asteroid.i);
+      return watchlist.data.map(w => w.asteroid);
     }
     return [];
   }, [watchlist.data]);

@@ -188,6 +188,7 @@ const StandardButton = (props) => {
     loading,
     onClick,
     setRef,
+    children,
     ...restProps } = props;
 
   const playSound = useStore(s => s.dispatchSoundRequested);
@@ -221,7 +222,7 @@ const StandardButton = (props) => {
               css={loadingCss}
               height={1} />
           )}
-          {props.children}
+          {children}
         </InnerContainer>
         <Corner
           borderless={props.borderless}
