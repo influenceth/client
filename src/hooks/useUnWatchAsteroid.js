@@ -1,7 +1,6 @@
 import { useQueryClient, useMutation } from 'react-query';
 
 import useAuth from '~/hooks/useAuth';
-import useStore from '~/hooks/useStore';
 import api from '~/lib/api';
 
 const useUnWatchAsteroid = () => {
@@ -9,12 +8,12 @@ const useUnWatchAsteroid = () => {
   const queryClient = useQueryClient();
   const watchedMapped = true;//useStore(s => s.asteroids.watched.mapped);
 
-  return useMutation(async (i) => api.unWatchAsteroid(i),
+  return useMutation(async (id) => api.unWatchAsteroid(id),
   {
     enabled: !!token,
     onSuccess: async () => {
-      queryClient.invalidateQueries('watchlist');
-      if (watchedMapped) queryClient.invalidateQueries('asteroids', 'list');
+      queryClient.invalidateQueries(['watchlist']);
+      if (watchedMapped) queryClient.invalidateQueries(['asteroids', 'list']);
     }
   });
 };

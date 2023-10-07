@@ -167,6 +167,10 @@ const api = {
     return getEntityById({ label: Entity.IDS.ASTEROID, id });
   },
 
+  getAsteroids: async (ids) => {
+    return ids?.length > 0 ? getEntities({ ids, label: Entity.IDS.ASTEROID }) : [];
+  },
+
   getAsteroidLotData: async (i) => {
     const response = await instance.get(`/${apiVersion}/asteroids/${i}/lots/packed`, { responseType: 'blob' });
     const lotTally = Asteroid.getSurfaceArea(i);

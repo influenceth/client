@@ -46,11 +46,11 @@ const useColumns = () => {
   const watchAsteroid = useWatchAsteroid();
   const unWatchAsteroid = useUnWatchAsteroid();
 
-  const toggleWatchlist = useCallback((i) => () => {
-    if (watchlistIds.includes(i)) {
-      unWatchAsteroid.mutate(i);
+  const toggleWatchlist = useCallback((id) => () => {
+    if (watchlistIds.includes(id)) {
+      unWatchAsteroid.mutate(id);
     } else {
-      watchAsteroid.mutate(i);
+      watchAsteroid.mutate(id);
     }
   }, [watchlistIds]);
 
@@ -83,9 +83,9 @@ const useColumns = () => {
             <FavoriteToggle
               data-for="listView"
               data-tip={isFavorited ? 'Favorited' : 'Add to Favorites'}
-              data-place="left"
+              data-place="top"
               favorited={isFavorited}
-              onClick={toggleWatchlist(row.i)}>
+              onClick={toggleWatchlist(row.id)}>
               <FavoriteIcon />
             </FavoriteToggle>
           );

@@ -18,7 +18,9 @@ const SelectTravelDestination = ({}) => {
 
   useEffect(() => {
     if (openHudMenu) return;
-    dispatchHudMenuOpened(origin && destination && inTravelMode ? 'BELT_PLAN_FLIGHT' : null);
+    if (origin && destination && inTravelMode) {
+      dispatchHudMenuOpened('BELT_PLAN_FLIGHT');
+    }
   }, [destination, inTravelMode, origin]);
 
   return (
