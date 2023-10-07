@@ -1,10 +1,10 @@
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import styled, { css, keyframes } from 'styled-components';
 import ReactTooltip from 'react-tooltip';
 
 import ClipCorner from '~/components/ClipCorner';
 import useChainTime from '~/hooks/useChainTime';
-import { formatTimer } from "~/lib/utils";
+import { formatTimer, nativeBool, reactBool } from "~/lib/utils";
 import { hexToRGB } from '~/theme';
 
 const dimension = 60;
@@ -231,6 +231,12 @@ const ActionButtonComponent = ({ label, flags = {}, icon, onClick, ...props }) =
   const _onClick = useCallback(() => {
     if (!flags?.disabled && onClick) onClick();
   }, [flags, onClick]);
+  const safeFlags = useMemo(() => {
+    return Object.keys(flags).reduce((acc, k) => {
+      acc[k] = k === 'disabled' ? nativeBool(flags[k]) : reactBool(flags[k]);
+      return acc;
+    }, {})
+  }, [flags]);
   useEffect(() => ReactTooltip.rebuild(), []);
   return (
     <ActionButtonWrapper
@@ -239,7 +245,7 @@ const ActionButtonComponent = ({ label, flags = {}, icon, onClick, ...props }) =
       data-place="top"
       data-tip={label}
       onClick={_onClick}
-      {...flags}
+      {...safeFlags}
       {...props}>
       {flags.loading && <LoadingAnimation />}
       <ActionButton {...flags} overrideColor={props.overrideColor}>

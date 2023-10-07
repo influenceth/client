@@ -14,19 +14,19 @@ const ScanAsteroid = ({ asteroid, _disabled }) => {
   const { scanStatus, scanType } = useScanManager(asteroid);
   const { crew } = useCrewContext();
 
-  const { label, flags, handleClick } = useMemo(() => {
+  const { disabledReason, label, flags, handleClick } = useMemo(() => {
     let flags = {
       attention: undefined,
       disabled: _disabled || undefined,
-      disabledReason: '',
       loading: undefined,
       finishTime: asteroid?.Celestial?.scanFinishTime
-    }
+    };
+    let disabledReason = null;
 
     // resource scan requires crew to be on asteroid
     if (scanType === 'RESOURCE' && (!crew._location?.asteroidId || crew._location?.asteroidId !== asteroid?.id)) {
       flags.disabled = true;
-      flags.disabledReason = 'Crew must be Present';
+      disabledReason = 'Crew must be Present';
     }
 
     switch (scanStatus) {
@@ -34,6 +34,7 @@ const ScanAsteroid = ({ asteroid, _disabled }) => {
       case 'UNSCANNED':
         flags.attention = flags.disabled ? false : true;
         return {
+          disabledReason,
           label: `Scan Asteroid ${scanType === 'SURFACE' ? 'Surface' : 'Resources'}`,
           flags,
           handleClick: () => {
@@ -44,6 +45,7 @@ const ScanAsteroid = ({ asteroid, _disabled }) => {
       case 'SCANNING':
         flags.loading = true;
         return {
+          disabledReason,
           label: `Scanning Asteroid ${scanType === 'SURFACE' ? 'Surface' : 'Resources'}...`,
           flags,
           handleClick: () => {
@@ -53,6 +55,7 @@ const ScanAsteroid = ({ asteroid, _disabled }) => {
       case 'READY_TO_FINISH':
         flags.attention = flags.disabled ? false : true;
         return {
+          disabledReason,
           label: 'Retrieve Scan Results',
           flags,
           handleClick: () => {
@@ -63,6 +66,7 @@ const ScanAsteroid = ({ asteroid, _disabled }) => {
       case 'FINISHING':
         flags.loading = true;
         return {
+          disabledReason,
           label: 'Retrieving Scan Results...',
           flags,
           handleClick: () => {
@@ -75,7 +79,7 @@ const ScanAsteroid = ({ asteroid, _disabled }) => {
   // TODO: icon should probably be distinct for each scan type
   return (
     <ActionButton
-      label={`${label}${flags.disabledReason ? ` (${flags.disabledReason})` : ''}`}
+      label={`${label}${disabledReason ? ` (${disabledReason})` : ''}`}
       flags={flags}
       icon={<ScanAsteroidIcon />}
       onClick={handleClick} />
