@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AmbientLight, Color, DirectionalLight} from 'three';
 import { Canvas, useThree } from '@react-three/fiber';
 
@@ -74,16 +74,37 @@ const RenderedAsteroid = ({ asteroid, brightness = 1, varyDistance = false, onRe
   return null;
 };
 
-const RenderedAsteroidInCanvas = (props) => {
+
+const RenderedAsteroidInCanvas = ({ onReady, ...props }) => {
   const webWorkerPool = useWebWorker();
-  return (
-    <Canvas
-      antialias
-      frameloop="never"
-      style={{ width: '100%', height: '100%', ...(props.style || {}) }}>
-      <RenderedAsteroid {...props} webWorkerPool={webWorkerPool} />
-    </Canvas>
-  );
+
+  const canvas = useRef();
+  const [imageSrc, setImageSrc] = useState(null);
+
+  // to free up webgl contexts, once the asteroid is rendered in canvas, we replace the canvas with an image
+  // TODO: since we don't need the canvas to ever render visibly, this would likely be more performant in
+  //  an offscreen canvas
+  // TODO: in general, it might be wise to keep track of all webgl contexts at the app-level and block 
+  //  any components that require a canvas until the contexts are freed up (this will be a user-specific
+  //  limit, but maybe 4-5 simultaneous contexts max would be safe?)
+  const onReadyInternal = useCallback(() => {
+    if (canvas.current) setImageSrc(canvas.current.toDataURL());
+    if (onReady) onReady();
+  }, [onReady]);
+
+  const style = useMemo(() => ({ width: '100%', height: '100%', ...(props.style || {}) }), [props.style]);
+
+  return imageSrc
+    ? <img src={imageSrc} style={style} />
+    : (
+      <Canvas
+        ref={canvas}
+        antialias
+        frameloop="never"
+        style={style}>
+        <RenderedAsteroid {...props} onReady={onReadyInternal} webWorkerPool={webWorkerPool} />
+      </Canvas>
+    );
 };
 
 export default RenderedAsteroidInCanvas;

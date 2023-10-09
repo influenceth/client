@@ -1,6 +1,5 @@
 import { useCallback, useState } from 'react';
 import styled from 'styled-components';
-import { Address } from '@influenceth/sdk';
 
 import AsteroidRendering from '~/components/AsteroidRendering';
 import ClipCorner from '~/components/ClipCorner';
@@ -146,9 +145,9 @@ const AllAssets = ({ onClose }) => {
           titleText={`Asteroids`}
           borderless>
           {(ownedAsteroids || []).map((asteroid, i) => (
-            <SelectableRow key={asteroid.i} selected={asteroidId === asteroid.i} onClick={onClickAsteroid(asteroid.i)}>
+            <SelectableRow key={asteroid.id} selected={asteroidId === asteroid.id} onClick={onClickAsteroid(asteroid.id)}>
               <Thumbnail>
-                {asteroid.Control?.controller?.id === crew?.i && <MyAssetWrapper><MyAssetIcon /></MyAssetWrapper>}
+                {crew?.id && asteroid.Control?.controller?.id === crew?.id && <MyAssetWrapper><MyAssetIcon /></MyAssetWrapper>}
                 {rendersReady >= i && <AsteroidRendering asteroid={asteroid} onReady={onRenderReady} />}
                 <ClipCorner dimension={10} color={majorBorderColor} />
               </Thumbnail>
@@ -156,7 +155,7 @@ const AllAssets = ({ onClose }) => {
                 <label>{formatters.asteroidName(asteroid)}</label>
                 <div style={{ flex: 1 }}></div>
               </Info>
-              {asteroidId === asteroid.i && <ClipCorner dimension={10} color={theme.colors.main} />}
+              {asteroidId === asteroid.id && <ClipCorner dimension={10} color={theme.colors.main} />}
             </SelectableRow>
           ))}
         </HudMenuCollapsibleSection>
