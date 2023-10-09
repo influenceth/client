@@ -1,12 +1,10 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
 import { RingLoader as Loader } from 'react-spinners';
 
 import useAuth from '~/hooks/useAuth';
 import useStore from '~/hooks/useStore';
 import Badge from '~/components/Badge';
-import InfluenceLogo from '~/components/InfluenceLogo';
-import NavIcon from '~/components/NavIcon';
 import {
   ChevronDoubleRightIcon,
   CloseIcon,
@@ -16,14 +14,17 @@ import {
   UserIcon,
   WalletIcon
 } from '~/components/Icons';
+import InfluenceLogo from '~/components/InfluenceLogo';
+import NavIcon from '~/components/NavIcon';
+import OnClickLink from '~/components/OnClickLink';
 import useCrewContext from '~/hooks/useCrewContext';
+import usePriceConstants from '~/hooks/usePriceConstants';
+import { reactBool } from '~/lib/utils';
 import Crews from './launcher/Crews';
 import Settings from './launcher/Settings';
-import HudMenu from './interface/hud/HudMenu';
 import Store from './launcher/Store';
-import usePriceConstants from '~/hooks/usePriceConstants';
+import HudMenu from './interface/hud/HudMenu';
 import DropdownNavMenu, { NavMenuLoggedInUser } from './interface/hud/DropdownNavMenu';
-import { reactBool } from '~/lib/utils';
 
 const menuPadding = 25;
 const headerHeight = 68;
@@ -327,7 +328,7 @@ const Launcher = (props) => {
     else if (!priceConstantsLoading && !priceConstants?.ADALIAN_PRICE_ETH && launcherPage === 'store') {
       dispatchLauncherPage('account');
     }
-  }, [launcherPage, loggedIn, priceConstants, priceConstantsLoading])
+  }, [launcherPage, loggedIn, priceConstants, priceConstantsLoading]);
 
   const menuItems = useMemo(() => {
     const items = [{
@@ -344,6 +345,14 @@ const Launcher = (props) => {
 
     return items;
   }, [logout, walletId]);
+
+  const onInstallApp = useCallback(async () => {
+    window.installPrompt.prompt();
+    const { outcome } = await window.installPrompt.userChoice;
+    if (outcome === 'accepted') {
+      window.installPrompt = null;
+    }
+  }, []);
 
   return (
     <StyledLauncher {...props}>
@@ -447,7 +456,9 @@ const Launcher = (props) => {
             {process.env.REACT_APP_BRIDGE_URL &&
               <a href={process.env.REACT_APP_BRIDGE_URL} target="_blank" rel="noopener noreferrer"><MyAssetIcon /> Assets Portal</a>
             }
-            <a href={process.env.REACT_APP_BRIDGE_URL} target="_blank" rel="noopener noreferrer"><DownloadIcon /> Install App</a>
+            {!!window.installPrompt && 
+              <OnClickLink onClick={onInstallApp} target="_blank" rel="noopener noreferrer"><DownloadIcon /> Install App</OnClickLink>
+            }
           </div>
         </Footer>
       </ContentWrapper>

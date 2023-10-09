@@ -78,7 +78,6 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
     cameraNeedsReorientation: false,
 
     hasSeenIntroVideo: false,
-    cutscenePlaying: false,
     canvasStack: [],
 
     logs: {
@@ -606,7 +605,6 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
     'asteroids.travelSolution',
     'asteroids.zoomScene',
     'canvasStack',
-    'cutscenePlaying',
     'cameraNeedsReorientation',
     'draggables',
     'failedTransactions',
