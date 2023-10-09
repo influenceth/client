@@ -77,6 +77,7 @@ export const useLotLink = ({ asteroidId, lotId, resourceId, zoomToLot }) => {
 export const LotLink = ({ asteroidId, lotId, resourceId, zoomToLot }) => {
   const onClick = useLotLink({ asteroidId, lotId, resourceId, zoomToLot });
 
+  // TODO: this should probably rely on useAsteroid? lotlink may not be to asteroid crew owns
   const { data: owned, isLoading: ownedAreLoading } = useOwnedAsteroids();
   const asteroidName = useMemo(() => {
     if (owned) {

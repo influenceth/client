@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import styled from 'styled-components';
 
 import AsteroidRendering from '~/components/AsteroidRendering';
@@ -119,6 +119,18 @@ const AllAssets = ({ onClose }) => {
 
   const [rendersReady, setRendersReady] = useState(0);
 
+  // list "controlled by me" and owned by my wallet but uncontrolled
+  const asteroidsList = useMemo(() => {
+    const l = [];
+    if (controlledAsteroids && ownedAsteroids) {
+      controlledAsteroids.forEach((a) => l.push(a));
+      ownedAsteroids.forEach((a) => {
+        if (!a.Control?.controller?.id) l.push(a);
+      });
+    }
+    return l;
+  }, [controlledAsteroids, ownedAsteroids])
+
   const onClickAsteroid = useCallback((i) => () => {
     if (asteroidId === i) {
       updateZoomStatus('zooming-in');
@@ -144,7 +156,7 @@ const AllAssets = ({ onClose }) => {
         <HudMenuCollapsibleSection
           titleText={`Asteroids`}
           borderless>
-          {(ownedAsteroids || []).map((asteroid, i) => (
+          {asteroidsList.map((asteroid, i) => (
             <SelectableRow key={asteroid.id} selected={asteroidId === asteroid.id} onClick={onClickAsteroid(asteroid.id)}>
               <Thumbnail>
                 {crew?.id && asteroid.Control?.controller?.id === crew?.id && <MyAssetWrapper><MyAssetIcon /></MyAssetWrapper>}
