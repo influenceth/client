@@ -11,16 +11,14 @@ const useWatchlist = () => {
   const watchlist = useQuery(
     [ 'watchlist', token ],
     async () => {
-      const list = await api.getWatchlist();
-      return await api.getEntities({ ids: list.map(w => w.asteroid.i), label: Entity.IDS.ASTEROID });
+      const list = (await api.getWatchlist()) || [];
+      return await api.getEntities({ ids: list.map(w => w.asteroid), label: Entity.IDS.ASTEROID });
     },
     { enabled: !!token }
   );
 
   const ids = useMemo(() => {
-    if (watchlist.data) {
-      return watchlist.data.map(w => w.asteroid);
-    }
+    if (watchlist.data) return watchlist.data.map(w => w.id);
     return [];
   }, [watchlist.data]);
 

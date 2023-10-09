@@ -88,11 +88,11 @@ const Favorites = ({ onClose }) => {
 
   return (
     <HudMenuCollapsibleSection titleText="Asteroids">
-      {(asteroids || []).map((asteroid) => (
+      {(watchlist || []).map(asteroid => (
         <SelectableRow key={asteroid.id} selected={asteroidId === asteroid.id} onClick={onClick(asteroid.id)}>
           {asteroidId === asteroid.id && (
             <Thumbnail>
-              {asteroid.Control?.controller?.id === crew?.id && <MyAssetIcon />}
+              {asteroid.Control?.controller.id === crew?.id && <MyAssetIcon />}
               <AsteroidRendering asteroid={asteroid} />
             </Thumbnail>
           )}

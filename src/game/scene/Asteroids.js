@@ -130,9 +130,9 @@ const Asteroids = () => {
     });
 
     (watchlist || []).forEach((wa) => {
-      const already = newMappedAsteroids.find((a) => a.id === wa.asteroid.id);
+      const already = newMappedAsteroids.find((a) => a.id === wa.id);
       if (already) already.isWatched = 1;
-      else if (isDefaultSearch) newMappedAsteroids.push(Object.assign({ isWatched: 1 }, wa.asteroid));
+      else if (isDefaultSearch) newMappedAsteroids.push(Object.assign({ isWatched: 1 }, wa));
     });
 
     // append origin and destination in case not already in results
