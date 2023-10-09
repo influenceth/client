@@ -214,7 +214,7 @@ const MainMenu = () => {
           }
         </LeftHudButtonArea>
 
-        <MenuWrapper>
+        {/* <MenuWrapper>
           {!!account && (
             <Menu title="Assets">
               <MenuItem
@@ -225,29 +225,29 @@ const MainMenu = () => {
                 name="My Crew"
                 icon={<CrewIcon />}
                 onClick={() => history.push('/crew')} />
-              {/* <MenuItem
+              <MenuItem
                 name="My Ships"
                 icon={<ShipIcon />}
-                onClick={notYet} /> */}
+                onClick={notYet} />
               <MenuItem
                 name="My Buildings"
                 icon={<BuildingIcon />}
                 onClick={notYet} />
-              {/* <MenuItem
+              <MenuItem
                 name="My Resources"
                 icon={<ResourceIcon />}
                 onClick={notYet} />
               <MenuItem
                 name="My Deposits"
                 icon={<CoreSampleIcon />}
-                onClick={notYet} /> */}
+                onClick={notYet} />
               <MenuItem
                 name="Favorites"
                 icon={<FavoriteIcon />}
                 onClick={() => openSection('belt.Favorites')} />
             </Menu>
           )}
-          {/* {!!account && (
+          {!!account && (
             <Menu title="Events">
               <MenuItem
                 name="Captain's Log"
@@ -262,8 +262,8 @@ const MainMenu = () => {
                 icon={<CrewStoryIcon />}
                 onClick={notYet} />
             </Menu>
-          )} */}
-          {/* <Menu title="Finances">
+          )}
+          <Menu title="Finances">
             <MenuItem
               name="Transactions"
               icon={<TransactionIcon />}
@@ -276,19 +276,8 @@ const MainMenu = () => {
               name="Leases"
               icon={<LeaseIcon />}
               onClick={notYet} />
-          </Menu> */}
-
-          {/*
-          {!!account && hasGenesisCrewmate && (
-            <Menu title="Activities" badge={totalAssignments}>
-              <MenuItem
-                name="Crew Assignments"
-                icon={<RocketIcon />}
-                onClick={() => openSection('crewAssignments')} />
-            </Menu>
-          )}
-          */}
-        </MenuWrapper>
+          </Menu>
+        </MenuWrapper> */}
 
         {!isMobile && (
           <TimeSection>

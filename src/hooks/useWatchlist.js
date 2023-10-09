@@ -1,7 +1,8 @@
 import { useMemo } from 'react';
 import { useQuery } from 'react-query';
-import api from '~/lib/api';
+import { Entity } from '@influenceth/sdk';
 
+import api from '~/lib/api';
 import useAuth from '~/hooks/useAuth';
 
 const useWatchlist = () => {
@@ -9,7 +10,10 @@ const useWatchlist = () => {
 
   const watchlist = useQuery(
     [ 'watchlist', token ],
-    api.getWatchlist,
+    async () => {
+      const list = await api.getWatchlist();
+      return await api.getEntities({ ids: list.map(w => w.asteroid.i), label: Entity.IDS.ASTEROID });
+    },
     { enabled: !!token }
   );
 

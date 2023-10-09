@@ -1,5 +1,6 @@
 import { css } from 'styled-components';
 import LoadingAnimation from 'react-spinners/PuffLoader';
+import { reactBool } from '~/lib/utils';
 
 const loadingCss = css`
   position: absolute;
@@ -11,7 +12,7 @@ const Loader = ({ overrides }) => (
   <LoadingAnimation
     color="white"
     css={loadingCss}
-    loading={true}
+    loading={reactBool(true)}
     {...overrides} />
 );
 
