@@ -33,8 +33,6 @@ const Container = styled.div`
   z-index: 99999;
 `;
 
-const noop = () => {};
-
 const Cutscene = () => {
   const { source, allowSkip } = useStore(s => s.cutscene || {});
   const dispatchCutscene = useStore(s => s.dispatchCutscene);
@@ -71,7 +69,7 @@ const Cutscene = () => {
         height={'100%'}
         width={'100%'}
         playing
-        onEnded={onComplete || noop}
+        onEnded={onComplete}
         onError={onError}
         config={{
           file: {

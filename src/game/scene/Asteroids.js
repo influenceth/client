@@ -10,7 +10,7 @@ import { CaptainIcon, FlagMarkerIcon, MyAssetIcon, ShipMarkerIcon } from '~/comp
 import ClockContext from '~/contexts/ClockContext';
 import useAsteroid from '~/hooks/useAsteroid';
 import useAssetSearch from '~/hooks/useAssetSearch';
-import useOwnedAsteroids from '~/hooks/useOwnedAsteroids';
+import useControlledAsteroids from '~/hooks/useControlledAsteroids';
 import useStore from '~/hooks/useStore';
 import useWatchlist from '~/hooks/useWatchlist';
 import useWebWorker from '~/hooks/useWebWorker';
@@ -88,7 +88,7 @@ const Asteroids = () => {
   const { data: origin } = useAsteroid(originId);
   const { data: destination } = useAsteroid(destinationId);
   const { coarseTime } = useContext(ClockContext);
-  const { data: ownedAsteroids } = useOwnedAsteroids();
+  const { data: controlledAsteroids } = useControlledAsteroids();
   const { watchlist: { data: watchlist }} = useWatchlist();
 
   const [ mappedAsteroids, setMappedAsteroids ] = useState([]);
@@ -108,13 +108,13 @@ const Asteroids = () => {
 
   const assetedAsteroids = useMemo(() => {
     const asseted = {};
-    (ownedAsteroids || []).forEach((a) => {
+    (controlledAsteroids || []).forEach((a) => {
       if (!asseted[a.id]) asseted[a.id] = { asteroid: a };
       asseted[a.id].owned = true;
     });
     // TODO: ecs-refactor -- fill in crew and ships tally on each asteroid where located
     return asseted;
-  }, [asteroids, ownedAsteroids]);
+  }, [asteroids, controlledAsteroids]);
 
   // Update state when asteroids from server, origin, or destination change
   const isZoomedIn = zoomStatus === 'in';

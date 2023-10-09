@@ -413,6 +413,16 @@ const HudMenu = ({ forceOpenMenu }) => {
     return buttons.find((b) => b.key === openHudMenu) || {};
   }, [buttons, openHudMenu]);
 
+  // if get logged out, close "requireLogin" menu if open
+  useEffect(() => {
+    if (openHudMenu) {
+      const openMenuConfig = buttons.find((b) => b.key === openHudMenu);
+      if (openMenuConfig.requireLogin && !account) {
+        handleButtonClick(openHudMenu, null, openMenuConfig.hideInsteadOfClose);
+      }
+    }
+  }, [account, handleButtonClick, openHudMenu]);
+
   return (
     <Wrapper>
       {!forceOpenMenu && (
