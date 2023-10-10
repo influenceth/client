@@ -5,6 +5,7 @@ import { useThrottleCallback } from '@react-hook/throttle';
 import { useThree } from '@react-three/fiber';
 import { Html, useTexture } from '@react-three/drei';
 import gsap from 'gsap';
+import { cloneDeep } from 'lodash';
 
 import { CaptainIcon, FlagMarkerIcon, MyAssetIcon, ShipMarkerIcon } from '~/components/Icons';
 import ClockContext from '~/contexts/ClockContext';
@@ -120,13 +121,7 @@ const Asteroids = () => {
   const isZoomedIn = zoomStatus === 'in';
 
   useEffect(() => {
-    let newMappedAsteroids = !!asteroids ? asteroids.slice() : [];
-
-    // Reset isAsseted and isWatched flags
-    newMappedAsteroids.map(a => {
-      delete a.isAsseted;
-      delete a.isWatched
-    })
+    const newMappedAsteroids = asteroids ? cloneDeep(asteroids) : [];
 
     // in default search, append watchlist and owned as needed
     Object.keys(assetedAsteroids || {}).forEach((i) => {

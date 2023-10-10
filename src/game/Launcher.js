@@ -20,6 +20,7 @@ import OnClickLink from '~/components/OnClickLink';
 import useCrewContext from '~/hooks/useCrewContext';
 import usePriceConstants from '~/hooks/usePriceConstants';
 import { reactBool } from '~/lib/utils';
+import Account from './launcher/Account';
 import Crews from './launcher/Crews';
 import Settings from './launcher/Settings';
 import Store from './launcher/Store';
@@ -269,7 +270,7 @@ const Footer = styled.div`
       }
     }
 
-    & > a {
+    & > a, & > span {
       border-left: 1px solid #777;
       color: inherit;
       display: inline-block;
@@ -289,17 +290,22 @@ const Footer = styled.div`
   }
 `;
 
+const DISABLE_LAUNCHER_TRAILER = true && process.env.NODE_ENV === 'development';
+
 const StyledNavIcon = () => <Icon><NavIcon selected selectedColor="#777" /></Icon>;
 
 const Launcher = (props) => {
   const { authenticating, login, logout, token, walletContext } = useAuth();
-  const { crews, loading: crewsLoading } = useCrewContext();
+  const { crews } = useCrewContext();
   const { data: priceConstants, isLoading: priceConstantsLoading } = usePriceConstants();
 
   const launcherPage = useStore(s => s.launcherPage);
+  const dispatchCutscene = useStore(s => s.dispatchCutscene);
   const dispatchLauncherPage = useStore(s => s.dispatchLauncherPage);
   const dispatchToggleInterface = useStore(s => s.dispatchToggleInterface);
+  const dispatchSeenIntroVideo = useStore(s => s.dispatchSeenIntroVideo);
   const interfaceHidden = useStore(s => s.graphics.hideInterface);
+  const hasSeenIntroVideo = useStore(s => s.hasSeenIntroVideo);
 
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -353,6 +359,17 @@ const Launcher = (props) => {
       window.installPrompt = null;
     }
   }, []);
+
+  const onClickPlay = useCallback(() => {
+    if (!hasSeenIntroVideo && !DISABLE_LAUNCHER_TRAILER) {
+      dispatchSeenIntroVideo(true);
+      dispatchCutscene(
+        `${process.env.REACT_APP_CLOUDFRONT_OTHER_URL}/videos/intro.m3u8`,
+        true
+      );
+    }
+    dispatchLauncherPage();
+  }, [hasSeenIntroVideo]);
 
   return (
     <StyledLauncher {...props}>
@@ -435,12 +452,12 @@ const Launcher = (props) => {
 
       <ContentWrapper>
         <MainContent>
-          {launcherPage === 'account' && (<></>)}
+          {launcherPage === 'account' && <Account />}
           {launcherPage === 'settings' && <Settings />}
           {launcherPage === 'store' && <Store />}
         </MainContent>
 
-        <PlayButton disabled={authenticating} onClick={() => dispatchLauncherPage()}>
+        <PlayButton disabled={authenticating} onClick={onClickPlay}>
           {loggedIn ? 'Play' : 'Explore'}
         </PlayButton>
 

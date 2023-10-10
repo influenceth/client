@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useCallback, useEffect } from 'react';
 import styled from 'styled-components';
 import { ReactNotifications, Store as notify } from 'react-notifications-component';
 import 'react-notifications-component/dist/theme.css';
@@ -26,7 +26,7 @@ const send = (message, options = {}) => {
   try {
     options.message = message;
     const mergedOptions = Object.assign({}, JSON.parse(JSON.stringify(defaults)), options);
-    notify.addNotification(mergedOptions);
+    return notify.addNotification(mergedOptions);
   } catch (e) {
     console.error(e);
   }
@@ -83,8 +83,8 @@ const AlertWrapper = styled.div`
 
 const Icon = styled.div`
   color: ${p => p.theme.colors.main};
-  flex: 0 0 26px;
-  font-size: 130%;
+  flex: 0 0 44px;
+  font-size: 250%;
   padding-left: 5px;
   padding-right: 5px;
 `;
@@ -121,6 +121,43 @@ const TransactionLink = styled.a`
   }
 `;
 
+const getOptions = ({ level, duration, hideCloseIcon, onRemoval, width }) => {
+  const opts = {}
+  if (level) opts.type = level;
+  if (duration) opts.dismiss = { duration: duration };
+  if (hideCloseIcon) {
+    opts.dismiss = {
+      ...(opts.dismiss || defaults.dismiss),
+      showIcon: false
+    };
+  }
+  if (onRemoval) opts.onRemoval = onRemoval;
+  if (width) opts.width = width;
+  return opts;
+}
+
+export const useControlledAlert = () => {
+  const create = useCallback((alertData) => {
+    return send(
+      <AlertWrapper>
+        <Icon>
+          {alertData.icon}
+        </Icon>
+        <Description>
+          {alertData.content}
+        </Description>
+      </AlertWrapper>,
+      getOptions(alertData)
+    );
+  }, []);
+
+  const destroy = useCallback((id) => {
+    return notify.removeNotification(id);
+  }, []);
+
+  return { create, destroy };
+}
+
 const Alerts = () => {
   const alerts = useStore(s => s.logs.alerts);
   const notifyAlert = useStore(s => s.dispatchAlertNotified);
@@ -129,17 +166,7 @@ const Alerts = () => {
   useEffect(() => {
     if (alerts?.length === 0) return;
     alerts.filter(a => !a.notified).forEach(a => {
-      const { level, type, duration, hideCloseIcon, onRemoval, data } = a;
-      const options = level ? { type: level } : {};
-      if (duration) options.dismiss = { duration: duration };
-      if (hideCloseIcon) {
-        options.dismiss = {
-          ...(options.dismiss || defaults.dismiss),
-          showIcon: false
-        };
-      }
-      if (onRemoval) options.onRemoval = onRemoval;
-
+      const { type, data, level } = a;
       const alertContent = getAlertContent({ type, data });
       if (alertContent) {
         const { icon, content, txLink } = alertContent;
@@ -157,7 +184,7 @@ const Alerts = () => {
               </TransactionLink>
             )}
           </AlertWrapper>,
-          options
+          getOptions(a)
         );
 
         if (level === 'warning') {

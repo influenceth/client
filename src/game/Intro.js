@@ -1,164 +1,59 @@
 import { useCallback, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import ReactPlayer from 'react-player/lazy';
+import ReactPlayer from 'react-player';
 import styled from 'styled-components';
-import gsap from 'gsap';
+import { gsap } from 'gsap';
 
-import IntroVideo from '~/assets/influence-load.webm';
-import Button from '~/components/Button';
-import Cutscene from '~/game/Cutscene';
-import useStore from '~/hooks/useStore';
+import introVideoSrc from '~/assets/influence-load.webm';
 
-// TODO: this file is deprecated now that the Launcher exists
-
-const StyledIntro = styled.div`
-  background-color: black;
-  position: absolute;
-  height: 100%;
-  opacity: 1;
-  width: 100%;
-  z-index: 8999;
-`;
-
-const Launcher = styled.div`
-  bottom: 27.75%;
-  left: 0;
-  opacity: ${p => p.hiding ? 0: 1};
+const Wrapper = styled.div`
+  background: black;
   position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
   right: 0;
-  text-align: center;
-  transition: opacity 600ms ease;
-
-  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
-    bottom: 5%;
-  }
-`;
-const ButtonContainer = styled.div`
-  display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-  justify-content: center;
-  padding: 0 20px;
-  & > button {
-    margin: 15px 10px 0;
-  }
+  z-index: 9999; /* above everything except Suspense */
 `;
 
-const isStandalone = (navigator.standalone || window.matchMedia('(display-mode: standalone)').matches);
-
-const Intro = (props) => {
-  const { onComplete, ...restProps } = props;
-
-  const dispatchSeenIntroVideo = useStore(s => s.dispatchSeenIntroVideo);
-  const hasSeenIntroVideo = useStore(s => s.hasSeenIntroVideo);
-
+const Intro = () => {
   const container = useRef();
-  const [closing, setClosing] = useState(false);
-  const [showingTrailer, setShowingTrailer] = useState(false);
-  const [launchOptions, setLaunchOptions] = useState([]);
+  const [complete, setComplete] = useState(false);
+  const [hiding, setHiding] = useState(false);
 
-  const closeIntro = useCallback(() => {
+  const onComplete = useCallback(() => {
+    setHiding(true); // (so they fade back out)
     gsap.to(container.current, {
-      delay: 0.5,
+      delay: 1,
       opacity: 0,
       duration: 1,
       ease: 'power1.out',
-      onComplete
+      onComplete: () => setComplete(true)
     });
+  }, []);
+
+  const onError = useCallback((err) => {
+    console.error(err);
+    onComplete();
   }, [onComplete]);
 
-  const onTrailerComplete = useCallback(() => {
-    setShowingTrailer(false);
-    dispatchSeenIntroVideo(true);
-    closeIntro();
-  }, [dispatchSeenIntroVideo, closeIntro]);
-
-  const onLaunch = useCallback(() => {
-    setClosing(true); // (so they fade back out)
-    if (!hasSeenIntroVideo) {
-      setShowingTrailer(true);
-    } else {
-      closeIntro();
-    }
-  }, [closeIntro, hasSeenIntroVideo]);
-
-  const onVideoEnded = useCallback(() => {
-    // if standalone, launch standard
-    if (isStandalone) return onLaunch();
-
-    // always have standard option
-    const options = [{
-      label: 'Launch',
-      onClick: onLaunch
-    }];
-
-    // include fullscreen option if fullscreen is available
-    const docElem = document.documentElement;
-    if (docElem.requestFullscreen || docElem.webkitRequestFullscreen || docElem.msRequestFullscreen) {
-      options.push({
-        label: 'Launch Fullscreen',
-        onClick: () => {
-          if (docElem.requestFullscreen) {
-            docElem.requestFullscreen();
-          } else if (docElem.webkitRequestFullscreen) { /* Safari */
-            docElem.webkitRequestFullscreen();
-          } else if (docElem.msRequestFullscreen) { /* IE11 */
-            docElem.msRequestFullscreen();
-          }
-          onLaunch();
-        }
-      });
-    }
-
-    // include "install" option if PWA install is available
-    if (!!window.installPrompt) {
-      options.push({
-        label: 'Install App',
-        onClick: async () => {
-          window.installPrompt.prompt();
-          const { outcome } = await window.installPrompt.userChoice;
-          if (outcome === 'accepted') {
-            window.installPrompt = null;
-            onLaunch();
-          }
-        }
-      });
-    }
-
-    setLaunchOptions(options);
-  }, [hasSeenIntroVideo, onLaunch]);
-
-  return (
-    <StyledIntro ref={container} {...restProps}>
-      <ReactPlayer
-        url={IntroVideo}
-        height={'100%'}
-        width={'100%'}
-        volume={0}
-        muted={true}
-        playing={true}
-        onError={onVideoEnded}
-        onEnded={onVideoEnded} />
-      <Launcher hiding={closing}>
-        <ButtonContainer>
-          {launchOptions.map(({ label, onClick }) => (
-            <Button key={label} onClick={onClick}>
-              {label}
-            </Button>
-          ))}
-        </ButtonContainer>
-      </Launcher>
-
-      {showingTrailer && createPortal(
-        <Cutscene
-          source={`${process.env.REACT_APP_CLOUDFRONT_OTHER_URL}/videos/intro.m3u8`}
-          allowSkip
-          onComplete={onTrailerComplete}
-        />,
-        document.body
-      )}
-    </StyledIntro>
+  if (complete) return null;
+  return createPortal(
+    (
+      <Wrapper ref={container} hiding={hiding}>
+        <ReactPlayer
+          url={introVideoSrc}
+          height="100%"
+          width="100%"
+          volume={0}
+          muted={true}
+          playing
+          onError={onError}
+          onEnded={onComplete} />
+      </Wrapper>
+    ),
+    document.body
   );
-};
+}
 
 export default Intro;
