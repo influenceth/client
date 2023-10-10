@@ -20,6 +20,7 @@ import OnClickLink from '~/components/OnClickLink';
 import useCrewContext from '~/hooks/useCrewContext';
 import usePriceConstants from '~/hooks/usePriceConstants';
 import { reactBool } from '~/lib/utils';
+import Account from './launcher/Account';
 import Crews from './launcher/Crews';
 import Settings from './launcher/Settings';
 import Store from './launcher/Store';
@@ -293,7 +294,7 @@ const StyledNavIcon = () => <Icon><NavIcon selected selectedColor="#777" /></Ico
 
 const Launcher = (props) => {
   const { authenticating, login, logout, token, walletContext } = useAuth();
-  const { crews, loading: crewsLoading } = useCrewContext();
+  const { crews } = useCrewContext();
   const { data: priceConstants, isLoading: priceConstantsLoading } = usePriceConstants();
 
   const launcherPage = useStore(s => s.launcherPage);
@@ -435,7 +436,7 @@ const Launcher = (props) => {
 
       <ContentWrapper>
         <MainContent>
-          {launcherPage === 'account' && (<></>)}
+          {launcherPage === 'account' && <Account />}
           {launcherPage === 'settings' && <Settings />}
           {launcherPage === 'store' && <Store />}
         </MainContent>
