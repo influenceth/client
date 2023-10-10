@@ -606,6 +606,7 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
     'asteroids.zoomScene',
     'canvasStack',
     'cameraNeedsReorientation',
+    'cutscene',
     'draggables',
     'failedTransactions',
     'lotLoader',

@@ -22,9 +22,10 @@ import LotViewer from './interface/modelViewer/LotViewer';
 import ShipViewer from './interface/modelViewer/ShipViewer';
 import LinkedViewer from './interface/modelViewer/LinkedViewer';
 import DevToolsViewer from './interface/modelViewer/DevToolsViewer';
+import CrewDetails from './interface/details/CrewDetails';
+import Intro from './Intro';
 import Cutscene from './Cutscene';
 import Launcher from './Launcher';
-import CrewDetails from './interface/details/CrewDetails';
 
 const StyledInterface = styled.div`
   align-items: stretch;
@@ -102,8 +103,9 @@ const Interface = () => {
   return (
     <>
       <Alerts />
-      {launcherPage && <Launcher />}
+      <Intro />
       {cutscene && <Cutscene />}
+      {launcherPage && <Launcher />}
       {showDevTools && <DevToolsViewer />}
       <StyledInterface hide={interfaceHidden}>
         {!isMobile && <ReactTooltip id="global" place="left" effect="solid" />}

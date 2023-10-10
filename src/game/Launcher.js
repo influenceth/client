@@ -289,6 +289,8 @@ const Footer = styled.div`
   }
 `;
 
+const DISABLE_LAUNCHER_TRAILER = true && process.env.NODE_ENV === 'development';
+
 const StyledNavIcon = () => <Icon><NavIcon selected selectedColor="#777" /></Icon>;
 
 const Launcher = (props) => {
@@ -297,9 +299,12 @@ const Launcher = (props) => {
   const { data: priceConstants, isLoading: priceConstantsLoading } = usePriceConstants();
 
   const launcherPage = useStore(s => s.launcherPage);
+  const dispatchCutscene = useStore(s => s.dispatchCutscene);
   const dispatchLauncherPage = useStore(s => s.dispatchLauncherPage);
   const dispatchToggleInterface = useStore(s => s.dispatchToggleInterface);
+  const dispatchSeenIntroVideo = useStore(s => s.dispatchSeenIntroVideo);
   const interfaceHidden = useStore(s => s.graphics.hideInterface);
+  const hasSeenIntroVideo = useStore(s => s.hasSeenIntroVideo);
 
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -353,6 +358,17 @@ const Launcher = (props) => {
       window.installPrompt = null;
     }
   }, []);
+
+  const onClickPlay = useCallback(() => {
+    if (!hasSeenIntroVideo && !DISABLE_LAUNCHER_TRAILER) {
+      dispatchSeenIntroVideo(true);
+      dispatchCutscene(
+        `${process.env.REACT_APP_CLOUDFRONT_OTHER_URL}/videos/intro.m3u8`,
+        true
+      );
+    }
+    dispatchLauncherPage();
+  }, [hasSeenIntroVideo]);
 
   return (
     <StyledLauncher {...props}>
@@ -440,7 +456,7 @@ const Launcher = (props) => {
           {launcherPage === 'store' && <Store />}
         </MainContent>
 
-        <PlayButton disabled={authenticating} onClick={() => dispatchLauncherPage()}>
+        <PlayButton disabled={authenticating} onClick={onClickPlay}>
           {loggedIn ? 'Play' : 'Explore'}
         </PlayButton>
 

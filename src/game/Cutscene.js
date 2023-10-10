@@ -4,6 +4,9 @@ import styled from 'styled-components';
 
 import Button from '~/components/Button';
 import useStore from '~/hooks/useStore';
+import { reactBool } from '~/lib/utils';
+
+const hideTime = 1000;
 
 const ButtonHolder = styled.div`
   bottom: 0;
@@ -26,9 +29,10 @@ const Container = styled.div`
   background-color: black;
   height: 100%;
   left: 0;
-  opacity: 1;
+  opacity: ${p => p.hiding ? 0 : 1};
   position: fixed;
   top: 0;
+  transition: opacity ${hideTime}ms ease;
   width: 100%;
   z-index: 99999;
 `;
@@ -37,10 +41,14 @@ const Cutscene = () => {
   const { source, allowSkip } = useStore(s => s.cutscene || {});
   const dispatchCutscene = useStore(s => s.dispatchCutscene);
 
+  const [hiding, setHiding] = useState(false);
   const [highlightButtons, setHighlightButtons] = useState(true);
 
   const onComplete = useCallback(() => {
-    dispatchCutscene();
+    setHiding(true);
+    setTimeout(() => {
+      dispatchCutscene();
+    }, hideTime)
   }, [dispatchCutscene]);
 
   const onError = useCallback((err) => {
@@ -63,12 +71,12 @@ const Cutscene = () => {
   }, []);
 
   return (
-    <Container>
+    <Container hiding={reactBool(hiding)}>
       <ReactPlayer
         url={source}
-        height={'100%'}
-        width={'100%'}
-        playing
+        height="100%"
+        width="100%"
+        playing={!hiding}
         onEnded={onComplete}
         onError={onError}
         config={{
