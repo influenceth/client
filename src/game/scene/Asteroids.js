@@ -120,7 +120,13 @@ const Asteroids = () => {
   const isZoomedIn = zoomStatus === 'in';
 
   useEffect(() => {
-    const newMappedAsteroids = !!asteroids ? asteroids.slice() : [];
+    let newMappedAsteroids = !!asteroids ? asteroids.slice() : [];
+
+    // Reset isAsseted and isWatched flags
+    newMappedAsteroids.map(a => {
+      delete a.isAsseted;
+      delete a.isWatched
+    })
 
     // in default search, append watchlist and owned as needed
     Object.keys(assetedAsteroids || {}).forEach((i) => {
@@ -129,6 +135,7 @@ const Asteroids = () => {
       else if (isDefaultSearch) newMappedAsteroids.push(Object.assign({ isAsseted: 1 }, assetedAsteroids[i].asteroid));
     });
 
+    // Add isWatched to watchlisted asteroids
     (watchlist || []).forEach((wa) => {
       const already = newMappedAsteroids.find((a) => a.id === wa.id);
       if (already) already.isWatched = 1;
