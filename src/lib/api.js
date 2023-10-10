@@ -290,6 +290,11 @@ const api = {
     return response.data;
   },
 
+  getAsteroidSale: async () => {
+    const response = await instance.get(`/${apiVersion}/sales/asteroid`);
+    return response.data;
+  },
+
   // getBook: async (id) => {
   //   return null;  // TODO: restore this when story is ready again
   //   const response = await instance.get(`/${apiVersion}/books/${id}`);
