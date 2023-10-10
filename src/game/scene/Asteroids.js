@@ -130,6 +130,7 @@ const Asteroids = () => {
       else if (isDefaultSearch) newMappedAsteroids.push(Object.assign({ isAsseted: 1 }, assetedAsteroids[i].asteroid));
     });
 
+    // Add isWatched to watchlisted asteroids
     (watchlist || []).forEach((wa) => {
       const already = newMappedAsteroids.find((a) => a.id === wa.id);
       if (already) already.isWatched = 1;

@@ -270,13 +270,12 @@ const SmHidden = styled.span`
   }
 `;
 
-
 const AsteroidInformation = ({ abundances, asteroid, isManager, isOwner }) => {
   const { account } = useAuth();
   const createReferral = useCreateReferral(Number(asteroid.id));
   const isNameValid = useNameAvailability(Entity.IDS.ASTEROID);
   const { data: activities } = useActivities({ id: asteroid.id, label: Entity.IDS.ASTEROID });
-  const { buyAsteroid, buying } = useBuyAsteroid(Number(asteroid.id));
+  const { buyAsteroid, checkForLimit, buying } = useBuyAsteroid(Number(asteroid.id));
   const { controlAsteroid, takingControl } = useControlAsteroid(Number(asteroid.id));
   const { changeName, changingName } = useChangeName({ id: Number(asteroid.id), label: Entity.IDS.ASTEROID });
   const { data: priceConstants } = usePriceConstants();
@@ -310,6 +309,15 @@ const AsteroidInformation = ({ abundances, asteroid, isManager, isOwner }) => {
       changeName(newName);
     }
   }, [changeName, isNameValid, newName, asteroid?.id]);
+
+  const attemptBuyAsteroid = useCallback(async () => {
+    const limited = await checkForLimit();
+
+    if (!limited) {
+      buyAsteroid();
+      createReferral.mutate();
+    }
+  }, [checkForLimit, buyAsteroid, createReferral]);
 
   return (
     <Wrapper>
@@ -468,10 +476,7 @@ const AsteroidInformation = ({ abundances, asteroid, isManager, isOwner }) => {
                   disabled={nativeBool(!account || buying)}
                   isTransaction
                   loading={reactBool(buying)}
-                  onClick={() => {
-                    buyAsteroid();
-                    createReferral.mutate();
-                  }}>
+                  onClick={attemptBuyAsteroid}>
                   Purchase -&nbsp;<Ether>{formatters.asteroidPrice(asteroid.Celestial.radius, priceConstants)}</Ether>
                 </Button>
               )}
