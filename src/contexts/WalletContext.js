@@ -3,7 +3,6 @@ import { connect as getStarknetConnect, disconnect as getStarknetDisconnect } fr
 import { Address } from '@influenceth/sdk';
 
 import api from '~/lib/api';
-import useStore from '~/hooks/useStore';
 
 const getErrorMessage = (error) => {
   console.error(error);
