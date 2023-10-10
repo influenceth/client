@@ -20,6 +20,7 @@ import OnClickLink from '~/components/OnClickLink';
 import useCrewContext from '~/hooks/useCrewContext';
 import usePriceConstants from '~/hooks/usePriceConstants';
 import { reactBool } from '~/lib/utils';
+import Account from './launcher/Account';
 import Crews from './launcher/Crews';
 import Settings from './launcher/Settings';
 import Store from './launcher/Store';
@@ -435,7 +436,7 @@ const Launcher = (props) => {
 
       <ContentWrapper>
         <MainContent>
-          {launcherPage === 'account' && <></>}
+          {launcherPage === 'account' && <Account />}
           {launcherPage === 'settings' && <Settings />}
           {launcherPage === 'store' && <Store />}
         </MainContent>
