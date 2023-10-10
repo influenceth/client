@@ -248,7 +248,7 @@ const ActionButtonComponent = ({ label, flags = {}, icon, onClick, ...props }) =
       {...safeFlags}
       {...props}>
       {flags.loading && <LoadingAnimation />}
-      <ActionButton {...flags} overrideColor={props.overrideColor}>
+      <ActionButton {...safeFlags} overrideColor={props.overrideColor}>
         <ClipCorner dimension={cornerSize} />
         <div>{icon}</div>
         {flags.loading && <LoadingTimer finishTime={flags.finishTime} />}
