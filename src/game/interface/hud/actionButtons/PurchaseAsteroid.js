@@ -6,7 +6,6 @@ import { PurchaseAsteroidIcon } from '~/components/Icons';
 import useBuyAsteroid from '~/hooks/useBuyAsteroid';
 import ActionButton from './ActionButton';
 import useSale from '~/hooks/useSale';
-import { nativeBool, reactBool } from '~/lib/utils';
 
 const PurchaseAsteroid = ({ asteroid, _disabled }) => {
   const history = useHistory();
@@ -21,8 +20,8 @@ const PurchaseAsteroid = ({ asteroid, _disabled }) => {
     <ActionButton
       label={`Purchase Asteroid${saleIsActive ? '' : ' (sale is currently closed)'}`}
       flags={{
-        disabled: nativeBool(_disabled || !saleIsActive || buying),
-        loading: reactBool(buying)
+        disabled: _disabled || !saleIsActive || buying,
+        loading: buying
       }}
       icon={<PurchaseAsteroidIcon />}
       onClick={handleClick} />

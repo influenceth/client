@@ -20,7 +20,7 @@ const useBuyAsteroid = (id) => {
   );
 
   const checkForLimit = useCallback(async () => {
-    const saleData = await api.getAsteroidSale();
+    const saleData = (await api.getAsteroidSale()) || {};
     const currentPeriod = Math.floor(Date.now() / 1000 / 1000000);
     const period = Number(saleData.period) || 0;
     const volume = Number(saleData.volume) || 0;
