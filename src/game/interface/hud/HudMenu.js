@@ -256,6 +256,7 @@ const HudMenu = ({ forceOpenMenu }) => {
           label: 'My Assets',
           icon: <MyAssetsIcon />,
           Component: hudMenus.AllAssets,
+          noDetail: true,
           requireLogin: true
         },
         {
@@ -274,6 +275,7 @@ const HudMenu = ({ forceOpenMenu }) => {
           label: 'Favorites',
           icon: <FavoriteIcon />,
           Component: hudMenus.Favorites,
+          noDetail: true,
           requireLogin: true
         },
         {
@@ -304,13 +306,15 @@ const HudMenu = ({ forceOpenMenu }) => {
           label: 'My Assets',
           icon: <MyAssetsIcon />,
           Component: hudMenus.AsteroidAssets,
+          noDetail: true,
           requireLogin: true
         },
         {
           key: 'ASTEROID_RESOURCES',
           label: 'Asteroid Resources',
           icon: <ResourceIcon />,
-          Component: hudMenus.Resources
+          Component: hudMenus.Resources,
+          noDetail: true
         },
         {
           key: 'ASTEROID_MAP_SEARCH',

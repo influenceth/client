@@ -41,15 +41,18 @@ export function AuthProvider({ children }) {
   // Invalidate token if...
   //  - the token has expired
   //  - the token's account doesn't match the current walletAccount
+  //  - (and not reconnecting)
   useEffect(() => {
     if (token) {
       if (!isExpired(token)) {
         if (walletContext?.account && walletContext?.account === getAccountFromToken(token)) return;
+        if (!!walletContext?.isConnecting) return;
       }
 
+      // console.log('Invalidating token...', isExpired(token), getAccountFromToken(token), walletContext?.account);
       dispatchTokenInvalidated();
     }
-  }, [ token, walletContext?.account, dispatchTokenInvalidated ]);
+  }, [ token, walletContext?.account, walletContext?.isConnecting, dispatchTokenInvalidated ]);
 
   const initiateLogin = useCallback(async () => {
     const wallet = await walletContext.connect();

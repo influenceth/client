@@ -106,8 +106,8 @@ export function WalletProvider({ children }) {
   // while connecting or connected, listen for network changes from extension
   useEffect(() => {
     const onConnectionChange = (e) => {
-      disconnect({ clearLastWallet: true }); // disconnect first in case does not complete connection
       if (starknet) connect({ auto: true });
+      else disconnect();
     };
 
     const startListening = () => {
@@ -138,7 +138,7 @@ export function WalletProvider({ children }) {
 
   return (
     <WalletContext.Provider value={{
-      account: starknet?.isConnected && account,
+      account,
       connect,
       disconnect,
       error: useMemo(() => error && getErrorMessage(error), [error]),

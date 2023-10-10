@@ -48,6 +48,7 @@ const getEntityById = async ({ label, id, components }) => {
 const getEntities = async ({ ids, match, label, components }) => {
   const query = {};
   if (ids) {
+    if (ids.length === 0) return [];
     query.id = ids.join(',');
   } else if (match) {
     // i.e. { 'Celestial.celestialType': 2 }
