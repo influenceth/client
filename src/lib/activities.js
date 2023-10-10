@@ -438,7 +438,7 @@ const activities = {
   // FoodSupplied,
   // MaterialProcessingFinished,
   // MaterialProcessingStarted,
-  
+
   NameChanged: {
     getInvalidations: ({ event: { returnValues } }) => ([
       ...invalidationDefaults(returnValues.entity.label, returnValues.entity.id),
@@ -449,7 +449,7 @@ const activities = {
       icon: <NameIcon />,
       content: (
         <>
-          {ucfirst(Entity.TYPES[returnValues.entity?.label]?.label || '')} 
+          {ucfirst(Entity.TYPES[returnValues.entity?.label]?.label || '')}
           {' '}<EntityLink {...returnValues.entity} forceBaseName />
           {' '}re-named to "{returnValues.name}"
         </>
@@ -562,6 +562,22 @@ const activities = {
     //   txLink: getTxLink(e),
     // }),
 
+  AsteroidScanned: {
+    getLogContent: ({ event: { returnValues } }) => {
+      const entity = { label: Entity.IDS.ASTEROID, id: returnValues.asteroidId };
+
+      return {
+        icon: <ScanAsteroidIcon />,
+        content: (
+          <>
+            Long-range surface scan completed on asteroid
+            {' '}<EntityLink {...entity} />
+          </>
+        )
+      };
+    }
+  },
+
   SurfaceScanFinished: {
     getInvalidations: ({ event: { returnValues } }) => ([
       ...invalidationDefaults(Entity.IDS.ASTEROID, returnValues.asteroid.id),
@@ -633,7 +649,7 @@ const activities = {
           ),
         };
       }
-      
+
       let namedFrom = getNamedAddress(returnValues.from);
       let namedTo = getNamedAddress(returnValues.to);
       return {
@@ -665,7 +681,7 @@ const getActivityConfig = (activity, viewingAs = {}) => {
   if (!config) console.warn(`No activity config found for "${name}"!`);
 
   const actionItem = config?.getActionItem ? config.getActionItem(activity.event) : null;
-  
+
   const invalidations = config?.getInvalidations ? config.getInvalidations(activity) : [];
 
   const logContent = config?.getLogContent ? config.getLogContent(activity, viewingAs) : null;
@@ -674,7 +690,7 @@ const getActivityConfig = (activity, viewingAs = {}) => {
   //  `${process.env.REACT_APP_ETHEREUM_EXPLORER_URL}/tx/${activity.event?.transactionHash}`
 
   const triggerAlert = !!config?.triggerAlert;
-  
+
   const isActionItemHidden = (pendingTransactions) => {
     return config?.getIsActionItemHidden && config.getIsActionItemHidden(activity.event)(pendingTransactions);
   };

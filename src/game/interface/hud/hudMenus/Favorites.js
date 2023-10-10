@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback } from 'react';
 import styled from 'styled-components';
 import { Asteroid } from '@influenceth/sdk';
 
@@ -8,10 +8,9 @@ import AsteroidRendering from '~/components/AsteroidRendering';
 import useStore from '~/hooks/useStore';
 import useWatchlist from '~/hooks/useWatchlist';
 import theme from '~/theme';
-import { HudMenuCollapsibleSection, Scrollable } from './components';
+import { HudMenuCollapsibleSection } from './components';
 import formatters from '~/lib/formatters';
 import useCrewContext from '~/hooks/useCrewContext';
-import useAsteroids from '~/hooks/useAsteroids';
 
 const thumbnailDimension = 75;
 
@@ -74,8 +73,7 @@ const Favorites = ({ onClose }) => {
   const asteroidId = useStore(s => s.asteroids.origin);
   const selectAsteroid = useStore(s => s.dispatchOriginSelected);
   const updateZoomStatus = useStore(s => s.dispatchZoomStatusChanged);
-  const { watchlist } = useWatchlist();
-  const { data: asteroids } = useAsteroids((watchlist?.data || []).map((w) => w.asteroid));
+  const { watchlist: { data: watchlist } } = useWatchlist();
 
   const onClick = useCallback((id) => () => {
     if (asteroidId === id) {
@@ -88,11 +86,11 @@ const Favorites = ({ onClose }) => {
 
   return (
     <HudMenuCollapsibleSection titleText="Asteroids">
-      {(asteroids || []).map((asteroid) => (
+      {(watchlist || []).map(asteroid => (
         <SelectableRow key={asteroid.id} selected={asteroidId === asteroid.id} onClick={onClick(asteroid.id)}>
           {asteroidId === asteroid.id && (
             <Thumbnail>
-              {asteroid.Control?.controller?.id === crew?.id && <MyAssetIcon />}
+              {asteroid.Control?.controller.id === crew?.id && <MyAssetIcon />}
               <AsteroidRendering asteroid={asteroid} />
             </Thumbnail>
           )}
