@@ -270,7 +270,7 @@ const Footer = styled.div`
       }
     }
 
-    & > a {
+    & > a, & > span {
       border-left: 1px solid #777;
       color: inherit;
       display: inline-block;
