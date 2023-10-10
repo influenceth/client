@@ -56,7 +56,7 @@ export function CrewProvider({ children }) {
       }, {});
     }
     return null;  // NOTE: if change this null response, see NOTE above crewsAndCrewmatesReady
-  }, [allCrewmates, crewmatesLoading]);
+  }, [allCrewmates, crewsLoading, crewmatesLoading]);
 
   // NOTE: this covers crewsLoading and crewmatesLoading because crewmateMap is
   // null while either of those are true
