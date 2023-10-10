@@ -86,12 +86,12 @@ export function CrewProvider({ children }) {
     return null;
   }, [crews, selectedCrewId]);
 
-  // make sure a default-selected crew makes it into state
+  // make sure a default-selected crew makes it into state (if logged in)
   useEffect(() => {
-    if (crewsAndCrewmatesReady && selectedCrew?.id !== selectedCrew) {
+    if (account && crewsAndCrewmatesReady && selectedCrew?.id !== selectedCrew) {
       dispatchCrewSelected(selectedCrew?.id || undefined);
     }
-  }, [crewsAndCrewmatesReady, selectedCrew]);
+  }, [account, crewsAndCrewmatesReady, selectedCrew]);
 
   const captain = useMemo(() => selectedCrew?._crewmates?.[0] || null, [crewmateMap, selectedCrew]);
 
