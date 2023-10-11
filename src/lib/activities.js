@@ -671,7 +671,7 @@ const activities = {
 };
 
 const getActivityConfig = (activity, viewingAs = {}) => {
-  const name = activity?.event?.name;
+  const name = activity?.event?.name || activity?.event?.event;
   if (!activities[name]) {
     console.warn(`No activity config for ${name}`);
     return null;
