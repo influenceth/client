@@ -149,7 +149,7 @@ export const CrewmateSKU = () => {
           <img src={AdaliansImages} />
         </Imagery>
         <Description>
-          Crewmates are the individual workers that perform all game tasks and form your crew.
+          Crewmates are the literal heart and soul of Adalia. They perform all in-game tasks and form your crew.
         </Description>
         <Main>
           <UncontrolledTextInput
@@ -160,7 +160,7 @@ export const CrewmateSKU = () => {
             step={1}
             type="number" />
 
-          <label>Crewmates</label>
+          <label>{Number(tally) === 1 ? 'Crewmate' : 'Crewmates'}</label>
         </Main>
         <Price>
           <span>{formatters.crewmatePrice(priceConstants, 4)}</span>
@@ -168,7 +168,7 @@ export const CrewmateSKU = () => {
         </Price>
         <Button
           loading={reactBool(isPendingPurchase)}
-          disabled={nativeBool(isPendingPurchase)}
+          disabled={nativeBool(isPendingPurchase) || Number(tally) === 0}
           isTransaction
           onClick={onPurchaseCrewmates}
           subtle
@@ -229,8 +229,8 @@ export const AsteroidSKU = () => {
           <img src={AsteroidsImage} />
         </Imagery>
         <Description>
-          Asteroids are the core productive land in Influence. All materials, buildings,
-          and ships ultimately come from asteroids.
+          Asteroids are the core productive land in Influence. Each asteroid comes with one free
+          Adalian crewmate!
         </Description>
         <Main>
           <label><b>{asteroidSale ? (Number(asteroidSale.limit) - Number(asteroidSale.volume)).toLocaleString() : ''}</b> Asteroids</label>
