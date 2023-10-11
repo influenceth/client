@@ -13,8 +13,9 @@ const MarketplaceLink = ({ assetType, chain, children, id }) => {
       if (assetType === 'asteroid' && id) {
         url += `assets/${process.env.REACT_APP_CONTRACT_ASTEROID_TOKEN}/${id}`;
       } else if(assetType === 'crewmate' && id) {
-        // TODO: should theoretically also support v2 crew token here
-        url += `assets/${process.env.REACT_APP_CONTRACT_CREW_TOKEN}/${id}`;
+        // TODO: swap to v2 once enough crewmates have been bridged
+        // Message on OpenSea also directs to other contract
+        url += `assets/${process.env.REACT_APP_CONTRACT_CREWMATE_TOKEN}/${id}`;
       // collection (NOTE: these are not used currently)
       } else if (assetType === 'asteroid') {
         url += `influenceth-asteroids`;
