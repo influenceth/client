@@ -21,6 +21,7 @@ import AsteroidsImage from '~/assets/images/sales/asteroids.png';
 const borderColor = `rgba(${theme.colors.mainRGB}, 0.5)`;
 
 const Wrapper = styled.div`
+  align-items: center;
   display: flex;
   flex-direction: row;
   height: 100%;
