@@ -1,5 +1,6 @@
 import { createContext, useCallback, useEffect, useContext, useMemo, useState } from 'react';
 import { isExpired, decodeToken } from 'react-jwt';
+import { Provider } from 'starknet';
 
 import WalletContext from '~/contexts/WalletContext';
 import api from '~/lib/api';
@@ -57,11 +58,21 @@ export function AuthProvider({ children }) {
   const initiateLogin = useCallback(async () => {
     const wallet = await walletContext.connect();
     const walletAccount = wallet?.account?.address;
+    let isDeployed = false;
+
+    try {
+      const { baseUrl, feederGatewayUrl, gatewayUrl } = wallet?.provider;
+      const provider = new Provider({ sequencer: { baseUrl, feederGatewayUrl, gatewayUrl }});
+      await provider.getClassAt(walletAccount); // if this throws, the contract is not deployed
+      isDeployed = true;
+    } catch (e) {
+      console.error(e);
+    }
 
     if (walletAccount && !token) {
       try {
         const loginMessage = await api.requestLogin(walletAccount);
-        const signature = await wallet.account.signMessage(loginMessage);
+        const signature = isDeployed ? await wallet.account.signMessage(loginMessage) : ['insecure'];
         if (signature?.code === 'CANCELED') throw new Error('User abort');
 
         if (signature) {
