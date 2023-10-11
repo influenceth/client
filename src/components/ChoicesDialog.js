@@ -299,12 +299,14 @@ const ChoicesDialog = ({
           <Footer>
             <Rule />
             <div style={{ alignItems: 'center', display: 'flex', height: 'calc(100% - 1px)', justifyContent: 'space-between' }}>
-              {leftButton
-                ? <Button {...(leftButton.props || {})} onClick={leftButton.onClick} subtle>{leftButton.label}</Button>
-                : <div />
-              }
+              <div>{leftButton && <Button {...(leftButton.props || {})} onClick={leftButton.onClick} subtle>{leftButton.label}</Button>}</div>
               {rightButton
-                ? <Button {...(rightButton.props || {})} onClick={rightButton.onClick} subtle>{rightButton.label}</Button>
+                ? (
+                  <div style={{ alignItems: 'center', display: 'flex' }}>
+                    {rightButton.preLabel || ''}
+                    <Button {...(rightButton.props || {})} onClick={rightButton.onClick} subtle>{rightButton.label}</Button>
+                  </div>
+                )
                 : <div />
               }
             </div>
