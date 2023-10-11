@@ -169,7 +169,7 @@ const SystemControls = () => {
     <StyledSystemControls>
       <MobileWarning>
         <WarningIcon />
-        <span>Mobile is not well supported in Testnet.</span>
+        <span>Mobile is not well supported, please use desktop.</span>
       </MobileWarning>
 
       <Button

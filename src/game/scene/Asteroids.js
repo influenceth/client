@@ -127,34 +127,37 @@ const Asteroids = () => {
     Object.keys(assetedAsteroids || {}).forEach((i) => {
       const already = newMappedAsteroids.find((a) => a.id === Number(i));
       if (already) already.isAsseted = 1;
-      else if (isDefaultSearch) newMappedAsteroids.push(Object.assign({ isAsseted: 1 }, assetedAsteroids[i].asteroid));
+      if (!already && isDefaultSearch) newMappedAsteroids.push(Object.assign({ isAsseted: 1 }, assetedAsteroids[i].asteroid));
     });
 
     // Add isWatched to watchlisted asteroids
     (watchlist || []).forEach((wa) => {
       const already = newMappedAsteroids.find((a) => a.id === wa.id);
       if (already) already.isWatched = 1;
-      else if (isDefaultSearch) newMappedAsteroids.push(Object.assign({ isWatched: 1 }, wa));
+      if (!already && isDefaultSearch) newMappedAsteroids.push(Object.assign({ isWatched: 1 }, wa));
     });
 
     // append origin and destination in case not already in results
     if (!!origin && !newMappedAsteroids.find(a => a.id === origin.id)) {
       newMappedAsteroids.push(Object.assign({}, origin));
     }
+
     if (!!destination && !newMappedAsteroids.find(a => a.id === destination.id)) {
       newMappedAsteroids.push(Object.assign({}, destination));
     }
 
     // if zoomed in, don't render the point for the origin (since rendering 3d version)
     const newValue = origin && isZoomedIn
-      ? newMappedAsteroids.filter((a) => a.id !== origin.i)
+      ? newMappedAsteroids.filter((a) => a.id !== origin.id)
       : newMappedAsteroids;
+
     setMappedAsteroids(newValue);
     setAsteroidsWorkerPayload({
       key: newValue.map((a) => a.id).join(','),
       orbitals: newValue.map((a) => a.Orbit),
     })
-  }, [ asteroids, origin, destination, isDefaultSearch, assetedAsteroids, watchlist, isZoomedIn ]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ asteroids, origin, destination, assetedAsteroids, watchlist, isZoomedIn ]);
 
   // Responds to hover changes in the store which could be fired from the HUD
   useEffect(() => {
@@ -181,6 +184,10 @@ const Asteroids = () => {
   //  and setting geometry attributes directly, rather than through state... could potentially do
   //  fewer updates / only update on coarseTime when zoomed in
   useEffect(() => {
+    // TODO: the isUpdating throttle that is now commented out below was potentially causing
+    // some state updates to not get rendered promptly (i.e. until next coarseTime update)...
+    // consider how we might re-introduce a throttle here to avoid parallel worker calculations
+    // (where the earlier one would immediately be irrelevant)... see above TODO in the process
     if (coarseTime && asteroidsWorkerPayload && !isUpdating.current) {
       isUpdating.current = true;
       processInBackground(

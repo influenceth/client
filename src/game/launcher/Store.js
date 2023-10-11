@@ -1,17 +1,22 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
 
 import Button from '~/components/ButtonAlt';
 import ClipCorner from '~/components/ClipCorner';
-import CrewCardFramed from '~/components/CrewCardFramed';
 import Ether from '~/components/Ether';
-import { PlusIcon } from '~/components/Icons';
 import UncontrolledTextInput, { safeValue } from '~/components/TextInputUncontrolled';
+
 import useCrewManager from '~/hooks/useCrewManager';
 import usePriceConstants from '~/hooks/usePriceConstants';
+import useStore from '~/hooks/useStore';
+
 import formatters from '~/lib/formatters';
 import { nativeBool, reactBool } from '~/lib/utils';
+import api from '~/lib/api';
 import theme from '~/theme';
+
+import AdaliansImages from '~/assets/images/sales/adalians.png';
+import AsteroidsImage from '~/assets/images/sales/asteroids.png';
 
 const borderColor = `rgba(${theme.colors.mainRGB}, 0.5)`;
 
@@ -25,15 +30,7 @@ const Wrapper = styled.div`
 
 const Group = styled.div`
   flex: 0 1 360px;
-`;
-
-const GroupTitle = styled.div`
-  border-bottom: 1px solid #333;
-  color: white;
-  font-size: 20px;
-  margin-bottom: 10px;
-  padding-bottom: 15px;
-  text-transform: uppercase;
+  margin: 0 10px;
 `;
 
 const SKUWrapper = styled.div`
@@ -42,11 +39,14 @@ const SKUWrapper = styled.div`
 `;
 
 const innerPadding = 10;
+
 const SKUInner = styled.div`
   background: rgba(${p => p.theme.colors.mainRGB}, 0.2);
   border: 1px solid ${borderColor};
+  min-height: 525px;
   padding: ${innerPadding}px;
   position: relative;
+  width: 340px;
   ${p => p.theme.clipCorner(10)};
 `;
 
@@ -61,8 +61,8 @@ const Imagery = styled.div`
   display: flex;
   justify-content: center;
   padding: 10px 10px 20px;
-  & > div {
-    box-shadow: 4px 4px 8px rgba(0, 0, 0, 0.33);
+  & > img {
+    height: 200px;
   }
 `;
 
@@ -75,6 +75,7 @@ const Main = styled.div`
   align-items: center;
   background: rgba(0, 0, 0, 0.3);
   display: flex;
+  height: 50px;
   margin: 10px -${innerPadding}px;
   padding: ${innerPadding}px;
   & > input {
@@ -87,29 +88,44 @@ const Main = styled.div`
     padding-left: 10px;
     font-size: 20px;
   }
+  & > sub {
+    align-items: flex-end;
+    display: flex;
+    height: 19px;
+    margin-left: 4px;
+    opacity: 0.5;
+    vertical-align: bottom;
+  }
+  & > span {
+    font-weight: bold;
+    margin-right: 5px;
+    font-size: 18px;
+  }
 `;
 
 const Description = styled(TypeLabel)`
-  padding: 5px 5px 15px 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 0 5px 15px 0;
+  height: 67px;
 `;
 
 const Price = styled.div`
   color: white;
   font-size: 30px;
   margin-bottom: 15px;
+  & span {
+    margin: 0 5px;
+  }
+  & span:first-child {
+    margin-left: 0;
+  }
   & label {
     font-size: 60%;
     opacity: 0.5;
-    margin-left: 6px;
     text-transform: uppercase;
   }
-`;
-
-const Footnote = styled.div`
-  font-size: 15px;
-  opacity: 0.6;
-  padding: 20px 30px 0;
-  text-align: center;
 `;
 
 export const CrewmateSKU = () => {
@@ -128,21 +144,9 @@ export const CrewmateSKU = () => {
   return (
     <SKUWrapper>
       <SKUInner>
-        <Title>Crewmate</Title>
+        <Title>Crewmates</Title>
         <Imagery>
-          <CrewCardFramed
-            borderColor={`rgba(${theme.colors.mainRGB}, 0.4)`}
-            crewmate={null}
-            noAnimation
-            noArrow
-            silhouetteOverlay={{
-              alwaysOn: ['icon'],
-              disableHover: true,
-              icon: <PlusIcon />,
-              iconSize: 85,
-              rgb: theme.colors.mainRGB,
-            }}
-            width={135} />
+          <img src={AdaliansImages} />
         </Imagery>
         <Description>
           Crewmates are the individual workers that perform all game tasks and form your crew.
@@ -183,12 +187,80 @@ export const CrewmateSKU = () => {
   );
 };
 
+export const AsteroidSKU = () => {
+  const { data: priceConstants } = usePriceConstants();
+
+  const filters = useStore(s => s.assetSearch['asteroidsMapped'].filters);
+  const updateFilters = useStore(s => s.dispatchFiltersUpdated('asteroidsMapped'));
+  const zoomStatus = useStore(s => s.asteroids.zoomStatus);
+  const dispatchHudMenuOpened = useStore(s => s.dispatchHudMenuOpened);
+  const dispatchLauncherPage = useStore(s => s.dispatchLauncherPage);
+  const dispatchZoomScene = useStore(s => s.dispatchZoomScene);
+  const updateZoomStatus = useStore(s => s.dispatchZoomStatusChanged);
+
+  const [asteroidSale, setAsteroidSale] = useState({});
+
+  useEffect(() => {
+    async function getSale() {
+      const salesData = await api.getAsteroidSale();
+      setAsteroidSale(salesData || {});
+    }
+
+    getSale();
+  }, []);
+
+  const filterAndClose = useCallback(() => {
+    updateFilters(Object.assign({}, filters, { ownedBy: 'unowned' }));
+    dispatchZoomScene();
+    let hudTimeout = 0;
+    if (zoomStatus !== 'out') {
+      updateZoomStatus('zooming-out');
+      hudTimeout = 2100;
+    }
+    setTimeout(() => dispatchHudMenuOpened('BELT_MAP_SEARCH'), hudTimeout);
+    dispatchLauncherPage();
+  }, [filters, updateFilters, zoomStatus]);
+
+  return (
+    <SKUWrapper>
+      <SKUInner>
+        <Title>Asteroids</Title>
+        <Imagery>
+          <img src={AsteroidsImage} />
+        </Imagery>
+        <Description>
+          Asteroids are the core productive land in Influence. All materials, buildings,
+          and ships ultimately come from asteroids.
+        </Description>
+        <Main>
+          <label><b>{asteroidSale ? (Number(asteroidSale.limit) - Number(asteroidSale.volume)).toLocaleString() : ''}</b> Asteroids</label>
+          <sub>remaining this period</sub>
+        </Main>
+        <Price>
+            <label>Starting at</label>
+            <span>{formatters.asteroidPrice(1, priceConstants)}</span>
+            <label>Eth</label>
+        </Price>
+        <Button
+          onClick={filterAndClose}
+          subtle
+          style={{ width: '100%' }}>
+          Browse Available Asteroids
+        </Button>
+        <ClipCorner dimension={10} color={borderColor} />
+      </SKUInner>
+    </SKUWrapper>
+  );
+};
+
 const Store = () => {
   return (
     <Wrapper>
       <Group>
-        <GroupTitle>Individual Crewmates</GroupTitle>
         <CrewmateSKU />
+      </Group>
+      <Group>
+        <AsteroidSKU />
       </Group>
     </Wrapper>
   );
