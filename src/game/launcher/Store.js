@@ -3,9 +3,7 @@ import styled from 'styled-components';
 
 import Button from '~/components/ButtonAlt';
 import ClipCorner from '~/components/ClipCorner';
-import CrewCardFramed from '~/components/CrewCardFramed';
 import Ether from '~/components/Ether';
-import { PlusIcon } from '~/components/Icons';
 import UncontrolledTextInput, { safeValue } from '~/components/TextInputUncontrolled';
 
 import useCrewManager from '~/hooks/useCrewManager';
@@ -77,6 +75,7 @@ const Main = styled.div`
   align-items: center;
   background: rgba(0, 0, 0, 0.3);
   display: flex;
+  height: 50px;
   margin: 10px -${innerPadding}px;
   padding: ${innerPadding}px;
   & > input {
@@ -89,6 +88,14 @@ const Main = styled.div`
     padding-left: 10px;
     font-size: 20px;
   }
+  & > sub {
+    align-items: flex-end;
+    display: flex;
+    height: 19px;
+    margin-left: 4px;
+    opacity: 0.5;
+    vertical-align: bottom;
+  }
   & > span {
     font-weight: bold;
     margin-right: 5px;
@@ -97,7 +104,11 @@ const Main = styled.div`
 `;
 
 const Description = styled(TypeLabel)`
-  padding: 5px 5px 15px 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 0 5px 15px 0;
+  height: 67px;
 `;
 
 const Price = styled.div`
@@ -181,7 +192,11 @@ export const AsteroidSKU = () => {
 
   const filters = useStore(s => s.assetSearch['asteroidsMapped'].filters);
   const updateFilters = useStore(s => s.dispatchFiltersUpdated('asteroidsMapped'));
+  const zoomStatus = useStore(s => s.asteroids.zoomStatus);
+  const dispatchHudMenuOpened = useStore(s => s.dispatchHudMenuOpened);
   const dispatchLauncherPage = useStore(s => s.dispatchLauncherPage);
+  const dispatchZoomScene = useStore(s => s.dispatchZoomScene);
+  const updateZoomStatus = useStore(s => s.dispatchZoomStatusChanged);
 
   const [asteroidSale, setAsteroidSale] = useState({});
 
@@ -196,8 +211,15 @@ export const AsteroidSKU = () => {
 
   const filterAndClose = useCallback(() => {
     updateFilters(Object.assign({}, filters, { ownedBy: 'unowned' }));
+    dispatchZoomScene();
+    let hudTimeout = 0;
+    if (zoomStatus !== 'out') {
+      updateZoomStatus('zooming-out');
+      hudTimeout = 2100;
+    }
+    setTimeout(() => dispatchHudMenuOpened('BELT_MAP_SEARCH'), hudTimeout);
     dispatchLauncherPage();
-  }, [filters, updateFilters]);
+  }, [filters, updateFilters, zoomStatus]);
 
   return (
     <SKUWrapper>
@@ -211,8 +233,8 @@ export const AsteroidSKU = () => {
           and ships ultimately come from asteroids.
         </Description>
         <Main>
-          <span>{Number(asteroidSale.limit) - Number(asteroidSale.volume)}</span>
-          asteroids remaining in this period.
+          <label><b>{asteroidSale ? (Number(asteroidSale.limit) - Number(asteroidSale.volume)).toLocaleString() : ''}</b> Asteroids</label>
+          <sub>remaining this period</sub>
         </Main>
         <Price>
             <label>Starting at</label>
@@ -223,7 +245,7 @@ export const AsteroidSKU = () => {
           onClick={filterAndClose}
           subtle
           style={{ width: '100%' }}>
-          See Available Asteroids
+          Browse Available Asteroids
         </Button>
         <ClipCorner dimension={10} color={borderColor} />
       </SKUInner>
