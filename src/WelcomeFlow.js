@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import styled from 'styled-components';
 import { useHistory } from 'react-router-dom';
 
@@ -71,17 +71,28 @@ const CrewmateCreditDialog = ({ onClose }) => (
   </Details>
 );
 
+const DISABLE_LAUNCHER_TRAILER = true && process.env.NODE_ENV === 'development';
+
 const WelcomeFlow = () => {
   const { token } = useAuth();
   const { crew, loading, adalianRecruits, arvadianRecruits } = useCrewContext();
   const history = useHistory();
   
+  const hasSeenIntroVideo = useStore(s => s.hasSeenIntroVideo);
   const launcherPage = useStore(s => s.launcherPage);
+  const dispatchCutscene = useStore(s => s.dispatchCutscene);
   const dispatchLauncherPage = useStore(s => s.dispatchLauncherPage);
+  const dispatchSeenIntroVideo = useStore(s => s.dispatchSeenIntroVideo);
   const dispatchToggleInterface = useStore(s => s.dispatchToggleInterface);
 
   const [status, setStatus] = useState(STATUS.LOGGED_OUT);
   const [prompting, setPrompting] = useState(true);
+
+  const wasLauncherPage = useRef(!!launcherPage);
+
+  useEffect(() => {
+    wasLauncherPage.current = wasLauncherPage.current || !!launcherPage;
+  }, [launcherPage])
 
   useEffect(() => {
     let updatedStatus = STATUS.LOGGED_OUT;
@@ -107,6 +118,19 @@ const WelcomeFlow = () => {
       setPrompting(false);
       if (!window.location.href.includes(`/recruit`)) {
         history.push(`/recruit/${crew?.i || 0}`);
+      }
+    }
+
+    // if have interacted with the launcher page so that there is no longer launcher page
+    // (then have either logged in or clicked "explore")... show intro trailer as needed
+    // NOTE: this happens whether still in "prompting" mode or not
+    if (wasLauncherPage.current && !launcherPage) {
+      if (!hasSeenIntroVideo && !DISABLE_LAUNCHER_TRAILER) {
+        dispatchSeenIntroVideo(true);
+        dispatchCutscene(
+          `${process.env.REACT_APP_CLOUDFRONT_OTHER_URL}/videos/intro.m3u8`,
+          true
+        );
       }
     }
   }, [launcherPage, prompting, status, crew?.i]);

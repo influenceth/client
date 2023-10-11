@@ -290,8 +290,6 @@ const Footer = styled.div`
   }
 `;
 
-const DISABLE_LAUNCHER_TRAILER = true && process.env.NODE_ENV === 'development';
-
 const StyledNavIcon = () => <Icon><NavIcon selected selectedColor="#777" /></Icon>;
 
 const Launcher = (props) => {
@@ -300,10 +298,8 @@ const Launcher = (props) => {
   const { data: priceConstants, isLoading: priceConstantsLoading } = usePriceConstants();
 
   const launcherPage = useStore(s => s.launcherPage);
-  const dispatchCutscene = useStore(s => s.dispatchCutscene);
   const dispatchLauncherPage = useStore(s => s.dispatchLauncherPage);
   const dispatchToggleInterface = useStore(s => s.dispatchToggleInterface);
-  const dispatchSeenIntroVideo = useStore(s => s.dispatchSeenIntroVideo);
   const interfaceHidden = useStore(s => s.graphics.hideInterface);
   const hasSeenIntroVideo = useStore(s => s.hasSeenIntroVideo);
 
@@ -328,10 +324,12 @@ const Launcher = (props) => {
   useEffect(() => {
     // only allow account and settings unless logged in
     if (!loggedIn && !['account', 'settings'].includes(launcherPage)) {
+      // console.log('dispatchLauncherPage', 4);
       dispatchLauncherPage('account');
     }
     // disallow store if no sale available
     else if (!priceConstantsLoading && !priceConstants?.ADALIAN_PRICE_ETH && launcherPage === 'store') {
+      // console.log('dispatchLauncherPage', 5);
       dispatchLauncherPage('account');
     }
   }, [launcherPage, loggedIn, priceConstants, priceConstantsLoading]);
@@ -361,13 +359,6 @@ const Launcher = (props) => {
   }, []);
 
   const onClickPlay = useCallback(() => {
-    if (!hasSeenIntroVideo && !DISABLE_LAUNCHER_TRAILER) {
-      dispatchSeenIntroVideo(true);
-      dispatchCutscene(
-        `${process.env.REACT_APP_CLOUDFRONT_OTHER_URL}/videos/intro.m3u8`,
-        true
-      );
-    }
     dispatchLauncherPage();
   }, [hasSeenIntroVideo]);
 
