@@ -441,21 +441,45 @@ const activities = {
   // MaterialProcessingStarted,
 
   NameChanged: {
-    getInvalidations: ({ event: { returnValues } }) => ([
-      ...invalidationDefaults(returnValues.entity.label, returnValues.entity.id),
-      ['activities'], // (to update name in already-fetched activities)
-      ['watchlist']
-    ]),
-    getLogContent: ({ event: { returnValues } }) => ({
-      icon: <NameIcon />,
-      content: (
-        <>
-          {ucfirst(Entity.TYPES[returnValues.entity?.label]?.label || '')}
-          {' '}<EntityLink {...returnValues.entity} forceBaseName />
-          {' '}re-named to "{returnValues.name}"
-        </>
-      )
-    })
+    getInvalidations: ({ event: { returnValues } }) => {
+      let invalidation;
+
+      if (returnValues.entity) {
+        invalidation = invalidationDefaults(returnValues.entity.label, returnValues.entity.id);
+      } else if (returnValues.asteroidId) {
+        invalidation = invalidationDefaults(Entity.IDS.ASTEROID, returnValues.asteroidId);
+      } else if (returnValues.crewId) {
+        invalidation = invalidationDefaults(Entity.IDS.CREWMATE, returnValues.crewId);
+      }
+
+      return [
+        ...invalidation,
+        ['activities'], // (to update name in already-fetched activities)
+        ['watchlist']
+      ];
+    },
+    getLogContent: ({ event: { returnValues } }) => {
+      let entity;
+
+      if (returnValues.entity) {
+        entity = returnValues.entity;
+      } else if (returnValues.asteroidId) {
+        entity = { label: Entity.IDS.ASTEROID, id: returnValues.asteroidId };
+      } else if (returnValues.crewId) {
+        entity = { label: Entity.IDS.CREWMATE, id: returnValues.crewId };
+      }
+
+      return {
+        icon: <NameIcon />,
+        content: (
+          <>
+            {ucfirst(Entity.TYPES[entity?.label]?.label || '')}
+            {' '}<EntityLink {...entity} forceBaseName />
+            {' '}re-named to "{returnValues.name || returnValues.newName}"
+          </>
+        )
+      };
+    }
   },
 
   // OrderCreated,
