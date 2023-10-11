@@ -56,12 +56,15 @@
       "required": true
     },
     "REACT_APP_CONTRACT_ASTEROID_TOKEN": {
+      "description": "Address of Asteroid token on L1",
       "required": true
     },
-    "REACT_APP_CONTRACT_CREW_TOKEN": {
+    "REACT_APP_CONTRACT_CREWMATE_TOKEN": {
+      "description": "Address of Crewmate token on L1",
       "required": true
     },
-    "REACT_APP_CONTRACT_CREW_TOKEN_V2": {
+    "REACT_APP_CONTRACT_CREWMATE_TOKEN_V2": {
+      "description": "Address of Crewmate v2 token on L1",
       "required": true
     },
     "REACT_APP_ENABLE_DEV_TOOLS": {
