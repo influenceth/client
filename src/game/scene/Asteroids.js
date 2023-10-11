@@ -184,10 +184,6 @@ const Asteroids = () => {
   //  and setting geometry attributes directly, rather than through state... could potentially do
   //  fewer updates / only update on coarseTime when zoomed in
   useEffect(() => {
-    // TODO: the isUpdating throttle that is now commented out below was potentially causing
-    // some state updates to not get rendered promptly (i.e. until next coarseTime update)...
-    // consider how we might re-introduce a throttle here to avoid parallel worker calculations
-    // (where the earlier one would immediately be irrelevant)... see above TODO in the process
     if (coarseTime && asteroidsWorkerPayload && !isUpdating.current) {
       isUpdating.current = true;
       processInBackground(
