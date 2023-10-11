@@ -174,16 +174,17 @@ const activities = {
     // })
 
   CrewDelegated: {
-    getInvalidations: ({ event: { returnValues } }) => invalidationDefaults(Entity.IDS.CREW, returnValues.callerCrew.id),
+    getInvalidations: ({ event: { returnValues } }) => invalidationDefaults(Entity.IDS.CREW, returnValues.crew.id),
     getLogContent: ({ event: { returnValues } }) => ({
       icon: <CrewIcon />,
       content: (
         <>
-          Crew <EntityLink {...returnValues.callerCrew} />
+          Crew <EntityLink {...returnValues.crew} />
           {' '}delegated to <AddressLink address={returnValues.delegatedTo} maxWidth={addressMaxWidth} />
         </>
       ),
     }),
+    triggerAlert: true
   },
 
   CrewFormed: {
