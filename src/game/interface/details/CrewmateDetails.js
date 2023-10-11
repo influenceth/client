@@ -1,317 +1,48 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useHistory, useParams } from 'react-router-dom';
 import styled, { css } from 'styled-components';
-import { Address, Crewmate, Entity, Time } from '@influenceth/sdk';
-import { FaBookOpen as BioIcon } from 'react-icons/fa';
-import { RiBarChart2Fill as StatsIcon } from 'react-icons/ri';
+import { Crewmate, Entity, Time } from '@influenceth/sdk';
+import LoadingAnimation from 'react-spinners/PuffLoader';
 
-import formatters from '~/lib/formatters';
-import Button from '~/components/Button';
-import CrewCard from '~/components/CrewCard';
-import CrewTraitIcon from '~/components/CrewTraitIcon';
-import DataReadout from '~/components/DataReadout';
+import CoverImageSrc from '~/assets/images/modal_headers/OwnedCrew.png';
+import Button from '~/components/ButtonAlt';
 import Details from '~/components/DetailsModal';
 import {
-  ClaimIcon,
-  HexagonIcon,
-  WarningOutlineIcon
+  BackIcon,
+  MyAssetIcon
 } from '~/components/Icons';
 import LogEntry from '~/components/LogEntry';
-import MarketplaceLink from '~/components/MarketplaceLink';
-import TabContainer from '~/components/TabContainer';
-import useAuth from '~/hooks/useAuth';
-import useCrewmate from '~/hooks/useCrewmate';
-import useStore from '~/hooks/useStore';
 import useActivities from '~/hooks/useActivities';
+import useCrewContext from '~/hooks/useCrewContext';
+import useNameAvailability from '~/hooks/useNameAvailability';
+import useStore from '~/hooks/useStore';
+import useEarliestActivity from '~/hooks/useEarliestActivity';
+import useCrewmate from '~/hooks/useCrewmate';
+import MarketplaceLink from '~/components/MarketplaceLink';
+import CrewCard from '~/components/CrewCard';
+import CrewTraitIcon from '~/components/CrewTraitIcon';
+import MouseoverInfoPane from '~/components/MouseoverInfoPane';
+import formatters from '~/lib/formatters';
 
 const borderColor = 'rgba(200, 200, 200, 0.15)';
 const breakpoint = 1375;
-
-const Content = styled.div`
-  display: flex;
-  flex-direction: row;
-  height: 100%;
-  padding: 40px 35px 25px;
-  @media (max-width: ${breakpoint}px) {
-    flex-direction: column;
-    height: auto;
-    padding: 10px 0 0px;
-  }
-`;
-
-const Subtitle = styled.h5`
-  border-bottom: 1px solid ${borderColor};
-  font-size: 14px;
-  line-height: 32px;
-  margin: 10px 0 0 0;
-`;
-
-const ManagementSubtitle = styled(Subtitle)`
-  @media (max-width: ${breakpoint}px) {
-    display: none;
-  }
-`;
-
-const CrewBasics = styled.div`
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  height: 100%;
-  overflow: hidden;
-
-  @media (max-width: ${breakpoint}px) {
-    flex-direction: row;
-    flex-wrap: wrap;
-    height: auto;
-    overflow: visible;
-    margin-bottom: 25px;
-    padding: 0 15px;
-  }
-`;
-
-const CardWrapper = styled.div`
-  border: 1px solid #363636;
-  padding: 2px;
-  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
-    flex: 0 1 400px;
-    @media (min-width: 440px) {
-      margin: 0 10px 0 0;
-    }
-  }
-  @media (min-width: ${p => p.theme.breakpoints.mobile}px) and (max-width: ${breakpoint}px) {
-    flex: 0 1 350px;
-    margin: 0 10px 0 0;
-  }
-`;
-
-const BelowCardWrapper = styled.div`
-  margin-top: 5px;
-  overflow-x: hidden;
-  overflow-y: auto;
-  padding-right: 3px;
-  flex: 1;
-  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
-    flex: none;
-    max-width: 100%;
-    overflow-y: visible;
-    overflow-x: visible;
-  }
-`;
-
-const CrewDetails = styled.div`
-  display: flex;
-  flex: 3;
-  flex-direction: column;
-  height: 100%;
-  padding-left: 25px;
-  @media (max-width: ${breakpoint}px) {
-    display: block;
-    padding-left: 0;
-  }
-`;
-
-const CrewLabels = styled.div`
-  color: white;
-  font-size: 85%;
-  line-height: 1.4em;
-  margin-top: -5px;
-  & label {
-    color: #666666;
-  }
-`;
-
-const Management = styled.div`
-  padding-top: 15px;
-`;
-
-const tabContainerCss = css`
-  color: white;
-  flex: 0 0 330px;
-  font-size: 15px;
-  @media (min-height: 950px) {
-    flex-basis: 45%;
-    max-height: 500px;
-  }
-  @media (max-width: ${breakpoint}px) {
-    background: rgba(${p => p.theme.colors.mainRGB}, 0.05);
-    border: 2px solid rgba(${p => p.theme.colors.mainRGB}, 0.15);
-    border-left: none;
-    border-right: none;
-    box-shadow: -4px 0 8px rgba(${p => p.theme.colors.mainRGB}, 0.25);
-    margin-top: 0;
-  }
-`;
-
-const TraitPane = styled.div`
-  display: flex;
-  flex-direction: row;
-  height: 100%;
-  padding: 8px 0 0;
-  width: 100%;
-  @media (max-width: ${breakpoint}px) {
-    flex-direction: column-reverse;
-    padding: 0;
-  }
-`;
-const traitSize = 128;
-const AllTraits = styled.div`
-  display: grid;
-  flex: 2 0 ${(traitSize + 5) * 3}px;
-  grid-template-columns: repeat(auto-fill, minmax(${traitSize}px, 1fr));
-  grid-template-rows: ${traitSize}px;
-  overflow: auto;
-  scrollbar-width: thin;
-  @media (max-width: ${breakpoint}px) {
-    display: flex;
-    flex: none;
-    flex-direction: row;
-  }
-`;
-const Trait = styled.div`
-  align-items: center;
-  ${p => p.selected && 'background: linear-gradient(to bottom, transparent 0%, rgb(255, 255, 255, 0.175) 100%);'}
-  cursor: ${p => p.theme.cursors.active};
-  display: flex;
-  flex: 1 0 ${traitSize}px;
-  flex-direction: column;
-  font-size: ${traitSize - 32 - 10}px;
-  height: ${traitSize}px;
-  justify-content: center;
-  padding: 5px;
-  line-height: ${0.74 * (traitSize - 32 - 10)}px;
-
-  & > h6 {
-    color: ${p => p.selected ? 'white' : p.theme.colors.secondaryText};
-    font-size: 12px;
-    line-height: 32px;
-    margin: 0;
-    max-width: 100%;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  &:hover {
-    & > h6 {
-      color: white;
-    }
-  }
-
-  @media (max-width: ${breakpoint}px) {
-    ${p => p.selected && 'background: linear-gradient(to top, transparent 0%, rgb(255, 255, 255, 0.175) 100%);'}
-    border-top: 1px solid ${borderColor};
-  }
-`;
-
-const TraitSelected = styled.div`
-  align-items: center;
-  display: flex;
-  flex: 1 0 225px;
-  flex-direction: column;
-  padding-left: 10px;
-`;
-
-const NoTraitsMessage = styled.div`
-  align-items: center;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  padding: 24px;
-  width: 100%;
-  & > div {
-    opacity: 0.5;
-  }
-  & > div:first-child {
-    font-size: 80px;
-  }
-  & > div:nth-child(2) {
-    font-size: 14px;
-    line-height: 32px;
-  }
-  & > button {
-    font-size: 85%;
-    font-weight: bold;
-    margin-top: 24px;
-    padding-left: 40px;
-    padding-right: 40px;
-    opacity: 1;
-    text-transform: uppercase;
-    white-space: nowrap;
-    width: auto;
-  }
-
-  @media (max-width: ${breakpoint}px) {
-    border-bottom: 2px solid #18313a;
-  }
-`;
-
-const Display = styled.div`
-  align-items: center;
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  justify-content: center;
-  min-height: 175px;
-  overflow: hidden;
-  padding: 0 0 10px;
-  & > div {
-    font-size: 100px;
-    line-height: 74px;
-  }
-  & > h6 {
-    font-size: 16px;
-    margin: 0;
-  }
-  @media (max-width: ${breakpoint}px) {
-    min-height: 0;
-    padding-top: 20px;
-  }
-`;
-
-const Description = styled.div`
-  align-items: center;
-  border-bottom: 1px solid ${borderColor};
-  border-top: 1px solid ${borderColor};
-  color: ${p => p.theme.colors.mainText};
-  display: flex;
-  font-size: 12px;
-  height: 85px;
-  justify-content: center;
-  padding: 5px;
-  text-align: center;
-  width: 100%;
-  & > div {
-    max-height: 75px;
-    max-width: 500px;
-    overflow: auto;
-    padding: 1px 0;
-  }
-  @media (max-width: ${breakpoint}px) {
-    border: none;
-  }
-`;
-
-const NameForm = styled.div`
-  display: flex;
-  margin-top: 15px;
-  max-width: 100%;
-
-  & input {
-    margin-right: 10px;
-    min-width: 0;
-  }
-  & button {
-    margin-right: 0;
-  }
-`;
 
 const History = styled.div`
   display: flex;
   flex: 1;
   flex-direction: column;
-  margin-top: 25px;
+  margin-top: 10px;
   overflow: hidden;
-  padding: 0 15px;
+  padding: 0;
+
+  & > h3 {
+    border-bottom: 1px solid #222;
+    color: #888;
+    font-size: 14px;
+    margin: 15px 0 0;
+    padding-bottom: 6px;
+    text-transform: uppercase;
+  }
 `;
 
 const LogHeader = styled.ul``;
@@ -322,7 +53,7 @@ const Log = styled.div`
   overflow: hidden;
   & ul {
     display: flex;
-    flex-direction: column-reverse;
+    flex-direction: column;
     list-style-type: none;
     margin: 0;
     padding: 5px 0;
@@ -337,8 +68,9 @@ const Log = styled.div`
     border-top: 1px solid ${borderColor};
     flex: 1;
     height: 100%;
-    overflow-x: hidden;
     overflow-y: auto;
+    padding-right: 5px;
+    margin-right: -5px;
     & ul {
       margin-right: -5px;
       @media (max-width: ${breakpoint}px) {
@@ -358,221 +90,405 @@ const Log = styled.div`
     margin: 0 -10px;
   }
 `;
-
 const EmptyLogEntry = styled.li`
   padding-top: 50px;
   text-align: center;
 `;
 
-const MIN_TRAIT_SLOTS = 12;
+const foldOffset = 28;
+const belowFoldMin = 256;
 
-const CrewmateDetails = () => {
-  const { i } = useParams();
-  const { account } = useAuth();
-  // const { data: assignmentData } = useCrewAssignments();
-  const { data: crewmate } = useCrewmate(i);
-  const { data: activities } = useActivities({ id: i, label: Entity.IDS.CREWMATE });
-  const playSound = useStore(s => s.dispatchSoundRequested);
+const CoverImage = styled.div`
+  height: calc(80% + ${foldOffset}px);
+  left: 0;
+  max-height: calc(100% - ${foldOffset}px - ${belowFoldMin}px);
+  position: absolute;
+  top: 0;
+  width: 100%;
 
-  const [ selectedTrait, setSelectedTrait ] = useState();
+  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
+    height: 33%;
+    max-height: none;
+  }
 
-  const traits = useMemo(() => Crewmate.getCombinedTraits(crewmate?.Crewmate || {}), [crewmate]);
+  &:before {
+    background-color: #111;
+    background-image: url(${p => p.src});
+    background-repeat: no-repeat;
+    background-position: ${p => p.center || 'center center'};
+    background-size: cover;
+    content: '';
+    display: block;
+    height: 100%;
+    mask-image: linear-gradient(to bottom, transparent 0%, black 10%, black 75%, transparent 100%);
+    transition:
+      background-position 750ms ease-out,
+      opacity 750ms ease-out;
+  }
+`;
 
-  const startDate = useMemo(() => {
-    if (crewmate?.events?.length > 0) {
-      return Time.fromUnixTime(crewmate.events[0].timestamp).toGameClockADays();
+const MainContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  justify-content: flex-start;
+  margin-top: 60px;
+  overflow: hidden;
+  padding: 25px 35px;
+  position: relative;
+  z-index: 1;
+`;
+
+const AboveFold = styled.div`
+  align-items: stretch;
+  display: flex;
+  flex-direction: row;
+  min-height: 375px;
+`;
+
+const CardSection = styled.div`
+  flex: 0 0 225px;
+`;
+
+const CardWrapper = styled.div`
+  background: black;
+  border: 1px solid #363636;
+  margin-bottom: 20px;
+  padding: 6px;
+  width: 100%;
+`;
+
+const TraitsAndBio = styled.div`
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 0 20px;
+  & > h3 {
+    border-bottom: 1px solid #333;
+    color: #888;
+    font-size: 14px;
+    margin: 0;
+    padding-bottom: 6px;
+    text-transform: uppercase;
+  }
+`;
+
+const TraitWrapper = styled.div`
+  min-height: 180px;
+  padding: 10px 0;
+`;
+const TraitRow = styled.div`
+  line-height: 55px;
+  font-size: 70px;
+  & > span {
+    display: inline-block;
+    margin-right: 4px;
+  }
+`;
+
+const MouseoverTitle = styled.div`
+  border-bottom: 1px solid #222;
+  color: ${p => p.highlight ? p.theme.colors.main : '#999'};
+  font-size: 14px;
+  padding-bottom: 4px;
+  text-transform: uppercase;
+`;
+const MouseoverBody = styled.div`
+  align-items: center;
+  display: flex;
+  flex-direction: row;
+  padding: 10px 0 0;
+  & > div:not(:first-child) {
+    padding-left: 15px;
+    & > h3 {
+      color: white;
+      font-size: 16px;
+      margin: 0 0 6px;
     }
-    return null;
-  }, [crewmate?.events]);
-
-  const selectTrait = useCallback((trait, mute) => () => {
-    setSelectedTrait({
-      ...(Crewmate.getTrait(trait) || {}),
-      id: trait
-    });
-    if (!mute) {
-      playSound('effects.click');
+    & > p {
+      color: #888;
+      font-size: 14px;
+      margin: 0;
     }
-  }, [playSound]);
+  }
+`;
+const MouseoverIcon = styled.div`
+  font-size: 80px;
+  line-height: 0;
+`;
 
-  const fillerTraits = useMemo(() => {
-    if (traits.length > 0 && traits.length < MIN_TRAIT_SLOTS) {
-      return Array.from(Array(MIN_TRAIT_SLOTS - traits.length));
-    }
-    return [];
-  }, [traits]);
+const BioWrapper = styled.div`
+  color: ${p => p.isAutogenerated ? '#999' : p.theme.colors.main};
+  font-size: 95%;
+  line-height: 1.5em;
+  padding: 10px 15px;
+`;
 
-  useEffect(() => {
-    if(traits?.length > 0) {
-      selectTrait(traits[0], true)();
+const ManagementContainer = styled.div`
+  border-left: 1px solid #363636;
+  display: flex;
+  flex-direction: column;
+  flex: 0 0 280px;
+  margin-left: 30px;
+  padding-left: 30px;
+  & > div {
+    margin-top: 20px;
+    &:first-child {
+      margin-top: 0;
     }
-  }, [traits, selectTrait]);
+
+    & > button {
+      margin-bottom: 8px;
+      width: 225px;
+    }
+  }
+`;
+const MyCrewStatement = styled.div`
+  align-items: center;
+  color: ${p => p.theme.colors.main};
+  display: flex;
+  font-weight: bold;
+  & > svg {
+    font-size: 24px;
+    margin-right: 10px;
+  }
+`;
+const Stat = styled.div`
+  color: white;
+  &:before {
+    content: "${p => p.label}:";
+    display: block;
+    opacity: 0.7;
+  }
+`;
+
+const BelowFold = styled.div`
+  flex: 1;
+  height: 0;
+`;
+
+const noop = () => {/* noop */};
+
+const mouseoverPaneProps = (visible) => ({
+  css: css`
+    padding: 10px;
+    pointer-events: ${visible ? 'auto' : 'none'};
+    width: 400px;
+  `,
+  placement: 'top',
+  visible
+});
+
+const PopperWrapper = (props) => {
+  const [refEl, setRefEl] = useState();
+  return props.children(refEl, props.disableRefSetter ? noop : setRefEl);
+}
+
+const MouseableCrewTrait = (props) => {
+  const [hovered, setHovered] = useState();
+  return (
+    <PopperWrapper>
+      {(refEl, setRefEl) => (
+        <span
+          ref={setRefEl}
+          onMouseEnter={() => setHovered(true)}
+          onMouseLeave={() => setHovered()}>
+          <CrewTraitIcon {...props} />
+
+          <MouseoverInfoPane referenceEl={refEl} {...mouseoverPaneProps(hovered)}>
+            <MouseoverTitle highlight={props.type === 'impactful'}>
+              {props.type === 'impactful' ? 'Impactful Trait' : 'Trait'}
+            </MouseoverTitle>
+            <MouseoverBody>
+              <MouseoverIcon>
+                <CrewTraitIcon {...props} />
+              </MouseoverIcon>
+              <div>
+                <h3>{Crewmate.getTrait(props.trait).name}</h3>
+                <p>{formatters.crewmateTraitDescription(Crewmate.getTrait(props.trait).description)}</p>
+              </div>
+            </MouseoverBody>
+          </MouseoverInfoPane>
+        </span>
+      )}
+    </PopperWrapper>
+  );
+};
+
+const CrewmateDetails = ({ crewmateId, crewmate, crewmateMap, isOwnedCrewmate }) => {
+  const history = useHistory();
+
+  const onSetAction = useStore(s => s.dispatchActionDialog);
+  const createAlert = useStore(s => s.dispatchAlertLogged);
+  const isNameValid = useNameAvailability(Entity.IDS.CREWMATE);
+  const { data: activities } = useActivities({ id: crewmateId, label: Entity.IDS.CREWMATE });
+  const { data: earliestActivity, isLoading: earliestLoading } = useEarliestActivity({ id: crewmateId, label: Entity.IDS.CREWMATE });
+
+  const onBackToCrew = useCallback(() => {
+    console.log('crewmate', crewmate, crewmate?.Controller?.controller.id);
+    if (crewmate?.Control?.controller.id) {
+      history.push(`/crew/${crewmate?.Control?.controller.id}`);
+    }
+  }, [crewmate]);
+
+  const formationDate = useMemo(() => {
+    if (earliestLoading) return '...';
+    if (!earliestActivity) return 'Unknown';
+    return `${Time.fromUnixTime(earliestActivity?.event?.timestamp, false).toGameClockADays(true)} SA`;
+  }, [earliestActivity, earliestLoading]);
 
   return (
-    <Details
-      onCloseDestination="/crew"
-      title="Crewmate Profile"
-      width="max">
-      {crewmate && (
-        <Content>
-          <CrewBasics>
+    <>
+      <MainContainer>
+        <AboveFold>
+          <CardSection>
             <CardWrapper>
-              <CrewCard crewmate={crewmate} />
+              <CrewCard crewmate={crewmate} showClassInHeader />
             </CardWrapper>
-            <BelowCardWrapper>
-              <CrewLabels>
-                {startDate && (
-                  <DataReadout label="Career Start" slim inheritFontSize style={{ margin: '1.4em 0' }}>
-                    {startDate.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} SA
-                  </DataReadout>
-                )}
-                <DataReadout label="Class" slim inheritFontSize>{Crewmate.Entity.getClass(crewmate)?.name || '(n/a)'}</DataReadout>
-                <DataReadout label="Title" slim inheritFontSize>{Crewmate.Entity.getTitle(crewmate)?.name || '(n/a)'}</DataReadout>
-                <DataReadout label="Collection" slim inheritFontSize>{Crewmate.Entity.getCollection(crewmate)?.name || '(n/a)'}</DataReadout>
-              </CrewLabels>
-              <Management>
-                <ManagementSubtitle>Management</ManagementSubtitle>
+            <Button onClick={onBackToCrew} subtle width={150}>
+              <BackIcon /> <span>Crew</span>
+            </Button>
+          </CardSection>
+
+          <TraitsAndBio>
+            <h3>Traits</h3>
+            <TraitWrapper>
+              <TraitRow>
+                {(crewmate?.Crewmate?.impactful || []).map((i) => (
+                  <MouseableCrewTrait key={i} trait={i} type="impactful" opaque />
+                ))}
+              </TraitRow>
+              <TraitRow>
+                {(crewmate?.Crewmate?.cosmetic || []).map((i) => (
+                  <MouseableCrewTrait key={i} trait={i} type="cosmetic" opaque />
+                ))}
+              </TraitRow>
+            </TraitWrapper>
+
+            <h3>Bio</h3>
+            {/* TODO: a real bio would replace this if set, AND would set isAutogenerated to false */}
+            <BioWrapper isAutogenerated>
+              {crewmate?.Name?.name}
+              {crewmate?.Crewmate?.coll === 4
+                ? ` is an Adalian, born after the arrival of the Arvad to the Belt.`
+                : ` is one of the rare surviving members of the Arvad manifest.`}
+              {crewmate?.Crewmate?.title > 0
+                ? ` Officially, their title is ${Crewmate.Entity.getTitle(crewmate)?.name}, but they have functioned 
+                    as a ${Crewmate.Entity.getClass(crewmate)?.name} in Adalia since ${formationDate}.`
+                : ` They officially began as a ${Crewmate.Entity.getClass(crewmate)?.name} in Adalia in ${formationDate}.`
+              }
+            </BioWrapper>
+          </TraitsAndBio>
+
+          <ManagementContainer>
+            {/* TODO: warning on crewmate on my crew but that i do not own */}
+            {/* TODO: warning on crewmate i own that is on a different crew */}
+            {isOwnedCrewmate && <MyCrewStatement><MyAssetIcon /> This crewmate asset is owned by me.</MyCrewStatement>}
+            <Stat label="Start Date">{formationDate}</Stat>
+            {crewmate?.Crewmate?.title > 0 && <Stat label="Title">{Crewmate.Entity.getTitle(crewmate)?.name}</Stat>}
+            <Stat label="Collection">{Crewmate.Entity.getCollection(crewmate)?.name}</Stat>
+            
+            <div style={{ flex: 1 }} />
+            
+            {isOwnedCrewmate && (
+              <div style={{ paddingTop: 15 }}>
+                <Button subtle disabled>Edit Bio</Button>
                 <MarketplaceLink
                   chain={crewmate?.Nft?.chain}
                   assetType="crewmate"
                   id={crewmate?.id}>
-                  {(onClick, setRefEl) => (
-                    <Button
-                      setRef={setRefEl}
-                      onClick={onClick}>
-                      <ClaimIcon />
-                      {Address.areEqual(account, crewmate?.Nft?.owner) ? 'List for Sale' : 'Purchase Crew'}
-                    </Button>
-                  )}
+                  {(onClick, setRefEl) => <Button setRef={setRefEl} subtle onClick={onClick}>List for Sale</Button>}
                 </MarketplaceLink>
+              </div>
+            )}
+          </ManagementContainer>
+        </AboveFold>
 
-              </Management>
-            </BelowCardWrapper>
-          </CrewBasics>
-          <CrewDetails>
-            <TabContainer
-              containerCss={tabContainerCss}
-              iconCss={{}}
-              labelCss={{
-                minWidth: '50px',
-                textAlign: 'center',
-                textTransform: 'uppercase'
-              }}
-              tabCss={{ width: '116px' }}
-              tabs={[
-                {
-                  icon: <HexagonIcon />,
-                  label: 'Traits',
-                },
-                {
-                  icon: <BioIcon />,
-                  label: 'Bio',
-                  disabled: true
-                },
-                {
-                  icon: <StatsIcon />,
-                  label: 'Stats',
-                  disabled: true,
-                }
-              ]}
-              panes={[
-                (
-                  <TraitPane>
-                    {traits?.length > 0 && (
-                      <>
-                        <AllTraits>
-                          {traits.map((trait) => {
-                            const { name, type } = Crewmate.getTrait(trait) || {};
-                            if (name) {
-                              return (
-                                <Trait
-                                  key={trait}
-                                  onClick={selectTrait(trait)}
-                                  selected={selectedTrait?.id === trait}>
-                                  <CrewTraitIcon trait={trait} type={type} />
-                                  <h6>{name}</h6>
-                                </Trait>
-                              );
-                            }
-                            return null;
-                          })}
-                          {fillerTraits.map((tmp, i) => (
-                            <Trait key={i} style={{ opacity: 0.10 }}>
-                              <HexagonIcon />
-                              <h6>&nbsp;</h6>
-                            </Trait>
-                          ))}
-                        </AllTraits>
-                        <TraitSelected>
-                          <Display>
-                            <div>
-                              <CrewTraitIcon trait={selectedTrait?.id} type={selectedTrait?.type} />
-                            </div>
-                            <h6>{selectedTrait?.name}</h6>
-                          </Display>
-                          {selectedTrait?.description && (
-                            <Description>
-                              <div>
-                                {formatters.crewmateTraitDescription(selectedTrait?.description)}
-                              </div>
-                            </Description>
-                          )}
-                        </TraitSelected>
-                      </>
-                    )}
-                    {!traits?.length && (
-                      <NoTraitsMessage>
-                        <div>
-                          <WarningOutlineIcon />
-                        </div>
-                        <div>
-                          This crewmate doesn't have any traits.
-                        </div>
-                        {/* TODO: ecs refactor --  this should link to to appropriate "initialization" story flow */}
-                        {/*
-                        {assignmentData?.assignmentsByBook?.length > 0 && (
-                          <Button onClick={goToCrewAssignments}>
-                            Go to Crew Assignments
-                          </Button>
-                        )}
-                        */}
-                      </NoTraitsMessage>
-                    )}
-                  </TraitPane>
-                ),
-                null,
-                null
-              ]}
-              negativeTopMargin
-            />
-            <History>
-              <Subtitle>Crew Log</Subtitle>
-              <Log>
-                <LogHeader>
-                  <LogEntry isHeaderRow isTabular />
-                </LogHeader>
-                <div>
-                  <ul>
-                    {/* TODO: totalCount from api, pagination, custom columns (see mocks) */}
-                    {activities?.length > 0
-                      ? activities.map((activity) => (
-                        <LogEntry
-                          key={activity.id}
-                          activity={activity}
-                          timestampBreakpoint="1500px"
-                          isTabular />
-                      ))
-                      : <EmptyLogEntry>No logs recorded yet.</EmptyLogEntry>
-                    }
-                  </ul>
-                </div>
-              </Log>
-            </History>
-          </CrewDetails>
-        </Content>
+        <BelowFold>
+          <History>
+            <h3>Crewmate Log</h3>
+            <Log>
+              <LogHeader>
+                <LogEntry isHeaderRow isTabular />
+              </LogHeader>
+              <div>
+                <ul>
+                  {/* TODO: totalCount from api, pagination, custom columns (see mocks) */}
+                  {activities?.length > 0
+                    ? activities.map((activity) => (
+                      <LogEntry
+                        key={activity.id}
+                        activity={activity}
+                        timestampBreakpoint="1500px"
+                        isTabular />
+                    ))
+                    : <EmptyLogEntry>No logs recorded yet.</EmptyLogEntry>
+                  }
+                </ul>
+              </div>
+            </Log>
+          </History>
+        </BelowFold>
+      </MainContainer>
+    </>
+  );
+};
+
+const Wrapper = () => {
+  const { i } = useParams();
+  const { crewmateMap, loading: myCrewLoading } = useCrewContext();
+  const history = useHistory();
+
+  const { data: crewmate, isLoading: crewmateLoading } = useCrewmate(Number(i));
+  
+  const createAlert = useStore(s => s.dispatchAlertLogged);
+
+  useEffect(() => {
+    // if id is specified...
+    if (i) {
+      // ...return to / with error if crew not found
+      if (!crewmateLoading && !crewmate) {
+        createAlert({
+          type: 'GenericAlert',
+          data: { content: 'Invalid crewmate id specified.' },
+          level: 'warning',
+          duration: 5000
+        });
+        history.replace('/');
+      }
+
+    // if i is not specified and I am not logged in... return to / without warning
+    } else {
+      history.replace('/');
+    }
+  }, [crewmateLoading, crewmate, i]);
+
+  const loading = myCrewLoading || crewmateLoading;
+  {/* TODO: onClose, should maybe just go "back", but possibly should go to "crew" page */}
+  return (
+    <Details
+      edgeToEdge
+      headerProps={{ background: 'true', v2: 'true' }}
+      onCloseDestination="/"
+      contentInnerProps={{ style: { display: 'flex', flexDirection: 'column', height: '100%' } }}
+      title={<>Crewmate Details</>}
+      width="1250px">
+      <CoverImage src={CoverImageSrc} />
+      {loading && (
+        <div style={{ position: 'absolute', left: 'calc(50% - 30px)', top: 'calc(50% - 30px)' }}>
+          <LoadingAnimation color="white" />
+        </div>
+      )}
+      {crewmate && !loading && (
+        <CrewmateDetails
+          crewmateId={i}
+          crewmate={crewmate}
+          crewmateMap={crewmateMap}
+          isOwnedCrewmate={!!crewmateMap[i]}
+        />
       )}
     </Details>
   );
 };
 
-export default CrewmateDetails;
+export default Wrapper;

@@ -76,6 +76,8 @@ const loadingCss = css`
   z-index: 1;
 `;
 
+const DISABLE_INTRO_ANIMATION = true && process.env.NODE_ENV === 'development';
+
 const Interface = () => {
   const { isMobile } = useScreenSize();
   const isFetching = useIsFetching();
@@ -103,7 +105,7 @@ const Interface = () => {
   return (
     <>
       <Alerts />
-      <Intro />
+      {!DISABLE_INTRO_ANIMATION && <Intro />}
       {cutscene && <Cutscene />}
       {launcherPage && <Launcher />}
       {showDevTools && <DevToolsViewer />}

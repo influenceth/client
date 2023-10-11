@@ -78,8 +78,18 @@ const CardOuter = styled.div`
   }
 `;
 
+const RecruitTally = styled.div`
+  color: ${p => p.theme.colors.main};
+  margin-right: 16px;
+  & b {
+    color: white;
+    font-weight: normal;
+  }
+`;
+
 const SelectUninitializedCrewmateDialog = ({ onSelect }) => {
   const { adalianRecruits, arvadianRecruits, loading } = useCrewContext();
+  console.log('adalianRecruits', adalianRecruits);
 
   const [selected, setSelected] = useState();
 
@@ -118,15 +128,15 @@ const SelectUninitializedCrewmateDialog = ({ onSelect }) => {
       flourish={<Flourish><GenesisIcon /></Flourish>}
       flourishWidth={cardWidth}
       leftButton={{
-        // TODO: should we put a badge if they have adalianRecruits available?
-        label: 'Create a New Adalian',
+        label: 'Create New Adalian',
         onClick: () => onSelect(adalianRecruits?.[0]?.id || 0),
-        props: { style: { width: cardWidth } }
+        props: { badge: adalianRecruits?.length || 0, width: cardWidth }
       }}
       rightButton={{
         label: 'Next',
         onClick: () => selected ? onSelect(selected) : null,
-        props: { disabled: nativeBool(!selected) }
+        props: { disabled: nativeBool(!selected) },
+        preLabel: <RecruitTally>Unrecruited Arvad Crewmates: <b>{arvadianRecruits.length}</b></RecruitTally>
       }}
       title="Arvad Crewmates"
       subtitle={<Subtitle>Your account has <b>Arvad Crewmates</b> that can be recruited</Subtitle>}

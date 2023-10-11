@@ -29,7 +29,7 @@ export function WebsocketProvider({ children }) {
     
     const roomKey = (room || '').includes('::') ? room : DEFAULT_ROOM;
     if (registeredHandlers.current[roomKey]) {
-      console.log('handleMessage', roomKey, { type, body });
+      if (process.env.NODE_ENV !== 'production') console.log('handleMessage', roomKey, { type, body });
       registeredHandlers.current[roomKey]({ type, body });
     }
   }, []);
