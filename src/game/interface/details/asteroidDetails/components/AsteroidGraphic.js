@@ -26,6 +26,7 @@ const Graphic = styled.div`
     z-index: -1;
   }
 `;
+
 const GraphicData = styled.div`
   align-items: center;
   color: rgba(255, 255, 255, 0.5);
@@ -72,9 +73,11 @@ const opacityKeyframes = keyframes`
     opacity: 0.3;
   }
 `;
+
 const opacityAnimation = css`
   animation: ${opacityKeyframes} 1200ms ease-in-out infinite;
 `;
+
 const LastRow = styled.div`
   ${p => p.animate && opacityAnimation};
   text-align: center;
