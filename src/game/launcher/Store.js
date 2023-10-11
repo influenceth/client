@@ -26,6 +26,7 @@ import { WarningIcon } from '~/components/Icons';
 import Details from '~/components/DetailsV2';
 import useAuth from '~/hooks/useAuth';
 import useInterval from '~/hooks/useInterval';
+import ReactTooltip from 'react-tooltip';
 
 const borderColor = `rgba(${theme.colors.mainRGB}, 0.5)`;
 
@@ -144,6 +145,8 @@ const FundingButtons = styled.div`
     width: 100%;
   }
 `;
+
+const rampDisclaimer = `Ramp requires the following disclaimer: "Don't invest unless you're prepared to lose all the money you invest. This is a high-risk investment and you should not expect to be protected if something goes wrong."`;
 
 export const CrewmateSKU = () => {
   const { account, walletContext: { starknet } } = useAuth();
@@ -277,6 +280,7 @@ export const CrewmateSKU = () => {
       {funding && createPortal(
         (
           <Details title="Funding Methods" onClose={() => setFunding(false)} modalMode style={{ zIndex: 9000 }}>
+            <ReactTooltip id="fundingDialog" effect="solid" style={{ width: '250px' }} />
             <FundingButtons>
               <Button subtle onClick={() => onSelectFundingOption('eth')}>
                 <Ether /> <span>Fund from Ethereum</span>
@@ -287,7 +291,7 @@ export const CrewmateSKU = () => {
               </Button>
 
               {process.env.REACT_APP_RAMP_API_KEY && (
-                <Button subtle onClick={() => onSelectFundingOption('ramp')}>
+                <Button subtle onClick={() => onSelectFundingOption('ramp')} data-tip={rampDisclaimer} data-for="fundingDialog">
                   <TbLetterR /> <span>Fund with Ramp</span>
                 </Button>
               )}
