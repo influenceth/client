@@ -84,6 +84,12 @@
     },
     "REACT_APP_HELP_URL": {
       "required": false
+    },
+    "REACT_APP_RAMP_API_KEY": {
+      "required": false
+    },
+    "REACT_APP_ARGENT_WEB_WALLET_URL": {
+      "required": false
     }
   }
 }
