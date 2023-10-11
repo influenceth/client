@@ -206,9 +206,9 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
       }
     })),
 
-    dispatchToggleInterface: (force) => set(produce(state => {
-      state.graphics.hideInterface = (force === true || force === false)
-        ? force
+    dispatchToggleInterface: (forceHide) => set(produce(state => {
+      state.graphics.hideInterface = (forceHide === true || forceHide === false)
+        ? forceHide
         : !state.graphics.hideInterface;
     })),
 

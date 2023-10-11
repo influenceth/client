@@ -290,29 +290,23 @@ const Footer = styled.div`
   }
 `;
 
-const DISABLE_LAUNCHER_TRAILER = true && process.env.NODE_ENV === 'development';
-
 const StyledNavIcon = () => <Icon><NavIcon selected selectedColor="#777" /></Icon>;
 
 const Launcher = (props) => {
-  const { authenticating, login, logout, token, walletContext } = useAuth();
+  const { account, authenticating, login, logout, walletContext } = useAuth();
   const { crews } = useCrewContext();
   const { data: priceConstants, isLoading: priceConstantsLoading } = usePriceConstants();
 
   const launcherPage = useStore(s => s.launcherPage);
-  const dispatchCutscene = useStore(s => s.dispatchCutscene);
   const dispatchLauncherPage = useStore(s => s.dispatchLauncherPage);
   const dispatchToggleInterface = useStore(s => s.dispatchToggleInterface);
-  const dispatchSeenIntroVideo = useStore(s => s.dispatchSeenIntroVideo);
   const interfaceHidden = useStore(s => s.graphics.hideInterface);
   const hasSeenIntroVideo = useStore(s => s.hasSeenIntroVideo);
 
   const [menuOpen, setMenuOpen] = useState(false);
 
-  const { account } = walletContext;
   const walletId = walletContext?.starknet?.id;
-
-  const loggedIn = account && token;
+  const loggedIn = !!account;
 
   useEffect(() => {
     if (!interfaceHidden) {
@@ -361,13 +355,6 @@ const Launcher = (props) => {
   }, []);
 
   const onClickPlay = useCallback(() => {
-    if (!hasSeenIntroVideo && !DISABLE_LAUNCHER_TRAILER) {
-      dispatchSeenIntroVideo(true);
-      dispatchCutscene(
-        `${process.env.REACT_APP_CLOUDFRONT_OTHER_URL}/videos/intro.m3u8`,
-        true
-      );
-    }
     dispatchLauncherPage();
   }, [hasSeenIntroVideo]);
 
