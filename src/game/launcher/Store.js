@@ -1,5 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
+import { utils as ethersUtils } from 'ethers';
+import { createPortal } from 'react-dom';
+import { BiCreditCard } from 'react-icons/bi';
+import { TbLetterR } from 'react-icons/tb';
+import { uint256 } from 'starknet';
 
 import Button from '~/components/ButtonAlt';
 import ClipCorner from '~/components/ClipCorner';
@@ -17,6 +22,10 @@ import theme from '~/theme';
 
 import AdaliansImages from '~/assets/images/sales/adalians.png';
 import AsteroidsImage from '~/assets/images/sales/asteroids.png';
+import { WarningIcon } from '~/components/Icons';
+import Details from '~/components/DetailsV2';
+import useAuth from '~/hooks/useAuth';
+import useInterval from '~/hooks/useInterval';
 
 const borderColor = `rgba(${theme.colors.mainRGB}, 0.5)`;
 
@@ -128,10 +137,55 @@ const Price = styled.div`
   }
 `;
 
+const FundingButtons = styled.div`
+  padding: 10px;
+  & > button {
+    margin-bottom: 15px;
+    width: 100%;
+  }
+`;
+
 export const CrewmateSKU = () => {
+  const { account, walletContext: { starknet } } = useAuth();
   const { purchaseCredits, getPendingCreditPurchase } = useCrewManager();
   const { data: priceConstants } = usePriceConstants();
+  
+  const [ethBalance, setEthBalance] = useState(null);
   const [tally, setTally] = useState(1);
+
+  const totalCost = useMemo(() => {
+    return BigInt(tally) * BigInt(priceConstants?.ADALIAN_PRICE_ETH || 0);
+  }, [priceConstants?.ADALIAN_PRICE_ETH, tally]);
+
+  const [funding, setFunding] = useState(false);
+  const [polling, setPolling] = useState(false);
+
+  const onFundWallet = useCallback(() => {
+    setFunding(true);
+  }, []);
+
+  const onSelectFundingOption = useCallback((which) => {
+    const targetAmount = Math.max(ethersUtils.formatEther(totalCost || 0n) || 0, 0.01);
+    setFunding(false);
+    if (which === 'eth') {
+      window.open(
+        `https://www.layerswap.io/app/?from=ETHEREUM_MAINNET&to=STARKNET_MAINNET&asset=ETH&destAddress=${account}&lockAddress=true&amount=${targetAmount}&actionButtonText=Fund%20Account`,
+        '_blank'
+      );
+    } else if (which === 'stripe') {
+      window.open(
+        `https://www.layerswap.io/app/?from=STRIPE&to=STARKNET_MAINNET&asset=ETH&destAddress=${account}&lockAddress=true&amount=${targetAmount}&actionButtonText=Fund%20Account`,
+        '_blank'
+      );
+    } else if (which === 'ramp') {
+      const logoUrl = window.location.origin + '/maskable-logo-192x192.png';
+      window.open(
+        `https://app.${process.env.NODE_ENV === 'production' ? '' : 'demo.'}ramp.network?hostApiKey=${process.env.REACT_APP_RAMP_API_KEY}&hostAppName=Influence&hostLogoUrl=${logoUrl}`,
+        '_blank'
+      );
+    }
+    setPolling(true);
+  }, [totalCost]);
 
   const onPurchaseCrewmates = useCallback(() => {
     purchaseCredits(tally);
@@ -141,49 +195,108 @@ export const CrewmateSKU = () => {
     return !!getPendingCreditPurchase();
   }, [getPendingCreditPurchase]);
 
-  return (
-    <SKUWrapper>
-      <SKUInner>
-        <Title>Crewmates</Title>
-        <Imagery>
-          <img src={AdaliansImages} />
-        </Imagery>
-        <Description>
-          Crewmates are the individual workers that perform all game tasks and form your crew.
-        </Description>
-        <Main>
-          <UncontrolledTextInput
-            disabled={nativeBool(isPendingPurchase)}
-            min={1}
-            onChange={(e) => setTally(e.currentTarget.value)}
-            value={safeValue(tally)}
-            step={1}
-            type="number" />
+  const updateEthBalance = useCallback(async () => {
+    if (!starknet?.account?.provider) return;
+    try {
+      const balance = await starknet.account.provider.callContract({
+        contractAddress: process.env.REACT_APP_ERC20_TOKEN_ADDRESS,
+        entrypoint: 'balanceOf',
+        calldata: [starknet.account.address]
+      });
+      setEthBalance(
+        uint256.uint256ToBN({ low: balance.result[0], high: balance.result[1] })
+      );
+    } catch (e) {
+      console.warn(e);
+    }
+  }, [starknet]);
+  useEffect(updateEthBalance, []);
 
-          <label>Crewmates</label>
-        </Main>
-        <Price>
-          <span>{formatters.crewmatePrice(priceConstants, 4)}</span>
-          <label>Eth each</label>
-        </Price>
-        <Button
-          loading={reactBool(isPendingPurchase)}
-          disabled={nativeBool(isPendingPurchase)}
-          isTransaction
-          onClick={onPurchaseCrewmates}
-          subtle
-          style={{ width: '100%' }}>
-          Purchase
-          {priceConstants && (
-            <span style={{ color: 'white', flex: 1, fontSize: '90%', textAlign: 'right', marginLeft: 15 }}>
-              {/* TODO: should this update price before "approve"? what about asteroids? */}
-              <Ether>{formatters.ethPrice(BigInt(tally) * BigInt(priceConstants.ADALIAN_PRICE_ETH), 4)}</Ether>
-            </span>
-          )}
-        </Button>
-        <ClipCorner dimension={10} color={borderColor} />
-      </SKUInner>
-    </SKUWrapper>
+  // TODO: would it make more sense to just check on each new block?
+  useInterval(() => {
+    if (polling && ethBalance < totalCost) updateEthBalance();
+  }, 5e3);
+
+  return (
+    <>
+      <SKUWrapper>
+        <SKUInner>
+          <Title>Crewmates</Title>
+          <Imagery>
+            <img src={AdaliansImages} />
+          </Imagery>
+          <Description>
+            Crewmates are the individual workers that perform all game tasks and form your crew.
+          </Description>
+          <Main>
+            <UncontrolledTextInput
+              disabled={nativeBool(isPendingPurchase)}
+              min={1}
+              onChange={(e) => setTally(e.currentTarget.value)}
+              value={safeValue(tally)}
+              step={1}
+              type="number" />
+
+            <label>Crewmates</label>
+          </Main>
+          <Price>
+            <span>{formatters.crewmatePrice(priceConstants, 4)}</span>
+            <label>Eth each</label>
+          </Price>
+          <Button
+            loading={reactBool(isPendingPurchase)}
+            disabled={nativeBool(isPendingPurchase || !priceConstants?.ADALIAN_PRICE_ETH)}
+            isTransaction={ethBalance >= totalCost}
+            onClick={ethBalance >= totalCost ? onPurchaseCrewmates : onFundWallet}
+            subtle={ethBalance >= totalCost}
+            style={{ width: '100%' }}>
+            {ethBalance < totalCost
+              ? (
+                <>
+                  <WarningIcon style={{ color: 'orangered' }} />
+                  <span>Fund Wallet</span>
+                </>
+              )
+              : (
+                <>
+                  Purchase
+                  {priceConstants && (
+                    <span style={{ color: 'white', flex: 1, fontSize: '90%', textAlign: 'right', marginLeft: 15 }}>
+                      {/* TODO: should this update price before "approve"? what about asteroids? */}
+                      <Ether>{formatters.ethPrice(totalCost, 4)}</Ether>
+                    </span>
+                  )}
+                </>
+              )}
+          </Button>
+          
+          <ClipCorner dimension={10} color={borderColor} />
+        </SKUInner>
+      </SKUWrapper>
+
+      {funding && createPortal(
+        (
+          <Details title="Funding Methods" onClose={() => setFunding(false)} modalMode style={{ zIndex: 9000 }}>
+            <FundingButtons>
+              <Button subtle onClick={() => onSelectFundingOption('eth')}>
+                <Ether /> <span>Fund from Ethereum</span>
+              </Button>
+
+              <Button subtle onClick={() => onSelectFundingOption('stripe')}>
+                <BiCreditCard /> <span>Fund with Credit Card (US)</span>
+              </Button>
+
+              {process.env.REACT_APP_RAMP_API_KEY && (
+                <Button subtle onClick={() => onSelectFundingOption('ramp')}>
+                  <TbLetterR /> <span>Fund with Ramp</span>
+                </Button>
+              )}
+            </FundingButtons>
+          </Details>
+        ),
+        document.body
+      )}
+    </>
   );
 };
 
