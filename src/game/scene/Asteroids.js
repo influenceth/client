@@ -188,7 +188,7 @@ const Asteroids = () => {
     // some state updates to not get rendered promptly (i.e. until next coarseTime update)...
     // consider how we might re-introduce a throttle here to avoid parallel worker calculations
     // (where the earlier one would immediately be irrelevant)... see above TODO in the process
-    if (coarseTime && asteroidsWorkerPayload/* && !isUpdating.current */) {
+    if (coarseTime && asteroidsWorkerPayload && !isUpdating.current) {
       isUpdating.current = true;
       processInBackground(
         {
