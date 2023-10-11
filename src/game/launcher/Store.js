@@ -168,7 +168,7 @@ export const CrewmateSKU = () => {
         </Price>
         <Button
           loading={reactBool(isPendingPurchase)}
-          disabled={nativeBool(isPendingPurchase) || Number(tally) === 0}
+          disabled={nativeBool(isPendingPurchase || Number(tally) === 0)}
           isTransaction
           onClick={onPurchaseCrewmates}
           subtle
