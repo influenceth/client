@@ -193,6 +193,7 @@ const StandardButton = (props) => {
 
   const playSound = useStore(s => s.dispatchSoundRequested);
   const sizeParams = sizes[props.size] || sizes.medium;
+  const { style, ...nonStyleProps } = restProps;
 
   const _onClick = (e) => {
     playSound('effects.click');
@@ -205,7 +206,7 @@ const StandardButton = (props) => {
 
   return (
     <>
-      {props.badge ? <StyledBadge value={props.badge} {...restProps} sizeParams={sizeParams} /> : null}
+      {props.badge ? <StyledBadge value={props.badge} {...nonStyleProps} sizeParams={sizeParams} /> : null}
       <StyledButton
         onClick={_onClick}
         data-tip={dataTip}

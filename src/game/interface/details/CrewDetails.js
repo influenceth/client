@@ -596,14 +596,40 @@ const Wrapper = () => {
   const crewId = Number(i || myCrew?.id);
   const { data: crew, isLoading: crewLoading } = useCrew(crewId);
   const { data: crewmates, isLoading: crewmatesLoading } = useCrewmates(crew?.Crew?.roster || []);
+  
+  const createAlert = useStore(s => s.dispatchAlertLogged);
 
   useEffect(() => {
-    if (!crewLoading && !crew) {
-      history.replace(`/recruit/0`);
-    } else if (!i && myCrew?.id) {
-      history.replace(`/crew/${myCrew.id}`);
+    // if id is specified...
+    if (i) {
+      // ...return to / with error if crew not found
+      if (!crewLoading && !crew) {
+        createAlert({
+          type: 'GenericAlert',
+          data: { content: 'Invalid crew id specified.' },
+          level: 'warning',
+          duration: 5000
+        });
+        history.replace('/');
+      }
+
+    // if i is not specified, but I am logged in...
+    } else if (account) {
+      // ...if my crew is done loading...
+      if (!myCrewLoading) {
+        // ...if my crew exists, redirect to it
+        if (myCrew?.id) {
+          history.replace(`/crew/${myCrew.id}`);
+        // ...if my crew does not exist, prompt to create a new crew
+        } else {
+          history.replace(`/recruit/0`);
+        }
+      }
+    // if i is not specified and I am not logged in... return to / without warning
+    } else {
+      history.replace('/');
     }
-  }, [crewLoading, crew, myCrew])
+  }, [account, crewLoading, crew, i, myCrew, myCrewLoading]);
 
   const loading = myCrewLoading || crewLoading || crewmatesLoading;
   return (

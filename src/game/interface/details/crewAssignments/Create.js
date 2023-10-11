@@ -925,7 +925,7 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
     if (crewmate?.Crewmate?.coll === Crewmate.COLLECTION_IDS.ADALIAN) return 4;
     if (crewmate?.Crewmate?.coll) return 8;
     return 0;
-  });
+  }, [crewmate?.Crewmate?.coll]);
 
   // init appearance options as desired
   useEffect(() => {
@@ -1081,8 +1081,9 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
   }, []);
 
   const recruitTally = useMemo(() => {
-    return (adalianRecruits?.length || 0) + (arvadianRecruits?.length || 0);
-  }, [adalianRecruits, arvadianRecruits]);
+    if (crewmate?.Crewmate?.coll === Crewmate.COLLECTION_IDS.ADALIAN) return adalianRecruits?.length || 0;
+    return 0;
+  }, [adalianRecruits, crewmate?.Crewmate?.coll]);
 
   const disableChanges = pendingCrewmate || traitsLocked || promptingTransaction;
 
@@ -1399,7 +1400,7 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
               <Button disabled={!!pendingCrewmate} subtle onClick={handleBack}>Back</Button>
               <div style={{ flex: 1 }} />
               <div style={{ alignItems: 'center', display: 'flex', flexDirection: 'row' }}>
-                {recruitTally > 0 && <RecruitTally>Available Recruits: <b>{recruitTally}</b></RecruitTally>}
+                {recruitTally > 0 && <RecruitTally>Credits Remaining: <b>{recruitTally}</b></RecruitTally>}
                 <Button
                   disabled={!readyForSubmission || !!pendingCrewmate}
                   loading={!!pendingCrewmate}
