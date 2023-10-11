@@ -293,7 +293,7 @@ const Footer = styled.div`
 const StyledNavIcon = () => <Icon><NavIcon selected selectedColor="#777" /></Icon>;
 
 const Launcher = (props) => {
-  const { authenticating, login, logout, token, walletContext } = useAuth();
+  const { account, authenticating, login, logout, walletContext } = useAuth();
   const { crews } = useCrewContext();
   const { data: priceConstants, isLoading: priceConstantsLoading } = usePriceConstants();
 
@@ -305,10 +305,8 @@ const Launcher = (props) => {
 
   const [menuOpen, setMenuOpen] = useState(false);
 
-  const { account } = walletContext;
   const walletId = walletContext?.starknet?.id;
-
-  const loggedIn = account && token;
+  const loggedIn = !!account;
 
   useEffect(() => {
     if (!interfaceHidden) {
@@ -324,12 +322,10 @@ const Launcher = (props) => {
   useEffect(() => {
     // only allow account and settings unless logged in
     if (!loggedIn && !['account', 'settings'].includes(launcherPage)) {
-      // console.log('dispatchLauncherPage', 4);
       dispatchLauncherPage('account');
     }
     // disallow store if no sale available
     else if (!priceConstantsLoading && !priceConstants?.ADALIAN_PRICE_ETH && launcherPage === 'store') {
-      // console.log('dispatchLauncherPage', 5);
       dispatchLauncherPage('account');
     }
   }, [launcherPage, loggedIn, priceConstants, priceConstantsLoading]);
