@@ -92,6 +92,10 @@ const RenderedAsteroidInCanvas = ({ onReady, ...props }) => {
     if (onReady) onReady();
   }, [onReady]);
 
+  useEffect(() => {
+    setImageSrc(null);
+  }, [props.asteroid?.id, props.brightness, props.varyDistance])
+
   const style = useMemo(() => ({ width: '100%', height: '100%', ...(props.style || {}) }), [props.style]);
 
   return imageSrc
