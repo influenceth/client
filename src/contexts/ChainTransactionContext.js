@@ -51,7 +51,7 @@ const customConfigs = {
   PurchaseAdalian: {
     getPrice: async () => {
       const { ADALIAN_PRICE_ETH } = await api.getConstants('ADALIAN_PRICE_ETH');
-      return Number(ethersUtils.formatEther(String(ADALIAN_PRICE_ETH)));
+      return BigInt(ADALIAN_PRICE_ETH);
     },
     equalityTest: true
   },
@@ -61,9 +61,9 @@ const customConfigs = {
         'ASTEROID_BASE_PRICE_ETH',
         'ASTEROID_LOT_PRICE_ETH'
       ]);
-      const base = Number(ethersUtils.formatEther(String(ASTEROID_BASE_PRICE_ETH)));
-      const lot = Number(ethersUtils.formatEther(String(ASTEROID_LOT_PRICE_ETH)));
-      return base + lot * Asteroid.Entity.getSurfaceArea(asteroid);
+      const base = BigInt(ASTEROID_BASE_PRICE_ETH);
+      const lot = BigInt(ASTEROID_LOT_PRICE_ETH);
+      return base + lot * BigInt(Asteroid.Entity.getSurfaceArea(asteroid));
     },
     equalityTest: ['asteroid.id']
   },
@@ -72,7 +72,7 @@ const customConfigs = {
     getPrice: async ({ crewmate }) => {
       if (crewmate?.id > 0) return 0; // if recruiting existing crewmate, no cost
       const { ADALIAN_PRICE_ETH } = await api.getConstants('ADALIAN_PRICE_ETH');
-      return Number(ethersUtils.formatEther(String(ADALIAN_PRICE_ETH)));
+      return BigInt(ADALIAN_PRICE_ETH);
     },
     equalityTest: true
   },
@@ -141,7 +141,7 @@ export function ChainTransactionProvider({ children }) {
               runSystems = [systemName];
             }
 
-            let totalPrice = 0;
+            let totalPrice = 0n;
             const calls = [];
             for (let runSystem of runSystems) {
               const vars = customConfigs[runSystem]?.preprocess ? customConfigs[runSystem].preprocess(rawVars) : rawVars;
@@ -151,9 +151,10 @@ export function ChainTransactionProvider({ children }) {
               }
             }
 
-            if (totalPrice > 0) {
-              const amount = totalPrice * 1e18; // convert to wei
-              calls.unshift(System.getApproveEthCall(amount, process.env.REACT_APP_ERC20_TOKEN_ADDRESS, process.env.REACT_APP_STARKNET_DISPATCHER));
+            if (totalPrice > 0n) {
+              calls.unshift(System.getApproveEthCall(
+                totalPrice, process.env.REACT_APP_ERC20_TOKEN_ADDRESS, process.env.REACT_APP_STARKNET_DISPATCHER
+              ));
             }
 
             return starknet.account.execute(calls);
@@ -404,8 +405,6 @@ export function ChainTransactionProvider({ children }) {
 };
 
 export default ChainTransactionContext;
-
-
 
 // TODO: ecs refactor
 //  below is all the old contract code, remove this when done it as a reference
