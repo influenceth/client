@@ -295,7 +295,7 @@ export const CrewmateSKU = () => {
     return BigInt(tally) * BigInt(priceConstants?.ADALIAN_PRICE_ETH || 0);
   }, [priceConstants?.ADALIAN_PRICE_ETH, tally]);
 
-  const [funding, setFunding] = useState(true);
+  const [funding, setFunding] = useState(false);
   const [polling, setPolling] = useState(false);
 
   const onFundWallet = useCallback(() => {
