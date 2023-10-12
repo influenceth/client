@@ -70,7 +70,7 @@ const customConfigs = {
   InitializeArvadian: { equalityTest: true },
   RecruitAdalian: {
     getPrice: async ({ crewmate }) => {
-      if (crewmate?.id > 0) return 0; // if recruiting existing crewmate, no cost
+      if (crewmate?.id > 0) return 0n; // if recruiting existing crewmate, no cost
       const { ADALIAN_PRICE_ETH } = await api.getConstants('ADALIAN_PRICE_ETH');
       return BigInt(ADALIAN_PRICE_ETH);
     },
