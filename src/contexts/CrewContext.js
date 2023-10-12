@@ -22,7 +22,7 @@ export function CrewProvider({ children }) {
 
   const combinedCrewRoster = useMemo(() => (rawCrews || []).reduce((acc, c) => [...acc, ...c.Crew.roster], []), [rawCrews]);
   const { data: allCrewmates, isLoading: crewmatesLoading } = useQuery(
-    [ 'entities', Entity.IDS.CREWMATE, combinedCrewRoster.join(',') ],
+    [ 'entities', Entity.IDS.CREWMATE, combinedCrewRoster.join(',') ], // TODO: joined key
     () => api.getCrewmates(combinedCrewRoster),
     { enabled: combinedCrewRoster?.length > 0 }
   );
