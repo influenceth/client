@@ -69,4 +69,17 @@ self.addEventListener('message', (event) => {
   }
 });
 
+// See: https://redfin.engineering/how-to-fix-the-refresh-button-when-using-service-workers-a8e27af6df68
+// Allows a regular refresh to actually upgrade the service worker
+addEventListener('fetch', event => {
+  event.respondWith((async () => {
+    if (event.request.mode === 'navigate' && event.request.method === 'GET' && registration.waiting) {
+      registration.waiting.postMessage('skipWaiting');
+      return new Response('', { headers: { 'Refresh': '0' }});
+    }
+
+    return await caches.match(event.request) || fetch(event.request);
+  })());
+});
+
 // Any other custom service worker logic can go here.
