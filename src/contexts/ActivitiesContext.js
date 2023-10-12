@@ -145,7 +145,7 @@ export function ActivitiesProvider({ children }) {
         .filter((txHash) => !!txHash);
       if (pendingTxHashes?.length > 0) {
         // NOTE: since is to make sure no pagination occurs... we should fix this endpoint on the server
-        api.getActivities({ txHash: pendingTxHashes.join(',') }).then((data) => {
+        api.getTransactionActivities(pendingTxHashes).then((data) => {
           handleActivities(data.activities, true);
           setLastBlockNumber(data.blockNumber);
         });

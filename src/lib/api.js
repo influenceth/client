@@ -135,6 +135,14 @@ const api = {
     };
   },
 
+  getTransactionActivities: async (txHashes) => {
+    const response = await instance.get(`/${apiVersion}/activity?${buildQuery({ txHashes: txHashes.join(',') })}`);
+    return {
+      activities: response.data,
+      blockNumber: parseInt(response.headers['starknet-block-number'])
+    }
+  },
+
   getWatchlist: async () => {
     const response = await instance.get(`/${apiVersion}/user/watchlist`); // TODO: server-side update
     return response.data;
