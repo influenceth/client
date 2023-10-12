@@ -642,38 +642,38 @@ const activities = {
   // ShipDocked,
 
   Transfer: {
-  //   getInvalidations: ({ entities, event: { returnValues } }) => invalidationDefaults(entities[0].label, entities[0].id),
-  //   getLogContent: ({ entities, event: { returnValues } }) => {
-  //     const entity = entities[0];
+    getInvalidations: ({ entities, event: { returnValues } }) => invalidationDefaults(entities[0].label, entities[0].id),
+    getLogContent: ({ entities, event: { returnValues } }) => {
+      const entity = entities[0];
 
-  //     if (parseInt(returnValues.from) === 0) {
-  //       return {
-  //         icon: <TransferIcon />,
-  //         content: (
-  //           <>
-  //             {ucfirst(Entity.TYPES[entity?.label]?.label || '')}
-  //             {' '}<EntityLink {...entity} /> minted to
-  //             {' '}<AddressLink address={returnValues.to} maxWidth={addressMaxWidth} />
-  //           </>
-  //         ),
-  //       };
-  //     }
+      if (parseInt(returnValues.from) === 0) {
+        return {
+          icon: <TransferIcon />,
+          content: (
+            <>
+              {ucfirst(Entity.TYPES[entity?.label]?.label || '')}
+              {' '}<EntityLink {...entity} /> minted to
+              {' '}<AddressLink address={returnValues.to} maxWidth={addressMaxWidth} />
+            </>
+          ),
+        };
+      }
 
-  //     let namedFrom = getNamedAddress(returnValues.from);
-  //     let namedTo = getNamedAddress(returnValues.to);
-  //     return {
-  //       icon: <TransferIcon />,
-  //       content: (
-  //         <>
-  //           {ucfirst(Entity.TYPES[entity?.label]?.label || '')}
-  //           {' '}<EntityLink {...entity} /> transferred from
-  //           {' '}{namedFrom || <AddressLink address={returnValues.from} maxWidth={addressMaxWidth} />}
-  //           {' '}to {namedTo || <AddressLink address={returnValues.to} maxWidth={addressMaxWidth} />}
-  //         </>
-  //       ),
-  //     };
-  //   },
-  //   triggerAlert: true
+      let namedFrom = getNamedAddress(returnValues.from);
+      let namedTo = getNamedAddress(returnValues.to);
+      return {
+        icon: <TransferIcon />,
+        content: (
+          <>
+            {ucfirst(Entity.TYPES[entity?.label]?.label || '')}
+            {' '}<EntityLink {...entity} /> transferred from
+            {' '}{namedFrom || <AddressLink address={returnValues.from} maxWidth={addressMaxWidth} />}
+            {' '}to {namedTo || <AddressLink address={returnValues.to} maxWidth={addressMaxWidth} />}
+          </>
+        ),
+      };
+    },
+    triggerAlert: true
   },
 
   // TransitStarted

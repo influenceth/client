@@ -128,7 +128,6 @@ const api = {
 
   getActivities: async (query) => {
     const response = await instance.get(`/${apiVersion}/user/activity${query ? `?${buildQuery(query)}` : ''}`);
-    console.log({ response });
     return {
       activities: response.data,
       totalHits: query?.returnTotal ? parseInt(response.headers['total-hits']) : undefined,
