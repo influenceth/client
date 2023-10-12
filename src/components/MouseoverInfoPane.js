@@ -23,7 +23,7 @@ const InfoTooltip = styled.div`
   `}
 `;
 
-const MouseoverInfoPane = ({ children, css, cssWhenVisible, placement, referenceEl, visible }) => {
+const MouseoverInfoPane = ({ children, css, cssWhenVisible, placement, referenceEl, visible, zIndex = 1000 }) => {
   const [popperEl, setPopperEl] = useState();
   const { styles, attributes } = usePopper(referenceEl, popperEl, {
     placement: placement || 'top',
@@ -39,7 +39,7 @@ const MouseoverInfoPane = ({ children, css, cssWhenVisible, placement, reference
 
   if (!children) return null;
   return createPortal(
-    <div ref={setPopperEl} style={{ ...styles.popper, zIndex: 1000, pointerEvents: 'none' }} {...attributes.popper}>
+    <div ref={setPopperEl} style={{ ...styles.popper, zIndex, pointerEvents: 'none' }} {...attributes.popper}>
       <InfoTooltip visible={visible} css={css} cssWhenVisible={cssWhenVisible}>
         {children}
       </InfoTooltip>

@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import styled from 'styled-components';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import styled, { css } from 'styled-components';
 import { utils as ethersUtils } from 'ethers';
 import { createPortal } from 'react-dom';
 import { BiCreditCard } from 'react-icons/bi';
@@ -22,11 +22,13 @@ import theme from '~/theme';
 
 import AdaliansImages from '~/assets/images/sales/adalians.png';
 import AsteroidsImage from '~/assets/images/sales/asteroids.png';
-import { WarningIcon } from '~/components/Icons';
+import { ChevronRightIcon, PlusIcon, WarningIcon, WarningOutlineIcon } from '~/components/Icons';
 import Details from '~/components/DetailsV2';
 import useAuth from '~/hooks/useAuth';
 import useInterval from '~/hooks/useInterval';
 import ReactTooltip from 'react-tooltip';
+import BrightButton from '~/components/BrightButton';
+import MouseoverInfoPane from '~/components/MouseoverInfoPane';
 
 const borderColor = `rgba(${theme.colors.mainRGB}, 0.5)`;
 
@@ -102,7 +104,7 @@ const Main = styled.div`
   & > sub {
     align-items: flex-end;
     display: flex;
-    height: 19px;
+    height: 21px;
     margin-left: 4px;
     opacity: 0.5;
     vertical-align: bottom;
@@ -139,15 +141,147 @@ const Price = styled.div`
   }
 `;
 
-const FundingButtons = styled.div`
-  padding: 10px;
-  & > button {
-    margin-bottom: 15px;
-    width: 100%;
+const FundingBody = styled.div`
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  width: 500px;
+  h3 {
+    align-items: center;
+    color: ${p => p.theme.colors.warning};
+    display: flex;
+    font-size: 18px;
+    font-weight: normal;
+    & > svg {
+      font-size: 35px;
+      margin-right: 16px;
+    }
   }
 `;
 
-const rampDisclaimer = `Ramp requires the following disclaimer: "Don't invest unless you're prepared to lose all the money you invest. This is a high-risk investment and you should not expect to be protected if something goes wrong."`;
+const FundingButtons = styled.div`
+  padding: 10px 10px 20px;
+  width: 400px;  
+  & button {
+    margin-bottom: 15px;
+    padding: 15px 10px;
+    text-transform: none;
+    width: 100%;
+    & > div {
+      display: flex;
+      & > span {
+        flex: 1;
+        text-align: left;
+      }
+    }
+  }
+`;
+
+const FundingFooter = styled.div`
+  border-top: 1px solid #222;
+  display: flex;
+  justify-content: flex-end;
+  padding: 10px 0 15px;
+`;
+
+const Disclaimer = styled.div`
+  color: ${p => p.theme.colors.main};
+  font-size: 15.5px;
+  padding: 10px 10px 20px;
+  pointer-events: ${p => p.visible ? 'all' : 'none'};
+  & a {
+    color: white;
+    text-decoration: none;
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+`;
+
+const ButtonExtra = styled.span`
+  align-items: center;
+  color: white;
+  display: flex;
+  flex-direction: row;
+  flex: 1;
+  font-size: 90%;
+  justify-content: flex-end;
+  margin-left: 15px;
+  text-align: right;
+`;
+const ButtonWarning = styled(ButtonExtra)`
+  color: orangered;
+  font-size: 80%;
+`;
+
+export const FundingDialog = ({ onClose, onSelect }) => {
+  const [hoveredRampButton, setHoveredRampButton] = useState(false);
+
+  const to = useRef();
+  const onRampHover = useCallback((which) => (e) => {
+    if (to.current) clearTimeout(to.current);
+    if (which) {
+      setHoveredRampButton(e.target);
+    } else {  // close on delay so have time to click the link
+      to.current = setTimeout(() => {
+        setHoveredRampButton();
+      }, 1500);
+    }
+  }, []);
+
+  return createPortal(
+    (
+      <Details title="Add Funds" onClose={onClose} modalMode style={{ zIndex: 9000 }}>
+        <FundingBody>
+          <h3>
+            <WarningOutlineIcon /> <span>Your account does not have enough funds.</span>
+          </h3>
+          <FundingButtons>
+            <BrightButton onClick={() => onSelect('eth')}>
+              <span>Fund with ETH</span>
+              <ChevronRightIcon />
+            </BrightButton>
+
+            <BrightButton onClick={() => onSelect('stripe')}>
+              <span>Buy with credit card (U.S. Only)</span>
+              <ChevronRightIcon />
+            </BrightButton>
+
+            {process.env.REACT_APP_RAMP_API_KEY && (
+              <div style={{ position: 'relative' }}>
+                <BrightButton
+                  onClick={() => onSelect('ramp')}
+                  onMouseEnter={onRampHover(true)}
+                  onMouseLeave={onRampHover(false)}>
+                  <span>Buy now with Ramp</span>
+                  <ChevronRightIcon />
+                </BrightButton>
+                
+                <MouseoverInfoPane
+                  referenceEl={hoveredRampButton}
+                  css={css`margin-top:10px;`}
+                  placement="bottom"
+                  visible={!!hoveredRampButton}
+                  zIndex={9001}>
+                  <Disclaimer visible={!!hoveredRampButton}>
+                    RAMP DISCLAIMER: Don't invest unless you're prepared to lose all the money you
+                    invest. This is a high-risk investment and you should not expect to be protected
+                    if something goes wrong.{' '}
+                    <a href="https://ramp.network/risk-warning" target="_blank" rel="noopener noreferrer">Take 2 minutes to learn more.</a>
+                  </Disclaimer>
+                </MouseoverInfoPane>
+              </div>
+            )}
+          </FundingButtons>
+        </FundingBody>
+        <FundingFooter>
+          <Button subtle onClick={onClose}>Back</Button>
+        </FundingFooter>
+      </Details>
+    ),
+    document.body
+  );
+};
 
 export const CrewmateSKU = () => {
   const { account, walletContext: { starknet } } = useAuth();
@@ -184,7 +318,8 @@ export const CrewmateSKU = () => {
     } else if (which === 'ramp') {
       const logoUrl = window.location.origin + '/maskable-logo-192x192.png';
       window.open(
-        `https://app.${process.env.NODE_ENV === 'production' ? '' : 'demo.'}ramp.network?hostApiKey=${process.env.REACT_APP_RAMP_API_KEY}&hostAppName=Influence&hostLogoUrl=${logoUrl}`,
+        // TODO: url params are confusing/not working here `&swapAsset=ETH&swapAmount=${targetAmount}`
+        `https://app.${process.env.NODE_ENV === 'production' ? '' : 'demo.'}ramp.network?hostApiKey=${process.env.REACT_APP_RAMP_API_KEY}&hostAppName=Influence&hostLogoUrl=${logoUrl}&userAddress=${account}`,
         '_blank'
       );
     }
@@ -216,9 +351,14 @@ export const CrewmateSKU = () => {
   }, [starknet]);
   useEffect(updateEthBalance, []);
 
+  const isInsufficientBalance = useMemo(() => {
+    if (ethBalance === null) return false;
+    return totalCost > ethBalance;
+  }, [ethBalance, totalCost]);
+
   // TODO: would it make more sense to just check on each new block?
   useInterval(() => {
-    if (polling && ethBalance < totalCost) updateEthBalance();
+    if (polling && isInsufficientBalance) updateEthBalance();
   }, 5e3);
 
   return (
@@ -236,7 +376,7 @@ export const CrewmateSKU = () => {
             <UncontrolledTextInput
               disabled={nativeBool(isPendingPurchase)}
               min={1}
-              onChange={(e) => setTally(e.currentTarget.value)}
+              onChange={(e) => setTally(Math.floor(e.currentTarget.value))}
               value={safeValue(tally)}
               step={1}
               type="number" />
@@ -247,60 +387,43 @@ export const CrewmateSKU = () => {
             <span>{formatters.crewmatePrice(priceConstants, 4)}</span>
             <label>Eth each</label>
           </Price>
-          <Button
-            loading={reactBool(isPendingPurchase)}
-            disabled={nativeBool(isPendingPurchase || !priceConstants?.ADALIAN_PRICE_ETH || Number(tally) === 0)}
-            isTransaction={ethBalance >= totalCost}
-            onClick={ethBalance >= totalCost ? onPurchaseCrewmates : onFundWallet}
-            subtle={ethBalance >= totalCost}
-            style={{ width: '100%' }}>
-            {ethBalance < totalCost
-              ? (
-                <>
-                  <WarningIcon style={{ color: 'orangered' }} />
-                  <span>Fund Wallet</span>
-                </>
-              )
-              : (
-                <>
-                  Purchase
-                  {priceConstants && (
-                    <span style={{ color: 'white', flex: 1, fontSize: '90%', textAlign: 'right', marginLeft: 15 }}>
-                      {/* TODO: should this update price before "approve"? what about asteroids? */}
-                      <Ether>{formatters.ethPrice(totalCost, 4)}</Ether>
-                    </span>
-                  )}
-                </>
-              )}
-          </Button>
-          
+          {(isPendingPurchase || !priceConstants?.ADALIAN_PRICE_ETH || Number(tally) === 0 || !isInsufficientBalance)
+            ? (
+              <Button
+                loading={reactBool(isPendingPurchase)}
+                disabled={nativeBool(isPendingPurchase || !priceConstants?.ADALIAN_PRICE_ETH || Number(tally) === 0)}
+                isTransaction
+                onClick={onPurchaseCrewmates}
+                subtle
+                style={{ width: '100%' }}>
+                Purchase
+                {priceConstants && (
+                  <ButtonExtra>
+                    {/* TODO: should this update price before "approve"? what about asteroids? */}
+                    <Ether>{formatters.ethPrice(totalCost, 4)}</Ether>
+                  </ButtonExtra>
+                )}
+              </Button>
+            )
+            : (
+              <Button
+                onClick={onFundWallet}
+                color={theme.colors.success}
+                background={`rgba(${theme.colors.successRGB}, 0.1)`}
+                subtle
+                style={{ width: '100%' }}>
+                <PlusIcon />
+                <span>Add Funds</span>
+                <ButtonWarning>
+                  Low Balance
+                </ButtonWarning>
+              </Button>
+            )}
           <ClipCorner dimension={10} color={borderColor} />
         </SKUInner>
       </SKUWrapper>
 
-      {funding && createPortal(
-        (
-          <Details title="Funding Methods" onClose={() => setFunding(false)} modalMode style={{ zIndex: 9000 }}>
-            <ReactTooltip id="fundingDialog" effect="solid" style={{ width: '250px' }} />
-            <FundingButtons>
-              <Button subtle onClick={() => onSelectFundingOption('eth')}>
-                <Ether /> <span>Fund from Ethereum</span>
-              </Button>
-
-              <Button subtle onClick={() => onSelectFundingOption('stripe')}>
-                <BiCreditCard /> <span>Fund with Credit Card (US)</span>
-              </Button>
-
-              {process.env.REACT_APP_RAMP_API_KEY && (
-                <Button subtle onClick={() => onSelectFundingOption('ramp')} data-tip={rampDisclaimer} data-for="fundingDialog">
-                  <TbLetterR /> <span>Fund with Ramp</span>
-                </Button>
-              )}
-            </FundingButtons>
-          </Details>
-        ),
-        document.body
-      )}
+      {funding && <FundingDialog onClose={() => setFunding(false)} onSelect={onSelectFundingOption} />}
     </>
   );
 };
@@ -318,14 +441,12 @@ export const AsteroidSKU = () => {
 
   const [asteroidSale, setAsteroidSale] = useState({});
 
-  useEffect(() => {
-    async function getSale() {
-      const salesData = await api.getAsteroidSale();
-      setAsteroidSale(salesData || {});
-    }
-
-    getSale();
+  const updateSale = useCallback(async () => {
+    const salesData = await api.getAsteroidSale();
+    setAsteroidSale(salesData || {});
   }, []);
+
+  useEffect(updateSale, []);
 
   const filterAndClose = useCallback(() => {
     updateFilters(Object.assign({}, filters, { ownedBy: 'unowned' }));
