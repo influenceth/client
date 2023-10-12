@@ -394,9 +394,9 @@ const InfoPane = () => {
           )}
           <AsteroidRendering
             asteroid={asteroid}
-            varyDistance={true}
             onReady={onRenderReady}
-            style={asteroid.Celestial.scanStatus === Asteroid.SCAN_STATUSES.UNSCANNED ? { filter: 'grayscale(1)' } : {}} />
+            style={asteroid.Celestial.scanStatus === Asteroid.SCAN_STATUSES.UNSCANNED ? { filter: 'grayscale(1)' } : {}}
+            varyDistance />
         </ThumbBackground>
       );
     } else if (zoomStatus === 'in') {

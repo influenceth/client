@@ -520,7 +520,7 @@ const CrewDetails = ({ crewId, crew, crewmates, isMyCrew, isOwnedCrew, selectCre
               <div style={{ paddingTop: 15 }}>
                 <Button subtle onClick={() => onSetAction('MANAGE_CREW')}>Manage Crew</Button>
                 <Button subtle onClick={onClickNewCrew}>Form New Crew</Button>
-                <Button subtle onClick={onClickRecruit}>Recruit Crewmate</Button>
+                <Button disabled={nativeBool(crew.Crew?.roster?.length >= 5)} subtle onClick={onClickRecruit}>Recruit Crewmate</Button>
               </div>
             )}
             {isOwnedCrew && !isMyCrew && (

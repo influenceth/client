@@ -47,8 +47,8 @@ export function ActivitiesProvider({ children }) {
       transformedActivities.forEach(activity => {
         if (!skipInvalidations) {
           const activityConfig = getActivityConfig(activity);
-          // console.log('invalidations', activityConfig.invalidations);
-          activityConfig.invalidations.forEach((queryKey) => {
+          // console.log('invalidations', activityConfig?.invalidations);
+          (activityConfig?.invalidations || []).forEach((queryKey) => {
 
             // TODO: ecs refactor -- probably want to restore what this was doing below...
 

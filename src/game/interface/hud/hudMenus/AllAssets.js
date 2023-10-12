@@ -113,8 +113,8 @@ const AllAssets = ({ onClose }) => {
   const asteroidId = useStore(s => s.asteroids.origin);
   const selectAsteroid = useStore(s => s.dispatchOriginSelected);
   const updateZoomStatus = useStore(s => s.dispatchZoomStatusChanged);
-  const { data: controlledAsteroids } = useControlledAsteroids();
-  const { data: ownedAsteroids } = useOwnedAsteroids();
+  const { data: controlledAsteroids, isLoading: isControlledLoading } = useControlledAsteroids();
+  const { data: ownedAsteroids, isLoading: isOwnedLoading } = useOwnedAsteroids();
   const { data: ownedShips } = useOwnedShips();
 
   const [rendersReady, setRendersReady] = useState(0);
@@ -122,14 +122,14 @@ const AllAssets = ({ onClose }) => {
   // list "controlled by me" and owned by my wallet but uncontrolled
   const asteroidsList = useMemo(() => {
     const l = [];
-    if (controlledAsteroids && ownedAsteroids) {
-      controlledAsteroids.forEach((a) => l.push(a));
-      ownedAsteroids.forEach((a) => {
+    if (!isControlledLoading && !isOwnedLoading) {
+      (controlledAsteroids || []).forEach((a) => l.push(a));
+      (ownedAsteroids || []).forEach((a) => {
         if (!a.Control?.controller?.id) l.push(a);
       });
     }
     return l;
-  }, [controlledAsteroids, ownedAsteroids])
+  }, [controlledAsteroids, isControlledLoading, isOwnedLoading, ownedAsteroids])
 
   const onClickAsteroid = useCallback((i) => () => {
     if (asteroidId === i) {

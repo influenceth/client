@@ -104,8 +104,7 @@ const CrewAssignment = ({ crewId, crewmateId, onFinish }) => {
     bookSession,
     storySession,
     choosePath,
-    undoPath,
-    restart
+    undoPath
   } = useBookSession(crewId, crewmateId);
 
   const playSound = useStore(s => s.dispatchSoundRequested);

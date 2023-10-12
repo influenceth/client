@@ -89,7 +89,6 @@ const RecruitTally = styled.div`
 
 const SelectUninitializedCrewmateDialog = ({ onSelect }) => {
   const { adalianRecruits, arvadianRecruits, loading } = useCrewContext();
-  console.log('adalianRecruits', adalianRecruits);
 
   const [selected, setSelected] = useState();
 

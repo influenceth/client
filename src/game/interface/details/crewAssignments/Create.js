@@ -1090,9 +1090,9 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
   const readyForSubmission = useMemo(() => {
     if (!name) return false;
     if (!selectedClass) return false;
-    if (selectedTraits < traitTally) return false;
+    if (selectedTraits?.length < traitTally) return false;
     return true;
-  }, [name, selectedClass, selectedTraits, traitTally]);
+  }, [name, selectedClass, selectedTraits?.length, traitTally]);
 
   if (!crewmate) return null;
   return (
@@ -1321,7 +1321,7 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
                                   </Trait>
 
                                   <MouseoverInfoPane referenceEl={refEl} {...mouseoverPaneProps(hovered === hoverKey && trait && !toggling)}>
-                                    <MouseoverInfoContent title={trait?.name} description={trait?.description} />
+                                    <MouseoverInfoContent title={trait?.name} description={formatters.crewmateTraitDescription(trait?.description)} />
                                   </MouseoverInfoPane>
 
                                   <MouseoverInfoPane
@@ -1402,7 +1402,7 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
               <div style={{ alignItems: 'center', display: 'flex', flexDirection: 'row' }}>
                 {recruitTally > 0 && <RecruitTally>Credits Remaining: <b>{recruitTally}</b></RecruitTally>}
                 <Button
-                  disabled={!readyForSubmission || !!pendingCrewmate}
+                  disabled={!readyForSubmission || !!pendingCrewmate || (crewId !== 0 && crew?.Crew?.roster?.length >= 5)}
                   loading={!!pendingCrewmate}
                   subtle
                   isTransaction
@@ -1485,6 +1485,8 @@ const Wrapper = ({ backLocation, crewId, crewmateId, locationId }) => {
     if (finalizing.current) {
       if (crewId === 0 || crewmateId === 0) {
         if (crews && crewmateMap) {
+          // TODO: should newCrewId instead just come from the newCrewmate's controller?
+          //  (this technically should work, but feels a little hacky)
           const newCrewId = crewId || crews.reduce((acc, c) => Math.max(acc, Number(c.id)), 0);
           const newCrewmateId = crewmateId || Object.keys(crewmateMap || {}).reduce((acc, id) => Math.max(acc, Number(id)), 0);
 
@@ -1495,7 +1497,7 @@ const Wrapper = ({ backLocation, crewId, crewmateId, locationId }) => {
         }
       }
     }
-  }, [crewmateMap])
+  }, [crewmateMap]);
 
   const bookSessionIsLoading = !(bookSession || bookError);
 
