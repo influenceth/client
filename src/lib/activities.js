@@ -642,8 +642,18 @@ const activities = {
   // ShipDocked,
 
   Transfer: {
-    getInvalidations: ({ entities, event: { returnValues } }) => invalidationDefaults(entities[0].label, entities[0].id),
+    getInvalidations: ({ entities, event: { returnValues } }) => {
+      if (!entities?.[0]?.label) return [];
+      return invalidationDefaults(entities[0].label, entities[0].id)
+    },
     getLogContent: ({ entities, event: { returnValues } }) => {
+      if (!entities?.[0]?.label) {
+        return {
+          icon: <TransferIcon />,
+          content: <>Transfer complete.</>
+        }
+      }
+
       const entity = entities[0];
 
       if (parseInt(returnValues.from) === 0) {
