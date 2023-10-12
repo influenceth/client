@@ -136,7 +136,7 @@ const api = {
   },
 
   getTransactionActivities: async (txHashes) => {
-    const response = await instance.get(`/${apiVersion}/activity?${buildQuery({ txHashes: txHashes.join(',') })}`);
+    const response = await instance.get(`/${apiVersion}/activity?${buildQuery({ txHash: txHashes.join(',') })}`);
     return {
       activities: response.data,
       blockNumber: parseInt(response.headers['starknet-block-number'])
