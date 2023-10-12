@@ -176,7 +176,6 @@ const ConstructionPlan = ({ buildingType, planningLot }) => {
       </Requirements>
     </>
   );
-  return null;
 };
 
 const LotInfo = () => {
@@ -199,7 +198,7 @@ const LotInfo = () => {
             <div>Sites are active for 24 hours to allow building materials to be transferred.</div>
           </ExtraDescription>
         </HudMenuCollapsibleSection>
-        
+
         <HudMenuCollapsibleSection titleText="Buildings Overview" borderless>
           <BuildingRow>
             <label>Name</label>
@@ -290,14 +289,14 @@ const LotInfo = () => {
         )}
       </HudMenuCollapsibleSection>
 
-      <HudMenuCollapsibleSection
+      {/* <HudMenuCollapsibleSection
         titleText="Construction"
         collapsed={lot.building.Building.status === Building.CONSTRUCTION_STATUSES.OPERATIONAL}
         borderless>
         <ConstructionPlan
           buildingType={lot.building.Building.buildingType}
           planningLot={lot.building.Building.status === Building.CONSTRUCTION_STATUSES.PLANNED ? lot : null} />
-      </HudMenuCollapsibleSection>
+      </HudMenuCollapsibleSection> */}
     </Wrapper>
   );
 };

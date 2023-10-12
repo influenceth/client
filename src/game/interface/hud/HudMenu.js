@@ -378,12 +378,12 @@ const HudMenu = ({ forceOpenMenu }) => {
         }
       }
 
-      buttons.push({
-        key: 'LOT_RESOURCES',
-        label: 'Resources',
-        icon: <ResourceIcon />,
-        Component: hudMenus.LotResources
-      });
+      // buttons.push({
+      //   key: 'LOT_RESOURCES',
+      //   label: 'Resources',
+      //   icon: <ResourceIcon />,
+      //   Component: hudMenus.LotResources
+      // });
 
       if (lot?.building?.Building?.buildingType && (lot?.building?.Inventories || []).find((i) => i.status === Inventory.STATUSES.AVAILABLE)) {
         buttons.push({
@@ -421,7 +421,7 @@ const HudMenu = ({ forceOpenMenu }) => {
   useEffect(() => {
     if (openHudMenu) {
       const openMenuConfig = buttons.find((b) => b.key === openHudMenu);
-      if (openMenuConfig.requireLogin && !account) {
+      if (openMenuConfig?.requireLogin && !account) {
         handleButtonClick(openHudMenu, null, openMenuConfig.hideInsteadOfClose);
       }
     }
