@@ -18,10 +18,10 @@ const RecruitCrewmate = ({ crew, lot }) => {
 
   return (
     <ActionButton
-      label="Recruit Crewmate"
+      label={`Recruit Crewmate${crew?.Crew?.roster?.length >= 5 ? ' (Crew is full)' : ''}`}
       flags={{
         attention: reactBool(!pendingCrewmate && !(crew?.Crew?.roster?.length > 0)),
-        disabled: nativeBool(!!pendingCrewmate),
+        disabled: nativeBool(!!pendingCrewmate || crew?.Crew?.roster?.length >= 5),
         loading: reactBool(!!pendingCrewmate),
       }}
       icon={<RecruitCrewmateIcon />}
