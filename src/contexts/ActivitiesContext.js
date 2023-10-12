@@ -78,7 +78,11 @@ export function ActivitiesProvider({ children }) {
             // // // // // //
 
             if (!optimisticUpdate) {
-              queryClient.invalidateQueries({ queryKey });
+              // invalidation seems to refetch very inconsistently... so we try to invalidate all, but refetch active explicitly
+              // TODO: search "joined key" -- these queryKeys cause inefficiency because may be refetched after actually inactive here...
+              //  we should ideally collapse those into named queries where possible (as long as can still trigger updates accurately)
+              queryClient.invalidateQueries({ queryKey, refetchType: 'none' });
+              queryClient.refetchQueries({ queryKey, type: 'active' });
             }
           });
 

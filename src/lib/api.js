@@ -212,8 +212,8 @@ const api = {
   },
 
   // TODO: ecs refactor -- probably better to use a single resolve location endpoint
-  getBuilding: async (i) => {
-    return getEntityById({ label: Entity.IDS.BUILDING, i });
+  getBuilding: async (id) => {
+    return getEntityById({ label: Entity.IDS.BUILDING, id });
   },
 
   getCrewOccupiedLots: async (a, c) => {
