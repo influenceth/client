@@ -298,7 +298,6 @@ const ActionItem = ({ data }) => {
     if (item.asteroidId) {
       goToAction();
     }
-    // return;
 
     if (item.onClick) {
       // delay dialog opening based on how far camera needs to fly to get there
@@ -398,7 +397,7 @@ const ActionItems = () => {
       // set to transition state
       setDisplayItems((items) => {
         items.forEach((item) => {
-          if (!allItems.find((i) => i.key === item.key)) {
+          if (!allItems.find((i) => i.uniqueKey === item.uniqueKey)) {
             item.transitionOut = true;
           }
         });
@@ -467,7 +466,7 @@ const ActionItems = () => {
           )}>
           <ActionItemWrapper>
             <ActionItemContainer>
-              {filteredDisplayItems.map((item) => <ActionItem key={item.key} data={item} />)}
+              {filteredDisplayItems.map((item) => <ActionItem key={item.uniqueKey} data={item} />)}
             </ActionItemContainer>
           </ActionItemWrapper>
         </CollapsibleSection>

@@ -136,7 +136,7 @@ export function ActionItemProvider({ children }) {
       ...(visiblePlannedItems || []).map((item) => ({ ...item, type: 'plans' })),
       ...(unreadyItems || []).map((item) => ({ ...item, type: 'unready' }))
     ].map((x) => {  // make sure everything has a unique key
-      if (!x.key) x.key = `${x.type}_${x._id || x.txHash || x.timestamp || x.gracePeriodEnd}`;
+      x.uniqueKey = `${x.type}_${x._id || x.txHash || x.timestamp || x.gracePeriodEnd}`;
       return x;
     });
 
