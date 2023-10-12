@@ -1001,7 +1001,7 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
     }
 
     // if full, clear and randomize (else, fill in from current state)
-    const traits = (selectedTraits?.length === traitTally ? [] : selectedTraits);
+    const traits = (selectedTraits?.length === traitTally ? [] : [...selectedTraits]);
     let possibleTraits = Crewmate.nextTraits(c.Crewmate.coll, c.Crewmate.class, traits);
     let randomIndex;
     while (possibleTraits.length > 0 && traits.length < 12) {
@@ -1055,17 +1055,16 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
     }
     setSelectedClass(newClass);
     setToggling();
-  }, [selectedTraits]);
+  }, [selectedClass]);
 
   const onUpdateTraits = useCallback((newTraits) => {
     setSelectedTraits(newTraits);
     setToggling();
-  }, [selectedTraits]);
+  }, []);
 
   const traitObjects = useMemo(() => {
     return (selectedTraits || []).map((id) => ({ id, ...Crewmate.TRAITS[id] }));
-  }, [selectedTraits, selectedTraits?.length]);
-  // TODO: above was not triggering on first click of "randomize" without the length dependency added?
+  }, [selectedTraits]);
 
   const classObjects = useMemo(() => {
     return Object.values(Crewmate.CLASS_IDS).reduce((acc, id) => ({

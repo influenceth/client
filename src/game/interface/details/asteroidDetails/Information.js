@@ -215,7 +215,7 @@ const Log = styled.div`
   overflow: hidden;
   & ul {
     display: flex;
-    flex-direction: column-reverse;
+    flex-direction: column;
     list-style-type: none;
     margin: 0;
     padding: 5px 0;
