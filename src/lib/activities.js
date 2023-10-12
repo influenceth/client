@@ -20,9 +20,18 @@ import { andList, ucfirst } from './utils';
 // TODO (enhancement): some of the invalidations may be overkill by using this
 const invalidationDefaults = (label, id) => {
   const i = [];
+  // any group results where the affected record might be included
+  // TODO: https://tanstack.com/query/v4/docs/react/guides/query-invalidation
+  //  can pass in predicates so can check each result to see if contains the relevant record (or would now) before invalidating
   i.push(['entities', label]);
-  if (id) i.push(['entity', label, id]);
 
+  // the specific affected record (and its activities)
+  if (id) {
+    i.push(['entity', label, id]);
+    i.push(['activities', label, id]);
+  }
+
+  // search results that might included the affected record
   // TODO: convert search keys to entity-based labels
   let searchKey;
   if (label === Entity.IDS.ASTEROID) searchKey = 'asteroids';
@@ -633,38 +642,38 @@ const activities = {
   // ShipDocked,
 
   Transfer: {
-    getInvalidations: ({ entities, event: { returnValues } }) => invalidationDefaults(entities[0].label, entities[0].id),
-    getLogContent: ({ entities, event: { returnValues } }) => {
-      const entity = entities[0];
+  //   getInvalidations: ({ entities, event: { returnValues } }) => invalidationDefaults(entities[0].label, entities[0].id),
+  //   getLogContent: ({ entities, event: { returnValues } }) => {
+  //     const entity = entities[0];
 
-      if (parseInt(returnValues.from) === 0) {
-        return {
-          icon: <TransferIcon />,
-          content: (
-            <>
-              {ucfirst(Entity.TYPES[entity?.label]?.label || '')}
-              {' '}<EntityLink {...entity} /> minted to
-              {' '}<AddressLink address={returnValues.to} maxWidth={addressMaxWidth} />
-            </>
-          ),
-        };
-      }
+  //     if (parseInt(returnValues.from) === 0) {
+  //       return {
+  //         icon: <TransferIcon />,
+  //         content: (
+  //           <>
+  //             {ucfirst(Entity.TYPES[entity?.label]?.label || '')}
+  //             {' '}<EntityLink {...entity} /> minted to
+  //             {' '}<AddressLink address={returnValues.to} maxWidth={addressMaxWidth} />
+  //           </>
+  //         ),
+  //       };
+  //     }
 
-      let namedFrom = getNamedAddress(returnValues.from);
-      let namedTo = getNamedAddress(returnValues.to);
-      return {
-        icon: <TransferIcon />,
-        content: (
-          <>
-            {ucfirst(Entity.TYPES[entity?.label]?.label || '')}
-            {' '}<EntityLink {...entity} /> transferred from
-            {' '}{namedFrom || <AddressLink address={returnValues.from} maxWidth={addressMaxWidth} />}
-            {' '}to {namedTo || <AddressLink address={returnValues.to} maxWidth={addressMaxWidth} />}
-          </>
-        ),
-      };
-    },
-    triggerAlert: true
+  //     let namedFrom = getNamedAddress(returnValues.from);
+  //     let namedTo = getNamedAddress(returnValues.to);
+  //     return {
+  //       icon: <TransferIcon />,
+  //       content: (
+  //         <>
+  //           {ucfirst(Entity.TYPES[entity?.label]?.label || '')}
+  //           {' '}<EntityLink {...entity} /> transferred from
+  //           {' '}{namedFrom || <AddressLink address={returnValues.from} maxWidth={addressMaxWidth} />}
+  //           {' '}to {namedTo || <AddressLink address={returnValues.to} maxWidth={addressMaxWidth} />}
+  //         </>
+  //       ),
+  //     };
+  //   },
+  //   triggerAlert: true
   },
 
   // TransitStarted
