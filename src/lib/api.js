@@ -128,12 +128,19 @@ const api = {
 
   getActivities: async (query) => {
     const response = await instance.get(`/${apiVersion}/user/activity${query ? `?${buildQuery(query)}` : ''}`);
-    console.log({ response });
     return {
       activities: response.data,
       totalHits: query?.returnTotal ? parseInt(response.headers['total-hits']) : undefined,
       blockNumber: parseInt(response.headers['starknet-block-number'])
     };
+  },
+
+  getTransactionActivities: async (txHashes) => {
+    const response = await instance.get(`/${apiVersion}/activity?${buildQuery({ txHashes: txHashes.join(',') })}`);
+    return {
+      activities: response.data,
+      blockNumber: parseInt(response.headers['starknet-block-number'])
+    }
   },
 
   getWatchlist: async () => {
