@@ -295,7 +295,7 @@ export const CrewmateSKU = () => {
     return BigInt(tally) * BigInt(priceConstants?.ADALIAN_PRICE_ETH || 0);
   }, [priceConstants?.ADALIAN_PRICE_ETH, tally]);
 
-  const [funding, setFunding] = useState(false);
+  const [funding, setFunding] = useState(true);
   const [polling, setPolling] = useState(false);
 
   const onFundWallet = useCallback(() => {
@@ -319,7 +319,7 @@ export const CrewmateSKU = () => {
       const logoUrl = window.location.origin + '/maskable-logo-192x192.png';
       window.open(
         // TODO: url params are confusing/not working here `&swapAsset=ETH&swapAmount=${targetAmount}`
-        `https://app.${process.env.NODE_ENV === 'production' ? '' : 'demo.'}ramp.network?hostApiKey=${process.env.REACT_APP_RAMP_API_KEY}&hostAppName=Influence&hostLogoUrl=${logoUrl}&userAddress=${account}`,
+        `https://app.${process.env.NODE_ENV === 'production' ? '' : 'demo.'}ramp.network?hostApiKey=${process.env.REACT_APP_RAMP_API_KEY}&hostAppName=Influence&hostLogoUrl=${logoUrl}&userAddress=${account}&defaultAsset=STARKNET_ETH`,
         '_blank'
       );
     }
