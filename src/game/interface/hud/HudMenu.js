@@ -260,6 +260,14 @@ const HudMenu = ({ forceOpenMenu }) => {
           requireLogin: true
         },
         {
+          key: 'BELT_FAVORITES',
+          label: 'Favorites',
+          icon: <FavoriteIcon />,
+          Component: hudMenus.Favorites,
+          noDetail: true,
+          requireLogin: true
+        },
+        {
           key: 'BELT_MAP_SEARCH',
           label: 'System Search',
           icon: <AsteroidSearchIcon />,
@@ -269,14 +277,6 @@ const HudMenu = ({ forceOpenMenu }) => {
           onDetailClick: () => {
             history.push(`/listview/asteroids`);
           }
-        },
-        {
-          key: 'BELT_FAVORITES',
-          label: 'Favorites',
-          icon: <FavoriteIcon />,
-          Component: hudMenus.Favorites,
-          noDetail: true,
-          requireLogin: true
         },
         {
           key: 'BELT_ADVANCED_SEARCH',
@@ -301,6 +301,18 @@ const HudMenu = ({ forceOpenMenu }) => {
     // zoomed to asteroid, not zoomed to lot or ship
     } else if (zoomStatus === 'in' && !zoomScene) {
       buttons.push(
+        {
+          key: 'ASTEROID_INFO',
+          label: 'Asteroid Info',
+          icon: <InfoIcon />,
+          Component: hudMenus.AsteroidInfo,
+          detailType: 'detail',
+          onDetailClick: () => {
+            if (asteroidId) {
+              history.push(`/asteroids/${asteroidId}`);
+            }
+          }
+        },
         {
           key: 'ASTEROID_ASSETS',
           label: 'My Assets',

@@ -77,7 +77,7 @@ const TravelBanner = ({ visible }) => {
     }
     return { headline: h, bannerColor: c };
   }, [travelSolution]);
-  
+
   return (
     <Banner
       headline={<b>{headline}</b>}
@@ -88,7 +88,7 @@ const TravelBanner = ({ visible }) => {
       {!travelSolution && (
         <Content color={bannerColor} onClick={() => dispatchHudMenuOpened('BELT_PLAN_FLIGHT')}>
           <Side><GasIcon /></Side>
-          <Center>Use Route Planner to calculator viable route between asteroids.</Center>
+          <Center>Use Route Planner to calculate viable route between asteroids.</Center>
           <Side />
         </Content>
       )}
