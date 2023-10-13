@@ -20,6 +20,7 @@ const getNow = () => Math.floor(Date.now() / 1000);
 //  confirms, equalityTest
 const customConfigs = {
   // customization of Systems configs from sdk
+  ArrangeCrew: { equalityTest: ['callerCrew.id'] },
   ChangeName: { equalityTest: ['entity.id', 'entity.label'] },
   CoreSampleStart: { equalityTest: ['asteroidId', 'crewId', 'lotId'] },
   CoreSampleFinish: { equalityTest: ['asteroidId', 'crewId', 'lotId'] },

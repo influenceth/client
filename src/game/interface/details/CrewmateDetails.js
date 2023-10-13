@@ -315,14 +315,13 @@ const MouseableCrewTrait = (props) => {
   );
 };
 
-const CrewmateDetails = ({ crewmateId, crewmate, crewmateMap, isOwnedCrewmate }) => {
+const CrewmateDetails = ({ crewmateId, crewmate, isOwnedCrewmate }) => {
   const history = useHistory();
 
-  const onSetAction = useStore(s => s.dispatchActionDialog);
-  const createAlert = useStore(s => s.dispatchAlertLogged);
-  const isNameValid = useNameAvailability(Entity.IDS.CREWMATE);
   const { data: activities } = useActivities({ id: crewmateId, label: Entity.IDS.CREWMATE });
   const { data: earliestActivity, isLoading: earliestLoading } = useEarliestActivity({ id: crewmateId, label: Entity.IDS.CREWMATE });
+
+  const viewingAs = useMemo(() => ({ id: crewmateId, label: Entity.IDS.CREWMATE }), [crewmateId]);
 
   const onBackToCrew = useCallback(() => {
     console.log('crewmate', crewmate, crewmate?.Controller?.controller.id);
@@ -420,7 +419,8 @@ const CrewmateDetails = ({ crewmateId, crewmate, crewmateMap, isOwnedCrewmate })
                         key={activity.id}
                         activity={activity}
                         timestampBreakpoint="1500px"
-                        isTabular />
+                        isTabular
+                        viewingAs={viewingAs} />
                     ))
                     : <EmptyLogEntry>No logs recorded yet.</EmptyLogEntry>
                   }
@@ -483,7 +483,6 @@ const Wrapper = () => {
         <CrewmateDetails
           crewmateId={i}
           crewmate={crewmate}
-          crewmateMap={crewmateMap}
           isOwnedCrewmate={!!crewmateMap[i]}
         />
       )}

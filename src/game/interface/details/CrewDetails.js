@@ -324,6 +324,8 @@ const CrewDetails = ({ crewId, crew, crewmates, isMyCrew, isOwnedCrew, selectCre
   const [hovered, setHovered] = useState();
   const [newName, setNewName] = useState(crew.Name?.name || '');
 
+  const viewingAs = useMemo(() => ({ id: crewId, label: Entity.IDS.CREW }), [crewId]);
+
   // reset
   useEffect(() => {
     if (editing) setNewName(crew.Name?.name || '');
@@ -567,7 +569,8 @@ const CrewDetails = ({ crewId, crew, crewmates, isMyCrew, isOwnedCrew, selectCre
                               key={activity.id}
                               activity={activity}
                               timestampBreakpoint="1500px"
-                              isTabular />
+                              isTabular
+                              viewingAs={viewingAs} />
                           ))
                           : <EmptyLogEntry>No logs recorded yet.</EmptyLogEntry>
                         }

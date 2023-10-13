@@ -1,9 +1,8 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
 import { Asteroid, Entity, Name } from '@influenceth/sdk';
 
 import useAuth from '~/hooks/useAuth';
-import useStore from '~/hooks/useStore';
 import useWebWorker from '~/hooks/useWebWorker';
 import useBuyAsteroid from '~/hooks/useBuyAsteroid';
 import useChangeName from '~/hooks/useChangeName';
@@ -285,6 +284,8 @@ const AsteroidInformation = ({ abundances, asteroid, isManager, isOwner }) => {
   const [newName, setNewName] = useState('');
   const [openNameChangeForm, setOpenNameChangeForm] = useState(false);
 
+  const viewingAs = useMemo(() => ({ id: Number(asteroid?.id), label: Entity.IDS.ASTEROID }), [asteroid?.id]);
+
   const download3dModel = useCallback(() => {
     if (exportingModel || !asteroid) return;
     setExportingModel(true);
@@ -390,7 +391,8 @@ const AsteroidInformation = ({ abundances, asteroid, isManager, isOwner }) => {
                         activity={activity}
                         css={{ fontSize: '13px', fontWeight: 'bold', padding: '6px 4px' }}
                         timestampBreakpoint="1400px"
-                        isTabular />
+                        isTabular
+                        viewingAs={viewingAs} />
                     ))
                     : <EmptyLogEntry>No logs recorded yet.</EmptyLogEntry>
                   }
