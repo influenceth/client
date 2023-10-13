@@ -266,12 +266,16 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
     })),
 
     dispatchOriginSelected: (i) => set(produce(state => {
-      if (state.asteroids.destination === i) return;
-
       state.asteroids.origin = null;
       if (i && Number(i) > 0 && Number(i) <= 250000) {
         state.asteroids.origin = Number(i);
       }
+
+      // Allow changing destination to origin
+      if (state.asteroids.destination === i) {
+        state.asteroids.destination = null;
+      }
+
       state.asteroids.lot = null;
       state.asteroids.lotDestination = null;
       state.asteroids.travelSolution = null;

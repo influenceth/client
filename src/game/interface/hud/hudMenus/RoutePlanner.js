@@ -293,7 +293,8 @@ const RoutePlanner = () => {
         setBaseTime(coarseTime);
       }
     }
-  }, [coarseTime, timeOverride?.speed, nowTime, baseTime, travelSolution]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [coarseTime, travelSolution]);
 
   const { originPath, destinationPath } = useMemo(() => {
     if (!origin || !destination || !baseTime) return {};
