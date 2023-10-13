@@ -13,6 +13,8 @@ import {
   SurfaceTransferIcon,
   ShipIcon,
   BuildingIcon,
+  KeysIcon,
+  ManageCrewIcon,
 } from '~/components/Icons';
 import getActivityConfig from '~/lib/activities';
 import theme, { hexToRGB } from '~/theme';
@@ -88,6 +90,23 @@ const formatAsTx = (item) => {
   //  if so, copy in all the deprecated / not-yet-implemented items as well for reference
   const eventName = item.event?.event || item.key;
   switch(eventName) {
+    case 'ArrangeCrew': {
+      formatted.icon = <ManageCrewIcon />;
+      formatted.label = 'Manage Crew';
+      formatted.onClick = ({ openDialog }) => {
+        openDialog('MANAGE_CREW'); // TODO: need crew id?
+      };
+      break;
+    }
+    case 'ExchangeCrew': {
+      formatted.icon = <ManageCrewIcon />;
+      formatted.label = 'Exchange Crew';
+      formatted.onClick = ({ openDialog }) => {
+        openDialog('MANAGE_CREW'); // TODO: need exchange crew id // TODO: need crew id?
+      };
+      break;
+    }
+
     case 'ChangeName': {
       if (item.vars.entity.label === Entity.IDS.ASTEROID) {
         formatted.icon = <PurchaseAsteroidIcon />;
@@ -135,7 +154,7 @@ const formatAsTx = (item) => {
 
     case 'InitializeAndManageAsteroid':
     case 'ManageAsteroid': {
-      formatted.icon = <CrewIcon />;
+      formatted.icon = <KeysIcon />;
       formatted.label = 'Control Asteroid';
       formatted.onClick = ({ openDialog }) => {
         openDialog('CONTROL_ASTEROID'); // TODO: need asteroid id?

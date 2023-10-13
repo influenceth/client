@@ -245,7 +245,7 @@ const activities = {
 
   CrewmatesArranged: {
     getInvalidations: ({ event: { returnValues } }) => invalidationDefaults(Entity.IDS.CREW, returnValues.callerCrew.id),
-    getLogContent: ({ event: { returnValues, version = 0 /* TODO: remove this default once Charlie's fix is in */ } }, viewingAs = {}) => {
+    getLogContent: ({ event: { returnValues, version } }, viewingAs = {}) => {
       if (version === 0) {
         // v0 does not have oldCrew included, so this is presumptive and potentially inaccurate
         const newCaptain = returnValues.composition?.[0];
@@ -324,9 +324,8 @@ const activities = {
               {toList.length > 0 && fromList.length > 0 && (
                 <>
                   {andList(toList.map((id) => <EntityLink key={id} label={Entity.IDS.CREWMATE} id={id} />))}
-                  {' '}on <EntityLink {...toCrew} /> exchanged for{' '}
+                  {' '}recruited from <EntityLink {...fromCrew} /> in exchange for
                   {' '}{andList(fromList.map((id) => <EntityLink key={id} label={Entity.IDS.CREWMATE} id={id} />))}
-                  {' '}on <EntityLink {...fromCrew} />
                 </>
               )}
               {toList.length > 0 && fromList.length === 0 && (
@@ -339,8 +338,8 @@ const activities = {
               {fromList.length > 0 && toList.length === 0 && (
                 <>
                   {andList(fromList.map((id) => <EntityLink key={id} label={Entity.IDS.CREWMATE} id={id} />))}
-                  {' '}transferred to <EntityLink {...fromCrew} />
-                  {' '}from <EntityLink {...toCrew} />
+                  {' '}transferred from <EntityLink {...toCrew} />
+                  {' '}to <EntityLink {...fromCrew} />
                 </>
               )}
             </>
