@@ -52,22 +52,22 @@ const RouteSelection = () => {
   const originId = useStore(s => s.asteroids.origin);
   const dispatchDestinationSelected = useStore(s => s.dispatchDestinationSelected);
   const dispatchSwapOriginDestination = useStore(s => s.dispatchSwapOriginDestination);
-  const dispatchTravelMode = useStore(s => s.dispatchTravelMode);
+  const dispatchHudMenuOpened = useStore(s => s.dispatchHudMenuOpened);
   const { data: origin } = useAsteroid(originId);
   const { data: destination } = useAsteroid(destinationId);
 
   const handleSwap = useCallback(() => {
     if (originId && destinationId) dispatchSwapOriginDestination();
-  }, [destinationId, originId]);
+  }, [destinationId, dispatchSwapOriginDestination, originId]);
 
   const handleClose = useCallback(() => {
     dispatchDestinationSelected();
-    dispatchTravelMode(false);
-  }, []);
+    dispatchHudMenuOpened();
+  }, [dispatchDestinationSelected, dispatchHudMenuOpened]);
 
   const handleSelect = useCallback((dest) => {
     if (Number(dest?.id) !== Number(originId)) dispatchDestinationSelected(dest?.id)
-  }, [originId]);
+  }, [dispatchDestinationSelected, originId]);
 
   return (
     <>

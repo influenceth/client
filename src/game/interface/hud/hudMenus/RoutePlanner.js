@@ -57,7 +57,7 @@ const SliderInfoRow = styled.div`
   }
   sub {
     font-size: 12px;
-    opacity: 0.4;
+    opacity: 0.75;
     margin-left: 3px;
   }
 `;
@@ -215,14 +215,14 @@ const RoutePlanner = () => {
       ...s,
       _name: s.Name?.name || `Ship #${s.id.toLowerCase()}`,
     }))
-  }, [myShips, myShipsLoading]);
+  }, [myShips, myShipsLoading, crew?._location?.shipId, originId]);
 
   // select default
   useEffect(() => {
     if (shipList.length > 0 && !ship) {
       setShip(shipList[0]);
     }
-  }, [shipList.length]);
+  }, [shipList, ship]);
 
   const shipConfig = useMemo(() => {
     if (!ship) return null;
@@ -253,16 +253,14 @@ const RoutePlanner = () => {
   }, [shipConfig]);
 
   const onSetCargoMass = useCallback((amount) => {
-    setCargoMass(Math.max(0, Math.min(shipConfig?.maxCargoMass, Math.floor(parseInt(amount * 1000) || 0))));
+    const parsed = parseInt(amount * 1_000_000) || 0;
+    setCargoMass(Math.max(0, Math.min(shipConfig?.maxCargoMass, Math.floor(parsed))));
   }, [shipConfig]);
 
   const onSetPropellantMass = useCallback((amount) => {
-    setPropellantMass(Math.max(0, Math.min(shipConfig?.maxPropellantMass, Math.floor(parseInt(amount * 1000) || 0))));
+    const parsed = parseInt(amount * 1_000_000) || 0;
+    setPropellantMass(Math.max(0, Math.min(shipConfig?.maxPropellantMass, Math.floor(parsed))));
   }, [shipConfig]);
-
-  const onCancel = useCallback(() => {
-    dispatchTravelSolution();
-  }, []);
 
   const shipParams = useMemo(() => {
     if (!ship) return 0;
@@ -281,19 +279,22 @@ const RoutePlanner = () => {
 
   useEffect(() => {
     dispatchReorientCamera(true);
+
     return () => {
       dispatchReorientCamera(true);
     }
-  }, []);
+  }, [dispatchReorientCamera]);
 
   useEffect(() => {
     if (!nowTime || !timeOverride?.speed || Math.abs(timeOverride.speed) <= 1) {
       setNowTime(coarseTime);
+
       if (!baseTime || !travelSolution || travelSolution?.departureTime < coarseTime) {
         setBaseTime(coarseTime);
       }
     }
-  }, [coarseTime]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [coarseTime, travelSolution]);
 
   const { originPath, destinationPath } = useMemo(() => {
     if (!origin || !destination || !baseTime) return {};
@@ -350,18 +351,18 @@ const RoutePlanner = () => {
             <label><b>Simulated</b> Onboard Cargo</label>
             <NumberInput
               min={0}
-              max={shipConfig?.maxCargoMass / 1000 || 0}
+              max={shipConfig?.maxCargoMass / 1_000_000 || 0}
               onChange={onSetCargoMass}
-              step={1}
-              value={cargoMass / 1000} />
-            <sub>kg</sub>
+              step={0.1}
+              value={cargoMass / 1_000_000} />
+            <sub>t</sub>
           </SliderInfoRow>
           <SliderInput
             min={0}
-            max={shipConfig?.maxCargoMass / 1000 || 0}
-            increment={1}
+            max={shipConfig?.maxCargoMass / 1_000_000 || 0}
+            increment={0.1}
             onChange={onSetCargoMass}
-            value={cargoMass / 1000 || 0} />
+            value={cargoMass / 1_000_000 || 0} />
         </SliderSection>
 
         <SliderSection>
@@ -369,25 +370,25 @@ const RoutePlanner = () => {
             <label><b>Simulated</b> Onboard Propellant</label>
             <NumberInput
               min={0}
-              max={shipConfig?.maxPropellantMass / 1000 || 0}
+              max={shipConfig?.maxPropellantMass / 1_000_000 || 0}
               onChange={onSetPropellantMass}
-              step={1}
-              value={propellantMass / 1000} />
-            <sub>kg</sub>
+              step={0.1}
+              value={propellantMass / 1_000_000} />
+            <sub>t</sub>
           </SliderInfoRow>
           <SliderInput
             min={0}
-            max={shipConfig?.maxPropellantMass / 1000 || 0}
-            increment={1}
+            max={shipConfig?.maxPropellantMass / 1_000_000 || 0}
+            increment={0.1}
             onChange={onSetPropellantMass}
-            value={propellantMass / 1000 || 0} />
+            value={propellantMass / 1_000_000 || 0} />
         </SliderSection>
       </Sliders>
 
       <SectionHeader style={{ marginBottom: 10 }}>
         <span>Ballistic Transfer Graph</span>
         {travelSolution && (
-          <Closer onClick={onCancel}><CloseIcon /></Closer>
+          <Closer onClick={dispatchTravelSolution}><CloseIcon /></Closer>
         )}
       </SectionHeader>
       <SectionBody>
@@ -438,7 +439,7 @@ const RoutePlanner = () => {
                 }
               </Note>
               <Value>
-                {formatMass(travelSolution.usedPropellantMass * 1e3, { minPrecision: 4 })}
+                {formatMass(travelSolution.usedPropellantMass, { minPrecision: 4 })}
               </Value>
             </InfoRow>
           </SectionBody>
