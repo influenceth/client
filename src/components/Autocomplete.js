@@ -136,7 +136,7 @@ const Autocomplete = ({
           {...inputProps}
         />
         <Loading isLoading={reactBool(isLoading)}>
-          <PuffLoader color={theme.colors.main} size="16" />
+          <PuffLoader color={theme.colors.main} size="16px" />
         </Loading>
       </span>
 
