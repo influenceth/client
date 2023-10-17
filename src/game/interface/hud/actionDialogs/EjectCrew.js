@@ -24,8 +24,7 @@ import {
   LotInputBlock
 } from './components';
 import useAsteroid from '~/hooks/useAsteroid';
-import useCrew from '~/hooks/useCrew';
-import useCrewmates from '~/hooks/useCrewmates';
+import useHydratedCrew from '~/hooks/useHydratedCrew';
 import useLot from '~/hooks/useLot';
 import useStore from '~/hooks/useStore';
 import actionStages from '~/lib/actionStages';
@@ -202,8 +201,7 @@ const Wrapper = (props) => {
 
   // TODO: targetCrewId needs to be specified if guests (or we need to pass in an array of crews to select)
   const targetCrewId = props.guests ? null : crew?.i;
-  const { data: targetCrew, isLoading: crewIsLoading } = useCrew(targetCrewId);
-  const { data: targetCrewmates, isLoading: targetCrewmatesLoading } = useCrewmates(targetCrew?.Crew?.roster || []);
+  const { data: targetCrew, isLoading: crewIsLoading } = useHydratedCrew(targetCrewId);
 
   // TODO: ...
   // const extractionManager = useExtractionManager(asteroid?.i, lot?.i);
@@ -211,7 +209,7 @@ const Wrapper = (props) => {
   const manager = {};
   const actionStage = actionStages.NOT_STARTED;
 
-  const isLoading = asteroidIsLoading || lotIsLoading || shipIsLoading || crewIsLoading || targetCrewmatesLoading;
+  const isLoading = asteroidIsLoading || lotIsLoading || shipIsLoading || crewIsLoading;
   useEffect(() => {
     if (!asteroid || (!lot && !ship) || !targetCrew) {
       if (!isLoading) {
@@ -229,7 +227,7 @@ const Wrapper = (props) => {
         asteroid={asteroid}
         lot={lot}
         ship={ship}
-        targetCrew={{ ...targetCrew, _crewmates: targetCrewmates }}
+        targetCrew={targetCrew}
         manager={manager}
         stage={actionStage}
         {...props} />

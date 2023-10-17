@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useHistory, useParams } from 'react-router-dom';
 import styled, { css } from 'styled-components';
-import { Crewmate, Entity, Time } from '@influenceth/sdk';
+import { Address, Crewmate, Entity, Time } from '@influenceth/sdk';
 import LoadingAnimation from 'react-spinners/PuffLoader';
 
 import CoverImageSrc from '~/assets/images/modal_headers/OwnedCrew.png';
@@ -13,8 +13,8 @@ import {
 } from '~/components/Icons';
 import LogEntry from '~/components/LogEntry';
 import useActivities from '~/hooks/useActivities';
+import useAuth from '~/hooks/useAuth';
 import useCrewContext from '~/hooks/useCrewContext';
-import useNameAvailability from '~/hooks/useNameAvailability';
 import useStore from '~/hooks/useStore';
 import useEarliestActivity from '~/hooks/useEarliestActivity';
 import useCrewmate from '~/hooks/useCrewmate';
@@ -436,6 +436,7 @@ const CrewmateDetails = ({ crewmateId, crewmate, isOwnedCrewmate }) => {
 
 const Wrapper = () => {
   const { i } = useParams();
+  const { account } = useAuth();
   const { crewmateMap, loading: myCrewLoading } = useCrewContext();
   const history = useHistory();
 
@@ -483,7 +484,7 @@ const Wrapper = () => {
         <CrewmateDetails
           crewmateId={i}
           crewmate={crewmate}
-          isOwnedCrewmate={!!crewmateMap[i]}
+          isOwnedCrewmate={Address.areEqual(crewmateMap[i]?.Nft?.owner, account)}
         />
       )}
     </Details>

@@ -12,15 +12,14 @@ import CrewLocationLabel from '~/components/CrewLocationLabel';
 import FoodStatus from '~/components/FoodStatus';
 import IconButton from '~/components/IconButton';
 import { CloseIcon, CrewIcon, ManageCrewIcon, NewCrewIcon, PlusIcon } from '~/components/Icons';
-import useCrew from '~/hooks/useCrew';
 import useCrewContext from '~/hooks/useCrewContext';
-import useCrewmates from '~/hooks/useCrewmates';
 import useCrewSwapManager from '~/hooks/useCrewSwapManager';
+import useHydratedCrew from '~/hooks/useHydratedCrew';
 import useHydratedLocation from '~/hooks/useHydratedLocation';
 import useStore from '~/hooks/useStore';
 import actionStages from '~/lib/actionStages';
 import formatters from '~/lib/formatters';
-import { reactBool, locationsArrToObj, nativeBool } from '~/lib/utils';
+import { reactBool, nativeBool } from '~/lib/utils';
 import theme from '~/theme';
 import { ActionDialogInner } from '../ActionDialog';
 import {
@@ -535,23 +534,12 @@ const TargetMyCrewWrapper = (props) => {
 // this would only be used if you are transferring your crewmate off of someone else's crew
 // TODO: block other dialog functions
 const TargetForeignCrewWrapper = (props) => {
-  const { data: rawCrew, isLoading: crewLoading } = useCrew(props?.crewId);
-  const { data: crewmates, isLoading: crewmatesLoading } = useCrewmates(rawCrew?.Crew?.roster || []);
-
-  const crew = useMemo(() => {
-    if (!rawCrew || !crewmates) return null;
-    return {
-      ...rawCrew,
-      _location: locationsArrToObj(rawCrew.Location?.locations),
-      _crewmates: rawCrew.Crew.roster.map((id) => crewmates.find((c) => c.id === id))
-    }
-  }, [rawCrew, crewmates]);
-
+  const { data: crew, isLoading } = useHydratedCrew(props.crewId);
   return (
     <Wrapper
       crew={crew}
       isForeignCrew
-      loading={crewLoading || crewmatesLoading}
+      loading={isLoading}
       {...props}
     />
   );

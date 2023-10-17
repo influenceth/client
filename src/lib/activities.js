@@ -774,7 +774,6 @@ export default getActivityConfig;
 // [ 'entities', Entity.IDS.CREW, 'ship', shipId ],
 // [ 'entities', Entity.IDS.CREWMATE, ids.join(',') ],
 // [ 'entities', Entity.IDS.CREWMATE, 'owned', account ],
-// [ 'entities', Entity.IDS.CREWMATE, 'uninitialized', account ],
 // [ 'entities', Entity.IDS.SHIP, 'asteroid', i ],
 // [ 'entities', Entity.IDS.SHIP, 'owned', useCrewId ],
 // [ 'entity', Entity.IDS.ASTEROID, id ],

@@ -118,6 +118,7 @@ const Crews = () => {
             crewCardProps={{ hideHeader: true}}
             crewmate={crew?._crewmates?.[0]}
             isCaptain
+            warnIfNotOwnedBy={crew?.Nft?.owner}
             width={captainWidth} />
         )}
         {!crew?._crewmates?.[0] && <EmptyCrewCardFramed hideHeader width={captainWidth} />}
@@ -135,6 +136,7 @@ const Crews = () => {
                   borderColor={`rgba(${theme.colors.mainRGB}, 0.6)`}
                   crewCardProps={{ hideHeader: true }}
                   crewmate={crewmate}
+                  warnIfNotOwnedBy={crew?.Nft?.owner}
                   width={crewmateWidth}
                   noArrow />
               );

@@ -21,23 +21,21 @@ export function CrewProvider({ children }) {
   );
 
   const combinedCrewRoster = useMemo(() => (rawCrews || []).reduce((acc, c) => [...acc, ...c.Crew.roster], []), [rawCrews]);
-  const { data: allCrewmates, isLoading: crewmatesLoading } = useQuery(
+  const { data: myCrewCrewmates, isLoading: crewmatesLoading } = useQuery(
     [ 'entities', Entity.IDS.CREWMATE, combinedCrewRoster.join(',') ], // TODO: joined key
     () => api.getCrewmates(combinedCrewRoster),
     { enabled: combinedCrewRoster?.length > 0 }
   );
 
-  const { data: allRecruits, isLoading: recruitsLoading } = useQuery(
-    [ 'entities', Entity.IDS.CREWMATE, 'uninitialized', account ],
-    async () => {
-      // return all account-owned crewmates that are not part of a crew (thus must need initialization)
-      return (await api.getAccountCrewmates(account)).filter((c) => !c.Control?.controller?.id);
-    },
+  const { data: myOwnedCrewmates, isLoading: myOwnedCrewmatesLoading } = useQuery(
+    [ 'entities', Entity.IDS.CREWMATE, 'owned', account ],
+    () => api.getAccountCrewmates(account),
     { enabled: !!account }
   );
 
   const [adalianRecruits, arvadianRecruits] = useMemo(() => {
-    if (!allRecruits) return [[], []];
+    if (!myOwnedCrewmates) return [[], []];
+    const allRecruits = myOwnedCrewmates.filter((c) => !c.Control?.controller?.id);
     return [
       allRecruits.filter((c) => !c.Crewmate.class),
       allRecruits.filter((c) => [
@@ -46,20 +44,24 @@ export function CrewProvider({ children }) {
         Crewmate.COLLECTION_IDS.ARVAD_LEADERSHIP
       ].includes(c.Crewmate.coll))
     ];
-  }, [allRecruits]);
+  }, [myOwnedCrewmates]);
 
   const crewmateMap = useMemo(() => {
-    if (!crewsLoading && !crewmatesLoading) {
-      return (allCrewmates || []).reduce((acc, crewmate) => {
-        acc[crewmate.id] = crewmate;
-        return acc;
-      }, {});
+    if (!crewsLoading && !crewmatesLoading && !myOwnedCrewmatesLoading) {
+      const map = {};
+      (myCrewCrewmates || []).forEach((crewmate) => {
+        if (!map[crewmate.id]) map[crewmate.id] = crewmate;
+      });
+      (myOwnedCrewmates || []).forEach((crewmate) => {
+        if (!map[crewmate.id]) map[crewmate.id] = crewmate;
+      });
+      return map;
     }
-    return null;  // NOTE: if change this null response, see NOTE above crewsAndCrewmatesReady
-  }, [allCrewmates, crewsLoading, crewmatesLoading]);
+    return null;
+  }, [myCrewCrewmates, myOwnedCrewmates, crewsLoading, crewmatesLoading, myOwnedCrewmatesLoading]);
 
-  // NOTE: this covers crewsLoading and crewmatesLoading because crewmateMap is
-  // null while either of those are true
+  // NOTE: this covers all queries' loading states because crewmateMap is
+  // null while any of those are true
   const crewsAndCrewmatesReady = useMemo(() => !!crewmateMap, [crewmateMap]);
 
   const crews = useMemo(() => {
@@ -103,7 +105,7 @@ export function CrewProvider({ children }) {
       crew: selectedCrew,
       crews,
       crewmateMap,
-      loading: !crewsAndCrewmatesReady || recruitsLoading,
+      loading: !crewsAndCrewmatesReady,
       selectCrew: dispatchCrewSelected  // TODO: this might be redundant
     }}>
       {children}

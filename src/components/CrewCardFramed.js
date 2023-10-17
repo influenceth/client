@@ -1,12 +1,15 @@
 import styled, { css, keyframes } from 'styled-components';
+import { Address } from '@influenceth/sdk';
 
 import CrewCard from '~/components/CrewCard';
 import CrewSilhouetteCard from '~/components/CrewSilhouetteCard';
 import { CaptainIcon } from '~/components/Icons';
 import TriangleTip from '~/components/TriangleTip';
+import theme, { hexToRGB } from '~/theme';
 
 const bgColor = '#000';
 const hoverBgColor = '#183541';
+const warningBorderColor = `rgba(${hexToRGB(theme.colors.error)}, 0.4)`;
 const defaultBorderColor = '#444';
 const tween = '250ms ease';
 
@@ -18,7 +21,7 @@ const silhouetteAnimation = keyframes`
 
 const Avatar = styled.div`
   background: ${bgColor};
-  border: solid ${p => p.borderColor || defaultBorderColor};
+  border: solid ${p => p.borderColor};
   border-width: ${p => p.noArrow ? '1px' : '1px 1px 0'};
   overflow: hidden;
   pointer-events: auto;
@@ -140,8 +143,10 @@ export const EmptyCrewCardFramed = styled.div`
 
 const noop = () => {};
 const CrewCardFramed = ({
+  borderColor,
   crewmate,
   crewCardProps = {},
+  warnIfNotOwnedBy,
   isCaptain,
   onClick,
   silhouetteOverlay,
@@ -149,6 +154,9 @@ const CrewCardFramed = ({
   width,
   ...props
 }) => {
+  const finalBorderColor = warnIfNotOwnedBy && !Address.areEqual(crewmate?.Nft?.owner, warnIfNotOwnedBy)
+    ? warningBorderColor
+    : (borderColor || defaultBorderColor);
   const cardWidth = width || 96;
   return (
     <AvatarWrapper
@@ -159,7 +167,7 @@ const CrewCardFramed = ({
       onClick={onClick || noop}
       width={cardWidth}
       {...props}>
-      <Avatar isEmpty={!crewmate} {...props}>
+      <Avatar isEmpty={!crewmate} borderColor={finalBorderColor} {...props}>
         {crewmate && (
           <CrewCard
             crewmate={crewmate}
@@ -177,7 +185,7 @@ const CrewCardFramed = ({
         {!props.noArrow && (
           <StyledTriangleTip
             fillColor={bgColor}
-            strokeColor={props.borderColor || defaultBorderColor}
+            strokeColor={finalBorderColor}
             strokeWidth={2} />
         )}
       </AvatarFlourish>
