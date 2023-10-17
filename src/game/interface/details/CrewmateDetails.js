@@ -14,7 +14,6 @@ import {
 import LogEntry from '~/components/LogEntry';
 import useActivities from '~/hooks/useActivities';
 import useCrewContext from '~/hooks/useCrewContext';
-import useNameAvailability from '~/hooks/useNameAvailability';
 import useStore from '~/hooks/useStore';
 import useEarliestActivity from '~/hooks/useEarliestActivity';
 import useCrewmate from '~/hooks/useCrewmate';

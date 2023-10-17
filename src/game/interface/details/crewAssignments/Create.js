@@ -28,7 +28,7 @@ import CrewClassIcon from '~/components/CrewClassIcon';
 import CrewTraitIcon from '~/components/CrewTraitIcon';
 import Details from '~/components/DetailsModal';
 import Ether from '~/components/Ether';
-import { CloseIcon, LinkIcon } from '~/components/Icons';
+import { CheckIcon, CloseIcon, LinkIcon } from '~/components/Icons';
 import IconButton from '~/components/IconButton';
 import MouseoverInfoPane from '~/components/MouseoverInfoPane';
 import TextInput from '~/components/TextInput';
@@ -94,6 +94,12 @@ const opacityTransition = keyframes`
   0% { opacity: 0; }
   75% { opacity: 0; }
   100% { opacity: 1; }
+`;
+
+const pulsingTransition = keyframes`
+  0% { opacity: 0.75; }
+  50% { opacity: 0.25; }
+  100% { opacity: 0.75; }
 `;
 
 const TitleBox = styled.div`
@@ -496,12 +502,34 @@ const NameSection = styled.div`
     width: 275px;
   }
   & > label {
-    color: #777;
+    color: ${p => p.theme.colors.main};
     display: block;
+    font-size: 15px;
     font-weight: bold;
     margin-bottom: 8px;
     text-transform: uppercase;
   }
+`;
+
+const NameMessage = styled.div`
+  align-items: center;
+  display: flex;
+  flex-direction: row;
+  font-size: 15px;
+  height: 32px;
+  & > span {
+    margin-left: 8px;
+  }
+`;
+const NameError = styled(NameMessage)`
+  color: ${p => p.theme.colors.error};
+`;
+const NameLoading = styled(NameMessage)`
+  animation: ${pulsingTransition} 1000ms ease infinite;
+  color: ${p => p.theme.colors.lightPurple};
+`;
+const NameSuccess = styled(NameMessage)`
+  color: ${p => p.theme.colors.success};
 `;
 
 const RandomizeControls = styled(IconButton)`
@@ -1086,6 +1114,29 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
 
   const disableChanges = pendingCrewmate || traitsLocked || promptingTransaction;
 
+  const [checkingName, setCheckingName] = useState(false);
+  const [nameError, setNameError] = useState(null);
+  useEffect(() => {
+    setNameError('');
+
+    const testName = `${name}`;
+    if (testName.length > 0) {
+      // (to throttle)
+      let to = setTimeout(() => {
+        setCheckingName(true);
+        isNameValid(testName, crewmate?.id, 'string').then((trueOrNameErr) => {
+          setNameError(trueOrNameErr === true ? null : trueOrNameErr);
+          setCheckingName(false);
+        });
+      }, 500);
+      return () => {
+        if (to) clearTimeout(to);
+      }
+    } else {
+      setNameError('Enter Crewmate Name');
+    }
+  }, [name, crewmate?.id, isNameValid]);
+
   const readyForSubmission = useMemo(() => {
     if (!name) return false;
     if (!selectedClass) return false;
@@ -1123,16 +1174,20 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
                     <NameSection>
                       {crewmate._canRename && (
                         <>
-                          <label>Crewmate Name</label>
-                          {/* TODO: implement naming rules from sdk */}
+                          <label>Name</label>
                           <TextInput
-                            disabled={promptingTransaction || finalizing || !crewmate._canRename}
+                            autoFocus
+                            disabled={promptingTransaction || finalizing}
                             initialValue={name}
                             minlength={Name.TYPES[Entity.IDS.CREWMATE].min}
                             maxlength={Name.TYPES[Entity.IDS.CREWMATE].max}
                             pattern={Name.getTypeRegex(Entity.IDS.CREWMATE)}
                             onChange={handleNameChange}
-                            placeholder="Enter Name" />
+                            placeholder="Crewmate Name" />
+
+                          {checkingName && <NameLoading>Checking availability...</NameLoading>}
+                          {!checkingName && nameError && <NameError><CloseIcon /> <span>{nameError}</span></NameError>}
+                          {!checkingName && nameError === null && <NameSuccess><CheckIcon /> <span>Name is available</span></NameSuccess>}
                         </>
                       )}
 
@@ -1168,7 +1223,6 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
                           </RandomizeControls>
                         </RerollContainer>
                       )}
-
 
                       <RerollContainer>
                         {traitsLocked
@@ -1401,7 +1455,7 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
               <div style={{ alignItems: 'center', display: 'flex', flexDirection: 'row' }}>
                 {recruitTally > 0 && <RecruitTally>Credits Remaining: <b>{recruitTally}</b></RecruitTally>}
                 <Button
-                  disabled={!readyForSubmission || !!pendingCrewmate || (crewId !== 0 && crew?.Crew?.roster?.length >= 5)}
+                  disabled={!readyForSubmission || !!pendingCrewmate || nameError !== null || (crewId !== 0 && crew?.Crew?.roster?.length >= 5)}
                   loading={!!pendingCrewmate}
                   subtle
                   isTransaction

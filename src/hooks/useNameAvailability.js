@@ -7,51 +7,46 @@ import useStore from './useStore';
 const useNameAvailability = (entityType) => {
   const createAlert = useStore(s => s.dispatchAlertLogged);
 
-  const validateName = useCallback((name, suppressAlert) => {
-    let err = '';
-    const standardError = Name.getNameError(name, Name.getType(entityType));
-
-    if (standardError) err = standardError;
-    // TODO: move these extras to sdk? only really make sense if also true in the contract
-    else if (/^ /.test(name) || / $/.test(name)) err = 'Name cannot have leading or trailing spaces.';
-    else if (/ {2,}/.test(name)) err = 'Name cannot have adjoining spaces.';
-    if (err) {
-      if (!suppressAlert) {
-        createAlert({
-          type: 'GenericAlert',
-          data: { content: err },
-          level: 'warning',
-          duration: 4000
-        });
-      }
-      return false;
-    }
-
-    return true;
-  }, [createAlert]);
-
-  const getNameAvailability = useCallback(async (name, entityId, suppressAlert) => {
+  const getNameAvailability = useCallback(async (name, entityId, returnType = 'alert') => {
     try {
-      if (!validateName(name, suppressAlert)) return false;
-      const nameCollisions = await api.getNameUse(entityType, name);
+      let nameError = null;
 
-      if (nameCollisions?.length > 0 && nameCollisions[0].id !== entityId) {
-        if (!suppressAlert) {
+      const standardError = Name.getNameError(name, Name.getType(entityType));
+      if (standardError) {
+        nameError = standardError;
+      
+      // TODO: vvv move these extras to sdk? only really make sense if also true in the contract
+      } else if (/^ /.test(name) || / $/.test(name)) {
+        nameError = 'Name cannot have leading or trailing spaces.';
+      } else if (/ {2,}/.test(name)) {
+        nameError = 'Name cannot have adjoining spaces.';
+      // ^^^
+      } else {
+        const nameCollisions = await api.getNameUse(entityType, name);
+        if (nameCollisions?.length > 0 && nameCollisions[0].id !== entityId) {
+          nameError = `The name "${name}" is already taken.`;
+        }
+      }
+
+      if (nameError) {
+        if (returnType === 'alert') {
           createAlert({
             type: 'GenericAlert',
             level: 'warning',
-            data: { content: `The name: "${name}" is already taken.` },
+            data: { content: nameError },
             duration: 4000
           });
+          // fallthrough to return false
+        } else if (returnType === 'string') {
+          return nameError;
         }
         return false;
       }
-
       return true;
     } catch (e) {
-      return true;  // true on error, wallet will report failure
+      return true;  // true on thrown error, wallet will report failure
     }
-  }, [createAlert, validateName]);
+  }, [createAlert]);
 
   return getNameAvailability;
 };
