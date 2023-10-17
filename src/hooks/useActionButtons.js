@@ -81,6 +81,7 @@ const useActionButtons = () => {
 
   const [actions, setActions] = useState([]);
 
+  // TODO: should this be useMemo?
   // TODO: could reasonably have buttons determine own visibility and remove some redundant logic here
   // (the only problem is parent wouldn't know how many visible buttons there were)
   useEffect(() => {
@@ -118,7 +119,7 @@ const useActionButtons = () => {
       if (zoomStatus === 'in') {
 
         // if operational habitat, can recruit there
-        if (lot && lot.building?.Building?.buildingType === Building.IDS.HABITAT && constructionStatus === 'OPERATIONAL') {
+        if (account && lot && lot.building?.Building?.buildingType === Building.IDS.HABITAT && constructionStatus === 'OPERATIONAL') {
           a.push(actionButtons.RecruitCrewmate);
         }
 
