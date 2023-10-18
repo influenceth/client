@@ -143,14 +143,6 @@ const Interface = () => {
           <Route path="/recruit/:crewId([0-9]+)/:locationId([0-9]+)?/:crewmateId([0-9]+)?/:page?">
             <RecruitCrewmate />
           </Route>
-          {/* 
-          <Route exact path="/recruit/:crewmateId([0-9]+)/">
-            <CrewAssignment />
-          </Route>
-          <Route path="/recruit/:crewmateId([0-9]+)/create">
-            <CrewCreation />
-          </Route>
-          */}
 
           {/* TODO: deprecated?
           <Route exact path="/crew-assignments/:id([a-z0-9]+)/:selected?">

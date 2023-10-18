@@ -1,16 +1,18 @@
+import { useCallback, useEffect } from 'react';
 import { useHistory, useParams } from 'react-router-dom';
 
 import SelectHabitatDialog from '~/components/SelectHabitatDialog';
+import SelectUninitializedCrewmateDialog from '~/components/SelectUninitializedCrewmateDialog';
 import CrewAssignmentCreate from '~/game/interface/details/crewAssignments/Create';
 import CrewAssignment from '~/game/interface/details/crewAssignments/Assignment';
-import SelectUninitializedCrewmateDialog from '~/components/SelectUninitializedCrewmateDialog';
-import { useCallback } from 'react';
+import useAuth from '~/hooks/useAuth';
 
 // /recruit/:crewId -- select location IF crew is 0
 // /recruit/:crewId/:locationId -- select crewmate credit
 // /recruit/:crewId/:locationId/:crewmateId -- crewmate assignment
 // /recruit/:crewId/:locationId/:crewmateId/create -- crewmate creation
 const RecruitCrewmate = () => {
+  const { account } = useAuth();
   const history = useHistory();
   const { locationId, crewId, crewmateId, page } = useParams();
 
@@ -18,7 +20,7 @@ const RecruitCrewmate = () => {
   // - crewId is 0 or is owned by account
   // - crewId is 0 or is at locationId
   // - if crewId > 0, crewId is not full
-  // - if locationId > 0. locationId is a habitat
+  // - if locationId > 0, locationId is a habitat
 
   const onSelectAssignedHabitat = useCallback((locationId) => {
     history.push(`/recruit/0/${locationId}/`)
@@ -35,6 +37,10 @@ const RecruitCrewmate = () => {
   const onFinishAssignment = useCallback(() => {
     history.push(`/recruit/${crewId}/${locationId}/${crewmateId}/create`);
   }, [crewId, locationId, crewmateId]);
+
+  useEffect(() => {
+    if (!account) history.push('/');
+  }, [account]);
 
   if (locationId === undefined) {
     return <SelectHabitatDialog onAccept={onSelectAssignedHabitat} onReject={onRejectAssignedHabitat} />;
