@@ -2940,7 +2940,7 @@ export const SwayInputBlock = ({ title, ...props }) => (
   </FlexSectionInputBlock>
 );
 
-export const CrewInputBlock = ({ cardWidth, crew, hideCrewmates, title, inlineDetails, ...props }) => (
+export const CrewInputBlock = ({ cardWidth, crew, hideCrewmates, highlightCrewmates, title, inlineDetails, ...props }) => (
   <FlexSectionInputBlock
     title={title}
     titleDetails={inlineDetails ? null : (
@@ -2979,9 +2979,15 @@ export const CrewInputBlock = ({ cardWidth, crew, hideCrewmates, title, inlineDe
                   isCaptain={i === 0}
                   lessPadding
                   noArrow={i > 0}
+                  style={highlightCrewmates && !highlightCrewmates.includes(crew._crewmates[i].id) ? { opacity: 0.5 } : {}}
                   width={cardWidth || 60} />
               )
-              : <CrewCardPlaceholder key={i} width={cardWidth || 60} />
+              : (
+                <CrewCardPlaceholder
+                  key={i}
+                  style={highlightCrewmates ? { opacity: 0.5 } : {}}
+                  width={cardWidth || 60} />
+              )
           )}
         </CrewCards>
       )}

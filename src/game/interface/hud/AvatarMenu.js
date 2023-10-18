@@ -168,6 +168,7 @@ const AvatarMenu = () => {
             isCaptain
             onClick={onClick}
             silhouetteOverlay={silhouetteOverlay}
+            warnIfNotOwnedBy={crew?.Nft?.owner}
             width={96} />
 
           <CrewInfoContainer>
@@ -191,6 +192,7 @@ const AvatarMenu = () => {
                     crewmate={crewmate}
                     onClick={onClick}
                     silhouetteOverlay={silhouetteOverlay}
+                    warnIfNotOwnedBy={crew?.Nft?.owner}
                     width={65}
                     noArrow />
                 );

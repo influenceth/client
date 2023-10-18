@@ -7,9 +7,14 @@ import DataReadout from '~/components/DataReadout';
 import MouseoverInfoPane from './MouseoverInfoPane';
 import { useMemo } from 'react';
 import formatters from '~/lib/formatters';
+import AddressLink from './AddressLink';
 
 const TooltipContents = styled.div`
   & > h3 {
+    align-items: flex-end;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
     margin: 0 0 7px;
   }
   & > article {
@@ -52,14 +57,25 @@ const Trait = styled.div`
   }
 `;
 
-const CrewmateInfoPane = ({ crewmate, cssWhenVisible, referenceEl, visible, ...props }) => {
+const NotMine = styled.span`
+  color: ${p => p.theme.colors.error};
+  font-size: 12px;
+  span {
+    color: ${p => p.theme.colors.error} !important;
+  }
+`;
+
+const CrewmateInfoPane = ({ crewmate, cssWhenVisible, referenceEl, showOwner, visible, ...props }) => {
   const traits = useMemo(() => Crewmate.getCombinedTraits(crewmate.Crewmate), [crewmate]);
 
   if (!crewmate) return null;
   return (
     <MouseoverInfoPane cssWhenVisible={cssWhenVisible} referenceEl={referenceEl} visible={visible} {...props}>
       <TooltipContents>
-        <h3>{formatters.crewmateName(crewmate)}</h3>
+        <h3>
+          {formatters.crewmateName(crewmate)}
+          {showOwner && <NotMine>Owned by <AddressLink address={crewmate?.Nft?.owner} truncate /></NotMine>}
+        </h3>
         <article>
           <div>
             <CrewClassIcon crewClass={crewmate.Crewmate.class} />

@@ -6,7 +6,7 @@ const CrewLocationLabel = ({ hydratedLocation }) => {
   return (
     <>
       <CrewLocationIcon />
-      {formatters.asteroidName(hydratedLocation.asteroid)}
+      {' '}{formatters.asteroidName(hydratedLocation.asteroid)}
       {(() => {
         const { ship, building, lotId } = hydratedLocation;
         if (ship) return <span>{formatters.shipName(ship)}</span>;

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useHistory, useParams } from 'react-router-dom';
 import styled, { css } from 'styled-components';
-import { Building, Entity, Name, Time } from '@influenceth/sdk';
+import { Address, Building, Entity, Name, Time } from '@influenceth/sdk';
 import LoadingAnimation from 'react-spinners/PuffLoader';
 
 import CoverImageSrc from '~/assets/images/modal_headers/OwnedCrew.png';
@@ -22,18 +22,17 @@ import LogEntry from '~/components/LogEntry';
 import TabContainer from '~/components/TabContainer';
 import TextInput from '~/components/TextInput';
 import useActivities from '~/hooks/useActivities';
+import useAuth from '~/hooks/useAuth';
 import useChangeName from '~/hooks/useChangeName';
-import useCrew from '~/hooks/useCrew';
 import useCrewContext from '~/hooks/useCrewContext';
-import useCrewmates from '~/hooks/useCrewmates';
+import useEarliestActivity from '~/hooks/useEarliestActivity';
+import useHydratedCrew from '~/hooks/useHydratedCrew';
 import useHydratedLocation from '~/hooks/useHydratedLocation';
 import useNameAvailability from '~/hooks/useNameAvailability';
 import useStore from '~/hooks/useStore';
 import formatters from '~/lib/formatters';
-import { locationsArrToObj, nativeBool } from '~/lib/utils';
-import theme from '~/theme';
-import useEarliestActivity from '~/hooks/useEarliestActivity';
-import useAuth from '~/hooks/useAuth';
+import { nativeBool, reactBool } from '~/lib/utils';
+import theme, { hexToRGB } from '~/theme';
 
 const borderColor = 'rgba(200, 200, 200, 0.15)';
 const breakpoint = 1375;
@@ -308,7 +307,8 @@ const PopperWrapper = (props) => {
   return props.children(refEl, props.disableRefSetter ? noop : setRefEl);
 }
 
-const CrewDetails = ({ crewId, crew, crewmates, isMyCrew, isOwnedCrew, selectCrew }) => {
+const CrewDetails = ({ crewId, crew, isMyCrew, isOwnedCrew, selectCrew }) => {
+  const { account } = useAuth();
   const history = useHistory();
 
   const onSetAction = useStore(s => s.dispatchActionDialog);
@@ -318,13 +318,14 @@ const CrewDetails = ({ crewId, crew, crewmates, isMyCrew, isOwnedCrew, selectCre
   const { data: earliestActivity, isLoading: earliestLoading } = useEarliestActivity({ id: crewId, label: Entity.IDS.CREW });
   const { changeName, changingName } = useChangeName({ id: crewId, label: Entity.IDS.CREW });
 
-  const hydratedLocation = useHydratedLocation(locationsArrToObj(crew.Location?.locations));
+  const hydratedLocation = useHydratedLocation(crew._location);
 
   const [editing, setEditing] = useState();
   const [hovered, setHovered] = useState();
   const [newName, setNewName] = useState(crew.Name?.name || '');
 
   const viewingAs = useMemo(() => ({ id: crewId, label: Entity.IDS.CREW }), [crewId]);
+  const hasMyCrewmates = useMemo(() => crew._crewmates.filter((c) => account && Address.areEqual(account, c.Nft?.owner))?.length, [account, crew._crewmates]);
 
   // reset
   useEffect(() => {
@@ -420,7 +421,7 @@ const CrewDetails = ({ crewId, crew, crewmates, isMyCrew, isOwnedCrew, selectCre
             <CrewWrapper>
               <PopperWrapper disableRefSetter={!ready}>
                 {(refEl, setRefEl) => {
-                  const crewmate = crewmates?.[0];
+                  const crewmate = crew._crewmates?.[0];
                   if (!crewmate) {
                     return (
                       <EmptyCrewCardFramed isCaptain onClick={isMyCrew ? onClickRecruit : null} width={146}>
@@ -439,10 +440,12 @@ const CrewDetails = ({ crewId, crew, crewmates, isMyCrew, isOwnedCrew, selectCre
                           onClick={onClickCrewmate(crewmate)}
                           onMouseEnter={() => setHovered(0)}
                           onMouseLeave={() => setHovered()}
+                          warnIfNotOwnedBy={crew?.Nft?.owner}
                           width={180} />
                       </span>
                       <CrewmateInfoPane
                         crewmate={crewmate}
+                        showOwner={reactBool(!Address.areEqual(crew?.Nft?.owner, crewmate?.Nft?.owner))}
                         css="transform: translateY(25px);"
                         cssWhenVisible="transform: translateY(3px);"
                         referenceEl={refEl}
@@ -456,7 +459,8 @@ const CrewDetails = ({ crewId, crew, crewmates, isMyCrew, isOwnedCrew, selectCre
               <CrewInfoContainer>
                 <Crewmates>
                   {Array.from(Array(4)).map((_, i) => {
-                    const crewmate = crewmates?.[i + 1];
+                    const crewmate = crew._crewmates?.[i + 1];
+                    const isMercenary = !Address.areEqual(crewmate?.Nft?.owner || '', crew?.Nft?.owner || '');
                     if (!crewmate) {
                       return (
                         <EmptyCrewCardFramed key={i} onClick={isMyCrew ? onClickRecruit : null} width={146}>
@@ -476,11 +480,13 @@ const CrewDetails = ({ crewId, crew, crewmates, isMyCrew, isOwnedCrew, selectCre
                                 onClick={onClickCrewmate(crewmate)}
                                 onMouseEnter={() => setHovered(i + 1)}
                                 onMouseLeave={() => setHovered()}
+                                warnIfNotOwnedBy={crew?.Nft?.owner}
                                 width={146}
                                 noArrow />
                             </span>
                             <CrewmateInfoPane
                               crewmate={crewmate}
+                              showOwner={reactBool(!Address.areEqual(crew?.Nft?.owner, crewmate?.Nft?.owner))}
                               css="transform: translateY(25px);"
                               cssWhenVisible="transform: translateY(3px);"
                               referenceEl={refEl}
@@ -528,6 +534,11 @@ const CrewDetails = ({ crewId, crew, crewmates, isMyCrew, isOwnedCrew, selectCre
             {isOwnedCrew && !isMyCrew && (
               <div style={{ paddingTop: 15 }}>
                 <Button subtle onClick={() => selectCrew(crewId)}>Switch to Crew</Button>
+              </div>
+            )}
+            {!isMyCrew && hasMyCrewmates > 0 && (
+              <div style={{ paddingTop: 15 }}>
+                <Button subtle onClick={() => onSetAction('MANAGE_CREW', { crewId })}>Recover Crewmate{hasMyCrewmates === 1 ? '' : 's'}</Button>
               </div>
             )}
           </ManagementContainer>
@@ -597,8 +608,7 @@ const Wrapper = () => {
   const history = useHistory();
 
   const crewId = Number(i || myCrew?.id);
-  const { data: crew, isLoading: crewLoading } = useCrew(crewId);
-  const { data: crewmates, isLoading: crewmatesLoading } = useCrewmates(crew?.Crew?.roster || []);
+  const { data: crew, isLoading: crewLoading } = useHydratedCrew(crewId);
   
   const createAlert = useStore(s => s.dispatchAlertLogged);
 
@@ -634,7 +644,7 @@ const Wrapper = () => {
     }
   }, [account, crewLoading, crew, i, myCrew, myCrewLoading]);
 
-  const loading = myCrewLoading || crewLoading || crewmatesLoading;
+  const loading = myCrewLoading || crewLoading;
   return (
     <Details
       edgeToEdge
@@ -653,9 +663,8 @@ const Wrapper = () => {
         <CrewDetails
           crewId={crewId}
           crew={crew}
-          crewmates={crewmates}
           isMyCrew={crewId === myCrew?.id}
-          isOwnedCrew={crew?.Nft?.owner === account}
+          isOwnedCrew={Address.areEqual(crew?.Nft?.owner, account)}
           selectCrew={selectCrew}
         />
       )}
