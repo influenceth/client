@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import styled from 'styled-components';
 import { Building, Entity } from '@influenceth/sdk'
 
@@ -83,6 +83,7 @@ const fromEntityFormat = (loc) => {
   throw `Invalid location label: "${loc.label}" (${typeof loc.label})`;
 };
 
+// TODO: this dialog may now be deprecated
 const SelectHabitatDialog = ({ onAccept, onReject }) => {
   const randomAssignment = 1;// TODO: should not be hardcoded
   const { data: habitat } = useBuilding(randomAssignment);
