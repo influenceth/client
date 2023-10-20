@@ -424,9 +424,11 @@ const CrewDetails = ({ crewId, crew, isMyCrew, isOwnedCrew, selectCrew }) => {
                   const crewmate = crew._crewmates?.[0];
                   if (!crewmate) {
                     return (
-                      <EmptyCrewCardFramed isCaptain onClick={isMyCrew ? onClickRecruit : null} width={146}>
-                        {isMyCrew && <PlusIcon />}
-                      </EmptyCrewCardFramed>
+                      <div>
+                        <EmptyCrewCardFramed isCaptain onClick={isMyCrew ? onClickRecruit : null} width={180}>
+                          {isMyCrew && <PlusIcon />}
+                        </EmptyCrewCardFramed>
+                      </div>
                     );
                   }
                   return (
@@ -518,7 +520,6 @@ const CrewDetails = ({ crewId, crew, isMyCrew, isOwnedCrew, selectCrew }) => {
 
             </CrewWrapper>
 
-
           </CrewDetailsContainer>
           <ManagementContainer>
             {isOwnedCrew && <MyCrewStatement><MyAssetIcon /> This crew is owned by me.</MyCrewStatement>}
@@ -527,7 +528,8 @@ const CrewDetails = ({ crewId, crew, isMyCrew, isOwnedCrew, selectCrew }) => {
             {isMyCrew && (
               <div style={{ paddingTop: 15 }}>
                 <Button subtle onClick={() => onSetAction('MANAGE_CREW')}>Manage Crew</Button>
-                <Button subtle onClick={onClickNewCrew}>Form New Crew</Button>
+                {crew.Crew?.roster?.length >= 2 && <Button subtle onClick={() => onSetAction('MANAGE_CREW', { exchangeCrewId: 0 })}>Split Crew</Button>}
+                <Button disabled={nativeBool(!crew.Crew?.roster?.length)} subtle onClick={onClickNewCrew}>Form New Crew</Button>
                 <Button disabled={nativeBool(crew.Crew?.roster?.length >= 5)} subtle onClick={onClickRecruit}>Recruit Crewmate</Button>
               </div>
             )}

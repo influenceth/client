@@ -216,7 +216,7 @@ const ManageCrew = ({ altCrews, crew, isForeignCrew, manager, stage, ...props })
   const hydratedLocation = useHydratedLocation(crew?._location);
 
   const [crewSelectorOpen, setCrewSelectorOpen] = useState();
-  const [exchangeCrewId, setExchangeCrewId] = useState();
+  const [exchangeCrewId, setExchangeCrewId] = useState(props.exchangeCrewId);
   const [pristine, setPristine] = useState();
   const [orderedCrewmates, setOrderedCrewmates] = useState([]);
 
