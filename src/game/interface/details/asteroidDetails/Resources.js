@@ -495,7 +495,7 @@ const ResourceDetails = ({ abundances, asteroid, isManager }) => {
                   <UnscannedHeader isManager>
                     <WarningOutlineIcon />
                     {scanType === 'RESOURCE'
-                      ? 'Asteroid Resource Scan'
+                      ? 'Orbital Surface Scan'
                       : 'Un-Scanned Asteroid'}
                   </UnscannedHeader>
                 )}
@@ -509,7 +509,7 @@ const ResourceDetails = ({ abundances, asteroid, isManager }) => {
                       )}
                       {scanType === 'RESOURCE' && (
                         <p>
-                          A resource scan to determine the final resource composition of this asteroid must be performed
+                          An orbital scan to determine the final resource composition of this asteroid must be performed
                           at short-range.
                           <br/><br/>
                           <span style={crew._location?.asteroidId !== asteroid.id ? { color: theme.colors.error } : {}}>
@@ -521,19 +521,19 @@ const ResourceDetails = ({ abundances, asteroid, isManager }) => {
                         disabled={scanType === 'RESOURCE' && crew._location?.asteroidId !== asteroid.id}
                         onClick={startAsteroidScan}
                         isTransaction>
-                        Start {scanType} Scan
+                        Start {scanType === 'RESOURCE' ? 'Orbital' : 'Long-Range'} Scan
                       </Button>
                     </>
                   )}
                   {scanStatus === 'SCANNING' && (
                     <>
-                      <h3>SCANNING {scanType === 'RESOURCE' ? 'RESOURCES' : 'SURFACE'}</h3>
+                      <h3>{scanType === 'RESOURCE' ? 'ORBITAL' : 'LONG-RANGE'} SCAN IN PROGRESS</h3>
                       <LiveTimer target={asteroid.Celestial.scanFinishTime} />
                     </>
                   )}
                   {(scanStatus === 'READY_TO_FINISH' || scanStatus === 'FINISHING') && (
                     <>
-                      <p>{scanType === 'RESOURCE' ? 'Short-range resource' : 'Long-range surface'} scan is complete. Ready to finalize.</p>
+                      <p>{scanType === 'RESOURCE' ? 'Orbital resource' : 'Long-range surface'} scan is complete. Ready to retrieve results.</p>
                       <Button
                         disabled={nativeBool(scanStatus === 'FINISHING')}
                         loading={reactBool(scanStatus === 'FINISHING')}

@@ -194,9 +194,28 @@ const formatAsTx = (item) => {
       break;
     }
 
+    case 'ScanResourcesStart': {
+      formatted.icon = <ScanAsteroidIcon />;
+      formatted.label = 'Orbital Scan';
+      formatted.asteroidId = item.vars.asteroid.id;
+      formatted.onClick = ({ history }) => {
+        history.push(`/asteroids/${formatted.asteroidId}/resources`);
+      };
+      break;
+    }
+    case 'ScanResourcesFinish': {
+      formatted.icon = <ScanAsteroidIcon />;
+      formatted.label = 'Retrieve Orbital Scan Results';
+      formatted.asteroidId = item.vars.asteroid.id;
+      formatted.onClick = ({ history }) => {
+        history.push(`/asteroids/${formatted.asteroidId}/resources`);
+      };
+      break;
+    }
+
     case 'ScanSurfaceStart': {
       formatted.icon = <ScanAsteroidIcon />;
-      formatted.label = 'Asteroid Surface Scan';
+      formatted.label = 'Long-Range Scan';
       formatted.asteroidId = item.vars.asteroid.id;
       formatted.onClick = ({ history }) => {
         history.push(`/asteroids/${formatted.asteroidId}/resources`);
@@ -205,7 +224,7 @@ const formatAsTx = (item) => {
     }
     case 'ScanSurfaceFinish': {
       formatted.icon = <ScanAsteroidIcon />;
-      formatted.label = 'Retrieve Surface Scan Results';
+      formatted.label = 'Retrieve Long-Range Scan Results';
       formatted.asteroidId = item.vars.asteroid.id;
       formatted.onClick = ({ history }) => {
         history.push(`/asteroids/${formatted.asteroidId}/resources`);

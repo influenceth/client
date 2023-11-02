@@ -14,8 +14,8 @@ const useScanManager = (asteroid) => {
     const scanType = asteroid?.Celestial?.scanStatus < Asteroid.SCAN_STATUSES.SURFACE_SCANNED ? 'SURFACE' : 'RESOURCE';
     return {
       scanType,
-      startSystem: scanType === 'RESOURCE' ? 'ScanResourceStart' : 'ScanSurfaceStart',
-      finishSystem: scanType === 'RESOURCE' ? 'ScanResourceFinish' : 'ScanSurfaceFinish',
+      startSystem: scanType === 'RESOURCE' ? 'ScanResourcesStart' : 'ScanSurfaceStart',
+      finishSystem: scanType === 'RESOURCE' ? 'ScanResourcesFinish' : 'ScanSurfaceFinish',
       payload: asteroid && crew && {
         asteroid: { id: asteroid.id, label: asteroid.label },
         caller_crew: { id: crew.id, label: crew.label }
