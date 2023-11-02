@@ -31,8 +31,7 @@ const Account = () => {
             {' '}<a href="https://wiki.influenceth.io/en/docs/user-guides" target="_blank" rel="noopener noreferrer">See Here</a>
             {' '}for help getting started.
           </Content>
-        ),
-        width: 400
+        )
       });
       return () => {
         destroy(alertId);
