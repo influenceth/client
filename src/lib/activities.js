@@ -611,6 +611,55 @@ const activities = {
     }
   },
 
+  ResourceScanFinished: {
+    getInvalidations: ({ event: { returnValues } }) => ([
+      ...invalidationDefaults(Entity.IDS.ASTEROID, returnValues.asteroid.id),
+      ['actionItems'],
+      ['watchlist']
+    ]),
+    getLogContent: ({ event: { returnValues } }) => ({
+      icon: <ScanAsteroidIcon />,
+      content: (
+        <>
+          Orbital surface scan completed on asteroid
+          {' '}<EntityLink {...returnValues.asteroid} />
+        </>
+      )
+    }),
+    triggerAlert: true
+  },
+
+  ResourceScanStarted: {
+    getActionItem: ({ returnValues }) => ({
+      icon: <ScanAsteroidIcon />,
+      label: 'Orbital Scan',
+      asteroidId: returnValues.asteroid.id,
+      onClick: ({ history }) => {
+        history.push(`/asteroids/${returnValues.asteroid.id}/resources`);
+      }
+    }),
+    getIsActionItemHidden: ({ returnValues }) => (pendingTransactions) => {
+      return pendingTransactions.find((tx) => (
+        tx.key === 'ScanResourcesFinish'
+        && tx.vars.asteroid.id === returnValues.asteroid.id
+      ))
+    },
+    getInvalidations: ({ event: { returnValues } }) => ([
+      ...invalidationDefaults(Entity.IDS.ASTEROID, returnValues.asteroid.id),
+      ['actionItems'],
+      ['watchlist']
+    ]),
+    // getLogContent: ({ event: { returnValues } }) => ({
+    //   icon: <ScanAsteroidIcon />,
+    //   content: (
+    //     <>
+    //       <span>Orbital surface scan initiated on asteroid </span>
+    //       <EntityLink {...returnValues.asteroid} />
+    //     </>
+    //   ),
+    // }),
+  },
+
   SurfaceScanFinished: {
     getInvalidations: ({ event: { returnValues } }) => ([
       ...invalidationDefaults(Entity.IDS.ASTEROID, returnValues.asteroid.id),
@@ -632,7 +681,7 @@ const activities = {
   SurfaceScanStarted: {
     getActionItem: ({ returnValues }) => ({
       icon: <ScanAsteroidIcon />,
-      label: 'Asteroid Surface Scan',
+      label: 'Long-Range Surface Scan',
       asteroidId: returnValues.asteroid.id,
       onClick: ({ history }) => {
         history.push(`/asteroids/${returnValues.asteroid.id}/resources`);
