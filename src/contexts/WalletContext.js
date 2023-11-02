@@ -92,40 +92,45 @@ export function WalletProvider({ children }) {
 
   const disconnect = useCallback(async () => {
     setStarknet(null);
-    starknetDisconnect({ clearLastWallet: true });
+    if (window.starknet?.provider) starknetDisconnect({ clearLastWallet: true });
   }, []);
+
+  const onConnectionChange = useCallback(() => {
+    // react has trouble detecting changes deep to starknet object without essentially
+    // using this update counter to force a dependency change where appropriate
+    // TODO: would this update make more sense in `onConnectionResult`?
+    setStarknetUpdated((v) => v + 1);
+
+    // disconnect, then attempt reconnection
+    disconnect();
+    if (starknet) {
+      connect(true);
+    }
+  }, [connect, disconnect, starknet]);
 
   // while connecting or connected, listen for network changes from extension
   useEffect(() => {
-    const onConnectionChange = (e) => {
-      // react has trouble detecting changes deep to starknet object without essentially
-      // using this update counter to force a dependency change where appropriate
-      setStarknetUpdated((v) => v + 1);
-      
+    const onAccountsChanged = (e) => {
       // braavos especially seems to fire false positives here, so catch those
       if (e && starknet.account?.address && Address.areEqual(`${e}`, `${starknet.account.address}`)) return;
-
-      disconnect(); // disconnect first in case does not complete connection
-      if (starknet) {
-        connect(true);
-      }
+      onConnectionChange();
     };
+    const onNetworkChanged = (e) => { onConnectionChange(); };
 
     const startListening = () => {
-      starknet.on('accountsChanged', onConnectionChange);
-      starknet.on('networkChanged', onConnectionChange);
+      starknet.on('accountsChanged', onAccountsChanged);
+      starknet.on('networkChanged', onNetworkChanged);
     }
 
     const stopListening = () => {
       if (!starknet) return;
-      starknet.off('accountsChanged', onConnectionChange);
-      starknet.off('networkChanged', onConnectionChange);
+      starknet.off('accountsChanged', onAccountsChanged);
+      starknet.off('networkChanged', onNetworkChanged);
     };
 
     if (starknet) startListening();
-
     return stopListening;
-  }, [starknet?.name, connect, disconnect]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [starknet?.name, starknet?.account?.address, onConnectionChange]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // autoconnect as possible
   useEffect(() => {
