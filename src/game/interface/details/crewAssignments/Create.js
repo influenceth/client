@@ -1043,10 +1043,12 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
   }, [crewmate?.Crewmate?.class, selectedTraits, traitTally]);
 
   const confirmFinalize = useCallback(async () => {
-    if (await isNameValid(name || crewmate?.Name?.name, crewmate?.id)) {
+    // don't check name validity if could not rename (i.e. some names are to be grandfathered
+    //  in from L1 since user cannot change them at this point anyway)
+    if (!crewmate?._canRename || await isNameValid(name || crewmate?.Name?.name, crewmate?.id)) {
       setConfirming(true);
     }
-  }, [isNameValid, name, crewmate?.Name?.name, crewmate?.id]);
+  }, [isNameValid, name, crewmate?.Name?.name, crewmate?.id, crewmate?._canRename]);
 
   const finalize = useCallback(() => {
     setConfirming(false);
@@ -1117,6 +1119,8 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
   const [checkingName, setCheckingName] = useState(false);
   const [nameError, setNameError] = useState(null);
   useEffect(() => {
+    if (!crewmate?._canRename) return;  // only check for name validity if can rename
+
     setNameError('');
 
     const testName = `${name}`;
@@ -1135,7 +1139,7 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
     } else {
       setNameError('Enter Crewmate Name');
     }
-  }, [name, crewmate?.id, isNameValid]);
+  }, [name, crewmate?.id, crewmate?._canRename, isNameValid]);
 
   const readyForSubmission = useMemo(() => {
     if (!name) return false;

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, createContext } from 'react';
-import { connect as getStarknetConnect, disconnect as getStarknetDisconnect } from '@argent/get-starknet';
+import { connect as starknetConnect, disconnect as starknetDisconnect } from 'starknetkit';
 import { Address } from '@influenceth/sdk';
 
 import api from '~/lib/api';
@@ -12,17 +12,16 @@ const getErrorMessage = (error) => {
 };
 
 const isAllowedChain = (chainId) => {
-  return chainId === process.env.REACT_APP_CHAIN_ID;
+  return `${chainId}` === `${process.env.REACT_APP_CHAIN_ID}`;
 }
 
 const getAllowedChainLabel = (wallet) => {
   if (process.env.REACT_APP_STARKNET_NETWORK.includes('mainnet')) {
-    return wallet === 'Braavos' ? 'Mainnet-Alpha' : 'Mainnet';
+    return wallet === 'Braavos' ? 'SN Mainnet' : 'Mainnet';
   } else if (process.env.REACT_APP_STARKNET_NETWORK.includes('localhost')) {
-    return wallet === 'Braavos' ? 'Devnet' : 'Localhost';
+    return wallet === 'Braavos' ? 'Developer' : 'Localhost';
   }
-
-  return wallet === 'Braavos' ? 'Goerli-Alpha' : 'Testnet';
+  return wallet === 'Braavos' ? 'Starknet Goerli' : 'Testnet';
 }
 
 const WalletContext = createContext();
@@ -34,26 +33,17 @@ export function WalletProvider({ children }) {
   const [error, setError] = useState();
   const [starknet, setStarknet] = useState(false);
   const [starknetReady, setStarknetReady] = useState(false);
-
-  // if using devnet, put "create block" on a timer since otherwise, blocks will not be advancing in the background
-  useEffect(() => {
-    if (process.env.REACT_APP_IS_DEVNET) {
-      let blockInterval = setInterval(() => {
-        api.createDevnetBlock();
-      }, 15e3);
-      return () => {
-        if (blockInterval) clearInterval(blockInterval);
-      }
-    }
-  }, []);
+  const [starknetUpdated, setStarknetUpdated] = useState(0);
 
   const active = useMemo(() => {
     return starknet?.isConnected && starknet?.account?.address && isAllowedChain(starknet?.account?.provider?.chainId);
-  }, [starknet?.isConnected, starknet?.account ]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [starknet?.isConnected, starknet?.account, starknet?.account?.provider?.chainId, starknetUpdated]);
 
   const account = useMemo(() => {
     return active && Address.toStandard(starknet.account.address);
-  }, [active, starknet?.account?.address]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [active, starknet?.account?.address, starknetUpdated]);
 
   const onConnectionResult = useCallback((wallet) => {
     setConnecting(false);
@@ -65,15 +55,18 @@ export function WalletProvider({ children }) {
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const connect = useCallback(async ({ auto = false } = {}) => {
+  const connect = useCallback(async (auto = false) => {
     try {
-      setConnecting(true);
+      // TODO: starknetkit currently does not return from `starknetConnect` when user closes the 
+      // web or mobile wallet windows, so it will not exit the `connecting` state, and it can end
+      // up blocking the UI... should uncomment the below line if they ever fix it
+      // setConnecting(true);
       setError();
 
-      const mode = auto ? 'neverAsk' : 'alwaysAsk';
-      const wallet = await getStarknetConnect({
+      const wallet = await starknetConnect({
         dappName: 'Influence',
-        modalMode: mode,
+        modalMode: auto ? 'neverAsk' : 'alwaysAsk',
+        modalTheme: 'dark',
         projectId: 'influence',
         webWalletUrl: process.env.REACT_APP_ARGENT_WEB_WALLET_URL
       });
@@ -99,40 +92,64 @@ export function WalletProvider({ children }) {
 
   const disconnect = useCallback(async () => {
     setStarknet(null);
-    getStarknetDisconnect({ clearLastWallet: true });
-  }, [getStarknetDisconnect]);
+    if (window.starknet?.provider) starknetDisconnect({ clearLastWallet: true });
+  }, []);
+
+  const onConnectionChange = useCallback(() => {
+    // react has trouble detecting changes deep to starknet object without essentially
+    // using this update counter to force a dependency change where appropriate
+    // TODO: would this update make more sense in `onConnectionResult`?
+    setStarknetUpdated((v) => v + 1);
+
+    // disconnect, then attempt reconnection
+    if (starknet) {
+      connect(true);
+    } else {
+      disconnect();
+    }
+  }, [connect, disconnect, starknet]);
 
   // while connecting or connected, listen for network changes from extension
   useEffect(() => {
-    const onConnectionChange = (e) => {
-      if (starknet) connect({ auto: true });
-      else disconnect();
+    const onAccountsChanged = (e) => {
+      // for a while, false positives from braavos seemed to force a disconnection, but
+      // that disconnection seems to have been resolved through other changes... leaving
+      // this here just in case that comes back though
+      // const newAddress = Array.isArray(e) ? e[0] : e;
+      // if (newAddress && starknet.account?.address && Address.areEqual(`${newAddress}`, `${starknet.account.address}`)) return;
+      
+      onConnectionChange();
     };
+    const onNetworkChanged = (e) => { onConnectionChange(); };
 
     const startListening = () => {
-      starknet.on('accountsChanged', onConnectionChange);
-      starknet.on('networkChanged', onConnectionChange);
+      starknet.on('accountsChanged', onAccountsChanged);
+      starknet.on('networkChanged', onNetworkChanged);
     }
 
     const stopListening = () => {
       if (!starknet) return;
-      starknet.off('accountsChanged', onConnectionChange);
-      starknet.off('networkChanged', onConnectionChange);
+      starknet.off('accountsChanged', onAccountsChanged);
+      starknet.off('networkChanged', onNetworkChanged);
     };
 
     if (starknet) startListening();
-
     return stopListening;
-  }, [starknet?.name, connect, disconnect]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [starknet?.name, starknet?.account?.address, onConnectionChange]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // autoconnect as possible
   useEffect(() => {
-    async function autoConnect() {
-      await connect({ auto: true });
-      setStarknetReady(true);
-    }
+    connect(true).finally(() => setStarknetReady(true));
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-    autoConnect();
+  // if using devnet, put "create block" on a timer since otherwise, blocks will not be advancing in the background
+  useEffect(() => {
+    if (process.env.REACT_APP_IS_DEVNET) {
+      let blockInterval = setInterval(() => { api.createDevnetBlock(); }, 15e3);
+      return () => {
+        if (blockInterval) clearInterval(blockInterval);
+      }
+    }
   }, []);
 
   return (

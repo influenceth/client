@@ -13,6 +13,7 @@ const defaults = {
   insert: 'top',
   container: 'top-center',
   dismiss: { duration: 0, pauseOnHover: true, onScreen: true, showIcon: true },
+  width: 400,
   animationIn: ['animate__animated animate__fadeIn'],
   animationOut: ['animate__animated animate__fadeOut']
 };
@@ -122,7 +123,7 @@ const TransactionLink = styled.a`
 `;
 
 const getOptions = ({ level, duration, hideCloseIcon, onRemoval, width }) => {
-  const opts = {}
+  const opts = {};
   if (level) opts.type = level;
   if (duration) opts.dismiss = { duration: duration };
   if (hideCloseIcon) {

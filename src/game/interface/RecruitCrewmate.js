@@ -40,8 +40,11 @@ const RecruitCrewmate = () => {
 
   useEffect(() => {
     if (!account) history.push('/');
-  }, [account]);
+    if (!locationId) history.push(`/recruit/${crewId}/1`); // TODO: 1 should probably be in env (or a list of allowable starting habitats)
+  }, [account, crewId, locationId]);
 
+  // NOTE: as it is now, the useEffect line above checking !locationId will ensure this
+  //  dialog is never rendered... remove this file if we truly want this deprecated
   if (locationId === undefined) {
     return <SelectHabitatDialog onAccept={onSelectAssignedHabitat} onReject={onRejectAssignedHabitat} />;
   }
