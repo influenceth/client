@@ -102,17 +102,22 @@ export function WalletProvider({ children }) {
     setStarknetUpdated((v) => v + 1);
 
     // disconnect, then attempt reconnection
-    disconnect();
     if (starknet) {
       connect(true);
+    } else {
+      disconnect();
     }
   }, [connect, disconnect, starknet]);
 
   // while connecting or connected, listen for network changes from extension
   useEffect(() => {
     const onAccountsChanged = (e) => {
-      // braavos especially seems to fire false positives here, so catch those
-      if (e && starknet.account?.address && Address.areEqual(`${e}`, `${starknet.account.address}`)) return;
+      // for a while, false positives from braavos seemed to force a disconnection, but
+      // that disconnection seems to have been resolved through other changes... leaving
+      // this here just in case that comes back though
+      // const newAddress = Array.isArray(e) ? e[0] : e;
+      // if (newAddress && starknet.account?.address && Address.areEqual(`${newAddress}`, `${starknet.account.address}`)) return;
+      
       onConnectionChange();
     };
     const onNetworkChanged = (e) => { onConnectionChange(); };
