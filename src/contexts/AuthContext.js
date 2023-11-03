@@ -61,10 +61,8 @@ export function AuthProvider({ children }) {
     let isDeployed = false;
 
     try {
-      // NOTE: brave's argent does not have these properties in wallet.provider (only wallet.provider.provider)
-      const { baseUrl, feederGatewayUrl, gatewayUrl } = wallet?.provider?.provider || wallet?.provider || {};
-      // console.log('{ baseUrl, feederGatewayUrl, gatewayUrl }', wallet, { baseUrl, feederGatewayUrl, gatewayUrl });
-      const provider = new Provider({ sequencer: { baseUrl, feederGatewayUrl, gatewayUrl }});
+      // brave's argent uses provider.provider..
+      const provider = wallet?.provider?.provider || wallet?.provider;
       await provider.getClassAt(walletAccount); // if this throws, the contract is not deployed
       isDeployed = true;
     } catch (e) {
