@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import styled from 'styled-components';
-import { Building, Crew, Crewmate } from '@influenceth/sdk';
+import { Building, Crew, Crewmate, Delivery, Entity } from '@influenceth/sdk';
 
 import constructionBackground from '~/assets/images/modal_headers/Construction.png';
 import {
@@ -9,7 +9,7 @@ import {
 } from '~/components/Icons';
 import useCrewContext from '~/hooks/useCrewContext';
 import theme, { hexToRGB } from '~/theme';
-import useConstructionManager from '~/hooks/useConstructionManager';
+import useConstructionManager from '~/hooks/actionManagers/useConstructionManager';
 import { reactBool, formatTimer } from '~/lib/utils';
 
 import {
@@ -31,6 +31,7 @@ import {
 import { ActionDialogInner, useAsteroidAndLot } from '../ActionDialog';
 import actionStage from '~/lib/actionStages';
 import ActionButtonComponent from '../actionButtons/ActionButton';
+import useDeliveryManager from '~/hooks/actionManagers/useDeliveryManager';
 
 const MouseoverWarning = styled.span`
   & b { color: ${theme.colors.error}; }
@@ -52,20 +53,21 @@ const TransferToSite = styled.div`
 const Construct = ({ asteroid, lot, constructionManager, stage, ...props }) => {
   const { crew, crewmateMap } = useCrewContext();
   const { currentConstructionAction, constructionStatus, startConstruction, finishConstruction } = constructionManager;
+  const { currentDeliveryActions } = useDeliveryManager({ destination: lot.building });
 
   const crewmates = currentConstructionAction?._crewmates || (crew?._crewmates || []).map((i) => crewmateMap[i]);
   const captain = crewmates[0];
-  const crewTravelBonus = Crew.getAbilityBonus(Crewmate.ABILITY_IDS.SURFACE_TRANSPORT_SPEED, crewmates);
-  const constructionBonus = Crew.getAbilityBonus(Crewmate.ABILITY_IDS.CONSTRUCTION_EFFICIENCY, crewmates);
+  const crewTravelBonus = Crew.getAbilityBonus(Crewmate.ABILITY_IDS.HOPPER_TRANSPORT_TIME, crewmates);
+  const constructionBonus = Crew.getAbilityBonus(Crewmate.ABILITY_IDS.CONSTRUCTION_TIME, crewmates);
 
   // TODO: ...
   // const { totalTime: crewTravelTime, tripDetails } = useMemo(() => {
-  //   if (!asteroid?.i || !lot?.i) return {};
-  //   return getTripDetails(asteroid.i, crewTravelBonus.totalBonus, 1, [
-  //     { label: 'Travel to destination', lot: lot.i },
+  //   if (!asteroid?.id || !lot?.id) return {};
+  //   return getTripDetails(asteroid.id, crewTravelBonus.totalBonus, 1, [
+  //     { label: 'Travel to destination', lot: lot.id },
   //     { label: 'Return from destination', lot: 1 },
   //   ])
-  // }, [asteroid?.i, lot?.i, crewTravelBonus]);
+  // }, [asteroid?.id, lot?.id, crewTravelBonus]);
   const crewTravelTime = 0;
   const tripDetails = null;
 
@@ -133,11 +135,11 @@ const Construct = ({ asteroid, lot, constructionManager, stage, ...props }) => {
   }, []);
 
   const [buildingRequirements, requirementsMet, waitingOnTransfer] = useMemo(() => {
-    const reqs = getBuildingRequirements(lot?.building, lot?.deliveries);
+    const reqs = getBuildingRequirements(lot?.building, currentDeliveryActions);
     const met = !reqs.find((req) => req.inNeed > 0);
     const wait = reqs.find((req) => req.inTransit > 0);
     return [reqs, met, wait];
-  }, [lot?.building]);
+  }, [lot?.building, currentDeliveryActions]);
 
   return (
     <>
@@ -201,8 +203,8 @@ const Construct = ({ asteroid, lot, constructionManager, stage, ...props }) => {
 
         {stage === actionStage.NOT_STARTED && (
           <ProgressBarSection
-            finishTime={lot?.building?.plannedAt + Building.GRACE_PERIOD}
-            startTime={lot?.building?.plannedAt}
+            finishTime={lot?.building?.Building?.plannedAt + Building.GRACE_PERIOD}
+            startTime={lot?.building?.Building?.plannedAt}
             isCountDown
             overrides={{
               barColor: theme.colors.lightOrange,
@@ -254,7 +256,7 @@ const Construct = ({ asteroid, lot, constructionManager, stage, ...props }) => {
 
 const Wrapper = (props) => {
   const { asteroid, lot, isLoading } = useAsteroidAndLot(props);
-  const constructionManager = useConstructionManager(asteroid?.i, lot?.i);
+  const constructionManager = useConstructionManager(lot?.id);
   const { stageByActivity } = constructionManager;
 
   useEffect(() => {

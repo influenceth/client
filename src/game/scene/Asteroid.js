@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import { AxesHelper, CameraHelper, Color, DirectionalLight, DirectionalLightHelper, Vector3 } from 'three';
 import gsap from 'gsap';
-import { AdalianOrbit, Asteroid, Entity, Product, Ship } from '@influenceth/sdk';
+import { AdalianOrbit, Asteroid, Entity, Lot, Product, Ship } from '@influenceth/sdk';
 
 import useStore from '~/hooks/useStore';
 import useAsteroid from '~/hooks/useAsteroid';
@@ -127,9 +127,11 @@ const AsteroidComponent = () => {
   const dispatchReorientCamera = useStore(s => s.dispatchReorientCamera);
   const updateZoomStatus = useStore(s => s.dispatchZoomStatusChanged);
   const setZoomedFrom = useStore(s => s.dispatchAsteroidZoomedFrom);
-  const selectLot = useStore(s => s.dispatchLotSelected);
+  const dispatchLotSelected = useStore(s => s.dispatchLotSelected);
   const resourceMap = useStore(s => s.asteroids.resourceMap);
-  const selectedLot = useStore(s => s.asteroids.lot);
+  const lotId = useStore(s => s.asteroids.lot);
+
+  const selectedLot = useMemo(() => Lot.toPosition(lotId), [lotId]);
 
   const { data: asteroidData } = useAsteroid(origin);
   const { data: ships } = useAsteroidShips(origin);
@@ -601,13 +603,18 @@ const AsteroidComponent = () => {
       color.convertSRGBToLinear();
 
       // Collect relevant settings for generating procedural resource map
-      const abundances = Asteroid.getAbundances(asteroidData.Celestial.abundances);
       const settings = Asteroid.getAbundanceMapSettings(
         asteroidData.id,
-        asteroidData.Celestial.abundanceSeed,
         resourceMapId,
-        abundances[resourceMapId]
+        asteroidData.Celestial.abundances,
       );
+      console.log('settings', settings, {
+        asteroidId: asteroidData.id,
+        color,
+        resource: resourceMapId,
+        intensityMult: EMISSIVE_INTENSITY[categoryKey],
+        ...settings
+      });
       geometry.current.setEmissiveParams({
         asteroidId: asteroidData.id,
         color,
@@ -699,14 +706,14 @@ const AsteroidComponent = () => {
   useEffect(() => {
     if (selectedLot && zoomedIntoAsteroidId === selectedLot?.asteroidId && config?.radiusNominal && zoomStatus === 'in') {
       const lotTally = Math.floor(4 * Math.PI * (config?.radiusNominal / 1000) ** 2);
-      if (lotTally < selectedLot.lotId) { selectLot(); return; }
+      if (lotTally < selectedLot.lotIndex) { dispatchLotSelected(); return; }
 
       automatingCamera.current = true;
 
       const currentCameraHeight = controls.object.position.length();
       const targetAltitude = (cameraAltitude && cameraAltitude < 5000) ? cameraAltitude : 5000;
 
-      const lotPosition = new Vector3(...Asteroid.getLotPosition(selectedLot.asteroidId, selectedLot.lotId, lotTally));
+      const lotPosition = new Vector3(...Asteroid.getLotPosition(selectedLot.asteroidId, selectedLot.lotIndex, lotTally));
       lotPosition.setLength(config.radius).multiply(config.stretch); // best guess of lot position
       lotPosition.setLength(lotPosition.length() + targetAltitude); // best guess of final camera position
 
@@ -847,7 +854,7 @@ const AsteroidComponent = () => {
 
         // lock to surface if within "lock" radius OR lot is selected
         // TODO: consider automatically deselecting lot if zoom out enough
-        lockToSurface.current = controls.object.position.length() < 1.1 * config.radius || selectedLot;
+        lockToSurface.current = (controls.object.position.length() < 1.1 * config.radius) || selectedLot;
         if (lockToSurface.current) {
           controls.object.up.applyAxisAngle(rotationAxis.current, updatedRotation - rotation.current);
           controls.object.position.applyAxisAngle(rotationAxis.current, updatedRotation - rotation.current);

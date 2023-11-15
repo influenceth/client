@@ -42,16 +42,16 @@ const LandShip = ({ asteroid, lot, manager, ship, stage, ...props }) => {
   const [destinationSelectorOpen, setDestinationSelectorOpen] = useState();
   
   const { crew, crewmateMap } = useCrewContext();
-  const { data: landingDestinationLot } = useLot(asteroid?.i, currentLanding?.destinationLotId);
+  const { data: landingDestinationLot } = useLot(currentLanding?.destinationLotId);
   
   const [propulsionType, setPropulsionType] = useState('propulsive');
   const [tab, setTab] = useState(0);
 
   const crewmates = currentLanding?._crewmates || (crew?._crewmates || []).map((i) => crewmateMap[i]);
   const captain = crewmates[0];
-  const crewTravelBonus = Crew.getAbilityBonus(Crewmate.ABILITY_IDS.SURFACE_TRANSPORT_SPEED, crewmates);
+  const crewTravelBonus = Crew.getAbilityBonus(Crewmate.ABILITY_IDS.HOPPER_TRANSPORT_TIME, crewmates);
   const landingBonus = 0;/*useMemo(() => {
-    const bonus = Crew.getAbilityBonus(Crewmate.ABILITY_IDS.EXTRACTION_RATE, crewmates);
+    const bonus = Crew.getAbilityBonus(Crewmate.ABILITY_IDS.EXTRACTION_TIME, crewmates);
     const asteroidBonus = Asteroid.getBonusByResource(asteroid?.bonuses, selectedCoreSample?.resourceId);
     if (asteroidBonus.totalBonus !== 1) {
       bonus.totalBonus *= asteroidBonus.totalBonus;
@@ -102,7 +102,7 @@ const LandShip = ({ asteroid, lot, manager, ship, stage, ...props }) => {
 
   // const resource = useMemo(() => {
   //   if (!selectedCoreSample) return null;
-  //   return resources[selectedCoreSample.resourceId];
+  //   return resources[selectedCoreSample.resource];
   // }, [selectedCoreSample]);
 
   // const extractionTime = useMemo(() => {
@@ -306,7 +306,7 @@ const LandShip = ({ asteroid, lot, manager, ship, stage, ...props }) => {
 const Wrapper = (props) => {
   const { asteroid, lot, isLoading } = useAsteroidAndLot(props);
   // TODO: ...
-  // const extractionManager = useExtractionManager(asteroid?.i, lot?.i);
+  // const extractionManager = useExtractionManager(lot?.id);
   // const { actionStage } = extractionManager;
   const manager = {};
   const actionStage = actionStages.NOT_STARTED;

@@ -127,7 +127,7 @@ const MainMenu = () => {
   const { isMobile } = useScreenSize();
   const history = useHistory();
 
-  const { lotId } = useStore(s => s.asteroids.lot || {});
+  const lotId = useStore(s => s.asteroids.lot);
   const zoomScene = useStore(s => s.asteroids.zoomScene);
   const zoomStatus = useStore(s => s.asteroids.zoomStatus);
 

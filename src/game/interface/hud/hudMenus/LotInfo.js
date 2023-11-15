@@ -140,7 +140,7 @@ const ConstructionPlan = ({ buildingType, planningLot }) => {
     () => {
       const requirements = getBuildingRequirements(planningLot);
       return requirements.map((item) => ({
-        i: item.i,
+        i: item.id,
         numerator: item.inInventory + item.inTransit,
         denominator: item.totalRequired,
         customIcon: item.inTransit > 0
@@ -179,8 +179,8 @@ const ConstructionPlan = ({ buildingType, planningLot }) => {
 };
 
 const LotInfo = () => {
-  const { asteroidId, lotId } = useStore(s => s.asteroids.lot || {});
-  const { data: lot, isLoading } = useLot(asteroidId, lotId);
+  const lotId = useStore(s => s.asteroids.lot);
+  const { data: lot, isLoading } = useLot(lotId);
 
   const [selectedBuilding, setSelectedBuilding] = useState();
 

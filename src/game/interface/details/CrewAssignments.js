@@ -577,16 +577,16 @@ const CrewAssignments = () => {
                   <CrewSection>
                     <div>
                       {eligibleCrew.map((c) => {
-                        const crewStatus = bookReady ? selectedStory?.crewStatuses[c.i] : 'loading';
+                        const crewStatus = bookReady ? selectedStory?.crewStatuses[c.id] : 'loading';
                         const uiConfig = crewStates[crewStatus || 'notReady'] || {};
                         return (
-                          <div key={c.i}>
+                          <div key={c.id}>
                             <CrewCard
                               crewmate={c}
                               clickable={uiConfig.clickable}
                               fade={uiConfig.fade}
                               overlay={uiConfig}
-                              onClick={selectCrewmate(c.i)} />
+                              onClick={selectCrewmate(c.id)} />
                           </div>
                         );
                       })}

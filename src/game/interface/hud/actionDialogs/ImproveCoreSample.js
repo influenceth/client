@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Asteroid, Crew, Crewmate, Deposit, Product } from '@influenceth/sdk';
+import { Asteroid, Crew, Crewmate, Deposit, Lot, Product } from '@influenceth/sdk';
 
 import coreSampleBackground from '~/assets/images/modal_headers/CoreSample.png';
 import { CoreSampleIcon, ImproveCoreSampleIcon, ResourceIcon } from '~/components/Icons';
 import ResourceThumbnail from '~/components/ResourceThumbnail';
 import useCrewContext from '~/hooks/useCrewContext';
 import useStore from '~/hooks/useStore';
-import useCoreSampleManager from '~/hooks/useCoreSampleManager';
+import useCoreSampleManager from '~/hooks/actionManagers/useCoreSampleManager';
 import actionStage from '~/lib/actionStages';
 import { reactBool, formatTimer } from '~/lib/utils';
 
@@ -40,7 +40,7 @@ const ImproveCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }
   const resourceMap = useStore(s => s.asteroids.resourceMap);
   
   // if an active sample is detected, set "sample" for remainder of dialog's lifespan
-  const [sampleId, setSampleId] = useState();
+  const [sampleId, setSampleId] = useState(props.preselect?.depositId);
   const [resourceId, setResourceId] = useState(props.preselect?.resourceId || (resourceMap?.active && resourceMap?.selected || undefined));
   const [sampleSelectorOpen, setSampleSelectorOpen] = useState(false);
 
@@ -72,7 +72,7 @@ const ImproveCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }
   const [sample, initialYieldTonnage] = useMemo(() => {
     if (lot?.deposits) {
       if (resourceId && sampleId) {
-        const thisSample = lot.deposits.find((s) => s.i === sampleId && s.Deposit.resource === resourceId);
+        const thisSample = lot.deposits.find((s) => s.id === sampleId && s.Deposit.resource === resourceId);
         if (thisSample) {
           // TODO: ecs refactor: with the db changes, double-check that key is still only conditionally included
           const initialYieldTonnage = Object.keys(thisSample.Deposit).includes('initialYield')
@@ -88,14 +88,7 @@ const ImproveCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }
   // get lot abundance
   const lotAbundance = useMemo(() => {
     if (!resourceId || !asteroid?.Celestial?.abundanceSeed || !asteroid.Celestial?.abundances) return 0;
-    const abundances = Asteroid.getAbundances(asteroid.Celestial.abundances);
-    return Asteroid.getAbundanceAtLot(
-      asteroid?.i,
-      BigInt(asteroid.Celestial.abundanceSeed),
-      Number(lot?.i),
-      resourceId,
-      abundances[resourceId]
-    );
+    return Asteroid.Entity.getAbundanceAtLot(asteroid, Lot.toIndex(lot.id), resourceId);
 }, [asteroid, lot, resourceId]);
 
   // handle sample selection
@@ -103,7 +96,7 @@ const ImproveCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }
 
   const improvableSamples = useMemo(() => {
     return (lot?.deposits || [])
-      .filter((c) => (c.Control.controller.id === crew?.i && c.Deposit.initialYield > 0 && c.Deposit.status !== Deposit.STATUSES.USED))
+      .filter((c) => (c.Control.controller.id === crew?.id && c.Deposit.initialYield > 0 && c.Deposit.status !== Deposit.STATUSES.USED))
       .map((c) => ({ ...c, tonnage: c.Deposit.initialYield * Product.TYPES[c.Deposit.resource].massPerUnit }));
   }, [lot?.deposits]);
 
@@ -133,18 +126,18 @@ const ImproveCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }
 
   const crewmates = currentSamplingAction?._crewmates || ((crew?._crewmates || []).map((i) => crewmateMap[i]));
   const captain = crewmates[0];
-  const sampleTimeBonus = Crew.getAbilityBonus(Crewmate.ABILITY_IDS.CORE_SAMPLE_SPEED, crewmates);
+  const sampleTimeBonus = Crew.getAbilityBonus(Crewmate.ABILITY_IDS.CORE_SAMPLE_TIME, crewmates);
   const sampleQualityBonus = Crew.getAbilityBonus(Crewmate.ABILITY_IDS.CORE_SAMPLE_QUALITY, crewmates);
-  const crewTravelBonus = Crew.getAbilityBonus(Crewmate.ABILITY_IDS.SURFACE_TRANSPORT_SPEED, crewmates);
+  const crewTravelBonus = Crew.getAbilityBonus(Crewmate.ABILITY_IDS.HOPPER_TRANSPORT_TIME, crewmates);
 
   // TODO: ...
   // const { totalTime: crewTravelTime, tripDetails } = useMemo(() => {
-  //   if (!asteroid?.i || !lot?.i) return {};
-  //   return getTripDetails(asteroid.i, crewTravelBonus.totalBonus, 1, [ // TODO
-  //     { label: 'Travel to destination', lot: lot.i },
+  //   if (!asteroid?.id || !lot?.id) return {};
+  //   return getTripDetails(asteroid.id, crewTravelBonus.totalBonus, 1, [ // TODO
+  //     { label: 'Travel to destination', lot: lot.id },
   //     { label: 'Return from destination', lot: 1 },
   //   ]);
-  // }, [asteroid?.i, lot?.i, crewTravelBonus]);
+  // }, [asteroid?.id, lot?.id, crewTravelBonus]);
   const crewTravelTime = 0;
   const tripDetails = null;
 
@@ -316,7 +309,7 @@ const ImproveCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }
         <CoreSampleSelectionDialog
           options={improvableSamples}
           initialSelection={existingSample}
-          lotId={lot?.i}
+          lotId={lot?.id}
           onClose={() => setSampleSelectorOpen(false)}
           onSelected={onSelectSample}
           open={sampleSelectorOpen}
@@ -328,7 +321,7 @@ const ImproveCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }
 
 const Wrapper = (props) => {
   const { asteroid, lot, isLoading } = useAsteroidAndLot(props);
-  const coreSampleManager = useCoreSampleManager(asteroid?.i, lot?.i);
+  const coreSampleManager = useCoreSampleManager(lot?.id);
   const { actionStage } = coreSampleManager;
 
   useEffect(() => {

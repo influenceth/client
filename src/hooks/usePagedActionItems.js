@@ -3,6 +3,7 @@ import { useContext, useEffect, useMemo, useState } from 'react';
 import ActionItemContext from '~/contexts/ActionItemContext';
 import { formatActionItem } from '~/lib/actionItem';
 import useStore from './useStore';
+import useGetActivityConfig from './useGetActivityConfig';
 
 const assetType = 'actionitems';
 const pageSize = 25;
@@ -10,6 +11,8 @@ const pageSize = 25;
 const typeOrder = ['pending', 'failed', 'ready', 'unready', 'plans'];
 
 const usePagedActionItems = () => {
+  const getActivityConfig = useGetActivityConfig();
+
   const {
     allVisibleItems: allItems,
     isLoading
@@ -27,7 +30,7 @@ const usePagedActionItems = () => {
 
   const { hits, total } = useMemo(() => {
     const filteredItems = allItems
-      .map((item) => formatActionItem(item))
+      .map((item) => formatActionItem(item, getActivityConfig(item)?.actionItem))
       .filter((item) => {
         if (!filters?.asteroid || item.asteroidId === Number(filters.asteroid)) {
           if (!filters?.status || filters.status.includes(item.type)) {

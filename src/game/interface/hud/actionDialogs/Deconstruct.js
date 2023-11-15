@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Asteroid, Building, Crew, Crewmate } from '@influenceth/sdk';
+import { Asteroid, Building, Crew, Crewmate, Lot } from '@influenceth/sdk';
 
 import constructionBackground from '~/assets/images/modal_headers/Construction.png';
 import {
@@ -8,7 +8,7 @@ import {
   ForwardIcon
 } from '~/components/Icons';
 import useCrewContext from '~/hooks/useCrewContext';
-import useConstructionManager from '~/hooks/useConstructionManager';
+import useConstructionManager from '~/hooks/actionManagers/useConstructionManager';
 import { reactBool, formatFixed, formatTimer } from '~/lib/utils';
 
 import {
@@ -36,11 +36,11 @@ import useLot from '~/hooks/useLot';
 const Deconstruct = ({ asteroid, lot, constructionManager, stage, ...props }) => {
   const { crew, crewmateMap } = useCrewContext();
   const { deconstruct, deconstructTx } = constructionManager;
-  const { data: inProgressDestination } = useLot(asteroid?.i, deconstructTx?.returnValues?.destinationLotId);
+  const { data: inProgressDestination } = useLot(deconstructTx?.returnValues?.destinationLotId);
 
   const crewmates = crew._crewmates.map((i) => crewmateMap[i]);
   const captain = crewmates[0];
-  const crewTravelBonus = Crew.getAbilityBonus(Crewmate.ABILITY_IDS.SURFACE_TRANSPORT_SPEED, crewmates);
+  const crewTravelBonus = Crew.getAbilityBonus(Crewmate.ABILITY_IDS.HOPPER_TRANSPORT_TIME, crewmates);
 
   const [destinationLot, setDestinationLot] = useState();
   const [destinationSelectorOpen, setDestinationSelectorOpen] = useState(false);
@@ -51,12 +51,12 @@ const Deconstruct = ({ asteroid, lot, constructionManager, stage, ...props }) =>
 
   // TODO: ...
   // const { totalTime: crewTravelTime, tripDetails } = useMemo(() => {
-  //   if (!asteroid?.i || !lot?.i) return {};
-  //   return getTripDetails(asteroid.i, crewTravelBonus.totalBonus, 1, [
-  //     { label: 'Travel to destination', lot: lot.i },
+  //   if (!asteroid?.id || !lot?.id) return {};
+  //   return getTripDetails(asteroid.id, crewTravelBonus.totalBonus, 1, [
+  //     { label: 'Travel to destination', lot: lot.id },
   //     { label: 'Return from destination', lot: 1 },
   //   ])
-  // }, [asteroid?.i, lot?.i, crewTravelBonus]);
+  // }, [asteroid?.id, lot?.id, crewTravelBonus]);
   const crewTravelTime = 0;
   const tripDetails = null;
 
@@ -84,7 +84,7 @@ const Deconstruct = ({ asteroid, lot, constructionManager, stage, ...props }) =>
     },
     {
       label: 'Transfer Distance',
-      value: `${formatFixed(lot.i === destinationLot?.i ? 0 : (Asteroid.getLotDistance(asteroid.i, lot.i, destinationLot?.i) || 0), 1)} km`,
+      value: `${formatFixed(lot.id === destinationLot?.id ? 0 : (Asteroid.getLotDistance(asteroid.id, Lot.toIndex(lot.id), Lot.toIndex(destinationLot?.id)) || 0), 1)} km`,
       direction: 0,
     }
   ], [destinationLot]);
@@ -122,7 +122,7 @@ const Deconstruct = ({ asteroid, lot, constructionManager, stage, ...props }) =>
             title="Transfer To"
             lot={destinationLot}
             fallbackSublabel="Inventory"
-            imageProps={destinationLot && destinationLot.i === lot.i
+            imageProps={destinationLot && destinationLot.id === lot.id
               ? {
                 unfinished: true
               }
@@ -166,7 +166,7 @@ const Deconstruct = ({ asteroid, lot, constructionManager, stage, ...props }) =>
       {stage === actionStage.NOT_STARTED && (
         <DestinationSelectionDialog
           asteroid={asteroid}
-          originLotId={lot?.i}
+          originLotId={lot?.id}
           includeDeconstruction
           initialSelection={undefined/* TODO: default to self... */}
           onClose={() => setDestinationSelectorOpen(false)}
@@ -181,7 +181,7 @@ const Deconstruct = ({ asteroid, lot, constructionManager, stage, ...props }) =>
 
 const Wrapper = (props) => {
   const { asteroid, lot, isLoading } = useAsteroidAndLot(props);
-  const constructionManager = useConstructionManager(asteroid?.i, lot?.i);
+  const constructionManager = useConstructionManager(lot?.id);
   const { stageByActivity } = constructionManager;
 
   useEffect(() => {

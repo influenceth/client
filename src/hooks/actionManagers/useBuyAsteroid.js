@@ -1,8 +1,8 @@
 import { useCallback, useContext, useMemo } from 'react';
 
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
-import useAsteroid from './useAsteroid';
-import useCrewContext from './useCrewContext';
+import useAsteroid from '~/hooks/useAsteroid';
+import useCrewContext from '~/hooks/useCrewContext';
 import useStore from '~/hooks/useStore';
 import api from '~/lib/api';
 

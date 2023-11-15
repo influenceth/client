@@ -2,23 +2,22 @@ import { useCallback, useContext, useMemo } from 'react';
 import { Extractor } from '@influenceth/sdk';
 
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
+import useActionItems from '~/hooks/useActionItems';
+import useCrewContext from '~/hooks/useCrewContext';
+import useLot from '~/hooks/useLot';
 import actionStages from '~/lib/actionStages';
-import useCrewContext from './useCrewContext';
-import useLot from './useLot';
-import useActionItems from './useActionItems';
 
 // TODO: support multiple extractors
-const useExtractionManager = (asteroidId, lotId, slot = 0) => {
+const useExtractionManager = (lotId, slot = 0) => {
   const { actionItems, readyItems, liveBlockTime } = useActionItems();
   const { execute, getPendingTx, getStatus } = useContext(ChainTransactionContext);
   const { crew } = useCrewContext();
-  const { data: lot } = useLot(asteroidId, lotId);
+  const { data: lot } = useLot(lotId);
 
   const payload = useMemo(() => ({
-    asteroidId,
     lotId,
-    crewId: crew?.i
-  }), [asteroidId, lotId, crew?.i]);
+    crewId: crew?.id
+  }), [lotId, crew?.id]);
 
   // status flow
   // READY > EXTRACTING > READY_TO_FINISH > FINISHING
@@ -40,7 +39,6 @@ const useExtractionManager = (asteroidId, lotId, slot = 0) => {
     if (lot?.building?.Extractors?.[slot]?.status === Extractor.STATUSES.RUNNING) {
       let actionItem = (actionItems || []).find((item) => (
         item.event.name === 'Dispatcher_ExtractionStart'
-        && item.event.returnValues.asteroidId === asteroidId
         && item.event.returnValues.lotId === lotId
       ));
       if (actionItem) {
@@ -86,18 +84,31 @@ const useExtractionManager = (asteroidId, lotId, slot = 0) => {
   }, [actionItems, readyItems, getPendingTx, getStatus, payload, lot?.building?.Extractors?.[slot]?.status]);
 
   const startExtraction = useCallback((amount, coreSample, destinationLot) => {
-    execute('START_EXTRACTION', {
-      ...payload,
-      amount,
-      resourceId: coreSample.Deposit.resource,
-      sampleId: coreSample.id,
-      destinationLotId: destinationLot.i,
-      destinationInventoryId: 1 // TODO: probably should not hard-code this
-    })
+    execute(
+      'START_EXTRACTION',
+      {
+        ...payload,
+        amount,
+        resourceId: coreSample.Deposit.resource,
+        sampleId: coreSample.id,
+        destinationLotId: destinationLot.id,
+        destinationInventoryId: 1 // TODO: probably should not hard-code this
+      },
+      {
+        resourceId: coreSample.Deposit.resource,
+        lotId: destinationLot.id,
+      }
+    )
   }, [payload]);
 
   const finishExtraction = useCallback(() => {
-    execute('FINISH_EXTRACTION', payload)
+    execute(
+      'FINISH_EXTRACTION',
+      payload,
+      {
+        lotId: payload.lotId // TODO: this will likely change w/ ecs
+      }
+    )
   }, [payload]);
 
   return {

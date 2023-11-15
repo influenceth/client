@@ -3,7 +3,7 @@ import { persist, subscribeWithSelector } from 'zustand/middleware';
 import produce from 'immer';
 import cloneDeep from 'lodash/cloneDeep';
 import isEqual from 'lodash/isEqual';
-import { Building } from '@influenceth/sdk';
+import { Building, Lot } from '@influenceth/sdk';
 
 import constants from '~/lib/constants';
 
@@ -37,6 +37,20 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
     actionDialog: {},
     launcherPage: null,
     openHudMenu: null,
+
+    // scene: {
+    //   belt: {
+    //     origin, destination, hovered, travelMode, travelSolution, cameraPos/* (zoomedFrom) */,
+    //   },
+    //   asteroid: {
+    //     origin, destination, hovered, resourceMap
+    //   },
+    //   lot: {
+    //     model
+    //   },
+    //   zoomStatus: 'belt', // belt, zooming-in / zooming-out, asteroid, zooming-to-scene, lot
+    //   transitionTo: {}
+    // },
 
     asteroids: {
       origin: null,
@@ -474,8 +488,8 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
       }
     })),
 
-    dispatchLotSelected: (asteroidId, lotId) => set(produce(state => {
-      state.asteroids.lot = asteroidId && lotId ? { asteroidId, lotId } : null;
+    dispatchLotSelected: (lotId) => set(produce(state => {
+      state.asteroids.lot = lotId > 0 ? lotId : null;
       state.asteroids.zoomScene = null;
     })),
 
@@ -483,7 +497,7 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
       state.cameraNeedsReorientation = !!needsReorienting;
     })),
 
-    dispatchFailedTransaction: ({ key, vars, txHash, err }) => set(produce(state => {
+    dispatchFailedTransaction: ({ key, vars, meta, txHash, err }) => set(produce(state => {
       if (!state.failedTransactions) state.failedTransactions = [];
       // because different wallets report tx failure in different ways, this is
       // prone to duplicates, so only report one failure per failed transaction
@@ -491,6 +505,7 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
         state.failedTransactions.push({
           key,
           vars,
+          meta,
           err,
           txHash,
           timestamp: Date.now()
@@ -500,14 +515,16 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
 
     dispatchFailedTransactionDismissed: (txHashOrTimestamp) => set(produce(state => {
       if (!state.failedTransactions) state.failedTransactions = [];
-      state.failedTransactions = state.failedTransactions.filter((tx) => tx.txHash !== txHashOrTimestamp && tx.timestamp !== txHashOrTimestamp);
+      const bTxHashOrTimestamp = txHashOrTimestamp ? BigInt(txHashOrTimestamp) : null;
+      state.failedTransactions = state.failedTransactions.filter((tx) => BigInt(tx.txHash || 0) !== bTxHashOrTimestamp && tx.timestamp !== txHashOrTimestamp);
     })),
 
-    dispatchPendingTransaction: ({ key, vars, timestamp, txHash }) => set(produce(state => {
+    dispatchPendingTransaction: ({ key, vars, meta, timestamp, txHash }) => set(produce(state => {
       if (!state.pendingTransactions) state.pendingTransactions = [];
       state.pendingTransactions.push({
         key,
         vars,
+        meta,
         txHash,
         timestamp: timestamp || Date.now() // 1695408166
       });
@@ -579,7 +596,7 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
 
 }), {
   name: 'influence',
-  version: 2,
+  version: 3,
   migrate: (persistedState, oldVersion) => {
     const migrations = [
       (state, version) => {
@@ -592,6 +609,15 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
       (state, version) => {
         if (version >= 2) return;
         state.assetSearch = { ...assetSearchDefaults };
+        return state;
+      },
+      (state, version) => {
+        if (version >= 3) return;
+        if (state.asteroids.lot?.asteroidId && state.asteroids.lot?.lotId) {
+          state.asteroids.lot = Lot.toId(state.asteroids.lot?.asteroidId, state.asteroids.lot?.lotId);
+        } else {
+          state.asteroids.lot = null;
+        }
         return state;
       },
     ];

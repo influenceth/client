@@ -17,14 +17,9 @@ export const useShipLink = ({ shipId, zoomToShip }) => {
 
   const { data: ship } = useShip(shipId);
 
-  const zoomToAsteroid = useLotLink({
-    asteroidId: ship?.asteroidId
-  });
+  const zoomToAsteroid = useLotLink({ asteroidId: ship?._location?.asteroidId });
 
-  const zoomToLot = useLotLink({
-    asteroidId: ship?.asteroidId,
-    lotId: ship?.lotId,
-  });
+  const zoomToLot = useLotLink({ lotId: ship?._location?.lotId });
 
   const zoomToShipAsNeeded = useCallback(() => {
     if (!ship) return;
@@ -45,9 +40,9 @@ export const useShipLink = ({ shipId, zoomToShip }) => {
     }
 
     // show zoomScene of ship
-    if (zoomToShip && !(currentZoomScene?.type === 'SHIP' && currentZoomScene?.shipId === ship.i)) {
+    if (zoomToShip && !(currentZoomScene?.type === 'SHIP' && currentZoomScene?.shipId === ship.id)) {
       setTimeout(() => {
-        dispatchZoomScene(zoomToShip ? { type: 'SHIP', shipId: ship.i } : null);
+        dispatchZoomScene(zoomToShip ? { type: 'SHIP', shipId: ship.id } : null);
 
         // if this is not just a boolean, it is assumed to be a hudmenu to open upon arrival
         if (zoomToShip && zoomToShip !== true) {
@@ -68,7 +63,7 @@ export const ShipLink = ({ shipId, zoomToShip }) => {
   const { data: owned, isLoading: ownedAreLoading } = useOwnedShips();
   const shipName = useMemo(() => {
     if (owned) {
-      const match = owned.find(a => a.i === Number(shipId));
+      const match = owned.find(a => a.id === Number(shipId));
       return match?.name || `Ship #${shipId.toLocaleString()}`;
     }
     return null;

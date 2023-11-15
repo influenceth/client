@@ -77,7 +77,7 @@ const useColumns = () => {
                 <BuildingLabel>{lot ? `${building} > ` : ``}</BuildingLabel>
                 {formatters.asteroidName(asteroid)}
               </LocationLabel>
-              <LocationLink asteroidId={asteroid.i} lotId={lot?.i} />
+              <LocationLink lotId={lot?.id} />
             </>
           );
         },
@@ -97,7 +97,7 @@ const useColumns = () => {
     ];
 
     return columns.filter((c) => account || !c.requireLogin);
-  }, [account, crew?.i]);
+  }, [account, crew?.id]);
 };
 
 export default useColumns;

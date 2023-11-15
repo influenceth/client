@@ -2,7 +2,7 @@ import { useCallback, useMemo } from 'react';
 import { Deposit } from '@influenceth/sdk';
 
 import { ExtractionIcon } from '~/components/Icons';
-import useExtractionManager from '~/hooks/useExtractionManager';
+import useExtractionManager from '~/hooks/actionManagers/useExtractionManager';
 import ActionButton from './ActionButton';
 
 const labelDict = {
@@ -14,7 +14,7 @@ const labelDict = {
 
 // TODO: for multiple extractors, need one of these (and an extraction manager) per extractor
 const Extract = ({ onSetAction, asteroid, crew, lot, preselect, _disabled }) => {
-  const { extractionStatus } = useExtractionManager(asteroid?.i, lot?.i);
+  const { extractionStatus } = useExtractionManager(lot?.id);
   const handleClick = useCallback(() => {
     onSetAction('EXTRACT_RESOURCE', { preselect });
   }, [onSetAction, preselect]);
@@ -23,24 +23,26 @@ const Extract = ({ onSetAction, asteroid, crew, lot, preselect, _disabled }) => 
   // TODO: this should ideally also check for pending use of samples (i.e. in core sample improvement)
   const usableSamples = useMemo(() => (lot?.deposits || []).filter((c) => (
     c.Deposit.remainingYield > 0 && c.Deposit.status >= Deposit.STATUSES.SAMPLED
-  )), [lot?.coreSamples, crew?.i]);
+  )), [lot?.coreSamples, crew?.id]);
 
   // add attention flag if any of those ^ are mine
-  const myUsableSamples = useMemo(() => usableSamples.filter((c) => c.owner === crew?.i), [crew?.i, usableSamples]);
+  const myUsableSamples = useMemo(() => usableSamples.filter((c) => c.Control.controller.id === crew?.id), [crew?.id, usableSamples]);
 
   const attention = !_disabled && (extractionStatus === 'READY_TO_FINISH' || (myUsableSamples?.length > 0) && extractionStatus === 'READY');
   const badge = ((extractionStatus === 'READY' && !preselect) ? usableSamples?.length : 0);
-  const disabled = extractionStatus === 'READY' && (myUsableSamples?.length === 0);
+  let disabledReason = extractionStatus === 'READY' && (
+    !lot?.building?.Extractors ? ' (no extractor)' : (myUsableSamples?.length === 0 ? ' (requires core sample)' : '')
+  );
   const loading = ['EXTRACTING', 'FINISHING'].includes(extractionStatus);
   return (
     <ActionButton
-      label={`${labelDict[extractionStatus]}${disabled ? ' (requires core sample)' : ''}`}
+      label={`${labelDict[extractionStatus]}${disabledReason}`}
       flags={{
         badge,
-        disabled: _disabled || disabled || undefined,
+        disabled: _disabled || disabledReason || undefined,
         attention: attention || undefined,
         loading: loading || undefined,
-        finishTime: lot?.building?.Extractors[0]?.finishTime
+        finishTime: lot?.building?.Extractors?.[0]?.finishTime
       }}
       icon={<ExtractionIcon />}
       onClick={handleClick} />

@@ -2,7 +2,7 @@ import { useCallback } from 'react';
 
 import { KeysIcon } from '~/components/Icons';
 import useAsteroid from '~/hooks/useAsteroid';
-import useControlAsteroid from '~/hooks/useControlAsteroid';
+import useControlAsteroid from '~/hooks/actionManagers/useControlAsteroid';
 import ActionButton from './ActionButton';
 
 const ControlAsteroid = ({ asteroid, onSetAction, _disabled }) => {

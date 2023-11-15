@@ -7,10 +7,10 @@ import ModelViewer from '../ModelViewer';
 import { getBuildingModel } from '~/lib/assetUtils';
 
 const LotViewer = () => {
-  const { asteroidId, lotId } = useStore(s => s.asteroids.lot || {});
+  const lotId = useStore(s => s.asteroids.lot);
   const zoomScene = useStore(s => s.asteroids.zoomScene);
 
-  const { data: lot, isLoading } = useLot(asteroidId, lotId);
+  const { data: lot, isLoading } = useLot(lotId);
 
   const modelUrl = useMemo(() => {
     if (lot?.building?.Building?.status === Building.CONSTRUCTION_STATUS_IDS.OPERATIONAL) {

@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import styled from 'styled-components';
 import { useHistory, useLocation, useParams } from 'react-router-dom';
-import { Product } from '@influenceth/sdk';
+import { Lot, Product } from '@influenceth/sdk';
 
 import Details from '~/components/DetailsModal';
 import { OrderIcon } from '~/components/Icons';
@@ -109,9 +109,8 @@ for (let resourceId = 1; resourceId <= 245; resourceId++) {
 }
 
 const Marketplace = () => {
-
   const history = useHistory();
-  const { asteroidId, lotId, discriminator } = useParams();
+  const { asteroidId, lotIndex, discriminator } = useParams();
   const { search } = useLocation();
 
   const backOverride = useMemo(() => {
@@ -121,7 +120,7 @@ const Marketplace = () => {
 
   const { crew } = useCrewContext();
   const { data: asteroid } = useAsteroid(Number(asteroidId));
-  const { data: lot } = useLot(Number(asteroidId), lotId === 'all' ? null : Number(lotId));
+  const { data: lot } = useLot(Lot.toId(Number(asteroidId), lotIndex === 'all' ? null : Number(lotIndex)));
   const { data: marketplaceOwner } = useCrew(lot?.building?.Control?.controller?.id);
 
   const resourceId = discriminator === 'orders' ? null : discriminator;
@@ -129,12 +128,12 @@ const Marketplace = () => {
   // TODO: if lot is loaded and this is not a marketplace, go back
 
   const localOrders = useMemo(() => (myOpenOrders || []).filter((o) => {
-    return o.asteroidId === Number(asteroidId) && (lotId === 'all' || Number(lotId) === o.lotId);
-  }), [asteroidId, lotId, myOpenOrders]);
+    return o.asteroidId === Number(asteroidId) && (lotIndex === 'all' || Number(lot.id) === o.lotId);
+  }), [asteroidId, lot.id, lotIndex, myOpenOrders]);
 
-  const marketplace = lotId === 'all' ? null : {
+  const marketplace = lotIndex === 'all' ? null : {
     name: `Joe's Spacing Emporium`,
-    listings: asteroidListings.filter((l) => l.lotId === Number(lotId)),
+    listings: asteroidListings.filter((l) => l.lotId === Number(lot.id)),
     orders: []
   };
 
@@ -166,22 +165,22 @@ const Marketplace = () => {
     if (backOverride === 'all') {
       history.push(`/marketplace/${asteroidId}/all/${resourceId || ''}`);
     } else {
-      history.push(`/marketplace/${asteroidId}/${lotId}`);
+      history.push(`/marketplace/${asteroidId}/${lotIndex}`);
     }
   }, [backOverride, resourceId]);
 
   const goToMyOrders = useCallback(() => {
-    history.push(`/marketplace/${asteroidId}/${lotId}/orders`);
+    history.push(`/marketplace/${asteroidId}/${lotIndex}/orders`);
   }, []);
 
   const onSelectListing = useCallback((listing) => {
-    history.push(`/marketplace/${asteroidId}/${lotId}/${listing?.resourceId || ''}`);
+    history.push(`/marketplace/${asteroidId}/${lotIndex}/${listing?.resourceId || ''}`);
   }, []);
 
   const showFooter = discriminator || localOrders.length > 0;
 
   // TODO: loading might be better than null
-  if (!asteroid || (lotId !== 'all' && (!lot || !marketplace))) return null;
+  if (!asteroid || (lotIndex !== 'all' && (!lot || !marketplace))) return null;
   return (
     <Details
       outerNode={resourceId
@@ -190,7 +189,7 @@ const Marketplace = () => {
             isPreMasked={!marketplace}
             src={marketplace ? getBuildingIcon(8, 'w1000') : marketplaceHeader} />
       }
-      title={`${formatters.asteroidName(asteroid, '...')} > ${lotId === 'all' ? 'Markets' : (marketplace.name || 'Marketplace')}`}
+      title={`${formatters.asteroidName(asteroid, '...')} > ${lotIndex === 'all' ? 'Markets' : (marketplace.name || 'Marketplace')}`}
       headerProps={{ underlineHeader: 'true' }}
       contentProps={showFooter ? { style: { marginBottom: 0 } } : {}}
       maxWidth="1600px"
@@ -230,7 +229,7 @@ const Marketplace = () => {
           <Footer>
             {discriminator && <Button flip subtle onClick={goBack}>Back</Button>}
             <div style={{ flex: 1 }} />
-            {crew?.i && (!discriminator || (discriminator !== 'orders' && marketplace)) && (
+            {crew?.id && (!discriminator || (discriminator !== 'orders' && marketplace)) && (
               <>
                 <OrderTally><OrderIcon /> {localOrders.length} Order{localOrders.length === 1 ? '' : 's'} {marketplace ? 'at this Marketplace' : 'on this Asteroid'}</OrderTally>
                 <Button subtle onClick={goToMyOrders}>My Open Orders</Button>

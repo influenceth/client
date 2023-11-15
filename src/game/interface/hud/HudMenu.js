@@ -157,14 +157,14 @@ const HudMenu = ({ forceOpenMenu }) => {
   const { account } = useAuth();
   const asteroidId = useStore(s => s.asteroids.origin);
   const destination = useStore(s => s.asteroids.destination);
-  const { asteroidId: lotAsteroidId, lotId } = useStore(s => s.asteroids.lot || {});
+  const lotId = useStore(s => s.asteroids.lot);
   const resourceMap = useStore(s => s.asteroids.resourceMap);
   const zoomScene = useStore(s => s.asteroids.zoomScene);
   const zoomStatus = useStore(s => s.asteroids.zoomStatus);
   const showDevTools = useStore(s => s.graphics.showDevTools);
   const openHudMenu = useStore(s => forceOpenMenu || s.openHudMenu);
 
-  const { data: lot } = useLot(lotAsteroidId, lotId);
+  const { data: lot } = useLot(lotId);
 
   const dispatchHudMenuOpened = useStore(s => s.dispatchHudMenuOpened);
 
@@ -390,12 +390,12 @@ const HudMenu = ({ forceOpenMenu }) => {
         }
       }
 
-      // buttons.push({
-      //   key: 'LOT_RESOURCES',
-      //   label: 'Resources',
-      //   icon: <ResourceIcon />,
-      //   Component: hudMenus.LotResources
-      // });
+      buttons.push({
+        key: 'LOT_RESOURCES',
+        label: 'Resources',
+        icon: <ResourceIcon />,
+        Component: hudMenus.LotResources
+      });
 
       if (lot?.building?.Building?.buildingType && (lot?.building?.Inventories || []).find((i) => i.status === Inventory.STATUSES.AVAILABLE)) {
         buttons.push({

@@ -1,23 +1,30 @@
 import { useCallback, useContext, useMemo } from 'react';
-import { Building } from '@influenceth/sdk';
+import { Building, Entity, Lot } from '@influenceth/sdk';
 
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
-import useCrewContext from './useCrewContext';
-import useLot from './useLot';
-import useActionItems from './useActionItems';
+import useCrewContext from '~/hooks/useCrewContext';
+import useLot from '~/hooks/useLot';
+import useActionItems from '~/hooks/useActionItems';
 import actionStage from '~/lib/actionStages';
 
-const useConstructionManager = (asteroidId, lotId) => {
+const useConstructionManager = (lotId) => {
   const { actionItems, readyItems, liveBlockTime } = useActionItems();
   const { execute, getPendingTx, getStatus } = useContext(ChainTransactionContext);
   const { crew } = useCrewContext();
-  const { data: lot } = useLot(asteroidId, lotId);
+  const { data: lot } = useLot(lotId);
+
+  const asteroidId = useMemo(() => Lot.toPosition(lotId)?.asteroidId, [lotId]);
+  const buildingId = lot?.building?.id;
+
+  const planPayload = useMemo(() => ({
+    lot: { id: lotId, label: Entity.IDS.LOT },
+    caller_crew: { id: crew?.id, label: Entity.IDS.CREW }
+  }), [lotId, crew?.id]);
 
   const payload = useMemo(() => ({
-    asteroidId,
-    lotId,
-    crewId: crew?.id
-  }), [asteroidId, lotId, crew?.id]);
+    building: { id: buildingId, label: Entity.IDS.BUILDING },
+    caller_crew: { id: crew?.id, label: Entity.IDS.CREW }
+  }), [buildingId, crew?.id]);
 
   // READY_TO_PLAN > PLANNING  > PLANNED > UNDER_CONSTRUCTION > READY_TO_FINISH > FINISHING > OPERATIONAL
   //               < CANCELING <         <                  DECONSTRUCTING                  <
@@ -43,7 +50,6 @@ const useConstructionManager = (asteroidId, lotId) => {
     if (lot?.building) {
       let actionItem = (actionItems || []).find((item) => (
         item.event.name === 'Dispatcher_ConstructionStart'
-        && item.assets.asteroid?.id === asteroidId
         && item.assets.lot?.id === lotId
       ));
 
@@ -58,10 +64,10 @@ const useConstructionManager = (asteroidId, lotId) => {
       current.crewId = lot.building.Control?.controller?.id;
 
       if (lot.building.Building.status === Building.CONSTRUCTION_STATUS_IDS.PLANNED) {
-        if (getStatus('START_CONSTRUCTION', payload) === 'pending') {
+        if (getStatus('ConstructionStart', payload) === 'pending') {
           status = 'UNDER_CONSTRUCTION';
           stages.construct = actionStage.STARTING;
-        } else if (getStatus('UNPLAN_CONSTRUCTION', payload) === 'pending') {
+        } else if (getStatus('ConstructionAbandon', payload) === 'pending') {
           status = 'CANCELING';
           stages.unplan = actionStage.COMPLETING;
         } else if (lot.building.Building.plannedAt + Building.GRACE_PERIOD >= liveBlockTime) {
@@ -71,7 +77,7 @@ const useConstructionManager = (asteroidId, lotId) => {
           isAtRisk = true;
 
           // if at-risk is being rebuilt on, check transaction to see if a new occupier is re-planning
-          const planTx = getPendingTx('PLAN_CONSTRUCTION', payload);
+          const planTx = getPendingTx('ConstructionPlan', planPayload);
           if (planTx) {
             current.buildingType = planTx.vars.buildingType;
             current.crewId = planTx.vars.crewId;
@@ -88,7 +94,7 @@ const useConstructionManager = (asteroidId, lotId) => {
         }
 
       } else if (lot.building.Building.status === Building.CONSTRUCTION_STATUS_IDS.UNDER_CONSTRUCTION) {
-        if (getStatus('FINISH_CONSTRUCTION', payload) === 'pending') {
+        if (getStatus('ConstructionFinish', payload) === 'pending') {
           status = 'FINISHING';
           stages.construct = actionStage.COMPLETING;
         } else if (lot.building.Building.finishTime && (lot.building.Building.finishTime <= liveBlockTime)) {
@@ -100,9 +106,9 @@ const useConstructionManager = (asteroidId, lotId) => {
         }
 
       } else if (lot.building.Building.status === Building.CONSTRUCTION_STATUS_IDS.OPERATIONAL) {
-        if (getStatus('DECONSTRUCT', payload) === 'pending') {
+        if (getStatus('ConstructionDeconstruct', payload) === 'pending') {
           status = 'DECONSTRUCTING';
-          deconstructTx = getPendingTx('DECONSTRUCT', payload);
+          deconstructTx = getPendingTx('ConstructionDeconstruct', payload);
           stages.deconstruct = actionStage.STARTING;
         } else {
           status = 'OPERATIONAL';
@@ -110,48 +116,54 @@ const useConstructionManager = (asteroidId, lotId) => {
         }
       }
     } else {
-      const planTx = getPendingTx('PLAN_CONSTRUCTION', payload);
+      const planTx = getPendingTx('ConstructionPlan', planPayload);
       if (planTx) {
-        current.buildingType = planTx.vars.buildingType;
-        current.crewId = planTx.vars.crewId;
+        current.buildingType = planTx.vars.building_type;
+        current.crewId = planTx.vars.caller_crew.id;
         status = 'PLANNING';
         stages.plan = actionStage.COMPLETING;
       }
     }
 
     return [
-      status === 'READY_TO_PLAN' ? null : current,
+      current,
       status,
       isAtRisk,
       deconstructTx,
       stages
     ];
-  }, [actionItems, readyItems, getPendingTx, getStatus, payload, lot?.building]);
+  }, [actionItems, readyItems, getPendingTx, getStatus, payload, planPayload, lot?.building]);
+
+  const txMeta = useMemo(() => ({ asteroidId, lotId }), [asteroidId, lotId]);
 
   const planConstruction = useCallback((buildingType) => {
     execute(
-      'PLAN_CONSTRUCTION',
+      'ConstructionPlan',
       {
-        buildingType,
-        ...payload
+        building_type: buildingType,
+        ...planPayload
       }
+    )
+  }, [planPayload]);
+
+  const unplanConstruction = useCallback(() => {
+    execute(
+      'ConstructionAbandon',
+      payload,
+      { ...txMeta, buildingType: lot?.building?.Building?.buildingType }
     )
   }, [payload]);
 
-  const unplanConstruction = useCallback(() => {
-    execute('UNPLAN_CONSTRUCTION', payload)
-  }, [payload]);
-
   const startConstruction = useCallback(() => {
-    execute('START_CONSTRUCTION', payload)
+    execute('ConstructionStart', payload, txMeta)
   }, [payload]);
 
   const finishConstruction = useCallback(() => {
-    execute('FINISH_CONSTRUCTION', payload)
+    execute('ConstructionFinish', payload, txMeta)
   }, [payload]);
 
   const deconstruct = useCallback(() => {
-    execute('DECONSTRUCT', payload)
+    execute('ConstructionDeconstruct', payload, txMeta)
   }, [payload]);
 
   return {

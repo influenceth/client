@@ -35,7 +35,7 @@ import TextInput from '~/components/TextInput';
 import TriangleTip from '~/components/TriangleTip';
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
 import useBookSession, { bookIds, getBookCompletionImage } from '~/hooks/useBookSession';
-import useCrewManager from '~/hooks/useCrewManager';
+import useCrewManager from '~/hooks/actionManagers/useCrewManager';
 import useCrewContext from '~/hooks/useCrewContext';
 import useNameAvailability from '~/hooks/useNameAvailability';
 import usePriceConstants from '~/hooks/usePriceConstants';

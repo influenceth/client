@@ -9,14 +9,14 @@ import crewSwapBackground from '~/assets/images/modal_headers/Travel.png';  // T
 import Button from '~/components/ButtonAlt';
 import CrewCardFramed, { EmptyCrewCardFramed } from '~/components/CrewCardFramed';
 import CrewLocationLabel from '~/components/CrewLocationLabel';
-import FoodStatus from '~/components/FoodStatus';
+import LiveFoodStatus from '~/components/LiveFoodStatus';
 import IconButton from '~/components/IconButton';
 import { CloseIcon, CrewIcon, ManageCrewIcon, NewCrewIcon, PlusIcon } from '~/components/Icons';
 import useCrewContext from '~/hooks/useCrewContext';
-import useCrewSwapManager from '~/hooks/useCrewSwapManager';
 import useHydratedCrew from '~/hooks/useHydratedCrew';
 import useHydratedLocation from '~/hooks/useHydratedLocation';
 import useStore from '~/hooks/useStore';
+import useCrewSwapManager from '~/hooks/actionManagers/useCrewSwapManager';
 import actionStages from '~/lib/actionStages';
 import formatters from '~/lib/formatters';
 import { reactBool, nativeBool } from '~/lib/utils';
@@ -162,7 +162,7 @@ const CrewDraggable = ({
         <div>
           {isForeignCrew
             ? <ForeignCrewWarning>Crew is not under my control</ForeignCrewWarning>
-            : <FoodStatus percentage={100} />
+            : <LiveFoodStatus crew={crew} />
           }
         </div>
       </Titlebar>

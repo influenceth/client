@@ -5,7 +5,7 @@ import useCrewContext from './useCrewContext';
 
 const useAsteroidCrewLots = (asteroidId, explicitCrewId) => {
   const { crew } = useCrewContext();
-  const crewId = explicitCrewId || crew?.i;
+  const crewId = explicitCrewId || crew?.id;
   return useQuery(
     // TODO: convert this to 'entities' model of cache keys
     [ 'asteroidCrewLots', asteroidId, crewId ],

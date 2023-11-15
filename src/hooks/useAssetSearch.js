@@ -94,7 +94,7 @@ filtersToQuery.buildings = (filters) => {
 
   // TODO: ecs refactor
   // if (filters.occupier) {
-  //   queryBuilder.filter(esb.termQuery('occupier.i', filters.occupier));
+  //   queryBuilder.filter(esb.termQuery('occupier.id', filters.occupier));
   // }
 
   if (filters.construction) {

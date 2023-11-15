@@ -253,8 +253,8 @@ const StackSplitterPopper = ({ children, referenceEl }) => {
 
 const LotInventory = () => {
   const { props: actionProps } = useActionButtons();
-  const { asteroidId, lotId } = useStore(s => s.asteroids.lot) || {};
-  const { data: lot } = useLot(asteroidId, lotId);
+  const lotId = useStore(s => s.asteroids.lot);
+  const { data: lot } = useLot(lotId);
 
   const [amount, setAmount] = useState();
   const [focused, setFocused] = useState();
@@ -268,7 +268,7 @@ const LotInventory = () => {
   const inventory = Object.values(lot?.building?.Inventories || {}).find((i) => i.status === Inventory.STATUSES.AVAILABLE);
   inventory.contentsObj = useMemo(() => {
     return inventory?.contents?.reduce((acc, c) => {
-      acc[c.resource] = c.amount;
+      acc[c.product] = c.amount;
       return acc;
     }, {});
   }, [inventory?.contents])

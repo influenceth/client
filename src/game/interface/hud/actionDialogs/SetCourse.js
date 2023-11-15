@@ -5,7 +5,7 @@ import { Crew, Crewmate, Ship, Time } from '@influenceth/sdk';
 import travelBackground from '~/assets/images/modal_headers/Travel.png';
 import { CoreSampleIcon, ExtractionIcon, InventoryIcon, LaunchShipIcon, LocationIcon, ResourceIcon, RouteIcon, SetCourseIcon, ShipIcon, RotatedShipMarkerIcon, WarningOutlineIcon, MyAssetIcon } from '~/components/Icons';
 import useCrewContext from '~/hooks/useCrewContext';
-import useExtractionManager from '~/hooks/useExtractionManager';
+import useExtractionManager from '~/hooks/actionManagers/useExtractionManager';
 import { formatFixed, formatTimer } from '~/lib/utils';
 
 import {
@@ -210,7 +210,7 @@ const SetCourse = ({ origin, destination, manager, ship, stage, travelSolution, 
 
   const crewmates = currentLaunch?._crewmates || (crew?._crewmates || []).map((i) => crewmateMap[i]);
   const captain = crewmates[0];
-  const crewTravelBonus = Crew.getAbilityBonus(Crewmate.ABILITY_IDS.SURFACE_TRANSPORT_SPEED, crewmates);
+  const crewTravelBonus = Crew.getAbilityBonus(Crewmate.ABILITY_IDS.HOPPER_TRANSPORT_TIME, crewmates);
   const launchBonus = 0;
 
   const arrivingIn = useMemo(() => 3600 * (travelSolution.arrivalTime - coarseTime), [coarseTime, travelSolution])
@@ -435,7 +435,7 @@ const Wrapper = ({ travelSolution, ...props }) => {
 
   // const { asteroid, lot, isLoading } = useAsteroidAndLot(props);
   // TODO: ...
-  // const extractionManager = useExtractionManager(asteroid?.i, lot?.i);
+  // const extractionManager = useExtractionManager(lot?.id);
   // const { actionStage } = extractionManager;
   const manager = { flightStatus: 'READY' };
   const actionStage = actionStages.NOT_STARTED;

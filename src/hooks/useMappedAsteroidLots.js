@@ -43,7 +43,7 @@ const useMappedAsteroidLots = (i) => {
   const { data: crewLots, isLoading: crewLotsLoading } = useAsteroidCrewLots(i);
   const myOccupationMap = useMemo(() => {
     if (crewLotsLoading) return null;
-    return (crewLots || []).reduce((acc, p) => { acc[p.i] = true; return acc; }, {});
+    return (crewLots || []).reduce((acc, p) => { acc[p.id] = true; return acc; }, {});
   }, [crewLots, crewLotsLoading]);
 
   // determine if search is on or not
@@ -177,6 +177,7 @@ const useMappedAsteroidLots = (i) => {
       case 'Dispatcher_ConstructionUnplan':
         // asteroidId, lotId, crewId, (buildingType)
         queryClient.setQueryData([ 'asteroidLots', body.returnValues.asteroidId ], (currentLotsValue) => {
+          // TODO: this will need to be translated to lotIndex
           currentLotsValue[body.returnValues.lotId] = 
             (currentLotsValue[body.returnValues.lotId] & 0b00001111)  // clear existing building
             | (body.returnValues.buildingType || 0) << 4               // set to event building (if there is one)

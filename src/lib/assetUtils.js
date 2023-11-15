@@ -26,7 +26,7 @@ const getSlug = (assetName) => {
 }
 
 const getIconUrl = (type, assetName, iconVersion, { append, w, h, f } = {}) => {
-  const environment = process.env.NODE_ENV || 'development';
+  const environment = process.env.NODE_ENV === 'production' ? 'production' : 'staging';
   return getCloudfrontUrl(
     `influence/${environment}/images/icons/${type}/${getSlug(assetName)}${append || ''}.v${iconVersion || '1'}.png`,
     { w, h, f }
@@ -53,7 +53,7 @@ export const getBuildingIcon = (i, size, isHologram) => {
 
   const cacheKey = `buildingIcon_${i}_${useSize}_${isHologram}`;
   if (!ASSET_CACHE[cacheKey]) {
-    const conf = BUILDING_SIZES[useSize];
+    const conf = { ...BUILDING_SIZES[useSize] };
     if (isHologram) conf.append = '_Site';
     ASSET_CACHE[cacheKey] = getIconUrl('buildings', Building.TYPES[i]?.name, Assets.Building[i]?.iconVersion, conf);
   }
@@ -109,7 +109,7 @@ export const getShipIcon = (i, size, isHologram) => {
 
   const cacheKey = `shipIcon_${i}_${useSize}_${isHologram}`;
   if (!ASSET_CACHE[cacheKey]) {
-    const conf = SHIP_SIZES[useSize];
+    const conf = { ...SHIP_SIZES[useSize] };
     if (isHologram) conf.append = '_Holo';
     ASSET_CACHE[cacheKey] = getIconUrl('ships', Ship.TYPES[i]?.name, Assets.Ship[i]?.iconVersion, conf);
   }

@@ -2,7 +2,7 @@ import { useCallback, useMemo } from 'react';
 import { useHistory } from 'react-router-dom';
 
 import { RecruitCrewmateIcon } from '~/components/Icons';  // TODO: sergey's
-import useCrewManager from '~/hooks/useCrewManager';
+import useCrewManager from '~/hooks/actionManagers/useCrewManager';
 import useStore from '~/hooks/useStore';
 import { nativeBool, reactBool } from '~/lib/utils';
 import ActionButton from './ActionButton';

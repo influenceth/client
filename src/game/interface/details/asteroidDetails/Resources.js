@@ -11,7 +11,7 @@ import ButtonPill from '~/components/ButtonPill';
 import Button from '~/components/ButtonAlt';
 import { CaretIcon, ResourceGroupIcons, WarningOutlineIcon } from '~/components/Icons';
 import useAsteroid from '~/hooks/useAsteroid';
-import useScanManager from '~/hooks/useScanManager';
+import useScanManager from '~/hooks/actionManagers/useScanManager';
 import useStore from '~/hooks/useStore';
 import AsteroidGraphic from './components/AsteroidGraphic';
 import theme, { hexToRGB } from '~/theme';
@@ -433,7 +433,7 @@ const ResourceDetails = ({ abundances, asteroid, isManager }) => {
 
   const goToResourceMap = useCallback((resource) => (e) => {
     e.stopPropagation();
-    selectOrigin(asteroid.i);
+    selectOrigin(asteroid.id);
     if (zoomStatus !== 'in') updateZoomStatus('zooming-in');
     dispatchResourceMapSelect(resource.i);
     dispatchResourceMapToggle(true);

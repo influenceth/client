@@ -91,7 +91,7 @@ const Info = styled.div`
 `;
 
 const ShipRow = ({ ship }) => {
-  const onClickShip = useShipLink({ shipId: ship.i, zoomToShip: true })
+  const onClickShip = useShipLink({ shipId: ship.id, zoomToShip: true })
   return (
     <SelectableRow onClick={onClickShip}>
       <Thumbnail>
@@ -100,7 +100,7 @@ const ShipRow = ({ ship }) => {
         <ClipCorner dimension={10} color={majorBorderColor} />
       </Thumbnail>
       <Info>
-        <label>{ship.Name?.name || `Ship #${ship.i.toLocaleString()}`}</label>
+        <label>{ship.Name?.name || `Ship #${ship.id.toLocaleString()}`}</label>
         <div style={{ flex: 1 }}></div>
       </Info>
     </SelectableRow>
@@ -150,7 +150,7 @@ const AllAssets = ({ onClose }) => {
         <HudMenuCollapsibleSection
           titleText={`Ships`}
           collapsed>
-          {(ownedShips || []).map((ship) => <ShipRow key={ship.i} ship={ship} />)}
+          {(ownedShips || []).map((ship) => <ShipRow key={ship.id} ship={ship} />)}
         </HudMenuCollapsibleSection>
         
         <HudMenuCollapsibleSection

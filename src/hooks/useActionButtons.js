@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Asteroid, Building, Delivery, Inventory, Processor, Ship } from '@influenceth/sdk';
 
 import useAsteroid from '~/hooks/useAsteroid';
-import useConstructionManager from '~/hooks/useConstructionManager';
+import useConstructionManager from '~/hooks/actionManagers/useConstructionManager';
 import useCrewContext from '~/hooks/useCrewContext';
 import useLot from '~/hooks/useLot';
 import useShip from '~/hooks/useShip';
@@ -51,7 +51,7 @@ import useAuth from './useAuth';
 
 const useActionButtons = () => {
   const asteroidId = useStore(s => s.asteroids.origin);
-  const { lotId } = useStore(s => s.asteroids.lot || {});
+  const lotId = useStore(s => s.asteroids.lot);
   const resourceMap = useStore(s => s.asteroids.resourceMap);
   const zoomStatus = useStore(s => s.asteroids.zoomStatus);
   const zoomScene = useStore(s => s.asteroids.zoomScene);
@@ -68,8 +68,8 @@ const useActionButtons = () => {
   const { data: asteroid, isLoading: asteroidIsLoading } = useAsteroid(asteroidId);
 
   // lot-level
-  const { data: lot, isLoading: lotIsLoading } = useLot(asteroidId, lotId);
-  const { constructionStatus } = useConstructionManager(asteroidId, lotId); // TODO: could potentially pass in building id here if helpful
+  const { data: lot, isLoading: lotIsLoading } = useLot(lotId);
+  const { constructionStatus } = useConstructionManager(lotId); // TODO: could potentially pass in building id here if helpful
 
   // ship
   const { data: crewedShip, isLoading: crewedShipIsLoading } = useShip(crew?._location?.shipId);
@@ -77,7 +77,7 @@ const useActionButtons = () => {
 
   // set ship IF zoomed to ship or zoomed to lot that can only contain one ship (i.e. not a spaceport)
   const ship = zoomedToShip || (lot && lot.building?.Building?.buildingType !== Building.IDS.SPACEPORT ? lot.Ships?.[0] : null);
-  const { data: crewsOnShip } = useShipCrews(ship?.id);  // TODO: isLoading?
+  const { data: crewsOnShip } = useShipCrews(ship?.id);  // TODO: isLoading?  
 
   const [actions, setActions] = useState([]);
 
@@ -128,7 +128,7 @@ const useActionButtons = () => {
 
           // TODO: pilotedShip?
           // if there is a crewedShip and it is selected (or no other ship is selected)
-          if (crewedShip && (!ship || crewedShip.i === ship.i)) {
+          if (crewedShip && (!ship || crewedShip.id === ship.id)) {
 
             // if ship on surface and the lot is selected (or no other lot is selected)
             if (crew._location.lotId && (!lotId || lotId === crew._location.lotId)) {
@@ -147,7 +147,7 @@ const useActionButtons = () => {
             //  AND check that both in orbit or both on surface
 
             // if i own a ship, can pilot it
-            if (ship.Control.controller.id === crew.i) {
+            if (ship.Control.controller.id === crew.id) {
               a.push(actionButtons.StationCrewAsPilots);
 
             // if i don't own it, can ride it
@@ -156,17 +156,17 @@ const useActionButtons = () => {
             }
 
             // if my crew is on ship, can eject
-            if (crew._location.shipId === ship.i) {
+            if (crew._location.shipId === ship.id) {
               a.push(actionButtons.EjectCrew);
             }
 
             // if i own the ship and there are other crews on the ship
-            if (ship.Control.controller.id === crew.i && crewsOnShip?.length > 0) {
+            if (ship.Control.controller.id === crew.id && crewsOnShip?.length > 0) {
               a.push(actionButtons.EjectGuestCrew);
             }
 
             // if i am piloting the ship and it is eligible to enter or leave emergency mode
-            if (crew._location?.shipId === ship.i && crew.i === ship.Control.controller.id) {
+            if (crew._location?.shipId === ship.id && crew.id === ship.Control.controller.id) {
 
               // if in emergency mode or ship has < 10% propellant, can toggle emergency mode
               const propellantInventory = ship.Inventories.find((i) => i.slot === Ship.TYPES[ship.Ship.shipType].propellantSlot);
@@ -182,11 +182,13 @@ const useActionButtons = () => {
             }
           }
 
-          // if lot is selected and asteroid has been scanned
-          if (lot && asteroid.Celestial.scanStatus === Asteroid.SCAN_STATUSES.RESOURCE_SCANNED) {
+          // if lot is selected
+          if (lot) {
 
-            // can always core sample
-            a.push(actionButtons.CoreSample);
+            // if asteroid has been scanned, can core sample
+            if (asteroid.Celestial.scanStatus === Asteroid.SCAN_STATUSES.RESOURCE_SCANNED) {
+              a.push(actionButtons.CoreSample);
+            }
 
             // if there is a building
             // TODO: resourceScan is probably not required for building (i.e. habitat on AP is pre-resource-scan)
@@ -199,7 +201,7 @@ const useActionButtons = () => {
                 if (lot.building.Station) {
 
                   // if my crew is stationed in building, can eject
-                  if (crew?._location.buildingId === lot.building.i) {
+                  if (crew?._location.buildingId === lot.building.id) {
                     a.push(actionButtons.EjectCrew);
 
                   // else, can station my crew
@@ -210,7 +212,7 @@ const useActionButtons = () => {
               }
 
               // if i control the building
-              if (lot.building.Control?.controller?.id === crew.i) {
+              if (lot.building.Control?.controller?.id === crew.id) {
 
                 // if it's operational
                 if (constructionStatus === 'OPERATIONAL') {
@@ -249,21 +251,24 @@ const useActionButtons = () => {
                   a.push(actionButtons.UnplanBuilding);
                 }
               }
-            } else if (constructionStatus === 'READY_TO_PLAN') {
+
+            // else (no building), can plan one if asteroid has been scanned
+            } else if (constructionStatus === 'READY_TO_PLAN' && asteroid.Celestial.scanStatus === Asteroid.SCAN_STATUSES.RESOURCE_SCANNED) {
               // TODO: cannot plan a building under a ship (disable)
               a.push(actionButtons.PlanBuilding);
             }
 
             // if this lot or ship has an unlocked inventory, can transfer things from it
-            if ((lot.building || ship || {}).Inventory.find((i) => i.status === Inventory.STATUSES.AVAILABLE)) {
+            if ((lot.building || ship || {}).Inventories?.find((i) => i.status === Inventory.STATUSES.AVAILABLE)) {
               a.push(actionButtons.SurfaceTransferOutgoing);
             }
 
             // if this lot or ship has incoming deliveries, link to those deliveries
             // TODO: these deliveries should be filtered to only those that are to/from something user controls
-            if ((lot.delivery || []).find((d) => d.delivery.Delivery.status !== Delivery.STATUSES.COMPLETE)) {
-              a.push(actionButtons.SurfaceTransferIncoming);
-            }
+            // TODO: commented this out 
+            // if ((lot.delivery || []).find((d) => d.delivery.Delivery.status !== Delivery.STATUSES.COMPLETE)) {
+            //   a.push(actionButtons.SurfaceTransferIncoming);
+            // }
           }
         }
       }

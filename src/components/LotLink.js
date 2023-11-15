@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from 'react';
-import { Entity } from '@influenceth/sdk';
+import { Entity, Lot } from '@influenceth/sdk';
 
 import useOwnedAsteroids from '~/hooks/useOwnedAsteroids';
 import useStore from '~/hooks/useStore';
@@ -7,7 +7,7 @@ import OnClickLink from './OnClickLink';
 import formatters from '~/lib/formatters';
 import EntityName from './EntityName';
 
-export const useLotLink = ({ asteroidId, lotId, resourceId, zoomToLot }) => {
+export const useLotLink = ({ asteroidId: optAsteroidId, lotId: optLotId, resourceId, zoomToLot }) => {
   const dispatchHudMenuOpened = useStore(s => s.dispatchHudMenuOpened);
   const dispatchOriginSelected = useStore(s => s.dispatchOriginSelected);
   const dispatchLotSelected = useStore(s => s.dispatchLotSelected);
@@ -19,6 +19,14 @@ export const useLotLink = ({ asteroidId, lotId, resourceId, zoomToLot }) => {
   const origin = useStore(s => s.asteroids.origin);
   const currentZoomScene = useStore(s => s.asteroids.zoomScene);
   const zoomStatus = useStore(s => s.asteroids.zoomStatus);
+
+  const [ asteroidId, lotId ] = useMemo(() => {
+    if (!optAsteroidId && optLotId) {
+      const loc = Lot.toPosition(optLotId);
+      return [loc.asteroidId, optLotId];
+    }
+    return [optAsteroidId, optLotId];
+  }, [optAsteroidId, optLotId]);
 
   const selectResourceMapAsNeeded = useCallback(() => {
     if (resourceId) {
@@ -44,7 +52,7 @@ export const useLotLink = ({ asteroidId, lotId, resourceId, zoomToLot }) => {
   const onClickFunction = useCallback(() => {
     // if already zoomed into asteroid, just select lot and select resource map
     if (asteroidId === origin && zoomStatus === 'in') {
-      dispatchLotSelected(asteroidId, lotId);
+      dispatchLotSelected(lotId);
       selectResourceMapAsNeeded();
       setTimeout(() => {
         zoomToLotAsNeeded();
@@ -57,7 +65,7 @@ export const useLotLink = ({ asteroidId, lotId, resourceId, zoomToLot }) => {
 
       setTimeout(() => {
         if (lotId) {
-          dispatchLotSelected(asteroidId, lotId);
+          dispatchLotSelected(lotId);
           selectResourceMapAsNeeded();
           zoomToLotAsNeeded();
         } else {
@@ -74,27 +82,35 @@ export const useLotLink = ({ asteroidId, lotId, resourceId, zoomToLot }) => {
   return onClickFunction;
 }
 
-export const LotLink = ({ asteroidId, lotId, resourceId, zoomToLot }) => {
+export const LotLink = ({ asteroidId: optAsteroidId, lotId: optLotId, resourceId, zoomToLot }) => {
+  const [ asteroidId, lotId ] = useMemo(() => {
+    if (!optAsteroidId && optLotId) {
+      const loc = Lot.toPosition(optLotId);
+      return [loc.asteroidId, optLotId];
+    }
+    return [optAsteroidId, optLotId];
+  }, [optAsteroidId, optLotId]);
+
   const onClick = useLotLink({ asteroidId, lotId, resourceId, zoomToLot });
 
   // TODO: this should probably rely on useAsteroid? lotlink may not be to asteroid crew owns
   const { data: owned, isLoading: ownedAreLoading } = useOwnedAsteroids();
   const asteroidName = useMemo(() => {
     if (owned) {
-      const match = owned.find(a => a.i === Number(asteroidId));
+      const match = owned.find(a => a.id === Number(asteroidId));
       if (match) {
         return formatters.asteroidName(match);
       }
     }
     return null;
-  }, [ owned, asteroidId ])
+  }, [ owned, asteroidId ]);
 
   return (
     <OnClickLink onClick={onClick}>
       {ownedAreLoading
-        ? `Asteroid #${asteroidId.toLocaleString()}`
+        ? `Asteroid #${asteroidId?.toLocaleString()}`
         : (asteroidName || <EntityName id={asteroidId} label={Entity.IDS.ASTEROID} />)}
-      {' '}#{lotId ? lotId.toLocaleString() : '?'}
+      {' '}#{Lot.toIndex(lotId)?.toLocaleString()}
     </OnClickLink>
   );
 };

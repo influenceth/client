@@ -49,8 +49,8 @@ const getSamplePosition = (side, s, t, heightMap, config, resolution) => {
   return getSamplePoint(side, resolution, s, t).setLength(displacement).multiply(config.stretch);
 }
 
-export const getLotPointGeometry = (lotId, pointTally, resolution, heightMaps, config, aboveSurface) => {
-  const fibo = (new Vector3()).fromArray(Asteroid.getLotPosition(0, lotId, pointTally));
+export const getLotPointGeometry = (lotIndex, pointTally, resolution, heightMaps, config, aboveSurface) => {
+  const fibo = (new Vector3()).fromArray(Asteroid.getLotPosition(0, lotIndex, pointTally));
 
   const xAbs = Math.abs(fibo.x);
   const yAbs = Math.abs(fibo.y);

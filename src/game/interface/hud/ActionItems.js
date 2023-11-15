@@ -20,6 +20,7 @@ import { formatActionItem, itemColors, statuses } from '~/lib/actionItem';
 import theme, { hexToRGB } from '~/theme';
 import formatters from '~/lib/formatters';
 import useCrewContext from '~/hooks/useCrewContext';
+import useGetActivityConfig from '~/hooks/useGetActivityConfig';
 
 const ICON_WIDTH = 34;
 const ITEM_WIDTH = 410;
@@ -276,6 +277,8 @@ const ActionItemRow = styled.div`
 
 const ActionItem = ({ data }) => {
   const history = useHistory();
+  const getActivityConfig = useGetActivityConfig();
+
   const currentAsteroid = useStore(s => s.asteroids);
   const dispatchActionDialog = useStore(s => s.dispatchActionDialog);
   const dispatchLauncherPage = useStore(s => s.dispatchLauncherPage);
@@ -283,10 +286,10 @@ const ActionItem = ({ data }) => {
   const type = data?.type;
 
   // TODO: can probably clean up the `formatted` structure
-  const item = useMemo(() => formatActionItem(data), [data]);
+  const item = useMemo(() => formatActionItem(data, getActivityConfig(data)?.actionItem), [data]);
 
   const { data: asteroid } = useAsteroid(item.asteroidId);
-  const { data: lot } = useLot(item.asteroidId, item.lotId);
+  const { data: lot } = useLot(item.lotId);
 
   const goToAction = useLotLink({
     asteroidId: item.asteroidId,

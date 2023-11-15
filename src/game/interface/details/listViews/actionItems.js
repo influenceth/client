@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import styled from 'styled-components';
+import { Lot } from '@influenceth/sdk';
 
 import useAuth from '~/hooks/useAuth';
 import useCrewContext from '~/hooks/useCrewContext';
@@ -116,8 +117,8 @@ const useColumns = () => {
         sortField: 'lotId',
         selector: row => row.lotId && (
           <>
-            <LocationLink asteroidId={row.asteroidId} lotId={row.lotId} resourceId={row.resourceId} />
-            <span>{row.lotId.toLocaleString()}</span>
+            <LocationLink lotId={row.lotId} resourceId={row.resourceId} />
+            <span>{Lot.toIndex(row.lotId).toLocaleString()}</span>
           </>
         ),
       },
@@ -142,7 +143,7 @@ const useColumns = () => {
     ];
 
     return columns.filter((c) => account || !c.requireLogin);
-  }, [account, crew?.i]);
+  }, [account, crew?.id]);
 };
 
 export default useColumns;

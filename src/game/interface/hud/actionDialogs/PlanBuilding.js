@@ -9,7 +9,7 @@ import {
 } from '~/components/Icons';
 import useCrewContext from '~/hooks/useCrewContext';
 import theme from '~/theme';
-import useConstructionManager from '~/hooks/useConstructionManager';
+import useConstructionManager from '~/hooks/actionManagers/useConstructionManager';
 import { reactBool, formatTimer } from '~/lib/utils';
 
 import { ActionDialogInner, useAsteroidAndLot } from '../ActionDialog';
@@ -46,9 +46,9 @@ const PlanBuilding = ({ asteroid, lot, constructionManager, stage, ...props }) =
   const crewTravelTime = useMemo(() => 0, []);  // TODO: ...
   const taskTime = useMemo(() => 0, []);
   const stats = useMemo(() => {
-    if (!asteroid?.i || !lot?.i) return [];
+    if (!asteroid?.id || !lot?.id) return [];
     const crewmates = (crew?._crewmates || []).map((i) => crewmateMap[i]);
-    const crewTravelBonus = Crew.getAbilityBonus(Crewmate.ABILITY_IDS.SURFACE_TRANSPORT_SPEED, crewmates);
+    const crewTravelBonus = Crew.getAbilityBonus(Crewmate.ABILITY_IDS.HOPPER_TRANSPORT_TIME, crewmates);
     const tripDetails = []; // TODO: 
     const taskTime = 0;
     return [
@@ -174,7 +174,7 @@ const PlanBuilding = ({ asteroid, lot, constructionManager, stage, ...props }) =
 
 const Wrapper = (props) => {
   const { asteroid, lot, isLoading } = useAsteroidAndLot(props);
-  const constructionManager = useConstructionManager(asteroid?.i, lot?.i);
+  const constructionManager = useConstructionManager(lot?.id);
   const { stageByActivity } = constructionManager;
 
   useEffect(() => {

@@ -13,7 +13,7 @@ const RenderedAsteroid = ({ asteroid, brightness = 1, varyDistance = false, onRe
 
   useEffect(() => {
     if (asteroid?.id && webWorkerPool) {
-      renderDummyAsteroid(asteroid, asteroid.i < 25 ? 64 : 32, webWorkerPool, (asteroidModel, dispose) => {
+      renderDummyAsteroid(asteroid, asteroid.id < 25 ? 64 : 32, webWorkerPool, (asteroidModel, dispose) => {
         asteroidModel.traverse(function (node) {
           if (node.isMesh) {
             node.material.map = null;

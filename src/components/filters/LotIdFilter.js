@@ -12,7 +12,7 @@ const fieldName = 'id';
 
 const LotIdFilter = ({ assetType, filters }) => {  
   const asteroidId = useStore((s) => s.asteroids.origin);
-  const selectLotId = useStore((s) => s.dispatchLotSelected);
+  const dispatchLotSelected = useStore((s) => s.dispatchLotSelected);
   
   const lotId = useRef();
 
@@ -29,7 +29,7 @@ const LotIdFilter = ({ assetType, filters }) => {
         lotId.current.value = maxLots;
         targetId = maxLots;
       }
-      selectLotId(asteroidId, targetId);
+      dispatchLotSelected(targetId);
     }
   }, [asteroidId]);
 

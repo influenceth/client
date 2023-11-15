@@ -4,7 +4,7 @@ import { Asteroid } from '@influenceth/sdk';
 
 import { ScanAsteroidIcon } from '~/components/Icons';
 import useAsteroid from '~/hooks/useAsteroid';
-import useScanManager from '~/hooks/useScanManager';
+import useScanManager from '~/hooks/actionManagers/useScanManager';
 
 import ActionButton from './ActionButton';
 import useCrewContext from '~/hooks/useCrewContext';

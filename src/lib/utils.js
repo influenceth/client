@@ -1,4 +1,4 @@
-import { Entity } from '@influenceth/sdk';
+import { Entity, Lot } from '@influenceth/sdk';
 
 const timerIncrements = { d: 86400, h: 3600, m: 60, s: 1 };
 export const formatTimer = (secondsRemaining, maxPrecision = null) => {
@@ -60,7 +60,8 @@ export const locationsArrToObj = (locations) => {
   const lotLocation = locations.find((l) => l.label === Entity.IDS.LOT);
   return {
     asteroidId: locations.find((l) => Number(l.label) === Entity.IDS.ASTEROID)?.id,
-    lotId: lotLocation ? Entity.toPosition(lotLocation)?.lotId : null,
+    lotId: lotLocation?.id,
+    lotIndex: lotLocation?.id ? Lot.toIndex(lotLocation?.id) : null,
     buildingId: locations.find((l) => l.label === Entity.IDS.BUILDING)?.id,
     shipId: locations.find((l) => l.label === Entity.IDS.SHIP)?.id,
   }

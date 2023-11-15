@@ -119,6 +119,12 @@ const TravelSolution = ({}) => {
       [originPosition[0], originPosition[1], originPosition[2]],
       v1
     );
+    // console.log({
+    //   travelSolution,
+    //   solutionOrbit,
+    //   nuInit: solutionOrbit.getTrueAnomalyAtPos({ x: originPosition[0], y: originPosition[1], z: originPosition[2] }),
+    //   nuFinal: solutionOrbit.getTrueAnomalyAtPos({ x: destinationPosition[0], y: destinationPosition[1], z: destinationPosition[2] }),
+    // });
 
     const totalTime = arrivalTime - departureTime;
     const timeInc = (arrivalTime - departureTime) / solutionPoints;

@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import styled from 'styled-components';
 import moment from 'moment';
-import { Product } from '@influenceth/sdk';
+import { Lot, Product } from '@influenceth/sdk';
 
 import CrewIndicator from '~/components/CrewIndicator';
 import DataTable from '~/components/DataTable';
@@ -185,8 +185,8 @@ const MarketplaceOpenOrders = ({ asteroid, orders, marketplace = null, marketpla
         sortField: 'deliveryTo',
         selector: row => (
           <>
-            <LocationLink asteroidId={row.asteroidId} lotId={row.deliveryTo} />
-            <span>Lot {row.deliveryTo.toLocaleString()}</span>
+            <LocationLink lotId={row.deliveryTo} />
+            <span>Lot {Lot.toIndex(row.deliveryTo).toLocaleString()}</span>
           </>
         ),
       },
@@ -198,10 +198,10 @@ const MarketplaceOpenOrders = ({ asteroid, orders, marketplace = null, marketpla
         sortField: 'marketplaceName',
         selector: row => (
           <>
-            <LocationLink asteroidId={row.asteroidId} lotId={row.lotId} zoomToLot />
-            <span>{row.marketplaceName || `Marketplace at Lot #${row.lotId}`}</span>
+            <LocationLink lotId={row.lotId} zoomToLot />
+            <span>{row.marketplaceName || `Marketplace at Lot #${Lot.toIndex(row.lotId).toLocaleString()}`}</span>
           </>
-        ),
+        )
       });
     }
     return c;

@@ -1,11 +1,17 @@
-import { useQuery } from 'react-query';
+import { useQuery, useQueryClient } from 'react-query';
+import { hydrateActivities } from '~/lib/activities';
 
 import api from '~/lib/api';
 
 const useActivities = (entity) => {
+  const queryClient = useQueryClient();
   return useQuery(
     [ 'activities', entity.label, entity.id ],
-    () => api.getEntityActivities(entity),
+    async () => {
+      const activities = await api.getEntityActivities(entity);
+      await hydrateActivities(activities, queryClient);
+      return activities;
+    },
     { enabled: !!entity }
   );
 };

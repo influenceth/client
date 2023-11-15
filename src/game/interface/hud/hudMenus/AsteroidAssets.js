@@ -1,6 +1,6 @@
 import { Fragment, useMemo } from 'react';
 import styled from 'styled-components';
-import { Building, Dock, Entity, Inventory, Ship, Station } from '@influenceth/sdk';
+import { Building, Dock, Entity, Inventory, Lot, Ship, Station } from '@influenceth/sdk';
 
 import { useLotLink } from '~/components/LotLink';
 import useAsteroid from '~/hooks/useAsteroid';
@@ -154,7 +154,7 @@ const BuildingRow = ({ lot }) => {
   const chainTime = useChainTime();
   const onClick = useLotLink({
     asteroidId: lot.asteroid,
-    lotId: lot.i,
+    lotId: lot.id
   });
 
   const [progress, progressColor] = useMemo(() => {
@@ -250,7 +250,7 @@ const BuildingRow = ({ lot }) => {
             {lot.building?.Name?.name || Building.TYPES[lot.building?.Building?.buildingType || 0].name}
           </label>
           <span>
-            <HoverContent>Lot {(lot.i || '').toLocaleString()}</HoverContent>
+            <HoverContent>Lot {(lot.id || '').toLocaleString()}</HoverContent>
             <NotHoverContent>{status}</NotHoverContent>
           </span>
         </Details>
@@ -264,15 +264,15 @@ const ShipGroupHeader = ({ asteroidId, buildingId, lotId }) => {
   const { data: building } = useBuilding(buildingId);
   const buildingLoc = Entity.toPosition(building?.Location?.location);
 
-  const { data: lot } = useLot(asteroidId, buildingLoc?.lotId || lotId);
+  const { data: lot } = useLot(buildingLoc?.lotId || lotId);
 
   const [mainLabel, details] = useMemo(() => {
     if (lotId === 0) return ['In Orbit', ''];
     return [
       Building.TYPES[lot?.building?.Building?.buildingType]?.name || 'Empty Lot',
-      `Lot ${lot?.i.toLocaleString()}`
+      `Lot ${Lot.toIndex(buildingLoc?.lotId || lotId).toLocaleString()}`
     ]
-  }, [lot, lotId]);
+  }, [buildingLoc, lot, lotId]);
 
   return (
     <ShipHeaderRow>
@@ -283,7 +283,7 @@ const ShipGroupHeader = ({ asteroidId, buildingId, lotId }) => {
 };
 
 const ShipInfoRow = ({ ship }) => {
-  const onClick = useShipLink({ shipId: ship.i, zoomToShip: true });
+  const onClick = useShipLink({ shipId: ship.id, zoomToShip: true });
 
   return (
     <ShipRow onClick={onClick}>
@@ -294,7 +294,7 @@ const ShipInfoRow = ({ ship }) => {
         </ImageWrapper>
       </ImageCell>
       <td>
-        {ship.Name?.name || `Ship #${ship.i.toLocaleString()}`}
+        {ship.Name?.name || `Ship #${ship.id.toLocaleString()}`}
       </td>
       <td>
         {Ship.TYPES[ship.Ship.shipType].name}
@@ -331,7 +331,7 @@ const AsteroidAssets = () => {
     if (!ships) return {};
     return ships
     .reduce((acc, ship) => {
-      if (ship.Control?.controller?.id === crew?.i) {
+      if (ship.Control?.controller?.id === crew?.id) {
         const loc = ship.Location.location;
         const lot = loc.label === Entity.IDS.LOT ? (loc.id || 0) : -loc.id;
         if (!acc[lot]) acc[lot] = [];
@@ -354,7 +354,7 @@ const AsteroidAssets = () => {
                 {i > 0 && <Rule />}
                 <AssetTable>
                   <tbody>
-                    {buildingsByType[buildingType].map((lot) => <BuildingRow key={lot.i} lot={lot} />)}
+                    {buildingsByType[buildingType].map((lot) => <BuildingRow key={lot.id} lot={lot} />)}
                   </tbody>
                 </AssetTable>
               </Fragment>
@@ -382,7 +382,7 @@ const AsteroidAssets = () => {
                       <ShipGroupHeader {...headerProps} />
                     </thead>
                     <tbody>
-                      {shipsByLocation[lotOrBuildingId].map((ship) => <ShipInfoRow key={ship.i} ship={ship} />)}
+                      {shipsByLocation[lotOrBuildingId].map((ship) => <ShipInfoRow key={ship.id} ship={ship} />)}
                     </tbody>
                   </AssetTable>
                 </Fragment>

@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { Entity, Product } from '@influenceth/sdk';
+import { Entity, Lot, Product } from '@influenceth/sdk';
 
 import { MyAssetIcon } from '~/components/Icons';
 import useAuth from '~/hooks/useAuth';
@@ -17,7 +17,7 @@ const useColumns = () => {
         key: 'my',
         align: 'center',
         icon: <MyAssetIcon />,
-        selector: row => row.Control?.controller?.id === crew?.i ? <MyAssetIcon /> : null,
+        selector: row => row.Control?.controller?.id === crew?.id ? <MyAssetIcon /> : null,
         bodyStyle: { fontSize: '24px' },
         requireLogin: true,
         unhideable: true
@@ -30,7 +30,7 @@ const useColumns = () => {
           const loc = Entity.toPosition(row.Location?.location);
           return (
             <>
-              <LocationLink asteroidId={loc.asteroidId} lotId={loc.lotId} resourceId={row.Deposit.resource} zoomToLot="LOT_RESOURCES" />
+              <LocationLink lotId={loc.lotId} resourceId={row.Deposit.resource} zoomToLot="LOT_RESOURCES" />
               <span>{Product.TYPES[row.Deposit.resource]?.name}</span>
             </>
           );
@@ -59,8 +59,8 @@ const useColumns = () => {
           const loc = Entity.toPosition(row.Location?.location);
           return (
             <>
-              <LocationLink asteroidId={loc.asteroidId} lotId={loc.lotId} resourceId={row.Deposit.resource} />
-              <span>{row.lotId.toLocaleString()}</span>
+              <LocationLink lotId={loc.lotId} resourceId={row.Deposit.resource} />
+              <span>{Lot.toIndex(row.lotId).toLocaleString()}</span>
             </>
           );
         },
@@ -93,7 +93,7 @@ const useColumns = () => {
     ];
 
     return columns.filter((c) => account || !c.requireLogin);
-  }, [account, crew?.i]);
+  }, [account, crew?.id]);
 };
 
 export default useColumns;

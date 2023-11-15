@@ -9,6 +9,80 @@ import useStore from '~/hooks/useStore';
 import useInterval from '~/hooks/useInterval';
 import api from '~/lib/api';
 
+
+
+
+import { CallData, uint256 } from 'starknet';
+const Systems = System.Systems;
+
+
+const formatCalldataValue = (type, value) => {
+  console.log('formatCalldataValue', type, value);
+  if (type === 'ContractAddress') {
+    return value;
+  }
+  else if (type === 'Entity') {
+    return [value.label, value.id];
+  }
+  else if (type === 'Number') {
+    return Number(value);
+  }
+  else if (type === 'String') {
+    return value;
+  }
+  else if (type === 'BigNumber') {
+    return BigInt(value);
+  }
+  else if (type === 'Ether') {
+    return uint256.bnToUint256(value);
+  }
+  else if (type === 'InventoryItem') {
+    return [value.product, value.amount];
+  }
+  else {
+    return value?.product ? [value.product, value.amount] : value;
+  }
+};
+
+// this is specific to the system's calldata format (i.e. not the full calldata of execute())
+const formatSystemCalldata = (name, vars) => {
+  console.log('formatSystemCalldata', { name, vars });
+  const system = Systems[name];
+  if (!system) throw new Error(`Unknown system: ${name}`);
+
+  const x = system.inputs.reduce((acc, { name, type, isArray }) => {
+    if (isArray) acc.push(vars[name]?.length || 0);
+    (isArray ? vars[name] : [vars[name]]).forEach((v) => {
+      const formattedVar = formatCalldataValue(type, v);
+      try {
+        (Array.isArray(formattedVar) ? formattedVar : [formattedVar]).forEach((val) => {
+          acc.push(val);
+        });
+      } catch (e) {
+        console.error(`${name} could not be formatted`, vars[name], e);
+      }
+    }, []);
+    return acc;
+  }, []);
+  console.log('formatSystemCalldata (out)', x);
+  return x;
+};
+
+const getRunSystemCall = (name, input, dispatcherAddress) => {
+  console.log('getRunSystemCall', { name, input, dispatcherAddress });
+  return {
+    contractAddress: dispatcherAddress,
+    entrypoint: 'run_system',
+    calldata: CallData.compile({
+      name,
+      calldata: formatSystemCalldata(name, input)
+    }),
+  };
+};
+
+
+///////////
+
 const RETRY_INTERVAL = 5e3; // 5 seconds
 const ChainTransactionContext = createContext();
 
@@ -16,18 +90,37 @@ const getNow = () => Math.floor(Date.now() / 1000);
 
 // TODO: equalityTest default of 'i' doesn't make sense anymore
 
+console.log('System', System);
+
+// TODO: move systems into their own util file (like activities)
+
+// x ConstructionAbandon
+// x ConstructionDeconstruct
+// x ConstructionFinish
+// x ConstructionPlan
+// x ConstructionStart
+// SampleDepositFinish
+// SampleDepositImprove
+// SampleDepositStart
+
 // supported configs:
 //  confirms, equalityTest
 const customConfigs = {
   // customization of Systems configs from sdk
-  ArrangeCrew: { equalityTest: ['callerCrew.id'] },
+  ArrangeCrew: { equalityTest: ['callerCrew.id'] }, // TODO: should this be caller_crew?
   ChangeName: { equalityTest: ['entity.id', 'entity.label'] },
-  CoreSampleStart: { equalityTest: ['asteroidId', 'crewId', 'lotId'] },
-  CoreSampleFinish: { equalityTest: ['asteroidId', 'crewId', 'lotId'] },
-  DeliveryStart: { equalityTest: ['asteroidId', 'crewId', 'originLotId'] },
-  DeliveryFinish: { equalityTest: ['asteroidId', 'crewId', 'deliveryId', 'destLotId'] },
+
+  ConstructionAbandon: { equalityTest: ['building.id'] },
+  ConstructionDeconstruct: { equalityTest: ['building.id'] },
+  ConstructionFinish: { equalityTest: ['building.id'] },
+  ConstructionPlan: { equalityTest: ['lot.id'] },
+  ConstructionStart: { equalityTest: ['building.id'] },
+
+  SampleDepositFinish: { equalityTest: ['lot.id', 'caller_crew.id'] },
+  SampleDepositImprove: { equalityTest: ['lot.id', 'caller_crew.id'] },
+  SampleDepositStart: { equalityTest: ['lot.id', 'caller_crew.id'] },
+
   ExchangeCrew: { equalityTest: true },
-  ExtractionStart: { equalityTest: ['asteroidId', 'crewId', 'lotId'] },
   InitializeAsteroid: {
     preprocess: ({ asteroid }) => ({
       asteroid,
@@ -48,7 +141,6 @@ const customConfigs = {
     equalityTest: ['asteroid.id']
   },
   ManageAsteroid: { equalityTest: ['asteroid.id'] },
-  PlanConstruction: { equalityTest: ['asteroidId', 'crewId', 'lotId'] },
   PurchaseAdalian: {
     getPrice: async () => {
       const { ADALIAN_PRICE_ETH } = await api.getConstants('ADALIAN_PRICE_ETH');
@@ -146,7 +238,7 @@ export function ChainTransactionProvider({ children }) {
             const calls = [];
             for (let runSystem of runSystems) {
               const vars = customConfigs[runSystem]?.preprocess ? customConfigs[runSystem].preprocess(rawVars) : rawVars;
-              calls.push(System.getRunSystemCall(runSystem, vars, process.env.REACT_APP_STARKNET_DISPATCHER));
+              calls.push(/*System.*/getRunSystemCall(runSystem, vars, process.env.REACT_APP_STARKNET_DISPATCHER));
               if (customConfigs[runSystem]?.getPrice) {
                 totalPrice += await customConfigs[runSystem].getPrice(vars);
               }
@@ -158,6 +250,8 @@ export function ChainTransactionProvider({ children }) {
               ));
             }
 
+            console.log('execute', calls);
+            // calls[0].calldata[1] = "27";
             return starknet.account.execute(calls);
           },
 
@@ -219,13 +313,15 @@ export function ChainTransactionProvider({ children }) {
             // })
             .catch((err) => {
               contracts[key].onTransactionError(err, vars);
-              dispatchFailedTransaction({
-                key,
-                vars,
-                txHash,
-                err: err?.message || 'Transaction was rejected.'
-              });
-              dispatchPendingTransactionComplete(txHash);
+              if (txHash) { // TODO: may want to display pre-tx failures if using session wallet
+                dispatchFailedTransaction({
+                  key,
+                  vars,
+                  txHash,
+                  err: err?.message || 'Transaction was rejected.'
+                });
+                dispatchPendingTransactionComplete(txHash);
+              }
             })
             .finally(() => {
               // NOTE: keep this in "finally" so also performed on success (even though not handling success)
@@ -319,9 +415,7 @@ export function ChainTransactionProvider({ children }) {
   //   }
   // }, [])
 
-
-
-  const execute = useCallback(async (key, vars) => {
+  const execute = useCallback(async (key, vars, meta = {}) => {
     if (contracts && contracts[key]) {
       const { execute, onTransactionError } = contracts[key];
 
@@ -343,17 +437,21 @@ export function ChainTransactionProvider({ children }) {
         dispatchPendingTransaction({
           key,
           vars,
+          meta,
           timestamp: block?.timestamp ? (block.timestamp * 1000) : null,
           txHash: tx.transaction_hash,
           waitingOn: 'TRANSACTION'
         });
       } catch (e) {
-        // TODO: in Braavos, get "Execute failed" when decline (but it's unclear if that is just their generic error)
-        // ("User abort" is argent, "Canceled" is Cartridge)
-        if (!['User abort', 'Canceled'].includes(e?.message)) {
+        // "User abort" is argent, 'Execute failed' is braavos
+        // TODO: in Braavos, is "Execute failed" a generic error? in that case, we should still show
+        // (and it will just be annoying that it shows a failure on declines)
+        // console.log('failed', e);
+        if (!['User abort', 'Execute failed'].includes(e?.message)) {
           dispatchFailedTransaction({
             key,
             vars,
+            meta,
             txHash: null,
             err: e?.message || e
           });
@@ -377,6 +475,7 @@ export function ChainTransactionProvider({ children }) {
           if (contracts[key].equalityTest === true) {
             return true;
           } else if (contracts[key].equalityTest === 'ALL') {
+            console.log('in here for ', key, tx.vars, vars, isEqual(tx.vars, vars));
             return isEqual(tx.vars, vars);
           } else if (contracts[key].equalityTest) {
             return !contracts[key].equalityTest.find((k) => get(tx.vars, k) !== get(vars, k));
@@ -475,7 +574,7 @@ export default ChainTransactionContext;
 //       _packed.bonuses,
 //       _proofs.boostBonus,
 //     ]),
-//     isEqual: (txVars, vars) => txVars.i === vars.i
+//     isEqual: (txVars, vars) => txVars.id === vars.id
 //   },
 //   'FINISH_ASTEROID_SCAN': {
 //     address: process.env.REACT_APP_STARKNET_DISPATCHER,
@@ -564,7 +663,7 @@ export default ChainTransactionContext;
 //         crewId
 //       ]);
 //     },
-//     isEqual: (vars, txVars) => vars.i === txVars.i,
+//     isEqual: (vars, txVars) => vars.id === txVars.id,
 //   },
 //   'PURCHASE_AND_INITIALIZE_CREWMATE': {
 //     address: process.env.REACT_APP_STARKNET_DISPATCHER,

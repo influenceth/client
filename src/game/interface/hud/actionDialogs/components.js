@@ -5,7 +5,7 @@ import ReactTooltip from 'react-tooltip';
 import { useQuery } from 'react-query';
 import { TbBellRingingFilled as AlertIcon } from 'react-icons/tb';
 import { BarLoader } from 'react-spinners';
-import { Asteroid, Building, Crewmate, Delivery, Entity, Inventory, Process, Product, Ship } from '@influenceth/sdk';
+import { Asteroid, Building, Crewmate, Delivery, Entity, Inventory, Lot, Process, Product, Ship } from '@influenceth/sdk';
 import { cloneDeep } from 'lodash';
 
 import AsteroidRendering from '~/components/AsteroidRendering';
@@ -33,7 +33,8 @@ import {
   CaptainIcon,
   EmergencyModeEnterIcon,
   CheckIcon,
-  ProcessIcon
+  ProcessIcon,
+  ShipIcon
 } from '~/components/Icons';
 import LiveTimer from '~/components/LiveTimer';
 import MouseoverInfoPane from '~/components/MouseoverInfoPane';
@@ -46,7 +47,7 @@ import TextInput from '~/components/TextInputUncontrolled';
 import useAsteroidCrewLots from '~/hooks/useAsteroidCrewLots';
 import useChainTime from '~/hooks/useChainTime';
 import api from '~/lib/api';
-import { reactBool, formatFixed, formatTimer, nativeBool } from '~/lib/utils';
+import { reactBool, formatFixed, formatTimer, nativeBool, locationsArrToObj } from '~/lib/utils';
 import actionStage from '~/lib/actionStages';
 import constants from '~/lib/constants';
 import { getBuildingIcon, getShipIcon } from '~/lib/assetUtils';
@@ -54,9 +55,10 @@ import theme, { hexToRGB } from '~/theme';
 import { theming } from '../ActionDialog';
 import formatters from '~/lib/formatters';
 import useCrewContext from '~/hooks/useCrewContext';
-import FoodStatus from '~/components/FoodStatus';
+import LiveFoodStatus from '~/components/LiveFoodStatus';
 import useHydratedLocation from '~/hooks/useHydratedLocation';
 import CrewLocationLabel from '~/components/CrewLocationLabel';
+import useAccessibleAsteroidInventories from '~/hooks/useAccessibleAsteroidInventories';
 
 const SECTION_WIDTH = 780;
 
@@ -1447,7 +1449,7 @@ export const ResourceSelectionDialog = ({ abundances, lotId, initialSelection, o
       onClose={onClose}
       onComplete={onComplete}
       open={open}
-      title={`Lot #${(lotId || 0).toLocaleString()}`}>
+      title={formatters.lotName(Lot.toIndex(lotId))}>
       {/* TODO: replace with DataTable? */}
       <SelectionTableWrapper>
         <table>
@@ -1464,7 +1466,7 @@ export const ResourceSelectionDialog = ({ abundances, lotId, initialSelection, o
                 <SelectionTableRow
                   key={`${resourceId}`}
                   disabledRow={abundances[resourceId] === 0}
-                  onClick={() => setSelection(resourceId)}
+                  onClick={() => setSelection(Number(resourceId))}
                   selectedRow={selection === Number(resourceId)}>
                   <td><ResourceColorIcon category={Product.TYPES[resourceId].category} /> {Product.TYPES[resourceId].name}</td>
                   <td>{(100 * abundances[resourceId]).toFixed(1)}%</td>
@@ -1492,11 +1494,11 @@ export const CoreSampleSelectionDialog = ({ lotId, options, initialSelection, on
 
   return (
     <SelectionDialog
-      isCompletable={selection?.sampleId > 0}
+      isCompletable={selection?.id > 0}
       onClose={onClose}
       onComplete={onComplete}
       open={open}
-      title={`Lot #${(lotId || 0).toLocaleString()}`}>
+      title={formatters.lotName(Lot.toIndex(lotId))}>
       {/* TODO: replace with DataTable? */}
       <SelectionTableWrapper>
         <table>
@@ -1509,11 +1511,11 @@ export const CoreSampleSelectionDialog = ({ lotId, options, initialSelection, on
           <tbody>
             {options.sort((a, b) => b.remainingYield - a.remainingYield).map((sample) => (
               <SelectionTableRow
-                key={`${sample.resourceId}_${sample.sampleId}`}
+                key={sample.id}
                 onClick={() => setSelection(sample)}
-                selectedRow={selection?.resourceId === sample.resourceId && selection?.sampleId === sample.sampleId}>
-                <td><ResourceColorIcon category={Product.TYPES[sample.resourceId].category} /> {Product.TYPES[sample.resourceId].name} #{sample.sampleId.toLocaleString()}</td>
-                <td>{formatSampleMass(sample.remainingYield * Product.TYPES[sample.resourceId].massPerUnit)} tonnes</td>
+                selectedRow={selection?.resourceId === sample.resource && selection?.id === sample.id}>
+                <td><ResourceColorIcon category={Product.TYPES[sample.resource]?.category} /> {Product.TYPES[sample.resource]?.name} #{sample.id.toLocaleString()}</td>
+                <td>{formatSampleMass(sample.remainingYield * Product.TYPES[sample.resource]?.massPerUnit)} tonnes</td>
               </SelectionTableRow>
             ))}
           </tbody>
@@ -1533,7 +1535,7 @@ export const DestinationSelectionDialog = ({
   onSelected,
   open
 }) => {
-  const { data: crewLots, isLoading } = useAsteroidCrewLots(asteroid.i);
+  const { data: crewLots, isLoading } = useAsteroidCrewLots(asteroid.id);
   const [selection, setSelection] = useState(initialSelection);
 
   useEffect(() => {
@@ -1547,15 +1549,15 @@ export const DestinationSelectionDialog = ({
 
   const inventories = useMemo(() => {
     return (crewLots || [])
-      .filter((lot) => (includeDeconstruction && lot.i === originLotId) || (
-        lot.building && lot.i !== originLotId && (lot.building.Inventories || []).find((i) => i.status === Inventory.STATUSES.AVAILABLE)
+      .filter((lot) => (includeDeconstruction && lot.id === originLotId) || (
+        lot.building && lot.id !== originLotId && (lot.building.Inventories || []).find((i) => i.status === Inventory.STATUSES.AVAILABLE)
       ))
       .reduce((acc, lot) => {
         (lot.building.Inventories || []).forEach((inventory, slot) => {
           let usedMass = 0, usedVolume = 0, type;
 
           // deconstructing in place (use currently-locked inventory)
-          if (includeDeconstruction && lot.i === originLotId && inventory.status === Inventory.STATUSES.LOCKED) {
+          if (includeDeconstruction && lot.id === originLotId && inventory.status === Inventory.STATUSES.LOCKED) {
             type = `(construction site)`;
 
           // going to another lot (if unlocked)
@@ -1582,7 +1584,7 @@ export const DestinationSelectionDialog = ({
           acc.push({
             lot,
             slot,
-            distance: Asteroid.getLotDistance(asteroid.i, originLotId, lot.i) || 0,
+            distance: Asteroid.getLotDistance(asteroid.id, Lot.toIndex(originLotId), Lot.toIndex(lot.id)) || 0,
             type,
             fullness,
             availMass,
@@ -1596,11 +1598,11 @@ export const DestinationSelectionDialog = ({
 
   return (
     <SelectionDialog
-      isCompletable={selection?.i > 0}
+      isCompletable={selection?.id > 0}
       onClose={onClose}
       onComplete={onComplete}
       open={open}
-      title={`Origin Lot #${(originLotId || 0).toLocaleString()}`}>
+      title={`Origin ${formatters.lotName(Lot.toIndex(originLotId))}`}>
       {/* TODO: isLoading */}
       {/* TODO: replace with DataTable? */}
       <SelectionTableWrapper>
@@ -1622,11 +1624,11 @@ export const DestinationSelectionDialog = ({
                 : (inventory.fullness > 0.5 ? theme.colors.yellow : theme.colors.success);
               return (
                 <SelectionTableRow
-                  key={`${asteroid.i}_${inventory.lot.i}`}
+                  key={`${asteroid.id}_${inventory.lot.id}`}
                   disabled={inventory.fullness >= 1}
                   onClick={() => setSelection(inventory.lot)}
-                  selectedRow={inventory.lot.i === Number(selection?.i)}>
-                  <td>{inventory.lot.i === originLotId ? '(in place)' : `Lot #${inventory.lot.i}`}</td>
+                  selectedRow={inventory.lot.id === Number(selection?.id)}>
+                  <td>{inventory.lot.id === originLotId ? '(in place)' : formatters.lotName(Lot.toIndex(inventory.lot.id))}</td>
                   <td>{formatFixed(inventory.distance, 1)} km</td>
                   <td>{inventory.type}</td>
                   <td style={{ color: warningColor }}>{(100 * inventory.fullness).toFixed(1)}%</td>
@@ -1642,7 +1644,7 @@ export const DestinationSelectionDialog = ({
   );
 }
 
-export const TransferSelectionDialog = ({ requirements, inventory, lot, initialSelection, onClose, onSelected, open }) => {
+export const TransferSelectionDialog = ({ sourceEntity, requirements, inventory, initialSelection, onClose, onSelected, open }) => {
   const [selection, setSelection] = useState({});
 
   useEffect(() => {
@@ -1667,32 +1669,43 @@ export const TransferSelectionDialog = ({ requirements, inventory, lot, initialS
   }, []);
 
   const cells = useMemo(() => [...Array(6 * Math.max(2, Math.ceil(Object.keys(inventory).length / 6))).keys()], [inventory]);
-  const items = useMemo(() => Object.keys(inventory).map((resourceId) => ({
-    selected: selection[resourceId],
-    available: inventory[resourceId],
-    resource: Product.TYPES[resourceId],
+  const items = useMemo(() => inventory.map(({ product, amount }) => ({
+    selected: selection[product],
+    available: amount,
+    resource: Product.TYPES[product],
     maxSelectable: requirements
-      ? Math.min(inventory[resourceId], requirements.find((r) => r.i === Number(resourceId))?.inNeed || 0)
-      : inventory[resourceId]
+      ? Math.min(amount, requirements.find((r) => Number(r.i) === Number(product))?.inNeed || 0)
+      : amount
   })), [inventory, requirements, selection]);
 
   const { tally, totalMass, totalVolume } = useMemo(() => {
     return items.reduce((acc, { selected, resource }) => {
       acc.tally += selected > 0 ? 1 : 0;
-      acc.totalMass += (selected || 0) * resource.massPerUnit * 1e6;
-      acc.totalVolume += (selected || 0) * (resource.volumePerUnit || 0) * 1e6;
+      acc.totalMass += (selected || 0) * resource.massPerUnit;
+      acc.totalVolume += (selected || 0) * (resource.volumePerUnit || 0);
       return acc;
     }, { tally: 0, totalMass: 0, totalVolume: 0 });
   }, [items]);
 
   // TODO: should title be inventory type name instead?
+
+  const [title, subtitle] = useMemo(() => {
+    let title = '';
+    if (sourceEntity?.Ship) {
+      title = Ship.TYPES[sourceEntity.Ship.shipType || 0]?.name;
+    } else if (sourceEntity?.Building) {
+      title = Building.TYPES[sourceEntity.Building.buildingType || 0]?.name;
+    }
+    return [title, formatters.lotName(Lot.toIndex(locationsArrToObj(sourceEntity?.Location?.locations || []).lotId))];
+  }, [sourceEntity]);
+
   return (
     <SelectionDialog
       isCompletable
       onClose={onClose}
       onComplete={onComplete}
       open={open}
-      title={<>{Building.TYPES[lot?.building?.Building?.buildingType || 0]?.name} Inventory <b>{'> '}Lot {(lot?.i || 0).toLocaleString()}</b></>}>
+      title={<>{title} Inventory <b>{'> '}{subtitle}</b></>}>
       <DialogIngredientsList>
         {cells.map((i) => (
           items[i]
@@ -1730,9 +1743,9 @@ export const LandingSelectionDialog = ({ asteroid, initialSelection, onClose, on
   // TODO: to get spaceport names, it will probably make more sense to have
   //  a "get spaceports" api endpoint
   const { data: lotData, isLoading: lotDataLoading } = useQuery(
-    [ 'asteroidLots', asteroid?.i ],
-    () => api.getAsteroidLotData(asteroid?.i),
-    { enabled: !!asteroid?.i }
+    [ 'asteroidLots', asteroid?.id ],
+    () => api.getAsteroidLotData(asteroid?.id),
+    { enabled: !!asteroid?.id }
   );
 
   const spaceports = useMemo(() => {
@@ -1809,7 +1822,7 @@ export const LandingSelectionDialog = ({ asteroid, initialSelection, onClose, on
                       selectedRow={lotId === selection}>
                       <td>Parking @ {lotId}</td>
                       <td>Spaceport</td>
-                      <td><LocationIcon /> {lotId}</td>
+                      <td><LocationIcon /> {formatters.lotName(Lot.toIndex(lotId))}</td>
                       <td>0</td>
                     </SelectionTableRow>
                   );
@@ -1949,22 +1962,140 @@ export const ShipConstructionSelectionDialog = ({ initialSelection, onClose, onS
   );
 };
 
+export const InventorySelectionDialog = ({ otherEntity, otherLotId, itemIds, initialSelection, onClose, onSelected, open, requirePresenceOfItemIds }) => {
+  const { crew } = useCrewContext();
+
+  const [selection, setSelection] = useState(initialSelection);
+
+  const asteroidId = useMemo(() => Entity.toPosition({ id: otherLotId, label: Entity.IDS.LOT }).asteroidId || 0, [otherLotId]);
+
+  const { data: inventoryData, isLoading: inventoryDataLoading } = useAccessibleAsteroidInventories(asteroidId);
+
+  const inventories = useMemo(() => {
+    if (!inventoryData) return [];
+
+    const crewLotIndex = Lot.toIndex(crew?._location?.lotId);
+    const otherLotIndex = Lot.toIndex(otherLotId)
+
+    const display = [];
+    inventoryData.forEach((entity) => {
+      if (otherEntity && entity.id === otherEntity.id && entity.label === otherEntity.label) return;
+      if (!entity.Inventory) return;
+      // inventory might be single or array
+      (Array.isArray(entity.Inventory) ? entity.Inventory : [entity.Inventory]).forEach((inv) => {
+        // skip if cannot contain any of the itemIds
+        if (itemIds && Inventory.TYPES[inv.inventoryType].productConstraints) {
+          const allowedMaterials = Object.keys(Inventory.TYPES[inv.inventoryType].productConstraints);
+          if (!itemIds.find((i) => !allowedMaterials.includes(i))) return;
+        }
+
+        // skip if cannot locate entity lot
+        const entityLotId = entity.Location.locations.find((l) => l.label === Entity.IDS.LOT)?.id;
+        const entityLotIndex = Lot.toIndex(entityLotId);
+        if (!entityLotIndex) return;
+
+        let itemTally = 0;
+        if (itemIds?.length === 1) {
+          itemTally = (inv.contents || []).find((p) => p.product === itemIds[0])?.amount || 0;
+        } else if (itemIds?.length) {
+          itemTally = itemIds.filter((itemId) => (inv.contents || []).find((p) => p.product === Number(itemId))?.amount > 0).length;
+        }
+
+        // disable if !available or does not contain itemId
+        display.push({
+          disabled: inv.status !== Inventory.STATUSES.AVAILABLE || (requirePresenceOfItemIds && !itemTally),
+          distance: Asteroid.getLotDistance(asteroidId, crewLotIndex, entityLotIndex)
+            + Asteroid.getLotDistance(asteroidId, entityLotIndex, otherLotIndex), // distance to source + distance to destination
+          isMine: entity.Control.controller.id === crew?.id,
+          isShip: !!entity.Ship,
+          itemTally,
+          key: JSON.stringify({ id: entity.id, label: entity.label, lotId: entityLotId, asteroidId, lotIndex: entityLotIndex, slot: inv.slot }),
+          label: entity.Ship ? formatters.shipName(entity) : formatters.buildingName(entity),
+          lotId: entityLotId,
+          lotIndex: entityLotIndex,
+          slot: inv.slot,
+        })
+      });
+    });
+
+    return display;
+  }, [inventoryData]);
+
+  const onComplete = useCallback(() => {
+    onSelected(selection ? JSON.parse(selection) : null);
+    onClose();
+  }, [onClose, onSelected, selection]);
+
+  const specifiedItems = !!itemIds;
+  const soloItem = itemIds?.length === 1 ? itemIds[0] : null;
+
+  return (
+    <SelectionDialog
+      isCompletable={!!selection}
+      onClose={onClose}
+      onComplete={onComplete}
+      open={open}
+      title={`Available ${soloItem ? `${Product.TYPES[soloItem].name}s` : 'Inventories'}`}>
+      {/* TODO: isLoading */}
+      {/* TODO: replace with DataTable? */}
+      <div style={{ minWidth: 500 }}></div>
+      {inventories.length > 0
+        ? (
+          <SelectionTableWrapper style={{ minHeight: 200 }}>
+            <table>
+              <thead>
+                <tr>
+                  <td></td>{/* isMine */}
+                  <td style={{ textAlign: 'left' }}>Name</td>
+                  <td>Distance</td>
+                  {specifiedItems && (
+                    <td>
+                      {soloItem ? `# ${Product.TYPES[soloItem].name}` : 'Needed Products'}
+                    </td>
+                  )}
+                </tr>
+              </thead>
+              <tbody>
+                {inventories.map((inv) => {
+                  return (
+                    <SelectionTableRow
+                      key={inv.key}
+                      disabledRow={inv.disabled}
+                      onClick={() => setSelection(inv.key)}
+                      selectedRow={inv.key === selection}>
+                      <td>{inv.isMine && <MyAssetIcon />}</td>
+                      <td style={{ textAlign: 'left' }}>{inv.label} {inv.isShip && <ShipIcon />}</td>
+                      <td>{formatSurfaceDistance(inv.distance)}</td>
+                      {specifiedItems && <td>{inv.itemTally.toLocaleString()}</td>}
+                    </SelectionTableRow>
+                  );
+                })}
+              </tbody>
+            </table>
+          </SelectionTableWrapper>
+        )
+        : <EmptyMessage>You have no {otherEntity ? 'other ' : ''}available inventories on this asteroid.</EmptyMessage>
+      }
+    </SelectionDialog>
+  );
+};
+
 
 //
 //  FORMATTERS
 //
 
-export const getCapacityUsage = (inventories, type) => {
+export const getCapacityStats = (inventory) => {
   const capacity = {
     mass: { max: 0, used: 0, reserved: 0 },
     volume: { max: 0, used: 0, reserved: 0 },
   }
-  if (type !== undefined) {
-    const inventory = (inventories || []).find((i) => i.status === Inventory.STATUSES.AVAILABLE);
-
+  if (inventory?.status === Inventory.STATUSES.AVAILABLE) {
     const { filledMass, filledVolume } = Inventory.getFilledCapacity(inventory.inventoryType);
     capacity.mass.max = filledMass;
+    capacity.mass.isSoftMax = Inventory.TYPES[inventory.inventoryType].massConstraint === Infinity;
     capacity.volume.max = filledVolume;
+    capacity.volume.isSoftMax = Inventory.TYPES[inventory.inventoryType].volumeConstraint === Infinity;
 
     const { reservedMass, reservedVolume, mass, volume } = inventory || {};
     capacity.mass.used = (mass || 0);
@@ -1975,17 +2106,20 @@ export const getCapacityUsage = (inventories, type) => {
   return capacity;
 }
 
-export const getBuildingRequirements = (building = {}, deliveries = []) => {
+export const getCapacityUsage = (inventories, type) => {
+  return getCapacityStats((inventories || []).find((i) => i.inventoryType === type));
+}
+
+export const getBuildingRequirements = (building = {}, deliveryActions = []) => {
   const { Building: { buildingType }, Inventories = [] } = building;
   const inventory = Inventories.find((i) => i.status === Inventory.STATUSES.AVAILABLE);
 
-  // TODO: presumably ingredients will come from sdk per building
   return Object.keys(Building.CONSTRUCTION_TYPES[buildingType]?.requirements || {}).map((productId) => {
     const totalRequired = Building.CONSTRUCTION_TYPES[buildingType].requirements[productId];
-    const inInventory = (inventory?.contents || []).find((c) => c.product === productId)?.amount;
-    const inTransit = deliveries
-      .filter((d) => d.Delivery.status === Delivery.STATUSES.IN_PROGRESS)
-      .reduce((acc, d) => acc + d.contents.find((c) => c.product === productId)?.amount || 0, 0);
+    const inInventory = (inventory?.contents || []).find((c) => Number(c.product) === Number(productId))?.amount || 0;
+    const inTransit = deliveryActions
+      .filter((d) => d.status !== 'FINISHED')
+      .reduce((acc, d) => acc + (d.action.contents.find((c) => Number(c.product) === Number(productId))?.amount || 0), 0);
     return {
       i: productId,
       totalRequired,
@@ -2037,19 +2171,19 @@ export const ShipImage = ({ shipType, iconBadge, iconBadgeColor, iconOverlay, ic
   );
 };
 
-export const BuildingImage = ({ buildingType, error, iconOverlay, iconOverlayColor, inventories, showInventoryStatusForType, unfinished }) => {
+export const BuildingImage = ({ buildingType, error, iconOverlay, iconOverlayColor, inventory, inventories, showInventoryStatusForType, unfinished }) => {
   const buildingAsset = Building.TYPES[buildingType];
   if (!buildingAsset) return null;
 
-  const capacity = getCapacityUsage(inventories, showInventoryStatusForType);
+  const capacity = inventory ? getCapacityStats(inventory) : getCapacityUsage(inventories, showInventoryStatusForType);
   const closerLimit = (capacity.volume.used + capacity.volume.reserved) / capacity.volume.max > (capacity.mass.used + capacity.mass.reserved) / capacity.mass.max ? 'volume' : 'mass';
   return (
     <BuildingThumbnailWrapper>
       <ResourceImage src={getBuildingIcon(buildingAsset.i, 'w150', unfinished)} />
-      {showInventoryStatusForType !== undefined && (
+      {capacity && (
         <>
           <InventoryLabel overloaded={error}>
-            {formatFixed(100 * (capacity[closerLimit].reserved + capacity[closerLimit].used) / capacity[closerLimit].max, 1)}% {closerLimit === 'volume' ? `m³` : `t`}
+            {formatFixed(100 * (capacity[closerLimit].reserved + capacity[closerLimit].used) / capacity[closerLimit].max, 1)}% {/*closerLimit === 'volume' ? `m³` : `t`*/}
           </InventoryLabel>
           <InventoryUtilization
             horizontal
@@ -2160,7 +2294,7 @@ const ActionDialogActionBar = ({ location, onClose, overrideColor, stage }) => (
     )}
     <ActionLocation {...theming[stage]} overrideColor={overrideColor}>
       <b>{formatters.asteroidName(location?.asteroid)}</b>
-      <span>{location?.lot?.i ? `> LOT ${location.lot.i.toLocaleString()}` : ''}</span>
+      <span>{location?.lot ? `> ${formatters.lotName(Lot.toIndex(location.lot.id))}` : ''}</span>
       <span>{location?.ship && !location?.lot ? `> ${formatShipStatus(location.ship)}` : ''}</span>
     </ActionLocation>
     <IconButton backgroundColor={`rgba(0, 0, 0, 0.15)`} marginless onClick={onClose}>
@@ -2272,13 +2406,17 @@ export const ResourceGridSectionInner = ({
 }) => {
   const { totalItems, totalMass, totalVolume } = useMemo(() => {
     return items.reduce((acc, { i, numerator, denominator, selected }) => {
+      if (!Product.TYPES[i]) {
+        console.error(`Product #${i} invalid`)
+        return acc;
+      }
       let sumValue = numerator;
       if (selected !== undefined) sumValue = selected;
       else if (denominator !== undefined) sumValue = denominator;
 
       acc.totalItems += (selected === undefined || selected > 0) ? 1 : 0;
-      acc.totalMass += sumValue * Product.TYPES[i].massPerUnit * 1e6;
-      acc.totalVolume += sumValue * (Product.TYPES[i].volumePerUnit || 0) * 1e6;
+      acc.totalMass += sumValue * Product.TYPES[i].massPerUnit;
+      acc.totalVolume += sumValue * (Product.TYPES[i].volumePerUnit || 0);
       return acc;
     }, { totalItems: 0, totalMass: 0, totalVolume: 0 });
   }, [items]);
@@ -2549,7 +2687,7 @@ export const ProgressBarSection = ({
       <ActionProgressWrapper>
         <ActionProgressContainer
           animating={animating}
-          color={overrides.barColor || theming[stage].highlight}
+          color={overrides.barColor || theming[stage]?.highlight}
           labelColor={overrides.color || color || undefined}
           onMouseEnter={() => setHovered(true)}
           onMouseLeave={() => setHovered(false)}
@@ -2964,7 +3102,7 @@ export const CrewInputBlock = ({ cardWidth, crew, hideCrewmates, highlightCrewma
             </span>
           </div>
           <div style={{ flex: 1 }} />
-          <FoodStatus percentage={100} style={(props.subtle && !props.isSelected) ? { color: '#777' } : {}} />
+          <LiveFoodStatus crew={crew} style={(props.subtle && !props.isSelected) ? { color: '#777' } : {}} />
         </div>
       )}
       {!hideCrewmates && (
@@ -3015,7 +3153,47 @@ export const LotInputBlock = ({ lot, fallbackLabel = 'Select', fallbackSublabel 
           : <EmptyBuildingImage {...imageProps} />
       }
       label={lot ? `${lot.building?.Name?.name || Building.TYPES[buildingType].name}` : fallbackLabel}
-      sublabel={lot ? `${lot.building?.Name?.name ? Building.TYPES[buildingType].name : `Lot #${lot.i.toLocaleString()}`}` : fallbackSublabel}
+      sublabel={lot ? `${lot.building?.Name?.name ? Building.TYPES[buildingType].name : formatters.lotName(Lot.toIndex(lot.id))}` : fallbackSublabel}
+      {...props}
+    />
+  );
+};
+
+export const InventoryInputBlock = ({ entity, inventorySlot, fallbackLabel = 'Select', fallbackSublabel = 'Inventory', imageProps = {}, ...props }) => {
+  const params = useMemo(() => {
+    const fullImageProps = {
+      ...imageProps,
+      inventory: (entity?.Inventories || []).find((i) => i.slot === inventorySlot),
+    }
+    const lotIndex = locationsArrToObj(entity?.Location?.locations || []).lotIndex;
+    if (entity?.label === Entity.IDS.BUILDING) {
+      const unfinished = entity?.Building?.status !== Building.CONSTRUCTION_STATUS_IDS.OPERATIONAL;
+      return {
+        image: (
+          <BuildingImage
+            buildingType={entity?.Building?.buildingType || 0}
+            unfinished={reactBool(unfinished)}
+            {...fullImageProps} />
+        ),
+        label: `${formatters.buildingName(entity)}${unfinished ? ' (Site)' : ''}`,
+        sublabel: formatters.lotName(lotIndex),
+      };
+    }
+    else if (entity?.label === Entity.IDS.SHIP) {
+      return {
+        image: <ShipImage shipType={entity?.Ship?.shipType || 0} {...fullImageProps} />,
+        label: formatters.shipName(entity),
+        sublabel: formatters.lotName(lotIndex),
+      };
+    }
+    return { image: <EmptyBuildingImage {...fullImageProps} /> };
+  }, []);
+
+  return (
+    <FlexSectionInputBlock
+      image={params.image}
+      label={params.label || fallbackLabel}
+      sublabel={params.sublabel || fallbackSublabel}
       {...props}
     />
   );
@@ -3031,7 +3209,7 @@ export const BuildingInputBlock = ({ building, imageProps = {}, ...props }) => {
           : <EmptyBuildingImage {...imageProps} />
       }
       label={building?.Name?.name || Building.TYPES[buildingType].name}
-      sublabel={building?.Name?.name ? Building.TYPES[buildingType].name : `Lot #${(Entity.toPosition(building.Location?.location)?.lotId || 0).toLocaleString()}`}
+      sublabel={building?.Name?.name ? Building.TYPES[buildingType].name : formatters.lotName(Entity.toPosition(building.Location?.location)?.lotIndex || 0)}
       {...props}
     />
   );
@@ -3040,7 +3218,7 @@ export const BuildingInputBlock = ({ building, imageProps = {}, ...props }) => {
 export const ShipInputBlock = ({ ship, ...props }) => {
   const { crew } = useCrewContext();
   const hasMyCrew = crew && crew._location?.shipId === ship?.id;
-  const isMine = crew && crew.i === ship?.Control?.controller?.id;
+  const isMine = crew && crew.id === ship?.Control?.controller?.id;
   const inEmergencyMode = ship?.Ship?.operationMode === Ship.MODES.EMERGENCY;
   return (
     <FlexSectionInputBlock
@@ -3158,10 +3336,10 @@ export const ShipTab = ({ pilotCrew, ship, stage, previousStats = {}, warnings =
   );
 };
 
-export const InventoryChangeCharts = ({ building, inventoryType, deltaMass, deltaVolume }) => {
-  if (!(building && building.inventories && inventoryType !== undefined)) return null;
+export const InventoryChangeCharts = ({ inventory, deltaMass, deltaVolume }) => {
+  if (!inventory) return null;
 
-  const capacity = getCapacityUsage(building?.inventories, inventoryType);
+  const capacity = getCapacityStats(inventory);
   const postDeltaMass = capacity.mass.used + capacity.mass.reserved + deltaMass;
   const postDeltaVolume = capacity.volume.used + capacity.volume.reserved + deltaVolume;
   const overMassCapacity = postDeltaMass > capacity.mass.max;
@@ -3501,6 +3679,7 @@ export const BonusTooltip = ({ bonus, crewRequired, details, title, titleValue, 
           </BonusesSection>
         </>
       )}
+      {/*
       {crewRequired === 'duration' && (
         <BonusesFootnote warning>
           NOTE: Actions requiring a crew for the duration begin as soon as your crew reaches its destination and end once the crew has finished the task.
@@ -3511,6 +3690,7 @@ export const BonusTooltip = ({ bonus, crewRequired, details, title, titleValue, 
           NOTE: Actions requiring a crew to start will begin as soon as your crew reaches its destination.
         </BonusesFootnote>
       )}
+      */}
     </Bonuses>
   );
 };
@@ -3552,8 +3732,8 @@ export const TravelBonusTooltip = ({ bonus, totalTime, tripDetails, ...props }) 
 // utils
 //
 
-export const formatSampleMass = (tonnage) => {
-  return formatFixed(tonnage, 1);
+export const formatSampleMass = (grams) => {
+  return formatFixed(grams / 1e6, 1);
 };
 
 export const formatSampleVolume = (volume) => {
@@ -3565,15 +3745,15 @@ export const getBonusDirection = ({ totalBonus }, biggerIsBetter = true) => {
   return (biggerIsBetter === (totalBonus > 1)) ? 1 : -1;
 };
 
-export const getTripDetails = (asteroidId, crewTravelBonus, startingLotId, steps) => {
-  let currentLocation = startingLotId;
+export const getTripDetails = (asteroidId, crewTravelBonus, originLotIndex, steps) => {
+  let currentLotIndex = originLotIndex;
   let totalDistance = 0;
   let totalTime = 0;
 
-  const tripDetails = steps.map(({ label, lot, skipTo }) => {
-    const stepDistance = Asteroid.getLotDistance(asteroidId, currentLocation, lot) || 0;
-    const stepTime = Asteroid.getLotTravelTime(asteroidId, currentLocation, lot, crewTravelBonus) || 0;
-    currentLocation = skipTo || lot;
+  const tripDetails = steps.map(({ label, lotIndex, skipToLotIndex }) => {
+    const stepDistance = Asteroid.getLotDistance(asteroidId, currentLotIndex, lotIndex) || 0;
+    const stepTime = Asteroid.getLotTravelTime(asteroidId, currentLotIndex, lotIndex, crewTravelBonus) || 0;
+    currentLotIndex = skipToLotIndex || lotIndex;
 
     // agg
     totalDistance += stepDistance;
@@ -3678,6 +3858,10 @@ export const formatVolume = (ml, { abbrev = true, minPrecision = 3, fixedPrecisi
     }
   }
   return `${formatFixed(workingUnits, fixedPlaces)} ${unitLabel}`;
+};
+
+export const formatSurfaceDistance = (km) => {
+  return `${Math.round(km).toLocaleString()} km`;
 };
 
 export const formatBeltDistance = (m) => {

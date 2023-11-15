@@ -1,19 +1,33 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useHistory } from 'react-router-dom';
-import styled from 'styled-components';
+import styled, { keyframes } from 'styled-components';
 
 import CollapsibleSection from '~/components/CollapsibleSection';
 import CrewCardFramed from '~/components/CrewCardFramed';
 import CrewLocationLabel from '~/components/CrewLocationLabel';
-import FoodStatus from '~/components/FoodStatus';
-import { CrewIcon, CrewLocationIcon, IdleIcon, WarningOutlineIcon } from '~/components/Icons';
+import LiveFoodStatus from '~/components/LiveFoodStatus';
+import { ClockIcon, CloseIcon, CrewIcon, CrewLocationIcon, IdleIcon, WarningOutlineIcon } from '~/components/Icons';
+import LiveTimer from '~/components/LiveTimer';
 import useAuth from '~/hooks/useAuth';
 import useCrewContext from '~/hooks/useCrewContext';
 import useHydratedLocation from '~/hooks/useHydratedLocation';
+import useInterval from '~/hooks/useInterval';
 import formatters from '~/lib/formatters';
 import theme from '~/theme';
 
 const menuWidth = 450;
+
+const opacityKeyframes = keyframes`
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.3;
+  }
+  100% {
+    opacity: 1;
+  }
+`;
 
 const Wrapper = styled.div`
   pointer-events: none;
@@ -33,6 +47,11 @@ const StatusContainer = styled.div`
   & > ${IconWrapper} {
     margin-left: 4px;
     margin-right: 6px;
+  }
+`;
+const FlashingStatusContainer = styled(StatusContainer)`
+  & > ${IconWrapper} {
+    animation: ${opacityKeyframes} 2000ms ease-in-out infinite;
   }
 `;
 
@@ -145,6 +164,20 @@ const AvatarMenu = () => {
 
   const onClick = useCallback(() => history.push('/crew'), []);
 
+  const [crewIsBusy, setCrewIsBusy] = useState(false);
+  useEffect(() => {
+    const readyAtMS = (crew?.Crew?.readyAt || 0) * 1e3;
+    if (readyAtMS > Date.now()) {
+      setCrewIsBusy(true);
+      const to = setTimeout(() => {
+        setCrewIsBusy(false);
+      }, 1000 + (readyAtMS - Date.now()))
+      return () => { if (to) { clearTimeout(to) } };
+    } else {
+      setCrewIsBusy(false);
+    }
+  }, [crew?.Crew?.readyAt]);
+
   if (crewIsLoading) return null;
   return (
     <Wrapper>
@@ -155,10 +188,18 @@ const AvatarMenu = () => {
           <>
             <IconWrapper style={{ color: theme.colors.main }}><CrewIcon /></IconWrapper>
             <label>{formatters.crewName(crew)}</label>
-            <StatusContainer>
-              Idle
-              <IconWrapper><IdleIcon /></IconWrapper>
-            </StatusContainer>
+            {crewIsBusy && (
+              <FlashingStatusContainer>
+                <LiveTimer target={crew.Crew.readyAt} maxPrecision={2} prefix="Busy " />
+                <IconWrapper><ClockIcon /></IconWrapper>
+              </FlashingStatusContainer>
+            )}
+            {!crewIsBusy && (
+              <StatusContainer>
+                Idle 
+                <IconWrapper><IdleIcon /></IconWrapper>
+              </StatusContainer>
+            )}
           </>
         )}>
         <CrewWrapper>
@@ -178,8 +219,7 @@ const AvatarMenu = () => {
               </BaseLocation>
 
               {/* TODO: potentially link directly to add rations dialog instead */}
-              {/* TODO: implement lastFed or whatever */}
-              <FoodStatus percentage={100} />
+              <LiveFoodStatus crew={crew} />
             </TitleBar>
 
             <Crewmates>

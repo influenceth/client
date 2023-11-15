@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 
 import { ConstructIcon } from '~/components/Icons';
-import useConstructionManager from '~/hooks/useConstructionManager';
+import useConstructionManager from '~/hooks/actionManagers/useConstructionManager';
 import ActionButton from './ActionButton';
 
 const labelDict = {
@@ -12,7 +12,7 @@ const labelDict = {
 };
 
 const Construct = ({ asteroid, lot, onSetAction, _disabled }) => {
-  const { constructionStatus } = useConstructionManager(asteroid?.i, lot?.i);
+  const { constructionStatus } = useConstructionManager(lot?.id);
   const handleClick = useCallback(() => {
     onSetAction('CONSTRUCT');
   }, [onSetAction]);

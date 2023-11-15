@@ -1,23 +1,23 @@
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
-import { Deposit } from '@influenceth/sdk';
+import { Deposit, Entity } from '@influenceth/sdk';
 
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
+import useActionItems from '~/hooks/useActionItems';
+import useCrewContext from '~/hooks/useCrewContext';
+import useLot from '~/hooks/useLot';
 import actionStages from '~/lib/actionStages';
-import useCrewContext from './useCrewContext';
-import useLot from './useLot';
-import useActionItems from './useActionItems';
 
-const useCoreSampleManager = (asteroidId, lotId) => {
+const useCoreSampleManager = (lotId) => {
   const { actionItems, readyItems, liveBlockTime } = useActionItems();
   const { execute, getPendingTx, getStatus } = useContext(ChainTransactionContext);
   const { crew } = useCrewContext();
-  const { data: lot } = useLot(asteroidId, lotId);
+  const { data: lot } = useLot(lotId);
 
+  // * only used by SampleDepositStart contract, but used for equality check on others
   const payload = useMemo(() => ({
-    asteroidId,
-    lotId,
-    crewId: crew?.i
-  }), [asteroidId, lotId, crew?.i]);
+    lot: { id: lotId, label: Entity.IDS.LOT },
+    caller_crew: { id: crew?.id, label: Entity.IDS.CREW }
+  }), [lotId]);
 
   const [completingSample, setCompletingSample] = useState();
 
@@ -28,6 +28,8 @@ const useCoreSampleManager = (asteroidId, lotId) => {
       _crewmates: null,
       finishTime: null,
       isNew: null,
+      origin: null,
+      originSlot: null,
       owner: null,
       resourceId: null,
       sampleId: null,
@@ -37,27 +39,28 @@ const useCoreSampleManager = (asteroidId, lotId) => {
 
     let status = 'READY';
     let stage = actionStages.NOT_STARTED;
-    const activeSample = (lot?.deposits || []).find((c) => c.Control.controller.id === crew?.i && c.Deposit.status < Deposit.STATUSES.SAMPLED);
+    const activeSample = (lot?.deposits || []).find((c) => {
+      return c.Control.controller.id === crew?.id && c.Deposit.status < Deposit.STATUSES.SAMPLED
+    });
     if (activeSample) {
       let actionItem = (actionItems || []).find((item) => (
-        item.event.name === 'Dispatcher_CoreSampleStartSampling'
-        && item.event.returnValues.asteroidId === asteroidId
-        && item.event.returnValues.lotId === lotId
-        && item.event.returnValues.resourceId === activeSample.Deposit.resource
-        && item.event.returnValues.sampleId === activeSample.id
+        item.event.name === 'SamplingDepositStarted'
+        && item.event.returnValues.deposit.id === activeSample.id
       ));
       if (actionItem) {
-        current._crewmates = actionItem.assets.crew.crewmates;
-        current.startTime = actionItem.startTime;
+        // current._crewmates = actionItem.assets.crew.crewmates;  // TODO: ...
+        current.startTime = actionItem.event.timestamp;
       }
       current.finishTime = activeSample.Deposit.finishTime;
-      current.isNew = !(activeSample.Deposit.initialYield > 0);
+      current.isNew = !activeSample.Deposit.improving;
+      current.origin = activeSample.Deposit.origin;
+      current.originSlot = activeSample.Deposit.origin_slot;
       current.owner = activeSample.Control.controller.id;
       current.resourceId = activeSample.Deposit.resource;
       current.sampleId = activeSample.id;
 
       if (activeSample.Deposit.finishTime <= liveBlockTime) {
-        if (getStatus('FINISH_CORE_SAMPLE', payload) === 'pending') {
+        if (getStatus('SampleDepositFinish', payload) === 'pending') {
           status = 'FINISHING';
           stage = actionStages.COMPLETING;
         } else {
@@ -69,14 +72,26 @@ const useCoreSampleManager = (asteroidId, lotId) => {
         stage = actionStages.IN_PROGRESS;
       }
     } else {
-      const sampleTx = getPendingTx('START_CORE_SAMPLE', payload);
-      if (sampleTx) {
-        current.isNew = sampleTx.vars.sampleId === 0;
-        current.owner = sampleTx.vars.crewId;
-        current.resourceId = sampleTx.vars.resourceId;
-        current.sampleId = sampleTx.vars.sampleId;
+      const newSampleTx = getPendingTx('SampleDepositStart', payload);
+      if (newSampleTx) {
+        current.isNew = true;
+        current.owner = newSampleTx.vars.caller_crew.id;
+        current.origin = newSampleTx.vars.origin;
+        current.originSlot = newSampleTx.vars.origin_slot;
+        current.resourceId = newSampleTx.vars.resource;
+        current.sampleId = null;
         status = 'SAMPLING';
         stage = actionStages.IN_PROGRESS;
+      } else {
+        const improveSampleTx = getPendingTx('SampleDepositImprove', payload);
+        if (improveSampleTx) {
+          current.isNew = false;
+          current.owner = improveSampleTx.vars.crewId;
+          current.resourceId = improveSampleTx.vars.resourceId;
+          current.sampleId = improveSampleTx.vars.sampleId;
+          status = 'SAMPLING';
+          stage = actionStages.IN_PROGRESS;
+        }
       }
     }
 
@@ -105,24 +120,40 @@ const useCoreSampleManager = (asteroidId, lotId) => {
     }
   }, [currentSamplingAction, actionStage]);
 
-  const startSampling = useCallback((resourceId, sampleId = 0) => {
-    execute('START_CORE_SAMPLE', {
-      resourceId,
-      sampleId: sampleId,
+  const startSampling = useCallback((resourceId, coreDrillSource) => {
+    execute('SampleDepositStart', {
+      resource: resourceId,
+      origin: { id: coreDrillSource.id, label: coreDrillSource.label },
+      origin_slot: coreDrillSource.slot,
       ...payload
     })
   }, [payload]);
 
+  const startImproving = useCallback((depositId) => {
+    execute(
+      'SampleDepositImprove',
+      {
+        deposit: { id: depositId, label: Entity.IDS.DEPOSIT },
+        ...payload
+      },
+      { lotId }
+    )
+  }, [lotId, payload]);
+
   const finishSampling = useCallback(() => {
-    execute('FINISH_CORE_SAMPLE', {
-      sampleId: currentSamplingAction.sampleId,
-      resourceId: currentSamplingAction.resourceId,
-      ...payload
-    })
+    execute(
+      'SampleDepositFinish',
+      {
+        deposit: { id: currentSamplingAction.sampleId, label: Entity.IDS.DEPOSIT },
+        ...payload
+      },
+      { lotId, isNew: currentSamplingAction.isNew }
+    )
   }, [currentSamplingAction, payload]);
 
   return {
     startSampling,
+    startImproving,
     finishSampling,
     samplingStatus,
     currentSamplingAction,

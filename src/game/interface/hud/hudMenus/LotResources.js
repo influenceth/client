@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
-import { Asteroid, Deposit, Product } from '@influenceth/sdk';
+import { Asteroid, Deposit, Lot, Product } from '@influenceth/sdk';
 
 import useActionButtons from '~/hooks/useActionButtons';
 import useAsteroid from '~/hooks/useAsteroid';
-import useCoreSampleManager from '~/hooks/useCoreSampleManager';
-import useExtractionManager from '~/hooks/useExtractionManager';
+import useCoreSampleManager from '~/hooks/actionManagers/useCoreSampleManager';
+import useExtractionManager from '~/hooks/actionManagers/useExtractionManager';
 import useLot from '~/hooks/useLot';
 import useStore from '~/hooks/useStore';
 import { HudMenuCollapsibleSection, Tray, trayHeight } from './components';
@@ -103,11 +103,13 @@ const InProgress = styled.span`
 const LotResources = () => {
   const { props: actionProps } = useActionButtons();
   const { crew } = useCrewContext();
-  const { asteroidId, lotId } = useStore(s => s.asteroids.lot || {});
+  const lotId = useStore(s => s.asteroids.lot);
+  const asteroidId = useMemo(() => Lot.toPosition(lotId).asteroidId, [lotId]);
+
   const { data: asteroid } = useAsteroid(asteroidId);
-  const { data: lot } = useLot(asteroidId, lotId);
-  const { currentSamplingAction } = useCoreSampleManager(asteroidId, lotId);
-  const { currentExtractionAction } = useExtractionManager(asteroidId, lotId);
+  const { data: lot } = useLot(lotId);
+  const { currentSamplingAction } = useCoreSampleManager(lotId);
+  const { currentExtractionAction } = useExtractionManager(lotId);
 
   const [showAllAbundances, setShowAllAbundances] = useState();
   const [showAllSamples, setShowAllSamples] = useState();
@@ -116,20 +118,15 @@ const LotResources = () => {
   const lotAbundances = useMemo(() => {
     if (!(asteroid && lot)) return [];
 
-    const resourceAbundances = Asteroid.Entity.getAbundances(asteroid);
     // TODO: do this in worker? takes about 200ms on decent cpu
+    const lotIndex = Lot.toIndex(lot.id);
+    const resourceAbundances = Asteroid.Entity.getAbundances(asteroid);
     return Object.keys(resourceAbundances || {})
       .reduce((acc, i) => {
         if (resourceAbundances[i] > 0) {
           acc.push({
             i,
-            abundance: Asteroid.getAbundanceAtLot(
-              asteroid.i,
-              BigInt(asteroid.Celestial.abundanceSeed),
-              Number(lot.i),
-              i,
-              resourceAbundances[i]
-            )
+            abundance: Asteroid.Entity.getAbundanceAtLot(asteroid, lotIndex, i)
           });
         }
         return acc;
@@ -139,11 +136,12 @@ const LotResources = () => {
 
   const [selected, setSelected] = useState();
 
-  const onClickResource = useCallback((i) => () => {
-    setSelected({ type: 'resource', i });
+  const onClickResource = useCallback((id) => () => {
+    setSelected({ type: 'resource', id });
   }, []);
-  const onClickSample = useCallback((i) => () => {
-    setSelected({ type: 'sample', i });
+  
+  const onClickSample = useCallback((id) => () => {
+    setSelected({ type: 'sample', id });
   }, []);
 
   const [showAbundances, abundancesTruncated] = useMemo(() => {
@@ -156,7 +154,7 @@ const LotResources = () => {
 
   const [ownedSamples, depletedSamples] = useMemo(() => ([
     (lot?.deposits || [])
-      .filter((s) => s.Control.controller.id === crew?.i)
+      .filter((s) => s.Control.controller.id === crew?.id)
       .filter((s) => showAllSamples || !s.Deposit.initialYield || s.Deposit.remainingYield > 0)
       .sort((a, b) => {
         if (!a.Deposit.initialYield && !b.Deposit.initialYield) {
@@ -165,9 +163,9 @@ const LotResources = () => {
         return b.Deposit.initialYield ? -1 : 1;
       }),
     (lot?.deposits || [])
-    .filter((s) => s.Control.controller.id === crew?.i)
+    .filter((s) => s.Control.controller.id === crew?.id)
       .filter((s) => s.Deposit.initialYield > 0 && s.Deposit.remainingYield === 0),
-  ]), [crew?.i, lot?.deposits, showAllSamples]);
+  ]), [crew?.id, lot?.deposits, showAllSamples]);
 
   const getSampleYield = useCallback((sample) => {
     if (sample.Deposit.initialYield) {
@@ -184,14 +182,14 @@ const LotResources = () => {
 
   const selectedResource = useMemo(() => {
     if (selected && selected.type === 'resource') {
-      return Product.TYPES[selected.i];
+      return Product.TYPES[selected.id];
     }
     return null;
   }, [selected]);
 
   const selectedSample = useMemo(() => {
     if (selected && selected.type === 'sample') {
-      return ownedSamples.find((s) => selected.i === s.id);
+      return ownedSamples.find((s) => selected.id === s.id);
     }
     return null;
   }, [ownedSamples, selected]);
@@ -199,8 +197,8 @@ const LotResources = () => {
   const extraSampleParams = useMemo(() => {
     const params = {};
     if (!currentSamplingAction) {
-      if (selectedResource?.i) {
-        params.overrideResourceId = Number(selectedResource?.i);
+      if (selectedResource?.id) {
+        params.overrideResourceId = Number(selectedResource?.id);
       } else if (selectedSample) {
         params.improveSample = { ...selectedSample };
         params._disabled = !(selectedSample?.Deposit?.status === Deposit.STATUSES.SAMPLED && selectedSample?.Deposit?.initialYield === selectedSample?.Deposit?.remainingYield);
@@ -239,7 +237,7 @@ const LotResources = () => {
             {showAbundances.map(({ i, abundance }) => {
               const { name, category } = Product.TYPES[i];
               const categoryKey = keyify(category);
-              const isSelected = selected?.type === 'resource' && selected?.i === i;
+              const isSelected = selected?.type === 'resource' && selected?.id === i;
               return (
                 <Resource
                   key={i}
@@ -269,12 +267,12 @@ const LotResources = () => {
             {ownedSamples.map((sample) => {
               const { name, category } = Product.TYPES[sample.Deposit.resource];
               const categoryKey = keyify(category);
-              const isSelected = selected?.type === 'sample' && selected?.i === sample.id;
+              const isSelected = selected?.type === 'sample' && selected?.id === sample.id;
               return (
                 <Sample
-                  key={sample.i}
+                  key={sample.id}
                   category={categoryKey}
-                  onClick={onClickSample(sample.Deposit.resource, sample.id)}
+                  onClick={onClickSample(sample.id)}
                   selected={isSelected}>
                   {isSelected
                     ? (
