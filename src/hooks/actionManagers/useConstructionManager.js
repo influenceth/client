@@ -49,13 +49,13 @@ const useConstructionManager = (lotId) => {
     let deconstructTx;
     if (lot?.building) {
       let actionItem = (actionItems || []).find((item) => (
-        item.event.name === 'Dispatcher_ConstructionStart'
-        && item.assets.lot?.id === lotId
+        item.event.name === 'ConstructionStarted'
+        && item.event.returnValues.building.id === lot.building.id
       ));
 
       if (actionItem) {
-        current._crewmates = actionItem.assets.crew.crewmates;
-        current.startTime = actionItem.startTime;
+        // current._crewmates = actionItem.assets.crew.crewmates; // TODO: ...
+        current.startTime = actionItem.event.timestamp;
       }
 
       current.buildingId = lot.building.id;

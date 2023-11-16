@@ -20,7 +20,7 @@ const ignoreEventTypes = ['CURRENT_ETH_BLOCK_NUMBER'];
 
 export function ActivitiesProvider({ children }) {
   const { token } = useAuth();
-  const { crew } = useCrewContext();
+  const { crew, refreshReadyAt } = useCrewContext();
   const getActivityConfig = useGetActivityConfig();
   const queryClient = useQueryClient();
   const { registerWSHandler, unregisterWSHandler, wsReady } = useWebsocket();
@@ -37,6 +37,11 @@ export function ActivitiesProvider({ children }) {
 
   const handleActivities = useCallback((newActivities, skipInvalidations) => {
     // return;
+
+    // refresh crew's readyAt
+    let shouldRefreshReadyAt = false;
+
+    // prep activities, then handle
     const transformedActivities = newActivities.map((e) => {
       e.id = e.id || e._id;
       e.key = e.id;
@@ -50,6 +55,8 @@ export function ActivitiesProvider({ children }) {
       transformedActivities.forEach(activity => {
         if (!skipInvalidations) {
           const activityConfig = getActivityConfig(activity);
+          shouldRefreshReadyAt = shouldRefreshReadyAt || !!activityConfig?.requiresCrewTime;
+
           // console.log('invalidations', activityConfig?.invalidations);
           (activityConfig?.invalidations || []).forEach((queryKey) => {
 
@@ -103,8 +110,13 @@ export function ActivitiesProvider({ children }) {
         ...transformedActivities,
         ...prevActivities
       ], 'key'));
+
+      if (shouldRefreshReadyAt) {
+        refreshReadyAt();
+      }
+      
     }, 1000);
-  }, []);
+  }, [refreshReadyAt]);
 
   // try to process WS activities grouped by block
   const processPendingWSBatch = useCallback(async () => {

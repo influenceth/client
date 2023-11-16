@@ -55,7 +55,7 @@ const getEntities = async ({ ids, match, label, components }) => {
     query.label = label;  // i.e. 'asteroid'
   }
   if (components) {
-    query.components = components.join(',');  // i.e. [ 'celestial', 'control' ]
+    query.components = components.join(',');  // i.e. [ 'Celestial', 'Control' ]
   }
 
   const response = await instance.get(`/${apiVersion}/entities?${buildQuery(query)}`);
@@ -93,6 +93,29 @@ const api = {
     return response.data.hits.hits.map((h) => h._source) || [];
   },
 
+  getCrewBuildingsOnAsteroid: async (asteroidId, crewId) => {
+    const queryBuilder = esb.boolQuery();
+
+    // on asteroid
+    queryBuilder.filter(esb.termQuery('meta.location.label', Entity.IDS.ASTEROID));
+    queryBuilder.filter(esb.termQuery('meta.location.id', asteroidId));
+
+    // controlled by crew
+    queryBuilder.filter(esb.termQuery('Control.controller.id', crewId));
+
+    // not abandoned
+    queryBuilder.filter(esb.rangeQuery('Building.status').gt(0));
+
+    const q = esb.requestBodySearch();
+    q.query(queryBuilder);
+    // q.from(0);
+    // q.size(10000000);
+    const query = q.toJSON();
+
+    const response = await instance.post(`/_search/building`, query);
+    return response.data.hits.hits.map((h) => h._source) || [];
+  },
+
   getCrewAccessibleInventories: async (asteroidId, crewId) => {
     const queryPromises = [];
 
@@ -111,13 +134,13 @@ const api = {
     // buildingQueryBuilder.filter(esb.termQuery('Building.status', Building.CONSTRUCTION_STATUS_IDS.OPERATIONAL));
 
     // has inventory
+    // TODO: has unlocked inventory more specifically?
     buildingQueryBuilder.filter(esb.existsQuery('Inventory'));
     
     const buildingQ = esb.requestBodySearch();
-    // buildingQ.query(buildingQueryBuilder);
+    buildingQ.query(buildingQueryBuilder);
     buildingQ.from(0);
     buildingQ.size(10000);
-    console.log('buildingQ.toJSON()', buildingQ.toJSON());
     queryPromises.push(instance.post(`/_search/building`, buildingQ.toJSON()));
 
     // SHIPS...
@@ -247,17 +270,6 @@ const api = {
   // TODO: ecs refactor -- probably better to use a single resolve location endpoint
   getBuilding: async (id) => {
     return getEntityById({ label: Entity.IDS.BUILDING, id });
-  },
-
-  getCrewOccupiedLots: async (a, c) => {
-    return [];
-    // TODO: elasticsearch
-    // const response = await instance.get(`/${apiVersion}/asteroids/${a}/lots/occupier/${c}`);
-    // return response.data;
-    // return getEntities({
-    //   match: { 'control.controller': c },
-    //   label: Entity.IDS.BUILDING
-    // });
   },
 
   getCrewSampledLots: async (a, c, r) => {

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
-import { Building, Crew, Crewmate, Product } from '@influenceth/sdk';
+import { Building, Crew, Crewmate, Lot } from '@influenceth/sdk';
 
 import constructionBackground from '~/assets/images/modal_headers/Construction.png';
 import {
@@ -10,7 +10,7 @@ import {
 import useCrewContext from '~/hooks/useCrewContext';
 import theme from '~/theme';
 import useConstructionManager from '~/hooks/actionManagers/useConstructionManager';
-import { reactBool, formatTimer } from '~/lib/utils';
+import { reactBool, formatTimer, getCrewAbilityBonuses } from '~/lib/utils';
 
 import { ActionDialogInner, useAsteroidAndLot } from '../ActionDialog';
 import {
@@ -29,7 +29,8 @@ import {
   ProgressBarSection,
   TravelBonusTooltip,
   ActionDialogBody,
-  getBuildingRequirements
+  getBuildingRequirements,
+  getTripDetails
 } from './components';
 import actionStage from '~/lib/actionStages';
 
@@ -39,17 +40,28 @@ const MouseoverWarning = styled.span`
 
 const PlanBuilding = ({ asteroid, lot, constructionManager, stage, ...props }) => {
   const { currentConstructionAction, planConstruction } = constructionManager;
-  const { captain, crew, crewmateMap } = useCrewContext();
+  const { captain, crew } = useCrewContext();
 
   const [buildingType, setBuildingType] = useState();
 
-  const crewTravelTime = useMemo(() => 0, []);  // TODO: ...
+  const crewTravelBonus = useMemo(() => {
+    if (!crew) return 0;
+    return getCrewAbilityBonuses(Crewmate.ABILITY_IDS.HOPPER_TRANSPORT_TIME, crew);
+  }, [crew]);
+  console.log('crewTravelBonus', crewTravelBonus);
+
+  const { totalTime: crewTravelTime, tripDetails } = useMemo(() => {
+    if (!asteroid?.id || !crew?._location?.lotId || !lot?.id) return {};
+    const crewLotIndex = Lot.toIndex(crew?._location?.lotId);
+    return getTripDetails(asteroid.id, crewTravelBonus.totalBonus, crewLotIndex, [
+      { label: 'Travel to Construction Site', lotIndex: Lot.toIndex(lot.id) },
+      { label: 'Return to Crew Station', lotIndex: crewLotIndex },
+    ]);
+  }, [asteroid?.id, crew?._location?.lotId, lot?.id, crewTravelBonus]);
+
   const taskTime = useMemo(() => 0, []);
   const stats = useMemo(() => {
     if (!asteroid?.id || !lot?.id) return [];
-    const crewmates = (crew?._crewmates || []).map((i) => crewmateMap[i]);
-    const crewTravelBonus = Crew.getAbilityBonus(Crewmate.ABILITY_IDS.HOPPER_TRANSPORT_TIME, crewmates);
-    const tripDetails = []; // TODO: 
     const taskTime = 0;
     return [
       {
@@ -71,7 +83,7 @@ const PlanBuilding = ({ asteroid, lot, constructionManager, stage, ...props }) =
         isTimeStat: true
       },
     ];
-  }, [crew?._crewmates]);
+  }, [crewTravelTime, tripDetails]);
 
   useEffect(() => {
     if (currentConstructionAction?.buildingType) setBuildingType(currentConstructionAction.buildingType)
@@ -123,7 +135,6 @@ const PlanBuilding = ({ asteroid, lot, constructionManager, stage, ...props }) =
             requirements={buildingRequirements} />
         )}
 
-        {/* TODO: if crew travel becomes part of planning, will need to configure this */}
         {stage === actionStage.NOT_STARTED && (
           <ProgressBarSection
             overrides={{
@@ -184,7 +195,6 @@ const Wrapper = (props) => {
       }
     }
   }, [asteroid, lot, isLoading]);
-
 
   // stay in this window until PLANNED, then swap to CONSTRUCT
   useEffect(() => {

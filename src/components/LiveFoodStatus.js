@@ -4,6 +4,7 @@ import { Crew } from '@influenceth/sdk';
 
 import { FoodIcon, WarningOutlineIcon } from '~/components/Icons';
 import useChainTime from '~/hooks/useChainTime';
+import useConstants from '~/hooks/useConstants';
 
 const Food = styled.div`
   align-items: center;
@@ -17,13 +18,14 @@ const Food = styled.div`
 
 const LiveFoodStatus = ({ crew: optCrew, lastFed: optLastFed, onClick, ...props }) => {
   const chainTime = useChainTime();
+  const { data: TIME_ACCELERATION } = useConstants('TIME_ACCELERATION');
 
   const lastFed = useMemo(() => {
     return optLastFed || optCrew?.Crew?.lastFed || 0;
   }, [optCrew, optLastFed]);
 
   const percentage = useMemo(() => {
-    const lastFedAgo = chainTime - lastFed;
+    const lastFedAgo = (chainTime - lastFed) * parseInt(TIME_ACCELERATION);
     return lastFedAgo ? Math.round(100 * Crew.getCurrentFood(lastFedAgo) / Crew.CREWMATE_FOOD_PER_YEAR) : 0;
   }, [chainTime, lastFed]);
   

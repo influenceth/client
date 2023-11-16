@@ -4,7 +4,7 @@ import { Building, Dock, Entity, Inventory, Lot, Ship, Station } from '@influenc
 
 import { useLotLink } from '~/components/LotLink';
 import useAsteroid from '~/hooks/useAsteroid';
-import useAsteroidCrewLots from '~/hooks/useAsteroidCrewLots';
+import useAsteroidCrewBuildings from '~/hooks/useAsteroidCrewBuildings';
 import useChainTime from '~/hooks/useChainTime';
 import useStore from '~/hooks/useStore';
 import { HudMenuCollapsibleSection, Rule, majorBorderColor } from './components';
@@ -308,24 +308,24 @@ const AsteroidAssets = () => {
 
   const asteroidId = useStore(s => s.asteroids.origin);
   const { data: asteroid } = useAsteroid(asteroidId);
-  const { data: lots, isLoading: lotsLoading } = useAsteroidCrewLots(asteroidId);
+  const { data: buildings, isLoading: buildingsLoading } = useAsteroidCrewBuildings(asteroidId);
   // TODO: ecs refactor -- should this use useOwnedShips instead (and filter to asteroid location?);
   //  might be harder todo unless also using elasticsearch for flattened location
   const { data: ships, isLoading: shipsLoading } = useAsteroidShips(asteroidId);
 
-  const buildingTally = lots?.length || 0;
+  const buildingTally = buildings?.length || 0;
 
   const buildingsByType = useMemo(() => {
-    if (!lots) return {};
-    return lots
-    .sort((a, b) => Building.TYPES[a.building?.Building?.buildingType]?.name < Building.TYPES[b.building?.Building?.buildingType]?.name ? -1 : 1)
-    .reduce((acc, lot) => {
-      const buildingType = lot.building?.Building?.buildingType;
+    if (!buildings) return {};
+    return buildings
+    .sort((a, b) => Building.TYPES[a.Building?.buildingType]?.name < Building.TYPES[b.Building?.buildingType]?.name ? -1 : 1)
+    .reduce((acc, building) => {
+      const buildingType = building.Building?.buildingType;
       if (!acc[buildingType]) acc[buildingType] = [];
-      acc[buildingType].push(lot);
+      acc[buildingType].push(building);
       return acc;
     }, {});
-  }, [lots]);
+  }, [buildings]);
 
   const shipsByLocation = useMemo(() => {
     if (!ships) return {};
@@ -346,7 +346,7 @@ const AsteroidAssets = () => {
       <HudMenuCollapsibleSection
         titleText="Buildings"
         titleLabel={`${buildingTally.toLocaleString()} Asset${buildingTally === 1 ? '' : 's'}`}>
-        {asteroid && lots && !lotsLoading && (
+        {asteroid && buildings && !buildingsLoading && (
           <>
             {buildingTally === 0 && <div style={{ padding: '15px 10px', textAlign: 'center' }}>Your crew has not occupied any lots on this asteroid yet.</div>}
             {buildingTally > 0 && Object.keys(buildingsByType).map((buildingType, i) => (

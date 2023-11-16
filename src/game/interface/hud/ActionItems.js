@@ -248,18 +248,22 @@ const ActionItemRow = styled.div`
   }
   ${Label} {
     color: white;
-    flex: 1;
+    white-space: nowrap;
   }
   ${Details} {
+    flex: 1;
     height: 100%;
     margin-right: 8px;
     overflow: hidden;
     & > * {
       align-items: center;
       display: flex;
+      flex-direction: row;
+      flex-wrap: wrap;
       height: 100%;
       justify-content: flex-end;
       transition: transform 150ms ease;
+      white-space: nowrap;
     }
   }
   ${Progress} {

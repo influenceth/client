@@ -1,12 +1,15 @@
 import { useCallback, useMemo, useState } from 'react';
-import { useQuery, useQueryClient } from 'react-query';
+import { useQueryClient } from 'react-query';
+import { Entity, Lot } from '@influenceth/sdk';
 
-import api from '~/lib/api';
 import { options as lotLeaseOptions } from '~/components/filters/LotLeaseFilter';
 import useStore from '~/hooks/useStore';
 import theme from '~/theme';
 import useAsteroidCrewSamples from './useAsteroidCrewSamples';
-import useAsteroidCrewLots from './useAsteroidCrewLots';
+import useAsteroidCrewBuildings from './useAsteroidCrewBuildings';
+import useAsteroidLotData from './useAsteroidLotData';
+import { getAndCacheEntity } from '~/lib/activities';
+import { locationsArrToObj } from '~/lib/utils';
 
 const lotLeaseOptionKeys = Object.keys(lotLeaseOptions);
 
@@ -22,11 +25,7 @@ const useMappedAsteroidLots = (i) => {
   const [rebuildTally, setRebuildTally] = useState(0);
 
   // get all packed lot data from server
-  const { data: lotData, isLoading: lotDataLoading } = useQuery(
-    [ 'asteroidLots', i ],
-    () => api.getAsteroidLotData(i),
-    { enabled: !!i }
-  );
+  const { data: lotData, isLoading: lotDataLoading } = useAsteroidLotData(i);
 
   // get all sampled lots (for this resource) from the server
   const { data: sampledLots, isLoading: sampledLotsLoading } = useAsteroidCrewSamples(i, mapResourceId);
@@ -39,11 +38,17 @@ const useMappedAsteroidLots = (i) => {
     ];
   }, [sampledLots]);
 
-  // get all occupied-by-me lots from the server
-  const { data: crewLots, isLoading: crewLotsLoading } = useAsteroidCrewLots(i);
+  // get all occupied-by-me buildings from the server
+  const { data: crewLots, isLoading: crewLotsLoading } = useAsteroidCrewBuildings(i);
   const myOccupationMap = useMemo(() => {
     if (crewLotsLoading) return null;
-    return (crewLots || []).reduce((acc, p) => { acc[p.id] = true; return acc; }, {});
+    return (crewLots || []).reduce((acc, p) => {
+      const _locations = locationsArrToObj(p?.Location?.locations || []);
+      return {
+        ...acc,
+        [_locations.lotIndex]: true
+      };
+    }, {});
   }, [crewLots, crewLotsLoading]);
 
   // determine if search is on or not
@@ -169,21 +174,32 @@ const useMappedAsteroidLots = (i) => {
     setRebuildTally((t) => t + 1);
   }, [])
 
-  const processEvent = useCallback((eventType, body) => {
-    // TODO: these events could/should technically go through the same invalidation process as primary events
-    //  (it's just that these events won't match as much data b/c most may not be relevant to my crew)
-    switch (eventType) {
-      case 'Dispatcher_ConstructionPlan':
-      case 'Dispatcher_ConstructionUnplan':
-        // asteroidId, lotId, crewId, (buildingType)
-        queryClient.setQueryData([ 'asteroidLots', body.returnValues.asteroidId ], (currentLotsValue) => {
-          // TODO: this will need to be translated to lotIndex
-          currentLotsValue[body.returnValues.lotId] = 
-            (currentLotsValue[body.returnValues.lotId] & 0b00001111)  // clear existing building
-            | (body.returnValues.buildingType || 0) << 4               // set to event building (if there is one)
-          return currentLotsValue;
-        });
-        break;
+  const processEvent = useCallback(async (eventType, body) => {
+    let asteroidId, lotIndex, buildingType;
+    if (eventType === 'ConstructionPlanned') {
+      asteroidId = body.returnValues.asteroid.id;
+      lotIndex = Lot.toIndex(body.returnValues.lot.id);
+      buildingType = body.returnValues.building_type;
+    } else if (eventType === 'ConstructionAbandoned') {
+      // TODO: the above does not block prepopping of other activities, so
+      // may result in double-fetches on invalidation via this event
+      const building = await getAndCacheEntity(Entity.IDS.Building, body.returnValues.building.id);
+      const _location = locationsArrToObj(building?.location?.Locations || []);
+      asteroidId = _location.asteroidId;
+      lotIndex = _location.lotIndex;
+      buildingType = 0;
+    }
+    // TODO: light transport landed / departed
+
+    if (asteroidId && lotIndex && buildingType !== undefined) {
+      // TODO: these events could/should technically go through the same invalidation process as primary events
+      //  (it's just that these events won't match as much data b/c most may not be relevant to my crew)
+      queryClient.setQueryData([ 'asteroidLots', asteroidId ], (currentLotsValue) => {
+        currentLotsValue[lotIndex] = 
+          (currentLotsValue[body.lotIndex] & 0b00001111)  // clear existing building
+          | buildingType << 4                             // set to new buildingType
+        return currentLotsValue;
+      });
     }
   }, []);
 

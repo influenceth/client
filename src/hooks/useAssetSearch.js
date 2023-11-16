@@ -107,7 +107,7 @@ filtersToQuery.buildings = (filters) => {
 filtersToQuery.deposits = (filters) => {
   const queryBuilder = esb.boolQuery();
 
-  if (filters.asteroid) {
+  if (filters.asteroid) { // TODO: should this (and others like this here) be an `and`?
     queryBuilder.filter(esb.termQuery('meta.location.label', Entity.IDS.ASTEROID));
     queryBuilder.filter(esb.termQuery('meta.location.id', filters.asteroid));
   }

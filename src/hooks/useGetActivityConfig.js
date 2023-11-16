@@ -31,6 +31,8 @@ const getActivityConfig = (queryClient) => (activity, viewingAs = {}) => {
   // TODO: support L1? __t is in event record, but is not included in activity record...
   //  `${process.env.REACT_APP_ETHEREUM_EXPLORER_URL}/tx/${activity.event?.transactionHash}`
 
+  const requiresCrewTime = !!config?.requiresCrewTime;
+
   const triggerAlert = !!config?.triggerAlert;
 
   const isActionItemHidden = (pendingTransactions, prepopped) => {
@@ -44,6 +46,7 @@ const getActivityConfig = (queryClient) => (activity, viewingAs = {}) => {
     invalidations,
     logContent,
     isActionItemHidden,
+    requiresCrewTime,
     triggerAlert
   };
 }

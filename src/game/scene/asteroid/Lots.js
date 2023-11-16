@@ -25,6 +25,7 @@ import useWebWorker from '~/hooks/useWebWorker';
 import useMappedAsteroidLots from '~/hooks/useMappedAsteroidLots';
 import constants from '~/lib/constants';
 import { getLotGeometryHeightMaps, getLotGeometryHeightMapResolution } from './helpers/LotGeometry';
+import useGetActivityConfig from '~/hooks/useGetActivityConfig';
 
 const { MAX_LOTS_RENDERED } = constants;
 
@@ -69,6 +70,7 @@ const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, co
   const queryClient = useQueryClient();
   const { registerWSHandler, unregisterWSHandler, wsReady } = useWebsocket();
   const { processInBackground } = useWebWorker();
+  const getActivityConfig = useGetActivityConfig();
 
   const textureQuality = useStore(s => s.graphics.textureQuality);
   const lotId = useStore(s => s.asteroids.lot);
@@ -243,16 +245,27 @@ const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, co
     }
   }, [lotDisplayMap, lastLotUpdate]);
 
-  const handleWSMessage = useCallback(({ type: eventType, body }) => {
-    // pass the event to useMappedAsteroidLots hook
+  const handleWSMessage = useCallback(({ type: eventType, body, ...props }) => {
+    console.log('asteroid handleWSMessage', {eventType, body, props});
+
+    // pass the event to useMappedAsteroidLots hook to update scene
     processEvent(eventType, body);
 
-    // // // // //
-    // TODO: vvv maybe remove this when updating more systematically from linked data
+    // invalidate cached values due to other crews' actions
+    // (since these will be missed in the main activities context invalidations)
+    // TODO: ...
+
 
     //
     // UPDATE CACHE FOR SPECIFIC LOT VALUES
     //
+
+    // (can skip those that are my own crew since those will be
+    //  handled by crew-room activities context)
+    // const activityConfig = getActivityConfig(activity);
+    // (activityConfig?.invalidations || []).forEach((queryKey) => {
+
+    // });
 
     // TODO: ecs refactor (below)
 

@@ -44,7 +44,7 @@ import ResourceRequirement from '~/components/ResourceRequirement';
 import ResourceSelection from '~/components/ResourceSelection';
 import SliderInput from '~/components/SliderInput';
 import TextInput from '~/components/TextInputUncontrolled';
-import useAsteroidCrewLots from '~/hooks/useAsteroidCrewLots';
+import useAsteroidLotData from '~/hooks/useAsteroidLotData';
 import useChainTime from '~/hooks/useChainTime';
 import api from '~/lib/api';
 import { reactBool, formatFixed, formatTimer, nativeBool, locationsArrToObj } from '~/lib/utils';
@@ -1535,7 +1535,13 @@ export const DestinationSelectionDialog = ({
   onSelected,
   open
 }) => {
-  const { data: crewLots, isLoading } = useAsteroidCrewLots(asteroid.id);
+  // TODO: this will presumably be deprecated in favor of inventory selection
+  //  and/or modified for cases where moving crew or ship
+  return null;
+
+  const crewLots = [];
+  // TODO: this is buildings, not lots
+  // const { data: crewLots, isLoading } = useAsteroidCrewBuildings(asteroid.id);
   const [selection, setSelection] = useState(initialSelection);
 
   useEffect(() => {
@@ -1742,11 +1748,7 @@ export const LandingSelectionDialog = ({ asteroid, initialSelection, onClose, on
 
   // TODO: to get spaceport names, it will probably make more sense to have
   //  a "get spaceports" api endpoint
-  const { data: lotData, isLoading: lotDataLoading } = useQuery(
-    [ 'asteroidLots', asteroid?.id ],
-    () => api.getAsteroidLotData(asteroid?.id),
-    { enabled: !!asteroid?.id }
-  );
+  const { data: lotData, isLoading: lotDataLoading } = useAsteroidLotData(asteroid?.id);
 
   const spaceports = useMemo(() => {
     if (!lotData) return [];
@@ -3598,7 +3600,7 @@ const BonusesFootnote = styled.div`
 `;
 
 export const BonusTooltip = ({ bonus, crewRequired, details, title, titleValue, isTimeStat }) => {
-  const { titles, traits, others, totalBonus } = bonus;
+  const { titles, traits, others, foodMultiplier, stationMultiplier, timeMultiplier, totalBonus } = bonus;
   const timeMult = isTimeStat ? -1 : 1;
   const titleDirection = getBonusDirection({ totalBonus });
 
@@ -3628,9 +3630,30 @@ export const BonusTooltip = ({ bonus, crewRequired, details, title, titleValue, 
         direction: getBonusDirection({ totalBonus: 1 + timeMult * bonus }, !isTimeStat)
       });
     });
+    if (foodMultiplier < 1) {
+      x.push({
+        text: `Food Rationing Penalty`,
+        multiplier: foodMultiplier,
+        direction: getBonusDirection({ totalBonus: foodMultiplier })
+      });
+    }
+    if (stationMultiplier !== 1) {
+      x.push({
+        text: `Station Capacity ${stationMultiplier > 1 ? 'Bonus' : 'Penalty'}`,
+        multiplier: stationMultiplier,
+        direction: getBonusDirection({ totalBonus: stationMultiplier })
+      });
+    }
     (others || []).forEach(({ text, bonus, direction }) => {
       x.push({ text, bonus, direction });
     });
+    if (timeMultiplier !== 1) {
+      x.push({
+        text: `Time Acceleration`,
+        multiplier: timeMultiplier,
+        direction: getBonusDirection({ totalBonus: timeMultiplier })
+      });
+    }
 
     return x.sort((a, b) => b.bonus - a.bonus);
   }, [titles, traits]);
@@ -3745,7 +3768,7 @@ export const getBonusDirection = ({ totalBonus }, biggerIsBetter = true) => {
   return (biggerIsBetter === (totalBonus > 1)) ? 1 : -1;
 };
 
-export const getTripDetails = (asteroidId, crewTravelBonus, originLotIndex, steps) => {
+export const getTripDetails = (asteroidId, crewTravelBonus, originLotIndex, steps, timeAcceleration) => {
   let currentLotIndex = originLotIndex;
   let totalDistance = 0;
   let totalTime = 0;
