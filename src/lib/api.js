@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { Asteroid, Building, Deposit, Entity, Ship } from '@influenceth/sdk';
+import { Asteroid, Building, Deposit, Entity, Inventory, Ship } from '@influenceth/sdk';
 import esb from 'elastic-builder';
 
 import useStore from '~/hooks/useStore';
@@ -159,12 +159,8 @@ const api = {
     // on asteroid
     buildingQueryBuilder.filter(esbLocationQuery({ asteroidId }));
 
-    // operational
-    // buildingQueryBuilder.filter(esb.termQuery('Building.status', Building.CONSTRUCTION_STATUS_IDS.OPERATIONAL));
-
-    // has inventory
-    // TODO: has unlocked inventory more specifically?
-    buildingQueryBuilder.filter(esb.existsQuery('Inventory'));
+    // has unlocked inventory
+    buildingQueryBuilder.filter(esb.termQuery('Inventory.status', Inventory.STATUSES.AVAILABLE));
     
     const buildingQ = esb.requestBodySearch();
     buildingQ.query(buildingQueryBuilder);
@@ -192,6 +188,9 @@ const api = {
           ])
         )
     );
+
+    // has unlocked inventory
+    shipQueryBuilder.filter(esb.termQuery('Inventory.status', Inventory.STATUSES.AVAILABLE));
 
     // ship is operational and not traveling or in emergency mode
     shipQueryBuilder.filter(esb.termQuery('Ship.status', Ship.STATUSES.AVAILABLE));
