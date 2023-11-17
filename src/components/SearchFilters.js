@@ -73,7 +73,7 @@ const constructionStatusOptions = Object.keys(Building.CONSTRUCTION_STATUSES)
   .filter(({ key }) => key > 0);
 
 const actionItemStatusOptions = [
-  { key: 'pending', label: 'Processing', initialValue: true },
+  { key: 'pending', label: 'Pending', initialValue: true },
   { key: 'failed', label: 'Failed', initialValue: true },
   { key: 'ready', label: 'Ready', initialValue: true },
   { key: 'unready', label: 'Not Ready', initialValue: true },

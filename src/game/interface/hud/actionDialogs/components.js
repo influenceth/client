@@ -34,7 +34,8 @@ import {
   EmergencyModeEnterIcon,
   CheckIcon,
   ProcessIcon,
-  ShipIcon
+  ShipIcon,
+  BusyIcon
 } from '~/components/Icons';
 import LiveTimer from '~/components/LiveTimer';
 import MouseoverInfoPane from '~/components/MouseoverInfoPane';
@@ -368,7 +369,7 @@ const IconContainer = styled.div`
 `;
 const TimePill = styled.div`
   align-items: center;
-  background: rgba(${p => hexToRGB(p.type === 'crew' ? p.theme.colors.purple : p.theme.colors.success)}, 0.4);
+  background: rgba(${p => hexToRGB(p.type === 'crew' ? p.theme.colors.main : p.theme.colors.success)}, 0.4);
   border-radius: 20px;
   color: white;
   display: flex;
@@ -377,7 +378,7 @@ const TimePill = styled.div`
   text-align: center;
   text-transform: none;
   & > svg {
-    color: ${p => p.type === 'crew' ? p.theme.colors.purple : p.theme.colors.success};
+    color: ${p => p.type === 'crew' ? p.theme.colors.brightMain : p.theme.colors.success};
     opacity: 0.7;
     margin-right: 4px;
   }
@@ -2327,7 +2328,7 @@ export const ActionDialogHeader = ({ action, captain, crewAvailableTime, locatio
             <h1>{action.label}</h1>
             <div>
               <h2>{action.status || theming[stage]?.label}</h2>
-              {crewAvailableTime !== undefined && <TimePill type="crew"><CrewIcon /> {formatTimer(crewAvailableTime, 2)}</TimePill>}
+              {crewAvailableTime !== undefined && <TimePill type="crew"><BusyIcon /> {formatTimer(crewAvailableTime, 2)}</TimePill>}
               {taskCompleteTime !== undefined && <TimePill type="total"><AlertIcon /> {formatTimer(taskCompleteTime, 2)}</TimePill>}
             </div>
           </LabelContainer>

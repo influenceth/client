@@ -104,7 +104,6 @@ const MyCrews = () => {
   }, [nonEmptyCrews]);
 
   const uncontrolledCrewIds = useMemo(() => {
-    console.log({ crews, crewmateMap });
     return Object.keys(crewmateMap || {})
       .filter((id) => !crews.find((c) => c.id === crewmateMap[id].Control?.controller?.id))
       .reduce((acc, crewmateId) => {

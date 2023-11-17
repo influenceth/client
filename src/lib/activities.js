@@ -215,7 +215,6 @@ const activities = {
         ['actionItems'],
       ];
 
-      console.log({ building, returnValues });
       const _location = locationsArrToObj(building?.Location?.locations || []);
       if (_location.lotId) {
         invs.unshift(...invalidationDefaults(Entity.IDS.LOT, _location.lotId));

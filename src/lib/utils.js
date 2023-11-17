@@ -1,4 +1,5 @@
 import { Crew, Crewmate, Entity, Lot } from '@influenceth/sdk';
+import esb from 'elastic-builder';
 
 const timerIncrements = { d: 86400, h: 3600, m: 60, s: 1 };
 export const formatTimer = (secondsRemaining, maxPrecision = null) => {
@@ -112,3 +113,21 @@ export const getCrewAbilityBonuses = (abilityIdOrAbilityIds, crew) => {
   }, {});
   return isMultiple ? bonuses : bonuses[abilityIdOrAbilityIds];
 }
+
+export const esbLocationQuery = ({ asteroidId }) => {
+  let label, id;
+  if (asteroidId) {
+    label = Entity.IDS.ASTEROID;
+    id = asteroidId;
+  }
+  if (!label || !id) return undefined;
+
+  return esb.nestedQuery()
+    .path('meta.location')
+    .query(
+      esb.boolQuery().must([
+        esb.termQuery('meta.location.label', Entity.IDS.ASTEROID),
+        esb.termQuery('meta.location.id', asteroidId),
+      ])
+    )
+};

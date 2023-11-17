@@ -3,13 +3,13 @@ import { useQueryClient } from 'react-query';
 import { Entity, Lot } from '@influenceth/sdk';
 
 import { options as lotLeaseOptions } from '~/components/filters/LotLeaseFilter';
+import useAsteroidCrewSamples from '~/hooks/useAsteroidCrewSamples';
+import useAsteroidCrewBuildings from '~/hooks/useAsteroidCrewBuildings';
+import useAsteroidLotData from '~/hooks/useAsteroidLotData';
 import useStore from '~/hooks/useStore';
-import theme from '~/theme';
-import useAsteroidCrewSamples from './useAsteroidCrewSamples';
-import useAsteroidCrewBuildings from './useAsteroidCrewBuildings';
-import useAsteroidLotData from './useAsteroidLotData';
 import { getAndCacheEntity } from '~/lib/activities';
 import { locationsArrToObj } from '~/lib/utils';
+import theme from '~/theme';
 
 const lotLeaseOptionKeys = Object.keys(lotLeaseOptions);
 
@@ -32,7 +32,13 @@ const useMappedAsteroidLots = (i) => {
   const [lotSampledMap, fillTally] = useMemo(() => {
     return [
       sampledLots
-        ? sampledLots.reduce((acc, i) => { acc[i] = true; return acc; }, {})
+        ? sampledLots.reduce((acc, d) => {
+            const _locations = locationsArrToObj(d?.Location?.locations || []);
+            return {
+              ...acc,
+              [_locations.lotIndex]: true
+            };
+          }, {})
         : (sampledLotsLoading ? {} : null),
       sampledLots?.length || 0
     ];

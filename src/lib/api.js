@@ -1,8 +1,9 @@
 import axios from 'axios';
-import { Asteroid, Building, Entity, Ship } from '@influenceth/sdk';
+import { Asteroid, Building, Deposit, Entity, Ship } from '@influenceth/sdk';
 import esb from 'elastic-builder';
 
 import useStore from '~/hooks/useStore';
+import { esbLocationQuery } from './utils';
 
 // set default app version
 const apiVersion = 'v2';
@@ -97,8 +98,7 @@ const api = {
     const queryBuilder = esb.boolQuery();
 
     // on asteroid
-    queryBuilder.filter(esb.termQuery('meta.location.label', Entity.IDS.ASTEROID));
-    queryBuilder.filter(esb.termQuery('meta.location.id', asteroidId));
+    queryBuilder.filter(esbLocationQuery({ asteroidId }));
 
     // controlled by crew
     queryBuilder.filter(esb.termQuery('Control.controller.id', crewId));
@@ -115,6 +115,36 @@ const api = {
     const response = await instance.post(`/_search/building`, query);
     return response.data.hits.hits.map((h) => h._source) || [];
   },
+  
+  getCrewSamplesOnAsteroid: async (asteroidId, crewId, resourceId) => {
+    const queryBuilder = esb.boolQuery();
+
+    // on asteroid
+    queryBuilder.filter(esbLocationQuery({ asteroidId }));
+
+    // controlled by crew
+    queryBuilder.filter(esb.termQuery('Control.controller.id', crewId));
+    
+    // resource
+    queryBuilder.filter(esb.termQuery('Deposit.resource', resourceId));
+
+    // not depleted !(used AND remainingYield === 0)
+    queryBuilder.filter(
+      esb.boolQuery().mustNot([
+        esb.termQuery('Deposit.status', Deposit.STATUSES.USED),
+        esb.termQuery('Deposit.remainingYield', 0),
+      ])
+    );
+
+    const q = esb.requestBodySearch();
+    q.query(queryBuilder);
+    // q.from(0);
+    // q.size(10000000);
+    const query = q.toJSON();
+
+    const response = await instance.post(`/_search/deposit`, query);
+    return response.data.hits.hits.map((h) => h._source) || [];
+  },
 
   getCrewAccessibleInventories: async (asteroidId, crewId) => {
     const queryPromises = [];
@@ -127,8 +157,7 @@ const api = {
     // buildingQueryBuilder.filter(esb.termQuery('Control.controller.id', crewId));
     
     // on asteroid
-    buildingQueryBuilder.filter(esb.termQuery('meta.location.label', Entity.IDS.ASTEROID));
-    buildingQueryBuilder.filter(esb.termQuery('meta.location.id', asteroidId));
+    buildingQueryBuilder.filter(esbLocationQuery({ asteroidId }));
 
     // operational
     // buildingQueryBuilder.filter(esb.termQuery('Building.status', Building.CONSTRUCTION_STATUS_IDS.OPERATIONAL));
@@ -151,10 +180,18 @@ const api = {
     shipQueryBuilder.filter(esb.termQuery('Control.controller.id', crewId));
     
     // on asteroid
-    // TODO: also not in orbit (i.e. lotId is present and !== 0)
-    shipQueryBuilder.filter(esb.termQuery('meta.location.label', Entity.IDS.ASTEROID));
-    shipQueryBuilder.filter(esb.termQuery('meta.location.id', asteroidId));
-    shipQueryBuilder.filter(esb.termQuery('meta.location.label', Entity.IDS.LOT));
+    // (and not in orbit -- i.e. lotId is present and !== 0)
+    shipQueryBuilder.filter(esbLocationQuery({ asteroidId }));
+    shipQueryBuilder.filter(
+      esb.nestedQuery()
+        .path('meta.location')
+        .query(
+          esb.boolQuery().must([
+            esb.termQuery('meta.location.label', Entity.IDS.LOT),
+            esb.rangeQuery('meta.location.id').gt(0),
+          ])
+        )
+    );
 
     // ship is operational and not traveling or in emergency mode
     shipQueryBuilder.filter(esb.termQuery('Ship.status', Ship.STATUSES.AVAILABLE));
@@ -270,12 +307,6 @@ const api = {
   // TODO: ecs refactor -- probably better to use a single resolve location endpoint
   getBuilding: async (id) => {
     return getEntityById({ label: Entity.IDS.BUILDING, id });
-  },
-
-  getCrewSampledLots: async (a, c, r) => {
-    // TODO: elasticsearch
-    const response = await instance.get(`/${apiVersion}/asteroids/${a}/lots/sampled/${c}/${r}`);
-    return response.data;
   },
 
   getCrewShips: async (c) => {

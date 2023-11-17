@@ -8,7 +8,7 @@ const useAsteroidCrewSamples = (asteroidId, resourceId) => {
   return useQuery(
     // TODO: convert this to 'entities' model of cache keys (update invalidations!)
     [ 'asteroidCrewSampledLots', asteroidId, resourceId, crew?.id ],
-    () => api.getCrewSampledLots(asteroidId, crew?.id, resourceId),
+    () => api.getCrewSamplesOnAsteroid(asteroidId, crew?.id, resourceId),
     { enabled: !!(asteroidId && crew?.id && resourceId) }
   );
 };
