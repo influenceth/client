@@ -15,7 +15,7 @@ import api from '~/lib/api';
 import { CallData, uint256 } from 'starknet';
 const Systems = System.Systems;
 
-
+// TODO: move this back to sdk once finished debugging
 const formatCalldataValue = (type, value) => {
   console.log('formatCalldataValue', type, value);
   if (type === 'ContractAddress') {
@@ -40,6 +40,7 @@ const formatCalldataValue = (type, value) => {
     return [value.product, value.amount];
   }
   else {
+    console.log('TODO: should probably not be in this ELSE');
     return value?.product ? [value.product, value.amount] : value;
   }
 };

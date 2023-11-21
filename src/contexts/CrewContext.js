@@ -115,7 +115,6 @@ export function CrewProvider({ children }) {
       queryClient.setQueryData(ownedCrewsQueryKey, (prevRawCrews) => {
         return prevRawCrews.map((c) => {
           if (c.id === updatedCrew.id) {
-            console.log('update ready at', c.Crew.readyAt, updatedCrew.Crew.readyAt);
             c.Crew.readyAt = updatedCrew.Crew.readyAt;
           }
           return c;

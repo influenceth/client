@@ -199,9 +199,12 @@ const formatAsTx = (item) => {
       formatted.lotId = item.vars.lot.id;
       formatted.resourceId = item.vars.resource; // not necessarily forcing open resourcemap
       formatted.onClick = ({ openDialog }) => {
-        // TODO: in case of failure, should link with selected sampleId
-        // (low priority b/c would have to fail and would have to have closed dialog)
-        openDialog('NEW_CORE_SAMPLE');
+        openDialog('NEW_CORE_SAMPLE', {
+          preselect: {
+            resourceId: item.vars.resource,
+            origin: item.vars.origin
+          }
+        });
       };
       break;
     }
@@ -213,9 +216,13 @@ const formatAsTx = (item) => {
       formatted.lotId = item.meta?.lotId;
       // formatted.resourceId = item.vars.resourceId; // not necessarily forcing open resourcemap
       formatted.onClick = ({ openDialog }) => {
-        // link with selected sampleId
-        // (low priority b/c would have to fail and would have to have closed dialog)
-        openDialog('IMPROVE_CORE_SAMPLE', { preselect: { depositId: item.vars.deposit.id } });
+        openDialog('IMPROVE_CORE_SAMPLE', {
+          preselect: {
+            id: item.vars.deposit.id,
+            origin: item.vars.origin
+            // NOTE: slot is not repopulated here (but not currently displayed anyway)
+          }
+        });
       };
       break;
     }

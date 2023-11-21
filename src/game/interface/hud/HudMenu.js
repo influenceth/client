@@ -377,7 +377,7 @@ const HudMenu = ({ forceOpenMenu }) => {
         }
       );
 
-      if (lot?.building?.Building?.status === Building.CONSTRUCTION_STATUS_IDS.OPERATIONAL) {
+      if (lot?.building?.Building?.status === Building.CONSTRUCTION_STATUSES.OPERATIONAL) {
         if (lot.building.Building.buildingType === Building.IDS.MARKETPLACE) {
           buttons.push({
             key: 'MARKETPLACE_LISTINGS',

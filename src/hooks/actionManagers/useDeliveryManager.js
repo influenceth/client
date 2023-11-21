@@ -116,7 +116,7 @@ const useDeliveryManager = ({ destination, destinationSlot, origin, originSlot, 
       };
     });
     return [allDeliveries, Date.now()];
-  }, [deliveries, pendingDeliveries]);
+  }, [deliveries, pendingDeliveries, getStatus, payload]);
 
   const startDelivery = useCallback(({ origin, originSlot, destination, destinationSlot, contents }, meta) => {
     execute(

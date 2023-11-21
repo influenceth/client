@@ -181,15 +181,17 @@ const useMappedAsteroidLots = (i) => {
   }, [])
 
   const processEvent = useCallback(async (eventType, body) => {
+    console.log('processEvent', eventType, body);
+
     let asteroidId, lotIndex, buildingType;
     if (eventType === 'ConstructionPlanned') {
-      asteroidId = body.returnValues.asteroid.id;
-      lotIndex = Lot.toIndex(body.returnValues.lot.id);
-      buildingType = body.returnValues.building_type;
+      asteroidId = body.event.returnValues.asteroid.id;
+      lotIndex = Lot.toIndex(body.event.returnValues.lot.id);
+      buildingType = body.event.returnValues.building_type;
     } else if (eventType === 'ConstructionAbandoned') {
       // TODO: the above does not block prepopping of other activities, so
       // may result in double-fetches on invalidation via this event
-      const building = await getAndCacheEntity(Entity.IDS.Building, body.returnValues.building.id);
+      const building = await getAndCacheEntity({ label: Entity.IDS.Building, id: body.event.returnValues.building.id }, queryClient);
       const _location = locationsArrToObj(building?.location?.Locations || []);
       asteroidId = _location.asteroidId;
       lotIndex = _location.lotIndex;
@@ -202,8 +204,8 @@ const useMappedAsteroidLots = (i) => {
       //  (it's just that these events won't match as much data b/c most may not be relevant to my crew)
       queryClient.setQueryData([ 'asteroidLots', asteroidId ], (currentLotsValue) => {
         currentLotsValue[lotIndex] = 
-          (currentLotsValue[body.lotIndex] & 0b00001111)  // clear existing building
-          | buildingType << 4                             // set to new buildingType
+          (currentLotsValue[lotIndex] & 0b00001111)  // clear existing building
+          | buildingType << 4                        // set to new buildingType
         return currentLotsValue;
       });
     }

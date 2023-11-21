@@ -65,10 +65,10 @@ const lotSearchBuildingTypeOptions = Object.keys(Building.TYPES).reduce((acc, ke
 ]), []);
 lotSearchBuildingTypeOptions.push({ key: 10, label: 'Light Transport (landed)', initialValue: true });
 
-const constructionStatusOptions = Object.keys(Building.CONSTRUCTION_STATUSES)
+const constructionStatusOptions = Object.keys(Building.CONSTRUCTION_STATUS_LABELS)
   .reduce((acc, key) => ([
     ...acc,
-    { key, label: Building.CONSTRUCTION_STATUSES[key], initialValue: true }
+    { key, label: Building.CONSTRUCTION_STATUS_LABELS[key], initialValue: true }
   ]), [])
   .filter(({ key }) => key > 0);
 

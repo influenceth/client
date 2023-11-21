@@ -49,12 +49,12 @@ const useCoreSampleManager = (lotId) => {
       ));
       if (actionItem) {
         // current._crewmates = actionItem.assets.crew.crewmates;  // TODO: ...
+        current.origin = actionItem.event.returnValues.origin;
+        current.originSlot = actionItem.event.returnValues.originSlot;
         current.startTime = actionItem.event.timestamp;
       }
       current.finishTime = activeSample.Deposit.finishTime;
       current.isNew = !activeSample.Deposit.improving;
-      current.origin = activeSample.Deposit.origin;
-      current.originSlot = activeSample.Deposit.origin_slot;
       current.owner = activeSample.Control.controller.id;
       current.resourceId = activeSample.Deposit.resource;
       current.sampleId = activeSample.id;
@@ -129,11 +129,13 @@ const useCoreSampleManager = (lotId) => {
     })
   }, [payload]);
 
-  const startImproving = useCallback((depositId) => {
+  const startImproving = useCallback((depositId, coreDrillSource) => {
     execute(
       'SampleDepositImprove',
       {
         deposit: { id: depositId, label: Entity.IDS.DEPOSIT },
+        origin: { id: coreDrillSource.id, label: coreDrillSource.label },
+        origin_slot: coreDrillSource.slot,
         ...payload
       },
       { lotId }

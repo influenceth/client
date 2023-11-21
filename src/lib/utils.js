@@ -3,6 +3,7 @@ import esb from 'elastic-builder';
 
 const timerIncrements = { d: 86400, h: 3600, m: 60, s: 1 };
 export const formatTimer = (secondsRemaining, maxPrecision = null) => {
+  if (isNaN(secondsRemaining)) return '';
   let remainder = secondsRemaining;
   const parts = Object.keys(timerIncrements).reduce((acc, k) => {
     if (acc.length > 0 || remainder >= timerIncrements[k] || timerIncrements[k] === 1) {

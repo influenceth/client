@@ -45,10 +45,9 @@ const PlanBuilding = ({ asteroid, lot, constructionManager, stage, ...props }) =
   const [buildingType, setBuildingType] = useState();
 
   const crewTravelBonus = useMemo(() => {
-    if (!crew) return 0;
-    return getCrewAbilityBonuses(Crewmate.ABILITY_IDS.HOPPER_TRANSPORT_TIME, crew);
+    if (!crew) return {};
+    return getCrewAbilityBonuses(Crewmate.ABILITY_IDS.HOPPER_TRANSPORT_TIME, crew) || {};
   }, [crew]);
-  console.log('crewTravelBonus', crewTravelBonus);
 
   const { totalTime: crewTravelTime, tripDetails } = useMemo(() => {
     if (!asteroid?.id || !crew?._location?.lotId || !lot?.id) return {};

@@ -8,7 +8,7 @@ import useCrewContext from '~/hooks/useCrewContext';
 import useDeliveryManager from '~/hooks/actionManagers/useDeliveryManager';
 import useLot from '~/hooks/useLot';
 import useStore from '~/hooks/useStore';
-import { reactBool, formatTimer, locationsArrToObj } from '~/lib/utils';
+import { reactBool, formatTimer, locationsArrToObj, getCrewAbilityBonuses } from '~/lib/utils';
 import {
   ItemSelectionSection,
   ActionDialogFooter,
@@ -79,7 +79,11 @@ const SurfaceTransfer = ({
 
   const crewmates = (crew?._crewmates || []).map((i) => crewmateMap[i]);
   const captain = crewmates[0];
-  const crewTravelBonus = Crew.getAbilityBonus(Crewmate.ABILITY_IDS.HOPPER_TRANSPORT_TIME, crewmates);
+
+  const crewTravelBonus = useMemo(() => {
+    if (!crew) return {};
+    return getCrewAbilityBonuses(Crewmate.ABILITY_IDS.HOPPER_TRANSPORT_TIME, crew) || {};
+  }, [crew]);
 
   const [destinationSelectorOpen, setDestinationSelectorOpen] = useState(false);
   const [tab, setTab] = useState(0);

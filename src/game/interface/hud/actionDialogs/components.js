@@ -778,6 +778,9 @@ const SelectionTableRow = styled.tr`
       background: rgba(${p.theme.colors.mainRGB}, 0.3) !important;
     }
   `}
+  & > td > small {
+    color: #aaa;
+  }
 `;
 const SelectionTableWrapper = styled.div`
   border: solid ${borderColor};
@@ -1510,13 +1513,13 @@ export const CoreSampleSelectionDialog = ({ lotId, options, initialSelection, on
             </tr>
           </thead>
           <tbody>
-            {options.sort((a, b) => b.remainingYield - a.remainingYield).map((sample) => (
+            {options.sort((a, b) => b.Deposit.remainingYield - a.Deposit.remainingYield).map((sample) => (
               <SelectionTableRow
                 key={sample.id}
                 onClick={() => setSelection(sample)}
-                selectedRow={selection?.resourceId === sample.resource && selection?.id === sample.id}>
-                <td><ResourceColorIcon category={Product.TYPES[sample.resource]?.category} /> {Product.TYPES[sample.resource]?.name} #{sample.id.toLocaleString()}</td>
-                <td>{formatSampleMass(sample.remainingYield * Product.TYPES[sample.resource]?.massPerUnit)} tonnes</td>
+                selectedRow={selection?.id === sample.id}>
+                <td><ResourceColorIcon category={Product.TYPES[sample.Deposit.resource]?.category} /> {Product.TYPES[sample.Deposit.resource]?.name} #{sample.id.toLocaleString()}</td>
+                <td>{formatSampleMass(sample.Deposit.remainingYield * Product.TYPES[sample.Deposit.resource]?.massPerUnit)} tonnes</td>
               </SelectionTableRow>
             ))}
           </tbody>
@@ -1965,6 +1968,31 @@ export const ShipConstructionSelectionDialog = ({ initialSelection, onClose, onS
   );
 };
 
+// TODO: should this be in sdk?
+const getInventorySublabel = (inventoryType) => {
+  switch(inventoryType) {
+    case Inventory.IDS.WAREHOUSE_SITE:
+    case Inventory.IDS.EXTRACTOR_SITE:
+    case Inventory.IDS.REFINERY_SITE:
+    case Inventory.IDS.BIOREACTOR_SITE:
+    case Inventory.IDS.FACTORY_SITE:
+    case Inventory.IDS.SHIPYARD_SITE:
+    case Inventory.IDS.SPACEPORT_SITE:
+    case Inventory.IDS.MARKETPLACE_SITE:
+    case Inventory.IDS.HABITAT_SITE:
+      return 'Site';
+    
+    case Inventory.IDS.PROPELLANT_TINY:
+    case Inventory.IDS.PROPELLANT_SMALL:
+    case Inventory.IDS.PROPELLANT_MEDIUM:
+    case Inventory.IDS.PROPELLANT_LARGE:
+      return 'Propellant';
+    
+    default:  // others are considered "primary" for their entity
+      return '';
+  }
+}
+
 export const InventorySelectionDialog = ({ otherEntity, otherLotId, itemIds, initialSelection, onClose, onSelected, open, requirePresenceOfItemIds }) => {
   const { crew } = useCrewContext();
 
@@ -2003,6 +2031,10 @@ export const InventorySelectionDialog = ({ otherEntity, otherLotId, itemIds, ini
         } else if (itemIds?.length) {
           itemTally = itemIds.filter((itemId) => (inv.contents || []).find((p) => p.product === Number(itemId))?.amount > 0).length;
         }
+        
+        // skip if non-primary and no items
+        const nonPrimaryType = getInventorySublabel(inv.inventoryType);
+        if (nonPrimaryType && itemIds?.length && itemTally === 0) return;
 
         // disable if !available or does not contain itemId
         display.push({
@@ -2014,6 +2046,7 @@ export const InventorySelectionDialog = ({ otherEntity, otherLotId, itemIds, ini
           itemTally,
           key: JSON.stringify({ id: entity.id, label: entity.label, lotId: entityLotId, asteroidId, lotIndex: entityLotIndex, slot: inv.slot }),
           label: entity.Ship ? formatters.shipName(entity) : formatters.buildingName(entity),
+          sublabel: nonPrimaryType,
           lotId: entityLotId,
           lotIndex: entityLotIndex,
           slot: inv.slot,
@@ -2067,7 +2100,7 @@ export const InventorySelectionDialog = ({ otherEntity, otherLotId, itemIds, ini
                       onClick={() => setSelection(inv.key)}
                       selectedRow={inv.key === selection}>
                       <td>{inv.isMine && <MyAssetIcon />}</td>
-                      <td style={{ textAlign: 'left' }}>{inv.label} {inv.isShip && <ShipIcon />}</td>
+                      <td style={{ textAlign: 'left' }}>{inv.label}{inv.sublabel && <small> ({inv.sublabel})</small>} {inv.isShip && <ShipIcon />}</td>
                       <td>{formatSurfaceDistance(inv.distance)}</td>
                       {specifiedItems && <td>{inv.itemTally.toLocaleString()}</td>}
                     </SelectionTableRow>
@@ -2122,7 +2155,7 @@ export const getBuildingRequirements = (building = {}, deliveryActions = []) => 
     const inInventory = (inventory?.contents || []).find((c) => Number(c.product) === Number(productId))?.amount || 0;
     const inTransit = deliveryActions
       .filter((d) => d.status !== 'FINISHED')
-      .reduce((acc, d) => acc + (d.action.contents.find((c) => Number(c.product) === Number(productId))?.amount || 0), 0);
+      .reduce((acc, d) => acc + (d.action.contents.find((c) => Number(c.product) === Number(productId))?.amount) || 0, 0);
     return {
       i: productId,
       totalRequired,
@@ -3170,7 +3203,7 @@ export const InventoryInputBlock = ({ entity, inventorySlot, fallbackLabel = 'Se
     }
     const lotIndex = locationsArrToObj(entity?.Location?.locations || []).lotIndex;
     if (entity?.label === Entity.IDS.BUILDING) {
-      const unfinished = entity?.Building?.status !== Building.CONSTRUCTION_STATUS_IDS.OPERATIONAL;
+      const unfinished = entity?.Building?.status !== Building.CONSTRUCTION_STATUSES.OPERATIONAL;
       return {
         image: (
           <BuildingImage
@@ -3648,7 +3681,7 @@ export const BonusTooltip = ({ bonus, crewRequired, details, title, titleValue, 
     (others || []).forEach(({ text, bonus, direction }) => {
       x.push({ text, bonus, direction });
     });
-    if (timeMultiplier !== 1) {
+    if (timeMultiplier > 0 && timeMultiplier !== 1) {
       x.push({
         text: `Time Acceleration`,
         multiplier: timeMultiplier,
@@ -3656,7 +3689,9 @@ export const BonusTooltip = ({ bonus, crewRequired, details, title, titleValue, 
       });
     }
 
-    return x.sort((a, b) => b.bonus - a.bonus);
+    return x
+      .filter((b) => (b.multiplier !== undefined && b.multiplier !== 1) || (b.bonus !== undefined && b.bonus !== 0))
+      .sort((a, b) => b.bonus - a.bonus);
   }, [titles, traits]);
 
   return (
@@ -3769,7 +3804,7 @@ export const getBonusDirection = ({ totalBonus }, biggerIsBetter = true) => {
   return (biggerIsBetter === (totalBonus > 1)) ? 1 : -1;
 };
 
-export const getTripDetails = (asteroidId, crewTravelBonus, originLotIndex, steps, timeAcceleration) => {
+export const getTripDetails = (asteroidId, crewTravelBonus, originLotIndex, steps) => {
   let currentLotIndex = originLotIndex;
   let totalDistance = 0;
   let totalTime = 0;

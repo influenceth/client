@@ -93,7 +93,7 @@ const useColumns = () => {
         sortField: 'Building.status',
         selector: row => {
           if (row.Building?.status) {
-            return Building.CONSTRUCTION_STATUSES[row.Building.status];
+            return Building.CONSTRUCTION_STATUS_LABELS[row.Building.status];
           }
           return null;
         }

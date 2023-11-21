@@ -7,7 +7,7 @@ import useCrewContext from '~/hooks/useCrewContext';
 import useDeliveryManager from '~/hooks/actionManagers/useDeliveryManager';
 import useLot from '~/hooks/useLot';
 import useStore from '~/hooks/useStore';
-import { reactBool, formatTimer, locationsArrToObj } from '~/lib/utils';
+import { reactBool, formatTimer, locationsArrToObj, getCrewAbilityBonuses } from '~/lib/utils';
 import {
   ActionDialogFooter,
   ActionDialogHeader,
@@ -38,13 +38,18 @@ import actionStage from '~/lib/actionStages';
 
 const TransferToSite = ({ asteroid, lot: destinationLot, deliveryManager, stage, ...props }) => {
   const createAlert = useStore(s => s.dispatchAlertLogged);
+  const onSetAction = useStore(s => s.dispatchActionDialog);
 
   const { currentDeliveryActions, startDelivery } = deliveryManager;
   const { crew, crewmateMap } = useCrewContext();
 
   const crewmates = (crew?._crewmates || []).map((i) => crewmateMap[i]);
   const captain = crewmates[0];
-  const crewTravelBonus = Crew.getAbilityBonus(Crewmate.ABILITY_IDS.HOPPER_TRANSPORT_TIME, crewmates);
+
+  const crewTravelBonus = useMemo(() => {
+    if (!crew) return {};
+    return getCrewAbilityBonuses(Crewmate.ABILITY_IDS.HOPPER_TRANSPORT_TIME, crew) || {};
+  }, [crew]);
 
   const [originSelectorOpen, setOriginSelectorOpen] = useState(false);
   const [transferSelectorOpen, setTransferSelectorOpen] = useState();
@@ -162,6 +167,24 @@ const TransferToSite = ({ asteroid, lot: destinationLot, deliveryManager, stage,
     () => getBuildingRequirements(destinationLot?.building, currentDeliveryActions),
     [destinationLot?.building, currentDeliveryActions]
   );
+
+  useEffect(() => {
+    if (destinationLot?.building && !buildingRequirements.find((r) => r.inNeed > 0)) {
+      onSetAction('CONSTRUCT');
+    }
+  }, [buildingRequirements, destinationLot?.building, onSetAction]);
+
+  useEffect(() => {
+    if (!destinationInventory) {
+      createAlert({
+        type: 'GenericAlert',
+        data: { content: 'Destination has no available inventories.' },
+        duration: 5000,
+        level: 'warning',
+      });
+      if (props.onClose) props.onClose();
+    }
+  }, [destinationInventory])
 
   return (
     <>

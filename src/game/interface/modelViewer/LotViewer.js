@@ -13,7 +13,7 @@ const LotViewer = () => {
   const { data: lot, isLoading } = useLot(lotId);
 
   const modelUrl = useMemo(() => {
-    if (lot?.building?.Building?.status === Building.CONSTRUCTION_STATUS_IDS.OPERATIONAL) {
+    if (lot?.building?.Building?.status === Building.CONSTRUCTION_STATUSES.OPERATIONAL) {
       return getBuildingModel(lot.building.Building.buildingType);
     }
     return getBuildingModel(0);

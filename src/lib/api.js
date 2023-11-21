@@ -81,7 +81,7 @@ const api = {
 
   getCrewPlannedBuildings: async (crewId) => {
     const queryBuilder = esb.boolQuery();
-    queryBuilder.filter(esb.termQuery('Building.status', Building.CONSTRUCTION_STATUS_IDS.PLANNED));
+    queryBuilder.filter(esb.termQuery('Building.status', Building.CONSTRUCTION_STATUSES.PLANNED));
     queryBuilder.filter(esb.termQuery('Control.controller.id', crewId));
 
     const q = esb.requestBodySearch();
@@ -261,12 +261,6 @@ const api = {
     return response.status;
   },
 
-  getAsteroid: async (id) => { //, extended = false) => {
-    // TODO: deprecate `extended` OR need to pass extra queryString to getEntityById OR need a separate call for that data
-    // const response = await instance.get(`/${apiVersion}/asteroids/${i}${extended ? '?extended=1' : ''}`);
-    return getEntityById({ label: Entity.IDS.ASTEROID, id });
-  },
-
   getAsteroids: async (ids) => {
     return ids?.length > 0 ? getEntities({ ids, label: Entity.IDS.ASTEROID }) : [];
   },
@@ -303,11 +297,6 @@ const api = {
     return [];
   },
 
-  // TODO: ecs refactor -- probably better to use a single resolve location endpoint
-  getBuilding: async (id) => {
-    return getEntityById({ label: Entity.IDS.BUILDING, id });
-  },
-
   getCrewShips: async (c) => {
     return getEntities({
       match: { 'Control.controller.id': c },
@@ -328,6 +317,7 @@ const api = {
       components: [ 'Building', 'Control', 'Deposit', 'Inventory', 'Location' ]
     });
 
+    // NOTE: if add to these entity types, need to update useLot hook
     entity.building = entities.find(e => e.label === Entity.IDS.BUILDING);
     entity.ship = entities.find(e => e.label === Entity.IDS.SHIP);  // TODO: should this be an array?
     entity.deposits = entities.filter(e => e.label === Entity.IDS.DEPOSIT);
@@ -343,24 +333,12 @@ const api = {
     return getEntities({ match: { 'Crew.delegatedTo': account }, label: Entity.IDS.CREW });
   },
 
-  getCrew: async (id) => {
-    return getEntityById({ id, label: Entity.IDS.CREW });
-  },
-
-  getCrewmate: async (id) => {
-    return getEntityById({ id, label: Entity.IDS.CREWMATE });
-  },
-
   getCrewmates: async (ids) => {
     return ids?.length > 0 ? getEntities({ ids, label: Entity.IDS.CREWMATE }) : [];
   },
 
   getAccountCrewmates: async (account) => {
     return getEntities({ match: { 'Nft.owners.starknet': account }, label: Entity.IDS.CREWMATE });
-  },
-
-  getShip: async (id) => {
-    return getEntityById({ id, label: Entity.IDS.SHIP });
   },
 
   getShipCrews: async (shipId) => {

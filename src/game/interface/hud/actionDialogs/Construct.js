@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import styled from 'styled-components';
-import { Building, Crew, Crewmate, Delivery, Entity } from '@influenceth/sdk';
+import { Building, Crewmate, Lot } from '@influenceth/sdk';
 
 import constructionBackground from '~/assets/images/modal_headers/Construction.png';
 import {
@@ -10,7 +10,7 @@ import {
 import useCrewContext from '~/hooks/useCrewContext';
 import theme, { hexToRGB } from '~/theme';
 import useConstructionManager from '~/hooks/actionManagers/useConstructionManager';
-import { reactBool, formatTimer } from '~/lib/utils';
+import { reactBool, formatTimer, getCrewAbilityBonuses } from '~/lib/utils';
 
 import {
   BuildingRequirementsSection,
@@ -26,7 +26,8 @@ import {
   FlexSectionSpacer,
   ProgressBarSection,
   getBuildingRequirements,
-  LotInputBlock
+  LotInputBlock,
+  getTripDetails
 } from './components';
 import { ActionDialogInner, useAsteroidAndLot } from '../ActionDialog';
 import actionStage from '~/lib/actionStages';
@@ -57,22 +58,26 @@ const Construct = ({ asteroid, lot, constructionManager, stage, ...props }) => {
 
   const crewmates = currentConstructionAction?._crewmates || (crew?._crewmates || []).map((i) => crewmateMap[i]);
   const captain = crewmates[0];
-  const crewTravelBonus = Crew.getAbilityBonus(Crewmate.ABILITY_IDS.HOPPER_TRANSPORT_TIME, crewmates);
-  const constructionBonus = Crew.getAbilityBonus(Crewmate.ABILITY_IDS.CONSTRUCTION_TIME, crewmates);
 
-  // TODO: ...
-  // const { totalTime: crewTravelTime, tripDetails } = useMemo(() => {
-  //   if (!asteroid?.id || !lot?.id) return {};
-  //   return getTripDetails(asteroid.id, crewTravelBonus.totalBonus, 1, [
-  //     { label: 'Travel to destination', lot: lot.id },
-  //     { label: 'Return from destination', lot: 1 },
-  //   ])
-  // }, [asteroid?.id, lot?.id, crewTravelBonus]);
-  const crewTravelTime = 0;
-  const tripDetails = null;
+  const [crewTravelBonus, constructionBonus] = useMemo(() => {
+    const bonusIds = [Crewmate.ABILITY_IDS.HOPPER_TRANSPORT_TIME, Crewmate.ABILITY_IDS.CONSTRUCTION_TIME];
+    const abilities = getCrewAbilityBonuses(bonusIds, crew);
+    return bonusIds.map((id) => abilities[id] || {});
+  }, [crew])
+
+  const { totalTime: crewTravelTime, tripDetails } = useMemo(() => {
+    if (!asteroid?.id || !crew?._location?.lotId || !lot?.id) return {};
+    const crewLotIndex = Lot.toIndex(crew?._location?.lotId);
+    return getTripDetails(asteroid.id, crewTravelBonus.totalBonus, crewLotIndex, [
+      { label: 'Travel to Construction Site', lotIndex: Lot.toIndex(lot.id) },
+      { label: 'Return to Crew Station', lotIndex: crewLotIndex },
+    ]);
+  }, [asteroid?.id, lot?.id, crewTravelBonus]);
 
   const constructionTime = useMemo(() =>
-    lot?.building?.Building?.buildingType ? Building.getConstructionTime(lot?.building?.Building?.buildingType, constructionBonus.totalBonus) : 0,
+    lot?.building?.Building?.buildingType
+      ? Building.getConstructionTime(lot?.building?.Building?.buildingType, constructionBonus.totalBonus)
+      : 0,
     [lot?.building?.Building?.buildingType, constructionBonus.totalBonus]
   );
 
@@ -131,15 +136,15 @@ const Construct = ({ asteroid, lot, constructionManager, stage, ...props }) => {
   }, [constructionStatus]);
 
   const transferToSite = useCallback(() => {
-    props.onSetAction('TRANSFER_TO_SITE', {});  // TODO: 
+    props.onSetAction('TRANSFER_TO_SITE', {});
   }, []);
 
   const [buildingRequirements, requirementsMet, waitingOnTransfer] = useMemo(() => {
-    const reqs = getBuildingRequirements(lot?.building, currentDeliveryActions);
+    const reqs = getBuildingRequirements(lot?.building, constructionStatus === 'PLANNED' ? currentDeliveryActions : []);
     const met = !reqs.find((req) => req.inNeed > 0);
     const wait = reqs.find((req) => req.inTransit > 0);
-    return [reqs, met, wait];
-  }, [lot?.building, currentDeliveryActions]);
+    return [reqs, constructionStatus === 'PLANNED' ? met : true, wait];
+  }, [lot?.building, constructionStatus, currentDeliveryActions]);
 
   return (
     <>

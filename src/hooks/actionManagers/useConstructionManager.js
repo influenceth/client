@@ -63,7 +63,7 @@ const useConstructionManager = (lotId) => {
       current.finishTime = lot.building.Building?.finishTime;
       current.crewId = lot.building.Control?.controller?.id;
 
-      if (lot.building.Building.status === Building.CONSTRUCTION_STATUS_IDS.PLANNED) {
+      if (lot.building.Building.status === Building.CONSTRUCTION_STATUSES.PLANNED) {
         if (getStatus('ConstructionStart', payload) === 'pending') {
           status = 'UNDER_CONSTRUCTION';
           stages.construct = actionStage.STARTING;
@@ -93,7 +93,7 @@ const useConstructionManager = (lotId) => {
           }
         }
 
-      } else if (lot.building.Building.status === Building.CONSTRUCTION_STATUS_IDS.UNDER_CONSTRUCTION) {
+      } else if (lot.building.Building.status === Building.CONSTRUCTION_STATUSES.UNDER_CONSTRUCTION) {
         if (getStatus('ConstructionFinish', payload) === 'pending') {
           status = 'FINISHING';
           stages.construct = actionStage.COMPLETING;
@@ -105,7 +105,7 @@ const useConstructionManager = (lotId) => {
           stages.construct = actionStage.IN_PROGRESS;
         }
 
-      } else if (lot.building.Building.status === Building.CONSTRUCTION_STATUS_IDS.OPERATIONAL) {
+      } else if (lot.building.Building.status === Building.CONSTRUCTION_STATUSES.OPERATIONAL) {
         if (getStatus('ConstructionDeconstruct', payload) === 'pending') {
           status = 'DECONSTRUCTING';
           deconstructTx = getPendingTx('ConstructionDeconstruct', payload);

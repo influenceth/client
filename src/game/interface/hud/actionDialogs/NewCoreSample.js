@@ -8,7 +8,7 @@ import useCrewContext from '~/hooks/useCrewContext';
 import useStore from '~/hooks/useStore';
 import useCoreSampleManager from '~/hooks/actionManagers/useCoreSampleManager';
 import actionStage from '~/lib/actionStages';
-import { reactBool, formatFixed, formatTimer } from '~/lib/utils';
+import { reactBool, formatFixed, formatTimer, locationsArrToObj, getCrewAbilityBonuses } from '~/lib/utils';
 
 import {
   ActionDialogBody,
@@ -34,10 +34,12 @@ import {
   InventorySelectionDialog,
 } from './components';
 import { ActionDialogInner, theming, useAsteroidAndLot } from '../ActionDialog';
+import useEntity from '~/hooks/useEntity';
 
 const NewCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }) => {
   const { currentSamplingAction, startSampling, finishSampling, samplingStatus } = coreSampleManager;
   const { crew, crewmateMap } = useCrewContext();
+  const { data: originEntity } = useEntity(currentSamplingAction?.origin ? { ...currentSamplingAction.origin } : props.preselect?.origin);
 
   const dispatchResourceMapSelect = useStore(s => s.dispatchResourceMapSelect);
   const dispatchResourceMapToggle = useStore(s => s.dispatchResourceMapToggle);
@@ -53,16 +55,13 @@ const NewCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }) =>
   useEffect(() => {
     if (currentSamplingAction) {
       setSampleId(currentSamplingAction.sampleId);
-
-      setDrillSource({
-        // ...currentSamplingAction.origin,
-        // // TODO: need to populate lotIndex from origin entity
-        // slot: currentSamplingAction.origin_slot
-
-        // TODO: remove this, uncomment above
-        lotIndex: 1615682,
-        slot: 1,
-      });
+      if (originEntity) {
+        const { lotIndex } = locationsArrToObj(originEntity.Location.locations || []);
+        setDrillSource({
+          lotIndex,
+          slot: currentSamplingAction.origin_slot
+        });
+      }
       if (currentSamplingAction.resourceId !== resourceId) {
         setResourceId(currentSamplingAction.resourceId)
       }
@@ -71,7 +70,7 @@ const NewCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }) =>
         dispatchResourceMapToggle(true);
       }
     }
-  }, [currentSamplingAction]);
+  }, [currentSamplingAction, originEntity]);
 
   const onSelectResource = useCallback((r) => {
     setResourceId(r);
@@ -86,8 +85,7 @@ const NewCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }) =>
     if (lot?.deposits && resourceId && sampleId) {
       const thisSample = lot.deposits.find((s) => s.id === sampleId && s.Deposit.resource === resourceId);
       if (thisSample) {
-        // TODO: ecs refactor: with the db changes, double-check that key is still only conditionally included
-        const initialYieldTonnage = Object.keys(thisSample.Deposit).includes('initialYield')
+        const initialYieldTonnage = thisSample.Deposit.initialYield
           ? thisSample.Deposit.initialYield * Product.TYPES[resourceId].massPerUnit
           : undefined;
         return [thisSample, initialYieldTonnage];
@@ -115,16 +113,17 @@ const NewCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }) =>
 
   const crewmates = currentSamplingAction?._crewmates || crew?._crewmates || [];
   const captain = crewmates[0];
-  // console.log('Crewmate.ABILITY_IDS.CORE_SAMPLE_TIME', Crewmate.ABILITY_IDS.CORE_SAMPLE_TIME, crewmates.map((c) => c.Crewmate));
-  const sampleTimeBonus = Crew.getAbilityBonus(Crewmate.ABILITY_IDS.CORE_SAMPLE_TIME, crewmates);
-  const sampleQualityBonus = Crew.getAbilityBonus(Crewmate.ABILITY_IDS.CORE_SAMPLE_QUALITY, crewmates);
-  const crewTravelBonus = Crew.getAbilityBonus(Crewmate.ABILITY_IDS.HOPPER_TRANSPORT_TIME, crewmates);
+
+  const [sampleTimeBonus, sampleQualityBonus, crewTravelBonus] = useMemo(() => {
+    const bonusIds = [Crewmate.ABILITY_IDS.HOPPER_TRANSPORT_TIME, Crewmate.ABILITY_IDS.CORE_SAMPLE_QUALITY, Crewmate.ABILITY_IDS.CORE_SAMPLE_TIME];
+    const abilities = getCrewAbilityBonuses(bonusIds, crew);
+    return bonusIds.map((id) => abilities[id] || {});
+  }, [crew]);
 
   const { totalTime: crewTravelTime, tripDetails } = useMemo(() => {
     if (!asteroid?.id || !crew?._location?.lotId || !lot?.id || !drillSource?.lotIndex) return {};
     const crewLotIndex = Lot.toIndex(crew?._location?.lotId);
     return getTripDetails(asteroid.id, crewTravelBonus.totalBonus, crewLotIndex, [
-      { label: `Retrieve ${Product.TYPES[175].name}`, lotIndex: drillSource.lotIndex },
       { label: 'Travel to Sampling Site', lotIndex: Lot.toIndex(lot.id) },
       { label: 'Return to Crew Station', lotIndex: crewLotIndex },
     ]);
@@ -132,6 +131,16 @@ const NewCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }) =>
 
   const sampleBounds = Deposit.getSampleBounds(lotAbundance, 0, sampleQualityBonus.totalBonus);
   const sampleTime = Deposit.getSampleTime(sampleTimeBonus.totalBonus);
+
+  const [crewTimeRequirement, taskTimeRequirement] = useMemo(() => {
+    if (!asteroid?.id || !crew?._location?.lotId || !lot?.id || !drillSource?.lotIndex) return [];
+    const oneWayCrewTravelTime = crewTravelTime / 2;
+    const drillTravelTime = Asteroid.getLotTravelTime(asteroid.id, drillSource?.lotIndex, Lot.toIndex(lot.id), crewTravelBonus.totalBonus);
+    return [
+      Math.max(oneWayCrewTravelTime, drillTravelTime) + sampleTime + oneWayCrewTravelTime,
+      Math.max(oneWayCrewTravelTime, drillTravelTime) + sampleTime
+    ];
+  }, [asteroid?.id, crew?._location?.lotId, drillSource?.lotIndex, lot?.id, crewTravelBonus]);
 
   const stats = useMemo(() => ([
     {
@@ -205,8 +214,8 @@ const NewCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }) =>
         }}
         captain={captain}
         location={{ asteroid, lot }}
-        crewAvailableTime={crewTravelTime + sampleTime}
-        taskCompleteTime={crewTravelTime + sampleTime}
+        crewAvailableTime={crewTimeRequirement}
+        taskCompleteTime={taskTimeRequirement}
         onClose={props.onClose}
         stage={stage} />
 
@@ -271,7 +280,7 @@ const NewCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }) =>
             startTime={currentSamplingAction?.startTime}
             stage={stage}
             title="Progress"
-            totalTime={crewTravelTime + sampleTime}
+            totalTime={taskTimeRequirement}
           />
         )}
 

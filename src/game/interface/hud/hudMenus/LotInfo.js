@@ -10,6 +10,7 @@ import useLot from '~/hooks/useLot';
 import ResourceRequirement from '~/components/ResourceRequirement';
 import { getBuildingRequirements } from '../actionDialogs/components';
 import { getBuildingIcon } from '~/lib/assetUtils';
+import useDeliveryManager from '~/hooks/actionManagers/useDeliveryManager';
 
 const Wrapper = styled.div`
   display: flex;
@@ -127,6 +128,7 @@ const ItemsList = styled.div`
   & > div {
     flex-shrink: 0;
     margin-right: 6px;
+    margin-bottom: 4px;
     &:last-child {
       margin-right: 0;
     }
@@ -134,46 +136,47 @@ const ItemsList = styled.div`
 `;
 
 const ConstructionPlan = ({ buildingType, planningLot }) => {
+  const { currentDeliveryActions } = useDeliveryManager({ destination: planningLot?.building });
   const thumbUrl = getBuildingIcon(buildingType, 'w400', true);
 
-  const items = useMemo(
-    () => {
-      const requirements = getBuildingRequirements(planningLot);
-      return requirements.map((item) => ({
-        i: item.id,
-        numerator: item.inInventory + item.inTransit,
-        denominator: item.totalRequired,
-        customIcon: item.inTransit > 0
-          ? {
-            animated: true,
-            icon: <SurfaceTransferIcon />
-          }
-          : undefined
-      }));
-    },
-    [planningLot]
-  );
+  const items = useMemo(() => {
+    if (!planningLot?.building) return [];
+    const requirements = getBuildingRequirements(planningLot.building, currentDeliveryActions);
+    return requirements.map((item) => ({
+      i: Number(item.i),
+      numerator: item.inInventory + item.inTransit,
+      denominator: item.totalRequired,
+      customIcon: item.inTransit > 0
+        ? {
+          animated: true,
+          icon: <SurfaceTransferIcon />
+        }
+        : undefined
+    }));
+  }, [planningLot, currentDeliveryActions]);
 
   return (
     <>
       <SiteThumb image={thumbUrl}>
         <ClipCorner color="#333" dimension={10} />
       </SiteThumb>
-      <Requirements>
-        <label>Required Materials</label>
-        <ItemsList>
-          {items.map((item) => (
-            <ResourceRequirement
-              key={item.i}
-              isGathering={!!planningLot}
-              noStyles={!planningLot}
-              item={item}
-              resource={Product.TYPES[item.i]}
-              size="85px"
-              tooltipContainer="hudMenu" />
-          ))}
-        </ItemsList>
-      </Requirements>
+      {items.length > 0 && (
+        <Requirements>
+          <label>Required Materials</label>
+          <ItemsList>
+            {items.map((item) => (
+              <ResourceRequirement
+                key={item.i}
+                isGathering={!!planningLot}
+                noStyles={!planningLot}
+                item={item}
+                resource={Product.TYPES[item.i]}
+                size="85px"
+                tooltipContainer="hudMenu" />
+            ))}
+          </ItemsList>
+        </Requirements>
+      )}
     </>
   );
 };
@@ -238,7 +241,8 @@ const LotInfo = () => {
         </HudMenuCollapsibleSection>
       </Wrapper>
     );
-  }
+  };
+
   return (
     <Wrapper>
       <HudMenuCollapsibleSection titleText={Building.TYPES[lot.building?.Building?.buildingType]?.name}>
@@ -289,14 +293,14 @@ const LotInfo = () => {
         )}
       </HudMenuCollapsibleSection>
 
-      {/* <HudMenuCollapsibleSection
+      <HudMenuCollapsibleSection
         titleText="Construction"
         collapsed={lot.building.Building.status === Building.CONSTRUCTION_STATUSES.OPERATIONAL}
         borderless>
         <ConstructionPlan
           buildingType={lot.building.Building.buildingType}
           planningLot={lot.building.Building.status === Building.CONSTRUCTION_STATUSES.PLANNED ? lot : null} />
-      </HudMenuCollapsibleSection> */}
+      </HudMenuCollapsibleSection>
     </Wrapper>
   );
 };

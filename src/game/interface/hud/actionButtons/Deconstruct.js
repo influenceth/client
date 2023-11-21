@@ -10,6 +10,7 @@ const labelDict = {
 };
 
 const Deconstruct = ({ asteroid, lot, onSetAction, _disabled }) => {
+  return null;
   const { constructionStatus } = useConstructionManager(lot?.id);
   const handleClick = useCallback(() => {
     onSetAction('DECONSTRUCT');

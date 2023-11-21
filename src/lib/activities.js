@@ -240,15 +240,18 @@ const activities = {
         ['asteroidCrewBuildings', asteroidId, returnValues.callerCrew.id],
       ]
     },
-    getLogContent: ({ event: { returnValues } }, { building = {} }) => ({
-      icon: <ConstructIcon />,
-      content: (
-        <>
-          <span>{Building.TYPES[building?.Building?.buildingType]?.name || 'Building'} construction finished on </span>
-          <LotLink lotId={locationsArrToObj(building?.Location?.locations || [])?.lotId} />
-        </>
-      ),
-    }),
+    getLogContent: ({ event: { returnValues } }, { building = {} }) => {
+      console.log('GET LOG CONTENT', returnValues, building, locationsArrToObj(building?.Location?.locations || [])?.lotId);
+      return {
+        icon: <ConstructIcon />,
+        content: (
+          <>
+            <span>{Building.TYPES[building?.Building?.buildingType]?.name || 'Building'} construction finished on </span>
+            <LotLink lotId={locationsArrToObj(building?.Location?.locations || [])?.lotId} />
+          </>
+        ),
+      };
+    },
     getPrepopEntities: ({ event: { returnValues } }) => ({
       building: returnValues.building,
     }),
@@ -513,16 +516,19 @@ const activities = {
       ];
 
       if (delivery?.Delivery?.dest) {
+        console.log('1');
         invs.unshift(...invalidationDefaults(delivery.Delivery.dest.label, delivery.Delivery.dest.id));
       }
 
       const _originLocation = locationsArrToObj(origin?.Location?.locations || []);
       if (_originLocation.lotId) {
+        console.log('2');
         invs.unshift(...invalidationDefaults(Entity.IDS.LOT, _originLocation.lotId));
       }
 
       const _destLocation = locationsArrToObj(destination?.Location?.locations || []);
       if (_destLocation.lotId) {
+        console.log('3'); // TODO: this is not firing
         invs.unshift(...invalidationDefaults(Entity.IDS.LOT, _destLocation.lotId));
       }
 
@@ -541,11 +547,15 @@ const activities = {
         ),
       };
     },
-    getPrepopEntities: ({ event: { returnValues } }) => ({
+    getPrepopEntities: ({ event: { returnValues } }) => {
+      console.log('DeliveryFinished returnValues', returnValues);
+      // TODO: only delivery and caller crew are actually returned
+      return {
       delivery: returnValues.delivery,
       destination: returnValues.destination,
       origin: returnValues.origin,
-    }),
+    };
+  },
     triggerAlert: true
   },
 
@@ -843,13 +853,13 @@ const activities = {
       return pendingTransactions.find((tx) => (
         tx.key === 'SampleDepositFinish'
         && tx.vars.deposit.id === returnValues.deposit.id
-      ))
+      ));
     },
     getInvalidations: ({ event: { returnValues, version } }, { origin }) => ([
-      ...invalidationDefaults(Entity.IDS.LOT, returnValues.lot.id), // sampling lot
-      ...(origin ? invalidationDefaults(Entity.IDS.LOT, locationsArrToObj(origin?.Location?.locations || [])?.lotId) : []), // source lot
       ...invalidationDefaults(Entity.IDS.DEPOSIT, returnValues.deposit.id), // (not sure this exists)
       ...(version > 0 ? invalidationDefaults(returnValues.origin.label, returnValues.origin.id) : []), // source inventory
+      ...invalidationDefaults(Entity.IDS.LOT, returnValues.lot.id), // sampling lot
+      ...(origin ? invalidationDefaults(Entity.IDS.LOT, locationsArrToObj(origin?.Location?.locations || [])?.lotId) : []), // source lot
       ['actionItems'],
       ['asteroidCrewSampledLots', Lot.toPosition(returnValues.lot.id)?.asteroidId, returnValues.resource],
     ]),
