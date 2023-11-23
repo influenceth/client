@@ -109,7 +109,7 @@ const LotResources = () => {
   const { data: asteroid } = useAsteroid(asteroidId);
   const { data: lot } = useLot(lotId);
   const { currentSamplingAction } = useCoreSampleManager(lotId);
-  const { currentExtractionAction } = useExtractionManager(lotId);
+  const { currentExtraction } = useExtractionManager(lotId);
 
   const [showAllAbundances, setShowAllAbundances] = useState();
   const [showAllSamples, setShowAllSamples] = useState();
@@ -209,7 +209,7 @@ const LotResources = () => {
 
   const extraExtractParams = useMemo(() => {
     const params = {};
-    if (!currentExtractionAction) {
+    if (!currentExtraction) {
       if (selectedSample) {
         params.preselect = { ...selectedSample };
         if (selectedSample.Deposit?.remainingYield === 0) {
@@ -218,7 +218,7 @@ const LotResources = () => {
       }
     }
     return params;
-  }, [currentExtractionAction, selectedSample]);
+  }, [currentExtraction, selectedSample]);
 
   const sampleTally = showAllSamples
     ? (ownedSamples.length - depletedSamples.length)
@@ -302,7 +302,7 @@ const LotResources = () => {
           </HudMenuCollapsibleSection>
       </Wrapper>
 
-      {(currentSamplingAction || selectedResource || selectedSample || currentExtractionAction) && (
+      {(currentSamplingAction || selectedResource || selectedSample || currentExtraction) && (
         <Tray>
           <>
             {(currentSamplingAction || selectedResource || selectedSample) && (
@@ -310,7 +310,7 @@ const LotResources = () => {
             )}
             {/* TODO: list sample for sale */}
             {/* TODO: purchase sample for sale (if one is selected) */}
-            {(currentExtractionAction || selectedSample) && (
+            {(currentExtraction || selectedSample) && (
               <actionButtons.Extract {...actionProps} {...extraExtractParams} />
             )}
           </>

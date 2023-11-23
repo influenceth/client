@@ -117,6 +117,9 @@ const customConfigs = {
   ConstructionPlan: { equalityTest: ['lot.id'] },
   ConstructionStart: { equalityTest: ['building.id'] },
 
+  ExtractResourceStart: { equalityTest: ['extractor.id', 'extractor_slot'] },
+  ExtractResourceFinish: { equalityTest: ['extractor.id', 'extractor_slot'] },
+
   SampleDepositFinish: { equalityTest: ['lot.id', 'caller_crew.id'] },
   SampleDepositImprove: { equalityTest: ['lot.id', 'caller_crew.id'] },
   SampleDepositStart: { equalityTest: ['lot.id', 'caller_crew.id'] },

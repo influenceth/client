@@ -1,5 +1,5 @@
 import { useCallback, useContext, useMemo } from 'react';
-import { Extractor } from '@influenceth/sdk';
+import { Entity, Extractor } from '@influenceth/sdk';
 
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
 import useActionItems from '~/hooks/useActionItems';
@@ -7,53 +7,59 @@ import useCrewContext from '~/hooks/useCrewContext';
 import useLot from '~/hooks/useLot';
 import actionStages from '~/lib/actionStages';
 
-// TODO: support multiple extractors
-const useExtractionManager = (lotId, slot = 0) => {
+// TODO: truly support multiple extractors
+const useExtractionManager = (lotId, slot = 1) => {
   const { actionItems, readyItems, liveBlockTime } = useActionItems();
   const { execute, getPendingTx, getStatus } = useContext(ChainTransactionContext);
   const { crew } = useCrewContext();
   const { data: lot } = useLot(lotId);
 
   const payload = useMemo(() => ({
-    lotId,
-    crewId: crew?.id
-  }), [lotId, crew?.id]);
+    extractor: { id: lot?.building?.id, label: Entity.IDS.BUILDING },
+    extractor_slot: slot,
+    caller_crew: { id: crew?.id, label: Entity.IDS.CREW }
+  }), [lot?.building, crew?.id, slot]);
 
   // status flow
   // READY > EXTRACTING > READY_TO_FINISH > FINISHING
-  const [currentExtractionAction, extractionStatus, actionStage] = useMemo(() => {
+  const [currentExtraction, extractionStatus, actionStage] = useMemo(() => {
     let current = {
       _crewmates: null,
       finishTime: null,
-      destinationLotId: null,
-      destinationInventoryId: null,
+      destination: null,
+      destinationSlot: null,
       resourceId: null,
-      sampleId: null,
+      depositId: null,
       startTime: null,
       yield: null,
       isCoreSampleUpdated: false
     };
+    // 
+    // TODO: destinationLotId --> destination, destinationInventoryId --> destinationSlot
   
     let status = 'READY';
     let stage = actionStages.NOT_STARTED;
-    if (lot?.building?.Extractors?.[slot]?.status === Extractor.STATUSES.RUNNING) {
+    const slotExtractor = lot?.building?.Extractors?.find((e) => e.slot === slot);
+    if (slotExtractor?.status === Extractor.STATUSES.RUNNING) {
       let actionItem = (actionItems || []).find((item) => (
-        item.event.name === 'Dispatcher_ExtractionStart'
-        && item.event.returnValues.lotId === lotId
+        item.event.name === 'ResourceExtractionStarted'
+        && item.event.returnValues.extractor.id === lot.building.id
+        && item.event.returnValues.extractorSlot === slot
       ));
       if (actionItem) {
-        current._crewmates = actionItem.assets.crew.crewmates;
-        current.destinationLotId = actionItem.event.returnValues.destinationLotId;
-        current.destinationInventoryId = actionItem.event.returnValues.destinationInventoryId;
-        current.sampleId = actionItem.event.returnValues.sampleId;
-        current.startTime = actionItem.startTime;
+        // current._crewmates = actionItem.assets.crew.crewmates; // TODO: ...
+        current.depositId = actionItem.event.returnValues.deposit.id;
+        current.startTime = actionItem.event.timestamp;
       }
-      current.finishTime = lot.building?.Extractors?.[slot]?.finishTime;
-      current.resourceId = lot.building?.Extractors?.[slot]?.resourceId;
-      current.yield = lot.building?.Extractors?.[slot]?.yield;
+      current.destination = slotExtractor?.destination;
+      current.destinationSlot = slotExtractor?.destinationSlot;
+      current.finishTime = slotExtractor?.finishTime;
+      current.resourceId = slotExtractor?.outputProduct;
+      current.yield = slotExtractor?.yield;
+
       current.isCoreSampleUpdated = true;
       
-      if(getStatus('FINISH_EXTRACTION', payload) === 'pending') {
+      if(getStatus('ExtractResourceFinish', payload) === 'pending') {
         status = 'FINISHING';
         stage = actionStages.COMPLETING;
       } else if (lot.building?.Extractors?.[slot]?.finishTime && lot.building?.Extractors?.[slot]?.finishTime <= liveBlockTime) {
@@ -64,13 +70,13 @@ const useExtractionManager = (lotId, slot = 0) => {
         stage = actionStages.IN_PROGRESS;
       }
     } else {
-      const startTx = getPendingTx('START_EXTRACTION', payload);
+      const startTx = getPendingTx('ExtractResourceStart', payload);
       if (startTx) {
-        current.destinationLotId = startTx.vars.destinationLotId;
-        current.destinationInventoryId = startTx.vars.destinationInventoryId;
-        current.resourceId = startTx.vars.resourceId;
-        current.sampleId = startTx.vars.sampleId;
-        current.yield = startTx.vars.amount;
+        current.depositId = startTx.vars.deposit.id;
+        current.destination = startTx.vars.destination;
+        current.destinationSlot = startTx.vars.destination_slot;
+        current.resourceId = startTx.meta.resourceId;
+        current.yield = startTx.vars.yield;
         status = 'EXTRACTING';
         stage = actionStages.STARTING;
       }
@@ -83,39 +89,32 @@ const useExtractionManager = (lotId, slot = 0) => {
     ];
   }, [actionItems, readyItems, getPendingTx, getStatus, payload, lot?.building?.Extractors?.[slot]?.status]);
 
-  const startExtraction = useCallback((amount, coreSample, destinationLot) => {
+  const startExtraction = useCallback((amount, deposit, destination, destinationSlot) => {
     execute(
-      'START_EXTRACTION',
+      'ExtractResourceStart',
       {
         ...payload,
-        amount,
-        resourceId: coreSample.Deposit.resource,
-        sampleId: coreSample.id,
-        destinationLotId: destinationLot.id,
-        destinationInventoryId: 1 // TODO: probably should not hard-code this
+        yield: amount,
+        deposit: { id: deposit.id, label: deposit.label },
+        destination: { id: destination.id, label: destination.label },
+        destination_slot: destinationSlot
       },
       {
-        resourceId: coreSample.Deposit.resource,
-        lotId: destinationLot.id,
+        resourceId: deposit.Deposit.resource,
+        lotId
       }
     )
   }, [payload]);
 
   const finishExtraction = useCallback(() => {
-    execute(
-      'FINISH_EXTRACTION',
-      payload,
-      {
-        lotId: payload.lotId // TODO: this will likely change w/ ecs
-      }
-    )
+    execute('ExtractResourceFinish', payload, { lotId });
   }, [payload]);
 
   return {
     startExtraction,
     finishExtraction,
     extractionStatus,
-    currentExtractionAction,
+    currentExtraction,
     actionStage
   };
 };

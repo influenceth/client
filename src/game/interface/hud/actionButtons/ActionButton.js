@@ -36,28 +36,31 @@ const ActionButtonWrapper = styled.div`
   pointer-events: all;
   position: relative;
 
-  &:last-child {
-    margin-right: 0;
+  ${p => p?.badge
+    ? `
+      &:before {
+        background-color: ${p.overrideColor || p.theme.colors.main};
+        content: "${p.badge}";
+        color: white;
+        border-radius: 2em;
+        font-size: 12px;
+        font-weight: bold;
+        line-height: 20px;
+        position: absolute;
+        text-align: center;
+        top: -8px;
+        right: -6px;
+        height: 20px;
+        width: 20px;
+        z-index: 1;
+      }
+    `
+    : `
+      &:last-child {
+        margin-right: 0;
+      }
+    `
   }
-
-  ${p => p?.badge ? `
-    &:before {
-      background-color: ${p.overrideColor || p.theme.colors.main};
-      content: "${p.badge}";
-      color: white;
-      border-radius: 2em;
-      font-size: 12px;
-      font-weight: bold;
-      line-height: 20px;
-      position: absolute;
-      text-align: center;
-      top: -8px;
-      right: -6px;
-      height: 20px;
-      width: 20px;
-      z-index: 1;
-    }
-  ` : ''}
 
   ${p => p.attention && css`
     color: ${p.theme.colors.success};
@@ -233,7 +236,8 @@ const ActionButtonComponent = ({ label, flags = {}, icon, onClick, ...props }) =
   }, [flags, onClick]);
   const safeFlags = useMemo(() => {
     return Object.keys(flags).reduce((acc, k) => {
-      acc[k] = k === 'disabled' ? nativeBool(flags[k]) : reactBool(flags[k]);
+      if (k === 'badge') acc[k] = flags[k];
+      else acc[k] = k === 'disabled' ? nativeBool(flags[k]) : reactBool(flags[k]);
       return acc;
     }, {})
   }, [flags]);

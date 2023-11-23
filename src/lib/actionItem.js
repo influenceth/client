@@ -357,9 +357,9 @@ const formatAsTx = (item) => {
       formatted.label = `${Product.TYPES[item.meta?.resourceId]?.name || 'Resource'} Extraction`;
       formatted.asteroidId = Lot.toPosition(item.meta?.lotId)?.asteroidId;
       formatted.lotId = item.meta?.lotId;
-      formatted.resourceId = item.meta?.resourceId;
+      // formatted.resourceId = item.meta?.resourceId;
       formatted.onClick = ({ openDialog }) => {
-        // TODO: in case of failure, should link with sample preset, destination, and amount selection
+        // TODO: in case of failure, should link with sample preset, destination, slot, and amount selection
         // (low priority b/c would have to fail and would have to have closed dialog)
         openDialog('EXTRACT_RESOURCE');
       };

@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from 'react-query';
 import cloneDeep from 'lodash/cloneDeep';
-import { Entity } from '@influenceth/sdk';
+import { Deposit, Entity } from '@influenceth/sdk';
 
 import api from '~/lib/api';
 import { useEffect, useMemo } from 'react';
@@ -76,15 +76,15 @@ const useLot = (lotId) => {
   );
 
   return useMemo(() => ({
-    data: {
+    data: lotId ? {
       ...lotEntity,
       building: (buildings || []).find((e) => e.Building.status > 0),
-      deposits: (deposits || []).filter((e) => e.Deposit.status > 0 && e.Deposit.remainingYield > 0),
+      deposits: (deposits || []).filter((e) => e.Deposit.status > 0 && !(e.Deposit.status === Deposit.STATUSES.USED && e.Deposit.remainingYield === 0)),
       ships,
       ship: ships?.[0] // TODO: deprecate?
-    },
+    } : undefined,
     isLoading: isLoading || buildingsLoading || depositsLoading || shipsLoading
-  }), [lotEntity, buildings, deposits, ships, isLoading, buildingsLoading, depositsLoading, shipsLoading])
+  }), [lotId, lotEntity, buildings, deposits, ships, isLoading, buildingsLoading, depositsLoading, shipsLoading])
 
 };
 

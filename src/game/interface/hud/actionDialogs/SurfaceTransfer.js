@@ -51,13 +51,6 @@ import CrewIndicator from '~/components/CrewIndicator';
 import useEntity from '~/hooks/useEntity';
 import formatters from '~/lib/formatters';
 
-const Overloaded = styled.div`
-  color: ${p => p.theme.colors.error};
-  font-size: 12px;
-  margin-top: 6px;
-  text-transform: uppercase;
-`;
-
 const SurfaceTransfer = ({
   asteroid,
   deliveryManager,
@@ -164,19 +157,6 @@ const SurfaceTransfer = ({
     },
   ]), [totalMass, totalVolume, transportDistance, transportTime]);
 
-  const destinationOverloaded = useMemo(() => {
-    if (destinationInventory) {
-      const capacity = getCapacityStats(destinationInventory);
-      if (!capacity.mass.isSoftMax && capacity.mass.used + capacity.mass.reserved + totalMass * 1e6 > capacity.mass.max) {
-        return true;
-      }
-      if (!capacity.volume.isSoftMax && capacity.volume.used + capacity.volume.reserved + totalVolume * 1e6 > capacity.volume.max) {
-        return true;
-      }
-    }
-    return false;
-  }, [totalMass, totalVolume, destinationLot]);
-
   const onStartDelivery = useCallback(() => {
     const destInventoryConfig = Inventory.getType(destinationInventory?.inventoryType) || {};
     if (destinationInventory) {
@@ -264,26 +244,21 @@ const SurfaceTransfer = ({
           <InventoryInputBlock
             title="Destination"
             titleDetails={<TransferDistanceDetails distance={transportDistance} />}
+            disabled={stage !== actionStage.NOT_STARTED}
             entity={destination}
             inventorySlot={destinationInventory?.slot}
             imageProps={{
-              error: destinationOverloaded,
               iconOverride: <InventoryIcon />,
-              inventory: destinationInventory
             }}
             isSelected={stage === actionStage.NOT_STARTED}
             onClick={() => { setDestinationSelectorOpen(true) }}
-            disabled={stage !== actionStage.NOT_STARTED}
             sublabel={
               destinationLot
-              ? (
-                <>
-                  <LocationIcon /> {formatters.lotName(destinationSelection?.lotIndex)}
-                  {destinationOverloaded && <Overloaded>Insufficient Capacity</Overloaded>}
-                </>
-              )
+              ? <><LocationIcon /> {formatters.lotName(destinationSelection?.lotIndex)}</>
               : 'Inventory'
-            } />
+            }
+            transferMass={totalMass}
+            transferVolume={totalVolume} />
         </FlexSection>
 
         {tab === 0 && (

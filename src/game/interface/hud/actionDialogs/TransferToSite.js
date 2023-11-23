@@ -282,6 +282,7 @@ const TransferToSite = ({ asteroid, lot: destinationLot, deliveryManager, stage,
           <InventorySelectionDialog
             otherEntity={destination}
             otherLotId={destinationLot?.id}
+            isSourcing
             itemIds={buildingRequirements.map(({ i }) => i)}
             onClose={() => setOriginSelectorOpen(false)}
             onSelected={setOrigin}

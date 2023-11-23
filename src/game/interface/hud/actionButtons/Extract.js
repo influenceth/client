@@ -22,7 +22,7 @@ const Extract = ({ onSetAction, asteroid, crew, lot, preselect, _disabled }) => 
   // badge shows full count of *useable* core samples of *any* resource on lot, owned by *anyone*
   // TODO: this should ideally also check for pending use of samples (i.e. in core sample improvement)
   const usableSamples = useMemo(() => (lot?.deposits || []).filter((c) => (
-    c.Deposit.remainingYield > 0 && c.Deposit.status >= Deposit.STATUSES.SAMPLED
+    c.Deposit.status >= Deposit.STATUSES.SAMPLED && c.Deposit.remainingYield > 0
   )), [lot?.coreSamples, crew?.id]);
 
   // add attention flag if any of those ^ are mine

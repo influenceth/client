@@ -1993,7 +1993,7 @@ const getInventorySublabel = (inventoryType) => {
   }
 }
 
-export const InventorySelectionDialog = ({ otherEntity, otherLotId, itemIds, initialSelection, onClose, onSelected, open, requirePresenceOfItemIds }) => {
+export const InventorySelectionDialog = ({ otherEntity, otherLotId, isSourcing, itemIds, initialSelection, onClose, onSelected, open, requirePresenceOfItemIds }) => {
   const { crew } = useCrewContext();
 
   const [selection, setSelection] = useState(initialSelection);
@@ -2071,7 +2071,9 @@ export const InventorySelectionDialog = ({ otherEntity, otherLotId, itemIds, ini
       onClose={onClose}
       onComplete={onComplete}
       open={open}
-      title={`Available ${soloItem ? `${Product.TYPES[soloItem].name}s` : 'Inventories'}`}>
+      title={isSourcing && soloItem
+        ? `Available ${Product.TYPES[soloItem].name}s`
+        : 'Available Inventories'}>
       {/* TODO: isLoading */}
       {/* TODO: replace with DataTable? */}
       <div style={{ minWidth: 500 }}></div>
@@ -2084,7 +2086,7 @@ export const InventorySelectionDialog = ({ otherEntity, otherLotId, itemIds, ini
                   <td></td>{/* isMine */}
                   <td style={{ textAlign: 'left' }}>Name</td>
                   <td>Distance</td>
-                  {specifiedItems && (
+                  {isSourcing && specifiedItems && (
                     <td>
                       {soloItem ? `# ${Product.TYPES[soloItem].name}` : 'Needed Products'}
                     </td>
@@ -2102,7 +2104,7 @@ export const InventorySelectionDialog = ({ otherEntity, otherLotId, itemIds, ini
                       <td>{inv.isMine && <MyAssetIcon />}</td>
                       <td style={{ textAlign: 'left' }}>{inv.label}{inv.sublabel && <small> ({inv.sublabel})</small>} {inv.isShip && <ShipIcon />}</td>
                       <td>{formatSurfaceDistance(inv.distance)}</td>
-                      {specifiedItems && <td>{inv.itemTally.toLocaleString()}</td>}
+                      {isSourcing && specifiedItems && <td>{inv.itemTally.toLocaleString()}</td>}
                     </SelectionTableRow>
                   );
                 })}
@@ -3195,11 +3197,39 @@ export const LotInputBlock = ({ lot, fallbackLabel = 'Select', fallbackSublabel 
   );
 };
 
-export const InventoryInputBlock = ({ entity, inventorySlot, fallbackLabel = 'Select', fallbackSublabel = 'Inventory', imageProps = {}, ...props }) => {
+const Overloaded = styled.div`
+  color: ${p => p.theme.colors.error};
+  font-size: 12px;
+  margin-top: 6px;
+  text-transform: uppercase;
+`;
+
+export const InventoryInputBlock = ({ entity, inventorySlot, transferMass = 0, transferVolume = 0, fallbackLabel = 'Select', fallbackSublabel = 'Inventory', imageProps = {}, sublabel, ...props }) => {
+  const inventory = useMemo(() => {
+    if (entity && inventorySlot) {
+      return entity.Inventories.find((i) => i.slot === inventorySlot);
+    }
+    return null;
+  }, [entity, inventorySlot]);
+
+  const destinationOverloaded = useMemo(() => {
+    if (inventory) {
+      const capacity = getCapacityStats(inventory);
+      if (!capacity.mass.isSoftMax && (capacity.mass.used + capacity.mass.reserved + transferMass > capacity.mass.max)) {
+        return true;
+      }
+      if (!capacity.volume.isSoftMax && (capacity.volume.used + capacity.volume.reserved + transferVolume > capacity.volume.max)) {
+        return true;
+      }
+    }
+    return false;
+  }, [transferMass, transferVolume, inventory]);
+
   const params = useMemo(() => {
     const fullImageProps = {
       ...imageProps,
-      inventory: (entity?.Inventories || []).find((i) => i.slot === inventorySlot),
+      error: destinationOverloaded,
+      inventory
     }
     const lotIndex = locationsArrToObj(entity?.Location?.locations || []).lotIndex;
     if (entity?.label === Entity.IDS.BUILDING) {
@@ -3212,24 +3242,29 @@ export const InventoryInputBlock = ({ entity, inventorySlot, fallbackLabel = 'Se
             {...fullImageProps} />
         ),
         label: `${formatters.buildingName(entity)}${unfinished ? ' (Site)' : ''}`,
-        sublabel: formatters.lotName(lotIndex),
+        sublabel: sublabel || formatters.lotName(lotIndex),
       };
     }
     else if (entity?.label === Entity.IDS.SHIP) {
       return {
         image: <ShipImage shipType={entity?.Ship?.shipType || 0} {...fullImageProps} />,
         label: formatters.shipName(entity),
-        sublabel: formatters.lotName(lotIndex),
+        sublabel: sublabel || formatters.lotName(lotIndex),
       };
     }
     return { image: <EmptyBuildingImage {...fullImageProps} /> };
-  }, []);
+  }, [destinationOverloaded, imageProps, entity, inventory, sublabel]);
 
   return (
     <FlexSectionInputBlock
       image={params.image}
       label={params.label || fallbackLabel}
-      sublabel={params.sublabel || fallbackSublabel}
+      sublabel={(
+        <>
+          {params.sublabel || fallbackSublabel}
+          {inventory && destinationOverloaded && <Overloaded>Insufficient Capacity</Overloaded>}
+        </>
+      )}
       {...props}
     />
   );
@@ -3886,7 +3921,7 @@ export const formatMass = (grams, { abbrev = true, minPrecision = 3, fixedPrecis
 export const formatResourceVolume = (units, resourceId, { abbrev = true, minPrecision = 3, fixedPrecision } = {}) => {
   return formatVolume(
     resourceId
-      ? units * Product.TYPES[resourceId].volumePerUnit * 1e6
+      ? units * Product.TYPES[resourceId].volumePerUnit
       : 0,
     { abbrev, minPrecision, fixedPrecision }
   );

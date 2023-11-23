@@ -326,7 +326,6 @@ const AsteroidAssets = () => {
       return acc;
     }, {});
   }, [buildings]);
-  console.log({ buildingsByType })
 
   const shipsByLocation = useMemo(() => {
     if (!ships) return {};

@@ -66,7 +66,7 @@ const LandShip = ({ asteroid, lot, manager, ship, stage, ...props }) => {
 
   // useEffect(() => {
   //   let defaultSelection;
-  //   if (!currentExtractionAction && !selectedCoreSample) {
+  //   if (!currentExtraction && !selectedCoreSample) {
   //     if (props.preselect) {
   //       defaultSelection = usableSamples.find((s) => s.resourceId === props.preselect.resourceId && s.sampleId === props.preselect.sampleId);
   //     } else if (usableSamples.length === 1) {
@@ -76,23 +76,23 @@ const LandShip = ({ asteroid, lot, manager, ship, stage, ...props }) => {
   //       selectCoreSample(defaultSelection);
   //     }
   //   }
-  // }, [!currentExtractionAction, !selectedCoreSample, usableSamples]);
+  // }, [!currentExtraction, !selectedCoreSample, usableSamples]);
 
-  // // handle "currentExtractionAction" state
+  // // handle "currentExtraction" state
   // useEffect(() => {
-  //   if (currentExtractionAction) {
+  //   if (currentExtraction) {
   //     if (lot?.coreSamples) {
-  //       const currentSample = lot.coreSamples.find((c) => c.resourceId === currentExtractionAction.resourceId && c.sampleId === currentExtractionAction.sampleId);
+  //       const currentSample = lot.coreSamples.find((c) => c.resourceId === currentExtraction.resourceId && c.sampleId === currentExtraction.sampleId);
   //       if (currentSample) {
   //         setSelectedCoreSample({
   //           ...currentSample,
-  //           remainingYield: currentSample.remainingYield + (currentExtractionAction.isCoreSampleUpdated ? currentExtractionAction.yield : 0)
+  //           remainingYield: currentSample.remainingYield + (currentExtraction.isCoreSampleUpdated ? currentExtraction.yield : 0)
   //         });
-  //         setAmount(currentExtractionAction.yield);
+  //         setAmount(currentExtraction.yield);
   //       }
   //     }
   //   }
-  // }, [currentExtractionAction, lot?.coreSamples]);
+  // }, [currentExtraction, lot?.coreSamples]);
 
   // useEffect(() => {
   //   if (currentExtractionDestinationLot) {

@@ -312,6 +312,7 @@ const NewCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }) =>
 
           <InventorySelectionDialog
             otherLotId={lot?.id}
+            isSourcing
             itemIds={[175]}
             onClose={() => setSourceSelectorOpen(false)}
             onSelected={setDrillSource}

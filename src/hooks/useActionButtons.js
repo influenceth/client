@@ -220,7 +220,7 @@ const useActionButtons = () => {
                     a.push(actionButtons.EjectGuestCrew);
                   }
 
-                  if (lot.building.Extractor?.length > 0) {
+                  if (lot.building.Extractors?.length > 0) {
                     a.push(actionButtons.Extract);
                   }
 

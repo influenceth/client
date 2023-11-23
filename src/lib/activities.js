@@ -148,7 +148,6 @@ const activities = {
   ConstructionPlanned: {
     getInvalidations: ({ event: { returnValues } }) => ([
       ...invalidationDefaults(Entity.IDS.BUILDING, returnValues.building.id),
-      // ...invalidationDefaults(Entity.IDS.LOT, returnValues.lot.id),
       ['planned'],
       ['asteroidCrewBuildings', returnValues.asteroid.id, returnValues.callerCrew.id],
     ]),
@@ -166,10 +165,9 @@ const activities = {
 
   ConstructionAbandoned: {
     getInvalidations: ({ event: { returnValues } }, { building = {} }) => {
-      const { asteroidId, lotId } = locationsArrToObj(building?.Location?.locations || []) || {};
+      const { asteroidId } = locationsArrToObj(building?.Location?.locations || []) || {};
       return [
         ...invalidationDefaults(Entity.IDS.BUILDING, returnValues.building.id),
-        // ...invalidationDefaults(Entity.IDS.LOT, lotId),
         ['planned'],
         // ['asteroidLots', asteroidId], (handled by asteroid room connection now)
         ['asteroidCrewBuildings', asteroidId, returnValues.callerCrew.id],
@@ -217,9 +215,6 @@ const activities = {
       ];
 
       const _location = locationsArrToObj(building?.Location?.locations || []);
-      // if (_location.lotId) {
-      //   invs.unshift(...invalidationDefaults(Entity.IDS.LOT, _location.lotId));
-      // }
       if (_location.asteroidId) {
         invs.push(['asteroidCrewBuildings', _location.asteroidId, returnValues.callerCrew.id]);
       }
@@ -233,10 +228,9 @@ const activities = {
   
   ConstructionFinished: {
     getInvalidations: ({ event: { returnValues } }, { building = {} }) => {
-      const { asteroidId, lotId } = locationsArrToObj(building?.Location?.locations || []) || {};
+      const { asteroidId } = locationsArrToObj(building?.Location?.locations || []) || {};
       return [
         ...invalidationDefaults(Entity.IDS.BUILDING, returnValues.building.id),
-        // ...invalidationDefaults(Entity.IDS.LOT, lotId),
         ['actionItems'],
         ['asteroidCrewBuildings', asteroidId, returnValues.callerCrew.id],
       ]
@@ -261,10 +255,9 @@ const activities = {
 
   ConstructionDeconstructed: {
     getInvalidations: ({ event: { returnValues } }, { building = {} }) => {
-      const { asteroidId, lotId } = locationsArrToObj(building?.Location?.locations || []) || {};
+      const { asteroidId } = locationsArrToObj(building?.Location?.locations || []) || {};
       return [
         ...invalidationDefaults(Entity.IDS.BUILDING, returnValues.building.id),
-        // ...invalidationDefaults(Entity.IDS.LOT, lotId),
         ['asteroidCrewBuildings', asteroidId, returnValues.callerCrew.id],
       ]
     },
@@ -541,7 +534,7 @@ const activities = {
   },
 
   DeliveryStarted: {
-    getActionItem: ({ returnValues }, { destination = {}, origin = {} }) => {
+    getActionItem: ({ returnValues }, { destination = {} }) => {
       const _location = locationsArrToObj(destination?.Location?.locations || []);
       return {
         icon: <SurfaceTransferIcon />,
@@ -561,30 +554,16 @@ const activities = {
       ))
     },
 
-    getInvalidations: ({ event: { returnValues, version } }, { destination = {}, origin = {} }) => {
-      const invs = [
-        ...invalidationDefaults(Entity.IDS.DELIVERY, returnValues.delivery.id),
-        ...invalidationDefaults(returnValues.dest.label, returnValues.dest.id),
-        ...invalidationDefaults(returnValues.origin.label, returnValues.origin.id),
-        ['actionItems']
-      ];
-
-      // const _originLocation = locationsArrToObj(origin?.Location?.locations || []);
-      // if (_originLocation.lotId) {
-      //   invs.unshift(...invalidationDefaults(Entity.IDS.LOT, _originLocation.lotId));
-      // }
-
-      // const _destLocation = locationsArrToObj(destination?.Location?.locations || []);
-      // if (_destLocation.lotId) {
-      //   invs.unshift(...invalidationDefaults(Entity.IDS.LOT, _destLocation.lotId));
-      // }
-
-      return invs;
-    },
+    getInvalidations: ({ event: { returnValues, version } }) => ([
+      ...invalidationDefaults(Entity.IDS.DELIVERY, returnValues.delivery.id),
+      ...invalidationDefaults(returnValues.dest.label, returnValues.dest.id),
+      ...invalidationDefaults(returnValues.origin.label, returnValues.origin.id),
+      ['actionItems']
+    ]),
 
     getPrepopEntities: ({ event: { returnValues } }) => ({
       destination: returnValues.dest,
-      origin: returnValues.origin,
+      // origin: returnValues.origin,
     }),
 
     // getLogContent: (activity, viewingAs, { destination = {} }) => {
@@ -654,16 +633,17 @@ const activities = {
   },
 
   ResourceExtractionStarted: {
-    getActionItem: ({ returnValues }, { destination = {}, extractor = {} }) => {
+    getActionItem: ({ returnValues }, { extractor = {} }) => {
       const _location = locationsArrToObj(extractor?.Location?.locations || []);
       return {
         icon: <ExtractionIcon />,
         label: `${Product.TYPES[returnValues?.resourcd]?.name || 'Resource'} Extraction`,
         asteroidId: _location.asteroidId,
         lotId: _location.lotId,
-        resourceId: returnValues.resource,
+        // resourceId: returnValues.resource,
         locationDetail: getEntityName(extractor),
         onClick: ({ openDialog }) => {
+          console.log({ returnValues, extractor });
           openDialog('EXTRACT_RESOURCE');
         }
       };
@@ -676,19 +656,17 @@ const activities = {
       ))
     },
 
-    getInvalidations: ({ event: { returnValues, version } }, { destination = {}, extractor = {} }) => ([
+    getInvalidations: ({ event: { returnValues, version } }) => ([
       ...invalidationDefaults(Entity.IDS.DEPOSIT, returnValues.deposit.id),
       ...invalidationDefaults(returnValues.extractor.label, returnValues.extractor.id),
       ...invalidationDefaults(returnValues.destination.label, returnValues.destination.id),
-      // ...invalidationDefaults(Entity.IDS.LOT, locationsArrToObj(destination?.Location?.locations || [])?.lotId),
-      // ...invalidationDefaults(Entity.IDS.LOT, locationsArrToObj(extractor?.Location?.locations || [])?.lotId),
       ['actionItems'],
       ['asteroidCrewBuildings', returnValues.asteroidId, returnValues.crewId],
       ['asteroidCrewSampledLots', returnValues.asteroidId, returnValues.resourceId, returnValues.crewId],
     ]),
 
     getPrepopEntities: ({ event: { returnValues } }) => ({
-      destination: returnValues.destination,
+      // destination: returnValues.destination,
       extractor: returnValues.extractor,
     }),
 
@@ -709,17 +687,15 @@ const activities = {
   },
 
   ResourceExtractionFinished: {
-    getInvalidations: ({ event: { returnValues, version } }, { destination = {}, extractor = {} }) => ([
+    getInvalidations: ({ event: { returnValues, version } }) => ([
       ...invalidationDefaults(returnValues.extractor.label, returnValues.extractor.id),
       ...invalidationDefaults(returnValues.destination.label, returnValues.destination.id),
-      // ...invalidationDefaults(Entity.IDS.LOT, locationsArrToObj(destination?.Location?.locations || [])?.lotId),
-      // ...invalidationDefaults(Entity.IDS.LOT, locationsArrToObj(extractor?.Location?.locations || [])?.lotId),
       ['actionItems'],
       ['asteroidCrewBuildings', returnValues.asteroidId, returnValues.crewId],
     ]),
 
     getPrepopEntities: ({ event: { returnValues } }) => ({
-      destination: returnValues.destination,
+      // destination: returnValues.destination,
       extractor: returnValues.extractor,
     }),
 
@@ -795,9 +771,8 @@ const activities = {
   },
 
   SamplingDepositFinished: {
-    getInvalidations: ({ event: { returnValues } }, { deposit = {} }) => ([
+    getInvalidations: ({ event: { returnValues } }) => ([
       ...invalidationDefaults(Entity.IDS.DEPOSIT, returnValues.deposit?.id),
-      // ...invalidationDefaults(Entity.IDS.LOT, locationsArrToObj(deposit?.Location?.locations || []).lotId),
       ['actionItems']
     ]),
     getLogContent: (activity, viewingAs, { deposit = {} }) => {
@@ -836,20 +811,12 @@ const activities = {
         && tx.vars.deposit.id === returnValues.deposit.id
       ));
     },
-    getInvalidations: ({ event: { returnValues, version } }, { origin }) => ([
+    getInvalidations: ({ event: { returnValues, version } }) => ([
       ...invalidationDefaults(Entity.IDS.DEPOSIT, returnValues.deposit.id), // (not sure this exists)
       ...(version > 0 ? invalidationDefaults(returnValues.origin.label, returnValues.origin.id) : []), // source inventory
-      // ...invalidationDefaults(Entity.IDS.LOT, returnValues.lot.id), // sampling lot
-      // ...(origin ? invalidationDefaults(Entity.IDS.LOT, locationsArrToObj(origin?.Location?.locations || [])?.lotId) : []), // source lot
       ['actionItems'],
       ['asteroidCrewSampledLots', Lot.toPosition(returnValues.lot.id)?.asteroidId, returnValues.resource],
     ]),
-    getPrepopEntities: ({ event: { returnValues, version } }) => {
-      if (version === 0) return {};
-      return {
-        origin: { label: returnValues.origin.label, id: returnValues.origin.id }
-      };
-    },
     // getLogContent: ({ event: { returnValues } }) => {
     //   return {
     //     icon: returnValues.improving ? <ImproveCoreSampleIcon /> : <NewCoreSampleIcon />,
@@ -1014,6 +981,7 @@ export const hydrateActivities = async (newActivities, queryClient) => {
           }))
         )
       }
+      return;
     })
   );
 };

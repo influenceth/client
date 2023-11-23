@@ -63,6 +63,27 @@ const getEntities = async ({ ids, match, label, components }) => {
   return response.data;
 };
 
+const arrayComponents = {
+  Extractor: 'Extractors',
+  Inventory: 'Inventories',
+  Processor: 'Processors'
+};
+
+const formatESData = (responseData) => {
+  return responseData?.hits?.hits?.map((h) => {
+    return h._source;
+    // console.log('h._source', h._source);
+    return Object.keys(h._source).reduce((acc, k) => {
+      if (!!arrayComponents[k]) {
+        acc[arrayComponents[k]] = h._source[k] || [];
+      } else {
+        acc[k] = Array.isArray(h._source[k]) ? h._source[k][0] : h._source[k];
+      }
+      return acc;
+    }, {});
+  }) || [];
+}
+
 const api = {
   getUser: async () => {
     const response = await instance.get(`/${apiVersion}/user`);
@@ -91,7 +112,7 @@ const api = {
     const query = q.toJSON();
 
     const response = await instance.post(`/_search/building`, query);
-    return response.data.hits.hits.map((h) => h._source) || [];
+    return formatESData(response.data);
   },
 
   getCrewBuildingsOnAsteroid: async (asteroidId, crewId) => {
@@ -113,7 +134,7 @@ const api = {
     const query = q.toJSON();
 
     const response = await instance.post(`/_search/building`, query);
-    return response.data.hits.hits.map((h) => h._source) || [];
+    return formatESData(response.data);
   },
   
   getCrewSamplesOnAsteroid: async (asteroidId, crewId, resourceId) => {
@@ -143,7 +164,7 @@ const api = {
     const query = q.toJSON();
 
     const response = await instance.post(`/_search/deposit`, query);
-    return response.data.hits.hits.map((h) => h._source) || [];
+    return formatESData(response.data);
   },
 
   getCrewAccessibleInventories: async (asteroidId, crewId) => {
@@ -206,7 +227,7 @@ const api = {
     const responses = await Promise.allSettled(queryPromises);
     return responses.reduce((acc, r) => {
       if (r.status === 'fulfilled') {
-        acc.push(...r.value.data.hits.hits.map((h) => h._source));
+        acc.push(...formatESData(r.value.data));
       }
       return acc;
     }, []);
@@ -307,23 +328,23 @@ const api = {
   getEntities,
   getEntityById,
 
-  getLot: async (lotId) => {
-    const lotEntity = { id: lotId, label: Entity.IDS.LOT };
+  // getLot: async (lotId) => {
+  //   const lotEntity = { id: lotId, label: Entity.IDS.LOT };
 
-    const entity = (await getEntityById(lotEntity)) || lotEntity;
+  //   const entity = (await getEntityById(lotEntity)) || lotEntity;
 
-    const entities = await getEntities({
-      match: { 'Location.locations': lotEntity },
-      components: [ 'Building', 'Control', 'Deposit', 'Inventory', 'Location' ]
-    });
+  //   const entities = await getEntities({
+  //     match: { 'Location.locations': lotEntity },
+  //     components: [ 'Building', 'Control', 'Deposit', 'Inventory', 'Location' ]
+  //   });
 
-    // NOTE: if add to these entity types, need to update useLot hook
-    entity.building = entities.find(e => e.label === Entity.IDS.BUILDING);
-    entity.ship = entities.find(e => e.label === Entity.IDS.SHIP);  // TODO: should this be an array?
-    entity.deposits = entities.filter(e => e.label === Entity.IDS.DEPOSIT);
+  //   // NOTE: if add to these entity types, need to update useLot hook
+  //   entity.building = entities.find(e => e.label === Entity.IDS.BUILDING);
+  //   entity.ship = entities.find(e => e.label === Entity.IDS.SHIP);  // TODO: should this be an array?
+  //   entity.deposits = entities.filter(e => e.label === Entity.IDS.DEPOSIT);
 
-    return entity;
-  },
+  //   return entity;
+  // },
 
   getNameUse: async (label, name) => {
     return getEntities({ match: { 'Name.name': name }, label, components: [] });
@@ -414,7 +435,7 @@ const api = {
     const response = await instance.post(`/_search/${assetIndex}`, query);
 
     return {
-      hits: response.data.hits.hits.map((h) => h._source),
+      hits: formatESData(response.data),
       total: response.data.hits.total.value
     }
   },
