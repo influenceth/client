@@ -78,7 +78,7 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
         id: defaultSelection?.destination.id,
         label: defaultSelection?.destination.label,
         lotIndex: null,
-        slot: defaultSelection?.destination_slot
+        slot: defaultSelection?.destinationSlot
       });
     }
   }, [currentExtraction?.destination]);
@@ -164,8 +164,8 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
   const extractionTime = useMemo(() => {
     if (!selectedCoreSample) return 0;
     return Extractor.getExtractionTime(
-      amount,
-      selectedCoreSample.Deposit.remainingYield || 0,
+      amount * resource?.massPerUnit || 0,
+      selectedCoreSample.Deposit.remainingYield * resource?.massPerUnit || 0,
       extractionBonus.totalBonus || 1
     );
   }, [amount, extractionBonus, selectedCoreSample]);
@@ -180,7 +180,7 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
   }, [asteroid?.id, crew?._location?.lotId, lot?.id, crewTravelBonus]);
 
   const [transportDistance, transportTime] = useMemo(() => {
-    if (!destinationLot) return [];
+    if (!destinationLot?.id) return [];
     return [
       Asteroid.getLotDistance(asteroid?.id, Lot.toIndex(lot?.id), Lot.toIndex(destinationLot?.id)) || 0,
       Asteroid.getLotTravelTime(asteroid?.id, Lot.toIndex(lot?.id), Lot.toIndex(destinationLot?.id), crewTravelBonus.totalBonus) || 0

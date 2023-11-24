@@ -20,6 +20,8 @@ const useExtractionManager = (lotId, slot = 1) => {
     caller_crew: { id: crew?.id, label: Entity.IDS.CREW }
   }), [lot?.building, crew?.id, slot]);
 
+  const slotExtractor = useMemo(() => lot?.building?.Extractors?.find((e) => e.slot === slot), [lot?.building, slot]);
+
   // status flow
   // READY > EXTRACTING > READY_TO_FINISH > FINISHING
   const [currentExtraction, extractionStatus, actionStage] = useMemo(() => {
@@ -39,7 +41,6 @@ const useExtractionManager = (lotId, slot = 1) => {
   
     let status = 'READY';
     let stage = actionStages.NOT_STARTED;
-    const slotExtractor = lot?.building?.Extractors?.find((e) => e.slot === slot);
     if (slotExtractor?.status === Extractor.STATUSES.RUNNING) {
       let actionItem = (actionItems || []).find((item) => (
         item.event.name === 'ResourceExtractionStarted'
@@ -62,7 +63,7 @@ const useExtractionManager = (lotId, slot = 1) => {
       if(getStatus('ExtractResourceFinish', payload) === 'pending') {
         status = 'FINISHING';
         stage = actionStages.COMPLETING;
-      } else if (lot.building?.Extractors?.[slot]?.finishTime && lot.building?.Extractors?.[slot]?.finishTime <= liveBlockTime) {
+      } else if (slotExtractor?.finishTime && slotExtractor.finishTime <= liveBlockTime) {
         status = 'READY_TO_FINISH';
         stage = actionStages.READY_TO_COMPLETE;
       } else {
@@ -87,7 +88,7 @@ const useExtractionManager = (lotId, slot = 1) => {
       status,
       stage
     ];
-  }, [actionItems, readyItems, getPendingTx, getStatus, payload, lot?.building?.Extractors?.[slot]?.status]);
+  }, [actionItems, readyItems, getPendingTx, getStatus, payload, slotExtractor?.status]);
 
   const startExtraction = useCallback((amount, deposit, destination, destinationSlot) => {
     execute(

@@ -36,7 +36,7 @@ const Extract = ({ onSetAction, asteroid, crew, lot, preselect, _disabled }) => 
   const loading = ['EXTRACTING', 'FINISHING'].includes(extractionStatus);
   return (
     <ActionButton
-      label={`${labelDict[extractionStatus]}${disabledReason}`}
+      label={`${labelDict[extractionStatus]}${disabledReason || ''}`}
       flags={{
         badge,
         disabled: _disabled || disabledReason || undefined,

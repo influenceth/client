@@ -2743,8 +2743,12 @@ export const ProgressBarSection = ({
 };
 
 export const ResourceAmountSlider = ({ amount, extractionTime, min, max, resource, setAmount }) => {
-  const tonnage = useMemo(() => amount * resource?.massPerUnit || 0, [amount, resource]);
-  const tonnageValue = useMemo(() => Math.round(1e3 * tonnage) / 1e3, [tonnage]);
+  const [grams, tonnageValue] = useMemo(() => {
+    const grams = amount * resource?.massPerUnit || 0;
+    const tonnage = grams / 1e6;
+    const tonnageValue = Math.round(1e3 * tonnage) / 1e3;
+    return [grams, tonnageValue];
+  }, [amount, resource]);
 
   const [focusOn, setFocusOn] = useState();
   const [mouseIn, setMouseIn] = useState(false);
@@ -2763,7 +2767,7 @@ export const ResourceAmountSlider = ({ amount, extractionTime, min, max, resourc
   }, []);
 
   const onChangeInput = (e) => {
-    let quanta = Math.round(e.currentTarget.value / resource.massPerUnit);
+    let quanta = Math.round(1e6 * e.currentTarget.value / resource.massPerUnit);
     if (quanta > max) quanta = max;
     if (quanta < min) quanta = min;
     setAmount(quanta);
@@ -2782,7 +2786,7 @@ export const ResourceAmountSlider = ({ amount, extractionTime, min, max, resourc
               onFocus={onFocusEvent} />
             )
             : (
-              <b>{formatSampleMass(tonnage)}</b>
+              <b>{formatSampleMass(grams)}</b>
             )
           }
           {' '}
