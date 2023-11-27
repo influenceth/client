@@ -1,6 +1,5 @@
 import { createContext, useCallback, useEffect, useContext, useMemo, useState } from 'react';
 import { isExpired, decodeToken } from 'react-jwt';
-import { Provider } from 'starknet';
 
 import WalletContext from '~/contexts/WalletContext';
 import api from '~/lib/api';
