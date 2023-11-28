@@ -194,10 +194,10 @@ const formatAsTx = (item) => {
 
     case 'SampleDepositStart': {
       formatted.icon = <NewCoreSampleIcon />;
-      formatted.label = 'Core Sample';
+      formatted.label = `${Product.TYPES[item.vars.resource]?.name || 'Core'} Sample`;
       formatted.asteroidId = Lot.toPosition(item.vars.lot.id)?.asteroidId;
       formatted.lotId = item.vars.lot.id;
-      formatted.resourceId = item.vars.resource; // not necessarily forcing open resourcemap
+      // formatted.resourceId = item.vars.resource; // not necessarily forcing open resourcemap
       formatted.onClick = ({ openDialog }) => {
         openDialog('NEW_CORE_SAMPLE', {
           preselect: {
@@ -210,11 +210,11 @@ const formatAsTx = (item) => {
     }
     case 'SampleDepositImprove': {
       formatted.icon = <ImproveCoreSampleIcon />;
-      formatted.label = 'Core Improvement';
-      formatted.sampleId = item.vars.deposit.id;
+      formatted.label = `${Product.TYPES[item.meta?.resource]?.name || 'Core'} Resample`;
+      // formatted.sampleId = item.vars.deposit.id;
       formatted.asteroidId = Lot.toPosition(item.meta?.lotId)?.asteroidId;
       formatted.lotId = item.meta?.lotId;
-      // formatted.resourceId = item.vars.resourceId; // not necessarily forcing open resourcemap
+      // formatted.resourceId = item.meta.resource; // not necessarily forcing open resourcemap
       formatted.onClick = ({ openDialog }) => {
         openDialog('IMPROVE_CORE_SAMPLE', {
           preselect: {
@@ -270,7 +270,7 @@ const formatAsTx = (item) => {
     }
     case 'ScanSurfaceFinish': {
       formatted.icon = <ScanAsteroidIcon />;
-      formatted.label = 'Retrieve Long-Range Scan Results';
+      formatted.label = 'Analyze Scan Results';
       formatted.asteroidId = item.vars.asteroid.id;
       formatted.onClick = ({ history }) => {
         history.push(`/asteroids/${formatted.asteroidId}/resources`);
@@ -343,7 +343,7 @@ const formatAsTx = (item) => {
     }
     case 'ConstructionDeconstruct': {
       formatted.icon = <DeconstructIcon />;
-      formatted.label = 'Deconstruct';
+      formatted.label = `Deconstruct ${Building.TYPES[item.vars?.buildingType]?.name || 'Building'}`;
       formatted.asteroidId = item.meta?.asteroidId;
       formatted.lotId = item.meta?.lotId;
       formatted.onClick = ({ openDialog }) => {

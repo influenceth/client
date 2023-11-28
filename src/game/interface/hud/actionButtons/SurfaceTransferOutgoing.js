@@ -1,4 +1,5 @@
 import { useCallback, useMemo } from 'react';
+import { Inventory } from '@influenceth/sdk';
 
 import { SurfaceTransferIcon } from '~/components/Icons';
 import useDeliveryManager from '~/hooks/actionManagers/useDeliveryManager';
@@ -15,7 +16,7 @@ const SurfaceTransferOutgoing = ({ asteroid, lot, onSetAction, preselect, _disab
   }, [onSetAction, preselect]);
 
   const isEmpty = useMemo(() => {
-    const hasMass = (lot?.building?.Inventories || []).find((i) => i.mass > 0);
+    const hasMass = (lot?.building?.Inventories || []).find((i) => i.status === Inventory.STATUSES.AVAILABLE && i.mass > 0);
     return !hasMass;
   }, [lot?.building?.inventories]);
 

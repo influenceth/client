@@ -163,7 +163,11 @@ const useConstructionManager = (lotId) => {
   }, [payload]);
 
   const deconstruct = useCallback(() => {
-    execute('ConstructionDeconstruct', payload, txMeta)
+    execute(
+      'ConstructionDeconstruct',
+      payload,
+      { ...txMeta, buildingType: lot?.building?.Building?.buildingType }
+    )
   }, [payload]);
 
   return {

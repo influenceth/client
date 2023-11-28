@@ -73,7 +73,7 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
 
   useEffect(() => {
     const defaultSelection = props.preselect || currentExtraction;
-    if (defaultSelection) {
+    if (defaultSelection?.destination) {
       setDestinationSelection({
         id: defaultSelection?.destination.id,
         label: defaultSelection?.destination.label,
@@ -173,7 +173,7 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
   const { totalTime: crewTravelTime, tripDetails } = useMemo(() => {
     if (!asteroid?.id || !crew?._location?.lotId || !lot?.id) return {};
     const crewLotIndex = Lot.toIndex(crew?._location?.lotId);
-    return getTripDetails(asteroid.id, crewTravelBonus.totalBonus, crewLotIndex, [
+    return getTripDetails(asteroid.id, crewTravelBonus, crewLotIndex, [
       { label: 'Travel to Extraction Site', lotIndex: Lot.toIndex(lot.id) },
       { label: 'Return to Crew Station', lotIndex: crewLotIndex },
     ]);
@@ -183,14 +183,14 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
     if (!destinationLot?.id) return [];
     return [
       Asteroid.getLotDistance(asteroid?.id, Lot.toIndex(lot?.id), Lot.toIndex(destinationLot?.id)) || 0,
-      Asteroid.getLotTravelTime(asteroid?.id, Lot.toIndex(lot?.id), Lot.toIndex(destinationLot?.id), crewTravelBonus.totalBonus) || 0
+      Asteroid.getLotTravelTime(asteroid?.id, Lot.toIndex(lot?.id), Lot.toIndex(destinationLot?.id), crewTravelBonus.totalBonus, crewTravelBonus.timeMultiplier) || 0
     ];
   }, [asteroid?.id, lot?.id, destinationLot?.id, crewTravelBonus]);
 
   const [crewTimeRequirement, taskTimeRequirement] = useMemo(() => {
     if (!asteroid?.id || !lot?.id || !destinationLot?.id) return [];
     const oneWayCrewTravelTime = crewTravelTime / 2;
-    const yieldTravelTime = Asteroid.getLotTravelTime(asteroid.id, Lot.toIndex(lot?.id), Lot.toIndex(destinationLot?.id), crewTravelBonus.totalBonus);
+    const yieldTravelTime = Asteroid.getLotTravelTime(asteroid.id, Lot.toIndex(lot?.id), Lot.toIndex(destinationLot?.id), crewTravelBonus.totalBonus, crewTravelBonus.timeMultiplier);
     return [
       crewTravelTime,
       oneWayCrewTravelTime + extractionTime + Math.max(oneWayCrewTravelTime, yieldTravelTime)
@@ -253,7 +253,7 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
           crewRequired="start" />
       )
     },
-  ]), [amount, crewTravelBonus, crewTravelTime, extractionBonus, extractionTime, resource]);
+  ]), [amount, crewTravelBonus, crewTravelTime, extractionBonus, extractionTime, resource, transportDistance, transportTime]);
 
   const onStartExtraction = useCallback(() => {
     if (!(amount && selectedCoreSample && destination && destinationInventory)) {

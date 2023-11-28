@@ -70,7 +70,7 @@ const NewCoreSample = ({ asteroid, lot, onSetAction, overrideResourceId, improve
     } else {
       onSetAction('NEW_CORE_SAMPLE', resourceId ? { preselect: { resourceId } } : undefined);
     }
-  }, [currentSamplingAction, onSetAction, resourceId]);
+  }, [currentSamplingAction, improveSample, onSetAction, resourceId]);
 
   const isImprovement = improveSample || (currentSamplingAction && !currentSamplingAction.isNew);
   return (

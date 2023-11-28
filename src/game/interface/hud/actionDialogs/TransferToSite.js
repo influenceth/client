@@ -95,7 +95,7 @@ const TransferToSite = ({ asteroid, lot: destinationLot, deliveryManager, stage,
     const originLotIndex = Lot.toIndex(originLot?.id);
     const destinationLotIndex = Lot.toIndex(destinationLot?.id);
     const transportDistance = Asteroid.getLotDistance(asteroid?.id, originLotIndex, destinationLotIndex);
-    const transportTime = Asteroid.getLotTravelTime(asteroid?.id, originLotIndex, destinationLotIndex, crewTravelBonus.totalBonus);
+    const transportTime = Asteroid.getLotTravelTime(asteroid?.id, originLotIndex, destinationLotIndex, crewTravelBonus.totalBonus, crewTravelBonus.timeMultiplier);
     return [transportDistance, transportTime];
   }, [asteroid?.id, originLot?.id, destinationLot?.id, crewTravelBonus]);
 
@@ -106,6 +106,10 @@ const TransferToSite = ({ asteroid, lot: destinationLot, deliveryManager, stage,
       return acc;
     }, { totalMass: 0, totalVolume: 0 })
   }, [selectedItems]);
+
+  const [crewTimeRequirement, taskTimeRequirement] = useMemo(() => {
+    return [0, transportTime];
+  }, [transportTime]);
 
   const stats = useMemo(() => ([
     {
@@ -195,9 +199,9 @@ const TransferToSite = ({ asteroid, lot: destinationLot, deliveryManager, stage,
         }}
         captain={captain}
         location={{ asteroid, lot: destinationLot }}
-        crewAvailableTime={0}
+        crewAvailableTime={crewTimeRequirement}
+        taskCompleteTime={taskTimeRequirement}
         onClose={props.onClose}
-        taskCompleteTime={transportTime}
         stage={stage} />
 
       <ActionDialogBody>

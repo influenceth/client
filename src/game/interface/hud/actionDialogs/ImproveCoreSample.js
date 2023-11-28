@@ -39,18 +39,31 @@ const ImproveCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }
   const { crew, crewmateMap } = useCrewContext();
   const { data: originEntity } = useEntity(currentSamplingAction?.origin ? { ...currentSamplingAction.origin } : props.preselect?.origin);
 
-  console.log({ 'preselect': props.preselect, currentSamplingAction });
-
   const dispatchResourceMapSelect = useStore(s => s.dispatchResourceMapSelect);
-  const dispatchResourceMapToggle = useStore(s => s.dispatchResourceMapToggle);
   const resourceMap = useStore(s => s.asteroids.resourceMap);
   
   // if an active sample is detected, set "sample" for remainder of dialog's lifespan
   const [sampleId, setSampleId] = useState(props.preselect?.id);
-  const [resourceId, setResourceId] = useState(resourceMap?.active && resourceMap?.selected || undefined);
   const [drillSource, setDrillSource] = useState();
   const [sampleSelectorOpen, setSampleSelectorOpen] = useState(false);
   const [sourceSelectorOpen, setSourceSelectorOpen] = useState(false);
+
+  const improvableSamples = useMemo(() => {
+    return (lot?.deposits || [])
+      .filter((c) => (c.Control.controller.id === crew?.id && c.Deposit.initialYield > 0 && c.Deposit.status !== Deposit.STATUSES.USED))
+      .map((c) => ({ ...c, tonnage: c.Deposit.initialYield * Product.TYPES[c.Deposit.resource].massPerUnit }));
+  }, [lot?.deposits]);
+
+  const [selectedSample, resourceId, initialYieldTonnage] = useMemo(() => {
+    const selected = (improvableSamples || []).find((s) => s.id === sampleId);
+    const initialYield = selected?.Deposit.initialYield || 0;
+    const initialYieldTonnage = initialYield * (Product.TYPES[selected?.Deposit.resource]?.massPerUnit || 0);
+    return [
+      selected,
+      selected?.Deposit.resource,
+      initialYieldTonnage
+    ];
+  }, [improvableSamples, sampleId]);
 
   useEffect(() => {
     if (currentSamplingAction) {
@@ -62,79 +75,34 @@ const ImproveCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }
           slot: currentSamplingAction.origin_slot
         });
       }
-      if (currentSamplingAction.resourceId !== resourceId) {
-        setResourceId(currentSamplingAction.resourceId)
+    } else {
+      let defaultSelection;
+      if (props.preselect) {
+        defaultSelection = (improvableSamples || []).find((s) => s.id === props.preselect.id);
+      } else if (improvableSamples.length === 1) {
+        defaultSelection = improvableSamples[0];
       }
-      if (resourceMap?.active && currentSamplingAction.resourceId !== resourceMap?.selected) {
-        dispatchResourceMapSelect(currentSamplingAction.resourceId);
-        dispatchResourceMapToggle(true);
-      }
-    }
-  }, [currentSamplingAction, originEntity]);
-
-  const onSelectSample = useCallback((s) => {
-    if (s) {
-      setSampleId(s.id);
-      setResourceId(s.Deposit.resource);
-  
-      // if open to a different resource map, switch... if a resource map is not open, don't open one
-      if (resourceMap?.active && resourceMap.selected !== s.Deposit.resource) {
-        dispatchResourceMapSelect(s.Deposit.resource);
+      if (defaultSelection) {
+        setSampleId(defaultSelection?.id);
       }
     }
-  }, [resourceMap?.active]);
+  }, [currentSamplingAction, originEntity, improvableSamples, props.preselect]);
 
-  const [sample, initialYieldTonnage] = useMemo(() => {
-    if (lot?.deposits && resourceId && sampleId) {
-      const thisSample = lot.deposits.find((s) => s.id === sampleId && s.Deposit.resource === resourceId);
-      if (thisSample) {
-        const initialYieldTonnage = thisSample.Deposit.initialYield
-          ? thisSample.Deposit.initialYield * Product.TYPES[resourceId].massPerUnit
-          : undefined;
-        return [thisSample, initialYieldTonnage];
-      }
-    }
-    return [null, 0];
-  }, [lot?.deposits, sampleId, resourceId]);
-
-  // get lot abundance
   const lotAbundance = useMemo(() => {
     if (!resourceId || !asteroid?.Celestial?.abundances || !lot?.id) return 0;
     return Asteroid.Entity.getAbundanceAtLot(asteroid, Lot.toIndex(lot.id), resourceId);
-}, [asteroid, lot, resourceId]);
+  }, [asteroid, lot, resourceId]);
 
-  // handle sample selection
-  const [selectedSample, setSelectedSample] = useState();
+  const originalYield = useMemo(() => selectedSample?.Deposit?.initialYield, [selectedSample?.id]); // only update on id change
+  const originalTonnage = useMemo(() => originalYield ? originalYield * Product.TYPES[selectedSample?.Deposit.resource]?.massPerUnit : 0, [selectedSample, originalYield]);
 
-  const improvableSamples = useMemo(() => {
-    return (lot?.deposits || [])
-      .filter((c) => (c.Control.controller.id === crew?.id && c.Deposit.initialYield > 0 && c.Deposit.status !== Deposit.STATUSES.USED))
-      .map((c) => ({ ...c, tonnage: c.Deposit.initialYield * Product.TYPES[c.Deposit.resource].massPerUnit }));
-  }, [lot?.deposits]);
-
-  const onSampleSelection = useCallback((sample) => {
-    if (sample.Deposit.resource !== resourceId) {
-      dispatchResourceMapSelect(sample.Deposit.resource);
-    }
-    dispatchResourceMapToggle(true);
-    setSelectedSample(sample);
-  }, [resourceId]);
 
   useEffect(() => {
-    let defaultSelection;
-    if (props.preselect) {
-      defaultSelection = improvableSamples.find((s) => s.id === props.preselect.id);
-    } else if (improvableSamples.length === 1) {
-      defaultSelection = improvableSamples[0];
+    // if open to a different resource map, switch... if a resource map is not open, don't open one
+    if (resourceMap?.active && resourceMap.selected !== resourceId) {
+      dispatchResourceMapSelect(resourceId);
     }
-    if (defaultSelection) {
-      onSampleSelection(defaultSelection);
-    }
-  }, [improvableSamples, props.preselect]);
-
-  const existingSample = sample || selectedSample;
-  const originalYield = useMemo(() => existingSample?.Deposit?.initialYield, [existingSample?.id]); // only update on id change
-  const originalTonnage = useMemo(() => originalYield ? originalYield * Product.TYPES[existingSample.Deposit.resource].massPerUnit : 0, [existingSample, originalYield]);
+  }, [resourceId, resourceMap]);
 
   const crewmates = currentSamplingAction?._crewmates || ((crew?._crewmates || []).map((i) => crewmateMap[i]));
   const captain = crewmates[0];
@@ -146,21 +114,25 @@ const ImproveCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }
   }, [crew]);
 
   const { totalTime: crewTravelTime, tripDetails } = useMemo(() => {
-    if (!asteroid?.id || !crew?._location?.lotId || !lot?.id || !drillSource?.lotIndex) return {};
+    if (!asteroid?.id || !crew?._location?.lotId || !lot?.id) return {};
     const crewLotIndex = Lot.toIndex(crew?._location?.lotId);
-    return getTripDetails(asteroid.id, crewTravelBonus.totalBonus, crewLotIndex, [
+    return getTripDetails(asteroid.id, crewTravelBonus, crewLotIndex, [
       { label: 'Travel to Sampling Site', lotIndex: Lot.toIndex(lot.id) },
       { label: 'Return to Crew Station', lotIndex: crewLotIndex },
     ]);
-  }, [asteroid?.id, crew?._location?.lotId, drillSource?.lotIndex, lot?.id, crewTravelBonus]);
+  }, [asteroid?.id, crew?._location?.lotId, lot?.id, crewTravelBonus]);
   
-  const sampleBounds = Deposit.getSampleBounds(lotAbundance, 0, sampleQualityBonus.totalBonus);
-  const sampleTime = Deposit.getSampleTime(sampleTimeBonus.totalBonus);
+  const [sampleBounds, sampleTime] = useMemo(() => {
+    return [
+      lotAbundance ? Deposit.getSampleBounds(lotAbundance, originalYield, sampleQualityBonus.totalBonus) : null,
+      Deposit.getSampleTime(sampleTimeBonus.totalBonus)
+    ];
+  }, [lotAbundance, originalYield, sampleQualityBonus, sampleTimeBonus]);
 
   const [crewTimeRequirement, taskTimeRequirement] = useMemo(() => {
     if (!asteroid?.id || !crew?._location?.lotId || !lot?.id || !drillSource?.lotIndex) return [];
     const oneWayCrewTravelTime = crewTravelTime / 2;
-    const drillTravelTime = Asteroid.getLotTravelTime(asteroid.id, drillSource?.lotIndex, Lot.toIndex(lot.id), crewTravelBonus.totalBonus);
+    const drillTravelTime = Asteroid.getLotTravelTime(asteroid.id, drillSource?.lotIndex, Lot.toIndex(lot.id), crewTravelBonus.totalBonus, crewTravelBonus.timeMultiplier);
     return [
       Math.max(oneWayCrewTravelTime, drillTravelTime) + sampleTime + oneWayCrewTravelTime,
       Math.max(oneWayCrewTravelTime, drillTravelTime) + sampleTime
@@ -196,24 +168,24 @@ const ImproveCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }
     },
     {
       label: 'Discovery Minimum',
-      value: `${formatSampleMass(sampleBounds.lower)} tonnes`,
+      value: sampleBounds ? `${formatSampleMass(sampleBounds?.lower)} tonnes` : '',
       direction: sampleQualityBonus.totalBonus > 1 ? getBonusDirection(sampleQualityBonus) : 0,
       tooltip: sampleQualityBonus.totalBonus > 1 && (
         <MaterialBonusTooltip
           bonus={sampleQualityBonus}
           title="Minimum Yield"
-          titleValue={`${formatSampleMass(sampleBounds.lower)} tonnes`} />
+          titleValue={`${formatSampleMass(sampleBounds?.lower)} tonnes`} />
       )
     },
     {
       label: 'Discovery Maximum',
-      value: `${formatSampleMass(sampleBounds.upper)} tonnes`,
+      value: sampleBounds ? `${formatSampleMass(sampleBounds?.upper)} tonnes` : '',
       direction: sampleQualityBonus.totalBonus < 1 ? getBonusDirection(sampleQualityBonus) : 0,
       tooltip: sampleQualityBonus.totalBonus < 1 && (
         <MaterialBonusTooltip
           bonus={sampleQualityBonus}
           title="Maximum Yield"
-          titleValue={`${formatSampleMass(sampleBounds.upper)} tonnes`} />
+          titleValue={`${formatSampleMass(sampleBounds?.upper)} tonnes`} />
       )
     },
   ]), [crewTravelBonus, crewTravelTime, sampleBounds, sampleQualityBonus, sampleTime, tripDetails]);
@@ -318,9 +290,9 @@ const ImproveCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }
       </ActionDialogBody>
 
       <ActionDialogFooter
-        disabled={!existingSample || !drillSource}
+        disabled={!selectedSample || !drillSource}
         goLabel="Optimize"
-        onGo={() => startImproving(existingSample?.id, drillSource)}
+        onGo={() => startImproving(selectedSample?.id, drillSource)}
         finalizeLabel="Analyze"
         onFinalize={finishSampling}
         stage={stage}
@@ -330,10 +302,10 @@ const ImproveCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }
         <>
           <CoreSampleSelectionDialog
             options={improvableSamples}
-            initialSelection={existingSample}
+            initialSelection={selectedSample}
             lotId={lot?.id}
             onClose={() => setSampleSelectorOpen(false)}
-            onSelected={onSelectSample}
+            onSelected={(s) => setSampleId(s?.id)}
             open={sampleSelectorOpen}
           />
 

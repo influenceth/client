@@ -101,7 +101,7 @@ const activities = {
       icon: <KeysIcon />,
       content: (
         <>
-          Crew <EntityLink {...returnValues.callerCrew} />
+          <EntityLink {...returnValues.callerCrew} />
           {' '}granted management rights for <EntityLink {...returnValues.asteroid} />
         </>
       ),
@@ -155,7 +155,7 @@ const activities = {
       icon: <PlanBuildingIcon />,
       content: (
         <>
-          <span>{Building.TYPES[returnValues.building_type]?.name} site plan created for </span>
+          <span>{Building.TYPES[returnValues.buildingType]?.name} site plan created for </span>
           <LotLink lotId={returnValues.lot.id} />
         </>
       ),
@@ -173,7 +173,7 @@ const activities = {
         ['asteroidCrewBuildings', asteroidId, returnValues.callerCrew.id],
       ]
     },
-    getLogContent: ({ event: { returnValues } }, { building = {} }) => ({
+    getLogContent: ({ event: { returnValues } }, viewingAs, { building = {} }) => ({
       icon: <UnplanBuildingIcon />,
       content: (
         <>
@@ -235,7 +235,7 @@ const activities = {
         ['asteroidCrewBuildings', asteroidId, returnValues.callerCrew.id],
       ]
     },
-    getLogContent: ({ event: { returnValues } }, { building = {} }) => {
+    getLogContent: ({ event: { returnValues } }, viewingAs, { building = {} }) => {
       console.log('GET LOG CONTENT', returnValues, building, locationsArrToObj(building?.Location?.locations || [])?.lotId);
       return {
         icon: <ConstructIcon />,
@@ -261,7 +261,7 @@ const activities = {
         ['asteroidCrewBuildings', asteroidId, returnValues.callerCrew.id],
       ]
     },
-    getLogContent: ({ event: { returnValues } }, { building = {} }) => ({
+    getLogContent: ({ event: { returnValues } }, viewingAs, { building = {} }) => ({
       icon: <ConstructIcon />,
       content: (
         <>
@@ -282,7 +282,7 @@ const activities = {
       icon: <CrewIcon />,
       content: (
         <>
-          Crew <EntityLink {...returnValues.crew} />
+          <EntityLink {...returnValues.crew} />
           {' '}delegated to <AddressLink address={returnValues.delegatedTo} maxWidth={addressMaxWidth} />
         </>
       ),
@@ -296,7 +296,7 @@ const activities = {
       icon: <CrewIcon />,
       content: (
         <>
-          Crew <EntityLink {...returnValues.callerCrew} />
+          <EntityLink {...returnValues.callerCrew} />
           {' '}was formed by <AddressLink address={returnValues.caller} maxWidth={addressMaxWidth} />
         </>
       ),
@@ -905,7 +905,7 @@ const activities = {
           icon: <TransferIcon />,
           content: (
             <>
-              {ucfirst(Entity.TYPES[entity?.label]?.label || '')}
+              {/*ucfirst(Entity.TYPES[entity?.label]?.label || '')*/}
               {' '}<EntityLink {...entity} /> minted to
               {' '}<AddressLink address={returnValues.to} maxWidth={addressMaxWidth} />
             </>
@@ -968,7 +968,10 @@ export const hydrateActivities = async (newActivities, queryClient) => {
                 // prepop it, then resolve
                 prepopping[key] = true;
                 return api.getEntityById({ label, id })
-                  .then((data) => queryClient.setQueryData(queryKey, data))
+                  .then((data) => {
+                    console.log({ label, id, data });
+                    queryClient.setQueryData(queryKey, data);
+                  })
                   .catch((e) => console.warn('Error with activity prepop', queryKey, e))
                   .finally(() => {
                     delete prepopping[key];

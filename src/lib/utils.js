@@ -104,10 +104,12 @@ export const getCrewAbilityBonuses = (abilityIdOrAbilityIds, crew) => {
     acc[abilityId] = Crew.getAbilityBonus(abilityId, crew._crewmates, crew._station, timeSinceFed);
     
     // should this only be applied in dev?
-    if (crew._timeAcceleration !== 24 && timeAbilityIds.includes(abilityId)) {
-      const timeMultiplier = crew._timeAcceleration / 24;
-      acc[abilityId].totalBonus *= timeMultiplier;
-      acc[abilityId].timeMultiplier = timeMultiplier;
+    if (timeAbilityIds.includes(abilityId)) {
+      const timeMultiplier =  (crew._timeAcceleration || 24) / 24;
+      if (timeMultiplier !== 1) {
+        acc[abilityId].totalBonus *= timeMultiplier;
+        acc[abilityId].timeMultiplier = timeMultiplier;
+      }
     }
 
     return acc;

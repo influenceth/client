@@ -130,6 +130,7 @@ const useCoreSampleManager = (lotId) => {
   }, [payload]);
 
   const startImproving = useCallback((depositId, coreDrillSource) => {
+    const sample = (lot?.deposits || []).find((c) => c.id === depositId);
     execute(
       'SampleDepositImprove',
       {
@@ -138,7 +139,10 @@ const useCoreSampleManager = (lotId) => {
         origin_slot: coreDrillSource.slot,
         ...payload
       },
-      { lotId }
+      {
+        lotId,
+        resource: sample?.Deposit?.resource
+      }
     )
   }, [lotId, payload]);
 

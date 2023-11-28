@@ -114,7 +114,7 @@ const SurfaceTransfer = ({
     const originLotIndex = Lot.toIndex(originLot?.id);
     const destinationLotIndex = Lot.toIndex(destinationLot?.id);
     const transportDistance = Asteroid.getLotDistance(asteroid?.id, originLotIndex, destinationLotIndex);
-    const transportTime = Asteroid.getLotTravelTime(asteroid?.id, originLotIndex, destinationLotIndex, crewTravelBonus.totalBonus);
+    const transportTime = Asteroid.getLotTravelTime(asteroid?.id, originLotIndex, destinationLotIndex, crewTravelBonus.totalBonus, crewTravelBonus.timeMultiplier);
     return [transportDistance, transportTime];
   }, [asteroid?.id, originLot?.id, destinationLot?.id, crewTravelBonus]);
 
@@ -204,6 +204,8 @@ const SurfaceTransfer = ({
     }
     return { overrideColor, status };
   }, [crew, destinationLot, stage]);
+
+  console.log({ originLot, destinationLot });
 
   return (
     <>

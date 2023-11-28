@@ -121,21 +121,25 @@ const NewCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }) =>
   }, [crew]);
 
   const { totalTime: crewTravelTime, tripDetails } = useMemo(() => {
-    if (!asteroid?.id || !crew?._location?.lotId || !lot?.id || !drillSource?.lotIndex) return {};
+    if (!asteroid?.id || !crew?._location?.lotId || !lot?.id) return {};
     const crewLotIndex = Lot.toIndex(crew?._location?.lotId);
-    return getTripDetails(asteroid.id, crewTravelBonus.totalBonus, crewLotIndex, [
+    return getTripDetails(asteroid.id, crewTravelBonus, crewLotIndex, [
       { label: 'Travel to Sampling Site', lotIndex: Lot.toIndex(lot.id) },
       { label: 'Return to Crew Station', lotIndex: crewLotIndex },
     ]);
-  }, [asteroid?.id, crew?._location?.lotId, drillSource?.lotIndex, lot?.id, crewTravelBonus]);
+  }, [asteroid?.id, crew?._location?.lotId, lot?.id, crewTravelBonus]);
 
-  const sampleBounds = Deposit.getSampleBounds(lotAbundance, 0, sampleQualityBonus.totalBonus);
-  const sampleTime = Deposit.getSampleTime(sampleTimeBonus.totalBonus);
+  const [sampleBounds, sampleTime] = useMemo(() => {
+    return [
+      lotAbundance ? Deposit.getSampleBounds(lotAbundance, 0, sampleQualityBonus.totalBonus) : null,
+      Deposit.getSampleTime(sampleTimeBonus.totalBonus)
+    ];
+  }, [lotAbundance, sampleQualityBonus, sampleTimeBonus]);
 
   const [crewTimeRequirement, taskTimeRequirement] = useMemo(() => {
     if (!asteroid?.id || !crew?._location?.lotId || !lot?.id || !drillSource?.lotIndex) return [];
     const oneWayCrewTravelTime = crewTravelTime / 2;
-    const drillTravelTime = Asteroid.getLotTravelTime(asteroid.id, drillSource?.lotIndex, Lot.toIndex(lot.id), crewTravelBonus.totalBonus);
+    const drillTravelTime = Asteroid.getLotTravelTime(asteroid.id, drillSource?.lotIndex, Lot.toIndex(lot.id), crewTravelBonus.totalBonus, crewTravelBonus.timeMultiplier);
     return [
       Math.max(oneWayCrewTravelTime, drillTravelTime) + sampleTime + oneWayCrewTravelTime,
       Math.max(oneWayCrewTravelTime, drillTravelTime) + sampleTime
@@ -171,24 +175,24 @@ const NewCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }) =>
     },
     {
       label: 'Discovery Minimum',
-      value: `${formatSampleMass(sampleBounds.lower)} tonnes`,
+      value: sampleBounds ? `${formatSampleMass(sampleBounds?.lower)} tonnes` : '',
       direction: sampleQualityBonus.totalBonus > 1 ? getBonusDirection(sampleQualityBonus) : 0,
       tooltip: sampleQualityBonus.totalBonus > 1 && (
         <MaterialBonusTooltip
           bonus={sampleQualityBonus}
           title="Minimum Yield"
-          titleValue={`${formatSampleMass(sampleBounds.lower)} tonnes`} />
+          titleValue={`${formatSampleMass(sampleBounds?.lower)} tonnes`} />
       )
     },
     {
       label: 'Discovery Maximum',
-      value: `${formatSampleMass(sampleBounds.upper)} tonnes`,
+      value: sampleBounds ? `${formatSampleMass(sampleBounds?.upper)} tonnes` : '',
       direction: sampleQualityBonus.totalBonus < 1 ? getBonusDirection(sampleQualityBonus) : 0,
       tooltip: sampleQualityBonus.totalBonus < 1 && (
         <MaterialBonusTooltip
           bonus={sampleQualityBonus}
           title="Maximum Yield"
-          titleValue={`${formatSampleMass(sampleBounds.upper)} tonnes`} />
+          titleValue={`${formatSampleMass(sampleBounds?.upper)} tonnes`} />
       )
     },
   ]), [crewTravelBonus, crewTravelTime, sampleBounds, sampleQualityBonus, sampleTime, tripDetails]);

@@ -197,11 +197,11 @@ const LotResources = () => {
   const extraSampleParams = useMemo(() => {
     const params = {};
     if (!currentSamplingAction) {
-      if (selectedResource?.id) {
-        params.overrideResourceId = Number(selectedResource?.id);
-      } else if (selectedSample) {
+      if (selectedSample?.id) {
         params.improveSample = { ...selectedSample };
         params._disabled = !(selectedSample?.Deposit?.status === Deposit.STATUSES.SAMPLED && selectedSample?.Deposit?.initialYield === selectedSample?.Deposit?.remainingYield);
+      } else if (selectedResource?.id) {
+        params.overrideResourceId = Number(selectedResource?.id);
       }
     }
     return params;
@@ -211,7 +211,7 @@ const LotResources = () => {
     const params = {};
     if (!currentExtraction) {
       if (selectedSample) {
-        params.preselect = { ...selectedSample };
+        params.preselect = { depositId: selectedSample?.id };
         if (selectedSample.Deposit?.remainingYield === 0) {
           params._disabled = true;
         }

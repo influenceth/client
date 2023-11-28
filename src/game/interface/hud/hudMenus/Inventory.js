@@ -265,7 +265,7 @@ const LotInventory = () => {
 
   const resourceItemRefs = useRef([]);
 
-  const inventory = Object.values(lot?.building?.Inventories || {}).find((i) => i.status === Inventory.STATUSES.AVAILABLE);
+  const inventory = Object.values(lot?.building?.Inventories || []).find((i) => i.status === Inventory.STATUSES.AVAILABLE);
   inventory.contentsObj = useMemo(() => {
     return inventory?.contents?.reduce((acc, c) => {
       acc[c.product] = c.amount;

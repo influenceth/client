@@ -2005,15 +2005,16 @@ export const InventorySelectionDialog = ({ otherEntity, otherLotId, isSourcing, 
   const inventories = useMemo(() => {
     if (!inventoryData) return [];
 
-    const crewLotIndex = Lot.toIndex(crew?._location?.lotId);
     const otherLotIndex = Lot.toIndex(otherLotId)
 
     const display = [];
     inventoryData.forEach((entity) => {
       if (otherEntity && entity.id === otherEntity.id && entity.label === otherEntity.label) return;
-      if (!entity.Inventory) return;
-      // inventory might be single or array
-      (Array.isArray(entity.Inventory) ? entity.Inventory : [entity.Inventory]).forEach((inv) => {
+      if (!entity.Inventories) return;
+      entity.Inventories.forEach((inv) => {
+        // skip if locked
+        if (inv.status !== Inventory.STATUSES.AVAILABLE) return;
+
         // skip if cannot contain any of the itemIds
         if (itemIds && Inventory.TYPES[inv.inventoryType].productConstraints) {
           const allowedMaterials = Object.keys(Inventory.TYPES[inv.inventoryType].productConstraints);
@@ -2038,9 +2039,8 @@ export const InventorySelectionDialog = ({ otherEntity, otherLotId, isSourcing, 
 
         // disable if !available or does not contain itemId
         display.push({
-          disabled: inv.status !== Inventory.STATUSES.AVAILABLE || (requirePresenceOfItemIds && !itemTally),
-          distance: Asteroid.getLotDistance(asteroidId, crewLotIndex, entityLotIndex)
-            + Asteroid.getLotDistance(asteroidId, entityLotIndex, otherLotIndex), // distance to source + distance to destination
+          disabled: requirePresenceOfItemIds && !itemTally,
+          distance: Asteroid.getLotDistance(asteroidId, entityLotIndex, otherLotIndex), // distance to source + distance to destination
           isMine: entity.Control.controller.id === crew?.id,
           isShip: !!entity.Ship,
           itemTally,
@@ -2054,7 +2054,7 @@ export const InventorySelectionDialog = ({ otherEntity, otherLotId, isSourcing, 
       });
     });
 
-    return display;
+    return display.sort((a, b) => a.distance - b.distance);
   }, [inventoryData]);
 
   const onComplete = useCallback(() => {
@@ -3468,7 +3468,7 @@ const ActionDialogStat = ({ stat: { isTimeStat, label, value, direction, tooltip
   return (
     <StatRow
       key={label}
-      direction={direction}
+      direction={value === '' ? null : direction}
       isTimeStat={reactBool(isTimeStat)}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
@@ -3477,14 +3477,14 @@ const ActionDialogStat = ({ stat: { isTimeStat, label, value, direction, tooltip
       <span>
         {value}
       </span>
-      {tooltip && (
+      {value !== '' && tooltip && (
         <MouseoverInfoPane referenceEl={refEl.current} visible={hovered}>
           <MouseoverContent>
             {tooltip}
           </MouseoverContent>
         </MouseoverInfoPane>
       )}
-      {warning && (
+      {value !== '' && warning && (
         <MouseoverIcon icon={<WarningOutlineIcon />} iconStyle={{ fontSize: '125%', marginLeft: 5 }} themeColor={theme.colors.error}>
           {warning}
         </MouseoverIcon>
@@ -3850,7 +3850,7 @@ export const getTripDetails = (asteroidId, crewTravelBonus, originLotIndex, step
 
   const tripDetails = steps.map(({ label, lotIndex, skipToLotIndex }) => {
     const stepDistance = Asteroid.getLotDistance(asteroidId, currentLotIndex, lotIndex) || 0;
-    const stepTime = Asteroid.getLotTravelTime(asteroidId, currentLotIndex, lotIndex, crewTravelBonus) || 0;
+    const stepTime = Asteroid.getLotTravelTime(asteroidId, currentLotIndex, lotIndex, crewTravelBonus.totalBonus, crewTravelBonus.timeMultiplier) || 0;
     currentLotIndex = skipToLotIndex || lotIndex;
 
     // agg

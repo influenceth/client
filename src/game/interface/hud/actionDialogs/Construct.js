@@ -63,12 +63,12 @@ const Construct = ({ asteroid, lot, constructionManager, stage, ...props }) => {
     const bonusIds = [Crewmate.ABILITY_IDS.HOPPER_TRANSPORT_TIME, Crewmate.ABILITY_IDS.CONSTRUCTION_TIME];
     const abilities = getCrewAbilityBonuses(bonusIds, crew);
     return bonusIds.map((id) => abilities[id] || {});
-  }, [crew])
+  }, [crew]);
 
   const { totalTime: crewTravelTime, tripDetails } = useMemo(() => {
     if (!asteroid?.id || !crew?._location?.lotId || !lot?.id) return {};
     const crewLotIndex = Lot.toIndex(crew?._location?.lotId);
-    return getTripDetails(asteroid.id, crewTravelBonus.totalBonus, crewLotIndex, [
+    return getTripDetails(asteroid.id, crewTravelBonus, crewLotIndex, [
       { label: 'Travel to Construction Site', lotIndex: Lot.toIndex(lot.id) },
       { label: 'Return to Crew Station', lotIndex: crewLotIndex },
     ]);
@@ -80,6 +80,13 @@ const Construct = ({ asteroid, lot, constructionManager, stage, ...props }) => {
       : 0,
     [lot?.building?.Building?.buildingType, constructionBonus.totalBonus]
   );
+
+  const [crewTimeRequirement, taskTimeRequirement] = useMemo(() => {
+    return [
+      crewTravelTime + constructionTime / 2,
+      crewTravelTime / 2 + constructionTime
+    ];
+  }, [crewTravelTime, constructionTime]);
 
   const stats = useMemo(() => ([
     {
@@ -155,8 +162,8 @@ const Construct = ({ asteroid, lot, constructionManager, stage, ...props }) => {
         }}
         captain={captain}
         location={{ asteroid, lot }}
-        crewAvailableTime={crewTravelTime}
-        taskCompleteTime={constructionTime}
+        crewAvailableTime={crewTimeRequirement}
+        taskCompleteTime={taskTimeRequirement}
         onClose={props.onClose}
         stage={stage} />
 

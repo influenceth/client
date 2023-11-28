@@ -71,8 +71,6 @@ const arrayComponents = {
 
 const formatESData = (responseData) => {
   return responseData?.hits?.hits?.map((h) => {
-    return h._source;
-    // console.log('h._source', h._source);
     return Object.keys(h._source).reduce((acc, k) => {
       if (!!arrayComponents[k]) {
         acc[arrayComponents[k]] = h._source[k] || [];
@@ -181,7 +179,11 @@ const api = {
     buildingQueryBuilder.filter(esbLocationQuery({ asteroidId }));
 
     // has unlocked inventory
-    buildingQueryBuilder.filter(esb.termQuery('Inventory.status', Inventory.STATUSES.AVAILABLE));
+    buildingQueryBuilder.filter(
+      esb.nestedQuery()
+        .path('Inventory')
+        .query(esb.termQuery('Inventory.status', Inventory.STATUSES.AVAILABLE))
+    );
     
     const buildingQ = esb.requestBodySearch();
     buildingQ.query(buildingQueryBuilder);

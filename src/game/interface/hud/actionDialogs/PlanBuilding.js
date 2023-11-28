@@ -52,13 +52,17 @@ const PlanBuilding = ({ asteroid, lot, constructionManager, stage, ...props }) =
   const { totalTime: crewTravelTime, tripDetails } = useMemo(() => {
     if (!asteroid?.id || !crew?._location?.lotId || !lot?.id) return {};
     const crewLotIndex = Lot.toIndex(crew?._location?.lotId);
-    return getTripDetails(asteroid.id, crewTravelBonus.totalBonus, crewLotIndex, [
+    return getTripDetails(asteroid.id, crewTravelBonus, crewLotIndex, [
       { label: 'Travel to Construction Site', lotIndex: Lot.toIndex(lot.id) },
       { label: 'Return to Crew Station', lotIndex: crewLotIndex },
     ]);
   }, [asteroid?.id, crew?._location?.lotId, lot?.id, crewTravelBonus]);
 
-  const taskTime = useMemo(() => 0, []);
+  const [crewTimeRequirement, taskTimeRequirement] = useMemo(() => {
+    if (!tripDetails) return [];
+    return [crewTravelTime, 0];
+  }, [crewTravelTime, tripDetails]);
+
   const stats = useMemo(() => {
     if (!asteroid?.id || !lot?.id) return [];
     const taskTime = 0;
@@ -105,9 +109,9 @@ const PlanBuilding = ({ asteroid, lot, constructionManager, stage, ...props }) =
         }}
         captain={captain}
         location={{ asteroid, lot }}
-        crewAvailableTime={crewTravelTime}
+        crewAvailableTime={crewTimeRequirement}
+        taskCompleteTime={taskTimeRequirement}
         onClose={props.onClose}
-        taskCompleteTime={crewTravelTime + taskTime}
         stage={stage} />
 
       <ActionDialogBody>
