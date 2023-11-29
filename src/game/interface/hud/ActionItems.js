@@ -284,6 +284,7 @@ const ActionItem = ({ data }) => {
   const getActivityConfig = useGetActivityConfig();
 
   const currentAsteroid = useStore(s => s.asteroids);
+  const resourceMap = useStore(s => s.asteroids.resourceMap);
   const dispatchActionDialog = useStore(s => s.dispatchActionDialog);
   const dispatchLauncherPage = useStore(s => s.dispatchLauncherPage);
   const dismissFailedTx = useStore(s => s.dispatchFailedTransactionDismissed);
@@ -298,7 +299,7 @@ const ActionItem = ({ data }) => {
   const goToAction = useLotLink({
     asteroidId: item.asteroidId,
     lotId: item.lotId,
-    resourceId: item.resourceId,
+    resourceId: resourceMap?.active ? item.resourceId : undefined,  // only open resourcemap if a resourcemap is open
   });
 
   const onClick = useCallback(() => {

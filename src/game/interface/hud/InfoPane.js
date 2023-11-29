@@ -398,16 +398,18 @@ const InfoPane = () => {
             varyDistance />
         </ThumbBackground>
       );
+      
     } else if (zoomStatus === 'in') {
+      const isIncompleteBuilding = lot?.building && !['OPERATIONAL', 'DECONSTRUCTING'].includes(constructionStatus);
       if (zoomScene?.type === 'LOT') {
-        pane.title = Building.TYPES[lot?.building?.Building?.buildingType || 0]?.name;
+        pane.title = `${Building.TYPES[lot?.building?.Building?.buildingType || 0]?.name}${isIncompleteBuilding ? ' (Plan)' : ''}`;
         pane.subtitle = <>{formatters.asteroidName(asteroid)} &gt; <b>{formatters.lotName(Lot.toIndex(lotId))}</b></>;
         pane.captainCard = lot?.Control?.controller?.id;
       } else if (lotId && lot) {
-        let hologram = !!(isAtRisk || !['OPERATIONAL', 'DECONSTRUCTING', 'PLANNING'].includes(constructionStatus));
+        let hologram = !!(isAtRisk || isIncompleteBuilding);
         hologram = lot.building ? hologram : false;
         const thumbUrl = getBuildingIcon(lot.building?.Building?.buildingType || 0, 'w400', hologram);
-        pane.title = Building.TYPES[lot?.building?.Building?.buildingType || 0]?.name;
+        pane.title = `${Building.TYPES[lot?.building?.Building?.buildingType || 0]?.name}${isIncompleteBuilding ? ' (Plan)' : ''}`;
         pane.subtitle = <>{formatters.asteroidName(asteroid)} &gt; <b>{formatters.lotName(Lot.toIndex(lotId))}</b></>;
         pane.captainCard = lot.Control?.controller?.id;
         pane.hoverSubtitle = 'Zoom to Lot';

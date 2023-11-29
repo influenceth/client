@@ -211,7 +211,7 @@ const formatAsTx = (item) => {
     case 'SampleDepositImprove': {
       formatted.icon = <ImproveCoreSampleIcon />;
       formatted.label = `${Product.TYPES[item.meta?.resource]?.name || 'Core'} Resample`;
-      // formatted.sampleId = item.vars.deposit.id;
+      // formatted.sampleId = item.vars.deposit?.id; // TODO: this seems deprecated?
       formatted.asteroidId = Lot.toPosition(item.meta?.lotId)?.asteroidId;
       formatted.lotId = item.meta?.lotId;
       // formatted.resourceId = item.meta.resource; // not necessarily forcing open resourcemap
@@ -230,7 +230,7 @@ const formatAsTx = (item) => {
       const isImprovement = !item.meta?.isNew;
       formatted.icon = isImprovement ? <ImproveCoreSampleIcon /> : <NewCoreSampleIcon />;
       formatted.label = `Core Analysis`;
-      formatted.sampleId = item.vars.deposit?.id;
+      // formatted.sampleId = item.vars.deposit?.id; // TODO: this seems deprecated?
       formatted.asteroidId = Lot.toPosition(item.meta?.lotId)?.asteroidId;
       formatted.lotId = item.meta?.lotId;
       // formatted.resourceId = item.vars.resourceId; // not necessarily forcing open resourcemap

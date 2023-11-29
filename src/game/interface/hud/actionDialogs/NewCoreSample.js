@@ -53,7 +53,7 @@ const NewCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }) =>
   const [sourceSelectorOpen, setSourceSelectorOpen] = useState(false);
 
   useEffect(() => {
-    if (currentSamplingAction) {
+    if (currentSamplingAction?.sampleId) {
       setSampleId(currentSamplingAction.sampleId);
       if (originEntity) {
         const { lotIndex } = locationsArrToObj(originEntity.Location.locations || []);
@@ -65,7 +65,7 @@ const NewCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }) =>
       if (currentSamplingAction.resourceId !== resourceId) {
         setResourceId(currentSamplingAction.resourceId)
       }
-      if (resourceMap?.active && currentSamplingAction.resourceId !== resourceMap?.selected) {
+      if (currentSamplingAction.resourceId && resourceMap?.active && currentSamplingAction.resourceId !== resourceMap?.selected) {
         dispatchResourceMapSelect(currentSamplingAction.resourceId);
         dispatchResourceMapToggle(true);
       }

@@ -4,8 +4,8 @@ import { Asteroid, Lot, Product } from '@influenceth/sdk';
 import { NewCoreSampleIcon, ImproveCoreSampleIcon } from '~/components/Icons';
 import useCoreSampleManager from '~/hooks/actionManagers/useCoreSampleManager';
 import useStore from '~/hooks/useStore';
-import ActionButton from './ActionButton';
 import { formatFixed } from '~/lib/utils';
+import ActionButton from './ActionButton';
 
 const labelDict = {
   READY: 'Start Core Sample',

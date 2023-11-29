@@ -34,6 +34,7 @@ import {
 import { ActionDialogInner, theming, useAsteroidAndLot } from '../ActionDialog';
 import useEntity from '~/hooks/useEntity';
 
+// TODO: combine this ui with "NewCoreSample" dialog if possible
 const ImproveCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }) => {
   const { currentSamplingAction, startImproving, finishSampling, samplingStatus } = coreSampleManager;
   const { crew, crewmateMap } = useCrewContext();
@@ -66,7 +67,7 @@ const ImproveCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }
   }, [improvableSamples, sampleId]);
 
   useEffect(() => {
-    if (currentSamplingAction) {
+    if (currentSamplingAction?.sampleId) {
       setSampleId(currentSamplingAction.sampleId);
       if (originEntity) {
         const { lotIndex } = locationsArrToObj(originEntity.Location.locations || []);
@@ -99,7 +100,7 @@ const ImproveCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }
 
   useEffect(() => {
     // if open to a different resource map, switch... if a resource map is not open, don't open one
-    if (resourceMap?.active && resourceMap.selected !== resourceId) {
+    if (resourceId && resourceMap?.active && resourceMap.selected !== resourceId) {
       dispatchResourceMapSelect(resourceId);
     }
   }, [resourceId, resourceMap]);

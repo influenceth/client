@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
-import { Asteroid, Deposit, Lot, Product } from '@influenceth/sdk';
+import { Asteroid, Building, Deposit, Lot, Product } from '@influenceth/sdk';
 
 import useActionButtons from '~/hooks/useActionButtons';
 import useAsteroid from '~/hooks/useAsteroid';
@@ -310,9 +310,11 @@ const LotResources = () => {
             )}
             {/* TODO: list sample for sale */}
             {/* TODO: purchase sample for sale (if one is selected) */}
-            {(currentExtraction || selectedSample) && (
-              <actionButtons.Extract {...actionProps} {...extraExtractParams} />
-            )}
+            {lot?.building?.Building?.status === Building.CONSTRUCTION_STATUSES.OPERATIONAL
+              && lot?.building?.Extractors?.length > 0
+              && (currentExtraction || selectedSample)
+              && <actionButtons.Extract {...actionProps} {...extraExtractParams} />
+            }
           </>
         </Tray>
       )}
