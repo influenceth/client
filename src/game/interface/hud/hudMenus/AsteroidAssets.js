@@ -1,16 +1,16 @@
 import { Fragment, useMemo } from 'react';
 import styled from 'styled-components';
-import { Building, Dock, Entity, Inventory, Ship, Station } from '@influenceth/sdk';
+import { Building, Dock, Entity, Inventory, Lot, Ship, Station } from '@influenceth/sdk';
 
 import { useLotLink } from '~/components/LotLink';
 import useAsteroid from '~/hooks/useAsteroid';
-import useAsteroidCrewLots from '~/hooks/useAsteroidCrewLots';
+import useAsteroidCrewBuildings from '~/hooks/useAsteroidCrewBuildings';
 import useChainTime from '~/hooks/useChainTime';
 import useStore from '~/hooks/useStore';
 import { HudMenuCollapsibleSection, Rule, majorBorderColor } from './components';
 import ClipCorner from '~/components/ClipCorner';
 import { CaretIcon, ConstructIcon } from '~/components/Icons';
-import { formatFixed } from '~/lib/utils';
+import { formatFixed, locationsArrToObj } from '~/lib/utils';
 import useAsteroidShips from '~/hooks/useAsteroidShips';
 import { ResourceImage } from '~/components/ResourceThumbnail';
 import useLot from '~/hooks/useLot';
@@ -18,6 +18,8 @@ import { useShipLink } from '~/components/ShipLink';
 import { getShipIcon } from '~/lib/assetUtils';
 import useBuilding from '~/hooks/useBuilding';
 import useCrewContext from '~/hooks/useCrewContext';
+import formatters from '~/lib/formatters';
+import useEntity from '~/hooks/useEntity';
 
 const Wrapper = styled.div`
   display: flex;
@@ -150,17 +152,15 @@ const Status = styled.td`
   white-space: nowrap;
 `;
 
-const BuildingRow = ({ lot }) => {
+const BuildingRow = ({ building }) => {
   const chainTime = useChainTime();
-  const onClick = useLotLink({
-    asteroidId: lot.asteroid,
-    lotId: lot.i,
-  });
+  const buildingLoc = locationsArrToObj(building?.Location?.locations);
+  const onClick = useLotLink(buildingLoc);
 
   const [progress, progressColor] = useMemo(() => {
-    if (lot.building?.Building?.status === Building.CONSTRUCTION_STATUSES.OPERATIONAL) {
-      if (lot.building?.Building?.buildingType === Building.IDS.WAREHOUSE) {
-        const inventory = (lot.building.Inventories || []).find((i) => i.status === Inventory.STATUSES.AVAILABLE);
+    if (building?.Building?.status === Building.CONSTRUCTION_STATUSES.OPERATIONAL) {
+      if (building?.Building?.buildingType === Building.IDS.WAREHOUSE) {
+        const inventory = (building.Inventories || []).find((i) => i.status === Inventory.STATUSES.AVAILABLE);
         const filledCapacity = Inventory.getFilledCapacity(inventory?.inventoryType);
         const usage = inventory
           ? Math.min(1,
@@ -178,63 +178,63 @@ const BuildingRow = ({ lot }) => {
       // TODO: anything to show for marketplace?
       // TODO: how do drydocks work at shipyard?
 
-      if (lot.building?.Building?.buildingType === Building.IDS.SPACEPORT) {
-        const usage = Math.min(1, lot.building.Dock.dockedShips / Dock.TYPES[lot.building.Dock.dockType].cap);
+      if (building?.Building?.buildingType === Building.IDS.SPACEPORT) {
+        const usage = Math.min(1, building.Dock.dockedShips / Dock.TYPES[building.Dock.dockType].cap);
         return [usage, usage < 0.75 ? 'main' : (usage < 0.9 ? 'warning' : 'error')];
       }
-      else if (lot.building?.Building?.buildingType === Building.IDS.HABITAT) {
-        const usage = Math.min(1, lot.building.Station.population / Station.TYPES[lot.building.Station.stationType].cap);
+      else if (building?.Building?.buildingType === Building.IDS.HABITAT) {
+        const usage = Math.min(1, building.Station.population / Station.TYPES[building.Station.stationType].cap);
         return [usage, usage < 0.75 ? 'main' : (usage < 0.9 ? 'warning' : 'error')];
       }
 
-      else if (lot.building?.Building?.buildingType === Building.IDS.EXTRACTOR) {
+      else if (building?.Building?.buildingType === Building.IDS.EXTRACTOR) {
         return [
-          Math.min(1, (chainTime - lot.building?.Extractors?.[0]?.startTime) / (lot.building?.Extractors?.[0]?.finishTime - lot.building?.Extractors?.[0]?.startTime)),
+          Math.min(1, (chainTime - building?.Extractors?.[0]?.startTime) / (building?.Extractors?.[0]?.finishTime - building?.Extractors?.[0]?.startTime)),
           'main'
         ];
       }
-      else if (lot.building?.Processors?.length) {
+      else if (building?.Processors?.length) {
         return [
-          Math.min(1, (chainTime - lot.building?.Processors?.[0]?.startTime) / (lot.building?.Processors?.[0]?.finishTime - lot.building?.Processors?.[0]?.startTime)),
+          Math.min(1, (chainTime - building?.Processors?.[0]?.startTime) / (building?.Processors?.[0]?.finishTime - building?.Processors?.[0]?.startTime)),
           'main'
         ];
       }
     }
 
-    if (lot.building?.Building?.status === Building.CONSTRUCTION_STATUSES.PLANNED) {
+    if (building?.Building?.status === Building.CONSTRUCTION_STATUSES.PLANNED) {
       return [
-        Math.min(1, 1 - (lot.building?.Building?.plannedAt + Building.GRACE_PERIOD - chainTime) / Building.GRACE_PERIOD),
+        Math.min(1, 1 - (building?.Building?.plannedAt + Building.GRACE_PERIOD - chainTime) / Building.GRACE_PERIOD),
         'error'
       ];
     }
 
-    if (lot.building?.Building?.status === Building.CONSTRUCTION_STATUSES.UNDER_CONSTRUCTION) {
+    if (building?.Building?.status === Building.CONSTRUCTION_STATUSES.UNDER_CONSTRUCTION) {
       return [
-        Math.min(1, (chainTime - lot.building?.Building?.startTime) / (lot.building?.Building?.finishTime - lot.building?.Building?.startTime)),
+        Math.min(1, (chainTime - building?.Building?.startTime) / (building?.Building?.finishTime - building?.Building?.startTime)),
         'main'
       ];
     }
     return [0];
-  }, [chainTime, lot.building]);
+  }, [chainTime, building]);
 
   const status = useMemo(() => {
-    if (lot.building?.Building?.status === Building.CONSTRUCTION_STATUSES.OPERATIONAL) {
-      if (lot.building?.Building?.buildingType === Building.IDS.EXTRACTOR && lot.building?.Extractors?.[0]?.status > 0) {
+    if (building?.Building?.status === Building.CONSTRUCTION_STATUSES.OPERATIONAL) {
+      if (building?.Building?.buildingType === Building.IDS.EXTRACTOR && building?.Extractors?.[0]?.status > 0) {
         return 'Extracting';
 
-      } else if (lot.building?.Processors?.length && lot.building?.Processors?.[0]?.status > 0) {
+      } else if (building?.Processors?.length && building?.Processors?.[0]?.status > 0) {
         return 'Processing';
 
-      } else if ([Building.IDS.WAREHOUSE, Building.IDS.SPACEPORT, Building.IDS.HABITAT].includes(lot.building?.Building?.buildingType)) {
+      } else if ([Building.IDS.WAREHOUSE, Building.IDS.SPACEPORT, Building.IDS.HABITAT].includes(building?.Building?.buildingType)) {
         return `${formatFixed(100 * progress, 1)}% Full`
       }
       return 'Idle';
     }
-    if (lot.building?.construction?.status === Building.CONSTRUCTION_STATUSES.PLANNED && lot.building?.Building?.plannedAt + Building.GRACE_PERIOD < chainTime) {
+    if (building?.construction?.status === Building.CONSTRUCTION_STATUSES.PLANNED && building?.Building?.plannedAt + Building.GRACE_PERIOD < chainTime) {
       return 'At Risk';
     }
-    return Building.CONSTRUCTION_STATUSES[lot.building?.Building?.status || 0];
-  }, [lot.building, progress]);
+    return Building.CONSTRUCTION_STATUSES[building?.Building?.status || 0];
+  }, [building, progress]);
 
   return (
     <LotRow onClick={onClick}>
@@ -247,10 +247,10 @@ const BuildingRow = ({ lot }) => {
       <InfoCell>
         <Details>
           <label>
-            {lot.building?.Name?.name || Building.TYPES[lot.building?.Building?.buildingType || 0].name}
+            {building?.Name?.name || Building.TYPES[building?.Building?.buildingType || 0].name}
           </label>
           <span>
-            <HoverContent>Lot {(lot.i || '').toLocaleString()}</HoverContent>
+            <HoverContent>{formatters.lotName(buildingLoc?.lotIndex)}</HoverContent>
             <NotHoverContent>{status}</NotHoverContent>
           </span>
         </Details>
@@ -264,15 +264,15 @@ const ShipGroupHeader = ({ asteroidId, buildingId, lotId }) => {
   const { data: building } = useBuilding(buildingId);
   const buildingLoc = Entity.toPosition(building?.Location?.location);
 
-  const { data: lot } = useLot(asteroidId, buildingLoc?.lotId || lotId);
+  const { data: lot } = useLot(buildingLoc?.lotId || lotId);
 
   const [mainLabel, details] = useMemo(() => {
     if (lotId === 0) return ['In Orbit', ''];
     return [
       Building.TYPES[lot?.building?.Building?.buildingType]?.name || 'Empty Lot',
-      `Lot ${lot?.i.toLocaleString()}`
+      `Lot ${Lot.toIndex(buildingLoc?.lotId || lotId).toLocaleString()}`
     ]
-  }, [lot, lotId]);
+  }, [buildingLoc, lot, lotId]);
 
   return (
     <ShipHeaderRow>
@@ -283,7 +283,7 @@ const ShipGroupHeader = ({ asteroidId, buildingId, lotId }) => {
 };
 
 const ShipInfoRow = ({ ship }) => {
-  const onClick = useShipLink({ shipId: ship.i, zoomToShip: true });
+  const onClick = useShipLink({ shipId: ship.id, zoomToShip: true });
 
   return (
     <ShipRow onClick={onClick}>
@@ -294,7 +294,7 @@ const ShipInfoRow = ({ ship }) => {
         </ImageWrapper>
       </ImageCell>
       <td>
-        {ship.Name?.name || `Ship #${ship.i.toLocaleString()}`}
+        {ship.Name?.name || `Ship #${ship.id.toLocaleString()}`}
       </td>
       <td>
         {Ship.TYPES[ship.Ship.shipType].name}
@@ -308,30 +308,30 @@ const AsteroidAssets = () => {
 
   const asteroidId = useStore(s => s.asteroids.origin);
   const { data: asteroid } = useAsteroid(asteroidId);
-  const { data: lots, isLoading: lotsLoading } = useAsteroidCrewLots(asteroidId);
+  const { data: buildings, isLoading: buildingsLoading } = useAsteroidCrewBuildings(asteroidId);
   // TODO: ecs refactor -- should this use useOwnedShips instead (and filter to asteroid location?);
   //  might be harder todo unless also using elasticsearch for flattened location
   const { data: ships, isLoading: shipsLoading } = useAsteroidShips(asteroidId);
 
-  const buildingTally = lots?.length || 0;
+  const buildingTally = buildings?.length || 0;
 
   const buildingsByType = useMemo(() => {
-    if (!lots) return {};
-    return lots
-    .sort((a, b) => Building.TYPES[a.building?.Building?.buildingType]?.name < Building.TYPES[b.building?.Building?.buildingType]?.name ? -1 : 1)
-    .reduce((acc, lot) => {
-      const buildingType = lot.building?.Building?.buildingType;
+    if (!buildings) return {};
+    return buildings
+    .sort((a, b) => Building.TYPES[a.Building?.buildingType]?.name < Building.TYPES[b.Building?.buildingType]?.name ? -1 : 1)
+    .reduce((acc, building) => {
+      const buildingType = building.Building?.buildingType;
       if (!acc[buildingType]) acc[buildingType] = [];
-      acc[buildingType].push(lot);
+      acc[buildingType].push(building);
       return acc;
     }, {});
-  }, [lots]);
+  }, [buildings]);
 
   const shipsByLocation = useMemo(() => {
     if (!ships) return {};
     return ships
     .reduce((acc, ship) => {
-      if (ship.Control?.controller?.id === crew?.i) {
+      if (ship.Control?.controller?.id === crew?.id) {
         const loc = ship.Location.location;
         const lot = loc.label === Entity.IDS.LOT ? (loc.id || 0) : -loc.id;
         if (!acc[lot]) acc[lot] = [];
@@ -346,7 +346,7 @@ const AsteroidAssets = () => {
       <HudMenuCollapsibleSection
         titleText="Buildings"
         titleLabel={`${buildingTally.toLocaleString()} Asset${buildingTally === 1 ? '' : 's'}`}>
-        {asteroid && lots && !lotsLoading && (
+        {asteroid && buildings && !buildingsLoading && (
           <>
             {buildingTally === 0 && <div style={{ padding: '15px 10px', textAlign: 'center' }}>Your crew has not occupied any lots on this asteroid yet.</div>}
             {buildingTally > 0 && Object.keys(buildingsByType).map((buildingType, i) => (
@@ -354,7 +354,7 @@ const AsteroidAssets = () => {
                 {i > 0 && <Rule />}
                 <AssetTable>
                   <tbody>
-                    {buildingsByType[buildingType].map((lot) => <BuildingRow key={lot.i} lot={lot} />)}
+                    {buildingsByType[buildingType].map((building) => <BuildingRow key={building.id} building={building} />)}
                   </tbody>
                 </AssetTable>
               </Fragment>
@@ -382,7 +382,7 @@ const AsteroidAssets = () => {
                       <ShipGroupHeader {...headerProps} />
                     </thead>
                     <tbody>
-                      {shipsByLocation[lotOrBuildingId].map((ship) => <ShipInfoRow key={ship.i} ship={ship} />)}
+                      {shipsByLocation[lotOrBuildingId].map((ship) => <ShipInfoRow key={ship.id} ship={ship} />)}
                     </tbody>
                   </AssetTable>
                 </Fragment>

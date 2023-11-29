@@ -4,7 +4,7 @@ import { Asteroid } from '@influenceth/sdk';
 
 import { ScanAsteroidIcon } from '~/components/Icons';
 import useAsteroid from '~/hooks/useAsteroid';
-import useScanManager from '~/hooks/useScanManager';
+import useScanManager from '~/hooks/actionManagers/useScanManager';
 
 import ActionButton from './ActionButton';
 import useCrewContext from '~/hooks/useCrewContext';
@@ -35,7 +35,7 @@ const ScanAsteroid = ({ asteroid, _disabled }) => {
         flags.attention = flags.disabled ? false : true;
         return {
           disabledReason,
-          label: `Scan Asteroid ${scanType === 'SURFACE' ? 'Surface' : 'Resources'}`,
+          label: `Perform ${scanType === 'SURFACE' ? 'Long-Range' : 'Orbital'} Scan`,
           flags,
           handleClick: () => {
             // startAsteroidScan();
@@ -46,7 +46,7 @@ const ScanAsteroid = ({ asteroid, _disabled }) => {
         flags.loading = true;
         return {
           disabledReason,
-          label: `Scanning Asteroid ${scanType === 'SURFACE' ? 'Surface' : 'Resources'}...`,
+          label: `Performing ${scanType === 'SURFACE' ? 'Long-Range' : 'Orbital'}...`,
           flags,
           handleClick: () => {
             history.push(`/asteroids/${asteroid.id}/resources`);

@@ -8,7 +8,7 @@ import {
   WarningOutlineIcon
 } from '~/components/Icons';
 import useCrewContext from '~/hooks/useCrewContext';
-import useConstructionManager from '~/hooks/useConstructionManager';
+import useConstructionManager from '~/hooks/actionManagers/useConstructionManager';
 
 import {
   ActionDialogFooter,
@@ -38,7 +38,7 @@ const UnplanWarning = styled.div`
 `;
 
 const UnplanBuilding = ({ asteroid, lot, constructionManager, stage, ...props }) => {
-  const { currentConstructionAction, constructionStatus, unplanConstruction } = useConstructionManager(asteroid?.i, lot?.i);
+  const { currentConstructionAction, constructionStatus, unplanConstruction } = useConstructionManager(lot?.id);
   const { captain } = useCrewContext();
 
   // handle auto-closing
@@ -104,7 +104,7 @@ const UnplanBuilding = ({ asteroid, lot, constructionManager, stage, ...props })
 
 const Wrapper = (props) => {
   const { asteroid, lot, isLoading } = useAsteroidAndLot(props);
-  const constructionManager = useConstructionManager(asteroid?.i, lot?.i);
+  const constructionManager = useConstructionManager(lot?.id);
   const { stageByActivity } = constructionManager;
 
   useEffect(() => {

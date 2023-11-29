@@ -1,7 +1,9 @@
-import { Entity } from '@influenceth/sdk';
+import { Crew, Crewmate, Entity, Lot } from '@influenceth/sdk';
+import esb from 'elastic-builder';
 
 const timerIncrements = { d: 86400, h: 3600, m: 60, s: 1 };
 export const formatTimer = (secondsRemaining, maxPrecision = null) => {
+  if (isNaN(secondsRemaining)) return '';
   let remainder = secondsRemaining;
   const parts = Object.keys(timerIncrements).reduce((acc, k) => {
     if (acc.length > 0 || remainder >= timerIncrements[k] || timerIncrements[k] === 1) {
@@ -60,7 +62,8 @@ export const locationsArrToObj = (locations) => {
   const lotLocation = locations.find((l) => l.label === Entity.IDS.LOT);
   return {
     asteroidId: locations.find((l) => Number(l.label) === Entity.IDS.ASTEROID)?.id,
-    lotId: lotLocation ? Entity.toPosition(lotLocation)?.lotId : null,
+    lotId: lotLocation?.id,
+    lotIndex: lotLocation?.id ? Lot.toIndex(lotLocation?.id) : null,
     buildingId: locations.find((l) => l.label === Entity.IDS.BUILDING)?.id,
     shipId: locations.find((l) => l.label === Entity.IDS.SHIP)?.id,
   }
@@ -76,4 +79,58 @@ export const ucfirst = (str) => {
   if (!str) return str;
   const s = (str || '').toLowerCase();
   return s.charAt(0).toUpperCase() + s.slice(1)
+};
+
+const timeAbilityIds = [
+  Crewmate.ABILITY_IDS.CORE_SAMPLE_TIME,
+  Crewmate.ABILITY_IDS.HOPPER_TRANSPORT_TIME,
+  Crewmate.ABILITY_IDS.EXTRACTION_TIME,
+  Crewmate.ABILITY_IDS.CONSTRUCTION_TIME,
+  Crewmate.ABILITY_IDS.REFINING_TIME,
+  
+  Crewmate.ABILITY_IDS.MANUFACTURING_TIME,
+  Crewmate.ABILITY_IDS.REACTION_TIME,
+  Crewmate.ABILITY_IDS.FOOD_CONSUMPTION_TIME,
+
+  // TODO: these?
+  // Crewmate.ABILITY_IDS.FOOD_RATIONING_PENALTY,
+  // Crewmate.ABILITY_IDS.PROPELLANT_FLOW_RATE,
+];
+
+export const getCrewAbilityBonuses = (abilityIdOrAbilityIds, crew) => {
+  const isMultiple = Array.isArray(abilityIdOrAbilityIds);
+  const timeSinceFed = Math.max(0, ((Date.now() / 1000) - crew.Crew.lastFed) * (crew._timeAcceleration || 24));
+  const bonuses = (isMultiple ? abilityIdOrAbilityIds : [abilityIdOrAbilityIds]).reduce((acc, abilityId) => {
+    acc[abilityId] = Crew.getAbilityBonus(abilityId, crew._crewmates, crew._station, timeSinceFed);
+    
+    // should this only be applied in dev?
+    if (timeAbilityIds.includes(abilityId)) {
+      const timeMultiplier =  (crew._timeAcceleration || 24) / 24;
+      if (timeMultiplier !== 1) {
+        acc[abilityId].totalBonus *= timeMultiplier;
+        acc[abilityId].timeMultiplier = timeMultiplier;
+      }
+    }
+
+    return acc;
+  }, {});
+  return isMultiple ? bonuses : bonuses[abilityIdOrAbilityIds];
+}
+
+export const esbLocationQuery = ({ asteroidId }) => {
+  let label, id;
+  if (asteroidId) {
+    label = Entity.IDS.ASTEROID;
+    id = asteroidId;
+  }
+  if (!label || !id) return undefined;
+
+  return esb.nestedQuery()
+    .path('meta.location')
+    .query(
+      esb.boolQuery().must([
+        esb.termQuery('meta.location.label', Entity.IDS.ASTEROID),
+        esb.termQuery('meta.location.id', asteroidId),
+      ])
+    )
 };

@@ -2,8 +2,8 @@ import { useCallback, useContext, useMemo } from 'react';
 import { Asteroid } from '@influenceth/sdk';
 
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
-import useActionItems from './useActionItems';
-import useCrewContext from './useCrewContext';
+import useActionItems from '~/hooks/useActionItems';
+import useCrewContext from '~/hooks/useCrewContext';
 
 const useScanManager = (asteroid) => {
   const { readyItems, liveBlockTime } = useActionItems();

@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from 'react';
 import styled from 'styled-components';
-import { Building, Entity } from '@influenceth/sdk'
+import { Building, Entity, Lot } from '@influenceth/sdk'
 
 import { getBuildingIcon, getCloudfrontUrl } from '~/lib/assetUtils';
 import ChoicesDialog from './ChoicesDialog';
@@ -120,7 +120,7 @@ const SelectHabitatDialog = ({ onAccept, onReject }) => {
               <div>{formatters.buildingName(habitat)}</div>
               {asteroid && (
                 <label>
-                  {asteroid?.Name?.name} &gt; <span>Lot #{(habitatLocation.lotId || 0).toLocaleString()}</span>
+                  {asteroid?.Name?.name} &gt; <span>{formatters.lotName(Lot.toIndex(habitatLocation.lotId))}</span>
                 </label>
               )}
             </div>

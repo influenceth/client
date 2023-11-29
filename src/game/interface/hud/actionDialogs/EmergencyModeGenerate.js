@@ -211,11 +211,11 @@ const Wrapper = (props) => {
   const shipId = crew?._location?.shipId;
 
   const { data: asteroid, isLoading: asteroidIsLoading } = useAsteroid(asteroidId);
-  const { data: lot, isLoading: lotIsLoading } = useLot(asteroidId, lotId);
+  const { data: lot, isLoading: lotIsLoading } = useLot(lotId);
   const { data: ship, isLoading: shipIsLoading } = useShip(shipId);
 
   // TODO: ...
-  // const extractionManager = useExtractionManager(asteroid?.i, lot?.i);
+  // const extractionManager = useExtractionManager(lot?.id);
   // const { actionStage } = extractionManager;
   const manager = {};
   const actionStage = actionStages.NOT_STARTED;

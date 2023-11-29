@@ -1,14 +1,10 @@
-import { useQuery } from 'react-query';
 import { Entity } from '@influenceth/sdk';
 
-import api from '~/lib/api';
+import useEntity from './useEntity';
 
+// TODO: could deprecate this and just use useEntity directly
 const useBuilding = (id) => {
-  return useQuery(
-    [ 'entity', Entity.IDS.BUILDING, id ],
-    () => api.getBuilding(id),
-    { enabled: !!id }
-  );
+  return useEntity({ label: Entity.IDS.BUILDING, id });
 };
 
 export default useBuilding;

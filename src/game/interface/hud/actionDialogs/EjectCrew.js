@@ -42,7 +42,7 @@ const EjectCrew = ({ asteroid, lot, manager, ship, stage, targetCrew, ...props }
   const myCrewmates = currentStationing?._crewmates || (crew?._crewmates || []).map((i) => crewmateMap[i]);
   const captain = myCrewmates[0];
 
-  const myCrewIsTarget = targetCrew?.i === crew?.i;
+  const myCrewIsTarget = targetCrew?.id === crew?.id;
 
   const stats = useMemo(() => ([
     {
@@ -188,23 +188,23 @@ const Wrapper = (props) => {
   const { crew } = useCrewContext();
 
   const originAsteroid = useStore(s => s.asteroids.origin);
-  const originLot = useStore(s => s.asteroids.lot || {});
+  const originLotId = useStore(s => s.asteroids.lot);
   const zoomScene = useStore(s => s.asteroids.zoomScene);
 
   const asteroidId = props.guests ? originAsteroid : crew?._location?.asteroidId;
-  const lotId = props.guests ? originLot?.lotId : crew?._location?.lotId;
+  const lotId = props.guests ? originLotId : crew?._location?.lotId;
   const shipId = props.guests ? (zoomScene?.type === 'SHIP' && zoomScene.shipId) : crew?._location?.shipId;
 
   const { data: asteroid, isLoading: asteroidIsLoading } = useAsteroid(asteroidId);
-  const { data: lot, isLoading: lotIsLoading } = useLot(asteroidId, lotId);
+  const { data: lot, isLoading: lotIsLoading } = useLot(lotId);
   const { data: ship, isLoading: shipIsLoading } = useShip(shipId);
 
   // TODO: targetCrewId needs to be specified if guests (or we need to pass in an array of crews to select)
-  const targetCrewId = props.guests ? null : crew?.i;
+  const targetCrewId = props.guests ? null : crew?.id;
   const { data: targetCrew, isLoading: crewIsLoading } = useHydratedCrew(targetCrewId);
 
   // TODO: ...
-  // const extractionManager = useExtractionManager(asteroid?.i, lot?.i);
+  // const extractionManager = useExtractionManager(lot?.id);
   // const { actionStage } = extractionManager;
   const manager = {};
   const actionStage = actionStages.NOT_STARTED;

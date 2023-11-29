@@ -1,15 +1,19 @@
 import { useEffect, useState } from 'react';
 import { Entity } from '@influenceth/sdk';
+import { useQueryClient } from 'react-query';
 
-import getActivityConfig, { typesWithLogContent } from '~/lib/activities';
+import { hydrateActivities, typesWithLogContent } from '~/lib/activities';
 import api from '~/lib/api';
 import useCrewContext from '~/hooks/useCrewContext';
 import useStore from '~/hooks/useStore';
+import useGetActivityConfig from './useGetActivityConfig';
 
 const assetType = 'eventlog';
 const pageSize = 25;
 
 const usePagedEvents = () => {
+  const getActivityConfig = useGetActivityConfig();
+  const queryClient = useQueryClient();
   const { crew } = useCrewContext();
   const [data, setData] = useState({ hits: [], total: 0 });
   const [loading, setLoading] = useState();
@@ -30,7 +34,8 @@ const usePagedEvents = () => {
     //  but will need to invalidate these queries when get event updates from WS
 
     api.getActivities({ page, pageSize, types: typesWithLogContent, returnTotal: true })
-      .then(({ activities, totalHits }) => {
+      .then(async ({ activities, totalHits }) => {
+        await hydrateActivities(activities, queryClient);
         setData({
           hits: activities
             .map((activity) => {

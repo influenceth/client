@@ -65,15 +65,15 @@ const lotSearchBuildingTypeOptions = Object.keys(Building.TYPES).reduce((acc, ke
 ]), []);
 lotSearchBuildingTypeOptions.push({ key: 10, label: 'Light Transport (landed)', initialValue: true });
 
-const constructionStatusOptions = Object.keys(Building.CONSTRUCTION_STATUSES)
+const constructionStatusOptions = Object.keys(Building.CONSTRUCTION_STATUS_LABELS)
   .reduce((acc, key) => ([
     ...acc,
-    { key, label: Building.CONSTRUCTION_STATUSES[key], initialValue: true }
+    { key, label: Building.CONSTRUCTION_STATUS_LABELS[key], initialValue: true }
   ]), [])
   .filter(({ key }) => key > 0);
 
 const actionItemStatusOptions = [
-  { key: 'pending', label: 'Processing', initialValue: true },
+  { key: 'pending', label: 'Pending', initialValue: true },
   { key: 'failed', label: 'Failed', initialValue: true },
   { key: 'ready', label: 'Ready', initialValue: true },
   { key: 'unready', label: 'Not Ready', initialValue: true },

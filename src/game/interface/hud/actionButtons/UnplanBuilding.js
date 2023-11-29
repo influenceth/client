@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 
 import { UnplanBuildingIcon } from '~/components/Icons';
-import useConstructionManager from '~/hooks/useConstructionManager';
+import useConstructionManager from '~/hooks/actionManagers/useConstructionManager';
 import ActionButton from './ActionButton';
 
 const labelDict = {
@@ -10,7 +10,7 @@ const labelDict = {
 };
 
 const UnplanBuilding = ({ asteroid, lot, onSetAction, _disabled }) => {
-  const { constructionStatus } = useConstructionManager(asteroid?.i, lot?.i);
+  const { constructionStatus } = useConstructionManager(lot?.id);
   const handleClick = useCallback(() => {
     onSetAction('UNPLAN_BUILDING');
   }, [onSetAction]);

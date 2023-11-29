@@ -2,12 +2,14 @@ import { useEffect, useMemo, useState } from 'react';
 import styled, { keyframes } from 'styled-components';
 import { PuffLoader } from 'react-spinners';
 import ReactTooltip from 'react-tooltip';
+import { Lot } from '@influenceth/sdk';
 
 import ClipCorner from '~/components/ClipCorner';
 import useAsteroid from '~/hooks/useAsteroid';
 import useLot from '~/hooks/useLot';
 import useStore from '~/hooks/useStore';
 import actionStage from '~/lib/actionStages';
+import { reactBool } from '~/lib/utils';
 import theme, { hexToRGB } from '~/theme';
 import BuildShip from './actionDialogs/BuildShip';
 import Construct from './actionDialogs/Construct';
@@ -31,8 +33,6 @@ import StationCrew from './actionDialogs/StationCrew';
 import SurfaceTransfer from './actionDialogs/SurfaceTransfer';
 import TransferToSite from './actionDialogs/TransferToSite';
 import UnplanBuilding from './actionDialogs/UnplanBuilding';
-import { reactBool } from '~/lib/utils';
-
 const cornerSize = 20;
 
 const fadeIn = keyframes`
@@ -133,14 +133,11 @@ theming[actionStage.COMPLETED].label = 'Results';
 
 
 export const useAsteroidAndLot = (props = {}) => {
-  const selectedLot = useStore(s => s.asteroids.lot);
-  const { asteroidId: defaultAsteroidId, lotId: defaultLotId } = selectedLot || {};
-  const { data: asteroid, isLoading: asteroidIsLoading } = useAsteroid(props.asteroidId || defaultAsteroidId);
+  const lotId = useStore(s => s.asteroids.lot);
+  const lotAsteroidId = useMemo(() => Lot.toPosition(lotId)?.asteroidId, [lotId]);
 
-  const { data: lot, isLoading: lotIsLoading } = useLot(
-    props.asteroidId && props.lotId ? props.asteroidId : defaultAsteroidId,
-    props.asteroidId && props.lotId ? props.lotId : defaultLotId,
-  );
+  const { data: asteroid, isLoading: asteroidIsLoading } = useAsteroid(props.asteroidId || lotAsteroidId);
+  const { data: lot, isLoading: lotIsLoading } = useLot(lotId);
 
   // close dialog if cannot load asteroid and lot
   useEffect(() => {

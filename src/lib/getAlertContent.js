@@ -1,5 +1,3 @@
-import getActivityConfig from './activities';
-
 const entries = {
   //
   // Generic
@@ -46,8 +44,7 @@ const entries = {
   // Activities
   //
 
-  ActivityLog: (activity) => {
-    const { logContent } = getActivityConfig(activity);
+  ActivityLog: (logContent) => {
     if (!logContent) return null;
 
     const { icon, content, txHash } = logContent;

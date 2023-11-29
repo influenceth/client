@@ -1,8 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import styled, { css, keyframes } from 'styled-components';
-import PuffLoader from 'react-spinners/PuffLoader';
-import { Asteroid, Building, Entity } from '@influenceth/sdk';
+import { Asteroid, Building, Entity, Lot } from '@influenceth/sdk';
 import { FaSearchPlus as DetailsIcon } from 'react-icons/fa';
 import ReactTooltip from 'react-tooltip';
 
@@ -18,7 +17,7 @@ import {
 import AsteroidRendering from '~/components/AsteroidRendering';
 import useActionButtons from '~/hooks/useActionButtons';
 import useAsteroid from '~/hooks/useAsteroid';
-import useConstructionManager from '~/hooks/useConstructionManager';
+import useConstructionManager from '~/hooks/actionManagers/useConstructionManager';
 import useLot from '~/hooks/useLot';
 import useStore from '~/hooks/useStore';
 import useCrew from '~/hooks/useCrew';
@@ -282,7 +281,7 @@ const InfoPane = () => {
   const history = useHistory();
 
   const asteroidId = useStore(s => s.asteroids.origin);
-  const { lotId } = useStore(s => s.asteroids.lot || {});
+  const lotId = useStore(s => s.asteroids.lot);
   const lotLoader = useStore(s => s.lotLoader);
   const inTravelMode = useStore(s => s.asteroids.travelMode);
   const zoomScene = useStore(s => s.asteroids.zoomScene);
@@ -295,9 +294,9 @@ const InfoPane = () => {
 
   const { actions, props: actionProps } = useActionButtons();
   const { data: asteroid } = useAsteroid(asteroidId);
-  const { constructionStatus, isAtRisk } = useConstructionManager(asteroidId, lotId);
+  const { constructionStatus, isAtRisk } = useConstructionManager(lotId);
   const { crew } = useCrewContext();
-  const { data: lot } = useLot(asteroidId, lotId);
+  const { data: lot } = useLot(lotId);
   const saleIsActive = useSale(Entity.IDS.ASTEROID);
 
   const [renderReady, setRenderReady] = useState(false);
@@ -357,7 +356,7 @@ const InfoPane = () => {
 
     if (zoomStatus === 'out' && asteroid) {
       pane.title = formatters.asteroidName(asteroid);
-      pane.titleLink = `/asteroids/${asteroid.i}`;
+      pane.titleLink = `/asteroids/${asteroid.id}`;
       pane.subtitle = <>{Asteroid.Entity.getSize(asteroid)} <b>{Asteroid.Entity.getSpectralType(asteroid)}-type</b></>;
       pane.hoverSubtitle = 'Zoom to Asteroid';
       // TODO: add captainCard for the "crew" managing the asteroid
@@ -399,17 +398,19 @@ const InfoPane = () => {
             varyDistance />
         </ThumbBackground>
       );
+      
     } else if (zoomStatus === 'in') {
+      const isIncompleteBuilding = lot?.building && !['OPERATIONAL', 'DECONSTRUCTING'].includes(constructionStatus);
       if (zoomScene?.type === 'LOT') {
-        pane.title = Building.TYPES[lot?.building?.Building?.buildingType || 0]?.name;
-        pane.subtitle = <>{formatters.asteroidName(asteroid)} &gt; <b>Lot {lotId.toLocaleString()}</b></>;
+        pane.title = `${Building.TYPES[lot?.building?.Building?.buildingType || 0]?.name}${isIncompleteBuilding ? ' (Plan)' : ''}`;
+        pane.subtitle = <>{formatters.asteroidName(asteroid)} &gt; <b>{formatters.lotName(Lot.toIndex(lotId))}</b></>;
         pane.captainCard = lot?.Control?.controller?.id;
       } else if (lotId && lot) {
-        let hologram = isAtRisk || !['OPERATIONAL', 'DECONSTRUCTING', 'PLANNING'].includes(constructionStatus);
+        let hologram = !!(isAtRisk || isIncompleteBuilding);
         hologram = lot.building ? hologram : false;
         const thumbUrl = getBuildingIcon(lot.building?.Building?.buildingType || 0, 'w400', hologram);
-        pane.title = Building.TYPES[lot?.building?.Building?.buildingType || 0]?.name;
-        pane.subtitle = <>{formatters.asteroidName(asteroid)} &gt; <b>Lot {lotId.toLocaleString()}</b></>;
+        pane.title = `${Building.TYPES[lot?.building?.Building?.buildingType || 0]?.name}${isIncompleteBuilding ? ' (Plan)' : ''}`;
+        pane.subtitle = <>{formatters.asteroidName(asteroid)} &gt; <b>{formatters.lotName(Lot.toIndex(lotId))}</b></>;
         pane.captainCard = lot.Control?.controller?.id;
         pane.hoverSubtitle = 'Zoom to Lot';
         pane.thumbVisible = true;
@@ -417,7 +418,7 @@ const InfoPane = () => {
           <ThumbBackground image={thumbUrl}>
             {isAtRisk && (
               <ThumbBanner color="error">
-                {lot.Control?.controller?.id === crew?.i ? 'At Risk' : 'Abandoned'}
+                {lot.Control?.controller?.id === crew?.id ? 'At Risk' : 'Abandoned'}
               </ThumbBanner>
             )}
           </ThumbBackground>

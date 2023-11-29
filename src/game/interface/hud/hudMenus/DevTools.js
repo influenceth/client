@@ -227,7 +227,7 @@ const DevTools = () => {
           )}
           <Dropdown
             disabled={isLoading || modelOverride}
-            initialSelection={categoryModels?.find((m) => m.modelUrl === settings.modelUrl)?.i}
+            initialSelection={categoryModels?.find((m) => m.modelUrl === settings.modelUrl)?.id}
             labelKey="name"
             valueKey="i"
             options={categoryModels}

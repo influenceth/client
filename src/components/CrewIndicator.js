@@ -65,8 +65,8 @@ const CrewIndicator = ({ crew, flip, label = 'Owned by' }) => {
       <CrewLabel>
         <div>{label}</div>
         <h3>
-          {crew?.Name?.name || `Crew #${crew?.i}`}
-          {myCrew?.i === crew?.i ? <label> (Me)</label> : null}
+          {crew?.Name?.name || `Crew #${crew?.id}`}
+          {myCrew?.id === crew?.id ? <label> (Me)</label> : null}
         </h3>
       </CrewLabel>
     </CrewCards>

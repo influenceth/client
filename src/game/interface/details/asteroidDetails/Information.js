@@ -4,8 +4,8 @@ import { Asteroid, Entity, Name } from '@influenceth/sdk';
 
 import useAuth from '~/hooks/useAuth';
 import useWebWorker from '~/hooks/useWebWorker';
-import useBuyAsteroid from '~/hooks/useBuyAsteroid';
-import useChangeName from '~/hooks/useChangeName';
+import useBuyAsteroid from '~/hooks/actionManagers/useBuyAsteroid';
+import useChangeName from '~/hooks/actionManagers/useChangeName';
 import useCreateReferral from '~/hooks/useCreateReferral';
 import constants from '~/lib/constants';
 import formatters from '~/lib/formatters';
@@ -36,7 +36,7 @@ import AsteroidGraphic from './components/AsteroidGraphic';
 import useNameAvailability from '~/hooks/useNameAvailability';
 import { nativeBool, reactBool } from '~/lib/utils';
 import usePriceConstants from '~/hooks/usePriceConstants';
-import useControlAsteroid from '~/hooks/useControlAsteroid';
+import useControlAsteroid from '~/hooks/actionManagers/useControlAsteroid';
 import useActivities from '~/hooks/useActivities';
 
 const paneStackBreakpoint = 720;
@@ -486,7 +486,7 @@ const AsteroidInformation = ({ abundances, asteroid, isManager, isOwner }) => {
                 <MarketplaceLink
                   chain={asteroid.Nft?.chain}
                   assetType="asteroid"
-                  id={asteroid.i}>
+                  id={asteroid.id}>
                   {(onClick, setRefEl) => (
                     <Button setRef={setRefEl} onClick={onClick}>
                       {isOwner ? <><span>List</span><SmHidden>{' '}for Sale</SmHidden></> : 'Purchase'}

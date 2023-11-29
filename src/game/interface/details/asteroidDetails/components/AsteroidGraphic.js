@@ -8,7 +8,7 @@ import AsteroidSpinner from './AsteroidSpinner';
 import formatters from '~/lib/formatters';
 import { WarningOutlineIcon } from '~/components/Icons';
 import theme from '~/theme';
-import useScanManager from '~/hooks/useScanManager';
+import useScanManager from '~/hooks/actionManagers/useScanManager';
 import useSale from '~/hooks/useSale';
 
 const OPACITY_ANIMATION = 400;

@@ -3,7 +3,7 @@ import styled from 'styled-components';
 
 import CrewCardFramed, { EmptyCrewCardFramed } from '~/components/CrewCardFramed';
 import CrewLocationLabel from '~/components/CrewLocationLabel';
-import FoodStatus from '~/components/FoodStatus';
+import LiveFoodStatus from '~/components/LiveFoodStatus';
 import useCrewContext from '~/hooks/useCrewContext';
 import useHydratedLocation from '~/hooks/useHydratedLocation';
 import useScreenSize from '~/hooks/useScreenSize';
@@ -150,8 +150,7 @@ const Crews = () => {
                 <CrewLocationLabel hydratedLocation={hydratedLocation} />
               </BaseLocation>
 
-              {/* TODO: implement lastFed or whatever */}
-              <FoodStatus percentage={100} />
+              <LiveFoodStatus crew={crew} />
             </TitleBar>
           )}
         </CrewInfoContainer>

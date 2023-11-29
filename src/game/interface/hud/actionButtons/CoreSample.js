@@ -1,11 +1,11 @@
 import { useCallback, useMemo } from 'react';
-import { Asteroid, Product } from '@influenceth/sdk';
+import { Asteroid, Lot, Product } from '@influenceth/sdk';
 
 import { NewCoreSampleIcon, ImproveCoreSampleIcon } from '~/components/Icons';
-import useCoreSampleManager from '~/hooks/useCoreSampleManager';
+import useCoreSampleManager from '~/hooks/actionManagers/useCoreSampleManager';
 import useStore from '~/hooks/useStore';
-import ActionButton from './ActionButton';
 import { formatFixed } from '~/lib/utils';
+import ActionButton from './ActionButton';
 
 const labelDict = {
   READY: 'Start Core Sample',
@@ -16,7 +16,7 @@ const labelDict = {
 
 const NewCoreSample = ({ asteroid, lot, onSetAction, overrideResourceId, improveSample, _disabled }) => {
   const defaultResourceId = useStore(s => s.asteroids.resourceMap?.active && s.asteroids.resourceMap?.selected);
-  const { currentSamplingAction: actualCurrentSample, samplingStatus: actualSamplingStatus } = useCoreSampleManager(asteroid?.i, lot?.i);
+  const { currentSamplingAction: actualCurrentSample, samplingStatus: actualSamplingStatus } = useCoreSampleManager(lot?.id);
 
   const resourceId = overrideResourceId || defaultResourceId;
 
@@ -30,14 +30,7 @@ const NewCoreSample = ({ asteroid, lot, onSetAction, overrideResourceId, improve
   // get lot abundance
   const lotAbundance = useMemo(() => {
     if (!resourceId || !asteroid?.Celestial?.abundanceSeed || !asteroid.Celestial?.abundances) return 0;
-    const abundances = Asteroid.getAbundances(asteroid.Celestial.abundances);
-    return Asteroid.getAbundanceAtLot(
-      asteroid?.i,
-      BigInt(asteroid.Celestial.abundanceSeed),
-      Number(lot?.i),
-      resourceId,
-      abundances[resourceId]
-    );
+    return Asteroid.Entity.getAbundanceAtLot(asteroid, Lot.toIndex(lot.id), resourceId);
   }, [asteroid, lot, resourceId]);
 
   let label = labelDict[samplingStatus];
@@ -56,7 +49,7 @@ const NewCoreSample = ({ asteroid, lot, onSetAction, overrideResourceId, improve
 
     // always append which resource it is if not the selected one
     if (currentSamplingAction.resourceId !== resourceId) {
-      label += ` (${Product.TYPES[currentSamplingAction.resourceId].name})`;
+      label += ` (${Product.TYPES[currentSamplingAction.resourceId]?.name})`;
     }
     
   // else if there is not at current sample, if it is ready...
@@ -77,7 +70,7 @@ const NewCoreSample = ({ asteroid, lot, onSetAction, overrideResourceId, improve
     } else {
       onSetAction('NEW_CORE_SAMPLE', resourceId ? { preselect: { resourceId } } : undefined);
     }
-  }, [currentSamplingAction, onSetAction, resourceId]);
+  }, [currentSamplingAction, improveSample, onSetAction, resourceId]);
 
   const isImprovement = improveSample || (currentSamplingAction && !currentSamplingAction.isNew);
   return (

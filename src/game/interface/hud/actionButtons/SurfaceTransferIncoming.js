@@ -2,17 +2,18 @@ import { useCallback, useMemo } from 'react';
 import { Delivery } from '@influenceth/sdk';
 
 import { SurfaceTransferIcon } from '~/components/Icons';
-import useDeliveryManager from '~/hooks/useDeliveryManager';
+import useDeliveryManager from '~/hooks/actionManagers/useDeliveryManager';
 import ActionButton from './ActionButton';
 
 const SurfaceTransferIncoming = ({ asteroid, lot, onSetAction, _disabled }) => {
+  return null;
   const incoming = useMemo(() => {
     return (lot?.deliveries || [])
       .filter((d) => d.Delivery.status !== Delivery.STATUSES.COMPLETE)
       .sort((a, b) => (a.Delivery.finishTime || 0) - (b.Delivery.finishTime || 0))
   }, [lot?.deliveries]);
   const nextIncoming = incoming?.length > 0 ? incoming[0] : null;
-  const { deliveryStatus } = useDeliveryManager(asteroid?.i, lot?.i, nextIncoming?.id);
+  const { deliveryStatus } = useDeliveryManager(lot?.id, nextIncoming?.id);
   
   const handleClick = useCallback(() => {
     onSetAction('SURFACE_TRANSFER', { deliveryId: nextIncoming?.id });

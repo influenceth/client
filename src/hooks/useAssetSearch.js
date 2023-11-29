@@ -8,6 +8,7 @@ import isEqual from 'lodash/isEqual';
 import api from '~/lib/api';
 import useStore from '~/hooks/useStore';
 import constants from '~/lib/constants';
+import { esbLocationQuery } from '~/lib/utils';
 
 const filtersToQuery = {};
 
@@ -80,8 +81,7 @@ filtersToQuery.buildings = (filters) => {
   const queryBuilder = esb.boolQuery();
 
   if (filters.asteroid) {
-    queryBuilder.filter(esb.termQuery('meta.location.label', Entity.IDS.ASTEROID));
-    queryBuilder.filter(esb.termQuery('meta.location.id', filters.asteroid));
+    queryBuilder.filter(esbLocationQuery({ asteroidId: filters.asteroid }));
   }
 
   if (filters.type) {
@@ -94,7 +94,7 @@ filtersToQuery.buildings = (filters) => {
 
   // TODO: ecs refactor
   // if (filters.occupier) {
-  //   queryBuilder.filter(esb.termQuery('occupier.i', filters.occupier));
+  //   queryBuilder.filter(esb.termQuery('occupier.id', filters.occupier));
   // }
 
   if (filters.construction) {
@@ -108,8 +108,7 @@ filtersToQuery.deposits = (filters) => {
   const queryBuilder = esb.boolQuery();
 
   if (filters.asteroid) {
-    queryBuilder.filter(esb.termQuery('meta.location.label', Entity.IDS.ASTEROID));
-    queryBuilder.filter(esb.termQuery('meta.location.id', filters.asteroid));
+    queryBuilder.filter(esbLocationQuery({ asteroidId: filters.asteroid }));
   }
 
   if (filters.resource) {
@@ -171,8 +170,7 @@ filtersToQuery.leases = (filters) => {
   const queryBuilder = esb.boolQuery();
 
   if (filters.asteroid) {
-    queryBuilder.filter(esb.termQuery('meta.location.label', Entity.IDS.ASTEROID));
-    queryBuilder.filter(esb.termQuery('meta.location.id', filters.asteroid));
+    queryBuilder.filter(esbLocationQuery({ asteroidId: filters.asteroid }));
   }
 
   return queryBuilder;

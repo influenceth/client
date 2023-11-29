@@ -117,7 +117,7 @@ const WelcomeFlow = () => {
     if (prompting && status === STATUS.NEED_CREWMATE_INITIALIZED) {
       setPrompting(false);
       if (!window.location.href.includes(`/recruit`)) {
-        history.push(`/recruit/${crew?.i || 0}`);
+        history.push(`/recruit/${crew?.id || 0}`);
       }
     }
 
@@ -133,7 +133,7 @@ const WelcomeFlow = () => {
         );
       }
     }
-  }, [launcherPage, prompting, status, crew?.i]);
+  }, [launcherPage, prompting, status, crew?.id]);
 
   if (!prompting || status === STATUS.READY) return null;
   return (

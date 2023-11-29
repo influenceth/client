@@ -3,18 +3,18 @@ import { useHistory } from 'react-router-dom';
 import { Entity } from '@influenceth/sdk';
 
 import { PurchaseAsteroidIcon } from '~/components/Icons';
-import useBuyAsteroid from '~/hooks/useBuyAsteroid';
+import useBuyAsteroid from '~/hooks/actionManagers/useBuyAsteroid';
 import ActionButton from './ActionButton';
 import useSale from '~/hooks/useSale';
 
 const PurchaseAsteroid = ({ asteroid, _disabled }) => {
   const history = useHistory();
-  const { buying } = useBuyAsteroid(Number(asteroid?.i));
+  const { buying } = useBuyAsteroid(Number(asteroid?.id));
   const saleIsActive = useSale(Entity.IDS.ASTEROID);
 
   const handleClick = useCallback(() => {
-    history.push(`/asteroids/${asteroid?.i}`);
-  }, [asteroid?.i]);
+    history.push(`/asteroids/${asteroid?.id}`);
+  }, [asteroid?.id]);
 
   return (
     <ActionButton

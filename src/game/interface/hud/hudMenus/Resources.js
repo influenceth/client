@@ -118,7 +118,7 @@ const Resources = ({ onClose }) => {
   useEffect(() => {
     if (!resourceMap.active && groupAbundances.length > 0) {
       if (!resourceMap.selected) {
-        dispatchResourceMapSelect(groupAbundances[0].resources[0].i);
+        dispatchResourceMapSelect(groupAbundances[0].resources[0].id);
       }
       dispatchResourceMapToggle(true);
     }

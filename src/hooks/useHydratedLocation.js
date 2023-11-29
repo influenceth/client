@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { Lot } from '@influenceth/sdk';
 
 import { useLotLink } from '~/components/LotLink';
 import { useShipLink } from '~/components/ShipLink';
@@ -14,13 +15,16 @@ const useHydratedLocation = (location = {}) => {
   const { data: building } = useBuilding(location?.buildingId);
   const { data: ship } = useShip(location?.shipId);
 
-  return useMemo(() => ({
-    asteroid,
-    building,
-    lotId: location?.lotId,
-    ship,
-    onLink: (ship && !location?.lotId) ? onShipLink : onLotLink
-  }), [asteroid, building, location?.lotId, ship, onShipLink, onLotLink]);
+  return useMemo(() => {
+    return {
+      asteroid,
+      building,
+      lotId: location?.lotId,
+      lotIndex: Lot.toIndex(location?.lotId),
+      ship,
+      onLink: (ship && !location?.lotId) ? onShipLink : onLotLink
+    };
+  }, [asteroid, building, location?.lotId, ship, onShipLink, onLotLink]);
 };
 
 export default useHydratedLocation;

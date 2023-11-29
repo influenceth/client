@@ -5,9 +5,10 @@ import { keyify } from '~/lib/utils';
 
 const useAsteroidAbundances = (asteroid) => {
   const data = useMemo(() => {
-    if (asteroid?.scanned) {
+    if (asteroid?.Celestial?.scanStatus === Asteroid.SCAN_STATUSES.RESOURCE_SCANNED) {
       const categories = {};
-      const abundances = Asteroid.getAbundances(asteroid.Celestial.abundances);
+      const abundances = Asteroid.Entity.getAbundances(asteroid);
+      const bonuses = Asteroid.Entity.getBonuses(asteroid);
       Object.keys(abundances).forEach((i) => {
         const abundance = abundances[i];
         if (abundance > 0) {
@@ -18,7 +19,7 @@ const useAsteroidAbundances = (asteroid) => {
             categories[category] = {
               categoryKey,
               category,
-              bonus: asteroid.bonuses.find((b) => b.type === categoryKey.toLowerCase()),
+              bonus: bonuses.find((b) => b.type === categoryKey.toLowerCase()),
               resources: [],
               abundance: 0,
             };
@@ -44,7 +45,7 @@ const useAsteroidAbundances = (asteroid) => {
         .sort((a, b) => b.abundance - a.abundance);
     }
     return [];
-  }, [asteroid?.scanned, asteroid?.Celestial?.abundances]);  // eslint-disable-line react-hooks/exhaustive-deps
+  }, [asteroid]);  // eslint-disable-line react-hooks/exhaustive-deps
 
   return data;
 };

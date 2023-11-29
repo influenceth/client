@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useQuery } from 'react-query';
+import { useQuery, useQueryClient } from 'react-query';
 import { Building } from '@influenceth/sdk';
 
 import useAuth from '~/hooks/useAuth';
@@ -7,7 +7,8 @@ import useChainTime from '~/hooks/useChainTime';
 import useCrewContext from '~/hooks/useCrewContext';
 import useStore from '~/hooks/useStore';
 import api from '~/lib/api';
-import getActivityConfig from '~/lib/activities';
+import { hydrateActivities } from '~/lib/activities';
+import useGetActivityConfig from '~/hooks/useGetActivityConfig';
 
 const ActionItemContext = React.createContext();
 
@@ -15,17 +16,23 @@ export function ActionItemProvider({ children }) {
   const { account, token, walletContext: { starknet } } = useAuth();
   const chainTime = useChainTime();
   const { crew } = useCrewContext();
+  const getActivityConfig = useGetActivityConfig();
+  const queryClient = useQueryClient();
 
   const { data: actionItems, isLoading: actionItemsLoading } = useQuery(
-    [ 'actionItems', crew?.i ],
-    () => api.getCrewActionItems(),
-    { enabled: !!crew?.i }
+    [ 'actionItems', crew?.id ],
+    async () => {
+      const activities = await api.getCrewActionItems();
+      await hydrateActivities(activities, queryClient);
+      return activities;
+    },
+    { enabled: !!crew?.id }
   );
 
   const { data: plannedBuildings, isLoading: plannedBuildingsLoading } = useQuery(
-    [ 'planned', crew?.i ],
-    () => api.getCrewPlannedBuildings(crew?.i),
-    { enabled: !!crew?.i }
+    [ 'planned', crew?.id ],
+    () => api.getCrewPlannedBuildings(crew?.id),
+    { enabled: !!crew?.id }
   );
 
   const pendingTransactions = useStore(s => s.pendingTransactions);
@@ -77,10 +84,13 @@ export function ActionItemProvider({ children }) {
     setPlannedItems(
       (plannedBuildings || [])
         // .filter((a) => a.Building.plannedAt + Building.GRACE_PERIOD >= nowTime)
-        .map((a) => ({
-          ...a,
-          waitingFor: a.Building.plannedAt + Building.GRACE_PERIOD > liveBlockTime ? a.Building.plannedAt + Building.GRACE_PERIOD : null
-        }))
+        .map((a) => {
+          const gracePeriodEnd = a.Building.plannedAt + Building.GRACE_PERIOD;
+          return {
+            ...a,
+            waitingFor: gracePeriodEnd > liveBlockTime ? gracePeriodEnd : null
+          };
+        })
         .sort((a, b) => a.plannedAt - b.plannedAt)
     );
   }, [actionItems, plannedBuildings, liveBlockTime]);
@@ -113,7 +123,7 @@ export function ActionItemProvider({ children }) {
     // return the readyItems whose "finishing transaction" is not already pending
     const visibleReadyItems = readyItems.filter((item) => {
       if (pendingTransactions) {
-        return !getActivityConfig(item).isActionItemHidden(pendingTransactions);
+        return !getActivityConfig(item)?.isActionItemHidden(pendingTransactions);
       }
       return true;
     });
@@ -121,9 +131,8 @@ export function ActionItemProvider({ children }) {
     const visiblePlannedItems = plannedItems.filter((item) => {
       if (pendingTransactions) {
         return !pendingTransactions.find((tx) => (
-          ['START_CONSTRUCTION', 'UNPLAN_CONSTRUCTION'].includes(tx.key)
-          && tx.vars.asteroidId === item.asteroid
-          && tx.vars.lotId === item.i
+          ['ConstructionStart', 'ConstructionAbandon'].includes(tx.key)
+          && tx.vars.building.id === item.id
         ));
       }
       return true;
@@ -135,8 +144,8 @@ export function ActionItemProvider({ children }) {
       ...(visibleReadyItems || []).map((item) => ({ ...item, type: 'ready' })),
       ...(visiblePlannedItems || []).map((item) => ({ ...item, type: 'plans' })),
       ...(unreadyItems || []).map((item) => ({ ...item, type: 'unready' }))
-    ].map((x) => {  // make sure everything has a unique key
-      x.uniqueKey = `${x.type}_${x._id || x.txHash || x.timestamp || x.gracePeriodEnd}`;
+    ].map((x) => {  // make sure everything has a unique key (only plans should fall through to the label_id option)
+      x.uniqueKey = `${x.type}_${x._id || x.txHash || x.timestamp || `${x.label}_${x.id}`}`;
       return x;
     });
 

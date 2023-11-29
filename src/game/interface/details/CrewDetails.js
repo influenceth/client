@@ -10,7 +10,7 @@ import CrewCardFramed, { EmptyCrewCardFramed } from '~/components/CrewCardFramed
 import CrewmateInfoPane from '~/components/CrewmateInfoPane';
 import CrewLocationLabel from '~/components/CrewLocationLabel';
 import Details from '~/components/DetailsModal';
-import FoodStatus from '~/components/FoodStatus';
+import LiveFoodStatus from '~/components/LiveFoodStatus';
 import {
   CheckIcon,
   CloseIcon,
@@ -23,7 +23,7 @@ import TabContainer from '~/components/TabContainer';
 import TextInput from '~/components/TextInput';
 import useActivities from '~/hooks/useActivities';
 import useAuth from '~/hooks/useAuth';
-import useChangeName from '~/hooks/useChangeName';
+import useChangeName from '~/hooks/actionManagers/useChangeName';
 import useCrewContext from '~/hooks/useCrewContext';
 import useEarliestActivity from '~/hooks/useEarliestActivity';
 import useHydratedCrew from '~/hooks/useHydratedCrew';
@@ -506,9 +506,7 @@ const CrewDetails = ({ crewId, crew, isMyCrew, isOwnedCrew, selectCrew }) => {
                     <CrewLocationLabel hydratedLocation={hydratedLocation} />
                   </BaseLocation>
 
-                  {/* TODO: potentially link directly to add rations dialog instead */}
-                  {/* TODO: implement lastFed or whatever */}
-                  <FoodStatus percentage={100} />
+                  <LiveFoodStatus crew={crew} />
                 </TitleBar>
 
                 {isMyCrew && (

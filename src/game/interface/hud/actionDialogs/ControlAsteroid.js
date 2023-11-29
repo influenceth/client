@@ -8,7 +8,7 @@ import {
   KeysIcon, MyAssetIcon,
 } from '~/components/Icons';
 import useAsteroid from '~/hooks/useAsteroid';
-import useControlAsteroid from '~/hooks/useControlAsteroid';
+import useControlAsteroid from '~/hooks/actionManagers/useControlAsteroid';
 import useStore from '~/hooks/useStore';
 import useCrewContext from '~/hooks/useCrewContext';
 import actionStage from '~/lib/actionStages';

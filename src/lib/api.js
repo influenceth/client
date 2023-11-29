@@ -1,8 +1,9 @@
 import axios from 'axios';
-import { Asteroid, Building, Entity } from '@influenceth/sdk';
+import { Asteroid, Building, Deposit, Entity, Inventory, Ship } from '@influenceth/sdk';
 import esb from 'elastic-builder';
 
 import useStore from '~/hooks/useStore';
+import { esbLocationQuery } from './utils';
 
 // set default app version
 const apiVersion = 'v2';
@@ -32,10 +33,6 @@ const buildQuery = (queryObj) => {
   }).join('&');
 };
 
-const backwardCompatibility = (entity) => {
-  return { ...entity, i: entity.id }; // TODO: deprecate the `i` thing, remove this function
-};
-
 const getEntityById = async ({ label, id, components }) => {
   return new Promise((resolve, reject) => {
     getEntities({ label, ids: [id], components }).then(entities => {
@@ -59,12 +56,31 @@ const getEntities = async ({ ids, match, label, components }) => {
     query.label = label;  // i.e. 'asteroid'
   }
   if (components) {
-    query.components = components.join(',');  // i.e. [ 'celestial', 'control' ]
+    query.components = components.join(',');  // i.e. [ 'Celestial', 'Control' ]
   }
 
   const response = await instance.get(`/${apiVersion}/entities?${buildQuery(query)}`);
-  return (response.data || []).map(backwardCompatibility);
+  return response.data;
 };
+
+const arrayComponents = {
+  Extractor: 'Extractors',
+  Inventory: 'Inventories',
+  Processor: 'Processors'
+};
+
+const formatESData = (responseData) => {
+  return responseData?.hits?.hits?.map((h) => {
+    return Object.keys(h._source).reduce((acc, k) => {
+      if (!!arrayComponents[k]) {
+        acc[arrayComponents[k]] = h._source[k] || [];
+      } else {
+        acc[k] = Array.isArray(h._source[k]) ? h._source[k][0] : h._source[k];
+      }
+      return acc;
+    }, {});
+  }) || [];
+}
 
 const api = {
   getUser: async () => {
@@ -84,7 +100,7 @@ const api = {
 
   getCrewPlannedBuildings: async (crewId) => {
     const queryBuilder = esb.boolQuery();
-    queryBuilder.filter(esb.termQuery('Building.status', Building.CONSTRUCTION_STATUS_IDS.PLANNED));
+    queryBuilder.filter(esb.termQuery('Building.status', Building.CONSTRUCTION_STATUSES.PLANNED));
     queryBuilder.filter(esb.termQuery('Control.controller.id', crewId));
 
     const q = esb.requestBodySearch();
@@ -94,30 +110,129 @@ const api = {
     const query = q.toJSON();
 
     const response = await instance.post(`/_search/building`, query);
-    return response.data.hits.hits.map((h) => h._source) || [];
+    return formatESData(response.data);
   },
 
-  getCrewLocation: async (id) => {
-    // this is a little unconventional compared to the rest of the api (i.e. to pull a single id from es),
-    // but since es already has a flattened location, it feels like a worthwhile shortcut
-    const q = esb.requestBodySearch();
+  getCrewBuildingsOnAsteroid: async (asteroidId, crewId) => {
     const queryBuilder = esb.boolQuery();
-    queryBuilder.filter(esb.termQuery('id', id));
+
+    // on asteroid
+    queryBuilder.filter(esbLocationQuery({ asteroidId }));
+
+    // controlled by crew
+    queryBuilder.filter(esb.termQuery('Control.controller.id', crewId));
+
+    // not abandoned
+    queryBuilder.filter(esb.rangeQuery('Building.status').gt(0));
+
+    const q = esb.requestBodySearch();
     q.query(queryBuilder);
-    q.from(0);
-    q.size(1);
+    // q.from(0);
+    // q.size(10000000);
     const query = q.toJSON();
 
-    const response = await instance.post(`/_search/crew`, query);
-    const [crew] = (response.data.hits.hits.map((h) => h._source) || []);
+    const response = await instance.post(`/_search/building`, query);
+    return formatESData(response.data);
+  },
+  
+  getCrewSamplesOnAsteroid: async (asteroidId, crewId, resourceId) => {
+    const queryBuilder = esb.boolQuery();
 
-    const lotLocation = crew.Location.locations.find((l) => l.label === Entity.IDS.LOT);
-    return {
-      asteroidId: crew.Location.locations.find((l) => Number(l.label) === Entity.IDS.ASTEROID)?.id,
-      lotId: lotLocation ? Entity.toPosition(lotLocation)?.lotId : null,
-      buildingId: crew.Location.locations.find((l) => l.label === Entity.IDS.BUILDING)?.id,
-      shipId: crew.Location.locations.find((l) => l.label === Entity.IDS.SHIP)?.id,
-    };
+    // on asteroid
+    queryBuilder.filter(esbLocationQuery({ asteroidId }));
+
+    // controlled by crew
+    queryBuilder.filter(esb.termQuery('Control.controller.id', crewId));
+    
+    // resource
+    queryBuilder.filter(esb.termQuery('Deposit.resource', resourceId));
+
+    // not depleted !(used AND remainingYield === 0)
+    queryBuilder.filter(
+      esb.boolQuery().mustNot([
+        esb.termQuery('Deposit.status', Deposit.STATUSES.USED),
+        esb.termQuery('Deposit.remainingYield', 0),
+      ])
+    );
+
+    const q = esb.requestBodySearch();
+    q.query(queryBuilder);
+    // q.from(0);
+    // q.size(10000000);
+    const query = q.toJSON();
+
+    const response = await instance.post(`/_search/deposit`, query);
+    return formatESData(response.data);
+  },
+
+  getCrewAccessibleInventories: async (asteroidId, crewId) => {
+    const queryPromises = [];
+
+    // BUILDINGS...
+    const buildingQueryBuilder = esb.boolQuery();
+
+    // controlled by crew
+    // TODO: also include those crew does not control but has access to
+    // buildingQueryBuilder.filter(esb.termQuery('Control.controller.id', crewId));
+    
+    // on asteroid
+    buildingQueryBuilder.filter(esbLocationQuery({ asteroidId }));
+
+    // has unlocked inventory
+    buildingQueryBuilder.filter(
+      esb.nestedQuery()
+        .path('Inventory')
+        .query(esb.termQuery('Inventory.status', Inventory.STATUSES.AVAILABLE))
+    );
+    
+    const buildingQ = esb.requestBodySearch();
+    buildingQ.query(buildingQueryBuilder);
+    buildingQ.from(0);
+    buildingQ.size(10000);
+    queryPromises.push(instance.post(`/_search/building`, buildingQ.toJSON()));
+
+    // SHIPS...
+    const shipQueryBuilder = esb.boolQuery();
+
+    // controlled by crew
+    // TODO: also include those crew does not control but has access to
+    shipQueryBuilder.filter(esb.termQuery('Control.controller.id', crewId));
+    
+    // on asteroid
+    // (and not in orbit -- i.e. lotId is present and !== 0)
+    shipQueryBuilder.filter(esbLocationQuery({ asteroidId }));
+    shipQueryBuilder.filter(
+      esb.nestedQuery()
+        .path('meta.location')
+        .query(
+          esb.boolQuery().must([
+            esb.termQuery('meta.location.label', Entity.IDS.LOT),
+            esb.rangeQuery('meta.location.id').gt(0),
+          ])
+        )
+    );
+
+    // has unlocked inventory
+    shipQueryBuilder.filter(esb.termQuery('Inventory.status', Inventory.STATUSES.AVAILABLE));
+
+    // ship is operational and not traveling or in emergency mode
+    shipQueryBuilder.filter(esb.termQuery('Ship.status', Ship.STATUSES.AVAILABLE));
+    shipQueryBuilder.filter(esb.termQuery('Ship.mode', Ship.MODES.NORMAL)); // TODO: may not be called mode (not yet implemented)
+
+    const shipQ = esb.requestBodySearch();
+    shipQ.query(shipQueryBuilder);
+    shipQ.from(0);
+    shipQ.size(10000);
+    queryPromises.push(instance.post(`/_search/ship`, shipQ.toJSON()));
+
+    // COMBINE...
+    const responses = await Promise.allSettled(queryPromises);
+    return responses.reduce((acc, r) => {
+      if (r.status === 'fulfilled') {
+        acc.push(...formatESData(r.value.data));
+      }
+      return acc;
+    }, []);
   },
 
   // TODO: will we want this for "random" story events
@@ -169,12 +284,6 @@ const api = {
     return response.status;
   },
 
-  getAsteroid: async (id) => { //, extended = false) => {
-    // TODO: deprecate `extended` OR need to pass extra queryString to getEntityById OR need a separate call for that data
-    // const response = await instance.get(`/${apiVersion}/asteroids/${i}${extended ? '?extended=1' : ''}`);
-    return getEntityById({ label: Entity.IDS.ASTEROID, id });
-  },
-
   getAsteroids: async (ids) => {
     return ids?.length > 0 ? getEntities({ ids, label: Entity.IDS.ASTEROID }) : [];
   },
@@ -211,28 +320,6 @@ const api = {
     return [];
   },
 
-  // TODO: ecs refactor -- probably better to use a single resolve location endpoint
-  getBuilding: async (id) => {
-    return getEntityById({ label: Entity.IDS.BUILDING, id });
-  },
-
-  getCrewOccupiedLots: async (a, c) => {
-    return [];
-    // TODO: elasticsearch
-    // const response = await instance.get(`/${apiVersion}/asteroids/${a}/lots/occupier/${c}`);
-    // return response.data;
-    // return getEntities({
-    //   match: { 'control.controller': c },
-    //   label: Entity.IDS.BUILDING
-    // });
-  },
-
-  getCrewSampledLots: async (a, c, r) => {
-    // TODO: elasticsearch
-    const response = await instance.get(`/${apiVersion}/asteroids/${a}/lots/sampled/${c}/${r}`);
-    return response.data;
-  },
-
   getCrewShips: async (c) => {
     return getEntities({
       match: { 'Control.controller.id': c },
@@ -243,20 +330,23 @@ const api = {
   getEntities,
   getEntityById,
 
-  getLot: async (asteroidId, lotId) => {
-    let entity = await getEntityById(Entity.fromPosition({ asteroidId, lotId }));
-    entity = entity ? entity : Entity.fromPosition({ asteroidId, lotId });
-    const entities = await getEntities({
-      match: { 'Location.location': Entity.fromPosition({ asteroidId, lotId }) },
-      components: [ 'Building', 'Control' ]
-    });
+  // getLot: async (lotId) => {
+  //   const lotEntity = { id: lotId, label: Entity.IDS.LOT };
 
-    entity.building = entities.find(e => e.label === Entity.IDS.BUILDING);
-    entity.ship = entities.find(e => e.label === Entity.IDS.SHIP);
-    entity.deposits = entities.filter(e => e.label === Entity.IDS.DEPOSIT);
+  //   const entity = (await getEntityById(lotEntity)) || lotEntity;
 
-    return entity;
-  },
+  //   const entities = await getEntities({
+  //     match: { 'Location.locations': lotEntity },
+  //     components: [ 'Building', 'Control', 'Deposit', 'Inventory', 'Location' ]
+  //   });
+
+  //   // NOTE: if add to these entity types, need to update useLot hook
+  //   entity.building = entities.find(e => e.label === Entity.IDS.BUILDING);
+  //   entity.ship = entities.find(e => e.label === Entity.IDS.SHIP);  // TODO: should this be an array?
+  //   entity.deposits = entities.filter(e => e.label === Entity.IDS.DEPOSIT);
+
+  //   return entity;
+  // },
 
   getNameUse: async (label, name) => {
     return getEntities({ match: { 'Name.name': name }, label, components: [] });
@@ -266,24 +356,12 @@ const api = {
     return getEntities({ match: { 'Crew.delegatedTo': account }, label: Entity.IDS.CREW });
   },
 
-  getCrew: async (id) => {
-    return getEntityById({ id, label: Entity.IDS.CREW });
-  },
-
-  getCrewmate: async (id) => {
-    return getEntityById({ id, label: Entity.IDS.CREWMATE });
-  },
-
   getCrewmates: async (ids) => {
     return ids?.length > 0 ? getEntities({ ids, label: Entity.IDS.CREWMATE }) : [];
   },
 
   getAccountCrewmates: async (account) => {
     return getEntities({ match: { 'Nft.owners.starknet': account }, label: Entity.IDS.CREWMATE });
-  },
-
-  getShip: async (id) => {
-    return getEntityById({ id, label: Entity.IDS.SHIP });
   },
 
   getShipCrews: async (shipId) => {
@@ -359,7 +437,7 @@ const api = {
     const response = await instance.post(`/_search/${assetIndex}`, query);
 
     return {
-      hits: response.data.hits.hits.map((h) => h._source),
+      hits: formatESData(response.data),
       total: response.data.hits.total.value
     }
   },

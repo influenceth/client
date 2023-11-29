@@ -11,7 +11,7 @@ import ClipCorner from '~/components/ClipCorner';
 import Ether from '~/components/Ether';
 import UncontrolledTextInput, { safeValue } from '~/components/TextInputUncontrolled';
 
-import useCrewManager from '~/hooks/useCrewManager';
+import useCrewManager from '~/hooks/actionManagers/useCrewManager';
 import usePriceConstants from '~/hooks/usePriceConstants';
 import useStore from '~/hooks/useStore';
 

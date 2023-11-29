@@ -1,14 +1,10 @@
-import { useQuery } from 'react-query';
 import { Entity } from '@influenceth/sdk';
 
-import api from '~/lib/api';
+import useEntity from './useEntity';
 
+// TODO: could deprecate this and just use useEntity directly
 const useShip = (id) => {
-  return useQuery(
-    [ 'entity', Entity.IDS.SHIP, id ],
-    () => api.getShip(id),
-    { enabled: !!id }
-  );
+  return useEntity({ label: Entity.IDS.SHIP, id });
 };
 
 export default useShip;

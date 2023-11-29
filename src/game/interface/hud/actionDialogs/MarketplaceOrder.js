@@ -180,7 +180,7 @@ const MarketplaceOrder = ({ asteroid, lot, manager, stage, ...props }) => {
   const { currentLaunch, launchStatus, startLaunch } = manager;
 
   const { crew, crewmateMap } = useCrewContext();
-  const { data: currentDestinationLot } = useLot(asteroid.i, currentLaunch?.destinationLotId);
+  const { data: currentDestinationLot } = useLot(currentLaunch?.destinationLotId);
 
   const [destinationLot, setDestinationLot] = useState();
   const [destinationSelectorOpen, setDestinationSelectorOpen] = useState(false);
@@ -189,7 +189,7 @@ const MarketplaceOrder = ({ asteroid, lot, manager, stage, ...props }) => {
 
   const crewmates = currentLaunch?._crewmates || (crew?._crewmates || []).map((i) => crewmateMap[i]);
   const captain = crewmates[0];
-  const crewTravelBonus = Crew.getAbilityBonus(Crewmate.ABILITY_IDS.SURFACE_TRANSPORT_SPEED, crewmates);
+  const crewTravelBonus = Crew.getAbilityBonus(Crewmate.ABILITY_IDS.HOPPER_TRANSPORT_TIME, crewmates);
   const launchBonus = 0;
 
   const tooltipRefEl = useRef();
@@ -330,7 +330,7 @@ const MarketplaceOrder = ({ asteroid, lot, manager, stage, ...props }) => {
     return sum + (mode === 'buy' ? fee : -fee);
   }, [fee, mode, totalLimitPrice, totalMarketPrice, type]);
 
-  const marketplaceBonus = Crew.getAbilityBonus(Crewmate.ABILITY_IDS.SURFACE_TRANSPORT_SPEED, crewmates); // TODO: wrong id
+  const marketplaceBonus = Crew.getAbilityBonus(Crewmate.ABILITY_IDS.HOPPER_TRANSPORT_TIME, crewmates); // TODO: wrong id
 
   const stats = useMemo(() => ([
     {
@@ -619,7 +619,7 @@ const MarketplaceOrder = ({ asteroid, lot, manager, stage, ...props }) => {
       {stage === actionStages.NOT_STARTED && (
         <DestinationSelectionDialog
           asteroid={asteroid}
-          originLotId={lot?.i}
+          originLotId={lot?.id}
           initialSelection={undefined/* TODO: if only one warehouse, use it... */}
           onClose={() => setDestinationSelectorOpen(false)}
           onSelected={setDestinationLot}
@@ -633,7 +633,7 @@ const MarketplaceOrder = ({ asteroid, lot, manager, stage, ...props }) => {
 const Wrapper = (props) => {
   const { asteroid, lot, isLoading } = useAsteroidAndLot(props);
   // TODO: ...
-  // const extractionManager = useExtractionManager(asteroid?.i, lot?.i);
+  // const extractionManager = useExtractionManager(lot?.id);
   // const { actionStage } = extractionManager;
   const manager = {};
   const actionStage = actionStages.NOT_STARTED;

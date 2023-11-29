@@ -68,7 +68,7 @@ const Rarity = styled.span`
 
 const Unscanned = styled.span`
   color: #AAA;
-  ${p => p.scanned && `animation: ${opacityAnimation} 1000ms linear infinite;`};
+  ${p => p.scanning && `animation: ${opacityAnimation} 1000ms linear infinite;`};
 `;
 
 const Resources = styled.span`
@@ -123,8 +123,8 @@ const AsteroidInfo = ({ onClose }) => {
             <span>
               {asteroid.Celestial.scanStatus >= Asteroid.SCAN_STATUSES.SURFACE_SCANNED && <Rarity rarity={Asteroid.Entity.getRarity(asteroid)} />}
               {asteroid.Celestial.scanStatus === Asteroid.SCAN_STATUSES.UNSCANNED && <Unscanned>Unscanned</Unscanned>}
-              {asteroid.Celestial.scanStatus === Asteroid.SCAN_STATUSES.SURFACE_SCANNING && <Unscanned scanning>Scanning Surface...</Unscanned>}
-              {asteroid.Celestial.scanStatus === Asteroid.SCAN_STATUSES.RESOURCE_SCANNING && <Unscanned scanning>Scanning Resources...</Unscanned>}
+              {asteroid.Celestial.scanStatus === Asteroid.SCAN_STATUSES.SURFACE_SCANNING && <Unscanned scanning>Scanning...</Unscanned>}
+              {/*asteroid.Celestial.scanStatus === Asteroid.SCAN_STATUSES.RESOURCE_SCANNING && <Unscanned scanning>Scanning...</Unscanned>*/}
             </span>
           </InfoRow>
         </TitleArea>

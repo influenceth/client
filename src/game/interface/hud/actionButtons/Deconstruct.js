@@ -1,7 +1,8 @@
 import { useCallback, useMemo } from 'react';
+import { Inventory } from '@influenceth/sdk';
 
 import { DeconstructIcon } from '~/components/Icons';
-import useConstructionManager from '~/hooks/useConstructionManager';
+import useConstructionManager from '~/hooks/actionManagers/useConstructionManager';
 import ActionButton from './ActionButton';
 
 const labelDict = {
@@ -10,14 +11,14 @@ const labelDict = {
 };
 
 const Deconstruct = ({ asteroid, lot, onSetAction, _disabled }) => {
-  const { constructionStatus } = useConstructionManager(asteroid?.i, lot?.i);
+  const { constructionStatus } = useConstructionManager(lot?.id);
   const handleClick = useCallback(() => {
     onSetAction('DECONSTRUCT');
   }, [onSetAction]);
 
   const disabledReason = useMemo(() => {
     if (
-      (lot?.building?.Inventories || []).find((i) => i.mass > 0)
+      (lot?.building?.Inventories || []).find((i) => i.status === Inventory.STATUSES.AVAILABLE && i.mass > 0)
       || lot?.building?.Dock?.dockedShips > 0
       || lot?.building?.Station?.population > 0
     ) return 'not empty';
@@ -25,10 +26,10 @@ const Deconstruct = ({ asteroid, lot, onSetAction, _disabled }) => {
     if (
       (lot?.building?.Extractors || []).find((e) => e.status > 0)
       || (lot?.building?.Processors || []).find((e) => e.status > 0)
-      || lot?.building?.DryDock.status > 0
+      || lot?.building?.DryDock?.status > 0
     ) return 'busy';
 
-    if ((lot?.building?.Inventories || []).find((i) => i.reservedMass > 0)) {
+    if ((lot?.building?.Inventories || []).find((i) => i.status === Inventory.STATUSES.AVAILABLE && i.reservedMass > 0)) {
       return 'pending deliveries';
     }
     

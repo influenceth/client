@@ -1,34 +1,71 @@
-import { Address, Entity } from '@influenceth/sdk';
+import { Address, Building, Entity, Lot, Product } from '@influenceth/sdk';
 import { AiFillEdit as NameIcon } from 'react-icons/ai';
 import { BiTransfer as TransferIcon } from 'react-icons/bi';
 
 import AddressLink from '~/components/AddressLink';
 import EntityLink from '~/components/EntityLink';
 import {
+  ConstructIcon,
+  CoreSampleIcon,
   CrewIcon,
   CrewmateIcon,
+  ExtractionIcon,
+  ImproveCoreSampleIcon,
   KeysIcon,
+  NewCoreSampleIcon,
+  PlanBuildingIcon,
   PromoteIcon,
   PurchaseAsteroidIcon,
   ScanAsteroidIcon,
-  StationCrewIcon
+  StationCrewIcon,
+  SurfaceTransferIcon,
+  UnplanBuildingIcon
 } from '~/components/Icons';
 import LotLink from '~/components/LotLink';
 
-import { andList, ucfirst } from './utils';
+import { andList, locationsArrToObj, ucfirst } from './utils';
+import api from './api';
+import formatters from './formatters';
+
+const addressMaxWidth = '100px';
+
+const getNamedAddress = (address) => {
+  if (Address.areEqual(address, process.env.REACT_APP_STARKNET_ASTEROID_TOKEN)) return 'the Asteroid Bridge';
+  else if (Address.areEqual(address, process.env.REACT_APP_STARKNET_CREWMATE_TOKEN)) return 'the Crewmate Bridge';
+}
+
+const getEntityName = (entity) => {
+  if (!entity) return '';
+  switch (entity.label) {
+    case Entity.IDS.CREW: return formatters.crewName(entity);
+    case Entity.IDS.CREWMATE: return formatters.crewmateName(entity);
+    case Entity.IDS.ASTEROID: return formatters.asteroidName(entity);
+    case Entity.IDS.LOT: return formatters.lotName(Lot.toIndex(entity.id));
+    case Entity.IDS.BUILDING: return formatters.buildingName(entity);
+    case Entity.IDS.SHIP: return formatters.shipName(entity);
+    default: return '';
+  }
+};
+
+// TODO: instead of guessing at what should be invalidated with each event,
+//  should we just have a more standard invalidation on ComponentUpdated
+//  (that also travels up to lot since lot is an aggregation)
+// ... would need to emit these from the server to the relevant crew and asteroid rooms
+
 
 // TODO (enhancement): some of the invalidations may be overkill by using this
 const invalidationDefaults = (label, id) => {
   const i = [];
-  // any group results where the affected record might be included
-  // TODO: https://tanstack.com/query/v4/docs/react/guides/query-invalidation
-  //  can pass in predicates so can check each result to see if contains the relevant record (or would now) before invalidating
-  i.push(['entities', label]);
 
   // the specific affected record (and its activities)
+  // NOTE: 'entity' invalidation will also invalidate any ['entities', label, *] groups where find id
   if (id) {
     i.push(['entity', label, id]);
     i.push(['activities', label, id]);
+
+  // if no id included, dump all group queries
+  } else {
+    i.push(['entities', label]);
   }
 
   // search results that might included the affected record
@@ -50,13 +87,7 @@ const invalidationDefaults = (label, id) => {
   return i;
 };
 
-const addressMaxWidth = '100px';
-
-const getNamedAddress = (address) => {
-  if (Address.areEqual(address, process.env.REACT_APP_STARKNET_ASTEROID_TOKEN)) return 'the Asteroid Bridge';
-  else if (Address.areEqual(address, process.env.REACT_APP_STARKNET_CREWMATE_TOKEN)) return 'the Crewmate Bridge';
-}
-
+// TODO: write a test to make sure all activities (from sdk) have a config
 const activities = {
   // AddedToWhitelist,
 
@@ -70,7 +101,7 @@ const activities = {
       icon: <KeysIcon />,
       content: (
         <>
-          Crew <EntityLink {...returnValues.callerCrew} />
+          <EntityLink {...returnValues.callerCrew} />
           {' '}granted management rights for <EntityLink {...returnValues.asteroid} />
         </>
       ),
@@ -91,6 +122,22 @@ const activities = {
     triggerAlert: true
   },
 
+  AsteroidScanned: {
+    getLogContent: ({ event: { returnValues } }) => {
+      const entity = { label: Entity.IDS.ASTEROID, id: returnValues.asteroidId };
+
+      return {
+        icon: <ScanAsteroidIcon />,
+        content: (
+          <>
+            Long-range surface scan completed on asteroid
+            {' '}<EntityLink {...entity} />
+          </>
+        )
+      };
+    }
+  },
+
   // TODO: do any of these need invalidations or logs?
   //  ^ or some specialized version of an actionitem
   BridgeFromStarknet: {},
@@ -98,89 +145,136 @@ const activities = {
   BridgedFromL1: {},
   BridgedToL1: {},
 
-  // ConstructionDeconstructed,
-    // = invalidations
-    //   ['lots', returnValues.asteroidId, returnValues.lotId],
-    //   ['asteroidCrewLots', returnValues.asteroidId, returnValues.crewId],
-    // = content log
-    // return {
-    //   icon: <DeconstructIcon />,
-    //   content: (
-    //     <>
-    //       <span>{capableName ? `${capableName} ` : 'Building'} deconstructed on </span>
-    //       <LotLink asteroidId={asteroidId} lotId={lotId} />
-    //     </>
-    //   ),
-    // };
-  // ConstructionFinished,
-    // = invalidations
-    //   ['actionItems'],
-    //   ['lots', returnValues.asteroidId, returnValues.lotId],
-    //   ['asteroidCrewLots', returnValues.asteroidId, returnValues.crewId],
-    // = content log
-    // return {
-    //   icon: <ConstructIcon />,
-    //   content: (
-    //     <>
-    //       <span>{capableName ? `${capableName} construction` : 'Construction'} finished on </span>
-    //       <LotLink asteroidId={asteroidId} lotId={lotId} />
-    //     </>
-    //   ),
-    // };
-  // ConstructionPlanned,
-    // = invalidations
-    //   ['planned'],
-    //   ['lots', returnValues.asteroidId, returnValues.lotId],
-    //   // ['asteroidLots', returnValues.asteroidId], (handled by asteroid room connection now)
-    //   ['asteroidCrewLots', returnValues.asteroidId, returnValues.crewId],
-    // = content log
-    // ({
-    //   icon: <PlanBuildingIcon />,
-    //   content: (
-    //     <>
-    //       <span>{Building.TYPES[e.returnValues.buildingType]?.title} site plan completed on </span>
-    //       <LotLink asteroidId={e.returnValues.asteroidId} lotId={e.returnValues.lotId} />
-    //     </>
-    //   ),
-    //   txLink: getTxLink(e),
-    // })
-  // ConstructionStarted,
-    //  = invalidations
-    //   ['planned'],
-    //   ['actionItems'],
-    //   ['lots', returnValues.asteroidId, returnValues.lotId],
-    //   ['asteroidCrewLots', returnValues.asteroidId, returnValues.crewId],
-    //  = action item:
-    //     formatted.icon = <ConstructIcon />;
-    //     formatted.label = `${Building.TYPES[item.assets.building.type]?.name || 'Building'} Construction`;
-    //     formatted.asteroidId = item.assets.asteroid.i;
-    //     formatted.lotId = item.assets.lot.i;
-    //     formatted.onClick = ({ openDialog }) => {
-    //       openDialog('CONSTRUCT');
-    //     };
-    //  = actionitem hidden:
-    //     return !pendingTransactions.find((tx) => (
-    //       tx.key === 'FINISH_CONSTRUCTION'
-    //       && tx.vars.asteroidId === item.assets.asteroid.i
-    //       && tx.vars.lotId === item.assets.lot.i
-    //     ));
-  // ConstructionUnplanned,
-    // = invalidations
-    //   ['planned'],
-    //   ['lots', returnValues.asteroidId, returnValues.lotId],
-    //   // ['asteroidLots', returnValues.asteroidId], (handled by asteroid room connection now)
-    //   ['asteroidCrewLots', returnValues.asteroidId, returnValues.crewId],
-    // = content log
-    // ({
-    //   icon: <UnplanBuildingIcon />,
-    //   content: (
-    //     <>
-    //       <span>Construction plans canceled on </span>
-    //       <LotLink asteroidId={e.returnValues.asteroidId} lotId={e.returnValues.lotId} />
-    //     </>
-    //   ),
-    //   txLink: getTxLink(e),
-    // })
+  ConstructionPlanned: {
+    getInvalidations: ({ event: { returnValues } }) => ([
+      ...invalidationDefaults(Entity.IDS.BUILDING, returnValues.building.id),
+      ['planned'],
+      ['asteroidCrewBuildings', returnValues.asteroid.id, returnValues.callerCrew.id],
+    ]),
+    getLogContent: ({ event: { returnValues } }) => ({
+      icon: <PlanBuildingIcon />,
+      content: (
+        <>
+          <span>{Building.TYPES[returnValues.buildingType]?.name} site plan created for </span>
+          <LotLink lotId={returnValues.lot.id} />
+        </>
+      ),
+    }),
+    requiresCrewTime: true
+  },
+
+  ConstructionAbandoned: {
+    getInvalidations: ({ event: { returnValues } }, { building = {} }) => {
+      const { asteroidId } = locationsArrToObj(building?.Location?.locations || []) || {};
+      return [
+        ...invalidationDefaults(Entity.IDS.BUILDING, returnValues.building.id),
+        ['planned'],
+        // ['asteroidLots', asteroidId], (handled by asteroid room connection now)
+        ['asteroidCrewBuildings', asteroidId, returnValues.callerCrew.id],
+      ]
+    },
+    getLogContent: ({ event: { returnValues } }, viewingAs, { building = {} }) => ({
+      icon: <UnplanBuildingIcon />,
+      content: (
+        <>
+          <span>Construction plans abandoned on </span>
+          <LotLink lotId={locationsArrToObj(building?.Location?.locations || [])?.lotId} />
+        </>
+      ),
+    }),
+    getPrepopEntities: ({ event: { returnValues } }) => ({
+      building: returnValues.building,
+    }),
+  },
+
+  ConstructionStarted: {
+    getActionItem: ({ returnValues }, { building = {} }) => {
+      const { asteroidId, lotId, lotIndex } = locationsArrToObj(building?.Location?.locations || []) || {};
+      return {
+        icon: <ConstructIcon />,
+        label: `${Building.TYPES[building?.Building?.buildingType]?.name || 'Building'} Construction`,
+        asteroidId,
+        lotId,
+        locationDetail: lotIndex ? formatters.lotName(lotIndex) : undefined,
+        onClick: ({ openDialog }) => {
+          openDialog('CONSTRUCT');
+        }
+      };
+    },
+    getIsActionItemHidden: ({ returnValues }) => (pendingTransactions) => {
+      return pendingTransactions.find((tx) => (
+        tx.key === 'ConstructionFinish'
+        && tx.vars.building.id === returnValues.building.id
+      ))
+    },
+    getInvalidations: ({ event: { returnValues } }, { building = {} }) => {
+      const invs = [
+        ...invalidationDefaults(Entity.IDS.BUILDING, returnValues.building.id),
+        ['planned'],
+        ['actionItems'],
+      ];
+
+      const _location = locationsArrToObj(building?.Location?.locations || []);
+      if (_location.asteroidId) {
+        invs.push(['asteroidCrewBuildings', _location.asteroidId, returnValues.callerCrew.id]);
+      }
+      return invs;
+    },
+    getPrepopEntities: ({ event: { returnValues } }) => ({
+      building: returnValues.building,
+    }),
+    requiresCrewTime: true
+  },
+  
+  ConstructionFinished: {
+    getInvalidations: ({ event: { returnValues } }, { building = {} }) => {
+      const { asteroidId } = locationsArrToObj(building?.Location?.locations || []) || {};
+      return [
+        ...invalidationDefaults(Entity.IDS.BUILDING, returnValues.building.id),
+        ['actionItems'],
+        ['asteroidCrewBuildings', asteroidId, returnValues.callerCrew.id],
+      ]
+    },
+    getLogContent: ({ event: { returnValues } }, viewingAs, { building = {} }) => {
+      console.log('GET LOG CONTENT', returnValues, building, locationsArrToObj(building?.Location?.locations || [])?.lotId);
+      return {
+        icon: <ConstructIcon />,
+        content: (
+          <>
+            <span>{Building.TYPES[building?.Building?.buildingType]?.name || 'Building'} construction finished on </span>
+            <LotLink lotId={locationsArrToObj(building?.Location?.locations || [])?.lotId} />
+          </>
+        ),
+      };
+    },
+    getPrepopEntities: ({ event: { returnValues } }) => ({
+      building: returnValues.building,
+    }),
+    triggerAlert: true
+  },
+
+  ConstructionDeconstructed: {
+    getInvalidations: ({ event: { returnValues } }, { building = {} }) => {
+      const { asteroidId } = locationsArrToObj(building?.Location?.locations || []) || {};
+      return [
+        ...invalidationDefaults(Entity.IDS.BUILDING, returnValues.building.id),
+        ['asteroidCrewBuildings', asteroidId, returnValues.callerCrew.id],
+      ]
+    },
+    getLogContent: ({ event: { returnValues } }, viewingAs, { building = {} }) => ({
+      icon: <ConstructIcon />,
+      content: (
+        <>
+          <span>{Building.TYPES[building?.Building?.buildingType]?.name || 'Building'} deconstructed on </span>
+          <LotLink lotId={locationsArrToObj(building?.Location?.locations || [])?.lotId} />
+        </>
+      ),
+    }),
+    getPrepopEntities: ({ event: { returnValues } }) => ({
+      building: returnValues.building,
+    }),
+    requiresCrewTime: true
+  },
 
   CrewDelegated: {
     getInvalidations: ({ event: { returnValues } }) => invalidationDefaults(Entity.IDS.CREW, returnValues.crew.id),
@@ -188,7 +282,7 @@ const activities = {
       icon: <CrewIcon />,
       content: (
         <>
-          Crew <EntityLink {...returnValues.crew} />
+          <EntityLink {...returnValues.crew} />
           {' '}delegated to <AddressLink address={returnValues.delegatedTo} maxWidth={addressMaxWidth} />
         </>
       ),
@@ -202,7 +296,7 @@ const activities = {
       icon: <CrewIcon />,
       content: (
         <>
-          Crew <EntityLink {...returnValues.callerCrew} />
+          <EntityLink {...returnValues.callerCrew} />
           {' '}was formed by <AddressLink address={returnValues.caller} maxWidth={addressMaxWidth} />
         </>
       ),
@@ -405,42 +499,89 @@ const activities = {
         </>
       ),
     }),
+    requiresCrewTime: true
+  },
+  
+  DeliveryFinished: {
+    getInvalidations: ({ event: { returnValues } }, { delivery = {} }) => {
+      const invs = [
+        ...invalidationDefaults(Entity.IDS.DELIVERY, returnValues.delivery?.id),
+        ['actionItems']
+      ];
+
+      if (delivery?.Delivery) {
+        invs.unshift(...invalidationDefaults(delivery.Delivery.origin.label, delivery.Delivery.origin.id));
+        invs.unshift(...invalidationDefaults(delivery.Delivery.dest.label, delivery.Delivery.dest.id));
+      }
+
+      return invs;
+    },
+    getLogContent: (activity, viewingAs, { delivery }) => {
+      if (!delivery) return null;
+      return {
+        icon: <SurfaceTransferIcon />,
+        content: (
+          <>
+            <span>Delivery completed to </span> <EntityLink {...delivery.Delivery.dest} />
+          </>
+        ),
+      };
+    },
+    getPrepopEntities: ({ event: { returnValues } }) => ({
+      delivery: returnValues.delivery,
+    }),
+    triggerAlert: true
   },
 
-  // DeliveryFinished,
-    // = invalidations
-    //   ['actionItems'],
-    //   ['lots', getLinkedAsset(linked, 'Asteroid').i, getLinkedAsset(linked, 'Lot').i]
-    // = content log
-    // return {
-    //   icon: <SurfaceTransferIcon />,
-    //   content: (
-    //     <>
-    //       <span>Delivery completed to </span>
-    //       <LotLink asteroidId={e.returnValues.asteroidId} lotId={e.returnValues.destinationLotId} />
-    //     </>
-    //   ),
-    //   txLink: getTxLink(e),
-    // };
-  // DeliveryStarted,
-  // = invalidations
-  //   ['actionItems'],
-  //   ['lots', getLinkedAsset(linked, 'Asteroid').i, getLinkedAsset(linked, 'Lot').i]
-  // = action item
-  //     formatted.icon = <SurfaceTransferIcon />;
-  //     formatted.label = 'Surface Transfer';
-  //     formatted.asteroidId = item.event.returnValues?.asteroidId;
-  //     formatted.lotId = item.event.returnValues?.destinationLotId;  // after start, link to destination
-  //     formatted.onClick = ({ openDialog }) => {
-  //       openDialog('SURFACE_TRANSFER', { deliveryId: item.assets.delivery?.deliveryId });
-  //     };
-  // = action item hidden
-  //     return !pendingTransactions.find((tx) => (
-  //       tx.key === 'FINISH_DELIVERY'
-  //       && tx.vars.asteroidId === item.event.returnValues?.asteroidId
-  //       && tx.vars.destLotId === item.event.returnValues?.destinationLotId
-  //       && tx.vars.deliveryId === item.assets.delivery?.deliveryId
-  //     ));
+  DeliveryStarted: {
+    getActionItem: ({ returnValues }, { destination = {} }) => {
+      const _location = locationsArrToObj(destination?.Location?.locations || []);
+      return {
+        icon: <SurfaceTransferIcon />,
+        label: 'Surface Transfer',
+        asteroidId: _location.asteroidId,
+        lotId: _location.lotId,
+        locationDetail: getEntityName(destination),
+        onClick: ({ openDialog }) => {
+          openDialog('SURFACE_TRANSFER', { deliveryId: returnValues.delivery.id });
+        }
+      };
+    },
+    getIsActionItemHidden: ({ returnValues }) => (pendingTransactions) => {
+      return pendingTransactions.find((tx) => (
+        tx.key === 'TransferInventoryFinish'
+        && tx.vars.delivery.id === returnValues.delivery.id
+      ))
+    },
+
+    getInvalidations: ({ event: { returnValues, version } }) => ([
+      ...invalidationDefaults(Entity.IDS.DELIVERY, returnValues.delivery.id),
+      ...invalidationDefaults(returnValues.dest.label, returnValues.dest.id),
+      ...invalidationDefaults(returnValues.origin.label, returnValues.origin.id),
+      ['actionItems']
+    ]),
+
+    getPrepopEntities: ({ event: { returnValues } }) => ({
+      destination: returnValues.dest,
+      // origin: returnValues.origin,
+    }),
+
+    // getLogContent: (activity, viewingAs, { destination = {} }) => {
+    //   const _location = locationsArrToObj(destination?.Location?.locations || []);
+    //   return {
+    //     icon: <SurfaceTransferIcon />,
+    //     content: (
+    //       <>
+    //         <span>Delivery started to </span>
+    //         <EntityLink {...activity.returnValue.dest} />
+    //         {_location.lotId && <>at<LotLink lotId={_location.lotId} /></>}
+    //       </>
+    //     ),
+    //   };
+    // },
+
+    requiresCrewTime: true
+  },
 
   // DockShip,
   // EarlyAdopterRewardClaimed,
@@ -488,6 +629,89 @@ const activities = {
         )
       };
     }
+    // TODO: prepop as needed (i.e. if building name changed, to update lot)
+  },
+
+  ResourceExtractionStarted: {
+    getActionItem: ({ returnValues }, { extractor = {} }) => {
+      const _location = locationsArrToObj(extractor?.Location?.locations || []);
+      return {
+        icon: <ExtractionIcon />,
+        label: `${Product.TYPES[returnValues?.resourcd]?.name || 'Resource'} Extraction`,
+        asteroidId: _location.asteroidId,
+        lotId: _location.lotId,
+        // resourceId: returnValues.resource,
+        locationDetail: getEntityName(extractor),
+        onClick: ({ openDialog }) => {
+          console.log({ returnValues, extractor });
+          openDialog('EXTRACT_RESOURCE');
+        }
+      };
+    },
+    getIsActionItemHidden: ({ returnValues }) => (pendingTransactions) => {
+      return pendingTransactions.find((tx) => (
+        tx.key === 'ResourceExtractionFinished'
+        && tx.vars.extractor.id === returnValues.extractor.id
+        && tx.vars.extractor_slot === returnValues.extractor_slot
+      ))
+    },
+
+    getInvalidations: ({ event: { returnValues, version } }) => ([
+      ...invalidationDefaults(Entity.IDS.DEPOSIT, returnValues.deposit.id),
+      ...invalidationDefaults(returnValues.extractor.label, returnValues.extractor.id),
+      ...invalidationDefaults(returnValues.destination.label, returnValues.destination.id),
+      ['actionItems'],
+      ['asteroidCrewBuildings', returnValues.asteroidId, returnValues.crewId],
+      ['asteroidCrewSampledLots', returnValues.asteroidId, returnValues.resourceId, returnValues.crewId],
+    ]),
+
+    getPrepopEntities: ({ event: { returnValues } }) => ({
+      // destination: returnValues.destination,
+      extractor: returnValues.extractor,
+    }),
+
+    // getLogContent: ({ event: { returnValues } }, viewingAs, { extractor = {} }) => {
+    //   const _location = locationsArrToObj(extractor?.Location?.locations || []);
+    //   return {
+    //     icon: <ExtractionIcon />,
+    //     content: (
+    //       <>
+    //         <span>{Product.TYPES[returnValues.resource]?.name || 'Resource'} extraction started at </span>
+    //         <LotLink lotId={_location.lotId} />
+    //       </>
+    //     ),
+    //   };
+    // },
+
+    requiresCrewTime: true
+  },
+
+  ResourceExtractionFinished: {
+    getInvalidations: ({ event: { returnValues, version } }) => ([
+      ...invalidationDefaults(returnValues.extractor.label, returnValues.extractor.id),
+      ...invalidationDefaults(returnValues.destination.label, returnValues.destination.id),
+      ['actionItems'],
+      ['asteroidCrewBuildings', returnValues.asteroidId, returnValues.crewId],
+    ]),
+
+    getPrepopEntities: ({ event: { returnValues } }) => ({
+      // destination: returnValues.destination,
+      extractor: returnValues.extractor,
+    }),
+
+    getLogContent: ({ event: { returnValues } }, viewingAs, { extractor = {} }) => {
+      return {
+        icon: <ExtractionIcon />,
+        content: (
+          <>
+            <span>{Product.TYPES[returnValues.resource]?.name || 'Resource'} extraction completed at </span>
+            <LotLink lotId={locationsArrToObj(extractor?.Location?.locations || []).lotId} />
+          </>
+        ),
+      };
+    },
+
+    triggerAlert: true
   },
 
   // OrderCreated,
@@ -495,121 +719,7 @@ const activities = {
   // PrepaidPolicyRemoved,
   // PublicPolicyAssigned,
   // RemovedFromWhitelist,
-  // ResourceExtractionFinished,
-    // = invalidations
-    //   ['actionItems'],
-    //   ['asteroidCrewLots', returnValues.asteroidId, returnValues.crewId],
-    //   ['lots', returnValues.asteroidId, returnValues.lotId]
-    // = content log
-    // return {
-    //   icon: <ExtractionIcon />,
-    //   content: (
-    //     <>
-    //       <span>Extraction completed at </span>
-    //       <LotLink asteroidId={e.returnValues.asteroidId} lotId={e.returnValues.lotId} />
-    //     </>
-    //   ),
-    //   txLink: getTxLink(e),
-    // };
-  // ResourceExtractionStarted,
-    // = invalidations
-    //   ['actionItems'],
-    //   ['asteroidCrewLots', returnValues.asteroidId, returnValues.crewId],
-    //   ['asteroidCrewSampledLots', returnValues.asteroidId, returnValues.resourceId, returnValues.crewId],
-    //   ['lots', returnValues.asteroidId, returnValues.lotId],
-    //   // ['lots', returnValues.asteroidId, returnValues.destinationLotId] // (this should happen in inventory_changed)
-    // = action item
-    //     formatted.icon = <ExtractionIcon />;
-    //     formatted.label = `${Product.TYPES[item.event.returnValues?.resourceId]?.name || 'Resource'} Extraction`;
-    //     formatted.asteroidId = item.event.returnValues?.asteroidId;
-    //     formatted.lotId = item.event.returnValues?.lotId;
-    //     formatted.resourceId = item.event.returnValues?.resourceId;
-    //     formatted.onClick = ({ openDialog }) => {
-    //       openDialog('EXTRACT_RESOURCE');
-    //     };
-    // = action item hidden
-    //    return !pendingTransactions.find((tx) => (
-    //       tx.key === 'FINISH_EXTRACTION'
-    //       && tx.vars.asteroidId === item.event.returnValues?.asteroidId
-    //       && tx.vars.lotId === item.event.returnValues?.lotId
-    //     ));
-    // = content log
-    // return {
-    //   icon: <ExtractionIcon />,
-    //   content: (
-    //     <>
-    //       <span>{Product.TYPES[e.returnValues.resourceId]?.name} extraction started at </span>
-    //       <LotLink asteroidId={e.returnValues.asteroidId} lotId={e.returnValues.lotId} resourceId={e.returnValues.resourceId} />
-    //     </>
-    //   ),
-    //   txLink: getTxLink(e),
-    // };
-  // ResourceScanFinished,
-  // ResourceScanStarted,
   // SaleOffered,
-  // SamplingDepositFinished,
-    // = invalidations
-    //   ['actionItems'],
-    //   ['lots', returnValues.asteroidId, returnValues.lotId],
-    // = content log
-    // return {
-    //   icon: <NewCoreSampleIcon />,
-    //   content: (
-    //     <>
-    //       <span>{Product.TYPES[e.returnValues.resourceId]?.name} core sample completed at </span>
-    //       <LotLink asteroidId={e.returnValues.asteroidId} lotId={e.returnValues.lotId} resourceId={e.returnValues.resourceId} />
-    //     </>
-    //   ),
-    //   txLink: getTxLink(e),
-    // };
-  // SamplingDepositStarted,
-    //  = invalidations
-    //   ['actionItems'],
-    //   ['asteroidCrewSampledLots', returnValues.asteroidId, returnValues.resourceId, returnValues.crewId],
-    //   ['lots', returnValues.asteroidId, returnValues.lotId],
-    //  = action item
-    //     const isImprovement = item.assets?.coreSample?.initialYield > 0;
-    //     formatted.icon = isImprovement ? <ImproveCoreSampleIcon /> : <NewCoreSampleIcon />;
-    //     formatted.label = `Core ${isImprovement ? 'Improvement' : 'Sample'}`;
-    //     formatted.asteroidId = item.event.returnValues?.asteroidId;
-    //     formatted.lotId = item.event.returnValues?.lotId;
-    //     formatted.resourceId = item.event.returnValues?.resourceId;
-    //     formatted.locationDetail = Product.TYPES[item.event.returnValues?.resourceId].name;
-    //     formatted.onClick = ({ openDialog }) => {
-    //       openDialog(isImprovement ? 'IMPROVE_CORE_SAMPLE' : 'NEW_CORE_SAMPLE');
-    //     };
-    // = action item hidden
-    //    return !pendingTransactions.find((tx) => (
-    //    tx.key === 'FINISH_CORE_SAMPLE'
-    //    && tx.vars.asteroidId === item.event.returnValues?.asteroidId
-    //    && tx.vars.lotId === item.event.returnValues?.lotId
-    // = (optional) log content
-    // ({
-    //   icon: <NewCoreSampleIcon />,
-    //   content: (
-    //     <>
-    //       <span>{Product.TYPES[e.returnValues.resourceId]?.name} core sample started at </span>
-    //       <LotLink asteroidId={e.returnValues.asteroidId} lotId={e.returnValues.lotId} resourceId={e.returnValues.resourceId} />
-    //     </>
-    //   ),
-    //   txLink: getTxLink(e),
-    // }),
-
-  AsteroidScanned: {
-    getLogContent: ({ event: { returnValues } }) => {
-      const entity = { label: Entity.IDS.ASTEROID, id: returnValues.asteroidId };
-
-      return {
-        icon: <ScanAsteroidIcon />,
-        content: (
-          <>
-            Long-range surface scan completed on asteroid
-            {' '}<EntityLink {...entity} />
-          </>
-        )
-      };
-    }
-  },
 
   ResourceScanFinished: {
     getInvalidations: ({ event: { returnValues } }) => ([
@@ -658,6 +768,67 @@ const activities = {
     //     </>
     //   ),
     // }),
+  },
+
+  SamplingDepositFinished: {
+    getInvalidations: ({ event: { returnValues } }) => ([
+      ...invalidationDefaults(Entity.IDS.DEPOSIT, returnValues.deposit?.id),
+      ['actionItems']
+    ]),
+    getLogContent: (activity, viewingAs, { deposit = {} }) => {
+      const _location = locationsArrToObj(deposit?.Location?.locations || []);
+      return {
+        icon: <CoreSampleIcon />,
+        content: (
+          <>
+            <span>{Product.TYPES[deposit.Deposit?.resource]?.name} core sample analyzed at </span>
+            <LotLink lotId={_location.lotId} resourceId={deposit.Deposit?.resource} />
+          </>
+        ),
+      };
+    },
+    getPrepopEntities: ({ event: { returnValues } }) => ({
+      deposit: { label: Entity.IDS.DEPOSIT, id: returnValues.deposit?.id }
+    }),
+    triggerAlert: true
+  },
+
+  SamplingDepositStarted: {
+    getActionItem: ({ returnValues }) => ({
+      icon: returnValues.improving ? <ImproveCoreSampleIcon /> : <NewCoreSampleIcon />,
+      label: `Core ${returnValues.improving ? 'Improvement' : 'Sample'}`,
+      asteroidId: Lot.toPosition(returnValues.lot.id)?.asteroidId,
+      lotId: returnValues.lot.id,
+      resourceId: returnValues.resource,
+      locationDetail: Product.TYPES[returnValues.resource].name,
+      onClick: ({ openDialog }) => {
+        openDialog(returnValues.improving ? 'IMPROVE_CORE_SAMPLE' : 'NEW_CORE_SAMPLE');
+      }
+    }),
+    getIsActionItemHidden: ({ returnValues }) => (pendingTransactions) => {
+      return pendingTransactions.find((tx) => (
+        tx.key === 'SampleDepositFinish'
+        && tx.vars.deposit.id === returnValues.deposit.id
+      ));
+    },
+    getInvalidations: ({ event: { returnValues, version } }) => ([
+      ...invalidationDefaults(Entity.IDS.DEPOSIT, returnValues.deposit.id), // (not sure this exists)
+      ...(version > 0 ? invalidationDefaults(returnValues.origin.label, returnValues.origin.id) : []), // source inventory
+      ['actionItems'],
+      ['asteroidCrewSampledLots', Lot.toPosition(returnValues.lot.id)?.asteroidId, returnValues.resource],
+    ]),
+    // getLogContent: ({ event: { returnValues } }) => {
+    //   return {
+    //     icon: returnValues.improving ? <ImproveCoreSampleIcon /> : <NewCoreSampleIcon />,
+    //     content: (
+    //       <>
+    //         <span>{Product.TYPES[e.returnValues.resource]?.name} core sample {returnValues.improving ? 'improvement ' : ' '}started at </span>
+    //         <LotLink lotId={e.returnValues.lotId} resourceId={e.returnValues.resource} />
+    //       </>
+    //     ),
+    //   };
+    // },
+    requiresCrewTime: true
   },
 
   SurfaceScanFinished: {
@@ -734,7 +905,7 @@ const activities = {
           icon: <TransferIcon />,
           content: (
             <>
-              {ucfirst(Entity.TYPES[entity?.label]?.label || '')}
+              {/*ucfirst(Entity.TYPES[entity?.label]?.label || '')*/}
               {' '}<EntityLink {...entity} /> minted to
               {' '}<AddressLink address={returnValues.to} maxWidth={addressMaxWidth} />
             </>
@@ -762,56 +933,77 @@ const activities = {
   // TransitStarted
 };
 
-const getActivityConfig = (activity, viewingAs = {}) => {
-  const name = activity?.event?.name || activity?.event?.event;
-  if (!activities[name]) {
-    console.warn(`No activity config for ${name}`);
-    return null;
+/**
+ * Hydration and Prepopulation
+ */
+export const getHydrationQueryKey = ({ label, id }) => ['entity', label, id];
+
+export const getAndCacheEntity = async ({ label, id }, queryClient) => {
+  const queryKey = getHydrationQueryKey({ id, label });
+  
+  let data = queryClient.getQueryData(queryKey);
+  if (!data) {
+    data = await api.getEntityById({ label, id });
+    if (data) queryClient.setQueryData(queryKey, data);
   }
+  return data;
+};
 
-  const config = activities[name];
-  if (!config) console.warn(`No activity config found for "${name}"!`);
+const prepopping = {};
+export const hydrateActivities = async (newActivities, queryClient) => {
+  return Promise.allSettled(
+    newActivities.map((activity) => {
+      const name = activity?.event?.name || activity?.event?.event;
+      if (activities[name]?.getPrepopEntities) {
+        const entities = activities[name].getPrepopEntities(activity) || {};
+        return Promise.allSettled(
+          Object.values(entities).filter((x) => !!x).map(({ id, label }) => new Promise((resolve) => {
+            const queryKey = getHydrationQueryKey({ id, label });
 
-  const actionItem = config?.getActionItem ? config.getActionItem(activity.event) : null;
-
-  const invalidations = config?.getInvalidations ? config.getInvalidations(activity) : [];
-
-  const logContent = config?.getLogContent ? config.getLogContent(activity, viewingAs) : null;
-  if (logContent && activity.event.transactionHash) logContent.txLink = `${process.env.REACT_APP_STARKNET_EXPLORER_URL}/tx/${activity.event.transactionHash}`;
-  // TODO: support L1? __t is in event record, but is not included in activity record...
-  //  `${process.env.REACT_APP_ETHEREUM_EXPLORER_URL}/tx/${activity.event?.transactionHash}`
-
-  const triggerAlert = !!config?.triggerAlert;
-
-  const isActionItemHidden = (pendingTransactions) => {
-    return config?.getIsActionItemHidden && config.getIsActionItemHidden(activity.event)(pendingTransactions);
-  };
-
-  return {
-    actionItem,
-    invalidations,
-    logContent,
-    isActionItemHidden,
-    triggerAlert
-  };
-}
+            // if data is not yet available
+            if (!queryClient.getQueryData(queryKey)) {
+              const key = queryKey.join('_');
+              // and not already prepopping
+              if (!prepopping[key]) {
+                // prepop it, then resolve
+                prepopping[key] = true;
+                return api.getEntityById({ label, id })
+                  .then((data) => {
+                    console.log({ label, id, data });
+                    queryClient.setQueryData(queryKey, data);
+                  })
+                  .catch((e) => console.warn('Error with activity prepop', queryKey, e))
+                  .finally(() => {
+                    delete prepopping[key];
+                    resolve(); // TODO: should resolve after entire loop
+                  });
+              }
+            }
+            // otherwise, go ahead and resolve
+            resolve();
+          }))
+        )
+      }
+      return;
+    })
+  );
+};
 
 export const typesWithLogContent = Object.keys(activities).filter((type) => !!activities[type].getLogContent);
 
-export default getActivityConfig;
+export default activities;
 
-// TODO: write a test to make sure all activities (from sdk) have a config
 
 // TODO: remove references to old methods below when no longer need the reference
 
 // useQuery cache keys:
-// [ 'actionItems', crew?.i ],
+// [ 'actionItems', crew?.id ],
 // [ 'activities', entity.label, entity.id ],
-// [ 'asteroidLots', asteroid?.i ],  // TODO: two of these references
-// [ 'asteroidCrewLots', asteroidId, crewId ],
-// [ 'asteroidCrewSampledLots', asteroidId, resourceId, crew?.i ],
+// [ 'asteroidLots', asteroid?.id ],  // TODO: two of these references
+// [ 'asteroidCrewBuildings', asteroidId, crewId ],
+// [ 'asteroidCrewSampledLots', asteroidId, resourceId, crew?.id ],
 // [ 'crewLocation', id ],
-// [ 'planned', crew?.i ],
+// [ 'planned', crew?.id ],
 // [ 'priceConstants' ],
 // [ 'referrals', 'count', token ],
 // [ 'user', token ],
@@ -829,7 +1021,7 @@ export default getActivityConfig;
 // [ 'entity', Entity.IDS.CREWMATE, id ],
 // [ 'entity', Entity.IDS.BUILDING, id ],
 // [ 'entity', Entity.IDS.CREW, id ],
-// [ 'entity', Entity.IDS.LOT, `${asteroidId}_${lotId}` ],
+// [ 'entity', Entity.IDS.LOT, id ],
 // [ 'entity', Entity.IDS.SHIP, id ],
 
 // [ 'search', assetType, query ],
@@ -843,10 +1035,10 @@ export default getActivityConfig;
 
 // TODO: old events that do not have a corresponding entry yet:
 // Inventory_ReservedChanged: [
-//   ['lots', getLinkedAsset(linked, 'Asteroid').i, getLinkedAsset(linked, 'Lot').i],
-//   ['asteroidCrewLots',  getLinkedAsset(linked, 'Asteroid').i, getLinkedAsset(linked, 'Crew').i],
+//   ['lots', getLinkedAsset(linked, 'Asteroid').id, getLinkedAsset(linked, 'Lot').id],
+//   ['asteroidCrewBuildings',  getLinkedAsset(linked, 'Asteroid').id, getLinkedAsset(linked, 'Crew').id],
 // ],
 // Inventory_Changed: [
-//   ['lots', getLinkedAsset(linked, 'Asteroid').i, getLinkedAsset(linked, 'Lot').i],
-//   ['asteroidCrewLots',  getLinkedAsset(linked, 'Asteroid').i, getLinkedAsset(linked, 'Crew').i],
+//   ['lots', getLinkedAsset(linked, 'Asteroid').id, getLinkedAsset(linked, 'Lot').id],
+//   ['asteroidCrewBuildings',  getLinkedAsset(linked, 'Asteroid').id, getLinkedAsset(linked, 'Crew').id],
 // ],

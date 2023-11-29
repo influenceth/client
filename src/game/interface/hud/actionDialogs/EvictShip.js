@@ -41,14 +41,14 @@ const EvictShip = ({ asteroid, lot, manager, stage, ...props }) => {
   const { currentLaunch, launchStatus, startLaunch } = manager;
 
   const { crew, crewmateMap } = useCrewContext();
-  const { data: launchOriginLot } = useLot(asteroid?.i, currentLaunch?.originLotId);
+  const { data: launchOriginLot } = useLot(currentLaunch?.originLotId);
 
   const [tab, setTab] = useState(0);
   const ship = Ship.TYPES[1];  // TODO
 
   const crewmates = currentLaunch?._crewmates || (crew?._crewmates || []).map((i) => crewmateMap[i]);
   const captain = crewmates[0];
-  const crewTravelBonus = Crew.getAbilityBonus(Crewmate.ABILITY_IDS.SURFACE_TRANSPORT_SPEED, crewmates);
+  const crewTravelBonus = Crew.getAbilityBonus(Crewmate.ABILITY_IDS.HOPPER_TRANSPORT_TIME, crewmates);
   const launchBonus = 0;
 
   const stats = useMemo(() => ([
@@ -227,7 +227,7 @@ const EvictShip = ({ asteroid, lot, manager, stage, ...props }) => {
 const Wrapper = (props) => {
   const { asteroid, lot, isLoading } = useAsteroidAndLot(props);
   // TODO: ...
-  // const extractionManager = useExtractionManager(asteroid?.i, lot?.i);
+  // const extractionManager = useExtractionManager(lot?.id);
   // const { actionStage } = extractionManager;
   const manager = {};
   const actionStage = actionStages.NOT_STARTED;

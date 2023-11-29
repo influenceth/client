@@ -1,27 +1,31 @@
 import { useCallback, useMemo } from 'react';
+import { Inventory } from '@influenceth/sdk';
 
 import { SurfaceTransferIcon } from '~/components/Icons';
-import useDeliveryManager from '~/hooks/useDeliveryManager';
+import useDeliveryManager from '~/hooks/actionManagers/useDeliveryManager';
 import ActionButton from './ActionButton';
 
 const SurfaceTransferOutgoing = ({ asteroid, lot, onSetAction, preselect, _disabled }) => {
-  const { deliveryStatus } = useDeliveryManager(asteroid?.i, lot?.i);
+  const { currentDeliveryActions, isLoading } = useDeliveryManager({ origin: lot?.building || lot?.ship });
+  const deliveryDeparting = useMemo(() => {
+    return (currentDeliveryActions || []).find((a) => a.status === 'DEPARTING');
+  }, [currentDeliveryActions]);
 
   const handleClick = useCallback(() => {
     onSetAction('SURFACE_TRANSFER', { deliveryId: 0, preselect });
   }, [onSetAction, preselect]);
 
-  const disabled = useMemo(() => {
-    const hasMass = Object.values(lot?.building?.Inventories || {}).find((i) => i.mass > 0);
+  const isEmpty = useMemo(() => {
+    const hasMass = (lot?.building?.Inventories || []).find((i) => i.status === Inventory.STATUSES.AVAILABLE && i.mass > 0);
     return !hasMass;
   }, [lot?.building?.inventories]);
 
   return (
     <ActionButton
-      label={`Surface Transfer${disabled ? ' (inventory empty)' : ''}`}
+      label={`Surface Transfer${isEmpty ? ' (inventory empty)' : ''}`}
       flags={{
-        disabled: _disabled || disabled || undefined,
-        loading: (deliveryStatus === 'DEPARTING') || undefined
+        disabled: _disabled || isEmpty || isLoading || undefined,
+        loading: deliveryDeparting || undefined
       }}
       icon={<SurfaceTransferIcon />}
       onClick={handleClick} />

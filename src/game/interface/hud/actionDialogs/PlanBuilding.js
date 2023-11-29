@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
-import { Building, Crew, Crewmate, Product } from '@influenceth/sdk';
+import { Building, Crew, Crewmate, Lot } from '@influenceth/sdk';
 
 import constructionBackground from '~/assets/images/modal_headers/Construction.png';
 import {
@@ -9,8 +9,8 @@ import {
 } from '~/components/Icons';
 import useCrewContext from '~/hooks/useCrewContext';
 import theme from '~/theme';
-import useConstructionManager from '~/hooks/useConstructionManager';
-import { reactBool, formatTimer } from '~/lib/utils';
+import useConstructionManager from '~/hooks/actionManagers/useConstructionManager';
+import { reactBool, formatTimer, getCrewAbilityBonuses } from '~/lib/utils';
 
 import { ActionDialogInner, useAsteroidAndLot } from '../ActionDialog';
 import {
@@ -29,7 +29,8 @@ import {
   ProgressBarSection,
   TravelBonusTooltip,
   ActionDialogBody,
-  getBuildingRequirements
+  getBuildingRequirements,
+  getTripDetails
 } from './components';
 import actionStage from '~/lib/actionStages';
 
@@ -39,17 +40,31 @@ const MouseoverWarning = styled.span`
 
 const PlanBuilding = ({ asteroid, lot, constructionManager, stage, ...props }) => {
   const { currentConstructionAction, planConstruction } = constructionManager;
-  const { captain, crew, crewmateMap } = useCrewContext();
+  const { captain, crew } = useCrewContext();
 
   const [buildingType, setBuildingType] = useState();
 
-  const crewTravelTime = useMemo(() => 0, []);  // TODO: ...
-  const taskTime = useMemo(() => 0, []);
+  const crewTravelBonus = useMemo(() => {
+    if (!crew) return {};
+    return getCrewAbilityBonuses(Crewmate.ABILITY_IDS.HOPPER_TRANSPORT_TIME, crew) || {};
+  }, [crew]);
+
+  const { totalTime: crewTravelTime, tripDetails } = useMemo(() => {
+    if (!asteroid?.id || !crew?._location?.lotId || !lot?.id) return {};
+    const crewLotIndex = Lot.toIndex(crew?._location?.lotId);
+    return getTripDetails(asteroid.id, crewTravelBonus, crewLotIndex, [
+      { label: 'Travel to Construction Site', lotIndex: Lot.toIndex(lot.id) },
+      { label: 'Return to Crew Station', lotIndex: crewLotIndex },
+    ]);
+  }, [asteroid?.id, crew?._location?.lotId, lot?.id, crewTravelBonus]);
+
+  const [crewTimeRequirement, taskTimeRequirement] = useMemo(() => {
+    if (!tripDetails) return [];
+    return [crewTravelTime, 0];
+  }, [crewTravelTime, tripDetails]);
+
   const stats = useMemo(() => {
-    if (!asteroid?.i || !lot?.i) return [];
-    const crewmates = (crew?._crewmates || []).map((i) => crewmateMap[i]);
-    const crewTravelBonus = Crew.getAbilityBonus(Crewmate.ABILITY_IDS.SURFACE_TRANSPORT_SPEED, crewmates);
-    const tripDetails = []; // TODO: 
+    if (!asteroid?.id || !lot?.id) return [];
     const taskTime = 0;
     return [
       {
@@ -71,7 +86,7 @@ const PlanBuilding = ({ asteroid, lot, constructionManager, stage, ...props }) =
         isTimeStat: true
       },
     ];
-  }, [crew?._crewmates]);
+  }, [crewTravelTime, tripDetails]);
 
   useEffect(() => {
     if (currentConstructionAction?.buildingType) setBuildingType(currentConstructionAction.buildingType)
@@ -94,9 +109,9 @@ const PlanBuilding = ({ asteroid, lot, constructionManager, stage, ...props }) =
         }}
         captain={captain}
         location={{ asteroid, lot }}
-        crewAvailableTime={crewTravelTime}
+        crewAvailableTime={crewTimeRequirement}
+        taskCompleteTime={taskTimeRequirement}
         onClose={props.onClose}
-        taskCompleteTime={crewTravelTime + taskTime}
         stage={stage} />
 
       <ActionDialogBody>
@@ -123,7 +138,6 @@ const PlanBuilding = ({ asteroid, lot, constructionManager, stage, ...props }) =
             requirements={buildingRequirements} />
         )}
 
-        {/* TODO: if crew travel becomes part of planning, will need to configure this */}
         {stage === actionStage.NOT_STARTED && (
           <ProgressBarSection
             overrides={{
@@ -174,7 +188,7 @@ const PlanBuilding = ({ asteroid, lot, constructionManager, stage, ...props }) =
 
 const Wrapper = (props) => {
   const { asteroid, lot, isLoading } = useAsteroidAndLot(props);
-  const constructionManager = useConstructionManager(asteroid?.i, lot?.i);
+  const constructionManager = useConstructionManager(lot?.id);
   const { stageByActivity } = constructionManager;
 
   useEffect(() => {
@@ -184,7 +198,6 @@ const Wrapper = (props) => {
       }
     }
   }, [asteroid, lot, isLoading]);
-
 
   // stay in this window until PLANNED, then swap to CONSTRUCT
   useEffect(() => {

@@ -324,7 +324,6 @@ const CrewmateDetails = ({ crewmateId, crewmate, isOwnedCrewmate }) => {
   const viewingAs = useMemo(() => ({ id: crewmateId, label: Entity.IDS.CREWMATE }), [crewmateId]);
 
   const onBackToCrew = useCallback(() => {
-    console.log('crewmate', crewmate, crewmate?.Controller?.controller.id);
     if (crewmate?.Control?.controller.id) {
       history.push(`/crew/${crewmate?.Control?.controller.id}`);
     }

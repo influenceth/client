@@ -1,15 +1,13 @@
-import { useEffect, useMemo, useState } from 'react';
-import { Asteroid, Building, Crew, Crewmate } from '@influenceth/sdk';
+import { useEffect, useMemo } from 'react';
+import { Building, Crewmate, Inventory, Lot } from '@influenceth/sdk';
 
 import constructionBackground from '~/assets/images/modal_headers/Construction.png';
 import {
   DeconstructIcon,
-  InventoryIcon,
-  ForwardIcon
 } from '~/components/Icons';
 import useCrewContext from '~/hooks/useCrewContext';
-import useConstructionManager from '~/hooks/useConstructionManager';
-import { reactBool, formatFixed, formatTimer } from '~/lib/utils';
+import useConstructionManager from '~/hooks/actionManagers/useConstructionManager';
+import { reactBool, formatTimer, getCrewAbilityBonuses } from '~/lib/utils';
 
 import {
   DeconstructionMaterialsSection,
@@ -21,46 +19,35 @@ import {
   ActionDialogBody,
   ProgressBarSection,
   FlexSection,
-  FlexSectionInputBlock,
-  FlexSectionSpacer,
-  BuildingImage,
-  DestinationSelectionDialog,
-  EmptyBuildingImage,
   getBuildingRequirements,
   LotInputBlock
 } from './components';
 import { ActionDialogInner, useAsteroidAndLot } from '../ActionDialog';
 import actionStage from '~/lib/actionStages';
-import useLot from '~/hooks/useLot';
+import { getTripDetails } from './components';
 
+// TODO: deprecate deconstructTx?
 const Deconstruct = ({ asteroid, lot, constructionManager, stage, ...props }) => {
   const { crew, crewmateMap } = useCrewContext();
   const { deconstruct, deconstructTx } = constructionManager;
-  const { data: inProgressDestination } = useLot(asteroid?.i, deconstructTx?.returnValues?.destinationLotId);
 
   const crewmates = crew._crewmates.map((i) => crewmateMap[i]);
   const captain = crewmates[0];
-  const crewTravelBonus = Crew.getAbilityBonus(Crewmate.ABILITY_IDS.SURFACE_TRANSPORT_SPEED, crewmates);
 
-  const [destinationLot, setDestinationLot] = useState();
-  const [destinationSelectorOpen, setDestinationSelectorOpen] = useState(false);
+  const crewTravelBonus = useMemo(() => getCrewAbilityBonuses(Crewmate.ABILITY_IDS.HOPPER_TRANSPORT_TIME, crew), [crew]);
 
-  useEffect(() => {
-    if (inProgressDestination) setDestinationLot(inProgressDestination);
-  }, [inProgressDestination]);
+  const { totalTime: crewTravelTime, tripDetails } = useMemo(() => {
+    if (!asteroid?.id || !crew?._location?.lotId || !lot?.id) return {};
+    const crewLotIndex = Lot.toIndex(crew?._location?.lotId);
+    return getTripDetails(asteroid.id, crewTravelBonus, crewLotIndex, [
+      { label: 'Travel to Site', lotIndex: Lot.toIndex(lot.id) },
+      { label: 'Return to Crew Station', lotIndex: crewLotIndex },
+    ]);
+  }, [asteroid?.id, lot?.id, crewTravelBonus]);
 
-  // TODO: ...
-  // const { totalTime: crewTravelTime, tripDetails } = useMemo(() => {
-  //   if (!asteroid?.i || !lot?.i) return {};
-  //   return getTripDetails(asteroid.i, crewTravelBonus.totalBonus, 1, [
-  //     { label: 'Travel to destination', lot: lot.i },
-  //     { label: 'Return from destination', lot: 1 },
-  //   ])
-  // }, [asteroid?.i, lot?.i, crewTravelBonus]);
-  const crewTravelTime = 0;
-  const tripDetails = null;
-
-  const constructionTime = Building.getConstructionTime(lot?.building?.Building?.buildingType || 0, 1);
+  const [crewTimeRequirement, taskTimeRequirement] = useMemo(() => {
+    return [crewTravelTime, 0];
+  }, [crewTravelTime]);
 
   const stats = useMemo(() => [
     {
@@ -77,19 +64,20 @@ const Deconstruct = ({ asteroid, lot, constructionManager, stage, ...props }) =>
       )
     },
     {
-      label: 'Deconstruction Time',
-      value: formatTimer(constructionTime),
-      direction: 0,
-      isTimeStat: true,
+      label: 'Deconstruction Penalty',
+      value: `${Math.round(100 * Building.DECONSTRUCTION_PENALTY)}%`,
+      direction: -1
+      // TODO: add a tooltip here showing reduction by each item
     },
-    {
-      label: 'Transfer Distance',
-      value: `${formatFixed(lot.i === destinationLot?.i ? 0 : (Asteroid.getLotDistance(asteroid.i, lot.i, destinationLot?.i) || 0), 1)} km`,
-      direction: 0,
-    }
-  ], [destinationLot]);
+  ], [tripDetails]);
 
-  const itemsReturned = getBuildingRequirements(lot?.building);
+  const itemsReturned = useMemo(() => {
+    if (!lot?.building) return [];
+    return getBuildingRequirements(lot?.building).map((item) => ({
+      ...item,
+      totalRequired: (1 - Building.DECONSTRUCTION_PENALTY || 0) * item.totalRequired
+    }));
+  }, [lot?.building]);
 
   return (
     <>
@@ -101,8 +89,8 @@ const Deconstruct = ({ asteroid, lot, constructionManager, stage, ...props }) =>
         }}
         captain={captain}
         location={{ asteroid, lot }}
-        crewAvailableTime={crewTravelTime}
-        taskCompleteTime={crewTravelTime + constructionTime}
+        crewAvailableTime={crewTimeRequirement}
+        taskCompleteTime={taskTimeRequirement}
         onClose={props.onClose}
         stage={stage} />
 
@@ -112,29 +100,6 @@ const Deconstruct = ({ asteroid, lot, constructionManager, stage, ...props }) =>
             title="Deconstruct"
             lot={lot}
             disabled
-          />
-          
-          <FlexSectionSpacer>
-            <ForwardIcon />
-          </FlexSectionSpacer>
-
-          <LotInputBlock
-            title="Transfer To"
-            lot={destinationLot}
-            fallbackSublabel="Inventory"
-            imageProps={destinationLot && destinationLot.i === lot.i
-              ? {
-                unfinished: true
-              }
-              : {
-                iconOverride: <InventoryIcon />,
-                inventories: destinationLot?.building?.inventories,
-                showInventoryStatusForType: 1
-              }
-            }
-            isSelected={stage === actionStage.NOT_STARTED}
-            onClick={() => { setDestinationSelectorOpen(true) }}
-            disabled={stage !== actionStage.NOT_STARTED}
           />
         </FlexSection>
 
@@ -157,23 +122,10 @@ const Deconstruct = ({ asteroid, lot, constructionManager, stage, ...props }) =>
       </ActionDialogBody>
 
       <ActionDialogFooter
-        disabled={!destinationLot}
         goLabel="Deconstruct"
         onGo={deconstruct}
         stage={stage}
         {...props} />
-
-      {stage === actionStage.NOT_STARTED && (
-        <DestinationSelectionDialog
-          asteroid={asteroid}
-          originLotId={lot?.i}
-          includeDeconstruction
-          initialSelection={undefined/* TODO: default to self... */}
-          onClose={() => setDestinationSelectorOpen(false)}
-          onSelected={setDestinationLot}
-          open={destinationSelectorOpen}
-        />
-      )}
     </>
   );
 };
@@ -181,25 +133,31 @@ const Deconstruct = ({ asteroid, lot, constructionManager, stage, ...props }) =>
 
 const Wrapper = (props) => {
   const { asteroid, lot, isLoading } = useAsteroidAndLot(props);
-  const constructionManager = useConstructionManager(asteroid?.i, lot?.i);
+  const constructionManager = useConstructionManager(lot?.id);
   const { stageByActivity } = constructionManager;
 
   useEffect(() => {
-    if (!asteroid || !lot) {
+    // console.log('deconstruct props', props, lot);
+    if (!asteroid || !lot?.building) {
       if (!isLoading) {
         if (props.onClose) props.onClose();
       }
     }
   }, [asteroid, lot, isLoading]);
 
-  // stay in this window until PLANNED, then swap to UNPLAN / SURFACE_TRANSFER
+  // stay in this window until PLANNED (and lot updated), then swap to UNPLAN / SURFACE_TRANSFER
   useEffect(() => {
     if (!['OPERATIONAL', 'DECONSTRUCTING'].includes(constructionManager.constructionStatus)) {
-      // TODO: if materials are recovered, open surface transport dialog w/ all materials selected
-      // else, open "unplan" dialog
-      props.onSetAction('UNPLAN_BUILDING');
+      const siteInventory = (lot?.building?.Inventories || []).find((i) => Inventory.TYPES[i.inventoryType].category === Inventory.CATEGORIES.SITE);
+      if (siteInventory?.status === Inventory.STATUSES.AVAILABLE) {
+        if (siteInventory?.mass > 0) { // (if materials recovered)
+          props.onSetAction('SURFACE_TRANSFER');
+        } else {
+          props.onSetAction('UNPLAN_BUILDING');
+        }
+      }
     }
-  }, [constructionManager.constructionStatus]);
+  }, [constructionManager.constructionStatus, lot?.building?.Inventories]);
 
   return (
     <ActionDialogInner

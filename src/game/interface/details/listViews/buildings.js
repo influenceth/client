@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { Building, Entity } from '@influenceth/sdk';
+import { Building, Entity, Lot } from '@influenceth/sdk';
 
 import { MyAssetIcon } from '~/components/Icons';
 import useAuth from '~/hooks/useAuth';
@@ -16,7 +16,7 @@ const useColumns = () => {
         key: 'my',
         align: 'center',
         icon: <MyAssetIcon />,
-        selector: row => row.Control?.controller?.id === crew?.i ? <MyAssetIcon /> : null,
+        selector: row => row.Control?.controller?.id === crew?.id ? <MyAssetIcon /> : null,
         bodyStyle: { fontSize: '24px' },
         requireLogin: true,
         unhideable: true
@@ -29,7 +29,7 @@ const useColumns = () => {
           const loc = Entity.toPosition(row.Location?.location);
           return (
             <>
-              <LocationLink asteroidId={loc.asteroidId} lotId={loc.lotId} zoomToLot />
+              <LocationLink lotId={loc.lotId} zoomToLot />
               <span>{Building.TYPES[row.Building.buildingType].name}</span>
             </>
           );
@@ -58,8 +58,8 @@ const useColumns = () => {
           const loc = Entity.toPosition(row.Location?.location);
           return (
             <>
-              <LocationLink asteroidId={loc.asteroidId} lotId={loc.lotId} />
-              <span>{loc.lotId ? loc.lotId.toLocaleString() : null}</span>
+              <LocationLink lotId={loc.lotId} />
+              <span>{loc.lotId ? Lot.toIndex(loc.lotId).toLocaleString() : null}</span>
             </>
           );
         },
@@ -70,7 +70,7 @@ const useColumns = () => {
         sortField: 'Control.controller.id',
         selector: row => {
           if (row.Control?.controller?.id) {
-            return row.Control?.controller?.id === crew?.i ? 'you' : row.Control?.controller?.id.toLocaleString();
+            return row.Control?.controller?.id === crew?.id ? 'you' : row.Control?.controller?.id.toLocaleString();
           }
 
           return 'Uncontrolled';
@@ -93,7 +93,7 @@ const useColumns = () => {
         sortField: 'Building.status',
         selector: row => {
           if (row.Building?.status) {
-            return Building.CONSTRUCTION_STATUSES[row.Building.status];
+            return Building.CONSTRUCTION_STATUS_LABELS[row.Building.status];
           }
           return null;
         }
@@ -101,7 +101,7 @@ const useColumns = () => {
     ];
 
     return columns.filter((c) => account || !c.requireLogin);
-  }, [account, crew?.i]);
+  }, [account, crew?.id]);
 };
 
 export default useColumns;

@@ -3,7 +3,7 @@ import styled from 'styled-components';
 import moment from 'moment';
 
 import { LinkIcon } from '~/components/Icons';
-import getActivityConfig from '~/lib/activities';
+import useGetActivityConfig from '~/hooks/useGetActivityConfig';
 
 const LogEntryItem = styled.li`
   align-items: center;
@@ -126,6 +126,8 @@ const LinkLabel = styled.div`
 `;
 
 const LogEntry = ({ activity, css = {}, isHeaderRow, isTabular, timestampBreakpoint, viewingAs = {} }) => {
+  const getActivityConfig = useGetActivityConfig();
+
   const m = useMemo(() => {
     if (isTabular && activity?.event?.timestamp) {
       return moment(new Date(activity.event.timestamp * 1000));

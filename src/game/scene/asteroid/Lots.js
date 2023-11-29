@@ -15,7 +15,7 @@ import {
   Vector3
 } from 'three';
 import { useQueryClient } from 'react-query';
-import { Asteroid } from '@influenceth/sdk';
+import { Asteroid, Entity, Lot } from '@influenceth/sdk';
 
 import useAuth from '~/hooks/useAuth';
 import useCrewContext from '~/hooks/useCrewContext';
@@ -25,6 +25,7 @@ import useWebWorker from '~/hooks/useWebWorker';
 import useMappedAsteroidLots from '~/hooks/useMappedAsteroidLots';
 import constants from '~/lib/constants';
 import { getLotGeometryHeightMaps, getLotGeometryHeightMapResolution } from './helpers/LotGeometry';
+import useGetActivityConfig from '~/hooks/useGetActivityConfig';
 
 const { MAX_LOTS_RENDERED } = constants;
 
@@ -69,12 +70,15 @@ const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, co
   const queryClient = useQueryClient();
   const { registerWSHandler, unregisterWSHandler, wsReady } = useWebsocket();
   const { processInBackground } = useWebWorker();
+  const getActivityConfig = useGetActivityConfig();
 
   const textureQuality = useStore(s => s.graphics.textureQuality);
-  const { lotId: selectedLotId } = useStore(s => s.asteroids.lot || {});
+  const lotId = useStore(s => s.asteroids.lot);
   const dispatchLotsLoading = useStore(s => s.dispatchLotsLoading);
   const dispatchLotSelected = useStore(s => s.dispatchLotSelected);
   const dispatchSearchResults = useStore(s => s.dispatchLotsMappedSearchResults);
+
+  const selectedLotIndex = useMemo(() => Lot.toIndex(lotId), [lotId]);
 
   const [positionsReady, setPositionsReady] = useState(false);
   const [regionsByDistance, setRegionsByDistance] = useState([]);
@@ -211,9 +215,9 @@ const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, co
             }
           }, ({ regions }) => { // eslint-disable-line no-loop-func
             regions.forEach((region, i) => {
-              const lotId = batchStart + i + 1;
+              const lotIndex = batchStart + i + 1;
               if (!lotsByRegion.current[region]) lotsByRegion.current[region] = [];
-              lotsByRegion.current[region].push(lotId);
+              lotsByRegion.current[region].push(lotIndex);
             });
             batchesProcessed++;
             if (batchesProcessed === expectedBatches) {
@@ -236,35 +240,48 @@ const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, co
   useEffect(() => {
     if (lotDisplayMap && lotsByRegion.current?.length) {
       Object.keys(lotsByRegion.current).forEach((region) => {
-        resultsByRegion.current[region] = lotsByRegion.current[region].filter((lotId) => (lotDisplayMap[lotId] & isResultMask) > 0);
+        resultsByRegion.current[region] = lotsByRegion.current[region].filter((lotIndex) => (lotDisplayMap[lotIndex] & isResultMask) > 0);
       });
     }
   }, [lotDisplayMap, lastLotUpdate]);
 
-  const handleWSMessage = useCallback(({ type: eventType, body }) => {
-    // pass the event to useMappedAsteroidLots hook
+  const handleWSMessage = useCallback(({ type: eventType, body, ...props }) => {
+    console.log('asteroid handleWSMessage', {eventType, body, props});
+
+    // pass the event to useMappedAsteroidLots hook to update scene
     processEvent(eventType, body);
 
-    // // // // //
-    // TODO: vvv maybe remove this when updating more systematically from linked data
+    // invalidate cached values due to other crews' actions
+    // (since these will be missed in the main activities context invalidations)
+    // TODO: ...
+
 
     //
     // UPDATE CACHE FOR SPECIFIC LOT VALUES
     //
 
+    // (can skip those that are my own crew since those will be
+    //  handled by crew-room activities context)
+    // const activityConfig = getActivityConfig(activity);
+    // (activityConfig?.invalidations || []).forEach((queryKey) => {
+
+    // });
+
+    // TODO: ecs refactor (below)
+
     // try to minimize redundant updates by just listening to Dispatcher_* events
     if (eventType.match(/^Dispatcher_/)) {
       // myCrew will handle their own invalidations through the default ws room
-      const isMyCrew = crew?.i && body.linked.find(({ type, asset }) => type === 'Crew' && asset?.i === crew.i);
+      const isMyCrew = crew?.id && body.linked.find(({ type, asset }) => type === 'Crew' && asset?.id === crew.id);
       if (!isMyCrew) {
         // find any lot data on this asteroid... if it is complete and in my cache, replace my cache value
         const optimisticLots = body.linked.filter(({ type, asset }) => type === 'Lot' && asset?.asteroid === asteroidId);
         optimisticLots.forEach(({ asset: optimisticLot }) => {
-          const queryKey = ['lots', asteroidId, optimisticLot.i];
+          const queryKey = ['entity', Entity.IDS.LOT, optimisticLot.id];
           if (!!queryClient.getQueryData(queryKey)) {
             const needsBuilding = !!optimisticLot.building;
             optimisticLot.building = body.linked
-              .find(({ type, asset }) => type === optimisticLot.building?.type && asset?.i === optimisticLot.building?.i)
+              .find(({ type, asset }) => type === optimisticLot.building?.type && asset?.id === optimisticLot.building?.id)
               ?.asset;
             if (!needsBuilding || !!optimisticLot.building) {
               queryClient.setQueryData(queryKey, optimisticLot);
@@ -287,11 +304,16 @@ const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, co
         unregisterWSHandler(roomName);
 
         // since will not be listening to asteroid room when zoomed away, remove ['asteroidLots', asteroidId]
-        // and all ['lots', asteroidId, *] that are not occupied by me when I navigate away from the asteroid
+        // and all [ 'entity', Entity.IDS.LOT, * ] that are on the asteroid but not occupied by me
         queryClient.removeQueries({ queryKey: [ 'asteroidLots', asteroidId ] });
-        queryClient.getQueriesData(['lots', asteroidId])
-          .filter(([ queryKey, data ]) => data && data.occupier !== crew?.i)  // TODO: ecs refactor -- occupier?
-          .forEach(([ queryKey ]) => { queryClient.removeQueries({ queryKey }); });
+        queryClient.getQueriesData([ 'entity', Entity.IDS.LOT ]).forEach(([ queryKey, data ]) => {
+          const lotAsteroidId = Lot.toPosition(lotId)?.asteroidId;
+          if (asteroidId === lotAsteroidId) {
+            if (data && data.occupier !== crew?.id) { // TODO: ecs refactor -- occupier?
+              queryClient.removeQueries({ queryKey });
+            }
+          }
+        });
       }
     }
   }, [token, handleWSMessage, wsReady]);
@@ -543,11 +565,11 @@ const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, co
 
         // TODO (enhancement): on altitude change (where rotation has not changed), don't need to recalculate pip matrixes, etc
         //  (i.e. even when lotTally > visibleLotTally)... just would need to update result matrixes (to update scale)
-        lotSource[lotRegion].every((lotId) => {
+        lotSource[lotRegion].every((lotIndex) => {
           const hasPip = (pipsRendered + resultsRendered) < visibleLotTally;
-          const hasResult = (isResultMask & lotDisplayMap[lotId]) && (resultsRendered < visibleResultTally);
-          const hasStroke = (hasBuildingMask & lotDisplayMap[lotId]) && (strokesRendered < visibleStrokeTally);
-          const hasFill = lotSampledMap && lotSampledMap[lotId] && (fillsRendered < visibleFillTally);
+          const hasResult = (isResultMask & lotDisplayMap[lotIndex]) && (resultsRendered < visibleResultTally);
+          const hasStroke = (hasBuildingMask & lotDisplayMap[lotIndex]) && (strokesRendered < visibleStrokeTally);
+          const hasFill = lotSampledMap && lotSampledMap[lotIndex] && (fillsRendered < visibleFillTally);
           const hasMouseable = lotTally > visibleLotTally || !lotsInitialized.current;
 
           if (hasPip || hasResult || hasStroke || hasFill || hasMouseable) {
@@ -557,18 +579,18 @@ const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, co
             // > otherwise, only need to (re)build matrix on (re)initialization or if lot visibility is dynamic
             //   (note: building source and fill source changes will result in updated lastLotUpdate update)
             if (hasResult || lotTally > visibleLotTally || !lotsInitialized.current) {
-              const lotIndex = lotId - 1;
+              const lotZeroIndex = lotIndex - 1;
 
               dummy.position.set(
-                positions.current[lotIndex * 3 + 0],
-                positions.current[lotIndex * 3 + 1],
-                positions.current[lotIndex * 3 + 2]
+                positions.current[lotZeroIndex * 3 + 0],
+                positions.current[lotZeroIndex * 3 + 1],
+                positions.current[lotZeroIndex * 3 + 2]
               );
 
               dummy.lookAt(
-                orientations.current[lotIndex * 3 + 0],
-                orientations.current[lotIndex * 3 + 1],
-                orientations.current[lotIndex * 3 + 2]
+                orientations.current[lotZeroIndex * 3 + 0],
+                orientations.current[lotZeroIndex * 3 + 1],
+                orientations.current[lotZeroIndex * 3 + 2]
               );
 
               // update building matrix or pip matrix
@@ -621,7 +643,7 @@ const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, co
             // > strokes use result color (if result) else pip color (only need to be updated after initialization if dynamic)
             let lotColor;
             if (hasResult) {
-              lotColor = getColor(colorMap[colorIndexMask & lotDisplayMap[lotId]]);
+              lotColor = getColor(colorMap[colorIndexMask & lotDisplayMap[lotIndex]]);
               let testColor = new Color();
               try { resultMesh.current.getColorAt(resultsRendered, testColor); } catch {}
               if (!testColor.equals(lotColor)) {
@@ -727,49 +749,49 @@ const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, co
     updateVisibleLots();
   }, [!lotsReady, lastLotUpdate]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const highlightLot = useCallback((lotId) => {
+  const highlightLot = useCallback((lotIndex) => {
     highlighted.current = null;
-    // if a new lotId was passed to highlight, do it
-    if (lotId !== undefined && lotId !== selectedLotId) {
+    // if a new lotIndex was passed to highlight, do it
+    if (lotIndex !== undefined && lotIndex !== selectedLotIndex) {
       if (!positions.current) return;
-      const lotIndex = lotId - 1;
+      const lotZeroIndex = lotIndex - 1;
 
       mouseHoverMesh.current.position.set(
-        positions.current[lotIndex * 3 + 0],
-        positions.current[lotIndex * 3 + 1],
-        positions.current[lotIndex * 3 + 2]
+        positions.current[lotZeroIndex * 3 + 0],
+        positions.current[lotZeroIndex * 3 + 1],
+        positions.current[lotZeroIndex * 3 + 2]
       );
 
       const orientation = new Vector3(
-        orientations.current[lotIndex * 3 + 0],
-        orientations.current[lotIndex * 3 + 1],
-        orientations.current[lotIndex * 3 + 2]
+        orientations.current[lotZeroIndex * 3 + 0],
+        orientations.current[lotZeroIndex * 3 + 1],
+        orientations.current[lotZeroIndex * 3 + 2]
       );
 
       orientation.applyQuaternion(attachTo.quaternion);
       mouseHoverMesh.current.lookAt(orientation);
       mouseHoverMesh.current.material.opacity = 0.5;
-      highlighted.current = lotId;
+      highlighted.current = lotIndex;
     } else {
       mouseHoverMesh.current.material.opacity = 0;
     }
-  }, [attachTo.quaternion, selectedLotId]);
+  }, [attachTo.quaternion, selectedLotIndex]);
 
   const selectionAnimationTime = useRef(0);
   useEffect(() => {
-    if (selectionMesh.current && positions.current && positionsReady && selectedLotId) {
-      const lotIndex = selectedLotId - 1;
+    if (selectionMesh.current && positions.current && positionsReady && selectedLotIndex) {
+      const lotZeroIndex = selectedLotIndex - 1;
 
       selectionMesh.current.position.set(
-        positions.current[lotIndex * 3 + 0],
-        positions.current[lotIndex * 3 + 1],
-        positions.current[lotIndex * 3 + 2]
+        positions.current[lotZeroIndex * 3 + 0],
+        positions.current[lotZeroIndex * 3 + 1],
+        positions.current[lotZeroIndex * 3 + 2]
       );
 
       const orientation = new Vector3(
-        orientations.current[lotIndex * 3 + 0],
-        orientations.current[lotIndex * 3 + 1],
-        orientations.current[lotIndex * 3 + 2]
+        orientations.current[lotZeroIndex * 3 + 0],
+        orientations.current[lotZeroIndex * 3 + 1],
+        orientations.current[lotZeroIndex * 3 + 2]
       );
       orientation.applyQuaternion(attachTo.quaternion);
       selectionMesh.current.lookAt(orientation);
@@ -780,7 +802,7 @@ const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, co
     } else {
       selectionMesh.current.material.opacity = 0;
     }
-  }, [attachTo.quaternion, selectedLotId, positionsReady]);
+  }, [attachTo.quaternion, selectedLotIndex, positionsReady]);
 
   // when camera angle changes, sort all regions by closest, then display
   // up to max lots (ordered by region proximity)
@@ -807,7 +829,7 @@ const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, co
 
   useEffect(() => {
     if (!lastClick) return;
-    dispatchLotSelected(asteroidId, highlighted.current);
+    dispatchLotSelected(Lot.toId(asteroidId, highlighted.current));
   }, [lastClick]);
 
 
@@ -818,7 +840,7 @@ const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, co
     if (!lotTally) return;
 
     // pulse the size of the selection reticule
-    if (selectionMesh.current && positions.current && selectedLotId) {
+    if (selectionMesh.current && positions.current && selectedLotIndex) {
       selectionMesh.current.scale.x = 1 + 0.1 * Math.sin(7.5 * selectionAnimationTime.current);
       selectionMesh.current.scale.y = selectionMesh.current.scale.x;
     }

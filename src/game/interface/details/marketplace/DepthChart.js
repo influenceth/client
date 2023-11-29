@@ -495,10 +495,10 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
   const createOrder = useCallback(() => {
     onSetAction('MARKETPLACE_ORDER', {
       asteroidId: lot?.asteroid,
-      lotId: lot?.i,
+      lotId: lot?.id,
       mode,
       type,
-      resourceId: resource?.i,
+      resourceId: resource?.id,
       preselect: { limitPrice, quantity }
     });
   }, [limitPrice, lot, mode, quantity, resource, type]);

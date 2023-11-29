@@ -42,16 +42,16 @@ const LandShip = ({ asteroid, lot, manager, ship, stage, ...props }) => {
   const [destinationSelectorOpen, setDestinationSelectorOpen] = useState();
   
   const { crew, crewmateMap } = useCrewContext();
-  const { data: landingDestinationLot } = useLot(asteroid?.i, currentLanding?.destinationLotId);
+  const { data: landingDestinationLot } = useLot(currentLanding?.destinationLotId);
   
   const [propulsionType, setPropulsionType] = useState('propulsive');
   const [tab, setTab] = useState(0);
 
   const crewmates = currentLanding?._crewmates || (crew?._crewmates || []).map((i) => crewmateMap[i]);
   const captain = crewmates[0];
-  const crewTravelBonus = Crew.getAbilityBonus(Crewmate.ABILITY_IDS.SURFACE_TRANSPORT_SPEED, crewmates);
+  const crewTravelBonus = Crew.getAbilityBonus(Crewmate.ABILITY_IDS.HOPPER_TRANSPORT_TIME, crewmates);
   const landingBonus = 0;/*useMemo(() => {
-    const bonus = Crew.getAbilityBonus(Crewmate.ABILITY_IDS.EXTRACTION_RATE, crewmates);
+    const bonus = Crew.getAbilityBonus(Crewmate.ABILITY_IDS.EXTRACTION_TIME, crewmates);
     const asteroidBonus = Asteroid.getBonusByResource(asteroid?.bonuses, selectedCoreSample?.resourceId);
     if (asteroidBonus.totalBonus !== 1) {
       bonus.totalBonus *= asteroidBonus.totalBonus;
@@ -66,7 +66,7 @@ const LandShip = ({ asteroid, lot, manager, ship, stage, ...props }) => {
 
   // useEffect(() => {
   //   let defaultSelection;
-  //   if (!currentExtractionAction && !selectedCoreSample) {
+  //   if (!currentExtraction && !selectedCoreSample) {
   //     if (props.preselect) {
   //       defaultSelection = usableSamples.find((s) => s.resourceId === props.preselect.resourceId && s.sampleId === props.preselect.sampleId);
   //     } else if (usableSamples.length === 1) {
@@ -76,23 +76,23 @@ const LandShip = ({ asteroid, lot, manager, ship, stage, ...props }) => {
   //       selectCoreSample(defaultSelection);
   //     }
   //   }
-  // }, [!currentExtractionAction, !selectedCoreSample, usableSamples]);
+  // }, [!currentExtraction, !selectedCoreSample, usableSamples]);
 
-  // // handle "currentExtractionAction" state
+  // // handle "currentExtraction" state
   // useEffect(() => {
-  //   if (currentExtractionAction) {
+  //   if (currentExtraction) {
   //     if (lot?.coreSamples) {
-  //       const currentSample = lot.coreSamples.find((c) => c.resourceId === currentExtractionAction.resourceId && c.sampleId === currentExtractionAction.sampleId);
+  //       const currentSample = lot.coreSamples.find((c) => c.resourceId === currentExtraction.resourceId && c.sampleId === currentExtraction.sampleId);
   //       if (currentSample) {
   //         setSelectedCoreSample({
   //           ...currentSample,
-  //           remainingYield: currentSample.remainingYield + (currentExtractionAction.isCoreSampleUpdated ? currentExtractionAction.yield : 0)
+  //           remainingYield: currentSample.remainingYield + (currentExtraction.isCoreSampleUpdated ? currentExtraction.yield : 0)
   //         });
-  //         setAmount(currentExtractionAction.yield);
+  //         setAmount(currentExtraction.yield);
   //       }
   //     }
   //   }
-  // }, [currentExtractionAction, lot?.coreSamples]);
+  // }, [currentExtraction, lot?.coreSamples]);
 
   // useEffect(() => {
   //   if (currentExtractionDestinationLot) {
@@ -102,7 +102,7 @@ const LandShip = ({ asteroid, lot, manager, ship, stage, ...props }) => {
 
   // const resource = useMemo(() => {
   //   if (!selectedCoreSample) return null;
-  //   return resources[selectedCoreSample.resourceId];
+  //   return resources[selectedCoreSample.resource];
   // }, [selectedCoreSample]);
 
   // const extractionTime = useMemo(() => {
@@ -306,7 +306,7 @@ const LandShip = ({ asteroid, lot, manager, ship, stage, ...props }) => {
 const Wrapper = (props) => {
   const { asteroid, lot, isLoading } = useAsteroidAndLot(props);
   // TODO: ...
-  // const extractionManager = useExtractionManager(asteroid?.i, lot?.i);
+  // const extractionManager = useExtractionManager(lot?.id);
   // const { actionStage } = extractionManager;
   const manager = {};
   const actionStage = actionStages.NOT_STARTED;

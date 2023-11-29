@@ -1,19 +1,33 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useHistory } from 'react-router-dom';
-import styled from 'styled-components';
+import styled, { keyframes } from 'styled-components';
 
 import CollapsibleSection from '~/components/CollapsibleSection';
 import CrewCardFramed from '~/components/CrewCardFramed';
 import CrewLocationLabel from '~/components/CrewLocationLabel';
-import FoodStatus from '~/components/FoodStatus';
-import { CrewIcon, CrewLocationIcon, IdleIcon, WarningOutlineIcon } from '~/components/Icons';
+import LiveFoodStatus from '~/components/LiveFoodStatus';
+import { BusyIcon, CloseIcon, CrewIcon, CrewLocationIcon, IdleIcon, WarningOutlineIcon } from '~/components/Icons';
+import LiveTimer from '~/components/LiveTimer';
 import useAuth from '~/hooks/useAuth';
 import useCrewContext from '~/hooks/useCrewContext';
 import useHydratedLocation from '~/hooks/useHydratedLocation';
+import useInterval from '~/hooks/useInterval';
 import formatters from '~/lib/formatters';
 import theme from '~/theme';
 
 const menuWidth = 450;
+
+const opacityKeyframes = keyframes`
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+  100% {
+    opacity: 1;
+  }
+`;
 
 const Wrapper = styled.div`
   pointer-events: none;
@@ -25,14 +39,57 @@ const IconWrapper = styled.span`
   line-height: 0;
 `;
 
+const TimerWrapper = styled.span.attrs((p) => {
+  let width = 0;
+  if (p.len === 7) width = 66;
+  if (p.len === 6) width = 61;
+  if (p.len === 5) width = 56;
+  if (p.len === 4) width = 51;
+  if (p.len === 3) width = 46;
+  if (p.len === 2) width = 41;
+  return width ? { style: { width: `${width}px` } } : {};
+})`
+  display: inline-block;
+  padding-left: 5px;
+  text-align: right;
+  white-space: nowrap;
+`;
+
 const StatusContainer = styled.div`
   align-items: center;
+  color: white;
   display: flex;
   flex-direction: row;
+  font-size: 16px;
   justify-content: flex-end;
+  & > label {
+    color: #BBB;
+    font-size: 16px;
+    text-transform: uppercase;
+  }
   & > ${IconWrapper} {
-    margin-left: 4px;
+    align-items: center;
+    background: rgba(90, 90, 90, 0.75);
+    border-radius: 3px;
+    display: flex;
+    height: 24px;
+    justify-content: center;
+    margin-left: 8px;
     margin-right: 6px;
+    width: 24px;
+  }
+`;
+const BusyStatusContainer = styled(StatusContainer)`
+  & > label {
+    color: ${p => p.theme.colors.main};
+  }
+  & > ${IconWrapper} {
+    background: rgba(${p => p.theme.colors.mainRGB}, 0.4);
+    color: ${p => p.theme.colors.main};
+    & > svg {
+      animation: ${opacityKeyframes} 2000ms infinite;
+      font-size: 17px;
+    }
   }
 `;
 
@@ -100,16 +157,6 @@ const BaseLocation = styled.div`
   }
 `;
 
-const Food = styled.div`
-  align-items: center;
-  color: ${p => p.isRationing ? p.theme.colors.red : p.theme.colors.green};
-  display: flex;
-  span {
-    font-size: 15px;
-    margin: 0 6px;
-  }
-`;
-
 const Crewmates = styled.div`
   display: flex;
   flex-direction: row;
@@ -145,6 +192,20 @@ const AvatarMenu = () => {
 
   const onClick = useCallback(() => history.push('/crew'), []);
 
+  const [crewIsBusy, setCrewIsBusy] = useState(false);
+  useEffect(() => {
+    const readyAtMS = (crew?.Crew?.readyAt || 0) * 1e3;
+    if (readyAtMS > Date.now()) {
+      setCrewIsBusy(true);
+      const to = setTimeout(() => {
+        setCrewIsBusy(false);
+      }, 1000 + (readyAtMS - Date.now()))
+      return () => { if (to) { clearTimeout(to) } };
+    } else {
+      setCrewIsBusy(false);
+    }
+  }, [crew?.Crew?.readyAt]);
+
   if (crewIsLoading) return null;
   return (
     <Wrapper>
@@ -155,10 +216,21 @@ const AvatarMenu = () => {
           <>
             <IconWrapper style={{ color: theme.colors.main }}><CrewIcon /></IconWrapper>
             <label>{formatters.crewName(crew)}</label>
-            <StatusContainer>
-              Idle
-              <IconWrapper><IdleIcon /></IconWrapper>
-            </StatusContainer>
+            {crewIsBusy && (
+              <BusyStatusContainer>
+                <label>Busy</label>
+                <LiveTimer target={crew.Crew.readyAt} maxPrecision={2}>
+                  {(formattedTime) => <TimerWrapper len={formattedTime.length}>{formattedTime}</TimerWrapper>}
+                </LiveTimer>
+                <IconWrapper><BusyIcon /></IconWrapper>
+              </BusyStatusContainer>
+            )}
+            {!crewIsBusy && (
+              <StatusContainer>
+                <label>Idle</label> 
+                <IconWrapper><IdleIcon /></IconWrapper>
+              </StatusContainer>
+            )}
           </>
         )}>
         <CrewWrapper>
@@ -178,8 +250,7 @@ const AvatarMenu = () => {
               </BaseLocation>
 
               {/* TODO: potentially link directly to add rations dialog instead */}
-              {/* TODO: implement lastFed or whatever */}
-              <FoodStatus percentage={100} />
+              <LiveFoodStatus crew={crew} />
             </TitleBar>
 
             <Crewmates>

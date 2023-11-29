@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import styled from 'styled-components';
+import { Lot } from '@influenceth/sdk';
 
 import Button from '~/components/ButtonAlt';
 import ClipCorner from '~/components/ClipCorner';
@@ -164,7 +165,7 @@ const AsteroidResourcePrices = ({ asteroid, resource }) => {
   const [sort, setSort] = useState(['centerPrice', 'asc']);
   const [sortField, sortDirection] = sort;
 
-  const { data: selectedLot } = useLot(asteroid.i, selected);
+  const { data: selectedLot } = useLot(selected);
   const { data: marketplaceOwner } = useCrew(selectedLot?.building?.Control?.controller?.id);
   const selectedSupply = useMemo(() => {
     return resourceMarketplaces.find((m) => m.lotId === selected)?.supply || 0;
@@ -212,8 +213,8 @@ const AsteroidResourcePrices = ({ asteroid, resource }) => {
         sortField: 'marketplaceName',
         selector: row => (
           <>
-            <LocationLink asteroidId={asteroid.i} lotId={row.lotId} zoomToLot />
-            <span>{row.marketplaceName || `Marketplace at Lot #${row.lotId}`}</span>
+            <LocationLink asteroidId={asteroid.id} lotId={row.lotId} zoomToLot />
+            <span>{row.marketplaceName || `Marketplace @ ${formatters.lotName(Lot.toIndex(row.lotId))}`}</span>
           </>
         ),
       },
@@ -221,7 +222,7 @@ const AsteroidResourcePrices = ({ asteroid, resource }) => {
         key: 'lotId',
         label: 'Lot ID',
         sortField: 'lotId',
-        selector: row => row.lotId.toLocaleString(),
+        selector: row => Lot.toIndex(row.lotId).toLocaleString(),
       },
       {
         key: 'supply',
@@ -267,7 +268,7 @@ const AsteroidResourcePrices = ({ asteroid, resource }) => {
   }, [selected]);
 
   const onViewMarketplace = useCallback(() => {
-    history.push(`/marketplace/${asteroid.i}/${selected}/${resource.i}?back=all`);
+    history.push(`/marketplace/${asteroid.id}/${selected}/${resource.i}?back=all`);
   }, [asteroid, resource, selected]);
 
   const [ totalSupply, totalDemand, medianPrice ] = useMemo(() => {
@@ -330,7 +331,7 @@ const AsteroidResourcePrices = ({ asteroid, resource }) => {
               </MarketplaceImage>
             </div>
             <div>
-              <label>{selectedLot.building?.Name?.name || `Marketplace @ ${selectedLot.i.toLocaleString()}`}</label>
+              <label>{selectedLot.building?.Name?.name || `Marketplace @ ${selectedLot.id.toLocaleString()}`}</label>
               <span>{formatResourceAmount(selectedSupply, resource.i)} available</span>
             </div>
           </SelectedMarketplace>

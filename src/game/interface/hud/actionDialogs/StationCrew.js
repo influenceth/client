@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import styled from 'styled-components';
-import { Asteroid, Building, Crew, Crewmate, Entity, Ship, Station } from '@influenceth/sdk';
+import { Asteroid, Building, Crew, Crewmate, Entity, Lot, Ship, Station } from '@influenceth/sdk';
 
 import travelBackground from '~/assets/images/modal_headers/Travel.png';
 import { StationCrewIcon, StationPassengersIcon } from '~/components/Icons';
@@ -62,14 +62,14 @@ const StationCrew = ({ asteroid, lot, destinations, manager, ship, stage, ...pro
   const destinationShip = destinations[0]?.type === 'ship' ? destinations[0].data : null;
   
   const { data: ownerCrew } = useCrew((destinationShip || destinationLot)?.Control.controller.id);
-  const crewIsOwner = ownerCrew?.id === crew?.i;
+  const crewIsOwner = ownerCrew?.id === crew?.id;
 
   const crewmates = currentStationing?._crewmates || (crew?._crewmates || []).map((i) => crewmateMap[i]);
   const captain = crewmates[0];
-  const crewTravelBonus = Crew.getAbilityBonus(Crewmate.ABILITY_IDS.SURFACE_TRANSPORT_SPEED, crewmates);
+  const crewTravelBonus = Crew.getAbilityBonus(Crewmate.ABILITY_IDS.HOPPER_TRANSPORT_TIME, crewmates);
   const launchBonus = 0;
 
-  const transportDistance = Asteroid.getLotDistance(asteroid?.i, lot?.i, destinationLot?.i || destinationShip?.lotId) || 0;
+  const transportDistance = Asteroid.getLotDistance(asteroid?.id, Lot.toIndex(lot?.id), Lot.toIndex(destinationLot?.id || destinationShip?.lotId)) || 0;
 
   const stats = useMemo(() => ([
     {
@@ -95,7 +95,6 @@ const StationCrew = ({ asteroid, lot, destinations, manager, ship, stage, ...pro
     // (close on status change from)
     if (['READY', 'READY_TO_FINISH', 'FINISHING'].includes(lastStatus.current)) {
       if (stationingStatus !== lastStatus.current) {
-        console.log('on Close');
         props.onClose();
       }
     }
@@ -238,21 +237,21 @@ const StationCrew = ({ asteroid, lot, destinations, manager, ship, stage, ...pro
 const Wrapper = (props) => {
   const { crew } = useCrewContext();
   const { data: asteroid, isLoading: asteroidIsLoading } = useAsteroid(crew?._location?.asteroidId);
-  const { data: lot, isLoading: lotIsLoading } = useLot(crew?._location?.asteroidId, crew?._location?.lotId);
+  const { data: lot, isLoading: lotIsLoading } = useLot(crew?._location?.lotId);
   const { data: ship, isLoading: shipIsLoading } = useShip(crew?._location?.shipId);
   
   const asteroidId = useStore(s => s.asteroids.origin);
-  const { lotId } = useStore(s => s.asteroids.lot || {});
+  const lotId = useStore(s => s.asteroids.lot);
   const zoomScene = useStore(s => s.asteroids.zoomScene);
   
   const { data: ships, isLoading: shipsLoading } = useAsteroidShips(asteroidId);  // TODO: do we need this?
-  const { data: destinationLot, isLoading: destLotIsLoading } = useLot(asteroidId, lotId);
+  const { data: destinationLot, isLoading: destLotIsLoading } = useLot(lotId);
   const { data: destinationShip, isLoading: destShipIsLoading } = useShip(zoomScene?.type === 'SHIP' ? zoomScene.shipId : undefined);
 
   // TODO: if no station on destination ship or lot, then close
 
   // TODO: ...
-  // const extractionManager = useExtractionManager(asteroid?.i, lot?.i);
+  // const extractionManager = useExtractionManager(lot?.id);
   // const { actionStage } = extractionManager;
   const manager = {};
   const actionStage = actionStages.NOT_STARTED;
@@ -275,7 +274,7 @@ const Wrapper = (props) => {
           s.Station
           && s.Ship.status === Ship.STATUSES.AVAILABLE
           && s.Ship.operationMode === Ship.MODES.NORMAL
-          && !!props.guests === (s.Control.controller.id !== crew?.i))
+          && !!props.guests === (s.Control.controller.id !== crew?.id))
         .map((s) => ({ type: 'ship', data: s }));
   
       // if lot && !ships, if habitable, destinations.length = 1, destination is hab
@@ -293,7 +292,7 @@ const Wrapper = (props) => {
           && ship?.Location?.location?.label === Entity.IDS.ASTEROID
           && ship?.Location?.location?.id === asteroidId
           && ship?.Ship?.status !== Ship.STATUS.IN_FLIGHT
-          && !!props.guests === (s.Control.controller.id !== crew?.i))
+          && !!props.guests === (s.Control.controller.id !== crew?.id))
         .map((s) => ({ type: 'ship', data: s }));
     }
 
