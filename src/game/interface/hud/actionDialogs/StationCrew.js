@@ -95,7 +95,6 @@ const StationCrew = ({ asteroid, lot, destinations, manager, ship, stage, ...pro
     // (close on status change from)
     if (['READY', 'READY_TO_FINISH', 'FINISHING'].includes(lastStatus.current)) {
       if (stationingStatus !== lastStatus.current) {
-        console.log('on Close');
         props.onClose();
       }
     }

@@ -69,13 +69,6 @@ const ImproveCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }
   useEffect(() => {
     if (currentSamplingAction?.sampleId) {
       setSampleId(currentSamplingAction.sampleId);
-      if (originEntity) {
-        const { lotIndex } = locationsArrToObj(originEntity.Location.locations || []);
-        setDrillSource({
-          lotIndex,
-          slot: currentSamplingAction.origin_slot
-        });
-      }
     } else {
       let defaultSelection;
       if (props.preselect) {
@@ -86,6 +79,14 @@ const ImproveCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }
       if (defaultSelection) {
         setSampleId(defaultSelection?.id);
       }
+    }
+
+    if (originEntity) {
+      const { lotIndex } = locationsArrToObj(originEntity.Location.locations || []);
+      setDrillSource({
+        lotIndex,
+        slot: currentSamplingAction?.originSlot || null
+      });
     }
   }, [currentSamplingAction, originEntity, improvableSamples, props.preselect]);
 
@@ -291,7 +292,7 @@ const ImproveCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }
       </ActionDialogBody>
 
       <ActionDialogFooter
-        disabled={!selectedSample || !drillSource}
+        disabled={stage === actionStage.NOT_STARTED && (!selectedSample || !drillSource)}
         goLabel="Optimize"
         onGo={() => startImproving(selectedSample?.id, drillSource)}
         finalizeLabel="Analyze"

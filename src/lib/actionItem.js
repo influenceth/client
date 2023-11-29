@@ -229,7 +229,7 @@ const formatAsTx = (item) => {
     case 'SampleDepositFinish': {
       const isImprovement = !item.meta?.isNew;
       formatted.icon = isImprovement ? <ImproveCoreSampleIcon /> : <NewCoreSampleIcon />;
-      formatted.label = `Core Analysis`;
+      formatted.label = `${isImprovement ? 'Optimized ' : ''}Core Analysis`;
       // formatted.sampleId = item.vars.deposit?.id; // TODO: this seems deprecated?
       formatted.asteroidId = Lot.toPosition(item.meta?.lotId)?.asteroidId;
       formatted.lotId = item.meta?.lotId;

@@ -200,8 +200,8 @@ const LotResources = () => {
       if (selectedSample?.id) {
         params.improveSample = { ...selectedSample };
         params._disabled = !(selectedSample?.Deposit?.status === Deposit.STATUSES.SAMPLED && selectedSample?.Deposit?.initialYield === selectedSample?.Deposit?.remainingYield);
-      } else if (selectedResource?.id) {
-        params.overrideResourceId = Number(selectedResource?.id);
+      } else if (selectedResource?.i) {
+        params.overrideResourceId = Number(selectedResource?.i);
       }
     }
     return params;

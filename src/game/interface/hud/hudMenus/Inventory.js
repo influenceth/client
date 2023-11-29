@@ -126,6 +126,7 @@ const Controls = styled.div`
 `;
 
 const InventoryItems = styled.div`
+  align-content: flex-start;
   display: grid;
   flex: 1;
   grid-gap: 4px;

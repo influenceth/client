@@ -36,7 +36,6 @@ export function ActivitiesProvider({ children }) {
   const pendingTimeout = useRef();
 
   const handleActivities = useCallback((newActivities, skipInvalidations) => {
-    // return;
 
     // refresh crew's readyAt
     let shouldRefreshReadyAt = false;

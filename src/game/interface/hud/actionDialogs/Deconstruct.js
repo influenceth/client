@@ -137,10 +137,10 @@ const Wrapper = (props) => {
   const { stageByActivity } = constructionManager;
 
   useEffect(() => {
-    console.log('props', props, lot);
+    // console.log('deconstruct props', props, lot);
     if (!asteroid || !lot?.building) {
       if (!isLoading) {
-        // if (props.onClose) props.onClose();
+        if (props.onClose) props.onClose();
       }
     }
   }, [asteroid, lot, isLoading]);
@@ -149,7 +149,6 @@ const Wrapper = (props) => {
   useEffect(() => {
     if (!['OPERATIONAL', 'DECONSTRUCTING'].includes(constructionManager.constructionStatus)) {
       const siteInventory = (lot?.building?.Inventories || []).find((i) => Inventory.TYPES[i.inventoryType].category === Inventory.CATEGORIES.SITE);
-      console.log({ 'lot?.building': lot, siteInventory })
       if (siteInventory?.status === Inventory.STATUSES.AVAILABLE) {
         if (siteInventory?.mass > 0) { // (if materials recovered)
           props.onSetAction('SURFACE_TRANSFER');
