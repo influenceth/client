@@ -54,7 +54,7 @@ const useCoreSampleManager = (lotId) => {
         current.startTime = actionItem.event.timestamp;
       }
       current.finishTime = activeSample.Deposit.finishTime;
-      current.isNew = !activeSample.Deposit.improving;
+      current.isNew = !activeSample.Deposit.initialYield;
       current.owner = activeSample.Control.controller.id;
       current.resourceId = activeSample.Deposit.resource;
       current.sampleId = activeSample.id;
@@ -114,13 +114,14 @@ const useCoreSampleManager = (lotId) => {
   // manage the "completed" stage explicitly
   useEffect(() => {
     if (currentSamplingAction && actionStage === actionStages.COMPLETING) {
-      if (completingSample?.resourceId !== currentSamplingAction.resourceId || completingSample?.sampleId !== currentSamplingAction.sampleId) {
+      if (completingSample?.sampleId !== currentSamplingAction.sampleId) {
         setCompletingSample(currentSamplingAction);
       }
     }
-  }, [currentSamplingAction, actionStage]);
+  }, [currentSamplingAction, actionStage, completingSample]);
 
   const startSampling = useCallback((resourceId, coreDrillSource) => {
+    // console.log('coreDrillSource', coreDrillSource); return;
     execute('SampleDepositStart', {
       resource: resourceId,
       origin: { id: coreDrillSource.id, label: coreDrillSource.label },

@@ -188,14 +188,13 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
   }, [asteroid?.id, lot?.id, destinationLot?.id, crewTravelBonus]);
 
   const [crewTimeRequirement, taskTimeRequirement] = useMemo(() => {
-    if (!asteroid?.id || !lot?.id || !destinationLot?.id) return [];
+    if (!extractionTime || !crewTravelTime || !transportTime) return [];
     const oneWayCrewTravelTime = crewTravelTime / 2;
-    const yieldTravelTime = Asteroid.getLotTravelTime(asteroid.id, Lot.toIndex(lot?.id), Lot.toIndex(destinationLot?.id), crewTravelBonus.totalBonus, crewTravelBonus.timeMultiplier);
     return [
       crewTravelTime,
-      oneWayCrewTravelTime + extractionTime + Math.max(oneWayCrewTravelTime, yieldTravelTime)
+      oneWayCrewTravelTime + extractionTime + transportTime
     ];
-  }, [asteroid?.id, crew?._location?.lotId, lot?.id, extractionTime, crewTravelTime]);
+  }, [extractionTime, crewTravelTime, transportTime]);
 
 
   const stats = useMemo(() => ([

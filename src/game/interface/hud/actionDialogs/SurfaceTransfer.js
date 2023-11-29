@@ -390,6 +390,8 @@ const SurfaceTransfer = ({
 const Wrapper = (props) => {
   const { asteroid, lot, isLoading } = useAsteroidAndLot(props);
 
+  // console.log('SurfaceTransfer lot', JSON.stringify(lot));
+
   // entrypoints w/ props:
   //  - actionitem (deliveryId)
   //  - specific entity (entity, selected inventory)
