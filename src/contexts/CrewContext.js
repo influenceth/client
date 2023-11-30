@@ -116,6 +116,8 @@ export function CrewProvider({ children }) {
         return prevRawCrews.map((c) => {
           if (c.id === updatedCrew.id) {
             c.Crew.readyAt = updatedCrew.Crew.readyAt;
+            // TODO: flesh this out! setting to a Jan 1 2025 as a flag to self for now
+            if (updatedCrew.Crew.actionType) c.Crew.readyAt = 1735689600;
           }
           return c;
         });

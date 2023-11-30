@@ -137,7 +137,6 @@ const Wrapper = (props) => {
   const { stageByActivity } = constructionManager;
 
   useEffect(() => {
-    // console.log('deconstruct props', props, lot);
     if (!asteroid || !lot?.building) {
       if (!isLoading) {
         if (props.onClose) props.onClose();
