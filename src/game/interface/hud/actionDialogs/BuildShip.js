@@ -282,6 +282,7 @@ const BuildShip = ({ asteroid, lot, manager, stage, ...props }) => {
         goLabel="Launch"
         onGo={onLaunch}
         stage={stage}
+        waitForCrewReady
         wide
         {...props} />
 

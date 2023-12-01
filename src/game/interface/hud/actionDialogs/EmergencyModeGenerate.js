@@ -193,6 +193,7 @@ const EmergencyModeGenerate = ({ asteroid, lot, manager, ship, stage, ...props }
 
       </ActionDialogBody>
 
+      {/* TODO: add waitForCrewReady? */}
       <ActionDialogFooter
         disabled={false/* TODO: no permission */}
         goLabel="Generate"

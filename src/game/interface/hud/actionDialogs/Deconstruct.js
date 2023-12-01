@@ -125,6 +125,7 @@ const Deconstruct = ({ asteroid, lot, constructionManager, stage, ...props }) =>
         goLabel="Deconstruct"
         onGo={deconstruct}
         stage={stage}
+        waitForCrewReady
         {...props} />
     </>
   );

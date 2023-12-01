@@ -359,6 +359,7 @@ const SurfaceTransfer = ({
         onFinalize={onFinishDelivery}
         onGo={onStartDelivery}
         stage={stage}
+        waitForCrewReady
         {...props} />
 
       {stage === actionStage.NOT_STARTED && (

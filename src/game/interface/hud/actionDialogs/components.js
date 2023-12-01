@@ -3526,7 +3526,19 @@ export const ActionDialogStats = ({ stage, stats, wide }) => {
   );
 };
 
-export const ActionDialogFooter = ({ buttonsLoading, disabled, finalizeLabel, goLabel, onClose, onFinalize, onGo, stage, wide }) => {
+const CrewBusyButton = ({ crew }) => {
+  return (
+    <Button
+      isTransaction
+      disabled={nativeBool(true)}
+      loading={reactBool(true)}>
+      Crew Busy
+    </Button>
+  );
+};
+
+export const ActionDialogFooter = ({ buttonsLoading, disabled, finalizeLabel, goLabel, onClose, onFinalize, onGo, stage, waitForCrewReady, wide }) => {
+  const { crew } = useCrewContext();
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
 
   // TODO: connect notifications to top-level state
@@ -3555,11 +3567,16 @@ export const ActionDialogFooter = ({ buttonsLoading, disabled, finalizeLabel, go
               <Button
                 loading={reactBool(buttonsLoading)}
                 onClick={onClose}>Cancel</Button>
-              <Button
-                isTransaction
-                disabled={nativeBool(disabled)}
-                loading={reactBool(buttonsLoading)}
-                onClick={onGo}>{goLabel}</Button>
+              {waitForCrewReady && !crew?._ready
+                ? <CrewBusyButton crew={crew} />
+                : (
+                  <Button
+                    isTransaction
+                    disabled={nativeBool(disabled)}
+                    loading={reactBool(buttonsLoading)}
+                    onClick={onGo}>{goLabel}</Button>
+                )
+              }
             </>
           )
           : (

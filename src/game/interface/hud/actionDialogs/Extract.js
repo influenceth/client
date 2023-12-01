@@ -412,6 +412,7 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
         finalizeLabel="Complete"
         onFinalize={finishExtraction}
         stage={stage}
+        waitForCrewReady
         {...props} />
 
       {stage === actionStage.NOT_STARTED && (

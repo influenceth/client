@@ -229,6 +229,7 @@ const StationCrew = ({ asteroid, lot, destinations, manager, ship, stage, ...pro
         goLabel="Station"
         onGo={onStation}
         stage={stage}
+        waitForCrewReady
         {...props} />
     </>
   );
