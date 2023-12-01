@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { Asteroid, Lot, Product } from '@influenceth/sdk';
 
 import { NewCoreSampleIcon, ImproveCoreSampleIcon } from '~/components/Icons';
@@ -14,7 +14,7 @@ const labelDict = {
   FINISHING: 'Analyzing...'
 };
 
-const NewCoreSample = ({ asteroid, lot, onSetAction, overrideResourceId, improveSample, _disabled }) => {
+const NewCoreSample = ({ asteroid, crew, lot, onSetAction, overrideResourceId, improveSample, _disabled }) => {
   const defaultResourceId = useStore(s => s.asteroids.resourceMap?.active && s.asteroids.resourceMap?.selected);
   const { currentSamplingAction: actualCurrentSample, samplingStatus: actualSamplingStatus } = useCoreSampleManager(lot?.id);
 
@@ -35,7 +35,7 @@ const NewCoreSample = ({ asteroid, lot, onSetAction, overrideResourceId, improve
 
   let label = labelDict[samplingStatus];
   let attention = undefined;
-  let disabled = _disabled || undefined;
+  let disabledReason = (samplingStatus === 'READY' && !crew?._ready) ? 'crew is busy' : null;
   let loading = undefined;
 
   // if there is a current sample ongoing
@@ -76,9 +76,10 @@ const NewCoreSample = ({ asteroid, lot, onSetAction, overrideResourceId, improve
   return (
     <ActionButton
       label={label}
+      labelAddendum={disabledReason}
       flags={{
         attention: attention || undefined,
-        disabled,
+        disabled: _disabled || disabledReason || undefined,
         loading: loading || undefined,
         finishTime: currentSamplingAction?.finishTime
       }}

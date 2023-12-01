@@ -197,7 +197,7 @@ const Refine = ({ asteroid, lot, manager, stage, ...props }) => {
 
           <LotInputBlock
             title="Input Inventory"
-            titleDetails={<TransferDistanceDetails distance={8} />}
+            titleDetails={<TransferDistanceDetails distance={8} crewTravelBonus={crewTravelBonus} />}
             lot={lot}
             disabled={stage !== actionStages.NOT_STARTED}
             style={{ width: '33.3%' }}
@@ -227,7 +227,7 @@ const Refine = ({ asteroid, lot, manager, stage, ...props }) => {
 
           <LotInputBlock
             title="Output Inventory"
-            titleDetails={<TransferDistanceDetails distance={19} />}
+            titleDetails={<TransferDistanceDetails distance={19} crewTravelBonus={crewTravelBonus} />}
             lot={lot}
             disabled={stage !== actionStages.NOT_STARTED}
             style={{ width: '33.3%' }}

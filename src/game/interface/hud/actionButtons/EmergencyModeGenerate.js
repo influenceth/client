@@ -16,7 +16,7 @@ const EmergencyModeGenerate = ({ asteroid, lot, onSetAction }) => {
       label="Generate Emergency Propellant"
       flags={{
         attention: true,  // TODO: only if < 10% propellant
-        disabled: false, // TODO: ... crew not on asteroid? ship permissions?
+        disabled: false, // TODO: ... crew not on asteroid? ship permissions? crew busy?
         loading: false, // TODO: ...
       }}
       icon={<EmergencyModeGenerateIcon />}

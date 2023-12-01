@@ -204,7 +204,7 @@ const BuildShip = ({ asteroid, lot, manager, stage, ...props }) => {
             <LotInputBlock
               lot={lot}
               title="Input Inventory"
-              titleDetails={<TransferDistanceDetails distance={8} />}
+              titleDetails={<TransferDistanceDetails distance={8} crewTravelBonus={crewTravelBonus} />}
               disabled={stage !== actionStages.NOT_STARTED}
               style={{ marginBottom: 20, width: '100%' }}
             />
@@ -212,7 +212,7 @@ const BuildShip = ({ asteroid, lot, manager, stage, ...props }) => {
             <LotInputBlock
               lot={lot}
               title="Output Inventory"
-              titleDetails={<TransferDistanceDetails distance={19} />}
+              titleDetails={<TransferDistanceDetails distance={19} crewTravelBonus={crewTravelBonus} />}
               disabled={stage !== actionStages.NOT_STARTED}
               style={{ width: '100%' }}
             />

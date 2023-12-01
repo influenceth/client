@@ -18,7 +18,8 @@ const PurchaseAsteroid = ({ asteroid, _disabled }) => {
 
   return (
     <ActionButton
-      label={`Purchase Asteroid${saleIsActive ? '' : ' (sale is currently closed)'}`}
+      label={`Purchase Asteroid`}
+      labelAddendum={saleIsActive ? null : 'sale is currently closed'}
       flags={{
         disabled: _disabled || !saleIsActive || buying,
         loading: buying

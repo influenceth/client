@@ -12,7 +12,7 @@ const Refine = ({ asteroid, crew, lot, onSetAction }) => {
     <ActionButton
       label="Refine"
       flags={{
-        disabled: false, // TODO: ... crew not on asteroid? crew already on ship? ship ownership?
+        disabled: false, // TODO: ... crew not on asteroid? crew already on ship? ship ownership? crew busy?
         loading: false, // TODO: ...
       }}
       icon={<RefineIcon />}
