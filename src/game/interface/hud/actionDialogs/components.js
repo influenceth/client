@@ -1567,7 +1567,7 @@ export const DestinationSelectionDialog = ({
           let usedMass = 0, usedVolume = 0, type;
 
           // deconstructing in place (use currently-locked inventory)
-          if (includeDeconstruction && lot.id === originLotId && inventory.status === Inventory.STATUSES.LOCKED) {
+          if (includeDeconstruction && lot.id === originLotId && inventory.status !== Inventory.STATUSES.AVAILABLE) {
             type = `(construction site)`;
 
           // going to another lot (if unlocked)
