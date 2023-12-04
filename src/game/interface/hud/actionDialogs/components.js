@@ -5,7 +5,7 @@ import ReactTooltip from 'react-tooltip';
 import { useQuery } from 'react-query';
 import { TbBellRingingFilled as AlertIcon } from 'react-icons/tb';
 import { BarLoader } from 'react-spinners';
-import { Asteroid, Building, Crewmate, Delivery, Entity, Inventory, Lot, Process, Product, Ship } from '@influenceth/sdk';
+import { Asteroid, Building, Crewmate, Entity, Inventory, Lot, Process, Product, Ship, Time } from '@influenceth/sdk';
 import { cloneDeep } from 'lodash';
 
 import AsteroidRendering from '~/components/AsteroidRendering';
@@ -3843,14 +3843,17 @@ export const getBonusDirection = ({ totalBonus }, biggerIsBetter = true) => {
   return (biggerIsBetter === (totalBonus > 1)) ? 1 : -1;
 };
 
-export const getTripDetails = (asteroidId, crewTravelBonus, originLotIndex, steps) => {
+export const getTripDetails = (asteroidId, crewTravelBonus, originLotIndex, steps, timeAcceleration) => {
   let currentLotIndex = originLotIndex;
   let totalDistance = 0;
   let totalTime = 0;
 
   const tripDetails = steps.map(({ label, lotIndex, skipToLotIndex }) => {
     const stepDistance = Asteroid.getLotDistance(asteroidId, currentLotIndex, lotIndex) || 0;
-    const stepTime = Asteroid.getLotTravelTime(asteroidId, currentLotIndex, lotIndex, crewTravelBonus.totalBonus, crewTravelBonus.timeMultiplier) || 0;
+    const stepTime = Time.toRealDuration(
+      Asteroid.getLotTravelTime(asteroidId, currentLotIndex, lotIndex, crewTravelBonus.totalBonus) || 0,
+      timeAcceleration
+    );
     currentLotIndex = skipToLotIndex || lotIndex;
 
     // agg

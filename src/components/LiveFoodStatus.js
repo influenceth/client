@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import styled from 'styled-components';
-import { Crew } from '@influenceth/sdk';
+import { Crew, Time } from '@influenceth/sdk';
 
 import { FoodIcon, WarningOutlineIcon } from '~/components/Icons';
 import useChainTime from '~/hooks/useChainTime';
@@ -25,7 +25,7 @@ const LiveFoodStatus = ({ crew: optCrew, lastFed: optLastFed, onClick, ...props 
   }, [optCrew, optLastFed]);
 
   const percentage = useMemo(() => {
-    const lastFedAgo = (chainTime - lastFed) * parseInt(TIME_ACCELERATION);
+    const lastFedAgo = Time.toGameDuration(chainTime - lastFed, parseInt(TIME_ACCELERATION));
     return lastFedAgo ? Math.round(100 * Crew.getCurrentFood(lastFedAgo) / Crew.CREWMATE_FOOD_PER_YEAR) : 0;
   }, [chainTime, lastFed]);
   

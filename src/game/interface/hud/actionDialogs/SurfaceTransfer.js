@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Asteroid, Building, Crew, Crewmate, Entity, Inventory, Lot, Product } from '@influenceth/sdk';
+import { Asteroid, Crewmate, Inventory, Lot, Product, Time } from '@influenceth/sdk';
 import styled from 'styled-components';
 
 import surfaceTransferBackground from '~/assets/images/modal_headers/SurfaceTransfer.png';
@@ -114,9 +114,12 @@ const SurfaceTransfer = ({
     const originLotIndex = Lot.toIndex(originLot?.id);
     const destinationLotIndex = Lot.toIndex(destinationLot?.id);
     const transportDistance = Asteroid.getLotDistance(asteroid?.id, originLotIndex, destinationLotIndex);
-    const transportTime = Asteroid.getLotTravelTime(asteroid?.id, originLotIndex, destinationLotIndex, crewTravelBonus.totalBonus, crewTravelBonus.timeMultiplier);
+    const transportTime = Time.toRealDuration(
+      Asteroid.getLotTravelTime(asteroid?.id, originLotIndex, destinationLotIndex, crewTravelBonus.totalBonus),
+      crew?._timeAcceleration
+    );
     return [transportDistance, transportTime];
-  }, [asteroid?.id, originLot?.id, destinationLot?.id, crewTravelBonus]);
+  }, [asteroid?.id, originLot?.id, destinationLot?.id, crewTravelBonus, crew?._timeAcceleration]);
 
   const { totalMass, totalVolume } = useMemo(() => {
     return Object.keys(selectedItems).reduce((acc, resourceId) => {
