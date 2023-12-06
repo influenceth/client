@@ -14,6 +14,7 @@ import useHydratedLocation from '~/hooks/useHydratedLocation';
 import useInterval from '~/hooks/useInterval';
 import formatters from '~/lib/formatters';
 import theme from '~/theme';
+import useStore from '~/hooks/useStore';
 
 const menuWidth = 450;
 
@@ -175,6 +176,8 @@ const AvatarMenu = () => {
   const { captain, crew, loading: crewIsLoading } = useCrewContext();
   const history = useHistory();
 
+  const onSetAction = useStore(s => s.dispatchActionDialog);
+
   const hydratedLocation = useHydratedLocation(crew?._location);
 
   const silhouetteOverlay = useMemo(() => {
@@ -249,8 +252,7 @@ const AvatarMenu = () => {
                 <CrewLocationLabel hydratedLocation={hydratedLocation} />
               </BaseLocation>
 
-              {/* TODO: potentially link directly to add rations dialog instead */}
-              <LiveFoodStatus crew={crew} />
+              <LiveFoodStatus crew={crew} onClick={() => { onSetAction('FEED_CREW'); }} />
             </TitleBar>
 
             <Crewmates>

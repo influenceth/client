@@ -208,8 +208,6 @@ const SurfaceTransfer = ({
     return { overrideColor, status };
   }, [crew, destinationLot, stage]);
 
-  console.log({ originLot, destinationLot });
-
   return (
     <>
       <ActionDialogHeader

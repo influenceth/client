@@ -5,7 +5,7 @@ import styled from 'styled-components';
 import { Entity } from '@influenceth/sdk';
 import { cloneDeep } from 'lodash';
 
-import crewSwapBackground from '~/assets/images/modal_headers/Travel.png';  // TODO: ...
+import headerBackground from '~/assets/images/modal_headers/CrewManagement.png';
 import Button from '~/components/ButtonAlt';
 import CrewCardFramed, { EmptyCrewCardFramed } from '~/components/CrewCardFramed';
 import CrewLocationLabel from '~/components/CrewLocationLabel';
@@ -41,10 +41,6 @@ const Instructions = styled.div`
   color: ${p => p.isExchanging ? p.theme.colors.main : '#888'};
   font-size: 15px;
   transition: color 500ms ease;
-`;
-
-const CrewLocation = styled(CrewLocationWrapper)`
-  font-size: 15px;
 `;
 
 const Titlebar = styled.div`
@@ -400,7 +396,7 @@ const ManageCrew = ({ altCrews, crew, isForeignCrew, manager, stage, ...props })
           <FlexSection>
             <FlexSectionBlock
               title="Exchanging Crew"
-              titleDetails={<CrewLocation><CrewLocationLabel hydratedLocation={hydratedLocation} /></CrewLocation>}
+              titleDetails={<CrewLocationWrapper style={{ fontSize: '15px' }}><CrewLocationLabel hydratedLocation={hydratedLocation} /></CrewLocationWrapper>}
               bodyStyle={{ height: 'auto', paddingRight: 0 }}
               style={{ width: '100%' }}>
               <CrewDraggable
@@ -507,7 +503,7 @@ const Wrapper = ({ crew, loading, ...props }) => {
 
   return (
     <ActionDialogInner
-      actionImage={crewSwapBackground}
+      actionImage={headerBackground}
       isLoading={reactBool(loading)}
       stage={actionStage}>
       <ManageCrew
