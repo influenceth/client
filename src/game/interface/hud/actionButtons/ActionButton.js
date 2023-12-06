@@ -230,10 +230,11 @@ const LoadingTimer = ({ finishTime }) => {
   );
 };
 
-const ActionButtonComponent = ({ label, flags = {}, icon, onClick, ...props }) => {
+const ActionButtonComponent = ({ label, labelAddendum, flags = {}, icon, onClick, ...props }) => {
   const _onClick = useCallback(() => {
     if (!flags?.disabled && onClick) onClick();
   }, [flags, onClick]);
+
   const safeFlags = useMemo(() => {
     return Object.keys(flags).reduce((acc, k) => {
       if (k === 'badge') acc[k] = flags[k];
@@ -241,13 +242,14 @@ const ActionButtonComponent = ({ label, flags = {}, icon, onClick, ...props }) =
       return acc;
     }, {})
   }, [flags]);
+
   useEffect(() => ReactTooltip.rebuild(), []);
   return (
     <ActionButtonWrapper
       data-arrow-color="transparent"
       data-for="global"
       data-place="top"
-      data-tip={label}
+      data-tip={`${label}${labelAddendum ? ` (${labelAddendum})` : ''}`}
       onClick={_onClick}
       {...safeFlags}
       {...props}>

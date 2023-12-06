@@ -456,6 +456,7 @@ const ManageCrew = ({ altCrews, crew, isForeignCrew, manager, stage, ...props })
         goLabel="Save Changes"
         onGo={onSaveChanges}
         stage={stage}
+        waitForCrewReady
         {...props} />
 
 

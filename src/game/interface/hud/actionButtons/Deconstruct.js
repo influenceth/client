@@ -10,8 +10,9 @@ const labelDict = {
   DECONSTRUCTING: 'Deconstructing...'
 };
 
-const Deconstruct = ({ asteroid, lot, onSetAction, _disabled }) => {
-  const { constructionStatus } = useConstructionManager(lot?.id);
+const Deconstruct = ({ asteroid, crew, lot, onSetAction, _disabled }) => {
+  const { constructionStatus, requireReadyCrew } = useConstructionManager(lot?.id);
+
   const handleClick = useCallback(() => {
     onSetAction('DECONSTRUCT');
   }, [onSetAction]);
@@ -32,13 +33,18 @@ const Deconstruct = ({ asteroid, lot, onSetAction, _disabled }) => {
     if ((lot?.building?.Inventories || []).find((i) => i.status === Inventory.STATUSES.AVAILABLE && i.reservedMass > 0)) {
       return 'pending deliveries';
     }
+
+    if (constructionStatus === 'OPERATIONAL' && !crew?._ready) {
+      return 'crew is busy';
+    }
     
     return null;
-  }, [lot?.building]);
+  }, [lot?.building, crew?._ready]);
 
   return (
     <ActionButton
-      label={`${labelDict[constructionStatus]}${disabledReason ? ` (${disabledReason})` : ''}` || undefined}
+      label={`${labelDict[constructionStatus]}` || undefined}
+      labelAddendum={disabledReason}
       flags={{
         disabled: _disabled || disabledReason || undefined,
         loading: constructionStatus === 'DECONSTRUCTING' || undefined

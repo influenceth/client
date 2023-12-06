@@ -12,7 +12,7 @@ const EjectCrew = ({ asteroid, lot, onSetAction }) => {
     <ActionButton
       label="Eject My Crew"
       flags={{
-        disabled: false, // TODO: ... crew not on asteroid? ship permissions?
+        disabled: false, // TODO: ... crew not on asteroid? ship permissions? crew ready?
         loading: false, // TODO: ...
       }}
       icon={<EjectPassengersIcon />}

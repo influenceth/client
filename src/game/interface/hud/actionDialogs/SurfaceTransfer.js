@@ -205,8 +205,6 @@ const SurfaceTransfer = ({
     return { overrideColor, status };
   }, [crew, destinationLot, stage]);
 
-  console.log({ originLot, destinationLot });
-
   return (
     <>
       <ActionDialogHeader
@@ -245,7 +243,7 @@ const SurfaceTransfer = ({
 
           <InventoryInputBlock
             title="Destination"
-            titleDetails={<TransferDistanceDetails distance={transportDistance} />}
+            titleDetails={<TransferDistanceDetails distance={transportDistance} crewTravelBonus={crewTravelBonus} />}
             disabled={stage !== actionStage.NOT_STARTED}
             entity={destination}
             inventorySlot={destinationInventory?.slot}
@@ -361,6 +359,7 @@ const SurfaceTransfer = ({
         onFinalize={onFinishDelivery}
         onGo={onStartDelivery}
         stage={stage}
+        waitForCrewReady
         {...props} />
 
       {stage === actionStage.NOT_STARTED && (

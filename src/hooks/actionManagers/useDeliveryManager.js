@@ -149,7 +149,7 @@ const useDeliveryManager = ({ destination, destinationSlot, origin, originSlot, 
     currentDeliveryActions: currentDeliveries,
     currentVersion: currentDeliveriesVersion,
     startDelivery,
-    finishDelivery,
+    finishDelivery
   };
 };
 

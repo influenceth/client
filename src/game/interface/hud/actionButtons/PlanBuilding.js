@@ -10,17 +10,20 @@ const labelDict = {
   PLANNING: 'Planning Site...'
 };
 
-const PlanBuilding = ({ asteroid, lot, onSetAction, _disabled }) => {
+const PlanBuilding = ({ asteroid, crew, lot, onSetAction, _disabled }) => {
   const { constructionStatus } = useConstructionManager(lot?.id);
   const handleClick = useCallback(() => {
     onSetAction('PLAN_BUILDING');
   }, [onSetAction]);
 
+  const disabledReason = constructionStatus === 'READY_TO_PLAN' && !crew?._ready ? 'crew is busy' : null;
+
   return (
     <ActionButton
       label={labelDict[constructionStatus] || undefined}
+      labelAddendum={disabledReason}
       flags={{
-        disabled: _disabled || undefined,
+        disabled: _disabled || disabledReason || undefined,
         loading: constructionStatus === 'PLANNING' || undefined
       }}
       icon={<PlanBuildingIcon />}

@@ -2012,8 +2012,8 @@ export const InventorySelectionDialog = ({ otherEntity, otherLotId, isSourcing, 
       if (otherEntity && entity.id === otherEntity.id && entity.label === otherEntity.label) return;
       if (!entity.Inventories) return;
       entity.Inventories.forEach((inv) => {
-        // skip if locked
-        if (inv.status !== Inventory.STATUSES.AVAILABLE) return;
+        // skip if locked (or somehow type 0)
+        if (inv.status !== Inventory.STATUSES.AVAILABLE || inv.inventoryType === 0) return;
 
         // skip if cannot contain any of the itemIds
         if (itemIds && Inventory.TYPES[inv.inventoryType].productConstraints) {
@@ -2614,21 +2614,24 @@ export const ItemSelectionSection = ({ columns = 7, label, items, onClick, stage
     );
 };
 
-export const TransferDistanceDetails = ({ distance }) => (
-  <TransferDistanceTitleDetails>
-    {distance && distance < Asteroid.FREE_TRANSPORT_RADIUS ? (
-      <Mouseoverable tooltip={(
-        <FreeTransferNote>
-          <div>Instant Transfer Radius</div>
-          <div>Transfers less than {Asteroid.FREE_TRANSPORT_RADIUS}km in distance are instantaneous.</div>
-        </FreeTransferNote>
-      )}>
-        <label><WarningOutlineIcon /> {Math.round(distance)}km Away</label>
-      </Mouseoverable>
-    ) : ''}
-    {distance && distance >= Asteroid.FREE_TRANSPORT_RADIUS ? `${Math.round(distance)}km Away` : ''}
-  </TransferDistanceTitleDetails>
-);
+export const TransferDistanceDetails = ({ distance, crewTravelBonus}) => {
+  const crewFreeTransferRadius = Asteroid.FREE_TRANSPORT_RADIUS * (crewTravelBonus?.totalBonus || 1) / (crewTravelBonus?.timeMultiplier || 1);
+  return (
+    <TransferDistanceTitleDetails>
+      {distance && distance < crewFreeTransferRadius ? (
+        <Mouseoverable tooltip={(
+          <FreeTransferNote>
+            <div>Instant Transfer Radius</div>
+            <div>Transfers less than {crewFreeTransferRadius}km in distance are instantaneous.</div>
+          </FreeTransferNote>
+        )}>
+          <label><WarningOutlineIcon /> {Math.round(distance)}km Away</label>
+        </Mouseoverable>
+      ) : ''}
+      {distance && distance >= crewFreeTransferRadius ? `${Math.round(distance)}km Away` : ''}
+    </TransferDistanceTitleDetails>
+  );
+};
 
 export const ProgressBarSection = ({
   finishTime,
@@ -3523,7 +3526,19 @@ export const ActionDialogStats = ({ stage, stats, wide }) => {
   );
 };
 
-export const ActionDialogFooter = ({ buttonsLoading, disabled, finalizeLabel, goLabel, onClose, onFinalize, onGo, stage, wide }) => {
+const CrewBusyButton = ({ crew }) => {
+  return (
+    <Button
+      isTransaction
+      disabled={nativeBool(true)}
+      loading={reactBool(true)}>
+      Crew Busy
+    </Button>
+  );
+};
+
+export const ActionDialogFooter = ({ buttonsLoading, disabled, finalizeLabel, goLabel, onClose, onFinalize, onGo, stage, waitForCrewReady, wide }) => {
+  const { crew } = useCrewContext();
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
 
   // TODO: connect notifications to top-level state
@@ -3552,11 +3567,16 @@ export const ActionDialogFooter = ({ buttonsLoading, disabled, finalizeLabel, go
               <Button
                 loading={reactBool(buttonsLoading)}
                 onClick={onClose}>Cancel</Button>
-              <Button
-                isTransaction
-                disabled={nativeBool(disabled)}
-                loading={reactBool(buttonsLoading)}
-                onClick={onGo}>{goLabel}</Button>
+              {waitForCrewReady && !crew?._ready
+                ? <CrewBusyButton crew={crew} />
+                : (
+                  <Button
+                    isTransaction
+                    disabled={nativeBool(disabled)}
+                    loading={reactBool(buttonsLoading)}
+                    onClick={onGo}>{goLabel}</Button>
+                )
+              }
             </>
           )
           : (

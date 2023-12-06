@@ -5,7 +5,7 @@ import { SurfaceTransferIcon } from '~/components/Icons';
 import useDeliveryManager from '~/hooks/actionManagers/useDeliveryManager';
 import ActionButton from './ActionButton';
 
-const SurfaceTransferOutgoing = ({ asteroid, lot, onSetAction, preselect, _disabled }) => {
+const SurfaceTransferOutgoing = ({ asteroid, crew, lot, onSetAction, preselect, _disabled }) => {
   const { currentDeliveryActions, isLoading } = useDeliveryManager({ origin: lot?.building || lot?.ship });
   const deliveryDeparting = useMemo(() => {
     return (currentDeliveryActions || []).find((a) => a.status === 'DEPARTING');
@@ -15,16 +15,19 @@ const SurfaceTransferOutgoing = ({ asteroid, lot, onSetAction, preselect, _disab
     onSetAction('SURFACE_TRANSFER', { deliveryId: 0, preselect });
   }, [onSetAction, preselect]);
 
-  const isEmpty = useMemo(() => {
+  const disabledReason = useMemo(() => {
     const hasMass = (lot?.building?.Inventories || []).find((i) => i.status === Inventory.STATUSES.AVAILABLE && i.mass > 0);
-    return !hasMass;
-  }, [lot?.building?.inventories]);
+    if (!hasMass) return 'inventory empty';
+    if (!crew?._ready) return 'crew is busy';
+    return '';
+  }, [lot?.building?.Inventories, crew?._ready]);
 
   return (
     <ActionButton
-      label={`Surface Transfer${isEmpty ? ' (inventory empty)' : ''}`}
+      label={`Surface Transfer`}
+      labelAddendum={disabledReason}
       flags={{
-        disabled: _disabled || isEmpty || isLoading || undefined,
+        disabled: _disabled || disabledReason || isLoading || undefined,
         loading: deliveryDeparting || undefined
       }}
       icon={<SurfaceTransferIcon />}

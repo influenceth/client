@@ -117,27 +117,30 @@ const Details = styled.div`
 `;
 
 // TODO: progress should be an attribute, or else each of these creates a new class every second
-const Bar = styled.div`
+const BarWrapper = styled.div`
   background: ${majorBorderColor};
   border-radius: 3px;
   position: relative;
   height: 3px;
   margin-top: 6px;
   width: 100%;
-  &:before {
-    content: '';
-    background: ${p => {
-      const color = p.progressColor || 'main';
-      return p.theme.colors[p.progress === 1 && color === 'main' ? 'success' : color];
-    }};
-    border-radius: 3px;
-    position: absolute;
-    height: 100%;
-    left: 0;
-    top: 0;
-    transition: width 1000ms linear;
-    width: ${p => 100 * p.progress}%;
+`;
+const Bar = styled.div.attrs((p) => {
+  const progressColor = p.progressColor || 'main';
+  const background = p.theme.colors[p.progress === 1 && progressColor === 'main' ? 'success' : progressColor];
+  return {
+    style: {
+      background,
+      width: `${100 * p.progress}%`,
+    }
   }
+})`
+  border-radius: 3px;
+  position: absolute;
+  height: 100%;
+  left: 0;
+  top: 0;
+  transition: width 1000ms linear;
 `;
 
 const Status = styled.td`
@@ -254,7 +257,7 @@ const BuildingRow = ({ building }) => {
             <NotHoverContent>{status}</NotHoverContent>
           </span>
         </Details>
-        <Bar progress={progress} progressColor={progressColor} />
+        <BarWrapper><Bar progress={progress} progressColor={progressColor} /></BarWrapper>
       </InfoCell>
     </LotRow>
   );

@@ -354,7 +354,7 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
 
           <InventoryInputBlock
             title="Destination"
-            titleDetails={<TransferDistanceDetails distance={transportDistance} />}
+            titleDetails={<TransferDistanceDetails distance={transportDistance} crewTravelBonus={crewTravelBonus} />}
             entity={destination}
             inventorySlot={destinationInventory?.slot}
             imageProps={{
@@ -412,6 +412,7 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
         finalizeLabel="Complete"
         onFinalize={finishExtraction}
         stage={stage}
+        waitForCrewReady
         {...props} />
 
       {stage === actionStage.NOT_STARTED && (
