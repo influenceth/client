@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
-import { Building, Crew, Crewmate, Lot } from '@influenceth/sdk';
+import { Building, Crewmate, Lot, Time } from '@influenceth/sdk';
 
 import constructionBackground from '~/assets/images/modal_headers/Construction.png';
 import {
@@ -55,8 +55,8 @@ const PlanBuilding = ({ asteroid, lot, constructionManager, stage, ...props }) =
     return getTripDetails(asteroid.id, crewTravelBonus, crewLotIndex, [
       { label: 'Travel to Construction Site', lotIndex: Lot.toIndex(lot.id) },
       { label: 'Return to Crew Station', lotIndex: crewLotIndex },
-    ]);
-  }, [asteroid?.id, crew?._location?.lotId, lot?.id, crewTravelBonus]);
+    ], crew?._timeAcceleration);
+  }, [asteroid?.id, lot?.id, crew?._location?.lotId, crew?._timeAcceleration, crewTravelBonus]);
 
   const [crewTimeRequirement, taskTimeRequirement] = useMemo(() => {
     if (!tripDetails) return [];
@@ -172,6 +172,7 @@ const PlanBuilding = ({ asteroid, lot, constructionManager, stage, ...props }) =
         goLabel="Create Site"
         onGo={() => planConstruction(buildingType)}
         stage={stage}
+        waitForCrewReady
         {...props} />
 
       {stage === actionStage.NOT_STARTED && (

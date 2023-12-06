@@ -4,6 +4,7 @@ import { Deposit } from '@influenceth/sdk';
 import { ExtractionIcon } from '~/components/Icons';
 import useExtractionManager from '~/hooks/actionManagers/useExtractionManager';
 import ActionButton from './ActionButton';
+import useCrewContext from '~/hooks/useCrewContext';
 
 const labelDict = {
   READY: 'Extract Resource',
@@ -30,13 +31,20 @@ const Extract = ({ onSetAction, asteroid, crew, lot, preselect, _disabled }) => 
 
   const attention = !_disabled && (extractionStatus === 'READY_TO_FINISH' || (myUsableSamples?.length > 0) && extractionStatus === 'READY');
   const badge = ((extractionStatus === 'READY' && !preselect) ? usableSamples?.length : 0);
-  let disabledReason = extractionStatus === 'READY' && (
-    !lot?.building?.Extractors ? ' (no extractor)' : (myUsableSamples?.length === 0 ? ' (requires core sample)' : '')
-  );
+  let disabledReason = useMemo(() => {
+    if (extractionStatus === 'READY') {
+      if (!lot?.building?.Extractors) return 'no extractor';
+      if (myUsableSamples?.length === 0) return 'requires core sample';
+      if (!crew?._ready) return 'crew is busy';
+      return '';
+    }
+  }, [crew?._ready, lot?.building?.Extractors, myUsableSamples?.length]);
+  
   const loading = ['EXTRACTING', 'FINISHING'].includes(extractionStatus);
   return (
     <ActionButton
-      label={`${labelDict[extractionStatus]}${disabledReason || ''}`}
+      label={`${labelDict[extractionStatus]}`}
+      labelAddendum={disabledReason}
       flags={{
         badge,
         disabled: _disabled || disabledReason || undefined,

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Asteroid, Crew, Crewmate, Deposit, Lot, Product } from '@influenceth/sdk';
+import { Asteroid, Crewmate, Deposit, Lot, Product, Time } from '@influenceth/sdk';
 
 import coreSampleBackground from '~/assets/images/modal_headers/CoreSample.png';
 import { CoreSampleIcon, ImproveCoreSampleIcon, ResourceIcon } from '~/components/Icons';
@@ -121,25 +121,28 @@ const ImproveCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }
     return getTripDetails(asteroid.id, crewTravelBonus, crewLotIndex, [
       { label: 'Travel to Sampling Site', lotIndex: Lot.toIndex(lot.id) },
       { label: 'Return to Crew Station', lotIndex: crewLotIndex },
-    ]);
-  }, [asteroid?.id, crew?._location?.lotId, lot?.id, crewTravelBonus]);
+    ], crew?._timeAcceleration);
+  }, [asteroid?.id, lot?.id, crew?._location?.lotId, crew?._timeAcceleration, crewTravelBonus]);
   
   const [sampleBounds, sampleTime] = useMemo(() => {
     return [
       lotAbundance ? Deposit.getSampleBounds(lotAbundance, originalYield, sampleQualityBonus.totalBonus) : null,
-      Deposit.getSampleTime(sampleTimeBonus.totalBonus)
+      Time.toRealDuration(Deposit.getSampleTime(sampleTimeBonus.totalBonus), crew?._timeAcceleration)
     ];
-  }, [lotAbundance, originalYield, sampleQualityBonus, sampleTimeBonus]);
+  }, [lotAbundance, originalYield, sampleQualityBonus, sampleTimeBonus, crew?._timeAcceleration]);
 
   const [crewTimeRequirement, taskTimeRequirement] = useMemo(() => {
     if (!asteroid?.id || !crew?._location?.lotId || !lot?.id || !drillSource?.lotIndex) return [];
     const oneWayCrewTravelTime = crewTravelTime / 2;
-    const drillTravelTime = Asteroid.getLotTravelTime(asteroid.id, drillSource?.lotIndex, Lot.toIndex(lot.id), crewTravelBonus.totalBonus, crewTravelBonus.timeMultiplier);
+    const drillTravelTime = Time.toRealDuration(
+      Asteroid.getLotTravelTime(asteroid.id, drillSource?.lotIndex, Lot.toIndex(lot.id), crewTravelBonus.totalBonus),
+      crew?._timeAcceleration
+    );
     return [
       Math.max(oneWayCrewTravelTime, drillTravelTime) + sampleTime + oneWayCrewTravelTime,
       Math.max(oneWayCrewTravelTime, drillTravelTime) + sampleTime
     ];
-  }, [asteroid?.id, crew?._location?.lotId, drillSource?.lotIndex, lot?.id, crewTravelBonus]);
+  }, [asteroid?.id, crew?._location?.lotId, crew?._timeAcceleration, drillSource?.lotIndex, lot?.id, crewTravelBonus]);
 
   const stats = useMemo(() => ([
     {
@@ -298,6 +301,7 @@ const ImproveCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }
         finalizeLabel="Analyze"
         onFinalize={finishSampling}
         stage={stage}
+        waitForCrewReady
         {...props} />
 
       {stage === actionStage.NOT_STARTED && (

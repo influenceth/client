@@ -159,7 +159,7 @@ const StationCrew = ({ asteroid, lot, destinations, manager, ship, stage, ...pro
                 titleDetails={
                   !isInOrbit && destIsInOrbit
                     ? <TransferDistanceTitleDetails><label>Orbital Transfer</label></TransferDistanceTitleDetails>
-                    : <TransferDistanceDetails distance={transportDistance} />
+                    : <TransferDistanceDetails distance={transportDistance} crewTravelBonus={crewTravelBonus} />
                 }
                 ship={destinationShip}
                 disabled={stage !== actionStages.NOT_STARTED} />
@@ -170,7 +170,7 @@ const StationCrew = ({ asteroid, lot, destinations, manager, ship, stage, ...pro
                 titleDetails={
                   isInOrbit
                     ? <TransferDistanceTitleDetails><label>Orbital Transfer</label></TransferDistanceTitleDetails>
-                    : <TransferDistanceDetails distance={transportDistance} />
+                    : <TransferDistanceDetails distance={transportDistance} crewTravelBonus={crewTravelBonus} />
                 }
                 lot={destinationLot}
                 disabled={stage !== actionStages.NOT_STARTED} />
@@ -229,6 +229,7 @@ const StationCrew = ({ asteroid, lot, destinations, manager, ship, stage, ...pro
         goLabel="Station"
         onGo={onStation}
         stage={stage}
+        waitForCrewReady
         {...props} />
     </>
   );

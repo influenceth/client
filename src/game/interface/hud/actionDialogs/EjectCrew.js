@@ -174,6 +174,7 @@ const EjectCrew = ({ asteroid, lot, manager, ship, stage, targetCrew, ...props }
 
       </ActionDialogBody>
 
+      {/* TODO: add waitForCrewReady? */}
       <ActionDialogFooter
         disabled={false/* TODO: no permission */}
         goLabel="Eject"

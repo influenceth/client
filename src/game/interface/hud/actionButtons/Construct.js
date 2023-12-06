@@ -11,7 +11,7 @@ const labelDict = {
   FINISHING: 'Finishing Construction...'
 };
 
-const Construct = ({ asteroid, lot, onSetAction, _disabled }) => {
+const Construct = ({ asteroid, crew, lot, onSetAction, _disabled }) => {
   const { constructionStatus } = useConstructionManager(lot?.id);
   const handleClick = useCallback(() => {
     onSetAction('CONSTRUCT');
@@ -19,11 +19,13 @@ const Construct = ({ asteroid, lot, onSetAction, _disabled }) => {
 
   const attention = constructionStatus === 'PLANNED' || constructionStatus === 'READY_TO_FINISH';
   const loading = constructionStatus === 'UNDER_CONSTRUCTION' || constructionStatus === 'FINISHING';
+  const disabledReason = constructionStatus === 'PLANNED' && !crew?._ready ? 'crew is busy' : null;
   return (
     <ActionButton
       label={labelDict[constructionStatus] || undefined}
+      labelAddendum={disabledReason}
       flags={{
-        disabled: _disabled || undefined,
+        disabled: _disabled || disabledReason || undefined,
         attention: attention || undefined,
         loading: loading || undefined,
         finishTime: lot?.building?.Building?.finishTime

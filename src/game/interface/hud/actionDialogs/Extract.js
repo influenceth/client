@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import styled from 'styled-components';
-import { Asteroid, Crew, Crewmate, Deposit, Extractor, Inventory, Lot, Product } from '@influenceth/sdk';
+import { Asteroid, Crew, Crewmate, Deposit, Extractor, Inventory, Lot, Product, Time } from '@influenceth/sdk';
 
 import extractionBackground from '~/assets/images/modal_headers/Extraction.png';
 import { CoreSampleIcon, ExtractionIcon, InventoryIcon, LocationIcon, ResourceIcon } from '~/components/Icons';
@@ -163,12 +163,15 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
 
   const extractionTime = useMemo(() => {
     if (!selectedCoreSample) return 0;
-    return Extractor.getExtractionTime(
-      amount * resource?.massPerUnit || 0,
-      selectedCoreSample.Deposit.remainingYield * resource?.massPerUnit || 0,
-      extractionBonus.totalBonus || 1
+    return Time.toRealDuration(
+      Extractor.getExtractionTime(
+        amount * resource?.massPerUnit || 0,
+        selectedCoreSample.Deposit.remainingYield * resource?.massPerUnit || 0,
+        extractionBonus.totalBonus || 1
+      ),
+      crew?._timeAcceleration
     );
-  }, [amount, extractionBonus, selectedCoreSample]);
+  }, [amount, crew?._timeAcceleration, extractionBonus, selectedCoreSample]);
 
   const { totalTime: crewTravelTime, tripDetails } = useMemo(() => {
     if (!asteroid?.id || !crew?._location?.lotId || !lot?.id) return {};
@@ -176,16 +179,19 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
     return getTripDetails(asteroid.id, crewTravelBonus, crewLotIndex, [
       { label: 'Travel to Extraction Site', lotIndex: Lot.toIndex(lot.id) },
       { label: 'Return to Crew Station', lotIndex: crewLotIndex },
-    ]);
-  }, [asteroid?.id, crew?._location?.lotId, lot?.id, crewTravelBonus]);
+    ], crew?._timeAcceleration);
+  }, [asteroid?.id, lot?.id, crew?._location?.lotId, crew?._timeAcceleration, crewTravelBonus]);
 
   const [transportDistance, transportTime] = useMemo(() => {
     if (!destinationLot?.id) return [];
     return [
       Asteroid.getLotDistance(asteroid?.id, Lot.toIndex(lot?.id), Lot.toIndex(destinationLot?.id)) || 0,
-      Asteroid.getLotTravelTime(asteroid?.id, Lot.toIndex(lot?.id), Lot.toIndex(destinationLot?.id), crewTravelBonus.totalBonus, crewTravelBonus.timeMultiplier) || 0
+      Time.toRealDuration(
+        Asteroid.getLotTravelTime(asteroid?.id, Lot.toIndex(lot?.id), Lot.toIndex(destinationLot?.id), crewTravelBonus.totalBonus) || 0,
+        crew?._timeAcceleration
+      )
     ];
-  }, [asteroid?.id, lot?.id, destinationLot?.id, crewTravelBonus]);
+  }, [asteroid?.id, lot?.id, crew?._timeAcceleration, destinationLot?.id, crewTravelBonus]);
 
   const [crewTimeRequirement, taskTimeRequirement] = useMemo(() => {
     if (!extractionTime || !crewTravelTime || !transportTime) return [];
@@ -354,7 +360,7 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
 
           <InventoryInputBlock
             title="Destination"
-            titleDetails={<TransferDistanceDetails distance={transportDistance} />}
+            titleDetails={<TransferDistanceDetails distance={transportDistance} crewTravelBonus={crewTravelBonus} />}
             entity={destination}
             inventorySlot={destinationInventory?.slot}
             imageProps={{
@@ -412,6 +418,7 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
         finalizeLabel="Complete"
         onFinalize={finishExtraction}
         stage={stage}
+        waitForCrewReady
         {...props} />
 
       {stage === actionStage.NOT_STARTED && (

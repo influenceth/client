@@ -412,6 +412,7 @@ const SetCourse = ({ origin, destination, manager, ship, stage, travelSolution, 
         goLabel="Schedule"
         onGo={onLaunch}
         stage={stage}
+        waitForCrewReady
         {...props} />
     </>
   );

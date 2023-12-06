@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Asteroid, Building, Crew, Crewmate, Entity, Inventory, Lot, Product } from '@influenceth/sdk';
+import { Asteroid, Crewmate, Entity, Inventory, Lot, Product, Time } from '@influenceth/sdk';
 
 import surfaceTransferBackground from '~/assets/images/modal_headers/SurfaceTransfer.png';
 import { ForwardIcon, InventoryIcon, LocationIcon, SurfaceTransferIcon, TransferToSiteIcon } from '~/components/Icons';
@@ -95,9 +95,12 @@ const TransferToSite = ({ asteroid, lot: destinationLot, deliveryManager, stage,
     const originLotIndex = Lot.toIndex(originLot?.id);
     const destinationLotIndex = Lot.toIndex(destinationLot?.id);
     const transportDistance = Asteroid.getLotDistance(asteroid?.id, originLotIndex, destinationLotIndex);
-    const transportTime = Asteroid.getLotTravelTime(asteroid?.id, originLotIndex, destinationLotIndex, crewTravelBonus.totalBonus, crewTravelBonus.timeMultiplier);
+    const transportTime = Time.toRealDuration(
+      Asteroid.getLotTravelTime(asteroid?.id, originLotIndex, destinationLotIndex, crewTravelBonus.totalBonus),
+      crew?._timeAcceleration
+    );
     return [transportDistance, transportTime];
-  }, [asteroid?.id, originLot?.id, destinationLot?.id, crewTravelBonus]);
+  }, [asteroid?.id, originLot?.id, destinationLot?.id, crew?._timeAcceleration, crewTravelBonus]);
 
   const { totalMass, totalVolume } = useMemo(() => {
     return Object.keys(selectedItems).reduce((acc, resourceId) => {
@@ -269,6 +272,7 @@ const TransferToSite = ({ asteroid, lot: destinationLot, deliveryManager, stage,
         goLabel="Transfer"
         onGo={onStartDelivery}
         stage={stage}
+        waitForCrewReady
         {...props} />
 
       {stage === actionStage.NOT_STARTED && (

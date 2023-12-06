@@ -608,6 +608,7 @@ const MarketplaceOrder = ({ asteroid, lot, manager, stage, ...props }) => {
 
       </ActionDialogBody>
 
+      {/* TODO: add waitForCrewReady? */}
       <ActionDialogFooter
         disabled={false/* TODO: no destination selected, amount invalid, price too much, etc */}
         goLabel={goLabel}

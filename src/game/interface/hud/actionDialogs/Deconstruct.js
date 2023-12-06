@@ -1,5 +1,5 @@
 import { useEffect, useMemo } from 'react';
-import { Building, Crewmate, Inventory, Lot } from '@influenceth/sdk';
+import { Building, Crewmate, Inventory, Lot, Time } from '@influenceth/sdk';
 
 import constructionBackground from '~/assets/images/modal_headers/Construction.png';
 import {
@@ -42,8 +42,8 @@ const Deconstruct = ({ asteroid, lot, constructionManager, stage, ...props }) =>
     return getTripDetails(asteroid.id, crewTravelBonus, crewLotIndex, [
       { label: 'Travel to Site', lotIndex: Lot.toIndex(lot.id) },
       { label: 'Return to Crew Station', lotIndex: crewLotIndex },
-    ]);
-  }, [asteroid?.id, lot?.id, crewTravelBonus]);
+    ], crew?._timeAcceleration);
+  }, [asteroid?.id, lot?.id, crew?._location?.lotId, crew?._timeAcceleration, crewTravelBonus]);
 
   const [crewTimeRequirement, taskTimeRequirement] = useMemo(() => {
     return [crewTravelTime, 0];
@@ -125,6 +125,7 @@ const Deconstruct = ({ asteroid, lot, constructionManager, stage, ...props }) =>
         goLabel="Deconstruct"
         onGo={deconstruct}
         stage={stage}
+        waitForCrewReady
         {...props} />
     </>
   );
