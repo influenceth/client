@@ -147,6 +147,7 @@ export function CrewProvider({ children }) {
             if (c.Crew.readyAt > getNow() && c.Crew.readyAt < nextReadyAt) {
               setNextReadyAt(c.Crew.readyAt);
             }
+
           }
           return c;
         });

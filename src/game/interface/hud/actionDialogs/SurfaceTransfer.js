@@ -84,7 +84,7 @@ const SurfaceTransfer = ({
   const [selectedItems, setSelectedItems] = useState(props.preselect?.selectedItems || {});
 
   // get origin and originInventory
-  const originInventory = useMemo(() => (origin?.Inventories || []).find((i) => originSlot ? (i.slot === originSlot) : (i.status === Inventory.STATUSES.AVAILABLE)), [origin, originSlot]);
+  const originInventory = useMemo(() => (origin?.Inventories || []).find((i) => originSlot ? (i.slot === originSlot) : (i.status === Inventory.STATUSES.AVAILABLE)), [origin?.Inventories, originSlot]);
   const { data: originController } = useCrew(origin?.Control?.controller?.id);
 
   // get destinationLot and destinationInventory
@@ -391,8 +391,6 @@ const SurfaceTransfer = ({
 
 const Wrapper = (props) => {
   const { asteroid, lot, isLoading } = useAsteroidAndLot(props);
-
-  // console.log('SurfaceTransfer lot', JSON.stringify(lot));
 
   // entrypoints w/ props:
   //  - actionitem (deliveryId)
