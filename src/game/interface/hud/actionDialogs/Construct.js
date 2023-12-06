@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import styled from 'styled-components';
-import { Building, Crewmate, Lot } from '@influenceth/sdk';
+import { Building, Crewmate, Lot, Time } from '@influenceth/sdk';
 
 import constructionBackground from '~/assets/images/modal_headers/Construction.png';
 import {
@@ -71,14 +71,17 @@ const Construct = ({ asteroid, lot, constructionManager, stage, ...props }) => {
     return getTripDetails(asteroid.id, crewTravelBonus, crewLotIndex, [
       { label: 'Travel to Construction Site', lotIndex: Lot.toIndex(lot.id) },
       { label: 'Return to Crew Station', lotIndex: crewLotIndex },
-    ]);
-  }, [asteroid?.id, lot?.id, crewTravelBonus]);
+    ], crew?._timeAcceleration);
+  }, [asteroid?.id, lot?.id, crew?._location?.lotId, crew?._timeAcceleration, crewTravelBonus]);
 
   const constructionTime = useMemo(() =>
-    lot?.building?.Building?.buildingType
-      ? Building.getConstructionTime(lot?.building?.Building?.buildingType, constructionBonus.totalBonus)
-      : 0,
-    [lot?.building?.Building?.buildingType, constructionBonus.totalBonus]
+    Time.toRealDuration(
+      lot?.building?.Building?.buildingType
+        ? Building.getConstructionTime(lot?.building?.Building?.buildingType, constructionBonus.totalBonus)
+        : 0,
+      crew?._timeAcceleration
+    ),
+    [lot?.building?.Building?.buildingType, constructionBonus.totalBonus, crew?._timeAcceleration]
   );
 
   const [crewTimeRequirement, taskTimeRequirement] = useMemo(() => {
