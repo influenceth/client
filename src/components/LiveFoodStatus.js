@@ -24,14 +24,19 @@ const LiveFoodStatus = ({ crew: optCrew, lastFed: optLastFed, onClick, ...props 
     return optLastFed || optCrew?.Crew?.lastFed || 0;
   }, [optCrew, optLastFed]);
 
-  const percentage = useMemo(() => {
+  const [percentage, isRationing] = useMemo(() => {
     const lastFedAgo = Time.toGameDuration(chainTime - lastFed, parseInt(TIME_ACCELERATION));
-    return lastFedAgo ? Math.round(100 * Crew.getCurrentFood(lastFedAgo) / Crew.CREWMATE_FOOD_PER_YEAR) : 0;
+    return lastFedAgo
+      ? [
+        Math.round(100 * Crew.getCurrentFoodRatio(lastFedAgo)),
+        (Crew.getFoodMultiplier(lastFedAgo) < 1)
+      ]
+      : [0, false];
   }, [chainTime, lastFed]);
   
   return (
-    <Food isRationing={percentage < 25} onClick={onClick} {...props}>
-      {percentage < 50 && <WarningOutlineIcon />}
+    <Food isRationing={isRationing} onClick={onClick} {...props}>
+      {isRationing && <WarningOutlineIcon />}
       <span>{percentage}%</span>
       <FoodIcon />
     </Food>

@@ -1,3 +1,4 @@
+import AssembleShip from './AssembleShip';
 import Construct from './Construct';
 import ControlAsteroid from './ControlAsteroid';
 import CoreSample from './CoreSample';
@@ -24,6 +25,7 @@ import SurfaceTransferOutgoing from './SurfaceTransferOutgoing';
 import UnplanBuilding from './UnplanBuilding';
 
 const ActionsButtons = {
+  AssembleShip,
   Construct,
   ControlAsteroid,
   CoreSample,

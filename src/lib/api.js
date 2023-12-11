@@ -64,6 +64,7 @@ const getEntities = async ({ ids, match, label, components }) => {
 };
 
 const arrayComponents = {
+  DryDock: 'DryDocks',
   Extractor: 'Extractors',
   Inventory: 'Inventories',
   Processor: 'Processors'

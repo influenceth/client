@@ -215,12 +215,13 @@ const Menu = ({ children }) => {
   progress,
   size,
   tooltipContainer = 'global',
+  tooltipOverride,
   underlay,
   ...props
 }) => {
   const tooltipProps = tooltipContainer ? {
     'data-place': 'top',
-    'data-tip': resource.name,
+    'data-tip': tooltipOverride || resource.name,
     'data-for': tooltipContainer
   } : {};
   useEffect(() => ReactTooltip.rebuild(), []);

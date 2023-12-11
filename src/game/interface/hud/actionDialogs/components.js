@@ -1843,13 +1843,13 @@ export const LandingSelectionDialog = ({ asteroid, initialSelection, onClose, on
   );
 };
 
-export const ProcessSelectionDialog = ({ initialSelection, processorType, onClose, onSelected, open }) => {
+export const ProcessSelectionDialog = ({ initialSelection, onClose, forceProcesses, processorType, onSelected, open }) => {
   const [error, setError] = useState();
   const [selection, setSelection] = useState(initialSelection);
 
   const processes = useMemo(() => {
-    return Object.values(Process.TYPES).filter((p) => p.processorType === processorType);
-  }, [processorType])
+    return forceProcesses || Object.values(Process.TYPES).filter((p) => p.processorType === processorType);
+  }, [forceProcesses, processorType])
 
   const onComplete = useCallback(() => {
     onSelected(selection);
@@ -1872,11 +1872,12 @@ export const ProcessSelectionDialog = ({ initialSelection, processorType, onClos
             <tr>
               <td>Process Name</td>
               <td style={{ textAlign: 'left'}}>Inputs</td>
-              <td style={{ textAlign: 'left'}}>Outputs</td>
+              {processes[0].outputs && <td style={{ textAlign: 'left'}}>Outputs</td>}
             </tr>
           </thead>
           <tbody>
             {processes.map(({ i, name, inputs, outputs }) => {
+              // console.log({ i, name, inputs, outputs });
               return (
                 <SelectionTableRow
                   key={i}
@@ -1891,14 +1892,16 @@ export const ProcessSelectionDialog = ({ initialSelection, processorType, onClos
                       ))}
                     </InputOutputTableCell>
                   </td>
-                  <td>
-                    <InputOutputTableCell>
-                      <label>{Object.keys(outputs).length}</label>
-                      {Object.keys(outputs).map((resourceId) => (
-                        <ResourceThumbnail key={resourceId} resource={Product.TYPES[resourceId]} size="45px" tooltipContainer="selectionDialog" />
-                      ))}
-                    </InputOutputTableCell>
-                  </td>
+                  {outputs && (
+                    <td>
+                      <InputOutputTableCell>
+                        <label>{Object.keys(outputs).length}</label>
+                        {Object.keys(outputs).map((resourceId) => (
+                          <ResourceThumbnail key={resourceId} resource={Product.TYPES[resourceId]} size="45px" tooltipContainer="selectionDialog" />
+                        ))}
+                      </InputOutputTableCell>
+                    </td>
+                  )}
                 </SelectionTableRow>
               );
             })}
@@ -2028,7 +2031,7 @@ export const InventorySelectionDialog = ({ otherEntity, otherLotId, isSourcing, 
 
         let itemTally = 0;
         if (itemIds?.length === 1) {
-          itemTally = (inv.contents || []).find((p) => p.product === itemIds[0])?.amount || 0;
+          itemTally = (inv.contents || []).find((p) => p.product === Number(itemIds[0]))?.amount || 0;
         } else if (itemIds?.length) {
           itemTally = itemIds.filter((itemId) => (inv.contents || []).find((p) => p.product === Number(itemId))?.amount > 0).length;
         }
@@ -2055,7 +2058,7 @@ export const InventorySelectionDialog = ({ otherEntity, otherLotId, isSourcing, 
     });
 
     return display.sort((a, b) => a.distance - b.distance);
-  }, [inventoryData]);
+  }, [inventoryData, itemIds]);
 
   const onComplete = useCallback(() => {
     onSelected(selection ? JSON.parse(selection) : null);
@@ -2150,7 +2153,7 @@ export const getCapacityUsage = (inventories, type) => {
 
 export const getBuildingRequirements = (building = {}, deliveryActions = []) => {
   const { Building: { buildingType }, Inventories = [] } = building;
-  const inventory = Inventories.find((i) => i.status === Inventory.STATUSES.AVAILABLE);
+  const inventory = Inventories.find((i) => i.status === Inventory.STATUSES.AVAILABLE); // TODO: should this be slot?
 
   return Object.keys(Building.CONSTRUCTION_TYPES[buildingType]?.requirements || {}).map((productId) => {
     const totalRequired = Building.CONSTRUCTION_TYPES[buildingType].requirements[productId];
@@ -2158,6 +2161,22 @@ export const getBuildingRequirements = (building = {}, deliveryActions = []) => 
     const inTransit = deliveryActions
       .filter((d) => d.status !== 'FINISHED')
       .reduce((acc, d) => acc + (d.action.contents.find((c) => Number(c.product) === Number(productId))?.amount) || 0, 0);
+    return {
+      i: productId,
+      totalRequired,
+      inInventory,
+      inTransit,
+      inNeed: Math.max(0, totalRequired - inInventory - inTransit)
+    };
+  })
+};
+
+export const getShipRequirements = (shipType, origin, originSlot) => {
+  const inventory = (origin?.Inventories || []).find((i) => i.slot === originSlot);
+  return Object.keys(Ship.CONSTRUCTION_TYPES[shipType]?.requirements || {}).map((productId) => {
+    const totalRequired = Ship.CONSTRUCTION_TYPES[shipType].requirements[productId];
+    const inInventory = (inventory?.contents || []).find((c) => Number(c.product) === Number(productId))?.amount || 0;
+    const inTransit = 0;
     return {
       i: productId,
       totalRequired,
@@ -2182,14 +2201,14 @@ export const AsteroidImage = ({ asteroid, size }) => {
   )
 }
 
-export const ShipImage = ({ shipType, iconBadge, iconBadgeColor, iconOverlay, iconOverlayColor, inventories, showInventoryStatusForType, simulated, square, style = {} }) => {
+export const ShipImage = ({ shipType, iconBadge, iconBadgeColor, iconOverlay, iconOverlayColor, inventories, showInventoryStatusForType, simulated, size = 'w150', backgroundSize = 'cover', style = {} }) => {
   const shipAsset = Ship.TYPES[Math.abs(shipType)]; // abs for simulated ships
   if (!shipAsset) return null;
 
   const capacity = getCapacityUsage(inventories, showInventoryStatusForType);
   return (
     <ShipThumbnailWrapper style={style}>
-      <ResourceImage src={getShipIcon(shipAsset.i, 'w150', simulated)} />
+      <ResourceImage src={getShipIcon(shipAsset.i, size, simulated)} style={{ backgroundSize }} />
       {showInventoryStatusForType !== undefined && (
         <>
           <InventoryUtilization
@@ -2812,7 +2831,7 @@ export const ResourceAmountSlider = ({ amount, extractionTime, min, max, resourc
   );
 };
 
-export const RecipeSlider = ({ amount, processingTime, min, max, setAmount }) => {
+export const RecipeSlider = ({ amount, processingTime, min, max, overrideSliderLabel, setAmount }) => {
   const [focusOn, setFocusOn] = useState();
   const [mouseIn, setMouseIn] = useState(false);
 
@@ -2853,103 +2872,141 @@ export const RecipeSlider = ({ amount, processingTime, min, max, setAmount }) =>
         value={amount || 0} />
       <SliderInfoRow style={{ alignItems: 'center' }}>
         <SliderInfo style={{ flex: 1 }}>{formatTimer(processingTime, 3)}</SliderInfo>
-        <SliderLabel onMouseEnter={onMouseEvent} onMouseLeave={onMouseEvent} style={{ flex: 'none', fontSize: '10px', lineHeight: '29px' }}>
-          {(mouseIn || focusOn) ? (
-            <SliderTextInput
-              type="number"
-              step={0.001}
-              value={amount}
-              onChange={onChangeInput}
-              onBlur={onFocusEvent}
-              onFocus={onFocusEvent}
-              style={{ marginTop: -2 }} />
-            )
-            : (
-              <b>{amount.toLocaleString(undefined, { minimumFractionDigits: 3 })}</b>
-            )
-          }
-          {' '}
-          <span style={{ fontSize: 14 }}>SRs</span>
-        </SliderLabel>
-        <Button
-          disabled={amount === Math.round(amount)}
-          onClick={onRound}
-          size="small"
-          style={{ marginLeft: 10, padding: 0, minWidth: 75 }}>Round</Button>
-        <Button
-          disabled={amount === max}
-          onClick={() => setAmount(max)}
-          size="small"
-          style={{ marginLeft: 10, padding: 0, minWidth: 75 }}>Max</Button>
+        {overrideSliderLabel || (
+          <>
+            <SliderLabel onMouseEnter={onMouseEvent} onMouseLeave={onMouseEvent} style={{ flex: 'none', fontSize: '10px', lineHeight: '29px' }}>
+              {(mouseIn || focusOn) ? (
+                <SliderTextInput
+                  type="number"
+                  step={0.001}
+                  value={amount}
+                  onChange={onChangeInput}
+                  onBlur={onFocusEvent}
+                  onFocus={onFocusEvent}
+                  style={{ marginTop: -2 }} />
+                )
+                : (
+                  <b>{amount.toLocaleString(undefined, { minimumFractionDigits: 3 })}</b>
+                )
+              }
+              {' '}
+              <span style={{ fontSize: 14 }}>SRs</span>
+            </SliderLabel>
+            <Button
+              disabled={amount === Math.round(amount)}
+              onClick={onRound}
+              size="small"
+              style={{ marginLeft: 10, padding: 0, minWidth: 75 }}>Round</Button>
+            <Button
+              disabled={amount === max}
+              onClick={() => setAmount(max)}
+              size="small"
+              style={{ marginLeft: 10, padding: 0, minWidth: 75 }}>Max</Button>
+          </>
+        )}
       </SliderInfoRow>
     </SliderWrapper>
   );
 };
 
-export const ProcessInputOutputSection = ({ title, products, input, output, primaryOutput, setPrimaryOutput, ...props }) => {
+export const ProcessInputOutputSection = ({ title, products, input, output, primaryOutput, setPrimaryOutput, source, ...props }) => {
+  const sourceContents = useMemo(() => (source?.contents || []).reduce((acc, cur) => ({ ...acc, [cur.product]: cur.amount }), {}), [source]);
   return (
     <FlexSectionBlock title={title} {...props} bodyStyle={{ padding: 0 }}>
       <ProductWrapper>
-        {products.map(({ resourceId, recipe, amount }) => (
-          <ProductSelector
-            key={resourceId}
-            input={input}
-            output={output}
-            primary={primaryOutput === resourceId}
-            onClick={setPrimaryOutput ? () => setPrimaryOutput(resourceId) : undefined}>
-            <ResourceThumbnail
-              resource={Product.TYPES[resourceId]}
-              backgroundColor={output ? `rgba(${hexToRGB(theme.colors.green)}, 0.15)` : undefined}
-              badge={`${output ? '+' : '-'}${formatResourceMass(amount, resourceId)}`}
-              badgeColor={output ? theme.colors.green : theme.colors.main}
-              progress={0.5}
-              iconBadge={<RecipeLabel>{recipe}</RecipeLabel>}
-              tooltipContainer="actionDialog"
-            />
-            {output && (
-              <label>
-                {primaryOutput === resourceId
-                  ? (
-                    <>
-                      <CheckIcon /> Primary
-                      <ClipCorner dimension={10} color={theme.colors.main} />
-                    </>
-                  )
-                  : `-50%`
-                }
-              </label>
-            )}
-          </ProductSelector>
-        ))}
+        {products.map(({ i: resourceId, recipe, amount }) => {
+          const thumbProps = {};
+          if (output) {
+            thumbProps.backgroundColor = `rgba(${hexToRGB(theme.colors.green)}, 0.15)`;
+            thumbProps.badgeColor = theme.colors.green;
+          } else if ((sourceContents[resourceId] || 0) > amount) {
+            thumbProps.backgroundColor = `rgba(${theme.colors.mainRGB}, 0.15)`;
+            thumbProps.badgeColor = theme.colors.main;
+            thumbProps.progress = 1;
+          } else {
+            thumbProps.backgroundColor = `rgba(${hexToRGB(theme.colors.error)}, 0.15)`;
+            thumbProps.badgeColor = theme.colors.error;
+            thumbProps.progress = (sourceContents[resourceId] || 0) / amount;
+            if (source) {
+              thumbProps.tooltipOverride = `[INSUFFICIENT] ${Product.TYPES[resourceId]?.name}`;
+            }
+          }
+          return (
+            <ProductSelector
+              key={resourceId}
+              input={input}
+              output={output}
+              primary={primaryOutput === resourceId}
+              onClick={setPrimaryOutput ? () => setPrimaryOutput(resourceId) : undefined}>
+              <ResourceThumbnail
+                resource={Product.TYPES[resourceId]}
+                badge={`${output ? '+' : '-'}${formatResourceMass(amount, resourceId)}`}
+                iconBadge={<RecipeLabel>{recipe.toLocaleString()}</RecipeLabel>}
+                tooltipContainer="actionDialog"
+                {...thumbProps}
+              />
+              {output && (
+                <label>
+                  {primaryOutput === resourceId
+                    ? (
+                      <>
+                        <CheckIcon /> Primary
+                        <ClipCorner dimension={10} color={theme.colors.main} />
+                      </>
+                    )
+                    : `-50%`
+                  }
+                </label>
+              )}
+            </ProductSelector>
+          );
+        })}
       </ProductWrapper>
     </FlexSectionBlock>
   );
 };
 
-export const ProcessInputSquareSection = ({ title, products, input, output, primaryOutput, setPrimaryOutput, ...props }) => {
+export const ProcessInputSquareSection = ({ title, products, input, output, primaryOutput, setPrimaryOutput, source, ...props }) => {
+  const sourceContents = useMemo(() => (source?.contents || []).reduce((acc, cur) => ({ ...acc, [cur.product]: cur.amount }), {}), [source]);
   return (
     <FlexSectionBlock title={title} {...props} bodyStyle={{ padding: 0 }}>
       <ProductGridWrapper>
-        {products.map(({ resourceId, recipe, amount }) => (
-          <ProductSelector
-            key={resourceId}
-            input={input}
-            output={output}
-            primary={primaryOutput === resourceId}
-            onClick={setPrimaryOutput ? () => setPrimaryOutput(resourceId) : undefined}>
-            <ResourceThumbnail
-              resource={Product.TYPES[resourceId]}
-              backgroundColor={output ? `rgba(${hexToRGB(theme.colors.green)}, 0.15)` : undefined}
-              badge={`${output ? '+' : '-'}${formatResourceMass(amount, resourceId)}`}
-              badgeColor={output ? theme.colors.green : theme.colors.main}
-              progress={0.5}
-              iconBadge={<RecipeLabel>{recipe}</RecipeLabel>}
-              size="87px"
-              tooltipContainer="actionDialog"
-            />
-            {output && <label>{primaryOutput === resourceId ? <><CheckIcon /> Primary</> : `-50%`}</label>}
-          </ProductSelector>
-        ))}
+        {products.map(({ i: resourceId, recipe, amount }) => {
+          const thumbProps = {};
+          if (output) {
+            thumbProps.backgroundColor = `rgba(${hexToRGB(theme.colors.green)}, 0.15)`;
+            thumbProps.badgeColor = theme.colors.green;
+          } else if ((sourceContents[resourceId] || 0) > amount) {
+            thumbProps.backgroundColor = `rgba(${theme.colors.mainRGB}, 0.15)`;
+            thumbProps.badgeColor = theme.colors.main;
+            thumbProps.progress = 1;
+          } else {
+            thumbProps.backgroundColor = `rgba(${hexToRGB(theme.colors.error)}, 0.15)`;
+            thumbProps.badgeColor = theme.colors.error;
+            thumbProps.progress = (sourceContents[resourceId] || 0) / amount;
+            if (source) {
+              thumbProps.tooltipOverride = `[INSUFFICIENT] ${Product.TYPES[resourceId]?.name}`;
+            }
+          }
+          return (
+            <ProductSelector
+              key={resourceId}
+              input={input}
+              output={output}
+              primary={primaryOutput === resourceId}
+              onClick={setPrimaryOutput ? () => setPrimaryOutput(resourceId) : undefined}>
+              <ResourceThumbnail
+                resource={Product.TYPES[resourceId]}
+                badge={`${output ? '+' : '-'}${formatResourceMass(amount, resourceId)}`}
+                iconBadge={<RecipeLabel>{recipe.toLocaleString()}</RecipeLabel>}
+                size="87px"
+                tooltipContainer="actionDialog"
+                {...thumbProps}
+              />
+              {output && <label>{primaryOutput === resourceId ? <><CheckIcon /> Primary</> : `-50%`}</label>}
+            </ProductSelector>
+          );
+        })}
       </ProductGridWrapper>
     </FlexSectionBlock>
   );

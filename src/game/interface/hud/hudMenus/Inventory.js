@@ -24,12 +24,14 @@ const Wrapper = styled.div`
   flex-direction: row;
   justify-content: flex-end;
   flex: 1;
+  height: 100%;
 `;
 
 const InnerWrapper = styled.div`
   border-radius: 10px 0 0 10px;
   display: flex;
   flex-direction: column;
+  height: 100%;
   padding: 8px 0;
   width: 100%;
   & > div {

@@ -224,15 +224,23 @@ const useActionButtons = () => {
                     a.push(actionButtons.Extract);
                   }
 
+                  if (lot.building.DryDocks?.length > 0) {
+                    a.push(actionButtons.AssembleShip);
+                  }
+
                   // TODO: these should be different
                   //  (or a single "Refine" button should have dynamic icons based on processor type)
-                  if (lot.building.Processor?.processorType === Processor.IDS.REFINERY) {
+                  const processors = lot.building.Processors || [];
+                  if (processors.find((p) => p.processorType === Processor.IDS.REFINERY)) {
                     a.push(actionButtons.Refine);
-                  } else if (lot.building.Processor?.processorType === Processor.IDS.FACTORY) {
+                  }
+                  if (processors.find((p) => p.processorType === Processor.IDS.FACTORY)) {
                     a.push(actionButtons.Refine);
-                  } else if (lot.building.Processor?.processorType === Processor.IDS.BIOREACTOR) {
+                  }
+                  if (processors.find((p) => p.processorType === Processor.IDS.BIOREACTOR)) {
                     a.push(actionButtons.Refine);
-                  } else if (lot.building.Processor?.processorType === Processor.IDS.SHIPYARD) {
+                  }
+                  if (processors.find((p) => p.processorType === Processor.IDS.SHIPYARD)) {
                     a.push(actionButtons.Refine);
                   }
                 }

@@ -17,17 +17,19 @@ const Systems = System.Systems;
 
 // TODO: move this back to sdk once finished debugging
 const formatCalldataValue = (type, value) => {
-  console.log('formatCalldataValue', type, value);
   if (type === 'ContractAddress') {
     return value;
   }
   else if (type === 'Entity') {
-    return [value.label, value.id];
+    return [value.label, BigInt(value.id)];
   }
   else if (type === 'Number') {
     return Number(value);
   }
   else if (type === 'String') {
+    return value;
+  }
+  else if (type === 'Boolean') {
     return value;
   }
   else if (type === 'BigNumber') {
@@ -39,12 +41,24 @@ const formatCalldataValue = (type, value) => {
   else if (type === 'InventoryItem') {
     return [value.product, value.amount];
   }
-  else {
+  else if (type === 'Boolean') {
+    return !!value;
+  }
+  else if (type === 'Fixed64') {
+    const neg = value < 0;
+    const val = BigInt(Math.floor(Math.abs(value) * 2 ** 32));
+    return [val, neg ? 1 : 0];
+  }
+  else if (type === 'Fixed128') {
+    const neg = value < 0;
+    const val = BigInt(Math.floor(Math.abs(value)) * 2n ** 64n);
+    return [val, neg ? 1 : 0];
+  }
+  else { // "Raw"
     console.log('TODO: should probably not be in this ELSE');
     return value?.product ? [value.product, value.amount] : value;
   }
 };
-
 // this is specific to the system's calldata format (i.e. not the full calldata of execute())
 const formatSystemCalldata = (name, vars) => {
   console.log('formatSystemCalldata', { name, vars });

@@ -6,7 +6,7 @@ import { AiOutlineExclamation as FailureIcon } from 'react-icons/ai';
 import { MdClear as DismissIcon } from 'react-icons/md';
 import BarLoader from 'react-spinners/BarLoader';
 
-import { PopoutIcon, } from '~/components/Icons';
+import { PopoutIcon } from '~/components/Icons';
 import CollapsibleSection from '~/components/CollapsibleSection';
 import LiveTimer from '~/components/LiveTimer';
 import NavIcon from '~/components/NavIcon';
@@ -24,6 +24,7 @@ import useGetActivityConfig from '~/hooks/useGetActivityConfig';
 
 const ICON_WIDTH = 34;
 const ITEM_WIDTH = 410;
+const SECTION_WIDTH = 450;
 const TRANSITION_TIME = 400;
 
 const TitleWrapper = styled.div`
@@ -457,6 +458,7 @@ const ActionItems = () => {
       {account && (
         <CollapsibleSection
           borderless
+          collapsibleProps={{ style: { width: SECTION_WIDTH - 32 } }}
           openOnChange={lastClick}
           title={(
             <TitleWrapper>
