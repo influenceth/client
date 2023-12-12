@@ -10,6 +10,7 @@ import {
   CrewIcon,
   CrewmateIcon,
   ExtractionIcon,
+  FoodIcon,
   ImproveCoreSampleIcon,
   KeysIcon,
   NewCoreSampleIcon,
@@ -27,6 +28,8 @@ import LotLink from '~/components/LotLink';
 import { andList, getProcessorProps, locationsArrToObj, ucfirst } from './utils';
 import api from './api';
 import formatters from './formatters';
+import EntityName from '~/components/EntityName';
+import { formatResourceMass } from '~/game/interface/hud/actionDialogs/components';
 
 const addressMaxWidth = '100px';
 
@@ -869,6 +872,32 @@ const activities = {
     //     </>
     //   ),
     // }),
+  },
+
+  FoodSupplied: {
+    getInvalidations: ({ event: { returnValues } }) => {
+      console.log({ returnValues });
+      // TODO: replace lastFed in place
+      return [
+        ...invalidationDefaults(Entity.IDS.CREW, returnValues.callerCrew.id),
+        ...(returnValues.origin ? invalidationDefaults(returnValues.origin.label, returnValues.origin.id) : []),
+      ];
+    },
+    getLogContent: ({ event: { returnValues } }, viewingAs) => {
+      return {
+        icon: <FoodIcon />,
+        content: (
+          <>
+            <span>
+              <EntityName {...returnValues.callerCrew} /> resupplied with{' '}
+              {formatResourceMass(returnValues.food, Product.IDS.FOOD)} food
+            </span>
+          </>
+        ),
+      };
+    },
+    requiresCrewTime: true,
+    triggerAlert: true
   },
 
   SamplingDepositFinished: {

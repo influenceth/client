@@ -19,6 +19,7 @@ import {
   UnplanBuildingIcon,
   ConstructIcon,
   ProcessIcon,
+  FoodIcon,
 } from '~/components/Icons';
 import theme, { hexToRGB } from '~/theme';
 import { getProcessorProps } from './utils';
@@ -191,6 +192,15 @@ const formatAsTx = (item) => {
       formatted.icon = <PurchaseAsteroidIcon />;
       formatted.label = 'Purchase Asteroid';
       formatted.asteroidId = item.vars.asteroid.id;
+      break;
+    }
+
+    case 'ResupplyFood': {
+      formatted.icon = <FoodIcon />;
+      formatted.label = `Resupply Food`;
+      formatted.onClick = ({ openDialog }) => {
+        openDialog('FEED_CREW');
+      };
       break;
     }
 

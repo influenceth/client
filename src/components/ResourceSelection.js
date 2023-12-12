@@ -25,6 +25,7 @@ const QuantaInput = styled.input`
   margin-right: 2px;
   outline: 0;
   text-align: right;
+  width: 100%;
 `;
 
 const PartialSelectMenu = ({ maxSelectable, onChange, onClose, resource, selected }) => {

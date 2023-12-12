@@ -1233,6 +1233,10 @@ export const WarningAlert = styled.div`
   }
   & > div:last-child {
     font-size: 96%;
+    & > i {
+      color: white;
+      font-style: normal;
+    }
   }
   &:first-child {
     margin-top: 0;
@@ -2015,7 +2019,7 @@ export const InventorySelectionDialog = ({ otherEntity, otherLotId, isSourcing, 
       if (otherEntity && entity.id === otherEntity.id && entity.label === otherEntity.label) return;
       if (!entity.Inventories) return;
       entity.Inventories.forEach((inv) => {
-        // skip if locked (or somehow type 0)
+        // skip if locked (or inventory type is 0, which should not happen but has in staging b/c of dev bugs)
         if (inv.status !== Inventory.STATUSES.AVAILABLE || inv.inventoryType === 0) return;
 
         // skip if cannot contain any of the itemIds
@@ -2221,7 +2225,7 @@ export const BuildingImage = ({ buildingType, error, iconOverlay, iconOverlayCol
   return (
     <BuildingThumbnailWrapper>
       <ResourceImage src={getBuildingIcon(buildingAsset.i, 'w150', unfinished)} />
-      {capacity && (
+      {inventory !== false && capacity && (
         <>
           <InventoryLabel overloaded={error}>
             {formatFixed(100 * (capacity[closerLimit].reserved + capacity[closerLimit].used) / capacity[closerLimit].max, 1)}% {/*closerLimit === 'volume' ? `m³` : `t`*/}
@@ -2443,6 +2447,7 @@ export const ResourceGridSectionInner = ({
   onClick,
   minCells = 0,
   noCellStyles,
+  style,
   theming = 'default'
 }) => {
   const { totalItems, totalMass, totalVolume } = useMemo(() => {
@@ -2468,7 +2473,8 @@ export const ResourceGridSectionInner = ({
       hasSummary
       theming={theming}
       isSelected={reactBool(onClick)}
-      onClick={onClick}>
+      onClick={onClick}
+      style={style}>
       {items.length > 0
         ? (
           <>
@@ -2513,10 +2519,10 @@ export const ResourceGridSectionInner = ({
   );
 };
 
-const ResourceGridSection = ({ label, ...props }) => (
+const ResourceGridSection = ({ label, sectionProps = {}, ...props }) => (
   <Section style={{ marginBottom: 25 }}>
     <SectionTitle>{label}</SectionTitle>
-    <SectionBody>
+    <SectionBody {...sectionProps}>
       <ResourceGridSectionInner {...props} />
     </SectionBody>
   </Section>
@@ -2587,7 +2593,7 @@ export const DeconstructionMaterialsSection = ({ label, itemsReturned }) => {
   );
 };
 
-export const ItemSelectionSection = ({ columns = 7, label, items, onClick, stage, unwrapped }) => {
+export const ItemSelectionSection = ({ columns = 7, label, items, onClick, stage, unwrapped, ...props }) => {
   const formattedItems = useMemo(() => {
     return Object.keys(items || {}).map((resourceId) => ({
       i: resourceId,
@@ -2603,7 +2609,8 @@ export const ItemSelectionSection = ({ columns = 7, label, items, onClick, stage
         minCells={columns * 2}
         noCellStyles={stage !== actionStage.NOT_STARTED}
         onClick={onClick}
-        theming={stage === actionStage.READY_TO_COMPLETE ? 'success' : 'default'} />
+        theming={stage === actionStage.READY_TO_COMPLETE ? 'success' : 'default'}
+        {...props} />
     )
     : (
       <ResourceGridSection
@@ -2613,7 +2620,8 @@ export const ItemSelectionSection = ({ columns = 7, label, items, onClick, stage
         minCells={columns * 2}
         noCellStyles={stage !== actionStage.NOT_STARTED}
         onClick={onClick}
-        theming={stage === actionStage.READY_TO_COMPLETE ? 'success' : 'default'} />
+        theming={stage === actionStage.READY_TO_COMPLETE ? 'success' : 'default'}
+        {...props} />
     );
 };
 
@@ -3275,7 +3283,7 @@ const Overloaded = styled.div`
   text-transform: uppercase;
 `;
 
-export const InventoryInputBlock = ({ entity, inventorySlot, transferMass = 0, transferVolume = 0, fallbackLabel = 'Select', fallbackSublabel = 'Inventory', imageProps = {}, sublabel, ...props }) => {
+export const InventoryInputBlock = ({ entity, isSourcing, inventorySlot, transferMass = 0, transferVolume = 0, fallbackLabel = 'Select', fallbackSublabel = 'Inventory', imageProps = {}, sublabel, ...props }) => {
   const inventory = useMemo(() => {
     if (entity && inventorySlot) {
       return entity.Inventories.find((i) => i.slot === inventorySlot);
@@ -3284,7 +3292,7 @@ export const InventoryInputBlock = ({ entity, inventorySlot, transferMass = 0, t
   }, [entity, inventorySlot]);
 
   const destinationOverloaded = useMemo(() => {
-    if (inventory) {
+    if (inventory && !isSourcing) {
       const capacity = getCapacityStats(inventory);
       if (!capacity.mass.isSoftMax && (capacity.mass.used + capacity.mass.reserved + transferMass > capacity.mass.max)) {
         return true;
@@ -3300,7 +3308,7 @@ export const InventoryInputBlock = ({ entity, inventorySlot, transferMass = 0, t
     const fullImageProps = {
       ...imageProps,
       error: destinationOverloaded,
-      inventory
+      inventory: !isSourcing && inventory
     }
     const lotIndex = locationsArrToObj(entity?.Location?.locations || []).lotIndex;
     if (entity?.label === Entity.IDS.BUILDING) {
@@ -3324,7 +3332,7 @@ export const InventoryInputBlock = ({ entity, inventorySlot, transferMass = 0, t
       };
     }
     return { image: <EmptyBuildingImage {...fullImageProps} /> };
-  }, [destinationOverloaded, imageProps, entity, inventory, sublabel]);
+  }, [destinationOverloaded, imageProps, isSourcing, entity, inventory, sublabel]);
 
   return (
     <FlexSectionInputBlock
@@ -3333,7 +3341,7 @@ export const InventoryInputBlock = ({ entity, inventorySlot, transferMass = 0, t
       sublabel={(
         <>
           {params.sublabel || fallbackSublabel}
-          {inventory && destinationOverloaded && <Overloaded>Insufficient Capacity</Overloaded>}
+          {destinationOverloaded && <Overloaded>Insufficient Capacity</Overloaded>}
         </>
       )}
       {...props}
