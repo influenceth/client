@@ -9,7 +9,7 @@ import useChainTime from '~/hooks/useChainTime';
 import useStore from '~/hooks/useStore';
 import { HudMenuCollapsibleSection, Rule, majorBorderColor } from './components';
 import ClipCorner from '~/components/ClipCorner';
-import { CaretIcon, ConstructIcon } from '~/components/Icons';
+import { BioreactorBuildingIcon, CaretIcon, ConstructIcon, ExtractorBuildingIcon, FactoryBuildingIcon, HabitatBuildingIcon, MarketplaceBuildingIcon, RefineryBuildingIcon, ShipyardBuildingIcon, SpaceportBuildingIcon, WarehouseBuildingIcon } from '~/components/Icons';
 import { formatFixed, locationsArrToObj } from '~/lib/utils';
 import useAsteroidShips from '~/hooks/useAsteroidShips';
 import { ResourceImage } from '~/components/ResourceThumbnail';
@@ -155,6 +155,21 @@ const Status = styled.td`
   white-space: nowrap;
 `;
 
+const getBuildingIcon = (buildingType) => {
+  switch(buildingType) {
+    case Building.IDS.BIOREACTOR: return <BioreactorBuildingIcon />;
+    case Building.IDS.EXTRACTOR: return <ExtractorBuildingIcon />;
+    case Building.IDS.FACTORY: return <FactoryBuildingIcon />;
+    case Building.IDS.HABITAT: return <HabitatBuildingIcon />;
+    case Building.IDS.MARKETPLACE: return <MarketplaceBuildingIcon />;
+    case Building.IDS.REFINERY: return <RefineryBuildingIcon />;
+    case Building.IDS.SHIPYARD: return <ShipyardBuildingIcon />;
+    case Building.IDS.SPACEPORT: return <SpaceportBuildingIcon />;
+    case Building.IDS.WAREHOUSE: return <WarehouseBuildingIcon />;
+    default: return <ConstructIcon />;
+  }
+}
+
 const BuildingRow = ({ building }) => {
   const chainTime = useChainTime();
   const buildingLoc = locationsArrToObj(building?.Location?.locations);
@@ -243,7 +258,7 @@ const BuildingRow = ({ building }) => {
     <LotRow onClick={onClick}>
       <ImageCell>
         <ImageWrapper>
-          <ConstructIcon />
+          {getBuildingIcon(building?.Building?.buildingType)}
           <ClipCorner color="#222" dimension={8} />
         </ImageWrapper>
       </ImageCell>

@@ -93,19 +93,6 @@ const useProcessManager = (lotId, slot) => {
   }, [actionItems, readyItems, getPendingTx, getStatus, payload, processor?.status]);
 
   const startProcess = useCallback(({ processId, primaryOutputId, recipeTally, origin, originSlot, destination, destinationSlot }) => {
-    console.log(
-      'ProcessProductsStart',
-      {
-        ...payload,
-        process: processId,
-        target_output: primaryOutputId,
-        recipes: recipeTally,
-        origin: { id: origin.id, label: origin.label },
-        origin_slot: originSlot,
-        destination: { id: destination.id, label: destination.label },
-        destination_slot: destinationSlot
-      }
-    );
     execute(
       'ProcessProductsStart',
       {
@@ -119,14 +106,14 @@ const useProcessManager = (lotId, slot) => {
         destination_slot: destinationSlot
       },
       {
-        lotId
+        lotId,
       }
     )
-  }, [payload]);
+  }, [lotId, payload, processor?.processorType]);
 
   const finishProcess = useCallback(() => {
-    execute('ProcessProductsFinish', payload, { lotId });
-  }, [payload]);
+    execute('ProcessProductsFinish', payload, { lotId, process: processor?.runningProcess });
+  }, [lotId, payload, processor?.runningProcess]);
 
   return {
     startProcess,

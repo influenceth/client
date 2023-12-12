@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import styled from 'styled-components';
-import { Asteroid, Crewmate, Lot, Ship, Time } from '@influenceth/sdk';
+import { Asteroid, Crewmate, Lot, Product, Ship, Time } from '@influenceth/sdk';
 
 import travelBackground from '~/assets/images/modal_headers/Travel.png';
 import { CaretIcon, CloseIcon, ForwardIcon, ConstructShipIcon, ProcessIcon, InventoryIcon, LocationIcon } from '~/components/Icons';
@@ -26,7 +26,6 @@ import {
   TravelBonusTooltip,
   getTripDetails,
   getBonusDirection,
-  getShipRequirements,
   TimeBonusTooltip,
   InventorySelectionDialog,
   InventoryInputBlock,
@@ -76,6 +75,8 @@ const shipContructionProcesses = [Ship.IDS.SHUTTLE, Ship.IDS.LIGHT_TRANSPORT, Sh
   name: `${Ship.TYPES[i].name} Integration`,
   inputs: Ship.CONSTRUCTION_TYPES[i].requirements,
   outputs: null,
+  batched: false,
+  setupTime: Ship.CONSTRUCTION_TYPES[i].setupTime,
   recipeTime: Ship.CONSTRUCTION_TYPES[i].constructionTime
 }));
 
@@ -98,7 +99,7 @@ const AssembleShip = ({ asteroid, lot, dryDockManager, stage, ...props }) => {
   const { data: destination } = useEntity(selectedDestination);
   const destinationLotId = useMemo(() => destination && locationsArrToObj(destination?.Location?.locations || []).lotId, [destination]);
   const { data: destinationLot } = useLot(destinationLotId);
-  const destinationSlot = selectedDestination?.slot;
+  const destinationInventory = useMemo(() => (destination?.Inventories || []).find((i) => i.slot === selectedDestination?.slot), [destination, selectedDestination?.slot]);
 
   const amount = 1;
   const [shipType, setShipType] = useState();
@@ -166,6 +167,16 @@ const AssembleShip = ({ asteroid, lot, dryDockManager, stage, ...props }) => {
     ];
   }, [asteroid?.id, lot?.id, crew?._timeAcceleration, destinationLot?.id, crewTravelBonus]);
 
+  const [inputArr, inputMass, inputVolume] = useMemo(() => {
+    if (!process || !amount) return [[], 0, 0, [], 0, 0];
+    const inputArr = Object.keys(process?.inputs || {}).map(Number);
+    return [
+      inputArr,
+      inputArr.reduce((sum, i) => sum + process.inputs[i] * (Product.TYPES[i].massPerUnit || 0), 0),
+      inputArr.reduce((sum, i) => sum + process.inputs[i] * (Product.TYPES[i].volumePerUnit || 0), 0),
+    ];
+  }, [process]); 
+
   const stats = useMemo(() => ([
     {
       label: 'Crew Travel',
@@ -217,11 +228,6 @@ const AssembleShip = ({ asteroid, lot, dryDockManager, stage, ...props }) => {
     startShipAssembly(shipType, origin, originSlot);
   }, [shipType, origin, originSlot]);
 
-  const shipRequirements = useMemo(
-    () => getShipRequirements(shipType, origin, originSlot),
-    [shipType, origin, originSlot]
-  );
-
   // handle auto-closing
   const lastStatus = useRef();
   useEffect(() => {
@@ -233,6 +239,12 @@ const AssembleShip = ({ asteroid, lot, dryDockManager, stage, ...props }) => {
     }
     lastStatus.current = assemblyStatus;
   }, [assemblyStatus]);
+
+  const isOriginSufficient = useMemo(() => {
+    if (!originInventory) return false;
+    const sourceContentObj = (originInventory?.contents || []).reduce((acc, cur) => ({ ...acc, [cur.product]: cur.amount }), {});
+    return !inputArr.find((i) => (sourceContentObj[i] || 0) < process.inputs[i]);
+  }, [inputArr, originInventory?.contents, process]);
 
   return (
     <>
@@ -344,11 +356,15 @@ const AssembleShip = ({ asteroid, lot, dryDockManager, stage, ...props }) => {
             <ProcessInputSquareSection
               input
               title={
-                shipRequirements
-                  ? <>Required: <b style={{ color: 'white', marginLeft: 4 }}>{shipRequirements?.length || 0} Products</b></>
+                process
+                  ? <>Required: <b style={{ color: 'white', marginLeft: 4 }}>{inputArr.length || 0} Products</b></>
                   : `Requirements`
               }
-              products={shipRequirements || 0}
+              products={
+                process
+                  ? inputArr.map((i) => ({ i, recipe: process.inputs[i], amount: process.inputs[i] * amount }))
+                  : []
+              }
               source={originInventory}
               style={{ width: '100%' }} />
           </div>
@@ -396,8 +412,12 @@ const AssembleShip = ({ asteroid, lot, dryDockManager, stage, ...props }) => {
       </ActionDialogBody>
 
       <ActionDialogFooter
-        disabled={false/* TODO: insufficient propellant + anything else? */}
-        goLabel="Launch"
+        disabled={!(
+          (stage === actionStages.NOT_STARTED && process && originInventory && isOriginSufficient)
+          || (stage === actionStages.READY_TO_COMPLETE && destinationInventory)
+        )}
+        finalizeLabel="Deliver Ship"
+        goLabel="Begin Assembly"
         onGo={onAssemble}
         stage={stage}
         wide
@@ -417,7 +437,7 @@ const AssembleShip = ({ asteroid, lot, dryDockManager, stage, ...props }) => {
             otherEntity={lot.building}
             otherLotId={lot?.id}
             isSourcing
-            itemIds={shipRequirements.map(({ i }) => Number(i))}
+            itemIds={inputArr}
             onClose={() => setOriginSelectorOpen(false)}
             onSelected={setSelectedOrigin}
             open={originSelectorOpen}

@@ -3,7 +3,7 @@ import styled from 'styled-components';
 import { Asteroid, Crewmate, Lot, Process, Processor, Product, Time } from '@influenceth/sdk';
 
 import travelBackground from '~/assets/images/modal_headers/Travel.png';
-import { BackIcon, CaretIcon, CloseIcon, ForwardIcon, RefineIcon, ProcessIcon, FactoryBuildingIcon, BioreactorBuildingIcon, ShipyardBuildingIcon, InventoryIcon, LocationIcon } from '~/components/Icons';
+import { BackIcon, CaretIcon, CloseIcon, ForwardIcon, RefineIcon, ProcessIcon, BioreactorBuildingIcon, ShipyardBuildingIcon, InventoryIcon, LocationIcon, RefineryBuildingIcon, ManufactureIcon } from '~/components/Icons';
 import useCrewContext from '~/hooks/useCrewContext';
 import { reactBool, formatTimer, locationsArrToObj, getCrewAbilityBonuses, formatFixed } from '~/lib/utils';
 
@@ -19,20 +19,19 @@ import {
   sectionBodyCornerSize,
   RecipeSlider,
   TransferDistanceDetails,
-  ProcessInputSquareSection,
   formatMass,
   ProcessSelectionDialog,
   LotInputBlock,
   TravelBonusTooltip,
   getTripDetails,
   getBonusDirection,
-  getShipRequirements,
   TimeBonusTooltip,
   InventorySelectionDialog,
   InventoryInputBlock,
   ShipImage,
   ProcessInputOutputSection,
-  formatVolume
+  formatVolume,
+  ProgressBarSection
 } from './components';
 import useLot from '~/hooks/useLot';
 import useStore from '~/hooks/useStore';
@@ -70,6 +69,8 @@ const IconWrapper = styled.div`
 `;
 const RightIconWrapper = styled.div``;
 
+const noop = () => {};
+
 const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...props }) => {
   const createAlert = useStore(s => s.dispatchAlertLogged);
   
@@ -93,12 +94,12 @@ const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...pro
   const { data: destinationLot } = useLot(destinationLotId);
   const destinationInventory = useMemo(() => (destination?.Inventories || []).find((i) => i.slot === selectedDestination?.slot), [destination, selectedDestination?.slot]);
 
-  const [amount, setAmount] = useState(1);
-  const [processId, setProcessId] = useState();
+  const [amount, setAmount] = useState(currentProcess?.recipeTally || 1);
+  const [processId, setProcessId] = useState(currentProcess?.processId);
   const [destinationSelectorOpen, setDestinationSelectorOpen] = useState(false);
   const [originSelectorOpen, setOriginSelectorOpen] = useState(false);
   const [processSelectorOpen, setProcessSelectorOpen] = useState(false);
-  const [primaryOutput, setPrimaryOutput] = useState();
+  const [primaryOutput, setPrimaryOutput] = useState(currentProcess?.primaryOutputId);
   
   const process = Process.TYPES[processId];
   const maxAmount = useMemo(() => {
@@ -109,26 +110,25 @@ const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...pro
 
   useEffect(() => {
     if (!process) return;
+    if (currentProcess) return;
     setPrimaryOutput(Number(Object.keys(process.outputs)[0]));
     setAmount(maxAmount);
-  }, [maxAmount, process]);
+  }, [currentProcess, maxAmount, process]);
 
   const crewmates = currentProcess?._crewmates || crew?._crewmates || [];
   const captain = crewmates[0];
 
   const [crewTravelBonus, processingTimeBonus] = useMemo(() => {
     const bonusIds = [Crewmate.ABILITY_IDS.HOPPER_TRANSPORT_TIME];
-    if (processor.processorType === Processor.IDS.FACTORY) {
-      bonusIds.push(Crewmate.ABILITY_IDS.MANUFACTURING_TIME);
+    if (processor.processorType === Processor.IDS.BIOREACTOR) {
+      bonusIds.push(Crewmate.ABILITY_IDS.REACTION_TIME);
     } else if (processor.processorType === Processor.IDS.REFINERY) {
       bonusIds.push(Crewmate.ABILITY_IDS.REFINING_TIME);
-    } else if (processor.processorType === Processor.IDS.BIOREACTOR) {
-      bonusIds.push(Crewmate.ABILITY_IDS.REACTION_TIME);
+    } else {
+      bonusIds.push(Crewmate.ABILITY_IDS.MANUFACTURING_TIME);
     }
     const abilities = getCrewAbilityBonuses(bonusIds, crew);
-    const response = bonusIds.map((id) => abilities[id] || {});
-    // if (response.length < 2) response.push({ totalBonus: 1 });  // if no processor selected yet
-    return response;
+    return bonusIds.map((id) => abilities[id] || {});
   }, [crew]);
 
   const [setupTime, processingTime] = useMemo(() => {
@@ -173,8 +173,8 @@ const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...pro
 
   const [inputArr, inputMass, inputVolume, outputArr, outputMass, outputVolume] = useMemo(() => {
     if (!process || !amount) return [[], 0, 0, [], 0, 0];
-    const inputArr = Object.keys(process?.inputs || {}).map(Number);
-    const outputArr = Object.keys(process?.outputs || {}).map(Number);
+    const inputArr = Object.keys(process.inputs || {}).map(Number);
+    const outputArr = Object.keys(process.outputs || {}).map(Number);
     return [
       inputArr,
       inputArr.reduce((sum, i) => sum + process.inputs[i] * amount * (Product.TYPES[i].massPerUnit || 0), 0),
@@ -190,7 +190,7 @@ const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...pro
       crewTravelTime + setupTime,
       Math.max(crewTravelTime / 2, inputTransportTime) + setupTime + processingTime + outputTransportTime
     ];
-  }, [crewTravelTime, inputTransportTime, process, setupTime, processingTime, outputTransportTime]);
+  }, [crewTravelTime, inputTransportTime, setupTime, processingTime, outputTransportTime]);
 
   const stats = useMemo(() => ([
     {
@@ -262,6 +262,10 @@ const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...pro
     tripDetails
   ]);
 
+  const onFinishProcess = useCallback(() => {
+    finishProcess();
+  }, [finishProcess]);
+
   const onStartProcess = useCallback(() => {
     startProcess({
       processId,
@@ -289,7 +293,7 @@ const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...pro
   }, [processStatus]);
 
   const isOriginSufficient = useMemo(() => {
-    if (!originInventory) return false;
+    if (!originInventory || !process) return false;
     const sourceContentObj = (originInventory?.contents || []).reduce((acc, cur) => ({ ...acc, [cur.product]: cur.amount }), {});
     return !inputArr.find((i) => (sourceContentObj[i] || 0) < process.inputs[i] * amount);
   }, [amount, inputArr, originInventory?.contents, process]);
@@ -307,7 +311,7 @@ const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...pro
     if (processor.processorType === Processor.IDS.FACTORY) {
       return [
         {
-          icon: <FactoryBuildingIcon />,
+          icon: <ManufactureIcon />,
           label: 'Manufacture Products',
         },
         'Manufacturing'
@@ -333,6 +337,18 @@ const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...pro
     }
     return [{}, ''];
   }, [processor.processorType]);
+
+  const recipeStepSize = useMemo(() => {
+    if (process) {
+      return Object.keys(process.outputs).reduce((acc, i) => {
+        const outputStep = Product.TYPES[i].isAtomic
+          ? Math.floor(1000 / process.outputs[i]) / 1000
+          : 0.001;
+        return Math.max(acc, outputStep);
+      }, 0.001);
+    }
+    return 0.001;
+  }, [process]);
 
   return (
     <>
@@ -366,15 +382,19 @@ const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...pro
             style={{ alignSelf: 'flex-start', width: '66.7%' }}>
 
             <FlexSectionInputBody
-              isSelected={true}
-              onClick={() => setProcessSelectorOpen(true)}
+              isSelected={stage === actionStages.NOT_STARTED}
+              onClick={stage === actionStages.NOT_STARTED ? () => setProcessSelectorOpen(true) : undefined}
               style={{ padding: 4 }}>
               <SelectorInner>
                 <IconWrapper>
                   <ProcessIcon />
                 </IconWrapper>
                 <label>{process?.name || `Select a Process...`}</label>
-                {process ? <IconButton borderless><CloseIcon /></IconButton> : <CaretIcon />}
+                {stage === actionStages.NOT_STARTED && (
+                  <>
+                    {process ? <IconButton borderless><CloseIcon /></IconButton> : <CaretIcon />}
+                  </>
+                )}
               </SelectorInner>
               <ClipCorner dimension={sectionBodyCornerSize} />
             </FlexSectionInputBody>
@@ -382,6 +402,7 @@ const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...pro
             <RecipeSlider
               disabled={!process || stage !== actionStages.NOT_STARTED}
               amount={amount}
+              increment={recipeStepSize}
               processingTime={processingTime}
               min={0}
               max={maxAmount}
@@ -460,6 +481,7 @@ const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...pro
           </FlexSectionSpacer>
 
           <ProcessInputOutputSection
+            disabled={stage !== actionStages.NOT_STARTED}
             output
             title={
               process
@@ -472,20 +494,21 @@ const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...pro
                 : []
             }
             primaryOutput={primaryOutput}
-            setPrimaryOutput={setPrimaryOutput}
+            setPrimaryOutput={stage === actionStages.NOT_STARTED ? setPrimaryOutput : null}
             style={{ alignSelf: 'flex-start', width: '66.7%' }} />
 
         </FlexSection>
 
-        {stage !== actionStages.NOT_STARTED && null /* TODO: (
+        {stage !== actionStages.NOT_STARTED && (
           <ProgressBarSection
-            finishTime={lot?.building?.construction?.finishTime}
-            startTime={lot?.building?.construction?.startTime}
+            finishTime={currentProcess?.finishTime}
+            startTime={currentProcess?.startTime}
             stage={stage}
             title="Progress"
-            totalTime={crewTravelTime + constructionTime}
+            totalTime={taskTimeRequirement}
+            width="100%"
           />
-        )*/}
+        )}
 
         <ActionDialogStats
           stage={stage}
@@ -499,6 +522,8 @@ const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...pro
         disabled={!(process && amount > 0 && originInventory && isOriginSufficient && destinationInventory)}
         goLabel="Begin"
         onGo={onStartProcess}
+        finalizeLabel="Finish"
+        onFinalize={onFinishProcess}
         stage={stage}
         waitForCrewReady
         wide
@@ -508,7 +533,7 @@ const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...pro
         <>
           <ProcessSelectionDialog
             initialSelection={processId}
-            processorType={lot?.building?.Processors?.[0]?.processorType}
+            processorType={processor?.processorType}
             onClose={() => setProcessSelectorOpen(false)}
             onSelected={setProcessId}
             open={processSelectorOpen}
@@ -535,17 +560,6 @@ const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...pro
           />
         </>
       )}
-      
-      {/* TODO: ecs refactor -- now that shipyard has two processors, need somewhere to construct ships
-      {stage === actionStages.NOT_STARTED && (
-        <ShipConstructionSelectionDialog
-          initialSelection={processId}
-          onClose={() => setProcessSelectorOpen(false)}
-          onSelected={setProcessId}
-          open={processSelectorOpen}
-        />
-      )}
-      */}
     </>
   );
 };

@@ -231,17 +231,8 @@ const useActionButtons = () => {
                   // TODO: these should be different
                   //  (or a single "Refine" button should have dynamic icons based on processor type)
                   const processors = lot.building.Processors || [];
-                  if (processors.find((p) => p.processorType === Processor.IDS.REFINERY)) {
-                    a.push(actionButtons.Refine);
-                  }
-                  if (processors.find((p) => p.processorType === Processor.IDS.FACTORY)) {
-                    a.push(actionButtons.Refine);
-                  }
-                  if (processors.find((p) => p.processorType === Processor.IDS.BIOREACTOR)) {
-                    a.push(actionButtons.Refine);
-                  }
-                  if (processors.find((p) => p.processorType === Processor.IDS.SHIPYARD)) {
-                    a.push(actionButtons.Refine);
+                  if (processors.length) {
+                    a.push(actionButtons.Processors);
                   }
                 }
 

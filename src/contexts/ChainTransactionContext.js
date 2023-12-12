@@ -15,85 +15,85 @@ import api from '~/lib/api';
 import { CallData, uint256 } from 'starknet';
 const Systems = System.Systems;
 
-// TODO: move this back to sdk once finished debugging
-const formatCalldataValue = (type, value) => {
-  if (type === 'ContractAddress') {
-    return value;
-  }
-  else if (type === 'Entity') {
-    return [value.label, BigInt(value.id)];
-  }
-  else if (type === 'Number') {
-    return Number(value);
-  }
-  else if (type === 'String') {
-    return value;
-  }
-  else if (type === 'Boolean') {
-    return value;
-  }
-  else if (type === 'BigNumber') {
-    return BigInt(value);
-  }
-  else if (type === 'Ether') {
-    return uint256.bnToUint256(value);
-  }
-  else if (type === 'InventoryItem') {
-    return [value.product, value.amount];
-  }
-  else if (type === 'Boolean') {
-    return !!value;
-  }
-  else if (type === 'Fixed64') {
-    const neg = value < 0;
-    const val = BigInt(Math.floor(Math.abs(value) * 2 ** 32));
-    return [val, neg ? 1 : 0];
-  }
-  else if (type === 'Fixed128') {
-    const neg = value < 0;
-    const val = BigInt(Math.floor(Math.abs(value)) * 2n ** 64n);
-    return [val, neg ? 1 : 0];
-  }
-  else { // "Raw"
-    console.log('TODO: should probably not be in this ELSE');
-    return value?.product ? [value.product, value.amount] : value;
-  }
-};
-// this is specific to the system's calldata format (i.e. not the full calldata of execute())
-const formatSystemCalldata = (name, vars) => {
-  console.log('formatSystemCalldata', { name, vars });
-  const system = Systems[name];
-  if (!system) throw new Error(`Unknown system: ${name}`);
+// // TODO: move this back to sdk once finished debugging
+// const formatCalldataValue = (type, value) => {
+//   if (type === 'ContractAddress') {
+//     return value;
+//   }
+//   else if (type === 'Entity') {
+//     return [value.label, BigInt(value.id)];
+//   }
+//   else if (type === 'Number') {
+//     return Number(value);
+//   }
+//   else if (type === 'String') {
+//     return value;
+//   }
+//   else if (type === 'Boolean') {
+//     return value;
+//   }
+//   else if (type === 'BigNumber') {
+//     return BigInt(value);
+//   }
+//   else if (type === 'Ether') {
+//     return uint256.bnToUint256(value);
+//   }
+//   else if (type === 'InventoryItem') {
+//     return [value.product, value.amount];
+//   }
+//   else if (type === 'Boolean') {
+//     return !!value;
+//   }
+//   else if (type === 'Fixed64') {
+//     const neg = value < 0;
+//     const val = BigInt(Math.floor(Math.abs(value) * 2 ** 32));
+//     return [val, neg ? 1 : 0];
+//   }
+//   else if (type === 'Fixed128') {
+//     const neg = value < 0;
+//     const val = BigInt(Math.floor(Math.abs(value)) * 2n ** 64n);
+//     return [val, neg ? 1 : 0];
+//   }
+//   else { // "Raw"
+//     console.log('TODO: should probably not be in this ELSE');
+//     return value?.product ? [value.product, value.amount] : value;
+//   }
+// };
+// // this is specific to the system's calldata format (i.e. not the full calldata of execute())
+// const formatSystemCalldata = (name, vars) => {
+//   console.log('formatSystemCalldata', { name, vars });
+//   const system = Systems[name];
+//   if (!system) throw new Error(`Unknown system: ${name}`);
 
-  const x = system.inputs.reduce((acc, { name, type, isArray }) => {
-    if (isArray) acc.push(vars[name]?.length || 0);
-    (isArray ? vars[name] : [vars[name]]).forEach((v) => {
-      const formattedVar = formatCalldataValue(type, v);
-      try {
-        (Array.isArray(formattedVar) ? formattedVar : [formattedVar]).forEach((val) => {
-          acc.push(val);
-        });
-      } catch (e) {
-        console.error(`${name} could not be formatted`, vars[name], e);
-      }
-    }, []);
-    return acc;
-  }, []);
-  console.log('formatSystemCalldata (out)', x);
-  return x;
-};
+//   const x = system.inputs.reduce((acc, { name, type, isArray }) => {
+//     if (isArray) acc.push(vars[name]?.length || 0);
+//     (isArray ? vars[name] : [vars[name]]).forEach((v) => {
+//       const formattedVar = formatCalldataValue(type, v);
+//       try {
+//         (Array.isArray(formattedVar) ? formattedVar : [formattedVar]).forEach((val) => {
+//           acc.push(val);
+//         });
+//       } catch (e) {
+//         console.error(`${name} could not be formatted`, vars[name], e);
+//       }
+//     }, []);
+//     return acc;
+//   }, []);
+//   console.log('formatSystemCalldata (out)', x);
+//   return x;
+// };
 
-const getRunSystemCall = (name, input, dispatcherAddress) => {
-  console.log('getRunSystemCall', { name, input, dispatcherAddress });
-  return {
-    contractAddress: dispatcherAddress,
-    entrypoint: 'run_system',
-    calldata: CallData.compile({
-      name,
-      calldata: formatSystemCalldata(name, input)
-    }),
-  };
-};
+// const getRunSystemCall = (name, input, dispatcherAddress) => {
+//   console.log('getRunSystemCall', { name, input, dispatcherAddress });
+//   return {
+//     contractAddress: dispatcherAddress,
+//     entrypoint: 'run_system',
+//     calldata: CallData.compile({
+//       name,
+//       calldata: formatSystemCalldata(name, input)
+//     }),
+//   };
+// };
 
 
 ///////////
@@ -133,6 +133,9 @@ const customConfigs = {
 
   ExtractResourceStart: { equalityTest: ['extractor.id', 'extractor_slot'] },
   ExtractResourceFinish: { equalityTest: ['extractor.id', 'extractor_slot'] },
+
+  ProcessProductsStart: { equalityTest: ['processor.id', 'processor_slot'] },
+  ProcessProductsFinish: { equalityTest: ['processor.id', 'processor_slot'] },
 
   SampleDepositFinish: { equalityTest: ['lot.id', 'caller_crew.id'] },
   SampleDepositImprove: { equalityTest: ['lot.id', 'caller_crew.id'] },
@@ -256,7 +259,7 @@ export function ChainTransactionProvider({ children }) {
             const calls = [];
             for (let runSystem of runSystems) {
               const vars = customConfigs[runSystem]?.preprocess ? customConfigs[runSystem].preprocess(rawVars) : rawVars;
-              calls.push(/*System.*/getRunSystemCall(runSystem, vars, process.env.REACT_APP_STARKNET_DISPATCHER));
+              calls.push(System.getRunSystemCall(runSystem, vars, process.env.REACT_APP_STARKNET_DISPATCHER));
               if (customConfigs[runSystem]?.getPrice) {
                 totalPrice += await customConfigs[runSystem].getPrice(vars);
               }

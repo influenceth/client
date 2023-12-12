@@ -652,7 +652,7 @@ const ProductSelector = styled.div`
     border: 1px solid ${p.theme.colors.main};
     padding: 3px;
   `}
-  ${p => p.output && !p.primary && `
+  ${p => p.onClick && !p.primary && `
     cursor: ${p.theme.cursors.active};
     &:hover {
       background: #171717;
@@ -1872,7 +1872,7 @@ export const ProcessSelectionDialog = ({ initialSelection, onClose, forceProcess
             <tr>
               <td>Process Name</td>
               <td style={{ textAlign: 'left'}}>Inputs</td>
-              {processes[0].outputs && <td style={{ textAlign: 'left'}}>Outputs</td>}
+              {processes[0]?.outputs && <td style={{ textAlign: 'left'}}>Outputs</td>}
             </tr>
           </thead>
           <tbody>
@@ -2161,22 +2161,6 @@ export const getBuildingRequirements = (building = {}, deliveryActions = []) => 
     const inTransit = deliveryActions
       .filter((d) => d.status !== 'FINISHED')
       .reduce((acc, d) => acc + (d.action.contents.find((c) => Number(c.product) === Number(productId))?.amount) || 0, 0);
-    return {
-      i: productId,
-      totalRequired,
-      inInventory,
-      inTransit,
-      inNeed: Math.max(0, totalRequired - inInventory - inTransit)
-    };
-  })
-};
-
-export const getShipRequirements = (shipType, origin, originSlot) => {
-  const inventory = (origin?.Inventories || []).find((i) => i.slot === originSlot);
-  return Object.keys(Ship.CONSTRUCTION_TYPES[shipType]?.requirements || {}).map((productId) => {
-    const totalRequired = Ship.CONSTRUCTION_TYPES[shipType].requirements[productId];
-    const inInventory = (inventory?.contents || []).find((c) => Number(c.product) === Number(productId))?.amount || 0;
-    const inTransit = 0;
     return {
       i: productId,
       totalRequired,
@@ -2665,7 +2649,8 @@ export const ProgressBarSection = ({
   startTime,
   title,
   tooltip,
-  totalTime
+  totalTime,
+  width
 }) => {
   const chainTime = useChainTime();
 
@@ -2735,7 +2720,7 @@ export const ProgressBarSection = ({
   }, [stage, totalTime]);
 
   return (
-    <Section>
+    <Section style={{ width }}>
       <SectionTitle note={totalTimeNote}>{title}</SectionTitle>
       {tooltip && (
         <MouseoverInfoPane referenceEl={refEl.current} visible={hovered}>
@@ -2831,9 +2816,16 @@ export const ResourceAmountSlider = ({ amount, extractionTime, min, max, resourc
   );
 };
 
-export const RecipeSlider = ({ amount, processingTime, min, max, overrideSliderLabel, setAmount }) => {
+export const RecipeSlider = ({ amount, disabled, increment = 0.001, processingTime, min: rawMin, max: rawMax, overrideSliderLabel, setAmount }) => {
   const [focusOn, setFocusOn] = useState();
   const [mouseIn, setMouseIn] = useState(false);
+
+  const [min, max] = useMemo(() => {
+    return [
+      Math.ceil(rawMin / increment) * increment,
+      Math.floor(rawMax / increment) * increment
+    ];
+  }, [increment, rawMin, rawMax]);
 
   const onFocusEvent = useCallback((e) => {
     if (e.type === 'focus') {
@@ -2848,27 +2840,35 @@ export const RecipeSlider = ({ amount, processingTime, min, max, overrideSliderL
     setMouseIn(e.type === 'mouseenter')
   }, []);
 
-  const onChangeInput = (e) => {
-    let currentValue = Math.round(1000 * e.currentTarget.value) / 1000;
-    if (currentValue > max) currentValue = max;
-    if (currentValue < min) currentValue = min;
-    setAmount(currentValue);
-  };
+  const onSetAmount = useCallback((value) => {
+    // apply max, then min, then single increment
+    let cleansed = Math.min(max, value);
 
-  const onRound = () => {
-    let newValue = Math.round(amount);
-    if (newValue > max) newValue = Math.floor(amount);
-    if (newValue < min) newValue = Math.ceil(amount);
-    setAmount(newValue);
-  };
+    // apply min / single increment
+    cleansed = Math.max(cleansed, min, increment);
+
+    // round to nearest increment
+    cleansed = Math.floor(cleansed / increment) * increment;
+
+    setAmount(cleansed);
+  }, [increment, min, max]);
+
+  const onChangeInput = useCallback((e) => {
+    onSetAmount(e.currentTarget.value);
+  }, [onSetAmount]);
+
+  const onRound = useCallback(() => {
+    onSetAmount(Math.round(amount));
+  }, [amount, onSetAmount]);
 
   return (
     <SliderWrapper>
       <SliderInput
+        disabled={disabled}
         min={min}
         max={max}
-        increment={0.001}
-        onChange={setAmount}
+        increment={increment}
+        onChange={onSetAmount}
         value={amount || 0} />
       <SliderInfoRow style={{ alignItems: 'center' }}>
         <SliderInfo style={{ flex: 1 }}>{formatTimer(processingTime, 3)}</SliderInfo>
@@ -2878,6 +2878,7 @@ export const RecipeSlider = ({ amount, processingTime, min, max, overrideSliderL
               {(mouseIn || focusOn) ? (
                 <SliderTextInput
                   type="number"
+                  disabled={disabled}
                   step={0.001}
                   value={amount}
                   onChange={onChangeInput}
@@ -2892,16 +2893,20 @@ export const RecipeSlider = ({ amount, processingTime, min, max, overrideSliderL
               {' '}
               <span style={{ fontSize: 14 }}>SRs</span>
             </SliderLabel>
-            <Button
-              disabled={amount === Math.round(amount)}
-              onClick={onRound}
-              size="small"
-              style={{ marginLeft: 10, padding: 0, minWidth: 75 }}>Round</Button>
-            <Button
-              disabled={amount === max}
-              onClick={() => setAmount(max)}
-              size="small"
-              style={{ marginLeft: 10, padding: 0, minWidth: 75 }}>Max</Button>
+            {!disabled && (
+              <>
+                <Button
+                  disabled={amount === Math.round(amount)}
+                  onClick={onRound}
+                  size="small"
+                  style={{ marginLeft: 10, padding: 0, minWidth: 75 }}>Round</Button>
+                <Button
+                  disabled={amount === max}
+                  onClick={() => onSetAmount(max)}
+                  size="small"
+                  style={{ marginLeft: 10, padding: 0, minWidth: 75 }}>Max</Button>
+              </>
+            )}
           </>
         )}
       </SliderInfoRow>
@@ -2931,6 +2936,7 @@ export const ProcessInputOutputSection = ({ title, products, input, output, prim
               thumbProps.tooltipOverride = `[INSUFFICIENT] ${Product.TYPES[resourceId]?.name}`;
             }
           }
+          const resource = Product.TYPES[resourceId];
           return (
             <ProductSelector
               key={resourceId}
@@ -2939,8 +2945,8 @@ export const ProcessInputOutputSection = ({ title, products, input, output, prim
               primary={primaryOutput === resourceId}
               onClick={setPrimaryOutput ? () => setPrimaryOutput(resourceId) : undefined}>
               <ResourceThumbnail
-                resource={Product.TYPES[resourceId]}
-                badge={`${output ? '+' : '-'}${formatResourceMass(amount, resourceId)}`}
+                resource={resource}
+                badge={`${output ? '+' : '-'}${resource.isAtomic ? amount : formatResourceMass(amount, resourceId)}`}
                 iconBadge={<RecipeLabel>{recipe.toLocaleString()}</RecipeLabel>}
                 tooltipContainer="actionDialog"
                 {...thumbProps}
@@ -2988,6 +2994,7 @@ export const ProcessInputSquareSection = ({ title, products, input, output, prim
               thumbProps.tooltipOverride = `[INSUFFICIENT] ${Product.TYPES[resourceId]?.name}`;
             }
           }
+          const resource = Product.TYPES[resourceId];
           return (
             <ProductSelector
               key={resourceId}
@@ -2996,9 +3003,9 @@ export const ProcessInputSquareSection = ({ title, products, input, output, prim
               primary={primaryOutput === resourceId}
               onClick={setPrimaryOutput ? () => setPrimaryOutput(resourceId) : undefined}>
               <ResourceThumbnail
-                resource={Product.TYPES[resourceId]}
-                badge={`${output ? '+' : '-'}${formatResourceMass(amount, resourceId)}`}
-                iconBadge={<RecipeLabel>{recipe.toLocaleString()}</RecipeLabel>}
+                resource={resource}
+                badge={`${output ? '+' : '-'}${resource.isAtomic ? amount : formatResourceMass(amount, resourceId)}`}
+                iconBadge={<RecipeLabel>{(recipe || 0).toLocaleString()}</RecipeLabel>}
                 size="87px"
                 tooltipContainer="actionDialog"
                 {...thumbProps}

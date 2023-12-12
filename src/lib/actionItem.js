@@ -1,4 +1,4 @@
-import { Building, Entity, Lot, Product } from '@influenceth/sdk';
+import { Building, Entity, Lot, Process, Product } from '@influenceth/sdk';
 import moment from 'moment';
 
 import {
@@ -18,8 +18,10 @@ import {
   NewCoreSampleIcon,
   UnplanBuildingIcon,
   ConstructIcon,
+  ProcessIcon,
 } from '~/components/Icons';
 import theme, { hexToRGB } from '~/theme';
+import { getProcessorProps } from './utils';
 
 const formatAsItem = (activity, actionItem = {}) => {
   const formatted = {
@@ -372,6 +374,35 @@ const formatAsTx = (item) => {
       formatted.lotId = item.meta?.lotId;
       formatted.onClick = ({ openDialog }) => {
         openDialog('EXTRACT_RESOURCE');
+      };
+      break;
+    }
+
+    case 'ProcessProductsStart': {
+      const process = Process.TYPES[item.vars?.process];
+      const processorProps = getProcessorProps(process?.processorType);
+      formatted.icon = processorProps?.icon || <ProcessIcon />;
+      formatted.label = processorProps?.label || 'Start Process';
+      formatted.asteroidId = Lot.toPosition(item.meta?.lotId)?.asteroidId;
+      formatted.lotId = item.meta?.lotId;
+      formatted.locationDetail = process?.name;
+      formatted.onClick = ({ openDialog }) => {
+        console.log('openDialog', 'PROCESS', { processorSlot: item.vars?.processor_slot });
+        openDialog('PROCESS', { processorSlot: item.vars?.processor_slot });
+      };
+      break;
+    }
+
+    case 'ProcessProductsFinish': {
+      const process = Process.TYPES[item.meta?.process];
+      const processorProps = getProcessorProps(process?.processorType);
+      formatted.icon = processorProps?.icon || <ProcessIcon />;
+      formatted.label = processorProps?.label || 'Finish Process';
+      formatted.asteroidId = Lot.toPosition(item.meta?.lotId)?.asteroidId;
+      formatted.lotId = item.meta?.lotId;
+      formatted.locationDetail = process?.name; 
+      formatted.onClick = ({ openDialog }) => {
+        openDialog('PROCESS', { processorSlot: item.vars?.processorSlot });
       };
       break;
     }

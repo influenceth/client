@@ -13,7 +13,7 @@ import LaunchShip from './LaunchShip';
 import PlanBuilding from './PlanBuilding';
 import PurchaseAsteroid from './PurchaseAsteroid';
 import RecruitCrewmate from './RecruitCrewmate';
-import Refine from './Refine';
+import Processors from './Processors';
 import ScanAsteroid from './ScanAsteroid';
 import SelectTravelDestination from './SelectTravelDestination';
 import SetCourse from './SetCourse';
@@ -38,9 +38,9 @@ const ActionsButtons = {
   LandShip,
   LaunchShip,
   PlanBuilding,
+  Processors,
   PurchaseAsteroid,
   RecruitCrewmate,
-  Refine,
   ScanAsteroid,
   SelectTravelDestination,
   SetCourse,

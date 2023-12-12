@@ -1,4 +1,4 @@
-import { Address, Building, Entity, Lot, Product } from '@influenceth/sdk';
+import { Address, Building, Entity, Lot, Process, Product } from '@influenceth/sdk';
 import { AiFillEdit as NameIcon } from 'react-icons/ai';
 import { BiTransfer as TransferIcon } from 'react-icons/bi';
 
@@ -14,6 +14,7 @@ import {
   KeysIcon,
   NewCoreSampleIcon,
   PlanBuildingIcon,
+  ProcessIcon,
   PromoteIcon,
   PurchaseAsteroidIcon,
   ScanAsteroidIcon,
@@ -23,7 +24,7 @@ import {
 } from '~/components/Icons';
 import LotLink from '~/components/LotLink';
 
-import { andList, locationsArrToObj, ucfirst } from './utils';
+import { andList, getProcessorProps, locationsArrToObj, ucfirst } from './utils';
 import api from './api';
 import formatters from './formatters';
 
@@ -589,6 +590,106 @@ const activities = {
   // MaterialProcessingFinished,
   // MaterialProcessingStarted,
 
+  MaterialProcessingStarted: {
+    getActionItem: ({ returnValues }, { building = {} }) => {
+      const _location = locationsArrToObj(building?.Location?.locations || []);
+      const process = Process.TYPES[returnValues.process];
+      const processorProps = getProcessorProps(process?.processorType);
+      return {
+        icon: processorProps?.icon || <ProcessIcon />,
+        label: processorProps?.label || 'Running Process',
+        asteroidId: _location.asteroidId,
+        lotId: _location.lotId,
+        locationDetail: getEntityName(building),
+        onClick: ({ openDialog }) => {
+          openDialog('PROCESS', { processorSlot: returnValues.processorSlot });
+        }
+      };
+    },
+    getIsActionItemHidden: ({ returnValues }) => (pendingTransactions) => {
+      return pendingTransactions.find((tx) => (
+        tx.key === 'MaterialProcessingFinished'
+        && tx.vars.processor.id === returnValues.processor.id
+        && tx.vars.processor_slot === returnValues.processor_slot
+      ))
+    },
+
+    getInvalidations: ({ event: { returnValues, version } }) => {
+      const inv = [
+        ...invalidationDefaults(returnValues.processor.label, returnValues.processor.id),
+        ...invalidationDefaults(returnValues.destination.label, returnValues.destination.id),
+        ['actionItems']
+      ];
+
+      // (v1 only)
+      if (returnValues.origin) inv.unshift(...invalidationDefaults(returnValues.origin.label, returnValues.origin.id));
+
+      // TODO: do we need this for building status?
+      // ['asteroidCrewBuildings', returnValues.asteroidId, returnValues.crewId],
+      return inv;
+    },
+
+    getPrepopEntities: ({ event: { returnValues } }) => ({
+      building: returnValues.processor,
+    }),
+
+    // getLogContent: ({ event: { returnValues } }, viewingAs, { building = {} }) => {
+    //   const _location = locationsArrToObj(building?.Location?.locations || []);
+    //   const process = Process.TYPES[returnValues.process];
+    //   const processorProps = getProcessorProps(process?.processorType);
+    //   return {
+    //     icon: processorProps?.icon || <ProcessIcon />,
+    //     content: (
+    //       <>
+    //         <span>{process?.name || processorProps?.label || 'Process'} started at </span>
+    //         <LotLink lotId={_location.lotId} />
+    //       </>
+    //     ),
+    //   };
+    // },
+
+    requiresCrewTime: true
+  },
+  MaterialProcessingFinished: {
+    getInvalidations: ({ event: { returnValues, version } }, { building = {} }) => {
+
+      const invs = [
+        ...invalidationDefaults(returnValues.processor.label, returnValues.processor.id),
+        ['actionItems']
+      ];
+
+      const processor = (building?.Processors || []).find((p) => p.slot === returnValues.processorSlot);
+      if (processor?.destination) invs.unshift(...invalidationDefaults(processor.destination.label, processor.destination.id));
+
+      // TODO: do we need this for building status?
+      // ['asteroidCrewBuildings', returnValues.asteroidId, returnValues.crewId],
+
+      return invs;
+    },
+
+    getPrepopEntities: ({ event: { returnValues } }) => ({
+      // destination: returnValues.destination,
+      building: returnValues.processor,
+    }),
+
+    getLogContent: ({ event: { returnValues } }, viewingAs, { building = {} }) => {
+      const _location = locationsArrToObj(building?.Location?.locations || []);
+      const process = Process.TYPES[returnValues.process];
+      const processorProps = getProcessorProps(process?.processorType);
+      return {
+        icon: processorProps?.icon || <ProcessIcon />,
+        content: (
+          <>
+            <span>{process?.name || processorProps?.label || 'Process'} completed at </span>
+            <LotLink lotId={_location.lotId} />
+          </>
+        ),
+      };
+    },
+
+    triggerAlert: true
+  },
+
   NameChanged: {
     getInvalidations: ({ event: { returnValues } }) => {
       let invalidation;
@@ -637,7 +738,7 @@ const activities = {
       const _location = locationsArrToObj(extractor?.Location?.locations || []);
       return {
         icon: <ExtractionIcon />,
-        label: `${Product.TYPES[returnValues?.resourcd]?.name || 'Resource'} Extraction`,
+        label: `${Product.TYPES[returnValues?.resource]?.name || 'Resource'} Extraction`,
         asteroidId: _location.asteroidId,
         lotId: _location.lotId,
         // resourceId: returnValues.resource,
