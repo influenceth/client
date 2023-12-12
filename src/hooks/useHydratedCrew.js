@@ -1,7 +1,8 @@
 import { useMemo } from 'react';
 import { cloneDeep } from 'lodash';
+import { Crewmate } from '@influenceth/sdk';
 
-import { locationsArrToObj } from '~/lib/utils';
+import { getCrewAbilityBonuses, locationsArrToObj } from '~/lib/utils';
 import useCrew from './useCrew';
 import useCrewmates from './useCrewmates';
 
@@ -16,6 +17,13 @@ const useHydratedCrew = (id) => {
       data = cloneDeep(crew);
       data._crewmates = (crewmates || []).map((c) => cloneDeep(c));
       data._location = locationsArrToObj(crew.Location?.locations);
+
+      const foodBonuses = getCrewAbilityBonuses([Crewmate.ABILITY_IDS.FOOD_CONSUMPTION_TIME, Crewmate.ABILITY_IDS.FOOD_RATIONING_PENALTY], data);
+      data._foodBonuses = {
+        consumption: foodBonuses[Crewmate.ABILITY_IDS.FOOD_CONSUMPTION_TIME]?.crewmatesMultiplier,
+        rationing: foodBonuses[Crewmate.ABILITY_IDS.FOOD_RATIONING_PENALTY]?.crewmatesMultiplier
+      };
+
       isLoading = false;
     }
     return { data, isLoading };

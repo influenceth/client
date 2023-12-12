@@ -214,12 +214,12 @@ const FeedCrew = ({
   const foodStats = useMemo(() => {
     const maxFood = (crew?._crewmates?.length || 1) * Crew.CREWMATE_FOOD_PER_YEAR;
     const timeSinceFed = Time.toGameDuration((Date.now() / 1000) - (crew?.Crew?.lastFed || 0), crew?._timeAcceleration);
-    const currentFood = Math.floor(maxFood * Crew.getCurrentFoodRatio(timeSinceFed)); // floor to quanta
+    const currentFood = Math.floor(maxFood * Crew.getCurrentFoodRatio(timeSinceFed, crew._foodBonuses?.consumption)); // floor to quanta
     const addingFood = selectedItems[Product.IDS.FOOD] || 0;
     const postValue = (currentFood + addingFood) / maxFood;
-    const postTimeSinceFed = Crew.getTimeSinceFed((currentFood + addingFood) / maxFood);
-    const rationingTimeSinceFed = Crew.getTimeSinceFed(0.5);
-    const rationingPenalty = 1 - Crew.getFoodMultiplier(postTimeSinceFed);
+    const postTimeSinceFed = Crew.getTimeSinceFed((currentFood + addingFood) / maxFood, crew._foodBonuses?.consumption);
+    const rationingTimeSinceFed = Crew.getTimeSinceFed(0.5, crew._foodBonuses?.consumption);
+    const rationingPenalty = 1 - Crew.getFoodMultiplier(postTimeSinceFed, crew._foodBonuses?.consumption, crew._foodBonuses?.rationing);
     const timeUntilRationing = Time.toRealDuration(Math.max(0, rationingTimeSinceFed - postTimeSinceFed));
   
     const barColor = postValue >= 0.5 ? theme.colors.green : theme.colors.warning;
