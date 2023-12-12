@@ -85,10 +85,18 @@ export function ActivitiesProvider({ children }) {
                 // its own query key, then figuring out which lot should actually reload all for (since
                 // this invalidation may result in lots of requests)... but we would need a more explicit 'entities'
                 // caching key structure -- this is not just for 'lot' based collections!
+                console.log('invalidate', collectionQueryKey);
                 queryClient.invalidateQueries({ queryKey: collectionQueryKey, refetchType: 'none' });
                 queryClient.refetchQueries({ queryKey: collectionQueryKey, type: 'active' });
               }
 
+            } else {
+              // invalidation seems to refetch very inconsistently... so we try to invalidate all, but refetch active explicitly
+              // TODO: search "joined key" -- these queryKeys cause inefficiency because may be refetched after actually inactive here...
+              //  we should ideally collapse those into named queries where possible (as long as can still trigger updates accurately)
+              console.log('invalidate', queryKey);
+              queryClient.invalidateQueries({ queryKey, refetchType: 'none' });
+              queryClient.refetchQueries({ queryKey, type: 'active' });
             }
 
             // invalidation seems to refetch very inconsistently... so we try to invalidate all, but refetch active explicitly

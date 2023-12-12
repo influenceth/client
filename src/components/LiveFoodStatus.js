@@ -5,6 +5,7 @@ import { Crew, Time } from '@influenceth/sdk';
 import { FoodIcon, WarningOutlineIcon } from '~/components/Icons';
 import useChainTime from '~/hooks/useChainTime';
 import useConstants from '~/hooks/useConstants';
+import { hexToRGB } from '~/theme';
 
 const Food = styled.div`
   align-items: center;
@@ -14,23 +15,28 @@ const Food = styled.div`
     font-size: 15px;
     margin: 0 6px;
   }
+  ${p => p.onClick && `
+    border-radius: 3px;
+    cursor: ${p.theme.cursors.active};
+    padding: 3px;
+    transition: background 250ms ease;
+    &:hover {
+      background: rgba(${hexToRGB(p.isRationing ? p.theme.colors.red : p.theme.colors.green)}, 0.15);
+    }
+  `}
 `;
 
-const LiveFoodStatus = ({ crew: optCrew, lastFed: optLastFed, onClick, ...props }) => {
+const LiveFoodStatus = ({ crew, onClick, ...props }) => {
   const chainTime = useChainTime();
   const { data: TIME_ACCELERATION } = useConstants('TIME_ACCELERATION');
 
-  const lastFed = useMemo(() => {
-    return optLastFed || optCrew?.Crew?.lastFed || 0;
-  }, [optCrew, optLastFed]);
-
   const percentage = useMemo(() => {
-    const lastFedAgo = Time.toGameDuration(chainTime - lastFed, parseInt(TIME_ACCELERATION));
-    return lastFedAgo ? Math.round(100 * Crew.getCurrentFood(lastFedAgo) / Crew.CREWMATE_FOOD_PER_YEAR) : 0;
-  }, [chainTime, lastFed]);
+    const lastFedAgo = Time.toGameDuration(chainTime - (crew?.Crew?.lastFed || 0), parseInt(TIME_ACCELERATION));
+    return lastFedAgo ? Math.round(100 * Crew.getCurrentFoodRatio(lastFedAgo, crew._foodBonuses?.consumption || 1)) : 0;
+  }, [chainTime, crew._foodBonuses?.consumption]);
   
   return (
-    <Food isRationing={percentage < 25} onClick={onClick} {...props}>
+    <Food isRationing={percentage < 50} onClick={onClick} {...props}>
       {percentage < 50 && <WarningOutlineIcon />}
       <span>{percentage}%</span>
       <FoodIcon />

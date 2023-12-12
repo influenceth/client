@@ -19,6 +19,7 @@ import EmergencyModeToggle from './actionDialogs/EmergencyModeToggle';
 import EjectCrew from './actionDialogs/EjectCrew';
 import EvictShip from './actionDialogs/EvictShip';
 import Extract from './actionDialogs/Extract';
+import FeedCrew from './actionDialogs/FeedCrew';
 import NewCoreSample from './actionDialogs/NewCoreSample';
 import Deconstruct from './actionDialogs/Deconstruct';
 import ImproveCoreSample from './actionDialogs/ImproveCoreSample';
@@ -229,6 +230,7 @@ const ActionDialog = ({ type, params }) => {
         {type === 'EMERGENCY_MODE_TOGGLE' && <EmergencyModeToggle {...allProps} />}
         {type === 'EVICT_SHIP' && <EvictShip {...allProps} />}
         {type === 'EXTRACT_RESOURCE' && <Extract {...allProps} />}
+        {type === 'FEED_CREW' && <FeedCrew {...allProps} />}
         {type === 'LAND_SHIP' && <LandShip {...allProps} />}
         {type === 'LAUNCH_SHIP' && <LaunchShip {...allProps} />}
         {type === 'IMPROVE_CORE_SAMPLE' && <ImproveCoreSample {...allProps} />}

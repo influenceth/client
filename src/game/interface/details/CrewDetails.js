@@ -447,7 +447,7 @@ const CrewDetails = ({ crewId, crew, isMyCrew, isOwnedCrew, selectCrew }) => {
                       </span>
                       <CrewmateInfoPane
                         crewmate={crewmate}
-                        showOwner={reactBool(!Address.areEqual(crew?.Nft?.owner, crewmate?.Nft?.owner))}
+                        showOwner={reactBool(!Address.areEqual(crew?.Nft?.owner || '', crewmate?.Nft?.owner || ''))}
                         css="transform: translateY(25px);"
                         cssWhenVisible="transform: translateY(3px);"
                         referenceEl={refEl}
@@ -462,7 +462,6 @@ const CrewDetails = ({ crewId, crew, isMyCrew, isOwnedCrew, selectCrew }) => {
                 <Crewmates>
                   {Array.from(Array(4)).map((_, i) => {
                     const crewmate = crew._crewmates?.[i + 1];
-                    const isMercenary = !Address.areEqual(crewmate?.Nft?.owner || '', crew?.Nft?.owner || '');
                     if (!crewmate) {
                       return (
                         <EmptyCrewCardFramed key={i} onClick={isMyCrew ? onClickRecruit : null} width={146}>
@@ -488,7 +487,7 @@ const CrewDetails = ({ crewId, crew, isMyCrew, isOwnedCrew, selectCrew }) => {
                             </span>
                             <CrewmateInfoPane
                               crewmate={crewmate}
-                              showOwner={reactBool(!Address.areEqual(crew?.Nft?.owner, crewmate?.Nft?.owner))}
+                              showOwner={reactBool(!Address.areEqual(crew?.Nft?.owner || '', crewmate?.Nft?.owner || ''))}
                               css="transform: translateY(25px);"
                               cssWhenVisible="transform: translateY(3px);"
                               referenceEl={refEl}
@@ -506,7 +505,7 @@ const CrewDetails = ({ crewId, crew, isMyCrew, isOwnedCrew, selectCrew }) => {
                     <CrewLocationLabel hydratedLocation={hydratedLocation} />
                   </BaseLocation>
 
-                  <LiveFoodStatus crew={crew} />
+                  <LiveFoodStatus crew={crew} onClick={isMyCrew ? () => { onSetAction('FEED_CREW'); } : undefined} />
                 </TitleBar>
 
                 {isMyCrew && (
@@ -664,7 +663,7 @@ const Wrapper = () => {
           crewId={crewId}
           crew={crew}
           isMyCrew={crewId === myCrew?.id}
-          isOwnedCrew={Address.areEqual(crew?.Nft?.owner, account)}
+          isOwnedCrew={Address.areEqual(crew?.Nft?.owner || '', account || '')}
           selectCrew={selectCrew}
         />
       )}

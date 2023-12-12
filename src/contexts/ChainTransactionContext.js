@@ -173,6 +173,9 @@ const customConfigs = {
     },
     equalityTest: true
   },
+  ResupplyFood: {
+    equalityTest: ['caller_crew.id']
+  },
 
   // virtual multi-system wrappers
   // TODO: could do fancier conditional multisystems if that would help

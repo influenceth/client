@@ -7,7 +7,7 @@ import useAuth from '~/hooks/useAuth';
 import useConstants from '~/hooks/useConstants';
 import useEntity from '~/hooks/useEntity';
 import useStore from '~/hooks/useStore';
-import { locationsArrToObj } from '~/lib/utils';
+import { getCrewAbilityBonuses, locationsArrToObj } from '~/lib/utils';
 
 const CrewContext = createContext();
 
@@ -97,6 +97,12 @@ export function CrewProvider({ children }) {
     return rawCrews.map((c) => {
       if (!!crewmateMap) {
         c._crewmates = c.Crew.roster.map((i) => crewmateMap[i]).filter((c) => !!c);
+        
+        const foodBonuses = getCrewAbilityBonuses([Crewmate.ABILITY_IDS.FOOD_CONSUMPTION_TIME, Crewmate.ABILITY_IDS.FOOD_RATIONING_PENALTY], c);
+        c._foodBonuses = {
+          consumption: foodBonuses[Crewmate.ABILITY_IDS.FOOD_CONSUMPTION_TIME]?.crewmatesMultiplier,
+          rationing: foodBonuses[Crewmate.ABILITY_IDS.FOOD_RATIONING_PENALTY]?.crewmatesMultiplier
+        };
       }
       if (c.Location?.locations) {
         c._location = locationsArrToObj(c.Location.locations);
@@ -138,6 +144,7 @@ export function CrewProvider({ children }) {
       queryClient.setQueryData(ownedCrewsQueryKey, (prevRawCrews) => {
         return prevRawCrews.map((c) => {
           if (c.id === updatedCrew.id) {
+            c.Crew.lastFed = updatedCrew.Crew.lastFed;
             c.Crew.readyAt = updatedCrew.Crew.readyAt;
 
             // TODO: flesh this out! setting to a Jan 1 2025 as a flag to self for now
