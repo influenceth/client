@@ -133,10 +133,9 @@ const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...pro
 
   const [setupTime, processingTime] = useMemo(() => {
     if (!process) return [0, 0];
-    const amountMult = process.batched ? Math.ceil(amount) : amount;
     return [
-      Time.toRealDuration(process.setupTime * processingTimeBonus.totalBonus, crew?._timeAcceleration),
-      Time.toRealDuration(amountMult * process.recipeTime * processingTimeBonus.totalBonus, crew?._timeAcceleration),
+      Time.toRealDuration(Process.getSetupTime(processId, processingTimeBonus.totalBonus), crew?._timeAcceleration),
+      Time.toRealDuration(Process.getProcessingTime(processId, amount, processingTimeBonus.totalBonus), crew?._timeAcceleration),
     ];
   }, [amount, crew?._timeAcceleration, process, processingTimeBonus]);
 

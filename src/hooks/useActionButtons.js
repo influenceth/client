@@ -185,9 +185,13 @@ const useActionButtons = () => {
           // if lot is selected
           if (lot) {
 
-            // if asteroid has been scanned, can core sample
+            // if asteroid has been scanned, can core sample... but only offer as main button if
+            // no building or the building is an extractor (can still zoom to lot and do through
+            // resources panel)
             if (asteroid.Celestial.scanStatus === Asteroid.SCAN_STATUSES.RESOURCE_SCANNED) {
-              a.push(actionButtons.CoreSample);
+              if (!lot.building || lot.building.Extractors?.length > 0) {
+                a.push(actionButtons.CoreSample);
+              }
             }
 
             // if there is a building
