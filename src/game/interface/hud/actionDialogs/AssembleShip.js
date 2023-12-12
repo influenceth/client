@@ -175,7 +175,16 @@ const AssembleShip = ({ asteroid, lot, dryDockManager, stage, ...props }) => {
       inputArr.reduce((sum, i) => sum + process.inputs[i] * (Product.TYPES[i].massPerUnit || 0), 0),
       inputArr.reduce((sum, i) => sum + process.inputs[i] * (Product.TYPES[i].volumePerUnit || 0), 0),
     ];
-  }, [process]); 
+  }, [process]);
+
+  const [crewTimeRequirement, taskTimeRequirement] = useMemo(() => {
+    const onewayCrewTravelTime = crewTravelTime / 2;
+    const setupTime = ship?.setupTime || 0;
+    return [
+      Math.max(onewayCrewTravelTime, inputTransportTime) + setupTime + onewayCrewTravelTime,
+      Math.max(onewayCrewTravelTime, inputTransportTime) + setupTime + assemblyTime
+    ];
+  }, [crewTravelTime, inputTransportTime, ship?.setupTime, assemblyTime]);
 
   const stats = useMemo(() => ([
     {
@@ -255,8 +264,8 @@ const AssembleShip = ({ asteroid, lot, dryDockManager, stage, ...props }) => {
         }}
         captain={captain}
         location={{ asteroid, lot }}
-        crewAvailableTime={0}
-        taskCompleteTime={0}
+        crewAvailableTime={crewTimeRequirement}
+        taskCompleteTime={taskTimeRequirement}
         onClose={props.onClose}
         stage={stage}
         wide />
