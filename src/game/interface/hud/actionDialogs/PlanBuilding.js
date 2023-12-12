@@ -172,6 +172,7 @@ const PlanBuilding = ({ asteroid, lot, constructionManager, stage, ...props }) =
         goLabel="Create Site"
         onGo={() => planConstruction(buildingType)}
         stage={stage}
+        waitForCrewReady
         {...props} />
 
       {stage === actionStage.NOT_STARTED && (

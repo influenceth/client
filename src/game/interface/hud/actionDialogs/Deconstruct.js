@@ -125,6 +125,7 @@ const Deconstruct = ({ asteroid, lot, constructionManager, stage, ...props }) =>
         goLabel="Deconstruct"
         onGo={deconstruct}
         stage={stage}
+        waitForCrewReady
         {...props} />
     </>
   );
@@ -137,7 +138,6 @@ const Wrapper = (props) => {
   const { stageByActivity } = constructionManager;
 
   useEffect(() => {
-    // console.log('deconstruct props', props, lot);
     if (!asteroid || !lot?.building) {
       if (!isLoading) {
         if (props.onClose) props.onClose();

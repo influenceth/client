@@ -264,6 +264,7 @@ const Construct = ({ asteroid, lot, constructionManager, stage, ...props }) => {
         finalizeLabel="Complete"
         onFinalize={finishConstruction}
         stage={stage}
+        waitForCrewReady
         {...props} />
     </>
   );

@@ -14,7 +14,7 @@ const EmergencyModeToggle = ({ asteroid, lot, onSetAction }) => {
     <ActionButton
       label={`${inMode ? 'Exit' : 'Enter'} Emergency Mode`}
       flags={{
-        disabled: false, // TODO: ... crew not on asteroid? ship permissions?
+        disabled: false, // TODO: ... crew not on asteroid? ship permissions? crew busy?
         loading: false, // TODO: ...
       }}
       icon={inMode ? <EmergencyModeExitIcon /> : <EmergencyModeEnterIcon />}

@@ -79,6 +79,7 @@ export function ActivitiesProvider({ children }) {
               });
 
               // if not found, we invalidate all collections of label since this is probably a new entity
+              // TODO: isn't possible this is new to *some* 'entities' results? we may always need to do this:
               if (!foundSomewhere) {
                 // TODO: there is an argument for loading the entity in this case, replacing in-place in
                 // its own query key, then figuring out which lot should actually reload all for (since
@@ -97,6 +98,12 @@ export function ActivitiesProvider({ children }) {
               queryClient.invalidateQueries({ queryKey, refetchType: 'none' });
               queryClient.refetchQueries({ queryKey, type: 'active' });
             }
+
+            // invalidation seems to refetch very inconsistently... so we try to invalidate all, but refetch active explicitly
+            // TODO: search "joined key" -- these queryKeys cause inefficiency because may be refetched after actually inactive here...
+            //  we should ideally collapse those into named queries where possible (as long as can still trigger updates accurately)
+            queryClient.invalidateQueries({ queryKey, refetchType: 'none' });
+            queryClient.refetchQueries({ queryKey, type: 'active' });
           });
 
           if (activityConfig?.triggerAlert) {

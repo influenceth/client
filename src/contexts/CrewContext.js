@@ -11,6 +11,8 @@ import { getCrewAbilityBonuses, locationsArrToObj } from '~/lib/utils';
 
 const CrewContext = createContext();
 
+const getNow = () => Math.ceil(Date.now() / 1000);
+
 export function CrewProvider({ children }) {
   const { account } = useAuth();
   const queryClient = useQueryClient();
@@ -72,8 +74,26 @@ export function CrewProvider({ children }) {
   // null while any of those are true
   const crewsAndCrewmatesReady = useMemo(() => !!crewmateMap && TIME_ACCELERATION, [crewmateMap, TIME_ACCELERATION]);
 
+  // update crews' _ready value at next readyAt
+  // TODO: getNows() should really be getter from usechaintime
+  const [nextReadyAt, setNextReadyAt] = useState(Infinity);
+  const refreshNextReadyAt = useCallback(() => {
+    if (!crewsAndCrewmatesReady || !rawCrews) return;
+    const now = getNow();
+    const val = rawCrews.reduce((acc, c) => now > c.Crew.readyAt ? acc : Math.min(acc, c.Crew.readyAt), Infinity);
+    setNextReadyAt(val);
+  }, [crewsAndCrewmatesReady, rawCrews]);
+  useEffect(() => {
+    const toTime = nextReadyAt ? Math.max(0, nextReadyAt - getNow() + 1) : 0;
+    const to = setTimeout(() => { refreshNextReadyAt(); }, toTime * 1000);
+    return () => {
+      if (to) clearTimeout(to);
+    };
+  }, [nextReadyAt, refreshNextReadyAt]);
+
   const crews = useMemo(() => {
     if (!crewsAndCrewmatesReady || !rawCrews) return [];
+    const now = getNow();
     return rawCrews.map((c) => {
       if (!!crewmateMap) {
         c._crewmates = c.Crew.roster.map((i) => crewmateMap[i]).filter((c) => !!c);
@@ -87,9 +107,12 @@ export function CrewProvider({ children }) {
       if (c.Location?.locations) {
         c._location = locationsArrToObj(c.Location.locations);
       }
+      if (c.Crew) {
+        c._ready = now > c.Crew.readyAt;
+      }
       return c;
     })
-  }, [rawCrews, crewmateMap, crewsAndCrewmatesReady]);
+  }, [rawCrews, crewmateMap, crewsAndCrewmatesReady, nextReadyAt]);
 
   const selectedCrew = useMemo(() => {
     if (crews && crews.length > 0) {
@@ -100,7 +123,7 @@ export function CrewProvider({ children }) {
       return crews.find((crew) => crew.Crew.roster.length > 0) || crews[0];
     }
     return null;
-  }, [crews, selectedCrewId]);
+  }, [crews, nextReadyAt, selectedCrewId]);
 
   // hydrate crew location so can attach station to crew
   const { data: selectedCrewLocation } = useEntity(selectedCrew ? { ...selectedCrew.Location.location } : undefined);
@@ -113,7 +136,7 @@ export function CrewProvider({ children }) {
       _station: selectedCrewLocation?.Station || {},
       _timeAcceleration: parseInt(TIME_ACCELERATION) // (attach to crew for easy use in bonus calcs)
     }
-  }, [selectedCrew, selectedCrewLocation, TIME_ACCELERATION]);
+  }, [selectedCrew, selectedCrew?._ready, selectedCrewLocation, TIME_ACCELERATION]);
 
   const refreshReadyAt = useCallback(async () => {
     const updatedCrew = await api.getEntityById({ label: Entity.IDS.CREW, id: selectedCrewId, components: ['Crew'] });
@@ -123,12 +146,22 @@ export function CrewProvider({ children }) {
           if (c.id === updatedCrew.id) {
             c.Crew.lastFed = updatedCrew.Crew.lastFed;
             c.Crew.readyAt = updatedCrew.Crew.readyAt;
+
+            // TODO: flesh this out! setting to a Jan 1 2025 as a flag to self for now
+            if (updatedCrew.Crew.actionType) c.Crew.readyAt = 1735689600;
+
+            // update nextReadyAt if this crew's readyAt is sooner
+            if (c.Crew.readyAt > getNow() && c.Crew.readyAt < nextReadyAt) {
+              setNextReadyAt(c.Crew.readyAt);
+            }
+
           }
           return c;
         });
-      })
+      });
+
     }
-  }, [selectedCrewId]);
+  }, [nextReadyAt, selectedCrewId]);
 
   // make sure a default-selected crew makes it into state (if logged in)
   useEffect(() => {

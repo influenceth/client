@@ -168,6 +168,7 @@ const EmergencyModeToggle = ({ asteroid, lot, manager, ship, stage, ...props }) 
 
       </ActionDialogBody>
 
+      {/* TODO: add waitForCrewReady? */}
       <ActionDialogFooter
         disabled={!inEmergencyMode && shipPassengerCrews?.length > 0/* TODO: no permission */}
         goLabel={inEmergencyMode ? 'Restore' : 'Prepare'}

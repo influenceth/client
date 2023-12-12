@@ -12,7 +12,7 @@ const StationCrewAsPilots = ({ asteroid, lot, onSetAction }) => {
     <ActionButton
       label="Station Flight Crew on Ship"
       flags={{
-        disabled: false, // TODO: ... crew not on asteroid? crew already on ship? ship ownership?
+        disabled: false, // TODO: ... crew not on asteroid? crew already on ship? ship ownership? crew._ready?
         loading: false, // TODO: ...
       }}
       icon={<StationCrewIcon />}

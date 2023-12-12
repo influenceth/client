@@ -26,7 +26,11 @@ const ScanAsteroid = ({ asteroid, _disabled }) => {
     // resource scan requires crew to be on asteroid
     if (scanType === 'RESOURCE' && (!crew._location?.asteroidId || crew._location?.asteroidId !== asteroid?.id)) {
       flags.disabled = true;
-      disabledReason = 'Crew must be Present';
+      disabledReason = 'crew must be present';
+    }
+    else if (scanStatus === 'UNSCANNED' && !crew?._ready) {
+      flags.disabled = true;
+      disabledReason = 'crew is busy';
     }
 
     switch (scanStatus) {
@@ -74,12 +78,13 @@ const ScanAsteroid = ({ asteroid, _disabled }) => {
           }
         };
     }
-  }, [asteroid?.id, scanStatus, _disabled]);
+  }, [asteroid?.id, crew?._ready, scanStatus, _disabled]);
 
   // TODO: icon should probably be distinct for each scan type
   return (
     <ActionButton
-      label={`${label}${disabledReason ? ` (${disabledReason})` : ''}`}
+      label={`${label}`}
+      labelAddendum={disabledReason}
       flags={flags}
       icon={<ScanAsteroidIcon />}
       onClick={handleClick} />

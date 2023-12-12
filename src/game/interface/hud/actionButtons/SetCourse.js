@@ -1,26 +1,31 @@
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import { SetCourseIcon } from '~/components/Icons';
 import useCrewContext from '~/hooks/useCrewContext';
 import useStore from '~/hooks/useStore';
 import ActionButton from './ActionButton';
 
-const SetCourse = ({ onSetAction }) => {
-  const { crew } = useCrewContext();
+const SetCourse = ({ crew, onSetAction }) => {
   const travelSolution = useStore(s => s.asteroids.travelSolution);
   
   const handleClick = useCallback(() => {
     onSetAction('SET_COURSE', { travelSolution });
   }, [travelSolution]);
 
+  const disabledReason = useMemo(() => {
+    if (!travelSolution?.invalid) return 'invalid travel solution';
+    if (!crew?._ready) return 'crew is busy';
+    return '';
+  }, [crew?._ready, travelSolution?.invalid]);
+
   return (
     <ActionButton
+      label="Set Course"
+      labelAddendum={disabledReason}
       flags={{
         attention: crew && travelSolution && !travelSolution.invalid,
-        // TODO: remove false
-        disabled: false && !(crew && travelSolution && !travelSolution.invalid),
+        disabled: disabledReason || undefined,
       }}
-      label="Set Course"
       icon={<SetCourseIcon />}
       onClick={handleClick} />
   );
