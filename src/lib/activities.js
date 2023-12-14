@@ -1,4 +1,4 @@
-import { Address, Building, Entity, Lot, Product } from '@influenceth/sdk';
+import { Address, Building, Entity, Lot, Process, Product, Ship } from '@influenceth/sdk';
 import { AiFillEdit as NameIcon } from 'react-icons/ai';
 import { BiTransfer as TransferIcon } from 'react-icons/bi';
 
@@ -9,22 +9,25 @@ import {
   CoreSampleIcon,
   CrewIcon,
   CrewmateIcon,
+  EjectPassengersIcon,
   ExtractionIcon,
   FoodIcon,
   ImproveCoreSampleIcon,
   KeysIcon,
   NewCoreSampleIcon,
   PlanBuildingIcon,
+  ProcessIcon,
   PromoteIcon,
   PurchaseAsteroidIcon,
   ScanAsteroidIcon,
+  ShipIcon,
   StationCrewIcon,
   SurfaceTransferIcon,
   UnplanBuildingIcon
 } from '~/components/Icons';
 import LotLink from '~/components/LotLink';
 
-import { andList, locationsArrToObj, ucfirst } from './utils';
+import { andList, getProcessorProps, locationsArrToObj, ucfirst } from './utils';
 import api from './api';
 import formatters from './formatters';
 import EntityName from '~/components/EntityName';
@@ -239,7 +242,6 @@ const activities = {
       ]
     },
     getLogContent: ({ event: { returnValues } }, viewingAs, { building = {} }) => {
-      console.log('GET LOG CONTENT', returnValues, building, locationsArrToObj(building?.Location?.locations || [])?.lotId);
       return {
         icon: <ConstructIcon />,
         content: (
@@ -488,20 +490,48 @@ const activities = {
     }
   },
 
+  CrewEjected: {
+    getInvalidations: ({ event: { returnValues } }) => ([
+      ...invalidationDefaults(returnValues.callerCrew.label, returnValues.callerCrew.id),
+      ...invalidationDefaults(returnValues.ejectedCrew.label, returnValues.ejectedCrew.id),
+      // TODO: previous station
+    ]),
+
+    getLogContent: ({ event: { returnValues } }, { viewingAs }) => {
+      return {
+        icon: <EjectPassengersIcon />,
+        content: (
+          <>
+          <EntityLink {...returnValues.ejectedCrew} />
+          {' '}ejected from <EntityLink {...returnValues.ejectedCrew} />
+          {' '}by <EntityLink {...returnValues.callerCrew} />
+        </>
+        ),
+      };
+    },
+
+    requiresCrewTime: true
+  },
+
   CrewStationed: {
     getInvalidations: ({ event: { returnValues } }) => ([
-      ...invalidationDefaults(Entity.IDS.CREW, returnValues.callerCrew.id),
-      ...invalidationDefaults(Entity.IDS.BUILDING, returnValues.station.id)
+      ...invalidationDefaults(returnValues.callerCrew.label, returnValues.callerCrew.id),
+      ...invalidationDefaults(returnValues.station.label, returnValues.station.id),
+      // TODO: previous station
     ]),
-    getLogContent: ({ event: { returnValues } }) => ({
-      icon: <StationCrewIcon />,
-      content: (
-        <>
-          Crew <EntityLink {...returnValues.callerCrew} />
+
+    getLogContent: ({ event: { returnValues } }) => {
+      return {
+        icon: <StationCrewIcon />,
+        content: (
+          <>
+          <EntityLink {...returnValues.callerCrew} />
           {' '}stationed in <EntityLink {...returnValues.station} />
         </>
-      ),
-    }),
+        ),
+      };
+    },
+
     requiresCrewTime: true
   },
   
@@ -592,6 +622,106 @@ const activities = {
   // MaterialProcessingFinished,
   // MaterialProcessingStarted,
 
+  MaterialProcessingStarted: {
+    getActionItem: ({ returnValues }, { building = {} }) => {
+      const _location = locationsArrToObj(building?.Location?.locations || []);
+      const process = Process.TYPES[returnValues.process];
+      const processorProps = getProcessorProps(process?.processorType);
+      return {
+        icon: processorProps?.icon || <ProcessIcon />,
+        label: processorProps?.label || 'Running Process',
+        asteroidId: _location.asteroidId,
+        lotId: _location.lotId,
+        locationDetail: getEntityName(building),
+        onClick: ({ openDialog }) => {
+          openDialog('PROCESS', { processorSlot: returnValues.processorSlot });
+        }
+      };
+    },
+    getIsActionItemHidden: ({ returnValues }) => (pendingTransactions) => {
+      return pendingTransactions.find((tx) => (
+        tx.key === 'MaterialProcessingFinished'
+        && tx.vars.processor.id === returnValues.processor.id
+        && tx.vars.processor_slot === returnValues.processor_slot
+      ))
+    },
+
+    getInvalidations: ({ event: { returnValues, version } }) => {
+      const inv = [
+        ...invalidationDefaults(returnValues.processor.label, returnValues.processor.id),
+        ...invalidationDefaults(returnValues.destination.label, returnValues.destination.id),
+        ['actionItems']
+      ];
+
+      // (v1 only)
+      if (returnValues.origin) inv.unshift(...invalidationDefaults(returnValues.origin.label, returnValues.origin.id));
+
+      // TODO: do we need this for building status?
+      // ['asteroidCrewBuildings', returnValues.asteroidId, returnValues.crewId],
+      return inv;
+    },
+
+    getPrepopEntities: ({ event: { returnValues } }) => ({
+      building: returnValues.processor,
+    }),
+
+    // getLogContent: ({ event: { returnValues } }, viewingAs, { building = {} }) => {
+    //   const _location = locationsArrToObj(building?.Location?.locations || []);
+    //   const process = Process.TYPES[returnValues.process];
+    //   const processorProps = getProcessorProps(process?.processorType);
+    //   return {
+    //     icon: processorProps?.icon || <ProcessIcon />,
+    //     content: (
+    //       <>
+    //         <span>{process?.name || processorProps?.label || 'Process'} started at </span>
+    //         <LotLink lotId={_location.lotId} />
+    //       </>
+    //     ),
+    //   };
+    // },
+
+    requiresCrewTime: true
+  },
+  MaterialProcessingFinished: {
+    getInvalidations: ({ event: { returnValues, version } }, { building = {} }) => {
+
+      const invs = [
+        ...invalidationDefaults(returnValues.processor.label, returnValues.processor.id),
+        ['actionItems']
+      ];
+
+      const processor = (building?.Processors || []).find((p) => p.slot === returnValues.processorSlot);
+      if (processor?.destination) invs.unshift(...invalidationDefaults(processor.destination.label, processor.destination.id));
+
+      // TODO: do we need this for building status?
+      // ['asteroidCrewBuildings', returnValues.asteroidId, returnValues.crewId],
+
+      return invs;
+    },
+
+    getPrepopEntities: ({ event: { returnValues } }) => ({
+      // destination: returnValues.destination,
+      building: returnValues.processor,
+    }),
+
+    getLogContent: ({ event: { returnValues } }, viewingAs, { building = {} }) => {
+      const _location = locationsArrToObj(building?.Location?.locations || []);
+      const process = Process.TYPES[returnValues.process];
+      const processorProps = getProcessorProps(process?.processorType);
+      return {
+        icon: processorProps?.icon || <ProcessIcon />,
+        content: (
+          <>
+            <span>{process?.name || processorProps?.label || 'Process'} completed at </span>
+            <LotLink lotId={_location.lotId} />
+          </>
+        ),
+      };
+    },
+
+    triggerAlert: true
+  },
+
   NameChanged: {
     getInvalidations: ({ event: { returnValues } }) => {
       let invalidation;
@@ -640,13 +770,12 @@ const activities = {
       const _location = locationsArrToObj(extractor?.Location?.locations || []);
       return {
         icon: <ExtractionIcon />,
-        label: `${Product.TYPES[returnValues?.resourcd]?.name || 'Resource'} Extraction`,
+        label: `${Product.TYPES[returnValues?.resource]?.name || 'Resource'} Extraction`,
         asteroidId: _location.asteroidId,
         lotId: _location.lotId,
         // resourceId: returnValues.resource,
         locationDetail: getEntityName(extractor),
         onClick: ({ openDialog }) => {
-          console.log({ returnValues, extractor });
           openDialog('EXTRACT_RESOURCE');
         }
       };
@@ -775,7 +904,6 @@ const activities = {
 
   FoodSupplied: {
     getInvalidations: ({ event: { returnValues } }) => {
-      console.log({ returnValues });
       // TODO: replace lastFed in place
       return [
         ...invalidationDefaults(Entity.IDS.CREW, returnValues.callerCrew.id),
@@ -858,6 +986,97 @@ const activities = {
     //   };
     // },
     requiresCrewTime: true
+  },
+
+  ShipAssemblyStarted: {
+    getActionItem: ({ returnValues }, { building = {} }) => {
+      const _location = locationsArrToObj(building?.Location?.locations || []);
+      return {
+        icon: <ShipIcon />,
+        label: `${Ship.TYPES[returnValues.shipType]?.name || 'Ship'} Assembly`,
+        asteroidId: _location.asteroidId,
+        lotId: _location.lotId,
+        locationDetail: getEntityName(building),
+        onClick: ({ openDialog }) => {
+          openDialog('ASSEMBLE_SHIP', { dryDockSlot: returnValues.dryDockSlot });
+        }
+      };
+    },
+    getIsActionItemHidden: ({ returnValues }) => (pendingTransactions) => {
+      return pendingTransactions.find((tx) => (
+        tx.key === 'ShipAssemblyFinished'
+        && tx.vars.dry_dock.id === returnValues.dryDock.id
+        && tx.vars.dry_dock_slot === returnValues.dryDockSlot
+      ))
+    },
+
+    getInvalidations: ({ event: { returnValues, version } }) => ([
+      ...invalidationDefaults(returnValues.dryDock.label, returnValues.dryDock.id),
+      ...invalidationDefaults(returnValues.origin.label, returnValues.origin.id),
+      ['actionItems']
+      // TODO: do we need this for building status?
+      // ['asteroidCrewBuildings', returnValues.asteroidId, returnValues.crewId],
+    ]),
+
+    getPrepopEntities: ({ event: { returnValues } }) => ({
+      building: returnValues.dryDock,
+    }),
+
+    // getLogContent: ({ event: { returnValues } }, viewingAs, { building = {} }) => {
+    //   const _location = locationsArrToObj(building?.Location?.locations || []);
+    //   return {
+    //     icon: <ShipIcon />,
+    //     content: (
+    //       <>
+    //         <span>{Ship.TYPES[returnValues.shipType]?.name || 'Ship'} assembly started at </span>
+    //         <LotLink lotId={_location.lotId} />
+    //       </>
+    //     ),
+    //   };
+    // },
+
+    requiresCrewTime: true
+  },
+  ShipAssemblyFinished: {
+    getInvalidations: ({ event: { returnValues } }, { building = {} }) => {
+      const invs = [
+        ...invalidationDefaults(returnValues.dryDock.label, returnValues.dryDock.id),
+        ...invalidationDefaults(returnValues.destination.label, returnValues.destination.id),
+        ['actionItems'],
+        // TODO: ...
+        // ['asteroidInventories', asteroidId],
+        // ['asteroidCrewShips', returnValues.asteroidId, returnValues.crewId],
+      ];
+
+      const dryDock = (building?.DryDocks || []).find((p) => p.slot === returnValues.dryDockSlot);
+      if (dryDock?.outputShip) invs.unshift(...invalidationDefaults(dryDock.outputShip.label, dryDock.outputShip.id));
+
+      // TODO: do we need this for building status?
+      // ['asteroidCrewBuildings', returnValues.asteroidId, returnValues.crewId],
+
+      return invs;
+    },
+
+    getPrepopEntities: ({ event: { returnValues } }) => ({
+      building: returnValues.dryDock,
+      destination: returnValues.destination,
+    }),
+
+    getLogContent: ({ event: { returnValues } }, viewingAs, { building = {}, destination = {} }) => {
+      const _location = locationsArrToObj(building?.Location?.locations || []);
+      const _dlocation = locationsArrToObj(destination?.Location?.locations || []);
+      return {
+        icon: <ShipIcon />,
+        content: (
+          <>
+            <span><EntityLink {...returnValues.ship} /> assembled at </span>
+            <span><LotLink lotId={_location.lotId} /> and delivered to <LotLink lotId={_dlocation?.lotId || returnValues.destination?.id} /></span>
+          </>
+        ),
+      };
+    },
+
+    triggerAlert: true
   },
 
   SurfaceScanFinished: {
@@ -998,7 +1217,7 @@ export const hydrateActivities = async (newActivities, queryClient) => {
                 prepopping[key] = true;
                 return api.getEntityById({ label, id })
                   .then((data) => {
-                    console.log({ label, id, data });
+                    // console.log({ label, id, data });
                     queryClient.setQueryData(queryKey, data);
                   })
                   .catch((e) => console.warn('Error with activity prepop', queryKey, e))

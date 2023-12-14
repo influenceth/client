@@ -9,17 +9,15 @@ import useChainTime from '~/hooks/useChainTime';
 import useStore from '~/hooks/useStore';
 import { HudMenuCollapsibleSection, Rule, majorBorderColor } from './components';
 import ClipCorner from '~/components/ClipCorner';
-import { CaretIcon, ConstructIcon } from '~/components/Icons';
+import { BioreactorBuildingIcon, CaretIcon, ConstructIcon, ExtractorBuildingIcon, FactoryBuildingIcon, HabitatBuildingIcon, MarketplaceBuildingIcon, RefineryBuildingIcon, ShipyardBuildingIcon, SpaceportBuildingIcon, WarehouseBuildingIcon } from '~/components/Icons';
 import { formatFixed, locationsArrToObj } from '~/lib/utils';
-import useAsteroidShips from '~/hooks/useAsteroidShips';
 import { ResourceImage } from '~/components/ResourceThumbnail';
-import useLot from '~/hooks/useLot';
 import { useShipLink } from '~/components/ShipLink';
 import { getShipIcon } from '~/lib/assetUtils';
 import useBuilding from '~/hooks/useBuilding';
 import useCrewContext from '~/hooks/useCrewContext';
+import useOwnedShips from '~/hooks/useOwnedShips';
 import formatters from '~/lib/formatters';
-import useEntity from '~/hooks/useEntity';
 
 const Wrapper = styled.div`
   display: flex;
@@ -155,6 +153,21 @@ const Status = styled.td`
   white-space: nowrap;
 `;
 
+const getBuildingIcon = (buildingType) => {
+  switch(buildingType) {
+    case Building.IDS.BIOREACTOR: return <BioreactorBuildingIcon />;
+    case Building.IDS.EXTRACTOR: return <ExtractorBuildingIcon />;
+    case Building.IDS.FACTORY: return <FactoryBuildingIcon />;
+    case Building.IDS.HABITAT: return <HabitatBuildingIcon />;
+    case Building.IDS.MARKETPLACE: return <MarketplaceBuildingIcon />;
+    case Building.IDS.REFINERY: return <RefineryBuildingIcon />;
+    case Building.IDS.SHIPYARD: return <ShipyardBuildingIcon />;
+    case Building.IDS.SPACEPORT: return <SpaceportBuildingIcon />;
+    case Building.IDS.WAREHOUSE: return <WarehouseBuildingIcon />;
+    default: return <ConstructIcon />;
+  }
+}
+
 const BuildingRow = ({ building }) => {
   const chainTime = useChainTime();
   const buildingLoc = locationsArrToObj(building?.Location?.locations);
@@ -243,7 +256,7 @@ const BuildingRow = ({ building }) => {
     <LotRow onClick={onClick}>
       <ImageCell>
         <ImageWrapper>
-          <ConstructIcon />
+          {getBuildingIcon(building?.Building?.buildingType)}
           <ClipCorner color="#222" dimension={8} />
         </ImageWrapper>
       </ImageCell>
@@ -263,19 +276,24 @@ const BuildingRow = ({ building }) => {
   );
 };
 
-const ShipGroupHeader = ({ asteroidId, buildingId, lotId }) => {
+const ShipGroupHeader = ({ buildingId, lotId }) => {
   const { data: building } = useBuilding(buildingId);
-  const buildingLoc = Entity.toPosition(building?.Location?.location);
-
-  const { data: lot } = useLot(buildingLoc?.lotId || lotId);
 
   const [mainLabel, details] = useMemo(() => {
-    if (lotId === 0) return ['In Orbit', ''];
+    if (lotId === 0) {
+      return ['In Orbit', ''];
+    }
+    if (building) {
+      return [
+        building.Name?.name || Building.TYPES[building?.Building?.buildingType]?.name || 'Empty Lot',
+        `Lot ${Lot.toIndex(lotId).toLocaleString()}`
+      ];
+    }
     return [
-      Building.TYPES[lot?.building?.Building?.buildingType]?.name || 'Empty Lot',
-      `Lot ${Lot.toIndex(buildingLoc?.lotId || lotId).toLocaleString()}`
+      'Empty Lot',
+      `Lot ${Lot.toIndex(lotId).toLocaleString()}`
     ]
-  }, [buildingLoc, lot, lotId]);
+  }, [building, lotId]);
 
   return (
     <ShipHeaderRow>
@@ -312,9 +330,13 @@ const AsteroidAssets = () => {
   const asteroidId = useStore(s => s.asteroids.origin);
   const { data: asteroid } = useAsteroid(asteroidId);
   const { data: buildings, isLoading: buildingsLoading } = useAsteroidCrewBuildings(asteroidId);
-  // TODO: ecs refactor -- should this use useOwnedShips instead (and filter to asteroid location?);
-  //  might be harder todo unless also using elasticsearch for flattened location
-  const { data: ships, isLoading: shipsLoading } = useAsteroidShips(asteroidId);
+  const { data: allShips, isLoading: shipsLoading } = useOwnedShips();
+  
+  const ships = useMemo(() => {
+    return (allShips || [])
+      .map((ship) => ({ ...ship, _location: locationsArrToObj(ship.Location?.locations) }))
+      .filter((ship) => ship.Ship.status === Ship.STATUSES.AVAILABLE && ship._location.asteroidId === asteroidId);
+  }, [allShips, asteroidId])
 
   const buildingTally = buildings?.length || 0;
 
@@ -332,13 +354,11 @@ const AsteroidAssets = () => {
 
   const shipsByLocation = useMemo(() => {
     if (!ships) return {};
-    return ships
-    .reduce((acc, ship) => {
+    return ships.reduce((acc, ship) => {
       if (ship.Control?.controller?.id === crew?.id) {
-        const loc = ship.Location.location;
-        const lot = loc.label === Entity.IDS.LOT ? (loc.id || 0) : -loc.id;
-        if (!acc[lot]) acc[lot] = [];
-        acc[lot].push(ship);
+        const packedLoc = Entity.packEntity(ship.Location.location, true);
+        if (!acc[packedLoc]) acc[packedLoc] = [];
+        acc[packedLoc].push(ship);
       }
       return acc;
     }, {});
@@ -373,19 +393,16 @@ const AsteroidAssets = () => {
         {asteroid && ships && !shipsLoading && (
           <>
             {!ships?.length && <div style={{ padding: '15px 10px', textAlign: 'center' }}>Your crew has no ships landed on or orbiting this asteroid yet.</div>}
-            {ships?.length > 0 && Object.keys(shipsByLocation).map((lotOrBuildingId, i) => {
-              const headerProps = { asteroidId };
-              if (lotOrBuildingId > 0) headerProps.lotId = lotOrBuildingId;
-              else if (lotOrBuildingId < 0) headerProps.buildingId = -lotOrBuildingId;
-
+            {ships?.length > 0 && Object.keys(shipsByLocation).map((locEntId, i) => {
+              const locShips = shipsByLocation[locEntId];
               return (
-                <Fragment key={lotOrBuildingId}>
+                <Fragment key={locEntId}>
                   <AssetTable style={i > 0 ? { marginTop: 10 } : {}}>
                     <thead>
-                      <ShipGroupHeader {...headerProps} />
+                      <ShipGroupHeader {...locShips[0]._location} />
                     </thead>
                     <tbody>
-                      {shipsByLocation[lotOrBuildingId].map((ship) => <ShipInfoRow key={ship.id} ship={ship} />)}
+                      {locShips.map((ship) => <ShipInfoRow key={ship.id} ship={ship} />)}
                     </tbody>
                   </AssetTable>
                 </Fragment>

@@ -64,6 +64,7 @@ const getEntities = async ({ ids, match, label, components }) => {
 };
 
 const arrayComponents = {
+  DryDock: 'DryDocks',
   Extractor: 'Extractors',
   Inventory: 'Inventories',
   Processor: 'Processors'
@@ -217,7 +218,7 @@ const api = {
 
     // ship is operational and not traveling or in emergency mode
     shipQueryBuilder.filter(esb.termQuery('Ship.status', Ship.STATUSES.AVAILABLE));
-    shipQueryBuilder.filter(esb.termQuery('Ship.mode', Ship.MODES.NORMAL)); // TODO: may not be called mode (not yet implemented)
+    shipQueryBuilder.filter(esb.termQuery('Ship.emergencyAt', 0));
 
     const shipQ = esb.requestBodySearch();
     shipQ.query(shipQueryBuilder);

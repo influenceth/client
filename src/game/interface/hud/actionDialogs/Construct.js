@@ -86,7 +86,7 @@ const Construct = ({ asteroid, lot, constructionManager, stage, ...props }) => {
 
   const [crewTimeRequirement, taskTimeRequirement] = useMemo(() => {
     return [
-      crewTravelTime + constructionTime / 2,
+      crewTravelTime + constructionTime / 5,
       crewTravelTime / 2 + constructionTime
     ];
   }, [crewTravelTime, constructionTime]);

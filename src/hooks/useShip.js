@@ -1,10 +1,20 @@
+import { useMemo } from 'react';
+import { cloneDeep } from 'lodash';
 import { Entity } from '@influenceth/sdk';
 
-import useEntity from './useEntity';
+import useEntity from '~/hooks/useEntity';
+import { locationsArrToObj } from '~/lib/utils';
 
-// TODO: could deprecate this and just use useEntity directly
 const useShip = (id) => {
-  return useEntity({ label: Entity.IDS.SHIP, id });
+  const { data, ...responseProps } = useEntity({ label: Entity.IDS.SHIP, id });
+  return useMemo(() => {
+    let ship = null;
+    if (data && !responseProps.isLoading) {
+      ship = cloneDeep(data);
+      ship._location = locationsArrToObj(ship.Location?.locations);
+    }
+    return { data: ship, ...responseProps };
+  }, [data, responseProps]);
 };
 
 export default useShip;

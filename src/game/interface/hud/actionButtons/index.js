@@ -1,3 +1,4 @@
+import AssembleShip from './AssembleShip';
 import Construct from './Construct';
 import ControlAsteroid from './ControlAsteroid';
 import CoreSample from './CoreSample';
@@ -12,7 +13,7 @@ import LaunchShip from './LaunchShip';
 import PlanBuilding from './PlanBuilding';
 import PurchaseAsteroid from './PurchaseAsteroid';
 import RecruitCrewmate from './RecruitCrewmate';
-import Refine from './Refine';
+import Processors from './Processors';
 import ScanAsteroid from './ScanAsteroid';
 import SelectTravelDestination from './SelectTravelDestination';
 import SetCourse from './SetCourse';
@@ -24,6 +25,7 @@ import SurfaceTransferOutgoing from './SurfaceTransferOutgoing';
 import UnplanBuilding from './UnplanBuilding';
 
 const ActionsButtons = {
+  AssembleShip,
   Construct,
   ControlAsteroid,
   CoreSample,
@@ -36,9 +38,9 @@ const ActionsButtons = {
   LandShip,
   LaunchShip,
   PlanBuilding,
+  Processors,
   PurchaseAsteroid,
   RecruitCrewmate,
-  Refine,
   ScanAsteroid,
   SelectTravelDestination,
   SetCourse,

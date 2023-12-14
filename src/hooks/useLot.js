@@ -42,7 +42,9 @@ const useLot = (lotId) => {
       // update queryClient for individual entities, so that when invalidated, they are refetched
       // (when is when the data on the lot gets updated)
       lotEntities.forEach((e) => {
-        queryClient.setQueryData([ 'entity', e.label, e.id ], e);
+        if ([Entity.IDS.BUILDING, Entity.IDS.DEPOSIT, Entity.IDS.SHIP].includes(e.label)) {
+          queryClient.setQueryData([ 'entity', e.label, e.id ], e);
+        }
       });
 
       [Entity.IDS.BUILDING, Entity.IDS.DEPOSIT, Entity.IDS.SHIP].forEach((label) => {

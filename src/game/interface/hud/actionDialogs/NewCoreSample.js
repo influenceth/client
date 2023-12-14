@@ -152,14 +152,13 @@ const NewCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }) =>
   const stats = useMemo(() => ([
     {
       label: 'Crew Travel',
-      value: crewTravelTime,
+      value: formatTimer(crewTravelTime),
       direction: getBonusDirection(crewTravelBonus),
       isTimeStat: true,
       timeAcceleration: crew?._timeAcceleration,
       tooltip: (
         <TravelBonusTooltip
           bonus={crewTravelBonus}
-          timeAcceleration={crew?._timeAcceleration}
           totalTime={crewTravelTime}
           tripDetails={tripDetails}
           crewRequired="duration" />
@@ -167,14 +166,13 @@ const NewCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }) =>
     },
     {
       label: 'Sample Time',
-      value: sampleTime,
+      value: formatTimer(sampleTime),
       direction: getBonusDirection(sampleTimeBonus),
       isTimeStat: true,
       timeAcceleration: crew?._timeAcceleration,
       tooltip: sampleTimeBonus.totalBonus !== 1 && (
         <TimeBonusTooltip
           bonus={sampleTimeBonus}
-          timeAcceleration={crew?._timeAcceleration}
           title="Sample Time"
           totalTime={sampleTime}
           crewRequired="duration" />

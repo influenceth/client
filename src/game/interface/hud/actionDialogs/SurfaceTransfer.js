@@ -70,7 +70,7 @@ const SurfaceTransfer = ({
   const { startDelivery, finishDelivery } = deliveryManager;
   const { crew, crewmateMap } = useCrewContext();
 
-  const crewmates = (crew?._crewmates || []).map((i) => crewmateMap[i]);
+  const crewmates = (crew?._crewmates || []);
   const captain = crewmates[0];
 
   const crewTravelBonus = useMemo(() => {

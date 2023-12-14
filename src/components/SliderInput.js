@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import styled from 'styled-components';
 
 import NavIcon from './NavIcon';
@@ -59,16 +59,17 @@ const Slider = styled.div`
   `}
 `;
 
-const SliderInput = ({ min = 0, max = 1, increment = 1, value, onChange }) => {
+const SliderInput = ({ disabled, min = 0, max = 1, increment = 1, value, onChange }) => {
   const sliderRef = useRef();
   const updating = useRef(false);
   const expectedChange = useRef();
 
-  const handleChange = (newValue) => {
+  const handleChange = useCallback((newValue) => {
+    if (disabled) return;
     const incrementedNewValue = (newValue === max || newValue === min) ? newValue : Math.round((1 / increment) * newValue) * increment;
     expectedChange.current = incrementedNewValue;
-    onChange(incrementedNewValue);
-  }
+    if (onChange) onChange(incrementedNewValue);
+  }, [disabled, increment, min, max, onChange]);
 
   useEffect(() => {
     const mouseHandler = (e) => {
@@ -87,9 +88,10 @@ const SliderInput = ({ min = 0, max = 1, increment = 1, value, onChange }) => {
       let incr = 0;
       if (e.code === 'ArrowLeft') incr = -increment;
       if (e.code === 'ArrowRight') incr = increment;
+
       if (incr !== 0) {
         if (max - min === 1) incr *= 0.01;
-        handleChange((v) => Math.min(Math.max(min, v + incr), max));
+        handleChange(Math.min(Math.max(min, value + incr), max));
       }
     };
 
@@ -107,7 +109,7 @@ const SliderInput = ({ min = 0, max = 1, increment = 1, value, onChange }) => {
       }
       window.removeEventListener('keydown', keyHandler);
     }
-  }, [increment, min, max, handleChange]);
+  }, [increment, min, max, handleChange, value]);
 
   const percentage = useMemo(() => Math.max(0, Math.min(100, (value - min) / (max - min))), [value, min, max]) || 0;
   return (

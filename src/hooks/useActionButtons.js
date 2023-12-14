@@ -185,9 +185,13 @@ const useActionButtons = () => {
           // if lot is selected
           if (lot) {
 
-            // if asteroid has been scanned, can core sample
+            // if asteroid has been scanned, can core sample... but only offer as main button if
+            // no building or the building is an extractor (can still zoom to lot and do through
+            // resources panel)
             if (asteroid.Celestial.scanStatus === Asteroid.SCAN_STATUSES.RESOURCE_SCANNED) {
-              a.push(actionButtons.CoreSample);
+              if (!lot.building || lot.building.Extractors?.length > 0) {
+                a.push(actionButtons.CoreSample);
+              }
             }
 
             // if there is a building
@@ -224,16 +228,15 @@ const useActionButtons = () => {
                     a.push(actionButtons.Extract);
                   }
 
+                  if (lot.building.DryDocks?.length > 0) {
+                    a.push(actionButtons.AssembleShip);
+                  }
+
                   // TODO: these should be different
                   //  (or a single "Refine" button should have dynamic icons based on processor type)
-                  if (lot.building.Processor?.processorType === Processor.IDS.REFINERY) {
-                    a.push(actionButtons.Refine);
-                  } else if (lot.building.Processor?.processorType === Processor.IDS.FACTORY) {
-                    a.push(actionButtons.Refine);
-                  } else if (lot.building.Processor?.processorType === Processor.IDS.BIOREACTOR) {
-                    a.push(actionButtons.Refine);
-                  } else if (lot.building.Processor?.processorType === Processor.IDS.SHIPYARD) {
-                    a.push(actionButtons.Refine);
+                  const processors = lot.building.Processors || [];
+                  if (processors.length) {
+                    a.push(actionButtons.Processors);
                   }
                 }
 

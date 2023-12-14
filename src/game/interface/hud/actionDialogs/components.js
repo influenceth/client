@@ -652,7 +652,7 @@ const ProductSelector = styled.div`
     border: 1px solid ${p.theme.colors.main};
     padding: 3px;
   `}
-  ${p => p.output && !p.primary && `
+  ${p => p.onClick && !p.primary && `
     cursor: ${p.theme.cursors.active};
     &:hover {
       background: #171717;
@@ -1750,7 +1750,7 @@ export const TransferSelectionDialog = ({ sourceEntity, requirements, inventory,
   );
 };
 
-export const LandingSelectionDialog = ({ asteroid, initialSelection, onClose, onSelected, open, ship }) => {
+export const LandingSelectionDialog = ({ asteroid, deliveryMode, initialSelection, onClose, onSelected, open, originLotIndex, ship }) => {
   const [error, setError] = useState();
   const [selection, setSelection] = useState(initialSelection);
 
@@ -1795,7 +1795,7 @@ export const LandingSelectionDialog = ({ asteroid, initialSelection, onClose, on
       onClose={onClose}
       onComplete={onComplete}
       open={open}
-      title={`Landing Sites`}>
+      title={`${deliveryMode ? 'Delivery' : 'Landing'} Sites`}>
       {/* TODO: isLoading */}
       {/* TODO: replace with DataTable? */}
       <div style={{ minWidth: 500 }}></div>
@@ -1803,11 +1803,11 @@ export const LandingSelectionDialog = ({ asteroid, initialSelection, onClose, on
         <TextInputWithNote>
           <TextInput
             onKeyDown={handleKeyDown}
-            placeholder="Specify Lot by Id..."
+            placeholder="Specify Lot by Index..."
             type="number" />
           <TextInputNote error={!!error}>
             <WarningOutlineIcon />
-            This ship may land at a Spaceport or Empty Lot.
+            This ship may {deliveryMode ? 'be delivered to' : 'land at'} a Spaceport or Empty Lot.
           </TextInputNote>
         </TextInputWithNote>
       )}
@@ -1821,19 +1821,21 @@ export const LandingSelectionDialog = ({ asteroid, initialSelection, onClose, on
                   <td>Building</td>
                   <td>Lot Id</td>
                   <td>Landing Fee</td>
+                  {deliveryMode && <td>Distance</td>}
                 </tr>
               </thead>
               <tbody>
-                {spaceports.map((lotId) => {
+                {spaceports.map((lotIndex) => {
                   return (
                     <SelectionTableRow
-                      key={lotId}
-                      onClick={() => setSelection(lotId)}
-                      selectedRow={lotId === selection}>
-                      <td>Parking @ {lotId}</td>
+                      key={lotIndex}
+                      onClick={() => setSelection(lotIndex)}
+                      selectedRow={lotIndex === selection}>
+                      <td>Parking @ {lotIndex}</td>
                       <td>Spaceport</td>
-                      <td><LocationIcon /> {formatters.lotName(Lot.toIndex(lotId))}</td>
+                      <td><LocationIcon /> {formatters.lotName(lotIndex)}</td>
                       <td>0</td>
+                      {deliveryMode && <td>{Math.round(Asteroid.getLotDistance(asteroid?.id, originLotIndex, lotIndex))} km</td>}
                     </SelectionTableRow>
                   );
                 })}
@@ -1847,13 +1849,13 @@ export const LandingSelectionDialog = ({ asteroid, initialSelection, onClose, on
   );
 };
 
-export const ProcessSelectionDialog = ({ initialSelection, processorType, onClose, onSelected, open }) => {
+export const ProcessSelectionDialog = ({ initialSelection, onClose, forceProcesses, processorType, onSelected, open }) => {
   const [error, setError] = useState();
   const [selection, setSelection] = useState(initialSelection);
 
   const processes = useMemo(() => {
-    return Object.values(Process.TYPES).filter((p) => p.processorType === processorType);
-  }, [processorType])
+    return forceProcesses || Object.values(Process.TYPES).filter((p) => p.processorType === processorType);
+  }, [forceProcesses, processorType])
 
   const onComplete = useCallback(() => {
     onSelected(selection);
@@ -1876,11 +1878,12 @@ export const ProcessSelectionDialog = ({ initialSelection, processorType, onClos
             <tr>
               <td>Process Name</td>
               <td style={{ textAlign: 'left'}}>Inputs</td>
-              <td style={{ textAlign: 'left'}}>Outputs</td>
+              {processes[0]?.outputs && <td style={{ textAlign: 'left'}}>Outputs</td>}
             </tr>
           </thead>
           <tbody>
             {processes.map(({ i, name, inputs, outputs }) => {
+              // console.log({ i, name, inputs, outputs });
               return (
                 <SelectionTableRow
                   key={i}
@@ -1895,14 +1898,16 @@ export const ProcessSelectionDialog = ({ initialSelection, processorType, onClos
                       ))}
                     </InputOutputTableCell>
                   </td>
-                  <td>
-                    <InputOutputTableCell>
-                      <label>{Object.keys(outputs).length}</label>
-                      {Object.keys(outputs).map((resourceId) => (
-                        <ResourceThumbnail key={resourceId} resource={Product.TYPES[resourceId]} size="45px" tooltipContainer="selectionDialog" />
-                      ))}
-                    </InputOutputTableCell>
-                  </td>
+                  {outputs && (
+                    <td>
+                      <InputOutputTableCell>
+                        <label>{Object.keys(outputs).length}</label>
+                        {Object.keys(outputs).map((resourceId) => (
+                          <ResourceThumbnail key={resourceId} resource={Product.TYPES[resourceId]} size="45px" tooltipContainer="selectionDialog" />
+                        ))}
+                      </InputOutputTableCell>
+                    </td>
+                  )}
                 </SelectionTableRow>
               );
             })}
@@ -2032,7 +2037,7 @@ export const InventorySelectionDialog = ({ otherEntity, otherLotId, isSourcing, 
 
         let itemTally = 0;
         if (itemIds?.length === 1) {
-          itemTally = (inv.contents || []).find((p) => p.product === itemIds[0])?.amount || 0;
+          itemTally = (inv.contents || []).find((p) => p.product === Number(itemIds[0]))?.amount || 0;
         } else if (itemIds?.length) {
           itemTally = itemIds.filter((itemId) => (inv.contents || []).find((p) => p.product === Number(itemId))?.amount > 0).length;
         }
@@ -2059,7 +2064,7 @@ export const InventorySelectionDialog = ({ otherEntity, otherLotId, isSourcing, 
     });
 
     return display.sort((a, b) => a.distance - b.distance);
-  }, [inventoryData]);
+  }, [inventoryData, itemIds]);
 
   const onComplete = useCallback(() => {
     onSelected(selection ? JSON.parse(selection) : null);
@@ -2154,7 +2159,7 @@ export const getCapacityUsage = (inventories, type) => {
 
 export const getBuildingRequirements = (building = {}, deliveryActions = []) => {
   const { Building: { buildingType }, Inventories = [] } = building;
-  const inventory = Inventories.find((i) => i.status === Inventory.STATUSES.AVAILABLE);
+  const inventory = Inventories.find((i) => i.status === Inventory.STATUSES.AVAILABLE); // TODO: should this be slot?
 
   return Object.keys(Building.CONSTRUCTION_TYPES[buildingType]?.requirements || {}).map((productId) => {
     const totalRequired = Building.CONSTRUCTION_TYPES[buildingType].requirements[productId];
@@ -2186,14 +2191,14 @@ export const AsteroidImage = ({ asteroid, size }) => {
   )
 }
 
-export const ShipImage = ({ shipType, iconBadge, iconBadgeColor, iconOverlay, iconOverlayColor, inventories, showInventoryStatusForType, simulated, square, style = {} }) => {
+export const ShipImage = ({ shipType, iconBadge, iconBadgeColor, iconOverlay, iconOverlayColor, inventories, showInventoryStatusForType, simulated, size = 'w150', backgroundSize = 'cover', style = {} }) => {
   const shipAsset = Ship.TYPES[Math.abs(shipType)]; // abs for simulated ships
   if (!shipAsset) return null;
 
   const capacity = getCapacityUsage(inventories, showInventoryStatusForType);
   return (
     <ShipThumbnailWrapper style={style}>
-      <ResourceImage src={getShipIcon(shipAsset.i, 'w150', simulated)} />
+      <ResourceImage src={getShipIcon(shipAsset.i, size, simulated)} style={{ backgroundSize }} />
       {showInventoryStatusForType !== undefined && (
         <>
           <InventoryUtilization
@@ -2630,7 +2635,7 @@ export const TransferDistanceDetails = ({ distance, crewTravelBonus}) => {
         <Mouseoverable tooltip={(
           <FreeTransferNote>
             <div>Instant Transfer Radius</div>
-            <div>Transfers less than {crewFreeTransferRadius}km in distance are instantaneous.</div>
+            <div>Transfers less than {crewFreeTransferRadius.toFixed(1)}km in distance are instantaneous.</div>
           </FreeTransferNote>
         )}>
           <label><WarningOutlineIcon /> {Math.round(distance)}km Away</label>
@@ -2654,7 +2659,8 @@ export const ProgressBarSection = ({
   startTime,
   title,
   tooltip,
-  totalTime
+  totalTime,
+  width
 }) => {
   const chainTime = useChainTime();
 
@@ -2724,7 +2730,7 @@ export const ProgressBarSection = ({
   }, [stage, totalTime]);
 
   return (
-    <Section>
+    <Section style={{ width }}>
       <SectionTitle note={totalTimeNote}>{title}</SectionTitle>
       {tooltip && (
         <MouseoverInfoPane referenceEl={refEl.current} visible={hovered}>
@@ -2820,9 +2826,16 @@ export const ResourceAmountSlider = ({ amount, extractionTime, min, max, resourc
   );
 };
 
-export const RecipeSlider = ({ amount, processingTime, min, max, setAmount }) => {
+export const RecipeSlider = ({ amount, disabled, increment = 0.001, processingTime, min: rawMin, max: rawMax, overrideSliderLabel, setAmount }) => {
   const [focusOn, setFocusOn] = useState();
   const [mouseIn, setMouseIn] = useState(false);
+
+  const [min, max] = useMemo(() => {
+    return [
+      Math.ceil(rawMin / increment) * increment,
+      Math.floor(rawMax / increment) * increment
+    ];
+  }, [increment, rawMin, rawMax]);
 
   const onFocusEvent = useCallback((e) => {
     if (e.type === 'focus') {
@@ -2837,127 +2850,180 @@ export const RecipeSlider = ({ amount, processingTime, min, max, setAmount }) =>
     setMouseIn(e.type === 'mouseenter')
   }, []);
 
-  const onChangeInput = (e) => {
-    let currentValue = Math.round(1000 * e.currentTarget.value) / 1000;
-    if (currentValue > max) currentValue = max;
-    if (currentValue < min) currentValue = min;
-    setAmount(currentValue);
-  };
+  const onSetAmount = useCallback((value) => {
+    // apply max, then min, then single increment
+    let cleansed = Math.min(max, value);
 
-  const onRound = () => {
-    let newValue = Math.round(amount);
-    if (newValue > max) newValue = Math.floor(amount);
-    if (newValue < min) newValue = Math.ceil(amount);
-    setAmount(newValue);
-  };
+    // apply min / single increment
+    cleansed = Math.max(cleansed, min, increment);
+
+    // round to nearest increment
+    cleansed = Math.floor(cleansed / increment) * increment;
+
+    setAmount(cleansed);
+  }, [increment, min, max]);
+
+  const onChangeInput = useCallback((e) => {
+    onSetAmount(e.currentTarget.value);
+  }, [onSetAmount]);
+
+  const onRound = useCallback(() => {
+    onSetAmount(Math.round(amount));
+  }, [amount, onSetAmount]);
 
   return (
     <SliderWrapper>
       <SliderInput
+        disabled={disabled}
         min={min}
         max={max}
-        increment={0.001}
-        onChange={setAmount}
+        increment={increment}
+        onChange={onSetAmount}
         value={amount || 0} />
       <SliderInfoRow style={{ alignItems: 'center' }}>
         <SliderInfo style={{ flex: 1 }}>{formatTimer(processingTime, 3)}</SliderInfo>
-        <SliderLabel onMouseEnter={onMouseEvent} onMouseLeave={onMouseEvent} style={{ flex: 'none', fontSize: '10px', lineHeight: '29px' }}>
-          {(mouseIn || focusOn) ? (
-            <SliderTextInput
-              type="number"
-              step={0.001}
-              value={amount}
-              onChange={onChangeInput}
-              onBlur={onFocusEvent}
-              onFocus={onFocusEvent}
-              style={{ marginTop: -2 }} />
-            )
-            : (
-              <b>{amount.toLocaleString(undefined, { minimumFractionDigits: 3 })}</b>
-            )
-          }
-          {' '}
-          <span style={{ fontSize: 14 }}>SRs</span>
-        </SliderLabel>
-        <Button
-          disabled={amount === Math.round(amount)}
-          onClick={onRound}
-          size="small"
-          style={{ marginLeft: 10, padding: 0, minWidth: 75 }}>Round</Button>
-        <Button
-          disabled={amount === max}
-          onClick={() => setAmount(max)}
-          size="small"
-          style={{ marginLeft: 10, padding: 0, minWidth: 75 }}>Max</Button>
+        {overrideSliderLabel || (
+          <>
+            <SliderLabel onMouseEnter={onMouseEvent} onMouseLeave={onMouseEvent} style={{ flex: 'none', fontSize: '10px', lineHeight: '29px' }}>
+              {(mouseIn || focusOn) ? (
+                <SliderTextInput
+                  type="number"
+                  disabled={disabled}
+                  step={0.001}
+                  value={amount}
+                  onChange={onChangeInput}
+                  onBlur={onFocusEvent}
+                  onFocus={onFocusEvent}
+                  style={{ marginTop: -2 }} />
+                )
+                : (
+                  <b>{amount.toLocaleString(undefined, { minimumFractionDigits: 3 })}</b>
+                )
+              }
+              {' '}
+              <span style={{ fontSize: 14 }}>SRs</span>
+            </SliderLabel>
+            {!disabled && (
+              <>
+                <Button
+                  disabled={amount === Math.round(amount)}
+                  onClick={onRound}
+                  size="small"
+                  style={{ marginLeft: 10, padding: 0, minWidth: 75 }}>Round</Button>
+                <Button
+                  disabled={amount === max}
+                  onClick={() => onSetAmount(max)}
+                  size="small"
+                  style={{ marginLeft: 10, padding: 0, minWidth: 75 }}>Max</Button>
+              </>
+            )}
+          </>
+        )}
       </SliderInfoRow>
     </SliderWrapper>
   );
 };
 
-export const ProcessInputOutputSection = ({ title, products, input, output, primaryOutput, setPrimaryOutput, ...props }) => {
+export const ProcessInputOutputSection = ({ title, products, input, output, primaryOutput, setPrimaryOutput, source, ...props }) => {
+  const sourceContents = useMemo(() => (source?.contents || []).reduce((acc, cur) => ({ ...acc, [cur.product]: cur.amount }), {}), [source]);
   return (
     <FlexSectionBlock title={title} {...props} bodyStyle={{ padding: 0 }}>
       <ProductWrapper>
-        {products.map(({ resourceId, recipe, amount }) => (
-          <ProductSelector
-            key={resourceId}
-            input={input}
-            output={output}
-            primary={primaryOutput === resourceId}
-            onClick={setPrimaryOutput ? () => setPrimaryOutput(resourceId) : undefined}>
-            <ResourceThumbnail
-              resource={Product.TYPES[resourceId]}
-              backgroundColor={output ? `rgba(${hexToRGB(theme.colors.green)}, 0.15)` : undefined}
-              badge={`${output ? '+' : '-'}${formatResourceMass(amount, resourceId)}`}
-              badgeColor={output ? theme.colors.green : theme.colors.main}
-              progress={0.5}
-              iconBadge={<RecipeLabel>{recipe}</RecipeLabel>}
-              tooltipContainer="actionDialog"
-            />
-            {output && (
-              <label>
-                {primaryOutput === resourceId
-                  ? (
-                    <>
-                      <CheckIcon /> Primary
-                      <ClipCorner dimension={10} color={theme.colors.main} />
-                    </>
-                  )
-                  : `-50%`
-                }
-              </label>
-            )}
-          </ProductSelector>
-        ))}
+        {products.map(({ i: resourceId, recipe, amount }) => {
+          const thumbProps = {};
+          if (output) {
+            thumbProps.backgroundColor = `rgba(${hexToRGB(theme.colors.green)}, 0.15)`;
+            thumbProps.badgeColor = theme.colors.green;
+          } else if ((sourceContents[resourceId] || 0) > amount) {
+            thumbProps.backgroundColor = `rgba(${theme.colors.mainRGB}, 0.15)`;
+            thumbProps.badgeColor = theme.colors.main;
+            thumbProps.progress = 1;
+          } else {
+            thumbProps.backgroundColor = `rgba(${hexToRGB(theme.colors.error)}, 0.15)`;
+            thumbProps.badgeColor = theme.colors.error;
+            thumbProps.progress = (sourceContents[resourceId] || 0) / amount;
+            if (source) {
+              thumbProps.tooltipOverride = `[INSUFFICIENT] ${Product.TYPES[resourceId]?.name}`;
+            }
+          }
+          const resource = Product.TYPES[resourceId];
+          return (
+            <ProductSelector
+              key={resourceId}
+              input={input}
+              output={output}
+              primary={primaryOutput === resourceId}
+              onClick={setPrimaryOutput ? () => setPrimaryOutput(resourceId) : undefined}>
+              <ResourceThumbnail
+                resource={resource}
+                badge={`${output ? '+' : '-'}${resource.isAtomic ? amount : formatResourceMass(amount, resourceId)}`}
+                iconBadge={<RecipeLabel>{recipe.toLocaleString()}</RecipeLabel>}
+                tooltipContainer="actionDialog"
+                {...thumbProps}
+              />
+              {output && (
+                <label>
+                  {primaryOutput === resourceId
+                    ? (
+                      <>
+                        <CheckIcon /> Primary
+                        <ClipCorner dimension={10} color={theme.colors.main} />
+                      </>
+                    )
+                    : `-50%`
+                  }
+                </label>
+              )}
+            </ProductSelector>
+          );
+        })}
       </ProductWrapper>
     </FlexSectionBlock>
   );
 };
 
-export const ProcessInputSquareSection = ({ title, products, input, output, primaryOutput, setPrimaryOutput, ...props }) => {
+export const ProcessInputSquareSection = ({ title, products, input, output, primaryOutput, setPrimaryOutput, source, ...props }) => {
+  const sourceContents = useMemo(() => (source?.contents || []).reduce((acc, cur) => ({ ...acc, [cur.product]: cur.amount }), {}), [source]);
   return (
     <FlexSectionBlock title={title} {...props} bodyStyle={{ padding: 0 }}>
       <ProductGridWrapper>
-        {products.map(({ resourceId, recipe, amount }) => (
-          <ProductSelector
-            key={resourceId}
-            input={input}
-            output={output}
-            primary={primaryOutput === resourceId}
-            onClick={setPrimaryOutput ? () => setPrimaryOutput(resourceId) : undefined}>
-            <ResourceThumbnail
-              resource={Product.TYPES[resourceId]}
-              backgroundColor={output ? `rgba(${hexToRGB(theme.colors.green)}, 0.15)` : undefined}
-              badge={`${output ? '+' : '-'}${formatResourceMass(amount, resourceId)}`}
-              badgeColor={output ? theme.colors.green : theme.colors.main}
-              progress={0.5}
-              iconBadge={<RecipeLabel>{recipe}</RecipeLabel>}
-              size="87px"
-              tooltipContainer="actionDialog"
-            />
-            {output && <label>{primaryOutput === resourceId ? <><CheckIcon /> Primary</> : `-50%`}</label>}
-          </ProductSelector>
-        ))}
+        {products.map(({ i: resourceId, recipe, amount }) => {
+          const thumbProps = {};
+          if (output) {
+            thumbProps.backgroundColor = `rgba(${hexToRGB(theme.colors.green)}, 0.15)`;
+            thumbProps.badgeColor = theme.colors.green;
+          } else if ((sourceContents[resourceId] || 0) > amount) {
+            thumbProps.backgroundColor = `rgba(${theme.colors.mainRGB}, 0.15)`;
+            thumbProps.badgeColor = theme.colors.main;
+            thumbProps.progress = 1;
+          } else {
+            thumbProps.backgroundColor = `rgba(${hexToRGB(theme.colors.error)}, 0.15)`;
+            thumbProps.badgeColor = theme.colors.error;
+            thumbProps.progress = (sourceContents[resourceId] || 0) / amount;
+            if (source) {
+              thumbProps.tooltipOverride = `[INSUFFICIENT] ${Product.TYPES[resourceId]?.name}`;
+            }
+          }
+          const resource = Product.TYPES[resourceId];
+          return (
+            <ProductSelector
+              key={resourceId}
+              input={input}
+              output={output}
+              primary={primaryOutput === resourceId}
+              onClick={setPrimaryOutput ? () => setPrimaryOutput(resourceId) : undefined}>
+              <ResourceThumbnail
+                resource={resource}
+                badge={`${output ? '+' : '-'}${resource.isAtomic ? amount : formatResourceMass(amount, resourceId)}`}
+                iconBadge={<RecipeLabel>{(recipe || 0).toLocaleString()}</RecipeLabel>}
+                size="87px"
+                tooltipContainer="actionDialog"
+                {...thumbProps}
+              />
+              {output && <label>{primaryOutput === resourceId ? <><CheckIcon /> Primary</> : `-50%`}</label>}
+            </ProductSelector>
+          );
+        })}
       </ProductGridWrapper>
     </FlexSectionBlock>
   );
@@ -3305,7 +3371,7 @@ export const ShipInputBlock = ({ ship, ...props }) => {
   const { crew } = useCrewContext();
   const hasMyCrew = crew && crew._location?.shipId === ship?.id;
   const isMine = crew && crew.id === ship?.Control?.controller?.id;
-  const inEmergencyMode = ship?.Ship?.operationMode === Ship.MODES.EMERGENCY;
+  const inEmergencyMode = ship?.Ship?.emergencyAt > 0;
   return (
     <FlexSectionInputBlock
       image={(
@@ -3313,7 +3379,7 @@ export const ShipInputBlock = ({ ship, ...props }) => {
           iconBadge={isMine ? <MyAssetIcon /> : null}
           iconOverlay={inEmergencyMode ? <EmergencyModeEnterIcon /> : null}
           iconOverlayColor={theme.colors.orange}
-          shipType={ship?.shipType} />
+          shipType={ship?.Ship?.shipType} />
       )}
       label={formatters.shipName(ship)}
       sublabel={(
@@ -4027,13 +4093,13 @@ export const formatVelocity = (metersPerSecond, { abbrev = true, minPrecision = 
 };
 
 export const formatShipStatus = (ship) => {
-  if (ship?.Ship?.status === Ship.STATUSES.IN_FLIGHT) {
-    return 'In Flight'; // TODO: do we need to distinguish Launching, Landing
-  }
+  if (ship?.Ship?.status === Ship.STATUSES.UNDER_CONSTRUCTION) return 'Under Construction';
+  if (ship?.Ship?.status === Ship.STATUSES.IN_FLIGHT) return 'In Flight'; // TODO: do we need to distinguish Launching, Landing
+  if (ship?.Ship?.status === Ship.STATUSES.DISABLED) return 'Disabled';
 
   const loc = ship?.Location.location;
 
-  if (loc.label === Entity.IDS.SHIP) {
+  if (loc.label === Entity.IDS.BUILDING) {
     return 'In Port';
   } else if (loc.label === Entity.IDS.LOT) {
     return 'On Surface';

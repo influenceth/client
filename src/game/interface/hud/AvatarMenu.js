@@ -145,6 +145,10 @@ const BaseLocation = styled.div`
   color: white;
   cursor: ${p => p.theme.cursors.active};
   font-size: 14.5px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  width: 222px;
   span {
     color: #AAA;
     &:before {

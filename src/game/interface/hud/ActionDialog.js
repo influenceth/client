@@ -11,7 +11,7 @@ import useStore from '~/hooks/useStore';
 import actionStage from '~/lib/actionStages';
 import { reactBool } from '~/lib/utils';
 import theme, { hexToRGB } from '~/theme';
-import BuildShip from './actionDialogs/BuildShip';
+import AssembleShip from './actionDialogs/AssembleShip';
 import Construct from './actionDialogs/Construct';
 import ControlAsteroid from './actionDialogs/ControlAsteroid';
 import EmergencyModeGenerate from './actionDialogs/EmergencyModeGenerate';
@@ -28,7 +28,7 @@ import LaunchShip from './actionDialogs/LaunchShip';
 import ManageCrew from './actionDialogs/ManageCrew';
 import MarketplaceOrder from './actionDialogs/MarketplaceOrder';
 import PlanBuilding from './actionDialogs/PlanBuilding';
-import Refine from './actionDialogs/Refine';
+import Process from './actionDialogs/Process';
 import SetCourse from './actionDialogs/SetCourse';
 import StationCrew from './actionDialogs/StationCrew';
 import SurfaceTransfer from './actionDialogs/SurfaceTransfer';
@@ -218,7 +218,7 @@ const ActionDialog = ({ type, params }) => {
   return (
     <Backdrop>
       <ModalCushion>
-        {type === 'BUILD_SHIP' && <BuildShip {...allProps} />}
+        {type === 'ASSEMBLE_SHIP' && <AssembleShip {...allProps} />}
         {type === 'CONTROL_ASTEROID' && <ControlAsteroid {...allProps} />}
         {type === 'PLAN_BUILDING' && <PlanBuilding {...allProps} />}
         {type === 'UNPLAN_BUILDING' && <UnplanBuilding {...allProps} />}
@@ -238,7 +238,7 @@ const ActionDialog = ({ type, params }) => {
         {type === 'MANAGE_CREW' && <ManageCrew {...allProps} />}
         {type === 'NEW_CREW' && <ManageCrew {...allProps} newCrew />}
         {type === 'MARKETPLACE_ORDER' && <MarketplaceOrder {...allProps} />}
-        {type === 'REFINE' && <Refine {...allProps} />}
+        {type === 'PROCESS' && <Process {...allProps} />}
         {type === 'SET_COURSE' && <SetCourse {...allProps} />}
         {type === 'STATION_CREW' && <StationCrew {...allProps} />}
         {type === 'STATION_CREW_AS_GUESTS' && <StationCrew {...allProps} guests />}

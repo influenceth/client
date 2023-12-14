@@ -1,4 +1,4 @@
-import { Building, Entity, Lot, Product } from '@influenceth/sdk';
+import { Building, Entity, Lot, Process, Product, Ship } from '@influenceth/sdk';
 import moment from 'moment';
 
 import {
@@ -18,9 +18,12 @@ import {
   NewCoreSampleIcon,
   UnplanBuildingIcon,
   ConstructIcon,
+  ProcessIcon,
   FoodIcon,
+  StationCrewIcon,
 } from '~/components/Icons';
 import theme, { hexToRGB } from '~/theme';
+import { getProcessorProps } from './utils';
 
 const formatAsItem = (activity, actionItem = {}) => {
   const formatted = {
@@ -288,6 +291,28 @@ const formatAsTx = (item) => {
       break;
     }
 
+    case 'AssembleShipStart': {
+      formatted.icon = <ShipIcon />;
+      formatted.label = `Assemble ${Ship.TYPES[item.vars.ship_type]?.name || 'Ship'}`;
+      formatted.asteroidId = Lot.toPosition(item.meta?.lotId)?.asteroidId;
+      formatted.lotId = item.meta?.lotId;
+      formatted.onClick = ({ openDialog }) => {
+        openDialog('ASSEMBLE_SHIP');
+      };
+      break;
+    }
+
+    case 'AssembleShipFinish': {
+      formatted.icon = <ShipIcon />;
+      formatted.label = `Deliver ${Ship.TYPES[item.meta.shipType]?.name || 'Ship'}`;
+      formatted.asteroidId = Lot.toPosition(item.meta?.lotId)?.asteroidId;
+      formatted.lotId = item.meta?.lotId;
+      formatted.onClick = ({ openDialog }) => {
+        openDialog('ASSEMBLE_SHIP');
+      };
+      break;
+    }
+
     case 'TransferInventoryStart': {
       formatted.icon = <SurfaceTransferIcon />;
       formatted.label = 'Start Transfer';
@@ -382,6 +407,50 @@ const formatAsTx = (item) => {
       formatted.lotId = item.meta?.lotId;
       formatted.onClick = ({ openDialog }) => {
         openDialog('EXTRACT_RESOURCE');
+      };
+      break;
+    }
+
+    case 'ProcessProductsStart': {
+      const process = Process.TYPES[item.vars?.process];
+      const processorProps = getProcessorProps(process?.processorType);
+      formatted.icon = processorProps?.icon || <ProcessIcon />;
+      formatted.label = processorProps?.label || 'Start Process';
+      formatted.asteroidId = Lot.toPosition(item.meta?.lotId)?.asteroidId;
+      formatted.lotId = item.meta?.lotId;
+      formatted.locationDetail = process?.name;
+      formatted.onClick = ({ openDialog }) => {
+        openDialog('PROCESS', { processorSlot: item.vars?.processor_slot });
+      };
+      break;
+    }
+
+    case 'ProcessProductsFinish': {
+      const process = Process.TYPES[item.meta?.process];
+      const processorProps = getProcessorProps(process?.processorType);
+      formatted.icon = processorProps?.icon || <ProcessIcon />;
+      formatted.label = processorProps?.label || 'Finish Process';
+      formatted.asteroidId = Lot.toPosition(item.meta?.lotId)?.asteroidId;
+      formatted.lotId = item.meta?.lotId;
+      formatted.locationDetail = process?.name; 
+      formatted.onClick = ({ openDialog }) => {
+        openDialog('PROCESS', { processorSlot: item.vars?.processorSlot });
+      };
+      break;
+    }
+
+    case 'StationCrew': {
+      formatted.icon = <StationCrewIcon />;
+      formatted.label = 'Station Crew';
+      formatted.asteroidId = Lot.toPosition(item.meta?.destLotId)?.asteroidId;
+      formatted.lotId = item.meta?.destLotId;
+      if (item.vars.destination.label === Entity.IDS.BUILDING) {
+        formatted.buildingId = item.vars.destination.id;
+      } else if (item.vars.destination.label === Entity.IDS.SHIP) {
+        formatted.shipId = item.vars.destination.id;
+      }
+      formatted.onClick = ({ openDialog }) => {
+        openDialog('STATION_CREW', { destinationEntityId: item.vars.destination });
       };
       break;
     }

@@ -13,7 +13,7 @@ const useHydratedCrew = (id) => {
   return useMemo(() => {
     let data = null;
     let isLoading = true;
-    if (!crewLoading && !crewmatesLoading) {
+    if (crew && !crewLoading && !crewmatesLoading) {
       data = cloneDeep(crew);
       data._crewmates = (crewmates || []).map((c) => cloneDeep(c));
       data._location = locationsArrToObj(crew.Location?.locations);

@@ -1,5 +1,6 @@
-import { Crew, Entity, Lot, Time } from '@influenceth/sdk';
+import { Crew, Entity, Lot, Processor, Time } from '@influenceth/sdk';
 import esb from 'elastic-builder';
+import { BioreactorBuildingIcon, ManufactureIcon, RefineIcon } from '~/components/Icons';
 
 const timerIncrements = { d: 86400, h: 3600, m: 60, s: 1 };
 export const formatTimer = (secondsRemaining, maxPrecision = null) => {
@@ -83,7 +84,7 @@ export const ucfirst = (str) => {
 
 export const getCrewAbilityBonuses = (abilityIdOrAbilityIds, crew) => {
   const isMultiple = Array.isArray(abilityIdOrAbilityIds);
-  const timeSinceFed = Math.max(0, Time.toGameDuration((Date.now() / 1000) - crew.Crew.lastFed));
+  const timeSinceFed = Math.max(0, Time.toGameDuration((Date.now() / 1000) - (crew.Crew?.lastFed || 0), crew._timeAcceleration));
   const bonuses = (isMultiple ? abilityIdOrAbilityIds : [abilityIdOrAbilityIds]).reduce((acc, abilityId) => {
     acc[abilityId] = Crew.getAbilityBonus(abilityId, crew._crewmates, crew._station, timeSinceFed);
     return acc;
@@ -108,3 +109,13 @@ export const esbLocationQuery = ({ asteroidId }) => {
       ])
     )
 };
+
+export const getProcessorProps = (processorType) => {
+  switch (processorType) {
+    case Processor.IDS.REFINERY: return { label: 'Refine Material', icon: <RefineIcon /> };
+    case Processor.IDS.FACTORY: return { label: 'Manufacture Goods', icon: <ManufactureIcon /> };
+    case Processor.IDS.BIOREACTOR: return { label: 'Manufacture Organic Goods', icon: <BioreactorBuildingIcon /> };
+    case Processor.IDS.SHIPYARD: return { label: 'Manufacture Ship Parts', icon: <ManufactureIcon /> };
+  }
+  return {};
+}

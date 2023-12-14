@@ -30,14 +30,19 @@ const LiveFoodStatus = ({ crew, onClick, ...props }) => {
   const chainTime = useChainTime();
   const { data: TIME_ACCELERATION } = useConstants('TIME_ACCELERATION');
 
-  const percentage = useMemo(() => {
+  const [percentage, isRationing] = useMemo(() => {
     const lastFedAgo = Time.toGameDuration(chainTime - (crew?.Crew?.lastFed || 0), parseInt(TIME_ACCELERATION));
-    return lastFedAgo ? Math.round(100 * Crew.getCurrentFoodRatio(lastFedAgo, crew._foodBonuses?.consumption || 1)) : 0;
-  }, [chainTime, crew._foodBonuses?.consumption]);
+    return lastFedAgo
+      ? [
+        Math.round(100 * Crew.getCurrentFoodRatio(lastFedAgo, crew._foodBonuses?.consumption)),
+        (Crew.getFoodMultiplier(lastFedAgo, crew._foodBonuses?.consumption, crew._foodBonuses?.rationing) < 1)
+      ]
+      : [0, false];
+  }, [chainTime, crew]);
   
   return (
-    <Food isRationing={percentage < 50} onClick={onClick} {...props}>
-      {percentage < 50 && <WarningOutlineIcon />}
+    <Food isRationing={isRationing} onClick={onClick} {...props}>
+      {isRationing && <WarningOutlineIcon />}
       <span>{percentage}%</span>
       <FoodIcon />
     </Food>

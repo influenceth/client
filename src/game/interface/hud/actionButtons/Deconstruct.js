@@ -27,7 +27,7 @@ const Deconstruct = ({ asteroid, crew, lot, onSetAction, _disabled }) => {
     if (
       (lot?.building?.Extractors || []).find((e) => e.status > 0)
       || (lot?.building?.Processors || []).find((e) => e.status > 0)
-      || lot?.building?.DryDock?.status > 0
+      || (lot?.building?.DryDocks || []).find((e) => e.status > 0)
     ) return 'busy';
 
     if ((lot?.building?.Inventories || []).find((i) => i.status === Inventory.STATUSES.AVAILABLE && i.reservedMass > 0)) {
