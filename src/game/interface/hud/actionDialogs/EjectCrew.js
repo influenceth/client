@@ -79,7 +79,7 @@ const EjectCrew = ({ asteroid, lot, manager, ship, stage, targetCrew, ...props }
     const icon = <EjectPassengersIcon />;
     const label = myCrewIsTarget ? 'Eject My Crew' : 'Force Eject Crew';
     const status = stage === actionStages.NOT_STARTED
-      ? `Eject from My ${ship ? 'Ship' : Building.TYPES[lot?.building?.Building?.buildingType]}`
+      ? `Eject from ${ship ? 'Ship' : Building.TYPES[lot?.building?.Building?.buildingType]?.name}`
       : undefined;
     return { icon, label, status };
   }, [myCrewIsTarget, lot, ship, stage]);

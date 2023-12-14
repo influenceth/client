@@ -1,4 +1,4 @@
-import { Address, Building, Entity, Lot, Process, Product } from '@influenceth/sdk';
+import { Address, Building, Entity, Lot, Process, Product, Ship } from '@influenceth/sdk';
 import { AiFillEdit as NameIcon } from 'react-icons/ai';
 import { BiTransfer as TransferIcon } from 'react-icons/bi';
 
@@ -9,6 +9,7 @@ import {
   CoreSampleIcon,
   CrewIcon,
   CrewmateIcon,
+  EjectPassengersIcon,
   ExtractionIcon,
   FoodIcon,
   ImproveCoreSampleIcon,
@@ -19,6 +20,7 @@ import {
   PromoteIcon,
   PurchaseAsteroidIcon,
   ScanAsteroidIcon,
+  ShipIcon,
   StationCrewIcon,
   SurfaceTransferIcon,
   UnplanBuildingIcon
@@ -240,7 +242,6 @@ const activities = {
       ]
     },
     getLogContent: ({ event: { returnValues } }, viewingAs, { building = {} }) => {
-      console.log('GET LOG CONTENT', returnValues, building, locationsArrToObj(building?.Location?.locations || [])?.lotId);
       return {
         icon: <ConstructIcon />,
         content: (
@@ -489,20 +490,48 @@ const activities = {
     }
   },
 
+  CrewEjected: {
+    getInvalidations: ({ event: { returnValues } }) => ([
+      ...invalidationDefaults(returnValues.callerCrew.label, returnValues.callerCrew.id),
+      ...invalidationDefaults(returnValues.ejectedCrew.label, returnValues.ejectedCrew.id),
+      // TODO: previous station
+    ]),
+
+    getLogContent: ({ event: { returnValues } }, { viewingAs }) => {
+      return {
+        icon: <EjectPassengersIcon />,
+        content: (
+          <>
+          <EntityLink {...returnValues.ejectedCrew} />
+          {' '}ejected from <EntityLink {...returnValues.ejectedCrew} />
+          {' '}by <EntityLink {...returnValues.callerCrew} />
+        </>
+        ),
+      };
+    },
+
+    requiresCrewTime: true
+  },
+
   CrewStationed: {
     getInvalidations: ({ event: { returnValues } }) => ([
-      ...invalidationDefaults(Entity.IDS.CREW, returnValues.callerCrew.id),
-      ...invalidationDefaults(Entity.IDS.BUILDING, returnValues.station.id)
+      ...invalidationDefaults(returnValues.callerCrew.label, returnValues.callerCrew.id),
+      ...invalidationDefaults(returnValues.station.label, returnValues.station.id),
+      // TODO: previous station
     ]),
-    getLogContent: ({ event: { returnValues } }) => ({
-      icon: <StationCrewIcon />,
-      content: (
-        <>
-          Crew <EntityLink {...returnValues.callerCrew} />
+
+    getLogContent: ({ event: { returnValues } }) => {
+      return {
+        icon: <StationCrewIcon />,
+        content: (
+          <>
+          <EntityLink {...returnValues.callerCrew} />
           {' '}stationed in <EntityLink {...returnValues.station} />
         </>
-      ),
-    }),
+        ),
+      };
+    },
+
     requiresCrewTime: true
   },
   
@@ -747,7 +776,6 @@ const activities = {
         // resourceId: returnValues.resource,
         locationDetail: getEntityName(extractor),
         onClick: ({ openDialog }) => {
-          console.log({ returnValues, extractor });
           openDialog('EXTRACT_RESOURCE');
         }
       };
@@ -876,7 +904,6 @@ const activities = {
 
   FoodSupplied: {
     getInvalidations: ({ event: { returnValues } }) => {
-      console.log({ returnValues });
       // TODO: replace lastFed in place
       return [
         ...invalidationDefaults(Entity.IDS.CREW, returnValues.callerCrew.id),
@@ -959,6 +986,97 @@ const activities = {
     //   };
     // },
     requiresCrewTime: true
+  },
+
+  ShipAssemblyStarted: {
+    getActionItem: ({ returnValues }, { building = {} }) => {
+      const _location = locationsArrToObj(building?.Location?.locations || []);
+      return {
+        icon: <ShipIcon />,
+        label: `${Ship.TYPES[returnValues.shipType]?.name || 'Ship'} Assembly`,
+        asteroidId: _location.asteroidId,
+        lotId: _location.lotId,
+        locationDetail: getEntityName(building),
+        onClick: ({ openDialog }) => {
+          openDialog('ASSEMBLE_SHIP', { dryDockSlot: returnValues.dryDockSlot });
+        }
+      };
+    },
+    getIsActionItemHidden: ({ returnValues }) => (pendingTransactions) => {
+      return pendingTransactions.find((tx) => (
+        tx.key === 'ShipAssemblyFinished'
+        && tx.vars.dry_dock.id === returnValues.dryDock.id
+        && tx.vars.dry_dock_slot === returnValues.dryDockSlot
+      ))
+    },
+
+    getInvalidations: ({ event: { returnValues, version } }) => ([
+      ...invalidationDefaults(returnValues.dryDock.label, returnValues.dryDock.id),
+      ...invalidationDefaults(returnValues.origin.label, returnValues.origin.id),
+      ['actionItems']
+      // TODO: do we need this for building status?
+      // ['asteroidCrewBuildings', returnValues.asteroidId, returnValues.crewId],
+    ]),
+
+    getPrepopEntities: ({ event: { returnValues } }) => ({
+      building: returnValues.dryDock,
+    }),
+
+    // getLogContent: ({ event: { returnValues } }, viewingAs, { building = {} }) => {
+    //   const _location = locationsArrToObj(building?.Location?.locations || []);
+    //   return {
+    //     icon: <ShipIcon />,
+    //     content: (
+    //       <>
+    //         <span>{Ship.TYPES[returnValues.shipType]?.name || 'Ship'} assembly started at </span>
+    //         <LotLink lotId={_location.lotId} />
+    //       </>
+    //     ),
+    //   };
+    // },
+
+    requiresCrewTime: true
+  },
+  ShipAssemblyFinished: {
+    getInvalidations: ({ event: { returnValues } }, { building = {} }) => {
+      const invs = [
+        ...invalidationDefaults(returnValues.dryDock.label, returnValues.dryDock.id),
+        ...invalidationDefaults(returnValues.destination.label, returnValues.destination.id),
+        ['actionItems'],
+        // TODO: ...
+        // ['asteroidInventories', asteroidId],
+        // ['asteroidCrewShips', returnValues.asteroidId, returnValues.crewId],
+      ];
+
+      const dryDock = (building?.DryDocks || []).find((p) => p.slot === returnValues.dryDockSlot);
+      if (dryDock?.outputShip) invs.unshift(...invalidationDefaults(dryDock.outputShip.label, dryDock.outputShip.id));
+
+      // TODO: do we need this for building status?
+      // ['asteroidCrewBuildings', returnValues.asteroidId, returnValues.crewId],
+
+      return invs;
+    },
+
+    getPrepopEntities: ({ event: { returnValues } }) => ({
+      building: returnValues.dryDock,
+      destination: returnValues.destination,
+    }),
+
+    getLogContent: ({ event: { returnValues } }, viewingAs, { building = {}, destination = {} }) => {
+      const _location = locationsArrToObj(building?.Location?.locations || []);
+      const _dlocation = locationsArrToObj(destination?.Location?.locations || []);
+      return {
+        icon: <ShipIcon />,
+        content: (
+          <>
+            <span><EntityLink {...returnValues.ship} /> assembled at </span>
+            <span><LotLink lotId={_location.lotId} /> and delivered to <LotLink lotId={_dlocation?.lotId || returnValues.destination?.id} /></span>
+          </>
+        ),
+      };
+    },
+
+    triggerAlert: true
   },
 
   SurfaceScanFinished: {
@@ -1099,7 +1217,7 @@ export const hydrateActivities = async (newActivities, queryClient) => {
                 prepopping[key] = true;
                 return api.getEntityById({ label, id })
                   .then((data) => {
-                    console.log({ label, id, data });
+                    // console.log({ label, id, data });
                     queryClient.setQueryData(queryKey, data);
                   })
                   .catch((e) => console.warn('Error with activity prepop', queryKey, e))

@@ -85,12 +85,14 @@ const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...pro
   const [selectedOrigin, setSelectedOrigin] = useState(currentProcess ? { ...currentProcess?.origin, slot: currentProcess?.originSlot } : undefined);
   const { data: origin } = useEntity(selectedOrigin);
   const originLotId = useMemo(() => origin && locationsArrToObj(origin?.Location?.locations || []).lotId, [origin]);
+  const originLotIndex = useMemo(() => Lot.toIndex(originLotId), [originLotId]);
   const { data: originLot } = useLot(originLotId);
   const originInventory = useMemo(() => (origin?.Inventories || []).find((i) => i.slot === selectedOrigin?.slot), [origin, selectedOrigin?.slot]);
 
   const [selectedDestination, setSelectedDestination] = useState(currentProcess ? { ...currentProcess?.destination, slot: currentProcess?.destinationSlot } : undefined);
   const { data: destination } = useEntity(selectedDestination);
   const destinationLotId = useMemo(() => destination && locationsArrToObj(destination?.Location?.locations || []).lotId, [destination]);
+  const destinationLotIndex = useMemo(() => Lot.toIndex(destinationLotId), [destinationLotId]);
   const { data: destinationLot } = useLot(destinationLotId);
   const destinationInventory = useMemo(() => (destination?.Inventories || []).find((i) => i.slot === selectedDestination?.slot), [destination, selectedDestination?.slot]);
 
@@ -427,7 +429,7 @@ const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...pro
             style={{ marginBottom: 20, width: '33.3%' }}
             sublabel={
               originLot
-              ? <><LocationIcon /> {formatters.lotName(selectedOrigin?.lotIndex)}</>
+              ? <><LocationIcon /> {formatters.lotName(originLotIndex)}</>
               : 'Inventory'
             }
             transferMass={inputMass}
@@ -470,7 +472,7 @@ const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...pro
             style={{ marginBottom: 20, width: '33.3%' }}
             sublabel={
               destinationLot
-              ? <><LocationIcon /> {formatters.lotName(selectedDestination?.lotIndex)}</>
+              ? <><LocationIcon /> {formatters.lotName(destinationLotIndex)}</>
               : 'Inventory'
             }
             transferMass={outputMass}

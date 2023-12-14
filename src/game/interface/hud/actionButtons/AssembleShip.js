@@ -23,6 +23,7 @@ const AssembleShip = ({ asteroid, lot, onSetAction, _disabled }) => {
       label={labelDict[assemblyStatus] || undefined}
       flags={{
         disabled: _disabled || undefined,
+        attention: assemblyStatus === 'READY_TO_FINISH' || undefined,
         loading: assemblyStatus === 'ASSEMBLING' || assemblyStatus === 'FINISHING' || undefined
       }}
       icon={<ShipIcon />}

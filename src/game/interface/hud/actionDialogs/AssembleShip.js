@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import styled from 'styled-components';
-import { Asteroid, Crewmate, Lot, Product, Ship, Time } from '@influenceth/sdk';
+import { Asteroid, Crewmate, Entity, Lot, Product, Ship, Time } from '@influenceth/sdk';
 
 import travelBackground from '~/assets/images/modal_headers/Travel.png';
 import { CaretIcon, CloseIcon, ForwardIcon, ConstructShipIcon, ProcessIcon, InventoryIcon, LocationIcon } from '~/components/Icons';
@@ -29,7 +29,9 @@ import {
   TimeBonusTooltip,
   InventorySelectionDialog,
   InventoryInputBlock,
-  ShipImage
+  ShipImage,
+  ProgressBarSection,
+  LandingSelectionDialog
 } from './components';
 import useLot from '~/hooks/useLot';
 import useStore from '~/hooks/useStore';
@@ -90,22 +92,31 @@ const AssembleShip = ({ asteroid, lot, dryDockManager, stage, ...props }) => {
   const [selectedOrigin, setSelectedOrigin] = useState(currentAssembly ? { ...currentAssembly?.origin, slot: currentAssembly?.originSlot } : undefined);
   const { data: origin } = useEntity(selectedOrigin);
   const originLotId = useMemo(() => origin && locationsArrToObj(origin?.Location?.locations || []).lotId, [origin]);
+  const originLotIndex = useMemo(() => Lot.toIndex(originLotId), [originLotId]);
   const { data: originLot } = useLot(originLotId);
   const originSlot = selectedOrigin?.slot;
   // TODO: is both below and above needed? just using below in other Process action dialogs...
   const originInventory = useMemo(() => (origin?.Inventories || []).find((i) => i.slot === selectedOrigin?.slot), [origin, selectedOrigin?.slot]);
 
-  const [selectedDestination, setSelectedDestination] = useState(currentAssembly ? { ...currentAssembly?.destination, slot: currentAssembly?.destinationSlot } : undefined);
-  const { data: destination } = useEntity(selectedDestination);
-  const destinationLotId = useMemo(() => destination && locationsArrToObj(destination?.Location?.locations || []).lotId, [destination]);
+  const { data: currentDestinationEntity } = useEntity(currentAssembly?.destination ? { ...currentAssembly.destination } : undefined);
+  const [selectedDestinationIndex, setSelectedDestinationIndex] = useState();
+  const destinationLotId = Lot.toId(asteroid?.id, selectedDestinationIndex);
   const { data: destinationLot } = useLot(destinationLotId);
-  const destinationInventory = useMemo(() => (destination?.Inventories || []).find((i) => i.slot === selectedDestination?.slot), [destination, selectedDestination?.slot]);
+  const destination = destinationLot?.building || destinationLot;
 
   const amount = 1;
-  const [shipType, setShipType] = useState();
+  const [shipType, setShipType] = useState(currentAssembly?.shipType);
   const [destinationSelectorOpen, setDestinationSelectorOpen] = useState(false);
   const [originSelectorOpen, setOriginSelectorOpen] = useState(false);
   const [processSelectorOpen, setProcessSelectorOpen] = useState(false);
+
+  useEffect(() => {
+    if (currentDestinationEntity) {
+      setSelectedDestinationIndex(
+        Lot.toIndex(currentDestinationEntity?.Location?.locations?.find((l) => l.label === Entity.IDS.LOT)?.lotId)
+      )
+    }
+  }, [currentDestinationEntity]);
 
   // TODO: if shipType is changed, reset origin and originSlot?
   //  or at least re-eval which inputs are available in grid
@@ -131,9 +142,12 @@ const AssembleShip = ({ asteroid, lot, dryDockManager, stage, ...props }) => {
     return bonusIds.map((id) => abilities[id] || {});
   }, [crew]);
 
-  const assemblyTime = useMemo(() => {
-    if (!ship) return 0;
-    return Time.toRealDuration(ship?.constructionTime * assemblyTimeBonus.totalBonus, crew?._timeAcceleration);
+  const [assemblyTime, setupTime] = useMemo(() => {
+    if (!ship) return [0, 0];
+    return [
+      Time.toRealDuration(ship?.constructionTime / assemblyTimeBonus.totalBonus, crew?._timeAcceleration),
+      Time.toRealDuration(ship?.setupTime / assemblyTimeBonus.totalBonus, crew?._timeAcceleration)
+    ];
   }, [amount, crew?._timeAcceleration, assemblyTimeBonus, ship?.constructionTime]);
 
   const { totalTime: crewTravelTime, tripDetails } = useMemo(() => {
@@ -157,7 +171,7 @@ const AssembleShip = ({ asteroid, lot, dryDockManager, stage, ...props }) => {
   }, [asteroid?.id, lot?.id, crew?._timeAcceleration, originLot?.id, crewTravelBonus]);
 
   const [outputTransportDistance, outputTransportTime] = useMemo(() => {
-    if (!destinationLot?.id) return [];
+    if (!lot?.id || !destinationLot?.id) return [];
     return [
       Asteroid.getLotDistance(asteroid?.id, Lot.toIndex(lot?.id), Lot.toIndex(destinationLot?.id)) || 0,
       Time.toRealDuration(
@@ -179,12 +193,11 @@ const AssembleShip = ({ asteroid, lot, dryDockManager, stage, ...props }) => {
 
   const [crewTimeRequirement, taskTimeRequirement] = useMemo(() => {
     const onewayCrewTravelTime = crewTravelTime / 2;
-    const setupTime = ship?.setupTime || 0;
     return [
       Math.max(onewayCrewTravelTime, inputTransportTime) + setupTime + onewayCrewTravelTime,
       Math.max(onewayCrewTravelTime, inputTransportTime) + setupTime + assemblyTime
     ];
-  }, [crewTravelTime, inputTransportTime, ship?.setupTime, assemblyTime]);
+  }, [crewTravelTime, inputTransportTime, setupTime, assemblyTime]);
 
   const stats = useMemo(() => ([
     {
@@ -233,9 +246,13 @@ const AssembleShip = ({ asteroid, lot, dryDockManager, stage, ...props }) => {
     },
   ]), [assemblyTime, assemblyTimeBonus, crewTravelTime, crewTravelBonus, tripDetails, inputTransportDistance, inputTransportTime]);
 
-  const onAssemble = useCallback(() => {
+  const onStart = useCallback(() => {
     startShipAssembly(shipType, origin, originSlot);
   }, [shipType, origin, originSlot]);
+
+  const onFinish = useCallback(() => {
+    finishShipAssembly(destination);
+  }, [destination]);
 
   // handle auto-closing
   const lastStatus = useRef();
@@ -282,20 +299,27 @@ const AssembleShip = ({ asteroid, lot, dryDockManager, stage, ...props }) => {
           <FlexSectionSpacer />
 
           <FlexSectionBlock
-            title="Process"
+            title="Assembly Process"
+            titleDetails={!ship ? undefined : (
+              <span style={{ fontSize: '85%' }}>Setup Time: {formatTimer(setupTime)}</span>
+            )}
             bodyStyle={{ padding: 0 }}
             style={{ alignSelf: 'flex-start', width: '592px' }}>
 
             <FlexSectionInputBody
-              isSelected={true}
-              onClick={() => setProcessSelectorOpen(true)}
+              isSelected={stage === actionStages.NOT_STARTED}
+              onClick={stage === actionStages.NOT_STARTED ? () => setProcessSelectorOpen(true) : undefined}
               style={{ padding: 4 }}>
               <SelectorInner>
                 <IconWrapper>
                   <ProcessIcon />
                 </IconWrapper>
                 <label>{process?.name || `Select a Process...`}</label>
-                {process ? <IconButton borderless><CloseIcon /></IconButton> : <CaretIcon />}
+                {stage === actionStages.NOT_STARTED && (
+                  <>
+                    {process ? <IconButton borderless><CloseIcon /></IconButton> : <CaretIcon />}
+                  </>
+                )}
               </SelectorInner>
               <ClipCorner dimension={sectionBodyCornerSize} />
             </FlexSectionInputBody>
@@ -328,33 +352,21 @@ const AssembleShip = ({ asteroid, lot, dryDockManager, stage, ...props }) => {
               style={{ marginBottom: 20, width: '100%' }}
               sublabel={
                 originLot
-                ? <><LocationIcon /> {formatters.lotName(selectedOrigin?.lotIndex)}</>
+                ? <><LocationIcon /> {formatters.lotName(originLotIndex)}</>
                 : 'Inventory'
               }
               transferMass={0/* TODO */}
               transferVolume={0/* TODO */} />
 
-            <InventoryInputBlock
+            <LotInputBlock
               title="Delivery Destination"
               titleDetails={<TransferDistanceDetails distance={outputTransportDistance} crewTravelBonus={crewTravelBonus} />}
               disabled={stage !== actionStages.READY_TO_COMPLETE}
-              entity={destination}
-              inventorySlot={selectedDestination?.slot}
-              imageProps={{
-                iconOverride: <InventoryIcon />,
-              }}
+              lot={destinationLot}
               isSelected={stage === actionStages.READY_TO_COMPLETE}
-              label="Select"
               onClick={() => { setDestinationSelectorOpen(true) }}
               style={{ marginBottom: 20, width: '100%' }}
-              sublabel={
-                destinationLot
-                ? <><LocationIcon /> {formatters.lotName(selectedDestination?.lotIndex)}</>
-                : 'Inventory'
-              }
-              fallbackSublabel={stage !== actionStages.READY_TO_COMPLETE ? 'Upon Completion' : 'Inventory'}
-              transferMass={0/* TODO */}
-              transferVolume={0/* TODO */} />
+              fallbackSublabel={stage !== actionStages.READY_TO_COMPLETE ? 'Upon Completion' : 'Destination'} />
           </div>
           
           <FlexSectionSpacer style={{ alignItems: 'flex-start', paddingTop: '54px' }}>
@@ -402,15 +414,16 @@ const AssembleShip = ({ asteroid, lot, dryDockManager, stage, ...props }) => {
           </div>
         </FlexSection>
 
-        {stage !== actionStages.NOT_STARTED && null /* TODO: (
+        {stage !== actionStages.NOT_STARTED && (
           <ProgressBarSection
-            finishTime={lot?.building?.construction?.finishTime}
-            startTime={lot?.building?.construction?.startTime}
+            finishTime={currentAssembly?.finishTime}
+            startTime={currentAssembly?.startTime}
             stage={stage}
             title="Progress"
-            totalTime={crewTravelTime + constructionTime}
+            totalTime={taskTimeRequirement}
+            width="100%"
           />
-        )*/}
+        )}
 
         <ActionDialogStats
           stage={stage}
@@ -423,11 +436,12 @@ const AssembleShip = ({ asteroid, lot, dryDockManager, stage, ...props }) => {
       <ActionDialogFooter
         disabled={!(
           (stage === actionStages.NOT_STARTED && process && originInventory && isOriginSufficient)
-          || (stage === actionStages.READY_TO_COMPLETE && destinationInventory)
+          || (stage === actionStages.READY_TO_COMPLETE && destination)
         )}
         finalizeLabel="Deliver Ship"
+        onFinalize={onFinish}
         goLabel="Begin Assembly"
-        onGo={onAssemble}
+        onGo={onStart}
         stage={stage}
         wide
         {...props} />
@@ -455,12 +469,15 @@ const AssembleShip = ({ asteroid, lot, dryDockManager, stage, ...props }) => {
         </>
       )}
       {stage === actionStages.READY_TO_COMPLETE && (
-        <InventorySelectionDialog
-          otherEntity={lot.building}
-          otherLotId={lot?.id}
+        <LandingSelectionDialog
+          asteroid={asteroid}
+          deliveryMode
+          initialSelection={selectedDestinationIndex}
           onClose={() => setDestinationSelectorOpen(false)}
-          onSelected={setSelectedDestination}
+          onSelected={setSelectedDestinationIndex}
+          originLotIndex={Lot.toIndex(lot?.id)}
           open={destinationSelectorOpen}
+          ship={ship}
         />
       )}
     </>

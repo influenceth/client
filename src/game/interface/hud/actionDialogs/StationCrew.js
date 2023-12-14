@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import styled from 'styled-components';
-import { Asteroid, Building, Crew, Crewmate, Entity, Lot, Ship, Station } from '@influenceth/sdk';
+import cloneDeep from 'lodash/cloneDeep';
+import { Asteroid, Building, Crew, Crewmate, Entity, Lot, Ship, Station, Time } from '@influenceth/sdk';
 
 import travelBackground from '~/assets/images/modal_headers/Travel.png';
 import { StationCrewIcon, StationPassengersIcon } from '~/components/Icons';
 import useCrewContext from '~/hooks/useCrewContext';
 import useShip from '~/hooks/useShip';
-import { reactBool, formatTimer } from '~/lib/utils';
+import { reactBool, formatTimer, locationsArrToObj, getCrewAbilityBonuses } from '~/lib/utils';
 
 import {
   ActionDialogFooter,
@@ -21,7 +22,9 @@ import {
   TransferDistanceDetails,
   TransferDistanceTitleDetails,
   ShipInputBlock,
-  LotInputBlock
+  LotInputBlock,
+  getBonusDirection,
+  TimeBonusTooltip
 } from './components';
 import useLot from '~/hooks/useLot';
 import useStore from '~/hooks/useStore';
@@ -32,6 +35,8 @@ import useCrew from '~/hooks/useCrew';
 import useAsteroid from '~/hooks/useAsteroid';
 import useAsteroidShips from '~/hooks/useAsteroidShips';
 import CrewIndicator from '~/components/CrewIndicator';
+import useStationCrewManager from '~/hooks/actionManagers/useStationCrewManager';
+import useEntity from '~/hooks/useEntity';
 
 const Warning = styled.div`
   align-items: center;
@@ -51,82 +56,114 @@ const Note = styled.div`
   padding: 15px 10px 10px;
 `;
 
-const StationCrew = ({ asteroid, lot, destinations, manager, ship, stage, ...props }) => {
+const StationCrew = ({ asteroid, destination: rawDestination, lot, origin: rawOrigin, stationCrewManager, stage, ...props }) => {
   const createAlert = useStore(s => s.dispatchAlertLogged);
   
-  const { currentStationing, stationingStatus, stationOnShip } = manager;
-
+  const { stationCrew } = stationCrewManager;
   const { crew, crewmateMap } = useCrewContext();
 
-  const destinationLot = destinations[0]?.type === 'lot' ? destinations[0].data : null;
-  const destinationShip = destinations[0]?.type === 'ship' ? destinations[0].data : null;
-  
-  const { data: ownerCrew } = useCrew((destinationShip || destinationLot)?.Control.controller.id);
-  const crewIsOwner = ownerCrew?.id === crew?.id;
-
-  const crewmates = currentStationing?._crewmates || (crew?._crewmates || []).map((i) => crewmateMap[i]);
+  const crewmates = (crew?._crewmates || []);
   const captain = crewmates[0];
-  const crewTravelBonus = Crew.getAbilityBonus(Crewmate.ABILITY_IDS.HOPPER_TRANSPORT_TIME, crewmates);
-  const launchBonus = 0;
 
-  const transportDistance = Asteroid.getLotDistance(asteroid?.id, Lot.toIndex(lot?.id), Lot.toIndex(destinationLot?.id || destinationShip?.lotId)) || 0;
+  const crewTravelBonus = useMemo(() => {
+    if (!crew) return {};
+    return getCrewAbilityBonuses(Crewmate.ABILITY_IDS.HOPPER_TRANSPORT_TIME, crew) || {};
+  }, [crew]);
+
+  const [origin, destination] = useMemo(() => {
+    const origin = cloneDeep(rawOrigin);
+    origin._location = locationsArrToObj(origin.Location?.locations || []);
+    origin._inOrbit = !origin._location.lotId;
+    origin._crewOwned = origin?.Control?.controller?.id === crew?.id;
+
+    const destination = cloneDeep(rawDestination);
+    destination._location = locationsArrToObj(destination.Location?.locations || []);
+    destination._inOrbit = !destination._location.lotId;
+    destination._crewOwned = destination?.Control?.controller?.id === crew?.id;
+
+    return [origin, destination];
+  }, [rawDestination, rawOrigin]);
+
+  const crewIsOwner = destination?.Control?.controller?.id === crew?.id;
+
+  const { data: destinationOwner } = useCrew(destination?.Control?.controller?.id);
+  const { data: destinationLot } = useLot(destination?._location?.lotId);
+  const { data: originLot } = useLot(origin?._location?.lotId);
+
+  const [travelDistance, travelTime] = useMemo(() => {
+    if (!origin || !destination) return [0, 0];
+    return [
+      Asteroid.getLotDistance(asteroid?.id, origin._location.lotIndex, destination._location.lotIndex),
+      Time.toRealDuration(
+        Asteroid.getLotTravelTime(asteroid?.id, origin._location.lotIndex, destination._location.lotIndex, crewTravelBonus.totalBonus),
+        crew?._timeAcceleration
+      )
+    ];
+  }, [asteroid?.id, origin?.id, destination?.id, crewTravelBonus, crew?._timeAcceleration]);
 
   const stats = useMemo(() => ([
     {
       label: 'Travel Time',
-      value: formatTimer(0),
-      direction: 0,
+      value: formatTimer(travelTime),
+      direction: getBonusDirection(crewTravelBonus),
       isTimeStat: true,
+      tooltip: (
+        <TimeBonusTooltip
+          bonus={crewTravelBonus}
+          title="Transport Time"
+          totalTime={travelTime}
+          crewRequired="start" />
+      )
     },
     {
-      label: 'Crewmates Stationed',
-      value: `5`,
+      label: 'Crewmates Restationed',
+      value: crew?._crewmates?.length || 0,
       direction: 0,
     },
-  ]), []);
+  ]), [crewTravelBonus, travelTime]);
 
   const onStation = useCallback(() => {
-    stationOnShip();
-  }, []);
+    stationCrew();
+  }, [stationCrew]);
 
   // handle auto-closing
   const lastStatus = useRef();
   useEffect(() => {
-    // (close on status change from)
-    if (['READY', 'READY_TO_FINISH', 'FINISHING'].includes(lastStatus.current)) {
-      if (stationingStatus !== lastStatus.current) {
-        props.onClose();
-      }
+    if (lastStatus.current && stage !== lastStatus.current) {
+      props.onClose();
     }
-    lastStatus.current = stationingStatus;
-  }, [stationingStatus]);
+    lastStatus.current = stage;
+  }, [stage]);
+
+
 
   const actionDetails = useMemo(() => {
-    const icon = destinationShip
-      ? (crewIsOwner ? <StationCrewIcon /> : <StationPassengersIcon />)
-      : <StationCrewIcon />;  // TODO: this should be station in habitat
-    const label = destinationShip
+    const icon = destination?.label === Entity.IDS.SHIP && !crewIsOwner
+      ? <StationPassengersIcon />
+      : <StationCrewIcon />;
+    const label = destination?.label === Entity.IDS.SHIP
       ? (crewIsOwner ? 'Station Flight Crew' : 'Station Passengers')
       : 'Station Crew';
     const status = stage === actionStages.NOT_STARTED
       ? (
-        destinationShip
+        destination?.label === Entity.IDS.SHIP
           ? `Send to ${crewIsOwner ? 'My ' : ''} Ship`
-          : `Send to ${Building.TYPES[destinationLot?.building?.Building?.buildingType]?.name}`
+          : `Send to ${Building.TYPES[destination?.Building?.buildingType]?.name}`
       )
       : undefined;
     return { icon, label, status };
-  }, [crewIsOwner, destinationLot, destinationShip, stage]);
+  }, [crewIsOwner, destination, stage]);
 
-  const isInOrbit = ship?.Location?.location?.label === Entity.IDS.ASTEROID && ship?.Ship?.status !== Ship.STATUS.IN_FLIGHT;
-  const destIsInOrbit = destinationShip?.Location?.location?.label === Entity.IDS.ASTEROID && destinationShip?.Ship?.status !== Ship.STATUS.IN_FLIGHT;
   return (
     <>
       <ActionDialogHeader
         action={actionDetails}
         captain={captain}
         crewAvailableTime={0}
-        location={{ asteroid, lot, ship }}
+        location={{
+          asteroid,
+          lot,
+          ship: null /* TODO: */ }}
         onClose={props.onClose}
         overrideColor={stage === actionStages.NOT_STARTED ? (crewIsOwner ? theme.colors.main : theme.colors.green) : undefined}
         taskCompleteTime={0}
@@ -134,43 +171,43 @@ const StationCrew = ({ asteroid, lot, destinations, manager, ship, stage, ...pro
 
       <ActionDialogBody>
         <FlexSection>
-          {ship
+          {origin.label === Entity.IDS.SHIP
             ? (
               <ShipInputBlock
                 title="Origin"
-                ship={ship}
-                disabled={stage !== actionStages.NOT_STARTED} />
+                ship={origin}
+                disabled />
             )
             : (
               <LotInputBlock
                 title="Origin"
-                lot={lot}
-                disabled={stage !== actionStages.NOT_STARTED}
+                lot={originLot}
+                disabled
               />
             )
           }
 
           <FlexSectionSpacer />
 
-          {destinationShip
+          {destination.label === Entity.IDS.SHIP
             ? (
               <ShipInputBlock
                 title="Destination"
                 titleDetails={
-                  !isInOrbit && destIsInOrbit
+                  origin._location.lotIndex === 0 && destination._location.lotIndex === 0
                     ? <TransferDistanceTitleDetails><label>Orbital Transfer</label></TransferDistanceTitleDetails>
-                    : <TransferDistanceDetails distance={transportDistance} crewTravelBonus={crewTravelBonus} />
+                    : <TransferDistanceDetails distance={travelDistance} crewTravelBonus={crewTravelBonus} />
                 }
-                ship={destinationShip}
+                ship={destination}
                 disabled={stage !== actionStages.NOT_STARTED} />
             )
             : (
               <LotInputBlock
                 title="Destination"
                 titleDetails={
-                  isInOrbit
+                  origin._location.lotIndex === 0 && destination._location.lotIndex === 0
                     ? <TransferDistanceTitleDetails><label>Orbital Transfer</label></TransferDistanceTitleDetails>
-                    : <TransferDistanceDetails distance={transportDistance} crewTravelBonus={crewTravelBonus} />
+                    : <TransferDistanceDetails distance={travelDistance} crewTravelBonus={crewTravelBonus} />
                 }
                 lot={destinationLot}
                 disabled={stage !== actionStages.NOT_STARTED} />
@@ -181,24 +218,24 @@ const StationCrew = ({ asteroid, lot, destinations, manager, ship, stage, ...pro
         <FlexSection>
           <CrewInputBlock
             title={
-              destinationShip
-              ? (crewIsOwner ? 'Flight Crew' : 'Passengers')
-              : 'Stationed Crew'
+              destination.label === Entity.IDS.SHIP
+                ? (crewIsOwner ? 'Flight Crew' : 'Passengers')
+                : 'Stationed Crew'
             }
             crew={{ ...crew, roster: crewmates }} />
 
           <FlexSectionSpacer />
 
-          <div style={{ alignSelf: 'flex-start', width: '50%' }}>
-            {!crewIsOwner && <CrewIndicator crew={ownerCrew} />}
-            {destinationShip && (
+          <div style={{ alignSelf: 'flex-start', width: '50%', overflow: 'hidden' }}>
+            {!crewIsOwner && <CrewIndicator crew={destinationOwner} />}
+            {destination && (
               <MiniBarChart
                 color="#92278f"
                 label="Crewmate Count"
-                valueLabel={`${destinationShip.Station.population} / ${Station.TYPES[destinationShip.Station.stationType].cap}`}
-                value={destinationShip.Station.population / Station.TYPES[destinationShip.Station.stationType].cap}
+                valueLabel={`${destination.Station.population + crew?.Crew?.roster?.length} / ${Station.TYPES[destination.Station.stationType].cap}`}
+                value={(destination.Station.population + crew?.Crew?.roster?.length) / Station.TYPES[destination.Station.stationType].cap}
                 deltaColor="#f644fa"
-                deltaValue={crew?.roster?.length / Station.TYPES[destinationShip.Station.stationType].cap}
+                deltaValue={crew?.Crew?.roster?.length / Station.TYPES[destination.Station.stationType].cap}
               />
             )}
           </div>
@@ -236,77 +273,44 @@ const StationCrew = ({ asteroid, lot, destinations, manager, ship, stage, ...pro
 };
 
 const Wrapper = (props) => {
-  const { crew } = useCrewContext();
-  const { data: asteroid, isLoading: asteroidIsLoading } = useAsteroid(crew?._location?.asteroidId);
-  const { data: lot, isLoading: lotIsLoading } = useLot(crew?._location?.lotId);
-  const { data: ship, isLoading: shipIsLoading } = useShip(crew?._location?.shipId);
-  
+  const { crew, loading: crewIsLoading } = useCrewContext();
+
+  const originEntityId = crew?.Location?.location;
+
   const asteroidId = useStore(s => s.asteroids.origin);
   const lotId = useStore(s => s.asteroids.lot);
   const zoomScene = useStore(s => s.asteroids.zoomScene);
   
-  const { data: ships, isLoading: shipsLoading } = useAsteroidShips(asteroidId);  // TODO: do we need this?
-  const { data: destinationLot, isLoading: destLotIsLoading } = useLot(lotId);
-  const { data: destinationShip, isLoading: destShipIsLoading } = useShip(zoomScene?.type === 'SHIP' ? zoomScene.shipId : undefined);
+  const { data: asteroid, isLoading: asteroidIsLoading } = useAsteroid(asteroidId);
+  const { data: lot, isLoading: lotIsLoading } = useLot(lotId);
 
-  // TODO: if no station on destination ship or lot, then close
-
-  // TODO: ...
-  // const extractionManager = useExtractionManager(lot?.id);
-  // const { actionStage } = extractionManager;
-  const manager = {};
-  const actionStage = actionStages.NOT_STARTED;
-
-  const isLoading = asteroidIsLoading || lotIsLoading || shipIsLoading || shipsLoading || destLotIsLoading || destShipIsLoading;
-
-  // determine destination options based on selection
-  const destinations = useMemo(() => {
-    if (isLoading) return [];
-
-    let d = [];
-    // if zoomedToShip, destinations.length = 1, destination is ship
-    if (destinationShip) {
-      d = [{ type: 'ship', data: destinationShip }];
-  
-    // if lot, destinations = ships (filter w/ guests boolean), destination is [0]
-    } else if (destinationLot) {
-      d = destinationLot.ships
-        .filter((s) => 
-          s.Station
-          && s.Ship.status === Ship.STATUSES.AVAILABLE
-          && s.Ship.operationMode === Ship.MODES.NORMAL
-          && !!props.guests === (s.Control.controller.id !== crew?.id))
-        .map((s) => ({ type: 'ship', data: s }));
-  
-      // if lot && !ships, if habitable, destinations.length = 1, destination is hab
-      if (d.length === 0) {
-        if (destinationLot.building?.Station) {
-          d = [{ type: 'lot', data: destinationLot }];
-        }
-      }
-      
-    // if !lot, destinations = ships in orbit (filter w/ guests), destinations is [0]
-    } else {
-      d = ships
-        .filter((s) => 
-          s.Station
-          && ship?.Location?.location?.label === Entity.IDS.ASTEROID
-          && ship?.Location?.location?.id === asteroidId
-          && ship?.Ship?.status !== Ship.STATUS.IN_FLIGHT
-          && !!props.guests === (s.Control.controller.id !== crew?.id))
-        .map((s) => ({ type: 'ship', data: s }));
+  const destinationEntityId = useMemo(() => {
+    if (props.destinationEntityId) return props.destinationEntityId;
+    if (zoomScene?.type === 'SHIP' && zoomScene.shipId) {
+      return { label: Entity.IDS.SHIP, id: zoomScene.shipId };
+    } else if (lot?.building) {
+      return { label: Entity.IDS.BUILDING, id: lot?.building?.id };
+    } else if (lotId) {
+      return { label: Entity.IDS.LOT, id: lot?.id };
     }
+    return { label: Entity.IDS.ASTEROID, id: asteroidId };
+  }, [asteroidId, lot?.building, lotId, zoomScene]);
 
-    return d;
-  }, [isLoading]);
+  const { data: destination, isLoading: destIsLoading } = useEntity(destinationEntityId);
+  const { data: origin, isLoading: originIsLoading } = useEntity(originEntityId);
+
+  const stationCrewManager = useStationCrewManager(destinationEntityId);
+  const { actionStage } = stationCrewManager;
+
+  const isLoading = asteroidIsLoading || crewIsLoading || destIsLoading || lotIsLoading || originIsLoading;
 
   useEffect(() => {
-    if (!asteroid || (!lot && !ship) || destinations.length === 0) {
+    if (!origin || !destination) {
       if (!isLoading) {
         if (props.onClose) props.onClose();
       }
     }
-  }, [asteroid, lot, ship, isLoading]);
+  }, [origin, destination, isLoading]);
 
   return (
     <ActionDialogInner
@@ -316,9 +320,9 @@ const Wrapper = (props) => {
       <StationCrew
         asteroid={asteroid}
         lot={lot}
-        ship={ship}
-        destinations={destinations}
-        manager={manager}
+        origin={origin}
+        destination={destination}
+        stationCrewManager={stationCrewManager}
         stage={actionStage}
         {...props} />
     </ActionDialogInner>

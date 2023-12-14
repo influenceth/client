@@ -316,6 +316,9 @@ const ActionItem = ({ data }) => {
         if (item.lotId) dialogDelay += 750;
       } else if (item.lotId && currentAsteroid.lot?.lotId !== item.lotId) {
         dialogDelay = 400;
+      // TODO: implement these?
+      } else if (item.buildingId) {
+      } else if (item.shipId) {
       }
       setTimeout(() => {
         item.onClick({

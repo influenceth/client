@@ -115,7 +115,7 @@ const AllAssets = ({ onClose }) => {
   const updateZoomStatus = useStore(s => s.dispatchZoomStatusChanged);
   const { data: controlledAsteroids, isLoading: isControlledLoading } = useControlledAsteroids();
   const { data: ownedAsteroids, isLoading: isOwnedLoading } = useOwnedAsteroids();
-  const { data: ownedShips } = useOwnedShips();
+  const { data: ownedShips } = useOwnedShips(); // TODO: filter for AVAILABLE/IN_FLIGHT
 
   const [rendersReady, setRendersReady] = useState(0);
 

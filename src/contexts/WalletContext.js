@@ -63,13 +63,6 @@ export function WalletProvider({ children }) {
       // setConnecting(true);
       setError();
 
-      console.log('pre connect', {
-        dappName: 'Influence',
-        modalMode: auto ? 'neverAsk' : 'alwaysAsk',
-        modalTheme: 'dark',
-        projectId: 'influence',
-        webWalletUrl: process.env.REACT_APP_ARGENT_WEB_WALLET_URL
-      });
       const wallet = await starknetConnect({
         dappName: 'Influence',
         modalMode: auto ? 'neverAsk' : 'alwaysAsk',
@@ -77,7 +70,6 @@ export function WalletProvider({ children }) {
         projectId: 'influence',
         webWalletUrl: process.env.REACT_APP_ARGENT_WEB_WALLET_URL
       });
-      console.log('auto connect', wallet);
 
       if (wallet && wallet.isConnected && wallet.account?.address) {
         if (isAllowedChain(wallet.account?.provider?.chainId)) {

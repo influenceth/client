@@ -1750,7 +1750,7 @@ export const TransferSelectionDialog = ({ sourceEntity, requirements, inventory,
   );
 };
 
-export const LandingSelectionDialog = ({ asteroid, initialSelection, onClose, onSelected, open, ship }) => {
+export const LandingSelectionDialog = ({ asteroid, deliveryMode, initialSelection, onClose, onSelected, open, originLotIndex, ship }) => {
   const [error, setError] = useState();
   const [selection, setSelection] = useState(initialSelection);
 
@@ -1795,7 +1795,7 @@ export const LandingSelectionDialog = ({ asteroid, initialSelection, onClose, on
       onClose={onClose}
       onComplete={onComplete}
       open={open}
-      title={`Landing Sites`}>
+      title={`${deliveryMode ? 'Delivery' : 'Landing'} Sites`}>
       {/* TODO: isLoading */}
       {/* TODO: replace with DataTable? */}
       <div style={{ minWidth: 500 }}></div>
@@ -1803,11 +1803,11 @@ export const LandingSelectionDialog = ({ asteroid, initialSelection, onClose, on
         <TextInputWithNote>
           <TextInput
             onKeyDown={handleKeyDown}
-            placeholder="Specify Lot by Id..."
+            placeholder="Specify Lot by Index..."
             type="number" />
           <TextInputNote error={!!error}>
             <WarningOutlineIcon />
-            This ship may land at a Spaceport or Empty Lot.
+            This ship may {deliveryMode ? 'be delivered to' : 'land at'} a Spaceport or Empty Lot.
           </TextInputNote>
         </TextInputWithNote>
       )}
@@ -1821,19 +1821,21 @@ export const LandingSelectionDialog = ({ asteroid, initialSelection, onClose, on
                   <td>Building</td>
                   <td>Lot Id</td>
                   <td>Landing Fee</td>
+                  {deliveryMode && <td>Distance</td>}
                 </tr>
               </thead>
               <tbody>
-                {spaceports.map((lotId) => {
+                {spaceports.map((lotIndex) => {
                   return (
                     <SelectionTableRow
-                      key={lotId}
-                      onClick={() => setSelection(lotId)}
-                      selectedRow={lotId === selection}>
-                      <td>Parking @ {lotId}</td>
+                      key={lotIndex}
+                      onClick={() => setSelection(lotIndex)}
+                      selectedRow={lotIndex === selection}>
+                      <td>Parking @ {lotIndex}</td>
                       <td>Spaceport</td>
-                      <td><LocationIcon /> {formatters.lotName(Lot.toIndex(lotId))}</td>
+                      <td><LocationIcon /> {formatters.lotName(lotIndex)}</td>
                       <td>0</td>
+                      {deliveryMode && <td>{Math.round(Asteroid.getLotDistance(asteroid?.id, originLotIndex, lotIndex))} km</td>}
                     </SelectionTableRow>
                   );
                 })}
@@ -2633,7 +2635,7 @@ export const TransferDistanceDetails = ({ distance, crewTravelBonus}) => {
         <Mouseoverable tooltip={(
           <FreeTransferNote>
             <div>Instant Transfer Radius</div>
-            <div>Transfers less than {crewFreeTransferRadius}km in distance are instantaneous.</div>
+            <div>Transfers less than {crewFreeTransferRadius.toFixed(1)}km in distance are instantaneous.</div>
           </FreeTransferNote>
         )}>
           <label><WarningOutlineIcon /> {Math.round(distance)}km Away</label>
@@ -3369,7 +3371,7 @@ export const ShipInputBlock = ({ ship, ...props }) => {
   const { crew } = useCrewContext();
   const hasMyCrew = crew && crew._location?.shipId === ship?.id;
   const isMine = crew && crew.id === ship?.Control?.controller?.id;
-  const inEmergencyMode = ship?.Ship?.operationMode === Ship.MODES.EMERGENCY;
+  const inEmergencyMode = ship?.Ship?.emergencyAt > 0;
   return (
     <FlexSectionInputBlock
       image={(
@@ -3377,7 +3379,7 @@ export const ShipInputBlock = ({ ship, ...props }) => {
           iconBadge={isMine ? <MyAssetIcon /> : null}
           iconOverlay={inEmergencyMode ? <EmergencyModeEnterIcon /> : null}
           iconOverlayColor={theme.colors.orange}
-          shipType={ship?.shipType} />
+          shipType={ship?.Ship?.shipType} />
       )}
       label={formatters.shipName(ship)}
       sublabel={(
@@ -4091,13 +4093,13 @@ export const formatVelocity = (metersPerSecond, { abbrev = true, minPrecision = 
 };
 
 export const formatShipStatus = (ship) => {
-  if (ship?.Ship?.status === Ship.STATUSES.IN_FLIGHT) {
-    return 'In Flight'; // TODO: do we need to distinguish Launching, Landing
-  }
+  if (ship?.Ship?.status === Ship.STATUSES.UNDER_CONSTRUCTION) return 'Under Construction';
+  if (ship?.Ship?.status === Ship.STATUSES.IN_FLIGHT) return 'In Flight'; // TODO: do we need to distinguish Launching, Landing
+  if (ship?.Ship?.status === Ship.STATUSES.DISABLED) return 'Disabled';
 
   const loc = ship?.Location.location;
 
-  if (loc.label === Entity.IDS.SHIP) {
+  if (loc.label === Entity.IDS.BUILDING) {
     return 'In Port';
   } else if (loc.label === Entity.IDS.LOT) {
     return 'On Surface';

@@ -105,8 +105,6 @@ const getNow = () => Math.floor(Date.now() / 1000);
 
 // TODO: equalityTest default of 'i' doesn't make sense anymore
 
-console.log('System', System);
-
 // TODO: move systems into their own util file (like activities)
 
 // x ConstructionAbandon
@@ -123,6 +121,10 @@ console.log('System', System);
 const customConfigs = {
   // customization of Systems configs from sdk
   ArrangeCrew: { equalityTest: ['callerCrew.id'] }, // TODO: should this be caller_crew?
+  
+  AssembleShipStart: { equalityTest: ['dry_dock.id', 'dry_dock_slot'] },
+  AssembleShipFinish: { equalityTest: ['dry_dock.id', 'dry_dock_slot'] },
+  
   ChangeName: { equalityTest: ['entity.id', 'entity.label'] },
 
   ConstructionAbandon: { equalityTest: ['building.id'] },
@@ -191,6 +193,9 @@ const customConfigs = {
     equalityTest: true
   },
   ResupplyFood: {
+    equalityTest: ['caller_crew.id']
+  },
+  StationCrew: {
     equalityTest: ['caller_crew.id']
   },
 
@@ -499,7 +504,6 @@ export function ChainTransactionProvider({ children }) {
           if (contracts[key].equalityTest === true) {
             return true;
           } else if (contracts[key].equalityTest === 'ALL') {
-            console.log('in here for ', key, tx.vars, vars, isEqual(tx.vars, vars));
             return isEqual(tx.vars, vars);
           } else if (contracts[key].equalityTest) {
             return !contracts[key].equalityTest.find((k) => get(tx.vars, k) !== get(vars, k));
