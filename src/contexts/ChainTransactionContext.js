@@ -198,6 +198,12 @@ const customConfigs = {
   StationCrew: {
     equalityTest: ['caller_crew.id']
   },
+  DockShip: {
+    equalityTest: ['caller_crew.id']
+  },
+  UndockShip: {
+    equalityTest: ['caller_crew.id']
+  },
 
   // virtual multi-system wrappers
   // TODO: could do fancier conditional multisystems if that would help

@@ -84,7 +84,14 @@ const SurfaceTransfer = ({
   const [selectedItems, setSelectedItems] = useState(props.preselect?.selectedItems || {});
 
   // get origin and originInventory
-  const originInventory = useMemo(() => (origin?.Inventories || []).find((i) => originSlot ? (i.slot === originSlot) : (i.status === Inventory.STATUSES.AVAILABLE)), [origin?.Inventories, originSlot]);
+  const originInventory = useMemo(() => {
+    const inventories = (origin?.Inventories || []).filter((i) => i.status === Inventory.STATUSES.AVAILABLE);
+    // if originSlot is specified, use that
+    if (originSlot) return inventories.find((i) => i.slot === originSlot);
+    // else, use primary (or first available if no primary)
+    return inventories.find((i) => Inventory.TYPES[i.inventoryType].category === Inventory.CATEGORIES.PRIMARY)
+      || inventories[0];
+  }, [origin?.Inventories, originSlot]);
   const { data: originController } = useCrew(origin?.Control?.controller?.id);
 
   // get destinationLot and destinationInventory
@@ -379,6 +386,7 @@ const SurfaceTransfer = ({
           <InventorySelectionDialog
             otherEntity={origin}
             otherLotId={originLot?.id}
+            otherLotInvSlot={originInventory?.slot}
             onClose={() => setDestinationSelectorOpen(false)}
             onSelected={setDestinationSelection}
             open={destinationSelectorOpen}
@@ -411,7 +419,7 @@ const Wrapper = (props) => {
     });
   }, [deliveryManager.currentVersion]);
 
-  const { data: originEntity, isLoading: originLoading } = useEntity(currentDeliveryAction?.action?.origin || props.origin || lot?.building);
+  const { data: originEntity, isLoading: originLoading } = useEntity(currentDeliveryAction?.action?.origin || props.origin || lot?.building || lot?.surfaceShip);
   const { data: originLot, isLoading: originLotLoading } = useLot(locationsArrToObj(originEntity?.Location?.locations || []).lotId);
   const { data: destEntity, isLoading: destLoading } = useEntity(currentDeliveryAction?.action?.dest);
 

@@ -5,7 +5,7 @@ import ReactTooltip from 'react-tooltip';
 import { useQuery } from 'react-query';
 import { TbBellRingingFilled as AlertIcon } from 'react-icons/tb';
 import { BarLoader } from 'react-spinners';
-import { Asteroid, Building, Crewmate, Entity, Inventory, Lot, Process, Product, Ship, Time } from '@influenceth/sdk';
+import { Asteroid, Building, Crewmate, Entity, Inventory, Lot, Process, Product, Ship, Station, Time } from '@influenceth/sdk';
 import { cloneDeep } from 'lodash';
 
 import AsteroidRendering from '~/components/AsteroidRendering';
@@ -1038,7 +1038,7 @@ const BarChart = styled.div`
   &:after {
     background: ${p => p.color};
     left: ${barChartPadding}px;
-    width: ${p => 100 * p.value}%;
+    width: ${p => 100 * Math.max(0, Math.min(p.value, 1))}%;
     z-index: 1;
   }
   ${p => p.postValue !== undefined && `
@@ -1046,7 +1046,7 @@ const BarChart = styled.div`
       background: ${p.color};
       left: ${barChartPadding}px;
       opacity: 0.7;
-      width: ${100 * p.postValue}%;
+      width: ${100 * Math.max(0, Math.min(p.postValue, 1))}%;
       z-index: 1;
     }
   `}
@@ -2002,12 +2002,12 @@ const getInventorySublabel = (inventoryType) => {
   }
 }
 
-export const InventorySelectionDialog = ({ otherEntity, otherLotId, isSourcing, itemIds, initialSelection, onClose, onSelected, open, requirePresenceOfItemIds }) => {
+export const InventorySelectionDialog = ({ otherEntity, otherLotId, otherLotInvSlot, isSourcing, itemIds, initialSelection, onClose, onSelected, open, requirePresenceOfItemIds }) => {
   const { crew } = useCrewContext();
 
   const [selection, setSelection] = useState(initialSelection);
 
-  const asteroidId = useMemo(() => Entity.toPosition({ id: otherLotId, label: Entity.IDS.LOT }).asteroidId || 0, [otherLotId]);
+  const asteroidId = useMemo(() => otherLotId ? Entity.toPosition({ id: otherLotId, label: Entity.IDS.LOT }).asteroidId : 0, [otherLotId]);
 
   const { data: inventoryData, isLoading: inventoryDataLoading } = useAccessibleAsteroidInventories(asteroidId);
 
@@ -2018,9 +2018,17 @@ export const InventorySelectionDialog = ({ otherEntity, otherLotId, isSourcing, 
 
     const display = [];
     inventoryData.forEach((entity) => {
-      if (otherEntity && entity.id === otherEntity.id && entity.label === otherEntity.label) return;
       if (!entity.Inventories) return;
       entity.Inventories.forEach((inv) => {
+        // (can't send to self)
+        if (otherEntity) {
+          if (entity.id === otherEntity.id && entity.label === otherEntity.label){
+            if (!otherLotInvSlot || otherLotInvSlot === inv.slot) {
+              return;
+            }
+          }
+        }
+
         // skip if locked (or inventory type is 0, which should not happen but has in staging b/c of dev bugs)
         if (inv.status !== Inventory.STATUSES.AVAILABLE || inv.inventoryType === 0) return;
 
@@ -3029,26 +3037,26 @@ export const ProcessInputSquareSection = ({ title, products, input, output, prim
   );
 };
 
-export const PropulsionTypeSection = ({ objectLabel, propulsiveTime, tugTime, selected, onSelect, warning }) => {
+export const PropulsionTypeSection = ({ objectLabel, propulsiveTime, tugTime, powered, onSetPowered, warning }) => {
   return (
     <FlexSectionBlock title={`${objectLabel} Type`} bodyStyle={{ padding: 0 }}>
       <>
-        {(onSelect || selected === 'propulsive') && (
+        {(onSetPowered || powered) && (
           <PropulsionTypeOption
-            onClick={onSelect ? onSelect('propulsive') : undefined}
-            selected={selected === 'propulsive'}>
-            {onSelect && (selected === 'propulsive' ? <RadioCheckedIcon /> : <RadioUncheckedIcon />)}
+            onClick={onSetPowered ? () => onSetPowered(true) : undefined}
+            selected={powered}>
+            {onSetPowered && (powered ? <RadioCheckedIcon /> : <RadioUncheckedIcon />)}
             <div style={{ flex: 1 }}>
               <label>Propulsive:</label> Thruster {objectLabel}
             </div>
             <div>{formatTimer(propulsiveTime || 0, 2)}</div>
           </PropulsionTypeOption>
         )}
-        {(onSelect || selected === 'tug') && (
+        {(onSetPowered || !powered) && (
           <PropulsionTypeOption
-            onClick={onSelect ? onSelect('tug') : undefined}
-            selected={selected === 'tug'}>
-            {onSelect && (selected === 'tug' ? <RadioCheckedIcon /> : <RadioUncheckedIcon />)}
+            onClick={onSetPowered ? () => onSetPowered(false) : undefined}
+            selected={!powered}>
+            {onSetPowered && (!powered ? <RadioCheckedIcon /> : <RadioUncheckedIcon />)}
             <div style={{ flex: 1 }}>
               <label>Tug:</label> Hopper-Assisted {objectLabel}
             </div>
@@ -3070,8 +3078,8 @@ export const PropellantSection = ({ title, narrow, deltaVLoaded, deltaVRequired,
   const [deltaVMode, setDeltaVMode] = useState(false);
   // useEffect(() => ReactTooltip.rebuild(), []);
 
-  const propellantUse = propellantLoaded > 0 ? propellantRequired / propellantLoaded : 1;
-  const deltaVUse = deltaVLoaded > 0 ? deltaVRequired / deltaVLoaded : 1;
+  const propellantUse = propellantLoaded > 0 ? propellantRequired / propellantLoaded : (propellantRequired > 0 ? 1 : 0);
+  const deltaVUse = deltaVLoaded > 0 ? deltaVRequired / deltaVLoaded : (deltaVRequired > 0 ? 1 : 0);
 
   return (
     <FlexSectionBlock
@@ -3099,14 +3107,14 @@ export const PropellantSection = ({ title, narrow, deltaVLoaded, deltaVRequired,
             <div>
               <b>Required: </b>
               {propellantRequired
-                ? (deltaVMode ? formatVelocity(deltaVRequired) : formatMass(propellantRequired * 1e3))
+                ? (deltaVMode ? formatVelocity(deltaVRequired) : formatMass(propellantRequired))
                 : 'NONE'
               }
             </div>
             <div />
             <div>
-              <b>Loaded:</b> {deltaVMode ? formatVelocity(deltaVLoaded) : formatMass(propellantLoaded * 1e3)}
-              {/* TODO: tooltip this? <small style={{ color: '#667'}}> / {formatMass(propellantMax * 1e3)} max</small> */}
+              <b>Loaded:</b> {deltaVMode ? formatVelocity(deltaVLoaded) : formatMass(propellantLoaded)}
+              {/* TODO: tooltip this? <small style={{ color: '#667'}}> / {formatMass(propellantMax)} max</small> */}
             </div>
           </BarChartNotes>
         )}
@@ -3394,12 +3402,12 @@ export const ShipInputBlock = ({ ship, ...props }) => {
   );
 };
 
-export const ShipTab = ({ pilotCrew, ship, stage, previousStats = {}, warnings = [] }) => {
-  const shipConfig = Ship.TYPES[ship?.shipType] || {};
+export const ShipTab = ({ pilotCrew, ship, stage, deltas = {}, warnings = [] }) => {
 
   // TODO: if want to include "reserved", it would probably make sense to use getCapacityUsage helper instead
   const inventory = useMemo(() => {
-    if (!ship) return {};
+    if (!ship?.Ship?.shipType || !ship?.Inventories) return {};
+    const shipConfig = Ship.TYPES[ship.Ship.shipType] || {};
     const propellantInventory = ship.Inventories.find((i) => i.slot === shipConfig.propellantSlot);
     const cargoInventory = ship.Inventories.find((i) => i.slot === shipConfig.cargoSlot);
     return {
@@ -3412,7 +3420,35 @@ export const ShipTab = ({ pilotCrew, ship, stage, previousStats = {}, warnings =
       cargoVolume: cargoInventory?.volume || 0,
       maxCargoVolume: Inventory.TYPES[cargoInventory?.inventoryType]?.volumeConstraint || 0,
     };
-  }, [shipConfig, ship?.Inventories]);
+  }, [ship?.shipType, ship?.Inventories]);
+
+  const charts = useMemo(() => ({
+    propellantMass: {
+      valueLabel: `${formatFixed((inventory.propellantMass + (deltas.propellantMass || 0)) / 1e6)} / ${formatFixed(inventory.maxPropellantMass / 1e6)}t`,
+      value: (inventory.propellantMass + (deltas.propellantMass || 0)) / inventory.maxPropellantMass,
+      deltaValue: (deltas.propellantMass || 0) / inventory.maxPropellantMass,
+    },
+    propellantVolume: {
+      valueLabel: `${formatFixed((inventory.propellantVolume + (deltas.propellantVolume || 0)) / 1e6)} / ${formatFixed(inventory.maxPropellantVolume / 1e6)}m³`,
+      value: (inventory.propellantVolume + (deltas.propellantVolume || 0)) / inventory.maxPropellantVolume,
+      deltaValue: (deltas.propellantVolume || 0) / inventory.maxPropellantVolume,
+    },
+    cargoMass: {
+      valueLabel: `${formatFixed((inventory.cargoMass + (deltas.cargoMass || 0)) / 1e6)} / ${formatFixed(inventory.maxCargoMass / 1e6)}t`,
+      value: (inventory.cargoMass + (deltas.cargoMass || 0)) / inventory.maxCargoMass,
+      deltaValue: (deltas.cargoMass || 0) / inventory.maxCargoMass,
+    },
+    cargoVolume: {
+      valueLabel: `${formatFixed((inventory.cargoVolume + (deltas.cargoVolume || 0)) / 1e6)} / ${formatFixed(inventory.maxCargoVolume / 1e6)}m³`,
+      value: (inventory.cargoVolume + (deltas.cargoVolume || 0)) / inventory.maxCargoVolume,
+      deltaValue: (deltas.cargoVolume || 0) / inventory.maxCargoVolume,
+    },
+    passengers: {
+      valueLabel: `${(ship.Station.population + (deltas.passengers || 0))} / ${Station.TYPES[ship.Station.stationType]?.cap}`,
+      value: (ship.Station.population + (deltas.passengers || 0)) / Station.TYPES[ship.Station.stationType]?.cap,
+      deltaValue: (deltas.passengers || 0) / Station.TYPES[ship.Station.stationType]?.cap,
+    },
+  }), [deltas, inventory, ship]);
 
   return (
     <>
@@ -3435,38 +3471,26 @@ export const ShipTab = ({ pilotCrew, ship, stage, previousStats = {}, warnings =
             <MiniBarChart
               color="#8cc63f"
               label="Propellant Mass"
-              valueLabel={`${formatFixed(inventory.propellantMass / 1e3)} / ${formatFixed(inventory.maxPropellantMass / 1e3)}t`}
-              value={0.5}
-              {...(/* TODO: would probably be more performant to do this in a memo hook */
-                previousStats.propellantMass
-                  ? {
-                    deltaValue: previousStats.propellantMass / inventory.maxPropellantMass
-                  }
-                  : {}
-              )}
+              {...charts.propellantMass}
             />
             <MiniBarChart
               color="#557826"
               label="Propellant Volume"
-              valueLabel={`${formatFixed(inventory.propellantVolume / 1e3)} / ${formatFixed(inventory.maxPropellantVolume / 1e3)}m³`}
-              value={0.7}
+              {...charts.propellantVolume}
             />
             <MiniBarChart
               label="Cargo Mass"
-              valueLabel={`${formatFixed(inventory.cargoMass / 1e3)} / ${formatFixed(inventory.maxCargoMass / 1e3)}t`}
-              value={0.8}
+              {...charts.cargoMass}
             />
             <MiniBarChart
               color="#1f5f75"
               label="Cargo Volume"
-              valueLabel={`${formatFixed(inventory.cargoVolume / 1e3)} / ${formatFixed(inventory.maxCargoVolume / 1e3)}m³`}
-              value={0.3}
+              {...charts.cargoVolume}
             />
             <MiniBarChart
               color="#92278f"
               label="Passengers"
-              valueLabel={`${pilotCrew.Crew.roster.length} / 5`}
-              value={pilotCrew.Crew.roster.length / 5}
+              {...charts.passengers}
             />
           </MiniBarChartSection>
         </div>

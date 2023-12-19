@@ -60,7 +60,7 @@ const StationCrew = ({ asteroid, destination: rawDestination, lot, origin: rawOr
   const createAlert = useStore(s => s.dispatchAlertLogged);
   
   const { stationCrew } = stationCrewManager;
-  const { crew, crewmateMap } = useCrewContext();
+  const { crew } = useCrewContext();
 
   const crewmates = (crew?._crewmates || []);
   const captain = crewmates[0];
@@ -286,15 +286,18 @@ const Wrapper = (props) => {
 
   const destinationEntityId = useMemo(() => {
     if (props.destinationEntityId) return props.destinationEntityId;
+
     if (zoomScene?.type === 'SHIP' && zoomScene.shipId) {
       return { label: Entity.IDS.SHIP, id: zoomScene.shipId };
     } else if (lot?.building) {
-      return { label: Entity.IDS.BUILDING, id: lot?.building?.id };
+      return { label: Entity.IDS.BUILDING, id: lot?.building.id };
+    } else if (lot?.surfaceShip) {
+      return { label: Entity.IDS.SHIP, id: lot?.surfaceShip.id };
     } else if (lotId) {
-      return { label: Entity.IDS.LOT, id: lot?.id };
+      return { label: Entity.IDS.LOT, id: lotId };
     }
     return { label: Entity.IDS.ASTEROID, id: asteroidId };
-  }, [asteroidId, lot?.building, lotId, zoomScene]);
+  }, [asteroidId, lot?.building, lot?.surfaceShip, lotId, zoomScene]);
 
   const { data: destination, isLoading: destIsLoading } = useEntity(destinationEntityId);
   const { data: origin, isLoading: originIsLoading } = useEntity(originEntityId);

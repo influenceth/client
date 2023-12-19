@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { Asteroid, Building, Delivery, Inventory, Processor, Ship } from '@influenceth/sdk';
+import { useEffect, useMemo, useState } from 'react';
+import { Asteroid, Building, Entity, Inventory, Processor, Ship } from '@influenceth/sdk';
 
 import useAsteroid from '~/hooks/useAsteroid';
 import useConstructionManager from '~/hooks/actionManagers/useConstructionManager';
@@ -72,12 +72,31 @@ const useActionButtons = () => {
   const { constructionStatus } = useConstructionManager(lotId); // TODO: could potentially pass in building id here if helpful
 
   // ship
-  const { data: crewedShip, isLoading: crewedShipIsLoading } = useShip(crew?._location?.shipId);
+  const { data: crewedShip, isLoading: crewedShipIsLoading } = useShip(crew?._location?.shipId);  // TODO: do we need this?
   const { data: zoomedToShip, isLoading: zoomedShipIsLoading } = useShip(zoomScene?.type === 'SHIP' ? zoomScene.shipId : undefined);
 
-  // set ship IF zoomed to ship or zoomed to lot that can only contain one ship (i.e. not a spaceport)
-  const ship = zoomedToShip || (lot && lot.building?.Building?.buildingType !== Building.IDS.SPACEPORT ? lot.Ships?.[0] : null);
-  const { data: crewsOnShip } = useShipCrews(ship?.id);  // TODO: isLoading?  
+  // actionable ship
+  const lotShip = useMemo(() => {
+    // if zoomed to ship
+    if (zoomedToShip) return zoomedToShip;
+
+    // if surface ship on lot
+    if (lot?.surfaceShip) return lot.surfaceShip;
+
+    // "shortcuts" -- these ships are of implicit interest, but not explicitly selected in this case
+
+    // if my crew is on a ship on this lot
+    if (crewedShip && crewedShip._location?.lotId === lot?.id) return crewedShip;
+
+    // if there is only one owned ship on the lot
+    const lotOwnedShips = (lot?.ships || []).filter((s) => s.Control.controller.id === crew?.id);
+    if (lotOwnedShips?.length === 1) return lotOwnedShips[0]; // if only one owned ship, show it
+
+    return null;
+  }, [zoomedToShip, crewedShip, lot, crew?.id]);
+
+  const { data: crewsOnShip } = useShipCrews(lotShip?.id);  // TODO: isLoading?
+  const guestCrewsOnShip = useMemo(() => crewsOnShip?.filter((c) => c.id !== crew?.id), [crewsOnShip, crew?.id]);
 
   const [actions, setActions] = useState([]);
 
@@ -126,58 +145,58 @@ const useActionButtons = () => {
         // all other actions require a crew
         if (crew) {
 
-          // TODO: pilotedShip?
-          // if there is a crewedShip and it is selected (or no other ship is selected)
-          if (crewedShip && (!ship || crewedShip.id === ship.id)) {
-
-            // if ship on surface and the lot is selected (or no other lot is selected)
-            if (crew._location.lotId && (!lotId || lotId === crew._location.lotId)) {
-              a.push(actionButtons.LaunchShip);
-            }
-
-            // else, if ship is in orbit
-            else if (!crew._location.lotId) {
-              a.push(actionButtons.LandShip);
+          // if my crew is on a ship in orbit, can land if landable
+          if (crewedShip && !crewedShip._location?.lotId) {
+            // (if no lot is selected or if a usable lot is selected)
+            if (!lot || Ship.TYPES[crewedShip.Ship.shipType].landing || lot?.building?.Dock) {
+              // (if not zoomed to a different ship)
+              if (!(zoomedToShip && zoomedToShip.id !== crewedShip.id)) {
+                a.push(actionButtons.LandShip);
+              }
             }
           }
+          
+          if (lotShip) {
 
-          // if ship (or single-ship lot) is selected
-          if (ship) {
             // TODO: check in buttons that crew is on asteroid
             //  AND check that both in orbit or both on surface
 
-            // if i own a ship, can pilot it
-            if (ship.Control.controller.id === crew.id) {
-              a.push(actionButtons.StationCrewAsPilots);
 
-            // if i don't own it, can ride it
-            } else {
-              a.push(actionButtons.StationCrewAsPassengers);
+            // if i control the selectedShip (and it is on the surface), can show launch button (may be disabled)
+            if (lotShip.Control.controller.id === crew.id && lotShip._location.lotId) {
+              a.push(actionButtons.LaunchShip);
             }
 
-            // if my crew is on ship, can eject
-            if (crew._location.shipId === ship.id) {
+            // if crew is on ship, show ejection options
+            if (crew._location.shipId === lotShip.id) {
               a.push(actionButtons.EjectCrew);
+            
+            // else (my crew is not on this ship), allow to station there as pilots or passengers
+            } else {
+              a.push(lotShip.Control.controller.id === crew.id ? actionButtons.StationCrewAsPilots : actionButtons.StationCrewAsPassengers);
             }
 
-            // if i own the ship and there are other crews on the ship
-            if (ship.Control.controller.id === crew.id && crewsOnShip?.length > 0) {
-              a.push(actionButtons.EjectGuestCrew);
-            }
-
-            // if i am piloting the ship and it is eligible to enter or leave emergency mode
-            if (crew._location?.shipId === ship.id && crew.id === ship.Control.controller.id) {
-
-              // if in emergency mode or ship has < 10% propellant, can toggle emergency mode
-              const propellantInventory = ship.Inventories.find((i) => i.slot === Ship.TYPES[ship.Ship.shipType].propellantSlot);
-              const propellantInventoryMassMax = Inventory.TYPES[propellantInventory?.inventoryType]?.massConstraint;
-              if (ship.Ship.operatingMode === Ship.MODES.EMERGENCY || propellantInventory.mass <= 0.1 * propellantInventoryMassMax) {
-                a.push(actionButtons.EmergencyModeToggle);
+            // if i own the ship...
+            if (lotShip.Control.controller.id === crew.id) {
+              // ...and there are other crews on the ship, can eject them
+              if (guestCrewsOnShip?.length > 0) {
+                a.push(actionButtons.EjectGuestCrew);
               }
 
-              // if in emergency mode, can generate
-              if (ship.Ship.operatingMode === Ship.MODES.EMERGENCY) {
-                a.push(actionButtons.EmergencyModeGenerate);
+              // ... and if i am piloting the ship...
+              if (crew._location?.shipId === lotShip.id) {
+
+                // ... if in emergency mode or ship has < 10% propellant, can toggle emergency mode
+                const propellantInventory = lotShip.Inventories.find((i) => i.slot === Ship.TYPES[lotShip.Ship.shipType].propellantSlot);
+                const propellantInventoryMassMax = Inventory.TYPES[propellantInventory?.inventoryType]?.massConstraint;
+                if (lotShip.Ship.emergencyAt > 0 || propellantInventory.mass <= 0.1 * propellantInventoryMassMax) {
+                  a.push(actionButtons.EmergencyModeToggle);
+                }
+
+                // ... if in emergency mode, can generate
+                if (lotShip.Ship.emergencyAt > 0) {
+                  a.push(actionButtons.EmergencyModeGenerate);
+                }
               }
             }
           }
@@ -210,6 +229,7 @@ const useActionButtons = () => {
 
                   // else, can station my crew
                   } else {
+                    // console.log('crew loc', crew)
                     a.push(actionButtons.StationCrew);
                   }
                 }
@@ -262,7 +282,7 @@ const useActionButtons = () => {
             }
 
             // if this lot or ship has an unlocked inventory, can transfer things from it
-            if ((lot.building || ship || {}).Inventories?.find((i) => i.status === Inventory.STATUSES.AVAILABLE)) {
+            if ((lot.building || lotShip || {}).Inventories?.find((i) => i.status === Inventory.STATUSES.AVAILABLE)) {
               a.push(actionButtons.SurfaceTransferOutgoing);
             }
 
@@ -278,7 +298,7 @@ const useActionButtons = () => {
     }
 
     setActions(a);
-  }, [asteroid, constructionStatus, crew, lot, openHudMenu, resourceMap?.active, !!resourceMap?.selected, zoomStatus]);
+  }, [lotShip?.id, asteroid, constructionStatus, crew, lot, openHudMenu, resourceMap?.active, !!resourceMap?.selected, zoomStatus]);
 
   return {
     actions,

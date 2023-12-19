@@ -9,7 +9,7 @@ import useShip from '~/hooks/useShip';
 
 const useHydratedLocation = (location = {}) => {
   const onLotLink = useLotLink(location);
-  const onShipLink = useShipLink(location);
+  const onShipLink = useShipLink(location?.shipId ? { shipId: location?.shipId, zoomToShip: true } : {});
 
   const { data: asteroid } = useAsteroid(location?.asteroidId);
   const { data: building } = useBuilding(location?.buildingId);

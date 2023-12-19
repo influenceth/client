@@ -107,7 +107,7 @@ const EmergencyModeToggle = ({ asteroid, lot, manager, ship, stage, ...props }) 
     lastStatus.current = stationingStatus;
   }, [stationingStatus]);
 
-  const inEmergencyMode = ship?.Ship?.operatingMode === Ship.MODES.EMERGENCY;
+  const inEmergencyMode = ship?.Ship?.emergencyAt > 0;
 
   const actionDetails = useMemo(() => {
     const icon = inEmergencyMode ? <EmergencyModeExitIcon /> : <EmergencyModeEnterIcon />;

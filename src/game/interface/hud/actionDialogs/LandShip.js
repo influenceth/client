@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Crew, Crewmate } from '@influenceth/sdk';
+import { Asteroid, Crewmate, Entity, Inventory, Lot, Product, Ship, Time } from '@influenceth/sdk';
 
 import travelBackground from '~/assets/images/modal_headers/Travel.png';
 import { LandShipIcon, RouteIcon, ShipIcon, WarningOutlineIcon } from '~/components/Icons';
 import useCrewContext from '~/hooks/useCrewContext';
-import { reactBool, formatTimer } from '~/lib/utils';
+import { reactBool, formatTimer, formatFixed, locationsArrToObj, getCrewAbilityBonuses } from '~/lib/utils';
 
 import {
   ActionDialogFooter,
@@ -22,7 +22,10 @@ import {
   ShipTab,
   LandingSelectionDialog,
   PropulsionTypeSection,
-  LotInputBlock
+  LotInputBlock,
+  formatMass,
+  getBonusDirection,
+  TimeBonusTooltip
 } from './components';
 import useLot from '~/hooks/useLot';
 import useStore from '~/hooks/useStore';
@@ -30,155 +33,118 @@ import { ActionDialogInner, useAsteroidAndLot } from '../ActionDialog';
 import actionStages from '~/lib/actionStages';
 import theme from '~/theme';
 import formatters from '~/lib/formatters';
+import useShip from '~/hooks/useShip';
+import useEntity from '~/hooks/useEntity';
+import useShipDockingManager from '~/hooks/actionManagers/useShipDockingManager';
+import useAsteroid from '~/hooks/useAsteroid';
 
-// TODO: ecs refactor
-
-const LandShip = ({ asteroid, lot, manager, ship, stage, ...props }) => {
+const LandShip = ({ asteroid, manager, ship, stage, ...props }) => {
   const createAlert = useStore(s => s.dispatchAlertLogged);
-  
-  const { currentLanding, landingStatus, startLanding } = manager;
 
-  const [destinationLot, setDestinationLot] = useState();
-  const [destinationSelectorOpen, setDestinationSelectorOpen] = useState();
-  
-  const { crew, crewmateMap } = useCrewContext();
-  const { data: landingDestinationLot } = useLot(currentLanding?.destinationLotId);
-  
-  const [propulsionType, setPropulsionType] = useState('propulsive');
+  const { currentDockingAction, dockShip } = manager;
+  const { crew } = useCrewContext();
+
+  // TODO: should this default to hopper-assisted if no propellant?
+  const [powered, setPowered] = useState(true);
   const [tab, setTab] = useState(0);
 
-  const crewmates = currentLanding?._crewmates || (crew?._crewmates || []).map((i) => crewmateMap[i]);
+  const crewmates = currentDockingAction?._crewmates || crew?._crewmates || [];
   const captain = crewmates[0];
-  const crewTravelBonus = Crew.getAbilityBonus(Crewmate.ABILITY_IDS.HOPPER_TRANSPORT_TIME, crewmates);
-  const landingBonus = 0;/*useMemo(() => {
-    const bonus = Crew.getAbilityBonus(Crewmate.ABILITY_IDS.EXTRACTION_TIME, crewmates);
-    const asteroidBonus = Asteroid.getBonusByResource(asteroid?.bonuses, selectedCoreSample?.resourceId);
-    if (asteroidBonus.totalBonus !== 1) {
-      bonus.totalBonus *= asteroidBonus.totalBonus;
-      bonus.others = [{
-        text: `${resources[selectedCoreSample?.resourceId].category} Yield Bonus`,
-        bonus: asteroidBonus.totalBonus - 1,
-        direction: 1
-      }];
-    }
-    return bonus;
-  }, [asteroid?.bonuses, crewmates, selectedCoreSample?.resourceId]);*/
+  
+  const [selectedDestinationIndex, setSelectedDestinationIndex] = useState(
+    props.preselect?.destinationLotId ? Lot.toIndex(props.preselect?.destinationLotId) : undefined
+  );
+  const [destinationSelectorOpen, setDestinationSelectorOpen] = useState();
+  const destinationLotId = currentDockingAction?.meta?.lotId
+    || (selectedDestinationIndex && Lot.toId(asteroid?.id, selectedDestinationIndex))
+    || undefined;
+  const { data: destinationLot, isLoading: destLotLoading } = useLot(destinationLotId);
+  
+  const [hopperBonus, propellantBonus] = useMemo(() => {
+    if (!crew) return {};
+    const bonusIds = [Crewmate.ABILITY_IDS.HOPPER_TRANSPORT_TIME, Crewmate.ABILITY_IDS.PROPELLANT_FLOW_RATE];
+    const abilities = getCrewAbilityBonuses(bonusIds, crew) || {};
+    return bonusIds.map((id) => abilities[id] || {});
+  }, [crew]);
+  
+  const [escapeVelocity, propellantRequirement, poweredTime, tugTime] = useMemo(() => {
+    const escapeVelocity = Asteroid.Entity.getEscapeVelocity(asteroid) * 1000;
+    const propellantRequired = Ship.Entity.getPropellantRequirement(ship, escapeVelocity, hopperBonus.totalBonus);
+    const destinationLotIndex = destinationLot ? Lot.toIndex(destinationLot?.id) : 1;
+    return [
+      escapeVelocity,
+      propellantRequired,
+      0, // TODO: propellantBonus may be incorporated here in the future
+      Time.toRealDuration(Asteroid.getLotTravelTime(asteroid?.id, 0, destinationLotIndex, hopperBonus.totalBonus), crew?._timeAcceleration)
+    ];
+  }, [asteroid, hopperBonus, destinationLot?.id, powered, ship]);
 
-  // useEffect(() => {
-  //   let defaultSelection;
-  //   if (!currentExtraction && !selectedCoreSample) {
-  //     if (props.preselect) {
-  //       defaultSelection = usableSamples.find((s) => s.resourceId === props.preselect.resourceId && s.sampleId === props.preselect.sampleId);
-  //     } else if (usableSamples.length === 1) {
-  //       defaultSelection = usableSamples[0];
-  //     }
-  //     if (defaultSelection) {
-  //       selectCoreSample(defaultSelection);
-  //     }
-  //   }
-  // }, [!currentExtraction, !selectedCoreSample, usableSamples]);
-
-  // // handle "currentExtraction" state
-  // useEffect(() => {
-  //   if (currentExtraction) {
-  //     if (lot?.coreSamples) {
-  //       const currentSample = lot.coreSamples.find((c) => c.resourceId === currentExtraction.resourceId && c.sampleId === currentExtraction.sampleId);
-  //       if (currentSample) {
-  //         setSelectedCoreSample({
-  //           ...currentSample,
-  //           remainingYield: currentSample.remainingYield + (currentExtraction.isCoreSampleUpdated ? currentExtraction.yield : 0)
-  //         });
-  //         setAmount(currentExtraction.yield);
-  //       }
-  //     }
-  //   }
-  // }, [currentExtraction, lot?.coreSamples]);
-
-  // useEffect(() => {
-  //   if (currentExtractionDestinationLot) {
-  //     setDestinationLot(currentExtractionDestinationLot);
-  //   }
-  // }, [currentExtractionDestinationLot]);
-
-  // const resource = useMemo(() => {
-  //   if (!selectedCoreSample) return null;
-  //   return resources[selectedCoreSample.resource];
-  // }, [selectedCoreSample]);
-
-  // const extractionTime = useMemo(() => {
-  //   if (!selectedCoreSample) return 0;
-  //   return Extraction.getExtractionTime(
-  //     amount,
-  //     selectedCoreSample.remainingYield || 0,
-  //     extractionBonus.totalBonus || 1
-  //   );
-  // }, [amount, extractionBonus, selectedCoreSample]);
-
-
-  // const crewTravelTime = 0;
-  // const tripDetails = null;
-
+  const [propellantLoaded, deltaVLoaded] = useMemo(() => {
+    if (!ship) return 0;
+    const shipConfig = Ship.TYPES[ship.Ship.shipType];
+    const propellantMass = (ship.Inventories || []).find((inv) => inv.slot === shipConfig.propellantSlot)?.mass || 0;
+    const deltaV = Ship.Entity.propellantToDeltaV(ship, propellantMass, hopperBonus.totalBonus);
+    return [
+      propellantMass,
+      deltaV
+    ];
+  }, [ship]);
+  const launchTime = useMemo(() => powered ? poweredTime : tugTime, [powered, poweredTime, tugTime]);
 
   const stats = useMemo(() => ([
     {
-      label: 'Propellant Used',
-      value: `0 tonnes`,
-      direction: 0
-    },
-    {
-      label: 'Arriving In',
-      value: formatTimer(0),
-      direction: 0,
+      label: 'Time until Docked',
+      value: formatTimer(launchTime),
+      direction: launchTime > 0 ? getBonusDirection(hopperBonus) : 0,
       isTimeStat: true,
+      tooltip: hopperBonus.totalBonus !== 1 && launchTime > 0 && (
+        <TimeBonusTooltip
+          bonus={hopperBonus}
+          title="Time until Docked"
+          totalTime={launchTime}
+          crewRequired="duration" />
+      )
     },
     {
-      label: 'Delta-V Used',
-      value: `1.712 m/s`,
-      direction: 0,
+      label: 'Propellant Used',
+      value: powered ? formatMass(propellantRequirement) : 0,
+      direction: powered && propellantRequirement > 0 ? getBonusDirection(hopperBonus) : 0
     },
     {
-      label: 'Max Acceleration',
-      value: <>1.712 m/s<sup>2</sup></>,
+      label: 'Escape Velocity',
+      value: `${formatFixed(escapeVelocity, 1)} km/s`,
       direction: 0,
     },
     {
       label: 'Wet Mass',
-      value: `10,000 t`,
+      value: formatMass(
+        Ship.TYPES[ship.Ship.shipType].hullMass
+        + ship.Inventories.reduce((acc, inv) => acc + (inv.status === Inventory.STATUSES.AVAILABLE ? inv.mass : 0), 0)
+      ),
       direction: 0,
     },
-    {
-      label: 'Cargo Mass',
-      value: `1,000 t`,
-      direction: 0,
-    },
-    {
-      label: 'Cargo Volume',
-      value: <>1,000 m<sup>3</sup></>,
-      direction: 0,
-    },
-    {
-      label: 'Passengers',
-      value: `5`,
-      direction: 0,
-    },
-  ]), []);
+  ]), [escapeVelocity, hopperBonus, launchTime, propellantRequirement, ship]);
 
   const onLand = useCallback(() => {
-    startLanding();
-  }, []);
+    if (!destinationLot) return;
+    dockShip(
+      destinationLot.building || { label: Entity.IDS.LOT, id: destinationLot.id },
+      !powered,
+      destinationLot.id
+    );
+  }, [destinationLot, powered]);
 
   // handle auto-closing
   const lastStatus = useRef();
   useEffect(() => {
     // (close on status change from)
-    if (['READY', 'READY_TO_FINISH', 'FINISHING'].includes(lastStatus.current)) {
-      if (landingStatus !== lastStatus.current) {
-        console.log('on Close');
-        props.onClose();
-      }
+    if (lastStatus.current && stage !== lastStatus.current) {
+      props.onClose();
     }
-    lastStatus.current = landingStatus;
-  }, [landingStatus]);
+    lastStatus.current = stage;
+  }, [stage]);
+
+  const propellantProduct = Product.TYPES[Product.IDS.HYDROGEN_PROPELLANT];
 
   return (
     <>
@@ -186,10 +152,10 @@ const LandShip = ({ asteroid, lot, manager, ship, stage, ...props }) => {
         action={{
           icon: <LandShipIcon />,
           label: 'Land Ship',
-          status: stage === actionStages.NOT_STARTED ? 'On Surface' : undefined,
+          status: stage === actionStages.NOT_STARTED ? 'Return from Orbit' : undefined,
         }}
         captain={captain}
-        location={{ asteroid, lot, ship }}
+        location={{ asteroid, lot: destinationLot, ship }}
         crewAvailableTime={0}
         taskCompleteTime={0}
         onClose={props.onClose}
@@ -221,7 +187,7 @@ const LandShip = ({ asteroid, lot, manager, ship, stage, ...props }) => {
               
               <LotInputBlock
                 title="Destination"
-                lot={lot}
+                lot={destinationLot}
                 disabled={stage !== actionStages.NOT_STARTED}
                 onClick={() => setDestinationSelectorOpen(true)}
                 isSelected={stage === actionStages.NOT_STARTED}
@@ -231,17 +197,19 @@ const LandShip = ({ asteroid, lot, manager, ship, stage, ...props }) => {
             <FlexSection style={{ marginBottom: -15 }}>
               <PropulsionTypeSection
                 objectLabel="Landing"
-                onSelect={(x) => () => setPropulsionType(x)}
-                selected={propulsionType} />
+                onSetPowered={(x) => setPowered(x)}
+                powered={powered}
+                propulsiveTime={poweredTime}
+                tugTime={tugTime} />
 
               <FlexSectionSpacer />
 
               <PropellantSection
                 title="Propellant"
-                deltaVLoaded={1500}
-                deltaVRequired={propulsionType === 'tug' ? 0 : 1123}
-                propellantLoaded={840e3}
-                propellantRequired={propulsionType === 'tug' ? 0 : 168e3}
+                deltaVLoaded={deltaVLoaded}
+                deltaVRequired={powered ? escapeVelocity : 0}
+                propellantLoaded={propellantLoaded}
+                propellantRequired={powered ? propellantRequirement : 0}
                 narrow
               />
             </FlexSection>
@@ -254,13 +222,14 @@ const LandShip = ({ asteroid, lot, manager, ship, stage, ...props }) => {
                     barColor: theme.colors.lightOrange,
                     color: theme.colors.lightOrange,
                     left: <><WarningOutlineIcon /> Landing Delay</>,
-                    right: formatTimer(2700)
+                    right: formatTimer(0) // TODO: ...
                   }}
                   stage={stage}
                   title="Port Traffic"
                 />
                 <ProgressBarNote themeColor="lightOrange">
-                  <b>6 ships</b> are queued to land ahead of you.
+                  {/* TODO: ... */}
+                  <b>0 ships</b> are queued to land ahead of you.
                 </ProgressBarNote>
               </>
             )}
@@ -270,7 +239,10 @@ const LandShip = ({ asteroid, lot, manager, ship, stage, ...props }) => {
         {tab === 1 && (
           <ShipTab
             pilotCrew={{ ...crew, roster: crewmates }}
-            previousStats={{ propellantMass: -168e3 }}
+            deltas={{
+              propellantMass: powered ? -propellantRequirement : 0,
+              propellantVolume: powered ? -(propellantRequirement * propellantProduct.volumePerUnit / propellantProduct.massPerUnit) : 0,
+            }}
             ship={ship}
             stage={stage} />
         )}
@@ -288,14 +260,17 @@ const LandShip = ({ asteroid, lot, manager, ship, stage, ...props }) => {
         goLabel="Land"
         onGo={onLand}
         stage={stage}
+        waitForCrewReady
         {...props} />
 
       {stage === actionStages.NOT_STARTED && (
         <LandingSelectionDialog
           asteroid={asteroid}
-          initialSelection={undefined/* TODO: default to self... */}
+          deliveryMode
+          initialSelection={selectedDestinationIndex}
           onClose={() => setDestinationSelectorOpen(false)}
-          onSelected={setDestinationLot}
+          onSelected={setSelectedDestinationIndex}
+          originLotIndex={0}
           open={destinationSelectorOpen}
           ship={ship}
         />
@@ -305,32 +280,35 @@ const LandShip = ({ asteroid, lot, manager, ship, stage, ...props }) => {
 };
 
 const Wrapper = (props) => {
-  const { asteroid, lot, isLoading } = useAsteroidAndLot(props);
-  // TODO: ...
-  // const extractionManager = useExtractionManager(lot?.id);
-  // const { actionStage } = extractionManager;
-  const manager = {};
-  const actionStage = actionStages.NOT_STARTED;
+  const { data: ship, isLoading: shipIsLoading } = useShip(props.shipId);
+  const dockingManager = useShipDockingManager(props.shipId);
+  const { actionStage, currentDockingAction } = dockingManager;
+
+  const { data: asteroid, isLoading: asteroidIsLoading } = useAsteroid(currentDockingAction?.meta?.asteroidId || ship?._location?.asteroidId);
+
+  const isLoading = shipIsLoading || asteroidIsLoading;
 
   useEffect(() => {
-    if (!asteroid || !lot) {
+    if (!asteroid || !ship) {
       if (!isLoading) {
         if (props.onClose) props.onClose();
       }
     }
-  }, [asteroid, lot, isLoading]);
+  }, [asteroid, ship, isLoading]);
 
   return (
     <ActionDialogInner
       actionImage={travelBackground}
       isLoading={reactBool(isLoading)}
       stage={actionStage}>
-      <LandShip
-        asteroid={asteroid}
-        lot={lot}
-        manager={manager}
-        stage={actionStage}
-        {...props} />
+      {asteroid && ship && (
+        <LandShip
+          asteroid={asteroid}
+          manager={dockingManager}
+          ship={ship}
+          stage={actionStage}
+          {...props} />
+      )}
     </ActionDialogInner>
   )
 };

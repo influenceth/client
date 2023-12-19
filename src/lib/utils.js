@@ -60,11 +60,12 @@ export const reactBool = (value) => value ? 'true' : undefined;
 export const nativeBool = (value) => Boolean(value);
 
 export const locationsArrToObj = (locations) => {
+  const asteroidId = locations.find((l) => Number(l.label) === Entity.IDS.ASTEROID)?.id;
   const lotLocation = locations.find((l) => l.label === Entity.IDS.LOT);
   return {
-    asteroidId: locations.find((l) => Number(l.label) === Entity.IDS.ASTEROID)?.id,
+    asteroidId,
     lotId: lotLocation?.id,
-    lotIndex: lotLocation?.id ? Lot.toIndex(lotLocation?.id) : null,
+    lotIndex: lotLocation?.id ? Lot.toIndex(lotLocation?.id) : (asteroidId ? 0 : undefined),
     buildingId: locations.find((l) => l.label === Entity.IDS.BUILDING)?.id,
     shipId: locations.find((l) => l.label === Entity.IDS.SHIP)?.id,
   }

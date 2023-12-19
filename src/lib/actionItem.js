@@ -21,6 +21,8 @@ import {
   ProcessIcon,
   FoodIcon,
   StationCrewIcon,
+  LaunchShipIcon,
+  LandShipIcon,
 } from '~/components/Icons';
 import theme, { hexToRGB } from '~/theme';
 import { getProcessorProps } from './utils';
@@ -451,6 +453,30 @@ const formatAsTx = (item) => {
       }
       formatted.onClick = ({ openDialog }) => {
         openDialog('STATION_CREW', { destinationEntityId: item.vars.destination });
+      };
+      break;
+    }
+
+    case 'DockShip': {
+      formatted.icon = <LandShipIcon />;
+      formatted.label = 'Dock on Surface';
+      formatted.asteroidId = item.meta?.asteroidId;
+      formatted.lotId = item.meta?.lotId;
+      formatted.shipId = item.meta?.id;
+      formatted.onClick = ({ openDialog }) => {
+        openDialog('LAND_SHIP', { shipId: item.meta.shipId });
+      };
+      break;
+    }
+
+    case 'UndockShip': {
+      formatted.icon = <LaunchShipIcon />;
+      formatted.label = `${item.vars.powered ? 'Launch' : 'Tug'} into Orbit`;
+      formatted.asteroidId = item.meta?.asteroidId;
+      formatted.lotId = item.meta?.lotId;
+      formatted.shipId = item.vars.ship.id;
+      formatted.onClick = ({ openDialog }) => {
+        openDialog('LAUNCH_SHIP', { shipId: item.vars.ship.id });
       };
       break;
     }

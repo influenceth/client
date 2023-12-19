@@ -14,6 +14,7 @@ import {
   FoodIcon,
   ImproveCoreSampleIcon,
   KeysIcon,
+  LaunchShipIcon,
   NewCoreSampleIcon,
   PlanBuildingIcon,
   ProcessIcon,
@@ -616,11 +617,7 @@ const activities = {
     requiresCrewTime: true
   },
 
-  // DockShip,
   // EarlyAdopterRewardClaimed,
-  // FoodSupplied,
-  // MaterialProcessingFinished,
-  // MaterialProcessingStarted,
 
   MaterialProcessingStarted: {
     getActionItem: ({ returnValues }, { building = {} }) => {
@@ -1076,6 +1073,47 @@ const activities = {
       };
     },
 
+    triggerAlert: true
+  },
+  
+  ShipDocked: {
+    getInvalidations: ({ event: { returnValues } }) => ([
+      ...invalidationDefaults(returnValues.ship.label, returnValues.ship.id),
+      ...invalidationDefaults(returnValues.dock.label, returnValues.dock.id),
+      // TODO: any others? crew? passenger crews?
+    ]),
+    getLogContent: ({ event: { returnValues } }) => ({
+      icon: <ScanAsteroidIcon />,
+      content: (
+        <>
+          <EntityLink {...returnValues.ship} /> docked at <EntityLink {...returnValues.dock} />
+        </>
+      )
+    }),
+    requiresCrewTime: true, // only true currently if !powered
+    triggerAlert: true
+  },
+  ShipUndocked: {
+    getInvalidations: ({ event: { returnValues } }, { dock = {} }) => ([
+      ...invalidationDefaults(returnValues.ship.label, returnValues.ship.id),
+      ...invalidationDefaults(returnValues.dock.label, returnValues.dock.id),
+      [ 'entities', Entity.IDS.SHIP, 'asteroid', (dock?.Location?.locations || []).find((l) => l.label === Entity.IDS.ASTEROID)?.id ],
+      // TODO: any others? crew? passenger crews?
+    ]),
+    getLogContent: ({ event: { returnValues } }) => {
+      return {
+        icon: <LaunchShipIcon />,
+        content: (
+          <>
+            <EntityLink {...returnValues.ship} /> undocked from <EntityLink {...returnValues.dock} />
+          </>
+        )
+      };
+    },
+    getPrepopEntities: ({ event: { returnValues } }) => ({
+      dock: returnValues.dock,
+    }),
+    requiresCrewTime: true, // only true currently if !powered
     triggerAlert: true
   },
 

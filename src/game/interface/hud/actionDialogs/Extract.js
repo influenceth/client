@@ -9,9 +9,11 @@ import useExtractionManager from '~/hooks/actionManagers/useExtractionManager';
 import { reactBool, formatTimer, locationsArrToObj, getCrewAbilityBonuses, formatFixed } from '~/lib/utils';
 
 import {
-  ResourceAmountSlider, ActionDialogFooter,
+  ResourceAmountSlider,
+  ActionDialogFooter,
   ActionDialogHeader,
-  ActionDialogStats, getBonusDirection,
+  ActionDialogStats,
+  getBonusDirection,
   formatResourceVolume,
   formatSampleMass,
   formatSampleVolume,
