@@ -105,6 +105,12 @@ export function CrewProvider({ children }) {
         };
       }
       if (c.Location?.locations) {
+        // // TODO: remove this vvv
+        // if (c.id === 8) {
+        //   c.Location.locations = c.Location.locations.filter((l) => (l.label === Entity.IDS.ASTEROID || l.label === Entity.IDS.SHIP));
+        //   console.log('c.Location.locations', c.Location.locations);
+        // }
+        // // TODO: ^^^
         c._location = locationsArrToObj(c.Location.locations);
       }
       if (c.Crew) {

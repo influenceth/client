@@ -18,7 +18,7 @@ import {
 import useLot from '~/hooks/useLot';
 import useStore from '~/hooks/useStore';
 import useAsteroid from '~/hooks/useAsteroid';
-import useShipCrews from '~/hooks/useShipCrews';
+import useStationedCrews from '~/hooks/useStationedCrews';
 import actionStages from '~/lib/actionStages';
 import theme, { hexToRGB } from '~/theme';
 import { ActionDialogInner } from '../ActionDialog';
@@ -53,7 +53,7 @@ const EmergencyModeToggle = ({ asteroid, lot, manager, ship, stage, ...props }) 
 
   const { crew, crewmateMap } = useCrewContext();
 
-  const shipCrews = useShipCrews(ship?.id);
+  const shipCrews = useStationedCrews(ship?.id);
   const shipPassengerCrews = useMemo(() => {
     return shipCrews.filter((c) => c.id !== crew?.id);
   }, [shipCrews]);

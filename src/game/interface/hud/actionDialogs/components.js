@@ -1352,7 +1352,7 @@ export const SelectionDialog = ({ children, isCompletable, open, onClose, onComp
   );
 };
 
-export const CrewSelectionDialog = ({ crews, onClose, onSelected, open }) => {
+export const CrewSelectionDialog = ({ crews, onClose, onSelected, open, title }) => {
   const [selection, setSelection] = useState();
 
   const onComplete = useCallback(() => {
@@ -1370,7 +1370,7 @@ export const CrewSelectionDialog = ({ crews, onClose, onSelected, open }) => {
       onClose={onClose}
       onComplete={onComplete}
       open={open}
-      title="Exchange With Crew">
+      title={title || 'Crew Selection'}>
       <div style={{ minHeight: 300 }}>
         {nonEmptyCrews.map((crew, i) => {
           return (
@@ -2002,28 +2002,31 @@ const getInventorySublabel = (inventoryType) => {
   }
 }
 
-export const InventorySelectionDialog = ({ otherEntity, otherLotId, otherLotInvSlot, isSourcing, itemIds, initialSelection, onClose, onSelected, open, requirePresenceOfItemIds }) => {
+export const InventorySelectionDialog = ({ asteroidId, otherEntity, otherInvSlot, isSourcing, itemIds, initialSelection, onClose, onSelected, open, requirePresenceOfItemIds }) => {
   const { crew } = useCrewContext();
 
   const [selection, setSelection] = useState(initialSelection);
 
-  const asteroidId = useMemo(() => otherLotId ? Entity.toPosition({ id: otherLotId, label: Entity.IDS.LOT }).asteroidId : 0, [otherLotId]);
+  const otherLotIndex = useMemo(() => {
+    if (!otherEntity) return -1;
+    console.log('oth', otherEntity)
+    let lotId = otherEntity.label === Entity.IDS.LOT ? otherEntity.id : otherEntity.Location.locations.find((l) => l.label === Entity.IDS.LOT)?.id;
+    return Lot.toIndex(lotId);
+  }, [otherEntity]);
 
   const { data: inventoryData, isLoading: inventoryDataLoading } = useAccessibleAsteroidInventories(asteroidId);
 
   const inventories = useMemo(() => {
     if (!inventoryData) return [];
 
-    const otherLotIndex = Lot.toIndex(otherLotId)
-
     const display = [];
     inventoryData.forEach((entity) => {
       if (!entity.Inventories) return;
       entity.Inventories.forEach((inv) => {
-        // (can't send to self)
+        // (can't send to same entity and slot)
         if (otherEntity) {
           if (entity.id === otherEntity.id && entity.label === otherEntity.label){
-            if (!otherLotInvSlot || otherLotInvSlot === inv.slot) {
+            if (!otherInvSlot || otherInvSlot === inv.slot) {
               return;
             }
           }
@@ -2072,7 +2075,7 @@ export const InventorySelectionDialog = ({ otherEntity, otherLotId, otherLotInvS
     });
 
     return display.sort((a, b) => a.distance - b.distance);
-  }, [inventoryData, itemIds]);
+  }, [inventoryData, itemIds, otherLotIndex]);
 
   const onComplete = useCallback(() => {
     onSelected(selection ? JSON.parse(selection) : null);
@@ -2273,7 +2276,7 @@ export const MiniBarChart = ({ color, deltaColor, deltaValue, label, valueLabel,
       <label>{label}</label>
       <label style={valueStyle || {}}>{valueLabel}</label>
     </ChartLabels>
-    <MiniBar color={color} value={Math.min(value, 1)} deltaColor={deltaColor} deltaValue={Math.max(-1, Math.min(deltaValue, 1))}>
+    <MiniBar color={color} value={Math.max(0, Math.min(value, 1))} deltaColor={deltaColor} deltaValue={Math.max(-1, Math.min(deltaValue, 1))}>
       {deltaValue ? <DeltaIcon negativeDelta={deltaValue < 0} value={value}><FastForwardIcon /></DeltaIcon> : null}
     </MiniBar>
     {underLabels && <UnderChartLabels>{underLabels}</UnderChartLabels>}
@@ -2344,7 +2347,7 @@ const ActionDialogActionBar = ({ location, onClose, overrideColor, stage }) => (
   <ActionBar {...theming[stage]} overrideColor={overrideColor}>
     {(stage === actionStage.STARTING || stage === actionStage.COMPLETING) && (
       <BarLoadingContainer>
-        <BarLoader color={theme.colors.lightPurple} height="5" speedMultiplier={0.5} width="100%" />
+        <BarLoader color={theme.colors.lightPurple} height="5px" speedMultiplier={0.5} width="100%" />
       </BarLoadingContainer>
     )}
     <ActionLocation {...theming[stage]} overrideColor={overrideColor}>
@@ -3205,60 +3208,62 @@ export const SwayInputBlock = ({ title, ...props }) => (
   </FlexSectionInputBlock>
 );
 
-export const CrewInputBlock = ({ cardWidth, crew, hideCrewmates, highlightCrewmates, title, inlineDetails, ...props }) => (
-  <FlexSectionInputBlock
-    title={title}
-    titleDetails={inlineDetails ? null : (
-      <div>
-        <CrewIcon />
-        <span style={{ fontSize: '85%', marginLeft: 4 }}>
-          {formatters.crewName(crew)}
-        </span>
-      </div>
-    )}
-    bodyStyle={{ paddingRight: 8, ...(hideCrewmates ? { paddingBottom: 0 } : {}) }}
-    innerBodyStyle={{ height: 'auto' }}
-    {...props}>
-    <div>
-      {inlineDetails && (
-        <div style={{ display: 'flex', alignItems: 'center', marginBottom: 8 }}>
-          <div>
-            <CrewIcon />
-            <span style={{ marginLeft: 4 }}>
-              {formatters.crewName(crew)}
-            </span>
-          </div>
-          <div style={{ flex: 1 }} />
-          <LiveFoodStatus crew={crew} style={(props.subtle && !props.isSelected) ? { color: '#777' } : {}} />
+export const CrewInputBlock = ({ cardWidth, crew, hideCrewmates, highlightCrewmates, title, inlineDetails, ...props }) => {
+  return (
+    <FlexSectionInputBlock
+      title={title}
+      titleDetails={(inlineDetails || !crew) ? null : (
+        <div>
+          <CrewIcon />
+          <span style={{ fontSize: '85%', marginLeft: 4 }}>
+            {formatters.crewName(crew)}
+          </span>
         </div>
       )}
-      {!hideCrewmates && (
-        <CrewCards>
-          {Array.from({ length: 5 }).map((_, i) =>
-            crew._crewmates[i]
-              ? (
-                <CrewCardFramed
-                  key={i}
-                  borderColor={`rgba(${theme.colors.mainRGB}, 0.7)`}
-                  crewmate={crew._crewmates[i]}
-                  isCaptain={i === 0}
-                  lessPadding
-                  noArrow={i > 0}
-                  style={highlightCrewmates && !highlightCrewmates.includes(crew._crewmates[i].id) ? { opacity: 0.5 } : {}}
-                  width={cardWidth || 60} />
-              )
-              : (
-                <CrewCardPlaceholder
-                  key={i}
-                  style={highlightCrewmates ? { opacity: 0.5 } : {}}
-                  width={cardWidth || 60} />
-              )
-          )}
-        </CrewCards>
-      )}
-    </div>
-  </FlexSectionInputBlock>
-);
+      bodyStyle={{ paddingRight: 8, ...(hideCrewmates ? { paddingBottom: 0 } : {}) }}
+      innerBodyStyle={{ height: 'auto' }}
+      {...props}>
+      <div>
+        {crew && inlineDetails && (
+          <div style={{ display: 'flex', alignItems: 'center', marginBottom: 8 }}>
+            <div>
+              <CrewIcon />
+              <span style={{ marginLeft: 4 }}>
+                {formatters.crewName(crew)}
+              </span>
+            </div>
+            <div style={{ flex: 1 }} />
+            <LiveFoodStatus crew={crew} style={(props.subtle && !props.isSelected) ? { color: '#777' } : {}} />
+          </div>
+        )}
+        {!hideCrewmates && (
+          <CrewCards>
+            {Array.from({ length: 5 }).map((_, i) =>
+              crew?._crewmates[i]
+                ? (
+                  <CrewCardFramed
+                    key={i}
+                    borderColor={`rgba(${theme.colors.mainRGB}, 0.7)`}
+                    crewmate={crew._crewmates[i]}
+                    isCaptain={i === 0}
+                    lessPadding
+                    noArrow={i > 0}
+                    style={highlightCrewmates && !highlightCrewmates.includes(crew._crewmates[i].id) ? { opacity: 0.5 } : {}}
+                    width={cardWidth || 60} />
+                )
+                : (
+                  <CrewCardPlaceholder
+                    key={i}
+                    style={highlightCrewmates ? { opacity: 0.5 } : {}}
+                    width={cardWidth || 60} />
+                )
+            )}
+          </CrewCards>
+        )}
+      </div>
+    </FlexSectionInputBlock>
+  )
+};
 
 export const CrewOwnerBlock = ({ title, ...innerProps }) => {
   return (
@@ -4121,7 +4126,7 @@ export const formatShipStatus = (ship) => {
   if (ship?.Ship?.status === Ship.STATUSES.IN_FLIGHT) return 'In Flight'; // TODO: do we need to distinguish Launching, Landing
   if (ship?.Ship?.status === Ship.STATUSES.DISABLED) return 'Disabled';
 
-  const loc = ship?.Location.location;
+  const loc = ship?.Location?.location;
 
   if (loc.label === Entity.IDS.BUILDING) {
     return 'In Port';

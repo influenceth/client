@@ -384,9 +384,9 @@ const SurfaceTransfer = ({
           />
 
           <InventorySelectionDialog
+            asteroidId={asteroid.id}
             otherEntity={origin}
-            otherLotId={originLot?.id}
-            otherLotInvSlot={originInventory?.slot}
+            otherInvSlot={originInventory?.slot}
             onClose={() => setDestinationSelectorOpen(false)}
             onSelected={setDestinationSelection}
             open={destinationSelectorOpen}

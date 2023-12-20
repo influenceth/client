@@ -101,6 +101,10 @@ const StationCrew = ({ asteroid, destination: rawDestination, lot, origin: rawOr
     ];
   }, [asteroid?.id, origin?.id, destination?.id, crewTravelBonus, crew?._timeAcceleration]);
 
+  const [crewTimeRequirement, taskTimeRequirement] = useMemo(() => {
+    return [ travelTime, 0 ];
+  }, [travelTime]);
+
   const stats = useMemo(() => ([
     {
       label: 'Travel Time',
@@ -135,8 +139,6 @@ const StationCrew = ({ asteroid, destination: rawDestination, lot, origin: rawOr
     lastStatus.current = stage;
   }, [stage]);
 
-
-
   const actionDetails = useMemo(() => {
     const icon = destination?.label === Entity.IDS.SHIP && !crewIsOwner
       ? <StationPassengersIcon />
@@ -159,23 +161,23 @@ const StationCrew = ({ asteroid, destination: rawDestination, lot, origin: rawOr
       <ActionDialogHeader
         action={actionDetails}
         captain={captain}
-        crewAvailableTime={0}
+        crewAvailableTime={crewTimeRequirement}
+        taskCompleteTime={taskTimeRequirement}
         location={{
           asteroid,
           lot,
           ship: null /* TODO: */ }}
         onClose={props.onClose}
         overrideColor={stage === actionStages.NOT_STARTED ? (crewIsOwner ? theme.colors.main : theme.colors.green) : undefined}
-        taskCompleteTime={0}
         stage={stage} />
 
       <ActionDialogBody>
         <FlexSection>
-          {origin.label === Entity.IDS.SHIP
+          {(origin.label === Entity.IDS.SHIP || !originLot)
             ? (
               <ShipInputBlock
                 title="Origin"
-                ship={origin}
+                ship={origin.label === Entity.IDS.SHIP ? origin : crew}
                 disabled />
             )
             : (

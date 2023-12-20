@@ -23,6 +23,7 @@ import {
   StationCrewIcon,
   LaunchShipIcon,
   LandShipIcon,
+  EjectPassengersIcon,
 } from '~/components/Icons';
 import theme, { hexToRGB } from '~/theme';
 import { getProcessorProps } from './utils';
@@ -477,6 +478,19 @@ const formatAsTx = (item) => {
       formatted.shipId = item.vars.ship.id;
       formatted.onClick = ({ openDialog }) => {
         openDialog('LAUNCH_SHIP', { shipId: item.vars.ship.id });
+      };
+      break;
+    }
+
+    case 'EjectCrew': {
+      const isGuests = item.vars.caller_crew.id !== item.vars.ejected_crew.id;
+      formatted.icon = <EjectPassengersIcon />;
+      formatted.label = `Eject Crew`;
+      formatted.asteroidId = item.meta?.asteroidId;
+      formatted.lotId = item.meta?.lotId;
+      formatted.shipId = item.meta?.shipId;
+      formatted.onClick = ({ openDialog }) => {
+        openDialog(isGuests ? 'EJECT_GUEST_CREW' : 'EJECT_CREW', { originId: item.meta?.originId });
       };
       break;
     }

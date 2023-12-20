@@ -495,17 +495,19 @@ const activities = {
     getInvalidations: ({ event: { returnValues } }) => ([
       ...invalidationDefaults(returnValues.callerCrew.label, returnValues.callerCrew.id),
       ...invalidationDefaults(returnValues.ejectedCrew.label, returnValues.ejectedCrew.id),
-      // TODO: previous station
+      ...invalidationDefaults(returnValues.station.label, returnValues.station.id),
     ]),
 
     getLogContent: ({ event: { returnValues } }, { viewingAs }) => {
+      const selfEjection = returnValues.ejectedCrew.id === returnValues.callerCrew.id;
       return {
         icon: <EjectPassengersIcon />,
         content: (
           <>
           <EntityLink {...returnValues.ejectedCrew} />
-          {' '}ejected from <EntityLink {...returnValues.ejectedCrew} />
-          {' '}by <EntityLink {...returnValues.callerCrew} />
+          {selfEjection ? ' self-ejected' : ' force-ejected'}
+          {' '}from <EntityLink {...returnValues.station} />
+          {selfEjection ? '' : <>{' '}by <EntityLink {...returnValues.callerCrew} /></>}
         </>
         ),
       };

@@ -105,7 +105,6 @@ const FoodMiniBar = ({ addingFood, barColor, deltaValue, maxFood, postValue }) =
 const FeedCrew = ({
   asteroid,
   feedCrewManager,
-  destinationLot,
   stage,
   ...props
 }) => {
@@ -146,16 +145,16 @@ const FeedCrew = ({
   }, [currentFeeding]);
 
   const [transportDistance, transportTime] = useMemo(() => {
-    if (!asteroid?.id || !originLot?.id || !destinationLot?.id) return [0, 0];
+    if (!asteroid?.id || !originLot?.id) return [0, 0];
     const originLotIndex = Lot.toIndex(originLot?.id);
-    const destinationLotIndex = Lot.toIndex(destinationLot?.id);
+    const destinationLotIndex = crew?._location?.lotIndex;
     const transportDistance = Asteroid.getLotDistance(asteroid?.id, originLotIndex, destinationLotIndex);
     const transportTime = Time.toRealDuration(
       Asteroid.getLotTravelTime(asteroid?.id, originLotIndex, destinationLotIndex, crewTravelBonus.totalBonus),
       crew?._timeAcceleration
     );
     return [transportDistance, transportTime];
-  }, [asteroid?.id, originLot?.id, destinationLot?.id, crewTravelBonus, crew?._timeAcceleration]);
+  }, [asteroid?.id, originLot?.id, crewTravelBonus, crew?._location?.lotIndex, crew?._timeAcceleration]);
 
   const { totalMass, totalVolume } = useMemo(() => {
     return Object.keys(selectedItems).reduce((acc, resourceId) => {
@@ -398,10 +397,10 @@ const FeedCrew = ({
           />
 
           <InventorySelectionDialog
+            asteroidId={asteroid.id}
             isSourcing
             itemIds={[Product.IDS.FOOD]}
-            otherEntity={destinationLot}
-            otherLotId={destinationLot?.id}
+            otherEntity={crew}
             onClose={() => setOriginSelectorOpen(false)}
             onSelected={setOriginSelection}
             open={originSelectorOpen}
@@ -418,17 +417,8 @@ const Wrapper = (props) => {
   const feedCrewManager = useFeedCrewManager();
 
   const { data: asteroid, isLoading: asteroidIsLoading } = useAsteroid(crew?._location?.asteroidId);
-  const { data: destinationLot, isLoading: destinationLotLoading } = useLot(crew?._location?.lotId);
 
   const stage = feedCrewManager.actionStage || actionStages.NOT_STARTED;
-
-  useEffect(() => {
-    if (!destinationLot) {
-      if (!crewIsLoading && !destinationLotLoading) {
-        if (props.onClose) props.onClose();
-      }
-    }
-  }, [destinationLot, crewIsLoading, destinationLotLoading]);
 
   // handle auto-closing on any status change
   const lastStatus = useRef();
@@ -444,12 +434,11 @@ const Wrapper = (props) => {
   return (
     <ActionDialogInner
       actionImage={headerBackground}
-      isLoading={reactBool(crewIsLoading || asteroidIsLoading || destinationLotLoading || crewIsLoading)}
+      isLoading={reactBool(crewIsLoading || asteroidIsLoading || crewIsLoading)}
       stage={stage}>
       <FeedCrew
         asteroid={asteroid}
         feedCrewManager={feedCrewManager}
-        destinationLot={destinationLot}
         stage={feedCrewManager?.actionStage}
         {...props} />
     </ActionDialogInner>

@@ -474,6 +474,7 @@ const ManageCrew = ({ altCrews, crew, isForeignCrew, manager, stage, ...props })
           onClose={() => setCrewSelectorOpen(false)}
           onSelected={setExchangeCrewId}
           open={crewSelectorOpen}
+          title="Exchange With Crew"
         />
       )}
     </>

@@ -26,7 +26,6 @@ import {
   FlexSection,
   FlexSectionInputBlock,
   FlexSectionSpacer,
-  SourceInventorySelectionDialog,
   ResourceSelectionDialog,
   ProgressBarSection,
   SublabelBanner,
@@ -321,7 +320,8 @@ const NewCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }) =>
           />
 
           <InventorySelectionDialog
-            otherLotId={lot?.id}
+            asteroidId={asteroid.id}
+            otherEntity={lot}
             isSourcing
             itemIds={[175]}
             onClose={() => setSourceSelectorOpen(false)}

@@ -1,14 +1,16 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Asteroid, Building, Entity, Inventory, Processor, Ship } from '@influenceth/sdk';
+import { Asteroid, Building, Inventory, Ship } from '@influenceth/sdk';
+import cloneDeep from 'lodash/cloneDeep';
 
 import useAsteroid from '~/hooks/useAsteroid';
 import useConstructionManager from '~/hooks/actionManagers/useConstructionManager';
 import useCrewContext from '~/hooks/useCrewContext';
 import useLot from '~/hooks/useLot';
 import useShip from '~/hooks/useShip';
+import useStationedCrews from '~/hooks/useStationedCrews';
 import useStore from '~/hooks/useStore';
+import { locationsArrToObj } from '~/lib/utils';
 import actionButtons from '../game/interface/hud/actionButtons';
-import useShipCrews from './useShipCrews';
 import useAuth from './useAuth';
 
 // if selected asteroid (any zoom)
@@ -77,25 +79,33 @@ const useActionButtons = () => {
 
   // actionable ship
   const lotShip = useMemo(() => {
-    // if zoomed to ship
-    if (zoomedToShip) return zoomedToShip;
+    let ship = null;
 
+    // if zoomed to ship
+    if (zoomedToShip) ship = zoomedToShip;
     // if surface ship on lot
-    if (lot?.surfaceShip) return lot.surfaceShip;
+    else if (lot?.surfaceShip) ship = lot.surfaceShip;
 
     // "shortcuts" -- these ships are of implicit interest, but not explicitly selected in this case
-
     // if my crew is on a ship on this lot
-    if (crewedShip && crewedShip._location?.lotId === lot?.id) return crewedShip;
+    else if (crewedShip && crewedShip._location?.lotId === lot?.id) ship = crewedShip;
 
     // if there is only one owned ship on the lot
-    const lotOwnedShips = (lot?.ships || []).filter((s) => s.Control.controller.id === crew?.id);
-    if (lotOwnedShips?.length === 1) return lotOwnedShips[0]; // if only one owned ship, show it
+    if (!ship) {
+      const lotOwnedShips = (lot?.ships || []).filter((s) => s.Control.controller.id === crew?.id);
+      if (lotOwnedShips?.length === 1) ship = lotOwnedShips[0]; // if only one owned ship, show it
+    }
 
-    return null;
+    // some of these sources don't have location set
+    if (ship && !ship._location) {
+      ship = cloneDeep(ship);
+      ship._location = locationsArrToObj(ship.Location.locations || []);
+    }
+
+    return ship;
   }, [zoomedToShip, crewedShip, lot, crew?.id]);
 
-  const { data: crewsOnShip } = useShipCrews(lotShip?.id);  // TODO: isLoading?
+  const { data: crewsOnShip } = useStationedCrews(lotShip?.id);  // TODO: isLoading?
   const guestCrewsOnShip = useMemo(() => crewsOnShip?.filter((c) => c.id !== crew?.id), [crewsOnShip, crew?.id]);
 
   const [actions, setActions] = useState([]);
@@ -156,7 +166,7 @@ const useActionButtons = () => {
             }
           }
           
-          if (lotShip) {
+          if (lotShip && [Ship.STATUSES.AVAILABLE, Ship.STATUSES.IN_FLIGHT].includes(lotShip.Ship?.status)) {
 
             // TODO: check in buttons that crew is on asteroid
             //  AND check that both in orbit or both on surface

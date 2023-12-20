@@ -316,7 +316,8 @@ const ImproveCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }
           />
 
           <InventorySelectionDialog
-            otherLotId={lot?.id}
+            asteroidId={asteroid.id}
+            otherEntity={lot}
             itemIds={[175]}
             isSourcing
             onClose={() => setSourceSelectorOpen(false)}

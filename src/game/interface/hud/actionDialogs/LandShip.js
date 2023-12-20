@@ -91,6 +91,10 @@ const LandShip = ({ asteroid, manager, ship, stage, ...props }) => {
   }, [ship]);
   const launchTime = useMemo(() => powered ? poweredTime : tugTime, [powered, poweredTime, tugTime]);
 
+  const [crewTimeRequirement, taskTimeRequirement] = useMemo(() => {
+    return [ 0, launchTime ];
+  }, [launchTime]);
+
   const stats = useMemo(() => ([
     {
       label: 'Time until Docked',
@@ -156,8 +160,8 @@ const LandShip = ({ asteroid, manager, ship, stage, ...props }) => {
         }}
         captain={captain}
         location={{ asteroid, lot: destinationLot, ship }}
-        crewAvailableTime={0}
-        taskCompleteTime={0}
+        crewAvailableTime={crewTimeRequirement}
+        taskCompleteTime={taskTimeRequirement}
         onClose={props.onClose}
         overrideColor={stage === actionStages.NOT_STARTED ? theme.colors.main : undefined}
         stage={stage} />

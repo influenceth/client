@@ -62,6 +62,7 @@ const LaunchShip = ({ asteroid, originLot, manager, ship, stage, ...props }) => 
   }, [crew]);
   
   const [escapeVelocity, propellantRequirement, poweredTime, tugTime] = useMemo(() => {
+    if (!ship || !asteroid) return [0, 0, 0, 0];
     const escapeVelocity = Asteroid.Entity.getEscapeVelocity(asteroid) * 1000;
     const propellantRequired = Ship.Entity.getPropellantRequirement(ship, escapeVelocity, hopperBonus.totalBonus);
     const originLotIndex = Lot.toIndex(originLot?.id);
@@ -74,7 +75,7 @@ const LaunchShip = ({ asteroid, originLot, manager, ship, stage, ...props }) => 
   }, [asteroid, hopperBonus, originLot?.id, powered, ship]);
 
   const [propellantLoaded, deltaVLoaded] = useMemo(() => {
-    if (!ship) return 0;
+    if (!ship) return [0, 0];
     const shipConfig = Ship.TYPES[ship.Ship.shipType];
     const propellantMass = (ship.Inventories || []).find((inv) => inv.slot === shipConfig.propellantSlot)?.mass || 0;
     const deltaV = Ship.Entity.propellantToDeltaV(ship, propellantMass, hopperBonus.totalBonus);
@@ -85,6 +86,10 @@ const LaunchShip = ({ asteroid, originLot, manager, ship, stage, ...props }) => 
   }, [ship]);
   
   const launchTime = useMemo(() => powered ? poweredTime : tugTime, [powered, poweredTime, tugTime]);
+
+  const [crewTimeRequirement, taskTimeRequirement] = useMemo(() => {
+    return [ 0, launchTime ];
+  }, [launchTime]);
 
   const stats = useMemo(() => ([
     {
@@ -146,8 +151,8 @@ const LaunchShip = ({ asteroid, originLot, manager, ship, stage, ...props }) => 
         }}
         captain={captain}
         location={{ asteroid, lot: originLot, ship }}
-        crewAvailableTime={0}
-        taskCompleteTime={0}
+        crewAvailableTime={crewTimeRequirement}
+        taskCompleteTime={taskTimeRequirement}
         onClose={props.onClose}
         overrideColor={stage === actionStages.NOT_STARTED ? theme.colors.main : undefined}
         stage={stage} />

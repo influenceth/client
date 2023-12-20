@@ -457,8 +457,8 @@ const AssembleShip = ({ asteroid, lot, dryDockManager, stage, ...props }) => {
           />
 
           <InventorySelectionDialog
+            asteroidId={asteroid.id}
             otherEntity={lot.building}
-            otherLotId={lot?.id}
             isSourcing
             itemIds={inputArr}
             onClose={() => setOriginSelectorOpen(false)}

@@ -378,9 +378,9 @@ const api = {
     return getEntities({ match: { 'Nft.owners.starknet': account }, label: Entity.IDS.CREWMATE });
   },
 
-  getShipCrews: async (shipId) => {
+  getStationedCrews: async (entityId) => {
     return getEntities({
-      match: { 'Location.location': { id: shipId, label: Entity.IDS.SHIP } },
+      match: { 'Location.location': entityId },
       label: Entity.IDS.CREW
     });
   },

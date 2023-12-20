@@ -428,7 +428,7 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
           <CoreSampleSelectionDialog
             options={usableSamples}
             initialSelection={selectedCoreSample}
-            lotId={lot?.id}
+            lotId={lot.id}
             onClose={() => setSampleSelectorOpen(false)}
             onSelected={setSelectedCoreSample}
             open={sampleSelectorOpen}
@@ -436,8 +436,8 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
 
           {/* TODO: reset if resource changes? */}
           <InventorySelectionDialog
-            otherEntity={lot?.building}
-            otherLotId={lot?.id}
+            asteroidId={asteroid.id}
+            otherEntity={lot.building}
             itemIds={[selectedCoreSample?.resource]}
             onClose={() => setDestinationSelectorOpen(false)}
             onSelected={setDestinationSelection}
