@@ -60,6 +60,7 @@ import LiveFoodStatus from '~/components/LiveFoodStatus';
 import useHydratedLocation from '~/hooks/useHydratedLocation';
 import CrewLocationLabel from '~/components/CrewLocationLabel';
 import useAccessibleAsteroidInventories from '~/hooks/useAccessibleAsteroidInventories';
+import useShip from '~/hooks/useShip';
 
 const SECTION_WIDTH = 780;
 
@@ -1097,7 +1098,7 @@ const ChartLabels = styled.div`
   font-size: 14.5px;
   justify-content: space-between;
   & > label:last-child {
-    color: white;
+    color: ${p => p.warning ? p.theme.colors.error : 'white'};
   }
 `;
 const UnderChartLabels = styled(ChartLabels)``;
@@ -1121,14 +1122,14 @@ const DeltaIcon = styled.div`
 const MiniBar = styled.div`
   background: #333;
   border-radius: ${miniBarChartRounding}px;
-  color: ${p => p.deltaColor || p.color || p.theme.colors.brightMain};
+  color: ${p => p.warning ? p.theme.colors.error : (p.deltaColor || p.color || p.theme.colors.brightMain)};
   height: ${miniBarChartHeight}px;
   margin: 4px 0;
   position: relative;
   width: 100%;
   &:before {
     content: "";
-    background: ${p => p.color || p.theme.colors.main};
+    background: ${p => p.warning ? p.theme.colors.error : (p.color || p.theme.colors.main)};
     bottom: 0px;
     border-radius: ${miniBarChartRounding}px;
     left: 0px;
@@ -1142,7 +1143,7 @@ const MiniBar = styled.div`
   ${p => p.deltaValue && `
     &:after {
       content: "";
-      background: ${p.deltaColor || p.color || p.theme.colors.brightMain};
+      background: ${p.warning ? p.theme.colors.error : (p.deltaColor || p.color || p.theme.colors.brightMain)};
       bottom: 0px;
       border-radius: ${miniBarChartRounding}px;
       position: absolute;
@@ -2007,26 +2008,30 @@ export const InventorySelectionDialog = ({ asteroidId, otherEntity, otherInvSlot
 
   const [selection, setSelection] = useState(initialSelection);
 
-  const otherLotIndex = useMemo(() => {
-    if (!otherEntity) return -1;
-    console.log('oth', otherEntity)
-    let lotId = otherEntity.label === Entity.IDS.LOT ? otherEntity.id : otherEntity.Location.locations.find((l) => l.label === Entity.IDS.LOT)?.id;
-    return Lot.toIndex(lotId);
+  const otherLocation = useMemo(() => {
+    if (!otherEntity) return {};
+    return locationsArrToObj(otherEntity.Location.locations || []);
   }, [otherEntity]);
 
-  const { data: inventoryData, isLoading: inventoryDataLoading } = useAccessibleAsteroidInventories(asteroidId);
+  // if off the surface, cannot access inventories on the surface...
+  const { data: inventoryData } = useAccessibleAsteroidInventories(otherLocation.lotIndex === 0 ? null : asteroidId);
+  // ... but can access inventories on their crewed ship (assuming not sending things elsewhere)
+  const { data: crewedShip } = useShip((otherLocation.lotIndex === 0 && crew?._location?.shipId === otherLocation.shipId) ? otherLocation.shipId : null);
 
   const inventories = useMemo(() => {
-    if (!inventoryData) return [];
+    const allInventoryEntities = [];
+    if (inventoryData) allInventoryEntities.push(...inventoryData);
+    if (crewedShip) allInventoryEntities.push(crewedShip);
 
     const display = [];
-    inventoryData.forEach((entity) => {
+    allInventoryEntities.forEach((entity) => {
       if (!entity.Inventories) return;
       entity.Inventories.forEach((inv) => {
         // (can't send to same entity and slot)
         if (otherEntity) {
           if (entity.id === otherEntity.id && entity.label === otherEntity.label){
             if (!otherInvSlot || otherInvSlot === inv.slot) {
+              console.log('skip', inv, entity, otherEntity, otherInvSlot);
               return;
             }
           }
@@ -2041,10 +2046,8 @@ export const InventorySelectionDialog = ({ asteroidId, otherEntity, otherInvSlot
           if (!itemIds.find((i) => !allowedMaterials.includes(i))) return;
         }
 
-        // skip if cannot locate entity lot
         const entityLotId = entity.Location.locations.find((l) => l.label === Entity.IDS.LOT)?.id;
         const entityLotIndex = Lot.toIndex(entityLotId);
-        if (!entityLotIndex) return;
 
         let itemTally = 0;
         if (itemIds?.length === 1) {
@@ -2060,7 +2063,7 @@ export const InventorySelectionDialog = ({ asteroidId, otherEntity, otherInvSlot
         // disable if !available or does not contain itemId
         display.push({
           disabled: requirePresenceOfItemIds && !itemTally,
-          distance: Asteroid.getLotDistance(asteroidId, entityLotIndex, otherLotIndex), // distance to source + distance to destination
+          distance: Asteroid.getLotDistance(asteroidId, entityLotIndex, otherLocation.lotIndex), // distance to source + distance to destination
           isMine: entity.Control.controller.id === crew?.id,
           isShip: !!entity.Ship,
           itemTally,
@@ -2075,7 +2078,7 @@ export const InventorySelectionDialog = ({ asteroidId, otherEntity, otherInvSlot
     });
 
     return display.sort((a, b) => a.distance - b.distance);
-  }, [inventoryData, itemIds, otherLotIndex]);
+  }, [crewedShip, inventoryData, itemIds, otherLocation]);
 
   const onComplete = useCallback(() => {
     onSelected(selection ? JSON.parse(selection) : null);
@@ -2270,13 +2273,18 @@ export const EmptyResourceImage = ({ iconOverride, noIcon, ...props }) => (
   </ResourceThumbnailWrapper>
 );
 
-export const MiniBarChart = ({ color, deltaColor, deltaValue, label, valueLabel, value, valueStyle, underLabels }) => (
+export const MiniBarChart = ({ color, deltaColor, deltaValue, label, valueLabel, value, valueStyle, underLabels, warning }) => (
   <MiniBarWrapper>
-    <ChartLabels>
+    <ChartLabels warning={reactBool(warning)}>
       <label>{label}</label>
-      <label style={valueStyle || {}}>{valueLabel}</label>
+      <label style={valueStyle || {}}>{warning && <WarningOutlineIcon />} {valueLabel}</label>
     </ChartLabels>
-    <MiniBar color={color} value={Math.max(0, Math.min(value, 1))} deltaColor={deltaColor} deltaValue={Math.max(-1, Math.min(deltaValue, 1))}>
+    <MiniBar
+      color={color}
+      value={Math.max(0, Math.min(value, 1))}
+      deltaColor={deltaColor}
+      deltaValue={Math.max(-1, Math.min(deltaValue, 1))}
+      warning={reactBool(warning)}>
       {deltaValue ? <DeltaIcon negativeDelta={deltaValue < 0} value={value}><FastForwardIcon /></DeltaIcon> : null}
     </MiniBar>
     {underLabels && <UnderChartLabels>{underLabels}</UnderChartLabels>}
@@ -2664,6 +2672,7 @@ export const ProgressBarSection = ({
     barColor: null,
     color: null,
     left: '',
+    center: '',
     right: ''
   },
   stage,
@@ -2678,7 +2687,7 @@ export const ProgressBarSection = ({
   const refEl = useRef();
   const [hovered, setHovered] = useState();
 
-  const { animating, barWidth, color, left, reverseAnimation, right } = useMemo(() => {
+  const { animating, barWidth, color, left, reverseAnimation, right, center } = useMemo(() => {
     const r = {
       animating: false,
       reverseAnimation: false,
@@ -2762,6 +2771,7 @@ export const ProgressBarSection = ({
           <ActionProgress progress={barWidth || 0} />
           <ActionProgressLabels>
             <div>{overrides.left || left}</div>
+            <div>{overrides.center || center}</div>
             <div>{overrides.right || right}</div>
           </ActionProgressLabels>
         </ActionProgressContainer>
@@ -3158,33 +3168,26 @@ export const PropellantSection = ({ title, narrow, deltaVLoaded, deltaVRequired,
 
 export const EmergencyPropellantSection = ({ title, propellantPregeneration, propellantPostgeneration, propellantTankMax }) => {
   // useEffect(() => ReactTooltip.rebuild(), []);
-
-  const propellantPre = propellantPregeneration / propellantTankMax;
-  const propellantPost = propellantPostgeneration / propellantTankMax;
-
   return (
     <FlexSectionBlock
       title={title}
       bodyStyle={{ padding: '1px 0' }}
       style={{ width: '100%' }}>
         <BarChart
-          color={theme.colors.main}
+          color={theme.colors.warning}
           bgColor={theme.colors.main}
-          value={propellantPre}
-          postValue={propellantPost}>
+          value={propellantPregeneration / propellantTankMax}
+          postValue={propellantPostgeneration / propellantTankMax}>
           <BarChartLimitLine position={0.1} />
         </BarChart>
         <BarChartNotes color={theme.colors.main}>
           <div>
-            <span style={{ color: theme.colors.red }}>Emergency Limit: </span>
-            <b>{formatMass(0.1 * propellantTankMax * 1e3)}</b>
-          </div>
-          <div style={{ color: propellantPost > 0.1 ? theme.colors.error : theme.colors.main }}>
-            {propellantPost > 0.1 && <span style={{ verticalAlign: 'middle', fontSize: 20, lineHeight: '1em' }}><CloseIcon /></span>}
-            {formatFixed(100 * propellantPost / 0.1)}% of Limit
+            <span style={{ color: theme.colors.warning }}>Current: </span>
+            <b>{formatMass(propellantPostgeneration)}</b>
           </div>
           <div>
-            After Generation: <b>{formatMass(propellantPostgeneration * 1e3)}</b>
+            <span style={{ color: theme.colors.red, textTransform: 'uppercase' }}>Emergency Limit 10%: </span>
+            <b>{formatMass(0.1 * propellantTankMax)}</b>
           </div>
         </BarChartNotes>
     </FlexSectionBlock>
@@ -3407,7 +3410,7 @@ export const ShipInputBlock = ({ ship, ...props }) => {
   );
 };
 
-export const ShipTab = ({ pilotCrew, ship, stage, deltas = {}, warnings = [] }) => {
+export const ShipTab = ({ pilotCrew, ship, stage, deltas = {}, statWarnings = {}, warnings = [] }) => {
 
   // TODO: if want to include "reserved", it would probably make sense to use getCapacityUsage helper instead
   const inventory = useMemo(() => {
@@ -3429,31 +3432,40 @@ export const ShipTab = ({ pilotCrew, ship, stage, deltas = {}, warnings = [] }) 
 
   const charts = useMemo(() => ({
     propellantMass: {
+      color: '#8cc63f',
+      label: 'Propellant Mass',
       valueLabel: `${formatFixed((inventory.propellantMass + (deltas.propellantMass || 0)) / 1e6)} / ${formatFixed(inventory.maxPropellantMass / 1e6)}t`,
       value: (inventory.propellantMass + (deltas.propellantMass || 0)) / inventory.maxPropellantMass,
       deltaValue: (deltas.propellantMass || 0) / inventory.maxPropellantMass,
     },
     propellantVolume: {
+      color: '#557826',
+      label: 'Propellant Volume',
       valueLabel: `${formatFixed((inventory.propellantVolume + (deltas.propellantVolume || 0)) / 1e6)} / ${formatFixed(inventory.maxPropellantVolume / 1e6)}m³`,
       value: (inventory.propellantVolume + (deltas.propellantVolume || 0)) / inventory.maxPropellantVolume,
       deltaValue: (deltas.propellantVolume || 0) / inventory.maxPropellantVolume,
     },
     cargoMass: {
+      label: 'Cargo Mass',
       valueLabel: `${formatFixed((inventory.cargoMass + (deltas.cargoMass || 0)) / 1e6)} / ${formatFixed(inventory.maxCargoMass / 1e6)}t`,
       value: (inventory.cargoMass + (deltas.cargoMass || 0)) / inventory.maxCargoMass,
       deltaValue: (deltas.cargoMass || 0) / inventory.maxCargoMass,
     },
     cargoVolume: {
+      color: '#1f5f75',
+      label: 'Cargo Volume',
       valueLabel: `${formatFixed((inventory.cargoVolume + (deltas.cargoVolume || 0)) / 1e6)} / ${formatFixed(inventory.maxCargoVolume / 1e6)}m³`,
       value: (inventory.cargoVolume + (deltas.cargoVolume || 0)) / inventory.maxCargoVolume,
       deltaValue: (deltas.cargoVolume || 0) / inventory.maxCargoVolume,
     },
     passengers: {
+      color: '#92278f',
+      label: 'Crewmates Onboard',
       valueLabel: `${(ship.Station.population + (deltas.passengers || 0))} / ${Station.TYPES[ship.Station.stationType]?.cap}`,
       value: (ship.Station.population + (deltas.passengers || 0)) / Station.TYPES[ship.Station.stationType]?.cap,
       deltaValue: (deltas.passengers || 0) / Station.TYPES[ship.Station.stationType]?.cap,
     },
-  }), [deltas, inventory, ship]);
+  }), [deltas, inventory, ship, statWarnings]);
 
   return (
     <>
@@ -3473,30 +3485,13 @@ export const ShipTab = ({ pilotCrew, ship, stage, deltas = {}, warnings = [] }) 
       <FlexSection>
         <div style={{ width: '50%'}}>
           <MiniBarChartSection>
-            <MiniBarChart
-              color="#8cc63f"
-              label="Propellant Mass"
-              {...charts.propellantMass}
-            />
-            <MiniBarChart
-              color="#557826"
-              label="Propellant Volume"
-              {...charts.propellantVolume}
-            />
-            <MiniBarChart
-              label="Cargo Mass"
-              {...charts.cargoMass}
-            />
-            <MiniBarChart
-              color="#1f5f75"
-              label="Cargo Volume"
-              {...charts.cargoVolume}
-            />
-            <MiniBarChart
-              color="#92278f"
-              label="Passengers"
-              {...charts.passengers}
-            />
+            {Object.keys(charts).map((key) => (
+              <MiniBarChart
+                key={key}
+                {...charts[key]}
+                warning={statWarnings[key]}
+              />
+            ))}
           </MiniBarChartSection>
         </div>
 

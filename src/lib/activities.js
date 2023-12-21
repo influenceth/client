@@ -10,6 +10,9 @@ import {
   CrewIcon,
   CrewmateIcon,
   EjectPassengersIcon,
+  EmergencyModeEnterIcon,
+  EmergencyModeExitIcon,
+  EmergencyModeGenerateIcon,
   ExtractionIcon,
   FoodIcon,
   ImproveCoreSampleIcon,
@@ -617,6 +620,67 @@ const activities = {
     // },
 
     requiresCrewTime: true
+  },
+
+  EmergencyActivated: {
+    getInvalidations: ({ event: { returnValues } }) => {
+      return [
+        ...invalidationDefaults(returnValues.ship.label, returnValues.ship.id),
+      ];
+    },
+    getLogContent: ({ event: { returnValues } }) => {
+      return {
+        icon: <EmergencyModeEnterIcon />,
+        content: (
+          <>
+            <span>
+              <EntityName {...returnValues.ship} /> activated Emergency Mode
+            </span>
+          </>
+        ),
+      };
+    },
+    triggerAlert: true
+  },
+  EmergencyDeactivated: {
+    getInvalidations: ({ event: { returnValues } }) => {
+      return [
+        ...invalidationDefaults(returnValues.ship.label, returnValues.ship.id),
+      ];
+    },
+    getLogContent: ({ event: { returnValues } }) => {
+      return {
+        icon: <EmergencyModeExitIcon />,
+        content: (
+          <>
+            <span>
+              <EntityName {...returnValues.ship} /> deactivated Emergency Mode
+            </span>
+          </>
+        ),
+      };
+    },
+    triggerAlert: true
+  },
+  EmergencyPropellantCollected: {
+    getInvalidations: ({ event: { returnValues } }) => {
+      return [
+        ...invalidationDefaults(returnValues.ship.label, returnValues.ship.id),
+      ];
+    },
+    // TODO: log content seems like overkill here?
+    getLogContent: ({ event: { returnValues } }) => {
+      return {
+        icon: <EmergencyModeGenerateIcon />,
+        content: (
+          <>
+            <span>
+              <EntityName {...returnValues.ship} /> collected {formatResourceMass(returnValues.amount, Product.IDS.HYDROGEN_PROPELLANT)} of Emergency Propellant
+            </span>
+          </>
+        ),
+      };
+    },
   },
 
   // EarlyAdopterRewardClaimed,

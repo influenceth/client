@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import styled from 'styled-components';
-import { Inventory, Product, Ship } from '@influenceth/sdk';
+import { Inventory, Product, Ship, Time } from '@influenceth/sdk';
 
 import travelBackground from '~/assets/images/modal_headers/Travel.png';
 import { EmergencyModeGenerateIcon } from '~/components/Icons';
@@ -22,7 +22,10 @@ import {
   SectionBody,
   formatMass,
   ShipInputBlock,
-  EmergencyPropellantSection
+  EmergencyPropellantSection,
+  ProgressBarSection,
+  formatResourceMass,
+  formatResourceVolume
 } from './components';
 import useLot from '~/hooks/useLot';
 import useStore from '~/hooks/useStore';
@@ -31,6 +34,9 @@ import ResourceThumbnail from '~/components/ResourceThumbnail';
 import actionStages from '~/lib/actionStages';
 import theme, { hexToRGB } from '~/theme';
 import useAsteroid from '~/hooks/useAsteroid';
+import useInterval from '~/hooks/useInterval';
+import useShipEmergencyManager from '~/hooks/actionManagers/useShipEmergencyManager';
+import useChainTime from '~/hooks/useChainTime';
 
 // TODO: should probably be able to select a ship (based on ships on that lot -- i.e. might have two ships in a spaceport)
 //  - however, could you launch two ships at once? probably not because crew needs to be on ship?
@@ -55,78 +61,129 @@ const Note = styled.div`
   padding: 15px 10px 10px;
 `;
 
-const resourceId = 170;
+const EMERGENCY_PROP_GEN_TIME = 10368000; // in-game seconds to generate 10% of tank from 0
+const getEmergencyPropellantAmount = (generationTime, propellantInvType, startingAmount, resourceId = Product.IDS.HYDROGEN_PROPELLANT) => {
+  const maxEmergencyPropellantAmount = 0.1 * Inventory.TYPES[propellantInvType].massConstraint / Product.TYPES[resourceId].massPerUnit;
+  const generationRate = maxEmergencyPropellantAmount / EMERGENCY_PROP_GEN_TIME;
+  const uncappedGenerationAmount = generationRate * generationTime;
+  return Math.min(maxEmergencyPropellantAmount, startingAmount + uncappedGenerationAmount);
+};
+
+const getTimeUntilEmergencyPropellantFull = (propellantInvType, startingAmount, resourceId = Product.IDS.HYDROGEN_PROPELLANT) => {
+  const maxEmergencyPropellantAmount = 0.1 * Inventory.TYPES[propellantInvType].massConstraint / Product.TYPES[resourceId].massPerUnit;
+  const maxAmountCanGenerate = maxEmergencyPropellantAmount - startingAmount;
+  const generationRate = maxEmergencyPropellantAmount / EMERGENCY_PROP_GEN_TIME;
+  return maxAmountCanGenerate / generationRate;
+};
+
 
 const EmergencyModeGenerate = ({ asteroid, lot, manager, ship, stage, ...props }) => {
   const createAlert = useStore(s => s.dispatchAlertLogged);
+  const chainTime = useChainTime();
   
-  const { currentStationing, stationingStatus, stationOnShip } = manager;
+  const { collectEmergencyPropellant, actionStage } = manager;
 
-  const { crew, crewmateMap } = useCrewContext();
+  const { crew } = useCrewContext();
 
-  const crewmates = currentStationing?._crewmates || (crew?._crewmates || []).map((i) => crewmateMap[i]);
+  const crewmates = crew?._crewmates || [];
   const captain = crewmates[0];
 
-  const [amount, setAmount] = useState(0);
+  const resourceId = Product.IDS.HYDROGEN_PROPELLANT;
+
+  const propellantInventory = ship.Inventories.find((i) => i.slot === Ship.TYPES[ship.Ship.shipType].propellantSlot);
+  const propellantInventoryConfig = Inventory.TYPES[propellantInventory.inventoryType];
+  const startingAmount = propellantInventory.mass / Product.TYPES[resourceId].massPerUnit;
+  const maxTankAmount = propellantInventoryConfig.massConstraint / Product.TYPES[resourceId].massPerUnit;
+  const maxEmergencyAmount = 0.1 * maxTankAmount;
+
+  const [collectableAmount, setCollectableAmount] = useState(0);
+  const recalculateCollectableAmount = useCallback(() => {
+    setCollectableAmount(
+      Math.floor(
+        getEmergencyPropellantAmount(
+          Time.toGameDuration(Date.now() / 1000 - ship?.Ship?.emergencyAt, crew?._timeAcceleration),
+          propellantInventory.inventoryType,
+          startingAmount
+        ) - startingAmount
+      )
+    );
+  }, [crew?._timeAcceleration, ship?.Ship?.emergencyAt, propellantInventory, startingAmount]);
+
+  useEffect(() => {
+    recalculateCollectableAmount();
+    const i = setInterval(recalculateCollectableAmount, 1000);
+    return () => clearInterval(i);
+  }, [recalculateCollectableAmount]);
+
+  const totalAmount = startingAmount + collectableAmount;
+  const totalEmergencyFraction = totalAmount / maxEmergencyAmount;
+  const totalTankFraction = totalAmount / maxTankAmount;
+
+  // console.log({ totalAmount, totalEmergencyFraction, totalTankFraction });
+
+  const maxGenerationTime = useMemo(() => {
+    // console.log(propellantInventory.inventoryType, propellantInventory.mass, Product.TYPES[resourceId].massPerUnit)
+    return Time.toRealDuration(
+      getTimeUntilEmergencyPropellantFull(
+        propellantInventory.inventoryType,
+        propellantInventory.mass / Product.TYPES[resourceId].massPerUnit
+      ),
+      crew?._timeAcceleration
+    );
+  }, [crew?._timeAcceleration, ship?.emergencyAt]);
 
   const stats = useMemo(() => ([
     {
-      label: 'Action Time',
-      value: formatTimer(0),
+      label: 'Generation Time',
+      value: formatTimer(
+        Math.min(
+          maxGenerationTime,
+          chainTime - ship.Ship.emergencyAt
+        )
+      ),
       direction: 0,
       isTimeStat: true,
     },
     {
-      label: 'Propellant Mass Jettisoned',
-      value: 0,
+      label: 'Remaining Time Until Limit',
+      value: formatTimer(
+        Math.max(0, maxGenerationTime - (chainTime - ship.Ship.emergencyAt))
+      ),
       direction: 0,
     },
     {
-      label: 'Propellant Volume Jettisoned',
-      value: 0,
+      label: 'Propellant Mass Generated',
+      value: formatResourceMass(collectableAmount, resourceId),
       direction: 0,
     },
     {
-      label: 'Cargo Mass Jettisoned',
-      value: 0,
+      label: 'Propellant Volume Generated',
+      value: formatResourceVolume(collectableAmount, resourceId),
       direction: 0,
     },
-    {
-      label: 'Cargo Volume Jettisoned',
-      value: 0,
-      direction: 0,
-    },
-  ]), [ship]);
+  ]), [chainTime, maxGenerationTime, ship]);
 
-  const propellantInventory = ship.Inventories.find((i) => i.slot === Ship.TYPES[ship.Ship.shipType].propellantSlot);
-  const maxEmergencyPropellant = 0.1 * Inventory.TYPES[propellantInventory?.inventoryType]?.massConstraint;
-  const maxTonnageToGenerate = (maxEmergencyPropellant - propellantInventory.mass) / 1e6;
-  const generationTime = 1000;
-
-  const onStation = useCallback(() => {
-    stationOnShip();
-  }, []);
+  const onCollect = useCallback(() => {
+    collectEmergencyPropellant();
+  }, [collectEmergencyPropellant]);
 
   // handle auto-closing
   const lastStatus = useRef();
   useEffect(() => {
     // (close on status change from)
-    if (['READY', 'READY_TO_FINISH', 'FINISHING'].includes(lastStatus.current)) {
-      if (stationingStatus !== lastStatus.current) {
-        console.log('on Close');
-        props.onClose();
-      }
+    if (lastStatus.current && actionStage !== lastStatus.current) {
+      props.onClose();
     }
-    lastStatus.current = stationingStatus;
-  }, [stationingStatus]);
+    lastStatus.current = actionStage;
+  }, [actionStage]);
 
   return (
     <>
       <ActionDialogHeader
         action={{
           icon: <EmergencyModeGenerateIcon />,
-          label: 'Emergency Generation',
-          status: stage === actionStages.NOT_STARTED ? 'Generate Propellant' : undefined
+          label: 'Collect Propellant',
+          status: stage === actionStages.NOT_STARTED ? 'Emergency Generation Active' : undefined
         }}
         captain={captain}
         crewAvailableTime={0}
@@ -149,7 +206,7 @@ const EmergencyModeGenerate = ({ asteroid, lot, manager, ship, stage, ...props }
               </>
             )}
             disabled={stage !== actionStages.NOT_STARTED}
-            sublabel={`${formatMass(propellantInventory.mass)}t`}
+            sublabel={`${formatMass(propellantInventory.mass)}`}
             bodyStyle={{ backgroundColor: `rgba(${hexToRGB(theme.colors.orange)}, 0.2)` }}
           />
 
@@ -162,27 +219,31 @@ const EmergencyModeGenerate = ({ asteroid, lot, manager, ship, stage, ...props }
 
         </FlexSection>
           
-        {stage === actionStages.NOT_STARTED && (
-          <Section>
-            <SectionTitle>Amount Generated</SectionTitle>
-            <SectionBody style={{ paddingTop: 5 }}>
-              <ResourceAmountSlider
-                amount={amount || 0}
-                extractionTime={generationTime || 0}
-                min={0}
-                max={maxTonnageToGenerate}
-                resource={Product.TYPES[resourceId]}
-                setAmount={setAmount} />
-            </SectionBody>
-          </Section>
-        )}
+        <ProgressBarSection
+          overrides={{
+            barColor: theme.colors.lightOrange,
+            // color: 'white',//theme.colors.lightOrange,
+            left: `${Math.floor(totalEmergencyFraction * 100)}%`,
+            center: (
+              <small style={{ textTransform: 'uppercase' }}>
+                {totalEmergencyFraction >= 1 ? 'Max Emergency Propellant Generated' : 'Generating Emergency Propellant...'}
+              </small>
+            ),
+            right: <span style={{ opacity: 0 }}>{Math.floor(totalEmergencyFraction * 100)}</span>,
+          }}
+          finishTime={ship.Ship.emergencyAt + maxGenerationTime}
+          startTime={ship.Ship.emergencyAt}
+          stage={actionStages.IN_PROGRESS}
+          title="Generated Amount"
+          width="100%"
+        />
 
         <FlexSection style={{ marginBottom: -15 }}>
           <EmergencyPropellantSection
-            title="Propellant"
-            propellantPregeneration={propellantInventory.mass}
-            propellantPostgeneration={propellantInventory.mass + amount}
-            propellantTankMax={maxEmergencyPropellant}
+            title="Propellant Tank"
+            propellantPregeneration={startingAmount * Product.TYPES[resourceId].massPerUnit}
+            propellantPostgeneration={totalAmount * Product.TYPES[resourceId].massPerUnit}
+            propellantTankMax={propellantInventoryConfig.massConstraint}
           />
         </FlexSection>
 
@@ -195,9 +256,9 @@ const EmergencyModeGenerate = ({ asteroid, lot, manager, ship, stage, ...props }
 
       {/* TODO: add waitForCrewReady? */}
       <ActionDialogFooter
-        disabled={false/* TODO: no permission */}
-        goLabel="Generate"
-        onGo={onStation}
+        disabled={!(ship?.Ship?.emergencyAt > 0) || collectableAmount <= 0}
+        goLabel="Collect"
+        onGo={onCollect}
         stage={stage}
         {...props} />
     </>
@@ -207,28 +268,21 @@ const EmergencyModeGenerate = ({ asteroid, lot, manager, ship, stage, ...props }
 const Wrapper = (props) => {
   const { crew } = useCrewContext();
 
-  const asteroidId = crew?._location?.asteroidId;
-  const lotId = crew?._location?.lotId;
-  const shipId = crew?._location?.shipId;
+  const { data: asteroid, isLoading: asteroidIsLoading } = useAsteroid(crew?._location?.asteroidId);
+  const { data: lot, isLoading: lotIsLoading } = useAsteroid(crew?._location?.lotId);
+  const { data: ship, isLoading: shipIsLoading } = useShip(crew?._location?.shipId);
 
-  const { data: asteroid, isLoading: asteroidIsLoading } = useAsteroid(asteroidId);
-  const { data: lot, isLoading: lotIsLoading } = useLot(lotId);
-  const { data: ship, isLoading: shipIsLoading } = useShip(shipId);
-
-  // TODO: ...
-  // const extractionManager = useExtractionManager(lot?.id);
-  // const { actionStage } = extractionManager;
-  const manager = {};
-  const actionStage = actionStages.NOT_STARTED;
+  const manager = useShipEmergencyManager();
+  const { actionStage } = manager;
 
   const isLoading = asteroidIsLoading || lotIsLoading || shipIsLoading;
   useEffect(() => {
-    if (!asteroid || (!lot && !ship)) {
+    if (!asteroid || !ship) {
       if (!isLoading) {
         if (props.onClose) props.onClose();
       }
     }
-  }, [asteroid, lot, ship, isLoading]);
+  }, [asteroid, ship, isLoading]);
 
   return (
     <ActionDialogInner

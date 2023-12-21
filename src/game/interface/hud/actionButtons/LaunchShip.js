@@ -9,7 +9,7 @@ import useReadyAtWatcher from '~/hooks/useReadyAtWatcher';
 const LaunchShip = ({ lot, onSetAction, _disabled }) => {
   const { crew } = useCrewContext();
   const crewedShip = useMemo(() => lot?.ships?.find((s) => s.id === crew?._location?.shipId), [crew?._location?.shipId, lot?.ships]);
-  const ready = useReadyAtWatcher(crewedShip?.readyAt);
+  const ready = useReadyAtWatcher(crewedShip?.Ship?.readyAt);
 
   const handleClick = useCallback(() => {
     onSetAction('LAUNCH_SHIP', { shipId: crew?._location.shipId });

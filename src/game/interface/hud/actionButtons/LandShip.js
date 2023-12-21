@@ -10,7 +10,7 @@ import useShip from '~/hooks/useShip';
 const LandShip = ({ lot, onSetAction, _disabled }) => {
   const { crew } = useCrewContext();
   const { data: crewedShip } = useShip(crew?._location?.shipId)
-  const ready = useReadyAtWatcher(crewedShip?.readyAt);
+  const ready = useReadyAtWatcher(crewedShip?.Ship?.readyAt);
   
   const handleClick = useCallback(() => {
     onSetAction(
