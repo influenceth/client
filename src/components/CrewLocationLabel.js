@@ -11,7 +11,7 @@ const CrewLocationLabel = ({ hydratedLocation }) => {
         if (ship) return <span>{formatters.shipName(ship)}</span>;
         if (building) return <span>{formatters.buildingName(building)}</span>;
         if (lotIndex) return <span>{formatters.lotName(lotIndex)}</span>;
-        return null;
+        return <span>Escape Module</span>;
       })()}
     </>
   );

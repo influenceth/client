@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from 'react-query';
 import cloneDeep from 'lodash/cloneDeep';
-import { Deposit, Entity } from '@influenceth/sdk';
+import { Deposit, Entity, Ship } from '@influenceth/sdk';
 
 import api from '~/lib/api';
 import { useEffect, useMemo } from 'react';
@@ -77,16 +77,22 @@ const useLot = (lotId) => {
     { enabled: !!lotData } // give a chance to preload the data
   );
 
-  return useMemo(() => ({
-    data: lotId ? {
-      ...lotEntity,
-      building: (buildings || []).find((e) => e.Building.status > 0),
-      deposits: (deposits || []).filter((e) => e.Deposit.status > 0 && !(e.Deposit.status === Deposit.STATUSES.USED && e.Deposit.remainingYield === 0)),
-      ships,
-      ship: ships?.[0] // TODO: deprecate?
-    } : undefined,
-    isLoading: isLoading || buildingsLoading || depositsLoading || shipsLoading
-  }), [lotId, lotEntity, buildings, deposits, ships, isLoading, buildingsLoading, depositsLoading, shipsLoading])
+  return useMemo(() => {
+    const building = (buildings || []).find((e) => e.Building.status > 0);
+    const depositsToShow = (deposits || []).filter((e) => e.Deposit.status > 0 && !(e.Deposit.status === Deposit.STATUSES.USED && e.Deposit.remainingYield === 0));
+    const shipsToShow = (ships || []).filter((s) => [Ship.STATUSES.UNDER_CONSTRUCTION, Ship.STATUSES.AVAILABLE].includes(s.Ship.status));
+    const surfaceShip = !building && shipsToShow.find((e) => e.Ship.status === Ship.STATUSES.AVAILABLE && e.Location.location.label === Entity.IDS.LOT);
+    return {
+      data: lotId ? {
+        ...lotEntity,
+        building,
+        deposits: depositsToShow,
+        ships: shipsToShow,
+        surfaceShip
+      } : undefined,
+      isLoading: isLoading || buildingsLoading || depositsLoading || shipsLoading
+    };
+  }, [lotId, lotEntity, buildings, deposits, ships, isLoading, buildingsLoading, depositsLoading, shipsLoading])
 
 };
 

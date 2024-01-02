@@ -6,7 +6,7 @@ import useDeliveryManager from '~/hooks/actionManagers/useDeliveryManager';
 import ActionButton from './ActionButton';
 
 const SurfaceTransferOutgoing = ({ asteroid, crew, lot, onSetAction, preselect, _disabled }) => {
-  const { currentDeliveryActions, isLoading } = useDeliveryManager({ origin: lot?.building || lot?.ship });
+  const { currentDeliveryActions, isLoading } = useDeliveryManager({ origin: lot?.building || lot?.surfaceShip });
   const deliveryDeparting = useMemo(() => {
     return (currentDeliveryActions || []).find((a) => a.status === 'DEPARTING');
   }, [currentDeliveryActions]);
@@ -16,7 +16,8 @@ const SurfaceTransferOutgoing = ({ asteroid, crew, lot, onSetAction, preselect, 
   }, [onSetAction, preselect]);
 
   const disabledReason = useMemo(() => {
-    const hasMass = (lot?.building?.Inventories || []).find((i) => i.status === Inventory.STATUSES.AVAILABLE && i.mass > 0);
+    const entity = lot?.building || lot?.surfaceShip;
+    const hasMass = (entity?.Inventories || []).find((i) => i.status === Inventory.STATUSES.AVAILABLE && i.mass > 0);
     if (!hasMass) return 'inventory empty';
     if (!crew?._ready) return 'crew is busy';
     return '';

@@ -5,7 +5,7 @@ import CoreSample from './CoreSample';
 import Deconstruct from './Deconstruct';
 import EjectCrew from './EjectCrew';
 import EjectGuestCrew from './EjectGuestCrew';
-import EmergencyModeGenerate from './EmergencyModeGenerate';
+import EmergencyModeCollect from './EmergencyModeCollect';
 import EmergencyModeToggle from './EmergencyModeToggle';
 import Extract from './Extract';
 import LandShip from './LandShip';
@@ -30,7 +30,7 @@ const ActionsButtons = {
   ControlAsteroid,
   CoreSample,
   Deconstruct,
-  EmergencyModeGenerate,
+  EmergencyModeCollect,
   EmergencyModeToggle,
   EjectCrew,
   EjectGuestCrew,

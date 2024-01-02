@@ -44,7 +44,7 @@ const constants = {
   //       (i.e. in case want to alter defaults)
   GRAPHICS_DEFAULTS: [
     {
-      // shadowQuality: 0,
+      // shadowQuality: 0, 
       textureQuality: 1
     },
     {

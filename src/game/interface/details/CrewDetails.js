@@ -510,7 +510,7 @@ const CrewDetails = ({ crewId, crew, isMyCrew, isOwnedCrew, selectCrew }) => {
 
                 {isMyCrew && (
                   <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 15 }}>
-                    <Button disabled subtle style={{ width: 225 }}>Add Rations</Button>{/* TODO: connect this */}
+                    <Button onClick={() => onSetAction('FEED_CREW')} subtle style={{ width: 225 }}>Add Rations</Button>
                   </div>
                 )}
               </CrewInfoContainer>

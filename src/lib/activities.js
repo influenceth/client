@@ -10,10 +10,14 @@ import {
   CrewIcon,
   CrewmateIcon,
   EjectPassengersIcon,
+  EmergencyModeEnterIcon,
+  EmergencyModeExitIcon,
+  EmergencyModeCollectIcon,
   ExtractionIcon,
   FoodIcon,
   ImproveCoreSampleIcon,
   KeysIcon,
+  LaunchShipIcon,
   NewCoreSampleIcon,
   PlanBuildingIcon,
   ProcessIcon,
@@ -494,17 +498,19 @@ const activities = {
     getInvalidations: ({ event: { returnValues } }) => ([
       ...invalidationDefaults(returnValues.callerCrew.label, returnValues.callerCrew.id),
       ...invalidationDefaults(returnValues.ejectedCrew.label, returnValues.ejectedCrew.id),
-      // TODO: previous station
+      ...invalidationDefaults(returnValues.station.label, returnValues.station.id),
     ]),
 
     getLogContent: ({ event: { returnValues } }, { viewingAs }) => {
+      const selfEjection = returnValues.ejectedCrew.id === returnValues.callerCrew.id;
       return {
         icon: <EjectPassengersIcon />,
         content: (
           <>
           <EntityLink {...returnValues.ejectedCrew} />
-          {' '}ejected from <EntityLink {...returnValues.ejectedCrew} />
-          {' '}by <EntityLink {...returnValues.callerCrew} />
+          {selfEjection ? ' self-ejected' : ' force-ejected'}
+          {' '}from <EntityLink {...returnValues.station} />
+          {selfEjection ? '' : <>{' '}by <EntityLink {...returnValues.callerCrew} /></>}
         </>
         ),
       };
@@ -616,11 +622,68 @@ const activities = {
     requiresCrewTime: true
   },
 
-  // DockShip,
+  EmergencyActivated: {
+    getInvalidations: ({ event: { returnValues } }) => {
+      return [
+        ...invalidationDefaults(returnValues.ship.label, returnValues.ship.id),
+      ];
+    },
+    getLogContent: ({ event: { returnValues } }) => {
+      return {
+        icon: <EmergencyModeEnterIcon />,
+        content: (
+          <>
+            <span>
+              <EntityName {...returnValues.ship} /> activated Emergency Mode
+            </span>
+          </>
+        ),
+      };
+    },
+    triggerAlert: true
+  },
+  EmergencyDeactivated: {
+    getInvalidations: ({ event: { returnValues } }) => {
+      return [
+        ...invalidationDefaults(returnValues.ship.label, returnValues.ship.id),
+      ];
+    },
+    getLogContent: ({ event: { returnValues } }) => {
+      return {
+        icon: <EmergencyModeExitIcon />,
+        content: (
+          <>
+            <span>
+              <EntityName {...returnValues.ship} /> deactivated Emergency Mode
+            </span>
+          </>
+        ),
+      };
+    },
+    triggerAlert: true
+  },
+  EmergencyPropellantCollected: {
+    getInvalidations: ({ event: { returnValues } }) => {
+      return [
+        ...invalidationDefaults(returnValues.ship.label, returnValues.ship.id),
+      ];
+    },
+    // TODO: log content seems like overkill here?
+    getLogContent: ({ event: { returnValues } }) => {
+      return {
+        icon: <EmergencyModeCollectIcon />,
+        content: (
+          <>
+            <span>
+              <EntityName {...returnValues.ship} /> collected {formatResourceMass(returnValues.amount, Product.IDS.HYDROGEN_PROPELLANT)} of Emergency Propellant
+            </span>
+          </>
+        ),
+      };
+    },
+  },
+
   // EarlyAdopterRewardClaimed,
-  // FoodSupplied,
-  // MaterialProcessingFinished,
-  // MaterialProcessingStarted,
 
   MaterialProcessingStarted: {
     getActionItem: ({ returnValues }, { building = {} }) => {
@@ -1076,6 +1139,47 @@ const activities = {
       };
     },
 
+    triggerAlert: true
+  },
+  
+  ShipDocked: {
+    getInvalidations: ({ event: { returnValues } }) => ([
+      ...invalidationDefaults(returnValues.ship.label, returnValues.ship.id),
+      ...invalidationDefaults(returnValues.dock.label, returnValues.dock.id),
+      // TODO: any others? crew? passenger crews?
+    ]),
+    getLogContent: ({ event: { returnValues } }) => ({
+      icon: <ScanAsteroidIcon />,
+      content: (
+        <>
+          <EntityLink {...returnValues.ship} /> docked at <EntityLink {...returnValues.dock} />
+        </>
+      )
+    }),
+    requiresCrewTime: true, // only true currently if !powered
+    triggerAlert: true
+  },
+  ShipUndocked: {
+    getInvalidations: ({ event: { returnValues } }, { dock = {} }) => ([
+      ...invalidationDefaults(returnValues.ship.label, returnValues.ship.id),
+      ...invalidationDefaults(returnValues.dock.label, returnValues.dock.id),
+      [ 'entities', Entity.IDS.SHIP, 'asteroid', (dock?.Location?.locations || []).find((l) => l.label === Entity.IDS.ASTEROID)?.id ],
+      // TODO: any others? crew? passenger crews?
+    ]),
+    getLogContent: ({ event: { returnValues } }) => {
+      return {
+        icon: <LaunchShipIcon />,
+        content: (
+          <>
+            <EntityLink {...returnValues.ship} /> {returnValues.dock.label === Entity.IDS.BUILDING ? 'undocked' : 'launched'} from <EntityLink {...returnValues.dock} />
+          </>
+        )
+      };
+    },
+    getPrepopEntities: ({ event: { returnValues } }) => ({
+      dock: returnValues.dock,
+    }),
+    requiresCrewTime: true, // only true currently if !powered
     triggerAlert: true
   },
 

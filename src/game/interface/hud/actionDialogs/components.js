@@ -5,7 +5,7 @@ import ReactTooltip from 'react-tooltip';
 import { useQuery } from 'react-query';
 import { TbBellRingingFilled as AlertIcon } from 'react-icons/tb';
 import { BarLoader } from 'react-spinners';
-import { Asteroid, Building, Crewmate, Entity, Inventory, Lot, Process, Product, Ship, Time } from '@influenceth/sdk';
+import { Asteroid, Building, Crewmate, Entity, Inventory, Lot, Process, Product, Ship, Station, Time } from '@influenceth/sdk';
 import { cloneDeep } from 'lodash';
 
 import AsteroidRendering from '~/components/AsteroidRendering';
@@ -60,6 +60,7 @@ import LiveFoodStatus from '~/components/LiveFoodStatus';
 import useHydratedLocation from '~/hooks/useHydratedLocation';
 import CrewLocationLabel from '~/components/CrewLocationLabel';
 import useAccessibleAsteroidInventories from '~/hooks/useAccessibleAsteroidInventories';
+import useShip from '~/hooks/useShip';
 
 const SECTION_WIDTH = 780;
 
@@ -1038,7 +1039,7 @@ const BarChart = styled.div`
   &:after {
     background: ${p => p.color};
     left: ${barChartPadding}px;
-    width: ${p => 100 * p.value}%;
+    width: ${p => 100 * Math.max(0, Math.min(p.value, 1))}%;
     z-index: 1;
   }
   ${p => p.postValue !== undefined && `
@@ -1046,7 +1047,7 @@ const BarChart = styled.div`
       background: ${p.color};
       left: ${barChartPadding}px;
       opacity: 0.7;
-      width: ${100 * p.postValue}%;
+      width: ${100 * Math.max(0, Math.min(p.postValue, 1))}%;
       z-index: 1;
     }
   `}
@@ -1097,7 +1098,7 @@ const ChartLabels = styled.div`
   font-size: 14.5px;
   justify-content: space-between;
   & > label:last-child {
-    color: white;
+    color: ${p => p.warning ? p.theme.colors.error : 'white'};
   }
 `;
 const UnderChartLabels = styled(ChartLabels)``;
@@ -1121,14 +1122,14 @@ const DeltaIcon = styled.div`
 const MiniBar = styled.div`
   background: #333;
   border-radius: ${miniBarChartRounding}px;
-  color: ${p => p.deltaColor || p.color || p.theme.colors.brightMain};
+  color: ${p => p.warning ? p.theme.colors.error : (p.deltaColor || p.color || p.theme.colors.brightMain)};
   height: ${miniBarChartHeight}px;
   margin: 4px 0;
   position: relative;
   width: 100%;
   &:before {
     content: "";
-    background: ${p => p.color || p.theme.colors.main};
+    background: ${p => p.warning ? p.theme.colors.error : (p.color || p.theme.colors.main)};
     bottom: 0px;
     border-radius: ${miniBarChartRounding}px;
     left: 0px;
@@ -1142,7 +1143,7 @@ const MiniBar = styled.div`
   ${p => p.deltaValue && `
     &:after {
       content: "";
-      background: ${p.deltaColor || p.color || p.theme.colors.brightMain};
+      background: ${p.warning ? p.theme.colors.error : (p.deltaColor || p.color || p.theme.colors.brightMain)};
       bottom: 0px;
       border-radius: ${miniBarChartRounding}px;
       position: absolute;
@@ -1352,7 +1353,7 @@ export const SelectionDialog = ({ children, isCompletable, open, onClose, onComp
   );
 };
 
-export const CrewSelectionDialog = ({ crews, onClose, onSelected, open }) => {
+export const CrewSelectionDialog = ({ crews, onClose, onSelected, open, title }) => {
   const [selection, setSelection] = useState();
 
   const onComplete = useCallback(() => {
@@ -1370,7 +1371,7 @@ export const CrewSelectionDialog = ({ crews, onClose, onSelected, open }) => {
       onClose={onClose}
       onComplete={onComplete}
       open={open}
-      title="Exchange With Crew">
+      title={title || 'Crew Selection'}>
       <div style={{ minHeight: 300 }}>
         {nonEmptyCrews.map((crew, i) => {
           return (
@@ -1753,6 +1754,7 @@ export const TransferSelectionDialog = ({ sourceEntity, requirements, inventory,
 export const LandingSelectionDialog = ({ asteroid, deliveryMode, initialSelection, onClose, onSelected, open, originLotIndex, ship }) => {
   const [error, setError] = useState();
   const [selection, setSelection] = useState(initialSelection);
+  const shipConfig = Ship.TYPES[ship?.Ship?.shipType];
 
   // TODO: to get spaceport names, it will probably make more sense to have
   //  a "get spaceports" api endpoint
@@ -1799,7 +1801,7 @@ export const LandingSelectionDialog = ({ asteroid, deliveryMode, initialSelectio
       {/* TODO: isLoading */}
       {/* TODO: replace with DataTable? */}
       <div style={{ minWidth: 500 }}></div>
-      {ship?.landing && (
+      {shipConfig?.landing && (
         <TextInputWithNote>
           <TextInput
             onKeyDown={handleKeyDown}
@@ -2002,25 +2004,40 @@ const getInventorySublabel = (inventoryType) => {
   }
 }
 
-export const InventorySelectionDialog = ({ otherEntity, otherLotId, isSourcing, itemIds, initialSelection, onClose, onSelected, open, requirePresenceOfItemIds }) => {
+export const InventorySelectionDialog = ({ asteroidId, otherEntity, otherInvSlot, isSourcing, itemIds, initialSelection, onClose, onSelected, open, requirePresenceOfItemIds }) => {
   const { crew } = useCrewContext();
 
   const [selection, setSelection] = useState(initialSelection);
 
-  const asteroidId = useMemo(() => Entity.toPosition({ id: otherLotId, label: Entity.IDS.LOT }).asteroidId || 0, [otherLotId]);
+  const otherLocation = useMemo(() => {
+    if (!otherEntity) return {};
+    return locationsArrToObj(otherEntity.Location.locations || []);
+  }, [otherEntity]);
 
-  const { data: inventoryData, isLoading: inventoryDataLoading } = useAccessibleAsteroidInventories(asteroidId);
+  // if off the surface, cannot access inventories on the surface...
+  const { data: inventoryData } = useAccessibleAsteroidInventories(otherLocation.lotIndex === 0 ? null : asteroidId);
+  // ... but can access inventories on their crewed ship (assuming not sending things elsewhere)
+  const { data: crewedShip } = useShip((otherLocation.lotIndex === 0 && crew?._location?.shipId === otherLocation.shipId) ? otherLocation.shipId : null);
 
   const inventories = useMemo(() => {
-    if (!inventoryData) return [];
-
-    const otherLotIndex = Lot.toIndex(otherLotId)
+    const allInventoryEntities = [];
+    if (inventoryData) allInventoryEntities.push(...inventoryData);
+    if (crewedShip) allInventoryEntities.push(crewedShip);
 
     const display = [];
-    inventoryData.forEach((entity) => {
-      if (otherEntity && entity.id === otherEntity.id && entity.label === otherEntity.label) return;
+    allInventoryEntities.forEach((entity) => {
       if (!entity.Inventories) return;
       entity.Inventories.forEach((inv) => {
+        // (can't send to same entity and slot)
+        if (otherEntity) {
+          if (entity.id === otherEntity.id && entity.label === otherEntity.label){
+            if (!otherInvSlot || otherInvSlot === inv.slot) {
+              console.log('skip', inv, entity, otherEntity, otherInvSlot);
+              return;
+            }
+          }
+        }
+
         // skip if locked (or inventory type is 0, which should not happen but has in staging b/c of dev bugs)
         if (inv.status !== Inventory.STATUSES.AVAILABLE || inv.inventoryType === 0) return;
 
@@ -2030,10 +2047,8 @@ export const InventorySelectionDialog = ({ otherEntity, otherLotId, isSourcing, 
           if (!itemIds.find((i) => !allowedMaterials.includes(i))) return;
         }
 
-        // skip if cannot locate entity lot
         const entityLotId = entity.Location.locations.find((l) => l.label === Entity.IDS.LOT)?.id;
         const entityLotIndex = Lot.toIndex(entityLotId);
-        if (!entityLotIndex) return;
 
         let itemTally = 0;
         if (itemIds?.length === 1) {
@@ -2049,7 +2064,7 @@ export const InventorySelectionDialog = ({ otherEntity, otherLotId, isSourcing, 
         // disable if !available or does not contain itemId
         display.push({
           disabled: requirePresenceOfItemIds && !itemTally,
-          distance: Asteroid.getLotDistance(asteroidId, entityLotIndex, otherLotIndex), // distance to source + distance to destination
+          distance: Asteroid.getLotDistance(asteroidId, entityLotIndex, otherLocation.lotIndex), // distance to source + distance to destination
           isMine: entity.Control.controller.id === crew?.id,
           isShip: !!entity.Ship,
           itemTally,
@@ -2064,7 +2079,7 @@ export const InventorySelectionDialog = ({ otherEntity, otherLotId, isSourcing, 
     });
 
     return display.sort((a, b) => a.distance - b.distance);
-  }, [inventoryData, itemIds]);
+  }, [crewedShip, inventoryData, itemIds, otherLocation]);
 
   const onComplete = useCallback(() => {
     onSelected(selection ? JSON.parse(selection) : null);
@@ -2259,13 +2274,18 @@ export const EmptyResourceImage = ({ iconOverride, noIcon, ...props }) => (
   </ResourceThumbnailWrapper>
 );
 
-export const MiniBarChart = ({ color, deltaColor, deltaValue, label, valueLabel, value, valueStyle, underLabels }) => (
+export const MiniBarChart = ({ color, deltaColor, deltaValue, label, valueLabel, value, valueStyle, underLabels, warning }) => (
   <MiniBarWrapper>
-    <ChartLabels>
+    <ChartLabels warning={reactBool(warning)}>
       <label>{label}</label>
-      <label style={valueStyle || {}}>{valueLabel}</label>
+      <label style={valueStyle || {}}>{warning && <WarningOutlineIcon />} {valueLabel}</label>
     </ChartLabels>
-    <MiniBar color={color} value={Math.min(value, 1)} deltaColor={deltaColor} deltaValue={Math.max(-1, Math.min(deltaValue, 1))}>
+    <MiniBar
+      color={color}
+      value={Math.max(0, Math.min(value, 1))}
+      deltaColor={deltaColor}
+      deltaValue={Math.max(-1, Math.min(deltaValue, 1))}
+      warning={reactBool(warning)}>
       {deltaValue ? <DeltaIcon negativeDelta={deltaValue < 0} value={value}><FastForwardIcon /></DeltaIcon> : null}
     </MiniBar>
     {underLabels && <UnderChartLabels>{underLabels}</UnderChartLabels>}
@@ -2336,7 +2356,7 @@ const ActionDialogActionBar = ({ location, onClose, overrideColor, stage }) => (
   <ActionBar {...theming[stage]} overrideColor={overrideColor}>
     {(stage === actionStage.STARTING || stage === actionStage.COMPLETING) && (
       <BarLoadingContainer>
-        <BarLoader color={theme.colors.lightPurple} height="5" speedMultiplier={0.5} width="100%" />
+        <BarLoader color={theme.colors.lightPurple} height="5px" speedMultiplier={0.5} width="100%" />
       </BarLoadingContainer>
     )}
     <ActionLocation {...theming[stage]} overrideColor={overrideColor}>
@@ -2653,6 +2673,7 @@ export const ProgressBarSection = ({
     barColor: null,
     color: null,
     left: '',
+    center: '',
     right: ''
   },
   stage,
@@ -2667,7 +2688,7 @@ export const ProgressBarSection = ({
   const refEl = useRef();
   const [hovered, setHovered] = useState();
 
-  const { animating, barWidth, color, left, reverseAnimation, right } = useMemo(() => {
+  const { animating, barWidth, color, left, reverseAnimation, right, center } = useMemo(() => {
     const r = {
       animating: false,
       reverseAnimation: false,
@@ -2751,6 +2772,7 @@ export const ProgressBarSection = ({
           <ActionProgress progress={barWidth || 0} />
           <ActionProgressLabels>
             <div>{overrides.left || left}</div>
+            <div>{overrides.center || center}</div>
             <div>{overrides.right || right}</div>
           </ActionProgressLabels>
         </ActionProgressContainer>
@@ -3029,26 +3051,26 @@ export const ProcessInputSquareSection = ({ title, products, input, output, prim
   );
 };
 
-export const PropulsionTypeSection = ({ objectLabel, propulsiveTime, tugTime, selected, onSelect, warning }) => {
+export const PropulsionTypeSection = ({ objectLabel, propulsiveTime, tugTime, powered, onSetPowered, warning }) => {
   return (
     <FlexSectionBlock title={`${objectLabel} Type`} bodyStyle={{ padding: 0 }}>
       <>
-        {(onSelect || selected === 'propulsive') && (
+        {(onSetPowered || powered) && (
           <PropulsionTypeOption
-            onClick={onSelect ? onSelect('propulsive') : undefined}
-            selected={selected === 'propulsive'}>
-            {onSelect && (selected === 'propulsive' ? <RadioCheckedIcon /> : <RadioUncheckedIcon />)}
+            onClick={onSetPowered ? () => onSetPowered(true) : undefined}
+            selected={powered}>
+            {onSetPowered && (powered ? <RadioCheckedIcon /> : <RadioUncheckedIcon />)}
             <div style={{ flex: 1 }}>
               <label>Propulsive:</label> Thruster {objectLabel}
             </div>
             <div>{formatTimer(propulsiveTime || 0, 2)}</div>
           </PropulsionTypeOption>
         )}
-        {(onSelect || selected === 'tug') && (
+        {(onSetPowered || !powered) && (
           <PropulsionTypeOption
-            onClick={onSelect ? onSelect('tug') : undefined}
-            selected={selected === 'tug'}>
-            {onSelect && (selected === 'tug' ? <RadioCheckedIcon /> : <RadioUncheckedIcon />)}
+            onClick={onSetPowered ? () => onSetPowered(false) : undefined}
+            selected={!powered}>
+            {onSetPowered && (!powered ? <RadioCheckedIcon /> : <RadioUncheckedIcon />)}
             <div style={{ flex: 1 }}>
               <label>Tug:</label> Hopper-Assisted {objectLabel}
             </div>
@@ -3070,8 +3092,8 @@ export const PropellantSection = ({ title, narrow, deltaVLoaded, deltaVRequired,
   const [deltaVMode, setDeltaVMode] = useState(false);
   // useEffect(() => ReactTooltip.rebuild(), []);
 
-  const propellantUse = propellantLoaded > 0 ? propellantRequired / propellantLoaded : 1;
-  const deltaVUse = deltaVLoaded > 0 ? deltaVRequired / deltaVLoaded : 1;
+  const propellantUse = propellantLoaded > 0 ? propellantRequired / propellantLoaded : (propellantRequired > 0 ? 1 : 0);
+  const deltaVUse = deltaVLoaded > 0 ? deltaVRequired / deltaVLoaded : (deltaVRequired > 0 ? 1 : 0);
 
   return (
     <FlexSectionBlock
@@ -3099,14 +3121,14 @@ export const PropellantSection = ({ title, narrow, deltaVLoaded, deltaVRequired,
             <div>
               <b>Required: </b>
               {propellantRequired
-                ? (deltaVMode ? formatVelocity(deltaVRequired) : formatMass(propellantRequired * 1e3))
+                ? (deltaVMode ? formatVelocity(deltaVRequired) : formatMass(propellantRequired))
                 : 'NONE'
               }
             </div>
             <div />
             <div>
-              <b>Loaded:</b> {deltaVMode ? formatVelocity(deltaVLoaded) : formatMass(propellantLoaded * 1e3)}
-              {/* TODO: tooltip this? <small style={{ color: '#667'}}> / {formatMass(propellantMax * 1e3)} max</small> */}
+              <b>Loaded:</b> {deltaVMode ? formatVelocity(deltaVLoaded) : formatMass(propellantLoaded)}
+              {/* TODO: tooltip this? <small style={{ color: '#667'}}> / {formatMass(propellantMax)} max</small> */}
             </div>
           </BarChartNotes>
         )}
@@ -3147,33 +3169,26 @@ export const PropellantSection = ({ title, narrow, deltaVLoaded, deltaVRequired,
 
 export const EmergencyPropellantSection = ({ title, propellantPregeneration, propellantPostgeneration, propellantTankMax }) => {
   // useEffect(() => ReactTooltip.rebuild(), []);
-
-  const propellantPre = propellantPregeneration / propellantTankMax;
-  const propellantPost = propellantPostgeneration / propellantTankMax;
-
   return (
     <FlexSectionBlock
       title={title}
       bodyStyle={{ padding: '1px 0' }}
       style={{ width: '100%' }}>
         <BarChart
-          color={theme.colors.main}
+          color={theme.colors.warning}
           bgColor={theme.colors.main}
-          value={propellantPre}
-          postValue={propellantPost}>
+          value={propellantPregeneration / propellantTankMax}
+          postValue={propellantPostgeneration / propellantTankMax}>
           <BarChartLimitLine position={0.1} />
         </BarChart>
         <BarChartNotes color={theme.colors.main}>
           <div>
-            <span style={{ color: theme.colors.red }}>Emergency Limit: </span>
-            <b>{formatMass(0.1 * propellantTankMax * 1e3)}</b>
-          </div>
-          <div style={{ color: propellantPost > 0.1 ? theme.colors.error : theme.colors.main }}>
-            {propellantPost > 0.1 && <span style={{ verticalAlign: 'middle', fontSize: 20, lineHeight: '1em' }}><CloseIcon /></span>}
-            {formatFixed(100 * propellantPost / 0.1)}% of Limit
+            <span style={{ color: theme.colors.warning }}>Current: </span>
+            <b>{formatMass(propellantPostgeneration)}</b>
           </div>
           <div>
-            After Generation: <b>{formatMass(propellantPostgeneration * 1e3)}</b>
+            <span style={{ color: theme.colors.red, textTransform: 'uppercase' }}>Emergency Limit 10%: </span>
+            <b>{formatMass(0.1 * propellantTankMax)}</b>
           </div>
         </BarChartNotes>
     </FlexSectionBlock>
@@ -3197,60 +3212,62 @@ export const SwayInputBlock = ({ title, ...props }) => (
   </FlexSectionInputBlock>
 );
 
-export const CrewInputBlock = ({ cardWidth, crew, hideCrewmates, highlightCrewmates, title, inlineDetails, ...props }) => (
-  <FlexSectionInputBlock
-    title={title}
-    titleDetails={inlineDetails ? null : (
-      <div>
-        <CrewIcon />
-        <span style={{ fontSize: '85%', marginLeft: 4 }}>
-          {formatters.crewName(crew)}
-        </span>
-      </div>
-    )}
-    bodyStyle={{ paddingRight: 8, ...(hideCrewmates ? { paddingBottom: 0 } : {}) }}
-    innerBodyStyle={{ height: 'auto' }}
-    {...props}>
-    <div>
-      {inlineDetails && (
-        <div style={{ display: 'flex', alignItems: 'center', marginBottom: 8 }}>
-          <div>
-            <CrewIcon />
-            <span style={{ marginLeft: 4 }}>
-              {formatters.crewName(crew)}
-            </span>
-          </div>
-          <div style={{ flex: 1 }} />
-          <LiveFoodStatus crew={crew} style={(props.subtle && !props.isSelected) ? { color: '#777' } : {}} />
+export const CrewInputBlock = ({ cardWidth, crew, hideCrewmates, highlightCrewmates, title, inlineDetails, ...props }) => {
+  return (
+    <FlexSectionInputBlock
+      title={title}
+      titleDetails={(inlineDetails || !crew) ? null : (
+        <div>
+          <CrewIcon />
+          <span style={{ fontSize: '85%', marginLeft: 4 }}>
+            {formatters.crewName(crew)}
+          </span>
         </div>
       )}
-      {!hideCrewmates && (
-        <CrewCards>
-          {Array.from({ length: 5 }).map((_, i) =>
-            crew._crewmates[i]
-              ? (
-                <CrewCardFramed
-                  key={i}
-                  borderColor={`rgba(${theme.colors.mainRGB}, 0.7)`}
-                  crewmate={crew._crewmates[i]}
-                  isCaptain={i === 0}
-                  lessPadding
-                  noArrow={i > 0}
-                  style={highlightCrewmates && !highlightCrewmates.includes(crew._crewmates[i].id) ? { opacity: 0.5 } : {}}
-                  width={cardWidth || 60} />
-              )
-              : (
-                <CrewCardPlaceholder
-                  key={i}
-                  style={highlightCrewmates ? { opacity: 0.5 } : {}}
-                  width={cardWidth || 60} />
-              )
-          )}
-        </CrewCards>
-      )}
-    </div>
-  </FlexSectionInputBlock>
-);
+      bodyStyle={{ paddingRight: 8, ...(hideCrewmates ? { paddingBottom: 0 } : {}) }}
+      innerBodyStyle={{ height: 'auto' }}
+      {...props}>
+      <div>
+        {crew && inlineDetails && (
+          <div style={{ display: 'flex', alignItems: 'center', marginBottom: 8 }}>
+            <div>
+              <CrewIcon />
+              <span style={{ marginLeft: 4 }}>
+                {formatters.crewName(crew)}
+              </span>
+            </div>
+            <div style={{ flex: 1 }} />
+            <LiveFoodStatus crew={crew} style={(props.subtle && !props.isSelected) ? { color: '#777' } : {}} />
+          </div>
+        )}
+        {!hideCrewmates && (
+          <CrewCards>
+            {Array.from({ length: 5 }).map((_, i) =>
+              crew?._crewmates[i]
+                ? (
+                  <CrewCardFramed
+                    key={i}
+                    borderColor={`rgba(${theme.colors.mainRGB}, 0.7)`}
+                    crewmate={crew._crewmates[i]}
+                    isCaptain={i === 0}
+                    lessPadding
+                    noArrow={i > 0}
+                    style={highlightCrewmates && !highlightCrewmates.includes(crew._crewmates[i].id) ? { opacity: 0.5 } : {}}
+                    width={cardWidth || 60} />
+                )
+                : (
+                  <CrewCardPlaceholder
+                    key={i}
+                    style={highlightCrewmates ? { opacity: 0.5 } : {}}
+                    width={cardWidth || 60} />
+                )
+            )}
+          </CrewCards>
+        )}
+      </div>
+    </FlexSectionInputBlock>
+  )
+};
 
 export const CrewOwnerBlock = ({ title, ...innerProps }) => {
   return (
@@ -3394,12 +3411,12 @@ export const ShipInputBlock = ({ ship, ...props }) => {
   );
 };
 
-export const ShipTab = ({ pilotCrew, ship, stage, previousStats = {}, warnings = [] }) => {
-  const shipConfig = Ship.TYPES[ship?.shipType] || {};
+export const ShipTab = ({ pilotCrew, ship, stage, deltas = {}, statWarnings = {}, warnings = [] }) => {
 
   // TODO: if want to include "reserved", it would probably make sense to use getCapacityUsage helper instead
   const inventory = useMemo(() => {
-    if (!ship) return {};
+    if (!ship?.Ship?.shipType || !ship?.Inventories) return {};
+    const shipConfig = Ship.TYPES[ship.Ship.shipType] || {};
     const propellantInventory = ship.Inventories.find((i) => i.slot === shipConfig.propellantSlot);
     const cargoInventory = ship.Inventories.find((i) => i.slot === shipConfig.cargoSlot);
     return {
@@ -3412,7 +3429,44 @@ export const ShipTab = ({ pilotCrew, ship, stage, previousStats = {}, warnings =
       cargoVolume: cargoInventory?.volume || 0,
       maxCargoVolume: Inventory.TYPES[cargoInventory?.inventoryType]?.volumeConstraint || 0,
     };
-  }, [shipConfig, ship?.Inventories]);
+  }, [ship?.shipType, ship?.Inventories]);
+
+  const charts = useMemo(() => ({
+    propellantMass: {
+      color: '#8cc63f',
+      label: 'Propellant Mass',
+      valueLabel: `${formatFixed((inventory.propellantMass + (deltas.propellantMass || 0)) / 1e6)} / ${formatFixed(inventory.maxPropellantMass / 1e6)}t`,
+      value: (inventory.propellantMass + (deltas.propellantMass || 0)) / inventory.maxPropellantMass,
+      deltaValue: (deltas.propellantMass || 0) / inventory.maxPropellantMass,
+    },
+    propellantVolume: {
+      color: '#557826',
+      label: 'Propellant Volume',
+      valueLabel: `${formatFixed((inventory.propellantVolume + (deltas.propellantVolume || 0)) / 1e6)} / ${formatFixed(inventory.maxPropellantVolume / 1e6)}m³`,
+      value: (inventory.propellantVolume + (deltas.propellantVolume || 0)) / inventory.maxPropellantVolume,
+      deltaValue: (deltas.propellantVolume || 0) / inventory.maxPropellantVolume,
+    },
+    cargoMass: {
+      label: 'Cargo Mass',
+      valueLabel: `${formatFixed((inventory.cargoMass + (deltas.cargoMass || 0)) / 1e6)} / ${formatFixed(inventory.maxCargoMass / 1e6)}t`,
+      value: (inventory.cargoMass + (deltas.cargoMass || 0)) / inventory.maxCargoMass,
+      deltaValue: (deltas.cargoMass || 0) / inventory.maxCargoMass,
+    },
+    cargoVolume: {
+      color: '#1f5f75',
+      label: 'Cargo Volume',
+      valueLabel: `${formatFixed((inventory.cargoVolume + (deltas.cargoVolume || 0)) / 1e6)} / ${formatFixed(inventory.maxCargoVolume / 1e6)}m³`,
+      value: (inventory.cargoVolume + (deltas.cargoVolume || 0)) / inventory.maxCargoVolume,
+      deltaValue: (deltas.cargoVolume || 0) / inventory.maxCargoVolume,
+    },
+    passengers: {
+      color: '#92278f',
+      label: 'Crewmates Onboard',
+      valueLabel: `${(ship.Station.population + (deltas.passengers || 0))} / ${Station.TYPES[ship.Station.stationType]?.cap}`,
+      value: (ship.Station.population + (deltas.passengers || 0)) / Station.TYPES[ship.Station.stationType]?.cap,
+      deltaValue: (deltas.passengers || 0) / Station.TYPES[ship.Station.stationType]?.cap,
+    },
+  }), [deltas, inventory, ship, statWarnings]);
 
   return (
     <>
@@ -3432,42 +3486,13 @@ export const ShipTab = ({ pilotCrew, ship, stage, previousStats = {}, warnings =
       <FlexSection>
         <div style={{ width: '50%'}}>
           <MiniBarChartSection>
-            <MiniBarChart
-              color="#8cc63f"
-              label="Propellant Mass"
-              valueLabel={`${formatFixed(inventory.propellantMass / 1e3)} / ${formatFixed(inventory.maxPropellantMass / 1e3)}t`}
-              value={0.5}
-              {...(/* TODO: would probably be more performant to do this in a memo hook */
-                previousStats.propellantMass
-                  ? {
-                    deltaValue: previousStats.propellantMass / inventory.maxPropellantMass
-                  }
-                  : {}
-              )}
-            />
-            <MiniBarChart
-              color="#557826"
-              label="Propellant Volume"
-              valueLabel={`${formatFixed(inventory.propellantVolume / 1e3)} / ${formatFixed(inventory.maxPropellantVolume / 1e3)}m³`}
-              value={0.7}
-            />
-            <MiniBarChart
-              label="Cargo Mass"
-              valueLabel={`${formatFixed(inventory.cargoMass / 1e3)} / ${formatFixed(inventory.maxCargoMass / 1e3)}t`}
-              value={0.8}
-            />
-            <MiniBarChart
-              color="#1f5f75"
-              label="Cargo Volume"
-              valueLabel={`${formatFixed(inventory.cargoVolume / 1e3)} / ${formatFixed(inventory.maxCargoVolume / 1e3)}m³`}
-              value={0.3}
-            />
-            <MiniBarChart
-              color="#92278f"
-              label="Passengers"
-              valueLabel={`${pilotCrew.Crew.roster.length} / 5`}
-              value={pilotCrew.Crew.roster.length / 5}
-            />
+            {Object.keys(charts).map((key) => (
+              <MiniBarChart
+                key={key}
+                {...charts[key]}
+                warning={statWarnings[key]}
+              />
+            ))}
           </MiniBarChartSection>
         </div>
 
@@ -3476,7 +3501,7 @@ export const ShipTab = ({ pilotCrew, ship, stage, previousStats = {}, warnings =
         {warnings?.length > 0 && (
           <div style={{ alignSelf: 'flex-start', width: '50%' }}>
             {warnings.map(({ icon, text }) => (
-              <WarningAlert>
+              <WarningAlert key={text}>
                 <div>{icon}</div>
                 <div>{text}</div>
               </WarningAlert>
@@ -4097,7 +4122,7 @@ export const formatShipStatus = (ship) => {
   if (ship?.Ship?.status === Ship.STATUSES.IN_FLIGHT) return 'In Flight'; // TODO: do we need to distinguish Launching, Landing
   if (ship?.Ship?.status === Ship.STATUSES.DISABLED) return 'Disabled';
 
-  const loc = ship?.Location.location;
+  const loc = ship?.Location?.location;
 
   if (loc.label === Entity.IDS.BUILDING) {
     return 'In Port';

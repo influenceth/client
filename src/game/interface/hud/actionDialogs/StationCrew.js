@@ -60,7 +60,7 @@ const StationCrew = ({ asteroid, destination: rawDestination, lot, origin: rawOr
   const createAlert = useStore(s => s.dispatchAlertLogged);
   
   const { stationCrew } = stationCrewManager;
-  const { crew, crewmateMap } = useCrewContext();
+  const { crew } = useCrewContext();
 
   const crewmates = (crew?._crewmates || []);
   const captain = crewmates[0];
@@ -101,6 +101,10 @@ const StationCrew = ({ asteroid, destination: rawDestination, lot, origin: rawOr
     ];
   }, [asteroid?.id, origin?.id, destination?.id, crewTravelBonus, crew?._timeAcceleration]);
 
+  const [crewTimeRequirement, taskTimeRequirement] = useMemo(() => {
+    return [ travelTime, 0 ];
+  }, [travelTime]);
+
   const stats = useMemo(() => ([
     {
       label: 'Travel Time',
@@ -135,8 +139,6 @@ const StationCrew = ({ asteroid, destination: rawDestination, lot, origin: rawOr
     lastStatus.current = stage;
   }, [stage]);
 
-
-
   const actionDetails = useMemo(() => {
     const icon = destination?.label === Entity.IDS.SHIP && !crewIsOwner
       ? <StationPassengersIcon />
@@ -159,23 +161,23 @@ const StationCrew = ({ asteroid, destination: rawDestination, lot, origin: rawOr
       <ActionDialogHeader
         action={actionDetails}
         captain={captain}
-        crewAvailableTime={0}
+        crewAvailableTime={crewTimeRequirement}
+        taskCompleteTime={taskTimeRequirement}
         location={{
           asteroid,
           lot,
           ship: null /* TODO: */ }}
         onClose={props.onClose}
         overrideColor={stage === actionStages.NOT_STARTED ? (crewIsOwner ? theme.colors.main : theme.colors.green) : undefined}
-        taskCompleteTime={0}
         stage={stage} />
 
       <ActionDialogBody>
         <FlexSection>
-          {origin.label === Entity.IDS.SHIP
+          {(origin.label === Entity.IDS.SHIP || !originLot)
             ? (
               <ShipInputBlock
                 title="Origin"
-                ship={origin}
+                ship={origin.label === Entity.IDS.SHIP ? origin : crew}
                 disabled />
             )
             : (
@@ -286,15 +288,18 @@ const Wrapper = (props) => {
 
   const destinationEntityId = useMemo(() => {
     if (props.destinationEntityId) return props.destinationEntityId;
+
     if (zoomScene?.type === 'SHIP' && zoomScene.shipId) {
       return { label: Entity.IDS.SHIP, id: zoomScene.shipId };
     } else if (lot?.building) {
-      return { label: Entity.IDS.BUILDING, id: lot?.building?.id };
+      return { label: Entity.IDS.BUILDING, id: lot?.building.id };
+    } else if (lot?.surfaceShip) {
+      return { label: Entity.IDS.SHIP, id: lot?.surfaceShip.id };
     } else if (lotId) {
-      return { label: Entity.IDS.LOT, id: lot?.id };
+      return { label: Entity.IDS.LOT, id: lotId };
     }
     return { label: Entity.IDS.ASTEROID, id: asteroidId };
-  }, [asteroidId, lot?.building, lotId, zoomScene]);
+  }, [asteroidId, lot?.building, lot?.surfaceShip, lotId, zoomScene]);
 
   const { data: destination, isLoading: destIsLoading } = useEntity(destinationEntityId);
   const { data: origin, isLoading: originIsLoading } = useEntity(originEntityId);

@@ -1,11 +1,11 @@
-import { useCallback, useEffect, useMemo, useRef } from 'react';
-import { Building, Entity, Ship } from '@influenceth/sdk';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Building, Entity, Ship, Station } from '@influenceth/sdk';
 
 import travelBackground from '~/assets/images/modal_headers/Travel.png';
 import { EjectPassengersIcon, WarningOutlineIcon } from '~/components/Icons';
 import useCrewContext from '~/hooks/useCrewContext';
 import useShip from '~/hooks/useShip';
-import { reactBool, formatTimer } from '~/lib/utils';
+import { reactBool, formatTimer, locationsArrToObj } from '~/lib/utils';
 
 import {
   ActionDialogFooter,
@@ -21,9 +21,12 @@ import {
   TransferDistanceTitleDetails,
   ShipInputBlock,
   WarningAlert,
-  LotInputBlock
+  LotInputBlock,
+  CrewSelectionDialog
 } from './components';
+import useEjectCrewManager from '~/hooks/actionManagers/useEjectCrewManager';
 import useAsteroid from '~/hooks/useAsteroid';
+import useEntity from '~/hooks/useEntity';
 import useHydratedCrew from '~/hooks/useHydratedCrew';
 import useLot from '~/hooks/useLot';
 import useStore from '~/hooks/useStore';
@@ -32,61 +35,54 @@ import formatters from '~/lib/formatters';
 import theme from '~/theme';
 import { ActionDialogInner } from '../ActionDialog';
 
-const EjectCrew = ({ asteroid, lot, manager, ship, stage, targetCrew, ...props }) => {
+const EjectCrew = ({ asteroid, origin, originLot, manager, stage, ...props }) => {
   const createAlert = useStore(s => s.dispatchAlertLogged);
   
-  const { currentStationing, stationingStatus, stationOnShip } = manager;
+  const { currentEjection, ejectCrew, actionStage: ejectionStatus } = manager;
+  
+  // TODO: only if specified id
+  const { crew } = useCrewContext();
 
-  const { crew, crewmateMap } = useCrewContext();
+  const [crewSelectorOpen, setCrewSelectorOpen] = useState(false);
+  const [targetCrewId, setTargetCrewId] = useState(currentEjection?.ejected_crew?.id || (props.guests ? null : crew?.id));
 
-  const myCrewmates = currentStationing?._crewmates || (crew?._crewmates || []).map((i) => crewmateMap[i]);
+  const { data: targetCrew } = useHydratedCrew(targetCrewId);
+
+  const myCrewmates = currentEjection?._crewmates || crew?._crewmates || [];
   const captain = myCrewmates[0];
 
   const myCrewIsTarget = targetCrew?.id === crew?.id;
 
   const stats = useMemo(() => ([
     {
-      label: 'Travel Time',
-      value: formatTimer(0),
-      direction: 0,
-      isTimeStat: true,
-    },
-    {
       label: 'Crewmates Ejected',
-      value: `5`,
+      value: (targetCrew?.Crew?.roster || []).length,
       direction: 0,
     },
-  ]), []);
+  ]), [targetCrew]);
 
-  const onStation = useCallback(() => {
-    stationOnShip();
-  }, []);
+  const onEject = useCallback(() => {
+    ejectCrew(targetCrewId);
+  }, [targetCrewId]);
 
   // handle auto-closing
   const lastStatus = useRef();
   useEffect(() => {
     // (close on status change from)
-    if (['READY', 'READY_TO_FINISH', 'FINISHING'].includes(lastStatus.current)) {
-      if (stationingStatus !== lastStatus.current) {
-        console.log('on Close');
-        props.onClose();
-      }
+    if (lastStatus.current && ejectionStatus !== lastStatus.current) {
+      props.onClose();
     }
-    lastStatus.current = stationingStatus;
-  }, [stationingStatus]);
+    lastStatus.current = ejectionStatus;
+  }, [ejectionStatus]);
 
   const actionDetails = useMemo(() => {
     const icon = <EjectPassengersIcon />;
     const label = myCrewIsTarget ? 'Eject My Crew' : 'Force Eject Crew';
     const status = stage === actionStages.NOT_STARTED
-      ? `Eject from ${ship ? 'Ship' : Building.TYPES[lot?.building?.Building?.buildingType]?.name}`
+      ? `From ${origin.Ship ? Ship.TYPES[origin.Ship.shipType]?.name : Building.TYPES[origin.Building?.buildingType]?.name}`
       : undefined;
     return { icon, label, status };
-  }, [myCrewIsTarget, lot, ship, stage]);
-
-  const shipIsInOrbit = ship?.Location?.location?.label === Entity.IDS.ASTEROID && ship?.Ship?.status !== Ship.STATUS.IN_FLIGHT;
-
-  const maxPassengers = ship?.Station?.cap || 0;
+  }, [myCrewIsTarget, origin, stage]);
 
   return (
     <>
@@ -94,7 +90,7 @@ const EjectCrew = ({ asteroid, lot, manager, ship, stage, targetCrew, ...props }
         action={actionDetails}
         captain={captain}
         crewAvailableTime={0}
-        location={{ asteroid, lot, ship }}
+        location={{ asteroid, lot: originLot, ship: origin.Ship ? origin : undefined }}
         onClose={props.onClose}
         overrideColor={stage === actionStages.NOT_STARTED ? (myCrewIsTarget ? theme.colors.main : theme.colors.red) : undefined}
         taskCompleteTime={0}
@@ -102,27 +98,28 @@ const EjectCrew = ({ asteroid, lot, manager, ship, stage, targetCrew, ...props }
 
       <ActionDialogBody>
         <FlexSection>
-          {ship
+          {origin.Ship
             ? (
               <ShipInputBlock
                 title="Origin"
-                ship={ship}
+                ship={origin}
                 disabled={stage !== actionStages.NOT_STARTED} />
             )
             : (
               <LotInputBlock
                 title="Origin"
-                lot={lot}
+                lot={originLot}
                 disabled={stage !== actionStages.NOT_STARTED} />
             )
           }
 
           <FlexSectionSpacer />
 
+          {/* TODO: can a crew be ejected from ship while in flight? */}
           <FlexSectionInputBlock
             title="Destination"
             titleDetails={
-              !shipIsInOrbit && <TransferDistanceTitleDetails><label>Orbital Transfer</label></TransferDistanceTitleDetails>
+              originLot && <TransferDistanceTitleDetails><label>Orbital Transfer</label></TransferDistanceTitleDetails>
             }  
             image={<AsteroidImage asteroid={asteroid} />}
             label={formatters.asteroidName(asteroid)}
@@ -134,27 +131,33 @@ const EjectCrew = ({ asteroid, lot, manager, ship, stage, targetCrew, ...props }
         <FlexSection>
 
           <div style={{ alignSelf: 'flex-start', width: '50%' }}>
-            {ship && (
+            {origin && targetCrew && (
               <MiniBarChart
                 color="#92278f"
                 label="Crewmate Count"
-                valueLabel={`5 / ${maxPassengers || '?'}`}
-                value={maxPassengers > 0 ? (5 / maxPassengers) : 1}
+                valueLabel={`${origin.Station.population - (targetCrew.Crew?.roster?.length || 0)} / ${Station.TYPES[origin.Station.stationType].cap}`}
+                value={(origin.Station.population - (targetCrew.Crew?.roster?.length || 0)) / Station.TYPES[origin.Station.stationType].cap}
                 deltaColor="#f644fa"
-                deltaValue={maxPassengers > 0 ? (-targetCrew?.roster?.length / maxPassengers) : 0}
+                deltaValue={-(targetCrew.Crew?.roster?.length || 0) / Station.TYPES[origin.Station.stationType].cap}
               />
             )}
           </div>
 
           <FlexSectionSpacer />
 
+          {/* TODO: only selectable if i control the ship */}
           <CrewInputBlock
-            title="Ejected Crew"
-            crew={{ ...targetCrew, roster: targetCrew.crewmates }} />
+            title={targetCrew ? "Ejected Crew" : "Select Crew to Eject"}
+            crew={targetCrew ? { ...targetCrew, roster: targetCrew._crewmates } : undefined}
+            select
+            isSelected={props.guests && (stage === actionStages.NOT_STARTED)}
+            onClick={props.guests ? () => setCrewSelectorOpen(true) : undefined}
+            subtle
+          />
 
         </FlexSection>
 
-        {!shipIsInOrbit && (
+        {originLot && (
           <FlexSection>
             <div style={{ width: '50%' }} />
             <FlexSectionSpacer />
@@ -178,9 +181,18 @@ const EjectCrew = ({ asteroid, lot, manager, ship, stage, targetCrew, ...props }
       <ActionDialogFooter
         disabled={false/* TODO: no permission */}
         goLabel="Eject"
-        onGo={onStation}
+        onGo={onEject}
         stage={stage}
         {...props} />
+
+      {stage === actionStages.NOT_STARTED && (
+        <CrewSelectionDialog
+          crews={[]}
+          onClose={() => setCrewSelectorOpen(false)}
+          onSelected={setTargetCrewId}
+          open={crewSelectorOpen}
+        />
+      )}
     </>
   );
 };
@@ -188,49 +200,46 @@ const EjectCrew = ({ asteroid, lot, manager, ship, stage, targetCrew, ...props }
 const Wrapper = (props) => {
   const { crew } = useCrewContext();
 
-  const originAsteroid = useStore(s => s.asteroids.origin);
-  const originLotId = useStore(s => s.asteroids.lot);
-  const zoomScene = useStore(s => s.asteroids.zoomScene);
+  // NOTE: use props.originId for guests
+  const originId = useMemo(() => props.originId || crew?.Location?.location, [crew?.Location?.location, props.originId]);
+  const { data: origin, isLoading: entityIsLoading } = useEntity(originId);
+  const originLocation = useMemo(() => locationsArrToObj(origin?.Location?.locations || []), [origin]);
+  
+  const { data: asteroid, isLoading: asteroidIsLoading } = useAsteroid(originLocation?.asteroidId);
+  const { data: originLot, isLoading: lotIsLoading } = useLot(originLocation?.lotId);
 
-  const asteroidId = props.guests ? originAsteroid : crew?._location?.asteroidId;
-  const lotId = props.guests ? originLotId : crew?._location?.lotId;
-  const shipId = props.guests ? (zoomScene?.type === 'SHIP' && zoomScene.shipId) : crew?._location?.shipId;
+  const ejectCrewManager = useEjectCrewManager(originId);
 
-  const { data: asteroid, isLoading: asteroidIsLoading } = useAsteroid(asteroidId);
-  const { data: lot, isLoading: lotIsLoading } = useLot(lotId);
-  const { data: ship, isLoading: shipIsLoading } = useShip(shipId);
+  // ejection is weird, so create a psuedo manager to make it seem more normal
+  const manager = useMemo(() => {
+    const currentEjection = ejectCrewManager.currentEjections?.[0];  // TODO: ...
+    return {
+      ejectCrew: ejectCrewManager.ejectCrew,
+      currentEjection,
+      actionStage: currentEjection ? actionStages.STARTING : actionStages.NOT_STARTED,
+    };
+  }, [ejectCrewManager]);
 
-  // TODO: targetCrewId needs to be specified if guests (or we need to pass in an array of crews to select)
-  const targetCrewId = props.guests ? null : crew?.id;
-  const { data: targetCrew, isLoading: crewIsLoading } = useHydratedCrew(targetCrewId);
-
-  // TODO: ...
-  // const extractionManager = useExtractionManager(lot?.id);
-  // const { actionStage } = extractionManager;
-  const manager = {};
-  const actionStage = actionStages.NOT_STARTED;
-
-  const isLoading = asteroidIsLoading || lotIsLoading || shipIsLoading || crewIsLoading;
+  const isLoading = entityIsLoading || asteroidIsLoading || lotIsLoading;
   useEffect(() => {
-    if (!asteroid || (!lot && !ship) || !targetCrew) {
+    if (!origin) {
       if (!isLoading) {
         if (props.onClose) props.onClose();
       }
     }
-  }, [asteroid, lot, ship, isLoading]);
+  }, [origin, isLoading]);
 
   return (
     <ActionDialogInner
       actionImage={travelBackground}
       isLoading={reactBool(isLoading)}
-      stage={actionStage}>
+      stage={manager.actionStage}>
       <EjectCrew
         asteroid={asteroid}
-        lot={lot}
-        ship={ship}
-        targetCrew={targetCrew}
+        origin={origin}
+        originLot={originLot}
         manager={manager}
-        stage={actionStage}
+        stage={manager.actionStage}
         {...props} />
     </ActionDialogInner>
   )

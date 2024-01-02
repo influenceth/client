@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from 'react';
-import { Entity } from '@influenceth/sdk';
+import { Entity, Ship } from '@influenceth/sdk';
 
 import useOwnedShips from '~/hooks/useOwnedShips';
 import useShip from '~/hooks/useShip';
@@ -25,12 +25,12 @@ export const useShipLink = ({ shipId, zoomToShip }) => {
     if (!ship) return;
 
     // if ship is in_flight, zoom "out", show zoomScene of ship
-    if (ship.status === 'IN_FLIGHT') {
+    if (ship.Ship?.status === Ship.STATUSES.IN_FLIGHT) {
       // TODO (later): zoom to ship location or at least show reticule on it
       if (zoomStatus === 'in') updateZoomStatus('zooming-out');
 
     // if ship is in_port / on_surface, zoom to lot, show zoomScene of ship
-    } else if (['IN_PORT', 'ON_SURFACE'].includes(ship.status)) {
+    } else if (!!ship?._location.lotId) {
       zoomToLot();
 
     // if ship is landing/launching/in_orbit, zoom to asteroid, show zoomScene of ship

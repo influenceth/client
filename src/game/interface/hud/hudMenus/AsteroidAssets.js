@@ -280,7 +280,7 @@ const ShipGroupHeader = ({ buildingId, lotId }) => {
   const { data: building } = useBuilding(buildingId);
 
   const [mainLabel, details] = useMemo(() => {
-    if (lotId === 0) {
+    if (!lotId) {
       return ['In Orbit', ''];
     }
     if (building) {
@@ -297,7 +297,7 @@ const ShipGroupHeader = ({ buildingId, lotId }) => {
 
   return (
     <ShipHeaderRow>
-      <th colspan="2" style={{  }}><CaretIcon /> {mainLabel}</th>
+      <th colSpan={2} style={{  }}><CaretIcon /> {mainLabel}</th>
       <td style={{  }}>{details}</td>
     </ShipHeaderRow>
   );

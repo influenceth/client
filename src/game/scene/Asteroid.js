@@ -140,7 +140,7 @@ const AsteroidComponent = () => {
     return (ships || []).filter((ship) => {
       return ship.Location.location.label === Entity.IDS.ASTEROID && ship.Ship.status === Ship.STATUSES.AVAILABLE;
     }).length;
-  }, [ships])
+  }, [ships]);
 
   const getTime = useGetTime();
   const webWorkerPool = useWebWorker();

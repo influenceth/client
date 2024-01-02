@@ -105,6 +105,9 @@ export function CrewProvider({ children }) {
         };
       }
       if (c.Location?.locations) {
+        // if (c.id === 8) {
+        //   c.Location.locations = c.Location?.locations.filter(({ label }) => label !== Entity.IDS.LOT && label !== Entity.IDS.BUILDING)
+        // }
         c._location = locationsArrToObj(c.Location.locations);
       }
       if (c.Crew) {

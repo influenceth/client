@@ -542,8 +542,8 @@ const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...pro
           />
 
           <InventorySelectionDialog
+            asteroidId={asteroid.id}
             otherEntity={lot.building}
-            otherLotId={lot?.id}
             isSourcing
             itemIds={inputArr}
             onClose={() => setOriginSelectorOpen(false)}
@@ -553,8 +553,8 @@ const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...pro
           />
 
           <InventorySelectionDialog
+            asteroidId={asteroid.id}
             otherEntity={lot.building}
-            otherLotId={lot?.id}
             itemIds={outputArr}
             onClose={() => setDestinationSelectorOpen(false)}
             onSelected={setSelectedDestination}

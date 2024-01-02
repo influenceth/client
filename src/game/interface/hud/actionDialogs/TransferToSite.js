@@ -30,7 +30,6 @@ import {
   DestinationSelectionDialog,
   ProgressBarSection,
   LotInputBlock,
-  SourceInventorySelectionDialog,
   InventorySelectionDialog
 } from './components';
 import { ActionDialogInner, useAsteroidAndLot } from '../ActionDialog';
@@ -288,8 +287,8 @@ const TransferToSite = ({ asteroid, lot: destinationLot, deliveryManager, stage,
           />
 
           <InventorySelectionDialog
-            otherEntity={destination}
-            otherLotId={destinationLot?.id}
+            asteroidId={asteroid.id}
+            otherEntity={destinationLot?.building}
             isSourcing
             itemIds={buildingRequirements.map(({ i }) => i)}
             onClose={() => setOriginSelectorOpen(false)}

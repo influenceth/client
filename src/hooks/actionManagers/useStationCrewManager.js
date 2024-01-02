@@ -22,7 +22,7 @@ const useStationCrewManager = (destination) => {
   );
 
   const currentStationing = useMemo(
-    () => getPendingTx('StationCrew', { caller_crew }),
+    () => getPendingTx ? getPendingTx('StationCrew', { caller_crew }) : null,
     [caller_crew, getPendingTx]
   );
 

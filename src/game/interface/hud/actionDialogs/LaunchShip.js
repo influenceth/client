@@ -1,12 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import styled from 'styled-components';
-import { Building, Crew, Crewmate, Ship } from '@influenceth/sdk';
+import { Asteroid, Crewmate, Inventory, Lot, Product, Ship, Time } from '@influenceth/sdk';
 
 import travelBackground from '~/assets/images/modal_headers/Travel.png';
-import { CoreSampleIcon, ExtractionIcon, InventoryIcon, LaunchShipIcon, LocationIcon, ResourceIcon, RouteIcon, SetCourseIcon, ShipIcon, WarningOutlineIcon } from '~/components/Icons';
+import { LaunchShipIcon, RouteIcon, ShipIcon, WarningOutlineIcon } from '~/components/Icons';
 import useCrewContext from '~/hooks/useCrewContext';
-import useExtractionManager from '~/hooks/actionManagers/useExtractionManager';
-import { reactBool, formatFixed, formatTimer } from '~/lib/utils';
+import { reactBool, formatFixed, formatTimer, locationsArrToObj, getCrewAbilityBonuses } from '~/lib/utils';
 
 import {
   ActionDialogFooter,
@@ -24,7 +22,9 @@ import {
   PropellantSection,
   ShipTab,
   PropulsionTypeSection,
-  LotInputBlock
+  LotInputBlock,
+  formatResourceMass,
+  formatMass
 } from './components';
 import useLot from '~/hooks/useLot';
 import useStore from '~/hooks/useStore';
@@ -34,88 +34,112 @@ import actionStages from '~/lib/actionStages';
 import theme from '~/theme';
 import CrewCardFramed from '~/components/CrewCardFramed';
 import formatters from '~/lib/formatters';
+import useShip from '~/hooks/useShip';
+import useShipDockingManager from '~/hooks/actionManagers/useShipDockingManager';
+import useAsteroid from '~/hooks/useAsteroid';
+import useEntity from '~/hooks/useEntity';
+import { getBonusDirection } from './components';
+import { TimeBonusTooltip } from './components';
 
-// TODO: should probably be able to select a ship (based on ships on that lot -- i.e. might have two ships in a spaceport)
-//  - however, could you launch two ships at once? probably not because crew needs to be on ship?
-
-// TODO: ecs refactor
-
-const LaunchShip = ({ asteroid, lot, manager, ship, stage, ...props }) => {
+const LaunchShip = ({ asteroid, originLot, manager, ship, stage, ...props }) => {
   const createAlert = useStore(s => s.dispatchAlertLogged);
 
-  const { currentLaunch, launchStatus, startLaunch } = manager;
+  const { currentUndockingAction, undockShip } = manager;
+  const { crew } = useCrewContext();
 
-  const { crew, crewmateMap } = useCrewContext();
-  const { data: launchOriginLot } = useLot(currentLaunch?.originLotId);
-
-  const [propulsionType, setPropulsionType] = useState('propulsive');
+  // TODO: should this default to hopper-assisted if no propellant?
+  const [powered, setPowered] = useState(true);
   const [tab, setTab] = useState(0);
 
-  const crewmates = currentLaunch?._crewmates || (crew?._crewmates || []).map((i) => crewmateMap[i]);
+  const crewmates = currentUndockingAction?._crewmates || crew?._crewmates || [];
   const captain = crewmates[0];
-  const crewTravelBonus = Crew.getAbilityBonus(Crewmate.ABILITY_IDS.HOPPER_TRANSPORT_TIME, crewmates);
-  const launchBonus = 0;
+
+  const [hopperBonus, propellantBonus] = useMemo(() => {
+    if (!crew) return {};
+    const bonusIds = [Crewmate.ABILITY_IDS.HOPPER_TRANSPORT_TIME, Crewmate.ABILITY_IDS.PROPELLANT_FLOW_RATE];
+    const abilities = getCrewAbilityBonuses(bonusIds, crew) || {};
+    return bonusIds.map((id) => abilities[id] || {});
+  }, [crew]);
+  
+  const [escapeVelocity, propellantRequirement, poweredTime, tugTime] = useMemo(() => {
+    if (!ship || !asteroid) return [0, 0, 0, 0];
+    const escapeVelocity = Asteroid.Entity.getEscapeVelocity(asteroid) * 1000;
+    const propellantRequired = Ship.Entity.getPropellantRequirement(ship, escapeVelocity, hopperBonus.totalBonus);
+    const originLotIndex = Lot.toIndex(originLot?.id);
+    return [
+      escapeVelocity,
+      propellantRequired,
+      0, // TODO: propellantBonus may be incorporated here in the future
+      Time.toRealDuration(Asteroid.getLotTravelTime(asteroid?.id, originLotIndex, 0, hopperBonus.totalBonus), crew?._timeAcceleration)
+    ];
+  }, [asteroid, hopperBonus, originLot?.id, powered, ship]);
+
+  const [propellantLoaded, deltaVLoaded] = useMemo(() => {
+    if (!ship) return [0, 0];
+    const shipConfig = Ship.TYPES[ship.Ship.shipType];
+    const propellantMass = (ship.Inventories || []).find((inv) => inv.slot === shipConfig.propellantSlot)?.mass || 0;
+    const deltaV = Ship.Entity.propellantToDeltaV(ship, propellantMass, hopperBonus.totalBonus);
+    return [
+      propellantMass,
+      deltaV
+    ];
+  }, [ship]);
+  
+  const launchTime = useMemo(() => powered ? poweredTime : tugTime, [powered, poweredTime, tugTime]);
+
+  const [crewTimeRequirement, taskTimeRequirement] = useMemo(() => {
+    return [ 0, launchTime ];
+  }, [launchTime]);
 
   const stats = useMemo(() => ([
     {
-      label: 'Propellant Used',
-      value: `0 tonnes`,
-      direction: 0
-    },
-    {
-      label: 'Launch Time',
-      value: formatTimer(0),
-      direction: 0,
+      label: 'Time until Orbit',
+      value: formatTimer(launchTime),
+      direction: launchTime > 0 ? getBonusDirection(hopperBonus) : 0,
       isTimeStat: true,
+      tooltip: hopperBonus.totalBonus !== 1 && launchTime > 0 && (
+        <TimeBonusTooltip
+          bonus={hopperBonus}
+          title="Time until Orbit"
+          totalTime={launchTime}
+          crewRequired="duration" />
+      )
     },
     {
-      label: 'Delta-V Used',
-      value: `1.712 m/s`,
-      direction: 0,
+      label: 'Propellant Used',
+      value: powered ? formatMass(propellantRequirement) : 0,
+      direction: powered && propellantRequirement > 0 ? getBonusDirection(hopperBonus) : 0
     },
     {
-      label: 'Max Acceleration',
-      value: <>1.712 m/s<sup>2</sup></>,
+      label: 'Escape Velocity',
+      value: `${formatFixed(escapeVelocity, 1)} km/s`,
       direction: 0,
     },
     {
       label: 'Wet Mass',
-      value: `10,000 t`,
+      value: formatMass(
+        Ship.TYPES[ship.Ship.shipType].hullMass
+        + ship.Inventories.reduce((acc, inv) => acc + (inv.status === Inventory.STATUSES.AVAILABLE ? inv.mass : 0), 0)
+      ),
       direction: 0,
     },
-    {
-      label: 'Cargo Mass',
-      value: `1,000 t`,
-      direction: 0,
-    },
-    {
-      label: 'Cargo Volume',
-      value: <>1,000 m<sup>3</sup></>,
-      direction: 0,
-    },
-    {
-      label: 'Passengers',
-      value: `5`,
-      direction: 0,
-    },
-  ]), []);
+  ]), [escapeVelocity, hopperBonus, launchTime, propellantRequirement, ship]);
 
   const onLaunch = useCallback(() => {
-    startLaunch();
+    undockShip();
   }, []);
 
   // handle auto-closing
   const lastStatus = useRef();
   useEffect(() => {
     // (close on status change from)
-    if (['READY', 'READY_TO_FINISH', 'FINISHING'].includes(lastStatus.current)) {
-      if (launchStatus !== lastStatus.current) {
-        console.log('on Close');
-        props.onClose();
-      }
+    if (lastStatus.current && stage !== lastStatus.current) {
+      props.onClose();
     }
-    lastStatus.current = launchStatus;
-  }, [launchStatus]);
+    lastStatus.current = stage;
+  }, [stage]);
+
+  const propellantProduct = Product.TYPES[Product.IDS.HYDROGEN_PROPELLANT];
 
   return (
     <>
@@ -126,9 +150,9 @@ const LaunchShip = ({ asteroid, lot, manager, ship, stage, ...props }) => {
           status: stage === actionStages.NOT_STARTED ? 'Send to Orbit' : undefined,
         }}
         captain={captain}
-        location={{ asteroid, lot, ship }}
-        crewAvailableTime={0}
-        taskCompleteTime={0}
+        location={{ asteroid, lot: originLot, ship }}
+        crewAvailableTime={crewTimeRequirement}
+        taskCompleteTime={taskTimeRequirement}
         onClose={props.onClose}
         overrideColor={stage === actionStages.NOT_STARTED ? theme.colors.main : undefined}
         stage={stage} />
@@ -149,7 +173,7 @@ const LaunchShip = ({ asteroid, lot, manager, ship, stage, ...props }) => {
             <FlexSection>
               <LotInputBlock
                 title="Origin"
-                lot={lot}
+                lot={originLot}
                 disabled={stage !== actionStages.NOT_STARTED}
               />
 
@@ -166,17 +190,19 @@ const LaunchShip = ({ asteroid, lot, manager, ship, stage, ...props }) => {
             <FlexSection style={{ marginBottom: -15 }}>
               <PropulsionTypeSection
                 objectLabel="Launch"
-                onSelect={(x) => () => setPropulsionType(x)}
-                selected={propulsionType} />
+                onSetPowered={(x) => setPowered(x)}
+                powered={powered}
+                propulsiveTime={poweredTime}
+                tugTime={tugTime} />
 
               <FlexSectionSpacer />
 
               <PropellantSection
                 title="Propellant"
-                deltaVLoaded={1500}
-                deltaVRequired={propulsionType === 'tug' ? 0 : 1123}
-                propellantLoaded={840e3}
-                propellantRequired={propulsionType === 'tug' ? 0 : 168e3}
+                deltaVLoaded={deltaVLoaded}
+                deltaVRequired={powered ? escapeVelocity : 0}
+                propellantLoaded={propellantLoaded}
+                propellantRequired={powered ? propellantRequirement : 0}
                 narrow
               />
             </FlexSection>
@@ -189,13 +215,14 @@ const LaunchShip = ({ asteroid, lot, manager, ship, stage, ...props }) => {
                     barColor: theme.colors.lightOrange,
                     color: theme.colors.lightOrange,
                     left: <><WarningOutlineIcon /> Launch Delay</>,
-                    right: formatTimer(2700)
+                    right: formatTimer(0) // TODO: ...
                   }}
                   stage={stage}
                   title="Port Traffic"
                 />
                 <ProgressBarNote themeColor="lightOrange">
-                  <b>6 ships</b> are queued to launch ahead of you.
+                  {/* TODO: ... */}
+                  <b>0 ships</b> are queued to launch ahead of you.
                 </ProgressBarNote>
               </>
             )}
@@ -205,7 +232,10 @@ const LaunchShip = ({ asteroid, lot, manager, ship, stage, ...props }) => {
         {tab === 1 && (
           <ShipTab
             pilotCrew={{ ...crew, roster: crewmates }}
-            previousStats={{ propellantMass: -168e3 }}
+            deltas={{
+              propellantMass: powered ? -propellantRequirement : 0,
+              propellantVolume: powered ? -(propellantRequirement * propellantProduct.volumePerUnit / propellantProduct.massPerUnit) : 0,
+            }}
             ship={ship}
             stage={stage} />
         )}
@@ -219,30 +249,33 @@ const LaunchShip = ({ asteroid, lot, manager, ship, stage, ...props }) => {
 
       {/* TODO: add waitForCrewReady? */}
       <ActionDialogFooter
-        disabled={false/* TODO: insufficient propellant + anything else? */}
+        disabled={false/* TODO: insufficient propellant + reserved inventory, etc */}
         goLabel="Launch"
         onGo={onLaunch}
         stage={stage}
+        waitForCrewReady
         {...props} />
     </>
   );
 };
 
 const Wrapper = (props) => {
-  const { asteroid, lot, isLoading } = useAsteroidAndLot(props);
-  // TODO: ...
-  // const extractionManager = useExtractionManager(lot?.id);
-  // const { actionStage } = extractionManager;
-  const manager = {};
-  const actionStage = actionStages.NOT_STARTED;
+  const { data: ship, isLoading: shipIsLoading } = useShip(props.shipId);
+  const dockingManager = useShipDockingManager(props.shipId);
+  const { actionStage, currentUndockingAction } = dockingManager;
+
+  const { data: asteroid, isLoading: asteroidIsLoading } = useAsteroid(currentUndockingAction?.meta?.asteroidId || ship?._location?.asteroidId);
+  const { data: originLot, isLoading: originLotIsLoading } = useLot(currentUndockingAction?.meta?.lotId || ship?._location?.lotId);
+
+  const isLoading = shipIsLoading || asteroidIsLoading || originLotIsLoading;
 
   useEffect(() => {
-    if (!asteroid || !lot) {
+    if (!asteroid || !originLot || !ship) {
       if (!isLoading) {
         if (props.onClose) props.onClose();
       }
     }
-  }, [asteroid, lot, isLoading]);
+  }, [asteroid, originLot, ship, isLoading]);
 
   return (
     <ActionDialogInner
@@ -251,8 +284,9 @@ const Wrapper = (props) => {
       stage={actionStage}>
       <LaunchShip
         asteroid={asteroid}
-        lot={lot}
-        manager={manager}
+        manager={dockingManager}
+        originLot={originLot}
+        ship={ship}
         stage={actionStage}
         {...props} />
     </ActionDialogInner>

@@ -122,13 +122,8 @@ const AssembleShip = ({ asteroid, lot, dryDockManager, stage, ...props }) => {
   //  or at least re-eval which inputs are available in grid
 
   const process = shipType && shipContructionProcesses.find((p) => p.i === shipType);
-  const ship = useMemo(() => {
-    if (!shipType) return null;
-    return {
-      ...Ship.TYPES[shipType],
-      ...Ship.CONSTRUCTION_TYPES[shipType],
-    }
-  }, [shipType]);
+  const shipConfig = shipType ? Ship.getType(shipType) : null;
+  const shipConstruction = shipType ? Ship.getConstructionType(shipType) : null;
 
   const crewmates = currentAssembly?._crewmates || crew?._crewmates || [];
   const captain = crewmates[0];
@@ -143,12 +138,12 @@ const AssembleShip = ({ asteroid, lot, dryDockManager, stage, ...props }) => {
   }, [crew]);
 
   const [assemblyTime, setupTime] = useMemo(() => {
-    if (!ship) return [0, 0];
+    if (!shipConstruction) return [0, 0];
     return [
-      Time.toRealDuration(ship?.constructionTime / assemblyTimeBonus.totalBonus, crew?._timeAcceleration),
-      Time.toRealDuration(ship?.setupTime / assemblyTimeBonus.totalBonus, crew?._timeAcceleration)
+      Time.toRealDuration(shipConstruction?.constructionTime / assemblyTimeBonus.totalBonus, crew?._timeAcceleration),
+      Time.toRealDuration(shipConstruction?.setupTime / assemblyTimeBonus.totalBonus, crew?._timeAcceleration)
     ];
-  }, [amount, crew?._timeAcceleration, assemblyTimeBonus, ship?.constructionTime]);
+  }, [amount, crew?._timeAcceleration, assemblyTimeBonus, shipConstruction]);
 
   const { totalTime: crewTravelTime, tripDetails } = useMemo(() => {
     if (!asteroid?.id || !crew?._location?.lotId || !lot?.id) return {};
@@ -300,7 +295,7 @@ const AssembleShip = ({ asteroid, lot, dryDockManager, stage, ...props }) => {
 
           <FlexSectionBlock
             title="Assembly Process"
-            titleDetails={!ship ? undefined : (
+            titleDetails={!shipConstruction ? undefined : (
               <span style={{ fontSize: '85%' }}>Setup Time: {formatTimer(setupTime)}</span>
             )}
             bodyStyle={{ padding: 0 }}
@@ -394,12 +389,12 @@ const AssembleShip = ({ asteroid, lot, dryDockManager, stage, ...props }) => {
 
           <div style={{ alignSelf: 'flex-start', height: '280px', width: '280px' }}>
             <FlexSectionBlock
-              title={ship ? <>Produced: <b style={{ color: 'white', marginLeft: 4 }}>1 Ship</b></> : `Production`}
+              title={shipConstruction ? <>Produced: <b style={{ color: 'white', marginLeft: 4 }}>1 Ship</b></> : `Production`}
               bodyStyle={{ alignItems: 'center', display: 'flex', height: '252px', justifyContent: 'center', padding: 0 }}
               style={{ width: '100%' }}>
                 {shipType && (
                   <ShipImage
-                    iconBadge={`+${formatMass(ship.hullMass)}`}
+                    iconBadge={`+${formatMass(shipConfig.hullMass)}`}
                     iconBadgeColor={theme.colors.green}
                     shipType={shipType}
                     size="w400"
@@ -457,8 +452,8 @@ const AssembleShip = ({ asteroid, lot, dryDockManager, stage, ...props }) => {
           />
 
           <InventorySelectionDialog
+            asteroidId={asteroid.id}
             otherEntity={lot.building}
-            otherLotId={lot?.id}
             isSourcing
             itemIds={inputArr}
             onClose={() => setOriginSelectorOpen(false)}
@@ -477,7 +472,7 @@ const AssembleShip = ({ asteroid, lot, dryDockManager, stage, ...props }) => {
           onSelected={setSelectedDestinationIndex}
           originLotIndex={Lot.toIndex(lot?.id)}
           open={destinationSelectorOpen}
-          ship={ship}
+          ship={{ Ship: { shipType }}}
         />
       )}
     </>

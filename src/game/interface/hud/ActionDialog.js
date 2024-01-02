@@ -14,7 +14,7 @@ import theme, { hexToRGB } from '~/theme';
 import AssembleShip from './actionDialogs/AssembleShip';
 import Construct from './actionDialogs/Construct';
 import ControlAsteroid from './actionDialogs/ControlAsteroid';
-import EmergencyModeGenerate from './actionDialogs/EmergencyModeGenerate';
+import EmergencyModeCollect from './actionDialogs/EmergencyModeCollect';
 import EmergencyModeToggle from './actionDialogs/EmergencyModeToggle';
 import EjectCrew from './actionDialogs/EjectCrew';
 import EvictShip from './actionDialogs/EvictShip';
@@ -226,7 +226,7 @@ const ActionDialog = ({ type, params }) => {
         {type === 'DECONSTRUCT' && <Deconstruct {...allProps} />}
         {type === 'EJECT_CREW' && <EjectCrew {...allProps} />}
         {type === 'EJECT_GUEST_CREW' && <EjectCrew {...allProps} guests />}
-        {type === 'EMERGENCY_MODE_GENERATE' && <EmergencyModeGenerate {...allProps} />}
+        {type === 'EMERGENCY_MODE_COLLECT' && <EmergencyModeCollect {...allProps} />}
         {type === 'EMERGENCY_MODE_TOGGLE' && <EmergencyModeToggle {...allProps} />}
         {type === 'EVICT_SHIP' && <EvictShip {...allProps} />}
         {type === 'EXTRACT_RESOURCE' && <Extract {...allProps} />}

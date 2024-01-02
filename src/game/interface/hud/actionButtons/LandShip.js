@@ -1,23 +1,46 @@
-import { useCallback } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Dock, Ship } from '@influenceth/sdk';
 
 import { LandShipIcon } from '~/components/Icons';
-import useStore from '~/hooks/useStore';
 import ActionButton from './ActionButton';
+import useCrewContext from '~/hooks/useCrewContext';
+import useReadyAtWatcher from '~/hooks/useReadyAtWatcher';
+import useShip from '~/hooks/useShip';
 
-const LandShip = ({ onSetAction }) => {
+const LandShip = ({ lot, onSetAction, _disabled }) => {
+  const { crew } = useCrewContext();
+  const { data: crewedShip } = useShip(crew?._location?.shipId)
+  const ready = useReadyAtWatcher(crewedShip?.Ship?.readyAt);
   
   const handleClick = useCallback(() => {
-    onSetAction('LAND_SHIP');
-  }, []);
+    onSetAction(
+      'LAND_SHIP',
+      {
+        shipId: crew?._location.shipId,
+        preselect: { destinationLotId: lot?.id }
+      }
+    );
+  }, [crew?._location.shipId, lot?.id]);
 
-  // TODO: disable if insufficient propellant to land, don't have permission to land,
-  //  no crew on board, or not a valid landing location for this type of ship
+  const disabledReason = useMemo(() => {
+    if (!crewedShip) return 'ship is not crewed';
+    if (!ready) return 'ship is busy';
+    if (lot) {
+      if (lot?.building) {
+        if (!lot.building?.Dock) return 'building has no dock';
+        if (lot.building.Dock.dockedShips >= Dock.TYPES[lot.building.Dock.dockType].cap) return 'dock is full';
+      } else if (!Ship.TYPES[crewedShip.Ship.shipType]?.landing) return 'ship type requires a dock';
+    }
+    return null;
+  }, [crewedShip, ready]);
+
   return (
     <ActionButton
+      label={`${lot?.building?.Dock ? 'Dock' : 'Land'} Ship`}
+      labelAddendum={disabledReason}
       flags={{
-        disabled: false // TODO: ...
+        disabled: _disabled || disabledReason || undefined,
       }}
-      label="Land Ship"
       icon={<LandShipIcon />}
       onClick={handleClick} />
   );

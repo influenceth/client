@@ -317,8 +317,21 @@ const api = {
   },
 
   getAsteroidShips: async (i) => {
-    // TODO: use elasticsearch so can search by flattened location
-    return [];
+    const shipQueryBuilder = esb.boolQuery();
+    
+    // on asteroid
+    shipQueryBuilder.filter(esbLocationQuery({ asteroidId: i }));
+
+    // ship is operational and not traveling or in emergency mode
+    shipQueryBuilder.filter(esb.termQuery('Ship.status', Ship.STATUSES.AVAILABLE));
+
+    const shipQ = esb.requestBodySearch();
+    shipQ.query(shipQueryBuilder);
+    shipQ.from(0);
+    shipQ.size(10000);
+    const response = await instance.post(`/_search/ship`, shipQ.toJSON());
+
+    return formatESData(response.data);
   },
 
   getCrewShips: async (c) => {
@@ -365,9 +378,9 @@ const api = {
     return getEntities({ match: { 'Nft.owners.starknet': account }, label: Entity.IDS.CREWMATE });
   },
 
-  getShipCrews: async (shipId) => {
+  getStationedCrews: async (entityId) => {
     return getEntities({
-      match: { 'Location.location': { id: shipId, label: Entity.IDS.SHIP } },
+      match: { 'Location.location': entityId },
       label: Entity.IDS.CREW
     });
   },

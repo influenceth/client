@@ -21,6 +21,12 @@ import {
   ProcessIcon,
   FoodIcon,
   StationCrewIcon,
+  LaunchShipIcon,
+  LandShipIcon,
+  EjectPassengersIcon,
+  EmergencyModeEnterIcon,
+  EmergencyModeExitIcon,
+  EmergencyModeCollectIcon,
 } from '~/components/Icons';
 import theme, { hexToRGB } from '~/theme';
 import { getProcessorProps } from './utils';
@@ -451,6 +457,79 @@ const formatAsTx = (item) => {
       }
       formatted.onClick = ({ openDialog }) => {
         openDialog('STATION_CREW', { destinationEntityId: item.vars.destination });
+      };
+      break;
+    }
+
+    case 'DockShip': {
+      formatted.icon = <LandShipIcon />;
+      formatted.label = 'Dock on Surface';
+      formatted.asteroidId = item.meta?.asteroidId;
+      formatted.lotId = item.meta?.lotId;
+      formatted.shipId = item.meta?.id;
+      formatted.onClick = ({ openDialog }) => {
+        openDialog('LAND_SHIP', { shipId: item.meta.shipId });
+      };
+      break;
+    }
+
+    case 'UndockShip': {
+      formatted.icon = <LaunchShipIcon />;
+      formatted.label = `${item.vars.powered ? 'Launch' : 'Tug'} into Orbit`;
+      formatted.asteroidId = item.meta?.asteroidId;
+      formatted.lotId = item.meta?.lotId;
+      formatted.shipId = item.vars.ship.id;
+      formatted.onClick = ({ openDialog }) => {
+        openDialog('LAUNCH_SHIP', { shipId: item.vars.ship.id });
+      };
+      break;
+    }
+
+    case 'EjectCrew': {
+      const isGuests = item.vars.caller_crew.id !== item.vars.ejected_crew.id;
+      formatted.icon = <EjectPassengersIcon />;
+      formatted.label = `Eject Crew`;
+      formatted.asteroidId = item.meta?.asteroidId;
+      formatted.lotId = item.meta?.lotId;
+      formatted.shipId = item.meta?.shipId;
+      formatted.onClick = ({ openDialog }) => {
+        openDialog(isGuests ? 'EJECT_GUEST_CREW' : 'EJECT_CREW', { originId: item.meta?.originId });
+      };
+      break;
+    }
+
+    case 'ActivateEmergency': {
+      formatted.icon = <EmergencyModeEnterIcon />;
+      formatted.label = `Activate Emergency`;
+      formatted.asteroidId = item.meta?.asteroidId;
+      formatted.lotId = item.meta?.lotId;
+      formatted.shipId = item.meta?.shipId;
+      formatted.onClick = ({ openDialog }) => {
+        openDialog('EMERGENCY_MODE_TOGGLE');
+      };
+      break;
+    }
+
+    case 'DeactivateEmergency': {
+      formatted.icon = <EmergencyModeExitIcon />;
+      formatted.label = `Deactivate Emergency`;
+      formatted.asteroidId = item.meta?.asteroidId;
+      formatted.lotId = item.meta?.lotId;
+      formatted.shipId = item.meta?.shipId;
+      formatted.onClick = ({ openDialog }) => {
+        openDialog('EMERGENCY_MODE_TOGGLE');
+      };
+      break;
+    }
+
+    case 'CollectEmergencyPropellant': {
+      formatted.icon = <EmergencyModeCollectIcon />;
+      formatted.label = `Collect Propellant`;
+      formatted.asteroidId = item.meta?.asteroidId;
+      formatted.lotId = item.meta?.lotId;
+      formatted.shipId = item.meta?.shipId;
+      formatted.onClick = ({ openDialog }) => {
+        openDialog('EMERGENCY_MODE_COLLECT');
       };
       break;
     }

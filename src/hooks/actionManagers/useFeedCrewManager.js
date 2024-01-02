@@ -22,7 +22,7 @@ const useFeedCrewManager = (entity) => {
   );
 
   const currentFeeding = useMemo(
-    () => getPendingTx('ResupplyFood', { caller_crew }),
+    () => getPendingTx ? getPendingTx('ResupplyFood', { caller_crew }) : null,
     [caller_crew, getPendingTx]
   );
 
