@@ -205,7 +205,7 @@ const useActionButtons = () => {
 
                 // ... if in emergency mode, can generate
                 if (lotShip.Ship.emergencyAt > 0) {
-                  a.push(actionButtons.EmergencyModeGenerate);
+                  a.push(actionButtons.EmergencyModeCollect);
                 }
               }
             }

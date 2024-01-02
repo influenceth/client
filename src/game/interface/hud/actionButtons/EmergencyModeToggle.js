@@ -6,7 +6,7 @@ import useShipEmergencyManager from '~/hooks/actionManagers/useShipEmergencyMana
 import ActionButton from './ActionButton';
 import useReadyAtWatcher from '~/hooks/useReadyAtWatcher';
 
-const EmergencyModeToggle = ({ asteroid, crew, lot, onSetAction, _disabled }) => {
+const EmergencyModeToggle = ({ crew, onSetAction, _disabled }) => {
   const manager = useShipEmergencyManager();
   const { data: crewedShip } = useShip(crew?._location?.shipId);
   const ready = useReadyAtWatcher(crewedShip?.Ship?.readyAt);
@@ -17,6 +17,7 @@ const EmergencyModeToggle = ({ asteroid, crew, lot, onSetAction, _disabled }) =>
 
   const disabledReason = useMemo(() => {
     if (!crewedShip) return 'ship is not crewed';
+    if (crewedShip?._location.lotId) return 'must be in orbit';
     if (!ready) return 'ship is busy';
     return null;
   }, [crewedShip, ready]);

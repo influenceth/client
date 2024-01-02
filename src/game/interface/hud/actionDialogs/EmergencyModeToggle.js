@@ -6,7 +6,7 @@ import travelBackground from '~/assets/images/modal_headers/Travel.png';
 import { CloseIcon, EmergencyModeEnterIcon, EmergencyModeExitIcon, WarningOutlineIcon } from '~/components/Icons';
 import useCrewContext from '~/hooks/useCrewContext';
 import useShip from '~/hooks/useShip';
-import { reactBool, formatTimer } from '~/lib/utils';
+import { reactBool, formatTimer, formatFixed } from '~/lib/utils';
 
 import {
   ActionDialogFooter,
@@ -82,7 +82,7 @@ const EmergencyModeToggle = ({ asteroid, lot, manager, ship, stage, ...props }) 
 
   const propellantJettisoned = useMemo(() => {
     if (inEmergencyMode) {  // if exiting emergency mode, jettison all but 10% of max propellant
-      return Math.max(0, propellantInventory.mass - 0.1 * Inventory.TYPES[propellantInventory.inventoryType].massConstraint) / Product.TYPES[Product.IDS.HYDROGEN_PROPELLANT].massPerUnit;
+      return Math.max(0, propellantInventory.mass - Ship.EMERGENCY_PROP_LIMIT * Inventory.TYPES[propellantInventory.inventoryType].massConstraint) / Product.TYPES[Product.IDS.HYDROGEN_PROPELLANT].massPerUnit;
     }
     return 0;
   }, [inEmergencyMode, propellantInventory]);
@@ -142,7 +142,7 @@ const EmergencyModeToggle = ({ asteroid, lot, manager, ship, stage, ...props }) 
     if (inEmergencyMode) {
       w.push({
         icon: <WarningOutlineIcon />,
-        text: `WARNING: A ship must jettison all but 10% of its propellant capacity when exiting Emergency Mode.`
+        text: `WARNING: A ship must jettison all but ${formatFixed(Ship.EMERGENCY_PROP_LIMIT * 100, 1)}% of its propellant capacity when exiting Emergency Mode.`
       });
     } else {
       w.push({

@@ -26,7 +26,7 @@ import {
   EjectPassengersIcon,
   EmergencyModeEnterIcon,
   EmergencyModeExitIcon,
-  EmergencyModeGenerateIcon,
+  EmergencyModeCollectIcon,
 } from '~/components/Icons';
 import theme, { hexToRGB } from '~/theme';
 import { getProcessorProps } from './utils';
@@ -523,7 +523,7 @@ const formatAsTx = (item) => {
     }
 
     case 'CollectEmergencyPropellant': {
-      formatted.icon = <EmergencyModeGenerateIcon />;
+      formatted.icon = <EmergencyModeCollectIcon />;
       formatted.label = `Collect Propellant`;
       formatted.asteroidId = item.meta?.asteroidId;
       formatted.lotId = item.meta?.lotId;

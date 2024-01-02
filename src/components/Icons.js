@@ -204,7 +204,7 @@ export const DeltaVIcon = () => <DeltaVSVG className="icon" />;
 export const EccentricityIcon = () => <EccentricitySVG className="icon" />;
 export const EmergencyModeEnterIcon = () => <EModeEnterSVG className="icon" />;
 export const EmergencyModeExitIcon = () => <EModeExitSVG className="icon" />;
-export const EmergencyModeGenerateIcon = () => <EModeGenerateSVG className="icon" />;
+export const EmergencyModeCollectIcon = () => <EModeGenerateSVG className="icon" />;
 export const EventIcon = () => <EventSVG className="icon" />;
 export const FarmIcon = () => <FarmSVG className="icon" />;
 export const FavoriteIcon = () => <FavoriteSVG className="icon" />;

@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import styled from 'styled-components';
-import { Inventory, Product, Ship, Time } from '@influenceth/sdk';
+import { Crewmate, Inventory, Product, Ship, Time } from '@influenceth/sdk';
 
 import travelBackground from '~/assets/images/modal_headers/Travel.png';
-import { EmergencyModeGenerateIcon } from '~/components/Icons';
+import { EmergencyModeCollectIcon } from '~/components/Icons';
 import useCrewContext from '~/hooks/useCrewContext';
 import useShip from '~/hooks/useShip';
-import { reactBool, formatTimer } from '~/lib/utils';
+import { reactBool, formatTimer, getCrewAbilityBonuses } from '~/lib/utils';
 
 import {
   ResourceAmountSlider,
@@ -61,23 +61,7 @@ const Note = styled.div`
   padding: 15px 10px 10px;
 `;
 
-const EMERGENCY_PROP_GEN_TIME = 10368000; // in-game seconds to generate 10% of tank from 0
-const getEmergencyPropellantAmount = (generationTime, propellantInvType, startingAmount, resourceId = Product.IDS.HYDROGEN_PROPELLANT) => {
-  const maxEmergencyPropellantAmount = 0.1 * Inventory.TYPES[propellantInvType].massConstraint / Product.TYPES[resourceId].massPerUnit;
-  const generationRate = maxEmergencyPropellantAmount / EMERGENCY_PROP_GEN_TIME;
-  const uncappedGenerationAmount = generationRate * generationTime;
-  return Math.min(maxEmergencyPropellantAmount, startingAmount + uncappedGenerationAmount);
-};
-
-const getTimeUntilEmergencyPropellantFull = (propellantInvType, startingAmount, resourceId = Product.IDS.HYDROGEN_PROPELLANT) => {
-  const maxEmergencyPropellantAmount = 0.1 * Inventory.TYPES[propellantInvType].massConstraint / Product.TYPES[resourceId].massPerUnit;
-  const maxAmountCanGenerate = maxEmergencyPropellantAmount - startingAmount;
-  const generationRate = maxEmergencyPropellantAmount / EMERGENCY_PROP_GEN_TIME;
-  return maxAmountCanGenerate / generationRate;
-};
-
-
-const EmergencyModeGenerate = ({ asteroid, lot, manager, ship, stage, ...props }) => {
+const EmergencyModeCollect = ({ asteroid, lot, manager, ship, stage, ...props }) => {
   const createAlert = useStore(s => s.dispatchAlertLogged);
   const chainTime = useChainTime();
   
@@ -90,24 +74,46 @@ const EmergencyModeGenerate = ({ asteroid, lot, manager, ship, stage, ...props }
 
   const resourceId = Product.IDS.HYDROGEN_PROPELLANT;
 
-  const propellantInventory = ship.Inventories.find((i) => i.slot === Ship.TYPES[ship.Ship.shipType].propellantSlot);
-  const propellantInventoryConfig = Inventory.TYPES[propellantInventory.inventoryType];
-  const startingAmount = propellantInventory.mass / Product.TYPES[resourceId].massPerUnit;
-  const maxTankAmount = propellantInventoryConfig.massConstraint / Product.TYPES[resourceId].massPerUnit;
-  const maxEmergencyAmount = 0.1 * maxTankAmount;
-
   const [collectableAmount, setCollectableAmount] = useState(0);
+
+  const {
+    propellantInventory,
+    propellantInventoryConfig,
+    startingAmount,
+    totalAmount,
+    totalEmergencyFraction
+  } = useMemo(() => {
+    const inventoryBonus = getCrewAbilityBonuses(Crewmate.ABILITY_IDS.INVENTORY_VOLUME_CAPACITY, crew);
+    const propellantInventory = ship.Inventories.find((i) => i.slot === Ship.TYPES[ship.Ship.shipType].propellantSlot);
+    const propellantInventoryConfig = Inventory.getType(propellantInventory.inventoryType, inventoryBonus.totalBonus);
+    const startingAmount = propellantInventory.mass / Product.TYPES[resourceId].massPerUnit;
+    const maxTankAmount = propellantInventoryConfig.massConstraint / Product.TYPES[resourceId].massPerUnit;
+    const maxEmergencyAmount = Ship.EMERGENCY_PROP_LIMIT * maxTankAmount;
+    const totalAmount = startingAmount + collectableAmount;
+    const totalEmergencyFraction = totalAmount / maxEmergencyAmount;
+    return {
+      inventoryBonus,
+      propellantInventory,
+      propellantInventoryConfig,
+      startingAmount,
+      maxTankAmount,
+      maxEmergencyAmount,
+      totalAmount,
+      totalEmergencyFraction
+    };
+  }, [crew, resourceId, ship, collectableAmount]);
+
   const recalculateCollectableAmount = useCallback(() => {
     setCollectableAmount(
       Math.floor(
-        getEmergencyPropellantAmount(
+        Ship.getEmergencyPropellantAmount(
           Time.toGameDuration(Date.now() / 1000 - ship?.Ship?.emergencyAt, crew?._timeAcceleration),
-          propellantInventory.inventoryType,
-          startingAmount
+          propellantInventoryConfig,
+          startingAmount,
         ) - startingAmount
       )
     );
-  }, [crew?._timeAcceleration, ship?.Ship?.emergencyAt, propellantInventory, startingAmount]);
+  }, [crew?._timeAcceleration, ship?.Ship?.emergencyAt, propellantInventoryConfig, startingAmount]);
 
   useEffect(() => {
     recalculateCollectableAmount();
@@ -115,22 +121,16 @@ const EmergencyModeGenerate = ({ asteroid, lot, manager, ship, stage, ...props }
     return () => clearInterval(i);
   }, [recalculateCollectableAmount]);
 
-  const totalAmount = startingAmount + collectableAmount;
-  const totalEmergencyFraction = totalAmount / maxEmergencyAmount;
-  const totalTankFraction = totalAmount / maxTankAmount;
-
-  // console.log({ totalAmount, totalEmergencyFraction, totalTankFraction });
-
   const maxGenerationTime = useMemo(() => {
     // console.log(propellantInventory.inventoryType, propellantInventory.mass, Product.TYPES[resourceId].massPerUnit)
     return Time.toRealDuration(
-      getTimeUntilEmergencyPropellantFull(
-        propellantInventory.inventoryType,
-        propellantInventory.mass / Product.TYPES[resourceId].massPerUnit
+      Ship.getTimeUntilEmergencyPropellantFull(
+        propellantInventoryConfig,
+        propellantInventory.mass / Product.TYPES[resourceId].massPerUnit,
       ),
       crew?._timeAcceleration
     );
-  }, [crew?._timeAcceleration, ship?.emergencyAt]);
+  }, [crew?._timeAcceleration, propellantInventory, propellantInventoryConfig]);
 
   const stats = useMemo(() => ([
     {
@@ -181,7 +181,7 @@ const EmergencyModeGenerate = ({ asteroid, lot, manager, ship, stage, ...props }
     <>
       <ActionDialogHeader
         action={{
-          icon: <EmergencyModeGenerateIcon />,
+          icon: <EmergencyModeCollectIcon />,
           label: 'Collect Propellant',
           status: stage === actionStages.NOT_STARTED ? 'Emergency Generation Active' : undefined
         }}
@@ -289,7 +289,7 @@ const Wrapper = (props) => {
       actionImage={travelBackground}
       isLoading={reactBool(isLoading)}
       stage={actionStage}>
-      <EmergencyModeGenerate
+      <EmergencyModeCollect
         asteroid={asteroid}
         lot={lot}
         ship={ship}

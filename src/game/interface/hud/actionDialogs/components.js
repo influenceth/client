@@ -1754,6 +1754,7 @@ export const TransferSelectionDialog = ({ sourceEntity, requirements, inventory,
 export const LandingSelectionDialog = ({ asteroid, deliveryMode, initialSelection, onClose, onSelected, open, originLotIndex, ship }) => {
   const [error, setError] = useState();
   const [selection, setSelection] = useState(initialSelection);
+  const shipConfig = Ship.TYPES[ship?.Ship?.shipType];
 
   // TODO: to get spaceport names, it will probably make more sense to have
   //  a "get spaceports" api endpoint
@@ -1800,7 +1801,7 @@ export const LandingSelectionDialog = ({ asteroid, deliveryMode, initialSelectio
       {/* TODO: isLoading */}
       {/* TODO: replace with DataTable? */}
       <div style={{ minWidth: 500 }}></div>
-      {ship?.landing && (
+      {shipConfig?.landing && (
         <TextInputWithNote>
           <TextInput
             onKeyDown={handleKeyDown}
@@ -3500,7 +3501,7 @@ export const ShipTab = ({ pilotCrew, ship, stage, deltas = {}, statWarnings = {}
         {warnings?.length > 0 && (
           <div style={{ alignSelf: 'flex-start', width: '50%' }}>
             {warnings.map(({ icon, text }) => (
-              <WarningAlert>
+              <WarningAlert key={text}>
                 <div>{icon}</div>
                 <div>{text}</div>
               </WarningAlert>

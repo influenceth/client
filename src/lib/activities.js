@@ -12,7 +12,7 @@ import {
   EjectPassengersIcon,
   EmergencyModeEnterIcon,
   EmergencyModeExitIcon,
-  EmergencyModeGenerateIcon,
+  EmergencyModeCollectIcon,
   ExtractionIcon,
   FoodIcon,
   ImproveCoreSampleIcon,
@@ -671,7 +671,7 @@ const activities = {
     // TODO: log content seems like overkill here?
     getLogContent: ({ event: { returnValues } }) => {
       return {
-        icon: <EmergencyModeGenerateIcon />,
+        icon: <EmergencyModeCollectIcon />,
         content: (
           <>
             <span>
@@ -1171,7 +1171,7 @@ const activities = {
         icon: <LaunchShipIcon />,
         content: (
           <>
-            <EntityLink {...returnValues.ship} /> undocked from <EntityLink {...returnValues.dock} />
+            <EntityLink {...returnValues.ship} /> {returnValues.dock.label === Entity.IDS.BUILDING ? 'undocked' : 'launched'} from <EntityLink {...returnValues.dock} />
           </>
         )
       };
