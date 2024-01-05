@@ -166,7 +166,7 @@ const useActionButtons = () => {
             }
           }
           
-          if (lotShip && [Ship.STATUSES.AVAILABLE, Ship.STATUSES.IN_FLIGHT].includes(lotShip.Ship?.status)) {
+          if (lotShip && Ship.STATUSES.AVAILABLE === lotShip.Ship?.status) {
 
             // TODO: check in buttons that crew is on asteroid
             //  AND check that both in orbit or both on surface
