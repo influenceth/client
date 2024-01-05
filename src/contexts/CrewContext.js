@@ -147,9 +147,6 @@ export function CrewProvider({ children }) {
             c.Crew.lastFed = updatedCrew.Crew.lastFed;
             c.Crew.readyAt = updatedCrew.Crew.readyAt;
 
-            // TODO: flesh this out! setting to a Jan 1 2025 as a flag to self for now
-            if (updatedCrew.Crew.actionType) c.Crew.readyAt = 1735689600;
-
             // update nextReadyAt if this crew's readyAt is sooner
             if (c.Crew.readyAt > getNow() && c.Crew.readyAt < nextReadyAt) {
               setNextReadyAt(c.Crew.readyAt);

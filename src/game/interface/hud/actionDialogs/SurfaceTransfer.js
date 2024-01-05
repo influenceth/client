@@ -273,7 +273,7 @@ const SurfaceTransfer = ({
 
         {tab === 0 && (
           <>
-            {(!destinationLot || (destinationLot?.building || destinationLot?.surfaceShip)?.Control?.controller?.id === crew?.id)
+            {(!destinationLot || destinationController?.id === crew?.id)
               ? (
                 <ItemSelectionSection
                   label="Transfer Items"
@@ -296,7 +296,7 @@ const SurfaceTransfer = ({
                   <FlexSectionSpacer />
 
                   <div style={{ alignSelf: 'flex-start', width: '50%' }}>
-                    <CrewIndicator crew={crew} />
+                    <CrewIndicator crew={destinationController} />
 
                     <WarningAlert severity="warning" style={{ marginBottom: 20 }}>
                       <div><WarningOutlineIcon /></div>
@@ -376,7 +376,9 @@ const SurfaceTransfer = ({
         <>
           <TransferSelectionDialog
             sourceEntity={origin}
-            inventory={originInventory?.contents || []}
+            sourceContents={originInventory?.contents || []}
+            pendingTargetDeliveries={deliveryManager.currentDeliveryActions}
+            targetInventory={destinationInventory}
             initialSelection={selectedItems}
             onClose={() => setTransferSelectorOpen(false)}
             onSelected={setSelectedItems}

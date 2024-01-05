@@ -385,7 +385,8 @@ const FeedCrew = ({
         <>
           <TransferSelectionDialog
             sourceEntity={origin}
-            inventory={originInventory?.contents || []}
+            sourceContents={originInventory?.contents || []}
+            targetInventoryConstraints={{ [129]: Math.max(0, foodStats.maxFood - foodStats.currentFood) }}
             initialSelection={selectedItems}
             onClose={() => setTransferSelectorOpen(false)}
             onSelected={setSelectedItems}
