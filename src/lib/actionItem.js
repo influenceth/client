@@ -27,9 +27,11 @@ import {
   EmergencyModeEnterIcon,
   EmergencyModeExitIcon,
   EmergencyModeCollectIcon,
+  SetCourseIcon,
 } from '~/components/Icons';
 import theme, { hexToRGB } from '~/theme';
 import { getProcessorProps } from './utils';
+import formatters from './formatters';
 
 const formatAsItem = (activity, actionItem = {}) => {
   const formatted = {
@@ -319,7 +321,7 @@ const formatAsTx = (item) => {
       break;
     }
 
-    case 'TransferInventoryStart': {
+    case 'SendDelivery': {
       formatted.icon = <SurfaceTransferIcon />;
       formatted.label = 'Start Transfer';
       formatted.asteroidId = item.meta?.asteroidId;
@@ -329,7 +331,7 @@ const formatAsTx = (item) => {
       };
       break;
     }
-    case 'TransferInventoryFinish': {
+    case 'ReceiveDelivery': {
       formatted.icon = <SurfaceTransferIcon />;
       formatted.label = 'Finish Transfer';
       formatted.asteroidId = item.meta?.asteroidId;
@@ -530,6 +532,28 @@ const formatAsTx = (item) => {
       formatted.shipId = item.meta?.shipId;
       formatted.onClick = ({ openDialog }) => {
         openDialog('EMERGENCY_MODE_COLLECT');
+      };
+      break;
+    }
+
+    case 'TransitBetweenStart': {
+      formatted.icon = <SetCourseIcon />;
+      formatted.label = item.meta.destination ? `Departure for ${formatters.asteroidName(item.meta.destination)}` : `Departure Sequence`;
+      formatted.asteroidId = item.vars.origin?.id;
+      formatted.shipId = item.meta?.shipId;
+      formatted.onClick = ({ openDialog }) => {
+        openDialog('SET_COURSE');
+      };
+      break;
+    }
+
+    case 'TransitBetweenFinish': {
+      formatted.icon = <SetCourseIcon />;
+      formatted.label = item.meta.destination ? `Arrival to ${formatters.asteroidName(item.meta.destination)}` : `Arrival Sequence`;
+      formatted.asteroidId = item.meta.destination?.id;
+      formatted.shipId = item.meta?.shipId;
+      formatted.onClick = ({ openDialog }) => {
+        openDialog('SET_COURSE');
       };
       break;
     }

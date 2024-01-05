@@ -1,12 +1,13 @@
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import styled from 'styled-components';
-import { Crew, Crewmate, Ship, Time } from '@influenceth/sdk';
+import { Crew, Crewmate, Product, Ship, Time } from '@influenceth/sdk';
 
 import travelBackground from '~/assets/images/modal_headers/Travel.png';
 import { CoreSampleIcon, ExtractionIcon, InventoryIcon, LaunchShipIcon, LocationIcon, ResourceIcon, RouteIcon, SetCourseIcon, ShipIcon, RotatedShipMarkerIcon, WarningOutlineIcon, MyAssetIcon } from '~/components/Icons';
+import TimeComponent from '~/components/Time';
 import useCrewContext from '~/hooks/useCrewContext';
 import useExtractionManager from '~/hooks/actionManagers/useExtractionManager';
-import { formatFixed, formatTimer } from '~/lib/utils';
+import { formatFixed, formatTimer, reactBool } from '~/lib/utils';
 
 import {
   ResourceAmountSlider,
@@ -45,7 +46,8 @@ import {
   MiniBarChartSection,
   ShipTab,
   formatVelocity,
-  ShipInputBlock
+  ShipInputBlock,
+  formatVolume
 } from './components';
 import useLot from '~/hooks/useLot';
 import useStore from '~/hooks/useStore';
@@ -55,8 +57,10 @@ import actionStages from '~/lib/actionStages';
 import theme from '~/theme';
 import CrewCardFramed from '~/components/CrewCardFramed';
 import useAsteroid from '~/hooks/useAsteroid';
-import ClockContext from '~/contexts/ClockContext';
+import ClockContext, { DISPLAY_TIME_FRACTION_DIGITS } from '~/contexts/ClockContext';
 import formatters from '~/lib/formatters';
+import useShipTravelManager from '~/hooks/actionManagers/useShipTravelManager';
+import useShip from '~/hooks/useShip';
 
 const Banner = styled.div`
   align-items: center;
@@ -88,6 +92,10 @@ const CourseRow = styled.div`
   display: flex;
   flex-direction: row;
   margin-bottom: 20px;
+  & > div:first-child,
+  & > div:last-child {
+    flex: 0 0 92px;
+  }
 `;
 const Course = styled.div`
   display: flex-inline;
@@ -147,8 +155,12 @@ const TimingDetails = styled.div`
     color: white;
     display: flex;
     flex-direction: row;
+    line-height: 1em;
     margin-bottom: 4px;
-    padding: 4px 8px;
+    padding: 8px 8px;
+    &:last-child {
+      margin-bottom: 0px;
+    }
     & > label {
       flex: 1;
       font-size: 95%;
@@ -163,6 +175,12 @@ const TimingDetails = styled.div`
         & svg {
           margin-right: 6px;
         }
+      }
+      & i {
+        font-size: 14px;
+        font-style: normal;
+        margin-left: 4px;
+        opacity: 0.5;
       }
     }
   }
@@ -196,30 +214,68 @@ const LocationDiamond = () => (
   </DiamondOuter>
 );
 
-// TODO: fill in real numbers
+const propellantProduct = Product.TYPES[Product.IDS.HYDROGEN_PROPELLANT];
 
 const SetCourse = ({ origin, destination, manager, ship, stage, travelSolution, ...props }) => {
   const { coarseTime } = useContext(ClockContext);
   const createAlert = useStore(s => s.dispatchAlertLogged);
   
-  const { currentLaunch, flightStatus, startLaunch } = manager;
-
-  const { crew, crewmateMap } = useCrewContext();
+  const { currentTravelAction, depart, arrive, travelStatus } = manager;
+  const { crew } = useCrewContext();
 
   const [tab, setTab] = useState(0);
 
-  const crewmates = currentLaunch?._crewmates || (crew?._crewmates || []).map((i) => crewmateMap[i]);
+  const crewmates = currentTravelAction?._crewmates || crew?._crewmates || [];
   const captain = crewmates[0];
-  const crewTravelBonus = Crew.getAbilityBonus(Crewmate.ABILITY_IDS.HOPPER_TRANSPORT_TIME, crewmates);
-  const launchBonus = 0;
+  
+  const [shipConfig, cargoInv, propellantInv] = useMemo(() => {
+    if (!ship) return [];
+    const shipConfig = Ship.TYPES[ship.Ship.shipType];
+    const cargoInv = ship.Inventories.find((inventory) => inventory.slot === shipConfig.cargoSlot);
+    const propellantInv = ship.Inventories.find((inventory) => inventory.slot === shipConfig.propellantSlot);
+    return [shipConfig, cargoInv, propellantInv];
+  }, [ship]);
 
-  const arrivingIn = useMemo(() => 3600 * (travelSolution.arrivalTime - coarseTime), [coarseTime, travelSolution])
+
+  const delay = useMemo(() => {
+    return Math.max(0, travelSolution.departureTime - coarseTime) * 86400;
+  }, [coarseTime, travelSolution]);
+
+  const arrivingIn = useMemo(() => {
+    return Math.max(0, travelSolution.arrivalTime - coarseTime);
+  }, [coarseTime, travelSolution]);
+
+  const propellantMassLoaded = useMemo(() => {
+    if (!propellantInv) return 0;
+    let totalMass = propellantInv.mass;
+    if (currentTravelAction) totalMass += travelSolution.usedPropellantMass || 0;
+    return totalMass;
+  }, [currentTravelAction, propellantInv]);
+
+  // TODO: should we apply bonus here? to solution deltaV?
+  const deltaVLoaded = useMemo(() => {
+    if (!ship || !propellantMassLoaded) return 0;
+    const propellantBonus = 1;
+    return Ship.Entity.propellantToDeltaV(ship, propellantMassLoaded, propellantBonus);
+  }, [propellantMassLoaded, ship]);
+
+  const [crewTimeRequirement, taskTimeRequirement] = useMemo(() => {
+    const timeRequirement = currentTravelAction
+      ? currentTravelAction.finishTime - currentTravelAction.startTime
+      : Time.toRealDuration(arrivingIn * 86400, crew?._timeAcceleration);
+    return [timeRequirement, timeRequirement];
+  }, [currentTravelAction, arrivingIn, crew?._timeAcceleration]);
 
   const stats = useMemo(() => ([
     {
       label: 'Propellant Used',
-      value: `0 tonnes`,
+      value: formatMass(travelSolution.usedPropellantMass),
       direction: 0
+    },
+    {
+      label: 'Delta-V Used',
+      value: formatVelocity(travelSolution.deltaV),
+      direction: 0,
     },
     {
       label: 'Arriving In',
@@ -227,67 +283,62 @@ const SetCourse = ({ origin, destination, manager, ship, stage, travelSolution, 
       direction: 0,
       isTimeStat: true,
     },
-    {
-      label: 'Delta-V Used',
-      value: `1.712 m/s`,
-      direction: 0,
-    },
-    {
-      label: 'Max Acceleration',
-      value: <>1.712 m/s<sup>2</sup></>,
-      direction: 0,
-    },
+    // {
+    //   label: 'Max Acceleration',
+    //   value: <>1.712 m/s<sup>2</sup></>,
+    //   direction: 0,
+    // },
     {
       label: 'Wet Mass',
-      value: `10,000 t`,
+      value: formatMass(shipConfig.hullMass + propellantMassLoaded + cargoInv.mass),
       direction: 0,
     },
     {
-      label: 'Cargo Mass',
-      value: `1,000 t`,
+      label: 'Dry Mass',
+      value: formatMass(shipConfig.hullMass + propellantMassLoaded + cargoInv.mass - travelSolution.usedPropellantMass),
       direction: 0,
     },
-    {
-      label: 'Cargo Volume',
-      value: <>1,000 m<sup>3</sup></>,
-      direction: 0,
-    },
+    // {
+    //   label: 'Cargo Volume',
+    //   value: formatVolume(cargoInv.volume),
+    //   direction: 0,
+    // },
     {
       label: 'Passengers',
-      value: `5`,
+      value: ship.Station.population || 0,
       direction: 0,
     },
-  ]), []);
+  ]), [arrivingIn, cargoInv, travelSolution, propellantInv, shipConfig]);
 
-  const onLaunch = useCallback(() => {
-    startLaunch();
+  const onDepart = useCallback(() => {
+    depart();
+  }, []);
+
+  const onArrive = useCallback(() => {
+    arrive();
   }, []);
 
   // handle auto-closing
   const lastStatus = useRef();
   useEffect(() => {
-    // (close on status change from)
-    if (['READY', 'READY_TO_FINISH', 'FINISHING'].includes(lastStatus.current)) {
-      if (flightStatus !== lastStatus.current) {
-        props.onClose();
-      }
+    // (close on status change)
+    if (lastStatus.current && travelStatus !== lastStatus.current) {
+      props.onClose();
     }
-    lastStatus.current = flightStatus;
-  }, [flightStatus]);
+    lastStatus.current = travelStatus;
+  }, [travelStatus]);
 
-  const delay = travelSolution.departureTime - coarseTime;
   useEffect(() => {
-    if (flightStatus === 'READY' && delay <= 0) {
+    if (travelStatus === 'READY' && delay <= 0) {
       createAlert({
         type: 'GenericAlert',
         data: { content: 'Scheduled departure time has past.' },
         level: 'warning',
-        duration: 0,
-      })
+        // duration: 0,
+      });
       props.onClose();
     }
   }, [delay]);
-  
 
   return (
     <>
@@ -299,8 +350,8 @@ const SetCourse = ({ origin, destination, manager, ship, stage, travelSolution, 
         }}
         captain={captain}
         location={{ asteroid: origin, ship }}
-        crewAvailableTime={arrivingIn}
-        taskCompleteTime={arrivingIn}
+        crewAvailableTime={crewTimeRequirement}
+        taskCompleteTime={taskTimeRequirement}
         onClose={props.onClose}
         overrideColor={stage === actionStages.NOT_STARTED ? theme.colors.main : undefined}
         stage={stage} />
@@ -338,7 +389,7 @@ const SetCourse = ({ origin, destination, manager, ship, stage, travelSolution, 
                     <label>
                       <RotatedShipMarkerIcon />
                       <span>
-                        {travelSolution.arrivalTime - travelSolution.departureTime} hours
+                        {formatTimer(86400 * Time.toRealDuration(travelSolution.arrivalTime - travelSolution.departureTime, crew?._timeAcceleration), 2)}
                       </span>
                     </label>
                     <Dashes flip />
@@ -361,21 +412,38 @@ const SetCourse = ({ origin, destination, manager, ship, stage, travelSolution, 
               <FlexSectionSpacer />
 
               <TimingDetails>
-                <div>
-                  <label>Departure Delay</label>
-                  <span>
-                    {delay > 0.1
-                      ? <b><WarningOutlineIcon /> {formatTimer(3600 * delay, 2)}</b>
-                      : <>{formatTimer(3600 * delay, 2)}</>}
-                  </span>
-                </div>
+                {travelStatus === 'READY' && (
+                  <div>
+                    <label>Departure Delay</label>
+                    <span>
+                      {delay > 300
+                        ? <b><WarningOutlineIcon /> {formatTimer(delay, 2)}</b>
+                        : <>{formatTimer(delay, 2)}</>}
+                    </span>
+                  </div>
+                )}
                 <div>
                   <label>Depart</label>
-                  <span>{(Time.fromOrbitADays(travelSolution.departureTime).toGameClockADays() || 0).toLocaleString()}</span>
+                  <span>
+                    {(Time.fromOrbitADays(travelSolution.departureTime, crew._timeAcceleration).toGameClockADays() || 0).toLocaleString(undefined, { minimumFractionDigits: DISPLAY_TIME_FRACTION_DIGITS })}
+                    <i>DAYS</i>
+                  </span>
                 </div>
+                {travelStatus !== 'READY' && (
+                  <div>
+                    <label>Time in Flight</label>
+                    <span>
+                      {(travelSolution.arrivalTime - travelSolution.departureTime).toLocaleString(undefined, { minimumFractionDigits: DISPLAY_TIME_FRACTION_DIGITS })}
+                      <i>DAYS</i>
+                    </span>
+                  </div>
+                )}
                 <div>
                   <label>Arrive</label>
-                  <span>{(Time.fromOrbitADays(travelSolution.arrivalTime).toGameClockADays() || 0).toLocaleString()}</span>
+                  <span>
+                    {(Time.fromOrbitADays(travelSolution.arrivalTime, crew._timeAcceleration).toGameClockADays() || 0).toLocaleString(undefined, { minimumFractionDigits: DISPLAY_TIME_FRACTION_DIGITS })}
+                    <i>DAYS</i>
+                  </span>
                 </div>
               </TimingDetails>
 
@@ -384,9 +452,10 @@ const SetCourse = ({ origin, destination, manager, ship, stage, travelSolution, 
             <FlexSection style={{ marginBottom: -15 }}>
               <PropellantSection
                 title="Requirements"
-                propellantRequired={168e3}
-                propellantLoaded={840e3}
-                propellantMax={950e3}
+                deltaVRequired={travelSolution.deltaV}
+                deltaVLoaded={deltaVLoaded}
+                propellantRequired={travelSolution.usedPropellantMass / propellantProduct.massPerUnit}
+                propellantLoaded={propellantMassLoaded / propellantProduct.massPerUnit}
               />
             </FlexSection>
           </>
@@ -395,7 +464,10 @@ const SetCourse = ({ origin, destination, manager, ship, stage, travelSolution, 
         {tab === 1 && (
           <ShipTab
             pilotCrew={{ ...crew, roster: crewmates }}
-            previousStats={{ propellantMass: -168e3 }}
+            deltas={{
+              propellantMass: -travelSolution.usedPropellantMass,
+              propellantVolume: -travelSolution.usedPropellantMass / propellantProduct.massPerUnit * propellantProduct.volumePerUnit,
+            }}
             ship={ship}
             stage={stage} />
         )}
@@ -410,7 +482,9 @@ const SetCourse = ({ origin, destination, manager, ship, stage, travelSolution, 
       <ActionDialogFooter
         disabled={false/* TODO: insufficient propellant + anything else? */}
         goLabel="Schedule"
-        onGo={onLaunch}
+        onGo={onDepart}
+        finalizeLabel="Arrive"
+        onFinalize={onArrive}
         stage={stage}
         waitForCrewReady
         {...props} />
@@ -418,39 +492,51 @@ const SetCourse = ({ origin, destination, manager, ship, stage, travelSolution, 
   );
 };
 
-const Wrapper = ({ travelSolution, ...props }) => {
+const Wrapper = ({ ...props }) => {
+  const { crew } = useCrewContext();
+
+  const manager = useShipTravelManager(crew?._location?.shipId);
+  const { actionStage, currentTravelAction, currentTravelSolution, isLoading: solutionIsLoading } = manager;
+
   const defaultOrigin = useStore(s => s.asteroids.origin);
   const defaultDestination = useStore(s => s.asteroids.destination);
+  const proposedTravelSolution = useStore(s => s.asteroids.travelSolution);
 
-  const { data: origin, isLoading: originIsLoading } = useAsteroid(travelSolution?.originId || defaultOrigin);
-  const { data: destination, isLoading: destinationIsLoading } = useAsteroid(travelSolution?.destinationId || defaultDestination);
+  const travelSolution = useMemo(() => currentTravelAction ? currentTravelSolution : proposedTravelSolution, [currentTravelAction, proposedTravelSolution]);
+
+  const { data: origin, isLoading: originIsLoading } = useAsteroid(currentTravelAction?.originId || defaultOrigin);
+  const { data: destination, isLoading: destinationIsLoading } = useAsteroid(currentTravelAction?.destinationId || defaultDestination);
+  const { data: ship, isLoading: shipIsLoading } = useShip(crew?._location?.shipId);
   
   // close dialog if cannot load both asteroids or if no travel solution
   useEffect(() => {
-    if (!origin || !destination) {
-      if (!originIsLoading && !destinationIsLoading) {
+    if (!origin || !destination || !ship) {
+      if (!originIsLoading && !destinationIsLoading && !shipIsLoading) {
+        console.log('not loaded', origin, destination, ship);
         if (props.onClose) props.onClose();
       }
     }
-  }, [origin, destination, originIsLoading, destinationIsLoading]);
 
-  // const { asteroid, lot, isLoading } = useAsteroidAndLot(props);
-  // TODO: ...
-  // const extractionManager = useExtractionManager(lot?.id);
-  // const { actionStage } = extractionManager;
-  const manager = { flightStatus: 'READY' };
-  const actionStage = actionStages.NOT_STARTED;
+    if (!travelSolution) {
+      if (!solutionIsLoading) {
+        console.log('not loading');
+        if (props.onClose) props.onClose();
+      }
+    }
+  }, [origin, destination, originIsLoading, destinationIsLoading, travelSolution, solutionIsLoading]);
 
+  const isLoading = originIsLoading || destinationIsLoading || shipIsLoading || !travelSolution;
   return (
     <ActionDialogInner
       actionImage={travelBackground}
-      isLoading={originIsLoading || destinationIsLoading}
+      isLoading={reactBool(isLoading)}
       stage={actionStage}>
       <SetCourse
         origin={origin}
         destination={destination}
         manager={manager}
         stage={actionStage}
+        ship={ship}
         travelSolution={travelSolution}
         {...props} />
     </ActionDialogInner>

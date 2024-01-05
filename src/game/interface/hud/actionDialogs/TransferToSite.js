@@ -67,7 +67,12 @@ const TransferToSite = ({ asteroid, lot: destinationLot, deliveryManager, stage,
   const [origin, setOrigin] = useState();
   const originLotId = useMemo(() => Lot.toId(asteroid?.id, origin?.lotIndex), [asteroid?.id, origin?.lotIndex]);
   const { data: originLot } = useLot(originLotId);
-  const originInventory = useMemo(() => (originLot?.[origin?.label === Entity.IDS.BUILDING ? 'building' : 'ship']?.Inventories || []).find((i) => i.slot === origin?.slot), [originLot, origin]);
+  const originEntity = useMemo(() => {
+    if (!originLot || !origin) return null;
+    if (origin.label === Entity.IDS.SHIP) return originLot.ships.find((s) => s.id === origin.id);
+    return originLot.building;
+  }, [originLot, origin]);
+  const originInventory = useMemo(() => (originEntity?.Inventories || []).find((i) => i.slot === origin?.slot), [originEntity, origin]);
 
   // // handle "currentDeliveryAction" state
   // useEffect(() => {
@@ -214,7 +219,7 @@ const TransferToSite = ({ asteroid, lot: destinationLot, deliveryManager, stage,
             fallbackSublabel="Inventory"
             imageProps={{
               iconOverride: <InventoryIcon />,
-              inventories: originLot?.building?.Inventories,
+              inventories: originEntity?.Inventories,
               showInventoryStatusForType: origin?.slot
             }}
             isSelected={stage === actionStage.NOT_STARTED}
@@ -277,7 +282,7 @@ const TransferToSite = ({ asteroid, lot: destinationLot, deliveryManager, stage,
       {stage === actionStage.NOT_STARTED && (
         <>
           <TransferSelectionDialog
-            sourceEntity={originLot?.building}
+            sourceEntity={originEntity}
             requirements={buildingRequirements}
             inventory={originInventory?.contents || []}
             initialSelection={selectedItems}

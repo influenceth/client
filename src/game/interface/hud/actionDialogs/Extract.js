@@ -204,7 +204,6 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
     ];
   }, [extractionTime, crewTravelTime, transportTime]);
 
-
   const stats = useMemo(() => ([
     {
       label: 'Extraction Mass',

@@ -1,5 +1,6 @@
 import { Crew, Entity, Lot, Processor, Time } from '@influenceth/sdk';
 import esb from 'elastic-builder';
+
 import { BioreactorBuildingIcon, ManufactureIcon, RefineIcon } from '~/components/Icons';
 
 const timerIncrements = { d: 86400, h: 3600, m: 60, s: 1 };
@@ -120,3 +121,5 @@ export const getProcessorProps = (processorType) => {
   }
   return {};
 }
+
+export const arrToXYZ = (arr) => ({ x: arr[0], y: arr[1], z: arr[2] });

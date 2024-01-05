@@ -24,6 +24,7 @@ import TextInput from '~/components/TextInput';
 import useActivities from '~/hooks/useActivities';
 import useAuth from '~/hooks/useAuth';
 import useChangeName from '~/hooks/actionManagers/useChangeName';
+import useConstants from '~/hooks/useConstants';
 import useCrewContext from '~/hooks/useCrewContext';
 import useEarliestActivity from '~/hooks/useEarliestActivity';
 import useHydratedCrew from '~/hooks/useHydratedCrew';
@@ -318,6 +319,8 @@ const CrewDetails = ({ crewId, crew, isMyCrew, isOwnedCrew, selectCrew }) => {
   const { data: earliestActivity, isLoading: earliestLoading } = useEarliestActivity({ id: crewId, label: Entity.IDS.CREW });
   const { changeName, changingName } = useChangeName({ id: crewId, label: Entity.IDS.CREW });
 
+  const { data: TIME_ACCELERATION } = useConstants('TIME_ACCELERATION');
+
   const hydratedLocation = useHydratedLocation(crew._location);
 
   const [editing, setEditing] = useState();
@@ -371,7 +374,7 @@ const CrewDetails = ({ crewId, crew, isMyCrew, isOwnedCrew, selectCrew }) => {
   const formationDate = useMemo(() => {
     if (earliestLoading) return '...';
     if (!earliestActivity) return 'Unknown';
-    return `${Time.fromUnixTime(earliestActivity?.event?.timestamp, false).toGameClockADays(true)} SA`;
+    return `${Time.fromUnixSeconds(earliestActivity?.event?.timestamp, TIME_ACCELERATION).toGameClockADays(true)} SA`;
   }, [earliestActivity, earliestLoading]);
 
   // TODO: was this just debug? remove?

@@ -33,7 +33,7 @@ const useDeliveryManager = ({ destination, destinationSlot, origin, originSlot, 
   }), [crew?.id]);
 
   const pendingDeliveries = useMemo(() => {
-    return pendingTransactions.filter(({ key, vars }) => key === 'TransferInventoryStart' && (
+    return pendingTransactions.filter(({ key, vars }) => key === 'SendDelivery' && (
       (!destination || (vars.dest.label === destination.label && vars.dest.id === destination.id))
       && (!destinationSlot || vars.dest_slot === destinationSlot)
       && (!origin || (vars.origin.label === origin.label && vars.origin.id === origin.id))
@@ -67,7 +67,7 @@ const useDeliveryManager = ({ destination, destinationSlot, origin, originSlot, 
   
       // if deliveryId, treat lot as destination and assume in progress or done
       if (delivery.id > 0) {
-        let actionItem = (actionItems || []).find((item) => item.event.name === 'DeliveryStarted' && item.event.returnValues.delivery.id === delivery.id);
+        let actionItem = (actionItems || []).find((item) => item.event.name === 'DeliverySent' && item.event.returnValues.delivery.id === delivery.id);
         if (actionItem) {
           // current._crewmates = actionItem.assets.crew?.crewmates;  // TODO: ...
           current.startTime = actionItem.event.timestamp;
@@ -85,7 +85,7 @@ const useDeliveryManager = ({ destination, destinationSlot, origin, originSlot, 
           status = 'FINISHED';
           stage = actionStages.COMPLETED;
         } else {
-          if(getStatus('TransferInventoryFinish', { ...payload, delivery: { id: delivery.id, label: Entity.IDS.DELIVERY } }) === 'pending') {
+          if(getStatus('ReceiveDelivery', { ...payload, delivery: { id: delivery.id, label: Entity.IDS.DELIVERY } }) === 'pending') {
             status = 'FINISHING';
             stage = actionStages.COMPLETING;
           } else if (delivery.Delivery.finishTime && delivery.Delivery.finishTime <= liveBlockTime) {
@@ -120,7 +120,7 @@ const useDeliveryManager = ({ destination, destinationSlot, origin, originSlot, 
 
   const startDelivery = useCallback(({ origin, originSlot, destination, destinationSlot, contents }, meta) => {
     execute(
-      'TransferInventoryStart',
+      'SendDelivery',
       {
         origin,
         origin_slot: originSlot,
@@ -135,7 +135,7 @@ const useDeliveryManager = ({ destination, destinationSlot, origin, originSlot, 
 
   const finishDelivery = useCallback((selectedDeliveryId, meta) => {
     execute(
-      'TransferInventoryFinish',
+      'ReceiveDelivery',
       {
         delivery: { id: selectedDeliveryId || deliveryId, label: Entity.IDS.DELIVERY },
         ...payload

@@ -273,7 +273,7 @@ const SurfaceTransfer = ({
 
         {tab === 0 && (
           <>
-            {(!destinationLot || destinationLot?.building?.Control?.controller?.id === crew?.id)
+            {(!destinationLot || (destinationLot?.building || destinationLot?.surfaceShip)?.Control?.controller?.id === crew?.id)
               ? (
                 <ItemSelectionSection
                   label="Transfer Items"

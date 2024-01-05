@@ -11,10 +11,13 @@ import ClockContext from '~/contexts/ClockContext';
 import useAsteroid from '~/hooks/useAsteroid';
 import useStore from '~/hooks/useStore';
 import { sampleAsteroidOrbit } from '~/lib/geometryUtils';
-import { reactBool, formatFixed } from '~/lib/utils';
+import { reactBool, formatFixed, nativeBool } from '~/lib/utils';
 import { ShipImage, formatMass } from '../actionDialogs/components';
 import { Scrollable } from './components';
 import useCrewContext from '~/hooks/useCrewContext';
+import useOwnedShips from '~/hooks/useOwnedShips';
+import formatters from '~/lib/formatters';
+import useConstants from '~/hooks/useConstants';
 
 const ShipSelection = styled.div`
   align-items: center;
@@ -42,7 +45,7 @@ const SliderInfoRow = styled.div`
     flex: 1;
     font-size: 14px;
     b {
-      color: ${p => p.theme.colors.main};
+      color: ${p => p.disabled ? p.theme.colors.warning : p.theme.colors.main};
       font-weight: normal;
     }
   }
@@ -51,9 +54,11 @@ const SliderInfoRow = styled.div`
     border: 1px solid rgba(${p => p.theme.colors.mainRGB}, 0.5);
     transition: border-color 250ms ease;
     width: 85px;
-    &:hover {
-      border-color: ${p => p.theme.colors.main};
-    }
+    ${p => !p.disabled && `
+      &:hover {
+        border-color: ${p.theme.colors.main};
+      }
+    `}
   }
   sub {
     font-size: 12px;
@@ -171,7 +176,8 @@ const RoutePlanner = () => {
 
   const { data: origin } = useAsteroid(originId);
   const { data: destination } = useAsteroid(destinationId);
-  const { data: myShips, isLoading: myShipsLoading } = { data: [] }; // TODO: useMyShips
+  const { data: myShips, isLoading: myShipsLoading } = useOwnedShips();
+  const { data: TIME_ACCELERATION } = useConstants('TIME_ACCELERATION');
 
   const [baseTime, setBaseTime] = useState();
   const [nowTime, setNowTime] = useState();
@@ -181,7 +187,7 @@ const RoutePlanner = () => {
   const [ship, setShip] = useState();
 
   const shipList = useMemo(() => {
-    if (myShipsLoading) return [];
+    if (myShipsLoading || !myShips) return [];
     return [
       // add my ships
       ...myShips.sort((a, b) => {
@@ -213,7 +219,7 @@ const RoutePlanner = () => {
       }))
     ].map((s) => ({
       ...s,
-      _name: s.Name?.name || `Ship #${s.id.toLowerCase()}`,
+      _name: formatters.shipName(s)
     }))
   }, [myShips, myShipsLoading, crew?._location?.shipId, originId]);
 
@@ -329,7 +335,7 @@ const RoutePlanner = () => {
     <Scrollable hasTray={hasTray} style={{ marginLeft: -12, paddingLeft: 12 }}>
 
       <ShipSelection isSimulated={ship?._simulated}>
-        <ShipImage shipType={ship?.id} simulated={reactBool(ship?._simulated)} />
+        <ShipImage shipType={ship?.Ship?.shipType} simulated={reactBool(ship?._simulated)} />
 
         <div>
           <SectionHeader style={{ border: 0, margin: 0 }}>Ship</SectionHeader>
@@ -347,9 +353,10 @@ const RoutePlanner = () => {
 
       <Sliders>
         <SliderSection>
-          <SliderInfoRow>
-            <label><b>Simulated</b> Onboard Cargo</label>
+          <SliderInfoRow disabled={!ship?._simulated}>
+            <label><b>{ship?._simulated ? 'Simulated' : 'Actual'}</b> Onboard Cargo</label>
             <NumberInput
+              disabled={nativeBool(!ship?._simulated)}
               min={0}
               max={shipConfig?.maxCargoMass / 1_000_000 || 0}
               onChange={onSetCargoMass}
@@ -358,6 +365,7 @@ const RoutePlanner = () => {
             <sub>t</sub>
           </SliderInfoRow>
           <SliderInput
+            disabled={nativeBool(!ship?._simulated)}
             min={0}
             max={shipConfig?.maxCargoMass / 1_000_000 || 0}
             increment={0.1}
@@ -366,9 +374,10 @@ const RoutePlanner = () => {
         </SliderSection>
 
         <SliderSection>
-          <SliderInfoRow>
-            <label><b>Simulated</b> Onboard Propellant</label>
+          <SliderInfoRow disabled={!ship?._simulated}>
+            <label><b>{ship?._simulated ? 'Simulated' : 'Actual'}</b> Onboard Propellant</label>
             <NumberInput
+              disabled={nativeBool(!ship?._simulated)}
               min={0}
               max={shipConfig?.maxPropellantMass / 1_000_000 || 0}
               onChange={onSetPropellantMass}
@@ -377,6 +386,7 @@ const RoutePlanner = () => {
             <sub>t</sub>
           </SliderInfoRow>
           <SliderInput
+            disabled={nativeBool(!ship?._simulated)}
             min={0}
             max={shipConfig?.maxPropellantMass / 1_000_000 || 0}
             increment={0.1}
@@ -418,7 +428,7 @@ const RoutePlanner = () => {
               <label>Depart</label>
               <Note>{travelSolution.departureTime > coarseTime ? '+' : ''}{formatFixed(travelSolution.departureTime - coarseTime, 1)}h</Note>
               <Value>
-                {Time.fromOrbitADays(travelSolution.departureTime).toGameClockADays(true)}
+                {Time.fromOrbitADays(travelSolution.departureTime, TIME_ACCELERATION).toGameClockADays(true)}
               </Value>
             </InfoRow>
 
@@ -426,7 +436,7 @@ const RoutePlanner = () => {
               <label>Arrive</label>
               <Note>{travelSolution.arrivalTime > coarseTime ? '+' : ''}{formatFixed(travelSolution.arrivalTime - coarseTime, 1)}h</Note>
               <Value>
-                {Time.fromOrbitADays(travelSolution.arrivalTime).toGameClockADays(true)}
+                {Time.fromOrbitADays(travelSolution.arrivalTime, TIME_ACCELERATION).toGameClockADays(true)}
               </Value>
             </InfoRow>
 

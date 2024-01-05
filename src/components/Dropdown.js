@@ -65,7 +65,7 @@ const Dropdown = ({
       return [true, [...rawOptions]];
     }
     return [false, (rawOptions || []).map((o, i) => ({ [labelKey]: o, [valueKey]: i }))];
-  }, [rawOptions]);
+  }, [labelKey, rawOptions, valueKey]);
 
   const closeTimer = useRef();
 
@@ -122,7 +122,7 @@ const Dropdown = ({
     setSelected(
       (initialSelection && options.find((o) => o[valueKey] === initialSelection)) || options[0]
     );
-  }, [initialSelection]);
+  }, [initialSelection, options?.length]);
   
   useEffect(() => {
     setOpen(false);

@@ -1020,38 +1020,42 @@ const ActionProgressContainer = styled.div`
 const barChartHeight = 22;
 const barChartPadding = 3;
 const barChartRounding = barChartHeight / 2;
-const BarChart = styled.div`
+const BarChartValue = styled.span.attrs((p) => ({
+  style: {
+    width: `${100 * Math.max(0, Math.min(p.value, 1))}%`
+  }
+}))`
+  bottom: ${barChartPadding}px;
+  border-radius: ${barChartRounding - barChartPadding}px;
+  position: absolute;
+  left: ${barChartPadding}px;
+  top: ${barChartPadding}px;
+  transition: width 500ms ease;
+  z-index: 1;
+`;
+const BarChartPostValue = styled(BarChartValue)`
+  opacity: 0.7;
+`;
+const BarChartWrapper = styled.div`
   background: rgba(${p => hexToRGB(p.bgColor || p.color)}, 0.3);
   border-radius: ${barChartRounding}px;
   height: ${barChartHeight}px;
   margin: ${(28 - barChartHeight) / 2}px 0;
   position: relative;
   width: 100%;
-  &:before, &:after {
-    content: "";
-    bottom: ${barChartPadding}px;
-    border-radius: ${barChartRounding - barChartPadding}px;
-    position: absolute;
-    top: ${barChartPadding}px;
-    transition: width 500ms ease;
-    z-index: 0;
-  }
-  &:after {
+  ${BarChartValue} {
     background: ${p => p.color};
-    left: ${barChartPadding}px;
-    width: ${p => 100 * Math.max(0, Math.min(p.value, 1))}%;
-    z-index: 1;
   }
-  ${p => p.postValue !== undefined && `
-    &:before {
-      background: ${p.color};
-      left: ${barChartPadding}px;
-      opacity: 0.7;
-      width: ${100 * Math.max(0, Math.min(p.postValue, 1))}%;
-      z-index: 1;
-    }
-  `}
 `;
+
+const BarChart = ({ children, value, postValue, color, bgColor }) => (
+  <BarChartWrapper color={color} bgColor={bgColor}>
+    <BarChartValue value={value} />
+    {children}
+    {postValue !== undefined && <BarChartPostValue value={postValue} />}
+  </BarChartWrapper>
+);
+
 const BarChartLimitLine = styled.div`
   border: solid ${p => p.theme.colors.red};
   border-width: 0 1px;
@@ -2032,7 +2036,7 @@ export const InventorySelectionDialog = ({ asteroidId, otherEntity, otherInvSlot
         if (otherEntity) {
           if (entity.id === otherEntity.id && entity.label === otherEntity.label){
             if (!otherInvSlot || otherInvSlot === inv.slot) {
-              console.log('skip', inv, entity, otherEntity, otherInvSlot);
+              // console.log('skip', inv, entity, otherEntity, otherInvSlot);
               return;
             }
           }
@@ -4119,7 +4123,7 @@ export const formatVelocity = (metersPerSecond, { abbrev = true, minPrecision = 
 
 export const formatShipStatus = (ship) => {
   if (ship?.Ship?.status === Ship.STATUSES.UNDER_CONSTRUCTION) return 'Under Construction';
-  if (ship?.Ship?.status === Ship.STATUSES.IN_FLIGHT) return 'In Flight'; // TODO: do we need to distinguish Launching, Landing
+  if (ship?.Ship?.transitDeparture > 0) return 'In Flight';
   if (ship?.Ship?.status === Ship.STATUSES.DISABLED) return 'Disabled';
 
   const loc = ship?.Location?.location;
