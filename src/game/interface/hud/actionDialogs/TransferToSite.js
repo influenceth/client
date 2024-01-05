@@ -30,7 +30,8 @@ import {
   DestinationSelectionDialog,
   ProgressBarSection,
   LotInputBlock,
-  InventorySelectionDialog
+  InventorySelectionDialog,
+  InventoryInputBlock
 } from './components';
 import { ActionDialogInner, useAsteroidAndLot } from '../ActionDialog';
 import actionStage from '~/lib/actionStages';
@@ -213,15 +214,16 @@ const TransferToSite = ({ asteroid, lot: destinationLot, deliveryManager, stage,
 
       <ActionDialogBody>
         <FlexSection>
-          <LotInputBlock
+          <InventoryInputBlock
             title="Origin"
-            lot={originLot}
-            fallbackSublabel="Inventory"
+            entity={originEntity}
             imageProps={{
               iconOverride: <InventoryIcon />,
               inventories: originEntity?.Inventories,
               showInventoryStatusForType: origin?.slot
             }}
+            isSourcing
+            inventorySlot={origin?.slot}
             isSelected={stage === actionStage.NOT_STARTED}
             onClick={() => { setOriginSelectorOpen(true) }}
             disabled={stage !== actionStage.NOT_STARTED}

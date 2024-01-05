@@ -3381,6 +3381,13 @@ export const InventoryInputBlock = ({ entity, isSourcing, inventorySlot, transfe
     return null;
   }, [entity, inventorySlot]);
 
+  const invConfig = useMemo(() => {
+    if (inventory) {
+      return Inventory.TYPES[inventory.inventoryType];
+    }
+    return null;
+  }, [inventory]);
+
   const destinationOverloaded = useMemo(() => {
     if (inventory && !isSourcing) {
       const capacity = getCapacityStats(inventory);
@@ -3410,19 +3417,19 @@ export const InventoryInputBlock = ({ entity, isSourcing, inventorySlot, transfe
             unfinished={reactBool(unfinished)}
             {...fullImageProps} />
         ),
-        label: `${formatters.buildingName(entity)}${unfinished ? ' (Site)' : ''}`,
+        label: `${formatters.buildingName(entity)}${invConfig?.category === Inventory.CATEGORIES.SITE ? ' (Site)' : ''}`,
         sublabel: sublabel || formatters.lotName(lotIndex),
       };
     }
     else if (entity?.label === Entity.IDS.SHIP) {
       return {
         image: <ShipImage shipType={entity?.Ship?.shipType || 0} {...fullImageProps} />,
-        label: formatters.shipName(entity),
+        label: `${formatters.shipName(entity)}${invConfig?.category === Inventory.CATEGORIES.PROPELLANT ? ' (Propellant)' : ' (Cargo)'}`,
         sublabel: sublabel || formatters.lotName(lotIndex),
       };
     }
     return { image: <EmptyBuildingImage {...fullImageProps} /> };
-  }, [destinationOverloaded, imageProps, isSourcing, entity, inventory, sublabel]);
+  }, [destinationOverloaded, imageProps, isSourcing, entity, inventory, invConfig, sublabel]);
 
   return (
     <FlexSectionInputBlock
