@@ -761,6 +761,7 @@ const IngredientSummary = styled.div`
   right: 0;
   & > span {
     background:
+      ${p => p.theming === 'error' && `rgba(${hexToRGB(p.theme.colors.error)}, 0.45)`}
       ${p => p.theming === 'warning' && `rgba(${hexToRGB(p.theme.colors.lightOrange)}, 0.45)`}
       ${p => p.theming === 'success' && `rgba(${p.theme.colors.successRGB}, 0.2)`}
       ${p => (!p.theming || p.theming === 'default') && `rgba(${p.theme.colors.mainRGB}, 0.45)`}
@@ -1664,8 +1665,31 @@ export const DestinationSelectionDialog = ({
   );
 }
 
-export const TransferSelectionDialog = ({ sourceEntity, requirements, inventory, initialSelection, onClose, onSelected, open }) => {
+export const TransferSelectionDialog = ({
+  sourceEntity,
+  sourceContents,
+  pendingTargetDeliveries,
+  targetInventory,
+  targetInventoryConstraints,
+  initialSelection,
+  onClose,
+  onSelected,
+  open
+}) => {
   const [selection, setSelection] = useState({});
+
+  const pendingContents = useMemo(() => {
+    if (!pendingTargetDeliveries) return {};
+    return (pendingTargetDeliveries || [])
+      .filter((d) => d.status !== 'FINISHED')
+      .reduce((acc, d) => {
+        d.action.contents.forEach((c) => {
+          if (!acc[c.product]) acc[c.product] = 0;
+          acc[c.product] += c.amount;
+        })
+        return acc;
+      }, {});
+  }, [pendingTargetDeliveries]);
 
   useEffect(() => {
     setSelection({ ...initialSelection });
@@ -1688,15 +1712,44 @@ export const TransferSelectionDialog = ({ sourceEntity, requirements, inventory,
     });
   }, []);
 
-  const cells = useMemo(() => [...Array(6 * Math.max(2, Math.ceil(Object.keys(inventory).length / 6))).keys()], [inventory]);
-  const items = useMemo(() => inventory.map(({ product, amount }) => ({
-    selected: selection[product],
-    available: amount,
-    resource: Product.TYPES[product],
-    maxSelectable: requirements
-      ? Math.min(amount, requirements.find((r) => Number(r.i) === Number(product))?.inNeed || 0)
-      : amount
-  })), [inventory, requirements, selection]);
+  // TODO: inventory bonus
+  const targetInvConfig = useMemo(() => targetInventory ? Inventory.getType(targetInventory?.inventoryType) : null, [targetInventory?.inventoryType]);
+
+  const cells = useMemo(() => [...Array(6 * Math.max(2, Math.ceil(Object.keys(sourceContents).length / 6))).keys()], [sourceContents]);
+  const items = useMemo(() => {
+    const productConstraints = targetInventoryConstraints || (targetInvConfig ? targetInvConfig?.productConstraints : null);
+
+    return sourceContents.map(({ product, amount }) => {
+      let maxSelectable = amount;
+      if (productConstraints) {
+
+        // non-zero means "allowed" and capped at that amount
+        // zero means "allowed" but not specifically capped (other than overall mass constraint)
+        let productConstraint = productConstraints[`${product}`];
+        if (productConstraint !== undefined) {
+          const alreadyInTarget = targetInventory?.contents.find((c) => Number(c.product) === Number(product))?.amount || 0;
+          const enrouteToTarget = pendingContents?.[Number(product)] || 0;
+          if (productConstraint === 0) {
+            productConstraint = Math.min(
+              targetInvConfig.massConstraint / Product.TYPES[product].massPerUnit,
+              targetInvConfig.volumeConstraint / Product.TYPES[product].volumePerUnit
+            );
+          }
+          maxSelectable = Math.min(Math.max(0, productConstraint - alreadyInTarget - enrouteToTarget), amount);
+
+        // not present means not allowed
+        } else {
+          maxSelectable = 0;
+        }
+      }
+      return {
+        selected: selection[product],
+        available: amount,
+        resource: Product.TYPES[product],
+        maxSelectable
+      }
+    });
+  }, [sourceContents, targetInventory, targetInventoryConstraints, targetInvConfig, selection]);
 
   const { tally, totalMass, totalVolume } = useMemo(() => {
     return items.reduce((acc, { selected, resource }) => {
@@ -1718,6 +1771,12 @@ export const TransferSelectionDialog = ({ sourceEntity, requirements, inventory,
     }
     return [title, formatters.lotName(Lot.toIndex(locationsArrToObj(sourceEntity?.Location?.locations || []).lotId))];
   }, [sourceEntity]);
+
+  const overcapacity = useMemo(() => {
+    if (targetInvConfig?.massConstraint && totalMass > targetInvConfig.massConstraint) return 'mass';
+    if (targetInvConfig?.volumeConstraint && totalVolume > targetInvConfig.volumeConstraint) return 'volume';
+    return false;
+  }, [targetInvConfig, totalMass, totalVolume]);
 
   return (
     <SelectionDialog
@@ -1743,14 +1802,29 @@ export const TransferSelectionDialog = ({ sourceEntity, requirements, inventory,
                 noIcon />
             )
         ))}
-        <IngredientSummary>
-          <span>
-            {tally > 0
-              ? `${tally} Items: ${formatMass(totalMass)} | ${formatVolume(totalVolume)}`
-              : `None Selected`
-            }
-          </span>
-        </IngredientSummary>
+        {overcapacity
+          ? (
+            <IngredientSummary theming="error">
+              <span>
+                OVER CAPACITY: {
+                  overcapacity === 'mass'
+                    ? `${formatMass(totalMass)} > ${formatMass(targetInvConfig.massConstraint)}`
+                    : `${formatVolume(totalVolume)} > ${formatVolume(targetInvConfig.volumeConstraint)}`
+                }
+              </span>
+            </IngredientSummary>
+          )
+          : (
+            <IngredientSummary>
+              <span>
+                {tally > 0
+                  ? `${tally} Items: ${formatMass(totalMass)} | ${formatVolume(totalVolume)}`
+                  : `None Selected`
+                }
+              </span>
+            </IngredientSummary>
+          )
+        }
       </DialogIngredientsList>
     </SelectionDialog>
   );

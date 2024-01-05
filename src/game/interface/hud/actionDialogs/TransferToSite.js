@@ -195,7 +195,7 @@ const TransferToSite = ({ asteroid, lot: destinationLot, deliveryManager, stage,
       });
       if (props.onClose) props.onClose();
     }
-  }, [destinationInventory])
+  }, [destinationInventory]);
 
   return (
     <>
@@ -283,8 +283,9 @@ const TransferToSite = ({ asteroid, lot: destinationLot, deliveryManager, stage,
         <>
           <TransferSelectionDialog
             sourceEntity={originEntity}
-            requirements={buildingRequirements}
-            inventory={originInventory?.contents || []}
+            sourceContents={originInventory?.contents || []}
+            pendingTargetDeliveries={currentDeliveryActions}
+            targetInventory={destinationInventory}
             initialSelection={selectedItems}
             onClose={() => setTransferSelectorOpen(false)}
             onSelected={setSelectedItems}
