@@ -270,7 +270,6 @@ const LandShip = ({ asteroid, manager, ship, stage, ...props }) => {
       {stage === actionStages.NOT_STARTED && (
         <LandingSelectionDialog
           asteroid={asteroid}
-          deliveryMode
           initialSelection={selectedDestinationIndex}
           onClose={() => setDestinationSelectorOpen(false)}
           onSelected={setSelectedDestinationIndex}

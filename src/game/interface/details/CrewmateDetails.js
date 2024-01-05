@@ -14,6 +14,7 @@ import {
 import LogEntry from '~/components/LogEntry';
 import useActivities from '~/hooks/useActivities';
 import useAuth from '~/hooks/useAuth';
+import useConstants from '~/hooks/useConstants';
 import useCrewContext from '~/hooks/useCrewContext';
 import useStore from '~/hooks/useStore';
 import useEarliestActivity from '~/hooks/useEarliestActivity';
@@ -321,6 +322,8 @@ const CrewmateDetails = ({ crewmateId, crewmate, isOwnedCrewmate }) => {
   const { data: activities } = useActivities({ id: crewmateId, label: Entity.IDS.CREWMATE });
   const { data: earliestActivity, isLoading: earliestLoading } = useEarliestActivity({ id: crewmateId, label: Entity.IDS.CREWMATE });
 
+  const { data: TIME_ACCELERATION } = useConstants('TIME_ACCELERATION');
+
   const viewingAs = useMemo(() => ({ id: crewmateId, label: Entity.IDS.CREWMATE }), [crewmateId]);
 
   const onBackToCrew = useCallback(() => {
@@ -332,7 +335,7 @@ const CrewmateDetails = ({ crewmateId, crewmate, isOwnedCrewmate }) => {
   const formationDate = useMemo(() => {
     if (earliestLoading) return '...';
     if (!earliestActivity) return 'Unknown';
-    return `${Time.fromUnixTime(earliestActivity?.event?.timestamp, false).toGameClockADays(true)} SA`;
+    return `${Time.fromUnixSeconds(earliestActivity?.event?.timestamp, TIME_ACCELERATION).toGameClockADays(true)} SA`;
   }, [earliestActivity, earliestLoading]);
 
   return (

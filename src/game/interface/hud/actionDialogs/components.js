@@ -13,6 +13,7 @@ import Button from '~/components/ButtonAlt';
 import ClipCorner from '~/components/ClipCorner';
 import CrewCardFramed from '~/components/CrewCardFramed';
 import CrewIndicator from '~/components/CrewIndicator';
+import CrewLocationLabel from '~/components/CrewLocationLabel';
 import Dialog from '~/components/Dialog';
 import IconButton from '~/components/IconButton';
 import {
@@ -37,6 +38,7 @@ import {
   ShipIcon,
   BusyIcon
 } from '~/components/Icons';
+import LiveFoodStatus from '~/components/LiveFoodStatus';
 import LiveTimer from '~/components/LiveTimer';
 import MouseoverInfoPane from '~/components/MouseoverInfoPane';
 import ResourceColorIcon from '~/components/ResourceColorIcon';
@@ -45,22 +47,21 @@ import ResourceRequirement from '~/components/ResourceRequirement';
 import ResourceSelection from '~/components/ResourceSelection';
 import SliderInput from '~/components/SliderInput';
 import TextInput from '~/components/TextInputUncontrolled';
+import useAccessibleAsteroidBuildings from '~/hooks/useAccessibleAsteroidBuildings';
+import useAccessibleAsteroidInventories from '~/hooks/useAccessibleAsteroidInventories';
 import useAsteroidLotData from '~/hooks/useAsteroidLotData';
 import useChainTime from '~/hooks/useChainTime';
-import api from '~/lib/api';
+import useCrewContext from '~/hooks/useCrewContext';
+import useHydratedLocation from '~/hooks/useHydratedLocation';
+import useShip from '~/hooks/useShip';
 import { reactBool, formatFixed, formatTimer, nativeBool, locationsArrToObj } from '~/lib/utils';
 import actionStage from '~/lib/actionStages';
 import constants from '~/lib/constants';
 import { getBuildingIcon, getShipIcon } from '~/lib/assetUtils';
+import formatters from '~/lib/formatters';
 import theme, { hexToRGB } from '~/theme';
 import { theming } from '../ActionDialog';
-import formatters from '~/lib/formatters';
-import useCrewContext from '~/hooks/useCrewContext';
-import LiveFoodStatus from '~/components/LiveFoodStatus';
-import useHydratedLocation from '~/hooks/useHydratedLocation';
-import CrewLocationLabel from '~/components/CrewLocationLabel';
-import useAccessibleAsteroidInventories from '~/hooks/useAccessibleAsteroidInventories';
-import useShip from '~/hooks/useShip';
+
 
 const SECTION_WIDTH = 780;
 
@@ -1020,38 +1021,42 @@ const ActionProgressContainer = styled.div`
 const barChartHeight = 22;
 const barChartPadding = 3;
 const barChartRounding = barChartHeight / 2;
-const BarChart = styled.div`
+const BarChartValue = styled.span.attrs((p) => ({
+  style: {
+    width: `${100 * Math.max(0, Math.min(p.value, 1))}%`
+  }
+}))`
+  bottom: ${barChartPadding}px;
+  border-radius: ${barChartRounding - barChartPadding}px;
+  position: absolute;
+  left: ${barChartPadding}px;
+  top: ${barChartPadding}px;
+  transition: width 500ms ease;
+  z-index: 1;
+`;
+const BarChartPostValue = styled(BarChartValue)`
+  opacity: 0.7;
+`;
+const BarChartWrapper = styled.div`
   background: rgba(${p => hexToRGB(p.bgColor || p.color)}, 0.3);
   border-radius: ${barChartRounding}px;
   height: ${barChartHeight}px;
   margin: ${(28 - barChartHeight) / 2}px 0;
   position: relative;
   width: 100%;
-  &:before, &:after {
-    content: "";
-    bottom: ${barChartPadding}px;
-    border-radius: ${barChartRounding - barChartPadding}px;
-    position: absolute;
-    top: ${barChartPadding}px;
-    transition: width 500ms ease;
-    z-index: 0;
-  }
-  &:after {
+  ${BarChartValue} {
     background: ${p => p.color};
-    left: ${barChartPadding}px;
-    width: ${p => 100 * Math.max(0, Math.min(p.value, 1))}%;
-    z-index: 1;
   }
-  ${p => p.postValue !== undefined && `
-    &:before {
-      background: ${p.color};
-      left: ${barChartPadding}px;
-      opacity: 0.7;
-      width: ${100 * Math.max(0, Math.min(p.postValue, 1))}%;
-      z-index: 1;
-    }
-  `}
 `;
+
+const BarChart = ({ children, value, postValue, color, bgColor }) => (
+  <BarChartWrapper color={color} bgColor={bgColor}>
+    <BarChartValue value={value} />
+    {children}
+    {postValue !== undefined && <BarChartPostValue value={postValue} />}
+  </BarChartWrapper>
+);
+
 const BarChartLimitLine = styled.div`
   border: solid ${p => p.theme.colors.red};
   border-width: 0 1px;
@@ -1756,17 +1761,8 @@ export const LandingSelectionDialog = ({ asteroid, deliveryMode, initialSelectio
   const [selection, setSelection] = useState(initialSelection);
   const shipConfig = Ship.TYPES[ship?.Ship?.shipType];
 
-  // TODO: to get spaceport names, it will probably make more sense to have
-  //  a "get spaceports" api endpoint
-  const { data: lotData, isLoading: lotDataLoading } = useAsteroidLotData(asteroid?.id);
-
-  const spaceports = useMemo(() => {
-    if (!lotData) return [];
-    return lotData.reduce((acc, cur, i) => {
-      if (cur >> 4 === 7) acc.push(i)
-      return acc;
-    }, []);
-  }, [lotData]);
+  const { data: lotData } = useAsteroidLotData(asteroid?.id);
+  const { data: spaceports } = useAccessibleAsteroidBuildings(asteroid?.id, 'Dock');
 
   const onComplete = useCallback(() => {
     onSelected(selection);
@@ -1813,28 +1809,29 @@ export const LandingSelectionDialog = ({ asteroid, deliveryMode, initialSelectio
           </TextInputNote>
         </TextInputWithNote>
       )}
-      {spaceports.length > 0
+      {spaceports?.length > 0
         ? (
           <SelectionTableWrapper>
             <table>
               <thead>
                 <tr>
-                  <td>Name</td>
-                  <td>Building</td>
+                  <td>Building Name</td>
+                  <td>Type</td>
                   <td>Lot Id</td>
                   <td>Landing Fee</td>
                   {deliveryMode && <td>Distance</td>}
                 </tr>
               </thead>
               <tbody>
-                {spaceports.map((lotIndex) => {
+                {spaceports.map((entity) => {
+                  const { lotIndex } = locationsArrToObj(entity?.Location?.locations);
                   return (
                     <SelectionTableRow
                       key={lotIndex}
                       onClick={() => setSelection(lotIndex)}
                       selectedRow={lotIndex === selection}>
-                      <td>Parking @ {lotIndex}</td>
-                      <td>Spaceport</td>
+                      <td>{formatters.buildingName(entity)}</td>
+                      <td>{Building.TYPES[entity.Building?.buildingType].name}</td>
                       <td><LocationIcon /> {formatters.lotName(lotIndex)}</td>
                       <td>0</td>
                       {deliveryMode && <td>{Math.round(Asteroid.getLotDistance(asteroid?.id, originLotIndex, lotIndex))} km</td>}
@@ -2032,7 +2029,7 @@ export const InventorySelectionDialog = ({ asteroidId, otherEntity, otherInvSlot
         if (otherEntity) {
           if (entity.id === otherEntity.id && entity.label === otherEntity.label){
             if (!otherInvSlot || otherInvSlot === inv.slot) {
-              console.log('skip', inv, entity, otherEntity, otherInvSlot);
+              // console.log('skip', inv, entity, otherEntity, otherInvSlot);
               return;
             }
           }
@@ -4119,7 +4116,7 @@ export const formatVelocity = (metersPerSecond, { abbrev = true, minPrecision = 
 
 export const formatShipStatus = (ship) => {
   if (ship?.Ship?.status === Ship.STATUSES.UNDER_CONSTRUCTION) return 'Under Construction';
-  if (ship?.Ship?.status === Ship.STATUSES.IN_FLIGHT) return 'In Flight'; // TODO: do we need to distinguish Launching, Landing
+  if (ship?.Ship?.transitDeparture > 0) return 'In Flight';
   if (ship?.Ship?.status === Ship.STATUSES.DISABLED) return 'Disabled';
 
   const loc = ship?.Location?.location;

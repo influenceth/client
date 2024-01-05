@@ -225,6 +225,9 @@ const customConfigs = {
     equalityTest: ['asteroid.id'],
     isVirtual: true
   },
+
+  TransitStart: { equalityTest: ['caller_crew.id'] },
+  TransitFinish: { equalityTest: ['caller_crew.id'] },
 };
 
 export function ChainTransactionProvider({ children }) {

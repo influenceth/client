@@ -166,6 +166,32 @@ const api = {
     return formatESData(response.data);
   },
 
+  getCrewAccessibleBuildingsWithComponent: async (asteroidId, crewId, component = 'Building') => {
+
+    // BUILDINGS...
+    const buildingQueryBuilder = esb.boolQuery();
+
+    // controlled by crew
+    // TODO: also include those crew does not control but has access to
+    // buildingQueryBuilder.filter(esb.termQuery('Control.controller.id', crewId));
+    
+    // on asteroid
+    buildingQueryBuilder.filter(esbLocationQuery({ asteroidId }));
+
+    // is operational
+    buildingQueryBuilder.filter(esb.termQuery('Building.status', Building.CONSTRUCTION_STATUSES.OPERATIONAL));
+
+    // has component
+    buildingQueryBuilder.filter(esb.existsQuery(component));
+    
+    const buildingQ = esb.requestBodySearch();
+    buildingQ.query(buildingQueryBuilder);
+    buildingQ.from(0);
+    buildingQ.size(10000);
+    const response = await instance.post(`/_search/building`, buildingQ.toJSON());
+    return formatESData(response.data);
+  },
+
   getCrewAccessibleInventories: async (asteroidId, crewId) => {
     const queryPromises = [];
 

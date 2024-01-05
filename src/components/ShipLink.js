@@ -25,7 +25,7 @@ export const useShipLink = ({ shipId, zoomToShip }) => {
     if (!ship) return;
 
     // if ship is in_flight, zoom "out", show zoomScene of ship
-    if (ship.Ship?.status === Ship.STATUSES.IN_FLIGHT) {
+    if (ship.Ship?.transitDeparture > 0) {
       // TODO (later): zoom to ship location or at least show reticule on it
       if (zoomStatus === 'in') updateZoomStatus('zooming-out');
 

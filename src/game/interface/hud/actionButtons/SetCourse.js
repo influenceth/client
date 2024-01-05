@@ -13,8 +13,8 @@ const SetCourse = ({ crew, onSetAction }) => {
   }, [travelSolution]);
 
   const disabledReason = useMemo(() => {
-    if (!travelSolution?.invalid) return 'invalid travel solution';
     if (!crew?._ready) return 'crew is busy';
+    if (travelSolution?.invalid) return 'invalid travel solution';
     return '';
   }, [crew?._ready, travelSolution?.invalid]);
 

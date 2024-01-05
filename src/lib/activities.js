@@ -27,7 +27,8 @@ import {
   ShipIcon,
   StationCrewIcon,
   SurfaceTransferIcon,
-  UnplanBuildingIcon
+  UnplanBuildingIcon,
+  SetCourseIcon
 } from '~/components/Icons';
 import LotLink from '~/components/LotLink';
 
@@ -541,7 +542,7 @@ const activities = {
     requiresCrewTime: true
   },
   
-  DeliveryFinished: {
+  DeliveryReceived: {
     getInvalidations: ({ event: { returnValues } }, { delivery = {} }) => {
       const invs = [
         ...invalidationDefaults(Entity.IDS.DELIVERY, returnValues.delivery?.id),
@@ -572,7 +573,7 @@ const activities = {
     triggerAlert: true
   },
 
-  DeliveryStarted: {
+  DeliverySent: {
     getActionItem: ({ returnValues }, { destination = {} }) => {
       const _location = locationsArrToObj(destination?.Location?.locations || []);
       return {
@@ -588,7 +589,7 @@ const activities = {
     },
     getIsActionItemHidden: ({ returnValues }) => (pendingTransactions) => {
       return pendingTransactions.find((tx) => (
-        tx.key === 'TransferInventoryFinish'
+        tx.key === 'ReceiveDelivery'
         && tx.vars.delivery.id === returnValues.delivery.id
       ))
     },
@@ -681,6 +682,31 @@ const activities = {
         ),
       };
     },
+  },
+
+  FoodSupplied: {
+    getInvalidations: ({ event: { returnValues } }) => {
+      // TODO: replace lastFed in place
+      return [
+        ...invalidationDefaults(Entity.IDS.CREW, returnValues.callerCrew.id),
+        ...(returnValues.origin ? invalidationDefaults(returnValues.origin.label, returnValues.origin.id) : []),
+      ];
+    },
+    getLogContent: ({ event: { returnValues } }, viewingAs) => {
+      return {
+        icon: <FoodIcon />,
+        content: (
+          <>
+            <span>
+              <EntityName {...returnValues.callerCrew} /> resupplied with{' '}
+              {formatResourceMass(returnValues.food, Product.IDS.FOOD)} food
+            </span>
+          </>
+        ),
+      };
+    },
+    requiresCrewTime: true,
+    triggerAlert: true
   },
 
   // EarlyAdopterRewardClaimed,
@@ -965,31 +991,6 @@ const activities = {
     // }),
   },
 
-  FoodSupplied: {
-    getInvalidations: ({ event: { returnValues } }) => {
-      // TODO: replace lastFed in place
-      return [
-        ...invalidationDefaults(Entity.IDS.CREW, returnValues.callerCrew.id),
-        ...(returnValues.origin ? invalidationDefaults(returnValues.origin.label, returnValues.origin.id) : []),
-      ];
-    },
-    getLogContent: ({ event: { returnValues } }, viewingAs) => {
-      return {
-        icon: <FoodIcon />,
-        content: (
-          <>
-            <span>
-              <EntityName {...returnValues.callerCrew} /> resupplied with{' '}
-              {formatResourceMass(returnValues.food, Product.IDS.FOOD)} food
-            </span>
-          </>
-        ),
-      };
-    },
-    requiresCrewTime: true,
-    triggerAlert: true
-  },
-
   SamplingDepositFinished: {
     getInvalidations: ({ event: { returnValues } }) => ([
       ...invalidationDefaults(Entity.IDS.DEPOSIT, returnValues.deposit?.id),
@@ -1146,7 +1147,8 @@ const activities = {
     getInvalidations: ({ event: { returnValues } }) => ([
       ...invalidationDefaults(returnValues.ship.label, returnValues.ship.id),
       ...invalidationDefaults(returnValues.dock.label, returnValues.dock.id),
-      // TODO: any others? crew? passenger crews?
+      ...invalidationDefaults(returnValues.callerCrew.label, returnValues.callerCrew.id),
+      // TODO: any others? passenger crews?
     ]),
     getLogContent: ({ event: { returnValues } }) => ({
       icon: <ScanAsteroidIcon />,
@@ -1163,8 +1165,9 @@ const activities = {
     getInvalidations: ({ event: { returnValues } }, { dock = {} }) => ([
       ...invalidationDefaults(returnValues.ship.label, returnValues.ship.id),
       ...invalidationDefaults(returnValues.dock.label, returnValues.dock.id),
+      ...invalidationDefaults(returnValues.callerCrew.label, returnValues.callerCrew.id),
       [ 'entities', Entity.IDS.SHIP, 'asteroid', (dock?.Location?.locations || []).find((l) => l.label === Entity.IDS.ASTEROID)?.id ],
-      // TODO: any others? crew? passenger crews?
+      // TODO: any others? passenger crews?
     ]),
     getLogContent: ({ event: { returnValues } }) => {
       return {
@@ -1282,7 +1285,74 @@ const activities = {
     triggerAlert: true
   },
 
-  // TransitStarted
+  TransitStarted: {
+    getActionItem: ({ returnValues }, { origin = {} }) => {
+      return {
+        icon: <SetCourseIcon />,
+        label: `In Flight`,
+        asteroidId: returnValues.destination.id,
+        // lotId: _location.lotId,
+        locationDetail: getEntityName(origin),
+        onClick: ({ openDialog }) => {
+          openDialog('SET_COURSE');
+        }
+      };
+    },
+    getIsActionItemHidden: ({ returnValues }) => (pendingTransactions) => {
+      return pendingTransactions.find((tx) => tx.key === 'TransitFinished')
+    },
+
+    getInvalidations: ({ event: { returnValues, version } }) => ([
+      ...invalidationDefaults(returnValues.ship.label, returnValues.ship.id),
+      ...invalidationDefaults(returnValues.origin.label, returnValues.origin.id),
+      ...invalidationDefaults(returnValues.callerCrew.label, returnValues.callerCrew.id),
+      ['actionItems'],
+    ]),
+
+    getPrepopEntities: ({ event: { returnValues } }) => ({
+      origin: returnValues.origin,
+    }),
+
+    getLogContent: ({ event: { returnValues } }) => {
+      return {
+        icon: <SetCourseIcon />,
+        content: (
+          <>
+            <EntityLink {...returnValues.callerCrew} />
+            <span> set course from </span>
+            <EntityLink {...returnValues.origin} />{' to '}<EntityLink {...returnValues.destination} />
+          </>
+        ),
+      };
+    },
+
+    requiresCrewTime: true,
+    triggerAlert: true
+  },
+
+  TransitFinished: {
+    getInvalidations: ({ event: { returnValues, version } }) => ([
+      ...invalidationDefaults(returnValues.ship.label, returnValues.ship.id),
+      ...invalidationDefaults(returnValues.destination.label, returnValues.destination.id),
+      ...invalidationDefaults(returnValues.callerCrew.label, returnValues.callerCrew.id),
+      ['actionItems'],
+    ]),
+
+    getLogContent: ({ event: { returnValues } }) => {
+      return {
+        icon: <SetCourseIcon />,
+        content: (
+          <>
+            <EntityLink {...returnValues.callerCrew} />
+            <span> entered orbit around </span>
+            <EntityLink {...returnValues.destination} />
+          </>
+        ),
+      };
+    },
+
+    triggerAlert: true
+  },
 };
 
 /**

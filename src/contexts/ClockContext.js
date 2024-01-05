@@ -3,6 +3,7 @@ import { Time } from '@influenceth/sdk';
 
 import useGetTime from '~/hooks/useGetTime';
 import useInterval from '~/hooks/useInterval';
+import useConstants from '~/hooks/useConstants';
 
 
 const INTERVAL_LENGTH = 1000 / 30;  // denominator is FPS for clock check
@@ -15,6 +16,7 @@ const ClockContext = React.createContext();
 //  for every clock update... components that need higher precision can use `getTime` as needed
 export function ClockProvider({ children }) {
   const getTime = useGetTime();
+  const { data: TIME_ACCELERATION } = useConstants('TIME_ACCELERATION');
 
   const [contextValue, setContextValue] = useState({
     coarseTime: 0,
@@ -23,18 +25,19 @@ export function ClockProvider({ children }) {
   });
 
   const updateClock = useCallback(() => {
-    const coarseTime = Math.floor(100 * getTime()) / 100;
+    const coarseTimeInterval = 100 / (TIME_ACCELERATION / Time.DEFAULT_TIME_ACCELERATION);
+    const coarseTime = Math.floor(coarseTimeInterval * getTime()) / coarseTimeInterval;
     if (contextValue.coarseTime !== coarseTime) {
-      const gameTime = Time.fromOrbitADays(coarseTime).toGameClockADays();
+      const gameTime = Time.fromOrbitADays(coarseTime, TIME_ACCELERATION).toGameClockADays();
       setTimeout(() => { // setter gets slow at fast intervals, so return setInterval function before setting
         setContextValue({
           coarseTime,
           displayTime: `${gameTime >= 0 ? '' : ''}${gameTime.toLocaleString(undefined, { minimumFractionDigits: DISPLAY_TIME_FRACTION_DIGITS })}`,
-          realWorldTime: Time.fromOrbitADays(coarseTime).toDate()
+          realWorldTime: Time.fromOrbitADays(coarseTime, TIME_ACCELERATION).toDate()
         });
       }, 0);
     }
-  }, [contextValue, getTime]);
+  }, [contextValue, getTime, TIME_ACCELERATION]);
   useEffect(updateClock, []); // eslint-disable-line react-hooks/exhaustive-deps
   useInterval(updateClock, INTERVAL_LENGTH);
 

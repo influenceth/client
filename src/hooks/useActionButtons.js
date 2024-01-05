@@ -141,7 +141,7 @@ const useActionButtons = () => {
         // TODO: this should probably only be a button in the BELT_PLAN_FLIGHT tray
         //  so we know a valid ship is selected in the dropdown of that menu
         if (crew && openHudMenu === 'BELT_PLAN_FLIGHT') {
-          // a.push(actionButtons.SetCourse); // TODO: add back, not implemented yet
+          a.push(actionButtons.SetCourse);
         }
       }
 
@@ -166,7 +166,7 @@ const useActionButtons = () => {
             }
           }
           
-          if (lotShip && [Ship.STATUSES.AVAILABLE, Ship.STATUSES.IN_FLIGHT].includes(lotShip.Ship?.status)) {
+          if (lotShip && Ship.STATUSES.AVAILABLE === lotShip.Ship?.status) {
 
             // TODO: check in buttons that crew is on asteroid
             //  AND check that both in orbit or both on surface
