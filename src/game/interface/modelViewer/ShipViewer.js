@@ -13,7 +13,7 @@ const ShipViewer = () => {
 
   const modelUrl = useMemo(() => {
     return getShipModel(ship?.Ship?.shipType);
-  }, [ship?.type]);
+  }, [ship?.Ship?.shipType]);
 
   if (zoomScene?.type !== 'SHIP' || isLoading) return null;
   return (
@@ -22,4 +22,3 @@ const ShipViewer = () => {
 }
 
 export default ShipViewer;
-        
