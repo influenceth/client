@@ -1704,7 +1704,7 @@ export const TransferSelectionDialog = ({
     setSelection((currentlySelected) => {
       const updated = {...currentlySelected};
       if (selectedAmount > 0) {
-        updated[resourceId] = selectedAmount;
+        updated[resourceId] = Math.floor(selectedAmount);
       } else {
         delete updated[resourceId];
       }

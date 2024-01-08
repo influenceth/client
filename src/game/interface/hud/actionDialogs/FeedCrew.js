@@ -421,6 +421,14 @@ const Wrapper = (props) => {
 
   const stage = feedCrewManager.actionStage || actionStages.NOT_STARTED;
 
+  useEffect(() => {
+    if (!asteroid) {
+      if (!asteroidIsLoading) {
+        if (props.onClose) props.onClose();
+      }
+    }
+  }, [asteroid, asteroidIsLoading]);
+
   // handle auto-closing on any status change
   const lastStatus = useRef();
   useEffect(() => {

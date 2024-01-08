@@ -124,7 +124,7 @@ const useDeliveryManager = ({ destination, destinationSlot, origin, originSlot, 
       {
         origin,
         origin_slot: originSlot,
-        products: Object.keys(contents).map((product) => ({ product, amount: contents[product] })),
+        products: Object.keys(contents).map((product) => ({ product, amount: Math.floor(contents[product]) })),
         dest: destination,
         dest_slot: destinationSlot,
         ...payload,
