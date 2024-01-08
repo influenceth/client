@@ -485,7 +485,7 @@ export function ChainTransactionProvider({ children }) {
         // TODO: in Braavos, is "Execute failed" a generic error? in that case, we should still show
         // (and it will just be annoying that it shows a failure on declines)
         // console.log('failed', e);
-        if (!['User abort', 'Execute failed'].includes(e?.message)) {
+        if (!['User abort', 'Execute failed', 'Timeout'].includes(e?.message)) {
           dispatchFailedTransaction({
             key,
             vars,
@@ -494,6 +494,18 @@ export function ChainTransactionProvider({ children }) {
             err: e?.message || e
           });
         }
+
+        // "Timeout" is in argent (at least) for when tx is auto-rejected b/c previous tx is still pending
+        // TODO: should hopefully be able to remove Timeout because would make sessions feel pretty useless
+        if (e?.message === 'Timeout') {
+          createAlert({
+            type: 'GenericAlert',
+            data: { content: 'Previous tx is not yet accepted on l2. Wait for the extension notification and try again.' },
+            level: 'warning',
+            duration: 5000
+          });
+        }
+
         onTransactionError(e, vars);
       }
       setPromptingTransaction(false);
