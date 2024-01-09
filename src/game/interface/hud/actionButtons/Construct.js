@@ -11,7 +11,15 @@ const labelDict = {
   FINISHING: 'Finishing Construction...'
 };
 
-const Construct = ({ asteroid, crew, lot, onSetAction, _disabled }) => {
+const isVisible = ({ building, constructionStatus, crew }) => {
+  // zoomStatus === 'in'?
+  return crew && building
+    && building.Control?.controller?.id === crew.id
+    && building.DryDocks?.length > 0
+    && ['PLANNED', 'UNDER_CONSTRUCTION', 'READY_TO_FINISH', 'FINISHING'].includes(constructionStatus);
+};
+
+const Component = ({ asteroid, crew, lot, onSetAction, _disabled }) => {
   const { constructionStatus } = useConstructionManager(lot?.id);
   const handleClick = useCallback(() => {
     onSetAction('CONSTRUCT');
@@ -35,4 +43,4 @@ const Construct = ({ asteroid, crew, lot, onSetAction, _disabled }) => {
   );
 };
 
-export default Construct;
+export default { Component, isVisible };

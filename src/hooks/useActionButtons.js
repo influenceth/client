@@ -51,6 +51,13 @@ import useAuth from './useAuth';
 //  - if has unlocked inventory, offer "surface transfer"
 //  - if has incoming delivery, offer "surface transfer"
 
+const buttonOrder = [
+  'PlanBuilding',
+  'Construct',
+  'Deconstruct',
+  'UnplanBuilding'
+].reduce((acc, k, i) => ({ ...acc, [k]: i }), {});
+
 const useActionButtons = () => {
   const asteroidId = useStore(s => s.asteroids.origin);
   const lotId = useStore(s => s.asteroids.lot);
@@ -115,6 +122,26 @@ const useActionButtons = () => {
   // (the only problem is parent wouldn't know how many visible buttons there were)
   useEffect(() => {
     if (asteroidIsLoading || lotIsLoading || crewedShipIsLoading || zoomedShipIsLoading) return;
+
+    setActions(
+      Object.keys(actionButtons)
+        .filter((k) => !actionButtons[k].isVisible || actionButtons[k].isVisible({
+          crew,
+          building: lot?.building,
+          constructionStatus,
+
+          asteroid,
+          lot,
+          lotShip,
+          zoomedToShip,
+          zoomStatus,
+          openHudMenu,
+          resourceMap
+        }))
+        .sort((a, b) => (buttonOrder[a] || 100) - (buttonOrder[b] || 100))
+        .map((k) => actionButtons[k].Component || actionButtons[k])
+    );
+    return;
 
     const a = [];
     if (asteroid) {

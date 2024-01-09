@@ -12,7 +12,15 @@ const labelDict = {
   FINISHING: 'Finishing Ship Assembly...'
 };
 
-const AssembleShip = ({ asteroid, lot, onSetAction, _disabled }) => {
+const isVisible = ({ building, constructionStatus, crew }) => {
+  // zoomStatus === 'in'?
+  return crew && building
+    && building.Control?.controller?.id === crew.id
+    && building.DryDocks?.length > 0
+    && constructionStatus === 'OPERATIONAL';
+};
+
+const Component = ({ asteroid, lot, onSetAction, _disabled }) => {
   const { assemblyStatus } = useDryDockManager(lot?.id);
   const handleClick = useCallback(() => {
     onSetAction('ASSEMBLE_SHIP');
@@ -31,4 +39,4 @@ const AssembleShip = ({ asteroid, lot, onSetAction, _disabled }) => {
   );
 };
 
-export default AssembleShip;
+export default { Component, isVisible };
