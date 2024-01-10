@@ -4,6 +4,7 @@ import { Inventory } from '@influenceth/sdk';
 import { SurfaceTransferIcon } from '~/components/Icons';
 import useDeliveryManager from '~/hooks/actionManagers/useDeliveryManager';
 import ActionButton, { getCrewDisabledReason } from './ActionButton';
+import { locationsArrToObj } from '~/lib/utils';
 
 const isVisible = ({ crew, lot, ship }) => {
   return crew && (lot?.building || ship)?.Inventories?.find((i) => i.status === Inventory.STATUSES.AVAILABLE);
@@ -22,8 +23,9 @@ const SurfaceTransferOutgoing = ({ asteroid, crew, lot, ship, onSetAction, prese
   const disabledReason = useMemo(() => {
     const entity = lot?.building || ship;
     if (!entity) return '';
-    if (!entity._location?.lotId) return 'not on surface';
-    const hasMass = (entity?.Inventories || []).find((i) => i.status === Inventory.STATUSES.AVAILABLE && i.mass > 0);
+    const _location = locationsArrToObj(entity.Location?.locations || []);
+    if (!_location?.lotId) return 'not on surface';
+    const hasMass = (entity.Inventories || []).find((i) => i.status === Inventory.STATUSES.AVAILABLE && i.mass > 0);
     if (!hasMass) return 'inventory empty';
     return getCrewDisabledReason({ asteroid, crew });
   }, [lot?.building?.Inventories, crew?._ready]);
