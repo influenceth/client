@@ -90,11 +90,11 @@ const useShipTravelManager = (shipId) => {
   const shipConfig = Ship.TYPES[ship?.Ship?.shipType];
 
   const cargoInv = useMemo(() => {
-    return (ship.Inventories || []).find(i => i.slot === shipConfig?.cargoSlot);
+    return (ship?.Inventories || []).find(i => i.slot === shipConfig?.cargoSlot);
   }, [ship, shipConfig?.cargoSlot]);
 
   const propellantInv = useMemo(() => {
-    return (ship.Inventories || []).find(i => i.slot === shipConfig?.propellantSlot);
+    return (ship?.Inventories || []).find(i => i.slot === shipConfig?.propellantSlot);
   }, [ship, shipConfig?.propellantSlot]);
 
   useEffect(() => {

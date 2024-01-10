@@ -17,7 +17,7 @@ const isVisible = ({ openHudMenu, /*asteroid, crew, ship, zoomStatus*/ }) => {
 };
 
 const SetCourse = ({ asteroid, crew, ship, onSetAction, _disabled }) => {
-  const { travelStatus } = useShipTravelManager(crew?._location?.shipId);
+  const { currentTravelAction, travelStatus } = useShipTravelManager(crew?._location?.shipId);
   const travelSolution = useStore(s => s.asteroids.travelSolution);
   
   const handleClick = useCallback(() => {
@@ -33,7 +33,7 @@ const SetCourse = ({ asteroid, crew, ship, onSetAction, _disabled }) => {
       if (travelSolution.originId !== crew?._location?.asteroidId) return 'invalid travel origin';
       if (ship?.Ship?.transitDeparture > 0) return 'ship is in flight';
       if (ship?._location?.lotId) return 'ship is docked';
-      return getCrewDisabledReason({ asteroid, crew });
+      return getCrewDisabledReason({ crew });
     }
     return '';
   }, [_disabled, asteroid, crew, ship, travelSolution?.invalid]);
@@ -43,8 +43,10 @@ const SetCourse = ({ asteroid, crew, ship, onSetAction, _disabled }) => {
       label="Set Course"
       labelAddendum={disabledReason}
       flags={{
-        attention: crew && travelSolution && !travelSolution.invalid,
+        attention: crew && travelStatus === 'READY' && travelSolution && !travelSolution.invalid,
         disabled: disabledReason,
+        loading: travelStatus !== 'READY',
+        finishTime: currentTravelAction?.finishTime
       }}
       icon={<SetCourseIcon />}
       onClick={handleClick} />

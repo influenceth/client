@@ -219,6 +219,8 @@ const propellantProduct = Product.TYPES[Product.IDS.HYDROGEN_PROPELLANT];
 const SetCourse = ({ origin, destination, manager, ship, stage, travelSolution, ...props }) => {
   const { coarseTime } = useContext(ClockContext);
   const createAlert = useStore(s => s.dispatchAlertLogged);
+  const dispatchHudMenuOpened = useStore(s => s.dispatchHudMenuOpened);
+  const dispatchTravelMode = useStore(s => s.dispatchTravelMode);
   
   const { currentTravelAction, depart, arrive, travelStatus } = manager;
   const { crew } = useCrewContext();
@@ -323,6 +325,9 @@ const SetCourse = ({ origin, destination, manager, ship, stage, travelSolution, 
   useEffect(() => {
     // (close on status change)
     if (lastStatus.current && travelStatus !== lastStatus.current) {
+      // (close travel details)
+      dispatchHudMenuOpened();
+      dispatchTravelMode(false);
       props.onClose();
     }
     lastStatus.current = travelStatus;

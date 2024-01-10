@@ -211,7 +211,7 @@ const RoutePlanner = () => {
         label: Entity.IDS.SHIP,
         id: -(1 + i),
         i: -(1 + i),
-        Name: { name: `[Simulated] ${Ship.TYPES[s].name}` },
+        Name: { name: `Simulated ${Ship.TYPES[s].name}` },
         Ship: { shipType: Number(s), status: Ship.STATUSES.AVAILABLE },
         Location: { location: { label: Entity.IDS.ASTEROID, id: originId } },
         Inventories: getInventoriesByShipType(s),
@@ -219,7 +219,7 @@ const RoutePlanner = () => {
       }))
     ].map((s) => ({
       ...s,
-      _name: formatters.shipName(s)
+      _name: `${s.Ship.transitDeparture > 0 ? '[In Flight] ' : ''}${formatters.shipName(s)}`
     }))
   }, [myShips, myShipsLoading, crew?._location?.shipId, originId]);
 
@@ -345,7 +345,7 @@ const RoutePlanner = () => {
             options={shipList}
             valueKey="i"
             size="small"
-            style={{ textTransform: 'none' }}
+            style={{ textTransform: 'none', fontSize: '80%' }}
             width={200} />
         </div>
 

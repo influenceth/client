@@ -306,14 +306,14 @@ const LotResources = () => {
         <Tray>
           <>
             {(currentSamplingAction || selectedResource || selectedSample) && (
-              <actionButtons.CoreSample {...actionProps} {...extraSampleParams} />
+              <actionButtons.CoreSample.Component {...actionProps} {...extraSampleParams} />
             )}
             {/* TODO: list sample for sale */}
             {/* TODO: purchase sample for sale (if one is selected) */}
             {lot?.building?.Building?.status === Building.CONSTRUCTION_STATUSES.OPERATIONAL
               && lot?.building?.Extractors?.length > 0
               && (currentExtraction || selectedSample)
-              && <actionButtons.Extract {...actionProps} {...extraExtractParams} />
+              && <actionButtons.Extract.Component {...actionProps} {...extraExtractParams} />
             }
           </>
         </Tray>
