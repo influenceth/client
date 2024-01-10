@@ -9,6 +9,12 @@ import useScanManager from '~/hooks/actionManagers/useScanManager';
 import ActionButton from './ActionButton';
 import useCrewContext from '~/hooks/useCrewContext';
 
+const isVisible = ({ asteroid, crew }) => {
+  return asteroid && crew
+    && asteroid.Control?.controller?.id === crew.id
+    && asteroid.Celestial?.scanStatus < Asteroid.SCAN_STATUSES.RESOURCE_SCANNED;
+};
+
 const ScanAsteroid = ({ asteroid, _disabled }) => {
   const history = useHistory();
   const { scanStatus, scanType } = useScanManager(asteroid);
@@ -17,11 +23,11 @@ const ScanAsteroid = ({ asteroid, _disabled }) => {
   const { disabledReason, label, flags, handleClick } = useMemo(() => {
     let flags = {
       attention: undefined,
-      disabled: _disabled || undefined,
+      disabled: _disabled,
       loading: undefined,
       finishTime: asteroid?.Celestial?.scanFinishTime
     };
-    let disabledReason = null;
+    let disabledReason = _disabled ? 'loading...' : null;
 
     // resource scan requires crew to be on asteroid
     if (scanType === 'RESOURCE' && (!crew._location?.asteroidId || crew._location?.asteroidId !== asteroid?.id)) {
@@ -91,4 +97,4 @@ const ScanAsteroid = ({ asteroid, _disabled }) => {
   );
 };
 
-export default ScanAsteroid;
+export default { Component: ScanAsteroid, isVisible };

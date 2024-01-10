@@ -1,8 +1,8 @@
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import { ConstructIcon } from '~/components/Icons';
 import useConstructionManager from '~/hooks/actionManagers/useConstructionManager';
-import ActionButton from './ActionButton';
+import ActionButton, { getCrewDisabledReason } from './ActionButton';
 
 const labelDict = {
   PLANNED: 'Start Construction',
@@ -11,31 +11,33 @@ const labelDict = {
   FINISHING: 'Finishing Construction...'
 };
 
-const isVisible = ({ building, constructionStatus, crew }) => {
-  // zoomStatus === 'in'?
-  return crew && building
-    && building.Control?.controller?.id === crew.id
-    && building.DryDocks?.length > 0
+const isVisible = ({ constructionStatus, crew, lot }) => {
+  return crew && lot && lot.building
+    && lot.building.Control?.controller?.id === crew.id
     && ['PLANNED', 'UNDER_CONSTRUCTION', 'READY_TO_FINISH', 'FINISHING'].includes(constructionStatus);
 };
 
-const Component = ({ asteroid, crew, lot, onSetAction, _disabled }) => {
+const Construct = ({ asteroid, crew, lot, onSetAction, _disabled }) => {
   const { constructionStatus } = useConstructionManager(lot?.id);
   const handleClick = useCallback(() => {
     onSetAction('CONSTRUCT');
   }, [onSetAction]);
 
-  const attention = constructionStatus === 'PLANNED' || constructionStatus === 'READY_TO_FINISH';
+  const disabledReason = useMemo(() => {
+    if (_disabled) return 'loading...';
+    return constructionStatus === 'PLANNED' ? getCrewDisabledReason({ asteroid, crew }) : '';
+  }, [_disabled, asteroid, constructionStatus, crew]);
+
+  const attention = !disabledReason && (constructionStatus === 'PLANNED' || constructionStatus === 'READY_TO_FINISH');
   const loading = constructionStatus === 'UNDER_CONSTRUCTION' || constructionStatus === 'FINISHING';
-  const disabledReason = constructionStatus === 'PLANNED' && !crew?._ready ? 'crew is busy' : null;
   return (
     <ActionButton
-      label={labelDict[constructionStatus] || undefined}
+      label={labelDict[constructionStatus]}
       labelAddendum={disabledReason}
       flags={{
-        disabled: _disabled || disabledReason || undefined,
-        attention: attention || undefined,
-        loading: loading || undefined,
+        disabled: _disabled || disabledReason,
+        attention,
+        loading,
         finishTime: lot?.building?.Building?.finishTime
       }}
       icon={<ConstructIcon />}
@@ -43,4 +45,4 @@ const Component = ({ asteroid, crew, lot, onSetAction, _disabled }) => {
   );
 };
 
-export default { Component, isVisible };
+export default { Component: Construct, isVisible };

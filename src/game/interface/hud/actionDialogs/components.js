@@ -2082,7 +2082,7 @@ export const InventorySelectionDialog = ({ asteroidId, otherEntity, otherInvSlot
 
   const otherLocation = useMemo(() => {
     if (!otherEntity) return {};
-    return locationsArrToObj(otherEntity.Location.locations || []);
+    return locationsArrToObj(otherEntity.Location?.locations || []);
   }, [otherEntity]);
 
   // if off the surface, cannot access inventories on the surface...

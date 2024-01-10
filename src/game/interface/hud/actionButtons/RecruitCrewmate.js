@@ -1,11 +1,16 @@
 import { useCallback, useMemo } from 'react';
 import { useHistory } from 'react-router-dom';
+import { Building } from '@influenceth/sdk';
 
 import { RecruitCrewmateIcon } from '~/components/Icons';  // TODO: sergey's
 import useCrewManager from '~/hooks/actionManagers/useCrewManager';
 import useStore from '~/hooks/useStore';
 import { nativeBool, reactBool } from '~/lib/utils';
 import ActionButton from './ActionButton';
+
+const isVisible = ({ account, building }) => {
+  return account && building?.Building?.buildingType === Building.IDS.HABITAT;
+};
 
 const RecruitCrewmate = ({ crew, lot }) => {  
   const { getPendingCrewmate } = useCrewManager();
@@ -55,6 +60,7 @@ const RecruitCrewmate = ({ crew, lot }) => {
 
   const pendingCrewmate = useMemo(getPendingCrewmate, [getPendingCrewmate]);
 
+  // TODO: attention always?
   return (
     <ActionButton
       label={`Recruit Crewmate${tooltipExtra}`}
@@ -68,4 +74,4 @@ const RecruitCrewmate = ({ crew, lot }) => {
   );
 };
 
-export default RecruitCrewmate;
+export default { Component: RecruitCrewmate, isVisible };

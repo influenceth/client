@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useHistory } from 'react-router-dom';
 import { Entity } from '@influenceth/sdk';
 
@@ -6,6 +6,10 @@ import { PurchaseAsteroidIcon } from '~/components/Icons';
 import useBuyAsteroid from '~/hooks/actionManagers/useBuyAsteroid';
 import ActionButton from './ActionButton';
 import useSale from '~/hooks/useSale';
+
+const isVisible = ({ asteroid }) => {
+  return asteroid && !asteroid.Nft?.owner;
+};
 
 const PurchaseAsteroid = ({ asteroid, _disabled }) => {
   const history = useHistory();
@@ -16,12 +20,17 @@ const PurchaseAsteroid = ({ asteroid, _disabled }) => {
     history.push(`/asteroids/${asteroid?.id}`);
   }, [asteroid?.id]);
 
+  let disabledReason = useMemo(() => {
+    if (_disabled) return 'loading...';
+    if (!saleIsActive) return 'sale is currently closed';
+  }, [_disabled, saleIsActive]);
+
   return (
     <ActionButton
-      label={`Purchase Asteroid`}
-      labelAddendum={saleIsActive ? null : 'sale is currently closed'}
+      label="Purchase Asteroid"
+      labelAddendum={disabledReason}
       flags={{
-        disabled: _disabled || !saleIsActive || buying,
+        disabled: disabledReason || buying,
         loading: buying
       }}
       icon={<PurchaseAsteroidIcon />}
@@ -29,4 +38,4 @@ const PurchaseAsteroid = ({ asteroid, _disabled }) => {
   );
 };
 
-export default PurchaseAsteroid;
+export default { Component: PurchaseAsteroid, isVisible };

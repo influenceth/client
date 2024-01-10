@@ -1,10 +1,11 @@
 import { useCallback, useContext, useMemo } from 'react';
-import { Building, Entity, Lot } from '@influenceth/sdk';
+import { Asteroid, Building, Entity, Lot } from '@influenceth/sdk';
 
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
 import useCrewContext from '~/hooks/useCrewContext';
 import useLot from '~/hooks/useLot';
 import useActionItems from '~/hooks/useActionItems';
+import useAsteroid from '~/hooks/useAsteroid';
 import actionStage from '~/lib/actionStages';
 
 const useConstructionManager = (lotId) => {
@@ -14,6 +15,7 @@ const useConstructionManager = (lotId) => {
   const { data: lot } = useLot(lotId);
 
   const asteroidId = useMemo(() => Lot.toPosition(lotId)?.asteroidId, [lotId]);
+  const { data: asteroid } = useAsteroid(asteroidId);
   const buildingId = lot?.building?.id;
 
   const planPayload = useMemo(() => ({
@@ -26,6 +28,7 @@ const useConstructionManager = (lotId) => {
     caller_crew: { id: crew?.id, label: Entity.IDS.CREW }
   }), [buildingId, crew?.id]);
 
+  // UNBUILDABLE (before asteroid is scanned)
   // READY_TO_PLAN > PLANNING  > PLANNED > UNDER_CONSTRUCTION > READY_TO_FINISH > FINISHING > OPERATIONAL
   //               < CANCELING <         <                  DECONSTRUCTING                  <
   const [currentConstructionAction, constructionStatus, isAtRisk, deconstructTx, stageByActivity] = useMemo(() => {
@@ -44,7 +47,9 @@ const useConstructionManager = (lotId) => {
       deconstruct: actionStage.NOT_STARTED,
     };
 
-    let status = 'READY_TO_PLAN';
+    let status = asteroid?.Celestial?.scanStatus === Asteroid.SCAN_STATUSES.RESOURCE_SCANNED
+      ? 'READY_TO_PLAN'
+      : 'UNBUILDABLE';
     let isAtRisk = false;
     let deconstructTx;
     if (lot?.building) {
@@ -132,7 +137,7 @@ const useConstructionManager = (lotId) => {
       deconstructTx,
       stages
     ];
-  }, [actionItems, readyItems, getPendingTx, getStatus, payload, planPayload, lot?.building]);
+  }, [actionItems, asteroid, readyItems, getPendingTx, getStatus, payload, planPayload, lot?.building]);
 
   const txMeta = useMemo(() => ({ asteroidId, lotId }), [asteroidId, lotId]);
 

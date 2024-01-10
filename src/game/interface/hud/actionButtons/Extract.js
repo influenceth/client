@@ -3,7 +3,7 @@ import { Deposit } from '@influenceth/sdk';
 
 import { ExtractionIcon } from '~/components/Icons';
 import useExtractionManager from '~/hooks/actionManagers/useExtractionManager';
-import ActionButton from './ActionButton';
+import ActionButton, { getCrewDisabledReason } from './ActionButton';
 import useCrewContext from '~/hooks/useCrewContext';
 
 const labelDict = {
@@ -11,6 +11,13 @@ const labelDict = {
   EXTRACTING: 'Extracting...',
   READY_TO_FINISH: 'Finish Extraction',
   FINISHING: 'Finishing Extraction...'
+};
+
+const isVisible = ({ building, crew }) => {
+  // zoomStatus === 'in'?
+  return crew && building
+    && building.Control?.controller?.id === crew.id // TODO: policy instead of control
+    && building.Extractors?.length > 0;
 };
 
 // TODO: for multiple extractors, need one of these (and an extraction manager) per extractor
@@ -32,13 +39,12 @@ const Extract = ({ onSetAction, asteroid, crew, lot, preselect, _disabled }) => 
   const attention = !_disabled && (extractionStatus === 'READY_TO_FINISH' || (myUsableSamples?.length > 0) && extractionStatus === 'READY');
   const badge = ((extractionStatus === 'READY' && !preselect) ? usableSamples?.length : 0);
   let disabledReason = useMemo(() => {
+    if (_disabled) return 'loading...';
     if (extractionStatus === 'READY') {
-      if (!lot?.building?.Extractors) return 'no extractor';
       if (myUsableSamples?.length === 0) return 'requires core sample';
-      if (!crew?._ready) return 'crew is busy';
-      return '';
+      return getCrewDisabledReason({ asteroid, crew });
     }
-  }, [crew?._ready, lot?.building?.Extractors, myUsableSamples?.length]);
+  }, [_disabled, crew, extractionStatus, lot?.building?.Extractors, myUsableSamples?.length]);
   
   const loading = ['EXTRACTING', 'FINISHING'].includes(extractionStatus);
   return (
@@ -47,7 +53,7 @@ const Extract = ({ onSetAction, asteroid, crew, lot, preselect, _disabled }) => 
       labelAddendum={disabledReason}
       flags={{
         badge,
-        disabled: _disabled || disabledReason || undefined,
+        disabled: disabledReason || undefined,
         attention: attention || undefined,
         loading: loading || undefined,
         finishTime: lot?.building?.Extractors?.[0]?.finishTime
@@ -57,4 +63,4 @@ const Extract = ({ onSetAction, asteroid, crew, lot, preselect, _disabled }) => 
   );
 };
 
-export default Extract;
+export default { Component: Extract, isVisible };
