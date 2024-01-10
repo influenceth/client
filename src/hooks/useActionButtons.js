@@ -164,6 +164,7 @@ const useActionButtons = () => {
           account,
           asteroid,
           crew,
+          crewedShip,
           building: zoomStatus === 'in' && constructionStatus === 'OPERATIONAL' && lot?.building,
           constructionStatus,
           lot: zoomStatus === 'in' && lot,
@@ -174,7 +175,7 @@ const useActionButtons = () => {
         .sort((a, b) => (buttonOrder[a] || 100) - (buttonOrder[b] || 100))
         .map((k) => actionButtons[k].Component || actionButtons[k])
     ); 
-  }, [targetShip?.id, asteroid, constructionStatus, crew, lot, openHudMenu, resourceMap?.active, !!resourceMap?.selected, zoomStatus]);
+  }, [targetShip?.id, asteroid, constructionStatus, crew, crewedShip, lot, openHudMenu, resourceMap?.active, !!resourceMap?.selected, zoomStatus]);
 
   // TODO: within each action button, should memoize whatever is passed to flags
   // (because always a new object, will always re-render the underlying button)

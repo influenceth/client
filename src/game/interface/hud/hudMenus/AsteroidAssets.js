@@ -205,13 +205,13 @@ const BuildingRow = ({ building }) => {
 
       else if (building?.Building?.buildingType === Building.IDS.EXTRACTOR) {
         return [
-          Math.min(1, (chainTime - building?.Extractors?.[0]?.startTime) / (building?.Extractors?.[0]?.finishTime - building?.Extractors?.[0]?.startTime)),
+          Math.min(1, (chainTime - building?.Extractors?.[0]?.event?.timestamp) / (building?.Extractors?.[0]?.finishTime - building?.Extractors?.[0]?.event?.timestamp)),
           'main'
         ];
       }
       else if (building?.Processors?.length) {
         return [
-          Math.min(1, (chainTime - building?.Processors?.[0]?.startTime) / (building?.Processors?.[0]?.finishTime - building?.Processors?.[0]?.startTime)),
+          Math.min(1, (chainTime - building?.Processors?.[0]?.event?.timestamp) / (building?.Processors?.[0]?.finishTime - building?.Processors?.[0]?.event?.timestamp)),
           'main'
         ];
       }
@@ -226,7 +226,7 @@ const BuildingRow = ({ building }) => {
 
     if (building?.Building?.status === Building.CONSTRUCTION_STATUSES.UNDER_CONSTRUCTION) {
       return [
-        Math.min(1, (chainTime - building?.Building?.startTime) / (building?.Building?.finishTime - building?.Building?.startTime)),
+        Math.min(1, (chainTime - building?.Building?.event?.timestamp) / (building?.Building?.finishTime - building?.Building?.event?.timestamp)),
         'main'
       ];
     }

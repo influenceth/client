@@ -8,12 +8,23 @@ import useReadyAtWatcher from '~/hooks/useReadyAtWatcher';
 import useShip from '~/hooks/useShip';
 import useShipDockingManager from '~/hooks/actionManagers/useShipDockingManager';
 
-const isVisible = ({ asteroid, crew, ship }) => {
-  return crew && ship
-    && ship.Control?.controller?.id === crew.id
-    // TODO: if in orbit around asteroid?
-    // && asteroid?.id === ship._location.asteroidId
-    && !ship._location.lotId  // not on surface
+const isVisible = ({ asteroid, crew, crewedShip, ship }) => {
+  return crew && (
+    (
+      ship
+      && ship.Control?.controller?.id === crew.id
+      // TODO: if in orbit around asteroid?
+      // && asteroid?.id === ship._location.asteroidId
+      && !ship._location.lotId  // not on surface
+    )
+    || 
+    (
+      crewedShip
+      && crewedShip.Control?.controller?.id === crew.id
+      && crewedShip._location.asteroidId === asteroid?.id
+      && !crewedShip._location.lotId  // not on surface
+    )
+  );
 };
 
 const LandShip = ({ lot, onSetAction, _disabled }) => {

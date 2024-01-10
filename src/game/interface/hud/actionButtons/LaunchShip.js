@@ -3,7 +3,7 @@ import { Entity } from '@influenceth/sdk';
 
 import { LaunchShipIcon } from '~/components/Icons';
 import useStore from '~/hooks/useStore';
-import ActionButton from './ActionButton';
+import ActionButton, { getCrewDisabledReason } from './ActionButton';
 import useCrewContext from '~/hooks/useCrewContext';
 import useReadyAtWatcher from '~/hooks/useReadyAtWatcher';
 import useDeliveryManager from '~/hooks/actionManagers/useDeliveryManager';
@@ -35,8 +35,8 @@ const LaunchShip = ({ lot, onSetAction, _disabled }) => {
     const invReserved = crewedShip?.Inventories?.find((i) => i.reservedMass > 0)
       || currentDeliveries?.length > 0;
     if (invReserved) return 'delivery pending';
-    return null;
-  }, [_disabled, crewedShip, currentDeliveries, lot, ready]);
+    return getCrewDisabledReason({ crew });
+  }, [_disabled, crew, crewedShip, currentDeliveries, lot, ready]);
 
   return (
     <ActionButton
