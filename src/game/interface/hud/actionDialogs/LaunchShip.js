@@ -41,6 +41,9 @@ import useEntity from '~/hooks/useEntity';
 import { getBonusDirection } from './components';
 import { TimeBonusTooltip } from './components';
 
+
+const propellantProduct = Product.TYPES[Product.IDS.HYDROGEN_PROPELLANT];
+
 const LaunchShip = ({ asteroid, originLot, manager, ship, stage, ...props }) => {
   const createAlert = useStore(s => s.dispatchAlertLogged);
 
@@ -73,6 +76,8 @@ const LaunchShip = ({ asteroid, originLot, manager, ship, stage, ...props }) => 
       Time.toRealDuration(Asteroid.getLotTravelTime(asteroid?.id, originLotIndex, 0, hopperBonus.totalBonus), crew?._timeAcceleration)
     ];
   }, [asteroid, hopperBonus, originLot?.id, powered, ship]);
+
+  const isDeliveryPending = useMemo(() => !!(ship.Inventories || []).find((inv) => inv.reservedMass > 0), [ship])
 
   const [propellantLoaded, deltaVLoaded] = useMemo(() => {
     if (!ship) return [0, 0];
@@ -138,8 +143,6 @@ const LaunchShip = ({ asteroid, originLot, manager, ship, stage, ...props }) => 
     }
     lastStatus.current = stage;
   }, [stage]);
-
-  const propellantProduct = Product.TYPES[Product.IDS.HYDROGEN_PROPELLANT];
 
   return (
     <>
@@ -247,9 +250,8 @@ const LaunchShip = ({ asteroid, originLot, manager, ship, stage, ...props }) => 
 
       </ActionDialogBody>
 
-      {/* TODO: add waitForCrewReady? */}
       <ActionDialogFooter
-        disabled={false/* TODO: insufficient propellant + reserved inventory, etc */}
+        disabled={isDeliveryPending || propellantRequirement > propellantLoaded}
         goLabel="Launch"
         onGo={onLaunch}
         stage={stage}

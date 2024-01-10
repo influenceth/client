@@ -22,6 +22,7 @@ import useActivitiesContext from '~/hooks/useActivitiesContext';
 import useCrewContext from '~/hooks/useCrewContext';
 import useStore from '~/hooks/useStore';
 import DropdownNavMenu, { NavMenuLoggedInUser, menuAnimationTime } from './DropdownNavMenu';
+import { uint256 } from 'starknet';
 
 const MobileWarning = styled.div`
   align-items: center;
@@ -88,24 +89,26 @@ const SystemControls = () => {
     if (swayUpdateTimeout.current) clearTimeout(swayUpdateTimeout.current);
 
     try {
-      // TODO: uncomment this when sway contract deployed
-      // const balance = await starknet.account.provider.invoke({
-      //   contractAddress: process.env.REACT_APP_STARKNET_SWAY_TOKEN,
-      //   entrypoint: 'balanceOf',
-      // });
-      // setSwayBalance(balance);
+      const balance = await starknet.account.provider.callContract({
+        contractAddress: process.env.REACT_APP_STARKNET_SWAY_TOKEN,
+        entrypoint: 'balanceOf',
+        calldata: [starknet.account.address]
+      });
+      setSwayBalance(
+        uint256.uint256ToBN({ low: balance.result[0], high: balance.result[1] })
+      );
     } catch (e) {
       console.error(e);
     }
 
     swayUpdateTimeout.current = setTimeout(updateSwayBalance, 300e3);
-  }, []);
+  }, [!starknet?.account?.provider]);
 
   const openAssetsPortal = useCallback(() => {
     window.open(process.env.REACT_APP_BRIDGE_URL, '_blank');
   }, []);
 
-  useEffect(() => updateSwayBalance, [account, activities]);
+  useEffect(() => updateSwayBalance, [account, activities, updateSwayBalance]);
 
   const menuItems = useMemo(() => {
     const items = [];

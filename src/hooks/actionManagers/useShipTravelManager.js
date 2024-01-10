@@ -6,11 +6,11 @@ import { Vector3 } from 'three';
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
 import useActionItems from '~/hooks/useActionItems';
 import useAsteroid from '~/hooks/useAsteroid';
+import useConstants from '~/hooks/useConstants';
 import useShip from '~/hooks/useShip';
 import useStore from '~/hooks/useStore';
 import actionStages from '~/lib/actionStages';
 import { arrToXYZ } from '~/lib/utils';
-import useConstants from '../useConstants';
 
 const toV3 = ({ x, y, z }) => new Vector3(x, y, z);
 
@@ -26,6 +26,7 @@ const useShipTravelManager = (shipId) => {
 
   const caller_crew = useMemo(() => ({ id: ship?.Control?.controller?.id, label: Entity.IDS.CREW }), [ship?.Control?.controller?.id]);
 
+  // READY > DEPARTING > IN_FLIGHT > READY_TO_ARRIVE > ARRIVING
   const [currentTravelAction, status, stage] = useMemo(() => {
     let current = {
       _crewmates: null,
@@ -83,22 +84,22 @@ const useShipTravelManager = (shipId) => {
     ];
   }, [actionItems, readyItems, getPendingTx, getStatus, caller_crew, ship, TIME_ACCELERATION]);
 
-  const { data: origin } = useAsteroid(currentTravelAction?.originId);
-  const { data: destination } = useAsteroid(currentTravelAction?.destinationId);
+  const { data: origin } = useAsteroid(currentTravelAction?.originId || proposedTravelSolution?.originId);
+  const { data: destination } = useAsteroid(currentTravelAction?.destinationId || proposedTravelSolution?.destinationId);
 
   const shipConfig = Ship.TYPES[ship?.Ship?.shipType];
 
   const cargoInv = useMemo(() => {
-    return (ship.Inventories || []).find(i => i.slot === shipConfig?.cargoSlot);
+    return (ship?.Inventories || []).find(i => i.slot === shipConfig?.cargoSlot);
   }, [ship, shipConfig?.cargoSlot]);
 
   const propellantInv = useMemo(() => {
-    return (ship.Inventories || []).find(i => i.slot === shipConfig?.propellantSlot);
+    return (ship?.Inventories || []).find(i => i.slot === shipConfig?.propellantSlot);
   }, [ship, shipConfig?.propellantSlot]);
 
   useEffect(() => {
     setCurrentTravelSolution();
-    if (!origin || !destination || !propellantInv) return;
+    if (!origin || !destination || !propellantInv || !currentTravelAction) return;
 
     const originOrbit = new AdalianOrbit(origin.Orbit, { units: 'km' });
     const oPos = toV3(originOrbit.getPositionAtTime(currentTravelAction.departureTime));
@@ -187,23 +188,27 @@ const useShipTravelManager = (shipId) => {
     // console.log('travelSolution', proposedTravelSolution);
     // console.log('originPosition', originPosition);
     // console.log('solutionOrbit', solutionOrbit);
-    // console.log(
-    //   'TransitBetweenStart',
-    //   {
-    //     origin: { id: originId, label: Entity.IDS.ASTEROID },
-    //     destination: { id: destinationId, label: Entity.IDS.ASTEROID },
-    //     departure_time: Math.round(departureTime * 86400), // in-game seconds since orbit epoch
-    //     arrival_time: Math.round(arrivalTime * 86400), // in-game seconds since orbit epoch
-    //     transit_p: solutionOrbit.orbit.p,
-    //     transit_ecc: solutionOrbit.orbit.ecc,
-    //     transit_inc: solutionOrbit.orbit.inc,
-    //     transit_raan: solutionOrbit.orbit.raan,
-    //     transit_argp: solutionOrbit.orbit.argp,
-    //     transit_nu_start: solutionOrbit.getTrueAnomalyAtPos(arrToXYZ(originPosition)),
-    //     transit_nu_end: solutionOrbit.getTrueAnomalyAtPos(arrToXYZ(destinationPosition)),
-    //     caller_crew
-    //   }
-    // );
+    console.log(
+      'TransitBetweenStart',
+      {
+        origin: { id: originId, label: Entity.IDS.ASTEROID },
+        destination: { id: destinationId, label: Entity.IDS.ASTEROID },
+        departure_time: Math.round(departureTime * 86400), // in-game seconds since orbit epoch
+        arrival_time: Math.round(arrivalTime * 86400), // in-game seconds since orbit epoch
+        transit_p: solutionOrbit.orbit.p,
+        transit_ecc: solutionOrbit.orbit.ecc,
+        transit_inc: solutionOrbit.orbit.inc,
+        transit_raan: solutionOrbit.orbit.raan,
+        transit_argp: solutionOrbit.orbit.argp,
+        transit_nu_start: solutionOrbit.getTrueAnomalyAtPos(arrToXYZ(originPosition)),
+        transit_nu_end: solutionOrbit.getTrueAnomalyAtPos(arrToXYZ(destinationPosition)),
+        caller_crew
+      },
+      {
+        destination,
+        shipId
+      }
+    );
     execute(
       'TransitBetweenStart',
       {
@@ -225,9 +230,19 @@ const useShipTravelManager = (shipId) => {
         shipId
       }
     );
-  }, [caller_crew, proposedTravelSolution, shipId]);
+  }, [caller_crew, destination, proposedTravelSolution, shipId]);
 
   const arrive = useCallback(() => {
+    console.log(
+      'TransitBetweenFinish',
+      {
+        caller_crew
+      },
+      {
+        destination,
+        shipId
+      }
+    );
     execute(
       'TransitBetweenFinish',
       {
@@ -238,7 +253,7 @@ const useShipTravelManager = (shipId) => {
         shipId
       }
     );
-  }, [caller_crew, shipId]);
+  }, [caller_crew, destination, shipId]);
 
   return {
     depart,

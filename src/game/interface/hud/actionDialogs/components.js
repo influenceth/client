@@ -1704,7 +1704,7 @@ export const TransferSelectionDialog = ({
     setSelection((currentlySelected) => {
       const updated = {...currentlySelected};
       if (selectedAmount > 0) {
-        updated[resourceId] = selectedAmount;
+        updated[resourceId] = Math.floor(selectedAmount);
       } else {
         delete updated[resourceId];
       }
@@ -2082,7 +2082,7 @@ export const InventorySelectionDialog = ({ asteroidId, otherEntity, otherInvSlot
 
   const otherLocation = useMemo(() => {
     if (!otherEntity) return {};
-    return locationsArrToObj(otherEntity.Location.locations || []);
+    return locationsArrToObj(otherEntity.Location?.locations || []);
   }, [otherEntity]);
 
   // if off the surface, cannot access inventories on the surface...
@@ -3714,7 +3714,18 @@ const CrewBusyButton = ({ crew }) => {
   );
 };
 
-export const ActionDialogFooter = ({ buttonsLoading, disabled, finalizeLabel, goLabel, onClose, onFinalize, onGo, stage, waitForCrewReady, wide }) => {
+export const ActionDialogFooter = ({
+  buttonsLoading,
+  disabled,
+  finalizeLabel,
+  goLabel,
+  onClose,
+  onFinalize,
+  onGo,
+  stage,
+  waitForCrewReady,
+  wide
+}) => {
   const { crew } = useCrewContext();
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
 

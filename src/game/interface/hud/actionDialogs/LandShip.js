@@ -258,9 +258,8 @@ const LandShip = ({ asteroid, manager, ship, stage, ...props }) => {
 
       </ActionDialogBody>
 
-      {/* TODO: add waitForCrewReady? */}
       <ActionDialogFooter
-        disabled={false/* TODO: insufficient propellant + anything else? */}
+        disabled={propellantRequirement > propellantLoaded}
         goLabel="Land"
         onGo={onLand}
         stage={stage}

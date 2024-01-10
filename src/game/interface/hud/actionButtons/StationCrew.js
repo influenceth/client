@@ -1,23 +1,78 @@
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
+import { Station } from '@influenceth/sdk';
 
-import { StationCrewIcon } from '~/components/Icons';
-import ActionButton from './ActionButton';
+import { StationCrewIcon, StationPassengersIcon } from '~/components/Icons';
+import ActionButton, { getCrewDisabledReason } from './ActionButton';
+import useStationCrewManager from '~/hooks/actionManagers/useStationCrewManager';
 
-const StationCrew = ({ asteroid, crew, lot, onSetAction }) => {
+const isVisible = ({ crew, building, ship }) => {
+  return crew && (
+    (
+      building?.Station
+      && crew._location?.buildingId !== building.id
+    )
+    ||
+    (
+      ship?.Station
+      && crew._location?.shipId !== ship.id
+    )
+  );
+};
+
+const StationCrew = ({ asteroid, crew, lot, ship, onSetAction, _disabled }) => {
+  const stationEntity = useMemo(() => ship || lot?.building, [ship, lot?.building]);
+  const { currentStationing } = useStationCrewManager(stationEntity);
+
+  const crewIsController = stationEntity?.Control?.controller?.id === crew?.id;
   const handleClick = useCallback(() => {
-    onSetAction('STATION_CREW');
-  }, [onSetAction]);
+    onSetAction(crewIsController ? 'STATION_CREW' : 'STATION_CREW_AS_GUESTS');
+  }, [crewIsController, onSetAction]);
+
+  const disabledReason = useMemo(() => {
+    if (_disabled || !stationEntity) return 'loading...';
+    if (!currentStationing) {
+      if (!crewIsController) {
+        // TODO: check policy
+      }
+      const stationConfig = Station.TYPES[stationEntity.Station.stationType];
+      if (stationConfig.hardCap && stationEntity.Station.population + crew._crewmates.length >= stationConfig.cap) {
+        return 'station is full';
+      }
+      return getCrewDisabledReason({ asteroid, crew, requireSurface: false });
+    }
+    return '';
+  }, [_disabled, asteroid, crew, crewIsController, currentStationing, stationEntity]);
+
+  const buttonParams = useMemo(() => {
+    if (ship) {
+      if (crewIsController) {
+        return {
+          label: 'Station Flight Crew',
+          icon: <StationCrewIcon />
+        }
+      } else {
+        return {
+          label: 'Station Crew as Passengers',
+          icon: <StationPassengersIcon />
+        }
+      }
+    }
+    return {
+      label: 'Station Crew',
+      icon: <StationCrewIcon />
+    }
+  }, [crewIsController, ship]);
 
   return (
     <ActionButton
-      label="Station Crew"
+      {...buttonParams}
+      labelAddendum={disabledReason}
       flags={{
-        disabled: false, // TODO: ... crew not on asteroid? crew already on ship? ship ownership? crew._ready?
-        loading: false, // TODO: ...
+        disabled: disabledReason,
+        loading: !!currentStationing
       }}
-      icon={<StationCrewIcon />}
       onClick={handleClick} />
   );
 };
 
-export default StationCrew;
+export default { Component: StationCrew, isVisible };

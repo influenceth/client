@@ -18,11 +18,10 @@ const useEjectCrewManager = (originId) => {
   const { data: originCrews } = useStationedCrews(originId);
 
   const currentEjections = useMemo(() => {
-    console.log({ originCrews, pendingTransactions });
     return pendingTransactions
       .filter((tx) => {
         if (tx.key === 'EjectCrew') {
-          return (originCrews || []).find((c) => c.id === tx.vars.caller_crew.id);
+          return (originCrews || []).find((c) => c.id === tx.vars.ejected_crew.id);
         }
       });
   }, [originCrews, pendingTransactions]);

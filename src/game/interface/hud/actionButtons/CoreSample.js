@@ -1,17 +1,30 @@
 import { useCallback, useEffect, useMemo } from 'react';
-import { Asteroid, Lot, Product } from '@influenceth/sdk';
+import { Asteroid, Building, Lot, Product } from '@influenceth/sdk';
 
 import { NewCoreSampleIcon, ImproveCoreSampleIcon } from '~/components/Icons';
 import useCoreSampleManager from '~/hooks/actionManagers/useCoreSampleManager';
 import useStore from '~/hooks/useStore';
 import { formatFixed } from '~/lib/utils';
-import ActionButton from './ActionButton';
+import ActionButton, { getCrewDisabledReason } from './ActionButton';
 
 const labelDict = {
   READY: 'Start Core Sample',
   SAMPLING: 'Sampling...',
   READY_TO_FINISH: 'Analyze Sample',
   FINISHING: 'Analyzing...'
+};
+
+const isVisible = ({ asteroid, crew, lot, openHudMenu }) => {
+  // if asteroid has been scanned, can core sample...
+  // (only offer as main button if no building or the building is an extractor)
+  // (can still zoom to lot and do through resources panel)
+  return crew && asteroid && lot
+    && asteroid.Celestial.scanStatus === Asteroid.SCAN_STATUSES.RESOURCE_SCANNED
+    && (
+      // (operational or planned extractor)
+      lot?.building?.Building?.buildingType === Building.IDS.EXTRACTOR
+      || openHudMenu === 'ASTEROID_RESOURCES'
+    ); 
 };
 
 const NewCoreSample = ({ asteroid, crew, lot, onSetAction, overrideResourceId, improveSample, _disabled }) => {
@@ -35,7 +48,6 @@ const NewCoreSample = ({ asteroid, crew, lot, onSetAction, overrideResourceId, i
 
   let label = labelDict[samplingStatus];
   let attention = undefined;
-  let disabledReason = (samplingStatus === 'READY' && !crew?._ready) ? 'crew is busy' : null;
   let loading = undefined;
 
   // if there is a current sample ongoing
@@ -72,15 +84,20 @@ const NewCoreSample = ({ asteroid, crew, lot, onSetAction, overrideResourceId, i
     }
   }, [currentSamplingAction, improveSample, onSetAction, resourceId]);
 
+  const disabledReason = useMemo(() => {
+    if (_disabled) return 'loading...';
+    return getCrewDisabledReason({ asteroid, crew });
+  }, [_disabled, asteroid, crew]);
+
   const isImprovement = improveSample || (currentSamplingAction && !currentSamplingAction.isNew);
   return (
     <ActionButton
       label={label}
       labelAddendum={disabledReason}
       flags={{
-        attention: attention || undefined,
-        disabled: _disabled || disabledReason || undefined,
-        loading: loading || undefined,
+        attention: (!disabledReason && attention),
+        disabled: _disabled || disabledReason,
+        loading,
         finishTime: currentSamplingAction?.finishTime
       }}
       icon={isImprovement ? <ImproveCoreSampleIcon /> : <NewCoreSampleIcon />}
@@ -88,4 +105,4 @@ const NewCoreSample = ({ asteroid, crew, lot, onSetAction, overrideResourceId, i
   );
 };
 
-export default NewCoreSample;
+export default { Component: NewCoreSample, isVisible };

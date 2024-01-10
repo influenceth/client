@@ -263,4 +263,16 @@ const ActionButtonComponent = ({ label, labelAddendum, flags = {}, icon, onClick
   );
 }
 
+export const getCrewDisabledReason = ({ asteroid, crew, requireAsteroid = true, requireSurface = true }) => {
+  if (asteroid && requireAsteroid) {
+    if (crew?._location?.asteroidId !== asteroid?.id) {
+      return 'crew is away';
+    } else if (requireSurface && !crew?._location?.lotId) {
+      return 'crew is in orbit';
+    }
+  }
+  if (!crew?._ready) return 'crew is busy';
+  return '';
+};
+
 export default ActionButtonComponent;

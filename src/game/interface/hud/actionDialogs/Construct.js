@@ -67,7 +67,7 @@ const Construct = ({ asteroid, lot, constructionManager, stage, ...props }) => {
 
   const { totalTime: crewTravelTime, tripDetails } = useMemo(() => {
     if (!asteroid?.id || !crew?._location?.lotId || !lot?.id) return {};
-    const crewLotIndex = Lot.toIndex(crew?._location?.lotId);
+    const crewLotIndex = crew?._location?.asteroidId === asteroid.id ? Lot.toIndex(crew?._location?.lotId) : 0;
     return getTripDetails(asteroid.id, crewTravelBonus, crewLotIndex, [
       { label: 'Travel to Construction Site', lotIndex: Lot.toIndex(lot.id) },
       { label: 'Return to Crew Station', lotIndex: crewLotIndex },

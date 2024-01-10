@@ -177,12 +177,12 @@ const EjectCrew = ({ asteroid, origin, originLot, manager, stage, ...props }) =>
 
       </ActionDialogBody>
 
-      {/* TODO: add waitForCrewReady? */}
       <ActionDialogFooter
-        disabled={false/* TODO: no permission */}
+        disabled={!targetCrew}
         goLabel="Eject"
         onGo={onEject}
         stage={stage}
+        waitForCrewReady
         {...props} />
 
       {stage === actionStages.NOT_STARTED && (

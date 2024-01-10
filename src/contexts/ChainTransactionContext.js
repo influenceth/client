@@ -5,15 +5,13 @@ import { isEqual, get } from 'lodash';
 
 import useActivitiesContext from '~/hooks/useActivitiesContext';
 import useAuth from '~/hooks/useAuth';
+import useCrewContext from '~/hooks/useCrewContext';
 import useStore from '~/hooks/useStore';
 import useInterval from '~/hooks/useInterval';
 import api from '~/lib/api';
 
-
-
-
-import { CallData, uint256 } from 'starknet';
-const Systems = System.Systems;
+// import { CallData, uint256 } from 'starknet';
+// const Systems = System.Systems;
 
 // // TODO: move this back to sdk once finished debugging
 // const formatCalldataValue = (type, value) => {
@@ -118,6 +116,8 @@ const getNow = () => Math.floor(Date.now() / 1000);
 
 // supported configs:
 //  confirms, equalityTest
+
+// TODO: when equalityTest is ['callerCrew.id'], can't it just be `true`?
 const customConfigs = {
   // customization of Systems configs from sdk
   ArrangeCrew: { equalityTest: ['callerCrew.id'] }, // TODO: should this be caller_crew?
@@ -192,6 +192,13 @@ const customConfigs = {
     },
     equalityTest: true
   },
+  ResolveRandomEvent: {
+    preprocess: (vars) => {
+      if (!Object.keys(vars).includes('choice')) vars.choice = 0;
+      return vars;
+    },
+    equalityTest: true
+  },
   ResupplyFood: {
     equalityTest: ['caller_crew.id']
   },
@@ -232,7 +239,8 @@ const customConfigs = {
 
 export function ChainTransactionProvider({ children }) {
   const { account, walletContext: { starknet } } = useAuth();
-  const { activities/*, lastBlockNumber*/ } = useActivitiesContext();
+  const { activities, lastBlockNumber } = useActivitiesContext();
+  const { crew } = useCrewContext();
 
   const createAlert = useStore(s => s.dispatchAlertLogged);
   const dispatchFailedTransaction = useStore(s => s.dispatchFailedTransaction);
@@ -243,6 +251,30 @@ export function ChainTransactionProvider({ children }) {
   const pendingTransactions = useStore(s => s.pendingTransactions);
 
   const [promptingTransaction, setPromptingTransaction] = useState(false);
+
+  const prependEventAutoresolve = useRef();
+  useEffect(() => {
+    let wasTriggered = false;
+    if (crew?.Crew?.actionType && crew?.crew?.actionRound <= lastBlockNumber) {
+      starknet.account.provider.callContract(
+        System.getRunSystemCall(
+          'CheckForRandomEvent',
+          { caller_crew: { id: crew.id, label: crew.label }},
+          process.env.REACT_APP_STARKNET_DISPATCHER
+        )
+      )
+      .then((response) => {
+        // TODO: (should have type that can do something with)
+        console.log('CheckForRandomEvent', response);
+        wasTriggered = !!response;
+      })
+      .catch((err) => {
+        console.warn('CheckForRandomEvent', err);
+        // (wasTriggered can stay false)
+      });
+    }
+    prependEventAutoresolve.current = crew?.Crew?.actionType && !wasTriggered;
+  }, [crew?.Crew?.actionType, crew?.crew?.actionRound, lastBlockNumber]);
 
   const contracts = useMemo(() => {
     if (!!starknet?.account) {
@@ -265,11 +297,17 @@ export function ChainTransactionProvider({ children }) {
           execute: async (rawVars) => {
             let runSystems;
             if (config.multisystemCalls) {
-              runSystems = config.multisystemCalls;
+              runSystems = [ ...config.multisystemCalls ];
             } else if (config.bulkSystemCall) {
               runSystems = Array.from(Array(config.getRepeatTally(rawVars))).map(() => config.bulkSystemCall);
             } else {
               runSystems = [systemName];
+            }
+
+            // if actionType is set but the random event was not actually triggered, prepend resolveRandomEvent
+            // so that the event is cleared (preprocess will add the null choice)
+            if (prependEventAutoresolve.current && !config.isUnblockable) { // TODO: fill in these isUnblockable's
+              runSystems.unshift('ResolveRandomEvent');
             }
 
             let totalPrice = 0n;
@@ -289,7 +327,6 @@ export function ChainTransactionProvider({ children }) {
             }
 
             console.log('execute', calls);
-            // calls[0].calldata[1] = "27";
             return starknet.account.execute(calls);
           },
 
@@ -485,7 +522,7 @@ export function ChainTransactionProvider({ children }) {
         // TODO: in Braavos, is "Execute failed" a generic error? in that case, we should still show
         // (and it will just be annoying that it shows a failure on declines)
         // console.log('failed', e);
-        if (!['User abort', 'Execute failed'].includes(e?.message)) {
+        if (!['User abort', 'Execute failed', 'Timeout'].includes(e?.message)) {
           dispatchFailedTransaction({
             key,
             vars,
@@ -494,6 +531,18 @@ export function ChainTransactionProvider({ children }) {
             err: e?.message || e
           });
         }
+
+        // "Timeout" is in argent (at least) for when tx is auto-rejected b/c previous tx is still pending
+        // TODO: should hopefully be able to remove Timeout because would make sessions feel pretty useless
+        if (e?.message === 'Timeout') {
+          createAlert({
+            type: 'GenericAlert',
+            data: { content: 'Previous tx is not yet accepted on l2. Wait for the extension notification and try again.' },
+            level: 'warning',
+            duration: 5000
+          });
+        }
+
         onTransactionError(e, vars);
       }
       setPromptingTransaction(false);

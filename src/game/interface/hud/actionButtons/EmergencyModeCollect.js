@@ -4,10 +4,16 @@ import { Crewmate, Inventory, Product, Ship, Time } from '@influenceth/sdk';
 import { EmergencyModeCollectIcon } from '~/components/Icons';
 import useCrewContext from '~/hooks/useCrewContext';
 import useShip from '~/hooks/useShip';
-import ActionButton from './ActionButton';
+import ActionButton, { getCrewDisabledReason } from './ActionButton';
 import { getCrewAbilityBonuses } from '~/lib/utils';
 
 const resourceId = Product.IDS.HYDROGEN_PROPELLANT;
+
+const isVisible = ({ crew, ship }) => {
+  return crew && ship
+    && crew._location.shipId === ship.id
+    && ship.Ship.emergencyAt > 0;
+};
 
 const EmergencyModeCollect = ({ asteroid, crew, lot, onSetAction, _disabled }) => {
   const { data: ship } = useShip(crew?._location?.shipId)
@@ -40,9 +46,7 @@ const EmergencyModeCollect = ({ asteroid, crew, lot, onSetAction, _disabled }) =
 
   useEffect(() => {
     const now = Date.now() / 1000;
-    console.log('finishTime', finishTime);
     if (finishTime > now) {
-      console.log('in', finishTime - now)
       setHasGeneratedMax(false);
       const to = setTimeout(() => {
         setHasGeneratedMax(true);
@@ -54,10 +58,11 @@ const EmergencyModeCollect = ({ asteroid, crew, lot, onSetAction, _disabled }) =
   }, [finishTime]);
 
   const disabledReason = useMemo(() => {
+    if (_disabled) return 'loading...';
     if (!ship) return 'ship is not crewed';
     if (hasCollectedMax) return 'max reached';
-    return null;
-  }, [hasCollectedMax, ship]);
+    return getCrewDisabledReason({ crew });
+  }, [_disabled, crew, hasCollectedMax, ship]);
 
   return (
     <ActionButton
@@ -65,7 +70,7 @@ const EmergencyModeCollect = ({ asteroid, crew, lot, onSetAction, _disabled }) =
       labelAddendum={disabledReason || (hasGeneratedMax ? undefined : 'generating...')}
       flags={{
         attention: hasGeneratedMax && !hasCollectedMax,
-        disabled: _disabled || disabledReason || undefined,
+        disabled: disabledReason,
         loading: (!disabledReason && !hasGeneratedMax),
         finishTime
       }}
@@ -74,4 +79,4 @@ const EmergencyModeCollect = ({ asteroid, crew, lot, onSetAction, _disabled }) =
   );
 };
 
-export default EmergencyModeCollect;
+export default { Component: EmergencyModeCollect, isVisible };

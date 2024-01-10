@@ -5,8 +5,14 @@ import { SurfaceTransferIcon } from '~/components/Icons';
 import useDeliveryManager from '~/hooks/actionManagers/useDeliveryManager';
 import ActionButton from './ActionButton';
 
-const SurfaceTransferIncoming = ({ asteroid, lot, onSetAction, _disabled }) => {
-  return null;
+// TODO: is this fully deprecated?
+//       (below is how it was used in the old code)
+// if ((lot.delivery || []).find((d) => d.delivery.Delivery.status !== Delivery.STATUSES.COMPLETE)) {
+//   a.push(actionButtons.SurfaceTransferIncoming);
+// }
+const isVisible = () => false;
+
+const SurfaceTransferIncoming = ({ lot, onSetAction, _disabled }) => {
   const incoming = useMemo(() => {
     return (lot?.deliveries || [])
       .filter((d) => d.Delivery.status !== Delivery.STATUSES.COMPLETE)
@@ -25,10 +31,10 @@ const SurfaceTransferIncoming = ({ asteroid, lot, onSetAction, _disabled }) => {
     <ActionButton
       label={`${deliveryStatus === 'READY_TO_FINISH' ? 'Finish' : 'Incoming'} Surface Transfer`}
       flags={{
-        attention: isReadyToFinish || undefined,
+        attention: isReadyToFinish,
         badge: !isReadyToFinish && incoming.length > 1 ? incoming.length : 0,
-        disabled: _disabled || undefined,
-        loading: !isReadyToFinish || undefined,
+        disabled: _disabled,
+        loading: !isReadyToFinish,
         finishTime: nextIncoming?.Delivery?.finishTime
       }}
       icon={<SurfaceTransferIcon />}
@@ -36,4 +42,4 @@ const SurfaceTransferIncoming = ({ asteroid, lot, onSetAction, _disabled }) => {
   );
 };
 
-export default SurfaceTransferIncoming;
+export default { Component: SurfaceTransferIncoming, isVisible };

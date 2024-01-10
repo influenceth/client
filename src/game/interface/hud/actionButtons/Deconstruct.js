@@ -3,11 +3,17 @@ import { Inventory } from '@influenceth/sdk';
 
 import { DeconstructIcon } from '~/components/Icons';
 import useConstructionManager from '~/hooks/actionManagers/useConstructionManager';
-import ActionButton from './ActionButton';
+import ActionButton, { getCrewDisabledReason } from './ActionButton';
 
 const labelDict = {
   OPERATIONAL: 'Deconstruct Building',
   DECONSTRUCTING: 'Deconstructing...'
+};
+
+const isVisible = ({ constructionStatus, building, crew }) => {
+  return crew && building
+    && building.Control?.controller?.id === crew.id
+    && ['OPERATIONAL', 'DECONSTRUCTING'].includes(constructionStatus);
 };
 
 const Deconstruct = ({ asteroid, crew, lot, onSetAction, _disabled }) => {
@@ -18,6 +24,8 @@ const Deconstruct = ({ asteroid, crew, lot, onSetAction, _disabled }) => {
   }, [onSetAction]);
 
   const disabledReason = useMemo(() => {
+    if (_disabled) return 'loading...';
+
     if (
       (lot?.building?.Inventories || []).find((i) => i.status === Inventory.STATUSES.AVAILABLE && i.mass > 0)
       || lot?.building?.Dock?.dockedShips > 0
@@ -28,30 +36,30 @@ const Deconstruct = ({ asteroid, crew, lot, onSetAction, _disabled }) => {
       (lot?.building?.Extractors || []).find((e) => e.status > 0)
       || (lot?.building?.Processors || []).find((e) => e.status > 0)
       || (lot?.building?.DryDocks || []).find((e) => e.status > 0)
-    ) return 'busy';
+    ) return 'in operation';
 
     if ((lot?.building?.Inventories || []).find((i) => i.status === Inventory.STATUSES.AVAILABLE && i.reservedMass > 0)) {
       return 'pending deliveries';
     }
 
-    if (constructionStatus === 'OPERATIONAL' && !crew?._ready) {
-      return 'crew is busy';
+    if (constructionStatus === 'OPERATIONAL') {
+      return getCrewDisabledReason({ asteroid, crew });
     }
     
     return null;
-  }, [lot?.building, crew?._ready]);
+  }, [asteroid, lot?.building, crew]);
 
   return (
     <ActionButton
-      label={`${labelDict[constructionStatus]}` || undefined}
+      label={`${labelDict[constructionStatus]}`}
       labelAddendum={disabledReason}
       flags={{
-        disabled: _disabled || disabledReason || undefined,
-        loading: constructionStatus === 'DECONSTRUCTING' || undefined
+        disabled: _disabled || disabledReason,
+        loading: constructionStatus === 'DECONSTRUCTING'
       }}
       icon={<DeconstructIcon />}
       onClick={handleClick} />
   );
 };
 
-export default Deconstruct;
+export default { Component: Deconstruct, isVisible };

@@ -3,9 +3,13 @@ import { Inventory } from '@influenceth/sdk';
 
 import { SurfaceTransferIcon } from '~/components/Icons';
 import useDeliveryManager from '~/hooks/actionManagers/useDeliveryManager';
-import ActionButton from './ActionButton';
+import ActionButton, { getCrewDisabledReason } from './ActionButton';
 
-const SurfaceTransferOutgoing = ({ asteroid, crew, lot, onSetAction, preselect, _disabled }) => {
+const isVisible = ({ crew, lot, ship }) => {
+  return crew && (lot?.building || ship)?.Inventories?.find((i) => i.status === Inventory.STATUSES.AVAILABLE);
+};
+
+const SurfaceTransferOutgoing = ({ asteroid, crew, lot, ship, onSetAction, preselect, _disabled }) => {
   const { currentDeliveryActions, isLoading } = useDeliveryManager({ origin: lot?.building || lot?.surfaceShip });
   const deliveryDeparting = useMemo(() => {
     return (currentDeliveryActions || []).find((a) => a.status === 'DEPARTING');
@@ -16,11 +20,12 @@ const SurfaceTransferOutgoing = ({ asteroid, crew, lot, onSetAction, preselect, 
   }, [onSetAction, preselect]);
 
   const disabledReason = useMemo(() => {
-    const entity = lot?.building || lot?.surfaceShip;
+    const entity = lot?.building || ship;
+    if (!entity) return '';
+    if (!entity._location?.lotId) return 'not on surface';
     const hasMass = (entity?.Inventories || []).find((i) => i.status === Inventory.STATUSES.AVAILABLE && i.mass > 0);
     if (!hasMass) return 'inventory empty';
-    if (!crew?._ready) return 'crew is busy';
-    return '';
+    return getCrewDisabledReason({ asteroid, crew });
   }, [lot?.building?.Inventories, crew?._ready]);
 
   return (
@@ -28,12 +33,12 @@ const SurfaceTransferOutgoing = ({ asteroid, crew, lot, onSetAction, preselect, 
       label={`Surface Transfer`}
       labelAddendum={disabledReason}
       flags={{
-        disabled: _disabled || disabledReason || isLoading || undefined,
-        loading: deliveryDeparting || undefined
+        disabled: _disabled || disabledReason || isLoading,
+        loading: deliveryDeparting
       }}
       icon={<SurfaceTransferIcon />}
       onClick={handleClick} />
   );
 };
 
-export default SurfaceTransferOutgoing;
+export default { Component: SurfaceTransferOutgoing, isVisible };

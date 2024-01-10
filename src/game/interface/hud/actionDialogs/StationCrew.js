@@ -156,6 +156,8 @@ const StationCrew = ({ asteroid, destination: rawDestination, lot, origin: rawOr
     return { icon, label, status };
   }, [crewIsOwner, destination, stage]);
 
+  const stationConfig = destination ? Station.TYPES[destination.Station.stationType] : null;
+
   return (
     <>
       <ActionDialogHeader
@@ -166,7 +168,8 @@ const StationCrew = ({ asteroid, destination: rawDestination, lot, origin: rawOr
         location={{
           asteroid,
           lot,
-          ship: null /* TODO: */ }}
+          ship: destination?.label === Entity.IDS.SHIP ? destination : null
+        }}
         onClose={props.onClose}
         overrideColor={stage === actionStages.NOT_STARTED ? (crewIsOwner ? theme.colors.main : theme.colors.green) : undefined}
         stage={stage} />
@@ -263,8 +266,9 @@ const StationCrew = ({ asteroid, destination: rawDestination, lot, origin: rawOr
 
       </ActionDialogBody>
 
+      {/* TODO: add "no permission" to disabled list */}
       <ActionDialogFooter
-        disabled={false/* TODO: no permission */}
+        disabled={!destination || !stationConfig || (stationConfig.hardCap && destination.Station.population + crew?.Crew?.roster?.length > stationConfig.cap)}
         goLabel="Station"
         onGo={onStation}
         stage={stage}

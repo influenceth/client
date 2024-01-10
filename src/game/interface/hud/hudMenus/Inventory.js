@@ -470,10 +470,10 @@ const LotInventory = () => {
         <Tray>
           {trayLabel && <TrayLabel content={trayLabel} />}
           {Object.keys(selectedItems).length > 0 && (
-            <actionButtons.SurfaceTransferOutgoing {...actionProps} preselect={{ selectedItems }} />
+            <actionButtons.SurfaceTransferOutgoing.Component {...actionProps} preselect={{ selectedItems }} />
           )}
           {isIncomingDelivery && (
-            <actionButtons.SurfaceTransferIncoming {...actionProps} />
+            <actionButtons.SurfaceTransferIncoming.Component {...actionProps} />
           )}
         </Tray>
       )}

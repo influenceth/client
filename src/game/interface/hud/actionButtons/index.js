@@ -18,8 +18,6 @@ import ScanAsteroid from './ScanAsteroid';
 import SelectTravelDestination from './SelectTravelDestination';
 import SetCourse from './SetCourse';
 import StationCrew from './StationCrew';
-import StationCrewAsPassengers from './StationCrewAsPassengers';
-import StationCrewAsPilots from './StationCrewAsPilots';
 import SurfaceTransferIncoming from './SurfaceTransferIncoming';
 import SurfaceTransferOutgoing from './SurfaceTransferOutgoing';
 import UnplanBuilding from './UnplanBuilding';
@@ -45,8 +43,6 @@ const ActionsButtons = {
   SelectTravelDestination,
   SetCourse,
   StationCrew,
-  StationCrewAsPassengers,
-  StationCrewAsPilots,
   SurfaceTransferIncoming,
   SurfaceTransferOutgoing,
   UnplanBuilding,
