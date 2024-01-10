@@ -254,12 +254,12 @@ const EmergencyModeCollect = ({ asteroid, lot, manager, ship, stage, ...props })
 
       </ActionDialogBody>
 
-      {/* TODO: add waitForCrewReady? */}
       <ActionDialogFooter
         disabled={!(ship?.Ship?.emergencyAt > 0) || collectableAmount <= 0}
         goLabel="Collect"
         onGo={onCollect}
         stage={stage}
+        waitForCrewReady
         {...props} />
     </>
   );

@@ -485,7 +485,7 @@ const SetCourse = ({ origin, destination, manager, ship, stage, travelSolution, 
       </ActionDialogBody>
 
       <ActionDialogFooter
-        disabled={false/* TODO: insufficient propellant + anything else? */}
+        disabled={propellantMassLoaded < travelSolution.usedPropellantMass}
         goLabel="Schedule"
         onGo={onDepart}
         finalizeLabel="Arrive"

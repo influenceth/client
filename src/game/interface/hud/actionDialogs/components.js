@@ -3714,7 +3714,18 @@ const CrewBusyButton = ({ crew }) => {
   );
 };
 
-export const ActionDialogFooter = ({ buttonsLoading, disabled, finalizeLabel, goLabel, onClose, onFinalize, onGo, stage, waitForCrewReady, wide }) => {
+export const ActionDialogFooter = ({
+  buttonsLoading,
+  disabled,
+  finalizeLabel,
+  goLabel,
+  onClose,
+  onFinalize,
+  onGo,
+  stage,
+  waitForCrewReady,
+  wide
+}) => {
   const { crew } = useCrewContext();
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
 
