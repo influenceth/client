@@ -251,7 +251,7 @@ const LaunchShip = ({ asteroid, originLot, manager, ship, stage, ...props }) => 
       </ActionDialogBody>
 
       <ActionDialogFooter
-        disabled={isDeliveryPending || propellantRequirement > propellantLoaded}
+        disabled={isDeliveryPending || (powered && propellantRequirement > propellantLoaded)}
         goLabel="Launch"
         onGo={onLaunch}
         stage={stage}

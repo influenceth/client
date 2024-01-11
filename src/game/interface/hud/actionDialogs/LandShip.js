@@ -259,7 +259,7 @@ const LandShip = ({ asteroid, manager, ship, stage, ...props }) => {
       </ActionDialogBody>
 
       <ActionDialogFooter
-        disabled={propellantRequirement > propellantLoaded}
+        disabled={powered && propellantRequirement > propellantLoaded}
         goLabel="Land"
         onGo={onLand}
         stage={stage}
