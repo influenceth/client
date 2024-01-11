@@ -12,12 +12,13 @@ const useScanManager = (asteroid) => {
 
   const { scanType, startSystem, finishSystem, payload } = useMemo(() => {
     const scanType = asteroid?.Celestial?.scanStatus < Asteroid.SCAN_STATUSES.SURFACE_SCANNED ? 'SURFACE' : 'RESOURCE';
+    const startSystem = scanType === 'RESOURCE' ? 'ScanResourcesStart' : (asteroid?.AsteroidProof?.used ? 'ScanSurfaceStart' : 'InitializeAndStartSurfaceScan');
     return {
       scanType,
-      startSystem: scanType === 'RESOURCE' ? 'ScanResourcesStart' : 'ScanSurfaceStart',
+      startSystem,
       finishSystem: scanType === 'RESOURCE' ? 'ScanResourcesFinish' : 'ScanSurfaceFinish',
       payload: asteroid && crew && {
-        asteroid: { id: asteroid.id, label: asteroid.label },
+        asteroid: startSystem === 'InitializeAndStartSurfaceScan' ? asteroid : { id: asteroid.id, label: asteroid.label },
         caller_crew: { id: crew.id, label: crew.label }
       }
     };

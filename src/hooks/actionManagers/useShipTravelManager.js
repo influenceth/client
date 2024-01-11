@@ -66,7 +66,7 @@ const useShipTravelManager = (shipId) => {
         stage = actionStages.IN_PROGRESS;
       }
     } else {
-      const startTx = getPendingTx('TransitBetweenStart', { caller_crew });
+      const startTx = getPendingTx('TransitBetweenStart', { caller_crew }) || getPendingTx('InitializeAndStartTransit', { caller_crew });
       if (startTx) {
         status = 'DEPARTING';
         stage = actionStages.STARTING;
@@ -189,8 +189,9 @@ const useShipTravelManager = (shipId) => {
     // console.log('originPosition', originPosition);
     // console.log('solutionOrbit', solutionOrbit);
     console.log(
-      'TransitBetweenStart',
+      destination?.AsteroidProof?.used ? 'TransitBetweenStart' : 'InitializeAndStartTransit',
       {
+        asteroid: destination,
         origin: { id: originId, label: Entity.IDS.ASTEROID },
         destination: { id: destinationId, label: Entity.IDS.ASTEROID },
         departure_time: Math.round(departureTime * 86400), // in-game seconds since orbit epoch
@@ -210,8 +211,9 @@ const useShipTravelManager = (shipId) => {
       }
     );
     execute(
-      'TransitBetweenStart',
+      destination?.AsteroidProof?.used ? 'TransitBetweenStart' : 'InitializeAndStartTransit',
       {
+        asteroid: destination, // in case needs initialization
         origin: { id: originId, label: Entity.IDS.ASTEROID },
         destination: { id: destinationId, label: Entity.IDS.ASTEROID },
         departure_time: Math.round(departureTime * 86400), // in-game seconds since orbit epoch

@@ -211,6 +211,8 @@ const customConfigs = {
   UndockShip: {
     equalityTest: ['caller_crew.id']
   },
+  TransitBetweenStart: { equalityTest: ['caller_crew.id'] },
+  TransitBetweenFinish: { equalityTest: ['caller_crew.id'] },
 
   // virtual multi-system wrappers
   // TODO: could do fancier conditional multisystems if that would help
@@ -232,9 +234,16 @@ const customConfigs = {
     equalityTest: ['asteroid.id'],
     isVirtual: true
   },
-
-  TransitStart: { equalityTest: ['caller_crew.id'] },
-  TransitFinish: { equalityTest: ['caller_crew.id'] },
+  InitializeAndStartSurfaceScan: {
+    multisystemCalls: ['InitializeAsteroid', 'ScanSurfaceStart'],
+    equalityTest: ['asteroid.id'],
+    isVirtual: true
+  },
+  InitializeAndStartTransit: {
+    multisystemCalls: ['InitializeAsteroid', 'TransitBetweenStart'],
+    equalityTest: ['caller_crew.id'],
+    isVirtual: true
+  },
 };
 
 export function ChainTransactionProvider({ children }) {
