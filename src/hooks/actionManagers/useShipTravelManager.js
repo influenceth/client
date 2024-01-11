@@ -145,7 +145,6 @@ const useShipTravelManager = (shipId) => {
       console.log({ preMass, postMass, usedPropellantMass, prePropellantMass });
       setCurrentTravelSolution({
         ...solution,
-        invalid: false,
         originId: currentTravelAction.originId,
         destinationId: currentTravelAction.destinationId,
         departureTime: currentTravelAction.departureTime,

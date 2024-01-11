@@ -7,6 +7,9 @@ import { formatFixed } from '~/lib/utils';
 import theme from '~/theme';
 
 import Banner from './Banner';
+import useCrewContext from '~/hooks/useCrewContext';
+import useShip from '~/hooks/useShip';
+import useTravelSolutionIsValid from '~/hooks/useTravelSolutionIsValid';
 
 const Side = styled.div`
   align-items: center;
@@ -62,10 +65,12 @@ const TravelBanner = ({ visible }) => {
   const travelSolution = useStore(s => s.asteroids.travelSolution);
   const dispatchHudMenuOpened = useStore(s => s.dispatchHudMenuOpened);
 
+  const travelSolutionIsValid = useTravelSolutionIsValid();
+
   const { headline, bannerColor } = useMemo(() => {
     let h, c;
     if (travelSolution) {
-      if (travelSolution.invalid) {
+      if (!travelSolutionIsValid) {
         h = 'Not Possible';
         c = '#f36d64';
       } else {
@@ -76,7 +81,7 @@ const TravelBanner = ({ visible }) => {
       c = theme.colors.main;
     }
     return { headline: h, bannerColor: c };
-  }, [travelSolution]);
+  }, [travelSolution, travelSolutionIsValid]);
 
   return (
     <Banner
@@ -92,14 +97,14 @@ const TravelBanner = ({ visible }) => {
           <Side />
         </Content>
       )}
-      {travelSolution && travelSolution.invalid && (
+      {travelSolution && !travelSolutionIsValid && (
         <Content color={bannerColor}>
           <Side><GasIcon /> {travelSolution.usedPropellantPercent > 100 ? '' : `${formatFixed(travelSolution.usedPropellantPercent, 1)}%`}</Side>
           <Center>Route is not possible with specified parameters.</Center>
           <Side><WarningIcon /></Side>
         </Content>
       )}
-      {travelSolution && !travelSolution.invalid && (
+      {travelSolution && travelSolutionIsValid && (
         <Content color={bannerColor}>
           <Side><GasIcon /> {formatFixed(travelSolution.usedPropellantPercent, 1)}%</Side>
           <Center style={{ fontSize: 22 }}>

@@ -8,6 +8,7 @@ import constants from '~/lib/constants';
 import theme from '~/theme';
 import orbitColors from './orbit/orbitColors';
 import { useFrame } from '@react-three/fiber';
+import useTravelSolutionIsValid from '~/hooks/useTravelSolutionIsValid';
 
 const markerMaxRadius = constants.AU / 50;
 const initialUniforms = {
@@ -17,6 +18,8 @@ const initialUniforms = {
 const Marker = (props) => {
   const { asteroidPos, hasDestination, isDestination, isOrigin, isTravelMarker, travelSolution } = props;
   const [ points, setPoints ] = useState(asteroidPos);
+
+  const travelSolutionIsValid = useTravelSolutionIsValid();
   
   const [
     reticuleTexture,
@@ -86,14 +89,14 @@ const Marker = (props) => {
       if (travelSolution) {
         // destination "where it will be" marker
         if (isTravelMarker) {
-          x.outerProps.color = travelSolution.invalid ? orbitColors.error : orbitColors.success;
+          x.outerProps.color = travelSolutionIsValid ? orbitColors.success : orbitColors.error;
           x.outerProps.map = translucentDiamondTexture;
           x.showInner = true;
           x.showReticule = true;
 
         // destination "where it was" marker
         } else {
-          x.outerProps.color = travelSolution.invalid ? orbitColors.error : orbitColors.success;
+          x.outerProps.color = travelSolutionIsValid ? orbitColors.success : orbitColors.error;
           x.outerProps.map = strokedDiamondTexture;
           x.outerProps.size = 15;
         }

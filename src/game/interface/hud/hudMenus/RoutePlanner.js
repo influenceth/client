@@ -1,6 +1,6 @@
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
-import { Entity, Inventory, Ship, Time } from '@influenceth/sdk';
+import { Crew, Entity, Inventory, Ship, Time } from '@influenceth/sdk';
 
 import Dropdown from '~/components/Dropdown';
 import { CloseIcon, WarningIcon } from '~/components/Icons';
@@ -18,6 +18,7 @@ import useCrewContext from '~/hooks/useCrewContext';
 import useOwnedShips from '~/hooks/useOwnedShips';
 import formatters from '~/lib/formatters';
 import useConstants from '~/hooks/useConstants';
+import useChainTime from '~/hooks/useChainTime';
 
 const ShipSelection = styled.div`
   align-items: center;
@@ -183,8 +184,16 @@ const RoutePlanner = () => {
   const [nowTime, setNowTime] = useState();
 
   const [cargoMass, setCargoMass] = useState(0);
+  const [foodSupplies, setFoodSupplies] = useState(0);
   const [propellantMass, setPropellantMass] = useState(0);
   const [ship, setShip] = useState();
+
+  const crewFoodSupplies = useMemo(() => {
+    if (!crew) return 100;
+    const realTime = Time.fromOrbitADays(coarseTime, TIME_ACCELERATION).toDate().getTime() / 1000;
+    const lastFedAgo = Time.toGameDuration(realTime - (crew?.Crew?.lastFed || 0), parseInt(TIME_ACCELERATION));
+    return lastFedAgo > 0 ? Math.round(100 * Crew.getCurrentFoodRatio(lastFedAgo, crew._foodBonuses?.consumption)) : 100;
+  }, [coarseTime, crew?.Crew?.lastFed]);
 
   const shipList = useMemo(() => {
     if (myShipsLoading || !myShips) return [];
@@ -256,7 +265,14 @@ const RoutePlanner = () => {
     if (!shipConfig) return;
     setCargoMass(shipConfig.initialCargoMass);
     setPropellantMass(shipConfig.initialPropellantMass);
-  }, [shipConfig]);
+    setFoodSupplies(ship?._simulated ? 100 : crewFoodSupplies);
+  }, [shipConfig, ship]);
+
+  useEffect(() => {
+    if (!ship?._simulated) {
+      setFoodSupplies(crewFoodSupplies);
+    }
+  }, [crewFoodSupplies, ship]);
 
   const onSetCargoMass = useCallback((amount) => {
     const parsed = parseInt(amount * 1_000_000) || 0;
@@ -266,6 +282,11 @@ const RoutePlanner = () => {
   const onSetPropellantMass = useCallback((amount) => {
     const parsed = parseInt(amount * 1_000_000) || 0;
     setPropellantMass(Math.max(0, Math.min(shipConfig?.maxPropellantMass, Math.floor(parsed))));
+  }, [shipConfig]);
+
+  const onSetFoodSupplies = useCallback((amount) => {
+    const parsed = parseInt(amount) || 0;
+    setFoodSupplies(Math.max(0, Math.min(100, Math.floor(parsed))));
   }, [shipConfig]);
 
   const shipParams = useMemo(() => {
@@ -328,11 +349,12 @@ const RoutePlanner = () => {
     return paths;
   }, [baseTime, origin, destination]);
 
-  // hasTray is true if real ship selected and valid solution is selected
-  const hasTray = false;
+  const lastFedAt = useMemo(() => {
+    return coarseTime - Crew.getTimeSinceFed(foodSupplies / 100, crew?._foodBonuses?.consumption) / 86400;
+  }, [coarseTime, crew, foodSupplies]);
 
   return (
-    <Scrollable hasTray={hasTray} style={{ marginLeft: -12, paddingLeft: 12 }}>
+    <Scrollable style={{ marginLeft: -12, paddingLeft: 12 }}>
 
       <ShipSelection isSimulated={ship?._simulated}>
         <ShipImage shipType={ship?.Ship?.shipType} simulated={reactBool(ship?._simulated)} />
@@ -393,6 +415,27 @@ const RoutePlanner = () => {
             onChange={onSetPropellantMass}
             value={propellantMass / 1_000_000 || 0} />
         </SliderSection>
+
+        <SliderSection>
+          <SliderInfoRow disabled={!ship?._simulated}>
+            <label><b>{ship?._simulated ? 'Simulated' : 'Actual'}</b> Food Supplies</label>
+            <NumberInput
+              disabled={nativeBool(!ship?._simulated)}
+              min={0}
+              max={100}
+              onChange={onSetFoodSupplies}
+              step={1}
+              value={foodSupplies || 0} />
+            <sub style={{ marginRight: -4 }}>%</sub>
+          </SliderInfoRow>
+          <SliderInput
+            disabled={nativeBool(!ship?._simulated)}
+            min={0}
+            max={100}
+            increment={0.1}
+            onChange={onSetFoodSupplies}
+            value={foodSupplies || 0} />
+        </SliderSection>
       </Sliders>
 
       <SectionHeader style={{ marginBottom: 10 }}>
@@ -407,6 +450,7 @@ const RoutePlanner = () => {
             originId={originId}
             destinationId={destinationId}
             baseTime={baseTime}
+            lastFedAt={lastFedAt}
             nowTime={nowTime}
             originPath={originPath}
             destinationPath={destinationPath}

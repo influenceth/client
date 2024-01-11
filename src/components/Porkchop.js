@@ -7,12 +7,13 @@ import { Vector3 } from 'three';
 
 import useStore from '~/hooks/useStore';
 import useWebWorker from '~/hooks/useWebWorker';
-import theme from '~/theme';
+import theme, { hexToRGB } from '~/theme';
 import Grid from './porkchop/Grid';
 import SolutionLabels from './porkchop/SolutionLabels';
 import Reticule from './porkchop/Reticule';
 import { WarningOutlineIcon } from './Icons';
 import { reactBool } from '~/lib/utils';
+import useTravelSolutionIsValid, { maxFoodUtilizationAdays } from '~/hooks/useTravelSolutionIsValid';
 
 const PorkchopWrapper = styled.div`
   overflow: visible;
@@ -71,21 +72,42 @@ const colorRange = [
   new Vector3(0, 0, 102)
 ];
 
-const deltaVColor = (deltaV, maxDeltaV) => {
+const desaturation = 3;
+const deltaVColor = (deltaV, maxDeltaV, isInvalid = false) => {
   if (deltaV > maxDeltaV) return '#000000';
+
+  let r, g, b;
   if (deltaV < 0.33 * maxDeltaV) {
     const c = colorRange[0].clone();
     c.lerp(colorRange[1], deltaV / (0.33 * maxDeltaV));
-    return `rgb(${c.x},${c.y},${c.z})`
+    r = c.x;
+    g = c.y;
+    b = c.z;
   } else if (deltaV < 0.67 * maxDeltaV) {
     const c = colorRange[1].clone();
     c.lerp(colorRange[2], (deltaV - 0.33 * maxDeltaV) / (0.33 * maxDeltaV));
-    return `rgb(${c.x},${c.y},${c.z})`
+    r = c.x;
+    g = c.y;
+    b = c.z;
   } else {
     const c = colorRange[2].clone();
     c.lerp(colorRange[3], (deltaV - 0.67 * maxDeltaV) / (0.33 * maxDeltaV));
-    return `rgb(${c.x},${c.y},${c.z})`
+    r = c.x;
+    g = c.y;
+    b = c.z;
   }
+  // if invalid, recolor
+  if (isInvalid) {
+    // darkened + grayscale:
+    // g = b = (r + g + b) / 6
+
+    // darkened + desaturated:
+    let gray = (r + g + b) / 8;
+    r = (r + desaturation * gray) / (desaturation + 1);
+    g = (g + desaturation * gray) / (desaturation + 1);
+    b = (b + desaturation * gray) / (desaturation + 1);
+  };
+  return `rgb(${r}, ${g}, ${b})`;
 };
 
 const Porkchop = ({
@@ -95,6 +117,7 @@ const Porkchop = ({
   originId,
   destinationPath,
   destinationId,
+  lastFedAt,
   minDelay,
   maxDelay,
   minTof,
@@ -106,6 +129,7 @@ const Porkchop = ({
 
   const travelSolution = useStore(s => s.asteroids.travelSolution);
   const dispatchTravelSolution = useStore(s => s.dispatchTravelSolution);
+  const travelSolutionIsValid = useTravelSolutionIsValid();
 
   const [canvasRefIsSet, setCanvasRefIsSet] = useState();
   const [loading, setLoading] = useState(true);
@@ -140,6 +164,7 @@ const Porkchop = ({
 
     const width = maxDelay - minDelay + 1;
     const height = maxTof - minTof + 1;
+    const foodCutoff = lastFedAt + maxFoodUtilizationAdays;
 
     const p2 = performance.now();
 
@@ -175,16 +200,25 @@ const Porkchop = ({
 
         // TODO: don't need to draw black areas if clear in advance
         const col = Math.round(delay - minDelay);
+        const colDelay = (maxDelay - minDelay) * (col / width) + minDelay;
+
+        let wasFoodInvalid = false;
 
         let previousBucket = null;
         let currentBucket;
         const isobuckets = 8;
 
         for (let i in deltaVs) {
+          let isFoodInvalid = false;
+          const arrivalTime = baseTime + (maxTof - minTof) * (i / height) + minTof + colDelay;
+          if (arrivalTime > foodCutoff) {
+            isFoodInvalid = true;
+          }
+
           if (zeroSolutionsExist && deltaVs[i] > 0 && deltaVs[i] < maxDeltaV) {
             zeroSolutionsExist = false;
           }
-          canvasCtx.fillStyle = deltaVColor(deltaVs[i], maxDeltaV);
+          canvasCtx.fillStyle = deltaVColor(deltaVs[i], maxDeltaV, isFoodInvalid);
           canvasCtx.fillRect(col, height - i, 1, -1);
           currentBucket = Math.floor(isobuckets * deltaVs[i] / maxDeltaV);
           if (previousBucket !== null && currentBucket !== previousBucket) {
@@ -194,6 +228,14 @@ const Porkchop = ({
             }
           }
           previousBucket = currentBucket;
+
+          if (!wasFoodInvalid && isFoodInvalid) {
+            if (deltaVs[i] > 0 && deltaVs[i] < maxDeltaV) {
+              canvasCtx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+              canvasCtx.fillRect(col, height - i - 2, 1, 4);
+            }
+            wasFoodInvalid = true;
+          }
         }
 
         batchesProcessed++;
@@ -204,7 +246,7 @@ const Porkchop = ({
         }
       })
     }
-  }, [canvasRefIsSet, originPath, destinationPath, maxDeltaV]);
+  }, [canvasRefIsSet, lastFedAt, originPath, destinationPath, maxDeltaV]);
 
   useEffect(() => {
     if (!travelSolution) setSelectionPos();
@@ -252,14 +294,14 @@ const Porkchop = ({
       dVel.toArray(),
     );
 
-    const invalid = solution.deltaV > maxDeltaV;
+    const insufficientPropellant = solution.deltaV > maxDeltaV;
 
     // deltav = v_e * ln(wetmass / drymass)
     let usedPropellantMass;
 
     // deltav = v_e * ln((drymass + propused) / drymass)
-    // (if invalid, calculate the required propellant req if 100% is to be used (i.e. actual === used))
-    if (invalid) {
+    // (if insufficientPropellant, calculate the required propellant req if 100% is to be used (i.e. actual === used))
+    if (insufficientPropellant) {
       let drymass = (shipParams.hullMass + shipParams.actualCargoMass);
       usedPropellantMass = drymass * (Math.exp(solution.deltaV / shipParams.exhaustVelocity) - 1);
 
@@ -269,15 +311,21 @@ const Porkchop = ({
       usedPropellantMass = wetmass * (1 - 1 / Math.exp(solution.deltaV / shipParams.exhaustVelocity));
     }
 
+    const arrivalTime = baseTime + delay + tof;
+    const insufficientFood = lastFedAt + maxFoodUtilizationAdays < arrivalTime;
+
+    // TODO: invalid (if insufficient food in simulation, also should report here)
+    // TODO: should potentially extract usedPropellantMass and percent...?
     dispatchTravelSolution({
       ...solution, // v1, v2, deltaV
-      invalid,
+      _isSimulation: shipParams._simulated,
+      _isSimulationInvalid: insufficientPropellant || insufficientFood,
       originId,
       destinationId,
       usedPropellantMass,
       usedPropellantPercent: 100 * usedPropellantMass / shipParams.actualPropellantMass,
       departureTime: baseTime + delay,
-      arrivalTime: baseTime + delay + tof,
+      arrivalTime,
       originPosition: oPos.toArray(),
       originVelocity: oVel.toArray(),
       destinationPosition: dPos.toArray(),
@@ -308,7 +356,7 @@ const Porkchop = ({
           width={maxDelay - minDelay}
           style={{ verticalAlign: 'bottom', height: `${size}px`, width: `${size}px` }} />
         <Grid />
-        {selectionPos && <Reticule selected center={selectionPos} fade={!!mousePos} invalid={travelSolution?.invalid} />}
+        {selectionPos && <Reticule selected center={selectionPos} fade={!!mousePos} invalid={!travelSolutionIsValid} />}
         {mousePos && <Reticule center={mousePos} />}
       </PorkchopContainer>
       <TimeBlock width={(nowTime - baseTime) / (maxDelay - minDelay)} />
@@ -316,7 +364,13 @@ const Porkchop = ({
         <WarningOutlineIcon />
         <h3>No Possible Routes</h3>
       </Solutionless>
-      {selectionPos && <SolutionLabels center={selectionPos} mousePos={mousePos} shipParams={shipParams} />}
+      {selectionPos && (
+        <SolutionLabels
+          center={selectionPos}
+          lastFedAt={lastFedAt}
+          mousePos={mousePos}
+          shipParams={shipParams} />
+      )}
     </PorkchopWrapper>
   );
 };

@@ -1,9 +1,11 @@
 import { useContext, useMemo } from 'react';
 import styled from 'styled-components';
+import { Crew } from '@influenceth/sdk';
 
 import ClockContext from '~/contexts/ClockContext';
 import useStore from '~/hooks/useStore';
 import { WarningIcon } from '../Icons';
+import { formatFixed } from '~/lib/utils';
 
 const tagHeight = 22;
 const halfTagHeight = tagHeight / 2;
@@ -134,14 +136,15 @@ const Row = styled.div`
   display: inline-flex;
   flex-direction: row;
   font-weight: bold;
+  margin-bottom: 4px;
+  &:last-child {
+    margin-bottom: 0;
+  }
   ${Label} {
     align-items: center;
     display: flex;
     height: ${tagHeight}px;
     padding: 0 6px;
-  }
-  &:first-child {
-    margin-bottom: 4px;
   }
 `;
 const CornerLabels = styled(TopLevelLabel).attrs((p) => {
@@ -255,14 +258,14 @@ const DelayLabel = styled(TopLevelLabel)`
   }
 `;
 
-const SolutionLabels = ({ center, mousePos, shipParams }) => {
+const SolutionLabels = ({ center, lastFedAt, mousePos, shipParams }) => {
   const { coarseTime } = useContext(ClockContext);
   const travelSolution = useStore(s => s.asteroids.travelSolution);
 
   const {
     arrival,
     delay,
-    invalid,
+    invalid: insufficientPropellant,
     usedPropellant,
     tof
   } = useMemo(() => {
@@ -273,9 +276,25 @@ const SolutionLabels = ({ center, mousePos, shipParams }) => {
       delay: Math.round(travelSolution.departureTime - coarseTime),
       invalid: travelSolution.invalid,
       tof: (travelSolution.arrivalTime - travelSolution.departureTime),
+      usedFood: Math.ceil(travelSolution.usedPropellantPercent),
       usedPropellant: Math.ceil(travelSolution.usedPropellantPercent)
     }
   }, [shipParams, travelSolution]);
+
+  const usedFood = useMemo(() => {
+    if (!lastFedAt || !travelSolution?.arrivalTime) return 0;
+    // TODO: consumption bonuses!
+    const currentFood = Math.round(100 * Crew.getCurrentFoodRatio((coarseTime - lastFedAt) * 86400));
+    const arrivalFood = Math.round(100 * Crew.getCurrentFoodRatio((travelSolution?.arrivalTime - lastFedAt) * 86400));
+    return formatFixed(100 * (currentFood - arrivalFood) / currentFood, 1);
+  }, [travelSolution?.arrivalTime, coarseTime, lastFedAt]);
+
+  // TODO: only report % over 100 of what i have until reach max of possible
+  // (i.e. food should report up to 100%/current amount)
+  // (i.e. propellant should report up to tank max/current amount)
+  // const maxReportableFood = 
+
+  const invalid = insufficientPropellant || usedFood >= 100;
 
   return (
     <>
@@ -288,6 +307,10 @@ const SolutionLabels = ({ center, mousePos, shipParams }) => {
         <Row>
           <Label>Propellant Used</Label>
           <StatValue colorValue={usedPropellant}>{usedPropellant > 1000 ? <WarningIcon /> : `${usedPropellant}%`}</StatValue>
+        </Row>
+        <Row>
+          <Label>Food Used</Label>
+          <StatValue colorValue={invalid ? 1000 : 0}>{usedFood >= 100 ? <WarningIcon /> : `${usedFood}%`}</StatValue>
         </Row>
         <Row>
           <ArrivalLabel>Arrival In</ArrivalLabel>
