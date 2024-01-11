@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import styled, { css, keyframes } from 'styled-components';
-import { Asteroid, Building, Entity, Lot } from '@influenceth/sdk';
+import { Asteroid, Building, Entity, Lot, Ship } from '@influenceth/sdk';
 import { FaSearchPlus as DetailsIcon } from 'react-icons/fa';
 import ReactTooltip from 'react-tooltip';
 
@@ -23,9 +23,11 @@ import useStore from '~/hooks/useStore';
 import useCrew from '~/hooks/useCrew';
 import useCrewContext from '~/hooks/useCrewContext';
 import RouteSelection from './actionForms/RouteSelection';
-import { getBuildingIcon } from '~/lib/assetUtils';
+import { getBuildingIcon, getShipIcon } from '~/lib/assetUtils';
 import formatters from '~/lib/formatters';
 import useSale from '~/hooks/useSale';
+import useCrewmate from '~/hooks/useCrewmate';
+import useShip from '~/hooks/useShip';
 
 
 const opacityAnimation = keyframes`
@@ -259,20 +261,23 @@ const ActionButtons = styled.div`
 `;
 
 const CaptainCard = ({ crewId }) => {
-  const { data: crew } = useCrew(crewId);
   const history = useHistory();
+  const { data: crew } = useCrew(crewId);
+  const { data: captain } = useCrewmate(crew?.Crew?.roster?.length ? crew?.Crew.roster[0] : null);
 
   // onclick should open up crew profile
   const onClick = useCallback(() => {
-    const captainId = crew?.roster?.length && crew.roster[0];
-    history.push(`/crew/${captainId}`);
-  }, [crew]);
+    if (!crewId) return;
+    history.push(`/crew/${crewId}`);
+  }, [crewId]);
 
-  if (!crewId || !crew?.roster.length) return null;
   return (
     <CrewCardFramed
-      crewmate={{ i: crew.roster[0] }}
+      crewmate={captain}
+      isCaptain
       onClick={onClick}
+      tooltip={formatters.crewName(crew)}
+      tooltipPlace="top"
       width={50} />
   );
 }
@@ -293,10 +298,11 @@ const InfoPane = () => {
   const updateZoomStatus = useStore(s => s.dispatchZoomStatusChanged);
 
   const { actions, props: actionProps } = useActionButtons();
-  const { data: asteroid } = useAsteroid(asteroidId);
+  const { data: asteroid, isLoading: asteroidIsLoading } = useAsteroid(asteroidId);
   const { constructionStatus, isAtRisk } = useConstructionManager(lotId);
   const { crew } = useCrewContext();
-  const { data: lot } = useLot(lotId);
+  const { data: lot, isLoading: lotIsLoading } = useLot(lotId);
+  const { data: ship, isLoading: shipIsLoading } = useShip(zoomScene?.type === 'SHIP' ? zoomScene.shipId : undefined);
   const saleIsActive = useSale(Entity.IDS.ASTEROID);
 
   const [renderReady, setRenderReady] = useState(false);
@@ -405,13 +411,29 @@ const InfoPane = () => {
         pane.title = `${Building.TYPES[lot?.building?.Building?.buildingType || 0]?.name}${isIncompleteBuilding ? ' (Plan)' : ''}`;
         pane.subtitle = <>{formatters.asteroidName(asteroid)} &gt; <b>{formatters.lotName(Lot.toIndex(lotId))}</b></>;
         pane.captainCard = lot?.Control?.controller?.id;
+      } else if (zoomScene?.type === 'SHIP' && ship) {
+        pane.title = formatters.shipName(ship);
+        if (ship.Ship?.transitDeparture > 0) {
+          pane.subtitle = 'In Flight';
+        } else {
+          pane.subtitle = <>{formatters.asteroidName(asteroid)} &gt; <b>{lotId ? formatters.lotName(Lot.toIndex(lotId)) : 'In Orbit'}</b></>;
+        }
+        pane.captainCard = ship.Control?.controller?.id;
+      } else if (lotId && lot && lot.surfaceShip) {
+        const thumbUrl = getShipIcon(lot.surfaceShip.Ship?.shipType || 0, 'w400');
+        pane.title = `${Ship.TYPES[lot.surfaceShip.Ship?.shipType || 0]?.name}`;
+        pane.subtitle = <>{formatters.asteroidName(asteroid)} &gt; <b>{formatters.lotName(Lot.toIndex(lotId))}</b></>;
+        pane.captainCard = lot.surfaceShip.Control?.controller?.id;
+        pane.hoverSubtitle = 'Zoom to Lot';
+        pane.thumbVisible = true;
+        pane.thumbnail = <ThumbBackground image={thumbUrl} />;
       } else if (lotId && lot) {
         let hologram = !!(isAtRisk || isIncompleteBuilding);
         hologram = lot.building ? hologram : false;
         const thumbUrl = getBuildingIcon(lot.building?.Building?.buildingType || 0, 'w400', hologram);
-        pane.title = `${Building.TYPES[lot?.building?.Building?.buildingType || 0]?.name}${isIncompleteBuilding ? ' (Plan)' : ''}`;
+        pane.title = `${Building.TYPES[lot.building?.Building?.buildingType || 0]?.name}${isIncompleteBuilding ? ' (Plan)' : ''}`;
         pane.subtitle = <>{formatters.asteroidName(asteroid)} &gt; <b>{formatters.lotName(Lot.toIndex(lotId))}</b></>;
-        pane.captainCard = lot.Control?.controller?.id;
+        pane.captainCard = lot.building?.Control?.controller?.id;
         pane.hoverSubtitle = 'Zoom to Lot';
         pane.thumbVisible = true;
         pane.thumbnail = (
@@ -460,12 +482,13 @@ const InfoPane = () => {
 
   useEffect(() => ReactTooltip.rebuild(), [actions]);
 
+  if (lotIsLoading || asteroidIsLoading || shipIsLoading) return null;
   return (
     <Pane visible={asteroidId && ['out','in'].includes(zoomStatus)}>
       <ReactTooltip id="infoPane" effect="solid" />
-      <OuterTitleRow>
+      <OuterTitleRow style={captainCard && !thumbnail ? { marginBottom: 8 } : {}}>
         {captainCard && <CaptainCardContainer><CaptainCard crewId={captainCard} /></CaptainCardContainer>}
-        <div>
+        <div style={captainCard && !thumbnail ? { marginTop: -8 } : {}}>
           {title && (
             <TitleRow hasLink={!!titleLink} onClick={onClickTitle}>
               <Title hasThumb={!!thumbnail}>{title}</Title>
