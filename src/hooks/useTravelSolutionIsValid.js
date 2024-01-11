@@ -28,8 +28,6 @@ const useTravelSolutionIsValid = () => {
     const propellantMass = propellantInventory?.mass || 0;
     const dryMass = shipConfig.hullMass + cargoMass;
     const wetMass = propellantMass + dryMass;
-
-    console.log({cargoInventory,propellantInventory, dryMass, wetMass });
   
     const maxDeltaV = shipConfig.exhaustVelocity * Math.log(wetMass / dryMass);
     if (travelSolution.deltaV > maxDeltaV) return false;

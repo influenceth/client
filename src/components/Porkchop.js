@@ -331,7 +331,7 @@ const Porkchop = ({
       destinationPosition: dPos.toArray(),
       key: Date.now()
     });
-  }, [originPath, destinationPath, maxDeltaV, shipParams]);
+  }, [originPath, destinationPath, lastFedAt, maxDeltaV, shipParams]);
 
   const handleMouseMove = useCallback((e) => {
     if (loading) return;
