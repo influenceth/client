@@ -56,14 +56,17 @@ const buildingTypeOptions = Object.keys(Building.TYPES)
     7: '#00b294',
     8: '#009e49',
     9: '#bad80a',
-    10: '#fff100',
+    // (extras)
+    14: '#999999',  // construction site
+    15: '#fff100',  // landed light transport
   };
 
 const lotSearchBuildingTypeOptions = Object.keys(Building.TYPES).reduce((acc, key) => ([
   ...acc,
   { key, label: Building.TYPES[key].name, initialValue: true }
 ]), []);
-lotSearchBuildingTypeOptions.push({ key: 10, label: 'Light Transport (landed)', initialValue: true });
+lotSearchBuildingTypeOptions.splice(1, 0, { key: 14, label: 'Construction Site', initialValue: true });
+lotSearchBuildingTypeOptions.push({ key: 15, label: 'Light Transport (landed)', initialValue: true });
 
 const constructionStatusOptions = Object.keys(Building.CONSTRUCTION_STATUS_LABELS)
   .reduce((acc, key) => ([

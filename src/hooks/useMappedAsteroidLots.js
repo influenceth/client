@@ -184,20 +184,59 @@ const useMappedAsteroidLots = (i) => {
     console.log('processEvent', eventType, body);
 
     let asteroidId, lotIndex, buildingType;
+
+    // TODO: the above does not block prepopping of other activities, so any
+    // getAndCacheEntity may result in double-fetches on invalidation via this event
+
+    // construction site planned (0 -> 14)
     if (eventType === 'ConstructionPlanned') {
       asteroidId = body.event.returnValues.asteroid.id;
       lotIndex = Lot.toIndex(body.event.returnValues.lot.id);
-      buildingType = body.event.returnValues.buildingType;
+      buildingType = 14;
+
+    // construction site -> building (14 -> buildingType)
+    } else if (eventType === 'ConstructionFinished') {
+      const building = await getAndCacheEntity(body.event.returnValues.building, queryClient);
+      const _location = locationsArrToObj(building?.Location?.locations || []);
+      asteroidId = _location.asteroidId;
+      lotIndex = _location.lotIndex;
+      buildingType = building?.Building?.buildingType;
+
+    // building -> construction site (buildingType -> 14)
+    } else if (eventType === 'ConstructionDeconstructed') {
+      const building = await getAndCacheEntity(body.event.returnValues.building, queryClient);
+      const _location = locationsArrToObj(building?.Location?.locations || []);
+      asteroidId = _location.asteroidId;
+      lotIndex = _location.lotIndex;
+      buildingType = 14;
+
+    // construction site abandoned (14 -> 0)
     } else if (eventType === 'ConstructionAbandoned') {
-      // TODO: the above does not block prepopping of other activities, so
-      // may result in double-fetches on invalidation via this event
-      const building = await getAndCacheEntity({ label: Entity.IDS.BUILDING, id: body.event.returnValues.building.id }, queryClient);
+      const building = await getAndCacheEntity(body.event.returnValues.building, queryClient);
       const _location = locationsArrToObj(building?.Location?.locations || []);
       asteroidId = _location.asteroidId;
       lotIndex = _location.lotIndex;
       buildingType = 0;
+    
+    // ship moved to empty lot (0 -> 15)
+    } else if (eventType === 'ShipDocked' || eventType === 'ShipAssemblyFinished') {
+      const entityId = body.event.returnValues.dock || body.event.returnValues.destination;
+      if (entityId?.label === Entity.IDS.LOT) {
+        const position = Entity.toPosition(entityId);
+        asteroidId = position.asteroidId;
+        lotIndex = position.lotIndex;
+        buildingType = 15;
+      }
+
+    // ship undocked from empty lot (15 -> 0)
+    } else if (eventType === 'ShipUndocked') {
+      if (body.event.returnValues.dock.label === Entity.IDS.LOT) {
+        const position = Entity.toPosition(body.event.returnValues.dock);
+        asteroidId = position.asteroidId;
+        lotIndex = position.lotIndex;
+        buildingType = 0;
+      }
     }
-    // TODO: light transport landed / departed
 
     if (asteroidId && lotIndex && buildingType !== undefined) {
       // TODO: these events could/should technically go through the same invalidation process as primary events

@@ -1848,7 +1848,7 @@ export const LandingSelectionDialog = ({ asteroid, deliveryMode, initialSelectio
       const lot = parseInt(e.target.value);
       if (lot && lotData[lot] !== undefined) {
         const buildingType = lotData[lot] >> 4;
-        if (buildingType === 0 || buildingType === 7) {
+        if (buildingType === 0 || buildingType === Building.IDS.SPACEPORT) {
           onSelected(lot);
           onClose();
           return;
