@@ -150,31 +150,24 @@ const useActionButtons = () => {
     return ship;
   }, [zoomedToShip, crewedShip, lot, crew?.id]);
 
-  const [actions, setActions] = useState([]);
-
   // TODO: should this be useMemo?
-  // TODO: could reasonably have buttons determine own visibility and remove some redundant logic here
-  // (the only problem is parent wouldn't know how many visible buttons there were)
-  useEffect(() => {
-    if (asteroidIsLoading || lotIsLoading || crewedShipIsLoading || zoomedShipIsLoading) return;
-
-    setActions(
-      Object.keys(actionButtons)
-        .filter((k) => !actionButtons[k].isVisible || actionButtons[k].isVisible({
-          account,
-          asteroid,
-          crew,
-          crewedShip,
-          building: zoomStatus === 'in' && constructionStatus === 'OPERATIONAL' && lot?.building,
-          constructionStatus,
-          lot: zoomStatus === 'in' && lot,
-          openHudMenu,
-          ship: targetShip?.Ship.status === Ship.STATUSES.AVAILABLE && targetShip,
-          zoomStatus,
-        }))
-        .sort((a, b) => (buttonOrder[a] || 100) - (buttonOrder[b] || 100))
-        .map((k) => actionButtons[k].Component || actionButtons[k])
-    ); 
+  const actions = useMemo(() => {
+    if (asteroidIsLoading || lotIsLoading || crewedShipIsLoading || zoomedShipIsLoading) return [];
+    return Object.keys(actionButtons)
+      .filter((k) => !actionButtons[k].isVisible || actionButtons[k].isVisible({
+        account,
+        asteroid,
+        crew,
+        crewedShip,
+        building: zoomStatus === 'in' && constructionStatus === 'OPERATIONAL' && lot?.building,
+        constructionStatus,
+        lot: zoomStatus === 'in' && lot,
+        openHudMenu,
+        ship: targetShip?.Ship.status === Ship.STATUSES.AVAILABLE && targetShip,
+        zoomStatus,
+      }))
+      .sort((a, b) => (buttonOrder[a] || 100) - (buttonOrder[b] || 100))
+      .map((k) => actionButtons[k].Component || actionButtons[k]);
   }, [targetShip?.id, asteroid, constructionStatus, crew, crewedShip, lot, openHudMenu, resourceMap?.active, !!resourceMap?.selected, zoomStatus]);
 
   // TODO: within each action button, should memoize whatever is passed to flags

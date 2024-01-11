@@ -151,6 +151,7 @@ const CrewCardFramed = ({
   onClick,
   silhouetteOverlay,
   tooltip,
+  tooltipPlace = 'right',
   width,
   ...props
 }) => {
@@ -162,7 +163,7 @@ const CrewCardFramed = ({
     <AvatarWrapper
       data-tip={tooltip}
       data-for="global"
-      data-place="right"
+      data-place={tooltipPlace}
       clickable={!!onClick}
       onClick={onClick || noop}
       width={cardWidth}
