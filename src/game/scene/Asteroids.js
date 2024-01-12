@@ -13,6 +13,7 @@ import useAsteroid from '~/hooks/useAsteroid';
 import useAssetSearch from '~/hooks/useAssetSearch';
 import useControlledAsteroids from '~/hooks/useControlledAsteroids';
 import useStore from '~/hooks/useStore';
+import useTravelSolutionIsValid from '~/hooks/useTravelSolutionIsValid';
 import useWatchlist from '~/hooks/useWatchlist';
 import useWebWorker from '~/hooks/useWebWorker';
 import constants from '~/lib/constants';
@@ -91,6 +92,7 @@ const Asteroids = () => {
   const { coarseTime } = useContext(ClockContext);
   const { data: controlledAsteroids } = useControlledAsteroids();
   const { watchlist: { data: watchlist }} = useWatchlist();
+  const travelSolutionValid = useTravelSolutionIsValid();
 
   const [ mappedAsteroids, setMappedAsteroids ] = useState([]);
   const [ asteroidsWorkerPayload, setAsteroidsWorkerPayload ] = useState();
@@ -455,7 +457,7 @@ const Asteroids = () => {
               <Marker asteroidPos={travelSolution.originPosition} travelSolution={travelSolution} isOrigin isTravelMarker />
               <Marker asteroidPos={travelSolution.destinationPosition} travelSolution={travelSolution} isDestination isTravelMarker />
               {origin && <Orbit asteroid={origin} opacityMult={0.5} />}
-              {destination && <Orbit asteroid={destination} opacityMult={0.5} color={travelSolution?.invalid ? 'error' : 'success'} />}
+              {destination && <Orbit asteroid={destination} opacityMult={0.5} color={!travelSolutionValid ? 'error' : 'success'} />}
             </>
           )}
           {!travelSolution && (

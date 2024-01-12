@@ -14,6 +14,7 @@ import frag from './orbit/orbit.frag';
 import vert from './orbit/orbit.vert';
 import { RouteInvalidIcon, RouteValidIcon } from '~/components/Icons';
 import { formatBeltDistance } from '~/game/interface/hud/actionDialogs/components';
+import useTravelSolutionIsValid from '~/hooks/useTravelSolutionIsValid';
 
 const RouteMarker = styled.div`
   align-items: center;
@@ -60,6 +61,7 @@ const TravelSolution = ({}) => {
 
   const { data: destination } = useAsteroid(destinationId);
   const { data: origin } = useAsteroid(originId);
+  const travelSolutionIsValid = useTravelSolutionIsValid();
 
   const [baseTime, setBaseTime] = useState();
   const [order, setOrder] = useState();
@@ -186,7 +188,7 @@ const TravelSolution = ({}) => {
     }
     setPrearrival(new Float32Array(destinationPositions));
 
-    uniforms.current.uCol.value = new Color(travelSolution.invalid ? orbitColors.error : orbitColors.main);
+    uniforms.current.uCol.value = new Color(travelSolutionIsValid ? orbitColors.main : orbitColors.error);
     uniforms.current.uDash.value = true;
   }, [baseTime, travelSolution]);
 
@@ -240,7 +242,7 @@ const TravelSolution = ({}) => {
           <bufferGeometry>
             <bufferAttribute attachObject={[ 'attributes', 'position' ]} args={[ prearrival, 3 ]} />
           </bufferGeometry>
-          <lineBasicMaterial color={travelSolution?.invalid ? orbitColors.error : orbitColors.success} />
+          <lineBasicMaterial color={travelSolutionIsValid ? orbitColors.success : orbitColors.error} />
         </line>
       )}
 
@@ -248,13 +250,13 @@ const TravelSolution = ({}) => {
         <Html
           position={trajectoryCenter}
           style={{ pointerEvents: 'none' }}>
-          {travelSolution && !travelSolution.invalid && (
+          {travelSolution && travelSolutionIsValid && (
             <RouteMarker color="success">
               <RouteValidIcon />
               <RouteNotes>Route: {formattedTrajectoryLength}</RouteNotes>
             </RouteMarker>
           )}
-          {travelSolution && travelSolution.invalid && (
+          {travelSolution && !travelSolutionIsValid && (
             <RouteMarker color="error">
               <RouteInvalidIcon />
               <RouteNotes>Not Possible: {formattedTrajectoryLength}</RouteNotes>

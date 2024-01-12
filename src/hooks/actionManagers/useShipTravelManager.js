@@ -137,15 +137,12 @@ const useShipTravelManager = (shipId) => {
 
       // deltav = v_e * ln(preMass / postMass)
       // preMass = postMass * e^(deltav / v_e)
-      console.log('solution', solution, shipConfig?.exhaustVelocity, solution.deltaV / shipConfig?.exhaustVelocity, Math.exp(solution.deltaV / shipConfig?.exhaustVelocity));
       const postMass = shipConfig?.hullMass + cargoInv?.mass + propellantInv?.mass;
       const preMass = Math.round(postMass * Math.exp(solution.deltaV / shipConfig?.exhaustVelocity));
       const usedPropellantMass = preMass - postMass;
       const prePropellantMass = preMass - (shipConfig?.hullMass + cargoInv?.mass);
-      console.log({ preMass, postMass, usedPropellantMass, prePropellantMass });
       setCurrentTravelSolution({
         ...solution,
-        invalid: false,
         originId: currentTravelAction.originId,
         destinationId: currentTravelAction.destinationId,
         departureTime: currentTravelAction.departureTime,

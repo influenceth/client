@@ -1,9 +1,12 @@
 import { useContext, useMemo } from 'react';
 import styled from 'styled-components';
+import { Crew, Inventory, Ship } from '@influenceth/sdk';
 
 import ClockContext from '~/contexts/ClockContext';
+import useCrewContext from '~/hooks/useCrewContext';
 import useStore from '~/hooks/useStore';
 import { WarningIcon } from '../Icons';
+import { formatFixed } from '~/lib/utils';
 
 const tagHeight = 22;
 const halfTagHeight = tagHeight / 2;
@@ -134,14 +137,15 @@ const Row = styled.div`
   display: inline-flex;
   flex-direction: row;
   font-weight: bold;
+  margin-bottom: 4px;
+  &:last-child {
+    margin-bottom: 0;
+  }
   ${Label} {
     align-items: center;
     display: flex;
     height: ${tagHeight}px;
     padding: 0 6px;
-  }
-  &:first-child {
-    margin-bottom: 4px;
   }
 `;
 const CornerLabels = styled(TopLevelLabel).attrs((p) => {
@@ -255,14 +259,16 @@ const DelayLabel = styled(TopLevelLabel)`
   }
 `;
 
-const SolutionLabels = ({ center, mousePos, shipParams }) => {
+const SolutionLabels = ({ center, emode, lastFedAt, mousePos, shipParams }) => {
   const { coarseTime } = useContext(ClockContext);
+  
+  const { crew } = useCrewContext();
   const travelSolution = useStore(s => s.asteroids.travelSolution);
 
   const {
     arrival,
     delay,
-    invalid,
+    invalid: insufficientPropellant,
     usedPropellant,
     tof
   } = useMemo(() => {
@@ -275,7 +281,33 @@ const SolutionLabels = ({ center, mousePos, shipParams }) => {
       tof: (travelSolution.arrivalTime - travelSolution.departureTime),
       usedPropellant: Math.ceil(travelSolution.usedPropellantPercent)
     }
-  }, [shipParams, travelSolution]);
+  }, [travelSolution]);
+
+  const [currentFood, usedFood] = useMemo(() => {
+    if (emode || !lastFedAt || !travelSolution?.arrivalTime) return [100, 100];
+    const currentFood = Math.round(100 * Crew.getCurrentFoodRatio((coarseTime - lastFedAt) * 86400, crew?._foodBonuses?.consumption));
+    
+    const currentFoodIfMaxed = 100;
+    const arrivalFoodIfMaxed = Math.round(100 * Crew.getCurrentFoodRatio((travelSolution?.arrivalTime - coarseTime) * 86400, crew?._foodBonuses?.consumption));
+    return [
+      currentFood,
+      formatFixed(100 * (currentFoodIfMaxed - arrivalFoodIfMaxed) / currentFood, 1)
+    ];
+  }, [emode, travelSolution?.arrivalTime, coarseTime, crew?._foodBonuses?.consumption, lastFedAt]);
+
+  // only report the >100% values if they are within the ship/crew's capabilities
+  const [maxReportableFood, maxReportablePropellant] = useMemo(() => {
+    if (!shipParams || !travelSolution) return [100, 100];
+    const shipConfig = Ship.TYPES[shipParams.Ship.shipType];
+    const propInv = shipParams.Inventories.find((i) => i.slot === shipConfig.propellantSlot);
+    const invConfig = Inventory.TYPES[propInv.inventoryType];
+    return [
+      Math.floor(100 * (100 / currentFood)),
+      Math.floor(100 * (invConfig.massConstraint / shipParams.actualPropellantMass))
+    ];
+  }, [currentFood, shipParams, travelSolution]);
+
+  const invalid = insufficientPropellant || (!emode && usedFood >= 100);
 
   return (
     <>
@@ -287,8 +319,14 @@ const SolutionLabels = ({ center, mousePos, shipParams }) => {
       <CornerLabels x={center.x} y={center.y} mousePos={mousePos}>
         <Row>
           <Label>Propellant Used</Label>
-          <StatValue colorValue={usedPropellant}>{usedPropellant > 1000 ? <WarningIcon /> : `${usedPropellant}%`}</StatValue>
+          <StatValue colorValue={usedPropellant}>{usedPropellant >= maxReportablePropellant ? <WarningIcon /> : `${usedPropellant}%`}</StatValue>
         </Row>
+        {!emode && (
+          <Row>
+            <Label>Food Used</Label>
+            <StatValue colorValue={invalid ? 1000 : 0}>{usedFood >= maxReportableFood ? <WarningIcon /> : `${usedFood}%`}</StatValue>
+          </Row>
+        )}
         <Row>
           <ArrivalLabel>Arrival In</ArrivalLabel>
           <StatValue colorValue={invalid ? 1000 : 0}>{arrival}h</StatValue>
