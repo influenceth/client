@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import { Crew, Inventory, Ship } from '@influenceth/sdk';
 
 import ClockContext from '~/contexts/ClockContext';
+import useCrewContext from '~/hooks/useCrewContext';
 import useStore from '~/hooks/useStore';
 import { WarningIcon } from '../Icons';
 import { formatFixed } from '~/lib/utils';
@@ -258,8 +259,10 @@ const DelayLabel = styled(TopLevelLabel)`
   }
 `;
 
-const SolutionLabels = ({ center, lastFedAt, mousePos, shipParams }) => {
+const SolutionLabels = ({ center, emode, lastFedAt, mousePos, shipParams }) => {
   const { coarseTime } = useContext(ClockContext);
+  
+  const { crew } = useCrewContext();
   const travelSolution = useStore(s => s.asteroids.travelSolution);
 
   const {
@@ -281,17 +284,16 @@ const SolutionLabels = ({ center, lastFedAt, mousePos, shipParams }) => {
   }, [travelSolution]);
 
   const [currentFood, usedFood] = useMemo(() => {
-    if (!lastFedAt || !travelSolution?.arrivalTime) return [0, 0, 0];
-    // TODO: consumption bonuses!
-    const currentFood = Math.round(100 * Crew.getCurrentFoodRatio((coarseTime - lastFedAt) * 86400));
+    if (emode || !lastFedAt || !travelSolution?.arrivalTime) return [100, 100];
+    const currentFood = Math.round(100 * Crew.getCurrentFoodRatio((coarseTime - lastFedAt) * 86400, crew?._foodBonuses?.consumption));
     
     const currentFoodIfMaxed = 100;
-    const arrivalFoodIfMaxed = Math.round(100 * Crew.getCurrentFoodRatio((travelSolution?.arrivalTime - coarseTime) * 86400));
+    const arrivalFoodIfMaxed = Math.round(100 * Crew.getCurrentFoodRatio((travelSolution?.arrivalTime - coarseTime) * 86400, crew?._foodBonuses?.consumption));
     return [
       currentFood,
       formatFixed(100 * (currentFoodIfMaxed - arrivalFoodIfMaxed) / currentFood, 1)
     ];
-  }, [travelSolution?.arrivalTime, coarseTime, lastFedAt]);
+  }, [emode, travelSolution?.arrivalTime, coarseTime, crew?._foodBonuses?.consumption, lastFedAt]);
 
   // only report the >100% values if they are within the ship/crew's capabilities
   const [maxReportableFood, maxReportablePropellant] = useMemo(() => {
@@ -305,7 +307,7 @@ const SolutionLabels = ({ center, lastFedAt, mousePos, shipParams }) => {
     ];
   }, [currentFood, shipParams, travelSolution]);
 
-  const invalid = insufficientPropellant || usedFood >= 100;
+  const invalid = insufficientPropellant || (!emode && usedFood >= 100);
 
   return (
     <>
@@ -319,10 +321,12 @@ const SolutionLabels = ({ center, lastFedAt, mousePos, shipParams }) => {
           <Label>Propellant Used</Label>
           <StatValue colorValue={usedPropellant}>{usedPropellant >= maxReportablePropellant ? <WarningIcon /> : `${usedPropellant}%`}</StatValue>
         </Row>
-        <Row>
-          <Label>Food Used</Label>
-          <StatValue colorValue={invalid ? 1000 : 0}>{usedFood >= maxReportableFood ? <WarningIcon /> : `${usedFood}%`}</StatValue>
-        </Row>
+        {!emode && (
+          <Row>
+            <Label>Food Used</Label>
+            <StatValue colorValue={invalid ? 1000 : 0}>{usedFood >= maxReportableFood ? <WarningIcon /> : `${usedFood}%`}</StatValue>
+          </Row>
+        )}
         <Row>
           <ArrivalLabel>Arrival In</ArrivalLabel>
           <StatValue colorValue={invalid ? 1000 : 0}>{arrival}h</StatValue>

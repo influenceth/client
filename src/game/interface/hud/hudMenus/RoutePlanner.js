@@ -3,7 +3,7 @@ import styled from 'styled-components';
 import { Crew, Entity, Inventory, Ship, Time } from '@influenceth/sdk';
 
 import Dropdown from '~/components/Dropdown';
-import { CloseIcon, WarningIcon } from '~/components/Icons';
+import { CheckedIcon, CloseIcon, UncheckedIcon, WarningIcon } from '~/components/Icons';
 import NumberInput from '~/components/NumberInput';
 import Porkchop from '~/components/Porkchop';
 import SliderInput from '~/components/SliderInput';
@@ -80,6 +80,19 @@ const SectionHeader = styled.div`
   text-transform: uppercase;
   & > span:first-child {
     flex: 1;
+  }
+  & > label {
+    align-items: center;
+    cursor: ${p => p.theme.cursors.active};
+    display: flex;
+    opacity: 0.7;
+    transition: opacity 250ms ease;
+    & > svg {
+      margin-right: 2px;
+    }
+    &:hover {
+      opacity: 1;
+    }
   }
 `;
 const SectionBody = styled.div`
@@ -183,6 +196,7 @@ const RoutePlanner = () => {
   const [baseTime, setBaseTime] = useState();
   const [nowTime, setNowTime] = useState();
 
+  const [emode, setEmode] = useState(false);
   const [cargoMass, setCargoMass] = useState(0);
   const [foodSupplies, setFoodSupplies] = useState(0);
   const [propellantMass, setPropellantMass] = useState(0);
@@ -239,6 +253,10 @@ const RoutePlanner = () => {
     }
   }, [shipList, ship]);
 
+  const toggleEmode = useCallback(() => {
+    setEmode((e) => !e);
+  }, []);
+
   const shipConfig = useMemo(() => {
     if (!ship) return null;
 
@@ -247,8 +265,9 @@ const RoutePlanner = () => {
     const propellantInventory = ship.Inventories.find((i) => i.slot === shipTypeConfig.propellantSlot);
 
     const config = {};
-    config.maxCargoMass = Inventory.TYPES[cargoInventory?.inventoryType]?.massConstraint || 0;
-    config.maxPropellantMass = Inventory.TYPES[propellantInventory?.inventoryType]?.massConstraint || 0;
+    config.emode = ship._simulated ? emode : ship?.Ship?.emergencyAt > 0;
+    config.maxCargoMass = config.emode ? 0 : (Inventory.TYPES[cargoInventory?.inventoryType]?.massConstraint || 0);
+    config.maxPropellantMass = (config.emode ? 0.1 : 1) * (Inventory.TYPES[propellantInventory?.inventoryType]?.massConstraint || 0);
 
     if (ship._simulated) {
       config.initialCargoMass = config.maxCargoMass * 0.5;
@@ -259,13 +278,13 @@ const RoutePlanner = () => {
     }
 
     return config;
-  }, [ship]);
+  }, [emode, ship]);
 
   useEffect(() => {
     if (!shipConfig) return;
     setCargoMass(shipConfig.initialCargoMass);
     setPropellantMass(shipConfig.initialPropellantMass);
-    setFoodSupplies(ship?._simulated ? 100 : crewFoodSupplies);
+    setFoodSupplies((shipConfig.emode || ship?._simulated) ? 100 : crewFoodSupplies);
   }, [shipConfig, ship]);
 
   useEffect(() => {
@@ -360,7 +379,14 @@ const RoutePlanner = () => {
         <ShipImage shipType={ship?.Ship?.shipType} simulated={reactBool(ship?._simulated)} />
 
         <div>
-          <SectionHeader style={{ border: 0, margin: 0 }}>Ship</SectionHeader>
+          <SectionHeader style={{ border: 0, margin: 0 }}>
+            <span>Ship</span>
+            <label onClick={ship?._simulated ? toggleEmode : undefined}>
+              {shipConfig.emode ? <CheckedIcon style={{ color: 'red' }} /> : <UncheckedIcon />}
+              Emergency Mode
+            </label>
+          </SectionHeader>
+          
           <Dropdown
             labelKey="_name"
             onChange={setShip}
@@ -378,7 +404,7 @@ const RoutePlanner = () => {
           <SliderInfoRow disabled={!ship?._simulated}>
             <label><b>{ship?._simulated ? 'Simulated' : 'Actual'}</b> Onboard Cargo</label>
             <NumberInput
-              disabled={nativeBool(!ship?._simulated)}
+              disabled={nativeBool(!ship?._simulated || shipConfig?.emode)}
               min={0}
               max={shipConfig?.maxCargoMass / 1_000_000 || 0}
               onChange={onSetCargoMass}
@@ -387,7 +413,7 @@ const RoutePlanner = () => {
             <sub>t</sub>
           </SliderInfoRow>
           <SliderInput
-            disabled={nativeBool(!ship?._simulated)}
+            disabled={nativeBool(!ship?._simulated || shipConfig?.emode)}
             min={0}
             max={shipConfig?.maxCargoMass / 1_000_000 || 0}
             increment={0.1}
@@ -416,26 +442,28 @@ const RoutePlanner = () => {
             value={propellantMass / 1_000_000 || 0} />
         </SliderSection>
 
-        <SliderSection>
-          <SliderInfoRow disabled={!ship?._simulated}>
-            <label><b>{ship?._simulated ? 'Simulated' : 'Actual'}</b> Food Supplies</label>
-            <NumberInput
+        {!shipConfig.emode && (
+          <SliderSection>
+            <SliderInfoRow disabled={!ship?._simulated}>
+              <label><b>{ship?._simulated ? 'Simulated' : 'Actual'}</b> Food Supplies</label>
+              <NumberInput
+                disabled={nativeBool(!ship?._simulated)}
+                min={0}
+                max={100}
+                onChange={onSetFoodSupplies}
+                step={1}
+                value={foodSupplies || 0} />
+              <sub style={{ marginRight: -4 }}>%</sub>
+            </SliderInfoRow>
+            <SliderInput
               disabled={nativeBool(!ship?._simulated)}
               min={0}
               max={100}
+              increment={0.1}
               onChange={onSetFoodSupplies}
-              step={1}
               value={foodSupplies || 0} />
-            <sub style={{ marginRight: -4 }}>%</sub>
-          </SliderInfoRow>
-          <SliderInput
-            disabled={nativeBool(!ship?._simulated)}
-            min={0}
-            max={100}
-            increment={0.1}
-            onChange={onSetFoodSupplies}
-            value={foodSupplies || 0} />
-        </SliderSection>
+          </SliderSection>
+        )}
       </Sliders>
 
       <SectionHeader style={{ marginBottom: 10 }}>
@@ -450,6 +478,7 @@ const RoutePlanner = () => {
             originId={originId}
             destinationId={destinationId}
             baseTime={baseTime}
+            emode={shipConfig?.emode}
             lastFedAt={lastFedAt}
             nowTime={nowTime}
             originPath={originPath}

@@ -112,6 +112,7 @@ const deltaVColor = (deltaV, maxDeltaV, isInvalid = false) => {
 
 const Porkchop = ({
   baseTime,
+  emode,
   nowTime,
   originPath,
   originId,
@@ -210,8 +211,10 @@ const Porkchop = ({
 
         for (let i in deltaVs) {
           let isFoodInvalid = false;
-          const arrivalTime = baseTime + (maxTof - minTof) * (i / height) + minTof + colDelay;
-          if (arrivalTime > foodCutoff) {
+          const departureTime = baseTime + colDelay;
+          const arrivalTime = departureTime + ((maxTof - minTof) * (i / height) + minTof);
+          const invalidCutoff = emode ? departureTime + maxFoodUtilizationAdays : foodCutoff;
+          if (arrivalTime > invalidCutoff) {
             isFoodInvalid = true;
           }
 
@@ -311,11 +314,10 @@ const Porkchop = ({
       usedPropellantMass = wetmass * (1 - 1 / Math.exp(solution.deltaV / shipParams.exhaustVelocity));
     }
 
-    const arrivalTime = baseTime + delay + tof;
-    const insufficientFood = lastFedAt + maxFoodUtilizationAdays < arrivalTime;
+    const departureTime = baseTime + delay;
+    const arrivalTime = departureTime + tof;
+    const insufficientFood = arrivalTime > (emode ? departureTime : lastFedAt) + maxFoodUtilizationAdays;
 
-    // TODO: invalid (if insufficient food in simulation, also should report here)
-    // TODO: should potentially extract usedPropellantMass and percent...?
     dispatchTravelSolution({
       ...solution, // v1, v2, deltaV
       _isSimulation: shipParams._simulated,
@@ -331,7 +333,7 @@ const Porkchop = ({
       destinationPosition: dPos.toArray(),
       key: Date.now()
     });
-  }, [originPath, destinationPath, lastFedAt, maxDeltaV, shipParams]);
+  }, [emode, originPath, destinationPath, lastFedAt, maxDeltaV, shipParams]);
 
   const handleMouseMove = useCallback((e) => {
     if (loading) return;
@@ -367,6 +369,7 @@ const Porkchop = ({
       {selectionPos && (
         <SolutionLabels
           center={selectionPos}
+          emode={emode}
           lastFedAt={lastFedAt}
           mousePos={mousePos}
           shipParams={shipParams} />

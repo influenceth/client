@@ -19,7 +19,7 @@ const useTravelSolutionIsValid = () => {
 
     if (!crew || !ship) return false;
   
-    const shipConfig = Ship.TYPES[ship?.Ship?.shipType];
+    const shipConfig = Ship.TYPES[ship.Ship?.shipType];
   
     const cargoInventory = ship.Inventories.find((i) => i.slot === shipConfig.cargoSlot);
     const propellantInventory = ship.Inventories.find((i) => i.slot === shipConfig.propellantSlot);
@@ -32,8 +32,12 @@ const useTravelSolutionIsValid = () => {
     const maxDeltaV = shipConfig.exhaustVelocity * Math.log(wetMass / dryMass);
     if (travelSolution.deltaV > maxDeltaV) return false;
 
-    const lastFedAt = Time.fromUnixSeconds(crew.Crew.lastFed || 0, crew._timeAcceleration).toOrbitADays();
-    if (lastFedAt + maxFoodUtilizationAdays < travelSolution?.arrivalTime) return false;
+    if (ship.Ship?.emergencyAt > 0) {
+      if (travelSolution.departureTime + maxFoodUtilizationAdays < travelSolution?.arrivalTime) return false;
+    } else {
+      const lastFedAt = Time.fromUnixSeconds(crew.Crew.lastFed || 0, crew._timeAcceleration).toOrbitADays();
+      if (lastFedAt + maxFoodUtilizationAdays < travelSolution?.arrivalTime) return false;
+    }
   
     return true;
   }, [crew, travelSolution, ship]);
