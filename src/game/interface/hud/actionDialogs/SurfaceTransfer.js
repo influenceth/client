@@ -429,11 +429,11 @@ const Wrapper = (props) => {
 
   useEffect(() => {
     if (!asteroid || !originLot) {
-      if (!isLoading && !originLoading && !originLotLoading) {
+      if (!isLoading && !originLoading && !originLotLoading && !deliveryManager.isLoading) {
         if (props.onClose) props.onClose();
       }
     }
-  }, [asteroid, origin, isLoading, originLoading, originLotLoading]);
+  }, [asteroid, origin, isLoading, originLoading, originLotLoading, deliveryManager.isLoading]);
 
   // handle auto-closing on any status change
   const lastStatus = useRef();
