@@ -321,6 +321,36 @@ const formatAsTx = (item) => {
       break;
     }
 
+    case 'AcceptDelivery': {
+      formatted.icon = <SurfaceTransferIcon />;
+      formatted.label = 'Accept Transfer';
+      formatted.asteroidId = item.meta?.asteroidId;
+      formatted.lotId = item.meta?.lotId;
+      formatted.onClick = ({ openDialog }) => {
+        openDialog('SURFACE_TRANSFER', { txHash: item.txHash });
+      };
+      break;
+    }
+    case 'CancelDelivery': {
+      formatted.icon = <SurfaceTransferIcon />;
+      formatted.label = 'Cancel Transfer';
+      formatted.asteroidId = item.meta?.asteroidId;
+      formatted.lotId = item.meta?.lotId;
+      formatted.onClick = ({ openDialog }) => {
+        openDialog('SURFACE_TRANSFER', { txHash: item.txHash });
+      };
+      break;
+    }
+    case 'PackageDelivery': {
+      formatted.icon = <SurfaceTransferIcon />;
+      formatted.label = 'Propose Transfer';
+      formatted.asteroidId = item.meta?.asteroidId;
+      formatted.lotId = item.meta?.lotId;
+      formatted.onClick = ({ openDialog }) => {
+        openDialog('SURFACE_TRANSFER', { txHash: item.txHash });
+      };
+      break;
+    }
     case 'SendDelivery': {
       formatted.icon = <SurfaceTransferIcon />;
       formatted.label = 'Start Transfer';

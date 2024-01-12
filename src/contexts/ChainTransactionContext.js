@@ -331,6 +331,7 @@ export function ChainTransactionProvider({ children }) {
             const calls = [];
             for (let runSystem of runSystems) {
               const vars = customConfigs[runSystem]?.preprocess ? customConfigs[runSystem].preprocess(rawVars) : rawVars;
+              console.log('runSystem', runSystem, vars);
               calls.push(System.getRunSystemCall(runSystem, vars, process.env.REACT_APP_STARKNET_DISPATCHER));
               if (customConfigs[runSystem]?.getPrice) {
                 totalPrice += await customConfigs[runSystem].getPrice(vars);
