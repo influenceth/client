@@ -382,7 +382,7 @@ const RoutePlanner = () => {
           <SectionHeader style={{ border: 0, margin: 0 }}>
             <span>Ship</span>
             <label onClick={ship?._simulated ? toggleEmode : undefined}>
-              {shipConfig.emode ? <CheckedIcon style={{ color: 'red' }} /> : <UncheckedIcon />}
+              {shipConfig?.emode ? <CheckedIcon style={{ color: 'red' }} /> : <UncheckedIcon />}
               Emergency Mode
             </label>
           </SectionHeader>
@@ -442,7 +442,7 @@ const RoutePlanner = () => {
             value={propellantMass / 1_000_000 || 0} />
         </SliderSection>
 
-        {!shipConfig.emode && (
+        {!shipConfig?.emode && (
           <SliderSection>
             <SliderInfoRow disabled={!ship?._simulated}>
               <label><b>{ship?._simulated ? 'Simulated' : 'Actual'}</b> Food Supplies</label>

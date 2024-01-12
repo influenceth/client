@@ -54,6 +54,9 @@ import useEntity from '~/hooks/useEntity';
 import formatters from '~/lib/formatters';
 import useFeedCrewManager from '~/hooks/actionManagers/useFeedCrewManager';
 import useAsteroid from '~/hooks/useAsteroid';
+import useInterval from '~/hooks/useInterval';
+import useAuth from '~/hooks/useAuth';
+import useBlockTime from '~/hooks/useBlockTime';
 
 const PseudoStatRow = styled.div`
   align-items: center;
@@ -110,6 +113,7 @@ const FeedCrew = ({
 }) => {
   const { currentFeeding, feedCrew } = feedCrewManager;
   const { crew } = useCrewContext();
+  const blockTime = useBlockTime();
 
   const crewmates = crew?._crewmates;
   const captain = crewmates[0];
@@ -212,7 +216,7 @@ const FeedCrew = ({
 
   const foodStats = useMemo(() => {
     const maxFood = (crew?._crewmates?.length || 1) * Crew.CREWMATE_FOOD_PER_YEAR;
-    const timeSinceFed = Time.toGameDuration((Date.now() / 1000) - (crew?.Crew?.lastFed || 0), crew?._timeAcceleration);
+    const timeSinceFed = Time.toGameDuration(blockTime - (crew?.Crew?.lastFed || 0), crew?._timeAcceleration);
     const currentFood = Math.floor(maxFood * Crew.getCurrentFoodRatio(timeSinceFed, crew._foodBonuses?.consumption)); // floor to quanta
     const addingFood = selectedItems[Product.IDS.FOOD] || 0;
     const postValue = (currentFood + addingFood) / maxFood;
@@ -234,7 +238,7 @@ const FeedCrew = ({
       rationingPenalty,
       timeUntilRationing
     }
-  }, [crew?._crewmates, crew?.Crew?.lastFed, crew?._timeAcceleration, selectedItems]);
+  }, [crew?._crewmates, crew?.Crew?.lastFed, crew?._timeAcceleration, blockTime, selectedItems]);
 
   return (
     <>

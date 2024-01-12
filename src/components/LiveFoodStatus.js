@@ -6,6 +6,7 @@ import { FoodIcon, WarningOutlineIcon } from '~/components/Icons';
 import useChainTime from '~/hooks/useChainTime';
 import useConstants from '~/hooks/useConstants';
 import { hexToRGB } from '~/theme';
+import useBlockTime from '~/hooks/useBlockTime';
 
 const Food = styled.div`
   align-items: center;
@@ -27,18 +28,18 @@ const Food = styled.div`
 `;
 
 const LiveFoodStatus = ({ crew, onClick, ...props }) => {
-  const chainTime = useChainTime();
+  const blockTime = useBlockTime();
   const { data: TIME_ACCELERATION } = useConstants('TIME_ACCELERATION');
 
   const [percentage, isRationing] = useMemo(() => {
-    const lastFedAgo = Time.toGameDuration(chainTime - (crew?.Crew?.lastFed || 0), parseInt(TIME_ACCELERATION));
+    const lastFedAgo = Time.toGameDuration(blockTime - (crew?.Crew?.lastFed || 0), parseInt(TIME_ACCELERATION));
     return lastFedAgo
       ? [
         Math.round(100 * Crew.getCurrentFoodRatio(lastFedAgo, crew._foodBonuses?.consumption)),
         (Crew.getFoodMultiplier(lastFedAgo, crew._foodBonuses?.consumption, crew._foodBonuses?.rationing) < 1)
       ]
       : [0, false];
-  }, [chainTime, crew]);
+  }, [blockTime, crew]);
   
   return (
     <Food isRationing={isRationing} onClick={onClick} {...props}>

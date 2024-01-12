@@ -252,6 +252,14 @@ export function ChainTransactionProvider({ children }) {
 
   const [promptingTransaction, setPromptingTransaction] = useState(false);
 
+  const [ blockTime, setBlockTime ] = useState(0);
+
+  useEffect(() => {
+    starknet.provider.getBlock()
+      .then((block) => setBlockTime(block?.timestamp))
+      .catch(console.error)
+  }, [starknet, lastBlockNumber]);
+
   const prependEventAutoresolve = useRef();
   useEffect(() => {
     let wasTriggered = false;
@@ -579,6 +587,7 @@ export function ChainTransactionProvider({ children }) {
 
   return (
     <ChainTransactionContext.Provider value={{
+      blockTime,
       chainTime,
       execute,
       getStatus,
