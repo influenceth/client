@@ -26,6 +26,7 @@ import useMappedAsteroidLots from '~/hooks/useMappedAsteroidLots';
 import constants from '~/lib/constants';
 import { getLotGeometryHeightMaps, getLotGeometryHeightMapResolution } from './helpers/LotGeometry';
 import useGetActivityConfig from '~/hooks/useGetActivityConfig';
+import useConstants from '~/hooks/useConstants';
 
 const { MAX_LOTS_RENDERED } = constants;
 
@@ -66,6 +67,8 @@ const colorIndexMask  = 0b001111;
 const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, config, getLockToSurface, getRotation }) => {
   const { token } = useAuth();
   const { crew } = useCrewContext();
+  const { data: TIME_ACCELERATION } = useConstants('TIME_ACCELERATION');
+
   const { gl, scene } = useThree();
   const queryClient = useQueryClient();
   const { registerWSHandler, unregisterWSHandler, wsReady } = useWebsocket();
@@ -832,6 +835,7 @@ const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, co
     dispatchLotSelected(Lot.toId(asteroidId, highlighted.current));
   }, [lastClick]);
 
+  const mouseThrottleTime = useMemo(() => MOUSE_THROTTLE_TIME / (TIME_ACCELERATION / 24), [TIME_ACCELERATION]);
 
   useFrame((state, delta) => {
     selectionAnimationTime.current = (selectionAnimationTime.current || 0) + delta;
@@ -859,7 +863,7 @@ const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, co
 
     // throttle by time as well
     const now = Date.now();
-    if (now - lastMouseUpdateTime.current < MOUSE_THROTTLE_TIME) return;
+    if (now - lastMouseUpdateTime.current < mouseThrottleTime) return;
 
     // FINALLY, find the closest intersection
     lastMouseUpdatePosition.current = mouseVector.clone();
