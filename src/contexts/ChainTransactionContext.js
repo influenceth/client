@@ -264,10 +264,12 @@ export function ChainTransactionProvider({ children }) {
   const [ blockTime, setBlockTime ] = useState(0);
 
   useEffect(() => {
-    starknet.provider.getBlock()
-      .then((block) => setBlockTime(block?.timestamp))
-      .catch(console.error)
-  }, [starknet, lastBlockNumber]);
+    if (starknet?.provider) {
+      starknet.provider.getBlock()
+        .then((block) => setBlockTime(block?.timestamp))
+        .catch(console.error);
+    }
+  }, [starknet?.provider, lastBlockNumber]);
 
   const prependEventAutoresolve = useRef();
   useEffect(() => {
@@ -331,6 +333,7 @@ export function ChainTransactionProvider({ children }) {
             const calls = [];
             for (let runSystem of runSystems) {
               const vars = customConfigs[runSystem]?.preprocess ? customConfigs[runSystem].preprocess(rawVars) : rawVars;
+              console.log('runSystem', runSystem, vars);
               calls.push(System.getRunSystemCall(runSystem, vars, process.env.REACT_APP_STARKNET_DISPATCHER));
               if (customConfigs[runSystem]?.getPrice) {
                 totalPrice += await customConfigs[runSystem].getPrice(vars);
@@ -380,7 +383,7 @@ export function ChainTransactionProvider({ children }) {
   // on initial load, set provider.waitForTransaction for any pendingTransactions
   // so that we can throw any extension-related or timeout errors needed
   useEffect(() => {
-    if (contracts && pendingTransactions?.length) {
+    if (starknet?.provider && contracts && pendingTransactions?.length) {
       pendingTransactions.forEach(({ key, vars, txHash }) => {
         // (sanity check) this should not be possible since pendingTransaction should not be created
         // without txHash... so we aren't even reporting this error to user since should not happen
@@ -508,7 +511,7 @@ export function ChainTransactionProvider({ children }) {
   // }, [])
 
   const execute = useCallback(async (key, vars, meta = {}) => {
-    if (contracts && contracts[key]) {
+    if (starknet?.provider && contracts && contracts[key]) {
       const { execute, onTransactionError } = contracts[key];
 
       setPromptingTransaction(true);

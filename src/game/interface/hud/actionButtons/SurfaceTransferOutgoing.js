@@ -7,7 +7,10 @@ import ActionButton, { getCrewDisabledReason } from './ActionButton';
 import { locationsArrToObj } from '~/lib/utils';
 
 const isVisible = ({ crew, lot, ship }) => {
-  return crew && (lot?.building || ship)?.Inventories?.find((i) => i.status === Inventory.STATUSES.AVAILABLE);
+  const entity = lot?.building || ship;
+  return crew
+    && entity?.Control?.controller?.id === crew.id  // TODO: policy instead?
+    && entity?.Inventories?.find((i) => i.status === Inventory.STATUSES.AVAILABLE);
 };
 
 const SurfaceTransferOutgoing = ({ asteroid, crew, lot, ship, onSetAction, preselect, _disabled }) => {

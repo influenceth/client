@@ -541,6 +541,61 @@ const activities = {
 
     requiresCrewTime: true
   },
+
+  DeliveryAccepted: {
+    // TODO: ...
+  },
+  DeliveryCancelled: {
+    // TODO: ...
+  },
+  DeliveryPackaged: {
+    getActionItem: ({ returnValues }, { destination = {} }) => {
+      const _location = locationsArrToObj(destination?.Location?.locations || []);
+      return {
+        icon: <SurfaceTransferIcon />,
+        label: 'Proposed Transfer',
+        asteroidId: _location.asteroidId,
+        lotId: _location.lotId,
+        locationDetail: getEntityName(destination),
+        onClick: ({ openDialog }) => {
+          openDialog('SURFACE_TRANSFER', { deliveryId: returnValues.delivery.id });
+        }
+      };
+    },
+    getIsActionItemHidden: ({ returnValues }) => (pendingTransactions) => {
+      return pendingTransactions.find((tx) => (
+        (tx.key === 'AcceptDelivery' || tx.key === 'CancelDelivery')
+        && tx.vars.delivery.id === returnValues.delivery.id
+      ))
+    },
+
+    getInvalidations: ({ event: { returnValues, version } }) => ([
+      ...invalidationDefaults(Entity.IDS.DELIVERY, returnValues.delivery.id),
+      ...invalidationDefaults(returnValues.origin.label, returnValues.origin.id),
+      ['actionItems']
+    ]),
+
+    getPrepopEntities: ({ event: { returnValues } }) => ({
+      destination: returnValues.dest,
+      // origin: returnValues.origin,
+    }),
+
+    getLogContent: ({ event: { returnValues } }, viewingAs, { destination = {} }) => {
+      const _location = locationsArrToObj(destination?.Location?.locations || []);
+      return {
+        icon: <SurfaceTransferIcon />,
+        content: (
+          <>
+            <span>Delivery proposed to </span>
+            <EntityLink {...returnValues.dest} />
+            {_location.lotId && <>at<LotLink lotId={_location.lotId} /></>}
+          </>
+        ),
+      };
+    },
+
+    requiresCrewTime: true
+  },
   
   DeliveryReceived: {
     getInvalidations: ({ event: { returnValues } }, { delivery = {} }) => {
@@ -556,7 +611,7 @@ const activities = {
 
       return invs;
     },
-    getLogContent: (activity, viewingAs, { delivery }) => {
+    getLogContent: ({ event: { returnValues } }, viewingAs, { delivery }) => {
       if (!delivery) return null;
       return {
         icon: <SurfaceTransferIcon />,
@@ -606,14 +661,14 @@ const activities = {
       // origin: returnValues.origin,
     }),
 
-    // getLogContent: (activity, viewingAs, { destination = {} }) => {
+    // getLogContent: ({ event: { returnValues } }, viewingAs, { destination = {} }) => {
     //   const _location = locationsArrToObj(destination?.Location?.locations || []);
     //   return {
     //     icon: <SurfaceTransferIcon />,
     //     content: (
     //       <>
     //         <span>Delivery started to </span>
-    //         <EntityLink {...activity.returnValue.dest} />
+    //         <EntityLink {...returnValues.dest} />
     //         {_location.lotId && <>at<LotLink lotId={_location.lotId} /></>}
     //       </>
     //     ),
