@@ -316,7 +316,7 @@ const api = {
   },
 
   getAsteroidLotData: async (i) => {
-    const response = await instance.get(`/${apiVersion}/asteroids/${i}/lots/packed`, { responseType: 'blob' });
+    const response = await instance.get(`/${apiVersion}/asteroids/${i}/lots/packed`, { responseType: 'arraybuffer' });
     const lotTally = Asteroid.getSurfaceArea(i);
 
     let shift;
@@ -325,8 +325,7 @@ const api = {
     // TODO (enhancement?): any benefit to returning a sparse array here instead?
     // (probably yes unless going to send as a buffer to worker as part of a performance enhancement)
     if (response.data) {
-      // console.log(response, new Uint32Array(await response.data.arrayBuffer()));
-      return (new Uint32Array(await response.data.arrayBuffer())).reduce((acc, byte, i) => {
+      return (new Uint32Array(response.data)).reduce((acc, byte, i) => {
         for (let j = 0; j < 4; j++) {
           const index = i * 4 + j;
           if (index < lotTally) {
