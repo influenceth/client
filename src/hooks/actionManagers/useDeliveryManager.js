@@ -33,11 +33,14 @@ const useDeliveryManager = ({ destination, destinationSlot, origin, originSlot, 
   }), [crew?.id]);
 
   const pendingDeliveries = useMemo(() => {
-    return pendingTransactions.filter(({ key, vars }) => key === 'SendDelivery' && (
-      (!destination || (vars.dest.label === destination.label && vars.dest.id === destination.id))
-      && (!destinationSlot || vars.dest_slot === destinationSlot)
-      && (!origin || (vars.origin.label === origin.label && vars.origin.id === origin.id))
-      && (!originSlot || vars.origin_slot === originSlot)
+    return pendingTransactions.filter(({ key, vars }) => (
+      (key === 'SendDelivery' || key === 'PackageDelivery')
+      && (
+        (!destination || (vars.dest.label === destination.label && vars.dest.id === destination.id))
+        && (!destinationSlot || vars.dest_slot === destinationSlot)
+        && (!origin || (vars.origin.label === origin.label && vars.origin.id === origin.id))
+        && (!originSlot || vars.origin_slot === originSlot)
+      )
     ));
   }, [destination, destinationSlot, origin, originSlot, pendingTransactions]);
 
@@ -49,9 +52,11 @@ const useDeliveryManager = ({ destination, destinationSlot, origin, originSlot, 
     const allDeliveries = active.map((delivery) => {
       let current = {
         _crewmates: null,
+        caller: null,
         deliveryId: null,
         dest: null,
         destSlot: null,
+        isProposal: false,
         origin: null,
         originSlot: null,
         contents: null,
@@ -61,7 +66,8 @@ const useDeliveryManager = ({ destination, destinationSlot, origin, originSlot, 
       };
   
       // status flow
-      // READY > DEPARTING > IN_TRANSIT > READY_TO_FINISH > FINISHING > FINISHED
+      // READY > (PACKAGING > PACKAGED) > DEPARTING > IN_TRANSIT > READY_TO_FINISH > FINISHING > FINISHED
+      //       < (CANCELING <         )
       let status = 'READY';
       let stage = actionStages.NOT_STARTED;
   
@@ -71,6 +77,15 @@ const useDeliveryManager = ({ destination, destinationSlot, origin, originSlot, 
         if (actionItem) {
           // current._crewmates = actionItem.assets.crew?.crewmates;  // TODO: ...
           current.startTime = actionItem.event.timestamp;
+        } else {
+          actionItem = (actionItems || []).find((item) => item.event.name === 'DeliveryPackaged' && item.event.returnValues.delivery.id === delivery.id);
+          if (actionItem) {
+            // current._crewmates = actionItem.assets.crew?.crewmates;  // TODO: ...
+            current.caller = actionItem.event.returnValues.caller; 
+            current.price = actionItem.event.returnValues.price;
+            current.startTime = actionItem.event.timestamp;
+            current.isProposal = true;
+          }
         }
         current.deliveryId = delivery.id;
         current.dest = delivery.Delivery.dest;
@@ -78,16 +93,25 @@ const useDeliveryManager = ({ destination, destinationSlot, origin, originSlot, 
         current.origin = delivery.Delivery.origin;
         current.originSlot = delivery.Delivery.originSlot;
         current.contents = delivery.Delivery.contents;
-        current.finishTime = delivery.Delivery.finishTime;
+        current.finishTime = current.isProposal ? current.startTime : delivery.Delivery.finishTime;
         current.status = delivery.Delivery.status;
   
         if (delivery.Delivery.status === Delivery.STATUSES.COMPLETE) {
           status = 'FINISHED';
           stage = actionStages.COMPLETED;
         } else {
-          if(getStatus('ReceiveDelivery', { ...payload, delivery: { id: delivery.id, label: Entity.IDS.DELIVERY } }) === 'pending') {
+          if (getStatus('AcceptDelivery', { ...payload, delivery: { id: delivery.id, label: Entity.IDS.DELIVERY } }) === 'pending') {
+            status = 'DEPARTING';
+            stage = actionStages.STARTING;
+          } else if (getStatus('CancelDelivery', { ...payload, delivery: { id: delivery.id, label: Entity.IDS.DELIVERY } }) === 'pending') {
+            status = 'CANCELING';
+            stage = actionStages.STARTING;
+          } else if (getStatus('ReceiveDelivery', { ...payload, delivery: { id: delivery.id, label: Entity.IDS.DELIVERY } }) === 'pending') {
             status = 'FINISHING';
             stage = actionStages.COMPLETING;
+          } else if (current.isProposal) {
+            status = 'PACKAGED';
+            stage = actionStages.READY_TO_COMPLETE;
           } else if (delivery.Delivery.finishTime && delivery.Delivery.finishTime <= liveBlockTime) {
             status = 'READY_TO_FINISH';
             stage = actionStages.READY_TO_COMPLETE;
@@ -97,15 +121,17 @@ const useDeliveryManager = ({ destination, destinationSlot, origin, originSlot, 
           }
         }
   
-      // if no deliveryId yet, must be the pending start
+      // if no deliveryId yet, must be the pending start / package
       } else {
         current.dest = delivery.vars.dest;
         current.destSlot = delivery.vars.dest_slot;
         current.origin = delivery.vars.origin;
         current.originSlot = delivery.vars.origin_slot;
         current.contents = delivery.vars.products.map((p) => ({ product: Number(p.product), amount: p.amount }));
+        current.price = delivery.vars.price;
         current.txHash = delivery.txHash;
-        status = 'DEPARTING';
+        current.isProposal = (delivery.key === 'PackageDelivery');
+        status = current.isProposal ? 'PACKAGING' : 'DEPARTING';
         stage = actionStages.STARTING;
       }
   
@@ -117,6 +143,48 @@ const useDeliveryManager = ({ destination, destinationSlot, origin, originSlot, 
     });
     return [allDeliveries, Date.now()];
   }, [deliveries, pendingDeliveries, getStatus, payload]);
+
+  const acceptDelivery = useCallback((selectedDeliveryId, meta) => {
+    const delivery = currentDeliveries.find((d) => d.action.deliveryId === selectedDeliveryId);
+    if (!delivery?.action) return;
+    execute(
+      'AcceptDelivery',
+      {
+        caller: delivery.action.caller,
+        price: delivery.action.price,
+        delivery: { id: selectedDeliveryId || deliveryId, label: Entity.IDS.DELIVERY },
+        ...payload,
+      },
+      meta
+    );
+  }, [payload]);
+
+  const cancelDelivery = useCallback((selectedDeliveryId, meta) => {
+    execute(
+      'CancelDelivery',
+      {
+        delivery: { id: selectedDeliveryId || deliveryId, label: Entity.IDS.DELIVERY },
+        ...payload,
+      },
+      meta
+    );
+  }, [payload]);
+
+  const packageDelivery = useCallback(({ origin, originSlot, destination, destinationSlot, contents, price }, meta) => {
+    execute(
+      'PackageDelivery',
+      {
+        origin,
+        origin_slot: originSlot,
+        products: Object.keys(contents).map((product) => ({ product, amount: Math.floor(contents[product]) })),
+        dest: destination,
+        dest_slot: destinationSlot,
+        price: price * 1e6,
+        ...payload,
+      },
+      meta
+    );
+  }, [payload]);
 
   const startDelivery = useCallback(({ origin, originSlot, destination, destinationSlot, contents }, meta) => {
     execute(
@@ -148,6 +216,10 @@ const useDeliveryManager = ({ destination, destinationSlot, origin, originSlot, 
     isLoading,
     currentDeliveryActions: currentDeliveries,
     currentVersion: currentDeliveriesVersion,
+    
+    acceptDelivery,
+    cancelDelivery,
+    packageDelivery,
     startDelivery,
     finishDelivery
   };

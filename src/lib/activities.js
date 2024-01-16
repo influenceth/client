@@ -199,7 +199,7 @@ const activities = {
   },
 
   ConstructionStarted: {
-    getActionItem: ({ returnValues }, { building = {} }) => {
+    getActionItem: ({ returnValues }, viewingAs, { building = {} }) => {
       const { asteroidId, lotId, lotIndex } = locationsArrToObj(building?.Location?.locations || []) || {};
       return {
         icon: <ConstructIcon />,
@@ -543,17 +543,26 @@ const activities = {
   },
 
   DeliveryAccepted: {
-    // TODO: ...
+    getInvalidations: ({ event: { returnValues, version } }) => ([
+      ...invalidationDefaults(Entity.IDS.DELIVERY, returnValues.delivery.id),
+      ...invalidationDefaults(returnValues.origin.label, returnValues.origin.id),
+      ...invalidationDefaults(returnValues.destination.label, returnValues.destination.id),
+      ['actionItems']
+    ]),
   },
   DeliveryCancelled: {
-    // TODO: ...
+    getInvalidations: ({ event: { returnValues, version } }) => ([
+      ...invalidationDefaults(Entity.IDS.DELIVERY, returnValues.delivery.id),
+      ...invalidationDefaults(returnValues.origin.label, returnValues.origin.id),
+      ['actionItems']
+    ]),
   },
   DeliveryPackaged: {
-    getActionItem: ({ returnValues }, { destination = {} }) => {
+    getActionItem: ({ returnValues }, viewingAs, { destination = {} }) => {
       const _location = locationsArrToObj(destination?.Location?.locations || []);
       return {
         icon: <SurfaceTransferIcon />,
-        label: 'Proposed Transfer',
+        label: `${destination.Control.controller.id !== viewingAs?.id ? 'Outgoing' : 'Incoming'} Transfer Proposal`,
         asteroidId: _location.asteroidId,
         lotId: _location.lotId,
         locationDetail: getEntityName(destination),
@@ -577,24 +586,24 @@ const activities = {
 
     getPrepopEntities: ({ event: { returnValues } }) => ({
       destination: returnValues.dest,
-      // origin: returnValues.origin,
+      origin: returnValues.origin,
     }),
 
-    getLogContent: ({ event: { returnValues } }, viewingAs, { destination = {} }) => {
-      const _location = locationsArrToObj(destination?.Location?.locations || []);
-      return {
-        icon: <SurfaceTransferIcon />,
-        content: (
-          <>
-            <span>Delivery proposed to </span>
-            <EntityLink {...returnValues.dest} />
-            {_location.lotId && <>at<LotLink lotId={_location.lotId} /></>}
-          </>
-        ),
-      };
-    },
+    // getLogContent: ({ event: { returnValues } }, viewingAs, { destination = {} }) => {
+    //   const _location = locationsArrToObj(destination?.Location?.locations || []);
+    //   return {
+    //     icon: <SurfaceTransferIcon />,
+    //     content: (
+    //       <>
+    //         <span>Delivery proposed to </span>
+    //         <EntityLink {...returnValues.dest} />
+    //         {_location.lotId && <>at<LotLink lotId={_location.lotId} /></>}
+    //       </>
+    //     ),
+    //   };
+    // },
 
-    requiresCrewTime: true
+    // requiresCrewTime: true
   },
   
   DeliveryReceived: {
@@ -629,7 +638,7 @@ const activities = {
   },
 
   DeliverySent: {
-    getActionItem: ({ returnValues }, { destination = {} }) => {
+    getActionItem: ({ returnValues }, viewingAs, { destination = {} }) => {
       const _location = locationsArrToObj(destination?.Location?.locations || []);
       return {
         icon: <SurfaceTransferIcon />,
@@ -767,7 +776,7 @@ const activities = {
   // EarlyAdopterRewardClaimed,
 
   MaterialProcessingStarted: {
-    getActionItem: ({ returnValues }, { building = {} }) => {
+    getActionItem: ({ returnValues }, viewingAs, { building = {} }) => {
       const _location = locationsArrToObj(building?.Location?.locations || []);
       const process = Process.TYPES[returnValues.process];
       const processorProps = getProcessorProps(process?.processorType);
@@ -910,7 +919,7 @@ const activities = {
   },
 
   ResourceExtractionStarted: {
-    getActionItem: ({ returnValues }, { extractor = {} }) => {
+    getActionItem: ({ returnValues }, viewingAs, { extractor = {} }) => {
       const _location = locationsArrToObj(extractor?.Location?.locations || []);
       return {
         icon: <ExtractionIcon />,
@@ -1108,7 +1117,7 @@ const activities = {
   },
 
   ShipAssemblyStarted: {
-    getActionItem: ({ returnValues }, { building = {} }) => {
+    getActionItem: ({ returnValues }, viewingAs, { building = {} }) => {
       const _location = locationsArrToObj(building?.Location?.locations || []);
       return {
         icon: <ShipIcon />,
@@ -1341,7 +1350,7 @@ const activities = {
   },
 
   TransitStarted: {
-    getActionItem: ({ returnValues }, { origin = {} }) => {
+    getActionItem: ({ returnValues }, viewingAs, { origin = {} }) => {
       return {
         icon: <SetCourseIcon />,
         label: `In Flight`,
