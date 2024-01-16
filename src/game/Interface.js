@@ -155,7 +155,7 @@ const Interface = () => {
             <CrewAssignmentComplete />
           </Route>
           */}
-          <Route path="/marketplace/:asteroidId([0-9]+)/:lotId(all|[0-9]+)?/:discriminator?">
+          <Route path="/marketplace/:asteroidId([0-9]+)/:lotIndex(all|[0-9]+)?/:discriminator?">
             <Marketplace />
           </Route>
         </Switch>

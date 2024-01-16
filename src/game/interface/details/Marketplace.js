@@ -128,12 +128,12 @@ const Marketplace = () => {
   // TODO: if lot is loaded and this is not a marketplace, go back
 
   const localOrders = useMemo(() => (myOpenOrders || []).filter((o) => {
-    return o.asteroidId === Number(asteroidId) && (lotIndex === 'all' || Number(lot.id) === o.lotId);
-  }), [asteroidId, lot.id, lotIndex, myOpenOrders]);
+    return o.asteroidId === Number(asteroidId) && (lotIndex === 'all' || Number(lot?.id) === o.lotId);
+  }), [asteroidId, lot?.id, lotIndex, myOpenOrders]);
 
   const marketplace = lotIndex === 'all' ? null : {
     name: `Joe's Spacing Emporium`,
-    listings: asteroidListings.filter((l) => l.lotId === Number(lot.id)),
+    listings: asteroidListings.filter((l) => l.lotId === Number(lot?.id)),
     orders: []
   };
 

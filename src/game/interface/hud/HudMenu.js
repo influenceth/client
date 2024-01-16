@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import ReactTooltip from 'react-tooltip';
 import styled from 'styled-components';
-import { Building, Inventory } from '@influenceth/sdk';
+import { Building, Inventory, Lot } from '@influenceth/sdk';
 import { BiWrench as WrenchIcon } from 'react-icons/bi';
 
 import IconButton from '~/components/IconButton';
@@ -384,7 +384,7 @@ const HudMenu = ({ forceOpenMenu }) => {
             label: 'Marketplace Listings',
             icon: <OrderIcon />,
             onOpen: () => {
-              history.push(`/marketplace/${asteroidId}/${lotId}`);
+              history.push(`/marketplace/${asteroidId}/${Lot.toIndex(lotId)}`);
             }
           });
         }

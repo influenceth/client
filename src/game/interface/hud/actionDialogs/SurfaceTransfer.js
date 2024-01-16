@@ -530,7 +530,7 @@ const Wrapper = (props) => {
   useEffect(() => {
     if (stage !== 'READY_TO_FINISH') {
       if (lastStatus.current && stage !== lastStatus.current) {
-        props.onClose();
+        if (props.onClose) props.onClose();
       }
     }
     if (!deliveryManager.isLoading) {

@@ -1730,7 +1730,7 @@ export const TransferSelectionDialog = ({
         if (productConstraint !== undefined) {
           const alreadyInTarget = targetInventory?.contents.find((c) => Number(c.product) === Number(product))?.amount || 0;
           const enrouteToTarget = pendingContents?.[Number(product)] || 0;
-          if (productConstraint === 0) {
+          if (targetInvConfig && productConstraint === 0) {
             productConstraint = Math.min(
               targetInvConfig.massConstraint / Product.TYPES[product].massPerUnit,
               targetInvConfig.volumeConstraint / Product.TYPES[product].volumePerUnit
