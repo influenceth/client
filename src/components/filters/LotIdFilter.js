@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useRef } from 'react';
-import { Asteroid } from '@influenceth/sdk';
+import { Asteroid, Lot } from '@influenceth/sdk';
 
 import IconButton from '~/components/IconButton';
 import { GoIcon } from '~/components/Icons';
@@ -29,7 +29,7 @@ const LotIdFilter = ({ assetType, filters }) => {
         lotId.current.value = maxLots;
         targetId = maxLots;
       }
-      dispatchLotSelected(targetId);
+      dispatchLotSelected(Lot.toId(asteroidId, targetId));
     }
   }, [asteroidId]);
 
