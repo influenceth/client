@@ -34,6 +34,7 @@ import { getProcessorProps } from './utils';
 import formatters from './formatters';
 
 const formatAsItem = (activity, actionItem = {}) => {
+  // console.log('formatAsItem', activity, actionItem);
   const formatted = {
     key: `activity_${activity._id}`,
     type: activity.type,
@@ -43,9 +44,9 @@ const formatAsItem = (activity, actionItem = {}) => {
     lotId: null,
     resourceId: null,
     locationDetail: '',
-    finishTime: activity.event.returnValues.finishTime || 0,
+    finishTime: activity.event.returnValues.finishTime || activity.event.timestamp || 0,
     startTime: activity.event.timestamp || 0,
-    ago: (new moment(new Date(1000 * (activity.event.returnValues.finishTime || 0)))).fromNow(),
+    ago: (new moment(new Date(1000 * (activity.event.returnValues.finishTime || activity.event.timestamp || 0)))).fromNow(),
     onClick: null,
 
     // overwrite with formatted actionItem keys

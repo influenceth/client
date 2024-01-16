@@ -6,12 +6,12 @@ import activities, { getHydrationQueryKey } from '~/lib/activities';
 const getActivityConfig = (queryClient) => (activity, viewingAs = {}) => {
   const name = activity?.event?.name || activity?.event?.event;
   if (!activities[name]) {
-    console.warn(`No activity config for ${name}`);
+    console.warn(`No activity config for ${name}`, activity);
     return null;
   }
 
   const config = activities[name];
-  if (!config) console.warn(`No activity config found for "${name}"!`);
+  if (!config) console.warn(`No activity config found for "${name}"!`, activity);
 
   const prepopEntities = config.getPrepopEntities ? config.getPrepopEntities(activity) : {};
   const prepopped = Object.keys(prepopEntities).reduce((acc, prepopKey) => {
@@ -22,7 +22,7 @@ const getActivityConfig = (queryClient) => (activity, viewingAs = {}) => {
     };
   }, {});
 
-  const actionItem = config?.getActionItem ? config.getActionItem(activity.event, prepopped) : null;
+  const actionItem = config?.getActionItem ? config.getActionItem(activity.event, viewingAs, prepopped) : null;
 
   const invalidations = config?.getInvalidations ? config.getInvalidations(activity, prepopped) : [];
 

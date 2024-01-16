@@ -1272,11 +1272,12 @@ const SwayInputFieldWrapper = styled.div`
   flex: 1;
   position: relative;
   &:after {
-    content: "SWAY";
+    content: "${p => p.inputLabel}";
     color: ${p => p.theme.colors.main};
     font-size: 18px;
     margin-top: -10px;
     opacity: 0.5;
+    pointer-events: none;
     position: absolute;
     right: 12px;
     top: 50%;
@@ -2363,19 +2364,28 @@ export const MiniBarChart = ({ color, deltaColor, deltaValue, label, valueLabel,
   </MiniBarWrapper>
 );
 
-export const SwayInput = () => {
+export const SwayInput = ({ inputLabel = "SWAY", onChange, value, ...props }) => {
+  const formattedValue = useMemo(() => {
+    return value ? `${parseInt(value)}` : '';
+  }, [value]);
   return (
     <SwayInputRow>
       <SwayInputIconWrapper><SwayIcon /></SwayInputIconWrapper>
-      <SwayInputFieldWrapper>
-        <TextInput type="number" min={0} value={0} />
+      <SwayInputFieldWrapper inputLabel={inputLabel}>
+        <TextInput
+          type="number"
+          min={0}
+          step={1}
+          value={formattedValue || 0}
+          onChange={onChange}
+          {...props} />
       </SwayInputFieldWrapper>
       <SwayInputHelp>{/* TODO: this doesn't do anything */}
         <QuestionIcon />
       </SwayInputHelp>
     </SwayInputRow>
   );
-};
+}
 
 const MouseoverIcon = ({ children, icon, iconStyle = {}, themeColor }) => {
   const refEl = useRef();
@@ -3266,11 +3276,11 @@ export const EmergencyPropellantSection = ({ title, propellantPregeneration, pro
   );
 };
 
-export const SwayInputBlockInner = ({ instruction }) => {
+export const SwayInputBlockInner = ({ instruction, ...props }) => {
   return (
     <>
       {instruction && <SwayInputInstruction>{instruction}</SwayInputInstruction>}
-      <SwayInput />
+      <SwayInput {...props} />
     </>
   )
 };
