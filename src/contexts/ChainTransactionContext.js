@@ -1,6 +1,5 @@
 import { createContext, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Asteroid, System } from '@influenceth/sdk';
-import { utils as ethersUtils } from 'ethers';
 import { isEqual, get } from 'lodash';
 
 import useActivitiesContext from '~/hooks/useActivitiesContext';
@@ -121,10 +120,10 @@ const getNow = () => Math.floor(Date.now() / 1000);
 const customConfigs = {
   // customization of Systems configs from sdk
   ArrangeCrew: { equalityTest: ['callerCrew.id'] }, // TODO: should this be caller_crew?
-  
+
   AssembleShipStart: { equalityTest: ['dry_dock.id', 'dry_dock_slot'] },
   AssembleShipFinish: { equalityTest: ['dry_dock.id', 'dry_dock_slot'] },
-  
+
   ChangeName: { equalityTest: ['entity.id', 'entity.label'] },
 
   ConstructionAbandon: { equalityTest: ['building.id'] },

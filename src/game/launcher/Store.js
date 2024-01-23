@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import styled, { css } from 'styled-components';
-import { utils as ethersUtils } from 'ethers';
+import { formatEther, formatUnits, parseUnits } from 'ethers';
 import { createPortal } from 'react-dom';
 import { uint256 } from 'starknet';
 
@@ -93,16 +93,19 @@ const Main = styled.div`
   height: 50px;
   margin: 10px -${innerPadding}px;
   padding: ${innerPadding}px;
+
   & > input {
     font-size: 18px;
     height: 30px;
+    margin: 0 10px;
     text-align: right;
     width: 75px;
   }
+
   & > label {
-    padding-left: 10px;
     font-size: 20px;
   }
+
   & > sub {
     align-items: flex-end;
     display: flex;
@@ -111,6 +114,7 @@ const Main = styled.div`
     opacity: 0.5;
     vertical-align: bottom;
   }
+
   & > span {
     font-weight: bold;
     margin-right: 5px;
@@ -461,7 +465,7 @@ export const CrewmateSKU = () => {
 
       {funding && (
         <FundingDialog
-          targetAmount={Math.max(ethersUtils.formatEther(totalCost || 0n) || 0, 0.01)}
+          targetAmount={Math.max(formatEther(totalCost || 0n) || 0, 0.01)}
           onClose={() => setFunding(false)}
           onSelect={onSelectFundingOption}
         />
@@ -535,20 +539,48 @@ export const AsteroidSKU = () => {
 };
 
 export const SwaySKU = () => {
-  const swayPerEth = 22000000;
-
   const { walletContext: { starknet } } = useAuth();
 
   const [ethBalance, setEthBalance] = useState(null);
-  const [tally, setTally] = useState(100000);
-
-  const totalCost = useMemo(() => {
-    const fees = 1000000000000000n; // 0.001 ETH
-    return BigInt(Math.round(tally * 1e18 / swayPerEth)) + fees;
-  }, [tally, swayPerEth]);
+  const [ethToSell, setEthToSell] = useState(0.01);
 
   const [funding, setFunding] = useState(false);
   const [polling, setPolling] = useState(false);
+  const [quote, setQuote] = useState(null);
+
+  const swapForSway = useCallback(async () => {
+    try {
+      await api.executeSwaySwap({ quote, account: starknet?.account });
+      setQuote(null);
+      setEthToSell(0);
+    } catch (e) {
+      setQuote(null);
+      console.error(e);
+    }
+  }, [starknet?.account, quote]);
+
+  useEffect(() => {
+    const getPrice = async () => {
+      try {
+        const [ quote ] = await api.getSwayQuote({
+          sellToken: process.env.REACT_APP_ERC20_TOKEN_ADDRESS,
+          buyToken: process.env.REACT_APP_STARKNET_SWAY_TOKEN,
+          amount: parseUnits(ethToSell.toString(10)),
+          account: starknet?.account?.address
+        });
+
+        if (quote) {
+          setQuote(quote);
+        } else {
+          setQuote(null);
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    };
+
+    getPrice();
+  }, [starknet?.account?.address, ethToSell]);
 
   const onFundWallet = useCallback(() => {
     setFunding(true);
@@ -578,8 +610,8 @@ export const SwaySKU = () => {
 
   const isInsufficientBalance = useMemo(() => {
     if (ethBalance === null) return false;
-    return totalCost > ethBalance;
-  }, [ethBalance, totalCost]);
+    return parseUnits(ethToSell.toString(10), 18) + parseUnits('0.001', 18) > ethBalance;
+  }, [ethBalance, ethToSell]);
 
   // TODO: would it make more sense to just check on each new block?
   useInterval(() => {
@@ -591,7 +623,8 @@ export const SwaySKU = () => {
   const swayFormatter = new Intl.NumberFormat('en-US', {
     notation: 'compact',
     compactDisplay: 'short',
-    minimumSignificantDigits: 3
+    minimumSignificantDigits: 4,
+    maximumSignificantDigits: 4
   });
 
   return (
@@ -606,34 +639,38 @@ export const SwaySKU = () => {
             SWAY (Standard Weighted Adalian Yield) is the basic economic unit of exchange in Adalia.
           </Description>
           <Main>
+              <label>Exchange</label>
               <UncontrolledTextInput
                 min={1}
-                onChange={(e) => setTally(Math.floor(e.currentTarget.value))}
-                value={safeValue(tally)}
+                onChange={(e) => setEthToSell(e.currentTarget.value || 0)}
+                value={ethToSell}
                 step={1}
-                style={{ width: '150px' }}
                 type="number" />
 
-              <label>SWAY</label>
+              <label>ETH for</label>
           </Main>
           <Price>
-              <label></label>
-              <span>{swayFormatter.format(swayPerEth)}</span>
-              <label>SWAY / Eth</label>
+              {!quote && <label>SWAY Unavailable</label>}
+              {!!quote && (
+                <>
+                  <span>{swayFormatter.format(Number(quote.buyAmount) / 1e6)}</span>
+                  <label>SWAY</label>
+                </>
+              )}
           </Price>
-          {(isPendingPurchase || totalCost === 0 || !isInsufficientBalance)
+          {(isPendingPurchase || !ethToSell || !isInsufficientBalance)
             ? (
               <Button
                 loading={reactBool(isPendingPurchase)}
-                disabled={nativeBool(isPendingPurchase || totalCost === 0)}
+                disabled={nativeBool(isPendingPurchase || !ethToSell)}
                 isTransaction
-                onClick={() => console.log('TODO: purchase SWAY')}
+                onClick={swapForSway}
                 subtle
                 style={{ width: '100%' }}>
                 Purchase
                   <ButtonExtra>
                     {/* TODO: should this update price before "approve"? what about asteroids? */}
-                    <Ether>{formatters.ethPrice(totalCost, 4)}</Ether>
+                    <Ether>{Number(ethToSell) + 0.001}</Ether>
                   </ButtonExtra>
               </Button>
             )
@@ -657,7 +694,7 @@ export const SwaySKU = () => {
 
       {funding && (
         <FundingDialog
-          targetAmount={Math.max(ethersUtils.formatEther(totalCost || 0n) || 0, 0.01)}
+          targetAmount={Math.max(ethToSell + 0.001) || 0.01}
           onClose={() => setFunding(false)}
           onSelect={onSelectFundingOption}
         />
