@@ -8,7 +8,7 @@ import useCrewContext from '~/hooks/useCrewContext';
 import useDeliveryManager from '~/hooks/actionManagers/useDeliveryManager';
 import useLot from '~/hooks/useLot';
 import useStore from '~/hooks/useStore';
-import { reactBool, formatTimer, locationsArrToObj, getCrewAbilityBonuses } from '~/lib/utils';
+import { reactBool, formatTimer, locationsArrToObj, getCrewAbilityBonuses, nativeBool } from '~/lib/utils';
 import {
   ItemSelectionSection,
   ActionDialogFooter,
@@ -51,6 +51,17 @@ import CrewIndicator from '~/components/CrewIndicator';
 import useEntity from '~/hooks/useEntity';
 import formatters from '~/lib/formatters';
 
+const P2PSection = styled.div`
+  align-self: flex-start;
+  width: 50%;
+  & > * {
+    margin-bottom: 20px;
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+`;
+
 const SurfaceTransfer = ({
   asteroid,
   deliveryManager,
@@ -60,14 +71,15 @@ const SurfaceTransfer = ({
   originSlot,
 
   dest,
-  currentDelivery,
+  currentDeliveryAction,
 
   stage,
   ...props
 }) => {
   const createAlert = useStore(s => s.dispatchAlertLogged);
 
-  const { startDelivery, finishDelivery } = deliveryManager;
+  const { startDelivery, finishDelivery, packageDelivery, acceptDelivery, cancelDelivery } = deliveryManager;
+  const currentDelivery = useMemo(() => currentDeliveryAction?.action, [currentDeliveryAction]);
   const { crew, crewmateMap } = useCrewContext();
 
   const crewmates = (crew?._crewmates || []);
@@ -82,6 +94,11 @@ const SurfaceTransfer = ({
   const [tab, setTab] = useState(0);
   const [transferSelectorOpen, setTransferSelectorOpen] = useState();
   const [selectedItems, setSelectedItems] = useState(props.preselect?.selectedItems || {});
+  const [sway, setSway] = useState((currentDelivery?.price || 0) / 1e6);
+
+  const onSwayChange = useCallback((e) => {
+    setSway(e.currentTarget.value ? parseInt(e.currentTarget.value) : '');
+  }, []);
 
   // get origin and originInventory
   const originInventory = useMemo(() => {
@@ -136,6 +153,10 @@ const SurfaceTransfer = ({
     }, { totalMass: 0, totalVolume: 0 })
   }, [selectedItems]);
 
+  const isP2P = useMemo(() => (
+    originController && destinationController && originController?.id !== destinationController?.id
+  ), [destinationController, originController]);
+
   const stats = useMemo(() => ([
     {
       label: 'Task Duration',
@@ -183,14 +204,15 @@ const SurfaceTransfer = ({
       return;
     }
 
-    startDelivery({
+    (isP2P ? packageDelivery : startDelivery)({
       origin,
       originSlot: originInventory?.slot,
       destination,
       destinationSlot: destinationInventory?.slot,
-      contents: selectedItems
+      contents: selectedItems,
+      price: sway
     }, { asteroidId: asteroid?.id, lotId: originLot?.id });
-  }, [originInventory, destinationInventory, selectedItems, asteroid?.id, originLot?.id]);
+  }, [originInventory, destinationInventory, selectedItems, sway, isP2P ,asteroid?.id, originLot?.id]);
 
   const onFinishDelivery = useCallback(() => {
     finishDelivery(props.deliveryId, {
@@ -199,21 +221,59 @@ const SurfaceTransfer = ({
     });
   }, [props.deliveryId, asteroid?.id, destinationLot?.id]);
 
+  const onCancelDelivery = useCallback(() => {
+    cancelDelivery(props.deliveryId, {
+      asteroidId: asteroid?.id,
+      lotId: destinationLot?.id,
+    });
+  }, [props.deliveryId, asteroid?.id, destinationLot?.id]);
+
+  const onAcceptDelivery = useCallback(() => {
+    acceptDelivery(props.deliveryId, {
+      asteroidId: asteroid?.id,
+      lotId: destinationLot?.id,
+    });
+  }, [props.deliveryId, asteroid?.id, destinationLot?.id]);
+
   const actionDetails = useMemo(() => {
     let overrideColor = undefined;
     let status = undefined;
-    if (stage === actionStage.NOT_STARTED) {
-      // TODO: should use entity, not lot
-      if (destinationLot && destinationLot?.building?.Control?.controller?.id !== crew?.id) {
-        status = 'Send to Crew';
-        overrideColor = theme.colors.green;
+    if (stage === actionStage.NOT_STARTED || ['READY','PACKAGED'].includes(currentDeliveryAction?.status)) {
+      if (isP2P) {
+        if (destination?.Control?.controller?.id === crew?.id) {
+          status = 'Incoming from Other Crew';
+          overrideColor = '#faaf3f';
+        } else {
+          status = 'Send to Crew';
+          overrideColor = theme.colors.green;
+        }
       } else {
         status = 'Send Items';
         overrideColor = theme.colors.main;
       }
     }
-    return { overrideColor, status };
-  }, [crew, destinationLot, stage]);
+    return { overrideColor, status, stage };
+  }, [crew, currentDeliveryAction?.status, destination, isP2P, stage]);
+
+  const finalizeActions = useMemo(() => {
+    if (currentDeliveryAction?.status === 'PACKAGED') {
+      if (destination?.Control?.controller?.id === crew?.id) {
+        return {
+          finalizeLabel: 'Accept Proposal',
+          onFinalize: onAcceptDelivery,
+        };
+      } else {
+        return {
+          finalizeLabel: 'Cancel Proposal',
+          onFinalize: onCancelDelivery,
+        };
+      }
+    }
+    return {
+      finalizeLabel: 'Complete',
+      onFinalize: onFinishDelivery,
+    };
+  }, [currentDeliveryAction?.status, crew, destination, onAcceptDelivery, onCancelDelivery, onFinishDelivery]);
 
   return (
     <>
@@ -273,7 +333,7 @@ const SurfaceTransfer = ({
 
         {tab === 0 && (
           <>
-            {(!destinationLot || destinationController?.id === crew?.id)
+            {(!destinationLot || !isP2P)
               ? (
                 <ItemSelectionSection
                   label="Transfer Items"
@@ -295,23 +355,54 @@ const SurfaceTransfer = ({
 
                   <FlexSectionSpacer />
 
-                  <div style={{ alignSelf: 'flex-start', width: '50%' }}>
-                    <CrewIndicator crew={destinationController} />
+                  <P2PSection>
+                    {origin?.Control?.controller?.id === crew?.id
+                      ? (
+                        <>
+                          <CrewIndicator crew={destinationController} label={'Destination Controller'} />
 
-                    <WarningAlert severity="warning" style={{ marginBottom: 20 }}>
-                      <div><WarningOutlineIcon /></div>
-                      <div>The destination is controlled by a different crew.</div>
-                    </WarningAlert>
+                          <WarningAlert severity="warning">
+                            <div><WarningOutlineIcon /></div>
+                            <div>The destination is controlled by a different crew.</div>
+                          </WarningAlert>
 
-                    <SwayInputBlockInner
-                      instruction="OPTIONAL: You may request a SWAY payment from the controlling crew in exchange for goods delivered." />
-                  </div>
+                          {(stage === actionStage.NOT_STARTED || ['PACKAGING','PACKAGED','CANCELING'].includes(currentDeliveryAction?.status)) && (
+                            <SwayInputBlockInner
+                              disabled={nativeBool(stage !== actionStage.NOT_STARTED)}
+                              inputLabel="REQUESTED SWAY"
+                              instruction="OPTIONAL: You may request a SWAY payment from the controlling crew in exchange for goods delivered."
+                              onChange={onSwayChange}
+                              value={sway} />
+                          )}
+                        </>
+                      )
+                      : (
+                        <>
+                          <CrewIndicator crew={originController} label={'Origin Controller'} />
+
+                          {sway > 0 && (
+                            <WarningAlert severity="error">
+                              <div><WarningOutlineIcon /></div>
+                              <div>The sender has requested a SWAY payment for these goods.</div>
+                            </WarningAlert>
+                          )}
+
+                          {(stage === actionStage.NOT_STARTED || ['PACKAGING','PACKAGED','CANCELING'].includes(currentDeliveryAction?.status)) && (
+                            <SwayInputBlockInner
+                              disabled
+                              inputLabel="SWAY"
+                              instruction="You pay the controller in exchange for these goods:"
+                              value={sway} />
+                          )}
+                        </>
+                      )}
+                  </P2PSection>
 
                 </FlexSection>
               )
             }
 
-            {stage !== actionStage.NOT_STARTED && (
+            {stage !== actionStage.NOT_STARTED && currentDeliveryAction?.status !== 'PACKAGED' && (
               <ProgressBarSection
                 finishTime={currentDelivery?.finishTime}
                 startTime={currentDelivery?.startTime}
@@ -364,12 +455,11 @@ const SurfaceTransfer = ({
 
       <ActionDialogFooter
         disabled={!destination || totalMass === 0}
-        finalizeLabel="Complete"
         goLabel="Transfer"
-        onFinalize={onFinishDelivery}
         onGo={onStartDelivery}
         stage={stage}
         waitForCrewReady
+        {...finalizeActions}
         {...props} />
 
       {stage === actionStage.NOT_STARTED && (
@@ -452,7 +542,7 @@ const Wrapper = (props) => {
     <ActionDialogInner
       actionImage={surfaceTransferBackground}
       isLoading={reactBool(isLoading || originLoading || originLotLoading || destLoading || deliveryManager.isLoading)}
-      stage={stage}>
+      stage={currentDeliveryAction?.status === 'PACKAGED' ? actionStage.NOT_STARTED : stage}>
       <SurfaceTransfer
         asteroid={asteroid}
         deliveryManager={deliveryManager}
@@ -460,7 +550,7 @@ const Wrapper = (props) => {
         originLot={originLot}
         originSlot={props.originSlot}
         dest={destEntity}
-        currentDelivery={currentDeliveryAction?.action}
+        currentDeliveryAction={currentDeliveryAction}
         stage={stage}
         {...props} />
     </ActionDialogInner>

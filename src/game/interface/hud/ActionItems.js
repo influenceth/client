@@ -280,7 +280,7 @@ const ActionItemRow = styled.div`
   }
 `;
 
-const ActionItem = ({ data }) => {
+const ActionItem = ({ data, crew }) => {
   const history = useHistory();
   const getActivityConfig = useGetActivityConfig();
 
@@ -292,7 +292,7 @@ const ActionItem = ({ data }) => {
   const type = data?.type;
 
   // TODO: can probably clean up the `formatted` structure
-  const item = useMemo(() => formatActionItem(data, getActivityConfig(data)?.actionItem), [data]);
+  const item = useMemo(() => formatActionItem(data, getActivityConfig(data, crew)?.actionItem), [data]);
 
   const { data: asteroid } = useAsteroid(item.asteroidId);
   const { data: lot } = useLot(item.lotId);
@@ -400,7 +400,7 @@ const ActionItem = ({ data }) => {
 const ActionItems = () => {
   const { account } = useAuth();
   const { allVisibleItems: allItems } = useActionItems();
-  const { captain } = useCrewContext();
+  const { captain, crew } = useCrewContext();
 
   const [displayItems, setDisplayItems] = useState();
   useEffect(() => {
@@ -479,7 +479,7 @@ const ActionItems = () => {
           )}>
           <ActionItemWrapper>
             <ActionItemContainer>
-              {filteredDisplayItems.map((item) => <ActionItem key={item.uniqueKey} data={item} />)}
+              {filteredDisplayItems.map((item) => <ActionItem key={item.uniqueKey} crew={crew} data={item} />)}
             </ActionItemContainer>
           </ActionItemWrapper>
         </CollapsibleSection>

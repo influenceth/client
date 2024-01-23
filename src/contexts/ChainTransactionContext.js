@@ -1,5 +1,10 @@
 import { createContext, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+<<<<<<< HEAD
 import { Asteroid, System } from '@influenceth/sdk';
+=======
+import { Asteroid, Entity, System } from '@influenceth/sdk';
+import { utils as ethersUtils } from 'ethers';
+>>>>>>> master
 import { isEqual, get } from 'lodash';
 
 import useActivitiesContext from '~/hooks/useActivitiesContext';
@@ -16,44 +21,34 @@ import api from '~/lib/api';
 // const formatCalldataValue = (type, value) => {
 //   if (type === 'ContractAddress') {
 //     return value;
-//   }
-//   else if (type === 'Entity') {
-//     return [value.label, BigInt(value.id)];
-//   }
-//   else if (type === 'Number') {
+//   } else if (type === 'Entity') {
+//     return [value.label, value.id];
+//   } else if (type === 'Number') {
 //     return Number(value);
-//   }
-//   else if (type === 'String') {
+//   } else if (type === 'String') {
 //     return value;
-//   }
-//   else if (type === 'Boolean') {
+//   } else if (type === 'Boolean') {
 //     return value;
-//   }
-//   else if (type === 'BigNumber') {
+//   } else if (type === 'BigNumber') {
 //     return BigInt(value);
-//   }
-//   else if (type === 'Ether') {
+//   } else if (type === 'Ether') {
 //     return uint256.bnToUint256(value);
-//   }
-//   else if (type === 'InventoryItem') {
+//   } else if (type === 'InventoryItem') {
 //     return [value.product, value.amount];
-//   }
-//   else if (type === 'Boolean') {
+//   } else if (type === 'Withdrawal') {
+//     return [value.recipient, BigInt(value.amount)];
+//   } else if (type === 'Boolean') {
 //     return !!value;
-//   }
-//   else if (type === 'Fixed64') {
+//   } else if (type === 'Fixed64') {
 //     const neg = value < 0;
 //     const val = BigInt(Math.floor(Math.abs(value) * 2 ** 32));
 //     return [val, neg ? 1 : 0];
-//   }
-//   else if (type === 'Fixed128') {
+//   } else if (type === 'Fixed128') {
 //     const neg = value < 0;
-//     const val = BigInt(Math.floor(Math.abs(value)) * 2n ** 64n);
+//     const val = BigInt(Math.floor(Math.abs(value) * 2 ** 64)); // TODO: this will cause precision loss, use bignumber
 //     return [val, neg ? 1 : 0];
-//   }
-//   else { // "Raw"
-//     console.log('TODO: should probably not be in this ELSE');
-//     return value?.product ? [value.product, value.amount] : value;
+//   } else { // "Raw"
+//     return value;
 //   }
 // };
 // // this is specific to the system's calldata format (i.e. not the full calldata of execute())
@@ -92,7 +87,6 @@ import api from '~/lib/api';
 //   };
 // };
 
-
 ///////////
 
 const RETRY_INTERVAL = 5e3; // 5 seconds
@@ -119,7 +113,15 @@ const getNow = () => Math.floor(Date.now() / 1000);
 // TODO: when equalityTest is ['callerCrew.id'], can't it just be `true`?
 const customConfigs = {
   // customization of Systems configs from sdk
-  ArrangeCrew: { equalityTest: ['callerCrew.id'] }, // TODO: should this be caller_crew?
+  AcceptDelivery: {
+    equalityTest: ['delivery.id'],
+    getTransferConfig: ({ caller, delivery, price }) => ({
+      amount: BigInt(price),
+      recipient: caller,
+      memo: Entity.packEntity(delivery)
+    })
+  },
+  ArrangeCrew: { equalityTest: ['caller_crew.id'] },
 
   AssembleShipStart: { equalityTest: ['dry_dock.id', 'dry_dock_slot'] },
   AssembleShipFinish: { equalityTest: ['dry_dock.id', 'dry_dock_slot'] },
@@ -334,6 +336,20 @@ export function ChainTransactionProvider({ children }) {
               const vars = customConfigs[runSystem]?.preprocess ? customConfigs[runSystem].preprocess(rawVars) : rawVars;
               console.log('runSystem', runSystem, vars);
               calls.push(System.getRunSystemCall(runSystem, vars, process.env.REACT_APP_STARKNET_DISPATCHER));
+
+              if (customConfigs[runSystem]?.getTransferConfig) {
+                const transferCalldata = await customConfigs[runSystem].getTransferConfig(vars);
+                if (transferCalldata.amount > 0) {
+                  calls.unshift(System.getTransferWithConfirmationCall(
+                    transferCalldata.recipient,
+                    transferCalldata.amount,
+                    transferCalldata.memo,
+                    transferCalldata.consumer || process.env.REACT_APP_STARKNET_DISPATCHER,
+                    process.env.REACT_APP_STARKNET_SWAY_TOKEN,
+                  ));
+                }
+              }
+
               if (customConfigs[runSystem]?.getPrice) {
                 totalPrice += await customConfigs[runSystem].getPrice(vars);
               }

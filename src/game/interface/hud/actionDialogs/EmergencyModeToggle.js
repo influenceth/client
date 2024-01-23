@@ -59,7 +59,7 @@ const EmergencyModeToggle = ({ asteroid, lot, manager, ship, stage, ...props }) 
   const { crew } = useCrewContext();
 
   const { data: shipCrews } = useStationedCrews(ship?.id);
-  const shipPassengerCrews = useMemo(() => shipCrews.filter((c) => c.id !== crew?.id), [shipCrews]);
+  const shipPassengerCrews = useMemo(() => (shipCrews || []).filter((c) => c.id !== crew?.id), [shipCrews]);
 
   const crewmates = crew?._crewmates || [];
   const captain = crewmates[0];

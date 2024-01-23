@@ -71,7 +71,7 @@ export function ActionItemProvider({ children }) {
 
     setReadyItems(
       (actionItems || [])
-        .filter((a) => a.event.returnValues?.finishTime <= liveBlockTime)
+        .filter((a) => a.event.name === 'DeliveryPackaged' || a.event.returnValues?.finishTime <= liveBlockTime)
         .sort((a, b) => a.event.returnValues?.finishTime - b.event.returnValues?.finishTime)
     );
 
@@ -123,7 +123,7 @@ export function ActionItemProvider({ children }) {
     // return the readyItems whose "finishing transaction" is not already pending
     const visibleReadyItems = readyItems.filter((item) => {
       if (pendingTransactions) {
-        return !getActivityConfig(item)?.isActionItemHidden(pendingTransactions);
+        return !getActivityConfig(item, crew)?.isActionItemHidden(pendingTransactions);
       }
       return true;
     });
@@ -149,7 +149,7 @@ export function ActionItemProvider({ children }) {
       return x;
     });
 
-  }, [pendingTransactions, failedTransactions, readyItems, plannedItems, unreadyItems, account, token]);
+  }, [pendingTransactions, failedTransactions, readyItems, plannedItems, unreadyItems, account, crew, token]);
 
 
   // TODO: clear timers in the serviceworker
