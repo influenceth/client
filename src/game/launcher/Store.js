@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import styled, { css } from 'styled-components';
-import { formatEther, formatUnits, parseUnits } from 'ethers';
+import { formatEther, parseUnits } from 'ethers';
 import { createPortal } from 'react-dom';
 import { uint256 } from 'starknet';
 
@@ -20,7 +20,7 @@ import theme from '~/theme';
 
 import AdaliansImages from '~/assets/images/sales/adalians.png';
 import AsteroidsImage from '~/assets/images/sales/asteroids.png';
-import { ChevronRightIcon, PlusIcon, WarningOutlineIcon, SwayIcon } from '~/components/Icons';
+import { ChevronRightIcon, PlusIcon, SwayIcon, WarningOutlineIcon } from '~/components/Icons';
 import Details from '~/components/DetailsV2';
 import useAuth from '~/hooks/useAuth';
 import useInterval from '~/hooks/useInterval';
@@ -128,6 +128,15 @@ const Description = styled(TypeLabel)`
   justify-content: center;
   padding: 0 5px 15px 0;
   height: 67px;
+
+  & a {
+    color: ${p => p.theme.colors.brightMain};
+    display: inline;
+  }
+
+  & a:hover {
+    color: white;
+    text-decoration: none;
 `;
 
 const Price = styled.div`
@@ -270,7 +279,7 @@ export const FundingDialog = ({ onClose, onSelect, targetAmount }) => {
       &userAddress=${account}&defaultAsset=STARKNET_ETH`;
 
     window.open(url, '_blank');
-  }, [starknet?.chainId, account, targetAmount]);
+  }, [account]);
 
   const onClick = useCallback((which) => {
     switch (which) {
@@ -282,6 +291,8 @@ export const FundingDialog = ({ onClose, onSelect, targetAmount }) => {
         break;
       case 'ramp':
         selectRamp();
+        break;
+      default:
         break;
     }
 
@@ -352,23 +363,23 @@ export const CrewmateSKU = () => {
 
   const totalCost = useMemo(() => {
     return BigInt(tally) * BigInt(priceConstants?.ADALIAN_PRICE_ETH || 0);
-  }, [tally]);
+  }, [tally, priceConstants?.ADALIAN_PRICE_ETH]);
 
   const [funding, setFunding] = useState(false);
   const [polling, setPolling] = useState(false);
 
-  const onFundWallet = useCallback(() => {
+  const onFundWallet = () => {
     setFunding(true);
-  }, []);
+  };
 
-  const onSelectFundingOption = useCallback(() => {
+  const onSelectFundingOption = () => {
     setFunding(false);
     setPolling(true);
-  });
+  };
 
   const onPurchaseCrewmates = useCallback(() => {
     purchaseCredits(tally);
-  }, [tally]);
+  }, [tally, purchaseCredits]);
 
   const isPendingPurchase = useMemo(() => {
     return !!getPendingCreditPurchase();
@@ -389,7 +400,7 @@ export const CrewmateSKU = () => {
       console.warn(e);
     }
   }, [starknet]);
-  useEffect(updateEthBalance, []);
+  useEffect(() => updateEthBalance(), [updateEthBalance]);
 
   const isInsufficientBalance = useMemo(() => {
     if (ethBalance === null) return false;
@@ -407,7 +418,7 @@ export const CrewmateSKU = () => {
         <SKUInner>
           <Title>Crewmates</Title>
           <Imagery>
-            <img src={AdaliansImages} />
+            <img src={AdaliansImages} alt="Adalian Crewmate Cards" />
           </Imagery>
           <Description>
             Crewmates are the literal heart and soul of Adalia. They perform all in-game tasks and form your crew.
@@ -492,7 +503,7 @@ export const AsteroidSKU = () => {
     setAsteroidSale(salesData || {});
   }, []);
 
-  useEffect(updateSale, []);
+  useEffect(() => updateSale(), [updateSale]);
 
   const filterAndClose = useCallback(() => {
     updateFilters(Object.assign({}, filters, { ownedBy: 'unowned' }));
@@ -504,14 +515,14 @@ export const AsteroidSKU = () => {
     }
     setTimeout(() => dispatchHudMenuOpened('BELT_MAP_SEARCH'), hudTimeout);
     dispatchLauncherPage();
-  }, [filters, updateFilters, zoomStatus]);
+  }, [filters, updateFilters, zoomStatus, dispatchHudMenuOpened, dispatchLauncherPage, dispatchZoomScene, updateZoomStatus]);
 
   return (
     <SKUWrapper>
       <SKUInner>
         <Title>Asteroids</Title>
         <Imagery>
-          <img src={AsteroidsImage} />
+          <img src={AsteroidsImage} alt="Asteroid Card" />
         </Imagery>
         <Description>
           Asteroids are the core productive land in Influence. Each asteroid comes with one free
@@ -548,13 +559,15 @@ export const SwaySKU = () => {
   const [polling, setPolling] = useState(false);
   const [quote, setQuote] = useState(null);
 
+  const avnuUrl = `https://app.avnu.fi/en?tokenFrom=${process.env.REACT_APP_ERC20_TOKEN_ADDRESS}
+      &tokenTo=${process.env.REACT_APP_STARKNET_SWAY_TOKEN}`;
+
   const swapForSway = useCallback(async () => {
     try {
       await api.executeSwaySwap({ quote, account: starknet?.account });
       setQuote(null);
       setEthToSell(0);
     } catch (e) {
-      setQuote(null);
       console.error(e);
     }
   }, [starknet?.account, quote]);
@@ -582,14 +595,14 @@ export const SwaySKU = () => {
     getPrice();
   }, [starknet?.account?.address, ethToSell]);
 
-  const onFundWallet = useCallback(() => {
+  const onFundWallet = () => {
     setFunding(true);
-  }, []);
+  };
 
-  const onSelectFundingOption = useCallback(() => {
+  const onSelectFundingOption = () => {
     setFunding(false);
     setPolling(true);
-  });
+  };
 
   const updateEthBalance = useCallback(async () => {
     if (!starknet?.account?.provider) return;
@@ -606,7 +619,7 @@ export const SwaySKU = () => {
       console.warn(e);
     }
   }, [starknet]);
-  useEffect(updateEthBalance, []);
+  useEffect(() => updateEthBalance(), [updateEthBalance]);
 
   const isInsufficientBalance = useMemo(() => {
     if (ethBalance === null) return false;
@@ -636,7 +649,10 @@ export const SwaySKU = () => {
             <SwayIcon />
           </Imagery>
           <Description>
-            SWAY (Standard Weighted Adalian Yield) is the basic economic unit of exchange in Adalia.
+            <p>
+              SWAY (Standard Weighted Adalian Yield) is the basic economic unit of exchange in Adalia. Purchases
+              powered by <a href={avnuUrl} target="_blank" rel="noopener noreferrer">AVNU</a>.
+            </p>
           </Description>
           <Main>
               <label>Exchange</label>
@@ -709,9 +725,11 @@ const Store = () => {
       <Group>
         <CrewmateSKU />
       </Group>
-      <Group>
-        <SwaySKU />
-      </Group>
+      {!!process.env.REACT_APP_AVNU_API_URL && (
+        <Group>
+          <SwaySKU />
+        </Group>
+      )}
       <Group>
         <AsteroidSKU />
       </Group>
