@@ -92,7 +92,7 @@ const formatters = {
   shipName: (s, fallbackText) => {
     if (!s) return fallbackText || 'Ship';
     return s.Name?.name || `${Ship.TYPES[s.Ship?.shipType]?.name || 'Ship'} #${s.id.toLocaleString()}`;
-  },
+  }
 };
 
 export default formatters;

@@ -85,7 +85,6 @@ const SystemControls = () => {
   const swayUpdateTimeout = useRef();
   const updateSwayBalance = useCallback(async () => {
     if (!starknet?.account?.provider) return null;
-
     if (swayUpdateTimeout.current) clearTimeout(swayUpdateTimeout.current);
 
     try {
@@ -94,9 +93,8 @@ const SystemControls = () => {
         entrypoint: 'balanceOf',
         calldata: [starknet.account.address]
       });
-      setSwayBalance(
-        uint256.uint256ToBN({ low: balance.result[0], high: balance.result[1] })
-      );
+
+      setSwayBalance(uint256.uint256ToBN({ low: balance.result[0], high: balance.result[1] }) / 1000000n);
     } catch (e) {
       console.error(e);
     }
@@ -104,11 +102,12 @@ const SystemControls = () => {
     swayUpdateTimeout.current = setTimeout(updateSwayBalance, 300e3);
   }, [!starknet?.account?.provider]);
 
+  useEffect(() => updateSwayBalance(), [account, activities, updateSwayBalance]);
+
   const openAssetsPortal = useCallback(() => {
     window.open(process.env.REACT_APP_BRIDGE_URL, '_blank');
   }, []);
 
-  useEffect(() => updateSwayBalance, [account, activities, updateSwayBalance]);
 
   const menuItems = useMemo(() => {
     const items = [];

@@ -2,8 +2,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import styled, { css } from 'styled-components';
 import { utils as ethersUtils } from 'ethers';
 import { createPortal } from 'react-dom';
-import { BiCreditCard } from 'react-icons/bi';
-import { TbLetterR } from 'react-icons/tb';
 import { uint256 } from 'starknet';
 
 import Button from '~/components/ButtonAlt';
@@ -22,11 +20,10 @@ import theme from '~/theme';
 
 import AdaliansImages from '~/assets/images/sales/adalians.png';
 import AsteroidsImage from '~/assets/images/sales/asteroids.png';
-import { ChevronRightIcon, PlusIcon, WarningIcon, WarningOutlineIcon } from '~/components/Icons';
+import { ChevronRightIcon, PlusIcon, WarningOutlineIcon, SwayIcon } from '~/components/Icons';
 import Details from '~/components/DetailsV2';
 import useAuth from '~/hooks/useAuth';
 import useInterval from '~/hooks/useInterval';
-import ReactTooltip from 'react-tooltip';
 import BrightButton from '~/components/BrightButton';
 import MouseoverInfoPane from '~/components/MouseoverInfoPane';
 
@@ -76,6 +73,11 @@ const Imagery = styled.div`
   padding: 10px 10px 20px;
   & > img {
     height: 200px;
+  }
+
+  & > svg.icon {
+    height: 200px;
+    width: auto;
   }
 `;
 
@@ -161,7 +163,7 @@ const FundingBody = styled.div`
 
 const FundingButtons = styled.div`
   padding: 10px 10px 20px;
-  width: 400px;  
+  width: 400px;
   & button {
     margin-bottom: 15px;
     padding: 15px 10px;
@@ -214,7 +216,17 @@ const ButtonWarning = styled(ButtonExtra)`
   font-size: 80%;
 `;
 
-export const FundingDialog = ({ onClose, onSelect }) => {
+const layerSwapChains = {
+  '0x534e5f4d41494e': { ethereum: 'ETHEREUM_MAINNET', starknet: 'STARKNET_MAINNET' },
+  'SN_MAIN': { ethereum: 'ETHEREUM_MAINNET', starknet: 'STARKNET_MAINNET' },
+  '0x534e5f474f45524c49': { ethereum: 'ETHEREUM_GOERLI', starknet: 'STARKNET_GOERLI' },
+  'SN_GOERLI': { ethereum: 'ETHEREUM_GOERLI', starknet: 'STARKNET_GOERLI' },
+  '0x534e5f5345504f4c4941': { ethereum: 'ETHEREUM_SEPOLIA', starknet: 'STARKNET_SEPOLIA' },
+  'SN_SEPOLIA': { ethereum: 'ETHEREUM_SEPOLIA', starknet: 'STARKNET_SEPOLIA' }
+};
+
+export const FundingDialog = ({ onClose, onSelect, targetAmount }) => {
+  const { account, walletContext: { starknet } } = useAuth();
   const [hoveredRampButton, setHoveredRampButton] = useState(false);
 
   const to = useRef();
@@ -229,6 +241,49 @@ export const FundingDialog = ({ onClose, onSelect }) => {
     }
   }, []);
 
+  const selectBridge = useCallback(() => {
+    const fromChain = layerSwapChains[starknet?.chainId]?.ethereum;
+    const toChain = layerSwapChains[starknet?.chainId]?.starknet;
+    const url = `https://www.layerswap.io/app/?from=${fromChain}&to=${toChain}&asset=ETH&destAddress=${account}
+      &lockAddress=true&amount=${targetAmount}&actionButtonText=Fund%20Account`;
+
+    window.open(url, '_blank');
+  }, [starknet?.chainId, account, targetAmount]);
+
+  const selectStripe = useCallback(() => {
+    const toChain = layerSwapChains[starknet?.chainId]?.starknet;
+    const url = `https://www.layerswap.io/app/?from=STRIPE&to=${toChain}&asset=ETH&destAddress=${account}
+      &lockAddress=true&amount=${targetAmount}&actionButtonText=Fund%20Account`;
+
+    window.open(url, '_blank');
+  }, [starknet?.chainId, account, targetAmount]);
+
+  const selectRamp = useCallback(() => {
+    const logoUrl = window.location.origin + '/maskable-logo-192x192.png';
+    // TODO: url params are confusing/not working here `&swapAsset=ETH&swapAmount=${targetAmount}`
+    const url = `https://app.${process.env.NODE_ENV === 'production' ? '' : 'demo.'}ramp.network
+      ?hostApiKey=${process.env.REACT_APP_RAMP_API_KEY}&hostAppName=Influence&hostLogoUrl=${logoUrl}
+      &userAddress=${account}&defaultAsset=STARKNET_ETH`;
+
+    window.open(url, '_blank');
+  }, [starknet?.chainId, account, targetAmount]);
+
+  const onClick = useCallback((which) => {
+    switch (which) {
+      case 'bridge':
+        selectBridge();
+        break;
+      case 'stripe':
+        selectStripe();
+        break;
+      case 'ramp':
+        selectRamp();
+        break;
+    }
+
+    onSelect();
+  }, [onSelect, selectBridge, selectStripe, selectRamp]);
+
   return createPortal(
     (
       <Details title="Add Funds" onClose={onClose} modalMode style={{ zIndex: 9000 }}>
@@ -237,12 +292,12 @@ export const FundingDialog = ({ onClose, onSelect }) => {
             <WarningOutlineIcon /> <span>Your account does not have enough funds.</span>
           </h3>
           <FundingButtons>
-            <BrightButton onClick={() => onSelect('eth')}>
+            <BrightButton onClick={() => onClick('bridge')}>
               <span>Fund with ETH</span>
               <ChevronRightIcon />
             </BrightButton>
 
-            <BrightButton onClick={() => onSelect('stripe')}>
+            <BrightButton onClick={() => onClick('stripe')}>
               <span>Buy with credit card (U.S. Only)</span>
               <ChevronRightIcon />
             </BrightButton>
@@ -250,13 +305,13 @@ export const FundingDialog = ({ onClose, onSelect }) => {
             {process.env.REACT_APP_RAMP_API_KEY && (
               <div style={{ position: 'relative' }}>
                 <BrightButton
-                  onClick={() => onSelect('ramp')}
+                  onClick={() => onClick('ramp')}
                   onMouseEnter={onRampHover(true)}
                   onMouseLeave={onRampHover(false)}>
                   <span>Buy now with Ramp</span>
                   <ChevronRightIcon />
                 </BrightButton>
-                
+
                 <MouseoverInfoPane
                   referenceEl={hoveredRampButton}
                   css={css`margin-top:10px;`}
@@ -284,16 +339,16 @@ export const FundingDialog = ({ onClose, onSelect }) => {
 };
 
 export const CrewmateSKU = () => {
-  const { account, walletContext: { starknet } } = useAuth();
+  const { walletContext: { starknet } } = useAuth();
   const { purchaseCredits, getPendingCreditPurchase } = useCrewManager();
   const { data: priceConstants } = usePriceConstants();
-  
+
   const [ethBalance, setEthBalance] = useState(null);
-  const [tally, setTally] = useState(1);
+  const [tally, setTally] = useState(5);
 
   const totalCost = useMemo(() => {
     return BigInt(tally) * BigInt(priceConstants?.ADALIAN_PRICE_ETH || 0);
-  }, [priceConstants?.ADALIAN_PRICE_ETH, tally]);
+  }, [tally]);
 
   const [funding, setFunding] = useState(false);
   const [polling, setPolling] = useState(false);
@@ -302,29 +357,10 @@ export const CrewmateSKU = () => {
     setFunding(true);
   }, []);
 
-  const onSelectFundingOption = useCallback((which) => {
-    const targetAmount = Math.max(ethersUtils.formatEther(totalCost || 0n) || 0, 0.01);
+  const onSelectFundingOption = useCallback(() => {
     setFunding(false);
-    if (which === 'eth') {
-      window.open(
-        `https://www.layerswap.io/app/?from=ETHEREUM_MAINNET&to=STARKNET_MAINNET&asset=ETH&destAddress=${account}&lockAddress=true&amount=${targetAmount}&actionButtonText=Fund%20Account`,
-        '_blank'
-      );
-    } else if (which === 'stripe') {
-      window.open(
-        `https://www.layerswap.io/app/?from=STRIPE&to=STARKNET_MAINNET&asset=ETH&destAddress=${account}&lockAddress=true&amount=${targetAmount}&actionButtonText=Fund%20Account`,
-        '_blank'
-      );
-    } else if (which === 'ramp') {
-      const logoUrl = window.location.origin + '/maskable-logo-192x192.png';
-      window.open(
-        // TODO: url params are confusing/not working here `&swapAsset=ETH&swapAmount=${targetAmount}`
-        `https://app.${process.env.NODE_ENV === 'production' ? '' : 'demo.'}ramp.network?hostApiKey=${process.env.REACT_APP_RAMP_API_KEY}&hostAppName=Influence&hostLogoUrl=${logoUrl}&userAddress=${account}&defaultAsset=STARKNET_ETH`,
-        '_blank'
-      );
-    }
     setPolling(true);
-  }, [totalCost]);
+  });
 
   const onPurchaseCrewmates = useCallback(() => {
     purchaseCredits(tally);
@@ -423,7 +459,13 @@ export const CrewmateSKU = () => {
         </SKUInner>
       </SKUWrapper>
 
-      {funding && <FundingDialog onClose={() => setFunding(false)} onSelect={onSelectFundingOption} />}
+      {funding && (
+        <FundingDialog
+          targetAmount={Math.max(ethersUtils.formatEther(totalCost || 0n) || 0, 0.01)}
+          onClose={() => setFunding(false)}
+          onSelect={onSelectFundingOption}
+        />
+      )}
     </>
   );
 };
@@ -492,11 +534,146 @@ export const AsteroidSKU = () => {
   );
 };
 
+export const SwaySKU = () => {
+  const swayPerEth = 22000000;
+
+  const { walletContext: { starknet } } = useAuth();
+
+  const [ethBalance, setEthBalance] = useState(null);
+  const [tally, setTally] = useState(100000);
+
+  const totalCost = useMemo(() => {
+    const fees = 1000000000000000n; // 0.001 ETH
+    return BigInt(Math.round(tally * 1e18 / swayPerEth)) + fees;
+  }, [tally, swayPerEth]);
+
+  const [funding, setFunding] = useState(false);
+  const [polling, setPolling] = useState(false);
+
+  const onFundWallet = useCallback(() => {
+    setFunding(true);
+  }, []);
+
+  const onSelectFundingOption = useCallback(() => {
+    setFunding(false);
+    setPolling(true);
+  });
+
+  const updateEthBalance = useCallback(async () => {
+    if (!starknet?.account?.provider) return;
+    try {
+      const balance = await starknet.account.provider.callContract({
+        contractAddress: process.env.REACT_APP_ERC20_TOKEN_ADDRESS,
+        entrypoint: 'balanceOf',
+        calldata: [starknet.account.address]
+      });
+      setEthBalance(
+        uint256.uint256ToBN({ low: balance.result[0], high: balance.result[1] })
+      );
+    } catch (e) {
+      console.warn(e);
+    }
+  }, [starknet]);
+  useEffect(updateEthBalance, []);
+
+  const isInsufficientBalance = useMemo(() => {
+    if (ethBalance === null) return false;
+    return totalCost > ethBalance;
+  }, [ethBalance, totalCost]);
+
+  // TODO: would it make more sense to just check on each new block?
+  useInterval(() => {
+    if (polling && isInsufficientBalance) updateEthBalance();
+  }, 5e3);
+
+  const isPendingPurchase = false;
+
+  const swayFormatter = new Intl.NumberFormat('en-US', {
+    notation: 'compact',
+    compactDisplay: 'short',
+    minimumSignificantDigits: 3
+  });
+
+  return (
+    <>
+      <SKUWrapper>
+        <SKUInner>
+          <Title>SWAY</Title>
+          <Imagery>
+            <SwayIcon />
+          </Imagery>
+          <Description>
+            SWAY (Standard Weighted Adalian Yield) is the basic economic unit of exchange in Adalia.
+          </Description>
+          <Main>
+              <UncontrolledTextInput
+                min={1}
+                onChange={(e) => setTally(Math.floor(e.currentTarget.value))}
+                value={safeValue(tally)}
+                step={1}
+                style={{ width: '150px' }}
+                type="number" />
+
+              <label>SWAY</label>
+          </Main>
+          <Price>
+              <label></label>
+              <span>{swayFormatter.format(swayPerEth)}</span>
+              <label>SWAY / Eth</label>
+          </Price>
+          {(isPendingPurchase || totalCost === 0 || !isInsufficientBalance)
+            ? (
+              <Button
+                loading={reactBool(isPendingPurchase)}
+                disabled={nativeBool(isPendingPurchase || totalCost === 0)}
+                isTransaction
+                onClick={() => console.log('TODO: purchase SWAY')}
+                subtle
+                style={{ width: '100%' }}>
+                Purchase
+                  <ButtonExtra>
+                    {/* TODO: should this update price before "approve"? what about asteroids? */}
+                    <Ether>{formatters.ethPrice(totalCost, 4)}</Ether>
+                  </ButtonExtra>
+              </Button>
+            )
+            : (
+              <Button
+                onClick={onFundWallet}
+                color={theme.colors.success}
+                background={`rgba(${theme.colors.successRGB}, 0.1)`}
+                subtle
+                style={{ width: '100%' }}>
+                <PlusIcon />
+                <span>Add Funds</span>
+                <ButtonWarning>
+                  Low Balance
+                </ButtonWarning>
+              </Button>
+            )}
+          <ClipCorner dimension={10} color={borderColor} />
+        </SKUInner>
+      </SKUWrapper>
+
+      {funding && (
+        <FundingDialog
+          targetAmount={Math.max(ethersUtils.formatEther(totalCost || 0n) || 0, 0.01)}
+          onClose={() => setFunding(false)}
+          onSelect={onSelectFundingOption}
+        />
+      )}
+    </>
+  );
+};
+
 const Store = () => {
   return (
     <Wrapper>
       <Group>
         <CrewmateSKU />
+      </Group>
+      <Group>
+        <SwaySKU />
       </Group>
       <Group>
         <AsteroidSKU />
