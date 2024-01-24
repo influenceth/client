@@ -1,4 +1,4 @@
-import { AdalianOrbit, Asteroid, Building, Lot, Ship } from '@influenceth/sdk';
+import { AdalianOrbit, Asteroid, Building, Ship } from '@influenceth/sdk';
 import { formatEther } from 'ethers';
 import { constants } from '@influenceth/astro';
 

@@ -118,8 +118,8 @@ export const getProcessorProps = (processorType) => {
     case Processor.IDS.FACTORY: return { label: 'Manufacture Goods', icon: <ManufactureIcon /> };
     case Processor.IDS.BIOREACTOR: return { label: 'Manufacture Organic Goods', icon: <BioreactorBuildingIcon /> };
     case Processor.IDS.SHIPYARD: return { label: 'Manufacture Ship Parts', icon: <ManufactureIcon /> };
+    default: return {};
   }
-  return {};
 }
 
 export const arrToXYZ = (arr) => ({ x: arr[0], y: arr[1], z: arr[2] });

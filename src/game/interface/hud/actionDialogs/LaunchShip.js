@@ -4,7 +4,7 @@ import { Asteroid, Crewmate, Inventory, Lot, Product, Ship, Time } from '@influe
 import travelBackground from '~/assets/images/modal_headers/Travel.png';
 import { LaunchShipIcon, RouteIcon, ShipIcon, WarningOutlineIcon } from '~/components/Icons';
 import useCrewContext from '~/hooks/useCrewContext';
-import { reactBool, formatFixed, formatTimer, locationsArrToObj, getCrewAbilityBonuses } from '~/lib/utils';
+import { reactBool, formatFixed, formatTimer, getCrewAbilityBonuses } from '~/lib/utils';
 
 import {
   ActionDialogFooter,
@@ -15,7 +15,6 @@ import {
   FlexSection,
   FlexSectionInputBlock,
   FlexSectionSpacer,
-  BuildingImage,
   ProgressBarSection,
   AsteroidImage,
   ProgressBarNote,
@@ -23,21 +22,17 @@ import {
   ShipTab,
   PropulsionTypeSection,
   LotInputBlock,
-  formatResourceMass,
   formatMass
 } from './components';
 import useLot from '~/hooks/useLot';
 import useStore from '~/hooks/useStore';
-import { ActionDialogInner, theming, useAsteroidAndLot } from '../ActionDialog';
-import ResourceThumbnail from '~/components/ResourceThumbnail';
+import { ActionDialogInner } from '../ActionDialog';
 import actionStages from '~/lib/actionStages';
 import theme from '~/theme';
-import CrewCardFramed from '~/components/CrewCardFramed';
 import formatters from '~/lib/formatters';
 import useShip from '~/hooks/useShip';
 import useShipDockingManager from '~/hooks/actionManagers/useShipDockingManager';
 import useAsteroid from '~/hooks/useAsteroid';
-import useEntity from '~/hooks/useEntity';
 import { getBonusDirection } from './components';
 import { TimeBonusTooltip } from './components';
 
@@ -63,7 +58,7 @@ const LaunchShip = ({ asteroid, originLot, manager, ship, stage, ...props }) => 
     const abilities = getCrewAbilityBonuses(bonusIds, crew) || {};
     return bonusIds.map((id) => abilities[id] || {});
   }, [crew]);
-  
+
   const [escapeVelocity, propellantRequirement, poweredTime, tugTime] = useMemo(() => {
     if (!ship || !asteroid) return [0, 0, 0, 0];
     const escapeVelocity = Asteroid.Entity.getEscapeVelocity(asteroid) * 1000;
@@ -89,7 +84,7 @@ const LaunchShip = ({ asteroid, originLot, manager, ship, stage, ...props }) => 
       deltaV
     ];
   }, [ship]);
-  
+
   const launchTime = useMemo(() => powered ? poweredTime : tugTime, [powered, poweredTime, tugTime]);
 
   const [crewTimeRequirement, taskTimeRequirement] = useMemo(() => {
