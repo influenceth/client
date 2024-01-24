@@ -1,6 +1,5 @@
 import { createContext, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Asteroid, Entity, System } from '@influenceth/sdk';
-import { utils as ethersUtils } from 'ethers';
+import { Asteroid, System } from '@influenceth/sdk';
 import { isEqual, get } from 'lodash';
 
 import useActivitiesContext from '~/hooks/useActivitiesContext';
@@ -118,10 +117,10 @@ const customConfigs = {
     })
   },
   ArrangeCrew: { equalityTest: ['caller_crew.id'] },
-  
+
   AssembleShipStart: { equalityTest: ['dry_dock.id', 'dry_dock_slot'] },
   AssembleShipFinish: { equalityTest: ['dry_dock.id', 'dry_dock_slot'] },
-  
+
   ChangeName: { equalityTest: ['entity.id', 'entity.label'] },
 
   ConstructionAbandon: { equalityTest: ['building.id'] },
@@ -337,7 +336,7 @@ export function ChainTransactionProvider({ children }) {
                 const transferCalldata = await customConfigs[runSystem].getTransferConfig(vars);
                 if (transferCalldata.amount > 0) {
                   calls.unshift(System.getTransferWithConfirmationCall(
-                    transferCalldata.recipient,  
+                    transferCalldata.recipient,
                     transferCalldata.amount,
                     transferCalldata.memo,
                     transferCalldata.consumer || process.env.REACT_APP_STARKNET_DISPATCHER,

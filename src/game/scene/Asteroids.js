@@ -12,6 +12,7 @@ import ClockContext from '~/contexts/ClockContext';
 import useAsteroid from '~/hooks/useAsteroid';
 import useAssetSearch from '~/hooks/useAssetSearch';
 import useControlledAsteroids from '~/hooks/useControlledAsteroids';
+import useOwnedShips from '~/hooks/useOwnedShips';
 import useStore from '~/hooks/useStore';
 import useTravelSolutionIsValid from '~/hooks/useTravelSolutionIsValid';
 import useWatchlist from '~/hooks/useWatchlist';
@@ -91,6 +92,7 @@ const Asteroids = () => {
   const { data: destination } = useAsteroid(destinationId);
   const { coarseTime } = useContext(ClockContext);
   const { data: controlledAsteroids } = useControlledAsteroids();
+  const { data: ownedShips } = useOwnedShips();
   const { watchlist: { data: watchlist }} = useWatchlist();
   const travelSolutionValid = useTravelSolutionIsValid();
 
@@ -117,7 +119,7 @@ const Asteroids = () => {
     });
     // TODO: ecs-refactor -- fill in crew and ships tally on each asteroid where located
     return asseted;
-  }, [asteroids, controlledAsteroids]);
+  }, [asteroids, controlledAsteroids, ownedShips]);
 
   // Update state when asteroids from server, origin, or destination change
   const isZoomedIn = zoomStatus === 'in';

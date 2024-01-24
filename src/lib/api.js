@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { Asteroid, Building, Deposit, Entity, Inventory, Ship } from '@influenceth/sdk';
 import esb from 'elastic-builder';
+import { executeSwap, fetchQuotes } from "@avnu/avnu-sdk";
 
 import useStore from '~/hooks/useStore';
 import { esbLocationQuery } from './utils';
@@ -135,7 +136,7 @@ const api = {
     const response = await instance.post(`/_search/building`, query);
     return formatESData(response.data);
   },
-  
+
   getCrewSamplesOnAsteroid: async (asteroidId, crewId, resourceId) => {
     const queryBuilder = esb.boolQuery();
 
@@ -144,7 +145,7 @@ const api = {
 
     // controlled by crew
     queryBuilder.filter(esb.termQuery('Control.controller.id', crewId));
-    
+
     // resource
     queryBuilder.filter(esb.termQuery('Deposit.resource', resourceId));
 
@@ -174,7 +175,7 @@ const api = {
     // controlled by crew
     // TODO: also include those crew does not control but has access to
     // buildingQueryBuilder.filter(esb.termQuery('Control.controller.id', crewId));
-    
+
     // on asteroid
     buildingQueryBuilder.filter(esbLocationQuery({ asteroidId }));
 
@@ -183,7 +184,7 @@ const api = {
 
     // has component
     buildingQueryBuilder.filter(esb.existsQuery(component));
-    
+
     const buildingQ = esb.requestBodySearch();
     buildingQ.query(buildingQueryBuilder);
     buildingQ.from(0);
@@ -201,7 +202,7 @@ const api = {
     // controlled by crew
     // TODO: also include those crew does not control but has access to
     // buildingQueryBuilder.filter(esb.termQuery('Control.controller.id', crewId));
-    
+
     // on asteroid
     buildingQueryBuilder.filter(esbLocationQuery({ asteroidId }));
 
@@ -211,7 +212,7 @@ const api = {
         .path('Inventory')
         .query(esb.termQuery('Inventory.status', Inventory.STATUSES.AVAILABLE))
     );
-    
+
     const buildingQ = esb.requestBodySearch();
     buildingQ.query(buildingQueryBuilder);
     buildingQ.from(0);
@@ -224,7 +225,7 @@ const api = {
     // controlled by crew
     // TODO: also include those crew does not control but has access to
     shipQueryBuilder.filter(esb.termQuery('Control.controller.id', crewId));
-    
+
     // on asteroid
     // (and not in orbit -- i.e. lotId is present and !== 0)
     shipQueryBuilder.filter(esbLocationQuery({ asteroidId }));
@@ -344,7 +345,7 @@ const api = {
 
   getAsteroidShips: async (i) => {
     const shipQueryBuilder = esb.boolQuery();
-    
+
     // on asteroid
     shipQueryBuilder.filter(esbLocationQuery({ asteroidId: i }));
 
@@ -419,6 +420,22 @@ const api = {
   getAsteroidSale: async () => {
     const response = await instance.get(`/${apiVersion}/sales/asteroid`);
     return response.data;
+  },
+
+  // AVNU endpoints
+  getSwayQuote: async ({ sellToken, buyToken, amount, account }) => {
+    const options = { baseUrl: process.env.REACT_APP_AVNU_API_URL };
+    return fetchQuotes({
+      sellTokenAddress: sellToken,
+      buyTokenAddress: buyToken,
+      sellAmount: amount,
+      takerAddress: account
+    }, options);
+  },
+
+  executeSwaySwap: async ({ quote, account }) => {
+    const options = { baseUrl: process.env.REACT_APP_AVNU_API_URL };
+    return executeSwap(account, quote, {}, options);
   },
 
   // getBook: async (id) => {
