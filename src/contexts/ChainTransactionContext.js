@@ -1,10 +1,5 @@
 import { createContext, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-<<<<<<< HEAD
 import { Asteroid, System } from '@influenceth/sdk';
-=======
-import { Asteroid, Entity, System } from '@influenceth/sdk';
-import { utils as ethersUtils } from 'ethers';
->>>>>>> master
 import { isEqual, get } from 'lodash';
 
 import useActivitiesContext from '~/hooks/useActivitiesContext';
