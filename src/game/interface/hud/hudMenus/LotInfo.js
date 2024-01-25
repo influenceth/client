@@ -255,13 +255,13 @@ const LotInfo = () => {
                 {inventoryConfig.volumeConstraint && (
                   <DetailRow>
                     <label>Maximum Storage Volume</label>
-                    <div>{inventoryConfig.volumeConstraint} mL (TODO: m<sup>3</sup>)</div>
+                    <div>{(inventoryConfig.volumeConstraint / 1e6).toLocaleString()} m<sup>3</sup></div>
                   </DetailRow>
                 )}
                 {inventoryConfig.volumeConstraint && (
                   <DetailRow>
                     <label>Maximum Storage Mass</label>
-                    <div>{inventoryConfig.massConstraint} g (TODO: t)</div>
+                    <div>{(inventoryConfig.massConstraint / 1e6).toLocaleString()} t</div>
                   </DetailRow>
                 )}
               </>
