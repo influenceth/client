@@ -22,16 +22,27 @@ const useColumns = () => {
         unhideable: true
       },
       {
-        key: 'name',
+        key: 'type',
         label: 'Building Type',
         sortField: 'Building.buildingType',
         selector: row => {
-          const loc = Entity.toPosition(row.Location?.location);
+          const lotId = row.Location?.location?.id;
           return (
             <>
-              <LocationLink lotId={loc.lotId} zoomToLot />
+              <LocationLink lotId zoomToLot />
               <span>{Building.TYPES[row.Building.buildingType].name}</span>
             </>
+          );
+        },
+        unhideable: true
+      },
+      {
+        key: 'name',
+        label: 'Name',
+        sortField: 'Name.name',
+        selector: row => {
+          return (
+            <span>{row.Name?.name || `${Building.TYPES[row.Building.buildingType].name} #${row.id}`}</span>
           );
         },
         unhideable: true
@@ -55,11 +66,11 @@ const useColumns = () => {
         label: 'Lot',
         sortField: 'Location.locations[1].id', // TODO: will this work? does sequential sorting matter?
         selector: row => {
-          const loc = Entity.toPosition(row.Location?.location);
+          const lotId = row.Location?.location?.id;
           return (
             <>
-              <LocationLink lotId={loc.lotId} />
-              <span>{loc.lotId ? Lot.toIndex(loc.lotId).toLocaleString() : null}</span>
+              <LocationLink lotId />
+              <span>{lotId ? Lot.toIndex(lotId).toLocaleString() : null}</span>
             </>
           );
         },

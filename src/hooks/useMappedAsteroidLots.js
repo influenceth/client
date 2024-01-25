@@ -97,7 +97,7 @@ const useMappedAsteroidLots = (i) => {
       return unpacked.type > 0;
     }
   }, [mappedLotSearch?.filters, searchIsOn]);
-  
+
   // build sparse array of search results
   // TODO (enhancement): should send this to a worker if possible
   const [lotDisplayMap, buildingTally, resultTally] = useMemo(() => {
@@ -146,7 +146,7 @@ const useMappedAsteroidLots = (i) => {
           hasBuilding = 1;
           buildingTally++;
         }
-        
+
         // if this lot has something, include in the results
         if (isResult || hasBuilding) {
 
@@ -217,7 +217,7 @@ const useMappedAsteroidLots = (i) => {
       asteroidId = _location.asteroidId;
       lotIndex = _location.lotIndex;
       buildingType = 0;
-    
+
     // ship moved to empty lot (0 -> 15)
     } else if (eventType === 'ShipDocked' || eventType === 'ShipAssemblyFinished') {
       const entityId = body.event.returnValues.dock || body.event.returnValues.destination;
@@ -243,7 +243,7 @@ const useMappedAsteroidLots = (i) => {
       //  (it's just that these events won't match as much data b/c most may not be relevant to my crew)
       queryClient.setQueryData([ 'asteroidLots', asteroidId ], (currentLotsValue) => {
         const newLotsValue = currentLotsValue.slice();
-        newLotsValue[lotIndex] = 
+        newLotsValue[lotIndex] =
           (newLotsValue[lotIndex] & 0b00001111)  // clear existing building
           | buildingType << 4                    // set to new buildingType
         return newLotsValue;

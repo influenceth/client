@@ -398,7 +398,7 @@ const api = {
 
   getCrewOpenOrders: async (c) => {
     const queryBuilder = esb.boolQuery();
-    
+
     // by crew
     queryBuilder.filter(esb.termQuery('crew.id', c));
 
