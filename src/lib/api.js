@@ -115,6 +115,27 @@ const api = {
     return formatESEntityData(response.data);
   },
 
+  getCrewShipsOnAsteroid: async (asteroidId, crewId) => {
+    const queryBuilder = esb.boolQuery();
+
+    // on asteroid
+    queryBuilder.filter(esbLocationQuery({ asteroidId }));
+
+    // controlled by crew
+    queryBuilder.filter(esb.termQuery('Control.controller.id', crewId));
+
+    // in use
+    queryBuilder.filter(esb.termQuery('Ship.status', 1));
+
+    const q = esb.requestBodySearch();
+    q.query(queryBuilder);
+    q.size(10000);
+    const query = q.toJSON();
+
+    const response = await instance.post(`/_search/ship`, query);
+    return formatESEntityData(response.data);
+  },
+
   getCrewBuildingsOnAsteroid: async (asteroidId, crewId) => {
     const queryBuilder = esb.boolQuery();
 
@@ -129,8 +150,7 @@ const api = {
 
     const q = esb.requestBodySearch();
     q.query(queryBuilder);
-    // q.from(0);
-    // q.size(10000000);
+    q.size(10000);
     const query = q.toJSON();
 
     const response = await instance.post(`/_search/building`, query);
@@ -159,8 +179,7 @@ const api = {
 
     const q = esb.requestBodySearch();
     q.query(queryBuilder);
-    // q.from(0);
-    // q.size(10000000);
+    q.size(10000);
     const query = q.toJSON();
 
     const response = await instance.post(`/_search/deposit`, query);

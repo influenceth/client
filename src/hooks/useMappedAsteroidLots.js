@@ -5,6 +5,7 @@ import { Entity, Lot } from '@influenceth/sdk';
 import { options as lotLeaseOptions } from '~/components/filters/LotLeaseFilter';
 import useAsteroidCrewSamples from '~/hooks/useAsteroidCrewSamples';
 import useAsteroidCrewBuildings from '~/hooks/useAsteroidCrewBuildings';
+import useAsteroidCrewShips from './useAsteroidCrewShips';
 import useAsteroidLotData from '~/hooks/useAsteroidLotData';
 import useStore from '~/hooks/useStore';
 import { getAndCacheEntity } from '~/lib/activities';
@@ -56,6 +57,19 @@ const useMappedAsteroidLots = (i) => {
       };
     }, {});
   }, [crewLots, crewLotsLoading]);
+
+  // get all occupied-by-me ships from the server
+  const { data: crewShips, isLoading: crewShipsLoading } = useAsteroidCrewShips(i);
+  const myShipMap = useMemo(() => {
+    if (crewShipsLoading) return null;
+    return (crewShips || []).reduce((acc, p) => {
+      const _locations = locationsArrToObj(p?.Location?.locations || []);
+      return {
+        ...acc,
+        [_locations.lotIndex]: true
+      };
+    }, {});
+  }, [crewShips, crewShipsLoading]);
 
   // determine if search is on or not
   const searchIsOn = useMemo(() => {
@@ -111,8 +125,7 @@ const useMappedAsteroidLots = (i) => {
     let buildingTally = 0;
     let resultTally = 0;
 
-    if (lotData && myOccupationMap) {
-
+    if (lotData && myOccupationMap && myShipMap) {
       // packed data has the following masks:
       //  11110000 capable type
       //  00001100 lease status (0 unleasable, 1 leasable, 2 leased)
@@ -128,7 +141,7 @@ const useMappedAsteroidLots = (i) => {
         unpacked.occupiedBy = unpacked.type === 0
           ? 'unoccupied'
           : (
-            myOccupationMap[i]
+            (myOccupationMap[i] || myShipMap[i])
               ? 'me'
               : 'other'
           );
@@ -156,7 +169,7 @@ const useMappedAsteroidLots = (i) => {
           } else if (searchIsOn) {  // (default in search mode) 0 magenta
             color = 0;
           } else {                  // (default in non-search mode) 0 blue, 1 white
-            color = myOccupationMap[i] ? 1 : 0;
+            color = (myOccupationMap[i] || myShipMap[i]) ? 1 : 0;
           }
 
           // pack into sparse results array
