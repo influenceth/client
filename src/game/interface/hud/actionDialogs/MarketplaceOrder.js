@@ -120,10 +120,10 @@ const OrderAlert = styled.div`
 
   color: white;
   ${p => p.theme.clipCorner(15)};
-  
+
   padding: 5px;
   width: 100%;
-  
+
   & > div {
     align-items: center;
     ${p => p.theme.clipCorner(12)};
@@ -132,7 +132,7 @@ const OrderAlert = styled.div`
     height: 65px;
     padding: 0 8px;
     width: 100%;
-    
+
     & > div {
       padding: 0 6px;
     }
@@ -198,7 +198,7 @@ const MarketplaceOrder = ({
   const resourceByMass = !resource?.isAtomic;
   const exchange = lot.building;  // TODO: ...
   const { data: exchangeController } = useHydratedCrew(lot.building?.Control?.controller?.id);
-  
+
   const {
     createBuyOrder,
     createSellOrder,
@@ -230,7 +230,7 @@ const MarketplaceOrder = ({
 
   const crewmates = currentOrder?._crewmates || crew?._crewmates || [];
   const captain = crewmates[0];
-  
+
   const [hopperTransportBonus, feeReductionBonus] = useMemo(() => {
     if (!crew) return [];
 
@@ -405,7 +405,7 @@ const MarketplaceOrder = ({
       // TODO: make selections
     }
   }, [currentOrder]);
-  
+
 
   const tooltipRefEl = useRef();
 
@@ -589,7 +589,7 @@ const MarketplaceOrder = ({
             onClick={() => setStorageSelectorOpen(true)}
             sublabel={
               storageLot
-              ? <><LocationIcon /> {formatters.lotName(Lot.toId(storageLot?.id))}</>
+              ? <><LocationIcon /> {formatters.lotName(storageLot?.id)}</>
               : 'Inventory'
             } />
 
