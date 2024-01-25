@@ -5,6 +5,7 @@ import { MyAssetIcon } from '~/components/Icons';
 import useAuth from '~/hooks/useAuth';
 import useCrewContext from '~/hooks/useCrewContext';
 import { LocationLink } from './components';
+import formatters from '~/lib/formatters';
 
 const useColumns = () => {
   const { account } = useAuth();
@@ -29,7 +30,7 @@ const useColumns = () => {
           const lotId = row.Location?.location?.id;
           return (
             <>
-              <LocationLink lotId zoomToLot />
+              <LocationLink lotId={lotId} zoomToLot />
               <span>{Building.TYPES[row.Building.buildingType].name}</span>
             </>
           );
@@ -42,7 +43,7 @@ const useColumns = () => {
         sortField: 'Name.name',
         selector: row => {
           return (
-            <span>{row.Name?.name || `${Building.TYPES[row.Building.buildingType].name} #${row.id}`}</span>
+            <span>{formatters.buildingName(row)}</span>
           );
         },
         unhideable: true
@@ -69,7 +70,7 @@ const useColumns = () => {
           const lotId = row.Location?.location?.id;
           return (
             <>
-              <LocationLink lotId />
+              <LocationLink lotId={lotId} />
               <span>{lotId ? Lot.toIndex(lotId).toLocaleString() : null}</span>
             </>
           );
