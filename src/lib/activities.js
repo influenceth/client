@@ -51,7 +51,7 @@ const getEntityName = (entity) => {
     case Entity.IDS.CREW: return formatters.crewName(entity);
     case Entity.IDS.CREWMATE: return formatters.crewmateName(entity);
     case Entity.IDS.ASTEROID: return formatters.asteroidName(entity);
-    case Entity.IDS.LOT: return formatters.lotName(Lot.toIndex(entity.id));
+    case Entity.IDS.LOT: return formatters.lotName(entity.id);
     case Entity.IDS.BUILDING: return formatters.buildingName(entity);
     case Entity.IDS.SHIP: return formatters.shipName(entity);
     default: return '';
@@ -236,7 +236,7 @@ const activities = {
     }),
     requiresCrewTime: true
   },
-  
+
   ConstructionFinished: {
     getInvalidations: ({ event: { returnValues } }, { building = {} }) => {
       const { asteroidId } = locationsArrToObj(building?.Location?.locations || []) || {};
@@ -605,7 +605,7 @@ const activities = {
 
     // requiresCrewTime: true
   },
-  
+
   DeliveryReceived: {
     getInvalidations: ({ event: { returnValues } }, { delivery = {} }) => {
       const invs = [
@@ -1231,7 +1231,7 @@ const activities = {
 
     triggerAlert: true
   },
-  
+
   ShipDocked: {
     getInvalidations: ({ event: { returnValues } }) => ([
       ...invalidationDefaults(returnValues.ship.label, returnValues.ship.id),
@@ -1451,7 +1451,7 @@ export const getHydrationQueryKey = ({ label, id }) => ['entity', label, id];
 
 export const getAndCacheEntity = async ({ label, id }, queryClient) => {
   const queryKey = getHydrationQueryKey({ id, label });
-  
+
   let data = queryClient.getQueryData(queryKey);
   if (!data) {
     data = await api.getEntityById({ label, id });

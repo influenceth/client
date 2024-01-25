@@ -13,7 +13,9 @@ const EntityLink = (props) => {
       case Entity.IDS.BUILDING: return `/building/${id}`;  // TODO: ...
       case Entity.IDS.CREW: return `/crew/${id}`;
       case Entity.IDS.CREWMATE: return `/crewmate/${id}`;
+      case Entity.IDS.LOT: return `/lot/${id}`; // TODO: ...
       case Entity.IDS.SHIP: return `/ship/${id}`; // TODO: ...
+      default: return '#';
     }
   }, [label, id]);
 

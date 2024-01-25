@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import styled, { css, keyframes } from 'styled-components';
-import { Asteroid, Building, Entity, Lot, Ship } from '@influenceth/sdk';
+import { Asteroid, Building, Entity, Ship } from '@influenceth/sdk';
 import { FaSearchPlus as DetailsIcon } from 'react-icons/fa';
 import ReactTooltip from 'react-tooltip';
 
@@ -404,25 +404,25 @@ const InfoPane = () => {
             varyDistance />
         </ThumbBackground>
       );
-      
+
     } else if (zoomStatus === 'in') {
       const isIncompleteBuilding = lot?.building && !['OPERATIONAL', 'DECONSTRUCTING'].includes(constructionStatus);
       if (zoomScene?.type === 'LOT') {
         pane.title = `${Building.TYPES[lot?.building?.Building?.buildingType || 0]?.name}${isIncompleteBuilding ? ' (Plan)' : ''}`;
-        pane.subtitle = <>{formatters.asteroidName(asteroid)} &gt; <b>{formatters.lotName(Lot.toIndex(lotId))}</b></>;
+        pane.subtitle = <>{formatters.asteroidName(asteroid)} &gt; <b>{formatters.lotName(lotId)}</b></>;
         pane.captainCard = lot?.Control?.controller?.id;
       } else if (zoomScene?.type === 'SHIP' && ship) {
         pane.title = formatters.shipName(ship);
         if (ship.Ship?.transitDeparture > 0) {
           pane.subtitle = 'In Flight';
         } else {
-          pane.subtitle = <>{formatters.asteroidName(asteroid)} &gt; <b>{lotId ? formatters.lotName(Lot.toIndex(lotId)) : 'In Orbit'}</b></>;
+          pane.subtitle = <>{formatters.asteroidName(asteroid)} &gt; <b>{lotId ? formatters.lotName(lotId) : 'In Orbit'}</b></>;
         }
         pane.captainCard = ship.Control?.controller?.id;
       } else if (lotId && lot && lot.surfaceShip) {
         const thumbUrl = getShipIcon(lot.surfaceShip.Ship?.shipType || 0, 'w400');
         pane.title = `${Ship.TYPES[lot.surfaceShip.Ship?.shipType || 0]?.name}`;
-        pane.subtitle = <>{formatters.asteroidName(asteroid)} &gt; <b>{formatters.lotName(Lot.toIndex(lotId))}</b></>;
+        pane.subtitle = <>{formatters.asteroidName(asteroid)} &gt; <b>{formatters.lotName(lotId)}</b></>;
         pane.captainCard = lot.surfaceShip.Control?.controller?.id;
         pane.hoverSubtitle = 'Zoom to Lot';
         pane.thumbVisible = true;
@@ -432,7 +432,7 @@ const InfoPane = () => {
         hologram = lot.building ? hologram : false;
         const thumbUrl = getBuildingIcon(lot.building?.Building?.buildingType || 0, 'w400', hologram);
         pane.title = `${Building.TYPES[lot.building?.Building?.buildingType || 0]?.name}${isIncompleteBuilding ? ' (Plan)' : ''}`;
-        pane.subtitle = <>{formatters.asteroidName(asteroid)} &gt; <b>{formatters.lotName(Lot.toIndex(lotId))}</b></>;
+        pane.subtitle = <>{formatters.asteroidName(asteroid)} &gt; <b>{formatters.lotName(lotId)}</b></>;
         pane.captainCard = lot.building?.Control?.controller?.id;
         pane.hoverSubtitle = 'Zoom to Lot';
         pane.thumbVisible = true;
