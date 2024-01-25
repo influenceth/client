@@ -194,7 +194,7 @@ const formatAsTx = (item) => {
           type: 'limit',
           resourceId: item.vars.product,
           preselect: {
-            limitPrice: item.vars.price,
+            limitPrice: item.vars.price / 1e6,
             quantity: item.vars.amount,
             storage: item.vars.storage,
             storageSlot: item.vars.storage_slot
@@ -241,7 +241,7 @@ const formatAsTx = (item) => {
           type: 'limit',
           resourceId: item.vars.product,
           preselect: {
-            limitPrice: item.vars.price,
+            limitPrice: item.vars.price / 1e6,
             quantity: item.vars.amount,
             storage: item.vars.storage,
             storageSlot: item.vars.storage_slot
