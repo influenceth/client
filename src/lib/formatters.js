@@ -86,8 +86,8 @@ const formatters = {
 
   lotName: (lotOrIndex) => {
     let lotIndex = lotOrIndex?.id || lotOrIndex;
-    if (BigInt(lotIndex) >= 2n ** 32n) lotIndex = Lot.toIndex(lotIndex);
     if (!lotIndex) return 'Lot';
+    if (BigInt(lotIndex) >= 2n ** 32n) lotIndex = Lot.toIndex(lotIndex);
     return `Lot #${lotIndex.toLocaleString()}`;
   },
 
