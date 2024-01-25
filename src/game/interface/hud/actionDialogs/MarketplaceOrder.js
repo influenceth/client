@@ -779,7 +779,8 @@ const MarketplaceOrder = ({
 const Wrapper = (props) => {
   const { asteroid, lot, isLoading } = useAsteroidAndLot(props);
   const manager = useMarketplaceManager(lot?.building?.id);
-  const actionStage = actionStages.NOT_STARTED; // TODO: ...
+  const pendingOrder = manager.getPendingOrder(props.mode, props.type, { exchange: lot.building, product: props.resourceId });
+  const actionStage = pendingOrder ? actionStages.STARTING : actionStages.NOT_STARTED;
 
   useEffect(() => {
     if (!asteroid || !lot) {
@@ -788,7 +789,14 @@ const Wrapper = (props) => {
       }
     }
   }, [asteroid, lot, isLoading]);
-  console.log('park of the prob');
+
+  const lastStatus = useRef();
+  useEffect(() => {
+    if (lastStatus.current && actionStage !== lastStatus.current) {
+      if (props.onClose) props.onClose();
+    }
+    lastStatus.current = actionStage;
+  }, [actionStage]);
 
   // TODO: actionImage
   return (
