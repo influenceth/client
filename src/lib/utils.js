@@ -39,9 +39,11 @@ export const formatPrice = (sway, { minPrecision = 3, fixedPrecision } = {}) => 
   } else if (sway >= 1e3) {
     scale = 1e3;
     unitLabel = 'k';
-  } else {
+  } else if (sway >= 1) {
     scale = 1;
     unitLabel = '';
+  } else {
+    return Number(sway || 0).toFixed(6).replace(/0$/g, '');
   }
 
   const workingUnits = (sway / scale);
@@ -94,20 +96,23 @@ export const getCrewAbilityBonuses = (abilityIdOrAbilityIds, crew) => {
   return isMultiple ? bonuses : bonuses[abilityIdOrAbilityIds];
 }
 
-export const esbLocationQuery = ({ asteroidId }) => {
+export const esbLocationQuery = ({ asteroidId, lotId }, path = 'Location.locations') => {
   let label, id;
   if (asteroidId) {
     label = Entity.IDS.ASTEROID;
     id = asteroidId;
+  } else if (lotId) {
+    label = Entity.IDS.LOT;
+    id = lotId;
   }
   if (!label || !id) return undefined;
 
   return esb.nestedQuery()
-    .path('meta.location')
+    .path(path)
     .query(
       esb.boolQuery().must([
-        esb.termQuery('meta.location.label', Entity.IDS.ASTEROID),
-        esb.termQuery('meta.location.id', asteroidId),
+        esb.termQuery(`${path}.label`, label),
+        esb.termQuery(`${path}.id`, id),
       ])
     )
 };

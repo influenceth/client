@@ -204,7 +204,7 @@ const SurfaceTransfer = ({
       return;
     }
 
-    (isP2P ? packageDelivery : startDelivery)({
+    ((isP2P && originController.id === crew?.id) ? packageDelivery : startDelivery)({
       origin,
       originSlot: originInventory?.slot,
       destination,
@@ -212,7 +212,7 @@ const SurfaceTransfer = ({
       contents: selectedItems,
       price: sway
     }, { asteroidId: asteroid?.id, lotId: originLot?.id });
-  }, [originInventory, destinationInventory, selectedItems, sway, isP2P ,asteroid?.id, originLot?.id]);
+  }, [originInventory, destinationInventory, selectedItems, sway, isP2P, asteroid?.id, originLot?.id]);
 
   const onFinishDelivery = useCallback(() => {
     finishDelivery(props.deliveryId, {

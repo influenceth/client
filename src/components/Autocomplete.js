@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { usePopper } from 'react-popper';
 import { PuffLoader } from 'react-spinners';
@@ -49,24 +49,20 @@ const Loading = styled.div`
   top: 8px;
 `;
 
-const Autocomplete = ({
-  assetType,
+const AutocompleteComponent = ({
   dropdownProps = {},
+  formatFootnote,
+  formatLabel,
   onSelect,
+  options,
+  isLoading,
+  searchTerm,
   selected,
+  setSearchTerm,
+  valueKey,
   width,
   ...inputProps
 }) => {
-  const {
-    formatFootnote,
-    formatLabel,
-    options,
-    isLoading,
-    searchTerm,
-    setSearchTerm,
-    valueKey
-  } = useAutocomplete(assetType);
-
   const textInputEl = useRef();
 
   const [focused, setFocused] = useState();
@@ -74,6 +70,11 @@ const Autocomplete = ({
   const [highlighted, setHighlighted] = useState(0);
   const [popperEl, setPopperEl] = useState();
   const [referenceEl, setReferenceEl] = useState();
+
+  const { userOnBlur, userOnFocus, safeInputProps } = useMemo(() => {
+    const { onBlur: userOnBlur, onFocus: userOnFocus, ...safeInputProps } = inputProps;
+    return { userOnBlur, userOnFocus, safeInputProps };
+  }, [inputProps]);
 
   const { styles, attributes } = usePopper(referenceEl, popperEl, {
     placement: 'bottom-start',
@@ -113,7 +114,7 @@ const Autocomplete = ({
     setFocused(false);
     setHovered(false);
     textInputEl.current.blur();
-  }, []);
+  }, [onSelect]);
 
   const handleOptionHover = useCallback((e) => {
     if (e.type === 'mouseenter') {
@@ -123,17 +124,27 @@ const Autocomplete = ({
     }
   }, []);
 
+  const handleBlur = useCallback((e) => {
+    setFocused(false);
+    if (userOnBlur) userOnBlur(e);
+  }, [userOnBlur]);
+
+  const handleFocus = useCallback((e) => {
+    setFocused(true);
+    if (userOnFocus) userOnFocus(e);
+  }, [userOnFocus]);
+
   return (
     <Wrapper onKeyDown={handleKeyDown}>
       <span ref={setReferenceEl}>
         <TextInput
           ref={textInputEl}
-          onBlur={() => setFocused(false)}
+          onBlur={handleBlur}
           onInput={(e) => setSearchTerm(e.target.value)}
-          onFocus={() => setFocused(true)}
+          onFocus={handleFocus}
           value={(selected && !focused) ? formatLabel(selected) : searchTerm}
           width={width}
-          {...inputProps}
+          {...safeInputProps}
         />
         <Loading isLoading={reactBool(isLoading)}>
           <PuffLoader color={theme.colors.main} size="16px" />
@@ -158,6 +169,89 @@ const Autocomplete = ({
         document.body
       )}
     </Wrapper>
+  );
+}
+
+export const StaticAutocomplete = ({
+  dropdownProps = {},
+  footnoteKey,
+  labelKey,
+  options = [],
+  onSelect,
+  selected,
+  valueKey,
+  width,
+  ...inputProps
+}) => {
+  const [searchTerm, setSearchTerm] = useState('');
+  
+  const formatFootnote = useCallback((o) => {
+    if (typeof footnoteKey === 'string') return o[footnoteKey];
+    if (typeof footnoteKey === 'function') return footnoteKey(o);
+  }, [footnoteKey]);
+
+  const formatLabel = useCallback((o) => {
+    if (typeof labelKey === 'string') return o[labelKey];
+    if (typeof labelKey === 'function') return labelKey(o);
+  }, [labelKey]);
+
+  const filteredOptions = useMemo(() => {
+    const lcSearchTerm = searchTerm.toLowerCase();
+    return options.filter(o => {
+      return `${formatLabel(o)} ${formatFootnote(o)}`.toLowerCase().includes(lcSearchTerm)
+    });
+  }, [formatFootnote, formatLabel, searchTerm]);
+
+  return (
+    <AutocompleteComponent
+      dropdownProps={dropdownProps}
+      formatFootnote={formatFootnote}
+      formatLabel={formatLabel}
+      onSelect={onSelect}
+      options={filteredOptions}
+      selected={selected}
+      searchTerm={searchTerm}
+      setSearchTerm={setSearchTerm}
+      valueKey={valueKey}
+      width={width}
+      {...inputProps}
+    />
+  );
+};
+
+const Autocomplete = ({
+  assetType,
+  dropdownProps = {},
+  onSelect,
+  selected,
+  width,
+  ...inputProps
+}) => {
+  const {
+    formatFootnote,
+    formatLabel,
+    options,
+    isLoading,
+    searchTerm,
+    setSearchTerm,
+    valueKey
+  } = useAutocomplete(assetType);
+
+  return (
+    <AutocompleteComponent
+      dropdownProps={dropdownProps}
+      formatFootnote={formatFootnote}
+      formatLabel={formatLabel}
+      onSelect={onSelect}
+      options={options}
+      isLoading={isLoading}
+      selected={selected}
+      searchTerm={searchTerm}
+      setSearchTerm={setSearchTerm}
+      valueKey={valueKey}
+      width={width}
+      {...inputProps}
+    />
   );
 };
 

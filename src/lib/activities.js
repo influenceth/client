@@ -748,6 +748,12 @@ const activities = {
     },
   },
 
+  ExchangeConfigured: {
+    getInvalidations: ({ event: { returnValues } }) => ([
+      ...invalidationDefaults(returnValues.exchange.label, returnValues.exchange.id),
+    ]),
+  },
+
   FoodSupplied: {
     getInvalidations: ({ event: { returnValues } }) => {
       // TODO: replace lastFed in place
@@ -1113,6 +1119,25 @@ const activities = {
     //     ),
     //   };
     // },
+    requiresCrewTime: true
+  },
+
+  SellOrderCreated: {
+    getInvalidations: ({ event: { returnValues, version } }, { exchange = {} }) => {
+      const asteroidId = exchange && Lot.toPosition(exchange.Location.location.id)?.asteroidId;
+      return [
+        ...invalidationDefaults(Entity.IDS.BUILDING, returnValues.exchange.id),
+        ...invalidationDefaults(returnValues.storage.label, returnValues.storage.id),
+        [ 'crewOpenOrders', returnValues.callerCrew.id ],
+        [ 'orderSummary', Entity.IDS.ASTEROID, asteroidId ],
+        [ 'orderSummary', returnValues.exchange.label, returnValues.exchange.id ],
+        [ 'swayBalance' ]
+        // TODO: any other order locations cached?
+      ];
+    },
+    getPrepopEntities: ({ event: { returnValues } }) => ({
+      exchange: returnValues.exchange,
+    }),
     requiresCrewTime: true
   },
 

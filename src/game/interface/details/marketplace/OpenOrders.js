@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import styled from 'styled-components';
 import moment from 'moment';
-import { Lot, Product } from '@influenceth/sdk';
+import { Lot, Order, Product } from '@influenceth/sdk';
 
 import CrewIndicator from '~/components/CrewIndicator';
 import DataTable from '~/components/DataTable';
@@ -14,10 +14,10 @@ import formatters from '~/lib/formatters';
 const Subheader = styled.div``;
 const Header = styled.div`
   align-items: center;
-  border-bottom: 1px solid #333;
   display: flex;
   flex-direction: row;
   height: 150px;
+  margin-bottom: 15px;
   margin-top: -25px;
   padding-bottom: 25px;
   padding-top: 25px;
@@ -60,7 +60,7 @@ const Body = styled.div`
   flex: 1;
   overflow-x: hidden;
   overflow-y: auto;
-  padding-top: 25px;
+  border-top: 1px solid #333;
 `;
 
 const TableContainer = styled.div`
@@ -113,24 +113,25 @@ const MarketplaceOpenOrders = ({ asteroid, orders, marketplace = null, marketpla
     return (orders || [])
       .map((o) => ({
         ...o,
-        resourceName: Product.TYPES[o.resourceId]?.name,
+        lotId: o.marketplace?.Location?.location?.id,
+        marketplaceName: formatters.buildingName(o.marketplace),
+        resourceName: Product.TYPES[o.product]?.name,
         total: o.price * o.amount,
-        ago: (new moment(new Date(1000 * (o.createdAt || 0)))).fromNow()
+        ago: (new moment(new Date(1000 * (o.validTime || 0)))).fromNow()
       }))
       .sort((a, b) => (sortDirection === 'asc' ? 1 : -1) * (a[sortField] < b[sortField] ? 1 : -1));
   }, [orders, sortField, sortDirection]);
 
-
   const columns = useMemo(() => {
     const c = [
       {
-        key: 'type',
+        key: 'orderType',
         label: 'Order Type',
-        sortField: 'type',
+        sortField: 'orderType',
         selector: row => (
           <>
-            {row.type === 'LimitBuy' && <OrderType type={row.type}>Limit Buy</OrderType>}
-            {row.type === 'LimitSell' && <OrderType type={row.type}>Limit Sell</OrderType>}
+            {row.orderType === Order.IDS.LIMIT_BUY && <OrderType type={row.type}>Limit Buy</OrderType>}
+            {row.orderType === Order.IDS.LIMIT_SELL && <OrderType type={row.type}>Limit Sell</OrderType>}
           </>
         ),
       },
@@ -146,9 +147,9 @@ const MarketplaceOpenOrders = ({ asteroid, orders, marketplace = null, marketpla
         ),
       },
       {
-        key: 'createdAt',
+        key: 'validTime',
         label: 'Placed',
-        sortField: 'createdAt',
+        sortField: 'validTime',
         selector: row => row.ago,
       },
       {
@@ -164,7 +165,13 @@ const MarketplaceOpenOrders = ({ asteroid, orders, marketplace = null, marketpla
         selector: row => (
           <>
             <IconWrapper><SwayIcon /></IconWrapper>
-            {formatPrice(row.price)}
+            {formatPrice(row.price, (
+              row.price < 1 ? { fixedPrecision: 4 }
+                : (
+                  row.price < 10 ? { fixedPrecision: 6 } : undefined
+                )
+              )
+            )}
           </>
         )
       },
@@ -179,17 +186,18 @@ const MarketplaceOpenOrders = ({ asteroid, orders, marketplace = null, marketpla
           </>
         )
       },
-      {
-        key: 'deliveryTo',
-        label: 'Delivery',
-        sortField: 'deliveryTo',
-        selector: row => (
-          <>
-            <LocationLink lotId={row.deliveryTo} />
-            <span>Lot {Lot.toIndex(row.deliveryTo).toLocaleString()}</span>
-          </>
-        ),
-      },
+      // TODO: ... would need to pre-load or pre-pop these in ES
+      // {
+      //   key: 'storage',
+      //   label: 'Storage',
+      //   sortField: 'storage',
+      //   selector: row => (
+      //     <>
+      //       <LocationLink lotId={row.storage} />
+      //       <span>Lot {Lot.toIndex(row.storage).toLocaleString()}</span>
+      //     </>
+      //   ),
+      // },
     ];
     if (!marketplace) {
       c.unshift({
@@ -226,7 +234,7 @@ const MarketplaceOpenOrders = ({ asteroid, orders, marketplace = null, marketpla
           <DataTable
             columns={columns}
             data={sortedOrders || []}
-            keyField="i"
+            keyField="validTime"
             onClickColumn={handleSort}
             sortDirection={sortDirection}
             sortField={sortField}

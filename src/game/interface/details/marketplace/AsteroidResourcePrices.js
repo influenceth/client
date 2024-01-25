@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import styled from 'styled-components';
-import { Lot } from '@influenceth/sdk';
+import { Asteroid, Lot } from '@influenceth/sdk';
 
 import Button from '~/components/ButtonAlt';
 import ClipCorner from '~/components/ClipCorner';
@@ -12,11 +12,13 @@ import ResourceThumbnail from '~/components/ResourceThumbnail';
 import { formatResourceAmount } from '~/game/interface/hud/actionDialogs/components';
 import useCrew from '~/hooks/useCrew';
 import useLot from '~/hooks/useLot';
-import { formatPrice, nativeBool } from '~/lib/utils';
+import { formatFixed, formatPrice, nativeBool } from '~/lib/utils';
 import theme from '~/theme';
 import { LocationLink } from '../listViews/components';
 import { getBuildingIcon } from '~/lib/assetUtils';
 import formatters from '~/lib/formatters';
+import useOrderSummaryByExchange from '~/hooks/useOrderSummaryByMarket';
+import useCrewContext from '~/hooks/useCrewContext';
 
 
 const Header = styled.div`
@@ -141,32 +143,32 @@ const PseudoFooterButton = styled(Button)`
   right: 0px;
 `;
 
-// TODO: ecs refactor
-// TODO: get this data from the API (probably elasticsearch?)
-const resourceMarketplaces = [
-  { marketplaceName: `Joe's Spacing Emporium`, lotId: 2350, supply: 1234, demand: 0, centerPrice: 1244, fee: 0.05 },
-  { marketplaceName: `The Fanciest of Stuffs`, lotId: 1572, supply: 8129, demand: 43666, centerPrice: 2044, fee: 0.075 },
-  { marketplaceName: `Mom and Pop's`,          lotId: 9, supply: 12332555, demand: 34344, centerPrice: 1249, fee: 0.025 },
-  // { marketplaceName: `Joe's Spacing Emporium`, lotId: 2351, supply: 1234, demand: 0, centerPrice: 1244, fee: 0.05 },
-  // { marketplaceName: `The Fanciest of Stuffs`, lotId: 1571, supply: 8129, demand: 43666, centerPrice: 2044, fee: 0.075 },
-  // { marketplaceName: `Mom and Pop's`,          lotId: 1, supply: 12332555, demand: 34344, centerPrice: 1249, fee: 0.025 },
-  // { marketplaceName: `Joe's Spacing Emporium`, lotId: 2353, supply: 1234, demand: 0, centerPrice: 1244, fee: 0.05 },
-  // { marketplaceName: `The Fanciest of Stuffs`, lotId: 1573, supply: 8129, demand: 43666, centerPrice: 2044, fee: 0.075 },
-  // { marketplaceName: `Mom and Pop's`,          lotId: 3, supply: 12332555, demand: 34344, centerPrice: 1249, fee: 0.025 },
-  // { marketplaceName: `Joe's Spacing Emporium`, lotId: 2354, supply: 1234, demand: 0, centerPrice: 1244, fee: 0.05 },
-  // { marketplaceName: `The Fanciest of Stuffs`, lotId: 1574, supply: 8129, demand: 43666, centerPrice: 2044, fee: 0.075 },
-  // { marketplaceName: `Mom and Pop's`,          lotId: 4, supply: 12332555, demand: 34344, centerPrice: 1249, fee: 0.025 },
-];
-
 const AsteroidResourcePrices = ({ asteroid, resource }) => {
   const history = useHistory();
 
+  const { crew } = useCrewContext();
   const [selected, setSelected] = useState();
   const [sort, setSort] = useState(['centerPrice', 'asc']);
   const [sortField, sortDirection] = sort;
 
   const { data: selectedLot } = useLot(selected);
   const { data: marketplaceOwner } = useCrew(selectedLot?.building?.Control?.controller?.id);
+
+  const { data: orderSummary } = useOrderSummaryByExchange(asteroid.id, resource.i);
+  const resourceMarketplaces = useMemo(() => {
+    if (!orderSummary) return [];
+    return orderSummary.map((o) => ({
+      marketplaceName: formatters.buildingName(o.marketplace),
+      lotId: o.marketplace?.Location?.location?.id,
+      supply: o.sell.amount,
+      demand: o.buy.amount,
+      distance: crew?._location?.asteroidId === asteroid.id ? Asteroid.getLotDistance(asteroid.id, crew?._location?.lotIndex, Lot.toIndex(o.marketplace?.Location?.location?.id)) : 0,
+      centerPrice: (o.sell.price && o.buy.price) ? (o.sell.price + o.buy.price) / 2 : (o.sell.price || o.buy.price || 0),
+      makerFee: o.marketplace?.Exchange?.makerFee,
+      takerFee: o.marketplace?.Exchange?.takerFee,
+    }))
+  }, [asteroid.id, crew, orderSummary]);
+
   const selectedSupply = useMemo(() => {
     return resourceMarketplaces.find((m) => m.lotId === selected)?.supply || 0;
   }, [selected]);
@@ -196,17 +198,18 @@ const AsteroidResourcePrices = ({ asteroid, resource }) => {
 
   const columns = useMemo(() => {
     const c = [
-      {
-        key: 'resourceName',
-        label: 'Product',
-        sortField: 'resourceName',
-        selector: row => (
-          <>
-            <IconWrapper><ProductIcon /></IconWrapper>
-            {resource.name}
-          </>
-        ),
-      },
+      // (this feels redundant)
+      // {
+      //   key: 'resourceName',
+      //   label: 'Product',
+      //   sortField: 'resourceName',
+      //   selector: row => (
+      //     <>
+      //       <IconWrapper><ProductIcon /></IconWrapper>
+      //       {resource.name}
+      //     </>
+      //   ),
+      // },
       {
         key: 'marketplaceName',
         label: 'Marketplace Name',
@@ -214,7 +217,7 @@ const AsteroidResourcePrices = ({ asteroid, resource }) => {
         selector: row => (
           <>
             <LocationLink asteroidId={asteroid.id} lotId={row.lotId} zoomToLot />
-            <span>{row.marketplaceName || `Marketplace @ ${formatters.lotName(Lot.toIndex(row.lotId))}`}</span>
+            <span>{row.marketplaceName}</span>
           </>
         ),
       },
@@ -248,15 +251,30 @@ const AsteroidResourcePrices = ({ asteroid, resource }) => {
         )
       },
       // TODO: add distanceAway, calculate from crew's current position (if logged in and on asteroid surface)
+      // TODO: maker fee / taker fee? which one is relevant here?
       {
-        key: 'fee',
-        label: 'Marketplace Fee',
-        sortField: 'fee',
-        selector: row => `${(100 * row.fee).toFixed(1)}%`,
+        key: 'makerFee',
+        label: 'Maker Fee',
+        sortField: 'makerFee',
+        selector: row => `${(100 * row.makerFee).toFixed(1)}%`,
+      },
+      {
+        key: 'takerFee',
+        label: 'Taker Fee',
+        sortField: 'takerFee',
+        selector: row => `${(100 * row.takerFee).toFixed(1)}%`,
       },
     ];
+    if (crew?._location?.asteroidId === asteroid.id) {
+      c.splice(3, 0, ({
+        key: 'distance',
+        label: 'Distance',
+        sortField: 'distance',
+        selector: row => `${formatFixed(row.distance, 1)} km`,
+      }))
+    }
     return c;
-  }, [asteroid, resource]);
+  }, [asteroid, crew, resource]);
 
   const getRowProps = useCallback((row) => {
     return {
@@ -268,7 +286,7 @@ const AsteroidResourcePrices = ({ asteroid, resource }) => {
   }, [selected]);
 
   const onViewMarketplace = useCallback(() => {
-    history.push(`/marketplace/${asteroid.id}/${selected}/${resource.i}?back=all`);
+    history.push(`/marketplace/${asteroid.id}/${Lot.toIndex(selected)}/${resource.i}?back=all`);
   }, [asteroid, resource, selected]);
 
   const [ totalSupply, totalDemand, medianPrice ] = useMemo(() => {
@@ -300,13 +318,12 @@ const AsteroidResourcePrices = ({ asteroid, resource }) => {
           <div style={{ flex: 1, paddingLeft: 25 }}>
             <h1>{resource.name}</h1>
             <Subheader>
-              {/* TODO: resource categories */}
-              <span>Raw Material</span>
-              <span>Volatile</span>
+              <span>{resource.classification}</span>
+              <span>{resource.category}</span>
             </Subheader>
             <MarketSummary>
               <div>
-                Listed at <b>{resourceMarketplaces.length} Marketplaces</b> on <b>{formatters.asteroidName(asteroid)}</b>
+                Listed at <b>{resourceMarketplaces.length} Marketplace{resourceMarketplaces.length === 1 ? '' : 's'}</b> on <b>{formatters.asteroidName(asteroid)}</b>
               </div>
               <div>
                 Total Supply: <span style={{ color: theme.colors.green }}>{formatResourceAmount(totalSupply, resource.i)}</span>
@@ -331,7 +348,7 @@ const AsteroidResourcePrices = ({ asteroid, resource }) => {
               </MarketplaceImage>
             </div>
             <div>
-              <label>{selectedLot.building?.Name?.name || `Marketplace @ ${selectedLot.id.toLocaleString()}`}</label>
+              <label>{formatters.buildingName(selectedLot.building)}</label>
               <span>{formatResourceAmount(selectedSupply, resource.i)} available</span>
             </div>
           </SelectedMarketplace>

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
 import Ticker from 'react-ticker';
 import { Product } from '@influenceth/sdk';
@@ -249,8 +249,7 @@ const TickerItem = styled.div`
 
 const greenRGB = hexToRGB(theme.colors.green);
 
-// TODO: ecs refactor
-const MarketplaceHome = ({ asteroid, listings, orders, onSelectListing, marketplace = null, marketplaceOwner = null }) => {
+const MarketplaceHome = ({ asteroid, listings, orderTally, onSelectListing, marketplace = null, marketplaceOwner = null, marketplaceTally }) => {
   const [mode, setMode] = useState('buy');
   const [nameFilter, setNameFilter] = useState('');
 
@@ -266,9 +265,25 @@ const MarketplaceHome = ({ asteroid, listings, orders, onSelectListing, marketpl
         return l.forBuy > 0;
       })
       .sort((a, b) => {
-        return Product.TYPES[a.resourceId].name < Product.TYPES[b.resourceId].name ? -1 : 1;
+        return Product.TYPES[a.product].name < Product.TYPES[b.product].name ? -1 : 1;
       });
   }, [!!marketplace, listings, mode]);
+
+  const filteredListings = useMemo(() => {
+    return listings
+      .filter(({ product }) => nameFilter.length === 0 || Product.TYPES[product].name.toLowerCase().includes((nameFilter || '').toLowerCase()))
+      .sort((a, b) => Product.TYPES[a.product].name < Product.TYPES[b.product].name ? -1 : 1) // TODO: according to dropdown
+  }, [listings, nameFilter]);
+
+  // unclear why this is required, but if no timeout, then ticker just renders a "0"
+  const [tickerReady, setTickerReady] = useState(false);
+  useEffect(() => {
+    if (!!tickerListings?.length) {
+      setTimeout(() => {
+        setTickerReady(true);
+      }, 500)
+    }
+  }, [!!tickerListings?.length]);
 
   // TODO: loading might be better
   if (!asteroid) return null;
@@ -279,11 +294,11 @@ const MarketplaceHome = ({ asteroid, listings, orders, onSelectListing, marketpl
           ? (
             <>
               <div>
-                <h1><MarketplaceBuildingIcon /> {marketplace?.name}</h1>
+                <h1><MarketplaceBuildingIcon /> {formatters.buildingName(marketplace)}</h1>
                 <Subheader>
                   <span>Marketplace</span>
                   <span><b>{listings.length || 0}</b> Listed Product{listings.length === 1 ? '' : 's'}</span>
-                  <span><b>{orders.length || 0}</b> Active Order{orders.length === 1 ? '' : 's'}</span>
+                  <span><b>{orderTally}</b> Active Order{orderTally === 1 ? '' : 's'}</span>
                 </Subheader>
               </div>
               {marketplaceOwner && <CrewIndicator crew={marketplaceOwner} flip label="Managed by" />}
@@ -295,9 +310,9 @@ const MarketplaceHome = ({ asteroid, listings, orders, onSelectListing, marketpl
               <div style={{ flex: 1, paddingLeft: 25 }}>
                 <h1><MarketsIcon /> {formatters.asteroidName(asteroid)} Markets</h1>
                 <Subheader>
-                  <span><b>127</b> Marketplaces</span>
+                  <span><b>{marketplaceTally}</b> Marketplace{marketplaceTally === 1 ? '' : 's'}</span>
                   <span><b>{listings.length || 0}</b> Product{listings.length === 1 ? '' : 's'} Listed</span>
-                  <span><b>{orders.length || 0}</b> Active Order{orders.length === 1 ? '' : 's'}</span>
+                  <span><b>{orderTally}</b> Active Order{orderTally === 1 ? '' : 's'}</span>
                 </Subheader>
               </div>
             </div>
@@ -305,20 +320,20 @@ const MarketplaceHome = ({ asteroid, listings, orders, onSelectListing, marketpl
         }
       </Header>
 
-      {tickerListings?.length > 0 && (
+      {tickerReady && (
         <Ticker>
           {() => (
             <TickerItems>
               {tickerListings.map((listing) => {
-                const resource = Product.TYPES[listing.resourceId];
+                const resource = Product.TYPES[listing.product];
                 const price = mode === 'buy' ? listing.salePrice : listing.buyPrice;
-                const change = mode === 'buy' ? listing.saleChange : listing.buyChange;
+                const change = mode === 'buy' ? listing.saleChange : listing.buyChange; // TODO: ...
                 return (
-                  <TickerItem key={listing.resourceId} onClick={() => onSelectListing(listing)}>
+                  <TickerItem key={listing.product} onClick={() => onSelectListing(listing)}>
                     <span>{resource.name}</span>
                     <SwayIcon />
                     <span>{formatPrice(price)}</span>
-                    <ChangeBubble isUp={change > 0}>{change > 0 ? '+' : ''}{formatPrecision(100 * change, 3)}%</ChangeBubble>
+                    {change && <ChangeBubble isUp={change > 0}>{change > 0 ? '+' : ''}{formatPrecision(100 * change, 3)}%</ChangeBubble>}
                   </TickerItem>
                 );
               })}
@@ -339,7 +354,7 @@ const MarketplaceHome = ({ asteroid, listings, orders, onSelectListing, marketpl
           size="small"
           style={{ textTransform: 'none', width: '240px' }} />
         <ResultsTally>
-          <GridIcon /> <span>10 Results</span>
+          <GridIcon /> <span>{filteredListings.length} Result{filteredListings.length === 1 ? '' : 's'}</span>
         </ResultsTally>
         
         <div style={{ flex: 1 }} />
@@ -365,9 +380,7 @@ const MarketplaceHome = ({ asteroid, listings, orders, onSelectListing, marketpl
 
       <Body>
         <Listings>
-          {listings
-            .filter(({ resourceId }) => nameFilter.length === 0 || Product.TYPES[resourceId].name.toLowerCase().includes((nameFilter || '').toLowerCase()))
-            .sort((a, b) => Product.TYPES[a.resourceId].name < Product.TYPES[b.resourceId].name ? -1 : 1) // TODO: according to dropdown
+          {filteredListings
             .map((listing) => {
               let thumbBG = 'rgba(170, 170, 170, 0.2)';
               if (!!marketplace) {
@@ -377,13 +390,13 @@ const MarketplaceHome = ({ asteroid, listings, orders, onSelectListing, marketpl
                   thumbBG = `rgba(${theme.colors.mainRGB}, 0.2);`//`#0d2a33`;
                 };
               }
-              const resource = Product.TYPES[listing.resourceId];
+              const resource = Product.TYPES[listing.product];
               const amount = mode === 'buy' ? listing.forSale : listing.forBuy;
               const price = mode === 'buy' ? listing.salePrice : listing.buyPrice;
-              const change = mode === 'buy' ? listing.saleChange : listing.buyChange;
+              const change = mode === 'buy' ? listing.saleChange : listing.buyChange; // TODO: ...
               return (
-                <Listing key={listing.resourceId} onClick={() => onSelectListing(listing)}>
-                  {!!marketplace && <ChangeBubble isUp={change > 0}>{change > 0 ? '+' : ''}{formatPrecision(100 * change, 3)}%</ChangeBubble>}
+                <Listing key={listing.product} onClick={() => onSelectListing(listing)}>
+                  {!!marketplace && change && <ChangeBubble isUp={change > 0}>{change > 0 ? '+' : ''}{formatPrecision(100 * change, 3)}%</ChangeBubble>}
                   <ResourceThumbnail
                     backgroundColor={thumbBG}
                     outlineColor="transparent"
@@ -392,7 +405,7 @@ const MarketplaceHome = ({ asteroid, listings, orders, onSelectListing, marketpl
                     style={amount === 0 ? { opacity: 0.5 } : {}}
                     tooltipContainer={null} />
                   <ListingTitle>{resource.name}</ListingTitle>
-                  <ListingAmount color={amount > 0 && mode}>{amount > 0 ? formatResourceAmount(amount, listing.resourceId) : 'None'} {mode === 'buy' ? 'Available' : 'Sellable'}</ListingAmount>
+                  <ListingAmount color={amount > 0 && mode}>{amount > 0 ? formatResourceAmount(amount, listing.product) : 'None'} {mode === 'buy' ? 'Available' : 'Sellable'}</ListingAmount>
                   {amount > 0
                     ? (
                       <ListingPrice>

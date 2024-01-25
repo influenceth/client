@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import styled from 'styled-components';
-import { Crew, Crewmate, Product } from '@influenceth/sdk';
+import { Asteroid, Crew, Crewmate, Lot, Order, Product, Time } from '@influenceth/sdk';
 
 import marketplaceBackground from '~/assets/images/modal_headers/Marketplace.png';
-import { BanIcon, InventoryIcon, WarningOutlineIcon, SwayIcon, MarketBuyIcon, MarketSellIcon, LimitBuyIcon, LimitSellIcon, CancelLimitOrderIcon } from '~/components/Icons';
+import { BanIcon, InventoryIcon, WarningOutlineIcon, SwayIcon, MarketBuyIcon, MarketSellIcon, LimitBuyIcon, LimitSellIcon, CancelLimitOrderIcon, LocationIcon } from '~/components/Icons';
 import Button from '~/components/ButtonAlt';
 import useCrewContext from '~/hooks/useCrewContext';
 import useLot from '~/hooks/useLot';
@@ -11,7 +11,7 @@ import useStore from '~/hooks/useStore';
 import ResourceThumbnail from '~/components/ResourceThumbnail';
 import UncontrolledTextInput, { TextInputWrapper } from '~/components/TextInputUncontrolled';
 import actionStages from '~/lib/actionStages';
-import { reactBool, formatFixed, formatTimer } from '~/lib/utils';
+import { reactBool, formatFixed, formatTimer, getCrewAbilityBonuses, locationsArrToObj, formatPrice } from '~/lib/utils';
 import theme, { hexToRGB } from '~/theme';
 import { ActionDialogInner, useAsteroidAndLot } from '../ActionDialog';
 import {
@@ -31,9 +31,20 @@ import {
   BonusTooltip,
   getBonusDirection,
   MouseoverContent,
-  LotInputBlock
+  LotInputBlock,
+  InventorySelectionDialog,
+  InventoryInputBlock,
+  TransferDistanceDetails,
+  TimeBonusTooltip,
+  getTripDetails
 } from './components';
 import MouseoverInfoPane from '~/components/MouseoverInfoPane';
+import useMarketplaceManager from '~/hooks/actionManagers/useMarketplaceManager';
+import useEntity from '~/hooks/useEntity';
+import formatters from '~/lib/formatters';
+import useCrew from '~/hooks/useCrew';
+import useHydratedCrew from '~/hooks/useHydratedCrew';
+import useOrderList from '~/hooks/useOrderList';
 
 const greenRGB = hexToRGB(theme.colors.green);
 const redRGB = hexToRGB(theme.colors.red);
@@ -170,69 +181,235 @@ const TooltipBody = styled.div`
 
 // TODO: ecs refactor
 
-const MarketplaceOrder = ({ asteroid, lot, manager, stage, ...props }) => {
-  const { isCancellation, mode, type, resourceId, preselect } = props;
-
+const MarketplaceOrder = ({
+  asteroid,
+  lot,
+  manager,
+  stage,
+  isCancellation,
+  mode,
+  type,
+  resourceId,
+  preselect,
+  ...props
+}) => {
   const createAlert = useStore(s => s.dispatchAlertLogged);
   const resource = Product.TYPES[resourceId] || {};
   const resourceByMass = !resource?.isAtomic;
+  const exchange = lot.building;  // TODO: ...
+  const { data: exchangeController } = useHydratedCrew(lot.building?.Control?.controller?.id);
   
-  const { currentLaunch, launchStatus, startLaunch } = manager;
+  const {
+    createBuyOrder,
+    createSellOrder,
+    cancelBuyOrder,
+    cancelSellOrder,
+    fillBuyOrders,
+    fillSellOrders,
+    pendingOrders,
 
-  const { crew, crewmateMap } = useCrewContext();
-  const { data: currentDestinationLot } = useLot(currentLaunch?.destinationLotId);
+    orderStatus,
+    currentOrder = {}
+  } = manager;
+  const { crew } = useCrewContext();
+  const { data: orders } = useOrderList(exchange, resourceId);
 
-  const [destinationLot, setDestinationLot] = useState();
-  const [destinationSelectorOpen, setDestinationSelectorOpen] = useState(false);
-  const [limitPrice, setLimitPrice] = useState(preselect?.limitPrice);
-  const [quantity, setQuantity] = useState(preselect?.quantity);
+  const [buyOrders, sellOrders] = useMemo(() => ([
+    (orders || []).filter((o) => o.orderType === Order.IDS.LIMIT_BUY),
+    (orders || []).filter((o) => o.orderType === Order.IDS.LIMIT_SELL),
+  ]), [orders]);
 
-  const crewmates = currentLaunch?._crewmates || (crew?._crewmates || []).map((i) => crewmateMap[i]);
+  // TODO: ...
+  const currentDestinationLot = {};
+  const currentOriginLot = {};
+  // const { data: destination } = useEntity(destinationSelection ? { id: destinationSelection.id, label: destinationSelection.label } : undefined);
+  // const destinationLotId = useMemo(() => destination && locationsArrToObj(destination?.Location?.locations || []).lotId, [destination]);
+  // const { data: destinationLot } = useLot(destinationLotId);
+  // const destinationInventory = useMemo(() => (destination?.Inventories || []).find((i) => i.slot === destinationSelection?.slot), [destination, destinationSelection]);
+  // const { data: destinationController } = useCrew(destination?.Control?.controller?.id);
+
+  const crewmates = currentOrder?._crewmates || crew?._crewmates || [];
   const captain = crewmates[0];
-  const crewTravelBonus = Crew.getAbilityBonus(Crewmate.ABILITY_IDS.HOPPER_TRANSPORT_TIME, crewmates);
-  const launchBonus = 0;
+  
+  const [hopperTransportBonus, feeReductionBonus] = useMemo(() => {
+    if (!crew) return [];
+
+    const bonusIds = [
+      Crewmate.ABILITY_IDS.HOPPER_TRANSPORT_TIME,
+      Crewmate.ABILITY_IDS.MARKETPLACE_FEE_REDUCTION,
+    ];
+    const abilities = getCrewAbilityBonuses(bonusIds, crew);
+    return bonusIds.map((id) => abilities[id] || {});
+  }, [crew]);
+
+  const feeEnforcementBonus = useMemo(() => {
+    if (!exchangeController) return {};
+    return getCrewAbilityBonuses(Crewmate.ABILITY_IDS.MARKETPLACE_FEE_ENFORCEMENT, exchangeController) || {};
+  }, [exchangeController]);
+
+  const quantityToUnits = useCallback((quantity) => resource.isAtomic ? quantity : (quantity / 1000 * resource.massPerUnit), [resource]);
+  const unitsToQuantity = useCallback((units) => resource.isAtomic ? units : (1000 * units / resource.massPerUnit), [resource]);
+
+  const [limitPrice, setLimitPrice] = useState(preselect?.limitPrice);
+  const [quantity, setQuantity] = useState(unitsToQuantity(preselect?.quantity));
+  const [storageSelectorOpen, setStorageSelectorOpen] = useState(false);
+  const [storageSelection, setStorageSelection] = useState(
+    (preselect?.storage && {
+      id: preselect.storage.id,
+      label: preselect.storage.label,
+      slot: preselect.storageSlot
+    }) || undefined
+  );
+  const { data: storage } = useEntity(storageSelection ? { id: storageSelection.id, label: storageSelection.label } : undefined);
+  const storageLotId = useMemo(() => storage && locationsArrToObj(storage?.Location?.locations || []).lotId, [storage]);
+  const { data: storageLot } = useLot(storageLotId);
+  const storageInventory = useMemo(() => (storage?.Inventories || []).find((i) => i.slot === storageSelection?.slot), [storage, storageSelection]);
+
+  const { totalTime: crewTravelTime, tripDetails } = useMemo(() => {
+    if (!asteroid?.id || !crew?._location?.lotId || !lot?.id) return {};
+    return getTripDetails(asteroid.id, hopperTransportBonus, crew?._location?.lotIndex, [
+      { label: 'Travel to Marketplace', lotIndex: Lot.toIndex(lot.id) },
+      { label: 'Return to Crew Station', lotIndex: crew?._location?.lotIndex },
+    ], crew?._timeAcceleration);
+  }, [asteroid?.id, lot?.id, crew?._location?.lotId, crew?._timeAcceleration, hopperTransportBonus]);
+
+  const [transportDistance, transportTime] = useMemo(() => {
+    if (!asteroid?.id || !exchange?.id || !storageLot?.id) return [0, 0];
+    const exchangeLotIndex = Lot.toIndex(exchange?.Location?.location?.id);
+    const storageLotIndex = Lot.toIndex(storageLot?.id);
+    const transportDistance = Asteroid.getLotDistance(asteroid?.id, exchangeLotIndex, storageLotIndex);
+    const transportTime = Time.toRealDuration(
+      Asteroid.getLotTravelTime(asteroid?.id, exchangeLotIndex, storageLotIndex, hopperTransportBonus?.totalBonus),
+      crew?._timeAcceleration
+    );
+    return [transportDistance, transportTime];
+  }, [asteroid?.id, exchange?.id, storageLot?.id, hopperTransportBonus, crew?._timeAcceleration]);
+
+  const [crewTimeRequirement, taskTimeRequirement] = useMemo(() => {
+    return [
+      type === 'market' ? 0 : (Math.max(crewTravelTime / 2, transportTime) + crewTravelTime / 2),
+      0
+    ];
+  }, [transportTime, crewTravelTime, type]);
+
+  // TODO: probably make this a shared util (w/ depth chart)
+  const [totalMarketPrice, avgMarketPrice, averagedOrderTally, marketFills] = useMemo(() => {
+    let total = 0;
+    let totalOrders = 0;
+    let needed = quantity;
+    let marketFills = [];
+    const priceSortMult = mode === 'buy' ? 1 : -1;
+    const orders = []
+      .concat(mode === 'buy' ? sellOrders : buyOrders)
+      .sort((a, b) => a.price === b.price ? a.validTime - b.validTime : (priceSortMult * (a.price - b.price)));
+    orders.every((order) => {
+      const { amount, price } = order;
+      const levelAmount = Math.min(needed, amount);
+      total += levelAmount * price;
+      needed -= levelAmount;
+      if (levelAmount > 0) {
+        marketFills.push({ ...order, fillAmount: levelAmount });
+        totalOrders++;
+        return true;
+      }
+      return false;
+    });
+    return [total, total / quantity, totalOrders, marketFills];
+  }, [buyOrders, mode, quantity, sellOrders]);
+
+  const totalLimitPrice = useMemo(() => {
+    return (limitPrice || 0) * quantity;
+  }, [limitPrice, quantity]);
+
+  // TODO: re-release sdk and reference there
+  const effFeeBonus = useMemo(
+    () => Order.netEffFeeBonus(feeReductionBonus?.totalBonus, feeEnforcementBonus?.totalBonus),
+    [feeReductionBonus, feeEnforcementBonus]
+  );
+
+  // maker = limit order
+  // taker = market order
+  const feeRate = useMemo(
+    () => 1E-5 * exchange?.Exchange?.[type === 'market' ? 'takerFee' : 'makerFee'] / effFeeBonus,
+    [effFeeBonus, type]
+  );
+
+  const feeTotal = useMemo(
+    () => feeRate * (type === 'market' ? totalMarketPrice : totalLimitPrice),
+    [feeRate, totalLimitPrice, totalMarketPrice, type]
+  );
+
+  const stats = useMemo(() => ([
+    {
+      label: type === 'limit' ? 'Maker Fee' : 'Taker Fee',
+      value: <><SwayIcon /> {feeTotal.toLocaleString()} ({formatFixed(100 * feeRate, 1)}%)</>,
+      direction: 0,
+      direction: feeReductionBonus?.totalBonus > 1 ? getBonusDirection(feeReductionBonus) : 0,
+      tooltip: feeReductionBonus?.totalBonus > 1 && (
+        <BonusTooltip
+          bonus={feeReductionBonus}
+          title="Marketplace Fee"
+          titleValue={`${feeTotal.toLocaleString()}`} />
+      )
+    },
+    (type === 'market'
+      ? undefined // TODO: could add an "orders filled" stat here
+      : {
+        label: 'Crew Travel Time',
+        value: formatTimer(crewTravelTime),
+        direction: getBonusDirection(hopperTransportBonus),
+        isTimeStat: true,
+        tooltip: (
+          <TimeBonusTooltip
+            bonus={hopperTransportBonus}
+            title="Travel Time"
+            totalTime={crewTravelTime}
+            crewRequired="start" />
+        )
+      }
+    ),
+    {
+      label: 'Product Transport Time',
+      value: formatTimer(transportTime),
+      direction: getBonusDirection(hopperTransportBonus),
+      isTimeStat: true,
+      tooltip: (
+        <TimeBonusTooltip
+          bonus={hopperTransportBonus}
+          title="Transport Time"
+          totalTime={transportTime}
+          crewRequired="start" />
+      )
+    },
+    {
+      label: 'Order Mass',
+      value: formatResourceMass(quantity, resourceId),
+      direction: 0,
+    },
+    {
+      label: 'Order Volume',
+      value: formatResourceVolume(quantity, resourceId),
+      direction: 0,
+    },
+  ]), [feeTotal, quantity, transportTime, crewTravelTime, hopperTransportBonus, resourceId]);
+
+
+
+
+
+
+
+  // handle "currentOrder" state
+  useEffect(() => {
+    if (currentOrder) {
+      // TODO: make selections
+    }
+  }, [currentOrder]);
+  
 
   const tooltipRefEl = useRef();
 
-  const [buyOrders, setBuyOrders] = useState([]);
-  const [sellOrders, setSellOrders] = useState([]);
   const [tooltipVisible, setTooltipVisible] = useState();
-  
-  const marketplaceFee = 0.05;  // TODO: ...
-  
-  // TODO: presumably these will come from useQuery and don't
-  //  need to be in local state like this
-  useEffect(() => {
-    setBuyOrders(
-      [
-        { price: 110, amount: 71 },
-        { price: 140, amount: 71 },
-        { price: 170, amount: 71 },
-        { price: 180, amount: 71 },
-        { price: 190, amount: 71 },
-        { price: 200, amount: 71 },
-        { price: 210, amount: 200 },
-        { price: 240, amount: 140 },
-        { price: 245, amount: 10 },
-        { price: 259, amount: 350 },
-        { price: 300, amount: 50 },
-        { price: 305, amount: 90 },
-      ].sort((a, b) => a.price > b.price ? -1 : 1)
-    );
-    setSellOrders(
-      [
-        { price: 370, amount: 369 },
-        { price: 327, amount: 16 },
-        { price: 317, amount: 80 },
-      ].sort((a, b) => a.price > b.price ? -1 : 1)
-    );
-  }, []);
-
-  useEffect(() => {
-    if (currentDestinationLot) {
-      setDestinationLot(currentDestinationLot);
-    }
-  }, [currentDestinationLot]);
 
   const totalForBuy = useMemo(() => {
     return (buyOrders || []).reduce((acc, cur) => acc + cur.amount, 0);
@@ -243,21 +420,54 @@ const MarketplaceOrder = ({ asteroid, lot, manager, stage, ...props }) => {
   }, [sellOrders]);
 
   const onSubmitOrder = useCallback(() => {
-    startLaunch();
-  }, []);
+    if (type === 'market') {
+      if (mode === 'buy') {
+        fillSellOrders({
+          destination: { id: storage?.id, label: storage?.label },
+          destinationSlot: storageInventory?.slot,
+          fillOrders: marketFills || [],
+          product: resourceId
+        })
+      } else {
+        fillBuyOrders({
+          origin: { id: storage?.id, label: storage?.label },
+          originSlot: storageInventory?.slot,
+          fillOrders: marketFills || [],
+          product: resourceId
+        })
+      }
+    } else {
+      const vars = {
+        product: resourceId,
+        amount: quantityToUnits(quantity),
+        price: limitPrice
+      };
+      if (mode === 'buy') {
+        createBuyOrder({
+          ...vars,
+          destination: { id: storage?.id, label: storage?.label },
+          destinationSlot: storageInventory?.slot,
+          feeTotal
+        });
+      } else {
+        createSellOrder({
+          ...vars,
+          origin: { id: storage?.id, label: storage?.label },
+          originSlot: storageInventory?.slot
+        });
+      }
+    }
+  }, [feeTotal, limitPrice, marketFills, quantity, quantityToUnits, resourceId, storage, storageInventory]);
 
   // handle auto-closing
   const lastStatus = useRef();
   useEffect(() => {
     // (close on status change from)
-    if (['READY', 'READY_TO_FINISH', 'FINISHING'].includes(lastStatus.current)) {
-      if (launchStatus !== lastStatus.current) {
-        console.log('on Close');
-        props.onClose();
-      }
+    if (lastStatus.current && orderStatus !== lastStatus.current) {
+      props.onClose();
     }
-    lastStatus.current = launchStatus;
-  }, [launchStatus]);
+    lastStatus.current = orderStatus;
+  }, [orderStatus]);
 
   const handleChangeQuantity = useCallback((e) => {
     let input = parseInt(e.currentTarget.value) || 0;
@@ -265,6 +475,7 @@ const MarketplaceOrder = ({ asteroid, lot, manager, stage, ...props }) => {
       if (mode === 'buy') input = Math.max(0, Math.min(input, totalForSale));
       if (mode === 'sell') input = Math.max(0, Math.min(input, totalForBuy));
     }
+
     // TODO: set limits for limit orders
     setQuantity(input);
   }, [mode, totalForSale, totalForBuy, type]);
@@ -281,30 +492,6 @@ const MarketplaceOrder = ({ asteroid, lot, manager, stage, ...props }) => {
     }
   }, [mode, buyOrders, sellOrders]);
 
-  const [totalMarketPrice, avgMarketPrice, averagedOrderTally] = useMemo(() => {
-    let total = 0;
-    let totalOrders = 0;
-    let needed = quantity;
-    const orders = []
-      .concat(mode === 'buy' ? sellOrders : buyOrders)
-      .sort((a, b) => (mode === 'buy' ? 1 : -1) * (a.price - b.price));
-    orders.every(({ price, amount }) => {
-      const levelAmount = Math.min(needed, amount);
-      total += levelAmount * price;
-      needed -= levelAmount;
-      if (levelAmount > 0) {
-        totalOrders++;
-        return true;
-      }
-      return false;
-    });
-    return [total, total / quantity, totalOrders];
-  }, [buyOrders, mode, quantity, sellOrders]);
-
-  const totalLimitPrice = useMemo(() => {
-    return (limitPrice || 0) * quantity;
-  }, [limitPrice, quantity]);
-
   const [competingOrderTally, betterOrderTally, bestOrderPrice] = useMemo(() => {
     if (mode === 'buy') {
       return [
@@ -320,48 +507,11 @@ const MarketplaceOrder = ({ asteroid, lot, manager, stage, ...props }) => {
     ];
   }, [buyOrders, mode, sellOrders, limitPrice]);
 
-  const fee = useMemo(() => {
-    return (type === 'market' ? totalMarketPrice : totalLimitPrice)
-      * marketplaceFee;
-  }, [marketplaceFee, totalMarketPrice, totalLimitPrice, type]);
-
   const total = useMemo(() => {
     let sum = type === 'limit' ? totalLimitPrice : totalMarketPrice;
-    return sum + (mode === 'buy' ? fee : -fee);
-  }, [fee, mode, totalLimitPrice, totalMarketPrice, type]);
+    return sum + (mode === 'buy' ? feeTotal : -feeTotal);
+  }, [feeTotal, mode, totalLimitPrice, totalMarketPrice, type]);
 
-  const marketplaceBonus = Crew.getAbilityBonus(Crewmate.ABILITY_IDS.HOPPER_TRANSPORT_TIME, crewmates); // TODO: wrong id
-
-  const stats = useMemo(() => ([
-    {
-      label: 'Crew Travel Time',
-      value: formatTimer(0),
-      direction: 0,
-      isTimeStat: true,
-    },
-    {
-      label: 'Marketplace Fee',
-      value: (fee || 0).toLocaleString(),
-      direction: 0,
-      direction: marketplaceBonus.totalBonus > 1 ? getBonusDirection(marketplaceBonus) : 0,
-      tooltip: marketplaceBonus.totalBonus > 1 && (
-        <BonusTooltip
-          bonus={marketplaceBonus}
-          title="Marketplace Fee"
-          titleValue={`${(fee || 0).toLocaleString()}`} />
-      )
-    },
-    {
-      label: 'Order Mass',
-      value: formatResourceMass(quantity, resourceId),
-      direction: 0,
-    },
-    {
-      label: 'Order Volume',
-      value: formatResourceVolume(quantity, resourceId),
-      direction: 0,
-    },
-  ]), [fee, quantity, marketplaceBonus, resourceId]);
 
   const dialogAction = useMemo(() => {
     let a = {};
@@ -392,6 +542,8 @@ const MarketplaceOrder = ({ asteroid, lot, manager, stage, ...props }) => {
   }, [type, isCancellation]);
 
   const insufficientBalance = false;  // TODO: ...
+  const insufficientProduct = false;  // TODO: ...
+  // TODO: in inventory
 
   return (
     <>
@@ -399,8 +551,8 @@ const MarketplaceOrder = ({ asteroid, lot, manager, stage, ...props }) => {
         action={dialogAction}
         captain={captain}
         location={{ asteroid, lot }}
-        crewAvailableTime={0}
-        taskCompleteTime={0}
+        crewAvailableTime={crewTimeRequirement}
+        taskCompleteTime={taskTimeRequirement}
         onClose={props.onClose}
         stage={stage}
         wide />
@@ -420,25 +572,26 @@ const MarketplaceOrder = ({ asteroid, lot, manager, stage, ...props }) => {
             image={<ResourceThumbnail resource={resource} tooltipContainer="none" />}
             label={resource?.name}
             disabled
-            sublabel="Finished Good"
+            sublabel={resource?.classification}
             bodyStyle={{ background: 'transparent' }}
           />
         </FlexSection>
 
         <FlexSection>
-          <LotInputBlock
-            title={`Delivery ${mode === 'buy' ? 'To' : 'From'}`}
-            lot={destinationLot}
-            fallbackSublabel='Inventory'
-            imageProps={{
-              iconOverride: <InventoryIcon />,
-              inventories: destinationLot?.building?.Inventories,
-              showInventoryStatusForType: 1
-            }}
-            isSelected={stage === actionStages.NOT_STARTED}
-            onClick={() => setDestinationSelectorOpen(true)}
+          <InventoryInputBlock
+            title={mode === 'buy' ? 'Deliver To' : 'Source From'}
+            titleDetails={<TransferDistanceDetails distance={transportDistance} crewTravelBonus={hopperTransportBonus} />}
             disabled={stage !== actionStages.NOT_STARTED}
-          />
+            entity={storage}
+            inventorySlot={storageInventory?.slot}
+            imageProps={{ iconOverride: <InventoryIcon /> }}
+            isSelected={stage === actionStages.NOT_STARTED}
+            onClick={() => setStorageSelectorOpen(true)}
+            sublabel={
+              storageLot
+              ? <><LocationIcon /> {formatters.lotName(Lot.toId(storageLot?.id))}</>
+              : 'Inventory'
+            } />
 
           <FlexSectionSpacer />
 
@@ -474,7 +627,7 @@ const MarketplaceOrder = ({ asteroid, lot, manager, stage, ...props }) => {
                   min={0}
                   onChange={handleChangeLimitPrice}
                   type="number"
-                  value={type === 'market' ? avgMarketPrice.toLocaleString() : limitPrice} />
+                  value={type === 'market' ? formatPrice(avgMarketPrice) : limitPrice} />
               </TextInputWrapper>
             </FormSection>
 
@@ -590,16 +743,6 @@ const MarketplaceOrder = ({ asteroid, lot, manager, stage, ...props }) => {
 
         </FlexSection>
 
-        {stage !== actionStages.NOT_STARTED && null /* TODO: (
-          <ProgressBarSection
-            finishTime={lot?.building?.construction?.finishTime}
-            startTime={lot?.building?.construction?.startTime}
-            stage={stage}
-            title="Progress"
-            totalTime={crewTravelTime + constructionTime}
-          />
-        )*/}
-
         <ActionDialogStats
           stage={stage}
           stats={stats}
@@ -608,23 +751,25 @@ const MarketplaceOrder = ({ asteroid, lot, manager, stage, ...props }) => {
 
       </ActionDialogBody>
 
-      {/* TODO: add waitForCrewReady? */}
       <ActionDialogFooter
         disabled={false/* TODO: no destination selected, amount invalid, price too much, etc */}
         goLabel={goLabel}
         onGo={onSubmitOrder}
         stage={stage}
+        waitForCrewReady
         wide
         {...props} />
 
       {stage === actionStages.NOT_STARTED && (
-        <DestinationSelectionDialog
-          asteroid={asteroid}
-          originLotId={lot?.id}
-          initialSelection={undefined/* TODO: if only one warehouse, use it... */}
-          onClose={() => setDestinationSelectorOpen(false)}
-          onSelected={setDestinationLot}
-          open={destinationSelectorOpen}
+        <InventorySelectionDialog
+          asteroidId={asteroid.id}
+          otherEntity={exchange}
+          onClose={() => setStorageSelectorOpen(false)}
+          onSelected={setStorageSelection}
+          open={storageSelectorOpen}
+          isSourcing={reactBool(mode === 'sell')}
+          itemIds={[resourceId]}
+          requirePresenceOfItemIds={reactBool(mode === 'sell')}
         />
       )}
     </>
@@ -633,11 +778,8 @@ const MarketplaceOrder = ({ asteroid, lot, manager, stage, ...props }) => {
 
 const Wrapper = (props) => {
   const { asteroid, lot, isLoading } = useAsteroidAndLot(props);
-  // TODO: ...
-  // const extractionManager = useExtractionManager(lot?.id);
-  // const { actionStage } = extractionManager;
-  const manager = {};
-  const actionStage = actionStages.NOT_STARTED;
+  const manager = useMarketplaceManager(lot?.building?.id);
+  const actionStage = actionStages.NOT_STARTED; // TODO: ...
 
   useEffect(() => {
     if (!asteroid || !lot) {
@@ -646,6 +788,7 @@ const Wrapper = (props) => {
       }
     }
   }, [asteroid, lot, isLoading]);
+  console.log('park of the prob');
 
   // TODO: actionImage
   return (

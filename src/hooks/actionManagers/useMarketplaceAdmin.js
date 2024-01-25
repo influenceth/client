@@ -3,26 +3,42 @@ import { Entity } from '@influenceth/sdk';
 
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
 import useCrewContext from '~/hooks/useCrewContext';
+import useEntity from '../useEntity';
 
-const useMarketplaceAdmin = (entity) => {
+const useMarketplaceAdmin = (buildingId) => {
   const { crew } = useCrewContext();
   const { execute, getStatus } = useContext(ChainTransactionContext);
+  const { data: building } = useEntity({ id: buildingId, label: Entity.IDS.BUILDING });
 
-  const caller_crew = useMemo(() => ({ id: crew?.id, label: Entity.IDS.CREW }), [crew?.id]);
+  const payload = useMemo(() => ({
+    exchange: { id: buildingId, label: Entity.IDS.BUILDING },
+    caller_crew: { id: crew?.id, label: Entity.IDS.CREW }
+  }), [crew?.id, buildingId]);
 
-  const changeName = useCallback(
-    (name) => execute('ChangeName', { entity, name, caller_crew }),
-    [execute, entity, caller_crew]
+  const changeSettings = useCallback(
+    ({ makerFee, takerFee, allowedProducts }) => execute(
+      'ConfigureExchange',
+      {
+        maker_fee: makerFee,
+        taker_fee: takerFee,
+        allowed_products: allowedProducts,
+        ...payload
+      }, 
+      {
+        lotId: building?.Location?.location?.id
+      }
+    ),
+    [building, execute, payload]
   );
 
   const status = useMemo(
-    () => getStatus('ChangeName', { entity }),
-    [getStatus, entity]
+    () => getStatus('ConfigureExchange', { ...payload }),
+    [getStatus, payload]
   );
 
   return {
-    changeName,
-    changingName: status === 'pending'
+    changeSettings,
+    changingSettings: status === 'pending'
   };
 };
 

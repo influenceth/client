@@ -14,6 +14,7 @@ import {
   FavoriteIcon,
   InfoIcon,
   InventoryIcon,
+  KeysIcon,
   ListViewIcon,
   LotSearchIcon,
   MyAssetsIcon,
@@ -26,6 +27,7 @@ import useLot from '~/hooks/useLot';
 import useStore from '~/hooks/useStore';
 import hudMenus from './hudMenus';
 import { reactBool } from '~/lib/utils';
+import useCrewContext from '~/hooks/useCrewContext';
 
 const cornerWidth = 8;
 const bumpHeightHalf = 100;
@@ -155,6 +157,8 @@ const PanelContent = styled.div`
 const HudMenu = ({ forceOpenMenu }) => {
   const history = useHistory();
   const { account } = useAuth();
+  const { crew } = useCrewContext();
+
   const asteroidId = useStore(s => s.asteroids.origin);
   const destination = useStore(s => s.asteroids.destination);
   const lotId = useStore(s => s.asteroids.lot);
@@ -218,6 +222,10 @@ const HudMenu = ({ forceOpenMenu }) => {
   useEffect(() => {
     setOpen(!!openHudMenu);
   }, [openHudMenu]);
+
+  const asteroidHasMarketplace = useMemo(() => {
+    return false; // TODO: true if has at least 1 OPERATIONAL marketplace (use lotData or elasticsearch)
+  }, []);
 
   const buttons = useMemo(() => {
     let buttons = [];
@@ -355,7 +363,7 @@ const HudMenu = ({ forceOpenMenu }) => {
         },
       );
 
-      if (false) { // TODO: if has at least 1 OPERATIONAL marketplace
+      if (asteroidHasMarketplace) {
         buttons.push({
           key: 'ASTEROID_MARKETS',
           label: 'Asteroid Markets',
@@ -387,6 +395,16 @@ const HudMenu = ({ forceOpenMenu }) => {
               history.push(`/marketplace/${asteroidId}/${Lot.toIndex(lotId)}`);
             }
           });
+
+          if (lot.building.Control.controller.id === crew?.id) {
+            buttons.push({
+              key: 'BUILDING_ADMIN',
+              label: 'Building Management',
+              icon: <KeysIcon />,
+              noDetail: true,
+              Component: hudMenus.AdminBuilding
+            });
+          }
         }
       }
 
@@ -423,7 +441,7 @@ const HudMenu = ({ forceOpenMenu }) => {
     }
 
     return buttons;
-  }, [asteroidId, destination, lot, lotId, showDevTools, zoomStatus, zoomScene]);
+  }, [asteroidId, crew?.id, destination, lot, lotId, showDevTools, zoomStatus, zoomScene]);
 
   const { label, onDetailClick, detailType, Component, componentProps, hideInsteadOfClose, noClose, noDetail } = useMemo(() => {
     return buttons.find((b) => b.key === openHudMenu) || {};

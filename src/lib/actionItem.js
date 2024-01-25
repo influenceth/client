@@ -28,6 +28,11 @@ import {
   EmergencyModeExitIcon,
   EmergencyModeCollectIcon,
   SetCourseIcon,
+  MarketplaceBuildingIcon,
+  LimitSellIcon,
+  MarketBuyIcon,
+  LimitBuyIcon,
+  MarketSellIcon,
 } from '~/components/Icons';
 import theme, { hexToRGB } from '~/theme';
 import { getProcessorProps } from './utils';
@@ -160,6 +165,113 @@ const formatAsTx = (item) => {
           // TODO: use ship link
         };
       }
+      break;
+    }
+
+    case 'ConfigureExchange': {
+      formatted.icon = <MarketplaceBuildingIcon />;
+      formatted.label = 'Configure Marketplace';
+      formatted.asteroidId = Lot.toPosition(item.meta?.lotId)?.asteroidId;
+      formatted.lotId = item.meta?.lotId;
+      formatted.onClick = ({ history }) => {
+        // TODO: link to (zoomed) lot
+      };
+      break;
+    }
+
+    case 'CreateSellOrder': {
+      const { asteroidId } = Lot.toPosition(item.meta.lotId) || {};
+      formatted.icon = <LimitSellIcon />;
+      formatted.label = 'Limit Sell';
+      formatted.asteroidId = asteroidId;
+      formatted.lotId = item.meta.lotId;
+      formatted.locationDetail = Product.TYPES[item.vars.product]?.name;
+      formatted.onClick = ({ openDialog }) => {
+        openDialog('MARKETPLACE_ORDER', {
+          asteroidId,
+          lotId: item.meta.lotId,
+          mode: 'sell',
+          type: 'limit',
+          resourceId: item.vars.product,
+          preselect: {
+            limitPrice: item.vars.price,
+            quantity: item.vars.amount,
+            storage: item.vars.storage,
+            storageSlot: item.vars.storage_slot
+          }
+        });
+      };
+      break;
+    }
+    case 'BulkFillSellOrder': {
+      const { asteroidId } = Lot.toPosition(item.meta.lotId) || {};
+      formatted.icon = <MarketBuyIcon />;
+      formatted.label = 'Market Buy';
+      formatted.asteroidId = asteroidId;
+      formatted.lotId = item.meta.lotId;
+      formatted.locationDetail = Product.TYPES[item.vars[0].product]?.name;
+      formatted.onClick = ({ openDialog }) => {
+        openDialog('MARKETPLACE_ORDER', {
+          asteroidId,
+          lotId: item.meta.lotId,
+          mode: 'buy',
+          type: 'market',
+          resourceId: item.vars[0].product,
+          preselect: {
+            quantity: item.vars.reduce((acc, o) => acc + o.amount, 0),
+            storage: item.vars[0].destination,
+            storageSlot: item.vars[0].destination_slot
+          }
+        });
+      };
+      break;
+    }
+    case 'EscrowDepositAndCreateBuyOrder': {
+      const { asteroidId } = Lot.toPosition(item.meta.lotId) || {};
+      formatted.icon = <LimitBuyIcon />;
+      formatted.label = 'Limit Buy';
+      formatted.asteroidId = asteroidId;
+      formatted.lotId = item.meta.lotId;
+      formatted.locationDetail = Product.TYPES[item.vars.product]?.name;
+      formatted.onClick = ({ openDialog }) => {
+        openDialog('MARKETPLACE_ORDER', {
+          asteroidId,
+          lotId: item.meta.lotId,
+          mode: 'buy',
+          type: 'limit',
+          resourceId: item.vars.product,
+          preselect: {
+            limitPrice: item.vars.price,
+            quantity: item.vars.amount,
+            storage: item.vars.storage,
+            storageSlot: item.vars.storage_slot
+          }
+        });
+      };
+      break;
+    }
+    case 'EscrowWithdrawalAndFillBuyOrders': {
+      const { asteroidId } = Lot.toPosition(item.meta.lotId) || {};
+      formatted.icon = <MarketSellIcon />;
+      formatted.label = 'Market Sell';
+      formatted.asteroidId = asteroidId;
+      formatted.lotId = item.meta.lotId;
+      formatted.locationDetail = Product.TYPES[item.vars[0].product]?.name;
+      formatted.onClick = ({ openDialog }) => {
+        console.log('item', item);
+        openDialog('MARKETPLACE_ORDER', {
+          asteroidId,
+          lotId: item.meta.lotId,
+          mode: 'sell',
+          type: 'market',
+          resourceId: item.vars[0].product,
+          preselect: {
+            quantity: item.vars.reduce((acc, o) => acc + o.amount, 0),
+            storage: item.vars[0].origin,
+            storageSlot: item.vars[0].originSlot
+          }
+        });
+      };
       break;
     }
 

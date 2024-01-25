@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import styled from 'styled-components';
+import { Crewmate, Order } from '@influenceth/sdk';
 
 import { CompositionIcon, InfoIcon, LimitBuyIcon, LimitSellIcon, MarketBuyIcon, MarketplaceBuildingIcon, MarketSellIcon, OrderIcon, RadioCheckedIcon, RadioUncheckedIcon, SwayIcon } from '~/components/Icons';
 import CrewIndicator from '~/components/CrewIndicator';
@@ -8,9 +9,13 @@ import Switcher from '~/components/SwitcherButton';
 import UncontrolledTextInput, { TextInputWrapper } from '~/components/TextInputUncontrolled';
 import useScreenSize from '~/hooks/useScreenSize';
 import theme, { hexToRGB } from '~/theme';
-import { reactBool, formatFixed, formatPrice } from '~/lib/utils';
+import { reactBool, formatFixed, formatPrice, getCrewAbilityBonuses } from '~/lib/utils';
 import ActionButton from '~/game/interface/hud/actionButtons/ActionButton';
 import useStore from '~/hooks/useStore';
+import formatters from '~/lib/formatters';
+import useOrderList from '~/hooks/useOrderList';
+import { formatResourceAmount } from '../../hud/actionDialogs/components';
+import useCrewContext from '~/hooks/useCrewContext';
 
 const greenRGB = hexToRGB(theme.colors.green);
 
@@ -339,47 +344,44 @@ const SummaryLabel = styled.label`
     
 const STROKE_WIDTH = 2;
 
-// TODO: ecs refactor
 const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource }) => {
   const { width, height } = useScreenSize();
+  const { crew } = useCrewContext();
 
   const onSetAction = useStore(s => s.dispatchActionDialog);
 
-  const [buyOrders, setBuyOrders] = useState([]);
-  const [sellOrders, setSellOrders] = useState([]);
+  const { data: orders } = useOrderList(marketplace, resource?.i);
+
+  const [buyOrders, sellOrders] = useMemo(() => ([
+    (orders || []).filter((o) => o.orderType === Order.IDS.LIMIT_BUY),
+    (orders || []).filter((o) => o.orderType === Order.IDS.LIMIT_SELL),
+  ]), [orders]);
+
+  const buyBuckets = useMemo(() => {
+    const buckets = buyOrders.reduce((acc, { price, amount }) => ({
+      ...acc,
+      [price]: (acc[price] || 0) + amount
+    }), {});
+    return Object.keys(buckets)
+      .map((price) => ({ price: Number(price), amount: buckets[price] }))
+      .sort((a, b) => a.price > b.price ? -1 : 1);
+  }, [buyOrders]);
+
+  const sellBuckets = useMemo(() => {
+    const buckets = sellOrders.reduce((acc, { price, amount }) => ({
+      ...acc,
+      [price]: (acc[price] || 0) + amount
+    }), {});
+    return Object.keys(buckets)
+      .map((price) => ({ price: Number(price), amount: buckets[price] }))
+      .sort((a, b) => a.price > b.price ? -1 : 1);
+  }, [sellOrders]);
+
   const [mode, setMode] = useState('buy');
   const [type, setType] = useState('market');
   const chartWrapperRef = useRef();
 
   // TODO: if nothing available for market order, default to limit
-
-  // TODO: presumably these will come from useQuery and don't
-  //  need to be in local state like this
-  useEffect(() => {
-    setBuyOrders(
-      [
-        { price: 110, amount: 71 },
-        { price: 140, amount: 71 },
-        { price: 170, amount: 71 },
-        { price: 180, amount: 71 },
-        { price: 190, amount: 71 },
-        { price: 200, amount: 71 },
-        { price: 210, amount: 200 },
-        { price: 240, amount: 140 },
-        { price: 245, amount: 10 },
-        { price: 259, amount: 350 },
-        { price: 300, amount: 50 },
-        { price: 305, amount: 90 },
-      ].sort((a, b) => a.price > b.price ? -1 : 1)
-    );
-    setSellOrders(
-      [
-        { price: 370, amount: 369 },
-        { price: 327, amount: 16 },
-        { price: 317, amount: 80 },
-      ].sort((a, b) => a.price > b.price ? -1 : 1)
-    );
-  }, []);
 
   const {
     xViewbox,
@@ -394,7 +396,7 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
     totalForSale
   } = useMemo(() => {
     if (!chartWrapperRef.current) return {};
-    if (!(buyOrders?.length > 0 || sellOrders?.length > 0)) return {};
+    if (!(buyBuckets?.length > 0 || sellBuckets?.length > 0)) return {};
 
     const xViewbox = chartWrapperRef.current.clientWidth;
     const yViewbox = chartWrapperRef.current.clientHeight;
@@ -402,20 +404,20 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
     // calculate centerPrice and spread for the orders
     let centerPrice;
     let spread;
-    if (buyOrders[0] && sellOrders[sellOrders.length - 1]) {
-      centerPrice = (buyOrders[0].price + sellOrders[sellOrders.length - 1].price) / 2;
-      spread = sellOrders[sellOrders.length - 1].price - buyOrders[0].price;
+    if (buyBuckets[0] && sellBuckets[sellBuckets.length - 1]) {
+      centerPrice = (buyBuckets[0].price + sellBuckets[sellBuckets.length - 1].price) / 2;
+      spread = sellBuckets[sellBuckets.length - 1].price - buyBuckets[0].price;
     } else {
-      centerPrice = buyOrders[0].price || sellOrders[sellOrders.length - 1].price;
+      centerPrice = buyBuckets?.[0]?.price || sellBuckets?.[sellBuckets.length - 1]?.price || 0;
     }
     
     // set the size of the y-axis
     let yAxisHalf = 0.05 * centerPrice;
-    if (buyOrders.length) {
-      yAxisHalf = Math.max(yAxisHalf, centerPrice - buyOrders[buyOrders.length - 1].price);
+    if (buyBuckets.length) {
+      yAxisHalf = Math.max(yAxisHalf, centerPrice - buyBuckets[buyBuckets.length - 1].price);
     }
-    if (sellOrders.length) {
-      yAxisHalf = Math.max(yAxisHalf, sellOrders[0].price - centerPrice);
+    if (sellBuckets.length) {
+      yAxisHalf = Math.max(yAxisHalf, sellBuckets[0].price - centerPrice);
     }
     yAxisHalf *= 1.05; // add enough buffer that can draw last step
 
@@ -423,8 +425,8 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
     const yAxisMin = centerPrice - yAxisHalf;
     
     // set the size of the x-axis
-    const buySum = buyOrders.reduce((acc, cur) => acc + cur.amount, 0);
-    const sellSum = sellOrders.reduce((acc, cur) => acc + cur.amount, 0);
+    const buySum = buyBuckets.reduce((acc, cur) => acc + cur.amount, 0);
+    const sellSum = sellBuckets.reduce((acc, cur) => acc + cur.amount, 0);
     const xAxisLength = 2 * Math.max(buySum, sellSum);
     
     // create helper functions
@@ -438,7 +440,7 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
     // calculate the "buy" polygon
     let totalForBuy = 0;
     const buyPoints = [];
-    buyOrders.forEach(({ price, amount }) => {
+    buyBuckets.forEach(({ price, amount }) => {
       if (buyPoints.length === 0) {
         buyPoints.push(`${xViewbox + STROKE_WIDTH},${priceToY(price)}`);
       }
@@ -453,13 +455,13 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
     // calculate the "sell" polygon
     let totalForSale = 0;
     const sellPoints = [];
-    [...sellOrders].reverse().forEach(({ price, amount }) => {
+    [...sellBuckets].reverse().forEach(({ price, amount }) => {
       if (sellPoints.length === 0) {
         sellPoints.push(`${xViewbox + STROKE_WIDTH},${priceToY(price)}`);
       }
-      sellPoints.push(`${amountToX(totalForSale)} ${priceToY(price)}`);
+      sellPoints.push(`${amountToX(totalForSale)},${priceToY(price)}`);
       totalForSale += amount;
-      sellPoints.push(`${amountToX(totalForSale)} ${priceToY(price)}`);
+      sellPoints.push(`${amountToX(totalForSale)},${priceToY(price)}`);
     });
     sellPoints.push(`${amountToX(totalForSale)},${-2 * STROKE_WIDTH}`);
     sellPoints.push(`${xViewbox + STROKE_WIDTH},${-2 * STROKE_WIDTH}`);
@@ -477,12 +479,32 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
       totalForBuy,
       totalForSale
     };
-  }, [buyOrders, sellOrders, height, width]);
+  }, [buyBuckets, sellBuckets, height, width]);
 
   let rowBuyVolume = 0;
   let rowSaleVolume = totalForSale + 0;
   let volumeBenchmark = Math.max(totalForBuy, totalForSale);
-  const marketplaceFee = 0.05;  // TODO: ...
+
+  // TODO: re-release sdk and reference there
+  const feeReductionBonus = useMemo(() => {
+    if (!crew) return {};
+    return getCrewAbilityBonuses(Crewmate.ABILITY_IDS.MARKETPLACE_FEE_REDUCTION, crew);
+  }, [crew]);
+
+  const feeEnforcementBonus = useMemo(() => {
+    if (!marketplaceOwner) return {};
+    return getCrewAbilityBonuses(Crewmate.ABILITY_IDS.MARKETPLACE_FEE_ENFORCEMENT, marketplaceOwner) || {};
+  }, [marketplaceOwner]);
+
+  const effFeeBonus = useMemo(
+    () => Order.netEffFeeBonus(feeReductionBonus.totalBonus, feeEnforcementBonus.totalBonus),
+    [feeReductionBonus, feeEnforcementBonus]
+  );
+
+  const marketplaceFee = useMemo(
+    () => 1E-5 * marketplace?.Exchange?.[type === 'market' ? 'takerFee' : 'makerFee'] / effFeeBonus,
+    [effFeeBonus, marketplace, type]
+  );
 
   const [quantity, setQuantity] = useState();
   const [limitPrice, setLimitPrice] = useState();
@@ -498,7 +520,7 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
       lotId: lot?.id,
       mode,
       type,
-      resourceId: resource?.id,
+      resourceId: resource?.i,
       preselect: { limitPrice, quantity }
     });
   }, [limitPrice, lot, mode, quantity, resource, type]);
@@ -517,12 +539,14 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
     setLimitPrice(e.currentTarget.value);
   }, []);
 
+  // TODO: is quantity right here for non-atomic?
   const [totalMarketPrice, avgMarketPrice] = useMemo(() => {
     let total = 0;
     let needed = quantity;
+    const priceSortMult = mode === 'buy' ? 1 : -1;
     const orders = []
       .concat(mode === 'buy' ? sellOrders : buyOrders)
-      .sort((a, b) => (mode === 'buy' ? 1 : -1) * (a.price - b.price));
+      .sort((a, b) => a.price === b.price ? a.validTime - b.validTime : (priceSortMult * (a.price - b.price)));
     orders.forEach(({ price, amount }) => {
       const levelAmount = Math.min(needed, amount);
       total += levelAmount * price;
@@ -562,12 +586,11 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
       <Main>
         <Header>
           <div>
-            <h1><MarketplaceBuildingIcon /> {marketplace.name}</h1>
+            <h1><MarketplaceBuildingIcon /> {formatters.buildingName(marketplace)}</h1>
             <Subheader>
               <span>{resource.name}</span>
-              {/* TODO: values */}
-              <span style={{ color: theme.colors.green }}>240t Available</span>
-              <span style={{ color: theme.colors.main }}>142t Sellable</span>
+              <span style={{ color: theme.colors.green }}>{formatResourceAmount(totalForBuy || 0, resource.i)} Available</span>
+              <span style={{ color: theme.colors.main }}>{formatResourceAmount(totalForSale || 0, resource.i)} Sellable</span>
             </Subheader>
           </div>
           {marketplaceOwner && <CrewIndicator crew={marketplaceOwner} flip label="Managed by" />}
@@ -610,7 +633,7 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
                   </tr>
                 </thead>
                 <tbody>
-                  {sellOrders.map(({ price, amount }, i) => {
+                  {sellBuckets.map(({ price, amount }, i) => {
                     const rowVolume = rowSaleVolume;
                     rowSaleVolume -= amount;
                     return (
@@ -640,7 +663,7 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
                   </tr>
                 </thead>
                 <tbody>
-                  {buyOrders.map(({ price, amount }, i) => {
+                  {buyBuckets.map(({ price, amount }, i) => {
                     rowBuyVolume += amount;
                     return (
                       <tr key={i}>
@@ -716,7 +739,7 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
                     <TextInputWrapper rightLabel="SWAY">
                       <UncontrolledTextInput
                         disabled
-                        value={avgMarketPrice ? formatFixed(avgMarketPrice || 0, 2) : centerPrice + spread / 2} />
+                        value={avgMarketPrice ? formatPrice(avgMarketPrice || 0) : (centerPrice + (spread || 0) / 2)} />
                     </TextInputWrapper>
                   </FormSection>
                 )}
@@ -741,7 +764,7 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
                   <TextInputWrapper rightLabel="SWAY">
                     <UncontrolledTextInput
                       disabled
-                      value={((type === 'market' ? totalMarketPrice : totalLimitPrice) || 0).toLocaleString()} />
+                      value={formatPrice((type === 'market' ? totalMarketPrice : totalLimitPrice) || 0)} />
                   </TextInputWrapper>
                 </FormSection>
 
@@ -764,7 +787,7 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
                   <Summary>
                     <SummaryLabel type={type} mode={mode} />
                     <div>
-                      <SwayIcon /> {total.toLocaleString()}
+                      <SwayIcon /> {formatPrice(total)}
                     </div>
                   </Summary>
 

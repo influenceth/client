@@ -3683,12 +3683,15 @@ const ActionDialogStat = ({ stat: { isTimeStat, label, value, direction, tooltip
   );
 };
 
-export const ActionDialogStats = ({ stage, stats, wide }) => {
+export const ActionDialogStats = ({ stage, stats: rawStats, wide }) => {
   const [open, setOpen] = useState();
 
   useEffect(() => {
     setOpen(stage === actionStage.NOT_STARTED);
   }, [stage]);
+
+  // remove any conditionally omitted stats
+  const stats = useMemo(() => rawStats.filter((s) => !!s), [rawStats]);
 
   if (!stats?.length) return null;
   return (
