@@ -59,7 +59,7 @@ const useMappedAsteroidLots = (i) => {
   }, [crewLots, crewLotsLoading]);
 
   // get all occupied-by-me ships from the server
-  const { data: crewShips, isLoading: crewShipsLoading } = useOwnedShips(i);
+  const { data: crewShips, isLoading: crewShipsLoading } = useOwnedShips();
   const myShipMap = useMemo(() => {
     if (crewShipsLoading) return null;
     return (crewShips || []).reduce((acc, p) => {
