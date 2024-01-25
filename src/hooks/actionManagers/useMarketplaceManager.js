@@ -15,7 +15,6 @@ const useMarketplaceManager = (buildingId) => {
   const { crew } = useCrewContext();
   const { data: exchange } = useEntity({ id: buildingId, label: Entity.IDS.BUILDING });
   const { data: exchangeController } = useHydratedCrew(exchange?.Control?.controller?.id);
-  console.log('exchangeController', exchangeController);
 
   const { data: orders, isLoading } = useCrewOrders(crew?.id);
 
@@ -26,15 +25,32 @@ const useMarketplaceManager = (buildingId) => {
     caller_crew: { id: crew?.id, label: Entity.IDS.CREW }
   }), [crew?.id, buildingId]);
 
-  // CreateSellOrder, CancelSellOrder, FillSellOrder
-  // CreateBuyOrder, CancelBuyOrder?, FillBuyOrder
-
-  const pendingLimitOrders = useMemo(() => {
-    return pendingTransactions.filter(({ key, vars }) => (
-      (key === 'CreateSellOrder' || key === 'CreateBuyOrder')
-
+  const getPendingOrder = useCallback((mode, type, details) => {
+    let key;
+    let locTest = () => true;
+    if (mode === 'buy' && type === 'limit') {
+      key = 'EscrowDepositAndCreateBuyOrder';
+      // locTest = (vars) => vars.storage.id === details.destination.id && vars.storage_slot === details.destinationSlot;
+    }
+    if (mode === 'buy' && type === 'market') {
+      key = 'EscrowWithdrawalAndFillBuyOrders';
+      // locTest = (vars) => vars.origin.id === details.origin.id && vars.origin_slot === details.originSlot;
+    }
+    if (mode === 'sell' && type === 'limit') {
+      key = 'CreateSellOrder';
+      // locTest = (vars) => vars.storage.id === details.origin.id && vars.storage_slot === details.originSlot;
+    }
+    if (mode === 'sell' && type === 'market') {
+      key = 'BulkFillSellOrder';
+      // locTest = (vars) => vars.destination.id === details.destination.id && vars.destination_slot === details.destinationSlot;
+    }
+    return pendingTransactions.find((tx) => (
+      tx.key === key
+        && tx.vars.product === details.product
+        && tx.vars.exchange.id === details.exchange.id
+        && locTest(tx.vars)
     ));
-  }, []);
+  }, [pendingTransactions]);
 
 
   const createBuyOrder = useCallback(
@@ -168,6 +184,7 @@ const useMarketplaceManager = (buildingId) => {
     fillSellOrders,
 
     // TODO: pending actions (by type?)
+    getPendingOrder
   };
 };
 
