@@ -5,7 +5,7 @@ import { Entity, Lot } from '@influenceth/sdk';
 import { options as lotLeaseOptions } from '~/components/filters/LotLeaseFilter';
 import useAsteroidCrewSamples from '~/hooks/useAsteroidCrewSamples';
 import useAsteroidCrewBuildings from '~/hooks/useAsteroidCrewBuildings';
-import useAsteroidCrewShips from './useAsteroidCrewShips';
+import useOwnedShips from './useOwnedShips';
 import useAsteroidLotData from '~/hooks/useAsteroidLotData';
 import useStore from '~/hooks/useStore';
 import { getAndCacheEntity } from '~/lib/activities';
@@ -59,7 +59,7 @@ const useMappedAsteroidLots = (i) => {
   }, [crewLots, crewLotsLoading]);
 
   // get all occupied-by-me ships from the server
-  const { data: crewShips, isLoading: crewShipsLoading } = useAsteroidCrewShips(i);
+  const { data: crewShips, isLoading: crewShipsLoading } = useOwnedShips(i);
   const myShipMap = useMemo(() => {
     if (crewShipsLoading) return null;
     return (crewShips || []).reduce((acc, p) => {
