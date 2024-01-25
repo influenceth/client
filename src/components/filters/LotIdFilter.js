@@ -10,28 +10,29 @@ import { InputBlock, SearchMenu } from './components';
 
 const fieldName = 'id';
 
-const LotIdFilter = ({ assetType, filters }) => {  
+const LotIdFilter = ({ assetType, filters }) => {
   const asteroidId = useStore((s) => s.asteroids.origin);
   const dispatchLotSelected = useStore((s) => s.dispatchLotSelected);
-  
-  const lotId = useRef();
-
+  const lotIndex = useRef();
   const maxLots = useMemo(() => Asteroid.getSurfaceArea(asteroidId), [asteroidId]);
 
   const handleById = useCallback(() => {
-    if (lotId.current.value) {
-      let targetId = parseInt(lotId.current.value);
-      if (targetId <= 0) {
-        lotId.current.value = 1;
-        targetId = 1;
+    if (lotIndex.current.value) {
+      let targetIndex = parseInt(lotIndex.current.value);
+
+      if (targetIndex <= 0) {
+        lotIndex.current.value = 1;
+        targetIndex = 1;
       }
-      if (targetId > maxLots) {
-        lotId.current.value = maxLots;
-        targetId = maxLots;
+
+      if (targetIndex > maxLots) {
+        lotIndex.current.value = maxLots;
+        targetIndex = maxLots;
       }
-      dispatchLotSelected(Lot.toId(asteroidId, targetId));
+
+      dispatchLotSelected(Lot.toId(asteroidId, targetIndex));
     }
-  }, [asteroidId]);
+  }, [asteroidId, dispatchLotSelected, maxLots]);
 
   const handleKeydown = useCallback((e) => {
     if (['Enter', 'Tab'].includes(e.key)) {
@@ -44,15 +45,14 @@ const LotIdFilter = ({ assetType, filters }) => {
       assetType={assetType}
       fieldName={fieldName}
       filters={filters}
-      title="Lot Id">
-      
+      title="Lot #">
+
       <InputBlock>
         <div>
           <UncontrolledTextInput
-            ref={lotId}
-            onBlur={(e) => e.currentTarget.value = ''}
+            ref={lotIndex}
             onKeyDown={handleKeydown}
-            placeholder="Lot ID"
+            placeholder="Lot #"
             step={1}
             max={maxLots}
             min={1}

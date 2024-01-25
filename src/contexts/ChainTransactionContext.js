@@ -159,10 +159,10 @@ const customConfigs = {
     })
   },
   ArrangeCrew: { equalityTest: ['caller_crew.id'] },
-  
+
   AssembleShipStart: { equalityTest: ['dry_dock.id', 'dry_dock_slot'] },
   AssembleShipFinish: { equalityTest: ['dry_dock.id', 'dry_dock_slot'] },
-  
+
   ChangeName: { equalityTest: ['entity.id', 'entity.label'] },
   ConfigureExchange: { equalityTest: ['exchange.id'] },
 
@@ -537,7 +537,7 @@ export function ChainTransactionProvider({ children }) {
                 const transferCalldatas = Array.isArray(transferCalldata) ? transferCalldata : [transferCalldata];
                 transferCalldatas.forEach((t) => {
                   calls.unshift(System.getTransferWithConfirmationCall(
-                    t.recipient,  
+                    t.recipient,
                     t.amount,
                     t.memo,
                     t.consumer || process.env.REACT_APP_STARKNET_DISPATCHER,

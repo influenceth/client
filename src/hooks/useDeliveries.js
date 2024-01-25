@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useQuery } from 'react-query';
-import { Delivery, Entity } from '@influenceth/sdk';
+import { Entity } from '@influenceth/sdk';
 
 import api from '~/lib/api';
 

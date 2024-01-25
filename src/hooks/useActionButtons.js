@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
-import { Asteroid, Building, Inventory, Ship } from '@influenceth/sdk';
+import { useMemo } from 'react';
+import { Ship } from '@influenceth/sdk';
 import cloneDeep from 'lodash/cloneDeep';
 
 import useAsteroid from '~/hooks/useAsteroid';
@@ -7,7 +7,6 @@ import useConstructionManager from '~/hooks/actionManagers/useConstructionManage
 import useCrewContext from '~/hooks/useCrewContext';
 import useLot from '~/hooks/useLot';
 import useShip from '~/hooks/useShip';
-import useStationedCrews from '~/hooks/useStationedCrews';
 import useStore from '~/hooks/useStore';
 import { locationsArrToObj } from '~/lib/utils';
 import actionButtons from '../game/interface/hud/actionButtons';
@@ -82,7 +81,7 @@ const buttonOrder = [
   // emode
   'EmergencyModeToggle',
   'EmergencyModeCollect',
-  
+
   // ejections
   'EjectCrew',
   'EjectGuestCrew',

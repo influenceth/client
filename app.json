@@ -93,6 +93,12 @@
     },
     "REACT_APP_ARGENT_WEB_WALLET_URL": {
       "required": false
+    },
+    "REACT_APP_STARKNET_SWAY_TOKEN": {
+      "required": true
+    },
+    "REACT_APP_AVNU_API_URL": {
+      "required": false
     }
   }
 }

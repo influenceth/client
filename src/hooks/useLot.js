@@ -1,9 +1,8 @@
 import { useQuery, useQueryClient } from 'react-query';
+import { useMemo } from 'react';
 import { Deposit, Entity, Lot, Ship } from '@influenceth/sdk';
 
 import api from '~/lib/api';
-import { useEffect, useMemo } from 'react';
-import useBuilding from './useBuilding';
 
 // const useLot = (lotId) => {
 //   return useQuery(
@@ -52,7 +51,7 @@ const useLot = (lotId) => {
           lotEntities.filter((e) => e.label === label)
         );
       })
-      
+
       return lot;
     },
     { enabled: !!lotId }

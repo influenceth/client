@@ -1,5 +1,4 @@
 import { useCallback, useMemo } from 'react';
-import { Lot } from '@influenceth/sdk';
 
 import { ShipIcon } from '~/components/Icons';
 import useDryDockManager from '~/hooks/actionManagers/useDryDockManager';
@@ -30,7 +29,7 @@ const AssembleShip = ({ asteroid, crew, lot, onSetAction, _disabled }) => {
       return getCrewDisabledReason({ asteroid, crew });
     }
   }, [_disabled, assemblyStatus, asteroid, crew]);
-  
+
   return (
     <ActionButton
       label={labelDict[assemblyStatus]}

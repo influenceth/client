@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo } from 'react';
 import { Dock, Ship } from '@influenceth/sdk';
 
 import { LandShipIcon } from '~/components/Icons';
@@ -17,7 +17,7 @@ const isVisible = ({ asteroid, crew, crewedShip, ship }) => {
       // && asteroid?.id === ship._location.asteroidId
       && !ship._location.lotId  // not on surface
     )
-    || 
+    ||
     (
       crewedShip
       && crewedShip.Control?.controller?.id === crew.id
@@ -32,7 +32,7 @@ const LandShip = ({ lot, onSetAction, _disabled }) => {
   const { currentDockingAction } = useShipDockingManager(crew?._location?.shipId);
   const { data: crewedShip } = useShip(crew?._location?.shipId)
   const ready = useReadyAtWatcher(crewedShip?.Ship?.readyAt);
-  
+
   const handleClick = useCallback(() => {
     onSetAction(
       'LAND_SHIP',
@@ -54,7 +54,7 @@ const LandShip = ({ lot, onSetAction, _disabled }) => {
         if (!Ship.TYPES[crewedShip.Ship.shipType]?.docking) return 'ship type cannot dock';
         if (!lot?.building?.Dock) return 'building has no dock';
         if (lot.building.Dock.dockedShips >= Dock.TYPES[lot.building.Dock.dockType].cap) return 'dock is full';
-      
+
       // trying to land
       } else {
         if (!Ship.TYPES[crewedShip.Ship.shipType]?.landing) return 'ship type requires a dock';
