@@ -28,11 +28,15 @@ import {
   StationCrewIcon,
   SurfaceTransferIcon,
   UnplanBuildingIcon,
-  SetCourseIcon
+  SetCourseIcon,
+  LimitBuyIcon,
+  MarketSellIcon,
+  LimitSellIcon,
+  MarketBuyIcon
 } from '~/components/Icons';
 import LotLink from '~/components/LotLink';
 
-import { andList, getProcessorProps, locationsArrToObj, ucfirst } from './utils';
+import { andList, formatPrice, getProcessorProps, locationsArrToObj, ucfirst } from './utils';
 import api from './api';
 import formatters from './formatters';
 import EntityName from '~/components/EntityName';
@@ -65,7 +69,15 @@ const getEntityName = (entity) => {
 
 
 // TODO (enhancement): some of the invalidations may be overkill by using this
-const invalidationDefaults = (label, id) => {
+const invalidationDefaults = (labelOrEntity, optId) => {
+  let label, id;
+  if (!optId) {
+    label = labelOrEntity.label;
+    id = labelOrEntity.id;
+  } else {
+    label = labelOrEntity;
+    id = optId;
+  }
   const i = [];
 
   // the specific affected record (and its activities)
@@ -155,6 +167,84 @@ const activities = {
   BridgeToStarknet: {},
   BridgedFromL1: {},
   BridgedToL1: {},
+
+  BuyOrderCancelled: {
+    getInvalidations: ({ event: { returnValues } }, { exchange = {} }) => {
+      const { asteroidId, lotId } = locationsArrToObj(exchange?.Location?.locations || []) || {};
+      return [
+        ...invalidationDefaults(returnValues.exchange),
+        ...invalidationDefaults(returnValues.storage),
+        [ 'swayBalance' ],
+        [ 'crewOpenOrders' ],
+        [ 'orderList', returnValues.product, returnValues.exchange.id ],
+        [ 'exchangeOrderSummary', asteroidId, returnValues.product ],
+        [ 'productOrderSummary', Entity.IDS.ASTEROID, asteroidId ],
+        [ 'productOrderSummary', Entity.IDS.LOT, lotId ],
+      ];
+    },
+
+    getPrepopEntities: ({ event: { returnValues } }) => ({
+      exchange: returnValues.exchange,
+    }),
+  },
+  BuyOrderCreated: {
+    getInvalidations: ({ event: { returnValues } }, { exchange = {} }) => {
+      const { asteroidId, lotId } = locationsArrToObj(exchange?.Location?.locations || []) || {};
+      return [
+        ...invalidationDefaults(returnValues.exchange),
+        ...invalidationDefaults(returnValues.storage),
+        [ 'swayBalance' ],
+        [ 'crewOpenOrders' ],
+        [ 'orderList', returnValues.product, returnValues.exchange.id ],
+        [ 'exchangeOrderSummary', asteroidId, returnValues.product ],
+        [ 'productOrderSummary', Entity.IDS.ASTEROID, asteroidId ],
+        [ 'productOrderSummary', Entity.IDS.LOT, lotId ],
+      ];
+    },
+
+    getPrepopEntities: ({ event: { returnValues } }) => ({
+      exchange: returnValues.exchange,
+    }),
+
+    requiresCrewTime: true
+  },
+  BuyOrderFilled: {
+    // amount, buyerCrew, caller, callerCrew, exchange, origin, originSlot, price, product, storage, storageSlot
+    getInvalidations: ({ event: { returnValues } }, { exchange = {} }) => {
+      const { asteroidId, lotId } = locationsArrToObj(exchange?.Location?.locations || []) || {};
+      return [
+        ...invalidationDefaults(returnValues.exchange),
+        ...invalidationDefaults(returnValues.origin),
+        ...invalidationDefaults(returnValues.storage),
+        [ 'swayBalance' ],
+        [ 'crewOpenOrders' ],
+        [ 'orderList', returnValues.product, returnValues.exchange.id ],
+        [ 'exchangeOrderSummary', asteroidId, returnValues.product ],
+        [ 'productOrderSummary', Entity.IDS.ASTEROID, asteroidId ],
+        [ 'productOrderSummary', Entity.IDS.LOT, lotId ],
+      ];
+    },
+
+    getLogContent: ({ event: { returnValues } }, viewingAs, { exchange = {} }) => {
+      // TODO: add marketplace owner? how do they keep track of fees?
+      // TODO: is this accounting for fees?
+      const payload = <>{returnValues.amount} {Product.TYPES[returnValues.product]?.name} for {formatPrice(returnValues.price / 1e6)} SWAY at <EntityLink {...returnValues.exchange} /></>;
+      if (viewingAs.label === Entity.IDS.CREW && viewingAs.id === returnValues.buyerCrew.id) {
+        return {
+          icon: <LimitBuyIcon />,
+          content: <>Purchased {payload}</>,
+        }
+      }
+      return {
+        icon: <MarketSellIcon />,
+        content: <>Sold {payload}</>,
+      }
+    },
+
+    getPrepopEntities: ({ event: { returnValues } }) => ({
+      exchange: returnValues.exchange,
+    })
+  },
 
   ConstructionPlanned: {
     getInvalidations: ({ event: { returnValues } }) => ([
@@ -1122,23 +1212,80 @@ const activities = {
     requiresCrewTime: true
   },
 
-  SellOrderCreated: {
-    getInvalidations: ({ event: { returnValues, version } }, { exchange = {} }) => {
-      const asteroidId = exchange && Lot.toPosition(exchange.Location.location.id)?.asteroidId;
+  SellOrderCancelled: {
+    getInvalidations: ({ event: { returnValues } }, { exchange = {} }) => {
+      const { asteroidId, lotId } = locationsArrToObj(exchange?.Location?.locations || []) || {};
       return [
-        ...invalidationDefaults(Entity.IDS.BUILDING, returnValues.exchange.id),
-        ...invalidationDefaults(returnValues.storage.label, returnValues.storage.id),
-        [ 'crewOpenOrders', returnValues.callerCrew.id ],
-        [ 'orderSummary', Entity.IDS.ASTEROID, asteroidId ],
-        [ 'orderSummary', returnValues.exchange.label, returnValues.exchange.id ],
-        [ 'swayBalance' ]
-        // TODO: any other order locations cached?
+        ...invalidationDefaults(returnValues.exchange),
+        ...invalidationDefaults(returnValues.storage),
+        [ 'crewOpenOrders' ],
+        [ 'orderList', returnValues.product, returnValues.exchange.id ],
+        [ 'exchangeOrderSummary', asteroidId, returnValues.product ],
+        [ 'productOrderSummary', Entity.IDS.ASTEROID, asteroidId ],
+        [ 'productOrderSummary', Entity.IDS.LOT, lotId ],
       ];
     },
+
+    getPrepopEntities: ({ event: { returnValues } }) => ({
+      exchange: returnValues.exchange,
+    })
+  },
+  SellOrderCreated: {
+    getInvalidations: ({ event: { returnValues } }, { exchange = {} }) => {
+      const { asteroidId, lotId } = locationsArrToObj(exchange?.Location?.locations || []) || {};
+      return [
+        ...invalidationDefaults(returnValues.exchange),
+        ...invalidationDefaults(returnValues.storage),
+        [ 'crewOpenOrders' ],
+        [ 'orderList', returnValues.product, returnValues.exchange.id ],
+        [ 'exchangeOrderSummary', asteroidId, returnValues.product ],
+        [ 'productOrderSummary', Entity.IDS.ASTEROID, asteroidId ],
+        [ 'productOrderSummary', Entity.IDS.LOT, lotId ],
+      ];
+    },
+    // getLogContent: ({ event: { returnValues } }) => ({}),
+
     getPrepopEntities: ({ event: { returnValues } }) => ({
       exchange: returnValues.exchange,
     }),
+
     requiresCrewTime: true
+  },
+  SellOrderFilled: {
+    getInvalidations: ({ event: { returnValues } }, { exchange = {} }) => {
+      const { asteroidId, lotId } = locationsArrToObj(exchange?.Location?.locations || []) || {};
+      return [
+        ...invalidationDefaults(returnValues.exchange),
+        ...invalidationDefaults(returnValues.destination),
+        ...invalidationDefaults(returnValues.storage),
+        [ 'swayBalance' ],
+        [ 'crewOpenOrders' ],
+        [ 'orderList', returnValues.product, returnValues.exchange.id ],
+        [ 'exchangeOrderSummary', asteroidId, returnValues.product ],
+        [ 'productOrderSummary', Entity.IDS.ASTEROID, asteroidId ],
+        [ 'productOrderSummary', Entity.IDS.LOT, lotId ],
+      ];
+    },
+
+    getLogContent: ({ event: { returnValues } }, viewingAs, { exchange = {} }) => {
+      // TODO: add marketplace owner? how do they keep track of fees?
+      // TODO: is this accounting for fees?
+      const payload = <>{returnValues.amount} {Product.TYPES[returnValues.product]?.name} for {formatPrice(returnValues.price / 1e6)} SWAY at <EntityLink {...returnValues.exchange} /></>;
+      if (viewingAs.label === Entity.IDS.CREW && viewingAs.id === returnValues.sellerCrew.id) {
+        return {
+          icon: <LimitSellIcon />,
+          content: <>Sold {payload}</>,
+        }
+      }
+      return {
+        icon: <MarketBuyIcon />,
+        content: <>Purchased {payload}</>,
+      }
+    },
+
+    getPrepopEntities: ({ event: { returnValues } }) => ({
+      exchange: returnValues.exchange,
+    })
   },
 
   ShipAssemblyStarted: {
@@ -1495,7 +1642,7 @@ export const hydrateActivities = async (newActivities, queryClient) => {
           }))
         )
       }
-      return;
+      return null;
     })
   );
 };
