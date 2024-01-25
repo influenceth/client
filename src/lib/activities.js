@@ -243,7 +243,9 @@ const activities = {
 
     getPrepopEntities: ({ event: { returnValues } }) => ({
       exchange: returnValues.exchange,
-    })
+    }),
+
+    triggerAlert: true
   },
 
   ConstructionPlanned: {
@@ -1285,7 +1287,9 @@ const activities = {
 
     getPrepopEntities: ({ event: { returnValues } }) => ({
       exchange: returnValues.exchange,
-    })
+    }),
+    
+    triggerAlert: true
   },
 
   ShipAssemblyStarted: {
