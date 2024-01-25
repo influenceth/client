@@ -60,6 +60,7 @@ const LandShip = ({ lot, onSetAction, _disabled }) => {
         if (!Ship.TYPES[crewedShip.Ship.shipType]?.landing) return 'ship type requires a dock';
       }
     }
+    if (crewedShip.Ship.emergencyAt > 0) return 'in emergency mode';
     return null;
   }, [_disabled, crewedShip, lot, ready]);
 

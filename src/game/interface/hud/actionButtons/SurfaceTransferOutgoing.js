@@ -9,7 +9,7 @@ import { locationsArrToObj } from '~/lib/utils';
 const isVisible = ({ crew, lot, ship }) => {
   const entity = lot?.building || ship;
   return crew
-    && entity?.Control?.controller?.id === crew.id  // TODO: policy instead?
+    // && entity?.Control?.controller?.id === crew.id  // TODO: policy instead?
     && entity?.Inventories?.find((i) => i.status === Inventory.STATUSES.AVAILABLE);
 };
 

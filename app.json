@@ -49,6 +49,9 @@
     "REACT_APP_STARKNET_DISPATCHER": {
       "required": true
     },
+    "REACT_APP_STARKNET_ESCROW": {
+      "required": true
+    },
     "REACT_APP_STARKNET_ASTEROID_TOKEN": {
       "required": true
     },

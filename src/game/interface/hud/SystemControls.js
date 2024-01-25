@@ -23,6 +23,8 @@ import useCrewContext from '~/hooks/useCrewContext';
 import useStore from '~/hooks/useStore';
 import DropdownNavMenu, { NavMenuLoggedInUser, menuAnimationTime } from './DropdownNavMenu';
 import { uint256 } from 'starknet';
+import useInterval from '~/hooks/useInterval';
+import useSwayBalance from '~/hooks/useSwayBalance';
 
 const MobileWarning = styled.div`
   align-items: center;
@@ -70,44 +72,22 @@ const VerticalRule = styled.div`
 
 const SystemControls = () => {
   const { account, login, logout, token, walletContext: { starknet } } = useAuth();
-  const { data: activities } = useActivitiesContext();
+  
   const { crews } = useCrewContext();
+  const { data: swayBalance } = useSwayBalance(account);
+
   const dispatchLauncherPage = useStore(s => s.dispatchLauncherPage);
   const dispatchReorientCamera = useStore(s => s.dispatchReorientCamera);
 
   const [menuOpen, setMenuOpen] = useState(false);
-  const [swayBalance, setSwayBalance] = useState();
 
   const openHelpChannel = useCallback(() => {
     window.open(process.env.REACT_APP_HELP_URL, '_blank');
   }, []);
 
-  const swayUpdateTimeout = useRef();
-  const updateSwayBalance = useCallback(async () => {
-    if (!starknet?.account?.provider) return null;
-    if (swayUpdateTimeout.current) clearTimeout(swayUpdateTimeout.current);
-
-    try {
-      const balance = await starknet.account.provider.callContract({
-        contractAddress: process.env.REACT_APP_STARKNET_SWAY_TOKEN,
-        entrypoint: 'balanceOf',
-        calldata: [starknet.account.address]
-      });
-
-      setSwayBalance(uint256.uint256ToBN({ low: balance.result[0], high: balance.result[1] }) / 1000000n);
-    } catch (e) {
-      console.error(e);
-    }
-
-    swayUpdateTimeout.current = setTimeout(updateSwayBalance, 300e3);
-  }, [!starknet?.account?.provider]);
-
-  useEffect(() => updateSwayBalance(), [account, activities, updateSwayBalance]);
-
   const openAssetsPortal = useCallback(() => {
     window.open(process.env.REACT_APP_BRIDGE_URL, '_blank');
   }, []);
-
 
   const menuItems = useMemo(() => {
     const items = [];
@@ -186,7 +166,7 @@ const SystemControls = () => {
       {swayBalance !== undefined && (
         <SwayBalance>
           <SwayIcon />
-          <label>{swayBalance.toLocaleString()}</label>
+          <label>{swayBalance.toLocaleString({ maximumFractionDigits: 0 })}</label>
         </SwayBalance>
       )}
 

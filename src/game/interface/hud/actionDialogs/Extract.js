@@ -413,7 +413,7 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
       </ActionDialogBody>
 
       <ActionDialogFooter
-        disabled={!destinationLot || !selectedCoreSample || amount === 0}
+        disabled={stage !== actionStage.READY_TO_COMPLETE && (!destinationLot || !selectedCoreSample || amount === 0)}
         goLabel="Extract"
         onGo={onStartExtraction}
         finalizeLabel="Complete"

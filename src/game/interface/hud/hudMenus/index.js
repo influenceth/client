@@ -1,3 +1,4 @@
+import AdminBuilding from './AdminBuilding';
 import AllAssets from './AllAssets';
 import AsteroidAssets from './AsteroidAssets';
 import AsteroidChat from './AsteroidChat';
@@ -13,6 +14,7 @@ import RoutePlanner from './RoutePlanner';
 import SearchMap from './SearchMap';
 
 const HudMenus = {
+  AdminBuilding,
   AllAssets,
   AsteroidAssets,
   AsteroidChat,

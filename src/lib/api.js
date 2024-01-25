@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { Asteroid, Building, Deposit, Entity, Inventory, Ship } from '@influenceth/sdk';
+import { Asteroid, Building, Deposit, Entity, Inventory, Order, Ship } from '@influenceth/sdk';
 import esb from 'elastic-builder';
 import { executeSwap, fetchQuotes } from "@avnu/avnu-sdk";
 
@@ -71,7 +71,7 @@ const arrayComponents = {
   Processor: 'Processors'
 };
 
-const formatESData = (responseData) => {
+const formatESEntityData = (responseData) => {
   return responseData?.hits?.hits?.map((h) => {
     return Object.keys(h._source).reduce((acc, k) => {
       if (!!arrayComponents[k]) {
@@ -112,7 +112,7 @@ const api = {
     const query = q.toJSON();
 
     const response = await instance.post(`/_search/building`, query);
-    return formatESData(response.data);
+    return formatESEntityData(response.data);
   },
 
   getCrewBuildingsOnAsteroid: async (asteroidId, crewId) => {
@@ -134,7 +134,7 @@ const api = {
     const query = q.toJSON();
 
     const response = await instance.post(`/_search/building`, query);
-    return formatESData(response.data);
+    return formatESEntityData(response.data);
   },
 
   getCrewSamplesOnAsteroid: async (asteroidId, crewId, resourceId) => {
@@ -164,7 +164,7 @@ const api = {
     const query = q.toJSON();
 
     const response = await instance.post(`/_search/deposit`, query);
-    return formatESData(response.data);
+    return formatESEntityData(response.data);
   },
 
   getCrewAccessibleBuildingsWithComponent: async (asteroidId, crewId, component = 'Building') => {
@@ -190,7 +190,7 @@ const api = {
     buildingQ.from(0);
     buildingQ.size(10000);
     const response = await instance.post(`/_search/building`, buildingQ.toJSON());
-    return formatESData(response.data);
+    return formatESEntityData(response.data);
   },
 
   getCrewAccessibleInventories: async (asteroidId, crewId) => {
@@ -231,11 +231,11 @@ const api = {
     shipQueryBuilder.filter(esbLocationQuery({ asteroidId }));
     shipQueryBuilder.filter(
       esb.nestedQuery()
-        .path('meta.location')
+        .path('Location.locations')
         .query(
           esb.boolQuery().must([
-            esb.termQuery('meta.location.label', Entity.IDS.LOT),
-            esb.rangeQuery('meta.location.id').gt(0),
+            esb.termQuery('Location.locations.label', Entity.IDS.LOT),
+            esb.rangeQuery('Location.locations.id').gt(0),
           ])
         )
     );
@@ -257,7 +257,7 @@ const api = {
     const responses = await Promise.allSettled(queryPromises);
     return responses.reduce((acc, r) => {
       if (r.status === 'fulfilled') {
-        acc.push(...formatESData(r.value.data));
+        acc.push(...formatESEntityData(r.value.data));
       }
       return acc;
     }, []);
@@ -343,6 +343,34 @@ const api = {
     return null;
   },
 
+  getAsteroidMarketplaceAggs: async (asteroidId) => {
+    const queryBuilder = esb.boolQuery();
+
+    // asteroid
+    queryBuilder.filter(esbLocationQuery({ asteroidId }));
+
+    // is operational marketplace
+    queryBuilder.filter(esb.termQuery('Building.status', Building.CONSTRUCTION_STATUSES.OPERATIONAL));
+    queryBuilder.filter(esb.termQuery('Building.buildingType', Building.IDS.MARKETPLACE));
+
+    // aggregate allowedProducts
+    const aggregation = esb.termsAggregation('products', 'Exchange.allowedProducts');
+
+    const q = esb.requestBodySearch();
+    q.query(queryBuilder);
+    q.agg(aggregation);
+    q.size(0);
+    const response = await instance.post(`/_search/building`, q.toJSON());
+
+    return {
+      marketplaceTally: response.data?.hits?.total?.value,
+      products: (response.data?.aggregations?.products?.buckets || []).reduce((acc, b) => ({
+        ...acc,
+        [b.key]: b.doc_count
+      }), {}),
+    };
+  },
+
   getAsteroidShips: async (i) => {
     const shipQueryBuilder = esb.boolQuery();
 
@@ -358,7 +386,7 @@ const api = {
     shipQ.size(10000);
     const response = await instance.post(`/_search/ship`, shipQ.toJSON());
 
-    return formatESData(response.data);
+    return formatESEntityData(response.data);
   },
 
   getCrewShips: async (c) => {
@@ -366,6 +394,193 @@ const api = {
       match: { 'Control.controller.id': c },
       label: Entity.IDS.SHIP
     })
+  },
+
+  getCrewOpenOrders: async (c) => {
+    const queryBuilder = esb.boolQuery();
+    
+    // by crew
+    queryBuilder.filter(esb.termQuery('crew.id', c));
+
+    // order is open
+    queryBuilder.filter(esb.termQuery('status', Order.STATUSES.OPEN));
+
+    const q = esb.requestBodySearch();
+    q.query(queryBuilder);
+    q.from(0);
+    q.size(10000);
+
+    const response = await instance.post(`/_search/order`, q.toJSON());
+
+    const orders = response?.data?.hits?.hits?.map((h) => ({
+      ...h._source,
+      price: h._source.price / 1e6,
+    })) || [];
+
+    const exchangeIds = Array.from(new Set(orders.map((o) => o.entity.id)));
+
+    // TODO: this is outside of cache invalidation scope... may want to re-work
+    const exchanges = exchangeIds > 0 ? await getEntities({ ids: exchangeIds, label: Entity.IDS.BUILDING, components: ['Building', 'Exchange', 'Location', 'Name'] }) : [];
+    return orders.map((o) => ({
+      ...o,
+      marketplace: exchanges.find(e => Number(e.id) === Number(o.entity.id))
+    }));
+  },
+
+  getOrderList: async (exchange, product) => {
+    const queryBuilder = esb.boolQuery();
+
+    // exchange
+    queryBuilder.filter(esb.termQuery('entity.id', exchange.id));
+
+    // product
+    queryBuilder.filter(esb.termQuery('product', product));
+
+    // status
+    queryBuilder.filter(esb.termQuery('status', Order.STATUSES.OPEN));
+
+    const q = esb.requestBodySearch();
+    q.query(queryBuilder);
+    q.from(0);
+    q.size(10000);
+    const response = await instance.post(`/_search/order`, q.toJSON());
+
+    return response?.data?.hits?.hits?.map((h) => ({
+      ...h._source,
+      price: h._source.price / 1e6,
+    })) || [];
+  },
+
+  getOrderSummaryByExchange: async (asteroidId, product) => {
+    const queryBuilder = esb.boolQuery();
+
+    // asteroid
+    queryBuilder.filter(
+      esbLocationQuery(
+        { asteroidId: asteroidId },
+        'locations'
+      )
+    );
+
+    // product
+    queryBuilder.filter(esb.termQuery('product', product));
+
+    // only return aggregations
+    const aggregation = esb
+      .termsAggregation('exchanges', 'entity.id')
+      .aggs([
+        // buy summary
+        esb
+          .filterAggregation(
+            'buy',
+            esb.boolQuery().must([
+              esb.termQuery('orderType', Order.IDS.LIMIT_BUY),
+              esb.termQuery('status', Order.STATUSES.OPEN),
+            ])
+          )
+          .aggs([
+            esb.sumAggregation('amount', 'amount'),
+            esb.maxAggregation('price', 'price'),
+          ]),
+
+        // sell summary
+        esb
+          .filterAggregation(
+            'sell',
+            esb.boolQuery().must([
+              esb.termQuery('orderType', Order.IDS.LIMIT_SELL),
+              esb.termQuery('status', Order.STATUSES.OPEN),
+            ])
+          )
+          .aggs([
+            esb.sumAggregation('amount', 'amount'),
+            esb.minAggregation('price', 'price'),
+          ]),
+      ]);
+
+    const q = esb.requestBodySearch();
+    q.query(queryBuilder);
+    q.agg(aggregation);
+    q.size(0);
+    const response = await instance.post(`/_search/order`, q.toJSON());
+
+    const buckets = response.data.aggregations.exchanges.buckets.reduce((acc, b) => ({
+      ...acc,
+      [b.key]: {
+        buy: { orders: b.buy.doc_count, amount: b.buy.amount.value, price: b.buy.price.value / 1e6 },
+        sell: { orders: b.sell.doc_count, amount: b.sell.amount.value, price: b.sell.price.value / 1e6 },
+      }
+    }), {});
+
+    const exchangeIds = Object.keys(buckets);
+
+    // TODO: get all exchanges where operational and in allowed products
+
+    // TODO: this is outside of cache invalidation scope... may want to re-work
+    const exchanges = exchangeIds > 0 ? await getEntities({ ids: exchangeIds, label: Entity.IDS.BUILDING, components: ['Building', 'Exchange', 'Location', 'Name'] }) : [];
+    return exchangeIds.map((key) => ({
+      ...buckets[key],
+      marketplace: exchanges.find(e => Number(e.id) === Number(key))
+    }));
+  },
+
+  getOrderSummaryByProduct: async (entity) => {
+    const queryBuilder = esb.boolQuery();
+
+    // asteroid or lot
+    queryBuilder.filter(
+      esbLocationQuery(
+        entity.label === Entity.IDS.ASTEROID ? { asteroidId: entity.id } : { lotId: entity.id },
+        'locations'
+      )
+    );
+
+    // only return aggregations
+    const aggregation = esb
+      .termsAggregation('products', 'product')
+      .aggs([
+        // buy summary
+        esb
+          .filterAggregation(
+            'buy',
+            esb.boolQuery().must([
+              esb.termQuery('orderType', Order.IDS.LIMIT_BUY),
+              esb.termQuery('status', Order.STATUSES.OPEN),
+            ])
+          )
+          .aggs([
+            esb.sumAggregation('amount', 'amount'),
+            esb.maxAggregation('price', 'price'),
+          ]),
+
+        // sell summary
+        esb
+          .filterAggregation(
+            'sell',
+            esb.boolQuery().must([
+              esb.termQuery('orderType', Order.IDS.LIMIT_SELL),
+              esb.termQuery('status', Order.STATUSES.OPEN),
+            ])
+          )
+          .aggs([
+            esb.sumAggregation('amount', 'amount'),
+            esb.minAggregation('price', 'price'),
+          ]),
+      ]);
+
+    const q = esb.requestBodySearch();
+    q.query(queryBuilder);
+    q.agg(aggregation);
+    q.size(0);
+    const response = await instance.post(`/_search/order`, q.toJSON());
+
+    return response.data.aggregations.products.buckets.reduce((acc, b) => ({
+      ...acc,
+      [b.key]: {
+        buy: { orders: b.buy.doc_count, amount: b.buy.amount.value, price: b.buy.price.value / 1e6 },
+        sell: { orders: b.sell.doc_count, amount: b.sell.amount.value, price: b.sell.price.value / 1e6 },
+      }
+    }), {});
   },
 
   getEntities,
@@ -494,7 +709,7 @@ const api = {
     const response = await instance.post(`/_search/${assetIndex}`, query);
 
     return {
-      hits: formatESData(response.data),
+      hits: formatESEntityData(response.data),
       total: response.data.hits.total.value
     }
   },

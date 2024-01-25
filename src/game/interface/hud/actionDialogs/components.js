@@ -1730,7 +1730,7 @@ export const TransferSelectionDialog = ({
         if (productConstraint !== undefined) {
           const alreadyInTarget = targetInventory?.contents.find((c) => Number(c.product) === Number(product))?.amount || 0;
           const enrouteToTarget = pendingContents?.[Number(product)] || 0;
-          if (productConstraint === 0) {
+          if (targetInvConfig && productConstraint === 0) {
             productConstraint = Math.min(
               targetInvConfig.massConstraint / Product.TYPES[product].massPerUnit,
               targetInvConfig.volumeConstraint / Product.TYPES[product].volumePerUnit
@@ -3683,12 +3683,15 @@ const ActionDialogStat = ({ stat: { isTimeStat, label, value, direction, tooltip
   );
 };
 
-export const ActionDialogStats = ({ stage, stats, wide }) => {
+export const ActionDialogStats = ({ stage, stats: rawStats, wide }) => {
   const [open, setOpen] = useState();
 
   useEffect(() => {
     setOpen(stage === actionStage.NOT_STARTED);
   }, [stage]);
+
+  // remove any conditionally omitted stats
+  const stats = useMemo(() => rawStats.filter((s) => !!s), [rawStats]);
 
   if (!stats?.length) return null;
   return (
