@@ -1,5 +1,5 @@
 import { useCallback, useContext, useMemo } from 'react';
-import { Entity } from '@influenceth/sdk';
+import { Entity, Order } from '@influenceth/sdk';
 
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
 import useCrewContext from '~/hooks/useCrewContext';
@@ -60,10 +60,10 @@ const useMarketplaceManager = (buildingId) => {
         buyer_crew: { id: crew?.id, label: crew?.label },
         product,
         amount,
-        price: price * 1e6,
+        price: Math.round(price * 1e6),
         storage: { id: destination?.id, label: destination?.label },
         storage_slot: destinationSlot,
-        feeTotal,
+        feeTotal: Math.round(feeTotal * 1e6),
         ...payload
       },
       {
@@ -78,7 +78,7 @@ const useMarketplaceManager = (buildingId) => {
       {
         product,
         amount,
-        price: price * 1e6,
+        price: Math.round(price * 1e6),
         storage: { id: origin?.id, label: origin?.label },
         storage_slot: originSlot,
         ...payload
@@ -91,7 +91,7 @@ const useMarketplaceManager = (buildingId) => {
   );
 
   const fillBuyOrders = useCallback(
-    ({ product, origin, originSlot, fillOrders }) => {
+    ({ product, origin, originSlot, fillOrders, payments }) => {
       if (!fillOrders?.length) return;
 
       return execute(
@@ -100,15 +100,18 @@ const useMarketplaceManager = (buildingId) => {
           depositCaller: order.initialCaller || crew?.Crew?.delegatedTo,
           seller_account: crew?.Crew?.delegatedTo,
           exchange_owner_account: exchangeController?.Crew?.delegatedTo,
-          takerFee: exchange?.Exchange?.takerFee,
+          makerFee: order.makerFee / Order.FEE_SCALE,
+          payments: {
+            toExchange: order.paymentsE6.toExchange,
+            toPlayer: order.paymentsE6.toPlayer
+          },
   
           origin: { id: origin?.id, label: origin?.label },
           origin_slot: originSlot,
           product,
-  
           amount: order.fillAmount,
           buyer_crew: { id: order.crew?.id, label: order.crew?.label },
-          price: order.price * 1e6,
+          price: Math.round(order.price * 1e6),
           storage: { id: order.storage?.id, label: order.storage?.label },
           storage_slot: order.storageSlot,
   
@@ -133,10 +136,14 @@ const useMarketplaceManager = (buildingId) => {
           seller_account: sellerCrews.find((c) => c.id === order.crew?.id)?.Crew?.delegatedTo,
           exchange_owner_account: exchangeController?.Crew?.delegatedTo,
           takerFee: exchange?.Exchange?.takerFee,
+          payments: {
+            toExchange: order.paymentsE6.toExchange,
+            toPlayer: order.paymentsE6.toPlayer
+          },
   
           seller_crew: { id: order.crew?.id, label: order.crew?.label },
           amount: order.fillAmount,
-          price: order.price * 1e6,
+          price: Math.round(order.price * 1e6),
           storage: { id: order.storage?.id, label: order.storage?.label },
           storage_slot: order.storageSlot,
           
@@ -165,7 +172,7 @@ const useMarketplaceManager = (buildingId) => {
       {
         seller_crew: { id: seller?.id, label: seller?.label },
         product,
-        price: price * 1e6,
+        price: Math.round(price * 1e6),
         storage: { id: origin?.id, label: origin?.label },
         storage_slot: originSlot,
         ...payload

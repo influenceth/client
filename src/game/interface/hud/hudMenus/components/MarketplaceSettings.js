@@ -88,8 +88,8 @@ const MarketplaceSettings = ({ marketplace }) => {
   const [ loading, setLoading ] = useState();
   const [ focused, setFocused ] = useState();
   const [ products, setProducts ] = useState(exchange.allowedProducts || []);
-  const [ makerFee, setMakerFee ] = useState(exchange.makerFee / 1000);
-  const [ takerFee, setTakerFee ] = useState(exchange.takerFee / 1000);
+  const [ makerFee, setMakerFee ] = useState(exchange.makerFee / 100);
+  const [ takerFee, setTakerFee ] = useState(exchange.takerFee / 100);
   
   const handleChange = useCallback((setter, defaultValue) => (e) => {
     setter(
@@ -105,8 +105,8 @@ const MarketplaceSettings = ({ marketplace }) => {
 
   const handleRevert = useCallback(() => {
     setProducts(exchange.allowedProducts || []);
-    setMakerFee(exchange.makerFee / 1000);
-    setTakerFee(exchange.takerFee / 1000);
+    setMakerFee(exchange.makerFee / 100);
+    setTakerFee(exchange.takerFee / 100);
     setFocused();
   }, [exchange]);
 
@@ -129,8 +129,8 @@ const MarketplaceSettings = ({ marketplace }) => {
 
   const saveChanges = useCallback(() => {
     changeSettings({
-      makerFee: makerFee * 1000,
-      takerFee: takerFee * 1000,
+      makerFee: makerFee * 100,
+      takerFee: takerFee * 100,
       allowedProducts: products,
     });
     setFocused();
@@ -160,8 +160,8 @@ const MarketplaceSettings = ({ marketplace }) => {
   }, [exchange.exchangeType, products]);
 
   const isDirty = useMemo(() => (
-    makerFee !== exchange.makerFee / 1000
-    || takerFee !== exchange.takerFee / 1000
+    makerFee !== exchange.makerFee / 100
+    || takerFee !== exchange.takerFee / 100
     || products.length !== exchange.allowedProducts.length
     || products.some((i, index) => i !== exchange.allowedProducts[index])
   ), [exchange, makerFee, takerFee, products, productListLength]);
@@ -182,7 +182,7 @@ const MarketplaceSettings = ({ marketplace }) => {
           <div>
             <TextInputWrapper rightLabel="%">
               <UncontrolledTextInput
-                max={5}
+                max={25}
                 min={0}
                 onBlur={handleChange(setMakerFee, makerFee || 0)}
                 onChange={handleChange(setMakerFee)}
@@ -191,7 +191,7 @@ const MarketplaceSettings = ({ marketplace }) => {
                 value={makerFee}
                 width={72} />
             </TextInputWrapper>
-            <span>Min 0.0% | Max 5.0%</span>
+            <span>Min 0.0% | Max 25%</span>
           </div>
         </InputBlock>
       </Section>
@@ -202,7 +202,7 @@ const MarketplaceSettings = ({ marketplace }) => {
           <div>
             <TextInputWrapper rightLabel="%">
               <UncontrolledTextInput
-                max={5}
+                max={25}
                 min={0}
                 onBlur={handleChange(setTakerFee, takerFee || 0)}
                 onChange={handleChange(setTakerFee)}
@@ -211,7 +211,7 @@ const MarketplaceSettings = ({ marketplace }) => {
                 value={takerFee}
                 width={72} />
             </TextInputWrapper>
-            <span>Min 0.0% | Max 5.0%</span>
+            <span>Min 0.0% | Max 25%</span>
           </div>
         </InputBlock>
       </Section>

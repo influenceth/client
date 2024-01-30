@@ -23,7 +23,7 @@ const isVisible = ({ asteroid, crew, lot, openHudMenu }) => {
     && (
       // (operational or planned extractor)
       lot?.building?.Building?.buildingType === Building.IDS.EXTRACTOR
-      || openHudMenu === 'ASTEROID_RESOURCES'
+      || openHudMenu === 'RESOURCES'
     ); 
 };
 

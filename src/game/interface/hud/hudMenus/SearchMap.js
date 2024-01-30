@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 // import styled from 'styled-components';
 
 import useStore from '~/hooks/useStore';
-import { Scrollable, Tray } from './components';
+import { Scrollable, Tray } from './components/components';
 import SearchFilterTray from '~/components/SearchFilterTray';
 import SearchFilters from '~/components/SearchFilters';
 

@@ -11,7 +11,7 @@ import NumberInput from '~/components/NumberInput';
 import DevToolContext from '~/contexts/DevToolContext';
 import theme from '~/theme';
 import { getModelViewerSettings, toneMaps } from '../../ModelViewer';
-import { HudMenuCollapsibleSection, Scrollable } from './components';
+import { HudMenuCollapsibleSection, Scrollable } from './components/components';
 import { getBuildingModel, getProductModel, getShipModel } from '~/lib/assetUtils';
 import { nativeBool } from '~/lib/utils';
 

@@ -305,8 +305,8 @@ const customConfigs = {
     isVirtual: true
   },
   EscrowWithdrawalAndFillBuyOrders: {
-    getEscrowAmount: ({ price, amount, feeTotal }) => {
-      return BigInt((price * amount + feeTotal) || 0);  // TODO: is this right?
+    getEscrowAmount: ({ price, amount, makerFee }) => {
+      return BigInt((price * amount * (1 + makerFee)) || 0);
     },
     escrowConfig: {
       entrypoint: 'withdraw',
@@ -315,10 +315,16 @@ const customConfigs = {
       withdrawHookCalldataLength: 25,
       withdrawHookKeys: ['buyer_crew', 'exchange', 'product', 'price', 'storage', 'storage_slot'],
       withdrawDataKeys: ['amount', 'origin', 'origin_slot', 'caller_crew'],
-      getWithdrawals: ({ amount, exchange_owner_account, price, seller_account, takerFee }) => ([
-        { recipient: seller_account, amount: BigInt(amount * price) },
-        { recipient: exchange_owner_account, amount: BigInt(amount * price * takerFee) },
-      ])
+      getWithdrawals: ({ exchange_owner_account, seller_account, payments }) => {
+        console.log([
+          { recipient: seller_account, amount: BigInt(payments.toPlayer) },
+          { recipient: exchange_owner_account, amount: BigInt(payments.toExchange) },
+        ]);
+        return [
+          { recipient: seller_account, amount: BigInt(payments.toPlayer) },
+          { recipient: exchange_owner_account, amount: BigInt(payments.toExchange) },
+        ];
+      }
     },
     isBatchable: true,
     equalityTest: true, // TODO: ...
@@ -338,12 +344,12 @@ const customConfigs = {
       ];
       return [
         {
-          amount: BigInt(vars.amount * vars.price),
+          amount: vars.payments.toPlayer,
           recipient: vars.seller_account,
           memo
         },
         {
-          amount: BigInt(vars.amount * vars.price * vars.takerFee),
+          amount: vars.payments.toExchange,
           recipient: vars.exchange_owner_account,
           memo
         }
@@ -437,7 +443,7 @@ export function ChainTransactionProvider({ children }) {
             if (config.multisystemCalls) {
               runSystems = config.multisystemCalls.map((runSystem) => ({ runSystem, rawVars }));
             } else if (config.repeatableSystemCall) {
-              runSystems = Array.from(Array(config.getRepeatTally(rawVars))).map(() => ({ runSystem: config.bulkSystemCall, rawVars }));
+              runSystems = Array.from(Array(config.getRepeatTally(rawVars))).map(() => ({ runSystem: config.repeatableSystemCall, rawVars }));
             } else if (config.isBatchable) {
               const rawVarSets = Array.isArray(rawVars) ? rawVars : [rawVars];
               runSystems = rawVarSets.map((rawVarSet) => ({ runSystem: config.batchableSystemCall || systemName, rawVars: rawVarSet }));
@@ -645,7 +651,7 @@ export function ChainTransactionProvider({ children }) {
   }, [contracts, pendingTransactions]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    console.log('trigger activities effect', activities);
+    console.log('trigger activities effect', activities, pendingTransactions);
     if (contracts && pendingTransactions?.length) {
       pendingTransactions.forEach((tx) => {
         const { key, vars, txHash } = tx;

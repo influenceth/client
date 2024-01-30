@@ -13,7 +13,7 @@ import useStore from '~/hooks/useStore';
 import { sampleAsteroidOrbit } from '~/lib/geometryUtils';
 import { reactBool, formatFixed, nativeBool } from '~/lib/utils';
 import { ShipImage, formatMass } from '../actionDialogs/components';
-import { Scrollable } from './components';
+import { Scrollable } from './components/components';
 import useCrewContext from '~/hooks/useCrewContext';
 import useOwnedShips from '~/hooks/useOwnedShips';
 import formatters from '~/lib/formatters';

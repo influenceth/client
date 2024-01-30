@@ -29,8 +29,9 @@ const AddressLink = (props) => {
           <OnClickLink
             ref={setRefEl}
             maxWidth={props.maxWidth}
-            onClick={onClick}>
-            {label}
+            onClick={onClick}
+            {...props}>
+            {props.children || label}
           </OnClickLink>
         )}
       </MarketplaceLink>

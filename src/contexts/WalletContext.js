@@ -34,6 +34,8 @@ export function WalletProvider({ children }) {
   const [starknet, setStarknet] = useState(false);
   const [starknetReady, setStarknetReady] = useState(false);
   const [starknetUpdated, setStarknetUpdated] = useState(0);
+  const [lastEventAccount, setLastEventAccount] = useState();
+  const [lastEventNetwork, setLastEventNetwork] = useState();
 
   const active = useMemo(() => {
     return starknet?.isConnected && starknet?.account?.address && isAllowedChain(starknet?.account?.provider?.chainId);
@@ -91,6 +93,7 @@ export function WalletProvider({ children }) {
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const disconnect = useCallback(async () => {
+    console.log('disconnect INNER');
     setStarknet(null);
     if (window.starknet?.provider) starknetDisconnect({ clearLastWallet: true });
   }, []);
@@ -105,22 +108,24 @@ export function WalletProvider({ children }) {
     if (starknet) {
       connect(true);
     } else {
+      console.log('onconnectionchange disconnect');
       disconnect();
     }
   }, [connect, disconnect, starknet]);
 
+  useEffect(() => {
+    console.log({ lastEventAccount, lastEventNetwork });
+    onConnectionChange();
+  }, [lastEventAccount, lastEventNetwork]);
+
   // while connecting or connected, listen for network changes from extension
   useEffect(() => {
     const onAccountsChanged = (e) => {
-      // for a while, false positives from braavos seemed to force a disconnection, but
-      // that disconnection seems to have been resolved through other changes... leaving
-      // this here just in case that comes back though
-      // const newAddress = Array.isArray(e) ? e[0] : e;
-      // if (newAddress && starknet.account?.address && Address.areEqual(`${newAddress}`, `${starknet.account.address}`)) return;
-      
-      onConnectionChange();
+      setLastEventAccount(Array.isArray(e) ? e[0] : e);
     };
-    const onNetworkChanged = (e) => { onConnectionChange(); };
+    const onNetworkChanged = (e) => {
+      setLastEventNetwork(Array.isArray(e) ? e[0] : e);
+    };
 
     const startListening = () => {
       starknet.on('accountsChanged', onAccountsChanged);

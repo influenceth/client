@@ -21,9 +21,10 @@ const EntityName = ({ id, label, forceBaseName }) => {
     if (forceBaseName && entity) {
       if (label === Entity.IDS.ASTEROID) return Asteroid.Entity.getBaseName(entity);
       return `#${(id || '').toLocaleString()}`;
-    } else {
+    } else if (formatterByLabel[label]) {
       return formatterByLabel[label](entity);
     }
+    return '';
   }, [entity, forceBaseName, isLoading, label])
 
   return <>{name}</>;

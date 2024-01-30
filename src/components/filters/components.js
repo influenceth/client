@@ -5,7 +5,7 @@ import { RiPaintFill as HighlightIcon } from 'react-icons/ri';
 import IconButton from '~/components/IconButton';
 import { CloseIcon } from '~/components/Icons';
 import useStore from '~/hooks/useStore';
-import { HudMenuCollapsibleSection } from '../../game/interface/hud/hudMenus/components';
+import { HudMenuCollapsibleSection } from '../../game/interface/hud/hudMenus/components/components';
 
 const HighlightToggle = styled(IconButton)`
   color: ${p => p.enabled ? 'white' : '#444'};

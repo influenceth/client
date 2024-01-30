@@ -30,7 +30,7 @@ const useColumns = () => {
           const loc = Entity.toPosition(row.Location?.location);
           return (
             <>
-              <LocationLink lotId={loc.lotId} resourceId={row.Deposit.resource} zoomToLot="LOT_RESOURCES" />
+              <LocationLink lotId={loc.lotId} resourceId={row.Deposit.resource} zoomToLot="RESOURCES" />
               <span>{Product.TYPES[row.Deposit.resource]?.name}</span>
             </>
           );

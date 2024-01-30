@@ -3,7 +3,7 @@ import styled, { keyframes } from 'styled-components';
 import { useHistory } from 'react-router-dom';
 
 import useCrewContext from '~/hooks/useCrewContext';
-import { HudMenuCollapsibleSection, Scrollable } from './components';
+import { HudMenuCollapsibleSection, Scrollable } from './components/components';
 import useHydratedLocation from '~/hooks/useHydratedLocation';
 import { CrewInputBlock, CrewLocationWrapper } from '../actionDialogs/components';
 import { locationsArrToObj } from '~/lib/utils';

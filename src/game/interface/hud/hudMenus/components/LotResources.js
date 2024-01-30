@@ -2,19 +2,19 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
 import { Asteroid, Building, Deposit, Lot, Product } from '@influenceth/sdk';
 
-import useActionButtons from '~/hooks/useActionButtons';
-import useAsteroid from '~/hooks/useAsteroid';
-import useCoreSampleManager from '~/hooks/actionManagers/useCoreSampleManager';
-import useExtractionManager from '~/hooks/actionManagers/useExtractionManager';
-import useLot from '~/hooks/useLot';
-import useStore from '~/hooks/useStore';
-import { HudMenuCollapsibleSection, Tray, trayHeight } from './components';
-import { hexToRGB } from '~/theme';
 import { CoreSampleIcon, PlusIcon } from '~/components/Icons';
 import ResourceThumbnail from '~/components/ResourceThumbnail';
+import useCoreSampleManager from '~/hooks/actionManagers/useCoreSampleManager';
+import useExtractionManager from '~/hooks/actionManagers/useExtractionManager';
+import useActionButtons from '~/hooks/useActionButtons';
+import useAsteroid from '~/hooks/useAsteroid';
 import useCrewContext from '~/hooks/useCrewContext';
+import useLot from '~/hooks/useLot';
+import useStore from '~/hooks/useStore';
 import { formatFixed, keyify } from '~/lib/utils';
-import actionButtons from '../actionButtons';
+import { hexToRGB } from '~/theme';
+import actionButtons from '../../actionButtons';
+import { HudMenuCollapsibleSection, Tray, trayHeight } from './components';
 
 const Wrapper = styled.div`
   display: flex;
@@ -104,7 +104,7 @@ const LotResources = () => {
   const { props: actionProps } = useActionButtons();
   const { crew } = useCrewContext();
   const lotId = useStore(s => s.asteroids.lot);
-  const asteroidId = useMemo(() => Lot.toPosition(lotId).asteroidId, [lotId]);
+  const asteroidId = useMemo(() => Lot.toPosition(lotId)?.asteroidId, [lotId]);
 
   const { data: asteroid } = useAsteroid(asteroidId);
   const { data: lot } = useLot(lotId);
