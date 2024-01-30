@@ -8,7 +8,7 @@ import AsteroidRendering from '~/components/AsteroidRendering';
 import useStore from '~/hooks/useStore';
 import useWatchlist from '~/hooks/useWatchlist';
 import theme from '~/theme';
-import { HudMenuCollapsibleSection } from './components';
+import { HudMenuCollapsibleSection } from './components/components';
 import formatters from '~/lib/formatters';
 import useCrewContext from '~/hooks/useCrewContext';
 

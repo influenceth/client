@@ -3,6 +3,7 @@ import { useMemo } from 'react';
 import { Deposit, Entity, Lot, Ship } from '@influenceth/sdk';
 
 import api from '~/lib/api';
+import { locationsArrToObj } from '~/lib/utils';
 
 // const useLot = (lotId) => {
 //   return useQuery(
@@ -18,7 +19,7 @@ import api from '~/lib/api';
 const useLot = (lotId) => {
   const queryClient = useQueryClient();
 
-  const lotEntity = useMemo(() => ({ id: lotId, label: Entity.IDS.LOT }), [lotId]);
+  const lotEntity = useMemo(() => lotId ? Entity.formatEntity({ id: lotId, label: Entity.IDS.LOT }) : null, [lotId]);
 
   // prepop all the entities on the lot in the cache
   // so can do in a single query
@@ -29,7 +30,7 @@ const useLot = (lotId) => {
 
       // populate from single query... set query data
       const lotEntities = (await api.getEntities({
-        match: { 'Location.locations': lotEntity },
+        match: { 'Location.locations.uuid': lotEntity.uuid },
         components: [ // this should include all default components returned for relevant entities (buildings, ships, deposits)
           'Building', 'Control', 'Dock', 'DryDock', 'Exchange', 'Extractor', 'Inventory', 'Location', 'Name', 'Processor', 'Station',
           /*'Control',*/ 'Deposit', /*'Location',*/
@@ -59,19 +60,19 @@ const useLot = (lotId) => {
 
   const { data: buildings, isLoading: buildingsLoading } = useQuery(
     ['entities', Entity.IDS.BUILDING, 'lot', lotId],
-    () => api.getEntities({ label: Entity.IDS.BUILDING, match: { 'Location.locations': lotEntity } }),
+    () => api.getEntities({ label: Entity.IDS.BUILDING, match: { 'Location.locations.uuid': lotEntity.uuid } }),
     { enabled: !!lotData } // give a chance to preload the data
   );
 
   const { data: deposits, isLoading: depositsLoading } = useQuery(
     ['entities', Entity.IDS.DEPOSIT, 'lot', lotId],
-    () => api.getEntities({ label: Entity.IDS.DEPOSIT, match: { 'Location.locations': lotEntity } }),
+    () => api.getEntities({ label: Entity.IDS.DEPOSIT, match: { 'Location.locations.uuid': lotEntity.uuid } }),
     { enabled: !!lotData } // give a chance to preload the data
   );
 
   const { data: ships, isLoading: shipsLoading } = useQuery(
     ['entities', Entity.IDS.SHIP, 'lot', lotId],
-    () => api.getEntities({ label: Entity.IDS.SHIP, match: { 'Location.locations': lotEntity } }),
+    () => api.getEntities({ label: Entity.IDS.SHIP, match: { 'Location.locations.uuid': lotEntity.uuid } }),
     { enabled: !!lotData } // give a chance to preload the data
   );
 

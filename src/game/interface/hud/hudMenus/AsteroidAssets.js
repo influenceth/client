@@ -7,7 +7,7 @@ import useAsteroid from '~/hooks/useAsteroid';
 import useAsteroidCrewBuildings from '~/hooks/useAsteroidCrewBuildings';
 import useChainTime from '~/hooks/useChainTime';
 import useStore from '~/hooks/useStore';
-import { HudMenuCollapsibleSection, Rule, majorBorderColor } from './components';
+import { HudMenuCollapsibleSection, Rule, majorBorderColor } from './components/components';
 import ClipCorner from '~/components/ClipCorner';
 import { BioreactorBuildingIcon, CaretIcon, ConstructIcon, ExtractorBuildingIcon, FactoryBuildingIcon, HabitatBuildingIcon, MarketplaceBuildingIcon, RefineryBuildingIcon, ShipyardBuildingIcon, SpaceportBuildingIcon, WarehouseBuildingIcon } from '~/components/Icons';
 import { formatFixed, locationsArrToObj } from '~/lib/utils';

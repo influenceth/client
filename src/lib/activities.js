@@ -40,7 +40,7 @@ import { andList, formatPrice, getProcessorProps, locationsArrToObj, ucfirst } f
 import api from './api';
 import formatters from './formatters';
 import EntityName from '~/components/EntityName';
-import { formatResourceMass } from '~/game/interface/hud/actionDialogs/components';
+import { formatResourceAmount, formatResourceMass } from '~/game/interface/hud/actionDialogs/components';
 
 const addressMaxWidth = '100px';
 
@@ -228,7 +228,14 @@ const activities = {
     getLogContent: ({ event: { returnValues } }, viewingAs, { exchange = {} }) => {
       // TODO: add marketplace owner? how do they keep track of fees?
       // TODO: is this accounting for fees?
-      const payload = <>{returnValues.amount} {Product.TYPES[returnValues.product]?.name} at {formatPrice(returnValues.price / 1e6)} SWAY at <EntityLink {...returnValues.exchange} /></>;
+      const payload = (
+        <>
+          {formatResourceAmount(returnValues.amount, returnValues.product)}{' '}
+          {Product.TYPES[returnValues.product]?.name} for{' '}
+          {formatPrice(returnValues.amount * returnValues.price / 1e6)} SWAY{' '}
+          at <EntityLink {...returnValues.exchange} />
+        </>
+      );
       if (viewingAs.label === Entity.IDS.CREW && viewingAs.id === returnValues.buyerCrew.id) {
         return {
           icon: <LimitBuyIcon />,
@@ -1272,7 +1279,14 @@ const activities = {
     getLogContent: ({ event: { returnValues } }, viewingAs, { exchange = {} }) => {
       // TODO: add marketplace owner? how do they keep track of fees?
       // TODO: is this accounting for fees?
-      const payload = <>{returnValues.amount} {Product.TYPES[returnValues.product]?.name} at {formatPrice(returnValues.price / 1e6)} SWAY at <EntityLink {...returnValues.exchange} /></>;
+      const payload = (
+        <>
+          {formatResourceAmount(returnValues.amount, returnValues.product)}{' '}
+          {Product.TYPES[returnValues.product]?.name} for{' '}
+          {formatPrice(returnValues.amount * returnValues.price / 1e6)} SWAY{' '}
+          at <EntityLink {...returnValues.exchange} />
+        </>
+      );
       if (viewingAs.label === Entity.IDS.CREW && viewingAs.id === returnValues.sellerCrew.id) {
         return {
           icon: <LimitSellIcon />,

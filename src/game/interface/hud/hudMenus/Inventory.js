@@ -15,7 +15,7 @@ import { formatFixed } from '~/lib/utils';
 import theme from '~/theme';
 import actionButtons from '../actionButtons';
 import { formatMass, formatResourceAmount, formatVolume } from '../actionDialogs/components';
-import { Tray, TrayLabel } from './components';
+import { Tray, TrayLabel } from './components/components';
 
 const resourceItemWidth = 83;
 

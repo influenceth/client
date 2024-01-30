@@ -14,7 +14,7 @@ import useOwnedAsteroids from '~/hooks/useOwnedAsteroids';
 import useOwnedShips from '~/hooks/useOwnedShips';
 import useStore from '~/hooks/useStore';
 import theme from '~/theme';
-import { HudMenuCollapsibleSection, majorBorderColor } from './components';
+import { HudMenuCollapsibleSection, majorBorderColor } from './components/components';
 
 const thumbnailDimension = 75;
 

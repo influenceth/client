@@ -1,16 +1,24 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import styled from 'styled-components';
-import { Building, Inventory, Product } from '@influenceth/sdk';
+import { Building, Inventory, Lot, Product } from '@influenceth/sdk';
 
 import useStore from '~/hooks/useStore';
-import { HudMenuCollapsibleSection, majorBorderColor, Rule } from './components';
+import { HudMenuCollapsibleSection, majorBorderColor, Rule, Scrollable, Tray } from './components/components';
 import ClipCorner from '~/components/ClipCorner';
-import { SurfaceTransferIcon } from '~/components/Icons';
+import { BackIcon, LocationIcon, MagnifyingIcon, SurfaceTransferIcon } from '~/components/Icons';
 import useLot from '~/hooks/useLot';
 import ResourceRequirement from '~/components/ResourceRequirement';
 import { getBuildingRequirements } from '../actionDialogs/components';
 import { getBuildingIcon } from '~/lib/assetUtils';
 import useDeliveryManager from '~/hooks/actionManagers/useDeliveryManager';
+import CrewLocationLabel from '~/components/CrewLocationLabel';
+import TitleArea from './components/TitleArea';
+import formatters from '~/lib/formatters';
+import EntityName from '~/components/EntityName';
+import moment from 'moment';
+import Button from '~/components/ButtonAlt';
+import { reactBool } from '~/lib/utils';
+import IconButton from '~/components/IconButton';
 
 const Wrapper = styled.div`
   display: flex;
@@ -19,9 +27,12 @@ const Wrapper = styled.div`
 `;
 
 const Description = styled.div`
-  color: #999;
+  color: ${p => p.theme.colors.main};
   font-size: 14px;
+  line-height: 20px;
 `;
+
+
 const ExtraDescription = styled(Description)`
   label {
     border-top: 1px solid ${majorBorderColor};
@@ -135,62 +146,99 @@ const ItemsList = styled.div`
   }
 `;
 
-const ConstructionPlan = ({ buildingType, planningLot }) => {
-  const { currentDeliveryActions } = useDeliveryManager({ destination: planningLot?.building });
-  const thumbUrl = getBuildingIcon(buildingType, 'w400', true);
-
-  const items = useMemo(() => {
-    if (!planningLot?.building) return [];
-    const requirements = getBuildingRequirements(planningLot.building, currentDeliveryActions);
-    return requirements.map((item) => ({
-      i: Number(item.i),
-      numerator: item.inInventory + item.inTransit,
-      denominator: item.totalRequired,
-      customIcon: item.inTransit > 0
-        ? {
-          animated: true,
-          icon: <SurfaceTransferIcon />
-        }
-        : undefined
-    }));
-  }, [planningLot, currentDeliveryActions]);
-
-  return (
-    <>
-      <SiteThumb image={thumbUrl}>
-        <ClipCorner color="#333" dimension={10} />
-      </SiteThumb>
-      {items.length > 0 && (
-        <Requirements>
-          <label>Required Materials</label>
-          <ItemsList>
-            {items.map((item) => (
-              <ResourceRequirement
-                key={item.i}
-                isGathering={!!planningLot}
-                noStyles={!planningLot}
-                item={item}
-                resource={Product.TYPES[item.i]}
-                size="85px"
-                tooltipContainer="hudMenu" />
-            ))}
-          </ItemsList>
-        </Requirements>
-      )}
-    </>
-  );
-};
-
 const LotInfo = () => {
   const lotId = useStore(s => s.asteroids.lot);
   const { data: lot, isLoading } = useLot(lotId);
+
+  const dispatchZoomScene = useStore(s => s.dispatchZoomScene);
+  const zoomScene = useStore(s => s.asteroids.zoomScene);
 
   const [selectedBuilding, setSelectedBuilding] = useState();
 
   const mainInventoryType = useMemo(() => (lot?.building?.Inventories || []).find((l) => l.status === Inventory.STATUSES.AVAILABLE)?.inventoryType, [lot]);
   const inventoryConfig = Inventory.getType(mainInventoryType) || {}; // TODO: use Inventory.getFilledCapacity() instead?
 
+  const [title, subtitle] = useMemo(() => {
+    if (!lot) return [];
+    if (lot.building) {
+      if (lot.building.Building?.status < Building.CONSTRUCTION_STATUSES.OPERATIONAL) {
+        return [
+          `${Building.TYPES[lot.building.Building?.buildingType].name} Site`,
+          lot.building.Building?.status === Building.CONSTRUCTION_STATUSES.UNDER_CONSTRUCTION ? 'Construction Site' : 'Planned Construction'
+        ]
+      }
+      return [
+        formatters.buildingName(lot.building),
+        Building.TYPES[lot.building.Building.buildingType].name
+      ];
+    }
+    return ['Empty Lot'];
+  }, [lot]);
+
+  const gracePeriodPretty = useMemo(() => {
+    return moment(Date.now() - Building.GRACE_PERIOD * 1e3).fromNow(true)
+  }, []);
+
+  const isZoomedToLot = zoomScene?.type === 'LOT';
+
+  const toggleZoomScene = useCallback(() => {
+    dispatchZoomScene(isZoomedToLot ? null : { type: 'LOT', lotId: lot?.id });
+  }, [isZoomedToLot, lot?.id]);
+
   if (!lot) return null;
+  return (
+    <>
+      <Scrollable hasTray={reactBool(!isZoomedToLot)}>
+        <TitleArea
+          title={title}
+          subtitle={subtitle}
+          upperLeft={(
+            <>
+              <LocationIcon />
+              <span style={{ marginRight: 4, opacity: 0.55 }}><EntityName {...lot.Location.location} /> {'>'}</span>
+              {formatters.lotName(Lot.toIndex(lot.id))}
+            </>
+          )}
+        />
+
+        {lot?.building && (
+          <>
+            <HudMenuCollapsibleSection titleText="Description">
+              <Description>
+                {lot.building.Building?.status === Building.CONSTRUCTION_STATUSES.OPERATIONAL
+                  ? Building.TYPES[lot.building.Building.buildingType].description
+                  : `
+                    Construction sites are used to reserve a lot and stage materials there
+                    prior to building construction. They have a limited reservation period
+                    of ${gracePeriodPretty}, after which any materials already sent to the site
+                    become public.
+                  `}
+              </Description>
+            </HudMenuCollapsibleSection>
+
+            <HudMenuCollapsibleSection titleText="Site Permissions" collapsed>
+
+            </HudMenuCollapsibleSection>
+          </>
+        )}
+
+        <HudMenuCollapsibleSection titleText="Lot Permissions" collapsed>
+
+        </HudMenuCollapsibleSection>
+
+      </Scrollable>
+    
+      {!isZoomedToLot && (
+        <Tray>
+          <Button onClick={toggleZoomScene} subtle>
+            <MagnifyingIcon style={{ marginRight: 8 }} /> Zoom to Lot
+          </Button>
+        </Tray>
+      )}
+    </>
+  );
+
+
   if (lot && !lot.building) {
     return (
       <Wrapper>
@@ -235,7 +283,7 @@ const LotInfo = () => {
           })}
           {selectedBuilding && (
             <div style={{ marginTop: 15 }}>
-              <ConstructionPlan buildingType={selectedBuilding} />
+              
             </div>
           )}
         </HudMenuCollapsibleSection>
@@ -297,9 +345,6 @@ const LotInfo = () => {
         titleText="Construction"
         collapsed={lot.building.Building.status === Building.CONSTRUCTION_STATUSES.OPERATIONAL}
         borderless>
-        <ConstructionPlan
-          buildingType={lot.building.Building.buildingType}
-          planningLot={lot.building.Building.status === Building.CONSTRUCTION_STATUSES.PLANNED ? lot : null} />
       </HudMenuCollapsibleSection>
     </Wrapper>
   );

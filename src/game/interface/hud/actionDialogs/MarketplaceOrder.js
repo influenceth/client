@@ -179,8 +179,6 @@ const TooltipBody = styled.div`
   }
 `;
 
-// TODO: ecs refactor
-
 const MarketplaceOrder = ({
   asteroid,
   lot,
@@ -298,6 +296,7 @@ const MarketplaceOrder = ({
     let totalOrders = 0;
     let needed = quantity;
     let marketFills = [];
+    const paymentFunc = mode === 'buy' ? Order.getFillSellOrderPayments : Order.getFillBuyOrderWithdrawals;
     const priceSortMult = mode === 'buy' ? 1 : -1;
     const orders = []
       .concat(mode === 'buy' ? sellOrders : buyOrders)
@@ -305,33 +304,43 @@ const MarketplaceOrder = ({
     orders.every((order) => {
       const { amount, price } = order;
       const levelAmount = Math.min(needed, amount);
-      total += levelAmount * price;
+      const levelValue = levelAmount * price;
+      total += levelValue;
       needed -= levelAmount;
       if (levelAmount > 0) {
-        marketFills.push({ ...order, fillAmount: levelAmount });
+        marketFills.push({
+          ...order,
+          fillAmount: levelAmount,
+          paymentsE6: paymentFunc(
+            levelValue * 1e6,
+            order.makerFee,
+            exchange.Exchange.takerFee,
+            feeReductionBonus?.totalBonus,
+            feeEnforcementBonus?.totalBonus
+          )
+        });
         totalOrders++;
         return true;
       }
       return false;
     });
+    console.log('marketFills', marketFills);
     return [total, total / quantity, totalOrders, marketFills];
-  }, [buyOrders, mode, quantity, sellOrders]);
+  }, [buyOrders, exchange, feeEnforcementBonus, feeReductionBonus, mode, quantity, sellOrders, type]);
 
   const totalLimitPrice = useMemo(() => {
     return (limitPrice || 0) * quantity;
   }, [limitPrice, quantity]);
 
-  // TODO: re-release sdk and reference there
-  const effFeeBonus = useMemo(
-    () => Order.netEffFeeBonus(feeReductionBonus?.totalBonus, feeEnforcementBonus?.totalBonus),
-    [feeReductionBonus, feeEnforcementBonus]
-  );
-
   // maker = limit order
   // taker = market order
   const feeRate = useMemo(
-    () => 1E-5 * exchange?.Exchange?.[type === 'market' ? 'takerFee' : 'makerFee'] / effFeeBonus,
-    [effFeeBonus, type]
+    () => Order.adjustedFee(
+      exchange?.Exchange?.[type === 'market' ? 'takerFee' : 'makerFee'],
+      feeReductionBonus?.totalBonus,
+      feeEnforcementBonus?.totalBonus
+    ) / Order.FEE_SCALE,
+    [exchange, feeEnforcementBonus, feeReductionBonus, type]
   );
 
   const feeTotal = useMemo(

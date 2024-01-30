@@ -402,13 +402,14 @@ const FeedCrew = ({
           />
 
           <InventorySelectionDialog
-            asteroidId={asteroid.id}
+            asteroidId={asteroid?.id}
             isSourcing
             itemIds={[Product.IDS.FOOD]}
             otherEntity={crew}
             onClose={() => setOriginSelectorOpen(false)}
             onSelected={setOriginSelection}
             open={originSelectorOpen}
+            requirePresenceOfItemIds
           />
         </>
       )}
@@ -425,14 +426,6 @@ const Wrapper = (props) => {
 
   const stage = feedCrewManager.actionStage || actionStages.NOT_STARTED;
 
-  useEffect(() => {
-    if (!asteroid) {
-      if (!asteroidIsLoading) {
-        if (props.onClose) props.onClose();
-      }
-    }
-  }, [asteroid, asteroidIsLoading]);
-
   // handle auto-closing on any status change
   const lastStatus = useRef();
   useEffect(() => {
@@ -447,7 +440,7 @@ const Wrapper = (props) => {
   return (
     <ActionDialogInner
       actionImage={headerBackground}
-      isLoading={reactBool(crewIsLoading || asteroidIsLoading || crewIsLoading)}
+      isLoading={reactBool(crewIsLoading || asteroidIsLoading)}
       stage={stage}>
       <FeedCrew
         asteroid={asteroid}

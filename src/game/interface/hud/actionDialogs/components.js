@@ -3893,7 +3893,7 @@ const BonusesFootnote = styled.div`
   margin-top: -5px;
 `;
 
-export const BonusTooltip = ({ bonus, crewRequired, details, title, titleValue, isTimeStat }) => {
+export const BonusTooltip = ({ bonus = {}, crewRequired, details, title, titleValue, isTimeStat }) => {
   const { titles, traits, others, foodMultiplier, stationMultiplier, timeMultiplier, totalBonus } = bonus;
   const timeMult = isTimeStat ? -1 : 1;
   const titleDirection = getBonusDirection({ totalBonus });
@@ -4059,7 +4059,7 @@ export const formatSampleVolume = (volume) => {
   return formatFixed(volume, 1);
 };
 
-export const getBonusDirection = ({ totalBonus }, biggerIsBetter = true) => {
+export const getBonusDirection = ({ totalBonus } = {}, biggerIsBetter = true) => {
   if (totalBonus === 1) return 0;
   return (biggerIsBetter === (totalBonus > 1)) ? 1 : -1;
 };

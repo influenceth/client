@@ -5,7 +5,7 @@ import { Building } from '@influenceth/sdk';
 import useLot from '~/hooks/useLot';
 import useStore from '~/hooks/useStore';
 import MarketplaceSettings from './components/MarketplaceSettings';
-import { HudMenuCollapsibleSection, Scrollable } from './components';
+import { HudMenuCollapsibleSection, Scrollable } from './components/components';
 
 const AdminBuilding = ({}) => {
   const lotId = useStore(s => s.asteroids.lot);

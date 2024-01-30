@@ -16,6 +16,7 @@ import formatters from '~/lib/formatters';
 import useOrderList from '~/hooks/useOrderList';
 import { formatResourceAmount } from '../../hud/actionDialogs/components';
 import useCrewContext from '~/hooks/useCrewContext';
+import { nativeBool } from '~/lib/utils';
 
 const greenRGB = hexToRGB(theme.colors.green);
 
@@ -379,7 +380,7 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
 
   const [mode, setMode] = useState('buy');
   const [type, setType] = useState('market');
-  const chartWrapperRef = useRef();
+  const chartWrapperRef = useRef({ clientHeight: 0, clientWidth: 0 });
 
   // TODO: if nothing available for market order, default to limit
 
@@ -395,7 +396,7 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
     totalForBuy,
     totalForSale
   } = useMemo(() => {
-    if (!chartWrapperRef.current) return {};
+    // if (!chartWrapperRef.current) return {};
     if (!(buyBuckets?.length > 0 || sellBuckets?.length > 0)) return {};
 
     const xViewbox = chartWrapperRef.current.clientWidth;
@@ -496,14 +497,14 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
     return getCrewAbilityBonuses(Crewmate.ABILITY_IDS.MARKETPLACE_FEE_ENFORCEMENT, marketplaceOwner) || {};
   }, [marketplaceOwner]);
 
-  const effFeeBonus = useMemo(
-    () => Order.netEffFeeBonus(feeReductionBonus.totalBonus, feeEnforcementBonus.totalBonus),
-    [feeReductionBonus, feeEnforcementBonus]
+  const baseMarketplaceFee = useMemo(
+    () => marketplace?.Exchange?.[type === 'market' ? 'takerFee' : 'makerFee'],
+    [marketplace, type]
   );
 
   const marketplaceFee = useMemo(
-    () => 1E-5 * marketplace?.Exchange?.[type === 'market' ? 'takerFee' : 'makerFee'] / effFeeBonus,
-    [effFeeBonus, marketplace, type]
+    () => Order.adjustedFee(baseMarketplaceFee, feeReductionBonus.totalBonus, feeEnforcementBonus.totalBonus),
+    [baseMarketplaceFee, feeReductionBonus, feeEnforcementBonus]
   );
 
   const [quantity, setQuantity] = useState();
@@ -561,7 +562,7 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
 
   const fee = useMemo(() => {
     return (type === 'market' ? totalMarketPrice : totalLimitPrice)
-      * marketplaceFee;
+      * marketplaceFee / Order.FEE_SCALE;
   }, [marketplaceFee, totalMarketPrice, totalLimitPrice, type]);
 
   const total = useMemo(() => {
@@ -603,7 +604,7 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
                 size="110px"
                 tooltipContainer={null} />
             </ResourceThumbWrapper>
-            <svg focusable="false" viewBox={`0 0 ${xViewbox} ${yViewbox}`}>
+            <svg focusable="false" viewBox={`0 0 ${xViewbox || 1} ${yViewbox || 1}`}>
               <g>
                 <polygon
                   points={sellPoints}
@@ -716,11 +717,12 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
                   <InputLabel>
                     <label>Quantity</label>
                     {type === 'market' && (
-                      <span>Max <b>{((mode === 'buy' ? totalForSale : totalForBuy) || 0).toLocaleString()}{resource.massPerUnit === 1000 ? ' kg' : ''}</b></span>
+                      <span>Max <b style={!(mode === 'buy' ? totalForSale : totalForBuy) ? { color: theme.colors.error} : {}}>{((mode === 'buy' ? totalForSale : totalForBuy) || 0).toLocaleString()}{resource.massPerUnit === 1000 ? ' kg' : ''}</b></span>
                     )}
                   </InputLabel>
                   <TextInputWrapper rightLabel={resource.isAtomic ? '' : ' kg'}>
                     <UncontrolledTextInput
+                      disabled={nativeBool(type === 'market' && ((mode === 'buy' && !totalForSale) || (mode === 'sell' && !totalForBuy)))}
                       min={0}
                       max={type === 'market' ? (mode === 'buy' ? totalForSale : totalForBuy) : undefined}
                       onChange={handleChangeQuantity}
@@ -736,10 +738,10 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
                     <InputLabel>
                       <label>Market Price</label>
                     </InputLabel>
-                    <TextInputWrapper rightLabel="SWAY">
+                    <TextInputWrapper rightLabel={`SWAY${resource.isAtomic ? '' : ' / kg'}`}>
                       <UncontrolledTextInput
                         disabled
-                        value={avgMarketPrice ? formatPrice(avgMarketPrice || 0) : (centerPrice + (spread || 0) / 2)} />
+                        value={avgMarketPrice ? formatPrice(avgMarketPrice || 0) : ((centerPrice || 0) + (spread || 0) / 2)} />
                     </TextInputWrapper>
                   </FormSection>
                 )}
@@ -748,7 +750,7 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
                     <InputLabel>
                       <label>Price</label>
                     </InputLabel>
-                    <TextInputWrapper rightLabel="SWAY">
+                    <TextInputWrapper rightLabel={`SWAY${resource.isAtomic ? '' : ' / kg'}`}>
                       <UncontrolledTextInput
                         onChange={handleChangeLimitPrice}
                         placeholder="Specify Price"
@@ -771,7 +773,18 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
                 <FormSection>
                   <InputLabel>
                     <label>Marketplace Fee</label>
-                    <span style={{ color: theme.colors.main }}>{100 * marketplaceFee}%</span>
+                    {marketplaceFee !== baseMarketplaceFee && (
+                      <span style={{ color: 'white', opacity: 0.3, paddingRight: 4 }}>
+                        BASE: {formatFixed(100 * baseMarketplaceFee / Order.FEE_SCALE, 2)}% ▸
+                      </span>
+                    )}
+                    <span
+                      style={{
+                        color: marketplaceFee === baseMarketplaceFee
+                          ? theme.colors.main
+                          : (marketplaceFee > baseMarketplaceFee ? theme.colors.error : theme.colors.success),
+                        fontWeight: 'bold'
+                      }}>{formatFixed(100 * marketplaceFee / Order.FEE_SCALE, 2)}%</span>
                   </InputLabel>
                   <TextInputWrapper rightLabel="SWAY">
                     <UncontrolledTextInput

@@ -48,10 +48,9 @@ const CrewCards = styled.div`
       }
     `
   }
-
 `;
 
-const CrewIndicator = ({ crew, flip, label = 'Owned by' }) => {
+const CrewIndicator = ({ cardWidth = 60, crew, noCrewText, flip, label = 'Owned by' }) => {
   const { crew: myCrew } = useCrewContext();
   const { data: captain } = useCrewmate((crew?.Crew?.roster || [])[0]);
   return (
@@ -61,12 +60,19 @@ const CrewIndicator = ({ crew, flip, label = 'Owned by' }) => {
         crewmate={captain}
         isCaptain
         lessPadding
-        width={60} />
+        noAnimation
+        width={cardWidth} />
       <CrewLabel>
         <div>{label}</div>
         <h3>
-          {crew?.Name?.name || `Crew #${crew?.id}`}
-          {myCrew?.id === crew?.id ? <label> (Me)</label> : null}
+          {crew
+            ? (
+              <>
+                {crew?.Name?.name || noCrewText || `Crew #${crew?.id}`}
+                {myCrew?.id === crew?.id ? <label> (Me)</label> : null}
+              </>
+            )
+            : (noCrewText || 'N/A')}
         </h3>
       </CrewLabel>
     </CrewCards>
