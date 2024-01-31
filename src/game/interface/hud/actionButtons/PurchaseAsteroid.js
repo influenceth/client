@@ -7,7 +7,8 @@ import useBuyAsteroid from '~/hooks/actionManagers/useBuyAsteroid';
 import ActionButton from './ActionButton';
 import useSale from '~/hooks/useSale';
 
-const isVisible = ({ asteroid }) => {
+const isVisible = ({ asteroid, lot }) => {
+  if (lot) return false;
   return asteroid && !asteroid.Nft?.owner;
 };
 

@@ -217,15 +217,15 @@ const CrewAssignment = ({ crewId, crewmateId, onFinish }) => {
             )
         }
         leftButton={{
-          label: 'Back',
-          onClick: (bookSession.currentStoryIndex > 0 || storySession.currentStep > 0) ? onUndoPath : onGoBack,
-        }}
-        rightButton={{
-          label: 'Exit Story Mode',
+          label: 'Skip Story',
           onClick: confirmExitStoryMode,
           props: {
             disabled: (storySession.isLastPage && bookSession.isLastStory) ? 'true' : undefined
           }
+        }}
+        rightButton={{
+          label: 'Back',
+          onClick: (bookSession.currentStoryIndex > 0 || storySession.currentStep > 0) ? onUndoPath : onGoBack,
         }}
         title={storySession.title}
         subtitle={(
@@ -260,7 +260,7 @@ const CrewAssignment = ({ crewId, crewmateId, onFinish }) => {
             <div style={{ fontSize: '110%' }}>
               <div>
                 Exiting story mode will allow you to select your character's traits
-                all at once, in contrast to deriving their traits from the choices you 
+                all at once, in contrast to deriving their traits from the choices you
                 make for them through their unique origin story.
               </div>
               <div style={{ marginTop: 15 }}>

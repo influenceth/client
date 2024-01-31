@@ -1,5 +1,4 @@
 import { useCallback, useMemo } from 'react';
-import { Ship } from '@influenceth/sdk';
 
 import { EjectPassengersIcon } from '~/components/Icons';
 import ActionButton, { getCrewDisabledReason } from './ActionButton';
@@ -33,15 +32,15 @@ const EjectCrew = ({ asteroid, crew, onSetAction, _disabled }) => {
 
   const disabledReason = useMemo(() => {
     if (_disabled) return 'loading...';
-    return getCrewDisabledReason({ crew });
+    return getCrewDisabledReason({ asteroid, crew, requireSurface: false });
   }, [_disabled, asteroid, crew]);
-  
+
   return (
     <ActionButton
       label="Eject My Crew"
       labelAddendum={disabledReason}
       flags={{
-        disabled: disabledReason, 
+        disabled: disabledReason,
         loading: !!currentEjection,
       }}
       icon={<EjectPassengersIcon />}
