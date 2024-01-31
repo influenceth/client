@@ -18,7 +18,7 @@ const configByType = {
 const useAutocomplete = (assetType) => {
   const [ searchTerm, setSearchTerm ] = useState('');
   const [ query, setQuery ] = useThrottle({}, 2, true);
-  
+
   useEffect(() => {
     if (!assetType) return;
     if (searchTerm) {
@@ -26,22 +26,18 @@ const useAutocomplete = (assetType) => {
 
       let queryBuilder;
       if (assetType === 'asteroids') {
-        queryBuilder = esb.boolQuery();
-
+        queryBuilder = esb.disMaxQuery();
+        const queries = [esb.matchQuery('Name.name', searchTerm)];
         // if all numeric, also search against id
-        // TODO: prioritize match against id if id is included
-        const matchAgainst = ['Name.name'];
-        if (!/^[^0-9]/.test(searchTerm)) matchAgainst.unshift('id');
-        queryBuilder.filter(
-          esb.multiMatchQuery(matchAgainst, searchTerm)
-        );
+        if (!/^[^0-9]/.test(searchTerm)) queries.push(esb.termQuery('id', searchTerm).boost(10));
+        queryBuilder.queries(queries);
       }
 
       if (queryBuilder) q.query(queryBuilder);
       if (sort) q.sort(esb.sort(...sort));
       q.from(0);
       q.size(50);
-  
+
       setQuery(q.toJSON());
     } else {
       // TODO: default response for asset type
