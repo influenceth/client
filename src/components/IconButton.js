@@ -3,13 +3,14 @@ import styled from 'styled-components';
 import ReactTooltip from 'react-tooltip';
 
 import useStore from '~/hooks/useStore';
+import { hexToRGB } from '~/theme';
 
 const StyledIconButton = styled.button`
   align-items: center;
-  border: ${p => p.borderless ? '0px' : '1px'} solid ${p => p.theme.colors.main};
+  border: ${p => p.borderless ? '0px' : '1px'} solid ${p => p.theme.colors[p.themeColor || 'main']};
   background-color: ${p => p.backgroundColor || 'transparent'};
   border-radius: 2px;
-  color: ${p => p.theme.colors.main};
+  color: ${p => p.theme.colors[p.themeColor || 'main']};
   display: flex;
   font-family: 'Jura', sans-serif;
   font-size: 15px;
@@ -27,12 +28,16 @@ const StyledIconButton = styled.button`
   }
 
   &:hover {
-    background-image: linear-gradient(120deg, rgba(54, 167, 205, 0.1), rgba(54, 167, 205, 0.25));
+    background-image: linear-gradient(
+      120deg,
+      rgba(${p => hexToRGB(p.theme.colors[p.themeColor || 'main'])}, 0.1),
+      rgba(${p => hexToRGB(p.theme.colors[p.themeColor || 'main'])}, 0.25)
+    );
     color: white;
   }
 
   &:active {
-    background-color: ${p => p.theme.colors.main};
+    background-color: ${p => p.theme.colors[p.themeColor || 'main']};
     color: white;
   }
 

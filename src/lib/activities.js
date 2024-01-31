@@ -1224,6 +1224,15 @@ const activities = {
   SellOrderCancelled: {
     getInvalidations: ({ event: { returnValues } }, { exchange = {} }) => {
       const { asteroidId, lotId } = locationsArrToObj(exchange?.Location?.locations || []) || {};
+      // console.log('invalidate on SellOrderCancelled', [
+      //   ...invalidationDefaults(returnValues.exchange),
+      //   ...invalidationDefaults(returnValues.storage),
+      //   [ 'crewOpenOrders' ],
+      //   [ 'orderList', returnValues.product, returnValues.exchange.id ],
+      //   [ 'exchangeOrderSummary', asteroidId, returnValues.product ],
+      //   [ 'productOrderSummary', Entity.IDS.ASTEROID, asteroidId ],
+      //   [ 'productOrderSummary', Entity.IDS.LOT, lotId ],
+      // ]);
       return [
         ...invalidationDefaults(returnValues.exchange),
         ...invalidationDefaults(returnValues.storage),

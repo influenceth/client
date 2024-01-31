@@ -3,7 +3,7 @@ import styled from 'styled-components';
 import { Asteroid, Crew, Crewmate, Lot, Order, Product, Time } from '@influenceth/sdk';
 
 import marketplaceBackground from '~/assets/images/modal_headers/Marketplace.png';
-import { BanIcon, InventoryIcon, WarningOutlineIcon, SwayIcon, MarketBuyIcon, MarketSellIcon, LimitBuyIcon, LimitSellIcon, CancelLimitOrderIcon, LocationIcon } from '~/components/Icons';
+import { BanIcon, InventoryIcon, WarningOutlineIcon, SwayIcon, MarketBuyIcon, MarketSellIcon, LimitBuyIcon, LimitSellIcon, CancelLimitOrderIcon, LocationIcon, CloseIcon } from '~/components/Icons';
 import Button from '~/components/ButtonAlt';
 import useCrewContext from '~/hooks/useCrewContext';
 import useLot from '~/hooks/useLot';
@@ -36,7 +36,8 @@ import {
   InventoryInputBlock,
   TransferDistanceDetails,
   TimeBonusTooltip,
-  getTripDetails
+  getTripDetails,
+  FeeBonusTooltip
 } from './components';
 import MouseoverInfoPane from '~/components/MouseoverInfoPane';
 import useMarketplaceManager from '~/hooks/actionManagers/useMarketplaceManager';
@@ -185,6 +186,8 @@ const MarketplaceOrder = ({
   manager,
   stage,
   isCancellation,
+  cancellationInitialCaller,
+  cancellationMakerFee,
   mode,
   type,
   resourceId,
@@ -324,7 +327,6 @@ const MarketplaceOrder = ({
       }
       return false;
     });
-    console.log('marketFills', marketFills);
     return [total, total / quantity, totalOrders, marketFills];
   }, [buyOrders, exchange, feeEnforcementBonus, feeReductionBonus, mode, quantity, sellOrders, type]);
 
@@ -335,10 +337,12 @@ const MarketplaceOrder = ({
   // maker = limit order
   // taker = market order
   const feeRate = useMemo(
-    () => Order.adjustedFee(
-      exchange?.Exchange?.[type === 'market' ? 'takerFee' : 'makerFee'],
-      feeReductionBonus?.totalBonus,
-      feeEnforcementBonus?.totalBonus
+    () => (
+      cancellationMakerFee || Order.adjustedFee(
+        exchange?.Exchange?.[type === 'market' ? 'takerFee' : 'makerFee'],
+        feeReductionBonus?.totalBonus,
+        feeEnforcementBonus?.totalBonus
+      )
     ) / Order.FEE_SCALE,
     [exchange, feeEnforcementBonus, feeReductionBonus, type]
   );
@@ -348,59 +352,70 @@ const MarketplaceOrder = ({
     [feeRate, totalLimitPrice, totalMarketPrice, type]
   );
 
-  const stats = useMemo(() => ([
-    {
-      label: type === 'limit' ? 'Maker Fee' : 'Taker Fee',
-      value: <><SwayIcon /> {feeTotal.toLocaleString()} ({formatFixed(100 * feeRate, 1)}%)</>,
-      direction: 0,
-      direction: feeReductionBonus?.totalBonus > 1 ? getBonusDirection(feeReductionBonus) : 0,
-      tooltip: feeReductionBonus?.totalBonus > 1 && (
-        <BonusTooltip
-          bonus={feeReductionBonus}
-          title="Marketplace Fee"
-          titleValue={`${feeTotal.toLocaleString()}`} />
-      )
-    },
-    (type === 'market'
-      ? undefined // TODO: could add an "orders filled" stat here
-      : {
-        label: 'Crew Travel Time',
-        value: formatTimer(crewTravelTime),
-        direction: getBonusDirection(hopperTransportBonus),
-        isTimeStat: true,
-        tooltip: (
-          <TimeBonusTooltip
-            bonus={hopperTransportBonus}
-            title="Travel Time"
-            totalTime={crewTravelTime}
-            crewRequired="start" />
-        )
-      }
-    ),
-    {
-      label: 'Product Transport Time',
-      value: formatTimer(transportTime),
-      direction: getBonusDirection(hopperTransportBonus),
-      isTimeStat: true,
-      tooltip: (
-        <TimeBonusTooltip
-          bonus={hopperTransportBonus}
-          title="Transport Time"
-          totalTime={transportTime}
-          crewRequired="start" />
-      )
-    },
-    {
-      label: 'Order Mass',
-      value: formatResourceMass(quantity, resourceId),
-      direction: 0,
-    },
-    {
-      label: 'Order Volume',
-      value: formatResourceVolume(quantity, resourceId),
-      direction: 0,
-    },
-  ]), [feeTotal, quantity, transportTime, crewTravelTime, hopperTransportBonus, resourceId]);
+  const stats = useMemo(() => {
+    const baseFeeRate = exchange?.Exchange?.[type === 'limit' ? 'makerFee' : 'takerFee'] / Order.FEE_SCALE;
+    return [
+      (isCancellation
+        ? undefined
+        : {
+          label: type === 'limit' ? 'Maker Fee' : 'Taker Fee',
+          value: <><SwayIcon /> {feeTotal.toLocaleString()} ({formatFixed(100 * feeRate, 1)}%)</>,
+          direction: feeRate === baseFeeRate ? 0 : (feeRate > baseFeeRate ? -1 : 1),
+          isTimeStat: true, // (to reverse direction of good/bad)
+          tooltip: feeRate !== baseFeeRate && (
+            <FeeBonusTooltip
+              baseFeeRate={baseFeeRate}
+              bonusedFeeRate={feeRate}
+              feeEnforcementBonus={feeEnforcementBonus}
+              feeReductionBonus={feeReductionBonus}
+              title="Fee Calculation" />
+          )
+        }
+      ),
+      ((isCancellation || type === 'market')
+        ? undefined // TODO: could add an "orders filled" stat here
+        : {
+          label: 'Crew Travel Time',
+          value: formatTimer(crewTravelTime),
+          direction: getBonusDirection(hopperTransportBonus),
+          isTimeStat: true,
+          tooltip: (
+            <TimeBonusTooltip
+              bonus={hopperTransportBonus}
+              title="Travel Time"
+              totalTime={crewTravelTime}
+              crewRequired="start" />
+          )
+        }
+      ),
+      (isCancellation
+        ? undefined
+        : {
+          label: 'Product Transport Time',
+          value: formatTimer(transportTime),
+          direction: getBonusDirection(hopperTransportBonus),
+          isTimeStat: true,
+          tooltip: (
+            <TimeBonusTooltip
+              bonus={hopperTransportBonus}
+              title="Transport Time"
+              totalTime={transportTime}
+              crewRequired="start" />
+          )
+        }
+      ),
+      {
+        label: 'Order Mass',
+        value: formatResourceMass(quantity, resourceId),
+        direction: 0,
+      },
+      {
+        label: 'Order Volume',
+        value: formatResourceVolume(quantity, resourceId),
+        direction: 0,
+      },
+    ];
+  }, [feeTotal, quantity, transportTime, crewTravelTime, hopperTransportBonus, resourceId]);
 
 
 
@@ -429,7 +444,40 @@ const MarketplaceOrder = ({
   }, [sellOrders]);
 
   const onSubmitOrder = useCallback(() => {
-    if (type === 'market') {
+    if (isCancellation) {
+      if (mode === 'buy') {
+        console.log('cancelBuyOrder', {
+          buyer: { id: crew?.id, label: crew?.label },
+          amount: quantityToUnits(quantity),
+          product: resourceId,
+          price: limitPrice,
+          destination: { id: storage?.id, label: storage?.label },
+          destinationSlot: storageInventory?.slot,
+          initialCaller: cancellationInitialCaller,
+          makerFee: cancellationMakerFee
+        });
+        cancelBuyOrder({
+          amount: quantityToUnits(quantity),
+          buyer: { id: crew?.id, label: crew?.label },
+          price: limitPrice,
+          product: resourceId,
+          destination: { id: storage?.id, label: storage?.label },
+          destinationSlot: storageInventory?.slot,
+          initialCaller: cancellationInitialCaller,
+          makerFee: cancellationMakerFee
+        })
+      } else {
+        cancelSellOrder({
+          amount: quantityToUnits(quantity),
+          seller: { id: crew?.id, label: crew?.label },
+          product: resourceId,
+          price: limitPrice,
+          origin: { id: storage?.id, label: storage?.label },
+          originSlot: storageInventory?.slot,
+        })
+      }
+    }
+    else if (type === 'market') {
       if (mode === 'buy') {
         fillSellOrders({
           destination: { id: storage?.id, label: storage?.label },
@@ -445,7 +493,8 @@ const MarketplaceOrder = ({
           product: resourceId
         })
       }
-    } else {
+    }
+    else {
       const vars = {
         product: resourceId,
         amount: quantityToUnits(quantity),
@@ -466,7 +515,7 @@ const MarketplaceOrder = ({
         });
       }
     }
-  }, [feeTotal, limitPrice, marketFills, quantity, quantityToUnits, resourceId, storage, storageInventory]);
+  }, [cancellationInitialCaller, feeTotal, limitPrice, marketFills, quantity, quantityToUnits, resourceId, storage, storageInventory]);
 
   // handle auto-closing
   const lastStatus = useRef();
@@ -590,11 +639,11 @@ const MarketplaceOrder = ({
           <InventoryInputBlock
             title={mode === 'buy' ? 'Deliver To' : 'Source From'}
             titleDetails={<TransferDistanceDetails distance={transportDistance} crewTravelBonus={hopperTransportBonus} />}
-            disabled={stage !== actionStages.NOT_STARTED}
+            disabled={isCancellation || stage !== actionStages.NOT_STARTED}
             entity={storage}
             inventorySlot={storageInventory?.slot}
             imageProps={{ iconOverride: <InventoryIcon /> }}
-            isSelected={stage === actionStages.NOT_STARTED}
+            isSelected={!isCancellation && stage === actionStages.NOT_STARTED}
             onClick={() => setStorageSelectorOpen(true)}
             sublabel={
               storageLot
@@ -614,7 +663,7 @@ const MarketplaceOrder = ({
               </InputLabel>
               <TextInputWrapper rightLabel={resourceByMass ? ' kg' : ''}>
                 <UncontrolledTextInput
-                  disabled={stage !== actionStages.NOT_STARTED}
+                  disabled={isCancellation || stage !== actionStages.NOT_STARTED}
                   min={0}
                   max={type === 'market' ? (mode === 'buy' ? totalForSale : totalForBuy) : undefined}
                   onChange={handleChangeQuantity}
@@ -631,7 +680,7 @@ const MarketplaceOrder = ({
               </InputLabel>
               <TextInputWrapper rightLabel={`SWAY / ${resourceByMass ? 'kg' : 'unit'}`}>
                 <UncontrolledTextInput
-                  disabled={type === 'market' || stage !== actionStages.NOT_STARTED}
+                  disabled={isCancellation || type === 'market' || stage !== actionStages.NOT_STARTED}
                   style={type === 'market' ? { backgroundColor: '#09191f' } : {}}
                   min={0}
                   onChange={handleChangeLimitPrice}
@@ -642,7 +691,10 @@ const MarketplaceOrder = ({
 
             {stage === actionStages.NOT_STARTED && (
               <FormSection style={{ marginTop: 10 }}>
-                {type === 'market' && (
+                {isCancellation && (
+                  <InputLabel style={{ color: theme.colors.error, opacity: 0.75 }}><CloseIcon /> Order Cancellation</InputLabel>
+                )}
+                {!isCancellation && type === 'market' && (
                   <InputLabel>
                     <span style={{ flex: 1 }}>
                       Average Price from: <b>{' '}{(averagedOrderTally || 0).toLocaleString()} {mode === 'buy' ? 'Seller' : 'Buyer'}{averagedOrderTally === 1 ? '' : 's'}</b>
@@ -650,7 +702,7 @@ const MarketplaceOrder = ({
                     <Button onClick={() => {/* TODO: ... */}} size="small" subtle>Refresh</Button>
                   </InputLabel>
                 )}
-                {type === 'limit' && (
+                {!isCancellation && type === 'limit' && (
                   <InputLabel>
                     <CompetitionSummary mode={mode} matchingBest={limitPrice === bestOrderPrice} notBest={betterOrderTally > 0}>
                       {mode === 'buy' && (

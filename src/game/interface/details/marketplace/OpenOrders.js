@@ -5,11 +5,13 @@ import { Lot, Order, Product } from '@influenceth/sdk';
 
 import CrewIndicator from '~/components/CrewIndicator';
 import DataTable from '~/components/DataTable';
-import { CompositionIcon, MarketplaceBuildingIcon, MarketsIcon, ProductIcon, SwayIcon } from '~/components/Icons';
+import { CloseIcon, MarketplaceBuildingIcon, MarketsIcon, ProductIcon, SwayIcon } from '~/components/Icons';
 import { formatPrice } from '~/lib/utils';
 import theme from '~/theme';
 import { LocationLink } from '../listViews/components';
 import formatters from '~/lib/formatters';
+import IconButton from '~/components/IconButton';
+import useStore from '~/hooks/useStore';
 
 const Subheader = styled.div``;
 const Header = styled.div`
@@ -86,10 +88,28 @@ const OrderType = styled.div`
   color: ${p => p.type === 'LimitBuy' ? theme.colors.green : theme.colors.main};
 `;
 
-// TODO: ecs refactor
 const MarketplaceOpenOrders = ({ asteroid, orders, marketplace = null, marketplaceOwner = null }) => {
   const [sort, setSort] = useState(['createdAt', 'asc']);
   const [sortField, sortDirection] = sort;
+  const onSetAction = useStore(s => s.dispatchActionDialog);
+
+  const onCancelOrder = useCallback((order) => {
+    onSetAction('MARKETPLACE_ORDER', { 
+      asteroidId: asteroid?.id,
+      lotId: order.lotId,
+      mode: order.orderType === Order.IDS.LIMIT_BUY ? 'buy' : 'sell',
+      type: 'limit',
+      resourceId: order.product,
+      isCancellation: true,
+      cancellationMakerFee: order.orderType === Order.IDS.LIMIT_BUY ? order.makerFee : undefined,
+      preselect: {
+        limitPrice: order.price,
+        quantity: order.amount,
+        storage: order.storage,
+        storageSlot: order.storageSlot
+      }
+     });
+  }, []);
 
   const handleSort = useCallback((field) => () => {
     if (!field) return;
@@ -130,8 +150,8 @@ const MarketplaceOpenOrders = ({ asteroid, orders, marketplace = null, marketpla
         sortField: 'orderType',
         selector: row => (
           <>
-            {row.orderType === Order.IDS.LIMIT_BUY && <OrderType type={row.type}>Limit Buy</OrderType>}
-            {row.orderType === Order.IDS.LIMIT_SELL && <OrderType type={row.type}>Limit Sell</OrderType>}
+            {row.orderType === Order.IDS.LIMIT_BUY && <OrderType type="LimitBuy">Limit Buy</OrderType>}
+            {row.orderType === Order.IDS.LIMIT_SELL && <OrderType type="LimitSell">Limit Sell</OrderType>}
           </>
         ),
       },
@@ -198,6 +218,21 @@ const MarketplaceOpenOrders = ({ asteroid, orders, marketplace = null, marketpla
       //     </>
       //   ),
       // },
+      {
+        key: 'cancel',
+        label: '',
+        selector: row => (
+          <>
+            <IconButton
+              borderless
+              dataTip="Cancel Order"
+              onClick={() => onCancelOrder(row)}
+              themeColor="error">
+              <CloseIcon />
+            </IconButton>
+          </>
+        )
+      },
     ];
     if (!marketplace) {
       c.unshift({

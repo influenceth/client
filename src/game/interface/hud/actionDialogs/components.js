@@ -5,7 +5,7 @@ import ReactTooltip from 'react-tooltip';
 import { useQuery } from 'react-query';
 import { TbBellRingingFilled as AlertIcon } from 'react-icons/tb';
 import { BarLoader } from 'react-spinners';
-import { Asteroid, Building, Crewmate, Entity, Inventory, Lot, Process, Product, Ship, Station, Time } from '@influenceth/sdk';
+import { Asteroid, Building, Crewmate, Entity, Inventory, Lot, Order, Process, Product, Ship, Station, Time } from '@influenceth/sdk';
 import { cloneDeep } from 'lodash';
 
 import AsteroidRendering from '~/components/AsteroidRendering';
@@ -3893,70 +3893,71 @@ const BonusesFootnote = styled.div`
   margin-top: -5px;
 `;
 
-export const BonusTooltip = ({ bonus = {}, crewRequired, details, title, titleValue, isTimeStat }) => {
-  const { titles, traits, others, foodMultiplier, stationMultiplier, timeMultiplier, totalBonus } = bonus;
+const extractBonuses = (bonusObj, isTimeStat) => {
   const timeMult = isTimeStat ? -1 : 1;
-  const titleDirection = getBonusDirection({ totalBonus });
 
-  const bonuses = useMemo(() => {
-    const x = [];
-    if (bonus.class?.classId) {
-      const { matches, multiplier, classId } = bonus.class;
-      x.push({
-        text: `${Crewmate.getClass(classId)?.name} on Crew (x${matches})`,
-        multiplier,
-        direction: getBonusDirection({ totalBonus: multiplier })
-      });
-    }
-    Object.keys(titles || {}).map((titleId) => {
-      const { matches, bonus, /* bonusPerMatch */ } = titles[titleId];
-      x.push({
-        text: `${Crewmate.getTitle(titleId)?.name} on Crew (x${matches})`,
-        bonus,
-        direction: getBonusDirection({ totalBonus: 1 + timeMult * bonus }, !isTimeStat)
-      });
+  const x = [];
+  if (bonusObj.class?.classId) {
+    const { matches, multiplier, classId } = bonusObj.class;
+    x.push({
+      text: `${Crewmate.getClass(classId)?.name} on Crew (x${matches})`,
+      multiplier,
+      direction: getBonusDirection({ totalBonus: multiplier })
     });
-    Object.keys(traits || {}).map((traitId) => {
-      const { matches, bonus, /* bonusPerMatch */ } = traits[traitId];
-      x.push({
-        text: `${Crewmate.getTrait(traitId)?.name} (x${matches})`,
-        bonus,
-        direction: getBonusDirection({ totalBonus: 1 + timeMult * bonus }, !isTimeStat)
-      });
+  }
+  Object.keys(bonusObj.titles || {}).map((titleId) => {
+    const { matches, bonus, /* bonusPerMatch */ } = bonusObj.titles[titleId];
+    x.push({
+      text: `${Crewmate.getTitle(titleId)?.name} on Crew (x${matches})`,
+      bonus,
+      direction: getBonusDirection({ totalBonus: 1 + timeMult * bonus }, !isTimeStat)
     });
-    if (foodMultiplier < 1) {
-      x.push({
-        text: `Food Rationing Penalty`,
-        multiplier: foodMultiplier,
-        direction: getBonusDirection({ totalBonus: foodMultiplier })
-      });
-    }
-    if (stationMultiplier !== 1) {
-      x.push({
-        text: `Station Capacity ${stationMultiplier > 1 ? 'Bonus' : 'Penalty'}`,
-        multiplier: stationMultiplier,
-        direction: getBonusDirection({ totalBonus: stationMultiplier })
-      });
-    }
-    (others || []).forEach(({ text, bonus, direction }) => {
-      x.push({ text, bonus, direction });
+  });
+  Object.keys(bonusObj.traits || {}).map((traitId) => {
+    const { matches, bonus, /* bonusPerMatch */ } = bonusObj.traits[traitId];
+    x.push({
+      text: `${Crewmate.getTrait(traitId)?.name} (x${matches})`,
+      bonus,
+      direction: getBonusDirection({ totalBonus: 1 + timeMult * bonus }, !isTimeStat)
     });
-    if (timeMultiplier > 0 && timeMultiplier !== 1) {
-      x.push({
-        text: `Time Acceleration`,
-        multiplier: timeMultiplier,
-        direction: getBonusDirection({ totalBonus: timeMultiplier })
-      });
-    }
+  });
+  if (bonusObj.foodMultiplier < 1) {
+    x.push({
+      text: `Food Rationing Penalty`,
+      multiplier: bonusObj.foodMultiplier,
+      direction: getBonusDirection({ totalBonus: bonusObj.foodMultiplier })
+    });
+  }
+  if (bonusObj.stationMultiplier !== 1) {
+    x.push({
+      text: `Station Capacity ${bonusObj.stationMultiplier > 1 ? 'Bonus' : 'Penalty'}`,
+      multiplier: bonusObj.stationMultiplier,
+      direction: getBonusDirection({ totalBonus: bonusObj.stationMultiplier })
+    });
+  }
+  (bonusObj.others || []).forEach(({ text, bonus, direction }) => {
+    x.push({ text, bonus, direction });
+  });
+  if (bonusObj.timeMultiplier > 0 && bonusObj.timeMultiplier !== 1) {
+    x.push({
+      text: `Time Acceleration`,
+      multiplier: bonusObj.timeMultiplier,
+      direction: getBonusDirection({ totalBonus: bonusObj.timeMultiplier })
+    });
+  }
 
-    return x
-      .filter((b) => (b.multiplier !== undefined && b.multiplier !== 1) || (b.bonus !== undefined && b.bonus !== 0))
-      .sort((a, b) => b.bonus - a.bonus);
-  }, [titles, traits]);
+  return x
+    .filter((b) => (b.multiplier !== undefined && b.multiplier !== 1) || (b.bonus !== undefined && b.bonus !== 0))
+    .sort((a, b) => b.bonus - a.bonus);
+};
 
+export const BonusTooltip = ({ bonus = {}, crewRequired, details, title, titleValue, isTimeStat }) => {
+  const timeMult = isTimeStat ? -1 : 1;
+  const titleDirection = getBonusDirection({ totalBonus: bonus.totalBonus });
+  const bonuses = useMemo(() => extractBonuses(bonus, isTimeStat), [bonus, isTimeStat]);
   return (
     <Bonuses>
-      {(bonus !== 1 || !details) && (
+      {(bonus.totalBonus !== 1 || !details) && (
         <>
           <BonusesHeader>Bonuses</BonusesHeader>
           <BonusesSection>
@@ -4014,6 +4015,71 @@ export const BonusTooltip = ({ bonus = {}, crewRequired, details, title, titleVa
   );
 };
 
+export const FeeBonusTooltip = ({ baseFeeRate, bonusedFeeRate, feeEnforcementBonus, feeReductionBonus, ...props }) => {
+  const flip = false;
+  const timeMult = 1;
+  const reductionBonuses = useMemo(() => extractBonuses(feeReductionBonus, true), [feeReductionBonus]);
+  return (
+    <Bonuses>
+      {feeEnforcementBonus.totalBonus !== 1 && (
+        <>
+          <BonusesHeader>Marketplace Operator</BonusesHeader>
+          <BonusesSection>
+            <BonusesSectionHeader direction={feeEnforcementBonus.totalBonus > 1 ? -1 : 1} flip>
+              <label>Fee Enforcement Bonus</label>
+              <span>x{feeEnforcementBonus.totalBonus}</span>
+            </BonusesSectionHeader>
+          </BonusesSection>
+        </>
+      )}
+      {feeReductionBonus.totalBonus !== 1 && (
+        <>
+          <BonusesHeader>Your Crew</BonusesHeader>
+          <BonusesSection>
+            <BonusesSectionHeader direction={feeReductionBonus.totalBonus > 1 ? 1 : -1}>
+              <label>Fee Reduction Bonus</label>
+              <span>x{feeReductionBonus.totalBonus}</span>
+            </BonusesSectionHeader>
+            {reductionBonuses.map(({ text, bonus, multiplier, direction }) => {
+              let bonusLabel;
+              if (multiplier) {
+                bonusLabel = `x${flip ? (Math.round(1000 / multiplier) / 1000) : multiplier}`;
+              } else {
+                bonusLabel = `${timeMult > 0 ? '+' : '-'}${formatFixed(100 * bonus, 1)}%`;
+              }
+              return (
+                <BonusItem key={text} direction={direction} noIcon>
+                  <label>{text}</label>
+                  <span>{bonusLabel}</span>
+                </BonusItem>
+              );
+            })}
+          </BonusesSection>
+        </>
+      )}
+      {feeEnforcementBonus.totalBonus !== 1 && feeReductionBonus.totalBonus !== 1 && (
+        <>
+          <BonusesHeader>Summary</BonusesHeader>
+          <BonusesSection>
+            <BonusesSectionHeader direction={bonusedFeeRate / baseFeeRate > 1 ? -1 : 1} flip>
+              <label>Effective Fee</label>
+              <span>{formatFixed(100 * bonusedFeeRate, Math.log10(Order.FEE_SCALE / 100))}%</span>
+            </BonusesSectionHeader>
+            <BonusItem direction={0} noIcon>
+              <label>Base Fee</label>
+              <span>{formatFixed(100 * baseFeeRate, Math.log10(Order.FEE_SCALE / 100))}%</span>
+            </BonusItem>
+            <BonusItem direction={bonusedFeeRate / baseFeeRate > 1 ? -1 : 1} noIcon>
+              <label>Net Multiplier</label>
+              <span>x{bonusedFeeRate / baseFeeRate}</span>
+            </BonusItem>
+          </BonusesSection>
+        </>
+      )}
+    </Bonuses>
+  );
+};
+
 export const MaterialBonusTooltip = ({ bonus, title, titleValue, ...props }) => (
   <BonusTooltip
     {...props}
@@ -4033,18 +4099,16 @@ export const TimeBonusTooltip = ({ bonus, title, totalTime, ...props }) => (
   />
 );
 
-export const TravelBonusTooltip = ({ bonus, totalTime, tripDetails, ...props }) => {
-  return (
-    <BonusTooltip
-      {...props}
-      bonus={bonus}
-      details={{ title: "Trip Details", rows: tripDetails }}
-      isTimeStat
-      title="Crew Travel Time"
-      titleValue={formatTimer(totalTime)}
-    />
-  );
-};
+export const TravelBonusTooltip = ({ bonus, totalTime, tripDetails, ...props }) => (
+  <BonusTooltip
+    {...props}
+    bonus={bonus}
+    details={{ title: "Trip Details", rows: tripDetails }}
+    isTimeStat
+    title="Crew Travel Time"
+    titleValue={formatTimer(totalTime)}
+  />
+);
 
 
 //
