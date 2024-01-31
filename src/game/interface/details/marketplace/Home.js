@@ -320,6 +320,14 @@ const MarketplaceHome = ({ asteroid, listings, orderTally, onSelectListing, mark
         }
       </Header>
 
+      {!tickerReady && (
+        <TickerItems>
+          <TickerItem>
+            <span>Loading...</span>
+          </TickerItem>
+        </TickerItems>
+      )}
+
       {tickerReady && (
         <Ticker>
           {() => (
@@ -356,7 +364,7 @@ const MarketplaceHome = ({ asteroid, listings, orderTally, onSelectListing, mark
         <ResultsTally>
           <GridIcon /> <span>{filteredListings.length} Result{filteredListings.length === 1 ? '' : 's'}</span>
         </ResultsTally>
-        
+
         <div style={{ flex: 1 }} />
 
         <Switcher
