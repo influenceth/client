@@ -31,6 +31,7 @@ import hudMenus from './hudMenus';
 import { reactBool } from '~/lib/utils';
 import useCrewContext from '~/hooks/useCrewContext';
 import theme from '~/theme';
+import useAccessibleAsteroidBuildings from '~/hooks/useAccessibleAsteroidBuildings';
 
 const cornerWidth = 8;
 const bumpHeightHalf = 100;
@@ -214,6 +215,7 @@ const HudMenu = ({ forceOpenMenu }) => {
   const openHudMenu = useStore(s => forceOpenMenu || s.openHudMenu);
 
   const { data: lot } = useLot(lotId);
+  const { data: marketplaces } = useAccessibleAsteroidBuildings(asteroidId, 'Exchange');
 
   const dispatchHudMenuOpened = useStore(s => s.dispatchHudMenuOpened);
 
@@ -267,10 +269,6 @@ const HudMenu = ({ forceOpenMenu }) => {
   useEffect(() => {
     setOpen(!!openHudMenu);
   }, [openHudMenu]);
-
-  const asteroidHasMarketplace = useMemo(() => {
-    return false; // TODO: true if has at least 1 OPERATIONAL marketplace (use lotData or elasticsearch)
-  }, []);
 
   const [menuButtons, pageButtons] = useMemo(() => {
     const menuButtons = [];
@@ -443,7 +441,7 @@ const HudMenu = ({ forceOpenMenu }) => {
         label: 'Asteroid Markets',
         icon: <MarketplaceBuildingIcon />,
         onOpen: () => {
-          if (asteroidHasMarketplace) {
+          if (marketplaces?.length > 0) {
             history.push(`/marketplace/${asteroidId}/all`);
           } else {
             // TODO: create alert to notify user that asteroid has no marketplace
@@ -484,7 +482,7 @@ const HudMenu = ({ forceOpenMenu }) => {
     }
 
     return [menuButtons, pageButtons];
-  }, [asteroidId, crew?.id, destination, lot, lotId, showDevTools, zoomStatus, zoomScene]);
+  }, [asteroidId, crew?.id, destination, lot, lotId, marketplaces?.length, showDevTools, zoomStatus, zoomScene]);
 
   const { label, onDetailClick, detailType, Component, componentProps, hideInsteadOfClose, noClose, noDetail } = useMemo(() => {
     return menuButtons.find((b) => b.key === openHudMenu) || {};

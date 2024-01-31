@@ -72,12 +72,6 @@ const OrderTally = styled.div`
   }
 `;
 
-
-// TODO: aggregations of all listings on this asteroid
-// TODO: aggregations of all listings at this marketplace? maybe roll these up ourselves
-
-
-
 const Marketplace = () => {
   const history = useHistory();
   const { asteroidId, lotIndex, discriminator } = useParams();
@@ -122,7 +116,6 @@ const Marketplace = () => {
       const summary = orderSummary?.[i] || {}; // TODO: combine
       buyOrderTally += summary.buy?.orders || 0;
       sellOrderTally += summary.sell?.orders || 0;
-      console.log(i, summary.buy, summary.sell);
       return {
         product: i,
         buyOrders: summary.buy?.orders || 0,

@@ -34,8 +34,11 @@ export function WalletProvider({ children }) {
   const [starknet, setStarknet] = useState(false);
   const [starknetReady, setStarknetReady] = useState(false);
   const [starknetUpdated, setStarknetUpdated] = useState(0);
-  const [lastEventAccount, setLastEventAccount] = useState();
-  const [lastEventNetwork, setLastEventNetwork] = useState();
+
+  const lastEvent = useRef({
+    account: starknet?.account?.address,
+    network: undefined
+  });
 
   const active = useMemo(() => {
     return starknet?.isConnected && starknet?.account?.address && isAllowedChain(starknet?.account?.provider?.chainId);
@@ -50,6 +53,8 @@ export function WalletProvider({ children }) {
   const onConnectionResult = useCallback((wallet) => {
     setConnecting(false);
     setStarknet(wallet);
+
+    if (wallet?.account?.address) lastEvent.current.account = wallet.account.address;
 
     if (onConnectCallback.current) {
       onConnectCallback.current(wallet?.account?.address && Address.toStandard(wallet?.account?.address));
@@ -113,18 +118,32 @@ export function WalletProvider({ children }) {
     }
   }, [connect, disconnect, starknet]);
 
-  useEffect(() => {
-    console.log({ lastEventAccount, lastEventNetwork });
-    onConnectionChange();
-  }, [lastEventAccount, lastEventNetwork]);
-
   // while connecting or connected, listen for network changes from extension
+  // NOTE: braavos fires lots of false positives, so that is what we are trying to trap
+  //  with the ref checks here
   useEffect(() => {
     const onAccountsChanged = (e) => {
-      setLastEventAccount(Array.isArray(e) ? e[0] : e);
+      const eventAccount = Array.isArray(e) ? e[0] : e;
+      if (!lastEvent.current.account || (lastEvent.current.account !== eventAccount)) {
+        // console.log('onAccountsChanged (YES)', eventAccount);
+        lastEvent.current.account = eventAccount;
+        onConnectionChange();
+      // } else {
+      //   console.log('onAccountsChanged (NO)', eventAccount);
+      }
     };
     const onNetworkChanged = (e) => {
-      setLastEventNetwork(Array.isArray(e) ? e[0] : e);
+      const eventNetwork = Array.isArray(e) ? e[0] : e;
+      if (!lastEvent.current.network || (lastEvent.current.network !== eventNetwork)) {
+        const resetConn = !!lastEvent.current.network;
+        lastEvent.current.network = eventNetwork;
+        if (resetConn) {
+          // console.log('onNetworkChanged (YES)', eventNetwork);
+          onConnectionChange();
+        }
+      // } else {
+      //   console.log('onNetworkChanged (NO)', eventNetwork);
+      }
     };
 
     const startListening = () => {

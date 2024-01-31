@@ -1,4 +1,4 @@
-import { Building, Entity, Lot, Process, Product, Ship } from '@influenceth/sdk';
+import { Building, Entity, Lot, Order, Process, Product, Ship } from '@influenceth/sdk';
 import moment from 'moment';
 
 import {
@@ -33,6 +33,7 @@ import {
   MarketBuyIcon,
   LimitBuyIcon,
   MarketSellIcon,
+  CancelLimitOrderIcon,
 } from '~/components/Icons';
 import theme, { hexToRGB } from '~/theme';
 import { getProcessorProps } from './utils';
@@ -203,6 +204,31 @@ const formatAsTx = (item) => {
       };
       break;
     }
+    case 'CancelSellOrder': {
+      const { asteroidId } = Lot.toPosition(item.meta.lotId) || {};
+      formatted.icon = <CancelLimitOrderIcon />;
+      formatted.label = 'Cancel Sell Order';
+      formatted.asteroidId = asteroidId;
+      formatted.lotId = item.meta.lotId;
+      formatted.locationDetail = Product.TYPES[item.vars.product]?.name;
+      formatted.onClick = ({ openDialog }) => {
+        openDialog('MARKETPLACE_ORDER', {
+          asteroidId,
+          lotId: item.meta.lotId,
+          mode: 'sell',
+          type: 'limit',
+          resourceId: item.vars.product,
+          isCancellation: true,
+          preselect: {
+            limitPrice: item.vars.price / 1e6,
+            quantity: item.meta.amount,
+            storage: item.vars.storage,
+            storageSlot: item.vars.storage_slot
+          }
+        });
+      };
+      break;
+    }
     case 'BulkFillSellOrder': {
       const { asteroidId } = Lot.toPosition(item.meta.lotId) || {};
       formatted.icon = <MarketBuyIcon />;
@@ -253,24 +279,41 @@ const formatAsTx = (item) => {
     case 'EscrowWithdrawalAndFillBuyOrders': {
       const { asteroidId } = Lot.toPosition(item.meta.lotId) || {};
       formatted.icon = <MarketSellIcon />;
-      formatted.label = 'Market Sell';
+      formatted.label = item.meta.isCancellation ? 'Cancel Buy Order' : 'Market Sell';
       formatted.asteroidId = asteroidId;
       formatted.lotId = item.meta.lotId;
       formatted.locationDetail = Product.TYPES[item.vars[0].product]?.name;
       formatted.onClick = ({ openDialog }) => {
-        console.log('item', item);
-        openDialog('MARKETPLACE_ORDER', {
-          asteroidId,
-          lotId: item.meta.lotId,
-          mode: 'sell',
-          type: 'market',
-          resourceId: item.vars[0].product,
-          preselect: {
-            quantity: item.vars.reduce((acc, o) => acc + o.amount, 0),
-            storage: item.vars[0].origin,
-            storageSlot: item.vars[0].originSlot
-          }
-        });
+        if (item.meta.isCancellation) {
+          openDialog('MARKETPLACE_ORDER', {
+            asteroidId,
+            lotId: item.meta.lotId,
+            mode: 'buy',
+            type: 'limit',
+            resourceId: item.vars[0].product,
+            isCancellation: true,
+            cancellationMakerFee: item.vars[0].makerFee * Order.FEE_SCALE,
+            preselect: {
+              limitPrice: item.vars[0].price / 1e6,
+              quantity: item.vars.reduce((acc, o) => acc + o.amount, 0),
+              storage: item.vars[0].origin,
+              storageSlot: item.vars[0].origin_slot
+            }
+          });
+        } else {        
+          openDialog('MARKETPLACE_ORDER', {
+            asteroidId,
+            lotId: item.meta.lotId,
+            mode: 'sell',
+            type: 'market',
+            resourceId: item.vars[0].product,
+            preselect: {
+              quantity: item.vars.reduce((acc, o) => acc + o.amount, 0),
+              storage: item.vars[0].origin,
+              storageSlot: item.vars[0].originSlot
+            }
+          });
+        }
       };
       break;
     }

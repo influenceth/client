@@ -1,11 +1,11 @@
-import { useQuery, useQueryClient } from 'react-query';
+import { useQuery } from 'react-query';
 import { uint256 } from 'starknet';
 
 import useAuth from './useAuth';
-import useActivitiesContext from './useActivitiesContext';
 
-const useSwayBalance = (account) => {
-  const { walletContext: { starknet } } = useAuth();
+const useSwayBalance = (overrideAccount) => {
+  const { account: defaultAccount, walletContext: { starknet } } = useAuth();
+  const account = overrideAccount || defaultAccount;
 
   return useQuery(
     [ 'swayBalance', account ],

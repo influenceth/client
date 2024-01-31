@@ -418,7 +418,7 @@ const api = {
     const exchangeIds = Array.from(new Set(orders.map((o) => o.entity.id)));
 
     // TODO: this is outside of cache invalidation scope... may want to re-work
-    const exchanges = exchangeIds > 0 ? await getEntities({ ids: exchangeIds, label: Entity.IDS.BUILDING, components: ['Building', 'Exchange', 'Location', 'Name'] }) : [];
+    const exchanges = exchangeIds.length > 0 ? await getEntities({ ids: exchangeIds, label: Entity.IDS.BUILDING, components: ['Building', 'Exchange', 'Location', 'Name'] }) : [];
     return orders.map((o) => ({
       ...o,
       marketplace: exchanges.find(e => Number(e.id) === Number(o.entity.id))
@@ -515,7 +515,7 @@ const api = {
     // TODO: get all exchanges where operational and in allowed products
 
     // TODO: this is outside of cache invalidation scope... may want to re-work
-    const exchanges = exchangeIds > 0 ? await getEntities({ ids: exchangeIds, label: Entity.IDS.BUILDING, components: ['Building', 'Exchange', 'Location', 'Name'] }) : [];
+    const exchanges = exchangeIds.length > 0 ? await getEntities({ ids: exchangeIds, label: Entity.IDS.BUILDING, components: ['Building', 'Exchange', 'Location', 'Name'] }) : [];
     return exchangeIds.map((key) => ({
       ...buckets[key],
       marketplace: exchanges.find(e => Number(e.id) === Number(key))

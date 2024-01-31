@@ -74,7 +74,7 @@ const SystemControls = () => {
   const { account, login, logout, token, walletContext: { starknet } } = useAuth();
   
   const { crews } = useCrewContext();
-  const { data: swayBalance } = useSwayBalance(account);
+  const { data: swayBalance } = useSwayBalance();
 
   const dispatchLauncherPage = useStore(s => s.dispatchLauncherPage);
   const dispatchReorientCamera = useStore(s => s.dispatchReorientCamera);
