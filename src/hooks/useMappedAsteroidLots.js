@@ -5,6 +5,7 @@ import { Entity, Lot } from '@influenceth/sdk';
 import { options as lotLeaseOptions } from '~/components/filters/LotLeaseFilter';
 import useAsteroidCrewSamples from '~/hooks/useAsteroidCrewSamples';
 import useAsteroidCrewBuildings from '~/hooks/useAsteroidCrewBuildings';
+import useOwnedShips from './useOwnedShips';
 import useAsteroidLotData from '~/hooks/useAsteroidLotData';
 import useStore from '~/hooks/useStore';
 import { getAndCacheEntity } from '~/lib/activities';
@@ -57,6 +58,19 @@ const useMappedAsteroidLots = (i) => {
     }, {});
   }, [crewLots, crewLotsLoading]);
 
+  // get all occupied-by-me ships from the server
+  const { data: crewShips, isLoading: crewShipsLoading } = useOwnedShips();
+  const myShipMap = useMemo(() => {
+    if (crewShipsLoading) return null;
+    return (crewShips || []).reduce((acc, p) => {
+      const _locations = locationsArrToObj(p?.Location?.locations || []);
+      return {
+        ...acc,
+        [_locations.lotIndex]: true
+      };
+    }, {});
+  }, [crewShips, crewShipsLoading]);
+
   // determine if search is on or not
   const searchIsOn = useMemo(() => {
     return openHudMenu === 'ASTEROID_MAP_SEARCH' || !isAssetSearchMatchingDefault('lotsMapped');
@@ -97,7 +111,7 @@ const useMappedAsteroidLots = (i) => {
       return unpacked.type > 0;
     }
   }, [mappedLotSearch?.filters, searchIsOn]);
-  
+
   // build sparse array of search results
   // TODO (enhancement): should send this to a worker if possible
   const [lotDisplayMap, buildingTally, resultTally] = useMemo(() => {
@@ -111,8 +125,7 @@ const useMappedAsteroidLots = (i) => {
     let buildingTally = 0;
     let resultTally = 0;
 
-    if (lotData && myOccupationMap) {
-
+    if (lotData && myOccupationMap && myShipMap) {
       // packed data has the following masks:
       //  11110000 capable type
       //  00001100 lease status (0 unleasable, 1 leasable, 2 leased)
@@ -128,7 +141,7 @@ const useMappedAsteroidLots = (i) => {
         unpacked.occupiedBy = unpacked.type === 0
           ? 'unoccupied'
           : (
-            myOccupationMap[i]
+            (myOccupationMap[i] || myShipMap[i])
               ? 'me'
               : 'other'
           );
@@ -146,7 +159,7 @@ const useMappedAsteroidLots = (i) => {
           hasBuilding = 1;
           buildingTally++;
         }
-        
+
         // if this lot has something, include in the results
         if (isResult || hasBuilding) {
 
@@ -156,7 +169,7 @@ const useMappedAsteroidLots = (i) => {
           } else if (searchIsOn) {  // (default in search mode) 0 magenta
             color = 0;
           } else {                  // (default in non-search mode) 0 blue, 1 white
-            color = myOccupationMap[i] ? 1 : 0;
+            color = (myOccupationMap[i] || myShipMap[i]) ? 1 : 0;
           }
 
           // pack into sparse results array
@@ -217,7 +230,7 @@ const useMappedAsteroidLots = (i) => {
       asteroidId = _location.asteroidId;
       lotIndex = _location.lotIndex;
       buildingType = 0;
-    
+
     // ship moved to empty lot (0 -> 15)
     } else if (eventType === 'ShipDocked' || eventType === 'ShipAssemblyFinished') {
       const entityId = body.event.returnValues.dock || body.event.returnValues.destination;
@@ -243,7 +256,7 @@ const useMappedAsteroidLots = (i) => {
       //  (it's just that these events won't match as much data b/c most may not be relevant to my crew)
       queryClient.setQueryData([ 'asteroidLots', asteroidId ], (currentLotsValue) => {
         const newLotsValue = currentLotsValue.slice();
-        newLotsValue[lotIndex] = 
+        newLotsValue[lotIndex] =
           (newLotsValue[lotIndex] & 0b00001111)  // clear existing building
           | buildingType << 4                    // set to new buildingType
         return newLotsValue;

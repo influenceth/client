@@ -553,8 +553,8 @@ const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, co
       let updateStrokeColor = false;
 
       // scale down results if in fill-mode and zoomed in pretty close (so can see fill)
-      const resultScale = ((cameraAltitude < FILL_VISIBILITY_ALTITUDE && lotSampledMap) ? 0.5 : 1)
-        * Math.max(1, Math.min(250 / BUILDING_RADIUS, cameraAltitude / 15000));
+      let resultScale = ((cameraAltitude < FILL_VISIBILITY_ALTITUDE && lotSampledMap) ? 0.5 : 1)
+        * Math.max(1, Math.min(500 / BUILDING_RADIUS, cameraAltitude / 15000));
 
       let i = 0;
       regionsByDistance.every((lotRegion) => {
@@ -839,7 +839,7 @@ const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, co
 
   useFrame((state, delta) => {
     selectionAnimationTime.current = (selectionAnimationTime.current || 0) + delta;
-    
+
     // if no lots, nothing to do
     if (!lotTally) return;
 

@@ -129,8 +129,7 @@ const api = {
 
     const q = esb.requestBodySearch();
     q.query(queryBuilder);
-    // q.from(0);
-    // q.size(10000000);
+    q.size(10000);
     const query = q.toJSON();
 
     const response = await instance.post(`/_search/building`, query);
@@ -159,8 +158,7 @@ const api = {
 
     const q = esb.requestBodySearch();
     q.query(queryBuilder);
-    // q.from(0);
-    // q.size(10000000);
+    q.size(10000);
     const query = q.toJSON();
 
     const response = await instance.post(`/_search/deposit`, query);
@@ -398,7 +396,7 @@ const api = {
 
   getCrewOpenOrders: async (c) => {
     const queryBuilder = esb.boolQuery();
-    
+
     // by crew
     queryBuilder.filter(esb.termQuery('crew.id', c));
 

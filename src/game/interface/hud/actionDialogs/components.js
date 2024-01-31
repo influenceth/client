@@ -2,11 +2,9 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import styled, { css, keyframes } from 'styled-components';
 import { createPortal } from 'react-dom';
 import ReactTooltip from 'react-tooltip';
-import { useQuery } from 'react-query';
 import { TbBellRingingFilled as AlertIcon } from 'react-icons/tb';
 import { BarLoader } from 'react-spinners';
 import { Asteroid, Building, Crewmate, Entity, Inventory, Lot, Order, Process, Product, Ship, Station, Time } from '@influenceth/sdk';
-import { cloneDeep } from 'lodash';
 
 import AsteroidRendering from '~/components/AsteroidRendering';
 import Button from '~/components/ButtonAlt';
@@ -1465,7 +1463,7 @@ export const ResourceSelectionDialog = ({ abundances, lotId, initialSelection, o
       onClose={onClose}
       onComplete={onComplete}
       open={open}
-      title={formatters.lotName(Lot.toIndex(lotId))}>
+      title={formatters.lotName(lotId)}>
       {/* TODO: replace with DataTable? */}
       <SelectionTableWrapper>
         <table>
@@ -1514,7 +1512,7 @@ export const CoreSampleSelectionDialog = ({ lotId, options, initialSelection, on
       onClose={onClose}
       onComplete={onComplete}
       open={open}
-      title={formatters.lotName(Lot.toIndex(lotId))}>
+      title={formatters.lotName(lotId)}>
       {/* TODO: replace with DataTable? */}
       <SelectionTableWrapper>
         <table>
@@ -1624,7 +1622,7 @@ export const DestinationSelectionDialog = ({
       onClose={onClose}
       onComplete={onComplete}
       open={open}
-      title={`Origin ${formatters.lotName(Lot.toIndex(originLotId))}`}>
+      title={`Origin ${formatters.lotName(originLotId)}`}>
       {/* TODO: isLoading */}
       {/* TODO: replace with DataTable? */}
       <SelectionTableWrapper>
@@ -1650,7 +1648,7 @@ export const DestinationSelectionDialog = ({
                   disabled={inventory.fullness >= 1}
                   onClick={() => setSelection(inventory.lot)}
                   selectedRow={inventory.lot.id === Number(selection?.id)}>
-                  <td>{inventory.lot.id === originLotId ? '(in place)' : formatters.lotName(Lot.toIndex(inventory.lot.id))}</td>
+                  <td>{inventory.lot.id === originLotId ? '(in place)' : formatters.lotName(inventory.lot.id)}</td>
                   <td>{formatFixed(inventory.distance, 1)} km</td>
                   <td>{inventory.type}</td>
                   <td style={{ color: warningColor }}>{(100 * inventory.fullness).toFixed(1)}%</td>
@@ -1770,7 +1768,7 @@ export const TransferSelectionDialog = ({
     } else if (sourceEntity?.Building) {
       title = Building.TYPES[sourceEntity.Building.buildingType || 0]?.name;
     }
-    return [title, formatters.lotName(Lot.toIndex(locationsArrToObj(sourceEntity?.Location?.locations || []).lotId))];
+    return [title, formatters.lotName(locationsArrToObj(sourceEntity?.Location?.locations || []).lotId)];
   }, [sourceEntity]);
 
   const overcapacity = useMemo(() => {
@@ -2064,13 +2062,13 @@ const getInventorySublabel = (inventoryType) => {
     case Inventory.IDS.MARKETPLACE_SITE:
     case Inventory.IDS.HABITAT_SITE:
       return 'Site';
-    
+
     case Inventory.IDS.PROPELLANT_TINY:
     case Inventory.IDS.PROPELLANT_SMALL:
     case Inventory.IDS.PROPELLANT_MEDIUM:
     case Inventory.IDS.PROPELLANT_LARGE:
       return 'Propellant';
-    
+
     default:  // others are considered "primary" for their entity
       return '';
   }
@@ -2128,7 +2126,7 @@ export const InventorySelectionDialog = ({ asteroidId, otherEntity, otherInvSlot
         } else if (itemIds?.length) {
           itemTally = itemIds.filter((itemId) => (inv.contents || []).find((p) => p.product === Number(itemId))?.amount > 0).length;
         }
-        
+
         // skip if non-primary and no items
         const nonPrimaryType = getInventorySublabel(inv.inventoryType);
         if (nonPrimaryType && itemIds?.length && itemTally === 0) return;
@@ -2442,7 +2440,7 @@ const ActionDialogActionBar = ({ location, onClose, overrideColor, stage }) => (
     )}
     <ActionLocation {...theming[stage]} overrideColor={overrideColor}>
       <b>{formatters.asteroidName(location?.asteroid)}</b>
-      <span>{location?.lot ? `> ${formatters.lotName(Lot.toIndex(location.lot.id))}` : ''}</span>
+      <span>{location?.lot ? `> ${formatters.lotName(location.lot.id)}` : ''}</span>
       <span>{location?.ship && !location?.lot ? `> ${formatShipStatus(location.ship)}` : ''}</span>
     </ActionLocation>
     <IconButton backgroundColor={`rgba(0, 0, 0, 0.15)`} marginless onClick={onClose}>
@@ -3370,7 +3368,7 @@ export const LotInputBlock = ({ lot, fallbackLabel = 'Select', fallbackSublabel 
           : <EmptyBuildingImage {...imageProps} />
       }
       label={lot ? `${lot.building?.Name?.name || Building.TYPES[buildingType].name}` : fallbackLabel}
-      sublabel={lot ? `${lot.building?.Name?.name ? Building.TYPES[buildingType].name : formatters.lotName(Lot.toIndex(lot.id))}` : fallbackSublabel}
+      sublabel={lot ? `${lot.building?.Name?.name ? Building.TYPES[buildingType].name : formatters.lotName(lot.id)}` : fallbackSublabel}
       {...props}
     />
   );

@@ -33,14 +33,14 @@ const LiveFoodStatus = ({ crew, onClick, ...props }) => {
 
   const [percentage, isRationing] = useMemo(() => {
     const lastFedAgo = Time.toGameDuration(blockTime - (crew?.Crew?.lastFed || 0), parseInt(TIME_ACCELERATION));
-    return lastFedAgo
+    return typeof lastFedAgo === 'number'
       ? [
         Math.round(100 * Crew.getCurrentFoodRatio(lastFedAgo, crew._foodBonuses?.consumption)),
         (Crew.getFoodMultiplier(lastFedAgo, crew._foodBonuses?.consumption, crew._foodBonuses?.rationing) < 1)
       ]
       : [0, false];
   }, [blockTime, crew]);
-  
+
   return (
     <Food isRationing={isRationing} onClick={onClick} {...props}>
       {isRationing && <WarningOutlineIcon />}

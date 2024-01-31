@@ -1,4 +1,4 @@
-import { AdalianOrbit, Asteroid, Building, Ship } from '@influenceth/sdk';
+import { AdalianOrbit, Asteroid, Building, Lot, Ship } from '@influenceth/sdk';
 import { formatEther } from 'ethers';
 import { constants } from '@influenceth/astro';
 
@@ -84,9 +84,11 @@ const formatters = {
     );
   },
 
-  lotName: (lotIndex) => {
+  lotName: (lotOrIndex) => {
+    let lotIndex = lotOrIndex?.id || lotOrIndex;
     if (!lotIndex) return 'Lot';
-    return `Lot ${lotIndex.toLocaleString()}`;
+    if (BigInt(lotIndex) >= 2n ** 32n) lotIndex = Lot.toIndex(lotIndex);
+    return `Lot #${lotIndex.toLocaleString()}`;
   },
 
   shipName: (s, fallbackText) => {

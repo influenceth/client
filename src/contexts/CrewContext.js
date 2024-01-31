@@ -97,7 +97,7 @@ export function CrewProvider({ children }) {
     return rawCrews.map((c) => {
       if (!!crewmateMap) {
         c._crewmates = c.Crew.roster.map((i) => crewmateMap[i]).filter((c) => !!c);
-        
+
         const foodBonuses = getCrewAbilityBonuses([Crewmate.ABILITY_IDS.FOOD_CONSUMPTION_TIME, Crewmate.ABILITY_IDS.FOOD_RATIONING_PENALTY], c);
         c._foodBonuses = {
           consumption: foodBonuses[Crewmate.ABILITY_IDS.FOOD_CONSUMPTION_TIME]?.crewmatesMultiplier,
@@ -141,7 +141,7 @@ export function CrewProvider({ children }) {
   const refreshReadyAt = useCallback(async () => {
     const updatedCrew = await api.getEntityById({ label: Entity.IDS.CREW, id: selectedCrewId, components: ['Crew'] });
     if (updatedCrew) {
-      queryClient.setQueryData(ownedCrewsQueryKey, (prevRawCrews) => {
+      queryClient.setQueryData(ownedCrewsQueryKey, (prevRawCrews = []) => {
         return prevRawCrews.map((c) => {
           if (c.id === updatedCrew.id) {
             c.Crew.lastFed = updatedCrew.Crew.lastFed;

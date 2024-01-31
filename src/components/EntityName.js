@@ -9,7 +9,7 @@ const formatterByLabel = {
   [Entity.IDS.BUILDING]: formatters.buildingName,
   [Entity.IDS.CREW]: formatters.crewName,
   [Entity.IDS.CREWMATE]: formatters.crewmateName,
-  [Entity.IDS.LOT]: formatters.lotName, // TODO: this takes lotIndex, not entity
+  [Entity.IDS.LOT]: formatters.lotName,
   [Entity.IDS.SHIP]: formatters.shipName,
 }
 
