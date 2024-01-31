@@ -272,7 +272,7 @@ export const getCrewDisabledReason = ({ asteroid, crew, requireAsteroid = true, 
     }
   }
   if (!crew?._ready) return 'crew is busy';
-  return '';
+  return null;
 };
 
 export default ActionButtonComponent;

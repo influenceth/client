@@ -31,6 +31,7 @@ const INITIAL_ZOOM_MIN = 6000;
 const MIN_ZOOM_DEFAULT = 1.2;
 const MAX_ZOOM = 20;
 const DIRECTIONAL_LIGHT_DISTANCE = 10;
+const DARK_LIGHT_INTENSITY = 0.25;
 
 const ZOOM_TO_PLOT_ANIMATION_TIME = 700;
 
@@ -374,7 +375,6 @@ const AsteroidComponent = () => {
     const darkLightColor = 0xd8ddff;
     const darkLightDistance = config.radius * DIRECTIONAL_LIGHT_DISTANCE;
     const darkLightDirection = posVec.negate().clone().normalize();
-    const darkLightIntensity = defaultLightIntensity * 0.25;
 
     const maxRadius = ringsPresent
       ? config.radius * 1.5
@@ -402,7 +402,7 @@ const AsteroidComponent = () => {
     }
 
     // create "dark light"
-    darkLight.current = new DirectionalLight(darkLightColor, darkLightIntensity);
+    darkLight.current = new DirectionalLight(darkLightColor, DARK_LIGHT_INTENSITY);
     darkLight.current.position.copy(darkLightDirection.negate().multiplyScalar(darkLightDistance));
     group.current.add(darkLight.current);
 
@@ -827,7 +827,11 @@ const AsteroidComponent = () => {
             new Vector3(...position.current).normalize().negate().multiplyScalar(config.radius * DIRECTIONAL_LIGHT_DISTANCE)
           );
         }
+
         if (darkLight.current) {
+          const falloff = Math.min(config.radius / 4, 25000);
+          const intensity = Math.max(0.25, Math.min(Math.sqrt(falloff / cameraAltitude), 0.75));
+          darkLight.current.intensity = DARK_LIGHT_INTENSITY * intensity;
           darkLight.current.position.copy(
             new Vector3(...position.current).normalize().multiplyScalar(config.radius * DIRECTIONAL_LIGHT_DISTANCE)
           );
@@ -990,9 +994,11 @@ const AsteroidComponent = () => {
     //   }
     // });
   });
+
   useFrame(() => {
     renderTimer.current = getNow();
   }, 1);
+
   // NOTE: useFrame 2 is renderer w/ postprocessor
   useFrame(() => {
     reportRenderTime(

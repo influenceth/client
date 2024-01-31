@@ -2,11 +2,12 @@ import { useCallback, useMemo } from 'react';
 import { Dock, Ship } from '@influenceth/sdk';
 
 import { LandShipIcon } from '~/components/Icons';
-import ActionButton from './ActionButton';
 import useCrewContext from '~/hooks/useCrewContext';
 import useReadyAtWatcher from '~/hooks/useReadyAtWatcher';
 import useShip from '~/hooks/useShip';
 import useShipDockingManager from '~/hooks/actionManagers/useShipDockingManager';
+
+import ActionButton, { getCrewDisabledReason } from './ActionButton';
 
 const isVisible = ({ asteroid, crew, crewedShip, ship }) => {
   return crew && (
@@ -27,7 +28,7 @@ const isVisible = ({ asteroid, crew, crewedShip, ship }) => {
   );
 };
 
-const LandShip = ({ lot, onSetAction, _disabled }) => {
+const LandShip = ({ asteroid, lot, onSetAction, _disabled }) => {
   const { crew } = useCrewContext();
   const { currentDockingAction } = useShipDockingManager(crew?._location?.shipId);
   const { data: crewedShip } = useShip(crew?._location?.shipId)
@@ -61,7 +62,7 @@ const LandShip = ({ lot, onSetAction, _disabled }) => {
       }
     }
     if (crewedShip.Ship.emergencyAt > 0) return 'in emergency mode';
-    return null;
+    return getCrewDisabledReason({ asteroid, crew, requireSurface: false });
   }, [_disabled, crewedShip, lot, ready]);
 
   return (
