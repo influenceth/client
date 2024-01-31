@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import styled from 'styled-components';
-import { Asteroid, Crew, Crewmate, Lot, Order, Product, Time } from '@influenceth/sdk';
+import { Asteroid, Crewmate, Inventory, Lot, Order, Product, Time } from '@influenceth/sdk';
 
 import marketplaceBackground from '~/assets/images/modal_headers/Marketplace.png';
 import { BanIcon, InventoryIcon, WarningOutlineIcon, SwayIcon, MarketBuyIcon, MarketSellIcon, LimitBuyIcon, LimitSellIcon, CancelLimitOrderIcon, LocationIcon, CloseIcon } from '~/components/Icons';
@@ -10,6 +10,13 @@ import useLot from '~/hooks/useLot';
 import useStore from '~/hooks/useStore';
 import ResourceThumbnail from '~/components/ResourceThumbnail';
 import UncontrolledTextInput, { TextInputWrapper } from '~/components/TextInputUncontrolled';
+import MouseoverInfoPane from '~/components/MouseoverInfoPane';
+import useMarketplaceManager from '~/hooks/actionManagers/useMarketplaceManager';
+import useEntity from '~/hooks/useEntity';
+import useHydratedCrew from '~/hooks/useHydratedCrew';
+import useOrderList from '~/hooks/useOrderList';
+import useSwayBalance from '~/hooks/useSwayBalance';
+import formatters from '~/lib/formatters';
 import actionStages from '~/lib/actionStages';
 import { reactBool, formatFixed, formatTimer, getCrewAbilityBonuses, locationsArrToObj, formatPrice } from '~/lib/utils';
 import theme, { hexToRGB } from '~/theme';
@@ -22,13 +29,9 @@ import {
   FlexSection,
   FlexSectionInputBlock,
   FlexSectionSpacer,
-  BuildingImage,
   FlexSectionBlock,
   formatResourceMass,
   formatResourceVolume,
-  EmptyBuildingImage,
-  DestinationSelectionDialog,
-  BonusTooltip,
   getBonusDirection,
   MouseoverContent,
   LotInputBlock,
@@ -37,15 +40,9 @@ import {
   TransferDistanceDetails,
   TimeBonusTooltip,
   getTripDetails,
-  FeeBonusTooltip
+  FeeBonusTooltip,
+  formatResourceAmount
 } from './components';
-import MouseoverInfoPane from '~/components/MouseoverInfoPane';
-import useMarketplaceManager from '~/hooks/actionManagers/useMarketplaceManager';
-import useEntity from '~/hooks/useEntity';
-import formatters from '~/lib/formatters';
-import useCrew from '~/hooks/useCrew';
-import useHydratedCrew from '~/hooks/useHydratedCrew';
-import useOrderList from '~/hooks/useOrderList';
 
 const greenRGB = hexToRGB(theme.colors.green);
 const redRGB = hexToRGB(theme.colors.red);
@@ -106,9 +103,9 @@ const OrderAlert = styled.div`
     }
   }};
 
-  ${p => p.insufficientBalance && `
+  ${p => p.insufficientAssets && `
     &:before {
-      content: "Insufficient Wallet Balance";
+      content: "Insufficient ${p.mode === 'buy' ? 'Wallet Balance' : 'Product in Inventory'}";
       color: ${p.theme.colors.red};
       display: inline-block;
       margin: 3px 5px 7px;
@@ -116,6 +113,15 @@ const OrderAlert = styled.div`
 
     ${TotalSway} {
       color: ${p.theme.colors.red};
+    }
+  `}
+
+  ${p => p.insufficientInventory && `
+    &:before {
+      content: "Insufficient Inventory Capacity";
+      color: ${p.theme.colors.red};
+      display: inline-block;
+      margin: 3px 5px 7px;
     }
   `}
 
@@ -199,6 +205,8 @@ const MarketplaceOrder = ({
   const resourceByMass = !resource?.isAtomic;
   const exchange = lot.building;  // TODO: ...
   const { data: exchangeController } = useHydratedCrew(lot.building?.Control?.controller?.id);
+
+  const { data: swayBalance } = useSwayBalance();
   
   const {
     createBuyOrder,
@@ -213,7 +221,7 @@ const MarketplaceOrder = ({
     currentOrder = {}
   } = manager;
   const { crew } = useCrewContext();
-  const { data: orders } = useOrderList(exchange, resourceId);
+  const { data: orders, refetch } = useOrderList(exchange, resourceId);
 
   const [buyOrders, sellOrders] = useMemo(() => ([
     (orders || []).filter((o) => o.orderType === Order.IDS.LIMIT_BUY),
@@ -348,7 +356,7 @@ const MarketplaceOrder = ({
   );
 
   const feeTotal = useMemo(
-    () => feeRate * (type === 'market' ? totalMarketPrice : totalLimitPrice),
+    () => Math.floor(feeRate * (type === 'market' ? totalMarketPrice : totalLimitPrice)),
     [feeRate, totalLimitPrice, totalMarketPrice, type]
   );
 
@@ -446,16 +454,6 @@ const MarketplaceOrder = ({
   const onSubmitOrder = useCallback(() => {
     if (isCancellation) {
       if (mode === 'buy') {
-        console.log('cancelBuyOrder', {
-          buyer: { id: crew?.id, label: crew?.label },
-          amount: quantityToUnits(quantity),
-          product: resourceId,
-          price: limitPrice,
-          destination: { id: storage?.id, label: storage?.label },
-          destinationSlot: storageInventory?.slot,
-          initialCaller: cancellationInitialCaller,
-          makerFee: cancellationMakerFee
-        });
         cancelBuyOrder({
           amount: quantityToUnits(quantity),
           buyer: { id: crew?.id, label: crew?.label },
@@ -533,7 +531,6 @@ const MarketplaceOrder = ({
       if (mode === 'buy') input = Math.max(0, Math.min(input, totalForSale));
       if (mode === 'sell') input = Math.max(0, Math.min(input, totalForBuy));
     }
-
     // TODO: set limits for limit orders
     setQuantity(input);
   }, [mode, totalForSale, totalForBuy, type]);
@@ -550,6 +547,10 @@ const MarketplaceOrder = ({
     }
   }, [mode, buyOrders, sellOrders]);
 
+  const handleOrderRefresh = useCallback(() => {
+    refetch();
+  }, [refetch]);
+
   const [competingOrderTally, betterOrderTally, bestOrderPrice] = useMemo(() => {
     if (mode === 'buy') {
       return [
@@ -564,12 +565,19 @@ const MarketplaceOrder = ({
       sellOrders.reduce((acc, cur) => Math.min(acc, cur.price), Infinity)
     ];
   }, [buyOrders, mode, sellOrders, limitPrice]);
-
+  
+  const exceedsOtherSide = useMemo(() => {
+    if (mode === 'buy') {
+      return limitPrice >= sellOrders?.[sellOrders?.length - 1]?.price;
+    } else {
+      return limitPrice <= buyOrders?.[0]?.price;
+    }
+  }, [mode, limitPrice, buyOrders, sellOrders]);
+  
   const total = useMemo(() => {
     let sum = type === 'limit' ? totalLimitPrice : totalMarketPrice;
     return sum + (mode === 'buy' ? feeTotal : -feeTotal);
   }, [feeTotal, mode, totalLimitPrice, totalMarketPrice, type]);
-
 
   const dialogAction = useMemo(() => {
     let a = {};
@@ -599,10 +607,34 @@ const MarketplaceOrder = ({
     else return `Create Order`;
   }, [type, isCancellation]);
 
-  const insufficientBalance = false;  // TODO: ...
-  const insufficientProduct = false;  // TODO: ...
-  // TODO: in inventory
+  const amountInInventory = useMemo(() => {
+    return (storageInventory?.contents || []).find((c) => Number(c.product) === Number(resourceId))?.amount || 0;
+  }, [storageInventory, resourceId]);
 
+  const insufficientAssets = useMemo(() => {
+    if (mode === 'buy') {
+      return total > swayBalance;
+    } else {
+      return quantityToUnits(quantity) > amountInInventory;
+    }
+  }, [mode, quantity, amountInInventory, swayBalance, total]);
+
+  const insufficientCapacity = useMemo(() => {
+    if (mode === 'buy' && storageInventory) {
+      const buyUnits = quantityToUnits(quantity);
+      const buyMass = buyUnits * resource.massPerUnit;
+      const buyVolume = buyUnits * resource.volumePerUnit;
+      const invConfig = Inventory.TYPES[storageInventory.inventoryType] || {};
+      if (storageInventory.mass + storageInventory.reservedMass + buyMass > invConfig.massConstraint) return true;
+      if (storageInventory.volume + storageInventory.reservedVolume + buyVolume > invConfig.volumeConstraint) return true;
+      if (invConfig.productConstraints) {
+        if (!invConfig.productConstraints[resourceId]) return true;
+        if (invConfig.productConstraints[resourceId] > 0 && amountInInventory + buyUnits > invConfig.productConstraints[resourceId]) return true;
+      }
+    }
+    return false;
+  }, [amountInInventory, mode, quantity, storageInventory]);
+  
   return (
     <>
       <ActionDialogHeader
@@ -660,12 +692,15 @@ const MarketplaceOrder = ({
                 {type === 'market' && (
                   <span>Max <b>{((mode === 'buy' ? totalForSale : totalForBuy) || 0).toLocaleString()}{resourceByMass ? ' kg' : ''}</b></span>
                 )}
+                {type === 'limit' && mode === 'sell' && (
+                  <span>In Inventory <b>{formatResourceAmount(amountInInventory || 0, resourceId)}</b></span>
+                )}
               </InputLabel>
               <TextInputWrapper rightLabel={resourceByMass ? ' kg' : ''}>
                 <UncontrolledTextInput
                   disabled={isCancellation || stage !== actionStages.NOT_STARTED}
                   min={0}
-                  max={type === 'market' ? (mode === 'buy' ? totalForSale : totalForBuy) : undefined}
+                  max={type === 'market' ? (mode === 'buy' ? totalForSale : totalForBuy) : (mode === 'sell' ? amountInInventory : undefined)}
                   onChange={handleChangeQuantity}
                   placeholder="Specify Quantity"
                   step={1}
@@ -699,22 +734,24 @@ const MarketplaceOrder = ({
                     <span style={{ flex: 1 }}>
                       Average Price from: <b>{' '}{(averagedOrderTally || 0).toLocaleString()} {mode === 'buy' ? 'Seller' : 'Buyer'}{averagedOrderTally === 1 ? '' : 's'}</b>
                     </span>
-                    <Button onClick={() => {/* TODO: ... */}} size="small" subtle>Refresh</Button>
+                    <Button onClick={handleOrderRefresh} size="small" subtle>Refresh</Button>
                   </InputLabel>
                 )}
                 {!isCancellation && type === 'limit' && (
                   <InputLabel>
-                    <CompetitionSummary mode={mode} matchingBest={limitPrice === bestOrderPrice} notBest={betterOrderTally > 0}>
+                    <CompetitionSummary mode={mode} matchingBest={limitPrice === bestOrderPrice} notBest={exceedsOtherSide || betterOrderTally > 0}>
                       {mode === 'buy' && (
                         <>
-                          {limitPrice > bestOrderPrice ? `Current Highest` : ''}
+                          {exceedsOtherSide ? `Exceeds Sell Side` : ''}
+                          {!exceedsOtherSide && limitPrice > bestOrderPrice ? `Current Highest` : ''}
                           {limitPrice === bestOrderPrice ? `Equal to Highest` : ''}
                           {betterOrderTally > 0 ? <>Lower than <b>{betterOrderTally} Buyer{betterOrderTally === 1 ? '' : 's'}</b></> : ''}
                         </>
                       )}
                       {mode === 'sell' && (
                         <>
-                          {limitPrice < bestOrderPrice && `Current Lowest`}
+                          {exceedsOtherSide ? `Exceeds Buy Side` : ''}
+                          {!exceedsOtherSide && limitPrice < bestOrderPrice && `Current Lowest`}
                           {limitPrice === bestOrderPrice && `Equal to Lowest`}
                           {betterOrderTally > 0 ? <>Higher than <b>{betterOrderTally} Sellers{betterOrderTally === 1 ? '' : 's'}</b></> : ''}
                         </>
@@ -742,7 +779,8 @@ const MarketplaceOrder = ({
             style={{ width: '100%' }}>
             <OrderAlert
               mode={mode}
-              insufficientBalance={reactBool(insufficientBalance)}
+              insufficientAssets={reactBool(insufficientAssets)}
+              insufficientInventory={reactBool(insufficientCapacity)}
               isCancellation={reactBool(isCancellation)}>
               <div>
                 {type === 'limit' && (
@@ -813,7 +851,12 @@ const MarketplaceOrder = ({
       </ActionDialogBody>
 
       <ActionDialogFooter
-        disabled={false/* TODO: no destination selected, amount invalid, price too much, etc */}
+        disabled={
+          !isCancellation && (
+            !storageSelection || !quantity || !total
+            || exceedsOtherSide || insufficientAssets || insufficientCapacity
+          )
+        }
         goLabel={goLabel}
         onGo={onSubmitOrder}
         stage={stage}

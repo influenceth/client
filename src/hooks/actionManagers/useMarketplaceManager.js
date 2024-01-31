@@ -11,12 +11,10 @@ import api from '~/lib/api';
 
 // TODO: product could probably be incorporated into props + payload
 const useMarketplaceManager = (buildingId) => {
-  const { execute, getStatus } = useContext(ChainTransactionContext);
+  const { execute } = useContext(ChainTransactionContext);
   const { crew } = useCrewContext();
   const { data: exchange } = useEntity({ id: buildingId, label: Entity.IDS.BUILDING });
   const { data: exchangeController } = useHydratedCrew(exchange?.Control?.controller?.id);
-
-  const { data: orders, isLoading } = useCrewOrders(crew?.id);
 
   const pendingTransactions = useStore(s => s.pendingTransactions);
 
@@ -26,32 +24,31 @@ const useMarketplaceManager = (buildingId) => {
   }), [crew?.id, buildingId]);
 
   const getPendingOrder = useCallback((mode, type, details) => {
-    let key;
+    const keys = [];
     let locTest = () => true;
     if (mode === 'buy' && type === 'limit') {
-      key = 'EscrowDepositAndCreateBuyOrder';
+      keys.push('EscrowDepositAndCreateBuyOrder', 'EscrowWithdrawalAndFillBuyOrders');
       // locTest = (vars) => vars.storage.id === details.destination.id && vars.storage_slot === details.destinationSlot;
     }
     if (mode === 'buy' && type === 'market') {
-      key = 'EscrowWithdrawalAndFillBuyOrders';
+      keys.push('BulkFillSellOrder');
       // locTest = (vars) => vars.origin.id === details.origin.id && vars.origin_slot === details.originSlot;
     }
     if (mode === 'sell' && type === 'limit') {
-      key = 'CreateSellOrder';
+      keys.push('CreateSellOrder', 'CancelSellOrder');
       // locTest = (vars) => vars.storage.id === details.origin.id && vars.storage_slot === details.originSlot;
     }
     if (mode === 'sell' && type === 'market') {
-      key = 'BulkFillSellOrder';
+      keys.push('EscrowWithdrawalAndFillBuyOrders');
       // locTest = (vars) => vars.destination.id === details.destination.id && vars.destination_slot === details.destinationSlot;
     }
     return pendingTransactions.find((tx) => (
-      tx.key === key
-        && tx.vars.product === details.product
-        && tx.vars.exchange.id === details.exchange.id
-        && locTest(tx.vars)
+      keys.includes(tx.key)
+        && (tx.vars[0] || tx.vars).product === details.product
+        && (tx.vars[0] || tx.vars).exchange.id === details.exchange.id
+        && locTest(tx.vars[0] || tx.vars)
     ));
   }, [pendingTransactions]);
-
 
   const createBuyOrder = useCallback(
     ({ product, amount, price, destination, destinationSlot, feeTotal }) => execute(
@@ -163,19 +160,6 @@ const useMarketplaceManager = (buildingId) => {
 
   const cancelBuyOrder = useCallback(
     ({ amount, buyer, price, product, destination, destinationSlot, initialCaller, makerFee }) => {
-      const priceE6 = Math.floor(price * 1e6);
-      const value = amount * priceE6;
-      const toPlayer = Order.getBuyOrderDeposit(value, makerFee);
-      console.log({
-        amount,
-        price,
-        priceE6: Math.floor(price * 1e6),
-        makerFee,
-        scaledMakerFee: makerFee / Order.FEE_SCALE,
-        toPlayer,
-        value,
-        // makerFeeAmount
-      });
       fillBuyOrders({
         isCancellation: true,
         product,
@@ -187,7 +171,7 @@ const useMarketplaceManager = (buildingId) => {
             makerFee,
             paymentsE6: {
               toExchange: 0,
-              toPlayer
+              toPlayer: Order.getBuyOrderDeposit(amount * Math.floor(price * 1e6), makerFee)
             },
             fillAmount: amount,
             crew: buyer,

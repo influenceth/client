@@ -651,7 +651,7 @@ export function ChainTransactionProvider({ children }) {
   }, [contracts, pendingTransactions]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    console.log('trigger activities effect', activities, pendingTransactions);
+    // console.log('trigger activities effect', activities, pendingTransactions);
     if (contracts && pendingTransactions?.length) {
       pendingTransactions.forEach((tx) => {
         const { key, vars, txHash } = tx;

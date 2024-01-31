@@ -17,6 +17,7 @@ import useOrderList from '~/hooks/useOrderList';
 import { formatResourceAmount } from '../../hud/actionDialogs/components';
 import useCrewContext from '~/hooks/useCrewContext';
 import { nativeBool } from '~/lib/utils';
+import useMarketplaceManager from '~/hooks/actionManagers/useMarketplaceManager';
 
 const greenRGB = hexToRGB(theme.colors.green);
 
@@ -353,6 +354,8 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
 
   const { data: orders } = useOrderList(marketplace, resource?.i);
 
+  const { getPendingOrder } = useMarketplaceManager(marketplace?.id);
+
   const [buyOrders, sellOrders] = useMemo(() => ([
     (orders || []).filter((o) => o.orderType === Order.IDS.LIMIT_BUY),
     (orders || []).filter((o) => o.orderType === Order.IDS.LIMIT_SELL),
@@ -382,7 +385,16 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
   const [type, setType] = useState('market');
   const chartWrapperRef = useRef({ clientHeight: 0, clientWidth: 0 });
 
-  // TODO: if nothing available for market order, default to limit
+  // make sure render again once chartWrapperRef is ready
+  const [refIsReady, setRefIsReady] = useState();
+  const checkRefIsReady = useCallback(() => {
+    if (chartWrapperRef.current.clientWidth > 0) {
+      setRefIsReady(true);
+    } else if (!refIsReady) {
+      setTimeout(checkRefIsReady, 50);
+    }
+  }, [refIsReady]);
+  useEffect(checkRefIsReady, []);
 
   const {
     xViewbox,
@@ -396,7 +408,7 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
     totalForBuy,
     totalForSale
   } = useMemo(() => {
-    // if (!chartWrapperRef.current) return {};
+    if (!chartWrapperRef.current) return {};
     if (!(buyBuckets?.length > 0 || sellBuckets?.length > 0)) return {};
 
     const xViewbox = chartWrapperRef.current.clientWidth;
@@ -480,7 +492,16 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
       totalForBuy,
       totalForSale
     };
-  }, [buyBuckets, sellBuckets, height, width]);
+  }, [refIsReady, buyBuckets, sellBuckets, height, width]);
+
+  // if nothing available for market order, default to limit
+  useEffect(() => {
+    if (type === 'market') {
+      if (!((mode === 'buy' ? totalForSale : totalForBuy) > 0)) {
+        setType('limit');
+      }
+    }
+  }, [mode, totalForBuy, totalForSale]);
 
   let rowBuyVolume = 0;
   let rowSaleVolume = totalForSale + 0;
@@ -570,17 +591,22 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
     return sum + (mode === 'buy' ? fee : -fee);
   }, [fee, mode, totalLimitPrice, totalMarketPrice, type]);
 
+  const loading = useMemo(
+    () => getPendingOrder(mode, type, { product: resource.i, exchange: marketplace }),
+    [mode, type, resource, marketplace, getPendingOrder]
+  );
+
   const actionButtonDetails = useMemo(() => {
     const a = { label: '', icon: null };
     if (type === 'limit') {
-      a.label = 'Create Limit Order';
+      a.label = `${loading ? 'Creating' : 'Create'} Limit Order`;
       a.icon = mode === 'buy' ? <LimitBuyIcon /> : <LimitSellIcon />;
     } else {
-      a.label = 'Create Market Order';
+      a.label = `${loading ? 'Creating' : 'Create'} Market Order`;
       a.icon = mode === 'buy' ? <MarketBuyIcon /> : <MarketSellIcon />;
     }
     return a;
-  }, [mode, type])
+  }, [loading, mode, type]);
 
   return (
     <Wrapper>
@@ -795,21 +821,23 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
 
               </div>
 
-              {total > 0 && (
-                <Tray>
-                  <Summary>
-                    <SummaryLabel type={type} mode={mode} />
-                    <div>
-                      <SwayIcon /> {formatPrice(total)}
-                    </div>
-                  </Summary>
+              <Tray style={{ overflow: 'hidden' }}>
+                <Summary>
+                  {total > 0 && (
+                    <>
+                      <SummaryLabel type={type} mode={mode} />
+                      <div>
+                        <SwayIcon /> {formatPrice(total)}
+                      </div>
+                    </>
+                  )}
+                </Summary>
 
-                  {/* TODO: update icon */}
-                  <ActionButton
-                    {...actionButtonDetails}
-                    onClick={createOrder} />
-                </Tray>
-              )}
+                <ActionButton
+                  {...actionButtonDetails}
+                  flags={{ disabled: loading || !(total > 0), loading }}
+                  onClick={createOrder} />
+              </Tray>
             </PanelContent>
           </PanelInner>
         </div>
