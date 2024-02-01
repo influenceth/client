@@ -268,13 +268,17 @@ const LotInventory = () => {
 
   const resourceItemRefs = useRef([]);
 
-  const inventory = Object.values(lot?.building?.Inventories || []).find((i) => i.status === Inventory.STATUSES.AVAILABLE);
-  inventory.contentsObj = useMemo(() => {
-    return inventory?.contents?.reduce((acc, c) => {
-      acc[c.product] = c.amount;
-      return acc;
-    }, {});
-  }, [inventory?.contents])
+  const inventory = useMemo(
+    () => {
+      const i = Object.values(lot?.building?.Inventories || []).find((i) => i.status === Inventory.STATUSES.AVAILABLE) || {};
+      i.contentsObj = (i.contents || []).reduce((acc, c) => ({
+        ...acc,
+        [c.product]: c.amount
+      }), {});
+      return i;
+    },
+    [lot?.building?.Inventories]
+  );
 
   const { used, usedOrReserved } = useMemo(() => {
     if (!inventory) {

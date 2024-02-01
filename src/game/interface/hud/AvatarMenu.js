@@ -3,7 +3,7 @@ import { useHistory } from 'react-router-dom';
 import styled, { keyframes } from 'styled-components';
 
 import CollapsibleSection from '~/components/CollapsibleSection';
-import CrewCardFramed from '~/components/CrewCardFramed';
+import CrewmateCardFramed from '~/components/CrewmateCardFramed';
 import CrewLocationLabel from '~/components/CrewLocationLabel';
 import LiveFoodStatus from '~/components/LiveFoodStatus';
 import { BusyIcon, CloseIcon, CrewIcon, CrewLocationIcon, IdleIcon, WarningOutlineIcon } from '~/components/Icons';
@@ -241,7 +241,7 @@ const AvatarMenu = () => {
           </>
         )}>
         <CrewWrapper>
-          <CrewCardFramed
+          <CrewmateCardFramed
             borderColor={`rgba(${theme.colors.mainRGB}, 0.4)`}
             crewmate={captain}
             isCaptain
@@ -263,7 +263,7 @@ const AvatarMenu = () => {
               {(crew?._crewmates || []).map((crewmate, i) => {
                 if (i === 0) return null;
                 return (
-                  <CrewCardFramed
+                  <CrewmateCardFramed
                     key={crewmate.id}
                     borderColor={`rgba(${theme.colors.mainRGB}, 0.4)`}
                     crewmate={crewmate}

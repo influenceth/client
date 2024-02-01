@@ -9,7 +9,7 @@ import { Asteroid, Building, Crewmate, Entity, Inventory, Lot, Order, Process, P
 import AsteroidRendering from '~/components/AsteroidRendering';
 import Button from '~/components/ButtonAlt';
 import ClipCorner from '~/components/ClipCorner';
-import CrewCardFramed from '~/components/CrewCardFramed';
+import CrewmateCardFramed from '~/components/CrewmateCardFramed';
 import CrewIndicator from '~/components/CrewIndicator';
 import CrewLocationLabel from '~/components/CrewLocationLabel';
 import Dialog from '~/components/Dialog';
@@ -59,6 +59,8 @@ import { getBuildingIcon, getShipIcon } from '~/lib/assetUtils';
 import formatters from '~/lib/formatters';
 import theme, { hexToRGB } from '~/theme';
 import { theming } from '../ActionDialog';
+import ThumbnailWithData from '~/components/AssetThumbnailWithData';
+import AssetBlock, { assetBlockCornerSize } from '~/components/AssetBlock';
 
 
 const SECTION_WIDTH = 780;
@@ -130,51 +132,10 @@ export const FlexSectionSpacer = styled.div`
   width: 32px;
 `;
 
-export const sectionBodyCornerSize = 15;
-export const FlexSectionInputBody = styled.div`
-  ${p => p.theme.clipCorner(sectionBodyCornerSize)};
-  padding: 8px 16px 8px 8px;
-  position: relative;
-  transition-properties: background, border-color;
-  transition-duration: 250ms;
-  transition-function: ease;
-  & > svg {
-    transition: stroke 250ms ease;
-  }
+export const FlexSectionInputBody = styled(AssetBlock)``;
 
-  ${p => p.isSelected ? `
-      background: rgba(${p.theme.colors.mainRGB}, 0.22);
-      border: 1px solid rgba(${p.theme.colors.mainRGB}, 0.7);
-      & > svg {
-        stroke: rgba(${p.theme.colors.mainRGB}, 0.7);
-      }
-    `
-    : `
-      background: ${p.subtle ? '#1c1c1c' : `rgba(${p.theme.colors.mainRGB}, 0.15)`};
-      border: 1px solid transparent;
-      & > svg {
-        stroke: transparent;
-      }
-    `
-  }
+export const sectionBodyCornerSize = assetBlockCornerSize;
 
-  ${p => p.onClick && `
-    cursor: ${p.theme.cursors.active};
-    &:hover {
-      background: rgba(${p.theme.colors.mainRGB}, 0.25) !important;
-      border-color: rgba(${p.theme.colors.mainRGB}, 0.9) !important;
-      & > svg {
-        stroke: rgba(${p.theme.colors.mainRGB}, 0.9) !important;
-      }
-    }
-  `};
-
-  ${p => p.style?.borderColor && `
-    & > svg {
-      stroke: ${p.style?.borderColor};
-    }
-  `}
-`;
 const FlexSectionInputBodyInner = styled.div`
   height: 92px;
 `;
@@ -496,30 +457,6 @@ const Footer = styled(Section)`
     }
   }
   ${p => p.wide && `width: 100%;`}
-`;
-
-const ThumbnailWithData = styled.div`
-  align-items: center;
-  color: #777;
-  display: flex;
-  flex: 1;
-  position: relative;
-  & > label {
-    flex: 1;
-    font-size: 14px;
-    padding-left: 15px;
-    & > h3 {
-      color: white;
-      font-size: 18px;
-      font-weight: normal;
-      margin: 0 0 4px;
-    }
-    & > footer {
-      bottom: 0;
-      color: ${p => p.theme.colors.main};
-      position: absolute;
-    }
-  }
 `;
 
 const EmptyThumbnail = styled.div`
@@ -1177,7 +1114,7 @@ export const ProgressBarNote = styled.div`
   }
 `;
 
-const CrewCards = styled.div`
+const CrewmateCards = styled.div`
   display: flex;
   flex-direction: row;
   & > div {
@@ -1187,7 +1124,7 @@ const CrewCards = styled.div`
     }
   }
 `;
-const CrewCardPlaceholder = styled.div`
+const CrewmateCardPlaceholder = styled.div`
   width: ${p => p.width}px;
   &:before {
     content: "";
@@ -2460,7 +2397,7 @@ export const ActionDialogHeader = ({ action, captain, crewAvailableTime, locatio
       />
       <Header theming={theming[stage]} overrideHighlightColor={overrideColor} wide={wide}>
         {captain && (
-          <CrewCardFramed
+          <CrewmateCardFramed
             crewmate={captain}
             isCaptain
             width={75} />
@@ -2498,7 +2435,7 @@ export const FlexSectionInputBlock = ({ bodyStyle, children, disabled, image, in
 
         <FlexSectionInputBody
           isSelected={isSelected}
-          onClick={disabled ? null : onClick}
+          onClick={disabled ? undefined : onClick}
           onMouseEnter={() => setHovered(true)}
           onMouseLeave={() => setHovered(false)}
           ref={refEl}
@@ -3320,11 +3257,11 @@ export const CrewInputBlock = ({ cardWidth, crew, hideCrewmates, highlightCrewma
           </div>
         )}
         {!hideCrewmates && (
-          <CrewCards>
+          <CrewmateCards>
             {Array.from({ length: 5 }).map((_, i) =>
               crew?._crewmates[i]
                 ? (
-                  <CrewCardFramed
+                  <CrewmateCardFramed
                     key={i}
                     borderColor={`rgba(${theme.colors.mainRGB}, 0.7)`}
                     crewmate={crew._crewmates[i]}
@@ -3335,13 +3272,13 @@ export const CrewInputBlock = ({ cardWidth, crew, hideCrewmates, highlightCrewma
                     width={cardWidth || 60} />
                 )
                 : (
-                  <CrewCardPlaceholder
+                  <CrewmateCardPlaceholder
                     key={i}
                     style={highlightCrewmates ? { opacity: 0.5 } : {}}
                     width={cardWidth || 60} />
                 )
             )}
-          </CrewCards>
+          </CrewmateCards>
         )}
       </div>
     </FlexSectionInputBlock>

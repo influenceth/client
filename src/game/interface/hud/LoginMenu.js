@@ -4,7 +4,7 @@ import ReactTooltip from 'react-tooltip';
 import styled from 'styled-components';
 import Button from '~/components/ButtonAlt';
 
-import CrewCardFramed from '~/components/CrewCardFramed';
+import CrewmateCardFramed from '~/components/CrewmateCardFramed';
 import { PlusIcon } from '~/components/Icons';
 import useAuth from '~/hooks/useAuth';
 import theme from '~/theme';
@@ -40,7 +40,7 @@ const LoginMenu = () => {
 
   return (
     <Wrapper>
-      <CrewCardFramed
+      <CrewmateCardFramed
         borderColor={`rgba(${theme.colors.mainRGB}, 0.4)`}
         crewmate={null}
         isCaptain

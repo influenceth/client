@@ -6,7 +6,7 @@ import { FaSearchPlus as DetailsIcon } from 'react-icons/fa';
 import ReactTooltip from 'react-tooltip';
 
 import ClipCorner from '~/components/ClipCorner';
-import CrewCardFramed from '~/components/CrewCardFramed';
+import CrewmateCardFramed from '~/components/CrewmateCardFramed';
 import IconButton from '~/components/IconButton';
 import {
   CloseIcon,
@@ -272,7 +272,7 @@ const CaptainCard = ({ crewId }) => {
   }, [crewId]);
 
   return (
-    <CrewCardFramed
+    <CrewmateCardFramed
       crewmate={captain}
       isCaptain
       onClick={onClick}

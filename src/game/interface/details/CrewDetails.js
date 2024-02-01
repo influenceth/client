@@ -6,7 +6,7 @@ import LoadingAnimation from 'react-spinners/PuffLoader';
 
 import CoverImageSrc from '~/assets/images/modal_headers/OwnedCrew.png';
 import Button from '~/components/ButtonAlt';
-import CrewCardFramed, { EmptyCrewCardFramed } from '~/components/CrewCardFramed';
+import CrewmateCardFramed, { EmptyCrewmateCardFramed } from '~/components/CrewmateCardFramed';
 import CrewmateInfoPane from '~/components/CrewmateInfoPane';
 import CrewLocationLabel from '~/components/CrewLocationLabel';
 import Details from '~/components/DetailsModal';
@@ -428,18 +428,18 @@ const CrewDetails = ({ crewId, crew, isMyCrew, isOwnedCrew, selectCrew }) => {
                   if (!crewmate) {
                     return (
                       <div>
-                        <EmptyCrewCardFramed isCaptain onClick={isMyCrew ? onClickRecruit : null} width={180}>
+                        <EmptyCrewmateCardFramed isCaptain onClick={isMyCrew ? onClickRecruit : null} width={180}>
                           {isMyCrew && <PlusIcon />}
-                        </EmptyCrewCardFramed>
+                        </EmptyCrewmateCardFramed>
                       </div>
                     );
                   }
                   return (
                     <>
                       <span ref={setRefEl}>
-                        <CrewCardFramed
+                        <CrewmateCardFramed
                           borderColor={`rgba(${theme.colors.mainRGB}, 0.4)`}
-                          crewCardProps={{ hideHeader: false, noWrapName: true }}
+                          CrewmateCardProps={{ hideHeader: false, noWrapName: true }}
                           crewmate={crewmate}
                           isCaptain
                           onClick={onClickCrewmate(crewmate)}
@@ -467,9 +467,9 @@ const CrewDetails = ({ crewId, crew, isMyCrew, isOwnedCrew, selectCrew }) => {
                     const crewmate = crew._crewmates?.[i + 1];
                     if (!crewmate) {
                       return (
-                        <EmptyCrewCardFramed key={i} onClick={isMyCrew ? onClickRecruit : null} width={146}>
+                        <EmptyCrewmateCardFramed key={i} onClick={isMyCrew ? onClickRecruit : null} width={146}>
                           {isMyCrew && <PlusIcon />}
-                        </EmptyCrewCardFramed>
+                        </EmptyCrewmateCardFramed>
                       );
                     }
                     return (
@@ -477,9 +477,9 @@ const CrewDetails = ({ crewId, crew, isMyCrew, isOwnedCrew, selectCrew }) => {
                         {(refEl, setRefEl) => (
                           <>
                             <span ref={setRefEl}>
-                              <CrewCardFramed
+                              <CrewmateCardFramed
                                 borderColor={`rgba(${theme.colors.mainRGB}, 0.4)`}
-                                crewCardProps={{ hideHeader: false, noWrapName: true }}
+                                CrewmateCardProps={{ hideHeader: false, noWrapName: true }}
                                 crewmate={crewmate}
                                 onClick={onClickCrewmate(crewmate)}
                                 onMouseEnter={() => setHovered(i + 1)}

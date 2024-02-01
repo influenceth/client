@@ -4,6 +4,7 @@ import AsteroidAssets from './AsteroidAssets';
 import AsteroidChat from './AsteroidChat';
 import AsteroidInfo from './AsteroidInfo';
 import DevTools from './DevTools';
+import DockDetails from './DockDetails';
 import Favorites from './Favorites';
 import Inventory from './Inventory';
 import LotInfo from './LotInfo';
@@ -19,6 +20,7 @@ const HudMenus = {
   AsteroidChat,
   AsteroidInfo,
   DevTools,
+  DockDetails,
   Favorites,
   Inventory,
   LotInfo,

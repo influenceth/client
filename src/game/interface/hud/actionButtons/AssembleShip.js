@@ -13,7 +13,7 @@ const labelDict = {
 
 const isVisible = ({ building, crew }) => {
   return crew && building
-    && building.Control?.controller?.id === crew.id // TODO: policy instead of control
+    // && building.Control?.controller?.id === crew.id // TODO: policy instead of control
     && building.DryDocks?.length > 0;
 };
 

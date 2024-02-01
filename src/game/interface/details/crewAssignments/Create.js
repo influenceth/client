@@ -23,7 +23,7 @@ import Collection4 from '~/assets/images/crew_collections/4.png';
 import Button from '~/components/ButtonAlt';
 import ConfirmationDialog from '~/components/ConfirmationDialog';
 import CopyReferralLink from '~/components/CopyReferralLink';
-import CrewCard from '~/components/CrewCard';
+import CrewmateCard from '~/components/CrewmateCard';
 import CrewClassIcon from '~/components/CrewClassIcon';
 import CrewTraitIcon from '~/components/CrewTraitIcon';
 import Details from '~/components/DetailsModal';
@@ -1160,10 +1160,9 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
                 <CardWrapper>
                   <CardContainer>
                     <div>
-                      <CrewCard
+                      <CrewmateCard
                         crewmate={crewmate}
                         fontSize="25px"
-                        hideCollectionInHeader
                         hideFooter
                         hideIfNoName
                         hideMask
@@ -1414,7 +1413,7 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
                 <CardWrapper>
                   <CardContainer>
                     <div>
-                      <CrewCard
+                      <CrewmateCard
                         crewmate={crewmate}
                         fontSize="25px"
                         noWrapName

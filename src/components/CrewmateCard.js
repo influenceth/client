@@ -5,7 +5,7 @@ import pick from 'lodash/pick';
 import { Crewmate } from '@influenceth/sdk';
 
 import silhouette from '~/assets/images/silhouette.png';
-import CrewCardOverlay, { cardTransitionSpeed, cardTransitionFunction } from '~/components/CrewCardOverlay';
+import CrewmateCardOverlay, { cardTransitionSpeed, cardTransitionFunction } from '~/components/CrewmateCardOverlay';
 import CrewClassIcon from '~/components/CrewClassIcon';
 import CrewCollectionEmblem from '~/components/CrewCollectionEmblem';
 import DataReadout from '~/components/DataReadout';
@@ -136,26 +136,9 @@ const loadingCss = css`
   top: 50%;
 `;
 
-const CrewCard = ({ crewmate, useExplicitAppearance, onClick, overlay, ...props }) => {
+const AbstractCard = ({ imageUrl, onClick, overlay, ...props }) => {
   const [ imageFailed, setImageFailed ] = useState(false);
   const [ imageLoaded, setImageLoaded ] = useState(false);
-
-  const useName = props.hideIfNoName
-    ? (crewmate.Name?.name || '')
-    : formatters.crewmateName(crewmate);
-  const classLabel = Crewmate.Entity.getClass(crewmate)?.name;
-
-  let imageUrl = useMemo(() => {
-    let url = silhouette;
-    if (crewmate.id && !useExplicitAppearance) {
-      url = `${process.env.REACT_APP_IMAGES_URL}/v1/crew/${crewmate.id}/image.svg?bustOnly=true`;
-    } else if (BigInt(crewmate.Crewmate?.appearance || 0) > 0n) {
-      url = `${process.env.REACT_APP_IMAGES_URL}/v1/crew/provided/image.svg?bustOnly=true&options=${JSON.stringify(
-        pick(crewmate.Crewmate, ['coll', 'class', 'title', 'appearance'])
-      )}`;
-    }
-    return url;
-  }, [crewmate, useExplicitAppearance]);
 
   // make sure onLoad and onError get called by making sure they are reset to false on imageUrl change
   const [ readyToLoadUrl, setReadyToLoadUrl ] = useState(imageUrl);
@@ -169,7 +152,7 @@ const CrewCard = ({ crewmate, useExplicitAppearance, onClick, overlay, ...props 
   useEffect(() => {
     if (imageFailed) setImageLoaded(true);
   }, [imageFailed]);
-
+  
   // TODO: make this a hook?
   // onLoad is not reliable if, ex. the image is already cached, so we use `complete`
   const watchImageLoad = useCallback((input) => {
@@ -184,22 +167,22 @@ const CrewCard = ({ crewmate, useExplicitAppearance, onClick, overlay, ...props 
     <Card
       onClick={onClick}
       hasOverlay={!!overlay}
-      classLabel={classLabel}
+      classLabel={props.crewmateClass ? Crewmate.getClass(props.crewmateClass)?.name : undefined}
       {...props}>
       {!imageLoaded && <LoadingAnimation color={'white'} css={loadingCss} />}
       <CardImage visible={imageLoaded} applyMask={!overlay && !props.hideMask}>
         <img
           ref={watchImageLoad}
-          alt={useName}
+          alt={props.crewmateName}
           src={imageFailed ? silhouette : readyToLoadUrl}
           onError={() => setImageFailed(true)} />
       </CardImage>
       <CardHeader>
         <CrewName {...props}>
-          <CrewClassIcon crewClass={crewmate.Crewmate?.class} />{' '}
-          {!props.hideNameInHeader && useName}
+          <CrewClassIcon crewClass={props.crewmateClass} />{' '}
+          {!props.hideNameInHeader && props.crewmateName}
         </CrewName>
-        {!props.hideCollectionInHeader && (
+        {props.showCollectionInHeader && props.crewmateColl && (
           <DataReadout style={{
             fontSize: '0.68em',
             ...(props.showClassInHeader
@@ -210,29 +193,77 @@ const CrewCard = ({ crewmate, useExplicitAppearance, onClick, overlay, ...props 
               : {}
             )
             }}>
-            {Crewmate.getCollection(crewmate)?.name}
+            {Crewmate.getCollection(props.crewmateColl)?.name}
           </DataReadout>
         )}
-        {props.showClassInHeader && <DataReadout style={{ fontSize: '0.9em', opacity: 0.7 }}>{Crewmate.Entity.getClass(crewmate)?.name}</DataReadout>}
+        {props.showClassInHeader && props.crewmateClass && (
+          <DataReadout style={{ fontSize: '0.9em', opacity: 0.7 }}>
+            {Crewmate.getClass(props.crewmateClass)?.name}
+          </DataReadout>
+        )}
       </CardHeader>
       {!overlay && (
         <CardFooter>
-          {crewmate.Crewmate?.coll && (
+          {props.crewmateColl && (
             <EmblemContainer>
               <CrewCollectionEmblem
-                collection={crewmate.Crewmate.coll}
+                collection={props.crewmateColl}
                 style={{ width: '100%' }} />
             </EmblemContainer>
           )}
           <FooterStats>
-            {!props.showClassInHeader && <div>{Crewmate.Entity.getClass(crewmate)?.name}</div>}
-            {crewmate.Crewmate.title > 0 && <div>{Crewmate.Entity.getTitle(crewmate)?.name}</div>}
+            {!props.showClassInHeader && props.crewmateClass ? <div>{Crewmate.getClass(props.crewmateClass)?.name}</div> : null}
+            {props.crewmateTitle ? <div>{Crewmate.getTitle(props.crewmateTitle)?.name}</div> : null}
           </FooterStats>
         </CardFooter>
       )}
-      {overlay && <CrewCardOverlay {...overlay} />}
+      {overlay && <CrewmateCardOverlay {...overlay} />}
     </Card>
   );
 };
 
-export default CrewCard;
+const CrewmateCard = ({ crewmate = {}, useExplicitAppearance, ...props }) => {
+  const useName = props.hideIfNoName
+    ? (crewmate.Name?.name || '')
+    : formatters.crewmateName(crewmate);
+
+  let imageUrl = useMemo(() => {
+    let url = silhouette;
+    if (!useExplicitAppearance && crewmate?.id) {
+      url = `${process.env.REACT_APP_IMAGES_URL}/v1/crew/${crewmate.id}/image.svg?bustOnly=true`;
+    } else if (BigInt(crewmate.Crewmate?.appearance || 0) > 0n) {
+      url = `${process.env.REACT_APP_IMAGES_URL}/v1/crew/provided/image.svg?bustOnly=true&options=${JSON.stringify(
+        pick(crewmate.Crewmate, ['coll', 'class', 'title', 'appearance'])
+      )}`;
+    }
+    return url;
+  }, [crewmate, useExplicitAppearance]);
+
+  return (
+    <AbstractCard
+      imageUrl={imageUrl}
+      crewmateColl={crewmate.Crewmate?.coll}
+      crewmateClass={crewmate.Crewmate?.class}
+      crewmateName={useName}
+      crewmateTitle={crewmate.Crewmate?.title}
+      {...props}
+    />
+  );
+};
+
+export const CrewCaptainCard = ({ crewId, ...props }) => {
+  let imageUrl = useMemo(() => crewId
+    ? `${process.env.REACT_APP_IMAGES_URL}/v2/crews/${crewId}/captain/image.svg?bustOnly=true`
+    : silhouette,
+    [crewId]
+  );
+
+  return (
+    <AbstractCard
+      imageUrl={imageUrl}
+      {...props}
+    />
+  );
+};
+
+export default CrewmateCard;

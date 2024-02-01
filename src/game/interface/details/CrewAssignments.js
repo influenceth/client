@@ -7,7 +7,7 @@ import useBook from '~/hooks/useBook';
 import useCreateStorySession from '~/hooks/useCreateStorySession';
 import useCrewContext from '~/hooks/useCrewContext';
 import useStore from '~/hooks/useStore';
-import CrewCard from '~/components/CrewCard';
+import CrewmateCard from '~/components/CrewmateCard';
 import Details from '~/components/DetailsModal';
 import Loader from '~/components/Loader';
 import NavIcon from '~/components/NavIcon';
@@ -581,7 +581,7 @@ const CrewAssignments = () => {
                         const uiConfig = crewStates[crewStatus || 'notReady'] || {};
                         return (
                           <div key={c.id}>
-                            <CrewCard
+                            <CrewmateCard
                               crewmate={c}
                               clickable={uiConfig.clickable}
                               fade={uiConfig.fade}

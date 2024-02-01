@@ -22,6 +22,7 @@ import {
   MyAssetsIcon,
   OrderIcon,
   ResourceIcon,
+  ShipIcon,
   SimulateRouteIcon,
 } from '~/components/Icons';
 import useAuth from '~/hooks/useAuth';
@@ -313,6 +314,16 @@ const HudMenu = ({ forceOpenMenu }) => {
         isVisible: focus === 'lot'
           && lot?.building?.Building?.status === Building.CONSTRUCTION_STATUSES.OPERATIONAL
           && lot.building.Control?.controller?.id === crew?.id
+      },
+      {
+        key: 'DOCKED_SHIPS',
+        label: 'Docked Ships',
+        icon: <ShipIcon />,
+        Component: hudMenus.DockDetails,
+        noDetail: true,
+        isVisible: focus === 'lot'
+          && lot?.building?.Building?.status === Building.CONSTRUCTION_STATUSES.OPERATIONAL
+          && lot.building.Dock
       },
       {
         key: 'RESOURCES',

@@ -2,7 +2,7 @@ import styled from 'styled-components';
 import { useHistory } from 'react-router-dom';
 
 import ChoicesDialog from '~/components/ChoicesDialog';
-import CrewCard from '~/components/CrewCard';
+import CrewmateCard from '~/components/CrewmateCard';
 import { GenesisIcon } from '~/components/Icons';
 import useCrewContext from '~/hooks/useCrewContext';
 import { getCloudfrontUrl } from '~/lib/assetUtils';
@@ -111,10 +111,9 @@ const SelectUninitializedCrewmateDialog = ({ onSelect }) => {
           <CardWrapper>
             {arvadianRecruits.map((crewmate) => (
               <CardOuter key={crewmate.id} selected={selected === crewmate.id}>
-                <CrewCard
+                <CrewmateCard
                   crewmate={crewmate}
                   hasOverlay
-                  hideCollectionInHeader
                   showClassInHeader
                   hideFooter
                   noWrapName
