@@ -12,6 +12,8 @@ import MyCrews from './MyCrews';
 import Resources from './Resources';
 import RoutePlanner from './RoutePlanner';
 import SearchMap from './SearchMap';
+import ShipInfo from './ShipInfo';
+import StationManifest from './StationManifest';
 
 const HudMenus = {
   AdminBuilding,
@@ -28,6 +30,8 @@ const HudMenus = {
   Resources,
   RoutePlanner,
   SearchMap,
+  ShipInfo,
+  StationManifest
 };
 
 export default HudMenus;

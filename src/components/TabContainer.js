@@ -136,14 +136,16 @@ const TabContainer = ({
             onClick={tab.onClick || onClick(i)}
             tabHeight={tabHeight}
             css={tabCss || {}}>
-            <TabIcon css={iconCss || {}}>{tab.icon}</TabIcon>
+            {tab.icon && <TabIcon css={iconCss || {}}>{tab.icon}</TabIcon>}
             <TabLabel css={labelCss || {}}>{tab.label}</TabLabel>
           </Tab>
         ))}
       </Tabs>
-      <Pane css={paneCss || {}}>
-        {panes && panes[active]}
-      </Pane>
+      {panes && (
+        <Pane css={paneCss || {}}>
+          {panes && panes[active]}
+        </Pane>
+      )}
     </Container>
   );
 };

@@ -21,6 +21,7 @@ import {
   MarketplaceBuildingIcon,
   MyAssetsIcon,
   OrderIcon,
+  PassengersIcon,
   ResourceIcon,
   ShipIcon,
   SimulateRouteIcon,
@@ -33,6 +34,7 @@ import { reactBool } from '~/lib/utils';
 import useCrewContext from '~/hooks/useCrewContext';
 import theme from '~/theme';
 import useAccessibleAsteroidBuildings from '~/hooks/useAccessibleAsteroidBuildings';
+import useShip from '~/hooks/useShip';
 
 const cornerWidth = 8;
 const bumpHeightHalf = 100;
@@ -216,6 +218,7 @@ const HudMenu = ({ forceOpenMenu }) => {
   const openHudMenu = useStore(s => forceOpenMenu || s.openHudMenu);
 
   const { data: lot } = useLot(lotId);
+  const { data: ship } = useShip(zoomScene?.type === 'SHIP' ? zoomScene.shipId : null);
   const { data: marketplaces } = useAccessibleAsteroidBuildings(asteroidId, 'Exchange');
 
   const dispatchHudMenuOpened = useStore(s => s.dispatchHudMenuOpened);
@@ -251,6 +254,7 @@ const HudMenu = ({ forceOpenMenu }) => {
   }, [open, openHudMenu]);
 
   useEffect(() => {
+    // TODO: refactor this now that organization changed...
     if (openHudMenu) {
       const category = openHudMenu.split('_').shift();
       if (category === 'BELT' && zoomStatus !== 'out') dispatchHudMenuOpened();
@@ -299,6 +303,13 @@ const HudMenu = ({ forceOpenMenu }) => {
 
     menuButtons.push(
       {
+        key: 'SHIP_INFORMATION',
+        label: 'Ship Info',
+        icon: <InfoIcon />,
+        Component: hudMenus.ShipInfo,
+        isVisible: focus === 'ship'
+      },
+      {
         key: 'LOT_INFORMATION',
         label: 'Lot Info',
         icon: <InfoIcon />,
@@ -335,11 +346,26 @@ const HudMenu = ({ forceOpenMenu }) => {
       },
       {
         key: 'LOT_INVENTORY',
-        label: 'Inventory',
+        label: 'Lot Inventory',
         icon: <InventoryIcon />,
         Component: hudMenus.Inventory,
         isVisible: focus === 'lot'
           && (lot?.building?.Inventories || []).find((i) => i.status === Inventory.STATUSES.AVAILABLE)
+      },
+      {
+        key: 'SHIP_INVENTORY',
+        label: 'Ship Inventory',
+        icon: <InventoryIcon />,
+        Component: hudMenus.Inventory,
+        isVisible: focus === 'ship'
+          && (ship?.Inventories || []).find((i) => i.status === Inventory.STATUSES.AVAILABLE)
+      },
+      {
+        key: 'SHIP_PASSENGERS',
+        label: 'Passenger Manifest',
+        icon: <PassengersIcon />,
+        Component: hudMenus.StationManifest,
+        isVisible: focus === 'ship'
       },
 
       {
@@ -509,49 +535,50 @@ const HudMenu = ({ forceOpenMenu }) => {
     }
   }, [account, handleButtonClick, openHudMenu]);
 
+  const [visibleMenuButtons, visiblePageButtons] = useMemo(() => ([
+    menuButtons.filter((b) => b.isVisible && (!b.requireLogin || !!account)),
+    pageButtons.filter((b) => b.isVisible && (!b.requireLogin || !!account)),
+  ]), [!!account, menuButtons]);
+
   return (
     <Wrapper>
       {!forceOpenMenu && (
         <>
           <ReactTooltip id="hudMenu" effect="solid" />
           <Buttons open={open}>
-            {menuButtons.length > 0 && (
+            {visibleMenuButtons.length > 0 && (
               <ButtonSection>
-                {menuButtons.map(({ key, label, highlightIcon, icon, isVisible, onOpen, requireLogin, hideInsteadOfClose }) => {
-                  if (!isVisible || (requireLogin && !account)) return null;
-                  return (
-                    <Button
-                      key={key}
-                      style={highlightIcon ? { color: theme.colors.main } : {}}
-                      onClick={() => handleButtonClick(key, onOpen, hideInsteadOfClose)}
-                      selected={key === openHudMenu}
-                      data-for="hudMenu"
-                      data-place="left"
-                      data-tip={label}>
-                      {icon}
-                    </Button>
-                  );
-                })}
+                {visibleMenuButtons.map(({ key, label, highlightIcon, icon, onOpen, hideInsteadOfClose }) => (
+                  <Button
+                    key={key}
+                    style={highlightIcon ? { color: theme.colors.main } : {}}
+                    onClick={() => handleButtonClick(key, onOpen, hideInsteadOfClose)}
+                    selected={key === openHudMenu}
+                    data-for="hudMenu"
+                    data-place="left"
+                    data-tip={label}>
+                    {icon}
+                  </Button>
+                ))}
               </ButtonSection>
             )}
-            {pageButtons.length > 0 && (
+            {visiblePageButtons.length > 0 && (
+              <div>{Object.keys(pageButtons).join('.')}
               <ButtonSection showSeparator={menuButtons.length > 0}>
-                {pageButtons.map(({ key, label, highlightIcon, icon, isVisible, onOpen, requireLogin, hideInsteadOfClose }) => {
-                  if (!isVisible || (requireLogin && !account)) return null;
-                  return (
-                    <PageButton
-                      key={key}
-                      style={highlightIcon ? { color: theme.colors.main } : {}}
-                      onClick={() => handleButtonClick(key, onOpen, hideInsteadOfClose)}
-                      selected={key === openHudMenu}
-                      data-for="hudMenu"
-                      data-place="left"
-                      data-tip={label}>
-                      {icon}
-                    </PageButton>
-                  );
-                })}
+                {visiblePageButtons.map(({ key, label, highlightIcon, icon, onOpen, hideInsteadOfClose }) => (
+                  <PageButton
+                    key={key}
+                    style={highlightIcon ? { color: theme.colors.main } : {}}
+                    onClick={() => handleButtonClick(key, onOpen, hideInsteadOfClose)}
+                    selected={key === openHudMenu}
+                    data-for="hudMenu"
+                    data-place="left"
+                    data-tip={label}>
+                    {icon}
+                  </PageButton>
+                ))}
               </ButtonSection>
+              </div>
             )}
           </Buttons>
         </>

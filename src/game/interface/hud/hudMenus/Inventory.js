@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import styled from 'styled-components';
+import styled, { css } from 'styled-components';
 import { usePopper } from 'react-popper';
 import ReactTooltip from 'react-tooltip';
 import { Delivery, Inventory, Product } from '@influenceth/sdk';
 
 import Dropdown from '~/components/Dropdown';
-import { CheckedIcon, DotsIcon, UncheckedIcon } from '~/components/Icons';
+import { DotsIcon } from '~/components/Icons';
 import ResourceThumbnail from '~/components/ResourceThumbnail';
 import useActionButtons from '~/hooks/useActionButtons';
 import useLot from '~/hooks/useLot';
@@ -16,8 +16,19 @@ import theme from '~/theme';
 import actionButtons from '../actionButtons';
 import { formatMass, formatResourceAmount, formatVolume } from '../actionDialogs/components';
 import { Tray, TrayLabel } from './components/components';
+import useShip from '~/hooks/useShip';
+import useDeliveries from '~/hooks/useDeliveries';
+import TabContainer from '~/components/TabContainer';
 
 const resourceItemWidth = 83;
+
+const tabContainerCss = css`
+  color: white;
+  font-size: 15px;
+  flex: 1;
+  height: 40px;
+  margin: -6px;
+`;
 
 const Wrapper = styled.div`
   display: flex;
@@ -68,6 +79,14 @@ const StorageTotal = styled.div`
   }
 `;
 
+const Charts = styled.div`
+  border-bottom: 1px solid #333;
+  padding: 5px 0 15px;
+  & > div:first-child {
+    margin-bottom: 10px;
+  }
+`;
+
 const ProgressBar = styled.div`
   background: #333;
   border-radius: 3px;
@@ -106,25 +125,6 @@ const Controls = styled.div`
   position: relative;
   width: 100%;
   z-index: 1;
-
-  & > label {
-    align-items: center;
-    cursor: ${p => p.theme.cursors.active};
-    display: flex;
-    flex-direction: row;
-    & > svg {
-      color: ${p => p.theme.colors.main};
-    }
-    & > span {
-      color: #999;
-      font-size: 85%;
-      margin-left: 4px;
-      transition: color 250ms ease;
-    }
-    &:hover > span {
-      color: white;
-    }
-  }
 `;
 
 const InventoryItems = styled.div`
@@ -208,7 +208,7 @@ const ThumbnailWrapper = styled.div`
   }
 `;
 
-const sortOptions = ['Name', 'Mass', 'Volume'];
+const sortOptions = ['Alphabetically', 'Mass', 'Volume'];
 
 const StackSplitter = styled.div`
   background: black;
@@ -256,60 +256,83 @@ const StackSplitterPopper = ({ children, referenceEl }) => {
 
 const LotInventory = () => {
   const { props: actionProps } = useActionButtons();
+
   const lotId = useStore(s => s.asteroids.lot);
+  const zoomScene = useStore(s => s.asteroids.zoomScene);
+
   const { data: lot } = useLot(lotId);
+  const { data: ship } = useShip(zoomScene?.type === 'SHIP' && zoomScene.shipId);
+  const entity = useMemo(() => ship || lot?.building, [lot, ship]);
+
+  const inventories = useMemo(() => {
+    return (entity?.Inventories || [])
+      .filter((i) => i.status === Inventory.STATUSES.AVAILABLE)
+      .map((i) => ({
+        ...i,
+        label: Inventory.TYPES[i.inventoryType].category,
+        contentsObj: (i.contents || []).reduce((acc, c) => ({ ...acc, [c.product]: c.amount }), {})
+      }))
+      .sort((a, b) => a.label < b.label ? -1 : 1);
+  }, [entity]);
 
   const [amount, setAmount] = useState();
   const [focused, setFocused] = useState();
   const [order, setOrder] = useState(sortOptions[0]);
   const [displayVolumes, setDisplayVolumes] = useState(true);
+  const [inventorySlot, setInventorySlot] = useState(null);
   const [selectedItems, setSelectedItems] = useState({});
   const [splittingResourceId, setSplittingResourceId] = useState();
 
   const resourceItemRefs = useRef([]);
 
+  // default slot
+  useEffect(() => {
+    if (inventorySlot === null) {
+      setInventorySlot(inventories?.[0]?.slot || null);
+    }
+  }, [inventories]);
+
+  useEffect(() => {
+    setSelectedItems({}); // clear selected items when switching inventories
+  }, [inventorySlot])
+
+  const { data: incomingDeliveries } = useDeliveries(entity && inventorySlot ? { destination: entity, destinationSlot: inventorySlot } : undefined);
+
+  // get selected inventory
   const inventory = useMemo(
-    () => {
-      const i = Object.values(lot?.building?.Inventories || []).find((i) => i.status === Inventory.STATUSES.AVAILABLE) || {};
-      i.contentsObj = (i.contents || []).reduce((acc, c) => ({
-        ...acc,
-        [c.product]: c.amount
-      }), {});
-      return i;
-    },
-    [lot?.building?.Inventories]
+    () => inventories.find((i) => i.slot === inventorySlot),
+    [inventories, inventorySlot]
   );
 
-  const { used, usedOrReserved } = useMemo(() => {
+  const { usedMass, usedOrReservedMass, usedVolume, usedOrReservedVolume } = useMemo(() => {
     if (!inventory) {
       return {
-        used: 0,
-        usedOrReserved: 0,
+        usedMass: 0,
+        usedOrReservedMass: 0,
+        usedVolume: 0,
+        usedOrReservedVolume: 0,
       };
     }
-
-    const mass = inventory?.mass || 0;
-    const reservedMass = inventory?.reservedMass || 0;
-    const volume = inventory?.volume || 0;
-    const reservedVolume = inventory?.reservedVolume || 0;
 
     // TODO: use Inventory.getFilledCapacity() instead?
     const inventoryConfig = Inventory.getType(inventory.inventoryType) || {};
+
+    const mass = inventory?.mass || 0;
+    const reservedMass = inventory?.reservedMass || 0;
     const massUsage = mass / inventoryConfig.massConstraint;
     const massReservedUsage = reservedMass / inventoryConfig.massConstraint;
+
+    const volume = inventory?.volume || 0;
+    const reservedVolume = inventory?.reservedVolume || 0;
     const volumeUsage = volume / inventoryConfig.volumeConstraint;
     const volumeReservedUsage = reservedVolume / inventoryConfig.volumeConstraint;
-    if (volumeUsage + volumeReservedUsage > massUsage + massReservedUsage) {
-      return {
-        used: volumeUsage,
-        usedOrReserved: volumeUsage + volumeReservedUsage,
-      };
-    }
-    return {
-      used: massUsage,
-      usedOrReserved: massUsage + massReservedUsage,
-    };
 
+    return {
+      usedMass: massUsage,
+      usedOrReservedMass: massUsage + massReservedUsage,
+      usedVolume: volumeUsage,
+      usedOrReservedVolume: volumeUsage + volumeReservedUsage,
+    };
   }, [inventory]);
 
   const toggleVolumeDisplay = useCallback(() => {
@@ -326,8 +349,8 @@ const LotInventory = () => {
   }, [inventory?.contentsObj, order]);
 
   const isIncomingDelivery = useMemo(() => {
-    return (lot?.deliveries || []).find((d) => d.Delivery.status !== Delivery.STATUSES.COMPLETE)  
-  }, [lot]);
+    return (incomingDeliveries || []).find((d) => d.Delivery.status !== Delivery.STATUSES.COMPLETE)  
+  }, [incomingDeliveries]);
 
   const handleSelected = useCallback((resourceId, newTotal) => {
     setSelectedItems((s) => {
@@ -397,27 +420,48 @@ const LotInventory = () => {
     <>
       <Wrapper>
         <InnerWrapper>
-          <div>
-            <StorageTotal utilization={usedOrReserved}>
-              <label>Used Capacity:</label>
-              <span>
-                {usedOrReserved > 0 && usedOrReserved < 0.01 ? '> ' : ''}{formatFixed(100 * usedOrReserved, 1)}%
-              </span>
-            </StorageTotal>
-            <ProgressBar progress={used} secondaryProgress={usedOrReserved} />
-          </div>
-          <Controls>
-            <label onClick={toggleVolumeDisplay}>
-              {displayVolumes ? <CheckedIcon /> : <UncheckedIcon />}
-              <span>Show Volumes</span>
-            </label>
+          {inventories?.length > 1 && (
             <div>
-              <Dropdown
-                options={sortOptions}
-                onChange={(l) => setOrder(sortOptions[l])}
-                size="legacy"
-                style={{ width: 160 }} />
+              <TabContainer
+                containerCss={tabContainerCss}
+                labelCss={{ flex: 1, textAlign: 'center' }}
+                onChange={(v) => setInventorySlot(inventories[v].slot)}
+                tabCss={{ flex: 1 }}
+                tabs={inventories.map(({ label }) => ({ label }))}
+              />
             </div>
+          )}
+          <Charts>
+            <div>
+              <StorageTotal utilization={usedOrReservedVolume}>
+                <label>Volume</label>
+                <span>
+                  {usedOrReservedVolume > 0 && usedOrReservedVolume < 0.01 ? '> ' : ''}{formatFixed(100 * usedOrReservedVolume, 1)}%
+                </span>
+              </StorageTotal>
+              <ProgressBar progress={usedVolume} secondaryProgress={usedOrReservedVolume} />
+            </div>
+            <div>
+              <StorageTotal utilization={usedOrReservedMass}>
+                <label>Mass</label>
+                <span>
+                  {usedOrReservedMass > 0 && usedOrReservedMass < 0.01 ? '> ' : ''}{formatFixed(100 * usedOrReservedMass, 1)}%
+                </span>
+              </StorageTotal>
+              <ProgressBar progress={usedMass} secondaryProgress={usedOrReservedMass} />
+            </div>
+          </Charts>
+          <Controls>
+            <Dropdown
+              background="transparent"
+              options={sortOptions}
+              onChange={(l) => setOrder(sortOptions[l])}
+              size="small"
+              textTransform="none"
+              style={{ flex: 1, width: 170 }}
+            />
+            
+            {/* TODO: mass / volume view toggle */}
           </Controls>
           <InventoryItems>
             {splittingResourceId && (
@@ -474,8 +518,13 @@ const LotInventory = () => {
         <Tray>
           {trayLabel && <TrayLabel content={trayLabel} />}
           {Object.keys(selectedItems).length > 0 && (
-            <actionButtons.SurfaceTransferOutgoing.Component {...actionProps} preselect={{ selectedItems }} />
+            <actionButtons.SurfaceTransferOutgoing.Component
+              {...actionProps}
+              dialogProps={{ origin: entity, originSlot: inventorySlot, preselect: { selectedItems } }}
+            />
           )}
+
+          {/* TODO: is SurfaceTransferIncoming still supported? */}
           {isIncomingDelivery && (
             <actionButtons.SurfaceTransferIncoming.Component {...actionProps} />
           )}

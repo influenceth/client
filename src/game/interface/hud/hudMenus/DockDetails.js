@@ -2,7 +2,6 @@ import { useCallback, useMemo, useState } from 'react';
 import styled from 'styled-components';
 import { Dock, Ship } from '@influenceth/sdk';
 
-import AsteroidRendering from '~/components/AsteroidRendering';
 import ClipCorner from '~/components/ClipCorner';
 import { MagnifyingIcon, MyAssetIcon } from '~/components/Icons';
 import { ResourceImage } from '~/components/ResourceThumbnail';
@@ -10,20 +9,16 @@ import { useShipLink } from '~/components/ShipLink';
 import { getShipIcon } from '~/lib/assetUtils';
 import formatters from '~/lib/formatters';
 import useCrewContext from '~/hooks/useCrewContext';
-import useControlledAsteroids from '~/hooks/useControlledAsteroids';
-import useOwnedAsteroids from '~/hooks/useOwnedAsteroids';
-import useOwnedShips from '~/hooks/useOwnedShips';
 import useStore from '~/hooks/useStore';
 import theme from '~/theme';
-import { HudMenuCollapsibleSection, Tray, majorBorderColor } from './components/components';
+import { Tray, majorBorderColor } from './components/components';
 import useLot from '~/hooks/useLot';
 import { MiniBarChart, ShipImage } from '../actionDialogs/components';
 import Dropdown from '~/components/Dropdown';
 import UncontrolledTextInput from '~/components/TextInputUncontrolled';
-import TextInput from '~/components/TextInput';
 import AssetBlock, { assetBlockCornerSize } from '~/components/AssetBlock';
 import ThumbnailWithData from '~/components/AssetThumbnailWithData';
-import CrewmateCardFramed, { CrewCaptainCardFramed } from '~/components/CrewmateCardFramed';
+import { CrewCaptainCardFramed } from '~/components/CrewmateCardFramed';
 import useActionItems from '~/hooks/useActionItems';
 import Button from '~/components/ButtonAlt';
 
@@ -195,6 +190,7 @@ const DockDetails = ({ onClose }) => {
         <div>
           <Dropdown
             disabled
+            background="transparent"
             options={['Alphabetically']}
             size="small"
             textTransform="none"

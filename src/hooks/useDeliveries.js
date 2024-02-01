@@ -5,7 +5,7 @@ import { Entity } from '@influenceth/sdk';
 import api from '~/lib/api';
 
 // TODO: should this be useCrewDeliveries (and filter by crew-controlled deliveries)?
-const useDeliveries = ({ destination, destinationSlot, origin, originSlot, deliveryId }) => {
+const useDeliveries = ({ destination, destinationSlot, origin, originSlot, deliveryId } = {}) => {
   // TODO: should consider using elasticsearch here instead so
   //  that can match on multiple fields (esp. status so not returning
   //  a bunch of completed deliveries that may not longer care about)
