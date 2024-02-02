@@ -25,6 +25,7 @@ import {
   ResourceIcon,
   ShipIcon,
   SimulateRouteIcon,
+  StationCrewIcon,
 } from '~/components/Icons';
 import useAuth from '~/hooks/useAuth';
 import useLot from '~/hooks/useLot';
@@ -353,6 +354,13 @@ const HudMenu = ({ forceOpenMenu }) => {
           && (lot?.building?.Inventories || []).find((i) => i.status === Inventory.STATUSES.AVAILABLE)
       },
       {
+        key: 'STATIONED_CREW',
+        label: 'Station Manifest',
+        icon: <StationCrewIcon />,
+        Component: hudMenus.StationManifest,
+        isVisible: focus === 'lot' && lot?.building?.Station
+      },
+      {
         key: 'SHIP_INVENTORY',
         label: 'Ship Inventory',
         icon: <InventoryIcon />,
@@ -563,7 +571,6 @@ const HudMenu = ({ forceOpenMenu }) => {
               </ButtonSection>
             )}
             {visiblePageButtons.length > 0 && (
-              <div>{Object.keys(pageButtons).join('.')}
               <ButtonSection showSeparator={menuButtons.length > 0}>
                 {visiblePageButtons.map(({ key, label, highlightIcon, icon, onOpen, hideInsteadOfClose }) => (
                   <PageButton
@@ -578,7 +585,6 @@ const HudMenu = ({ forceOpenMenu }) => {
                   </PageButton>
                 ))}
               </ButtonSection>
-              </div>
             )}
           </Buttons>
         </>
