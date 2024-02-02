@@ -1,4 +1,6 @@
+import AdminAsteroid from './AdminAsteroid';
 import AdminBuilding from './AdminBuilding';
+import AdminShip from './AdminShip';
 import AllAssets from './AllAssets';
 import AsteroidAssets from './AsteroidAssets';
 import AsteroidChat from './AsteroidChat';
@@ -16,7 +18,9 @@ import ShipInfo from './ShipInfo';
 import StationManifest from './StationManifest';
 
 const HudMenus = {
+  AdminAsteroid,
   AdminBuilding,
+  AdminShip,
   AllAssets,
   AsteroidAssets,
   AsteroidChat,

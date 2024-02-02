@@ -19,6 +19,7 @@ import moment from 'moment';
 import Button from '~/components/ButtonAlt';
 import { reactBool } from '~/lib/utils';
 import IconButton from '~/components/IconButton';
+import LotTitleArea from './components/LotTitleArea';
 
 const Wrapper = styled.div`
   display: flex;
@@ -158,23 +159,6 @@ const LotInfo = () => {
   const mainInventoryType = useMemo(() => (lot?.building?.Inventories || []).find((l) => l.status === Inventory.STATUSES.AVAILABLE)?.inventoryType, [lot]);
   const inventoryConfig = Inventory.getType(mainInventoryType) || {}; // TODO: use Inventory.getFilledCapacity() instead?
 
-  const [title, subtitle] = useMemo(() => {
-    if (!lot) return [];
-    if (lot.building) {
-      if (lot.building.Building?.status < Building.CONSTRUCTION_STATUSES.OPERATIONAL) {
-        return [
-          `${Building.TYPES[lot.building.Building?.buildingType].name} Site`,
-          lot.building.Building?.status === Building.CONSTRUCTION_STATUSES.UNDER_CONSTRUCTION ? 'Construction Site' : 'Planned Construction'
-        ]
-      }
-      return [
-        formatters.buildingName(lot.building),
-        Building.TYPES[lot.building.Building.buildingType].name
-      ];
-    }
-    return ['Empty Lot'];
-  }, [lot]);
-
   const gracePeriodPretty = useMemo(() => {
     return moment(Date.now() - Building.GRACE_PERIOD * 1e3).fromNow(true)
   }, []);
@@ -189,17 +173,7 @@ const LotInfo = () => {
   return (
     <>
       <Scrollable hasTray={reactBool(!isZoomedToLot)}>
-        <TitleArea
-          title={title}
-          subtitle={subtitle}
-          upperLeft={(
-            <>
-              <LocationIcon />
-              <span style={{ marginRight: 4, opacity: 0.55 }}><EntityName {...lot.Location.location} /> {'>'}</span>
-              {formatters.lotName(Lot.toIndex(lot.id))}
-            </>
-          )}
-        />
+        <LotTitleArea lot={lot} />
 
         {lot?.building && (
           <>

@@ -272,7 +272,7 @@ const api = {
     return {
       activities: response.data,
       totalHits: query?.returnTotal ? parseInt(response.headers['total-hits']) : undefined,
-      blockNumber: parseInt(response.headers['starknet-block-number'])
+      blockNumber: parseInt(response.headers['starknet-block-number'])  // TODO: this is not currently used
     };
   },
 
