@@ -61,6 +61,7 @@ import theme, { hexToRGB } from '~/theme';
 import { theming } from '../ActionDialog';
 import ThumbnailWithData from '~/components/AssetThumbnailWithData';
 import AssetBlock, { assetBlockCornerSize } from '~/components/AssetBlock';
+import LiveReadyStatus from '~/components/LiveReadyStatus';
 
 
 const SECTION_WIDTH = 780;
@@ -3253,7 +3254,7 @@ export const CrewInputBlock = ({ cardWidth, crew, hideCrewmates, highlightCrewma
               </span>
             </div>
             <div style={{ flex: 1 }} />
-            <LiveFoodStatus crew={crew} style={(props.subtle && !props.isSelected) ? { color: '#777' } : {}} />
+            <LiveReadyStatus crew={crew} style={{ fontSize: '14px' }} />
           </div>
         )}
         {!hideCrewmates && (

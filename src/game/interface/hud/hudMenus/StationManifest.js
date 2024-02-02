@@ -1,163 +1,100 @@
-import { useCallback, useMemo } from 'react';
-import styled, { keyframes } from 'styled-components';
+import { useCallback, useMemo, useState } from 'react';
 import { useHistory } from 'react-router-dom';
+import { Entity } from '@influenceth/sdk';
 
 import useCrewContext from '~/hooks/useCrewContext';
-import { HudMenuCollapsibleSection, Scrollable } from './components/components';
-import useHydratedLocation from '~/hooks/useHydratedLocation';
-import { CrewInputBlock, CrewLocationWrapper } from '../actionDialogs/components';
-import { locationsArrToObj } from '~/lib/utils';
-import CrewLocationLabel from '~/components/CrewLocationLabel';
 import useStore from '~/hooks/useStore';
 import useHydratedCrew from '~/hooks/useHydratedCrew';
-import { WarningIcon, WarningOutlineIcon } from '~/components/Icons';
+import useStationedCrews from '~/hooks/useStationedCrews';
+import useShip from '~/hooks/useShip';
+import useActionButtons from '~/hooks/useActionButtons';
+import actionButtons from '~/game/interface/hud/actionButtons';
+import { CrewInputBlock } from '../actionDialogs/components';
+import { HudMenuCollapsibleSection, Scrollable, Tray } from './components/components';
+import Button from '~/components/ButtonAlt';
+import { MagnifyingIcon } from '~/components/Icons';
+import { reactBool } from '~/lib/utils';
 
 const defaultBlockStyle = { marginBottom: 8, width: '100%' };
 
-const Wrapper = styled.div`
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-`;
+const StationManifest = () => {
+  const { props: actionProps } = useActionButtons();
+  const history = useHistory();
+  const zoomScene = useStore(s => s.asteroids.zoomScene);
 
-const SectionBody = styled.div``;
+  const { crew } = useCrewContext();
 
-const opacityAnimation = keyframes`
-  0% { opacity: 1; }
-  50% { opacity: 0.3; }
-  100% { opacity: 1; }
-`;
+  const shipId = zoomScene?.type === 'SHIP' ? zoomScene.shipId : undefined;
+  const { data: ship } = useShip(shipId);
+  const { data: crews } = useStationedCrews(shipId ? { id: shipId, label: Entity.IDS.SHIP } : undefined, true);
 
-const AttnTitle = styled.span`
-  align-items: center;
-  display: flex;
-  & > svg {
-    animation: ${opacityAnimation} 1250ms ease infinite;
-    color: ${p => p.theme.colors.warning};
-    font-size: 22px;
-    margin-right: 5px;
-  }
-`;
+  const [selectedCrewId, setSelectedCrewId] = useState();
+  
+  const crewIsStationed = crew?._location?.shipId === ship?.id;
+  const hasTray = !crewIsStationed || selectedCrewId;
 
-const LocationCrews = ({ locationCrews, selectedCrewId, onSelectCrew }) => {
-  const hydratedLocation = useHydratedLocation(locationsArrToObj(locationCrews[0].Location.locations));
+  const [flightCrew, passengerCrews] = useMemo(() => ([
+    crews?.find(c => c.id === ship.Control?.controller?.id),
+    crews?.filter(c => c.id !== ship.Control?.controller?.id)
+  ]), [crews]);
+
+  const handleInspect = useCallback(() => {
+    history.push(`/crew/${selectedCrewId}`);
+  }, [selectedCrewId]);
+
+  // TODO: add this to habitat (rename passenger section and hide flight section)
+
   return (
-    <HudMenuCollapsibleSection
-      titleText={<CrewLocationWrapper><CrewLocationLabel hydratedLocation={hydratedLocation} /></CrewLocationWrapper>}>
-      <SectionBody>
-        {(locationCrews || []).map((crew, i) => {
-          return (
+    <>
+      <Scrollable hasTray={reactBool(hasTray)}>
+        <HudMenuCollapsibleSection titleText="Flight Crew" collapsed={!flightCrew}>
+          <CrewInputBlock
+            cardWidth={64}
+            crew={flightCrew}
+            inlineDetails
+            isSelected={selectedCrewId && flightCrew?.id === selectedCrewId}
+            onClick={flightCrew ? () => setSelectedCrewId(flightCrew?.id) : null}
+            subtle
+            style={defaultBlockStyle} />
+        </HudMenuCollapsibleSection>
+
+        <HudMenuCollapsibleSection titleText="Passengers">
+          {(passengerCrews || []).map((passengerCrew) => (
             <CrewInputBlock
-              key={crew.id}
+              key={passengerCrew.id}
               cardWidth={64}
-              crew={crew}
+              crew={passengerCrew}
               inlineDetails
-              isSelected={crew.id === selectedCrewId}
-              onClick={() => onSelectCrew(crew)}
+              isSelected={selectedCrewId && passengerCrew.id === selectedCrewId}
+              onClick={() => setSelectedCrewId(passengerCrew.id)}
               subtle
               style={defaultBlockStyle} />
-          );
-        })}
-      </SectionBody>
-    </HudMenuCollapsibleSection>
-  );
-}
-
-const UncontrolledCrewBlock = ({ crewId, crewmateIds }) => {
-  const dispatchLauncherPage = useStore(s => s.dispatchLauncherPage);
-
-  const { data: crew } = useHydratedCrew(crewId);
-  const history = useHistory();
-
-  const onClick = useCallback(() => {
-    history.push(`/crew/${crewId}`);
-    dispatchLauncherPage();
-  }, [crewId]);
-
-  if (!crew) return null;
-  return (
-    <CrewInputBlock
-      cardWidth={64}
-      crew={crew}
-      highlightCrewmates={crewmateIds}
-      inlineDetails
-      onClick={onClick}
-      subtle
-      style={defaultBlockStyle} />
-  );
-};
-
-const MyCrews = () => {
-  const { crew, crews, crewmateMap, selectCrew } = useCrewContext();
-  
-  const nonEmptyCrews = useMemo(() => crews.filter((c) => c.Crew.roster.length > 0), [crews]);
-  const emptyCrews = useMemo(() => crews.filter((c) => c.Crew.roster.length === 0), [crews]);
-
-  const nonEmptyCrewsByLocation = useMemo(() => {
-    const groupedCrews = nonEmptyCrews.reduce((acc, cur) => {
-      const locationKey = JSON.stringify(locationsArrToObj(cur.Location.locations));
-      if (!acc[locationKey]) acc[locationKey] = [];
-      acc[locationKey].push(cur);
-      return acc;
-    }, {});
-    return Object.values(groupedCrews);
-  }, [nonEmptyCrews]);
-
-  const uncontrolledCrewIds = useMemo(() => {
-    return Object.keys(crewmateMap || {})
-      .filter((id) => !crews.find((c) => c.id === crewmateMap[id].Control?.controller?.id))
-      .reduce((acc, crewmateId) => {
-        const crewId = crewmateMap[crewmateId].Control?.controller?.id;
-        if (!crewId) return acc;
-        if (!acc[crewId]) acc[crewId] = [];
-        acc[crewId].push(Number(crewmateId));
-        return acc;
-      }, {});
-  }, [crewmateMap]);
-
-  return (
-    <Wrapper>
-      {(nonEmptyCrewsByLocation || []).map((locationCrews, i) => (
-        <LocationCrews
-          key={i}
-          locationCrews={locationCrews}
-          selectedCrewId={crew?.id}
-          onSelectCrew={(c) => selectCrew(c.id)} />
-      ))}
-
-      {Object.keys(uncontrolledCrewIds)?.length > 0 && (
-        <HudMenuCollapsibleSection
-          titleText={<AttnTitle><WarningIcon /> <span>Recoverable Crewmates</span></AttnTitle>}
-          collapsed>
-          <SectionBody>
-            {Object.keys(uncontrolledCrewIds || {}).map((crewId) => (
-              <UncontrolledCrewBlock key={crewId} crewId={crewId} crewmateIds={uncontrolledCrewIds[crewId]} />
-            ))}
-          </SectionBody>
+          ))}
         </HudMenuCollapsibleSection>
+      </Scrollable>
+
+      {hasTray && (
+        <Tray>
+          {!crewIsStationed && <actionButtons.StationCrew.Component {...actionProps} />}
+
+          {selectedCrewId && crew?.id === selectedCrewId && <actionButtons.EjectCrew.Component {...actionProps} />}
+
+          {selectedCrewId && crew?.id !== selectedCrewId && selectedCrewId !== flightCrew?.id && (
+            <actionButtons.EjectGuestCrew.Component {...actionProps} dialogProps={{ guestId: selectedCrewId }}
+            />
+          )}
+
+          <div style={{ flex: 1 }} />
+          
+          {selectedCrewId && (
+            <Button onClick={handleInspect} subtle>
+              <MagnifyingIcon style={{ marginRight: 8 }} /> Inspect
+            </Button>
+          )}
+        </Tray>
       )}
-      
-      <HudMenuCollapsibleSection titleText="Empty Crews" collapsed>
-        <SectionBody>
-          {emptyCrews.map((emptyCrew) => {
-            return (
-              <CrewInputBlock
-                key={emptyCrew.id}
-                cardWidth={64}
-                crew={emptyCrew}
-                hideCrewmates
-                inlineDetails
-                select
-                isSelected={emptyCrew.id === crew?.id}
-                onClick={() => selectCrew(emptyCrew.id)}
-                subtle
-                style={defaultBlockStyle} />
-            );
-          })}
-        </SectionBody>
-      </HudMenuCollapsibleSection>
-    </Wrapper>
+    </>
   );
 };
 
-export default MyCrews;
+export default StationManifest;

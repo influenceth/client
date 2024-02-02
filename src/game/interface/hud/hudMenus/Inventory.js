@@ -517,6 +517,8 @@ const LotInventory = () => {
       {(isIncomingDelivery || Object.keys(selectedItems).length > 0) && (
         <Tray>
           {trayLabel && <TrayLabel content={trayLabel} />}
+
+          {/* TODO: and have permissions to move stuff from here */}
           {Object.keys(selectedItems).length > 0 && (
             <actionButtons.SurfaceTransferOutgoing.Component
               {...actionProps}
@@ -524,6 +526,7 @@ const LotInventory = () => {
             />
           )}
 
+          {/* TODO: may only care about incoming transfer if have permission here */}
           {/* TODO: is SurfaceTransferIncoming still supported? */}
           {isIncomingDelivery && (
             <actionButtons.SurfaceTransferIncoming.Component {...actionProps} />

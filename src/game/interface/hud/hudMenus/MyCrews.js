@@ -116,7 +116,7 @@ const MyCrews = () => {
   }, [crewmateMap]);
 
   return (
-    <Wrapper>
+    <Scrollable>
       {(nonEmptyCrewsByLocation || []).map((locationCrews, i) => (
         <LocationCrews
           key={i}
@@ -156,7 +156,7 @@ const MyCrews = () => {
           })}
         </SectionBody>
       </HudMenuCollapsibleSection>
-    </Wrapper>
+    </Scrollable>
   );
 };
 
