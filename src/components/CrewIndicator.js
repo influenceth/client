@@ -1,9 +1,8 @@
 import styled from 'styled-components';
 
 import useCrewContext from '~/hooks/useCrewContext';
-import useCrewmate from '~/hooks/useCrewmate';
 import theme from '~/theme';
-import CrewmateCardFramed from './CrewmateCardFramed';
+import { CrewCaptainCardFramed } from './CrewmateCardFramed';
 
 const CrewLabel = styled.div`
   align-self: center;
@@ -52,13 +51,11 @@ const CrewmateCards = styled.div`
 
 const CrewIndicator = ({ cardWidth = 60, crew, noCrewText, flip, label = 'Owned by' }) => {
   const { crew: myCrew } = useCrewContext();
-  const { data: captain } = useCrewmate((crew?.Crew?.roster || [])[0]);
   return (
     <CrewmateCards flip={flip}>
-      <CrewmateCardFramed
+      <CrewCaptainCardFramed
         borderColor={`rgba(${theme.colors.mainRGB}, 0.7)`}
-        crewmate={captain}
-        isCaptain
+        crewId={crew?.id}
         lessPadding
         noAnimation
         width={cardWidth} />
