@@ -6,7 +6,7 @@ import { FaSearchPlus as DetailsIcon } from 'react-icons/fa';
 import ReactTooltip from 'react-tooltip';
 
 import ClipCorner from '~/components/ClipCorner';
-import CrewmateCardFramed from '~/components/CrewmateCardFramed';
+import { CrewCaptainCardFramed } from '~/components/CrewmateCardFramed';
 import IconButton from '~/components/IconButton';
 import {
   CloseIcon,
@@ -263,7 +263,6 @@ const ActionButtons = styled.div`
 const CaptainCard = ({ crewId }) => {
   const history = useHistory();
   const { data: crew } = useCrew(crewId);
-  const { data: captain } = useCrewmate(crew?.Crew?.roster?.length ? crew?.Crew.roster[0] : null);
 
   // onclick should open up crew profile
   const onClick = useCallback(() => {
@@ -272,9 +271,8 @@ const CaptainCard = ({ crewId }) => {
   }, [crewId]);
 
   return (
-    <CrewmateCardFramed
-      crewmate={captain}
-      isCaptain
+    <CrewCaptainCardFramed
+      crewId={crew?.id}
       onClick={onClick}
       tooltip={formatters.crewName(crew)}
       tooltipPlace="top"

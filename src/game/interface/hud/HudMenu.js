@@ -36,6 +36,7 @@ import useCrewContext from '~/hooks/useCrewContext';
 import theme from '~/theme';
 import useAccessibleAsteroidBuildings from '~/hooks/useAccessibleAsteroidBuildings';
 import useShip from '~/hooks/useShip';
+import useAsteroid from '~/hooks/useAsteroid';
 
 const cornerWidth = 8;
 const bumpHeightHalf = 100;
@@ -218,6 +219,7 @@ const HudMenu = ({ forceOpenMenu }) => {
   const showDevTools = useStore(s => s.graphics.showDevTools);
   const openHudMenu = useStore(s => forceOpenMenu || s.openHudMenu);
 
+  const { data: asteroid } = useAsteroid(asteroidId);
   const { data: lot } = useLot(lotId);
   const { data: ship } = useShip(zoomScene?.type === 'SHIP' ? zoomScene.shipId : null);
   const { data: marketplaces } = useAccessibleAsteroidBuildings(asteroidId, 'Exchange');
@@ -318,6 +320,19 @@ const HudMenu = ({ forceOpenMenu }) => {
         isVisible: focus === 'lot'
       },
       {
+        key: 'ASTEROID_INFO',
+        label: 'Asteroid Info',
+        icon: <InfoIcon />,
+        Component: hudMenus.AsteroidInfo,
+        // detailType: 'detail',
+        // onDetailClick: () => {
+        //   if (asteroidId) {
+        //     history.push(`/asteroids/${asteroidId}`);
+        //   }
+        // }
+        isVisible: focus === 'asteroid'
+      },
+      {
         key: 'BUILDING_ADMIN',
         label: 'Building Management',
         icon: <KeysIcon />,
@@ -326,6 +341,24 @@ const HudMenu = ({ forceOpenMenu }) => {
         isVisible: focus === 'lot'
           && lot?.building?.Building?.status === Building.CONSTRUCTION_STATUSES.OPERATIONAL
           && lot.building.Control?.controller?.id === crew?.id
+      },
+      {
+        key: 'ASTEROID_ADMIN',
+        label: 'Asteroid Management',
+        icon: <KeysIcon />,
+        noDetail: true,
+        Component: hudMenus.AdminAsteroid,
+        isVisible: focus === 'asteroid'
+          && asteroid?.Control?.controller?.id === crew?.id
+      },
+      {
+        key: 'SHIP_ADMIN',
+        label: 'Ship Management',
+        icon: <KeysIcon />,
+        noDetail: true,
+        Component: hudMenus.AdminShip,
+        isVisible: focus === 'ship'
+          && ship?.Control?.controller?.id === crew?.id
       },
       {
         key: 'DOCKED_SHIPS',
@@ -376,19 +409,6 @@ const HudMenu = ({ forceOpenMenu }) => {
         isVisible: focus === 'ship'
       },
 
-      {
-        key: 'ASTEROID_INFO',
-        label: 'Asteroid Info',
-        icon: <InfoIcon />,
-        Component: hudMenus.AsteroidInfo,
-        // detailType: 'detail',
-        // onDetailClick: () => {
-        //   if (asteroidId) {
-        //     history.push(`/asteroids/${asteroidId}`);
-        //   }
-        // }
-        isVisible: focus === 'asteroid'
-      },
       {
         key: 'ASTEROID_MAP_SEARCH',
         label: 'Lot Search',
@@ -527,7 +547,7 @@ const HudMenu = ({ forceOpenMenu }) => {
     }
 
     return [menuButtons, pageButtons];
-  }, [asteroidId, crew?.id, destination, lot, lotId, marketplaces?.length, showDevTools, zoomStatus, zoomScene]);
+  }, [asteroid, asteroidId, crew?.id, destination, lot, lotId, marketplaces?.length, showDevTools, zoomStatus, zoomScene]);
 
   const { label, onDetailClick, detailType, Component, componentProps, hideInsteadOfClose, noClose, noDetail } = useMemo(() => {
     return menuButtons.find((b) => b.key === openHudMenu) || {};

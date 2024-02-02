@@ -1,25 +1,33 @@
-import { Building, Entity } from '@influenceth/sdk';
+import { useMemo } from 'react';
+import { Entity } from '@influenceth/sdk';
 
 import useLot from '~/hooks/useLot';
+import useShip from '~/hooks/useShip';
 import useStore from '~/hooks/useStore';
-import MarketplaceSettings from './components/MarketplaceSettings';
 import { HudMenuCollapsibleSection, Scrollable } from './components/components';
 import EntityNameForm from './components/EntityNameForm';
-import LotTitleArea from './components/LotTitleArea';
+import ShipTitleArea from './components/ShipTitleArea';
 
-const AdminBuilding = ({}) => {
+const AdminShip = ({}) => {
   const lotId = useStore(s => s.asteroids.lot);
+  const zoomScene = useStore(s => s.asteroids.zoomScene);
+
+  const zoomShipId = zoomScene?.type === 'SHIP' ? zoomScene.shipId : null;
+  const { data: zoomShip } = useShip(zoomShipId);
   const { data: lot } = useLot(lotId);
+
+  const ship = useMemo(() => zoomShipId ? zoomShip : lot?.surfaceShip, [lot, zoomShip, zoomShipId]);
+
   return (
     <>
       <Scrollable>
-        <LotTitleArea lot={lot} />
+        <ShipTitleArea ship={ship} />
 
         <HudMenuCollapsibleSection titleText="Update Name" collapsed>
           <EntityNameForm
-            entity={lot?.building ? { id: lot.building.id, label: Entity.IDS.BUILDING } : null}
-            originalName={lot?.building?.Name?.name}
-            label="Building Name" />
+            entity={ship ? { id: ship.id, label: Entity.IDS.SHIP } : null}
+            originalName={ship?.Name?.name}
+            label="Ship Name" />
         </HudMenuCollapsibleSection>
 
         <HudMenuCollapsibleSection titleText="Update Description" collapsed>
@@ -29,15 +37,9 @@ const AdminBuilding = ({}) => {
         <HudMenuCollapsibleSection titleText="Update Permissions" collapsed>
           {/* TODO ... */}
         </HudMenuCollapsibleSection>
-
-        {lot?.building?.Building?.buildingType === Building.IDS.MARKETPLACE && (
-          <HudMenuCollapsibleSection titleText="Marketplace Settings">
-            <MarketplaceSettings marketplace={lot?.building} />
-          </HudMenuCollapsibleSection>
-        )}
       </Scrollable>
     </>
   );
 };
 
-export default AdminBuilding;
+export default AdminShip;

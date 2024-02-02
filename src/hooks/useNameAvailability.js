@@ -7,7 +7,7 @@ import useStore from './useStore';
 const useNameAvailability = (entityType) => {
   const createAlert = useStore(s => s.dispatchAlertLogged);
 
-  const getNameAvailability = useCallback(async (name, entityId, returnType = 'alert') => {
+  const getNameAvailability = useCallback(async (name, entityId, skipCollisionCheck = false, returnType = 'alert') => {
     try {
       let nameError = null;
 
@@ -21,7 +21,7 @@ const useNameAvailability = (entityType) => {
       } else if (/ {2,}/.test(name)) {
         nameError = 'Name cannot have adjoining spaces.';
       // ^^^
-      } else {
+      } else if (!skipCollisionCheck) {
         const nameCollisions = await api.getNameUse(entityType, name);
         if (nameCollisions?.length > 0 && nameCollisions[0].id !== entityId) {
           nameError = `The name "${name}" is already taken.`;

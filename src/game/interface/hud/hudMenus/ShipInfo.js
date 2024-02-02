@@ -20,6 +20,7 @@ import Button from '~/components/ButtonAlt';
 import { reactBool } from '~/lib/utils';
 import IconButton from '~/components/IconButton';
 import useShip from '~/hooks/useShip';
+import ShipTitleArea from './components/ShipTitleArea';
 
 const Description = styled.div`
   color: ${p => p.theme.colors.main};
@@ -28,13 +29,9 @@ const Description = styled.div`
 `;
 
 const ShipInfo = () => {
-  const lotId = useStore(s => s.asteroids.lot);
-  const { data: lot, isLoading } = useLot(lotId);
-
-  const dispatchZoomScene = useStore(s => s.dispatchZoomScene);
   const zoomScene = useStore(s => s.asteroids.zoomScene);
 
-  const { data: ship } = useShip(zoomScene?.shipId);
+  const { data: ship } = useShip(zoomScene?.type === 'SHIP' ? zoomScene?.shipId : null);
 
   useEffect(() => {
     if (!zoomScene?.shipId) {
@@ -42,42 +39,11 @@ const ShipInfo = () => {
     }
   }, [zoomScene?.shipId]);
 
-  const locations = useMemo(() => {
-    if (!ship?.Location?.locations) return [];
-    const asteroidEntity = ship.Location.locations.find((l) => l.label === Entity.IDS.ASTEROID);
-    if (asteroidEntity) {
-      const topLevel = <EntityName {...asteroidEntity} />;
-      const buildingEntityId = ship.Location.locations.find((l) => l.label === Entity.IDS.BUILDING);
-      if (buildingEntityId) {
-        return [topLevel, <EntityName {...buildingEntityId} />];
-      }
-
-      const lotEntityId = ship.Location.locations.find((l) => l.label === Entity.IDS.LOT);
-      if (lotEntityId) {
-        return [topLevel, <EntityName {...lotEntityId} />];
-      }
-
-      return [topLevel, 'In Orbit'];
-    } else {
-      return ['In Flight'];
-    }
-  }, [ship?.Location?.locations]);
-
   if (!ship) return null;
   return (
     <>
       <Scrollable hasTray>
-        <TitleArea
-          title={formatters.shipName(ship)}
-          subtitle={Ship.TYPES[ship.Ship.shipType].name}
-          upperLeft={(
-            <>
-              <LocationIcon />
-              <span style={{ marginRight: 4, opacity: 0.55 }}>{locations[0]}{locations[1] && ' >'}</span>
-              {locations[1]}
-            </>
-          )}
-        />
+        <ShipTitleArea ship={ship} />
 
         <HudMenuCollapsibleSection titleText="Ship Description" collapsed>
           <Description>
