@@ -139,7 +139,7 @@ const StationManifest = () => {
               </div>
             </HudMenuCollapsibleSection>
 
-            <HudMenuCollapsibleSection titleText="Passengers">
+            <HudMenuCollapsibleSection titleText="Passengers" collapsed={!(passengerCrews?.length > 0)}>
               <div style={{ paddingRight: 10 }}>
                 {(passengerCrews || []).map((passengerCrew) => (
                   <CrewInputBlock
@@ -179,7 +179,7 @@ const StationManifest = () => {
 
           {selectedCrewId && crew?.id === selectedCrewId && <actionButtons.EjectCrew.Component {...actionProps} />}
 
-          {selectedCrewId && crew?.id !== selectedCrewId && selectedCrewId !== flightCrew?.id && (
+          {selectedCrewId && crew?.id !== selectedCrewId && crew?.id === station?.Control?.controller?.id && (
             <actionButtons.EjectGuestCrew.Component {...actionProps} dialogProps={{ guestId: selectedCrewId }}
             />
           )}
