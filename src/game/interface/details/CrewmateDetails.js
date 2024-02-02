@@ -20,7 +20,7 @@ import useStore from '~/hooks/useStore';
 import useEarliestActivity from '~/hooks/useEarliestActivity';
 import useCrewmate from '~/hooks/useCrewmate';
 import MarketplaceLink from '~/components/MarketplaceLink';
-import CrewCard from '~/components/CrewCard';
+import CrewmateCard from '~/components/CrewmateCard';
 import CrewTraitIcon from '~/components/CrewTraitIcon';
 import MouseoverInfoPane from '~/components/MouseoverInfoPane';
 import formatters from '~/lib/formatters';
@@ -344,7 +344,7 @@ const CrewmateDetails = ({ crewmateId, crewmate, isOwnedCrewmate }) => {
         <AboveFold>
           <CardSection>
             <CardWrapper>
-              <CrewCard crewmate={crewmate} showClassInHeader />
+              <CrewmateCard crewmate={crewmate} showClassInHeader />
             </CardWrapper>
             <Button onClick={onBackToCrew} subtle width={150}>
               <BackIcon /> <span>Crew</span>

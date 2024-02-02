@@ -7,7 +7,7 @@ import { cloneDeep } from 'lodash';
 
 import headerBackground from '~/assets/images/modal_headers/CrewManagement.png';
 import Button from '~/components/ButtonAlt';
-import CrewCardFramed, { EmptyCrewCardFramed } from '~/components/CrewCardFramed';
+import CrewmateCardFramed, { EmptyCrewmateCardFramed } from '~/components/CrewmateCardFramed';
 import CrewLocationLabel from '~/components/CrewLocationLabel';
 import LiveFoodStatus from '~/components/LiveFoodStatus';
 import IconButton from '~/components/IconButton';
@@ -92,7 +92,7 @@ const CrewmateWrapper = styled.div`
           stroke: ${p.theme.colors.main} !important;
         }
         ${p.isDragging && `
-          ${EmptyCrewCardFramed} {
+          ${EmptyCrewmateCardFramed} {
             border-color: ${p.theme.colors.main};
           }
         `}
@@ -183,16 +183,16 @@ const CrewDraggable = ({
           return (
             <CrewmateWrapper key={i} place={i + 1} {...interactivityProps}>
               {crewmate && (
-                <CrewCardFramed
+                <CrewmateCardFramed
                   borderColor={`rgba(${theme.colors.mainRGB}, 0.4)`}
-                  crewCardProps={{ hideHeader: false, hideNameInHeader: true }}
+                  CrewmateCardProps={{ hideHeader: false, hideNameInHeader: true }}
                   crewmate={crewmate}
                   isCaptain={reactBool(i === 0)}
                   noArrow={reactBool(i > 0)}
                   width={i === 0 ? 130 : 118} />
               )}
               {!crewmate && (
-                <EmptyCrewCardFramed
+                <EmptyCrewmateCardFramed
                   borderColor={`rgba(${theme.colors.mainRGB}, 0.2)`}
                   width={i === 0 ? 130 : 118} />
               )}
@@ -458,7 +458,7 @@ const ManageCrew = ({ altCrews, crew, isForeignCrew, manager, stage, ...props })
 
       {dragging >= 0 && createPortal(
         <Dragging offset={dragOffset} position={dragPosition}>
-          <CrewCardFramed
+          <CrewmateCardFramed
             borderColor={`rgba(${theme.colors.mainRGB}, 0.4)`}
             crewmate={orderedCrewmates[dragging || 0]}
             noArrow

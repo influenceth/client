@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
 
-import CrewCardFramed, { EmptyCrewCardFramed } from '~/components/CrewCardFramed';
+import CrewmateCardFramed, { EmptyCrewmateCardFramed } from '~/components/CrewmateCardFramed';
 import CrewLocationLabel from '~/components/CrewLocationLabel';
 import LiveFoodStatus from '~/components/LiveFoodStatus';
 import useCrewContext from '~/hooks/useCrewContext';
@@ -113,28 +113,28 @@ const Crews = () => {
       <CrewTitle>{formatters.crewName(crew)}</CrewTitle>
       <CrewWrapper>
         {crew?._crewmates?.[0] && (
-          <CrewCardFramed
+          <CrewmateCardFramed
             borderColor={`rgba(${theme.colors.mainRGB}, 0.6)`}
-            crewCardProps={{ hideHeader: true}}
+            CrewmateCardProps={{ hideHeader: true}}
             crewmate={crew?._crewmates?.[0]}
             isCaptain
             warnIfNotOwnedBy={crew?.Nft?.owner}
             width={captainWidth} />
         )}
-        {!crew?._crewmates?.[0] && <EmptyCrewCardFramed hideHeader width={captainWidth} />}
+        {!crew?._crewmates?.[0] && <EmptyCrewmateCardFramed hideHeader width={captainWidth} />}
 
         <CrewInfoContainer>
           <Crewmates>
             {Array.from(Array(4)).map((_, i) => {
               const crewmate = crew?._crewmates?.[i + 1];
               if (!crewmate) {
-                return <EmptyCrewCardFramed key={i} hideHeader width={crewmateWidth} />;
+                return <EmptyCrewmateCardFramed key={i} hideHeader width={crewmateWidth} />;
               }
               return (
-                <CrewCardFramed
+                <CrewmateCardFramed
                   key={i}
                   borderColor={`rgba(${theme.colors.mainRGB}, 0.6)`}
-                  crewCardProps={{ hideHeader: true }}
+                  CrewmateCardProps={{ hideHeader: true }}
                   crewmate={crewmate}
                   warnIfNotOwnedBy={crew?.Nft?.owner}
                   width={crewmateWidth}

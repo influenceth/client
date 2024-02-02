@@ -3,7 +3,7 @@ import styled from 'styled-components';
 import { Asteroid } from '@influenceth/sdk';
 
 import constructionBackground from '~/assets/images/modal_headers/Construction.png';  // TODO: ...
-import CrewCardFramed from '~/components/CrewCardFramed';
+import CrewmateCardFramed from '~/components/CrewmateCardFramed';
 import {
   KeysIcon, MyAssetIcon,
 } from '~/components/Icons';
@@ -91,7 +91,7 @@ const ControlAsteroid = ({ asteroid, controlManager, stage, ...props }) => {
 
           <FlexSectionInputBlock
             title="Asteroid Administrator"
-            image={<CrewCardFramed crewmate={captain} isCaptain width={78} />}
+            image={<CrewmateCardFramed crewmate={captain} isCaptain width={78} />}
             label={formatters.crewName(crew)}
             sublabel="New Administrator"
           />

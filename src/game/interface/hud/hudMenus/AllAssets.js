@@ -100,7 +100,7 @@ const ShipRow = ({ ship }) => {
         <ClipCorner dimension={10} color={majorBorderColor} />
       </Thumbnail>
       <Info>
-        <label>{ship.Name?.name || `Ship #${ship.id.toLocaleString()}`}</label>
+        <label>{formatters.shipName(ship)}</label>
         <div style={{ flex: 1 }}></div>
       </Info>
     </SelectableRow>

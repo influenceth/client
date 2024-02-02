@@ -36,15 +36,13 @@ import theme from '~/theme';
 import { ActionDialogInner } from '../ActionDialog';
 
 const EjectCrew = ({ asteroid, origin, originLot, manager, stage, ...props }) => {
-  const createAlert = useStore(s => s.dispatchAlertLogged);
-  
   const { currentEjection, ejectCrew, actionStage: ejectionStatus } = manager;
   
   // TODO: only if specified id
   const { crew } = useCrewContext();
 
   const [crewSelectorOpen, setCrewSelectorOpen] = useState(false);
-  const [targetCrewId, setTargetCrewId] = useState(currentEjection?.ejected_crew?.id || (props.guests ? null : crew?.id));
+  const [targetCrewId, setTargetCrewId] = useState(currentEjection?.ejected_crew?.id || (props.guests || props.guestId ? (props.guestId || null) : crew?.id));
 
   const { data: targetCrew } = useHydratedCrew(targetCrewId);
 

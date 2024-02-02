@@ -86,7 +86,7 @@ const StyledButton = styled.button`
   padding: 3px; /* must match loadingCss.top */
   pointer-events: auto;
   position: relative;
-  text-transform: ${p => p.sizeParams.textTransform || 'uppercase'};
+  text-transform: ${p => p.textTransform || p.sizeParams.textTransform || 'uppercase'};
   transition: all 300ms ease;
 
   & > svg {

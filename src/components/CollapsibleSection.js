@@ -65,17 +65,17 @@ const Collapsible = styled.div`
   };
   margin-left: ${toggleWidth}px;
   margin-bottom: ${marginBottom}px;
+  overflow: hidden;
   transition: max-height 250ms ease, border-color 250ms ease, margin-bottom 250ms ease;
   ${p => p.width && `width: ${p.width};`}
   ${p => p.collapsed && `
     border-color: ${p.borderless ? 'transparent' : (p.borderColor || '#444')};
     max-height: 0;
-    overflow: hidden;
     margin-bottom: 4px;
   `};
   ${p => !p.collapsed && css`
     animation: ${expandedAnim} 500ms;
-    overflow: hidden auto;
+    max-height: 2000px;
   `};
 `;
 

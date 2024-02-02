@@ -1,7 +1,7 @@
 import styled from 'styled-components';
 
 import silhouette from '~/assets/images/silhouette.png';
-import CrewCardOverlay, { cardTransitionSpeed, cardTransitionFunction } from '~/components/CrewCardOverlay';
+import CrewmateCardOverlay, { cardTransitionSpeed, cardTransitionFunction } from '~/components/CrewmateCardOverlay';
 
 const CardLayer = styled.div`
   position: absolute;
@@ -43,7 +43,7 @@ const CrewSilhouetteCard = ({ onClick, overlay, ...props }) => {
       <CardImage>
         <img alt="Crewmate" src={silhouette} />
       </CardImage>
-      {overlay && <CrewCardOverlay {...overlay} />}
+      {overlay && <CrewmateCardOverlay {...overlay} />}
     </Card>
   );
 };

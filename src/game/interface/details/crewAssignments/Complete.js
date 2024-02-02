@@ -6,7 +6,7 @@
 // import useAuth from '~/hooks/useAuth';
 // import Button from '~/components/Button';
 // import CopyReferralLink from '~/components/CopyReferralLink';
-// import CrewCard from '~/components/CrewCard';
+// import CrewmateCard from '~/components/CrewmateCard';
 // import CrewTraitIcon from '~/components/CrewTraitIcon';
 // import Details from '~/components/DetailsModal';
 // import { LinkIcon, TwitterIcon } from '~/components/Icons';
@@ -372,7 +372,7 @@
 //             <CardWrapper>
 //               <CardContainer>
 //                 <div>
-//                   <CrewCard crewmate={crew} />
+//                   <CrewmateCard crewmate={crew} />
 //                 </div>
 //               </CardContainer>
 //               {slideOutContents && (

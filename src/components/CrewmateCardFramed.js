@@ -1,7 +1,7 @@
 import styled, { css, keyframes } from 'styled-components';
 import { Address } from '@influenceth/sdk';
 
-import CrewCard from '~/components/CrewCard';
+import CrewmateCard, { CrewCaptainCard } from '~/components/CrewmateCard';
 import CrewSilhouetteCard from '~/components/CrewSilhouetteCard';
 import { CaptainIcon } from '~/components/Icons';
 import TriangleTip from '~/components/TriangleTip';
@@ -106,7 +106,7 @@ const AvatarWrapper = styled.div`
   `}
 `;
 
-export const EmptyCrewCardFramed = styled.div`
+export const EmptyCrewmateCardFramed = styled.div`
   border: 1px solid ${p => p.borderColor || `rgba(${p.theme.colors.mainRGB}, 0.4)`};
   background: black;
   padding: 4px;
@@ -142,12 +142,13 @@ export const EmptyCrewCardFramed = styled.div`
 `;
 
 const noop = () => {};
-const CrewCardFramed = ({
+
+const CrewmateCardAbstract = ({
   borderColor,
-  crewmate,
-  crewCardProps = {},
-  warnIfNotOwnedBy,
+  children,
+  CardProps,
   isCaptain,
+  isEmpty,
   onClick,
   silhouetteOverlay,
   tooltip,
@@ -155,9 +156,6 @@ const CrewCardFramed = ({
   width,
   ...props
 }) => {
-  const finalBorderColor = warnIfNotOwnedBy && !Address.areEqual(crewmate?.Nft?.owner, warnIfNotOwnedBy)
-    ? warningBorderColor
-    : (borderColor || defaultBorderColor);
   const cardWidth = width || 96;
   return (
     <AvatarWrapper
@@ -168,25 +166,18 @@ const CrewCardFramed = ({
       onClick={onClick || noop}
       width={cardWidth}
       {...props}>
-      <Avatar isEmpty={!crewmate} borderColor={finalBorderColor} {...props}>
-        {crewmate && (
-          <CrewCard
-            crewmate={crewmate}
-            hideHeader
-            hideFooter
-            hideMask
-            {...crewCardProps} />
-        )}
-        {!crewmate && (
-          <CrewSilhouetteCard overlay={silhouetteOverlay} {...crewCardProps} />
+      <Avatar isEmpty={isEmpty} borderColor={borderColor || defaultBorderColor} {...props}>
+        {!isEmpty && children}
+        {isEmpty && (
+          <CrewSilhouetteCard overlay={silhouetteOverlay} {...CardProps} />
         )}
       </Avatar>
       <AvatarFlourish>
-        {isCaptain && <StyledCaptainIcon isEmpty={!crewmate} />}
+        {isCaptain && <StyledCaptainIcon isEmpty={isEmpty} />}
         {!props.noArrow && (
           <StyledTriangleTip
             fillColor={bgColor}
-            strokeColor={finalBorderColor}
+            strokeColor={borderColor || defaultBorderColor}
             strokeWidth={2} />
         )}
       </AvatarFlourish>
@@ -194,4 +185,49 @@ const CrewCardFramed = ({
   );
 };
 
-export default CrewCardFramed;
+const CrewmateCardFramed = ({
+  borderColor,
+  CrewmateCardProps = {},
+  warnIfNotOwnedBy,
+  crewmate,
+  ...props
+}) => {
+  const finalBorderColor = warnIfNotOwnedBy && !Address.areEqual(crewmate?.Nft?.owner, warnIfNotOwnedBy)
+    ? warningBorderColor
+    : (borderColor || defaultBorderColor);
+  return (
+    <CrewmateCardAbstract
+      borderColor={finalBorderColor}
+      CardProps={CrewmateCardProps}
+      isEmpty={!crewmate}
+      {...props}>
+      <CrewmateCard
+        crewmate={crewmate}
+        hideHeader
+        hideFooter
+        hideMask
+        {...CrewmateCardProps} />
+    </CrewmateCardAbstract>
+  );
+};
+
+export const CrewCaptainCardFramed = ({
+  CrewmateCardProps = {},
+  crewId,
+  ...props
+}) => (
+  <CrewmateCardAbstract
+    CardProps={CrewmateCardProps}
+    isCaptain
+    isEmpty={!crewId}
+    {...props}>
+    <CrewCaptainCard
+      crewId={crewId}
+      hideHeader
+      hideFooter
+      hideMask
+      {...CrewmateCardProps} />
+  </CrewmateCardAbstract>
+);
+
+export default CrewmateCardFramed;

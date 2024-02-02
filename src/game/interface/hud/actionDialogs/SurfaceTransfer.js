@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Asteroid, Crewmate, Inventory, Lot, Product, Time } from '@influenceth/sdk';
+import { Asteroid, Crewmate, Entity, Inventory, Lot, Product, Time } from '@influenceth/sdk';
 import styled from 'styled-components';
 
 import surfaceTransferBackground from '~/assets/images/modal_headers/SurfaceTransfer.png';
@@ -491,6 +491,7 @@ const SurfaceTransfer = ({
 
 const Wrapper = (props) => {
   const { asteroid, lot, isLoading } = useAsteroidAndLot(props);
+  const zoomScene = useStore(s => s.asteroids.zoomScene);
 
   // entrypoints w/ props:
   //  - actionitem (deliveryId)
@@ -511,7 +512,14 @@ const Wrapper = (props) => {
     });
   }, [deliveryManager.currentVersion]);
 
-  const { data: originEntity, isLoading: originLoading } = useEntity(currentDeliveryAction?.action?.origin || props.origin || lot?.building || lot?.surfaceShip);
+  const zoomShip = useMemo(
+    () => zoomScene?.type === 'SHIP' && zoomScene?.shipId
+      ? { label: Entity.IDS.SHIP, id: zoomScene.shipId }
+      : undefined,
+    [zoomScene]
+  );
+
+  const { data: originEntity, isLoading: originLoading } = useEntity(currentDeliveryAction?.action?.origin || props.origin || zoomShip || lot?.building || lot?.surfaceShip);
   const { data: originLot, isLoading: originLotLoading } = useLot(locationsArrToObj(originEntity?.Location?.locations || []).lotId);
   const { data: destEntity, isLoading: destLoading } = useEntity(currentDeliveryAction?.action?.dest);
 

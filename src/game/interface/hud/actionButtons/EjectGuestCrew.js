@@ -22,14 +22,20 @@ const isVisible = ({ crew, building, ship }) => {
 
 // NOTE: this is "eject guest(s)"
 // (can eject guests from ship or building i control)
-const EjectGuestCrew = ({ asteroid, crew, onSetAction, _disabled }) => {
-  const { currentEjections } = useEjectCrewManager(crew?.Location?.location);
-  const { data: allStationedCrews } = useStationedCrews(crew?.Location?.location);
-  const allGuestCrews = useMemo(() => allStationedCrews?.filter((c) => c.id !== crew?.id), [allStationedCrews, crew?.id]);
+const EjectGuestCrew = ({ asteroid, crew, lot, ship, onSetAction, dialogProps = {}, _disabled }) => {
+  const [station, entityId] = useMemo(() => {
+    const station = ship || lot;
+    const entityId = { id: station.id, label: station.label };
+    return [station, entityId];
+  }, [ship, lot]);
+  
+  const { currentEjections } = useEjectCrewManager(entityId);
+  const { data: allStationedCrews } = useStationedCrews(entityId);
+  const allGuestCrews = useMemo(() => (allStationedCrews || []).filter((c) => c.id !== crew?.id), [allStationedCrews, crew?.id]);
 
   const handleClick = useCallback(() => {
-    onSetAction('EJECT_GUEST_CREW');
-  }, [onSetAction]);
+    onSetAction('EJECT_GUEST_CREW', dialogProps);
+  }, [onSetAction, dialogProps]);
 
   const activeEjections = useMemo(() => {
     return currentEjections?.filter((e) => e.vars.ejected_crew.id === crew?.id);

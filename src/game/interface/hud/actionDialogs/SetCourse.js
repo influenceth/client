@@ -55,7 +55,7 @@ import { ActionDialogInner, theming, useAsteroidAndLot } from '../ActionDialog';
 import ResourceThumbnail from '~/components/ResourceThumbnail';
 import actionStages from '~/lib/actionStages';
 import theme from '~/theme';
-import CrewCardFramed from '~/components/CrewCardFramed';
+import CrewmateCardFramed from '~/components/CrewmateCardFramed';
 import useAsteroid from '~/hooks/useAsteroid';
 import ClockContext, { DISPLAY_TIME_FRACTION_DIGITS } from '~/contexts/ClockContext';
 import formatters from '~/lib/formatters';

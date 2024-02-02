@@ -618,11 +618,20 @@ const api = {
     return getEntities({ match: { 'Nft.owners.starknet': account }, label: Entity.IDS.CREWMATE });
   },
 
-  getStationedCrews: async (entityId) => {
-    return getEntities({
-      match: { 'Location.location': entityId },
+  getStationedCrews: async (entityUuid, hydrateCrewmates = false) => {
+    const crews = await getEntities({
+      match: { 'Location.location.uuid': entityUuid },
       label: Entity.IDS.CREW
     });
+    if (hydrateCrewmates) {
+      const crewmateIds = crews.reduce((acc, c) => ([...acc, ...c.Crew.roster]), []);
+      const crewmates = await getEntities({ ids: crewmateIds, label: Entity.IDS.CREWMATE });
+      return crews.map((c) => ({
+        ...c,
+        _crewmates: crewmates.filter((cm) => c.Crew.roster.includes(cm.id))
+      }));
+    }
+    return crews;
   },
 
   getConstants: async (names) => {

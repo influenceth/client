@@ -7,7 +7,7 @@ import useCrewContext from '~/hooks/useCrewContext';
 import useBookSession, { bookIds } from '~/hooks/useBookSession';
 import useStore from '~/hooks/useStore';
 import ConfirmationDialog from '~/components/ConfirmationDialog';
-import CrewCard from '~/components/CrewCard';
+import CrewmateCard from '~/components/CrewmateCard';
 import NavIcon from '~/components/NavIcon';
 
 import CrewSilhouetteCard from '~/components/CrewSilhouetteCard';
@@ -204,9 +204,8 @@ const CrewAssignment = ({ crewId, crewmateId, onFinish }) => {
               <CrewContainer>
                 <div>
                   {bookSession.crewmate
-                    ? <CrewCard
+                    ? <CrewmateCard
                         crewmate={bookSession.crewmate}
-                        hideCollectionInHeader
                         hideFooter
                         hideIfNoName
                         noWrapName

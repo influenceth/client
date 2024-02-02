@@ -183,7 +183,7 @@ const CardOverlay = styled.div`
   }
 `;
 
-const CrewCardOverlay = (config) => (
+const CrewmateCardOverlay = (config) => (
   <CardOverlay {...config} alwaysOn={config.alwaysOn || []}>
     {config.icon && <OverlayIcon iconSize={config.iconSize}>{config.icon}</OverlayIcon>}
     <div style={{ flex: 1 }} />
@@ -197,4 +197,4 @@ const CrewCardOverlay = (config) => (
   </CardOverlay>
 );
 
-export default CrewCardOverlay;
+export default CrewmateCardOverlay;

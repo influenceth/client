@@ -1,7 +1,7 @@
 import { AiFillEdit, AiFillEye, AiFillStar, AiOutlineNumber } from 'react-icons/ai';
 import { BsFillPersonFill, BsCheckCircle, BsPieChartFill, BsSliders, BsStopwatch, BsThreeDots } from 'react-icons/bs';
-import { FaBan, FaCaretDown, FaCaretUp, FaCogs, FaCopy, FaEthereum, FaList, FaMapMarkedAlt, FaStopwatch, FaUser } from 'react-icons/fa';
-import { FiCheckSquare, FiDownload, FiExternalLink, FiLogIn, FiLogOut, FiMenu, FiSearch, FiSquare } from 'react-icons/fi';
+import { FaBan, FaCaretDown, FaCaretUp, FaCogs, FaCopy, FaEthereum, FaList, FaMapMarkedAlt } from 'react-icons/fa';
+import { FiCheckSquare, FiDownload, FiExternalLink, FiLogIn, FiMenu, FiSearch, FiSquare } from 'react-icons/fi';
 import { GiHouseKeys } from 'react-icons/gi';
 import { HiClock, HiCog, HiChevronDoubleLeft, HiChevronDoubleRight } from 'react-icons/hi';
 import {
@@ -13,7 +13,6 @@ import {
   MdExpandMore,
   MdFastRewind,
   MdFastForward,
-  MdOutlineLocalGroceryStore,
   MdPlayArrow,
   MdPause,
   MdRadioButtonChecked,
@@ -28,11 +27,11 @@ import {
   RiLayoutGridFill,
   RiTableFill,
   RiRouteFill,
-  RiLoginCircleFill,
   RiAlertFill,
   RiSortDesc
 } from 'react-icons/ri';
 import { TiArrowRight } from 'react-icons/ti';
+import { TfiControlForward } from 'react-icons/tfi';
 import { WiMoonAltWaningCrescent5 } from 'react-icons/wi';
 import { VscDebugDisconnect, VscCircle } from 'react-icons/vsc';
 
@@ -320,7 +319,7 @@ export {
   FiDownload as DownloadIcon,
   FaBan as BanIcon,
   FaCogs as ProcessIcon,
-  FaStopwatch as BusyIcon,
+  TfiControlForward as BusyIcon,
   FaCopy as CopyIcon,
   FaEthereum as ConnectIcon,
   FaList as ListIcon,

@@ -3,7 +3,7 @@ import styled from 'styled-components';
 import useCrewContext from '~/hooks/useCrewContext';
 import useCrewmate from '~/hooks/useCrewmate';
 import theme from '~/theme';
-import CrewCardFramed from './CrewCardFramed';
+import CrewmateCardFramed from './CrewmateCardFramed';
 
 const CrewLabel = styled.div`
   align-self: center;
@@ -17,7 +17,7 @@ const CrewLabel = styled.div`
   }
 `;
 
-const CrewCards = styled.div`
+const CrewmateCards = styled.div`
   display: flex;
   ${p => p.flip
     ? `
@@ -54,8 +54,8 @@ const CrewIndicator = ({ cardWidth = 60, crew, noCrewText, flip, label = 'Owned 
   const { crew: myCrew } = useCrewContext();
   const { data: captain } = useCrewmate((crew?.Crew?.roster || [])[0]);
   return (
-    <CrewCards flip={flip}>
-      <CrewCardFramed
+    <CrewmateCards flip={flip}>
+      <CrewmateCardFramed
         borderColor={`rgba(${theme.colors.mainRGB}, 0.7)`}
         crewmate={captain}
         isCaptain
@@ -75,7 +75,7 @@ const CrewIndicator = ({ cardWidth = 60, crew, noCrewText, flip, label = 'Owned 
             : (noCrewText || 'N/A')}
         </h3>
       </CrewLabel>
-    </CrewCards>
+    </CrewmateCards>
   );
 };
 
