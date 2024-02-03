@@ -7,6 +7,7 @@ import useStore from '~/hooks/useStore';
 import { HudMenuCollapsibleSection, Scrollable } from './components/components';
 import EntityNameForm from './components/EntityNameForm';
 import ShipTitleArea from './components/ShipTitleArea';
+import EntityDescriptionForm from './components/EntityDescriptionForm';
 
 const AdminShip = ({}) => {
   const lotId = useStore(s => s.asteroids.lot);
@@ -31,7 +32,10 @@ const AdminShip = ({}) => {
         </HudMenuCollapsibleSection>
 
         <HudMenuCollapsibleSection titleText="Update Description" collapsed>
-          {/* TODO ... */}
+          <EntityDescriptionForm
+            entity={ship ? { id: ship.id, label: Entity.IDS.SHIP } : null}
+            originalDesc={``}
+            label="Ship Description" />
         </HudMenuCollapsibleSection>
 
         <HudMenuCollapsibleSection titleText="Update Permissions" collapsed>

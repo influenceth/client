@@ -23,7 +23,10 @@ const AdminBuilding = ({}) => {
         </HudMenuCollapsibleSection>
 
         <HudMenuCollapsibleSection titleText="Update Description" collapsed>
-          {/* TODO ... */}
+          <EntityDescriptionForm
+            entity={lot?.building ? { id: lot.building.id, label: Entity.IDS.BUILDING } : null}
+            originalDesc={``}
+            label="Building Description" />
         </HudMenuCollapsibleSection>
 
         <HudMenuCollapsibleSection titleText="Update Permissions" collapsed>
