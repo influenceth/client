@@ -256,13 +256,13 @@ const AsteroidResourcePrices = ({ asteroid, resource }) => {
         key: 'makerFee',
         label: 'Maker Fee',
         sortField: 'makerFee',
-        selector: row => `${(100 * row.makerFee).toFixed(1)}%`,
+        selector: row => `${(row.makerFee / 100).toFixed(2)}%`,
       },
       {
         key: 'takerFee',
         label: 'Taker Fee',
         sortField: 'takerFee',
-        selector: row => `${(100 * row.takerFee).toFixed(1)}%`,
+        selector: row => `${(row.takerFee / 100).toFixed(2)}%`,
       },
     ];
     if (crew?._location?.asteroidId === asteroid.id) {
@@ -337,7 +337,7 @@ const AsteroidResourcePrices = ({ asteroid, resource }) => {
             </MarketPrice>
           </div>
         </div>
-        
+
         {selectedLot && (
           <SelectedMarketplace>
             <div>

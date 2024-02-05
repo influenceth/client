@@ -257,8 +257,12 @@ const MarketplaceHome = ({ asteroid, listings, orderTally, onSelectListing, mark
     { key: 'recentlyTraded', label: 'Recently Traded' }
   ];
 
+  const tickerEnabled = useMemo(() => {
+    return !marketplace;
+  }, [!!marketplace]);
+
   const tickerListings = useMemo(() => {
-    if (!!marketplace) return [];
+    if (!tickerEnabled) return [];
     return listings
       .filter((l) => {
         if (mode === 'buy') return l.forSale > 0;
@@ -267,7 +271,7 @@ const MarketplaceHome = ({ asteroid, listings, orderTally, onSelectListing, mark
       .sort((a, b) => {
         return Product.TYPES[a.product].name < Product.TYPES[b.product].name ? -1 : 1;
       });
-  }, [!!marketplace, listings, mode]);
+  }, [tickerEnabled, listings, mode]);
 
   const filteredListings = useMemo(() => {
     return listings
@@ -320,7 +324,14 @@ const MarketplaceHome = ({ asteroid, listings, orderTally, onSelectListing, mark
         }
       </Header>
 
-      {tickerReady && (
+      {tickerEnabled && !tickerReady && (
+        <TickerItems>
+          <TickerItem>
+          </TickerItem>
+        </TickerItems>
+      )}
+
+      {tickerEnabled && tickerReady && (
         <Ticker>
           {() => (
             <TickerItems>
@@ -356,7 +367,7 @@ const MarketplaceHome = ({ asteroid, listings, orderTally, onSelectListing, mark
         <ResultsTally>
           <GridIcon /> <span>{filteredListings.length} Result{filteredListings.length === 1 ? '' : 's'}</span>
         </ResultsTally>
-        
+
         <div style={{ flex: 1 }} />
 
         <Switcher

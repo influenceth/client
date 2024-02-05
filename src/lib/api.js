@@ -731,14 +731,17 @@ const api = {
     return response.data.token;
   },
 
-  // createDevnetBlock: async () => {
-  //   return;
-  //   try {
-  //     axios.post(`${process.env.REACT_APP_STARKNET_NETWORK}/create_block`, {});
-  //   } catch (e) {
-  //     console.warn(e);
-  //   }
-  // }
+  // Checks the status of the faucet
+  faucetInfo: async () => {
+    const response = await instance.get(`/${apiVersion}/faucet`);
+    return response.data;
+  },
+
+  // Request either ETH or SWAY from the faucet (non-production only)
+  requestTokens: async (token) => {
+    const response = await instance.post(`/${apiVersion}/faucet/${token}`);
+    return response.data;
+  }
 };
 
 export default api;
