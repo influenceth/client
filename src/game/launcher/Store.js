@@ -3,6 +3,7 @@ import styled, { css } from 'styled-components';
 import { formatEther, parseUnits } from 'ethers';
 import { createPortal } from 'react-dom';
 import { uint256 } from 'starknet';
+import { useQuery, useQueryClient } from 'react-query';
 
 import Button from '~/components/ButtonAlt';
 import ClipCorner from '~/components/ClipCorner';
@@ -53,7 +54,10 @@ const innerPadding = 10;
 const SKUInner = styled.div`
   background: rgba(${p => p.theme.colors.mainRGB}, 0.2);
   border: 1px solid ${borderColor};
-  min-height: 525px;
+  display: flex;
+  flex-direction: column;
+  height: 530px;
+  justify-content: space-between;
   padding: ${innerPadding}px;
   position: relative;
   width: 340px;
@@ -224,6 +228,7 @@ const ButtonExtra = styled.span`
   margin-left: 15px;
   text-align: right;
 `;
+
 const ButtonWarning = styled(ButtonExtra)`
   color: orangered;
   font-size: 80%;
@@ -719,13 +724,141 @@ export const SwaySKU = () => {
   );
 };
 
+export const FaucetSKU = () => {
+  const { walletContext: { starknet } } = useAuth();
+  const queryClient = useQueryClient();
+  const createAlert = useStore(s => s.dispatchAlertLogged);
+
+  const [requestingEth, setRequestingEth] = useState(false);
+  const [requestingSway, setRequestingSway] = useState(false);
+
+  const { isLoading: faucetInfoLoading, data: faucetInfo } = useQuery(
+    [ 'faucetInfo', starknet?.account ],
+    () => api.faucetInfo(),
+    { enabled: !!starknet?.account }
+  );
+
+  const ethEnabled = useMemo(() => {
+    if (!faucetInfo) return false;
+    const lastClaimed = faucetInfo.ETH.lastClaimed || 0;
+    return Date.now() > (Date.parse(lastClaimed) + 23.5 * 3600 * 1000);
+  }, [faucetInfo]);
+
+  const swayEnabled = useMemo(() => {
+    if (!faucetInfo) return false;
+    const lastClaimed = faucetInfo.SWAY.lastClaimed || 0;
+    return Date.now() > (Date.parse(lastClaimed) + 23.5 * 3600 * 1000);
+  }, [faucetInfo]);
+
+  const requestEth = useCallback(async () => {
+    setRequestingEth(true);
+
+    try {
+      await api.requestTokens('ETH');
+      setRequestingEth(false);
+      createAlert({
+        type: 'GenericAlert',
+        data: { content: 'Added 0.015 ETH to your account.' },
+        duration: 5000
+      });
+    } catch (e) {
+      console.error(e);
+      setRequestingEth(false);
+      createAlert({
+        type: 'GenericAlert',
+        data: { content: 'Faucet request failed, please try again later.' },
+        level: 'warning',
+        duration: 5000
+      });
+    }
+
+    onComplete();
+  }, []);
+
+  const requestSway = useCallback(async () => {
+    setRequestingSway(true);
+
+    try {
+      await api.requestTokens('SWAY');
+      setRequestingSway(false);
+      createAlert({
+        type: 'GenericAlert',
+        data: { content: 'Added 100,000 SWAY to your account.' },
+        duration: 5000
+      });
+    } catch (e) {
+      console.error(e);
+      setRequestingSway(false);
+      createAlert({
+        type: 'GenericAlert',
+        data: { content: 'Faucet request failed, please try again later.' },
+        level: 'warning',
+        duration: 5000
+      });
+    }
+
+    onComplete();
+  }, []);
+
+  const onComplete = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: 'faucetInfo', refetchType: 'none' });
+    queryClient.refetchQueries({ queryKey: 'faucetInfo', type: 'active' });
+  }, [queryClient]);
+
+  return (
+    <>
+      <SKUWrapper>
+        <SKUInner>
+          <Title>Faucet</Title>
+          <Imagery>
+            <SwayIcon />
+          </Imagery>
+          <Description>
+            <p>
+              ETH and SWAY are required to play Influence. Requests can be made once per day, please use responsibly.
+            </p>
+          </Description>
+          <Main>
+            <label>Available daily</label>
+          </Main>
+          <Button
+            onClick={requestEth}
+            disabled={nativeBool(!ethEnabled || requestingEth || faucetInfoLoading)}
+            color={theme.colors.success}
+            background={`rgba(${theme.colors.successRGB}, 0.1)`}
+            subtle
+            style={{ width: '100%', marginBottom: 10 }}>
+            <PlusIcon />
+            <span>Request ETH</span>
+            <ButtonExtra>
+              <Ether>{0.015}</Ether>
+            </ButtonExtra>
+          </Button>
+          <Button
+            onClick={requestSway}
+            disabled={nativeBool(!swayEnabled || requestingSway || faucetInfoLoading)}
+            color={theme.colors.success}
+            background={`rgba(${theme.colors.successRGB}, 0.1)`}
+            subtle
+            style={{ width: '100%' }}>
+            <PlusIcon />
+            <span>Request SWAY</span>
+            <ButtonExtra>{Number(100000).toLocaleString()}</ButtonExtra>
+          </Button>
+          <ClipCorner dimension={10} color={borderColor} />
+        </SKUInner>
+      </SKUWrapper>
+    </>
+  );
+};
+
 const Store = () => {
   return (
     <Wrapper>
       <Group>
         <CrewmateSKU />
       </Group>
-      {!!process.env.REACT_APP_AVNU_API_URL && (
+      {!!process.env.REACT_APP_AVNU_API_URL && process.env.NODE_ENV === 'production' && (
         <Group>
           <SwaySKU />
         </Group>
@@ -733,6 +866,11 @@ const Store = () => {
       <Group>
         <AsteroidSKU />
       </Group>
+      {process.env.NODE_ENV !== 'production' && (
+        <Group>
+          <FaucetSKU />
+        </Group>
+      )}
     </Wrapper>
   );
 };
