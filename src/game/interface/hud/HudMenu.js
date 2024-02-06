@@ -42,7 +42,7 @@ const cornerWidth = 8;
 const bumpHeightHalf = 100;
 const buttonsWidth = 66;
 const panelAnimationLength = 250;
-const panelWidth = 450;
+const panelWidth = 475;
 
 const Wrapper = styled.div`
   align-items: flex-end;

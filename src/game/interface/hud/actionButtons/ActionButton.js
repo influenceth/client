@@ -32,6 +32,7 @@ const rotationAnimation = keyframes`
 const ActionButtonWrapper = styled.div`
   color: ${p => p.overrideColor || p.theme.colors.main};
   cursor: ${p => p.theme.cursors.active};
+  display: inline-block;
   margin-right: 8px;
   pointer-events: all;
   position: relative;

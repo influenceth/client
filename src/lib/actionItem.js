@@ -744,6 +744,26 @@ const formatAsTx = (item) => {
       break;
     }
 
+    case 'UpdateAllowlist': {
+      formatted.icon = <KeysIcon />;
+      formatted.label = 'Update Allowlist';
+      formatted.asteroidId = Lot.toPosition(item.meta?.lotId)?.asteroidId;
+      formatted.lotId = item.meta?.lotId;
+      formatted.shipId = item.meta?.shipId;
+      // formatted.onClick = () => {};
+      break;
+    }
+
+    case 'UpdatePolicy': {
+      formatted.icon = <KeysIcon />;
+      formatted.label = 'Update Permissions';
+      formatted.asteroidId = Lot.toPosition(item.meta?.lotId)?.asteroidId;
+      formatted.lotId = item.meta?.lotId;
+      formatted.shipId = item.meta?.shipId;
+      // formatted.onClick = () => {};
+      break;
+    }
+
     default:
       console.log('Unhandled ActionItems tx', item);
       break;

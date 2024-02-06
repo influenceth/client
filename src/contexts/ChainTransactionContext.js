@@ -316,10 +316,10 @@ const customConfigs = {
       withdrawHookKeys: ['buyer_crew', 'exchange', 'product', 'price', 'storage', 'storage_slot'],
       withdrawDataKeys: ['amount', 'origin', 'origin_slot', 'caller_crew'],
       getWithdrawals: ({ exchange_owner_account, seller_account, payments }) => {
-        console.log([
-          { recipient: seller_account, amount: BigInt(payments.toPlayer) },
-          { recipient: exchange_owner_account, amount: BigInt(payments.toExchange) },
-        ]);
+        // console.log([
+        //   { recipient: seller_account, amount: BigInt(payments.toPlayer) },
+        //   { recipient: exchange_owner_account, amount: BigInt(payments.toExchange) },
+        // ]);
         return [
           { recipient: seller_account, amount: BigInt(payments.toPlayer) },
           { recipient: exchange_owner_account, amount: BigInt(payments.toExchange) },
@@ -355,6 +355,27 @@ const customConfigs = {
         }
       ];
     }
+  },
+  UpdatePolicy: {
+    multisystemCalls: ({ add, remove }) => [remove, add].filter((c) => !!c),
+    equalityTest: ['entity.label', 'entity.id', 'permission'],
+    isVirtual: true
+  },
+  UpdateAllowlist: {
+    multisystemCalls: ({ additions, removals, ...vars }) => {
+      return [
+        ...removals.map((r) => ({
+          system: 'RemoveFromWhitelist',
+          vars: { ...vars, target: r }
+        })),
+        ...additions.map((a) => ({
+          system: 'Whitelist',
+          vars: { ...vars, target: a }
+        })),
+      ]
+    },
+    equalityTest: ['entity.label', 'entity.id', 'permission'],
+    isVirtual: true
   }
 };
 
@@ -441,7 +462,20 @@ export function ChainTransactionProvider({ children }) {
           execute: async (rawVars) => {
             let runSystems;
             if (config.multisystemCalls) {
-              runSystems = config.multisystemCalls.map((runSystem) => ({ runSystem, rawVars }));
+              runSystems = (
+                typeof config.multisystemCalls === 'function'
+                ? config.multisystemCalls(rawVars)
+                : config.multisystemCalls
+              ).map((runSystem) => {
+                if (typeof runSystem === 'string') {
+                  return { runSystem, rawVars };
+                } else if (typeof runSystem === 'object') {
+                  const { system, vars } = runSystem;
+                  return { runSystem: system, rawVars: vars };
+                }
+                // { runSystem, rawVars }
+              });
+              console.log('multisystemCalls', runSystems, rawVars);
             } else if (config.repeatableSystemCall) {
               runSystems = Array.from(Array(config.getRepeatTally(rawVars))).map(() => ({ runSystem: config.repeatableSystemCall, rawVars }));
             } else if (config.isBatchable) {

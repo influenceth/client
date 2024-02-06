@@ -110,9 +110,12 @@ const invalidationDefaults = (labelOrEntity, optId) => {
   return i;
 };
 
+const getPolicyInvalidations = ({ event: { returnValues } }) => {
+  return invalidationDefaults(returnValues.entity);
+};
+
 // TODO: write a test to make sure all activities (from sdk) have a config
 const activities = {
-  // AddedToWhitelist,
 
   AsteroidInitialized: {
     getInvalidations: ({ event: { returnValues } }) => invalidationDefaults(Entity.IDS.ASTEROID, returnValues.asteroid.id)
@@ -1616,6 +1619,15 @@ const activities = {
 
     triggerAlert: true
   },
+
+  AddedToWhitelist: { getInvalidations: getPolicyInvalidations },
+  RemovedFromWhitelist: { getInvalidations: getPolicyInvalidations },
+  ContractPolicyAssigned: { getInvalidations: getPolicyInvalidations },
+  ContractPolicyRemoved: { getInvalidations: getPolicyInvalidations },
+  PrepaidPolicyAssigned: { getInvalidations: getPolicyInvalidations },
+  PrepaidPolicyRemoved: { getInvalidations: getPolicyInvalidations },
+  PublicPolicyAssigned: { getInvalidations: getPolicyInvalidations },
+  PublicPolicyRemoved: { getInvalidations: getPolicyInvalidations },
 };
 
 /**

@@ -65,10 +65,16 @@ const getEntities = async ({ ids, match, label, components }) => {
 };
 
 const arrayComponents = {
+  ContractAgreement: 'ContractAgreements',
+  ContractPolicy: 'ContractPolicies',
   DryDock: 'DryDocks',
   Extractor: 'Extractors',
   Inventory: 'Inventories',
-  Processor: 'Processors'
+  Processor: 'Processors',
+  PrepaidAgreement: 'PrepaidAgreements',
+  PrepaidPolicy: 'PrepaidPolicies',
+  PublicPolicy: 'PublicPolicies',
+  WhitelistAgreement: 'WhitelistAgreements',
 };
 
 const formatESEntityData = (responseData) => {
