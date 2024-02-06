@@ -3,7 +3,6 @@ import { Entity, Permission } from '@influenceth/sdk';
 
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
 import useCrewContext from '~/hooks/useCrewContext';
-import actionStages from '~/lib/actionStages';
 
 // TODO: move to sdk
 const POLICY_TYPES = [
@@ -70,8 +69,8 @@ export const getEntityPolicies = (entity) => {
 };
 
 const usePolicyManager = (entity, permission) => {
-  const { crew, isLoading } = useCrewContext();
-  const { execute, getPendingTx } = useContext(ChainTransactionContext);
+  const { crew } = useCrewContext();
+  const { execute, getStatus } = useContext(ChainTransactionContext);
 
   const payload = useMemo(() => ({
     caller_crew: { id: crew?.id, label: Entity.IDS.CREW },
@@ -139,14 +138,13 @@ const usePolicyManager = (entity, permission) => {
     [currentPolicy, meta, payload]
   );
 
-  // TODO: key by permission
-  const currentAllowlistChanges = useMemo(
-    () => getPendingTx ? getPendingTx('ResupplyFood', { ...payload }) : null,
-    [payload, getPendingTx]
+  const allowlistChangePending = useMemo(
+    () => (getStatus ? getStatus('UpdateAllowlist', { ...payload }) : 'ready') === 'pending',
+    [payload, getStatus]
   );
-  const currentPolicyChanges = useMemo(
-    () => getPendingTx ? getPendingTx('ResupplyFood', { ...payload }) : null,
-    [payload, getPendingTx]
+  const policyChangePending = useMemo(
+    () => (getStatus ? getStatus('UpdatePolicy', { ...payload }) : 'ready') === 'pending',
+    [payload, getStatus]
   );
 
   return {
@@ -154,8 +152,8 @@ const usePolicyManager = (entity, permission) => {
     updateAllowlist,
     updatePolicy,
 
-    currentAllowlistChanges,
-    currentPolicyChanges
+    allowlistChangePending,
+    policyChangePending
   };
 };
 

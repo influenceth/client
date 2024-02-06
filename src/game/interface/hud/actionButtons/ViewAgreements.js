@@ -8,17 +8,16 @@ import ActionButton from './ActionButton';
 const isVisible = () => false;
 
 const ViewAgreements = ({ asteroid, tally, onSetAction, _disabled }) => {
-  const { takingControl } = useControlAsteroid(asteroid?.id);
-
   const handleClick = useCallback(() => {
-    onSetAction('CONTROL_ASTEROID');
-  }, [asteroid?.id]);
+    // onSetAction('CONTROL_ASTEROID');
+  }, []);
 
   return (
     <ActionButton
       label="View Agreements"
       flags={{
-        badge: tally
+        badge: tally,
+        disabled: _disabled
       }}
       icon={<KeysIcon />}
       onClick={handleClick} />

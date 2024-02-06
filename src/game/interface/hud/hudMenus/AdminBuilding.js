@@ -12,7 +12,7 @@ import EntityNameForm from './components/EntityNameForm';
 import LotTitleArea from './components/LotTitleArea';
 import MarketplaceSettings from './components/MarketplaceSettings';
 import Button from '~/components/ButtonAlt';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import Autocomplete from '~/components/Autocomplete';
 import formatters from '~/lib/formatters';
 import IconButton from '~/components/IconButton';
@@ -158,7 +158,7 @@ const types = {
 }
 
 const PolicyAdminPanel = ({ entity, permission }) => {
-  const { currentPolicy, updateAllowlist, updatePolicy } = usePolicyManager(entity, permission);
+  const { currentPolicy, updateAllowlist, updatePolicy, allowlistChangePending, policyChangePending } = usePolicyManager(entity, permission);
   // console.log({ currentPolicy });
   const {
     policyType: originalPolicyType,
@@ -167,25 +167,30 @@ const PolicyAdminPanel = ({ entity, permission }) => {
     agreements = [],  // TODO: ...
   } = currentPolicy || {};
 
+  const [policyType, setPolicyType] = useState(originalPolicyType);
+  const [details, setDetails] = useState(originalPolicyDetails);
   const [allowlist, setAllowlist] = useState(originalAllowlist || []);
+
   const [allowlistDirty, setAllowlistDirty] = useState(false);
   const [editing, setEditing] = useState();
-  const [policyType, setPolicyType] = useState(originalPolicyType);
 
-  const [details, setDetails] = useState(originalPolicyDetails);
+  const saving = editing === 'allowlist' ? allowlistChangePending : policyChangePending;
+  
+  // reset if object is changed
+  useEffect(() => {
+    setPolicyType(originalPolicyType);
+    setDetails(originalPolicyDetails);
+  }, [editing, originalPolicyType, originalPolicyDetails]);
+
+  useEffect(() => {
+    setAllowlist(originalAllowlist);
+    setAllowlistDirty(false);
+  }, [editing, originalAllowlist]);
+
   const handleChange = useCallback((key) => (e) => {
     let newVal = e.currentTarget.value;
-    console.log('newVal', key, newVal);
-    setDetails((v) => ({
-      ...v,
-      [key]: newVal
-    }));
+    setDetails((v) => ({ ...v, [key]: newVal }));
   }, []);
-
-  // TODO: disable while saving, exit "editing" mode when finished
-
-  // TODO: also check form completion before enabling "save"
-  // TODO: show error where relevant
 
   const isDirty = useMemo(() => {
     return policyType !== originalPolicyType
@@ -193,8 +198,17 @@ const PolicyAdminPanel = ({ entity, permission }) => {
       || Object.keys(originalPolicyDetails).reduce((acc, k) => acc || details[k] !== originalPolicyDetails[k], false)
       || allowlistDirty;
   }, [allowlistDirty, policyType, originalPolicyType, originalPolicyDetails, details]);
-  
-  const saving = false; // TODO: ...
+
+  const isIncomplete = useMemo(() => {
+    if (policyType === 'prepaid') {
+      if (!(details.rate > 0 && details.initialTerm > 0 && details.noticePeriod > 0)) return true;
+      return details.initialTerm + details.noticePeriod > Permission.MAX_POLICY_DURATION;
+    }
+    if (policyType === 'contract') {
+      return !/^0x[0-9a-f]{60,}/i.test(details.contract); // looks loosely like an address
+    }
+    return false;
+  }, [policyType, details]);
 
   const allowlistAdd = useCallback((crew) => {
     setAllowlist((a) => [...a, crew].sort((a, b) => formatters.crewName(a).localeCompare(formatters.crewName(b))));
@@ -212,7 +226,6 @@ const PolicyAdminPanel = ({ entity, permission }) => {
 
   const cancelEdits = useCallback(() => {
     setEditing();
-    // TODO: set back to pristine
   }, []);
 
   const saveEdits = useCallback(() => {
@@ -368,11 +381,12 @@ const PolicyAdminPanel = ({ entity, permission }) => {
           <Section style={{ paddingBottom: 0 }}>
             <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
               <Button
+                disabled={nativeBool(saving)}
                 onClick={() => cancelEdits()}
                 size="small"
                 subtle>Cancel</Button>
               <Button
-                disabled={nativeBool(!isDirty || saving)}
+                disabled={nativeBool(!isDirty || isIncomplete || saving)}
                 loading={saving}
                 isTransaction
                 onClick={() => saveEdits()}
@@ -397,7 +411,7 @@ const PolicyAdminPanel = ({ entity, permission }) => {
               )}
               {(policyType === 'prepaid' || policyType === 'contract') && (
                 <div style={{ paddingTop: 15 }}>
-                  <actionButtons.ViewAgreements.Component tally={3} />
+                  <actionButtons.ViewAgreements.Component _disabled={!agreements?.length} tally={agreements?.length || 0} />
                 </div>
               )}
             </DataBlock>
