@@ -1,3 +1,4 @@
+require('dotenv').config({ silent: true });
 const TerserPlugin = require('terser-webpack-plugin');
 
 module.exports = {
@@ -8,7 +9,7 @@ module.exports = {
   },
   optimization: {
     minimizer: [new TerserPlugin({ extractComments: false })],
-    nodeEnv: false
+    nodeEnv: process.env.NODE_ENV || false
   },
   output: {
     filename: 'server.built.js',
