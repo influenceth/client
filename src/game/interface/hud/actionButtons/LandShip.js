@@ -10,21 +10,11 @@ import useShipDockingManager from '~/hooks/actionManagers/useShipDockingManager'
 import ActionButton, { getCrewDisabledReason } from './ActionButton';
 
 const isVisible = ({ asteroid, crew, crewedShip, ship }) => {
-  return crew && (
-    (
-      ship
-      && ship.Control?.controller?.id === crew.id
-      // TODO: if in orbit around asteroid?
-      // && asteroid?.id === ship._location.asteroidId
-      && !ship._location.lotId  // not on surface
-    )
-    ||
-    (
-      crewedShip
-      && crewedShip.Control?.controller?.id === crew.id
-      && crewedShip._location.asteroidId === asteroid?.id
-      && !crewedShip._location.lotId  // not on surface
-    )
+  return crew && crewedShip.id === ship.id && (
+    crewedShip
+    && crewedShip.Control?.controller?.id === crew.id
+    && crewedShip._location.asteroidId === asteroid?.id
+    && !crewedShip._location.lotId  // not on surface
   );
 };
 

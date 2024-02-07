@@ -5,6 +5,7 @@ import { BiTransfer as TransferIcon } from 'react-icons/bi';
 import AddressLink from '~/components/AddressLink';
 import EntityLink from '~/components/EntityLink';
 import {
+  ClaimRewardIcon,
   ConstructIcon,
   CoreSampleIcon,
   CrewIcon,
@@ -886,7 +887,50 @@ const activities = {
     triggerAlert: true
   },
 
-  // EarlyAdopterRewardClaimed,
+  ArrivalRewardClaimed: {
+    getInvalidations: ({ event: { returnValues } }) => {
+      return [
+        ...invalidationDefaults(Entity.IDS.ASTEROID, returnValues.asteroid.id),
+        ...invalidationDefaults(Entity.IDS.CREW, returnValues.callerCrew.id)
+      ];
+    },
+    getLogContent: ({ event: { returnValues } }, viewingAs) => {
+      return {
+        icon: <ClaimRewardIcon />,
+        content: (
+          <>
+            <span>
+              <EntityLink {...returnValues.callerCrew} /> claimed the starter pack for
+              {' '}<EntityLink {...returnValues.asteroid} />
+            </span>
+          </>
+        ),
+      };
+    },
+    triggerAlert: true
+  },
+
+  PrepareForLaunchRewardClaimed: {
+    getInvalidations: ({ event: { returnValues } }) => {
+      return [
+        ...invalidationDefaults(Entity.IDS.ASTEROID, returnValues.asteroid.id)
+      ];
+    },
+    getLogContent: ({ event: { returnValues } }, viewingAs) => {
+      return {
+        icon: <ClaimRewardIcon />,
+        content: (
+          <>
+            <span>
+              Crewmate credit claimed for
+              {' '}<EntityLink {...returnValues.asteroid} />
+            </span>
+          </>
+        ),
+      };
+    },
+    triggerAlert: true
+  },
 
   MaterialProcessingStarted: {
     getActionItem: ({ returnValues }, viewingAs, { building = {} }) => {
@@ -1319,7 +1363,7 @@ const activities = {
     getPrepopEntities: ({ event: { returnValues } }) => ({
       exchange: returnValues.exchange,
     }),
-    
+
     triggerAlert: true
   },
 
