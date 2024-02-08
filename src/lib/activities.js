@@ -111,6 +111,10 @@ const invalidationDefaults = (labelOrEntity, optId) => {
   return i;
 };
 
+const getAgreementInvalidations = ({ event: { returnValues } }) => {
+  return invalidationDefaults(returnValues.target);
+};
+
 const getPolicyInvalidations = ({ event: { returnValues } }) => {
   return invalidationDefaults(returnValues.entity);
 };
@@ -1629,6 +1633,14 @@ const activities = {
   PrepaidPolicyRemoved: { getInvalidations: getPolicyInvalidations },
   PublicPolicyAssigned: { getInvalidations: getPolicyInvalidations },
   PublicPolicyRemoved: { getInvalidations: getPolicyInvalidations },
+  PrepaidMerklePolicyAssigned: { getInvalidations: getPolicyInvalidations },
+  PrepaidMerklePolicyRemoved: { getInvalidations: getPolicyInvalidations },
+
+  ContractAgreementAccepted: { getInvalidations: getAgreementInvalidations },
+  PrepaidMerkleAgreementAccepted: { getInvalidations: getAgreementInvalidations },
+  PrepaidAgreementAccepted: { getInvalidations: getAgreementInvalidations },
+  PrepaidAgreementExtended: { getInvalidations: getAgreementInvalidations },
+  PrepaidAgreementCancelled: { getInvalidations: getAgreementInvalidations },
 };
 
 /**

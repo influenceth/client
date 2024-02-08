@@ -26,6 +26,7 @@ import {
   RiPagesFill,
   RiLayoutGridFill,
   RiTableFill,
+  RiRepeatFill,
   RiRouteFill,
   RiAlertFill,
   RiSortDesc
@@ -377,6 +378,7 @@ export {
   RiAlertFill as WarningIcon,
   RiLayoutGridFill as GridIcon,
   FiLogIn as LoginIcon, // TODO: ...
+  RiRepeatFill as RefreshIcon,
   RiSortDesc as SortIcon,
   RiTableFill as TableIcon,
   RiRouteFill as TripsIcon,

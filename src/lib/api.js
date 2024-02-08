@@ -41,19 +41,6 @@ const arrayComponents = {
   WhitelistAgreement: 'WhitelistAgreements',
 };
 
-const formatEntityData = (responseData) => {
-  return responseData?.map((entity) => {
-    return Object.keys(entity).reduce((acc, k) => {
-      if (!!arrayComponents[k]) {
-        acc[arrayComponents[k]] = entity[k] || [];
-      } else {
-        acc[k] = Array.isArray(entity[k]) ? entity[k][0] : entity[k];
-      }
-      return acc;
-    }, {});
-  }) || [];
-}
-
 const formatESEntityData = (responseData) => {
   return responseData?.hits?.hits?.map((h) => {
     return Object.keys(h._source).reduce((acc, k) => {
@@ -100,7 +87,7 @@ const getEntities = async ({ ids, match, label, components }) => {
   }
 
   const response = await instance.get(`/${apiVersion}/entities?${buildQuery(query)}`);
-  return formatEntityData(response.data);
+  return response.data;
 };
 
 const api = {

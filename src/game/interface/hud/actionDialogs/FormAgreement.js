@@ -1,69 +1,38 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Entity, Permission, Product, Time } from '@influenceth/sdk';
+import { Entity, Permission, Time } from '@influenceth/sdk';
 import styled from 'styled-components';
+import Clipboard from 'react-clipboard.js';
 
 import headerBackground from '~/assets/images/modal_headers/CrewManagement.png';
-import { ExtendAgreementIcon, FoodIcon, FormAgreementIcon, ForwardIcon, InventoryIcon, LocationIcon, PermissionIcon, RouteIcon, SurfaceTransferIcon, SwayIcon, WarningOutlineIcon } from '~/components/Icons';
+import { CheckIcon, CloseIcon, ExtendAgreementIcon, FormAgreementIcon, LinkIcon, PermissionIcon, RefreshIcon, SwayIcon } from '~/components/Icons';
 import useCrewContext from '~/hooks/useCrewContext';
-import useDeliveryManager from '~/hooks/actionManagers/useDeliveryManager';
-import useLot from '~/hooks/useLot';
 import useStore from '~/hooks/useStore';
-import { reactBool, formatTimer, locationsArrToObj, getCrewAbilityBonuses, formatFixed, monthsToSeconds, secondsToMonths } from '~/lib/utils';
+import { reactBool, locationsArrToObj, formatFixed, monthsToSeconds, secondsToMonths, nativeBool } from '~/lib/utils';
 import {
-  ItemSelectionSection,
   ActionDialogFooter,
   ActionDialogHeader,
   ActionDialogStats,
-  formatMass,
-  formatSampleMass,
-  formatSampleVolume,
-  formatVolume,
-  getBonusDirection,
-  TimeBonusTooltip,
-  EmptyBuildingImage,
-  BuildingImage,
   FlexSectionSpacer,
   ActionDialogBody,
   FlexSectionInputBlock,
   FlexSection,
-  TransferSelectionDialog,
-  DestinationSelectionDialog,
-  ProgressBarSection,
-  Mouseoverable,
-  ActionDialogTabs,
-  InventoryChangeCharts,
-  CrewOwnerBlock,
-  TransferDistanceDetails,
   FlexSectionBlock,
-  WarningAlert,
-  SwayInputBlock,
-  SwayInputBlockInner,
   LotInputBlock,
-  InventorySelectionDialog,
-  getCapacityStats,
-  InventoryInputBlock,
-  CrewInputBlock,
-  MiniBarChart,
-  formatResourceMass,
   BuildingInputBlock,
   ShipInputBlock,
 } from './components';
 import { ActionDialogInner } from '../ActionDialog';
 import actionStages from '~/lib/actionStages';
-import theme from '~/theme';
+import theme, { hexToRGB } from '~/theme';
 import CrewIndicator from '~/components/CrewIndicator';
 import useEntity from '~/hooks/useEntity';
-import formatters from '~/lib/formatters';
-import useAsteroid from '~/hooks/useAsteroid';
-import useInterval from '~/hooks/useInterval';
 import useAuth from '~/hooks/useAuth';
-import useBlockTime from '~/hooks/useBlockTime';
 import useAgreementManager from '~/hooks/actionManagers/useAgreementManager';
 import useHydratedLocation from '~/hooks/useHydratedLocation';
 import useCrew from '~/hooks/useCrew';
 import UncontrolledTextInput, { TextInputWrapper } from '~/components/TextInputUncontrolled';
 import useSwayBalance from '~/hooks/useSwayBalance';
-import { current } from 'immer';
+import Button from '~/components/ButtonAlt';
 
 const FormSection = styled.div`
   margin-top: 12px;
@@ -106,6 +75,13 @@ const InputSublabels = styled.div`
   }
 `;
 
+const ContractDesc = styled.div`
+  color: ${p => p.theme.colors.main};
+  font-size: 90%;
+  & > a { text-decoration: none; }
+  margin-bottom: 20px;
+`;
+
 const InsufficientAssets = styled.span`
   color: ${p => p.theme.colors.red};
 `;
@@ -115,7 +91,7 @@ const Alert = styled.div`
 
     &:first-child {
       align-items: center;
-      background: rgba(${p => p.theme.colors.mainRGB}, 0.4);
+      background: rgba(${p => hexToRGB(p.theme.colors[p.scheme ? (p.scheme === 'success' ? 'green' : 'red') : 'main'])}, 0.4);
       color: white;
       display: flex;
       font-size: 20px;
@@ -124,6 +100,16 @@ const Alert = styled.div`
         font-size: 24px;
         margin-right: 6px;
       }
+
+      ${p => p.scheme && `
+        &:after {
+          content: "${p.scheme === 'success' ? 'Permitted' : 'Restricted'}";
+          color: ${p.scheme === 'success' ? p.theme.colors.green : p.theme.colors.red};
+          flex: 1;
+          text-align: right;
+          text-transform: uppercase;
+        }
+      `}
     }
 
     &:last-child {
@@ -134,6 +120,10 @@ const Alert = styled.div`
         color: white;
         font-weight: normal;
       }
+
+      ${p => p.scheme && `
+        color: ${p.scheme === 'success' ? p.theme.colors.green : p.theme.colors.red};
+      `}
     }
   }
 `;
@@ -141,11 +131,14 @@ const Alert = styled.div`
 const FormAgreement = ({
   agreementManager,
   entity,
-  isExtension = true,
+  isExtension,
   permission,
   stage,
   ...props
 }) => {
+  const { walletContext: { starknet } } = useAuth();
+  const createAlert = useStore(s => s.dispatchAlertLogged);
+
   const { currentAgreement, currentPolicy, enterAgreement, extendAgreement } = agreementManager;
   const { crew } = useCrewContext();
   const { data: swayBalance } = useSwayBalance();
@@ -159,15 +152,14 @@ const FormAgreement = ({
 
   const maxTerm = useMemo(() => {
     const now = Math.floor(Date.now() / 1000);
-    if (currentAgreement?.endTime > now) {
+    if (isExtension && currentAgreement?.endTime > now) {
       return 12 - secondsToMonths(Math.max(0, currentAgreement?.endTime - now - 3600));
     }
     return 12;
-  }, [currentAgreement]);
+  }, [currentAgreement, isExtension]);
 
   const [initialPeriod, setInitialPeriod] = useState(isExtension ? maxTerm : (currentPolicy?.policyDetails?.initialTerm || 0));
 
-  // TODO: ? the stats in the mock are very redundant
   const stats = useMemo(() => {
     if (currentPolicy?.policyType === Permission.POLICY_IDS.PREPAID) {
       return [
@@ -202,6 +194,38 @@ const FormAgreement = ({
     [swayBalance, totalLeaseCost]
   );
 
+  const [eligible, setEligible] = useState(false);
+  const [eligibilityLoading, setEligibilityLoading] = useState(false);
+  const updateContractEligibility = useCallback(async () => {
+    if (!starknet?.account?.provider) return;
+    if (!currentPolicy?.policyDetails?.contract) return;
+    try {
+      setEligibilityLoading(true);
+      const response = await starknet.account.provider.callContract({
+        contractAddress: currentPolicy?.policyDetails?.contract,
+        entrypoint: 'accept',
+        calldata: [
+          { label: entity.label, id: entity.id },   // target
+          permission, // permission
+          { label: crew?.label, id: crew?.id },   // permitted
+        ]
+      });
+      setEligible(response?.result?.[0] === "0x1");
+    } catch (e) {
+      console.warn(e);
+    }
+    setEligibilityLoading(false);
+  }, [crew?.id, currentPolicy?.policyDetails?.contract, entity, permission, starknet]);
+  useEffect(() => updateContractEligibility(), [updateContractEligibility]);
+
+  const handleCopyAddress = useCallback(() => {
+    createAlert({
+      type: 'GenericAlert',
+      data: { content: 'Contract address copied to your clipboard.' },
+      duration: 2000
+    });
+  }, [createAlert]);
+
   const handlePeriodChange = useCallback((e) => {
     // TODO: validate min/max before updating state
     setInitialPeriod(e.currentTarget.value);
@@ -219,8 +243,15 @@ const FormAgreement = ({
     }
   }, [controller?.Crew?.delegatedTo, initialPeriod, totalLeaseCost]);
 
+  const alertScheme = useMemo(() => {
+    if (currentPolicy?.policyType === Permission.POLICY_IDS.CONTRACT) {
+      if (!eligibilityLoading) return eligible ? 'success' : 'error';
+    }
+    return ''
+  }, [currentPolicy, eligibilityLoading, eligible]);
+
   const actionDetails = useMemo(() => {
-    const policyType = Permission.POLICY_IDS.PREPAID; // TODO: ...
+    const policyType = currentPolicy?.policyType;
     if (isExtension) {
       return {
         icon: <ExtendAgreementIcon />,
@@ -272,45 +303,68 @@ const FormAgreement = ({
           
           <FlexSectionSpacer />
 
-          <FlexSectionBlock
-            title={`${isExtension ? 'Extend' : 'Lease'} For`}
-            bodyStyle={{ height: 'auto', padding: '6px 12px' }}>
-            
-            <FormSection>
-              <InputLabel>
-                <label>{isExtension ? 'Added' : 'Leasing'} Period</label>
-              </InputLabel>
-              <TextInputWrapper rightLabel="months">
-                <UncontrolledTextInput
-                  disabled={stage !== actionStages.NOT_STARTED}
-                  min={currentPolicy?.policyDetails?.initialTerm || 0}
-                  max={12}
-                  onChange={handlePeriodChange}
-                  step={0.1}
-                  type="number"
-                  value={initialPeriod || 0} />
-              </TextInputWrapper>
-              <InputSublabels>
-                {isExtension
-                  ? <div>Min <b>{formatFixed(0, 1)} months</b></div>
-                  : <div>Min <b>{formatFixed(currentPolicy?.policyDetails?.initialTerm || 0, 1)} month{currentPolicy?.policyDetails?.initialTerm === 1 ? '' : 's'}</b></div>
-                }
-                <div>Max <b>{formatFixed(maxTerm, 1)} months</b></div>
-              </InputSublabels>
-            </FormSection>
-            
-            <FormSection>
-              <InputLabel>
-                <label>Price</label>
-              </InputLabel>
-              <TextInputWrapper rightLabel="SWAY / month">
-                <DisabledUncontrolledTextInput
-                  disabled
-                  value={(currentPolicy?.policyDetails?.rate || 0)} />
-              </TextInputWrapper>
-            </FormSection>
+          {isExtension || currentPolicy?.policyType === Permission.POLICY_IDS.PREPAID
+            ? (
+              <FlexSectionBlock
+                title={`${isExtension ? 'Extend' : 'Lease'} For`}
+                bodyStyle={{ height: 'auto', padding: '6px 12px' }}>
+                
+                <FormSection>
+                  <InputLabel>
+                    <label>{isExtension ? 'Added' : 'Leasing'} Period</label>
+                  </InputLabel>
+                  <TextInputWrapper rightLabel="months">
+                    <UncontrolledTextInput
+                      disabled={stage !== actionStages.NOT_STARTED}
+                      min={currentPolicy?.policyDetails?.initialTerm || 0}
+                      max={12}
+                      onChange={handlePeriodChange}
+                      step={0.1}
+                      type="number"
+                      value={initialPeriod || 0} />
+                  </TextInputWrapper>
+                  <InputSublabels>
+                    {isExtension
+                      ? <div>Min <b>{formatFixed(0, 1)} months</b></div>
+                      : <div>Min <b>{formatFixed(currentPolicy?.policyDetails?.initialTerm || 0, 1)} month{currentPolicy?.policyDetails?.initialTerm === 1 ? '' : 's'}</b></div>
+                    }
+                    <div>Max <b>{formatFixed(maxTerm, 1)} months</b></div>
+                  </InputSublabels>
+                </FormSection>
+                
+                <FormSection>
+                  <InputLabel>
+                    <label>Price</label>
+                  </InputLabel>
+                  <TextInputWrapper rightLabel="SWAY / month">
+                    <DisabledUncontrolledTextInput
+                      disabled
+                      value={(currentPolicy?.policyDetails?.rate || 0)} />
+                  </TextInputWrapper>
+                </FormSection>
 
-          </FlexSectionBlock>
+              </FlexSectionBlock>
+            )
+            : (
+              <FlexSectionBlock
+                title="Details"
+                bodyStyle={{ height: 'auto', padding: '6px 12px' }}>
+                <ContractDesc>
+                  Custom Contracts are used by owners to share or delegate permissions in a flexible manner.
+                  They are written outside of the game client and may be viewed externally on{' '}
+                  <a href={`${process.env.REACT_APP_STARKNET_EXPLORER_URL}/contract/${currentPolicy?.policyDetails?.contract}`} target="_blank" rel="noreferrer">Starkscan</a>.
+                </ContractDesc>
+              
+                <Clipboard
+                  component="span"
+                  data-clipboard-text={`${currentPolicy?.policyDetails?.contract}`}
+                  onClick={handleCopyAddress}>
+                  <Button subtle>
+                    <LinkIcon /> <span>Copy Contract Address</span>
+                  </Button>
+                </Clipboard>
+              </FlexSectionBlock>
+            )}
         </FlexSection>
 
         <FlexSection style={{ alignItems: 'flex-start' }}>
@@ -318,24 +372,45 @@ const FormAgreement = ({
             title="Agreement Details"
             bodyStyle={{ height: 'auto', padding: 6 }}
             style={{ width: '100%' }}>
-            <Alert>
+            <Alert scheme={alertScheme}>
               <div>
                 <PermissionIcon /> {Permission.TYPES[permission].name}
               </div>
-              <div>
+              {currentPolicy?.policyType === Permission.POLICY_IDS.CONTRACT && (
+                <div style={{ marginTop: 3 }}>
+                  <div style={{ fontSize: '85%' }}>
+                    {eligibilityLoading && `Checking eligibility...`}
+                    {!eligibilityLoading && eligible && <><CheckIcon /> Crew check succeeded.</>}
+                    {!eligibilityLoading && !eligible && <><CloseIcon /> Crew check failed. Refresh to check again.</>}
+                  </div>
+                  <div>
+                    <Button
+                      disabled={nativeBool(eligibilityLoading)}
+                      loading={eligibilityLoading}
+                      onClick={updateContractEligibility}
+                      size="small"
+                      subtle>
+                      <RefreshIcon /> <span>Refresh</span>
+                    </Button>
+                  </div>
+                </div>
+              )}
+              {currentPolicy?.policyType === Permission.POLICY_IDS.PREPAID && (
                 <div>
-                  {insufficientAssets
-                    ? <InsufficientAssets>Insufficient Wallet Balance</InsufficientAssets>
-                    : <>Granted For: <b>{' '}{initialPeriod} months</b></>
-                  }
+                  <div>
+                    {insufficientAssets
+                      ? <InsufficientAssets>Insufficient Wallet Balance</InsufficientAssets>
+                      : <>Granted For: <b>{' '}{initialPeriod} months</b></>
+                    }
+                  </div>
+                  <div style={{ position: 'relative', top: 4 }}>
+                    <span style={{ position: 'relative', bottom: 4 }}>Total:</span>
+                    <span style={{ color: 'white', display: 'inline-flex', fontSize: '32px', height: '32px', lineHeight: '32px' }}>
+                      <SwayIcon /> <span>{formatFixed(totalLeaseCost)}</span>
+                    </span>
+                  </div>
                 </div>
-                <div style={{ position: 'relative', top: 4 }}>
-                  <span style={{ position: 'relative', bottom: 4 }}>Total:</span>
-                  <span style={{ color: 'white', display: 'inline-flex', fontSize: '32px', height: '32px', lineHeight: '32px' }}>
-                    <SwayIcon /> <span>{formatFixed(totalLeaseCost)}</span>
-                  </span>
-                </div>
-              </div>
+              )}
             </Alert>
 
           </FlexSectionInputBlock>

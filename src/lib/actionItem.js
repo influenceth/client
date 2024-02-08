@@ -764,6 +764,20 @@ const formatAsTx = (item) => {
       // formatted.onClick = () => {};
       break;
     }
+    case 'AcceptContractAgreement': {
+      formatted.icon = <PermissionIcon />;
+      formatted.label = 'Contract Agreement';
+      formatted.asteroidId = Lot.toPosition(item.meta?.lotId)?.asteroidId;
+      formatted.lotId = item.meta?.lotId;
+      formatted.shipId = item.meta?.shipId;
+      formatted.onClick = ({ openDialog }) => {
+        openDialog(
+          'FORM_AGREEMENT',
+          { entity: item.vars.target, permission: item.vars.permission }
+        );
+      };
+      break;
+    }
     case 'AcceptPrepaidAgreement': {
       formatted.icon = <PermissionIcon />;
       formatted.label = 'Prepaid Lease Agreement';
@@ -773,11 +787,48 @@ const formatAsTx = (item) => {
       formatted.onClick = ({ openDialog }) => {
         openDialog(
           'FORM_AGREEMENT',
-          { entity: item.vars.target , permission: item.vars.permission }
+          { entity: item.vars.target, permission: item.vars.permission }
         );
       };
+      break;
+    }
+    case 'ExtendPrepaidAgreement': {
+      formatted.icon = <PermissionIcon />;
+      formatted.label = 'Extend Prepaid Agreement';
+      formatted.asteroidId = Lot.toPosition(item.meta?.lotId)?.asteroidId;
+      formatted.lotId = item.meta?.lotId;
+      formatted.shipId = item.meta?.shipId;
+      formatted.onClick = ({ openDialog }) => {
+        openDialog(
+          'FORM_AGREEMENT',
+          { entity: item.vars.target, permission: item.vars.permission, isExtension: true }
+        );
+      };
+      break;
+    }
+    case 'CancelPrepaidAgreement': {
+      formatted.icon = <PermissionIcon />;
+      formatted.label = 'Cancel Prepaid Agreement';
+      formatted.asteroidId = Lot.toPosition(item.meta?.lotId)?.asteroidId;
+      formatted.lotId = item.meta?.lotId;
+      formatted.shipId = item.meta?.shipId;
+      formatted.onClick = ({ openDialog }) => {
+        // TODO: ...
+      };
+      break;
     }
 
+    case 'AcceptPrepaidMerkleAgreement': {
+      formatted.icon = <PermissionIcon />;
+      formatted.label = 'TODO...';
+      formatted.asteroidId = Lot.toPosition(item.meta?.lotId)?.asteroidId;
+      formatted.lotId = item.meta?.lotId;
+      formatted.shipId = item.meta?.shipId;
+      formatted.onClick = ({ openDialog }) => {
+        // TODO: ...
+      };
+      break;
+    }
     default:
       console.log('Unhandled ActionItems tx', item);
       break;
