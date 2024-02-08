@@ -858,7 +858,7 @@ const Store = () => {
       <Group>
         <CrewmateSKU />
       </Group>
-      {!!process.env.REACT_APP_AVNU_API_URL && process.env.NODE_ENV === 'production' && (
+      {!!process.env.REACT_APP_AVNU_API_URL && process.env.REACT_APP_CHAIN_ID === '0x534e5f4d41494e' && (
         <Group>
           <SwaySKU />
         </Group>
@@ -866,7 +866,7 @@ const Store = () => {
       <Group>
         <AsteroidSKU />
       </Group>
-      {process.env.NODE_ENV !== 'production' && (
+      {process.env.NODE_ENV !== '0x534e5f4d41494e' && (
         <Group>
           <FaucetSKU />
         </Group>
