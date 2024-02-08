@@ -160,7 +160,19 @@ const customConfigs = {
   },
   AcceptPrepaidAgreement: {
     equalityTest: ['target.id', 'target.label', 'permission'],
-    getTransferConfig: ({ recipient, permission, permitted, target, term, termPrice }) => ({
+    getTransferConfig: ({ recipient, permission, permitted, target, termPrice }) => ({
+      amount: BigInt(termPrice),
+      recipient,
+      memo: [
+        Entity.packEntity(target),
+        permission,
+        Entity.packEntity(permitted),
+      ]
+    })
+  },
+  ExtendPrepaidAgreement: {
+    equalityTest: ['target.id', 'target.label', 'permission'],
+    getTransferConfig: ({ recipient, permission, permitted, target, termPrice }) => ({
       amount: BigInt(termPrice),
       recipient,
       memo: [

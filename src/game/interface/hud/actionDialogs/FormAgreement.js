@@ -8,7 +8,7 @@ import useCrewContext from '~/hooks/useCrewContext';
 import useDeliveryManager from '~/hooks/actionManagers/useDeliveryManager';
 import useLot from '~/hooks/useLot';
 import useStore from '~/hooks/useStore';
-import { reactBool, formatTimer, locationsArrToObj, getCrewAbilityBonuses, formatFixed, monthsToSeconds } from '~/lib/utils';
+import { reactBool, formatTimer, locationsArrToObj, getCrewAbilityBonuses, formatFixed, monthsToSeconds, secondsToMonths } from '~/lib/utils';
 import {
   ItemSelectionSection,
   ActionDialogFooter,
@@ -63,6 +63,7 @@ import useHydratedLocation from '~/hooks/useHydratedLocation';
 import useCrew from '~/hooks/useCrew';
 import UncontrolledTextInput, { TextInputWrapper } from '~/components/TextInputUncontrolled';
 import useSwayBalance from '~/hooks/useSwayBalance';
+import { current } from 'immer';
 
 const FormSection = styled.div`
   margin-top: 12px;
@@ -140,12 +141,12 @@ const Alert = styled.div`
 const FormAgreement = ({
   agreementManager,
   entity,
-  isExtension,
+  isExtension = true,
   permission,
   stage,
   ...props
 }) => {
-  const { currentPolicy, enterAgreement } = agreementManager;
+  const { currentAgreement, currentPolicy, enterAgreement, extendAgreement } = agreementManager;
   const { crew } = useCrewContext();
   const { data: swayBalance } = useSwayBalance();
   // const blockTime = useBlockTime();
@@ -156,10 +157,41 @@ const FormAgreement = ({
 
   const { data: controller } = useCrew(entity?.Control?.controller?.id);
 
-  const [initialPeriod, setInitialPeriod] = useState(currentPolicy?.policyDetails?.initialTerm || 0);
+  const maxTerm = useMemo(() => {
+    const now = Math.floor(Date.now() / 1000);
+    if (currentAgreement?.endTime > now) {
+      return 12 - secondsToMonths(Math.max(0, currentAgreement?.endTime - now - 3600));
+    }
+    return 12;
+  }, [currentAgreement]);
+
+  const [initialPeriod, setInitialPeriod] = useState(isExtension ? maxTerm : (currentPolicy?.policyDetails?.initialTerm || 0));
 
   // TODO: ? the stats in the mock are very redundant
-  const stats = useMemo(() => ([]), []);
+  const stats = useMemo(() => {
+    if (currentPolicy?.policyType === Permission.POLICY_IDS.PREPAID) {
+      return [
+        {
+          label: `${isExtension ? 'Updated ' : ''}Lease Length`,
+          value: `${initialPeriod} month${initialPeriod === 1 ? '' : 's'}`,
+          direction: 0,
+        },
+        {
+          label: 'Lease Length (Adalian Days)',
+          value: Time.toGameDuration(monthsToSeconds(initialPeriod) / 86400, crew?._timeAcceleration).toLocaleString(),
+          direction: 0,
+        },
+        {
+          label: 'Notice Period',
+          value: isExtension
+            ? `${currentAgreement?.noticePeriod || 0} month${currentAgreement?.noticePeriod === 1 ? '' : 's'}`
+            : `${currentPolicy?.policyDetails?.noticePeriod || 0} month${currentPolicy?.policyDetails?.noticePeriod === 1 ? '' : 's'}`,
+          direction: 0,
+        },
+      ];
+    }
+    return [];
+  }, [crew, currentAgreement, currentPolicy, initialPeriod, isExtension]);
 
   const totalLeaseCost = useMemo(() => {
     return (initialPeriod || 0) * (currentPolicy?.policyDetails?.rate || 0)
@@ -177,9 +209,14 @@ const FormAgreement = ({
 
   const onEnterAgreement = useCallback(() => {
     const recipient = controller?.Crew?.delegatedTo;
+    // TODO: should these conversions be in useAgreementManager?
     const term = monthsToSeconds(initialPeriod);
     const termPrice = totalLeaseCost * 1e6;
-    enterAgreement({ recipient, term, termPrice });
+    if (isExtension) {
+      extendAgreement({ recipient, term, termPrice });
+    } else {
+      enterAgreement({ recipient, term, termPrice });
+    }
   }, [controller?.Crew?.delegatedTo, initialPeriod, totalLeaseCost]);
 
   const actionDetails = useMemo(() => {
@@ -236,26 +273,29 @@ const FormAgreement = ({
           <FlexSectionSpacer />
 
           <FlexSectionBlock
-            title="Lease For"
+            title={`${isExtension ? 'Extend' : 'Lease'} For`}
             bodyStyle={{ height: 'auto', padding: '6px 12px' }}>
             
             <FormSection>
               <InputLabel>
-                <label>Leasing Period</label>
+                <label>{isExtension ? 'Added' : 'Leasing'} Period</label>
               </InputLabel>
               <TextInputWrapper rightLabel="months">
                 <UncontrolledTextInput
                   disabled={stage !== actionStages.NOT_STARTED}
                   min={currentPolicy?.policyDetails?.initialTerm || 0}
-                  max={12 - (currentPolicy?.policyDetails?.noticePeriod || 0)}
+                  max={12}
                   onChange={handlePeriodChange}
                   step={0.1}
                   type="number"
                   value={initialPeriod || 0} />
               </TextInputWrapper>
               <InputSublabels>
-                <div>Min <b>{formatFixed(currentPolicy?.policyDetails?.initialTerm || 0, 1)} months</b></div>
-                <div>Max <b>{formatFixed(12 - (currentPolicy?.policyDetails?.noticePeriod || 0), 1)} months</b></div>
+                {isExtension
+                  ? <div>Min <b>{formatFixed(0, 1)} months</b></div>
+                  : <div>Min <b>{formatFixed(currentPolicy?.policyDetails?.initialTerm || 0, 1)} month{currentPolicy?.policyDetails?.initialTerm === 1 ? '' : 's'}</b></div>
+                }
+                <div>Max <b>{formatFixed(maxTerm, 1)} months</b></div>
               </InputSublabels>
             </FormSection>
             
@@ -311,7 +351,7 @@ const FormAgreement = ({
 
       <ActionDialogFooter
         disabled={insufficientAssets}
-        goLabel="Create Agreement"
+        goLabel={`${isExtension ? 'Update' : 'Create'} Agreement`}
         onGo={onEnterAgreement}
         stage={stage}
         {...props} />

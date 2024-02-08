@@ -25,7 +25,7 @@ const usePolicyManager = (entity, permission) => {
   const currentPolicy = useMemo(() => {
     const pol = Permission.getPolicyDetails(entity, crew?.id)[permission];
     if (pol?.policyDetails && pol.policyType === Permission.POLICY_IDS.CONTRACT) pol.policyDetails.contract = pol.policyDetails.address;
-    if (pol?.policyDetails?.rate && pol.policyType === Permission.POLICY_IDS.PREPAID) {
+    if (pol?.policyDetails && pol.policyType === Permission.POLICY_IDS.PREPAID) {
       pol.policyDetails.rate = (pol.policyDetails.rate / 1e6) * hoursPerMonth;  // stored in microsway per hour, UI in sway/mo
       pol.policyDetails.initialTerm = secondsToMonths(pol.policyDetails.initialTerm); // stored in seconds, UI in months
       pol.policyDetails.noticePeriod = secondsToMonths(pol.policyDetails.noticePeriod); // stored in seconds, UI in months
