@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from 'react';
 
-import { KeysIcon } from '~/components/Icons';
+import { ExtendAgreementIcon } from '~/components/Icons';
 import useAsteroid from '~/hooks/useAsteroid';
 import useControlAsteroid from '~/hooks/actionManagers/useControlAsteroid';
 import ActionButton from './ActionButton';
@@ -32,7 +32,7 @@ const ExtendAgreement = ({ asteroid, onSetAction, _disabled }) => {
         disabled: _disabled || disabledReason,
         loading: takingControl
       }}
-      icon={<KeysIcon />}
+      icon={<ExtendAgreementIcon />}
       onClick={handleClick} />
   );
 };

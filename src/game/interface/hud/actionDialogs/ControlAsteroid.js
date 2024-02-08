@@ -5,6 +5,7 @@ import { Asteroid } from '@influenceth/sdk';
 import constructionBackground from '~/assets/images/modal_headers/Construction.png';  // TODO: ...
 import CrewmateCardFramed from '~/components/CrewmateCardFramed';
 import {
+  BecomeAdminIcon,
   KeysIcon, MyAssetIcon,
 } from '~/components/Icons';
 import useAsteroid from '~/hooks/useAsteroid';
@@ -62,7 +63,7 @@ const ControlAsteroid = ({ asteroid, controlManager, stage, ...props }) => {
     <>
       <ActionDialogHeader
         action={{
-          icon: <KeysIcon />,
+          icon: <BecomeAdminIcon />,
           label: 'Become Administrator',
         }}
         captain={captain}

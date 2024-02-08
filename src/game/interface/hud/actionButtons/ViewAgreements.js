@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from 'react';
 
-import { KeysIcon } from '~/components/Icons';
+import { AssetAgreementsIcon } from '~/components/Icons';
 import useAsteroid from '~/hooks/useAsteroid';
 import useControlAsteroid from '~/hooks/actionManagers/useControlAsteroid';
 import ActionButton from './ActionButton';
@@ -19,7 +19,7 @@ const ViewAgreements = ({ asteroid, tally, onSetAction, _disabled }) => {
         badge: tally,
         disabled: _disabled
       }}
-      icon={<KeysIcon />}
+      icon={<AssetAgreementsIcon />}
       onClick={handleClick} />
   );
 };

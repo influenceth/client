@@ -20,6 +20,7 @@ import EjectCrew from './actionDialogs/EjectCrew';
 import EvictShip from './actionDialogs/EvictShip';
 import Extract from './actionDialogs/Extract';
 import FeedCrew from './actionDialogs/FeedCrew';
+import FormAgreement from './actionDialogs/FormAgreement';
 import NewCoreSample from './actionDialogs/NewCoreSample';
 import Deconstruct from './actionDialogs/Deconstruct';
 import ImproveCoreSample from './actionDialogs/ImproveCoreSample';
@@ -231,6 +232,8 @@ const ActionDialog = ({ type, params }) => {
         {type === 'EVICT_SHIP' && <EvictShip {...allProps} />}
         {type === 'EXTRACT_RESOURCE' && <Extract {...allProps} />}
         {type === 'FEED_CREW' && <FeedCrew {...allProps} />}
+        {type === 'FORM_AGREEMENT' && <FormAgreement {...allProps} />}
+        {type === 'EXTEND_AGREEMENT' && <FormAgreement {...allProps} isExtension />}
         {type === 'LAND_SHIP' && <LandShip {...allProps} />}
         {type === 'LAUNCH_SHIP' && <LaunchShip {...allProps} />}
         {type === 'IMPROVE_CORE_SAMPLE' && <ImproveCoreSample {...allProps} />}

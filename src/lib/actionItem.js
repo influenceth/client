@@ -13,7 +13,6 @@ import {
   SurfaceTransferIcon,
   ShipIcon,
   BuildingIcon,
-  KeysIcon,
   ManageCrewIcon,
   NewCoreSampleIcon,
   UnplanBuildingIcon,
@@ -34,6 +33,8 @@ import {
   LimitBuyIcon,
   MarketSellIcon,
   CancelLimitOrderIcon,
+  BecomeAdminIcon,
+  PermissionIcon,
 } from '~/components/Icons';
 import theme, { hexToRGB } from '~/theme';
 import { getProcessorProps } from './utils';
@@ -320,7 +321,7 @@ const formatAsTx = (item) => {
 
     case 'InitializeAndManageAsteroid':
     case 'ManageAsteroid': {
-      formatted.icon = <KeysIcon />;
+      formatted.icon = <BecomeAdminIcon />;
       formatted.label = 'Control Asteroid';
       formatted.onClick = ({ openDialog }) => {
         openDialog('CONTROL_ASTEROID'); // TODO: need asteroid id?
@@ -745,7 +746,7 @@ const formatAsTx = (item) => {
     }
 
     case 'UpdateAllowlist': {
-      formatted.icon = <KeysIcon />;
+      formatted.icon = <PermissionIcon />;
       formatted.label = 'Update Allowlist';
       formatted.asteroidId = Lot.toPosition(item.meta?.lotId)?.asteroidId;
       formatted.lotId = item.meta?.lotId;
@@ -755,7 +756,7 @@ const formatAsTx = (item) => {
     }
 
     case 'UpdatePolicy': {
-      formatted.icon = <KeysIcon />;
+      formatted.icon = <PermissionIcon />;
       formatted.label = 'Update Permissions';
       formatted.asteroidId = Lot.toPosition(item.meta?.lotId)?.asteroidId;
       formatted.lotId = item.meta?.lotId;

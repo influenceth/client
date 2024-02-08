@@ -553,20 +553,20 @@ const HudMenu = ({ forceOpenMenu }) => {
     return menuButtons.find((b) => b.key === openHudMenu) || {};
   }, [menuButtons, openHudMenu]);
 
-  // if get logged out, close "requireLogin" menu if open
-  useEffect(() => {
-    if (openHudMenu) {
-      const openMenuConfig = menuButtons.find((b) => b.key === openHudMenu);
-      if (openMenuConfig?.requireLogin && !account) {
-        handleButtonClick(openHudMenu, null, openMenuConfig.hideInsteadOfClose);
-      }
-    }
-  }, [account, handleButtonClick, openHudMenu]);
-
   const [visibleMenuButtons, visiblePageButtons] = useMemo(() => ([
     menuButtons.filter((b) => b.isVisible && (!b.requireLogin || !!account)),
     pageButtons.filter((b) => b.isVisible && (!b.requireLogin || !!account)),
   ]), [!!account, menuButtons]);
+
+  // if open hud menu is no longer visible (or if get logged out and "requireLogin" menu), close
+  useEffect(() => {
+    if (openHudMenu) {
+      const openMenuConfig = menuButtons.find((b) => b.key === openHudMenu);
+      if (!openMenuConfig?.isVisible || (openMenuConfig?.requireLogin && !account)) {
+        handleButtonClick(openHudMenu, null, openMenuConfig.hideInsteadOfClose);
+      }
+    }
+  }, [account, handleButtonClick, openHudMenu, visibleMenuButtons]);
 
   return (
     <Wrapper>

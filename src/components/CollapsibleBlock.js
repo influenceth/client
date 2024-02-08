@@ -94,7 +94,8 @@ const Title = styled.div`
   height: ${titleHeight}px;
   transition: border-color 250ms ease;
   & > svg {
-    font-size: 28px;
+    font-size: 24px;
+    margin-right: 3px;
   }
   & label {
     flex: 1;

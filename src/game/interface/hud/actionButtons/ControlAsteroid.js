@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from 'react';
 
-import { KeysIcon } from '~/components/Icons';
+import { BecomeAdminIcon } from '~/components/Icons';
 import useAsteroid from '~/hooks/useAsteroid';
 import useControlAsteroid from '~/hooks/actionManagers/useControlAsteroid';
 import ActionButton from './ActionButton';
@@ -36,7 +36,7 @@ const ControlAsteroid = ({ asteroid, onSetAction, _disabled }) => {
         disabled: _disabled || disabledReason,
         loading: takingControl
       }}
-      icon={<KeysIcon />}
+      icon={<BecomeAdminIcon />}
       onClick={handleClick} />
   );
 };

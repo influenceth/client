@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { Entity } from '@influenceth/sdk';
+import { Entity, Permission } from '@influenceth/sdk';
 
 import useLot from '~/hooks/useLot';
 import useShip from '~/hooks/useShip';
@@ -8,6 +8,7 @@ import { HudMenuCollapsibleSection, Scrollable } from './components/components';
 import EntityNameForm from './components/EntityNameForm';
 import ShipTitleArea from './components/ShipTitleArea';
 import EntityDescriptionForm from './components/EntityDescriptionForm';
+import PolicyPanels from './components/PolicyPanels';
 
 const AdminShip = ({}) => {
   const lotId = useStore(s => s.asteroids.lot);
@@ -39,8 +40,9 @@ const AdminShip = ({}) => {
         </HudMenuCollapsibleSection>
 
         <HudMenuCollapsibleSection titleText="Update Permissions" collapsed>
-          {/* TODO ... */}
+          <PolicyPanels editable entity={ship} />
         </HudMenuCollapsibleSection>
+
       </Scrollable>
     </>
   );

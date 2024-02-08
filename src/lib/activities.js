@@ -32,7 +32,8 @@ import {
   LimitBuyIcon,
   MarketSellIcon,
   LimitSellIcon,
-  MarketBuyIcon
+  MarketBuyIcon,
+  BecomeAdminIcon
 } from '~/components/Icons';
 import LotLink from '~/components/LotLink';
 
@@ -124,7 +125,7 @@ const activities = {
   AsteroidManaged: {
     getInvalidations: ({ event: { returnValues } }) => invalidationDefaults(Entity.IDS.ASTEROID, returnValues.asteroid.id),
     getLogContent: ({ event: { returnValues } }) => ({
-      icon: <KeysIcon />,
+      icon: <BecomeAdminIcon />,
       content: (
         <>
           <EntityLink {...returnValues.callerCrew} />
