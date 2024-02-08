@@ -1,5 +1,5 @@
 import { AiFillEdit, AiFillEye, AiFillStar, AiOutlineNumber } from 'react-icons/ai';
-import { BsFillPersonFill, BsCheckCircle, BsPieChartFill, BsSliders, BsStopwatch, BsThreeDots } from 'react-icons/bs';
+import { BsFillPersonFill, BsCheckCircle, BsSliders, BsStopwatch, BsThreeDots } from 'react-icons/bs';
 import { FaBan, FaCaretDown, FaCaretUp, FaCogs, FaCopy, FaEthereum, FaList, FaMapMarkedAlt } from 'react-icons/fa';
 import { FiCheckSquare, FiDownload, FiExternalLink, FiLogIn, FiMenu, FiSearch, FiSquare } from 'react-icons/fi';
 import { GiHouseKeys } from 'react-icons/gi';
@@ -26,6 +26,7 @@ import {
   RiPagesFill,
   RiLayoutGridFill,
   RiTableFill,
+  RiRepeatFill,
   RiRouteFill,
   RiAlertFill,
   RiSortDesc
@@ -49,6 +50,7 @@ import ChatSVG from '~/assets/icons/ChatIcon.svg';
 import CheckSVG from '~/assets/icons/CheckIcon.svg';
 import ChevronDoubleDownSVG from '~/assets/icons/ChevronDoubleDownIcon.svg';
 import ColumnsSVG from '~/assets/icons/ColumnsIcon.svg';
+import CompositionSVG from '~/assets/icons/CompositionIcon.svg';
 import CoreSampleSVG from '~/assets/icons/CoreSampleIcon.svg';
 import CrewSVG from '~/assets/icons/CrewIcon.svg';
 import CrewInventorySVG from '~/assets/icons/CrewInventoryIcon.svg';
@@ -76,6 +78,7 @@ import ListViewSVG from '~/assets/icons/ListViewIcon.svg';
 import LocationSVG from '~/assets/icons/LocationIcon.svg';
 import LockSVG from '~/assets/icons/LockIcon.svg';
 import LogoutSVG from '~/assets/icons/LogoutIcon.svg';
+import LotControlSVG from '~/assets/icons/LotControlIcon.svg';
 import LotSearchSVG from '~/assets/icons/LotSearchIcon.svg';
 import ManageCrewSVG from '~/assets/icons/ManageCrewIcon.svg';
 import ManufactureSVG from '~/assets/icons/ManufactureIcon.svg';
@@ -88,6 +91,7 @@ import OrderSVG from '~/assets/icons/OrderIcon.svg';
 import OwnerSettingsSVG from '~/assets/icons/OwnerSettingsIcon.svg';
 import PassengerSVG from '~/assets/icons/PassengerIcon.svg';
 import PassengersSVG from '~/assets/icons/PassengersIcon.svg';
+import PermissionSVG from '~/assets/icons/PermissionIcon.svg';
 import ProductSVG from '~/assets/icons/ProductIcon.svg';
 import ProductsSVG from '~/assets/icons/ProductsIcon.svg';
 import ProductionSVG from '~/assets/icons/ProductionIcon.svg';
@@ -112,31 +116,39 @@ import TwitterSVG from '~/assets/icons/TwitterIcon.svg';
 import WalletSVG from '~/assets/icons/WalletIcon.svg';
 import WarningOutlineSVG from '~/assets/icons/WarningOutlineIcon.svg';
 
+import AssetAgreementsSVG from '~/assets/icons/action_buttons/AssetAgreements.svg';
+import BecomeAdminSVG from '~/assets/icons/action_buttons/BecomeAdmin.svg';
 import CancelLimitOrderSVG from '~/assets/icons/action_buttons/CancelLimitOrder.svg';
 import ConstructSVG from '~/assets/icons/action_buttons/Construct.svg';
 import ConstructShipSVG from '~/assets/icons/action_buttons/ConstructShip.svg';
-import EjectPassengersSVG from '~/assets/icons/action_buttons/EjectPassengers.svg';
-import NewCoreSampleSVG from '~/assets/icons/action_buttons/CoreSample.svg';
 import DeconstructSVG from '~/assets/icons/action_buttons/Deconstruct.svg';
+import EjectPassengersSVG from '~/assets/icons/action_buttons/EjectPassengers.svg';
 import EModeEnterSVG from '~/assets/icons/action_buttons/EmodeEnter.svg';
 import EModeExitSVG from '~/assets/icons/action_buttons/EmodeExit.svg';
 import EModeGenerateSVG from '~/assets/icons/action_buttons/EmodeGenerate.svg';
+import ExtendAgreementSVG from '~/assets/icons/action_buttons/ExtendAgreement.svg';
 import ExtractResourceSVG from '~/assets/icons/action_buttons/ExtractResource.svg';
+import FormAgreementSVG from '~/assets/icons/action_buttons/FormAgreement.svg';
+import GiveNoticeSVG from '~/assets/icons/action_buttons/GiveNotice.svg';
 import ImproveCoreSampleSVG from '~/assets/icons/action_buttons/ImproveCoreSample.svg';
 import LandShipSVG from '~/assets/icons/action_buttons/LandShip.svg';
 import LaunchShipSVG from '~/assets/icons/action_buttons/LaunchShip.svg';
 import LimitBuySVG from '~/assets/icons/action_buttons/LimitBuy.svg';
 import LimitSellSVG from '~/assets/icons/action_buttons/LimitSell.svg';
+import LotAgreementsSVG from '~/assets/icons/action_buttons/LotAgreements.svg';
 import MarketBuySVG from '~/assets/icons/action_buttons/MarketBuy.svg';
 import MarketSellSVG from '~/assets/icons/action_buttons/MarketSell.svg';
+import NewCoreSampleSVG from '~/assets/icons/action_buttons/CoreSample.svg';
 import PlanBuildingSVG from '~/assets/icons/action_buttons/PlanBuilding.svg';
 import PurchaseAsteroidSVG from '~/assets/icons/action_buttons/PurchaseAsteroid.svg';
 import ScanAsteroidSVG from '~/assets/icons/action_buttons/ScanAsteroid.svg';
+import SetAdminSVG from '~/assets/icons/action_buttons/SetAdmin.svg';
 import SetCourseSVG from '~/assets/icons/action_buttons/SetCourse.svg';
 import SimulateRouteSVG from '~/assets/icons/action_buttons/SimulateRoute.svg';
 import StationCrewSVG from '~/assets/icons/action_buttons/StationCrew.svg';
 import StationPassengersSVG from '~/assets/icons/action_buttons/StationPassengers.svg';
 import SurfaceTransferSVG from '~/assets/icons/action_buttons/SurfaceTransfer.svg';
+import TakeControlSVG from '~/assets/icons/action_buttons/TakeControl.svg';
 import TransferToSiteSVG from '~/assets/icons/action_buttons/TransferToSite.svg';
 import TravelingFromSVG from '~/assets/icons/action_buttons/TravelingFrom.svg';
 import TravelingToSVG from '~/assets/icons/action_buttons/TravelingTo.svg';
@@ -193,6 +205,7 @@ export const ChevronDoubleDownIcon = () => <ChevronDoubleDownSVG className="icon
 export const ChevronDoubleUpIcon = () => <ChevronDoubleDownSVG className="icon" style={{ transform: 'rotate(180deg)' }} />;
 export const ChevronDoubleRightIcon = () => <ChevronDoubleDownSVG className="icon" style={{ transform: 'rotate(270deg)' }} />;
 export const ColumnsIcon = () => <ColumnsSVG className="icon" />;
+export const CompositionIcon = () => <CompositionSVG className="icon" />;
 export const CoreSampleIcon = () => <CoreSampleSVG className="icon" />;
 export const CrewIcon = () => <CrewSVG className="icon" />;
 export const CrewInventoryIcon = () => <CrewInventorySVG className="icon" />;
@@ -223,6 +236,7 @@ export const ListViewIcon = () => <ListViewSVG className="icon" />;
 export const LocationIcon = () => <LocationSVG className="icon" />;
 export const LockIcon = () => <LockSVG className="icon" />;
 export const LogoutIcon = () => <LogoutSVG className="icon" />;
+export const LotControlIcon = () => <LotControlSVG className="icon" />;
 export const LotSearchIcon = () => <LotSearchSVG className="icon" />;
 export const ManageCrewIcon = () => <ManageCrewSVG className="icon" />;
 export const ManufactureIcon = () => <ManufactureSVG className="icon" />;
@@ -235,6 +249,7 @@ export const OrderIcon = () => <OrderSVG className="icon" />;
 export const OwnerSettingsIcon = () => <OwnerSettingsSVG className="icon" />;
 export const PassengerIcon = () => <PassengerSVG className="icon" />;
 export const PassengersIcon = () => <PassengersSVG className="icon" />;
+export const PermissionIcon = () => <PermissionSVG className="icon" />;
 export const ProductIcon = () => <ProductSVG className="icon" />;
 export const ProductsIcon = () => <ProductsSVG className="icon" />;
 export const ProductionIcon = () => <ProductionSVG className="icon" />;
@@ -261,28 +276,36 @@ export const WalletIcon = () => <WalletSVG className="icon" />;
 export const WarningOutlineIcon = () => <WarningOutlineSVG className="icon" />;
 
 // action icons
+export const AssetAgreementsIcon = () => <AssetAgreementsSVG className="icon" />;
+export const BecomeAdminIcon = () => <BecomeAdminSVG className="icon" />;
 export const CancelLimitOrderIcon = () => <CancelLimitOrderSVG className="icon" />;
 export const ConstructIcon = () => <ConstructSVG className="icon" />;
 export const ConstructShipIcon = () => <ConstructShipSVG className="icon" />;
 export const DeconstructIcon = () => <DeconstructSVG className="icon" />;
 export const EjectPassengersIcon = () => <EjectPassengersSVG className="icon" />;
+export const ExtendAgreementIcon = () => <ExtendAgreementSVG className="icon" />;
 export const ExtractionIcon = () => <ExtractResourceSVG className="icon" />;
+export const FormAgreementIcon = () => <FormAgreementSVG className="icon" />;
+export const GiveNoticeIcon = () => <GiveNoticeSVG className="icon" />;
 export const ImproveCoreSampleIcon = () => <ImproveCoreSampleSVG className="icon" />;
 export const LandShipIcon = () => <LandShipSVG className="icon" />;
 export const LaunchShipIcon = () => <LaunchShipSVG className="icon" />;
 export const LimitBuyIcon = () => <LimitBuySVG className="icon" />;
 export const LimitSellIcon = () => <LimitSellSVG className="icon" />;
+export const LotAgreementsIcon = () => <LotAgreementsSVG className="icon" />;
 export const MarketBuyIcon = () => <MarketBuySVG className="icon" />;
 export const MarketSellIcon = () => <MarketSellSVG className="icon" />;
 export const NewCoreSampleIcon = () => <NewCoreSampleSVG className="icon" />;
 export const PlanBuildingIcon = () => <PlanBuildingSVG className="icon" />;
 export const PurchaseAsteroidIcon = () => <PurchaseAsteroidSVG className="icon" />;
+export const SetAdminIcon = () => <SetAdminSVG className="icon" />;
 export const ScanAsteroidIcon = () => <ScanAsteroidSVG className="icon" />;
 export const SetCourseIcon = () => <SetCourseSVG className="icon" />;
 export const SimulateRouteIcon = () => <SimulateRouteSVG className="icon" />;
 export const StationCrewIcon = () => <StationCrewSVG className="icon" />;
 export const StationPassengersIcon = () => <StationPassengersSVG className="icon" />;
 export const SurfaceTransferIcon = () => <SurfaceTransferSVG className="icon" />;
+export const TakeControlIcon = () => <TakeControlSVG className="icon" />;
 export const TravelingFromIcon = () => <TravelingFromSVG className="icon" />;
 export const TravelingToIcon = () => <TravelingToSVG className="icon" />;
 export const UnplanBuildingIcon = () => <UnplanBuildingSVG className="icon" />;
@@ -312,7 +335,6 @@ export {
   AiFillEye as EyeIcon,
   AiFillStar as StarIcon,
   BsCheckCircle as CheckCircleIcon,
-  BsPieChartFill as CompositionIcon,
   BsSliders as SlidersIcon,
   BsStopwatch as TimerIcon,
   BsThreeDots as DotsIcon,
@@ -356,6 +378,7 @@ export {
   RiAlertFill as WarningIcon,
   RiLayoutGridFill as GridIcon,
   FiLogIn as LoginIcon, // TODO: ...
+  RiRepeatFill as RefreshIcon,
   RiSortDesc as SortIcon,
   RiTableFill as TableIcon,
   RiRouteFill as TripsIcon,

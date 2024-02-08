@@ -27,7 +27,7 @@ const useColumns = () => {
         label: 'Deposit',
         sortField: 'Deposit.resource',
         selector: row => {
-          const loc = Entity.toPosition(row.Location?.location);
+          const loc = Lot.toPosition(row.Location?.location);
           return (
             <>
               <LocationLink lotId={loc.lotId} resourceId={row.Deposit.resource} zoomToLot="RESOURCES" />
@@ -42,7 +42,7 @@ const useColumns = () => {
         label: 'Asteroid',
         sortField: 'Location.locations[0].id', // TODO: will this work? does sequential sorting matter?
         selector: row => {
-          const loc = Entity.toPosition(row.Location?.location);
+          const loc = Lot.toPosition(row.Location?.location);
           return (
             <>
               <LocationLink asteroidId={loc.asteroidId} resourceId={row.Deposit.resource} />
@@ -56,7 +56,7 @@ const useColumns = () => {
         label: 'Lot',
         sortField: 'Location.locations[1].id', // TODO: will this work? does sequential sorting matter?
         selector: row => {
-          const loc = Entity.toPosition(row.Location?.location);
+          const loc = Lot.toPosition(row.Location?.location);
           return (
             <>
               <LocationLink lotId={loc.lotId} resourceId={row.Deposit.resource} />

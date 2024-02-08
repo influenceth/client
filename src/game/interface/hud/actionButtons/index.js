@@ -7,7 +7,9 @@ import EjectCrew from './EjectCrew';
 import EjectGuestCrew from './EjectGuestCrew';
 import EmergencyModeCollect from './EmergencyModeCollect';
 import EmergencyModeToggle from './EmergencyModeToggle';
+import ExtendAgreement from './ExtendAgreement';
 import Extract from './Extract';
+import FormAgreement from './FormAgreement';
 import LandShip from './LandShip';
 import LaunchShip from './LaunchShip';
 import PlanBuilding from './PlanBuilding';
@@ -21,6 +23,7 @@ import StationCrew from './StationCrew';
 import SurfaceTransferIncoming from './SurfaceTransferIncoming';
 import SurfaceTransferOutgoing from './SurfaceTransferOutgoing';
 import UnplanBuilding from './UnplanBuilding';
+import ViewAgreements from './ViewAgreements';
 
 const ActionsButtons = {
   AssembleShip,
@@ -32,7 +35,9 @@ const ActionsButtons = {
   EmergencyModeToggle,
   EjectCrew,
   EjectGuestCrew,
+  ExtendAgreement,
   Extract,
+  FormAgreement,
   LandShip,
   LaunchShip,
   PlanBuilding,
@@ -46,6 +51,7 @@ const ActionsButtons = {
   SurfaceTransferIncoming,
   SurfaceTransferOutgoing,
   UnplanBuilding,
+  ViewAgreements,
 };
 
 export default ActionsButtons;

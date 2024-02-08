@@ -5,6 +5,7 @@ import useStore from '~/hooks/useStore';
 import { HudMenuCollapsibleSection, Scrollable } from './components/components';
 import EntityNameForm from './components/EntityNameForm';
 import AsteroidTitleArea from './components/AsteroidTitleArea';
+import EntityDescriptionForm from './components/EntityDescriptionForm';
 
 const AdminAsteroid = ({}) => {
   const asteroidId = useStore(s => s.asteroids.origin);
@@ -22,7 +23,10 @@ const AdminAsteroid = ({}) => {
         </HudMenuCollapsibleSection>
 
         <HudMenuCollapsibleSection titleText="Update Description" collapsed>
-          {/* TODO ... */}
+          <EntityDescriptionForm
+            entity={asteroid ? { id: asteroid.id, label: Entity.IDS.ASTEROID } : null}
+            originalDesc={``}
+            label="Asteroid Description" />
         </HudMenuCollapsibleSection>
 
         <HudMenuCollapsibleSection titleText="Update Permissions" collapsed>

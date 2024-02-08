@@ -1,17 +1,13 @@
 import { useCallback, useMemo } from 'react';
 
-import { BecomeAdminIcon } from '~/components/Icons';
+import { ExtendAgreementIcon } from '~/components/Icons';
 import useAsteroid from '~/hooks/useAsteroid';
 import useControlAsteroid from '~/hooks/actionManagers/useControlAsteroid';
 import ActionButton from './ActionButton';
 
-const isVisible = ({ account, asteroid, crew }) => {
-  return crew && asteroid
-    && asteroid.Nft?.owner === account
-    && crew?.id && asteroid.Control?.controller?.id !== crew?.id;
-};
+const isVisible = () => false;
 
-const ControlAsteroid = ({ asteroid, onSetAction, _disabled }) => {
+const ExtendAgreement = ({ asteroid, onSetAction, _disabled }) => {
   const { takingControl } = useControlAsteroid(asteroid?.id);
 
   const handleClick = useCallback(() => {
@@ -36,9 +32,9 @@ const ControlAsteroid = ({ asteroid, onSetAction, _disabled }) => {
         disabled: _disabled || disabledReason,
         loading: takingControl
       }}
-      icon={<BecomeAdminIcon />}
+      icon={<ExtendAgreementIcon />}
       onClick={handleClick} />
   );
 };
 
-export default { Component: ControlAsteroid, isVisible };
+export default { Component: ExtendAgreement, isVisible };

@@ -32,7 +32,8 @@ import {
   LimitBuyIcon,
   MarketSellIcon,
   LimitSellIcon,
-  MarketBuyIcon
+  MarketBuyIcon,
+  BecomeAdminIcon
 } from '~/components/Icons';
 import LotLink from '~/components/LotLink';
 
@@ -110,9 +111,16 @@ const invalidationDefaults = (labelOrEntity, optId) => {
   return i;
 };
 
+const getAgreementInvalidations = ({ event: { returnValues } }) => {
+  return invalidationDefaults(returnValues.target);
+};
+
+const getPolicyInvalidations = ({ event: { returnValues } }) => {
+  return invalidationDefaults(returnValues.entity);
+};
+
 // TODO: write a test to make sure all activities (from sdk) have a config
 const activities = {
-  // AddedToWhitelist,
 
   AsteroidInitialized: {
     getInvalidations: ({ event: { returnValues } }) => invalidationDefaults(Entity.IDS.ASTEROID, returnValues.asteroid.id)
@@ -121,7 +129,7 @@ const activities = {
   AsteroidManaged: {
     getInvalidations: ({ event: { returnValues } }) => invalidationDefaults(Entity.IDS.ASTEROID, returnValues.asteroid.id),
     getLogContent: ({ event: { returnValues } }) => ({
-      icon: <KeysIcon />,
+      icon: <BecomeAdminIcon />,
       content: (
         <>
           <EntityLink {...returnValues.callerCrew} />
@@ -1616,6 +1624,23 @@ const activities = {
 
     triggerAlert: true
   },
+
+  AddedToWhitelist: { getInvalidations: getPolicyInvalidations },
+  RemovedFromWhitelist: { getInvalidations: getPolicyInvalidations },
+  ContractPolicyAssigned: { getInvalidations: getPolicyInvalidations },
+  ContractPolicyRemoved: { getInvalidations: getPolicyInvalidations },
+  PrepaidPolicyAssigned: { getInvalidations: getPolicyInvalidations },
+  PrepaidPolicyRemoved: { getInvalidations: getPolicyInvalidations },
+  PublicPolicyAssigned: { getInvalidations: getPolicyInvalidations },
+  PublicPolicyRemoved: { getInvalidations: getPolicyInvalidations },
+  PrepaidMerklePolicyAssigned: { getInvalidations: getPolicyInvalidations },
+  PrepaidMerklePolicyRemoved: { getInvalidations: getPolicyInvalidations },
+
+  ContractAgreementAccepted: { getInvalidations: getAgreementInvalidations },
+  PrepaidMerkleAgreementAccepted: { getInvalidations: getAgreementInvalidations },
+  PrepaidAgreementAccepted: { getInvalidations: getAgreementInvalidations },
+  PrepaidAgreementExtended: { getInvalidations: getAgreementInvalidations },
+  PrepaidAgreementCancelled: { getInvalidations: getAgreementInvalidations },
 };
 
 /**

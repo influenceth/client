@@ -129,3 +129,7 @@ export const getProcessorProps = (processorType) => {
 }
 
 export const arrToXYZ = (arr) => ({ x: arr[0], y: arr[1], z: arr[2] });
+
+const yearOfSeconds = 31536000;
+export const secondsToMonths = (seconds) => Math.floor(100 * 12 * seconds / yearOfSeconds) / 100;
+export const monthsToSeconds = (months) => Math.floor(yearOfSeconds * months / 12);

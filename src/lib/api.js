@@ -28,43 +28,21 @@ useStore.subscribe(
   }
 );
 
-const arrayComponents = {
-  ContractAgreement: 'ContractAgreements',
-  ContractPolicy: 'ContractPolicies',
-  DryDock: 'DryDocks',
-  Extractor: 'Extractors',
-  Inventory: 'Inventories',
-  PrepaidAgreement: 'PrepaidAgreements',
-  PrepaidPolicy: 'PrepaidPolicies',
-  Processor: 'Processors',
-  PublicPolicy: 'PublicPolicies',
-  WhitelistAgreement: 'WhitelistAgreements',
-};
-
-const formatEntityData = (responseData) => {
-  return responseData?.map((entity) => {
-    return Object.keys(entity).reduce((acc, k) => {
-      if (!!arrayComponents[k]) {
-        acc[arrayComponents[k]] = entity[k] || [];
-      } else {
-        acc[k] = Array.isArray(entity[k]) ? entity[k][0] : entity[k];
-      }
-      return acc;
-    }, {});
-  }) || [];
-}
+// const arrayComponents = {
+//   ContractAgreement: 'ContractAgreements',
+//   ContractPolicy: 'ContractPolicies',
+//   DryDock: 'DryDocks',
+//   Extractor: 'Extractors',
+//   Inventory: 'Inventories',
+//   PrepaidAgreement: 'PrepaidAgreements',
+//   PrepaidPolicy: 'PrepaidPolicies',
+//   Processor: 'Processors',
+//   PublicPolicy: 'PublicPolicies',
+//   WhitelistAgreement: 'WhitelistAgreements',
+// };
 
 const formatESEntityData = (responseData) => {
-  return responseData?.hits?.hits?.map((h) => {
-    return Object.keys(h._source).reduce((acc, k) => {
-      if (!!arrayComponents[k]) {
-        acc[arrayComponents[k]] = h._source[k] || [];
-      } else {
-        acc[k] = Array.isArray(h._source[k]) ? h._source[k][0] : h._source[k];
-      }
-      return acc;
-    }, {});
-  }) || [];
+  return responseData?.hits?.hits?.map((h) => h._source) || [];
 }
 
 const buildQuery = (queryObj) => {
@@ -100,7 +78,7 @@ const getEntities = async ({ ids, match, label, components }) => {
   }
 
   const response = await instance.get(`/${apiVersion}/entities?${buildQuery(query)}`);
-  return formatEntityData(response.data);
+  return response.data;
 };
 
 const api = {

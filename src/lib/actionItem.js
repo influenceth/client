@@ -13,7 +13,6 @@ import {
   SurfaceTransferIcon,
   ShipIcon,
   BuildingIcon,
-  KeysIcon,
   ManageCrewIcon,
   NewCoreSampleIcon,
   UnplanBuildingIcon,
@@ -34,6 +33,8 @@ import {
   LimitBuyIcon,
   MarketSellIcon,
   CancelLimitOrderIcon,
+  BecomeAdminIcon,
+  PermissionIcon,
 } from '~/components/Icons';
 import theme, { hexToRGB } from '~/theme';
 import { getProcessorProps } from './utils';
@@ -320,7 +321,7 @@ const formatAsTx = (item) => {
 
     case 'InitializeAndManageAsteroid':
     case 'ManageAsteroid': {
-      formatted.icon = <KeysIcon />;
+      formatted.icon = <BecomeAdminIcon />;
       formatted.label = 'Control Asteroid';
       formatted.onClick = ({ openDialog }) => {
         openDialog('CONTROL_ASTEROID'); // TODO: need asteroid id?
@@ -744,6 +745,90 @@ const formatAsTx = (item) => {
       break;
     }
 
+    case 'UpdateAllowlist': {
+      formatted.icon = <PermissionIcon />;
+      formatted.label = 'Update Allowlist';
+      formatted.asteroidId = Lot.toPosition(item.meta?.lotId)?.asteroidId;
+      formatted.lotId = item.meta?.lotId;
+      formatted.shipId = item.meta?.shipId;
+      // formatted.onClick = () => {};
+      break;
+    }
+
+    case 'UpdatePolicy': {
+      formatted.icon = <PermissionIcon />;
+      formatted.label = 'Update Permissions';
+      formatted.asteroidId = Lot.toPosition(item.meta?.lotId)?.asteroidId;
+      formatted.lotId = item.meta?.lotId;
+      formatted.shipId = item.meta?.shipId;
+      // formatted.onClick = () => {};
+      break;
+    }
+    case 'AcceptContractAgreement': {
+      formatted.icon = <PermissionIcon />;
+      formatted.label = 'Contract Agreement';
+      formatted.asteroidId = Lot.toPosition(item.meta?.lotId)?.asteroidId;
+      formatted.lotId = item.meta?.lotId;
+      formatted.shipId = item.meta?.shipId;
+      formatted.onClick = ({ openDialog }) => {
+        openDialog(
+          'FORM_AGREEMENT',
+          { entity: item.vars.target, permission: item.vars.permission }
+        );
+      };
+      break;
+    }
+    case 'AcceptPrepaidAgreement': {
+      formatted.icon = <PermissionIcon />;
+      formatted.label = 'Prepaid Lease Agreement';
+      formatted.asteroidId = Lot.toPosition(item.meta?.lotId)?.asteroidId;
+      formatted.lotId = item.meta?.lotId;
+      formatted.shipId = item.meta?.shipId;
+      formatted.onClick = ({ openDialog }) => {
+        openDialog(
+          'FORM_AGREEMENT',
+          { entity: item.vars.target, permission: item.vars.permission }
+        );
+      };
+      break;
+    }
+    case 'ExtendPrepaidAgreement': {
+      formatted.icon = <PermissionIcon />;
+      formatted.label = 'Extend Prepaid Agreement';
+      formatted.asteroidId = Lot.toPosition(item.meta?.lotId)?.asteroidId;
+      formatted.lotId = item.meta?.lotId;
+      formatted.shipId = item.meta?.shipId;
+      formatted.onClick = ({ openDialog }) => {
+        openDialog(
+          'FORM_AGREEMENT',
+          { entity: item.vars.target, permission: item.vars.permission, isExtension: true }
+        );
+      };
+      break;
+    }
+    case 'CancelPrepaidAgreement': {
+      formatted.icon = <PermissionIcon />;
+      formatted.label = 'Cancel Prepaid Agreement';
+      formatted.asteroidId = Lot.toPosition(item.meta?.lotId)?.asteroidId;
+      formatted.lotId = item.meta?.lotId;
+      formatted.shipId = item.meta?.shipId;
+      formatted.onClick = ({ openDialog }) => {
+        // TODO: ...
+      };
+      break;
+    }
+
+    case 'AcceptPrepaidMerkleAgreement': {
+      formatted.icon = <PermissionIcon />;
+      formatted.label = 'TODO...';
+      formatted.asteroidId = Lot.toPosition(item.meta?.lotId)?.asteroidId;
+      formatted.lotId = item.meta?.lotId;
+      formatted.shipId = item.meta?.shipId;
+      formatted.onClick = ({ openDialog }) => {
+        // TODO: ...
+      };
+      break;
+    }
     default:
       console.log('Unhandled ActionItems tx', item);
       break;

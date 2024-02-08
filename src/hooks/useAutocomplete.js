@@ -13,6 +13,11 @@ const configByType = {
     formatLabel: (a) => formatters.asteroidName(a),
     valueKey: 'id'
   },
+  crews: {
+    formatFootnote: (c) => `ID #${(c.id || '').toLocaleString()}`,
+    formatLabel: (a) => formatters.crewName(a),
+    valueKey: 'id'
+  },
 }
 
 const useAutocomplete = (assetType) => {
@@ -26,6 +31,13 @@ const useAutocomplete = (assetType) => {
 
       let queryBuilder;
       if (assetType === 'asteroids') {
+        queryBuilder = esb.disMaxQuery();
+        const queries = [esb.matchQuery('Name.name', searchTerm)];
+        // if all numeric, also search against id
+        if (!/^[^0-9]/.test(searchTerm)) queries.push(esb.termQuery('id', searchTerm).boost(10));
+        queryBuilder.queries(queries);
+      }
+      else if (assetType === 'crews') {
         queryBuilder = esb.disMaxQuery();
         const queries = [esb.matchQuery('Name.name', searchTerm)];
         // if all numeric, also search against id

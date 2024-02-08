@@ -10,7 +10,7 @@ const isVisible = ({ crew, lot, ship }) => {
   const entity = ship || lot?.surfaceShip || lot?.building;
   return crew
     // && entity?.Control?.controller?.id === crew.id  // TODO: policy instead?
-    && entity?.Inventories?.find((i) => i.status === Inventory.STATUSES.AVAILABLE);
+    && ((entity?.Inventories || []).find((i) => i.status === Inventory.STATUSES.AVAILABLE));
 };
 
 const SurfaceTransferOutgoing = ({ asteroid, crew, lot, ship, onSetAction, dialogProps = {}, _disabled }) => {

@@ -1,15 +1,19 @@
-import { Building, Entity } from '@influenceth/sdk';
+import { useMemo } from 'react';
+import { Building, Entity, Permission } from '@influenceth/sdk';
 
 import useLot from '~/hooks/useLot';
 import useStore from '~/hooks/useStore';
-import MarketplaceSettings from './components/MarketplaceSettings';
 import { HudMenuCollapsibleSection, Scrollable } from './components/components';
+import EntityDescriptionForm from './components/EntityDescriptionForm';
 import EntityNameForm from './components/EntityNameForm';
 import LotTitleArea from './components/LotTitleArea';
+import MarketplaceSettings from './components/MarketplaceSettings';
+import PolicyPanels from './components/PolicyPanels';
 
 const AdminBuilding = ({}) => {
   const lotId = useStore(s => s.asteroids.lot);
   const { data: lot } = useLot(lotId);
+ 
   return (
     <>
       <Scrollable>
@@ -23,11 +27,14 @@ const AdminBuilding = ({}) => {
         </HudMenuCollapsibleSection>
 
         <HudMenuCollapsibleSection titleText="Update Description" collapsed>
-          {/* TODO ... */}
+          <EntityDescriptionForm
+            entity={lot?.building ? { id: lot.building.id, label: Entity.IDS.BUILDING } : null}
+            originalDesc={``}
+            label="Building Description" />
         </HudMenuCollapsibleSection>
 
         <HudMenuCollapsibleSection titleText="Update Permissions" collapsed>
-          {/* TODO ... */}
+          <PolicyPanels editable entity={lot?.building} />
         </HudMenuCollapsibleSection>
 
         {lot?.building?.Building?.buildingType === Building.IDS.MARKETPLACE && (

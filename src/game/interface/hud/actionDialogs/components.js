@@ -3402,7 +3402,7 @@ export const BuildingInputBlock = ({ building, imageProps = {}, ...props }) => {
           : <EmptyBuildingImage {...imageProps} />
       }
       label={building?.Name?.name || Building.TYPES[buildingType].name}
-      sublabel={building?.Name?.name ? Building.TYPES[buildingType].name : formatters.lotName(Entity.toPosition(building.Location?.location)?.lotIndex || 0)}
+      sublabel={building?.Name?.name ? Building.TYPES[buildingType].name : formatters.lotName(Lot.toPosition(building.Location?.location)?.lotIndex || 0)}
       {...props}
     />
   );

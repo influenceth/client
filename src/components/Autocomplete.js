@@ -51,10 +51,11 @@ const Loading = styled.div`
 
 const AutocompleteComponent = ({
   dropdownProps = {},
+  excludeFunc,
   formatFootnote,
   formatLabel,
   onSelect,
-  options,
+  options: rawOptions,
   isLoading,
   searchTerm,
   selected,
@@ -87,6 +88,11 @@ const AutocompleteComponent = ({
       },
     ],
   });
+
+  const options = useMemo(
+    () => rawOptions.filter((o) => !excludeFunc || !excludeFunc(o)),
+    [excludeFunc, rawOptions]
+  );
 
   const handleKeyDown = useCallback((e) => {
     if (e.key === 'Escape') {
@@ -222,6 +228,7 @@ export const StaticAutocomplete = ({
 const Autocomplete = ({
   assetType,
   dropdownProps = {},
+  excludeFunc,
   onSelect,
   selected,
   width,
@@ -240,6 +247,7 @@ const Autocomplete = ({
   return (
     <AutocompleteComponent
       dropdownProps={dropdownProps}
+      excludeFunc={excludeFunc}
       formatFootnote={formatFootnote}
       formatLabel={formatLabel}
       onSelect={onSelect}

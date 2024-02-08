@@ -35,6 +35,10 @@ const useLot = (lotId) => {
           'Building', 'Control', 'Dock', 'DryDock', 'Exchange', 'Extractor', 'Inventory', 'Location', 'Name', 'Processor', 'Station',
           /*'Control',*/ 'Deposit', /*'Location',*/
           /*'Control', 'Inventory', 'Location', 'Name',*/ 'Ship', /*'Station',*/
+
+          // TODO: do we need these on all entities? when should we pull *Agreement's? *Policy's?
+          'ContractPolicy', 'PrepaidPolicy', 'PublicPolicy',
+          'ContractAgreement', 'PrepaidAgreement', 'WhitelistAgreement',
         ]
       })) || [];
 
