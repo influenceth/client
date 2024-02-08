@@ -32,7 +32,7 @@ const LaunchShip = ({ asteroid, lot, onSetAction, _disabled }) => {
     if (!ready) return 'ship is busy';
 
     // disable if waiting on delivery
-    const invReserved = crewedShip?.Inventories?.find((i) => i.reservedMass > 0)
+    const invReserved = (crewedShip?.Inventories || []).find((i) => i.reservedMass > 0)
       || currentDeliveries?.length > 0;
     if (invReserved) return 'delivery pending';
     return getCrewDisabledReason({ asteroid, crew });

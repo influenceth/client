@@ -53,7 +53,7 @@ const useColumns = () => {
         label: 'Asteroid',
         sortField: 'meta.asteroid.name',
         selector: row => {
-          const loc = Entity.toPosition(row.Location?.location);
+          const loc = Lot.toPosition(row.Location?.location);
           return (
             <>
               <LocationLink asteroidId={loc.asteroidId} />

@@ -764,6 +764,19 @@ const formatAsTx = (item) => {
       // formatted.onClick = () => {};
       break;
     }
+    case 'AcceptPrepaidAgreement': {
+      formatted.icon = <PermissionIcon />;
+      formatted.label = 'Prepaid Lease Agreement';
+      formatted.asteroidId = Lot.toPosition(item.meta?.lotId)?.asteroidId;
+      formatted.lotId = item.meta?.lotId;
+      formatted.shipId = item.meta?.shipId;
+      formatted.onClick = ({ openDialog }) => {
+        openDialog(
+          'FORM_AGREEMENT',
+          { entity: item.vars.target , permission: item.vars.permission }
+        );
+      };
+    }
 
     default:
       console.log('Unhandled ActionItems tx', item);

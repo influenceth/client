@@ -235,7 +235,7 @@ const useMappedAsteroidLots = (i) => {
     } else if (eventType === 'ShipDocked' || eventType === 'ShipAssemblyFinished') {
       const entityId = body.event.returnValues.dock || body.event.returnValues.destination;
       if (entityId?.label === Entity.IDS.LOT) {
-        const position = Entity.toPosition(entityId);
+        const position = Lot.toPosition(entityId);
         asteroidId = position.asteroidId;
         lotIndex = position.lotIndex;
         buildingType = 15;
@@ -244,7 +244,7 @@ const useMappedAsteroidLots = (i) => {
     // ship undocked from empty lot (15 -> 0)
     } else if (eventType === 'ShipUndocked') {
       if (body.event.returnValues.dock.label === Entity.IDS.LOT) {
-        const position = Entity.toPosition(body.event.returnValues.dock);
+        const position = Lot.toPosition(body.event.returnValues.dock);
         asteroidId = position.asteroidId;
         lotIndex = position.lotIndex;
         buildingType = 0;

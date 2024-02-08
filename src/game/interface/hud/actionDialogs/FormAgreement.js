@@ -1,14 +1,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Entity, Permission, Product } from '@influenceth/sdk';
+import { Entity, Permission, Product, Time } from '@influenceth/sdk';
 import styled from 'styled-components';
 
 import headerBackground from '~/assets/images/modal_headers/CrewManagement.png';
-import { ExtendAgreementIcon, FoodIcon, FormAgreementIcon, ForwardIcon, InventoryIcon, LocationIcon, RouteIcon, SurfaceTransferIcon, WarningOutlineIcon } from '~/components/Icons';
+import { ExtendAgreementIcon, FoodIcon, FormAgreementIcon, ForwardIcon, InventoryIcon, LocationIcon, PermissionIcon, RouteIcon, SurfaceTransferIcon, SwayIcon, WarningOutlineIcon } from '~/components/Icons';
 import useCrewContext from '~/hooks/useCrewContext';
 import useDeliveryManager from '~/hooks/actionManagers/useDeliveryManager';
 import useLot from '~/hooks/useLot';
 import useStore from '~/hooks/useStore';
-import { reactBool, formatTimer, locationsArrToObj, getCrewAbilityBonuses, formatFixed } from '~/lib/utils';
+import { reactBool, formatTimer, locationsArrToObj, getCrewAbilityBonuses, formatFixed, monthsToSeconds } from '~/lib/utils';
 import {
   ItemSelectionSection,
   ActionDialogFooter,
@@ -45,6 +45,8 @@ import {
   CrewInputBlock,
   MiniBarChart,
   formatResourceMass,
+  BuildingInputBlock,
+  ShipInputBlock,
 } from './components';
 import { ActionDialogInner } from '../ActionDialog';
 import actionStages from '~/lib/actionStages';
@@ -58,42 +60,80 @@ import useAuth from '~/hooks/useAuth';
 import useBlockTime from '~/hooks/useBlockTime';
 import useAgreementManager from '~/hooks/actionManagers/useAgreementManager';
 import useHydratedLocation from '~/hooks/useHydratedLocation';
-import { BuildingInputBlock } from './components';
-import { ShipInputBlock } from './components';
 import useCrew from '~/hooks/useCrew';
+import UncontrolledTextInput, { TextInputWrapper } from '~/components/TextInputUncontrolled';
+import useSwayBalance from '~/hooks/useSwayBalance';
 
-const PseudoStatRow = styled.div`
+const FormSection = styled.div`
+  margin-top: 12px;
+  &:first-child {
+    margin-top: 0px;
+  }
+`;
+
+const InputLabel = styled.div`
   align-items: center;
+  color: #888;
   display: flex;
-  justify-content: space-between;
-  padding: 5px 0;
+  flex-direction: row;
+  font-size: 14px;
+  margin-bottom: 3px;
   & > label {
     flex: 1;
   }
   & > span {
+    b {
+      color: white;
+      font-weight: normal;
+    }
+  }
+`;
+
+const DisabledUncontrolledTextInput = styled(UncontrolledTextInput)`
+  background: rgba(${p => p.theme.colors.mainRGB}, 0.15);
+`;
+
+const InputSublabels = styled.div`
+  display: flex;
+  flex-direction: row;
+  font-size: 80%;
+  justify-content: space-between;
+  margin: 6px 0;
+  & > div > b {
     color: white;
-    font-weight: bold;
-    white-space: nowrap;
+    font-weight: normal;
   }
 `;
 
-const UnderLabel = styled.span`
-  overflow: hidden;
-  text-align: center;
-  width: 25%;
-  
-  &:first-child {
-    text-align: left;
-  }
-  &:last-child {
-    text-align: right;
-  }
+const InsufficientAssets = styled.span`
+  color: ${p => p.theme.colors.red};
 `;
-
 const Alert = styled.div`
-  background: #555;
-  & > div:first-child {
-    background: blue;
+  & > div {
+    display: flex;
+
+    &:first-child {
+      align-items: center;
+      background: rgba(${p => p.theme.colors.mainRGB}, 0.4);
+      color: white;
+      display: flex;
+      font-size: 20px;
+      padding: 8px 8px;
+      & > svg {
+        font-size: 24px;
+        margin-right: 6px;
+      }
+    }
+
+    &:last-child {
+      align-items: flex-end;
+      justify-content: space-between;
+      padding: 8px 10px 0;
+      b {
+        color: white;
+        font-weight: normal;
+      }
+    }
   }
 `;
 
@@ -105,137 +145,42 @@ const FormAgreement = ({
   stage,
   ...props
 }) => {
-  const { changePending } = agreementManager;
+  const { currentPolicy, enterAgreement } = agreementManager;
   const { crew } = useCrewContext();
+  const { data: swayBalance } = useSwayBalance();
   // const blockTime = useBlockTime();
 
   const crewmates = crew?._crewmates;
   const captain = crewmates[0];
   const location = useHydratedLocation(locationsArrToObj(entity?.Location?.locations || []));
 
-  const { data: controller } = useCrew(entity?.Control?.controller);
+  const { data: controller } = useCrew(entity?.Control?.controller?.id);
 
-  // const crewTravelBonus = useMemo(() => {
-  //   if (!crew) return {};
-  //   return getCrewAbilityBonuses(Crewmate.ABILITY_IDS.HOPPER_TRANSPORT_TIME, crew) || {};
-  // }, [crew]);
+  const [initialPeriod, setInitialPeriod] = useState(currentPolicy?.policyDetails?.initialTerm || 0);
 
-  // const [originSelectorOpen, setOriginSelectorOpen] = useState(false);
-  // const [tab, setTab] = useState(0);
-  // const [transferSelectorOpen, setTransferSelectorOpen] = useState();
-  // const [selectedItems, setSelectedItems] = useState(props.preselect?.selectedItems || {});
+  // TODO: ? the stats in the mock are very redundant
+  const stats = useMemo(() => ([]), []);
 
-  // // get origin* data
-  // const [originSelection, setOriginSelection] = useState(
-  //   (currentFeeding && currentFeeding.vars?.origin && {
-  //     id: currentFeeding.vars?.origin?.id,
-  //     label: currentFeeding.vars?.origin?.label,
-  //     slot: currentFeeding.vars?.origin_slot,
-  //   }) || undefined
-  // );
-  // const { data: origin } = useEntity(originSelection ? { id: originSelection.id, label: originSelection.label } : undefined);
-  // const originLotId = useMemo(() => origin && locationsArrToObj(origin?.Location?.locations || []).lotId, [origin]);
-  // const { data: originLot } = useLot(originLotId);
-  // const originInventory = useMemo(() => (origin?.Inventories || []).find((i) => i.slot === originSelection?.slot), [origin, originSelection]);
+  const totalLeaseCost = useMemo(() => {
+    return (initialPeriod || 0) * (currentPolicy?.policyDetails?.rate || 0)
+  }, [initialPeriod, currentPolicy]);
 
-  // // handle "currentFeeding" state
-  // useEffect(() => {
-  //   if (currentFeeding) {
-  //     setSelectedItems({ [Product.IDS.FOOD]: currentFeeding.vars?.food || 0 });
-  //   }
-  // }, [currentFeeding]);
+  const insufficientAssets = useMemo(
+    () => BigInt(Math.ceil(totalLeaseCost)) > swayBalance,
+    [swayBalance, totalLeaseCost]
+  );
 
-  // const [transportDistance, transportTime] = useMemo(() => {
-  //   if (!asteroid?.id || !originLot?.id) return [0, 0];
-  //   const originLotIndex = Lot.toIndex(originLot?.id);
-  //   const destinationLotIndex = crew?._location?.lotIndex;
-  //   const transportDistance = Asteroid.getLotDistance(asteroid?.id, originLotIndex, destinationLotIndex);
-  //   const transportTime = Time.toRealDuration(
-  //     Asteroid.getLotTravelTime(asteroid?.id, originLotIndex, destinationLotIndex, crewTravelBonus.totalBonus),
-  //     crew?._timeAcceleration
-  //   );
-  //   return [transportDistance, transportTime];
-  // }, [asteroid?.id, originLot?.id, crewTravelBonus, crew?._location?.lotIndex, crew?._timeAcceleration]);
+  const handlePeriodChange = useCallback((e) => {
+    // TODO: validate min/max before updating state
+    setInitialPeriod(e.currentTarget.value);
+  }, []);
 
-  // const { totalMass, totalVolume } = useMemo(() => {
-  //   return Object.keys(selectedItems).reduce((acc, resourceId) => {
-  //     acc.totalMass += selectedItems[resourceId] * Product.TYPES[resourceId].massPerUnit;
-  //     acc.totalVolume += selectedItems[resourceId] * Product.TYPES[resourceId].volumePerUnit;
-  //     return acc;
-  //   }, { totalMass: 0, totalVolume: 0 })
-  // }, [selectedItems]);
-
-  // const [crewTimeRequirement, taskTimeRequirement] = useMemo(() => {
-  //   return [
-  //     transportTime,
-  //     0
-  //   ];
-  // }, [transportTime]);
-
-  // const stats = useMemo(() => ([
-  //   {
-  //     label: 'Task Duration',
-  //     value: formatTimer(transportTime),
-  //     direction: getBonusDirection(crewTravelBonus),
-  //     isTimeStat: true,
-  //     tooltip: (
-  //       <TimeBonusTooltip
-  //         bonus={crewTravelBonus}
-  //         title="Transport Time"
-  //         totalTime={transportTime}
-  //         crewRequired="start" />
-  //     )
-  //   },
-  //   {
-  //     label: 'Transfer Distance',
-  //     value: `${Math.round(transportDistance)} km`,
-  //     direction: 0
-  //   },
-  //   {
-  //     label: 'Transfered Mass',
-  //     value: `${formatMass(totalMass)}`,
-  //     direction: 0
-  //   },
-  //   {
-  //     label: 'Transfered Volume',
-  //     value: `${formatVolume(totalVolume)}`,
-  //     direction: 0
-  //   },
-  // ]), [totalMass, totalVolume, transportDistance, transportTime]);
-
-  // const onStartFeeding = useCallback(() => {
-  //   feedCrew({
-  //     origin,
-  //     originSlot: originInventory?.slot,
-  //     amount: Math.floor(selectedItems[Product.IDS.FOOD])
-  //   });
-  // }, [asteroid?.id, origin, originInventory, originLot, selectedItems]);
-
-  // const foodStats = useMemo(() => {
-  //   const maxFood = (crew?._crewmates?.length || 1) * Crew.CREWMATE_FOOD_PER_YEAR;
-  //   const timeSinceFed = Time.toGameDuration(blockTime - (crew?.Crew?.lastFed || 0), crew?._timeAcceleration);
-  //   const currentFood = Math.floor(maxFood * Crew.getCurrentFoodRatio(timeSinceFed, crew._foodBonuses?.consumption)); // floor to quanta
-  //   const addingFood = selectedItems[Product.IDS.FOOD] || 0;
-  //   const postValue = (currentFood + addingFood) / maxFood;
-  //   const postTimeSinceFed = Crew.getTimeSinceFed((currentFood + addingFood) / maxFood, crew._foodBonuses?.consumption);
-  //   const rationingTimeSinceFed = Crew.getTimeSinceFed(0.5, crew._foodBonuses?.consumption);
-  //   const rationingPenalty = 1 - Crew.getFoodMultiplier(postTimeSinceFed, crew._foodBonuses?.consumption, crew._foodBonuses?.rationing);
-  //   const timeUntilRationing = Time.toRealDuration(Math.max(0, rationingTimeSinceFed - postTimeSinceFed));
-  
-  //   const barColor = postValue >= 0.5 ? theme.colors.green : theme.colors.warning;
-  //   const deltaValue = addingFood / maxFood;
-
-  //   return {
-  //     addingFood,
-  //     barColor,
-  //     currentFood,
-  //     deltaValue,
-  //     maxFood,
-  //     postValue,
-  //     rationingPenalty,
-  //     timeUntilRationing
-  //   }
-  // }, [crew?._crewmates, crew?.Crew?.lastFed, crew?._timeAcceleration, blockTime, selectedItems]);
+  const onEnterAgreement = useCallback(() => {
+    const recipient = controller?.Crew?.delegatedTo;
+    const term = monthsToSeconds(initialPeriod);
+    const termPrice = totalLeaseCost * 1e6;
+    enterAgreement({ recipient, term, termPrice });
+  }, [controller?.Crew?.delegatedTo, initialPeriod, totalLeaseCost]);
 
   const actionDetails = useMemo(() => {
     const policyType = Permission.POLICY_IDS.PREPAID; // TODO: ...
@@ -255,9 +200,6 @@ const FormAgreement = ({
     }
   }, [entity, isExtension, stage]);
 
-  const insufficientAssets = false;// TODO
-  const stats = [];
-
   return (
     <>
       <ActionDialogHeader
@@ -271,43 +213,92 @@ const FormAgreement = ({
         stage={stage} />
 
       <ActionDialogBody>
+        <FlexSection style={{ alignItems: 'flex-start' }}>
+          <FlexSectionBlock
+            title="Agreement Details"
+            bodyStyle={{ height: 'auto', padding: 0 }}>
 
-        <FlexSection>
-          <div>
             {entity.label === Entity.IDS.BUILDING && (
-              <BuildingInputBlock />
+              <BuildingInputBlock building={entity} style={{ width: '100%' }} />
             )}
             {entity.label === Entity.IDS.LOT && (
-              <LotInputBlock />
+              <LotInputBlock lot={entity} style={{ width: '100%' }} />
             )}
             {entity.label === Entity.IDS.SHIP && (
-              <ShipInputBlock />
+              <ShipInputBlock ship={entity} style={{ width: '100%' }} />
             )}
 
-            <CrewIndicator crew={controller} />
-          </div>
+            <div style={{ padding: '20px 10px' }}>
+              <CrewIndicator crew={controller} />
+            </div>
+          </FlexSectionBlock>
           
-          <FlexSectionSpacer>
-            <ForwardIcon />
-          </FlexSectionSpacer>
+          <FlexSectionSpacer />
 
-          <div>
-            form goes here
-          </div>
+          <FlexSectionBlock
+            title="Lease For"
+            bodyStyle={{ height: 'auto', padding: '6px 12px' }}>
+            
+            <FormSection>
+              <InputLabel>
+                <label>Leasing Period</label>
+              </InputLabel>
+              <TextInputWrapper rightLabel="months">
+                <UncontrolledTextInput
+                  disabled={stage !== actionStages.NOT_STARTED}
+                  min={currentPolicy?.policyDetails?.initialTerm || 0}
+                  max={12 - (currentPolicy?.policyDetails?.noticePeriod || 0)}
+                  onChange={handlePeriodChange}
+                  step={0.1}
+                  type="number"
+                  value={initialPeriod || 0} />
+              </TextInputWrapper>
+              <InputSublabels>
+                <div>Min <b>{formatFixed(currentPolicy?.policyDetails?.initialTerm || 0, 1)} months</b></div>
+                <div>Max <b>{formatFixed(12 - (currentPolicy?.policyDetails?.noticePeriod || 0), 1)} months</b></div>
+              </InputSublabels>
+            </FormSection>
+            
+            <FormSection>
+              <InputLabel>
+                <label>Price</label>
+              </InputLabel>
+              <TextInputWrapper rightLabel="SWAY / month">
+                <DisabledUncontrolledTextInput
+                  disabled
+                  value={(currentPolicy?.policyDetails?.rate || 0)} />
+              </TextInputWrapper>
+            </FormSection>
+
+          </FlexSectionBlock>
         </FlexSection>
 
         <FlexSection style={{ alignItems: 'flex-start' }}>
-        <FlexSectionBlock
+          <FlexSectionInputBlock
             title="Agreement Details"
-            bodyStyle={{ height: 'auto', padding: 0 }}
+            bodyStyle={{ height: 'auto', padding: 6 }}
             style={{ width: '100%' }}>
-            <Alert insufficientAssets={reactBool(insufficientAssets)}>
+            <Alert>
               <div>
-                blurf
+                <PermissionIcon /> {Permission.TYPES[permission].name}
+              </div>
+              <div>
+                <div>
+                  {insufficientAssets
+                    ? <InsufficientAssets>Insufficient Wallet Balance</InsufficientAssets>
+                    : <>Granted For: <b>{' '}{initialPeriod} months</b></>
+                  }
+                </div>
+                <div style={{ position: 'relative', top: 4 }}>
+                  <span style={{ position: 'relative', bottom: 4 }}>Total:</span>
+                  <span style={{ color: 'white', display: 'inline-flex', fontSize: '32px', height: '32px', lineHeight: '32px' }}>
+                    <SwayIcon /> <span>{formatFixed(totalLeaseCost)}</span>
+                  </span>
+                </div>
               </div>
             </Alert>
 
-          </FlexSectionBlock>
+          </FlexSectionInputBlock>
 
         </FlexSection>
 
@@ -319,10 +310,9 @@ const FormAgreement = ({
       </ActionDialogBody>
 
       <ActionDialogFooter
-        disabled={false/* TODO */}
-        finalizeLabel="Complete"
-        goLabel="Transfer"
-        onGo={() => {}}
+        disabled={insufficientAssets}
+        goLabel="Create Agreement"
+        onGo={onEnterAgreement}
         stage={stage}
         {...props} />
     </>
@@ -331,7 +321,7 @@ const FormAgreement = ({
 
 const Wrapper = ({ entity: entityId, permission, isExtension, ...props }) => {
   const { crewIsLoading } = useCrewContext();
-  const { data: entity, isLoading: entityIsLoading } = useEntity(entity);
+  const { data: entity, isLoading: entityIsLoading } = useEntity(entityId);
   const agreementManager = useAgreementManager(entity, permission);
 
   const stage = agreementManager.changePending ? actionStages.STARTING : actionStages.NOT_STARTED;

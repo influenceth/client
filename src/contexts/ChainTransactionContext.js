@@ -158,6 +158,18 @@ const customConfigs = {
       memo: Entity.packEntity(delivery)
     })
   },
+  AcceptPrepaidAgreement: {
+    equalityTest: ['target.id', 'target.label', 'permission'],
+    getTransferConfig: ({ recipient, permission, permitted, target, term, termPrice }) => ({
+      amount: BigInt(termPrice),
+      recipient,
+      memo: [
+        Entity.packEntity(target),
+        permission,
+        Entity.packEntity(permitted),
+      ]
+    })
+  },
   ArrangeCrew: { equalityTest: ['caller_crew.id'] },
 
   AssembleShipStart: { equalityTest: ['dry_dock.id', 'dry_dock_slot'] },

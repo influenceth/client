@@ -70,6 +70,8 @@ const useAgreementManager = (entity, permission) => {
 
   return {
     currentAgreement,
+    currentPolicy,
+    
     enterAgreement,
     extendAgreement,
     cancelAgreement,

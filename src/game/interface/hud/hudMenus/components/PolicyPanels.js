@@ -442,14 +442,14 @@ const PolicyPanel = ({ editable = false, entity, permission }) => {
           <Section>
             <DataBlock>
               <DataRow><label>Policy Type</label><span>{config.name}</span></DataRow>
-              {policyType === Permission.POLICY_IDS.CONTRACT && (
+              {policyType === Permission.POLICY_IDS.PREPAID && (
                 <>
                   <DataRow><label>Price per Month</label><span><SwayIcon /> {(originalPolicyDetails?.rate || 0).toLocaleString()}</span></DataRow>
                   <DataRow><label>Minimum Period</label><span>{formatFixed(originalPolicyDetails?.initialTerm, 1)} mo</span></DataRow>
                   <DataRow><label>Notice Period</label><span>{formatFixed(originalPolicyDetails?.noticePeriod, 1)} mo</span></DataRow>
                 </>
               )}
-              {([Permission.POLICY_IDS.CONTRACT,Permission.POLICY_IDS.PREPAID].includes(policyType)) && (
+              {([Permission.POLICY_IDS.CONTRACT, Permission.POLICY_IDS.PREPAID].includes(policyType)) && (
                 <div style={{ paddingTop: 15 }}>
                   <actionButtons.FormAgreement.Component entity={entity} permission={permission} />
                   <actionButtons.ViewAgreements.Component _disabled={!agreements?.length} tally={agreements?.length || 0} />
