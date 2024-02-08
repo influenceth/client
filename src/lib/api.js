@@ -35,7 +35,7 @@ const arrayComponents = {
   Extractor: 'Extractors',
   Inventory: 'Inventories',
   PrepaidAgreement: 'PrepaidAgreements',
-  PrepaidPolicy: 'ContractPolicies',
+  PrepaidPolicy: 'PrepaidPolicies',
   Processor: 'Processors',
   PublicPolicy: 'PublicPolicies',
   WhitelistAgreement: 'WhitelistAgreements',
