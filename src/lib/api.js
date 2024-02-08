@@ -28,6 +28,45 @@ useStore.subscribe(
   }
 );
 
+const arrayComponents = {
+  ContractAgreement: 'ContractAgreements',
+  ContractPolicy: 'ContractPolicies',
+  DryDock: 'DryDocks',
+  Extractor: 'Extractors',
+  Inventory: 'Inventories',
+  PrepaidAgreement: 'PrepaidAgreements',
+  PrepaidPolicy: 'ContractPolicies',
+  Processor: 'Processors',
+  PublicPolicy: 'PublicPolicies',
+  WhitelistAgreement: 'WhitelistAgreements',
+};
+
+const formatEntityData = (responseData) => {
+  return responseData?.map((entity) => {
+    return Object.keys(entity).reduce((acc, k) => {
+      if (!!arrayComponents[k]) {
+        acc[arrayComponents[k]] = entity[k] || [];
+      } else {
+        acc[k] = Array.isArray(entity[k]) ? entity[k][0] : entity[k];
+      }
+      return acc;
+    }, {});
+  }) || [];
+}
+
+const formatESEntityData = (responseData) => {
+  return responseData?.hits?.hits?.map((h) => {
+    return Object.keys(h._source).reduce((acc, k) => {
+      if (!!arrayComponents[k]) {
+        acc[arrayComponents[k]] = h._source[k] || [];
+      } else {
+        acc[k] = Array.isArray(h._source[k]) ? h._source[k][0] : h._source[k];
+      }
+      return acc;
+    }, {});
+  }) || [];
+}
+
 const buildQuery = (queryObj) => {
   return Object.keys(queryObj || {}).map((key) => {
     return `${encodeURIComponent(key)}=${encodeURIComponent(queryObj[key])}`;
@@ -61,34 +100,8 @@ const getEntities = async ({ ids, match, label, components }) => {
   }
 
   const response = await instance.get(`/${apiVersion}/entities?${buildQuery(query)}`);
-  return response.data;
+  return formatEntityData(response.data);
 };
-
-const arrayComponents = {
-  ContractAgreement: 'ContractAgreements',
-  ContractPolicy: 'ContractPolicies',
-  DryDock: 'DryDocks',
-  Extractor: 'Extractors',
-  Inventory: 'Inventories',
-  Processor: 'Processors',
-  PrepaidAgreement: 'PrepaidAgreements',
-  PrepaidPolicy: 'PrepaidPolicies',
-  PublicPolicy: 'PublicPolicies',
-  WhitelistAgreement: 'WhitelistAgreements',
-};
-
-const formatESEntityData = (responseData) => {
-  return responseData?.hits?.hits?.map((h) => {
-    return Object.keys(h._source).reduce((acc, k) => {
-      if (!!arrayComponents[k]) {
-        acc[arrayComponents[k]] = h._source[k] || [];
-      } else {
-        acc[k] = Array.isArray(h._source[k]) ? h._source[k][0] : h._source[k];
-      }
-      return acc;
-    }, {});
-  }) || [];
-}
 
 const api = {
   getUser: async () => {
@@ -737,14 +750,17 @@ const api = {
     return response.data.token;
   },
 
-  // createDevnetBlock: async () => {
-  //   return;
-  //   try {
-  //     axios.post(`${process.env.REACT_APP_STARKNET_NETWORK}/create_block`, {});
-  //   } catch (e) {
-  //     console.warn(e);
-  //   }
-  // }
+  // Checks the status of the faucet
+  faucetInfo: async () => {
+    const response = await instance.get(`/${apiVersion}/faucet`);
+    return response.data;
+  },
+
+  // Request either ETH or SWAY from the faucet (non-production only)
+  requestTokens: async (token) => {
+    const response = await instance.post(`/${apiVersion}/faucet/${token}`);
+    return response.data;
+  }
 };
 
 export default api;
