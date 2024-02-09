@@ -114,7 +114,7 @@ const CrewAssignment = ({ crewId, crewmateId, onFinish }) => {
   const [selection, setSelection] = useState();
 
   let onCloseDestination;
-  if (bookSession?.isMintingStory || Object.keys(crewmateMap || {}).length > 0) {
+  if (Object.keys(crewmateMap || {}).length > 0) {
     onCloseDestination = '/crew';
   } else {
     onCloseDestination = '/';
