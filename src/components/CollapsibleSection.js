@@ -76,6 +76,7 @@ const Collapsible = styled.div`
   ${p => !p.collapsed && css`
     animation: ${expandedAnim} 500ms;
     max-height: 2000px;
+    min-height: 140px;
   `};
 `;
 
