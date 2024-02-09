@@ -93,6 +93,11 @@ const buttonOrder = [
   // deconstruct
   'Deconstruct',
   'UnplanBuilding',
+
+  // rewards
+  'ClaimArrivalReward',
+  'ClaimPrepareReward'
+
 ].reduce((acc, k, i) => ({ ...acc, [k]: i + 1 }), {});
 
 const useActionButtons = () => {

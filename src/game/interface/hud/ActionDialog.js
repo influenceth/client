@@ -12,6 +12,8 @@ import actionStage from '~/lib/actionStages';
 import { reactBool } from '~/lib/utils';
 import theme, { hexToRGB } from '~/theme';
 import AssembleShip from './actionDialogs/AssembleShip';
+import ClaimArrivalReward from './actionDialogs/ClaimArrivalReward';
+import ClaimPrepareReward from './actionDialogs/ClaimPrepareReward';
 import Construct from './actionDialogs/Construct';
 import ControlAsteroid from './actionDialogs/ControlAsteroid';
 import EmergencyModeCollect from './actionDialogs/EmergencyModeCollect';
@@ -220,6 +222,8 @@ const ActionDialog = ({ type, params }) => {
     <Backdrop>
       <ModalCushion>
         {type === 'ASSEMBLE_SHIP' && <AssembleShip {...allProps} />}
+        {type === 'CLAIM_ARRIVAL_REWARD' && <ClaimArrivalReward {...allProps} />}
+        {type === 'CLAIM_PREPARE_REWARD' && <ClaimPrepareReward {...allProps} />}
         {type === 'CONTROL_ASTEROID' && <ControlAsteroid {...allProps} />}
         {type === 'PLAN_BUILDING' && <PlanBuilding {...allProps} />}
         {type === 'UNPLAN_BUILDING' && <UnplanBuilding {...allProps} />}

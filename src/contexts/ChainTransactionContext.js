@@ -312,6 +312,11 @@ const customConfigs = {
     equalityTest: ['caller_crew.id'],
     isVirtual: true
   },
+  InitializeAndClaimPrepareForLaunchReward: {
+    multisystemCalls: ['InitializeAsteroid', 'ClaimPrepareForLaunchReward'],
+    equalityTest: ['asteroid.id'],
+    isVirtual: true
+  },
   EscrowDepositAndCreateBuyOrder: {
     getEscrowAmount: ({ price, amount, feeTotal }) => {
       return BigInt((price * amount + feeTotal) || 0);
@@ -357,7 +362,7 @@ const customConfigs = {
   FillSellOrder: {
     getTransferConfig: (vars) => {
       // memo === order path
-      const memo = [  
+      const memo = [
         Entity.packEntity(vars.seller_crew),
         Entity.packEntity(vars.exchange),
         Order.IDS.LIMIT_SELL,
@@ -564,7 +569,7 @@ export function ChainTransactionProvider({ children }) {
 
                   console.log('runSystem via escrow deposit', runSystem, processedVars, escrowCall);
                   calls.push(escrowCall);
-                
+
                 // escrow withdrawal
                 } else {
                   processedVars = customConfigs[escrowConfig.withdrawHook]?.preprocess ? customConfigs[escrowConfig.withdrawHook].preprocess(rawVars) : rawVars;

@@ -34,6 +34,13 @@ filtersToQuery.asteroids = (filters) => {
     }
   }
 
+  if (filters.surfaceAreaMin || filters.surfaceAreaMax) {
+    const radiusRange = esb.rangeQuery('Celestial.radius');
+    if (filters.surfaceAreaMin) radiusRange.gte(Math.sqrt(filters.surfaceAreaMin / (4 * Math.PI)));
+    if (filters.surfaceAreaMax) radiusRange.lte(Math.sqrt(filters.surfaceAreaMax / (4 * Math.PI)));
+    queryBuilder.filter(radiusRange);
+  }
+
   if (filters.radiusMin || filters.radiusMax) {
     const radiusRange = esb.rangeQuery('Celestial.radius');
     if (filters.radiusMin) radiusRange.gte(filters.radiusMin);

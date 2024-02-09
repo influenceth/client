@@ -5,8 +5,8 @@ import useAsteroid from '~/hooks/useAsteroid';
 import useControlAsteroid from '~/hooks/actionManagers/useControlAsteroid';
 import ActionButton from './ActionButton';
 
-const isVisible = ({ account, asteroid, crew }) => {
-  return crew && asteroid
+const isVisible = ({ account, asteroid, lot, crew }) => {
+  return crew && asteroid && !lot
     && asteroid.Nft?.owner === account
     && crew?.id && asteroid.Control?.controller?.id !== crew?.id;
 };

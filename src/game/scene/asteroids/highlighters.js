@@ -26,6 +26,15 @@ const getter = (a, config) => {
   }
 }
 
+const surfaceAreaHighlighter = (a, config) => {
+  const toRadiusConfig = Object.assign({}, config, {
+    min: Math.sqrt(config.min / (4 * Math.PI)),
+    max: Math.sqrt(config.max / (4 * Math.PI))
+  });
+
+  return radiusHighlighter(a, toRadiusConfig);
+};
+
 const radiusHighlighter = (a, config) => {
   const v = getter(a, config);
   const color = new Color(config.from);
@@ -50,6 +59,7 @@ const categoryHighlighter = (a, config) => {
 }
 
 const highlighters = {
+  surfaceArea: surfaceAreaHighlighter,
   radius: radiusHighlighter,
   spectralType: categoryHighlighter,
   axis: minMaxHighlighter,

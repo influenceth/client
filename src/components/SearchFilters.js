@@ -103,6 +103,12 @@ const crewmateCollectionOptions = Object.keys(Crewmate.COLLECTIONS).reduce((acc,
   { key, label: Crewmate.COLLECTIONS[key].name, initialValue: true }
 ]), []);
 
+const surfaceAreaConfig = {
+  fieldNames: { min: 'surfaceAreaMin', max: 'surfaceAreaMax' },
+  labels: { min: 'Min (km²)', max: 'Max (km²)' },
+  rangeLimits: { min: 13, max: 1768485 }
+};
+
 const radiusConfig = {
   fieldNames: { min: 'radiusMin', max: 'radiusMax' },
   labels: { min: 'Min (km)', max: 'Max (km)' },
@@ -143,8 +149,14 @@ const SearchFilters = ({ assetType, highlighting }) => {
   const filters = useStore(s => s.assetSearch[assetType].filters);
   const updateFilters = useStore(s => s.dispatchFiltersUpdated(assetType));
   const { data: priceConstants } = usePriceConstants();
+
   const radiusFieldNote = useCallback((value) => {
     return priceConstants && <Ether>{formatters.asteroidPrice(value, priceConstants)}</Ether>
+  }, [priceConstants]);
+
+  const surfaceAreaFieldNote = useCallback((value) => {
+    const radius = Math.sqrt(value / (4 * Math.PI));
+    return priceConstants && <Ether>{formatters.asteroidPrice(radius, priceConstants)}</Ether>
   }, [priceConstants]);
 
   const onFiltersChange = useCallback((update) => {
@@ -183,10 +195,17 @@ const SearchFilters = ({ assetType, highlighting }) => {
 
         <RangeFilter
           {...filterProps}
+          {...surfaceAreaConfig}
+          fieldNote={surfaceAreaFieldNote}
+          highlightFieldName="surfaceArea"
+          title="Surface Area" />
+
+        {/* <RangeFilter
+          {...filterProps}
           {...radiusConfig}
           fieldNote={radiusFieldNote}
           highlightFieldName="radius"
-          title="Radius" />
+          title="Radius" /> */}
 
         <CheckboxFilter
           {...filterProps}

@@ -2,6 +2,7 @@ import { Building, Entity, Lot, Order, Process, Product, Ship } from '@influence
 import moment from 'moment';
 
 import {
+  ClaimRewardIcon,
   CrewIcon,
   CrewmateIcon,
   DeconstructIcon,
@@ -301,7 +302,7 @@ const formatAsTx = (item) => {
               storageSlot: item.vars[0].origin_slot
             }
           });
-        } else {        
+        } else {
           openDialog('MARKETPLACE_ORDER', {
             asteroidId,
             lotId: item.meta.lotId,
@@ -627,7 +628,7 @@ const formatAsTx = (item) => {
       formatted.label = processorProps?.label || 'Finish Process';
       formatted.asteroidId = Lot.toPosition(item.meta?.lotId)?.asteroidId;
       formatted.lotId = item.meta?.lotId;
-      formatted.locationDetail = process?.name; 
+      formatted.locationDetail = process?.name;
       formatted.onClick = ({ openDialog }) => {
         openDialog('PROCESS', { processorSlot: item.vars?.processorSlot });
       };
@@ -778,6 +779,7 @@ const formatAsTx = (item) => {
       };
       break;
     }
+
     case 'AcceptPrepaidAgreement': {
       formatted.icon = <PermissionIcon />;
       formatted.label = 'Prepaid Lease Agreement';
@@ -792,6 +794,7 @@ const formatAsTx = (item) => {
       };
       break;
     }
+
     case 'ExtendPrepaidAgreement': {
       formatted.icon = <PermissionIcon />;
       formatted.label = 'Extend Prepaid Agreement';
@@ -806,6 +809,7 @@ const formatAsTx = (item) => {
       };
       break;
     }
+
     case 'CancelPrepaidAgreement': {
       formatted.icon = <PermissionIcon />;
       formatted.label = 'Cancel Prepaid Agreement';
@@ -829,6 +833,21 @@ const formatAsTx = (item) => {
       };
       break;
     }
+
+    case 'ClaimArrivalReward': {
+      formatted.icon = <ClaimRewardIcon />;
+      formatted.label = 'Claim Starter Pack';
+      formatted.asteroidId = item.vars.asteroid.id;
+      break;
+    }
+
+    case 'ClaimPrepareForLaunchReward': {
+      formatted.icon = <ClaimRewardIcon />;
+      formatted.label = 'Claim Crewmate Credit';
+      formatted.asteroidId = item.vars.asteroid.id;
+      break;
+    }
+
     default:
       console.log('Unhandled ActionItems tx', item);
       break;

@@ -14,6 +14,7 @@ const ConfirmationTitle = styled.div`
   height: 60px;
   & > h4 { flex: 1, margin: 0 }
 `;
+
 const ConfirmationBody = styled.div`
   flex: 1;
   font-size: 15px;
@@ -31,6 +32,7 @@ const ConfirmationBody = styled.div`
     }
   }
 `;
+
 const ConfirmationButtons = styled.div`
   display: flex;
   flex-direction: row;
@@ -46,6 +48,7 @@ const ConfirmationButtons = styled.div`
     }
   }
 `;
+
 const Confirmation = styled.div`
   display: flex;
   flex-direction: column;
