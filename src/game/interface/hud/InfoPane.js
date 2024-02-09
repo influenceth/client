@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import styled, { css, keyframes } from 'styled-components';
-import { Asteroid, Building, Entity, Ship } from '@influenceth/sdk';
+import { Asteroid, Entity } from '@influenceth/sdk';
 import { FaSearchPlus as DetailsIcon } from 'react-icons/fa';
 import ReactTooltip from 'react-tooltip';
 
@@ -98,6 +98,7 @@ const SubtitleLoader = styled.span`
     display: block;
   }
 `;
+
 const ProgressBar = styled.div`
   ${p => p.progress === 0 ? css`animation: ${opacityAnimation} 1250ms ease infinite;` : ``}
   background: #333;
@@ -302,11 +303,6 @@ const InfoPane = () => {
   const { data: ship, isLoading: shipIsLoading } = useShip(zoomScene?.type === 'SHIP' ? zoomScene.shipId : undefined);
   const saleIsActive = useSale(Entity.IDS.ASTEROID);
 
-  const [renderReady, setRenderReady] = useState(false);
-  const onRenderReady = useCallback(() => {
-    setRenderReady(true);
-  }, []);
-
   const onClickPane = useCallback(() => {
     // open lot
     if (asteroidId && lotId && zoomStatus === 'in') {
@@ -338,9 +334,7 @@ const InfoPane = () => {
   }, [asteroidId, lotId, zoomStatus]);
 
   const [hover, setHover] = useState();
-  const onMouseEvent = useCallback((e) => {
-    setHover(e.type === 'mouseenter');
-  });
+  const onMouseEvent = (e) => setHover(e.type === 'mouseenter');
 
   useEffect(() => {
     setHover(false);
@@ -396,7 +390,6 @@ const InfoPane = () => {
           )}
           <AsteroidRendering
             asteroid={asteroid}
-            onReady={onRenderReady}
             style={asteroid.Celestial.scanStatus === Asteroid.SCAN_STATUSES.UNSCANNED ? { filter: 'grayscale(1)' } : {}}
             varyDistance />
         </ThumbBackground>
@@ -418,7 +411,7 @@ const InfoPane = () => {
         pane.captainCard = ship.Control?.controller?.id;
       } else if (lotId && lot && lot.surfaceShip) {
         const thumbUrl = getShipIcon(lot.surfaceShip.Ship?.shipType || 0, 'w400');
-        pane.title = `${lot.surfaceShip.Name?.name || Ship.TYPES[lot.surfaceShip.Ship?.shipType || 0]?.name}`;
+        pane.title = formatters.shipName(lot.surfaceShip);
         pane.subtitle = <>{formatters.asteroidName(asteroid)} &gt; <b>{formatters.lotName(lotId)}</b></>;
         pane.captainCard = lot.surfaceShip.Control?.controller?.id;
         pane.hoverSubtitle = 'Zoom to Lot';
@@ -465,10 +458,14 @@ const InfoPane = () => {
   }, [
     asteroidId,
     asteroid,
+    constructionStatus,
+    crew?.id,
+    isAtRisk,
     lotId,
     lot,
-    renderReady,
     lotLoader,
+    saleIsActive,
+    ship,
     zoomStatus,
     zoomScene
   ]);
