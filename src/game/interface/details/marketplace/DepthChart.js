@@ -378,7 +378,7 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
     }), {});
     return Object.keys(buckets)
       .map((price) => ({ price: Number(price), amount: buckets[price] }))
-      .sort((a, b) => a.price > b.price ? -1 : 1);
+      .sort((a, b) => a.price <= b.price ? -1 : 1);
   }, [sellOrders]);
 
   const [mode, setMode] = useState('buy');
