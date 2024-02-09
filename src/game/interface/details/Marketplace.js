@@ -77,7 +77,7 @@ const Marketplace = () => {
   const { asteroidId, lotIndex, discriminator } = useParams();
   const product = discriminator === 'orders' ? null : discriminator;
   const lotId = useMemo(() => Lot.toId(Number(asteroidId), lotIndex === 'all' ? null : Number(lotIndex)), [asteroidId, lotIndex]);
-  
+
   const { search } = useLocation();
   const backOverride = useMemo(() => {
     const q = new URLSearchParams(search);
@@ -88,10 +88,10 @@ const Marketplace = () => {
   const { data: asteroid } = useAsteroid(Number(asteroidId));
   const { data: lot } = useLot(lotId);
   const { data: marketplaceOwner } = useCrew(lot?.building?.Control?.controller?.id);
-  
+
   const { data: myOpenOrders } = useCrewOrders(crew?.id);
   const { data: orderSummary } = useOrderSummaryByProduct(lotIndex === 'all' ? { label: Entity.IDS.ASTEROID, id: asteroidId } : { label: Entity.IDS.LOT, id: lotId });
-  
+
   const [marketplaceTally, setMarketplaceTally] = useState(0);
   const [products, setProducts] = useState([]);
 
@@ -101,6 +101,7 @@ const Marketplace = () => {
       // TODO: getAsteroidMarketplaceAggs
       //  - include marketplace tally and products tally
       api.getAsteroidMarketplaceAggs(asteroidId).then((data) => {
+        console.log(data);
         setMarketplaceTally(data.marketplaceTally);
         setProducts(Object.keys(data.products));
       });

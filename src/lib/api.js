@@ -349,7 +349,7 @@ const api = {
     queryBuilder.filter(esb.termQuery('Building.buildingType', Building.IDS.MARKETPLACE));
 
     // aggregate allowedProducts
-    const aggregation = esb.termsAggregation('products', 'Exchange.allowedProducts');
+    const aggregation = esb.termsAggregation('products', 'Exchange.allowedProducts').size(250);
 
     const q = esb.requestBodySearch();
     q.query(queryBuilder);

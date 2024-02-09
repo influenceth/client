@@ -19,7 +19,7 @@ const Pagination = (props) => {
   const handleFirst = useCallback(() => onChangePage(1), [ onChangePage ]);
 
   return (
-    <StyledPagination>
+    <StyledPagination className={props.className}>
       <Button
         flip
         disabled={currentPage === 1}
