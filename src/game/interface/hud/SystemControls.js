@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import styled from 'styled-components';
 
 import Badge from '~/components/Badge';
@@ -18,12 +18,9 @@ import {
   WalletIcon
 } from '~/components/Icons';
 import useAuth from '~/hooks/useAuth';
-import useActivitiesContext from '~/hooks/useActivitiesContext';
 import useCrewContext from '~/hooks/useCrewContext';
 import useStore from '~/hooks/useStore';
 import DropdownNavMenu, { NavMenuLoggedInUser, menuAnimationTime } from './DropdownNavMenu';
-import { uint256 } from 'starknet';
-import useInterval from '~/hooks/useInterval';
 import useSwayBalance from '~/hooks/useSwayBalance';
 
 const MobileWarning = styled.div`
@@ -72,7 +69,7 @@ const VerticalRule = styled.div`
 
 const SystemControls = () => {
   const { account, login, logout, token, walletContext: { starknet } } = useAuth();
-  
+
   const { crews } = useCrewContext();
   const { data: swayBalance } = useSwayBalance();
 

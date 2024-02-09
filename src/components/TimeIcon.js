@@ -7,6 +7,7 @@ const halfDimension = diamondDimension / 2;
 const radius = 50 - halfDimension;
 
 const Wrapper = styled.div`
+  cursor: ${p => p.theme.cursors.active};
   height: ${p => p.size};
   overflow: visible;
   position: relative;
@@ -25,11 +26,13 @@ const HandDiamond = styled.path`
   stroke: black;
   stroke-width: 2px;
 `;
+
 const OuterCircle = styled.circle`
   fill: none;
   stroke: ${p => p.theme.colors.main};
   stroke-width: ${radius * 0.05}px;
 `;
+
 // TODO: this could presumably be improved using a radial gradient
 // https://stackoverflow.com/a/21448994
 const BlurCircle = styled.circle`

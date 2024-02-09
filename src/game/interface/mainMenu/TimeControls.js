@@ -6,7 +6,7 @@ import useGetTime from '~/hooks/useGetTime';
 import useStore from '~/hooks/useStore';
 import IconButton from '~/components/IconButton';
 import TimeComponent from '~/components/Time';
-import { RewindIcon, FastForwardIcon, PlayIcon, PauseIcon, StopIcon } from '~/components/Icons';
+import { RewindIcon, FastForwardIcon, PlayIcon, PauseIcon } from '~/components/Icons';
 import TimeIcon from '~/components/TimeIcon';
 
 
@@ -52,7 +52,7 @@ const SpeedDots = styled.div`
   justify-content: space-between;
   width: 60px;
 
-  ${p => p.speedSetting > 0 
+  ${p => p.speedSetting > 0
     ? `
       ${Dot}:nth-child(n+1):nth-child(-n+${p.speedSetting}) {
         background: white;
@@ -200,7 +200,8 @@ const TimeControls = (props) => {
         motionBlur={Math.abs(timeOverride?.speed || 0) > 10000}
         size="30px"
         style={{ marginLeft: 12 }}
-        time={displayTime} />
+        time={displayTime}
+        onClick={toggleOpen} />
       <DaysSince displayTime={displayTime} onClick={toggleOpen} />
     </StyledTime>
   );

@@ -5,7 +5,7 @@ import { ClaimRewardIcon } from '~/components/Icons';
 import ActionButton from './ActionButton';
 
 const isVisible = ({ account, asteroid }) => {
-  const owner = Address.areEqual(asteroid?.Nft?.owner, account);
+  const owner = asteroid?.Nft?.owner ? Address.areEqual(asteroid?.Nft?.owner, account) : false;
   return owner && asteroid?.AsteroidReward?.hasPrepareForLaunchCrewmate;
 };
 

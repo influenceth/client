@@ -26,7 +26,6 @@ import RouteSelection from './actionForms/RouteSelection';
 import { getBuildingIcon, getShipIcon } from '~/lib/assetUtils';
 import formatters from '~/lib/formatters';
 import useSale from '~/hooks/useSale';
-import useCrewmate from '~/hooks/useCrewmate';
 import useShip from '~/hooks/useShip';
 
 
@@ -363,7 +362,7 @@ const InfoPane = () => {
       pane.titleLink = `/asteroids/${asteroid.id}`;
       pane.subtitle = <>{Asteroid.Entity.getSize(asteroid)} <b>{Asteroid.Entity.getSpectralType(asteroid)}-type</b></>;
       pane.hoverSubtitle = 'Zoom to Asteroid';
-      // TODO: add captainCard for the "crew" managing the asteroid
+      pane.captainCard = asteroid.Control?.controller?.id;
 
       let thumbBanner = '';
       let thumbBannerColor = 'main';
@@ -419,7 +418,7 @@ const InfoPane = () => {
         pane.captainCard = ship.Control?.controller?.id;
       } else if (lotId && lot && lot.surfaceShip) {
         const thumbUrl = getShipIcon(lot.surfaceShip.Ship?.shipType || 0, 'w400');
-        pane.title = `${Ship.TYPES[lot.surfaceShip.Ship?.shipType || 0]?.name}`;
+        pane.title = `${lot.surfaceShip.Name?.name || Ship.TYPES[lot.surfaceShip.Ship?.shipType || 0]?.name}`;
         pane.subtitle = <>{formatters.asteroidName(asteroid)} &gt; <b>{formatters.lotName(lotId)}</b></>;
         pane.captainCard = lot.surfaceShip.Control?.controller?.id;
         pane.hoverSubtitle = 'Zoom to Lot';
