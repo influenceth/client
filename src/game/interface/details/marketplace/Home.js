@@ -301,7 +301,6 @@ const MarketplaceHome = ({ asteroid, listings, orderTally, onSelectListing, mark
   }, [tickerEnabled, listings, mode]);
 
   const [ filteredCount, filteredListings ] = useMemo(() => {
-    console.log(sort);
     const filtered = listings
       .filter(({ product }) => {
         return nameFilter.length === 0 ||

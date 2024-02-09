@@ -101,7 +101,6 @@ const Marketplace = () => {
       // TODO: getAsteroidMarketplaceAggs
       //  - include marketplace tally and products tally
       api.getAsteroidMarketplaceAggs(asteroidId).then((data) => {
-        console.log(data);
         setMarketplaceTally(data.marketplaceTally);
         setProducts(Object.keys(data.products));
       });
@@ -129,6 +128,7 @@ const Marketplace = () => {
         // saleChange: 0
       };
     });
+
     return [productListings, buyOrderTally + sellOrderTally];
   }, [orderSummary, products]);
 

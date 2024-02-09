@@ -462,7 +462,7 @@ const api = {
 
     // only return aggregations
     const aggregation = esb
-      .termsAggregation('exchanges', 'entity.id')
+      .termsAggregation('exchanges', 'entity.id').size(250)
       .aggs([
         // buy summary
         esb
@@ -532,7 +532,7 @@ const api = {
 
     // only return aggregations
     const aggregation = esb
-      .termsAggregation('products', 'product')
+      .termsAggregation('products', 'product').size(250)
       .aggs([
         // buy summary
         esb
