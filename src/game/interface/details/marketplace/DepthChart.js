@@ -147,7 +147,7 @@ const ChartArea = styled.div`
     height: 100%;
     width: 100%;
   }
-  
+
   &:before {
     color: #777;
     content: "${p => p.spread > 0 ? 'Spread' : ''}";
@@ -343,7 +343,7 @@ const SummaryLabel = styled.label`
     color: #888;
   }
 `;
-    
+
 const STROKE_WIDTH = 2;
 
 const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource }) => {
@@ -423,7 +423,7 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
     } else {
       centerPrice = buyBuckets?.[0]?.price || sellBuckets?.[sellBuckets.length - 1]?.price || 0;
     }
-    
+
     // set the size of the y-axis
     let yAxisHalf = 0.05 * centerPrice;
     if (buyBuckets.length) {
@@ -436,12 +436,12 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
 
     const yAxisLength = 2 * yAxisHalf;
     const yAxisMin = centerPrice - yAxisHalf;
-    
+
     // set the size of the x-axis
     const buySum = buyBuckets.reduce((acc, cur) => acc + cur.amount, 0);
     const sellSum = sellBuckets.reduce((acc, cur) => acc + cur.amount, 0);
     const xAxisLength = 2 * Math.max(buySum, sellSum);
-    
+
     // create helper functions
     const amountToX = (amount) => {
       return xViewbox * (1 - amount / xAxisLength);
@@ -449,7 +449,7 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
     const priceToY = (price) => {
       return yViewbox * (1 - (price - yAxisMin) / yAxisLength);
     };
-    
+
     // calculate the "buy" polygon
     let totalForBuy = 0;
     const buyPoints = [];
@@ -464,7 +464,7 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
     buyPoints.push(`${amountToX(totalForBuy)},${yViewbox + 2 * STROKE_WIDTH}`);
     buyPoints.push(`${xViewbox + STROKE_WIDTH},${yViewbox + 2 * STROKE_WIDTH}`);
     const buyLine = `M ${amountToX(totalForBuy)},${yViewbox / 2} v ${yViewbox / 2}`;
-    
+
     // calculate the "sell" polygon
     let totalForSale = 0;
     const sellPoints = [];
@@ -616,8 +616,8 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
             <h1><MarketplaceBuildingIcon /> {formatters.buildingName(marketplace)}</h1>
             <Subheader>
               <span>{resource.name}</span>
-              <span style={{ color: theme.colors.green }}>{formatResourceAmount(totalForBuy || 0, resource.i)} Available</span>
-              <span style={{ color: theme.colors.main }}>{formatResourceAmount(totalForSale || 0, resource.i)} Sellable</span>
+              <span style={{ color: theme.colors.green }}>{formatResourceAmount(totalForSale || 0, resource.i)} Available</span>
+              <span style={{ color: theme.colors.main }}>{formatResourceAmount(totalForBuy || 0, resource.i)} Sellable</span>
             </Subheader>
           </div>
           {marketplaceOwner && <CrewIndicator crew={marketplaceOwner} flip label="Managed by" />}
