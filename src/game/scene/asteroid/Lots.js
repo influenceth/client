@@ -206,8 +206,8 @@ const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, co
         positions.current = data.positions;
         orientations.current = data.orientations;
         lotsByRegion.current = [];
-
         let batchesProcessed = 0;
+
         for (let batchStart = 0; batchStart < lotTally; batchStart += batchSize) {
           const batchPositions = data.positions.slice(batchStart * 3, (batchStart + batchSize) * 3);
           processInBackground({
@@ -222,13 +222,13 @@ const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, co
               if (!lotsByRegion.current[region]) lotsByRegion.current[region] = [];
               lotsByRegion.current[region].push(lotIndex);
             });
+
             batchesProcessed++;
-            if (batchesProcessed === expectedBatches) {
-              // console.log('positionsready');
-              // ^^^
-              setPositionsReady(true);
-            }
-            dispatchLotsLoading(asteroidId, PLOT_LOADER_GEOMETRY_PCT + (1 - PLOT_LOADER_GEOMETRY_PCT) * batchesProcessed / expectedBatches);
+            if (batchesProcessed === expectedBatches) setPositionsReady(true);
+            dispatchLotsLoading(
+              asteroidId,
+              PLOT_LOADER_GEOMETRY_PCT + (1 - PLOT_LOADER_GEOMETRY_PCT) * batchesProcessed / expectedBatches
+            );
           }, [
             batchPositions.buffer
           ]);
@@ -236,7 +236,7 @@ const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, co
       },
       transfer
     );
-  }, [config]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [config]);
 
   //  before declaring the lots "loaded" initially
   // run this when lots changes (after its initial run through the effect that follows this one)
@@ -246,7 +246,7 @@ const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, co
         resultsByRegion.current[region] = lotsByRegion.current[region].filter((lotIndex) => (lotDisplayMap[lotIndex] & isResultMask) > 0);
       });
     }
-  }, [lotDisplayMap, lastLotUpdate]);
+  }, [lotDisplayMap, lastLotUpdate, positionsReady]);
 
   const handleWSMessage = useCallback(({ type: eventType, body, ...props }) => {
     console.log('asteroid handleWSMessage', {eventType, body, props});
@@ -535,6 +535,7 @@ const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, co
     if (!regionsByDistance?.length) return;
     if (!lotsByRegion.current?.length) return;
     if (!resultsByRegion.current) return;
+
     try {
       const dummy = new Object3D();
 
