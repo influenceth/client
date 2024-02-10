@@ -25,7 +25,7 @@ const Header = styled.div`
   border-bottom: 1px solid #333;
   display: flex;
   flex-direction: row;
-  height: ${p => p.marketplace ? '150px' : '250px'};
+  height: ${p => p.marketplace ? '150px' : '200px'};
   margin-top: -25px;
   padding-bottom: 25px;
   padding-top: 25px;
