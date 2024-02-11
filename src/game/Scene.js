@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useQueryClient, QueryClientProvider } from 'react-query';
-import { Object3D, Vector3 } from 'three';
+import { Object3D, Vector3, LinearToneMapping, NoToneMapping } from 'three';
 import { Canvas, useThree } from '@react-three/fiber';
 import { useContextBridge, Stats } from '@react-three/drei';
 import styled from 'styled-components';
@@ -21,15 +21,14 @@ import WebsocketContext from '~/contexts/WebsocketContext';
 import { GpuContextLostMessage, GpuContextLostReporter } from './GpuContextLost';
 
 const glConfig = {
-  antialias: true,
   shadows: true,
+  toneMapping: LinearToneMapping,
   camera: {
     fov: 75,
     near: 1000000,
     far: constants.MAX_SYSTEM_RADIUS * constants.AU * 2,
     position: [ 4 * constants.AU, 0, 1.5 * constants.AU ]
   },
-  powerPreference: 'default',
   onCreated: (state) => {
     state.raycaster.params.Points = {
       near: 1000000,
@@ -140,7 +139,19 @@ const Scene = () => {
         </div>
       )}
       {false && /* TODO: remove debug */(
-        <div id="debug_info" style={{ position: 'fixed', top: -1, left: 95, background: 'black', border: '1px solid white', padding: '8px 4px', fontSize: 11, minWidth: 60, textAlign: 'center' }} />
+        <div
+          id="debug_info"
+          style={{
+            position: 'fixed',
+            top: -1,
+            left: 95,
+            background: 'black',
+            border: '1px solid white',
+            padding: '8px 4px',
+            fontSize: 11,
+            minWidth: 60,
+            textAlign: 'center'
+          }} />
       )}
     </StyledContainer>
   );

@@ -23,6 +23,7 @@ const SettingsManager = () => {
   // toggle background on / off per settings
   useEffect(() => {
     if (skyboxVisible && (!scene.background || scene.background.isColor) && skybox) {
+      skybox.encoding = 3001;
       scene.background = skybox;
     } else if (!skyboxVisible && scene.background) {
       scene.background = new Color(0x000000);

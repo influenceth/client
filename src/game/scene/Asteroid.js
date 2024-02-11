@@ -31,7 +31,7 @@ const INITIAL_ZOOM_MIN = 6000;
 const MIN_ZOOM_DEFAULT = 1.2;
 const MAX_ZOOM = 20;
 const DIRECTIONAL_LIGHT_DISTANCE = 10;
-const DARK_LIGHT_INTENSITY = 0.25;
+const DARK_LIGHT_INTENSITY = 0.15;
 
 const ZOOM_TO_PLOT_ANIMATION_TIME = 700;
 
@@ -1064,7 +1064,6 @@ const AsteroidComponent = () => {
       )}
       {false && light.current?.shadow?.camera && <primitive object={new CameraHelper(light.current.shadow.camera)} />}
       {false && <primitive object={new AxesHelper(config?.radius * 2)} />}
-      {false && <ambientLight intensity={0.2} />}
     </group>
   );
 }

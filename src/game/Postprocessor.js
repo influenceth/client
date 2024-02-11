@@ -2,16 +2,16 @@ import { useEffect, useRef } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import {
   LinearToneMapping,
+  NoToneMapping,
   MeshBasicMaterial,
   ShaderMaterial,
   Vector2
 } from 'three';
-// import * as THREE from 'three';
-import { FXAAShader } from 'three/examples/jsm/shaders/FXAAShader.js';
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass';
 import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass';
+import { GammaCorrectionShader } from 'three/examples/jsm/shaders/GammaCorrectionShader.js';
 import useStore from '~/hooks/useStore';
 
 const VERTEX_SHADER = `
@@ -59,8 +59,8 @@ const materials = {};
 
 const defaultBloomParams = {
   threshold: 0,
-  strength: 2,
-  radius: 0.25
+  strength: 1,
+  radius: 0.1
 }
 
 const Postprocessor = ({ enabled, bloomParams = {}, toneMappingParams = {} }) => {
@@ -69,7 +69,6 @@ const Postprocessor = ({ enabled, bloomParams = {}, toneMappingParams = {} }) =>
   const pixelRatio = useStore(s => s.graphics.pixelRatio || 1);
 
   const bloomPass = useRef();
-  const fxaaPass = useRef();
   const bloomComposer = useRef();
   const finalComposer = useRef();
 
@@ -140,6 +139,9 @@ const Postprocessor = ({ enabled, bloomParams = {}, toneMappingParams = {} }) =>
       bloomPass.current[k] = Object.keys(bloomParams).includes(k) ? bloomParams[k] : defaultBloomParams[k];
     });
 
+    renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.setSize(size.width, size.height);
+
     bloomComposer.current = new EffectComposer( renderer );
     bloomComposer.current.renderToScreen = false;
     bloomComposer.current.addPass( renderScene );
@@ -157,16 +159,13 @@ const Postprocessor = ({ enabled, bloomParams = {}, toneMappingParams = {} }) =>
       }),
       'baseTexture'
     );
+
     selectiveBloomPass.needsSwap = true;
 
-    fxaaPass.current = new ShaderPass( FXAAShader );
-    fxaaPass.current.material.uniforms['resolution'].value.x = 1 / ( size.width * pixelRatio );
-    fxaaPass.current.material.uniforms['resolution'].value.y = 1 / ( size.height * pixelRatio );
-  
     finalComposer.current = new EffectComposer( renderer );
     finalComposer.current.addPass( renderScene );
     finalComposer.current.addPass( selectiveBloomPass );
-    finalComposer.current.addPass( fxaaPass.current );
+    finalComposer.current.addPass( new ShaderPass(GammaCorrectionShader) );
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
@@ -178,10 +177,6 @@ const Postprocessor = ({ enabled, bloomParams = {}, toneMappingParams = {} }) =>
     }
     if (finalComposer.current) {
       finalComposer.current.setSize( size.width, size.height );
-    }
-    if (fxaaPass.current) {
-      fxaaPass.current.material.uniforms['resolution'].value.x = 1 / ( size.width * pixelRatio );
-      fxaaPass.current.material.uniforms['resolution'].value.y = 1 / ( size.height * pixelRatio );
     }
   }, [size.height, size.width, pixelRatio]); // eslint-disable-line react-hooks/exhaustive-deps
 
