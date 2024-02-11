@@ -25,7 +25,6 @@ import useWebWorker from '~/hooks/useWebWorker';
 import useMappedAsteroidLots from '~/hooks/useMappedAsteroidLots';
 import constants from '~/lib/constants';
 import { getLotGeometryHeightMaps, getLotGeometryHeightMapResolution } from './helpers/LotGeometry';
-import useGetActivityConfig from '~/hooks/useGetActivityConfig';
 import useConstants from '~/hooks/useConstants';
 
 const { MAX_LOTS_RENDERED } = constants;
@@ -64,7 +63,7 @@ const isResultMask = 0b100000;
 const hasBuildingMask = 0b010000;
 const colorIndexMask  = 0b001111;
 
-const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, config, getLockToSurface, getRotation }) => {
+const Lots = ({attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, config, getLockToSurface, getRotation }) => {
   const { token } = useAuth();
   const { crew } = useCrewContext();
   const { data: TIME_ACCELERATION } = useConstants('TIME_ACCELERATION');
@@ -73,7 +72,6 @@ const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, co
   const queryClient = useQueryClient();
   const { registerWSHandler, unregisterWSHandler, wsReady } = useWebsocket();
   const { processInBackground } = useWebWorker();
-  const getActivityConfig = useGetActivityConfig();
 
   const textureQuality = useStore(s => s.graphics.textureQuality);
   const lotId = useStore(s => s.asteroids.lot);
@@ -241,7 +239,7 @@ const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, co
   //  before declaring the lots "loaded" initially
   // run this when lots changes (after its initial run through the effect that follows this one)
   useEffect(() => {
-    if (lotDisplayMap && lotsByRegion.current?.length) {
+    if (lotDisplayMap && lotsByRegion.current?.length && positionsReady) {
       Object.keys(lotsByRegion.current).forEach((region) => {
         resultsByRegion.current[region] = lotsByRegion.current[region].filter((lotIndex) => (lotDisplayMap[lotIndex] & isResultMask) > 0);
       });
@@ -740,7 +738,7 @@ const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, co
       // changed, so needs to fail gracefully (i.e. if buildingMesh.current is unset)
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cameraAltitude, lastLotUpdate, lotDisplayMap, lotSampledMap, regionsByDistance]);
+  }, [chunkyAltitude, cameraNormalized?.string, lastLotUpdate, lotDisplayMap, lotSampledMap, regionsByDistance]);
 
   useEffect(
     () => updateVisibleLots(),

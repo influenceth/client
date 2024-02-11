@@ -101,6 +101,7 @@ const Header = styled.div`
       line-height: 1em;
       margin: 0 0 32px;
       text-transform: uppercase;
+      white-space: nowrap;
       svg {
         color: ${p => p.theme.colors.main};
         height: 1em;
