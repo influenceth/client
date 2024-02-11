@@ -204,8 +204,8 @@ const api = {
     // has unlocked inventory
     buildingQueryBuilder.filter(
       esb.nestedQuery()
-        .path('Inventory')
-        .query(esb.termQuery('Inventory.status', Inventory.STATUSES.AVAILABLE))
+        .path('Inventories')
+        .query(esb.termQuery('Inventories.status', Inventory.STATUSES.AVAILABLE))
     );
 
     const buildingQ = esb.requestBodySearch();
