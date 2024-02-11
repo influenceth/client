@@ -9,13 +9,21 @@ import { monthsToSeconds, secondsToMonths } from '~/lib/utils';
 
 const hoursPerMonth = monthsToSeconds(1) / 3600;
 
-const useAgreementManager = (entity, permission) => {
+export const getAgreementPath = (target, permission, permitted) => {
+  return `${target ? Entity.packEntity(target) : ''}.${permission || ''}.${permitted ? Entity.packEntity(permitted) : ''}`;
+}
+
+const useAgreementManager = (entity, permission, agreementPath) => {
   const { crew } = useCrewContext();
   const { execute, getStatus } = useContext(ChainTransactionContext);
   const { currentPolicy } = usePolicyManager(entity, permission);
 
   const currentAgreement = useMemo(() => {
-    const agreement = (currentPolicy?.agreements || []).find((a) => a.permitted?.id === crew?.id && a.permission === Number(permission));
+    const agreement = (currentPolicy?.agreements || []).find((a) => {
+      if (agreementPath) return getAgreementPath(entity, permission, a.permitted) === agreementPath;
+      return a.permitted?.id === crew?.id && a.permission === Number(permission)
+    });
+
     if (agreement) {
       const agg = cloneDeep(agreement);
       if (agg?.rate) agg.rate = (agg.rate / 1e6) * hoursPerMonth;  // stored in microsway per hour, UI in sway/mo
@@ -24,14 +32,14 @@ const useAgreementManager = (entity, permission) => {
       return agg;
     }
     return null;
-  }, [crew?.id, currentPolicy, permission]);
+  }, [agreementPath, crew?.id, currentPolicy, entity, permission]);
 
   const payload = useMemo(() => ({
     target: { id: entity?.id, label: entity?.label },
     permission,
-    permitted: { id: crew?.id, label: Entity.IDS.CREW },
+    permitted: { id: currentAgreement?.permitted?.id || crew?.id, label: Entity.IDS.CREW },
     caller_crew: { id: crew?.id, label: Entity.IDS.CREW },
-  }), [crew?.id, entity, permission]);
+  }), [crew?.id, currentAgreement, entity, permission]);
 
   const meta = useMemo(() => ({
     lotId: entity?.Location?.locations?.find((l) => l.label === Entity.IDS.LOT)?.id,
@@ -59,13 +67,17 @@ const useAgreementManager = (entity, permission) => {
     );
   }, []);
 
-  const cancelAgreement = useCallback(() => {
+  const cancelAgreement = useCallback((params = {}) => {
+    // target: Entity,
+    // permission: u64,
+    // permitted: Entity,
+    // caller_crew: Entity,
     execute(
       'CancelPrepaidAgreement',
-      { ...payload },
+      { agreementPath, ...params, ...payload },
       meta
     );
-  }, []);
+  }, [agreementPath]);
 
   const changePending = useMemo(
     () => {

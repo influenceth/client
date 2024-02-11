@@ -2,6 +2,8 @@ import styled from 'styled-components';
 import { TriangleDownIcon, TriangleUpIcon } from './Icons';
 
 import { itemColors } from '~/lib/actionItem';
+import { Fragment, useCallback, useMemo, useState } from 'react';
+import { reactBool } from '~/lib/utils';
 
 const minColumnWidth = 190;
 
@@ -151,6 +153,51 @@ const DataTableCell = styled.td`
 `;
 
 const getEmptyObj = () => ({});
+
+const ExpandableDataTableRow = ({ columns, getRowProps, row, sortDirection, sortField }) => {
+  const [expanded, setExpanded] = useState(false);
+
+  const expandableContent = useMemo(() => {
+    const getContent = columns.find((c) => c.key === '_expandable')?.selector;
+    if (getContent) return getContent(row);
+    return null;
+  }, [columns, row]);
+
+  const onClick = useCallback(() => {
+    if (expandableContent) setExpanded((e) => !e);
+  }, [expandableContent]);
+
+  return (
+    <>
+      <DataTableRow
+        {...getRowProps(row)}
+        clickable={!!expandableContent}
+        isSelected={reactBool(expanded)}
+        onClick={onClick}>
+        {columns.filter((c) => !c.skip).map((c) => (
+          <DataTableCell
+            key={c.key}
+            align={c.align}
+            isIconColumn={!c.label}
+            sorted={sortField && sortField === c.sortField ? sortDirection : ''}
+            style={c.bodyStyle || {}}>
+            <div>
+              {c.selector(row)}
+            </div>
+          </DataTableCell>
+        ))}
+      </DataTableRow>
+      {expanded && expandableContent && (
+        <DataTableRow isSelected>
+          <DataTableCell colSpan={columns.filter((c) => !c.skip).length}>
+            {expandableContent}
+          </DataTableCell>
+        </DataTableRow>
+      )}
+    </>
+  );
+}
+
 const DataTableComponent = ({
   columns,
   data,
@@ -163,7 +210,7 @@ const DataTableComponent = ({
   <DataTable>
     <DataTableHead>
       <DataTableRow>
-        {columns.map((c) => (
+        {columns.filter((c) => !c.skip).map((c) => (
           <DataTableHeadCell
             key={c.key}
             align={c.align}
@@ -189,20 +236,13 @@ const DataTableComponent = ({
     </DataTableHead>
     <DataTableBody>
       {(data || []).map((row, i) => (
-        <DataTableRow key={keyField ? row[keyField] : i} {...getRowProps(row)}>
-          {columns.map((c) => (
-            <DataTableCell
-              key={c.key}
-              align={c.align}
-              isIconColumn={!c.label}
-              sorted={sortField && sortField === c.sortField ? sortDirection : ''}
-              style={c.bodyStyle || {}}>
-              <div>
-                {c.selector(row)}
-              </div>
-            </DataTableCell>
-          ))}
-        </DataTableRow>
+        <ExpandableDataTableRow
+          key={keyField ? row[keyField] : i}
+          columns={columns}
+          row={row}
+          getRowProps={getRowProps}
+          sortDirection={sortDirection}
+          sortField={sortField} />
       ))}
     </DataTableBody>
   </DataTable>

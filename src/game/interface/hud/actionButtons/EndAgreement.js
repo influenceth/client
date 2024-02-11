@@ -1,19 +1,19 @@
 import { useCallback, useMemo } from 'react';
 
-import { FormAgreementIcon } from '~/components/Icons';
+import { GiveNoticeIcon } from '~/components/Icons';
 import useAgreementManager from '~/hooks/actionManagers/useAgreementManager';
 import useStore from '~/hooks/useStore';
 import ActionButton from './ActionButton';
 
 const isVisible = () => false;
 
-const FormAgreement = ({ entity, permission, _disabled }) => {
-  const { changePending } = useAgreementManager(entity, permission);
+const EndAgreement = ({ entity, permission, agreementPath, _disabled }) => {
+  const { changePending } = useAgreementManager(entity, permission, agreementPath);
   
   const onSetAction = useStore(s => s.dispatchActionDialog);
 
   const handleClick = useCallback(() => {
-    onSetAction('FORM_AGREEMENT', { entity, permission });
+    onSetAction('END_AGREEMENT', { entity, permission, agreementPath });
   }, [entity, permission]);
 
   const disabledReason = useMemo(() => {
@@ -24,15 +24,15 @@ const FormAgreement = ({ entity, permission, _disabled }) => {
 
   return (
     <ActionButton
-      label="Form Agreement"
+      label="End Agreement"
       labelAddendum={disabledReason}
       flags={{
         disabled: _disabled || disabledReason,
         loading: changePending
       }}
-      icon={<FormAgreementIcon />}
+      icon={<GiveNoticeIcon />}
       onClick={handleClick} />
   );
 };
 
-export default { Component: FormAgreement, isVisible };
+export default { Component: EndAgreement, isVisible };

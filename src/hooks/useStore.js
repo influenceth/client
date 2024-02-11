@@ -19,6 +19,7 @@ const buildingIds = Object.values(Building.IDS).filter((k) => k > 0).map((k) => 
 
 const assetSearchDefaults = {
   actionitems: { filters: {}, sort: ['time', 'asc'] },
+  agreements: { filters: {}, sort: ['event.timestamp', 'asc'] },
   asteroids: { filters: {}, sort: ['Celestial.radius', 'desc'] },
   asteroidsMapped: { filters: {}, sort: ['Celestial.radius', 'desc'], highlight: null },
   buildings: { filters: {}, sort: ['Building.buildingType', 'asc'] },
@@ -596,7 +597,7 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
 
 }), {
   name: 'influence',
-  version: 3,
+  version: 4,
   migrate: (persistedState, oldVersion) => {
     const migrations = [
       (state, version) => {
@@ -607,17 +608,17 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
         return state;
       },
       (state, version) => {
-        if (version >= 2) return;
-        state.assetSearch = { ...assetSearchDefaults };
-        return state;
-      },
-      (state, version) => {
         if (version >= 3) return;
         if (state.asteroids.lot?.asteroidId && state.asteroids.lot?.lotId) {
           state.asteroids.lot = Lot.toId(state.asteroids.lot?.asteroidId, state.asteroids.lot?.lotId);
         } else {
           state.asteroids.lot = null;
         }
+        return state;
+      },
+      (state, version) => {
+        if (version >= 4) return;
+        state.assetSearch = { ...assetSearchDefaults };
         return state;
       },
     ];

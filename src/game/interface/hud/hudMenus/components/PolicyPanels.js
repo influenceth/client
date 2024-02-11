@@ -452,7 +452,11 @@ const PolicyPanel = ({ editable = false, entity, permission }) => {
               {([Permission.POLICY_IDS.CONTRACT, Permission.POLICY_IDS.PREPAID].includes(policyType)) && (
                 <div style={{ paddingTop: 15 }}>
                   <actionButtons.FormAgreement.Component entity={entity} permission={permission} />
-                  <actionButtons.ViewAgreements.Component _disabled={!agreements?.length} tally={agreements?.length || 0} />
+                  <actionButtons.ViewAgreements.Component
+                    _disabled={!agreements?.length}
+                    entity={entity}
+                    permission={permission}
+                    tally={agreements?.length || 0} />
                 </div>
               )}
             </DataBlock>
