@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useQueryClient, QueryClientProvider } from 'react-query';
-import { Object3D, Vector3, LinearToneMapping, NoToneMapping } from 'three';
+import { Object3D, Vector3 } from 'three';
 import { Canvas, useThree } from '@react-three/fiber';
 import { useContextBridge, Stats } from '@react-three/drei';
 import styled from 'styled-components';
@@ -22,7 +22,6 @@ import { GpuContextLostMessage, GpuContextLostReporter } from './GpuContextLost'
 
 const glConfig = {
   shadows: true,
-  toneMapping: LinearToneMapping,
   camera: {
     fov: 75,
     near: 1000000,
@@ -75,7 +74,6 @@ const WrappedScene = () => {
 }
 
 const Scene = () => {
-
   /**
    * Grab reference to queryClient to recreate QueryClientProvider within Canvas element
    * See: https://github.com/pmndrs/react-three-fiber/blob/master/markdown/api.md#gotchas

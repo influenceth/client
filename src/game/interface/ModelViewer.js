@@ -114,8 +114,6 @@ export const getModelViewerSettings = (assetType, overrides = {}) => {
     s.enableDefaultLights = true;
     s.keylightIntensity = 0.25;
     s.rimlightIntensity = 0;
-    s.toneMapping = LinearToneMapping;
-    s.toneMappingExposure = 1;
 
   } else if (assetType === 'resource') {
     s.background = '/textures/model-viewer/resource_skybox.hdr';
@@ -126,14 +124,18 @@ export const getModelViewerSettings = (assetType, overrides = {}) => {
     s.simpleZoomConstraints = [0.85, 5];
 
   } else if (assetType === 'ship') {
-    s.bloomStrength = 1;
     s.emissiveAsBloom = true;
+    s.emissiveMapAsLightMap = true;
     s.enableModelLights = true;
     s.enablePostprocessing = true;
+    s.envmapStrength = 0.1;
+    s.enableDefaultLights = true;
+    s.keylightIntensity = 0.25;
+    s.rimlightIntensity = 0;
   }
 
   if (s.enablePostprocessing) {
-    s.toneMapping = s.toneMapping || LinearToneMapping;
+    s.toneMapping = s.toneMapping || NoToneMapping;
   } else {
     s.toneMapping = NoToneMapping;
   }
@@ -209,7 +211,7 @@ const Model = ({ url, onLoaded, onCameraUpdate, ...settings }) => {
     controls.current.target.set(0, 0, 0);
     controls.current.zoomSpeed = 0.33;
 
-    controls.current.object.near = settings.enablePostprocessing ? 0.0018 : 0.001;  // postprocessing introduces acne if near is too low
+    controls.current.object.near = settings.enablePostprocessing ? 0.0018 : 0.01;  // postprocessing introduces acne if near is too low
     controls.current.object.far = 10;
     controls.current.object.updateProjectionMatrix();
 
@@ -758,7 +760,7 @@ const ModelViewer = ({ assetType, modelUrl, ...overrides }) => {
   }), [settings]);
 
   const toneMappingParams = useMemo(() => ({
-    toneMapping: settings.toneMapping || NoToneMapping,
+    toneMapping: settings.toneMapping || LinearToneMapping,
     toneMappingExposure: settings.toneMappingExposure
   }), [settings]);
 

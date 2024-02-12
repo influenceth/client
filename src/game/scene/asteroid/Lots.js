@@ -63,7 +63,7 @@ const isResultMask = 0b100000;
 const hasBuildingMask = 0b010000;
 const colorIndexMask  = 0b001111;
 
-const Lots = ({attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, config, getLockToSurface, getRotation }) => {
+const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, config, getLockToSurface, getRotation }) => {
   const { token } = useAuth();
   const { crew } = useCrewContext();
   const { data: TIME_ACCELERATION } = useConstants('TIME_ACCELERATION');
@@ -234,7 +234,7 @@ const Lots = ({attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, con
       },
       transfer
     );
-  }, [config]);
+  }, [config]); // eslint-disable-line react-hooks/exhaustive-deps
 
   //  before declaring the lots "loaded" initially
   // run this when lots changes (after its initial run through the effect that follows this one)
