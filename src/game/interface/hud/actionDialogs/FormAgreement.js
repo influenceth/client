@@ -173,9 +173,9 @@ const FormAgreement = ({
   );
 
   const remainingPeriod = useMemo(() => currentAgreement?.endTime - blockTime, [blockTime, currentAgreement?.endTime]);
-  const refundablePeriod = useMemo(() => secondsToMonths(Math.max(0, remainingPeriod - monthsToSeconds(currentAgreement?.noticePeriod))), [currentAgreement?.noticePeriod, remainingPeriod]);
-  const refundableAmount = useMemo(() => refundablePeriod * (currentAgreement?.rate || 0), [currentAgreement?.rate, refundablePeriod]);
-
+  const refundablePeriod = useMemo(() => Math.max(0, remainingPeriod - monthsToSeconds(currentAgreement?.noticePeriod)), [currentAgreement?.noticePeriod, remainingPeriod]);
+  const refundableAmount = useMemo(() => refundablePeriod * (currentAgreement?.rate_swayPerSec || 0), [currentAgreement?.rate_swayPerSec, refundablePeriod]);
+  
   const stats = useMemo(() => {
     if (isTermination) {
       return [
@@ -258,14 +258,17 @@ const FormAgreement = ({
 
   const handlePeriodChange = useCallback((e) => {
     // TODO: validate min/max before updating state
+    console.log('handlePeriodChange', e.currentTarget.value);
     setInitialPeriod(e.currentTarget.value);
   }, []);
 
   const onEnterAgreement = useCallback(() => {
     const recipient = controller?.Crew?.delegatedTo;
     // TODO: should these conversions be in useAgreementManager?
+    console.log('initialPeriod', initialPeriod);
     const term = monthsToSeconds(initialPeriod);
     const termPrice = totalLeaseCost * 1e6;
+    console.log({ recipient, term, termPrice });
     enterAgreement({ recipient, term, termPrice });
   }, [controller?.Crew?.delegatedTo, initialPeriod, totalLeaseCost]);
 
@@ -320,7 +323,13 @@ const FormAgreement = ({
       goLabel: 'Create Agreement',
       onGo: onEnterAgreement
     }
-  }, [currentAgreement?.noticePeriod, entity, isExtension, isTermination, stage]);
+  }, [currentAgreement?.noticePeriod, entity, isExtension, isTermination, onEnterAgreement, onExtendAgreement, onTerminateAgreement, stage]);
+
+  const disableGo = useMemo(() => {
+    if (insufficientAssets) return true;
+    if (isTermination && currentAgreement?._canGiveNoticeStart > blockTime) return true;
+    return false;
+  }, [blockTime, insufficientAssets, isTermination, currentAgreement])
 
   return (
     <>
@@ -375,13 +384,13 @@ const FormAgreement = ({
 
               <FormSection>
                 <InputLabel>
-                  <label>Excess Prepaid over Notice Period</label>
+                  <label>Excess Prepaid</label>
                 </InputLabel>
                 <TextInputWrapper rightLabel="months">
                   <DisabledUncontrolledTextInput
                     disabled
                     style={refundableAmount > 0 ? { backgroundColor: '#300c0c', color: theme.colors.red, fontWeight: 'bold' } : {}}
-                    value={(refundablePeriod || 0)} />
+                    value={secondsToMonths(refundablePeriod || 0)} />
                 </TextInputWrapper>
               </FormSection>
               
@@ -483,7 +492,7 @@ const FormAgreement = ({
                     {refundablePeriod > 0 && currentAgreement?.rate > 0 && (
                       <div style={{ padding: '0 10px' }}>
                         <div>
-                          Excess Duration Refunded: <b>{' '}{refundablePeriod} months</b>
+                          Excess Duration Refunded: <b>{' '}{secondsToMonths(refundablePeriod)} months</b>
                         </div>
                         <div style={{ position: 'relative', top: 4 }}>
                           <span style={{ position: 'relative', bottom: 4 }}>Total:</span>
@@ -549,7 +558,7 @@ const FormAgreement = ({
       </ActionDialogBody>
 
       <ActionDialogFooter
-        disabled={insufficientAssets}
+        disabled={disableGo}
         goLabel={actionDetails.goLabel}
         onGo={actionDetails.onGo}
         stage={stage}
@@ -571,7 +580,7 @@ const Wrapper = ({ entity: entityId, permission, isExtension, agreementPath, ...
     if (lastStatus.current && stage !== lastStatus.current) {
       props.onClose();
     }
-    if (lastStatus.current) {
+    if (!lastStatus.current) {
       lastStatus.current = stage;
     }
   }, [stage]);

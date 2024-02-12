@@ -26,9 +26,13 @@ const useAgreementManager = (entity, permission, agreementPath) => {
 
     if (agreement) {
       const agg = cloneDeep(agreement);
-      if (agg?.rate) agg.rate = (agg.rate / 1e6) * hoursPerMonth;  // stored in microsway per hour, UI in sway/mo
+      if (agg?.rate) {
+        agg.rate_swayPerSec = agg.rate / 1e6 / 3600; // (need this precision to avoid rounding issues)
+        agg.rate = agg.rate / 1e6 * hoursPerMonth;  // stored in microsway per hour, UI in sway/mo
+      }
       if (agg?.initialTerm) agg.initialTerm = secondsToMonths(agg.initialTerm); // stored in seconds, UI in months
       if (agg?.noticePeriod) agg.noticePeriod = secondsToMonths(agg.noticePeriod); // stored in seconds, UI in months
+      agg._canGiveNoticeStart = agg.startTime + monthsToSeconds(agg.initialTerm - agg.noticePeriod);
       return agg;
     }
     return null;
@@ -72,6 +76,7 @@ const useAgreementManager = (entity, permission, agreementPath) => {
     // permission: u64,
     // permitted: Entity,
     // caller_crew: Entity,
+    console.log();
     execute(
       'CancelPrepaidAgreement',
       { agreementPath, ...params, ...payload },

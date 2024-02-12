@@ -4,11 +4,14 @@ import { GiveNoticeIcon } from '~/components/Icons';
 import useAgreementManager from '~/hooks/actionManagers/useAgreementManager';
 import useStore from '~/hooks/useStore';
 import ActionButton from './ActionButton';
+import useBlockTime from '~/hooks/useBlockTime';
+import { formatTimer } from '~/lib/utils';
 
 const isVisible = () => false;
 
 const EndAgreement = ({ entity, permission, agreementPath, _disabled }) => {
-  const { changePending } = useAgreementManager(entity, permission, agreementPath);
+  const { changePending, currentAgreement } = useAgreementManager(entity, permission, agreementPath);
+  const blockTime = useBlockTime();
   
   const onSetAction = useStore(s => s.dispatchActionDialog);
 
@@ -19,6 +22,8 @@ const EndAgreement = ({ entity, permission, agreementPath, _disabled }) => {
   const disabledReason = useMemo(() => {
     if (_disabled) return 'loading...';
     if (changePending) return 'updating...';
+    if (currentAgreement?.noticeTime > 0) return 'notice already given';
+    if (currentAgreement?._canGiveNoticeStart > blockTime) return `allowed in ${formatTimer(currentAgreement._canGiveNoticeStart - blockTime, 1)}`;
     return '';
   }, [_disabled, changePending]);
 
