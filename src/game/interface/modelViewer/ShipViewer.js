@@ -1,5 +1,4 @@
 import { useMemo } from 'react';
-import { Ship } from '@influenceth/sdk';
 
 import useShip from '~/hooks/useShip';
 import useStore from '~/hooks/useStore';

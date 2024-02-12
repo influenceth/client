@@ -45,7 +45,6 @@ const ActionPanel = styled.div`
   }
 `;
 
-
 const PanelInner = styled.div`
   display: flex;
   flex-direction: column;
@@ -64,6 +63,7 @@ const PanelTitle = styled.div`
   padding-top: 4px;
   text-transform: uppercase;
 `;
+
 const PanelContent = styled.div`
   display: flex;
   flex: 1;
@@ -101,6 +101,7 @@ const Header = styled.div`
       line-height: 1em;
       margin: 0 0 32px;
       text-transform: uppercase;
+      white-space: nowrap;
       svg {
         color: ${p => p.theme.colors.main};
         height: 1em;
@@ -147,7 +148,7 @@ const ChartArea = styled.div`
     height: 100%;
     width: 100%;
   }
-  
+
   &:before {
     color: #777;
     content: "${p => p.spread > 0 ? 'Spread' : ''}";
@@ -165,6 +166,7 @@ const ChartArea = styled.div`
     top: calc(50% + 3px);
   }
 `;
+
 const ResourceThumbWrapper = styled.div`
   padding: 6px;
 `;
@@ -190,6 +192,8 @@ const VolumeBar = styled.div`
 const centerPriceHeight = 36;
 const centerPriceMargin = 8;
 const SellTable = styled.div`
+  display: flex;
+  flex-direction: column-reverse;
   height: calc(50% - ${(centerPriceHeight + 2 * centerPriceMargin) / 2}px);
   overflow: auto;
   table {
@@ -223,6 +227,7 @@ const SellTable = styled.div`
     background: rgba(${p => p.theme.colors.mainRGB}, 0.25);
   }
 `;
+
 const BuyTable = styled(SellTable)`
   table tr td:first-child {
     color: ${p => p.theme.colors.green};
@@ -231,6 +236,7 @@ const BuyTable = styled(SellTable)`
     background: rgba(${greenRGB}, 0.2);
   }
 `;
+
 const CenterPrice = styled.div`
   align-items: center;
   background: #222;
@@ -249,6 +255,7 @@ const CenterPrice = styled.div`
     font-size: 24px;
   }
 `;
+
 const Price = styled.div`
   flex: 1 0 0;
   font-size: 24px;
@@ -287,6 +294,7 @@ const RadioRow = styled.label`
     padding-left: 6px;
   }
 `;
+
 const InfoTooltip = styled.div`
   color: white;
 `;
@@ -330,6 +338,7 @@ const Summary = styled.div`
     }
   }
 `;
+
 const SummaryLabel = styled.label`
   display: block;
   font-size: 90%;
@@ -343,7 +352,7 @@ const SummaryLabel = styled.label`
     color: #888;
   }
 `;
-    
+
 const STROKE_WIDTH = 2;
 
 const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource }) => {
@@ -405,8 +414,8 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
     sellLine,
     spread,
     centerPrice,
-    totalForBuy,
-    totalForSale
+    totalBuying,
+    totalSelling
   } = useMemo(() => {
     if (!chartWrapperRef.current) return {};
     if (!(buyBuckets?.length > 0 || sellBuckets?.length > 0)) return {};
@@ -423,7 +432,7 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
     } else {
       centerPrice = buyBuckets?.[0]?.price || sellBuckets?.[sellBuckets.length - 1]?.price || 0;
     }
-    
+
     // set the size of the y-axis
     let yAxisHalf = 0.05 * centerPrice;
     if (buyBuckets.length) {
@@ -436,12 +445,12 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
 
     const yAxisLength = 2 * yAxisHalf;
     const yAxisMin = centerPrice - yAxisHalf;
-    
+
     // set the size of the x-axis
     const buySum = buyBuckets.reduce((acc, cur) => acc + cur.amount, 0);
     const sellSum = sellBuckets.reduce((acc, cur) => acc + cur.amount, 0);
     const xAxisLength = 2 * Math.max(buySum, sellSum);
-    
+
     // create helper functions
     const amountToX = (amount) => {
       return xViewbox * (1 - amount / xAxisLength);
@@ -449,36 +458,36 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
     const priceToY = (price) => {
       return yViewbox * (1 - (price - yAxisMin) / yAxisLength);
     };
-    
+
     // calculate the "buy" polygon
-    let totalForBuy = 0;
+    let totalBuying = 0;
     const buyPoints = [];
     buyBuckets.forEach(({ price, amount }) => {
       if (buyPoints.length === 0) {
         buyPoints.push(`${xViewbox + STROKE_WIDTH},${priceToY(price)}`);
       }
-      buyPoints.push(`${amountToX(totalForBuy)},${priceToY(price)}`);
-      totalForBuy += amount;
-      buyPoints.push(`${amountToX(totalForBuy)},${priceToY(price)}`);
+      buyPoints.push(`${amountToX(totalBuying)},${priceToY(price)}`);
+      totalBuying += amount;
+      buyPoints.push(`${amountToX(totalBuying)},${priceToY(price)}`);
     });
-    buyPoints.push(`${amountToX(totalForBuy)},${yViewbox + 2 * STROKE_WIDTH}`);
+    buyPoints.push(`${amountToX(totalBuying)},${yViewbox + 2 * STROKE_WIDTH}`);
     buyPoints.push(`${xViewbox + STROKE_WIDTH},${yViewbox + 2 * STROKE_WIDTH}`);
-    const buyLine = `M ${amountToX(totalForBuy)},${yViewbox / 2} v ${yViewbox / 2}`;
-    
+    const buyLine = `M ${amountToX(totalBuying)},${yViewbox / 2} v ${yViewbox / 2}`;
+
     // calculate the "sell" polygon
-    let totalForSale = 0;
+    let totalSelling = 0;
     const sellPoints = [];
     [...sellBuckets].reverse().forEach(({ price, amount }) => {
       if (sellPoints.length === 0) {
         sellPoints.push(`${xViewbox + STROKE_WIDTH},${priceToY(price)}`);
       }
-      sellPoints.push(`${amountToX(totalForSale)},${priceToY(price)}`);
-      totalForSale += amount;
-      sellPoints.push(`${amountToX(totalForSale)},${priceToY(price)}`);
+      sellPoints.push(`${amountToX(totalSelling)},${priceToY(price)}`);
+      totalSelling += amount;
+      sellPoints.push(`${amountToX(totalSelling)},${priceToY(price)}`);
     });
-    sellPoints.push(`${amountToX(totalForSale)},${-2 * STROKE_WIDTH}`);
+    sellPoints.push(`${amountToX(totalSelling)},${-2 * STROKE_WIDTH}`);
     sellPoints.push(`${xViewbox + STROKE_WIDTH},${-2 * STROKE_WIDTH}`);
-    const sellLine = `M ${amountToX(totalForSale)},0 v ${yViewbox / 2}`;
+    const sellLine = `M ${amountToX(totalSelling)},0 v ${yViewbox / 2}`;
 
     return {
       xViewbox,
@@ -489,23 +498,19 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
       sellLine,
       spread,
       centerPrice,
-      totalForBuy,
-      totalForSale
+      totalBuying,
+      totalSelling
     };
   }, [refIsReady, buyBuckets, sellBuckets, height, width]);
 
   // if nothing available for market order, default to limit
   useEffect(() => {
-    if (type === 'market') {
-      if (!((mode === 'buy' ? totalForSale : totalForBuy) > 0)) {
-        setType('limit');
-      }
-    }
-  }, [mode, totalForBuy, totalForSale]);
+    if (type === 'market' && mode === 'buy' && totalSelling === 0) setType('limit');
+  }, [mode, totalBuying, totalSelling]);
 
   let rowBuyVolume = 0;
-  let rowSaleVolume = totalForSale + 0;
-  let volumeBenchmark = Math.max(totalForBuy, totalForSale);
+  let rowSaleVolume = totalSelling + 0;
+  let volumeBenchmark = Math.max(totalBuying, totalSelling);
 
   // TODO: re-release sdk and reference there
   const feeReductionBonus = useMemo(() => {
@@ -550,12 +555,12 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
   const handleChangeQuantity = useCallback((e) => {
     let input = parseInt(e.currentTarget.value) || 0;
     if (input && type === 'market') {
-      if (mode === 'buy') input = Math.max(0, Math.min(input, totalForSale));
-      if (mode === 'sell') input = Math.max(0, Math.min(input, totalForBuy));
+      if (mode === 'buy') input = Math.max(0, Math.min(input, totalSelling));
+      if (mode === 'sell') input = Math.max(0, Math.min(input, totalBuying));
     }
     // TODO: set limits for limit orders
     setQuantity(input);
-  }, [mode, type, totalForBuy, totalForSale]);
+  }, [mode, type, totalBuying, totalSelling]);
 
   const handleChangeLimitPrice = useCallback((e) => {
     setLimitPrice(e.currentTarget.value);
@@ -616,8 +621,8 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
             <h1><MarketplaceBuildingIcon /> {formatters.buildingName(marketplace)}</h1>
             <Subheader>
               <span>{resource.name}</span>
-              <span style={{ color: theme.colors.green }}>{formatResourceAmount(totalForBuy || 0, resource.i)} Available</span>
-              <span style={{ color: theme.colors.main }}>{formatResourceAmount(totalForSale || 0, resource.i)} Sellable</span>
+              <span style={{ color: theme.colors.green }}>{formatResourceAmount(totalSelling || 0, resource.i)} Available</span>
+              <span style={{ color: theme.colors.main }}>{formatResourceAmount(totalBuying || 0, resource.i)} Sellable</span>
             </Subheader>
           </div>
           {marketplaceOwner && <CrewIndicator crew={marketplaceOwner} flip label="Managed by" />}
@@ -727,12 +732,12 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
                 </FormSection>
 
                 <FormSection>
-                  <RadioRow onClick={() => setType('market')} selected={reactBool(type === 'market')}>
+                  <RadioRow onClick={() => setType('market')} selected={nativeBool(type === 'market')}>
                     {type === 'market' ? <RadioCheckedIcon /> : <RadioUncheckedIcon />}
                     <span>Market Order</span>
                     <InfoTooltip data-tip="help" data-for="details"><InfoIcon /></InfoTooltip>
                   </RadioRow>
-                  <RadioRow onClick={() => setType('limit')} selected={reactBool(type === 'limit')}>
+                  <RadioRow onClick={() => setType('limit')} selected={nativeBool(type === 'limit')}>
                     {type === 'limit' ? <RadioCheckedIcon /> : <RadioUncheckedIcon />}
                     <span>Limit Order</span>
                     <InfoTooltip data-tip="help" data-for="details"><InfoIcon /></InfoTooltip>
@@ -743,14 +748,14 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
                   <InputLabel>
                     <label>Quantity</label>
                     {type === 'market' && (
-                      <span>Max <b style={!(mode === 'buy' ? totalForSale : totalForBuy) ? { color: theme.colors.error} : {}}>{((mode === 'buy' ? totalForSale : totalForBuy) || 0).toLocaleString()}{resource.massPerUnit === 1000 ? ' kg' : ''}</b></span>
+                      <span>Max <b style={!(mode === 'buy' ? totalSelling : totalBuying) ? { color: theme.colors.error} : {}}>{((mode === 'buy' ? totalSelling : totalBuying) || 0).toLocaleString()}{resource.massPerUnit === 1000 ? ' kg' : ''}</b></span>
                     )}
                   </InputLabel>
                   <TextInputWrapper rightLabel={resource.isAtomic ? '' : ' kg'}>
                     <UncontrolledTextInput
-                      disabled={nativeBool(type === 'market' && ((mode === 'buy' && !totalForSale) || (mode === 'sell' && !totalForBuy)))}
+                      disabled={nativeBool(type === 'market' && ((mode === 'buy' && !totalSelling) || (mode === 'sell' && !totalBuying)))}
                       min={0}
-                      max={type === 'market' ? (mode === 'buy' ? totalForSale : totalForBuy) : undefined}
+                      max={type === 'market' ? (mode === 'buy' ? totalSelling : totalBuying) : undefined}
                       onChange={handleChangeQuantity}
                       placeholder="Specify Quantity"
                       step={1}

@@ -9,13 +9,13 @@ import useShipDockingManager from '~/hooks/actionManagers/useShipDockingManager'
 
 import ActionButton, { getCrewDisabledReason } from './ActionButton';
 
-const isVisible = ({ asteroid, crew, crewedShip, ship }) => {
-  return crew && crewedShip?.id === ship?.id && (
-    crewedShip
-    && crewedShip.Control?.controller?.id === crew.id
-    && crewedShip._location.asteroidId === asteroid?.id
-    && !crewedShip._location.lotId  // not on surface
-  );
+const isVisible = ({ asteroid, crew, crewedShip, lot }) => {
+  if (!crew || !crewedShip || !asteroid) return false;
+  if (crewedShip.Control?.controller?.id !== crew.id) return false; // not piloting a ship
+  if (crewedShip._location?.asteroidId !== asteroid.id) return false; // not at asteroid
+  if (crewedShip._location?.lotId) return false; // on surface already
+  if (lot?.building && !lot?.building?.Dock) return false;
+  return true;
 };
 
 const LandShip = ({ asteroid, lot, onSetAction, _disabled }) => {

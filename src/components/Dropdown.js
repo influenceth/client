@@ -22,7 +22,7 @@ const IconWrapper = styled.span`
 
 const Options = styled.div`
   background: #111;
-  
+
   max-height: 50vh;
   min-width: ${p => p.width ? `${p.width}px` : 'auto'};
   overflow: auto;
@@ -90,7 +90,7 @@ const Dropdown = ({
     if (!disabled)
     setOpen((o) => !o);
   }, [disabled]);
-  
+
   const handleSelection = useCallback((option) => () => {
     if (option[valueKey] !== selected[valueKey]) {
       onChange(isObjArr ? option : option[valueKey]);
@@ -123,7 +123,7 @@ const Dropdown = ({
       (initialSelection && options.find((o) => o[valueKey] === initialSelection)) || options[0]
     );
   }, [initialSelection, options?.length]);
-  
+
   useEffect(() => {
     setOpen(false);
   }, [disabled]);

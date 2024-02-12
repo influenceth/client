@@ -505,25 +505,25 @@ const Telemetry = ({ axis, getPosition, getRotation, hasAccess, initialCameraPos
     // helper.current = new AxesHelper(2 * radius);
     // helper.current = new BoxHelper(accessGroup.current);
 
-    if (accessGroup.current) attachTo.add(accessGroup.current);
-    if (equatorCircle.current) attachTo.add(equatorCircle.current);
+    // if (accessGroup.current) attachTo.add(accessGroup.current);
+    // if (equatorCircle.current) attachTo.add(equatorCircle.current);
     if (helper.current) attachTo.add(helper.current);
-    if (inclinationCircle.current) attachTo.add(inclinationCircle.current);
+    // if (inclinationCircle.current) attachTo.add(inclinationCircle.current);
     if (rotationalMarkersGroup.current) attachTo.add(rotationalMarkersGroup.current);
-    if (planarCircle.current) attachTo.add(planarCircle.current);
+    // if (planarCircle.current) attachTo.add(planarCircle.current);
     if (rotationalAxis.current) attachTo.add(rotationalAxis.current);
-    if (shipGroup.current) attachTo.add(shipGroup.current);
+    // if (shipGroup.current) attachTo.add(shipGroup.current);
     if (trajectory.current) attachTo.add(trajectory.current);
 
     return () => {
-      if (accessGroup.current) attachTo.remove(accessGroup.current);
-      if (equatorCircle.current) attachTo.remove(equatorCircle.current);
+      // if (accessGroup.current) attachTo.remove(accessGroup.current);
+      // if (equatorCircle.current) attachTo.remove(equatorCircle.current);
       if (helper.current) attachTo.remove(helper.current); // eslint-disable-line react-hooks/exhaustive-deps
-      if (inclinationCircle.current) attachTo.remove(inclinationCircle.current);
+      // if (inclinationCircle.current) attachTo.remove(inclinationCircle.current);
       if (rotationalMarkersGroup.current) attachTo.remove(rotationalMarkersGroup.current);
-      if (planarCircle.current) attachTo.remove(planarCircle.current);
+      // if (planarCircle.current) attachTo.remove(planarCircle.current);
       if (rotationalAxis.current) attachTo.remove(rotationalAxis.current);
-      if (shipGroup.current) attachTo.remove(shipGroup.current);
+      // if (shipGroup.current) attachTo.remove(shipGroup.current);
       if (trajectory.current) attachTo.remove(trajectory.current);
     };
   }, [!attachTo, radius]); // eslint-disable-line react-hooks/exhaustive-deps
