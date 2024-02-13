@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import styled from 'styled-components';
-import { Station } from '@influenceth/sdk';
+import { Permission, Station } from '@influenceth/sdk';
 
 import useCrewContext from '~/hooks/useCrewContext';
 import useStore from '~/hooks/useStore';
@@ -50,7 +50,7 @@ const StationManifest = () => {
   const lotId = useStore(s => s.asteroids.lot);
   const zoomScene = useStore(s => s.asteroids.zoomScene);
 
-  const { crew } = useCrewContext();
+  const { crew, crewCan } = useCrewContext();
   const { data: lot } = useLot(lotId);
 
   const shipId = zoomScene?.type === 'SHIP' ? zoomScene.shipId : undefined;
@@ -65,6 +65,11 @@ const StationManifest = () => {
   const onFilterChange = useCallback((e) => {
     setNameFilter(e.target.value || '');
   }, []);
+
+  const canStation = useMemo(
+    () => crewCan(Permission.IDS.STATION_CREW, station),
+    [crewCan, station]
+  );
 
   const crews = useMemo(() => {
     return (unfilteredCrews || [])
@@ -175,7 +180,13 @@ const StationManifest = () => {
 
       {hasTray && (
         <Tray>
-          {!crewIsStationed && <actionButtons.StationCrew.Component {...actionProps} />}
+          {!crewIsStationed && (
+            <actionButtons.StationCrew.Component
+              {...actionProps}
+              labelAddendum={canStation ? '' : 'access restricted'}
+              flags={{ disabled: !canStation }}
+            />
+          )}
 
           {selectedCrewId && crew?.id === selectedCrewId && <actionButtons.EjectCrew.Component {...actionProps} />}
 

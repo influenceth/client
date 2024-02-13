@@ -233,6 +233,7 @@ const ActionDialog = ({ type, params }) => {
         {type === 'EJECT_GUEST_CREW' && <EjectCrew {...allProps} guests />}
         {type === 'EMERGENCY_MODE_COLLECT' && <EmergencyModeCollect {...allProps} />}
         {type === 'EMERGENCY_MODE_TOGGLE' && <EmergencyModeToggle {...allProps} />}
+        {type === 'END_AGREEMENT' && <FormAgreement {...allProps} isTermination />}
         {type === 'EVICT_SHIP' && <EvictShip {...allProps} />}
         {type === 'EXTRACT_RESOURCE' && <Extract {...allProps} />}
         {type === 'FEED_CREW' && <FeedCrew {...allProps} />}

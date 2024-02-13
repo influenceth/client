@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import styled from 'styled-components';
-import { Asteroid, Crew, Crewmate, Deposit, Extractor, Inventory, Lot, Product, Time } from '@influenceth/sdk';
+import { Asteroid, Crewmate, Deposit, Extractor, Inventory, Lot, Permission, Product, Time } from '@influenceth/sdk';
 
 import extractionBackground from '~/assets/images/modal_headers/Extraction.png';
 import { CoreSampleIcon, ExtractionIcon, InventoryIcon, LocationIcon, ResourceIcon } from '~/components/Icons';
@@ -31,7 +31,6 @@ import {
   SectionBody,
   ProgressBarSection,
   CoreSampleSelectionDialog,
-  DestinationSelectionDialog,
   SublabelBanner,
   LotInputBlock,
   InventorySelectionDialog,
@@ -59,7 +58,7 @@ const SampleAmount = styled.span`
 const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
   const createAlert = useStore(s => s.dispatchAlertLogged);
   const { currentExtraction, extractionStatus, startExtraction, finishExtraction } = extractionManager;
-  const { crew, crewmateMap } = useCrewContext();
+  const { crew, crewCan } = useCrewContext();
 
   const [amount, setAmount] = useState(0);
   const [selectedCoreSample, setSelectedCoreSample] = useState();
@@ -85,7 +84,7 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
     }
   }, [currentExtraction?.destination]);
 
-  const crewmates = currentExtraction?._crewmates || (crew?._crewmates || []).map((i) => crewmateMap[i]);
+  const crewmates = currentExtraction?._crewmates || crew?._crewmates || [];
   const captain = crewmates[0];
 
   const [crewTravelBonus, extractionBonus] = useMemo(() => {
@@ -413,7 +412,7 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
       </ActionDialogBody>
 
       <ActionDialogFooter
-        disabled={stage !== actionStage.READY_TO_COMPLETE && (!destinationLot || !selectedCoreSample || amount === 0)}
+        disabled={stage !== actionStage.READY_TO_COMPLETE && (!destinationLot || !selectedCoreSample || amount === 0 || !crewCan(Permission.IDS.EXTRACT_RESOURCES, lot.building))}
         goLabel="Extract"
         onGo={onStartExtraction}
         finalizeLabel="Complete"

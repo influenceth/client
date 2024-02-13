@@ -9,6 +9,7 @@ import EjectCrew from './EjectCrew';
 import EjectGuestCrew from './EjectGuestCrew';
 import EmergencyModeCollect from './EmergencyModeCollect';
 import EmergencyModeToggle from './EmergencyModeToggle';
+import EndAgreement from './EndAgreement';
 import ExtendAgreement from './ExtendAgreement';
 import Extract from './Extract';
 import FormAgreement from './FormAgreement';
@@ -39,6 +40,7 @@ const ActionsButtons = {
   EmergencyModeToggle,
   EjectCrew,
   EjectGuestCrew,
+  EndAgreement,
   ExtendAgreement,
   Extract,
   FormAgreement,

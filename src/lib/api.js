@@ -1,10 +1,11 @@
 import axios from 'axios';
 import { Asteroid, Building, Deposit, Entity, Inventory, Order, Ship } from '@influenceth/sdk';
 import esb from 'elastic-builder';
+import isEmpty from 'lodash/isEmpty';
 import { executeSwap, fetchQuotes } from "@avnu/avnu-sdk";
 
 import useStore from '~/hooks/useStore';
-import { esbLocationQuery } from './utils';
+import { esbLocationQuery, esbPermissionQuery } from './utils';
 
 // set default app version
 const apiVersion = 'v2';
@@ -162,14 +163,10 @@ const api = {
     return formatESEntityData(response.data);
   },
 
-  getCrewAccessibleBuildingsWithComponent: async (asteroidId, crewId, component = 'Building') => {
+  getBuildingsWithComponent: async (asteroidId, component = 'Building') => {
 
     // BUILDINGS...
     const buildingQueryBuilder = esb.boolQuery();
-
-    // controlled by crew
-    // TODO: also include those crew does not control but has access to
-    // buildingQueryBuilder.filter(esb.termQuery('Control.controller.id', crewId));
 
     // on asteroid
     buildingQueryBuilder.filter(esbLocationQuery({ asteroidId }));
@@ -188,15 +185,14 @@ const api = {
     return formatESEntityData(response.data);
   },
 
-  getCrewAccessibleInventories: async (asteroidId, crewId) => {
+  getCrewAccessibleInventories: async (asteroidId, crewId, withPermission) => {
     const queryPromises = [];
 
     // BUILDINGS...
     const buildingQueryBuilder = esb.boolQuery();
 
-    // controlled by crew
-    // TODO: also include those crew does not control but has access to
-    // buildingQueryBuilder.filter(esb.termQuery('Control.controller.id', crewId));
+    // has permission
+    if (withPermission) buildingQueryBuilder.filter(esbPermissionQuery(crewId, withPermission));
 
     // on asteroid
     buildingQueryBuilder.filter(esbLocationQuery({ asteroidId }));
@@ -217,9 +213,8 @@ const api = {
     // SHIPS...
     const shipQueryBuilder = esb.boolQuery();
 
-    // controlled by crew
-    // TODO: also include those crew does not control but has access to
-    shipQueryBuilder.filter(esb.termQuery('Control.controller.id', crewId));
+    // has permission
+    if (withPermission) buildingQueryBuilder.filter(esbPermissionQuery(crewId, withPermission));
 
     // on asteroid
     // (and not in orbit -- i.e. lotId is present and !== 0)

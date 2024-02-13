@@ -118,6 +118,27 @@ export const esbLocationQuery = ({ asteroidId, lotId }, path = 'Location.locatio
     )
 };
 
+export const esbPermissionQuery = (crewId, permissionId) => {
+  return esb.boolQuery().should([
+    esb.termQuery('Control.controller.id', crewId),
+    esb.nestedQuery()
+      .path('PublicPolicies')
+      .query(esb.termQuery('PublicPolicies.permission', permissionId)),
+    esb.nestedQuery()
+      .path('PrepaidAgreements')
+      .query(esb.termQuery('PrepaidAgreements.permission', permissionId))
+      .query(esb.termQuery('PrepaidAgreements.permitted.id', crewId)),
+    esb.nestedQuery()
+      .path('ContractAgreements')
+      .query(esb.termQuery('ContractAgreements.permission', permissionId))
+      .query(esb.termQuery('ContractAgreements.permitted.id', crewId)),
+    esb.nestedQuery()
+      .path('WhitelistAgreements')
+      .query(esb.termQuery('WhitelistAgreements.permission', permissionId))
+      .query(esb.termQuery('WhitelistAgreements.permitted.id', crewId))
+  ])
+};
+
 export const getProcessorProps = (processorType) => {
   switch (processorType) {
     case Processor.IDS.REFINERY: return { label: 'Refine Material', icon: <RefineIcon /> };
@@ -131,5 +152,5 @@ export const getProcessorProps = (processorType) => {
 export const arrToXYZ = (arr) => ({ x: arr[0], y: arr[1], z: arr[2] });
 
 const yearOfSeconds = 31536000;
-export const secondsToMonths = (seconds) => Math.floor(100 * 12 * seconds / yearOfSeconds) / 100;
+export const secondsToMonths = (seconds) => Math.floor(1000 * 12 * seconds / yearOfSeconds) / 1000;
 export const monthsToSeconds = (months) => Math.floor(yearOfSeconds * months / 12);

@@ -1614,7 +1614,7 @@ const activities = {
       };
     },
     getIsActionItemHidden: ({ returnValues }) => (pendingTransactions) => {
-      return pendingTransactions.find((tx) => tx.key === 'TransitFinished')
+      return pendingTransactions.find((tx) => tx.key === 'TransitBetweenFinish')
     },
 
     getInvalidations: ({ event: { returnValues, version } }) => ([

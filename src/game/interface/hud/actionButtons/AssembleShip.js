@@ -1,4 +1,5 @@
 import { useCallback, useMemo } from 'react';
+import { Permission } from '@influenceth/sdk';
 
 import { ShipIcon } from '~/components/Icons';
 import useDryDockManager from '~/hooks/actionManagers/useDryDockManager';
@@ -12,9 +13,7 @@ const labelDict = {
 };
 
 const isVisible = ({ building, crew }) => {
-  return crew && building
-    // && building.Control?.controller?.id === crew.id // TODO: policy instead of control
-    && building.DryDocks?.length > 0;
+  return crew && building && building.DryDocks?.length > 0;
 };
 
 const AssembleShip = ({ asteroid, crew, lot, onSetAction, _disabled }) => {
@@ -26,9 +25,9 @@ const AssembleShip = ({ asteroid, crew, lot, onSetAction, _disabled }) => {
   const disabledReason = useMemo(() => {
     if (_disabled) return 'loading...';
     if (assemblyStatus === 'READY') {
-      return getCrewDisabledReason({ asteroid, crew });
+      return getCrewDisabledReason({ asteroid, crew, permission: Permission.IDS.ASSEMBLE_SHIP, permissionTarget: lot?.building });
     }
-  }, [_disabled, assemblyStatus, asteroid, crew]);
+  }, [_disabled, assemblyStatus, asteroid, crew, lot?.building]);
 
   return (
     <ActionButton

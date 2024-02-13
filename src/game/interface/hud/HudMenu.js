@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import ReactTooltip from 'react-tooltip';
 import styled from 'styled-components';
-import { Building, Inventory, Lot } from '@influenceth/sdk';
+import { Building, Inventory, Lot, Permission } from '@influenceth/sdk';
 import { BiWrench as WrenchIcon } from 'react-icons/bi';
 
 import IconButton from '~/components/IconButton';
@@ -34,7 +34,7 @@ import hudMenus from './hudMenus';
 import { reactBool } from '~/lib/utils';
 import useCrewContext from '~/hooks/useCrewContext';
 import theme from '~/theme';
-import useAccessibleAsteroidBuildings from '~/hooks/useAccessibleAsteroidBuildings';
+import useAsteroidBuildings from '~/hooks/useAsteroidBuildings';
 import useShip from '~/hooks/useShip';
 import useAsteroid from '~/hooks/useAsteroid';
 
@@ -222,7 +222,11 @@ const HudMenu = ({ forceOpenMenu }) => {
   const { data: asteroid } = useAsteroid(asteroidId);
   const { data: lot } = useLot(lotId);
   const { data: ship } = useShip(zoomScene?.type === 'SHIP' ? zoomScene.shipId : null);
-  const { data: marketplaces } = useAccessibleAsteroidBuildings(asteroidId, 'Exchange');
+  const { data: marketplaces } = useAsteroidBuildings(
+    asteroidId,
+    'Exchange',
+    [Permission.IDS.BUY, Permission.IDS.SELL, Permission.IDS.LIMIT_BUY, Permission.IDS.LIMIT_BUY]
+  );
 
   const dispatchHudMenuOpened = useStore(s => s.dispatchHudMenuOpened);
 

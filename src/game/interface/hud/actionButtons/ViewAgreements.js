@@ -1,4 +1,5 @@
 import { useCallback, useMemo } from 'react';
+import { useHistory } from 'react-router-dom';
 
 import { AssetAgreementsIcon } from '~/components/Icons';
 import useAsteroid from '~/hooks/useAsteroid';
@@ -7,10 +8,11 @@ import ActionButton from './ActionButton';
 
 const isVisible = () => false;
 
-const ViewAgreements = ({ asteroid, tally, onSetAction, _disabled }) => {
+const ViewAgreements = ({ entity, permission, tally, _disabled }) => {
+  const history = useHistory();
   const handleClick = useCallback(() => {
-    // onSetAction('CONTROL_ASTEROID');
-  }, []);
+    history.push(`/listview/agreements?uuid=${entity.uuid}&permission=${permission}`)
+  }, [entity, permission]);
 
   return (
     <ActionButton

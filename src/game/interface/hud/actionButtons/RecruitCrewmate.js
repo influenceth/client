@@ -1,18 +1,18 @@
 import { useCallback, useMemo } from 'react';
 import { useHistory } from 'react-router-dom';
-import { Building } from '@influenceth/sdk';
+import { Building, Permission } from '@influenceth/sdk';
 
 import { RecruitCrewmateIcon } from '~/components/Icons';  // TODO: sergey's
 import useCrewManager from '~/hooks/actionManagers/useCrewManager';
 import useStore from '~/hooks/useStore';
 import { nativeBool, reactBool } from '~/lib/utils';
-import ActionButton from './ActionButton';
+import ActionButton, { getCrewDisabledReason } from './ActionButton';
 
 const isVisible = ({ account, building }) => {
   return account && building?.Building?.buildingType === Building.IDS.HABITAT;
 };
 
-const RecruitCrewmate = ({ crew, lot }) => {  
+const RecruitCrewmate = ({ asteroid, crew, lot, _disabled }) => {  
   const { getPendingCrewmate } = useCrewManager();
   const history = useHistory();
 
@@ -60,13 +60,20 @@ const RecruitCrewmate = ({ crew, lot }) => {
 
   const pendingCrewmate = useMemo(getPendingCrewmate, [getPendingCrewmate]);
 
+  const disabledReason = useMemo(() => {
+    if (_disabled) return 'loading...';
+    if (pendingCrewmate) return 'recruiting...';
+    return getCrewDisabledReason({ asteroid, crew, permission: Permission.IDS.RECRUIT_CREWMATE, permissionTarget: lot?.building });
+  }, [asteroid, crew, lot?.building, pendingCrewmate]);
+
   // TODO: attention always?
   return (
     <ActionButton
       label={`Recruit Crewmate${tooltipExtra}`}
+      labelAddendum={disabledReason}
       flags={{
+        disabled: disabledReason,
         attention: reactBool(!pendingCrewmate && !(crew?.Crew?.roster?.length > 0)),
-        disabled: nativeBool(!!pendingCrewmate),
         loading: reactBool(!!pendingCrewmate),
       }}
       icon={<RecruitCrewmateIcon />}

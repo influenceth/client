@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
 import { Entity, Permission } from '@influenceth/sdk';
 
-import { CloseIcon, FormAgreementIcon, KeysIcon, PermissionIcon, RadioCheckedIcon, RadioUncheckedIcon, SwayIcon, WarningIcon } from '~/components/Icons';
+import { CloseIcon, FormAgreementIcon, LotControlIcon, PermissionIcon, RadioCheckedIcon, RadioUncheckedIcon, SwayIcon, WarningIcon } from '~/components/Icons';
 import CollapsibleBlock from '~/components/CollapsibleBlock';
 import Button from '~/components/ButtonAlt';
 import Autocomplete from '~/components/Autocomplete';
@@ -72,16 +72,25 @@ const Policy = styled.div`
       }
     `
     : `
-      cursor: ${p.theme.cursors.active};
       opacity: 0.5;
       & > svg { opacity: 0.3; }
       & > svg:first-child {
         display: none;
       }
 
-      &:hover {
-        opacity: 0.8;
-      }
+      ${p.disabled
+        ? `
+          &:hover {
+            color: ${p.theme.colors.error};
+            opacity: 0.8;
+          }
+        `
+        : `
+          cursor: ${p.theme.cursors.active};
+          &:hover {
+            opacity: 0.8;
+          }
+        `}
     `
   }
 `;
@@ -152,6 +161,9 @@ const getStatusColor = (status) => {
     case 'granted': return '#336342';
     case 'available': return '#363d65';
     case 'restricted': return '#7e2b2a';
+    case 'under notice': return '#8c520b';
+    case 'controlled':
+    case 'under contract': return '#555555';
     default: return '#333333';
   }
 }
@@ -251,6 +263,23 @@ const PolicyPanel = ({ editable = false, entity, permission }) => {
     [crew, currentPolicy]
   );
 
+  const jitStatus = useMemo(() => {
+    // if exclusive, everyone cares if under notice
+    if (Permission.TYPES[permission].isExclusive) {
+      if (currentPolicy?.agreements?.[0]?.noticeTime > 0) return 'under notice';
+      if (currentPolicy?.crewStatus === 'available' && permission === Permission.IDS.LOT_USE) {
+        if (entity?.building?.Control?.controller?.id === entity?.Control?.controller?.id) return 'controlled';
+        if (entity?.surfaceShip?.Control?.controller?.id === entity?.Control?.controller?.id) return 'controlled';
+      }
+
+    // else, only the crew cares
+    } else if (currentPolicy?.crewStatus === 'granted') {
+      if ((currentPolicy?.agreements || []).find((a) => a.permitted.id === crew?.id && a.noticeTime > 0)) return 'under notice';
+    }
+
+    return null;
+  }, [currentPolicy?.crewStatus, entity]);
+
   const config = useMemo(() => {
     if (editing === 'allowlist') {
       return {
@@ -259,12 +288,13 @@ const PolicyPanel = ({ editable = false, entity, permission }) => {
         description: `The permission is granted to all crews on the list.`,
       };
     }
+    const crewStatus = jitStatus || currentPolicy?.crewStatus;
     return {
       ...Permission.POLICY_TYPES[policyType],
-      crewStatus: currentPolicy?.crewStatus,
-      color: editable ? getPolicyColor(policyType) : getStatusColor(currentPolicy?.crewStatus),
+      crewStatus,
+      color: editable ? getPolicyColor(policyType) : getStatusColor(crewStatus),
     };
-  }, [currentPolicy, editable, editing, policyType]);
+  }, [currentPolicy, editable, editing, jitStatus, policyType]);
 
   return (
     <CollapsibleBlock
@@ -278,8 +308,18 @@ const PolicyPanel = ({ editable = false, entity, permission }) => {
       uncollapsibleProps={{
         headerColor: config.color
       }}
-      title={(<><PermissionIcon /> {Permission.TYPES[permission]?.name}</>)}
-      titleAction={() => <span style={{ color: config.color }}>{editable ? (config.nameShort || config.name) : config.crewStatus}</span>}
+      title={permission === Permission.IDS.LOT_USE ? <><LotControlIcon /> Lot Control</> : <><PermissionIcon /> {Permission.TYPES[permission]?.name}</>}
+      titleAction={() => (
+        <span style={{ color: config.color }}>
+          {editable
+            ? (config.nameShort || config.name)
+            : (permission === Permission.IDS.LOT_USE && entity?.Control?.controller?.id === crew?.id
+                ? 'Administrator'
+                : config.crewStatus
+            )
+          }
+        </span>
+      )}
       initiallyClosed>
       {editing && (
         <>
@@ -320,7 +360,7 @@ const PolicyPanel = ({ editable = false, entity, permission }) => {
             <>
               <Section>
                 <PolicySelector>
-                  <h3>Policy Type</h3>
+                  <h3>Policy Type {entity?.label}</h3>
                   <div>
                     <Policy
                       onClick={saving ? null : () => setPolicyType(Permission.POLICY_IDS.PRIVATE)}
@@ -335,7 +375,8 @@ const PolicyPanel = ({ editable = false, entity, permission }) => {
                   </div>
                   <div>
                     <Policy
-                      onClick={saving ? null : () => setPolicyType(Permission.POLICY_IDS.PUBLIC)}
+                      onClick={(saving || entity?.label === Entity.IDS.ASTEROID) ? null : () => setPolicyType(Permission.POLICY_IDS.PUBLIC)}
+                      disabled={nativeBool(entity?.label === Entity.IDS.ASTEROID)}
                       isSelected={policyType === Permission.POLICY_IDS.PUBLIC}>
                       <RadioCheckedIcon /><RadioUncheckedIcon /> {Permission.POLICY_TYPES[Permission.POLICY_IDS.PUBLIC].name}
                     </Policy>
@@ -444,15 +485,36 @@ const PolicyPanel = ({ editable = false, entity, permission }) => {
               <DataRow><label>Policy Type</label><span>{config.name}</span></DataRow>
               {policyType === Permission.POLICY_IDS.PREPAID && (
                 <>
-                  <DataRow><label>Price per Month</label><span><SwayIcon /> {(originalPolicyDetails?.rate || 0).toLocaleString()}</span></DataRow>
-                  <DataRow><label>Minimum Period</label><span>{formatFixed(originalPolicyDetails?.initialTerm, 1)} mo</span></DataRow>
-                  <DataRow><label>Notice Period</label><span>{formatFixed(originalPolicyDetails?.noticePeriod, 1)} mo</span></DataRow>
+                  <DataRow>
+                    <label>Price per Month</label>
+                    {permission === Permission.IDS.LOT_USE && entity?.label === Entity.IDS.ASTEROID && entity?.id === 1
+                      ? <span><SwayIcon /> Variable by Lot</span>
+                      : <span><SwayIcon /> {formatFixed(originalPolicyDetails?.rate || 0)}</span>
+                    }
+                  </DataRow>
+                  <DataRow><label>Minimum Period</label><span>{formatFixed(originalPolicyDetails?.initialTerm, 3)} mo</span></DataRow>
+                  <DataRow><label>Notice Period</label><span>{formatFixed(originalPolicyDetails?.noticePeriod, 3)} mo</span></DataRow>
                 </>
               )}
               {([Permission.POLICY_IDS.CONTRACT, Permission.POLICY_IDS.PREPAID].includes(policyType)) && (
                 <div style={{ paddingTop: 15 }}>
-                  <actionButtons.FormAgreement.Component entity={entity} permission={permission} />
-                  <actionButtons.ViewAgreements.Component _disabled={!agreements?.length} tally={agreements?.length || 0} />
+                  {entity?.Control?.controller?.id !== crew?.id
+                    && !(entity?.label === Entity.IDS.ASTEROID && permission === Permission.IDS.LOT_USE)
+                    && (
+                    <actionButtons.FormAgreement.Component
+                      _disabled={Permission.TYPES[permission].isExclusive && agreements?.length > 0}
+                      entity={entity}
+                      permission={permission} />
+                  )}
+                  {/* TODO: enable list view at an asteroid level... will need to pull all agreements from 
+                    elasticsearch since entity will be asteroid (and *agreements won't be populated) */}
+                  {!(entity?.label === Entity.IDS.ASTEROID && permission === Permission.IDS.LOT_USE) && (
+                    <actionButtons.ViewAgreements.Component
+                      _disabled={!agreements?.length}
+                      entity={entity}
+                      permission={permission}
+                      tally={agreements?.length || 0} />
+                  )}
                 </div>
               )}
             </DataBlock>
@@ -464,25 +526,30 @@ const PolicyPanel = ({ editable = false, entity, permission }) => {
             </EditBlock>
           )}
 
-          {editable && (
-            <Section style={{ borderTop: 0, marginTop: 5 }}>
-              <DataBlock style={{ paddingBottom: 5 }}>
-                <DataRow><label>Allowlist</label><span>{(allowlist?.length || 0).toLocaleString()} Crew{allowlist?.length === 1 ? '' : 's'}</span></DataRow>
-              </DataBlock>
-              <EditBlock>
-                <Button onClick={() => toggleEditing('allowlist')} subtle>Edit Allowlist</Button>
-              </EditBlock>
-            </Section>
-          )}
-          {!editable && (
-            <Section style={{ paddingBottom: 0 }}>
-              <DataBlock>
-                <DataRow>
-                  <label>Allowlist</label>
-                  <span style={{ color: onAllowlist ? '#00db51' : '#777' }}>{onAllowlist ? 'Allowed' : 'Not on List'}</span>
-                </DataRow>
-              </DataBlock>
-            </Section>
+          {permission !== Permission.IDS.LOT_USE && (
+            <>
+              {editable && (
+                <Section style={{ borderTop: 0, marginTop: 5 }}>
+                  <DataBlock style={{ paddingBottom: 5 }}>
+                    <DataRow><label>Allowlist</label><span>{(allowlist?.length || 0).toLocaleString()} Crew{allowlist?.length === 1 ? '' : 's'}</span></DataRow>
+                  </DataBlock>
+                  <EditBlock>
+                    <Button onClick={() => toggleEditing('allowlist')} subtle>Edit Allowlist</Button>
+                  </EditBlock>
+                </Section>
+              )}
+
+              {!editable && (
+                <Section style={{ paddingBottom: 0 }}>
+                  <DataBlock>
+                    <DataRow>
+                      <label>Allowlist</label>
+                      <span style={{ color: onAllowlist ? '#00db51' : '#777' }}>{onAllowlist ? 'Allowed' : 'Not on List'}</span>
+                    </DataRow>
+                  </DataBlock>
+                </Section>
+              )}
+            </>
           )}
         </>
       )}
@@ -497,7 +564,6 @@ const PolicyPanels = ({ editable, entity }) => {
   const permPolicies = useMemo(() => entity ? Permission.getPolicyDetails(entity, crew?.id) : {}, [crew?.id, entity]);
 
   // show lot warning if building controller does not have lot permission
-  // TODO: lot permissions
   const showLotWarning = useMemo(() => {
     if (!lot) return false;
 
@@ -530,7 +596,7 @@ const PolicyPanels = ({ editable, entity }) => {
           key={permission}
           editable={reactBool(editable)}
           entity={entity}
-          permission={permission} />
+          permission={Number(permission)} />
       ))}
     </div>
   );

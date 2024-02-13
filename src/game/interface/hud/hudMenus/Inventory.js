@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import styled, { css } from 'styled-components';
 import { usePopper } from 'react-popper';
 import ReactTooltip from 'react-tooltip';
-import { Delivery, Inventory, Product } from '@influenceth/sdk';
+import { Delivery, Inventory, Permission, Product } from '@influenceth/sdk';
 
 import Dropdown from '~/components/Dropdown';
 import { DotsIcon } from '~/components/Icons';
@@ -19,6 +19,7 @@ import { Tray, TrayLabel } from './components/components';
 import useShip from '~/hooks/useShip';
 import useDeliveries from '~/hooks/useDeliveries';
 import TabContainer from '~/components/TabContainer';
+import useCrewContext from '~/hooks/useCrewContext';
 
 const resourceItemWidth = 83;
 
@@ -264,6 +265,8 @@ const LotInventory = () => {
   const { data: ship } = useShip(zoomScene?.type === 'SHIP' && zoomScene.shipId);
   const entity = useMemo(() => ship || lot?.building, [lot, ship]);
 
+  const { crew, crewCan } = useCrewContext();
+
   const inventories = useMemo(() => {
     return (entity?.Inventories || [])
       .filter((i) => i.status === Inventory.STATUSES.AVAILABLE)
@@ -284,6 +287,11 @@ const LotInventory = () => {
   const [splittingResourceId, setSplittingResourceId] = useState();
 
   const resourceItemRefs = useRef([]);
+
+  const canRemoveProducts = useMemo(
+    () => crewCan(Permission.IDS.REMOVE_PRODUCTS, entity),
+    [crewCan, entity]
+  );
 
   // default slot
   useEffect(() => {
@@ -518,10 +526,11 @@ const LotInventory = () => {
         <Tray>
           {trayLabel && <TrayLabel content={trayLabel} />}
 
-          {/* TODO: and have permissions to move stuff from here */}
           {Object.keys(selectedItems).length > 0 && (
             <actionButtons.SurfaceTransferOutgoing.Component
               {...actionProps}
+              labelAddendum={canRemoveProducts ? '' : 'access restricted'}
+              flags={{ disabled: !canRemoveProducts }}
               dialogProps={{ origin: entity, originSlot: inventorySlot, preselect: { selectedItems } }}
             />
           )}

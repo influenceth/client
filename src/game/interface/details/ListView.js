@@ -10,6 +10,7 @@ import SearchFilters from '~/components/SearchFilters';
 import SearchFilterTray from '~/components/SearchFilterTray';
 import InProgressIcon from '~/components/InProgressIcon';
 import {
+  AssetAgreementsIcon,
   AsteroidSearchIcon,
   BuildingIcon,
   ColumnsIcon,
@@ -25,10 +26,11 @@ import {
 } from '~/components/Icons';
 import Button from '~/components/ButtonAlt';
 import Dropdown from '~/components/Dropdown';
-import { useHistory, useParams } from 'react-router-dom';
+import { useHistory, useLocation, useParams } from 'react-router-dom';
 import Multiselect from '~/components/Multiselect';
 import { itemColors, statuses } from '~/lib/actionItem';
 import usePagedActionItems from '~/hooks/usePagedActionItems';
+import usePagedAgreements from '~/hooks/usePagedAgreements';
 import usePagedEvents from '~/hooks/usePagedEvents';
 import useStore from '~/hooks/useStore';
 import theme from '~/theme';
@@ -241,6 +243,14 @@ const assetTypes = {
     usePagedAssetsOverride: usePagedEvents,
     disableFilters: true
   },
+  agreements: {
+    keyField: 'key',
+    icon: <AssetAgreementsIcon />,
+    title: 'Agreements',
+    useColumns: listConfigs.agreements,
+    usePagedAssetsOverride: usePagedAgreements,
+    disableFilters: true
+  }
 }
 
 const assetsAsOptions = Object.keys(assetTypes).map((key) => ({
@@ -249,9 +259,9 @@ const assetsAsOptions = Object.keys(assetTypes).map((key) => ({
   icon: assetTypes[key].icon
 }));
 
-const ListViewComponent = ({ assetType, onAssetTypeChange }) => {
+const ListViewComponent = ({ assetType, onAssetTypeChange, params }) => {
   const { keyField, getRowProps, useColumns, usePagedAssetsOverride, disableFilters } = assetTypes[assetType];
-  const { query, page, perPage, setPage, sort, setSort } = usePagedAssetsOverride ? usePagedAssetsOverride() : usePagedAssets(assetType); // eslint-disable-line react-hooks/rules-of-hooks
+  const { query, page, perPage, setPage, sort, setSort, disablePagination } = usePagedAssetsOverride ? usePagedAssetsOverride(params) : usePagedAssets(assetType, params); // eslint-disable-line react-hooks/rules-of-hooks
   const [sortField, sortDirection] = sort || [];
 
   const filters = useStore(s => s.assetSearch[assetType].filters);
@@ -315,7 +325,7 @@ const ListViewComponent = ({ assetType, onAssetTypeChange }) => {
   }, [columns, disabledColumns]);
 
   const hideableColumns = useMemo(() => {
-    return columns.filter((c) => !c.unhideable);
+    return columns.filter((c) => !c.skip).filter((c) => !c.unhideable);
   }, [columns]);
 
   const enabledColumnKeys = useMemo(() => enabledColumns.map((c) => c.key), [enabledColumns]);
@@ -397,26 +407,30 @@ const ListViewComponent = ({ assetType, onAssetTypeChange }) => {
               assetType={assetType}
               handleClickFilters={onClickFilters} />
           </div>
-          <Pages>
-            {!query?.isLoading && query?.data?.total > 0 && (
-              <>
-                <b>
-                  {((page - 1) * perPage + 1).toLocaleString()}-{Math.min(page * perPage, query?.data?.total).toLocaleString()} |
-                </b>
-                &nbsp;
-                <span>
-                  Page {page.toLocaleString()} of {Math.ceil(query.data.total / perPage).toLocaleString()}
-                </span>
-              </>
-            )}
-          </Pages>
-          <div>
-            <Pagination
-              currentPage={page}
-              rowsPerPage={perPage}
-              rowCount={query?.data?.total || 0}
-              onChangePage={setPage} />
-          </div>
+          {!disablePagination && (
+            <>
+              <Pages>
+                {!query?.isLoading && query?.data?.total > 0 && (
+                  <>
+                    <b>
+                      {((page - 1) * perPage + 1).toLocaleString()}-{Math.min(page * perPage, query?.data?.total).toLocaleString()} |
+                    </b>
+                    &nbsp;
+                    <span>
+                      Page {page.toLocaleString()} of {Math.ceil(query.data.total / perPage).toLocaleString()}
+                    </span>
+                  </>
+                )}
+              </Pages>
+              <div>
+                <Pagination
+                  currentPage={page}
+                  rowsPerPage={perPage}
+                  rowCount={query?.data?.total || 0}
+                  onChangePage={setPage} />
+              </div>
+            </>
+          )}
         </Tray>
       </Wrapper>
     </Details>
@@ -425,6 +439,7 @@ const ListViewComponent = ({ assetType, onAssetTypeChange }) => {
 
 const ListView = () => {
   const { assetType } = useParams();
+  const { search } = useLocation();
   const history = useHistory();
 
   const onAssetTypeChange = useCallback(({ value }) => {
@@ -436,9 +451,11 @@ const ListView = () => {
     else if (!assetTypes[assetType]) history.replace('/listview/asteroids');
   }, [assetType]);
 
+  const params = useMemo(() => Object.fromEntries(new URLSearchParams(search)), [search]);
+
   if (!assetType) return null;
   // (NOTE: key forces remount so that doesn't complain about hook order changing due to useColumns)
-  return <ListViewComponent key={assetType} assetType={assetType} onAssetTypeChange={onAssetTypeChange} />;
+  return <ListViewComponent key={assetType} assetType={assetType} onAssetTypeChange={onAssetTypeChange} params={params} />;
 };
 
 export default ListView;

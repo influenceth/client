@@ -13,7 +13,7 @@ const FormAgreement = ({ entity, permission, _disabled }) => {
   const onSetAction = useStore(s => s.dispatchActionDialog);
 
   const handleClick = useCallback(() => {
-    onSetAction('FORM_AGREEMENT', { entity, permission});
+    onSetAction('FORM_AGREEMENT', { entity, permission });
   }, [entity, permission]);
 
   const disabledReason = useMemo(() => {

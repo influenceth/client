@@ -749,7 +749,7 @@ const formatAsTx = (item) => {
     case 'UpdateAllowlist': {
       formatted.icon = <PermissionIcon />;
       formatted.label = 'Update Allowlist';
-      formatted.asteroidId = Lot.toPosition(item.meta?.lotId)?.asteroidId;
+      formatted.asteroidId = item.meta?.asteroidId || Lot.toPosition(item.meta?.lotId)?.asteroidId;
       formatted.lotId = item.meta?.lotId;
       formatted.shipId = item.meta?.shipId;
       // formatted.onClick = () => {};

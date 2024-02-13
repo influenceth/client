@@ -795,14 +795,6 @@ const ModelViewer = ({ assetType, modelUrl, ...overrides }) => {
             onLoaded={onSkyboxLoaded}
           />
 
-          {settings.enablePostprocessing && (
-            <Postprocessor
-              key={`${pixelRatio}_${settings.bloomRadius}_${settings.bloomStrength}_${settings.toneMapping}_${settings.toneMappingExposure}`}
-              enabled
-              bloomParams={bloomParams}
-              toneMappingParams={toneMappingParams} />
-          )}
-
           {!loadingSkybox && modelUrl && (
             <Model
               onCameraUpdate={settings.trackCamera ? setCameraInfo : null}
