@@ -129,9 +129,9 @@ export const esbPermissionQuery = (crewId, permissionId) => {
       .query(esb.termQuery('PrepaidAgreements.permission', permissionId))
       .query(esb.termQuery('PrepaidAgreements.permitted.id', crewId)),
     esb.nestedQuery()
-      .path('CustomAgreements')
-      .query(esb.termQuery('CustomAgreements.permission', permissionId))
-      .query(esb.termQuery('CustomAgreements.permitted.id', crewId)),
+      .path('ContractAgreements')
+      .query(esb.termQuery('ContractAgreements.permission', permissionId))
+      .query(esb.termQuery('ContractAgreements.permitted.id', crewId)),
     esb.nestedQuery()
       .path('WhitelistAgreements')
       .query(esb.termQuery('WhitelistAgreements.permission', permissionId))
