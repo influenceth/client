@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo } from 'react';
 import styled, { css, keyframes } from 'styled-components';
 import ReactTooltip from 'react-tooltip';
+import { Permission } from '@influenceth/sdk';
 
 import ClipCorner from '~/components/ClipCorner';
 import useChainTime from '~/hooks/useChainTime';
@@ -264,7 +265,10 @@ const ActionButtonComponent = ({ label, labelAddendum, flags = {}, icon, onClick
   );
 }
 
-export const getCrewDisabledReason = ({ asteroid, crew, requireAsteroid = true, requireSurface = true }) => {
+export const getCrewDisabledReason = ({ asteroid, crew, permission, permissionTarget, requireAsteroid = true, requireSurface = true }) => {
+  if (permission && permissionTarget) {
+    if (!Permission.isPermitted(crew, permission, permissionTarget)) return 'access restricted';
+  }
   if (asteroid && requireAsteroid) {
     if (crew?._location?.asteroidId !== asteroid?.id) {
       return 'crew is away';

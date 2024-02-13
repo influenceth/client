@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import styled from 'styled-components';
-import { Crewmate, Order } from '@influenceth/sdk';
+import { Crewmate, Order, Permission } from '@influenceth/sdk';
 
 import { CompositionIcon, InfoIcon, LimitBuyIcon, LimitSellIcon, MarketBuyIcon, MarketplaceBuildingIcon, MarketSellIcon, OrderIcon, RadioCheckedIcon, RadioUncheckedIcon, SwayIcon } from '~/components/Icons';
 import CrewIndicator from '~/components/CrewIndicator';
@@ -348,7 +348,7 @@ const STROKE_WIDTH = 2;
 
 const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource }) => {
   const { width, height } = useScreenSize();
-  const { crew } = useCrewContext();
+  const { crew, crewCan } = useCrewContext();
 
   const onSetAction = useStore(s => s.dispatchActionDialog);
 
@@ -596,6 +596,15 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
     [mode, type, resource, marketplace, getPendingOrder]
   );
 
+  const hasPermission = useMemo(() => {
+    let perm = 0;
+    if (type === 'limit' && mode === 'buy') perm = Permission.IDS.LIMIT_BUY;
+    if (type === 'limit' && mode === 'sell') perm = Permission.IDS.LIMIT_SELL;
+    if (type === 'market' && mode === 'buy') perm = Permission.IDS.BUY;
+    if (type === 'market' && mode === 'sell') perm = Permission.IDS.SELL;
+    return crewCan(perm, marketplace);
+  }, [mode, type]);
+
   const actionButtonDetails = useMemo(() => {
     const a = { label: '', icon: null };
     if (type === 'limit') {
@@ -605,8 +614,9 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
       a.label = `${loading ? 'Creating' : 'Create'} Market Order`;
       a.icon = mode === 'buy' ? <MarketBuyIcon /> : <MarketSellIcon />;
     }
+    a.labelAddendum = !loading && !hasPermission ? 'restricted' : '';
     return a;
-  }, [loading, mode, type]);
+  }, [loading, hasPermission, mode, type]);
 
   return (
     <Wrapper>
@@ -835,7 +845,10 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
 
                 <ActionButton
                   {...actionButtonDetails}
-                  flags={{ disabled: loading || !(total > 0), loading }}
+                  flags={{
+                    disabled: loading || !hasPermission || !(total > 0),
+                    loading
+                  }}
                   onClick={createOrder} />
               </Tray>
             </PanelContent>

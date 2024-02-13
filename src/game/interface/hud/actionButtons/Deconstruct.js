@@ -12,7 +12,7 @@ const labelDict = {
 
 const isVisible = ({ constructionStatus, building, crew }) => {
   return crew && building
-    && building.Control?.controller?.id === crew.id
+    && building.Control?.controller?.id === crew.id // TODO: possibly also lot controller?
     && ['OPERATIONAL', 'DECONSTRUCTING'].includes(constructionStatus);
 };
 

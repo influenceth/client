@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from 'react';
-import { Station } from '@influenceth/sdk';
+import { Permission, Station } from '@influenceth/sdk';
 
 import { StationCrewIcon, StationPassengersIcon } from '~/components/Icons';
 import ActionButton, { getCrewDisabledReason } from './ActionButton';
@@ -31,14 +31,11 @@ const StationCrew = ({ asteroid, crew, lot, ship, onSetAction, _disabled }) => {
   const disabledReason = useMemo(() => {
     if (_disabled || !stationEntity) return 'loading...';
     if (!currentStationing) {
-      if (!crewIsController) {
-        // TODO: check policy
-      }
       const stationConfig = Station.TYPES[stationEntity.Station.stationType];
       if (stationConfig.hardCap && stationEntity.Station.population + crew._crewmates.length >= stationConfig.cap) {
         return 'station is full';
       }
-      return getCrewDisabledReason({ asteroid, crew, requireSurface: false });
+      return getCrewDisabledReason({ asteroid, crew, permission: Permission.IDS.STATION_CREW, permissionTarget: stationEntity, requireSurface: false });
     }
     return '';
   }, [_disabled, asteroid, crew, crewIsController, currentStationing, stationEntity]);

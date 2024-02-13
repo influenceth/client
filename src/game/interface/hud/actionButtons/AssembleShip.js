@@ -13,9 +13,7 @@ const labelDict = {
 };
 
 const isVisible = ({ building, crew }) => {
-  return crew && building
-    && building.DryDocks?.length > 0
-    && Permission.isPermitted(crew, Permission.IDS.ASSEMBLE_SHIP, building); // TODO: should be hidden or disabled?
+  return crew && building && building.DryDocks?.length > 0;
 };
 
 const AssembleShip = ({ asteroid, crew, lot, onSetAction, _disabled }) => {
@@ -27,9 +25,9 @@ const AssembleShip = ({ asteroid, crew, lot, onSetAction, _disabled }) => {
   const disabledReason = useMemo(() => {
     if (_disabled) return 'loading...';
     if (assemblyStatus === 'READY') {
-      return getCrewDisabledReason({ asteroid, crew });
+      return getCrewDisabledReason({ asteroid, crew, permission: Permission.IDS.ASSEMBLE_SHIP, permissionTarget: lot?.building });
     }
-  }, [_disabled, assemblyStatus, asteroid, crew]);
+  }, [_disabled, assemblyStatus, asteroid, crew, lot?.building]);
 
   return (
     <ActionButton

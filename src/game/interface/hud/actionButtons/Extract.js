@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from 'react';
-import { Deposit } from '@influenceth/sdk';
+import { Deposit, Permission } from '@influenceth/sdk';
 
 import { ExtractionIcon } from '~/components/Icons';
 import useExtractionManager from '~/hooks/actionManagers/useExtractionManager';
@@ -15,9 +15,7 @@ const labelDict = {
 
 const isVisible = ({ building, crew }) => {
   // zoomStatus === 'in'?
-  return crew && building
-    && building.Control?.controller?.id === crew.id // TODO: policy instead of control
-    && building.Extractors?.length > 0;
+  return crew && building && building.Extractors?.length > 0;
 };
 
 // TODO: for multiple extractors, need one of these (and an extraction manager) per extractor
@@ -41,10 +39,11 @@ const Extract = ({ onSetAction, asteroid, crew, lot, preselect, _disabled }) => 
   let disabledReason = useMemo(() => {
     if (_disabled) return 'loading...';
     if (extractionStatus === 'READY') {
-      if (myUsableSamples?.length === 0) return 'requires core sample';
-      return getCrewDisabledReason({ asteroid, crew });
+      // if (myUsableSamples?.length === 0) return 'requires core sample';
+      if (usableSamples?.length === 0) return 'requires core sample'; // TODO: does above line make more sense?
+      return getCrewDisabledReason({ asteroid, crew, permission: Permission.IDS.EXTRACT_RESOURCES, permissionTarget: lot?.building });
     }
-  }, [_disabled, crew, extractionStatus, lot?.building?.Extractors, myUsableSamples?.length]);
+  }, [_disabled, crew, extractionStatus, lot?.building, myUsableSamples?.length]);
   
   const loading = ['EXTRACTING', 'FINISHING'].includes(extractionStatus);
   return (

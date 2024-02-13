@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import styled from 'styled-components';
-import { Asteroid, Crewmate, Lot, Process, Processor, Product, Time } from '@influenceth/sdk';
+import { Asteroid, Crewmate, Lot, Permission, Process, Processor, Product, Time } from '@influenceth/sdk';
 
 import travelBackground from '~/assets/images/modal_headers/Travel.png';
 import { BackIcon, CaretIcon, CloseIcon, ForwardIcon, RefineIcon, ProcessIcon, BioreactorBuildingIcon, ShipyardBuildingIcon, InventoryIcon, LocationIcon, RefineryBuildingIcon, ManufactureIcon } from '~/components/Icons';
@@ -80,7 +80,7 @@ const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...pro
     [lot.building, processorSlot]
   );
 
-  const { crew } = useCrewContext();
+  const { crew, crewCan } = useCrewContext();
 
   const [selectedOrigin, setSelectedOrigin] = useState(currentProcess ? { ...currentProcess?.origin, slot: currentProcess?.originSlot } : undefined);
   const { data: origin } = useEntity(selectedOrigin);
@@ -521,7 +521,7 @@ const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...pro
       </ActionDialogBody>
 
       <ActionDialogFooter
-        disabled={!(process && amount > 0 && originInventory && isOriginSufficient && destinationInventory)}
+        disabled={!(process && amount > 0 && originInventory && isOriginSufficient && destinationInventory && crewCan(Permission.IDS.RUN_PROCESS, lot.building))}
         goLabel="Begin"
         onGo={onStartProcess}
         finalizeLabel="Finish"

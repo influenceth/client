@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from 'react';
-import { Dock, Ship } from '@influenceth/sdk';
+import { Dock, Permission, Ship } from '@influenceth/sdk';
 
 import { LandShipIcon } from '~/components/Icons';
 import useCrewContext from '~/hooks/useCrewContext';
@@ -48,13 +48,17 @@ const LandShip = ({ asteroid, lot, onSetAction, _disabled }) => {
     if (_disabled) return 'loading...';
     if (!crewedShip) return 'ship is not crewed';
     if (!ready) return 'ship is in flight';
+    let permChecks = {};
+
     // if no lot selected, can select from dialog
     if (lot) {
+
       // trying to dock
       if (lot?.building) {
         if (!Ship.TYPES[crewedShip.Ship.shipType]?.docking) return 'ship type cannot dock';
         if (!lot?.building?.Dock) return 'building has no dock';
         if (lot.building.Dock.dockedShips >= Dock.TYPES[lot.building.Dock.dockType].cap) return 'dock is full';
+        permChecks = { permission: Permission.IDS.DOCK_SHIP, permissionTarget: lot.building };
 
       // trying to land
       } else {
@@ -62,7 +66,7 @@ const LandShip = ({ asteroid, lot, onSetAction, _disabled }) => {
       }
     }
     if (crewedShip.Ship.emergencyAt > 0) return 'in emergency mode';
-    return getCrewDisabledReason({ asteroid, crew, requireSurface: false });
+    return getCrewDisabledReason({ asteroid, crew, requireSurface: false, ...permChecks });
   }, [_disabled, crewedShip, lot, ready]);
 
   return (

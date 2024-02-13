@@ -1,6 +1,6 @@
 import { createContext, useCallback, useEffect, useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from 'react-query';
-import { Crewmate, Entity } from '@influenceth/sdk';
+import { Crewmate, Entity, Permission } from '@influenceth/sdk';
 
 import api from '~/lib/api';
 import useAuth from '~/hooks/useAuth';
@@ -169,12 +169,18 @@ export function CrewProvider({ children }) {
 
   const captain = useMemo(() => selectedCrew?._crewmates?.[0] || null, [crewmateMap, selectedCrew]);
 
+  const crewCan = useCallback(
+    (permission, hydratedTarget) => Permission.isPermitted(finalSelectedCrew, permission, hydratedTarget),
+    [finalSelectedCrew]
+  );
+
   return (
     <CrewContext.Provider value={{
       adalianRecruits,
       arvadianRecruits,
       captain,
       crew: finalSelectedCrew,
+      crewCan,
       crews,
       crewmateMap,
       loading: !crewsAndCrewmatesReady,
