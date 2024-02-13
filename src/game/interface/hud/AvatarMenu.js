@@ -1,17 +1,15 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useHistory } from 'react-router-dom';
-import styled, { keyframes } from 'styled-components';
+import styled from 'styled-components';
 
 import CollapsibleSection from '~/components/CollapsibleSection';
 import CrewmateCardFramed from '~/components/CrewmateCardFramed';
 import CrewLocationLabel from '~/components/CrewLocationLabel';
 import LiveFoodStatus from '~/components/LiveFoodStatus';
-import { BusyIcon, CloseIcon, CrewIcon, CrewLocationIcon, IdleIcon, WarningOutlineIcon } from '~/components/Icons';
-import LiveTimer from '~/components/LiveTimer';
+import { CrewIcon, WarningOutlineIcon } from '~/components/Icons';
 import useAuth from '~/hooks/useAuth';
 import useCrewContext from '~/hooks/useCrewContext';
 import useHydratedLocation from '~/hooks/useHydratedLocation';
-import useInterval from '~/hooks/useInterval';
 import formatters from '~/lib/formatters';
 import theme from '~/theme';
 import useStore from '~/hooks/useStore';
@@ -90,6 +88,11 @@ const BaseLocation = styled.div`
       content: " > ";
     }
   }
+
+  &:hover, &:hover span {
+    color: ${p => p.theme.colors.main};
+  }
+
   svg {
     color: ${p => p.theme.colors.main};
     margin-right: 2px;
