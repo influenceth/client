@@ -18,12 +18,16 @@ const usePolicyManager = (entity, permission) => {
   }), [crew?.id, entity, permission]);
 
   const meta = useMemo(() => ({
+    asteroidId: entity?.label === Entity.IDS.ASTEROID ? entity?.id : undefined,
     lotId: entity?.Location?.locations?.find((l) => l.label === Entity.IDS.LOT)?.id,
     shipId: entity?.label === Entity.IDS.SHIP ? entity?.id : undefined,
   }), [entity]);
 
   const currentPolicy = useMemo(() => {
+    if (!entity) return undefined;
+    
     const pol = Permission.getPolicyDetails(entity, crew?.id)[permission];
+
     if (pol?.policyDetails && pol.policyType === Permission.POLICY_IDS.CONTRACT) pol.policyDetails.contract = pol.policyDetails.address;
     if (pol?.policyDetails && pol.policyType === Permission.POLICY_IDS.PREPAID) {
       pol.policyDetails.rate = (pol.policyDetails.rate / 1e6) * hoursPerMonth;  // stored in microsway per hour, UI in sway/mo

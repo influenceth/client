@@ -25,7 +25,7 @@ const EndAgreement = ({ entity, permission, agreementPath, _disabled }) => {
     if (currentAgreement?.noticeTime > 0) return 'notice already given';
     if (currentAgreement?._canGiveNoticeStart > blockTime) return `allowed in ${formatTimer(currentAgreement._canGiveNoticeStart - blockTime, 1)}`;
     return '';
-  }, [_disabled, changePending]);
+  }, [_disabled, changePending, currentAgreement]);
 
   return (
     <ActionButton

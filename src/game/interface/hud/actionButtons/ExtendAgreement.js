@@ -8,7 +8,7 @@ import useAgreementManager from '~/hooks/actionManagers/useAgreementManager';
 const isVisible = () => false;
 
 const ExtendAgreement = ({ entity, permission, onSetAction, _disabled }) => {
-  const { changePending } = useAgreementManager(entity, permission);
+  const { changePending, currentAgreement } = useAgreementManager(entity, permission);
   
   // const onSetAction = useStore(s => s.dispatchActionDialog);
 
@@ -19,8 +19,9 @@ const ExtendAgreement = ({ entity, permission, onSetAction, _disabled }) => {
   const disabledReason = useMemo(() => {
     if (_disabled) return 'loading...';
     if (changePending) return 'updating...';
+    if (currentAgreement?.noticeTime > 0) return 'notice given';
     return '';
-  }, [_disabled, changePending]);
+  }, [_disabled, changePending, currentAgreement]);
 
   // only flash green if no controller... button is always present if you own and
   // do not currently have control (hopefully that is less distracting when admin'ed

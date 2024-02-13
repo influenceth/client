@@ -4,7 +4,7 @@ import styled from 'styled-components';
 import Clipboard from 'react-clipboard.js';
 
 import headerBackground from '~/assets/images/modal_headers/CrewManagement.png';
-import { BanIcon, CheckIcon, CloseIcon, DisconnectIcon, ExtendAgreementIcon, FormAgreementIcon, GiveNoticeIcon, LinkIcon, LogoutIcon, PermissionIcon, RefreshIcon, StopIcon, SwayIcon } from '~/components/Icons';
+import { BanIcon, CheckIcon, CloseIcon, DisconnectIcon, ExtendAgreementIcon, FormAgreementIcon, GiveNoticeIcon, LinkIcon, LogoutIcon, LotControlIcon, PermissionIcon, RefreshIcon, StopIcon, SwayIcon } from '~/components/Icons';
 import useCrewContext from '~/hooks/useCrewContext';
 import useStore from '~/hooks/useStore';
 import { reactBool, locationsArrToObj, formatFixed, monthsToSeconds, secondsToMonths, nativeBool } from '~/lib/utils';
@@ -34,6 +34,8 @@ import UncontrolledTextInput, { TextInputWrapper } from '~/components/TextInputU
 import useSwayBalance from '~/hooks/useSwayBalance';
 import Button from '~/components/ButtonAlt';
 import useBlockTime from '~/hooks/useBlockTime';
+import useLot from '~/hooks/useLot';
+import useAsteroid from '~/hooks/useAsteroid';
 
 const FormSection = styled.div`
   margin-top: 12px;
@@ -144,6 +146,7 @@ const FormAgreement = ({
   const createAlert = useStore(s => s.dispatchAlertLogged);
 
   const { currentAgreement, currentPolicy, cancelAgreement, enterAgreement, extendAgreement } = agreementManager;
+  const { data: asteroid } = useAsteroid(locationsArrToObj(entity?.Location?.locations || []).asteroidId);
   const blockTime = useBlockTime();
   const { crew } = useCrewContext();
   const { data: swayBalance } = useSwayBalance();
@@ -152,7 +155,7 @@ const FormAgreement = ({
   const captain = crewmates[0];
   const location = useHydratedLocation(locationsArrToObj(entity?.Location?.locations || []));
 
-  const { data: controller } = useCrew(entity?.Control?.controller?.id);
+  const { data: controller } = useCrew((entity?.label === Entity.IDS.LOT ? asteroid : entity)?.Control?.controller?.id);
   const { data: permitted } = useCrew(currentAgreement?.permitted?.id);
 
   const maxTerm = useMemo(() => {
@@ -267,7 +270,7 @@ const FormAgreement = ({
     // TODO: should these conversions be in useAgreementManager?
     console.log('initialPeriod', initialPeriod);
     const term = monthsToSeconds(initialPeriod);
-    const termPrice = totalLeaseCost * 1e6;
+    const termPrice = Math.ceil(totalLeaseCost * 1e6);
     console.log({ recipient, term, termPrice });
     enterAgreement({ recipient, term, termPrice });
   }, [controller?.Crew?.delegatedTo, initialPeriod, totalLeaseCost]);
@@ -276,7 +279,7 @@ const FormAgreement = ({
     const recipient = controller?.Crew?.delegatedTo;
     // TODO: should these conversions be in useAgreementManager?
     const term = monthsToSeconds(initialPeriod);
-    const termPrice = totalLeaseCost * 1e6;
+    const termPrice = Math.ceil(totalLeaseCost * 1e6);
     extendAgreement({ recipient, term, termPrice });
   }, []);
 
@@ -360,7 +363,7 @@ const FormAgreement = ({
             )}
 
             <div style={{ padding: '20px 10px' }}>
-              <CrewIndicator crew={controller} />
+              <CrewIndicator crew={controller} label={entity?.label === Entity.IDS.LOT ? `Administrator` : undefined} />
             </div>
           </FlexSectionBlock>
           
@@ -445,7 +448,7 @@ const FormAgreement = ({
                 <TextInputWrapper rightLabel="SWAY / month">
                   <DisabledUncontrolledTextInput
                     disabled
-                    value={(currentPolicy?.policyDetails?.rate || 0)} />
+                    value={formatFixed(currentPolicy?.policyDetails?.rate || 0)} />
                 </TextInputWrapper>
               </FormSection>
 
@@ -481,7 +484,10 @@ const FormAgreement = ({
             style={{ width: '100%' }}>
             <Alert scheme={alertScheme}>
               <div>
-                <PermissionIcon /> {Permission.TYPES[permission].name}
+                {entity.label === Entity.IDS.LOT
+                  ? <><LotControlIcon /> Lot Control (Exclusive)</>
+                  : <><PermissionIcon /> {Permission.TYPES[permission].name}</>
+                }
               </div>
               {isTermination
                 ? (
@@ -569,9 +575,13 @@ const FormAgreement = ({
 
 const Wrapper = ({ entity: entityId, permission, isExtension, agreementPath, ...props }) => {
   const { crewIsLoading } = useCrewContext();
-  const { data: entity, isLoading: entityIsLoading } = useEntity(entityId);
-  const agreementManager = useAgreementManager(entity, permission, agreementPath);
+  const { data: asset, isLoading: assetIsLoading } = useEntity(entityId?.label === Entity.IDS.LOT ? undefined : entityId);
+  const { data: lot, isLoading: lotIsLoading } = useLot(entityId?.label === Entity.IDS.LOT ? entityId?.id : undefined);
 
+  const entity = asset || lot;
+  const entityIsLoading = assetIsLoading || lotIsLoading;
+
+  const agreementManager = useAgreementManager(entity, permission, agreementPath);
   const stage = agreementManager.changePending ? actionStages.STARTING : actionStages.NOT_STARTED;
 
   // handle auto-closing on any status change

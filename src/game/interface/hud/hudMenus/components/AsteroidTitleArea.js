@@ -65,6 +65,7 @@ const AsteroidTitleArea = ({ asteroid }) => {
 
   useEffect(() => ReactTooltip.rebuild(), [resourceCategories]);
 
+  if (!asteroid) return null;
   return (
     <TitleArea
       title={formatters.asteroidName(asteroid)}

@@ -140,6 +140,12 @@ const ChainTransactionContext = createContext();
 
 const getNow = () => Math.floor(Date.now() / 1000);
 
+// this matches the 
+const cleanseTxHash = function (txHash) {
+  if (!txHash) return null;
+  return `0x${BigInt(txHash).toString(16).padStart(64, '0')}`;
+};
+
 // TODO: equalityTest default of 'i' doesn't make sense anymore
 
 // TODO: move systems into their own util file (like activities)
@@ -830,7 +836,7 @@ export function ChainTransactionProvider({ children }) {
           vars,
           meta,
           timestamp: block?.timestamp ? (block.timestamp * 1000) : null,
-          txHash: tx.transaction_hash,
+          txHash: cleanseTxHash(tx.transaction_hash),
           waitingOn: 'TRANSACTION'
         });
       } catch (e) {

@@ -18,6 +18,7 @@ import useCrew from '~/hooks/useCrew';
 import usePriceConstants from '~/hooks/usePriceConstants';
 import Button from '~/components/ButtonAlt';
 import AsteroidTitleArea from './components/AsteroidTitleArea';
+import PolicyPanels from './components/PolicyPanels';
 
 const InfoRow = styled.div`
   align-items: center;
@@ -165,6 +166,7 @@ const AsteroidInfo = ({ onClose }) => {
         </HudMenuCollapsibleSection>
 
         <HudMenuCollapsibleSection title="Lot Policy" collapsed>
+          <PolicyPanels entity={asteroid} />
         </HudMenuCollapsibleSection>
 
         

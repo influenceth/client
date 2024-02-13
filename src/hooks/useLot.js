@@ -1,9 +1,10 @@
 import { useQuery, useQueryClient } from 'react-query';
 import { useMemo } from 'react';
-import { Deposit, Entity, Lot, Ship } from '@influenceth/sdk';
+import { Deposit, Entity, Lot, Permission, Ship } from '@influenceth/sdk';
 
 import api from '~/lib/api';
 import { locationsArrToObj } from '~/lib/utils';
+import useEntity from './useEntity';
 
 // const useLot = (lotId) => {
 //   return useQuery(
@@ -43,7 +44,7 @@ const useLot = (lotId) => {
       })) || [];
 
       // update queryClient for individual entities, so that when invalidated, they are refetched
-      // (when is when the data on the lot gets updated)
+      // (when the data on the lot gets updated)
       lotEntities.forEach((e) => {
         if ([Entity.IDS.BUILDING, Entity.IDS.DEPOSIT, Entity.IDS.SHIP].includes(e.label)) {
           queryClient.setQueryData([ 'entity', e.label, e.id ], e);
@@ -61,6 +62,9 @@ const useLot = (lotId) => {
     },
     { enabled: !!lotId }
   );
+
+  // (presuming this is already loaded so doesn't cause any overhead)
+  const { data: asteroid, isLoading: asteroidLoading } = useEntity({ label: Entity.IDS.ASTEROID, id: Lot.toPosition(lotId)?.asteroidId });
 
   const { data: buildings, isLoading: buildingsLoading } = useQuery(
     ['entities', Entity.IDS.BUILDING, 'lot', lotId],
@@ -81,14 +85,14 @@ const useLot = (lotId) => {
   );
 
   return useMemo(() => {
-    const asteroidId = Lot.toPosition(lotId)?.asteroidId;
+    const { asteroidId, lotIndex } = Lot.toPosition(lotId) || {};
     const building = (buildings || []).find((e) => e.Building.status > 0);
     const depositsToShow = (deposits || []).filter((e) => e.Deposit.status > 0 && !(e.Deposit.status === Deposit.STATUSES.USED && e.Deposit.remainingYield === 0));
     const shipsToShow = (ships || []).filter((s) => [Ship.STATUSES.UNDER_CONSTRUCTION, Ship.STATUSES.AVAILABLE].includes(s.Ship.status));
     const surfaceShip = !building && shipsToShow.find((e) => e.Ship.status === Ship.STATUSES.AVAILABLE && e.Location.location.label === Entity.IDS.LOT);
     return {
       data: lotId ? {
-        ...lotEntity,
+        ...lotData,
         Location: {
           location: { label: Entity.IDS.ASTEROID, id: asteroidId },
           locations: [
@@ -99,11 +103,26 @@ const useLot = (lotId) => {
         building,
         deposits: depositsToShow,
         ships: shipsToShow,
-        surfaceShip
+        surfaceShip,
+
+        Control: asteroid?.Control,
+        ContractPolicies: asteroid?.ContractPolicies,
+        PrepaidPolicies: (asteroid?.PrepaidPolicies || []).map((p) => {
+          // for simplicity, apply AP's special lot rating here so don't have to apply it everywhere else
+          if (p.permission === Permission.IDS.LOT_USE && asteroid.id === 1) {
+            return {
+              ...p,
+              rate: Permission.getAdaliaPrimeLotRate(p, lotIndex)
+            }
+          }
+          return p;
+        }),
+        // 'ContractAgreement', 'PrepaidAgreement' should be on lot record
+        // unclear what happens to 'WhitelistAgreement' or PublicPolicies
       } : undefined,
-      isLoading: isLoading || buildingsLoading || depositsLoading || shipsLoading
+      isLoading: isLoading || asteroidLoading || buildingsLoading || depositsLoading || shipsLoading
     };
-  }, [lotId, lotEntity, buildings, deposits, ships, isLoading, buildingsLoading, depositsLoading, shipsLoading])
+  }, [lotId, lotEntity, asteroid, buildings, deposits, ships, isLoading, asteroidLoading, buildingsLoading, depositsLoading, shipsLoading])
 
 };
 
