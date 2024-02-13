@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import cloneDeep from 'lodash/cloneDeep'
 
 import useCrewContext from '~/hooks/useCrewContext';
 import useStore from '~/hooks/useStore';
@@ -23,6 +24,27 @@ const fetchBook = async (bookId) => {
 
 const anyOf = (mustHave, tests) => !!mustHave.find((x) => tests.includes(x));
 const allOf = (mustHave, tests) => !mustHave.find((x) => !tests.includes(x));
+
+
+const applyTokensToString = (str, tokenObj) => {
+  let applied = `${str}`;
+  Object.keys(tokenObj).forEach((k) => {
+    applied.replace(new RegExp(`{{${k}}}`, 'g'), tokenObj[k]);
+  });
+  return applied;
+}
+const applyTokens = (storyObj, tokenObj) => {
+  if (!tokenObj) return storyObj;
+
+  const storyWithTokens = cloneDeep(storyObj);
+  ['title', 'content', 'prompt'].forEach((k) => {
+    storyWithTokens[k] = applyTokensToString(storyWithTokens[k], tokenObj);
+  });
+  storyWithTokens.linkedPaths.forEach((p) => {
+    p.text = applyTokensToString(p.text, tokenObj);
+  });
+  return storyWithTokens;
+};
 
 export const getBookCompletionImage = (book, imageWidth = defaultImageWidth) => {
   if (!book) return null;
@@ -174,15 +196,17 @@ const useBookSession = (crewId, crewmateId) => {
         selectedClass,
         selectedTraits
       },
-      storySession: {
-        ...storyDefaults,
-        ...pathContent,
-        ...imageOverrides,
-        history: sessionData[currentStory.id] || [],
-        currentStep: (sessionData[currentStory.id] || []).length,
-        totalSteps: currentStory.totalSteps || (bookId === bookIds.ADALIAN_RECRUITMENT ? 5 : 3),
-        bookTokens,
-      }
+      storySession: applyTokens(
+        {
+          ...storyDefaults,
+          ...pathContent,
+          ...imageOverrides,
+          history: sessionData[currentStory.id] || [],
+          currentStep: (sessionData[currentStory.id] || []).length,
+          totalSteps: currentStory.totalSteps || (bookId === bookIds.ADALIAN_RECRUITMENT ? 5 : 3),
+        },
+        bookTokens
+      )
     };
   }, [book, bookTokens, crewmate, crewmateId, crewIsLoading, sessionData]);
 

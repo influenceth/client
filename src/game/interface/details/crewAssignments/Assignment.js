@@ -193,6 +193,7 @@ const CrewAssignment = ({ crewId, crewmateId, onFinish }) => {
             : 'Next Chapter',
           onClick: bookSession.isLastStory ? finish : selectPath(storySession.linkedPaths[0])
         }}
+        isHTML={storySession.isHTML}
         isLoading={!contentReady}
         isLoadingChoice={!contentReady || pathLoading}
         onSelect={selectPath}

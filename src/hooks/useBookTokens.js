@@ -11,6 +11,7 @@ const useBookTokens = (bookId) => {
         };
       }
     }
+    return null;
   }, [bookId, captain]);
 
   return useMemo(() => ({

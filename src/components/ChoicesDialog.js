@@ -223,6 +223,7 @@ const ChoicesDialog = ({
   dialogTitle,
   flourish,
   flourishWidth,
+  isHTML,
   isLoading,
   isLoadingChoice,
   leftButton,
@@ -269,7 +270,8 @@ const ChoicesDialog = ({
                   {contentOverride}
                   {!contentOverride && (
                     <BodyInner>
-                      {content && <PageContent>{content}</PageContent>}
+                      {content && isHTML && <PageContent>{content}</PageContent>}
+                      {content && !isHTML && <PageContent dangerouslySetInnerHTML={{ __html: content }} />}
                       {prompt && <PagePrompt>{prompt}</PagePrompt>}
                       {choices && (
                         <div>
