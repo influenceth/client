@@ -118,6 +118,27 @@ export const esbLocationQuery = ({ asteroidId, lotId }, path = 'Location.locatio
     )
 };
 
+export const esbPermissionQuery = (crewId, permissionId) => {
+  return esb.boolQuery().should([
+    esb.termQuery('Control.controller.id', crewId),
+    esb.nestedQuery()
+      .path('PublicPolicies')
+      .query(esb.termQuery('PublicPolicies.permission', permissionId)),
+    esb.nestedQuery()
+      .path('PrepaidAgreements')
+      .query(esb.termQuery('PrepaidAgreements.permission', permissionId))
+      .query(esb.termQuery('PrepaidAgreements.permitted.id', crewId)),
+    esb.nestedQuery()
+      .path('CustomAgreements')
+      .query(esb.termQuery('CustomAgreements.permission', permissionId))
+      .query(esb.termQuery('CustomAgreements.permitted.id', crewId)),
+    esb.nestedQuery()
+      .path('WhitelistAgreements')
+      .query(esb.termQuery('WhitelistAgreements.permission', permissionId))
+      .query(esb.termQuery('WhitelistAgreements.permitted.id', crewId))
+  ])
+};
+
 export const getProcessorProps = (processorType) => {
   switch (processorType) {
     case Processor.IDS.REFINERY: return { label: 'Refine Material', icon: <RefineIcon /> };

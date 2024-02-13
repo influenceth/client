@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Asteroid, Crewmate, Entity, Inventory, Lot, Product, Time } from '@influenceth/sdk';
+import { Asteroid, Crewmate, Entity, Inventory, Lot, Permission, Product, Time } from '@influenceth/sdk';
 
 import surfaceTransferBackground from '~/assets/images/modal_headers/SurfaceTransfer.png';
 import { ForwardIcon, InventoryIcon, LocationIcon, SurfaceTransferIcon, TransferToSiteIcon } from '~/components/Icons';
@@ -27,7 +27,6 @@ import {
   FlexSectionInputBlock,
   FlexSection,
   TransferSelectionDialog,
-  DestinationSelectionDialog,
   ProgressBarSection,
   LotInputBlock,
   InventorySelectionDialog,
@@ -41,9 +40,9 @@ const TransferToSite = ({ asteroid, lot: destinationLot, deliveryManager, stage,
   const onSetAction = useStore(s => s.dispatchActionDialog);
 
   const { currentDeliveryActions, startDelivery } = deliveryManager;
-  const { crew, crewmateMap } = useCrewContext();
+  const { crew, crewCan } = useCrewContext();
 
-  const crewmates = (crew?._crewmates || []).map((i) => crewmateMap[i]);
+  const crewmates = crew?._crewmates || [];
   const captain = crewmates[0];
 
   const crewTravelBonus = useMemo(() => {
@@ -273,7 +272,7 @@ const TransferToSite = ({ asteroid, lot: destinationLot, deliveryManager, stage,
       </ActionDialogBody>
 
       <ActionDialogFooter
-        disabled={!origin || totalMass === 0}
+        disabled={!origin || totalMass === 0 || !crewCan(Permission.IDS.ADD_PRODUCTS, destinationLot?.building) || !crewCan(Permission.IDS.REMOVE_PRODUCTS, originEntity)}
         finalizeLabel="Complete"
         goLabel="Transfer"
         onGo={onStartDelivery}

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import styled from 'styled-components';
-import { Asteroid, Crewmate, Entity, Lot, Product, Ship, Time } from '@influenceth/sdk';
+import { Asteroid, Crewmate, Entity, Lot, Permission, Product, Ship, Time } from '@influenceth/sdk';
 
 import travelBackground from '~/assets/images/modal_headers/Travel.png';
 import { CaretIcon, CloseIcon, ForwardIcon, ConstructShipIcon, ProcessIcon, InventoryIcon, LocationIcon } from '~/components/Icons';
@@ -87,7 +87,7 @@ const AssembleShip = ({ asteroid, lot, dryDockManager, stage, ...props }) => {
   
   const { currentAssembly, assemblyStatus, startShipAssembly, finishShipAssembly } = dryDockManager;
 
-  const { crew } = useCrewContext();
+  const { crew, crewCan } = useCrewContext();
 
   const [selectedOrigin, setSelectedOrigin] = useState(currentAssembly ? { ...currentAssembly?.origin, slot: currentAssembly?.originSlot } : undefined);
   const { data: origin } = useEntity(selectedOrigin);
@@ -430,7 +430,7 @@ const AssembleShip = ({ asteroid, lot, dryDockManager, stage, ...props }) => {
 
       <ActionDialogFooter
         disabled={!(
-          (stage === actionStages.NOT_STARTED && process && originInventory && isOriginSufficient)
+          (stage === actionStages.NOT_STARTED && process && originInventory && isOriginSufficient && crewCan(Permission.IDS.ASSEMBLE_SHIP, lot.building))
           || (stage === actionStages.READY_TO_COMPLETE && destination)
         )}
         finalizeLabel="Deliver Ship"

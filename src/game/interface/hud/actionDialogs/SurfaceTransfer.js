@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Asteroid, Crewmate, Entity, Inventory, Lot, Product, Time } from '@influenceth/sdk';
+import { Asteroid, Crewmate, Entity, Inventory, Lot, Permission, Product, Time } from '@influenceth/sdk';
 import styled from 'styled-components';
 
 import surfaceTransferBackground from '~/assets/images/modal_headers/SurfaceTransfer.png';
@@ -27,7 +27,6 @@ import {
   FlexSectionInputBlock,
   FlexSection,
   TransferSelectionDialog,
-  DestinationSelectionDialog,
   ProgressBarSection,
   Mouseoverable,
   ActionDialogTabs,
@@ -80,7 +79,7 @@ const SurfaceTransfer = ({
 
   const { startDelivery, finishDelivery, packageDelivery, acceptDelivery, cancelDelivery } = deliveryManager;
   const currentDelivery = useMemo(() => currentDeliveryAction?.action, [currentDeliveryAction]);
-  const { crew, crewmateMap } = useCrewContext();
+  const { crew, crewCan } = useCrewContext();
 
   const crewmates = (crew?._crewmates || []);
   const captain = crewmates[0];
@@ -454,7 +453,7 @@ const SurfaceTransfer = ({
       </ActionDialogBody>
 
       <ActionDialogFooter
-        disabled={!destination || totalMass === 0}
+        disabled={totalMass === 0 || !destination || !crewCan(Permission.IDS.ADD_PRODUCTS, destination) || !crewCan(Permission.IDS.REMOVE_PRODUCTS, origin)}
         goLabel="Transfer"
         onGo={onStartDelivery}
         stage={stage}

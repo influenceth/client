@@ -4,7 +4,7 @@ import { createPortal } from 'react-dom';
 import ReactTooltip from 'react-tooltip';
 import { TbBellRingingFilled as AlertIcon } from 'react-icons/tb';
 import { BarLoader } from 'react-spinners';
-import { Asteroid, Building, Crewmate, Entity, Inventory, Lot, Order, Process, Product, Ship, Station, Time } from '@influenceth/sdk';
+import { Asteroid, Building, Crewmate, Entity, Inventory, Lot, Order, Permission, Process, Product, Ship, Station, Time } from '@influenceth/sdk';
 
 import AsteroidRendering from '~/components/AsteroidRendering';
 import Button from '~/components/ButtonAlt';
@@ -45,7 +45,7 @@ import ResourceRequirement from '~/components/ResourceRequirement';
 import ResourceSelection from '~/components/ResourceSelection';
 import SliderInput from '~/components/SliderInput';
 import TextInput from '~/components/TextInputUncontrolled';
-import useAccessibleAsteroidBuildings from '~/hooks/useAccessibleAsteroidBuildings';
+import useAsteroidBuildings from '~/hooks/useAsteroidBuildings';
 import useAccessibleAsteroidInventories from '~/hooks/useAccessibleAsteroidInventories';
 import useAsteroidLotData from '~/hooks/useAsteroidLotData';
 import useChainTime from '~/hooks/useChainTime';
@@ -1477,131 +1477,6 @@ export const CoreSampleSelectionDialog = ({ lotId, options, initialSelection, on
   );
 };
 
-// TODO: pass options?
-export const DestinationSelectionDialog = ({
-  asteroid,
-  includeDeconstruction, // includes deconstructed origin's site plan as an option
-  originLotId,
-  initialSelection,
-  onClose,
-  onSelected,
-  open
-}) => {
-  // TODO: this will presumably be deprecated in favor of inventory selection
-  //  and/or modified for cases where moving crew or ship
-  return null;
-
-  const crewLots = [];
-  // TODO: this is buildings, not lots
-  // const { data: crewLots, isLoading } = useAsteroidCrewBuildings(asteroid.id);
-  const [selection, setSelection] = useState(initialSelection);
-
-  useEffect(() => {
-    setSelection(initialSelection);
-  }, [initialSelection]);
-
-  const onComplete = useCallback(() => {
-    onSelected(selection);
-    onClose();
-  }, [onClose, onSelected, selection]);
-
-  const inventories = useMemo(() => {
-    return (crewLots || [])
-      .filter((lot) => (includeDeconstruction && lot.id === originLotId) || (
-        lot.building && lot.id !== originLotId && (lot.building.Inventories || []).find((i) => i.status === Inventory.STATUSES.AVAILABLE)
-      ))
-      .reduce((acc, lot) => {
-        (lot.building.Inventories || []).forEach((inventory, slot) => {
-          let usedMass = 0, usedVolume = 0, type;
-
-          // deconstructing in place (use currently-locked inventory)
-          if (includeDeconstruction && lot.id === originLotId && inventory.status !== Inventory.STATUSES.AVAILABLE) {
-            type = `(construction site)`;
-
-          // going to another lot (if unlocked)
-          } else if (inventory.status === Inventory.STATUSES.AVAILABLE) {
-            usedMass = ((inventory?.mass || 0) + (inventory?.reservedMass || 0));
-            usedVolume = ((inventory?.volume || 0) + (inventory?.reservedVolume || 0));
-            type = Building.TYPES[lot.building?.Building?.buildingType]?.name || 'Construction Site';
-
-          // else, continue
-          } else {
-            return;
-          }
-
-          // TODO: use this here instead? also need to apply product restrictions in some cases
-          // const { filledMass, filledVolume } = Inventory.getFilledCapacity(inventory.inventoryType);
-          const inventoryConfig = Inventory.getType(inventory.inventoryType) || {};
-          const availMass = inventoryConfig.massConstraint - usedMass;
-          const availVolume = inventoryConfig.volumeConstraint - usedVolume;
-          const fullness = Math.max(
-            1 - availMass / inventoryConfig.massConstraint,
-            1 - availVolume / inventoryConfig.volumeConstraint,
-          ) || 0;
-
-          acc.push({
-            lot,
-            slot,
-            distance: Asteroid.getLotDistance(asteroid.id, Lot.toIndex(originLotId), Lot.toIndex(lot.id)) || 0,
-            type,
-            fullness,
-            availMass,
-            availVolume
-          });
-        });
-        return acc;
-      }, [])
-      .sort((a, b) => a.distance - b.distance)
-  }, [crewLots, originLotId]);
-
-  return (
-    <SelectionDialog
-      isCompletable={selection?.id > 0}
-      onClose={onClose}
-      onComplete={onComplete}
-      open={open}
-      title={`Origin ${formatters.lotName(originLotId)}`}>
-      {/* TODO: isLoading */}
-      {/* TODO: replace with DataTable? */}
-      <SelectionTableWrapper>
-        <table>
-          <thead>
-            <tr>
-              <td>Destination</td>
-              <td>Distance</td>
-              <td>Type</td>
-              <td>% Full</td>
-              <td>Avail. Mass</td>
-              <td>Avail. Volume</td>
-            </tr>
-          </thead>
-          <tbody>
-            {inventories.map((inventory, i) => {
-              const warningColor = inventory.fullness > 0.8
-                ? theme.colors.error
-                : (inventory.fullness > 0.5 ? theme.colors.yellow : theme.colors.success);
-              return (
-                <SelectionTableRow
-                  key={`${asteroid.id}_${inventory.lot.id}`}
-                  disabled={inventory.fullness >= 1}
-                  onClick={() => setSelection(inventory.lot)}
-                  selectedRow={inventory.lot.id === Number(selection?.id)}>
-                  <td>{inventory.lot.id === originLotId ? '(in place)' : formatters.lotName(inventory.lot.id)}</td>
-                  <td>{formatFixed(inventory.distance, 1)} km</td>
-                  <td>{inventory.type}</td>
-                  <td style={{ color: warningColor }}>{(100 * inventory.fullness).toFixed(1)}%</td>
-                  <td style={{ color: warningColor }}>{formatFixed(inventory.availMass)} t</td>
-                  <td style={{ color: warningColor }}>{formatFixed(inventory.availVolume)} m<sup>3</sup></td>
-                </SelectionTableRow>
-              );
-            })}
-          </tbody>
-        </table>
-      </SelectionTableWrapper>
-    </SelectionDialog>
-  );
-}
-
 export const TransferSelectionDialog = ({
   sourceEntity,
   sourceContents,
@@ -1773,7 +1648,7 @@ export const LandingSelectionDialog = ({ asteroid, deliveryMode, initialSelectio
   const shipConfig = Ship.TYPES[ship?.Ship?.shipType];
 
   const { data: lotData } = useAsteroidLotData(asteroid?.id);
-  const { data: spaceports } = useAccessibleAsteroidBuildings(asteroid?.id, 'Dock');
+  const { data: spaceports } = useAsteroidBuildings(asteroid?.id, 'Dock', Permission.IDS.DOCK_SHIP);
 
   const onComplete = useCallback(() => {
     onSelected(selection);
@@ -1926,65 +1801,6 @@ export const ProcessSelectionDialog = ({ initialSelection, onClose, forceProcess
       </SelectionTableWrapper>
     </SelectionDialog>
   );
-}
-
-export const ShipConstructionSelectionDialog = ({ initialSelection, onClose, onSelected, open }) => {
-  const [error, setError] = useState();
-  const [selection, setSelection] = useState(initialSelection);
-
-  const onComplete = useCallback(() => {
-    onSelected(selection);
-    onClose();
-  }, [onClose, onSelected, selection]);
-
-  return (
-    <SelectionDialog
-      isCompletable={selection > 0}
-      onClose={onClose}
-      onComplete={onComplete}
-      open={open}
-      title={`Select Process`}
-      style={{ maxWidth: '90vw' }}>
-      {/* TODO: isLoading */}
-      {/* TODO: replace with DataTable? */}
-      <SelectionTableWrapper>
-        <table>
-          <thead>
-            <tr>
-              <td>Process Name</td>
-              <td style={{ textAlign: 'left'}}>Inputs</td>
-              <td style={{ textAlign: 'left'}}>Outputs</td>
-            </tr>
-          </thead>
-          <tbody>
-            {Object.keys(Ship.CONSTRUCTION_TYPES).map((shipType) => {
-              return (
-                <SelectionTableRow
-                  key={shipType}
-                  onClick={() => setSelection(shipType)}
-                  selectedRow={shipType === selection}>
-                  <td><div style={{ display: 'flex', alignItems: 'center' }}><ProcessIcon style={{ marginRight: 6 }} /> {Ship.TYPES[shipType]?.name} Integration</div></td>
-                  <td>
-                    <InputOutputTableCell>
-                      <label>{Object.keys(Ship.CONSTRUCTION_TYPES[shipType].requirements).length}</label>
-                      {Object.keys(Ship.CONSTRUCTION_TYPES[shipType].requirements).map((resourceId) => (
-                        <ResourceThumbnail key={resourceId} resource={Product.TYPES[resourceId]} size="45px" tooltipContainer="selectionDialog" />
-                      ))}
-                    </InputOutputTableCell>
-                  </td>
-                  <td>
-                    <InputOutputTableCell>
-                      <ShipImage shipType={shipType} style={{ height: '45px', width: '74px' }} tooltipContainer="selectionDialog" />
-                    </InputOutputTableCell>
-                  </td>
-                </SelectionTableRow>
-              );
-            })}
-          </tbody>
-        </table>
-      </SelectionTableWrapper>
-    </SelectionDialog>
-  );
 };
 
 // TODO: should this be in sdk?
@@ -2023,7 +1839,7 @@ export const InventorySelectionDialog = ({ asteroidId, otherEntity, otherInvSlot
   }, [otherEntity]);
 
   // if off the surface, cannot access inventories on the surface...
-  const { data: inventoryData } = useAccessibleAsteroidInventories(otherLocation.lotIndex === 0 ? null : asteroidId);
+  const { data: inventoryData } = useAccessibleAsteroidInventories(otherLocation.lotIndex === 0 ? null : asteroidId, isSourcing);
   // ... but can access inventories on their crewed ship (assuming not sending things elsewhere)
   const { data: crewedShip } = useShip((otherLocation.lotIndex === 0 && crew?._location?.shipId === otherLocation.shipId) ? otherLocation.shipId : null);
 

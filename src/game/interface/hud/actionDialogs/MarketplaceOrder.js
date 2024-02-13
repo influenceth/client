@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import styled from 'styled-components';
-import { Asteroid, Crewmate, Inventory, Lot, Order, Product, Time } from '@influenceth/sdk';
+import { Asteroid, Crewmate, Inventory, Lot, Order, Permission, Product, Time } from '@influenceth/sdk';
 
 import marketplaceBackground from '~/assets/images/modal_headers/Marketplace.png';
 import { BanIcon, InventoryIcon, WarningOutlineIcon, SwayIcon, MarketBuyIcon, MarketSellIcon, LimitBuyIcon, LimitSellIcon, CancelLimitOrderIcon, LocationIcon, CloseIcon } from '~/components/Icons';
@@ -220,7 +220,7 @@ const MarketplaceOrder = ({
     orderStatus,
     currentOrder = {}
   } = manager;
-  const { crew } = useCrewContext();
+  const { crew, crewCan } = useCrewContext();
   const { data: orders, refetch } = useOrderList(exchange, resourceId);
 
   const [buyOrders, sellOrders] = useMemo(() => ([
@@ -425,12 +425,6 @@ const MarketplaceOrder = ({
     ];
   }, [feeTotal, quantity, transportTime, crewTravelTime, hopperTransportBonus, resourceId]);
 
-
-
-
-
-
-
   // handle "currentOrder" state
   useEffect(() => {
     if (currentOrder) {
@@ -634,6 +628,16 @@ const MarketplaceOrder = ({
     }
     return false;
   }, [amountInInventory, mode, quantity, storageInventory]);
+
+  const isPermitted = useMemo(() => {
+    let perm = 0;
+    if (isCancellation) return true;
+    if (type === 'limit' && mode === 'buy') perm = Permission.IDS.LIMIT_BUY;
+    if (type === 'limit' && mode === 'sell') perm = Permission.IDS.LIMIT_SELL;
+    if (type === 'market' && mode === 'buy') perm = Permission.IDS.BUY;
+    if (type === 'market' && mode === 'sell') perm = Permission.IDS.SELL;
+    return crewCan(perm, exchange);
+  }, [crewCan, exchange, mode, type, isCancellation]);
   
   return (
     <>
@@ -855,6 +859,7 @@ const MarketplaceOrder = ({
           !isCancellation && (
             !storageSelection || !quantity || !total
             || exceedsOtherSide || insufficientAssets || insufficientCapacity
+            || !isPermitted
           )
         }
         goLabel={goLabel}

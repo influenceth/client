@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Asteroid, Crewmate, Entity, Inventory, Lot, Product, Ship, Time } from '@influenceth/sdk';
+import { Asteroid, Crewmate, Entity, Inventory, Lot, Permission, Product, Ship, Time } from '@influenceth/sdk';
 
 import travelBackground from '~/assets/images/modal_headers/Travel.png';
 import { LandShipIcon, RouteIcon, ShipIcon, WarningOutlineIcon } from '~/components/Icons';
@@ -42,7 +42,7 @@ const LandShip = ({ asteroid, manager, ship, stage, ...props }) => {
   const createAlert = useStore(s => s.dispatchAlertLogged);
 
   const { currentDockingAction, dockShip } = manager;
-  const { crew } = useCrewContext();
+  const { crew, crewCan } = useCrewContext();
 
   // TODO: should this default to hopper-assisted if no propellant?
   const [powered, setPowered] = useState(true);
@@ -259,7 +259,7 @@ const LandShip = ({ asteroid, manager, ship, stage, ...props }) => {
       </ActionDialogBody>
 
       <ActionDialogFooter
-        disabled={powered && propellantRequirement > propellantLoaded}
+        disabled={(powered && propellantRequirement > propellantLoaded) || (destinationLot?.building && !crewCan(Permission.IDS.DOCK_SHIP, destinationLot.building))}
         goLabel="Land"
         onGo={onLand}
         stage={stage}

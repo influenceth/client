@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import styled from 'styled-components';
 import cloneDeep from 'lodash/cloneDeep';
-import { Asteroid, Building, Crew, Crewmate, Entity, Lot, Ship, Station, Time } from '@influenceth/sdk';
+import { Asteroid, Building, Crewmate, Entity, Permission, Station, Time } from '@influenceth/sdk';
 
 import travelBackground from '~/assets/images/modal_headers/Travel.png';
 import { StationCrewIcon, StationPassengersIcon } from '~/components/Icons';
@@ -60,7 +60,7 @@ const StationCrew = ({ asteroid, destination: rawDestination, lot, origin: rawOr
   const createAlert = useStore(s => s.dispatchAlertLogged);
   
   const { stationCrew } = stationCrewManager;
-  const { crew } = useCrewContext();
+  const { crew, crewCan } = useCrewContext();
 
   const crewmates = (crew?._crewmates || []);
   const captain = crewmates[0];
@@ -266,9 +266,8 @@ const StationCrew = ({ asteroid, destination: rawDestination, lot, origin: rawOr
 
       </ActionDialogBody>
 
-      {/* TODO: add "no permission" to disabled list */}
       <ActionDialogFooter
-        disabled={!destination || !stationConfig || (stationConfig.hardCap && destination.Station.population + crew?.Crew?.roster?.length > stationConfig.cap)}
+        disabled={!destination || !stationConfig || !crewCan(Permission.IDS.STATION_CREW, destination) || (stationConfig.hardCap && destination.Station.population + crew?.Crew?.roster?.length > stationConfig.cap)}
         goLabel="Station"
         onGo={onStation}
         stage={stage}

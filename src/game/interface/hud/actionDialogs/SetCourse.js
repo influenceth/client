@@ -33,7 +33,6 @@ import {
   SectionBody,
   ProgressBarSection,
   CoreSampleSelectionDialog,
-  DestinationSelectionDialog,
   SublabelBanner,
   AsteroidImage,
   ProgressBarNote,

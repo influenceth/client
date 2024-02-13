@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Asteroid, Crew, Crewmate, Lot, Product, Time } from '@influenceth/sdk';
+import { Asteroid, Crew, Crewmate, Lot, Permission, Product, Time } from '@influenceth/sdk';
 import styled from 'styled-components';
 
 import headerBackground from '~/assets/images/modal_headers/CrewManagement.png';
@@ -95,7 +95,7 @@ const FeedCrew = ({
   ...props
 }) => {
   const { currentFeeding, feedCrew } = feedCrewManager;
-  const { crew } = useCrewContext();
+  const { crew, crewCan } = useCrewContext();
   const blockTime = useBlockTime();
 
   const crewmates = crew?._crewmates;
@@ -361,7 +361,7 @@ const FeedCrew = ({
       </ActionDialogBody>
 
       <ActionDialogFooter
-        disabled={!origin || totalMass === 0}
+        disabled={!origin || totalMass === 0 || !crewCan(Permission.IDS.REMOVE_PRODUCTS, origin)}
         finalizeLabel="Complete"
         goLabel="Transfer"
         onGo={onStartFeeding}
