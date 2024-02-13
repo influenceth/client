@@ -563,7 +563,7 @@ const HudMenu = ({ forceOpenMenu }) => {
     if (openHudMenu) {
       const openMenuConfig = menuButtons.find((b) => b.key === openHudMenu);
       if (!openMenuConfig?.isVisible || (openMenuConfig?.requireLogin && !account)) {
-        handleButtonClick(openHudMenu, null, openMenuConfig.hideInsteadOfClose);
+        handleButtonClick(openHudMenu, null, openMenuConfig?.hideInsteadOfClose);
       }
     }
   }, [account, handleButtonClick, openHudMenu, visibleMenuButtons]);
