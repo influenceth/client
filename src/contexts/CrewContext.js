@@ -1,6 +1,6 @@
 import { createContext, useCallback, useEffect, useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from 'react-query';
-import { Crewmate, Entity, Permission } from '@influenceth/sdk';
+import { Crewmate, Entity, Permission, System } from '@influenceth/sdk';
 
 import api from '~/lib/api';
 import useAuth from '~/hooks/useAuth';
@@ -14,7 +14,7 @@ const CrewContext = createContext();
 const getNow = () => Math.ceil(Date.now() / 1000);
 
 export function CrewProvider({ children }) {
-  const { account } = useAuth();
+  const { account, walletContext: { starknet } } = useAuth();
   const queryClient = useQueryClient();
 
   const selectedCrewId = useStore(s => s.selectedCrewId);
@@ -127,16 +127,42 @@ export function CrewProvider({ children }) {
 
   // hydrate crew location so can attach station to crew
   const { data: selectedCrewLocation } = useEntity(selectedCrew ? { ...selectedCrew.Location.location } : undefined);
+  
+  const lastBlockNumber = 0;
+  const [actionTypeTriggered, setActionTypeTriggered] = useState(false);
+  useEffect(() => {
+    setActionTypeTriggered(false);
+    if (selectedCrew?.Crew?.actionType && selectedCrew?.Crew?.actionRound <= lastBlockNumber) {
+      starknet.account.provider.callContract(
+        System.getRunSystemCall(
+          'CheckForRandomEvent',
+          { caller_crew: { id: selectedCrew.id, label: selectedCrew.label }},
+          process.env.REACT_APP_STARKNET_DISPATCHER
+        )
+      )
+      .then((response) => {
+        // TODO: (should have type that can do something with)
+        console.log('CheckForRandomEvent', response);
+        window.alert('check RandomEvent response');
+        setActionTypeTriggered(response || false);
+      })
+      .catch((err) => {
+        console.warn('CheckForRandomEvent', err);
+        // (wasTriggered can stay false)
+      });
+    }
+  }, [selectedCrew?.Crew?.actionType, selectedCrew?.Crew?.actionRound, lastBlockNumber]);
 
   // add final data to selected crew
   const finalSelectedCrew = useMemo(() => {
     if (!selectedCrew) return null;
     return {
       ...selectedCrew,
+      _actionTypeTriggered: actionTypeTriggered,
       _station: selectedCrewLocation?.Station || {},
       _timeAcceleration: parseInt(TIME_ACCELERATION) // (attach to crew for easy use in bonus calcs)
     }
-  }, [selectedCrew, selectedCrew?._ready, selectedCrewLocation, TIME_ACCELERATION]);
+  }, [actionTypeTriggered, selectedCrew, selectedCrew?._ready, selectedCrewLocation, TIME_ACCELERATION]);
 
   const refreshReadyAt = useCallback(async () => {
     const updatedCrew = await api.getEntityById({ label: Entity.IDS.CREW, id: selectedCrewId, components: ['Crew'] });

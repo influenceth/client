@@ -1520,7 +1520,7 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
 //  for page-state so doesn't reload
 
 const Wrapper = ({ backLocation, crewId, crewmateId, locationId }) => {
-  const { book, bookSession, bookError } = useBookSession(crewId, crewmateId);
+  const { book, bookSession, bookError } = useBookSession(crewId, crewmateId || 0);
   const { crews, crewmateMap, loading: crewIsLoading } = useCrewContext();
   const { getPendingCrewmate } = useCrewManager();
   const history = useHistory();

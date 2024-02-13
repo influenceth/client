@@ -6,7 +6,8 @@ import { getCloudfrontUrl } from '~/lib/assetUtils';
 
 export const bookIds = {
   ADALIAN_RECRUITMENT: 'adalian-recruitment.json',
-  ARVADIAN_RECRUITMENT: 'arvadian-recruitment.json'
+  ARVADIAN_RECRUITMENT: 'arvadian-recruitment.json',
+  RANDOM_1: 'random-1.json',
 };
 
 const defaultImageWidth = 1500;
@@ -31,19 +32,28 @@ export const getBookCompletionImage = (book, imageWidth = defaultImageWidth) => 
 }
 
 const useBookSession = (crewId, crewmateId) => {
-  const { adalianRecruits, arvadianRecruits, loading: crewIsLoading } = useCrewContext();
+  const { adalianRecruits, arvadianRecruits, crew, loading: crewIsLoading } = useCrewContext();
 
   const [book, setBook] = useState();
 
   const [bookId, crewmate] = useMemo(() => {
+    // if creating a completely new crewmate, will be an adalian
     const adalianRecruit = adalianRecruits.find((a) => a.id === crewmateId);
-    if (adalianRecruit) return [bookIds.ADALIAN_RECRUITMENT, adalianRecruit];
+    if (adalianRecruit || crewmateId === 0) return [bookIds.ADALIAN_RECRUITMENT, adalianRecruit || null];
 
+    // if specify an arvadian recruit, use that story
     const arvadianRecruit = arvadianRecruits.find((a) => a.id === crewmateId);
     if (arvadianRecruit) return [bookIds.ARVADIAN_RECRUITMENT, arvadianRecruit];
 
-    return [bookIds.ADALIAN_RECRUITMENT, null];
-  }, [adalianRecruits, arvadianRecruits, crewmateId]);
+    // if get here, may be because triggered random event
+    if (crew?._actionTypeTriggered) {
+      return [bookIds[`RANDOM_${crew._actionTypeTriggered}`], null];
+    }
+
+    return [null, null, false];
+  }, [adalianRecruits, arvadianRecruits, crew?.actionTypeTriggered, crewmateId]);
+
+  const { bookTokens, isLoading: bookTokensLoading } = useBookTokens(bookId);
 
   const error = useMemo(() => {
     // validate crewmate (must have crewmate if non-zero id, crewmate must be uninitialized if present)
@@ -61,6 +71,7 @@ const useBookSession = (crewId, crewmateId) => {
   const { bookSession, storySession } = useMemo(() => {
     // console.log({ book, crewIsLoading, crewmateId, crewmate });
     if (!book) return {};
+    if (bookTokensLoading) return {};
     if (crewIsLoading) return {};
     if (crewmateId && !crewmate) return {};
 
@@ -169,10 +180,11 @@ const useBookSession = (crewId, crewmateId) => {
         ...imageOverrides,
         history: sessionData[currentStory.id] || [],
         currentStep: (sessionData[currentStory.id] || []).length,
-        totalSteps: bookId === bookIds.ADALIAN_RECRUITMENT ? 5 : 3,
+        totalSteps: currentStory.totalSteps || (bookId === bookIds.ADALIAN_RECRUITMENT ? 5 : 3),
+        bookTokens,
       }
     };
-  }, [book, crewmate, crewmateId, crewIsLoading, sessionData]);
+  }, [book, bookTokens, crewmate, crewmateId, crewIsLoading, sessionData]);
 
   const choosePath = useCallback((pathId) => {
     dispatchCrewAssignmentPathSelection(crewId, crewmateId, bookSession?.currentStoryId, pathId);

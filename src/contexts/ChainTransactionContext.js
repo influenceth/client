@@ -461,29 +461,11 @@ export function ChainTransactionProvider({ children }) {
     }
   }, [starknet?.provider, lastBlockNumber]);
 
-  const prependEventAutoresolve = useRef();
-  useEffect(() => {
-    let wasTriggered = false;
-    if (crew?.Crew?.actionType && crew?.crew?.actionRound <= lastBlockNumber) {
-      starknet.account.provider.callContract(
-        System.getRunSystemCall(
-          'CheckForRandomEvent',
-          { caller_crew: { id: crew.id, label: crew.label }},
-          process.env.REACT_APP_STARKNET_DISPATCHER
-        )
-      )
-      .then((response) => {
-        // TODO: (should have type that can do something with)
-        console.log('CheckForRandomEvent', response);
-        wasTriggered = !!response;
-      })
-      .catch((err) => {
-        console.warn('CheckForRandomEvent', err);
-        // (wasTriggered can stay false)
-      });
-    }
-    prependEventAutoresolve.current = crew?.Crew?.actionType && !wasTriggered;
-  }, [crew?.Crew?.actionType, crew?.crew?.actionRound, lastBlockNumber]);
+  // autoresolve when actionType is set but actionType was not actually triggered
+  const prependEventAutoresolve = useMemo(
+    () => crew?.Crew?.actionType && !crew?._actionTypeTriggered,
+    [crew]
+  );
 
   const contracts = useMemo(() => {
     if (!!starknet?.account) {
@@ -536,7 +518,7 @@ export function ChainTransactionProvider({ children }) {
 
             // if actionType is set but the random event was not actually triggered, prepend resolveRandomEvent
             // so that the event is cleared (preprocess will add the null choice)
-            if (prependEventAutoresolve.current && !config.isUnblockable) { // TODO: fill in these isUnblockable's
+            if (prependEventAutoresolve && !config.isUnblockable) { // TODO: fill in these isUnblockable's
               runSystems.unshift({ runSystem: 'ResolveRandomEvent', rawVars });
             }
 
@@ -667,7 +649,7 @@ export function ChainTransactionProvider({ children }) {
       }, {});
     }
     return null;
-  }, [createAlert, starknet?.account?.address, starknet?.account?.provider?.baseUrl]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [createAlert, prependEventAutoresolve, starknet?.account?.address, starknet?.account?.provider?.baseUrl]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const transactionWaiters = useRef([]);
 
