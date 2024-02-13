@@ -31,6 +31,7 @@ const { MAX_LOTS_RENDERED } = constants;
 
 const STROKE_COLOR = new Color().setHex(0xbbbbbb).convertSRGBToLinear();
 const WHITE_COLOR = new Color().setHex(0xffffff).convertSRGBToLinear();
+const GRAY_COLOR = new Color().setHex(0xaaaaaa).convertSRGBToLinear();
 const FILL_COLOR = new Color().setHex(0xffffff).convertSRGBToLinear();
 
 const colorCache = {};
@@ -356,7 +357,7 @@ const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, co
 
     const pipGeometry = new CircleGeometry(PIP_RADIUS, 6);
     const pipMaterial = new MeshBasicMaterial({
-      color: WHITE_COLOR,
+      color: GRAY_COLOR,
       depthTest: false,
       depthWrite: false,
       opacity: 0.6,
