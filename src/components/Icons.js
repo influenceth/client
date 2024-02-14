@@ -32,9 +32,8 @@ import {
   RiSortDesc
 } from 'react-icons/ri';
 import { TiArrowRight } from 'react-icons/ti';
-import { TfiControlForward } from 'react-icons/tfi';
 import { WiMoonAltWaningCrescent5 } from 'react-icons/wi';
-import { VscDebugDisconnect, VscCircle } from 'react-icons/vsc';
+import { VscDebugDisconnect } from 'react-icons/vsc';
 
 import AdalianSVG from '~/assets/icons/AdalianIcon.svg';
 import AddRationsSVG from '~/assets/icons/AddRationsIcon.svg';
@@ -345,12 +344,10 @@ export {
   FiDownload as DownloadIcon,
   FaBan as BanIcon,
   FaCogs as ProcessIcon,
-  TfiControlForward as BusyIcon,
   FaCopy as CopyIcon,
   FaEthereum as ConnectIcon,
   FaList as ListIcon,
   RiPagesFill as DetailIcon,
-  VscCircle as IdleIcon,
   AiOutlineNumber as IdIcon,
   FaMapMarkedAlt as MapIcon,
   FiExternalLink as PopoutIcon,

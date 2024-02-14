@@ -14,6 +14,7 @@ import CrewIndicator from '~/components/CrewIndicator';
 import CrewLocationLabel from '~/components/CrewLocationLabel';
 import Dialog from '~/components/Dialog';
 import IconButton from '~/components/IconButton';
+import { CrewBusyIcon } from '~/components/AnimatedIcons';
 import {
   ChevronRightIcon,
   CloseIcon,
@@ -33,8 +34,7 @@ import {
   EmergencyModeEnterIcon,
   CheckIcon,
   ProcessIcon,
-  ShipIcon,
-  BusyIcon
+  ShipIcon
 } from '~/components/Icons';
 import LiveFoodStatus from '~/components/LiveFoodStatus';
 import LiveTimer from '~/components/LiveTimer';
@@ -2225,7 +2225,7 @@ export const ActionDialogHeader = ({ action, captain, crewAvailableTime, locatio
             <h1>{action.label}</h1>
             <div>
               <h2>{action.status || theming[stage]?.label}</h2>
-              {crewAvailableTime !== undefined && <TimePill type="crew"><BusyIcon /> {formatTimer(crewAvailableTime, 2)}</TimePill>}
+              {crewAvailableTime !== undefined && <TimePill type="crew"><CrewBusyIcon isPaused /> {formatTimer(crewAvailableTime, 2)}</TimePill>}
               {taskCompleteTime !== undefined && <TimePill type="total"><AlertIcon /> {formatTimer(taskCompleteTime, 2)}</TimePill>}
             </div>
           </LabelContainer>

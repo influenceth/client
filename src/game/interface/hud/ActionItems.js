@@ -1,15 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useHistory } from 'react-router-dom';
 import styled, { css, keyframes } from 'styled-components';
-import { TbBellRingingFilled as AlertIcon } from 'react-icons/tb';
-import { AiOutlineExclamation as FailureIcon } from 'react-icons/ai';
-import { MdClear as DismissIcon } from 'react-icons/md';
 import BarLoader from 'react-spinners/BarLoader';
 
-import { PopoutIcon } from '~/components/Icons';
+import { CloseIcon as DismissIcon, PopoutIcon } from '~/components/Icons';
+import { FailedIcon, ReadyIcon } from '~/components/AnimatedIcons';
 import CollapsibleSection from '~/components/CollapsibleSection';
 import LiveTimer from '~/components/LiveTimer';
-import NavIcon from '~/components/NavIcon';
 import { useLotLink } from '~/components/LotLink';
 import useActionItems from '~/hooks/useActionItems';
 import useAsteroid from '~/hooks/useAsteroid';
@@ -237,11 +234,15 @@ const ActionItemRow = styled.div`
     align-items: center;
     background: rgba(${p => p.color}, 0.2);
     display: flex;
-    font-size: 24px;
+    font-size: ${ICON_WIDTH}px;
+    height: ${ICON_WIDTH}px;
     justify-content: center;
     margin-right: 8px;
-    height: 100%;
     width: ${ICON_WIDTH}px;
+    & span {
+      font-size: 24px;
+      line-height: 0;
+    }
   }
   ${Status} {
     margin-right: 8px;
@@ -357,9 +358,9 @@ const ActionItem = ({ data, crew }) => {
       oneRow={type !== 'failed' && !asteroid}
       transitionOut={data.transitionOut ? (type === 'failed' ? 'left' : 'right') : undefined}>
       <Icon animate={type === 'pending'}>
-        {type === 'failed' && <FailureIcon />}
-        {type === 'ready' && <NavIcon animate selected size="16px" />}
-        {(type === 'pending' || type === 'unready' || type === 'plans') && item.icon}
+        {type === 'failed' && <FailedIcon />}
+        {type === 'ready' && <ReadyIcon />}
+        {(type === 'pending' || type === 'unready' || type === 'plans') && <span>{item.icon}</span>}
       </Icon>
       <Status>{statuses[type]}</Status>
       <Label>{item.label}</Label>
@@ -465,7 +466,6 @@ const ActionItems = () => {
           openOnChange={lastClick}
           title={(
             <TitleWrapper>
-              <IconWrapper style={{ color: theme.colors.success }}><AlertIcon /></IconWrapper>
               <Filters>
                 <ReadyFilter tally={tallies.ready} onClick={onClickFilter('ready')} selected={selectedFilter === 'ready'} />
                 <InProgressFilter tally={tallies.progress} onClick={onClickFilter('progress')} selected={selectedFilter === 'progress'} />
