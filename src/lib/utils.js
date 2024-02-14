@@ -30,7 +30,7 @@ export const formatPrecision = (value, maximumPrecision = 0) => {
   return formatFixed(value, allowedDecimals);
 };
 
-export const formatPrice = (sway, { minPrecision = 3, fixedPrecision } = {}) => {
+export const formatPrice = (sway, { minPrecision = 3, fixedPrecision = 4 } = {}) => {
   let unitLabel;
   let scale;
   if (sway >= 1e6) {
@@ -43,7 +43,7 @@ export const formatPrice = (sway, { minPrecision = 3, fixedPrecision } = {}) => 
     scale = 1;
     unitLabel = '';
   } else {
-    return Number(sway || 0).toFixed(6).replace(/0$/g, '');
+    return Number(sway || 0).toFixed(fixedPrecision).replace(/0$/g, '');
   }
 
   const workingUnits = (sway / scale);

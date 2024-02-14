@@ -58,7 +58,7 @@ export function ActionItemProvider({ children }) {
       } catch(e) {
         console.warn(e);
       }
-      
+
       if (blockTimestamp < untilGreaterThan) {
         setTimeout(() => {
           refetchBlockTime(untilGreaterThan);
@@ -67,7 +67,9 @@ export function ActionItemProvider({ children }) {
     }
   }, [starknet?.provider]);
 
-  useEffect(refetchBlockTime, [refetchBlockTime]);
+  useEffect(() => {
+    refetchBlockTime();
+  }, [refetchBlockTime]);
 
   useEffect(() => {
     if (!liveBlockTime) return;

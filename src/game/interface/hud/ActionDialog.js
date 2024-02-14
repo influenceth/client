@@ -4,6 +4,7 @@ import { PuffLoader } from 'react-spinners';
 import ReactTooltip from 'react-tooltip';
 import { Lot } from '@influenceth/sdk';
 
+import modalHeaders from '~/assets/images/modal_headers';
 import ClipCorner from '~/components/ClipCorner';
 import useAsteroid from '~/hooks/useAsteroid';
 import useLot from '~/hooks/useLot';
@@ -12,6 +13,8 @@ import actionStage from '~/lib/actionStages';
 import { reactBool } from '~/lib/utils';
 import theme, { hexToRGB } from '~/theme';
 import AssembleShip from './actionDialogs/AssembleShip';
+import ClaimArrivalReward from './actionDialogs/ClaimArrivalReward';
+import ClaimPrepareReward from './actionDialogs/ClaimPrepareReward';
 import Construct from './actionDialogs/Construct';
 import ControlAsteroid from './actionDialogs/ControlAsteroid';
 import EmergencyModeCollect from './actionDialogs/EmergencyModeCollect';
@@ -183,7 +186,7 @@ export const ActionDialogInner = ({ actionImage, children, isLoading, stage }) =
       {isLoading && <LoadingContainer><PuffLoader color="white" /></LoadingContainer>}
       {!isLoading && (
         <>
-          <ActionImage src={actionImage} />
+          {actionImage && modalHeaders[actionImage] && <ActionImage src={modalHeaders[actionImage]} />}
           <ActionMain>
             {children}
           </ActionMain>
@@ -220,6 +223,8 @@ const ActionDialog = ({ type, params }) => {
     <Backdrop>
       <ModalCushion>
         {type === 'ASSEMBLE_SHIP' && <AssembleShip {...allProps} />}
+        {type === 'CLAIM_ARRIVAL_REWARD' && <ClaimArrivalReward {...allProps} />}
+        {type === 'CLAIM_PREPARE_REWARD' && <ClaimPrepareReward {...allProps} />}
         {type === 'CONTROL_ASTEROID' && <ControlAsteroid {...allProps} />}
         {type === 'PLAN_BUILDING' && <PlanBuilding {...allProps} />}
         {type === 'UNPLAN_BUILDING' && <UnplanBuilding {...allProps} />}

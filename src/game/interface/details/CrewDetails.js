@@ -139,7 +139,7 @@ const CoverImage = styled.div`
     content: '';
     display: block;
     height: 100%;
-    mask-image: linear-gradient(to bottom, transparent 0%, black 10%, black 75%, transparent 100%);
+    mask-image: linear-gradient(to bottom, transparent 0%, rgba(0, 0, 0, 0.6) 10%, rgba(0, 0, 0, 0.6) 75%, transparent 100%);
     transition:
       background-position 750ms ease-out,
       opacity 750ms ease-out;

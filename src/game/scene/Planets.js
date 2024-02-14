@@ -5,11 +5,13 @@ import { Planet } from '@influenceth/sdk';
 
 import ClockContext from '~/contexts/ClockContext';
 import useWebWorker from '~/hooks/useWebWorker';
+import useStore from '~/hooks/useStore';
 import Orbit from './planets/Orbit';
 import theme from '~/theme';
 
 const Planets = () => {
   const planets = Planet.planets;
+  const zoomStatus = useStore(s => s.asteroids.zoomStatus);
   const { coarseTime } = useContext(ClockContext);
 
   const texture = useTexture(`${process.env.PUBLIC_URL}/textures/circleFaded.png`);
@@ -44,7 +46,7 @@ const Planets = () => {
   }, [ planets, processInBackground, coarseTime ]);
 
   return (
-    <group position={[ 0, 0, 0 ]}>
+    <group position={[ 0, 0, 0 ]} visible={zoomStatus === 'out'}>
       <points>
         <bufferGeometry ref={geometry} />
         <pointsMaterial

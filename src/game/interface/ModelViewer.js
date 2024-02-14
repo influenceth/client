@@ -1,5 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ACESFilmicToneMapping, AnimationMixer, Box3, CineonToneMapping, Color, DirectionalLight, EquirectangularReflectionMapping, LinearToneMapping, LoopRepeat, NoToneMapping, Raycaster, ReinhardToneMapping, Vector2, Vector3 } from 'three';
+import {
+  ACESFilmicToneMapping, AnimationMixer, Box3, CineonToneMapping, Color, DirectionalLight,
+  EquirectangularReflectionMapping, LinearToneMapping, LoopRepeat, NoToneMapping, Raycaster,
+  ReinhardToneMapping, Vector2, Vector3
+} from 'three';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
@@ -90,7 +94,7 @@ export const getModelViewerSettings = (assetType, overrides = {}) => {
   const s = {
     background: null,
     bloomRadius: 0.25,
-    bloomStrength: 2,
+    bloomStrength: 1,
     enableZoomLimits: true,
     enableModelLights: true,
     envmap: '/textures/model-viewer/resource_envmap.hdr',
@@ -99,8 +103,6 @@ export const getModelViewerSettings = (assetType, overrides = {}) => {
 
   // modify default settings by asset type
   if (assetType === 'building') {
-    s.bloomRadius = 1;  // 0.25
-    s.bloomStrength = 6;  // 3
     s.emissiveAsBloom = true;
     s.emissiveMapAsLightMap = true;
     s.enableModelLights = true;
@@ -110,30 +112,32 @@ export const getModelViewerSettings = (assetType, overrides = {}) => {
     s.maxCameraDistance = 0.2;  // NOTE: use this or simple zoom constraints, not both
     s.initialZoom = 0.1;
     s.enableDefaultLights = true;
-    s.keylightIntensity = 0.75;
+    s.keylightIntensity = 0.25;
     s.rimlightIntensity = 0;
-    s.toneMapping = LinearToneMapping;
-    s.toneMappingExposure = 1;
 
   } else if (assetType === 'resource') {
     s.background = '/textures/model-viewer/resource_skybox.hdr';
     s.initialZoom = 1.75;
     s.enableDefaultLights = true;
     s.enableRotation = true;
-    s.simpleZoomConstraints = [0.85, 5];  // TODO: if using simple zoom constraints, should probably not allow panning... maybe all should use maxCameraDistance?
+    // TODO: if using simple zoom constraints, should probably not allow panning... maybe all should use maxCameraDistance?
+    s.simpleZoomConstraints = [0.85, 5];
 
   } else if (assetType === 'ship') {
     s.emissiveAsBloom = true;
+    s.emissiveMapAsLightMap = true;
     s.enableModelLights = true;
     s.enablePostprocessing = true;
+    s.envmapStrength = 0.1;
+    s.enableDefaultLights = true;
+    s.keylightIntensity = 0.25;
+    s.rimlightIntensity = 0;
   }
 
   if (s.enablePostprocessing) {
-    s.toneMapping = s.toneMapping || LinearToneMapping;
-    s.toneMappingExposure = s.toneMappingExposure || 3.5;
+    s.toneMapping = s.toneMapping || NoToneMapping;
   } else {
     s.toneMapping = NoToneMapping;
-    s.toneMappingExposure = 1;
   }
 
   // apply overrides
@@ -207,7 +211,7 @@ const Model = ({ url, onLoaded, onCameraUpdate, ...settings }) => {
     controls.current.target.set(0, 0, 0);
     controls.current.zoomSpeed = 0.33;
 
-    controls.current.object.near = settings.enablePostprocessing ? 0.0018 : 0.001;  // postprocessing introduces acne if near is too low
+    controls.current.object.near = settings.enablePostprocessing ? 0.0018 : 0.01;  // postprocessing introduces acne if near is too low
     controls.current.object.far = 10;
     controls.current.object.updateProjectionMatrix();
 
@@ -265,20 +269,20 @@ const Model = ({ url, onLoaded, onCameraUpdate, ...settings }) => {
         const removeNodes = [];
         model.current = gltf.scene || gltf.scenes[0];
         model.current.traverse(function (node) {
-          node.receiveShadow = true;
           if (node.name === 'Center') {
             predefinedCenter = node.position.clone();
           } else if (node.name === 'Camera') {
             predefinedCamera = node.position.clone();
           } else if (node.isMesh) {
-            if (node.name === settings.floorNodeName) {
-              collisionFloor.current = node;
-            }
-
             // self-shadowing
             if (ENABLE_SHADOWS) {
               node.castShadow = true;
               node.receiveShadow = true;
+            }
+
+            if (node.name === settings.floorNodeName) {
+              node.castShadow = false;
+              collisionFloor.current = node;
             }
 
             // env-map intensity
@@ -605,28 +609,20 @@ const Lighting = ({ keylightIntensity = 1.0, rimlightIntensity = 0.25 }) => {
     let keyLight;
     if (keylightIntensity > 0) {
       keyLight = new DirectionalLight(0xFFFFFF);
-      keyLight.castShadow = true;
       keyLight.intensity = keylightIntensity;
       keyLight.position.set(-2, 2, 2);
       scene.add(keyLight);
 
       if (ENABLE_SHADOWS) {
         gl.shadowMap.enabled = true;
-        // gl.shadowMap.type = PCFSoftShadowMap;
-
         keyLight.castShadow = true;
-        keyLight.shadow.camera.near = 2.75;
-        keyLight.shadow.camera.far = 4.25;
-        keyLight.shadow.camera.bottom = keyLight.shadow.camera.left = -0.75;
-        keyLight.shadow.camera.right = keyLight.shadow.camera.top = 0.75;
-        // keyLight.shadow.camera.near = 1.75;
-        // keyLight.shadow.camera.far = 2.25;
-        // keyLight.shadow.camera.bottom = keyLight.shadow.camera.left = -0.15;
-        // keyLight.shadow.camera.right = keyLight.shadow.camera.top = 0.15;
+        keyLight.shadow.camera.near = 3.40;
+        keyLight.shadow.camera.far = 3.525;
+        keyLight.shadow.camera.bottom = keyLight.shadow.camera.left = -0.05;
+        keyLight.shadow.camera.right = keyLight.shadow.camera.top = 0.05;
         keyLight.shadow.camera.updateProjectionMatrix();
         keyLight.shadow.mapSize.height = 1024;
         keyLight.shadow.mapSize.width = 1024;
-        // keyLight.shadow.bias = -0.02;
       }
     }
 
@@ -747,9 +743,7 @@ const ModelViewer = ({ assetType, modelUrl, ...overrides }) => {
 
   useEffect(() => {
     dispatchCanvasStacked(assetType);
-    return () => {
-      dispatchCanvasUnstacked(assetType);
-    }
+    return () => dispatchCanvasUnstacked(assetType);
   }, []);
 
   useEffect(() => {
@@ -766,7 +760,7 @@ const ModelViewer = ({ assetType, modelUrl, ...overrides }) => {
   }), [settings]);
 
   const toneMappingParams = useMemo(() => ({
-    toneMapping: settings.toneMapping || NoToneMapping,
+    toneMapping: settings.toneMapping || LinearToneMapping,
     toneMappingExposure: settings.toneMappingExposure
   }), [settings]);
 

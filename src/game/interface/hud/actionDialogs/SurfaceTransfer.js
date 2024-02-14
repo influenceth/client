@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Asteroid, Crewmate, Entity, Inventory, Lot, Permission, Product, Time } from '@influenceth/sdk';
 import styled from 'styled-components';
 
-import surfaceTransferBackground from '~/assets/images/modal_headers/SurfaceTransfer.png';
 import { ForwardIcon, InventoryIcon, LocationIcon, RouteIcon, SurfaceTransferIcon, WarningOutlineIcon } from '~/components/Icons';
 import useCrewContext from '~/hooks/useCrewContext';
 import useDeliveryManager from '~/hooks/actionManagers/useDeliveryManager';
@@ -547,7 +546,7 @@ const Wrapper = (props) => {
 
   return (
     <ActionDialogInner
-      actionImage={surfaceTransferBackground}
+      actionImage="SurfaceTransfer"
       isLoading={reactBool(isLoading || originLoading || originLotLoading || destLoading || deliveryManager.isLoading)}
       stage={currentDeliveryAction?.status === 'PACKAGED' ? actionStage.NOT_STARTED : stage}>
       <SurfaceTransfer

@@ -5,7 +5,6 @@ import styled from 'styled-components';
 import { Entity } from '@influenceth/sdk';
 import { cloneDeep } from 'lodash';
 
-import headerBackground from '~/assets/images/modal_headers/CrewManagement.png';
 import Button from '~/components/ButtonAlt';
 import CrewmateCardFramed, { EmptyCrewmateCardFramed } from '~/components/CrewmateCardFramed';
 import CrewLocationLabel from '~/components/CrewLocationLabel';
@@ -505,7 +504,7 @@ const Wrapper = ({ crew, loading, ...props }) => {
 
   return (
     <ActionDialogInner
-      actionImage={headerBackground}
+      actionImage="CrewManagement"
       isLoading={reactBool(loading)}
       stage={actionStage}>
       <ManageCrew

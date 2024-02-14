@@ -1,13 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
-import {
-  LinearToneMapping,
-  MeshBasicMaterial,
-  ShaderMaterial,
-  Vector2
-} from 'three';
-// import * as THREE from 'three';
-import { FXAAShader } from 'three/examples/jsm/shaders/FXAAShader.js';
+import { MeshBasicMaterial, ShaderMaterial, Vector2, WebGLRenderTarget, FloatType, RGBAFormat } from 'three';
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass';
 import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass';
@@ -19,7 +12,7 @@ const VERTEX_SHADER = `
 
   void main() {
     vUv = uv;
-    gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0 );
   }
 `;
 
@@ -29,8 +22,14 @@ const FRAGMENT_SHADER = `
 
   varying vec2 vUv;
 
+  vec4 gammaCorrection (vec4 color, float gamma) {
+    return vec4(pow(color.rgb, vec3(1. / gamma)).rgb, color.a);
+  }
+
   void main() {
-    gl_FragColor = ( texture2D( baseTexture, vUv ) + vec4( 1.0 ) * texture2D( bloomTexture, vUv ) );
+    vec4 preGamma = vec4(1.5) * texture2D(baseTexture, vUv) + vec4(0.75) * texture2D(bloomTexture, vUv);
+    gl_FragColor = preGamma;
+    gl_FragColor = gammaCorrection(preGamma, 1.5);
   }
 `;
 
@@ -59,8 +58,8 @@ const materials = {};
 
 const defaultBloomParams = {
   threshold: 0,
-  strength: 2,
-  radius: 0.25
+  strength: 1,
+  radius: 0.1
 }
 
 const Postprocessor = ({ enabled, bloomParams = {}, toneMappingParams = {} }) => {
@@ -69,7 +68,6 @@ const Postprocessor = ({ enabled, bloomParams = {}, toneMappingParams = {} }) =>
   const pixelRatio = useStore(s => s.graphics.pixelRatio || 1);
 
   const bloomPass = useRef();
-  const fxaaPass = useRef();
   const bloomComposer = useRef();
   const finalComposer = useRef();
 
@@ -122,28 +120,24 @@ const Postprocessor = ({ enabled, bloomParams = {}, toneMappingParams = {} }) =>
   }
 
   useEffect(() => {
-    if (enabled && toneMappingParams?.toneMapping) {
-      renderer.toneMapping = toneMappingParams.toneMapping;
-      renderer.toneMappingExposure = toneMappingParams.toneMappingExposure;
-      return () => {
-        renderer.toneMapping = LinearToneMapping;
-        renderer.toneMappingExposure = 1;
-      }
-    }
-  }, [enabled, toneMappingParams])
+    renderer.setPixelRatio(pixelRatio);
+    const renderScene = new RenderPass(scene, camera);
 
-  useEffect(() => {
-    const renderScene = new RenderPass( scene, camera );
-
-    bloomPass.current = new UnrealBloomPass(new Vector2( size.width, size.height ));
+    bloomPass.current = new UnrealBloomPass(new Vector2(size.width * pixelRatio, size.height * pixelRatio));
     Object.keys(defaultBloomParams).forEach((k) => {
       bloomPass.current[k] = Object.keys(bloomParams).includes(k) ? bloomParams[k] : defaultBloomParams[k];
     });
 
-    bloomComposer.current = new EffectComposer( renderer );
+    const target = new WebGLRenderTarget(size.width * pixelRatio, size.height * pixelRatio, {
+      format: RGBAFormat,
+      encoding: 3001,
+      type: FloatType
+    });
+
+    bloomComposer.current = new EffectComposer(renderer, target);
     bloomComposer.current.renderToScreen = false;
-    bloomComposer.current.addPass( renderScene );
-    bloomComposer.current.addPass( bloomPass.current );
+    bloomComposer.current.addPass(renderScene);
+    bloomComposer.current.addPass(bloomPass.current);
 
     const selectiveBloomPass = new ShaderPass(
       new ShaderMaterial({
@@ -157,33 +151,13 @@ const Postprocessor = ({ enabled, bloomParams = {}, toneMappingParams = {} }) =>
       }),
       'baseTexture'
     );
+
     selectiveBloomPass.needsSwap = true;
 
-    fxaaPass.current = new ShaderPass( FXAAShader );
-    fxaaPass.current.material.uniforms['resolution'].value.x = 1 / ( size.width * pixelRatio );
-    fxaaPass.current.material.uniforms['resolution'].value.y = 1 / ( size.height * pixelRatio );
-  
-    finalComposer.current = new EffectComposer( renderer );
-    finalComposer.current.addPass( renderScene );
-    finalComposer.current.addPass( selectiveBloomPass );
-    finalComposer.current.addPass( fxaaPass.current );
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  useEffect(() => {
-    if (bloomComposer.current) {
-      bloomComposer.current.setSize( size.width, size.height );
-    }
-    if (bloomPass.current) {
-      bloomPass.current.resolution = new Vector2( size.width, size.height );
-    }
-    if (finalComposer.current) {
-      finalComposer.current.setSize( size.width, size.height );
-    }
-    if (fxaaPass.current) {
-      fxaaPass.current.material.uniforms['resolution'].value.x = 1 / ( size.width * pixelRatio );
-      fxaaPass.current.material.uniforms['resolution'].value.y = 1 / ( size.height * pixelRatio );
-    }
-  }, [size.height, size.width, pixelRatio]); // eslint-disable-line react-hooks/exhaustive-deps
+    finalComposer.current = new EffectComposer(renderer, target);
+    finalComposer.current.addPass(renderScene);
+    finalComposer.current.addPass(selectiveBloomPass);
+  }, [size.width, size.height, pixelRatio]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useFrame(({ camera, gl, scene }) => {
     try {

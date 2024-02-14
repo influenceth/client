@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useQueryClient, QueryClientProvider } from 'react-query';
 import { Object3D, Vector3 } from 'three';
 import { Canvas, useThree } from '@react-three/fiber';
@@ -21,7 +21,6 @@ import WebsocketContext from '~/contexts/WebsocketContext';
 import { GpuContextLostMessage, GpuContextLostReporter } from './GpuContextLost';
 
 const glConfig = {
-  antialias: true,
   shadows: true,
   camera: {
     fov: 75,
@@ -29,7 +28,6 @@ const glConfig = {
     far: constants.MAX_SYSTEM_RADIUS * constants.AU * 2,
     position: [ 4 * constants.AU, 0, 1.5 * constants.AU ]
   },
-  powerPreference: 'default',
   onCreated: (state) => {
     state.raycaster.params.Points = {
       near: 1000000,
@@ -76,7 +74,6 @@ const WrappedScene = () => {
 }
 
 const Scene = () => {
-
   /**
    * Grab reference to queryClient to recreate QueryClientProvider within Canvas element
    * See: https://github.com/pmndrs/react-three-fiber/blob/master/markdown/api.md#gotchas
@@ -140,7 +137,19 @@ const Scene = () => {
         </div>
       )}
       {false && /* TODO: remove debug */(
-        <div id="debug_info" style={{ position: 'fixed', top: -1, left: 95, background: 'black', border: '1px solid white', padding: '8px 4px', fontSize: 11, minWidth: 60, textAlign: 'center' }} />
+        <div
+          id="debug_info"
+          style={{
+            position: 'fixed',
+            top: -1,
+            left: 95,
+            background: 'black',
+            border: '1px solid white',
+            padding: '8px 4px',
+            fontSize: 11,
+            minWidth: 60,
+            textAlign: 'center'
+          }} />
       )}
     </StyledContainer>
   );

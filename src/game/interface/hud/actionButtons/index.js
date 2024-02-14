@@ -1,4 +1,6 @@
 import AssembleShip from './AssembleShip';
+import ClaimArrivalReward from './ClaimArrivalReward';
+import ClaimPrepareReward from './ClaimPrepareReward';
 import Construct from './Construct';
 import ControlAsteroid from './ControlAsteroid';
 import CoreSample from './CoreSample';
@@ -28,6 +30,8 @@ import ViewAgreements from './ViewAgreements';
 
 const ActionsButtons = {
   AssembleShip,
+  ClaimArrivalReward,
+  ClaimPrepareReward,
   Construct,
   ControlAsteroid,
   CoreSample,

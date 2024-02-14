@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import styled, { keyframes } from 'styled-components';
 import { Crew, Time } from '@influenceth/sdk';
 
-import { BusyIcon, FoodIcon, IdleIcon, WarningOutlineIcon } from '~/components/Icons';
+import { CrewBusyIcon, CrewIdleIcon } from '~/components/AnimatedIcons';
 import useChainTime from '~/hooks/useChainTime';
 import useConstants from '~/hooks/useConstants';
 import { hexToRGB } from '~/theme';
@@ -43,6 +43,7 @@ const StatusContainer = styled.div`
     display: flex;
     justify-content: center;
     font-size: 24px;
+    margin-left: 4px;
     height: 24px;
     width: 24px;
   }
@@ -110,13 +111,13 @@ const LiveReadyStatus = ({ crew, ...props }) => {
           {(formattedTime) => <TimerWrapper len={formattedTime.length} waitingOnBlock={!crewIsBusy}>{formattedTime}</TimerWrapper>}
         </LiveTimer>
         {crewIsBusy && <label>Busy</label>}
-        <IconWrapper><BusyIcon /></IconWrapper>
+        <IconWrapper><CrewBusyIcon /></IconWrapper>
       </BusyStatusContainer>
     )
     : (
       <StatusContainer {...props}>
         <label>Idle</label> 
-        <IconWrapper><IdleIcon /></IconWrapper>
+        <IconWrapper><CrewIdleIcon /></IconWrapper>
       </StatusContainer>
     );
 }

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
 import Ticker from 'react-ticker';
 import { Product } from '@influenceth/sdk';
@@ -6,10 +6,14 @@ import { Product } from '@influenceth/sdk';
 import ClipCorner from '~/components/ClipCorner';
 import CrewIndicator from '~/components/CrewIndicator';
 import Dropdown from '~/components/Dropdown';
-import { ChevronDoubleDownIcon, ChevronDoubleUpIcon, ChevronRightIcon, CompositionIcon, GridIcon, MarketplaceBuildingIcon, MarketsIcon, SwayIcon } from '~/components/Icons';
+import {
+  ChevronDoubleDownIcon, ChevronDoubleUpIcon, ChevronRightIcon, GridIcon, MarketplaceBuildingIcon, MarketsIcon,
+  SwayIcon
+} from '~/components/Icons';
 import ResourceThumbnail from '~/components/ResourceThumbnail';
 import Switcher from '~/components/SwitcherButton';
 import TextInput from '~/components/TextInput';
+import Pagination from '~/components/Pagination';
 import { AsteroidImage, formatResourceAmount } from '~/game/interface/hud/actionDialogs/components';
 import { formatPrecision, formatPrice } from '~/lib/utils';
 import theme, { hexToRGB } from '~/theme';
@@ -21,7 +25,7 @@ const Header = styled.div`
   border-bottom: 1px solid #333;
   display: flex;
   flex-direction: row;
-  height: ${p => p.marketplace ? '150px' : '250px'};
+  height: ${p => p.marketplace ? '150px' : '200px'};
   margin-top: -25px;
   padding-bottom: 25px;
   padding-top: 25px;
@@ -60,6 +64,7 @@ const Header = styled.div`
     }
   }
 `;
+
 const BodyNav = styled.div`
   align-items: center;
   display: flex;
@@ -105,6 +110,7 @@ const Listings = styled.div`
   flex-wrap: wrap;
   margin: 10px -5px 0;
 `;
+
 const Listing = styled.div`
   background: black;
   border: 1px solid #333;
@@ -122,6 +128,7 @@ const Listing = styled.div`
     background: #111;
   }
 `;
+
 const ListingTitle = styled.div`
   font-size: 110%;
   overflow: hidden;
@@ -130,6 +137,7 @@ const ListingTitle = styled.div`
   text-overflow: ellipsis;
   white-space: nowrap;
 `;
+
 const ListingAmount = styled.div`
   color: #565656;
   ${p => p.color && `
@@ -138,6 +146,7 @@ const ListingAmount = styled.div`
   font-size: 80%;
   margin-top: 2px;
 `;
+
 const ListingPrice = styled.div`
   align-items: center;
   display: flex;
@@ -148,6 +157,7 @@ const ListingPrice = styled.div`
     font-size: 30px;
   }
 `;
+
 const Price = styled.div`
   flex: 1 0 0;
   font-size: 24px;
@@ -160,11 +170,13 @@ const Price = styled.div`
     }
   `}
 `;
+
 const PriceArrow = styled.div`
   color: ${p => p.mode === 'buy' ? theme.colors.green : theme.colors.main};
   font-size: 25px;
   line-height: 0;
 `;
+
 const ChangeBubble = styled.div`
   align-items: ${p => p.isUp ? 'flex-start' : 'flex-end'};
   background: rgba(${p => hexToRGB(p.isUp ? p.theme.colors.green : p.theme.colors.red)}, 0.3);
@@ -219,6 +231,7 @@ const TickerItems = styled.div`
   flex-direction: row;
   height: 50px;
 `;
+
 const TickerItem = styled.div`
   align-items: center;
   border-radius: 4px;
@@ -227,8 +240,12 @@ const TickerItem = styled.div`
   flex-direction: row;
   font-size: 15px;
   font-weight: bold;
-  padding: 5px 10px;
-  text-transform: uppercase;
+  padding: 5px 10px 5px 0;
+
+  &:before {
+    padding-right: 10px;
+    content: "•";
+  }
 
   &:hover {
     background: #171717;
@@ -246,15 +263,23 @@ const TickerItem = styled.div`
   }
 `;
 
+const StyledPagination = styled(Pagination)`
+  bottom: 15px;
+  position: absolute;
+`;
 
 const greenRGB = hexToRGB(theme.colors.green);
+const pageSize = 25;
 
 const MarketplaceHome = ({ asteroid, listings, orderTally, onSelectListing, marketplace = null, marketplaceOwner = null, marketplaceTally }) => {
   const [mode, setMode] = useState('buy');
   const [nameFilter, setNameFilter] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [sort, setSort] = useState('liquidity');
 
   const options = [
-    { key: 'recentlyTraded', label: 'Recently Traded' }
+    { value: 'liquidity', label: 'Liquidity' },
+    { value: 'alphabetical', label: 'Alphabetical'}
   ];
 
   const tickerEnabled = useMemo(() => {
@@ -263,21 +288,31 @@ const MarketplaceHome = ({ asteroid, listings, orderTally, onSelectListing, mark
 
   const tickerListings = useMemo(() => {
     if (!tickerEnabled) return [];
+
     return listings
       .filter((l) => {
         if (mode === 'buy') return l.forSale > 0;
         return l.forBuy > 0;
       })
       .sort((a, b) => {
-        return Product.TYPES[a.product].name < Product.TYPES[b.product].name ? -1 : 1;
-      });
+        return a.forBuy + a.forSale < b.forBuy + b.forSale ? 1 : -1;
+      })
+      .slice(0, 10);
   }, [tickerEnabled, listings, mode]);
 
-  const filteredListings = useMemo(() => {
-    return listings
-      .filter(({ product }) => nameFilter.length === 0 || Product.TYPES[product].name.toLowerCase().includes((nameFilter || '').toLowerCase()))
-      .sort((a, b) => Product.TYPES[a.product].name < Product.TYPES[b.product].name ? -1 : 1) // TODO: according to dropdown
-  }, [listings, nameFilter]);
+  const [ filteredCount, filteredListings ] = useMemo(() => {
+    const filtered = listings
+      .filter(({ product }) => {
+        return nameFilter.length === 0 ||
+          Product.TYPES[product].name.toLowerCase().includes((nameFilter || '').toLowerCase());
+      })
+      .sort((a, b) => {
+        if (sort === 'liquidity') return a.forBuy + a.forSale < b.forBuy + b.forSale ? 1 : -1;
+        if (sort === 'alphabetical') return Product.TYPES[a.product].name > Product.TYPES[b.product].name ? 1 : -1;
+      });
+
+    return [filtered.length, filtered.slice((currentPage - 1) * pageSize, (currentPage - 1) * pageSize + pageSize)];
+  }, [listings, nameFilter, currentPage, sort]);
 
   // unclear why this is required, but if no timeout, then ticker just renders a "0"
   const [tickerReady, setTickerReady] = useState(false);
@@ -361,11 +396,13 @@ const MarketplaceHome = ({ asteroid, listings, orderTally, onSelectListing, mark
           placeholder="Search by Name"
           style={{ borderWidth: '1px', height: '34px', width: '240px' }} />
         <Dropdown
+          initialSelection={sort}
           options={options}
+          onChange={(sort) => setSort(sort.value)}
           size="small"
           style={{ textTransform: 'none', width: '240px' }} />
         <ResultsTally>
-          <GridIcon /> <span>{filteredListings.length} Result{filteredListings.length === 1 ? '' : 's'}</span>
+          <GridIcon /> <span>{filteredCount} Result{filteredListings.length === 1 ? '' : 's'} ({listings.length} Total)</span>
         </ResultsTally>
 
         <div style={{ flex: 1 }} />
@@ -416,7 +453,9 @@ const MarketplaceHome = ({ asteroid, listings, orderTally, onSelectListing, mark
                     style={amount === 0 ? { opacity: 0.5 } : {}}
                     tooltipContainer={null} />
                   <ListingTitle>{resource.name}</ListingTitle>
-                  <ListingAmount color={amount > 0 && mode}>{amount > 0 ? formatResourceAmount(amount, listing.product) : 'None'} {mode === 'buy' ? 'Available' : 'Sellable'}</ListingAmount>
+                  <ListingAmount color={amount > 0 ? mode : 'none'}>
+                    {amount > 0 ? formatResourceAmount(amount, listing.product) : 'None'} {mode === 'buy' ? 'Available' : 'Sellable'}
+                  </ListingAmount>
                   {amount > 0
                     ? (
                       <ListingPrice>
@@ -437,6 +476,11 @@ const MarketplaceHome = ({ asteroid, listings, orderTally, onSelectListing, mark
             })}
         </Listings>
       </Body>
+      <StyledPagination
+          currentPage={currentPage}
+          rowsPerPage={pageSize}
+          rowCount={filteredCount}
+          onChangePage={(page) => setCurrentPage(page)} />
     </>
   );
 };

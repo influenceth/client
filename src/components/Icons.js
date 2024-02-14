@@ -32,9 +32,8 @@ import {
   RiSortDesc
 } from 'react-icons/ri';
 import { TiArrowRight } from 'react-icons/ti';
-import { TfiControlForward } from 'react-icons/tfi';
 import { WiMoonAltWaningCrescent5 } from 'react-icons/wi';
-import { VscDebugDisconnect, VscCircle } from 'react-icons/vsc';
+import { VscDebugDisconnect } from 'react-icons/vsc';
 
 import AdalianSVG from '~/assets/icons/AdalianIcon.svg';
 import AddRationsSVG from '~/assets/icons/AddRationsIcon.svg';
@@ -71,6 +70,7 @@ import InclinationSVG from '~/assets/icons/InclinationIcon.svg';
 import InfluenceSVG from '~/assets/images/logo-icon.svg';
 import InfoSVG from '~/assets/icons/InfoIcon.svg';
 import InventorySVG from '~/assets/icons/InventoryIcon.svg';
+import KeysSVG from '~/assets/icons/KeysIcon.svg';
 import LeaderboardSVG from '~/assets/icons/LeaderboardIcon.svg';
 import LeaseSVG from '~/assets/icons/LeaseIcon.svg';
 import LinkSVG from '~/assets/icons/LinkIcon.svg';
@@ -119,6 +119,7 @@ import WarningOutlineSVG from '~/assets/icons/WarningOutlineIcon.svg';
 import AssetAgreementsSVG from '~/assets/icons/action_buttons/AssetAgreements.svg';
 import BecomeAdminSVG from '~/assets/icons/action_buttons/BecomeAdmin.svg';
 import CancelLimitOrderSVG from '~/assets/icons/action_buttons/CancelLimitOrder.svg';
+import ClaimRewardSVG from '~/assets/icons/action_buttons/ClaimReward.svg';
 import ConstructSVG from '~/assets/icons/action_buttons/Construct.svg';
 import ConstructShipSVG from '~/assets/icons/action_buttons/ConstructShip.svg';
 import DeconstructSVG from '~/assets/icons/action_buttons/Deconstruct.svg';
@@ -229,6 +230,7 @@ export const InclinationIcon = () => <InclinationSVG className="icon" />;
 export const InfoIcon = () => <InfoSVG className="icon" />;
 export const InfluenceIcon = () => <InfluenceSVG className="icon" />;
 export const InventoryIcon = () => <InventorySVG className="icon" />;
+export const KeysIcon = () => <KeysSVG className="icon" />;
 export const LeaderboardIcon = () => <LeaderboardSVG className="icon" />;
 export const LeaseIcon = () => <LeaseSVG className="icon" />;
 export const LinkIcon = () => <LinkSVG className="icon" />;
@@ -279,6 +281,7 @@ export const WarningOutlineIcon = () => <WarningOutlineSVG className="icon" />;
 export const AssetAgreementsIcon = () => <AssetAgreementsSVG className="icon" />;
 export const BecomeAdminIcon = () => <BecomeAdminSVG className="icon" />;
 export const CancelLimitOrderIcon = () => <CancelLimitOrderSVG className="icon" />;
+export const ClaimRewardIcon = () => <ClaimRewardSVG className="icon" />;
 export const ConstructIcon = () => <ConstructSVG className="icon" />;
 export const ConstructShipIcon = () => <ConstructShipSVG className="icon" />;
 export const DeconstructIcon = () => <DeconstructSVG className="icon" />;
@@ -341,17 +344,14 @@ export {
   FiDownload as DownloadIcon,
   FaBan as BanIcon,
   FaCogs as ProcessIcon,
-  TfiControlForward as BusyIcon,
   FaCopy as CopyIcon,
   FaEthereum as ConnectIcon,
   FaList as ListIcon,
   RiPagesFill as DetailIcon,
-  VscCircle as IdleIcon,
   AiOutlineNumber as IdIcon,
   FaMapMarkedAlt as MapIcon,
   FiExternalLink as PopoutIcon,
   FiMenu as MenuIcon,
-  GiHouseKeys as KeysIcon,
   HiChevronDoubleLeft as BackIcon,
   HiChevronDoubleRight as ForwardIcon,
   HiClock as TimeIcon,
