@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Asteroid, Crewmate, Deposit, Lot, Product, Time } from '@influenceth/sdk';
 
-import coreSampleBackground from '~/assets/images/modal_headers/CoreSample.png';
 import { CoreSampleIcon, ImproveCoreSampleIcon, ResourceIcon } from '~/components/Icons';
 import ResourceThumbnail from '~/components/ResourceThumbnail';
 import useCrewContext from '~/hooks/useCrewContext';
@@ -346,7 +345,7 @@ const Wrapper = (props) => {
 
   return (
     <ActionDialogInner
-      actionImage={coreSampleBackground}
+      actionImage="CoreSample"
       isLoading={reactBool(isLoading)}
       stage={actionStage}>
       <ImproveCoreSample

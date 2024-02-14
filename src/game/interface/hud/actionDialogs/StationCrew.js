@@ -3,7 +3,6 @@ import styled from 'styled-components';
 import cloneDeep from 'lodash/cloneDeep';
 import { Asteroid, Building, Crewmate, Entity, Permission, Station, Time } from '@influenceth/sdk';
 
-import travelBackground from '~/assets/images/modal_headers/Travel.png';
 import { StationCrewIcon, StationPassengersIcon } from '~/components/Icons';
 import useCrewContext from '~/hooks/useCrewContext';
 import useShip from '~/hooks/useShip';
@@ -322,7 +321,7 @@ const Wrapper = (props) => {
 
   return (
     <ActionDialogInner
-      actionImage={travelBackground}
+      actionImage="CrewManagement"
       isLoading={reactBool(isLoading)}
       stage={actionStage}>
       <StationCrew

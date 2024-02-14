@@ -4,6 +4,7 @@ import { PuffLoader } from 'react-spinners';
 import ReactTooltip from 'react-tooltip';
 import { Lot } from '@influenceth/sdk';
 
+import modalHeaders from '~/assets/images/modal_headers';
 import ClipCorner from '~/components/ClipCorner';
 import useAsteroid from '~/hooks/useAsteroid';
 import useLot from '~/hooks/useLot';
@@ -185,7 +186,7 @@ export const ActionDialogInner = ({ actionImage, children, isLoading, stage }) =
       {isLoading && <LoadingContainer><PuffLoader color="white" /></LoadingContainer>}
       {!isLoading && (
         <>
-          <ActionImage src={actionImage} />
+          {actionImage && modalHeaders[actionImage] && <ActionImage src={modalHeaders[actionImage]} />}
           <ActionMain>
             {children}
           </ActionMain>

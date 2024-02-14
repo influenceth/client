@@ -1,11 +1,13 @@
 import styled from 'styled-components';
 
 import { majorBorderColor } from './components';
+import hudHeaders from '~/assets/images/hud_headers';
 
 const absPadding = 8;
 
 const Wrapper = styled.div`
-  background: #004;
+  background: url(${p => p.background ? hudHeaders[p.background] : ''}) no-repeat center center;
+  background-size: cover;
   border-bottom: 1px solid ${majorBorderColor};
   height: 150px;
   position: relative;
@@ -74,8 +76,8 @@ const UpperContainer = styled.div`
   }
 `;
 
-const TitleArea = ({ title, subtitle, upperLeft, upperRight }) => (
-  <Wrapper>
+const TitleArea = ({ background, title, subtitle, upperLeft, upperRight }) => (
+  <Wrapper background={background}>
     <UpperContainer>
       <div>{upperLeft}</div>
       <div>{upperRight}</div>

@@ -1,7 +1,6 @@
 import { useEffect, useMemo } from 'react';
 import { Building, Crewmate, Inventory, Lot, Time } from '@influenceth/sdk';
 
-import constructionBackground from '~/assets/images/modal_headers/Construction.png';
 import {
   DeconstructIcon,
 } from '~/components/Icons';
@@ -161,7 +160,7 @@ const Wrapper = (props) => {
 
   return (
     <ActionDialogInner
-      actionImage={constructionBackground}
+      actionImage="Construction"
       isLoading={reactBool(isLoading)}
       stage={stageByActivity.deconstruct}>
       <Deconstruct

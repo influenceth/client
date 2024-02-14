@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import styled from 'styled-components';
 import { Asteroid, Crewmate, Deposit, Extractor, Inventory, Lot, Permission, Product, Time } from '@influenceth/sdk';
 
-import extractionBackground from '~/assets/images/modal_headers/Extraction.png';
 import { CoreSampleIcon, ExtractionIcon, InventoryIcon, LocationIcon, ResourceIcon } from '~/components/Icons';
 import useCrewContext from '~/hooks/useCrewContext';
 import useExtractionManager from '~/hooks/actionManagers/useExtractionManager';
@@ -462,7 +461,7 @@ const Wrapper = (props) => {
 
   return (
     <ActionDialogInner
-      actionImage={extractionBackground}
+      actionImage="Extraction"
       isLoading={reactBool(isLoading)}
       stage={actionStage}>
       <Extract

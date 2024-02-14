@@ -3,7 +3,6 @@ import { Entity, Permission, Time } from '@influenceth/sdk';
 import styled from 'styled-components';
 import Clipboard from 'react-clipboard.js';
 
-import headerBackground from '~/assets/images/modal_headers/CrewManagement.png';
 import { BanIcon, CheckIcon, CloseIcon, DisconnectIcon, ExtendAgreementIcon, FormAgreementIcon, GiveNoticeIcon, LinkIcon, LogoutIcon, LotControlIcon, PermissionIcon, RefreshIcon, StopIcon, SwayIcon } from '~/components/Icons';
 import useCrewContext from '~/hooks/useCrewContext';
 import useStore from '~/hooks/useStore';
@@ -603,7 +602,7 @@ const Wrapper = ({ entity: entityId, permission, isExtension, agreementPath, ...
 
   return (
     <ActionDialogInner
-      actionImage={headerBackground}
+      actionImage="Agreements"
       isLoading={reactBool(entityIsLoading || crewIsLoading)}
       stage={stage}>
       <FormAgreement

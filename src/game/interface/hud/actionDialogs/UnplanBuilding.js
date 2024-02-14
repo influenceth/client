@@ -2,7 +2,6 @@ import { useEffect, useRef } from 'react';
 import styled from 'styled-components';
 import { Building } from '@influenceth/sdk';
 
-import constructionBackground from '~/assets/images/modal_headers/Construction.png';
 import {
   UnplanBuildingIcon,
   WarningOutlineIcon
@@ -117,7 +116,7 @@ const Wrapper = (props) => {
 
   return (
     <ActionDialogInner
-      actionImage={constructionBackground}
+      actionImage="ConstructionPlan"
       isLoading={reactBool(isLoading)}
       stage={stageByActivity.unplan}>
       <UnplanBuilding

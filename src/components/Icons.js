@@ -71,6 +71,7 @@ import InclinationSVG from '~/assets/icons/InclinationIcon.svg';
 import InfluenceSVG from '~/assets/images/logo-icon.svg';
 import InfoSVG from '~/assets/icons/InfoIcon.svg';
 import InventorySVG from '~/assets/icons/InventoryIcon.svg';
+import KeysSVG from '~/assets/icons/KeysIcon.svg';
 import LeaderboardSVG from '~/assets/icons/LeaderboardIcon.svg';
 import LeaseSVG from '~/assets/icons/LeaseIcon.svg';
 import LinkSVG from '~/assets/icons/LinkIcon.svg';
@@ -230,6 +231,7 @@ export const InclinationIcon = () => <InclinationSVG className="icon" />;
 export const InfoIcon = () => <InfoSVG className="icon" />;
 export const InfluenceIcon = () => <InfluenceSVG className="icon" />;
 export const InventoryIcon = () => <InventorySVG className="icon" />;
+export const KeysIcon = () => <KeysSVG className="icon" />;
 export const LeaderboardIcon = () => <LeaderboardSVG className="icon" />;
 export const LeaseIcon = () => <LeaseSVG className="icon" />;
 export const LinkIcon = () => <LinkSVG className="icon" />;
@@ -353,7 +355,6 @@ export {
   FaMapMarkedAlt as MapIcon,
   FiExternalLink as PopoutIcon,
   FiMenu as MenuIcon,
-  GiHouseKeys as KeysIcon,
   HiChevronDoubleLeft as BackIcon,
   HiChevronDoubleRight as ForwardIcon,
   HiClock as TimeIcon,

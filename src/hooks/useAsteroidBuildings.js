@@ -5,12 +5,12 @@ import useCrewContext from '~/hooks/useCrewContext';
 import api from '~/lib/api';
 
 const useAsteroidBuildings = (asteroidId, reqComponent = 'Building', reqOneOfPermissions = null) => {
-  const { crew, crewCan } = useCrewContext();
+  const { crewCan } = useCrewContext();
 
   const { data: allData, ...queryProps } = useQuery(
-    [ 'asteroidBuildings', asteroidId, crew?.id, reqComponent ],
-    () => api.getBuildingsWithComponent(asteroidId, crew?.id, reqComponent),
-    { enabled: !!(asteroidId && crew?.id) }
+    [ 'asteroidBuildings', asteroidId, reqComponent ],
+    () => api.getBuildingsWithComponent(asteroidId, reqComponent),
+    { enabled: !!asteroidId && !!reqComponent }
   );
 
   const perms = useMemo(() => 
@@ -22,7 +22,7 @@ const useAsteroidBuildings = (asteroidId, reqComponent = 'Building', reqOneOfPer
     data: (allData || [])
       .filter((entity) => perms.length === 0 || perms.find((p) => crewCan(p, entity))),
     ...queryProps,
-  }), [allData, queryProps])
+  }), [allData, crewCan, queryProps])
 };
 
 export default useAsteroidBuildings;

@@ -210,6 +210,7 @@ const HudMenu = ({ forceOpenMenu }) => {
   const { account } = useAuth();
   const { crew } = useCrewContext();
 
+  const createAlert = useStore(s => s.dispatchAlertLogged);
   const asteroidId = useStore(s => s.asteroids.origin);
   const destination = useStore(s => s.asteroids.destination);
   const lotId = useStore(s => s.asteroids.lot);
@@ -513,7 +514,12 @@ const HudMenu = ({ forceOpenMenu }) => {
           if (marketplaces?.length > 0) {
             history.push(`/marketplace/${asteroidId}/all`);
           } else {
-            // TODO: create alert to notify user that asteroid has no marketplace
+            createAlert({
+              type: 'GenericAlert',
+              level: 'warning',
+              data: { content: 'Asteroid does not yet have any marketplaces accessible to your crew.' },
+              duration: 3000
+            });
           }
         },
         isVisible: focus === 'asteroid' || scope === 'asteroid'
