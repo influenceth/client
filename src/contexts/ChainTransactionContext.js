@@ -402,7 +402,7 @@ const customConfigs = {
   },
   UpdatePolicy: {
     multisystemCalls: ({ add, remove }) => [remove, add].filter((c) => !!c),
-    equalityTest: ['entity.label', 'entity.id', 'permission'],
+    equalityTest: ['target.label', 'target.id', 'permission'],
     isVirtual: true
   },
   UpdateAllowlist: {
@@ -410,15 +410,15 @@ const customConfigs = {
       return [
         ...removals.map((r) => ({
           system: 'RemoveFromWhitelist',
-          vars: { ...vars, target: r }
+          vars: { ...vars, permitted: r }
         })),
         ...additions.map((a) => ({
           system: 'Whitelist',
-          vars: { ...vars, target: a }
+          vars: { ...vars, permitted: a }
         })),
       ]
     },
-    equalityTest: ['entity.label', 'entity.id', 'permission'],
+    equalityTest: ['target.label', 'target.id', 'permission'],
     isVirtual: true
   }
 };

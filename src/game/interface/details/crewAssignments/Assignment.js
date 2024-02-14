@@ -97,7 +97,6 @@ const REQUIRE_CONFIRM = false;
 
 const CrewAssignment = ({ crewId, crewmateId, onFinish }) => {
   const history = useHistory();
-  const { crewmateMap } = useCrewContext();
 
   const {
     bookError,
@@ -114,7 +113,7 @@ const CrewAssignment = ({ crewId, crewmateId, onFinish }) => {
   const [selection, setSelection] = useState();
 
   let onCloseDestination;
-  if (bookSession?.isMintingStory || Object.keys(crewmateMap || {}).length > 0) {
+  if (bookSession?.isMintingStory) {
     onCloseDestination = '/crew';
   } else {
     onCloseDestination = '/';
@@ -181,7 +180,7 @@ const CrewAssignment = ({ crewId, crewmateId, onFinish }) => {
   return (
     <>
       <ChoicesDialog
-        dialogTitle={bookSession.isMintingStory ? 'Crewmate Creation' : 'Crew Assignments'}
+        dialogTitle={bookSession.isMintingStory ? 'Crewmate Creation' : 'Random Event'}
         onCloseDestination={onCloseDestination}
         coverImage={storySession.image}
         coverImageCenter={storySession.imageCenter}

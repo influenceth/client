@@ -266,7 +266,7 @@ const ActionButtonComponent = ({ label, labelAddendum, flags = {}, icon, onClick
 }
 
 export const getCrewDisabledReason = ({ asteroid, crew, permission, permissionTarget, requireAsteroid = true, requireSurface = true }) => {
-  if (permission && permissionTarget) {
+  if (crew && permission && permissionTarget) {
     if (!Permission.isPermitted(crew, permission, permissionTarget)) return 'access restricted';
   }
   if (asteroid && requireAsteroid) {

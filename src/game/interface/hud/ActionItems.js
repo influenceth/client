@@ -358,6 +358,7 @@ const ActionItem = ({ data, crew }) => {
       transitionOut={data.transitionOut ? (type === 'failed' ? 'left' : 'right') : undefined}>
       <Icon animate={type === 'pending'}>
         {type === 'failed' && <FailureIcon />}
+        {type === 'randomEvent' && <FailureIcon />/* TODO: ...*/}
         {type === 'ready' && <NavIcon animate selected size="16px" />}
         {(type === 'pending' || type === 'unready' || type === 'plans') && item.icon}
       </Icon>
@@ -366,7 +367,7 @@ const ActionItem = ({ data, crew }) => {
       <Details>
         <Timing>
           {type === 'pending' && 'Just Now'}
-          {(type === 'ready' || type === 'failed') && item.ago}
+          {(type === 'ready' || type === 'failed' || type === 'randomEvent') && item.ago}
           {type === 'unready' && item.finishTime && <LiveTimer target={item.finishTime} maxPrecision={2} prefix="in " />}
           {/* TODO: would be nice for this to have different level warning intensity based on time-left and/or presence of inventory on the lot */}
           {type === 'plans' && (

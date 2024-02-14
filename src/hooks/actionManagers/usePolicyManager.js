@@ -7,26 +7,26 @@ import { monthsToSeconds, secondsToMonths } from '~/lib/utils';
 
 const hoursPerMonth = monthsToSeconds(1) / 3600;
 
-const usePolicyManager = (entity, permission) => {
+const usePolicyManager = (target, permission) => {
   const { crew } = useCrewContext();
   const { execute, getStatus } = useContext(ChainTransactionContext);
 
   const payload = useMemo(() => ({
-    caller_crew: { id: crew?.id, label: Entity.IDS.CREW },
-    entity: { id: entity?.id, label: entity?.label },
-    permission
-  }), [crew?.id, entity, permission]);
+    target: { id: target?.id, label: target?.label },
+    permission,
+    caller_crew: { id: crew?.id, label: Entity.IDS.CREW }, // "permitted"
+  }), [crew?.id, target, permission]);
 
   const meta = useMemo(() => ({
-    asteroidId: entity?.label === Entity.IDS.ASTEROID ? entity?.id : undefined,
-    lotId: entity?.Location?.locations?.find((l) => l.label === Entity.IDS.LOT)?.id,
-    shipId: entity?.label === Entity.IDS.SHIP ? entity?.id : undefined,
-  }), [entity]);
+    asteroidId: target?.label === Entity.IDS.ASTEROID ? target?.id : undefined,
+    lotId: target?.Location?.locations?.find((l) => l.label === Entity.IDS.LOT)?.id,
+    shipId: target?.label === Entity.IDS.SHIP ? target?.id : undefined,
+  }), [target]);
 
   const currentPolicy = useMemo(() => {
-    if (!entity) return undefined;
+    if (!target) return undefined;
     
-    const pol = Permission.getPolicyDetails(entity, crew?.id)[permission];
+    const pol = Permission.getPolicyDetails(target, crew?.id)[permission];
 
     if (pol?.policyDetails && pol.policyType === Permission.POLICY_IDS.CONTRACT) pol.policyDetails.contract = pol.policyDetails.address;
     if (pol?.policyDetails && pol.policyType === Permission.POLICY_IDS.PREPAID) {
@@ -35,7 +35,7 @@ const usePolicyManager = (entity, permission) => {
       pol.policyDetails.noticePeriod = secondsToMonths(pol.policyDetails.noticePeriod); // stored in seconds, UI in months
     };
     return pol;
-  }, [crew?.id, entity, permission]);
+  }, [crew?.id, target, permission]);
 
   const updateAllowlist = useCallback((newAllowlist) => {
     execute(

@@ -116,7 +116,7 @@ const getAgreementInvalidations = ({ event: { returnValues } }) => {
 };
 
 const getPolicyInvalidations = ({ event: { returnValues } }) => {
-  return invalidationDefaults(returnValues.entity);
+  return invalidationDefaults(returnValues.target);
 };
 
 // TODO: write a test to make sure all activities (from sdk) have a config

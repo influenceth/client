@@ -13,14 +13,14 @@ export const getAgreementPath = (target, permission, permitted) => {
   return `${target ? Entity.packEntity(target) : ''}.${permission || ''}.${permitted ? Entity.packEntity(permitted) : ''}`;
 }
 
-const useAgreementManager = (entity, permission, agreementPath) => {
+const useAgreementManager = (target, permission, agreementPath) => {
   const { crew } = useCrewContext();
   const { execute, getStatus } = useContext(ChainTransactionContext);
-  const { currentPolicy } = usePolicyManager(entity, permission);
+  const { currentPolicy } = usePolicyManager(target, permission);
 
   const currentAgreement = useMemo(() => {
     const agreement = (currentPolicy?.agreements || []).find((a) => {
-      if (agreementPath) return getAgreementPath(entity, permission, a.permitted) === agreementPath;
+      if (agreementPath) return getAgreementPath(target, permission, a.permitted) === agreementPath;
       return a.permitted?.id === crew?.id && a.permission === Number(permission)
     });
 
@@ -36,19 +36,19 @@ const useAgreementManager = (entity, permission, agreementPath) => {
       return agg;
     }
     return null;
-  }, [agreementPath, crew?.id, currentPolicy, entity, permission]);
+  }, [agreementPath, crew?.id, currentPolicy, target, permission]);
 
   const payload = useMemo(() => ({
-    target: { id: entity?.id, label: entity?.label },
+    target: { id: target?.id, label: target?.label },
     permission,
     permitted: { id: currentAgreement?.permitted?.id || crew?.id, label: Entity.IDS.CREW },
     caller_crew: { id: crew?.id, label: Entity.IDS.CREW },
-  }), [crew?.id, currentAgreement, entity, permission]);
+  }), [crew?.id, currentAgreement, target, permission]);
 
   const meta = useMemo(() => ({
-    lotId: entity?.Location?.locations?.find((l) => l.label === Entity.IDS.LOT)?.id,
-    shipId: entity?.label === Entity.IDS.SHIP ? entity?.id : undefined,
-  }), [entity]);
+    lotId: target?.Location?.locations?.find((l) => l.label === Entity.IDS.LOT)?.id,
+    shipId: target?.label === Entity.IDS.SHIP ? target?.id : undefined,
+  }), [target]);
 
   const enterAgreement = useCallback((details = {}) => {
     const agreementSystem = currentPolicy.policyType === Permission.POLICY_IDS.PREPAID

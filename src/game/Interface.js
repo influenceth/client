@@ -15,6 +15,7 @@ import MainMenu from './interface/MainMenu';
 import RecruitCrewmate from './interface/RecruitCrewmate';
 import ListView from './interface/details/ListView';
 import AsteroidDetails from './interface/details/AsteroidDetails';
+import CrewAssignment from './interface/details/crewAssignments/Assignment';
 // import CrewAssignmentComplete from './interface/details/crewAssignments/Complete';
 import CrewmateDetails from './interface/details/CrewmateDetails';
 import Marketplace from './interface/details/Marketplace';
@@ -144,14 +145,11 @@ const Interface = () => {
             <RecruitCrewmate />
           </Route>
 
-          {/* TODO: deprecated?
-          <Route exact path="/crew-assignments/:id([a-z0-9]+)/:selected?">
-            <CrewAssignments />
+          <Route path="/crew-assignment">
+            <CrewAssignment />
           </Route>
-          */}
-          {/*
-          /crew-assignment/* will use the same components as /recruit/* 
-          <Route path="/crew-assignment/:crewmateId([0-9]+)/complete">
+          {/* TODO ? 
+          <Route path="/crew-assignment/:eventId([0-9]+)/complete">
             <CrewAssignmentComplete />
           </Route>
           */}

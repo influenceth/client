@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import cloneDeep from 'lodash/cloneDeep'
 
+import useBookTokens from '~/hooks/useBookTokens';
 import useCrewContext from '~/hooks/useCrewContext';
 import useStore from '~/hooks/useStore';
 import { getCloudfrontUrl } from '~/lib/assetUtils';
@@ -16,6 +17,7 @@ const bookCache = {};
 
 const fetchBook = async (bookId) => {
   if (bookId) {
+    console.log('random', `/stories/${bookId}`);
     if (!bookCache[bookId]) bookCache[bookId] = await fetch(`/stories/${bookId}`).then((r) => r.json());
     return bookCache[bookId];
   }
@@ -29,7 +31,7 @@ const allOf = (mustHave, tests) => !mustHave.find((x) => !tests.includes(x));
 const applyTokensToString = (str, tokenObj) => {
   let applied = `${str}`;
   Object.keys(tokenObj).forEach((k) => {
-    applied.replace(new RegExp(`{{${k}}}`, 'g'), tokenObj[k]);
+    applied = applied.replace(new RegExp(`{{${k}}}`, 'g'), tokenObj[k]);
   });
   return applied;
 }
@@ -68,12 +70,12 @@ const useBookSession = (crewId, crewmateId) => {
     if (arvadianRecruit) return [bookIds.ARVADIAN_RECRUITMENT, arvadianRecruit];
 
     // if get here, may be because triggered random event
-    if (crew?._actionTypeTriggered) {
-      return [bookIds[`RANDOM_${crew._actionTypeTriggered}`], null];
+    if (crew?._actionTypeTriggered?.pendingEvent) {
+      return [bookIds[`RANDOM_${crew._actionTypeTriggered?.pendingEvent}`], null];
     }
 
     return [null, null, false];
-  }, [adalianRecruits, arvadianRecruits, crew?.actionTypeTriggered, crewmateId]);
+  }, [adalianRecruits, arvadianRecruits, crew?.actionTypeTriggered?.pendingEvent, crewmateId]);
 
   const { bookTokens, isLoading: bookTokensLoading } = useBookTokens(bookId);
 
@@ -89,6 +91,7 @@ const useBookSession = (crewId, crewmateId) => {
   const dispatchCrewAssignmentRestart = useStore(s => s.dispatchCrewAssignmentRestart);
 
   useEffect(() => fetchBook(bookId).then(setBook), [bookId]);
+  console.log({bookId, bookTokens, book});
 
   const { bookSession, storySession } = useMemo(() => {
     // console.log({ book, crewIsLoading, crewmateId, crewmate });

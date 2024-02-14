@@ -42,6 +42,9 @@ export function ActionItemProvider({ children }) {
   const [unreadyItems, setUnreadyItems] = useState([]);
   const [plannedItems, setPlannedItems] = useState([]);
 
+  const randomEventItems = useMemo(() => {
+    return crew?._actionTypeTriggered ? [crew?._actionTypeTriggered] : [];
+  }, [crew?._actionTypeTriggered]);
 
   // TODO: "Starknet could not be reached."
   // TODO: if block time > 2m, error; if error, set error
@@ -141,6 +144,7 @@ export function ActionItemProvider({ children }) {
     return [
       ...(pendingTransactions || []).map((item) => ({ ...item, type: 'pending' })),
       ...(failedTransactions || []).map((item) => ({ ...item, type: 'failed' })),
+      ...(randomEventItems || []).map((item) => ({ ...item, type: 'randomEvent' })),
       ...(visibleReadyItems || []).map((item) => ({ ...item, type: 'ready' })),
       ...(visiblePlannedItems || []).map((item) => ({ ...item, type: 'plans' })),
       ...(unreadyItems || []).map((item) => ({ ...item, type: 'unready' }))
@@ -149,7 +153,7 @@ export function ActionItemProvider({ children }) {
       return x;
     });
 
-  }, [pendingTransactions, failedTransactions, readyItems, plannedItems, unreadyItems, account, crew, token]);
+  }, [pendingTransactions, failedTransactions, randomEventItems, readyItems, plannedItems, unreadyItems, account, crew, token]);
 
 
   // TODO: clear timers in the serviceworker
@@ -161,6 +165,7 @@ export function ActionItemProvider({ children }) {
     liveBlockTime,
     pendingTransactions,
     failedTransactions,
+    randomEventItems,
     readyItems,
     plannedItems,
     unreadyItems,
@@ -171,6 +176,7 @@ export function ActionItemProvider({ children }) {
     liveBlockTime,
     pendingTransactions,
     failedTransactions,
+    randomEventItems,
     readyItems,
     plannedItems,
     unreadyItems,
