@@ -2,7 +2,6 @@ import { useEffect, useMemo, useRef } from 'react';
 import styled from 'styled-components';
 import { Asteroid } from '@influenceth/sdk';
 
-import constructionBackground from '~/assets/images/modal_headers/Construction.png';  // TODO: ...
 import CrewmateCardFramed from '~/components/CrewmateCardFramed';
 import {
   BecomeAdminIcon,
@@ -133,7 +132,7 @@ const Wrapper = (props) => {
 
   return (
     <ActionDialogInner
-      actionImage={constructionBackground}
+      actionImage="Management"
       isLoading={reactBool(isLoading)}
       stage={stage}>
       <ControlAsteroid

@@ -6,7 +6,7 @@ import CollapsibleSection from '~/components/CollapsibleSection';
 import CrewmateCardFramed from '~/components/CrewmateCardFramed';
 import CrewLocationLabel from '~/components/CrewLocationLabel';
 import LiveFoodStatus from '~/components/LiveFoodStatus';
-import { CrewIcon, WarningOutlineIcon } from '~/components/Icons';
+import { WarningOutlineIcon } from '~/components/Icons';
 import useAuth from '~/hooks/useAuth';
 import useCrewContext from '~/hooks/useCrewContext';
 import useHydratedLocation from '~/hooks/useHydratedLocation';
@@ -145,8 +145,7 @@ const AvatarMenu = () => {
         containerHeight={140}
         title={(
           <>
-            <IconWrapper style={{ color: theme.colors.main }}><CrewIcon /></IconWrapper>
-            <label>{formatters.crewName(crew)}</label>
+            <label style={{ paddingLeft: 0 }}>{formatters.crewName(crew)}</label>
             <LiveReadyStatus crew={crew} />
           </>
         )}>

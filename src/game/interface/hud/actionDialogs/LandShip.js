@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Asteroid, Crewmate, Entity, Inventory, Lot, Permission, Product, Ship, Time } from '@influenceth/sdk';
 
-import travelBackground from '~/assets/images/modal_headers/Travel.png';
 import { LandShipIcon, RouteIcon, ShipIcon, WarningOutlineIcon } from '~/components/Icons';
 import useCrewContext from '~/hooks/useCrewContext';
 import { reactBool, formatTimer, formatFixed, locationsArrToObj, getCrewAbilityBonuses } from '~/lib/utils';
@@ -300,7 +299,7 @@ const Wrapper = (props) => {
 
   return (
     <ActionDialogInner
-      actionImage={travelBackground}
+      actionImage="Travel"
       isLoading={reactBool(isLoading)}
       stage={actionStage}>
       {asteroid && ship && (

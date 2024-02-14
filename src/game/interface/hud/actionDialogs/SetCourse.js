@@ -2,7 +2,6 @@ import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'r
 import styled from 'styled-components';
 import { Crew, Crewmate, Product, Ship, Time } from '@influenceth/sdk';
 
-import travelBackground from '~/assets/images/modal_headers/Travel.png';
 import { CoreSampleIcon, ExtractionIcon, InventoryIcon, LaunchShipIcon, LocationIcon, ResourceIcon, RouteIcon, SetCourseIcon, ShipIcon, RotatedShipMarkerIcon, WarningOutlineIcon, MyAssetIcon } from '~/components/Icons';
 import TimeComponent from '~/components/Time';
 import useCrewContext from '~/hooks/useCrewContext';
@@ -532,7 +531,7 @@ const Wrapper = ({ ...props }) => {
   const isLoading = originIsLoading || destinationIsLoading || shipIsLoading || !travelSolution;
   return (
     <ActionDialogInner
-      actionImage={travelBackground}
+      actionImage="Travel"
       isLoading={reactBool(isLoading)}
       stage={actionStage}>
       <SetCourse

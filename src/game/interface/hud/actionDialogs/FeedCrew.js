@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Asteroid, Crew, Crewmate, Lot, Permission, Product, Time } from '@influenceth/sdk';
 import styled from 'styled-components';
 
-import headerBackground from '~/assets/images/modal_headers/CrewManagement.png';
 import { FoodIcon, ForwardIcon, InventoryIcon, LocationIcon, RouteIcon } from '~/components/Icons';
 import useCrewContext from '~/hooks/useCrewContext';
 import useLot from '~/hooks/useLot';
@@ -422,7 +421,7 @@ const Wrapper = (props) => {
 
   return (
     <ActionDialogInner
-      actionImage={headerBackground}
+      actionImage="CrewManagement"
       isLoading={reactBool(crewIsLoading || asteroidIsLoading)}
       stage={stage}>
       <FeedCrew

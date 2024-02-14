@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import styled from 'styled-components';
 import { Asteroid, Crewmate, Inventory, Lot, Order, Permission, Product, Time } from '@influenceth/sdk';
 
-import marketplaceBackground from '~/assets/images/modal_headers/Marketplace.png';
 import { BanIcon, InventoryIcon, WarningOutlineIcon, SwayIcon, MarketBuyIcon, MarketSellIcon, LimitBuyIcon, LimitSellIcon, CancelLimitOrderIcon, LocationIcon, CloseIcon } from '~/components/Icons';
 import Button from '~/components/ButtonAlt';
 import useCrewContext from '~/hooks/useCrewContext';
@@ -910,7 +909,7 @@ const Wrapper = (props) => {
   // TODO: actionImage
   return (
     <ActionDialogInner
-      actionImage={marketplaceBackground}
+      actionImage="Marketplace"
       isLoading={reactBool(isLoading)}
       stage={actionStage}>
       <MarketplaceOrder

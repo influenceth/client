@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useRef } from 'react';
 import styled from 'styled-components';
 import { Building, Crewmate, Lot, Time } from '@influenceth/sdk';
 
-import constructionBackground from '~/assets/images/modal_headers/Construction.png';
 import {
   ConstructIcon, WarningOutlineIcon,
   TransferToSiteIcon
@@ -285,7 +284,7 @@ const Wrapper = (props) => {
 
   return (
     <ActionDialogInner
-      actionImage={constructionBackground}
+      actionImage="Construction"
       isLoading={reactBool(isLoading)}
       stage={stageByActivity.construct}>
       <Construct

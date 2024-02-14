@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import styled from 'styled-components';
 import { Asteroid, Crewmate, Lot, Permission, Process, Processor, Product, Time } from '@influenceth/sdk';
 
-import travelBackground from '~/assets/images/modal_headers/Travel.png';
 import { BackIcon, CaretIcon, CloseIcon, ForwardIcon, RefineIcon, ProcessIcon, BioreactorBuildingIcon, ShipyardBuildingIcon, InventoryIcon, LocationIcon, RefineryBuildingIcon, ManufactureIcon } from '~/components/Icons';
 import useCrewContext from '~/hooks/useCrewContext';
 import { reactBool, formatTimer, locationsArrToObj, getCrewAbilityBonuses, formatFixed } from '~/lib/utils';
@@ -586,7 +585,7 @@ const Wrapper = (props) => {
 
   return (
     <ActionDialogInner
-      actionImage={travelBackground}
+      actionImage={lot?.building?.Building?.buildingType && `Production_${lot?.building?.Building?.buildingType}`}
       isLoading={reactBool(isLoading)}
       stage={actionStage}
       extraWide>

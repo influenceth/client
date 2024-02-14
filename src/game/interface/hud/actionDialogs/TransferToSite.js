@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Asteroid, Crewmate, Entity, Inventory, Lot, Permission, Product, Time } from '@influenceth/sdk';
 
-import surfaceTransferBackground from '~/assets/images/modal_headers/SurfaceTransfer.png';
 import { ForwardIcon, InventoryIcon, LocationIcon, SurfaceTransferIcon, TransferToSiteIcon } from '~/components/Icons';
 import useCrewContext from '~/hooks/useCrewContext';
 import useDeliveryManager from '~/hooks/actionManagers/useDeliveryManager';
@@ -333,7 +332,7 @@ const Wrapper = (props) => {
 
   return (
     <ActionDialogInner
-      actionImage={surfaceTransferBackground}
+      actionImage="SurfaceTransfer"
       isLoading={reactBool(isLoading || deliveryManager.isLoading)}
       stage={stage}>
       <TransferToSite

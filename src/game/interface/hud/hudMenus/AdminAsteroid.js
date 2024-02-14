@@ -65,12 +65,14 @@ const AdminAsteroid = ({}) => {
             label="Asteroid Name" />
         </HudMenuCollapsibleSection>
 
+        {/* TODO:
         <HudMenuCollapsibleSection titleText="Update Description" collapsed>
           <EntityDescriptionForm
             entity={asteroid ? { id: asteroid.id, label: Entity.IDS.ASTEROID } : null}
             originalDesc={``}
             label="Asteroid Description" />
         </HudMenuCollapsibleSection>
+        */}
 
         <HudMenuCollapsibleSection titleText="Update Lot Policy" collapsed>
           <PolicyPanels editable entity={asteroid} />

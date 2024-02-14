@@ -8,25 +8,28 @@ import EntityName from '~/components/EntityName';
 import TitleArea from '../components/TitleArea';
 
 const LotTitleArea = ({ lot }) => {
-  const [title, subtitle] = useMemo(() => {
+  const [title, subtitle, background] = useMemo(() => {
     if (!lot) return [];
     if (lot.building) {
       if (lot.building.Building?.status < Building.CONSTRUCTION_STATUSES.OPERATIONAL) {
         return [
           `${Building.TYPES[lot.building.Building?.buildingType].name} Site`,
-          lot.building.Building?.status === Building.CONSTRUCTION_STATUSES.UNDER_CONSTRUCTION ? 'Construction Site' : 'Planned Construction'
+          lot.building.Building?.status === Building.CONSTRUCTION_STATUSES.UNDER_CONSTRUCTION ? 'Construction Site' : 'Planned Construction',
+          `BuildingSite_${lot.building.Building?.buildingType}`
         ]
       }
       return [
         formatters.buildingName(lot.building),
-        Building.TYPES[lot.building.Building.buildingType].name
+        Building.TYPES[lot.building.Building.buildingType].name,
+        `Building_${lot.building.Building.buildingType}`
       ];
     }
-    return ['Empty Lot'];
+    return ['Empty Lot', null, 'EmptyLot'];
   }, [lot]);
 
   return (
     <TitleArea
+      background={background}
       title={title}
       subtitle={subtitle}
       upperLeft={lot && (

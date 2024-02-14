@@ -68,6 +68,7 @@ const AsteroidTitleArea = ({ asteroid }) => {
   if (!asteroid) return null;
   return (
     <TitleArea
+      background="Asteroid"
       title={formatters.asteroidName(asteroid)}
       subtitle={
         <SubtitleRow>

@@ -32,12 +32,14 @@ const AdminShip = ({}) => {
             label="Ship Name" />
         </HudMenuCollapsibleSection>
 
+        {/* TODO:
         <HudMenuCollapsibleSection titleText="Update Description" collapsed>
           <EntityDescriptionForm
             entity={ship ? { id: ship.id, label: Entity.IDS.SHIP } : null}
             originalDesc={``}
             label="Ship Description" />
         </HudMenuCollapsibleSection>
+        */}
 
         <HudMenuCollapsibleSection titleText="Update Permissions" collapsed>
           <PolicyPanels editable entity={ship} />

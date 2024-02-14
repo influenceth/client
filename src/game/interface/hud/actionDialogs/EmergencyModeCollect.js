@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import styled from 'styled-components';
 import { Crewmate, Inventory, Product, Ship, Time } from '@influenceth/sdk';
 
-import travelBackground from '~/assets/images/modal_headers/Travel.png';
 import { EmergencyModeCollectIcon } from '~/components/Icons';
 import useCrewContext from '~/hooks/useCrewContext';
 import useShip from '~/hooks/useShip';
@@ -286,7 +285,7 @@ const Wrapper = (props) => {
 
   return (
     <ActionDialogInner
-      actionImage={travelBackground}
+      actionImage="Travel"
       isLoading={reactBool(isLoading)}
       stage={actionStage}>
       <EmergencyModeCollect
