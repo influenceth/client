@@ -1,5 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState, createContext } from 'react';
 import { connect as starknetConnect, disconnect as starknetDisconnect } from 'starknetkit';
+import { ArgentMobileConnector } from 'starknetkit/argentMobile';
+import { InjectedConnector } from 'starknetkit/injected';
+import { WebWalletConnector } from 'starknetkit/webwallet';
 import { Address } from '@influenceth/sdk';
 
 import api from '~/lib/api';
@@ -73,12 +76,19 @@ export function WalletProvider({ children }) {
       // setConnecting(true);
       setError();
 
+      const connectors = [];
+      if (!!process.env.REACT_APP_ARGENT_WEB_WALLET_URL) connectors.push(new WebWalletConnector());
+      connectors.push(new InjectedConnector({ options: { id: 'argentX' }}));
+      connectors.push(new InjectedConnector({ options: { id: 'braavos' }}));
+      connectors.push(new ArgentMobileConnector());
+
       const wallet = await starknetConnect({
-        dappName: 'Influence',
+        dappName: 'Influence Asset Manager',
         modalMode: auto ? 'neverAsk' : 'alwaysAsk',
         modalTheme: 'dark',
         projectId: 'influence',
-        webWalletUrl: process.env.REACT_APP_ARGENT_WEB_WALLET_URL
+        webWalletUrl: process.env.REACT_APP_ARGENT_WEB_WALLET_URL,
+        connectors
       });
 
       if (wallet && wallet.isConnected && wallet.account?.address) {
