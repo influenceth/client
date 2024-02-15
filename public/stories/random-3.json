@@ -1,0 +1,21 @@
+[
+  {
+    "id": "random-3",
+    "title": "Keep 'em Separated",
+    "content": "<p>You’ve just finished running a refinery process when your MUSE alerts you: two new messages seem to have arrived almost simultaneously. You read the first one:</p><p>\"<i>Captain {{captainName}}:</i></p><p><i>As you are aware, one of our representatives visited your refinery to obtain some output samples for testing. What you may not be aware of is the fact that there are certain refineries that have been producing items with substantially, even dangerously, less purity than they claim. Whether it is due to ineptitude, hubris, or greed is not something that we care to comment upon.</i></p><p><i>We are pleased to report that all of the samples obtained from your refinery have passed our tests. In order to compensate you for any inconvenience, and to encourage you to continue following the carefully crafted processes, we are awarding you {{swayAmount1}} SWAY.</i></p><p><i>Kind Regards,</i></p><p><i>The Adalian Institute of Technology</i>\"</p><p>That is a nice, unexpected bonus for today, even if it comes with some concerning news about the outputs of other refineries.</p>",
+    "image": "influence/staging/images/stories/keep-em-separated/1.jpg",
+    "isHTML": true,
+    "totalSteps": 2,
+    "linkedPaths": [
+      {
+        "id": "page-2"
+      }
+    ],
+    "paths": [
+      {
+        "content": "<p>You move on and read the next message...</p><p>\"<i>Captain {{captainName}}:</i></p><p><i>We recently sent a Scientist to your refinery to ascertain the purity of your outputs. Our independent verification, entirely separate from the one carried out by the engineers of the A.I.T., was necessary due to the rampant corruption, and all too common incompetence, that is found in Adalia. We apologize for any inconvenience this necessary verification caused you.</i></p><p><i>Our laboratories have completed thorough and accurate testing of the samples taken. The results all showed sufficient purity. (Please view attachment for a detailed report of the results.) We are awarding you a grant of {{swayAmount2}} SWAY. Please continue your excellent work.</i></p><p><i>Thank you,</i></p><p><i>The Academy for the Study and Promotion of Sciences for Humanity</i>\"</p><p>A second unexpected bonus! Not a bad day for you, overall. However, these messages have now left you wondering which of your fellow Adalians are not following the refinery processes and why...</p>",
+        "id": "page-2"
+      }
+    ]
+  } 
+]

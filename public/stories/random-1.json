@@ -1,61 +1,12 @@
 [
   {
-    "id": "650128d44f0dbd6f776aa232",
-    "title": "Adalian Dawn",
-    "content": "{{captainName}}! Outside your <u>habitat</u> the sky is a cold, dark vacuum that expands endlessly overhead. There’s something about being stationary on a vast plain of silver-gray regolith that unsettles the older generation. They talk about ship life on the Arvad as being more insular and contained, and how there didn’t used to be a sense of outside like there is now.\n\nBut you love the outside. You have come of age in this thrilling new environment and can’t wait to be recruited to a crew to begin exploring the asteroid belt. As you leave behind adolescence and enter adulthood you are ready to take the first steps on your chosen path. \n\nYour general education completed, you must now choose which class to join so that your specialized education can begin, you can learn a trade, and earn a living.",
-    "prompt": "{{captainName}}, which class do you want to join?",
-    "image": "influence/production/images/stories/adalian-recruitment/1.jpg",
-    "imageCenter": "40% 55%",
+    "id": "random-1",
+    "title": "Stardust",
+    "content": "<p>They say that these asteroids might contain some grains of stardust. Tiny motes that traveled all the way across the cosmos from other stellar systems, maybe even from Sol. </p><p>Despite that grandiose thought, all you know is that core sampling is certainly dusty work, and whether or not it is stardust doesn’t matter when it takes eons to clean it all off. </p><p>At least the Prime Council seems to understand the amount of time and effort it takes to not only core sample, but to clean up afterwards. They’ve sent your crew {{swayAmount}} SWAY as a bonus for doing some of Adalia’s dirty work.</p>",
+    "image": "influence/staging/images/stories/stardust/1.jpg",
     "isHTML": true,
-    "completionImage": "influence/production/images/stories/adalian-recruitment/3.jpg",
     "totalSteps": 1,
-    "linkedPaths": [
-      {
-        "text": "Miner: While on the surface it may appear that miners value the strength of their backs over their brains, like their quarry, the reality lies underneath: they are highly skilled and knowledgeable in their area of expertise.",
-        "id": "650128d44f0dbd6f776aa233"
-      },
-      {
-        "text": "Engineer: If there is a problem, an engineer will find an answer. Whether it is buildings, ships, or processes, engineers are thrilled to be the one to solve the puzzle.",
-        "id": "650128d44f0dbd6f776aa735"
-      },
-      {
-        "text": "Merchant: Predictions of the ebb and flow of goods and services are about more than numbers on a spreadsheet, they are about anticipating the needs and desires of humanity, something merchants strive to understand.",
-        "id": "650128d44f0dbd6f776aac37"
-      },
-      {
-        "text": "Scientist: Motivated by a desire to expand human knowledge, scientists have the capability to learn from the past, while keeping their gaze steadily on the future.",
-        "id": "650128d44f0dbd6f776ab139"
-      },
-      {
-        "text": "Pilot: Often restless, and always ready for adventure, pilots are happiest when they are flying. Their expertise gets them and their crew where they want to go quickly, safely, and efficiently.",
-        "id": "650128d44f0dbd6f776ab63b"
-      }
-    ],
-    "paths": [
-      {
-        "content": "As you’ve grown, you’ve begun to have a more mature appreciation of what it means to take your place in society. You find that some old friends’ ambitions do not quite align with yours, while some of your new acquaintances have the same motivations as you. You are becoming more confident in understanding your place in the universe.",
-        "prompt": "What drives you?",
-        "id": "650128d44f0dbd6f776aa233",
-        "classObjective": 3,
-        "linkedPaths": [
-          {
-            "text": "Survival: You need to live. Your primary drive is the survival of yourself, the people you know, and the species.",
-            "id": "650128d44f0dbd6f776aa235"
-          },
-          {
-            "text": "Service: You need to fulfill your role. Your primary drive is to serve humanity for the greater good.",
-            "id": "650128d44f0dbd6f776aa375"
-          },
-          {
-            "text": "Glory: You need to excel. Your primary drive is to be the best at whatever you do.",
-            "id": "650128d44f0dbd6f776aa4b5"
-          },
-          {
-            "text": "Command: You need to be in control. Your primary drive is to lead others in what you know to be the right direction.",
-            "id": "650128d44f0dbd6f776aa5f5"
-          }
-        ]
-      }
-    ]
+    "linkedPaths": [],
+    "paths": []
   } 
 ]

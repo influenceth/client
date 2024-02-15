@@ -27,6 +27,7 @@ import CrewDetails from './interface/details/CrewDetails';
 import Intro from './Intro';
 import Cutscene from './Cutscene';
 import Launcher from './Launcher';
+import RandomEvent from './interface/RandomEvent';
 
 const StyledInterface = styled.div`
   align-items: stretch;
@@ -144,15 +145,9 @@ const Interface = () => {
           <Route path="/recruit/:crewId([0-9]+)/:locationId([0-9]+)?/:crewmateId([0-9]+)?/:page?">
             <RecruitCrewmate />
           </Route>
-
-          <Route path="/crew-assignment">
-            <CrewAssignment />
+          <Route path="/random-event">
+            <RandomEvent />
           </Route>
-          {/* TODO ? 
-          <Route path="/crew-assignment/:eventId([0-9]+)/complete">
-            <CrewAssignmentComplete />
-          </Route>
-          */}
           <Route path="/marketplace/:asteroidId([0-9]+)/:lotIndex(all|[0-9]+)?/:discriminator?">
             <Marketplace />
           </Route>

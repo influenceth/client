@@ -3,12 +3,14 @@ import { Deposit, Entity } from '@influenceth/sdk';
 
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
 import useActionItems from '~/hooks/useActionItems';
+import useBlockTime from '~/hooks/useBlockTime';
 import useCrewContext from '~/hooks/useCrewContext';
 import useLot from '~/hooks/useLot';
 import actionStages from '~/lib/actionStages';
 
 const useCoreSampleManager = (lotId) => {
-  const { actionItems, readyItems, liveBlockTime } = useActionItems();
+  const { actionItems, readyItems } = useActionItems();
+  const blockTime = useBlockTime();
   const { execute, getPendingTx, getStatus } = useContext(ChainTransactionContext);
   const { crew } = useCrewContext();
   const { data: lot } = useLot(lotId);
@@ -59,7 +61,7 @@ const useCoreSampleManager = (lotId) => {
       current.resourceId = activeSample.Deposit.resource;
       current.sampleId = activeSample.id;
 
-      if (activeSample.Deposit.finishTime <= liveBlockTime) {
+      if (activeSample.Deposit.finishTime <= blockTime) {
         if (getStatus('SampleDepositFinish', payload) === 'pending') {
           status = 'FINISHING';
           stage = actionStages.COMPLETING;
@@ -109,7 +111,7 @@ const useCoreSampleManager = (lotId) => {
       status,
       stage
     ];
-  }, [actionItems, completingSample, readyItems, getPendingTx, getStatus, payload, lot?.coreSamples]);
+  }, [actionItems, blockTime, completingSample, readyItems, getPendingTx, getStatus, payload, lot?.coreSamples]);
 
   // manage the "completed" stage explicitly
   useEffect(() => {

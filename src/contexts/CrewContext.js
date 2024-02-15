@@ -1,6 +1,7 @@
 import { createContext, useCallback, useEffect, useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from 'react-query';
 import { Crewmate, Entity, Permission, System } from '@influenceth/sdk';
+import { uint256 } from 'starknet';
 
 import api from '~/lib/api';
 import useAuth from '~/hooks/useAuth';
@@ -11,10 +12,8 @@ import { getCrewAbilityBonuses, locationsArrToObj } from '~/lib/utils';
 
 const CrewContext = createContext();
 
-const getNow = () => Math.ceil(Date.now() / 1000);
-
 export function CrewProvider({ children }) {
-  const { account, walletContext: { starknet } } = useAuth();
+  const { account, walletContext: { starknet, blockNumber, blockTime, getBlockTime } } = useAuth();
   const queryClient = useQueryClient();
 
   const selectedCrewId = useStore(s => s.selectedCrewId);
@@ -74,26 +73,9 @@ export function CrewProvider({ children }) {
   // null while any of those are true
   const crewsAndCrewmatesReady = useMemo(() => !!crewmateMap && TIME_ACCELERATION, [crewmateMap, TIME_ACCELERATION]);
 
-  // update crews' _ready value at next readyAt
-  // TODO: getNows() should really be getter from usechaintime
-  const [nextReadyAt, setNextReadyAt] = useState(Infinity);
-  const refreshNextReadyAt = useCallback(() => {
-    if (!crewsAndCrewmatesReady || !rawCrews) return;
-    const now = getNow();
-    const val = rawCrews.reduce((acc, c) => now > c.Crew.readyAt ? acc : Math.min(acc, c.Crew.readyAt), Infinity);
-    setNextReadyAt(val);
-  }, [crewsAndCrewmatesReady, rawCrews]);
-  useEffect(() => {
-    const toTime = nextReadyAt ? Math.max(0, nextReadyAt - getNow() + 1) : 0;
-    const to = setTimeout(() => { refreshNextReadyAt(); }, toTime * 1000);
-    return () => {
-      if (to) clearTimeout(to);
-    };
-  }, [nextReadyAt, refreshNextReadyAt]);
-
+  // update crews' _ready value
   const crews = useMemo(() => {
     if (!crewsAndCrewmatesReady || !rawCrews) return [];
-    const now = getNow();
     return rawCrews.map((c) => {
       if (!!crewmateMap) {
         c._crewmates = c.Crew.roster.map((i) => crewmateMap[i]).filter((c) => !!c);
@@ -108,11 +90,11 @@ export function CrewProvider({ children }) {
         c._location = locationsArrToObj(c.Location.locations);
       }
       if (c.Crew) {
-        c._ready = now > c.Crew.readyAt;
+        c._ready = blockTime > c.Crew.readyAt;
       }
       return c;
     })
-  }, [rawCrews, crewmateMap, crewsAndCrewmatesReady, nextReadyAt]);
+  }, [blockTime, rawCrews, crewmateMap, crewsAndCrewmatesReady]);
 
   const selectedCrew = useMemo(() => {
     if (crews && crews.length > 0) {
@@ -123,16 +105,15 @@ export function CrewProvider({ children }) {
       return crews.find((crew) => crew.Crew.roster.length > 0) || crews[0];
     }
     return null;
-  }, [crews, nextReadyAt, selectedCrewId]);
+  }, [crews, selectedCrewId]);
 
   // hydrate crew location so can attach station to crew
   const { data: selectedCrewLocation } = useEntity(selectedCrew ? { ...selectedCrew.Location.location } : undefined);
   
-  const lastBlockNumber = 0;
   const [actionTypeTriggered, setActionTypeTriggered] = useState(false);
   useEffect(() => {
     if (!actionTypeTriggered) {
-      if (selectedCrew?.Crew?.actionType && selectedCrew.Crew.actionRound && selectedCrew.Crew.actionRound <= lastBlockNumber) {
+      if (selectedCrew?.Crew?.actionType && selectedCrew.Crew.actionRound && selectedCrew.Crew.actionRound <= blockNumber) {
         starknet.account.provider.callContract(
           System.getRunSystemCall(
             'CheckForRandomEvent',
@@ -141,15 +122,15 @@ export function CrewProvider({ children }) {
           )
         )
         .then((response) => {
-          // TODO: (should have type that can do something with)
-          console.log('CheckForRandomEvent', response);
-          window.alert('check RandomEvent response');
-          if (response) {
-            setActionTypeTriggered({
-              actionType: selectedCrew.Crew.actionType,
-              pendingEvent: response,
-              timestamp: Date.now() / 1000  // TODO: at worst, use block time here (will change if refresh); ideally, use block time of actionRound
-            });
+          const pendingEvent = response?.result?.[1] ? parseInt(response?.result?.[1]) : null;
+          if (pendingEvent > 0) {
+            getBlockTime(selectedCrew.Crew.actionRound).then((timestamp) => {
+              setActionTypeTriggered({
+                actionType: selectedCrew.Crew.actionType,
+                pendingEvent,
+                timestamp
+              });
+            })
           }
         })
         .catch((err) => {
@@ -158,19 +139,14 @@ export function CrewProvider({ children }) {
         });
       }
     }
-  }, [selectedCrew?.Crew?.actionType, selectedCrew?.Crew?.actionRound, lastBlockNumber]);
+  }, [selectedCrew?.Crew?.actionType, selectedCrew?.Crew?.actionRound, blockNumber]);
 
   // add final data to selected crew
   const finalSelectedCrew = useMemo(() => {
     if (!selectedCrew) return null;
     return {
       ...selectedCrew,
-      // _actionTypeTriggered: actionTypeTriggered,
-      _actionTypeTriggered: {
-        actionType: 1,
-        pendingEvent: 1,
-        timestamp: Date.now() / 1000  // TODO: at worst, use block time here (will change if refresh); ideally, use block time of actionRound
-      },
+      _actionTypeTriggered: actionTypeTriggered,
       _station: selectedCrewLocation?.Station || {},
       _timeAcceleration: parseInt(TIME_ACCELERATION) // (attach to crew for easy use in bonus calcs)
     }
@@ -184,19 +160,12 @@ export function CrewProvider({ children }) {
           if (c.id === updatedCrew.id) {
             c.Crew.lastFed = updatedCrew.Crew.lastFed;
             c.Crew.readyAt = updatedCrew.Crew.readyAt;
-
-            // update nextReadyAt if this crew's readyAt is sooner
-            if (c.Crew.readyAt > getNow() && c.Crew.readyAt < nextReadyAt) {
-              setNextReadyAt(c.Crew.readyAt);
-            }
-
           }
           return c;
         });
       });
-
     }
-  }, [nextReadyAt, selectedCrewId]);
+  }, [selectedCrewId]);
 
   // make sure a default-selected crew makes it into state (if logged in)
   useEffect(() => {

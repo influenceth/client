@@ -3,6 +3,7 @@ import { Delivery, Entity } from '@influenceth/sdk';
 
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
 import useActionItems from '~/hooks/useActionItems';
+import useBlockTime from '~/hooks/useBlockTime';
 import useCrewContext from '~/hooks/useCrewContext';
 import useDeliveries from '~/hooks/useDeliveries';
 import useStore from '~/hooks/useStore';
@@ -20,7 +21,8 @@ import actionStages from '~/lib/actionStages';
 // must include destination OR origin OR deliveryId
 // if more input is included, will filter to those results
 const useDeliveryManager = ({ destination, destinationSlot, origin, originSlot, deliveryId }) => {
-  const { actionItems, readyItems, liveBlockTime } = useActionItems();
+  const { actionItems, readyItems } = useActionItems();
+  const blockTime = useBlockTime();
   const { execute, getStatus, getPendingTx } = useContext(ChainTransactionContext);
   const { crew } = useCrewContext();
 
@@ -112,7 +114,7 @@ const useDeliveryManager = ({ destination, destinationSlot, origin, originSlot, 
           } else if (current.isProposal) {
             status = 'PACKAGED';
             stage = actionStages.READY_TO_COMPLETE;
-          } else if (delivery.Delivery.finishTime && delivery.Delivery.finishTime <= liveBlockTime) {
+          } else if (delivery.Delivery.finishTime && delivery.Delivery.finishTime <= blockTime) {
             status = 'READY_TO_FINISH';
             stage = actionStages.READY_TO_COMPLETE;
           } else {
@@ -142,7 +144,7 @@ const useDeliveryManager = ({ destination, destinationSlot, origin, originSlot, 
       };
     });
     return [allDeliveries, Date.now()];
-  }, [deliveries, pendingDeliveries, getStatus, payload]);
+  }, [blockTime, deliveries, pendingDeliveries, getStatus, payload]);
 
   const acceptDelivery = useCallback((selectedDeliveryId, meta) => {
     const delivery = currentDeliveries.find((d) => d.action.deliveryId === selectedDeliveryId);

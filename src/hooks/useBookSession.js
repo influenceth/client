@@ -10,6 +10,13 @@ export const bookIds = {
   ADALIAN_RECRUITMENT: 'adalian-recruitment.json',
   ARVADIAN_RECRUITMENT: 'arvadian-recruitment.json',
   RANDOM_1: 'random-1.json',
+  RANDOM_2: 'random-2.json',
+  RANDOM_3: 'random-3.json',
+  RANDOM_4: 'random-4.json',
+  RANDOM_5: 'random-5.json',
+  RANDOM_6: 'random-6.json',
+  RANDOM_7: 'random-7.json',
+  RANDOM_8: 'random-8.json',
 };
 
 const defaultImageWidth = 1500;
@@ -17,7 +24,6 @@ const bookCache = {};
 
 const fetchBook = async (bookId) => {
   if (bookId) {
-    console.log('random', `/stories/${bookId}`);
     if (!bookCache[bookId]) bookCache[bookId] = await fetch(`/stories/${bookId}`).then((r) => r.json());
     return bookCache[bookId];
   }
@@ -29,7 +35,7 @@ const allOf = (mustHave, tests) => !mustHave.find((x) => !tests.includes(x));
 
 
 const applyTokensToString = (str, tokenObj) => {
-  let applied = `${str}`;
+  let applied = `${str || ''}`;
   Object.keys(tokenObj).forEach((k) => {
     applied = applied.replace(new RegExp(`{{${k}}}`, 'g'), tokenObj[k]);
   });
@@ -74,7 +80,8 @@ const useBookSession = (crewId, crewmateId) => {
       return [bookIds[`RANDOM_${crew._actionTypeTriggered?.pendingEvent}`], null];
     }
 
-    return [null, null, false];
+    // default to adalian recruitment
+    return [bookIds.ADALIAN_RECRUITMENT, null, false];
   }, [adalianRecruits, arvadianRecruits, crew?.actionTypeTriggered?.pendingEvent, crewmateId]);
 
   const { bookTokens, isLoading: bookTokensLoading } = useBookTokens(bookId);
@@ -91,7 +98,6 @@ const useBookSession = (crewId, crewmateId) => {
   const dispatchCrewAssignmentRestart = useStore(s => s.dispatchCrewAssignmentRestart);
 
   useEffect(() => fetchBook(bookId).then(setBook), [bookId]);
-  console.log({bookId, bookTokens, book});
 
   const { bookSession, storySession } = useMemo(() => {
     // console.log({ book, crewIsLoading, crewmateId, crewmate });
@@ -117,7 +123,11 @@ const useBookSession = (crewId, crewmateId) => {
       // path content is initially the story-level values
       // (we only need to include the linkedPaths since they are the only part
       //  that may be manipulated from the story defaults)
-      pathContent = { linkedPaths: [ ...story.linkedPaths ] };
+      if (story.linkedPaths.length > 0) {
+        pathContent = { linkedPaths: [ ...story.linkedPaths ] };
+      } else {
+        pathContent = { linkedPaths: [{ id: 'x' }], isLastPage: true };
+      }
 
       (sessionData[story.id] || []).forEach((pathId) => {
         fullPathHistory.push(pathId);

@@ -1,4 +1,4 @@
-import { Building, Entity, Lot, Order, Process, Product, Ship } from '@influenceth/sdk';
+import { Building, Entity, Lot, Order, Process, Product, RandomEvent, Ship } from '@influenceth/sdk';
 import moment from 'moment';
 
 import {
@@ -36,11 +36,11 @@ import {
   CancelLimitOrderIcon,
   BecomeAdminIcon,
   PermissionIcon,
-  WarningOutlineIcon,
 } from '~/components/Icons';
 import theme, { hexToRGB } from '~/theme';
 import { getProcessorProps } from './utils';
 import formatters from './formatters';
+import { RandomEventIcon } from '~/components/AnimatedIcons';
 
 const formatAsItem = (activity, actionItem = {}) => {
   // console.log('formatAsItem', activity, actionItem);
@@ -92,10 +92,10 @@ const formatAsRandomEvent = (item) => {
   return {
     key: item.pendingEvent,
     type: item.type,
-    label: 'Stardust', // TODO: ...
+    label: RandomEvent.TYPES[item.pendingEvent]?.name || 'Unknown',
     ago: (new moment(new Date(1000 * (item.timestamp || 0)))).fromNow(),
     onClick: ({ history }) => {
-      history.push(`/crew-assignment`)
+      history.push(`/random-event`)
     }
   };
 };
@@ -861,6 +861,15 @@ const formatAsTx = (item) => {
       break;
     }
 
+    case 'ResolveRandomEvent': {
+      formatted.icon = <RandomEventIcon isPaused />;
+      formatted.label = `Resolve Random Event`;
+      formatted.onClick = ({ history }) => {
+        history.push(`/random-event`);
+      }
+      break;
+    }
+
     default:
       console.log('Unhandled ActionItems tx', item);
       break;
@@ -896,7 +905,7 @@ export const itemColors = {
 export const statuses = {
   pending: 'Processing',
   failed: 'Failed',
-  randomEvent: 'Random Event',
+  randomEvent: 'Event',
   ready: 'Ready',
   unready: '',
   plans: ''

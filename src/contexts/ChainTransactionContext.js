@@ -442,8 +442,8 @@ const getSystemCallAndProcessedVars = (runSystem, rawVars, encodeEntrypoint = fa
 }
 
 export function ChainTransactionProvider({ children }) {
-  const { account, walletContext: { starknet } } = useAuth();
-  const { activities, lastBlockNumber } = useActivitiesContext();
+  const { account, walletContext: { starknet, blockTime } } = useAuth();
+  const { activities } = useActivitiesContext();
   const { crew } = useCrewContext();
 
   const createAlert = useStore(s => s.dispatchAlertLogged);
@@ -455,16 +455,6 @@ export function ChainTransactionProvider({ children }) {
   const pendingTransactions = useStore(s => s.pendingTransactions);
 
   const [promptingTransaction, setPromptingTransaction] = useState(false);
-
-  const [ blockTime, setBlockTime ] = useState(0);
-
-  useEffect(() => {
-    if (starknet?.provider) {
-      starknet.provider.getBlock()
-        .then((block) => setBlockTime(block?.timestamp))
-        .catch(console.error);
-    }
-  }, [starknet?.provider, lastBlockNumber]);
 
   // autoresolve when actionType is set but actionType was not actually triggered
   const prependEventAutoresolve = useMemo(
@@ -806,23 +796,13 @@ export function ChainTransactionProvider({ children }) {
       setPromptingTransaction(true);
 
       try {
-        // TODO: when there are consistent block times on starknet next year, we can remove this extra
-        // check and just use Date.now() (setting the buffer on the $since query to blockTime)
-        // get block so can tag pending transaction with accurate timestamp
-        let block;
-        try {
-          block = await starknet.provider.getBlock();
-        } catch (e) {
-          console.warn('Could not fetch pending block', e)
-        }
-
         // execute
         const tx = await execute(vars);
         dispatchPendingTransaction({
           key,
           vars,
           meta,
-          timestamp: block?.timestamp ? (block.timestamp * 1000) : null,
+          timestamp: blockTime ? (blockTime * 1000) : null,
           txHash: cleanseTxHash(tx.transaction_hash),
           waitingOn: 'TRANSACTION'
         });
@@ -862,7 +842,7 @@ export function ChainTransactionProvider({ children }) {
         level: 'warning',
       });
     }
-  }, [contracts]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [blockTime, contracts]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const getPendingTx = useCallback((key, vars) => {
     if (contracts && contracts[key]) {
@@ -888,7 +868,6 @@ export function ChainTransactionProvider({ children }) {
 
   return (
     <ChainTransactionContext.Provider value={{
-      blockTime,
       chainTime,
       execute,
       getStatus,

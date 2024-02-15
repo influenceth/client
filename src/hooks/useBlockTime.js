@@ -1,9 +1,9 @@
 import { useContext } from 'react';
 
-import ChainTransactionContext from '~/contexts/ChainTransactionContext';
+import WalletContext from '~/contexts/WalletContext';
 
 const useBlockTime = () => {
-  const { blockTime } = useContext(ChainTransactionContext);
+  const { blockTime } = useContext(WalletContext);
   return blockTime;
 };
 

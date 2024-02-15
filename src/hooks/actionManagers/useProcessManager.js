@@ -3,12 +3,14 @@ import { Entity, Processor } from '@influenceth/sdk';
 
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
 import useActionItems from '~/hooks/useActionItems';
+import useBlockTime from '~/hooks/useBlockTime';
 import useCrewContext from '~/hooks/useCrewContext';
 import useLot from '~/hooks/useLot';
 import actionStages from '~/lib/actionStages';
 
 const useProcessManager = (lotId, slot) => {
-  const { actionItems, readyItems, liveBlockTime } = useActionItems();
+  const { actionItems, readyItems } = useActionItems();
+  const blockTime = useBlockTime();
   const { execute, getPendingTx, getStatus } = useContext(ChainTransactionContext);
   const { crew } = useCrewContext();
   const { data: lot } = useLot(lotId);
@@ -62,7 +64,7 @@ const useProcessManager = (lotId, slot) => {
       if(getStatus('ProcessProductsFinish', payload) === 'pending') {
         status = 'FINISHING';
         stage = actionStages.COMPLETING;
-      } else if (processor?.finishTime && processor.finishTime <= liveBlockTime) {
+      } else if (processor?.finishTime && processor.finishTime <= blockTime) {
         status = 'READY_TO_FINISH';
         stage = actionStages.READY_TO_COMPLETE;
       } else {
@@ -90,7 +92,7 @@ const useProcessManager = (lotId, slot) => {
       status,
       stage
     ];
-  }, [actionItems, readyItems, getPendingTx, getStatus, payload, processor?.status]);
+  }, [actionItems, blockTime, readyItems, getPendingTx, getStatus, payload, processor?.status]);
 
   const startProcess = useCallback(({ processId, primaryOutputId, recipeTally, origin, originSlot, destination, destinationSlot }) => {
     execute(

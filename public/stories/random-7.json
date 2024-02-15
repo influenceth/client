@@ -1,0 +1,12 @@
+[
+  {
+    "id": "random-7",
+    "title": "Always Leave a Note",
+    "content": "<p>After the incident involving The Canary, the Prime Council instituted a system for reporting travel plans. While the crew of The Canary was, eventually, located safe and sound, and the Prime Council has never publicly acknowledged that they were ever “missing” or “lost”, it appears that all Adalians could do with a reminder about safety when traveling around the belt. </p><p>So, regardless of any personal feelings that your Captain or crew had about the directive, you participated in the system before your departure from Adalia Prime by leaving a “Note” with all of your planned trip information. For this, the Prime Council has awarded your crew {{swayAmount}} SWAY, in the hopes that others will follow your lead and comply with the directive. </p>",
+    "image": "influence/staging/images/stories/always-leave-a-note/1.jpg",
+    "isHTML": true,
+    "totalSteps": 1,
+    "linkedPaths": [],
+    "paths": []
+  } 
+]

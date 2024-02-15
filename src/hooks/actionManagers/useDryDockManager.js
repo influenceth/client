@@ -3,12 +3,14 @@ import { DryDock, Entity } from '@influenceth/sdk';
 
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
 import useActionItems from '~/hooks/useActionItems';
+import useBlockTime from '~/hooks/useBlockTime';
 import useCrewContext from '~/hooks/useCrewContext';
 import useLot from '~/hooks/useLot';
 import actionStages from '~/lib/actionStages';
 
 const useDryDockManager = (lotId, slot = 1) => {
-  const { actionItems, readyItems, liveBlockTime } = useActionItems();
+  const { actionItems, readyItems } = useActionItems();
+  const blockTime = useBlockTime();
   const { execute, getPendingTx, getStatus } = useContext(ChainTransactionContext);
   const { crew } = useCrewContext();
   const { data: lot } = useLot(lotId);
@@ -55,7 +57,7 @@ const useDryDockManager = (lotId, slot = 1) => {
       if(getStatus('AssembleShipFinish', payload) === 'pending') {
         status = 'FINISHING';
         stage = actionStages.COMPLETING;
-      } else if (slotDryDock?.finishTime && slotDryDock.finishTime <= liveBlockTime) {
+      } else if (slotDryDock?.finishTime && slotDryDock.finishTime <= blockTime) {
         status = 'READY_TO_FINISH';
         stage = actionStages.READY_TO_COMPLETE;
       } else {
@@ -78,7 +80,7 @@ const useDryDockManager = (lotId, slot = 1) => {
       status,
       stage
     ];
-  }, [actionItems, readyItems, getPendingTx, getStatus, payload, slotDryDock?.status]);
+  }, [actionItems, blockTime, readyItems, getPendingTx, getStatus, payload, slotDryDock?.status]);
 
   const startShipAssembly = useCallback((shipType, origin, originSlot) => {
     execute(

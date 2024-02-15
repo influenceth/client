@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import styled, { keyframes } from 'styled-components';
 import { Crew, Time } from '@influenceth/sdk';
 
-import { CrewBusyIcon, CrewIdleIcon } from '~/components/AnimatedIcons';
+import { CrewBusyIcon, CrewIdleIcon, RandomEventIcon } from '~/components/AnimatedIcons';
 import useChainTime from '~/hooks/useChainTime';
 import useConstants from '~/hooks/useConstants';
 import { hexToRGB } from '~/theme';
@@ -104,8 +104,16 @@ const LiveReadyStatus = ({ crew, ...props }) => {
   }, [blockTime, crew?.Crew?.readyAt])
 
   if (!crew || !blockTime) return null;
-  return crewIsBusy || waitingOnBlock
-    ? (
+  if (crew?._actionTypeTriggered?.pendingEvent) {
+    return (
+      <StatusContainer {...props}>
+        <label style={{ color: '#e6d375' }}>Event</label> 
+        <IconWrapper><RandomEventIcon /></IconWrapper>
+      </StatusContainer>
+    );
+  }
+  if (crewIsBusy || waitingOnBlock) {
+    return (
       <BusyStatusContainer {...props}>
         <LiveTimer target={crew.Crew.readyAt} maxPrecision={2}>
           {(formattedTime) => <TimerWrapper len={formattedTime.length} waitingOnBlock={!crewIsBusy}>{formattedTime}</TimerWrapper>}
@@ -113,13 +121,14 @@ const LiveReadyStatus = ({ crew, ...props }) => {
         {crewIsBusy && <label>Busy</label>}
         <IconWrapper><CrewBusyIcon /></IconWrapper>
       </BusyStatusContainer>
-    )
-    : (
-      <StatusContainer {...props}>
-        <label>Idle</label> 
-        <IconWrapper><CrewIdleIcon /></IconWrapper>
-      </StatusContainer>
     );
+  }
+  return (
+    <StatusContainer {...props}>
+      <label>Idle</label> 
+      <IconWrapper><CrewIdleIcon /></IconWrapper>
+    </StatusContainer>
+  );
 }
 
 export default LiveReadyStatus;

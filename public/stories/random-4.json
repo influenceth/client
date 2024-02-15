@@ -1,0 +1,12 @@
+[
+  {
+    "id": "random-4",
+    "title": "No Sound in Space",
+    "content": "<p><i>Captain {{captainName}}:</i></p><p><i>Despite what some radicals may say, the health, safety, and longevity of all Adalians is, of course, our primary concern. We want all crews running factory processes to ensure that they have the proper safety equipment.</i></p><p><i>With this in mind, we are providing your crew with {{swayAmount}} SWAY. Remember, while there is no sound in space, there certainly is on the factory floor! Make sure to provide proper Hearing Protection Devices for anyone working in your factory.</i></p><p><i>Thank you for your compliance,</i></p><p><i>The Prime Council</i></p>",
+    "image": "influence/staging/images/stories/no-sound-in-space/1.jpg",
+    "isHTML": true,
+    "totalSteps": 1,
+    "linkedPaths": [],
+    "paths": []
+  } 
+]

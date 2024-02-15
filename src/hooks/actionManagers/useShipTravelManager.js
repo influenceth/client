@@ -6,6 +6,7 @@ import { Vector3 } from 'three';
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
 import useActionItems from '~/hooks/useActionItems';
 import useAsteroid from '~/hooks/useAsteroid';
+import useBlockTime from '~/hooks/useBlockTime';
 import useConstants from '~/hooks/useConstants';
 import useShip from '~/hooks/useShip';
 import useStore from '~/hooks/useStore';
@@ -15,7 +16,8 @@ import { arrToXYZ } from '~/lib/utils';
 const toV3 = ({ x, y, z }) => new Vector3(x, y, z);
 
 const useShipTravelManager = (shipId) => {
-  const { actionItems, readyItems, liveBlockTime } = useActionItems();
+  const { actionItems, readyItems } = useActionItems();
+  const blockTime = useBlockTime();
   const { execute, getPendingTx, getStatus } = useContext(ChainTransactionContext);
   const { data: ship } = useShip(shipId);
 
@@ -58,7 +60,7 @@ const useShipTravelManager = (shipId) => {
       if (getStatus('TransitBetweenFinish', { caller_crew }) === 'pending') {
         status = 'ARRIVING';
         stage = actionStages.COMPLETING;
-      } else if (current.finishTime && current.finishTime <= liveBlockTime) {
+      } else if (current.finishTime && current.finishTime <= blockTime) {
         status = 'READY_TO_ARRIVE';
         stage = actionStages.READY_TO_COMPLETE;
       } else {
@@ -82,7 +84,7 @@ const useShipTravelManager = (shipId) => {
       status,
       stage
     ];
-  }, [actionItems, readyItems, getPendingTx, getStatus, caller_crew, ship, TIME_ACCELERATION]);
+  }, [actionItems, blockTime, readyItems, getPendingTx, getStatus, caller_crew, ship, TIME_ACCELERATION]);
 
   const { data: origin } = useAsteroid(currentTravelAction?.originId || proposedTravelSolution?.originId);
   const { data: destination } = useAsteroid(currentTravelAction?.destinationId || proposedTravelSolution?.destinationId);

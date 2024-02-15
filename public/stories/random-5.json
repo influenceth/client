@@ -1,0 +1,12 @@
+[
+  {
+    "id": "random-5",
+    "title": "The Cake is a Half-Truth",
+    "content": "<p><i>To the esteemed Captain {{captainName}}:</i></p><p><i>It is with unsurpassed gratitude that we now write to you upon the harvesting of the vital crops produced by your Bioreactor. While we aren’t all sitting around eating cake, and despite what some people say about the aftertaste of spirulina, without a doubt the production of nutritious food has become the preeminent occupation of our time. </i></p><p><i>The Prime Council has declared that ‘there is no widespread famine in Adalia.’</i></p><p><i>We sincerely hope that you will continue your work with the Bioreactor so that this statement remains accurate. We are sending you a grant of {{swayAmount}} SWAY to thank you for all that you have done so far, and encourage you to continue in your food production efforts.</i></p><p><i>With great appreciation,</i></p><p><i>The Academy for the Study and Promotion of Sciences for Humanity</i></p>",
+    "image": "influence/staging/images/stories/the-cake-is-a-half-truth/1.jpg",
+    "isHTML": true,
+    "totalSteps": 1,
+    "linkedPaths": [],
+    "paths": []
+  }
+]

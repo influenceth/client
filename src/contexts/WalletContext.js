@@ -29,6 +29,8 @@ const WalletContext = createContext();
 export function WalletProvider({ children }) {
   const onConnectCallback = useRef();
 
+  const [blockNumber, setBlockNumber] = useState(0);
+  const [blockTime, setBlockTime] = useState(0);
   const [connecting, setConnecting] = useState(false);
   const [error, setError] = useState();
   const [starknet, setStarknet] = useState(false);
@@ -176,6 +178,38 @@ export function WalletProvider({ children }) {
     }
   }, []);
 
+  const getBlockTime = useCallback(async (num) => {
+    if (starknet?.provider) {
+      try {
+        const block = await starknet.provider.getBlock(num > 0 ? num : undefined);
+        if (!(num > 0) && blockNumber === 0) {
+
+          console.log('init block', block); setBlockNumber(block?.number);
+        }
+        return block?.timestamp;
+      } catch (e) {
+        console.error(e);
+      }
+    }
+    return null;
+  }, [!!starknet.provider, blockNumber]);
+
+  // init block number
+  useEffect(() => {
+    if (starknet?.provider?.getBlockNumber) {
+      starknet.provider.getBlockNumber().then(setBlockNumber);
+    }
+  }, [!!starknet.provider]);
+
+  // get pending block time on every new block
+  useEffect(() => {
+    if (blockNumber > 0) {
+      getBlockTime().then((t) => setBlockTime(t));
+      // TODO: if no crew, then we won't receive websockets, and this will not get updated
+      //  (i.e. for logged out users) -- does that matter?
+    }
+  }, [blockNumber]);
+
   return (
     <WalletContext.Provider value={{
       account,
@@ -185,7 +219,16 @@ export function WalletProvider({ children }) {
       isConnecting: connecting,
       walletIcon: starknet?.icon && starknet?.name !== 'Argent Web Wallet' && <img src={starknet.icon} alt={`${starknet.name}`} />,
       walletName: starknet?.name,
-      starknet
+      starknet,
+
+      // NOTE:
+      // blockNumber is updated from websocket change or initial pull of activities from server
+      // blockTime is updated from blockNumber change
+      getBlockTime,
+      setBlockNumber,
+      setBlockTime,
+      blockNumber,
+      blockTime
     }}>
       {starknetReady && children}
     </WalletContext.Provider>
