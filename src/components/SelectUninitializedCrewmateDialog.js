@@ -92,7 +92,6 @@ const SelectUninitializedCrewmateDialog = ({ onSelect }) => {
   const [selected, setSelected] = useState();
 
   const onCloseDestination = useMemo(() => {
-    console.log(crew);
     if (crew?.Crew?.roster?.length > 0) {
       return '/crew';
     } else {
