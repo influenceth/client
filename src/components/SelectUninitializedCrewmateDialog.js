@@ -88,9 +88,16 @@ const RecruitTally = styled.div`
 `;
 
 const SelectUninitializedCrewmateDialog = ({ onSelect }) => {
-  const { adalianRecruits, arvadianRecruits, loading } = useCrewContext();
+  const { adalianRecruits, arvadianRecruits, crewmateMap, loading } = useCrewContext();
 
   const [selected, setSelected] = useState();
+
+  let onCloseDestination;
+  if (Object.keys(crewmateMap || {}).length > 0) {
+    onCloseDestination = '/crew';
+  } else {
+    onCloseDestination = '/';
+  }
 
   useEffect(() => {
     if (!loading) {
@@ -103,7 +110,7 @@ const SelectUninitializedCrewmateDialog = ({ onSelect }) => {
   return (
     <ChoicesDialog
       dialogTitle="Crewmate Creation"
-      onCloseDestination="/crew"
+      onCloseDestination={onCloseDestination}
       coverImage={coverImage}
       coverImageCenter="35% 75%"
       contentOverride={(
