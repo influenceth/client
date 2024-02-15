@@ -17,11 +17,14 @@ const isAllowedChain = (chainId) => {
 
 const getAllowedChainLabel = (wallet) => {
   if (process.env.REACT_APP_STARKNET_NETWORK.includes('mainnet')) {
-    return wallet === 'Braavos' ? 'SN Mainnet' : 'Mainnet';
+    return 'Mainnet';
   } else if (process.env.REACT_APP_STARKNET_NETWORK.includes('localhost')) {
-    return wallet === 'Braavos' ? 'Developer' : 'Localhost';
+    return wallet === 'Braavos' ? 'Developer' : 'Devnet';
+  } else if (process.env.REACT_APP_STARKNET_NETWORK.includes('sepolia')) {
+    return 'Sepolia';
   }
-  return wallet === 'Braavos' ? 'Starknet Goerli' : 'Testnet';
+
+  return 'Goerli';
 }
 
 const WalletContext = createContext();
@@ -64,7 +67,7 @@ export function WalletProvider({ children }) {
 
   const connect = useCallback(async (auto = false) => {
     try {
-      // TODO: starknetkit currently does not return from `starknetConnect` when user closes the 
+      // TODO: starknetkit currently does not return from `starknetConnect` when user closes the
       // web or mobile wallet windows, so it will not exit the `connecting` state, and it can end
       // up blocking the UI... should uncomment the below line if they ever fix it
       // setConnecting(true);
