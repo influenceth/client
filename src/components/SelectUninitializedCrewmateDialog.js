@@ -1,12 +1,11 @@
+import { useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
-import { useHistory } from 'react-router-dom';
 
 import ChoicesDialog from '~/components/ChoicesDialog';
 import CrewmateCard from '~/components/CrewmateCard';
 import { GenesisIcon } from '~/components/Icons';
 import useCrewContext from '~/hooks/useCrewContext';
 import { getCloudfrontUrl } from '~/lib/assetUtils';
-import { useEffect, useState } from 'react';
 import { nativeBool } from '~/lib/utils';
 
 const coverImage = getCloudfrontUrl('influence/production/images/stories/earth-and-the-void/1.jpg', { w: 1500 });
@@ -88,16 +87,18 @@ const RecruitTally = styled.div`
 `;
 
 const SelectUninitializedCrewmateDialog = ({ onSelect }) => {
-  const { adalianRecruits, arvadianRecruits, crewmateMap, loading } = useCrewContext();
+  const { adalianRecruits, arvadianRecruits, crew, loading } = useCrewContext();
 
   const [selected, setSelected] = useState();
 
-  let onCloseDestination;
-  if (Object.keys(crewmateMap || {}).length > 0) {
-    onCloseDestination = '/crew';
-  } else {
-    onCloseDestination = '/';
-  }
+  const onCloseDestination = useMemo(() => {
+    console.log(crew);
+    if (crew?.Crew?.roster?.length > 0) {
+      return '/crew';
+    } else {
+      return '/';
+    }
+  }, [crew]);
 
   useEffect(() => {
     if (!loading) {
