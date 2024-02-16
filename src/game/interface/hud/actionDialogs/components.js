@@ -34,7 +34,8 @@ import {
   EmergencyModeEnterIcon,
   CheckIcon,
   ProcessIcon,
-  ShipIcon
+  ShipIcon,
+  WarningIcon
 } from '~/components/Icons';
 import LiveFoodStatus from '~/components/LiveFoodStatus';
 import LiveTimer from '~/components/LiveTimer';
@@ -62,6 +63,8 @@ import { theming } from '../ActionDialog';
 import ThumbnailWithData from '~/components/AssetThumbnailWithData';
 import AssetBlock, { assetBlockCornerSize } from '~/components/AssetBlock';
 import LiveReadyStatus from '~/components/LiveReadyStatus';
+import useCrew from '~/hooks/useCrew';
+import useConstructionManager from '~/hooks/actionManagers/useConstructionManager';
 
 
 const SECTION_WIDTH = 780;
@@ -904,7 +907,7 @@ const ActionProgressLabels = styled.div`
   align-items: center;
   display: flex;
   flex-direction: row;
-  font-size: 20px;
+  font-size: 18px;
   justify-content: space-between;
   padding: 0 12px;
   & > div:first-child {
@@ -1269,6 +1272,18 @@ export const CrewLocationWrapper = styled.div`
       content: ">";
       margin: 0 4px;
     }
+  }
+`;
+
+const ControlWarning = styled.div`
+  align-items: center;
+  color: ${p => p.theme.colors.error};
+  display: flex;
+  justify-content: center;
+  padding: 20px 0 5px;
+  & > svg {
+    font-size: 125%;
+    margin-right: 10px;
   }
 `;
 
@@ -2290,6 +2305,30 @@ export const FlexSectionBlock = ({ bodyStyle, children, style = {}, title, title
   );
 };
 
+export const LotControlWarning = ({ lot }) => {
+  const { crew } = useCrewContext();
+  const { isAtRisk } = useConstructionManager(lot?.id);
+  const { data: controller } = useCrew(lot?.Control?.controller?.id);
+
+  const warning = useMemo(() => {
+    if (!(crew && controller && lot)) return null;
+    if (isAtRisk) {
+      return <>This site has been designated as abandoned. Any stored materials are now public.</>;
+    }
+    if (crew?.id !== controller?.id) {
+      return <>Without a Lot Control Agreement, you may be evicted at any time.</>;
+    }
+  }, [crew, controller?.id, isAtRisk, lot?.building]);
+
+  if (!warning) return null;
+  return (
+    <ControlWarning>
+      <WarningIcon /> <span>{warning}</span>
+    </ControlWarning>
+  );
+}
+
+
 
 //
 // Sections
@@ -2297,6 +2336,7 @@ export const FlexSectionBlock = ({ bodyStyle, children, style = {}, title, title
 
 export const ResourceGridSectionInner = ({
   columns,
+  hideTotals = false,
   isGathering,
   items,
   onClick,
@@ -2325,7 +2365,7 @@ export const ResourceGridSectionInner = ({
   return (
     <IngredientsList
       columns={columns}
-      hasSummary
+      hasSummary={!hideTotals}
       theming={theming}
       isSelected={reactBool(onClick)}
       onClick={onClick}
@@ -2340,17 +2380,19 @@ export const ResourceGridSectionInner = ({
                 item={item}
                 resource={Product.TYPES[item.i]}
                 noStyles={noCellStyles}
-                size="92px"
+                size="96px"
                 tooltipContainer="actionDialog" />
             ))}
             {Array.from({ length: Math.max(0, minCells - items.length) }).map((_, i) => (
               <EmptyResourceImage key={i} noIcon outlineColor="transparent" style={{ background: 'rgba(0, 0, 0, 0.25)' }} />
             ))}
-            <IngredientSummary theming={theming}>
-              <span>
-                {totalItems} Items: {formatMass(totalMass)} | {formatVolume(totalVolume)}
-              </span>
-            </IngredientSummary>
+            {!hideTotals && (
+              <IngredientSummary theming={theming}>
+                <span>
+                  {totalItems} Items: {formatMass(totalMass)} | {formatVolume(totalVolume)}
+                </span>
+              </IngredientSummary>
+            )}
           </>
         )
         : (
@@ -2364,9 +2406,11 @@ export const ResourceGridSectionInner = ({
                 </label>
               </ThumbnailWithData>
             </div>
-            <IngredientSummary>
-              <span>None Selected</span>
-            </IngredientSummary>
+            {!hideTotals && (
+              <IngredientSummary>
+                <span>None Selected</span>
+              </IngredientSummary>
+            )}+
           </>
         )}
       <ClipCorner dimension={sectionBodyCornerSize} />
@@ -2400,9 +2444,11 @@ export const BuildingRequirementsSection = ({ mode, label, requirements, require
 
   return (
     <ResourceGridSection
+      hideTotals={mode === 'simple'}
       isGathering={mode === 'gathering'}
       items={items}
       label={label}
+      noCellStyles={mode === 'simple'}
       theming={requirementsMet ? undefined : 'warning'} />
   );
 };
@@ -2541,7 +2587,7 @@ export const ProgressBarSection = ({
         r.barWidth = progress;
         r.left = `${formatFixed(100 * progress, 1)}%`;
         r.right = isZero
-          ? <span style={{ color: theme.colors.error }}>ABANDONED</span>
+          ? <span style={{ color: 'white' }}>Site is Abandoned</span>
           : <><LiveTimer target={finishTime} maxPrecision={2} /> left</>;
       }
       r.color = '#AAA';

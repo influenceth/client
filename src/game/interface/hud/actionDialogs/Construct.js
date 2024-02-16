@@ -4,7 +4,8 @@ import { Building, Crewmate, Lot, Time } from '@influenceth/sdk';
 
 import {
   ConstructIcon, WarningOutlineIcon,
-  TransferToSiteIcon
+  TransferToSiteIcon,
+  WarningIcon
 } from '~/components/Icons';
 import useCrewContext from '~/hooks/useCrewContext';
 import theme, { hexToRGB } from '~/theme';
@@ -26,7 +27,8 @@ import {
   ProgressBarSection,
   getBuildingRequirements,
   LotInputBlock,
-  getTripDetails
+  getTripDetails,
+  LotControlWarning
 } from './components';
 import { ActionDialogInner, useAsteroidAndLot } from '../ActionDialog';
 import actionStage from '~/lib/actionStages';
@@ -52,7 +54,7 @@ const TransferToSite = styled.div`
 
 const Construct = ({ asteroid, lot, constructionManager, stage, ...props }) => {
   const { crew, crewmateMap } = useCrewContext();
-  const { currentConstructionAction, constructionStatus, startConstruction, finishConstruction } = constructionManager;
+  const { currentConstructionAction, constructionStatus, startConstruction, finishConstruction, isAtRisk } = constructionManager;
   const { currentDeliveryActions } = useDeliveryManager({ destination: lot.building });
 
   const crewmates = currentConstructionAction?._crewmates || (crew?._crewmates || []).map((i) => crewmateMap[i]);
@@ -220,13 +222,21 @@ const Construct = ({ asteroid, lot, constructionManager, stage, ...props }) => {
             finishTime={lot?.building?.Building?.plannedAt + Building.GRACE_PERIOD}
             startTime={lot?.building?.Building?.plannedAt}
             isCountDown
-            overrides={{
-              barColor: theme.colors.lightOrange,
-              color: 'white',
-              left: <span style={{ display: 'flex', alignItems: 'center' }}><WarningOutlineIcon /> <span style={{ marginLeft: 6 }}>Site Timer</span></span>,
-            }}
+            overrides={
+              isAtRisk
+              ? {
+                barColor: theme.colors.error,
+                color: theme.colors.error,
+                left: <span style={{ display: 'flex', alignItems: 'center' }}><WarningIcon /> <span style={{ marginLeft: 6 }}>Expired</span></span>,
+              }
+              : {
+                barColor: theme.colors.main,
+                color: 'white',
+                left: <span style={{ display: 'flex', alignItems: 'center' }}><span style={{ marginLeft: 6 }}>Site Timer</span></span>,
+              }
+            }
             stage={stage}
-            title="Lot Reservation"
+            title="Staging Time"
             tooltip={(
               <MouseoverWarning>
                 Building Sites are used to stage materials before construction. While the{' '}<b>Site Timer</b> 
@@ -248,6 +258,8 @@ const Construct = ({ asteroid, lot, constructionManager, stage, ...props }) => {
             totalTime={crewTravelTime + constructionTime}
           />
         )}
+
+        <LotControlWarning lot={lot} />
 
         <ActionDialogStats
           stage={stage}

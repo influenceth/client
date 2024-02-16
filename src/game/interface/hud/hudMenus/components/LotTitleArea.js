@@ -2,12 +2,25 @@ import { useMemo } from 'react';
 import styled from 'styled-components';
 import { Building, Lot } from '@influenceth/sdk';
 
-import { LocationIcon } from '~/components/Icons';
+import { LocationIcon, WarningIcon } from '~/components/Icons';
 import formatters from '~/lib/formatters';
 import EntityName from '~/components/EntityName';
 import TitleArea from '../components/TitleArea';
+import useConstructionManager from '~/hooks/actionManagers/useConstructionManager';
+
+const SubtitleRow = styled.div`
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+`;
+
+const Abandoned = styled.div`
+  color: ${p => p.theme.colors.error};
+`;
 
 const LotTitleArea = ({ lot }) => {
+  const { isAtRisk } = useConstructionManager(lot?.id);
   const [title, subtitle, background] = useMemo(() => {
     if (!lot) return [];
     if (lot.building) {
@@ -31,7 +44,8 @@ const LotTitleArea = ({ lot }) => {
     <TitleArea
       background={background}
       title={title}
-      subtitle={subtitle}
+      subtitle={isAtRisk ? <SubtitleRow><div>{subtitle}</div><Abandoned>Abandoned</Abandoned></SubtitleRow> : subtitle}
+      overlay={isAtRisk && <Abandoned><WarningIcon /></Abandoned>}
       upperLeft={lot && (
         <>
           <LocationIcon />

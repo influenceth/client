@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
-import { Entity, Permission } from '@influenceth/sdk';
+import { Building, Entity, Permission } from '@influenceth/sdk';
 
 import { CloseIcon, FormAgreementIcon, LotControlIcon, PermissionIcon, RadioCheckedIcon, RadioUncheckedIcon, SwayIcon, WarningIcon } from '~/components/Icons';
 import CollapsibleBlock from '~/components/CollapsibleBlock';
@@ -17,6 +17,8 @@ import EntityName from '~/components/EntityName';
 import actionButtons from '../../actionButtons';
 import useCrewContext from '~/hooks/useCrewContext';
 import useLot from '~/hooks/useLot';
+import LiveTimer from '~/components/LiveTimer';
+import useConstructionManager from '~/hooks/actionManagers/useConstructionManager';
 
 const borderColor = `rgba(255, 255, 255, 0.15)`;
 const DataBlock = styled.div``;
@@ -137,12 +139,11 @@ const PermSummary = styled.div`
   padding-bottom: 15px;
   & > svg {
     font-size: 24px;
-    margin-right: 4px;
+    margin-right: 8px;
   }
 `;
 const PermSummaryWarning = styled(PermSummary)`
   color: ${p => p.theme.colors.error};
-  padding-bottom: 5px;
 `;
 
 const getPolicyColor = (policyType) => {
@@ -560,6 +561,7 @@ const PolicyPanel = ({ editable = false, entity, permission }) => {
 const PolicyPanels = ({ editable, entity }) => {
   const { crew } = useCrewContext();
   const { data: lot } = useLot(entity?.label === Entity.IDS.BUILDING ? entity.Location.location.id : null);
+  const { isAtRisk } = useConstructionManager(lot?.id);
 
   const permPolicies = useMemo(() => entity ? Permission.getPolicyDetails(entity, crew?.id) : {}, [crew?.id, entity]);
 
@@ -569,7 +571,18 @@ const PolicyPanels = ({ editable, entity }) => {
 
     const lotPerm = Permission.getPolicyDetails(lot, entity.Control?.controller?.id)[Permission.IDS.LOT_USE];
     return !(lotPerm?.crewStatus === 'controller' || lotPerm?.crewStatus === 'granted');
-  }, [lot])
+  }, [lot]);
+
+  const buildingOrSite = useMemo(() => lot?.building?.Building?.status < Building.CONSTRUCTION_STATUSES.OPERATIONAL ? 'Site' : 'Building', [lot]);
+
+  const showStagingWarning = useMemo(() => {
+    if (isAtRisk) {
+      return 2;
+    } else if (lot && lot.building && lot.building.Building?.status < Building.CONSTRUCTION_STATUSES.UNDER_CONSTRUCTION) {
+      return 1;
+    }
+    return 0;
+  }, [lot]);
 
   const [ crewHasAgreements, crewCanMakeAgreements ] = useMemo(() => {
     let hasAgreement = false;
@@ -584,7 +597,10 @@ const PolicyPanels = ({ editable, entity }) => {
 
   return (
     <div>
-      {showLotWarning && <PermSummaryWarning><WarningIcon /> Lot not controlled. Building is at risk.</PermSummaryWarning>}
+      {showLotWarning && <PermSummaryWarning style={{ paddingBottom: 5 }}><WarningIcon /> Lot not controlled. {buildingOrSite} is at risk.</PermSummaryWarning>}
+      {showStagingWarning === 2 && <PermSummaryWarning><WarningIcon /> Staging Time expired. Site is Abandoned.</PermSummaryWarning>}
+      {showStagingWarning === 1 && <PermSummary><WarningIcon /> <LiveTimer target={lot?.building?.Building?.plannedAt + Building.GRACE_PERIOD} maxPrecision={2} /> Staging Time Remaining</PermSummary>}
+
       {(crewHasAgreements || crewCanMakeAgreements) && (
         <PermSummary success={crewHasAgreements}>
           <FormAgreementIcon />

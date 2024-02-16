@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
-import { Building, Crewmate, Lot, Time } from '@influenceth/sdk';
+import { Building, Crewmate, Lot, Permission } from '@influenceth/sdk';
 
 import {
   PlanBuildingIcon,
+  WarningIcon,
   WarningOutlineIcon
 } from '~/components/Icons';
 import useCrewContext from '~/hooks/useCrewContext';
@@ -29,12 +30,27 @@ import {
   TravelBonusTooltip,
   ActionDialogBody,
   getBuildingRequirements,
-  getTripDetails
+  getTripDetails,
+  LotControlWarning
 } from './components';
 import actionStage from '~/lib/actionStages';
+import EntityName from '~/components/EntityName';
+
+const ControlWarning = styled.div`
+  align-items: center;
+  color: ${p => p.theme.colors.error};
+  display: flex;
+  justify-content: center;
+  padding: 20px 0 5px;
+  & > svg {
+    font-size: 125%;
+    margin-right: 10px;
+  }
+`;
 
 const MouseoverWarning = styled.span`
   & b { color: ${theme.colors.error}; }
+  & em { font-weight: bold; font-style: normal; color: white; }
 `;
 
 const PlanBuilding = ({ asteroid, lot, constructionManager, stage, ...props }) => {
@@ -132,33 +148,39 @@ const PlanBuilding = ({ asteroid, lot, constructionManager, stage, ...props }) =
 
         {buildingType && stage === actionStage.NOT_STARTED && (
           <BuildingRequirementsSection
-            label="Required for Construction"
-            mode="display"
-            requirements={buildingRequirements} />
+            label="Required Materials"
+            mode="simple"
+            requirements={buildingRequirements}
+            requirementsMet />
         )}
 
         {stage === actionStage.NOT_STARTED && (
           <ProgressBarSection
             overrides={{
-              barColor: buildingType ? theme.colors.lightOrange : '#bbbbbb',
-              color: buildingType ? theme.colors.lightOrange : undefined,
-              left: <><WarningOutlineIcon /> Site Timer</>,
+              barColor: buildingType ? theme.colors.main : '#bbbbbb',
+              color: buildingType ? '#ffffff' : undefined,
+              left: `Site Timer`,
               right: formatTimer(Building.GRACE_PERIOD)
             }}
             stage={stage}
-            title="Lot Reservation"
+            title="Staging Time"
             tooltip={(
               <MouseoverWarning>
-                Building Sites are used to stage materials before construction. While the{' '}<b>Site Timer</b> 
-                {' '}is active, any assets moved to the building site are protected. However, a site becomes 
-                {' '}<b>Abandoned</b>{' '}if it has not started construction when the time expires.
+                <em>Building Sites</em> are used to stage materials before construction. If you are the <em>Lot Contoller</em>,
+                any assets moved to the building site are protected for the duration of the <em>Site Timer</em>.
                 <br/><br/>
-                Warning: Any materials on an{' '}<b>Abandoned Site</b>{' '}become public, and are subject to be
-                claimed by other players!
+                A site is designated as <b>Abandoned</b> if it has not started construction before the
+                timer expires. Materials left on an <b>Abandoned Site</b> are public, and are thus subject to
+                be claimed by other players!
+                <br/><br/>
+                If you are not the <em>Lot Contoller</em>, the <em>Lot Contoller</em> may takeover your Building Site and its
+                materials at any time (even before the <em>Site Timer</em> elapses).
               </MouseoverWarning>
             )}
           />
         )}
+
+        <LotControlWarning lot={lot} />
 
         <ActionDialogStats
           stage={stage}
