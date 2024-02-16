@@ -452,7 +452,7 @@ const SurfaceTransfer = ({
       </ActionDialogBody>
 
       <ActionDialogFooter
-        disabled={totalMass === 0 || !destination || !crewCan(Permission.IDS.ADD_PRODUCTS, destination) || !crewCan(Permission.IDS.REMOVE_PRODUCTS, origin)}
+        disabled={totalMass === 0 || !destination || !crewCan(Permission.IDS.ADD_PRODUCTS, destination)}
         goLabel="Transfer"
         onGo={onStartDelivery}
         stage={stage}
