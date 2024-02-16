@@ -2116,10 +2116,17 @@ export const MiniBarChart = ({ color, deltaColor, deltaValue, label, valueLabel,
   </MiniBarWrapper>
 );
 
-export const SwayInput = ({ inputLabel = "SWAY", onChange, value, ...props }) => {
-  const formattedValue = useMemo(() => {
-    return value ? `${parseInt(value)}` : '';
-  }, [value]);
+export const SwayInput = ({ inputLabel = "SWAY", onChange, value: defaultValue, ...props }) => {
+  const [value, setValue] = useState(0);
+
+  const internalOnChange = useCallback((e) => {
+    setValue(e.target.value);
+    if (onChange) onChange(e.target.value);
+  }, [onChange]);
+
+  useEffect(() => {
+    setValue(defaultValue || 0);
+  }, [defaultValue]);
   return (
     <SwayInputRow>
       <SwayInputIconWrapper><SwayIcon /></SwayInputIconWrapper>
@@ -2128,8 +2135,8 @@ export const SwayInput = ({ inputLabel = "SWAY", onChange, value, ...props }) =>
           type="number"
           min={0}
           step={1}
-          value={formattedValue || 0}
-          onChange={onChange}
+          value={value}
+          onChange={internalOnChange}
           {...props} />
       </SwayInputFieldWrapper>
       <SwayInputHelp>{/* TODO: this doesn't do anything */}

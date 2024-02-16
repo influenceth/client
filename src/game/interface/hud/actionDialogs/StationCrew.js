@@ -57,7 +57,7 @@ const Note = styled.div`
 
 const StationCrew = ({ asteroid, destination: rawDestination, lot, origin: rawOrigin, stationCrewManager, stage, ...props }) => {
   const createAlert = useStore(s => s.dispatchAlertLogged);
-  
+
   const { stationCrew } = stationCrewManager;
   const { crew, crewCan } = useCrewContext();
 
@@ -71,13 +71,13 @@ const StationCrew = ({ asteroid, destination: rawDestination, lot, origin: rawOr
 
   const [origin, destination] = useMemo(() => {
     const origin = cloneDeep(rawOrigin);
-    origin._location = locationsArrToObj(origin.Location?.locations || []);
-    origin._inOrbit = !origin._location.lotId;
+    origin._location = locationsArrToObj(origin?.Location?.locations || []);
+    origin._inOrbit = !origin?._location.lotId;
     origin._crewOwned = origin?.Control?.controller?.id === crew?.id;
 
     const destination = cloneDeep(rawDestination);
-    destination._location = locationsArrToObj(destination.Location?.locations || []);
-    destination._inOrbit = !destination._location.lotId;
+    destination._location = locationsArrToObj(destination?.Location?.locations || []);
+    destination._inOrbit = !destination?._location.lotId;
     destination._crewOwned = destination?.Control?.controller?.id === crew?.id;
 
     return [origin, destination];
@@ -284,7 +284,7 @@ const Wrapper = (props) => {
   const asteroidId = useStore(s => s.asteroids.origin);
   const lotId = useStore(s => s.asteroids.lot);
   const zoomScene = useStore(s => s.asteroids.zoomScene);
-  
+
   const { data: asteroid, isLoading: asteroidIsLoading } = useAsteroid(asteroidId);
   const { data: lot, isLoading: lotIsLoading } = useLot(lotId);
 
