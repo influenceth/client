@@ -140,7 +140,7 @@ const ChainTransactionContext = createContext();
 
 const getNow = () => Math.floor(Date.now() / 1000);
 
-// this matches the 
+// this matches the
 const cleanseTxHash = function (txHash) {
   if (!txHash) return null;
   return `0x${BigInt(txHash).toString(16).padStart(64, '0')}`;
@@ -393,12 +393,12 @@ const customConfigs = {
       ];
       return [
         {
-          amount: vars.payments.toPlayer,
+          amount: BigInt(Math.round(vars.payments.toPlayer)),
           recipient: vars.seller_account,
           memo
         },
         {
-          amount: vars.payments.toExchange,
+          amount: BigInt(Math.round(vars.payments.toExchange)),
           recipient: vars.exchange_owner_account,
           memo
         }
