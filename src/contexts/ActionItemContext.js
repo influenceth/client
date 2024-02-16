@@ -1,9 +1,8 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from 'react-query';
 import { Building } from '@influenceth/sdk';
 
 import useAuth from '~/hooks/useAuth';
-import useChainTime from '~/hooks/useChainTime';
 import useCrewContext from '~/hooks/useCrewContext';
 import useStore from '~/hooks/useStore';
 import api from '~/lib/api';
@@ -13,8 +12,7 @@ import useGetActivityConfig from '~/hooks/useGetActivityConfig';
 const ActionItemContext = React.createContext();
 
 export function ActionItemProvider({ children }) {
-  const { account, token, walletContext: { starknet, blockTime, setBlockTime } } = useAuth();
-  const chainTime = useChainTime();
+  const { account, token, walletContext: { blockTime } } = useAuth();
   const { crew } = useCrewContext();
   const getActivityConfig = useGetActivityConfig();
   const queryClient = useQueryClient();
