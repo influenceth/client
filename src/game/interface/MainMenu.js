@@ -212,12 +212,12 @@ const MainMenu = () => {
               <BackIcon />
             </HudIconButton>
           )}
-          {!onClickBack && process.env.REACT_APP_CHAIN_ID === '0x534e5f5345504f4c4941' && (
+          {!onClickBack && process.env.REACT_APP_CHAIN_ID !== '0x534e5f5345504f4c4941' && (
             <img
               src={`${process.env.PUBLIC_URL}/maskable-logo-48x48.png`}
               style={{ height: 38, marginLeft: 3 }} />
           )}
-          {!onClickBack && process.env.REACT_APP_CHAIN_ID !== '0x534e5f5345504f4c4941' && (
+          {!onClickBack && process.env.REACT_APP_CHAIN_ID === '0x534e5f5345504f4c4941' && (
             <StyledPreReleaseIcon />
           )}
         </LeftHudButtonArea>
