@@ -419,6 +419,7 @@ const HudMenu = ({ forceOpenMenu }) => {
         label: 'Lot Search',
         icon: <LotSearchIcon />,
         Component: hudMenus.SearchMap,
+        noDetail: true,
         componentProps: { assetType: 'lotsMapped' },
         detailType: 'list',
         onDetailClick: () => {

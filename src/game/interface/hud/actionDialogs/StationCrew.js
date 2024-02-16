@@ -69,19 +69,23 @@ const StationCrew = ({ asteroid, destination: rawDestination, lot, origin: rawOr
     return getCrewAbilityBonuses(Crewmate.ABILITY_IDS.HOPPER_TRANSPORT_TIME, crew) || {};
   }, [crew]);
 
-  const [origin, destination] = useMemo(() => {
-    const origin = cloneDeep(rawOrigin);
-    origin._location = locationsArrToObj(origin?.Location?.locations || []);
-    origin._inOrbit = !origin?._location.lotId;
-    origin._crewOwned = origin?.Control?.controller?.id === crew?.id;
+  const origin = useMemo(() => {
+    if (!rawOrigin) return {};
+    const newOrigin = cloneDeep(rawOrigin);
+    newOrigin._location = locationsArrToObj(newOrigin?.Location?.locations || []);
+    newOrigin._inOrbit = !newOrigin?._location.lotId;
+    newOrigin._crewOwned = newOrigin?.Control?.controller?.id === crew?.id;
+    return newOrigin;
+  }, [rawOrigin]);
 
-    const destination = cloneDeep(rawDestination);
-    destination._location = locationsArrToObj(destination?.Location?.locations || []);
-    destination._inOrbit = !destination?._location.lotId;
-    destination._crewOwned = destination?.Control?.controller?.id === crew?.id;
-
-    return [origin, destination];
-  }, [rawDestination, rawOrigin]);
+  const destination = useMemo(() => {
+    if (!rawDestination) return {};
+    const newDestination = cloneDeep(rawDestination);
+    newDestination._location = locationsArrToObj(newDestination?.Location?.locations || []);
+    newDestination._inOrbit = !newDestination?._location.lotId;
+    newDestination._crewOwned = newDestination?.Control?.controller?.id === crew?.id;
+    return newDestination;
+  }, [rawDestination]);
 
   const crewIsOwner = destination?.Control?.controller?.id === crew?.id;
 
