@@ -384,6 +384,7 @@ const ListViewComponent = ({ assetType, onAssetTypeChange, params }) => {
           <FilterContainer open={filtersOpen}>
             <InnerFilterContainer>
               <SearchFilters
+                isListView={true}
                 assetType={assetType}
                 filters={filters}
                 updateFilters={updateFilters} />

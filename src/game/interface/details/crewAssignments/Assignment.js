@@ -119,7 +119,12 @@ const CrewAssignment = ({ crewId, crewmateId, onFinish, overrides = {} }) => {
   const [pathLoading, setPathLoading] = useState();
   const [selection, setSelection] = useState();
 
-  const onCloseDestination = useMemo(() => bookSession?.isMintingStory ? '/crew' : '/', [bookSession?.isMintingStory]);
+  let onCloseDestination;
+  if (Object.keys(crewmateMap || {}).length > 0) {
+    onCloseDestination = '/crew';
+  } else {
+    onCloseDestination = '/';
+  }
 
   useEffect(() => {
     if (bookError) history.push(onCloseDestination);

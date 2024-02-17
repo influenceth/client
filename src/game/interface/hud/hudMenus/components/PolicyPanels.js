@@ -66,7 +66,7 @@ const Policy = styled.div`
   }
   ${p => p.isSelected
     ? `
-      
+
       & > svg:not(:first-child) {
         display: none;
       }
@@ -189,7 +189,7 @@ const PolicyPanel = ({ editable = false, entity, permission }) => {
   const [editing, setEditing] = useState();
 
   const saving = editing === 'allowlist' ? allowlistChangePending : policyChangePending;
-  
+
   // reset if object is changed
   useEffect(() => {
     setPolicyType(Number(originalPolicyType));
@@ -431,15 +431,6 @@ const PolicyPanel = ({ editable = false, entity, permission }) => {
                       <span>months</span>
                     </div>
                   </PrepaidInputBlock>
-                  <PrepaidInputBlock>
-                    <label>Grace Period</label>
-                    <div>
-                      <UncontrolledTextInput
-                        disabled
-                        value={1.0} />
-                      <span>months</span>
-                    </div>
-                  </PrepaidInputBlock>
                 </>
               )}
               {policyType === Permission.POLICY_IDS.CONTRACT && (
@@ -506,7 +497,7 @@ const PolicyPanel = ({ editable = false, entity, permission }) => {
                       entity={entity}
                       permission={permission} />
                   )}
-                  {/* TODO: enable list view at an asteroid level... will need to pull all agreements from 
+                  {/* TODO: enable list view at an asteroid level... will need to pull all agreements from
                     elasticsearch since entity will be asteroid (and *agreements won't be populated) */}
                   {!(entity?.label === Entity.IDS.ASTEROID && permission === Permission.IDS.LOT_USE) && (
                     <actionButtons.ViewAgreements.Component
@@ -519,7 +510,7 @@ const PolicyPanel = ({ editable = false, entity, permission }) => {
               )}
             </DataBlock>
           </Section>
-          
+
           {editable && (
             <EditBlock>
               <Button onClick={() => toggleEditing('policy')} subtle>Edit Permission Policy</Button>

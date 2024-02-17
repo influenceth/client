@@ -143,7 +143,7 @@ const yieldConfig = {
 
 // TODO: there is probably a more performant and/or organized way to break these apart
 //  (and to memoize any inputs possible)
-const SearchFilters = ({ assetType, highlighting }) => {
+const SearchFilters = ({ assetType, highlighting, isListView = false }) => {
   const asteroidId = useStore(s => s.asteroids.origin);
   const zoomStatus = useStore(s => s.asteroids.zoomStatus);
   const filters = useStore(s => s.assetSearch[assetType].filters);
@@ -175,7 +175,8 @@ const SearchFilters = ({ assetType, highlighting }) => {
     assetType,
     filters,
     onChange: onFiltersChange,
-  }), [assetType, filters, highlighting, onFiltersChange]);
+    isListView
+  }), [assetType, filters, highlighting, onFiltersChange, isListView]);
 
   useEffect(() => {
     // for most types, default filter to asteroid if one is selected

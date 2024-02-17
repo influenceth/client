@@ -9,7 +9,7 @@ import { GoIcon } from '~/components/Icons';
 
 const fieldName = 'name';
 
-const NameFilter = ({ assetType, filters, onChange }) => {
+const NameFilter = ({ assetType, filters, onChange, isListView }) => {
   const asteroidId = useRef();
 
   const selectAsteroidId = useStore((s) => s.dispatchOriginSelected);
@@ -30,12 +30,14 @@ const NameFilter = ({ assetType, filters, onChange }) => {
     }
   }, [handleById]);
 
+  const searchFilterTitle = (isListView ? 'Name' : 'Name & Id');
+
   return (
     <SearchMenu
       assetType={assetType}
       fieldName={fieldName}
       filters={filters}
-      title="Name & Id">
+      title={searchFilterTitle}>
 
       <InputBlock>
         <label>Asteroid Name</label>
@@ -48,7 +50,7 @@ const NameFilter = ({ assetType, filters, onChange }) => {
         </div>
       </InputBlock>
 
-      <InputBlock>
+      {!isListView && (<InputBlock>
         <label>Asteroid Id</label>
         <div>
           <UncontrolledTextInput
@@ -66,7 +68,7 @@ const NameFilter = ({ assetType, filters, onChange }) => {
             <GoIcon />
           </IconButton>
         </div>
-      </InputBlock>
+      </InputBlock>)}
     </SearchMenu>
   );
 };

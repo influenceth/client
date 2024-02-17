@@ -2,7 +2,6 @@ import { AiFillEdit, AiFillEye, AiFillStar, AiOutlineNumber } from 'react-icons/
 import { BsFillPersonFill, BsCheckCircle, BsSliders, BsStopwatch, BsThreeDots } from 'react-icons/bs';
 import { FaBan, FaCaretDown, FaCaretUp, FaCogs, FaCopy, FaEthereum, FaList, FaMapMarkedAlt } from 'react-icons/fa';
 import { FiCheckSquare, FiDownload, FiExternalLink, FiLogIn, FiMenu, FiSearch, FiSquare } from 'react-icons/fi';
-import { GiHouseKeys } from 'react-icons/gi';
 import { HiClock, HiCog, HiChevronDoubleLeft, HiChevronDoubleRight } from 'react-icons/hi';
 import {
   MdAdd,
