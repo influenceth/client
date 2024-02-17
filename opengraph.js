@@ -23,6 +23,7 @@ const getOpengraphTags = async (originalUrl) => {
   try {
     switch(urlParts[0]) {
       // TODO: asteroid, crew sheet
+      // TODO: crew assignments in this form are deprecated -- see character recruitment and random events
 
       case 'crew-assignments': {
         if (urlParts[1]) {

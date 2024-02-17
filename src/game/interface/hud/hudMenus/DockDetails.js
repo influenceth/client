@@ -21,6 +21,7 @@ import ThumbnailWithData from '~/components/AssetThumbnailWithData';
 import { CrewCaptainCardFramed } from '~/components/CrewmateCardFramed';
 import useActionItems from '~/hooks/useActionItems';
 import Button from '~/components/ButtonAlt';
+import useBlockTime from '~/hooks/useBlockTime';
 
 const thumbnailDimension = 75;
 
@@ -145,13 +146,12 @@ const ShipRow = ({ ship }) => {
 
 const DockDetails = ({ onClose }) => {
   const { crew } = useCrewContext();
+  const blockTime = useBlockTime();
 
   const lotId = useStore(s => s.asteroids.lot);
   const dispatchZoomScene = useStore(s => s.dispatchZoomScene);
 
   const { data: lot } = useLot(lotId);
-
-  const { liveBlockTime } = useActionItems();
 
   const [nameFilter, setNameFilter] = useState('');
   const [selectedShipId, setSelectedShipId] = useState();
@@ -217,7 +217,7 @@ const DockDetails = ({ onClose }) => {
                   <label style={{ padding: '0 8px', width: 'calc(100% - 100px)' }}>
                     <h3 style={{ fontSize: '17px' }}>{formatters.shipName(ship)}</h3>
                     <div><b>{Ship.TYPES[ship.Ship.shipType]?.name}</b></div>
-                    {liveBlockTime >= ship.Ship.readyAt && <Ready>Launch Ready</Ready>}
+                    {blockTime >= ship.Ship.readyAt && <Ready>Launch Ready</Ready>}
                   </label>
                 </ThumbnailWithData>
                 <div style={{ width: 54 }}>

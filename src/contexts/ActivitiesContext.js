@@ -19,7 +19,7 @@ const ActivitiesContext = createContext();
 const ignoreEventTypes = ['CURRENT_ETH_BLOCK_NUMBER'];
 
 export function ActivitiesProvider({ children }) {
-  const { token } = useAuth();
+  const { token, walletContext: { blockNumber, setBlockNumber } } = useAuth();
   const { crew, refreshReadyAt } = useCrewContext();
   const getActivityConfig = useGetActivityConfig();
   const queryClient = useQueryClient();
@@ -27,7 +27,6 @@ export function ActivitiesProvider({ children }) {
 
   const createAlert = useStore(s => s.dispatchAlertLogged);
 
-  const [ lastBlockNumber, setLastBlockNumber ] = useState(0);
   const [ activities, setActivities ] = useState([]);
 
   const pendingTransactions = useStore(s => s.pendingTransactions);
@@ -144,7 +143,7 @@ export function ActivitiesProvider({ children }) {
     const { type, body } = message;
     if (ignoreEventTypes.includes(type)) return;
     if (type === 'CURRENT_STARKNET_BLOCK_NUMBER') {
-      setLastBlockNumber(body.blockNumber || 0);
+      setBlockNumber(body.blockNumber || 0);
     } else {
 
       // queue the current activity for processing
@@ -173,7 +172,7 @@ export function ActivitiesProvider({ children }) {
         api.getTransactionActivities(pendingTxHashes).then(async (data) => {
           await hydrateActivities(data.activities, queryClient);
           handleActivities(data.activities, true);
-          setLastBlockNumber(data.blockNumber);
+          setBlockNumber(data.blockNumber);
         });
       } else {
         handleActivities([], true);
@@ -188,7 +187,7 @@ export function ActivitiesProvider({ children }) {
     // reset on logout / disconnect
     return () => {
       setActivities([]);
-      setLastBlockNumber(0);
+      setBlockNumber(0);
       unregisterWSHandler();
       if (crewRoom) unregisterWSHandler(crewRoom);
     }
@@ -196,7 +195,7 @@ export function ActivitiesProvider({ children }) {
 
   return (
     <ActivitiesContext.Provider value={{
-      lastBlockNumber,
+      blockNumber,
       activities
     }}>
       {children}

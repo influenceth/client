@@ -3,13 +3,15 @@ import { Entity, Extractor } from '@influenceth/sdk';
 
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
 import useActionItems from '~/hooks/useActionItems';
+import useBlockTime from '~/hooks/useBlockTime';
 import useCrewContext from '~/hooks/useCrewContext';
 import useLot from '~/hooks/useLot';
 import actionStages from '~/lib/actionStages';
 
 // TODO: truly support multiple extractors
 const useExtractionManager = (lotId, slot = 1) => {
-  const { actionItems, readyItems, liveBlockTime } = useActionItems();
+  const { actionItems, readyItems } = useActionItems();
+  const blockTime = useBlockTime();
   const { execute, getPendingTx, getStatus } = useContext(ChainTransactionContext);
   const { crew } = useCrewContext();
   const { data: lot } = useLot(lotId);
@@ -63,7 +65,7 @@ const useExtractionManager = (lotId, slot = 1) => {
       if(getStatus('ExtractResourceFinish', payload) === 'pending') {
         status = 'FINISHING';
         stage = actionStages.COMPLETING;
-      } else if (slotExtractor?.finishTime && slotExtractor.finishTime <= liveBlockTime) {
+      } else if (slotExtractor?.finishTime && slotExtractor.finishTime <= blockTime) {
         status = 'READY_TO_FINISH';
         stage = actionStages.READY_TO_COMPLETE;
       } else {
@@ -88,7 +90,7 @@ const useExtractionManager = (lotId, slot = 1) => {
       status,
       stage
     ];
-  }, [actionItems, readyItems, getPendingTx, getStatus, payload, slotExtractor?.status]);
+  }, [actionItems, blockTime, readyItems, getPendingTx, getStatus, payload, slotExtractor?.status]);
 
   const startExtraction = useCallback((amount, deposit, destination, destinationSlot) => {
     execute(

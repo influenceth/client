@@ -32,7 +32,7 @@ const LiveFoodStatus = ({ crew, onClick, ...props }) => {
   const { data: TIME_ACCELERATION } = useConstants('TIME_ACCELERATION');
 
   const [percentage, isRationing] = useMemo(() => {
-    const lastFedAgo = Time.toGameDuration(blockTime - (crew?.Crew?.lastFed || 0), parseInt(TIME_ACCELERATION));
+    const lastFedAgo = Time.toGameDuration(blockTime - (crew?.Crew?.lastFed || 0), parseInt(TIME_ACCELERATION) || 1);
     return typeof lastFedAgo === 'number'
       ? [
         Math.round(100 * Crew.getCurrentFoodRatio(lastFedAgo, crew._foodBonuses?.consumption)),

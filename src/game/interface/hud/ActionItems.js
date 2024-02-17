@@ -4,7 +4,7 @@ import styled, { css, keyframes } from 'styled-components';
 import BarLoader from 'react-spinners/BarLoader';
 
 import { CloseIcon as DismissIcon, PopoutIcon } from '~/components/Icons';
-import { FailedIcon, ReadyIcon } from '~/components/AnimatedIcons';
+import { FailedIcon, RandomEventIcon, ReadyIcon } from '~/components/AnimatedIcons';
 import CollapsibleSection from '~/components/CollapsibleSection';
 import LiveTimer from '~/components/LiveTimer';
 import { useLotLink } from '~/components/LotLink';
@@ -359,6 +359,7 @@ const ActionItem = ({ data, crew }) => {
       transitionOut={data.transitionOut ? (type === 'failed' ? 'left' : 'right') : undefined}>
       <Icon animate={type === 'pending'}>
         {type === 'failed' && <FailedIcon />}
+        {type === 'randomEvent' && <RandomEventIcon />}
         {type === 'ready' && <ReadyIcon />}
         {(type === 'pending' || type === 'unready' || type === 'plans') && <span>{item.icon}</span>}
       </Icon>
@@ -367,7 +368,7 @@ const ActionItem = ({ data, crew }) => {
       <Details>
         <Timing>
           {type === 'pending' && 'Just Now'}
-          {(type === 'ready' || type === 'failed') && item.ago}
+          {(type === 'ready' || type === 'failed' || type === 'randomEvent') && item.ago}
           {type === 'unready' && item.finishTime && <LiveTimer target={item.finishTime} maxPrecision={2} prefix="in " />}
           {/* TODO: would be nice for this to have different level warning intensity based on time-left and/or presence of inventory on the lot */}
           {type === 'plans' && (

@@ -1,12 +1,22 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import cloneDeep from 'lodash/cloneDeep'
 
+import useBookTokens from '~/hooks/useBookTokens';
 import useCrewContext from '~/hooks/useCrewContext';
 import useStore from '~/hooks/useStore';
 import { getCloudfrontUrl } from '~/lib/assetUtils';
 
 export const bookIds = {
   ADALIAN_RECRUITMENT: 'adalian-recruitment.json',
-  ARVADIAN_RECRUITMENT: 'arvadian-recruitment.json'
+  ARVADIAN_RECRUITMENT: 'arvadian-recruitment.json',
+  RANDOM_1: 'random-1.json',
+  RANDOM_2: 'random-2.json',
+  RANDOM_3: 'random-3.json',
+  RANDOM_4: 'random-4.json',
+  RANDOM_5: 'random-5.json',
+  RANDOM_6: 'random-6.json',
+  RANDOM_7: 'random-7.json',
+  RANDOM_8: 'random-8.json',
 };
 
 const defaultImageWidth = 1500;
@@ -23,6 +33,27 @@ const fetchBook = async (bookId) => {
 const anyOf = (mustHave, tests) => !!mustHave.find((x) => tests.includes(x));
 const allOf = (mustHave, tests) => !mustHave.find((x) => !tests.includes(x));
 
+
+const applyTokensToString = (str, tokenObj) => {
+  let applied = `${str || ''}`;
+  Object.keys(tokenObj).forEach((k) => {
+    applied = applied.replace(new RegExp(`{{${k}}}`, 'g'), tokenObj[k]);
+  });
+  return applied;
+}
+const applyTokens = (storyObj, tokenObj) => {
+  if (!tokenObj) return storyObj;
+
+  const storyWithTokens = cloneDeep(storyObj);
+  ['title', 'content', 'prompt'].forEach((k) => {
+    storyWithTokens[k] = applyTokensToString(storyWithTokens[k], tokenObj);
+  });
+  storyWithTokens.linkedPaths.forEach((p) => {
+    p.text = applyTokensToString(p.text, tokenObj);
+  });
+  return storyWithTokens;
+};
+
 export const getBookCompletionImage = (book, imageWidth = defaultImageWidth) => {
   if (!book) return null;
 
@@ -31,19 +62,29 @@ export const getBookCompletionImage = (book, imageWidth = defaultImageWidth) => 
 }
 
 const useBookSession = (crewId, crewmateId) => {
-  const { adalianRecruits, arvadianRecruits, loading: crewIsLoading } = useCrewContext();
+  const { adalianRecruits, arvadianRecruits, crew, loading: crewIsLoading } = useCrewContext();
 
   const [book, setBook] = useState();
 
   const [bookId, crewmate] = useMemo(() => {
+    // if creating a completely new crewmate, will be an adalian
     const adalianRecruit = adalianRecruits.find((a) => a.id === crewmateId);
-    if (adalianRecruit) return [bookIds.ADALIAN_RECRUITMENT, adalianRecruit];
+    if (adalianRecruit || crewmateId === 0) return [bookIds.ADALIAN_RECRUITMENT, adalianRecruit || null];
 
+    // if specify an arvadian recruit, use that story
     const arvadianRecruit = arvadianRecruits.find((a) => a.id === crewmateId);
     if (arvadianRecruit) return [bookIds.ARVADIAN_RECRUITMENT, arvadianRecruit];
 
-    return [bookIds.ADALIAN_RECRUITMENT, null];
-  }, [adalianRecruits, arvadianRecruits, crewmateId]);
+    // if get here, may be because triggered random event
+    if (crew?._actionTypeTriggered?.pendingEvent) {
+      return [bookIds[`RANDOM_${crew._actionTypeTriggered?.pendingEvent}`], null];
+    }
+
+    // default to adalian recruitment
+    return [bookIds.ADALIAN_RECRUITMENT, null, false];
+  }, [adalianRecruits, arvadianRecruits, crew?.actionTypeTriggered?.pendingEvent, crewmateId]);
+
+  const { bookTokens, isLoading: bookTokensLoading } = useBookTokens(bookId);
 
   const error = useMemo(() => {
     // validate crewmate (must have crewmate if non-zero id, crewmate must be uninitialized if present)
@@ -61,6 +102,7 @@ const useBookSession = (crewId, crewmateId) => {
   const { bookSession, storySession } = useMemo(() => {
     // console.log({ book, crewIsLoading, crewmateId, crewmate });
     if (!book) return {};
+    if (bookTokensLoading) return {};
     if (crewIsLoading) return {};
     if (crewmateId && !crewmate) return {};
 
@@ -81,7 +123,11 @@ const useBookSession = (crewId, crewmateId) => {
       // path content is initially the story-level values
       // (we only need to include the linkedPaths since they are the only part
       //  that may be manipulated from the story defaults)
-      pathContent = { linkedPaths: [ ...story.linkedPaths ] };
+      if (story.linkedPaths.length > 0) {
+        pathContent = { linkedPaths: [ ...story.linkedPaths ] };
+      } else {
+        pathContent = { linkedPaths: [{ id: 'x' }], isLastPage: true };
+      }
 
       (sessionData[story.id] || []).forEach((pathId) => {
         fullPathHistory.push(pathId);
@@ -163,16 +209,19 @@ const useBookSession = (crewId, crewmateId) => {
         selectedClass,
         selectedTraits
       },
-      storySession: {
-        ...storyDefaults,
-        ...pathContent,
-        ...imageOverrides,
-        history: sessionData[currentStory.id] || [],
-        currentStep: (sessionData[currentStory.id] || []).length,
-        totalSteps: bookId === bookIds.ADALIAN_RECRUITMENT ? 5 : 3,
-      }
+      storySession: applyTokens(
+        {
+          ...storyDefaults,
+          ...pathContent,
+          ...imageOverrides,
+          history: sessionData[currentStory.id] || [],
+          currentStep: (sessionData[currentStory.id] || []).length,
+          totalSteps: currentStory.totalSteps || (bookId === bookIds.ADALIAN_RECRUITMENT ? 5 : 3),
+        },
+        bookTokens
+      )
     };
-  }, [book, crewmate, crewmateId, crewIsLoading, sessionData]);
+  }, [book, bookTokens, crewmate, crewmateId, crewIsLoading, sessionData]);
 
   const choosePath = useCallback((pathId) => {
     dispatchCrewAssignmentPathSelection(crewId, crewmateId, bookSession?.currentStoryId, pathId);

@@ -1,0 +1,12 @@
+[
+  {
+    "id": "random-6",
+    "title": "Fly Me to the Moon",
+    "content": "<p><i>Captain {{captainName}}:</i></p><p><i>We want to begin by telling you how proud we are of you and your crew for building an amazing ship! In appreciation of your hard work we have decided to grant you {{swayAmount}} SWAY.</i></p><p><i>Our ancestors first accomplished building the great rocket ships of the 20th Century, and reaching Earth’s sole moon, by harnessing humanity’s power of cooperation. This great power of cooperation was controlled, of course, by some of Earth’s most powerful governing bodies at the time. </i></p><p><i>We now hope that you will remember the importance of cooperating with governing bodies when it comes to providing much needed ships to your fellow Adalians. Congratulations on building the most recent ship in the Adalia. Expect us to be in touch again soon.</i></p><p><i>In cooperation,</i></p><p><i>The Prime Council</i></p>",
+    "image": "influence/staging/images/stories/fly-me-to-the-moon/1.jpg",
+    "isHTML": true,
+    "totalSteps": 1,
+    "linkedPaths": [],
+    "paths": []
+  } 
+]

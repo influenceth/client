@@ -35,6 +35,8 @@ const WalletContext = createContext();
 export function WalletProvider({ children }) {
   const onConnectCallback = useRef();
 
+  const [blockNumber, setBlockNumber] = useState(0);
+  const [blockTime, setBlockTime] = useState(0);
   const [connecting, setConnecting] = useState(false);
   const [error, setError] = useState();
   const [starknet, setStarknet] = useState(false);
@@ -111,7 +113,6 @@ export function WalletProvider({ children }) {
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const disconnect = useCallback(async () => {
-    console.log('disconnect INNER');
     setStarknet(null);
     if (window.starknet?.provider) starknetDisconnect({ clearLastWallet: true });
   }, []);
@@ -126,7 +127,6 @@ export function WalletProvider({ children }) {
     if (starknet) {
       connect(true);
     } else {
-      console.log('onconnectionchange disconnect');
       disconnect();
     }
   }, [connect, disconnect, starknet]);
@@ -138,11 +138,8 @@ export function WalletProvider({ children }) {
     const onAccountsChanged = (e) => {
       const eventAccount = Array.isArray(e) ? e[0] : e;
       if (!lastEvent.current.account || (lastEvent.current.account !== eventAccount)) {
-        // console.log('onAccountsChanged (YES)', eventAccount);
         lastEvent.current.account = eventAccount;
         onConnectionChange();
-      // } else {
-      //   console.log('onAccountsChanged (NO)', eventAccount);
       }
     };
     const onNetworkChanged = (e) => {
@@ -151,11 +148,8 @@ export function WalletProvider({ children }) {
         const resetConn = !!lastEvent.current.network;
         lastEvent.current.network = eventNetwork;
         if (resetConn) {
-          // console.log('onNetworkChanged (YES)', eventNetwork);
           onConnectionChange();
         }
-      // } else {
-      //   console.log('onNetworkChanged (NO)', eventNetwork);
       }
     };
 
@@ -189,6 +183,76 @@ export function WalletProvider({ children }) {
     }
   }, []);
 
+  // const getBlock = useCallback(async (num) => {
+  //   if (starknetReady && starknet?.provider) {
+  //     try {
+  //       const isCurrentBlock = !(num > 0);
+  //       const block = await starknet.provider.getBlock(isCurrentBlock ? undefined : num);
+  //       if (isCurrentBlock) {
+  //         setBlockTime(block?.timestamp);
+
+  //         // does not return a block number with pending block (but in case this changes, we check for it)
+  //         if (block?.block_number > 0) {
+  //           setBlockNumber(block?.block_number);
+
+  //         // in the pending block case, get the block number from the parent
+  //         } else if(block?.parent_hash) {
+  //           const parent = await starknet.provider.getBlock(block.parent_hash);
+  //           setBlockNumber(parent?.block_number);
+  //         }
+  //       }
+  //     } catch (e) {
+  //       console.error(e);
+  //     }
+  //   }
+  // }, []);
+
+  const getBlockTime = useCallback(async (num) => {
+    if (starknetReady && starknet?.provider) {
+      try {
+        return (await starknet.provider.getBlock(num > 0 ? num : undefined))?.timestamp;
+      } catch (e) {
+        console.error(e);
+      }
+    }
+    return null;
+  }, [starknetReady, blockNumber]);
+
+  // init block number and block time
+  const lastBlockNumberTime = useRef(0);
+  useEffect(() => {
+    if (starknetReady && starknet?.provider?.getBlock) {
+      starknet.provider.getBlock()
+        .then((block) => {
+          setBlockTime(block?.timestamp);
+
+          // does not (currently) return a block number with pending block...
+          if (block?.block_number > 0) {
+            lastBlockNumberTime.current = block?.block_number;
+            setBlockNumber(block?.block_number);
+
+          // ... so we get the block number from the parent (which matches what ws reports)
+          } else if(block?.parent_hash) {
+            starknet.provider.getBlock(block.parent_hash).then((parent) => {
+              lastBlockNumberTime.current = parent?.block_number;
+              setBlockNumber(parent?.block_number);
+            })
+          }
+        })
+        .catch((e) => console.error('failed to init block data', e));
+    }
+  }, [starknetReady]);
+
+  // get pending block time on every new block
+  // TODO: if no crew, then we won't receive websockets, and blockNumber will not get updated
+  //  (i.e. for logged out users) -- does that matter?
+  useEffect(() => {
+    if (blockNumber > lastBlockNumberTime.current) {
+      lastBlockNumberTime.current = blockNumber;
+      getBlockTime().then((t) => setBlockTime(t));
+    }
+  }, [blockNumber]);
+
   return (
     <WalletContext.Provider value={{
       account,
@@ -198,7 +262,16 @@ export function WalletProvider({ children }) {
       isConnecting: connecting,
       walletIcon: starknet?.icon && starknet?.name !== 'Argent Web Wallet' && <img src={starknet.icon} alt={`${starknet.name}`} />,
       walletName: starknet?.name,
-      starknet
+      starknet,
+
+      // NOTE:
+      // blockNumber is updated from websocket change or initial pull of activities from server
+      // blockTime is updated from blockNumber change
+      // NOTE: blockNumber is last committed block, blockTime is the *pending* block time
+      getBlockTime,
+      setBlockNumber,
+      blockNumber,
+      blockTime
     }}>
       {starknetReady && children}
     </WalletContext.Provider>

@@ -1,4 +1,4 @@
-import { Building, Entity, Lot, Order, Process, Product, Ship } from '@influenceth/sdk';
+import { Building, Entity, Lot, Order, Process, Product, RandomEvent, Ship } from '@influenceth/sdk';
 import moment from 'moment';
 
 import {
@@ -40,6 +40,7 @@ import {
 import theme, { hexToRGB } from '~/theme';
 import { getProcessorProps } from './utils';
 import formatters from './formatters';
+import { RandomEventIcon } from '~/components/AnimatedIcons';
 
 const formatAsItem = (activity, actionItem = {}) => {
   // console.log('formatAsItem', activity, actionItem);
@@ -83,6 +84,18 @@ const formatAsPlans = (item) => {
     startTime: null,
     onClick: ({ openDialog }) => {
       openDialog('CONSTRUCT');
+    }
+  };
+};
+
+const formatAsRandomEvent = (item) => {
+  return {
+    key: item.pendingEvent,
+    type: item.type,
+    label: RandomEvent.TYPES[item.pendingEvent]?.name || 'Unknown',
+    ago: (new moment(new Date(1000 * (item.timestamp || 0)))).fromNow(),
+    onClick: ({ history }) => {
+      history.push(`/random-event`)
     }
   };
 };
@@ -848,6 +861,15 @@ const formatAsTx = (item) => {
       break;
     }
 
+    case 'ResolveRandomEvent': {
+      formatted.icon = <RandomEventIcon isPaused />;
+      formatted.label = `Resolve Random Event`;
+      formatted.onClick = ({ history }) => {
+        history.push(`/random-event`);
+      }
+      break;
+    }
+
     default:
       console.log('Unhandled ActionItems tx', item);
       break;
@@ -862,6 +884,7 @@ const formatAsTx = (item) => {
 export const formatActionItem = (item, actionItem) => {
   try {
     if (item.type === 'pending' || item.type === 'failed') return formatAsTx(item);
+    if (item.type === 'randomEvent') return formatAsRandomEvent(item);
     if (item.type === 'plans') return formatAsPlans(item);
     return formatAsItem(item, actionItem);
   } catch (e) {
@@ -873,6 +896,7 @@ export const formatActionItem = (item, actionItem) => {
 export const itemColors = {
   pending: hexToRGB(theme.colors.purple),
   failed: hexToRGB(theme.colors.error),
+  randomEvent: '232, 211, 117',
   ready: theme.colors.successRGB,
   unready: theme.colors.mainRGB,
   plans: '248, 133, 44',
@@ -881,6 +905,7 @@ export const itemColors = {
 export const statuses = {
   pending: 'Processing',
   failed: 'Failed',
+  randomEvent: 'Event',
   ready: 'Ready',
   unready: '',
   plans: ''

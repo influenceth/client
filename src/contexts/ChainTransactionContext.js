@@ -407,7 +407,7 @@ const customConfigs = {
   },
   UpdatePolicy: {
     multisystemCalls: ({ add, remove }) => [remove, add].filter((c) => !!c),
-    equalityTest: ['entity.label', 'entity.id', 'permission'],
+    equalityTest: ['target.label', 'target.id', 'permission'],
     isVirtual: true
   },
   UpdateAllowlist: {
@@ -415,15 +415,15 @@ const customConfigs = {
       return [
         ...removals.map((r) => ({
           system: 'RemoveFromWhitelist',
-          vars: { ...vars, target: r }
+          vars: { ...vars, permitted: r }
         })),
         ...additions.map((a) => ({
           system: 'Whitelist',
-          vars: { ...vars, target: a }
+          vars: { ...vars, permitted: a }
         })),
       ]
     },
-    equalityTest: ['entity.label', 'entity.id', 'permission'],
+    equalityTest: ['target.label', 'target.id', 'permission'],
     isVirtual: true
   }
 };
@@ -442,8 +442,8 @@ const getSystemCallAndProcessedVars = (runSystem, rawVars, encodeEntrypoint = fa
 }
 
 export function ChainTransactionProvider({ children }) {
-  const { account, walletContext: { starknet } } = useAuth();
-  const { activities, lastBlockNumber } = useActivitiesContext();
+  const { account, walletContext: { starknet, blockTime } } = useAuth();
+  const { activities } = useActivitiesContext();
   const { crew } = useCrewContext();
 
   const createAlert = useStore(s => s.dispatchAlertLogged);
@@ -456,39 +456,11 @@ export function ChainTransactionProvider({ children }) {
 
   const [promptingTransaction, setPromptingTransaction] = useState(false);
 
-  const [ blockTime, setBlockTime ] = useState(0);
-
-  useEffect(() => {
-    if (starknet?.provider) {
-      starknet.provider.getBlock()
-        .then((block) => setBlockTime(block?.timestamp))
-        .catch(console.error);
-    }
-  }, [starknet?.provider, lastBlockNumber]);
-
-  const prependEventAutoresolve = useRef();
-  useEffect(() => {
-    let wasTriggered = false;
-    if (crew?.Crew?.actionType && crew?.crew?.actionRound <= lastBlockNumber) {
-      starknet.account.provider.callContract(
-        System.getRunSystemCall(
-          'CheckForRandomEvent',
-          { caller_crew: { id: crew.id, label: crew.label }},
-          process.env.REACT_APP_STARKNET_DISPATCHER
-        )
-      )
-      .then((response) => {
-        // TODO: (should have type that can do something with)
-        console.log('CheckForRandomEvent', response);
-        wasTriggered = !!response;
-      })
-      .catch((err) => {
-        console.warn('CheckForRandomEvent', err);
-        // (wasTriggered can stay false)
-      });
-    }
-    prependEventAutoresolve.current = crew?.Crew?.actionType && !wasTriggered;
-  }, [crew?.Crew?.actionType, crew?.crew?.actionRound, lastBlockNumber]);
+  // autoresolve when actionType is set but actionType was not actually triggered
+  const prependEventAutoresolve = useMemo(
+    () => crew?.Crew?.actionType && !crew?._actionTypeTriggered,
+    [crew]
+  );
 
   const contracts = useMemo(() => {
     if (!!starknet?.account) {
@@ -541,7 +513,7 @@ export function ChainTransactionProvider({ children }) {
 
             // if actionType is set but the random event was not actually triggered, prepend resolveRandomEvent
             // so that the event is cleared (preprocess will add the null choice)
-            if (prependEventAutoresolve.current && !config.isUnblockable) { // TODO: fill in these isUnblockable's
+            if (prependEventAutoresolve && !config.isUnblockable) { // TODO: fill in these isUnblockable's
               runSystems.unshift({ runSystem: 'ResolveRandomEvent', rawVars });
             }
 
@@ -672,7 +644,7 @@ export function ChainTransactionProvider({ children }) {
       }, {});
     }
     return null;
-  }, [createAlert, starknet?.account?.address, starknet?.account?.provider?.baseUrl]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [createAlert, prependEventAutoresolve, starknet?.account?.address, starknet?.account?.provider?.baseUrl]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const transactionWaiters = useRef([]);
 
@@ -824,23 +796,13 @@ export function ChainTransactionProvider({ children }) {
       setPromptingTransaction(true);
 
       try {
-        // TODO: when there are consistent block times on starknet next year, we can remove this extra
-        // check and just use Date.now() (setting the buffer on the $since query to blockTime)
-        // get block so can tag pending transaction with accurate timestamp
-        let block;
-        try {
-          block = await starknet.provider.getBlock();
-        } catch (e) {
-          console.warn('Could not fetch pending block', e)
-        }
-
         // execute
         const tx = await execute(vars);
         dispatchPendingTransaction({
           key,
           vars,
           meta,
-          timestamp: block?.timestamp ? (block.timestamp * 1000) : null,
+          timestamp: blockTime ? (blockTime * 1000) : null,
           txHash: cleanseTxHash(tx.transaction_hash),
           waitingOn: 'TRANSACTION'
         });
@@ -880,7 +842,7 @@ export function ChainTransactionProvider({ children }) {
         level: 'warning',
       });
     }
-  }, [contracts]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [blockTime, contracts]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const getPendingTx = useCallback((key, vars) => {
     if (contracts && contracts[key]) {
@@ -906,7 +868,6 @@ export function ChainTransactionProvider({ children }) {
 
   return (
     <ChainTransactionContext.Provider value={{
-      blockTime,
       chainTime,
       execute,
       getStatus,

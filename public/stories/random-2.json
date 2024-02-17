@@ -1,0 +1,12 @@
+[
+  {
+    "id": "random-2",
+    "title": "Groundbreaking",
+    "content": "<p>Another day, another core sample, another extractor. While a few Adalians are beginning to feel a creeping sense of monotony, most are still amazed at how the work that they are doing is truly groundbreaking. No other humans have ever been here before, the surfaces of these asteroids have not been disturbed for millenia, how could anyone ever view this as boring?</p><p>The Prime Council certainly still appreciates mining, perhaps in part due to the rumors of a wide-spread food shortage looming on the horizon. At any rate, they are still encouraging everyone to mine as much as they can, as quickly as they can, and with that sentiment clearly expressed, they have rewarded your crew with {{swayAmount}} SWAY.</p>",
+    "image": "influence/staging/images/stories/groundbreaking/1.jpg",
+    "isHTML": true,
+    "totalSteps": 1,
+    "linkedPaths": [],
+    "paths": []
+  } 
+]

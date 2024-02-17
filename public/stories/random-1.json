@@ -1,0 +1,12 @@
+[
+  {
+    "id": "random-1",
+    "title": "Stardust",
+    "content": "<p>They say that these asteroids might contain some grains of stardust. Tiny motes that traveled all the way across the cosmos from other stellar systems, maybe even from Sol. </p><p>Despite that grandiose thought, all you know is that core sampling is certainly dusty work, and whether or not it is stardust doesn’t matter when it takes eons to clean it all off. </p><p>At least the Prime Council seems to understand the amount of time and effort it takes to not only core sample, but to clean up afterwards. They’ve sent your crew {{swayAmount}} SWAY as a bonus for doing some of Adalia’s dirty work.</p>",
+    "image": "influence/staging/images/stories/stardust/1.jpg",
+    "isHTML": true,
+    "totalSteps": 1,
+    "linkedPaths": [],
+    "paths": []
+  } 
+]

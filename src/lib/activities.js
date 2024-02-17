@@ -1,4 +1,4 @@
-import { Address, Building, Entity, Lot, Process, Product, Ship } from '@influenceth/sdk';
+import { Address, Building, Entity, Lot, Process, Product, RandomEvent, Ship } from '@influenceth/sdk';
 import { AiFillEdit as NameIcon } from 'react-icons/ai';
 import { BiTransfer as TransferIcon } from 'react-icons/bi';
 
@@ -43,6 +43,7 @@ import api from './api';
 import formatters from './formatters';
 import EntityName from '~/components/EntityName';
 import { formatResourceAmount, formatResourceMass } from '~/game/interface/hud/actionDialogs/components';
+import { RandomEventIcon } from '~/components/AnimatedIcons';
 
 const addressMaxWidth = '100px';
 
@@ -117,7 +118,7 @@ const getAgreementInvalidations = ({ event: { returnValues } }) => {
 };
 
 const getPolicyInvalidations = ({ event: { returnValues } }) => {
-  return invalidationDefaults(returnValues.entity);
+  return invalidationDefaults(returnValues.target);
 };
 
 // TODO: write a test to make sure all activities (from sdk) have a config
@@ -1075,6 +1076,26 @@ const activities = {
     // TODO: prepop as needed (i.e. if building name changed, to update lot)
   },
 
+  RandomEventResolved: {
+    getInvalidations: ({ event: { returnValues } }) => ([
+      ...invalidationDefaults(returnValues.callerCrew.label, returnValues.callerCrew.id),
+      [ 'swayBalance' ],
+    ]),
+
+    getLogContent: ({ event: { returnValues } }, viewingAs) => {
+      return {
+        icon: <RandomEventIcon isPaused />,
+        content: (
+          <>
+            <span><EntityLink {...returnValues.callerCrew} /> completed "{RandomEvent.TYPES[returnValues.randomEvent]?.name || 'Random Event'}"</span>
+          </>
+        ),
+      };
+    },
+
+    triggerAlert: true
+  },
+
   ResourceExtractionStarted: {
     getActionItem: ({ returnValues }, viewingAs, { extractor = {} }) => {
       const _location = locationsArrToObj(extractor?.Location?.locations || []);
@@ -1155,13 +1176,6 @@ const activities = {
 
     triggerAlert: true
   },
-
-  // OrderCreated,
-  // PrepaidPolicyAssigned,
-  // PrepaidPolicyRemoved,
-  // PublicPolicyAssigned,
-  // RemovedFromWhitelist,
-  // SaleOffered,
 
   ResourceScanFinished: {
     getInvalidations: ({ event: { returnValues } }) => ([

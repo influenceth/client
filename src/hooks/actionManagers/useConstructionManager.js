@@ -2,6 +2,7 @@ import { useCallback, useContext, useMemo } from 'react';
 import { Asteroid, Building, Entity, Lot } from '@influenceth/sdk';
 
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
+import useBlockTime from '~/hooks/useBlockTime';
 import useCrewContext from '~/hooks/useCrewContext';
 import useLot from '~/hooks/useLot';
 import useActionItems from '~/hooks/useActionItems';
@@ -9,8 +10,9 @@ import useAsteroid from '~/hooks/useAsteroid';
 import actionStage from '~/lib/actionStages';
 
 const useConstructionManager = (lotId) => {
-  const { actionItems, readyItems, liveBlockTime } = useActionItems();
+  const { actionItems, readyItems } = useActionItems();
   const { execute, getPendingTx, getStatus } = useContext(ChainTransactionContext);
+  const blockTime = useBlockTime();
   const { crew } = useCrewContext();
   const { data: lot } = useLot(lotId);
 
@@ -75,7 +77,7 @@ const useConstructionManager = (lotId) => {
         } else if (getStatus('ConstructionAbandon', payload) === 'pending') {
           status = 'CANCELING';
           stages.unplan = actionStage.COMPLETING;
-        } else if (lot.building.Building.plannedAt + Building.GRACE_PERIOD >= liveBlockTime) {
+        } else if (lot.building.Building.plannedAt + Building.GRACE_PERIOD >= blockTime) {
           status = 'PLANNED';
           stages.plan = actionStage.COMPLETED;
         } else {
@@ -102,7 +104,7 @@ const useConstructionManager = (lotId) => {
         if (getStatus('ConstructionFinish', payload) === 'pending') {
           status = 'FINISHING';
           stages.construct = actionStage.COMPLETING;
-        } else if (lot.building.Building.finishTime && (lot.building.Building.finishTime <= liveBlockTime)) {
+        } else if (lot.building.Building.finishTime && (lot.building.Building.finishTime <= blockTime)) {
           status = 'READY_TO_FINISH';
           stages.construct = actionStage.READY_TO_COMPLETE;
         } else {

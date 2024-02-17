@@ -15,6 +15,7 @@ import MainMenu from './interface/MainMenu';
 import RecruitCrewmate from './interface/RecruitCrewmate';
 import ListView from './interface/details/ListView';
 import AsteroidDetails from './interface/details/AsteroidDetails';
+import CrewAssignment from './interface/details/crewAssignments/Assignment';
 // import CrewAssignmentComplete from './interface/details/crewAssignments/Complete';
 import CrewmateDetails from './interface/details/CrewmateDetails';
 import Marketplace from './interface/details/Marketplace';
@@ -26,6 +27,7 @@ import CrewDetails from './interface/details/CrewDetails';
 import Intro from './Intro';
 import Cutscene from './Cutscene';
 import Launcher from './Launcher';
+import RandomEvent from './interface/RandomEvent';
 
 const StyledInterface = styled.div`
   align-items: stretch;
@@ -143,18 +145,9 @@ const Interface = () => {
           <Route path="/recruit/:crewId([0-9]+)/:locationId([0-9]+)?/:crewmateId([0-9]+)?/:page?">
             <RecruitCrewmate />
           </Route>
-
-          {/* TODO: deprecated?
-          <Route exact path="/crew-assignments/:id([a-z0-9]+)/:selected?">
-            <CrewAssignments />
+          <Route path="/random-event">
+            <RandomEvent />
           </Route>
-          */}
-          {/*
-          /crew-assignment/* will use the same components as /recruit/* 
-          <Route path="/crew-assignment/:crewmateId([0-9]+)/complete">
-            <CrewAssignmentComplete />
-          </Route>
-          */}
           <Route path="/marketplace/:asteroidId([0-9]+)/:lotIndex(all|[0-9]+)?/:discriminator?">
             <Marketplace />
           </Route>

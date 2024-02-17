@@ -216,6 +216,7 @@ const Footer = styled.div`
 const ChoicesDialog = ({
   choices,
   choicelessButton,
+  choicelessInFooter,
   content,
   contentOverride,
   coverImage,
@@ -223,6 +224,7 @@ const ChoicesDialog = ({
   dialogTitle,
   flourish,
   flourishWidth,
+  isHTML,
   isLoading,
   isLoadingChoice,
   leftButton,
@@ -269,9 +271,10 @@ const ChoicesDialog = ({
                   {contentOverride}
                   {!contentOverride && (
                     <BodyInner>
-                      {content && <PageContent>{content}</PageContent>}
+                      {content && !isHTML && <PageContent>{content}</PageContent>}
+                      {content && isHTML && <PageContent dangerouslySetInnerHTML={{ __html: content }} />}
                       {prompt && <PagePrompt>{prompt}</PagePrompt>}
-                      {choices && (
+                      {(choices && !((choices.length === 1 && !choices[0].text)) && choicelessButton) && (
                         <div>
                           {choices.map((choice, i) => (
                             <Path key={choice.id} onClick={onSelect(choice)}>
@@ -283,9 +286,10 @@ const ChoicesDialog = ({
                           ))}
                         </div>
                       )}
-                      {!choices && choicelessButton && (
+                      {(!choices || (choices.length === 1 && !choices[0].text)) && choicelessButton && !choicelessInFooter && (
                         <Button
                           onClick={choicelessButton.onClick}
+                          {...(choicelessButton.props || {})}
                           style={{ margin: '0 auto' }}>
                           {choicelessButton.label}
                         </Button>
@@ -307,7 +311,21 @@ const ChoicesDialog = ({
                     <Button {...(rightButton.props || {})} onClick={rightButton.onClick} subtle>{rightButton.label}</Button>
                   </div>
                 )
-                : <div />
+                : (
+                  (!choices || (choices.length === 1 && !choices[0].text)) && choicelessButton && choicelessInFooter 
+                  ? (
+                    <div style={{ alignItems: 'center', display: 'flex' }}>
+                      <Button
+                        subtle
+                        onClick={choicelessButton.onClick}
+                        {...(choicelessButton.props || {})}
+                        style={{ margin: '0 auto' }}>
+                        {choicelessButton.label}
+                      </Button>
+                    </div>
+                  )
+                  : <div />
+                )
               }
             </div>
           </Footer>

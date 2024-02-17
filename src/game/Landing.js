@@ -13,6 +13,7 @@ const redirect = (url) => {
 //      for anything else, we just remove the "/play" and send to the unprefixed-url
 const LandingPage = () => (
   <Switch>
+    {/* TODO: crew assignments in this form are deprecated -- see character recruitment and random events */}
     <Route
       path="/play/crew-assignment"
       render={() => redirect('https://discord.gg/nnVhHcdkmG')}

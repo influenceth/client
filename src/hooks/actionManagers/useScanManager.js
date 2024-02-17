@@ -3,10 +3,12 @@ import { Asteroid } from '@influenceth/sdk';
 
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
 import useActionItems from '~/hooks/useActionItems';
+import useBlockTime from '~/hooks/useBlockTime';
 import useCrewContext from '~/hooks/useCrewContext';
 
 const useScanManager = (asteroid) => {
-  const { readyItems, liveBlockTime } = useActionItems();
+  const { readyItems } = useActionItems();
+  const blockTime = useBlockTime();
   const { execute, getStatus } = useContext(ChainTransactionContext);
   const { crew } = useCrewContext();
 
@@ -33,7 +35,7 @@ const useScanManager = (asteroid) => {
       } else if (asteroid.Celestial.scanFinishTime > 0) {
         if(getStatus(finishSystem, payload) === 'pending') {
           return 'FINISHING';
-        } else if (asteroid.Celestial.scanFinishTime <= liveBlockTime) {
+        } else if (asteroid.Celestial.scanFinishTime <= blockTime) {
           return 'READY_TO_FINISH';
         }
         return 'SCANNING';
@@ -47,7 +49,7 @@ const useScanManager = (asteroid) => {
   //  that something might have just gone from UNDER_CONSTRUCTION to READY_TO_FINISH
   //  so it is a good time to re-evaluate the status
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ asteroid, getStatus, startSystem, finishSystem, payload, readyItems, scanType ]);
+  }, [ asteroid, blockTime, getStatus, startSystem, finishSystem, payload, readyItems, scanType ]);
 
   const startAsteroidScan = useCallback(
     () => execute(startSystem, payload),

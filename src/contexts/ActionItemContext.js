@@ -1,9 +1,8 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from 'react-query';
 import { Building } from '@influenceth/sdk';
 
 import useAuth from '~/hooks/useAuth';
-import useChainTime from '~/hooks/useChainTime';
 import useCrewContext from '~/hooks/useCrewContext';
 import useStore from '~/hooks/useStore';
 import api from '~/lib/api';
@@ -13,8 +12,7 @@ import useGetActivityConfig from '~/hooks/useGetActivityConfig';
 const ActionItemContext = React.createContext();
 
 export function ActionItemProvider({ children }) {
-  const { account, token, walletContext: { starknet } } = useAuth();
-  const chainTime = useChainTime();
+  const { account, token, walletContext: { blockTime } } = useAuth();
   const { crew } = useCrewContext();
   const getActivityConfig = useGetActivityConfig();
   const queryClient = useQueryClient();
@@ -37,49 +35,31 @@ export function ActionItemProvider({ children }) {
 
   const pendingTransactions = useStore(s => s.pendingTransactions);
   const failedTransactions = useStore(s => s.failedTransactions);
-  const [liveBlockTime, setLiveBlockTime] = useState(0);
   const [readyItems, setReadyItems] = useState([]);
   const [unreadyItems, setUnreadyItems] = useState([]);
   const [plannedItems, setPlannedItems] = useState([]);
 
-
-  // TODO: "Starknet could not be reached."
-  // TODO: if block time > 2m, error; if error, set error
-  const refetchBlockTime = useCallback(async (untilGreaterThan = 0) => {
-    if (starknet?.provider) {
-      let blockTimestamp = 0;
-      try {
-        const block = await starknet.provider.getBlock();
-        blockTimestamp = block?.timestamp;
-        setLiveBlockTime(blockTimestamp);
-      } catch(e) {
-        console.warn(e);
-      }
-
-      if (blockTimestamp < untilGreaterThan) {
-        setTimeout(() => {
-          refetchBlockTime(untilGreaterThan);
-        }, 3000); // TODO: exponential backoff might be appropriate
+  const randomEventItems = useMemo(() => {
+    if (crew?._actionTypeTriggered) {
+      if (!(pendingTransactions || []).find((tx) => tx.key === 'ResolveRandomEvent')) {
+        return [crew?._actionTypeTriggered];
       }
     }
-  }, [starknet?.provider]);
+    return [];
+  }, [crew?._actionTypeTriggered, pendingTransactions]);
 
   useEffect(() => {
-    refetchBlockTime();
-  }, [refetchBlockTime]);
-
-  useEffect(() => {
-    if (!liveBlockTime) return;
+    if (!blockTime) return;
 
     setReadyItems(
       (actionItems || [])
-        .filter((a) => a.event.name === 'DeliveryPackaged' || a.event.returnValues?.finishTime <= liveBlockTime)
+        .filter((a) => a.event.name === 'DeliveryPackaged' || a.event.returnValues?.finishTime <= blockTime)
         .sort((a, b) => a.event.returnValues?.finishTime - b.event.returnValues?.finishTime)
     );
 
     setUnreadyItems(
       (actionItems || [])
-        .filter((a) => a.event.returnValues?.finishTime > liveBlockTime)
+        .filter((a) => a.event.returnValues?.finishTime > blockTime)
         .sort((a, b) => a.event.returnValues?.finishTime - b.event.returnValues?.finishTime)
     );
 
@@ -90,34 +70,12 @@ export function ActionItemProvider({ children }) {
           const gracePeriodEnd = a.Building.plannedAt + Building.GRACE_PERIOD;
           return {
             ...a,
-            waitingFor: gracePeriodEnd > liveBlockTime ? gracePeriodEnd : null
+            waitingFor: gracePeriodEnd > blockTime ? gracePeriodEnd : null
           };
         })
         .sort((a, b) => a.plannedAt - b.plannedAt)
     );
-  }, [actionItems, plannedBuildings, liveBlockTime]);
-
-  const nextCompletionTime = useMemo(() => {
-    return [...plannedItems, ...unreadyItems].reduce((acc, cur) => {
-      const relevantTime = cur.waitingFor || cur.event?.returnValues?.finishTime;
-      if (relevantTime && relevantTime && (acc === null || relevantTime < acc)) {
-        return relevantTime;
-      }
-      return acc;
-    }, null);
-  }, [plannedItems, unreadyItems]);
-
-  useEffect(() => {
-    if (nextCompletionTime) {
-      const nextRefreshTime = (nextCompletionTime + 1);
-      const to = setTimeout(() => {
-        refetchBlockTime(nextCompletionTime);
-      }, Math.max(0, 1000 * (nextRefreshTime - chainTime)));
-      return () => {
-        if (to) clearTimeout(to);
-      }
-    }
-  }, [nextCompletionTime]);
+  }, [actionItems, plannedBuildings, blockTime]);
 
   const allVisibleItems = useMemo(() => {
     if (!account || !token) return [];
@@ -143,6 +101,7 @@ export function ActionItemProvider({ children }) {
     return [
       ...(pendingTransactions || []).map((item) => ({ ...item, type: 'pending' })),
       ...(failedTransactions || []).map((item) => ({ ...item, type: 'failed' })),
+      ...(randomEventItems || []).map((item) => ({ ...item, type: 'randomEvent' })),
       ...(visibleReadyItems || []).map((item) => ({ ...item, type: 'ready' })),
       ...(visiblePlannedItems || []).map((item) => ({ ...item, type: 'plans' })),
       ...(unreadyItems || []).map((item) => ({ ...item, type: 'unready' }))
@@ -151,7 +110,7 @@ export function ActionItemProvider({ children }) {
       return x;
     });
 
-  }, [pendingTransactions, failedTransactions, readyItems, plannedItems, unreadyItems, account, crew, token]);
+  }, [pendingTransactions, failedTransactions, randomEventItems, readyItems, plannedItems, unreadyItems, account, crew, token]);
 
 
   // TODO: clear timers in the serviceworker
@@ -160,9 +119,9 @@ export function ActionItemProvider({ children }) {
   // without memoizing, triggers as if new value on every chainTime update
   const contextValue = useMemo(() => ({
     allVisibleItems,
-    liveBlockTime,
     pendingTransactions,
     failedTransactions,
+    randomEventItems,
     readyItems,
     plannedItems,
     unreadyItems,
@@ -170,9 +129,9 @@ export function ActionItemProvider({ children }) {
     isLoading: actionItemsLoading || plannedBuildingsLoading
   }), [
     allVisibleItems,
-    liveBlockTime,
     pendingTransactions,
     failedTransactions,
+    randomEventItems,
     readyItems,
     plannedItems,
     unreadyItems,
