@@ -101,8 +101,6 @@ const AdminAsteroid = ({}) => {
               subtle>
               Download 3D Model
             </Button>
-
-            <Button subtle>Claim Crewmate Credit</Button>
           </ButtonArea>
         </HudMenuCollapsibleSection>
 
