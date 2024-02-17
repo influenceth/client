@@ -1828,7 +1828,19 @@ const getInventorySublabel = (inventoryType) => {
   }
 }
 
-export const InventorySelectionDialog = ({ asteroidId, otherEntity, otherInvSlot, isSourcing, itemIds, initialSelection, onClose, onSelected, open, requirePresenceOfItemIds }) => {
+export const InventorySelectionDialog = ({
+  asteroidId,
+  otherEntity,
+  otherInvSlot,
+  isSourcing,
+  itemIds,
+  initialSelection,
+  limitToPrimary,
+  onClose,
+  onSelected,
+  open,
+  requirePresenceOfItemIds
+}) => {
   const { crew } = useCrewContext();
 
   const [selection, setSelection] = useState(initialSelection);
@@ -1845,8 +1857,13 @@ export const InventorySelectionDialog = ({ asteroidId, otherEntity, otherInvSlot
 
   const inventories = useMemo(() => {
     const allInventoryEntities = [];
-    if (inventoryData) allInventoryEntities.push(...inventoryData);
-    if (crewedShip) allInventoryEntities.push(crewedShip);
+
+    if (limitToPrimary) {
+      allInventoryEntities.push(limitToPrimary);
+    } else {
+      if (inventoryData) allInventoryEntities.push(...inventoryData);
+      if (crewedShip) allInventoryEntities.push(crewedShip);
+    }
 
     const display = [];
     allInventoryEntities.forEach((entity) => {
@@ -1933,7 +1950,7 @@ export const InventorySelectionDialog = ({ asteroidId, otherEntity, otherInvSlot
                 <tr>
                   <td></td>{/* isMine */}
                   <td style={{ textAlign: 'left' }}>Name</td>
-                  <td>Distance</td>
+                  {!limitToPrimary &&<td>Distance</td>}
                   {isSourcing && specifiedItems && (
                     <td>
                       {soloItem ? `# ${Product.TYPES[soloItem].name}` : 'Needed Products'}
@@ -1951,7 +1968,7 @@ export const InventorySelectionDialog = ({ asteroidId, otherEntity, otherInvSlot
                       selectedRow={inv.key === selection}>
                       <td>{inv.isMine && <MyAssetIcon />}</td>
                       <td style={{ textAlign: 'left' }}>{inv.label}{inv.sublabel && <small> ({inv.sublabel})</small>} {inv.isShip && <ShipIcon />}</td>
-                      <td>{formatSurfaceDistance(inv.distance)}</td>
+                      {!limitToPrimary && <td>{formatSurfaceDistance(inv.distance)}</td>}
                       {isSourcing && specifiedItems && <td>{inv.itemTally.toLocaleString()}</td>}
                     </SelectionTableRow>
                   );
@@ -3142,7 +3159,18 @@ const Overloaded = styled.div`
   text-transform: uppercase;
 `;
 
-export const InventoryInputBlock = ({ entity, isSourcing, inventorySlot, transferMass = 0, transferVolume = 0, fallbackLabel = 'Select', fallbackSublabel = 'Inventory', imageProps = {}, sublabel, ...props }) => {
+export const InventoryInputBlock = ({
+  entity,
+  isSourcing,
+  inventorySlot,
+  transferMass = 0,
+  transferVolume = 0,
+  fallbackLabel = 'Select',
+  fallbackSublabel = 'Inventory',
+  imageProps = {},
+  sublabel,
+  ...props
+}) => {
   const inventory = useMemo(() => {
     if (entity && inventorySlot) {
       return entity.Inventories.find((i) => i.slot === inventorySlot);
@@ -3207,7 +3235,7 @@ export const InventoryInputBlock = ({ entity, isSourcing, inventorySlot, transfe
       sublabel={(
         <>
           {params.sublabel || fallbackSublabel}
-          {destinationOverloaded && <Overloaded>Insufficient Capacity</Overloaded>}
+          {destinationOverloaded && <Overloaded>Over Capacity</Overloaded>}
         </>
       )}
       {...props}

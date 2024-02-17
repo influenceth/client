@@ -70,7 +70,7 @@ const StationCrew = ({ asteroid, destination: rawDestination, lot, origin: rawOr
   }, [crew]);
 
   const origin = useMemo(() => {
-    if (!rawOrigin) return {};
+    if (!rawOrigin) return null;
     const newOrigin = cloneDeep(rawOrigin);
     newOrigin._location = locationsArrToObj(newOrigin?.Location?.locations || []);
     newOrigin._inOrbit = !newOrigin?._location.lotId;
@@ -79,7 +79,7 @@ const StationCrew = ({ asteroid, destination: rawDestination, lot, origin: rawOr
   }, [rawOrigin]);
 
   const destination = useMemo(() => {
-    if (!rawDestination) return {};
+    if (!rawDestination) return null;
     const newDestination = cloneDeep(rawDestination);
     newDestination._location = locationsArrToObj(newDestination?.Location?.locations || []);
     newDestination._inOrbit = !newDestination?._location.lotId;
