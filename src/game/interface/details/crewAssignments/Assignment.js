@@ -101,7 +101,7 @@ const AdalianFlourish = styled.div`
 
 const REQUIRE_CONFIRM = false;
 
-const CrewAssignment = ({ crewId, crewmateId, onFinish, overrides = {} }) => {
+const CrewAssignment = ({ crewId, crewmateId, crewmateMap, onFinish, overrides = {} }) => {
   const { crew } = useCrewContext();
   const history = useHistory();
 

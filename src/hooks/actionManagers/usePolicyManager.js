@@ -25,7 +25,6 @@ const usePolicyManager = (target, permission) => {
 
   const currentPolicy = useMemo(() => {
     if (!target) return undefined;
-    
     const pol = Permission.getPolicyDetails(target, crew?.id)[permission];
 
     if (pol?.policyDetails && pol.policyType === Permission.POLICY_IDS.CONTRACT) pol.policyDetails.contract = pol.policyDetails.address;

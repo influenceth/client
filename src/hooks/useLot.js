@@ -3,7 +3,6 @@ import { useMemo } from 'react';
 import { Deposit, Entity, Lot, Permission, Ship } from '@influenceth/sdk';
 
 import api from '~/lib/api';
-import { locationsArrToObj } from '~/lib/utils';
 import useEntity from './useEntity';
 
 // const useLot = (lotId) => {
@@ -112,7 +111,7 @@ const useLot = (lotId) => {
           if (p.permission === Permission.IDS.LOT_USE && asteroid.id === 1) {
             return {
               ...p,
-              rate: Permission.getAdaliaPrimeLotRate(p, lotIndex)
+              rate: Math.floor(Permission.getAdaliaPrimeLotRate(p, lotIndex))
             }
           }
           return p;

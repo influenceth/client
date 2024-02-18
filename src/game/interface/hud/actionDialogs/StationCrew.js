@@ -5,7 +5,6 @@ import { Asteroid, Building, Crewmate, Entity, Permission, Station, Time } from 
 
 import { StationCrewIcon, StationPassengersIcon } from '~/components/Icons';
 import useCrewContext from '~/hooks/useCrewContext';
-import useShip from '~/hooks/useShip';
 import { reactBool, formatTimer, locationsArrToObj, getCrewAbilityBonuses } from '~/lib/utils';
 
 import {
@@ -29,35 +28,14 @@ import useLot from '~/hooks/useLot';
 import useStore from '~/hooks/useStore';
 import { ActionDialogInner } from '../ActionDialog';
 import actionStages from '~/lib/actionStages';
-import theme, { hexToRGB } from '~/theme';
+import theme from '~/theme';
 import useCrew from '~/hooks/useCrew';
 import useAsteroid from '~/hooks/useAsteroid';
-import useAsteroidShips from '~/hooks/useAsteroidShips';
 import CrewIndicator from '~/components/CrewIndicator';
 import useStationCrewManager from '~/hooks/actionManagers/useStationCrewManager';
 import useEntity from '~/hooks/useEntity';
 
-const Warning = styled.div`
-  align-items: center;
-  background: rgba(${p => hexToRGB(p.theme.colors.orange)}, 0.3);
-  color: ${p => p.theme.colors.orange};
-  display: flex;
-  flex-direction: row;
-  padding: 10px;
-  & > svg {
-    font-size: 30px;
-    margin-right: 12px;
-  }
-`;
-const Note = styled.div`
-  color: white;
-  font-size: 95%;
-  padding: 15px 10px 10px;
-`;
-
 const StationCrew = ({ asteroid, destination: rawDestination, lot, origin: rawOrigin, stationCrewManager, stage, ...props }) => {
-  const createAlert = useStore(s => s.dispatchAlertLogged);
-
   const { stationCrew } = stationCrewManager;
   const { crew, crewCan } = useCrewContext();
 
@@ -94,7 +72,7 @@ const StationCrew = ({ asteroid, destination: rawDestination, lot, origin: rawOr
   const { data: originLot } = useLot(origin?._location?.lotId);
 
   const [travelDistance, travelTime] = useMemo(() => {
-    if (!origin || !destination) return [0, 0];
+    if (!origin._location || !destination._location) return [0, 0];
     return [
       Asteroid.getLotDistance(asteroid?.id, origin._location.lotIndex, destination._location.lotIndex),
       Time.toRealDuration(
@@ -297,10 +275,12 @@ const Wrapper = (props) => {
 
     if (zoomScene?.type === 'SHIP' && zoomScene.shipId) {
       return { label: Entity.IDS.SHIP, id: zoomScene.shipId };
-    } else if (lot?.building) {
+    } else if (lot?.building && lot?.building?.Building?.buildingType === Building.TYPES.HABITAT) {
       return { label: Entity.IDS.BUILDING, id: lot?.building.id };
     } else if (lot?.surfaceShip) {
       return { label: Entity.IDS.SHIP, id: lot?.surfaceShip.id };
+    } else if (lot?.ships?.length === 1) {
+      return { label: Entity.IDS.SHIP, id: lot?.ships[0].id };
     } else if (lotId) {
       return { label: Entity.IDS.LOT, id: lotId };
     }
