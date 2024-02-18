@@ -226,7 +226,8 @@ const StationCrew = ({ asteroid, destination: rawDestination, lot, origin: rawOr
           </div>
         </FlexSection>
 
-        {!crewIsOwner && (
+        {/* turn this back on when payments are supported */}
+        {false && !crewIsOwner && (
           <FlexSection style={{ alignItems: 'flex-start' }}>
             <SwayInputBlock
               title="Sway Payment"
@@ -247,7 +248,12 @@ const StationCrew = ({ asteroid, destination: rawDestination, lot, origin: rawOr
       </ActionDialogBody>
 
       <ActionDialogFooter
-        disabled={!destination || !stationConfig || !crewCan(Permission.IDS.STATION_CREW, destination) || (stationConfig.hardCap && destination.Station.population + crew?.Crew?.roster?.length > stationConfig.cap)}
+        disabled={
+          !destination ||
+          !stationConfig ||
+          !crewCan(Permission.IDS.STATION_CREW, destination) ||
+          (stationConfig.cap && destination.Station.population + crew?.Crew?.roster?.length > stationConfig.cap)
+        }
         goLabel="Station"
         onGo={onStation}
         stage={stage}

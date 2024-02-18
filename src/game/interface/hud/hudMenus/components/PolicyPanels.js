@@ -25,10 +25,12 @@ const Desc = styled.div`
   font-size: 90%;
   height: 38px;
 `;
+
 const EditBlock = styled.div`
   border-top: 1px solid ${borderColor};
   padding: 10px 0;
 `;
+
 const DataRow = styled.div`
   align-items: center;
   color: white;
@@ -40,6 +42,7 @@ const DataRow = styled.div`
     opacity: 0.5;
   }
 `;
+
 const Section = styled.div`
   border-top: 1px solid ${borderColor};
   padding: 10px 0;
@@ -56,6 +59,7 @@ const PolicySelector = styled.div`
     padding: 8px 0 0;
   }
 `;
+
 const Policy = styled.div`
   align-items: center;
   display: flex;
@@ -94,6 +98,7 @@ const Policy = styled.div`
     `
   }
 `;
+
 const PrepaidInputBlock = styled(InputBlock)`
   & label {
     color: white;
@@ -116,6 +121,7 @@ const Allowlist = styled.div`
   max-height: 250px;
   overflow: hidden auto;
 `;
+
 const AllowCrew = styled.div`
   align-items: center;
   color: white;
@@ -140,6 +146,7 @@ const PermSummary = styled.div`
     margin-right: 4px;
   }
 `;
+
 const PermSummaryWarning = styled(PermSummary)`
   color: ${p => p.theme.colors.error};
   padding-bottom: 5px;

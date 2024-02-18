@@ -7,7 +7,6 @@ import useStore from '~/hooks/useStore';
 import { HudMenuCollapsibleSection, Scrollable } from './components/components';
 import EntityNameForm from './components/EntityNameForm';
 import ShipTitleArea from './components/ShipTitleArea';
-import EntityDescriptionForm from './components/EntityDescriptionForm';
 import PolicyPanels from './components/PolicyPanels';
 
 const AdminShip = ({}) => {
