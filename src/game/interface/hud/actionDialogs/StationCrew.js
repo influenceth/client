@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react';
-import styled from 'styled-components';
 import cloneDeep from 'lodash/cloneDeep';
 import { Asteroid, Building, Crewmate, Entity, Permission, Station, Time } from '@influenceth/sdk';
 
@@ -275,7 +274,7 @@ const Wrapper = (props) => {
 
     if (zoomScene?.type === 'SHIP' && zoomScene.shipId) {
       return { label: Entity.IDS.SHIP, id: zoomScene.shipId };
-    } else if (lot?.building && lot?.building?.Building?.buildingType === Building.TYPES.HABITAT) {
+    } else if (lot?.building && lot?.building?.Building?.buildingType === Building.IDS.HABITAT) {
       return { label: Entity.IDS.BUILDING, id: lot?.building.id };
     } else if (lot?.surfaceShip) {
       return { label: Entity.IDS.SHIP, id: lot?.surfaceShip.id };
@@ -284,6 +283,7 @@ const Wrapper = (props) => {
     } else if (lotId) {
       return { label: Entity.IDS.LOT, id: lotId };
     }
+
     return { label: Entity.IDS.ASTEROID, id: asteroidId };
   }, [asteroidId, lot?.building, lot?.surfaceShip, lotId, zoomScene]);
 
