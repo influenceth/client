@@ -1,5 +1,5 @@
 import { createContext, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Asteroid, Entity, Order, System } from '@influenceth/sdk';
+import { Asteroid, Entity, Order, RandomEvent, System } from '@influenceth/sdk';
 import { isEqual, get } from 'lodash';
 import { hash } from 'starknet';
 
@@ -454,7 +454,7 @@ export function ChainTransactionProvider({ children }) {
   const prependEventAutoresolve = useMemo(
     () => crew?.Crew?.actionType
       && crew?.Crew?.actionRound
-      && crew?.Crew?.actionRound <= blockNumber
+      && (crew?.Crew?.actionRound + RandomEvent.MIN_ROUNDS) <= blockNumber
       && !crew?._actionTypeTriggered,
     [blockNumber, crew]
   );

@@ -60,14 +60,12 @@ const LotInfo = () => {
               </Description>
             </HudMenuCollapsibleSection>
 
-            {lot.building.Building?.status < Building.CONSTRUCTION_STATUSES.OPERATIONAL && (
-              <HudMenuCollapsibleSection titleText={`${siteOrBuilding} Permissions`} collapsed>
-                <div style={{ marginBottom: 10 }}>
-                  <CrewIndicator crew={controller} label={`${siteOrBuilding} Controller`} />
-                </div>
-                <PolicyPanels entity={lot?.building} />
-              </HudMenuCollapsibleSection>
-            )}
+            <HudMenuCollapsibleSection titleText={`${siteOrBuilding} Permissions`} collapsed>
+              <div style={{ marginBottom: 10 }}>
+                <CrewIndicator crew={controller} label={`${siteOrBuilding} Controller`} />
+              </div>
+              <PolicyPanels entity={lot?.building} />
+            </HudMenuCollapsibleSection>
           </>
         )}
 
