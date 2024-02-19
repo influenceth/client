@@ -34,29 +34,34 @@ import useShipDockingManager from '~/hooks/actionManagers/useShipDockingManager'
 import useAsteroid from '~/hooks/useAsteroid';
 import { getBonusDirection } from './components';
 import { TimeBonusTooltip } from './components';
+import useStationedCrews from '~/hooks/useStationedCrews';
 
 
 const propellantProduct = Product.TYPES[Product.IDS.HYDROGEN_PROPELLANT];
 
-const LaunchShip = ({ asteroid, originLot, manager, ship, stage, ...props }) => {
+const LaunchShip = ({ asteroid, originLot, manager, ship, shipCrews, stage, ...props }) => {
   const createAlert = useStore(s => s.dispatchAlertLogged);
 
   const { currentUndockingAction, undockShip } = manager;
   const { crew } = useCrewContext();
 
+  const isForceLaunch = crew?.id !== ship?.Control?.controller?.id;
+  // TODO: in event of self-piloted launch, need to update with cached crew values on flightCrew (just like in other action dialogs while waiting on an action)
+  const flightCrew = useMemo(() => shipCrews.find((c) => c.id === ship.Control?.controller?.id), [shipCrews, ship]);
+
   // TODO: should this default to hopper-assisted if no propellant?
-  const [powered, setPowered] = useState(true);
+  const [powered, setPowered] = useState(isForceLaunch ? false : true);
   const [tab, setTab] = useState(0);
 
   const crewmates = currentUndockingAction?._crewmates || crew?._crewmates || [];
   const captain = crewmates[0];
 
   const [hopperBonus, propellantBonus] = useMemo(() => {
-    if (!crew) return {};
+    if (!flightCrew) return {};
     const bonusIds = [Crewmate.ABILITY_IDS.HOPPER_TRANSPORT_TIME, Crewmate.ABILITY_IDS.PROPELLANT_FLOW_RATE];
-    const abilities = getCrewAbilityBonuses(bonusIds, crew) || {};
+    const abilities = getCrewAbilityBonuses(bonusIds, flightCrew) || {};
     return bonusIds.map((id) => abilities[id] || {});
-  }, [crew]);
+  }, [flightCrew]);
 
   const [escapeVelocity, propellantRequirement, poweredTime, tugTime] = useMemo(() => {
     if (!ship || !asteroid) return [0, 0, 0, 0];
@@ -125,8 +130,8 @@ const LaunchShip = ({ asteroid, originLot, manager, ship, stage, ...props }) => 
   ]), [escapeVelocity, hopperBonus, launchTime, propellantRequirement, ship]);
 
   const onLaunch = useCallback(() => {
-    undockShip();
-  }, []);
+    undockShip(!powered);
+  }, [powered, undockShip]);
 
   // handle auto-closing
   const lastStatus = useRef();
@@ -143,7 +148,7 @@ const LaunchShip = ({ asteroid, originLot, manager, ship, stage, ...props }) => 
       <ActionDialogHeader
         action={{
           icon: <LaunchShipIcon />,
-          label: 'Launch Ship',
+          label: `${isForceLaunch ? 'Force ' : ''}Launch Ship`,
           status: stage === actionStages.NOT_STARTED ? 'Send to Orbit' : undefined,
         }}
         captain={captain}
@@ -151,7 +156,7 @@ const LaunchShip = ({ asteroid, originLot, manager, ship, stage, ...props }) => 
         crewAvailableTime={crewTimeRequirement}
         taskCompleteTime={taskTimeRequirement}
         onClose={props.onClose}
-        overrideColor={stage === actionStages.NOT_STARTED ? theme.colors.main : undefined}
+        overrideColor={stage === actionStages.NOT_STARTED ? (isForceLaunch ? theme.colors.red : theme.colors.main) : undefined}
         stage={stage} />
 
       <ActionDialogBody>
@@ -184,43 +189,47 @@ const LaunchShip = ({ asteroid, originLot, manager, ship, stage, ...props }) => 
               />
             </FlexSection>
 
-            <FlexSection style={{ marginBottom: -15 }}>
-              <PropulsionTypeSection
-                objectLabel="Launch"
-                onSetPowered={(x) => setPowered(x)}
-                powered={powered}
-                propulsiveTime={poweredTime}
-                tugTime={tugTime} />
-
-              <FlexSectionSpacer />
-
-              <PropellantSection
-                title="Propellant"
-                deltaVLoaded={deltaVLoaded}
-                deltaVRequired={powered ? escapeVelocity : 0}
-                propellantLoaded={propellantLoaded}
-                propellantRequired={powered ? propellantRequirement : 0}
-                narrow
-              />
-            </FlexSection>
-
-            {/* TODO: only need "port traffic" bar if launching from spaceport AND there is > 0 traffic (see also: landing) */}
-            {stage === actionStages.NOT_STARTED && (
+            {isForceLaunch ? null : (
               <>
-                <ProgressBarSection
-                  overrides={{
-                    barColor: theme.colors.lightOrange,
-                    color: theme.colors.lightOrange,
-                    left: <><WarningOutlineIcon /> Launch Delay</>,
-                    right: formatTimer(0) // TODO: ...
-                  }}
-                  stage={stage}
-                  title="Port Traffic"
-                />
-                <ProgressBarNote themeColor="lightOrange">
-                  {/* TODO: ... */}
-                  <b>0 ships</b> are queued to launch ahead of you.
-                </ProgressBarNote>
+                <FlexSection style={{ marginBottom: -15 }}>
+                  <PropulsionTypeSection
+                    objectLabel="Launch"
+                    onSetPowered={(x) => setPowered(x)}
+                    powered={powered}
+                    propulsiveTime={poweredTime}
+                    tugTime={tugTime} />
+
+                  <FlexSectionSpacer />
+
+                  <PropellantSection
+                    title="Propellant"
+                    deltaVLoaded={deltaVLoaded}
+                    deltaVRequired={powered ? escapeVelocity : 0}
+                    propellantLoaded={propellantLoaded}
+                    propellantRequired={powered ? propellantRequirement : 0}
+                    narrow
+                  />
+                </FlexSection>
+
+                {/* TODO: only need "port traffic" bar if launching from spaceport AND there is > 0 traffic (see also: landing) */}
+                {stage === actionStages.NOT_STARTED && (
+                  <>
+                    <ProgressBarSection
+                      overrides={{
+                        barColor: theme.colors.lightOrange,
+                        color: theme.colors.lightOrange,
+                        left: <><WarningOutlineIcon /> Launch Delay</>,
+                        right: formatTimer(0) // TODO: ...
+                      }}
+                      stage={stage}
+                      title="Port Traffic"
+                    />
+                    <ProgressBarNote themeColor="lightOrange">
+                      {/* TODO: ... */}
+                      <b>0 ships</b> are queued to launch ahead of you.
+                    </ProgressBarNote>
+                  </>
+                )}
               </>
             )}
           </>
@@ -228,7 +237,7 @@ const LaunchShip = ({ asteroid, originLot, manager, ship, stage, ...props }) => 
 
         {tab === 1 && (
           <ShipTab
-            pilotCrew={{ ...crew, roster: crewmates }}
+            pilotCrew={flightCrew}
             deltas={{
               propellantMass: powered ? -propellantRequirement : 0,
               propellantVolume: powered ? -(propellantRequirement * propellantProduct.volumePerUnit / propellantProduct.massPerUnit) : 0,
@@ -260,10 +269,12 @@ const Wrapper = (props) => {
   const dockingManager = useShipDockingManager(props.shipId);
   const { actionStage, currentUndockingAction } = dockingManager;
 
+  const { data: shipCrews, isLoading: shipCrewsLoading } = useStationedCrews(ship, true);
+
   const { data: asteroid, isLoading: asteroidIsLoading } = useAsteroid(currentUndockingAction?.meta?.asteroidId || ship?._location?.asteroidId);
   const { data: originLot, isLoading: originLotIsLoading } = useLot(currentUndockingAction?.meta?.lotId || ship?._location?.lotId);
 
-  const isLoading = shipIsLoading || asteroidIsLoading || originLotIsLoading;
+  const isLoading = shipIsLoading || asteroidIsLoading || originLotIsLoading || shipCrewsLoading;
 
   useEffect(() => {
     if (!asteroid || !originLot || !ship) {
@@ -283,6 +294,7 @@ const Wrapper = (props) => {
         manager={dockingManager}
         originLot={originLot}
         ship={ship}
+        shipCrews={shipCrews}
         stage={actionStage}
         {...props} />
     </ActionDialogInner>

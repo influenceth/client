@@ -7,6 +7,7 @@ import CoreSample from './CoreSample';
 import Deconstruct from './Deconstruct';
 import EjectCrew from './EjectCrew';
 import EjectGuestCrew from './EjectGuestCrew';
+import EjectShip from './EjectShip';
 import EmergencyModeCollect from './EmergencyModeCollect';
 import EmergencyModeToggle from './EmergencyModeToggle';
 import EndAgreement from './EndAgreement';
@@ -41,6 +42,7 @@ const ActionsButtons = {
   EmergencyModeToggle,
   EjectCrew,
   EjectGuestCrew,
+  EjectShip,
   EndAgreement,
   ExtendAgreement,
   Extract,
