@@ -696,7 +696,7 @@ const formatAsTx = (item) => {
       formatted.lotId = item.meta?.lotId;
       formatted.shipId = item.meta?.shipId;
       formatted.onClick = ({ openDialog }) => {
-        openDialog(isGuests ? 'EJECT_GUEST_CREW' : 'EJECT_CREW', { originId: item.meta?.originId });
+        openDialog(isGuests ? 'EJECT_GUEST_CREW' : 'EJECT_CREW', { origin: item.meta?.origin });
       };
       break;
     }
