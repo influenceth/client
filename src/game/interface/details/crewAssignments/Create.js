@@ -51,6 +51,18 @@ const CollectionImages = {
   4: Collection4,
 };
 
+const CloseButton = styled(IconButton)`
+  position: absolute !important;
+  top: 8px;
+  right: 0px;
+  z-index: 1;
+  ${p => p.hasBackground ? 'background: rgba(0, 0, 0, 0.75);' : ''}
+
+  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
+    right: 0;
+  }
+`;
+
 const blinkingBackground = (p) => keyframes`
   0% {
     background-color: #000;
@@ -714,14 +726,17 @@ const MouseoverInfoContent = ({ title, description }) => (
   </MouseoverContent>
 );
 
-const ClassSelector = ({ classObjects, crewmate, onUpdateClass }) => {
+const ClassSelector = ({ classObjects, crewmate, onUpdateClass, onClose }) => {
   const [hovered, setHovered] = useState();
 
   const classDisplay = useMemo(() => classObjects[hovered || crewmate?.Crewmate?.class], [hovered, crewmate?.Crewmate?.class])
 
   return (
     <MouseoverContent>
-      <MouseoverHighlightTitle>Select Class</MouseoverHighlightTitle>
+      <MouseoverHighlightTitle>
+        Select Class
+        <CloseButton onClick={onClose} hasBackground={false} borderless><CloseIcon /></CloseButton>
+      </MouseoverHighlightTitle>
       <ClassSelectionArea>
         {Object.values(Crewmate.CLASS_IDS).map((classId) => (
           <SelectableClass
@@ -750,7 +765,7 @@ const ClassSelector = ({ classObjects, crewmate, onUpdateClass }) => {
   );
 };
 
-const TraitSelector = ({ crewmate, currentTraits, onUpdateTraits, traitIndex }) => {
+const TraitSelector = ({ crewmate, currentTraits, onUpdateTraits, onClose, traitIndex }) => {
   const changeTrait = currentTraits[traitIndex];
   const priorTraits = currentTraits.slice(0, traitIndex).map((t) => t.id);
   const options = useMemo(() => {
@@ -771,7 +786,10 @@ const TraitSelector = ({ crewmate, currentTraits, onUpdateTraits, traitIndex }) 
 
   return (
     <MouseoverContent>
-      <MouseoverHighlightTitle>Available Traits</MouseoverHighlightTitle>
+      <MouseoverHighlightTitle>
+        Available Traits
+        <CloseButton onClick={onClose} hasBackground={false} borderless><CloseIcon /></CloseButton>
+      </MouseoverHighlightTitle>
       <TraitSelectionArea>
         {options.map((t) => (
           <SelectableTrait
@@ -1325,6 +1343,7 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
                           referenceEl={refEl}
                           {...mouseoverPaneProps(toggling === 'class', true)}>
                           <ClassSelector
+                            onClose={setToggling}
                             classObjects={classObjects}
                             crewmate={crewmate}
                             onUpdateClass={onUpdateClass} />
@@ -1384,6 +1403,7 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
                                     referenceEl={refEl}
                                     {...mouseoverPaneProps(toggling === hoverKey, true)}>
                                     <TraitSelector
+                                      onClose={setToggling}
                                       crewmate={crewmate}
                                       currentTraits={traitObjects}
                                       traitIndex={traitIndex}
