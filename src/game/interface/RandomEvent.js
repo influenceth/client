@@ -50,7 +50,7 @@ const SwayResult = ({ swayAmount }) => {
           <div>Your crew have earned <b>{' '}SWAY</b>.</div>
         </div>
         <div>
-          <SwayHighlight><SwayIcon /> {formatFixed(swayAmount || 0)}</SwayHighlight>
+          <SwayHighlight><SwayIcon /> {swayAmount}</SwayHighlight>
         </div>
       </ResultInner>
     </FlexSectionInputBlock>
@@ -65,7 +65,7 @@ const RandomEventAssignment = () => {
   const randomEvent = crew?._actionTypeTriggered?.pendingEvent;
 
   const pendingTransactions = useStore(s => s.pendingTransactions);
-  const { bookTokens, isLoading: bookTokensLoading } = useBookTokens(bookIds[`RANDOM_${randomEvent}`]);
+  const { bookTokens } = useBookTokens(bookIds[`RANDOM_${randomEvent}`]);
   const [finishing, setFinishing] = useState(false);
 
   const isPending = useMemo(
@@ -98,7 +98,7 @@ const RandomEventAssignment = () => {
         finishButtonProps: { isTransaction: true } // TODO: loading...
       }
     }
-  }, [finishing, isPending, onAccept]);
+  }, [bookTokens, finishing, isPending, onAccept]);
 
   return (
     <CrewAssignment
