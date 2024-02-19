@@ -15,11 +15,9 @@ const useDeliveries = ({ destination, destinationSlot, origin, originSlot, deliv
     if (deliveryId) {
       return { ids: [deliveryId] };
     } else if (destination) {
-      const { id, label } = destination;
-      return { match: { 'Delivery.dest': { id, label } } };
+      return { match: { 'Delivery.dest.uuid': destination.uuid } };
     } else if (origin) {
-      const { id, label } = origin;
-      return { match: { 'Delivery.origin': { id, label } } };
+      return { match: { 'Delivery.origin.uuid': origin.uuid } };
     }
     return null;
   }, [destination, origin, deliveryId]);
@@ -29,9 +27,9 @@ const useDeliveries = ({ destination, destinationSlot, origin, originSlot, deliv
     async () => {
       const deliveries = await api.getEntities({ label: Entity.IDS.DELIVERY, ...query });
       return deliveries.filter((d) => {
-        if (destination && d.Delivery.dest.id !== destination.id) return false;
+        if (destination && d.Delivery.dest.uuid !== destination.uuid) return false;
         if (destinationSlot && d.Delivery.destSlot !== destinationSlot) return false;
-        if (origin && d.Delivery.origin.id !== origin.id) return false;
+        if (origin && d.Delivery.origin.uuid !== origin.uuid) return false;
         if (originSlot && d.Delivery.originSlot !== originSlot) return false;
         return true;
       });

@@ -19,6 +19,8 @@ import useCrewContext from '~/hooks/useCrewContext';
 import useLot from '~/hooks/useLot';
 import LiveTimer from '~/components/LiveTimer';
 import useConstructionManager from '~/hooks/actionManagers/useConstructionManager';
+import useCrew from '~/hooks/useCrew';
+import EntityLink from '~/components/EntityLink';
 
 const borderColor = `rgba(255, 255, 255, 0.15)`;
 const DataBlock = styled.div``;
@@ -144,8 +146,12 @@ const PermSummary = styled.div`
   font-size: 15px;
   padding-bottom: 15px;
   & > svg {
+    flex: 0 0 24px;
     font-size: 24px;
     margin-right: 8px;
+  }
+  & a {
+    color: inherit;
   }
 `;
 
@@ -571,7 +577,7 @@ const PolicyPanels = ({ editable, entity }) => {
     return !(lotPerm?.crewStatus === 'controller' || lotPerm?.crewStatus === 'granted');
   }, [lot]);
 
-  const buildingOrSite = useMemo(() => lot?.building?.Building?.status < Building.CONSTRUCTION_STATUSES.OPERATIONAL ? 'Site' : 'Building', [lot]);
+  const buildingOrSite = useMemo(() => lot?.building?.Building?.status < Building.CONSTRUCTION_STATUSES.OPERATIONAL ? 'Construction Site' : 'Building', [lot]);
 
   const showStagingWarning = useMemo(() => {
     if (isAtRisk) {
@@ -595,9 +601,9 @@ const PolicyPanels = ({ editable, entity }) => {
 
   return (
     <div>
-      {showLotWarning && <PermSummaryWarning style={{ paddingBottom: 5 }}><WarningIcon /> Lot not controlled. {buildingOrSite} is at risk.</PermSummaryWarning>}
-      {showStagingWarning === 2 && <PermSummaryWarning><WarningIcon /> Staging Time expired. Site is Abandoned.</PermSummaryWarning>}
-      {showStagingWarning === 1 && <PermSummary><WarningIcon /> <LiveTimer target={lot?.building?.Building?.plannedAt + Building.GRACE_PERIOD} maxPrecision={2} /> Staging Time Remaining</PermSummary>}
+      {showLotWarning && <PermSummaryWarning style={{ paddingBottom: 10 }}><WarningIcon /><span>Lot not controlled. {buildingOrSite} is vulnerable to <EntityLink {...(lot?.Control?.controller || {})} />.</span></PermSummaryWarning>}
+      {showStagingWarning === 2 && <PermSummaryWarning><WarningIcon /><span>Staging Time expired. Construction Site is vulnerable to any crew.</span></PermSummaryWarning>}
+      {showStagingWarning === 1 && <PermSummary><WarningIcon /><span><LiveTimer target={lot?.building?.Building?.plannedAt + Building.GRACE_PERIOD} maxPrecision={2} /> Staging Time Remaining</span></PermSummary>}
 
       {(crewHasAgreements || crewCanMakeAgreements) && (
         <PermSummary success={crewHasAgreements}>

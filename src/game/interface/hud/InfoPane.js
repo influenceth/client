@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import styled, { css, keyframes } from 'styled-components';
-import { Asteroid, Entity } from '@influenceth/sdk';
+import { Asteroid, Building, Entity } from '@influenceth/sdk';
 import { FaSearchPlus as DetailsIcon } from 'react-icons/fa';
 import ReactTooltip from 'react-tooltip';
 
@@ -27,6 +27,7 @@ import { getBuildingIcon, getShipIcon } from '~/lib/assetUtils';
 import formatters from '~/lib/formatters';
 import useSale from '~/hooks/useSale';
 import useShip from '~/hooks/useShip';
+import LiveTimer from '~/components/LiveTimer';
 
 
 const opacityAnimation = keyframes`
@@ -428,10 +429,15 @@ const InfoPane = () => {
         pane.thumbVisible = true;
         pane.thumbnail = (
           <ThumbBackground image={thumbUrl}>
-            {isAtRisk && (
-              <ThumbBanner color="error">
-                {lot.Control?.controller?.id === crew?.id ? 'At Risk' : 'Abandoned'}
-              </ThumbBanner>
+            {isIncompleteBuilding && (
+              <>
+                {lot?.building?.Building?.status === Building.CONSTRUCTION_STATUSES.UNDER_CONSTRUCTION
+                ? <ThumbBanner color="main">Under Construction</ThumbBanner>
+                : (isAtRisk
+                  ? <ThumbBanner color="error">Expired</ThumbBanner>
+                  : <ThumbBanner color="warning"><LiveTimer target={lot?.building?.Building?.plannedAt + Building.GRACE_PERIOD} /></ThumbBanner>
+                )}
+              </>
             )}
           </ThumbBackground>
         );

@@ -63,8 +63,8 @@ import { theming } from '../ActionDialog';
 import ThumbnailWithData from '~/components/AssetThumbnailWithData';
 import AssetBlock, { assetBlockCornerSize } from '~/components/AssetBlock';
 import LiveReadyStatus from '~/components/LiveReadyStatus';
-import useCrew from '~/hooks/useCrew';
 import useConstructionManager from '~/hooks/actionManagers/useConstructionManager';
+import EntityName from '~/components/EntityName';
 
 
 const SECTION_WIDTH = 780;
@@ -2037,7 +2037,7 @@ export const getBuildingRequirements = (building = {}, deliveryActions = []) => 
     const inInventory = (inventory?.contents || []).find((c) => Number(c.product) === Number(productId))?.amount || 0;
     const inTransit = deliveryActions
       .filter((d) => d.status !== 'FINISHED')
-      .reduce((acc, d) => acc + (d.action.contents.find((c) => Number(c.product) === Number(productId))?.amount) || 0, 0);
+      .reduce((acc, d) => acc + ((d.action.contents.find((c) => Number(c.product) === Number(productId))?.amount) || 0), 0);
     return {
       i: productId,
       totalRequired,
@@ -2332,17 +2332,16 @@ export const FlexSectionBlock = ({ bodyStyle, children, style = {}, title, title
 export const LotControlWarning = ({ lot }) => {
   const { crew } = useCrewContext();
   const { isAtRisk } = useConstructionManager(lot?.id);
-  const { data: controller } = useCrew(lot?.Control?.controller?.id);
 
   const warning = useMemo(() => {
-    if (!(crew && controller && lot)) return null;
+    if (!(crew && lot)) return null;
     if (isAtRisk) {
-      return <>This site has been designated as abandoned. Any stored materials are now public.</>;
+      return <>Construction Site is vulnerable to any crew.</>;
     }
-    if (crew?.id !== controller?.id) {
-      return <>Without a Lot Control Agreement, you may be evicted at any time.</>;
+    if (crew?.id !== lot?.Control?.controller?.id) {
+      return <>Lot Not Controlled. Construction Site is vulnerable to <EntityName {...(lot?.Control?.controller || {})} /></>;
     }
-  }, [crew, controller?.id, isAtRisk, lot?.building]);
+  }, [crew, isAtRisk, lot?.building]);
 
   if (!warning) return null;
   return (
@@ -2434,7 +2433,7 @@ export const ResourceGridSectionInner = ({
               <IngredientSummary>
                 <span>None Selected</span>
               </IngredientSummary>
-            )}+
+            )}
           </>
         )}
       <ClipCorner dimension={sectionBodyCornerSize} />
@@ -3291,14 +3290,15 @@ export const InventoryInputBlock = ({
 
 export const BuildingInputBlock = ({ building, imageProps = {}, ...props }) => {
   const buildingType = building?.Building?.buildingType || 0;
+  const unfinished = building?.Building?.status < Building.CONSTRUCTION_STATUSES.OPERATIONAL;
   return (
     <FlexSectionInputBlock
       image={
         buildingType
-          ? <BuildingImage buildingType={buildingType} {...imageProps} />
+          ? <BuildingImage buildingType={buildingType} unfinished={unfinished} {...imageProps} />
           : <EmptyBuildingImage {...imageProps} />
       }
-      label={building?.Name?.name || Building.TYPES[buildingType].name}
+      label={building?.Name?.name ? formatters.buildingName(building) : `${Building.TYPES[buildingType].name}${unfinished ? ' (Site)' : ''}`}
       sublabel={building?.Name?.name ? Building.TYPES[buildingType].name : formatters.lotName(Lot.toPosition(building.Location?.location)?.lotIndex || 0)}
       {...props}
     />

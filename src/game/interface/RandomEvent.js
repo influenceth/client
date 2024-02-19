@@ -50,7 +50,7 @@ const SwayResult = ({ swayAmount }) => {
           <div>Your crew have earned <b>{' '}SWAY</b>.</div>
         </div>
         <div>
-          <SwayHighlight><SwayIcon /> {formatFixed(swayAmount || 0)}</SwayHighlight>
+          <SwayHighlight><SwayIcon /> {swayAmount}</SwayHighlight>
         </div>
       </ResultInner>
     </FlexSectionInputBlock>
@@ -99,7 +99,7 @@ const RandomEventAssignment = () => {
         isLoading: isPending
       }
     }
-  }, [finishing, isPending, onAccept]);
+  }, [bookTokens, finishing, isPending, onAccept]);
 
   return (
     <CrewAssignment

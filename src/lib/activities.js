@@ -178,6 +178,28 @@ const activities = {
   BridgedFromL1: {},
   BridgedToL1: {},
 
+  BuildingRepossessed: {
+    getInvalidations: ({ event: { returnValues } }, { building = {} }) => {
+      const loc = locationsArrToObj(building?.Location?.locations || []);
+      return [
+        ...invalidationDefaults(returnValues.building),
+        ['planned'],  // TODO: only if a construction site
+        ['asteroidCrewBuildings', loc.asteroidId, returnValues.callerCrew.id],
+      ]
+    }, // TODO: need to invalidate for the original crew (through asteroid ws?) AND trigger alert for them
+    
+    getPrepopEntities: ({ event: { returnValues } }) => ({
+      building: returnValues.building,
+    }),
+
+    getLogContent: ({ event: { returnValues } }, viewingAs, { building = {} }) => {
+      return {
+        icon: <KeysIcon />,
+        content: <>Repossessed <EntityLink label={Entity.IDS.LOT} id={building?.Location?.location?.id} /></>
+      }
+    },
+  },
+
   BuyOrderCancelled: {
     getInvalidations: ({ event: { returnValues } }, { exchange = {} }) => {
       const { asteroidId, lotId } = locationsArrToObj(exchange?.Location?.locations || []) || {};

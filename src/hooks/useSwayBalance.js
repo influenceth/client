@@ -14,7 +14,7 @@ const useSwayBalance = (overrideAccount) => {
         const balance = await starknet.account.provider.callContract({
           contractAddress: process.env.REACT_APP_STARKNET_SWAY_TOKEN,
           entrypoint: 'balanceOf',
-          calldata: [starknet.account.address]
+          calldata: [account]
         });
         const unscaledSway = uint256.uint256ToBN({ low: balance.result[0], high: balance.result[1] });
         return unscaledSway / 1000000n;
@@ -23,7 +23,7 @@ const useSwayBalance = (overrideAccount) => {
       }
     },
     {
-      enabled: !!starknet?.account?.provider,
+      enabled: !!starknet?.account?.provider && !!account,
       refetchInterval: 300e3,
     }
   );

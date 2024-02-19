@@ -116,10 +116,10 @@ const LotResources = () => {
 
   // get lot abundance
   const lotAbundances = useMemo(() => {
-    if (!(asteroid && lot)) return [];
+    if (!(asteroid && lotId)) return [];
 
     // TODO: do this in worker? takes about 200ms on decent cpu
-    const lotIndex = Lot.toIndex(lot.id);
+    const lotIndex = Lot.toIndex(lotId);
     const resourceAbundances = Asteroid.Entity.getAbundances(asteroid);
     return Object.keys(resourceAbundances || {})
       .reduce((acc, i) => {
@@ -132,7 +132,7 @@ const LotResources = () => {
         return acc;
       }, [])
       .sort((a, b) => b.abundance - a.abundance);
-  }, [asteroid, lot]);
+  }, [asteroid, lotId]);
 
   const [selected, setSelected] = useState();
 
