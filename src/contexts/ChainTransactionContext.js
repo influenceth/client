@@ -436,7 +436,7 @@ const getSystemCallAndProcessedVars = (runSystem, rawVars, encodeEntrypoint = fa
 }
 
 export function ChainTransactionProvider({ children }) {
-  const { account, walletContext: { starknet, blockTime } } = useAuth();
+  const { account, walletContext: { starknet, blockNumber, blockTime } } = useAuth();
   const { activities } = useActivitiesContext();
   const { crew } = useCrewContext();
 
@@ -450,10 +450,13 @@ export function ChainTransactionProvider({ children }) {
 
   const [promptingTransaction, setPromptingTransaction] = useState(false);
 
-  // autoresolve when actionType is set but actionType was not actually triggered
+  // autoresolve when actionType is set but actionType was not actually triggered by actionRound
   const prependEventAutoresolve = useMemo(
-    () => crew?.Crew?.actionType && !crew?._actionTypeTriggered,
-    [crew]
+    () => crew?.Crew?.actionType
+      && crew?.Crew?.actionRound
+      && crew?.Crew?.actionRound <= blockNumber
+      && !crew?._actionTypeTriggered,
+    [blockNumber, crew]
   );
 
   const contracts = useMemo(() => {
