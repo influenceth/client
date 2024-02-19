@@ -223,11 +223,11 @@ const HudMenu = ({ forceOpenMenu }) => {
   const { data: asteroid } = useAsteroid(asteroidId);
   const { data: lot } = useLot(lotId);
   const { data: ship } = useShip(zoomScene?.type === 'SHIP' ? zoomScene.shipId : null);
-  const { data: marketplaces } = useAsteroidBuildings(
-    asteroidId,
-    'Exchange',
-    [Permission.IDS.BUY, Permission.IDS.SELL, Permission.IDS.LIMIT_BUY, Permission.IDS.LIMIT_BUY]
-  );
+  // const { data: marketplaces } = useAsteroidBuildings(
+  //   asteroidId,
+  //   'Exchange',
+  //   [Permission.IDS.BUY, Permission.IDS.SELL, Permission.IDS.LIMIT_BUY, Permission.IDS.LIMIT_BUY]
+  // );
 
   const dispatchHudMenuOpened = useStore(s => s.dispatchHudMenuOpened);
 
@@ -511,16 +511,16 @@ const HudMenu = ({ forceOpenMenu }) => {
         label: 'Asteroid Markets',
         icon: <MarketplaceBuildingIcon />,
         onOpen: () => {
-          if (marketplaces?.length > 0) {
+          // if (marketplaces?.length > 0) {
             history.push(`/marketplace/${asteroidId}/all`);
-          } else {
-            createAlert({
-              type: 'GenericAlert',
-              level: 'warning',
-              data: { content: 'Asteroid does not yet have any marketplaces accessible to your crew.' },
-              duration: 3000
-            });
-          }
+          // } else {
+          //   createAlert({
+          //     type: 'GenericAlert',
+          //     level: 'warning',
+          //     data: { content: 'Asteroid does not yet have any marketplaces accessible to your crew.' },
+          //     duration: 3000
+          //   });
+          // }
         },
         isVisible: focus === 'asteroid' || scope === 'asteroid'
       },
@@ -557,7 +557,7 @@ const HudMenu = ({ forceOpenMenu }) => {
     }
 
     return [menuButtons, pageButtons];
-  }, [asteroid, asteroidId, crew?.id, destination, lot, lotId, marketplaces?.length, showDevTools, zoomStatus, zoomScene]);
+  }, [asteroid, asteroidId, crew?.id, destination, lot, lotId, showDevTools, zoomStatus, zoomScene]);
 
   const { label, onDetailClick, detailType, Component, componentProps, hideInsteadOfClose, noClose, noDetail } = useMemo(() => {
     return menuButtons.find((b) => b.key === openHudMenu) || {};
