@@ -14,7 +14,7 @@ import useAuth from '~/hooks/useAuth';
 import useLot from '~/hooks/useLot';
 import useStore from '~/hooks/useStore';
 import { formatActionItem, itemColors, statuses } from '~/lib/actionItem';
-import theme, { hexToRGB } from '~/theme';
+import { hexToRGB } from '~/theme';
 import formatters from '~/lib/formatters';
 import useCrewContext from '~/hooks/useCrewContext';
 import useGetActivityConfig from '~/hooks/useGetActivityConfig';
@@ -293,7 +293,12 @@ const ActionItem = ({ data, crew }) => {
   const type = data?.type;
 
   // TODO: can probably clean up the `formatted` structure
-  const item = useMemo(() => formatActionItem(data, getActivityConfig(data, crew)?.actionItem), [data]);
+  const item = useMemo(() => {
+    return formatActionItem(
+      data,
+      !['randomEvent', 'plans', 'pending'].includes(data.type) ? getActivityConfig(data, crew)?.actionItem : {}
+    );
+  }, [data]);
 
   const { data: asteroid } = useAsteroid(item.asteroidId);
   const { data: lot } = useLot(item.lotId);

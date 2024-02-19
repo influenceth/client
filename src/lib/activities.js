@@ -673,6 +673,49 @@ const activities = {
     requiresCrewTime: true
   },
 
+  // deprecated vvv
+  DeliveryStarted: {
+    getActionItem: ({ returnValues }, { destination = {} }) => {
+      const _location = locationsArrToObj(destination?.Location?.locations || []);
+      return {
+        icon: <SurfaceTransferIcon />,
+        label: 'Surface Transfer',
+        asteroidId: _location.asteroidId,
+        lotId: _location.lotId,
+        locationDetail: getEntityName(destination),
+        onClick: ({ openDialog }) => {
+          openDialog('SURFACE_TRANSFER', { deliveryId: returnValues.delivery.id });
+        }
+      };
+    },
+    getIsActionItemHidden: ({ returnValues }) => (pendingTransactions) => {
+      return pendingTransactions.find((tx) => (
+        tx.key === 'TransferInventoryFinish'
+        && tx.vars.delivery.id === returnValues.delivery.id
+      ))
+    },
+    getPrepopEntities: ({ event: { returnValues } }) => ({
+      destination: returnValues.dest,
+    }),
+  },
+  DeliveryFinished: {
+    getLogContent: (activity, viewingAs, { delivery }) => {
+      if (!delivery) return null;
+      return {
+        icon: <SurfaceTransferIcon />,
+        content: (
+          <>
+            <span>Delivery completed to </span> <EntityLink {...delivery.Delivery.dest} />
+          </>
+        ),
+      };
+    },
+    getPrepopEntities: ({ event: { returnValues } }) => ({
+      delivery: returnValues.delivery,
+    }),
+  },
+  // deprecated ^^^
+
   DeliveryAccepted: {
     getInvalidations: ({ event: { returnValues, version } }) => ([
       ...invalidationDefaults(Entity.IDS.DELIVERY, returnValues.delivery.id),
