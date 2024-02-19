@@ -120,7 +120,7 @@ const useActionButtons = () => {
 
   // lot-level
   const { data: lot, isLoading: lotIsLoading } = useLot(lotId);
-  const { constructionStatus } = useConstructionManager(lotId); // TODO: could potentially pass in building id here if helpful
+  const { constructionStatus, isAtRisk } = useConstructionManager(lotId); // TODO: could potentially pass in building id here if helpful
 
   // ship
   const { data: crewedShip, isLoading: crewedShipIsLoading } = useShip(crew?._location?.shipId);  // TODO: do we need this?
@@ -165,6 +165,7 @@ const useActionButtons = () => {
         crewedShip,
         building: zoomStatus === 'in' && constructionStatus === 'OPERATIONAL' && lot?.building,
         constructionStatus,
+        isAtRisk,
         lot: zoomStatus === 'in' && lot,
         openHudMenu,
         ship: targetShip?.Ship.status === Ship.STATUSES.AVAILABLE && targetShip,

@@ -33,6 +33,7 @@ import ManageCrew from './actionDialogs/ManageCrew';
 import MarketplaceOrder from './actionDialogs/MarketplaceOrder';
 import PlanBuilding from './actionDialogs/PlanBuilding';
 import Process from './actionDialogs/Process';
+import RepoBuilding from './actionDialogs/RepoBuilding';
 import SetCourse from './actionDialogs/SetCourse';
 import StationCrew from './actionDialogs/StationCrew';
 import SurfaceTransfer from './actionDialogs/SurfaceTransfer';
@@ -248,6 +249,7 @@ const ActionDialog = ({ type, params }) => {
         {type === 'NEW_CREW' && <ManageCrew {...allProps} newCrew />}
         {type === 'MARKETPLACE_ORDER' && <MarketplaceOrder {...allProps} />}
         {type === 'PROCESS' && <Process {...allProps} />}
+        {type === 'REPO_BUILDING' && <RepoBuilding {...allProps} />}
         {type === 'SET_COURSE' && <SetCourse {...allProps} />}
         {type === 'STATION_CREW' && <StationCrew {...allProps} />}
         {type === 'STATION_CREW_AS_GUESTS' && <StationCrew {...allProps} guests />}

@@ -36,6 +36,7 @@ import {
   CancelLimitOrderIcon,
   BecomeAdminIcon,
   PermissionIcon,
+  KeysIcon,
 } from '~/components/Icons';
 import theme, { hexToRGB } from '~/theme';
 import { getProcessorProps } from './utils';
@@ -866,6 +867,18 @@ const formatAsTx = (item) => {
       formatted.label = `Resolve Random Event`;
       formatted.onClick = ({ history }) => {
         history.push(`/random-event`);
+      }
+      break;
+    }
+
+    case 'RepossessBuilding': {
+      const { asteroidId } = Lot.toPosition(item.meta.lotId) || {};
+      formatted.icon = <KeysIcon />;
+      formatted.label = `Repossess Lot`;
+      formatted.asteroidId = asteroidId;
+      formatted.lotId = item.meta.lotId;
+      formatted.onClick = ({ openDialog }) => {
+        openDialog('REPO_BUILDING');
       }
       break;
     }
