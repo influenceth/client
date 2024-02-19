@@ -178,17 +178,11 @@ const customConfigs = {
   },
   CancelPrepaidAgreement: {
     equalityTest: ['target.id', 'target.label', 'permission'],
-    getTransferConfig: ({ agreementPath, refundAmount, recipient }) => {
-      console.log('getTransferConfig', agreementPath, refundAmount, recipient, {
-        amount: BigInt(refundAmount),
-        recipient,
-        memo: (agreementPath || '').split('.')
-      });
-      return {
+    getTransferConfig: ({ agreementPath, refundAmount, recipient }) => ({
       amount: BigInt(refundAmount),
       recipient,
       memo: (agreementPath || '').split('.')
-    }}
+    })
   },
   ExtendPrepaidAgreement: {
     equalityTest: ['target.id', 'target.label', 'permission'],

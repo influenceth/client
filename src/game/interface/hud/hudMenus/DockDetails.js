@@ -167,7 +167,6 @@ const DockDetails = ({ onClose }) => {
 
   const filteredShips = useMemo(() => {
     return (lot?.ships || []).filter((s) => {
-      console.log([formatters.shipName(s).toLowerCase(), nameFilter.toLowerCase()]);
       return formatters.shipName(s).toLowerCase().includes(nameFilter.toLowerCase())
     })
   }, [lot?.ships, nameFilter]);

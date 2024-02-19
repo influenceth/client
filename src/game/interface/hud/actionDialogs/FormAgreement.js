@@ -260,17 +260,14 @@ const FormAgreement = ({
 
   const handlePeriodChange = useCallback((e) => {
     // TODO: validate min/max before updating state
-    console.log('handlePeriodChange', e.currentTarget.value);
     setInitialPeriod(e.currentTarget.value);
   }, []);
 
   const onEnterAgreement = useCallback(() => {
     const recipient = controller?.Crew?.delegatedTo;
     // TODO: should these conversions be in useAgreementManager?
-    console.log('initialPeriod', initialPeriod);
     const term = monthsToSeconds(initialPeriod);
     const termPrice = Math.ceil(totalLeaseCost * 1e6);
-    console.log({ recipient, term, termPrice });
     enterAgreement({ recipient, term, termPrice });
   }, [controller?.Crew?.delegatedTo, initialPeriod, totalLeaseCost]);
 

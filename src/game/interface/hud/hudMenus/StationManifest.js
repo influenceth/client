@@ -74,7 +74,6 @@ const StationManifest = () => {
   const crews = useMemo(() => {
     return (unfilteredCrews || [])
       .filter((c) => {
-        console.log([formatters.crewName(c).toLowerCase(), nameFilter.toLowerCase()]);
         return formatters.crewName(c).toLowerCase().includes(nameFilter.toLowerCase())
       })
       .sort((a, b) => formatters.crewName(a) < formatters.crewName(b) ? -1 : 1)

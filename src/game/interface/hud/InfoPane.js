@@ -23,7 +23,7 @@ import useStore from '~/hooks/useStore';
 import useCrew from '~/hooks/useCrew';
 import useCrewContext from '~/hooks/useCrewContext';
 import RouteSelection from './actionForms/RouteSelection';
-import { getBuildingIcon, getShipIcon } from '~/lib/assetUtils';
+import { getBuildingIcon, getLotShipIcon, getShipIcon } from '~/lib/assetUtils';
 import formatters from '~/lib/formatters';
 import useSale from '~/hooks/useSale';
 import useShip from '~/hooks/useShip';
@@ -410,7 +410,7 @@ const InfoPane = () => {
         }
         pane.captainCard = ship.Control?.controller?.id;
       } else if (lotId && lot && lot.surfaceShip) {
-        const thumbUrl = getShipIcon(lot.surfaceShip.Ship?.shipType || 0, 'w400');
+        const thumbUrl = getLotShipIcon(lot.surfaceShip.Ship?.shipType || 0, 'w400');
         pane.title = formatters.shipName(lot.surfaceShip);
         pane.subtitle = <>{formatters.asteroidName(asteroid)} &gt; <b>{formatters.lotName(lotId)}</b></>;
         pane.captainCard = lot.surfaceShip.Control?.controller?.id;

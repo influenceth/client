@@ -10,8 +10,6 @@ const useAsteroidAbundances = (asteroid) => {
       const abundances = Asteroid.Entity.getAbundances(asteroid);
       const bonuses = Asteroid.Entity.getBonuses(asteroid);
 
-      console.log({ abundances, bonuses });
-
       Object.keys(abundances).forEach((i) => {
         const abundance = abundances[i];
         if (abundance > 0) {
