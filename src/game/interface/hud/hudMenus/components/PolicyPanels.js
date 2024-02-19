@@ -361,7 +361,7 @@ const PolicyPanel = ({ editable = false, entity, permission }) => {
             <>
               <Section>
                 <PolicySelector>
-                  <h3>Policy Type {entity?.label}</h3>
+                  <h3>Policy Type</h3>
                   <div>
                     <Policy
                       onClick={saving ? null : () => setPolicyType(Permission.POLICY_IDS.PRIVATE)}

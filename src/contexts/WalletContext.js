@@ -170,32 +170,11 @@ export function WalletProvider({ children }) {
     }
   }, []);
 
-  // const getBlock = useCallback(async (num) => {
-  //   if (starknetReady && starknet?.provider) {
-  //     try {
-  //       const isCurrentBlock = !(num > 0);
-  //       const block = await starknet.provider.getBlock(isCurrentBlock ? undefined : num);
-  //       if (isCurrentBlock) {
-  //         setBlockTime(block?.timestamp);
-
-  //         // does not return a block number with pending block (but in case this changes, we check for it)
-  //         if (block?.block_number > 0) {
-  //           setBlockNumber(block?.block_number);
-
-  //         // in the pending block case, get the block number from the parent
-  //         } else if(block?.parent_hash) {
-  //           const parent = await starknet.provider.getBlock(block.parent_hash);
-  //           setBlockNumber(parent?.block_number);
-  //         }
-  //       }
-  //     } catch (e) {
-  //       console.error(e);
-  //     }
-  //   }
-  // }, []);
+  // argent is slow to put together it's final "starknet" object, so we check explicitly for getBlock method
+  const canCheckBlock = starknetReady && !!starknet?.provider?.getBlock;
 
   const getBlockTime = useCallback(async (num) => {
-    if (starknetReady && starknet?.provider) {
+    if (canCheckBlock) {
       try {
         return (await starknet.provider.getBlock(num > 0 ? num : undefined))?.timestamp;
       } catch (e) {
@@ -203,12 +182,12 @@ export function WalletProvider({ children }) {
       }
     }
     return null;
-  }, [starknetReady, blockNumber]);
+  }, [canCheckBlock]);
 
   // init block number and block time
   const lastBlockNumberTime = useRef(0);
   useEffect(() => {
-    if (starknetReady && starknet?.provider?.getBlock) {
+    if (canCheckBlock) {
       starknet.provider.getBlock()
         .then((block) => {
           setBlockTime(block?.timestamp);
@@ -228,7 +207,7 @@ export function WalletProvider({ children }) {
         })
         .catch((e) => console.error('failed to init block data', e));
     }
-  }, [starknetReady]);
+  }, [canCheckBlock]);
 
   // get pending block time on every new block
   // TODO: if no crew, then we won't receive websockets, and blockNumber will not get updated

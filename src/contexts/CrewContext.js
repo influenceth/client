@@ -1,7 +1,6 @@
 import { createContext, useCallback, useEffect, useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from 'react-query';
 import { Crewmate, Entity, Permission, System } from '@influenceth/sdk';
-import { uint256 } from 'starknet';
 
 import api from '~/lib/api';
 import useAuth from '~/hooks/useAuth';
