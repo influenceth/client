@@ -220,7 +220,7 @@ const CrewAssignment = ({ crewId, crewmateId, crewmateMap, onFinish, overrides =
         }}
         choicelessInFooter={!bookSession.isMintingStory}
         isHTML={storySession.isHTML}
-        isLoading={!contentReady}
+        isLoading={overrides?.isLoading || !contentReady}
         isLoadingChoice={!contentReady || pathLoading}
         onSelect={selectPath}
         prompt={storySession.prompt}

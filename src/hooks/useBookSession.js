@@ -77,7 +77,7 @@ const useBookSession = (crewId, crewmateId) => {
 
     // if get here, may be because triggered random event
     if (crew?._actionTypeTriggered?.pendingEvent) {
-      return [bookIds[`RANDOM_${crew._actionTypeTriggered?.pendingEvent}`], null];
+      return [bookIds[`RANDOM_${crew._actionTypeTriggered.pendingEvent}`], null];
     }
 
     // default to adalian recruitment

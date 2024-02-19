@@ -65,7 +65,7 @@ const RandomEventAssignment = () => {
   const randomEvent = crew?._actionTypeTriggered?.pendingEvent;
 
   const pendingTransactions = useStore(s => s.pendingTransactions);
-  const { bookTokens, isLoading: bookTokensLoading } = useBookTokens(bookIds[`RANDOM_${randomEvent}`]);
+  const { bookTokens } = useBookTokens(bookIds[`RANDOM_${randomEvent}`]);
   const [finishing, setFinishing] = useState(false);
 
   const isPending = useMemo(
@@ -95,7 +95,8 @@ const RandomEventAssignment = () => {
           onAccept(RandomEvent.TYPES[crew?._actionTypeTriggered?.pendingEvent]?.choices?.[0] || 1);
         },
         finishButtonLabel: 'Accept',
-        finishButtonProps: { isTransaction: true } // TODO: loading...
+        finishButtonProps: { isTransaction: true },
+        isLoading: isPending
       }
     }
   }, [finishing, isPending, onAccept]);

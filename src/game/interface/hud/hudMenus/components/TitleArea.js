@@ -75,12 +75,22 @@ const UpperContainer = styled.div`
     }
   }
 `;
+const Overlay = styled.div`
+  position: absolute;
+  top: 32px;
+  left: calc(50% - 25px);
+  height: 50px;
+  width: 50px;
+  font-size: 50px;
+  line-height: 0px;
+`;
 
-const TitleArea = ({ background, title, subtitle, upperLeft, upperRight }) => (
+const TitleArea = ({ background, title, overlay, subtitle, upperLeft, upperRight }) => (
   <Wrapper background={background}>
     <UpperContainer>
       <div>{upperLeft}</div>
       <div>{upperRight}</div>
+      {overlay && <Overlay>{overlay}</Overlay>}
     </UpperContainer>
     <TitleContainer>
       <Title>{title}</Title>

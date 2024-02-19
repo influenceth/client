@@ -85,10 +85,13 @@ const useLot = (lotId) => {
 
   return useMemo(() => {
     const { asteroidId, lotIndex } = Lot.toPosition(lotId) || {};
+    const agreement = (lotData?.PrepaidAgreements || []).find((p) => p.permission === Permission.IDS.LOT_CONTROL)
+      || (lotData?.ContractPolicies || []).find((p) => p.permission === Permission.IDS.LOT_CONTROL);
     const building = (buildings || []).find((e) => e.Building.status > 0);
     const depositsToShow = (deposits || []).filter((e) => e.Deposit.status > 0 && !(e.Deposit.status === Deposit.STATUSES.USED && e.Deposit.remainingYield === 0));
     const shipsToShow = (ships || []).filter((s) => [Ship.STATUSES.UNDER_CONSTRUCTION, Ship.STATUSES.AVAILABLE].includes(s.Ship.status));
     const surfaceShip = !building && shipsToShow.find((e) => e.Ship.status === Ship.STATUSES.AVAILABLE && e.Location.location.label === Entity.IDS.LOT);
+
     return {
       data: lotId ? {
         ...lotData,
@@ -104,7 +107,9 @@ const useLot = (lotId) => {
         ships: shipsToShow,
         surfaceShip,
 
-        Control: asteroid?.Control,
+        Control: agreement?.permitted?.id
+          ? { controller: { id: agreement.permitted.id, label: Entity.IDS.CREW } }
+          : asteroid?.Control,
         ContractPolicies: asteroid?.ContractPolicies,
         PrepaidPolicies: (asteroid?.PrepaidPolicies || []).map((p) => {
           // for simplicity, apply AP's special lot rating here so don't have to apply it everywhere else
