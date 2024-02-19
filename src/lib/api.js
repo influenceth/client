@@ -214,7 +214,7 @@ const api = {
     const shipQueryBuilder = esb.boolQuery();
 
     // has permission
-    if (withPermission) buildingQueryBuilder.filter(esbPermissionQuery(crewId, withPermission));
+    if (withPermission) shipQueryBuilder.filter(esbPermissionQuery(crewId, withPermission));
 
     // on asteroid
     // (and not in orbit -- i.e. lotId is present and !== 0)
@@ -231,7 +231,11 @@ const api = {
     );
 
     // has unlocked inventory
-    shipQueryBuilder.filter(esb.termQuery('Inventory.status', Inventory.STATUSES.AVAILABLE));
+    shipQueryBuilder.filter(
+      esb.nestedQuery()
+        .path('Inventories')
+        .query(esb.termQuery('Inventories.status', Inventory.STATUSES.AVAILABLE))
+    );
 
     // ship is operational and not traveling or in emergency mode
     shipQueryBuilder.filter(esb.termQuery('Ship.status', Ship.STATUSES.AVAILABLE));

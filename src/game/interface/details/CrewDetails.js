@@ -362,10 +362,6 @@ const CrewDetails = ({ crewId, crew, isMyCrew, isOwnedCrew, selectCrew }) => {
     }
   }, [crew, hydratedLocation?.building]);
 
-  const onClickNewCrew = useCallback(() => {
-    history.push(`/recruit/0`);
-  }, []);
-
   const onClickLocation = useCallback(() => {
     hydratedLocation.onLink();
     history.push('/');
@@ -529,7 +525,6 @@ const CrewDetails = ({ crewId, crew, isMyCrew, isOwnedCrew, selectCrew }) => {
               <div style={{ paddingTop: 15 }}>
                 <Button subtle onClick={() => onSetAction('MANAGE_CREW')}>Manage Crew</Button>
                 {crew.Crew?.roster?.length >= 2 && <Button subtle onClick={() => onSetAction('MANAGE_CREW', { exchangeCrewId: 0 })}>Split Crew</Button>}
-                <Button disabled={nativeBool(!crew.Crew?.roster?.length)} subtle onClick={onClickNewCrew}>Form New Crew</Button>
                 <Button disabled={nativeBool(crew.Crew?.roster?.length >= 5)} subtle onClick={onClickRecruit}>Recruit Crewmate</Button>
               </div>
             )}
@@ -611,7 +606,7 @@ const Wrapper = () => {
 
   const crewId = Number(i || myCrew?.id);
   const { data: crew, isLoading: crewLoading } = useHydratedCrew(crewId);
-  
+
   const createAlert = useStore(s => s.dispatchAlertLogged);
 
   useEffect(() => {

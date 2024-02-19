@@ -787,6 +787,7 @@ const ModelViewer = ({ assetType, modelUrl, ...overrides }) => {
           shadows
           style={{ height: '100%', width: '100%' }}>
 
+          <Postprocessor enabled={true} />
           <Skybox
             background={settings.background}
             envmap={settings.envmap}

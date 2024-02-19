@@ -95,7 +95,8 @@ const RandomEventAssignment = () => {
           onAccept(RandomEvent.TYPES[crew?._actionTypeTriggered?.pendingEvent]?.choices?.[0] || 1);
         },
         finishButtonLabel: 'Accept',
-        finishButtonProps: { isTransaction: true } // TODO: loading...
+        finishButtonProps: { isTransaction: true },
+        isLoading: isPending
       }
     }
   }, [bookTokens, finishing, isPending, onAccept]);

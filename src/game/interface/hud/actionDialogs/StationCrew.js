@@ -1,11 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react';
-import styled from 'styled-components';
 import cloneDeep from 'lodash/cloneDeep';
 import { Asteroid, Building, Crewmate, Entity, Permission, Station, Time } from '@influenceth/sdk';
 
 import { StationCrewIcon, StationPassengersIcon } from '~/components/Icons';
 import useCrewContext from '~/hooks/useCrewContext';
-import useShip from '~/hooks/useShip';
 import { reactBool, formatTimer, locationsArrToObj, getCrewAbilityBonuses } from '~/lib/utils';
 
 import {
@@ -29,35 +27,14 @@ import useLot from '~/hooks/useLot';
 import useStore from '~/hooks/useStore';
 import { ActionDialogInner } from '../ActionDialog';
 import actionStages from '~/lib/actionStages';
-import theme, { hexToRGB } from '~/theme';
+import theme from '~/theme';
 import useCrew from '~/hooks/useCrew';
 import useAsteroid from '~/hooks/useAsteroid';
-import useAsteroidShips from '~/hooks/useAsteroidShips';
 import CrewIndicator from '~/components/CrewIndicator';
 import useStationCrewManager from '~/hooks/actionManagers/useStationCrewManager';
 import useEntity from '~/hooks/useEntity';
 
-const Warning = styled.div`
-  align-items: center;
-  background: rgba(${p => hexToRGB(p.theme.colors.orange)}, 0.3);
-  color: ${p => p.theme.colors.orange};
-  display: flex;
-  flex-direction: row;
-  padding: 10px;
-  & > svg {
-    font-size: 30px;
-    margin-right: 12px;
-  }
-`;
-const Note = styled.div`
-  color: white;
-  font-size: 95%;
-  padding: 15px 10px 10px;
-`;
-
 const StationCrew = ({ asteroid, destination: rawDestination, lot, origin: rawOrigin, stationCrewManager, stage, ...props }) => {
-  const createAlert = useStore(s => s.dispatchAlertLogged);
-  
   const { stationCrew } = stationCrewManager;
   const { crew, crewCan } = useCrewContext();
 
@@ -69,19 +46,23 @@ const StationCrew = ({ asteroid, destination: rawDestination, lot, origin: rawOr
     return getCrewAbilityBonuses(Crewmate.ABILITY_IDS.HOPPER_TRANSPORT_TIME, crew) || {};
   }, [crew]);
 
-  const [origin, destination] = useMemo(() => {
-    const origin = cloneDeep(rawOrigin);
-    origin._location = locationsArrToObj(origin.Location?.locations || []);
-    origin._inOrbit = !origin._location.lotId;
-    origin._crewOwned = origin?.Control?.controller?.id === crew?.id;
+  const origin = useMemo(() => {
+    if (!rawOrigin) return null;
+    const newOrigin = cloneDeep(rawOrigin);
+    newOrigin._location = locationsArrToObj(newOrigin?.Location?.locations || []);
+    newOrigin._inOrbit = !newOrigin?._location.lotId;
+    newOrigin._crewOwned = newOrigin?.Control?.controller?.id === crew?.id;
+    return newOrigin;
+  }, [rawOrigin]);
 
-    const destination = cloneDeep(rawDestination);
-    destination._location = locationsArrToObj(destination.Location?.locations || []);
-    destination._inOrbit = !destination._location.lotId;
-    destination._crewOwned = destination?.Control?.controller?.id === crew?.id;
-
-    return [origin, destination];
-  }, [rawDestination, rawOrigin]);
+  const destination = useMemo(() => {
+    if (!rawDestination) return null;
+    const newDestination = cloneDeep(rawDestination);
+    newDestination._location = locationsArrToObj(newDestination?.Location?.locations || []);
+    newDestination._inOrbit = !newDestination?._location.lotId;
+    newDestination._crewOwned = newDestination?.Control?.controller?.id === crew?.id;
+    return newDestination;
+  }, [rawDestination]);
 
   const crewIsOwner = destination?.Control?.controller?.id === crew?.id;
 
@@ -90,7 +71,7 @@ const StationCrew = ({ asteroid, destination: rawDestination, lot, origin: rawOr
   const { data: originLot } = useLot(origin?._location?.lotId);
 
   const [travelDistance, travelTime] = useMemo(() => {
-    if (!origin || !destination) return [0, 0];
+    if (!origin._location || !destination._location) return [0, 0];
     return [
       Asteroid.getLotDistance(asteroid?.id, origin._location.lotIndex, destination._location.lotIndex),
       Time.toRealDuration(
@@ -245,7 +226,8 @@ const StationCrew = ({ asteroid, destination: rawDestination, lot, origin: rawOr
           </div>
         </FlexSection>
 
-        {!crewIsOwner && (
+        {/* turn this back on when payments are supported */}
+        {false && !crewIsOwner && (
           <FlexSection style={{ alignItems: 'flex-start' }}>
             <SwayInputBlock
               title="Sway Payment"
@@ -266,7 +248,12 @@ const StationCrew = ({ asteroid, destination: rawDestination, lot, origin: rawOr
       </ActionDialogBody>
 
       <ActionDialogFooter
-        disabled={!destination || !stationConfig || !crewCan(Permission.IDS.STATION_CREW, destination) || (stationConfig.hardCap && destination.Station.population + crew?.Crew?.roster?.length > stationConfig.cap)}
+        disabled={
+          !destination ||
+          !stationConfig ||
+          !crewCan(Permission.IDS.STATION_CREW, destination) ||
+          (stationConfig.cap && destination.Station.population + crew?.Crew?.roster?.length > stationConfig.cap)
+        }
         goLabel="Station"
         onGo={onStation}
         stage={stage}
@@ -284,7 +271,7 @@ const Wrapper = (props) => {
   const asteroidId = useStore(s => s.asteroids.origin);
   const lotId = useStore(s => s.asteroids.lot);
   const zoomScene = useStore(s => s.asteroids.zoomScene);
-  
+
   const { data: asteroid, isLoading: asteroidIsLoading } = useAsteroid(asteroidId);
   const { data: lot, isLoading: lotIsLoading } = useLot(lotId);
 
@@ -293,13 +280,16 @@ const Wrapper = (props) => {
 
     if (zoomScene?.type === 'SHIP' && zoomScene.shipId) {
       return { label: Entity.IDS.SHIP, id: zoomScene.shipId };
-    } else if (lot?.building) {
+    } else if (lot?.building && lot?.building?.Building?.buildingType === Building.IDS.HABITAT) {
       return { label: Entity.IDS.BUILDING, id: lot?.building.id };
     } else if (lot?.surfaceShip) {
       return { label: Entity.IDS.SHIP, id: lot?.surfaceShip.id };
+    } else if (lot?.ships?.length === 1) {
+      return { label: Entity.IDS.SHIP, id: lot?.ships[0].id };
     } else if (lotId) {
       return { label: Entity.IDS.LOT, id: lotId };
     }
+
     return { label: Entity.IDS.ASTEROID, id: asteroidId };
   }, [asteroidId, lot?.building, lot?.surfaceShip, lotId, zoomScene]);
 

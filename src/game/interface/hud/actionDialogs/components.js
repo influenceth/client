@@ -63,8 +63,8 @@ import { theming } from '../ActionDialog';
 import ThumbnailWithData from '~/components/AssetThumbnailWithData';
 import AssetBlock, { assetBlockCornerSize } from '~/components/AssetBlock';
 import LiveReadyStatus from '~/components/LiveReadyStatus';
-import useCrew from '~/hooks/useCrew';
 import useConstructionManager from '~/hooks/actionManagers/useConstructionManager';
+import EntityName from '~/components/EntityName';
 
 
 const SECTION_WIDTH = 780;
@@ -1843,7 +1843,19 @@ const getInventorySublabel = (inventoryType) => {
   }
 }
 
-export const InventorySelectionDialog = ({ asteroidId, otherEntity, otherInvSlot, isSourcing, itemIds, initialSelection, onClose, onSelected, open, requirePresenceOfItemIds }) => {
+export const InventorySelectionDialog = ({
+  asteroidId,
+  otherEntity,
+  otherInvSlot,
+  isSourcing,
+  itemIds,
+  initialSelection,
+  limitToPrimary,
+  onClose,
+  onSelected,
+  open,
+  requirePresenceOfItemIds
+}) => {
   const { crew } = useCrewContext();
 
   const [selection, setSelection] = useState(initialSelection);
@@ -1860,8 +1872,13 @@ export const InventorySelectionDialog = ({ asteroidId, otherEntity, otherInvSlot
 
   const inventories = useMemo(() => {
     const allInventoryEntities = [];
-    if (inventoryData) allInventoryEntities.push(...inventoryData);
-    if (crewedShip) allInventoryEntities.push(crewedShip);
+
+    if (limitToPrimary) {
+      allInventoryEntities.push(limitToPrimary);
+    } else {
+      if (inventoryData) allInventoryEntities.push(...inventoryData);
+      if (crewedShip) allInventoryEntities.push(crewedShip);
+    }
 
     const display = [];
     allInventoryEntities.forEach((entity) => {
@@ -1948,7 +1965,7 @@ export const InventorySelectionDialog = ({ asteroidId, otherEntity, otherInvSlot
                 <tr>
                   <td></td>{/* isMine */}
                   <td style={{ textAlign: 'left' }}>Name</td>
-                  <td>Distance</td>
+                  {!limitToPrimary &&<td>Distance</td>}
                   {isSourcing && specifiedItems && (
                     <td>
                       {soloItem ? `# ${Product.TYPES[soloItem].name}` : 'Needed Products'}
@@ -1966,7 +1983,7 @@ export const InventorySelectionDialog = ({ asteroidId, otherEntity, otherInvSlot
                       selectedRow={inv.key === selection}>
                       <td>{inv.isMine && <MyAssetIcon />}</td>
                       <td style={{ textAlign: 'left' }}>{inv.label}{inv.sublabel && <small> ({inv.sublabel})</small>} {inv.isShip && <ShipIcon />}</td>
-                      <td>{formatSurfaceDistance(inv.distance)}</td>
+                      {!limitToPrimary && <td>{formatSurfaceDistance(inv.distance)}</td>}
                       {isSourcing && specifiedItems && <td>{inv.itemTally.toLocaleString()}</td>}
                     </SelectionTableRow>
                   );
@@ -2158,10 +2175,17 @@ export const MiniBarChart = ({ color, deltaColor, deltaValue, label, valueLabel,
   </MiniBarWrapper>
 );
 
-export const SwayInput = ({ inputLabel = "SWAY", onChange, value, ...props }) => {
-  const formattedValue = useMemo(() => {
-    return value ? `${parseInt(value)}` : '';
-  }, [value]);
+export const SwayInput = ({ inputLabel = "SWAY", onChange, value: defaultValue, ...props }) => {
+  const [value, setValue] = useState(0);
+
+  const internalOnChange = useCallback((e) => {
+    setValue(e.target.value);
+    if (onChange) onChange(e.target.value);
+  }, [onChange]);
+
+  useEffect(() => {
+    setValue(defaultValue || 0);
+  }, [defaultValue]);
   return (
     <SwayInputRow>
       <SwayInputIconWrapper><SwayIcon /></SwayInputIconWrapper>
@@ -2170,8 +2194,8 @@ export const SwayInput = ({ inputLabel = "SWAY", onChange, value, ...props }) =>
           type="number"
           min={0}
           step={1}
-          value={formattedValue || 0}
-          onChange={onChange}
+          value={value}
+          onChange={internalOnChange}
           {...props} />
       </SwayInputFieldWrapper>
       <SwayInputHelp>{/* TODO: this doesn't do anything */}
@@ -2335,17 +2359,16 @@ export const FlexSectionBlock = ({ bodyStyle, children, style = {}, title, title
 export const LotControlWarning = ({ lot }) => {
   const { crew } = useCrewContext();
   const { isAtRisk } = useConstructionManager(lot?.id);
-  const { data: controller } = useCrew(lot?.Control?.controller?.id);
 
   const warning = useMemo(() => {
-    if (!(crew && controller && lot)) return null;
+    if (!(crew && lot)) return null;
     if (isAtRisk) {
-      return <>This site has been designated as abandoned. Any stored materials are now public.</>;
+      return <>Construction Site is vulnerable to any crew.</>;
     }
-    if (crew?.id !== controller?.id) {
-      return <>Without a Lot Control Agreement, you may be evicted at any time.</>;
+    if (crew?.id !== lot?.Control?.controller?.id) {
+      return <>Lot Not Controlled. Construction Site is vulnerable to <EntityName {...(lot?.Control?.controller || {})} /></>;
     }
-  }, [crew, controller?.id, isAtRisk, lot?.building]);
+  }, [crew, isAtRisk, lot?.building]);
 
   if (!warning) return null;
   return (
@@ -3208,7 +3231,18 @@ const Overloaded = styled.div`
   text-transform: uppercase;
 `;
 
-export const InventoryInputBlock = ({ entity, isSourcing, inventorySlot, transferMass = 0, transferVolume = 0, fallbackLabel = 'Select', fallbackSublabel = 'Inventory', imageProps = {}, sublabel, ...props }) => {
+export const InventoryInputBlock = ({
+  entity,
+  isSourcing,
+  inventorySlot,
+  transferMass = 0,
+  transferVolume = 0,
+  fallbackLabel = 'Select',
+  fallbackSublabel = 'Inventory',
+  imageProps = {},
+  sublabel,
+  ...props
+}) => {
   const inventory = useMemo(() => {
     if (entity && inventorySlot) {
       return entity.Inventories.find((i) => i.slot === inventorySlot);
@@ -3275,7 +3309,7 @@ export const InventoryInputBlock = ({ entity, isSourcing, inventorySlot, transfe
       sublabel={(
         <>
           {params.sublabel || fallbackSublabel}
-          {destinationOverloaded && <Overloaded>Insufficient Capacity</Overloaded>}
+          {destinationOverloaded && <Overloaded>Over Capacity</Overloaded>}
         </>
       )}
       {...props}
@@ -3285,14 +3319,15 @@ export const InventoryInputBlock = ({ entity, isSourcing, inventorySlot, transfe
 
 export const BuildingInputBlock = ({ building, imageProps = {}, ...props }) => {
   const buildingType = building?.Building?.buildingType || 0;
+  const unfinished = building?.Building?.status < Building.CONSTRUCTION_STATUSES.OPERATIONAL;
   return (
     <FlexSectionInputBlock
       image={
         buildingType
-          ? <BuildingImage buildingType={buildingType} {...imageProps} />
+          ? <BuildingImage buildingType={buildingType} unfinished={unfinished} {...imageProps} />
           : <EmptyBuildingImage {...imageProps} />
       }
-      label={building?.Name?.name || Building.TYPES[buildingType].name}
+      label={building?.Name?.name ? formatters.buildingName(building) : `${Building.TYPES[buildingType].name}${unfinished ? ' (Site)' : ''}`}
       sublabel={building?.Name?.name ? Building.TYPES[buildingType].name : formatters.lotName(Lot.toPosition(building.Location?.location)?.lotIndex || 0)}
       {...props}
     />

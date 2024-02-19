@@ -101,7 +101,7 @@ const AdalianFlourish = styled.div`
 
 const REQUIRE_CONFIRM = false;
 
-const CrewAssignment = ({ crewId, crewmateId, onFinish, overrides = {} }) => {
+const CrewAssignment = ({ crewId, crewmateId, crewmateMap, onFinish, overrides = {} }) => {
   const { crew } = useCrewContext();
   const history = useHistory();
 
@@ -119,7 +119,12 @@ const CrewAssignment = ({ crewId, crewmateId, onFinish, overrides = {} }) => {
   const [pathLoading, setPathLoading] = useState();
   const [selection, setSelection] = useState();
 
-  const onCloseDestination = useMemo(() => bookSession?.isMintingStory ? '/crew' : '/', [bookSession?.isMintingStory]);
+  let onCloseDestination;
+  if (Object.keys(crewmateMap || {}).length > 0) {
+    onCloseDestination = '/crew';
+  } else {
+    onCloseDestination = '/';
+  }
 
   useEffect(() => {
     if (bookError) history.push(onCloseDestination);
@@ -215,7 +220,7 @@ const CrewAssignment = ({ crewId, crewmateId, onFinish, overrides = {} }) => {
         }}
         choicelessInFooter={!bookSession.isMintingStory}
         isHTML={storySession.isHTML}
-        isLoading={!contentReady}
+        isLoading={overrides?.isLoading || !contentReady}
         isLoadingChoice={!contentReady || pathLoading}
         onSelect={selectPath}
         prompt={storySession.prompt}

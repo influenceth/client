@@ -10,8 +10,8 @@ const labelDict = {
   DECONSTRUCTING: 'Deconstructing...'
 };
 
-const isVisible = ({ constructionStatus, building, crew }) => {
-  return crew && building
+const isVisible = ({ constructionStatus, building, crew, ship }) => {
+  return crew && building && !ship
     && building.Control?.controller?.id === crew.id
     && ['OPERATIONAL', 'DECONSTRUCTING'].includes(constructionStatus);
 };
@@ -31,7 +31,7 @@ const Deconstruct = ({ asteroid, crew, lot, onSetAction, _disabled }) => {
       || lot?.building?.Dock?.dockedShips > 0
       || lot?.building?.Station?.population > 0
     ) return 'not empty';
-    
+
     if (
       (lot?.building?.Extractors || []).find((e) => e.status > 0)
       || (lot?.building?.Processors || []).find((e) => e.status > 0)
@@ -45,7 +45,7 @@ const Deconstruct = ({ asteroid, crew, lot, onSetAction, _disabled }) => {
     if (constructionStatus === 'OPERATIONAL') {
       return getCrewDisabledReason({ asteroid, crew });
     }
-    
+
     return null;
   }, [asteroid, lot?.building, crew]);
 

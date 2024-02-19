@@ -44,7 +44,7 @@ const LotTitleArea = ({ lot }) => {
     <TitleArea
       background={background}
       title={title}
-      subtitle={isAtRisk ? <SubtitleRow><div>{subtitle}</div><Abandoned>Abandoned</Abandoned></SubtitleRow> : subtitle}
+      subtitle={isAtRisk ? <SubtitleRow><div>{subtitle}</div><Abandoned>Expired</Abandoned></SubtitleRow> : subtitle}
       overlay={isAtRisk && <Abandoned><WarningIcon /></Abandoned>}
       upperLeft={lot && (
         <>
