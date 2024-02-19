@@ -2020,7 +2020,7 @@ export const getBuildingRequirements = (building = {}, deliveryActions = []) => 
     const inInventory = (inventory?.contents || []).find((c) => Number(c.product) === Number(productId))?.amount || 0;
     const inTransit = deliveryActions
       .filter((d) => d.status !== 'FINISHED')
-      .reduce((acc, d) => acc + (d.action.contents.find((c) => Number(c.product) === Number(productId))?.amount) || 0, 0);
+      .reduce((acc, d) => acc + ((d.action.contents.find((c) => Number(c.product) === Number(productId))?.amount) || 0), 0);
     return {
       i: productId,
       totalRequired,
