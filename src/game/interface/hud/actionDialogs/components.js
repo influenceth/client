@@ -1768,7 +1768,6 @@ export const ProcessSelectionDialog = ({ initialSelection, onClose, forceProcess
           </thead>
           <tbody>
             {processes.map(({ i, name, inputs, outputs }) => {
-              // console.log({ i, name, inputs, outputs });
               return (
                 <SelectionTableRow
                   key={i}
@@ -1872,10 +1871,7 @@ export const InventorySelectionDialog = ({
         // (can't send to same entity and slot)
         if (otherEntity) {
           if (entity.id === otherEntity.id && entity.label === otherEntity.label){
-            if (!otherInvSlot || otherInvSlot === inv.slot) {
-              // console.log('skip', inv, entity, otherEntity, otherInvSlot);
-              return;
-            }
+            if (!otherInvSlot || otherInvSlot === inv.slot) return;
           }
         }
 
@@ -3985,12 +3981,10 @@ export const formatMass = (grams, { abbrev = true, minPrecision = 3, fixedPrecis
   }
 
   const workingUnits = (grams / scale);
-  // console.log('workingUnits', workingUnits);
 
   let fixedPlaces = fixedPrecision || 0;
   if (fixedPrecision === undefined) {
     while (workingUnits * 10 ** (fixedPlaces + 1) < 10 ** minPrecision) {
-      // console.log('x', workingUnits * 10 ** fixedPlaces, 10 ** minPrecision);
       fixedPlaces++;
     }
   }
@@ -4021,12 +4015,10 @@ export const formatVolume = (ml, { abbrev = true, minPrecision = 3, fixedPrecisi
   }
 
   const workingUnits = (ml / scale);
-  // console.log('workingUnits', workingUnits);
 
   let fixedPlaces = fixedPrecision || 0;
   if (fixedPrecision === undefined) {
     while (workingUnits * 10 ** (fixedPlaces + 1) < 10 ** minPrecision) {
-      // console.log('x', workingUnits * 10 ** fixedPlaces, 10 ** minPrecision);
       fixedPlaces++;
     }
   }
