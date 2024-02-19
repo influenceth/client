@@ -104,7 +104,6 @@ const EvictShip = ({ asteroid, lot, manager, stage, ...props }) => {
     // (close on status change from)
     if (['READY', 'READY_TO_FINISH', 'FINISHING'].includes(lastStatus.current)) {
       if (launchStatus !== lastStatus.current) {
-        console.log('on Close');
         props.onClose();
       }
     }

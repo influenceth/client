@@ -80,7 +80,6 @@ export function AuthProvider({ children }) {
           dispatchAuthenticated(newToken);
         }
       } catch (e) {
-        console.log('initiateLogout 1');
         initiateLogout();
         if (e.message === 'User abort') return;
         console.error(e);
@@ -97,7 +96,6 @@ export function AuthProvider({ children }) {
   }, [ walletContext, token, dispatchAuthenticated ]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const initiateLogout = useCallback(() => {
-    console.log('initiateLogout INNER');
     walletContext.disconnect();
     dispatchTokenInvalidated();
   }, [ walletContext.disconnect, dispatchTokenInvalidated ]);

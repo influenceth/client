@@ -56,7 +56,7 @@ import useShip from '~/hooks/useShip';
 import { reactBool, formatFixed, formatTimer, nativeBool, locationsArrToObj } from '~/lib/utils';
 import actionStage from '~/lib/actionStages';
 import constants from '~/lib/constants';
-import { getBuildingIcon, getShipIcon } from '~/lib/assetUtils';
+import { getBuildingIcon, getLotShipIcon, getShipIcon } from '~/lib/assetUtils';
 import formatters from '~/lib/formatters';
 import theme, { hexToRGB } from '~/theme';
 import { theming } from '../ActionDialog';
@@ -2089,6 +2089,33 @@ export const ShipImage = ({ shipType, iconBadge, iconBadgeColor, iconOverlay, ic
   );
 };
 
+export const LotShipImage = ({ shipType, iconBadge, iconBadgeColor, iconOverlay, iconOverlayColor, inventories, showInventoryStatusForType, size = 'w150', backgroundSize = 'cover', style = {} }) => {
+  const shipAsset = Ship.TYPES[Math.abs(shipType)]; // abs for simulated ships
+  if (!shipAsset) return null;
+
+  const capacity = getCapacityUsage(inventories, showInventoryStatusForType);
+  return (
+    <ShipThumbnailWrapper style={style}>
+      <ResourceImage src={getLotShipIcon(shipAsset.i, size)} style={{ backgroundSize }} />
+      {showInventoryStatusForType !== undefined && (
+        <>
+          <InventoryUtilization
+            progress={capacity.volume.used / capacity.volume.max}
+            secondaryProgress={(capacity.volume.reserved + capacity.volume.used) / capacity.volume.max}
+          />
+          <InventoryUtilization
+            progress={capacity.mass.used / capacity.mass.max}
+            secondaryProgress={(capacity.mass.reserved + capacity.mass.used) / capacity.mass.max}
+          />
+        </>
+      )}
+      {iconBadge && <ThumbnailBadge style={{ color: iconBadgeColor || 'white' }}>{iconBadge}</ThumbnailBadge>}
+      {iconOverlay && <ThumbnailOverlay color={iconOverlayColor}>{iconOverlay}</ThumbnailOverlay>}
+      <ClipCorner dimension={10} />
+    </ShipThumbnailWrapper>
+  );
+};
+
 export const BuildingImage = ({ buildingType, error, iconOverlay, iconOverlayColor, inventory, inventories, showInventoryStatusForType, unfinished }) => {
   const buildingAsset = Building.TYPES[buildingType];
   if (!buildingAsset) return null;
@@ -3265,7 +3292,9 @@ export const InventoryInputBlock = ({
     }
     else if (entity?.label === Entity.IDS.SHIP) {
       return {
-        image: <ShipImage shipType={entity?.Ship?.shipType || 0} {...fullImageProps} />,
+        image: lotIndex && entity?.Location?.location?.label !== Entity.IDS.BUILDING
+          ? <LotShipImage shipType={entity?.Ship?.shipType || 0} {...fullImageProps} />
+          : <ShipImage shipType={entity?.Ship?.shipType || 0} {...fullImageProps} />,
         label: `${formatters.shipName(entity)}${invConfig?.category === Inventory.CATEGORIES.PROPELLANT ? ' (Propellant)' : ' (Cargo)'}`,
         sublabel: sublabel || formatters.lotName(lotIndex),
       };

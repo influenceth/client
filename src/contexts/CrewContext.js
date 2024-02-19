@@ -182,7 +182,9 @@ export function CrewProvider({ children }) {
   const captain = useMemo(() => selectedCrew?._crewmates?.[0] || null, [crewmateMap, selectedCrew]);
 
   const crewCan = useCallback(
-    (permission, hydratedTarget) => finalSelectedCrew ? Permission.isPermitted(finalSelectedCrew, permission, hydratedTarget) : false,
+    (permission, hydratedTarget) => (finalSelectedCrew && hydratedTarget)
+      ? Permission.isPermitted(finalSelectedCrew, permission, hydratedTarget)
+      : false,
     [finalSelectedCrew]
   );
 

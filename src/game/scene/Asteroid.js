@@ -608,13 +608,13 @@ const AsteroidComponent = () => {
         resourceMapId,
         asteroidData.Celestial.abundances,
       );
-      console.log('settings', settings, {
-        asteroidId: asteroidData.id,
-        color,
-        resource: resourceMapId,
-        intensityMult: EMISSIVE_INTENSITY[categoryKey],
-        ...settings
-      });
+      // console.log('settings', settings, {
+      //   asteroidId: asteroidData.id,
+      //   color,
+      //   resource: resourceMapId,
+      //   intensityMult: EMISSIVE_INTENSITY[categoryKey],
+      //   ...settings
+      // });
       geometry.current.setEmissiveParams({
         asteroidId: asteroidData.id,
         color,

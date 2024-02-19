@@ -72,11 +72,6 @@ const useAgreementManager = (target, permission, agreementPath) => {
   }, []);
 
   const cancelAgreement = useCallback((params = {}) => {
-    // target: Entity,
-    // permission: u64,
-    // permitted: Entity,
-    // caller_crew: Entity,
-    console.log();
     execute(
       'CancelPrepaidAgreement',
       { agreementPath, ...params, ...payload },

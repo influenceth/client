@@ -68,6 +68,21 @@ export const getBuildingModel = (i) => {
   return ASSET_CACHE[cacheKey];
 };
 
+export const getLotShipIcon = (i, size) => {
+  let useSize = size;
+  if (!size || !BUILDING_SIZES[size]) {
+    if (size) console.log('getBuildingIcon - invalid size', size);
+    useSize = Object.keys(BUILDING_SIZES)[0];
+  }
+
+  const cacheKey = `buildingShipIcon_${i}_${useSize}`;
+  if (!ASSET_CACHE[cacheKey]) {
+    const conf = { ...BUILDING_SIZES[useSize] };
+    ASSET_CACHE[cacheKey] = getIconUrl('buildings', Ship.TYPES[i]?.name, Assets.Building[i]?.iconVersion, conf);
+  }
+  return ASSET_CACHE[cacheKey];
+};
+
 
 export const PRODUCT_SIZES = {
   w25: { w: 25 },

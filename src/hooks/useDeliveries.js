@@ -14,13 +14,13 @@ const useDeliveries = ({ destination, destinationSlot, origin, originSlot, deliv
   const query = useMemo(() => {
     if (deliveryId) {
       return { ids: [deliveryId] };
-    } else if (destination) {
+    } else if (destination?.uuid) {
       return { match: { 'Delivery.dest.uuid': destination.uuid } };
-    } else if (origin) {
+    } else if (origin?.uuid) {
       return { match: { 'Delivery.origin.uuid': origin.uuid } };
     }
     return null;
-  }, [destination, origin, deliveryId]);
+  }, [destination?.uuid, origin?.uuid, deliveryId]);
 
   return useQuery(
     [ 'entities', Entity.IDS.DELIVERY, query ],
