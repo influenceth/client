@@ -758,7 +758,7 @@ export function ChainTransactionProvider({ children }) {
         // }
       });
     }
-  }, [activities?.length]);  // eslint-disable-line react-hooks/exhaustive-deps
+  }, [activities?.length, pendingTransactions?.length]);  // eslint-disable-line react-hooks/exhaustive-deps
 
   // TODO: should probably re-implement this
   // useEffect(() => {
