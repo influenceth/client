@@ -98,7 +98,7 @@ const SelectHabitatDialog = ({ onAccept, onReject }) => {
   return (
     <ChoicesDialog
       dialogTitle="Crewmate Creation"
-      onCloseDestination={''/* TODO: */}
+      onCloseDestination={'/'/* TODO: */}
       coverImage={coverImage}
       coverImageCenter="35% 75%"
       content="All new crewmates begin their lives at a Habitat, a purpose-made life support structure from where they may venture out to perform tasks."

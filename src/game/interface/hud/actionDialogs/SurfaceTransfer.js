@@ -19,26 +19,19 @@ import {
   formatVolume,
   getBonusDirection,
   TimeBonusTooltip,
-  EmptyBuildingImage,
-  BuildingImage,
   FlexSectionSpacer,
   ActionDialogBody,
-  FlexSectionInputBlock,
   FlexSection,
   TransferSelectionDialog,
   ProgressBarSection,
-  Mouseoverable,
   ActionDialogTabs,
   InventoryChangeCharts,
   CrewOwnerBlock,
   TransferDistanceDetails,
   FlexSectionBlock,
   WarningAlert,
-  SwayInputBlock,
   SwayInputBlockInner,
-  LotInputBlock,
   InventorySelectionDialog,
-  getCapacityStats,
   InventoryInputBlock
 } from './components';
 import { ActionDialogInner, useAsteroidAndLot } from '../ActionDialog';
@@ -66,7 +59,7 @@ const SurfaceTransfer = ({
 
   origin,
   originLot,
-  originSlot,
+  originSlot: initialOriginSlot,
 
   dest,
   currentDeliveryAction,
@@ -89,10 +82,20 @@ const SurfaceTransfer = ({
   }, [crew]);
 
   const [destinationSelectorOpen, setDestinationSelectorOpen] = useState(false);
+  const [originSelectorOpen, setOriginSelectorOpen] = useState(false);
+  const [originSlot, setOriginSlot] = useState(initialOriginSlot);
   const [tab, setTab] = useState(0);
   const [transferSelectorOpen, setTransferSelectorOpen] = useState();
   const [selectedItems, setSelectedItems] = useState(props.preselect?.selectedItems || {});
   const [sway, setSway] = useState((currentDelivery?.price || 0) / 1e6);
+  const [destinationSelection, setDestinationSelection] = useState(
+    (currentDelivery && dest && {
+      id: dest.id,
+      label: dest.label,
+      lotIndex: locationsArrToObj(dest.Location?.locations || []).lotIndex,
+      slot: currentDelivery.destSlot
+    }) || undefined
+  );
 
   const onSwayChange = useCallback((e) => {
     setSway(e.currentTarget.value ? parseInt(e.currentTarget.value) : '');
@@ -107,17 +110,22 @@ const SurfaceTransfer = ({
     return inventories.find((i) => Inventory.TYPES[i.inventoryType].category === Inventory.CATEGORIES.PRIMARY)
       || inventories[0];
   }, [origin?.Inventories, originSlot]);
+
   const { data: originController } = useCrew(origin?.Control?.controller?.id);
 
-  // get destinationLot and destinationInventory
-  const [destinationSelection, setDestinationSelection] = useState(
-    (currentDelivery && dest && {
-      id: dest.id,
-      label: dest.label,
-      lotIndex: locationsArrToObj(dest.Location?.locations || []).lotIndex,
-      slot: currentDelivery.destSlot
-    }) || undefined
-  );
+  // When a new origin inventory is selected, reset the selected items
+  const onOriginSelect = useCallback((selection) => {
+    if (originSlot !== selection.slot) {
+      setOriginSlot(selection.slot);
+      setSelectedItems({});
+    }
+  }, [originSlot]);
+
+  const onDestinationSelect = useCallback((selection) => {
+    const { id, label, slot } = destinationSelection || {};
+    if (id !== selection.id || label !== selection.label || slot !== selection.slot) setDestinationSelection(selection);
+  }, [destinationSelection]);
+
   const { data: destination } = useEntity(destinationSelection ? { id: destinationSelection.id, label: destinationSelection.label } : undefined);
   const destinationLotId = useMemo(() => destination && locationsArrToObj(destination?.Location?.locations || []).lotId, [destination]);
   const { data: destinationLot } = useLot(destinationLotId);
@@ -302,9 +310,12 @@ const SurfaceTransfer = ({
         <FlexSection>
           <InventoryInputBlock
             title="Origin"
+            disabled={stage !== actionStage.NOT_STARTED}
             entity={origin}
-            inventorySlot={originSlot} />
-          
+            inventorySlot={originInventory?.slot}
+            isSelected={stage === actionStage.NOT_STARTED}
+            onClick={() => { setOriginSelectorOpen(true) }} />
+
           <FlexSectionSpacer>
             <ForwardIcon />
           </FlexSectionSpacer>
@@ -439,7 +450,7 @@ const SurfaceTransfer = ({
                 <FlexSectionSpacer />
 
                 <CrewOwnerBlock crew={destinationController} />
-              </FlexSection>  
+              </FlexSection>
             )}
           </>
         )}
@@ -452,7 +463,7 @@ const SurfaceTransfer = ({
       </ActionDialogBody>
 
       <ActionDialogFooter
-        disabled={totalMass === 0 || !destination || !crewCan(Permission.IDS.ADD_PRODUCTS, destination) || !crewCan(Permission.IDS.REMOVE_PRODUCTS, origin)}
+        disabled={totalMass === 0 || !destination || !crewCan(Permission.IDS.ADD_PRODUCTS, destination)}
         goLabel="Transfer"
         onGo={onStartDelivery}
         stage={stage}
@@ -475,10 +486,18 @@ const SurfaceTransfer = ({
 
           <InventorySelectionDialog
             asteroidId={asteroid.id}
+            onClose={() => setOriginSelectorOpen(false)}
+            onSelected={onOriginSelect}
+            open={originSelectorOpen}
+            limitToPrimary={origin}
+          />
+
+          <InventorySelectionDialog
+            asteroidId={asteroid.id}
             otherEntity={origin}
             otherInvSlot={originInventory?.slot}
             onClose={() => setDestinationSelectorOpen(false)}
-            onSelected={setDestinationSelection}
+            onSelected={onDestinationSelect}
             open={destinationSelectorOpen}
           />
         </>
@@ -517,8 +536,12 @@ const Wrapper = (props) => {
     [zoomScene]
   );
 
-  const { data: originEntity, isLoading: originLoading } = useEntity(currentDeliveryAction?.action?.origin || props.origin || zoomShip || lot?.building || lot?.surfaceShip);
-  const { data: originLot, isLoading: originLotLoading } = useLot(locationsArrToObj(originEntity?.Location?.locations || []).lotId);
+  const { data: originEntity, isLoading: originLoading } = useEntity(
+    currentDeliveryAction?.action?.origin || props.origin || zoomShip || lot?.surfaceShip || lot?.building);
+
+  const { data: originLot, isLoading: originLotLoading } = useLot(
+    locationsArrToObj(originEntity?.Location?.locations || []).lotId);
+
   const { data: destEntity, isLoading: destLoading } = useEntity(currentDeliveryAction?.action?.dest);
 
   const stage = currentDeliveryAction?.stage || actionStage.NOT_STARTED;

@@ -1128,7 +1128,7 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
       // (to throttle)
       let to = setTimeout(() => {
         setCheckingName(true);
-        isNameValid(testName, crewmate?.id, 'string').then((trueOrNameErr) => {
+        isNameValid(testName, crewmate?.id, false, 'string').then((trueOrNameErr) => {
           setNameError(trueOrNameErr === true ? null : trueOrNameErr);
           setCheckingName(false);
         });

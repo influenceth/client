@@ -12,24 +12,27 @@ const isVisible = ({ crew, lot, ship }) => {
 };
 
 const SurfaceTransferOutgoing = ({ asteroid, crew, lot, ship, onSetAction, dialogProps = {}, _disabled }) => {
-  const { currentDeliveryActions, isLoading } = useDeliveryManager({ origin: ship || lot?.surfaceShip || lot?.building });
+  const origin = useMemo(() => ship || lot?.surfaceShip || lot?.building, [ship, lot]);
+  const { currentDeliveryActions, isLoading } = useDeliveryManager({ origin });
   const deliveryDeparting = useMemo(() => {
     return (currentDeliveryActions || []).find((a) => a.status === 'DEPARTING');
   }, [currentDeliveryActions]);
 
   const handleClick = useCallback(() => {
-    onSetAction('SURFACE_TRANSFER', { deliveryId: 0, ...dialogProps });
+    onSetAction('SURFACE_TRANSFER', { deliveryId: 0, origin, ...dialogProps });
   }, [onSetAction, dialogProps]);
 
   const disabledReason = useMemo(() => {
-    const entity = ship || lot?.surfaceShip || lot?.building
-    if (!entity) return '';
-    const _location = locationsArrToObj(entity.Location?.locations || []);
+    if (!origin) return '';
+    const _location = locationsArrToObj(origin.Location?.locations || []);
     if (!_location?.lotId) return 'not on surface';
-    const hasMass = (entity.Inventories || []).find((i) => i.status === Inventory.STATUSES.AVAILABLE && i.mass > 0);
+    const hasMass = (origin.Inventories || []).find((i) => i.status === Inventory.STATUSES.AVAILABLE && i.mass > 0);
     if (!hasMass) return 'inventory empty';
-    return getCrewDisabledReason({ asteroid, crew, permission: Permission.IDS.REMOVE_PRODUCTS, permissionTarget: lot?.building });
-  }, [lot, crew?._ready, ship]);
+
+    return getCrewDisabledReason({
+      asteroid, crew, permission: Permission.IDS.REMOVE_PRODUCTS, permissionTarget: origin
+    });
+  }, [origin, crew?._ready]);
 
   return (
     <ActionButton

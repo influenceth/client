@@ -19,6 +19,8 @@ import useCrewContext from '~/hooks/useCrewContext';
 import useLot from '~/hooks/useLot';
 import LiveTimer from '~/components/LiveTimer';
 import useConstructionManager from '~/hooks/actionManagers/useConstructionManager';
+import useCrew from '~/hooks/useCrew';
+import EntityLink from '~/components/EntityLink';
 
 const borderColor = `rgba(255, 255, 255, 0.15)`;
 const DataBlock = styled.div``;
@@ -27,10 +29,12 @@ const Desc = styled.div`
   font-size: 90%;
   height: 38px;
 `;
+
 const EditBlock = styled.div`
   border-top: 1px solid ${borderColor};
   padding: 10px 0;
 `;
+
 const DataRow = styled.div`
   align-items: center;
   color: white;
@@ -42,6 +46,7 @@ const DataRow = styled.div`
     opacity: 0.5;
   }
 `;
+
 const Section = styled.div`
   border-top: 1px solid ${borderColor};
   padding: 10px 0;
@@ -58,6 +63,7 @@ const PolicySelector = styled.div`
     padding: 8px 0 0;
   }
 `;
+
 const Policy = styled.div`
   align-items: center;
   display: flex;
@@ -68,7 +74,7 @@ const Policy = styled.div`
   }
   ${p => p.isSelected
     ? `
-      
+
       & > svg:not(:first-child) {
         display: none;
       }
@@ -96,6 +102,7 @@ const Policy = styled.div`
     `
   }
 `;
+
 const PrepaidInputBlock = styled(InputBlock)`
   & label {
     color: white;
@@ -118,6 +125,7 @@ const Allowlist = styled.div`
   max-height: 250px;
   overflow: hidden auto;
 `;
+
 const AllowCrew = styled.div`
   align-items: center;
   color: white;
@@ -138,10 +146,15 @@ const PermSummary = styled.div`
   font-size: 15px;
   padding-bottom: 15px;
   & > svg {
+    flex: 0 0 24px;
     font-size: 24px;
     margin-right: 8px;
   }
+  & a {
+    color: inherit;
+  }
 `;
+
 const PermSummaryWarning = styled(PermSummary)`
   color: ${p => p.theme.colors.error};
 `;
@@ -190,7 +203,7 @@ const PolicyPanel = ({ editable = false, entity, permission }) => {
   const [editing, setEditing] = useState();
 
   const saving = editing === 'allowlist' ? allowlistChangePending : policyChangePending;
-  
+
   // reset if object is changed
   useEffect(() => {
     setPolicyType(Number(originalPolicyType));
@@ -432,15 +445,6 @@ const PolicyPanel = ({ editable = false, entity, permission }) => {
                       <span>months</span>
                     </div>
                   </PrepaidInputBlock>
-                  <PrepaidInputBlock>
-                    <label>Grace Period</label>
-                    <div>
-                      <UncontrolledTextInput
-                        disabled
-                        value={1.0} />
-                      <span>months</span>
-                    </div>
-                  </PrepaidInputBlock>
                 </>
               )}
               {policyType === Permission.POLICY_IDS.CONTRACT && (
@@ -507,7 +511,7 @@ const PolicyPanel = ({ editable = false, entity, permission }) => {
                       entity={entity}
                       permission={permission} />
                   )}
-                  {/* TODO: enable list view at an asteroid level... will need to pull all agreements from 
+                  {/* TODO: enable list view at an asteroid level... will need to pull all agreements from
                     elasticsearch since entity will be asteroid (and *agreements won't be populated) */}
                   {!(entity?.label === Entity.IDS.ASTEROID && permission === Permission.IDS.LOT_USE) && (
                     <actionButtons.ViewAgreements.Component
@@ -520,7 +524,7 @@ const PolicyPanel = ({ editable = false, entity, permission }) => {
               )}
             </DataBlock>
           </Section>
-          
+
           {editable && (
             <EditBlock>
               <Button onClick={() => toggleEditing('policy')} subtle>Edit Permission Policy</Button>
@@ -573,7 +577,7 @@ const PolicyPanels = ({ editable, entity }) => {
     return !(lotPerm?.crewStatus === 'controller' || lotPerm?.crewStatus === 'granted');
   }, [lot]);
 
-  const buildingOrSite = useMemo(() => lot?.building?.Building?.status < Building.CONSTRUCTION_STATUSES.OPERATIONAL ? 'Site' : 'Building', [lot]);
+  const buildingOrSite = useMemo(() => lot?.building?.Building?.status < Building.CONSTRUCTION_STATUSES.OPERATIONAL ? 'Construction Site' : 'Building', [lot]);
 
   const showStagingWarning = useMemo(() => {
     if (isAtRisk) {
@@ -597,9 +601,9 @@ const PolicyPanels = ({ editable, entity }) => {
 
   return (
     <div>
-      {showLotWarning && <PermSummaryWarning style={{ paddingBottom: 5 }}><WarningIcon /> Lot not controlled. {buildingOrSite} is at risk.</PermSummaryWarning>}
-      {showStagingWarning === 2 && <PermSummaryWarning><WarningIcon /> Staging Time expired. Site is Abandoned.</PermSummaryWarning>}
-      {showStagingWarning === 1 && <PermSummary><WarningIcon /> <LiveTimer target={lot?.building?.Building?.plannedAt + Building.GRACE_PERIOD} maxPrecision={2} /> Staging Time Remaining</PermSummary>}
+      {showLotWarning && <PermSummaryWarning style={{ paddingBottom: 10 }}><WarningIcon /><span>Lot not controlled. {buildingOrSite} is vulnerable to <EntityLink {...(lot?.Control?.controller || {})} />.</span></PermSummaryWarning>}
+      {showStagingWarning === 2 && <PermSummaryWarning><WarningIcon /><span>Staging Time expired. Construction Site is vulnerable to any crew.</span></PermSummaryWarning>}
+      {showStagingWarning === 1 && <PermSummary><WarningIcon /><span><LiveTimer target={lot?.building?.Building?.plannedAt + Building.GRACE_PERIOD} maxPrecision={2} /> Staging Time Remaining</span></PermSummary>}
 
       {(crewHasAgreements || crewCanMakeAgreements) && (
         <PermSummary success={crewHasAgreements}>

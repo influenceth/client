@@ -177,7 +177,7 @@ const FormAgreement = ({
   const remainingPeriod = useMemo(() => currentAgreement?.endTime - blockTime, [blockTime, currentAgreement?.endTime]);
   const refundablePeriod = useMemo(() => Math.max(0, remainingPeriod - monthsToSeconds(currentAgreement?.noticePeriod)), [currentAgreement?.noticePeriod, remainingPeriod]);
   const refundableAmount = useMemo(() => refundablePeriod * (currentAgreement?.rate_swayPerSec || 0), [currentAgreement?.rate_swayPerSec, refundablePeriod]);
-  
+
   const stats = useMemo(() => {
     if (isTermination) {
       return [
@@ -259,9 +259,8 @@ const FormAgreement = ({
   }, [createAlert]);
 
   const handlePeriodChange = useCallback((e) => {
-    // TODO: validate min/max before updating state
-    setInitialPeriod(e.currentTarget.value);
-  }, []);
+    setInitialPeriod(Math.max(currentPolicy?.policyDetails?.initialTerm, Math.min(e.currentTarget.value, maxTerm)));
+  }, [currentPolicy?.policyDetails?.initialTerm, maxTerm]);
 
   const onEnterAgreement = useCallback(() => {
     const recipient = controller?.Crew?.delegatedTo;
@@ -362,14 +361,14 @@ const FormAgreement = ({
               <CrewIndicator crew={controller} label={entity?.label === Entity.IDS.LOT ? `Administrator` : undefined} />
             </div>
           </FlexSectionBlock>
-          
+
           <FlexSectionSpacer />
 
           {isTermination && (
             <FlexSectionBlock
               title="Agreement Details"
               bodyStyle={{ height: 'auto', padding: '6px 12px' }}>
-              
+
               <FormSection>
                 <InputLabel>
                   <label>Notice Period</label>
@@ -392,7 +391,7 @@ const FormAgreement = ({
                     value={secondsToMonths(refundablePeriod || 0)} />
                 </TextInputWrapper>
               </FormSection>
-              
+
               {refundablePeriod > 0 && (
                 <FormSection>
                   <InputLabel>
@@ -413,7 +412,7 @@ const FormAgreement = ({
             <FlexSectionBlock
               title={`${isExtension ? 'Extend' : 'Lease'} For`}
               bodyStyle={{ height: 'auto', padding: '6px 12px' }}>
-              
+
               <FormSection>
                 <InputLabel>
                   <label>{isExtension ? 'Added' : 'Leasing'} Period</label>
@@ -421,12 +420,13 @@ const FormAgreement = ({
                 <TextInputWrapper rightLabel="months">
                   <UncontrolledTextInput
                     disabled={stage !== actionStages.NOT_STARTED}
-                    min={currentPolicy?.policyDetails?.initialTerm || 0}
+                    min={currentPolicy?.policyDetails?.initialTerm}
                     max={12}
+                    onBlur={handlePeriodChange}
                     onChange={handlePeriodChange}
                     step={0.1}
                     type="number"
-                    value={initialPeriod || 0} />
+                    value={initialPeriod} />
                 </TextInputWrapper>
                 <InputSublabels>
                   {isExtension
@@ -436,7 +436,7 @@ const FormAgreement = ({
                   <div>Max <b>{formatFixed(maxTerm, 1)} months</b></div>
                 </InputSublabels>
               </FormSection>
-              
+
               <FormSection>
                 <InputLabel>
                   <label>Price</label>
@@ -460,7 +460,7 @@ const FormAgreement = ({
                 They are written outside of the game client and may be viewed externally on{' '}
                 <a href={`${process.env.REACT_APP_STARKNET_EXPLORER_URL}/contract/${currentPolicy?.policyDetails?.contract}`} target="_blank" rel="noreferrer">Starkscan</a>.
               </ContractDesc>
-            
+
               <Clipboard
                 component="span"
                 data-clipboard-text={`${currentPolicy?.policyDetails?.contract}`}
@@ -545,7 +545,7 @@ const FormAgreement = ({
                     )}
                   </>
                 )}
-              
+
             </Alert>
 
           </FlexSectionInputBlock>

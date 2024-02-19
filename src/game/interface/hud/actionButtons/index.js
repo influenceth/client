@@ -7,6 +7,7 @@ import CoreSample from './CoreSample';
 import Deconstruct from './Deconstruct';
 import EjectCrew from './EjectCrew';
 import EjectGuestCrew from './EjectGuestCrew';
+import EjectShip from './EjectShip';
 import EmergencyModeCollect from './EmergencyModeCollect';
 import EmergencyModeToggle from './EmergencyModeToggle';
 import EndAgreement from './EndAgreement';
@@ -18,6 +19,7 @@ import LaunchShip from './LaunchShip';
 import PlanBuilding from './PlanBuilding';
 import PurchaseAsteroid from './PurchaseAsteroid';
 import RecruitCrewmate from './RecruitCrewmate';
+import RepoBuilding from './RepoBuilding';
 import Processors from './Processors';
 import ScanAsteroid from './ScanAsteroid';
 import SelectTravelDestination from './SelectTravelDestination';
@@ -40,6 +42,7 @@ const ActionsButtons = {
   EmergencyModeToggle,
   EjectCrew,
   EjectGuestCrew,
+  EjectShip,
   EndAgreement,
   ExtendAgreement,
   Extract,
@@ -50,6 +53,7 @@ const ActionsButtons = {
   Processors,
   PurchaseAsteroid,
   RecruitCrewmate,
+  RepoBuilding,
   ScanAsteroid,
   SelectTravelDestination,
   SetCourse,
