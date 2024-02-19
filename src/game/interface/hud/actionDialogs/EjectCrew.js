@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Building, Entity, Ship, Station } from '@influenceth/sdk';
+import { Building, Permission, Ship, Station } from '@influenceth/sdk';
 
 import { EjectPassengersIcon, WarningOutlineIcon } from '~/components/Icons';
 import useCrewContext from '~/hooks/useCrewContext';
-import useShip from '~/hooks/useShip';
+import useStationedCrews from '~/hooks/useStationedCrews';
 import { reactBool, formatTimer, locationsArrToObj } from '~/lib/utils';
 
 import {
@@ -34,9 +34,9 @@ import formatters from '~/lib/formatters';
 import theme from '~/theme';
 import { ActionDialogInner } from '../ActionDialog';
 
-const EjectCrew = ({ asteroid, origin, originLot, manager, stage, ...props }) => {
+const EjectCrew = ({ asteroid, origin, originLot, stationedCrews, manager, stage, ...props }) => {
   const { currentEjection, ejectCrew, actionStage: ejectionStatus } = manager;
-  
+
   // TODO: only if specified id
   const { crew } = useCrewContext();
 
@@ -57,6 +57,15 @@ const EjectCrew = ({ asteroid, origin, originLot, manager, stage, ...props }) =>
       direction: 0,
     },
   ]), [targetCrew]);
+
+  const hasPermission = useMemo(() => {
+    if (targetCrewId && origin) {
+      const perm = Permission.getPolicyDetails(origin, targetCrewId)[Permission.IDS.STATION_CREW];
+      return perm ? perm.crewStatus === 'controller' || perm.crewStatus === 'granted' : false;
+    }
+
+    return false;
+  }, [targetCrewId, origin]);
 
   const onEject = useCallback(() => {
     ejectCrew(targetCrewId);
@@ -117,7 +126,7 @@ const EjectCrew = ({ asteroid, origin, originLot, manager, stage, ...props }) =>
             title="Destination"
             titleDetails={
               originLot && <TransferDistanceTitleDetails><label>Orbital Transfer</label></TransferDistanceTitleDetails>
-            }  
+            }
             image={<AsteroidImage asteroid={asteroid} />}
             label={formatters.asteroidName(asteroid)}
             sublabel="Orbit"
@@ -142,7 +151,7 @@ const EjectCrew = ({ asteroid, origin, originLot, manager, stage, ...props }) =>
 
           <FlexSectionSpacer />
 
-          {/* TODO: only selectable if i control the ship */}
+          {/* TODO: only selectable if I control the ship */}
           <CrewInputBlock
             title={targetCrew ? "Ejected Crew" : "Select Crew to Eject"}
             crew={targetCrew ? { ...targetCrew, roster: targetCrew._crewmates } : undefined}
@@ -175,7 +184,7 @@ const EjectCrew = ({ asteroid, origin, originLot, manager, stage, ...props }) =>
       </ActionDialogBody>
 
       <ActionDialogFooter
-        disabled={!targetCrew}
+        disabled={!targetCrew || hasPermission}
         goLabel="Eject"
         onGo={onEject}
         stage={stage}
@@ -184,7 +193,7 @@ const EjectCrew = ({ asteroid, origin, originLot, manager, stage, ...props }) =>
 
       {stage === actionStages.NOT_STARTED && (
         <CrewSelectionDialog
-          crews={[]}
+          crews={stationedCrews || []}
           onClose={() => setCrewSelectorOpen(false)}
           onSelected={setTargetCrewId}
           open={crewSelectorOpen}
@@ -197,15 +206,16 @@ const EjectCrew = ({ asteroid, origin, originLot, manager, stage, ...props }) =>
 const Wrapper = (props) => {
   const { crew } = useCrewContext();
 
-  // NOTE: use props.originId for guests
-  const originId = useMemo(() => props.originId || crew?.Location?.location, [crew?.Location?.location, props.originId]);
-  const { data: origin, isLoading: entityIsLoading } = useEntity(originId);
+  // NOTE: use props.origin for guests
+  const originEntity = useMemo(() => props.origin || crew?.Location?.location, [crew?.Location?.location, props.origin]);
+  const { data: allStationedCrews } = useStationedCrews(originEntity, true);
+  const { data: origin, isLoading: entityIsLoading } = useEntity(originEntity);
   const originLocation = useMemo(() => locationsArrToObj(origin?.Location?.locations || []), [origin]);
-  
+
   const { data: asteroid, isLoading: asteroidIsLoading } = useAsteroid(originLocation?.asteroidId);
   const { data: originLot, isLoading: lotIsLoading } = useLot(originLocation?.lotId);
 
-  const ejectCrewManager = useEjectCrewManager(originId);
+  const ejectCrewManager = useEjectCrewManager(origin);
 
   // ejection is weird, so create a psuedo manager to make it seem more normal
   const manager = useMemo(() => {
@@ -233,6 +243,7 @@ const Wrapper = (props) => {
       stage={manager.actionStage}>
       <EjectCrew
         asteroid={asteroid}
+        stationedCrews={allStationedCrews}
         origin={origin}
         originLot={originLot}
         manager={manager}

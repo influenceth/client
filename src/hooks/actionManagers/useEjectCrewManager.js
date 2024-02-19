@@ -9,13 +9,13 @@ import useStore from '~/hooks/useStore';
 import { locationsArrToObj } from '~/lib/utils';
 
 
-const useEjectCrewManager = (originId) => {
+const useEjectCrewManager = (originEntity) => {
   const { crew, isLoading } = useCrewContext();
   const { execute } = useContext(ChainTransactionContext);
   const pendingTransactions = useStore(s => s.pendingTransactions);
 
-  const { data: origin } = useEntity(originId);
-  const { data: originCrews } = useStationedCrews(originId);
+  const { data: origin } = useEntity(originEntity);
+  const { data: originCrews } = useStationedCrews(origin);
 
   const currentEjections = useMemo(() => {
     return pendingTransactions
@@ -35,12 +35,12 @@ const useEjectCrewManager = (originId) => {
           caller_crew: { id: crew?.id, label: Entity.IDS.CREW }
         },
         {
-          originId,
+          origin,
           ...locationsArrToObj(origin?.Location?.locations || [])
         }
       );
     },
-    [execute, crew, originId, origin]
+    [execute, crew, originEntity, origin]
   );
 
   return {
