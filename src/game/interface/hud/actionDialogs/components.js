@@ -2410,7 +2410,7 @@ export const ResourceGridSectionInner = ({
               <IngredientSummary>
                 <span>None Selected</span>
               </IngredientSummary>
-            )}+
+            )}
           </>
         )}
       <ClipCorner dimension={sectionBodyCornerSize} />

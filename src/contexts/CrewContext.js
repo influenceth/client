@@ -158,6 +158,11 @@ export function CrewProvider({ children }) {
       queryClient.setQueryData(ownedCrewsQueryKey, (prevRawCrews = []) => {
         return prevRawCrews.map((c) => {
           if (c.id === updatedCrew.id) {
+            // TODO: any reason not to just replace the whole Crew component here?
+            c.Crew.actionRound = updatedCrew.Crew.actionRound;
+            c.Crew.actionStrategy = updatedCrew.Crew.actionStrategy;
+            c.Crew.actionType = updatedCrew.Crew.actionType;
+            c.Crew.actionWeight = updatedCrew.Crew.actionWeight;
             c.Crew.lastFed = updatedCrew.Crew.lastFed;
             c.Crew.readyAt = updatedCrew.Crew.readyAt;
           }
