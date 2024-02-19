@@ -1,7 +1,6 @@
 import { createContext, useCallback, useEffect, useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from 'react-query';
-import { Crewmate, Entity, Permission, System } from '@influenceth/sdk';
-import { uint256 } from 'starknet';
+import { Crewmate, Entity, Permission, RandomEvent, System } from '@influenceth/sdk';
 
 import api from '~/lib/api';
 import useAuth from '~/hooks/useAuth';
@@ -113,7 +112,7 @@ export function CrewProvider({ children }) {
   const [actionTypeTriggered, setActionTypeTriggered] = useState(false);
   useEffect(() => {
     if (!actionTypeTriggered) {
-      if (selectedCrew?.Crew?.actionType && selectedCrew.Crew.actionRound && selectedCrew.Crew.actionRound <= blockNumber) {
+      if (selectedCrew?.Crew?.actionType && selectedCrew.Crew.actionRound && (selectedCrew.Crew.actionRound + RandomEvent.MIN_ROUNDS) <= blockNumber) {
         starknet.account.provider.callContract(
           System.getRunSystemCall(
             'CheckForRandomEvent',
@@ -124,7 +123,7 @@ export function CrewProvider({ children }) {
         .then((response) => {
           const pendingEvent = response?.result?.[1] ? parseInt(response?.result?.[1]) : null;
           if (pendingEvent > 0) {
-            getBlockTime(selectedCrew.Crew.actionRound).then((timestamp) => {
+            getBlockTime(selectedCrew.Crew.actionRound + RandomEvent.MIN_ROUNDS).then((timestamp) => {
               setActionTypeTriggered({
                 actionType: selectedCrew.Crew.actionType,
                 pendingEvent,
