@@ -52,6 +52,10 @@ filtersToQuery.asteroids = (filters) => {
     queryBuilder.filter(esb.termsQuery('Celestial.celestialType', filters.spectralType.map((t) => parseInt(t))));
   }
 
+  if (filters.scanStatus) {
+    queryBuilder.filter(esb.termsQuery('Celestial.scanStatus', filters.scanStatus.map((t) => parseInt(t))));
+  }
+
   if (filters.axisMin || filters.axisMax) {
     const axisRange = esb.rangeQuery('Orbit.a');
     if (filters.axisMin) axisRange.gte(filters.axisMin * constants.AU / 1000);
