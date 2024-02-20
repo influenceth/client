@@ -12,8 +12,10 @@ const isVisible = ({ crew, ship }) => {
     // if already in emode, show so can toggle off
     if (ship.Ship.emergencyAt > 0) return true;
 
-    // else, show if propellant is low
-    // TODO: maybe always show
+    // show if food is low
+    if (crew?._foodBonuses < 1) return true;
+
+    // show if propellant is low
     const propellantInventory = ship.Inventories.find((i) => i.slot === Ship.TYPES[ship.Ship.shipType].propellantSlot);
     const propellantInventoryMassMax = Inventory.TYPES[propellantInventory?.inventoryType]?.massConstraint;
     return (propellantInventory.mass <= 0.1 * propellantInventoryMassMax);

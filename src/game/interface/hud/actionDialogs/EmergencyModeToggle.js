@@ -1,11 +1,11 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import styled from 'styled-components';
 import { Inventory, Product, Ship } from '@influenceth/sdk';
 
 import { CloseIcon, EmergencyModeEnterIcon, EmergencyModeExitIcon, WarningOutlineIcon } from '~/components/Icons';
 import useCrewContext from '~/hooks/useCrewContext';
 import useShip from '~/hooks/useShip';
-import { reactBool, formatTimer, formatFixed } from '~/lib/utils';
+import { reactBool, formatFixed } from '~/lib/utils';
 
 import {
   ActionDialogFooter,
@@ -18,8 +18,6 @@ import {
   formatResourceVolume,
   formatResourceMass,
 } from './components';
-import useLot from '~/hooks/useLot';
-import useStore from '~/hooks/useStore';
 import useAsteroid from '~/hooks/useAsteroid';
 import useStationedCrews from '~/hooks/useStationedCrews';
 import actionStages from '~/lib/actionStages';
@@ -51,18 +49,16 @@ const Note = styled.div`
 `;
 
 const EmergencyModeToggle = ({ asteroid, lot, manager, ship, stage, ...props }) => {
-  const createAlert = useStore(s => s.dispatchAlertLogged);
-  
   const { activateEmergencyMode, deactivateEmergencyMode, actionStage } = manager;
 
   const { crew } = useCrewContext();
 
-  const { data: shipCrews } = useStationedCrews(ship?.id);
+  const { data: shipCrews } = useStationedCrews(ship);
   const shipPassengerCrews = useMemo(() => (shipCrews || []).filter((c) => c.id !== crew?.id), [shipCrews]);
 
   const crewmates = crew?._crewmates || [];
   const captain = crewmates[0];
-  
+
   const inEmergencyMode = useMemo(() => {
     if (manager.isActivating) return false;
     if (manager.isDeactivating) return true;
@@ -73,7 +69,7 @@ const EmergencyModeToggle = ({ asteroid, lot, manager, ship, stage, ...props }) 
     const shipConfig = Ship.TYPES[ship.Ship.shipType];
     return ship.Inventories.find((i) => i.slot === shipConfig.cargoSlot);
   }, [ship]);
-  
+
   const propellantInventory = useMemo(() => {
     const shipConfig = Ship.TYPES[ship.Ship.shipType];
     return ship.Inventories.find((i) => i.slot === shipConfig.propellantSlot);
@@ -221,7 +217,7 @@ const EmergencyModeToggle = ({ asteroid, lot, manager, ship, stage, ...props }) 
 
 const Wrapper = (props) => {
   const { crew } = useCrewContext();
-  
+
   const { data: asteroid, isLoading: asteroidIsLoading } = useAsteroid(crew?._location?.asteroidId);
   const { data: lot, isLoading: lotIsLoading } = useAsteroid(crew?._location?.lotId);
   const { data: ship, isLoading: shipIsLoading } = useShip(crew?._location?.shipId);
