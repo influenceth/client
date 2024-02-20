@@ -394,7 +394,7 @@ const RoutePlanner = () => {
             valueKey="i"
             size="small"
             style={{ textTransform: 'none', fontSize: '80%' }}
-            width={200} />
+            width={230} />
         </div>
 
       </ShipSelection>
@@ -488,7 +488,7 @@ const RoutePlanner = () => {
             minTof={minTof}
             maxTof={maxTof}
             shipParams={shipParams}
-            size={320}
+            size={348}
           />
         )}
       </SectionBody>

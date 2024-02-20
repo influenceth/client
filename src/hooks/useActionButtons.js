@@ -170,10 +170,11 @@ const useActionButtons = () => {
         openHudMenu,
         ship: targetShip?.Ship.status === Ship.STATUSES.AVAILABLE && targetShip,
         zoomStatus,
+        zoomScene
       }))
       .sort((a, b) => (buttonOrder[a] || 100) - (buttonOrder[b] || 100))
       .map((k) => actionButtons[k].Component || actionButtons[k]);
-  }, [targetShip?.id, asteroid, constructionStatus, crew, crewedShip, lot, openHudMenu, resourceMap?.active, !!resourceMap?.selected, zoomStatus]);
+  }, [targetShip?.id, asteroid, constructionStatus, crew, crewedShip, lot, openHudMenu, resourceMap?.active, !!resourceMap?.selected, zoomScene, zoomStatus]);
 
   // TODO: within each action button, should memoize whatever is passed to flags
   // (because always a new object, will always re-render the underlying button)

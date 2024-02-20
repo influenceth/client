@@ -288,11 +288,18 @@ const activities = {
   },
 
   ConstructionPlanned: {
-    getInvalidations: ({ event: { returnValues } }) => ([
-      ...invalidationDefaults(Entity.IDS.BUILDING, returnValues.building.id),
-      ['planned'],
-      ['asteroidCrewBuildings', returnValues.asteroid.id, returnValues.callerCrew.id],
-    ]),
+    getInvalidations: ({ event: { returnValues } }, { building = {} }) => {
+      const lotId = locationsArrToObj(building?.Location?.locations || [])?.lotId;
+      return [
+        ...invalidationDefaults(Entity.IDS.BUILDING, returnValues.building.id),
+        ['entities', Entity.IDS.BUILDING, 'lot', lotId],
+        ['planned'],
+        ['asteroidCrewBuildings', returnValues.asteroid.id, returnValues.callerCrew.id],
+      ];
+    },
+    getPrepopEntities: ({ event: { returnValues } }) => ({
+      building: returnValues.building,
+    }),
     getLogContent: ({ event: { returnValues } }) => ({
       icon: <PlanBuildingIcon />,
       content: (
@@ -1336,6 +1343,7 @@ const activities = {
       ...invalidationDefaults(Entity.IDS.DEPOSIT, returnValues.deposit.id), // (not sure this exists)
       ...(version > 0 ? invalidationDefaults(returnValues.origin.label, returnValues.origin.id) : []), // source inventory
       ['actionItems'],
+      ['entities', Entity.IDS.DEPOSIT, 'lot', returnValues.lot.id], // b/c can be new in search
       ['asteroidCrewSampledLots', Lot.toPosition(returnValues.lot.id)?.asteroidId, returnValues.resource],
     ]),
     // getLogContent: ({ event: { returnValues } }) => {
@@ -1462,7 +1470,7 @@ const activities = {
     },
     getIsActionItemHidden: ({ returnValues }) => (pendingTransactions) => {
       return pendingTransactions.find((tx) => (
-        tx.key === 'ShipAssemblyFinished'
+        tx.key === 'AssembleShipFinish'
         && tx.vars.dry_dock.id === returnValues.dryDock.id
         && tx.vars.dry_dock_slot === returnValues.dryDockSlot
       ))
@@ -1496,10 +1504,12 @@ const activities = {
     requiresCrewTime: true
   },
   ShipAssemblyFinished: {
-    getInvalidations: ({ event: { returnValues } }, { building = {} }) => {
+    getInvalidations: ({ event: { returnValues } }, { building = {}, destination = {} }) => {
+      const lotId = destination?.label === Entity.IDS.LOT ? destination.id : locationsArrToObj(destination?.Location?.locations || [])?.lotId;
       const invs = [
         ...invalidationDefaults(returnValues.dryDock.label, returnValues.dryDock.id),
         ...invalidationDefaults(returnValues.destination.label, returnValues.destination.id),
+        ['entities', Entity.IDS.SHIP, 'lot', lotId], // (b/c will be new in search)
         ['actionItems'],
         // TODO: ...
         // ['asteroidInventories', asteroidId],
@@ -1538,12 +1548,19 @@ const activities = {
   },
 
   ShipDocked: {
-    getInvalidations: ({ event: { returnValues } }) => ([
-      ...invalidationDefaults(returnValues.ship.label, returnValues.ship.id),
-      ...invalidationDefaults(returnValues.dock.label, returnValues.dock.id),
-      ...invalidationDefaults(returnValues.callerCrew.label, returnValues.callerCrew.id),
-      // TODO: any others? passenger crews?
-    ]),
+    getInvalidations: ({ event: { returnValues } }, { dock = {} }) => {
+      const lotId = dock?.label === Entity.IDS.LOT ? dock.id : locationsArrToObj(dock?.Location?.locations || [])?.lotId;
+      return [
+        ...invalidationDefaults(returnValues.ship.label, returnValues.ship.id),
+        ...invalidationDefaults(returnValues.dock.label, returnValues.dock.id),
+        ...invalidationDefaults(returnValues.callerCrew.label, returnValues.callerCrew.id),
+        ['entities', Entity.IDS.SHIP, 'lot', lotId], // (b/c will be new in search)
+        // TODO: any others? passenger crews?
+      ];
+    },
+    getPrepopEntities: ({ event: { returnValues } }) => ({
+      dock: returnValues.dock
+    }),
     getLogContent: ({ event: { returnValues } }) => ({
       icon: <ScanAsteroidIcon />,
       content: (
@@ -1555,6 +1572,7 @@ const activities = {
     requiresCrewTime: true, // only true currently if !powered
     triggerAlert: true
   },
+
   ShipUndocked: {
     getInvalidations: ({ event: { returnValues } }, { dock = {} }) => ([
       ...invalidationDefaults(returnValues.ship.label, returnValues.ship.id),
