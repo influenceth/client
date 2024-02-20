@@ -22,6 +22,7 @@ import Ship_1 from './Ship_1.png';
 import Ship_2 from './Ship_2.png';
 import Ship_3 from './Ship_3.png';
 import Ship_4 from './Ship_4.png';
+import SurfaceShip from './SurfaceShip.png';
 
 export default {
   Asteroid,
@@ -48,4 +49,5 @@ export default {
   Ship_2,
   Ship_3,
   Ship_4,
+  SurfaceShip,
 }
