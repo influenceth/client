@@ -28,7 +28,6 @@ import useAsteroid from '~/hooks/useAsteroid';
 import useEntity from '~/hooks/useEntity';
 import useHydratedCrew from '~/hooks/useHydratedCrew';
 import useLot from '~/hooks/useLot';
-import useStore from '~/hooks/useStore';
 import actionStages from '~/lib/actionStages';
 import formatters from '~/lib/formatters';
 import theme from '~/theme';
@@ -44,7 +43,6 @@ const EjectCrew = ({ asteroid, origin, originLot, stationedCrews, manager, stage
   const [targetCrewId, setTargetCrewId] = useState(currentEjection?.ejected_crew?.id || (props.guests || props.guestId ? (props.guestId || null) : crew?.id));
 
   const { data: targetCrew } = useHydratedCrew(targetCrewId);
-
   const myCrewmates = currentEjection?._crewmates || crew?._crewmates || [];
   const captain = myCrewmates[0];
 
@@ -89,6 +87,12 @@ const EjectCrew = ({ asteroid, origin, originLot, stationedCrews, manager, stage
       : undefined;
     return { icon, label, status };
   }, [myCrewIsTarget, origin, stage]);
+
+  const allowAction = useMemo(() => {
+    if (myCrewIsTarget && targetCrew) return true;
+    if (!myCrewIsTarget && targetCrew && !hasPermission) return true;
+    return false;
+  }, [myCrewIsTarget, targetCrew, hasPermission]);
 
   return (
     <>
@@ -184,7 +188,7 @@ const EjectCrew = ({ asteroid, origin, originLot, stationedCrews, manager, stage
       </ActionDialogBody>
 
       <ActionDialogFooter
-        disabled={!targetCrew || hasPermission}
+        disabled={!allowAction}
         goLabel="Eject"
         onGo={onEject}
         stage={stage}

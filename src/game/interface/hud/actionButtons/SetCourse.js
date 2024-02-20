@@ -35,7 +35,7 @@ const SetCourse = ({ asteroid, crew, ship, onSetAction, _disabled }) => {
 
   const disabledReason = useMemo(() => {
     if (_disabled) return 'loading...';
-    if (!crew?._location?.shipId) return 'crew is not on ship';
+    if (!crew?._location?.shipId && crew?.Ship?.emergencyAt === 0) return 'crew is not on ship';
     if (travelStatus === 'READY') {
       if (!travelSolution) return 'no travel solution';
       if (travelSolution._isSimulation) return 'simulated solution';
