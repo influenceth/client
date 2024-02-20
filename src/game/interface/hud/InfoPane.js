@@ -398,7 +398,7 @@ const InfoPane = () => {
 
     } else if (zoomStatus === 'in') {
       const isIncompleteBuilding = lot?.building && !['OPERATIONAL', 'DECONSTRUCTING'].includes(constructionStatus);
-      const explicitLotControllerId = lot?.Control?.isExplicit ? lot?.Control?.controller : undefined;
+      const explicitLotControllerId = lot?.Control?.isExplicit ? lot?.Control?.controller?.id : undefined;
       if (zoomScene?.type === 'LOT') {
         pane.title = lot?.building ? `${formatters.buildingName(lot.building)}${isIncompleteBuilding ? ' (Site)' : ''}` : 'Empty Lot';
         pane.subtitle = <>{formatters.asteroidName(asteroid)} &gt; <b>{formatters.lotName(lotId)}</b></>;
