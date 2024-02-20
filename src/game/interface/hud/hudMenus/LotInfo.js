@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from 'react';
 import styled from 'styled-components';
-import { Building, Permission } from '@influenceth/sdk';
+import { Building, Ship } from '@influenceth/sdk';
 import moment from 'moment';
 
 import useStore from '~/hooks/useStore';
@@ -65,6 +65,20 @@ const LotInfo = () => {
                 <CrewIndicator crew={controller} label={`${siteOrBuilding} Controller`} />
               </div>
               <PolicyPanels entity={lot?.building} />
+            </HudMenuCollapsibleSection>
+          </>
+        )}
+
+        {!lot?.building && lot?.surfaceShip && (
+          <>
+            <HudMenuCollapsibleSection titleText="Landed Ship Description">
+              <Description>
+                {Ship.TYPES[lot.surfaceShip.Ship.shipType]?.description}
+              </Description>
+            </HudMenuCollapsibleSection>
+
+            <HudMenuCollapsibleSection titleText="Landed Ship Permissions" collapsed>
+              <PolicyPanels entity={lot?.surfaceShip} />
             </HudMenuCollapsibleSection>
           </>
         )}

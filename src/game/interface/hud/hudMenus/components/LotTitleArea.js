@@ -36,6 +36,12 @@ const LotTitleArea = ({ lot }) => {
         Building.TYPES[lot.building.Building.buildingType].name,
         `Building_${lot.building.Building.buildingType}`
       ];
+    } else if (lot?.surfaceShip) {
+      return [
+        formatters.shipName(lot.surfaceShip),
+        `Landing Site (Empty Lot)`,
+        'EmptyLot'
+      ];
     }
     return ['Empty Lot', null, 'EmptyLot'];
   }, [lot]);

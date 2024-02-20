@@ -33,7 +33,7 @@ const EmergencyModeToggle = ({ crew, onSetAction, _disabled }) => {
   const disabledReason = useMemo(() => {
     if (_disabled) return 'loading...';
     if (!crewedShip) return 'ship is not crewed';
-    if (crewedShip?._location.lotId) return 'must be in orbit';
+    if (crewedShip?._location.lotId || crewedShip?._location.spaceId) return 'must be in orbit';
     if (!ready) return 'ship is busy';
     return getCrewDisabledReason({ crew });
   }, [_disabled, crewedShip, ready]);

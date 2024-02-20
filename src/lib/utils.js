@@ -71,6 +71,7 @@ export const locationsArrToObj = (locations) => {
     lotIndex: lotLocation?.id ? Lot.toIndex(lotLocation?.id) : (asteroidId ? 0 : undefined),
     buildingId: locations.find((l) => l.label === Entity.IDS.BUILDING)?.id,
     shipId: locations.find((l) => l.label === Entity.IDS.SHIP)?.id,
+    spaceId: locations.find((l) => l.label === Entity.IDS.SPACE)?.id,
   }
 };
 
