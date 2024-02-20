@@ -73,7 +73,6 @@ const useLot = (lotId) => {
 
   return useMemo(() => {
     const { asteroidId, lotIndex } = Lot.toPosition(lotId) || {};
-    console.log('lot', lot);
     const agreement = (lot?.PrepaidAgreements || []).find((p) => p.permission === Permission.IDS.LOT_USE)
       || (lot?.ContractPolicies || []).find((p) => p.permission === Permission.IDS.LOT_USE);
     const building = (buildings || []).find((e) => e.Building.status > 0);
