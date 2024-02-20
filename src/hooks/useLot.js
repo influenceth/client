@@ -5,28 +5,17 @@ import { Deposit, Entity, Lot, Permission, Ship } from '@influenceth/sdk';
 import api from '~/lib/api';
 import useEntity from './useEntity';
 
-// const useLot = (lotId) => {
-//   return useQuery(
-//     // NOTE: this includes metadata that may not play as nicely with
-//     //  a more standardized entity caching model... so when we get
-//     //  there, we may want to rename this cache key
-//     [ 'entity', Entity.IDS.LOT, lotId ],
-//     () => api.getLot(lotId),
-//     { enabled: !!lotId }
-//   );
-// };
-
 const useLot = (lotId) => {
   const queryClient = useQueryClient();
 
   const lotEntity = useMemo(() => lotId ? Entity.formatEntity({ id: lotId, label: Entity.IDS.LOT }) : null, [lotId]);
 
-  // prepop all the entities on the lot in the cache
-  // so can do in a single query
-  const { data: lotData, isLoading } = useQuery(
-    ['lot', lotId],
+  const { data: lot, isLoading: lotIsLoading } = useEntity(lotId ? { id: lotId, label: Entity.IDS.LOT } : undefined);
+
+  // prepop all the entities on the lot in the cache (so can do in a single query)
+  const { data: lotDataPrepopped, isLoading: lotDataIsLoading } = useQuery(
+    ['lotData', lotId],
     async () => {
-      const lot = (await api.getEntityById(lotEntity)) || lotEntity;
 
       // populate from single query... set query data
       const lotEntities = (await api.getEntities({
@@ -36,9 +25,8 @@ const useLot = (lotId) => {
           /*'Control',*/ 'Deposit', /*'Location',*/
           /*'Control', 'Inventory', 'Location', 'Name',*/ 'Ship', /*'Station',*/
 
-          // TODO: do we need these on all entities? when should we pull *Agreement's? *Policy's?
-          'ContractPolicy', 'PrepaidPolicy', 'PublicPolicy',
-          'ContractAgreement', 'PrepaidAgreement', 'WhitelistAgreement',
+          // these are on both buildings and ships:
+          'ContractPolicy', 'PrepaidPolicy', 'PublicPolicy', 'ContractAgreement', 'PrepaidAgreement', 'WhitelistAgreement',
         ]
       })) || [];
 
@@ -57,9 +45,9 @@ const useLot = (lotId) => {
         );
       })
 
-      return lot;
+      return true;
     },
-    { enabled: !!lotId }
+    { enabled: !!lotEntity }
   );
 
   // (presuming this is already loaded so doesn't cause any overhead)
@@ -68,25 +56,26 @@ const useLot = (lotId) => {
   const { data: buildings, isLoading: buildingsLoading } = useQuery(
     ['entities', Entity.IDS.BUILDING, 'lot', lotId],
     () => api.getEntities({ label: Entity.IDS.BUILDING, match: { 'Location.locations.uuid': lotEntity.uuid } }),
-    { enabled: !!lotData } // give a chance to preload the data
+    { enabled: !!lotDataPrepopped } // give a chance to preload the data
   );
 
   const { data: deposits, isLoading: depositsLoading } = useQuery(
     ['entities', Entity.IDS.DEPOSIT, 'lot', lotId],
     () => api.getEntities({ label: Entity.IDS.DEPOSIT, match: { 'Location.locations.uuid': lotEntity.uuid } }),
-    { enabled: !!lotData } // give a chance to preload the data
+    { enabled: !!lotDataPrepopped } // give a chance to preload the data
   );
 
   const { data: ships, isLoading: shipsLoading } = useQuery(
     ['entities', Entity.IDS.SHIP, 'lot', lotId],
     () => api.getEntities({ label: Entity.IDS.SHIP, match: { 'Location.locations.uuid': lotEntity.uuid } }),
-    { enabled: !!lotData } // give a chance to preload the data
+    { enabled: !!lotDataPrepopped } // give a chance to preload the data
   );
 
   return useMemo(() => {
     const { asteroidId, lotIndex } = Lot.toPosition(lotId) || {};
-    const agreement = (lotData?.PrepaidAgreements || []).find((p) => p.permission === Permission.IDS.LOT_CONTROL)
-      || (lotData?.ContractPolicies || []).find((p) => p.permission === Permission.IDS.LOT_CONTROL);
+    console.log('lot', lot);
+    const agreement = (lot?.PrepaidAgreements || []).find((p) => p.permission === Permission.IDS.LOT_USE)
+      || (lot?.ContractPolicies || []).find((p) => p.permission === Permission.IDS.LOT_USE);
     const building = (buildings || []).find((e) => e.Building.status > 0);
     const depositsToShow = (deposits || []).filter((e) => e.Deposit.status > 0 && !(e.Deposit.status === Deposit.STATUSES.USED && e.Deposit.remainingYield === 0));
     const shipsToShow = (ships || []).filter((s) => [Ship.STATUSES.UNDER_CONSTRUCTION, Ship.STATUSES.AVAILABLE].includes(s.Ship.status));
@@ -94,7 +83,8 @@ const useLot = (lotId) => {
 
     return {
       data: lotId ? {
-        ...lotData,
+        ...lotEntity,
+        ...lot,
         Location: {
           location: { label: Entity.IDS.ASTEROID, id: asteroidId },
           locations: [
@@ -124,9 +114,9 @@ const useLot = (lotId) => {
         // 'ContractAgreement', 'PrepaidAgreement' should be on lot record
         // unclear what happens to 'WhitelistAgreement' or PublicPolicies
       } : undefined,
-      isLoading: isLoading || asteroidLoading || buildingsLoading || depositsLoading || shipsLoading
+      isLoading: lotIsLoading || lotDataIsLoading || asteroidLoading || buildingsLoading || depositsLoading || shipsLoading
     };
-  }, [lotId, lotEntity, asteroid, buildings, deposits, ships, isLoading, asteroidLoading, buildingsLoading, depositsLoading, shipsLoading])
+  }, [lotId, lot, lotEntity, asteroid, buildings, deposits, ships, lotIsLoading, lotDataIsLoading, asteroidLoading, buildingsLoading, depositsLoading, shipsLoading])
 
 };
 

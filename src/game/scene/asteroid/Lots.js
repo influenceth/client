@@ -269,29 +269,29 @@ const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, co
 
     // });
 
-    // TODO: ecs refactor (below)
+    // TODO: ecs refactor (below) and re-enable
 
-    // try to minimize redundant updates by just listening to Dispatcher_* events
-    if (eventType.match(/^Dispatcher_/)) {
-      // myCrew will handle their own invalidations through the default ws room
-      const isMyCrew = crew?.id && body.linked.find(({ type, asset }) => type === 'Crew' && asset?.id === crew.id);
-      if (!isMyCrew) {
-        // find any lot data on this asteroid... if it is complete and in my cache, replace my cache value
-        const optimisticLots = body.linked.filter(({ type, asset }) => type === 'Lot' && asset?.asteroid === asteroidId);
-        optimisticLots.forEach(({ asset: optimisticLot }) => {
-          const queryKey = ['entity', Entity.IDS.LOT, optimisticLot.id];
-          if (!!queryClient.getQueryData(queryKey)) {
-            const needsBuilding = !!optimisticLot.building;
-            optimisticLot.building = body.linked
-              .find(({ type, asset }) => type === optimisticLot.building?.type && asset?.id === optimisticLot.building?.id)
-              ?.asset;
-            if (!needsBuilding || !!optimisticLot.building) {
-              queryClient.setQueryData(queryKey, optimisticLot);
-            }
-          }
-        });
-      }
-    }
+    // // try to minimize redundant updates by just listening to Dispatcher_* events
+    // if (eventType.match(/^Dispatcher_/)) {
+    //   // myCrew will handle their own invalidations through the default ws room
+    //   const isMyCrew = crew?.id && body.linked.find(({ type, asset }) => type === 'Crew' && asset?.id === crew.id);
+    //   if (!isMyCrew) {
+    //     // find any lot data on this asteroid... if it is complete and in my cache, replace my cache value
+    //     const optimisticLots = body.linked.filter(({ type, asset }) => type === 'Lot' && asset?.asteroid === asteroidId);
+    //     optimisticLots.forEach(({ asset: optimisticLot }) => {
+    //       const queryKey = ['entity', Entity.IDS.LOT, optimisticLot.id];
+    //       if (!!queryClient.getQueryData(queryKey)) {
+    //         const needsBuilding = !!optimisticLot.building;
+    //         optimisticLot.building = body.linked
+    //           .find(({ type, asset }) => type === optimisticLot.building?.type && asset?.id === optimisticLot.building?.id)
+    //           ?.asset;
+    //         if (!needsBuilding || !!optimisticLot.building) {
+    //           queryClient.setQueryData(queryKey, optimisticLot);
+    //         }
+    //       }
+    //     });
+    //   }
+    // }
 
     // ^^^
     // // // // //
