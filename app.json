@@ -58,6 +58,9 @@
     "REACT_APP_STARKNET_CREWMATE_TOKEN": {
       "required": true
     },
+    "REACT_APP_STARKNET_SHIP_TOKEN": {
+      "required": true
+    },
     "REACT_APP_CONTRACT_ASTEROID_TOKEN": {
       "description": "Address of Asteroid token on L1",
       "required": true

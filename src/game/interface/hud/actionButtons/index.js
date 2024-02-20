@@ -3,6 +3,7 @@ import ClaimArrivalReward from './ClaimArrivalReward';
 import ClaimPrepareReward from './ClaimPrepareReward';
 import Construct from './Construct';
 import ControlAsteroid from './ControlAsteroid';
+import ControlShip from './ControlShip';
 import CoreSample from './CoreSample';
 import Deconstruct from './Deconstruct';
 import EjectCrew from './EjectCrew';
@@ -17,10 +18,11 @@ import FormAgreement from './FormAgreement';
 import LandShip from './LandShip';
 import LaunchShip from './LaunchShip';
 import PlanBuilding from './PlanBuilding';
+import Processors from './Processors';
 import PurchaseAsteroid from './PurchaseAsteroid';
+import PurchaseEntity from './PurchaseEntity';
 import RecruitCrewmate from './RecruitCrewmate';
 import RepoBuilding from './RepoBuilding';
-import Processors from './Processors';
 import ScanAsteroid from './ScanAsteroid';
 import SelectTravelDestination from './SelectTravelDestination';
 import SetCourse from './SetCourse';
@@ -36,6 +38,7 @@ const ActionsButtons = {
   ClaimPrepareReward,
   Construct,
   ControlAsteroid,
+  ControlShip,
   CoreSample,
   Deconstruct,
   EmergencyModeCollect,
@@ -52,6 +55,7 @@ const ActionsButtons = {
   PlanBuilding,
   Processors,
   PurchaseAsteroid,
+  PurchaseEntity,
   RecruitCrewmate,
   RepoBuilding,
   ScanAsteroid,

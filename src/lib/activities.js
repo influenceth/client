@@ -1408,48 +1408,86 @@ const activities = {
 
     requiresCrewTime: true
   },
+
+  // this applies ONLY to nfts being sold for sway
+  SellOrderSet: {
+    getInvalidations: ({ entities, event: { returnValues } }) => {
+      // TODO: entities should be coming back from ws now, so should be able to remove the else...
+      const entity = entities?.[0];
+      if (entity) {
+        return [...invalidationDefaults(entity.label, entity.id)];
+      } else {
+        return [...invalidationDefaults(Entity.IDS.SHIP, returnValues.tokenId)];
+      }
+    },
+  },
+  // this applies BOTH to nfts being sold for sway AND marketplace sell orders
   SellOrderFilled: {
-    getInvalidations: ({ event: { returnValues } }, { exchange = {} }) => {
-      const { asteroidId, lotId } = locationsArrToObj(exchange?.Location?.locations || []) || {};
-      return [
-        ...invalidationDefaults(returnValues.exchange),
-        ...invalidationDefaults(returnValues.destination),
-        ...invalidationDefaults(returnValues.storage),
-        [ 'swayBalance' ],
-        [ 'crewOpenOrders' ],
-        [ 'orderList', returnValues.product, returnValues.exchange.id ],
-        [ 'exchangeOrderSummary', asteroidId, returnValues.product ],
-        [ 'productOrderSummary', Entity.IDS.ASTEROID, asteroidId ],
-        [ 'productOrderSummary', Entity.IDS.LOT, lotId ],
-      ];
+    getInvalidations: ({ entities, event: { returnValues } }, { exchange = {} }) => {
+      // nft
+      if (returnValues.tokenId) {
+        // TODO: use entities here? currently just relying on Transfer event to invalidate entity
+        return [[ 'swayBalance' ]];
+
+      // marketplace
+      } else {
+        const { asteroidId, lotId } = locationsArrToObj(exchange?.Location?.locations || []) || {};
+        return [
+          ...invalidationDefaults(returnValues.exchange),
+          ...invalidationDefaults(returnValues.destination),
+          ...invalidationDefaults(returnValues.storage),
+          [ 'swayBalance' ],
+          [ 'crewOpenOrders' ],
+          [ 'orderList', returnValues.product, returnValues.exchange.id ],
+          [ 'exchangeOrderSummary', asteroidId, returnValues.product ],
+          [ 'productOrderSummary', Entity.IDS.ASTEROID, asteroidId ],
+          [ 'productOrderSummary', Entity.IDS.LOT, lotId ],
+        ];
+      }
     },
 
-    getLogContent: ({ event: { returnValues } }, viewingAs, { exchange = {} }) => {
-      // TODO: add marketplace owner? how do they keep track of fees?
-      // TODO: is this accounting for fees?
-      const payload = (
-        <>
-          {formatResourceAmount(returnValues.amount, returnValues.product)}{' '}
-          {Product.TYPES[returnValues.product]?.name} for{' '}
-          {formatPrice(returnValues.amount * returnValues.price / 1e6)} SWAY{' '}
-          at <EntityLink {...returnValues.exchange} />
-        </>
-      );
-      if (viewingAs.label === Entity.IDS.CREW && viewingAs.id === returnValues.sellerCrew.id) {
+    getLogContent: ({ entities, event: { returnValues } }, viewingAs, { exchange = {} }) => {
+      // nft
+      if (returnValues.tokenId) {
+        // TODO: use entities here? currently just relying on Transfer event for log
+        return null;
+
+      // marketplace
+      } else {
+
+        // TODO: add marketplace owner? how do they keep track of fees?
+        // TODO: is this accounting for fees?
+        const payload = (
+          <>
+            {formatResourceAmount(returnValues.amount, returnValues.product)}{' '}
+            {Product.TYPES[returnValues.product]?.name} for{' '}
+            {formatPrice(returnValues.amount * returnValues.price / 1e6)} SWAY{' '}
+            at <EntityLink {...returnValues.exchange} />
+          </>
+        );
+        if (viewingAs.label === Entity.IDS.CREW && viewingAs.id === returnValues.sellerCrew.id) {
+          return {
+            icon: <LimitSellIcon />,
+            content: <>Sold {payload}</>,
+          }
+        }
         return {
-          icon: <LimitSellIcon />,
-          content: <>Sold {payload}</>,
+          icon: <MarketBuyIcon />,
+          content: <>Purchased {payload}</>,
         }
       }
-      return {
-        icon: <MarketBuyIcon />,
-        content: <>Purchased {payload}</>,
-      }
     },
 
-    getPrepopEntities: ({ event: { returnValues } }) => ({
-      exchange: returnValues.exchange,
-    }),
+    getPrepopEntities: ({ event: { returnValues } }) => {
+      // nft
+      if (returnValues.tokenId) {
+        return {};
+
+      // marketplace
+      } else {
+        return { exchange: returnValues.exchange };
+      }
+    },
 
     triggerAlert: true
   },
@@ -1764,6 +1802,28 @@ const activities = {
     },
 
     triggerAlert: true
+  },
+
+  ShipCommandeered: {
+    getInvalidations: ({ event: { returnValues } }, { ship = {} }) => {
+      const location = locationsArrToObj(ship?.Location?.locations || []);
+      return [
+        ...invalidationDefaults(Entity.IDS.SHIP, returnValues.ship.id),
+        [ 'asteroidInventories', location?.asteroidId ],
+      ];
+    },
+    getPrepopEntities: ({ event: { returnValues } }) => ({
+      ship: returnValues.ship,
+    }),
+    getLogContent: ({ event: { returnValues } }, viewingAs, { ship = {} }) => ({
+      icon: <BecomeAdminIcon />,
+      content: (
+        <>
+          <EntityLink {...returnValues.callerCrew} />
+          {' '}commandeered {Ship.TYPES[ship?.Ship?.shipType]?.name} <EntityLink {...returnValues.ship} />
+        </>
+      ),
+    }),
   },
 
   AddedToWhitelist: { getInvalidations: getPolicyInvalidations },
