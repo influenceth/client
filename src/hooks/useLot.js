@@ -108,7 +108,7 @@ const useLot = (lotId) => {
         surfaceShip,
 
         Control: agreement?.permitted?.id
-          ? { controller: { id: agreement.permitted.id, label: Entity.IDS.CREW } }
+          ? { controller: { id: agreement.permitted.id, label: Entity.IDS.CREW }, isExplicit: true }
           : asteroid?.Control,
         ContractPolicies: asteroid?.ContractPolicies,
         PrepaidPolicies: (asteroid?.PrepaidPolicies || []).map((p) => {
