@@ -40,7 +40,7 @@ const LotTitleArea = ({ lot }) => {
       return [
         formatters.shipName(lot.surfaceShip),
         `Landing Site (Empty Lot)`,
-        'EmptyLot'
+        'SurfaceShip'
       ];
     }
     return ['Empty Lot', null, 'EmptyLot'];

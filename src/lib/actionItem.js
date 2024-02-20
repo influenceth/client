@@ -39,7 +39,7 @@ import {
   KeysIcon,
 } from '~/components/Icons';
 import theme, { hexToRGB } from '~/theme';
-import { getProcessorProps } from './utils';
+import { getProcessorProps, locationsArrToObj } from './utils';
 import formatters from './formatters';
 import { RandomEventIcon } from '~/components/AnimatedIcons';
 
@@ -340,6 +340,19 @@ const formatAsTx = (item) => {
       formatted.label = 'Control Asteroid';
       formatted.onClick = ({ openDialog }) => {
         openDialog('CONTROL_ASTEROID'); // TODO: need asteroid id?
+      };
+      break;
+    }
+
+    case 'CommandeerShip': {
+      const location = locationsArrToObj(item.vars.ship?.Location?.locations || []);
+      formatted.icon = <BecomeAdminIcon />;
+      formatted.label = 'Commandeer Ship';
+      formatted.asteroidId = location?.asteroidId;
+      formatted.lotId = location?.lotId;
+      formatted.shipId = location?.shipId;
+      formatted.onClick = ({ openDialog }) => {
+        openDialog('CONTROL_SHIP', { shipId: item.vars.ship?.id });
       };
       break;
     }
@@ -880,6 +893,26 @@ const formatAsTx = (item) => {
       formatted.onClick = ({ openDialog }) => {
         openDialog('REPO_BUILDING');
       }
+      break;
+    }
+
+    case 'FillNftSellOrder': {
+      const location = locationsArrToObj(item.meta?.entity?.Location?.locations || []);
+      formatted.icon = <ShipIcon />; // TODO: update if support other types
+      formatted.label = `Purchase ${Entity.TYPES[item.meta?.entity?.label]?.label || ''}`;
+      formatted.asteroidId = location?.asteroidId;
+      formatted.lotId = location?.lotId;
+      formatted.shipId = location?.shipId;
+      break;
+    }
+
+    case 'SetNftSellOrder': {
+      const location = locationsArrToObj(item.meta?.entity?.Location?.locations || []);
+      formatted.icon = <ShipIcon />; // TODO: update if support other types
+      formatted.label = `Update Listing`;
+      formatted.asteroidId = location?.asteroidId;
+      formatted.lotId = location?.lotId;
+      formatted.shipId = location?.shipId;
       break;
     }
 

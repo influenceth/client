@@ -17,6 +17,7 @@ import ClaimArrivalReward from './actionDialogs/ClaimArrivalReward';
 import ClaimPrepareReward from './actionDialogs/ClaimPrepareReward';
 import Construct from './actionDialogs/Construct';
 import ControlAsteroid from './actionDialogs/ControlAsteroid';
+import ControlShip from './actionDialogs/ControlShip';
 import EmergencyModeCollect from './actionDialogs/EmergencyModeCollect';
 import EmergencyModeToggle from './actionDialogs/EmergencyModeToggle';
 import EjectCrew from './actionDialogs/EjectCrew';
@@ -33,6 +34,7 @@ import ManageCrew from './actionDialogs/ManageCrew';
 import MarketplaceOrder from './actionDialogs/MarketplaceOrder';
 import PlanBuilding from './actionDialogs/PlanBuilding';
 import Process from './actionDialogs/Process';
+import PurchaseEntity from './actionDialogs/PurchaseEntity';
 import RepoBuilding from './actionDialogs/RepoBuilding';
 import SetCourse from './actionDialogs/SetCourse';
 import StationCrew from './actionDialogs/StationCrew';
@@ -227,6 +229,7 @@ const ActionDialog = ({ type, params }) => {
         {type === 'CLAIM_ARRIVAL_REWARD' && <ClaimArrivalReward {...allProps} />}
         {type === 'CLAIM_PREPARE_REWARD' && <ClaimPrepareReward {...allProps} />}
         {type === 'CONTROL_ASTEROID' && <ControlAsteroid {...allProps} />}
+        {type === 'CONTROL_SHIP' && <ControlShip {...allProps} />}
         {type === 'PLAN_BUILDING' && <PlanBuilding {...allProps} />}
         {type === 'UNPLAN_BUILDING' && <UnplanBuilding {...allProps} />}
         {type === 'CONSTRUCT' && <Construct {...allProps} />}
@@ -249,6 +252,7 @@ const ActionDialog = ({ type, params }) => {
         {type === 'NEW_CREW' && <ManageCrew {...allProps} newCrew />}
         {type === 'MARKETPLACE_ORDER' && <MarketplaceOrder {...allProps} />}
         {type === 'PROCESS' && <Process {...allProps} />}
+        {type === 'PURCHASE_ENTITY' && <PurchaseEntity {...allProps} />}
         {type === 'REPO_BUILDING' && <RepoBuilding {...allProps} />}
         {type === 'SET_COURSE' && <SetCourse {...allProps} />}
         {type === 'STATION_CREW' && <StationCrew {...allProps} />}

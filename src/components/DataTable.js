@@ -163,17 +163,21 @@ const ExpandableDataTableRow = ({ columns, getRowProps, row, sortDirection, sort
     return null;
   }, [columns, row]);
 
-  const onClick = useCallback(() => {
+  const onClickExpandable = useCallback(() => {
     if (expandableContent) setExpanded((e) => !e);
   }, [expandableContent]);
+
+  const rowProps = useMemo(() => {
+    return (getRowProps ? getRowProps(row) : null) || {};
+  }, [getRowProps, row]);
 
   return (
     <>
       <DataTableRow
-        {...getRowProps(row)}
-        clickable={!!expandableContent}
-        isSelected={reactBool(expanded)}
-        onClick={onClick}>
+        {...rowProps}
+        clickable={rowProps?.onClick || !!expandableContent}
+        isSelected={reactBool(rowProps?.isSelected || expanded)}
+        onClick={expandableContent ? onClickExpandable : rowProps?.onClick}>
         {columns.filter((c) => !c.skip).map((c) => (
           <DataTableCell
             key={c.key}

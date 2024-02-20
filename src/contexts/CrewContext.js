@@ -89,7 +89,7 @@ export function CrewProvider({ children }) {
         c._location = locationsArrToObj(c.Location.locations);
       }
       if (c.Crew) {
-        c._ready = blockTime > c.Crew.readyAt;
+        c._ready = blockTime >= c.Crew.readyAt;
       }
       return c;
     })

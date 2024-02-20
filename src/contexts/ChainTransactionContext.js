@@ -1,7 +1,7 @@
 import { createContext, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Asteroid, Entity, Order, RandomEvent, System } from '@influenceth/sdk';
 import { isEqual, get } from 'lodash';
-import { hash } from 'starknet';
+import { hash, shortString, uint256 } from 'starknet';
 
 import useActivitiesContext from '~/hooks/useActivitiesContext';
 import useAuth from '~/hooks/useAuth';
@@ -419,6 +419,56 @@ const customConfigs = {
     },
     equalityTest: ['target.label', 'target.id', 'permission'],
     isVirtual: true
+  },
+  SetNftSellOrder: {
+    getNonsystemCalls: ({ tokenAddress, tokenId, price }) => [
+      System.getFormattedCall(
+        tokenAddress,
+        'set_sell_order',
+        [
+          { value: tokenId, type: 'u256' },
+          { value: price, type: 'BigNumber' }
+        ]
+      )
+    ],
+    noSystemCalls: true,
+    isVirtual: true,
+  },
+  FillNftSellOrder: {
+    getNonsystemCalls: ({ tokenAddress, tokenId, crew, owner, price }) => {
+      const utoken = uint256.bnToUint256(tokenId);
+      const calls = [
+        System.getTransferWithConfirmationCall(
+          owner,
+          price,
+          [
+            shortString.encodeShortString('Ship'),
+            utoken.low,
+            utoken.high
+          ],
+          tokenAddress,
+          process.env.REACT_APP_STARKNET_SWAY_TOKEN,
+        ),
+        System.getFormattedCall(
+          tokenAddress,
+          'fill_sell_order',
+          [
+            { value: tokenId, type: 'u256' }
+          ]
+        )
+      ];
+      if (crew) { // auto-commandeer if crew is passed
+        const [commandeerCall] = getSystemCallAndProcessedVars(
+          'CommandeerShip',
+          { ship: { label: Entity.IDS.SHIP, id: tokenId }, caller_crew: crew }
+        );
+        calls.push(commandeerCall);
+      }
+      return calls;
+    },
+    equalityTest: ['tokenAddress', 'tokenId'],
+    noSystemCalls: true,
+    isVirtual: true,
   }
 };
 
@@ -478,9 +528,9 @@ export function ChainTransactionProvider({ children }) {
           equalityTest: config.equalityTest,
 
           execute: async (rawVars) => {
-            let runSystems;
+            let systemCalls;
             if (config.multisystemCalls) {
-              runSystems = (
+              systemCalls = (
                 typeof config.multisystemCalls === 'function'
                 ? config.multisystemCalls(rawVars)
                 : config.multisystemCalls
@@ -493,31 +543,34 @@ export function ChainTransactionProvider({ children }) {
                 }
                 // { runSystem, rawVars }
               });
-              console.log('multisystemCalls', runSystems, rawVars);
+              console.log('multisystemCalls', systemCalls, rawVars);
             } else if (config.repeatableSystemCall) {
-              runSystems = Array.from(Array(config.getRepeatTally(rawVars))).map(() => ({ runSystem: config.repeatableSystemCall, rawVars }));
+              systemCalls = Array.from(Array(config.getRepeatTally(rawVars))).map(() => ({ runSystem: config.repeatableSystemCall, rawVars }));
             } else if (config.isBatchable) {
               const rawVarSets = Array.isArray(rawVars) ? rawVars : [rawVars];
-              runSystems = rawVarSets.map((rawVarSet) => ({ runSystem: config.batchableSystemCall || systemName, rawVars: rawVarSet }));
+              systemCalls = rawVarSets.map((rawVarSet) => ({ runSystem: config.batchableSystemCall || systemName, rawVars: rawVarSet }));
+            } else if (config.noSystemCalls) {
+              systemCalls = [];
             } else {
-              runSystems = [{ runSystem: systemName, rawVars }];
+              systemCalls = [{ runSystem: systemName, rawVars }];
             }
 
             // mark as escrow interactors
             if (config.escrowConfig) {
-              runSystems.forEach((r) => r.escrowConfig = config.escrowConfig);
+              systemCalls.forEach((r) => r.escrowConfig = config.escrowConfig);
             }
 
             // if actionType is set but the random event was not actually triggered, prepend resolveRandomEvent
             // so that the event is cleared (preprocess will add the null choice)
-            if (prependEventAutoresolve && !config.isUnblockable) { // TODO: fill in these isUnblockable's
-              runSystems.unshift({ runSystem: 'ResolveRandomEvent', rawVars });
+            if (prependEventAutoresolve && !(config.noSystemCalls || config.isUnblockable)) { // TODO: fill in these isUnblockable's
+              systemCalls.unshift({ runSystem: 'ResolveRandomEvent', rawVars });
             }
 
             let totalEscrow = 0n;
             let totalPrice = 0n;
-            const calls = [];
-            for (let { runSystem, rawVars, escrowConfig } of runSystems) {
+            const calls = config.getNonsystemCalls ? config.getNonsystemCalls(rawVars) : [];
+            for (let { runSystem, rawVars, escrowConfig } of systemCalls) {
+              console.log('systemCall', runSystem, rawVars, escrowConfig);
               let processedVars;
               console.log({ runSystem, rawVars, escrowConfig });
 

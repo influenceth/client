@@ -288,11 +288,18 @@ const activities = {
   },
 
   ConstructionPlanned: {
-    getInvalidations: ({ event: { returnValues } }) => ([
-      ...invalidationDefaults(Entity.IDS.BUILDING, returnValues.building.id),
-      ['planned'],
-      ['asteroidCrewBuildings', returnValues.asteroid.id, returnValues.callerCrew.id],
-    ]),
+    getInvalidations: ({ event: { returnValues } }, { building = {} }) => {
+      const lotId = locationsArrToObj(building?.Location?.locations || [])?.lotId;
+      return [
+        ...invalidationDefaults(Entity.IDS.BUILDING, returnValues.building.id),
+        ['entities', Entity.IDS.BUILDING, 'lot', lotId],
+        ['planned'],
+        ['asteroidCrewBuildings', returnValues.asteroid.id, returnValues.callerCrew.id],
+      ];
+    },
+    getPrepopEntities: ({ event: { returnValues } }) => ({
+      building: returnValues.building,
+    }),
     getLogContent: ({ event: { returnValues } }) => ({
       icon: <PlanBuildingIcon />,
       content: (
@@ -1336,6 +1343,7 @@ const activities = {
       ...invalidationDefaults(Entity.IDS.DEPOSIT, returnValues.deposit.id), // (not sure this exists)
       ...(version > 0 ? invalidationDefaults(returnValues.origin.label, returnValues.origin.id) : []), // source inventory
       ['actionItems'],
+      ['entities', Entity.IDS.DEPOSIT, 'lot', returnValues.lot.id], // b/c can be new in search
       ['asteroidCrewSampledLots', Lot.toPosition(returnValues.lot.id)?.asteroidId, returnValues.resource],
     ]),
     // getLogContent: ({ event: { returnValues } }) => {
@@ -1400,48 +1408,86 @@ const activities = {
 
     requiresCrewTime: true
   },
+
+  // this applies ONLY to nfts being sold for sway
+  SellOrderSet: {
+    getInvalidations: ({ entities, event: { returnValues } }) => {
+      // TODO: entities should be coming back from ws now, so should be able to remove the else...
+      const entity = entities?.[0];
+      if (entity) {
+        return [...invalidationDefaults(entity.label, entity.id)];
+      } else {
+        return [...invalidationDefaults(Entity.IDS.SHIP, returnValues.tokenId)];
+      }
+    },
+  },
+  // this applies BOTH to nfts being sold for sway AND marketplace sell orders
   SellOrderFilled: {
-    getInvalidations: ({ event: { returnValues } }, { exchange = {} }) => {
-      const { asteroidId, lotId } = locationsArrToObj(exchange?.Location?.locations || []) || {};
-      return [
-        ...invalidationDefaults(returnValues.exchange),
-        ...invalidationDefaults(returnValues.destination),
-        ...invalidationDefaults(returnValues.storage),
-        [ 'swayBalance' ],
-        [ 'crewOpenOrders' ],
-        [ 'orderList', returnValues.product, returnValues.exchange.id ],
-        [ 'exchangeOrderSummary', asteroidId, returnValues.product ],
-        [ 'productOrderSummary', Entity.IDS.ASTEROID, asteroidId ],
-        [ 'productOrderSummary', Entity.IDS.LOT, lotId ],
-      ];
+    getInvalidations: ({ entities, event: { returnValues } }, { exchange = {} }) => {
+      // nft
+      if (returnValues.tokenId) {
+        // TODO: use entities here? currently just relying on Transfer event to invalidate entity
+        return [[ 'swayBalance' ]];
+
+      // marketplace
+      } else {
+        const { asteroidId, lotId } = locationsArrToObj(exchange?.Location?.locations || []) || {};
+        return [
+          ...invalidationDefaults(returnValues.exchange),
+          ...invalidationDefaults(returnValues.destination),
+          ...invalidationDefaults(returnValues.storage),
+          [ 'swayBalance' ],
+          [ 'crewOpenOrders' ],
+          [ 'orderList', returnValues.product, returnValues.exchange.id ],
+          [ 'exchangeOrderSummary', asteroidId, returnValues.product ],
+          [ 'productOrderSummary', Entity.IDS.ASTEROID, asteroidId ],
+          [ 'productOrderSummary', Entity.IDS.LOT, lotId ],
+        ];
+      }
     },
 
-    getLogContent: ({ event: { returnValues } }, viewingAs, { exchange = {} }) => {
-      // TODO: add marketplace owner? how do they keep track of fees?
-      // TODO: is this accounting for fees?
-      const payload = (
-        <>
-          {formatResourceAmount(returnValues.amount, returnValues.product)}{' '}
-          {Product.TYPES[returnValues.product]?.name} for{' '}
-          {formatPrice(returnValues.amount * returnValues.price / 1e6)} SWAY{' '}
-          at <EntityLink {...returnValues.exchange} />
-        </>
-      );
-      if (viewingAs.label === Entity.IDS.CREW && viewingAs.id === returnValues.sellerCrew.id) {
+    getLogContent: ({ entities, event: { returnValues } }, viewingAs, { exchange = {} }) => {
+      // nft
+      if (returnValues.tokenId) {
+        // TODO: use entities here? currently just relying on Transfer event for log
+        return null;
+
+      // marketplace
+      } else {
+
+        // TODO: add marketplace owner? how do they keep track of fees?
+        // TODO: is this accounting for fees?
+        const payload = (
+          <>
+            {formatResourceAmount(returnValues.amount, returnValues.product)}{' '}
+            {Product.TYPES[returnValues.product]?.name} for{' '}
+            {formatPrice(returnValues.amount * returnValues.price / 1e6)} SWAY{' '}
+            at <EntityLink {...returnValues.exchange} />
+          </>
+        );
+        if (viewingAs.label === Entity.IDS.CREW && viewingAs.id === returnValues.sellerCrew.id) {
+          return {
+            icon: <LimitSellIcon />,
+            content: <>Sold {payload}</>,
+          }
+        }
         return {
-          icon: <LimitSellIcon />,
-          content: <>Sold {payload}</>,
+          icon: <MarketBuyIcon />,
+          content: <>Purchased {payload}</>,
         }
       }
-      return {
-        icon: <MarketBuyIcon />,
-        content: <>Purchased {payload}</>,
-      }
     },
 
-    getPrepopEntities: ({ event: { returnValues } }) => ({
-      exchange: returnValues.exchange,
-    }),
+    getPrepopEntities: ({ event: { returnValues } }) => {
+      // nft
+      if (returnValues.tokenId) {
+        return {};
+
+      // marketplace
+      } else {
+        return { exchange: returnValues.exchange };
+      }
+    },
 
     triggerAlert: true
   },
@@ -1462,7 +1508,7 @@ const activities = {
     },
     getIsActionItemHidden: ({ returnValues }) => (pendingTransactions) => {
       return pendingTransactions.find((tx) => (
-        tx.key === 'ShipAssemblyFinished'
+        tx.key === 'AssembleShipFinish'
         && tx.vars.dry_dock.id === returnValues.dryDock.id
         && tx.vars.dry_dock_slot === returnValues.dryDockSlot
       ))
@@ -1496,10 +1542,12 @@ const activities = {
     requiresCrewTime: true
   },
   ShipAssemblyFinished: {
-    getInvalidations: ({ event: { returnValues } }, { building = {} }) => {
+    getInvalidations: ({ event: { returnValues } }, { building = {}, destination = {} }) => {
+      const lotId = destination?.label === Entity.IDS.LOT ? destination.id : locationsArrToObj(destination?.Location?.locations || [])?.lotId;
       const invs = [
         ...invalidationDefaults(returnValues.dryDock.label, returnValues.dryDock.id),
         ...invalidationDefaults(returnValues.destination.label, returnValues.destination.id),
+        ['entities', Entity.IDS.SHIP, 'lot', lotId], // (b/c will be new in search)
         ['actionItems'],
         // TODO: ...
         // ['asteroidInventories', asteroidId],
@@ -1538,12 +1586,19 @@ const activities = {
   },
 
   ShipDocked: {
-    getInvalidations: ({ event: { returnValues } }) => ([
-      ...invalidationDefaults(returnValues.ship.label, returnValues.ship.id),
-      ...invalidationDefaults(returnValues.dock.label, returnValues.dock.id),
-      ...invalidationDefaults(returnValues.callerCrew.label, returnValues.callerCrew.id),
-      // TODO: any others? passenger crews?
-    ]),
+    getInvalidations: ({ event: { returnValues } }, { dock = {} }) => {
+      const lotId = dock?.label === Entity.IDS.LOT ? dock.id : locationsArrToObj(dock?.Location?.locations || [])?.lotId;
+      return [
+        ...invalidationDefaults(returnValues.ship.label, returnValues.ship.id),
+        ...invalidationDefaults(returnValues.dock.label, returnValues.dock.id),
+        ...invalidationDefaults(returnValues.callerCrew.label, returnValues.callerCrew.id),
+        ['entities', Entity.IDS.SHIP, 'lot', lotId], // (b/c will be new in search)
+        // TODO: any others? passenger crews?
+      ];
+    },
+    getPrepopEntities: ({ event: { returnValues } }) => ({
+      dock: returnValues.dock
+    }),
     getLogContent: ({ event: { returnValues } }) => ({
       icon: <ScanAsteroidIcon />,
       content: (
@@ -1555,6 +1610,7 @@ const activities = {
     requiresCrewTime: true, // only true currently if !powered
     triggerAlert: true
   },
+
   ShipUndocked: {
     getInvalidations: ({ event: { returnValues } }, { dock = {} }) => ([
       ...invalidationDefaults(returnValues.ship.label, returnValues.ship.id),
@@ -1746,6 +1802,28 @@ const activities = {
     },
 
     triggerAlert: true
+  },
+
+  ShipCommandeered: {
+    getInvalidations: ({ event: { returnValues } }, { ship = {} }) => {
+      const location = locationsArrToObj(ship?.Location?.locations || []);
+      return [
+        ...invalidationDefaults(Entity.IDS.SHIP, returnValues.ship.id),
+        [ 'asteroidInventories', location?.asteroidId ],
+      ];
+    },
+    getPrepopEntities: ({ event: { returnValues } }) => ({
+      ship: returnValues.ship,
+    }),
+    getLogContent: ({ event: { returnValues } }, viewingAs, { ship = {} }) => ({
+      icon: <BecomeAdminIcon />,
+      content: (
+        <>
+          <EntityLink {...returnValues.callerCrew} />
+          {' '}commandeered {Ship.TYPES[ship?.Ship?.shipType]?.name} <EntityLink {...returnValues.ship} />
+        </>
+      ),
+    }),
   },
 
   AddedToWhitelist: { getInvalidations: getPolicyInvalidations },

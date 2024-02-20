@@ -23,7 +23,7 @@ const useLot = (lotId) => {
         components: [ // this should include all default components returned for relevant entities (buildings, ships, deposits)
           'Building', 'Control', 'Dock', 'DryDock', 'Exchange', 'Extractor', 'Inventory', 'Location', 'Name', 'Processor', 'Station',
           /*'Control',*/ 'Deposit', /*'Location',*/
-          /*'Control', 'Inventory', 'Location', 'Name',*/ 'Ship', /*'Station',*/
+          /*'Control', 'Inventory', 'Location', 'Name',*/ 'Nft', 'Ship', /*'Station',*/
 
           // these are on both buildings and ships:
           'ContractPolicy', 'PrepaidPolicy', 'PublicPolicy', 'ContractAgreement', 'PrepaidAgreement', 'WhitelistAgreement',
@@ -53,6 +53,7 @@ const useLot = (lotId) => {
   // (presuming this is already loaded so doesn't cause any overhead)
   const { data: asteroid, isLoading: asteroidLoading } = useEntity({ label: Entity.IDS.ASTEROID, id: Lot.toPosition(lotId)?.asteroidId });
 
+  // NOTE: if any of these can be created, make sure to invalidate these query keys in that activity's invalidations
   const { data: buildings, isLoading: buildingsLoading } = useQuery(
     ['entities', Entity.IDS.BUILDING, 'lot', lotId],
     () => api.getEntities({ label: Entity.IDS.BUILDING, match: { 'Location.locations.uuid': lotEntity.uuid } }),

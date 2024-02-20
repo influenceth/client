@@ -1,22 +1,22 @@
 import { useCallback, useMemo } from 'react';
+import { Address } from '@influenceth/sdk';
 
 import { BecomeAdminIcon } from '~/components/Icons';
-import useAsteroid from '~/hooks/useAsteroid';
-import useControlAsteroid from '~/hooks/actionManagers/useControlAsteroid';
+import useControlShip from '~/hooks/actionManagers/useControlShip';
 import ActionButton from './ActionButton';
 
-const isVisible = ({ account, asteroid, lot, crew, zoomScene }) => {
-  return crew && asteroid && !lot && !zoomScene
-    && asteroid.Nft?.owner === account
-    && crew?.id && asteroid.Control?.controller?.id !== crew?.id;
+const isVisible = ({ account, ship, crew }) => {
+  return crew && ship
+    && Address.areEqual(ship.Nft?.owner, account)
+    && crew?.id && ship.Control?.controller?.id !== crew?.id;
 };
 
-const ControlAsteroid = ({ asteroid, onSetAction, _disabled }) => {
-  const { takingControl } = useControlAsteroid(asteroid?.id);
+const ControlShip = ({ ship, onSetAction, _disabled }) => {
+  const { takingControl } = useControlShip(ship?.id);
 
   const handleClick = useCallback(() => {
-    onSetAction('CONTROL_ASTEROID');
-  }, [asteroid?.id]);
+    onSetAction('CONTROL_SHIP', { shipId: ship?.id });
+  }, [ship?.id]);
 
   const disabledReason = useMemo(() => {
     if (_disabled) return 'loading...';
@@ -32,7 +32,7 @@ const ControlAsteroid = ({ asteroid, onSetAction, _disabled }) => {
       label="Become Administrator"
       labelAddendum={disabledReason}
       flags={{
-        attention: (!asteroid?.Control?.controller && !disabledReason),
+        attention: (!ship?.Control?.controller && !disabledReason),
         disabled: _disabled || disabledReason,
         loading: takingControl
       }}
@@ -41,4 +41,4 @@ const ControlAsteroid = ({ asteroid, onSetAction, _disabled }) => {
   );
 };
 
-export default { Component: ControlAsteroid, isVisible };
+export default { Component: ControlShip, isVisible };

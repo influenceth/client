@@ -81,9 +81,10 @@ export const CheckboxButton = styled.button`
 export const CheckboxRow = styled.div`
   align-items: center;
   color: #999;
-  cursor: ${p => p.theme.cursors.active};
+  cursor: ${p => p.disabled ? p.theme.cursors.default : p.theme.cursors.active};
   display: flex;
   padding: 4px 0;
+  pointer-events: ${p => p.disabled ? 'none' : 'all'};
   &:hover {
     background: rgba(255, 255, 255, 0.05);
   }

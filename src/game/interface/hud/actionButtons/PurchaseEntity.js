@@ -1,0 +1,39 @@
+import { useCallback, useMemo } from 'react';
+import { Address } from '@influenceth/sdk';
+
+import { PurchaseAsteroidIcon } from '~/components/Icons';
+import useNftSaleManager from '~/hooks/actionManagers/useNftSaleManager';
+import ActionButton from './ActionButton';
+
+const isVisible = ({ account, ship }) => {
+  return account
+    && !Address.areEqual(account, ship?.Nft?.owner)
+    && ship?.Nft?.price > 0;
+};
+
+const PurchaseEntity = ({ ship, onSetAction, _disabled }) => {
+  const { isPendingPurchase } = useNftSaleManager(ship);
+
+  const handleClick = useCallback(() => {
+    onSetAction('PURCHASE_ENTITY', { entity: ship });
+  }, []);
+
+  let disabledReason = useMemo(() => {
+    if (_disabled || isPendingPurchase) return 'loading...';
+  }, [_disabled, isPendingPurchase]);
+
+  return (
+    <ActionButton
+      label="Purchase Ship"
+      labelAddendum={disabledReason}
+      flags={{
+        attention: !disabledReason && !isPendingPurchase,
+        disabled: disabledReason,
+        loading: isPendingPurchase
+      }}
+      icon={<PurchaseAsteroidIcon />}
+      onClick={handleClick} />
+  );
+};
+
+export default { Component: PurchaseEntity, isVisible };

@@ -1663,7 +1663,21 @@ export const LandingSelectionDialog = ({ asteroid, deliveryMode, initialSelectio
   const shipConfig = Ship.TYPES[ship?.Ship?.shipType];
 
   const { data: lotData } = useAsteroidLotData(asteroid?.id);
-  const { data: spaceports } = useAsteroidBuildings(asteroid?.id, 'Dock', Permission.IDS.DOCK_SHIP);
+  const { data: unorderedSpaceports } = useAsteroidBuildings(asteroid?.id, 'Dock', Permission.IDS.DOCK_SHIP);
+
+  const spaceports = useMemo(
+    () => unorderedSpaceports
+      .map((a) => {
+        const { lotIndex } = locationsArrToObj(a?.Location?.locations);
+        return {
+          ...a,
+          _lotIndex: lotIndex,
+          _distance: Math.round(Asteroid.getLotDistance(asteroid?.id, originLotIndex, lotIndex))
+        };
+      })
+      .sort((a, b) => a._distance - b._distance),
+    [asteroid?.id, originLotIndex, unorderedSpaceports]
+  );
 
   const onComplete = useCallback(() => {
     onSelected(selection);
@@ -1724,21 +1738,18 @@ export const LandingSelectionDialog = ({ asteroid, deliveryMode, initialSelectio
                 </tr>
               </thead>
               <tbody>
-                {spaceports.map((entity) => {
-                  const { lotIndex } = locationsArrToObj(entity?.Location?.locations);
-                  return (
-                    <SelectionTableRow
-                      key={lotIndex}
-                      onClick={() => setSelection(lotIndex)}
-                      selectedRow={lotIndex === selection}>
-                      <td>{formatters.buildingName(entity)}</td>
-                      <td>{Building.TYPES[entity.Building?.buildingType].name}</td>
-                      <td><LocationIcon /> {formatters.lotName(lotIndex)}</td>
-                      <td>0</td>
-                      {deliveryMode && <td>{Math.round(Asteroid.getLotDistance(asteroid?.id, originLotIndex, lotIndex))} km</td>}
-                    </SelectionTableRow>
-                  );
-                })}
+                {spaceports.map((entity) => (
+                  <SelectionTableRow
+                    key={entity._lotIndex}
+                    onClick={() => setSelection(entity._lotIndex)}
+                    selectedRow={entity._lotIndex === selection}>
+                    <td>{formatters.buildingName(entity)}</td>
+                    <td>{Building.TYPES[entity.Building?.buildingType].name}</td>
+                    <td><LocationIcon /> {formatters.lotName(entity._lotIndex)}</td>
+                    <td>0</td>
+                    {deliveryMode && <td>{entity._distance} km</td>}
+                  </SelectionTableRow>
+                ))}
               </tbody>
             </table>
           </SelectionTableWrapper>
