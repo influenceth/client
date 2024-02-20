@@ -147,6 +147,17 @@ const useColumns = () => {
         selector: row => `${Asteroid.Entity.getSpectralType(row)}-type`
       },
       {
+        key: 'scanStatus',
+        label: 'Scanning Status',
+        sortField: 'Celestial.scanStatus',
+        selector: row => {
+          const status = row.Celestial?.scanStatus;
+          if (status === Asteroid.SCAN_STATUSES.RESOURCE_SCANNED) return 'Orbital Scanned';
+          if (status >= Asteroid.SCAN_STATUSES.SURFACE_SCANNED) return 'Long-range Scanned';
+          return 'Un-scanned';
+        }
+      },
+      {
         key: 'rarity',
         icon: <ResourceIcon />,
         label: 'Rarity',
