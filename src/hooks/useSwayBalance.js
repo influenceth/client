@@ -11,7 +11,7 @@ const useSwayBalance = (overrideAccount) => {
     [ 'swayBalance', account ],
     async () => {
       try {
-        const balance = await starknet.account.provider.callContract({
+        const balance = await starknet.provider.callContract({
           contractAddress: process.env.REACT_APP_STARKNET_SWAY_TOKEN,
           entrypoint: 'balanceOf',
           calldata: [account]
@@ -23,7 +23,7 @@ const useSwayBalance = (overrideAccount) => {
       }
     },
     {
-      enabled: !!starknet?.account?.provider && !!account,
+      enabled: !!starknet?.provider && !!account,
       refetchInterval: 300e3,
     }
   );

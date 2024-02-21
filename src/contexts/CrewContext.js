@@ -128,12 +128,12 @@ export function CrewProvider({ children }) {
 
   // hydrate crew location so can attach station to crew
   const { data: selectedCrewLocation } = useEntity(selectedCrew ? { ...selectedCrew.Location.location } : undefined);
-  
+
   const [actionTypeTriggered, setActionTypeTriggered] = useState(false);
   useEffect(() => {
     if (!actionTypeTriggered) {
       if (selectedCrew?.Crew?.actionType && selectedCrew.Crew.actionRound && (selectedCrew.Crew.actionRound + RandomEvent.MIN_ROUNDS) <= blockNumber) {
-        starknet.account.provider.callContract(
+        starknet.provider.callContract(
           System.getRunSystemCall(
             'CheckForRandomEvent',
             { caller_crew: { id: selectedCrew.id, label: selectedCrew.label }},

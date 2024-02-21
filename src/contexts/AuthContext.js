@@ -55,28 +55,25 @@ export function AuthProvider({ children }) {
   }, [ token, walletContext?.account, walletContext?.isConnecting, dispatchTokenInvalidated ]);
 
   const initiateLogin = useCallback(async () => {
-    const wallet = await walletContext.connect();
-    const walletAccount = wallet?.account?.address;
+    const { provider, account } = await walletContext.connect();
     let isDeployed = false;
 
     try {
-      // brave's argent uses provider.provider..
-      const provider = wallet?.provider?.provider || wallet?.provider;
-      await provider.getClassAt(walletAccount); // if this throws, the contract is not deployed
+      await provider.getClassAt(account?.address); // if this throws, the contract is not deployed
       isDeployed = true;
     } catch (e) {
       console.error(e);
     }
 
-    if (walletAccount && !token) {
+    if (account?.address && !token) {
       try {
-        const loginMessage = await api.requestLogin(walletAccount);
-        const signature = isDeployed ? await wallet.account.signMessage(loginMessage) : ['insecure'];
+        const loginMessage = await api.requestLogin(account.address);
+        const signature = isDeployed ? await account.signMessage(loginMessage) : ['insecure'];
         if (signature?.code === 'CANCELED') throw new Error('User abort');
 
         if (signature) {
           setAuthenticating(true);
-          const newToken = await api.verifyLogin(walletAccount, { signature: signature.join(',') });
+          const newToken = await api.verifyLogin(account.address, { signature: signature.join(',') });
           dispatchAuthenticated(newToken);
         }
       } catch (e) {
