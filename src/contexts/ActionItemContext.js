@@ -33,11 +33,15 @@ export function ActionItemProvider({ children }) {
     { enabled: !!crew?.id }
   );
 
-  const pendingTransactions = useStore(s => s.pendingTransactions);
+  const allPendingTransactions = useStore(s => s.pendingTransactions);
   const failedTransactions = useStore(s => s.failedTransactions);
   const [readyItems, setReadyItems] = useState([]);
   const [unreadyItems, setUnreadyItems] = useState([]);
   const [plannedItems, setPlannedItems] = useState([]);
+
+  const pendingTransactions = useMemo(() => {
+    return (allPendingTransactions || []).filter((tx) => tx.vars?.caller_crew?.id === crew?.id);
+  }, [allPendingTransactions, crew?.id]);
 
   const randomEventItems = useMemo(() => {
     if (crew?._actionTypeTriggered) {
