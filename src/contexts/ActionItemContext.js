@@ -13,7 +13,7 @@ const ActionItemContext = React.createContext();
 
 export function ActionItemProvider({ children }) {
   const { account, token, walletContext: { blockTime } } = useAuth();
-  const { crew } = useCrewContext();
+  const { crew, pendingTransactions } = useCrewContext();
   const getActivityConfig = useGetActivityConfig();
   const queryClient = useQueryClient();
 
@@ -33,7 +33,6 @@ export function ActionItemProvider({ children }) {
     { enabled: !!crew?.id }
   );
 
-  const pendingTransactions = useStore(s => s.pendingTransactions);
   const failedTransactions = useStore(s => s.failedTransactions);
   const [readyItems, setReadyItems] = useState([]);
   const [unreadyItems, setUnreadyItems] = useState([]);

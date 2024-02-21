@@ -7,14 +7,15 @@ import useAuth from '~/hooks/useAuth';
 import useConstants from '~/hooks/useConstants';
 import useEntity from '~/hooks/useEntity';
 import useStore from '~/hooks/useStore';
-import { getCrewAbilityBonuses, locationsArrToObj } from '~/lib/utils';
+import { earlyAccessJSTime, getBlockTime, getCrewAbilityBonuses, locationsArrToObj, openAccessJSTime } from '~/lib/utils';
 
 const CrewContext = createContext();
 
 export function CrewProvider({ children }) {
-  const { account, walletContext: { starknet, blockNumber, blockTime, getBlockTime } } = useAuth();
+  const { account, walletContext: { starknet, blockNumber, blockTime } } = useAuth();
   const queryClient = useQueryClient();
 
+  const allPendingTransactions = useStore(s => s.pendingTransactions);
   const selectedCrewId = useStore(s => s.selectedCrewId);
   const dispatchCrewSelected = useStore(s => s.dispatchCrewSelected);
 
@@ -91,6 +92,23 @@ export function CrewProvider({ children }) {
       if (c.Crew) {
         c._ready = blockTime >= c.Crew.readyAt;
       }
+
+      // TODO: vvv remove this whole block (and _launched references) after
+      // only relevant on Sepolia
+      if (`${process.env.REACT_APP_CHAIN_ID}` === `0x534e5f5345504f4c4941`) {
+        // crew is early access eligible if...
+        const earlyAccessEligible = !!c._crewmates.find((c) =>
+          // ... has at least one arvadian crewmate
+          [Crewmate.COLLECTION_IDS.ARVAD_CITIZEN, Crewmate.COLLECTION_IDS.ARVAD_SPECIALIST, Crewmate.COLLECTION_IDS.ARVAD_LEADERSHIP].includes(c.Crewmate.coll)
+          // ... or has at least one "First Generation" adalian crewmate
+          || c.Crewmate.title === 67
+        );
+        c._launched = blockTime > (earlyAccessEligible ? earlyAccessJSTime : openAccessJSTime) / 1e3;
+      } else {
+        c._launched = true;
+      }
+      // ^^^
+
       return c;
     })
   }, [blockTime, rawCrews, crewmateMap, crewsAndCrewmatesReady]);
@@ -123,7 +141,7 @@ export function CrewProvider({ children }) {
         .then((response) => {
           const pendingEvent = response?.result?.[1] ? parseInt(response?.result?.[1]) : null;
           if (pendingEvent > 0) {
-            getBlockTime(selectedCrew.Crew.actionRound + RandomEvent.MIN_ROUNDS).then((timestamp) => {
+            getBlockTime(starknet, selectedCrew.Crew.actionRound + RandomEvent.MIN_ROUNDS).then((timestamp) => {
               setActionTypeTriggered({
                 actionType: selectedCrew.Crew.actionType,
                 pendingEvent,
@@ -149,7 +167,14 @@ export function CrewProvider({ children }) {
       _station: selectedCrewLocation?.Station || {},
       _timeAcceleration: parseInt(TIME_ACCELERATION) // (attach to crew for easy use in bonus calcs)
     }
-  }, [actionTypeTriggered, selectedCrew, selectedCrew?._ready, selectedCrewLocation, TIME_ACCELERATION]);
+  // (launched and ready are required for some reason to get final to update)
+  }, [actionTypeTriggered, selectedCrew, selectedCrew?._launched, selectedCrew?._ready, selectedCrewLocation, TIME_ACCELERATION]);
+
+  // return all pending transactions that are specific to this crew AND those that are not specific to any crew
+  const pendingTransactions = useMemo(() => {
+    if (!selectedCrew?.id) return [];
+    return (allPendingTransactions || []).filter((tx) => !tx.vars?.caller_crew?.id || (tx.vars.caller_crew.id === selectedCrew.id));
+  }, [allPendingTransactions, selectedCrew?.id])
 
   const refreshReadyAt = useCallback(async () => {
     const updatedCrew = await api.getEntityById({ label: Entity.IDS.CREW, id: selectedCrewId, components: ['Crew'] });
@@ -197,6 +222,7 @@ export function CrewProvider({ children }) {
       crews,
       crewmateMap,
       loading: !crewsAndCrewmatesReady,
+      pendingTransactions,
       refreshReadyAt,
       selectCrew: dispatchCrewSelected  // TODO: this might be redundant
     }}>

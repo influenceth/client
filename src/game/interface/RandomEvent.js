@@ -60,11 +60,10 @@ const SwayResult = ({ swayAmount }) => {
 const RandomEventAssignment = () => {
   const { execute } = useContext(ChainTransactionContext);
   const history = useHistory();
-  const { crew } = useCrewContext();
+  const { crew, pendingTransactions } = useCrewContext();
 
   const randomEvent = crew?._actionTypeTriggered?.pendingEvent;
 
-  const pendingTransactions = useStore(s => s.pendingTransactions);
   const { bookTokens } = useBookTokens(bookIds[`RANDOM_${randomEvent}`]);
   const [finishing, setFinishing] = useState(false);
 

@@ -608,7 +608,7 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
     if (type === 'market' && mode === 'buy') perm = Permission.IDS.BUY;
     if (type === 'market' && mode === 'sell') perm = Permission.IDS.SELL;
     return crewCan(perm, marketplace);
-  }, [mode, type]);
+  }, [crewCan, mode, type]);
 
   const actionButtonDetails = useMemo(() => {
     const a = { label: '', icon: null };
@@ -621,7 +621,7 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
     }
     a.labelAddendum = !loading && !hasPermission ? 'restricted' : '';
     return a;
-  }, [loading, hasPermission, mode, type]);
+  }, [loading, hasPermission, mode, total, type]);
 
   return (
     <Wrapper>

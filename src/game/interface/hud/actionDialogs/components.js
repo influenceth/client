@@ -1877,6 +1877,7 @@ export const InventorySelectionDialog = ({
 
   // if off the surface, cannot access inventories on the surface...
   const { data: inventoryData } = useAccessibleAsteroidInventories(otherLocation.lotIndex === 0 ? null : asteroidId, isSourcing);
+
   // ... but can access inventories on their crewed ship (assuming not sending things elsewhere)
   const { data: crewedShip } = useShip((otherLocation.lotIndex === 0 && crew?._location?.shipId === otherLocation.shipId) ? otherLocation.shipId : null);
 
@@ -1922,7 +1923,7 @@ export const InventorySelectionDialog = ({
 
         // skip if non-primary and no items
         const nonPrimaryType = getInventorySublabel(inv.inventoryType);
-        if (nonPrimaryType && itemIds?.length && itemTally === 0) return;
+        if (isSourcing && nonPrimaryType && itemIds?.length && itemTally === 0) return;
 
         // disable if !available or does not contain itemId
         display.push({
@@ -2186,13 +2187,15 @@ export const SwayInput = ({ inputLabel = "SWAY", onChange, value: defaultValue, 
   const [value, setValue] = useState(0);
 
   const internalOnChange = useCallback((e) => {
-    setValue(e.target.value);
-    if (onChange) onChange(e.target.value);
+    let cleanValue = e.target?.value ? parseInt(e.target.value) : '';
+    setValue(cleanValue);
+    if (onChange) onChange(cleanValue);
   }, [onChange]);
 
   useEffect(() => {
     setValue(defaultValue || 0);
   }, [defaultValue]);
+
   return (
     <SwayInputRow>
       <SwayInputIconWrapper><SwayIcon /></SwayInputIconWrapper>
@@ -2201,7 +2204,7 @@ export const SwayInput = ({ inputLabel = "SWAY", onChange, value: defaultValue, 
           type="number"
           min={0}
           step={1}
-          value={value}
+          value={value || ''}
           onChange={internalOnChange}
           {...props} />
       </SwayInputFieldWrapper>
@@ -2892,7 +2895,7 @@ export const ProcessInputOutputSection = ({ title, products, input, output, prim
           if (output) {
             thumbProps.backgroundColor = `rgba(${hexToRGB(theme.colors.green)}, 0.15)`;
             thumbProps.badgeColor = theme.colors.green;
-          } else if ((sourceContents[resourceId] || 0) > amount) {
+          } else if ((sourceContents[resourceId] || 0) >= amount) {
             thumbProps.backgroundColor = `rgba(${theme.colors.mainRGB}, 0.15)`;
             thumbProps.badgeColor = theme.colors.main;
             thumbProps.progress = 1;
@@ -2950,7 +2953,7 @@ export const ProcessInputSquareSection = ({ title, products, input, output, prim
           if (output) {
             thumbProps.backgroundColor = `rgba(${hexToRGB(theme.colors.green)}, 0.15)`;
             thumbProps.badgeColor = theme.colors.green;
-          } else if ((sourceContents[resourceId] || 0) > amount) {
+          } else if ((sourceContents[resourceId] || 0) >= amount) {
             thumbProps.backgroundColor = `rgba(${theme.colors.mainRGB}, 0.15)`;
             thumbProps.badgeColor = theme.colors.main;
             thumbProps.progress = 1;
@@ -3637,7 +3640,7 @@ export const ActionDialogFooter = ({
               <Button
                 loading={reactBool(buttonsLoading)}
                 onClick={onClose}>Cancel</Button>
-              {waitForCrewReady && !crew?._ready
+              {waitForCrewReady && !(crew?._ready && crew?._launched)
                 ? <CrewBusyButton crew={crew} />
                 : (
                   <Button

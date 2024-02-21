@@ -32,7 +32,7 @@ const SurfaceTransferOutgoing = ({ asteroid, crew, lot, ship, onSetAction, dialo
     return getCrewDisabledReason({
       asteroid, crew, permission: Permission.IDS.REMOVE_PRODUCTS, permissionTarget: origin
     });
-  }, [origin, crew?._ready]);
+  }, [origin, crew]);
 
   return (
     <ActionButton

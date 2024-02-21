@@ -20,7 +20,7 @@ const ignoreEventTypes = ['CURRENT_ETH_BLOCK_NUMBER'];
 
 export function ActivitiesProvider({ children }) {
   const { token, walletContext: { blockNumber, setBlockNumber } } = useAuth();
-  const { crew, refreshReadyAt } = useCrewContext();
+  const { crew, pendingTransactions, refreshReadyAt } = useCrewContext();
   const getActivityConfig = useGetActivityConfig();
   const queryClient = useQueryClient();
   const { registerWSHandler, unregisterWSHandler, wsReady } = useWebsocket();
@@ -28,8 +28,6 @@ export function ActivitiesProvider({ children }) {
   const createAlert = useStore(s => s.dispatchAlertLogged);
 
   const [ activities, setActivities ] = useState([]);
-
-  const pendingTransactions = useStore(s => s.pendingTransactions);
 
   const pendingBatchActivities = useRef([]);
   const pendingTimeout = useRef();
@@ -156,6 +154,7 @@ export function ActivitiesProvider({ children }) {
     }
   }, []);
 
+  const isFirstLoad = useRef(true); // (i.e. this is not a crew switch)
   useEffect(() => {
     if (!wsReady) return;
     let crewRoom = null;
@@ -171,11 +170,11 @@ export function ActivitiesProvider({ children }) {
         // NOTE: since is to make sure no pagination occurs... we should fix this endpoint on the server
         api.getTransactionActivities(pendingTxHashes).then(async (data) => {
           await hydrateActivities(data.activities, queryClient);
-          handleActivities(data.activities, true);
+          handleActivities(data.activities, isFirstLoad.current);
           setBlockNumber(data.blockNumber);
         });
       } else {
-        handleActivities([], true);
+        handleActivities([], isFirstLoad.current);
       }
 
       registerWSHandler(onWSMessage);
@@ -183,6 +182,10 @@ export function ActivitiesProvider({ children }) {
       crewRoom = crew?.id ? `Crew::${crew.id}` : null;
       if (crewRoom) registerWSHandler(onWSMessage, crewRoom);
     }
+
+    // after loaded once, if switch crews, this block will run again... but in the event of catching up
+    // on missing pending activities here, we DO need to invalidate the cache values
+    isFirstLoad.current = false;
 
     // reset on logout / disconnect
     return () => {

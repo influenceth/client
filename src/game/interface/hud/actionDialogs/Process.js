@@ -520,7 +520,7 @@ const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...pro
       </ActionDialogBody>
 
       <ActionDialogFooter
-        disabled={!(process && amount > 0 && originInventory && isOriginSufficient && destinationInventory && crewCan(Permission.IDS.RUN_PROCESS, lot.building))}
+        disabled={stage === actionStages.NOT_STARTED && !(process && amount > 0 && originInventory && isOriginSufficient && destinationInventory && crewCan(Permission.IDS.RUN_PROCESS, lot.building))}
         goLabel="Begin"
         onGo={onStartProcess}
         finalizeLabel="Finish"

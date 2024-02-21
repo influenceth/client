@@ -6,6 +6,7 @@ import { WebWalletConnector } from 'starknetkit/webwallet';
 import { Address } from '@influenceth/sdk';
 
 import api from '~/lib/api';
+import { getBlockTime } from '~/lib/utils';
 
 const getErrorMessage = (error) => {
   console.error(error);
@@ -186,17 +187,6 @@ export function WalletProvider({ children }) {
   // argent is slow to put together it's final "starknet" object, so we check explicitly for getBlock method
   const canCheckBlock = starknetReady && !!starknet?.provider?.getBlock;
 
-  const getBlockTime = useCallback(async (num) => {
-    if (canCheckBlock) {
-      try {
-        return (await starknet.provider.getBlock(num > 0 ? num : undefined))?.timestamp;
-      } catch (e) {
-        console.error(e);
-      }
-    }
-    return null;
-  }, [canCheckBlock]);
-
   // init block number and block time
   const lastBlockNumberTime = useRef(0);
   useEffect(() => {
@@ -228,7 +218,7 @@ export function WalletProvider({ children }) {
   useEffect(() => {
     if (blockNumber > lastBlockNumberTime.current) {
       lastBlockNumberTime.current = blockNumber;
-      getBlockTime().then((t) => setBlockTime(t));
+      getBlockTime(starknet).then((t) => setBlockTime(t));
     }
   }, [blockNumber]);
 
@@ -247,7 +237,6 @@ export function WalletProvider({ children }) {
       // blockNumber is updated from websocket change or initial pull of activities from server
       // blockTime is updated from blockNumber change
       // NOTE: blockNumber is last committed block, blockTime is the *pending* block time
-      getBlockTime,
       setBlockNumber,
       blockNumber,
       blockTime

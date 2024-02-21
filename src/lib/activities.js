@@ -1023,9 +1023,9 @@ const activities = {
     },
     getIsActionItemHidden: ({ returnValues }) => (pendingTransactions) => {
       return pendingTransactions.find((tx) => (
-        tx.key === 'MaterialProcessingFinished'
+        tx.key === 'ProcessProductsFinish'
         && tx.vars.processor.id === returnValues.processor.id
-        && tx.vars.processor_slot === returnValues.processor_slot
+        && tx.vars.processor_slot === returnValues.processorSlot
       ))
     },
 
@@ -1185,9 +1185,9 @@ const activities = {
     },
     getIsActionItemHidden: ({ returnValues }) => (pendingTransactions) => {
       return pendingTransactions.find((tx) => (
-        tx.key === 'ResourceExtractionFinished'
+        tx.key === 'ExtractResourceFinish'
         && tx.vars.extractor.id === returnValues.extractor.id
-        && tx.vars.extractor_slot === returnValues.extractor_slot
+        && tx.vars.extractor_slot === returnValues.extractorSlot
       ))
     },
 

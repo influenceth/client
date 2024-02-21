@@ -30,6 +30,10 @@ const ScanAsteroid = ({ asteroid, _disabled }) => {
     let disabledReason = _disabled ? 'loading...' : null;
 
     // resource scan requires crew to be on asteroid
+    if (!crew?._launched) {
+      flags.disabled = true;
+      disabledReason = 'not yet launched';
+    }
     if (scanType === 'RESOURCE' && (!crew._location?.asteroidId || crew._location?.asteroidId !== asteroid?.id)) {
       flags.disabled = true;
       disabledReason = 'crew must be present';
@@ -84,7 +88,7 @@ const ScanAsteroid = ({ asteroid, _disabled }) => {
           }
         };
     }
-  }, [asteroid?.id, crew?._ready, scanStatus, _disabled]);
+  }, [asteroid?.id, crew?._launched, crew?._ready, scanStatus, _disabled]);
 
   // TODO: icon should probably be distinct for each scan type
   return (

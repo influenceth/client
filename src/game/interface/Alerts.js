@@ -50,6 +50,10 @@ const StyledReactNotification = styled(ReactNotifications)`
     border-color: ${p => p.theme.colors.error};
   }
 
+  & .rnc__notification-item.rnc__notification-item--success {
+    border-color: ${p => p.theme.colors.success};
+  }
+
   & .rnc__notification-close-mark {
     background-color: transparent !important;
   }
