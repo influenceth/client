@@ -6,6 +6,7 @@ import { WebWalletConnector } from 'starknetkit/webwallet';
 import { Address } from '@influenceth/sdk';
 
 import api from '~/lib/api';
+import { getBlockTime } from '~/lib/utils';
 
 const getErrorMessage = (error) => {
   console.error(error);
@@ -186,34 +187,26 @@ export function WalletProvider({ children }) {
   // argent is slow to put together it's final "starknet" object, so we check explicitly for getBlock method
   const canCheckBlock = starknetReady && !!starknet?.provider?.getBlock;
 
-  const getBlockTime = useCallback(async (num) => {
-    if (canCheckBlock) {
-      try {
-        return (await starknet.provider.getBlock(num > 0 ? num : undefined))?.timestamp;
-      } catch (e) {
-        console.error(e);
-      }
-    }
-    return null;
-  }, [canCheckBlock]);
-
   // init block number and block time
   const lastBlockNumberTime = useRef(0);
   useEffect(() => {
     if (canCheckBlock) {
       starknet.provider.getBlock()
         .then((block) => {
+          console.log('initialize block TIME', block?.timestamp);
           setBlockTime(block?.timestamp);
 
           // does not (currently) return a block number with pending block...
           if (block?.block_number > 0) {
             lastBlockNumberTime.current = block?.block_number;
+            console.log('initialize block numnber (1)', block?.block_number);
             setBlockNumber(block?.block_number);
 
           // ... so we get the block number from the parent (which matches what ws reports)
           } else if(block?.parent_hash) {
             starknet.provider.getBlock(block.parent_hash).then((parent) => {
               lastBlockNumberTime.current = parent?.block_number;
+              console.log('initialize block numnber (2)', parent?.block_number);
               setBlockNumber(parent?.block_number);
             })
           }
@@ -228,7 +221,11 @@ export function WalletProvider({ children }) {
   useEffect(() => {
     if (blockNumber > lastBlockNumberTime.current) {
       lastBlockNumberTime.current = blockNumber;
-      getBlockTime().then((t) => setBlockTime(t));
+      console.log('refresh block TIME', blockNumber);
+      getBlockTime(starknet).then((t) => {
+        console.log('t', t);
+        setBlockTime(t)
+      });
     }
   }, [blockNumber]);
 
@@ -247,7 +244,6 @@ export function WalletProvider({ children }) {
       // blockNumber is updated from websocket change or initial pull of activities from server
       // blockTime is updated from blockNumber change
       // NOTE: blockNumber is last committed block, blockTime is the *pending* block time
-      getBlockTime,
       setBlockNumber,
       blockNumber,
       blockTime

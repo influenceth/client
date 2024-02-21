@@ -8,7 +8,7 @@ import LoadingAnimation from 'react-spinners/BarLoader';
 import useScreenSize from '~/hooks/useScreenSize';
 import useStore from '~/hooks/useStore';
 import theme from '~/theme';
-import Alerts from './interface/Alerts';
+import Alerts, { useControlledAlert } from './interface/Alerts';
 import Draggables from './interface/Draggables';
 import HUD from './interface/HUD';
 import MainMenu from './interface/MainMenu';
@@ -28,6 +28,9 @@ import Intro from './Intro';
 import Cutscene from './Cutscene';
 import Launcher from './Launcher';
 import RandomEvent from './interface/RandomEvent';
+import { PurchaseAsteroidIcon } from '~/components/Icons';
+import moment from 'moment';
+import { earlyAccessJSTime, openAccessJSTime } from '~/lib/utils';
 
 const StyledInterface = styled.div`
   align-items: stretch;
@@ -103,6 +106,31 @@ const Interface = () => {
       document.removeEventListener('keyup', handleInterfaceShortcut);
     }
   }, [handleInterfaceShortcut]);
+
+  // TODO: _launcher vvv
+  const { create, destroy } = useControlledAlert();
+  useEffect(() => {
+    if (`${process.env.REACT_APP_CHAIN_ID}` === `0x534e5f5345504f4c4941`) {
+      if (Date.now() < openAccessJSTime) {
+        const alertId = create({
+          icon: <span style={{ color: theme.colors.success }}><PurchaseAsteroidIcon /></span>,
+          content: (
+            <div style={{ color: theme.colors.success }}>
+              {Date.now() < earlyAccessJSTime
+                ? `Early Access launches ${moment(earlyAccessJSTime).format('MMM Do YYYY, h:mm a')}`
+                : `Open Access launches ${moment(openAccessJSTime).format('MMM Do YYYY, ha')}`
+              }
+            </div>
+          ),
+          level: 'success'
+        });
+        return () => {
+          destroy(alertId);
+        }
+      }
+    }
+  }, []);
+  // ^^^^
 
   return (
     <>

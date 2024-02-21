@@ -155,3 +155,14 @@ export const arrToXYZ = (arr) => ({ x: arr[0], y: arr[1], z: arr[2] });
 const yearOfSeconds = 31536000;
 export const secondsToMonths = (seconds) => Math.floor(1000 * 12 * seconds / yearOfSeconds) / 1000;
 export const monthsToSeconds = (months) => Math.floor(yearOfSeconds * months / 12);
+
+export const getBlockTime = async (starknet, ofBlockNumber) => {
+  try {
+    return (await starknet.provider.getBlock(ofBlockNumber > 0 ? ofBlockNumber : undefined))?.timestamp;
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+export const earlyAccessJSTime = 1708527600e3;
+export const openAccessJSTime = 1709046000e3;

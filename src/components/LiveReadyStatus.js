@@ -8,6 +8,7 @@ import useConstants from '~/hooks/useConstants';
 import { hexToRGB } from '~/theme';
 import useBlockTime from '~/hooks/useBlockTime';
 import LiveTimer from './LiveTimer';
+import { TimerIcon } from './Icons';
 
 
 const opacityKeyframes = keyframes`
@@ -121,6 +122,14 @@ const LiveReadyStatus = ({ crew, ...props }) => {
         {crewIsBusy && <label>Busy</label>}
         <IconWrapper><CrewBusyIcon /></IconWrapper>
       </BusyStatusContainer>
+    );
+  }
+  if (!crew?._launched) {
+    return (
+      <StatusContainer {...props}>
+        <label>Not Yet Launched</label> 
+        <IconWrapper><TimerIcon /></IconWrapper>
+      </StatusContainer>
     );
   }
   return (
