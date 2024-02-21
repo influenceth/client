@@ -53,23 +53,27 @@ const useLot = (lotId) => {
   // (presuming this is already loaded so doesn't cause any overhead)
   const { data: asteroid, isLoading: asteroidLoading } = useEntity({ label: Entity.IDS.ASTEROID, id: Lot.toPosition(lotId)?.asteroidId });
 
+  // we try to prepop all the below in a single call above so the
+  // below queries only get refreshed invididually when invalidated
+  const readyForLotEntityLoading = !!(lotDataPrepopped && lotEntity?.uuid);
+
   // NOTE: if any of these can be created, make sure to invalidate these query keys in that activity's invalidations
   const { data: buildings, isLoading: buildingsLoading } = useQuery(
     ['entities', Entity.IDS.BUILDING, 'lot', lotId],
     () => api.getEntities({ label: Entity.IDS.BUILDING, match: { 'Location.locations.uuid': lotEntity?.uuid } }),
-    { enabled: !!lotDataPrepopped } // give a chance to preload the data
+    { enabled: readyForLotEntityLoading } // give a chance to preload the data
   );
 
   const { data: deposits, isLoading: depositsLoading } = useQuery(
     ['entities', Entity.IDS.DEPOSIT, 'lot', lotId],
     () => api.getEntities({ label: Entity.IDS.DEPOSIT, match: { 'Location.locations.uuid': lotEntity?.uuid } }),
-    { enabled: !!lotDataPrepopped } // give a chance to preload the data
+    { enabled: readyForLotEntityLoading } 
   );
 
   const { data: ships, isLoading: shipsLoading } = useQuery(
     ['entities', Entity.IDS.SHIP, 'lot', lotId],
     () => api.getEntities({ label: Entity.IDS.SHIP, match: { 'Location.locations.uuid': lotEntity?.uuid } }),
-    { enabled: !!lotDataPrepopped } // give a chance to preload the data
+    { enabled: readyForLotEntityLoading } // give a chance to preload the data
   );
 
   return useMemo(() => {
