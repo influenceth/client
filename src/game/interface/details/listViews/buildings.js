@@ -40,7 +40,7 @@ const useColumns = () => {
       {
         key: 'name',
         label: 'Name',
-        sortField: 'Name.name',
+        sortField: 'Name.name.raw', // TODO: use meta.building.name?
         selector: row => {
           return (
             <span>{formatters.buildingName(row)}</span>
@@ -51,7 +51,7 @@ const useColumns = () => {
       {
         key: 'asteroid',
         label: 'Asteroid',
-        sortField: 'meta.asteroid.name',
+        sortField: 'meta.asteroid.name.raw',
         selector: row => {
           const loc = Lot.toPosition(row.Location?.location);
           return (

@@ -84,12 +84,13 @@ const useColumns = () => {
           return `${formatFixed(row.Deposit.remainingYield / 1e3, 0)} t`;
         },
       },
-      {
-        key: 'forSale',
-        label: 'For Sale',
-        sortField: 'forSale',
-        selector: row => row.Deposit.forSale ? '(TODO: price)' : 'No', // TODO: ecs refactor
-      },
+      // TODO: ...
+      // {
+      //   key: 'forSale',
+      //   label: 'For Sale',
+      //   sortField: 'forSale',
+      //   selector: row => row.Deposit.forSale ? '(TODO: price)' : 'No', // TODO: ecs refactor
+      // },
     ];
 
     return columns.filter((c) => account || !c.requireLogin);

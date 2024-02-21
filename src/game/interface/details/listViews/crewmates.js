@@ -35,7 +35,7 @@ const useColumns = () => {
         selector: row => formatters.crewmateName(row),
         unhideable: true
       },
-      {
+      { // TODO: should this be removed?
         key: 'owner',
         label: 'Owner',
         sortField: 'Nft.owner',
@@ -49,7 +49,7 @@ const useColumns = () => {
                 {(onClick, setRefEl) => (
                   <OnClickLink ref={setRefEl} onClick={onClick}>
                     {account && Address.areEqual(row.Nft.owner, account)
-                      ? `you`
+                      ? `you` // TODO: should this be <Me /> like in ships list config?
                       : `${row.Nft.owner.substr(0, 6)}...${row.Nft.owner.substr(-4)}`
                     }
                   </OnClickLink>
@@ -64,7 +64,7 @@ const useColumns = () => {
         key: 'crew',
         icon: <CrewIcon />,
         label: 'Crew',
-        sortField: 'meta.crew.name',
+        sortField: 'meta.crew.name.raw',
         selector: row => row.Control?.controller?.id ? (row.meta?.crew?.name || `#${row.Control?.controller?.id}`) : null
       },
       {

@@ -36,6 +36,8 @@ import useStore from '~/hooks/useStore';
 import theme from '~/theme';
 import listConfigs from './listViews';
 import { reactBool } from '~/lib/utils';
+import { TimerIcon } from '~/components/Icons';
+import { ListViewIcon } from '~/components/Icons';
 
 const footerMargin = 12;
 const filterWidth = 344;
@@ -192,12 +194,12 @@ const assetTypes = {
   //   title: 'Core Samples',
   //   useColumns: listConfigs.coreSamples,
   // },
-  // ships: {
-  //   keyField: 'i',
-  //   icon: <ShipIcon />,
-  //   title: 'Ships',
-  //   useColumns: listConfigs.asteroids,
-  // },
+  ships: {
+    keyField: 'id',
+    icon: <ShipIcon />,
+    title: 'Ships',
+    useColumns: listConfigs.ships,
+  },
   // orders: {
   //   keyField: 'i',
   //   icon: <RocketIcon />, // TODO
@@ -224,7 +226,7 @@ const assetTypes = {
   // },
   actionitems: {
     keyField: 'key',
-    icon: <RocketIcon />,
+    icon: <TimerIcon />,
     title: 'Active Events',
     useColumns: listConfigs.actionItems,
     usePagedAssetsOverride: usePagedActionItems,
@@ -237,7 +239,7 @@ const assetTypes = {
   },
   eventlog: {
     keyField: 'i',
-    icon: <RocketIcon />,
+    icon: <ListViewIcon />,
     title: 'Logged Events',
     useColumns: listConfigs.events,
     usePagedAssetsOverride: usePagedEvents,
