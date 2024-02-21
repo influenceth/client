@@ -99,7 +99,7 @@ export function WalletProvider({ children }) {
       }
 
       if (process.env.REACT_APP_STARKNET_PROVIDER) {
-        connectionOptions.provider =  new RpcProvider({ nodeUrl: process.env.REACT_APP_STARKNET_PROVIDER });
+        connectionOptions.provider = new RpcProvider({ nodeUrl: process.env.REACT_APP_STARKNET_PROVIDER });
       }
 
       const wallet = await starknetConnect(connectionOptions);
@@ -203,23 +203,25 @@ export function WalletProvider({ children }) {
     if (canCheckBlock) {
       starknet.provider.getBlock()
         .then((block) => {
-          setBlockTime(block?.timestamp);
+          if (block?.timestamp) {
+            setBlockTime(block?.timestamp);
 
-          // does not (currently) return a block number with pending block...
-          if (block?.block_number > 0) {
-            lastBlockNumberTime.current = block?.block_number;
-            setBlockNumber(block?.block_number);
+            // does not (currently) return a block number with pending block...
+            if (block?.block_number > 0) {
+              lastBlockNumberTime.current = block?.block_number;
+              setBlockNumber(block?.block_number);
 
-          // ... so we get the block number from the parent (which matches what ws reports)
-          } else if (block?.parent_hash) {
-            starknet.provider.getBlock(block.parent_hash).then((parent) => {
-              if (parent?.block_number > 0) {
-                lastBlockNumberTime.current = parent?.block_number;
-                setBlockNumber(parent?.block_number);
-              } else {
-                console.error('could not initialize block number!', block, parent);
-              }
-            })
+            // ... so we get the block number from the parent (which matches what ws reports)
+            } else if (block?.parent_hash) {
+              starknet.provider.getBlock(block.parent_hash).then((parent) => {
+                if (parent?.block_number > 0) {
+                  lastBlockNumberTime.current = parent?.block_number;
+                  setBlockNumber(parent?.block_number);
+                } else {
+                  console.error('could not initialize block number!', block, parent);
+                }
+              })
+            }
           }
         })
         .catch((e) => console.error('failed to init block data', e));
@@ -231,8 +233,12 @@ export function WalletProvider({ children }) {
   //  (i.e. for logged out users) -- does that matter?
   useEffect(() => {
     if (blockNumber > lastBlockNumberTime.current) {
-      lastBlockNumberTime.current = blockNumber;
-      getBlockTime(starknet).then((t) => { setBlockTime(t); });
+      getBlockTime(starknet).then((timestamp) => {
+        if (timestamp) {
+          lastBlockNumberTime.current = blockNumber;
+          setBlockTime(timestamp);
+        }
+      });
     }
   }, [blockNumber]);
 
