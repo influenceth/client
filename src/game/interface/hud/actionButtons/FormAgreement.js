@@ -17,7 +17,7 @@ const FormAgreement = ({ entity, permission, _disabled }) => {
   }, [entity, permission]);
 
   const disabledReason = useMemo(() => {
-    if (_disabled) return 'loading...';
+    // if (_disabled) return 'loading...';
     if (changePending) return 'updating...';
     return '';
   }, [_disabled, changePending]);

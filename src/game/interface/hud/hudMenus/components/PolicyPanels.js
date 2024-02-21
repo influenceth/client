@@ -507,7 +507,7 @@ const PolicyPanel = ({ editable = false, entity, permission }) => {
                     && !(entity?.label === Entity.IDS.ASTEROID && permission === Permission.IDS.LOT_USE)
                     && (
                     <actionButtons.FormAgreement.Component
-                      _disabled={Permission.TYPES[permission].isExclusive && agreements?.length > 0}
+                      _disabled={Permission.TYPES[permission].isExclusive && (jitStatus === 'controlled' || agreements?.length > 0)}
                       entity={entity}
                       permission={permission} />
                   )}

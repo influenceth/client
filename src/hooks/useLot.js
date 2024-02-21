@@ -5,6 +5,17 @@ import { Deposit, Entity, Lot, Permission, Ship } from '@influenceth/sdk';
 import api from '~/lib/api';
 import useEntity from './useEntity';
 
+const useLotEntities = (lotId, entityLabel, isPreloaded) => {
+  return useQuery(
+    ['entities', entityLabel, 'lot', lotId],
+    () => {
+      const lotEntity = Entity.formatEntity({ id: lotId, label: Entity.IDS.LOT });
+      return api.getEntities({ label: entityLabel, match: { 'Location.locations.uuid': lotEntity?.uuid } });
+    },
+    { enabled: !!(lotId > 0 && entityLabel && isPreloaded) }
+  )
+};
+
 const useLot = (lotId) => {
   const queryClient = useQueryClient();
 
@@ -55,26 +66,9 @@ const useLot = (lotId) => {
 
   // we try to prepop all the below in a single call above so the
   // below queries only get refreshed invididually when invalidated
-  const readyForLotEntityLoading = !!(lotDataPrepopped && lotEntity?.uuid);
-
-  // NOTE: if any of these can be created, make sure to invalidate these query keys in that activity's invalidations
-  const { data: buildings, isLoading: buildingsLoading } = useQuery(
-    ['entities', Entity.IDS.BUILDING, 'lot', lotId],
-    () => api.getEntities({ label: Entity.IDS.BUILDING, match: { 'Location.locations.uuid': lotEntity?.uuid } }),
-    { enabled: readyForLotEntityLoading } // give a chance to preload the data
-  );
-
-  const { data: deposits, isLoading: depositsLoading } = useQuery(
-    ['entities', Entity.IDS.DEPOSIT, 'lot', lotId],
-    () => api.getEntities({ label: Entity.IDS.DEPOSIT, match: { 'Location.locations.uuid': lotEntity?.uuid } }),
-    { enabled: readyForLotEntityLoading } 
-  );
-
-  const { data: ships, isLoading: shipsLoading } = useQuery(
-    ['entities', Entity.IDS.SHIP, 'lot', lotId],
-    () => api.getEntities({ label: Entity.IDS.SHIP, match: { 'Location.locations.uuid': lotEntity?.uuid } }),
-    { enabled: readyForLotEntityLoading } // give a chance to preload the data
-  );
+  const { data: buildings, isLoading: buildingsLoading } = useLotEntities(lotId, Entity.IDS.BUILDING, !!lotDataPrepopped);
+  const { data: deposits, isLoading: depositsLoading } = useLotEntities(lotId, Entity.IDS.DEPOSIT, !!lotDataPrepopped);
+  const { data: ships, isLoading: shipsLoading } = useLotEntities(lotId, Entity.IDS.SHIP, !!lotDataPrepopped);
 
   return useMemo(() => {
     const { asteroidId, lotIndex } = Lot.toPosition(lotId) || {};
