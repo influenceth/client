@@ -57,7 +57,7 @@ const StationManifest = () => {
   const { data: ship } = useShip(shipId);
 
   const station = useMemo(() => shipId ? ship : lot?.building, [ship, lot]);
-  const { data: unfilteredCrews } = useStationedCrews(station, true);
+  const { data: unfilteredCrews } = useStationedCrews(station);
 
   const [nameFilter, setNameFilter] = useState('');
   const [selectedCrewId, setSelectedCrewId] = useState();
@@ -73,9 +73,8 @@ const StationManifest = () => {
 
   const crews = useMemo(() => {
     return (unfilteredCrews || [])
-      .filter((c) => {
-        return formatters.crewName(c).toLowerCase().includes(nameFilter.toLowerCase())
-      })
+      .filter((c) => formatters.crewName(c).toLowerCase().includes(nameFilter.toLowerCase()))
+      .map((c) => ({ ...c, _crewmates: c.Crew.roster.map((id) => ({ id })) }))
       .sort((a, b) => formatters.crewName(a) < formatters.crewName(b) ? -1 : 1)
   }, [unfilteredCrews, nameFilter]);
   
