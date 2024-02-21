@@ -106,6 +106,7 @@ export function CrewProvider({ children }) {
           || c.Crewmate.title === 67
         );
         c._launched = blockTime > (earlyAccessEligible ? earlyAccessJSTime : openAccessJSTime) / 1e3;
+        console.log({ earlyAccessEligible, crew: c, blockTime, earlyAccessJSTime, openAccessJSTime });
       } else {
         c._launched = true;
       }
