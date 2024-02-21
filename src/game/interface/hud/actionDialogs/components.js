@@ -1512,7 +1512,7 @@ export const TransferSelectionDialog = ({
       .reduce((acc, d) => {
         d.action.contents.forEach((c) => {
           if (!acc[c.product]) acc[c.product] = 0;
-          acc[c.product] += c.amount;
+          acc[c.product] += Number(c.amount);
         })
         return acc;
       }, {});
@@ -3599,6 +3599,14 @@ const CrewBusyButton = ({ crew }) => {
   );
 };
 
+const CrewNotLaunchedButton = ({ crew }) => {
+  return (
+    <Button isTransaction disabled={nativeBool(true)}>
+      Crew Not Launched
+    </Button>
+  );
+};
+
 export const ActionDialogFooter = ({
   buttonsLoading,
   disabled,
@@ -3640,16 +3648,15 @@ export const ActionDialogFooter = ({
               <Button
                 loading={reactBool(buttonsLoading)}
                 onClick={onClose}>Cancel</Button>
-              {waitForCrewReady && !(crew?._ready && crew?._launched)
-                ? <CrewBusyButton crew={crew} />
-                : (
-                  <Button
-                    isTransaction
-                    disabled={nativeBool(disabled)}
-                    loading={reactBool(buttonsLoading)}
-                    onClick={onGo}>{goLabel}</Button>
-                )
-              }
+              {waitForCrewReady && !crew?._ready && <CrewBusyButton crew={crew} />}
+              {waitForCrewReady && !crew?._launched && <CrewNotLaunchedButton crew={crew} />}
+              {!waitForCrewReady || (crew?._ready && crew?._launched) && (
+                <Button
+                  isTransaction
+                  disabled={nativeBool(disabled)}
+                  loading={reactBool(buttonsLoading)}
+                  onClick={onGo}>{goLabel}</Button>
+              )}
             </>
           )
           : (
