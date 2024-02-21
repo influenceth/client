@@ -487,7 +487,7 @@ const getSystemCallAndProcessedVars = (runSystem, rawVars, encodeEntrypoint = fa
 
 export function ChainTransactionProvider({ children }) {
   const { account, walletContext: { starknet, blockNumber, blockTime } } = useAuth();
-  const { activities } = useActivitiesContext();
+  const activities = useActivitiesContext();
   const { crew, pendingTransactions } = useCrewContext();
 
   const createAlert = useStore(s => s.dispatchAlertLogged);

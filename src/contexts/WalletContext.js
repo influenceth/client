@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, createContext } from 'react';
+import { RpcProvider } from 'starknet';
 import { connect as starknetConnect, disconnect as starknetDisconnect } from 'starknetkit';
 import { ArgentMobileConnector } from 'starknetkit/argentMobile';
 import { InjectedConnector } from 'starknetkit/injected';
@@ -85,14 +86,23 @@ export function WalletProvider({ children }) {
       connectors.push(new InjectedConnector({ options: { id: 'braavos' }}));
       connectors.push(new ArgentMobileConnector());
 
-      const wallet = await starknetConnect({
+      const connectionOptions = {
         dappName: 'Influence Asset Manager',
         modalMode: auto ? 'neverAsk' : 'alwaysAsk',
         modalTheme: 'dark',
         projectId: 'influence',
-        webWalletUrl: process.env.REACT_APP_ARGENT_WEB_WALLET_URL,
         connectors
-      });
+      };
+
+      if (!!process.env.REACT_APP_ARGENT_WEB_WALLET_URL) {
+        connectionOptions.webWalletUrl = process.env.REACT_APP_ARGENT_WEB_WALLET_URL;
+      }
+
+      if (process.env.REACT_APP_STARKNET_PROVIDER) {
+        connectionOptions.provider =  new RpcProvider({ nodeUrl: process.env.REACT_APP_STARKNET_PROVIDER });
+      }
+
+      const wallet = await starknetConnect(connectionOptions);
 
       if (wallet && wallet.isConnected && wallet.account?.address) {
         if (isAllowedChain(wallet.account?.provider?.chainId)) {
@@ -201,10 +211,14 @@ export function WalletProvider({ children }) {
             setBlockNumber(block?.block_number);
 
           // ... so we get the block number from the parent (which matches what ws reports)
-          } else if(block?.parent_hash) {
+          } else if (block?.parent_hash) {
             starknet.provider.getBlock(block.parent_hash).then((parent) => {
-              lastBlockNumberTime.current = parent?.block_number;
-              setBlockNumber(parent?.block_number);
+              if (parent?.block_number > 0) {
+                lastBlockNumberTime.current = parent?.block_number;
+                setBlockNumber(parent?.block_number);
+              } else {
+                console.error('could not initialize block number!', block, parent);
+              }
             })
           }
         })
@@ -216,9 +230,13 @@ export function WalletProvider({ children }) {
   // TODO: if no crew, then we won't receive websockets, and blockNumber will not get updated
   //  (i.e. for logged out users) -- does that matter?
   useEffect(() => {
+    console.log('block change', blockNumber, lastBlockNumberTime.current);
     if (blockNumber > lastBlockNumberTime.current) {
       lastBlockNumberTime.current = blockNumber;
-      getBlockTime(starknet).then((t) => setBlockTime(t));
+      getBlockTime(starknet).then((t) => {
+        console.log('new block time', t);
+        setBlockTime(t);
+      });
     }
   }, [blockNumber]);
 

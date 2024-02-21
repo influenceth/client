@@ -73,6 +73,25 @@ const TransferToSite = ({ asteroid, lot: destinationLot, deliveryManager, stage,
   }, [originLot, origin]);
   const originInventory = useMemo(() => (originEntity?.Inventories || []).find((i) => i.slot === origin?.slot), [originEntity, origin]);
 
+  const buildingRequirements = useMemo(
+    () => getBuildingRequirements(destinationLot?.building, currentDeliveryActions),
+    [destinationLot?.building, currentDeliveryActions]
+  );
+
+  useEffect(() => {
+    if (stage === actionStage.NOT_STARTED) {
+      const validated = Object.keys(selectedItems).reduce((acc, product) => {
+        // cap selectedItems to originInventory contents and adjusted building requirements
+        const sendConstraint = ((originInventory?.contents || []).find((c) => Number(c.product) === Number(product))?.amount || 0);  // TODO: account for *pending* deliveries out?
+        const receiveConstraint = buildingRequirements.find(({ i }) => i === product)?.inNeed || 0;
+
+        const maxProduct = Math.min(selectedItems[product], sendConstraint, receiveConstraint);
+        return maxProduct > 0 ? { ...acc, [product]: maxProduct } : acc;
+      }, {});
+      setSelectedItems(validated);
+    }
+  }, [originInventory, buildingRequirements]);
+
   // // handle "currentDeliveryAction" state
   // useEffect(() => {
   //   if (currentDeliveryAction) {
@@ -172,11 +191,6 @@ const TransferToSite = ({ asteroid, lot: destinationLot, deliveryManager, stage,
       contents: selectedItems
     }, { asteroidId: asteroid?.id, lotId: originLot?.id });
   }, [originInventory, destinationInventory, selectedItems, asteroid?.id, originLot?.id]);
-
-  const buildingRequirements = useMemo(
-    () => getBuildingRequirements(destinationLot?.building, currentDeliveryActions),
-    [destinationLot?.building, currentDeliveryActions]
-  );
 
   useEffect(() => {
     if (destinationLot?.building && !buildingRequirements.find((r) => r.inNeed > 0)) {

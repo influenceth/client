@@ -19,7 +19,7 @@ const ActivitiesContext = createContext();
 const ignoreEventTypes = ['CURRENT_ETH_BLOCK_NUMBER'];
 
 export function ActivitiesProvider({ children }) {
-  const { token, walletContext: { blockNumber, setBlockNumber } } = useAuth();
+  const { token, walletContext: { setBlockNumber } } = useAuth();
   const { crew, pendingTransactions, refreshReadyAt } = useCrewContext();
   const getActivityConfig = useGetActivityConfig();
   const queryClient = useQueryClient();
@@ -141,7 +141,7 @@ export function ActivitiesProvider({ children }) {
     const { type, body } = message;
     if (ignoreEventTypes.includes(type)) return;
     if (type === 'CURRENT_STARKNET_BLOCK_NUMBER') {
-      setBlockNumber(body.blockNumber || 0);
+      if (body.blockNumber > 0) setBlockNumber(body.blockNumber);
     } else {
 
       // queue the current activity for processing
@@ -157,50 +157,45 @@ export function ActivitiesProvider({ children }) {
   const isFirstLoad = useRef(true); // (i.e. this is not a crew switch)
   useEffect(() => {
     if (!wsReady) return;
-    let crewRoom = null;
+    if (!token) return;
 
     // if authed, populate existing activities and start listening to user websocket
     // if have pending transactions, load back to the oldest one in case it missed the activity;
     // else, will just pull most recent X (limit set on server)
-    if (token) {
-      const pendingTxHashes = pendingTransactions
-        .map((tx) => tx.txHash)
-        .filter((txHash) => !!txHash);
-      if (pendingTxHashes?.length > 0) {
-        // NOTE: since is to make sure no pagination occurs... we should fix this endpoint on the server
-        api.getTransactionActivities(pendingTxHashes).then(async (data) => {
-          await hydrateActivities(data.activities, queryClient);
-          handleActivities(data.activities, isFirstLoad.current);
-          setBlockNumber(data.blockNumber);
-        });
-      } else {
-        handleActivities([], isFirstLoad.current);
-      }
-
-      registerWSHandler(onWSMessage);
-
-      crewRoom = crew?.id ? `Crew::${crew.id}` : null;
-      if (crewRoom) registerWSHandler(onWSMessage, crewRoom);
+    
+    const pendingTxHashes = pendingTransactions
+      .map((tx) => tx.txHash)
+      .filter((txHash) => !!txHash);
+    if (pendingTxHashes?.length > 0) {
+      // NOTE: since is to make sure no pagination occurs... we should fix this endpoint on the server
+      api.getTransactionActivities(pendingTxHashes).then(async (data) => {
+        await hydrateActivities(data.activities, queryClient);
+        handleActivities(data.activities, isFirstLoad.current);
+        if (data.blockNumber > 0) setBlockNumber(data.blockNumber);
+      });
+    } else {
+      handleActivities([], isFirstLoad.current);
     }
 
     // after loaded once, if switch crews, this block will run again... but in the event of catching up
     // on missing pending activities here, we DO need to invalidate the cache values
     isFirstLoad.current = false;
 
+    // setup ws listeners
+    registerWSHandler(onWSMessage);
+    const crewRoom = crew?.id ? `Crew::${crew.id}` : null;
+    if (crewRoom) registerWSHandler(onWSMessage, crewRoom);
+
     // reset on logout / disconnect
     return () => {
       setActivities([]);
-      setBlockNumber(0);
       unregisterWSHandler();
       if (crewRoom) unregisterWSHandler(crewRoom);
     }
   }, [crew?.id, onWSMessage, token, wsReady]);
 
   return (
-    <ActivitiesContext.Provider value={{
-      blockNumber,
-      activities
-    }}>
+    <ActivitiesContext.Provider value={activities}>
       {children}
     </ActivitiesContext.Provider>
   );

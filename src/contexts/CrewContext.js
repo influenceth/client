@@ -15,6 +15,8 @@ export function CrewProvider({ children }) {
   const { account, walletContext: { starknet, blockNumber, blockTime } } = useAuth();
   const queryClient = useQueryClient();
 
+  useEffect(() => { console.log({ blockTime, blockNumber }) }, [blockNumber, blockTime])
+
   const allPendingTransactions = useStore(s => s.pendingTransactions);
   const selectedCrewId = useStore(s => s.selectedCrewId);
   const dispatchCrewSelected = useStore(s => s.dispatchCrewSelected);
@@ -95,9 +97,9 @@ export function CrewProvider({ children }) {
 
       // TODO: vvv remove this whole block (and _launched references) after
       // only relevant on Sepolia
-      if (`${process.env.REACT_APP_CHAIN_ID}` === `0x534e5f5345504f4c4941`) {
+      if (true || `${process.env.REACT_APP_CHAIN_ID}` === `0x534e5f5345504f4c4941`) {
         // crew is early access eligible if...
-        const earlyAccessEligible = !!c._crewmates.find((c) =>
+        const earlyAccessEligible = true || !!c._crewmates.find((c) =>
           // ... has at least one arvadian crewmate
           [Crewmate.COLLECTION_IDS.ARVAD_CITIZEN, Crewmate.COLLECTION_IDS.ARVAD_SPECIALIST, Crewmate.COLLECTION_IDS.ARVAD_LEADERSHIP].includes(c.Crewmate.coll)
           // ... or has at least one "First Generation" adalian crewmate
