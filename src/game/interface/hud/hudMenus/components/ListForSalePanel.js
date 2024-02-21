@@ -1,26 +1,12 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import styled from 'styled-components';
-import { Building, Entity, Permission } from '@influenceth/sdk';
 
-import { CloseIcon, FormAgreementIcon, LotControlIcon, PermissionIcon, RadioCheckedIcon, RadioUncheckedIcon, SwayIcon, WarningIcon } from '~/components/Icons';
+import { RadioCheckedIcon, RadioUncheckedIcon, WarningIcon } from '~/components/Icons';
 import CollapsibleBlock from '~/components/CollapsibleBlock';
 import Button from '~/components/ButtonAlt';
-import Autocomplete from '~/components/Autocomplete';
-import formatters from '~/lib/formatters';
-import IconButton from '~/components/IconButton';
-import { CheckboxButton, CheckboxRow, InputBlock } from '~/components/filters/components';
-import { formatFixed, nativeBool, reactBool } from '~/lib/utils';
+import { CheckboxButton, CheckboxRow } from '~/components/filters/components';
+import { nativeBool } from '~/lib/utils';
 import UncontrolledTextInput from '~/components/TextInputUncontrolled';
-import UncontrolledTextArea from '~/components/TextAreaUncontrolled';
-import usePolicyManager from '~/hooks/actionManagers/usePolicyManager';
-import EntityName from '~/components/EntityName';
-import actionButtons from '../../actionButtons';
-import useCrewContext from '~/hooks/useCrewContext';
-import useLot from '~/hooks/useLot';
-import LiveTimer from '~/components/LiveTimer';
-import useConstructionManager from '~/hooks/actionManagers/useConstructionManager';
-import useCrew from '~/hooks/useCrew';
-import EntityLink from '~/components/EntityLink';
 import useNftSaleManager from '~/hooks/actionManagers/useNftSaleManager';
 
 const borderColor = `rgba(255, 255, 255, 0.15)`;
