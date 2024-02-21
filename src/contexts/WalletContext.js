@@ -222,6 +222,8 @@ export function WalletProvider({ children }) {
                 }
               })
             }
+          } else {
+            console.warn('block log refresh failed!', block);
           }
         })
         .catch((e) => console.error('failed to init block data', e));
@@ -237,6 +239,8 @@ export function WalletProvider({ children }) {
         if (timestamp) {
           lastBlockNumberTime.current = blockNumber;
           setBlockTime(timestamp);
+        } else {
+          console.warn('block time refresh failed');
         }
       });
     }
