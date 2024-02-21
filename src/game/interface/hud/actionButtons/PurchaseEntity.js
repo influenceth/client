@@ -6,7 +6,7 @@ import useNftSaleManager from '~/hooks/actionManagers/useNftSaleManager';
 import ActionButton from './ActionButton';
 
 const isVisible = ({ account, ship }) => {
-  return account
+  return account && ship
     && !Address.areEqual(account, ship?.Nft?.owner)
     && ship?.Nft?.price > 0;
 };
