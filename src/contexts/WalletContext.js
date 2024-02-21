@@ -193,20 +193,17 @@ export function WalletProvider({ children }) {
     if (canCheckBlock) {
       starknet.provider.getBlock()
         .then((block) => {
-          console.log('initialize block TIME', block?.timestamp);
           setBlockTime(block?.timestamp);
 
           // does not (currently) return a block number with pending block...
           if (block?.block_number > 0) {
             lastBlockNumberTime.current = block?.block_number;
-            console.log('initialize block numnber (1)', block?.block_number);
             setBlockNumber(block?.block_number);
 
           // ... so we get the block number from the parent (which matches what ws reports)
           } else if(block?.parent_hash) {
             starknet.provider.getBlock(block.parent_hash).then((parent) => {
               lastBlockNumberTime.current = parent?.block_number;
-              console.log('initialize block numnber (2)', parent?.block_number);
               setBlockNumber(parent?.block_number);
             })
           }
@@ -221,11 +218,7 @@ export function WalletProvider({ children }) {
   useEffect(() => {
     if (blockNumber > lastBlockNumberTime.current) {
       lastBlockNumberTime.current = blockNumber;
-      console.log('refresh block TIME', blockNumber);
-      getBlockTime(starknet).then((t) => {
-        console.log('t', t);
-        setBlockTime(t)
-      });
+      getBlockTime(starknet).then((t) => setBlockTime(t));
     }
   }, [blockNumber]);
 
