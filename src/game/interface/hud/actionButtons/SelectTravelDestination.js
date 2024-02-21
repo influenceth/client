@@ -6,6 +6,8 @@ import ActionButton from './ActionButton';
 import useShipTravelManager from '~/hooks/actionManagers/useShipTravelManager';
 
 const isVisible = ({ asteroid, crew, ship, zoomStatus }) => {
+  if (!ship && crew?.Ship?.emergencyAt > 0) return true; // crew is in escape module
+
   return crew && (
     (asteroid && zoomStatus === 'out') || (
       ship
