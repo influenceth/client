@@ -47,7 +47,7 @@ const useLot = (lotId) => {
 
       return true;
     },
-    { enabled: !!lotEntity }
+    { enabled: !!lotEntity?.uuid }
   );
 
   // (presuming this is already loaded so doesn't cause any overhead)
@@ -56,19 +56,19 @@ const useLot = (lotId) => {
   // NOTE: if any of these can be created, make sure to invalidate these query keys in that activity's invalidations
   const { data: buildings, isLoading: buildingsLoading } = useQuery(
     ['entities', Entity.IDS.BUILDING, 'lot', lotId],
-    () => api.getEntities({ label: Entity.IDS.BUILDING, match: { 'Location.locations.uuid': lotEntity.uuid } }),
+    () => api.getEntities({ label: Entity.IDS.BUILDING, match: { 'Location.locations.uuid': lotEntity?.uuid } }),
     { enabled: !!lotDataPrepopped } // give a chance to preload the data
   );
 
   const { data: deposits, isLoading: depositsLoading } = useQuery(
     ['entities', Entity.IDS.DEPOSIT, 'lot', lotId],
-    () => api.getEntities({ label: Entity.IDS.DEPOSIT, match: { 'Location.locations.uuid': lotEntity.uuid } }),
+    () => api.getEntities({ label: Entity.IDS.DEPOSIT, match: { 'Location.locations.uuid': lotEntity?.uuid } }),
     { enabled: !!lotDataPrepopped } // give a chance to preload the data
   );
 
   const { data: ships, isLoading: shipsLoading } = useQuery(
     ['entities', Entity.IDS.SHIP, 'lot', lotId],
-    () => api.getEntities({ label: Entity.IDS.SHIP, match: { 'Location.locations.uuid': lotEntity.uuid } }),
+    () => api.getEntities({ label: Entity.IDS.SHIP, match: { 'Location.locations.uuid': lotEntity?.uuid } }),
     { enabled: !!lotDataPrepopped } // give a chance to preload the data
   );
 

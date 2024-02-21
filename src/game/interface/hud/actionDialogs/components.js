@@ -1877,6 +1877,7 @@ export const InventorySelectionDialog = ({
 
   // if off the surface, cannot access inventories on the surface...
   const { data: inventoryData } = useAccessibleAsteroidInventories(otherLocation.lotIndex === 0 ? null : asteroidId, isSourcing);
+
   // ... but can access inventories on their crewed ship (assuming not sending things elsewhere)
   const { data: crewedShip } = useShip((otherLocation.lotIndex === 0 && crew?._location?.shipId === otherLocation.shipId) ? otherLocation.shipId : null);
 
@@ -1922,7 +1923,7 @@ export const InventorySelectionDialog = ({
 
         // skip if non-primary and no items
         const nonPrimaryType = getInventorySublabel(inv.inventoryType);
-        if (nonPrimaryType && itemIds?.length && itemTally === 0) return;
+        if (isSourcing && nonPrimaryType && itemIds?.length && itemTally === 0) return;
 
         // disable if !available or does not contain itemId
         display.push({
