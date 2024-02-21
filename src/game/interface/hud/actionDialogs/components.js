@@ -2892,7 +2892,7 @@ export const ProcessInputOutputSection = ({ title, products, input, output, prim
           if (output) {
             thumbProps.backgroundColor = `rgba(${hexToRGB(theme.colors.green)}, 0.15)`;
             thumbProps.badgeColor = theme.colors.green;
-          } else if ((sourceContents[resourceId] || 0) > amount) {
+          } else if ((sourceContents[resourceId] || 0) >= amount) {
             thumbProps.backgroundColor = `rgba(${theme.colors.mainRGB}, 0.15)`;
             thumbProps.badgeColor = theme.colors.main;
             thumbProps.progress = 1;
@@ -2950,7 +2950,7 @@ export const ProcessInputSquareSection = ({ title, products, input, output, prim
           if (output) {
             thumbProps.backgroundColor = `rgba(${hexToRGB(theme.colors.green)}, 0.15)`;
             thumbProps.badgeColor = theme.colors.green;
-          } else if ((sourceContents[resourceId] || 0) > amount) {
+          } else if ((sourceContents[resourceId] || 0) >= amount) {
             thumbProps.backgroundColor = `rgba(${theme.colors.mainRGB}, 0.15)`;
             thumbProps.badgeColor = theme.colors.main;
             thumbProps.progress = 1;
