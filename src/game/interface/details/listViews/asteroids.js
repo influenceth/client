@@ -106,7 +106,7 @@ const useColumns = () => {
         ),
         unhideable: true
       },
-      {
+      { // TODO: switch to managing crew?
         key: 'owner',
         icon: <WalletIcon />,
         label: 'Owner',

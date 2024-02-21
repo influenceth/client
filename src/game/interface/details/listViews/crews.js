@@ -34,7 +34,7 @@ const useColumns = () => {
         selector: row => formatters.crewName(row),
         unhideable: true
       },
-      {
+      { // TODO: do we want this here?
         key: 'owner',
         label: 'Owner',
         sortField: 'Nft.owner',

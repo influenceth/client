@@ -93,7 +93,7 @@ const useColumns = () => {
         key: 'permitted',
         label: 'Permitted Crew',
         sortField: 'permitted.id',
-        selector: row => <EntityName {...row.permitted} />,
+        selector: row => <EntityName {...row.permitted} />, // TODO: is meta.crew.name populated?
         unhideable: true
       },
       {

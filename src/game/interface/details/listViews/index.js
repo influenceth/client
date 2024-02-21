@@ -6,6 +6,7 @@ import coreSamples from './coreSamples';
 import crewmates from './crewmates';
 import crews from './crews';
 import events from './events';
+import ships from './ships';
 
 const columns = {
   actionItems,
@@ -15,7 +16,8 @@ const columns = {
   coreSamples,
   crewmates,
   crews,
-  events
+  events,
+  ships
 };
 
 export default columns;
