@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, createContext } from 'react';
+import { RpcProvider } from 'starknet';
 import { connect as starknetConnect, disconnect as starknetDisconnect } from 'starknetkit';
 import { ArgentMobileConnector } from 'starknetkit/argentMobile';
 import { InjectedConnector } from 'starknetkit/injected';
@@ -85,14 +86,23 @@ export function WalletProvider({ children }) {
       connectors.push(new InjectedConnector({ options: { id: 'braavos' }}));
       connectors.push(new ArgentMobileConnector());
 
-      const wallet = await starknetConnect({
+      const connectionOptions = {
         dappName: 'Influence Asset Manager',
         modalMode: auto ? 'neverAsk' : 'alwaysAsk',
         modalTheme: 'dark',
         projectId: 'influence',
-        webWalletUrl: process.env.REACT_APP_ARGENT_WEB_WALLET_URL,
         connectors
-      });
+      };
+
+      if (!!process.env.REACT_APP_ARGENT_WEB_WALLET_URL) {
+        connectionOptions.webWalletUrl = process.env.REACT_APP_ARGENT_WEB_WALLET_URL;
+      }
+
+      if (process.env.REACT_APP_STARKNET_PROVIDER) {
+        connectionOptions.provider =  new RpcProvider({ nodeUrl: process.env.REACT_APP_STARKNET_PROVIDER });
+      }
+
+      const wallet = await starknetConnect(connectionOptions);
 
       if (wallet && wallet.isConnected && wallet.account?.address) {
         if (isAllowedChain(wallet.account?.provider?.chainId)) {

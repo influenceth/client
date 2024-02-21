@@ -106,13 +106,16 @@ const SurfaceTransfer = ({
   }, []);
 
   // get origin and originInventory
-  const originInventory = useMemo(() => {
+  const [originInventory, originInventoryTally] = useMemo(() => {
     const inventories = (origin?.Inventories || []).filter((i) => i.status === Inventory.STATUSES.AVAILABLE);
-    // if originSlot is specified, use that
-    if (originSlot) return inventories.find((i) => i.slot === originSlot);
-    // else, use primary (or first available if no primary)
-    return inventories.find((i) => Inventory.TYPES[i.inventoryType].category === Inventory.CATEGORIES.PRIMARY)
-      || inventories[0];
+    return [
+      // if originSlot is specified, use that
+      // else, use primary (or first available if no primary)
+      originSlot
+        ? inventories.find((i) => i.slot === originSlot)
+        : inventories.find((i) => Inventory.TYPES[i.inventoryType].category === Inventory.CATEGORIES.PRIMARY) || inventories[0],
+      inventories.length
+    ];
   }, [origin?.Inventories, originSlot]);
   const { data: originController } = useCrew(origin?.Control?.controller?.id);
 
@@ -359,10 +362,10 @@ const SurfaceTransfer = ({
         <FlexSection>
           <InventoryInputBlock
             title="Origin"
-            disabled={stage !== actionStage.NOT_STARTED}
+            disabled={stage !== actionStage.NOT_STARTED || originInventoryTally === 1}
             entity={origin}
             inventorySlot={originInventory?.slot}
-            isSelected={stage === actionStage.NOT_STARTED}
+            isSelected={stage === actionStage.NOT_STARTED && originInventoryTally !== 1}
             onClick={() => { setOriginSelectorOpen(true) }} />
 
           <FlexSectionSpacer>
