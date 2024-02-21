@@ -391,9 +391,9 @@ export const CrewmateSKU = () => {
   }, [getPendingCreditPurchase]);
 
   const updateEthBalance = useCallback(async () => {
-    if (!starknet?.account?.provider) return;
+    if (!starknet?.provider) return;
     try {
-      const balance = await starknet.account.provider.callContract({
+      const balance = await starknet.provider.callContract({
         contractAddress: process.env.REACT_APP_ERC20_TOKEN_ADDRESS,
         entrypoint: 'balanceOf',
         calldata: [starknet.account.address]
@@ -610,9 +610,9 @@ export const SwaySKU = () => {
   };
 
   const updateEthBalance = useCallback(async () => {
-    if (!starknet?.account?.provider) return;
+    if (!starknet?.provider) return;
     try {
-      const balance = await starknet.account.provider.callContract({
+      const balance = await starknet.provider.callContract({
         contractAddress: process.env.REACT_APP_ERC20_TOKEN_ADDRESS,
         entrypoint: 'balanceOf',
         calldata: [starknet.account.address]

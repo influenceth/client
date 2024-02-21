@@ -51,9 +51,9 @@ export function WalletProvider({ children }) {
   });
 
   const active = useMemo(() => {
-    return starknet?.isConnected && starknet?.account?.address && isAllowedChain(starknet?.account?.provider?.chainId);
+    return starknet?.isConnected && starknet?.account?.address && isAllowedChain(starknet?.provider?.chainId);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [starknet?.isConnected, starknet?.account, starknet?.account?.provider?.chainId, starknetUpdated]);
+  }, [starknet?.isConnected, starknet?.account, starknet?.provider?.chainId, starknetUpdated]);
 
   const account = useMemo(() => {
     return active && Address.toStandard(starknet.account.address);
@@ -82,8 +82,14 @@ export function WalletProvider({ children }) {
 
       const connectors = [];
       if (!!process.env.REACT_APP_ARGENT_WEB_WALLET_URL) connectors.push(new WebWalletConnector());
-      connectors.push(new InjectedConnector({ options: { id: 'argentX' }}));
-      connectors.push(new InjectedConnector({ options: { id: 'braavos' }}));
+
+      let customProvider;
+      if (process.env.REACT_APP_STARKNET_PROVIDER) {
+        customProvider = new RpcProvider({ nodeUrl: process.env.REACT_APP_STARKNET_PROVIDER });
+      }
+
+      connectors.push(new InjectedConnector({ options: { id: 'argentX', provider: customProvider }}));
+      connectors.push(new InjectedConnector({ options: { id: 'braavos', provider: customProvider }}));
       connectors.push(new ArgentMobileConnector());
 
       const connectionOptions = {
@@ -98,14 +104,10 @@ export function WalletProvider({ children }) {
         connectionOptions.webWalletUrl = process.env.REACT_APP_ARGENT_WEB_WALLET_URL;
       }
 
-      if (process.env.REACT_APP_STARKNET_PROVIDER) {
-        connectionOptions.provider = new RpcProvider({ nodeUrl: process.env.REACT_APP_STARKNET_PROVIDER });
-      }
-
-      const wallet = await starknetConnect(connectionOptions);
+      const { wallet } = await starknetConnect(connectionOptions);
 
       if (wallet && wallet.isConnected && wallet.account?.address) {
-        if (isAllowedChain(wallet.account?.provider?.chainId)) {
+        if (isAllowedChain(wallet.provider?.chainId)) {
           onConnectionResult(wallet);
         } else {
           onConnectionResult(null);
