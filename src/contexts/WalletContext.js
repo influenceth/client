@@ -230,13 +230,9 @@ export function WalletProvider({ children }) {
   // TODO: if no crew, then we won't receive websockets, and blockNumber will not get updated
   //  (i.e. for logged out users) -- does that matter?
   useEffect(() => {
-    console.log('block change', blockNumber, lastBlockNumberTime.current);
     if (blockNumber > lastBlockNumberTime.current) {
       lastBlockNumberTime.current = blockNumber;
-      getBlockTime(starknet).then((t) => {
-        console.log('new block time', t);
-        setBlockTime(t);
-      });
+      getBlockTime(starknet).then((t) => { setBlockTime(t); });
     }
   }, [blockNumber]);
 
