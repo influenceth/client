@@ -18,7 +18,6 @@ import useCrewContext from '~/hooks/useCrewContext';
 import useOwnedShips from '~/hooks/useOwnedShips';
 import formatters from '~/lib/formatters';
 import useConstants from '~/hooks/useConstants';
-import useChainTime from '~/hooks/useChainTime';
 
 const ShipSelection = styled.div`
   align-items: center;
@@ -210,8 +209,13 @@ const RoutePlanner = () => {
   }, [coarseTime, crew?.Crew?.lastFed]);
 
   const shipList = useMemo(() => {
+    const escapeModule = crew?.Ship?.emergencyAt > 0 ? [ Object.assign({ _simulated: false }, crew ) ] : [];
     if (myShipsLoading || !myShips) return [];
+
     return [
+      // add escape module
+      ...escapeModule,
+
       // add my ships
       ...myShips.sort((a, b) => {
         if (crew?._location?.shipId === a.id) return -1;
@@ -386,7 +390,7 @@ const RoutePlanner = () => {
               Emergency Mode
             </label>
           </SectionHeader>
-          
+
           <Dropdown
             labelKey="_name"
             onChange={setShip}

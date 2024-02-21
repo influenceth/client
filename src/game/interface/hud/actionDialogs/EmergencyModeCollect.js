@@ -8,7 +8,6 @@ import useShip from '~/hooks/useShip';
 import { reactBool, formatTimer, getCrewAbilityBonuses } from '~/lib/utils';
 
 import {
-  ResourceAmountSlider,
   ActionDialogFooter,
   ActionDialogHeader,
   ActionDialogStats,
@@ -16,9 +15,6 @@ import {
   FlexSection,
   FlexSectionInputBlock,
   FlexSectionSpacer,
-  Section,
-  SectionTitle,
-  SectionBody,
   formatMass,
   ShipInputBlock,
   EmergencyPropellantSection,
@@ -26,14 +22,12 @@ import {
   formatResourceMass,
   formatResourceVolume
 } from './components';
-import useLot from '~/hooks/useLot';
 import useStore from '~/hooks/useStore';
 import { ActionDialogInner } from '../ActionDialog';
 import ResourceThumbnail from '~/components/ResourceThumbnail';
 import actionStages from '~/lib/actionStages';
 import theme, { hexToRGB } from '~/theme';
 import useAsteroid from '~/hooks/useAsteroid';
-import useInterval from '~/hooks/useInterval';
 import useShipEmergencyManager from '~/hooks/actionManagers/useShipEmergencyManager';
 import useChainTime from '~/hooks/useChainTime';
 
@@ -60,20 +54,22 @@ const Note = styled.div`
   padding: 15px 10px 10px;
 `;
 
-const EmergencyModeCollect = ({ asteroid, lot, manager, ship, stage, ...props }) => {
-  const createAlert = useStore(s => s.dispatchAlertLogged);
+const EmergencyModeCollect = ({ asteroid, lot, manager, ship: maybeShip, stage, ...props }) => {
   const chainTime = useChainTime();
-  
+
   const { collectEmergencyPropellant, actionStage } = manager;
 
   const { crew } = useCrewContext();
-
   const crewmates = crew?._crewmates || [];
   const captain = crewmates[0];
 
   const resourceId = Product.IDS.HYDROGEN_PROPELLANT;
 
   const [collectableAmount, setCollectableAmount] = useState(0);
+
+  const ship = useMemo(() => {
+    return (!maybeShip && crew?.Ship?.emergencyAt > 0) ? crew : maybeShip;
+  }, [crew]);
 
   const {
     propellantInventory,
@@ -217,7 +213,7 @@ const EmergencyModeCollect = ({ asteroid, lot, manager, ship, stage, ...props })
             ship={ship} />
 
         </FlexSection>
-          
+
         <ProgressBarSection
           overrides={{
             barColor: theme.colors.lightOrange,
@@ -266,21 +262,18 @@ const EmergencyModeCollect = ({ asteroid, lot, manager, ship, stage, ...props })
 
 const Wrapper = (props) => {
   const { crew } = useCrewContext();
-
   const { data: asteroid, isLoading: asteroidIsLoading } = useAsteroid(crew?._location?.asteroidId);
   const { data: lot, isLoading: lotIsLoading } = useAsteroid(crew?._location?.lotId);
-  const { data: ship, isLoading: shipIsLoading } = useShip(crew?._location?.shipId);
+
+  const shipId = crew?.Ship?.emergencyAt > 0 ? crew : crew?._location?.shipId;
+  const { data: ship, isLoading: shipIsLoading } = useShip(shipId);
 
   const manager = useShipEmergencyManager();
   const { actionStage } = manager;
 
   const isLoading = asteroidIsLoading || lotIsLoading || shipIsLoading;
   useEffect(() => {
-    if (!asteroid || !ship) {
-      if (!isLoading) {
-        if (props.onClose) props.onClose();
-      }
-    }
+    if ((!asteroid || !ship) && !isLoading && props.onClose) props.onClose();
   }, [asteroid, ship, isLoading]);
 
   return (

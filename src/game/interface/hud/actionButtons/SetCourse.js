@@ -23,7 +23,7 @@ const SetCourse = ({ asteroid, crew, ship, onSetAction, _disabled }) => {
   const { currentTravelAction, travelStatus } = useShipTravelManager(crew?._location?.shipId);
   const travelSolutionIsValid = useTravelSolutionIsValid();
   const travelSolution = useStore(s => s.asteroids.travelSolution);
-  const { data: destination } = useAsteroid(travelSolution?.destinationId)
+  const { data: destination } = useAsteroid(travelSolution?.destinationId);
 
   const handleClick = useCallback(() => {
     onSetAction('SET_COURSE', { travelSolution });
@@ -47,7 +47,7 @@ const SetCourse = ({ asteroid, crew, ship, onSetAction, _disabled }) => {
       return getCrewDisabledReason({ crew });
     }
     return '';
-  }, [_disabled, asteroid, crew, ship, travelSolution?.invalid, travelSolutionIsValid]);
+  }, [_disabled, asteroid, crew, ship, travelSolution, travelSolutionIsValid]);
 
   return (
     <ActionButton
