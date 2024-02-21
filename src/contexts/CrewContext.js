@@ -76,7 +76,6 @@ export function CrewProvider({ children }) {
   // update crews' _ready value
   const crews = useMemo(() => {
     if (!crewsAndCrewmatesReady || !rawCrews) return [];
-    console.log('blockTime', blockTime);
     return rawCrews.map((c) => {
       if (!!crewmateMap) {
         c._crewmates = c.Crew.roster.map((i) => crewmateMap[i]).filter((c) => !!c);
