@@ -215,7 +215,7 @@ const SetCourse = ({ origin, destination, manager, ship, stage, travelSolution, 
   const [shipConfig, cargoInv, propellantInv] = useMemo(() => {
     if (!ship) return [];
     const shipConfig = Ship.TYPES[ship.Ship.shipType];
-    const cargoInv = ship.Inventories.find((inventory) => inventory.slot === shipConfig.cargoSlot);
+    const cargoInv = ship.Inventories.find((inventory) => inventory.slot === shipConfig.cargoSlot) || { mass: 0 };
     const propellantInv = ship.Inventories.find((inventory) => inventory.slot === shipConfig.propellantSlot);
     return [shipConfig, cargoInv, propellantInv];
   }, [ship]);
@@ -273,12 +273,12 @@ const SetCourse = ({ origin, destination, manager, ship, stage, travelSolution, 
     // },
     {
       label: 'Wet Mass',
-      value: formatMass(shipConfig.hullMass + propellantMassLoaded + cargoInv.mass),
+      value: formatMass(shipConfig.hullMass + propellantMassLoaded + cargoInv?.mass),
       direction: 0,
     },
     {
       label: 'Dry Mass',
-      value: formatMass(shipConfig.hullMass + propellantMassLoaded + cargoInv.mass - travelSolution.usedPropellantMass),
+      value: formatMass(shipConfig.hullMass + propellantMassLoaded + cargoInv?.mass - travelSolution.usedPropellantMass),
       direction: 0,
     },
     // {
@@ -288,7 +288,7 @@ const SetCourse = ({ origin, destination, manager, ship, stage, travelSolution, 
     // },
     {
       label: 'Passengers',
-      value: ship.Station.population || 0,
+      value: ship.Station?.population || crew.Crew?.roster.length || 0,
       direction: 0,
     },
   ]), [arrivingIn, cargoInv, travelSolution, propellantInv, shipConfig]);
@@ -481,7 +481,8 @@ const SetCourse = ({ origin, destination, manager, ship, stage, travelSolution, 
 const Wrapper = ({ ...props }) => {
   const { crew } = useCrewContext();
 
-  const manager = useShipTravelManager(crew?._location?.shipId);
+  const shipId = crew?.Ship?.emergencyAt > 0 ? crew : crew?._location?.shipId;
+  const manager = useShipTravelManager(shipId);
   const { actionStage, currentTravelAction, currentTravelSolution, isLoading: solutionIsLoading } = manager;
 
   const defaultOrigin = useStore(s => s.asteroids.origin);
@@ -492,7 +493,7 @@ const Wrapper = ({ ...props }) => {
 
   const { data: origin, isLoading: originIsLoading } = useAsteroid(currentTravelAction?.originId || defaultOrigin);
   const { data: destination, isLoading: destinationIsLoading } = useAsteroid(currentTravelAction?.destinationId || defaultDestination);
-  const { data: ship, isLoading: shipIsLoading } = useShip(crew?._location?.shipId);
+  const { data: ship, isLoading: shipIsLoading } = useShip(shipId);
 
   // close dialog if cannot load both asteroids or if no travel solution
   useEffect(() => {

@@ -47,7 +47,7 @@ const SelectTravelDestination = ({ crew }) => {
     }
   }, [dispatchHudMenuOpened, destination, inTravelMode, origin]);
 
-  const canBeReal = crew?._location?.shipId && travelStatus === 'READY';
+  const canBeReal = (crew?._location?.shipId || crew?.Ship.emergencyAt > 0) && travelStatus === 'READY';
   const planOrSimulate = canBeReal ? 'Create' : 'Simulate';
   const planningOrSimulation = canBeReal ? 'Planning' : 'Simulation';
 

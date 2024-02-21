@@ -6,7 +6,8 @@ import useEntity from '~/hooks/useEntity';
 import { locationsArrToObj } from '~/lib/utils';
 
 const useShip = (id) => {
-  const { data, ...responseProps } = useEntity({ label: Entity.IDS.SHIP, id });
+  const entity = id?.label && id?.id ? id : { label: Entity.IDS.SHIP, id };
+  const { data, ...responseProps } = useEntity(entity);
   return useMemo(() => {
     let ship = null;
     if (data && !responseProps.isLoading) {
