@@ -134,6 +134,8 @@ const SurfaceTransfer = ({
   const destinationInventory = useMemo(() => (destination?.Inventories || []).find((i) => i.slot === destinationSelection?.slot), [destination, destinationSelection]);
   const { data: destinationController } = useCrew(destination?.Control?.controller?.id);
 
+  const destDeliveryManager = useDeliveryManager({ destination, destinationSlot: destinationSelection?.slot });
+
   // handle "currentDeliveryAction" state
   useEffect(() => {
     if (currentDelivery) {
@@ -479,7 +481,7 @@ const SurfaceTransfer = ({
           <TransferSelectionDialog
             sourceEntity={origin}
             sourceContents={originInventory?.contents || []}
-            pendingTargetDeliveries={deliveryManager.currentDeliveryActions}
+            pendingTargetDeliveries={destDeliveryManager.currentDeliveryActions}
             targetInventory={destinationInventory}
             initialSelection={selectedItems}
             onClose={() => setTransferSelectorOpen(false)}
@@ -518,7 +520,7 @@ const Wrapper = (props) => {
   //  - actionitem (deliveryId)
   //  - specific entity (entity, selected inventory)
   //  - lot (building, available inventory)
-  const deliveryManagerQuery =  props.deliveryId
+  const deliveryManagerQuery = props.deliveryId
     ? { deliveryId: props.deliveryId }
     : { origin: props.origin || lot?.building };
   if (props.originSlot) deliveryManagerQuery.originSlot = props.originSlot;
