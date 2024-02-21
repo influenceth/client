@@ -162,7 +162,6 @@ export function CrewProvider({ children }) {
   // add final data to selected crew
   const finalSelectedCrew = useMemo(() => {
     if (!selectedCrew) return null;
-    console.log('final', selectedCrew);
     return {
       ...selectedCrew,
       _actionTypeTriggered: actionTypeTriggered,
