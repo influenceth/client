@@ -116,7 +116,7 @@ const LaunchShip = ({ asteroid, originLot, manager, ship, shipCrews, stage, ...p
     },
     {
       label: 'Escape Velocity',
-      value: `${formatFixed(escapeVelocity, 1)} km/s`,
+      value: `${formatFixed(escapeVelocity, 1)} m/s`,
       direction: 0,
     },
     {

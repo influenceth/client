@@ -26,7 +26,9 @@ const useShipTravelManager = (shipId) => {
 
   const [currentTravelSolution, setCurrentTravelSolution] = useState();
 
-  const caller_crew = useMemo(() => ({ id: ship?.Control?.controller?.id, label: Entity.IDS.CREW }), [ship?.Control?.controller?.id]);
+  const caller_crew = useMemo(() => {
+    return ship?.label === Entity.IDS.CREW ? ship : ship?.Control?.controller;
+  }, [ship?.Control?.controller?.id]);
 
   // READY > DEPARTING > IN_FLIGHT > READY_TO_ARRIVE > ARRIVING
   const [currentTravelAction, status, stage] = useMemo(() => {

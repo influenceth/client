@@ -49,7 +49,7 @@ const LandShip = ({ asteroid, manager, ship, stage, ...props }) => {
 
   const crewmates = currentDockingAction?._crewmates || crew?._crewmates || [];
   const captain = crewmates[0];
-  
+
   const [selectedDestinationIndex, setSelectedDestinationIndex] = useState(
     props.preselect?.destinationLotId ? Lot.toIndex(props.preselect?.destinationLotId) : undefined
   );
@@ -58,14 +58,14 @@ const LandShip = ({ asteroid, manager, ship, stage, ...props }) => {
     || (selectedDestinationIndex && Lot.toId(asteroid?.id, selectedDestinationIndex))
     || undefined;
   const { data: destinationLot, isLoading: destLotLoading } = useLot(destinationLotId);
-  
+
   const [hopperBonus, propellantBonus] = useMemo(() => {
     if (!crew) return {};
     const bonusIds = [Crewmate.ABILITY_IDS.HOPPER_TRANSPORT_TIME, Crewmate.ABILITY_IDS.PROPELLANT_FLOW_RATE];
     const abilities = getCrewAbilityBonuses(bonusIds, crew) || {};
     return bonusIds.map((id) => abilities[id] || {});
   }, [crew]);
-  
+
   const [escapeVelocity, propellantRequirement, poweredTime, tugTime] = useMemo(() => {
     const escapeVelocity = Asteroid.Entity.getEscapeVelocity(asteroid) * 1000;
     const propellantRequired = Ship.Entity.getPropellantRequirement(ship, escapeVelocity, hopperBonus.totalBonus);
@@ -115,7 +115,7 @@ const LandShip = ({ asteroid, manager, ship, stage, ...props }) => {
     },
     {
       label: 'Escape Velocity',
-      value: `${formatFixed(escapeVelocity, 1)} km/s`,
+      value: `${formatFixed(escapeVelocity, 1)} m/s`,
       direction: 0,
     },
     {
@@ -187,7 +187,7 @@ const LandShip = ({ asteroid, manager, ship, stage, ...props }) => {
               />
 
               <FlexSectionSpacer />
-              
+
               <LotInputBlock
                 title="Destination"
                 lot={destinationLot}

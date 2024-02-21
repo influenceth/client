@@ -22,6 +22,7 @@ const getter = (a, config) => {
     }
     case 'radius': return a.Celestial.radius;
     case 'spectralType': return a.Celestial.celestialType;
+    case 'scanStatus': return a.Celestial.scanStatus;
     default: return null;
   }
 }
@@ -62,6 +63,7 @@ const highlighters = {
   surfaceArea: surfaceAreaHighlighter,
   radius: radiusHighlighter,
   spectralType: categoryHighlighter,
+  scanStatus: categoryHighlighter,
   axis: minMaxHighlighter,
   inclination: minMaxHighlighter,
   eccentricity: minMaxHighlighter,

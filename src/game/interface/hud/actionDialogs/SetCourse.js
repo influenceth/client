@@ -1,60 +1,39 @@
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import styled from 'styled-components';
-import { Crew, Crewmate, Product, Ship, Time } from '@influenceth/sdk';
-
-import { CoreSampleIcon, ExtractionIcon, InventoryIcon, LaunchShipIcon, LocationIcon, ResourceIcon, RouteIcon, SetCourseIcon, ShipIcon, RotatedShipMarkerIcon, WarningOutlineIcon, MyAssetIcon } from '~/components/Icons';
-import TimeComponent from '~/components/Time';
-import useCrewContext from '~/hooks/useCrewContext';
-import useExtractionManager from '~/hooks/actionManagers/useExtractionManager';
-import { formatFixed, formatTimer, reactBool } from '~/lib/utils';
+import { Product, Ship, Time } from '@influenceth/sdk';
 
 import {
-  ResourceAmountSlider,
+  LocationIcon,
+  RouteIcon,
+  SetCourseIcon,
+  ShipIcon,
+  RotatedShipMarkerIcon,
+  WarningOutlineIcon
+} from '~/components/Icons';
+import { formatTimer, reactBool } from '~/lib/utils';
+
+import {
   ActionDialogFooter,
   ActionDialogHeader,
   ActionDialogStats,
   ActionDialogTabs,
-  getBonusDirection,
-  formatResourceVolume,
-  formatSampleMass,
-  formatSampleVolume,
-  TravelBonusTooltip,
-  TimeBonusTooltip,
   ActionDialogBody,
   FlexSection,
-  FlexSectionInputBlock,
-  EmptyResourceImage,
   FlexSectionSpacer,
-  BuildingImage,
-  EmptyBuildingImage,
   Section,
-  SectionTitle,
-  SectionBody,
-  ProgressBarSection,
-  CoreSampleSelectionDialog,
-  SublabelBanner,
   AsteroidImage,
-  ProgressBarNote,
-  GenericSection,
-  BarChart,
   PropellantSection,
-  ShipImage,
   formatMass,
-  MiniBarChart,
-  MiniBarChartSection,
   ShipTab,
   formatVelocity,
   ShipInputBlock,
-  formatVolume
 } from './components';
-import useLot from '~/hooks/useLot';
 import useStore from '~/hooks/useStore';
-import { ActionDialogInner, theming, useAsteroidAndLot } from '../ActionDialog';
-import ResourceThumbnail from '~/components/ResourceThumbnail';
+import { ActionDialogInner } from '../ActionDialog';
 import actionStages from '~/lib/actionStages';
 import theme from '~/theme';
-import CrewmateCardFramed from '~/components/CrewmateCardFramed';
 import useAsteroid from '~/hooks/useAsteroid';
+import useCrewContext from '~/hooks/useCrewContext';
 import ClockContext, { DISPLAY_TIME_FRACTION_DIGITS } from '~/contexts/ClockContext';
 import formatters from '~/lib/formatters';
 import useShipTravelManager from '~/hooks/actionManagers/useShipTravelManager';
@@ -85,6 +64,7 @@ const Banner = styled.div`
     width: 40px;
   }
 `;
+
 const CourseRow = styled.div`
   align-items: center;
   display: flex;
@@ -95,12 +75,14 @@ const CourseRow = styled.div`
     flex: 0 0 92px;
   }
 `;
+
 const Course = styled.div`
   display: flex-inline;
   flex-direction: column;
   margin: 0 10px;
   width: 100%;
 `;
+
 const CourseLabels = styled.div`
   align-items: center;
   color: #aaa;
@@ -113,6 +95,7 @@ const CourseLabels = styled.div`
     text-transform: uppercase;
   }
 `;
+
 const CourseGraphic = styled(CourseLabels)`
   color: white;
   & label {
@@ -127,6 +110,7 @@ const CourseGraphic = styled(CourseLabels)`
     }
   }
 `;
+
 const Dashes = styled.div`
   flex: 1;
   height: 2px;
@@ -219,7 +203,7 @@ const SetCourse = ({ origin, destination, manager, ship, stage, travelSolution, 
   const createAlert = useStore(s => s.dispatchAlertLogged);
   const dispatchHudMenuOpened = useStore(s => s.dispatchHudMenuOpened);
   const dispatchTravelMode = useStore(s => s.dispatchTravelMode);
-  
+
   const { currentTravelAction, depart, arrive, travelStatus } = manager;
   const { crew } = useCrewContext();
 
@@ -227,15 +211,14 @@ const SetCourse = ({ origin, destination, manager, ship, stage, travelSolution, 
 
   const crewmates = currentTravelAction?._crewmates || crew?._crewmates || [];
   const captain = crewmates[0];
-  
+
   const [shipConfig, cargoInv, propellantInv] = useMemo(() => {
     if (!ship) return [];
     const shipConfig = Ship.TYPES[ship.Ship.shipType];
-    const cargoInv = ship.Inventories.find((inventory) => inventory.slot === shipConfig.cargoSlot);
+    const cargoInv = ship.Inventories.find((inventory) => inventory.slot === shipConfig.cargoSlot) || { mass: 0 };
     const propellantInv = ship.Inventories.find((inventory) => inventory.slot === shipConfig.propellantSlot);
     return [shipConfig, cargoInv, propellantInv];
   }, [ship]);
-
 
   const delay = useMemo(() => {
     return Math.max(0, travelSolution.departureTime - coarseTime) * 86400;
@@ -290,12 +273,12 @@ const SetCourse = ({ origin, destination, manager, ship, stage, travelSolution, 
     // },
     {
       label: 'Wet Mass',
-      value: formatMass(shipConfig.hullMass + propellantMassLoaded + cargoInv.mass),
+      value: formatMass(shipConfig.hullMass + propellantMassLoaded + cargoInv?.mass),
       direction: 0,
     },
     {
       label: 'Dry Mass',
-      value: formatMass(shipConfig.hullMass + propellantMassLoaded + cargoInv.mass - travelSolution.usedPropellantMass),
+      value: formatMass(shipConfig.hullMass + propellantMassLoaded + cargoInv?.mass - travelSolution.usedPropellantMass),
       direction: 0,
     },
     // {
@@ -305,7 +288,7 @@ const SetCourse = ({ origin, destination, manager, ship, stage, travelSolution, 
     // },
     {
       label: 'Passengers',
-      value: ship.Station.population || 0,
+      value: ship.Station?.population || crew.Crew?.roster.length || 0,
       direction: 0,
     },
   ]), [arrivingIn, cargoInv, travelSolution, propellantInv, shipConfig]);
@@ -498,7 +481,8 @@ const SetCourse = ({ origin, destination, manager, ship, stage, travelSolution, 
 const Wrapper = ({ ...props }) => {
   const { crew } = useCrewContext();
 
-  const manager = useShipTravelManager(crew?._location?.shipId);
+  const shipId = crew?.Ship?.emergencyAt > 0 ? crew : crew?._location?.shipId;
+  const manager = useShipTravelManager(shipId);
   const { actionStage, currentTravelAction, currentTravelSolution, isLoading: solutionIsLoading } = manager;
 
   const defaultOrigin = useStore(s => s.asteroids.origin);
@@ -509,8 +493,8 @@ const Wrapper = ({ ...props }) => {
 
   const { data: origin, isLoading: originIsLoading } = useAsteroid(currentTravelAction?.originId || defaultOrigin);
   const { data: destination, isLoading: destinationIsLoading } = useAsteroid(currentTravelAction?.destinationId || defaultDestination);
-  const { data: ship, isLoading: shipIsLoading } = useShip(crew?._location?.shipId);
-  
+  const { data: ship, isLoading: shipIsLoading } = useShip(shipId);
+
   // close dialog if cannot load both asteroids or if no travel solution
   useEffect(() => {
     if (!origin || !destination || !ship) {
