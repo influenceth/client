@@ -110,7 +110,6 @@ const SurfaceTransfer = ({
     return inventories.find((i) => Inventory.TYPES[i.inventoryType].category === Inventory.CATEGORIES.PRIMARY)
       || inventories[0];
   }, [origin?.Inventories, originSlot]);
-
   const { data: originController } = useCrew(origin?.Control?.controller?.id);
 
   // When a new origin inventory is selected, reset the selected items
@@ -159,9 +158,9 @@ const SurfaceTransfer = ({
     }, { totalMass: 0, totalVolume: 0 })
   }, [selectedItems]);
 
-  const isP2P = useMemo(() => (
-    originController && destinationController && originController?.id !== destinationController?.id
-  ), [destinationController, originController]);
+  const hasOriginPerm = useMemo(() => !origin || crewCan(Permission.IDS.REMOVE_PRODUCTS, origin), [origin, crew]);
+  const hasDestPerm = useMemo(() => !destination || crewCan(Permission.IDS.ADD_PRODUCTS, destination), [destination, crew]);
+  const isP2P = useMemo(() => !(hasOriginPerm && hasDestPerm), [hasOriginPerm, hasDestPerm]);
 
   const stats = useMemo(() => ([
     {
@@ -210,7 +209,7 @@ const SurfaceTransfer = ({
       return;
     }
 
-    ((isP2P && originController.id === crew?.id) ? packageDelivery : startDelivery)({
+    ((isP2P && hasOriginPerm) ? packageDelivery : startDelivery)({
       origin,
       originSlot: originInventory?.slot,
       destination,
@@ -218,7 +217,7 @@ const SurfaceTransfer = ({
       contents: selectedItems,
       price: sway
     }, { asteroidId: asteroid?.id, lotId: originLot?.id });
-  }, [packageDelivery, startDelivery, originInventory, destinationInventory, selectedItems, sway, isP2P, asteroid?.id, originLot?.id]);
+  }, [packageDelivery, startDelivery, originInventory, destinationInventory, selectedItems, sway, isP2P, hasOriginPerm, asteroid?.id, originLot?.id]);
 
   const onFinishDelivery = useCallback(() => {
     finishDelivery(props.deliveryId, {
@@ -246,7 +245,7 @@ const SurfaceTransfer = ({
     let status = undefined;
     if (stage === actionStage.NOT_STARTED || ['READY','PACKAGED'].includes(currentDeliveryAction?.status)) {
       if (isP2P) {
-        if (destination?.Control?.controller?.id === crew?.id) {
+        if (hasDestPerm) {
           status = 'Incoming from Other Crew';
           overrideColor = '#faaf3f';
         } else {
@@ -259,11 +258,11 @@ const SurfaceTransfer = ({
       }
     }
     return { overrideColor, status, stage };
-  }, [crew, currentDeliveryAction?.status, destination, isP2P, stage]);
+  }, [crew, currentDeliveryAction?.status, destination, isP2P, hasDestPerm, stage]);
 
   const finalizeActions = useMemo(() => {
     if (currentDeliveryAction?.status === 'PACKAGED') {
-      if (destination?.Control?.controller?.id === crew?.id) {
+      if (hasDestPerm) {
         return {
           finalizeLabel: 'Accept Proposal',
           onFinalize: onAcceptDelivery,
@@ -279,7 +278,7 @@ const SurfaceTransfer = ({
       finalizeLabel: 'Complete',
       onFinalize: onFinishDelivery,
     };
-  }, [currentDeliveryAction?.status, crew, destination, onAcceptDelivery, onCancelDelivery, onFinishDelivery]);
+  }, [currentDeliveryAction?.status, crew, hasDestPerm, onAcceptDelivery, onCancelDelivery, onFinishDelivery]);
 
   return (
     <>
@@ -364,8 +363,9 @@ const SurfaceTransfer = ({
 
                   <FlexSectionSpacer />
 
+                  {/* TODO: might be reasonable to warn user if about to send products to a place have ADD_PRODUCTS perm for, but not REMOVE_PRODUCTS */}
                   <P2PSection>
-                    {origin?.Control?.controller?.id === crew?.id
+                    {hasOriginPerm
                       ? (
                         <>
                           <CrewIndicator crew={destinationController} label={'Destination Controller'} />
