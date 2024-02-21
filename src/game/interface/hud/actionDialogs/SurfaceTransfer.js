@@ -97,8 +97,8 @@ const SurfaceTransfer = ({
     }) || undefined
   );
 
-  const onSwayChange = useCallback((e) => {
-    setSway(e.currentTarget?.value ? parseInt(e.currentTarget.value) : '');
+  const onSwayChange = useCallback((value) => {
+    setSway(value ? parseInt(value) : '');
   }, []);
 
   // get origin and originInventory
@@ -218,28 +218,28 @@ const SurfaceTransfer = ({
       contents: selectedItems,
       price: sway
     }, { asteroidId: asteroid?.id, lotId: originLot?.id });
-  }, [originInventory, destinationInventory, selectedItems, sway, isP2P, asteroid?.id, originLot?.id]);
+  }, [packageDelivery, startDelivery, originInventory, destinationInventory, selectedItems, sway, isP2P, asteroid?.id, originLot?.id]);
 
   const onFinishDelivery = useCallback(() => {
     finishDelivery(props.deliveryId, {
       asteroidId: asteroid?.id,
       lotId: destinationLot?.id,
     });
-  }, [props.deliveryId, asteroid?.id, destinationLot?.id]);
+  }, [finishDelivery, props.deliveryId, asteroid?.id, destinationLot?.id]);
 
   const onCancelDelivery = useCallback(() => {
     cancelDelivery(props.deliveryId, {
       asteroidId: asteroid?.id,
       lotId: destinationLot?.id,
     });
-  }, [props.deliveryId, asteroid?.id, destinationLot?.id]);
+  }, [cancelDelivery, props.deliveryId, asteroid?.id, destinationLot?.id]);
 
   const onAcceptDelivery = useCallback(() => {
     acceptDelivery(props.deliveryId, {
       asteroidId: asteroid?.id,
       lotId: destinationLot?.id,
     });
-  }, [props.deliveryId, asteroid?.id, destinationLot?.id]);
+  }, [acceptDelivery, props.deliveryId, asteroid?.id, destinationLot?.id]);
 
   const actionDetails = useMemo(() => {
     let overrideColor = undefined;

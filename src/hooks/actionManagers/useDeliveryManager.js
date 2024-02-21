@@ -157,7 +157,7 @@ const useDeliveryManager = ({ destination, destinationSlot, origin, originSlot, 
       },
       meta
     );
-  }, [payload]);
+  }, [currentDeliveries, payload]);
 
   const cancelDelivery = useCallback((selectedDeliveryId, meta) => {
     execute(
