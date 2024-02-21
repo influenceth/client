@@ -4,8 +4,6 @@ import { Entity, Order } from '@influenceth/sdk';
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
 import useCrewContext from '~/hooks/useCrewContext';
 import useEntity from '../useEntity';
-import useCrewOrders from '../useCrewOrders';
-import useStore from '../useStore';
 import useHydratedCrew from '../useHydratedCrew';
 import api from '~/lib/api';
 
