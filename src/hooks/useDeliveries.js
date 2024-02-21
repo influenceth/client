@@ -27,9 +27,9 @@ const useDeliveries = ({ destination, destinationSlot, origin, originSlot, deliv
     async () => {
       const deliveries = await api.getEntities({ label: Entity.IDS.DELIVERY, ...query });
       return deliveries.filter((d) => {
-        if (destination && d.Delivery.dest.uuid !== destination.uuid) return false;
+        if (destination?.uuid && d.Delivery.dest.uuid !== destination.uuid) return false;
         if (destinationSlot && d.Delivery.destSlot !== destinationSlot) return false;
-        if (origin && d.Delivery.origin.uuid !== origin.uuid) return false;
+        if (origin?.uuid && d.Delivery.origin.uuid !== origin.uuid) return false;
         if (originSlot && d.Delivery.originSlot !== originSlot) return false;
         return true;
       });

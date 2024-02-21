@@ -1512,7 +1512,7 @@ export const TransferSelectionDialog = ({
       .reduce((acc, d) => {
         d.action.contents.forEach((c) => {
           if (!acc[c.product]) acc[c.product] = 0;
-          acc[c.product] += c.amount;
+          acc[c.product] += Number(c.amount);
         })
         return acc;
       }, {});
