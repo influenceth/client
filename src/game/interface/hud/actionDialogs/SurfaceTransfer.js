@@ -98,7 +98,7 @@ const SurfaceTransfer = ({
   );
 
   const onSwayChange = useCallback((e) => {
-    setSway(e.currentTarget.value ? parseInt(e.currentTarget.value) : '');
+    setSway(e.currentTarget?.value ? parseInt(e.currentTarget.value) : '');
   }, []);
 
   // get origin and originInventory
@@ -486,6 +486,7 @@ const SurfaceTransfer = ({
 
           <InventorySelectionDialog
             asteroidId={asteroid.id}
+            isSourcing
             onClose={() => setOriginSelectorOpen(false)}
             onSelected={onOriginSelect}
             open={originSelectorOpen}

@@ -2186,8 +2186,8 @@ export const SwayInput = ({ inputLabel = "SWAY", onChange, value: defaultValue, 
   const [value, setValue] = useState(0);
 
   const internalOnChange = useCallback((e) => {
-    setValue(e.target.value);
-    if (onChange) onChange(e.target.value);
+    setValue(e.target?.value);
+    if (onChange) onChange(e.target?.value);
   }, [onChange]);
 
   useEffect(() => {

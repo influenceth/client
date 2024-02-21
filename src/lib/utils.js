@@ -127,16 +127,28 @@ export const esbPermissionQuery = (crewId, permissionId) => {
       .query(esb.termQuery('PublicPolicies.permission', permissionId)),
     esb.nestedQuery()
       .path('PrepaidAgreements')
-      .query(esb.termQuery('PrepaidAgreements.permission', permissionId))
-      .query(esb.termQuery('PrepaidAgreements.permitted.id', crewId)),
+      .query(
+        esb.boolQuery().must([
+          esb.termQuery('PrepaidAgreements.permission', permissionId),
+          esb.termQuery('PrepaidAgreements.permitted.id', crewId),
+        ])
+      ),
     esb.nestedQuery()
       .path('ContractAgreements')
-      .query(esb.termQuery('ContractAgreements.permission', permissionId))
-      .query(esb.termQuery('ContractAgreements.permitted.id', crewId)),
+      .query(
+        esb.boolQuery().must([
+          esb.termQuery('ContractAgreements.permission', permissionId),
+          esb.termQuery('ContractAgreements.permitted.id', crewId),
+        ])
+      ),
     esb.nestedQuery()
       .path('WhitelistAgreements')
-      .query(esb.termQuery('WhitelistAgreements.permission', permissionId))
-      .query(esb.termQuery('WhitelistAgreements.permitted.id', crewId))
+      .query(
+        esb.boolQuery().must([
+          esb.termQuery('WhitelistAgreements.permission', permissionId),
+          esb.termQuery('WhitelistAgreements.permitted.id', crewId),
+        ])
+      )
   ])
 };
 
