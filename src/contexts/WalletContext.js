@@ -201,10 +201,14 @@ export function WalletProvider({ children }) {
             setBlockNumber(block?.block_number);
 
           // ... so we get the block number from the parent (which matches what ws reports)
-          } else if(block?.parent_hash) {
+          } else if (block?.parent_hash) {
             starknet.provider.getBlock(block.parent_hash).then((parent) => {
-              lastBlockNumberTime.current = parent?.block_number;
-              setBlockNumber(parent?.block_number);
+              if (parent?.block_number > 0) {
+                lastBlockNumberTime.current = parent?.block_number;
+                setBlockNumber(parent?.block_number);
+              } else {
+                console.error('could not initialize block number!', block, parent);
+              }
             })
           }
         })
@@ -216,9 +220,13 @@ export function WalletProvider({ children }) {
   // TODO: if no crew, then we won't receive websockets, and blockNumber will not get updated
   //  (i.e. for logged out users) -- does that matter?
   useEffect(() => {
+    console.log('block change', blockNumber, lastBlockNumberTime.current);
     if (blockNumber > lastBlockNumberTime.current) {
       lastBlockNumberTime.current = blockNumber;
-      getBlockTime(starknet).then((t) => setBlockTime(t));
+      getBlockTime(starknet).then((t) => {
+        console.log('new block time', t);
+        setBlockTime(t);
+      });
     }
   }, [blockNumber]);
 
