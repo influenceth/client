@@ -124,7 +124,7 @@ const LiveReadyStatus = ({ crew, ...props }) => {
       </BusyStatusContainer>
     );
   }
-  if (!crew?._launched) {
+  if (crew.hasOwnProperty('_launched') && !crew?._launched) {
     return (
       <StatusContainer {...props}>
         <label>Not Yet Launched</label> 
