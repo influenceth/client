@@ -141,7 +141,7 @@ theming[actionStage.COMPLETED].label = 'Results';
 
 
 export const useAsteroidAndLot = (props = {}) => {
-  const lotId = useStore(s => s.asteroids.lot);
+  const lotId = useStore(s => props.lotId || s.asteroids.lot);
   const lotAsteroidId = useMemo(() => Lot.toPosition(lotId)?.asteroidId, [lotId]);
 
   const { data: asteroid, isLoading: asteroidIsLoading } = useAsteroid(props.asteroidId || lotAsteroidId);

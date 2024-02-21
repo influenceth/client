@@ -11,10 +11,11 @@ const formatterByLabel = {
   [Entity.IDS.CREWMATE]: formatters.crewmateName,
   [Entity.IDS.LOT]: formatters.lotName,
   [Entity.IDS.SHIP]: formatters.shipName,
+  [Entity.IDS.SPACE]: () => 'In Flight',
 }
 
 const EntityName = ({ id, label, forceBaseName }) => {
-  const { data: entity, isLoading } = useEntity({ label, id });
+  const { data: entity, isLoading } = useEntity(label === Entity.IDS.SPACE ? null : { label, id });
 
   const name = useMemo(() => {
     if (isLoading) return '...';

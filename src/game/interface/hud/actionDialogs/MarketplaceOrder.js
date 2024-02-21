@@ -431,7 +431,6 @@ const MarketplaceOrder = ({
     }
   }, [currentOrder]);
 
-
   const tooltipRefEl = useRef();
 
   const [tooltipVisible, setTooltipVisible] = useState();

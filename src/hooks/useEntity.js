@@ -2,11 +2,11 @@ import { useQuery } from 'react-query';
 
 import api from '~/lib/api';
 
-const useEntity = ({ label, id } = {}) => {
+const useEntity = (props) => {
   return useQuery(
-    [ 'entity', label, id ],
-    () => api.getEntityById({ label, id }),
-    { enabled: !!(label && id) }
+    [ 'entity', props?.label, props?.id ],
+    () => api.getEntityById({ label: props?.label, id: props?.id }),
+    { enabled: !!(props?.label && props?.id) }
   );
 };
 
