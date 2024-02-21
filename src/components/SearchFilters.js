@@ -23,6 +23,18 @@ const spectralTypeOptions = Object.keys(Asteroid.SPECTRAL_TYPES).reduce((acc, sp
   { key: spectralId, label: `${Asteroid.getSpectralType(spectralId)}-type`, initialValue: true }
 ]), []);
 
+const scanStatusOptions = [
+  { key: Asteroid.SCAN_STATUSES.UNSCANNED, label: 'Un-scanned', initialValue: true },
+  { key: Asteroid.SCAN_STATUSES.SURFACE_SCANNED, label: 'Long-range scanned', initialValue: true },
+  { key: Asteroid.SCAN_STATUSES.RESOURCE_SCANNED, label: 'Orbital scanned', initialValue: true }
+];
+
+const scanStatusColors = {
+  [Asteroid.SCAN_STATUSES.UNSCANNED]: '#333333',
+  [Asteroid.SCAN_STATUSES.SURFACE_SCANNED]: '#00c7ff',
+  [Asteroid.SCAN_STATUSES.RESOURCE_SCANNED]: '#ff00f2'
+};
+
 const spectralTypeColors = {
   1: '#6efaf4',
   2: '#00f3ff',
@@ -215,6 +227,14 @@ const SearchFilters = ({ assetType, highlighting, isListView = false }) => {
           highlightFieldName="spectralType"
           options={spectralTypeOptions}
           title="Spectral Type" />
+
+        <CheckboxFilter
+          {...filterProps}
+          defaultColorMap={scanStatusColors}
+          fieldName="scanStatus"
+          highlightFieldName="scanStatus"
+          options={scanStatusOptions}
+          title="Scanning Status" />
 
         <RangeFilter
           {...filterProps}
