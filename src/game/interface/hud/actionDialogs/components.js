@@ -3648,9 +3648,9 @@ export const ActionDialogFooter = ({
               <Button
                 loading={reactBool(buttonsLoading)}
                 onClick={onClose}>Cancel</Button>
-              {waitForCrewReady && !crew?._ready && <CrewBusyButton crew={crew} />}
               {waitForCrewReady && !crew?._launched && <CrewNotLaunchedButton crew={crew} />}
-              {!waitForCrewReady || (crew?._ready && crew?._launched) && (
+              {waitForCrewReady && crew?._launched && !crew?._ready && <CrewBusyButton crew={crew} />}
+              {(!waitForCrewReady || (crew?._ready && crew?._launched)) && (
                 <Button
                   isTransaction
                   disabled={nativeBool(disabled)}
