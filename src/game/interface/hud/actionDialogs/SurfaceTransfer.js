@@ -97,6 +97,10 @@ const SurfaceTransfer = ({
     }) || undefined
   );
 
+  useEffect(() => {
+
+  }, [origin, originSlot, dest, currentDeliveryAction, stage]);
+
   const onSwayChange = useCallback((value) => {
     setSway(value ? parseInt(value) : '');
   }, []);
@@ -139,6 +143,45 @@ const SurfaceTransfer = ({
       setSelectedItems(currentDelivery.contents.reduce((acc, item) => ({ ...acc, [item.product]: item.amount }), {}));
     }
   }, [currentDelivery]);
+
+  useEffect(() => {
+    if (stage === actionStage.NOT_STARTED) {
+      const destInvConfig = (Inventory.TYPES[destinationInventory?.inventoryType] || {})
+      const destInvConstraints = destInvConfig.productConstraints;
+
+      // cap selectedItems to originInventory contents and destinationInventory constraints
+      // TODO: account for *pending* deliveries out from origin (i.e. to adjust actual available amount)?
+      const validated = Object.keys(selectedItems).reduce((acc, product) => {
+        const sendConstraint = ((originInventory?.contents || []).find((c) => Number(c.product) === Number(product))?.amount || 0);
+        const inDestMax = destInvConstraints
+          ? (Object.keys(destInvConstraints).includes(`${product}`) ? (destInvConstraints[product] === 0 ? Infinity : destInvConstraints[product]) : 0)
+          : Infinity;
+        const inDestInv = ((destinationInventory?.contents || []).find((c) => Number(c.product) === Number(product))?.amount || 0);
+        const inDestTransit = (destDeliveryManager.currentDeliveryActions || [])
+          .filter((d) => d.status !== 'FINISHED')
+          .reduce((acc, d) => acc + ((d.action.contents.find((c) => Number(c.product) === Number(product))?.amount) || 0), 0);
+        const receiveConstraint = Math.max(0, inDestMax - inDestInv - inDestTransit);
+
+        const maxProduct = Math.min(selectedItems[product], sendConstraint, receiveConstraint);
+        return maxProduct > 0 ? { ...acc, [product]: maxProduct } : acc;
+      }, {});
+
+      // if one item selected and it is over the total mass / volume constraint, also cap (i.e. useful for propellant)
+      if (Object.keys(validated).length === 1) {
+        const product = Object.keys(validated)[0];
+        const massConstraint = destInvConfig.massConstraint - ((destinationInventory?.mass || 0) + (destinationInventory?.reservedMass || 0));
+        const volumeConstraint = destInvConfig.volumeConstraint - ((destinationInventory?.volume || 0) + (destinationInventory?.reservedVolume || 0));
+        if (Product.TYPES[product].massPerUnit * validated[product] > massConstraint) {
+          validated[product] = Math.floor(massConstraint / Product.TYPES[product].massPerUnit);
+        }
+        if (Product.TYPES[product].volumePerUnit * validated[product] > volumeConstraint) {
+          validated[product] = Math.floor(volumeConstraint / Product.TYPES[product].volumePerUnit);
+        }
+      }
+
+      setSelectedItems(validated);
+    }
+  }, [originInventory, destinationInventory, destDeliveryManager.currentDeliveryActions]);
 
   const [transportDistance, transportTime] = useMemo(() => {
     if (!asteroid?.id || !originLot?.id || !destinationLot?.id) return [0, 0];
@@ -195,13 +238,18 @@ const SurfaceTransfer = ({
     },
   ]), [totalMass, totalVolume, transportDistance, transportTime]);
 
-  const onStartDelivery = useCallback(() => {
+  const willBeOverCapacity = useMemo(() => {
     const destInventoryConfig = Inventory.getType(destinationInventory?.inventoryType) || {};
     if (destinationInventory) {
       destInventoryConfig.massConstraint -= ((destinationInventory.mass || 0) + (destinationInventory.reservedMass || 0));
       destInventoryConfig.volumeConstraint -= ((destinationInventory.volume || 0) + (destinationInventory.reservedVolume || 0));
     }
-    if (destInventoryConfig.massConstraint < totalMass || destInventoryConfig.volumeConstraint < totalVolume) {
+    return (totalMass > destInventoryConfig.massConstraint) || (totalVolume > destInventoryConfig.volumeConstraint);
+  }, [destinationInventory, totalMass, totalVolume]);
+
+  const onStartDelivery = useCallback(() => {
+    if (willBeOverCapacity) {
+      const destInventoryConfig = Inventory.getType(destinationInventory?.inventoryType) || {};
       createAlert({
         type: 'GenericAlert',
         level: 'warning',
@@ -219,7 +267,7 @@ const SurfaceTransfer = ({
       contents: selectedItems,
       price: sway
     }, { asteroidId: asteroid?.id, lotId: originLot?.id });
-  }, [packageDelivery, startDelivery, originInventory, destinationInventory, selectedItems, sway, isP2P, hasOriginPerm, asteroid?.id, originLot?.id]);
+  }, [packageDelivery, startDelivery, originInventory, destinationInventory, selectedItems, sway, isP2P, hasOriginPerm, asteroid?.id, originLot?.id, willBeOverCapacity]);
 
   const onFinishDelivery = useCallback(() => {
     finishDelivery(props.deliveryId, {
@@ -465,7 +513,7 @@ const SurfaceTransfer = ({
       </ActionDialogBody>
 
       <ActionDialogFooter
-        disabled={totalMass === 0 || !destination || !crewCan(Permission.IDS.ADD_PRODUCTS, destination)}
+        disabled={stage === actionStage.NOT_STARTED && (totalMass === 0 || !destination || willBeOverCapacity || !crewCan(Permission.IDS.ADD_PRODUCTS, destination))}
         goLabel="Transfer"
         onGo={onStartDelivery}
         stage={stage}
