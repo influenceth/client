@@ -15,6 +15,7 @@ export function CrewProvider({ children }) {
   const { account, walletContext: { starknet, blockNumber, blockTime, getBlockTime } } = useAuth();
   const queryClient = useQueryClient();
 
+  const allPendingTransactions = useStore(s => s.pendingTransactions);
   const selectedCrewId = useStore(s => s.selectedCrewId);
   const dispatchCrewSelected = useStore(s => s.dispatchCrewSelected);
 
@@ -151,6 +152,12 @@ export function CrewProvider({ children }) {
     }
   }, [actionTypeTriggered, selectedCrew, selectedCrew?._ready, selectedCrewLocation, TIME_ACCELERATION]);
 
+  // return all pending transactions that are specific to this crew AND those that are not specific to any crew
+  const pendingTransactions = useMemo(() => {
+    if (!selectedCrew?.id) return [];
+    return (allPendingTransactions || []).filter((tx) => !tx.vars?.caller_crew?.id || (tx.vars.caller_crew.id === selectedCrew.id));
+  }, [allPendingTransactions, selectedCrew?.id])
+
   const refreshReadyAt = useCallback(async () => {
     const updatedCrew = await api.getEntityById({ label: Entity.IDS.CREW, id: selectedCrewId, components: ['Crew'] });
     if (updatedCrew) {
@@ -197,6 +204,7 @@ export function CrewProvider({ children }) {
       crews,
       crewmateMap,
       loading: !crewsAndCrewmatesReady,
+      pendingTransactions,
       refreshReadyAt,
       selectCrew: dispatchCrewSelected  // TODO: this might be redundant
     }}>

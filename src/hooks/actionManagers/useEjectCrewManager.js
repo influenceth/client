@@ -10,9 +10,8 @@ import { locationsArrToObj } from '~/lib/utils';
 
 
 const useEjectCrewManager = (originEntity) => {
-  const { crew, isLoading } = useCrewContext();
+  const { crew, isLoading, pendingTransactions } = useCrewContext();
   const { execute } = useContext(ChainTransactionContext);
-  const pendingTransactions = useStore(s => s.pendingTransactions);
 
   const { data: origin } = useEntity(originEntity);
   const { data: originCrews } = useStationedCrews(origin);

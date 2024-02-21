@@ -24,11 +24,9 @@ const useDeliveryManager = ({ destination, destinationSlot, origin, originSlot, 
   const { actionItems, readyItems } = useActionItems();
   const blockTime = useBlockTime();
   const { execute, getStatus, getPendingTx } = useContext(ChainTransactionContext);
-  const { crew } = useCrewContext();
+  const { crew, pendingTransactions } = useCrewContext();
 
   const { data: deliveries, isLoading } = useDeliveries({ destination, destinationSlot, origin, originSlot, deliveryId, incomplete: true });
-
-  const pendingTransactions = useStore(s => s.pendingTransactions);
 
   const payload = useMemo(() => ({
     caller_crew: { id: crew?.id, label: Entity.IDS.CREW }

@@ -12,11 +12,9 @@ import api from '~/lib/api';
 // TODO: product could probably be incorporated into props + payload
 const useMarketplaceManager = (buildingId) => {
   const { execute } = useContext(ChainTransactionContext);
-  const { crew } = useCrewContext();
+  const { crew, pendingTransactions } = useCrewContext();
   const { data: exchange } = useEntity({ id: buildingId, label: Entity.IDS.BUILDING });
   const { data: exchangeController } = useHydratedCrew(exchange?.Control?.controller?.id);
-
-  const pendingTransactions = useStore(s => s.pendingTransactions);
 
   const payload = useMemo(() => ({
     exchange: { id: buildingId, label: Entity.IDS.BUILDING },

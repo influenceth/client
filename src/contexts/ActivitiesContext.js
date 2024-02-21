@@ -20,7 +20,7 @@ const ignoreEventTypes = ['CURRENT_ETH_BLOCK_NUMBER'];
 
 export function ActivitiesProvider({ children }) {
   const { token, walletContext: { blockNumber, setBlockNumber } } = useAuth();
-  const { crew, refreshReadyAt } = useCrewContext();
+  const { crew, pendingTransactions, refreshReadyAt } = useCrewContext();
   const getActivityConfig = useGetActivityConfig();
   const queryClient = useQueryClient();
   const { registerWSHandler, unregisterWSHandler, wsReady } = useWebsocket();
@@ -28,8 +28,6 @@ export function ActivitiesProvider({ children }) {
   const createAlert = useStore(s => s.dispatchAlertLogged);
 
   const [ activities, setActivities ] = useState([]);
-
-  const pendingTransactions = useStore(s => s.pendingTransactions);
 
   const pendingBatchActivities = useRef([]);
   const pendingTimeout = useRef();

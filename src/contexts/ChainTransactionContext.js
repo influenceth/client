@@ -488,7 +488,7 @@ const getSystemCallAndProcessedVars = (runSystem, rawVars, encodeEntrypoint = fa
 export function ChainTransactionProvider({ children }) {
   const { account, walletContext: { starknet, blockNumber, blockTime } } = useAuth();
   const { activities } = useActivitiesContext();
-  const { crew } = useCrewContext();
+  const { crew, pendingTransactions } = useCrewContext();
 
   const createAlert = useStore(s => s.dispatchAlertLogged);
   const dispatchFailedTransaction = useStore(s => s.dispatchFailedTransaction);
@@ -496,7 +496,6 @@ export function ChainTransactionProvider({ children }) {
   // const dispatchPendingTransactionUpdate = useStore(s => s.dispatchPendingTransactionUpdate);
   const dispatchPendingTransactionComplete = useStore(s => s.dispatchPendingTransactionComplete);
   const dispatchClearTransactionHistory = useStore(s => s.dispatchClearTransactionHistory);
-  const pendingTransactions = useStore(s => s.pendingTransactions);
 
   const [promptingTransaction, setPromptingTransaction] = useState(false);
 
