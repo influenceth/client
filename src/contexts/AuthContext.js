@@ -55,7 +55,7 @@ export function AuthProvider({ children }) {
   }, [ token, walletContext?.account, walletContext?.isConnecting, dispatchTokenInvalidated ]);
 
   const initiateLogin = useCallback(async () => {
-    const { provider, account } = await walletContext.connect();
+    const { provider, account } = (await walletContext.connect()) || {};
     let isDeployed = false;
 
     try {

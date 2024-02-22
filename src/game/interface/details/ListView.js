@@ -251,15 +251,18 @@ const assetTypes = {
     title: 'Agreements',
     useColumns: listConfigs.agreements,
     usePagedAssetsOverride: usePagedAgreements,
+    hideInDropdown: true,
     disableFilters: true
   }
 }
 
-const assetsAsOptions = Object.keys(assetTypes).map((key) => ({
-  value: key,
-  label: assetTypes[key].title,
-  icon: assetTypes[key].icon
-}));
+const assetsAsOptions = Object.keys(assetTypes)
+  .map((key) => ({
+    value: key,
+    label: assetTypes[key].title,
+    hide: assetTypes[key].hideInDropdown,
+    icon: assetTypes[key].icon
+  }));
 
 const ListViewComponent = ({ assetType, onAssetTypeChange, params }) => {
   const { keyField, getRowProps, useColumns, usePagedAssetsOverride, disableFilters } = assetTypes[assetType];
@@ -346,7 +349,7 @@ const ListViewComponent = ({ assetType, onAssetTypeChange, params }) => {
             <Dropdown
               initialSelection={assetType}
               onChange={onAssetTypeChange}
-              options={assetsAsOptions}
+              options={assetsAsOptions.filter((o) => !o.hide || (o.value === assetType))}
               size="medium"
               width={272} />
             <div style={{ marginLeft: 6 }}>

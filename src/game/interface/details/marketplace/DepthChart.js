@@ -782,7 +782,7 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
                     <TextInputWrapper rightLabel={`SWAY${resource.isAtomic ? '' : ' / kg'}`}>
                       <UncontrolledTextInput
                         disabled
-                        value={avgMarketPrice ? formatPrice(avgMarketPrice || 0) : ((centerPrice || 0) + (spread || 0) / 2)} />
+                        value={formatPrice(avgMarketPrice ? (avgMarketPrice || 0) : ((centerPrice || 0) + (spread || 0) / 2))} />
                     </TextInputWrapper>
                   </FormSection>
                 )}
@@ -842,7 +842,7 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
                     <>
                       <SummaryLabel type={type} mode={mode} />
                       <div>
-                        <SwayIcon /> {formatPrice(total)}
+                        <SwayIcon /> {formatPrice(total, { fixedPrecision: 2 })}
                       </div>
                     </>
                   )}

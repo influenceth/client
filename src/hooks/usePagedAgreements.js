@@ -7,7 +7,7 @@ import useEntity from '~/hooks/useEntity';
 const assetType = 'agreements';
 
 const usePagedAgreements = ({ uuid, permission }) => {
-  const { data: entity, isLoading } = useEntity(Entity.unpackEntity(uuid));
+  const { data: entity, isLoading } = useEntity(uuid ? Entity.unpackEntity(uuid) : null);
   const policy = useMemo(() => entity && permission ? Permission.getPolicyDetails(entity)[permission] : {}, [entity, permission]);
   const rawData = useMemo(() => policy?.agreements || [], [policy?.agreements]);
 
