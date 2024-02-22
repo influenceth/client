@@ -232,12 +232,15 @@ export function WalletProvider({ children }) {
     }
   }, [canCheckBlock]);
 
+  const reattempts = useRef();
   const capturePendingBlockTimestampUpdate = useCallback(async () => {
+    reattempts.current++;
+    console.log(`blocktime update attempt #${reattempts.current}`);
     getBlockTime(starknet).then((timestamp) => {
       if (timestamp > blockTime) {
         lastBlockNumberTime.current = blockNumber;
         setBlockTime(timestamp);
-      } else if ((Date.now() / 1e3) - blockTime < 90) {
+      } else if (reattempts.current < 12) {
         setTimeout(capturePendingBlockTimestampUpdate, 5000);
       } else {
         console.warn('gave up on pending blocktime update!');
@@ -250,6 +253,7 @@ export function WalletProvider({ children }) {
   //  (i.e. for logged out users) -- does that matter?
   useEffect(() => {
     if (blockNumber > lastBlockNumberTime.current) {
+      reattempts.current = 0;
       capturePendingBlockTimestampUpdate();
     }
   }, [blockNumber]);
