@@ -134,7 +134,7 @@ export function ActivitiesProvider({ children }) {
       await hydrateActivities(activitiesToProcess, queryClient);
       handleActivities(activitiesToProcess);
     }
-  }, []);
+  }, [handleActivities]);
 
   const onWSMessage = useCallback((message) => {
     if (process.env.NODE_ENV !== 'production') console.log('onWSMessage', message);
@@ -152,7 +152,7 @@ export function ActivitiesProvider({ children }) {
       if (pendingTimeout.current) clearTimeout(pendingTimeout.current);
       pendingTimeout.current = setTimeout(processPendingWSBatch, 1000);
     }
-  }, []);
+  }, [processPendingWSBatch]);
 
   const isFirstLoad = useRef(true); // (i.e. this is not a crew switch)
   useEffect(() => {
