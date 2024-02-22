@@ -6,9 +6,8 @@ import ActionButton, { getCrewDisabledReason } from './ActionButton';
 
 const isVisible = ({ account, asteroid, crew }) => {
   if (!account || !asteroid?.Nft?.owner) return false;
-  const owner = Address.areEqual(asteroid?.Nft?.owner, account);
   const controller = asteroid?.Control?.controller?.id === crew?.id;
-  return owner && controller && asteroid?.AsteroidReward?.hasArrivalStarterPack;
+  return controller && asteroid?.AsteroidReward?.hasArrivalStarterPack;
 };
 
 const ClaimArrivalReward = ({ asteroid, crew, onSetAction, _disabled }) => {
