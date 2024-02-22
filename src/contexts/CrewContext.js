@@ -106,8 +106,15 @@ export function CrewProvider({ children }) {
           || c.Crewmate.title === 67
         );
         c._launched = blockTime > (earlyAccessEligible ? earlyAccessJSTime : openAccessJSTime) / 1e3;
+
+        // overwrite food so 100% until launch
+        if (c.Crew) {
+          c.Crew.lastFed = Math.max(Math.min(blockTime, openAccessJSTime / 1e3), c.Crew.lastFed);
+        }
+
       } else {
         c._launched = true;
+        c._launched = blockTime > earlyAccessJSTime / 1e3;
       }
       // ^^^
 
