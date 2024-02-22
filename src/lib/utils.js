@@ -168,9 +168,11 @@ const yearOfSeconds = 31536000;
 export const secondsToMonths = (seconds) => Math.floor(1000 * 12 * seconds / yearOfSeconds) / 1000;
 export const monthsToSeconds = (months) => Math.floor(yearOfSeconds * months / 12);
 
-export const getBlockTime = async (starknet, ofBlockNumber) => {
+export const getBlockTime = async (starknet, blockNumber = 'pending') => {
   try {
-    return (await starknet.provider.getBlock(ofBlockNumber > 0 ? ofBlockNumber : undefined))?.timestamp;
+    const block = await starknet.provider.getBlock(blockNumber > 0 ? blockNumber : 'pending');
+    // console.log('block', block);
+    return block?.timestamp;
   } catch (e) {
     console.error(e);
   }

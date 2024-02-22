@@ -203,22 +203,22 @@ export function WalletProvider({ children }) {
   const lastBlockNumberTime = useRef(0);
   useEffect(() => {
     if (canCheckBlock) {
-      starknet.provider.getBlock()
+      starknet.provider.getBlock('pending')
         .then((block) => {
           if (block?.timestamp) {
             setBlockTime(block?.timestamp);
 
             // does not (currently) return a block number with pending block...
-            if (block?.block_number > 0) {
-              lastBlockNumberTime.current = block?.block_number;
-              setBlockNumber(block?.block_number);
+            if (block.block_number > 0) {
+              lastBlockNumberTime.current = block.block_number;
+              setBlockNumber(block.block_number);
 
             // ... so we get the block number from the parent (which matches what ws reports)
-            } else if (block?.parent_hash) {
+            } else if (block.parent_hash) {
               starknet.provider.getBlock(block.parent_hash).then((parent) => {
                 if (parent?.block_number > 0) {
-                  lastBlockNumberTime.current = parent?.block_number;
-                  setBlockNumber(parent?.block_number);
+                  lastBlockNumberTime.current = parent.block_number;
+                  setBlockNumber(parent.block_number);
                 } else {
                   console.error('could not initialize block number!', block, parent);
                 }
@@ -232,19 +232,25 @@ export function WalletProvider({ children }) {
     }
   }, [canCheckBlock]);
 
+  const capturePendingBlockTimestampUpdate = useCallback(async () => {
+    getBlockTime(starknet).then((timestamp) => {
+      if (timestamp > blockTime) {
+        lastBlockNumberTime.current = blockNumber;
+        setBlockTime(timestamp);
+      } else if ((Date.now() / 1e3) - blockTime < 90) {
+        setTimeout(capturePendingBlockTimestampUpdate, 5000);
+      } else {
+        console.warn('gave up on pending blocktime update!');
+      }
+    });
+  }, [blockNumber, blockTime, starknet])
+
   // get pending block time on every new block
   // TODO: if no crew, then we won't receive websockets, and blockNumber will not get updated
   //  (i.e. for logged out users) -- does that matter?
   useEffect(() => {
     if (blockNumber > lastBlockNumberTime.current) {
-      getBlockTime(starknet).then((timestamp) => {
-        if (timestamp) {
-          lastBlockNumberTime.current = blockNumber;
-          setBlockTime(timestamp);
-        } else {
-          console.warn('block time refresh failed');
-        }
-      });
+      capturePendingBlockTimestampUpdate();
     }
   }, [blockNumber]);
 
