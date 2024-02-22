@@ -81,7 +81,7 @@ const AsteroidTitleArea = ({ asteroid }) => {
               ? <Unowned>Unowned</Unowned>
               : (
                 <>
-                  {!asteroid.Control.controller.id
+                  {!asteroid.Control?.controller?.id
                     ? <Uncontrolled>Needs Administrator</Uncontrolled>
                     : (
                       <>
