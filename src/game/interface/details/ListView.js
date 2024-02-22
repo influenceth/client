@@ -349,7 +349,7 @@ const ListViewComponent = ({ assetType, onAssetTypeChange, params }) => {
             <Dropdown
               initialSelection={assetType}
               onChange={onAssetTypeChange}
-              options={assetsAsOptions.filter((o) => o.value === assetType || !o.hide)}
+              options={assetsAsOptions.filter((o) => !o.hide || (o.value === assetType))}
               size="medium"
               width={272} />
             <div style={{ marginLeft: 6 }}>
