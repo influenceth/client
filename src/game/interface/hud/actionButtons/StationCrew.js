@@ -20,7 +20,7 @@ const isVisible = ({ crew, building, ship }) => {
 };
 
 const StationCrew = ({ asteroid, crew, lot, ship, onSetAction, _disabled }) => {
-  const stationEntity = useMemo(() => ship || lot?.building, [ship, lot?.building]);
+  const stationEntity = useMemo(() => ship || (lot?.building?.Station ? lot.building : null), [ship, lot?.building]);
   const { currentStationing } = useStationCrewManager(stationEntity);
 
   const crewIsController = stationEntity?.Control?.controller?.id === crew?.id;
