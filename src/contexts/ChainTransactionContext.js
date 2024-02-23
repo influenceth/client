@@ -431,6 +431,7 @@ const customConfigs = {
         ]
       )
     ],
+    equalityTest: ['tokenAddress', 'tokenId'],
     noSystemCalls: true,
     isVirtual: true,
   },
