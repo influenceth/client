@@ -281,7 +281,7 @@ const PolicyPanel = ({ editable = false, entity, permission }) => {
     // if exclusive, everyone cares if under notice
     if (Permission.TYPES[permission].isExclusive) {
       if (currentPolicy?.agreements?.[0]?.noticeTime > 0) return 'under notice';
-      if (currentPolicy?.crewStatus === 'available' && permission === Permission.IDS.LOT_USE) {
+      if (currentPolicy?.crewStatus === 'available' && permission === Permission.IDS.USE_LOT) {
         if (entity?.building?.Control?.controller?.id === entity?.Control?.controller?.id) return 'controlled';
         if (entity?.surfaceShip?.Control?.controller?.id === entity?.Control?.controller?.id) return 'controlled';
       }
@@ -322,12 +322,12 @@ const PolicyPanel = ({ editable = false, entity, permission }) => {
       uncollapsibleProps={{
         headerColor: config.color
       }}
-      title={permission === Permission.IDS.LOT_USE ? <><LotControlIcon /> Lot Control</> : <><PermissionIcon /> {Permission.TYPES[permission]?.name}</>}
+      title={permission === Permission.IDS.USE_LOT ? <><LotControlIcon /> Lot Control</> : <><PermissionIcon /> {Permission.TYPES[permission]?.name}</>}
       titleAction={() => (
         <span style={{ color: config.color }}>
           {editable
             ? (config.nameShort || config.name)
-            : (permission === Permission.IDS.LOT_USE && entity?.Control?.controller?.id === crew?.id
+            : (permission === Permission.IDS.USE_LOT && entity?.Control?.controller?.id === crew?.id
                 ? 'Administrator'
                 : config.crewStatus
             )
@@ -492,7 +492,7 @@ const PolicyPanel = ({ editable = false, entity, permission }) => {
                 <>
                   <DataRow>
                     <label>Price per Month</label>
-                    {permission === Permission.IDS.LOT_USE && entity?.label === Entity.IDS.ASTEROID && entity?.id === 1
+                    {permission === Permission.IDS.USE_LOT && entity?.label === Entity.IDS.ASTEROID && entity?.id === 1
                       ? <span><SwayIcon /> Variable by Lot</span>
                       : <span><SwayIcon /> {formatFixed(originalPolicyDetails?.rate || 0)}</span>
                     }
@@ -504,7 +504,7 @@ const PolicyPanel = ({ editable = false, entity, permission }) => {
               {([Permission.POLICY_IDS.CONTRACT, Permission.POLICY_IDS.PREPAID].includes(policyType)) && (
                 <div style={{ paddingTop: 15 }}>
                   {entity?.Control?.controller?.id !== crew?.id
-                    && !(entity?.label === Entity.IDS.ASTEROID && permission === Permission.IDS.LOT_USE)
+                    && !(entity?.label === Entity.IDS.ASTEROID && permission === Permission.IDS.USE_LOT)
                     && (
                     <actionButtons.FormAgreement.Component
                       _disabled={Permission.TYPES[permission].isExclusive && (jitStatus === 'controlled' || agreements?.length > 0)}
@@ -513,7 +513,7 @@ const PolicyPanel = ({ editable = false, entity, permission }) => {
                   )}
                   {/* TODO: enable list view at an asteroid level... will need to pull all agreements from
                     elasticsearch since entity will be asteroid (and *agreements won't be populated) */}
-                  {!(entity?.label === Entity.IDS.ASTEROID && permission === Permission.IDS.LOT_USE) && (
+                  {!(entity?.label === Entity.IDS.ASTEROID && permission === Permission.IDS.USE_LOT) && (
                     <actionButtons.ViewAgreements.Component
                       _disabled={!agreements?.length}
                       entity={entity}
@@ -531,7 +531,7 @@ const PolicyPanel = ({ editable = false, entity, permission }) => {
             </EditBlock>
           )}
 
-          {permission !== Permission.IDS.LOT_USE && (
+          {permission !== Permission.IDS.USE_LOT && (
             <>
               {editable && (
                 <Section style={{ borderTop: 0, marginTop: 5 }}>
@@ -573,7 +573,7 @@ const PolicyPanels = ({ editable, entity }) => {
   const showLotWarning = useMemo(() => {
     if (!lot) return false;
 
-    const lotPerm = Permission.getPolicyDetails(lot, entity.Control?.controller?.id)[Permission.IDS.LOT_USE];
+    const lotPerm = Permission.getPolicyDetails(lot, entity.Control?.controller?.id)[Permission.IDS.USE_LOT];
     return !(lotPerm?.crewStatus === 'controller' || lotPerm?.crewStatus === 'granted');
   }, [lot]);
 

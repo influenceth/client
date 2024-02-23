@@ -188,7 +188,7 @@ const Construct = ({ asteroid, lot, constructionManager, stage, ...props }) => {
               </>
             )}
           />
-          
+
           {!requirementsMet && (
             <>
               <FlexSectionSpacer />
@@ -239,8 +239,8 @@ const Construct = ({ asteroid, lot, constructionManager, stage, ...props }) => {
             title="Staging Time"
             tooltip={(
               <MouseoverWarning>
-                Building Sites are used to stage materials before construction. While the{' '}<b>Site Timer</b> 
-                {' '}is active, any assets moved to the building site are protected. However, a site becomes 
+                Building Sites are used to stage materials before construction. While the{' '}<b>Site Timer</b>
+                {' '}is active, any assets moved to the building site are protected. However, a site becomes
                 {' '}<b>Abandoned</b>{' '}if it has not started construction when the time expires.
                 <br/><br/>
                 Warning: Any materials on an{' '}<b>Abandoned Site</b>{' '}become public, and are subject to be

@@ -2,11 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
 import { Building, Crewmate, Lot, Permission } from '@influenceth/sdk';
 
-import {
-  PlanBuildingIcon,
-  WarningIcon,
-  WarningOutlineIcon
-} from '~/components/Icons';
+import { PlanBuildingIcon } from '~/components/Icons';
 import useCrewContext from '~/hooks/useCrewContext';
 import theme from '~/theme';
 import useConstructionManager from '~/hooks/actionManagers/useConstructionManager';
@@ -34,7 +30,6 @@ import {
   LotControlWarning
 } from './components';
 import actionStage from '~/lib/actionStages';
-import EntityName from '~/components/EntityName';
 
 const ControlWarning = styled.div`
   align-items: center;
@@ -66,6 +61,7 @@ const PlanBuilding = ({ asteroid, lot, constructionManager, stage, ...props }) =
 
   const { totalTime: crewTravelTime, tripDetails } = useMemo(() => {
     if (!asteroid?.id || !crew?._location?.lotId || !lot?.id) return {};
+    if (Permission.isPermitted(crew, Permission.IDS.USE_LOT, lot)) return { totalTime: 0, tripDetails: null };
     const crewLotIndex = Lot.toIndex(crew?._location?.lotId);
     return getTripDetails(asteroid.id, crewTravelBonus, crewLotIndex, [
       { label: 'Travel to Construction Site', lotIndex: Lot.toIndex(lot.id) },
@@ -86,10 +82,10 @@ const PlanBuilding = ({ asteroid, lot, constructionManager, stage, ...props }) =
         label: 'Crew Travel Time',
         value: formatTimer(crewTravelTime),
         isTimeStat: true,
-        direction: getBonusDirection(crewTravelBonus),
+        direction: crewTravelTime ? getBonusDirection(crewTravelBonus) : 0,
         tooltip: (
           <TravelBonusTooltip
-            bonus={crewTravelBonus}
+            bonus={crewTravelTime ? crewTravelBonus : {}}
             totalTime={crewTravelTime}
             tripDetails={tripDetails}
             crewRequired="start" />

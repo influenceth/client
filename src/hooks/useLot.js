@@ -72,8 +72,8 @@ const useLot = (lotId) => {
 
   return useMemo(() => {
     const { asteroidId, lotIndex } = Lot.toPosition(lotId) || {};
-    const agreement = (lot?.PrepaidAgreements || []).find((p) => p.permission === Permission.IDS.LOT_USE)
-      || (lot?.ContractPolicies || []).find((p) => p.permission === Permission.IDS.LOT_USE);
+    const agreement = (lot?.PrepaidAgreements || []).find((p) => p.permission === Permission.IDS.USE_LOT)
+      || (lot?.ContractPolicies || []).find((p) => p.permission === Permission.IDS.USE_LOT);
     const building = (buildings || []).find((e) => e.Building.status > 0);
     const depositsToShow = (deposits || []).filter((e) => e.Deposit.status > 0 && !(e.Deposit.status === Deposit.STATUSES.USED && e.Deposit.remainingYield === 0));
     const shipsToShow = (ships || []).filter((s) => [Ship.STATUSES.UNDER_CONSTRUCTION, Ship.STATUSES.AVAILABLE].includes(s.Ship.status));
@@ -101,7 +101,7 @@ const useLot = (lotId) => {
         ContractPolicies: asteroid?.ContractPolicies,
         PrepaidPolicies: (asteroid?.PrepaidPolicies || []).map((p) => {
           // for simplicity, apply AP's special lot rating here so don't have to apply it everywhere else
-          if (p.permission === Permission.IDS.LOT_USE && asteroid.id === 1) {
+          if (p.permission === Permission.IDS.USE_LOT && asteroid.id === 1) {
             return {
               ...p,
               rate: Math.floor(Permission.getAdaliaPrimeLotRate(p, lotIndex))
