@@ -20,7 +20,8 @@ const useNameAvailability = (entityType) => {
         nameError = 'Name cannot have leading or trailing spaces.';
       } else if (/ {2,}/.test(name)) {
         nameError = 'Name cannot have adjoining spaces.';
-      // ^^^
+      } else if (!/^[a-zA-Z0-9\s]+$/i.test(name)) { // letters, numbers, and spaces only
+        nameError = 'Name contains invalid characters.';
       } else if (!skipCollisionCheck) {
         const nameCollisions = await api.getNameUse(entityType, name);
         if (nameCollisions?.length > 0 && nameCollisions[0].id !== entityId) {
