@@ -3151,7 +3151,7 @@ export const SwayInputBlock = ({ title, ...props }) => (
   </FlexSectionInputBlock>
 );
 
-export const CrewInputBlock = ({ cardWidth, crew, hideCrewmates, highlightCrewmates, title, inlineDetails, ...props }) => {
+export const CrewInputBlock = ({ cardWidth, crew, hideCrewmates, highlightCrewmates, inlineDetails, title, ...props }) => {
   return (
     <FlexSectionInputBlock
       title={title}
@@ -3163,7 +3163,7 @@ export const CrewInputBlock = ({ cardWidth, crew, hideCrewmates, highlightCrewma
           </span>
         </div>
       )}
-      bodyStyle={{ paddingRight: 8, ...(hideCrewmates ? { paddingBottom: 0 } : {}) }}
+      bodyStyle={{ paddingRight: 8, ...(hideCrewmates ? { paddingBottom: 0 } : (crew?.Crew?.roster?.length === 0 ? { paddingBottom: 20 } : {})) }}
       innerBodyStyle={{ height: 'auto' }}
       {...props}>
       <div>

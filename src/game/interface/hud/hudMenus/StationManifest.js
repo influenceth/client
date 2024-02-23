@@ -1,7 +1,8 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import styled from 'styled-components';
 import { Permission, Station } from '@influenceth/sdk';
+import { List } from 'react-virtualized';
 
 import useCrewContext from '~/hooks/useCrewContext';
 import useStore from '~/hooks/useStore';
@@ -14,14 +15,18 @@ import { CrewInputBlock, MiniBarChart } from '../actionDialogs/components';
 import { HudMenuCollapsibleSection, Scrollable, Tray } from './components/components';
 import Button from '~/components/ButtonAlt';
 import { MagnifyingIcon } from '~/components/Icons';
-import { reactBool } from '~/lib/utils';
 import useLot from '~/hooks/useLot';
 import theme from '~/theme';
 import Dropdown from '~/components/Dropdown';
 import UncontrolledTextInput from '~/components/TextInputUncontrolled';
 import formatters from '~/lib/formatters';
+import useScreenSize from '~/hooks/useScreenSize';
 
-const defaultBlockStyle = { marginBottom: 8, width: '100%' };
+const defaultBlockStyle = {
+  height: 152, // (causes margin bottom of 8px)
+  overflow: 'hidden',
+  width: '100%'
+};
 
 const Wrapper = styled.div`
   display: flex;
@@ -47,6 +52,7 @@ const ListWrapper = styled.div`
 const StationManifest = () => {
   const { props: actionProps } = useActionButtons();
   const history = useHistory();
+  const { height: screenHeight } = useScreenSize();
   const lotId = useStore(s => s.asteroids.lot);
   const zoomScene = useStore(s => s.asteroids.zoomScene);
 
@@ -91,6 +97,25 @@ const StationManifest = () => {
     history.push(`/crew/${selectedCrewId}`);
   }, [selectedCrewId]);
 
+  const renderCrewRow = useCallback(({ key, index, style }) => (
+    <div key={key} style={style}>
+      <CrewInputBlock
+        cardWidth={64}
+        crew={crews[index]}
+        inlineDetails
+        isSelected={selectedCrewId && crews[index].id === selectedCrewId}
+        onClick={() => setSelectedCrewId(crews[index].id)}
+        subtle
+        style={defaultBlockStyle} />
+    </div>
+  ), [crews]);
+
+  const listWrapper = useRef();
+  const [listHeight, setListHeight] = useState();
+  useEffect(() => {
+    setListHeight(listWrapper.current?.clientHeight || 500);
+  }, [screenHeight]);
+
   const barColor = theme.colors.main;
   const stationCapacity = Station.TYPES[station?.Station?.stationType]?.cap || 0;
   return (
@@ -126,7 +151,7 @@ const StationManifest = () => {
         </>
       )}
 
-      <ListWrapper>
+      <ListWrapper ref={listWrapper}>
         {shipId && (
           <>
             <HudMenuCollapsibleSection titleText="Flight Crew" collapsed={!flightCrew}>
@@ -160,19 +185,13 @@ const StationManifest = () => {
           </>
         )}
         {!shipId && (
-          <>
-            {(crews || []).map((c) => (
-              <CrewInputBlock
-                key={c.id}
-                cardWidth={64}
-                crew={c}
-                inlineDetails
-                isSelected={selectedCrewId && c.id === selectedCrewId}
-                onClick={() => setSelectedCrewId(c.id)}
-                subtle
-                style={defaultBlockStyle} />
-            ))}
-          </>
+          <List
+            width={372}
+            height={listHeight}
+            rowCount={crews?.length || 0}
+            rowHeight={152}
+            rowRenderer={renderCrewRow}
+          />
         )}
       </ListWrapper>
 
