@@ -2036,10 +2036,9 @@ export const getCapacityUsage = (inventories, type) => {
   return getCapacityStats((inventories || []).find((i) => i.inventoryType === type));
 }
 
-export const getBuildingRequirements = (building = {}, deliveryActions = []) => {
-  const { Building: { buildingType }, Inventories = [] } = building;
-  const inventory = Inventories.find((i) => i.status === Inventory.STATUSES.AVAILABLE); // TODO: should this be slot?
-
+export const getBuildingRequirements = (building, deliveryActions = []) => {
+  const buildingType = building?.Building?.buildingType;
+  const inventory = (building?.Inventories || []).find((i) => i.status === Inventory.STATUSES.AVAILABLE); // TODO: should this be slot?
   return Object.keys(Building.CONSTRUCTION_TYPES[buildingType]?.requirements || {}).map((productId) => {
     const totalRequired = Building.CONSTRUCTION_TYPES[buildingType].requirements[productId];
     const inInventory = (inventory?.contents || []).find((c) => Number(c.product) === Number(productId))?.amount || 0;

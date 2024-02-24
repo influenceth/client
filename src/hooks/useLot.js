@@ -72,8 +72,7 @@ const useLot = (lotId) => {
 
   return useMemo(() => {
     const { asteroidId, lotIndex } = Lot.toPosition(lotId) || {};
-    const agreement = (lot?.PrepaidAgreements || []).find((p) => p.permission === Permission.IDS.USE_LOT)
-      || (lot?.ContractPolicies || []).find((p) => p.permission === Permission.IDS.USE_LOT);
+    const agreement = (lot?.PrepaidAgreements || lot?.ContractAgreements || []).find((a) => a.permission === Permission.IDS.USE_LOT);
     const building = (buildings || []).find((e) => e.Building.status > 0);
     const depositsToShow = (deposits || []).filter((e) => e.Deposit.status > 0 && !(e.Deposit.status === Deposit.STATUSES.USED && e.Deposit.remainingYield === 0));
     const shipsToShow = (ships || []).filter((s) => [Ship.STATUSES.UNDER_CONSTRUCTION, Ship.STATUSES.AVAILABLE].includes(s.Ship.status));

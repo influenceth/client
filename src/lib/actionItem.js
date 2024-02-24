@@ -898,8 +898,9 @@ const formatAsTx = (item) => {
 
     case 'FillNftSellOrder': {
       const location = locationsArrToObj(item.meta?.entity?.Location?.locations || []);
+      const prettyLabel = item.meta?.entity?.label === Entity.IDS.SHIP ? 'Ship' : 'Asset';
       formatted.icon = <ShipIcon />; // TODO: update if support other types
-      formatted.label = `Purchase ${Entity.TYPES[item.meta?.entity?.label]?.label || ''}`;
+      formatted.label = `Purchase ${prettyLabel}`;
       formatted.asteroidId = location?.asteroidId;
       formatted.lotId = location?.lotId;
       formatted.shipId = location?.shipId;
@@ -908,8 +909,9 @@ const formatAsTx = (item) => {
 
     case 'SetNftSellOrder': {
       const location = locationsArrToObj(item.meta?.entity?.Location?.locations || []);
+      const prettyLabel = item.meta?.entity?.label === Entity.IDS.SHIP ? 'Ship' : 'Asset';
       formatted.icon = <ShipIcon />; // TODO: update if support other types
-      formatted.label = `Update Listing`;
+      formatted.label = `Update ${prettyLabel} Listing`;
       formatted.asteroidId = location?.asteroidId;
       formatted.lotId = location?.lotId;
       formatted.shipId = location?.shipId;
