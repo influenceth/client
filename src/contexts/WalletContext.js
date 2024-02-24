@@ -4,10 +4,11 @@ import { connect as starknetConnect, disconnect as starknetDisconnect } from 'st
 import { ArgentMobileConnector } from 'starknetkit/argentMobile';
 import { InjectedConnector } from 'starknetkit/injected';
 import { WebWalletConnector } from 'starknetkit/webwallet';
+import { useQueryClient } from 'react-query';
 import { Address } from '@influenceth/sdk';
 
 import api from '~/lib/api';
-import { getBlockTime } from '~/lib/utils';
+import { expectedBlockSeconds, getBlockTime } from '~/lib/utils';
 
 const getErrorMessage = (error) => {
   console.error(error);
@@ -36,6 +37,7 @@ const WalletContext = createContext();
 
 export function WalletProvider({ children }) {
   const onConnectCallback = useRef();
+  const queryClient = useQueryClient();
 
   const [blockNumber, setBlockNumber] = useState(0);
   const [blockTime, setBlockTime] = useState(0);
@@ -201,36 +203,37 @@ export function WalletProvider({ children }) {
 
   // init block number and block time
   const lastBlockNumberTime = useRef(0);
-  useEffect(() => {
-    if (canCheckBlock) {
-      starknet.provider.getBlock('pending')
-        .then((block) => {
-          if (block?.timestamp) {
-            setBlockTime(block?.timestamp);
+  const initializeBlockData = useCallback(async () => {
+    if (!canCheckBlock) return;
+    try {
+      const block = await starknet.provider.getBlock('pending');
+      if (block?.timestamp) {
+        setBlockTime(block?.timestamp);
+      
+        // does not (currently) return a block number with pending block...
+        if (block.block_number > 0) {
+          lastBlockNumberTime.current = block.block_number;
+          setBlockNumber(block.block_number);
 
-            // does not (currently) return a block number with pending block...
-            if (block.block_number > 0) {
-              lastBlockNumberTime.current = block.block_number;
-              setBlockNumber(block.block_number);
-
-            // ... so we get the block number from the parent (which matches what ws reports)
-            } else if (block.parent_hash) {
-              starknet.provider.getBlock(block.parent_hash).then((parent) => {
-                if (parent?.block_number > 0) {
-                  lastBlockNumberTime.current = parent.block_number;
-                  setBlockNumber(parent.block_number);
-                } else {
-                  console.error('could not initialize block number!', block, parent);
-                }
-              })
-            }
+        // ... so we get the block number from the parent (which matches what ws reports)
+        } else if (block.parent_hash) {
+          const parent = await starknet.provider.getBlock(block.parent_hash);
+          if (parent?.block_number > 0) {
+            lastBlockNumberTime.current = parent.block_number;
+            setBlockNumber(parent.block_number);
           } else {
-            console.warn('block log refresh failed!', block);
+            console.error('could not initialize block number!', block, parent);
           }
-        })
-        .catch((e) => console.error('failed to init block data', e));
+        }
+      } else {
+        console.warn('block log refresh failed!', block);
+      }
+    } catch (e) {
+      console.error('failed to init block data', e)
     }
   }, [canCheckBlock]);
+
+  useEffect(initializeBlockData, [initializeBlockData]);
 
   const reattempts = useRef();
   const capturePendingBlockTimestampUpdate = useCallback(async () => {
@@ -246,7 +249,17 @@ export function WalletProvider({ children }) {
         console.warn('gave up on pending blocktime update!');
       }
     });
-  }, [blockNumber, blockTime, starknet])
+  }, [blockNumber, blockTime, starknet]);
+
+  const lastBlockNumber = useRef(blockNumber);
+  const blockHasBeenMissed = useRef();
+  useEffect(() => {
+    if (lastBlockNumber.current > 0 && blockNumber > (lastBlockNumber.current + 1)) {
+      blockHasBeenMissed.current = true;
+      console.warn(`block(s) missed between ${lastBlockNumber.current} and ${blockNumber}`);
+    }
+    lastBlockNumber.current = blockNumber;
+  }, [blockNumber]);
 
   // get pending block time on every new block
   // TODO: if no crew, then we won't receive websockets, and blockNumber will not get updated
@@ -257,6 +270,45 @@ export function WalletProvider({ children }) {
       capturePendingBlockTimestampUpdate();
     }
   }, [blockNumber]);
+
+  const isBlurred = useRef(false);
+  const onBlur = useCallback(() => {
+    isBlurred.current = true;
+  }, []);
+
+  // if window was unfocused for long enough to miss a block, when it refocuses...
+  // reload the page
+  // TODO: could try just clearing the cache and making sure caught up on blocks)
+  //       i.e. blockHasBeenMissed.current = false; initializeBlockData().then(() => { queryClient.clear(); });
+  // TODO: could potentially miss still have missed websocket info for a short enough window
+  //       that didn't miss a block...
+  // TODO: could they potentially miss a block without blurring? in that case, we would
+  //       probably also want to reload
+  const onFocus = useCallback(() => {
+    if (isBlurred.current) {
+      isBlurred.current = false;
+      const tooLongForBlock = Math.max(expectedBlockSeconds * 1.5, expectedBlockSeconds + 60);
+
+      const now = Date.now() / 1e3;
+      const currentBlockIsMissing = blockTime > 0 && ((now - blockTime) > tooLongForBlock);
+      const shouldReload = blockHasBeenMissed.current || currentBlockIsMissing;
+      if (shouldReload) {
+        if (process.env.NODE_ENV === 'development') {
+          window.alert('reload stale browser state');
+        }
+        window.location.reload();
+      }
+    }
+  }, [blockTime, initializeBlockData]);
+
+  useEffect(() => {
+    window.addEventListener('blur', onBlur);
+    window.addEventListener('focus', onFocus);
+    return () => {
+      window.removeEventListener('blur', onBlur);
+      window.removeEventListener('focus', onFocus);
+    }
+  }, [onBlur, onFocus]);
 
   return (
     <WalletContext.Provider value={{
