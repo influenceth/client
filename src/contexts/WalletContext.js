@@ -4,7 +4,7 @@ import { connect as starknetConnect, disconnect as starknetDisconnect } from 'st
 import { ArgentMobileConnector } from 'starknetkit/argentMobile';
 import { InjectedConnector } from 'starknetkit/injected';
 import { WebWalletConnector } from 'starknetkit/webwallet';
-import { useQueryClient } from 'react-query';
+// import { useQueryClient } from 'react-query';
 import { Address } from '@influenceth/sdk';
 
 import api from '~/lib/api';
@@ -35,9 +35,11 @@ const getAllowedChainLabel = (wallet) => {
 
 const WalletContext = createContext();
 
+const TOO_LONG_FOR_BLOCK = Math.max(expectedBlockSeconds * 1.5, expectedBlockSeconds + 60);
+
 export function WalletProvider({ children }) {
   const onConnectCallback = useRef();
-  const queryClient = useQueryClient();
+  // const queryClient = useQueryClient();
 
   const [blockNumber, setBlockNumber] = useState(0);
   const [blockTime, setBlockTime] = useState(0);
@@ -243,6 +245,9 @@ export function WalletProvider({ children }) {
       if (timestamp > blockTime) {
         lastBlockNumberTime.current = blockNumber;
         setBlockTime(timestamp);
+      // TODO: relate the 12 * 5000 to TOO_LONG_FOR_BLOCK
+      // i.e. (TOO_LONG_FOR_BLOCK-expectedBlockTime) / 5000 === 12, so should perhaps abstract into the constants
+      // (only concern would be if blocktime gets too short, then we may need to re-approach this strategy generally)
       } else if (reattempts.current < 12) {
         setTimeout(capturePendingBlockTimestampUpdate, 5000);
       } else {
@@ -287,10 +292,9 @@ export function WalletProvider({ children }) {
   const onFocus = useCallback(() => {
     if (isBlurred.current) {
       isBlurred.current = false;
-      const tooLongForBlock = Math.max(expectedBlockSeconds * 1.5, expectedBlockSeconds + 60);
 
       const now = Date.now() / 1e3;
-      const currentBlockIsMissing = blockTime > 0 && ((now - blockTime) > tooLongForBlock);
+      const currentBlockIsMissing = blockTime > 0 && ((now - blockTime) > TOO_LONG_FOR_BLOCK);
       const shouldReload = blockHasBeenMissed.current || currentBlockIsMissing;
       if (shouldReload) {
         if (process.env.NODE_ENV === 'development') {
