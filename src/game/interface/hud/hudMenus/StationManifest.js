@@ -83,7 +83,7 @@ const StationManifest = () => {
       .map((c) => ({ ...c, _crewmates: c.Crew.roster.map((id) => ({ id })) }))
       .sort((a, b) => formatters.crewName(a) < formatters.crewName(b) ? -1 : 1)
   }, [unfilteredCrews, nameFilter]);
-  
+
   const crewIsStationed = shipId ? (crew?._location?.shipId === ship?.id) : (crew?._location?.buildingId === lot?.building?.id);
   const hasTray = !crewIsStationed || selectedCrewId;
 
@@ -197,7 +197,7 @@ const StationManifest = () => {
 
       {hasTray && (
         <Tray>
-          {!crewIsStationed && (
+          {!crewIsStationed && crew && (
             <actionButtons.StationCrew.Component
               {...actionProps}
               labelAddendum={canStation ? '' : 'access restricted'}
@@ -213,7 +213,7 @@ const StationManifest = () => {
           )}
 
           <div style={{ flex: 1 }} />
-          
+
           {selectedCrewId && (
             <Button onClick={handleInspect} subtle>
               <MagnifyingIcon style={{ marginRight: 8 }} /> Inspect
