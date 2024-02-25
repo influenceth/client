@@ -53,9 +53,9 @@ export function WalletProvider({ children }) {
   });
 
   const active = useMemo(() => {
-    return starknet?.isConnected && starknet?.account?.address && isAllowedChain(starknet?.provider?.chainId);
+    return starknet?.isConnected && starknet?.account?.address && isAllowedChain(starknet?.account?.provider?.chainId);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [starknet?.isConnected, starknet?.account, starknet?.provider?.chainId, starknetUpdated]);
+  }, [starknet?.isConnected, starknet?.account, starknetUpdated]);
 
   const account = useMemo(() => {
     return active && Address.toStandard(starknet.account.address);
@@ -109,7 +109,7 @@ export function WalletProvider({ children }) {
       const { wallet } = await starknetConnect(connectionOptions);
 
       if (wallet && wallet.isConnected && wallet.account?.address) {
-        if (isAllowedChain(wallet.provider?.chainId)) {
+        if (isAllowedChain(wallet.account?.provider?.chainId)) {
           onConnectionResult(wallet);
         } else {
           onConnectionResult(null);
@@ -129,7 +129,7 @@ export function WalletProvider({ children }) {
 
   const disconnect = useCallback(async () => {
     setStarknet(null);
-    if (window.starknet?.provider) starknetDisconnect({ clearLastWallet: true });
+    if (window.starknet?.account?.provider) starknetDisconnect({ clearLastWallet: true });
   }, []);
 
   const onConnectionChange = useCallback(() => {
@@ -199,17 +199,17 @@ export function WalletProvider({ children }) {
   }, []);
 
   // argent is slow to put together it's final "starknet" object, so we check explicitly for getBlock method
-  const canCheckBlock = starknetReady && !!starknet?.provider?.getBlock;
+  const canCheckBlock = starknetReady && !!starknet?.account?.getBlock;
 
   // init block number and block time
   const lastBlockNumberTime = useRef(0);
   const initializeBlockData = useCallback(async () => {
     if (!canCheckBlock) return;
     try {
-      const block = await starknet.provider.getBlock('pending');
+      const block = await starknet.account.getBlock('pending');
       if (block?.timestamp) {
         setBlockTime(block?.timestamp);
-      
+
         // does not (currently) return a block number with pending block...
         if (block.block_number > 0) {
           lastBlockNumberTime.current = block.block_number;
@@ -217,7 +217,7 @@ export function WalletProvider({ children }) {
 
         // ... so we get the block number from the parent (which matches what ws reports)
         } else if (block.parent_hash) {
-          const parent = await starknet.provider.getBlock(block.parent_hash);
+          const parent = await starknet.account.getBlock(block.parent_hash);
           if (parent?.block_number > 0) {
             lastBlockNumberTime.current = parent.block_number;
             setBlockNumber(parent.block_number);

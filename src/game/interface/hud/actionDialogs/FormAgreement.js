@@ -229,11 +229,11 @@ const FormAgreement = ({
   const [eligible, setEligible] = useState(false);
   const [eligibilityLoading, setEligibilityLoading] = useState(false);
   const updateContractEligibility = useCallback(async () => {
-    if (!starknet?.account?.provider) return;
+    if (!starknet?.account) return;
     if (!currentPolicy?.policyDetails?.contract) return;
     try {
       setEligibilityLoading(true);
-      const response = await starknet.account.provider.callContract({
+      const response = await starknet.account.callContract({
         contractAddress: currentPolicy?.policyDetails?.contract,
         entrypoint: 'accept',
         calldata: [
