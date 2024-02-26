@@ -154,6 +154,9 @@ const LotResources = () => {
   
   const onClickSample = useCallback((id) => () => {
     setSelected({ type: 'sample', id });
+
+    // TODO: instead of turning off the resource map, should this change it the resource of the selected sample?
+    dispatchResourceMapToggle(false);
   }, []);
 
   const [showAbundances, abundancesTruncated] = useMemo(() => {
