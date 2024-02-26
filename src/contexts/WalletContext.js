@@ -35,8 +35,6 @@ const getAllowedChainLabel = (wallet) => {
 
 const WalletContext = createContext();
 
-const TOO_LONG_FOR_BLOCK = Math.max(expectedBlockSeconds * 1.5, expectedBlockSeconds + 60);
-
 export function WalletProvider({ children }) {
   const onConnectCallback = useRef();
   // const queryClient = useQueryClient();
@@ -256,16 +254,6 @@ export function WalletProvider({ children }) {
     });
   }, [blockNumber, blockTime, starknet]);
 
-  const lastBlockNumber = useRef(blockNumber);
-  const blockHasBeenMissed = useRef();
-  useEffect(() => {
-    if (lastBlockNumber.current > 0 && blockNumber > (lastBlockNumber.current + 1)) {
-      blockHasBeenMissed.current = true;
-      console.warn(`block(s) missed between ${lastBlockNumber.current} and ${blockNumber}`);
-    }
-    lastBlockNumber.current = blockNumber;
-  }, [blockNumber]);
-
   // get pending block time on every new block
   // TODO: if no crew, then we won't receive websockets, and blockNumber will not get updated
   //  (i.e. for logged out users) -- does that matter?
@@ -275,41 +263,6 @@ export function WalletProvider({ children }) {
       capturePendingBlockTimestampUpdate();
     }
   }, [blockNumber]);
-
-  const isBlurred = useRef(false);
-  const onBlur = useCallback(() => {
-    isBlurred.current = true;
-  }, []);
-
-  // if window was unfocused for long enough to miss a block, when it refocuses...
-  // reload the page
-  // TODO: could try just clearing the cache and making sure caught up on blocks)
-  //       i.e. blockHasBeenMissed.current = false; initializeBlockData().then(() => { queryClient.clear(); });
-  // TODO: could potentially miss still have missed websocket info for a short enough window
-  //       that didn't miss a block...
-  // TODO: could they potentially miss a block without blurring? in that case, we would
-  //       probably also want to reload
-  const onFocus = useCallback(() => {
-    if (isBlurred.current) {
-      isBlurred.current = false;
-
-      const now = Date.now() / 1e3;
-      const currentBlockIsMissing = blockTime > 0 && ((now - blockTime) > TOO_LONG_FOR_BLOCK);
-      const shouldReload = blockHasBeenMissed.current || currentBlockIsMissing;
-      if (shouldReload) {
-        window.location.reload();
-      }
-    }
-  }, [blockTime, initializeBlockData]);
-
-  useEffect(() => {
-    window.addEventListener('blur', onBlur);
-    window.addEventListener('focus', onFocus);
-    return () => {
-      window.removeEventListener('blur', onBlur);
-      window.removeEventListener('focus', onFocus);
-    }
-  }, [onBlur, onFocus]);
 
   return (
     <WalletContext.Provider value={{
