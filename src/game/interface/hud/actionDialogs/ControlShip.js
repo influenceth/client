@@ -1,19 +1,14 @@
 import { useEffect, useMemo, useRef } from 'react';
 import styled from 'styled-components';
-import { Asteroid } from '@influenceth/sdk';
+import { Entity } from '@influenceth/sdk';
 
 import CrewmateCardFramed from '~/components/CrewmateCardFramed';
-import {
-  BecomeAdminIcon,
-  KeysIcon, MyAssetIcon,
-} from '~/components/Icons';
+import { BecomeAdminIcon } from '~/components/Icons';
 import useAsteroid from '~/hooks/useAsteroid';
-import useControlAsteroid from '~/hooks/actionManagers/useControlAsteroid';
-import useStore from '~/hooks/useStore';
 import useCrewContext from '~/hooks/useCrewContext';
 import actionStage from '~/lib/actionStages';
 import formatters from '~/lib/formatters';
-import { reactBool } from '~/lib/utils';
+import { locationsArrToObj, reactBool } from '~/lib/utils';
 
 import {
   ActionDialogFooter,
@@ -26,10 +21,12 @@ import {
   FlexSectionSpacer,
   ShipInputBlock
 } from './components';
-import { ActionDialogInner, useAsteroidAndLot } from '../ActionDialog';
+import { ActionDialogInner } from '../ActionDialog';
 import theme from '~/theme';
 import useControlShip from '~/hooks/actionManagers/useControlShip';
+import useEntity from '~/hooks/useEntity';
 import useShip from '~/hooks/useShip';
+
 
 const AsteroidImageWrapper = styled.div`
   position: relative;
@@ -101,24 +98,31 @@ const ControlShip = ({ asteroid, lot, ship, controlManager, stage, ...props }) =
 };
 
 const Wrapper = (props) => {
-  const { asteroid, lot, isLoading } = useAsteroidAndLot(props);
   const { data: ship, isLoading: shipIsLoading } = useShip(props.shipId);
   const controlManager = useControlShip(props.shipId);
 
+  const loc = useMemo(() => locationsArrToObj(ship?.Location?.locations || []), [ship]);
+  const { data: asteroid, isLoading: asteroidIsLoading } = useAsteroid(loc.asteroidId);
+  const { data: lot, isLoading: lotIsLoading } = useEntity({ id: loc.lotId, label: Entity.IDS.LOT });
+
   useEffect(() => {
-    if (!ship && !shipIsLoading) {
-      if (props.onClose) props.onClose();
-    } else if (controlManager.alreadyControlled) {
-      if (props.onClose) props.onClose();
+    if (props.onClose) {
+      if (!ship && !shipIsLoading) {
+        props.onClose();
+      } else if (!asteroid && !asteroidIsLoading) {
+        props.onClose();
+      } else if (controlManager.alreadyControlled) {
+        props.onClose();
+      }
     }
-  }, [asteroid, controlManager, shipIsLoading]);
+  }, [asteroid, controlManager, asteroidIsLoading, shipIsLoading]);
 
   const stage = useMemo(() => controlManager.takingControl ? actionStage.COMPLETING : actionStage.NOT_STARTED, [controlManager.takingControl]);
 
   return (
     <ActionDialogInner
       actionImage="Management"
-      isLoading={reactBool(shipIsLoading || isLoading)}
+      isLoading={reactBool(asteroidIsLoading || lotIsLoading || shipIsLoading)}
       stage={stage}>
       <ControlShip
         asteroid={asteroid}

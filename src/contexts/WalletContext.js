@@ -297,9 +297,6 @@ export function WalletProvider({ children }) {
       const currentBlockIsMissing = blockTime > 0 && ((now - blockTime) > TOO_LONG_FOR_BLOCK);
       const shouldReload = blockHasBeenMissed.current || currentBlockIsMissing;
       if (shouldReload) {
-        if (process.env.NODE_ENV === 'development') {
-          window.alert('reload stale browser state');
-        }
         window.location.reload();
       }
     }
