@@ -111,8 +111,6 @@ export function CrewProvider({ children }) {
         if (c.Crew) {
           c.Crew.lastFed = Math.max(Math.min(blockTime, openAccessJSTime / 1e3), c.Crew.lastFed);
         }
-
-        console.log({ earlyAccessEligible, crew: c, blockTime, earlyAccessJSTime, openAccessJSTime });
       } else {
         c._launched = true;
         c._launched = blockTime > earlyAccessJSTime / 1e3;
