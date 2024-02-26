@@ -110,9 +110,20 @@ const LotResources = () => {
   const { data: lot } = useLot(lotId);
   const { currentSamplingAction } = useCoreSampleManager(lotId);
   const { currentExtraction } = useExtractionManager(lotId);
+  const dispatchResourceMapSelect = useStore(s => s.dispatchResourceMapSelect);
+  const dispatchResourceMapToggle = useStore(s => s.dispatchResourceMapToggle);
+  const resourceMap = useStore(s => s.asteroids.resourceMap);
 
+  const [selected, setSelected] = useState();
   const [showAllAbundances, setShowAllAbundances] = useState();
   const [showAllSamples, setShowAllSamples] = useState();
+
+  // if there is an active resource map, select that resource
+  useEffect(() => {
+    if (resourceMap.active && resourceMap.selected) {
+      setSelected({ type: 'resource', id: resourceMap.selected });
+    }
+  }, []);
 
   // get lot abundance
   const lotAbundances = useMemo(() => {
@@ -134,10 +145,11 @@ const LotResources = () => {
       .sort((a, b) => b.abundance - a.abundance);
   }, [asteroid, lotId]);
 
-  const [selected, setSelected] = useState();
-
   const onClickResource = useCallback((id) => () => {
     setSelected({ type: 'resource', id });
+
+    dispatchResourceMapSelect(id);
+    dispatchResourceMapToggle(true);
   }, []);
   
   const onClickSample = useCallback((id) => () => {
@@ -237,7 +249,7 @@ const LotResources = () => {
             {showAbundances.map(({ i, abundance }) => {
               const { name, category } = Product.TYPES[i];
               const categoryKey = keyify(category);
-              const isSelected = selected?.type === 'resource' && selected?.id === i;
+              const isSelected = selected?.type === 'resource' && Number(selected?.id) === Number(i);
               return (
                 <Resource
                   key={i}
@@ -263,7 +275,10 @@ const LotResources = () => {
             </div>
           </HudMenuCollapsibleSection>
           
-          <HudMenuCollapsibleSection titleText="Core Samples" titleLabel={`${sampleTally} Sample${sampleTally === 1 ? '' : 's'}`}>
+          <HudMenuCollapsibleSection
+            titleText="Core Samples"
+            titleLabel={`${sampleTally} Sample${sampleTally === 1 ? '' : 's'}`}
+            collapsed={!(ownedSamples?.length > 0) || (selected?.type === 'resource')}>
             {ownedSamples.map((sample) => {
               const { name, category } = Product.TYPES[sample.Deposit.resource];
               const categoryKey = keyify(category);

@@ -114,7 +114,7 @@ const AsteroidResources = ({ onClose }) => {
     }
   }, [resourceMap]);
 
-  // hide emissive when the panel is closed
+  // default to most abundant emissive map when panel is opened...
   useEffect(() => {
     if (!resourceMap.active && groupAbundances.length > 0) {
       if (!resourceMap.selected) {
@@ -122,9 +122,6 @@ const AsteroidResources = ({ onClose }) => {
       }
       dispatchResourceMapToggle(true);
     }
-    return () => {
-      dispatchResourceMapToggle(false);
-    };
   }, []);
 
   const unpackedBonuses = useMemo(() => (asteroid && Asteroid.Entity.getBonuses(asteroid)) || [], [asteroid]);
