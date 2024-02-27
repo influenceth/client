@@ -1206,11 +1206,13 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
   // ^^^
 
   const confirmationProps = useMemo(() => {
-    if (BigInt(priceConstants.ADALIAN_PRICE_ETH) > (weiBalance || 0n)) {
-      return {
-        onConfirm: getEthFromFaucet,
-        loading: !!requestingEth,
-        confirmText: <Ether>Request ETH</Ether>
+    if (process.env.REACT_APP_CHAIN_ID === '0x534e5f5345504f4c4941') {
+      if (BigInt(priceConstants.ADALIAN_PRICE_ETH) > (weiBalance || 0n)) {
+        return {
+          onConfirm: getEthFromFaucet,
+          loading: !!requestingEth,
+          confirmText: <Ether>Request ETH</Ether>
+        }
       }
     }
     return {
