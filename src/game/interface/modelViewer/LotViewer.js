@@ -13,11 +13,14 @@ const LotViewer = () => {
   const { data: lot, isLoading } = useLot(lotId);
 
   const modelUrl = useMemo(() => {
+    if (zoomScene?.overrides?.buildingType) {
+      return getBuildingModel(zoomScene.overrides.buildingType);  
+    }
     if (lot?.building?.Building?.status === Building.CONSTRUCTION_STATUSES.OPERATIONAL) {
       return getBuildingModel(lot.building.Building.buildingType);
     }
     return getBuildingModel(0);
-  }, [lot?.building]);
+  }, [lot?.building, zoomScene?.overrides?.buildingType]);
 
   if (zoomScene?.type !== 'LOT' || isLoading) return null;
   return (

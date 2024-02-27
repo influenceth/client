@@ -210,14 +210,14 @@ const RoutePlanner = () => {
 
   const shipList = useMemo(() => {
     const escapeModule = crew?.Ship?.emergencyAt > 0 ? [ Object.assign({ _simulated: false }, crew ) ] : [];
-    if (myShipsLoading || !myShips) return [];
+    if (myShipsLoading) return [];
 
     return [
       // add escape module
       ...escapeModule,
 
       // add my ships
-      ...myShips.sort((a, b) => {
+      ...(myShips || []).sort((a, b) => {
         if (crew?._location?.shipId === a.id) return -1;
         if (crew?._location?.shipId === b.id) return 1;
 
@@ -253,7 +253,11 @@ const RoutePlanner = () => {
   // select default
   useEffect(() => {
     if (shipList.length > 0 && !ship) {
-      setShip(shipList[0]);
+      if (crew) {
+        setShip(shipList[0]);
+      } else { // if no crew, default to simulate shuttle (assuming in tutorial)
+        setShip(shipList.find((s) => s._simulated && s.Ship.shipType === Ship.IDS.SHUTTLE));
+      }
     }
   }, [shipList, ship]);
 
@@ -296,6 +300,15 @@ const RoutePlanner = () => {
       setFoodSupplies(crewFoodSupplies);
     }
   }, [crewFoodSupplies, ship]);
+
+  // if no crew, assume this is tutorial simulation (so minimize cargo, maximize propellant and food)
+  useEffect(() => {
+    if (!crew && !!shipConfig) {
+      setCargoMass(0);
+      setPropellantMass(shipConfig.maxPropellantMass);
+      setFoodSupplies(100);
+    }
+  }, [crew, shipConfig]);
 
   const onSetCargoMass = useCallback((amount) => {
     const parsed = parseInt(amount * 1_000_000) || 0;

@@ -1,4 +1,4 @@
-import { createContext, useCallback, useEffect, useMemo, useState } from 'react';
+import { createContext, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery, useQueryClient } from 'react-query';
 import { Crewmate, Entity, Permission, RandomEvent, System } from '@influenceth/sdk';
 
@@ -7,9 +7,11 @@ import useAuth from '~/hooks/useAuth';
 import useConstants from '~/hooks/useConstants';
 import useEntity from '~/hooks/useEntity';
 import useStore from '~/hooks/useStore';
-import { earlyAccessJSTime, getBlockTime, getCrewAbilityBonuses, locationsArrToObj, openAccessJSTime } from '~/lib/utils';
+import { earlyAccessJSTime, expectedBlockSeconds, getBlockTime, getCrewAbilityBonuses, locationsArrToObj, openAccessJSTime } from '~/lib/utils';
 
 const CrewContext = createContext();
+
+const TOO_LONG_FOR_BLOCK = Math.max(expectedBlockSeconds * 1.5, expectedBlockSeconds + 60);
 
 export function CrewProvider({ children }) {
   const { account, walletContext: { starknet, blockNumber, blockTime } } = useAuth();
@@ -219,6 +221,54 @@ export function CrewProvider({ children }) {
       : false,
     [finalSelectedCrew]
   );
+
+  const lastBlockNumber = useRef(blockNumber);
+  const blockHasBeenMissed = useRef();
+  useEffect(() => {
+    if (lastBlockNumber.current > 0 && blockNumber > (lastBlockNumber.current + 1)) {
+      blockHasBeenMissed.current = true;
+      console.warn(`block(s) missed between ${lastBlockNumber.current} and ${blockNumber}`);
+    }
+    lastBlockNumber.current = blockNumber;
+  }, [blockNumber]);
+
+  const isBlurred = useRef(false);
+  const onBlur = useCallback(() => {
+    isBlurred.current = true;
+  }, []);
+
+  // if window was unfocused for long enough to miss a block, when it refocuses...
+  // reload the page
+  // TODO: could try just clearing the cache and making sure caught up on blocks)
+  //       i.e. blockHasBeenMissed.current = false; initializeBlockData().then(() => { queryClient.clear(); });
+  // TODO: could potentially miss still have missed websocket info for a short enough window
+  //       that didn't miss a block...
+  // TODO: could they potentially miss a block without blurring? in that case, we would
+  //       probably also want to reload
+  // TODO: when first create crew, should probably reload all queries since they were not being updated
+  //       in the time before crew creation
+  const onFocus = useCallback(() => {
+    if (isBlurred.current) {
+      isBlurred.current = false;
+
+      const now = Date.now() / 1e3;
+      const currentBlockIsMissing = blockTime > 0 && ((now - blockTime) > TOO_LONG_FOR_BLOCK);
+      if (blockHasBeenMissed.current || currentBlockIsMissing) {
+        window.location.reload();
+      }
+    }
+  }, [blockTime]);
+
+  useEffect(() => {
+    if (!!finalSelectedCrew) {
+      window.addEventListener('blur', onBlur);
+      window.addEventListener('focus', onFocus);
+      return () => {
+        window.removeEventListener('blur', onBlur);
+        window.removeEventListener('focus', onFocus);
+      }
+    }
+  }, [!!finalSelectedCrew, onBlur, onFocus]);
 
   return (
     <CrewContext.Provider value={{

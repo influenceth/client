@@ -33,7 +33,10 @@ const MAX_ZOOM = 20;
 const DIRECTIONAL_LIGHT_DISTANCE = 10;
 const DARK_LIGHT_INTENSITY = 0.1;
 
-const ZOOM_TO_PLOT_ANIMATION_TIME = 700;
+const LIGHT_ANIMATION_TIME = 500;
+export const ZOOM_IN_ANIMATION_TIME = 3000;
+export const ZOOM_OUT_ANIMATION_TIME = 2000;
+export const ZOOM_TO_PLOT_ANIMATION_TIME = 700;
 
 // some numbers estimated from https://web.dev/rendering-performance/
 const TARGET_FPS = 60;
@@ -336,7 +339,7 @@ const AsteroidComponent = () => {
   }, [defaultLightIntensity, resourceMap]);
   useEffect(() => {
     if (light.current && light.current.intensity !== currentLightIntensity) {
-      gsap.timeline().to(light.current, { intensity: currentLightIntensity, ease: 'power4.out', duration: 0.5 });
+      gsap.timeline().to(light.current, { intensity: currentLightIntensity, ease: 'power4.out', duration: LIGHT_ANIMATION_TIME / 1e3 });
     }
   }, [currentLightIntensity]);
 
@@ -444,7 +447,7 @@ const AsteroidComponent = () => {
     group.current.position.copy(new Vector3(...position.current));
 
     // TODO: zoomingDuration should probably be distance-dependent
-    const zoomingDuration = 3;
+    const zoomingDuration = ZOOM_IN_ANIMATION_TIME / 1e3;
     const timeline = gsap.timeline({
       defaults: { duration: zoomingDuration, ease: 'power4.out' },
       onComplete: () => {
@@ -509,7 +512,7 @@ const AsteroidComponent = () => {
     controls.maxDistance = 10 * constants.AU;
 
     const timeline = gsap.timeline({
-      defaults: { duration: 2, ease: 'power4.in' },
+      defaults: { duration: ZOOM_OUT_ANIMATION_TIME / 1e3, ease: 'power4.in' },
       onComplete: () => {
         controls.targetScene.position.copy(zoomedFrom.scene);
         controls.object.position.copy(zoomedFrom.position);
