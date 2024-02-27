@@ -5,17 +5,18 @@ import Badge from '~/components/Badge';
 import Button from '~/components/ButtonAlt';
 import {
   BugIcon,
-  MenuIcon,
-  SettingsIcon,
-  ResetCameraIcon,
-  WarningIcon,
-  StoreIcon,
-  SwayIcon,
   CrewIcon,
+  DiscordIcon,
   LoginIcon,
   LogoutIcon,
+  MenuIcon,
   MyAssetIcon,
-  WalletIcon
+  ResetCameraIcon,
+  SettingsIcon,
+  StoreIcon,
+  SwayIcon,
+  WalletIcon,
+  WarningIcon
 } from '~/components/Icons';
 import useAuth from '~/hooks/useAuth';
 import useCrewContext from '~/hooks/useCrewContext';
@@ -78,6 +79,10 @@ const SystemControls = () => {
 
   const [menuOpen, setMenuOpen] = useState(false);
 
+  const openDiscord = useCallback(() => {
+    window.open('https://discord.gg/influenceth', '_blank');
+  }, []);
+
   const openHelpChannel = useCallback(() => {
     window.open(process.env.REACT_APP_HELP_URL, '_blank');
   }, []);
@@ -128,6 +133,11 @@ const SystemControls = () => {
         content: <><WalletIcon /> <label>My Wallet</label></>
       });
     }
+
+    items.push({
+      onClick: openDiscord,
+      content: <><DiscordIcon /> <label>Discord</label></>
+    });
 
     items.push({
       onClick: openAssetsPortal,
