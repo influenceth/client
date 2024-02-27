@@ -400,7 +400,11 @@ const InfoPane = () => {
       const isIncompleteBuilding = lot?.building && !['OPERATIONAL', 'DECONSTRUCTING'].includes(constructionStatus);
       const explicitLotControllerId = lot?.Control?.isExplicit ? lot?.Control?.controller?.id : undefined;
       if (zoomScene?.type === 'LOT') {
-        pane.title = lot?.building ? `${formatters.buildingName(lot.building)}${isIncompleteBuilding ? ' (Site)' : ''}` : 'Empty Lot';
+        if (zoomScene?.overrides?.buildingType) {
+          pane.title = Building.TYPES[zoomScene?.overrides?.buildingType]?.name;
+        } else {
+          pane.title = lot?.building ? `${formatters.buildingName(lot.building)}${isIncompleteBuilding ? ' (Site)' : ''}` : 'Empty Lot';
+        }
         pane.subtitle = <>{formatters.asteroidName(asteroid)} &gt; <b>{formatters.lotName(lotId)}</b></>;
         pane.captainCard = lot?.building?.Control?.controller?.id || explicitLotControllerId;
       } else if (zoomScene?.type === 'SHIP' && ship) {

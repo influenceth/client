@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import useCrewContext from '~/hooks/useCrewContext';
 import ActionDialog from './hud/ActionDialog';
 import ActionItems from './hud/ActionItems';
+import TutorialItems from './hud/TutorialItems';
 import AvatarMenu from './hud/AvatarMenu';
 import LoginMenu from './hud/LoginMenu';
 import InfoPane from './hud/InfoPane';
@@ -82,7 +83,12 @@ const HUD = () => {
             <ActionItems />
           </>
         )}
-        {!captain && !loading && <LoginMenu />}
+        {!captain && !loading && (
+          <>
+            <LoginMenu />
+            <TutorialItems />
+          </>
+        )}
         {!captain && <div style={{ flex: 1 }} />}
         <InfoPane />
       </LeftWrapper>

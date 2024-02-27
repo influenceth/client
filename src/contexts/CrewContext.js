@@ -245,17 +245,15 @@ export function CrewProvider({ children }) {
   //       that didn't miss a block...
   // TODO: could they potentially miss a block without blurring? in that case, we would
   //       probably also want to reload
+  // TODO: when first create crew, should probably reload all queries since they were not being updated
+  //       in the time before crew creation
   const onFocus = useCallback(() => {
     if (isBlurred.current) {
       isBlurred.current = false;
 
       const now = Date.now() / 1e3;
       const currentBlockIsMissing = blockTime > 0 && ((now - blockTime) > TOO_LONG_FOR_BLOCK);
-      const shouldReload = blockHasBeenMissed.current || currentBlockIsMissing;
-      if (shouldReload) {
-        if (process.env.NODE_ENV === 'development') {
-          window.alert(`reloading! blockHasBeenMissed.current (${blockHasBeenMissed.current}) + currentBlockIsMissing (${currentBlockIsMissing}, ${now} - ${blockTime} > ${TOO_LONG_FOR_BLOCK})`);
-        }
+      if (blockHasBeenMissed.current || currentBlockIsMissing) {
         window.location.reload();
       }
     }

@@ -85,6 +85,7 @@ const TitleAction = styled.div``;
 const CollapsibleSection = ({
   borderless,
   children,
+  forceClose,
   initiallyClosed,
   openOnChange,
   title,
@@ -98,6 +99,10 @@ const CollapsibleSection = ({
   }, []);
 
   const hasLoaded = useRef();
+
+  useEffect(() => {
+    if (forceClose) setCollapsed(true);
+  }, [forceClose]);
 
   useEffect(() => {
     if (hasLoaded.current) {
