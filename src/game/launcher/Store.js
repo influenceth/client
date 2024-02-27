@@ -751,7 +751,7 @@ export const FaucetSKU = () => {
       setRequestingSway(false);
       createAlert({
         type: 'GenericAlert',
-        data: { content: 'Added 100,000 SWAY to your account.' },
+        data: { content: 'Added 400,000 SWAY to your account.' },
         duration: 5000
       });
     } catch (e) {
@@ -811,7 +811,7 @@ export const FaucetSKU = () => {
             style={{ width: '100%' }}>
             <PlusIcon />
             <span>Request SWAY</span>
-            <ButtonExtra>{Number(100000).toLocaleString()}</ButtonExtra>
+            <ButtonExtra>{Number(400000).toLocaleString()}</ButtonExtra>
           </Button>
           <ClipCorner dimension={10} color={borderColor} />
         </SKUInner>
