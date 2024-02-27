@@ -43,6 +43,9 @@ import useStore from '~/hooks/useStore';
 import formatters from '~/lib/formatters';
 import { reactBool } from '~/lib/utils';
 import theme from '~/theme';
+import useEthBalance from '~/hooks/useEthBalance';
+import api from '~/lib/api';
+import useInterval from '~/hooks/useInterval';
 
 const CollectionImages = {
   1: Collection1,
@@ -821,6 +824,7 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
   const { crew, crewmateMap, adalianRecruits, arvadianRecruits } = useCrewContext();
   const { promptingTransaction } = useContext(ChainTransactionContext);
   const { data: priceConstants } = usePriceConstants();
+  const { data: weiBalance, refetch: refetchEth } = useEthBalance();
 
   const [confirming, setConfirming] = useState();
   const [confirmingUnlock, setConfirmingUnlock] = useState();
@@ -1165,6 +1169,65 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
     if (selectedTraits?.length < traitTally) return false;
     return true;
   }, [name, selectedClass, selectedTraits?.length, traitTally]);
+
+  // faucet stuff vvv
+  const [requestingEth, setRequestingEth] = useState();
+  const createAlert = useStore(s => s.dispatchAlertLogged);
+  const getEthFromFaucet = useCallback(async () => {
+    setRequestingEth(true);
+    try {
+      await api.requestTokens('ETH');
+    } catch (e) {
+      createAlert({
+        type: 'GenericAlert',
+        data: { content: 'Faucet already used today.' },
+        level: 'warning',
+        duration: 5000
+      });
+      setRequestingEth(false);
+    }
+  }, []);
+  useEffect(() => {
+    if (requestingEth) {
+      const i = setInterval(() => {
+        refetchEth();
+        if (true) {
+          setRequestingEth(false);
+          createAlert({
+            type: 'GenericAlert',
+            data: { content: 'Added 0.015 ETH to your account.' },
+            duration: 5000
+          });
+        }
+      }, 5e3);
+      return () => clearInterval(i);
+    }
+  }, [requestingEth]);
+  // ^^^
+
+  const confirmationProps = useMemo(() => {
+    if (BigInt(priceConstants.ADALIAN_PRICE_ETH) > (weiBalance || 0n)) {
+      return {
+        onConfirm: getEthFromFaucet,
+        loading: !!requestingEth,
+        confirmText: <Ether>Request ETH</Ether>
+      }
+    }
+    return {
+      onConfirm: finalize,
+      confirmText: (
+        <>
+          {crewmate.id ? 'Confirm' : 'Purchase Crewmate'}
+          {!crewmate.id && priceConstants && (
+            <span style={{ color: 'white', flex: 1, fontSize: '90%', textAlign: 'right', marginLeft: 15 }}>
+              {/* TODO: should this update price before "approve"? what about asteroids? */}
+              <Ether>{formatters.crewmatePrice(priceConstants)}</Ether>
+            </span>
+          )}
+        </>
+      )
+    };
+  }, [getEthFromFaucet, requestingEth, priceConstants, weiBalance]);
 
   if (!crewmate) return null;
   return (
@@ -1515,18 +1578,7 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
               stats, actions, skills, and other attributes will be stored in their unique on-chain history.
             </PromptBody>
           )}
-          onConfirm={finalize}
-          confirmText={(
-            <>
-              {crewmate.id ? 'Confirm' : 'Purchase Crewmate'}
-              {!crewmate.id && priceConstants && (
-                <span style={{ color: 'white', flex: 1, fontSize: '90%', textAlign: 'right', marginLeft: 15 }}>
-                  {/* TODO: should this update price before "approve"? what about asteroids? */}
-                  <Ether>{formatters.crewmatePrice(priceConstants)}</Ether>
-                </span>
-              )}
-            </>
-          )}
+          {...confirmationProps}
           onReject={() => setConfirming(false)}
           isTransaction
         />
