@@ -24,15 +24,14 @@ const getErrorMessage = (error) => {
 };
 
 const isAllowedChain = (chain) => {
-  let correct = resolveChainId(process.env.REACT_APP_CHAIN_ID);
-  return chain === correct;
+  return resolveChainId(chain) === resolveChainId(process.env.REACT_APP_CHAIN_ID);
 }
 
 const getAllowedChainLabel = (wallet) => {
-  let correct = resolveChainId(process.env.REACT_APP_CHAIN_ID);
-  if (correct === 'SN_MAIN') return 'Mainnet';
-  if (correct === 'SN_GOERLI') return 'Goerli';
-  if (correct === 'SN_SEPOLIA') return 'Sepolia';
+  let current = resolveChainId(process.env.REACT_APP_CHAIN_ID);
+  if (current === 'SN_MAIN') return 'Mainnet';
+  if (current === 'SN_GOERLI') return 'Goerli';
+  if (current === 'SN_SEPOLIA') return 'Sepolia';
   return wallet === 'Braavos' ? 'Developer' : 'Devnet';
 }
 
