@@ -56,6 +56,7 @@ import CrewLocationSVG from '~/assets/icons/CrewLocationIcon.svg';
 import CrewmateSVG from '~/assets/icons/CrewmateIcon.svg';
 import CrewStorySVG from '~/assets/icons/CrewStoryIcon.svg';
 import DeltaVSVG from '~/assets/icons/DeltaVIcon.svg';
+import DiscordSVG from '~/assets/icons/DiscordIcon.svg';
 import EccentricitySVG from '~/assets/icons/EccentricityIcon.svg';
 import EventSVG from '~/assets/icons/EventIcon.svg';
 import FavoriteSVG from '~/assets/icons/FavoriteIcon.svg';
@@ -214,6 +215,7 @@ export const CrewLocationIcon = () => <CrewLocationSVG className="icon" />; // T
 export const CrewmateIcon = () => <CrewmateSVG className="icon" />;
 export const CrewStoryIcon = () => <CrewStorySVG className="icon" />;
 export const DeltaVIcon = () => <DeltaVSVG className="icon" />;
+export const DiscordIcon = () => <DiscordSVG className="icon" />;
 export const EccentricityIcon = () => <EccentricitySVG className="icon" />;
 export const EmergencyModeEnterIcon = () => <EModeEnterSVG className="icon" />;
 export const EmergencyModeExitIcon = () => <EModeExitSVG className="icon" />;

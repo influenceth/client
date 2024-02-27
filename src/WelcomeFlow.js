@@ -77,7 +77,7 @@ const WelcomeFlow = () => {
   const { token } = useAuth();
   const { crew, loading, adalianRecruits, arvadianRecruits } = useCrewContext();
   const history = useHistory();
-  
+
   const hasSeenIntroVideo = useStore(s => s.hasSeenIntroVideo);
   const launcherPage = useStore(s => s.launcherPage);
   const dispatchCutscene = useStore(s => s.dispatchCutscene);

@@ -274,7 +274,7 @@ const useTutorial = () => {
   const [transitioning, setTransitioning] = useState();
   const [hideMessage, setHideMessage] = useState();
 
-  // TODO: use useLotLink instead of all this extra?  
+  // TODO: use useLotLink instead of all this extra?
 
   const tutorialParts = useMemo(() => ([
     {
@@ -326,7 +326,7 @@ const useTutorial = () => {
       title: 'Space Travel',
       content: `Skillful pilots and navigators are a foundational pillar of Adalian
         society. Successfully traversing a vast system of individually orbiting
-        locations require care and planning.`,
+        locations requires care and planning.`,
       crewmate: 6877,
       initialize: () => {
         if (currentZoomScene) dispatchZoomScene();
@@ -440,7 +440,6 @@ const useTutorial = () => {
   ]), [currentZoomScene, destination, lot, openHudMenu, resetAsteroidFilters, zoomStatus]);
 
   const previousStep = useRef(tutorialStep || -1);
-  
   const updateStep = useCallback((newStep) => {
     if (transitioning) return;
     setTransitioning(true);
@@ -543,7 +542,7 @@ const TutorialItems = () => {
             <CrewmateImage crewmateId={arvadLeader?.id} />
           </CrewmateOverflow>
         </CrewmateWrapper>
-        
+
         <TutorialContent>
           <h3>
             <span>{currentStep?.title}</span>

@@ -1,13 +1,15 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import ReactPlayer from 'react-player';
+import Lottie from 'react-lottie';
 import styled from 'styled-components';
 import { gsap } from 'gsap';
 
-import introVideoSrc from '~/assets/influence-load.webm';
+import IntroLottie from '~/assets/intro.json';
 
 const Wrapper = styled.div`
+  align-items: center;
   background: black;
+  display: flex;
   position: fixed;
   top: 0;
   bottom: 0;
@@ -16,10 +18,21 @@ const Wrapper = styled.div`
   z-index: 9999; /* above everything except Suspense */
 `;
 
+const animationOptions = {
+  loop: false,
+  autoplay: false,
+  animationData: IntroLottie
+};
+
 const Intro = () => {
   const container = useRef();
   const [complete, setComplete] = useState(false);
   const [hiding, setHiding] = useState(false);
+  const [paused, setPaused] = useState(true);
+
+  const onDataReady = useCallback(() => {
+    setTimeout(() => setPaused(false), 1000);
+  }, []);
 
   const onComplete = useCallback(() => {
     setHiding(true); // (so they fade back out)
@@ -32,24 +45,23 @@ const Intro = () => {
     });
   }, []);
 
-  const onError = useCallback((err) => {
-    console.error(err);
-    onComplete();
-  }, [onComplete]);
+  const eventListeners = useMemo(() => {
+    return [
+      { eventName: 'DOMLoaded', callback: onDataReady },
+      { eventName: 'complete', callback: onComplete }
+    ];
+  }, [onComplete, onDataReady]);
 
   if (complete) return null;
   return createPortal(
     (
       <Wrapper ref={container} hiding={hiding}>
-        <ReactPlayer
-          url={introVideoSrc}
-          height="100%"
-          width="100%"
-          volume={0}
-          muted={true}
-          playing
-          onError={onError}
-          onEnded={onComplete} />
+        <Lottie
+          eventListeners={eventListeners}
+          options={animationOptions}
+          isPaused={paused}
+          height="200px"
+          width="75%" />
       </Wrapper>
     ),
     document.body

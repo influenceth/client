@@ -59,6 +59,7 @@ const Circle = styled.div`
   margin: 0 8px;
   width: 8px;
 `;
+
 const ResourceList = styled.div``;
 const Resource = styled(Row)`
   cursor: ${p => p.theme.cursors.active};
