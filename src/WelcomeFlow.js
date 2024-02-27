@@ -101,7 +101,9 @@ const WelcomeFlow = () => {
       if (!loading) {
         if (crew && crew._crewmates?.length > 0) updatedStatus = STATUS.READY;
         else if (adalianRecruits?.length > 0 || arvadianRecruits?.length > 0) updatedStatus = STATUS.NEED_CREWMATE_INITIALIZED;
-        else updatedStatus = STATUS.NEED_CREWMATE_CREDITS;
+        // (not prompting for crewmate credit pack on prerelease)
+        // TODO: if remove this in prod, also see TutorialItems redirect into creation story
+        else if (`${process.env.REACT_APP_CHAIN_ID}` !== `0x534e5f5345504f4c4941`) updatedStatus = STATUS.NEED_CREWMATE_CREDITS;
       }
     }
     setStatus(updatedStatus);

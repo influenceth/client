@@ -453,8 +453,6 @@ const useTutorial = () => {
   }, [dispatchTutorialStep, transitioning, tutorialParts]);
 
   useEffect(() => {
-    // if (hasClickedPlay) updateStep(0);
-    console.log('in here', tutorialStep);
     if (!(tutorialStep >= 0)) dispatchTutorialStep(0);
   }, []);
 
@@ -491,7 +489,8 @@ const TutorialItems = () => {
   const handleNext = useCallback(() => {
     if (currentStepIndex >= steps.length - 1) {
       if (account) history.push('/crew')
-      else login();
+      // TODO: see WelcomeFlow -- if want to start prompting for crewmate credit pack, do not want to do this redirect
+      else login().then((success) => { if (success) { history.push('/crew'); } });
     } else {
       updateStep(currentStepIndex + 1);
     }
