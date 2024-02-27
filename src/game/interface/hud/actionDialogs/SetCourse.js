@@ -262,7 +262,7 @@ const SetCourse = ({ origin, destination, manager, ship, stage, travelSolution, 
     },
     {
       label: 'Arriving In',
-      value: formatTimer(arrivingIn, 3),
+      value: formatTimer(Time.toRealDuration(arrivingIn * 86400, crew?._timeAcceleration), 3),
       direction: 0,
       isTimeStat: true,
     },

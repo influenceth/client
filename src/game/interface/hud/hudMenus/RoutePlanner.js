@@ -516,7 +516,7 @@ const RoutePlanner = () => {
           <SectionBody style={{ paddingBottom: 20 }}>
             <InfoRow>
               <label>Depart</label>
-              <Note>{travelSolution.departureTime > coarseTime ? '+' : ''}{formatFixed(travelSolution.departureTime - coarseTime, 1)}h</Note>
+              <Note>{travelSolution.departureTime > coarseTime ? '+' : ''}{formatFixed(Time.toRealDuration(24 * (travelSolution.departureTime - coarseTime), TIME_ACCELERATION), 1)}h</Note>
               <Value>
                 {Time.fromOrbitADays(travelSolution.departureTime, TIME_ACCELERATION).toGameClockADays(true)}
               </Value>
@@ -524,7 +524,7 @@ const RoutePlanner = () => {
 
             <InfoRow>
               <label>Arrive</label>
-              <Note>{travelSolution.arrivalTime > coarseTime ? '+' : ''}{formatFixed(travelSolution.arrivalTime - coarseTime, 1)}h</Note>
+              <Note>{travelSolution.arrivalTime > coarseTime ? '+' : ''}{formatFixed(Time.toRealDuration(24 * (travelSolution.arrivalTime - coarseTime), TIME_ACCELERATION), 1)}h</Note>
               <Value>
                 {Time.fromOrbitADays(travelSolution.arrivalTime, TIME_ACCELERATION).toGameClockADays(true)}
               </Value>
