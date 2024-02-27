@@ -81,7 +81,7 @@ const loadingCss = css`
   z-index: 1;
 `;
 
-const DISABLE_INTRO_ANIMATION = false && process.env.NODE_ENV === 'development';
+const DISABLE_INTRO_ANIMATION = true && process.env.NODE_ENV === 'development';
 
 const Interface = () => {
   const { isMobile } = useScreenSize();

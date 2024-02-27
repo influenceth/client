@@ -71,7 +71,7 @@ const CrewmateCreditDialog = ({ onClose }) => (
   </Details>
 );
 
-const DISABLE_LAUNCHER_TRAILER = false && process.env.NODE_ENV === 'development';
+const DISABLE_LAUNCHER_TRAILER = true && process.env.NODE_ENV === 'development';
 
 const WelcomeFlow = () => {
   const { token } = useAuth();
