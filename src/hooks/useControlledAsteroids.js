@@ -9,7 +9,8 @@ const useControlledAsteroids = () => {
 
   return useQuery(
     [ 'entities', Entity.IDS.ASTEROID, 'controlled', crew?.id ],
-    () => api.getEntities({ match: { 'Control.controller.id': crew?.id }, label: Entity.IDS.ASTEROID }),
+    // TODO: this ternary should not be necessary if `enabled` is working... maybe something with the forced refresh from cache invalidation?
+    () => crew?.id ? api.getEntities({ match: { 'Control.controller.id': crew?.id }, label: Entity.IDS.ASTEROID }) : [],
     { enabled: !!crew?.id }
   );
 };
