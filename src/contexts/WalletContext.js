@@ -4,11 +4,17 @@ import { connect as starknetConnect, disconnect as starknetDisconnect } from 'st
 import { ArgentMobileConnector } from 'starknetkit/argentMobile';
 import { InjectedConnector } from 'starknetkit/injected';
 import { WebWalletConnector } from 'starknetkit/webwallet';
-// import { useQueryClient } from 'react-query';
 import { Address } from '@influenceth/sdk';
 
 import api from '~/lib/api';
 import { expectedBlockSeconds, getBlockTime } from '~/lib/utils';
+
+const resolveChainId = (chainId) => {
+  if (chainId === '0x534e5f4d41494e' || chainId === 'SN_MAIN') return 'SN_MAIN';
+  if (chainId === '0x534e5f474f45524c49' || chainId === 'SN_GOERLI') return 'SN_GOERLI';
+  if (chainId === '0x534e5f5345504f4c4941' || chainId === 'SN_SEPOLIA') return 'SN_SEPOLIA';
+  return 'SN_DEV';
+};
 
 const getErrorMessage = (error) => {
   console.error(error);
@@ -17,27 +23,23 @@ const getErrorMessage = (error) => {
   return 'An unknown error occurred, please check the console for details.';
 };
 
-const isAllowedChain = (chainId) => {
-  return `${chainId}` === `${process.env.REACT_APP_CHAIN_ID}`;
+const isAllowedChain = (chain) => {
+  let correct = resolveChainId(process.env.REACT_APP_CHAIN_ID);
+  return chain === correct;
 }
 
 const getAllowedChainLabel = (wallet) => {
-  if (process.env.REACT_APP_STARKNET_NETWORK.includes('mainnet')) {
-    return 'Mainnet';
-  } else if (process.env.REACT_APP_STARKNET_NETWORK.includes('localhost')) {
-    return wallet === 'Braavos' ? 'Developer' : 'Devnet';
-  } else if (process.env.REACT_APP_STARKNET_NETWORK.includes('sepolia')) {
-    return 'Sepolia';
-  }
-
-  return 'Goerli';
+  let correct = resolveChainId(process.env.REACT_APP_CHAIN_ID);
+  if (correct === 'SN_MAIN') return 'Mainnet';
+  if (correct === 'SN_GOERLI') return 'Goerli';
+  if (correct === 'SN_SEPOLIA') return 'Sepolia';
+  return wallet === 'Braavos' ? 'Developer' : 'Devnet';
 }
 
 const WalletContext = createContext();
 
 export function WalletProvider({ children }) {
   const onConnectCallback = useRef();
-  // const queryClient = useQueryClient();
 
   const [blockNumber, setBlockNumber] = useState(0);
   const [blockTime, setBlockTime] = useState(0);
@@ -53,7 +55,7 @@ export function WalletProvider({ children }) {
   });
 
   const active = useMemo(() => {
-    return starknet?.isConnected && starknet?.account?.address && isAllowedChain(starknet?.account?.provider?.chainId);
+    return starknet?.isConnected && starknet?.account?.address && isAllowedChain(starknet?.chainId);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [starknet?.isConnected, starknet?.account, starknetUpdated]);
 
@@ -109,7 +111,7 @@ export function WalletProvider({ children }) {
       const { wallet } = await starknetConnect(connectionOptions);
 
       if (wallet && wallet.isConnected && wallet.account?.address) {
-        if (isAllowedChain(wallet.account?.provider?.chainId)) {
+        if (isAllowedChain(wallet?.chainId)) {
           onConnectionResult(wallet);
         } else {
           onConnectionResult(null);
@@ -129,7 +131,7 @@ export function WalletProvider({ children }) {
 
   const disconnect = useCallback(async () => {
     setStarknet(null);
-    if (window.starknet?.account?.provider) starknetDisconnect({ clearLastWallet: true });
+    if (window.starknet?.account) starknetDisconnect({ clearLastWallet: true });
   }, []);
 
   const onConnectionChange = useCallback(() => {
