@@ -170,7 +170,7 @@ export const monthsToSeconds = (months) => Math.floor(yearOfSeconds * months / 1
 
 export const getBlockTime = async (starknet, blockNumber = 'pending') => {
   try {
-    const block = await starknet.account.getBlock(blockNumber > 0 ? blockNumber : 'pending');
+    const block = await starknet.provider.getBlock(blockNumber > 0 ? blockNumber : 'pending');
     // console.log('block', block);
     return block?.timestamp;
   } catch (e) {

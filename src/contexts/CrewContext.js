@@ -141,7 +141,7 @@ export function CrewProvider({ children }) {
   useEffect(() => {
     if (!actionTypeTriggered) {
       if (selectedCrew?.Crew?.actionType && selectedCrew.Crew.actionRound && (selectedCrew.Crew.actionRound + RandomEvent.MIN_ROUNDS) <= blockNumber) {
-        starknet.account.callContract(
+        starknet.provider.callContract(
           System.getRunSystemCall(
             'CheckForRandomEvent',
             { caller_crew: { id: selectedCrew.id, label: selectedCrew.label }},
@@ -166,7 +166,7 @@ export function CrewProvider({ children }) {
         });
       }
     }
-  }, [selectedCrew?.Crew?.actionType, selectedCrew?.Crew?.actionRound, blockNumber]);
+  }, [selectedCrew?.Crew?.actionType, selectedCrew?.Crew?.actionRound, blockNumber, starknet]);
 
   // add final data to selected crew
   const finalSelectedCrew = useMemo(() => {

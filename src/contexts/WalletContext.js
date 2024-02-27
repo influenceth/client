@@ -204,14 +204,16 @@ export function WalletProvider({ children }) {
   }, []);
 
   // argent is slow to put together it's final "starknet" object, so we check explicitly for getBlock method
-  const canCheckBlock = starknetReady && !!starknet?.account?.getBlock;
+  const canCheckBlock = useMemo(() => {
+    return starknetReady && !!starknet?.provider?.getBlock;
+  }, [starknet?.provider?.getBlock, starknetReady]);
 
   // init block number and block time
   const lastBlockNumberTime = useRef(0);
   const initializeBlockData = useCallback(async () => {
     if (!canCheckBlock) return;
     try {
-      const block = await starknet.account.getBlock('pending');
+      const block = await starknet.provider.getBlock('pending');
       if (block?.timestamp) {
         setBlockTime(block?.timestamp);
 
@@ -222,7 +224,7 @@ export function WalletProvider({ children }) {
 
         // ... so we get the block number from the parent (which matches what ws reports)
         } else if (block.parent_hash) {
-          const parent = await starknet.account.getBlock(block.parent_hash);
+          const parent = await starknet.provider.getBlock(block.parent_hash);
           if (parent?.block_number > 0) {
             lastBlockNumberTime.current = parent.block_number;
             setBlockNumber(parent.block_number);
@@ -236,7 +238,7 @@ export function WalletProvider({ children }) {
     } catch (e) {
       console.error('failed to init block data', e)
     }
-  }, [canCheckBlock]);
+  }, [canCheckBlock, starknet?.provider]);
 
   useEffect(initializeBlockData, [initializeBlockData]);
 
