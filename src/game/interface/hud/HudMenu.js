@@ -24,6 +24,7 @@ import {
   PassengersIcon,
   ResourceIcon,
   ShipIcon,
+  SearchIcon,
   SimulateRouteIcon,
   StationCrewIcon,
 } from '~/components/Icons';
@@ -447,7 +448,7 @@ const HudMenu = ({ forceOpenMenu }) => {
 
       {
         key: 'BELT_MAP_SEARCH',
-        label: 'System Search',
+        label: 'Asteroid Filters',
         icon: <AsteroidSearchIcon />,
         Component: hudMenus.SearchMap,
         componentProps: { assetType: 'asteroidsMapped' },
@@ -528,7 +529,7 @@ const HudMenu = ({ forceOpenMenu }) => {
       {
         key: 'ASTEROID_ADVANCED_SEARCH',
         label: 'Advanced Search',
-        icon: <ListViewIcon />,
+        icon: <SearchIcon />,
         onOpen: () => {
           history.push(`/listview`);  // TODO: should probably also go to /listview/lots
         },
@@ -538,7 +539,7 @@ const HudMenu = ({ forceOpenMenu }) => {
       {
         key: 'BELT_ADVANCED_SEARCH',
         label: 'Advanced Search',
-        icon: <ListViewIcon />,
+        icon: <SearchIcon />,
         onOpen: () => {
           history.push(`/listview/asteroids`);
         },

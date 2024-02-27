@@ -1,6 +1,19 @@
-<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" viewBox="0 0 24 24">
-  <rect x="12.99" y="12.74" width="9.7" height="1.45"/>
-  <rect x="12.99" y="15.97" width="9.7" height="1.45"/>
-  <polygon points="14.83 9.5 13.38 10.96 22.68 10.96 22.68 9.5 14.83 9.5"/>
-  <path d="m16.84,3.82H1.33c-.2,0-.31.25-.17.39l6.48,6.7v8.47c0,.2.2.33.38.25l2.33-.99c.1-.04.17-.14.17-.25v-7.47l6.48-6.7c.14-.15.04-.39-.17-.39Z"/>
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: #fff;
+        stroke-width: 0px;
+      }
+    </style>
+  </defs>
+  <rect class="cls-1" x="3" y="5" width="3" height="2"/>
+  <rect class="cls-1" x="8" y="5" width="13" height="2"/>
+  <rect class="cls-1" x="3" y="9" width="3" height="2"/>
+  <rect class="cls-1" x="8" y="9" width="13" height="2"/>
+  <rect class="cls-1" x="3" y="13" width="3" height="2"/>
+  <rect class="cls-1" x="8" y="13" width="13" height="2"/>
+  <rect class="cls-1" x="3" y="17" width="3" height="2"/>
+  <rect class="cls-1" x="8" y="17" width="13" height="2"/>
 </svg>
