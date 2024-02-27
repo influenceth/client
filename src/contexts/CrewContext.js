@@ -141,7 +141,7 @@ export function CrewProvider({ children }) {
   useEffect(() => {
     if (!actionTypeTriggered) {
       if (selectedCrew?.Crew?.actionType && selectedCrew.Crew.actionRound && (selectedCrew.Crew.actionRound + RandomEvent.MIN_ROUNDS) <= blockNumber) {
-        starknet.provider.callContract(
+        starknet.account.callContract(
           System.getRunSystemCall(
             'CheckForRandomEvent',
             { caller_crew: { id: selectedCrew.id, label: selectedCrew.label }},

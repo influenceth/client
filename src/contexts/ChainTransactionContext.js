@@ -711,7 +711,7 @@ export function ChainTransactionProvider({ children }) {
   // on initial load, set provider.waitForTransaction for any pendingTransactions
   // so that we can throw any extension-related or timeout errors needed
   useEffect(() => {
-    if (starknet?.provider && contracts && pendingTransactions?.length) {
+    if (starknet?.account && contracts && pendingTransactions?.length) {
       pendingTransactions.forEach(({ key, vars, txHash }) => {
         // (sanity check) this should not be possible since pendingTransaction should not be created
         // without txHash... so we aren't even reporting this error to user since should not happen
@@ -723,7 +723,7 @@ export function ChainTransactionProvider({ children }) {
           // NOTE: waitForTransaction is slow -- often slower than server to receive and process
           //  event and send back to frontend... so we are using it just to listen for errors
           //  (activities from backend will demonstrate success)
-          starknet.provider.waitForTransaction(txHash, { retryInterval: RETRY_INTERVAL })
+          starknet.account.waitForTransaction(txHash, { retryInterval: RETRY_INTERVAL })
             // .then((receipt) => {
             //   if (receipt) {
             //     console.log('transaction settled');
@@ -840,7 +840,7 @@ export function ChainTransactionProvider({ children }) {
   // }, [])
 
   const execute = useCallback(async (key, vars, meta = {}) => {
-    if (starknet?.provider && contracts && contracts[key]) {
+    if (starknet?.account && contracts && contracts[key]) {
       const { execute, onTransactionError } = contracts[key];
 
       setPromptingTransaction(true);
