@@ -27,6 +27,7 @@ import useAuth from '~/hooks/useAuth';
 import useInterval from '~/hooks/useInterval';
 import BrightButton from '~/components/BrightButton';
 import MouseoverInfoPane from '~/components/MouseoverInfoPane';
+import useEthBalance from '~/hooks/useEthBalance';
 
 const borderColor = `rgba(${theme.colors.mainRGB}, 0.5)`;
 
@@ -359,11 +360,10 @@ export const FundingDialog = ({ onClose, onSelect, targetAmount }) => {
 };
 
 export const CrewmateSKU = () => {
-  const { walletContext: { starknet } } = useAuth();
   const { purchaseCredits, getPendingCreditPurchase } = useCrewManager();
   const { data: priceConstants } = usePriceConstants();
+  const { data: ethBalance, refetch: refetchEth } = useEthBalance();
 
-  const [ethBalance, setEthBalance] = useState(null);
   const [tally, setTally] = useState(5);
 
   const totalCost = useMemo(() => {
@@ -390,31 +390,15 @@ export const CrewmateSKU = () => {
     return !!getPendingCreditPurchase();
   }, [getPendingCreditPurchase]);
 
-  const updateEthBalance = useCallback(async () => {
-    if (!starknet?.provider) return;
-    try {
-      const balance = await starknet.provider.callContract({
-        contractAddress: process.env.REACT_APP_ERC20_TOKEN_ADDRESS,
-        entrypoint: 'balanceOf',
-        calldata: [starknet.account.address]
-      });
-      setEthBalance(
-        uint256.uint256ToBN({ low: balance.result[0], high: balance.result[1] })
-      );
-    } catch (e) {
-      console.warn(e);
-    }
-  }, [starknet]);
-  useEffect(() => updateEthBalance(), [updateEthBalance]);
-
   const isInsufficientBalance = useMemo(() => {
     if (ethBalance === null) return false;
     return totalCost > ethBalance;
   }, [ethBalance, totalCost]);
 
   // TODO: would it make more sense to just check on each new block?
+  // TODO: definitely don't need this on both SKUs
   useInterval(() => {
-    if (polling && isInsufficientBalance) updateEthBalance();
+    if (polling && isInsufficientBalance) refetchEth();
   }, 5e3);
 
   return (
@@ -556,8 +540,8 @@ export const AsteroidSKU = () => {
 
 export const SwaySKU = () => {
   const { walletContext: { starknet } } = useAuth();
+  const { data: ethBalance, refetch: refetchEth } = useEthBalance();
 
-  const [ethBalance, setEthBalance] = useState(null);
   const [ethToSell, setEthToSell] = useState(0.01);
 
   const [funding, setFunding] = useState(false);
@@ -609,31 +593,15 @@ export const SwaySKU = () => {
     setPolling(true);
   };
 
-  const updateEthBalance = useCallback(async () => {
-    if (!starknet?.provider) return;
-    try {
-      const balance = await starknet.provider.callContract({
-        contractAddress: process.env.REACT_APP_ERC20_TOKEN_ADDRESS,
-        entrypoint: 'balanceOf',
-        calldata: [starknet.account.address]
-      });
-      setEthBalance(
-        uint256.uint256ToBN({ low: balance.result[0], high: balance.result[1] })
-      );
-    } catch (e) {
-      console.warn(e);
-    }
-  }, [starknet]);
-  useEffect(() => updateEthBalance(), [updateEthBalance]);
-
   const isInsufficientBalance = useMemo(() => {
     if (ethBalance === null) return false;
     return parseUnits(ethToSell.toString(10), 18) + parseUnits('0.001', 18) > ethBalance;
   }, [ethBalance, ethToSell]);
 
   // TODO: would it make more sense to just check on each new block?
+  // TODO: definitely don't need this on both SKUs
   useInterval(() => {
-    if (polling && isInsufficientBalance) updateEthBalance();
+    if (polling && isInsufficientBalance) refetchEth();
   }, 5e3);
 
   const isPendingPurchase = false;
