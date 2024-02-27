@@ -261,18 +261,15 @@ const useTutorial = () => {
   const dispatchDestinationSelected = useStore(s => s.dispatchDestinationSelected);
   const dispatchLotSelected = useStore(s => s.dispatchLotSelected);
   const dispatchReorientCamera = useStore(s => s.dispatchReorientCamera);
-  const dispatchResourceMapSelect = useStore(s => s.dispatchResourceMapSelect);
-  const dispatchResourceMapToggle = useStore(s => s.dispatchResourceMapToggle);
+  const dispatchTutorialStep = useStore(s => s.dispatchTutorialStep);
   const dispatchZoomScene = useStore(s => s.dispatchZoomScene);
   const updateZoomStatus = useStore(s => s.dispatchZoomStatusChanged);
+  const tutorialStep = useStore(s => s.tutorialStep);
   const openHudMenu = useStore(s => s.asteroids.openHudMenu);
   const destination = useStore(s => s.asteroids.destination);
-  const origin = useStore(s => s.asteroids.origin);
   const lot = useStore(s => s.asteroids.lot);
   const currentZoomScene = useStore(s => s.asteroids.zoomScene);
   const zoomStatus = useStore(s => s.asteroids.zoomStatus);
-
-  const [currentStepIndex, setCurrentStepIndex] = useState(0);
 
   const [transitioning, setTransitioning] = useState();
   const [hideMessage, setHideMessage] = useState();
@@ -442,41 +439,39 @@ const useTutorial = () => {
     }
   ]), [currentZoomScene, destination, lot, openHudMenu, resetAsteroidFilters, zoomStatus]);
 
-  const previousStep = useRef(currentStepIndex);
-
+  const previousStep = useRef(tutorialStep || -1);
   const updateStep = useCallback((newStep) => {
     if (transitioning) return;
     setTransitioning(true);
 
-    setCurrentStepIndex(newStep);
+    dispatchTutorialStep(newStep);
     const { initialize } = tutorialParts[newStep];
 
     initialize();
     setHideMessage(false);
-  }, [transitioning, tutorialParts]);
+  }, [dispatchTutorialStep, transitioning, tutorialParts]);
 
   useEffect(() => {
-    console.log('update step');
-    updateStep(0);
+    if (!(tutorialStep >= 0)) dispatchTutorialStep(0);
   }, []);
 
   useEffect(() => {
-    if (!transitioning) previousStep.current = currentStepIndex;
-  }, [currentStepIndex, transitioning]);
+    if (!transitioning) previousStep.current = tutorialStep;
+  }, [tutorialStep, transitioning]);
 
   const currentStep = useMemo(() => {
-    return tutorialParts[transitioning ? previousStep.current : currentStepIndex];
-  }, [currentStepIndex, transitioning, tutorialParts]);
+    return tutorialParts[transitioning ? previousStep.current : tutorialStep];
+  }, [tutorialStep, transitioning, tutorialParts]);
 
   return useMemo(() => ({
     updateStep,
     currentStep,
-    currentStepIndex,
+    currentStepIndex: tutorialStep,
     hideMessage: hideMessage,
     isTransitioning: transitioning,
     setHideMessage,
     steps: tutorialParts
-  }), [currentStepIndex, hideMessage, transitioning, tutorialParts, updateStep]);
+  }), [hideMessage, transitioning, tutorialParts, tutorialStep, updateStep]);
 }
 
 const TutorialItems = () => {
@@ -493,7 +488,8 @@ const TutorialItems = () => {
   const handleNext = useCallback(() => {
     if (currentStepIndex >= steps.length - 1) {
       if (account) history.push('/crew')
-      else login();
+      // TODO: see WelcomeFlow -- if want to start prompting for crewmate credit pack, do not want to do this redirect
+      else login().then((success) => { if (success) { history.push('/crew'); } });
     } else {
       updateStep(currentStepIndex + 1);
     }
@@ -503,7 +499,7 @@ const TutorialItems = () => {
   const hide = useMemo(() => {
     if (loading || (crews || []).find((c) => c._crewmates?.length > 0)) return true;
     return false;
-  }, [crews, loading])
+  }, [crews, loading]);
 
   // TODO: ideally, would not zoom out when account changes (unless stay logged out and click "explore")
   if (hide) return null;
@@ -540,7 +536,7 @@ const TutorialItems = () => {
         </CollapsibleSection>
       </OuterWrapper>
 
-      <TutorialMessage in={reactBool(!isTransitioning && !hideMessage)}>
+      <TutorialMessage in={reactBool(currentStep && !isTransitioning && !hideMessage)}>
         <CrewmateWrapper>
           <CrewmateOverflow>
             <CrewmateImage crewmateId={arvadLeader?.id} />

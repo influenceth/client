@@ -75,6 +75,7 @@ export function AuthProvider({ children }) {
           setAuthenticating(true);
           const newToken = await api.verifyLogin(account.address, { signature: signature.join(',') });
           dispatchAuthenticated(newToken);
+          return true;
         }
       } catch (e) {
         initiateLogout();
@@ -89,6 +90,7 @@ export function AuthProvider({ children }) {
       }
 
       setAuthenticating(false);
+      return false;
     }
   }, [ walletContext, token, dispatchAuthenticated ]); // eslint-disable-line react-hooks/exhaustive-deps
 

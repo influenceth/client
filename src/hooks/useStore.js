@@ -38,6 +38,7 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
     actionDialog: {},
     launcherPage: null,
     openHudMenu: null,
+    tutorialStep: -1,
 
     // scene: {
     //   belt: {
@@ -165,6 +166,10 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
 
     dispatchActionDialog: (type, params = {}) => set(produce(state => {
       state.actionDialog = { type, params };
+    })),
+
+    dispatchHasClickedPlay: () => set(produce(state => {
+      state.tutorialStep = state.tutorialStep > 0 ? 0 : state.tutorialStep;
     })),
 
     dispatchLauncherPage: (page) => set(produce(state => {
@@ -454,6 +459,11 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
 
     dispatchTokenInvalidated: () => set(produce(state => {
       state.auth.token = null;
+      state.tutorialStep = -1;
+    })),
+
+    dispatchTutorialStep: (step) => set(produce(state => {
+      state.tutorialStep = step;
     })),
 
     dispatchCrewSelected: (crewId) => set(produce(state => {
@@ -645,7 +655,8 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
     'draggables',
     'failedTransactions',
     'lotLoader',
-    'timeOverride'  // should this be in ClockContext?
+    'timeOverride',  // should this be in ClockContext?
+    'tutorialStep'
   ]
 })));
 

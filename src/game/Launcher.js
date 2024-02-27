@@ -299,6 +299,7 @@ const Launcher = (props) => {
 
   const launcherPage = useStore(s => s.launcherPage);
   const dispatchLauncherPage = useStore(s => s.dispatchLauncherPage);
+  const dispatchHasClickedPlay = useStore(s => s.dispatchHasClickedPlay);
   const dispatchToggleInterface = useStore(s => s.dispatchToggleInterface);
   const interfaceHidden = useStore(s => s.graphics.hideInterface);
   const hasSeenIntroVideo = useStore(s => s.hasSeenIntroVideo);
@@ -355,6 +356,7 @@ const Launcher = (props) => {
   }, []);
 
   const onClickPlay = useCallback(() => {
+    dispatchHasClickedPlay(true);
     dispatchLauncherPage();
   }, [hasSeenIntroVideo]);
 
@@ -407,7 +409,7 @@ const Launcher = (props) => {
               openerIcon={<CloseIcon />}
               openerAsButton
               openerTooltip="Back to Game"
-              onClickOpener={() => dispatchLauncherPage()}
+              onClickOpener={onClickPlay}
             />
           )
           : (
