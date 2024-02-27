@@ -110,12 +110,16 @@ export function WalletProvider({ children }) {
       const { wallet } = await starknetConnect(connectionOptions);
 
       if (wallet && wallet.isConnected && wallet.account?.address) {
-        if (isAllowedChain(wallet?.chainId)) {
+        if (!wallet.chainId) { // default to provider chainId if not set (starknetkit doesn't set for braavos)
+          wallet.chainId = wallet?.account?.provider?.chainId || wallet?.provider?.chainId;
+        }
+
+        if (isAllowedChain(wallet.chainId)) {
           onConnectionResult(wallet);
         } else {
           onConnectionResult(null);
           // eslint-disable-next-line no-throw-literal
-          throw `Chain unsupported, please connect your wallet to "${getAllowedChainLabel(wallet?.name)}".`;
+          throw `Chain unsupported, please connect your wallet to "${getAllowedChainLabel(wallet.name)}".`;
         }
       } else {
         onConnectionResult(null);
