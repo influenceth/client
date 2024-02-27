@@ -1229,7 +1229,7 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
         </>
       )
     };
-  }, [getEthFromFaucet, requestingEth, priceConstants, weiBalance]);
+  }, [getEthFromFaucet, crewmate, requestingEth, priceConstants, weiBalance]);
 
   if (!crewmate) return null;
   return (
