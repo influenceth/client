@@ -456,7 +456,6 @@ const useTutorial = () => {
   }, [transitioning, tutorialParts]);
 
   useEffect(() => {
-    console.log('update step');
     updateStep(0);
   }, []);
 
