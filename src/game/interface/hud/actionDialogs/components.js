@@ -963,7 +963,7 @@ const barChartPadding = 3;
 const barChartRounding = barChartHeight / 2;
 const BarChartValue = styled.span.attrs((p) => ({
   style: {
-    width: `${100 * Math.max(0, Math.min(p.value, 1))}%`
+    width: `calc(${100 * Math.max(0, Math.min(p.value, 1))}% - ${barChartPadding * 2}px)`,
   }
 }))`
   bottom: ${barChartPadding}px;
@@ -3030,8 +3030,8 @@ export const PropellantSection = ({ title, narrow, deltaVLoaded, deltaVRequired,
   const [deltaVMode, setDeltaVMode] = useState(false);
   // useEffect(() => ReactTooltip.rebuild(), []);
 
-  const propellantUse = propellantLoaded > 0 ? propellantRequired / propellantLoaded : (propellantRequired > 0 ? 1 : 0);
-  const deltaVUse = deltaVLoaded > 0 ? deltaVRequired / deltaVLoaded : (deltaVRequired > 0 ? 1 : 0);
+  const propellantUse = propellantLoaded > 0 ? propellantRequired / propellantLoaded : (propellantRequired > 0 ? Infinity : 0);
+  const deltaVUse = deltaVLoaded > 0 ? deltaVRequired / deltaVLoaded : (deltaVRequired > 0 ? Infinity : 0);
 
   return (
     <FlexSectionBlock
@@ -3073,11 +3073,11 @@ export const PropellantSection = ({ title, narrow, deltaVLoaded, deltaVRequired,
         {deltaVMode
           ? <BarChart
               color="#cccccc"
-              value={deltaVUse} />
+              value={Math.min(1, deltaVUse)} />
           : <BarChart
-              color={theme.colors.orange}
+              color={theme.colors[(deltaVMode ? deltaVUse : propellantUse) > 1 ? 'error' : 'orange']}
               bgColor={theme.colors.main}
-              value={propellantUse} />
+              value={Math.min(1, propellantUse)} />
         }
         {!(narrow && !propellantRequired) && (
           <BarChartNotes color={deltaVMode ? '#aaaaaa' : theme.colors.main}>
@@ -3091,7 +3091,11 @@ export const PropellantSection = ({ title, narrow, deltaVLoaded, deltaVRequired,
               </div>
             )}
             <div style={{ color: deltaVMode ? '#ccc' : theme.colors.orange, ...(narrow ? { textAlign: 'center', width: '100%'} : {}) }}>
-              {formatFixed(100 * (deltaVMode ? deltaVUse : propellantUse))}% of Loaded
+              {(deltaVMode ? deltaVUse : propellantUse) > 1
+                ? <span style={{ alignItems: 'center', color: theme.colors.error, display: 'flex', justifyContent: 'center' }}><WarningOutlineIcon /><span style={{ marginLeft: 4 }}>Insufficient Loaded</span></span>
+                : <>{formatFixed(100 * (deltaVMode ? deltaVUse : propellantUse))}% of Loaded</>
+              }
+              
             </div>
             {!narrow && (
               <div>

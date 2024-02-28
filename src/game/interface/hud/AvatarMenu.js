@@ -160,7 +160,7 @@ const AvatarMenu = () => {
 
           <CrewInfoContainer>
             <TitleBar>
-              <BaseLocation onClick={hydratedLocation.onLink}> 
+              <BaseLocation onClick={hydratedLocation.onLink}>
                 <CrewLocationLabel hydratedLocation={hydratedLocation} />
               </BaseLocation>
 
