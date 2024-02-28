@@ -3,7 +3,7 @@ import styled from 'styled-components';
 import { useFrame } from '@react-three/fiber';
 import { Html } from '@react-three/drei';
 import { Color, Vector3 } from 'three';
-import { AdalianOrbit } from '@influenceth/sdk';
+import { AdalianOrbit, Crewmate } from '@influenceth/sdk';
 import { cloneDeep } from 'lodash';
 
 import ClockContext from '~/contexts/ClockContext';
@@ -15,6 +15,8 @@ import vert from './orbit/orbit.vert';
 import { RouteInvalidIcon, RouteValidIcon } from '~/components/Icons';
 import { formatBeltDistance } from '~/game/interface/hud/actionDialogs/components';
 import useTravelSolutionIsValid from '~/hooks/useTravelSolutionIsValid';
+import { getCrewAbilityBonuses } from '~/lib/utils';
+import useCrewContext from '~/hooks/useCrewContext';
 
 const RouteMarker = styled.div`
   align-items: center;
@@ -49,6 +51,7 @@ const initialUniforms = {
 
 const TravelSolution = ({}) => {
   const { coarseTime } = useContext(ClockContext);
+  const { crew } = useCrewContext();
 
   const uniforms = useRef({
     ...cloneDeep(initialUniforms),
@@ -84,6 +87,9 @@ const TravelSolution = ({}) => {
   useEffect(() => {
     if (!travelSolution) return;
 
+    const propellantBonus = getCrewAbilityBonuses(Crewmate.ABILITY_IDS.PROPELLANT_EXHAUST_VELOCITY, crew);
+    console.log('travelSolution', travelSolution, 'propellantBonus', propellantBonus);
+
     // clear travel solution...
     if (
       // ...on endpoint mismatch
@@ -98,10 +104,13 @@ const TravelSolution = ({}) => {
 
       // ...on time override (i.e. ff / rewind)
       || timeOverride && ![0, 1].includes(Number(timeOverride.speed))
+
+      // ...crew's propellant bonus has changed
+      || travelSolution.propellantBonus !== (propellantBonus.totalBonus || 1)
     ) {
       dispatchTravelSolution();
     }
-  }, [baseTime, destinationId, originId, timeOverride, travelSolution]);
+  }, [baseTime, crew, destinationId, originId, timeOverride, travelSolution]);
 
   useEffect(() => {
     if (!travelSolution || !destination || !origin) {

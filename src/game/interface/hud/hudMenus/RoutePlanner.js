@@ -1,6 +1,6 @@
-import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import styled from 'styled-components';
-import { Crew, Entity, Inventory, Ship, Time } from '@influenceth/sdk';
+import { Crew, Crewmate, Entity, Inventory, Ship, Time } from '@influenceth/sdk';
 
 import Dropdown from '~/components/Dropdown';
 import { CheckedIcon, CloseIcon, UncheckedIcon, WarningIcon } from '~/components/Icons';
@@ -12,12 +12,15 @@ import useAsteroid from '~/hooks/useAsteroid';
 import useStore from '~/hooks/useStore';
 import { sampleAsteroidOrbit } from '~/lib/geometryUtils';
 import { reactBool, formatFixed, nativeBool } from '~/lib/utils';
-import { ShipImage, formatMass } from '../actionDialogs/components';
+import { MaterialBonusTooltip, MouseoverContent, ShipImage, formatMass } from '../actionDialogs/components';
 import { Scrollable } from './components/components';
 import useCrewContext from '~/hooks/useCrewContext';
 import useOwnedShips from '~/hooks/useOwnedShips';
 import formatters from '~/lib/formatters';
 import useConstants from '~/hooks/useConstants';
+import { getCrewAbilityBonuses } from '~/lib/utils';
+import { CrewCaptainCardFramed } from '~/components/CrewmateCardFramed';
+import MouseoverInfoPane from '~/components/MouseoverInfoPane';
 
 const ShipSelection = styled.div`
   align-items: center;
@@ -123,6 +126,16 @@ const Note = styled.span`
 const Value = styled.span`
   text-align: right;
   min-width: 90px;
+
+  ${p => p.bonus && p.bonus !== 1 && `
+    color: ${p.bonus < 1 ? p.theme.colors.error : p.theme.colors.success};
+    &:after {
+      content: "${p.bonus < 1 ? ' ▲' : ' ▼'}";
+      font-size: 50%;
+      padding-left: 2px;
+      vertical-align: middle;
+    }
+  `};
 `;
 
 const Closer = styled.span`
@@ -176,9 +189,29 @@ const getInventoriesByShipType = (shipType) => {
   return inventories;
 };
 
+const InfoRowWithTooltip = ({ children, tooltip }) => {
+  const refEl = useRef();
+  const [hovered, setHovered] = useState();
+  return (
+    <InfoRow
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      ref={refEl}>
+      {children}
+      {tooltip && (
+        <MouseoverInfoPane referenceEl={refEl.current} visible={hovered}>
+          <MouseoverContent>
+            {tooltip}
+          </MouseoverContent>
+        </MouseoverInfoPane>
+      )}
+    </InfoRow>
+  );
+};
+
 const RoutePlanner = () => {
   const { coarseTime } = useContext(ClockContext);
-  const { crew } = useCrewContext();
+  const { crew, loading: crewIsLoading } = useCrewContext();
 
   const originId = useStore(s => s.asteroids.origin);
   const destinationId = useStore(s => s.asteroids.destination);
@@ -210,7 +243,7 @@ const RoutePlanner = () => {
 
   const shipList = useMemo(() => {
     const escapeModule = crew?.Ship?.emergencyAt > 0 ? [ Object.assign({ _simulated: false }, crew ) ] : [];
-    if (myShipsLoading) return [];
+    if (crewIsLoading || myShipsLoading) return [];
 
     return [
       // add escape module
@@ -248,7 +281,7 @@ const RoutePlanner = () => {
       ...s,
       _name: `${s.Ship.transitDeparture > 0 ? '[In Flight] ' : ''}${formatters.shipName(s)}`
     }))
-  }, [myShips, myShipsLoading, crew?._location?.shipId, originId]);
+  }, [crewIsLoading, crew?._location?.shipId, myShips, myShipsLoading, originId]);
 
   // select default
   useEffect(() => {
@@ -259,7 +292,7 @@ const RoutePlanner = () => {
         setShip(shipList.find((s) => s._simulated && s.Ship.shipType === Ship.IDS.SHUTTLE));
       }
     }
-  }, [!!crew, shipList, ship]);
+  }, [!!crew, crewIsLoading, shipList, ship]);
 
   const toggleEmode = useCallback(() => {
     setEmode((e) => !e);
@@ -303,12 +336,12 @@ const RoutePlanner = () => {
 
   // if no crew, assume this is tutorial simulation (so minimize cargo, maximize propellant and food)
   useEffect(() => {
-    if (!crew && !!shipConfig) {
+    if (!crew && !crewIsLoading && !!shipConfig) {
       setCargoMass(0);
       setPropellantMass(shipConfig.maxPropellantMass);
       setFoodSupplies(100);
     }
-  }, [crew, shipConfig]);
+  }, [crew, crewIsLoading, shipConfig]);
 
   const onSetCargoMass = useCallback((amount) => {
     const parsed = parseInt(amount * 1_000_000) || 0;
@@ -388,6 +421,8 @@ const RoutePlanner = () => {
   const lastFedAt = useMemo(() => {
     return coarseTime - Crew.getTimeSinceFed(foodSupplies / 100, crew?._foodBonuses?.consumption) / 86400;
   }, [coarseTime, crew, foodSupplies]);
+
+  const propellantBonus = useMemo(() => getCrewAbilityBonuses(Crewmate.ABILITY_IDS.PROPELLANT_EXHAUST_VELOCITY, crew), [crew]);
 
   return (
     <Scrollable style={{ marginLeft: -12, paddingLeft: 12 }}>
@@ -504,6 +539,7 @@ const RoutePlanner = () => {
             maxDelay={maxDelay}
             minTof={minTof}
             maxTof={maxTof}
+            propellantBonus={propellantBonus?.totalBonus}
             shipParams={shipParams}
             size={348}
           />
@@ -513,35 +549,49 @@ const RoutePlanner = () => {
       {travelSolution && (
         <>
           <SectionHeader>Route Details</SectionHeader>
-          <SectionBody style={{ paddingBottom: 20 }}>
-            <InfoRow>
-              <label>Depart</label>
-              <Note>{travelSolution.departureTime > coarseTime ? '+' : ''}{formatFixed(Time.toRealDuration(24 * (travelSolution.departureTime - coarseTime), TIME_ACCELERATION), 1)}h</Note>
-              <Value>
-                {Time.fromOrbitADays(travelSolution.departureTime, TIME_ACCELERATION).toGameClockADays(true)}
-              </Value>
-            </InfoRow>
+          <SectionBody style={{ display: 'flex', paddingBottom: 20 }}>
+            {crew && (
+              <div style={{ paddingRight: 10, paddingTop: 5 }}>
+                <CrewCaptainCardFramed crewId={crew?.id} width={67} />
+              </div>
+            )}
+            <div style={{ flex: 1 }}>
+              <InfoRow>
+                <label>Depart</label>
+                <Note>{travelSolution.departureTime > coarseTime ? '+' : ''}{formatFixed(Time.toRealDuration(24 * (travelSolution.departureTime - coarseTime), TIME_ACCELERATION), 1)}h</Note>
+                <Value>
+                  {Time.fromOrbitADays(travelSolution.departureTime, TIME_ACCELERATION).toGameClockADays(true)}
+                </Value>
+              </InfoRow>
 
-            <InfoRow>
-              <label>Arrive</label>
-              <Note>{travelSolution.arrivalTime > coarseTime ? '+' : ''}{formatFixed(Time.toRealDuration(24 * (travelSolution.arrivalTime - coarseTime), TIME_ACCELERATION), 1)}h</Note>
-              <Value>
-                {Time.fromOrbitADays(travelSolution.arrivalTime, TIME_ACCELERATION).toGameClockADays(true)}
-              </Value>
-            </InfoRow>
+              <InfoRow>
+                <label>Arrive</label>
+                <Note>{travelSolution.arrivalTime > coarseTime ? '+' : ''}{formatFixed(Time.toRealDuration(24 * (travelSolution.arrivalTime - coarseTime), TIME_ACCELERATION), 1)}h</Note>
+                <Value>
+                  {Time.fromOrbitADays(travelSolution.arrivalTime, TIME_ACCELERATION).toGameClockADays(true)}
+                </Value>
+              </InfoRow>
 
-            <InfoRow>
-              <label>Propellant</label>
-              <Note isError={travelSolution.usedPropellantPercent > 100}>
-                {travelSolution.usedPropellantPercent > 1000
-                  ? <WarningIcon />
-                  : `${formatFixed(travelSolution.usedPropellantPercent, 1)}%`
-                }
-              </Note>
-              <Value>
-                {formatMass(travelSolution.usedPropellantMass, { minPrecision: 4 })}
-              </Value>
-            </InfoRow>
+              <InfoRowWithTooltip
+                tooltip={propellantBonus.totalBonus && propellantBonus.totalBonus !== 1 && (
+                  <MaterialBonusTooltip
+                    bonus={propellantBonus}
+                    isTimeStat
+                    title="Propellant Utilization"
+                    titleValue={`${formatFixed(100 / propellantBonus.totalBonus, 1)}%`} />
+                )}>
+                <label>Propellant</label>
+                <Note isError={travelSolution.usedPropellantPercent > 100}>
+                  {travelSolution.usedPropellantPercent > 1000
+                    ? <WarningIcon />
+                    : `${formatFixed(travelSolution.usedPropellantPercent, 1)}%`
+                  }
+                </Note>
+                <Value bonus={propellantBonus.totalBonus}>
+                  {formatMass(travelSolution.usedPropellantMass, { minPrecision: 4 })}
+                </Value>
+              </InfoRowWithTooltip>
+            </div>
           </SectionBody>
         </>
       )}
