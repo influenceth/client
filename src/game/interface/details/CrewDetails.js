@@ -519,13 +519,13 @@ const CrewDetails = ({ crewId, crew, isMyCrew, isOwnedCrew, selectCrew }) => {
           </CrewDetailsContainer>
           <ManagementContainer>
             {isOwnedCrew && <MyCrewStatement><MyAssetIcon /> This crew is owned by me.</MyCrewStatement>}
-            <Stat label="No. Members">{crew.Crew?.roster?.length || 0}</Stat>
+            <Stat label="Crew ID">{crewId || 0}</Stat>
             <Stat label="Formed">{formationDate}</Stat>
             {isMyCrew && (
               <div style={{ paddingTop: 15 }}>
                 <Button subtle onClick={() => onSetAction('MANAGE_CREW')}>Manage Crew</Button>
                 {crew.Crew?.roster?.length >= 2 && <Button subtle onClick={() => onSetAction('MANAGE_CREW', { exchangeCrewId: 0 })}>Split Crew</Button>}
-                <Button disabled={nativeBool(crew.Crew?.roster?.length >= 5)} subtle onClick={onClickRecruit}>Recruit Crewmate</Button>
+                <Button disabled={nativeBool(crew.Crew?.roster?.length >= 5)} subtle onClick={onClickRecruit}>Recruit to Crew</Button>
               </div>
             )}
             {isOwnedCrew && !isMyCrew && (
