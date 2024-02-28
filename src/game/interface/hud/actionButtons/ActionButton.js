@@ -64,7 +64,7 @@ const ActionButtonWrapper = styled.div`
     `
   }
 
-  ${p => p.attention && css`
+  ${p => p.attention && !p.disabled && css`
     color: ${p.theme.colors.success};
     &:before {
       background-color: ${p => p.theme.colors.success};
@@ -118,7 +118,7 @@ const ActionButton = styled.div`
     }
   `}
 
-  ${p => p.attention ? css`
+  ${p => p.attention && !p.disabled ? css`
     animation: ${borderAnimation} 800ms ease-out infinite;
     border-color: ${p.theme.colors.success};
     & > div {

@@ -12,7 +12,6 @@ import { CloseIcon, TutorialIcon } from '~/components/Icons';
 import { ZOOM_IN_ANIMATION_TIME, ZOOM_OUT_ANIMATION_TIME, ZOOM_TO_PLOT_ANIMATION_TIME } from '~/game/scene/Asteroid';
 import useAuth from '~/hooks/useAuth';
 import useCrewContext from '~/hooks/useCrewContext';
-import useCrewmate from '~/hooks/useCrewmate';
 import useStore from '~/hooks/useStore';
 import { reactBool } from '~/lib/utils';
 import theme from '~/theme';
@@ -237,7 +236,7 @@ const CrewmateOverflow = styled.div`
   top: -${crewmateOverflow}px;
 `;
 const CrewmateImage = styled.div`
-  background-image: url("${process.env.REACT_APP_IMAGES_URL}/v1/crew/${p => p.crewmateId}/image.svg?bustOnly=true");
+  background-image: ${p => p.crewmateId ? `url("${process.env.REACT_APP_IMAGES_URL}/v1/crew/${p.crewmateId}/image.svg?bustOnly=true")` : 'none'};
   background-position: top center;
   background-repeat: no-repeat;
   background-size: cover;
@@ -281,7 +280,7 @@ const useTutorial = () => {
       title: 'The Star System Adalia',
       content: `Welcome to the star system Adalia, which was first discovered by
         the wayward colony ship Arvad in the year 2335.`,
-      crewmate: 7539,
+      crewmateId: 7539,
       initialize: () => {
         if (currentZoomScene) dispatchZoomScene();
         if (destination) dispatchDestinationSelected();
@@ -303,7 +302,7 @@ const useTutorial = () => {
       title: 'The Belt',
       content: `The Adalian belt is divided into 250,000 individually colonizable
         asteroids which form the extent of the Prime Council's federated territories.`,
-      crewmate: 6891,
+      crewmateId: 6891,
       initialize: () => {
         if (currentZoomScene) dispatchZoomScene();
         if (destination) dispatchDestinationSelected();
@@ -327,7 +326,7 @@ const useTutorial = () => {
       content: `Skillful pilots and navigators are a foundational pillar of Adalian
         society. Successfully traversing a vast system of individually orbiting
         locations requires care and planning.`,
-      crewmate: 6877,
+      crewmateId: 6877,
       initialize: () => {
         if (currentZoomScene) dispatchZoomScene();
         dispatchOriginSelected(15);
@@ -349,7 +348,7 @@ const useTutorial = () => {
       content: `The foundations of the asteroid economy begin with raw ore. Everything
         from volatile gases, to organic compounds, and heavy metallic elements may be
         targeted for mining.`,
-      crewmate: 7422,
+      crewmateId: 7422,
       initialize: () => {
         if (currentZoomScene) dispatchZoomScene();
         dispatchOriginSelected(1);
@@ -371,7 +370,7 @@ const useTutorial = () => {
     {
       title: 'Warehousing',
       content: `After extraction, raw materials are packaged for transport to storage or refining facilities elsewhere in the colony.`,
-      crewmate: 7305,
+      crewmateId: 7305,
       initialize: () => {
         if (currentZoomScene) dispatchZoomScene();
         dispatchOriginSelected(1);
@@ -394,7 +393,7 @@ const useTutorial = () => {
       title: 'Markets',
       content: `The Adalian economy also relies heavily on thriving commercial
         Marketplaces bringing together buyers and sellers of goods.`,
-      crewmate: 7538,
+      crewmateId: 7538,
       initialize: () => {
         if (currentZoomScene) dispatchZoomScene();
         dispatchOriginSelected(1);
@@ -418,7 +417,7 @@ const useTutorial = () => {
       content: `Habitats serve as schooling and recruitment hubs for new Adalian
         Citizens coming of age and starting their journeys as functioning members
         of a new stellar society still in its infancy.`,
-      crewmate: 6980,
+      crewmateId: 6980,
       initialize: () => {
         if (currentZoomScene) dispatchZoomScene();
         dispatchOriginSelected(1);
@@ -479,7 +478,6 @@ const TutorialItems = () => {
   const { crews, loading } = useCrewContext();
   const history = useHistory();
   const { updateStep, currentStep, currentStepIndex, hideMessage, isTransitioning, setHideMessage, steps } = useTutorial();
-  const { data: arvadLeader } = useCrewmate(currentStep?.crewmate);
 
   const handlePrevious = useCallback(() => {
     updateStep(Math.max(0, currentStepIndex - 1));
@@ -537,35 +535,39 @@ const TutorialItems = () => {
       </OuterWrapper>
 
       <TutorialMessage in={reactBool(currentStep && !isTransitioning && !hideMessage)}>
-        <CrewmateWrapper>
-          <CrewmateOverflow>
-            <CrewmateImage crewmateId={arvadLeader?.id} />
-          </CrewmateOverflow>
-        </CrewmateWrapper>
+        {currentStep && (
+          <>
+            <CrewmateWrapper>
+              <CrewmateOverflow>
+                <CrewmateImage crewmateId={currentStep?.crewmateId} />
+              </CrewmateOverflow>
+            </CrewmateWrapper>
 
-        <TutorialContent>
-          <h3>
-            <span>{currentStep?.title}</span>
-            <IconButton onClick={() => setHideMessage(true)} scale={0.75}><CloseIcon /></IconButton>
-          </h3>
-          <div style={{ height: 70 }}>{currentStep?.content}</div>
-          <Buttons>
-            {currentStepIndex > 0 && (
-              <Button flip size="small" subtle onClick={handlePrevious}>Previous</Button>
-            )}
-            {currentStepIndex < steps.length - 1 && (
-              <Button size="small" subtle onClick={handleNext}>Next Section</Button>
-            )}
-            {currentStepIndex === steps.length - 1 && (
-              <Button
-                color={theme.colors.success}
-                disabled={authenticating}
-                onClick={handleNext}
-                size="small"
-                subtle>Start Your Crew</Button>
-            )}
-          </Buttons>
-        </TutorialContent>
+            <TutorialContent>
+              <h3>
+                <span>{currentStep?.title}</span>
+                <IconButton onClick={() => setHideMessage(true)} scale={0.75}><CloseIcon /></IconButton>
+              </h3>
+              <div style={{ height: 70 }}>{currentStep?.content}</div>
+              <Buttons>
+                {currentStepIndex > 0 && (
+                  <Button flip size="small" subtle onClick={handlePrevious}>Previous</Button>
+                )}
+                {currentStepIndex < steps.length - 1 && (
+                  <Button size="small" subtle onClick={handleNext}>Next Section</Button>
+                )}
+                {currentStepIndex === steps.length - 1 && (
+                  <Button
+                    color={theme.colors.success}
+                    disabled={authenticating}
+                    onClick={handleNext}
+                    size="small"
+                    subtle>Start Your Crew</Button>
+                )}
+              </Buttons>
+            </TutorialContent>
+          </>
+        )}
 
         <ClipCorner dimension={25} color={borderColor} />
       </TutorialMessage>

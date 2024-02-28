@@ -12,6 +12,7 @@ import CrewIndicator from '~/components/CrewIndicator';
 import { HudMenuCollapsibleSection, Scrollable, Tray } from './components/components';
 import LotTitleArea from './components/LotTitleArea';
 import PolicyPanels from './components/PolicyPanels';
+import useCrew from '~/hooks/useCrew';
 
 const Description = styled.div`
   color: ${p => p.theme.colors.main};
@@ -22,7 +23,7 @@ const Description = styled.div`
 const LotInfo = () => {
   const lotId = useStore(s => s.asteroids.lot);
   const { data: lot } = useLot(lotId);
-  const { data: controller } = useLot(lot?.building?.Control?.controller?.id);
+  const { data: controller } = useCrew(lot?.building?.Control?.controller?.id);
 
   const dispatchZoomScene = useStore(s => s.dispatchZoomScene);
   const zoomScene = useStore(s => s.asteroids.zoomScene);

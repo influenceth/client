@@ -1,6 +1,6 @@
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import styled from 'styled-components';
-import { Product, Ship, Time } from '@influenceth/sdk';
+import { Crewmate, Product, Ship, Time } from '@influenceth/sdk';
 
 import {
   LocationIcon,
@@ -10,7 +10,7 @@ import {
   RotatedShipMarkerIcon,
   WarningOutlineIcon
 } from '~/components/Icons';
-import { formatTimer, reactBool } from '~/lib/utils';
+import { formatFixed, formatTimer, getCrewAbilityBonuses, reactBool } from '~/lib/utils';
 
 import {
   ActionDialogFooter,
@@ -27,6 +27,8 @@ import {
   ShipTab,
   formatVelocity,
   ShipInputBlock,
+  MaterialBonusTooltip,
+  getBonusDirection,
 } from './components';
 import useStore from '~/hooks/useStore';
 import { ActionDialogInner } from '../ActionDialog';
@@ -212,6 +214,8 @@ const SetCourse = ({ origin, destination, manager, ship, stage, travelSolution, 
   const crewmates = currentTravelAction?._crewmates || crew?._crewmates || [];
   const captain = crewmates[0];
 
+  const propellantBonus = useMemo(() => getCrewAbilityBonuses(Crewmate.ABILITY_IDS.PROPELLANT_EXHAUST_VELOCITY, crew), [crew]);
+
   const [shipConfig, cargoInv, propellantInv] = useMemo(() => {
     if (!ship) return [];
     const shipConfig = Ship.TYPES[ship.Ship.shipType];
@@ -235,11 +239,10 @@ const SetCourse = ({ origin, destination, manager, ship, stage, travelSolution, 
     return totalMass;
   }, [currentTravelAction, propellantInv]);
 
-  // TODO: should we apply bonus here? to solution deltaV?
   const deltaVLoaded = useMemo(() => {
     if (!ship || !propellantMassLoaded) return 0;
-    const propellantBonus = 1;
-    return Ship.Entity.propellantToDeltaV(ship, propellantMassLoaded, propellantBonus);
+    const propellantToDeltaVBonus = 1; // TODO: is this ever going to be a thing?
+    return Ship.Entity.propellantToDeltaV(ship, propellantMassLoaded, propellantToDeltaVBonus);
   }, [propellantMassLoaded, ship]);
 
   const [crewTimeRequirement, taskTimeRequirement] = useMemo(() => {
@@ -253,7 +256,15 @@ const SetCourse = ({ origin, destination, manager, ship, stage, travelSolution, 
     {
       label: 'Propellant Used',
       value: formatMass(travelSolution.usedPropellantMass),
-      direction: 0
+      direction: getBonusDirection(propellantBonus),
+      isTimeStat: true,
+      tooltip: propellantBonus.totalBonus !== 1 && (
+        <MaterialBonusTooltip
+          bonus={propellantBonus}
+          isTimeStat
+          title="Propellant Utilization"
+          titleValue={`${formatFixed(100 / propellantBonus.totalBonus, 1)}%`} />
+      )
     },
     {
       label: 'Delta-V Used',
@@ -262,7 +273,7 @@ const SetCourse = ({ origin, destination, manager, ship, stage, travelSolution, 
     },
     {
       label: 'Arriving In',
-      value: formatTimer(arrivingIn, 3),
+      value: formatTimer(Time.toRealDuration(arrivingIn * 86400, crew?._timeAcceleration), 3),
       direction: 0,
       isTimeStat: true,
     },
@@ -291,7 +302,7 @@ const SetCourse = ({ origin, destination, manager, ship, stage, travelSolution, 
       value: ship.Station?.population || crew.Crew?.roster.length || 0,
       direction: 0,
     },
-  ]), [arrivingIn, cargoInv, travelSolution, propellantInv, shipConfig]);
+  ]), [arrivingIn, cargoInv, travelSolution, propellantBonus, propellantInv, shipConfig]);
 
   const onDepart = useCallback(() => {
     depart();

@@ -21,7 +21,8 @@ import {
   ShipTab,
   PropulsionTypeSection,
   LotInputBlock,
-  formatMass
+  formatMass,
+  MaterialBonusTooltip
 } from './components';
 import useLot from '~/hooks/useLot';
 import useStore from '~/hooks/useStore';
@@ -58,7 +59,7 @@ const LaunchShip = ({ asteroid, originLot, manager, ship, shipCrews, stage, ...p
 
   const [hopperBonus, propellantBonus] = useMemo(() => {
     if (!flightCrew) return {};
-    const bonusIds = [Crewmate.ABILITY_IDS.HOPPER_TRANSPORT_TIME, Crewmate.ABILITY_IDS.PROPELLANT_FLOW_RATE];
+    const bonusIds = [Crewmate.ABILITY_IDS.HOPPER_TRANSPORT_TIME, Crewmate.ABILITY_IDS.PROPELLANT_EXHAUST_VELOCITY];
     const abilities = getCrewAbilityBonuses(bonusIds, flightCrew) || {};
     return bonusIds.map((id) => abilities[id] || {});
   }, [flightCrew]);
@@ -66,15 +67,15 @@ const LaunchShip = ({ asteroid, originLot, manager, ship, shipCrews, stage, ...p
   const [escapeVelocity, propellantRequirement, poweredTime, tugTime] = useMemo(() => {
     if (!ship || !asteroid) return [0, 0, 0, 0];
     const escapeVelocity = Asteroid.Entity.getEscapeVelocity(asteroid) * 1000;
-    const propellantRequired = Ship.Entity.getPropellantRequirement(ship, escapeVelocity, hopperBonus.totalBonus);
+    const propellantRequired = Ship.Entity.getPropellantRequirement(ship, escapeVelocity, propellantBonus.totalBonus);
     const originLotIndex = Lot.toIndex(originLot?.id);
     return [
       escapeVelocity,
       propellantRequired,
-      0, // TODO: propellantBonus may be incorporated here in the future
+      0, // TODO: poweredTime may be a thing in the future
       Time.toRealDuration(Asteroid.getLotTravelTime(asteroid?.id, originLotIndex, 0, hopperBonus.totalBonus), crew?._timeAcceleration)
     ];
-  }, [asteroid, hopperBonus, originLot?.id, powered, ship]);
+  }, [asteroid, hopperBonus, originLot?.id, powered, propellantBonus, ship]);
 
   const isDeliveryPending = useMemo(() => !!(ship?.Inventories || []).find((inv) => inv.reservedMass > 0), [ship])
 
@@ -112,7 +113,15 @@ const LaunchShip = ({ asteroid, originLot, manager, ship, shipCrews, stage, ...p
     {
       label: 'Propellant Used',
       value: powered ? formatMass(propellantRequirement) : 0,
-      direction: powered && propellantRequirement > 0 ? getBonusDirection(hopperBonus) : 0
+      direction: powered && propellantRequirement > 0 ? getBonusDirection(propellantBonus) : 0,
+      isTimeStat: true,
+      tooltip: propellantRequirement > 0 && propellantBonus.totalBonus !== 1 && (
+        <MaterialBonusTooltip
+          bonus={propellantBonus}
+          isTimeStat
+          title="Propellant Utilization"
+          titleValue={`${formatFixed(100 / propellantBonus.totalBonus, 1)}%`} />
+      )
     },
     {
       label: 'Escape Velocity',
@@ -127,7 +136,7 @@ const LaunchShip = ({ asteroid, originLot, manager, ship, shipCrews, stage, ...p
       ),
       direction: 0,
     },
-  ]), [escapeVelocity, hopperBonus, launchTime, propellantRequirement, ship]);
+  ]), [escapeVelocity, hopperBonus, launchTime, propellantBonus, propellantRequirement, ship]);
 
   const onLaunch = useCallback(() => {
     undockShip(!powered);

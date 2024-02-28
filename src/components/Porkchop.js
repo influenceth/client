@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import styled from 'styled-components';
 import { lambert } from '@influenceth/astro';
 import { GM_ADALIA } from '@influenceth/sdk';
@@ -124,7 +124,8 @@ const Porkchop = ({
   minTof,
   maxTof,
   shipParams,
-  size
+  size,
+  propellantBonus = 1
 }) => {
   const { processInBackground, cancelBackgroundProcesses } = useWebWorker();
 
@@ -141,7 +142,7 @@ const Porkchop = ({
   const canvasRef = useRef();
   const runRef = useRef();
 
-  const { maxDeltaV } = shipParams;
+  const maxDeltaV = useMemo(() => shipParams?.maxDeltaV * propellantBonus, [propellantBonus, shipParams]);
 
   const setCanvasRef = useCallback((canvas) => {
     canvasRef.current = canvas;
@@ -314,6 +315,9 @@ const Porkchop = ({
       usedPropellantMass = wetmass * (1 - 1 / Math.exp(solution.deltaV / shipParams.exhaustVelocity));
     }
 
+    // apply propellant bonus
+    usedPropellantMass /= propellantBonus;
+
     const departureTime = baseTime + delay;
     const arrivalTime = departureTime + tof;
     const insufficientFood = arrivalTime > (emode ? departureTime : lastFedAt) + maxFoodUtilizationAdays;
@@ -331,6 +335,7 @@ const Porkchop = ({
       originPosition: oPos.toArray(),
       originVelocity: oVel.toArray(),
       destinationPosition: dPos.toArray(),
+      propellantBonus,
       key: Date.now()
     });
   }, [emode, originPath, destinationPath, lastFedAt, maxDeltaV, shipParams]);

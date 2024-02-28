@@ -24,7 +24,8 @@ import {
   LotInputBlock,
   formatMass,
   getBonusDirection,
-  TimeBonusTooltip
+  TimeBonusTooltip,
+  MaterialBonusTooltip
 } from './components';
 import useLot from '~/hooks/useLot';
 import useStore from '~/hooks/useStore';
@@ -61,22 +62,22 @@ const LandShip = ({ asteroid, manager, ship, stage, ...props }) => {
 
   const [hopperBonus, propellantBonus] = useMemo(() => {
     if (!crew) return {};
-    const bonusIds = [Crewmate.ABILITY_IDS.HOPPER_TRANSPORT_TIME, Crewmate.ABILITY_IDS.PROPELLANT_FLOW_RATE];
+    const bonusIds = [Crewmate.ABILITY_IDS.HOPPER_TRANSPORT_TIME, Crewmate.ABILITY_IDS.PROPELLANT_EXHAUST_VELOCITY];
     const abilities = getCrewAbilityBonuses(bonusIds, crew) || {};
     return bonusIds.map((id) => abilities[id] || {});
   }, [crew]);
 
   const [escapeVelocity, propellantRequirement, poweredTime, tugTime] = useMemo(() => {
     const escapeVelocity = Asteroid.Entity.getEscapeVelocity(asteroid) * 1000;
-    const propellantRequired = Ship.Entity.getPropellantRequirement(ship, escapeVelocity, hopperBonus.totalBonus);
+    const propellantRequired = Ship.Entity.getPropellantRequirement(ship, escapeVelocity, propellantBonus.totalBonus);
     const destinationLotIndex = destinationLot ? Lot.toIndex(destinationLot?.id) : 1;
     return [
       escapeVelocity,
       propellantRequired,
-      0, // TODO: propellantBonus may be incorporated here in the future
+      0, // TODO: poweredTime may be a thing in the future
       Time.toRealDuration(Asteroid.getLotTravelTime(asteroid?.id, 0, destinationLotIndex, hopperBonus.totalBonus), crew?._timeAcceleration)
     ];
-  }, [asteroid, hopperBonus, destinationLot?.id, powered, ship]);
+  }, [asteroid, destinationLot?.id, hopperBonus, powered, propellantBonus, ship]);
 
   const [propellantLoaded, deltaVLoaded] = useMemo(() => {
     if (!ship) return 0;
@@ -111,7 +112,15 @@ const LandShip = ({ asteroid, manager, ship, stage, ...props }) => {
     {
       label: 'Propellant Used',
       value: powered ? formatMass(propellantRequirement) : 0,
-      direction: powered && propellantRequirement > 0 ? getBonusDirection(hopperBonus) : 0
+      direction: powered && propellantRequirement > 0 ? getBonusDirection(propellantBonus) : 0,
+      isTimeStat: true,
+      tooltip: propellantRequirement > 0 && propellantBonus.totalBonus !== 1 && (
+        <MaterialBonusTooltip
+          bonus={propellantBonus}
+          isTimeStat
+          title="Propellant Utilization"
+          titleValue={`${formatFixed(100 / propellantBonus.totalBonus, 1)}%`} />
+      )
     },
     {
       label: 'Escape Velocity',
@@ -126,7 +135,7 @@ const LandShip = ({ asteroid, manager, ship, stage, ...props }) => {
       ),
       direction: 0,
     },
-  ]), [escapeVelocity, hopperBonus, launchTime, propellantRequirement, ship]);
+  ]), [escapeVelocity, hopperBonus, launchTime, propellantBonus, propellantRequirement, ship]);
 
   const onLand = useCallback(() => {
     if (!destinationLot) return;

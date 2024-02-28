@@ -1,12 +1,13 @@
 import { useContext, useMemo } from 'react';
 import styled from 'styled-components';
-import { Crew, Inventory, Ship } from '@influenceth/sdk';
+import { Crew, Inventory, Ship, Time } from '@influenceth/sdk';
 
 import ClockContext from '~/contexts/ClockContext';
 import useCrewContext from '~/hooks/useCrewContext';
 import useStore from '~/hooks/useStore';
 import { WarningIcon } from '../Icons';
 import { formatFixed } from '~/lib/utils';
+import useConstants from '~/hooks/useConstants';
 
 const tagHeight = 22;
 const halfTagHeight = tagHeight / 2;
@@ -261,6 +262,7 @@ const DelayLabel = styled(TopLevelLabel)`
 
 const SolutionLabels = ({ center, emode, lastFedAt, mousePos, shipParams }) => {
   const { coarseTime } = useContext(ClockContext);
+  const { data: TIME_ACCELERATION } = useConstants('TIME_ACCELERATION');
   
   const { crew } = useCrewContext();
   const travelSolution = useStore(s => s.asteroids.travelSolution);
@@ -275,11 +277,11 @@ const SolutionLabels = ({ center, emode, lastFedAt, mousePos, shipParams }) => {
     if (!travelSolution) return {};
 
     return {
-      arrival: Math.round(travelSolution.arrivalTime - coarseTime),
-      delay: Math.round(travelSolution.departureTime - coarseTime),
+      arrival: Math.round(Time.toRealDuration(24 * (travelSolution.arrivalTime - coarseTime), TIME_ACCELERATION)),
+      delay: Math.round(Time.toRealDuration(24 * (travelSolution.departureTime - coarseTime), TIME_ACCELERATION)),
+      tof: Math.round(Time.toRealDuration(24 * (travelSolution.arrivalTime - travelSolution.departureTime), TIME_ACCELERATION)),
+      usedPropellant: Math.ceil(travelSolution.usedPropellantPercent),
       invalid: travelSolution.invalid,
-      tof: (travelSolution.arrivalTime - travelSolution.departureTime),
-      usedPropellant: Math.ceil(travelSolution.usedPropellantPercent)
     }
   }, [travelSolution]);
 
