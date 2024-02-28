@@ -11,7 +11,9 @@ import CrewmateInfoPane from '~/components/CrewmateInfoPane';
 import CrewLocationLabel from '~/components/CrewLocationLabel';
 import Details from '~/components/DetailsModal';
 import LiveFoodStatus from '~/components/LiveFoodStatus';
+import LiveReadyStatus from '~/components/LiveReadyStatus';
 import {
+  BlockIcon,
   CheckIcon,
   CloseIcon,
   EditIcon,
@@ -167,6 +169,7 @@ const AboveFold = styled.div`
 const CrewDetailsContainer = styled.div`
   flex: 1;
 `;
+
 const ManagementContainer = styled.div`
   border-left: 1px solid #363636;
   flex: 0 0 280px;
@@ -215,6 +218,7 @@ const NameWrapper = styled.div`
     font-size: 30px;
     font-weight: normal;
     margin: 0;
+    flex: 1;
   }
   & > input {
     flex: 1;
@@ -416,11 +420,11 @@ const CrewDetails = ({ crewId, crew, isMyCrew, isOwnedCrew, selectCrew }) => {
                       </Button>
                     )}
                     <h4>{changingName ? newName : formatters.crewName(crew)}</h4>
+                    <LiveReadyStatus crew={crew} />
                   </>
                 )
               }
             </NameWrapper>
-
             <CrewWrapper>
               <PopperWrapper disableRefSetter={!ready}>
                 {(refEl, setRefEl) => {
@@ -429,7 +433,7 @@ const CrewDetails = ({ crewId, crew, isMyCrew, isOwnedCrew, selectCrew }) => {
                     return (
                       <div>
                         <EmptyCrewmateCardFramed isCaptain onClick={isMyCrew ? onClickRecruit : null} width={180}>
-                          {isMyCrew && <PlusIcon />}
+                          {isMyCrew && crew._ready && <PlusIcon />}
                         </EmptyCrewmateCardFramed>
                       </div>
                     );
@@ -467,8 +471,9 @@ const CrewDetails = ({ crewId, crew, isMyCrew, isOwnedCrew, selectCrew }) => {
                     const crewmate = crew._crewmates?.[i + 1];
                     if (!crewmate) {
                       return (
-                        <EmptyCrewmateCardFramed key={i} onClick={isMyCrew ? onClickRecruit : null} width={146}>
-                          {isMyCrew && <PlusIcon />}
+                        <EmptyCrewmateCardFramed key={i} onClick={(isMyCrew && crew._ready) ? onClickRecruit : null} width={146}>
+                          {isMyCrew && crew._ready && <PlusIcon />}
+                          {isMyCrew && !crew._ready && <BlockIcon />}
                         </EmptyCrewmateCardFramed>
                       );
                     }
@@ -529,7 +534,7 @@ const CrewDetails = ({ crewId, crew, isMyCrew, isOwnedCrew, selectCrew }) => {
               <div style={{ paddingTop: 15 }}>
                 <Button subtle onClick={() => onSetAction('MANAGE_CREW')}>Manage Crew</Button>
                 {crew.Crew?.roster?.length >= 2 && <Button subtle onClick={() => onSetAction('MANAGE_CREW', { exchangeCrewId: 0 })}>Split Crew</Button>}
-                <Button disabled={nativeBool(crew.Crew?.roster?.length >= 5)} subtle onClick={onClickRecruit}>Recruit to Crew</Button>
+                <Button disabled={nativeBool(crew.Crew?.roster?.length >= 5) || !crew._ready} subtle onClick={onClickRecruit}>Recruit to Crew</Button>
               </div>
             )}
             {isOwnedCrew && !isMyCrew && (

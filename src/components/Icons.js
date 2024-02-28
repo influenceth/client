@@ -5,6 +5,7 @@ import { FiCheckSquare, FiDownload, FiExternalLink, FiLogIn, FiMenu, FiSearch, F
 import { HiClock, HiCog, HiChevronDoubleLeft, HiChevronDoubleRight } from 'react-icons/hi';
 import {
   MdAdd,
+  MdBlock,
   MdFlag,
   MdKeyboardArrowDown,
   MdChevronRight,
@@ -358,6 +359,7 @@ export {
   HiClock as TimeIcon,
   HiCog as SettingsIcon,
   MdAdd as PlusIcon,
+  MdBlock as BlockIcon,
   MdChevronRight as ChevronRightIcon,
   MdChevronRight as CollapsedIcon,
   MdClose as CloseIcon,

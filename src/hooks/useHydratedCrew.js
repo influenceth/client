@@ -5,10 +5,12 @@ import { Crewmate } from '@influenceth/sdk';
 import { getCrewAbilityBonuses, locationsArrToObj } from '~/lib/utils';
 import useCrew from './useCrew';
 import useCrewmates from './useCrewmates';
+import useBlockTime from './useBlockTime';
 
 const useHydratedCrew = (id) => {
   const { data: crew, isLoading: crewLoading } = useCrew(id);
   const { data: crewmates, isLoading: crewmatesLoading } = useCrewmates(crew?.Crew?.roster);
+  const blockTime = useBlockTime();
 
   return useMemo(() => {
     let data = null;
@@ -25,9 +27,11 @@ const useHydratedCrew = (id) => {
       };
 
       isLoading = false;
+
+      data._ready = (crew.Crew?.readyAt) ? blockTime >= crew.Crew.readyAt : true;
     }
     return { data, isLoading };
-  }, [crew, crewmates, crewLoading, crewmatesLoading]);
+  }, [blockTime, crew, crewmates, crewLoading, crewmatesLoading]);
 };
 
 export default useHydratedCrew;
