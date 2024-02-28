@@ -72,7 +72,7 @@ const noop = () => {};
 
 const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...props }) => {
   const createAlert = useStore(s => s.dispatchAlertLogged);
-  
+
   const { currentProcess, processStatus, startProcess, finishProcess } = processManager;
   const processor = useMemo(
     () => (lot.building?.Processors || []).find((e) => e.slot === processorSlot) || {},
@@ -101,13 +101,21 @@ const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...pro
   const [originSelectorOpen, setOriginSelectorOpen] = useState(false);
   const [processSelectorOpen, setProcessSelectorOpen] = useState(false);
   const [primaryOutput, setPrimaryOutput] = useState(currentProcess?.primaryOutputId);
-  
+
   const process = Process.TYPES[processId];
   const maxAmount = useMemo(() => {
-    if (!process) return 1;
-    const maxSafeAmount = 1000;// Number.MAX_SAFE_INTEGER / 2 ** 32; // technical max value
-    return Math.min(maxSafeAmount, Math.floor((365 * 86400) / process.recipeTime));
-  }, [process]);
+    let maxPossible = 1;
+
+    if (process) maxPossible = Math.floor((365 * 86400) / process.recipeTime);
+    if (process && originInventory) {
+      Object.entries(process.inputs).forEach(([i, amount]) => {
+        const matching = originInventory.contents.find((c) => Number(c.product) === Number(i));
+        if (matching) maxPossible = Math.min(maxPossible, matching.amount / amount);
+      });
+    }
+
+    return maxPossible;
+  }, [process, originInventory]);
 
   useEffect(() => {
     if (!process) return;
@@ -342,12 +350,11 @@ const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...pro
   const recipeStepSize = useMemo(() => {
     if (process) {
       return Object.keys(process.outputs).reduce((acc, i) => {
-        const outputStep = Product.TYPES[i].isAtomic
-          ? Math.floor(1000 / process.outputs[i]) / 1000
-          : 0.001;
+        const outputStep = Product.TYPES[i].isAtomic ? 1 : 0.001;
         return Math.max(acc, outputStep);
       }, 0.001);
     }
+
     return 0.001;
   }, [process]);
 
@@ -399,7 +406,7 @@ const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...pro
               </SelectorInner>
               <ClipCorner dimension={sectionBodyCornerSize} />
             </FlexSectionInputBody>
-            
+
             <RecipeSlider
               disabled={!process || stage !== actionStages.NOT_STARTED}
               amount={amount}
@@ -423,6 +430,7 @@ const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...pro
             imageProps={{
               iconOverride: <InventoryIcon />,
             }}
+            isSourcing={true}
             isSelected={process && stage === actionStages.NOT_STARTED}
             onClick={() => { setOriginSelectorOpen(true) }}
             style={{ marginBottom: 20, width: '33.3%' }}

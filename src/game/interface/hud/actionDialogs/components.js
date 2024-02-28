@@ -2857,7 +2857,7 @@ export const RecipeSlider = ({ amount, disabled, increment = 0.001, processingTi
                   style={{ marginTop: -2 }} />
                 )
                 : (
-                  <b>{amount.toLocaleString(undefined, { minimumFractionDigits: 3 })}</b>
+                  <b>{amount.toLocaleString(undefined, { minimumFractionDigits: increment % 1 === 0 ? 0 : 3 })}</b>
                 )
               }
               {' '}
