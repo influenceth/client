@@ -488,8 +488,9 @@ const Wrapper = ({ crew, loading, ...props }) => {
   const locationCrews = useMemo(() => {
     if (!crew?._location) return [];
     return crews.filter((c) => (
-      c._location.buildingId === crew._location?.buildingId
-      && c.id !== crew.id
+      crew.Location.location.label === c.Location.location.label
+      && crew.Location.location.id === c.Location.location.id
+      && crew.id !== c.id
     ));
   }, [crew?._location]);
 
