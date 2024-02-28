@@ -253,13 +253,13 @@ const RoutePlanner = () => {
   // select default
   useEffect(() => {
     if (shipList.length > 0 && !ship) {
-      if (crew) {
+      if (!!crew) {
         setShip(shipList[0]);
       } else { // if no crew, default to simulate shuttle (assuming in tutorial)
         setShip(shipList.find((s) => s._simulated && s.Ship.shipType === Ship.IDS.SHUTTLE));
       }
     }
-  }, [shipList, ship]);
+  }, [!!crew, shipList, ship]);
 
   const toggleEmode = useCallback(() => {
     setEmode((e) => !e);
