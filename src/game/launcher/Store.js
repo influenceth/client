@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import styled, { css } from 'styled-components';
 import { formatEther, parseUnits } from 'ethers';
 import { createPortal } from 'react-dom';
-import { uint256 } from 'starknet';
 import { useQuery, useQueryClient } from 'react-query';
 
 import Button from '~/components/ButtonAlt';

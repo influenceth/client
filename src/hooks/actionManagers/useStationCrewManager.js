@@ -12,13 +12,15 @@ const useStationCrewManager = (destination) => {
   const { execute, getPendingTx } = useContext(ChainTransactionContext);
 
   const { data: destEntity } = useEntity(destination);
-  const destLotId = useMemo(() => locationsArrToObj(destEntity?.Location?.locations || [])?.lotId, [destEntity?.Location?.locations]);
-  
+  const destLotId = useMemo(() => {
+    return locationsArrToObj(destEntity?.Location?.locations || [])?.lotId;
+  }, [destEntity?.Location?.locations]);
+
   const caller_crew = useMemo(() => ({ id: crew?.id, label: Entity.IDS.CREW }), [crew?.id]);
 
   const stationCrew = useCallback(
     () => execute('StationCrew', { destination, caller_crew }, { destLotId }),
-    [execute, destination, caller_crew]
+    [caller_crew, destination, destLotId, execute]
   );
 
   const currentStationing = useMemo(

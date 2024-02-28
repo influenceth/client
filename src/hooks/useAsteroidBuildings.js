@@ -13,7 +13,7 @@ const useAsteroidBuildings = (asteroidId, reqComponent = 'Building', reqOneOfPer
     { enabled: !!asteroidId && !!reqComponent }
   );
 
-  const perms = useMemo(() => 
+  const perms = useMemo(() =>
     Array.isArray(reqOneOfPermissions) ? reqOneOfPermissions : (reqOneOfPermissions ? [reqOneOfPermissions] : []),
     [reqOneOfPermissions]
   );
@@ -22,7 +22,7 @@ const useAsteroidBuildings = (asteroidId, reqComponent = 'Building', reqOneOfPer
     data: (allData || [])
       .filter((entity) => perms.length === 0 || perms.find((p) => crewCan(p, entity))),
     ...queryProps,
-  }), [allData, crewCan, queryProps])
+  }), [allData, crewCan, queryProps, perms])
 };
 
 export default useAsteroidBuildings;

@@ -15,11 +15,13 @@ const useCrew = (id) => {
   return useMemo(() => {
     if (`${process.env.REACT_APP_CHAIN_ID}` === `0x534e5f5345504f4c4941`) {
       if (response?.data?.Crew) {
-        response.data.Crew.lastFed = Math.max(Math.min(blockTime || (Date.now() / 1e3), openAccessJSTime / 1e3), response.data.Crew.lastFed);
+        response.data.Crew.lastFed = Math.max(
+          Math.min(blockTime || (Date.now() / 1e3), openAccessJSTime / 1e3), response.data.Crew.lastFed
+        );
       }
     }
     return response;
-  }, [response]);
+  }, [blockTime, response]);
 };
 
 export default useCrew;

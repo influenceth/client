@@ -70,6 +70,7 @@
     "zustand": "^3.5.7"
   },
   "scripts": {
+    "analyze": "source-map-explorer 'build/static/js/*.js'",
     "start": "react-app-rewired start",
     "build": "react-app-rewired build && npm run build-server",
     "build-server": "webpack --config server.webpack.config.js",
@@ -116,6 +117,7 @@
     "patch-package": "^6.4.7",
     "raw-loader": "^4.0.2",
     "react-error-overlay": "6.0.9",
+    "source-map-explorer": "^2.5.3",
     "worker-loader": "^3.0.8"
   },
   "overrides": {

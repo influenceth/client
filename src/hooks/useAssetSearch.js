@@ -1,9 +1,7 @@
 import { useEffect, useMemo } from 'react';
 import { useThrottle } from '@react-hook/throttle';
 import { useQuery } from 'react-query';
-import { Entity } from '@influenceth/sdk';
 import esb from 'elastic-builder';
-import isEqual from 'lodash/isEqual';
 
 import api from '~/lib/api';
 import useStore from '~/hooks/useStore';
@@ -205,7 +203,7 @@ const useAssetSearch = (assetType, { from = 0, size = 2000 } = {}) => {
 
   const [throttledFilters, setThrottledFilters] = useThrottle(filters || {}, 2, true);
 
-  useEffect(() => setThrottledFilters(filters || {}), [filters]);
+  useEffect(() => setThrottledFilters(filters || {}), [filters, setThrottledFilters]);
 
   // asteroidsMapped use the exact same indices as asteroids (for now)
   // lotsMapped, actionitems, eventlog does not need to query ES
@@ -228,7 +226,7 @@ const useAssetSearch = (assetType, { from = 0, size = 2000 } = {}) => {
       return q.toJSON();
     }
     return null;
-  }, [throttledFilters, from, size, sort])
+  }, [esAssetType, from, size, sort, throttledFilters]);
 
   return useQuery(
     // TODO: convert this to 'entities' model of cache keys

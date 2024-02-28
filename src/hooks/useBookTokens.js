@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 
 import useCrewContext from '~/hooks/useCrewContext';
 import useSwayBalance from '~/hooks/useSwayBalance';
@@ -62,8 +62,10 @@ const useBookTokens = (bookId) => {
           swayAmount: Number(swayAmount).toLocaleString(),
         };
       }
+      default: {
+        return null;
+      }
     }
-    return null;
   }, [bookId, captain, swayAmount]);
 
   return useMemo(() => ({

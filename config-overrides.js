@@ -15,6 +15,17 @@ const addGlslifyLoader = () => config => {
   return config;
 };
 
+// Adjust precache maximum to 25 MB
+const adjustWorkbox = () => config => {
+  config.plugins.forEach(p => {
+    if (p.constructor.name === 'InjectManifest') {
+      p.config.maximumFileSizeToCacheInBytes = 25 * 1024 * 1024;
+    }
+  });
+
+  return config;
+};
+
 const addDataUriFileLoader = () => config => {
   const loaders = config.module.rules.find(rule => Array.isArray(rule.oneOf)).oneOf;
   loaders.unshift({
@@ -53,7 +64,7 @@ const addSVGR = () => config => {
 
 patchNpmModules = () => config => {
   const loaders = config.module.rules.find(rule => Array.isArray(rule.oneOf)).oneOf;
-  
+
   // NOTE: this is entirely for three's GLTFExporter
   // loaders.unshift({
   //   test: /\.js$/,
@@ -72,6 +83,7 @@ patchNpmModules = () => config => {
 
 module.exports = override(
   setWebpackTarget('web'),
+  adjustWorkbox(),
   addBabelPlugin([
     'babel-plugin-root-import',
     {
