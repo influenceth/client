@@ -111,7 +111,11 @@ export function CrewProvider({ children }) {
 
         // overwrite food so 100% until launch
         if (c.Crew) {
-          c.Crew.lastFed = Math.max(Math.min(blockTime, openAccessJSTime / 1e3), c.Crew.lastFed);
+          try {
+            c.Crew.lastFed = Math.max(Math.min(blockTime, openAccessJSTime / 1e3), c.Crew.lastFed);
+          } catch (e) {
+            console.warn('lastFed overwrite failed. refresh the page.', e);
+          }
         }
       } else {
         c._launched = true;
