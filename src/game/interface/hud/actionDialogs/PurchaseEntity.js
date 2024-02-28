@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef } from 'react';
 import styled from 'styled-components';
-import { Ship } from '@influenceth/sdk';
+import { Entity, Ship } from '@influenceth/sdk';
 
 import {
   PurchaseAsteroidIcon,
@@ -23,7 +23,7 @@ import {
 } from './components';
 import { ActionDialogInner, useAsteroidAndLot } from '../ActionDialog';
 import actionStages from '~/lib/actionStages';
-import { reactBool } from '~/lib/utils';
+import { locationsArrToObj, reactBool } from '~/lib/utils';
 import useNftSaleManager from '~/hooks/actionManagers/useNftSaleManager';
 import CrewIndicator from '~/components/CrewIndicator';
 import useEntity from '~/hooks/useEntity';
@@ -31,6 +31,7 @@ import useCrew from '~/hooks/useCrew';
 import { hexToRGB } from '~/theme';
 import formatters from '~/lib/formatters';
 import useSwayBalance from '~/hooks/useSwayBalance';
+import useAsteroid from '~/hooks/useAsteroid';
 
 const Alert = styled.div`
   ${p => p.theme.clipCorner(10)};
@@ -189,23 +190,32 @@ const PurchaseEntity = ({ asteroid, lot, entity, actionManager, stage, ...props 
 };
 
 const Wrapper = ({ entity: rawEntity, ...props }) => {
-  const { asteroid, lot, isLoading } = useAsteroidAndLot(props);
   const { data: entity, isLoading: entityIsLoading } = useEntity(rawEntity);
+  const loc = useMemo(() => locationsArrToObj(entity?.Location?.locations || []), [entity]);
+  const { data: asteroid, isLoading: asteroidIsLoading } = useAsteroid(loc.asteroidId);
+  const { data: lot, isLoading: lotIsLoading } = useEntity({ id: loc.lotId, label: Entity.IDS.LOT });
+
   const saleManager = useNftSaleManager(entity);
   const stage = saleManager.isPendingPurchase ? actionStages.STARTING : actionStages.NOT_STARTED
 
   useEffect(() => {
-    if (!asteroid || !lot || !entity) {
-      if (!isLoading && !entityIsLoading) {
-        if (props.onClose) props.onClose();
+    if (props.onClose) {
+      if (!entity && !entityIsLoading) {
+        props.onClose();
+      }
+      if (loc?.asteroidId && !asteroid && !asteroidIsLoading) {
+        props.onClose();
+      }
+      if (loc?.lotId && !lot && !lotIsLoading) {
+        props.onClose();
       }
     }
-  }, [asteroid, entity, lot, isLoading, entityIsLoading]);
+  }, [asteroid, entity, lot, asteroidIsLoading, lotIsLoading, entityIsLoading]);
 
   return (
     <ActionDialogInner
       actionImage="Agreements"
-      isLoading={reactBool(isLoading || entityIsLoading)}
+      isLoading={reactBool(asteroidIsLoading, lotIsLoading, entityIsLoading)}
       stage={stage}>
       <PurchaseEntity
         asteroid={asteroid}
