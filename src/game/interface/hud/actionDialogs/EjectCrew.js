@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Building, Permission, Ship, Station } from '@influenceth/sdk';
+import { Asteroid, Building, Crewmate, Permission, Ship, Station, Time } from '@influenceth/sdk';
 
 import { EjectPassengersIcon, WarningOutlineIcon } from '~/components/Icons';
 import useCrewContext from '~/hooks/useCrewContext';
 import useStationedCrews from '~/hooks/useStationedCrews';
-import { reactBool, formatTimer, locationsArrToObj } from '~/lib/utils';
+import { reactBool, formatTimer, locationsArrToObj, getCrewAbilityBonuses } from '~/lib/utils';
 
 import {
   ActionDialogFooter,
@@ -21,7 +21,9 @@ import {
   ShipInputBlock,
   WarningAlert,
   LotInputBlock,
-  CrewSelectionDialog
+  CrewSelectionDialog,
+  TimeBonusTooltip,
+  getBonusDirection
 } from './components';
 import useEjectCrewManager from '~/hooks/actionManagers/useEjectCrewManager';
 import useAsteroid from '~/hooks/useAsteroid';
@@ -48,7 +50,28 @@ const EjectCrew = ({ asteroid, origin, originLot, stationedCrews, manager, stage
 
   const myCrewIsTarget = targetCrew?.id === crew?.id;
 
+  const hopperBonus = useMemo(() => getCrewAbilityBonuses(Crewmate.ABILITY_IDS.HOPPER_TRANSPORT_TIME, crew), [crew]);
+
+  const ejectionTime = useMemo(() => {
+    if (myCrewIsTarget && originLot) {
+      return Time.toRealDuration(Asteroid.getLotTravelTime(asteroid?.id, originLot.index, 0, hopperBonus.totalBonus), crew?._timeAcceleration);
+    }
+    return 0;
+  }, [myCrewIsTarget, asteroid, crew?._timeAcceleration, hopperBonus, originLot]);
+
   const stats = useMemo(() => ([
+    ejectionTime > 0 && {
+      label: 'Time to Orbit',
+      value: formatTimer(ejectionTime),
+      direction: getBonusDirection(hopperBonus),
+      isTimeStat: true,
+      tooltip: (
+        <TimeBonusTooltip
+          bonus={hopperBonus}
+          title="Time to Orbit"
+          totalTime={ejectionTime} />
+      )
+    },
     {
       label: 'Crewmates Ejected',
       value: (targetCrew?.Crew?.roster || []).length,
@@ -99,11 +122,11 @@ const EjectCrew = ({ asteroid, origin, originLot, stationedCrews, manager, stage
       <ActionDialogHeader
         action={actionDetails}
         captain={captain}
-        crewAvailableTime={0}
+        crewAvailableTime={ejectionTime}
         location={{ asteroid, lot: originLot, ship: origin.Ship ? origin : undefined }}
         onClose={props.onClose}
         overrideColor={stage === actionStages.NOT_STARTED ? (myCrewIsTarget ? theme.colors.main : theme.colors.red) : undefined}
-        taskCompleteTime={0}
+        taskCompleteTime={ejectionTime}
         stage={stage} />
 
       <ActionDialogBody>

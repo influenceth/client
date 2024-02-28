@@ -211,6 +211,7 @@ const SearchFilters = ({ assetType, highlighting, isListView = false }) => {
           {...surfaceAreaConfig}
           fieldNote={surfaceAreaFieldNote}
           highlightFieldName="surfaceArea"
+          inputWidth={240}
           title="Surface Area" />
 
         {/* <RangeFilter

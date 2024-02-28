@@ -27,7 +27,6 @@ import {
   TimeBonusTooltip,
   InventorySelectionDialog,
   InventoryInputBlock,
-  ShipImage,
   ProcessInputOutputSection,
   formatVolume,
   ProgressBarSection
@@ -427,6 +426,7 @@ const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...pro
             disabled={!process || stage !== actionStages.NOT_STARTED}
             entity={origin}
             inventorySlot={selectedOrigin?.slot}
+            inventoryBonuses={crew?._inventoryBonuses}
             imageProps={{
               iconOverride: <InventoryIcon />,
             }}
@@ -471,6 +471,7 @@ const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...pro
             disabled={!process || stage !== actionStages.NOT_STARTED}
             entity={destination}
             inventorySlot={selectedDestination?.slot}
+            inventoryBonuses={crew?._inventoryBonuses}
             imageProps={{
               iconOverride: <InventoryIcon />,
             }}

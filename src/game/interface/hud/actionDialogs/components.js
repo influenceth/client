@@ -963,7 +963,7 @@ const barChartPadding = 3;
 const barChartRounding = barChartHeight / 2;
 const BarChartValue = styled.span.attrs((p) => ({
   style: {
-    width: `${100 * Math.max(0, Math.min(p.value, 1))}%`
+    width: `calc(${100 * Math.max(0, Math.min(p.value, 1))}% - ${barChartPadding * 2}px)`,
   }
 }))`
   bottom: ${barChartPadding}px;
@@ -1499,6 +1499,7 @@ export const TransferSelectionDialog = ({
   targetInventory,
   targetInventoryConstraints,
   initialSelection,
+  inventoryBonuses,
   onClose,
   onSelected,
   open
@@ -1539,8 +1540,10 @@ export const TransferSelectionDialog = ({
     });
   }, []);
 
-  // TODO: inventory bonus
-  const targetInvConfig = useMemo(() => targetInventory ? Inventory.getType(targetInventory?.inventoryType) : null, [targetInventory?.inventoryType]);
+  const targetInvConfig = useMemo(
+    () => targetInventory ? Inventory.getType(targetInventory?.inventoryType, inventoryBonuses) : null,
+    [targetInventory?.inventoryType, inventoryBonuses]
+  );
 
   const cells = useMemo(() => [...Array(6 * Math.max(2, Math.ceil(Object.keys(sourceContents).length / 6))).keys()], [sourceContents]);
   const items = useMemo(() => {
@@ -2011,17 +2014,18 @@ export const InventorySelectionDialog = ({
 //  FORMATTERS
 //
 
-export const getCapacityStats = (inventory) => {
+export const getCapacityStats = (inventory, inventoryBonuses) => {
   const capacity = {
     mass: { max: 0, used: 0, reserved: 0 },
     volume: { max: 0, used: 0, reserved: 0 },
   }
   if (inventory?.status === Inventory.STATUSES.AVAILABLE) {
-    const { filledMass, filledVolume } = Inventory.getFilledCapacity(inventory.inventoryType);
+    const { filledMass, filledVolume } = Inventory.getFilledCapacity(inventory.inventoryType, inventoryBonuses);
+    const inventoryConfig = Inventory.getType(inventory.inventoryType, inventoryBonuses);
     capacity.mass.max = filledMass;
-    capacity.mass.isSoftMax = Inventory.TYPES[inventory.inventoryType].massConstraint === Infinity;
+    capacity.mass.isSoftMax = inventoryConfig?.massConstraint === Infinity;
     capacity.volume.max = filledVolume;
-    capacity.volume.isSoftMax = Inventory.TYPES[inventory.inventoryType].volumeConstraint === Infinity;
+    capacity.volume.isSoftMax = inventoryConfig?.volumeConstraint === Infinity;
 
     const { reservedMass, reservedVolume, mass, volume } = inventory || {};
     capacity.mass.used = (mass || 0);
@@ -2032,8 +2036,8 @@ export const getCapacityStats = (inventory) => {
   return capacity;
 }
 
-export const getCapacityUsage = (inventories, type) => {
-  return getCapacityStats((inventories || []).find((i) => i.inventoryType === type));
+export const getCapacityUsage = (inventories, type, inventoryBonuses) => {
+  return getCapacityStats((inventories || []).find((i) => i.inventoryType === type), inventoryBonuses);
 }
 
 export const getBuildingRequirements = (building, deliveryActions = []) => {
@@ -2069,11 +2073,11 @@ export const AsteroidImage = ({ asteroid, size }) => {
   )
 }
 
-export const ShipImage = ({ shipType, iconBadge, iconBadgeColor, iconOverlay, iconOverlayColor, inventories, showInventoryStatusForType, simulated, size = 'w150', backgroundSize = 'cover', style = {} }) => {
+export const ShipImage = ({ shipType, iconBadge, iconBadgeColor, iconOverlay, iconOverlayColor, inventories, inventoryBonuses, showInventoryStatusForType, simulated, size = 'w150', backgroundSize = 'cover', style = {} }) => {
   const shipAsset = Ship.TYPES[Math.abs(shipType)]; // abs for simulated ships
   if (!shipAsset) return null;
 
-  const capacity = getCapacityUsage(inventories, showInventoryStatusForType);
+  const capacity = getCapacityUsage(inventories, showInventoryStatusForType, inventoryBonuses);
   return (
     <ShipThumbnailWrapper style={style}>
       <ResourceImage src={getShipIcon(shipAsset.i, size, simulated)} style={{ backgroundSize }} />
@@ -2096,11 +2100,11 @@ export const ShipImage = ({ shipType, iconBadge, iconBadgeColor, iconOverlay, ic
   );
 };
 
-export const LotShipImage = ({ shipType, iconBadge, iconBadgeColor, iconOverlay, iconOverlayColor, inventories, showInventoryStatusForType, size = 'w150', backgroundSize = 'cover', style = {} }) => {
+export const LotShipImage = ({ shipType, iconBadge, iconBadgeColor, iconOverlay, iconOverlayColor, inventories, inventoryBonuses, showInventoryStatusForType, size = 'w150', backgroundSize = 'cover', style = {} }) => {
   const shipAsset = Ship.TYPES[Math.abs(shipType)]; // abs for simulated ships
   if (!shipAsset) return null;
 
-  const capacity = getCapacityUsage(inventories, showInventoryStatusForType);
+  const capacity = getCapacityUsage(inventories, showInventoryStatusForType, inventoryBonuses);
   return (
     <ShipThumbnailWrapper style={style}>
       <ResourceImage src={getLotShipIcon(shipAsset.i, size)} style={{ backgroundSize }} />
@@ -2123,11 +2127,11 @@ export const LotShipImage = ({ shipType, iconBadge, iconBadgeColor, iconOverlay,
   );
 };
 
-export const BuildingImage = ({ buildingType, error, iconOverlay, iconOverlayColor, inventory, inventories, showInventoryStatusForType, unfinished }) => {
+export const BuildingImage = ({ buildingType, error, iconOverlay, iconOverlayColor, inventory, inventoryBonuses, inventories, showInventoryStatusForType, unfinished }) => {
   const buildingAsset = Building.TYPES[buildingType];
   if (!buildingAsset) return null;
 
-  const capacity = inventory ? getCapacityStats(inventory) : getCapacityUsage(inventories, showInventoryStatusForType);
+  const capacity = inventory ? getCapacityStats(inventory, inventoryBonuses) : getCapacityUsage(inventories, showInventoryStatusForType, inventoryBonuses);
   const closerLimit = (capacity.volume.used + capacity.volume.reserved) / capacity.volume.max > (capacity.mass.used + capacity.mass.reserved) / capacity.mass.max ? 'volume' : 'mass';
   return (
     <BuildingThumbnailWrapper>
@@ -3030,8 +3034,8 @@ export const PropellantSection = ({ title, narrow, deltaVLoaded, deltaVRequired,
   const [deltaVMode, setDeltaVMode] = useState(false);
   // useEffect(() => ReactTooltip.rebuild(), []);
 
-  const propellantUse = propellantLoaded > 0 ? propellantRequired / propellantLoaded : (propellantRequired > 0 ? 1 : 0);
-  const deltaVUse = deltaVLoaded > 0 ? deltaVRequired / deltaVLoaded : (deltaVRequired > 0 ? 1 : 0);
+  const propellantUse = propellantLoaded > 0 ? propellantRequired / propellantLoaded : (propellantRequired > 0 ? Infinity : 0);
+  const deltaVUse = deltaVLoaded > 0 ? deltaVRequired / deltaVLoaded : (deltaVRequired > 0 ? Infinity : 0);
 
   return (
     <FlexSectionBlock
@@ -3073,11 +3077,11 @@ export const PropellantSection = ({ title, narrow, deltaVLoaded, deltaVRequired,
         {deltaVMode
           ? <BarChart
               color="#cccccc"
-              value={deltaVUse} />
+              value={Math.min(1, deltaVUse)} />
           : <BarChart
-              color={theme.colors.orange}
+              color={theme.colors[(deltaVMode ? deltaVUse : propellantUse) > 1 ? 'error' : 'orange']}
               bgColor={theme.colors.main}
-              value={propellantUse} />
+              value={Math.min(1, propellantUse)} />
         }
         {!(narrow && !propellantRequired) && (
           <BarChartNotes color={deltaVMode ? '#aaaaaa' : theme.colors.main}>
@@ -3091,7 +3095,11 @@ export const PropellantSection = ({ title, narrow, deltaVLoaded, deltaVRequired,
               </div>
             )}
             <div style={{ color: deltaVMode ? '#ccc' : theme.colors.orange, ...(narrow ? { textAlign: 'center', width: '100%'} : {}) }}>
-              {formatFixed(100 * (deltaVMode ? deltaVUse : propellantUse))}% of Loaded
+              {(deltaVMode ? deltaVUse : propellantUse) > 1
+                ? <span style={{ alignItems: 'center', color: theme.colors.error, display: 'flex', justifyContent: 'center' }}><WarningOutlineIcon /><span style={{ marginLeft: 4 }}>Insufficient Loaded</span></span>
+                : <>{formatFixed(100 * (deltaVMode ? deltaVUse : propellantUse))}% of Loaded</>
+              }
+              
             </div>
             {!narrow && (
               <div>
@@ -3249,6 +3257,7 @@ export const InventoryInputBlock = ({
   fallbackLabel = 'Select',
   fallbackSublabel = 'Inventory',
   imageProps = {},
+  inventoryBonuses,
   sublabel,
   ...props
 }) => {
@@ -3261,14 +3270,14 @@ export const InventoryInputBlock = ({
 
   const invConfig = useMemo(() => {
     if (inventory) {
-      return Inventory.TYPES[inventory.inventoryType];
+      return Inventory.getType(inventory.inventoryType, inventoryBonuses);
     }
     return null;
-  }, [inventory]);
+  }, [inventory, inventoryBonuses]);
 
   const destinationOverloaded = useMemo(() => {
     if (inventory && !isSourcing) {
-      const capacity = getCapacityStats(inventory);
+      const capacity = getCapacityStats(inventory, inventoryBonuses);
       if (!capacity.mass.isSoftMax && (capacity.mass.used + capacity.mass.reserved + transferMass > capacity.mass.max)) {
         return true;
       }
@@ -3277,13 +3286,14 @@ export const InventoryInputBlock = ({
       }
     }
     return false;
-  }, [transferMass, transferVolume, inventory]);
+  }, [transferMass, transferVolume, inventory, inventoryBonuses]);
 
   const params = useMemo(() => {
     const fullImageProps = {
       ...imageProps,
       error: destinationOverloaded,
-      inventory: !isSourcing && inventory
+      inventory: !isSourcing && inventory,
+      inventoryBonuses
     }
     const lotIndex = locationsArrToObj(entity?.Location?.locations || []).lotIndex;
     if (entity?.label === Entity.IDS.BUILDING) {
@@ -3370,7 +3380,7 @@ export const ShipInputBlock = ({ ship, ...props }) => {
   );
 };
 
-export const ShipTab = ({ pilotCrew, ship, stage, deltas = {}, statWarnings = {}, warnings = [] }) => {
+export const ShipTab = ({ pilotCrew, inventoryBonuses, ship, stage, deltas = {}, statWarnings = {}, warnings = [] }) => {
 
   // TODO: if want to include "reserved", it would probably make sense to use getCapacityUsage helper instead
   const inventory = useMemo(() => {
@@ -3378,17 +3388,19 @@ export const ShipTab = ({ pilotCrew, ship, stage, deltas = {}, statWarnings = {}
     const shipConfig = Ship.TYPES[ship.Ship.shipType] || {};
     const propellantInventory = ship.Inventories.find((i) => i.slot === shipConfig.propellantSlot);
     const cargoInventory = ship.Inventories.find((i) => i.slot === shipConfig.cargoSlot);
+    const propInvConfig = Inventory.getType(propellantInventory?.inventoryType, inventoryBonuses);
+    const cargoInvConfig = Inventory.getType(cargoInventory?.inventoryType, inventoryBonuses);
     return {
       propellantMass: propellantInventory?.mass || 0,
-      maxPropellantMass: Inventory.TYPES[propellantInventory?.inventoryType]?.massConstraint || 0,
+      maxPropellantMass: propInvConfig?.massConstraint || 0,
       propellantVolume: propellantInventory?.volume || 0,
-      maxPropellantVolume: Inventory.TYPES[propellantInventory?.inventoryType]?.volumeConstraint || 0,
+      maxPropellantVolume: propInvConfig?.volumeConstraint || 0,
       cargoMass: cargoInventory?.mass || 0,
-      maxCargoMass: Inventory.TYPES[cargoInventory?.inventoryType]?.massConstraint || 0,
+      maxCargoMass: cargoInvConfig?.massConstraint || 0,
       cargoVolume: cargoInventory?.volume || 0,
-      maxCargoVolume: Inventory.TYPES[cargoInventory?.inventoryType]?.volumeConstraint || 0,
+      maxCargoVolume: cargoInvConfig?.volumeConstraint || 0,
     };
-  }, [ship?.shipType, ship?.Inventories]);
+  }, [ship?.shipType, ship?.Inventories, inventoryBonuses]);
 
   const charts = useMemo(() => ({
     propellantMass: {
@@ -3472,10 +3484,10 @@ export const ShipTab = ({ pilotCrew, ship, stage, deltas = {}, statWarnings = {}
   );
 };
 
-export const InventoryChangeCharts = ({ inventory, deltaMass, deltaVolume }) => {
+export const InventoryChangeCharts = ({ inventory, inventoryBonuses, deltaMass, deltaVolume }) => {
   if (!inventory) return null;
 
-  const capacity = getCapacityStats(inventory);
+  const capacity = getCapacityStats(inventory, inventoryBonuses);
   const postDeltaMass = capacity.mass.used + capacity.mass.reserved + deltaMass;
   const postDeltaVolume = capacity.volume.used + capacity.volume.reserved + deltaVolume;
   const overMassCapacity = postDeltaMass > capacity.mass.max;

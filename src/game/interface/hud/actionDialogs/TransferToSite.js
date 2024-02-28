@@ -19,14 +19,10 @@ import {
   formatMass,
   formatVolume,
   getBonusDirection,
-  EmptyBuildingImage,
-  BuildingImage,
   FlexSectionSpacer,
   ActionDialogBody,
-  FlexSectionInputBlock,
   FlexSection,
   TransferSelectionDialog,
-  ProgressBarSection,
   LotInputBlock,
   InventorySelectionDialog,
   InventoryInputBlock
@@ -168,7 +164,7 @@ const TransferToSite = ({ asteroid, lot: destinationLot, deliveryManager, stage,
   ]), [totalMass, totalVolume, transportDistance, transportTime]);
 
   const onStartDelivery = useCallback(() => {
-    const destInventoryConfig = Inventory.getType(destinationInventory?.inventoryType) || {};
+    const destInventoryConfig = Inventory.getType(destinationInventory?.inventoryType, crew?._inventoryBonuses) || {};
     if (destinationInventory) {
       destInventoryConfig.massConstraint -= ((destinationInventory.mass || 0) + (destinationInventory.reservedMass || 0));
       destInventoryConfig.volumeConstraint -= ((destinationInventory.volume || 0) + (destinationInventory.reservedVolume || 0));
@@ -190,7 +186,7 @@ const TransferToSite = ({ asteroid, lot: destinationLot, deliveryManager, stage,
       destinationSlot: destinationInventory?.slot,
       contents: selectedItems
     }, { asteroidId: asteroid?.id, lotId: originLot?.id });
-  }, [originInventory, destinationInventory, selectedItems, asteroid?.id, originLot?.id]);
+  }, [crew?._inventoryBonuses, originInventory, destinationInventory, selectedItems, asteroid?.id, originLot?.id]);
 
   useEffect(() => {
     if (destinationLot?.building && !buildingRequirements.find((r) => r.inNeed > 0)) {
@@ -236,6 +232,7 @@ const TransferToSite = ({ asteroid, lot: destinationLot, deliveryManager, stage,
             }}
             isSourcing
             inventorySlot={origin?.slot}
+            inventoryBonuses={crew?._inventoryBonuses}
             isSelected={stage === actionStage.NOT_STARTED}
             onClick={() => { setOriginSelectorOpen(true) }}
             disabled={stage !== actionStage.NOT_STARTED}
@@ -252,6 +249,7 @@ const TransferToSite = ({ asteroid, lot: destinationLot, deliveryManager, stage,
             imageProps={{
               iconOverride: <InventoryIcon />,
               inventories: destinationLot?.building?.Inventories,
+              inventoryBonuses: crew?._inventoryBonuses,
               showInventoryStatusForType: destination?.slot,
               unfinished: true
             }}
@@ -301,6 +299,7 @@ const TransferToSite = ({ asteroid, lot: destinationLot, deliveryManager, stage,
             pendingTargetDeliveries={currentDeliveryActions}
             targetInventory={destinationInventory}
             initialSelection={selectedItems}
+            inventoryBonuses={crew?._inventoryBonuses}
             onClose={() => setTransferSelectorOpen(false)}
             onSelected={setSelectedItems}
             open={transferSelectorOpen}

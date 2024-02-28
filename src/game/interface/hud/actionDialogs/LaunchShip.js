@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Asteroid, Crewmate, Inventory, Lot, Product, Ship, Time } from '@influenceth/sdk';
+import { Asteroid, Crewmate, Dock, Inventory, Lot, Product, Ship, Time } from '@influenceth/sdk';
 
 import { LaunchShipIcon, RouteIcon, ShipIcon, WarningOutlineIcon } from '~/components/Icons';
 import useCrewContext from '~/hooks/useCrewContext';
@@ -63,6 +63,11 @@ const LaunchShip = ({ asteroid, originLot, manager, ship, shipCrews, stage, ...p
     const abilities = getCrewAbilityBonuses(bonusIds, flightCrew) || {};
     return bonusIds.map((id) => abilities[id] || {});
   }, [flightCrew]);
+  
+  const groundDelay = useMemo(
+    () => Time.toRealDuration(originLot?.building ? Dock.Entity.getGroundDelay(originLot.building) : 0, crew?._timeAcceleration),
+    [crew?._timeAcceleration, originLot?.building]
+  );
 
   const [escapeVelocity, propellantRequirement, poweredTime, tugTime] = useMemo(() => {
     if (!ship || !asteroid) return [0, 0, 0, 0];
@@ -90,10 +95,10 @@ const LaunchShip = ({ asteroid, originLot, manager, ship, shipCrews, stage, ...p
     ];
   }, [ship]);
 
-  const launchTime = useMemo(() => powered ? poweredTime : tugTime, [powered, poweredTime, tugTime]);
+  const launchTime = useMemo(() => groundDelay + (powered ? poweredTime : tugTime), [groundDelay, powered, poweredTime, tugTime]);
 
   const [crewTimeRequirement, taskTimeRequirement] = useMemo(() => {
-    return [ 0, launchTime ];
+    return [ launchTime, launchTime ];
   }, [launchTime]);
 
   const stats = useMemo(() => ([
@@ -220,24 +225,17 @@ const LaunchShip = ({ asteroid, originLot, manager, ship, shipCrews, stage, ...p
                   />
                 </FlexSection>
 
-                {/* TODO: only need "port traffic" bar if launching from spaceport AND there is > 0 traffic (see also: landing) */}
-                {stage === actionStages.NOT_STARTED && (
-                  <>
-                    <ProgressBarSection
-                      overrides={{
-                        barColor: theme.colors.lightOrange,
-                        color: theme.colors.lightOrange,
-                        left: <><WarningOutlineIcon /> Launch Delay</>,
-                        right: formatTimer(0) // TODO: ...
-                      }}
-                      stage={stage}
-                      title="Port Traffic"
-                    />
-                    <ProgressBarNote themeColor="lightOrange">
-                      {/* TODO: ... */}
-                      <b>0 ships</b> are queued to launch ahead of you.
-                    </ProgressBarNote>
-                  </>
+                {stage === actionStages.NOT_STARTED && originLot?.building && (
+                  <ProgressBarSection
+                    overrides={{
+                      barColor: theme.colors.lightOrange,
+                      color: theme.colors.lightOrange,
+                      left: <><WarningOutlineIcon /> Landing Delay</>,
+                      right: formatTimer(groundDelay)
+                    }}
+                    stage={stage}
+                    title="Port Traffic"
+                  />
                 )}
               </>
             )}
@@ -247,6 +245,7 @@ const LaunchShip = ({ asteroid, originLot, manager, ship, shipCrews, stage, ...p
         {tab === 1 && (
           <ShipTab
             pilotCrew={flightCrew}
+            inventoryBonuses={crew?._inventoryBonuses}
             deltas={{
               propellantMass: powered ? -propellantRequirement : 0,
               propellantVolume: powered ? -(propellantRequirement * propellantProduct.volumePerUnit / propellantProduct.massPerUnit) : 0,

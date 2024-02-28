@@ -77,10 +77,11 @@ const EmergencyModeToggle = ({ asteroid, lot, manager, ship, stage, ...props }) 
 
   const propellantJettisoned = useMemo(() => {
     if (inEmergencyMode) {  // if exiting emergency mode, jettison all but 10% of max propellant
-      return Math.max(0, propellantInventory.mass - Ship.EMERGENCY_PROP_LIMIT * Inventory.TYPES[propellantInventory.inventoryType].massConstraint) / Product.TYPES[Product.IDS.HYDROGEN_PROPELLANT].massPerUnit;
+      const maxProp = Ship.EMERGENCY_PROP_LIMIT * Inventory.getType(propellantInventory.inventoryType, crew?._inventoryBonuses)?.massConstraint;
+      return Math.max(0, propellantInventory.mass - maxProp) / Product.TYPES[Product.IDS.HYDROGEN_PROPELLANT].massPerUnit;
     }
     return 0;
-  }, [inEmergencyMode, propellantInventory]);
+  }, [crew?._inventoryBonuses, inEmergencyMode, propellantInventory]);
 
   const stats = useMemo(() => ([
     {
@@ -169,6 +170,7 @@ const EmergencyModeToggle = ({ asteroid, lot, manager, ship, stage, ...props }) 
       <ActionDialogBody>
         <ShipTab
           pilotCrew={{ ...crew, roster: crewmates }}
+          inventoryBonuses={crew?._inventoryBonuses}
           deltas={inEmergencyMode
             ? {
               propellantMass: -propellantJettisoned * Product.TYPES[Product.IDS.HYDROGEN_PROPELLANT].massPerUnit,

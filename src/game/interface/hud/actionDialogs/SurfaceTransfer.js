@@ -149,7 +149,7 @@ const SurfaceTransfer = ({
 
   useEffect(() => {
     if (stage === actionStage.NOT_STARTED) {
-      const destInvConfig = (Inventory.TYPES[destinationInventory?.inventoryType] || {})
+      const destInvConfig = (Inventory.getType(destinationInventory?.inventoryType, crew?._inventoryBonuses) || {})
       const destInvConstraints = destInvConfig.productConstraints;
 
       // cap selectedItems to originInventory contents and destinationInventory constraints
@@ -184,7 +184,7 @@ const SurfaceTransfer = ({
 
       setSelectedItems(validated);
     }
-  }, [originInventory, destinationInventory, destDeliveryManager.currentDeliveryActions]);
+  }, [crew?._inventoryBonuses, originInventory, destinationInventory, destDeliveryManager.currentDeliveryActions]);
 
   const [transportDistance, transportTime] = useMemo(() => {
     if (!asteroid?.id || !originLot?.id || !destinationLot?.id) return [0, 0];
@@ -242,17 +242,17 @@ const SurfaceTransfer = ({
   ]), [totalMass, totalVolume, transportDistance, transportTime]);
 
   const willBeOverCapacity = useMemo(() => {
-    const destInventoryConfig = Inventory.getType(destinationInventory?.inventoryType) || {};
+    const destInventoryConfig = Inventory.getType(destinationInventory?.inventoryType, crew?._inventoryBonuses) || {};
     if (destinationInventory) {
       destInventoryConfig.massConstraint -= ((destinationInventory.mass || 0) + (destinationInventory.reservedMass || 0));
       destInventoryConfig.volumeConstraint -= ((destinationInventory.volume || 0) + (destinationInventory.reservedVolume || 0));
     }
     return (totalMass > destInventoryConfig.massConstraint) || (totalVolume > destInventoryConfig.volumeConstraint);
-  }, [destinationInventory, totalMass, totalVolume]);
+  }, [crew?._inventoryBonuses, destinationInventory, totalMass, totalVolume]);
 
   const onStartDelivery = useCallback(() => {
     if (willBeOverCapacity) {
-      const destInventoryConfig = Inventory.getType(destinationInventory?.inventoryType) || {};
+      const destInventoryConfig = Inventory.getType(destinationInventory?.inventoryType, crew?._inventoryBonuses) || {};
       createAlert({
         type: 'GenericAlert',
         level: 'warning',
@@ -270,7 +270,7 @@ const SurfaceTransfer = ({
       contents: selectedItems,
       price: sway
     }, { asteroidId: asteroid?.id, lotId: originLot?.id });
-  }, [packageDelivery, startDelivery, originInventory, destinationInventory, selectedItems, sway, isP2P, hasOriginPerm, asteroid?.id, originLot?.id, willBeOverCapacity]);
+  }, [crew?._inventoryBonuses, packageDelivery, startDelivery, originInventory, destinationInventory, selectedItems, sway, isP2P, hasOriginPerm, asteroid?.id, originLot?.id, willBeOverCapacity]);
 
   const onFinishDelivery = useCallback(() => {
     finishDelivery(props.deliveryId, {
@@ -365,6 +365,7 @@ const SurfaceTransfer = ({
             disabled={stage !== actionStage.NOT_STARTED || originInventoryTally === 1}
             entity={origin}
             inventorySlot={originInventory?.slot}
+            inventoryBonuses={crew?._inventoryBonuses}
             isSelected={stage === actionStage.NOT_STARTED && originInventoryTally !== 1}
             onClick={() => { setOriginSelectorOpen(true) }} />
 
@@ -378,6 +379,7 @@ const SurfaceTransfer = ({
             disabled={stage !== actionStage.NOT_STARTED}
             entity={destination}
             inventorySlot={destinationInventory?.slot}
+            inventoryBonuses={crew?._inventoryBonuses}
             imageProps={{
               iconOverride: <InventoryIcon />,
             }}
@@ -482,6 +484,7 @@ const SurfaceTransfer = ({
               <div style={{ width: '50%', overflow: 'hidden' }}>
                 <InventoryChangeCharts
                   inventory={originInventory}
+                  inventoryBonuses={crew?._inventoryBonuses}
                   deltaMass={-totalMass}
                   deltaVolume={-totalVolume}
                 />
@@ -490,6 +493,7 @@ const SurfaceTransfer = ({
               <div style={{ width: '50%', overflow: 'hidden' }}>
                 <InventoryChangeCharts
                   inventory={destinationInventory}
+                  inventoryBonuses={crew?._inventoryBonuses}
                   deltaMass={totalMass}
                   deltaVolume={totalVolume}
                 />
@@ -532,6 +536,7 @@ const SurfaceTransfer = ({
             pendingTargetDeliveries={destDeliveryManager.currentDeliveryActions}
             targetInventory={destinationInventory}
             initialSelection={selectedItems}
+            inventoryBonuses={crew?._inventoryBonuses}
             onClose={() => setTransferSelectorOpen(false)}
             onSelected={setSelectedItems}
             open={transferSelectorOpen}

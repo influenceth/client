@@ -461,6 +461,7 @@ const SetCourse = ({ origin, destination, manager, ship, stage, travelSolution, 
         {tab === 1 && (
           <ShipTab
             pilotCrew={{ ...crew, roster: crewmates }}
+            inventoryBonuses={crew?._inventoryBonuses}
             deltas={{
               propellantMass: -travelSolution.usedPropellantMass,
               propellantVolume: -travelSolution.usedPropellantMass / propellantProduct.massPerUnit * propellantProduct.volumePerUnit,
