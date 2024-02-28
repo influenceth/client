@@ -14,6 +14,7 @@ const RangeFilter = ({
   fieldNote,
   filters,
   displayFormatter,
+  inputWidth,
   searchFormatter,
   highlightColorMinMax = { min: '#73D8FF', max: '#FA28FF' },
   highlightFieldName,
@@ -105,6 +106,7 @@ const RangeFilter = ({
             placeholder={rangeLimits.min.toLocaleString()}
             step={step}
             type="number"
+            width={inputWidth}
             value={safeValue(valueMin)} />
           {fieldNote ? <FieldNote>({fieldNote(valueMin || rangeLimits.min)})</FieldNote> : <span />}
           {fieldHighlight && <ColorPicker initialColor={colorFrom} onChange={(c) => setColorFrom(c)} />}
@@ -121,6 +123,7 @@ const RangeFilter = ({
             placeholder={rangeLimits.max.toLocaleString()}
             step={step}
             type="number"
+            width={inputWidth}
             value={safeValue(valueMax)} />
           {fieldNote ? <FieldNote>({fieldNote(valueMax || rangeLimits.max)})</FieldNote> : <span />}
           {fieldHighlight && <ColorPicker initialColor={colorTo} onChange={(c) => setColorTo(c)} />}
