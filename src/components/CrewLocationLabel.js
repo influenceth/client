@@ -1,11 +1,11 @@
 import formatters from '~/lib/formatters';
-import { CrewLocationIcon } from './Icons';
+import { LocationIcon } from './Icons';
 
 const CrewLocationLabel = ({ hydratedLocation }) => {
   return (
-    <>
-      <CrewLocationIcon />
-      {' '}{hydratedLocation.asteroid ? formatters.asteroidName(hydratedLocation.asteroid) : 'In Flight'}
+    <>      
+      <LocationIcon />
+      {hydratedLocation.asteroid ? formatters.asteroidName(hydratedLocation.asteroid) : 'In Flight'}
       {(() => {
         const { ship, building, lotIndex } = hydratedLocation;
         if (ship) return <span>{formatters.shipName(ship)}</span>;

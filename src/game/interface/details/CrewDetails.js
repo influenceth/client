@@ -274,8 +274,12 @@ const BaseLocation = styled.div`
       content: " > ";
     }
   }
-  svg {
+
+  &:hover, &:hover span {
     color: ${p => p.theme.colors.main};
+  }
+  
+  svg {
     margin-right: 2px;
     vertical-align: middle;
   }
