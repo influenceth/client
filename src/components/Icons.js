@@ -52,7 +52,6 @@ import CompositionSVG from '~/assets/icons/CompositionIcon.svg';
 import CoreSampleSVG from '~/assets/icons/CoreSampleIcon.svg';
 import CrewSVG from '~/assets/icons/CrewIcon.svg';
 import CrewInventorySVG from '~/assets/icons/CrewInventoryIcon.svg';
-import CrewLocationSVG from '~/assets/icons/CrewLocationIcon.svg';
 import CrewmateSVG from '~/assets/icons/CrewmateIcon.svg';
 import CrewStorySVG from '~/assets/icons/CrewStoryIcon.svg';
 import DeltaVSVG from '~/assets/icons/DeltaVIcon.svg';
@@ -211,7 +210,6 @@ export const CompositionIcon = () => <CompositionSVG className="icon" />;
 export const CoreSampleIcon = () => <CoreSampleSVG className="icon" />;
 export const CrewIcon = () => <CrewSVG className="icon" />;
 export const CrewInventoryIcon = () => <CrewInventorySVG className="icon" />;
-export const CrewLocationIcon = () => <CrewLocationSVG className="icon" />; // TODO: this should be different
 export const CrewmateIcon = () => <CrewmateSVG className="icon" />;
 export const CrewStoryIcon = () => <CrewStorySVG className="icon" />;
 export const DeltaVIcon = () => <DeltaVSVG className="icon" />;

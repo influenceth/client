@@ -65,7 +65,6 @@ const BaseLocation = styled.div`
     }
   }
   svg {
-    color: ${p => p.theme.colors.main};
     margin-right: 2px;
     vertical-align: middle;
   }

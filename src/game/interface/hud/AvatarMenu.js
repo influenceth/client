@@ -94,7 +94,6 @@ const BaseLocation = styled.div`
   }
 
   svg {
-    color: ${p => p.theme.colors.main};
     margin-right: 2px;
     vertical-align: middle;
   }
@@ -161,7 +160,7 @@ const AvatarMenu = () => {
 
           <CrewInfoContainer>
             <TitleBar>
-              <BaseLocation onClick={hydratedLocation.onLink}>
+              <BaseLocation onClick={hydratedLocation.onLink}> 
                 <CrewLocationLabel hydratedLocation={hydratedLocation} />
               </BaseLocation>
 
