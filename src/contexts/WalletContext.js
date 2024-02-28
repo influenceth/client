@@ -85,11 +85,7 @@ export function WalletProvider({ children }) {
 
       const connectors = [];
       if (!!process.env.REACT_APP_ARGENT_WEB_WALLET_URL) connectors.push(new WebWalletConnector());
-
-      let customProvider;
-      if (process.env.REACT_APP_STARKNET_PROVIDER) {
-        customProvider = new RpcProvider({ nodeUrl: process.env.REACT_APP_STARKNET_PROVIDER });
-      }
+      const customProvider = new RpcProvider({ nodeUrl: process.env.REACT_APP_STARKNET_PROVIDER });
 
       connectors.push(new InjectedConnector({ options: { id: 'argentX', provider: customProvider }}));
       connectors.push(new InjectedConnector({ options: { id: 'braavos', provider: customProvider }}));
@@ -100,7 +96,8 @@ export function WalletProvider({ children }) {
         modalMode: auto ? 'neverAsk' : 'alwaysAsk',
         modalTheme: 'dark',
         projectId: 'influence',
-        connectors
+        connectors,
+        provider: customProvider
       };
 
       if (!!process.env.REACT_APP_ARGENT_WEB_WALLET_URL) {
