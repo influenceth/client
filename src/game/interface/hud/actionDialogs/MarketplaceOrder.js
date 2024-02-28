@@ -616,7 +616,7 @@ const MarketplaceOrder = ({
       const buyUnits = quantityToUnits(quantity);
       const buyMass = buyUnits * resource.massPerUnit;
       const buyVolume = buyUnits * resource.volumePerUnit;
-      const invConfig = Inventory.TYPES[storageInventory.inventoryType] || {};
+      const invConfig = Inventory.getType(storageInventory.inventoryType, crew?._inventoryBonuses) || {};
       if (storageInventory.mass + storageInventory.reservedMass + buyMass > invConfig.massConstraint) return true;
       if (storageInventory.volume + storageInventory.reservedVolume + buyVolume > invConfig.volumeConstraint) return true;
       if (invConfig.productConstraints) {
@@ -625,7 +625,7 @@ const MarketplaceOrder = ({
       }
     }
     return false;
-  }, [amountInInventory, mode, quantity, storageInventory]);
+  }, [amountInInventory, crew?._inventoryBonuses, mode, quantity, storageInventory]);
 
   const isPermitted = useMemo(() => {
     let perm = 0;
@@ -676,6 +676,7 @@ const MarketplaceOrder = ({
             disabled={isCancellation || stage !== actionStages.NOT_STARTED}
             entity={storage}
             inventorySlot={storageInventory?.slot}
+            inventoryBonuses={crew?._inventoryBonuses}
             imageProps={{ iconOverride: <InventoryIcon /> }}
             isSelected={!isCancellation && stage === actionStages.NOT_STARTED}
             onClick={() => setStorageSelectorOpen(true)}

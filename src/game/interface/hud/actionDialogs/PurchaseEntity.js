@@ -17,7 +17,6 @@ import {
   ActionDialogBody,
   FlexSection,
   FlexSectionInputBlock,
-  BuildingImage,
   FlexSectionSpacer,
   ShipInputBlock,
 } from './components';

@@ -23,15 +23,12 @@ import {
   FlexSectionInputBlock,
   EmptyResourceImage,
   FlexSectionSpacer,
-  BuildingImage,
-  EmptyBuildingImage,
   Section,
   SectionTitle,
   SectionBody,
   ProgressBarSection,
   CoreSampleSelectionDialog,
   SublabelBanner,
-  LotInputBlock,
   InventorySelectionDialog,
   InventoryInputBlock,
   TransferDistanceDetails,
@@ -263,7 +260,7 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
       return;
     }
 
-    const inventoryConfig = Inventory.getType(destinationInventory.inventoryType) || {};
+    const inventoryConfig = Inventory.getType(destinationInventory.inventoryType, crew?._inventoryBonuses) || {};
     if (destinationInventory) {
       inventoryConfig.massConstraint -= ((destinationInventory.mass || 0) + (destinationInventory.reservedMass || 0));
       inventoryConfig.volumeConstraint -= ((destinationInventory.volume || 0) + (destinationInventory.reservedVolume || 0));
@@ -290,7 +287,7 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
       destination,
       destinationInventory.slot
     );
-  }, [amount, selectedCoreSample, destination, destinationInventory, resource]);
+  }, [amount, crew?._inventoryBonuses, selectedCoreSample, destination, destinationInventory, resource]);
 
   // handle auto-closing
   const lastStatus = useRef();
@@ -361,6 +358,7 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
             titleDetails={<TransferDistanceDetails distance={transportDistance} crewTravelBonus={crewTravelBonus} />}
             entity={destination}
             inventorySlot={destinationInventory?.slot}
+            inventoryBonuses={crew?._inventoryBonuses}
             imageProps={{
               iconOverride: <InventoryIcon />
             }}

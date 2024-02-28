@@ -338,6 +338,7 @@ const AssembleShip = ({ asteroid, lot, dryDockManager, stage, ...props }) => {
               disabled={!shipType || stage !== actionStages.NOT_STARTED}
               entity={origin}
               inventorySlot={selectedOrigin?.slot}
+              inventoryBonuses={crew?._inventoryBonuses}
               imageProps={{
                 iconOverride: <InventoryIcon />,
               }}

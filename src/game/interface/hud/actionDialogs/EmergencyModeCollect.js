@@ -78,16 +78,14 @@ const EmergencyModeCollect = ({ asteroid, lot, manager, ship: maybeShip, stage, 
     totalAmount,
     totalEmergencyFraction
   } = useMemo(() => {
-    const inventoryBonus = getCrewAbilityBonuses(Crewmate.ABILITY_IDS.INVENTORY_VOLUME_CAPACITY, crew);
     const propellantInventory = ship.Inventories.find((i) => i.slot === Ship.TYPES[ship.Ship.shipType].propellantSlot);
-    const propellantInventoryConfig = Inventory.getType(propellantInventory.inventoryType, inventoryBonus.totalBonus);
+    const propellantInventoryConfig = Inventory.getType(propellantInventory.inventoryType, crew?._inventoryBonuses);
     const startingAmount = propellantInventory.mass / Product.TYPES[resourceId].massPerUnit;
     const maxTankAmount = propellantInventoryConfig.massConstraint / Product.TYPES[resourceId].massPerUnit;
     const maxEmergencyAmount = Ship.EMERGENCY_PROP_LIMIT * maxTankAmount;
     const totalAmount = startingAmount + collectableAmount;
     const totalEmergencyFraction = totalAmount / maxEmergencyAmount;
     return {
-      inventoryBonus,
       propellantInventory,
       propellantInventoryConfig,
       startingAmount,
@@ -96,7 +94,7 @@ const EmergencyModeCollect = ({ asteroid, lot, manager, ship: maybeShip, stage, 
       totalAmount,
       totalEmergencyFraction
     };
-  }, [crew, resourceId, ship, collectableAmount]);
+  }, [crew?._inventoryBonuses, resourceId, ship, collectableAmount]);
 
   const recalculateCollectableAmount = useCallback(() => {
     setCollectableAmount(

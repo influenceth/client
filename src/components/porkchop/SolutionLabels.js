@@ -302,12 +302,12 @@ const SolutionLabels = ({ center, emode, lastFedAt, mousePos, shipParams }) => {
     if (!shipParams || !travelSolution) return [100, 100];
     const shipConfig = Ship.TYPES[shipParams.Ship.shipType];
     const propInv = shipParams.Inventories.find((i) => i.slot === shipConfig.propellantSlot);
-    const invConfig = Inventory.TYPES[propInv.inventoryType];
+    const invConfig = Inventory.getType(propInv.inventoryType, crew?._inventoryBonuses);
     return [
       Math.floor(100 * (100 / currentFood)),
       Math.floor(100 * (invConfig.massConstraint / shipParams.actualPropellantMass))
     ];
-  }, [currentFood, shipParams, travelSolution]);
+  }, [crew?._inventoryBonuses, currentFood, shipParams, travelSolution]);
 
   const invalid = insufficientPropellant || (!emode && usedFood >= 100);
 

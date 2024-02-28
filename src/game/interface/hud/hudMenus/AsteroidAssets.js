@@ -170,6 +170,7 @@ const getBuildingIcon = (buildingType) => {
 
 const BuildingRow = ({ building }) => {
   const chainTime = useChainTime();
+  const { crew } = useCrewContext();
   const buildingLoc = locationsArrToObj(building?.Location?.locations);
   const onClick = useLotLink(buildingLoc);
 
@@ -177,7 +178,7 @@ const BuildingRow = ({ building }) => {
     if (building?.Building?.status === Building.CONSTRUCTION_STATUSES.OPERATIONAL) {
       if (building?.Building?.buildingType === Building.IDS.WAREHOUSE) {
         const inventory = (building.Inventories || []).find((i) => i.status === Inventory.STATUSES.AVAILABLE);
-        const filledCapacity = Inventory.getFilledCapacity(inventory?.inventoryType);
+        const filledCapacity = Inventory.getFilledCapacity(inventory?.inventoryType, crew?._inventoryBonuses);
         const usage = inventory
           ? Math.min(1,
             Math.max(
@@ -231,7 +232,7 @@ const BuildingRow = ({ building }) => {
       ];
     }
     return [0];
-  }, [chainTime, building]);
+  }, [chainTime, crew?._inventoryBonuses, building]);
 
   const status = useMemo(() => {
     if (building?.Building?.status === Building.CONSTRUCTION_STATUSES.OPERATIONAL) {

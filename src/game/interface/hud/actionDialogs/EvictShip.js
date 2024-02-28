@@ -199,6 +199,7 @@ const EvictShip = ({ asteroid, lot, manager, stage, ...props }) => {
           <>
             <ShipTab
               pilotCrew={{ ...crew, roster: crewmates }}
+              inventoryBonuses={crew?._inventoryBonuses}
               ship={ship}
               stage={stage} />
 

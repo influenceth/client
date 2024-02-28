@@ -255,6 +255,7 @@ const FeedCrew = ({
             disabled={stage !== actionStages.NOT_STARTED}
             entity={origin}
             inventorySlot={originSelection?.slot}
+            inventoryBonuses={crew?._inventoryBonuses}
             imageProps={{
               iconOverride: <InventoryIcon />,
             }}
@@ -340,6 +341,7 @@ const FeedCrew = ({
               <div style={{ width: '50%', overflow: 'hidden' }}>
                 <InventoryChangeCharts
                   inventory={originInventory}
+                  inventoryBonuses={crew?._inventoryBonuses}
                   deltaMass={-totalMass}
                   deltaVolume={-totalVolume}
                 />
@@ -374,6 +376,7 @@ const FeedCrew = ({
             sourceContents={originInventory?.contents || []}
             targetInventoryConstraints={{ [129]: Math.max(0, foodStats.maxFood - foodStats.currentFood) }}
             initialSelection={selectedItems}
+            inventoryBonuses={crew?._inventoryBonuses}
             onClose={() => setTransferSelectorOpen(false)}
             onSelected={setSelectedItems}
             open={transferSelectorOpen}

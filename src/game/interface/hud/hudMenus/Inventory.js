@@ -323,7 +323,7 @@ const LotInventory = () => {
     }
 
     // TODO: use Inventory.getFilledCapacity() instead?
-    const inventoryConfig = Inventory.getType(inventory.inventoryType) || {};
+    const inventoryConfig = Inventory.getType(inventory.inventoryType, crew?._inventoryBonuses) || {};
 
     const mass = inventory?.mass || 0;
     const reservedMass = inventory?.reservedMass || 0;
@@ -341,7 +341,7 @@ const LotInventory = () => {
       usedVolume: volumeUsage,
       usedOrReservedVolume: volumeUsage + volumeReservedUsage,
     };
-  }, [inventory]);
+  }, [crew?._inventoryBonuses, inventory]);
 
   const toggleVolumeDisplay = useCallback(() => {
     setDisplayVolumes((d) => !d);

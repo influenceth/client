@@ -17,7 +17,7 @@ const isVisible = ({ crew, ship }) => {
 
     // show if propellant is low
     const propellantInventory = ship.Inventories.find((i) => i.slot === Ship.TYPES[ship.Ship.shipType].propellantSlot);
-    const propellantInventoryMassMax = Inventory.TYPES[propellantInventory?.inventoryType]?.massConstraint;
+    const propellantInventoryMassMax = Inventory.getType(propellantInventory?.inventoryType, crew._inventoryBonuses)?.massConstraint;
     return (propellantInventory.mass <= 0.1 * propellantInventoryMassMax);
   }
   return false;

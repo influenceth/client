@@ -250,6 +250,7 @@ const LandShip = ({ asteroid, manager, ship, stage, ...props }) => {
         {tab === 1 && (
           <ShipTab
             pilotCrew={{ ...crew, roster: crewmates }}
+            inventoryBonuses={crew?._inventoryBonuses}
             deltas={{
               propellantMass: powered ? -propellantRequirement : 0,
               propellantVolume: powered ? -(propellantRequirement * propellantProduct.volumePerUnit / propellantProduct.massPerUnit) : 0,

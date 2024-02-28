@@ -245,6 +245,7 @@ const LaunchShip = ({ asteroid, originLot, manager, ship, shipCrews, stage, ...p
         {tab === 1 && (
           <ShipTab
             pilotCrew={flightCrew}
+            inventoryBonuses={crew?._inventoryBonuses}
             deltas={{
               propellantMass: powered ? -propellantRequirement : 0,
               propellantVolume: powered ? -(propellantRequirement * propellantProduct.volumePerUnit / propellantProduct.massPerUnit) : 0,
