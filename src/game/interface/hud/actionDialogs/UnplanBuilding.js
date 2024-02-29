@@ -1,6 +1,6 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import styled from 'styled-components';
-import { Building } from '@influenceth/sdk';
+import { Building, Inventory } from '@influenceth/sdk';
 
 import {
   UnplanBuildingIcon,
@@ -39,6 +39,11 @@ const UnplanWarning = styled.div`
 const UnplanBuilding = ({ asteroid, lot, constructionManager, stage, ...props }) => {
   const { currentConstructionAction, constructionStatus, unplanConstruction } = useConstructionManager(lot?.id);
   const { captain } = useCrewContext();
+
+  const siteEmpty = useMemo(() => {
+    const inv = (lot?.building?.Inventories || []).find((i) => Inventory.TYPES[i.inventoryType].category === Inventory.CATEGORIES.SITE);
+    return ((inv?.mass + inv?.reservedMass) === 0);
+  }, [lot?.building]);
 
   // handle auto-closing
   const lastStatus = useRef();
@@ -82,17 +87,22 @@ const UnplanBuilding = ({ asteroid, lot, constructionManager, stage, ...props })
             disabled
             sublabel="Site Plans"
           />
-          <FlexSectionSpacer />
-          <FlexSectionInputBlock bodyStyle={{ background: 'transparent' }}>
-            <UnplanWarning>
-              <span>On-site materials<br/>will be abandoned</span>
-              <span><WarningOutlineIcon /></span>
-            </UnplanWarning>
-          </FlexSectionInputBlock>
+          {!siteEmpty && (
+            <>
+              <FlexSectionSpacer />
+              <FlexSectionInputBlock bodyStyle={{ background: 'transparent' }}>
+                <UnplanWarning>
+                  <span>On-site materials<br/>must be removed</span>
+                  <span><WarningOutlineIcon /></span>
+                </UnplanWarning>
+              </FlexSectionInputBlock>
+            </>
+          )}
         </FlexSection>
       </ActionDialogBody>
 
       <ActionDialogFooter
+        disabled={!siteEmpty}
         goLabel="Remove Site"
         onGo={unplanConstruction}
         stage={stage}

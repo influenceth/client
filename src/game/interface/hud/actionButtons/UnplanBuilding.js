@@ -1,4 +1,5 @@
 import { useCallback, useMemo } from 'react';
+import { Inventory } from '@influenceth/sdk';
 
 import { UnplanBuildingIcon } from '~/components/Icons';
 import useConstructionManager from '~/hooks/actionManagers/useConstructionManager';
@@ -21,10 +22,16 @@ const UnplanBuilding = ({ asteroid, crew, lot, onSetAction, _disabled }) => {
     onSetAction('UNPLAN_BUILDING');
   }, [onSetAction]);
 
+  const siteEmpty = useMemo(() => {
+    const inv = (lot?.building?.Inventories || []).find((i) => Inventory.TYPES[i.inventoryType].category === Inventory.CATEGORIES.SITE);
+    return ((inv?.mass + inv?.reservedMass) === 0);
+  }, [lot?.building]);
+
   const disabledReason = useMemo(() => {
     if (_disabled) return 'loading...';
+    if (!siteEmpty) return 'not empty';
     return getCrewDisabledReason({ asteroid, crew });
-  }, [_disabled, asteroid, crew]);
+  }, [_disabled, asteroid, crew, siteEmpty]);
 
   return (
     <ActionButton
