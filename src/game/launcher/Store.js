@@ -725,7 +725,7 @@ export const FaucetSKU = () => {
       setRequestingEth(false);
       createAlert({
         type: 'GenericAlert',
-        data: { content: 'Added 0.015 ETH to your account.' },
+        data: { content: 'Adding 0.015 ETH to your account...' },
         duration: 5000
       });
     } catch (e) {
@@ -746,13 +746,15 @@ export const FaucetSKU = () => {
     setRequestingSway(true);
 
     try {
-      await api.requestTokens('SWAY');
+      const txHash = await api.requestTokens('SWAY');
       setRequestingSway(false);
       createAlert({
         type: 'GenericAlert',
-        data: { content: 'Added 400,000 SWAY to your account.' },
+        data: { content: 'Adding 400,000 SWAY to your account...' },
         duration: 5000
       });
+
+      await starknet.account.waitForTransaction(txHash);
     } catch (e) {
       console.error(e);
       setRequestingSway(false);
@@ -770,6 +772,7 @@ export const FaucetSKU = () => {
   const onComplete = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: 'faucetInfo', refetchType: 'none' });
     queryClient.refetchQueries({ queryKey: 'faucetInfo', type: 'active' });
+    queryClient.invalidateQueries({ queryKey: 'swayBalance' });
   }, [queryClient]);
 
   return (
