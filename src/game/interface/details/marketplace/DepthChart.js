@@ -631,8 +631,8 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
             <h1><MarketplaceBuildingIcon /> {formatters.buildingName(marketplace)}</h1>
             <Subheader>
               <span>{resource.name}</span>
-              <span style={{ color: theme.colors.green }}>{formatResourceAmount(totalSelling || 0, resource.i)} Available</span>
-              <span style={{ color: theme.colors.main }}>{formatResourceAmount(totalBuying || 0, resource.i)} Sellable</span>
+              <span style={{ color: theme.colors.brightMain }}>{formatResourceAmount(totalSelling || 0, resource.i)} Available</span>
+              <span style={{ color: theme.colors.green }}>{formatResourceAmount(totalBuying || 0, resource.i)} Sellable</span>
             </Subheader>
           </div>
           {marketplaceOwner && <CrewIndicator crew={marketplaceOwner} flip label="Managed by" />}
