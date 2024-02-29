@@ -14,7 +14,7 @@ import useStore from '~/hooks/useStore';
 import { formatFixed, keyify } from '~/lib/utils';
 import { hexToRGB } from '~/theme';
 import actionButtons from '../../actionButtons';
-import { HudMenuCollapsibleSection, Tray, trayHeight } from './components';
+import { HudMenuCollapsibleSection, Scrollable, Tray, trayHeight } from './components';
 
 const Wrapper = styled.div`
   display: flex;
@@ -246,7 +246,7 @@ const LotResources = () => {
 
   return (
     <>
-      <Wrapper>
+      <Scrollable hasTray={currentSamplingAction || selectedResource || selectedSample || currentExtraction}>
           <HudMenuCollapsibleSection titleText="Lot Resources" titleLabel="Abundance">
             <div style={{ height: '100%', overflow: 'hidden' }}>
             {showAbundances.map(({ i, abundance }) => {
@@ -318,7 +318,7 @@ const LotResources = () => {
           
           <HudMenuCollapsibleSection titleText="For Sale" titleLabel={`0 Samples`} borderless collapsed>
           </HudMenuCollapsibleSection>
-      </Wrapper>
+      </Scrollable>
 
       {(currentSamplingAction || selectedResource || selectedSample || currentExtraction) && (
         <Tray>

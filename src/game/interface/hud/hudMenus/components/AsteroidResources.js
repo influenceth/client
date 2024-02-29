@@ -9,13 +9,7 @@ import useAsteroidAbundances from '~/hooks/useAsteroidAbundances';
 import useStore from '~/hooks/useStore';
 import { keyify } from '~/lib/utils';
 import { hexToRGB } from '~/theme';
-import { majorBorderColor, HudMenuCollapsibleSection } from './components';
-
-const Wrapper = styled.div`
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-`;
+import { majorBorderColor, HudMenuCollapsibleSection, Scrollable } from './components';
 
 const ResourceWrapper = styled.div`
   flex: 1;
@@ -129,7 +123,7 @@ const AsteroidResources = ({ onClose }) => {
   const nonzeroBonuses = useMemo(() => unpackedBonuses.filter((b) => b.level > 0), [unpackedBonuses]);
 
   return (
-    <Wrapper>
+    <Scrollable>
       <ResourceWrapper>
         <HudMenuCollapsibleSection titleText="Resource Map">
           <div>
@@ -167,7 +161,7 @@ const AsteroidResources = ({ onClose }) => {
           </HudMenuCollapsibleSection>
         </div>
       )}
-    </Wrapper>
+    </Scrollable>
   );
 };
 
