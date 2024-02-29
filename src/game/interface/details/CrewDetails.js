@@ -440,8 +440,9 @@ const CrewDetails = ({ crewId, crew, isMyCrew, isOwnedCrew, selectCrew }) => {
                   if (!crewmate) {
                     return (
                       <div>
-                        <EmptyCrewmateCardFramed isCaptain onClick={isMyCrew ? onClickRecruit : null} width={180}>
+                        <EmptyCrewmateCardFramed isCaptain onClick={(isMyCrew && crew._ready) ? onClickRecruit : null} width={180}>
                           {isMyCrew && crew._ready && <PlusIcon />}
+                          {isMyCrew && !crew._ready && <BlockIcon />}
                         </EmptyCrewmateCardFramed>
                       </div>
                     );
