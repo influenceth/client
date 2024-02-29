@@ -164,6 +164,7 @@ const ActionItemRow = styled.div`
   }
 `;
 
+const messageClipCorner = 20;
 const messageOffset = 75;
 const messageHeight = 195;
 const messageWidth = 700;
@@ -184,7 +185,7 @@ const TutorialMessage = styled.div`
   z-index: 1000000;
   &:before {
     content: "";
-    ${p => p.theme.clipCorner(20)};
+    ${p => p.theme.clipCorner(messageClipCorner)};
     background: rgba(13, 33, 41, 0.8);
     border: 1px solid ${borderColor};
     position: absolute;
@@ -196,6 +197,8 @@ const TutorialMessage = styled.div`
   }
 `;
 const TutorialContent = styled.div`
+  display: flex;
+  flex-direction: column;
   padding: 0 15px;
   & > h3 {
     align-items: center;
@@ -214,9 +217,15 @@ const TutorialContent = styled.div`
     }
   }
   & > div {
-    color: ${p => p.theme.colors.main};
-    font-size: 85%;
+    display: flex;
+    flex: 1;
+    flex-direction: column;
     padding: 12px 0;
+    & > div:first-child {
+      color: ${p => p.theme.colors.main};
+      flex: 1;
+      font-size: 85%;
+    }
   }
 `;
 
@@ -250,7 +259,6 @@ const Buttons = styled.div`
   justify-content: flex-end;
   & > * {
     margin-left: 6px;
-    margin-top: 20px;
   }
 `;
 
@@ -290,25 +298,15 @@ const useTutorial = () => {
       ),  
       crewmateId: 7539,
       initialize: () => {
-        if (currentZoomScene) dispatchZoomScene();
-        if (destination) dispatchDestinationSelected();
-        if (openHudMenu) dispatchHudMenuOpened();
-        resetAsteroidFilters();
-        setTimeout(() => {
-          const delay = zoomStatus === 'out' ? 0 : ZOOM_OUT_ANIMATION_TIME;
-          if (!['out', 'zooming-out'].includes(zoomStatus)) updateZoomStatus('zooming-out');
-
-          setTimeout(() => {
-            dispatchReorientCamera();
-            dispatchOriginSelected(1);
-            setTimeout(() => { setTransitioning(false); }, DELAY_MESSAGE);
-          }, delay);
-        }, 0);
+        setTimeout(() => { setTransitioning(false); }, DELAY_MESSAGE / 2);
       },
     },
     {
       title: 'The Asteroid Belt',
-      content: `Located partly inside the star's habitable 'Goldilocks Zone', the Adalian asteroid belt is comprised of 250,000 asteroids with unique orbits & resource compositions. Aspiring colonist may purchase development rights to entire asteroids, or join with larger organizations attempting to develop their own tracts of land in the belt.`,
+      content: `Located partly inside the star's habitable "Goldilocks Zone," the Adalian asteroid belt is 
+        comprised of 250,000 asteroids with unique orbits & resource compositions. Aspiring colonists may 
+        purchase development rights to entire asteroids, or join with larger organizations attempting to 
+        develop their own tracts of land in the belt.`,
       crewmateId: 7539,
       initialize: () => {
         if (currentZoomScene) dispatchZoomScene();
@@ -329,7 +327,9 @@ const useTutorial = () => {
     },
     {
       title: 'Adalia Prime - The First Colony',
-      content: `Adalia Prime is the single largest asteroid in the belt and the oldest hub of commerce and human acitivty. Every Adalian owes their life to The Arvad, the wayward colony ship that was moored and dismantled here to form the first permanent settlements.`,
+      content: `Adalia Prime is the single largest asteroid in the belt and the oldest hub of commerce and 
+        human activity. Every Adalian owes their life to The Arvad, the wayward colony ship that was moored 
+        and dismantled here to form the first permanent settlements.`,
       crewmateId: 6891,
       initialize: () => {
         if (currentZoomScene) dispatchZoomScene();
@@ -351,7 +351,10 @@ const useTutorial = () => {
     },
     {
       title: 'Navigating The Belt',
-      content: `Adalian pilots burn from asteroid to asteroid using nuclear-powered torch ships. Traversing this vast network of individually orbiting bodies requires careful planning and preparation. Click on the Ballistic Transfer Graph to simulate possible routes, and consider re-fueling for the return journey!`,
+      content: `Adalian pilots burn from asteroid to asteroid using nuclear-powered torch ships. Traversing 
+        this vast network of individually orbiting bodies requires careful planning and preparation. Click 
+        on the Ballistic Transfer Graph to simulate possible routes, and consider re-fueling for the return 
+        journey!`,
       crewmateId: 6877,
       initialize: () => {
         if (currentZoomScene) dispatchZoomScene();
@@ -371,7 +374,10 @@ const useTutorial = () => {
     },
     {
       title: 'Resource Extraction',
-      content: `Raw asteroid ore contains all the basic ingredients to support life and create products for a thriving deep-space economy. Extractors such as this can harvest everything from frozen volatile gases to organic compounds. Deposits of metal, rare-earth, or fissile materials may also be discovered depending on an asteroid's composition and abundances.`,
+      content: `Raw asteroid ore contains all the basic ingredients to support life and create products 
+        for a thriving deep-space economy. Extractors such as this can harvest everything from frozen 
+        volatile gases to organic compounds. Deposits of metal, rare-earth, or fissile materials may 
+        also be discovered depending on an asteroid's composition and abundances.`,
       crewmateId: 7422,
       initialize: () => {
         if (currentZoomScene) dispatchZoomScene();
@@ -393,7 +399,10 @@ const useTutorial = () => {
     },
     {
       title: 'Warehousing & Logistics',
-      content: `Warehouses are another key component of the supply chain, providing secure storage facilities for stockpiling and construction. Most goods are shipped across the surface by low-velocity tug-boats called Hoppers, and travel distances are a critical factor to ensuring shipments arrive on time.`,
+      content: `Warehouses are another key component of the supply chain, providing secure storage 
+        facilities for stockpiling and construction. Most goods are shipped across the surface by 
+        low-velocity tug-boats called Hoppers, and travel distances are a critical factor to ensuring 
+        shipments arrive on time.`,
       crewmateId: 7305,
       initialize: () => {
         if (currentZoomScene) dispatchZoomScene();
@@ -415,7 +424,10 @@ const useTutorial = () => {
     },
     {
       title: 'Markets & Economy',
-      content: `The Adalian economy also heavily depends on Marketplaces to establish prices for goods, and the ever-shifting distances between asteroids provides nonstop opportunities for savvy merchants or intrepid haulers running trade routes. Click the Marketplace listings icon on the right to check this location's products and prices.`,
+      content: `The Adalian economy also heavily depends on Marketplaces to establish prices for goods, 
+        and the ever-shifting distances between asteroids provides nonstop opportunities for savvy 
+        merchants or intrepid haulers running trade routes. Click the Marketplace listings icon on the 
+        right to check this location's products and prices.`,
       crewmateId: 7538,
       initialize: () => {
         if (currentZoomScene) dispatchZoomScene();
@@ -437,7 +449,10 @@ const useTutorial = () => {
     },
     {
       title: 'Habitation & Life Support',
-      content: `Finally Habitats provide life support and a base of operations from which the Crews stationed there venture out to perform jobs. They also serve as social centers and recruitment hubs for new Adalians coming of age in the belt. You may immediately begin your recruitment here; take your first steps as a member of Adalian society!`,
+      content: `Finally, Habitats provide life support and a base of operations from which the Crews 
+        stationed there venture out to perform jobs. They also serve as social centers and recruitment 
+        hubs for new Adalians coming of age in the belt. You may immediately begin your recruitment 
+        here; take your first steps as a member of Adalian society!`,
       crewmateId: 6980,
       initialize: () => {
         if (currentZoomScene) dispatchZoomScene();
@@ -569,28 +584,30 @@ const TutorialItems = () => {
                 <span>{currentStep?.title}</span>
                 <IconButton onClick={() => setHideMessage(true)} scale={0.75}><CloseIcon /></IconButton>
               </h3>
-              <div style={{ height: 70 }}>{currentStep?.content}</div>
-              <Buttons>
-                {currentStepIndex > 0 && (
-                  <Button flip size="small" subtle onClick={handlePrevious}>Previous</Button>
-                )}
-                {currentStepIndex < steps.length - 1 && (
-                  <Button size="small" subtle onClick={handleNext}>Next Section</Button>
-                )}
-                {currentStepIndex === steps.length - 1 && (
-                  <Button
-                    color={theme.colors.success}
-                    disabled={authenticating}
-                    onClick={handleNext}
-                    size="small"
-                    subtle>Start Your Crew</Button>
-                )}
-              </Buttons>
+              <div>
+                <div>{currentStep?.content}</div>
+                <Buttons>
+                  {currentStepIndex > 0 && (
+                    <Button flip size="small" subtle onClick={handlePrevious}>Previous</Button>
+                  )}
+                  {currentStepIndex < steps.length - 1 && (
+                    <Button size="small" subtle onClick={handleNext}>Next Section</Button>
+                  )}
+                  {currentStepIndex === steps.length - 1 && (
+                    <Button
+                      color={theme.colors.success}
+                      disabled={authenticating}
+                      onClick={handleNext}
+                      size="small"
+                      subtle>Start Your Crew</Button>
+                  )}
+                </Buttons>
+              </div>
             </TutorialContent>
           </>
         )}
 
-        <ClipCorner dimension={20} color={borderColor} />
+        <ClipCorner dimension={messageClipCorner} color={borderColor} offset={-1} />
       </TutorialMessage>
     </>
   );

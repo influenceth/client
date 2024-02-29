@@ -17,6 +17,28 @@ const Content = styled.div`
 `;
 
 const Account = () => {
+  // const { token } = useAuth();
+  // const { create, destroy } = useControlledAlert();
+
+  // useEffect(() => {
+  //   if (!token) {
+  //     const alertId = create({
+  //       icon: <InfluenceIcon />,
+  //       content: (
+  //         <Content>
+  //           Welcome to the star system <b>Adalia</b>.
+  //           {' '}Explore the live world as a guest without logging in.
+  //           {' '}<a href="https://wiki.influenceth.io/en/docs/user-guides" target="_blank" rel="noopener noreferrer">See Here</a>
+  //           {' '}for help getting started.
+  //         </Content>
+  //       )
+  //     });
+  //     return () => {
+  //       destroy(alertId);
+  //     }
+  //   }
+  // }, [token]);
+
   return null;
 }
 
