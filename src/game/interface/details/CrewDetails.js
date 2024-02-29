@@ -214,16 +214,22 @@ const NameWrapper = styled.div`
     font-size: 24px;
     margin-right: 15px;
   }
-  & > h4 {
-    font-size: 30px;
-    font-weight: normal;
-    margin: 0;
-    flex: 1;
-  }
   & > input {
     flex: 1;
     font-size: 30px;
     height: 48px;
+  }
+`;
+const NameAndStatus = styled.div`
+  align-items: flex-end;
+  display: flex;
+  flex: 1;
+
+  & > h4 {
+    flex: 1;
+    font-size: 30px;
+    font-weight: normal;
+    margin: 0;
   }
 `;
 
@@ -419,8 +425,10 @@ const CrewDetails = ({ crewId, crew, isMyCrew, isOwnedCrew, selectCrew }) => {
                         {changingName ? <LoadingAnimation color="white" size="1em" /> : <EditIcon />}
                       </Button>
                     )}
-                    <h4>{changingName ? newName : formatters.crewName(crew)}</h4>
-                    <LiveReadyStatus crew={crew} />
+                    <NameAndStatus>
+                      <h4>{changingName ? newName : formatters.crewName(crew)}</h4>
+                      <LiveReadyStatus crew={crew} />
+                    </NameAndStatus>
                   </>
                 )
               }
@@ -432,8 +440,9 @@ const CrewDetails = ({ crewId, crew, isMyCrew, isOwnedCrew, selectCrew }) => {
                   if (!crewmate) {
                     return (
                       <div>
-                        <EmptyCrewmateCardFramed isCaptain onClick={isMyCrew ? onClickRecruit : null} width={180}>
+                        <EmptyCrewmateCardFramed isCaptain onClick={(isMyCrew && crew._ready) ? onClickRecruit : null} width={180}>
                           {isMyCrew && crew._ready && <PlusIcon />}
+                          {isMyCrew && !crew._ready && <BlockIcon />}
                         </EmptyCrewmateCardFramed>
                       </div>
                     );

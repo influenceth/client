@@ -367,6 +367,7 @@ const FeedCrew = ({
         goLabel="Transfer"
         onGo={onStartFeeding}
         stage={stage}
+        waitForCrewReady
         {...props} />
 
       {stage === actionStages.NOT_STARTED && (

@@ -19,6 +19,7 @@ const useHydratedCrew = (id) => {
       data = cloneDeep(crew);
       data._crewmates = (crewmates || []).map((c) => cloneDeep(c));
       data._location = locationsArrToObj(crew.Location?.locations);
+      data._ready = blockTime >= data.Crew?.readyAt;
 
       const foodBonuses = getCrewAbilityBonuses([Crewmate.ABILITY_IDS.FOOD_CONSUMPTION_TIME, Crewmate.ABILITY_IDS.FOOD_RATIONING_PENALTY], data);
       data._foodBonuses = {
@@ -34,8 +35,6 @@ const useHydratedCrew = (id) => {
       // };
 
       isLoading = false;
-
-      data._ready = (crew.Crew?.readyAt) ? blockTime >= crew.Crew.readyAt : true;
     }
     return { data, isLoading };
   }, [blockTime, crew, crewmates, crewLoading, crewmatesLoading]);
