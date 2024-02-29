@@ -67,7 +67,7 @@ const TutorialFilter = styled(Filter)`
     margin-right: 10px;
   }
   &:after {
-    content: "Welcome Tour";
+    content: "Game Tour";
     color: ${COLOR};
   }
 `;
@@ -81,7 +81,7 @@ const OuterWrapper = styled.div`
 `;
 
 const ActionItemContainer = styled.div`
-  max-height: 275px;
+  max-height: 300px;
   overflow-y: auto;
   overflow-x: hidden;
   pointer-events: auto;
@@ -164,10 +164,11 @@ const ActionItemRow = styled.div`
   }
 `;
 
-const messageOffset = 65;
-const messageHeight = 175;
-const messageWidth = 600;
-const crewmateOverflow = 80;
+const messageClipCorner = 20;
+const messageOffset = 75;
+const messageHeight = 195;
+const messageWidth = 700;
+const crewmateOverflow = 59;
 const crewmateWidth = 180;
 const borderColor = `rgba(${theme.colors.mainRGB}, 0.33)`;
 const TutorialMessage = styled.div`
@@ -184,7 +185,7 @@ const TutorialMessage = styled.div`
   z-index: 1000000;
   &:before {
     content: "";
-    ${p => p.theme.clipCorner(25)};
+    ${p => p.theme.clipCorner(messageClipCorner)};
     background: rgba(13, 33, 41, 0.8);
     border: 1px solid ${borderColor};
     position: absolute;
@@ -196,6 +197,8 @@ const TutorialMessage = styled.div`
   }
 `;
 const TutorialContent = styled.div`
+  display: flex;
+  flex-direction: column;
   padding: 0 15px;
   & > h3 {
     align-items: center;
@@ -214,9 +217,15 @@ const TutorialContent = styled.div`
     }
   }
   & > div {
-    color: ${p => p.theme.colors.main};
-    font-size: 85%;
+    display: flex;
+    flex: 1;
+    flex-direction: column;
     padding: 12px 0;
+    & > div:first-child {
+      color: ${p => p.theme.colors.main};
+      flex: 1;
+      font-size: 85%;
+    }
   }
 `;
 
@@ -277,9 +286,27 @@ const useTutorial = () => {
 
   const tutorialParts = useMemo(() => ([
     {
-      title: 'The Star System Adalia',
-      content: `Welcome to the star system Adalia, which was first discovered by
-        the wayward colony ship Arvad in the year 2335.`,
+      title: 'Welcome to Influence',
+      content: (
+        <>
+          Influence is a massively multiplayer simulation set in the asteroid belt surrounding the star <b>Adalia</b>.
+          <br></br><br></br>
+          Click NEXT to continue the Game Tour, or visit our
+          {' '}<a href="https://wiki.influenceth.io/en/docs/user-guides" target="_blank" rel="noopener noreferrer">Wiki</a>
+          {' '}or <a href="https://discord.com/invite/influenceth" target="_blank" rel="noopener noreferrer">Discord</a> for help getting started!
+        </>
+      ),  
+      crewmateId: 7539,
+      initialize: () => {
+        setTimeout(() => { setTransitioning(false); }, DELAY_MESSAGE / 2);
+      },
+    },
+    {
+      title: 'The Asteroid Belt',
+      content: `Located partly inside the star's habitable "Goldilocks Zone," the Adalian asteroid belt is 
+        comprised of 250,000 asteroids with unique orbits & resource compositions. Aspiring colonists may 
+        purchase development rights to entire asteroids, or join with larger organizations attempting to 
+        develop their own tracts of land in the belt.`,
       crewmateId: 7539,
       initialize: () => {
         if (currentZoomScene) dispatchZoomScene();
@@ -299,16 +326,17 @@ const useTutorial = () => {
       },
     },
     {
-      title: 'The Belt',
-      content: `The Adalian belt is divided into 250,000 individually colonizable
-        asteroids which form the extent of the Prime Council's federated territories.`,
+      title: 'Adalia Prime - The First Colony',
+      content: `Adalia Prime is the single largest asteroid in the belt and the oldest hub of commerce and 
+        human activity. Every Adalian owes their life to The Arvad, the wayward colony ship that was moored 
+        and dismantled here to form the first permanent settlements.`,
       crewmateId: 6891,
       initialize: () => {
         if (currentZoomScene) dispatchZoomScene();
         if (destination) dispatchDestinationSelected();
         if (openHudMenu) dispatchHudMenuOpened();
         if (lot) dispatchLotSelected();
-        dispatchOriginSelected(15);
+        dispatchOriginSelected(1);
         setTimeout(() => {
           const delay = zoomStatus === 'in' ? 0 : ZOOM_IN_ANIMATION_TIME;
           if (!['in', 'zooming-in'].includes(zoomStatus)) updateZoomStatus('zooming-in');
@@ -322,15 +350,16 @@ const useTutorial = () => {
       },
     },
     {
-      title: 'Space Travel',
-      content: `Skillful pilots and navigators are a foundational pillar of Adalian
-        society. Successfully traversing a vast system of individually orbiting
-        locations requires care and planning.`,
+      title: 'Navigating The Belt',
+      content: `Adalian pilots burn from asteroid to asteroid using nuclear-powered torch ships. Traversing 
+        this vast network of individually orbiting bodies requires careful planning and preparation. Click 
+        on the Ballistic Transfer Graph to simulate possible routes, and consider re-fueling for the return 
+        journey!`,
       crewmateId: 6877,
       initialize: () => {
         if (currentZoomScene) dispatchZoomScene();
-        dispatchOriginSelected(15);
-        dispatchDestinationSelected(1);
+        dispatchOriginSelected(1);
+        dispatchDestinationSelected(15);
         setTimeout(() => {
           const delay = zoomStatus === 'out' ? 0 : ZOOM_OUT_ANIMATION_TIME;
           if (!['out', 'zooming-out'].includes(zoomStatus)) updateZoomStatus('zooming-out');
@@ -344,10 +373,11 @@ const useTutorial = () => {
       },
     },
     {
-      title: 'Asteroid Mining',
-      content: `The foundations of the asteroid economy begin with raw ore. Everything
-        from volatile gases, to organic compounds, and heavy metallic elements may be
-        targeted for mining.`,
+      title: 'Resource Extraction',
+      content: `Raw asteroid ore contains all the basic ingredients to support life and create products 
+        for a thriving deep-space economy. Extractors such as this can harvest everything from frozen 
+        volatile gases to organic compounds. Deposits of metal, rare-earth, or fissile materials may 
+        also be discovered depending on an asteroid's composition and abundances.`,
       crewmateId: 7422,
       initialize: () => {
         if (currentZoomScene) dispatchZoomScene();
@@ -368,8 +398,11 @@ const useTutorial = () => {
       },
     },
     {
-      title: 'Warehousing',
-      content: `After extraction, raw materials are packaged for transport to storage or refining facilities elsewhere in the colony.`,
+      title: 'Warehousing & Logistics',
+      content: `Warehouses are another key component of the supply chain, providing secure storage 
+        facilities for stockpiling and construction. Most goods are shipped across the surface by 
+        low-velocity tug-boats called Hoppers, and travel distances are a critical factor to ensuring 
+        shipments arrive on time.`,
       crewmateId: 7305,
       initialize: () => {
         if (currentZoomScene) dispatchZoomScene();
@@ -390,9 +423,11 @@ const useTutorial = () => {
       },
     },
     {
-      title: 'Markets',
-      content: `The Adalian economy also relies heavily on thriving commercial
-        Marketplaces bringing together buyers and sellers of goods.`,
+      title: 'Markets & Economy',
+      content: `The Adalian economy also heavily depends on Marketplaces to establish prices for goods, 
+        and the ever-shifting distances between asteroids provides nonstop opportunities for savvy 
+        merchants or intrepid haulers running trade routes. Click the Marketplace listings icon on the 
+        right to check this location's products and prices.`,
       crewmateId: 7538,
       initialize: () => {
         if (currentZoomScene) dispatchZoomScene();
@@ -413,10 +448,11 @@ const useTutorial = () => {
       },
     },
     {
-      title: 'Habitation',
-      content: `Habitats serve as schooling and recruitment hubs for new Adalian
-        Citizens coming of age and starting their journeys as functioning members
-        of a new stellar society still in its infancy.`,
+      title: 'Habitation & Life Support',
+      content: `Finally, Habitats provide life support and a base of operations from which the Crews 
+        stationed there venture out to perform jobs. They also serve as social centers and recruitment 
+        hubs for new Adalians coming of age in the belt. You may immediately begin your recruitment 
+        here; take your first steps as a member of Adalian society!`,
       crewmateId: 6980,
       initialize: () => {
         if (currentZoomScene) dispatchZoomScene();
@@ -525,7 +561,7 @@ const TutorialItems = () => {
                   isPast={currentStepIndex > i}
                   onClick={() => updateStep(i)}>
                   <Icon><span><TutorialIcon /></span></Icon>
-                  <Status>Part {i + 1}</Status>
+                  <Status>{i + 1}</Status>
                   <Label>{title}</Label>
                 </ActionItemRow>
               ))}
@@ -548,28 +584,30 @@ const TutorialItems = () => {
                 <span>{currentStep?.title}</span>
                 <IconButton onClick={() => setHideMessage(true)} scale={0.75}><CloseIcon /></IconButton>
               </h3>
-              <div style={{ height: 70 }}>{currentStep?.content}</div>
-              <Buttons>
-                {currentStepIndex > 0 && (
-                  <Button flip size="small" subtle onClick={handlePrevious}>Previous</Button>
-                )}
-                {currentStepIndex < steps.length - 1 && (
-                  <Button size="small" subtle onClick={handleNext}>Next Section</Button>
-                )}
-                {currentStepIndex === steps.length - 1 && (
-                  <Button
-                    color={theme.colors.success}
-                    disabled={authenticating}
-                    onClick={handleNext}
-                    size="small"
-                    subtle>Start Your Crew</Button>
-                )}
-              </Buttons>
+              <div>
+                <div>{currentStep?.content}</div>
+                <Buttons>
+                  {currentStepIndex > 0 && (
+                    <Button flip size="small" subtle onClick={handlePrevious}>Previous</Button>
+                  )}
+                  {currentStepIndex < steps.length - 1 && (
+                    <Button size="small" subtle onClick={handleNext}>Next Section</Button>
+                  )}
+                  {currentStepIndex === steps.length - 1 && (
+                    <Button
+                      color={theme.colors.success}
+                      disabled={authenticating}
+                      onClick={handleNext}
+                      size="small"
+                      subtle>Start Your Crew</Button>
+                  )}
+                </Buttons>
+              </div>
             </TutorialContent>
           </>
         )}
 
-        <ClipCorner dimension={25} color={borderColor} />
+        <ClipCorner dimension={messageClipCorner} color={borderColor} offset={-1} />
       </TutorialMessage>
     </>
   );
