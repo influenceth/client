@@ -190,6 +190,9 @@ const api = {
     // BUILDINGS...
     const buildingQueryBuilder = esb.boolQuery();
 
+    // Exclude unplanned buildings
+    buildingQueryBuilder.mustNot(esb.termQuery('Building.status', Building.CONSTRUCTION_STATUSES.UNPLANNED))
+
     // has permission
     if (withPermission) buildingQueryBuilder.filter(esbPermissionQuery(crewId, withPermission));
 
