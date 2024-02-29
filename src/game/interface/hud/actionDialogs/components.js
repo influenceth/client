@@ -4,7 +4,7 @@ import { createPortal } from 'react-dom';
 import ReactTooltip from 'react-tooltip';
 import { TbBellRingingFilled as AlertIcon } from 'react-icons/tb';
 import { BarLoader } from 'react-spinners';
-import { Asteroid, Building, Crewmate, Entity, Inventory, Lot, Order, Permission, Process, Product, Ship, Station, Time } from '@influenceth/sdk';
+import { Asteroid, Building, Crewmate, Dock, Entity, Inventory, Lot, Order, Permission, Process, Product, Ship, Station, Time } from '@influenceth/sdk';
 
 import AsteroidRendering from '~/components/AsteroidRendering';
 import Button from '~/components/ButtonAlt';
@@ -1667,6 +1667,7 @@ export const LandingSelectionDialog = ({ asteroid, deliveryMode, initialSelectio
 
   const { data: lotData } = useAsteroidLotData(asteroid?.id);
   const { data: unorderedSpaceports } = useAsteroidBuildings(asteroid?.id, 'Dock', Permission.IDS.DOCK_SHIP);
+  const { crew } = useCrewContext();
 
   const spaceports = useMemo(
     () => unorderedSpaceports
@@ -1736,7 +1737,7 @@ export const LandingSelectionDialog = ({ asteroid, deliveryMode, initialSelectio
                   <td>Building Name</td>
                   <td>Type</td>
                   <td>Lot Id</td>
-                  <td>Landing Fee</td>
+                  <td>Ground Delay</td>
                   {deliveryMode && <td>Distance</td>}
                 </tr>
               </thead>
@@ -1749,7 +1750,7 @@ export const LandingSelectionDialog = ({ asteroid, deliveryMode, initialSelectio
                     <td>{formatters.buildingName(entity)}</td>
                     <td>{Building.TYPES[entity.Building?.buildingType].name}</td>
                     <td><LocationIcon /> {formatters.lotName(entity._lotIndex)}</td>
-                    <td>0</td>
+                    <td>{formatTimer(Time.toRealDuration(entity?.Dock ? Dock.Entity.getGroundDelay(entity) : 0, crew?._timeAcceleration))}</td>
                     {deliveryMode && <td>{entity._distance} km</td>}
                   </SelectionTableRow>
                 ))}
