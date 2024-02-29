@@ -201,11 +201,6 @@ const FormAgreement = ({
           direction: 0,
         },
         {
-          label: 'Lease Length (Adalian Days)',
-          value: Time.toGameDuration(monthsToSeconds(initialPeriod) / 86400, crew?._timeAcceleration).toLocaleString(),
-          direction: 0,
-        },
-        {
           label: 'Notice Period',
           value: isExtension
             ? `${currentAgreement?.noticePeriod || 0} month${currentAgreement?.noticePeriod === 1 ? '' : 's'}`
