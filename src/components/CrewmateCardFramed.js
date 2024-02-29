@@ -121,7 +121,7 @@ export const EmptyCrewmateCardFramed = styled.div`
     width: 100%;
   }
   & > svg {
-    color: ${p => p.theme.colors.main};
+    color: ${p => (p.onClick) ?  p.theme.colors.main : p.theme.colors.disabledButton};
     opacity: 0.5;
     position: absolute;
     top: calc(50% - 35px);
