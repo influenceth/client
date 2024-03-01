@@ -7,14 +7,14 @@ import Button from '~/components/ButtonAlt';
 import ClipCorner from '~/components/ClipCorner';
 import CrewIndicator from '~/components/CrewIndicator';
 import DataTable from '~/components/DataTable';
-import { ProductIcon, SwayIcon } from '~/components/Icons';
+import { OrderIcon, SwayIcon } from '~/components/Icons';
 import ResourceThumbnail from '~/components/ResourceThumbnail';
 import { formatResourceAmount } from '~/game/interface/hud/actionDialogs/components';
 import useCrew from '~/hooks/useCrew';
 import useLot from '~/hooks/useLot';
 import { formatFixed, formatPrice, nativeBool } from '~/lib/utils';
 import theme from '~/theme';
-import { LocationLink } from '../listViews/components';
+import { IconLink, LocationLink } from '../listViews/components';
 import { getBuildingIcon } from '~/lib/assetUtils';
 import formatters from '~/lib/formatters';
 import useOrderSummaryByExchange from '~/hooks/useOrderSummaryByMarket';
@@ -216,7 +216,12 @@ const AsteroidResourcePrices = ({ asteroid, resource }) => {
         sortField: 'marketplaceName',
         selector: row => (
           <>
-            <LocationLink asteroidId={asteroid.id} lotId={row.lotId} zoomToLot />
+            <IconLink
+              onClick={() => history.push(`/marketplace/${asteroid.id}/${Lot.toIndex(row.lotId)}/${resource.i}?back=all`)}
+              tooltip="View Marketplace Orderbook"
+              data-for="details">
+              <OrderIcon />
+            </IconLink>
             <span>{row.marketplaceName}</span>
           </>
         ),
@@ -225,7 +230,16 @@ const AsteroidResourcePrices = ({ asteroid, resource }) => {
         key: 'lotId',
         label: 'Lot ID',
         sortField: 'lotId',
-        selector: row => Lot.toIndex(row.lotId).toLocaleString(),
+        selector: row => (
+          <>
+            <LocationLink
+              asteroidId={asteroid.id}
+              lotId={row.lotId}
+              zoomToLot
+              data-for="details" />
+            <span>{formatters.lotName(row.lotId)}</span>
+          </>
+        )
       },
       {
         key: 'supply',

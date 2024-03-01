@@ -1909,10 +1909,11 @@ export const InventorySelectionDialog = ({
         // skip if locked (or inventory type is 0, which should not happen but has in staging b/c of dev bugs)
         if (inv.status !== Inventory.STATUSES.AVAILABLE || inv.inventoryType === 0) return;
 
-        // skip if cannot contain any of the itemIds
+        // skip if is source and cannot contain ANY of the itemIds, or is destination and cannot contain ALL of the itemIds
         if (itemIds && Inventory.TYPES[inv.inventoryType].productConstraints) {
-          const allowedMaterials = Object.keys(Inventory.TYPES[inv.inventoryType].productConstraints);
-          if (!itemIds.find((i) => !allowedMaterials.includes(i))) return;
+          const allowedMaterials = Object.keys(Inventory.TYPES[inv.inventoryType].productConstraints).map((i) => Number(i));
+          if (isSourcing && !itemIds.find((i) => allowedMaterials.includes(i))) return;
+          if (!isSourcing && itemIds.find((i) => !allowedMaterials.includes(i))) return;
         }
 
         const entityLotId = entity.Location.locations.find((l) => l.label === Entity.IDS.LOT)?.id;

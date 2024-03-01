@@ -322,7 +322,7 @@ const NewCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }) =>
             asteroidId={asteroid.id}
             otherEntity={lot}
             isSourcing
-            itemIds={[175]}
+            itemIds={[Product.IDS.CORE_DRILL]}
             onClose={() => setSourceSelectorOpen(false)}
             onSelected={setDrillSource}
             open={sourceSelectorOpen}
