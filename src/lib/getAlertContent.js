@@ -26,7 +26,7 @@ const entries = {
     content: (
       <>
         <span>A new version of Influence is now available! </span>
-        <span>Click here to update your experience.</span>
+        <span><b>Refresh</b> to update your client.</span>
       </>
     )
   }),
