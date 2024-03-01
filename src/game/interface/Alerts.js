@@ -89,7 +89,15 @@ const AlertWrapper = styled.div`
 const Icon = styled.div`
   color: ${p => p.theme.colors.main};
   flex: 0 0 44px;
-  font-size: 250%;
+  font-size: 200%;
+  padding-left: 5px;
+  padding-right: 5px;
+`;
+
+const IconError = styled.div`
+  color: ${p => p.theme.colors.error};
+  flex: 0 0 44px;
+  font-size: 200%;
   padding-left: 5px;
   padding-right: 5px;
 `;
@@ -175,26 +183,41 @@ const Alerts = () => {
       const alertContent = getAlertContent({ type, data });
       if (alertContent) {
         const { icon, content, txLink } = alertContent;
-        send(
-          <AlertWrapper>
-            <Icon>
-              {icon}
-            </Icon>
-            <Description>
-              {content}
-            </Description>
-            {txLink && (
-              <TransactionLink href={txLink} rel="noreferrer" target="_blank">
-                <LinkIcon />
-              </TransactionLink>
-            )}
-          </AlertWrapper>,
-          getOptions(a)
-        );
-
         if (level === 'warning') {
+          send(
+            <AlertWrapper>
+              <IconError>
+                {icon}
+              </IconError>
+              <Description>
+                {content}
+              </Description>
+              {txLink && (
+                <TransactionLink href={txLink} rel="noreferrer" target="_blank">
+                  <LinkIcon />
+                </TransactionLink>
+              )}
+            </AlertWrapper>,
+            getOptions(a)
+          );
           playSound('effects.failure');
         } else {
+          send(
+            <AlertWrapper>
+              <Icon>
+                {icon}
+              </Icon>
+              <Description>
+                {content}
+              </Description>
+              {txLink && (
+                <TransactionLink href={txLink} rel="noreferrer" target="_blank">
+                  <LinkIcon />
+                </TransactionLink>
+              )}
+            </AlertWrapper>,
+            getOptions(a)
+          );
           playSound('effects.success');
         }
       }

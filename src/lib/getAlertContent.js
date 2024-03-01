@@ -1,9 +1,12 @@
+import { UpdateIcon, WarningIcon, SettingsIcon } from '~/components/Icons';
+
 const entries = {
   //
   // Generic
   //
 
   GenericAlert: (e) => ({
+    icon: <WarningIcon />,
     content: <span>{e.content}</span>
   }),
 
@@ -19,6 +22,7 @@ const entries = {
   //
 
   App_Updated: (e) => ({
+    icon: <UpdateIcon />,
     content: (
       <>
         <span>A new version of Influence is now available! </span>
@@ -28,6 +32,7 @@ const entries = {
   }),
 
   Game_GPUPrompt: (e) => ({
+    icon: <SettingsIcon />,
     content: (
       <>
         <span>Please consider turning on browser hardware accleration for a better experience.</span>

@@ -99,6 +99,7 @@ import PromoteSVG from '~/assets/icons/PromoteIcon.svg';
 import RadiusSVG from '~/assets/icons/RadiusIcon.svg';
 import RecruitCrewmateSVG from '~/assets/icons/RecruitCrewmateIcon.svg';
 import RefineSVG from '~/assets/icons/RefineIcon.svg';
+import UpdateSVG from '~/assets/icons/UpdateIcon.svg';
 import ResetCameraSVG from '~/assets/icons/ResetCameraIcon.svg';
 import ResourceSVG from '~/assets/icons/ResourceIcon.svg';
 import RocketSVG from '~/assets/icons/RocketIcon.svg';
@@ -115,6 +116,7 @@ import TrophySVG from '~/assets/icons/TrophyIcon.svg';
 import TutorialSVG from '~/assets/icons/TutorialIcon.svg';
 import TwitterSVG from '~/assets/icons/TwitterIcon.svg';
 import WalletSVG from '~/assets/icons/WalletIcon.svg';
+import WarningSVG from '~/assets/icons/WarningIcon.svg';
 import WarningOutlineSVG from '~/assets/icons/WarningOutlineIcon.svg';
 
 import AssetAgreementsSVG from '~/assets/icons/action_buttons/AssetAgreements.svg';
@@ -260,6 +262,7 @@ export const PromoteIcon = () => <PromoteSVG className="icon" />;
 export const RadiusIcon = () => <RadiusSVG className="icon" />;
 export const RecruitCrewmateIcon = () => <RecruitCrewmateSVG className="icon" />;
 export const RefineIcon = () => <RefineSVG className="icon" />;
+export const UpdateIcon = () => <UpdateSVG className="icon" />;
 export const ResetCameraIcon = () => <ResetCameraSVG className="icon" />;
 export const ResourceIcon = () => <ResourceSVG className="icon" />;
 export const RocketIcon = () => <RocketSVG className="icon" />;
@@ -277,6 +280,7 @@ export const TrophyIcon = () => <TrophySVG className="icon" />;
 export const TutorialIcon = () => <TutorialSVG className="icon" />;
 export const TwitterIcon = () => <TwitterSVG className="icon" />;
 export const WalletIcon = () => <WalletSVG className="icon" />;
+export const WarningIcon = () => <WarningSVG className="icon" />;
 export const WarningOutlineIcon = () => <WarningOutlineSVG className="icon" />;
 
 // action icons
@@ -378,7 +382,6 @@ export {
   MdRadioButtonChecked as RadioCheckedIcon,
   MdRadioButtonUnchecked as RadioUncheckedIcon,
   MdStop as StopIcon,
-  RiAlertFill as WarningIcon,
   RiLayoutGridFill as GridIcon,
   FiLogIn as LoginIcon, // TODO: ...
   RiRepeatFill as RefreshIcon,
