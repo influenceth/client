@@ -6,6 +6,7 @@ import IconButton from '~/components/IconButton';
 import { CloseIcon } from '~/components/Icons';
 import ClipCorner from './ClipCorner';
 import theme from '~/theme';
+import { useEffect, useState } from 'react';
 
 const defaultMaxWidth = '1400px';
 const cornerWidth = 35;
@@ -136,6 +137,13 @@ const Details = (props) => {
   const { title, contentProps = {}, contentInnerProps = {}, edgeToEdge, headerProps, onClose, onCloseDestination, outerNode, width, ...restProps } = props;
   const history = useHistory();
 
+  // bc can go from details to details page, explicitly reset tooltip so doesn't linger after transition
+  const [showTooltip, setShowTooltip] = useState();
+  useEffect(() => {
+    setShowTooltip(false);
+    setTimeout(() => { setShowTooltip(true); }, 0);
+  }, [title]);
+
   return (
     <Wrapper {...restProps}>
       <StyledDetails {...restProps}>
@@ -154,7 +162,7 @@ const Details = (props) => {
         </Content>
         <ClipCorner dimension={cornerWidth} color={theme.colors.borderBottom} />
       </StyledDetails>
-      <ReactTooltip id="details" effect="solid" />
+      {showTooltip && <ReactTooltip id="details" effect="solid" />}
     </Wrapper>
   );
 };

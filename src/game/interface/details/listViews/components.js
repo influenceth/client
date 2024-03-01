@@ -1,10 +1,12 @@
+import { useEffect } from 'react';
 import { useHistory } from 'react-router-dom';
+import ReactTooltip from 'react-tooltip';
 import styled from 'styled-components';
 
 import { LocationIcon } from '~/components/Icons';
 import { useLotLink } from '~/components/LotLink';
 
-const LocLink = styled.span`
+const StyledIconLink = styled.span`
   color: white;
   cursor: ${p => p.theme.cursors.active};
   display: inline-block;
@@ -19,21 +21,34 @@ const LocLink = styled.span`
   }
 `;
 
-export const LocationLink = ({ asteroidId, lotId, resourceId, zoomToLot }) => {
+export const IconLink = ({ children, onClick, tooltip, ...props }) => {
+  useEffect(() => ReactTooltip.rebuild(), [tooltip]);
+  return (
+    <StyledIconLink
+      data-for="listView"
+      data-tip={tooltip}
+      data-place="left"
+      onClick={onClick}
+      {...props}>
+      {children}
+    </StyledIconLink>
+  );
+};
+
+export const LocationLink = ({ asteroidId, lotId, resourceId, zoomToLot, ...props }) => {
   const history = useHistory();
   const _onClick = useLotLink({ asteroidId, lotId, resourceId, zoomToLot });
   return (
-    <LocLink
-      data-for="listView"
-      data-tip={`View ${lotId ? 'Lot' : 'Asteroid'}`}
-      data-place="left"
+    <IconLink
+      tooltip={`View ${lotId ? 'Lot' : 'Asteroid'}`}
       onClick={() => {
         if (_onClick) {
           history.push('/');
           _onClick();
         }
-      }}>
+      }}
+      {...props}>
       <LocationIcon />
-    </LocLink>
+    </IconLink>
   )
 };
