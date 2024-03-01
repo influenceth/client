@@ -617,11 +617,11 @@ const MarketplaceOrder = ({
       const buyMass = buyUnits * resource.massPerUnit;
       const buyVolume = buyUnits * resource.volumePerUnit;
       const invConfig = Inventory.getType(storageInventory.inventoryType, crew?._inventoryBonuses) || {};
-      if (storageInventory.mass + storageInventory.reservedMass + buyMass > invConfig.massConstraint) return true;
-      if (storageInventory.volume + storageInventory.reservedVolume + buyVolume > invConfig.volumeConstraint) return true;
+      if ((storageInventory.mass + storageInventory.reservedMass + buyMass) > invConfig.massConstraint) return true;
+      if ((storageInventory.volume + storageInventory.reservedVolume + buyVolume) > invConfig.volumeConstraint) return true;
       if (invConfig.productConstraints) {
-        if (!invConfig.productConstraints[resourceId]) return true;
-        if (invConfig.productConstraints[resourceId] > 0 && amountInInventory + buyUnits > invConfig.productConstraints[resourceId]) return true;
+        if (!invConfig.productConstraints.hasOwnProperty(resourceId)) return true;
+        if (invConfig.productConstraints[resourceId] > 0 && ((amountInInventory + buyUnits) > invConfig.productConstraints[resourceId])) return true;
       }
     }
     return false;
