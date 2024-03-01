@@ -53,7 +53,7 @@ const TitleBar = styled.div`
     display: flex;
     flex-direction: row;
     font-size: 20px;
-    height: 48px;
+    height: 44px;
     justify-content: space-between;
     margin-left: 0;
     pointer-events: auto;
@@ -62,10 +62,10 @@ const TitleBar = styled.div`
     clip-path: polygon(
       0 0,
       100% 0,
-      100% 24px,
-      calc(100% - 12px) 36px,
-      12px 36px,
-      0 48px
+      100% 20px,
+      calc(100% - 10px) 32px,
+      10px 32px,
+      0 44px
     );
 
     & svg {
@@ -75,8 +75,10 @@ const TitleBar = styled.div`
 `;
 
 const BaseLocation = styled.div`
+  align-items: center;
   color: white;
   cursor: ${p => p.theme.cursors.active};
+  display: flex;
   font-size: 14.5px;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -102,10 +104,10 @@ const BaseLocation = styled.div`
 const Crewmates = styled.div`
   display: flex;
   flex-direction: row;
-  padding-left: 2px;
-  margin-top: -4px;
+  padding-left: 4px;
+  margin-top: -7px;
   & > * {
-    margin-left: 5px;
+    margin-left: 6px;
     &:first-child {
       margin-left: 0;
     }
@@ -156,7 +158,7 @@ const AvatarMenu = () => {
             onClick={onClick}
             silhouetteOverlay={silhouetteOverlay}
             warnIfNotOwnedBy={crew?.Nft?.owner}
-            width={96} />
+            width={98} />
 
           <CrewInfoContainer>
             <TitleBar>
@@ -178,7 +180,7 @@ const AvatarMenu = () => {
                     onClick={onClick}
                     silhouetteOverlay={silhouetteOverlay}
                     warnIfNotOwnedBy={crew?.Nft?.owner}
-                    width={65}
+                    width={68}
                     noArrow />
                 );
               })}
