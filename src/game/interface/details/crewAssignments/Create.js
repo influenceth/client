@@ -1194,7 +1194,7 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
         if (true) {
           setRequestingEth(false);
           createAlert({
-            type: 'GenericAlert',
+            type: 'WalletAlert',
             data: { content: 'Added 0.015 ETH to your account.' },
             duration: 5000
           });

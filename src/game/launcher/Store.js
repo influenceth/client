@@ -724,8 +724,8 @@ export const FaucetSKU = () => {
       await api.requestTokens('ETH');
       setRequestingEth(false);
       createAlert({
-        type: 'GenericAlert',
-        data: { content: 'Adding 0.015 ETH to your account...' },
+        type: 'WalletAlert',
+        data: { content: 'Added 0.015 ETH to your account.' },
         duration: 5000
       });
     } catch (e) {
@@ -749,8 +749,8 @@ export const FaucetSKU = () => {
       const txHash = await api.requestTokens('SWAY');
       setRequestingSway(false);
       createAlert({
-        type: 'GenericAlert',
-        data: { content: 'Adding 400,000 SWAY to your account...' },
+        type: 'WalletAlert',
+        data: { content: 'Added 400,000 SWAY to your account.' },
         duration: 5000
       });
 

@@ -1,4 +1,4 @@
-import { UpdateIcon, WarningIcon, SettingsIcon } from '~/components/Icons';
+import { UpdateIcon, WarningIcon, SettingsIcon, WalletIcon, ClipboardIcon } from '~/components/Icons';
 
 const entries = {
   //
@@ -17,6 +17,16 @@ const entries = {
     ),
   }),
 
+  WalletAlert: (e) => ({
+    icon: <WalletIcon />,
+    content: <span>{e.content}</span>
+  }),
+
+  ClipboardAlert: (e) => ({
+    icon: <ClipboardIcon />,
+    content: <span>{e.content}</span>
+  }),
+
   //
   // App-level
   //
@@ -26,7 +36,7 @@ const entries = {
     content: (
       <>
         <span>A new version of Influence is now available! </span>
-        <span><b>Refresh</b> to update your client.</span>
+        <span><b>Click here</b> to update your client.</span>
       </>
     )
   }),

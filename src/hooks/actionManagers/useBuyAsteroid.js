@@ -43,7 +43,7 @@ const useBuyAsteroid = (id) => {
       createAlert({
         type: 'GenericAlert',
         level: 'warning',
-        data: { content: `Asteroid sale limit reached. Next sale period begins ${nextPeriod.toLocaleString()}.` },
+        data: { content: `The maximum number of asteroids have been sold this period. Next sale begins ${nextPeriod.toLocaleString()}.` },
         duration: 5000
       });
 

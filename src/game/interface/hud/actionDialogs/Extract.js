@@ -275,7 +275,7 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
       createAlert({
         type: 'GenericAlert',
         level: 'warning',
-        data: { content: `Insufficient capacity remaining at selected destination: ${formatSampleMass(inventoryConfig.massConstraint)} tonnes or ${formatSampleVolume(inventoryConfig.volumeConstraint)} m³` },
+        data: { content: `Insufficient inventory capacity at destination: ${formatSampleMass(inventoryConfig.massConstraint)} tonnes or ${formatSampleVolume(inventoryConfig.volumeConstraint)} m³` },
         duration: 10000
       });
       return;

@@ -84,20 +84,18 @@ const AlertWrapper = styled.div`
       padding: 0;
     }
   }
+
+  ${p => p.level === 'warning' && `
+    & ${Icon} {
+      color: ${p.theme.colors.error};
+    }
+  `}
 `;
 
 const Icon = styled.div`
   color: ${p => p.theme.colors.main};
   flex: 0 0 44px;
-  font-size: 200%;
-  padding-left: 5px;
-  padding-right: 5px;
-`;
-
-const IconError = styled.div`
-  color: ${p => p.theme.colors.error};
-  flex: 0 0 44px;
-  font-size: 200%;
+  font-size: 175%;
   padding-left: 5px;
   padding-right: 5px;
 `;
@@ -170,7 +168,6 @@ export const useControlledAlert = () => {
 
   return { create, destroy };
 }
-
 const Alerts = () => {
   const alerts = useStore(s => s.logs.alerts);
   const notifyAlert = useStore(s => s.dispatchAlertNotified);
@@ -183,41 +180,25 @@ const Alerts = () => {
       const alertContent = getAlertContent({ type, data });
       if (alertContent) {
         const { icon, content, txLink } = alertContent;
+        send(
+          <AlertWrapper level={level}>
+            <Icon >
+              {icon}
+            </Icon>
+            <Description>
+              {content}
+            </Description>
+            {txLink && (
+              <TransactionLink href={txLink} rel="noreferrer" target="_blank">
+                <LinkIcon />
+              </TransactionLink>
+            )}
+          </AlertWrapper>,
+          getOptions(a)
+        );
         if (level === 'warning') {
-          send(
-            <AlertWrapper>
-              <IconError>
-                {icon}
-              </IconError>
-              <Description>
-                {content}
-              </Description>
-              {txLink && (
-                <TransactionLink href={txLink} rel="noreferrer" target="_blank">
-                  <LinkIcon />
-                </TransactionLink>
-              )}
-            </AlertWrapper>,
-            getOptions(a)
-          );
           playSound('effects.failure');
         } else {
-          send(
-            <AlertWrapper>
-              <Icon>
-                {icon}
-              </Icon>
-              <Description>
-                {content}
-              </Description>
-              {txLink && (
-                <TransactionLink href={txLink} rel="noreferrer" target="_blank">
-                  <LinkIcon />
-                </TransactionLink>
-              )}
-            </AlertWrapper>,
-            getOptions(a)
-          );
           playSound('effects.success');
         }
       }

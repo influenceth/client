@@ -48,6 +48,7 @@ import ChapterSVG from '~/assets/icons/ChapterIcon.svg';
 import ChatSVG from '~/assets/icons/ChatIcon.svg';
 import CheckSVG from '~/assets/icons/CheckIcon.svg';
 import ChevronDoubleDownSVG from '~/assets/icons/ChevronDoubleDownIcon.svg';
+import ClipboardSVG from '~/assets/icons/ClipboardIcon.svg';
 import ColumnsSVG from '~/assets/icons/ColumnsIcon.svg';
 import CompositionSVG from '~/assets/icons/CompositionIcon.svg';
 import CoreSampleSVG from '~/assets/icons/CoreSampleIcon.svg';
@@ -208,6 +209,7 @@ export const CheckIcon = () => <CheckSVG className="icon" style={{ width: '1.314
 export const ChevronDoubleDownIcon = () => <ChevronDoubleDownSVG className="icon" />;
 export const ChevronDoubleUpIcon = () => <ChevronDoubleDownSVG className="icon" style={{ transform: 'rotate(180deg)' }} />;
 export const ChevronDoubleRightIcon = () => <ChevronDoubleDownSVG className="icon" style={{ transform: 'rotate(270deg)' }} />;
+export const ClipboardIcon = () => <ClipboardSVG className="icon" />;
 export const ColumnsIcon = () => <ColumnsSVG className="icon" />;
 export const CompositionIcon = () => <CompositionSVG className="icon" />;
 export const CoreSampleIcon = () => <CoreSampleSVG className="icon" />;

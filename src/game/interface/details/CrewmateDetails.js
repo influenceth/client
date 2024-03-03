@@ -453,7 +453,7 @@ const Wrapper = () => {
       if (!crewmateLoading && !crewmate) {
         createAlert({
           type: 'GenericAlert',
-          data: { content: 'Invalid crewmate id specified.' },
+          data: { content: 'Invalid Crewmate ID specified.' },
           level: 'warning',
           duration: 5000
         });

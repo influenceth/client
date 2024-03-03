@@ -173,7 +173,7 @@ const TransferToSite = ({ asteroid, lot: destinationLot, deliveryManager, stage,
       createAlert({
         type: 'GenericAlert',
         level: 'warning',
-        data: { content: `Insufficient capacity remaining at selected destination: ${formatSampleMass(destInventoryConfig.massConstraint)} tonnes or ${formatSampleVolume(destInventoryConfig.volumeConstraint)} m³` },
+        data: { content: `Insufficient inventory capacity at destination: ${formatSampleMass(destInventoryConfig.massConstraint)} tonnes or ${formatSampleVolume(destInventoryConfig.volumeConstraint)} m³` },
         duration: 10000
       });
       return;
