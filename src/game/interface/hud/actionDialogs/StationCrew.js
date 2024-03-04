@@ -73,9 +73,9 @@ const StationCrew = ({ asteroid, destination: rawDestination, lot, origin: rawOr
   const [travelDistance, travelTime] = useMemo(() => {
     if (!origin._location || !destination._location) return [0, 0];
     return [
-      Asteroid.getLotDistance(asteroid?.id, origin._location.lotIndex, destination._location.lotIndex),
+      Asteroid.getLotDistance(asteroid?.id, origin._location.lotIndex || 0, destination._location.lotIndex || 0),
       Time.toRealDuration(
-        Asteroid.getLotTravelTime(asteroid?.id, origin._location.lotIndex, destination._location.lotIndex, crewTravelBonus.totalBonus),
+        Asteroid.getLotTravelTime(asteroid?.id, origin._location.lotIndex || 0, destination._location.lotIndex || 0, crewTravelBonus.totalBonus),
         crew?._timeAcceleration
       )
     ];
@@ -211,7 +211,7 @@ const StationCrew = ({ asteroid, destination: rawDestination, lot, origin: rawOr
 
           <FlexSectionSpacer />
 
-          <div style={{ alignSelf: 'flex-start', width: '50%', overflow: 'hidden' }}>
+          <div style={{ alignSelf: 'flex-start', paddingTop: 4, width: '50%', overflow: 'hidden' }}>
             {!crewIsOwner && <CrewIndicator crew={destinationOwner} />}
             {destination && (
               <MiniBarChart
