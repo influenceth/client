@@ -78,11 +78,12 @@ const EmergencyModeCollect = ({ asteroid, lot, manager, ship: maybeShip, stage, 
     totalAmount,
     totalEmergencyFraction
   } = useMemo(() => {
-    const propellantInventory = ship.Inventories.find((i) => i.slot === Ship.TYPES[ship.Ship.shipType].propellantSlot);
+    const shipConfig = Ship.TYPES[ship.Ship.shipType];
+    const propellantInventory = ship.Inventories.find((i) => i.slot === shipConfig.propellantSlot);
     const propellantInventoryConfig = Inventory.getType(propellantInventory.inventoryType, crew?._inventoryBonuses);
     const startingAmount = propellantInventory.mass / Product.TYPES[resourceId].massPerUnit;
     const maxTankAmount = propellantInventoryConfig.massConstraint / Product.TYPES[resourceId].massPerUnit;
-    const maxEmergencyAmount = Ship.EMERGENCY_PROP_LIMIT * maxTankAmount;
+    const maxEmergencyAmount = shipConfig.emergencyPropellantCap * maxTankAmount;
     const totalAmount = startingAmount + collectableAmount;
     const totalEmergencyFraction = totalAmount / maxEmergencyAmount;
     return {
@@ -99,14 +100,10 @@ const EmergencyModeCollect = ({ asteroid, lot, manager, ship: maybeShip, stage, 
   const recalculateCollectableAmount = useCallback(() => {
     setCollectableAmount(
       Math.floor(
-        Ship.getEmergencyPropellantAmount(
-          Time.toGameDuration(Date.now() / 1000 - ship?.Ship?.emergencyAt, crew?._timeAcceleration),
-          propellantInventoryConfig,
-          startingAmount,
-        ) - startingAmount
+        Ship.Entity.getEmergencyPropellantAmount(ship, crew?._inventoryBonuses, crew?._timeAcceleration) - startingAmount
       )
     );
-  }, [crew?._timeAcceleration, ship?.Ship?.emergencyAt, propellantInventoryConfig, startingAmount]);
+  }, [crew, ship, startingAmount]);
 
   useEffect(() => {
     recalculateCollectableAmount();
@@ -115,15 +112,11 @@ const EmergencyModeCollect = ({ asteroid, lot, manager, ship: maybeShip, stage, 
   }, [recalculateCollectableAmount]);
 
   const maxGenerationTime = useMemo(() => {
-    // console.log(propellantInventory.inventoryType, propellantInventory.mass, Product.TYPES[resourceId].massPerUnit)
     return Time.toRealDuration(
-      Ship.getTimeUntilEmergencyPropellantFull(
-        propellantInventoryConfig,
-        propellantInventory.mass / Product.TYPES[resourceId].massPerUnit,
-      ),
+      Ship.Entity.getTimeUntilEmergencyPropellantFull(ship, crew?._inventoryBonuses),
       crew?._timeAcceleration
     );
-  }, [crew?._timeAcceleration, propellantInventory, propellantInventoryConfig]);
+  }, [crew?._timeAcceleration, ship]);
 
   const stats = useMemo(() => ([
     {
@@ -237,6 +230,7 @@ const EmergencyModeCollect = ({ asteroid, lot, manager, ship: maybeShip, stage, 
             propellantPregeneration={startingAmount * Product.TYPES[resourceId].massPerUnit}
             propellantPostgeneration={totalAmount * Product.TYPES[resourceId].massPerUnit}
             propellantTankMax={propellantInventoryConfig.massConstraint}
+            emergencyPropellantCap={Ship.TYPES[ship.Ship.shipType].emergencyPropellantCap}
           />
         </FlexSection>
 

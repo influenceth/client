@@ -31,15 +31,14 @@ const EmergencyModeCollect = ({ crew, onSetAction, _disabled }) => {
     hasCollectedMax,
     finishTime,
   } = useMemo(() => {
-    const propellantInventory = ship.Inventories.find((i) => i.slot === Ship.TYPES[ship.Ship.shipType].propellantSlot);
+    const shipConfig = Ship.TYPES[ship.Ship.shipType];
+    const propellantInventory = ship.Inventories.find((i) => i.slot === shipConfig.propellantSlot);
     const propellantInventoryConfig = Inventory.getType(propellantInventory.inventoryType, crew?._inventoryBonuses);
     const startingAmount = propellantInventory.mass / Product.TYPES[resourceId].massPerUnit;
     const maxTankAmount = propellantInventoryConfig.massConstraint / Product.TYPES[resourceId].massPerUnit;
-    const maxEmergencyAmount = Ship.EMERGENCY_PROP_LIMIT * maxTankAmount;
-    const finishTime = (ship?.Ship?.emergencyAt || 0) + Time.toRealDuration(
-      Ship.getTimeUntilEmergencyPropellantFull(propellantInventoryConfig, startingAmount),
-      crew?._timeAcceleration
-    );
+    const maxEmergencyAmount = shipConfig.emergencyPropellantCap * maxTankAmount;
+    const finishTime = (ship?.Ship?.emergencyAt || 0)
+      + Time.toRealDuration(Ship.Entity.getTimeUntilEmergencyPropellantFull(ship), crew?._inventoryBonuses);
     return {
       hasCollectedMax: startingAmount >= maxEmergencyAmount,
       finishTime,

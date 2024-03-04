@@ -502,6 +502,9 @@ export function ChainTransactionProvider({ children }) {
 
   // autoresolve when actionType is set but actionType was not actually triggered by actionRound
   const prependEventAutoresolve = useMemo(
+    // TODO: can we check with a read call that this doesn't predict failure before prepending it
+    //  (i.e. in case local crew value is stale)? might be more reliable anyway
+    //  ... or we could also refetch crew again first
     () => crew?.Crew?.actionType
       && crew?.Crew?.actionRound
       && (crew?.Crew?.actionRound + RandomEvent.MIN_ROUNDS) <= blockNumber

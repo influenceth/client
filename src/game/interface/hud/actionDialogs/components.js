@@ -3115,7 +3115,7 @@ export const PropellantSection = ({ title, narrow, deltaVLoaded, deltaVRequired,
   );
 };
 
-export const EmergencyPropellantSection = ({ title, propellantPregeneration, propellantPostgeneration, propellantTankMax }) => {
+export const EmergencyPropellantSection = ({ title, propellantPregeneration, propellantPostgeneration, propellantTankMax, emergencyPropellantCap }) => {
   // useEffect(() => ReactTooltip.rebuild(), []);
   return (
     <FlexSectionBlock
@@ -3127,7 +3127,7 @@ export const EmergencyPropellantSection = ({ title, propellantPregeneration, pro
           bgColor={theme.colors.main}
           value={propellantPregeneration / propellantTankMax}
           postValue={propellantPostgeneration / propellantTankMax}>
-          <BarChartLimitLine position={0.1} />
+          {emergencyPropellantCap < 1 && <BarChartLimitLine position={emergencyPropellantCap} />}
         </BarChart>
         <BarChartNotes color={theme.colors.main}>
           <div>
@@ -3135,8 +3135,8 @@ export const EmergencyPropellantSection = ({ title, propellantPregeneration, pro
             <b>{formatMass(propellantPostgeneration)}</b>
           </div>
           <div>
-            <span style={{ color: theme.colors.red, textTransform: 'uppercase' }}>Emergency Limit 10%: </span>
-            <b>{formatMass(0.1 * propellantTankMax)}</b>
+            <span style={{ color: theme.colors.red, textTransform: 'uppercase' }}>Emergency Limit {formatFixed(emergencyPropellantCap * 100, 1)}%: </span>
+            <b>{formatMass(emergencyPropellantCap * propellantTankMax)}</b>
           </div>
         </BarChartNotes>
     </FlexSectionBlock>
