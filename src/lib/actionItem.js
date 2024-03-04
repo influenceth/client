@@ -37,6 +37,7 @@ import {
   BecomeAdminIcon,
   PermissionIcon,
   KeysIcon,
+  EjectMyCrewIcon,
 } from '~/components/Icons';
 import theme, { hexToRGB } from '~/theme';
 import { getProcessorProps, locationsArrToObj } from './utils';
@@ -704,8 +705,8 @@ const formatAsTx = (item) => {
 
     case 'EjectCrew': {
       const isGuests = item.vars.caller_crew.id !== item.vars.ejected_crew.id;
-      formatted.icon = <EjectPassengersIcon />;
-      formatted.label = `Eject Crew`;
+      formatted.icon = isGuests ? <EjectPassengersIcon /> : <EjectMyCrewIcon />;
+      formatted.label = `Eject ${isGuests ? '' : 'My'} Crew`;
       formatted.asteroidId = item.meta?.asteroidId;
       formatted.lotId = item.meta?.lotId;
       formatted.shipId = item.meta?.shipId;

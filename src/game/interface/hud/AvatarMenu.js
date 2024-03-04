@@ -86,8 +86,9 @@ const BaseLocation = styled.div`
   width: 222px;
   span {
     color: #AAA;
+    margin-left: 4px;
     &:before {
-      content: " > ";
+      content: "> ";
     }
   }
 

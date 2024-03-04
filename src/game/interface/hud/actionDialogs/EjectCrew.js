@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Asteroid, Building, Crewmate, Permission, Ship, Station, Time } from '@influenceth/sdk';
 
-import { EjectPassengersIcon, WarningOutlineIcon } from '~/components/Icons';
+import { EjectMyCrewIcon, EjectPassengersIcon, WarningIcon, WarningOutlineIcon } from '~/components/Icons';
 import useCrewContext from '~/hooks/useCrewContext';
 import useStationedCrews from '~/hooks/useStationedCrews';
 import { reactBool, formatTimer, locationsArrToObj, getCrewAbilityBonuses } from '~/lib/utils';
@@ -23,7 +23,8 @@ import {
   LotInputBlock,
   CrewSelectionDialog,
   TimeBonusTooltip,
-  getBonusDirection
+  getBonusDirection,
+  ProgressBarSection
 } from './components';
 import useEjectCrewManager from '~/hooks/actionManagers/useEjectCrewManager';
 import useAsteroid from '~/hooks/useAsteroid';
@@ -103,7 +104,7 @@ const EjectCrew = ({ asteroid, origin, originLot, stationedCrews, manager, stage
   }, [ejectionStatus]);
 
   const actionDetails = useMemo(() => {
-    const icon = <EjectPassengersIcon />;
+    const icon = myCrewIsTarget ? <EjectMyCrewIcon /> : <EjectPassengersIcon />;
     const label = myCrewIsTarget ? 'Eject My Crew' : 'Force Eject Crew';
     const status = stage === actionStages.NOT_STARTED
       ? `From ${origin.Ship ? Ship.TYPES[origin.Ship.shipType]?.name : Building.TYPES[origin.Building?.buildingType]?.name}`
@@ -163,7 +164,7 @@ const EjectCrew = ({ asteroid, origin, originLot, stationedCrews, manager, stage
 
         <FlexSection>
 
-          <div style={{ alignSelf: 'flex-start', width: '50%' }}>
+          <div style={{ alignSelf: 'flex-start', paddingTop: 4, width: '50%' }}>
             {origin && targetCrew && (
               <MiniBarChart
                 color="#92278f"
@@ -191,16 +192,39 @@ const EjectCrew = ({ asteroid, origin, originLot, stationedCrews, manager, stage
         </FlexSection>
 
         {originLot && (
-          <FlexSection>
-            <div style={{ width: '50%' }} />
-            <FlexSectionSpacer />
-            <div style={{ width: '50%' }}>
-              <WarningAlert>
-                <div><WarningOutlineIcon /></div>
-                <div>Ejected crews must travel into orbit.</div>
-              </WarningAlert>
-            </div>
-          </FlexSection>
+          <>
+            {myCrewIsTarget
+              ? (
+                <>
+                  <ProgressBarSection
+                    overrides={{
+                      barColor: theme.colors.error,
+                      color: theme.colors.error,
+                      left: <><WarningIcon /> Emergency Escape to Orbit</>,
+                      right: formatTimer(ejectionTime)
+                    }}
+                    stage={stage}
+                    title="Travel Time"
+                  />
+                  <div style={{ color: theme.colors.red, fontSize: '95%', padding: '12px 0 24px', textAlign: 'center' }}>
+                    Crews will become unstationed in orbit. Travel time is proportional to asteroid size.
+                  </div>
+                </>
+              )
+              : (
+                <FlexSection>
+                  <div style={{ width: '50%' }} />
+                  <FlexSectionSpacer />
+                  <div style={{ width: '50%' }}>
+                    <WarningAlert>
+                      <div><WarningOutlineIcon /></div>
+                      <div>Ejected crews must travel into orbit.</div>
+                    </WarningAlert>
+                  </div>
+                </FlexSection>
+              )
+            }
+          </>
         )}
 
         <ActionDialogStats
