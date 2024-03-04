@@ -3101,7 +3101,7 @@ export const PropellantSection = ({ title, narrow, deltaVLoaded, deltaVRequired,
                 ? <span style={{ alignItems: 'center', color: theme.colors.error, display: 'flex', justifyContent: 'center' }}><WarningOutlineIcon /><span style={{ marginLeft: 4 }}>Insufficient Loaded</span></span>
                 : <>{formatFixed(100 * (deltaVMode ? deltaVUse : propellantUse))}% of Loaded</>
               }
-              
+
             </div>
             {!narrow && (
               <div>

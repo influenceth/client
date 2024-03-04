@@ -154,9 +154,10 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
   }, [currentExtraction, lot?.deposits]);
 
   const resource = useMemo(() => {
-    if (!selectedCoreSample) return null;
-    return Product.TYPES[selectedCoreSample.Deposit.resource];
-  }, [selectedCoreSample]);
+    if (!selectedCoreSample && !currentExtraction) return null;
+    const resourceId = selectedCoreSample?.Deposit.resource || currentExtraction?.resourceId;
+    return Product.TYPES[resourceId];
+  }, [selectedCoreSample, currentExtraction]);
 
   const extractionTime = useMemo(() => {
     if (!selectedCoreSample) return 0;
@@ -171,13 +172,13 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
   }, [amount, crew?._timeAcceleration, extractionBonus, selectedCoreSample]);
 
   const { totalTime: crewTravelTime, tripDetails } = useMemo(() => {
-    if (!asteroid?.id || !crew?._location?.lotId || !lot?.id) return {};
+    if (!asteroid?.id || !crew?._location?.lotId || !lot?.id || extractionStatus !== 'NOT_STARTED') return {};
     const crewLotIndex = Lot.toIndex(crew?._location?.lotId);
     return getTripDetails(asteroid.id, crewTravelBonus, crewLotIndex, [
       { label: 'Travel to Extraction Site', lotIndex: Lot.toIndex(lot.id) },
       { label: 'Return to Crew Station', lotIndex: crewLotIndex },
     ], crew?._timeAcceleration);
-  }, [asteroid?.id, lot?.id, crew?._location?.lotId, crew?._timeAcceleration, crewTravelBonus]);
+  }, [extractionStatus, asteroid?.id, lot?.id, crew?._location?.lotId, crew?._timeAcceleration, crewTravelBonus]);
 
   const [transportDistance, transportTime] = useMemo(() => {
     if (!destinationLot?.id) return [];
@@ -350,7 +351,7 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
                 : 'Deposit'
             }
           />
-          
+
           <FlexSectionSpacer />
 
           <InventoryInputBlock

@@ -38,9 +38,9 @@ const useExtractionManager = (lotId, slot = 1) => {
       yield: null,
       isCoreSampleUpdated: false
     };
-    // 
+    //
     // TODO: destinationLotId --> destination, destinationInventoryId --> destinationSlot
-  
+
     let status = 'READY';
     let stage = actionStages.NOT_STARTED;
     if (slotExtractor?.status === Extractor.STATUSES.RUNNING) {
@@ -61,7 +61,7 @@ const useExtractionManager = (lotId, slot = 1) => {
       current.yield = slotExtractor?.yield;
 
       current.isCoreSampleUpdated = true;
-      
+
       if(getStatus('ExtractResourceFinish', payload) === 'pending') {
         status = 'FINISHING';
         stage = actionStages.COMPLETING;
