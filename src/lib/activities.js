@@ -34,7 +34,8 @@ import {
   MarketSellIcon,
   LimitSellIcon,
   MarketBuyIcon,
-  BecomeAdminIcon
+  BecomeAdminIcon,
+  EjectMyCrewIcon
 } from '~/components/Icons';
 import LotLink from '~/components/LotLink';
 
@@ -643,7 +644,7 @@ const activities = {
     getLogContent: ({ event: { returnValues } }, { viewingAs }) => {
       const selfEjection = returnValues.ejectedCrew.id === returnValues.callerCrew.id;
       return {
-        icon: <EjectPassengersIcon />,
+        icon: selfEjection ? <EjectMyCrewIcon /> : <EjectPassengersIcon />,
         content: (
           <>
           <EntityLink {...returnValues.ejectedCrew} />

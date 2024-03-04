@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from 'react';
 
-import { EjectPassengersIcon } from '~/components/Icons';
+import { EjectMyCrewIcon } from '~/components/Icons';
 import ActionButton, { getCrewDisabledReason } from './ActionButton';
 import useEjectCrewManager from '~/hooks/actionManagers/useEjectCrewManager';
 
@@ -43,7 +43,7 @@ const EjectCrew = ({ asteroid, crew, onSetAction, _disabled }) => {
         disabled: disabledReason,
         loading: !!currentEjection,
       }}
-      icon={<EjectPassengersIcon />}
+      icon={<EjectMyCrewIcon />}
       onClick={handleClick} />
   );
 };
