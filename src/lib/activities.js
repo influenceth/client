@@ -556,6 +556,9 @@ const activities = {
       const to2 = crew2CompositionNew.filter((id) => crew1CompositionOld.includes(id));
 
       if (viewingAs.label === Entity.IDS.CREW) {
+        // this tx theoretically should have been blocked by UI, but just in case... this will avoid empty logs
+        if (to1.length === 0 && to2.length === 0) return null;
+
         const toCrew = viewingAs.id === returnValues.crew1.id ? returnValues.crew1 : returnValues.crew2;
         const fromCrew = viewingAs.id === returnValues.crew1.id ? returnValues.crew2 : returnValues.crew1;
         const toList = viewingAs.id === returnValues.crew1.id ? to1 : to2;
