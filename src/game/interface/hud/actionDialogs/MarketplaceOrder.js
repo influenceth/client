@@ -559,12 +559,15 @@ const MarketplaceOrder = ({
   }, [buyOrders, mode, sellOrders, limitPrice]);
   
   const exceedsOtherSide = useMemo(() => {
-    if (mode === 'buy') {
-      return limitPrice >= sellOrders?.[sellOrders?.length - 1]?.price;
-    } else {
-      return limitPrice <= buyOrders?.[0]?.price;
+    if (type === 'limit') {
+      if (mode === 'buy') {
+        return limitPrice >= sellOrders?.[sellOrders?.length - 1]?.price;
+      } else {
+        return limitPrice <= buyOrders?.[0]?.price;
+      }
     }
-  }, [mode, limitPrice, buyOrders, sellOrders]);
+    return false;
+  }, [mode, type, limitPrice, buyOrders, sellOrders]);
   
   const total = useMemo(() => {
     let sum = type === 'limit' ? totalLimitPrice : totalMarketPrice;
