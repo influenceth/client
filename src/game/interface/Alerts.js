@@ -70,6 +70,14 @@ const StyledReactNotification = styled(ReactNotifications)`
 }
 `;
 
+const Icon = styled.div`
+  color: ${p => p.theme.colors.main};
+  flex: 0 0 44px;
+  font-size: 175%;
+  padding-left: 5px;
+  padding-right: 5px;
+`;
+
 const AlertWrapper = styled.div`
   align-items: center;
   color: ${p => p.theme.colors.mainText};
@@ -90,14 +98,6 @@ const AlertWrapper = styled.div`
       color: ${p.theme.colors.error};
     }
   `}
-`;
-
-const Icon = styled.div`
-  color: ${p => p.theme.colors.main};
-  flex: 0 0 44px;
-  font-size: 175%;
-  padding-left: 5px;
-  padding-right: 5px;
 `;
 
 const Description = styled.div`
@@ -182,7 +182,7 @@ const Alerts = () => {
         const { icon, content, txLink } = alertContent;
         send(
           <AlertWrapper level={level}>
-            <Icon >
+            <Icon>
               {icon}
             </Icon>
             <Description>
