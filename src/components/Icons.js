@@ -48,6 +48,7 @@ import ChapterSVG from '~/assets/icons/ChapterIcon.svg';
 import ChatSVG from '~/assets/icons/ChatIcon.svg';
 import CheckSVG from '~/assets/icons/CheckIcon.svg';
 import ChevronDoubleDownSVG from '~/assets/icons/ChevronDoubleDownIcon.svg';
+import ClipboardSVG from '~/assets/icons/ClipboardIcon.svg';
 import ColumnsSVG from '~/assets/icons/ColumnsIcon.svg';
 import CompositionSVG from '~/assets/icons/CompositionIcon.svg';
 import CoreSampleSVG from '~/assets/icons/CoreSampleIcon.svg';
@@ -99,6 +100,7 @@ import PromoteSVG from '~/assets/icons/PromoteIcon.svg';
 import RadiusSVG from '~/assets/icons/RadiusIcon.svg';
 import RecruitCrewmateSVG from '~/assets/icons/RecruitCrewmateIcon.svg';
 import RefineSVG from '~/assets/icons/RefineIcon.svg';
+import UpdateSVG from '~/assets/icons/UpdateIcon.svg';
 import ResetCameraSVG from '~/assets/icons/ResetCameraIcon.svg';
 import ResourceSVG from '~/assets/icons/ResourceIcon.svg';
 import RocketSVG from '~/assets/icons/RocketIcon.svg';
@@ -115,6 +117,7 @@ import TrophySVG from '~/assets/icons/TrophyIcon.svg';
 import TutorialSVG from '~/assets/icons/TutorialIcon.svg';
 import TwitterSVG from '~/assets/icons/TwitterIcon.svg';
 import WalletSVG from '~/assets/icons/WalletIcon.svg';
+import WarningSVG from '~/assets/icons/WarningIcon.svg';
 import WarningOutlineSVG from '~/assets/icons/WarningOutlineIcon.svg';
 
 import AssetAgreementsSVG from '~/assets/icons/action_buttons/AssetAgreements.svg';
@@ -206,6 +209,7 @@ export const CheckIcon = () => <CheckSVG className="icon" style={{ width: '1.314
 export const ChevronDoubleDownIcon = () => <ChevronDoubleDownSVG className="icon" />;
 export const ChevronDoubleUpIcon = () => <ChevronDoubleDownSVG className="icon" style={{ transform: 'rotate(180deg)' }} />;
 export const ChevronDoubleRightIcon = () => <ChevronDoubleDownSVG className="icon" style={{ transform: 'rotate(270deg)' }} />;
+export const ClipboardIcon = () => <ClipboardSVG className="icon" />;
 export const ColumnsIcon = () => <ColumnsSVG className="icon" />;
 export const CompositionIcon = () => <CompositionSVG className="icon" />;
 export const CoreSampleIcon = () => <CoreSampleSVG className="icon" />;
@@ -260,6 +264,7 @@ export const PromoteIcon = () => <PromoteSVG className="icon" />;
 export const RadiusIcon = () => <RadiusSVG className="icon" />;
 export const RecruitCrewmateIcon = () => <RecruitCrewmateSVG className="icon" />;
 export const RefineIcon = () => <RefineSVG className="icon" />;
+export const UpdateIcon = () => <UpdateSVG className="icon" />;
 export const ResetCameraIcon = () => <ResetCameraSVG className="icon" />;
 export const ResourceIcon = () => <ResourceSVG className="icon" />;
 export const RocketIcon = () => <RocketSVG className="icon" />;
@@ -277,6 +282,7 @@ export const TrophyIcon = () => <TrophySVG className="icon" />;
 export const TutorialIcon = () => <TutorialSVG className="icon" />;
 export const TwitterIcon = () => <TwitterSVG className="icon" />;
 export const WalletIcon = () => <WalletSVG className="icon" />;
+export const WarningIcon = () => <WarningSVG className="icon" />;
 export const WarningOutlineIcon = () => <WarningOutlineSVG className="icon" />;
 
 // action icons
@@ -378,7 +384,6 @@ export {
   MdRadioButtonChecked as RadioCheckedIcon,
   MdRadioButtonUnchecked as RadioUncheckedIcon,
   MdStop as StopIcon,
-  RiAlertFill as WarningIcon,
   RiLayoutGridFill as GridIcon,
   FiLogIn as LoginIcon, // TODO: ...
   RiRepeatFill as RefreshIcon,

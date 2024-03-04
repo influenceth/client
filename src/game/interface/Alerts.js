@@ -70,6 +70,14 @@ const StyledReactNotification = styled(ReactNotifications)`
 }
 `;
 
+const Icon = styled.div`
+  color: ${p => p.theme.colors.main};
+  flex: 0 0 44px;
+  font-size: 175%;
+  padding-left: 5px;
+  padding-right: 5px;
+`;
+
 const AlertWrapper = styled.div`
   align-items: center;
   color: ${p => p.theme.colors.mainText};
@@ -84,14 +92,12 @@ const AlertWrapper = styled.div`
       padding: 0;
     }
   }
-`;
 
-const Icon = styled.div`
-  color: ${p => p.theme.colors.main};
-  flex: 0 0 44px;
-  font-size: 250%;
-  padding-left: 5px;
-  padding-right: 5px;
+  ${p => p.level === 'warning' && `
+    & ${Icon} {
+      color: ${p.theme.colors.error};
+    }
+  `}
 `;
 
 const Description = styled.div`
@@ -162,7 +168,6 @@ export const useControlledAlert = () => {
 
   return { create, destroy };
 }
-
 const Alerts = () => {
   const alerts = useStore(s => s.logs.alerts);
   const notifyAlert = useStore(s => s.dispatchAlertNotified);
@@ -176,7 +181,7 @@ const Alerts = () => {
       if (alertContent) {
         const { icon, content, txLink } = alertContent;
         send(
-          <AlertWrapper>
+          <AlertWrapper level={level}>
             <Icon>
               {icon}
             </Icon>
@@ -191,7 +196,6 @@ const Alerts = () => {
           </AlertWrapper>,
           getOptions(a)
         );
-
         if (level === 'warning') {
           playSound('effects.failure');
         } else {

@@ -369,7 +369,7 @@ const CrewDetails = ({ crewId, crew, isMyCrew, isOwnedCrew, selectCrew }) => {
     } else {
       createAlert({
         type: 'GenericAlert',
-        data: { content: 'Your crew must be stationed in a habitat to recruit new members.' },
+        data: { content: 'Crew must be stationed in a Habitat to recruit.' },
         level: 'warning',
         duration: 6000
       })
@@ -634,7 +634,7 @@ const Wrapper = () => {
       if (!crewLoading && !crew) {
         createAlert({
           type: 'GenericAlert',
-          data: { content: 'Invalid crew id specified.' },
+          data: { content: 'Invalid Crew ID specified.' },
           level: 'warning',
           duration: 5000
         });

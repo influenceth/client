@@ -17,8 +17,8 @@ const CopyReferralLink = ({ children, fallbackContent }) => {
   const handleClick = useCallback(() => {
     playSound('effects.click');
     createAlert({
-      type: 'GenericAlert',
-      data: { content: 'Recruitment link copied to your clipboard.' },
+      type: 'ClipboardAlert',
+      data: { content: 'Recruitment link copied to clipboard.' },
     });
   }, [createAlert, playSound]);
 

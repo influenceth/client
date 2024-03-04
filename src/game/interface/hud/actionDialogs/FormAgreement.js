@@ -247,8 +247,8 @@ const FormAgreement = ({
 
   const handleCopyAddress = useCallback(() => {
     createAlert({
-      type: 'GenericAlert',
-      data: { content: 'Contract address copied to your clipboard.' },
+      type: 'ClipboardAlert',
+      data: { content: 'Contract address copied to clipboard.' },
       duration: 2000
     });
   }, [createAlert]);

@@ -1,9 +1,12 @@
+import { UpdateIcon, WarningIcon, SettingsIcon, WalletIcon, ClipboardIcon } from '~/components/Icons';
+
 const entries = {
   //
   // Generic
   //
 
   GenericAlert: (e) => ({
+    icon: <WarningIcon />,
     content: <span>{e.content}</span>
   }),
 
@@ -14,20 +17,32 @@ const entries = {
     ),
   }),
 
+  WalletAlert: (e) => ({
+    icon: <WalletIcon />,
+    content: <span>{e.content}</span>
+  }),
+
+  ClipboardAlert: (e) => ({
+    icon: <ClipboardIcon />,
+    content: <span>{e.content}</span>
+  }),
+
   //
   // App-level
   //
 
   App_Updated: (e) => ({
+    icon: <UpdateIcon />,
     content: (
       <>
         <span>A new version of Influence is now available! </span>
-        <span>Click here to update your experience.</span>
+        <span><b>Click here</b> to update your client.</span>
       </>
     )
   }),
 
   Game_GPUPrompt: (e) => ({
+    icon: <SettingsIcon />,
     content: (
       <>
         <span>Please consider turning on browser hardware accleration for a better experience.</span>
