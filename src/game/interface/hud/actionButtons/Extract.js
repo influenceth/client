@@ -29,7 +29,7 @@ const Extract = ({ onSetAction, asteroid, crew, lot, preselect, _disabled }) => 
   // TODO: this should ideally also check for pending use of samples (i.e. in core sample improvement)
   const usableSamples = useMemo(() => (lot?.deposits || []).filter((c) => (
     c.Deposit.status >= Deposit.STATUSES.SAMPLED && c.Deposit.remainingYield > 0
-  )), [lot?.coreSamples, crew?.id]);
+  )), [lot?.deposits, crew?.id]);
 
   // add attention flag if any of those ^ are mine
   const myUsableSamples = useMemo(() => usableSamples.filter((c) => c.Control.controller.id === crew?.id), [crew?.id, usableSamples]);
