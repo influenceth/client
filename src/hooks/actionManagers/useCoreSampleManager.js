@@ -111,7 +111,7 @@ const useCoreSampleManager = (lotId) => {
       status,
       stage
     ];
-  }, [actionItems, blockTime, completingSample, readyItems, getPendingTx, getStatus, payload, lot?.coreSamples]);
+  }, [actionItems, blockTime, completingSample, readyItems, getPendingTx, getStatus, payload, lot?.deposits]);
 
   // manage the "completed" stage explicitly
   useEffect(() => {

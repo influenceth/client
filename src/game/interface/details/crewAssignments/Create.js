@@ -37,15 +37,15 @@ import ChainTransactionContext from '~/contexts/ChainTransactionContext';
 import useBookSession, { bookIds, getBookCompletionImage } from '~/hooks/useBookSession';
 import useCrewManager from '~/hooks/actionManagers/useCrewManager';
 import useCrewContext from '~/hooks/useCrewContext';
+import useEthBalance from '~/hooks/useEthBalance';
+import useFaucetInfo from '~/hooks/useFaucetInfo';
 import useNameAvailability from '~/hooks/useNameAvailability';
 import usePriceConstants from '~/hooks/usePriceConstants';
 import useStore from '~/hooks/useStore';
 import formatters from '~/lib/formatters';
 import { reactBool } from '~/lib/utils';
 import theme from '~/theme';
-import useEthBalance from '~/hooks/useEthBalance';
 import api from '~/lib/api';
-import useInterval from '~/hooks/useInterval';
 
 const CollectionImages = {
   1: Collection1,
@@ -847,6 +847,8 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
   const [finalizing, setFinalizing] = useState();
   const [name, setName] = useState('');
 
+  const { data: faucetInfo } = useFaucetInfo();
+
   const mappedCrewmate = useMemo(() => crewmateMap?.[crewmateId] || null, [crewmateMap, crewmateId]);
 
   const finalized = useMemo(() => mappedCrewmate?.Crewmate?.status > 0, [mappedCrewmate]);
@@ -1171,9 +1173,11 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
   }, [name, selectedClass, selectedTraits?.length, traitTally]);
 
   // faucet stuff vvv
+  const [requestedEth, setRequestedEth] = useState();
   const [requestingEth, setRequestingEth] = useState();
   const createAlert = useStore(s => s.dispatchAlertLogged);
   const getEthFromFaucet = useCallback(async () => {
+    setRequestedEth(true);
     setRequestingEth(true);
     try {
       await api.requestTokens('ETH');
@@ -1187,6 +1191,7 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
       setRequestingEth(false);
     }
   }, []);
+
   useEffect(() => {
     if (requestingEth) {
       const i = setInterval(() => {
@@ -1203,11 +1208,18 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
       return () => clearInterval(i);
     }
   }, [requestingEth]);
+
+  const ethClaimEnabled = useMemo(() => {
+    if (!faucetInfo) return false;
+    if (requestedEth) return false;
+    const lastClaimed = faucetInfo.ETH.lastClaimed || 0;
+    return Date.now() > (Date.parse(lastClaimed) + 23.5 * 3600 * 1000);
+  }, [faucetInfo, requestedEth]);
   // ^^^
 
   const confirmationProps = useMemo(() => {
     if (process.env.REACT_APP_CHAIN_ID === '0x534e5f5345504f4c4941') {
-      if (BigInt(priceConstants.ADALIAN_PRICE_ETH) > (weiBalance || 0n)) {
+      if (ethClaimEnabled && (BigInt(priceConstants.ADALIAN_PRICE_ETH) > (weiBalance || 0n))) {
         return {
           onConfirm: getEthFromFaucet,
           loading: !!requestingEth,
@@ -1229,7 +1241,7 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
         </>
       )
     };
-  }, [getEthFromFaucet, crewmate, requestingEth, priceConstants, weiBalance]);
+  }, [crewmate, getEthFromFaucet, priceConstants, ethClaimEnabled, requestingEth, weiBalance]);
 
   if (!crewmate) return null;
   return (

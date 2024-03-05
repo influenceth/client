@@ -77,11 +77,12 @@ const EmergencyModeToggle = ({ asteroid, lot, manager, ship, stage, ...props }) 
 
   const propellantJettisoned = useMemo(() => {
     if (inEmergencyMode) {  // if exiting emergency mode, jettison all but 10% of max propellant
-      const maxProp = Ship.EMERGENCY_PROP_LIMIT * Inventory.getType(propellantInventory.inventoryType, crew?._inventoryBonuses)?.massConstraint;
+      const shipConfig = Ship.TYPES[ship.Ship.shipType];
+      const maxProp = shipConfig.emergencyPropellantCap * Inventory.getType(propellantInventory.inventoryType, crew?._inventoryBonuses)?.massConstraint;
       return Math.max(0, propellantInventory.mass - maxProp) / Product.TYPES[Product.IDS.HYDROGEN_PROPELLANT].massPerUnit;
     }
     return 0;
-  }, [crew?._inventoryBonuses, inEmergencyMode, propellantInventory]);
+  }, [crew?._inventoryBonuses, inEmergencyMode, propellantInventory, ship]);
 
   const stats = useMemo(() => ([
     {
@@ -135,11 +136,14 @@ const EmergencyModeToggle = ({ asteroid, lot, manager, ship, stage, ...props }) 
 
   const warnings = useMemo(() => {
     const w = [];
+    const shipConfig = Ship.TYPES[ship.Ship.shipType];
     if (inEmergencyMode) {
-      w.push({
-        icon: <WarningOutlineIcon />,
-        text: `WARNING: A ship must jettison all but ${formatFixed(Ship.EMERGENCY_PROP_LIMIT * 100, 1)}% of its propellant capacity when exiting Emergency Mode.`
-      });
+      if (shipConfig.emergencyPropellantCap < 1) {
+        w.push({
+          icon: <WarningOutlineIcon />,
+          text: `WARNING: A ship must jettison all but ${formatFixed(shipConfig.emergencyPropellantCap * 100, 1)}% of its propellant capacity when exiting Emergency Mode.`
+        });
+      }
     } else {
       w.push({
         icon: <WarningOutlineIcon />,

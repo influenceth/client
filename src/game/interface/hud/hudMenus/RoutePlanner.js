@@ -308,7 +308,8 @@ const RoutePlanner = () => {
     const config = {};
     config.emode = ship._simulated ? emode : ship?.Ship?.emergencyAt > 0;
     config.maxCargoMass = config.emode ? 0 : (Inventory.getType(cargoInventory?.inventoryType, crew?._inventoryBonuses)?.massConstraint || 0);
-    config.maxPropellantMass = (config.emode ? 0.1 : 1) * (Inventory.getType(propellantInventory?.inventoryType, crew?._inventoryBonuses)?.massConstraint || 0);
+    config.maxPropellantMass = (config.emode ? shipTypeConfig.emergencyPropellantCap : 1)
+      * (Inventory.getType(propellantInventory?.inventoryType, crew?._inventoryBonuses)?.massConstraint || 0);
 
     if (ship._simulated) {
       config.initialCargoMass = config.maxCargoMass * 0.5;

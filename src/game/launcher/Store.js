@@ -27,6 +27,7 @@ import useInterval from '~/hooks/useInterval';
 import BrightButton from '~/components/BrightButton';
 import MouseoverInfoPane from '~/components/MouseoverInfoPane';
 import useEthBalance from '~/hooks/useEthBalance';
+import useFaucetInfo from '~/hooks/useFaucetInfo';
 
 const borderColor = `rgba(${theme.colors.mainRGB}, 0.5)`;
 
@@ -694,16 +695,11 @@ export const SwaySKU = () => {
 export const FaucetSKU = () => {
   const { walletContext: { starknet } } = useAuth();
   const queryClient = useQueryClient();
+  const { data: faucetInfo, isLoading: faucetInfoLoading } = useFaucetInfo();
   const createAlert = useStore(s => s.dispatchAlertLogged);
 
   const [requestingEth, setRequestingEth] = useState(false);
   const [requestingSway, setRequestingSway] = useState(false);
-
-  const { isLoading: faucetInfoLoading, data: faucetInfo } = useQuery(
-    [ 'faucetInfo', starknet?.account ],
-    () => api.faucetInfo(),
-    { enabled: !!starknet?.account }
-  );
 
   const ethEnabled = useMemo(() => {
     if (!faucetInfo) return false;

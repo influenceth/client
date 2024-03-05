@@ -309,14 +309,16 @@ const ManageCrew = ({ altCrews, crew, isForeignCrew, manager, stage, ...props })
 
           // replaced should go into first null on the same crew they were on
           // (or if there is no space, first null)
-          let replaceNullIndex;
+          let replaceNullIndex = -1;
           if (index >= 5) {
             replaceNullIndex = newOrder.findIndex((c, i) => i >= 5 && !c);
           }
-          if (replaceNullIndex === undefined) {
+          if (replaceNullIndex === -1) {
             replaceNullIndex = newOrder.findIndex((c) => !c);
           }
-          newOrder[replaceNullIndex] = replaced;
+          if (replaceNullIndex >= 0) {
+            newOrder[replaceNullIndex] = replaced;
+          } // else should be impossible
 
           // ensure empty slots are at the end of each crew
           const target = newOrder.slice(0, 5).filter((c) => !!c);

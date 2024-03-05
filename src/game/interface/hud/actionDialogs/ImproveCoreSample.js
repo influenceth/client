@@ -108,7 +108,7 @@ const ImproveCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }
   const crewmates = currentSamplingAction?._crewmates || ((crew?._crewmates || []).map((i) => crewmateMap[i]));
   const captain = crewmates[0];
 
-  const [sampleTimeBonus, sampleQualityBonus, crewTravelBonus] = useMemo(() => {
+  const [crewTravelBonus, sampleQualityBonus, sampleTimeBonus] = useMemo(() => {
     const bonusIds = [Crewmate.ABILITY_IDS.HOPPER_TRANSPORT_TIME, Crewmate.ABILITY_IDS.CORE_SAMPLE_QUALITY, Crewmate.ABILITY_IDS.CORE_SAMPLE_TIME];
     const abilities = getCrewAbilityBonuses(bonusIds, crew);
     return bonusIds.map((id) => abilities[id] || {});
@@ -149,6 +149,7 @@ const ImproveCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }
       value: formatTimer(crewTravelTime),
       direction: getBonusDirection(crewTravelBonus),
       isTimeStat: true,
+      timeAcceleration: crew?._timeAcceleration,
       tooltip: (
         <TravelBonusTooltip
           bonus={crewTravelBonus}
@@ -162,6 +163,7 @@ const ImproveCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }
       value: formatTimer(sampleTime),
       direction: getBonusDirection(sampleTimeBonus),
       isTimeStat: true,
+      timeAcceleration: crew?._timeAcceleration,
       tooltip: sampleTimeBonus.totalBonus !== 1 && (
         <TimeBonusTooltip
           bonus={sampleTimeBonus}
@@ -192,7 +194,7 @@ const ImproveCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }
           titleValue={`${formatSampleMass(sampleBounds?.upper)} tonnes`} />
       )
     },
-  ]), [crewTravelBonus, crewTravelTime, sampleBounds, sampleQualityBonus, sampleTime, tripDetails]);
+  ]), [crew?._timeAcceleration, crewTravelBonus, crewTravelTime, sampleBounds, sampleQualityBonus, sampleTime, tripDetails]);
 
   // handle auto-closing
   const lastStatus = useRef();
