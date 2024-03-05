@@ -112,7 +112,7 @@ const NewCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }) =>
   const crewmates = currentSamplingAction?._crewmates || crew?._crewmates || [];
   const captain = crewmates[0];
 
-  const [sampleTimeBonus, sampleQualityBonus, crewTravelBonus] = useMemo(() => {
+  const [crewTravelBonus, sampleQualityBonus, sampleTimeBonus] = useMemo(() => {
     const bonusIds = [Crewmate.ABILITY_IDS.HOPPER_TRANSPORT_TIME, Crewmate.ABILITY_IDS.CORE_SAMPLE_QUALITY, Crewmate.ABILITY_IDS.CORE_SAMPLE_TIME];
     const abilities = getCrewAbilityBonuses(bonusIds, crew);
     return bonusIds.map((id) => abilities[id] || {});
