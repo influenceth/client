@@ -18,6 +18,7 @@ import {
   KeysIcon,
   ListViewIcon,
   LotSearchIcon,
+  MarketsIcon,
   MarketplaceBuildingIcon,
   MyAssetsIcon,
   OrderIcon,
@@ -490,7 +491,7 @@ const HudMenu = ({ forceOpenMenu }) => {
       {
         key: 'MARKETPLACE_LISTINGS',
         label: 'Marketplace Listings',
-        icon: <OrderIcon />,
+        icon: <MarketplaceBuildingIcon />,
         onOpen: () => {
           history.push(`/marketplace/${asteroidId}/${Lot.toIndex(lotId)}`);
         },
@@ -510,7 +511,7 @@ const HudMenu = ({ forceOpenMenu }) => {
       {
         key: 'ASTEROID_MARKETS',
         label: 'Asteroid Markets',
-        icon: <MarketplaceBuildingIcon />,
+        icon: <MarketsIcon />,
         onOpen: () => {
           // if (marketplaces?.length > 0) {
             history.push(`/marketplace/${asteroidId}/all`);
