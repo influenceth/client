@@ -162,6 +162,7 @@ const Dismissal = styled.div`
   align-items: center;
   color: white;
   display: flex;
+  width: 80px;
   & > div {
     align-items: center;
     border: 1px solid orangered;
@@ -285,6 +286,7 @@ const ActionItem = ({ data, crew }) => {
   const history = useHistory();
   const getActivityConfig = useGetActivityConfig();
 
+  const createAlert = useStore(s => s.dispatchAlertLogged);
   const currentAsteroid = useStore(s => s.asteroids);
   const resourceMap = useStore(s => s.asteroids.resourceMap);
   const dispatchActionDialog = useStore(s => s.dispatchActionDialog);
@@ -338,6 +340,14 @@ const ActionItem = ({ data, crew }) => {
     }
 
     if (type === 'failed' && item.txHash && process.env.REACT_APP_STARKNET_EXPLORER_URL) {
+      try {
+        navigator.clipboard.writeText(JSON.stringify(data));
+        createAlert({
+          type: 'ClipboardAlert',
+          data: { content: 'Transaction error copied to clipboard. If you are stuck, contact the Influence team in Discord.' }
+        });
+      } catch (e) {}
+
       window.open(`${process.env.REACT_APP_STARKNET_EXPLORER_URL}/tx/${item.txHash}`, '_blank');
     }
   }, [
@@ -383,9 +393,11 @@ const ActionItem = ({ data, crew }) => {
           )}
         </Timing>
         {type === 'failed' && (
-          <Dismissal onClick={onDismiss}>
-            Dismiss <div><DismissIcon /></div>
-          </Dismissal>
+          <div>
+            <Dismissal onClick={onDismiss}>
+              Dismiss <div><DismissIcon /></div>
+            </Dismissal>
+          </div>
         )}
         {type !== 'failed' && asteroid && (
           <Location>

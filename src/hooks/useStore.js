@@ -653,7 +653,7 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
     'cameraNeedsReorientation',
     'cutscene',
     'draggables',
-    'failedTransactions',
+    // 'failedTransactions',
     'lotLoader',
     'timeOverride',  // should this be in ClockContext?
     'tutorialStep'
