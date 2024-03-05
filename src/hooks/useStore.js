@@ -91,6 +91,7 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
     selectedCrewId: null,
     crewAssignments: {},
 
+    cameraNeedsRecenter: false,
     cameraNeedsReorientation: false,
 
     hasSeenIntroVideo: false,
@@ -504,6 +505,10 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
       state.asteroids.zoomScene = null;
     })),
 
+    dispatchRecenterCamera: (needsRecenter) => set(produce(state => {
+      state.cameraNeedsRecenter = !!needsRecenter;
+    })),
+
     dispatchReorientCamera: (needsReorienting) => set(produce(state => {
       state.cameraNeedsReorientation = !!needsReorienting;
     })),
@@ -650,6 +655,7 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
     'asteroids.travelSolution',
     'asteroids.zoomScene',
     'canvasStack',
+    'cameraNeedsRecenter',
     'cameraNeedsReorientation',
     'cutscene',
     'draggables',
