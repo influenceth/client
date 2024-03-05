@@ -374,7 +374,7 @@ const ActionItem = ({ data, crew }) => {
       transitionOut={data.transitionOut ? (type === 'failed' ? 'left' : 'right') : undefined}>
       <Icon animate={type === 'pending'}>
         {type === 'failed' && <FailedIcon />}
-        {type === 'randomEvent' && <RandomEventIcon />}
+        {type === 'randomEvent' && <RandomEventIcon size="0.77em" />}
         {type === 'ready' && <ReadyIcon />}
         {(type === 'pending' || type === 'unready' || type === 'plans') && <span>{item.icon}</span>}
       </Icon>

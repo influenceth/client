@@ -277,6 +277,7 @@ export const getCrewDisabledReason = ({ asteroid, crew, permission, permissionTa
       return 'crew is in orbit';
     }
   }
+  if (!!crew._actionTypeTriggered) return 'crew event pending';
   if (!crew?._ready) return 'crew is busy';
   return null;
 };

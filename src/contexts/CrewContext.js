@@ -186,6 +186,7 @@ export function CrewProvider({ children }) {
     return {
       ...selectedCrew,
       _actionTypeTriggered: actionTypeTriggered,
+      _ready: selectedCrew?._ready && !actionTypeTriggered,
       _station: selectedCrewLocation?.Station || {},
       _timeAcceleration: parseInt(TIME_ACCELERATION) // (attach to crew for easy use in bonus calcs)
     }
