@@ -103,7 +103,7 @@ const theme = {
         Scientist: hexToRGB(blue),
       }
     },
-    mainButton: main,
+    mainButton: '#0b1f26',
     disabledButton: '#676767',
     txButton: '#6c6adc',
   },

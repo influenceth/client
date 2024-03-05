@@ -9,8 +9,8 @@ import Badge from '~/components/Badge';
 import theme, { getContrastText, hexToRGB } from '~/theme';
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
 
-const bgOpacity = 0.175;
-const hoverBgOpacity = 0.35;
+const bgOpacity = 0.2;
+const hoverBgOpacity = 0.2;
 
 const sizes = {
   icon: { font: 16, height: 26, width: 34, line: 8, borderWidth: 1, isIconOnly: true },
@@ -42,7 +42,7 @@ const InnerContainer = styled.div`
   );
   display: flex;
   justify-content: center;
-  transition: background-color 300ms ease;
+  transition: background-color 100ms ease;
   width: 100%;
 
   & > * {
@@ -64,7 +64,7 @@ const StyledButton = styled.button`
     animation: ${opacityAnimation} 1250ms ease infinite;
   `}
   background: transparent;
-  border: ${p => p.sizeParams.borderWidth}px solid ${p => p.borderless ? 'transparent' : (p.color || (p.isTransaction ? p.theme.colors.txButton : p.theme.colors.mainButton))};
+  border: ${p => p.sizeParams.borderWidth}px solid ${p => p.borderless ? 'transparent' : (p.color || (p.isTransaction ? p.theme.colors.txButton : p.theme.colors.main))};
   clip-path: polygon(
     0 0,
     100% 0,
@@ -87,7 +87,7 @@ const StyledButton = styled.button`
   pointer-events: auto;
   position: relative;
   text-transform: ${p => p.textTransform || p.sizeParams.textTransform || 'uppercase'};
-  transition: all 300ms ease;
+  transition: all 100ms ease;
 
   & > svg {
     max-height: 24px;
@@ -118,7 +118,7 @@ const StyledButton = styled.button`
           : (
             p.background && p.background !== 'transparent'
               ? getContrastText(p.background)
-              : 'white'
+              : p.theme.colors.main
           )
       )};
       & > div {
@@ -128,7 +128,8 @@ const StyledButton = styled.button`
         background-color: ${p.isTransaction ? p.theme.colors.txButton : p.theme.colors.mainButton};
       }
       &:hover > div {
-        background-color: rgba(${hexToRGB(p.isTransaction ? p.theme.colors.txButton : p.theme.colors.mainButton)}, ${hoverBgOpacity * (p.bgStrength || 1)});
+        color: rgb(255, 255, 255);
+        background-color: rgba(${hexToRGB(p.isTransaction ? p.theme.colors.txButton : p.theme.colors.main)}, ${hoverBgOpacity * (p.bgStrength || 1)});
       }
     `
   }
@@ -139,7 +140,7 @@ const Corner = styled.svg`
   height: ${p => p.sizeParams.line - (p.sizeParams.borderWidth === 1 ? 0 : p.sizeParams.borderWidth - 1)}px;
   margin-right: 0;
   position: absolute;
-  stroke: ${p => p.borderless ? 'transparent' : (p.color || (p.isTransaction ? p.theme.colors.txButton : p.theme.colors.mainButton))};
+  stroke: ${p => p.borderless ? 'transparent' : (p.color || (p.isTransaction ? p.theme.colors.txButton : p.theme.colors.main))};
   stroke-width: ${p => p.sizeParams.borderWidth + 0.5}px;
   width: ${p => p.sizeParams.line - (p.sizeParams.borderWidth === 1 ? 0 : p.sizeParams.borderWidth - 1)}px;
 
@@ -219,7 +220,7 @@ const StandardButton = (props) => {
             <BarLoader
               color={props.color
                 ? getContrastText(props.color)
-                : (props.isTransaction ? theme.colors.txButton : theme.colors.mainButton)}
+                : (props.isTransaction ? theme.colors.txButton : theme.colors.main)}
               css={loadingCss}
               height={1} />
           )}
