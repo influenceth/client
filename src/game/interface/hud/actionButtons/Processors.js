@@ -19,7 +19,6 @@ const Button = ({ asteroid, crew, lot, processor, onSetAction, _disabled }) => {
 
   const disabledReason = useMemo(() => {
     if (_disabled) return 'loading...';
-    console.log('processStatus', processStatus);
     if (processStatus === 'READY') {
       return getCrewDisabledReason({ asteroid, crew, permission: Permission.IDS.RUN_PROCESS, permissionTarget: lot?.building });
     }

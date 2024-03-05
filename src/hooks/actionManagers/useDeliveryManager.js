@@ -76,7 +76,6 @@ const useDeliveryManager = ({ destination, destinationSlot, origin, originSlot, 
       if (delivery.id > 0) {
         let actionItem = (actionItems || []).find((item) => item.event.name === 'DeliverySent' && item.event.returnValues.delivery.id === delivery.id);
         if (actionItem) {
-          console.log('actionItem', actionItem);
           // current._crewmates = actionItem.assets.crew?.crewmates;  // TODO: ...
           current._originLot = actionItem.data.origin.Location.locations.find((l) => l.label === Entity.IDS.LOT);
           current.startTime = actionItem.event.timestamp;
