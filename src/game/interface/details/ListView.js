@@ -360,7 +360,7 @@ const ListViewComponent = ({ assetType, onAssetTypeChange, params }) => {
                 background={filtersOpen ? theme.colors.main : undefined}
                 badge={filtersOpen ? undefined : activeFilters}
                 disabled={disableFilters}
-                subtle={reactBool(!filtersOpen)}
+                highContrast={reactBool(filtersOpen)}
                 onClick={onToggleFilters}
                 size="bigicon">
                 <SlidersIcon />

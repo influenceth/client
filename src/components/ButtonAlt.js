@@ -9,8 +9,8 @@ import Badge from '~/components/Badge';
 import theme, { getContrastText, hexToRGB } from '~/theme';
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
 
-const bgOpacity = 0.2;
-const hoverBgOpacity = 0.2;
+export const bgOpacity = 0.2;
+export const hoverBgOpacity = 0.2;
 
 const sizes = {
   icon: { font: 16, height: 26, width: 34, line: 8, borderWidth: 1, isIconOnly: true },
@@ -113,22 +113,23 @@ const StyledButton = styled.button`
     `
     : `
       color: ${p.color || (
-        p.subtle
-          ? (p.isTransaction ? p.theme.colors.txButton : p.theme.colors.main)
-          : (
+        p.highContrast
+          ? (
             p.background && p.background !== 'transparent'
               ? getContrastText(p.background)
-              : p.theme.colors.main
+              : 'white'
           )
+          : (p.isTransaction ? p.theme.colors.txButton : p.theme.colors.main)
       )};
       & > div {
         background-color: ${p.background || `rgba(${hexToRGB(p.isTransaction ? p.theme.colors.txButton : p.theme.colors.mainButton)}, ${bgOpacity * (p.bgStrength || 1)})`};
+        transition: all 100ms ease;
       }
       &:active > div {
         background-color: ${p.isTransaction ? p.theme.colors.txButton : p.theme.colors.mainButton};
       }
       &:hover > div {
-        color: rgb(255, 255, 255);
+        color: white;
         background-color: rgba(${hexToRGB(p.isTransaction ? p.theme.colors.txButton : p.theme.colors.main)}, ${hoverBgOpacity * (p.bgStrength || 1)});
       }
     `

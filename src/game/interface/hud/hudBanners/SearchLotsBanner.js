@@ -65,7 +65,7 @@ const SearchLotsBanner = ({ visible }) => {
       </ActiveFilters>
       <div>
         {(activeFilters > 0 || highlight) && (
-          <Button size="small" width={110} subtle onClick={resetFilters}>
+          <Button size="small" width={110} onClick={resetFilters}>
             <CloseIcon style={{ marginRight: 6 }} /> Clear
           </Button>
         )}

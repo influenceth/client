@@ -42,7 +42,7 @@ const SearchFilterTray = ({ assetType, handleClickFilters }) => {
   if (isDefaultSearch) return null;
   return (
     <>
-      <Button onClick={onClear} size="medium" padding="0 15px 0 10px" width="auto" subtle>
+      <Button onClick={onClear} size="medium" padding="0 15px 0 10px" width="auto">
         <CloseIcon style={{ marginRight: 5 }} /> <span>Clear</span>
       </Button>
       {activeFilters > 0

@@ -195,21 +195,24 @@ const DevTools = () => {
             size="small"
             onClick={() => setters.setAssetType('building')}
             background={settings.assetType === 'building' ? theme.colors.main : undefined }
-            style={{ minWidth: 90 }}>
+            style={{ minWidth: 90 }}
+            highContrast>
             Buildings
           </Button>
           <Button
             size="small"
             onClick={() => setters.setAssetType('resource')}
             background={settings.assetType === 'resource' ? theme.colors.main : undefined }
-            style={{ minWidth: 90 }}>
+            style={{ minWidth: 90 }}
+            highContrast>
             Resources
           </Button>
           <Button
             size="small"
             onClick={() => setters.setAssetType('ship')}
             background={settings.assetType === 'ship' ? theme.colors.main : undefined }
-            style={{ minWidth: 90 }}>
+            style={{ minWidth: 90 }}
+            highContrast>
             Ships
           </Button>
         </div>
@@ -237,8 +240,7 @@ const DevTools = () => {
 
           <Button
             disabled={nativeBool(isLoading)}
-            onClick={handleUploadClick('model')}
-            subtle>
+            onClick={handleUploadClick('model')}>
             Upload Model
           </Button>
 
@@ -255,8 +257,7 @@ const DevTools = () => {
         <InnerSection>
           <Button
             disabled={nativeBool(isLoading)}
-            onClick={handleUploadClick('bg')}
-            subtle>
+            onClick={handleUploadClick('bg')}>
             Upload Skybox
           </Button>
           {overrides.background && (
@@ -268,8 +269,7 @@ const DevTools = () => {
 
           <Button
             disabled={nativeBool(isLoading)}
-            onClick={handleUploadClick('env')}
-            subtle>
+            onClick={handleUploadClick('env')}>
             Upload EnvMap
           </Button>
           {overrides.envmap && (

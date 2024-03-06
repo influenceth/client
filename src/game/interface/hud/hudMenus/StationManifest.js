@@ -215,7 +215,7 @@ const StationManifest = () => {
           <div style={{ flex: 1 }} />
 
           {selectedCrewId && (
-            <Button onClick={handleInspect} subtle>
+            <Button onClick={handleInspect}>
               <MagnifyingIcon style={{ marginRight: 8 }} /> Inspect
             </Button>
           )}

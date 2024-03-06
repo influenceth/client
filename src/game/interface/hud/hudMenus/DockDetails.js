@@ -231,7 +231,7 @@ const DockDetails = ({ onClose }) => {
 
       {selectedShip && (
         <Tray>
-          <Button onClick={zoomIn} subtle>
+          <Button onClick={zoomIn}>
             <MagnifyingIcon style={{ marginRight: 8 }} /> Zoom to Ship
           </Button>
           {/* TODO: station / eject / launch / etc? */}

@@ -90,15 +90,14 @@ const AdminAsteroid = ({}) => {
               assetType="asteroid"
               id={asteroid?.id}>
               {(onClick, setRefEl) => (
-                <Button setRef={setRefEl} onClick={onClick} subtle><LinkIcon /> <span>List for Sale</span></Button>
+                <Button setRef={setRefEl} onClick={onClick}><LinkIcon /> <span>List for Sale</span></Button>
               )}
             </MarketplaceLink>
 
             <Button
               disabled={nativeBool(exportingModel)}
               loading={reactBool(exportingModel)}
-              onClick={download3dModel}
-              subtle>
+              onClick={download3dModel}>
               Download 3D Model
             </Button>
           </ButtonArea>

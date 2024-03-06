@@ -405,8 +405,8 @@ const CrewDetails = ({ crewId, crew, isMyCrew, isOwnedCrew, selectCrew }) => {
               {editing
                 ? (
                   <>
-                    <Button size="hugeicon" subtle disabled={nativeBool(changingName)} onClick={saveName}><CheckIcon /></Button>
-                    <Button size="hugeicon" subtle disabled={nativeBool(changingName)} onClick={() => setEditing()}><CloseIcon /></Button>
+                    <Button size="hugeicon" disabled={nativeBool(changingName)} onClick={saveName}><CheckIcon /></Button>
+                    <Button size="hugeicon" disabled={nativeBool(changingName)} onClick={() => setEditing()}><CloseIcon /></Button>
                     <TextInput
                       initialValue={crew.Name?.name || ''}
                       minlength={Name.TYPES[Entity.IDS.CREW].min}
@@ -419,9 +419,10 @@ const CrewDetails = ({ crewId, crew, isMyCrew, isOwnedCrew, selectCrew }) => {
                 : (
                   <>
                     {isMyCrew && (
-                      <Button size="hugeicon" subtle
+                      <Button
                         disabled={nativeBool(changingName)}
-                        onClick={() => setEditing(true)}>
+                        onClick={() => setEditing(true)}
+                        size="hugeicon">
                         {changingName ? <LoadingAnimation color="white" size="1em" /> : <EditIcon />}
                       </Button>
                     )}
@@ -527,7 +528,7 @@ const CrewDetails = ({ crewId, crew, isMyCrew, isOwnedCrew, selectCrew }) => {
 
                 {isMyCrew && (
                   <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 15 }}>
-                    <Button onClick={() => onSetAction('FEED_CREW')} subtle style={{ width: 225 }}>Add Rations</Button>
+                    <Button onClick={() => onSetAction('FEED_CREW')} style={{ width: 225 }}>Add Rations</Button>
                   </div>
                 )}
               </CrewInfoContainer>
@@ -541,19 +542,19 @@ const CrewDetails = ({ crewId, crew, isMyCrew, isOwnedCrew, selectCrew }) => {
             <Stat label="Formed">{formationDate}</Stat>
             {isMyCrew && (
               <div style={{ paddingTop: 15 }}>
-                <Button subtle onClick={() => onSetAction('MANAGE_CREW')}>Manage Crew</Button>
-                {crew.Crew?.roster?.length >= 2 && <Button subtle onClick={() => onSetAction('MANAGE_CREW', { exchangeCrewId: 0 })}>Split Crew</Button>}
-                <Button disabled={nativeBool(crew.Crew?.roster?.length >= 5) || !crew._ready} subtle onClick={onClickRecruit}>Recruit to Crew</Button>
+                <Button onClick={() => onSetAction('MANAGE_CREW')}>Manage Crew</Button>
+                {crew.Crew?.roster?.length >= 2 && <Button onClick={() => onSetAction('MANAGE_CREW', { exchangeCrewId: 0 })}>Split Crew</Button>}
+                <Button disabled={nativeBool(crew.Crew?.roster?.length >= 5) || !crew._ready} onClick={onClickRecruit}>Recruit to Crew</Button>
               </div>
             )}
             {isOwnedCrew && !isMyCrew && (
               <div style={{ paddingTop: 15 }}>
-                <Button subtle onClick={() => selectCrew(crewId)}>Switch to Crew</Button>
+                <Button onClick={() => selectCrew(crewId)}>Switch to Crew</Button>
               </div>
             )}
             {!isMyCrew && hasMyCrewmates > 0 && (
               <div style={{ paddingTop: 15 }}>
-                <Button subtle onClick={() => onSetAction('MANAGE_CREW', { crewId })}>Recover Crewmate{hasMyCrewmates === 1 ? '' : 's'}</Button>
+                <Button onClick={() => onSetAction('MANAGE_CREW', { crewId })}>Recover Crewmate{hasMyCrewmates === 1 ? '' : 's'}</Button>
               </div>
             )}
           </ManagementContainer>

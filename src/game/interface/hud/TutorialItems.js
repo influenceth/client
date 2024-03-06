@@ -588,18 +588,17 @@ const TutorialItems = () => {
                 <div>{currentStep?.content}</div>
                 <Buttons>
                   {currentStepIndex > 0 && (
-                    <Button flip size="small" subtle onClick={handlePrevious}>Previous</Button>
+                    <Button flip size="small" onClick={handlePrevious}>Previous</Button>
                   )}
                   {currentStepIndex < steps.length - 1 && (
-                    <Button size="small" subtle onClick={handleNext}>Next Section</Button>
+                    <Button size="small" onClick={handleNext}>Next Section</Button>
                   )}
                   {currentStepIndex === steps.length - 1 && (
                     <Button
                       color={theme.colors.success}
                       disabled={authenticating}
                       onClick={handleNext}
-                      size="small"
-                      subtle>Start Your Crew</Button>
+                      size="small">Start Your Crew</Button>
                   )}
                 </Buttons>
               </div>

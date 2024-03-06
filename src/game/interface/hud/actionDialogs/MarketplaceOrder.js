@@ -740,7 +740,7 @@ const MarketplaceOrder = ({
                     <span style={{ flex: 1 }}>
                       Average Price from: <b>{' '}{(averagedOrderTally || 0).toLocaleString()} {mode === 'buy' ? 'Seller' : 'Buyer'}{averagedOrderTally === 1 ? '' : 's'}</b>
                     </span>
-                    <Button onClick={handleOrderRefresh} size="small" subtle>Refresh</Button>
+                    <Button onClick={handleOrderRefresh} size="small">Refresh</Button>
                   </InputLabel>
                 )}
                 {!isCancellation && type === 'limit' && (
@@ -767,8 +767,7 @@ const MarketplaceOrder = ({
                     <Button
                       disabled={limitPrice === bestOrderPrice}
                       onClick={matchBestLimitOrder}
-                      size="small"
-                      subtle>Match</Button>
+                      size="small">Match</Button>
                   </InputLabel>
                 )}
               </FormSection>

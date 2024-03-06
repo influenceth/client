@@ -460,7 +460,7 @@ const FormAgreement = ({
                 component="span"
                 data-clipboard-text={`${currentPolicy?.policyDetails?.contract}`}
                 onClick={handleCopyAddress}>
-                <Button subtle>
+                <Button>
                   <LinkIcon /> <span>Copy Contract Address</span>
                 </Button>
               </Clipboard>
@@ -515,8 +515,7 @@ const FormAgreement = ({
                             disabled={nativeBool(eligibilityLoading)}
                             loading={eligibilityLoading}
                             onClick={updateContractEligibility}
-                            size="small"
-                            subtle>
+                            size="small">
                             <RefreshIcon /> <span>Refresh</span>
                           </Button>
                         </div>

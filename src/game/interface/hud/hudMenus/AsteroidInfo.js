@@ -174,7 +174,7 @@ const AsteroidInfo = ({ onClose }) => {
       
       {zoomStatus === 'out' && (
         <Tray>
-          <Button onClick={zoomIn} subtle>
+          <Button onClick={zoomIn}>
             <MagnifyingIcon style={{ marginRight: 8 }} /> Zoom to Asteroid
           </Button>
         </Tray>

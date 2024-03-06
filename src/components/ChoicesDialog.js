@@ -288,6 +288,7 @@ const ChoicesDialog = ({
                       )}
                       {(!choices || (choices.length === 1 && !choices[0].text)) && choicelessButton && !choicelessInFooter && (
                         <Button
+                          highContrast
                           onClick={choicelessButton.onClick}
                           {...(choicelessButton.props || {})}
                           style={{ margin: '0 auto' }}>
@@ -303,12 +304,12 @@ const ChoicesDialog = ({
           <Footer>
             <Rule />
             <div style={{ alignItems: 'center', display: 'flex', height: 'calc(100% - 1px)', justifyContent: 'space-between' }}>
-              <div>{leftButton && <Button {...(leftButton.props || {})} onClick={leftButton.onClick} subtle>{leftButton.label}</Button>}</div>
+              <div>{leftButton && <Button {...(leftButton.props || {})} onClick={leftButton.onClick}>{leftButton.label}</Button>}</div>
               {rightButton
                 ? (
                   <div style={{ alignItems: 'center', display: 'flex' }}>
                     {rightButton.preLabel || ''}
-                    <Button {...(rightButton.props || {})} onClick={rightButton.onClick} subtle>{rightButton.label}</Button>
+                    <Button {...(rightButton.props || {})} onClick={rightButton.onClick}>{rightButton.label}</Button>
                   </div>
                 )
                 : (
@@ -316,7 +317,6 @@ const ChoicesDialog = ({
                   ? (
                     <div style={{ alignItems: 'center', display: 'flex' }}>
                       <Button
-                        subtle
                         onClick={choicelessButton.onClick}
                         {...(choicelessButton.props || {})}
                         style={{ margin: '0 auto' }}>

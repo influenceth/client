@@ -196,7 +196,7 @@ const DropdownNavMenu = ({
           {openerAsButton
             ? (
               <OpenerAsButtonWrapper>
-                <Button data-tip={openerTooltip} onClick={onClickOpener} size="icon">{openerIcon}</Button>
+                <Button data-tip={openerTooltip} highContrast onClick={onClickOpener} size="icon">{openerIcon}</Button>
               </OpenerAsButtonWrapper>
             )
             : (

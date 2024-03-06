@@ -55,12 +55,14 @@ const EntityNameForm = ({ entity, label, originalName, ...props }) => {
         <Button
           disabled={nativeBool(!entity || changingName || !name || error || (name === originalName))}
           size="small"
+          highContrast
           onClick={() => setName(originalName)}
           style={{ marginRight: 6 }}>Cancel</Button>
         <Button
           disabled={nativeBool(!entity || changingName || !name || error || (name === originalName))}
           loading={changingName}
           size="small"
+          highContrast
           isTransaction
           onClick={saveNameChange}>Update</Button>
       </div>

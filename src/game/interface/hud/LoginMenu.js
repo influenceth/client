@@ -64,7 +64,7 @@ const LoginMenu = () => {
       )}
       <ButtonWrapper loggedIn={!!account}>
         <label>{status}</label>
-        <Button onClick={onClick} disabled={authenticating} subtle width={account ? 148 : 170}>
+        <Button onClick={onClick} disabled={authenticating} width={account ? 148 : 170}>
           {tooltip}
         </Button>
       </ButtonWrapper>
