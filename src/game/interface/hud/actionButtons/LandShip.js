@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from 'react';
-import { Dock, Permission, Ship } from '@influenceth/sdk';
+import { Asteroid, Dock, Permission, Ship } from '@influenceth/sdk';
 
 import { LandShipIcon } from '~/components/Icons';
 import useCrewContext from '~/hooks/useCrewContext';
@@ -38,6 +38,7 @@ const LandShip = ({ asteroid, lot, onSetAction, _disabled }) => {
     if (_disabled) return 'loading...';
     if (!crewedShip) return 'ship is not crewed';
     if (!ready) return 'ship is in flight';
+    if (asteroid?.Celestial?.scanStatus < Asteroid.SCAN_STATUSES.RESOURCE_SCANNED) return 'asteroid un-scanned';
     let permChecks = {};
 
     // if no lot selected, can select from dialog
@@ -57,7 +58,7 @@ const LandShip = ({ asteroid, lot, onSetAction, _disabled }) => {
     }
     if (crewedShip.Ship.emergencyAt > 0) return 'in emergency mode';
     return getCrewDisabledReason({ asteroid, crew, requireSurface: false, ...permChecks });
-  }, [_disabled, crewedShip, lot, ready]);
+  }, [_disabled, asteroid, crewedShip, lot, ready]);
 
   return (
     <ActionButton
