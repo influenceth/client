@@ -65,25 +65,25 @@ const useDeliveryManager = ({ destination, destinationSlot, origin, originSlot, 
         status: Delivery.STATUSES.IN_PROGRESS,
         finishTime: null,
       };
-  
+
       // status flow
       // READY > (PACKAGING > PACKAGED) > DEPARTING > IN_TRANSIT > READY_TO_FINISH > FINISHING > FINISHED
       //       < (CANCELING <         )
       let status = 'READY';
       let stage = actionStages.NOT_STARTED;
-  
+
       // if deliveryId, treat lot as destination and assume in progress or done
       if (delivery.id > 0) {
         let actionItem = (actionItems || []).find((item) => item.event.name === 'DeliverySent' && item.event.returnValues.delivery.id === delivery.id);
         if (actionItem) {
           // current._crewmates = actionItem.assets.crew?.crewmates;  // TODO: ...
-          current._originLot = actionItem.data.origin.Location.locations.find((l) => l.label === Entity.IDS.LOT);
+          current._originLot = actionItem.data.origin?.Location.locations.find((l) => l.label === Entity.IDS.LOT);
           current.startTime = actionItem.event.timestamp;
         } else {
           actionItem = (actionItems || []).find((item) => item.event.name === 'DeliveryPackaged' && item.event.returnValues.delivery.id === delivery.id);
           if (actionItem) {
             // current._crewmates = actionItem.assets.crew?.crewmates;  // TODO: ...
-            current.caller = actionItem.event.returnValues.caller; 
+            current.caller = actionItem.event.returnValues.caller;
             current.price = actionItem.event.returnValues.price;
             current.startTime = actionItem.event.timestamp;
             current.isProposal = true;
@@ -97,7 +97,7 @@ const useDeliveryManager = ({ destination, destinationSlot, origin, originSlot, 
         current.contents = delivery.Delivery.contents;
         current.finishTime = current.isProposal ? current.startTime : delivery.Delivery.finishTime;
         current.status = delivery.Delivery.status;
-  
+
         if (delivery.Delivery.status === Delivery.STATUSES.COMPLETE) {
           status = 'FINISHED';
           stage = actionStages.COMPLETED;
@@ -122,7 +122,7 @@ const useDeliveryManager = ({ destination, destinationSlot, origin, originSlot, 
             stage = actionStages.IN_PROGRESS;
           }
         }
-  
+
       // if no deliveryId yet, must be the pending start / package
       } else {
         current.dest = delivery.vars.dest;
@@ -136,7 +136,7 @@ const useDeliveryManager = ({ destination, destinationSlot, origin, originSlot, 
         status = current.isProposal ? 'PACKAGING' : 'DEPARTING';
         stage = actionStages.STARTING;
       }
-  
+
       return {
         action: current,  // TODO? status === 'READY' ? null : current,
         status,
@@ -218,7 +218,7 @@ const useDeliveryManager = ({ destination, destinationSlot, origin, originSlot, 
     isLoading,
     currentDeliveryActions: currentDeliveries,
     currentVersion: currentDeliveriesVersion,
-    
+
     acceptDelivery,
     cancelDelivery,
     packageDelivery,
