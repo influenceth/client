@@ -8,7 +8,7 @@ const StyledPagination = styled.div`
   display: flex;
   justify-content: flex-end;
   & > button {
-    margin-left: 6px;
+    margin-right: 6px;
   }
 `;
 
