@@ -178,7 +178,7 @@ export function CrewProvider({ children }) {
         });
       }
     }
-  }, [selectedCrew?.Crew?.actionType, selectedCrew?.Crew?.actionRound, blockNumber, starknet]);
+  }, [actionTypeTriggered, selectedCrew?.Crew?.actionType, selectedCrew?.Crew?.actionRound, blockNumber, starknet]);
 
   // add final data to selected crew
   const finalSelectedCrew = useMemo(() => {
@@ -212,12 +212,16 @@ export function CrewProvider({ children }) {
             c.Crew.actionWeight = updatedCrew.Crew.actionWeight;
             c.Crew.lastFed = updatedCrew.Crew.lastFed;
             c.Crew.readyAt = updatedCrew.Crew.readyAt;
+            
+            // since refreshReadyAt can only happen on selectedCrewId, untrigger random event
+            // (in case random event resolution is what brought us here)
+            setActionTypeTriggered(false);
           }
           return c;
         });
       });
     }
-  }, [selectedCrewId]);
+  }, [ownedCrewsQueryKey, selectedCrewId]);
 
   // make sure a default-selected crew makes it into state (if logged in)
   useEffect(() => {
