@@ -7,13 +7,13 @@ import Failed from '~/assets/icons/animated/Failed.json';
 import RandomEvent from '~/assets/icons/animated/RandomEvent.json';
 import Ready from '~/assets/icons/animated/Ready.json';
 
-const LottieIcon = ({ animation, isPaused = false, height = "1em", width = "1em" }) => {
+const LottieIcon = ({ animation, isPaused = false, size = "1em" }) => {
   const options = useMemo(() => ({
     loop: true,
     autoplay: true,
     animationData: animation
   }), [animation]);
-  return <Lottie options={options} isPaused={isPaused} height={height} width={width} />;
+  return <Lottie options={options} isPaused={isPaused} height={size} width={size} style={{ lineHeight: 0 }} />;
 };
 
 export const CrewBusyIcon = (props) => <LottieIcon animation={CrewBusy} {...props} />;

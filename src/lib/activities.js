@@ -1154,7 +1154,7 @@ const activities = {
 
   RandomEventResolved: {
     getInvalidations: ({ event: { returnValues } }) => ([
-      ...invalidationDefaults(returnValues.callerCrew.label, returnValues.callerCrew.id),
+      // ...invalidationDefaults(returnValues.callerCrew.label, returnValues.callerCrew.id), // this is redundant to `requiresCrewTime`
       [ 'swayBalance' ],
     ]),
 
@@ -1169,6 +1169,7 @@ const activities = {
       };
     },
 
+    requiresCrewTime: true, // to reset random event crew data
     triggerAlert: true
   },
 

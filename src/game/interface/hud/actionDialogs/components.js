@@ -3254,6 +3254,7 @@ export const InventoryInputBlock = ({
   entity,
   isSourcing,
   inventorySlot,
+  lotIdOverride,
   transferMass = 0,
   transferVolume = 0,
   fallbackLabel = 'Select',
@@ -3297,7 +3298,8 @@ export const InventoryInputBlock = ({
       inventory: !isSourcing && inventory,
       inventoryBonuses
     }
-    const lotIndex = locationsArrToObj(entity?.Location?.locations || []).lotIndex;
+    const locObj = locationsArrToObj(entity?.Location?.locations || []);
+    const lotIndex = lotIdOverride ? Lot.toIndex(lotIdOverride) : locObj.lotIndex;
     if (entity?.label === Entity.IDS.BUILDING) {
       const unfinished = entity?.Building?.status !== Building.CONSTRUCTION_STATUSES.OPERATIONAL;
       return {
@@ -3312,8 +3314,10 @@ export const InventoryInputBlock = ({
       };
     }
     else if (entity?.label === Entity.IDS.SHIP) {
+      // lotIdOverride is included for when this was the origin of a delivery, but ship has taken off
+      // before action item completion... in case of lotIndex mismatch, just show the ship image
       return {
-        image: lotIndex && entity?.Location?.location?.label !== Entity.IDS.BUILDING
+        image: lotIndex && locObj.lotIndex === lotIndex && !locObj.buildingId
           ? <LotShipImage shipType={entity?.Ship?.shipType || 0} {...fullImageProps} />
           : <ShipImage shipType={entity?.Ship?.shipType || 0} {...fullImageProps} />,
         label: `${formatters.shipName(entity)}${invConfig?.category === Inventory.CATEGORIES.PROPELLANT ? ' (Propellant)' : ' (Cargo)'}`,

@@ -31,6 +31,7 @@ const Button = ({ asteroid, crew, lot, processor, onSetAction, _disabled }) => {
         {...buttonProps}
         labelAddendum={disabledReason}
         flags={{
+          attention: processStatus === 'READY_TO_FINISH',
           disabled: disabledReason,
           loading,
           finishTime: processor?.finishTime

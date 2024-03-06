@@ -126,8 +126,10 @@ const AsteroidComponent = () => {
   const { shadowSize, shadowMode } = useStore(s => s.getShadowQuality());
   const zoomStatus = useStore(s => s.asteroids.zoomStatus);
   const zoomedFrom = useStore(s => s.asteroids.zoomedFrom);
+  const cameraNeedsRecenter = useStore(s => s.cameraNeedsRecenter);
   const cameraNeedsReorientation = useStore(s => s.cameraNeedsReorientation);
   const dispatchLotsLoading = useStore(s => s.dispatchLotsLoading);
+  const dispatchRecenterCamera = useStore(s => s.dispatchRecenterCamera);
   const dispatchReorientCamera = useStore(s => s.dispatchReorientCamera);
   const updateZoomStatus = useStore(s => s.dispatchZoomStatusChanged);
   const setZoomedFrom = useStore(s => s.dispatchAsteroidZoomedFrom);
@@ -705,6 +707,14 @@ const AsteroidComponent = () => {
   //   }
   // }, [controls, config?.radius]);
 
+  const [cameraRecenterTimestamp, setCameraRecenterTimestamp] = useState(0);
+  useEffect(() => {
+    if (cameraNeedsRecenter) {
+      dispatchRecenterCamera();
+      setCameraRecenterTimestamp(Date.now())
+    }
+  }, [cameraNeedsRecenter]);
+
   const automatingCamera = useRef();
   useEffect(() => {
     if (selectedLot?.lotIndex > 0 && zoomedIntoAsteroidId === selectedLot?.asteroidId && config?.radiusNominal && zoomStatus === 'in') {
@@ -792,7 +802,7 @@ const AsteroidComponent = () => {
       })
       .to(controls.object.position, { ...lotPosition });
     }
-  }, [zoomedIntoAsteroidId, origin, selectedLot, config?.radiusNominal, zoomStatus]);
+  }, [cameraRecenterTimestamp, zoomedIntoAsteroidId, origin, selectedLot, config?.radiusNominal, zoomStatus]);
 
   useEffect(() => {
     if (!cameraNeedsReorientation || zoomStatus !== 'in') return;

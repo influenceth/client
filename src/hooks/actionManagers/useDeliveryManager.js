@@ -52,6 +52,7 @@ const useDeliveryManager = ({ destination, destinationSlot, origin, originSlot, 
     const allDeliveries = active.map((delivery) => {
       let current = {
         _crewmates: null,
+        _originLot: null,
         caller: null,
         deliveryId: null,
         dest: null,
@@ -76,6 +77,7 @@ const useDeliveryManager = ({ destination, destinationSlot, origin, originSlot, 
         let actionItem = (actionItems || []).find((item) => item.event.name === 'DeliverySent' && item.event.returnValues.delivery.id === delivery.id);
         if (actionItem) {
           // current._crewmates = actionItem.assets.crew?.crewmates;  // TODO: ...
+          current._originLot = actionItem.data.origin.Location.locations.find((l) => l.label === Entity.IDS.LOT);
           current.startTime = actionItem.event.timestamp;
         } else {
           actionItem = (actionItems || []).find((item) => item.event.name === 'DeliveryPackaged' && item.event.returnValues.delivery.id === delivery.id);

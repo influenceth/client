@@ -11,6 +11,7 @@ export const useLotLink = ({ asteroidId: optAsteroidId, lotId: optLotId, resourc
   const dispatchHudMenuOpened = useStore(s => s.dispatchHudMenuOpened);
   const dispatchOriginSelected = useStore(s => s.dispatchOriginSelected);
   const dispatchLotSelected = useStore(s => s.dispatchLotSelected);
+  const dispatchRecenterCamera = useStore(s => s.dispatchRecenterCamera);
   const dispatchResourceMapSelect = useStore(s => s.dispatchResourceMapSelect);
   const dispatchResourceMapToggle = useStore(s => s.dispatchResourceMapToggle);
   const dispatchZoomScene = useStore(s => s.dispatchZoomScene);
@@ -53,6 +54,7 @@ export const useLotLink = ({ asteroidId: optAsteroidId, lotId: optLotId, resourc
     // if already zoomed into asteroid, just select lot and select resource map
     if (asteroidId === origin && zoomStatus === 'in') {
       dispatchLotSelected(lotId);
+      dispatchRecenterCamera(true);
       selectResourceMapAsNeeded();
       setTimeout(() => {
         zoomToLotAsNeeded();
@@ -66,6 +68,7 @@ export const useLotLink = ({ asteroidId: optAsteroidId, lotId: optLotId, resourc
       setTimeout(() => {
         if (lotId) {
           dispatchLotSelected(lotId);
+          dispatchRecenterCamera(true);
           selectResourceMapAsNeeded();
           zoomToLotAsNeeded();
         } else {

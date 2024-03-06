@@ -97,10 +97,6 @@ const SurfaceTransfer = ({
     }) || undefined
   );
 
-  useEffect(() => {
-
-  }, [origin, originSlot, dest, currentDeliveryAction, stage]);
-
   const onSwayChange = useCallback((value) => {
     setSway(value ? parseInt(value) : '');
   }, []);
@@ -367,6 +363,7 @@ const SurfaceTransfer = ({
             inventorySlot={originInventory?.slot}
             inventoryBonuses={crew?._inventoryBonuses}
             isSelected={stage === actionStage.NOT_STARTED && originInventoryTally !== 1}
+            lotIdOverride={originLot?.id}
             onClick={() => { setOriginSelectorOpen(true) }} />
 
           <FlexSectionSpacer>
@@ -596,10 +593,13 @@ const Wrapper = (props) => {
   );
 
   const { data: originEntity, isLoading: originLoading } = useEntity(
-    currentDeliveryAction?.action?.origin || props.origin || zoomShip || lot?.surfaceShip || lot?.building);
+    currentDeliveryAction?.action?.origin || props.origin || zoomShip || lot?.surfaceShip || lot?.building
+  );
 
   const { data: originLot, isLoading: originLotLoading } = useLot(
-    locationsArrToObj(originEntity?.Location?.locations || []).lotId);
+    currentDeliveryAction?.action?._originLot?.id
+    || locationsArrToObj(originEntity?.Location?.locations || []).lotId
+  );
 
   const { data: destEntity, isLoading: destLoading } = useEntity(currentDeliveryAction?.action?.dest);
 
