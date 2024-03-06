@@ -1,15 +1,25 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import styled from 'styled-components';
-import { Crewmate, Order, Permission } from '@influenceth/sdk';
+import { Crewmate, Entity, Order, Permission } from '@influenceth/sdk';
 
-import { CompositionIcon, InfoIcon, LimitBuyIcon, LimitSellIcon, MarketBuyIcon, MarketplaceBuildingIcon, MarketSellIcon, OrderIcon, RadioCheckedIcon, RadioUncheckedIcon, SwayIcon } from '~/components/Icons';
+import {
+  InfoIcon,
+  LimitBuyIcon,
+  LimitSellIcon,
+  MarketBuyIcon,
+  MarketplaceBuildingIcon,
+  MarketSellIcon,
+  RadioCheckedIcon,
+  RadioUncheckedIcon,
+  SwayIcon
+} from '~/components/Icons';
 import CrewIndicator from '~/components/CrewIndicator';
 import ResourceThumbnail from '~/components/ResourceThumbnail';
 import Switcher from '~/components/SwitcherButton';
 import UncontrolledTextInput, { TextInputWrapper } from '~/components/TextInputUncontrolled';
 import useScreenSize from '~/hooks/useScreenSize';
 import theme, { hexToRGB } from '~/theme';
-import { reactBool, formatFixed, formatPrice, getCrewAbilityBonuses } from '~/lib/utils';
+import { formatFixed, formatPrice, getCrewAbilityBonuses } from '~/lib/utils';
 import ActionButton from '~/game/interface/hud/actionButtons/ActionButton';
 import useStore from '~/hooks/useStore';
 import formatters from '~/lib/formatters';
@@ -601,6 +611,22 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
     [mode, type, resource, marketplace, getPendingOrder]
   );
 
+  const sameAsteroid = useMemo(() => {
+    if (marketplace?.Location?.locations) {
+      console.log(marketplace?.Location?.locations);
+      console.log(crew?._location?.asteroidId, Entity.IDS.ASTEROID);
+      return !!marketplace?.Location?.locations.find((l) => {
+        return l.id === crew?._location?.asteroidId && l.label === Entity.IDS.ASTEROID;
+      });
+    }
+
+    return false;
+  }, [crew, marketplace]);
+
+  const onSurface = useMemo(() => {
+    return !!crew?._location?.lotId;
+  }, [crew]);
+
   const hasPermission = useMemo(() => {
     let perm = 0;
     if (type === 'limit' && mode === 'buy') perm = Permission.IDS.LIMIT_BUY;
@@ -612,6 +638,7 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
 
   const actionButtonDetails = useMemo(() => {
     const a = { label: '', icon: null };
+
     if (type === 'limit') {
       a.label = `${loading ? 'Creating' : 'Create'} Limit Order`;
       a.icon = mode === 'buy' ? <LimitBuyIcon /> : <LimitSellIcon />;
@@ -619,9 +646,15 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
       a.label = `${loading ? 'Creating' : 'Create'} Market Order`;
       a.icon = mode === 'buy' ? <MarketBuyIcon /> : <MarketSellIcon />;
     }
-    a.labelAddendum = !loading && !hasPermission ? 'restricted' : '';
+
+    if (!loading) {
+      if (!sameAsteroid) a.labelAddendum = 'different asteroid';
+      if (!onSurface) a.labelAddendum = 'in orbit';
+      if (!hasPermission) a.labelAddendum = 'restricted';
+    }
+
     return a;
-  }, [loading, hasPermission, mode, total, type]);
+  }, [loading, hasPermission, mode, onSurface, sameAsteroid, total, type]);
 
   return (
     <Wrapper>
