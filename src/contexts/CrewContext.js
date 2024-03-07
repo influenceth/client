@@ -212,7 +212,7 @@ export function CrewProvider({ children }) {
             c.Crew.actionWeight = updatedCrew.Crew.actionWeight;
             c.Crew.lastFed = updatedCrew.Crew.lastFed;
             c.Crew.readyAt = updatedCrew.Crew.readyAt;
-            
+
             // since refreshReadyAt can only happen on selectedCrewId, untrigger random event
             // (in case random event resolution is what brought us here)
             setActionTypeTriggered(false);
