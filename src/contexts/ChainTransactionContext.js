@@ -270,10 +270,6 @@ const customConfigs = {
     equalityTest: true
   },
   ResolveRandomEvent: {
-    preprocess: (vars) => {
-      if (!Object.keys(vars).includes('choice')) vars.choice = 0;
-      return vars;
-    },
     equalityTest: true
   },
   ResupplyFood: {
@@ -563,10 +559,16 @@ export function ChainTransactionProvider({ children }) {
               systemCalls.forEach((r) => r.escrowConfig = config.escrowConfig);
             }
 
-            // if actionType is set but the random event was not actually triggered, prepend resolveRandomEvent
-            // so that the event is cleared (preprocess will add the null choice)
+            // if actionType is set but the random event was not actually triggered,
+            // prepend resolveRandomEvent with choice 0 so that the event is cleared
             if (prependEventAutoresolve && !(config.noSystemCalls || config.isUnblockable)) { // TODO: fill in these isUnblockable's
-              systemCalls.unshift({ runSystem: 'ResolveRandomEvent', rawVars });
+              const caller_crew = (Array.isArray(rawVars) ? rawVars[0] : rawVars)?.caller_crew;
+              if (caller_crew) {
+                systemCalls.unshift({
+                  runSystem: 'ResolveRandomEvent',
+                  rawVars: { caller_crew, choice: 0 }
+                });
+              }
             }
 
             let totalEscrow = 0n;
