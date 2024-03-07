@@ -1859,6 +1859,7 @@ const getInventorySublabel = (inventoryType) => {
 
 export const InventorySelectionDialog = ({
   asteroidId,
+  excludeSites,
   otherEntity,
   otherInvSlot,
   isSourcing,
@@ -1908,6 +1909,9 @@ export const InventorySelectionDialog = ({
 
         // skip if locked (or inventory type is 0, which should not happen but has in staging b/c of dev bugs)
         if (inv.status !== Inventory.STATUSES.AVAILABLE || inv.inventoryType === 0) return;
+
+        // skip if site and excludeSites is set
+        if (excludeSites && Inventory.TYPES[inv.inventoryType].category === Inventory.CATEGORIES.SITE) return;
 
         // skip if is source and cannot contain ANY of the itemIds, or is destination and cannot contain ALL of the itemIds
         if (itemIds && Inventory.TYPES[inv.inventoryType].productConstraints) {

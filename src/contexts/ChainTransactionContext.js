@@ -540,7 +540,6 @@ export function ChainTransactionProvider({ children }) {
                   const { system, vars } = runSystem;
                   return { runSystem: system, rawVars: vars };
                 }
-                // { runSystem, rawVars }
               });
               console.log('multisystemCalls', systemCalls, rawVars);
             } else if (config.repeatableSystemCall) {
