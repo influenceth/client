@@ -245,7 +245,6 @@ const MarketplaceOrder = ({
     const bonusIds = [
       Crewmate.ABILITY_IDS.HOPPER_TRANSPORT_TIME,
       Crewmate.ABILITY_IDS.MARKETPLACE_FEE_REDUCTION,
-      Crewmate.ABILITY_IDS.FOOD_CONSUMPTION_TIME
     ];
 
     const abilities = getCrewAbilityBonuses(bonusIds, crew);
