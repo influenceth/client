@@ -562,7 +562,7 @@ export function ChainTransactionProvider({ children }) {
             // if actionType is set but the random event was not actually triggered,
             // prepend resolveRandomEvent with choice 0 so that the event is cleared
             if (prependEventAutoresolve && !(config.noSystemCalls || config.isUnblockable)) { // TODO: fill in these isUnblockable's
-              const caller_crew = (Array.isArray(rawVars) ? rawVars[0] : rawVars)?.caller_crew;
+              const caller_crew = (Array.isArray(rawVars) ? rawVars.find((rv) => !!rv.caller_crew) : rawVars)?.caller_crew;
               if (caller_crew) {
                 systemCalls.unshift({
                   runSystem: 'ResolveRandomEvent',
