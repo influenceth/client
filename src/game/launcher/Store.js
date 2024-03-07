@@ -750,6 +750,7 @@ export const FaucetSKU = () => {
         duration: 5000
       });
 
+      // TODO: should we move waitForTransaction above the alert?
       await starknet.account.waitForTransaction(txHash);
     } catch (e) {
       console.error(e);
