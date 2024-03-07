@@ -59,7 +59,7 @@ const UnderLabel = styled.span`
   overflow: hidden;
   text-align: center;
   width: 25%;
-  
+
   &:first-child {
     text-align: left;
   }
@@ -206,7 +206,6 @@ const FeedCrew = ({
     const rationingTimeSinceFed = Crew.getTimeSinceFed(0.5, crew._foodBonuses?.consumption);
     const rationingPenalty = 1 - Crew.getFoodMultiplier(postTimeSinceFed, crew._foodBonuses?.consumption, crew._foodBonuses?.rationing);
     const timeUntilRationing = Time.toRealDuration(Math.max(0, rationingTimeSinceFed - postTimeSinceFed));
-  
     const barColor = postValue >= 0.5 ? theme.colors.green : theme.colors.warning;
     const deltaValue = addingFood / maxFood;
 
@@ -269,7 +268,7 @@ const FeedCrew = ({
             }
             transferMass={totalMass}
             transferVolume={totalVolume} />
-          
+
           <FlexSectionSpacer>
             <ForwardIcon />
           </FlexSectionSpacer>
