@@ -102,6 +102,18 @@ const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...pro
   const [primaryOutput, setPrimaryOutput] = useState(currentProcess?.primaryOutputId);
 
   const process = Process.TYPES[processId];
+
+  const recipeStepSize = useMemo(() => {
+    if (process) {
+      return Object.keys(process.outputs).reduce((acc, i) => {
+        const outputStep = Product.TYPES[i].isAtomic ? 1 : 0.001;
+        return Math.max(acc, outputStep);
+      }, 0.001);
+    }
+
+    return 0.001;
+  }, [process]);
+
   const maxAmount = useMemo(() => {
     let maxPossible = 1;
 
@@ -113,7 +125,7 @@ const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...pro
       });
     }
 
-    return maxPossible;
+    return Math.floor(maxPossible / recipeStepSize) * recipeStepSize;
   }, [process, originInventory]);
 
   useEffect(() => {
@@ -345,17 +357,6 @@ const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...pro
     }
     return [{}, ''];
   }, [processor.processorType]);
-
-  const recipeStepSize = useMemo(() => {
-    if (process) {
-      return Object.keys(process.outputs).reduce((acc, i) => {
-        const outputStep = Product.TYPES[i].isAtomic ? 1 : 0.001;
-        return Math.max(acc, outputStep);
-      }, 0.001);
-    }
-
-    return 0.001;
-  }, [process]);
 
   return (
     <>
