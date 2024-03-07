@@ -144,14 +144,14 @@ const FormAgreement = ({
   const { walletContext: { starknet } } = useAuth();
   const createAlert = useStore(s => s.dispatchAlertLogged);
 
-  const { currentAgreement, currentPolicy, cancelAgreement, enterAgreement, extendAgreement } = agreementManager;
+  const { currentAgreement, currentPolicy, cancelAgreement, enterAgreement, extendAgreement, pendingChange } = agreementManager;
   const { data: asteroid } = useAsteroid(locationsArrToObj(entity?.Location?.locations || []).asteroidId);
   const blockTime = useBlockTime();
   const { crew } = useCrewContext();
   const { data: swayBalance } = useSwayBalance();
 
   const crewmates = crew?._crewmates;
-  const captain = crewmates[0];
+  const captain = crewmates?.[0];
   const location = useHydratedLocation(locationsArrToObj(entity?.Location?.locations || []));
 
   const { data: controller } = useCrew((entity?.label === Entity.IDS.LOT ? asteroid : entity)?.Control?.controller?.id);
@@ -171,7 +171,9 @@ const FormAgreement = ({
   );
 
   const [initialPeriod, setInitialPeriod] = useState(
-    isExtension ? maxTermFloored : (currentPolicy?.policyDetails?.initialTerm || 0)
+    (pendingChange?.vars?.term || pendingChange?.vars?.added_term)
+      ? secondsToMonths(pendingChange.vars.term || pendingChange.vars.added_term)
+      : (isExtension ? maxTermFloored : (currentPolicy?.policyDetails?.initialTerm || 0))
   );
 
   const remainingPeriod = useMemo(() => currentAgreement?.endTime - blockTime, [blockTime, currentAgreement?.endTime]);
@@ -196,7 +198,7 @@ const FormAgreement = ({
     if (currentPolicy?.policyType === Permission.POLICY_IDS.PREPAID) {
       return [
         {
-          label: `${isExtension ? 'Updated ' : ''}Lease Length`,
+          label: `${isExtension ? 'Added ' : ''}Lease Length`,
           value: `${initialPeriod} month${initialPeriod === 1 ? '' : 's'}`,
           direction: 0,
         },
@@ -271,7 +273,7 @@ const FormAgreement = ({
     const term = monthsToSeconds(initialPeriod);
     const termPrice = Math.ceil(totalLeaseCost * 1e6);
     extendAgreement({ recipient, term, termPrice });
-  }, []);
+  }, [controller?.Crew?.delegatedTo, initialPeriod, totalLeaseCost]);
 
   const onTerminateAgreement = useCallback(() => {
     cancelAgreement({
@@ -574,7 +576,7 @@ const Wrapper = ({ entity: entityId, permission, isExtension, agreementPath, ...
   const entityIsLoading = assetIsLoading || lotIsLoading;
 
   const agreementManager = useAgreementManager(entity, permission, agreementPath);
-  const stage = agreementManager.changePending ? actionStages.STARTING : actionStages.NOT_STARTED;
+  const stage = agreementManager.pendingChange ? actionStages.STARTING : actionStages.NOT_STARTED;
 
   // handle auto-closing on any status change
   const lastStatus = useRef();

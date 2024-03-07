@@ -10,7 +10,7 @@ import { formatTimer } from '~/lib/utils';
 const isVisible = () => false;
 
 const EndAgreement = ({ entity, permission, agreementPath, _disabled }) => {
-  const { changePending, currentAgreement } = useAgreementManager(entity, permission, agreementPath);
+  const { pendingChange, currentAgreement } = useAgreementManager(entity, permission, agreementPath);
   const blockTime = useBlockTime();
   
   const onSetAction = useStore(s => s.dispatchActionDialog);
@@ -21,11 +21,11 @@ const EndAgreement = ({ entity, permission, agreementPath, _disabled }) => {
 
   const disabledReason = useMemo(() => {
     if (_disabled) return 'loading...';
-    if (changePending) return 'updating...';
+    if (pendingChange) return 'updating...';
     if (currentAgreement?.noticeTime > 0) return 'notice already given';
     if (currentAgreement?._canGiveNoticeStart > blockTime) return `allowed in ${formatTimer(currentAgreement._canGiveNoticeStart - blockTime, 1)}`;
     return '';
-  }, [_disabled, changePending, currentAgreement]);
+  }, [_disabled, pendingChange, currentAgreement]);
 
   return (
     <ActionButton
@@ -33,7 +33,7 @@ const EndAgreement = ({ entity, permission, agreementPath, _disabled }) => {
       labelAddendum={disabledReason}
       flags={{
         disabled: _disabled || disabledReason,
-        loading: changePending
+        loading: pendingChange
       }}
       icon={<GiveNoticeIcon />}
       onClick={handleClick} />

@@ -189,7 +189,7 @@ const PolicyPanel = ({ editable = false, entity, permission }) => {
     policyType: originalPolicyType,
     policyDetails: originalPolicyDetails,
     allowlist: originalAllowlist,
-    agreements = [],  // TODO: ...
+    agreements = [],  // TODO: ...?
   } = currentPolicy || {};
 
   const [policyType, setPolicyType] = useState(Number(originalPolicyType));

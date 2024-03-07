@@ -8,7 +8,7 @@ import ActionButton from './ActionButton';
 const isVisible = () => false;
 
 const FormAgreement = ({ entity, permission, _disabled }) => {
-  const { changePending } = useAgreementManager(entity, permission);
+  const { pendingChange } = useAgreementManager(entity, permission);
   
   const onSetAction = useStore(s => s.dispatchActionDialog);
 
@@ -18,9 +18,9 @@ const FormAgreement = ({ entity, permission, _disabled }) => {
 
   const disabledReason = useMemo(() => {
     // if (_disabled) return 'loading...';
-    if (changePending) return 'updating...';
+    if (pendingChange) return 'updating...';
     return '';
-  }, [_disabled, changePending]);
+  }, [_disabled, pendingChange]);
 
   return (
     <ActionButton
@@ -28,7 +28,7 @@ const FormAgreement = ({ entity, permission, _disabled }) => {
       labelAddendum={disabledReason}
       flags={{
         disabled: _disabled || disabledReason,
-        loading: changePending
+        loading: pendingChange
       }}
       icon={<FormAgreementIcon />}
       onClick={handleClick} />

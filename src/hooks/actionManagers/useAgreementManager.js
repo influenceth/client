@@ -15,7 +15,7 @@ export const getAgreementPath = (target, permission, permitted) => {
 
 const useAgreementManager = (target, permission, agreementPath) => {
   const { crew } = useCrewContext();
-  const { execute, getStatus } = useContext(ChainTransactionContext);
+  const { execute, getPendingTx } = useContext(ChainTransactionContext);
   const { currentPolicy } = usePolicyManager(target, permission);
 
   const currentAgreement = useMemo(() => {
@@ -79,17 +79,18 @@ const useAgreementManager = (target, permission, agreementPath) => {
     );
   }, [agreementPath]);
 
-  const changePending = useMemo(
+  const pendingChange = useMemo(
     () => {
-      if (getStatus) {
-        return getStatus('AcceptPrepaidAgreement', { ...payload }) === 'pending'
-          || getStatus('AcceptContractAgreement', { ...payload }) === 'pending'
-          || getStatus('AcceptPrepaidMerkleAgreement', { ...payload }) === 'pending'
-          || getStatus('ExtendPrepaidAgreement', { ...payload }) === 'pending'
-          || getStatus('CancelPrepaidAgreement', { ...payload }) === 'pending'
+      if (getPendingTx) {
+        return getPendingTx('AcceptPrepaidAgreement', { ...payload })
+          || getPendingTx('AcceptContractAgreement', { ...payload })
+          || getPendingTx('AcceptPrepaidMerkleAgreement', { ...payload })
+          || getPendingTx('ExtendPrepaidAgreement', { ...payload })
+          || getPendingTx('CancelPrepaidAgreement', { ...payload })
       }
+      return null;
     },
-    [payload, getStatus]
+    [payload, getPendingTx]
   );
 
   return {
@@ -100,7 +101,7 @@ const useAgreementManager = (target, permission, agreementPath) => {
     extendAgreement,
     cancelAgreement,
 
-    changePending
+    pendingChange
   };
 };
 

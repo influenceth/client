@@ -8,20 +8,18 @@ import useAgreementManager from '~/hooks/actionManagers/useAgreementManager';
 const isVisible = () => false;
 
 const ExtendAgreement = ({ entity, permission, onSetAction, _disabled }) => {
-  const { changePending, currentAgreement } = useAgreementManager(entity, permission);
+  const { pendingChange, currentAgreement } = useAgreementManager(entity, permission);
   
-  // const onSetAction = useStore(s => s.dispatchActionDialog);
-
   const handleClick = useCallback(() => {
     onSetAction('EXTEND_AGREEMENT', { entity, permission });
   }, [entity, permission]);
 
   const disabledReason = useMemo(() => {
     if (_disabled) return 'loading...';
-    if (changePending) return 'updating...';
+    if (pendingChange) return 'updating...';
     if (currentAgreement?.noticeTime > 0) return 'notice given';
     return '';
-  }, [_disabled, changePending, currentAgreement]);
+  }, [_disabled, pendingChange, currentAgreement]);
 
   // only flash green if no controller... button is always present if you own and
   // do not currently have control (hopefully that is less distracting when admin'ed
@@ -32,7 +30,7 @@ const ExtendAgreement = ({ entity, permission, onSetAction, _disabled }) => {
       labelAddendum={disabledReason}
       flags={{
         disabled: _disabled || disabledReason,
-        loading: changePending
+        loading: pendingChange
       }}
       icon={<ExtendAgreementIcon />}
       onClick={handleClick} />

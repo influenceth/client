@@ -7,7 +7,6 @@ import {
   TransferToSiteIcon,
   WarningIcon
 } from '~/components/Icons';
-import useCrewContext from '~/hooks/useCrewContext';
 import theme, { hexToRGB } from '~/theme';
 import useConstructionManager from '~/hooks/actionManagers/useConstructionManager';
 import { reactBool, formatTimer, getCrewAbilityBonuses } from '~/lib/utils';
@@ -34,6 +33,7 @@ import { ActionDialogInner, useAsteroidAndLot } from '../ActionDialog';
 import actionStage from '~/lib/actionStages';
 import ActionButtonComponent from '../actionButtons/ActionButton';
 import useDeliveryManager from '~/hooks/actionManagers/useDeliveryManager';
+import useActionCrew from '~/hooks/useActionCrew';
 
 const MouseoverWarning = styled.span`
   & b { color: ${theme.colors.error}; }
@@ -53,12 +53,11 @@ const TransferToSite = styled.div`
 `;
 
 const Construct = ({ asteroid, lot, constructionManager, stage, ...props }) => {
-  const { crew, crewmateMap } = useCrewContext();
   const { currentConstructionAction, constructionStatus, startConstruction, finishConstruction, isAtRisk } = constructionManager;
   const { currentDeliveryActions } = useDeliveryManager({ destination: lot.building });
-
-  const crewmates = currentConstructionAction?._crewmates || (crew?._crewmates || []).map((i) => crewmateMap[i]);
-  const captain = crewmates[0];
+  
+  const crew = useActionCrew(constructionManager.currentConstructionAction);
+  const captain = crew?._crewmates?.[0];
 
   const [crewTravelBonus, constructionBonus] = useMemo(() => {
     const bonusIds = [Crewmate.ABILITY_IDS.HOPPER_TRANSPORT_TIME, Crewmate.ABILITY_IDS.CONSTRUCTION_TIME];

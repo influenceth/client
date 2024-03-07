@@ -90,7 +90,13 @@ export const ucfirst = (str) => {
 export const getCrewAbilityBonuses = (abilityIdOrAbilityIds, crew) => {
   if (!crew) return {};
   const isMultiple = Array.isArray(abilityIdOrAbilityIds);
-  const timeSinceFed = Math.max(0, Time.toGameDuration((Date.now() / 1000) - (crew.Crew?.lastFed || 0), crew._timeAcceleration));
+  const timeSinceFed = Math.max(
+    0,
+    Time.toGameDuration(
+      (crew._now || (Date.now() / 1000)) - (crew.Crew?.lastFed || 0),
+      crew._timeAcceleration
+    )
+  );
   const bonuses = (isMultiple ? abilityIdOrAbilityIds : [abilityIdOrAbilityIds]).reduce((acc, abilityId) => {
     acc[abilityId] = Crew.getAbilityBonus(abilityId, crew._crewmates, crew._station, timeSinceFed);
     return acc;
