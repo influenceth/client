@@ -538,10 +538,10 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
     [marketplace, type]
   );
 
-  const marketplaceFee = useMemo(
-    () => Order.adjustedFee(baseMarketplaceFee, feeReductionBonus.totalBonus, feeEnforcementBonus.totalBonus),
-    [baseMarketplaceFee, feeReductionBonus, feeEnforcementBonus]
-  );
+  const marketplaceFee = useMemo(() => {
+    const adjusted = Order.adjustedFee(baseMarketplaceFee, feeReductionBonus.totalBonus, feeEnforcementBonus.totalBonus);
+    return adjusted;
+  }, [baseMarketplaceFee, feeReductionBonus, feeEnforcementBonus]);
 
   const [quantity, setQuantity] = useState();
   const [limitPrice, setLimitPrice] = useState();
@@ -613,8 +613,6 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
 
   const sameAsteroid = useMemo(() => {
     if (marketplace?.Location?.locations) {
-      console.log(marketplace?.Location?.locations);
-      console.log(crew?._location?.asteroidId, Entity.IDS.ASTEROID);
       return !!marketplace?.Location?.locations.find((l) => {
         return l.id === crew?._location?.asteroidId && l.label === Entity.IDS.ASTEROID;
       });
@@ -622,10 +620,6 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
 
     return false;
   }, [crew, marketplace]);
-
-  const onSurface = useMemo(() => {
-    return !!crew?._location?.lotId;
-  }, [crew]);
 
   const hasPermission = useMemo(() => {
     let perm = 0;
@@ -649,12 +643,13 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
 
     if (!loading) {
       if (!sameAsteroid) a.labelAddendum = 'different asteroid';
-      if (!onSurface) a.labelAddendum = 'in orbit';
+      if (!crew?._location?.lotId) a.labelAddendum = 'in orbit';
       if (!hasPermission) a.labelAddendum = 'restricted';
+      if (!crew?._ready) a.labelAddendum = 'crew busy';
     }
 
     return a;
-  }, [loading, hasPermission, mode, onSurface, sameAsteroid, total, type]);
+  }, [crew, loading, hasPermission, mode, sameAsteroid, total, type]);
 
   return (
     <Wrapper>
