@@ -206,7 +206,7 @@ const MarketplaceOrder = ({
   const { data: exchangeController } = useHydratedCrew(lot.building?.Control?.controller?.id);
 
   const { data: swayBalance } = useSwayBalance();
-  
+
   const {
     createBuyOrder,
     createSellOrder,
@@ -245,7 +245,9 @@ const MarketplaceOrder = ({
     const bonusIds = [
       Crewmate.ABILITY_IDS.HOPPER_TRANSPORT_TIME,
       Crewmate.ABILITY_IDS.MARKETPLACE_FEE_REDUCTION,
+      Crewmate.ABILITY_IDS.FOOD_CONSUMPTION_TIME
     ];
+
     const abilities = getCrewAbilityBonuses(bonusIds, crew);
     return bonusIds.map((id) => abilities[id] || {});
   }, [crew]);
@@ -557,7 +559,7 @@ const MarketplaceOrder = ({
       sellOrders.reduce((acc, cur) => Math.min(acc, cur.price), Infinity)
     ];
   }, [buyOrders, mode, sellOrders, limitPrice]);
-  
+
   const exceedsOtherSide = useMemo(() => {
     if (type === 'limit') {
       if (mode === 'buy') {
@@ -568,7 +570,7 @@ const MarketplaceOrder = ({
     }
     return false;
   }, [mode, type, limitPrice, buyOrders, sellOrders]);
-  
+
   const total = useMemo(() => {
     let sum = type === 'limit' ? totalLimitPrice : totalMarketPrice;
     return sum + (mode === 'buy' ? feeTotal : -feeTotal);
@@ -639,7 +641,7 @@ const MarketplaceOrder = ({
     if (type === 'market' && mode === 'sell') perm = Permission.IDS.SELL;
     return crewCan(perm, exchange);
   }, [crewCan, exchange, mode, type, isCancellation]);
-  
+
   return (
     <>
       <ActionDialogHeader
