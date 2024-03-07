@@ -52,7 +52,7 @@ export function ActivitiesProvider({ children }) {
       transformedActivities.forEach(activity => {
         if (!skipInvalidations) {
           const debugInvalidation = true;
-          const activityConfig = getActivityConfig(activity);
+          const activityConfig = getActivityConfig(activity, crew);
           shouldRefreshReadyAt = shouldRefreshReadyAt || !!activityConfig?.requiresCrewTime;
 
           // console.log('invalidations', activityConfig?.invalidations);
