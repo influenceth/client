@@ -133,7 +133,7 @@ const Asteroids = () => {
 
       if (shipAsteroidId && !asseted[shipAsteroidId]) {
         const inList = asteroids.find((a) => a.id === shipAsteroidId);
-        if (inList) asseted[s._location.asteroidId] = { asteroid: inList };
+        if (inList) asseted[shipAsteroidId] = { asteroid: inList };
       }
 
       if (shipAsteroidId && asseted[shipAsteroidId]) asseted[shipAsteroidId].ships = true;
