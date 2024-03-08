@@ -1,9 +1,10 @@
 import { useMemo } from 'react';
 import { useQueryClient } from 'react-query';
 
+import useCrewContext from '~/hooks/useCrewContext';
 import activities, { getHydrationQueryKey } from '~/lib/activities';
 
-const getActivityConfig = (queryClient) => (activity, viewingAs = {}) => {
+const getActivityConfig = (queryClient, defaultViewingAs) => (activity, overrideViewingAs) => {
   const name = activity?.event?.name || activity?.event?.event;
   const config = activities[name];
   if (!config) {
@@ -19,6 +20,8 @@ const getActivityConfig = (queryClient) => (activity, viewingAs = {}) => {
       [prepopKey]: queryClient.getQueryData(getHydrationQueryKey(prepopEntities[prepopKey]))
     };
   }, {});
+
+  const viewingAs = overrideViewingAs || defaultViewingAs || {};
 
   const actionItem = config?.getActionItem ? config.getActionItem(activity.event, viewingAs, prepopped) : null;
 
@@ -51,7 +54,8 @@ const getActivityConfig = (queryClient) => (activity, viewingAs = {}) => {
 
 const useGetActivityConfig = () => {
   const queryClient = useQueryClient();
-  return useMemo(() => getActivityConfig(queryClient), [queryClient]);
+  const { crew } = useCrewContext();
+  return useMemo(() => getActivityConfig(queryClient, { id: crew?.id, label: crew?.label, uuid: crew?.uuid }), [crew?.id, queryClient]);
 }
 
 export default useGetActivityConfig;

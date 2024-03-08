@@ -141,6 +141,12 @@ const useActionButtons = () => {
     // if my crew is on a ship on this lot
     else if (crewedShip && crewedShip._location?.lotId === lot?.id) ship = crewedShip;
 
+    // // if there is only one owned ship on the lot
+    // if (!ship) {
+    //   const lotOwnedShips = (lot?.ships || []).filter((s) => s.Control.controller.id === crew?.id);
+    //   if (lotOwnedShips?.length === 1) ship = lotOwnedShips[0]; // if only one owned ship, show it
+    // }
+
     // some of these sources don't have location set
     if (ship && !ship._location) {
       ship = cloneDeep(ship);

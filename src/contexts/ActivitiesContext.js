@@ -4,11 +4,11 @@ import uniq from 'lodash.uniqby';
 
 import useAuth from '~/hooks/useAuth';
 import useCrewContext from '~/hooks/useCrewContext';
+import useGetActivityConfig from '~/hooks/useGetActivityConfig';
 import useStore from '~/hooks/useStore';
 import useWebsocket from '~/hooks/useWebsocket';
 import { hydrateActivities } from '~/lib/activities';
 import api from '~/lib/api';
-import useGetActivityConfig from '~/hooks/useGetActivityConfig';
 
 // TODO (enhancement): rather than invalidating, make optimistic updates to cache value directly
 // (i.e. update asteroid name wherever asteroid referenced rather than invalidating large query results)
@@ -52,7 +52,7 @@ export function ActivitiesProvider({ children }) {
       transformedActivities.forEach(activity => {
         if (!skipInvalidations) {
           const debugInvalidation = true;
-          const activityConfig = getActivityConfig(activity, crew);
+          const activityConfig = getActivityConfig(activity);
           shouldRefreshReadyAt = shouldRefreshReadyAt || !!activityConfig?.requiresCrewTime;
 
           // console.log('invalidations', activityConfig?.invalidations);
@@ -118,7 +118,7 @@ export function ActivitiesProvider({ children }) {
       }
       
     }, 2500);
-  }, [refreshReadyAt]);
+  }, [getActivityConfig, refreshReadyAt]);
 
   // try to process WS activities grouped by block
   const processPendingWSBatch = useCallback(async () => {
