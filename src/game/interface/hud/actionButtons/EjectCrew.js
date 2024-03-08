@@ -7,6 +7,9 @@ import useEjectCrewManager from '~/hooks/actionManagers/useEjectCrewManager';
 const isVisible = ({ crew, building, ship }) => {
   if (crew) {
     if (ship) {
+      // do not display if ship in emergency mode
+      if (ship.Ship?.emergencyAt > 0) return false;
+
       // if my crew is on it, do i still need to check that status is available?
       return crew._location.shipId === ship.id;
     }

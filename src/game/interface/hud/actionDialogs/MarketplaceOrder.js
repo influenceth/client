@@ -869,9 +869,11 @@ const MarketplaceOrder = ({
         wide
         {...props} />
 
+      {/* only market buys can use sites */}
       {stage === actionStages.NOT_STARTED && (
         <InventorySelectionDialog
           asteroidId={asteroid.id}
+          excludeSites={reactBool(!(mode === 'buy' && type === 'market'))}
           otherEntity={exchange}
           onClose={() => setStorageSelectorOpen(false)}
           onSelected={setStorageSelection}

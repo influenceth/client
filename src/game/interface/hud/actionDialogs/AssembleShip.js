@@ -449,6 +449,7 @@ const AssembleShip = ({ asteroid, lot, dryDockManager, stage, ...props }) => {
 
           <InventorySelectionDialog
             asteroidId={asteroid.id}
+            excludeSites
             otherEntity={lot.building}
             isSourcing
             itemIds={inputArr}

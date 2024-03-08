@@ -29,10 +29,14 @@ const usePolicyManager = (target, permission) => {
 
     if (pol?.policyDetails && pol.policyType === Permission.POLICY_IDS.CONTRACT) pol.policyDetails.contract = pol.policyDetails.address;
     if (pol?.policyDetails && pol.policyType === Permission.POLICY_IDS.PREPAID) {
-      pol.policyDetails.rate = (pol.policyDetails.rate / 1e6) * hoursPerMonth;  // stored in microsway per hour, UI in sway/mo
-      pol.policyDetails.initialTerm = secondsToMonths(pol.policyDetails.initialTerm); // stored in seconds, UI in months
-      pol.policyDetails.noticePeriod = secondsToMonths(pol.policyDetails.noticePeriod); // stored in seconds, UI in months
+      // stored in microsway per hour, UI in sway/mo
+      pol.policyDetails.rate = Number(BigInt(pol.policyDetails.rate) * BigInt(hoursPerMonth)) / 1e6;
+      // stored in seconds, UI in months
+      pol.policyDetails.initialTerm = secondsToMonths(pol.policyDetails.initialTerm);
+       // stored in seconds, UI in months
+      pol.policyDetails.noticePeriod = secondsToMonths(pol.policyDetails.noticePeriod);
     };
+
     return pol;
   }, [crew?.id, target, permission]);
 

@@ -96,7 +96,7 @@ const useAgreementManager = (target, permission, agreementPath) => {
   return {
     currentAgreement,
     currentPolicy,
-    
+
     enterAgreement,
     extendAgreement,
     cancelAgreement,
