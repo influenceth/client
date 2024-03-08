@@ -102,7 +102,6 @@ const Body = styled.div`
   flex: 1;
   overflow-x: hidden;
   overflow-y: auto;
-  margin: 0px 0px 10px;
 `;
 
 const Listings = styled.div`
@@ -120,7 +119,7 @@ const Listing = styled.div`
   padding: 4px;
   position: relative;
   text-align: center;
-  width: 178px;
+  width: 180px;
 
   ${p => p.theme.clipCorner(10)};
 
@@ -241,12 +240,11 @@ const TickerItem = styled.div`
   flex-direction: row;
   font-size: 15px;
   font-weight: bold;
-  padding: 5px 20px 5px 0;
+  padding: 5px 10px 5px 0;
 
   &:before {
-    opacity: 0.6;
-    padding-right: 20px;
-    content: "|";
+    padding-right: 10px;
+    content: "•";
   }
 
   &:hover {
@@ -266,19 +264,8 @@ const TickerItem = styled.div`
 `;
 
 const StyledPagination = styled(Pagination)`
-  display: flex;
-  justify-content: flex-end;
-  bottom: 0px;
-`;
-
-const footerHeight = 70;
-const Footer = styled.div`
-  align-items: center;
-  border-top: 1px solid #333;
-  display: flex;
-  flex-direction: row;
-  height: ${footerHeight}px;
-  justify-content: flex-end;
+  bottom: 15px;
+  position: absolute;
 `;
 
 const greenRGB = hexToRGB(theme.colors.green);
@@ -402,6 +389,7 @@ const MarketplaceHome = ({ asteroid, listings, orderTally, onSelectListing, mark
       )}
 
       <BodyNav style={tickerListings?.length > 0 ? { borderTop: '1px solid #333' } : {}}>
+        <IconPillow><GridIcon /></IconPillow>
         <TextInput
           initialValue={nameFilter}
           onChange={setNameFilter}
@@ -488,13 +476,11 @@ const MarketplaceHome = ({ asteroid, listings, orderTally, onSelectListing, mark
             })}
         </Listings>
       </Body>
-        <Footer>
-          <StyledPagination
-            currentPage={currentPage}
-            rowsPerPage={pageSize}
-            rowCount={filteredCount}
-            onChangePage={(page) => setCurrentPage(page)} />
-        </Footer>
+      <StyledPagination
+          currentPage={currentPage}
+          rowsPerPage={pageSize}
+          rowCount={filteredCount}
+          onChangePage={(page) => setCurrentPage(page)} />
     </>
   );
 };
