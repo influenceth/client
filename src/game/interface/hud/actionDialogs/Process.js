@@ -550,8 +550,10 @@ const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...pro
             open={processSelectorOpen}
           />
 
+          {/* dest can be site, but not source */}
           <InventorySelectionDialog
             asteroidId={asteroid.id}
+            excludeSites
             otherEntity={lot.building}
             isSourcing
             itemIds={inputArr}
