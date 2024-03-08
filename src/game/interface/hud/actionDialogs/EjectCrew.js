@@ -122,7 +122,7 @@ const EjectCrew = ({ asteroid, origin, originLot, stationedCrews, manager, stage
     <>
       <ActionDialogHeader
         action={actionDetails}
-        captain={captain}
+        actionCrew={crew}
         crewAvailableTime={ejectionTime}
         location={{ asteroid, lot: originLot, ship: origin.Ship ? origin : undefined }}
         onClose={props.onClose}

@@ -330,7 +330,7 @@ const FormAgreement = ({
     <>
       <ActionDialogHeader
         action={actionDetails}
-        captain={captain}
+        actionCrew={crew}
         location={location}
         crewAvailableTime={0}
         taskCompleteTime={0}

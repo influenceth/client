@@ -309,7 +309,7 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
           icon: <ExtractionIcon />,
           label: 'Extract Resource',
         }}
-        captain={captain}
+        actionCrew={crew}
         location={{ asteroid, lot }}
         crewAvailableTime={crewTimeRequirement}
         taskCompleteTime={taskTimeRequirement}

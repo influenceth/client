@@ -362,7 +362,7 @@ const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...pro
     <>
       <ActionDialogHeader
         action={headerAction}
-        captain={captain}
+        actionCrew={crew}
         location={{ asteroid, lot }}
         crewAvailableTime={crewTimeRequirement}
         taskCompleteTime={taskTimeRequirement}

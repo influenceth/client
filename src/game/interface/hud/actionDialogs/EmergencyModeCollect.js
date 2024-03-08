@@ -171,7 +171,7 @@ const EmergencyModeCollect = ({ asteroid, lot, manager, ship: maybeShip, stage, 
           label: 'Collect Propellant',
           status: stage === actionStages.NOT_STARTED ? 'Emergency Generation Active' : undefined
         }}
-        captain={captain}
+        actionCrew={crew}
         crewAvailableTime={0}
         location={{ asteroid, lot, ship }}
         onClose={props.onClose}

@@ -215,7 +215,7 @@ const ImproveCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }
           icon: <ImproveCoreSampleIcon />,
           label: 'Optimize Deposit',
         }}
-        captain={captain}
+        actionCrew={crew}
         location={{ asteroid, lot }}
         crewAvailableTime={crewTimeRequirement}
         taskCompleteTime={taskTimeRequirement}

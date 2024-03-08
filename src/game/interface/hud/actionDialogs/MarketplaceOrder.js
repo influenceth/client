@@ -645,7 +645,7 @@ const MarketplaceOrder = ({
     <>
       <ActionDialogHeader
         action={dialogAction}
-        captain={captain}
+        actionCrew={crew}
         location={{ asteroid, lot }}
         crewAvailableTime={crewTimeRequirement}
         taskCompleteTime={taskTimeRequirement}

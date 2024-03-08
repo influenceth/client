@@ -229,7 +229,7 @@ const FeedCrew = ({
           label: 'Resupply Food',
           status: stage === actionStages.NOT_STARTED ? 'Send Items' : undefined,
         }}
-        captain={captain}
+        actionCrew={crew}
         location={{ asteroid, lot: originLot }}
         crewAvailableTime={crewTimeRequirement}
         taskCompleteTime={taskTimeRequirement}

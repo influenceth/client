@@ -115,7 +115,7 @@ const EvictShip = ({ asteroid, lot, manager, stage, ...props }) => {
           label: 'Force Launch Ship',
           status: stage === actionStages.NOT_STARTED ? 'Evict from my Spaceport' : undefined,
         }}
-        captain={captain}
+        actionCrew={crew}
         location={{ asteroid, lot, ship }}
         crewAvailableTime={0}
         taskCompleteTime={0}

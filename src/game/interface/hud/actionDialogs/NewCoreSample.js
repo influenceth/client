@@ -219,7 +219,7 @@ const NewCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }) =>
           icon: <NewCoreSampleIcon />,
           label: 'Prospect',
         }}
-        captain={captain}
+        actionCrew={crew}
         location={{ asteroid, lot }}
         crewAvailableTime={crewTimeRequirement}
         taskCompleteTime={taskTimeRequirement}

@@ -163,7 +163,7 @@ const Construct = ({ asteroid, lot, constructionManager, stage, ...props }) => {
           icon: <ConstructIcon />,
           label: 'Construct Building',
         }}
-        captain={captain}
+        actionCrew={crew}
         location={{ asteroid, lot }}
         crewAvailableTime={crewTimeRequirement}
         taskCompleteTime={taskTimeRequirement}

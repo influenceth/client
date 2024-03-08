@@ -66,7 +66,7 @@ const ControlShip = ({ asteroid, lot, ship, controlManager, stage, ...props }) =
           icon: <BecomeAdminIcon />,
           label: 'Commandeer Ship',
         }}
-        captain={captain}
+        actionCrew={crew}
         location={{ asteroid, lot, ship }}
         onClose={props.onClose}
         overrideColor={stage === actionStage.NOT_STARTED ? theme.colors.main : undefined}

@@ -337,7 +337,7 @@ const SurfaceTransfer = ({
           label: 'Surface Transfer',
           status: actionDetails.status
         }}
-        captain={captain}
+        actionCrew={crew}
         location={{ asteroid, lot: originLot }}
         crewAvailableTime={0}
         onClose={props.onClose}

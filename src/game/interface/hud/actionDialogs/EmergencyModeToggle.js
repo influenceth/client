@@ -163,7 +163,7 @@ const EmergencyModeToggle = ({ asteroid, lot, manager, ship, stage, ...props }) 
     <>
       <ActionDialogHeader
         action={actionDetails}
-        captain={captain}
+        actionCrew={crew}
         crewAvailableTime={0}
         location={{ asteroid, lot, ship }}
         onClose={props.onClose}

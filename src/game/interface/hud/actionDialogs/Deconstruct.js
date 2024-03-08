@@ -84,7 +84,7 @@ const Deconstruct = ({ asteroid, lot, constructionManager, stage, ...props }) =>
           label: 'Deconstruct Building',
           status: stage === actionStage.NOT_STARTED ? 'Confirm' : '',
         }}
-        captain={captain}
+        actionCrew={crew}
         location={{ asteroid, lot }}
         crewAvailableTime={crewTimeRequirement}
         taskCompleteTime={taskTimeRequirement}

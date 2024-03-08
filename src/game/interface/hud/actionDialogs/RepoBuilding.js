@@ -85,7 +85,7 @@ const RepoBuilding = ({ asteroid, lot, actionManager, stage, ...props }) => {
             : undefined,
         }}
         overrideColor={stage === actionStage.NOT_STARTED ? theme.colors.error : undefined}
-        captain={captain}
+        actionCrew={crew}
         location={{ asteroid, lot }}
         crewAvailableTime={crewTimeRequirement}
         taskCompleteTime={taskTimeRequirement}

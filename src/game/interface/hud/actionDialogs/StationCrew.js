@@ -142,7 +142,7 @@ const StationCrew = ({ asteroid, destination: rawDestination, lot, origin: rawOr
     <>
       <ActionDialogHeader
         action={actionDetails}
-        captain={captain}
+        actionCrew={crew}
         crewAvailableTime={crewTimeRequirement}
         taskCompleteTime={taskTimeRequirement}
         location={{

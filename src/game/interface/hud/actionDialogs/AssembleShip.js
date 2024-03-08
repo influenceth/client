@@ -273,7 +273,7 @@ const AssembleShip = ({ asteroid, lot, dryDockManager, stage, ...props }) => {
           icon: <ConstructShipIcon />,
           label: 'Assemble Ship',
         }}
-        captain={captain}
+        actionCrew={crew}
         location={{ asteroid, lot }}
         crewAvailableTime={crewTimeRequirement}
         taskCompleteTime={taskTimeRequirement}

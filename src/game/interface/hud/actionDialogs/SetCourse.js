@@ -345,7 +345,7 @@ const SetCourse = ({ origin, destination, manager, ship, stage, travelSolution, 
           label: 'Set Course',
           status: stage === actionStages.NOT_STARTED ? 'Travel to Asteroid' : undefined,
         }}
-        captain={captain}
+        actionCrew={crew}
         location={{ asteroid: origin, ship }}
         crewAvailableTime={crewTimeRequirement}
         taskCompleteTime={taskTimeRequirement}

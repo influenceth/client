@@ -172,7 +172,7 @@ const LandShip = ({ asteroid, manager, ship, stage, ...props }) => {
           label: 'Land Ship',
           status: stage === actionStages.NOT_STARTED ? 'Return from Orbit' : undefined,
         }}
-        captain={captain}
+        actionCrew={crew}
         location={{ asteroid, lot: destinationLot, ship }}
         crewAvailableTime={crewTimeRequirement}
         taskCompleteTime={taskTimeRequirement}

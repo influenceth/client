@@ -65,7 +65,7 @@ const ControlAsteroid = ({ asteroid, controlManager, stage, ...props }) => {
           icon: <BecomeAdminIcon />,
           label: 'Become Administrator',
         }}
-        captain={captain}
+        actionCrew={crew}
         location={{ asteroid }}
         onClose={props.onClose}
         overrideColor={stage === actionStage.NOT_STARTED ? theme.colors.main : undefined}

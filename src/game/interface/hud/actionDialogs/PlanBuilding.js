@@ -106,7 +106,7 @@ const PlanBuilding = ({ asteroid, lot, constructionManager, stage, ...props }) =
           icon: <PlanBuildingIcon />,
           label: 'Create Building Site',
         }}
-        captain={captain}
+        actionCrew={crew}
         location={{ asteroid, lot }}
         crewAvailableTime={crewTimeRequirement}
         taskCompleteTime={taskTimeRequirement}

@@ -165,7 +165,7 @@ const LaunchShip = ({ asteroid, originLot, manager, ship, shipCrews, stage, ...p
           label: `${isForceLaunch ? 'Force ' : ''}Launch Ship`,
           status: stage === actionStages.NOT_STARTED ? 'Send to Orbit' : undefined,
         }}
-        captain={captain}
+        actionCrew={crew}
         location={{ asteroid, lot: originLot, ship }}
         crewAvailableTime={crewTimeRequirement}
         taskCompleteTime={taskTimeRequirement}

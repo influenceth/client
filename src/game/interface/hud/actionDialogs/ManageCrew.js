@@ -366,7 +366,7 @@ const ManageCrew = ({ altCrews, crew, isForeignCrew, manager, stage, ...props })
           label: exchangeCrewId === 0 ? 'Form New Crew' : 'Manage Crew',
           status: stage === actionStages.NOT_STARTED ? 'Arrange Crewmates' : undefined,
         }}
-        captain={crew?._crewmates[0]}
+        actionCrew={crew}
         location={hydratedLocation}
         crewAvailableTime={0}
         taskCompleteTime={0}

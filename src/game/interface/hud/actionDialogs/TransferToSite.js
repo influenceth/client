@@ -213,7 +213,7 @@ const TransferToSite = ({ asteroid, lot: destinationLot, deliveryManager, stage,
           icon: <TransferToSiteIcon />,
           label: 'Transfer to Site',
         }}
-        captain={captain}
+        actionCrew={crew}
         location={{ asteroid, lot: destinationLot }}
         crewAvailableTime={crewTimeRequirement}
         taskCompleteTime={taskTimeRequirement}
