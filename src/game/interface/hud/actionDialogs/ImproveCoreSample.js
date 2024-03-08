@@ -32,11 +32,12 @@ import {
 } from './components';
 import { ActionDialogInner, theming, useAsteroidAndLot } from '../ActionDialog';
 import useEntity from '~/hooks/useEntity';
+import useActionCrew from '~/hooks/useActionCrew';
 
 // TODO: combine this ui with "NewCoreSample" dialog if possible
 const ImproveCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }) => {
   const { currentSamplingAction, startImproving, finishSampling, samplingStatus } = coreSampleManager;
-  const { crew, crewmateMap } = useCrewContext();
+  const crew = useActionCrew(currentSamplingAction);
   const { data: originEntity } = useEntity(currentSamplingAction?.origin ? { ...currentSamplingAction.origin } : props.preselect?.origin);
 
   const dispatchResourceMapSelect = useStore(s => s.dispatchResourceMapSelect);
@@ -104,9 +105,6 @@ const ImproveCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }
       dispatchResourceMapSelect(resourceId);
     }
   }, [resourceId, resourceMap]);
-
-  const crewmates = currentSamplingAction?._crewmates || ((crew?._crewmates || []).map((i) => crewmateMap[i]));
-  const captain = crewmates[0];
 
   const [crewTravelBonus, sampleQualityBonus, sampleTimeBonus] = useMemo(() => {
     const bonusIds = [Crewmate.ABILITY_IDS.HOPPER_TRANSPORT_TIME, Crewmate.ABILITY_IDS.CORE_SAMPLE_QUALITY, Crewmate.ABILITY_IDS.CORE_SAMPLE_TIME];

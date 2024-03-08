@@ -38,7 +38,7 @@ const MouseoverWarning = styled.span`
 
 const PlanBuilding = ({ asteroid, lot, constructionManager, stage, ...props }) => {
   const { currentConstructionAction, planConstruction } = constructionManager;
-  const { captain, crew } = useCrewContext();
+  const { crew } = useCrewContext();
 
   const [buildingType, setBuildingType] = useState();
 

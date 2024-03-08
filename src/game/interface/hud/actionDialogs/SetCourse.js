@@ -40,6 +40,7 @@ import ClockContext, { DISPLAY_TIME_FRACTION_DIGITS } from '~/contexts/ClockCont
 import formatters from '~/lib/formatters';
 import useShipTravelManager from '~/hooks/actionManagers/useShipTravelManager';
 import useShip from '~/hooks/useShip';
+import useActionCrew from '~/hooks/useActionCrew';
 
 const Banner = styled.div`
   align-items: center;
@@ -207,12 +208,9 @@ const SetCourse = ({ origin, destination, manager, ship, stage, travelSolution, 
   const dispatchTravelMode = useStore(s => s.dispatchTravelMode);
 
   const { currentTravelAction, depart, arrive, travelStatus } = manager;
-  const { crew } = useCrewContext();
+  const crew = useActionCrew(currentTravelAction);
 
   const [tab, setTab] = useState(0);
-
-  const crewmates = currentTravelAction?._crewmates || crew?._crewmates || [];
-  const captain = crewmates[0];
 
   const propellantBonus = useMemo(() => getCrewAbilityBonuses(Crewmate.ABILITY_IDS.PROPELLANT_EXHAUST_VELOCITY, crew), [crew]);
 
@@ -460,7 +458,7 @@ const SetCourse = ({ origin, destination, manager, ship, stage, travelSolution, 
 
         {tab === 1 && (
           <ShipTab
-            pilotCrew={{ ...crew, roster: crewmates }}
+            pilotCrew={crew}
             inventoryBonuses={crew?._inventoryBonuses}
             deltas={{
               propellantMass: -travelSolution.usedPropellantMass,

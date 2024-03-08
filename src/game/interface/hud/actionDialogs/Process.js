@@ -40,6 +40,7 @@ import IconButton from '~/components/IconButton';
 import useProcessManager from '~/hooks/actionManagers/useProcessManager';
 import useEntity from '~/hooks/useEntity';
 import formatters from '~/lib/formatters';
+import useActionCrew from '~/hooks/useActionCrew';
 
 const SECTION_WIDTH = 1150;
 
@@ -70,15 +71,13 @@ const RightIconWrapper = styled.div``;
 const noop = () => {};
 
 const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...props }) => {
-  const createAlert = useStore(s => s.dispatchAlertLogged);
-
   const { currentProcess, processStatus, startProcess, finishProcess } = processManager;
   const processor = useMemo(
     () => (lot.building?.Processors || []).find((e) => e.slot === processorSlot) || {},
     [lot.building, processorSlot]
   );
-
-  const { crew, crewCan } = useCrewContext();
+  const crew = useActionCrew(currentProcess);
+  const { crewCan } = useCrewContext();
 
   const [selectedOrigin, setSelectedOrigin] = useState(currentProcess ? { ...currentProcess?.origin, slot: currentProcess?.originSlot } : undefined);
   const { data: origin } = useEntity(selectedOrigin);
@@ -134,9 +133,6 @@ const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...pro
     setPrimaryOutput(Number(Object.keys(process.outputs)[0]));
     setAmount(maxAmount);
   }, [currentProcess, maxAmount, process]);
-
-  const crewmates = currentProcess?._crewmates || crew?._crewmates || [];
-  const captain = crewmates[0];
 
   const [crewTravelBonus, processingTimeBonus] = useMemo(() => {
     const bonusIds = [Crewmate.ABILITY_IDS.HOPPER_TRANSPORT_TIME];

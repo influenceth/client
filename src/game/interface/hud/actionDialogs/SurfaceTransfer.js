@@ -41,6 +41,7 @@ import theme from '~/theme';
 import CrewIndicator from '~/components/CrewIndicator';
 import useEntity from '~/hooks/useEntity';
 import formatters from '~/lib/formatters';
+import useActionCrew from '~/hooks/useActionCrew';
 
 const P2PSection = styled.div`
   align-self: flex-start;
@@ -71,10 +72,8 @@ const SurfaceTransfer = ({
 
   const { startDelivery, finishDelivery, packageDelivery, acceptDelivery, cancelDelivery } = deliveryManager;
   const currentDelivery = useMemo(() => currentDeliveryAction?.action, [currentDeliveryAction]);
-  const { crew, crewCan } = useCrewContext();
-
-  const crewmates = (crew?._crewmates || []);
-  const captain = crewmates[0];
+  const crew = useActionCrew(currentDelivery);
+  const { crewCan } = useCrewContext();
 
   const crewTravelBonus = useMemo(() => {
     if (!crew) return {};

@@ -29,8 +29,6 @@ const Deconstruct = ({ asteroid, lot, constructionManager, stage, ...props }) =>
   const { crew } = useCrewContext();
   const { deconstruct } = constructionManager;
 
-  const captain = crew?._crewmates?.[0];
-
   const crewTravelBonus = useMemo(() => getCrewAbilityBonuses(Crewmate.ABILITY_IDS.HOPPER_TRANSPORT_TIME, crew), [crew]);
 
   const { totalTime: crewTravelTime, tripDetails } = useMemo(() => {

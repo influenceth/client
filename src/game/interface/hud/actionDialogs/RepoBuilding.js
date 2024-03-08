@@ -59,7 +59,7 @@ const MouseoverWarning = styled.span`
 
 const RepoBuilding = ({ asteroid, lot, actionManager, stage, ...props }) => {
   const { repoBuilding, takeoverType } = actionManager;
-  const { captain, crew } = useCrewContext();
+  const { crew } = useCrewContext();
   const { data: delinquentController } = useCrew(lot?.building?.Control?.controller?.id);
 
   const [crewTimeRequirement, taskTimeRequirement] = useMemo(() => ([0, 0]), []);

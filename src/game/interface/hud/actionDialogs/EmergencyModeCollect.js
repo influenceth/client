@@ -60,8 +60,6 @@ const EmergencyModeCollect = ({ asteroid, lot, manager, ship: maybeShip, stage, 
   const { collectEmergencyPropellant, actionStage } = manager;
 
   const { crew } = useCrewContext();
-  const crewmates = crew?._crewmates || [];
-  const captain = crewmates[0];
 
   const resourceId = Product.IDS.HYDROGEN_PROPELLANT;
 

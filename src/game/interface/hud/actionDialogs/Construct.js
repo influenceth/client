@@ -56,8 +56,7 @@ const Construct = ({ asteroid, lot, constructionManager, stage, ...props }) => {
   const { currentConstructionAction, constructionStatus, startConstruction, finishConstruction, isAtRisk } = constructionManager;
   const { currentDeliveryActions } = useDeliveryManager({ destination: lot.building });
   
-  const crew = useActionCrew(constructionManager.currentConstructionAction);
-  const captain = crew?._crewmates?.[0];
+  const crew = useActionCrew(currentConstructionAction);
 
   const [crewTravelBonus, constructionBonus] = useMemo(() => {
     const bonusIds = [Crewmate.ABILITY_IDS.HOPPER_TRANSPORT_TIME, Crewmate.ABILITY_IDS.CONSTRUCTION_TIME];

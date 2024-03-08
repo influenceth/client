@@ -27,7 +27,7 @@ const useCoreSampleManager = (lotId) => {
   // READY > SAMPLING > READY_TO_FINISH > FINISHING
   const [currentSamplingAction, samplingStatus, actionStage] = useMemo(() => {
     let current = {
-      _crewmates: null,
+      _cachedData: null,
       finishTime: null,
       isNew: null,
       origin: null,
@@ -50,7 +50,7 @@ const useCoreSampleManager = (lotId) => {
         && item.event.returnValues.deposit.id === activeSample.id
       ));
       if (actionItem) {
-        // current._crewmates = actionItem.assets.crew.crewmates;  // TODO: ...
+        current._cachedData = actionItem.data;
         current.origin = actionItem.event.returnValues.origin;
         current.originSlot = actionItem.event.returnValues.originSlot;
         current.startTime = actionItem.event.timestamp;

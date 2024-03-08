@@ -44,9 +44,6 @@ const EvictShip = ({ asteroid, lot, manager, stage, ...props }) => {
   const [tab, setTab] = useState(0);
   const ship = Ship.TYPES[1];  // TODO
 
-  const crewmates = currentLaunch?._crewmates || (crew?._crewmates || []).map((i) => crewmateMap[i]);
-  const captain = crewmates?.[0];
-
   const stats = useMemo(() => ([
     {
       label: 'Propellant Used',
@@ -195,7 +192,7 @@ const EvictShip = ({ asteroid, lot, manager, stage, ...props }) => {
         {tab === 1 && (
           <>
             <ShipTab
-              pilotCrew={{ ...crew, roster: crewmates }}
+              pilotCrew={crew}
               inventoryBonuses={crew?._inventoryBonuses}
               ship={ship}
               stage={stage} />

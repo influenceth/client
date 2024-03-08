@@ -56,9 +56,6 @@ const EmergencyModeToggle = ({ asteroid, lot, manager, ship, stage, ...props }) 
   const { data: shipCrews } = useStationedCrews(ship);
   const shipPassengerCrews = useMemo(() => (shipCrews || []).filter((c) => c.id !== crew?.id), [shipCrews]);
 
-  const crewmates = crew?._crewmates || [];
-  const captain = crewmates[0];
-
   const inEmergencyMode = useMemo(() => {
     if (manager.isActivating) return false;
     if (manager.isDeactivating) return true;
@@ -173,7 +170,7 @@ const EmergencyModeToggle = ({ asteroid, lot, manager, ship, stage, ...props }) 
 
       <ActionDialogBody>
         <ShipTab
-          pilotCrew={{ ...crew, roster: crewmates }}
+          pilotCrew={crew}
           inventoryBonuses={crew?._inventoryBonuses}
           deltas={inEmergencyMode
             ? {

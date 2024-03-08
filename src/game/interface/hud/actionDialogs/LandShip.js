@@ -48,9 +48,6 @@ const LandShip = ({ asteroid, manager, ship, stage, ...props }) => {
   const [powered, setPowered] = useState(true);
   const [tab, setTab] = useState(0);
 
-  const crewmates = currentDockingAction?._crewmates || crew?._crewmates || [];
-  const captain = crewmates[0];
-
   const [selectedDestinationIndex, setSelectedDestinationIndex] = useState(
     props.preselect?.destinationLotId ? Lot.toIndex(props.preselect?.destinationLotId) : undefined
   );
@@ -249,7 +246,7 @@ const LandShip = ({ asteroid, manager, ship, stage, ...props }) => {
 
         {tab === 1 && (
           <ShipTab
-            pilotCrew={{ ...crew, roster: crewmates }}
+            pilotCrew={crew}
             inventoryBonuses={crew?._inventoryBonuses}
             deltas={{
               propellantMass: powered ? -propellantRequirement : 0,

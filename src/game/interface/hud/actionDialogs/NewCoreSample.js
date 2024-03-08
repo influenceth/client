@@ -33,10 +33,11 @@ import {
 } from './components';
 import { ActionDialogInner, theming, useAsteroidAndLot } from '../ActionDialog';
 import useEntity from '~/hooks/useEntity';
+import useActionCrew from '~/hooks/useActionCrew';
 
 const NewCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }) => {
   const { currentSamplingAction, startSampling, finishSampling, samplingStatus } = coreSampleManager;
-  const { crew, crewmateMap } = useCrewContext();
+  const crew = useActionCrew(currentSamplingAction);
   const { data: originEntity } = useEntity(currentSamplingAction?.origin ? { ...currentSamplingAction.origin } : props.preselect?.origin);
 
   const dispatchResourceMapSelect = useStore(s => s.dispatchResourceMapSelect);
@@ -81,7 +82,7 @@ const NewCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }) =>
 
   const [sample, initialYieldTonnage]  = useMemo(() => {
     if (lot?.deposits && resourceId && sampleId) {
-      const thisSample = lot.deposits.find((s) => s.id === sampleId && s.Deposit.resource === resourceId);
+      const thisSample = lot.deposits.find((s) => s.id === sampleId);
       if (thisSample) {
         const initialYieldTonnage = thisSample.Deposit.initialYield
           ? thisSample.Deposit.initialYield * Product.TYPES[resourceId].massPerUnit
@@ -108,9 +109,6 @@ const NewCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }) =>
   }, [asteroid, lot]);
 
   const lotAbundance = resourceId ? lotAbundances[resourceId] : 0;
-
-  const crewmates = currentSamplingAction?._crewmates || crew?._crewmates || [];
-  const captain = crewmates[0];
 
   const [crewTravelBonus, sampleQualityBonus, sampleTimeBonus] = useMemo(() => {
     const bonusIds = [Crewmate.ABILITY_IDS.HOPPER_TRANSPORT_TIME, Crewmate.ABILITY_IDS.CORE_SAMPLE_QUALITY, Crewmate.ABILITY_IDS.CORE_SAMPLE_TIME];

@@ -150,8 +150,6 @@ const FormAgreement = ({
   const { crew } = useCrewContext();
   const { data: swayBalance } = useSwayBalance();
 
-  const crewmates = crew?._crewmates;
-  const captain = crewmates?.[0];
   const location = useHydratedLocation(locationsArrToObj(entity?.Location?.locations || []));
 
   const { data: controller } = useCrew((entity?.label === Entity.IDS.LOT ? asteroid : entity)?.Control?.controller?.id);

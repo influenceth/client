@@ -27,7 +27,7 @@ const useDryDockManager = (lotId, slot = 1) => {
   // READY > ASSEMBLING > READY_TO_FINISH > FINISHING
   const [currentAssembly, assemblyStatus, actionStage] = useMemo(() => {
     let current = {
-      _crewmates: null,
+      _cachedData: null,
       finishTime: null,
       origin: null,
       originSlot: null,
@@ -45,7 +45,7 @@ const useDryDockManager = (lotId, slot = 1) => {
         && item.event.returnValues.dryDockSlot === slot
       ));
       if (actionItem) {
-        // current._crewmates = actionItem.assets.crew.crewmates; // TODO: ...
+        current._cachedData = actionItem.data;
         current.origin = actionItem.event.returnValues.origin;
         current.originSlot = actionItem.event.returnValues.originSlot;
         current.shipType = actionItem.event.returnValues.shipType;

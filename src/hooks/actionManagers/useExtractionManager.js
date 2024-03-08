@@ -28,7 +28,7 @@ const useExtractionManager = (lotId, slot = 1) => {
   // READY > EXTRACTING > READY_TO_FINISH > FINISHING
   const [currentExtraction, extractionStatus, actionStage] = useMemo(() => {
     let current = {
-      _crewmates: null,
+      _cachedData: null,
       finishTime: null,
       destination: null,
       destinationSlot: null,
@@ -50,7 +50,7 @@ const useExtractionManager = (lotId, slot = 1) => {
         && item.event.returnValues.extractorSlot === slot
       ));
       if (actionItem) {
-        // current._crewmates = actionItem.assets.crew.crewmates; // TODO: ...
+        current._cachedData = actionItem.data;
         current.depositId = actionItem.event.returnValues.deposit.id;
         current.startTime = actionItem.event.timestamp;
       }

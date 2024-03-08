@@ -582,24 +582,6 @@ const api = {
   getEntities,
   getEntityById,
 
-  // getLot: async (lotId) => {
-  //   const lotEntity = { id: lotId, label: Entity.IDS.LOT };
-
-  //   const entity = (await getEntityById(lotEntity)) || lotEntity;
-
-  //   const entities = await getEntities({
-  //     match: { 'Location.locations': lotEntity },
-  //     components: [ 'Building', 'Control', 'Deposit', 'Inventory', 'Location' ]
-  //   });
-
-  //   // NOTE: if add to these entity types, need to update useLot hook
-  //   entity.building = entities.find(e => e.label === Entity.IDS.BUILDING);
-  //   entity.ship = entities.find(e => e.label === Entity.IDS.SHIP);  // TODO: should this be an array?
-  //   entity.deposits = entities.filter(e => e.label === Entity.IDS.DEPOSIT);
-
-  //   return entity;
-  // },
-
   getNameUse: async (label, name) => {
     return getEntities({ match: { 'Name.name': name }, label, components: [] });
   },
