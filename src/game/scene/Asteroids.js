@@ -6,9 +6,11 @@ import { useThree } from '@react-three/fiber';
 import { Html, useTexture } from '@react-three/drei';
 import gsap from 'gsap';
 import { cloneDeep } from 'lodash';
+import { Entity } from '@influenceth/sdk';
 
-import { CaptainIcon, FlagMarkerIcon, MyAssetIcon, ShipMarkerIcon } from '~/components/Icons';
+import { CaptainIcon, MyAssetIcon, ShipMarkerIcon } from '~/components/Icons';
 import ClockContext from '~/contexts/ClockContext';
+import useCrewContext from '~/hooks/useCrewContext';
 import useAsteroid from '~/hooks/useAsteroid';
 import useAssetSearch from '~/hooks/useAssetSearch';
 import useControlledAsteroids from '~/hooks/useControlledAsteroids';
@@ -87,6 +89,7 @@ const Asteroids = () => {
 
   const { processInBackground } = useWebWorker();
 
+  const { crew } = useCrewContext();
   const { data: asteroidSearch } = useAssetSearch('asteroidsMapped');
   const { data: origin } = useAsteroid(originId);
   const { data: destination } = useAsteroid(destinationId);
@@ -117,9 +120,27 @@ const Asteroids = () => {
       if (!asseted[a.id]) asseted[a.id] = { asteroid: a };
       asseted[a.id].owned = true;
     });
-    // TODO: ecs-refactor -- fill in crew and ships tally on each asteroid where located
+
+    if (crew?._location.asteroidId) {
+      const crewAsteroidId = crew._location.asteroidId;
+      const inList = asteroids.find((a) => a.id === crewAsteroidId);
+      if (!asseted[crewAsteroidId] && inList) asseted[crewAsteroidId] = { asteroid: inList };
+      if (asseted[crewAsteroidId]) asseted[crewAsteroidId].crew = crew;
+    }
+
+    (ownedShips || []).forEach((s) => {
+      const shipAsteroidId = s.Location?.locations?.find((l) => l.label === Entity.IDS.ASTEROID)?.id;
+
+      if (shipAsteroidId && !asseted[shipAsteroidId]) {
+        const inList = asteroids.find((a) => a.id === shipAsteroidId);
+        if (inList) asseted[s._location.asteroidId] = { asteroid: inList };
+      }
+
+      if (shipAsteroidId && asseted[shipAsteroidId]) asseted[shipAsteroidId].ships = true;
+    });
+
     return asseted;
-  }, [asteroids, controlledAsteroids, ownedShips]);
+  }, [asteroids, controlledAsteroids, crew, ownedShips]);
 
   // Update state when asteroids from server, origin, or destination change
   const isZoomedIn = zoomStatus === 'in';
@@ -498,9 +519,7 @@ const Asteroids = () => {
                       {assetedAsteroids[a.id] && (
                         <span>
                           {assetedAsteroids[a.id]?.owned && <MyAssetIcon />}
-                          {assetedAsteroids[a.id]?.ships > 0 && <ShipMarkerIcon />}
-                          {assetedAsteroids[a.id]?.ships > 1 && <ShipMarkerIcon />}
-                          {!assetedAsteroids[a.id]?.owned && <FlagMarkerIcon />}
+                          {assetedAsteroids[a.id]?.ships && <ShipMarkerIcon />}
                         </span>
                       )}
                       {name && (
