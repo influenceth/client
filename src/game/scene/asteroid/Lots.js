@@ -1,16 +1,22 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import {
+  BufferAttribute,
+  BufferGeometry,
   CircleGeometry,
   Color,
+  CubicBezierCurve3,
   FrontSide,
   InstancedMesh,
+  Line,
   Mesh,
   MeshBasicMaterial,
   Object3D,
   PlaneGeometry,
   RingGeometry,
+  ShaderMaterial,
   TextureLoader,
+  QuadraticBezierCurve3,
   Vector2,
   Vector3
 } from 'three';
@@ -23,9 +29,14 @@ import useStore from '~/hooks/useStore';
 import useWebsocket from '~/hooks/useWebsocket';
 import useWebWorker from '~/hooks/useWebWorker';
 import useMappedAsteroidLots from '~/hooks/useMappedAsteroidLots';
+import useDeliveries from '~/hooks/useDeliveries';
+import useLot from '~/hooks/useLot';
 import constants from '~/lib/constants';
 import { getLotGeometryHeightMaps, getLotGeometryHeightMapResolution } from './helpers/LotGeometry';
 import useConstants from '~/hooks/useConstants';
+
+import frag from './shaders/delivery.frag';
+import vert from './shaders/delivery.vert';
 
 const { MAX_LOTS_RENDERED } = constants;
 
@@ -81,6 +92,9 @@ const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, co
   const dispatchSearchResults = useStore(s => s.dispatchLotsMappedSearchResults);
 
   const selectedLotIndex = useMemo(() => Lot.toIndex(lotId), [lotId]);
+  const { data: lotDetails } = useLot(lotId);
+  const { data: outboundDeliveries } = useDeliveries({ origin: lotDetails?.building, status: 2 });
+  const { data: inboundDeliveries } = useDeliveries({ destination: lotDetails?.building, status: 2 });
 
   const [positionsReady, setPositionsReady] = useState(false);
   const [regionsByDistance, setRegionsByDistance] = useState([]);
@@ -104,6 +118,13 @@ const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, co
   const mouseHoverMesh = useRef();
   const selectionMesh = useRef();
   const lotsInitialized = useRef();
+  const deliveryArcs = useRef();
+  const deliveryUniforms = useRef({
+    uTime: { value: 0 },
+    uAlpha: { value: 1.0 },
+    uCount: { value: 51 },
+    uCol: { type: 'c', value: new Color('#20bde5').convertSRGBToLinear() },
+  });
 
   const lastMouseUpdatePosition = useRef(new Vector2());
   const lastMouseUpdateTime = useRef(0);
@@ -780,6 +801,90 @@ const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, co
     }
   }, [attachTo.quaternion, selectedLotIndex]);
 
+  // Calculates the control point for the delivery bezier curve
+  const calculateControlPoint = useCallback((origin, dest, dist = 0.5) => {
+    const ratio = 1 + Math.pow(origin.distanceTo(dest) / config.radius, 2);
+    return origin.clone().lerp(dest, dist).multiplyScalar(Math.min(ratio, 3.5));
+  }, [config]);
+
+  // Handle turning on and off delivery arcs when a lot is selected
+  useEffect(() => {
+    deliveryArcs.current?.forEach((arc) => (attachTo || scene).remove(arc));
+    deliveryArcs.current = [];
+
+    const newDeliveries = [];
+    const material = new ShaderMaterial({
+      uniforms: deliveryUniforms.current,
+      fragmentShader: frag,
+      vertexShader: vert,
+      transparent: true,
+      depthWrite: false
+    });
+
+    if (outboundDeliveries && positions.current && positionsReady) {
+      const originZeroIndex = selectedLotIndex - 1;
+      const origin = new Vector3(
+        positions.current[originZeroIndex * 3 + 0],
+        positions.current[originZeroIndex * 3 + 1],
+        positions.current[originZeroIndex * 3 + 2]
+      );
+
+      outboundDeliveries.forEach((delivery) => {
+        const maybeLot = delivery.Delivery?.dest?.Location?.location;
+        const destZeroIndex = (maybeLot?.label === Entity.IDS.LOT) ? Lot.toIndex(maybeLot.id) - 1 : null;
+        if (!destZeroIndex) return;
+
+        const destination = new Vector3(
+          positions.current[destZeroIndex * 3 + 0],
+          positions.current[destZeroIndex * 3 + 1],
+          positions.current[destZeroIndex * 3 + 2]
+        );
+
+        newDeliveries.push({ origin, destination });
+      });
+    }
+
+    if (inboundDeliveries && positions.current && positionsReady) {
+      const destZeroIndex = selectedLotIndex - 1;
+      const destination = new Vector3(
+        positions.current[destZeroIndex * 3 + 0],
+        positions.current[destZeroIndex * 3 + 1],
+        positions.current[destZeroIndex * 3 + 2]
+      );
+
+      inboundDeliveries.forEach((delivery) => {
+        const maybeLot = delivery.Delivery?.origin?.Location?.location;
+        const originZeroIndex = (maybeLot?.label === Entity.IDS.LOT) ? Lot.toIndex(maybeLot.id) - 1 : null;
+        if (!originZeroIndex) return;
+
+        const origin = new Vector3(
+          positions.current[originZeroIndex * 3 + 0],
+          positions.current[originZeroIndex * 3 + 1],
+          positions.current[originZeroIndex * 3 + 2]
+        );
+
+        newDeliveries.push({ origin, destination });
+      });
+    }
+
+    newDeliveries.forEach(({ origin, destination }) => {
+      const curve = new CubicBezierCurve3(
+        origin,
+        calculateControlPoint(origin, destination, 1/3),
+        calculateControlPoint(origin, destination, 2/3),
+        destination
+      );
+
+      const geometry = new BufferGeometry().setFromPoints(curve.getPoints(50));
+      const order = new Float32Array(Array(51).fill().map((_, i) => i+1));
+      geometry.setAttribute('order', new BufferAttribute(order, 1));
+
+      const curveGeom = new Line(geometry, material);
+      (attachTo || scene).add(curveGeom);
+      deliveryArcs.current.push(curveGeom);
+    });
+  }, [selectedLotIndex, inboundDeliveries, outboundDeliveries]);
+
   const selectionAnimationTime = useRef(0);
   useEffect(() => {
     if (selectionMesh.current && positions.current && positionsReady && selectedLotIndex) {
@@ -847,6 +952,12 @@ const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, co
     if (selectionMesh.current && positions.current && selectedLotIndex) {
       selectionMesh.current.scale.x = 1 + 0.1 * Math.sin(7.5 * selectionAnimationTime.current);
       selectionMesh.current.scale.y = selectionMesh.current.scale.x;
+    }
+
+    // If delivery arcs present, animate them
+    if (deliveryArcs.current && deliveryArcs.current.length) {
+      const time = deliveryUniforms.current.uTime.value;
+      deliveryUniforms.current.uTime.value = time + 1;
     }
 
     // MOUSE STUFF
