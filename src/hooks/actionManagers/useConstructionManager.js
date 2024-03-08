@@ -36,6 +36,7 @@ const useConstructionManager = (lotId) => {
   const [currentConstructionAction, constructionStatus, isAtRisk, stageByActivity] = useMemo(() => {
     let current = {
       _cachedData: null,
+      _isMyAction: true,
       buildingId: null,
       buildingType: null,
       finishTime: null,
@@ -62,6 +63,8 @@ const useConstructionManager = (lotId) => {
       if (actionItem) {
         current._cachedData = actionItem.data;
         current.startTime = actionItem.event.timestamp;
+      } else {
+        current._isMyAction = false;
       }
 
       current.buildingId = lot.building.id;

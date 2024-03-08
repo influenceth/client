@@ -28,6 +28,7 @@ const useDryDockManager = (lotId, slot = 1) => {
   const [currentAssembly, assemblyStatus, actionStage] = useMemo(() => {
     let current = {
       _cachedData: null,
+      _isMyAction: true,
       finishTime: null,
       origin: null,
       originSlot: null,
@@ -50,6 +51,8 @@ const useDryDockManager = (lotId, slot = 1) => {
         current.originSlot = actionItem.event.returnValues.originSlot;
         current.shipType = actionItem.event.returnValues.shipType;
         current.startTime = actionItem.event.timestamp;
+      } else {
+        current._isMyAction = false;
       }
       current.shipId = slotDryDock?.outputShip.id;
       current.finishTime = slotDryDock?.finishTime;

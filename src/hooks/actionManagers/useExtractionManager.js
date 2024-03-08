@@ -29,6 +29,7 @@ const useExtractionManager = (lotId, slot = 1) => {
   const [currentExtraction, extractionStatus, actionStage] = useMemo(() => {
     let current = {
       _cachedData: null,
+      _isMyAction: true,
       finishTime: null,
       destination: null,
       destinationSlot: null,
@@ -53,6 +54,8 @@ const useExtractionManager = (lotId, slot = 1) => {
         current._cachedData = actionItem.data;
         current.depositId = actionItem.event.returnValues.deposit.id;
         current.startTime = actionItem.event.timestamp;
+      } else {
+        current._isMyAction = false;
       }
       current.destination = slotExtractor?.destination;
       current.destinationSlot = slotExtractor?.destinationSlot;

@@ -51,6 +51,7 @@ const useDeliveryManager = ({ destination, destinationSlot, origin, originSlot, 
     const allDeliveries = active.map((delivery) => {
       let current = {
         _cachedData: null,
+        _isMyAction: true,
         _originLot: null,
         caller: null,
         deliveryId: null,
@@ -86,6 +87,8 @@ const useDeliveryManager = ({ destination, destinationSlot, origin, originSlot, 
             current.price = actionItem.event.returnValues.price;
             current.startTime = actionItem.event.timestamp;
             current.isProposal = true;
+          } else {
+            current._isMyAction = false;
           }
         }
         current.deliveryId = delivery.id;

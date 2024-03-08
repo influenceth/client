@@ -17,7 +17,7 @@ const isVisible = ({ building, crew }) => {
 };
 
 const AssembleShip = ({ asteroid, crew, lot, onSetAction, _disabled }) => {
-  const { assemblyStatus } = useDryDockManager(lot?.id);
+  const { assemblyStatus, currentAssembly } = useDryDockManager(lot?.id);
   const handleClick = useCallback(() => {
     onSetAction('ASSEMBLE_SHIP');
   }, [onSetAction]);
@@ -26,8 +26,10 @@ const AssembleShip = ({ asteroid, crew, lot, onSetAction, _disabled }) => {
     if (_disabled) return 'loading...';
     if (assemblyStatus === 'READY') {
       return getCrewDisabledReason({ asteroid, crew, permission: Permission.IDS.ASSEMBLE_SHIP, permissionTarget: lot?.building });
+    } else if (!currentAssembly?._isMyAction) {
+      return 'in use';
     }
-  }, [_disabled, assemblyStatus, asteroid, crew, lot?.building]);
+  }, [_disabled, assemblyStatus, asteroid, crew, currentAssembly, lot?.building]);
 
   return (
     <ActionButton
@@ -35,7 +37,7 @@ const AssembleShip = ({ asteroid, crew, lot, onSetAction, _disabled }) => {
       labelAddendum={disabledReason}
       flags={{
         disabled: _disabled || disabledReason,
-        attention: assemblyStatus === 'READY_TO_FINISH',
+        attention: !_disabled && assemblyStatus === 'READY_TO_FINISH',
         loading: assemblyStatus === 'ASSEMBLING' || assemblyStatus === 'FINISHING'
       }}
       icon={<ShipIcon />}

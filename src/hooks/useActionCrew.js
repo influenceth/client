@@ -5,7 +5,8 @@ import useCrewContext from '~/hooks/useCrewContext';
 import useEntity from '~/hooks/useEntity';
 import { getCrewAbilityBonuses, locationsArrToObj } from '~/lib/utils';
 
-const useActionCrew = ({ _cachedData, startTime } = {}) => {
+const useActionCrew = (currentAction) => {
+  const { _cachedData, startTime } = currentAction || {};
   const { crew: liveCrew } = useCrewContext();
   
   // NOTE: if station location was allowed to change mid-action, this could be problematic

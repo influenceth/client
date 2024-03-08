@@ -4,7 +4,6 @@ import { Deposit, Permission } from '@influenceth/sdk';
 import { ExtractionIcon } from '~/components/Icons';
 import useExtractionManager from '~/hooks/actionManagers/useExtractionManager';
 import ActionButton, { getCrewDisabledReason } from './ActionButton';
-import useCrewContext from '~/hooks/useCrewContext';
 
 const labelDict = {
   READY: 'Extract Resource',
@@ -20,7 +19,7 @@ const isVisible = ({ building, crew }) => {
 
 // TODO: for multiple extractors, need one of these (and an extraction manager) per extractor
 const Extract = ({ onSetAction, asteroid, crew, lot, preselect, _disabled }) => {
-  const { extractionStatus } = useExtractionManager(lot?.id);
+  const { currentExtraction, extractionStatus } = useExtractionManager(lot?.id);
   const handleClick = useCallback(() => {
     onSetAction('EXTRACT_RESOURCE', { preselect });
   }, [onSetAction, preselect]);
@@ -42,8 +41,10 @@ const Extract = ({ onSetAction, asteroid, crew, lot, preselect, _disabled }) => 
       // if (myUsableSamples?.length === 0) return 'requires core sample';
       if (usableSamples?.length === 0) return 'requires core sample'; // TODO: does above line make more sense?
       return getCrewDisabledReason({ asteroid, crew, permission: Permission.IDS.EXTRACT_RESOURCES, permissionTarget: lot?.building });
+    } else if (!currentExtraction?._isMyAction) {
+      return 'in use';
     }
-  }, [_disabled, crew, extractionStatus, lot?.building, myUsableSamples?.length]);
+  }, [_disabled, crew, currentExtraction, extractionStatus, lot?.building, myUsableSamples?.length]);
   
   const loading = ['EXTRACTING', 'FINISHING'].includes(extractionStatus);
   return (
@@ -52,9 +53,9 @@ const Extract = ({ onSetAction, asteroid, crew, lot, preselect, _disabled }) => 
       labelAddendum={disabledReason}
       flags={{
         badge,
-        disabled: disabledReason || undefined,
-        attention: attention || undefined,
-        loading: loading || undefined,
+        disabled: disabledReason,
+        attention: !disabledReason && attention,
+        loading,
         finishTime: lot?.building?.Extractors?.[0]?.finishTime
       }}
       icon={<ExtractionIcon />}
