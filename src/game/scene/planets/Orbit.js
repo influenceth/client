@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { AdalianOrbit } from '@influenceth/sdk';
 
-import constants from '~/lib/constants';
 import theme from '~/theme';
 import useStore from '~/hooks/useStore';
 

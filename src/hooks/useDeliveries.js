@@ -5,21 +5,25 @@ import { Entity } from '@influenceth/sdk';
 import api from '~/lib/api';
 
 // TODO: should this be useCrewDeliveries (and filter by crew-controlled deliveries)?
-const useDeliveries = ({ destination, destinationSlot, origin, originSlot, deliveryId } = {}) => {
+const useDeliveries = ({ destination, destinationSlot, origin, originSlot, deliveryId, status } = {}) => {
   // TODO: should consider using elasticsearch here instead so
   //  that can match on multiple fields (esp. status so not returning
   //  a bunch of completed deliveries that may not longer care about)
   //  ... just need to make sure elasticsearch is updated quickly enough
 
   const query = useMemo(() => {
+    let builtQuery = null;
+
     if (deliveryId) {
-      return { ids: [deliveryId] };
+      builtQuery = { ids: [deliveryId] };
     } else if (destination?.uuid) {
-      return { match: { 'Delivery.dest.uuid': destination.uuid } };
+      builtQuery = { match: { 'Delivery.dest.uuid': destination.uuid }};
     } else if (origin?.uuid) {
-      return { match: { 'Delivery.origin.uuid': origin.uuid } };
+      builtQuery = { match: { 'Delivery.origin.uuid': origin.uuid }};
     }
-    return null;
+
+    if (builtQuery && status) builtQuery.match = Object.assign({ 'Delivery.status': status }, builtQuery.match);
+    return builtQuery;
   }, [destination?.uuid, origin?.uuid, deliveryId]);
 
   return useQuery(
