@@ -198,16 +198,16 @@ const formatAsTx = (item) => {
     }
 
     case 'CreateSellOrder': {
-      const { asteroidId } = Lot.toPosition(item.meta.lotId) || {};
+      const { asteroidId } = Lot.toPosition(item.meta?.lotId) || {};
       formatted.icon = <LimitSellIcon />;
       formatted.label = 'Limit Sell';
       formatted.asteroidId = asteroidId;
-      formatted.lotId = item.meta.lotId;
+      formatted.lotId = item.meta?.lotId;
       formatted.locationDetail = Product.TYPES[item.vars.product]?.name;
       formatted.onClick = ({ openDialog }) => {
         openDialog('MARKETPLACE_ORDER', {
           asteroidId,
-          lotId: item.meta.lotId,
+          lotId: item.meta?.lotId,
           mode: 'sell',
           type: 'limit',
           resourceId: item.vars.product,
@@ -222,23 +222,23 @@ const formatAsTx = (item) => {
       break;
     }
     case 'CancelSellOrder': {
-      const { asteroidId } = Lot.toPosition(item.meta.lotId) || {};
+      const { asteroidId } = Lot.toPosition(item.meta?.lotId) || {};
       formatted.icon = <CancelLimitOrderIcon />;
       formatted.label = 'Cancel Sell Order';
       formatted.asteroidId = asteroidId;
-      formatted.lotId = item.meta.lotId;
+      formatted.lotId = item.meta?.lotId;
       formatted.locationDetail = Product.TYPES[item.vars.product]?.name;
       formatted.onClick = ({ openDialog }) => {
         openDialog('MARKETPLACE_ORDER', {
           asteroidId,
-          lotId: item.meta.lotId,
+          lotId: item.meta?.lotId,
           mode: 'sell',
           type: 'limit',
           resourceId: item.vars.product,
           isCancellation: true,
           preselect: {
             limitPrice: item.vars.price / 1e6,
-            quantity: item.meta.amount,
+            quantity: item.meta?.amount,
             storage: item.vars.storage,
             storageSlot: item.vars.storage_slot
           }
@@ -247,16 +247,16 @@ const formatAsTx = (item) => {
       break;
     }
     case 'BulkFillSellOrder': {
-      const { asteroidId } = Lot.toPosition(item.meta.lotId) || {};
+      const { asteroidId } = Lot.toPosition(item.meta?.lotId) || {};
       formatted.icon = <MarketBuyIcon />;
       formatted.label = 'Market Buy';
       formatted.asteroidId = asteroidId;
-      formatted.lotId = item.meta.lotId;
+      formatted.lotId = item.meta?.lotId;
       formatted.locationDetail = Product.TYPES[item.vars[0].product]?.name;
       formatted.onClick = ({ openDialog }) => {
         openDialog('MARKETPLACE_ORDER', {
           asteroidId,
-          lotId: item.meta.lotId,
+          lotId: item.meta?.lotId,
           mode: 'buy',
           type: 'market',
           resourceId: item.vars[0].product,
@@ -270,16 +270,16 @@ const formatAsTx = (item) => {
       break;
     }
     case 'EscrowDepositAndCreateBuyOrder': {
-      const { asteroidId } = Lot.toPosition(item.meta.lotId) || {};
+      const { asteroidId } = Lot.toPosition(item.meta?.lotId) || {};
       formatted.icon = <LimitBuyIcon />;
       formatted.label = 'Limit Buy';
       formatted.asteroidId = asteroidId;
-      formatted.lotId = item.meta.lotId;
+      formatted.lotId = item.meta?.lotId;
       formatted.locationDetail = Product.TYPES[item.vars.product]?.name;
       formatted.onClick = ({ openDialog }) => {
         openDialog('MARKETPLACE_ORDER', {
           asteroidId,
-          lotId: item.meta.lotId,
+          lotId: item.meta?.lotId,
           mode: 'buy',
           type: 'limit',
           resourceId: item.vars.product,
@@ -294,17 +294,17 @@ const formatAsTx = (item) => {
       break;
     }
     case 'EscrowWithdrawalAndFillBuyOrders': {
-      const { asteroidId } = Lot.toPosition(item.meta.lotId) || {};
+      const { asteroidId } = Lot.toPosition(item.meta?.lotId) || {};
       formatted.icon = <MarketSellIcon />;
-      formatted.label = item.meta.isCancellation ? 'Cancel Buy Order' : 'Market Sell';
+      formatted.label = item.meta?.isCancellation ? 'Cancel Buy Order' : 'Market Sell';
       formatted.asteroidId = asteroidId;
-      formatted.lotId = item.meta.lotId;
+      formatted.lotId = item.meta?.lotId;
       formatted.locationDetail = Product.TYPES[item.vars[0].product]?.name;
       formatted.onClick = ({ openDialog }) => {
-        if (item.meta.isCancellation) {
+        if (item.meta?.isCancellation) {
           openDialog('MARKETPLACE_ORDER', {
             asteroidId,
-            lotId: item.meta.lotId,
+            lotId: item.meta?.lotId,
             mode: 'buy',
             type: 'limit',
             resourceId: item.vars[0].product,
@@ -320,7 +320,7 @@ const formatAsTx = (item) => {
         } else {
           openDialog('MARKETPLACE_ORDER', {
             asteroidId,
-            lotId: item.meta.lotId,
+            lotId: item.meta?.lotId,
             mode: 'sell',
             type: 'market',
             resourceId: item.vars[0].product,
@@ -498,7 +498,7 @@ const formatAsTx = (item) => {
 
     case 'AssembleShipFinish': {
       formatted.icon = <ShipIcon />;
-      formatted.label = `Deliver ${Ship.TYPES[item.meta.shipType]?.name || 'Ship'}`;
+      formatted.label = `Deliver ${Ship.TYPES[item.meta?.shipType]?.name || 'Ship'}`;
       formatted.asteroidId = Lot.toPosition(item.meta?.lotId)?.asteroidId;
       formatted.lotId = item.meta?.lotId;
       formatted.onClick = ({ openDialog }) => {
@@ -686,7 +686,7 @@ const formatAsTx = (item) => {
       formatted.lotId = item.meta?.lotId;
       formatted.shipId = item.meta?.id;
       formatted.onClick = ({ openDialog }) => {
-        openDialog('LAND_SHIP', { shipId: item.meta.shipId });
+        openDialog('LAND_SHIP', { shipId: item.meta?.shipId });
       };
       break;
     }
@@ -754,7 +754,7 @@ const formatAsTx = (item) => {
 
     case 'TransitBetweenStart': {
       formatted.icon = <SetCourseIcon />;
-      formatted.label = item.meta.destination ? `Departure for ${formatters.asteroidName(item.meta.destination)}` : `Departure Sequence`;
+      formatted.label = item.meta?.destination ? `Departure for ${formatters.asteroidName(item.meta?.destination)}` : `Departure Sequence`;
       formatted.asteroidId = item.vars.origin?.id;
       formatted.shipId = item.meta?.shipId;
       formatted.onClick = ({ openDialog }) => {
@@ -765,8 +765,8 @@ const formatAsTx = (item) => {
 
     case 'TransitBetweenFinish': {
       formatted.icon = <SetCourseIcon />;
-      formatted.label = item.meta.destination ? `Arrival to ${formatters.asteroidName(item.meta.destination)}` : `Arrival Sequence`;
-      formatted.asteroidId = item.meta.destination?.id;
+      formatted.label = item.meta?.destination ? `Arrival to ${formatters.asteroidName(item.meta?.destination)}` : `Arrival Sequence`;
+      formatted.asteroidId = item.meta?.destination?.id;
       formatted.shipId = item.meta?.shipId;
       formatted.onClick = ({ openDialog }) => {
         openDialog('SET_COURSE');
@@ -886,11 +886,11 @@ const formatAsTx = (item) => {
     }
 
     case 'RepossessBuilding': {
-      const { asteroidId } = Lot.toPosition(item.meta.lotId) || {};
+      const { asteroidId } = Lot.toPosition(item.meta?.lotId) || {};
       formatted.icon = <KeysIcon />;
       formatted.label = `Repossess Lot`;
       formatted.asteroidId = asteroidId;
-      formatted.lotId = item.meta.lotId;
+      formatted.lotId = item.meta?.lotId;
       formatted.onClick = ({ openDialog }) => {
         openDialog('REPO_BUILDING');
       }
