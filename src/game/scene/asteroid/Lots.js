@@ -16,6 +16,7 @@ import {
   RingGeometry,
   ShaderMaterial,
   TextureLoader,
+  QuadraticBezierCurve3,
   Vector2,
   Vector3
 } from 'three';
