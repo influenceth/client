@@ -97,9 +97,6 @@ const FeedCrew = ({
   const { crew, crewCan } = useCrewContext();
   const blockTime = useBlockTime();
 
-  const crewmates = crew?._crewmates;
-  const captain = crewmates[0];
-
   const crewTravelBonus = useMemo(() => {
     if (!crew) return {};
     return getCrewAbilityBonuses(Crewmate.ABILITY_IDS.HOPPER_TRANSPORT_TIME, crew) || {};
@@ -229,7 +226,7 @@ const FeedCrew = ({
           label: 'Resupply Food',
           status: stage === actionStages.NOT_STARTED ? 'Send Items' : undefined,
         }}
-        captain={captain}
+        actionCrew={crew}
         location={{ asteroid, lot: originLot }}
         crewAvailableTime={crewTimeRequirement}
         taskCompleteTime={taskTimeRequirement}

@@ -11,13 +11,13 @@ import { useLotLink } from '~/components/LotLink';
 import useActionItems from '~/hooks/useActionItems';
 import useAsteroid from '~/hooks/useAsteroid';
 import useAuth from '~/hooks/useAuth';
+import useCrewContext from '~/hooks/useCrewContext';
+import useGetActivityConfig from '~/hooks/useGetActivityConfig';
 import useLot from '~/hooks/useLot';
 import useStore from '~/hooks/useStore';
 import { formatActionItem, itemColors, statuses } from '~/lib/actionItem';
 import { hexToRGB } from '~/theme';
 import formatters from '~/lib/formatters';
-import useCrewContext from '~/hooks/useCrewContext';
-import useGetActivityConfig from '~/hooks/useGetActivityConfig';
 
 const ICON_WIDTH = 34;
 const ITEM_WIDTH = 410;
@@ -28,12 +28,6 @@ const TitleWrapper = styled.div`
   display: flex;
   flex-direction: row;
   width: 100%;
-`;
-
-const IconWrapper = styled.span`
-  font-size: 24px;
-  line-height: 0;
-  margin-right: 6px;
 `;
 
 const ActionItemWrapper = styled.div`
@@ -282,9 +276,8 @@ const ActionItemRow = styled.div`
   }
 `;
 
-const ActionItem = ({ data, crew }) => {
+const ActionItem = ({ data, getActivityConfig }) => {
   const history = useHistory();
-  const getActivityConfig = useGetActivityConfig();
 
   const createAlert = useStore(s => s.dispatchAlertLogged);
   const currentAsteroid = useStore(s => s.asteroids);
@@ -298,9 +291,9 @@ const ActionItem = ({ data, crew }) => {
   const item = useMemo(() => {
     return formatActionItem(
       data,
-      !['randomEvent', 'plans', 'pending'].includes(data.type) ? getActivityConfig(data, crew)?.actionItem : {}
+      !['randomEvent', 'plans', 'pending'].includes(data.type) ? getActivityConfig(data)?.actionItem : {}
     );
-  }, [data]);
+  }, [data, getActivityConfig]);
 
   const { data: asteroid } = useAsteroid(item.asteroidId);
   const { data: lot } = useLot(item.lotId);
@@ -420,6 +413,7 @@ const ActionItems = () => {
   const { account } = useAuth();
   const { allVisibleItems: allItems } = useActionItems();
   const { captain, crew } = useCrewContext();
+  const getActivityConfig = useGetActivityConfig();
 
   const [displayItems, setDisplayItems] = useState();
   useEffect(() => {
@@ -497,7 +491,14 @@ const ActionItems = () => {
           )}>
           <ActionItemWrapper>
             <ActionItemContainer>
-              {filteredDisplayItems.map((item) => <ActionItem key={item.uniqueKey} crew={crew} data={item} />)}
+              {filteredDisplayItems.map((item) => (
+                <ActionItem
+                  key={item.uniqueKey}
+                  crew={crew}
+                  data={item}
+                  getActivityConfig={getActivityConfig}
+                />
+              ))}
             </ActionItemContainer>
           </ActionItemWrapper>
         </CollapsibleSection>

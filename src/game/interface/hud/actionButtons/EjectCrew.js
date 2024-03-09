@@ -7,9 +7,6 @@ import useEjectCrewManager from '~/hooks/actionManagers/useEjectCrewManager';
 const isVisible = ({ crew, building, ship }) => {
   if (crew) {
     if (ship) {
-      // do not display if ship in emergency mode
-      if (ship.Ship?.emergencyAt > 0) return false;
-
       // if my crew is on it, do i still need to check that status is available?
       return crew._location.shipId === ship.id;
     }
@@ -23,7 +20,7 @@ const isVisible = ({ crew, building, ship }) => {
 
 // NOTE: this is "eject self"
 // (can eject self from ship or building, whether own it or not)
-const EjectCrew = ({ asteroid, crew, onSetAction, _disabled }) => {
+const EjectCrew = ({ asteroid, crew, ship, onSetAction, _disabled }) => {
   const { currentEjections } = useEjectCrewManager(crew?.Location?.location);
   const handleClick = useCallback(() => {
     onSetAction('EJECT_CREW');
@@ -35,6 +32,7 @@ const EjectCrew = ({ asteroid, crew, onSetAction, _disabled }) => {
 
   const disabledReason = useMemo(() => {
     if (_disabled) return 'loading...';
+    if (ship?.Ship?.emergencyAt > 0) return 'emergency mode';
     return getCrewDisabledReason({ asteroid, crew, requireSurface: false });
   }, [_disabled, asteroid, crew]);
 

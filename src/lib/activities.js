@@ -1196,14 +1196,17 @@ const activities = {
       ))
     },
 
-    getInvalidations: ({ event: { returnValues, version } }) => ([
-      ...invalidationDefaults(Entity.IDS.DEPOSIT, returnValues.deposit.id),
-      ...invalidationDefaults(returnValues.extractor.label, returnValues.extractor.id),
-      ...invalidationDefaults(returnValues.destination.label, returnValues.destination.id),
-      ['actionItems'],
-      ['asteroidCrewBuildings', returnValues.asteroidId, returnValues.crewId],
-      ['asteroidCrewSampledLots', returnValues.asteroidId, returnValues.resourceId, returnValues.crewId],
-    ]),
+    getInvalidations: ({ event: { returnValues, version } }, { extractor = {} }) => {
+      const _location = locationsArrToObj(extractor?.Location?.locations || []);
+      return [
+        ...invalidationDefaults(Entity.IDS.DEPOSIT, returnValues.deposit.id),
+        ...invalidationDefaults(returnValues.extractor.label, returnValues.extractor.id),
+        ...invalidationDefaults(returnValues.destination.label, returnValues.destination.id),
+        ['actionItems'],
+        ['asteroidCrewBuildings', _location.asteroidId, returnValues.callerCrew?.id],
+        ['asteroidCrewSampledLots', _location.asteroidId, returnValues.resource, returnValues.callerCrew?.id],
+      ];
+    },
 
     getPrepopEntities: ({ event: { returnValues } }) => ({
       // destination: returnValues.destination,
@@ -1227,12 +1230,15 @@ const activities = {
   },
 
   ResourceExtractionFinished: {
-    getInvalidations: ({ event: { returnValues, version } }) => ([
-      ...invalidationDefaults(returnValues.extractor.label, returnValues.extractor.id),
-      ...invalidationDefaults(returnValues.destination.label, returnValues.destination.id),
-      ['actionItems'],
-      ['asteroidCrewBuildings', returnValues.asteroidId, returnValues.crewId],
-    ]),
+    getInvalidations: ({ event: { returnValues, version } }, { extractor = {} }) => {
+      const _location = locationsArrToObj(extractor?.Location?.locations || []);
+      return [
+        ...invalidationDefaults(returnValues.extractor.label, returnValues.extractor.id),
+        ...invalidationDefaults(returnValues.destination.label, returnValues.destination.id),
+        ['actionItems'],
+        ['asteroidCrewBuildings', _location.asteroidId, returnValues.callerCrew?.id],
+      ];
+    },
 
     getPrepopEntities: ({ event: { returnValues } }) => ({
       // destination: returnValues.destination,

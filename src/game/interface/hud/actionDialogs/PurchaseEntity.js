@@ -105,7 +105,7 @@ const Note = styled.div`
 
 const PurchaseEntity = ({ asteroid, lot, entity, actionManager, stage, ...props }) => {
   const { purchaseListing } = actionManager;
-  const { captain } = useCrewContext();
+  const { crew } = useCrewContext();
   const { data: controller } = useCrew(entity?.Control?.controller?.id);
   const { data: swayBalance } = useSwayBalance();
 
@@ -135,7 +135,7 @@ const PurchaseEntity = ({ asteroid, lot, entity, actionManager, stage, ...props 
           label: 'Buy Ship',
           status: stage === actionStages.NOT_STARTED ? 'Purchase Agreement' : '',
         }}
-        captain={captain}
+        actionCrew={crew}
         location={{ asteroid, lot, ship: entity }}
         crewAvailableTime={0}
         onClose={props.onClose}

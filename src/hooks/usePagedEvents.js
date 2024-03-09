@@ -14,7 +14,6 @@ const pageSize = 25;
 const usePagedEvents = () => {
   const getActivityConfig = useGetActivityConfig();
   const queryClient = useQueryClient();
-  const { crew } = useCrewContext();
   const [data, setData] = useState({ hits: [], total: 0 });
   const [loading, setLoading] = useState();
   const [page, setPage] = useState(1);
@@ -39,7 +38,7 @@ const usePagedEvents = () => {
         setData({
           hits: activities
             .map((activity) => {
-              const { logContent } = getActivityConfig(activity, { label: Entity.IDS.CREW, id: crew?.id });
+              const { logContent } = getActivityConfig(activity);
               if (!logContent) return null;
               return {
                 ...logContent,
@@ -55,7 +54,7 @@ const usePagedEvents = () => {
         console.warn(err);
         setLoading(false);
       });
-  }, [crew?.id, filters, sort, page]);
+  }, [getActivityConfig, filters, sort, page]);
 
   return {
     page,

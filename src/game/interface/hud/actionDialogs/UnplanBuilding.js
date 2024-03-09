@@ -38,7 +38,7 @@ const UnplanWarning = styled.div`
 
 const UnplanBuilding = ({ asteroid, lot, constructionManager, stage, ...props }) => {
   const { currentConstructionAction, constructionStatus, unplanConstruction } = useConstructionManager(lot?.id);
-  const { captain } = useCrewContext();
+  const { crew } = useCrewContext();
 
   const siteEmpty = useMemo(() => {
     const inv = (lot?.building?.Inventories || []).find((i) => Inventory.TYPES[i.inventoryType].category === Inventory.CATEGORIES.SITE);
@@ -71,7 +71,7 @@ const UnplanBuilding = ({ asteroid, lot, constructionManager, stage, ...props })
           label: 'Remove Building Site',
           status: stage === actionStage.NOT_STARTED ? 'Confirm' : '',
         }}
-        captain={captain}
+        actionCrew={crew}
         location={{ asteroid, lot }}
         crewAvailableTime={0}
         onClose={props.onClose}

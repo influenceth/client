@@ -40,15 +40,9 @@ const EvictShip = ({ asteroid, lot, manager, stage, ...props }) => {
   const { currentLaunch, launchStatus, startLaunch } = manager;
 
   const { crew, crewmateMap } = useCrewContext();
-  const { data: launchOriginLot } = useLot(currentLaunch?.originLotId);
 
   const [tab, setTab] = useState(0);
   const ship = Ship.TYPES[1];  // TODO
-
-  const crewmates = currentLaunch?._crewmates || (crew?._crewmates || []).map((i) => crewmateMap[i]);
-  const captain = crewmates[0];
-  const crewTravelBonus = Crew.getAbilityBonus(Crewmate.ABILITY_IDS.HOPPER_TRANSPORT_TIME, crewmates);
-  const launchBonus = 0;
 
   const stats = useMemo(() => ([
     {
@@ -118,7 +112,7 @@ const EvictShip = ({ asteroid, lot, manager, stage, ...props }) => {
           label: 'Force Launch Ship',
           status: stage === actionStages.NOT_STARTED ? 'Evict from my Spaceport' : undefined,
         }}
-        captain={captain}
+        actionCrew={crew}
         location={{ asteroid, lot, ship }}
         crewAvailableTime={0}
         taskCompleteTime={0}
@@ -198,7 +192,7 @@ const EvictShip = ({ asteroid, lot, manager, stage, ...props }) => {
         {tab === 1 && (
           <>
             <ShipTab
-              pilotCrew={{ ...crew, roster: crewmates }}
+              pilotCrew={crew}
               inventoryBonuses={crew?._inventoryBonuses}
               ship={ship}
               stage={stage} />

@@ -33,9 +33,10 @@ const useConstructionManager = (lotId) => {
   // UNBUILDABLE (before asteroid is scanned)
   // READY_TO_PLAN > PLANNING  > PLANNED > UNDER_CONSTRUCTION > READY_TO_FINISH > FINISHING > OPERATIONAL
   //               < CANCELING <         <                  DECONSTRUCTING                  <
-  const [currentConstructionAction, constructionStatus, isAtRisk, deconstructTx, stageByActivity] = useMemo(() => {
+  const [currentConstructionAction, constructionStatus, isAtRisk, stageByActivity] = useMemo(() => {
     let current = {
-      _crewmates: null,
+      _cachedData: null,
+      _isMyAction: true,
       buildingId: null,
       buildingType: null,
       finishTime: null,
@@ -53,7 +54,6 @@ const useConstructionManager = (lotId) => {
       ? 'READY_TO_PLAN'
       : 'UNBUILDABLE';
     let isAtRisk = false;
-    let deconstructTx;
     if (lot?.building) {
       let actionItem = (actionItems || []).find((item) => (
         item.event.name === 'ConstructionStarted'
@@ -61,8 +61,10 @@ const useConstructionManager = (lotId) => {
       ));
 
       if (actionItem) {
-        // current._crewmates = actionItem.assets.crew.crewmates; // TODO: ...
+        current._cachedData = actionItem.data;
         current.startTime = actionItem.event.timestamp;
+      } else {
+        current._isMyAction = false;
       }
 
       current.buildingId = lot.building.id;
@@ -115,7 +117,6 @@ const useConstructionManager = (lotId) => {
       } else if (lot.building.Building.status === Building.CONSTRUCTION_STATUSES.OPERATIONAL) {
         if (getStatus('ConstructionDeconstruct', payload) === 'pending') {
           status = 'DECONSTRUCTING';
-          deconstructTx = getPendingTx('ConstructionDeconstruct', payload);
           stages.deconstruct = actionStage.STARTING;
         } else {
           status = 'OPERATIONAL';
@@ -136,7 +137,6 @@ const useConstructionManager = (lotId) => {
       current,
       status,
       isAtRisk,
-      deconstructTx,
       stages
     ];
   }, [actionItems, asteroid, readyItems, getPendingTx, getStatus, payload, planPayload, lot?.building]);
@@ -185,7 +185,6 @@ const useConstructionManager = (lotId) => {
     deconstruct,
     constructionStatus,
     currentConstructionAction,
-    deconstructTx,
     isAtRisk,
     stageByActivity
   };

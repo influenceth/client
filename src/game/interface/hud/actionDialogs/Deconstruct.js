@@ -25,13 +25,9 @@ import { ActionDialogInner, useAsteroidAndLot } from '../ActionDialog';
 import actionStage from '~/lib/actionStages';
 import { getTripDetails } from './components';
 
-// TODO: deprecate deconstructTx?
 const Deconstruct = ({ asteroid, lot, constructionManager, stage, ...props }) => {
-  const { crew, crewmateMap } = useCrewContext();
-  const { deconstruct, deconstructTx } = constructionManager;
-
-  const crewmates = crew._crewmates.map((i) => crewmateMap[i]);
-  const captain = crewmates[0];
+  const { crew } = useCrewContext();
+  const { deconstruct } = constructionManager;
 
   const crewTravelBonus = useMemo(() => getCrewAbilityBonuses(Crewmate.ABILITY_IDS.HOPPER_TRANSPORT_TIME, crew), [crew]);
 
@@ -86,7 +82,7 @@ const Deconstruct = ({ asteroid, lot, constructionManager, stage, ...props }) =>
           label: 'Deconstruct Building',
           status: stage === actionStage.NOT_STARTED ? 'Confirm' : '',
         }}
-        captain={captain}
+        actionCrew={crew}
         location={{ asteroid, lot }}
         crewAvailableTime={crewTimeRequirement}
         taskCompleteTime={taskTimeRequirement}

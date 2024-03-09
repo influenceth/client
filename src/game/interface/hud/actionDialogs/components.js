@@ -2288,7 +2288,7 @@ const ActionDialogActionBar = ({ location, onClose, overrideColor, stage }) => (
   </ActionBar>
 );
 
-export const ActionDialogHeader = ({ action, captain, crewAvailableTime, location, onClose, overrideColor, stage, taskCompleteTime, wide }) => {
+export const ActionDialogHeader = ({ action, actionCrew, crewAvailableTime, location, onClose, overrideColor, stage, taskCompleteTime, wide }) => {
   return (
     <>
       <ActionDialogActionBar
@@ -2298,9 +2298,9 @@ export const ActionDialogHeader = ({ action, captain, crewAvailableTime, locatio
         stage={stage}
       />
       <Header theming={theming[stage]} overrideHighlightColor={overrideColor} wide={wide}>
-        {captain && (
+        {actionCrew?._crewmates?.[0] && (
           <CrewmateCardFramed
-            crewmate={captain}
+            crewmate={actionCrew?._crewmates?.[0]}
             isCaptain
             width={75} />
         )}

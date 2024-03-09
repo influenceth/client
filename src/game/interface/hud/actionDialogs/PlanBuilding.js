@@ -31,18 +31,6 @@ import {
 } from './components';
 import actionStage from '~/lib/actionStages';
 
-const ControlWarning = styled.div`
-  align-items: center;
-  color: ${p => p.theme.colors.error};
-  display: flex;
-  justify-content: center;
-  padding: 20px 0 5px;
-  & > svg {
-    font-size: 125%;
-    margin-right: 10px;
-  }
-`;
-
 const MouseoverWarning = styled.span`
   & b { color: ${theme.colors.error}; }
   & em { font-weight: bold; font-style: normal; color: white; }
@@ -50,7 +38,7 @@ const MouseoverWarning = styled.span`
 
 const PlanBuilding = ({ asteroid, lot, constructionManager, stage, ...props }) => {
   const { currentConstructionAction, planConstruction } = constructionManager;
-  const { captain, crew } = useCrewContext();
+  const { crew } = useCrewContext();
 
   const [buildingType, setBuildingType] = useState();
 
@@ -118,7 +106,7 @@ const PlanBuilding = ({ asteroid, lot, constructionManager, stage, ...props }) =
           icon: <PlanBuildingIcon />,
           label: 'Create Building Site',
         }}
-        captain={captain}
+        actionCrew={crew}
         location={{ asteroid, lot }}
         crewAvailableTime={crewTimeRequirement}
         taskCompleteTime={taskTimeRequirement}

@@ -6,7 +6,6 @@ import useActionItems from '~/hooks/useActionItems';
 import useBlockTime from '~/hooks/useBlockTime';
 import useCrewContext from '~/hooks/useCrewContext';
 import useDeliveries from '~/hooks/useDeliveries';
-import useStore from '~/hooks/useStore';
 import actionStages from '~/lib/actionStages';
 
 // start delivery:
@@ -51,7 +50,8 @@ const useDeliveryManager = ({ destination, destinationSlot, origin, originSlot, 
     if (pendingDeliveries) active.push(...pendingDeliveries);
     const allDeliveries = active.map((delivery) => {
       let current = {
-        _crewmates: null,
+        _cachedData: null,
+        _isMyAction: true,
         _originLot: null,
         caller: null,
         deliveryId: null,
@@ -76,17 +76,19 @@ const useDeliveryManager = ({ destination, destinationSlot, origin, originSlot, 
       if (delivery.id > 0) {
         let actionItem = (actionItems || []).find((item) => item.event.name === 'DeliverySent' && item.event.returnValues.delivery.id === delivery.id);
         if (actionItem) {
-          // current._crewmates = actionItem.assets.crew?.crewmates;  // TODO: ...
+          current._cachedData = actionItem.data;
           current._originLot = actionItem.data.origin?.Location.locations.find((l) => l.label === Entity.IDS.LOT);
           current.startTime = actionItem.event.timestamp;
         } else {
           actionItem = (actionItems || []).find((item) => item.event.name === 'DeliveryPackaged' && item.event.returnValues.delivery.id === delivery.id);
           if (actionItem) {
-            // current._crewmates = actionItem.assets.crew?.crewmates;  // TODO: ...
+            current._cachedData = actionItem.data;
             current.caller = actionItem.event.returnValues.caller;
             current.price = actionItem.event.returnValues.price;
             current.startTime = actionItem.event.timestamp;
             current.isProposal = true;
+          } else {
+            current._isMyAction = false;
           }
         }
         current.deliveryId = delivery.id;

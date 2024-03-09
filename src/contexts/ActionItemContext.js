@@ -4,10 +4,10 @@ import { Building } from '@influenceth/sdk';
 
 import useAuth from '~/hooks/useAuth';
 import useCrewContext from '~/hooks/useCrewContext';
+import useGetActivityConfig from '~/hooks/useGetActivityConfig';
 import useStore from '~/hooks/useStore';
 import api from '~/lib/api';
 import { hydrateActivities } from '~/lib/activities';
-import useGetActivityConfig from '~/hooks/useGetActivityConfig';
 
 const ActionItemContext = React.createContext();
 
@@ -82,7 +82,7 @@ export function ActionItemProvider({ children }) {
     // return the readyItems whose "finishing transaction" is not already pending
     const visibleReadyItems = readyItems.filter((item) => {
       if (pendingTransactions) {
-        return !getActivityConfig(item, crew)?.isActionItemHidden(pendingTransactions);
+        return !getActivityConfig(item)?.isActionItemHidden(pendingTransactions);
       }
       return true;
     });
@@ -109,7 +109,7 @@ export function ActionItemProvider({ children }) {
       return x;
     });
 
-  }, [pendingTransactions, failedTransactions, randomEventItems, readyItems, plannedItems, unreadyItems, account, crew, token]);
+  }, [getActivityConfig, pendingTransactions, failedTransactions, randomEventItems, readyItems, plannedItems, unreadyItems, account, token]);
 
 
   // TODO: clear timers in the serviceworker

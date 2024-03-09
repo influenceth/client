@@ -236,9 +236,6 @@ const MarketplaceOrder = ({
   // const destinationInventory = useMemo(() => (destination?.Inventories || []).find((i) => i.slot === destinationSelection?.slot), [destination, destinationSelection]);
   // const { data: destinationController } = useCrew(destination?.Control?.controller?.id);
 
-  const crewmates = currentOrder?._crewmates || crew?._crewmates || [];
-  const captain = crewmates[0];
-
   const [hopperTransportBonus, feeReductionBonus] = useMemo(() => {
     if (!crew) return [];
 
@@ -645,7 +642,7 @@ const MarketplaceOrder = ({
     <>
       <ActionDialogHeader
         action={dialogAction}
-        captain={captain}
+        actionCrew={crew}
         location={{ asteroid, lot }}
         crewAvailableTime={crewTimeRequirement}
         taskCompleteTime={taskTimeRequirement}

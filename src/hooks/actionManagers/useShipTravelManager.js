@@ -33,7 +33,8 @@ const useShipTravelManager = (shipId) => {
   // READY > DEPARTING > IN_FLIGHT > READY_TO_ARRIVE > ARRIVING
   const [currentTravelAction, status, stage] = useMemo(() => {
     let current = {
-      _crewmates: null,
+      _cachedData: null,
+      _isMyAction: true,
       finishTime: null,
     };
 
@@ -50,8 +51,10 @@ const useShipTravelManager = (shipId) => {
         && item.event.returnValues.callerCrew.id === caller_crew?.id
       ));
       if (actionItem) {
-        // current._crewmates = actionItem.assets.crew.crewmates; // TODO: ...
+        current._cachedData = actionItem.data;
         current.startTime = actionItem.event.timestamp;
+      } else {
+        current._isMyAction = false;
       }
       current.originId = ship.Ship.transitOrigin?.id;
       current.destinationId = ship.Ship.transitDestination?.id;

@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Asteroid, Crewmate, Entity, Inventory, Lot, Permission, Product, Time } from '@influenceth/sdk';
 
-import { ForwardIcon, InventoryIcon, LocationIcon, SurfaceTransferIcon, TransferToSiteIcon } from '~/components/Icons';
+import { ForwardIcon, InventoryIcon, TransferToSiteIcon } from '~/components/Icons';
 import useCrewContext from '~/hooks/useCrewContext';
 import useDeliveryManager from '~/hooks/actionManagers/useDeliveryManager';
 import useLot from '~/hooks/useLot';
 import useStore from '~/hooks/useStore';
-import { reactBool, formatTimer, locationsArrToObj, getCrewAbilityBonuses } from '~/lib/utils';
+import { reactBool, formatTimer, getCrewAbilityBonuses } from '~/lib/utils';
 import {
   ActionDialogFooter,
   ActionDialogHeader,
@@ -36,9 +36,6 @@ const TransferToSite = ({ asteroid, lot: destinationLot, deliveryManager, stage,
 
   const { currentDeliveryActions, startDelivery } = deliveryManager;
   const { crew, crewCan } = useCrewContext();
-
-  const crewmates = crew?._crewmates || [];
-  const captain = crewmates[0];
 
   const crewTravelBonus = useMemo(() => {
     if (!crew) return {};
@@ -213,7 +210,7 @@ const TransferToSite = ({ asteroid, lot: destinationLot, deliveryManager, stage,
           icon: <TransferToSiteIcon />,
           label: 'Transfer to Site',
         }}
-        captain={captain}
+        actionCrew={crew}
         location={{ asteroid, lot: destinationLot }}
         crewAvailableTime={crewTimeRequirement}
         taskCompleteTime={taskTimeRequirement}

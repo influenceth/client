@@ -10,7 +10,7 @@ const isVisible = ({ building, crew }) => {
 };
 
 const Button = ({ asteroid, crew, lot, processor, onSetAction, _disabled }) => {
-  const { processStatus } = useProcessManager(lot?.id, processor.slot);
+  const { currentProcess, processStatus } = useProcessManager(lot?.id, processor.slot);
   const handleClick = useCallback(() => {
     onSetAction('PROCESS', { processorSlot: processor.slot });
   }, [onSetAction, processor]);
@@ -21,8 +21,10 @@ const Button = ({ asteroid, crew, lot, processor, onSetAction, _disabled }) => {
     if (_disabled) return 'loading...';
     if (processStatus === 'READY') {
       return getCrewDisabledReason({ asteroid, crew, permission: Permission.IDS.RUN_PROCESS, permissionTarget: lot?.building });
+    } else if (!currentProcess?._isMyAction) {
+      return 'in use';
     }
-  }, [asteroid, crew]);
+  }, [asteroid, crew, currentProcess, processStatus]);
 
   const loading = ['PROCESSING', 'FINISHING'].includes(processStatus);
   return (

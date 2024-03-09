@@ -27,7 +27,8 @@ const useProcessManager = (lotId, slot) => {
   // READY > PROCESSING > READY_TO_FINISH > FINISHING
   const [currentProcess, processStatus, actionStage] = useMemo(() => {
     let current = {
-      _crewmates: null,
+      _cachedData: null,
+      _isMyAction: true,
       finishTime: null,
       destination: null,
       destinationSlot: null,
@@ -48,11 +49,12 @@ const useProcessManager = (lotId, slot) => {
         && item.event.returnValues.processorSlot === slot
       ));
       if (actionItem) {
-        // current._crewmates = actionItem.assets.crew.crewmates; // TODO: ...
-        // TODO: origin* is not in action item or in processor
+        current._cachedData = actionItem.data;
         current.origin = actionItem.event.returnValues.origin;
         current.originSlot = actionItem.event.returnValues.originSlot;
         current.startTime = actionItem.event.timestamp;
+      } else {
+        current._isMyAction = false;
       }
       current.destination = processor?.destination;
       current.destinationSlot = processor?.destinationSlot;

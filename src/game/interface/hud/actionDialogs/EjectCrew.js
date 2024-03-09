@@ -46,8 +46,6 @@ const EjectCrew = ({ asteroid, origin, originLot, stationedCrews, manager, stage
   const [targetCrewId, setTargetCrewId] = useState(currentEjection?.ejected_crew?.id || (props.guests || props.guestId ? (props.guestId || null) : crew?.id));
 
   const { data: targetCrew } = useHydratedCrew(targetCrewId);
-  const myCrewmates = currentEjection?._crewmates || crew?._crewmates || [];
-  const captain = myCrewmates[0];
 
   const myCrewIsTarget = targetCrew?.id === crew?.id;
 
@@ -122,7 +120,7 @@ const EjectCrew = ({ asteroid, origin, originLot, stationedCrews, manager, stage
     <>
       <ActionDialogHeader
         action={actionDetails}
-        captain={captain}
+        actionCrew={crew}
         crewAvailableTime={ejectionTime}
         location={{ asteroid, lot: originLot, ship: origin.Ship ? origin : undefined }}
         onClose={props.onClose}
@@ -182,7 +180,7 @@ const EjectCrew = ({ asteroid, origin, originLot, stationedCrews, manager, stage
           {/* TODO: only selectable if I control the ship */}
           <CrewInputBlock
             title={targetCrew ? "Ejected Crew" : "Select Crew to Eject"}
-            crew={targetCrew ? { ...targetCrew, roster: targetCrew._crewmates } : undefined}
+            crew={targetCrew}
             select
             isSelected={props.guests && (stage === actionStages.NOT_STARTED)}
             onClick={props.guests ? () => setCrewSelectorOpen(true) : undefined}

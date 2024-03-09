@@ -56,7 +56,7 @@ const usePagedActionItems = () => {
         .slice((page - 1) * pageSize, page * pageSize),
       total: filteredItems.length
     }
-  }, [allItems, filters, page, sort]);  
+  }, [allItems, filters, getActivityConfig, page, sort]);  
 
   return {
     page,

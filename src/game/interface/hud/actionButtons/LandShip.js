@@ -54,6 +54,7 @@ const LandShip = ({ asteroid, lot, onSetAction, _disabled }) => {
       // trying to land
       } else {
         if (!Ship.TYPES[crewedShip.Ship.shipType]?.landing) return 'ship type requires a dock';
+        if (lot?.surfaceShip) return 'already occupied';
       }
     }
     if (crewedShip.Ship.emergencyAt > 0) return 'in emergency mode';

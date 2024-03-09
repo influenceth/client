@@ -178,7 +178,7 @@ const LotResources = () => {
         return b.Deposit.initialYield ? -1 : 1;
       }),
     (lot?.deposits || [])
-    .filter((s) => s.Control.controller.id === crew?.id)
+      .filter((s) => s.Control.controller.id === crew?.id)
       .filter((s) => s.Deposit.initialYield > 0 && s.Deposit.remainingYield === 0),
   ]), [crew?.id, lot?.deposits, showAllSamples]);
 

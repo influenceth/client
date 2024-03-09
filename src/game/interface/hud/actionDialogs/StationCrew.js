@@ -38,9 +38,6 @@ const StationCrew = ({ asteroid, destination: rawDestination, lot, origin: rawOr
   const { stationCrew } = stationCrewManager;
   const { crew, crewCan } = useCrewContext();
 
-  const crewmates = (crew?._crewmates || []);
-  const captain = crewmates[0];
-
   const crewTravelBonus = useMemo(() => {
     if (!crew) return {};
     return getCrewAbilityBonuses(Crewmate.ABILITY_IDS.HOPPER_TRANSPORT_TIME, crew) || {};
@@ -142,7 +139,7 @@ const StationCrew = ({ asteroid, destination: rawDestination, lot, origin: rawOr
     <>
       <ActionDialogHeader
         action={actionDetails}
-        captain={captain}
+        actionCrew={crew}
         crewAvailableTime={crewTimeRequirement}
         taskCompleteTime={taskTimeRequirement}
         location={{
@@ -207,7 +204,7 @@ const StationCrew = ({ asteroid, destination: rawDestination, lot, origin: rawOr
                 ? (crewIsOwner ? 'Flight Crew' : 'Passengers')
                 : 'Stationed Crew'
             }
-            crew={{ ...crew, roster: crewmates }} />
+            crew={crew} />
 
           <FlexSectionSpacer />
 

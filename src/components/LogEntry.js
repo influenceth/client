@@ -125,7 +125,7 @@ const LinkLabel = styled.div`
   flex: 0 0 28px;
 `;
 
-const LogEntry = ({ activity, css = {}, isHeaderRow, isTabular, timestampBreakpoint, viewingAs = {} }) => {
+const LogEntry = ({ activity, css = {}, isHeaderRow, isTabular, timestampBreakpoint, viewingAs }) => {
   const getActivityConfig = useGetActivityConfig();
 
   const m = useMemo(() => {

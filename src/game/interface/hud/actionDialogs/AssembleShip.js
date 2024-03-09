@@ -35,7 +35,6 @@ import {
 import useLot from '~/hooks/useLot';
 import useStore from '~/hooks/useStore';
 import { ActionDialogInner, useAsteroidAndLot } from '../ActionDialog';
-import ResourceThumbnail from '~/components/ResourceThumbnail';
 import actionStages from '~/lib/actionStages';
 import theme, { hexToRGB } from '~/theme';
 import ClipCorner from '~/components/ClipCorner';
@@ -43,6 +42,7 @@ import IconButton from '~/components/IconButton';
 import useDryDockManager from '~/hooks/actionManagers/useDryDockManager';
 import useEntity from '~/hooks/useEntity';
 import formatters from '~/lib/formatters';
+import useActionCrew from '~/hooks/useActionCrew';
 
 const SECTION_WIDTH = 1046;
 
@@ -82,11 +82,10 @@ const shipContructionProcesses = [Ship.IDS.SHUTTLE, Ship.IDS.LIGHT_TRANSPORT, Sh
 }));
 
 const AssembleShip = ({ asteroid, lot, dryDockManager, stage, ...props }) => {
-  const createAlert = useStore(s => s.dispatchAlertLogged);
-  
   const { currentAssembly, assemblyStatus, startShipAssembly, finishShipAssembly } = dryDockManager;
 
-  const { crew, crewCan } = useCrewContext();
+  const crew = useActionCrew(currentAssembly);
+  const { crewCan } = useCrewContext();
 
   const [selectedOrigin, setSelectedOrigin] = useState(currentAssembly ? { ...currentAssembly?.origin, slot: currentAssembly?.originSlot } : undefined);
   const { data: origin } = useEntity(selectedOrigin);
@@ -123,9 +122,6 @@ const AssembleShip = ({ asteroid, lot, dryDockManager, stage, ...props }) => {
   const process = shipType && shipContructionProcesses.find((p) => p.i === shipType);
   const shipConfig = shipType ? Ship.getType(shipType) : null;
   const shipConstruction = shipType ? Ship.getConstructionType(shipType) : null;
-
-  const crewmates = currentAssembly?._crewmates || crew?._crewmates || [];
-  const captain = crewmates[0];
 
   const [crewTravelBonus, assemblyTimeBonus] = useMemo(() => {
     const bonusIds = [
@@ -273,7 +269,7 @@ const AssembleShip = ({ asteroid, lot, dryDockManager, stage, ...props }) => {
           icon: <ConstructShipIcon />,
           label: 'Assemble Ship',
         }}
-        captain={captain}
+        actionCrew={crew}
         location={{ asteroid, lot }}
         crewAvailableTime={crewTimeRequirement}
         taskCompleteTime={taskTimeRequirement}

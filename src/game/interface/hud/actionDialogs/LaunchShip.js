@@ -54,9 +54,6 @@ const LaunchShip = ({ asteroid, originLot, manager, ship, shipCrews, stage, ...p
   const [powered, setPowered] = useState(isForceLaunch ? false : true);
   const [tab, setTab] = useState(0);
 
-  const crewmates = currentUndockingAction?._crewmates || crew?._crewmates || [];
-  const captain = crewmates[0];
-
   const [hopperBonus, propellantBonus] = useMemo(() => {
     if (!flightCrew) return {};
     const bonusIds = [Crewmate.ABILITY_IDS.HOPPER_TRANSPORT_TIME, Crewmate.ABILITY_IDS.PROPELLANT_EXHAUST_VELOCITY];
@@ -165,7 +162,7 @@ const LaunchShip = ({ asteroid, originLot, manager, ship, shipCrews, stage, ...p
           label: `${isForceLaunch ? 'Force ' : ''}Launch Ship`,
           status: stage === actionStages.NOT_STARTED ? 'Send to Orbit' : undefined,
         }}
-        captain={captain}
+        actionCrew={crew}
         location={{ asteroid, lot: originLot, ship }}
         crewAvailableTime={crewTimeRequirement}
         taskCompleteTime={taskTimeRequirement}
