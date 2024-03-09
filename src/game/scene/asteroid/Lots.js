@@ -16,12 +16,11 @@ import {
   RingGeometry,
   ShaderMaterial,
   TextureLoader,
-  QuadraticBezierCurve3,
   Vector2,
   Vector3
 } from 'three';
 import { useQueryClient } from 'react-query';
-import { Asteroid, Entity, Lot } from '@influenceth/sdk';
+import { Asteroid, Delivery, Entity, Lot } from '@influenceth/sdk';
 
 import useAuth from '~/hooks/useAuth';
 import useCrewContext from '~/hooks/useCrewContext';
@@ -93,8 +92,8 @@ const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, co
 
   const selectedLotIndex = useMemo(() => Lot.toIndex(lotId), [lotId]);
   const { data: lotDetails } = useLot(lotId);
-  const { data: outboundDeliveries } = useDeliveries({ origin: lotDetails?.building, status: 2 });
-  const { data: inboundDeliveries } = useDeliveries({ destination: lotDetails?.building, status: 2 });
+  const { data: outboundDeliveries } = useDeliveries({ origin: lotDetails?.building, status: Delivery.STATUSES.SENT });
+  const { data: inboundDeliveries } = useDeliveries({ destination: lotDetails?.building, status: Delivery.STATUSES.SENT });
 
   const [positionsReady, setPositionsReady] = useState(false);
   const [regionsByDistance, setRegionsByDistance] = useState([]);
@@ -118,7 +117,7 @@ const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, co
   const mouseHoverMesh = useRef();
   const selectionMesh = useRef();
   const lotsInitialized = useRef();
-  const deliveryArcs = useRef();
+  const deliveryArcs = useRef([]);
   const deliveryUniforms = useRef({
     uTime: { value: 0 },
     uAlpha: { value: 1.0 },
@@ -809,9 +808,6 @@ const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, co
 
   // Handle turning on and off delivery arcs when a lot is selected
   useEffect(() => {
-    deliveryArcs.current?.forEach((arc) => (attachTo || scene).remove(arc));
-    deliveryArcs.current = [];
-
     const newDeliveries = [];
     const material = new ShaderMaterial({
       uniforms: deliveryUniforms.current,
@@ -883,6 +879,11 @@ const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, co
       (attachTo || scene).add(curveGeom);
       deliveryArcs.current.push(curveGeom);
     });
+
+    return () => {
+      deliveryArcs.current?.forEach((arc) => (attachTo || scene).remove(arc));
+      deliveryArcs.current = [];
+    };
   }, [selectedLotIndex, inboundDeliveries, outboundDeliveries]);
 
   const selectionAnimationTime = useRef(0);
