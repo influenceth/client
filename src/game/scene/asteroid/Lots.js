@@ -16,7 +16,6 @@ import {
   RingGeometry,
   ShaderMaterial,
   TextureLoader,
-  QuadraticBezierCurve3,
   Vector2,
   Vector3
 } from 'three';
@@ -818,7 +817,7 @@ const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, co
       depthWrite: false
     });
 
-    if (outboundDeliveries && positions.current && positionsReady) {
+    if (outboundDeliveries && lotDetails?.building && positions.current && positionsReady) {
       const originZeroIndex = selectedLotIndex - 1;
       const origin = new Vector3(
         positions.current[originZeroIndex * 3 + 0],
@@ -841,7 +840,7 @@ const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, co
       });
     }
 
-    if (inboundDeliveries && positions.current && positionsReady) {
+    if (inboundDeliveries && lotDetails?.building && positions.current && positionsReady) {
       const destZeroIndex = selectedLotIndex - 1;
       const destination = new Vector3(
         positions.current[destZeroIndex * 3 + 0],
@@ -885,7 +884,7 @@ const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, co
       deliveryArcs.current?.forEach((arc) => (attachTo || scene).remove(arc));
       deliveryArcs.current = [];
     };
-  }, [selectedLotIndex, inboundDeliveries, outboundDeliveries]);
+  }, [selectedLotIndex, lotDetails, inboundDeliveries, outboundDeliveries]);
 
   const selectionAnimationTime = useRef(0);
   useEffect(() => {

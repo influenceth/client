@@ -8,9 +8,9 @@ import { getCrewAbilityBonuses, locationsArrToObj } from '~/lib/utils';
 const useActionCrew = (currentAction) => {
   const { _cachedData, startTime } = currentAction || {};
   const { crew: liveCrew } = useCrewContext();
-  
+
   // NOTE: if station location was allowed to change mid-action, this can be problematic, so
-  // all new activities have crew.Location included... old ones will need to use this as a 
+  // all new activities have crew.Location included... old ones will need to use this as a
   // best-effort fallback (so we'll only load if crew.Location is not set)
   const { data: liveStation } = useEntity(_cachedData?.crew?.Location ? null : _cachedData?.station?.entity);
 
@@ -36,7 +36,7 @@ const useActionCrew = (currentAction) => {
       if (!c.Location) c.Location = liveStation?.Location;
 
       // attach _location
-      c._location = locationsArrToObj(c.Location.locations || []);
+      c._location = locationsArrToObj(c.Location?.locations || []);
 
       // load bonuses
       const bonuses = getCrewAbilityBonuses([
