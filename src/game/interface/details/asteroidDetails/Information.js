@@ -444,7 +444,6 @@ const AsteroidInformation = ({ abundances, asteroid, isManager, isOwner }) => {
                   </StaticForm>
                   <Button
                     disabled={nativeBool(changingName)}
-                    highContrast
                     isTransaction
                     loading={reactBool(changingName)}
                     onClick={() => setOpenNameChangeForm(true)}>
@@ -456,7 +455,6 @@ const AsteroidInformation = ({ abundances, asteroid, isManager, isOwner }) => {
               {isOwner && !isManager && (
                 <Button
                   disabled={nativeBool(takingControl)}
-                  highContrast
                   isTransaction
                   loading={reactBool(takingControl)}
                   onClick={controlAsteroid}>
@@ -467,7 +465,6 @@ const AsteroidInformation = ({ abundances, asteroid, isManager, isOwner }) => {
               {isOwner && (
                 <ModelButton
                   disabled={nativeBool(exportingModel)}
-                  highContrast
                   loading={reactBool(exportingModel)}
                   onClick={download3dModel}>
                   <><SmHidden>Download{' '}</SmHidden><span>3D Model</span></>
@@ -479,7 +476,6 @@ const AsteroidInformation = ({ abundances, asteroid, isManager, isOwner }) => {
                   data-tip="Purchase development rights"
                   data-for="global"
                   disabled={nativeBool(!account || buying)}
-                  highContrast
                   isTransaction
                   loading={reactBool(buying)}
                   onClick={attemptBuyAsteroid}>
@@ -492,7 +488,7 @@ const AsteroidInformation = ({ abundances, asteroid, isManager, isOwner }) => {
                   assetType="asteroid"
                   id={asteroid.id}>
                   {(onClick, setRefEl) => (
-                    <Button setRef={setRefEl} highContrast onClick={onClick}>
+                    <Button setRef={setRefEl} onClick={onClick}>
                       {isOwner ? <><span>List</span><SmHidden>{' '}for Sale</SmHidden></> : 'Purchase'}
                     </Button>
                   )}

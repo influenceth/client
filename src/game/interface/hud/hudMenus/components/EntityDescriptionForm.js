@@ -57,14 +57,12 @@ const EntityDescriptionForm = ({ entity, label, originalDesc, ...props }) => {
         <Button
           disabled={nativeBool(!entity || changingName || !name || error || (name === originalDesc))}
           size="small"
-          highContrast
           onClick={() => setDesc(originalDesc)}
           style={{ marginRight: 6 }}>Cancel</Button>
         <Button
           disabled={nativeBool(!entity || changingName || !name || error || (name === originalDesc))}
           loading={changingName}
           size="small"
-          highContrast
           isTransaction
           onClick={saveDescChange}>Update</Button>
       </div>

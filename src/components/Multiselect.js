@@ -120,7 +120,6 @@ const Multiselect = ({
       <span ref={setReferenceEl}>
         <Button
           disabled={nativeBool(disabled)}
-          highContrast
           onClick={handleToggle}
           {...styleProps}>
           {buttonIcon && <IconWrapper>{buttonIcon}</IconWrapper>}

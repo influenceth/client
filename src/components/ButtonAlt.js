@@ -9,8 +9,8 @@ import Badge from '~/components/Badge';
 import theme, { getContrastText, hexToRGB } from '~/theme';
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
 
-export const bgOpacity = 0.2;
-export const hoverBgOpacity = 0.2;
+export const bgOpacity = 0.1;
+export const bgOpacityHover = 0.25;
 
 const sizes = {
   icon: { font: 16, height: 26, width: 34, line: 8, borderWidth: 1, isIconOnly: true },
@@ -111,27 +111,25 @@ const StyledButton = styled.button`
         stroke: ${p.theme.colors.disabledText};
       }
     `
-    : `
-      color: ${p.color || (
-        p.highContrast
-          ? (
-            p.background && p.background !== 'transparent'
-              ? getContrastText(p.background)
-              : 'white'
-          )
-          : (p.isTransaction ? p.theme.colors.txButton : p.theme.colors.main)
-      )};
+    : ` 
+    color: ${p.isTransaction ? p.theme.colors.txButton : p.theme.colors.main};
+    & > div {
+      background-color: ${p.background || `rgba(${hexToRGB(p.isTransaction ? p.theme.colors.txButton : p.theme.colors.main)}, ${bgOpacity * (p.bgStrength || 1)})`};
+      transition: all 100ms ease;
+    };
+    &:active > div {
+      background-color: ${p.isTransaction ? p.theme.colors.txButton : p.theme.colors.mainButton};
+    };
+    &:hover {
       & > div {
-        background-color: ${p.background || `rgba(${hexToRGB(p.isTransaction ? p.theme.colors.txButton : p.theme.colors.mainButton)}, ${bgOpacity * (p.bgStrength || 1)})`};
-        transition: all 100ms ease;
-      }
-      &:active > div {
-        background-color: ${p.isTransaction ? p.theme.colors.txButton : p.theme.colors.mainButton};
-      }
-      &:hover > div {
         color: white;
-        background-color: rgba(${hexToRGB(p.isTransaction ? p.theme.colors.txButton : p.theme.colors.main)}, ${hoverBgOpacity * (p.bgStrength || 1)});
-      }
+        background-color: ${p.background || `rgba(${hexToRGB(p.isTransaction ? p.theme.colors.txButton : p.theme.colors.main)}, ${bgOpacityHover * (p.bgStrength || 1)})`};
+      };
+      & > svg {
+        stroke: ${`rgba(${hexToRGB(p.isTransaction ? p.theme.colors.txButton : p.theme.colors.brightMain)}, 1)`};
+      };
+      border-color: ${`rgba(${hexToRGB(p.isTransaction ? p.theme.colors.txButton : p.theme.colors.brightMain)}, 1)`};
+    };
     `
   }
 `;

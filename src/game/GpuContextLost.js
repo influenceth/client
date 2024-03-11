@@ -83,7 +83,7 @@ export const GpuContextLostMessage = () => {
         your OS, your hardware specs, and any steps you can follow to reliably reproduce this message.
       </div>
       <br/><br/>
-      <Button highContrast onClick={() => window.location.reload()}>Refresh</Button>
+      <Button onClick={() => window.location.reload()}>Refresh</Button>
     </GpuContextLostContainer>
   )
 }

@@ -1,6 +1,6 @@
 import styled from 'styled-components';
 
-import Button, { hoverBgOpacity } from '~/components/ButtonAlt';
+import Button, { bgOpacity, bgOpacityHover } from '~/components/ButtonAlt';
 import { reactBool } from '~/lib/utils';
 import theme, { hexToRGB, getContrastText } from '~/theme';
 
@@ -16,13 +16,20 @@ const SwitcherButton = styled(Button)`
   `}
 
   ${p => !p.disabled && `
-    &:hover > div {
-      color: ${p.isSelected ? getContrastText(p.background) : `white`};
-      background-color: rgba(
-        ${hexToRGB(p.isTransaction ? p.theme.colors.txButton : p.theme.colors.main)},
-        ${(p.isSelected ? 1 : hoverBgOpacity) * (p.bgStrength || 1)}
-      );
-    }
+    color: ${(p.isSelected ? `black` : p.theme.colors.main)};
+    &:hover {
+      & > div {
+        color: ${(p.isSelected ? `black` : `white`)};
+        background-color: rgba(
+          ${hexToRGB(p.isTransaction ? p.theme.colors.txButton : p.theme.colors.main)},
+          ${(p.isSelected ? 1 : bgOpacityHover) * (p.bgStrength || 1)}
+        );
+      };
+      & > svg {
+        stroke: ${`rgba(${hexToRGB(p.isTransaction ? p.theme.colors.txButton : p.theme.colors.main)}, 1)`};
+      };
+      border-color: ${`rgba(${hexToRGB(p.isTransaction ? p.theme.colors.txButton : p.theme.colors.main)}, 1)`};
+    };
   `}
 `;
 const SwitcherButtonInner = styled.div`
@@ -45,7 +52,6 @@ const Switcher = ({ buttons, buttonWidth, onChange, size, value }) => (
           key={buttonValue}
           background={buttonValue === value ? theme.colors.main : `rgba(${hexToRGB(theme.colors.main)}, 0.15)`}
           flip={reactBool(i === 0)}
-          highContrast
           isSelected={buttonValue === value}
           onClick={() => onChange(buttonValue)}
           size={size || undefined}

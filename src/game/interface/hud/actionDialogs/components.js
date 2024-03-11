@@ -1302,8 +1302,8 @@ export const SelectionDialog = ({ children, isCompletable, open, onClose, onComp
         <div>{children}</div>
       </SelectionBody>
       <SelectionButtons style={{ position: 'relative'}}>
-        <Button highContrast onClick={onClose}>Cancel</Button>
-        <Button disabled={!isCompletable} highContrast onClick={onComplete}>Done</Button>
+        <Button onClick={onClose}>Cancel</Button>
+        <Button disabled={!isCompletable} onClick={onComplete}>Done</Button>
       </SelectionButtons>
       <ClipCorner color={borderColor} dimension={selectionDialogCornerSize} />
     </Dialog>,
@@ -2778,7 +2778,6 @@ export const ResourceAmountSlider = ({ amount, extractionTime, min, max, resourc
         <SliderInfo>{formatTimer(extractionTime, 3)}</SliderInfo>
         <Button
           disabled={amount === max}
-          highContrast
           onClick={() => setAmount(max)}
           size="small"
           style={{ padding: 0, minWidth: 75 }}>Max</Button>
@@ -2874,13 +2873,11 @@ export const RecipeSlider = ({ amount, disabled, increment = 0.001, processingTi
               <>
                 <Button
                   disabled={amount === Math.round(amount)}
-                  highContrast
                   onClick={onRound}
                   size="small"
                   style={{ marginLeft: 10, padding: 0, minWidth: 75 }}>Round</Button>
                 <Button
                   disabled={amount === max}
-                  highContrast
                   onClick={() => onSetAmount(max)}
                   size="small"
                   style={{ marginLeft: 10, padding: 0, minWidth: 75 }}>Max</Button>
@@ -3608,7 +3605,6 @@ const CrewBusyButton = ({ crew }) => {
   return (
     <Button
       disabled={nativeBool(true)}
-      highContrast
       isTransaction
       loading={reactBool(true)}>
       Crew Busy
@@ -3618,7 +3614,7 @@ const CrewBusyButton = ({ crew }) => {
 
 const CrewNotLaunchedButton = ({ crew }) => {
   return (
-    <Button disabled={nativeBool(true)} highContrast isTransaction>
+    <Button disabled={nativeBool(true)} isTransaction>
       Crew Not Launched
     </Button>
   );
@@ -3663,7 +3659,6 @@ export const ActionDialogFooter = ({
           ? (
             <>
               <Button
-                highContrast
                 loading={reactBool(buttonsLoading)}
                 onClick={onClose}>Cancel</Button>
               {waitForCrewReady && !crew?._launched && <CrewNotLaunchedButton crew={crew} />}
@@ -3671,7 +3666,6 @@ export const ActionDialogFooter = ({
               {(!waitForCrewReady || (crew?._ready && crew?._launched)) && (
                 <Button
                   disabled={nativeBool(disabled)}
-                  highContrast
                   isTransaction
                   loading={reactBool(buttonsLoading)}
                   onClick={onGo}>{goLabel}</Button>
@@ -3683,12 +3677,10 @@ export const ActionDialogFooter = ({
               ? (
                 <>
                   <Button
-                    highContrast
                     loading={reactBool(buttonsLoading)}
                     onClick={onClose}>Close</Button>
                   <Button
                     disabled={nativeBool(disabled)}
-                    highContrast
                     isTransaction
                     loading={reactBool(buttonsLoading)}
                     onClick={onFinalize}>{finalizeLabel || 'Accept'}</Button>
@@ -3696,7 +3688,6 @@ export const ActionDialogFooter = ({
               )
               : (
                 <Button
-                  highContrast
                   loading={reactBool(buttonsLoading)}
                   onClick={onClose}>Close</Button>
               )

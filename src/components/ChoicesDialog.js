@@ -288,7 +288,6 @@ const ChoicesDialog = ({
                       )}
                       {(!choices || (choices.length === 1 && !choices[0].text)) && choicelessButton && !choicelessInFooter && (
                         <Button
-                          highContrast
                           onClick={choicelessButton.onClick}
                           {...(choicelessButton.props || {})}
                           style={{ margin: '0 auto' }}>

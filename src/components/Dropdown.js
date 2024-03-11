@@ -137,7 +137,6 @@ const Dropdown = ({
       <span ref={setReferenceEl}>
         <Button
           disabled={nativeBool(disabled)}
-          highContrast
           onClick={handleToggle}
           {...styleProps}>
           {selected[iconKey] && <IconWrapper>{selected[iconKey]}</IconWrapper>}

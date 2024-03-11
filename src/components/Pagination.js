@@ -23,7 +23,6 @@ const Pagination = (props) => {
       <Button
         flip
         disabled={currentPage === 1}
-        highContrast
         onClick={handleFirst}
         size="wideicon">
         <BeginningIcon />
@@ -32,7 +31,6 @@ const Pagination = (props) => {
       <Button
         flip
         disabled={currentPage === 1}
-        highContrast
         onClick={handlePrevious}
         size="wideicon">
         <PreviousIcon />
@@ -41,7 +39,6 @@ const Pagination = (props) => {
       <Button
         disabled={rowCount <= currentPage * rowsPerPage}
         flipCorner
-        highContrast
         onClick={handleNext}
         size="wideicon">
         <NextIcon />
