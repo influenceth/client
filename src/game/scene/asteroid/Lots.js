@@ -801,9 +801,9 @@ const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, co
   }, [attachTo.quaternion, selectedLotIndex]);
 
   // Calculates the control point for the delivery bezier curve
-  const calculateControlPoint = useCallback((origin, dest, dist = 0.5) => {
-    const ratio = 1 + Math.pow(origin.distanceTo(dest) / config.radius, 2);
-    return origin.clone().lerp(dest, dist).multiplyScalar(Math.min(ratio, 3.5));
+  const calculateControlPoint = useCallback((origin, dest, distance, frac = 0.5) => {
+    const ratio = 1 + Math.pow(distance / config.radius, 2);
+    return origin.clone().lerp(dest, frac).multiplyScalar(Math.min(ratio, 3.5));
   }, [config]);
 
   // Handle turning on and off delivery arcs when a lot is selected
@@ -818,56 +818,41 @@ const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, co
     });
 
     if (outboundDeliveries && lotDetails?.building && positions.current && positionsReady) {
-      const originZeroIndex = selectedLotIndex - 1;
+      outboundDeliveries.forEach((delivery) => {
+        const maybeLot = delivery.Delivery?.dest?.Location?.location;
+        const destinationIndex = (maybeLot?.label === Entity.IDS.LOT) ? Lot.toIndex(maybeLot.id): null;
+        if (destinationIndex) newDeliveries.push({ originIndex: selectedLotIndex, destinationIndex });
+      });
+    }
+
+    if (inboundDeliveries && lotDetails?.building && positions.current && positionsReady) {
+      inboundDeliveries.forEach((delivery) => {
+        const maybeLot = delivery.Delivery?.origin?.Location?.location;
+        const originIndex = (maybeLot?.label === Entity.IDS.LOT) ? Lot.toIndex(maybeLot.id) : null;
+        if (originIndex) newDeliveries.push({ originIndex, destinationIndex: selectedLotIndex });
+      });
+    }
+
+    newDeliveries.forEach(({ originIndex, destinationIndex }) => {
+      const originZeroIndex = originIndex - 1;
       const origin = new Vector3(
         positions.current[originZeroIndex * 3 + 0],
         positions.current[originZeroIndex * 3 + 1],
         positions.current[originZeroIndex * 3 + 2]
       );
 
-      outboundDeliveries.forEach((delivery) => {
-        const maybeLot = delivery.Delivery?.dest?.Location?.location;
-        const destZeroIndex = (maybeLot?.label === Entity.IDS.LOT) ? Lot.toIndex(maybeLot.id) - 1 : null;
-        if (!destZeroIndex) return;
-
-        const destination = new Vector3(
-          positions.current[destZeroIndex * 3 + 0],
-          positions.current[destZeroIndex * 3 + 1],
-          positions.current[destZeroIndex * 3 + 2]
-        );
-
-        newDeliveries.push({ origin, destination });
-      });
-    }
-
-    if (inboundDeliveries && lotDetails?.building && positions.current && positionsReady) {
-      const destZeroIndex = selectedLotIndex - 1;
+      const destZeroIndex = destinationIndex - 1;
       const destination = new Vector3(
         positions.current[destZeroIndex * 3 + 0],
         positions.current[destZeroIndex * 3 + 1],
         positions.current[destZeroIndex * 3 + 2]
       );
 
-      inboundDeliveries.forEach((delivery) => {
-        const maybeLot = delivery.Delivery?.origin?.Location?.location;
-        const originZeroIndex = (maybeLot?.label === Entity.IDS.LOT) ? Lot.toIndex(maybeLot.id) - 1 : null;
-        if (!originZeroIndex) return;
-
-        const origin = new Vector3(
-          positions.current[originZeroIndex * 3 + 0],
-          positions.current[originZeroIndex * 3 + 1],
-          positions.current[originZeroIndex * 3 + 2]
-        );
-
-        newDeliveries.push({ origin, destination });
-      });
-    }
-
-    newDeliveries.forEach(({ origin, destination }) => {
+      const distance = Asteroid.getLotDistance(asteroidId, originIndex, destinationIndex) * 1000;
       const curve = new CubicBezierCurve3(
         origin,
-        calculateControlPoint(origin, destination, 1/3),
-        calculateControlPoint(origin, destination, 2/3),
+        calculateControlPoint(origin, destination, distance, 1/3),
+        calculateControlPoint(origin, destination, distance, 2/3),
         destination
       );
 

@@ -131,8 +131,8 @@ const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...pro
     if (!process) return;
     if (currentProcess) return;
     setPrimaryOutput(Number(Object.keys(process.outputs)[0]));
-    setAmount(maxAmount);
-  }, [currentProcess, maxAmount, process]);
+    setAmount(1);
+  }, [currentProcess, process]);
 
   const [crewTravelBonus, processingTimeBonus] = useMemo(() => {
     const bonusIds = [Crewmate.ABILITY_IDS.HOPPER_TRANSPORT_TIME];
@@ -526,7 +526,18 @@ const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...pro
       </ActionDialogBody>
 
       <ActionDialogFooter
-        disabled={stage === actionStages.NOT_STARTED && !(process && amount > 0 && originInventory && isOriginSufficient && destinationInventory && crewCan(Permission.IDS.RUN_PROCESS, lot.building))}
+        disabled={
+          stage === actionStages.NOT_STARTED
+          && !(
+            process
+            && amount >= recipeStepSize
+            && originInventory
+            && isOriginSufficient
+            && destinationInventory
+            && crewCan(Permission.IDS.RUN_PROCESS, lot.building
+            )
+          )
+        }
         goLabel="Begin"
         onGo={onStartProcess}
         finalizeLabel="Finish"
