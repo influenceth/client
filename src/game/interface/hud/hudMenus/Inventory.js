@@ -83,6 +83,7 @@ const StorageLabelBottom = styled(StorageLabel)`
   padding-bottom: 4px;
   justify-content: space-between;
   & > span {
+    font-weight: normal;
     color: #999;
     margin-right: 4px
   }
