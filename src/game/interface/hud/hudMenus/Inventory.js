@@ -65,8 +65,7 @@ const StorageLabel = styled.div`
     flex: 1;
   }
   & > span {
-    color: #888;
-    font-weight: normal;
+    font-weight: bold;
     color: ${p =>
       p.utilization < 0.7
       ? p.theme.colors.success
@@ -79,20 +78,12 @@ const StorageLabel = styled.div`
   }
 `;
 
-const StorageDetails = styled.div`
-  align-items: center;
-  display: flex;
-  flex-direction: row;
-  font-size: 14px;
+const StorageLabelBottom = styled(StorageLabel)`
   padding-top: 8px;
   padding-bottom: 4px;
   justify-content: space-between;
-  & label {
-    flex: 1;
-  }
   & > span {
-    color: #888;
-    font-weight: normal;
+    color: #999;
     margin-right: 4px
   }
 `;
@@ -129,7 +120,7 @@ const ProgressBar = styled.div`
   ${p => p.secondaryProgress && `
     &:before {
       content: "";
-      background: white;
+      background: ${p.secondaryProgress <= 1 ? 'white' : p.theme.colors.error};
       border-radius: 3px;
       position: absolute;
       left: 0;
@@ -334,14 +325,16 @@ const LotInventory = () => {
     [inventories, inventorySlot]
   );
 
-  const { usedMass, maxMass, pctMass, pctOrReservedMass, usedVolume, maxVolume, pctVolume, pctOrReservedVolume } = useMemo(() => {
+  const { usedMass, usedOrReservedMass, maxMass, pctMass, pctOrReservedMass, usedVolume, usedOrReservedVolume, maxVolume, pctVolume, pctOrReservedVolume } = useMemo(() => {
     if (!inventory) {
       return {
         usedMass: 0,
+        usedOrReservedMass: 0,
         maxMass: 0,
         pctMass: 0,
         pctOrReservedMass: 0,
         usedVolume: 0,
+        usedOrReservedVolume: 0,
         maxVolume: 0,
         pctVolume: 0,
         pctOrReservedVolume: 0,
@@ -363,10 +356,12 @@ const LotInventory = () => {
 
     return {
       usedMass: mass,
+      usedOrReservedMass: mass + reservedMass,
       maxMass: inventoryConfig.massConstraint,
       pctMass: massUsage,
       pctOrReservedMass: massUsage + massReservedUsage,
       usedVolume: volume,
+      usedOrReservedVolume: volume + reservedVolume,
       maxVolume: inventoryConfig.volumeConstraint,
       pctVolume: volumeUsage,
       pctOrReservedVolume: volumeUsage + volumeReservedUsage,
@@ -478,11 +473,11 @@ const LotInventory = () => {
                 </span>
               </StorageLabel>
               <ProgressBar progress={pctVolume} secondaryProgress={pctOrReservedVolume} utilization={pctOrReservedVolume}/>
-              <StorageDetails>
-                <span>Used: </span> {formatVolume(usedVolume)}
+              <StorageLabelBottom>
+                <span>Used: </span> {formatVolume(usedOrReservedVolume)}
                 <label></label>
                 <span>Max: </span> {formatVolume(maxVolume)}
-              </StorageDetails>
+              </StorageLabelBottom>
             </div>
             <div>
               <StorageLabel utilization={pctOrReservedMass}>
@@ -492,11 +487,11 @@ const LotInventory = () => {
                 </span>
               </StorageLabel>
               <ProgressBar progress={pctMass} secondaryProgress={pctOrReservedMass} utilization={pctOrReservedMass}/>
-              <StorageDetails>
-                <span>Used: </span> {formatMass(usedMass)}
+              <StorageLabelBottom>
+                <span>Used: </span> {formatMass(usedOrReservedMass)}
                 <label></label>
                 <span>Max: </span> {formatMass(maxMass)}
-              </StorageDetails>
+              </StorageLabelBottom>
             </div>
           </Charts>
           <Controls>
