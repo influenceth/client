@@ -73,8 +73,8 @@ const noop = () => {};
 const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...props }) => {
   const { currentProcess, processStatus, startProcess, finishProcess } = processManager;
   const processor = useMemo(
-    () => (lot.building?.Processors || []).find((e) => e.slot === processorSlot) || {},
-    [lot.building, processorSlot]
+    () => (lot?.building?.Processors || []).find((e) => e.slot === processorSlot) || {},
+    [lot?.building, processorSlot]
   );
   const crew = useActionCrew(currentProcess);
   const { crewCan } = useCrewContext();
@@ -126,6 +126,12 @@ const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...pro
 
     return Math.floor(maxPossible / recipeStepSize) * recipeStepSize;
   }, [process, originInventory]);
+
+  // Ensure amount is within bounds when origin inventory or recipe changes
+  useEffect(() => {
+    if (amount > maxAmount) setAmount(maxAmount);
+    if (amount < recipeStepSize) setAmount(recipeStepSize);
+  }, [recipeStepSize, maxAmount]);
 
   useEffect(() => {
     if (!process) return;
@@ -559,9 +565,9 @@ const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...pro
 
           {/* dest can be site, but not source */}
           <InventorySelectionDialog
-            asteroidId={asteroid.id}
+            asteroidId={asteroid?.id}
             excludeSites
-            otherEntity={lot.building}
+            otherEntity={lot?.building}
             isSourcing
             itemIds={inputArr}
             onClose={() => setOriginSelectorOpen(false)}
@@ -571,8 +577,8 @@ const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...pro
           />
 
           <InventorySelectionDialog
-            asteroidId={asteroid.id}
-            otherEntity={lot.building}
+            asteroidId={asteroid?.id}
+            otherEntity={lot?.building}
             itemIds={outputArr}
             onClose={() => setDestinationSelectorOpen(false)}
             onSelected={setSelectedDestination}
