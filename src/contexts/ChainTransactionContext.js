@@ -739,15 +739,21 @@ export function ChainTransactionProvider({ children }) {
             //   }
             // })
             .catch((err) => {
-              contracts[key].onTransactionError(err, vars);
-              if (txHash) { // TODO: may want to display pre-tx failures if using session wallet
-                dispatchFailedTransaction({
-                  key,
-                  vars,
-                  txHash,
-                  err: err?.message || 'Transaction was rejected.'
-                });
-                dispatchPendingTransactionComplete(txHash);
+              // this somewhat commonly times out even when tx has gone through, so before reporting an error
+              // check again that we have not received a related activity
+              if (getTxEvent(txHash)) {
+                console.warn(`txEvent already exists for "failed" tx ${txHash}`, err);
+              } else {
+                contracts[key].onTransactionError(err, vars);
+                if (txHash) { // TODO: may want to display pre-tx failures if using session wallet
+                  dispatchFailedTransaction({
+                    key,
+                    vars,
+                    txHash,
+                    err: err?.message || 'Transaction was rejected.'
+                  });
+                  dispatchPendingTransactionComplete(txHash);
+                }
               }
             })
             .finally(() => {
@@ -759,6 +765,11 @@ export function ChainTransactionProvider({ children }) {
     }
   }, [contracts, pendingTransactions]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const getTxEvent = useCallback((txHash) => {
+    const txHashBInt = BigInt(txHash);
+    return (activities || []).find((a) => a.event.transactionHash && BigInt(a.event.transactionHash) === txHashBInt)?.event;
+  }, [activities?.length]);
+
   useEffect(() => {
     // console.log('trigger activities effect', activities, pendingTransactions);
     if (contracts && pendingTransactions?.length) {
@@ -767,16 +778,14 @@ export function ChainTransactionProvider({ children }) {
 
         // check for event
         // TODO (enhancement): only need to check new activities diff (not all)
-        const txHashBInt = BigInt(txHash);
-
-        const txEvent = (activities || []).find((a) => a.event.transactionHash && BigInt(a.event.transactionHash) === txHashBInt)?.event;
+        const txEvent = getTxEvent(txHash);
         if (txEvent) {
           contracts[key].onConfirmed(txEvent, vars);
           dispatchPendingTransactionComplete(txHash);
         }
       });
     }
-  }, [activities?.length, pendingTransactions?.length]);  // eslint-disable-line react-hooks/exhaustive-deps
+  }, [getTxEvent, pendingTransactions?.length]);  // eslint-disable-line react-hooks/exhaustive-deps
 
   // on every new block, check for reverted tx's
   // TODO: parse revert_reason to be more readible
