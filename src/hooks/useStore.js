@@ -513,7 +513,7 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
       state.cameraNeedsReorientation = !!needsReorienting;
     })),
 
-    dispatchFailedTransaction: ({ key, vars, meta, txHash, err }) => set(produce(state => {
+    dispatchFailedTransaction: ({ key, vars = {}, meta = {}, txHash, err }) => set(produce(state => {
       if (!state.failedTransactions) state.failedTransactions = [];
       // because different wallets report tx failure in different ways, this is
       // prone to duplicates, so only report one failure per failed transaction
@@ -535,7 +535,7 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
       state.failedTransactions = state.failedTransactions.filter((tx) => BigInt(tx.txHash || 0) !== bTxHashOrTimestamp && tx.timestamp !== txHashOrTimestamp);
     })),
 
-    dispatchPendingTransaction: ({ key, vars, meta, timestamp, txHash }) => set(produce(state => {
+    dispatchPendingTransaction: ({ key, vars = {}, meta = {}, timestamp, txHash }) => set(produce(state => {
       if (!state.pendingTransactions) state.pendingTransactions = [];
       state.pendingTransactions.push({
         key,
