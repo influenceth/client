@@ -1,43 +1,56 @@
 import { useCallback, useMemo } from 'react';
-import { Delivery } from '@influenceth/sdk';
+import { Inventory, Permission } from '@influenceth/sdk';
 
-import { SurfaceTransferIcon } from '~/components/Icons';
+import { TransferP2PIcon, TransferToIcon } from '~/components/Icons';
 import useDeliveryManager from '~/hooks/actionManagers/useDeliveryManager';
-import ActionButton from './ActionButton';
+import ActionButton, { getCrewDisabledReason } from './ActionButton';
+import { locationsArrToObj } from '~/lib/utils';
 
-// TODO: is this fully deprecated?
-//       (below is how it was used in the old code)
-// if ((lot.delivery || []).find((d) => d.delivery.Delivery.status !== Delivery.STATUSES.COMPLETE)) {
-//   a.push(actionButtons.SurfaceTransferIncoming);
-// }
-const isVisible = () => false;
+const isVisible = ({ crew, lot, ship }) => {
+  const entity = ship || lot?.surfaceShip || lot?.building;
+  return crew && ((entity?.Inventories || []).find((i) => i.status === Inventory.STATUSES.AVAILABLE));
+};
 
-const SurfaceTransferIncoming = ({ lot, onSetAction, _disabled }) => {
-  const incoming = useMemo(() => {
-    return (lot?.deliveries || [])
-      .filter((d) => d.Delivery.status !== Delivery.STATUSES.COMPLETE)
-      .sort((a, b) => (a.Delivery.finishTime || 0) - (b.Delivery.finishTime || 0))
-  }, [lot?.deliveries]);
-  const nextIncoming = incoming?.length > 0 ? incoming[0] : null;
-  const { deliveryStatus } = useDeliveryManager(lot?.id, nextIncoming?.id);
-  
+const SurfaceTransferIncoming = ({ asteroid, crew, lot, ship, onSetAction, dialogProps = {}, _disabled }) => {
+  const destination = useMemo(() => ship || lot?.surfaceShip || lot?.building, [ship, lot]);
+  const { currentDeliveryActions, isLoading } = useDeliveryManager({ destination });
+  const deliveryDeparting = useMemo(() => {
+    return (currentDeliveryActions || []).find((a) => a.status === 'DEPARTING');
+  }, [currentDeliveryActions]);
+
   const handleClick = useCallback(() => {
-    onSetAction('SURFACE_TRANSFER', { deliveryId: nextIncoming?.id });
-  }, [onSetAction, nextIncoming?.id]);
+    onSetAction('SURFACE_TRANSFER', { deliveryId: 0, destination, ...dialogProps });
+  }, [onSetAction, dialogProps]);
 
-  if (!nextIncoming) return null;
-  const isReadyToFinish = deliveryStatus === 'READY_TO_FINISH';
+  const disabledReason = useMemo(() => {
+    if (!destination) return '';
+    const _location = locationsArrToObj(destination.Location?.locations || []);
+    if (!_location?.lotId) return 'not on surface';
+    
+    const hasCapacity = !!(destination?.Inventories || []).find((i) => {
+      if (i.status === Inventory.STATUSES.AVAILABLE) {
+        const invConfig = Inventory.getType(i?.inventoryType, crew?._inventoryBonuses) || {};
+        const hasMassCapacity = invConfig.massConstraint > ((i.mass || 0) + (i.reservedMass || 0));
+        const hasVolumeCapacity = invConfig.volumeConstraint > ((i.volume || 0) + (i.reservedVolume || 0));
+        return (hasMassCapacity && hasVolumeCapacity);
+      }
+    });
+    if (!hasCapacity) return 'over capacity';
+
+    return getCrewDisabledReason({ asteroid, crew });
+  }, [destination, crew]);
+
+  const isP2P = useMemo(() => !Permission.isPermitted(crew, Permission.IDS.ADD_PRODUCTS, destination), [crew, destination]);
+
   return (
     <ActionButton
-      label={`${deliveryStatus === 'READY_TO_FINISH' ? 'Finish' : 'Incoming'} Surface Transfer`}
+      label="Send To"
+      labelAddendum={disabledReason}
       flags={{
-        attention: isReadyToFinish,
-        badge: !isReadyToFinish && incoming.length > 1 ? incoming.length : 0,
-        disabled: _disabled,
-        loading: !isReadyToFinish,
-        finishTime: nextIncoming?.Delivery?.finishTime
+        disabled: _disabled || disabledReason || isLoading,
+        loading: deliveryDeparting
       }}
-      icon={<SurfaceTransferIcon />}
+      icon={isP2P ? <TransferP2PIcon /> : <TransferToIcon />}
       onClick={handleClick} />
   );
 };

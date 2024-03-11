@@ -74,8 +74,8 @@ const buttonOrder = [
   'RecruitCrewmate',
 
   // transfers
-  'SurfaceTransferIncoming',
   'SurfaceTransferOutgoing',
+  'SurfaceTransferIncoming',
 
   // core sample
   'CoreSample',

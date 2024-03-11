@@ -19,7 +19,7 @@ import actionStages from '~/lib/actionStages';
 // { destination, destinationSlot, origin, originSlot, deliveryId }
 // must include destination OR origin OR deliveryId
 // if more input is included, will filter to those results
-const useDeliveryManager = ({ destination, destinationSlot, origin, originSlot, deliveryId }) => {
+const useDeliveryManager = ({ destination, destinationSlot, origin, originSlot, deliveryId, txHash }) => {
   const { actionItems, readyItems } = useActionItems();
   const blockTime = useBlockTime();
   const { execute, getStatus, getPendingTx } = useContext(ChainTransactionContext);
@@ -32,7 +32,7 @@ const useDeliveryManager = ({ destination, destinationSlot, origin, originSlot, 
   }), [crew?.id]);
 
   const pendingDeliveries = useMemo(() => {
-    return pendingTransactions.filter(({ key, vars }) => (
+    return pendingTransactions.filter(({ key, vars, ...pendingProps }) => (txHash && txHash === pendingProps.txHash) || (
       (key === 'SendDelivery' || key === 'PackageDelivery')
       && (
         (!destination || (vars.dest.label === destination.label && vars.dest.id === destination.id))
@@ -41,7 +41,7 @@ const useDeliveryManager = ({ destination, destinationSlot, origin, originSlot, 
         && (!originSlot || vars.origin_slot === originSlot)
       )
     ));
-  }, [destination, destinationSlot, origin, originSlot, pendingTransactions]);
+  }, [destination, destinationSlot, origin, originSlot, pendingTransactions, txHash]);
 
   const [currentDeliveries, currentDeliveriesVersion] = useMemo(() => {
     const active = [...(deliveries || [])];

@@ -1936,7 +1936,7 @@ export const InventorySelectionDialog = ({
 
         // disable if !available or does not contain itemId
         display.push({
-          disabled: requirePresenceOfItemIds && !itemTally,
+          disabled: (requirePresenceOfItemIds && !itemTally) || (isSourcing && inv.mass === 0),
           distance: Asteroid.getLotDistance(asteroidId, entityLotIndex, otherLocation.lotIndex), // distance to source + distance to destination
           isMine: entity.Control.controller.id === crew?.id,
           isShip: !!entity.Ship,
