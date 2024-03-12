@@ -24,10 +24,6 @@ const AdminShip = ({}) => {
   const ship = useMemo(() => zoomShipId ? zoomShip : lot?.surfaceShip, [lot, zoomShip, zoomShipId]);
   const { data: controller } = useCrew(ship?.Control?.controller?.id);
 
-  const config = useMemo(() => ({
-    color: ship?.Nft?.price > 0 ? '#363d65' : '#7e2b2a'
-  }), [ship?.Nft?.price]);
-
   return (
     <>
       <Scrollable>

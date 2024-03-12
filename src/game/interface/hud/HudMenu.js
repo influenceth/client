@@ -222,7 +222,8 @@ const HudMenu = ({ forceOpenMenu }) => {
 
   const { data: asteroid } = useAsteroid(asteroidId);
   const { data: lot } = useLot(lotId);
-  const { data: ship } = useShip(zoomScene?.type === 'SHIP' ? zoomScene.shipId : null);
+  const { data: zoomShip } = useShip(zoomScene?.type === 'SHIP' && zoomScene.shipId);
+  const ship = useMemo(() => zoomScene?.type === 'SHIP' ? zoomShip : lot?.surfaceShip, [lot, zoomShip, zoomScene]);
   // const { data: marketplaces } = useAsteroidBuildings(
   //   asteroidId,
   //   'Exchange',
@@ -362,7 +363,7 @@ const HudMenu = ({ forceOpenMenu }) => {
         icon: <KeysIcon />,
         noDetail: true,
         Component: hudMenus.AdminShip,
-        isVisible: focus === 'ship'
+        isVisible: (focus === 'ship' || (focus === 'lot' && lot?.surfaceShip))
           && ship?.Control?.controller?.id === crew?.id
       },
       {
@@ -374,6 +375,28 @@ const HudMenu = ({ forceOpenMenu }) => {
         isVisible: focus === 'lot'
           && lot?.building?.Building?.status === Building.CONSTRUCTION_STATUSES.OPERATIONAL
           && lot.building.Dock
+      },
+      {
+        key: 'STATIONED_CREW',
+        label: 'Station Manifest',
+        icon: <StationCrewIcon />,
+        Component: hudMenus.StationManifest,
+        isVisible: focus === 'lot' && lot?.building?.Station
+      },
+      {
+        key: 'SHIP_INVENTORY',
+        label: 'Ship Inventory',
+        icon: <InventoryIcon />,
+        Component: hudMenus.Inventory,
+        isVisible: ((focus === 'ship' || (focus === 'lot' && lot?.surfaceShip))
+          && (ship?.Inventories || []).find((i) => i.status === Inventory.STATUSES.AVAILABLE))
+      },
+      {
+        key: 'SHIP_PASSENGERS',
+        label: 'Passenger Manifest',
+        icon: <PassengersIcon />,
+        Component: hudMenus.StationManifest,
+        isVisible: focus === 'ship' || (focus === 'lot' && lot?.surfaceShip)
       },
       {
         key: 'RESOURCES',
@@ -391,29 +414,6 @@ const HudMenu = ({ forceOpenMenu }) => {
         isVisible: focus === 'lot'
           && (lot?.building?.Inventories || []).find((i) => i.status === Inventory.STATUSES.AVAILABLE)
       },
-      {
-        key: 'STATIONED_CREW',
-        label: 'Station Manifest',
-        icon: <StationCrewIcon />,
-        Component: hudMenus.StationManifest,
-        isVisible: focus === 'lot' && lot?.building?.Station
-      },
-      {
-        key: 'SHIP_INVENTORY',
-        label: 'Ship Inventory',
-        icon: <InventoryIcon />,
-        Component: hudMenus.Inventory,
-        isVisible: focus === 'ship'
-          && (ship?.Inventories || []).find((i) => i.status === Inventory.STATUSES.AVAILABLE)
-      },
-      {
-        key: 'SHIP_PASSENGERS',
-        label: 'Passenger Manifest',
-        icon: <PassengersIcon />,
-        Component: hudMenus.StationManifest,
-        isVisible: focus === 'ship'
-      },
-
       {
         key: 'ASTEROID_MAP_SEARCH',
         label: 'Lot Search',
@@ -484,7 +484,7 @@ const HudMenu = ({ forceOpenMenu }) => {
         requireLogin: true,
         isVisible: scope === 'belt'
       },
-    )
+    );
 
     pageButtons.push(
       {

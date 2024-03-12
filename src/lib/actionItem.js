@@ -513,7 +513,7 @@ const formatAsTx = (item) => {
       formatted.asteroidId = item.meta?.asteroidId;
       formatted.lotId = item.meta?.lotId;
       formatted.onClick = ({ openDialog }) => {
-        openDialog('SURFACE_TRANSFER', { txHash: item.txHash });
+        openDialog('SURFACE_TRANSFER', { deliveryId: item.vars.delivery.id });
       };
       break;
     }
@@ -523,7 +523,7 @@ const formatAsTx = (item) => {
       formatted.asteroidId = item.meta?.asteroidId;
       formatted.lotId = item.meta?.lotId;
       formatted.onClick = ({ openDialog }) => {
-        openDialog('SURFACE_TRANSFER', { txHash: item.txHash });
+        openDialog('SURFACE_TRANSFER', { deliveryId: item.vars.delivery.id });
       };
       break;
     }

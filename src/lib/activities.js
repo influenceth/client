@@ -732,7 +732,8 @@ const activities = {
       ...invalidationDefaults(Entity.IDS.DELIVERY, returnValues.delivery.id),
       ...invalidationDefaults(returnValues.origin.label, returnValues.origin.id),
       ...invalidationDefaults(returnValues.destination.label, returnValues.destination.id),
-      ['actionItems']
+      ['actionItems'],
+      ['swayBalance']
     ]),
   },
   DeliveryCancelled: {

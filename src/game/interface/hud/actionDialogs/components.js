@@ -3514,7 +3514,7 @@ export const InventoryChangeCharts = ({ inventory, inventoryBonuses, deltaMass, 
           valueLabel={`${formatFixed(100 * postDeltaMass / capacity.mass.max, 1)}%`}
           value={postDeltaMass / capacity.mass.max}
           deltaColor={overMassCapacity ? theme.colors.error : theme.colors.brightMain}
-          deltaValue={deltaMass * 1e6 / capacity.mass.max}
+          deltaValue={deltaMass / capacity.mass.max}
           underLabels={(
             <>
               <span style={{ color: massColor, opacity: deltaMass < 0 ? 0.6 : 1 }}>{deltaMass < 0 ? '-' : '+'}{formatMass(Math.abs(deltaMass))}</span>
@@ -3532,10 +3532,10 @@ export const InventoryChangeCharts = ({ inventory, inventoryBonuses, deltaMass, 
           valueLabel={`${formatFixed(100 * postDeltaVolume / capacity.volume.max, 1)}%`}
           value={postDeltaVolume / capacity.volume.max}
           deltaColor={overVolumeCapacity ? theme.colors.error : theme.colors.brightMain}
-          deltaValue={deltaVolume * 1e6 / capacity.volume.max}
+          deltaValue={deltaVolume / capacity.volume.max}
           underLabels={(
             <>
-              <span style={{ color: volumeColor, opacity: deltaVolume < 0 ? 0.6 : 1 }}>{deltaVolume < 0 ? '-' : '+'}{formatVolume(Math.abs(deltaVolume * 1e6))}</span>
+              <span style={{ color: volumeColor, opacity: deltaVolume < 0 ? 0.6 : 1 }}>{deltaVolume < 0 ? '-' : '+'}{formatVolume(Math.abs(deltaVolume))}</span>
               <span style={{ color: overVolumeCapacity ? theme.colors.error : 'white' }}>{formatVolume(capacity.volume.max)}</span>
             </>
           )}

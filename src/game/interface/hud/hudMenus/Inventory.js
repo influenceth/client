@@ -262,7 +262,11 @@ const LotInventory = () => {
   const zoomScene = useStore(s => s.asteroids.zoomScene);
 
   const { data: lot } = useLot(lotId);
-  const { data: ship } = useShip(zoomScene?.type === 'SHIP' && zoomScene.shipId);
+
+  const zoomShipId = zoomScene?.type === 'SHIP' ? zoomScene.shipId : null;
+  const { data: zoomShip } = useShip(zoomShipId);
+  const ship = useMemo(() => zoomShipId ? zoomShip : lot?.surfaceShip, [lot, zoomShip, zoomShipId]);
+
   const entity = useMemo(() => ship || lot?.building, [lot, ship]);
 
   const { crew, crewCan } = useCrewContext();

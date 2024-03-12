@@ -291,25 +291,25 @@ const SurfaceTransfer = ({
   }, [crew?._inventoryBonuses, packageDelivery, startDelivery, originInventory, destinationInventory, selectedItems, sway, isP2P, hasOriginPerm, asteroid?.id, originLot?.id, willBeOverCapacity]);
 
   const onFinishDelivery = useCallback(() => {
-    finishDelivery(props.deliveryId, {
+    finishDelivery(deliveryId, {
       asteroidId: asteroid?.id,
       lotId: destinationLot?.id,
     });
-  }, [finishDelivery, props.deliveryId, asteroid?.id, destinationLot?.id]);
+  }, [finishDelivery, deliveryId, asteroid?.id, destinationLot?.id]);
 
   const onCancelDelivery = useCallback(() => {
-    cancelDelivery(props.deliveryId, {
+    cancelDelivery(deliveryId, {
       asteroidId: asteroid?.id,
       lotId: destinationLot?.id,
     });
-  }, [cancelDelivery, props.deliveryId, asteroid?.id, destinationLot?.id]);
+  }, [cancelDelivery, deliveryId, asteroid?.id, destinationLot?.id]);
 
   const onAcceptDelivery = useCallback(() => {
-    acceptDelivery(props.deliveryId, {
+    acceptDelivery(deliveryId, {
       asteroidId: asteroid?.id,
       lotId: destinationLot?.id,
     });
-  }, [acceptDelivery, props.deliveryId, asteroid?.id, destinationLot?.id]);
+  }, [acceptDelivery, deliveryId, asteroid?.id, destinationLot?.id]);
 
   const actionDetails = useMemo(() => {
     let overrideColor = undefined;
@@ -546,9 +546,13 @@ const SurfaceTransfer = ({
       </ActionDialogBody>
 
       <ActionDialogFooter
-        disabled={stage === actionStage.NOT_STARTED && (
-          totalMass === 0 || !destination || !origin || willBeOverCapacity || !crewCan(Permission.IDS.REMOVE_PRODUCTS, origin)
-        )}
+        disabled={stage === actionStage.NOT_STARTED
+          ? (totalMass === 0 || !destination || !origin || willBeOverCapacity || !crewCan(Permission.IDS.REMOVE_PRODUCTS, origin))
+          : (currentDeliveryAction?.status === 'PACKAGED' && hasDestPerm && !(
+              crew?._location?.lotId && crew?._location?.asteroidId === asteroid?.id
+            )
+          )
+        }
         goLabel="Transfer"
         onGo={onStartDelivery}
         stage={stage}
@@ -619,8 +623,8 @@ const Wrapper = (props) => {
 
   const currentDeliveryAction = useMemo(() => {
     return (deliveryManager.currentDeliveryActions || []).find((d) => {
-      if (props.deliveryId) return d.action.deliveryId === deliveryId
-      if (props.txHash) return d.action.txHash === txHash;
+      if (deliveryId) return d.action.deliveryId === deliveryId
+      if (txHash) return d.action.txHash === txHash;
       return d.status === 'PACKAGING' || d.status === 'DEPARTING';
     });
   }, [deliveryManager.currentVersion, deliveryId, txHash]);

@@ -25,7 +25,9 @@ const useDeliveryManager = ({ destination, destinationSlot, origin, originSlot, 
   const { execute, getStatus, getPendingTx } = useContext(ChainTransactionContext);
   const { crew, pendingTransactions } = useCrewContext();
 
-  const { data: deliveries, isLoading } = useDeliveries({ destination, destinationSlot, origin, originSlot, deliveryId, incomplete: true });
+  const { data: deliveries, isLoading } = useDeliveries({ destination, destinationSlot, origin, originSlot, deliveryId, status: [
+    Delivery.STATUSES.ON_HOLD, Delivery.STATUSES.PACKAGED, Delivery.STATUSES.SENT,
+  ] });
 
   const payload = useMemo(() => ({
     caller_crew: { id: crew?.id, label: Entity.IDS.CREW }
@@ -131,7 +133,7 @@ const useDeliveryManager = ({ destination, destinationSlot, origin, originSlot, 
         current.destSlot = delivery.vars.dest_slot;
         current.origin = delivery.vars.origin;
         current.originSlot = delivery.vars.origin_slot;
-        current.contents = delivery.vars.products.map((p) => ({ product: Number(p.product), amount: p.amount }));
+        current.contents = (delivery.vars.products || []).map((p) => ({ product: Number(p.product), amount: p.amount }));
         current.price = delivery.vars.price;
         current.txHash = delivery.txHash;
         current.isProposal = (delivery.key === 'PackageDelivery');
@@ -149,7 +151,7 @@ const useDeliveryManager = ({ destination, destinationSlot, origin, originSlot, 
   }, [blockTime, deliveries, pendingDeliveries, getStatus, payload]);
 
   const acceptDelivery = useCallback((selectedDeliveryId, meta) => {
-    const delivery = currentDeliveries.find((d) => d.action.deliveryId === selectedDeliveryId);
+    const delivery = currentDeliveries.find((d) => d.action.deliveryId === (selectedDeliveryId || deliveryId));
     if (!delivery?.action) return;
     execute(
       'AcceptDelivery',
