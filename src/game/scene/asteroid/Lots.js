@@ -819,17 +819,21 @@ const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, co
 
     if (outboundDeliveries && lotDetails?.building && positions.current && positionsReady) {
       outboundDeliveries.forEach((delivery) => {
-        const maybeLot = delivery.Delivery?.dest?.Location?.location;
-        const destinationIndex = (maybeLot?.label === Entity.IDS.LOT) ? Lot.toIndex(maybeLot.id): null;
-        if (destinationIndex) newDeliveries.push({ originIndex: selectedLotIndex, destinationIndex });
+        const maybeLot = delivery.Delivery?.dest?.Location?.locations.find(l => l.label === Entity.IDS.LOT);
+        if (maybeLot?.id) newDeliveries.push({
+          originIndex: selectedLotIndex,
+          destinationIndex: Lot.toIndex(maybeLot.id)
+        });
       });
     }
 
     if (inboundDeliveries && lotDetails?.building && positions.current && positionsReady) {
       inboundDeliveries.forEach((delivery) => {
-        const maybeLot = delivery.Delivery?.origin?.Location?.location;
-        const originIndex = (maybeLot?.label === Entity.IDS.LOT) ? Lot.toIndex(maybeLot.id) : null;
-        if (originIndex) newDeliveries.push({ originIndex, destinationIndex: selectedLotIndex });
+        const maybeLot = delivery.Delivery?.dest?.Location?.locations.find(l => l.label === Entity.IDS.LOT);
+        if (maybeLot?.id) newDeliveries.push({
+          originIndex: Lot.toIndex(maybeLot.id),
+          destinationIndex: selectedLotIndex
+        });
       });
     }
 
@@ -848,7 +852,15 @@ const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, co
         positions.current[destZeroIndex * 3 + 2]
       );
 
-      const distance = Asteroid.getLotDistance(asteroidId, originIndex, destinationIndex) * 1000;
+      let distance;
+
+      // This shouldn't be needed, but maybe somehow previous asteroid deliveries are still in state?
+      try {
+        distance = Asteroid.getLotDistance(asteroidId, originIndex, destinationIndex) * 1000;
+      } catch (e) {
+        return;
+      }
+
       const curve = new CubicBezierCurve3(
         origin,
         calculateControlPoint(origin, destination, distance, 1/3),
