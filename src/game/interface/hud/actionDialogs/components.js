@@ -3412,42 +3412,49 @@ export const ShipTab = ({ pilotCrew, inventoryBonuses, ship, stage, deltas = {},
     };
   }, [ship?.shipType, ship?.Inventories, inventoryBonuses]);
 
-  const charts = useMemo(() => ({
-    propellantMass: {
-      color: '#8cc63f',
-      label: 'Propellant Mass',
-      valueLabel: `${formatFixed((inventory.propellantMass + (deltas.propellantMass || 0)) / 1e6)} / ${formatFixed(inventory.maxPropellantMass / 1e6)}t`,
-      value: (inventory.propellantMass + (deltas.propellantMass || 0)) / inventory.maxPropellantMass,
-      deltaValue: (deltas.propellantMass || 0) / inventory.maxPropellantMass,
-    },
-    propellantVolume: {
-      color: '#557826',
-      label: 'Propellant Volume',
-      valueLabel: `${formatFixed((inventory.propellantVolume + (deltas.propellantVolume || 0)) / 1e6)} / ${formatFixed(inventory.maxPropellantVolume / 1e6)}m³`,
-      value: (inventory.propellantVolume + (deltas.propellantVolume || 0)) / inventory.maxPropellantVolume,
-      deltaValue: (deltas.propellantVolume || 0) / inventory.maxPropellantVolume,
-    },
-    cargoMass: {
-      label: 'Cargo Mass',
-      valueLabel: `${formatFixed((inventory.cargoMass + (deltas.cargoMass || 0)) / 1e6)} / ${formatFixed(inventory.maxCargoMass / 1e6)}t`,
-      value: (inventory.cargoMass + (deltas.cargoMass || 0)) / inventory.maxCargoMass,
-      deltaValue: (deltas.cargoMass || 0) / inventory.maxCargoMass,
-    },
-    cargoVolume: {
-      color: '#1f5f75',
-      label: 'Cargo Volume',
-      valueLabel: `${formatFixed((inventory.cargoVolume + (deltas.cargoVolume || 0)) / 1e6)} / ${formatFixed(inventory.maxCargoVolume / 1e6)}m³`,
-      value: (inventory.cargoVolume + (deltas.cargoVolume || 0)) / inventory.maxCargoVolume,
-      deltaValue: (deltas.cargoVolume || 0) / inventory.maxCargoVolume,
-    },
-    passengers: {
-      color: '#92278f',
-      label: 'Crewmates Onboard',
-      valueLabel: `${(ship.Station.population + (deltas.passengers || 0))} / ${Station.TYPES[ship.Station.stationType]?.cap}`,
-      value: (ship.Station.population + (deltas.passengers || 0)) / Station.TYPES[ship.Station.stationType]?.cap,
-      deltaValue: (deltas.passengers || 0) / Station.TYPES[ship.Station.stationType]?.cap,
-    },
-  }), [deltas, inventory, ship, statWarnings]);
+  const charts = useMemo(() => {
+    const result = {
+      propellantMass: {
+        color: '#8cc63f',
+        label: 'Propellant Mass',
+        valueLabel: `${formatFixed((inventory.propellantMass + (deltas.propellantMass || 0)) / 1e6)} / ${formatFixed(inventory.maxPropellantMass / 1e6)}t`,
+        value: (inventory.propellantMass + (deltas.propellantMass || 0)) / inventory.maxPropellantMass,
+        deltaValue: (deltas.propellantMass || 0) / inventory.maxPropellantMass,
+      },
+      propellantVolume: {
+        color: '#557826',
+        label: 'Propellant Volume',
+        valueLabel: `${formatFixed((inventory.propellantVolume + (deltas.propellantVolume || 0)) / 1e6)} / ${formatFixed(inventory.maxPropellantVolume / 1e6)}m³`,
+        value: (inventory.propellantVolume + (deltas.propellantVolume || 0)) / inventory.maxPropellantVolume,
+        deltaValue: (deltas.propellantVolume || 0) / inventory.maxPropellantVolume,
+      },
+      cargoMass: {
+        label: 'Cargo Mass',
+        valueLabel: `${formatFixed((inventory.cargoMass + (deltas.cargoMass || 0)) / 1e6)} / ${formatFixed(inventory.maxCargoMass / 1e6)}t`,
+        value: (inventory.cargoMass + (deltas.cargoMass || 0)) / inventory.maxCargoMass,
+        deltaValue: (deltas.cargoMass || 0) / inventory.maxCargoMass,
+      },
+      cargoVolume: {
+        color: '#1f5f75',
+        label: 'Cargo Volume',
+        valueLabel: `${formatFixed((inventory.cargoVolume + (deltas.cargoVolume || 0)) / 1e6)} / ${formatFixed(inventory.maxCargoVolume / 1e6)}m³`,
+        value: (inventory.cargoVolume + (deltas.cargoVolume || 0)) / inventory.maxCargoVolume,
+        deltaValue: (deltas.cargoVolume || 0) / inventory.maxCargoVolume,
+      }
+    };
+
+    // No need to show passengers if not at a station (crew is likely on an escape module)
+    if (ship.Station) {
+      result.passengers = {
+        color: '#92278f',
+        label: 'Crewmates Onboard',
+        valueLabel: `${((ship.Station.population || 0) + (deltas.passengers || 0))} / ${Station.TYPES[ship.Station?.stationType]?.cap || 0}`,
+        value: ((ship.Station.population || 0) + (deltas.passengers || 0)) / Station.TYPES[ship.Station?.stationType]?.cap || 0,
+        deltaValue: (deltas.passengers || 0) / Station.TYPES[ship.Station?.stationType]?.cap || 0
+      };
+    }
+    return result;
+  }, [deltas, inventory, ship, statWarnings]);
 
   return (
     <>
