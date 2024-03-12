@@ -739,15 +739,21 @@ export function ChainTransactionProvider({ children }) {
             //   }
             // })
             .catch((err) => {
-              contracts[key].onTransactionError(err, vars);
-              if (txHash) { // TODO: may want to display pre-tx failures if using session wallet
-                dispatchFailedTransaction({
-                  key,
-                  vars,
-                  txHash,
-                  err: err?.message || 'Transaction was rejected.'
-                });
-                dispatchPendingTransactionComplete(txHash);
+              // this somewhat commonly times out even when tx has gone through, so before reporting an error
+              // check again that we have not received a related activity
+              if (getTxEvent(txHash)) {
+                console.warn(`txEvent already exists for "failed" tx ${txHash}`, err);
+              } else {
+                contracts[key].onTransactionError(err, vars);
+                if (txHash) { // TODO: may want to display pre-tx failures if using session wallet
+                  dispatchFailedTransaction({
+                    key,
+                    vars,
+                    txHash,
+                    err: err?.message || 'Transaction was rejected.'
+                  });
+                  dispatchPendingTransactionComplete(txHash);
+                }
               }
             })
             .finally(() => {
@@ -759,6 +765,11 @@ export function ChainTransactionProvider({ children }) {
     }
   }, [contracts, pendingTransactions]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const getTxEvent = useCallback((txHash) => {
+    const txHashBInt = BigInt(txHash);
+    return (activities || []).find((a) => a.event.transactionHash && BigInt(a.event.transactionHash) === txHashBInt)?.event;
+  }, [activities?.length]);
+
   useEffect(() => {
     // console.log('trigger activities effect', activities, pendingTransactions);
     if (contracts && pendingTransactions?.length) {
@@ -767,81 +778,45 @@ export function ChainTransactionProvider({ children }) {
 
         // check for event
         // TODO (enhancement): only need to check new activities diff (not all)
-        const txHashBInt = BigInt(txHash);
-
-        const txEvent = (activities || []).find((a) => a.event.transactionHash && BigInt(a.event.transactionHash) === txHashBInt)?.event;
+        const txEvent = getTxEvent(txHash);
         if (txEvent) {
           contracts[key].onConfirmed(txEvent, vars);
           dispatchPendingTransactionComplete(txHash);
         }
-
-        //
-        // TODO: fix below: move this into its own effect dependent only on block number changes so not running getTransactionReceipt so often
-
-        // // if pending transaction has not turned into an event within 45 seconds
-        // // check every useEffect loop if tx is rejected (or missing)
-        // // TODO: should potentially also try loading full activities using $since tx to see if we missed a ws message
-        // } else if (lastBlockNumber > lastBlockNumberHandled.current) {
-        //   if (chainTime > Math.floor(tx.timestamp / 1000) + 180) { // TODO: lower this
-        //     starknet.provider.getTransactionReceipt(txHash)
-        //       .then((receipt) => {
-        //         console.info(`RECEIPT for tx ${txHash}`, receipt);  // TODO: remove this
-        //         if (receipt && receipt.status === 'REJECTED') {
-        //           dispatchPendingTransactionComplete(txHash);
-        //           dispatchFailedTransaction({
-        //             key,
-        //             vars,
-        //             txHash,
-        //             err: receipt.status_data || 'Transaction was rejected.'
-        //           });
-        //         }
-        //       })
-        //       .catch((err) => {
-        //         console.warn(err);
-        //         if (err?.message.includes('Transaction hash not found')) {
-        //           dispatchPendingTransactionComplete(txHash);
-        //           dispatchFailedTransaction({
-        //             key,
-        //             vars,
-        //             txHash,
-        //             err: 'Transaction was rejected.'
-        //           });
-        //         }
-        //       });
-        //   }
-        // }
       });
     }
-  }, [activities?.length, pendingTransactions?.length]);  // eslint-disable-line react-hooks/exhaustive-deps
+  }, [getTxEvent, pendingTransactions?.length]);  // eslint-disable-line react-hooks/exhaustive-deps
 
-  // TODO: should probably re-implement this
-  // useEffect(() => {
-  //   if (contracts && pendingTransactions?.length) {
-  //     pendingTransactions.filter((tx) => !tx.txEvent).forEach((tx) => {
-  //       // if it's been 45+ seconds, start checking on each block if has been rejected (or missing)
-  //       if (chainTime > Math.floor(tx.timestamp / 1000) + 45) {
-  //         const { key, vars, txHash } = tx;
+  // on every new block, check for reverted tx's
+  // TODO: parse revert_reason to be more readible
+  // TODO: time out eventually?
+  useEffect(() => {
+    if (contracts && pendingTransactions?.length) {
+      pendingTransactions.filter((tx) => !tx.txEvent).forEach((tx) => {
+        // if it's been X+ seconds since submitted, check if it was reverted
+        if (chainTime > Math.floor(tx.timestamp / 1000) + 30) {
+          const { key, vars, txHash } = tx;
 
-  //         genericProvider.getTransactionReceipt(txHash)
-  //           .then((receipt) => {
-  //             if (receipt && receipt.status === 'REJECTED') {
-  //               contracts[key].onTransactionError(receipt, vars);
-  //               dispatchFailedTransaction({
-  //                 key,
-  //                 vars,
-  //                 txHash,
-  //                 err: receipt.status_data || 'Transaction was rejected.'
-  //               });
-  //               dispatchPendingTransactionComplete(txHash);
-  //             }
-  //           })
-  //           .catch((err) => {
-  //             console.warn(err);
-  //           });
-  //       }
-  //     });
-  //   }
-  // }, [])
+          starknet.account.getTransactionReceipt(txHash)
+            .then((receipt) => {
+              if (receipt && receipt.execution_status === 'REVERTED') {
+                contracts[key].onTransactionError(receipt, vars);
+                dispatchFailedTransaction({
+                  key,
+                  vars,
+                  txHash,
+                  err: receipt.revert_reason || 'Transaction was rejected.'
+                });
+                dispatchPendingTransactionComplete(txHash);
+              }
+            })
+            .catch((err) => {
+              console.warn(err);
+            });
+        }
+      });
+    }
+  }, [blockNumber]);
 
   const execute = useCallback(async (key, vars, meta = {}) => {
     if (starknet?.account && contracts && contracts[key]) {
