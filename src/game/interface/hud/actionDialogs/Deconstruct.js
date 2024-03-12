@@ -70,7 +70,7 @@ const Deconstruct = ({ asteroid, lot, constructionManager, stage, ...props }) =>
     if (!lot?.building) return [];
     return getBuildingRequirements(lot?.building).map((item) => ({
       ...item,
-      totalRequired: (1 - Building.DECONSTRUCTION_PENALTY || 0) * item.totalRequired
+      totalRequired: Math.floor((1 - Building.DECONSTRUCTION_PENALTY || 0) * item.totalRequired)
     }));
   }, [lot?.building]);
 
