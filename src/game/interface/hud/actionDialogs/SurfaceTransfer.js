@@ -65,6 +65,7 @@ const SurfaceTransfer = ({
   stage,
   ...props
 }) => {
+  const { crew: currentCrew } = useCrewContext();
   const createAlert = useStore(s => s.dispatchAlertLogged);
 
   const { startDelivery, finishDelivery, packageDelivery, acceptDelivery, cancelDelivery } = deliveryManager;
@@ -224,9 +225,18 @@ const SurfaceTransfer = ({
     }, { totalMass: 0, totalVolume: 0 })
   }, [selectedItems]);
 
-  const hasOriginPerm = useMemo(() => !origin || crewCan(Permission.IDS.REMOVE_PRODUCTS, origin), [origin, crew]);
-  const hasDestPerm = useMemo(() => !destination || crewCan(Permission.IDS.ADD_PRODUCTS, destination), [destination, crew]);
-  const isP2P = useMemo(() => !(hasOriginPerm && hasDestPerm), [hasOriginPerm, hasDestPerm]);
+  const currentCrewIsSender = useMemo(() => {
+    if (currentDelivery) return currentCrew?.id === currentDelivery.callerCrew?.id;
+    return true;
+  }, [currentCrew, currentDelivery]);
+
+  const senderHasDestPerm = useMemo(() => {
+    if (!destination) return true;
+    if (currentDelivery) return currentDelivery?.callerCrew ? Permission.isPermitted(currentDelivery.callerCrew, Permission.IDS.ADD_PRODUCTS, destination) : true;
+    return crewCan(Permission.IDS.ADD_PRODUCTS, destination);
+  }, [crew, currentDelivery, destination]);
+
+  const isP2P = useMemo(() => currentDelivery?.isProposal || !senderHasDestPerm, [currentDelivery?.isProposal, senderHasDestPerm]);
 
   const stats = useMemo(() => ([
     {
@@ -280,7 +290,7 @@ const SurfaceTransfer = ({
       return;
     }
 
-    ((isP2P && hasOriginPerm) ? packageDelivery : startDelivery)({
+    (senderHasDestPerm ? startDelivery : packageDelivery)({
       origin,
       originSlot: originInventory?.slot,
       destination,
@@ -288,7 +298,7 @@ const SurfaceTransfer = ({
       contents: selectedItems,
       price: sway
     }, { asteroidId: asteroid?.id, lotId: originLot?.id });
-  }, [crew?._inventoryBonuses, packageDelivery, startDelivery, originInventory, destinationInventory, selectedItems, sway, isP2P, hasOriginPerm, asteroid?.id, originLot?.id, willBeOverCapacity]);
+  }, [crew?._inventoryBonuses, packageDelivery, startDelivery, originInventory, destinationInventory, selectedItems, sway, isP2P, senderHasDestPerm, asteroid?.id, originLot?.id, willBeOverCapacity]);
 
   const onFinishDelivery = useCallback(() => {
     finishDelivery(deliveryId, {
@@ -316,12 +326,12 @@ const SurfaceTransfer = ({
     let status = undefined;
     if (stage === actionStage.NOT_STARTED || ['READY','PACKAGED'].includes(currentDeliveryAction?.status)) {
       if (isP2P) {
-        if (hasDestPerm) {
-          status = 'Incoming from Other Crew';
-          overrideColor = '#faaf3f';
-        } else {
+        if (currentCrewIsSender) {
           status = 'Send to Crew';
           overrideColor = theme.colors.green;
+        } else {
+          status = 'Incoming from Other Crew';
+          overrideColor = '#faaf3f';
         }
       } else {
         status = 'Send Items';
@@ -329,19 +339,19 @@ const SurfaceTransfer = ({
       }
     }
     return { overrideColor, status, stage };
-  }, [crew, currentDeliveryAction?.status, destination, isP2P, hasDestPerm, stage]);
+  }, [crew, currentCrewIsSender, currentDeliveryAction?.status, destination, isP2P, stage]);
 
   const finalizeActions = useMemo(() => {
     if (currentDeliveryAction?.status === 'PACKAGED') {
-      if (hasDestPerm) {
-        return {
-          finalizeLabel: 'Accept Proposal',
-          onFinalize: onAcceptDelivery,
-        };
-      } else {
+      if (currentCrewIsSender) {
         return {
           finalizeLabel: 'Cancel Proposal',
           onFinalize: onCancelDelivery,
+        };
+      } else {
+        return {
+          finalizeLabel: 'Accept Proposal',
+          onFinalize: onAcceptDelivery,
         };
       }
     }
@@ -349,7 +359,7 @@ const SurfaceTransfer = ({
       finalizeLabel: 'Complete',
       onFinalize: onFinishDelivery,
     };
-  }, [currentDeliveryAction?.status, crew, hasDestPerm, onAcceptDelivery, onCancelDelivery, onFinishDelivery]);
+  }, [currentDeliveryAction?.status, crew, currentCrewIsSender, onAcceptDelivery, onCancelDelivery, onFinishDelivery]);
 
   return (
     <>
@@ -446,7 +456,7 @@ const SurfaceTransfer = ({
 
                   {/* TODO: might be reasonable to warn user if about to send products to a place have ADD_PRODUCTS perm for, but not REMOVE_PRODUCTS */}
                   <P2PSection>
-                    {hasOriginPerm
+                    {currentCrewIsSender
                       ? (
                         <>
                           <CrewIndicator crew={destinationController} label={'Destination Controller'} />
@@ -470,19 +480,21 @@ const SurfaceTransfer = ({
                         <>
                           <CrewIndicator crew={originController} label={'Origin Controller'} />
 
-                          {sway > 0 && (
-                            <WarningAlert severity="error">
-                              <div><WarningOutlineIcon /></div>
-                              <div>The sender has requested a SWAY payment for these goods.</div>
-                            </WarningAlert>
-                          )}
-
                           {(stage === actionStage.NOT_STARTED || ['PACKAGING','PACKAGED','CANCELING'].includes(currentDeliveryAction?.status)) && (
-                            <SwayInputBlockInner
-                              disabled
-                              inputLabel="SWAY"
-                              instruction="You pay the controller in exchange for these goods:"
-                              value={sway} />
+                            <>
+                              {sway > 0 && (
+                                <WarningAlert severity="error">
+                                  <div><WarningOutlineIcon /></div>
+                                  <div>The sender has requested a SWAY payment for these goods.</div>
+                                </WarningAlert>
+                              )}
+                              
+                              <SwayInputBlockInner
+                                disabled
+                                inputLabel="SWAY"
+                                instruction="You pay the controller in exchange for these goods:"
+                                value={sway || '0'} />
+                            </>
                           )}
                         </>
                       )}
@@ -548,10 +560,7 @@ const SurfaceTransfer = ({
       <ActionDialogFooter
         disabled={stage === actionStage.NOT_STARTED
           ? (totalMass === 0 || !destination || !origin || willBeOverCapacity || !crewCan(Permission.IDS.REMOVE_PRODUCTS, origin))
-          : (currentDeliveryAction?.status === 'PACKAGED' && hasDestPerm && !(
-              crew?._location?.lotId && crew?._location?.asteroidId === asteroid?.id
-            )
-          )
+          : (currentDeliveryAction?.status === 'PACKAGED' && !(crew?._location?.lotId && crew?._location?.asteroidId === asteroid?.id))
         }
         goLabel="Transfer"
         onGo={onStartDelivery}
@@ -578,6 +587,7 @@ const SurfaceTransfer = ({
             asteroidId={asteroid.id}
             isSourcing
             itemIds={destinationProductIds}
+            limitToControlled={isP2P}
             limitToPrimary={fixedOrigin}
             otherEntity={destination}
             otherInvSlot={destinationInventory?.slot}

@@ -1865,6 +1865,7 @@ export const InventorySelectionDialog = ({
   isSourcing,
   itemIds,
   initialSelection,
+  limitToControlled,
   limitToPrimary,
   onClose,
   onSelected,
@@ -1906,6 +1907,9 @@ export const InventorySelectionDialog = ({
             if (!otherInvSlot || otherInvSlot === inv.slot) return;
           }
         }
+
+        // filter uncontrolled if limitToControlled
+        if (limitToControlled && entity.Control.controller.id !== crew?.id) return;
 
         // skip if locked (or inventory type is 0, which should not happen but has in staging b/c of dev bugs)
         if (inv.status !== Inventory.STATUSES.AVAILABLE || inv.inventoryType === 0) return;

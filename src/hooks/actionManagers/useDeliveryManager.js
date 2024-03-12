@@ -56,6 +56,7 @@ const useDeliveryManager = ({ destination, destinationSlot, origin, originSlot, 
         _isMyAction: true,
         _originLot: null,
         caller: null,
+        callerCrew: null,
         deliveryId: null,
         dest: null,
         destSlot: null,
@@ -74,18 +75,24 @@ const useDeliveryManager = ({ destination, destinationSlot, origin, originSlot, 
       let status = 'READY';
       let stage = actionStages.NOT_STARTED;
 
+      // default to pending tx value
+      current.callerCrew = delivery.vars?.caller_crew;
+
       // if deliveryId, treat lot as destination and assume in progress or done
       if (delivery.id > 0) {
         let actionItem = (actionItems || []).find((item) => item.event.name === 'DeliverySent' && item.event.returnValues.delivery.id === delivery.id);
         if (actionItem) {
           current._cachedData = actionItem.data;
           current._originLot = actionItem.data.origin?.Location.locations.find((l) => l.label === Entity.IDS.LOT);
+          current.caller = actionItem.event.returnValues.caller;
+          current.callerCrew = actionItem.event.returnValues.callerCrew;
           current.startTime = actionItem.event.timestamp;
         } else {
           actionItem = (actionItems || []).find((item) => item.event.name === 'DeliveryPackaged' && item.event.returnValues.delivery.id === delivery.id);
           if (actionItem) {
             current._cachedData = actionItem.data;
             current.caller = actionItem.event.returnValues.caller;
+            current.callerCrew = actionItem.event.returnValues.callerCrew;
             current.price = actionItem.event.returnValues.price;
             current.startTime = actionItem.event.timestamp;
             current.isProposal = true;

@@ -727,15 +727,6 @@ const activities = {
   },
   // deprecated ^^^
 
-  DeliveryAccepted: {
-    getInvalidations: ({ event: { returnValues, version } }) => ([
-      ...invalidationDefaults(Entity.IDS.DELIVERY, returnValues.delivery.id),
-      ...invalidationDefaults(returnValues.origin.label, returnValues.origin.id),
-      ...invalidationDefaults(returnValues.destination.label, returnValues.destination.id),
-      ['actionItems'],
-      ['swayBalance']
-    ]),
-  },
   DeliveryCancelled: {
     getInvalidations: ({ event: { returnValues, version } }) => ([
       ...invalidationDefaults(Entity.IDS.DELIVERY, returnValues.delivery.id),
@@ -848,7 +839,8 @@ const activities = {
       ...invalidationDefaults(Entity.IDS.DELIVERY, returnValues.delivery.id),
       ...invalidationDefaults(returnValues.dest.label, returnValues.dest.id),
       ...invalidationDefaults(returnValues.origin.label, returnValues.origin.id),
-      ['actionItems']
+      ['actionItems'],
+      ['swayBalance'] // (in case this was p2p)
     ]),
 
     getPrepopEntities: ({ event: { returnValues } }) => ({
