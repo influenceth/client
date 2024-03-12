@@ -1865,6 +1865,7 @@ export const InventorySelectionDialog = ({
   isSourcing,
   itemIds,
   initialSelection,
+  limitToControlled,
   limitToPrimary,
   onClose,
   onSelected,
@@ -1907,6 +1908,9 @@ export const InventorySelectionDialog = ({
           }
         }
 
+        // filter uncontrolled if limitToControlled
+        if (limitToControlled && entity.Control.controller.id !== crew?.id) return;
+
         // skip if locked (or inventory type is 0, which should not happen but has in staging b/c of dev bugs)
         if (inv.status !== Inventory.STATUSES.AVAILABLE || inv.inventoryType === 0) return;
 
@@ -1936,7 +1940,7 @@ export const InventorySelectionDialog = ({
 
         // disable if !available or does not contain itemId
         display.push({
-          disabled: requirePresenceOfItemIds && !itemTally,
+          disabled: (requirePresenceOfItemIds && !itemTally) || (isSourcing && inv.mass === 0),
           distance: Asteroid.getLotDistance(asteroidId, entityLotIndex, otherLocation.lotIndex), // distance to source + distance to destination
           isMine: entity.Control.controller.id === crew?.id,
           isShip: !!entity.Ship,
@@ -3514,7 +3518,7 @@ export const InventoryChangeCharts = ({ inventory, inventoryBonuses, deltaMass, 
           valueLabel={`${formatFixed(100 * postDeltaMass / capacity.mass.max, 1)}%`}
           value={postDeltaMass / capacity.mass.max}
           deltaColor={overMassCapacity ? theme.colors.error : theme.colors.brightMain}
-          deltaValue={deltaMass * 1e6 / capacity.mass.max}
+          deltaValue={deltaMass / capacity.mass.max}
           underLabels={(
             <>
               <span style={{ color: massColor, opacity: deltaMass < 0 ? 0.6 : 1 }}>{deltaMass < 0 ? '-' : '+'}{formatMass(Math.abs(deltaMass))}</span>
@@ -3532,10 +3536,10 @@ export const InventoryChangeCharts = ({ inventory, inventoryBonuses, deltaMass, 
           valueLabel={`${formatFixed(100 * postDeltaVolume / capacity.volume.max, 1)}%`}
           value={postDeltaVolume / capacity.volume.max}
           deltaColor={overVolumeCapacity ? theme.colors.error : theme.colors.brightMain}
-          deltaValue={deltaVolume * 1e6 / capacity.volume.max}
+          deltaValue={deltaVolume / capacity.volume.max}
           underLabels={(
             <>
-              <span style={{ color: volumeColor, opacity: deltaVolume < 0 ? 0.6 : 1 }}>{deltaVolume < 0 ? '-' : '+'}{formatVolume(Math.abs(deltaVolume * 1e6))}</span>
+              <span style={{ color: volumeColor, opacity: deltaVolume < 0 ? 0.6 : 1 }}>{deltaVolume < 0 ? '-' : '+'}{formatVolume(Math.abs(deltaVolume))}</span>
               <span style={{ color: overVolumeCapacity ? theme.colors.error : 'white' }}>{formatVolume(capacity.volume.max)}</span>
             </>
           )}

@@ -59,10 +59,13 @@ const StationManifest = () => {
   const { crew, crewCan } = useCrewContext();
   const { data: lot } = useLot(lotId);
 
-  const shipId = zoomScene?.type === 'SHIP' ? zoomScene.shipId : undefined;
-  const { data: ship } = useShip(shipId);
+  const zoomShipId = zoomScene?.type === 'SHIP' ? zoomScene.shipId : null;
+  const { data: zoomShip } = useShip(zoomShipId);
 
-  const station = useMemo(() => shipId ? ship : lot?.building, [ship, lot]);
+  const [shipId, ship] = useMemo(() => zoomShipId ? [zoomShipId, zoomShip] : [lot?.surfaceShip?.id, lot?.surfaceShip], [lot, zoomShip, zoomShipId]);
+
+  const station = useMemo(() => ship || lot?.building, [lot, ship]);
+
   const { data: unfilteredCrews } = useStationedCrews(station);
 
   const [nameFilter, setNameFilter] = useState('');

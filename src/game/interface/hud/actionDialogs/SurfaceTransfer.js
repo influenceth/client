@@ -42,6 +42,7 @@ import CrewIndicator from '~/components/CrewIndicator';
 import useEntity from '~/hooks/useEntity';
 import formatters from '~/lib/formatters';
 import useActionCrew from '~/hooks/useActionCrew';
+import { TransferP2PIcon } from '~/components/Icons';
 
 const P2PSection = styled.div`
   align-self: flex-start;
@@ -57,17 +58,14 @@ const P2PSection = styled.div`
 const SurfaceTransfer = ({
   asteroid,
   deliveryManager,
-
-  origin,
-  originLot,
-  originSlot: initialOriginSlot,
-
-  dest,
   currentDeliveryAction,
-
+  deliveryId,
+  destination: fixedDestination,
+  origin: fixedOrigin,
   stage,
   ...props
 }) => {
+  const { crew: currentCrew } = useCrewContext();
   const createAlert = useStore(s => s.dispatchAlertLogged);
 
   const { startDelivery, finishDelivery, packageDelivery, acceptDelivery, cancelDelivery } = deliveryManager;
@@ -80,60 +78,86 @@ const SurfaceTransfer = ({
     return getCrewAbilityBonuses(Crewmate.ABILITY_IDS.HOPPER_TRANSPORT_TIME, crew) || {};
   }, [crew]);
 
-  const [destinationSelectorOpen, setDestinationSelectorOpen] = useState(false);
-  const [originSelectorOpen, setOriginSelectorOpen] = useState(false);
-  const [originSlot, setOriginSlot] = useState(initialOriginSlot);
   const [tab, setTab] = useState(0);
   const [transferSelectorOpen, setTransferSelectorOpen] = useState();
   const [selectedItems, setSelectedItems] = useState(props.preselect?.selectedItems || {});
   const [sway, setSway] = useState((currentDelivery?.price || 0) / 1e6);
-  const [destinationSelection, setDestinationSelection] = useState(
-    (currentDelivery && dest && {
-      id: dest.id,
-      label: dest.label,
-      lotIndex: locationsArrToObj(dest.Location?.locations || []).lotIndex,
-      slot: currentDelivery.destSlot
-    }) || undefined
-  );
 
-  const onSwayChange = useCallback((value) => {
-    setSway(value ? parseInt(value) : '');
-  }, []);
+  const [destinationSelectorOpen, setDestinationSelectorOpen] = useState(false);
+  const [originSelectorOpen, setOriginSelectorOpen] = useState(false);
 
-  // get origin and originInventory
-  const [originInventory, originInventoryTally] = useMemo(() => {
-    const inventories = (origin?.Inventories || []).filter((i) => i.status === Inventory.STATUSES.AVAILABLE);
-    return [
-      // if originSlot is specified, use that
-      // else, use primary (or first available if no primary)
-      originSlot
-        ? inventories.find((i) => i.slot === originSlot)
-        : inventories.find((i) => Inventory.TYPES[i.inventoryType].category === Inventory.CATEGORIES.PRIMARY) || inventories[0],
-      inventories.length
-    ];
-  }, [origin?.Inventories, originSlot]);
-  const { data: originController } = useCrew(origin?.Control?.controller?.id);
-
-  // When a new origin inventory is selected, reset the selected items
-  const onOriginSelect = useCallback((selection) => {
-    if (originSlot !== selection.slot) {
-      setOriginSlot(selection.slot);
-      setSelectedItems({});
+  const [destinationSelection, setDestinationSelection] = useState();
+  const [originSelection, setOriginSelection] = useState();
+  useEffect(() => {
+    if (fixedDestination) {
+      const availInvs = (fixedDestination.Inventories || []).filter((i) => i.status === Inventory.STATUSES.AVAILABLE);
+      setDestinationSelection({
+        id: fixedDestination.id,
+        label: fixedDestination.label,
+        lotIndex: locationsArrToObj(fixedDestination.Location?.locations || []).lotIndex,
+        slot: currentDelivery?.destSlot
+          || props.destinationSlot
+          || availInvs.find((i) => Inventory.TYPES[i.inventoryType].category === Inventory.CATEGORIES.PRIMARY)?.slot
+          || availInvs[0]?.slot
+      });
     }
-  }, [originSlot]);
+    if (fixedOrigin) {
+      const availInvs = (fixedOrigin.Inventories || []).filter((i) => i.status === Inventory.STATUSES.AVAILABLE);
+      setOriginSelection({
+        id: fixedOrigin.id,
+        label: fixedOrigin.label,
+        lotIndex: locationsArrToObj(fixedOrigin.Location?.locations || []).lotIndex,
+        slot: currentDelivery?.originSlot
+          || props.originSlot
+          || availInvs.find((i) => Inventory.TYPES[i.inventoryType].category === Inventory.CATEGORIES.PRIMARY)?.slot
+          || availInvs[0]?.slot
+      });
+    }
+  }, [currentDelivery, fixedDestination, fixedOrigin]);
 
-  const onDestinationSelect = useCallback((selection) => {
-    const { id, label, slot } = destinationSelection || {};
-    if (id !== selection.id || label !== selection.label || slot !== selection.slot) setDestinationSelection(selection);
-  }, [destinationSelection]);
+  const { data: origin } = useEntity(originSelection ? { id: originSelection.id, label: originSelection.label } : undefined);
+  const originLotId = useMemo(() => origin && locationsArrToObj(origin?.Location?.locations || []).lotId, [origin]);
+  const { data: originLot } = useLot(originLotId);
+  const originInventory = useMemo(() => (origin?.Inventories || []).find((i) => i.slot === originSelection?.slot), [origin, originSelection]);
+  const { data: originController } = useCrew(origin?.Control?.controller?.id);
+  const originInventoryTally = useMemo(() => (origin?.Inventories || []).filter((i) => i.status === Inventory.STATUSES.AVAILABLE).length, [origin]);
+  const originProductIds = useMemo(() => {
+    const invConfig = Inventory.TYPES[originInventory?.inventoryType] || {};
+    return invConfig?.productConstraints ? Object.keys(invConfig?.productConstraints) : null;
+  }, [originInventory]);
 
   const { data: destination } = useEntity(destinationSelection ? { id: destinationSelection.id, label: destinationSelection.label } : undefined);
   const destinationLotId = useMemo(() => destination && locationsArrToObj(destination?.Location?.locations || []).lotId, [destination]);
   const { data: destinationLot } = useLot(destinationLotId);
   const destinationInventory = useMemo(() => (destination?.Inventories || []).find((i) => i.slot === destinationSelection?.slot), [destination, destinationSelection]);
   const { data: destinationController } = useCrew(destination?.Control?.controller?.id);
-
+  const destinationInventoryTally = useMemo(() => (destination?.Inventories || []).filter((i) => i.status === Inventory.STATUSES.AVAILABLE).length, [destination]);
   const destDeliveryManager = useDeliveryManager({ destination, destinationSlot: destinationSelection?.slot });
+  const destinationProductIds = useMemo(() => {
+    const invConfig = Inventory.TYPES[destinationInventory?.inventoryType] || {};
+    return invConfig?.productConstraints ? Object.keys(invConfig?.productConstraints) : null;
+  }, [destinationInventory]);
+
+  // When a new origin inventory is selected, reset the selected items
+  const onOriginSelect = useCallback((selection) => {
+    const { id, label, slot } = originSelection || {};
+    if (id !== selection.id || label !== selection.label || slot !== selection.slot) {
+      setOriginSelection(selection);
+      setSelectedItems({});
+    }
+  }, [originSelection]);
+
+  const onDestinationSelect = useCallback((selection) => {
+    const { id, label, slot } = destinationSelection || {};
+    if (id !== selection.id || label !== selection.label || slot !== selection.slot) {
+      setDestinationSelection(selection);
+      setSelectedItems({});
+    }
+  }, [destinationSelection]);
+
+  const onSwayChange = useCallback((value) => {
+    setSway(value ? parseInt(value) : '');
+  }, []);
 
   // handle "currentDeliveryAction" state
   useEffect(() => {
@@ -144,7 +168,7 @@ const SurfaceTransfer = ({
 
   useEffect(() => {
     if (stage === actionStage.NOT_STARTED) {
-      const destInvConfig = (Inventory.getType(destinationInventory?.inventoryType, crew?._inventoryBonuses) || {})
+      const destInvConfig = (Inventory.getType(destinationInventory?.inventoryType, crew?._inventoryBonuses) || {});
       const destInvConstraints = destInvConfig.productConstraints;
 
       // cap selectedItems to originInventory contents and destinationInventory constraints
@@ -201,9 +225,18 @@ const SurfaceTransfer = ({
     }, { totalMass: 0, totalVolume: 0 })
   }, [selectedItems]);
 
-  const hasOriginPerm = useMemo(() => !origin || crewCan(Permission.IDS.REMOVE_PRODUCTS, origin), [origin, crew]);
-  const hasDestPerm = useMemo(() => !destination || crewCan(Permission.IDS.ADD_PRODUCTS, destination), [destination, crew]);
-  const isP2P = useMemo(() => !(hasOriginPerm && hasDestPerm), [hasOriginPerm, hasDestPerm]);
+  const currentCrewIsSender = useMemo(() => {
+    if (currentDelivery) return currentCrew?.id === currentDelivery.callerCrew?.id;
+    return true;
+  }, [currentCrew, currentDelivery]);
+
+  const senderHasDestPerm = useMemo(() => {
+    if (!destination) return true;
+    if (currentDelivery) return currentDelivery?.callerCrew ? Permission.isPermitted(currentDelivery.callerCrew, Permission.IDS.ADD_PRODUCTS, destination) : true;
+    return crewCan(Permission.IDS.ADD_PRODUCTS, destination);
+  }, [crew, currentDelivery, destination]);
+
+  const isP2P = useMemo(() => currentDelivery?.isProposal || !senderHasDestPerm, [currentDelivery?.isProposal, senderHasDestPerm]);
 
   const stats = useMemo(() => ([
     {
@@ -257,7 +290,7 @@ const SurfaceTransfer = ({
       return;
     }
 
-    ((isP2P && hasOriginPerm) ? packageDelivery : startDelivery)({
+    (senderHasDestPerm ? startDelivery : packageDelivery)({
       origin,
       originSlot: originInventory?.slot,
       destination,
@@ -265,40 +298,40 @@ const SurfaceTransfer = ({
       contents: selectedItems,
       price: sway
     }, { asteroidId: asteroid?.id, lotId: originLot?.id });
-  }, [crew?._inventoryBonuses, packageDelivery, startDelivery, originInventory, destinationInventory, selectedItems, sway, isP2P, hasOriginPerm, asteroid?.id, originLot?.id, willBeOverCapacity]);
+  }, [crew?._inventoryBonuses, packageDelivery, startDelivery, originInventory, destinationInventory, selectedItems, sway, isP2P, senderHasDestPerm, asteroid?.id, originLot?.id, willBeOverCapacity]);
 
   const onFinishDelivery = useCallback(() => {
-    finishDelivery(props.deliveryId, {
+    finishDelivery(deliveryId, {
       asteroidId: asteroid?.id,
       lotId: destinationLot?.id,
     });
-  }, [finishDelivery, props.deliveryId, asteroid?.id, destinationLot?.id]);
+  }, [finishDelivery, deliveryId, asteroid?.id, destinationLot?.id]);
 
   const onCancelDelivery = useCallback(() => {
-    cancelDelivery(props.deliveryId, {
+    cancelDelivery(deliveryId, {
       asteroidId: asteroid?.id,
       lotId: destinationLot?.id,
     });
-  }, [cancelDelivery, props.deliveryId, asteroid?.id, destinationLot?.id]);
+  }, [cancelDelivery, deliveryId, asteroid?.id, destinationLot?.id]);
 
   const onAcceptDelivery = useCallback(() => {
-    acceptDelivery(props.deliveryId, {
+    acceptDelivery(deliveryId, {
       asteroidId: asteroid?.id,
       lotId: destinationLot?.id,
     });
-  }, [acceptDelivery, props.deliveryId, asteroid?.id, destinationLot?.id]);
+  }, [acceptDelivery, deliveryId, asteroid?.id, destinationLot?.id]);
 
   const actionDetails = useMemo(() => {
     let overrideColor = undefined;
     let status = undefined;
     if (stage === actionStage.NOT_STARTED || ['READY','PACKAGED'].includes(currentDeliveryAction?.status)) {
       if (isP2P) {
-        if (hasDestPerm) {
-          status = 'Incoming from Other Crew';
-          overrideColor = '#faaf3f';
-        } else {
+        if (currentCrewIsSender) {
           status = 'Send to Crew';
           overrideColor = theme.colors.green;
+        } else {
+          status = 'Incoming from Other Crew';
+          overrideColor = '#faaf3f';
         }
       } else {
         status = 'Send Items';
@@ -306,19 +339,19 @@ const SurfaceTransfer = ({
       }
     }
     return { overrideColor, status, stage };
-  }, [crew, currentDeliveryAction?.status, destination, isP2P, hasDestPerm, stage]);
+  }, [crew, currentCrewIsSender, currentDeliveryAction?.status, destination, isP2P, stage]);
 
   const finalizeActions = useMemo(() => {
     if (currentDeliveryAction?.status === 'PACKAGED') {
-      if (hasDestPerm) {
-        return {
-          finalizeLabel: 'Accept Proposal',
-          onFinalize: onAcceptDelivery,
-        };
-      } else {
+      if (currentCrewIsSender) {
         return {
           finalizeLabel: 'Cancel Proposal',
           onFinalize: onCancelDelivery,
+        };
+      } else {
+        return {
+          finalizeLabel: 'Accept Proposal',
+          onFinalize: onAcceptDelivery,
         };
       }
     }
@@ -326,13 +359,13 @@ const SurfaceTransfer = ({
       finalizeLabel: 'Complete',
       onFinalize: onFinishDelivery,
     };
-  }, [currentDeliveryAction?.status, crew, hasDestPerm, onAcceptDelivery, onCancelDelivery, onFinishDelivery]);
+  }, [currentDeliveryAction?.status, crew, currentCrewIsSender, onAcceptDelivery, onCancelDelivery, onFinishDelivery]);
 
   return (
     <>
       <ActionDialogHeader
         action={{
-          icon: <SurfaceTransferIcon />,
+          icon: isP2P ? <TransferP2PIcon /> : <SurfaceTransferIcon />,
           label: 'Surface Transfer',
           status: actionDetails.status
         }}
@@ -357,13 +390,21 @@ const SurfaceTransfer = ({
         <FlexSection>
           <InventoryInputBlock
             title="Origin"
-            disabled={stage !== actionStage.NOT_STARTED || originInventoryTally === 1}
+            disabled={stage !== actionStage.NOT_STARTED || (fixedOrigin && originInventoryTally === 1)}
             entity={origin}
             inventorySlot={originInventory?.slot}
             inventoryBonuses={crew?._inventoryBonuses}
-            isSelected={stage === actionStage.NOT_STARTED && originInventoryTally !== 1}
+            imageProps={{ iconOverride: <InventoryIcon /> }}
+            isSelected={stage === actionStage.NOT_STARTED && !(fixedOrigin && originInventoryTally === 1)}
             lotIdOverride={originLot?.id}
-            onClick={() => { setOriginSelectorOpen(true) }} />
+            onClick={() => { setOriginSelectorOpen(true) }}
+            sublabel={
+              originLot
+                ? <><LocationIcon /> {formatters.lotName(originSelection?.lotIndex)}</>
+                : 'Inventory'
+            }
+            transferMass={totalMass}
+            transferVolume={totalVolume} />
 
           <FlexSectionSpacer>
             <ForwardIcon />
@@ -372,19 +413,18 @@ const SurfaceTransfer = ({
           <InventoryInputBlock
             title="Destination"
             titleDetails={<TransferDistanceDetails distance={transportDistance} crewTravelBonus={crewTravelBonus} />}
-            disabled={stage !== actionStage.NOT_STARTED}
+            disabled={stage !== actionStage.NOT_STARTED || (fixedDestination && destinationInventoryTally === 1)}
             entity={destination}
             inventorySlot={destinationInventory?.slot}
             inventoryBonuses={crew?._inventoryBonuses}
-            imageProps={{
-              iconOverride: <InventoryIcon />,
-            }}
-            isSelected={stage === actionStage.NOT_STARTED}
+            imageProps={{ iconOverride: <InventoryIcon /> }}
+            isSelected={stage === actionStage.NOT_STARTED && !(fixedDestination && destinationInventoryTally === 1)}
+            lotIdOverride={destinationLot?.id}
             onClick={() => { setDestinationSelectorOpen(true) }}
             sublabel={
               destinationLot
-              ? <><LocationIcon /> {formatters.lotName(destinationSelection?.lotIndex)}</>
-              : 'Inventory'
+                ? <><LocationIcon /> {formatters.lotName(destinationSelection?.lotIndex)}</>
+                : 'Inventory'
             }
             transferMass={totalMass}
             transferVolume={totalVolume} />
@@ -416,7 +456,7 @@ const SurfaceTransfer = ({
 
                   {/* TODO: might be reasonable to warn user if about to send products to a place have ADD_PRODUCTS perm for, but not REMOVE_PRODUCTS */}
                   <P2PSection>
-                    {hasOriginPerm
+                    {currentCrewIsSender
                       ? (
                         <>
                           <CrewIndicator crew={destinationController} label={'Destination Controller'} />
@@ -440,19 +480,21 @@ const SurfaceTransfer = ({
                         <>
                           <CrewIndicator crew={originController} label={'Origin Controller'} />
 
-                          {sway > 0 && (
-                            <WarningAlert severity="error">
-                              <div><WarningOutlineIcon /></div>
-                              <div>The sender has requested a SWAY payment for these goods.</div>
-                            </WarningAlert>
-                          )}
-
                           {(stage === actionStage.NOT_STARTED || ['PACKAGING','PACKAGED','CANCELING'].includes(currentDeliveryAction?.status)) && (
-                            <SwayInputBlockInner
-                              disabled
-                              inputLabel="SWAY"
-                              instruction="You pay the controller in exchange for these goods:"
-                              value={sway} />
+                            <>
+                              {sway > 0 && (
+                                <WarningAlert severity="error">
+                                  <div><WarningOutlineIcon /></div>
+                                  <div>The sender has requested a SWAY payment for these goods.</div>
+                                </WarningAlert>
+                              )}
+                              
+                              <SwayInputBlockInner
+                                disabled
+                                inputLabel="SWAY"
+                                instruction="You pay the controller in exchange for these goods:"
+                                value={sway || '0'} />
+                            </>
                           )}
                         </>
                       )}
@@ -516,7 +558,10 @@ const SurfaceTransfer = ({
       </ActionDialogBody>
 
       <ActionDialogFooter
-        disabled={stage === actionStage.NOT_STARTED && (totalMass === 0 || !destination || willBeOverCapacity || !crewCan(Permission.IDS.ADD_PRODUCTS, destination))}
+        disabled={stage === actionStage.NOT_STARTED
+          ? (totalMass === 0 || !destination || !origin || willBeOverCapacity || !crewCan(Permission.IDS.REMOVE_PRODUCTS, origin))
+          : (currentDeliveryAction?.status === 'PACKAGED' && !(crew?._location?.lotId && crew?._location?.asteroidId === asteroid?.id))
+        }
         goLabel="Transfer"
         onGo={onStartDelivery}
         stage={stage}
@@ -541,19 +586,26 @@ const SurfaceTransfer = ({
           <InventorySelectionDialog
             asteroidId={asteroid.id}
             isSourcing
+            itemIds={destinationProductIds}
+            limitToControlled={isP2P}
+            limitToPrimary={fixedOrigin}
+            otherEntity={destination}
+            otherInvSlot={destinationInventory?.slot}
             onClose={() => setOriginSelectorOpen(false)}
             onSelected={onOriginSelect}
             open={originSelectorOpen}
-            limitToPrimary={origin}
+            requirePresenceOfItemIds={!!destinationProductIds}
           />
 
           <InventorySelectionDialog
             asteroidId={asteroid.id}
+            itemIds={originProductIds}
             otherEntity={origin}
             otherInvSlot={originInventory?.slot}
             onClose={() => setDestinationSelectorOpen(false)}
             onSelected={onDestinationSelect}
             open={destinationSelectorOpen}
+            limitToPrimary={fixedDestination}
           />
         </>
       )}
@@ -562,55 +614,42 @@ const SurfaceTransfer = ({
 };
 
 const Wrapper = (props) => {
+  const { deliveryId, destination, destinationSlot, origin, originSlot, txHash } = props;
   const { asteroid, lot, isLoading } = useAsteroidAndLot(props);
-  const zoomScene = useStore(s => s.asteroids.zoomScene);
 
   // entrypoints w/ props:
-  //  - actionitem (deliveryId)
-  //  - specific entity (entity, selected inventory)
-  //  - lot (building, available inventory)
-  const deliveryManagerQuery = props.deliveryId
-    ? { deliveryId: props.deliveryId }
-    : { origin: props.origin || lot?.building };
-  if (props.originSlot) deliveryManagerQuery.originSlot = props.originSlot;
-
+  //  - deliveryId (from actionitem)
+  //  - origin (from sendFrom button) +- originSlot
+  //  - destination (from sendTo button) +- destinationSlot
+  // TODO: test from actionItem, hud action button, inventory menu action button
+  const deliveryManagerQuery = useMemo(() => {
+    if (deliveryId) return { deliveryId };
+    if (txHash) return { txHash };
+    if (destination) return { destination, destinationSlot };
+    if (origin) return { origin, originSlot };
+    return null;
+  }, [deliveryId, destination, destinationSlot, origin, originSlot, txHash])
   const deliveryManager = useDeliveryManager(deliveryManagerQuery);
 
   const currentDeliveryAction = useMemo(() => {
     return (deliveryManager.currentDeliveryActions || []).find((d) => {
-      if (props.deliveryId) return d.action.deliveryId === props.deliveryId
-      if (props.txHash) return d.action.txHash === props.txHash;
-      return d.status === 'DEPARTING';
+      if (deliveryId) return d.action.deliveryId === deliveryId
+      if (txHash) return d.action.txHash === txHash;
+      return d.status === 'PACKAGING' || d.status === 'DEPARTING';
     });
-  }, [deliveryManager.currentVersion]);
+  }, [deliveryManager.currentVersion, deliveryId, txHash]);
 
-  const zoomShip = useMemo(
-    () => zoomScene?.type === 'SHIP' && zoomScene?.shipId
-      ? { label: Entity.IDS.SHIP, id: zoomScene.shipId }
-      : undefined,
-    [zoomScene]
-  );
-
-  const { data: originEntity, isLoading: originLoading } = useEntity(
-    currentDeliveryAction?.action?.origin || props.origin || zoomShip || lot?.surfaceShip || lot?.building
-  );
-
-  const { data: originLot, isLoading: originLotLoading } = useLot(
-    currentDeliveryAction?.action?._originLot?.id
-    || locationsArrToObj(originEntity?.Location?.locations || []).lotId
-  );
-
-  const { data: destEntity, isLoading: destLoading } = useEntity(currentDeliveryAction?.action?.dest);
-
-  const stage = currentDeliveryAction?.stage || actionStage.NOT_STARTED;
+  const { data: originEntity, isLoading: originLoading } = useEntity(currentDeliveryAction?.action?.origin || props.origin);
+  const { data: destEntity, isLoading: destLoading } = useEntity(currentDeliveryAction?.action?.dest || props.destination);
 
   useEffect(() => {
-    if (!asteroid || !originLot) {
-      if (!isLoading && !originLoading && !originLotLoading && !deliveryManager.isLoading) {
-        if (props.onClose) props.onClose();
-      }
-    }
-  }, [asteroid, origin, isLoading, originLoading, originLotLoading, deliveryManager.isLoading]);
+    if (!props.onClose) return;
+    if (!asteroid && !isLoading) props.onClose();
+    if (origin && !originEntity && !originLoading) props.onClose();
+    if (destination && !destEntity && !destLoading) props.onClose();
+  }, [asteroid, origin, isLoading, originLoading, deliveryManager.isLoading]);
+
+  const stage = currentDeliveryAction?.stage || actionStage.NOT_STARTED;
 
   // handle auto-closing on any status change
   const lastStatus = useRef();
@@ -628,16 +667,14 @@ const Wrapper = (props) => {
   return (
     <ActionDialogInner
       actionImage="SurfaceTransfer"
-      isLoading={reactBool(isLoading || originLoading || originLotLoading || destLoading || deliveryManager.isLoading)}
+      isLoading={reactBool(isLoading || originLoading || destLoading || deliveryManager.isLoading)}
       stage={currentDeliveryAction?.status === 'PACKAGED' ? actionStage.NOT_STARTED : stage}>
       <SurfaceTransfer
         asteroid={asteroid}
         deliveryManager={deliveryManager}
-        origin={originEntity}
-        originLot={originLot}
-        originSlot={props.originSlot}
-        dest={destEntity}
         currentDeliveryAction={currentDeliveryAction}
+        origin={originEntity}
+        destination={destEntity}
         stage={stage}
         {...props} />
     </ActionDialogInner>

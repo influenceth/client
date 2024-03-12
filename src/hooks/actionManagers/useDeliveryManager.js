@@ -19,20 +19,22 @@ import actionStages from '~/lib/actionStages';
 // { destination, destinationSlot, origin, originSlot, deliveryId }
 // must include destination OR origin OR deliveryId
 // if more input is included, will filter to those results
-const useDeliveryManager = ({ destination, destinationSlot, origin, originSlot, deliveryId }) => {
+const useDeliveryManager = ({ destination, destinationSlot, origin, originSlot, deliveryId, txHash }) => {
   const { actionItems, readyItems } = useActionItems();
   const blockTime = useBlockTime();
   const { execute, getStatus, getPendingTx } = useContext(ChainTransactionContext);
   const { crew, pendingTransactions } = useCrewContext();
 
-  const { data: deliveries, isLoading } = useDeliveries({ destination, destinationSlot, origin, originSlot, deliveryId, incomplete: true });
+  const { data: deliveries, isLoading } = useDeliveries({ destination, destinationSlot, origin, originSlot, deliveryId, status: [
+    Delivery.STATUSES.ON_HOLD, Delivery.STATUSES.PACKAGED, Delivery.STATUSES.SENT,
+  ] });
 
   const payload = useMemo(() => ({
     caller_crew: { id: crew?.id, label: Entity.IDS.CREW }
   }), [crew?.id]);
 
   const pendingDeliveries = useMemo(() => {
-    return pendingTransactions.filter(({ key, vars }) => (
+    return pendingTransactions.filter(({ key, vars, ...pendingProps }) => (txHash && txHash === pendingProps.txHash) || (
       (key === 'SendDelivery' || key === 'PackageDelivery')
       && (
         (!destination || (vars.dest.label === destination.label && vars.dest.id === destination.id))
@@ -41,7 +43,7 @@ const useDeliveryManager = ({ destination, destinationSlot, origin, originSlot, 
         && (!originSlot || vars.origin_slot === originSlot)
       )
     ));
-  }, [destination, destinationSlot, origin, originSlot, pendingTransactions]);
+  }, [destination, destinationSlot, origin, originSlot, pendingTransactions, txHash]);
 
   const [currentDeliveries, currentDeliveriesVersion] = useMemo(() => {
     const active = [...(deliveries || [])];
@@ -54,6 +56,7 @@ const useDeliveryManager = ({ destination, destinationSlot, origin, originSlot, 
         _isMyAction: true,
         _originLot: null,
         caller: null,
+        callerCrew: null,
         deliveryId: null,
         dest: null,
         destSlot: null,
@@ -72,18 +75,24 @@ const useDeliveryManager = ({ destination, destinationSlot, origin, originSlot, 
       let status = 'READY';
       let stage = actionStages.NOT_STARTED;
 
+      // default to pending tx value
+      current.callerCrew = delivery.vars?.caller_crew;
+
       // if deliveryId, treat lot as destination and assume in progress or done
       if (delivery.id > 0) {
         let actionItem = (actionItems || []).find((item) => item.event.name === 'DeliverySent' && item.event.returnValues.delivery.id === delivery.id);
         if (actionItem) {
           current._cachedData = actionItem.data;
           current._originLot = actionItem.data.origin?.Location.locations.find((l) => l.label === Entity.IDS.LOT);
+          current.caller = actionItem.event.returnValues.caller;
+          current.callerCrew = actionItem.event.returnValues.callerCrew;
           current.startTime = actionItem.event.timestamp;
         } else {
           actionItem = (actionItems || []).find((item) => item.event.name === 'DeliveryPackaged' && item.event.returnValues.delivery.id === delivery.id);
           if (actionItem) {
             current._cachedData = actionItem.data;
             current.caller = actionItem.event.returnValues.caller;
+            current.callerCrew = actionItem.event.returnValues.callerCrew;
             current.price = actionItem.event.returnValues.price;
             current.startTime = actionItem.event.timestamp;
             current.isProposal = true;
@@ -131,7 +140,7 @@ const useDeliveryManager = ({ destination, destinationSlot, origin, originSlot, 
         current.destSlot = delivery.vars.dest_slot;
         current.origin = delivery.vars.origin;
         current.originSlot = delivery.vars.origin_slot;
-        current.contents = delivery.vars.products.map((p) => ({ product: Number(p.product), amount: p.amount }));
+        current.contents = (delivery.vars.products || []).map((p) => ({ product: Number(p.product), amount: p.amount }));
         current.price = delivery.vars.price;
         current.txHash = delivery.txHash;
         current.isProposal = (delivery.key === 'PackageDelivery');
@@ -149,7 +158,7 @@ const useDeliveryManager = ({ destination, destinationSlot, origin, originSlot, 
   }, [blockTime, deliveries, pendingDeliveries, getStatus, payload]);
 
   const acceptDelivery = useCallback((selectedDeliveryId, meta) => {
-    const delivery = currentDeliveries.find((d) => d.action.deliveryId === selectedDeliveryId);
+    const delivery = currentDeliveries.find((d) => d.action.deliveryId === (selectedDeliveryId || deliveryId));
     if (!delivery?.action) return;
     execute(
       'AcceptDelivery',

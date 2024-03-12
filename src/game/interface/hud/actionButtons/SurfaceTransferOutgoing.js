@@ -1,7 +1,7 @@
 import { useCallback, useMemo } from 'react';
 import { Inventory, Permission } from '@influenceth/sdk';
 
-import { SurfaceTransferIcon } from '~/components/Icons';
+import { SwayIcon, TransferFromIcon } from '~/components/Icons';
 import useDeliveryManager from '~/hooks/actionManagers/useDeliveryManager';
 import ActionButton, { getCrewDisabledReason } from './ActionButton';
 import { locationsArrToObj } from '~/lib/utils';
@@ -36,13 +36,13 @@ const SurfaceTransferOutgoing = ({ asteroid, crew, lot, ship, onSetAction, dialo
 
   return (
     <ActionButton
-      label={`Surface Transfer`}
+      label="Send From"
       labelAddendum={disabledReason}
       flags={{
         disabled: _disabled || disabledReason || isLoading,
         loading: deliveryDeparting
       }}
-      icon={<SurfaceTransferIcon />}
+      icon={<TransferFromIcon />}
       onClick={handleClick} />
   );
 };
