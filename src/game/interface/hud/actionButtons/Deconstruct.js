@@ -38,7 +38,7 @@ const Deconstruct = ({ asteroid, crew, lot, onSetAction, _disabled }) => {
       || (lot?.building?.DryDocks || []).find((e) => e.status > 0)
     ) return 'in operation';
 
-    if ((lot?.building?.Inventories || []).find((i) => i.status === Inventory.STATUSES.AVAILABLE && i.reservedMass > 0)) {
+    if ((lot?.building?.Inventories || []).find((i) => i.status === Inventory.STATUSES.AVAILABLE && i.contents.length > 0)) {
       return 'pending deliveries';
     }
 
