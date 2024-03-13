@@ -523,29 +523,28 @@ const LotInventory = () => {
               </ThumbnailWrapper>
             ))}
           </InventoryItems>
+          {(isIncomingDelivery || Object.keys(selectedItems).length > 0) && (
+          <Tray>
+            {trayLabel && <TrayLabel content={trayLabel} />}
+
+            {Object.keys(selectedItems).length > 0 && (
+              <actionButtons.SurfaceTransferOutgoing.Component
+                {...actionProps}
+                labelAddendum={canRemoveProducts ? '' : 'access restricted'}
+                flags={{ disabled: !canRemoveProducts }}
+                dialogProps={{ origin: entity, originSlot: inventorySlot, preselect: { selectedItems } }}
+              />
+            )}
+
+            {/* TODO: may only care about incoming transfer if have permission here */}
+            {/* TODO: is SurfaceTransferIncoming still supported? */}
+            {isIncomingDelivery && (
+              <actionButtons.SurfaceTransferIncoming.Component {...actionProps} />
+            )}
+          </Tray>
+          )}
         </InnerWrapper>
       </Wrapper>
-
-      {(isIncomingDelivery || Object.keys(selectedItems).length > 0) && (
-        <Tray>
-          {trayLabel && <TrayLabel content={trayLabel} />}
-
-          {Object.keys(selectedItems).length > 0 && (
-            <actionButtons.SurfaceTransferOutgoing.Component
-              {...actionProps}
-              labelAddendum={canRemoveProducts ? '' : 'access restricted'}
-              flags={{ disabled: !canRemoveProducts }}
-              dialogProps={{ origin: entity, originSlot: inventorySlot, preselect: { selectedItems } }}
-            />
-          )}
-
-          {/* TODO: may only care about incoming transfer if have permission here */}
-          {/* TODO: is SurfaceTransferIncoming still supported? */}
-          {isIncomingDelivery && (
-            <actionButtons.SurfaceTransferIncoming.Component {...actionProps} />
-          )}
-        </Tray>
-      )}
     </>
   );
 };
