@@ -1,6 +1,9 @@
 import { createContext, useCallback, useEffect, useContext, useMemo, useState } from 'react';
 import { isExpired, decodeToken } from 'react-jwt';
 
+import { OffchainSessionAccount, createOffchainSession } from '@argent/x-sessions';
+import { getStarkKey, utils } from 'micro-starknet';
+
 import WalletContext from '~/contexts/WalletContext';
 import api from '~/lib/api';
 import useStore from '~/hooks/useStore';
@@ -55,7 +58,7 @@ export function AuthProvider({ children }) {
   }, [ token, walletContext?.account, walletContext?.isConnecting, dispatchTokenInvalidated ]);
 
   const initiateLogin = useCallback(async () => {
-    const { provider, account } = (await walletContext.connect()) || {};
+    const { id, provider, account } = (await walletContext.connect()) || {};
     let isDeployed = false;
 
     try {
@@ -65,7 +68,7 @@ export function AuthProvider({ children }) {
       console.error(e);
     }
 
-    if (account?.address && !token) {
+    if (account?.address && !token && id !== 'argentWebWallet') {
       try {
         const loginMessage = await api.requestLogin(account.address);
         const signature = isDeployed ? await account.signMessage(loginMessage) : ['insecure'];
@@ -88,6 +91,32 @@ export function AuthProvider({ children }) {
           duration: 10000
         });
       }
+
+      setAuthenticating(false);
+      return false;
+    }
+
+    if (account?.address && !token && id === 'argentWebWallet') {
+      setAuthenticating(true);
+      const sessionSigner = utils.randomPrivateKey();
+      const requestSession = {
+        sessionKey: getStarkKey(sessionSigner),
+        expirationTime: Math.floor(Date.now() / 1000) + 86400 * 7,
+        allowedMethods: [
+          {
+            contractAddress: '0x20cd0c1f8cc0ca293d17b8184a6d51605ef4175827432ed24818ce24891bcdf',
+            method: 'run_system'
+          }
+        ]
+      };
+
+      const gasFees = {
+        tokenAddress: '0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7',
+        maximumAmount: { low: '0x2386f26fc10000', high: '0x0' }
+      };
+
+      const signedSession = await createOffchainSession(requestSession, walletContext.starknet.account, gasFees);
+      console.log(signedSession);
 
       setAuthenticating(false);
       return false;

@@ -84,8 +84,11 @@ export function WalletProvider({ children }) {
       setError();
 
       const connectors = [];
-      if (!!process.env.REACT_APP_ARGENT_WEB_WALLET_URL) connectors.push(new WebWalletConnector());
       const customProvider = new RpcProvider({ nodeUrl: process.env.REACT_APP_STARKNET_PROVIDER });
+
+      if (!!process.env.REACT_APP_ARGENT_WEB_WALLET_URL) {
+        connectors.push(new WebWalletConnector({ url: process.env.REACT_APP_ARGENT_WEB_WALLET_URL }));
+      }
 
       connectors.push(new InjectedConnector({ options: { id: 'argentX', provider: customProvider }}));
       connectors.push(new InjectedConnector({ options: { id: 'braavos', provider: customProvider }}));
@@ -99,10 +102,6 @@ export function WalletProvider({ children }) {
         connectors,
         provider: customProvider
       };
-
-      if (!!process.env.REACT_APP_ARGENT_WEB_WALLET_URL) {
-        connectionOptions.webWalletUrl = process.env.REACT_APP_ARGENT_WEB_WALLET_URL;
-      }
 
       const { wallet } = await starknetConnect(connectionOptions);
 
