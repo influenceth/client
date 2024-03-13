@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import { useHistory, useLocation, useParams } from 'react-router-dom';
 import { Entity, Lot, Product } from '@influenceth/sdk';
 
+import Pagination from '~/components/Pagination';
 import Details from '~/components/DetailsModal';
 import { OrderIcon } from '~/components/Icons';
 import useAsteroid from '~/hooks/useAsteroid';
@@ -58,25 +59,53 @@ const Footer = styled.div`
   display: flex;
   flex-direction: row;
   height: ${footerHeight}px;
+  justify-content: center;
+`;
+const FooterLeft = styled.div`
+  flex: 1;
+  display: flex;
+  justify-content: flex-start;
+`;
+const FooterRight = styled.div`
+  flex: 1;
+  display: flex;
   justify-content: flex-end;
 `;
 const OrderTally = styled.div`
-  align-items: center;
-  color: ${p => p.theme.colors.main};
+  flex: 1;
   display: flex;
+  justify-content: center;
   font-size: 95%;
-  margin-right: 20px;
-  & > svg {
-    font-size: 24px;
-    margin-right: 4px;
+  & span {
+    margin-left: 4px;
+    text-decoration: underline
+  }
+  & a {
+    color: ${p => p.theme.colors.main};
+    display: flex;
+    align-items:center;
+    & > svg {
+      font-size: 175%;
+      margin-right: 4px;
+    }
   }
 `;
+const StyledPagination = styled(Pagination)`
+  bottom: 0px;
+`;
+
+const pageSize = 25;
 
 const Marketplace = () => {
   const history = useHistory();
   const { asteroidId, lotIndex, discriminator } = useParams();
   const product = discriminator === 'orders' ? null : discriminator;
   const lotId = useMemo(() => Lot.toId(Number(asteroidId), lotIndex === 'all' ? null : Number(lotIndex)), [asteroidId, lotIndex]);
+
+  const [mode, setMode] = useState('buy');
+  const [nameFilter, setNameFilter] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [sort, setSort] = useState('liquidity');
 
   const { search } = useLocation();
   const backOverride = useMemo(() => {
@@ -132,6 +161,20 @@ const Marketplace = () => {
     return [productListings, buyOrderTally + sellOrderTally];
   }, [orderSummary, products]);
 
+  const [ filteredCount, filteredListings ] = useMemo(() => {
+    const filtered = listings
+      .filter(({ product }) => {
+        return nameFilter.length === 0 ||
+          Product.TYPES[product].name.toLowerCase().includes((nameFilter || '').toLowerCase());
+      })
+      .sort((a, b) => {
+        if (sort === 'liquidity') return a.forBuy + a.forSale < b.forBuy + b.forSale ? 1 : -1;
+        if (sort === 'alphabetical') return Product.TYPES[a.product].name > Product.TYPES[b.product].name ? 1 : -1;
+      });
+
+    return [filtered.length, filtered.slice((currentPage - 1) * pageSize, (currentPage - 1) * pageSize + pageSize)];
+  }, [listings, nameFilter, currentPage, sort]);
+
   const marketplace = useMemo(() => {
     if (lot?.building?.Exchange) return lot.building;
     return null;
@@ -161,8 +204,6 @@ const Marketplace = () => {
     history.push(`/marketplace/${asteroidId}/${lotIndex}/${listing?.product || ''}`);
   }, []);
 
-  const showFooter = discriminator || myLocalOrders.length > 0;
-
   // TODO: loading might be better than null
   if (!asteroid || (lotIndex !== 'all' && (!lot || !marketplace))) return null;
   return (
@@ -175,7 +216,7 @@ const Marketplace = () => {
       }
       title={`${formatters.asteroidName(asteroid, '...')} > ${lotIndex === 'all' ? 'Markets' : formatters.buildingName(marketplace)}`}
       headerProps={{ underlineHeader: 'true' }}
-      contentProps={showFooter ? { style: { marginBottom: 0 } } : {}}
+      contentProps={{ style: { marginBottom: 0 } }}
       maxWidth="1600px"
       width="max">
       <Wrapper>
@@ -210,18 +251,25 @@ const Marketplace = () => {
               onSelectListing={onSelectListing} />
           )}
         </Wrapper>
-        {showFooter && (
           <Footer>
-            {discriminator && <Button flip onClick={goBack}>Back</Button>}
-            <div style={{ flex: 1 }} />
-            {crew?.id && (!discriminator || (discriminator !== 'orders' && marketplace)) && (
-              <>
-                <OrderTally><OrderIcon /> {myLocalOrders.length} Order{myLocalOrders.length === 1 ? '' : 's'} {marketplace ? 'at this Marketplace' : 'on this Asteroid'}</OrderTally>
-                <Button onClick={goToMyOrders}>My Open Orders</Button>
-              </>
-            )}
+              <FooterLeft>
+                {discriminator && <Button flip onClick={goBack}>Back</Button>}
+              </FooterLeft>
+              <OrderTally>
+              {crew?.id && (!discriminator || (discriminator !== 'orders' && marketplace)) && (
+                <a onClick={goToMyOrders} ><OrderIcon />Open Limit Orders: <span>{myLocalOrders.length} {myLocalOrders.length === 1 ? '' : 's'} {marketplace ? 'at this Marketplace' : 'on this Asteroid'}</span></a>
+              )}
+              </OrderTally>
+              <FooterRight>
+                {!discriminator && (filteredCount >= pageSize) &&
+                  <StyledPagination
+                  currentPage={currentPage}
+                  rowsPerPage={pageSize}
+                  rowCount={filteredCount}
+                  onChangePage={(page) => setCurrentPage(page)} />
+                }
+              </FooterRight>
           </Footer>
-        )}
       </Wrapper>
     </Details>
   );

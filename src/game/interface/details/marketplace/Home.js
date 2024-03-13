@@ -124,9 +124,13 @@ const Listing = styled.div`
 
   ${p => p.theme.clipCorner(10)};
 
-  transition: background 250ms ease;
+  transition: background 100ms ease;
   &:hover {
-    background: #111;
+    background: rgba(${p => hexToRGB(p.theme.colors.main)}, 0.2);
+    border-color: ${theme.colors.main};
+  }
+  &:hover > svg {
+    stroke: ${theme.colors.main};
   }
 `;
 
@@ -140,9 +144,10 @@ const ListingTitle = styled.div`
 `;
 
 const ListingAmount = styled.div`
-  color: #565656;
+  font-weight: normal;
   ${p => p.color && `
-    color: ${p.color === 'buy' ? theme.colors.green : theme.colors.main};
+    color: ${
+      p.color === 'none' ? '#565656' : (p.color === 'buy' ? theme.colors.green : theme.colors.main)};
   `}
   font-size: 80%;
   margin-top: 2px;
@@ -211,7 +216,7 @@ const ListingOffer = styled.div`
   flex-direction: row;
   height: 32px;
   margin-top: 10px;
-  transition: background 250ms ease;
+  transition: background 100ms ease;
   & label {
     flex: 1 0 0;
     padding-left: 6px;
@@ -442,12 +447,12 @@ const MarketplaceHome = ({ asteroid, listings, orderTally, onSelectListing, mark
         <Listings>
           {filteredListings
             .map((listing) => {
-              let thumbBG = 'rgba(170, 170, 170, 0.2)';
+              let thumbBG = 'rgba(80, 80, 80, 0.1)';
               if (!!marketplace) {
                 if (mode === 'buy' && listing.forSale > 0) {
-                  thumbBG = `rgba(${greenRGB}, 0.2);`;//`#002511`;
+                  thumbBG = `rgba(${greenRGB}, 0.1);`;//`#002511`;
                 } else if (mode === 'sell' && listing.forBuy > 0) {
-                  thumbBG = `rgba(${theme.colors.mainRGB}, 0.2);`//`#0d2a33`;
+                  thumbBG = `rgba(${theme.colors.mainRGB}, 0.1);`//`#0d2a33`;
                 };
               }
               const resource = Product.TYPES[listing.product];

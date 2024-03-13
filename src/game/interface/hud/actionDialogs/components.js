@@ -476,7 +476,7 @@ const EmptyThumbnail = styled.div`
 `;
 
 const AsteroidThumbnailWrapper = styled(ResourceThumbnailWrapper)`
-  background-color: rgba(0, 0, 0, 0.6);
+  background-color: rgba(0, 0, 0, 0.75);
 `;
 const BuildingThumbnailWrapper = styled(ResourceThumbnailWrapper)`
   height: 92px;
