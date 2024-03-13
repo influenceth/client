@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from 'react-query';
 import LoadingAnimation from 'react-spinners/PropagateLoader';
 import styled from 'styled-components';
 
+import ErrorBoundary from './ErrorBoundary';
 import Game from './Game';
 import './index.css';
 import reportWebVitals from './reportWebVitals';
@@ -31,9 +32,11 @@ const Loader = styled.div`
 
 ReactDOM.render(
   <Suspense fallback={<Loader><LoadingAnimation color={'white'} loading={true} /></Loader>}>
-    <QueryClientProvider client={queryClient} contextSharing={true}>
-      <Game />
-    </QueryClientProvider>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient} contextSharing={true}>
+        <Game />
+      </QueryClientProvider>
+    </ErrorBoundary>
   </Suspense>,
   document.getElementById('root')
 );
