@@ -7,6 +7,8 @@ import { Building, Lot } from '@influenceth/sdk';
 
 import constants from '~/lib/constants';
 
+export const STORE_NAME = 'influence';
+
 const {
   CHUNK_RESOLUTION,
   GRAPHICS_DEFAULTS,
@@ -69,14 +71,6 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
       zoomedFrom: null,
       zoomScene: null,
       zoomStatus: 'out', // out -> zooming-in -> in -> zooming-out -> out
-      // owned: {
-      //   highlighted: false,
-      //   highlightColor: '#AB149E'
-      // },
-      // watched: {
-      //   highlighted: false,
-      //   highlightColor: '#AB149E'
-      // },
     },
 
     assetSearch: {
@@ -410,46 +404,6 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
       state.crewAssignments[crewKey] = {};
     })),
 
-    // dispatchOwnedAsteroidsMapped: () => set(produce(state => {
-    //   state.asteroids.owned.mapped = true;
-    // })),
-
-    // dispatchOwnedAsteroidsUnmapped: () => set(produce(state => {
-    //   state.asteroids.owned.mapped = false;
-    // })),
-
-    // dispatchOwnedAsteroidsFiltered: () => set(produce(state => {
-    //   state.asteroids.owned.filtered = true;
-    // })),
-
-    // dispatchOwnedAsteroidsUnfiltered: () => set(produce(state => {
-    //   state.asteroids.owned.filtered = false;
-    // })),
-
-    // dispatchOwnedAsteroidColorChange: (color) => set(produce(state => {
-    //   state.asteroids.owned.highlightColor = color;
-    // })),
-
-    // dispatchWatchedAsteroidsMapped: () => set(produce(state => {
-    //   state.asteroids.watched.mapped = true;
-    // })),
-
-    // dispatchWatchedAsteroidsUnmapped: () => set(produce(state => {
-    //   state.asteroids.watched.mapped = false;
-    // })),
-
-    // dispatchWatchedAsteroidsFiltered: () => set(produce(state => {
-    //   state.asteroids.watched.filtered = true;
-    // })),
-
-    // dispatchWatchedAsteroidsUnfiltered: () => set(produce(state => {
-    //   state.asteroids.watched.filtered = false;
-    // })),
-
-    // dispatchWatchedAsteroidColorChange: (color) => set(produce(state => {
-    //   state.asteroids.watched.highlightColor = color;
-    // })),
-
     dispatchTimeOverride: (anchor, speed) => set((produce(state => {
       state.timeOverride = anchor ? { anchor, speed, ts: Date.now() } : null;
     }))),
@@ -611,7 +565,7 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
     },
 
 }), {
-  name: 'influence',
+  name: STORE_NAME,
   version: 4,
   migrate: (persistedState, oldVersion) => {
     const migrations = [

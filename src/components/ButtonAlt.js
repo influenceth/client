@@ -12,7 +12,7 @@ import ChainTransactionContext from '~/contexts/ChainTransactionContext';
 const bgOpacity = 0.175;
 const hoverBgOpacity = 0.35;
 
-const sizes = {
+export const sizes = {
   icon: { font: 16, height: 26, width: 34, line: 8, borderWidth: 1, isIconOnly: true },
   bigicon: { font: 16, height: 32, width: 40, line: 10, borderWidth: 1, isIconOnly: true },
   hugeicon: { font: 24, height: 40, width: 48, line: 10, borderWidth: 1, isIconOnly: true },
@@ -24,7 +24,7 @@ const sizes = {
   huge: { font: 32, height: 52, width: 275, line: 18, borderWidth: 2 }
 };
 
-const InnerContainer = styled.div`
+export const InnerContainer = styled.div`
   align-items: center;
   clip-path: polygon(
     0 0,
@@ -59,7 +59,7 @@ const opacityAnimation = keyframes`
   100% { opacity: 1; }
 `;
 
-const StyledButton = styled.button`
+export const StyledButton = styled.button`
   ${p => p.loadingAnimation && css`
     animation: ${opacityAnimation} 1250ms ease infinite;
   `}
@@ -134,7 +134,7 @@ const StyledButton = styled.button`
   }
 `;
 
-const Corner = styled.svg`
+export const Corner = styled.svg`
   bottom: -1px;
   height: ${p => p.sizeParams.line - (p.sizeParams.borderWidth === 1 ? 0 : p.sizeParams.borderWidth - 1)}px;
   margin-right: 0;
