@@ -488,7 +488,7 @@ const SurfaceTransfer = ({
                                   <div>The sender has requested a SWAY payment for these goods.</div>
                                 </WarningAlert>
                               )}
-                              
+
                               <SwayInputBlockInner
                                 disabled
                                 inputLabel="SWAY"
@@ -627,7 +627,7 @@ const Wrapper = (props) => {
     if (txHash) return { txHash };
     if (destination) return { destination, destinationSlot };
     if (origin) return { origin, originSlot };
-    return null;
+    return {};
   }, [deliveryId, destination, destinationSlot, origin, originSlot, txHash])
   const deliveryManager = useDeliveryManager(deliveryManagerQuery);
 
