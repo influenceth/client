@@ -60,12 +60,9 @@ const StorageLabel = styled.div`
   display: flex;
   flex-direction: row;
   font-size: 14px;
+  justify-content: space-between;
   padding-bottom: 8px;
-  & label {
-    flex: 1;
-  }
   & > span {
-    font-weight: bold;
     color: ${p =>
       p.utilization < 0.7
       ? p.theme.colors.success
@@ -75,17 +72,16 @@ const StorageLabel = styled.div`
         : p.theme.colors.error
       )
     };
+    font-weight: bold;
   }
 `;
 
 const StorageLabelBottom = styled(StorageLabel)`
   padding-top: 8px;
   padding-bottom: 4px;
-  justify-content: space-between;
-  & > span {
-    font-weight: normal;
+  & > div > span {
     color: #999;
-    margin-right: 4px
+    margin-right: 3px
   }
 `;
 
@@ -106,11 +102,7 @@ const ProgressBar = styled.div`
 
   &:after {
     content: "";
-    background: ${p =>
-      p.utilization <= 1.0
-      ? p.theme.colors.main
-      : p.theme.colors.error
-    };
+    background: ${p => p.utilization <= 1.0 ? p.theme.colors.main : p.theme.colors.error};
     border-radius: 3px;
     position: absolute;
     left: 0;
@@ -475,9 +467,8 @@ const LotInventory = () => {
               </StorageLabel>
               <ProgressBar progress={pctVolume} secondaryProgress={pctOrReservedVolume} utilization={pctOrReservedVolume}/>
               <StorageLabelBottom>
-                <span>Used: </span> {formatVolume(usedOrReservedVolume)}
-                <label></label>
-                <span>Max: </span> {formatVolume(maxVolume)}
+                <div><span>Used:</span> {formatVolume(usedOrReservedVolume)}</div>
+                <div><span>Max:</span> {formatVolume(maxVolume)}</div>
               </StorageLabelBottom>
             </div>
             <div>
@@ -489,9 +480,8 @@ const LotInventory = () => {
               </StorageLabel>
               <ProgressBar progress={pctMass} secondaryProgress={pctOrReservedMass} utilization={pctOrReservedMass}/>
               <StorageLabelBottom>
-                <span>Used: </span> {formatMass(usedOrReservedMass)}
-                <label></label>
-                <span>Max: </span> {formatMass(maxMass)}
+                <div><span>Used:</span> {formatMass(usedOrReservedMass)}</div>
+                <div><span>Max:</span> {formatMass(maxMass)}</div>
               </StorageLabelBottom>
             </div>
           </Charts>
