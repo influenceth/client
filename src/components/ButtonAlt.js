@@ -79,6 +79,8 @@ const StyledButton = styled.button`
       0 100%
     `}
   );
+  color: ${p => p.color || (p.isTransaction ? p.theme.colors.txButton : p.theme.colors.main)};
+  cursor: ${p => p.theme.cursors.active};
   display: flex;
   font-family: 'Jura', sans-serif;
   font-size: ${p => p.sizeParams.font}px;
@@ -94,9 +96,11 @@ const StyledButton = styled.button`
     max-width: 24px;
   }
 
-  & ${InnerContainer} {
+  & > ${InnerContainer} {
+    background-color: ${p => p.background || `rgba(${hexToRGB(p.isTransaction ? p.theme.colors.txButton : p.theme.colors.main)}, ${bgOpacity * (p.bgStrength || 1)})`};
     min-height: ${p => p.sizeParams.height}px;
     ${p => p.sizeParams.isIconOnly ? '' : `padding: ${p.padding || '0 10px'};`}
+    transition: background-color 100ms ease;
   }
 
   ${p => p.disabled
@@ -104,32 +108,29 @@ const StyledButton = styled.button`
       color: rgba(255, 255, 255, 0.5);
       cursor: ${p.theme.cursors.default};
       border-color: ${p.borderless ? 'transparent' : p.theme.colors.disabledText};
-      & > div {
+      & > ${InnerContainer} {
         background-color: ${p.disabledColor || (p.background === 'transparent' ? 'transparent' : `rgba(${hexToRGB(p.theme.colors.disabledButton)}, ${bgOpacity * (p.bgStrength || 1)})`)};
       }
       & > svg {
         stroke: ${p.theme.colors.disabledText};
       }
     `
-    : ` 
-    color: ${p.isTransaction ? p.theme.colors.txButton : p.theme.colors.main};
-    & > div {
-      background-color: ${p.background || `rgba(${hexToRGB(p.isTransaction ? p.theme.colors.txButton : p.theme.colors.main)}, ${bgOpacity * (p.bgStrength || 1)})`};
-      transition: all 100ms ease;
-    };
-    &:active > div {
-      background-color: ${p.isTransaction ? p.theme.colors.txButton : p.theme.colors.mainButton};
-    };
-    &:hover {
-      & > div {
+    : `
+      &:active {
+        & > ${InnerContainer} {
+          background-color: ${p.isTransaction ? p.theme.colors.txButton : p.theme.colors.darkMain};
+        }
+      }
+      &:hover {
+        border-color: ${p.color || (p.isTransaction ? p.theme.colors.txButton : p.theme.colors.brightMain)};
         color: white;
-        background-color: ${p.background || `rgba(${hexToRGB(p.isTransaction ? p.theme.colors.txButton : p.theme.colors.main)}, ${bgOpacityHover * (p.bgStrength || 1)})`};
-      };
-      & > svg {
-        stroke: ${`rgba(${hexToRGB(p.isTransaction ? p.theme.colors.txButton : p.theme.colors.brightMain)}, 1)`};
-      };
-      border-color: ${`rgba(${hexToRGB(p.isTransaction ? p.theme.colors.txButton : p.theme.colors.brightMain)}, 1)`};
-    };
+        & > ${InnerContainer} {
+          background-color: ${p.background || `rgba(${hexToRGB(p.isTransaction ? p.theme.colors.txButton : p.theme.colors.main)}, ${bgOpacityHover * (p.bgStrength || 1)})`};
+        };
+        & > svg {
+          stroke: ${p.color || (p.isTransaction ? p.theme.colors.txButton : p.theme.colors.brightMain)};
+        };
+      }
     `
   }
 `;

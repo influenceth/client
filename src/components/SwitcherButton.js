@@ -2,7 +2,7 @@ import styled from 'styled-components';
 
 import Button, { bgOpacity, bgOpacityHover } from '~/components/ButtonAlt';
 import { reactBool } from '~/lib/utils';
-import theme, { hexToRGB, getContrastText } from '~/theme';
+import { hexToRGB } from '~/theme';
 
 const Wrapper = styled.div`
   display: flex;
@@ -16,19 +16,20 @@ const SwitcherButton = styled(Button)`
   `}
 
   ${p => !p.disabled && `
-    color: ${(p.isSelected ? `black` : p.theme.colors.main)};
+    border-color: ${p.theme.colors.main} !important;
+    color: ${p.isSelected ? `black` : p.theme.colors.main};
+    & > div {
+      background-color: ${p.isSelected ? p.theme.colors.main : `rgba(${hexToRGB(p.theme.colors.main)}, ${bgOpacity * (p.bgStrength || 1)})`} !important;
+    }
     &:hover {
+      border-color: ${p.theme.colors.main};
+      color: ${p.isSelected ? 'black' : 'white'};
       & > div {
-        color: ${(p.isSelected ? `black` : `white`)};
-        background-color: rgba(
-          ${hexToRGB(p.isTransaction ? p.theme.colors.txButton : p.theme.colors.main)},
-          ${(p.isSelected ? 1 : bgOpacityHover) * (p.bgStrength || 1)}
-        );
+        background-color: ${p.isSelected ? p.theme.colors.main : `rgba(${hexToRGB(p.theme.colors.main)}, ${bgOpacityHover * (p.bgStrength || 1)})`} !important;
       };
       & > svg {
-        stroke: ${`rgba(${hexToRGB(p.isTransaction ? p.theme.colors.txButton : p.theme.colors.main)}, 1)`};
+        stroke: ${p.theme.colors.main};
       };
-      border-color: ${`rgba(${hexToRGB(p.isTransaction ? p.theme.colors.txButton : p.theme.colors.main)}, 1)`};
     };
   `}
 `;
@@ -50,15 +51,11 @@ const Switcher = ({ buttons, buttonWidth, onChange, size, value }) => (
       return (
         <SwitcherButton
           key={buttonValue}
-          background={buttonValue === value ? theme.colors.main : `rgba(${hexToRGB(theme.colors.main)}, 0.15)`}
           flip={reactBool(i === 0)}
           isSelected={buttonValue === value}
           onClick={() => onChange(buttonValue)}
           size={size || undefined}
-          style={{
-            ...styles,
-            color: buttonValue === value ? undefined : `${theme.colors.main}` //Text color
-          }}
+          style={{ ...styles }}
           width={buttonWidth}>
           <SwitcherButtonInner>
             {icon || null} {label}
