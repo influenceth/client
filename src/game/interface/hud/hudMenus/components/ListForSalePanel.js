@@ -102,16 +102,14 @@ const ListForSalePanel = ({ entity }) => {
           <Button
             disabled={nativeBool(isPendingUpdate)}
             onClick={() => cancelForSale()}
-            size="small"
-            subtle>Cancel</Button>
+            size="small">Cancel</Button>
           <Button
             disabled={nativeBool(!isDirty || isIncomplete || isPendingUpdate)}
             loading={isPendingUpdate}
             isTransaction
             onClick={() => saveForSale()}
             size="small"
-            style={{ marginLeft: 6 }}
-            subtle>Update</Button>
+            style={{ marginLeft: 6 }}>Update</Button>
         </div>
       </Section>
     </CollapsibleBlock>

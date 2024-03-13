@@ -76,8 +76,8 @@ const ConfirmationDialog = ({ loading, onConfirm, onReject, isTransaction, ...pr
         {loading ? <Loader /> : props.body}
       </ConfirmationBody>
       <ConfirmationButtons>
-        <Button onClick={onReject} disabled={nativeBool(loading)} subtle>{props.rejectText || 'Back'}</Button>
-        <Button onClick={onConfirm} disabled={nativeBool(loading)} isTransaction={isTransaction} subtle>{props.confirmText || 'Confirm'}</Button>
+        <Button onClick={onReject} disabled={nativeBool(loading)}>{props.rejectText || 'Back'}</Button>
+        <Button onClick={onConfirm} disabled={nativeBool(loading)} isTransaction={isTransaction}>{props.confirmText || 'Confirm'}</Button>
       </ConfirmationButtons>
     </Confirmation>
   </Dialog>

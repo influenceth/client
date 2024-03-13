@@ -92,7 +92,7 @@ const LotInfo = () => {
     
       {!isZoomedToLot && (
         <Tray>
-          <Button onClick={toggleZoomScene} subtle>
+          <Button onClick={toggleZoomScene}>
             <MagnifyingIcon style={{ marginRight: 8 }} /> Zoom to Lot
           </Button>
         </Tray>

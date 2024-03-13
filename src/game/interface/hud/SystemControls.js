@@ -165,7 +165,6 @@ const SystemControls = () => {
         data-tip="Realign camera to poles"
         onClick={dispatchReorientCamera}
         size="bigicon"
-        subtle
         style={{ fontSize: '26px', marginRight: swayBalance === undefined ? 15 : 0 }}>
         <ResetCameraIcon />
       </Button>

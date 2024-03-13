@@ -212,12 +212,12 @@ const Marketplace = () => {
         </Wrapper>
         {showFooter && (
           <Footer>
-            {discriminator && <Button flip subtle onClick={goBack}>Back</Button>}
+            {discriminator && <Button flip onClick={goBack}>Back</Button>}
             <div style={{ flex: 1 }} />
             {crew?.id && (!discriminator || (discriminator !== 'orders' && marketplace)) && (
               <>
                 <OrderTally><OrderIcon /> {myLocalOrders.length} Order{myLocalOrders.length === 1 ? '' : 's'} {marketplace ? 'at this Marketplace' : 'on this Asteroid'}</OrderTally>
-                <Button subtle onClick={goToMyOrders}>My Open Orders</Button>
+                <Button onClick={goToMyOrders}>My Open Orders</Button>
               </>
             )}
           </Footer>

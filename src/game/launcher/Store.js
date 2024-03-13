@@ -351,7 +351,7 @@ export const FundingDialog = ({ onClose, onSelect, targetAmount }) => {
           </FundingButtons>
         </FundingBody>
         <FundingFooter>
-          <Button subtle onClick={onClose}>Back</Button>
+          <Button onClick={onClose}>Back</Button>
         </FundingFooter>
       </Details>
     ),
@@ -434,7 +434,6 @@ export const CrewmateSKU = () => {
                 disabled={nativeBool(isPendingPurchase || !priceConstants?.ADALIAN_PRICE_ETH || Number(tally) === 0)}
                 isTransaction
                 onClick={onPurchaseCrewmates}
-                subtle
                 style={{ width: '100%' }}>
                 Purchase
                 {priceConstants && (
@@ -450,7 +449,6 @@ export const CrewmateSKU = () => {
                 onClick={onFundWallet}
                 color={theme.colors.success}
                 background={`rgba(${theme.colors.successRGB}, 0.1)`}
-                subtle
                 style={{ width: '100%' }}>
                 <PlusIcon />
                 <span>Add Funds</span>
@@ -528,7 +526,6 @@ export const AsteroidSKU = () => {
         </Price>
         <Button
           onClick={filterAndClose}
-          subtle
           style={{ width: '100%' }}>
           Browse Available Asteroids
         </Button>
@@ -654,7 +651,6 @@ export const SwaySKU = () => {
                 disabled={nativeBool(isPendingPurchase || !ethToSell)}
                 isTransaction
                 onClick={swapForSway}
-                subtle
                 style={{ width: '100%' }}>
                 Purchase
                   <ButtonExtra>
@@ -668,7 +664,6 @@ export const SwaySKU = () => {
                 onClick={onFundWallet}
                 color={theme.colors.success}
                 background={`rgba(${theme.colors.successRGB}, 0.1)`}
-                subtle
                 style={{ width: '100%' }}>
                 <PlusIcon />
                 <span>Add Funds</span>
@@ -793,7 +788,6 @@ export const FaucetSKU = () => {
             disabled={nativeBool(!ethEnabled || requestingEth || faucetInfoLoading)}
             color={theme.colors.success}
             background={`rgba(${theme.colors.successRGB}, 0.1)`}
-            subtle
             style={{ width: '100%', marginBottom: 10 }}>
             <PlusIcon />
             <span>Request ETH</span>
@@ -806,7 +800,6 @@ export const FaucetSKU = () => {
             disabled={nativeBool(!swayEnabled || requestingSway || faucetInfoLoading)}
             color={theme.colors.success}
             background={`rgba(${theme.colors.successRGB}, 0.1)`}
-            subtle
             style={{ width: '100%' }}>
             <PlusIcon />
             <span>Request SWAY</span>

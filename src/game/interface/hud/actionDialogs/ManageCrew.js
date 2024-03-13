@@ -428,8 +428,7 @@ const ManageCrew = ({ altCrews, crew, isForeignCrew, manager, stage, ...props })
                 <Button
                   disabled={nativeBool(stage !== actionStages.NOT_STARTED)}
                   onClick={() => setExchangeCrewId(0)}
-                  style={{ marginTop: 12 }}
-                  subtle>
+                  style={{ marginTop: 12 }}>
                   <PlusIcon /> Form New Crew
                 </Button>
               </FlexSectionBlock>

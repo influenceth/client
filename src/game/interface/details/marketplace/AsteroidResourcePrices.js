@@ -383,7 +383,7 @@ const AsteroidResourcePrices = ({ asteroid, resource }) => {
         </TableContainer>
       </Body>
 
-      <PseudoFooterButton subtle disabled={nativeBool(!selected)} onClick={onViewMarketplace}>
+      <PseudoFooterButton disabled={nativeBool(!selected)} onClick={onViewMarketplace}>
         View Marketplace
       </PseudoFooterButton>
     </>

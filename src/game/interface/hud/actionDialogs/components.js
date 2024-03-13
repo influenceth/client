@@ -1303,7 +1303,7 @@ export const SelectionDialog = ({ children, isCompletable, open, onClose, onComp
       </SelectionBody>
       <SelectionButtons style={{ position: 'relative'}}>
         <Button onClick={onClose}>Cancel</Button>
-        <Button onClick={onComplete} disabled={!isCompletable}>Done</Button>
+        <Button disabled={!isCompletable} onClick={onComplete}>Done</Button>
       </SelectionButtons>
       <ClipCorner color={borderColor} dimension={selectionDialogCornerSize} />
     </Dialog>,
@@ -3623,8 +3623,8 @@ export const ActionDialogStats = ({ stage, stats: rawStats, wide }) => {
 const CrewBusyButton = ({ crew }) => {
   return (
     <Button
-      isTransaction
       disabled={nativeBool(true)}
+      isTransaction
       loading={reactBool(true)}>
       Crew Busy
     </Button>
@@ -3633,7 +3633,7 @@ const CrewBusyButton = ({ crew }) => {
 
 const CrewNotLaunchedButton = ({ crew }) => {
   return (
-    <Button isTransaction disabled={nativeBool(true)}>
+    <Button disabled={nativeBool(true)} isTransaction>
       Crew Not Launched
     </Button>
   );
@@ -3684,8 +3684,8 @@ export const ActionDialogFooter = ({
               {waitForCrewReady && crew?._launched && !crew?._ready && <CrewBusyButton crew={crew} />}
               {(!waitForCrewReady || (crew?._ready && crew?._launched)) && (
                 <Button
-                  isTransaction
                   disabled={nativeBool(disabled)}
+                  isTransaction
                   loading={reactBool(buttonsLoading)}
                   onClick={onGo}>{goLabel}</Button>
               )}
@@ -3699,8 +3699,8 @@ export const ActionDialogFooter = ({
                     loading={reactBool(buttonsLoading)}
                     onClick={onClose}>Close</Button>
                   <Button
-                    isTransaction
                     disabled={nativeBool(disabled)}
+                    isTransaction
                     loading={reactBool(buttonsLoading)}
                     onClick={onFinalize}>{finalizeLabel || 'Accept'}</Button>
                 </>

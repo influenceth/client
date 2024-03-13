@@ -1308,8 +1308,7 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
                             disabled={promptingTransaction || finalizing}
                             lessTransparent
                             onClick={rerollAppearance}
-                            style={{ width: 275 }}
-                            subtle>
+                            style={{ width: 275 }}>
                             Randomize Appearance
                           </RandomizeButton>
 
@@ -1329,8 +1328,7 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
                               disabled={promptingTransaction || finalizing}
                               lessTransparent
                               onClick={() => setConfirmingUnlock(true)}
-                              style={{ width: 275 }}
-                              subtle>
+                              style={{ width: 275 }}>
                               Unlock Traits
                             </RandomizeButton>
                           )
@@ -1340,8 +1338,7 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
                                 disabled={promptingTransaction || finalizing}
                                 lessTransparent
                                 onClick={rerollTraits}
-                                style={{ width: 275 }}
-                                subtle>
+                                style={{ width: 275 }}>
                                 Randomize Traits
                               </RandomizeButton>
                             </>
@@ -1541,23 +1538,22 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
           {finalized && (
             <>
               <CopyReferralLink>
-                <Button subtle><LinkIcon /> <span style={{ marginLeft: 4 }}>Copy Referral Link</span></Button>
+                <Button><LinkIcon /> <span style={{ marginLeft: 4 }}>Copy Referral Link</span></Button>
               </CopyReferralLink>
 
               <div style={{ flex: 1 }} />
-              <Button subtle onClick={() => history.push(`/crew/${mappedCrewmate?.Control?.controller?.id}`)}>Go to Crew</Button>
+              <Button onClick={() => history.push(`/crew/${mappedCrewmate?.Control?.controller?.id}`)}>Go to Crew</Button>
             </>
           )}
           {!finalized && (
             <>
-              <Button disabled={!!pendingCrewmate} subtle onClick={handleBack}>Back</Button>
+              <Button disabled={!!pendingCrewmate} onClick={handleBack}>Back</Button>
               <div style={{ flex: 1 }} />
               <div style={{ alignItems: 'center', display: 'flex', flexDirection: 'row' }}>
                 {recruitTally > 0 && <RecruitTally>Credits Remaining: <b>{recruitTally}</b></RecruitTally>}
                 <Button
                   disabled={!readyForSubmission || !!pendingCrewmate || nameError !== null || (crewId !== 0 && crew?.Crew?.roster?.length >= 5)}
                   loading={!!pendingCrewmate}
-                  subtle
                   isTransaction
                   onClick={confirmFinalize}>Recruit</Button>
               </div>

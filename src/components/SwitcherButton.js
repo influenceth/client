@@ -1,24 +1,43 @@
 import styled from 'styled-components';
 
-import Button from '~/components/ButtonAlt';
+import Button, { bgOpacity, bgOpacityHover } from '~/components/ButtonAlt';
 import { reactBool } from '~/lib/utils';
-import theme from '~/theme';
+import { hexToRGB } from '~/theme';
 
 const Wrapper = styled.div`
   display: flex;
   flex-direction: row;
 `;
 const SwitcherButton = styled(Button)`
+  font-weight: bold;
   ${p => p.width && `
     max-width: ${p.width};
     width: ${p.width};
+  `}
+
+  ${p => !p.disabled && `
+    border-color: ${p.theme.colors.main} !important;
+    color: ${p.isSelected ? `black` : p.theme.colors.main};
+    & > div {
+      background-color: ${p.isSelected ? p.theme.colors.main : `rgba(${hexToRGB(p.theme.colors.main)}, ${bgOpacity * (p.bgStrength || 1)})`} !important;
+    }
+    &:hover {
+      border-color: ${p.theme.colors.main};
+      color: ${p.isSelected ? 'black' : 'white'};
+      & > div {
+        background-color: ${p.isSelected ? p.theme.colors.main : `rgba(${hexToRGB(p.theme.colors.main)}, ${bgOpacityHover * (p.bgStrength || 1)})`} !important;
+      };
+      & > svg {
+        stroke: ${p.theme.colors.main};
+      };
+    };
   `}
 `;
 const SwitcherButtonInner = styled.div`
   align-items: center;
   display: flex;
   & > svg {
-    font-size: 85%;
+    font-size: 75%;
     margin-right: 12px;
   }
 `;
@@ -32,15 +51,12 @@ const Switcher = ({ buttons, buttonWidth, onChange, size, value }) => (
       return (
         <SwitcherButton
           key={buttonValue}
-          background={buttonValue === value ? theme.colors.main : '#444'}
-          width={buttonWidth}
           flip={reactBool(i === 0)}
+          isSelected={buttonValue === value}
           onClick={() => onChange(buttonValue)}
           size={size || undefined}
-          style={{
-            ...styles,
-            color: buttonValue === value ? undefined : '#999'
-          }}>
+          style={{ ...styles }}
+          width={buttonWidth}>
           <SwitcherButtonInner>
             {icon || null} {label}
           </SwitcherButtonInner>
