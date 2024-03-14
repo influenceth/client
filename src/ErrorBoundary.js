@@ -58,8 +58,6 @@ const Buttons = styled.div`
   }
 `;
 
-const sizeParams = { font: 16, height: 32, width: 185, line: 10, borderWidth: 1 };
-
 class ErrorBoundary extends Component {
   constructor(props) {
     super(props);
@@ -75,15 +73,24 @@ class ErrorBoundary extends Component {
     return { hasError: true };
   }
 
-  componentDidCatch(error, info) {
+  componentDidCatch(error, errorInfo) {
     const redactedStore = JSON.parse(localStorage.getItem(STORE_NAME));
-    if (redactedStore?.state?.auth) redactedStore.state.auth = '<< REDACTED >>';
+    if (redactedStore?.state?.auth) redactedStore.state.auth = redactedStore.state.auth.token ? '<< LOGGED IN >>' : '<< LOGGED OUT >>';
+    // TODO (maybe):
+    //  - current block number and block time
+    //  - activities query cache
+    //  - most recent websocket messages
+    //  - most recent transactions
     this.setState({
       debugData: {
-        error,
-        info,
+        errorMessage: typeof error === 'string' ? error : error?.message,
+        errorCause: error?.cause, // (will likely be empty)
+        // errorStack: error?.stack, // (should be redundant to errorInfo, not sure that is true though)
+        errorInfo,
         redactedStore,
-        userAgent: window?.navigator?.userAgent
+        userAgent: window?.navigator?.userAgent,
+        href: window.location.href,
+        timestamp: Math.floor(Date.now() / 1000),
       }
     });
   }
