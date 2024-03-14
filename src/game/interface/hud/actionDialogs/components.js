@@ -4131,7 +4131,10 @@ export const formatResourceVolume = (units, resourceId, { abbrev = true, minPrec
   );
 }
 
-export const formatVolume = (ml, { abbrev = true, minPrecision = 3, fixedPrecision } = {}) => {
+export const formatVolume = (inputMl, { abbrev = true, minPrecision = 3, fixedPrecision } = {}) => {
+  let sign = inputMl < 0 ? '-' : '';
+
+  const ml = Math.abs(inputMl);
   let unitLabel;
   let scale;
   if (ml >= 1e6 || ml === 0) {
@@ -4153,7 +4156,7 @@ export const formatVolume = (ml, { abbrev = true, minPrecision = 3, fixedPrecisi
       fixedPlaces++;
     }
   }
-  return `${formatFixed(workingUnits, fixedPlaces)} ${unitLabel}`;
+  return `${sign}${formatFixed(workingUnits, fixedPlaces)} ${unitLabel}`;
 };
 
 export const formatSurfaceDistance = (km) => {
@@ -4171,7 +4174,10 @@ export const formatBeltDistance = (m) => {
   return `${Math.round(m / 1e3).toLocaleString()} km`;
 }
 
-export const formatVelocity = (metersPerSecond, { abbrev = true, minPrecision = 3, fixedPrecision } = {}) => {
+export const formatVelocity = (inputMetersPerSecond, { abbrev = true, minPrecision = 3, fixedPrecision } = {}) => {
+  let sign = inputMetersPerSecond < 0 ? '-' : '';
+
+  const metersPerSecond = Math.abs(inputMetersPerSecond);
   let unitLabel;
   let scale;
   if (metersPerSecond >= 1e3) {
@@ -4190,7 +4196,7 @@ export const formatVelocity = (metersPerSecond, { abbrev = true, minPrecision = 
       fixedPlaces++;
     }
   }
-  return `${formatFixed(workingUnits, fixedPlaces)} ${unitLabel}`;
+  return `${sign}${formatFixed(workingUnits, fixedPlaces)} ${unitLabel}`;
 };
 
 export const formatShipStatus = (ship) => {
