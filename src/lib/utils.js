@@ -30,7 +30,10 @@ export const formatPrecision = (value, maximumPrecision = 0) => {
   return formatFixed(value, allowedDecimals);
 };
 
-export const formatPrice = (sway, { minPrecision = 3, fixedPrecision = 4 } = {}) => {
+export const formatPrice = (inputSway, { minPrecision = 3, fixedPrecision = 4 } = {}) => {
+  let sign = inputSway < 0 ? '-' : '';
+
+  const sway = Math.abs(inputSway);
   let unitLabel;
   let scale;
   if (sway >= 1e6) {
@@ -54,7 +57,7 @@ export const formatPrice = (sway, { minPrecision = 3, fixedPrecision = 4 } = {})
       fixedPlaces++;
     }
   }
-  return `${formatFixed(workingUnits, fixedPlaces)}${unitLabel}`;
+  return `${sign}${formatFixed(workingUnits, fixedPlaces)}${unitLabel}`;
 };
 
 export const keyify = (str) => (str || '').replace(/[^a-zA-Z0-9_]/g, '');
