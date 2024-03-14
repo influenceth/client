@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
 import { Asteroid, Building, Deposit, Lot, Product } from '@influenceth/sdk';
 
-import { CoreSampleIcon, PlusIcon } from '~/components/Icons';
+import { CoreSampleIcon, MyAssetIcon, PlusIcon, ResourceIcon, SwayIcon } from '~/components/Icons';
 import ResourceThumbnail from '~/components/ResourceThumbnail';
 import useCoreSampleManager from '~/hooks/actionManagers/useCoreSampleManager';
 import useExtractionManager from '~/hooks/actionManagers/useExtractionManager';
@@ -11,17 +11,14 @@ import useAsteroid from '~/hooks/useAsteroid';
 import useCrewContext from '~/hooks/useCrewContext';
 import useLot from '~/hooks/useLot';
 import useStore from '~/hooks/useStore';
-import { formatFixed, keyify } from '~/lib/utils';
+import { formatFixed, formatPrice, keyify } from '~/lib/utils';
 import { hexToRGB } from '~/theme';
 import actionButtons from '../../actionButtons';
 import { HudMenuCollapsibleSection, Scrollable, Tray, trayHeight } from './components';
-
-const Wrapper = styled.div`
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
-  max-height: calc(100% - ${trayHeight}px);
-`;
+import Button from '~/components/ButtonAlt';
+import EntityLink from '~/components/EntityLink';
+import { ListForSaleInner } from './ListForSalePanel';
+import usePrivateSaleManager from '~/hooks/actionManagers/usePrivateSaleManager';
 
 const Circle = styled.div`
   background: currentColor;
@@ -61,19 +58,21 @@ const ShowMoreRow = styled(Row)`
 `;
 
 const Resource = styled(Row)`
-  cursor: ${p => p.theme.cursors.active};
-  &:hover {
-    background: rgba(${p => hexToRGB(p.theme.colors.resources[p.category])}, 0.15);
+  ${p => p.selected
+    ? `
+      background: rgba(${hexToRGB(p.theme.colors.resources[p.category])}, 0.15);
+      border: 1px solid rgba(${hexToRGB(p.theme.colors.resources[p.category])}, 0.45);
+      & > span {
+        color: white;
+      }
+    `
+    : `
+      cursor: ${p.theme.cursors.active};
+      &:hover {
+        background: rgba(${hexToRGB(p.theme.colors.resources[p.category])}, 0.05);
+      }
+    `
   }
-  ${p => p.selected && `
-    background: rgba(${hexToRGB(p.theme.colors.resources[p.category])}, 0.3);
-    label {
-      color: white !important;
-    }
-    span {
-      color: white;
-    }
-  `}
 
   ${Circle}, label, svg {
     color: ${p => p.theme.colors.resources[p.category]};
@@ -81,24 +80,255 @@ const Resource = styled(Row)`
 `;
 
 const Sample = styled(Resource)`
+  & > div:first-child {
+    margin: 4px 6px;
+  }
   & > svg {
     font-size: 22px;
+    margin-right: 6px;
   }
   & > label {
     color: white;
   }
 `;
 
+const SelectedDeposit = styled.div`
+  width: 100%;
+`;
+
+const PrimaryInfo = styled.div`
+  display: flex;
+`;
+const Details = styled.div`
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+  display: flex;
+  margin-top: 8px;
+  padding: 8px 0 2px 2px;
+`;
+const SaleInfo = styled.div`
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  min-height: 34px;
+  width: 100%;
+  & > label {
+    ${p => p.notForSale
+      ? `color: #888;`
+      : `
+        color: white;
+        display: flex;
+        font-size: 22px;
+        & > svg {
+          font-size: 26px;
+          color: white;
+        }
+      `
+    }
+  }
+  & > span {
+    color: #888;
+    & > a {
+      color: white;
+      text-decoration: none;
+      &:hover {
+        text-decoration: underline;
+      }
+    }
+  }
+`;
+
+const YieldWrapper = styled.span`
+  align-items: center;
+  display: flex;
+  & svg {
+    font-size: 18px;
+    margin-right: 3px;
+  }
+  & > span {
+    color: ${p => p.color};
+    display: flex;
+    & > span,
+    & > svg { color: inherit; }
+  }
+  & > svg {
+    color: ${p => p.theme.colors.main};
+  }
+`;
+
+const Unused = styled.span`
+  color: white !important;
+  &:before { content: "Unused"; }
+`;
 const Used = styled.span`
-  color: ${p => p.theme.colors.error} !important;
+  color: #888 !important;
+  &:before { content: "Used"; }
 `;
 const Depleted = styled.span`
   color: ${p => p.theme.colors.error} !important;
-`;
-const InProgress = styled.span`
-  color: ${p => p.theme.colors.main} !important;
+  &:before { content: "Depleted"; }
 `;
 
+const DepositInfo = styled.div`
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  justify-content: center;
+  padding-left: 8px;
+  & > label {
+    margin-bottom: 2px;
+  }
+`;
+
+const getYieldColor = (sample) => {
+  if (sample.Deposit.initialYield) {
+    if (sample.Deposit.remainingYield > 0) {
+      if (sample.Deposit.initialYield !== sample.Deposit.remainingYield) {
+        // partially used
+      }
+      return '#a97c4f';
+    }
+    return 'brown';
+  }
+  return '#555';
+};
+
+const sampleSort = (a, b) => {
+  if (!a.Deposit.initialYield && !b.Deposit.initialYield) {
+    return b.Deposit.remainingYield - a.Deposit.remainingYield;
+  }
+  return b.Deposit.initialYield ? -1 : 1;
+};
+
+const Yield = ({ isMine, sample }) => (
+  <YieldWrapper color={getYieldColor(sample)}>
+    {isMine && <MyAssetIcon />}
+    {sample.Deposit.status >= Deposit.STATUSES.SAMPLED
+      ? <span><ResourceIcon style={{ fontSize: '22px' }} /> <span>{formatFixed(sample.Deposit.remainingYield / 1e3, 0)} t</span></span>
+      : <>(unanalyzed)</>
+    }
+  </YieldWrapper>
+);
+
+const SaleDetails = ({ isMine, sample }) => {
+  const { updateListing, isPendingUpdate } = usePrivateSaleManager(sample);
+  const [editing, setEditing] = useState();
+  
+  const originalPrice = useMemo(() => (sample?.PrivateSale?.price || 0) / 1e6, [sample?.PrivateSale?.price]);
+
+  return editing
+    ? (
+      <div style={{ marginTop: 8, width: '100%' }}>
+        <ListForSaleInner
+          forSaleWarning="For-Sale Deposits can be purchased by the operator of an Extractor on this lot, and only during extraction or improvement."
+          isSaving={isPendingUpdate}
+          onCancel={() => setEditing(false)}
+          onSave={updateListing}
+          originalPrice={originalPrice} />
+      </div>
+    )
+    : (
+      <Details>
+        <SaleInfo notForSale={!(originalPrice > 0)}>
+          <label>{originalPrice > 0 ? <><SwayIcon /> <span>{formatPrice(originalPrice)}</span></> : 'Not for Sale'}</label>
+          {isMine && (
+            <Button size="small" onClick={() => setEditing((e) => !e)}>
+              {originalPrice > 0 ? 'Edit Sale' : 'List for Sale'}
+            </Button>
+          )}
+          {!isMine && originalPrice > 0 && (
+            <span>Sold by <EntityLink id={sample?.Control?.controller?.id} label={sample?.Control?.controller?.label} /></span>
+          )}
+        </SaleInfo>
+      </Details>
+    )
+  ;
+};
+
+const DepositSection = ({ deposits = [], depleted = [], selected, onSelect, title }) => {
+  const { crew } = useCrewContext();
+  const dispatchResourceMapToggle = useStore(s => s.dispatchResourceMapToggle);
+
+  const [showAll, setShowAll] = useState();
+  
+  const onClickSample = useCallback((id) => () => {
+    onSelect({ type: 'sample', id });
+    dispatchResourceMapToggle(false); // TODO: instead of turning off the resource map, should this change it the resource of the selected sample?
+  }, [onSelect]);
+
+  const samples = useMemo(() => {
+    if (showAll) return [...deposits, ...depleted];
+    return deposits;
+  }, [deposits, depleted, showAll]);
+
+  return (
+    <HudMenuCollapsibleSection
+      titleText={title}
+      titleLabel={`${deposits.length} Sample${deposits.length === 1 ? '' : 's'}`}
+      borderless
+      collapsed={!(deposits.length > 0) || (selected?.type === 'resource')}>
+      {samples.map((sample) => {
+        const { name, category } = Product.TYPES[sample.Deposit.resource];
+        const categoryKey = keyify(category);
+        const isSelected = selected?.type === 'sample' && selected?.id === sample.id;
+        
+        return (
+          <Sample
+            key={sample.id}
+            category={categoryKey}
+            onClick={onClickSample(sample.id)}
+            selected={isSelected}>
+            {isSelected
+              ? (
+                <SelectedDeposit>
+                  <PrimaryInfo>
+                    <div>
+                      <ResourceThumbnail
+                        resource={Product.TYPES[sample.Deposit.resource]}
+                        iconBadge={<CoreSampleIcon />}
+                        size="75px"
+                        tooltipContainer="hudMenu" />
+                    </div>
+                    <DepositInfo>
+                      <label>{name}</label>
+                      {sample.Deposit.initialYield
+                        ? (
+                          <div>
+                            {sample.Deposit.remainingYield > 0
+                              ? (sample.Deposit.initialYield === sample.Deposit.remainingYield ? <Unused /> : <Used />)
+                              : <Depleted />
+                            }
+                          </div>
+                        )
+                        : null
+                      }
+                    </DepositInfo>
+                    <Yield isMine={sample.Control.controller.id === crew?.id} sample={sample} />
+                  </PrimaryInfo>
+                  <SaleDetails isMine={sample.Control.controller.id === crew?.id} sample={sample} />
+                </SelectedDeposit>
+              )
+              : (
+                <>
+                  <CoreSampleIcon />
+                  <label>{name}</label>
+                  <Yield isMine={sample.Control.controller.id === crew?.id} sample={sample} />
+                </>
+              )
+            }
+          </Sample>
+        );
+      })}
+      {!showAll && depleted?.length > 0 && (
+        <ShowMoreRow onClick={() => setShowAll(true)}>
+          <PlusIcon />
+          <label>
+            Show {depleted.length} depleted...
+          </label>
+        </ShowMoreRow>
+      )}
+    </HudMenuCollapsibleSection>
+  )
+};
 
 const LotResources = () => {
   const { props: actionProps } = useActionButtons();
@@ -116,7 +346,6 @@ const LotResources = () => {
 
   const [selected, setSelected] = useState();
   const [showAllAbundances, setShowAllAbundances] = useState();
-  const [showAllSamples, setShowAllSamples] = useState();
 
   // if there is an active resource map, select that resource
   useEffect(() => {
@@ -151,13 +380,6 @@ const LotResources = () => {
     dispatchResourceMapSelect(id);
     dispatchResourceMapToggle(true);
   }, []);
-  
-  const onClickSample = useCallback((id) => () => {
-    setSelected({ type: 'sample', id });
-
-    // TODO: instead of turning off the resource map, should this change it the resource of the selected sample?
-    dispatchResourceMapToggle(false);
-  }, []);
 
   const [showAbundances, abundancesTruncated] = useMemo(() => {
     if (showAllAbundances || lotAbundances.length < 8) {
@@ -166,34 +388,6 @@ const LotResources = () => {
       return [lotAbundances.slice(0, 5), true];
     }
   }, [lotAbundances, showAllAbundances]);
-
-  const [ownedSamples, depletedSamples] = useMemo(() => ([
-    (lot?.deposits || [])
-      .filter((s) => s.Control.controller.id === crew?.id)
-      .filter((s) => showAllSamples || !s.Deposit.initialYield || s.Deposit.remainingYield > 0)
-      .sort((a, b) => {
-        if (!a.Deposit.initialYield && !b.Deposit.initialYield) {
-          return b.Deposit.remainingYield - a.Deposit.remainingYield;
-        }
-        return b.Deposit.initialYield ? -1 : 1;
-      }),
-    (lot?.deposits || [])
-      .filter((s) => s.Control.controller.id === crew?.id)
-      .filter((s) => s.Deposit.initialYield > 0 && s.Deposit.remainingYield === 0),
-  ]), [crew?.id, lot?.deposits, showAllSamples]);
-
-  const getSampleYield = useCallback((sample) => {
-    if (sample.Deposit.initialYield) {
-      if (sample.Deposit.remainingYield > 0) {
-        if (sample.Deposit.initialYield === sample.Deposit.remainingYield) {
-          return `${formatFixed(sample.Deposit.remainingYield / 1e3, 0)} t`;
-        }
-        return <>{formatFixed(sample.Deposit.remainingYield / 1e3, 0)} t <Used>(partial)</Used></>;
-      }
-      return <Depleted>Depleted</Depleted>;
-    }
-    return <InProgress>In progress...</InProgress>;
-  }, []);
 
   const selectedResource = useMemo(() => {
     if (selected && selected.type === 'resource') {
@@ -204,10 +398,10 @@ const LotResources = () => {
 
   const selectedSample = useMemo(() => {
     if (selected && selected.type === 'sample') {
-      return ownedSamples.find((s) => selected.id === s.id);
+      return (lot?.deposits || []).find((s) => selected.id === s.id);
     }
     return null;
-  }, [ownedSamples, selected]);
+  }, [lot?.deposits, selected]);
 
   const extraSampleParams = useMemo(() => {
     const params = {};
@@ -235,89 +429,61 @@ const LotResources = () => {
     return params;
   }, [currentExtraction, selectedSample]);
 
-  const sampleTally = showAllSamples
-    ? (ownedSamples.length - depletedSamples.length)
-    : ownedSamples.length;
-  
-  // TODO: for core samples, style more like original mock
-
-  // TODO: also consider one-at-a-time accordion or larger min-height
-  //  OR someother flex strategy
+  const [ownedSamples, ownedSamplesDepleted, forSaleSamples, forSaleSamplesDepleted] = useMemo(() => ([
+    (lot?.deposits || []).filter((s) => s.Control.controller.id === crew?.id && (!s.Deposit.initialYield || s.Deposit.remainingYield > 0)).sort(sampleSort),
+    (lot?.deposits || []).filter((s) => s.Control.controller.id === crew?.id && s.Deposit.initialYield > 0 && s.Deposit.remainingYield === 0).sort(sampleSort),
+    // TODO: price is the marker, not non-ownership
+    (lot?.deposits || []).filter((s) => s.Control.controller.id !== crew?.id && (!s.Deposit.initialYield || s.Deposit.remainingYield > 0)).sort(sampleSort),
+    (lot?.deposits || []).filter((s) => s.Control.controller.id !== crew?.id && s.Deposit.initialYield > 0 && s.Deposit.remainingYield === 0).sort(sampleSort),
+  ]), [crew?.id, lot?.deposits]);
 
   return (
     <>
       <Scrollable hasTray={currentSamplingAction || selectedResource || selectedSample || currentExtraction}>
-          <HudMenuCollapsibleSection titleText="Lot Resources" titleLabel="Abundance">
-            <div style={{ height: '100%', overflow: 'hidden' }}>
-            {showAbundances.map(({ i, abundance }) => {
-              const { name, category } = Product.TYPES[i];
-              const categoryKey = keyify(category);
-              const isSelected = selected?.type === 'resource' && Number(selected?.id) === Number(i);
-              return (
-                <Resource
-                  key={i}
-                  category={categoryKey}
-                  onClick={onClickResource(i)}
-                  selected={isSelected}>
-                  {isSelected
-                    ? <ResourceThumbnail resource={Product.TYPES[i]} size="75px" tooltipContainer="null" />
-                    : <Circle />}
-                  <label>{name}</label>
-                  <span>{(abundance * 100).toFixed(1)}%</span>
-                </Resource>
-              );
-            })}
-            {abundancesTruncated && (
-              <ShowMoreRow onClick={() => setShowAllAbundances(true)}>
-                <PlusIcon />
-                <label>
-                  Show {lotAbundances.length - 5} more...
-                </label>
-              </ShowMoreRow>
-            )}
-            </div>
-          </HudMenuCollapsibleSection>
+        <HudMenuCollapsibleSection titleText="Lot Resources" titleLabel="Abundance">
           
-          <HudMenuCollapsibleSection
-            titleText="Core Samples"
-            titleLabel={`${sampleTally} Sample${sampleTally === 1 ? '' : 's'}`}
-            collapsed={!(ownedSamples?.length > 0) || (selected?.type === 'resource')}>
-            {ownedSamples.map((sample) => {
-              const { name, category } = Product.TYPES[sample.Deposit.resource];
-              const categoryKey = keyify(category);
-              const isSelected = selected?.type === 'sample' && selected?.id === sample.id;
-              return (
-                <Sample
-                  key={sample.id}
-                  category={categoryKey}
-                  onClick={onClickSample(sample.id)}
-                  selected={isSelected}>
-                  {isSelected
-                    ? (
-                      <ResourceThumbnail
-                        resource={Product.TYPES[sample.Deposit.resource]}
-                        iconBadge={<CoreSampleIcon />}
-                        size="75px"
-                        tooltipContainer="hudeMenu" />
-                    )
-                    : <CoreSampleIcon />}
-                  <label>{name}{isSelected ? '' : ' Deposit'}</label>
-                  <span>{getSampleYield(sample)}</span>
-                </Sample>
-              );
-            })}
-            {!showAllSamples && depletedSamples?.length > 0 && (
-              <ShowMoreRow onClick={() => setShowAllSamples(true)}>
-                <PlusIcon />
-                <label>
-                  Show {depletedSamples.length} depleted...
-                </label>
-              </ShowMoreRow>
-            )}
-          </HudMenuCollapsibleSection>
+          {showAbundances.map(({ i, abundance }) => {
+            const { name, category } = Product.TYPES[i];
+            const categoryKey = keyify(category);
+            const isSelected = selected?.type === 'resource' && Number(selected?.id) === Number(i);
+            return (
+              <Resource
+                key={i}
+                category={categoryKey}
+                onClick={onClickResource(i)}
+                selected={isSelected}>
+                {isSelected
+                  ? <ResourceThumbnail resource={Product.TYPES[i]} size="75px" tooltipContainer="null" />
+                  : <Circle />}
+                <label>{name}</label>
+                <span>{(abundance * 100).toFixed(1)}%</span>
+              </Resource>
+            );
+          })}
+          {abundancesTruncated && (
+            <ShowMoreRow onClick={() => setShowAllAbundances(true)}>
+              <PlusIcon />
+              <label>
+                Show {lotAbundances.length - 5} more...
+              </label>
+            </ShowMoreRow>
+          )}
           
-          <HudMenuCollapsibleSection titleText="For Sale" titleLabel={`0 Samples`} borderless collapsed>
-          </HudMenuCollapsibleSection>
+        </HudMenuCollapsibleSection>
+
+        <DepositSection
+          title="My Deposits"
+          deposits={ownedSamples}
+          depleted={ownedSamplesDepleted}
+          onSelect={setSelected}
+          selected={selected} />
+
+        <DepositSection
+          title="For Sale"
+          deposits={forSaleSamples}
+          depleted={forSaleSamplesDepleted}
+          onSelect={setSelected}
+          selected={selected} />
       </Scrollable>
 
       {(currentSamplingAction || selectedResource || selectedSample || currentExtraction) && (
