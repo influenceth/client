@@ -3,10 +3,10 @@ import styled from 'styled-components';
 import { Asteroid, Crewmate, Deposit, Extractor, Inventory, Lot, Permission, Product, Time } from '@influenceth/sdk';
 import cloneDeep from 'lodash/cloneDeep';
 
-import { CoreSampleIcon, ExtractionIcon, InventoryIcon, LocationIcon, ResourceIcon } from '~/components/Icons';
+import { CoreSampleIcon, ExtractionIcon, InventoryIcon, LocationIcon, ResourceIcon, SwayIcon, WarningIcon } from '~/components/Icons';
 import useCrewContext from '~/hooks/useCrewContext';
 import useExtractionManager from '~/hooks/actionManagers/useExtractionManager';
-import { reactBool, formatTimer, locationsArrToObj, getCrewAbilityBonuses, formatFixed } from '~/lib/utils';
+import { reactBool, formatTimer, locationsArrToObj, getCrewAbilityBonuses, formatFixed, formatPrice } from '~/lib/utils';
 
 import {
   ResourceAmountSlider,
@@ -43,6 +43,27 @@ import actionStage from '~/lib/actionStages';
 import useEntity from '~/hooks/useEntity';
 import formatters from '~/lib/formatters';
 import useActionCrew from '~/hooks/useActionCrew';
+import { TextInputWrapper } from '~/components/TextInputUncontrolled';
+import CrewIndicator from '~/components/CrewIndicator';
+import useCrew from '~/hooks/useCrew';
+
+const InputLabel = styled.div`
+  align-items: center;
+  color: #888;
+  display: flex;
+  flex-direction: row;
+  font-size: 14px;
+  margin-bottom: 3px;
+  & > label {
+    flex: 1;
+  }
+  & > span {
+    b {
+      color: white;
+      font-weight: normal;
+    }
+  }
+`;
 
 const SampleAmount = styled.span`
   & > span {
@@ -50,6 +71,19 @@ const SampleAmount = styled.span`
     &:last-child {
       color: ${p => p.theme.colors.main};
     }
+  }
+`;
+
+const Warning = styled.div`
+  align-items: center;
+  color: ${p => p.theme.colors.main};
+  display: flex;
+  flex-direction: row;
+  font-size: 13px;
+  margin-top: 8px;
+  & > span:first-child {
+    margin-right: 8px;
+    width: 16px;
   }
 `;
 
@@ -104,11 +138,9 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
     return bonusIds.map((id) => abilities[id] || {});
   }, [crew, selectedCoreSample?.resourceId]);
 
-  // if extraction is in progress, consider all samples as usable so
-  // can be sure to match on whichever sample that is being extracted
   const usableSamples = useMemo(() => {
     return (lot?.deposits || []).filter((d) => (
-      d.Control.controller.id === crew?.id
+      (d.Control.controller.id === crew?.id || d.PrivateSale?.amount > 0)
       && d.Deposit.remainingYield > 0
       && d.Deposit.status >= Deposit.STATUSES.SAMPLED
     ));
@@ -253,10 +285,16 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
     },
   ]), [amount, crewTravelBonus, crewTravelTime, extractionBonus, extractionTime, resource, transportDistance, transportTime]);
 
+  const isPurchase = useMemo(
+    () => selectedCoreSample && selectedCoreSample?.Control?.controller?.id !== crew?.id,
+    [crew?.id, selectedCoreSample?.Control?.controller?.id]
+  );
+
+  const { data: depositOwner } = useCrew(isPurchase ? selectedCoreSample?.Control?.controller?.id : null);
+
   const onStartExtraction = useCallback(() => {
-    if (!(amount && selectedCoreSample && destination && destinationInventory)) {
-      return;
-    }
+    if (!(amount && selectedCoreSample && destination && destinationInventory)) return;
+    if (isPurchase && !depositOwner) return;
 
     const inventoryConfig = Inventory.getType(destinationInventory.inventoryType, crew?._inventoryBonuses) || {};
     if (destinationInventory) {
@@ -283,9 +321,10 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
       safeAmount,
       selectedCoreSample,
       destination,
-      destinationInventory.slot
+      destinationInventory.slot,
+      depositOwner,
     );
-  }, [amount, crew?._inventoryBonuses, selectedCoreSample, destination, destinationInventory, resource]);
+  }, [amount, crew?._inventoryBonuses, depositOwner, selectedCoreSample, destination, destinationInventory, isPurchase, resource]);
 
   // handle auto-closing
   const lastStatus = useRef();
@@ -373,6 +412,37 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
 
         </FlexSection>
 
+        {stage === actionStage.NOT_STARTED && isPurchase && (
+          <Section>
+            <SectionTitle>Purchase Deposit</SectionTitle>
+            <SectionBody style={{ alignItems: 'center', paddingTop: 5 }}>
+              <div style={{ flex: 1 }}>
+                <InputLabel>
+                  <label>Price</label>
+                </InputLabel>
+                <TextInputWrapper>
+                  <div style={{ background: '#09191f', color: 'white', fontSize: '26px', padding: '4px 2px' }}>
+                    <SwayIcon />{formatPrice(selectedCoreSample.PrivateSale?.amount / 1e6)}
+                  </div>
+                </TextInputWrapper>
+                <Warning>
+                  <span><WarningIcon /></span>
+                  <span>
+                    You are purchasing rights to an entire deposit and
+                    may extract any portion of it now or in the future.
+                  </span>
+                </Warning>
+              </div>
+
+              <FlexSectionSpacer />
+
+              <div style={{ flex: 1, marginTop: 10 }}>
+                <CrewIndicator crew={selectedCoreSample.Control.controller} label="Deposit Sold by" />
+              </div>
+            </SectionBody>
+          </Section>
+        )}
+
         {stage === actionStage.NOT_STARTED && (
           <Section>
             <SectionTitle>Extraction Amount</SectionTitle>
@@ -407,7 +477,7 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
 
       <ActionDialogFooter
         disabled={stage !== actionStage.READY_TO_COMPLETE && (!destinationLot || !selectedCoreSample || amount === 0 || !crewCan(Permission.IDS.EXTRACT_RESOURCES, lot.building))}
-        goLabel="Extract"
+        goLabel={isPurchase ? 'Purchase & Extract' : 'Extract'}
         onGo={onStartExtraction}
         finalizeLabel="Complete"
         onFinalize={finishExtraction}
@@ -429,8 +499,9 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
           {/* TODO: reset if resource changes? */}
           <InventorySelectionDialog
             asteroidId={asteroid.id}
+            excludeSites
             otherEntity={lot?.building}
-            itemIds={[selectedCoreSample?.resource]}
+            itemIds={[selectedCoreSample?.Deposit?.resource]}
             onClose={() => setDestinationSelectorOpen(false)}
             onSelected={setDestinationSelection}
             open={destinationSelectorOpen}

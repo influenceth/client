@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
 import { Asteroid, Building, Deposit, Lot, Product } from '@influenceth/sdk';
 
-import { CoreSampleIcon, MyAssetIcon, PlusIcon, ResourceIcon, SwayIcon } from '~/components/Icons';
+import { CheckIcon, CheckedIcon, CoreSampleIcon, MyAssetIcon, PlusIcon, ResourceIcon, SwayIcon, UncheckedIcon } from '~/components/Icons';
 import ResourceThumbnail from '~/components/ResourceThumbnail';
 import useCoreSampleManager from '~/hooks/actionManagers/useCoreSampleManager';
 import useExtractionManager from '~/hooks/actionManagers/useExtractionManager';
@@ -12,13 +12,13 @@ import useCrewContext from '~/hooks/useCrewContext';
 import useLot from '~/hooks/useLot';
 import useStore from '~/hooks/useStore';
 import { formatFixed, formatPrice, keyify } from '~/lib/utils';
-import { hexToRGB } from '~/theme';
+import theme, { hexToRGB } from '~/theme';
 import actionButtons from '../../actionButtons';
 import { HudMenuCollapsibleSection, Scrollable, Tray, trayHeight } from './components';
 import Button from '~/components/ButtonAlt';
 import EntityLink from '~/components/EntityLink';
 import { ListForSaleInner } from './ListForSalePanel';
-import usePrivateSaleManager from '~/hooks/actionManagers/usePrivateSaleManager';
+import useDepositSaleManager from '~/hooks/actionManagers/useDepositSaleManager';
 
 const Circle = styled.div`
   background: currentColor;
@@ -76,6 +76,23 @@ const Resource = styled(Row)`
 
   ${Circle}, label, svg {
     color: ${p => p.theme.colors.resources[p.category]};
+  }
+`;
+
+const ShowAllRow = styled(Row)`
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+  color: #777;
+  cursor: ${p => p.theme.cursors.active};
+  font-size: 15px;
+  margin-bottom: 8px;
+  &:hover {
+    color: #888;
+  }
+
+  & > svg {
+    ${p => p.showAll ? `color: ${p.theme.colors.main};` : ``}
+    font-size: 125%;
+    margin-right: 4px;
   }
 `;
 
@@ -185,7 +202,7 @@ const getYieldColor = (sample) => {
       if (sample.Deposit.initialYield !== sample.Deposit.remainingYield) {
         // partially used
       }
-      return '#a97c4f';
+      return theme.colors.depositSize;
     }
     return 'brown';
   }
@@ -210,10 +227,14 @@ const Yield = ({ isMine, sample }) => (
 );
 
 const SaleDetails = ({ isMine, sample }) => {
-  const { updateListing, isPendingUpdate } = usePrivateSaleManager(sample);
+  const { updateListing, isPendingUpdate } = useDepositSaleManager(sample);
   const [editing, setEditing] = useState();
   
-  const originalPrice = useMemo(() => (sample?.PrivateSale?.price || 0) / 1e6, [sample?.PrivateSale?.price]);
+  const originalPrice = useMemo(() => (sample?.PrivateSale?.amount || 0) / 1e6, [sample?.PrivateSale?.amount]);
+
+  useEffect(() => {
+    setEditing(false);
+  }, [originalPrice])
 
   return editing
     ? (
@@ -227,50 +248,63 @@ const SaleDetails = ({ isMine, sample }) => {
       </div>
     )
     : (
-      <Details>
-        <SaleInfo notForSale={!(originalPrice > 0)}>
-          <label>{originalPrice > 0 ? <><SwayIcon /> <span>{formatPrice(originalPrice)}</span></> : 'Not for Sale'}</label>
-          {isMine && (
-            <Button size="small" onClick={() => setEditing((e) => !e)}>
-              {originalPrice > 0 ? 'Edit Sale' : 'List for Sale'}
-            </Button>
-          )}
-          {!isMine && originalPrice > 0 && (
-            <span>Sold by <EntityLink id={sample?.Control?.controller?.id} label={sample?.Control?.controller?.label} /></span>
-          )}
-        </SaleInfo>
-      </Details>
+      sample?.Deposit?.status === Deposit.STATUSES.SAMPLED
+        ? (
+          <Details>
+            <SaleInfo notForSale={!(originalPrice > 0)}>
+              <label>{originalPrice > 0 ? <><SwayIcon /> <span>{formatPrice(originalPrice)}</span></> : 'Not for Sale'}</label>
+              {isMine && sample?.Deposit?.status === Deposit.STATUSES.SAMPLED && (
+                <Button size="small" onClick={() => setEditing((e) => !e)}>
+                  {originalPrice > 0 ? 'Edit Sale' : 'List for Sale'}
+                </Button>
+              )}
+              {!isMine && originalPrice > 0 && (
+                <span>Sold by <EntityLink id={sample?.Control?.controller?.id} label={sample?.Control?.controller?.label} /></span>
+              )}
+            </SaleInfo>
+          </Details>
+        )
+        : null
     )
   ;
 };
 
-const DepositSection = ({ deposits = [], depleted = [], selected, onSelect, title }) => {
+const DepositSection = ({ deposits = [], selected, onSelect, title, type }) => {
   const { crew } = useCrewContext();
   const dispatchResourceMapToggle = useStore(s => s.dispatchResourceMapToggle);
 
-  const [showAll, setShowAll] = useState();
+  const [showAll, setShowAll] = useState(true);
   
   const onClickSample = useCallback((id) => () => {
-    onSelect({ type: 'sample', id });
+    onSelect({ type, id });
     dispatchResourceMapToggle(false); // TODO: instead of turning off the resource map, should this change it the resource of the selected sample?
-  }, [onSelect]);
+  }, [onSelect, type]);
+
+  const usedDepositsExist = useMemo(() => {
+    return !!deposits.find((d) => d.Deposit.remainingYield !== d.Deposit.initialYield);
+  }, [deposits]);
 
   const samples = useMemo(() => {
-    if (showAll) return [...deposits, ...depleted];
-    return deposits;
-  }, [deposits, depleted, showAll]);
+    if (showAll) return deposits;
+    return deposits.filter((d) => d.Deposit.remainingYield === d.Deposit.initialYield);
+  }, [deposits, showAll]);
 
   return (
     <HudMenuCollapsibleSection
       titleText={title}
       titleLabel={`${deposits.length} Sample${deposits.length === 1 ? '' : 's'}`}
       borderless
-      collapsed={!(deposits.length > 0) || (selected?.type === 'resource')}>
+      collapsed={!(deposits.length > 0) || (selected?.type !== type)}>
+      {usedDepositsExist && (
+        <ShowAllRow showAll={showAll} onClick={() => setShowAll((e) => !e)} style={{ paddingTop: 0 }}>
+          {showAll ? <CheckedIcon /> : <UncheckedIcon />}
+          Show Used Deposits
+        </ShowAllRow>
+      )}
       {samples.map((sample) => {
         const { name, category } = Product.TYPES[sample.Deposit.resource];
         const categoryKey = keyify(category);
-        const isSelected = selected?.type === 'sample' && selected?.id === sample.id;
-        
+        const isSelected = selected?.type === type && selected?.id === sample.id;
         return (
           <Sample
             key={sample.id}
@@ -283,8 +317,9 @@ const DepositSection = ({ deposits = [], depleted = [], selected, onSelect, titl
                   <PrimaryInfo>
                     <div>
                       <ResourceThumbnail
-                        resource={Product.TYPES[sample.Deposit.resource]}
                         iconBadge={<CoreSampleIcon />}
+                        iconBadgeCorner={theme.colors.resources[categoryKey]}
+                        resource={Product.TYPES[sample.Deposit.resource]}
                         size="75px"
                         tooltipContainer="hudMenu" />
                     </div>
@@ -318,14 +353,6 @@ const DepositSection = ({ deposits = [], depleted = [], selected, onSelect, titl
           </Sample>
         );
       })}
-      {!showAll && depleted?.length > 0 && (
-        <ShowMoreRow onClick={() => setShowAll(true)}>
-          <PlusIcon />
-          <label>
-            Show {depleted.length} depleted...
-          </label>
-        </ShowMoreRow>
-      )}
     </HudMenuCollapsibleSection>
   )
 };
@@ -397,7 +424,7 @@ const LotResources = () => {
   }, [selected]);
 
   const selectedSample = useMemo(() => {
-    if (selected && selected.type === 'sample') {
+    if (selected && selected.type !== 'resource') {
       return (lot?.deposits || []).find((s) => selected.id === s.id);
     }
     return null;
@@ -429,12 +456,9 @@ const LotResources = () => {
     return params;
   }, [currentExtraction, selectedSample]);
 
-  const [ownedSamples, ownedSamplesDepleted, forSaleSamples, forSaleSamplesDepleted] = useMemo(() => ([
+  const [ownedSamples, forSaleSamples] = useMemo(() => ([
     (lot?.deposits || []).filter((s) => s.Control.controller.id === crew?.id && (!s.Deposit.initialYield || s.Deposit.remainingYield > 0)).sort(sampleSort),
-    (lot?.deposits || []).filter((s) => s.Control.controller.id === crew?.id && s.Deposit.initialYield > 0 && s.Deposit.remainingYield === 0).sort(sampleSort),
-    // TODO: price is the marker, not non-ownership
-    (lot?.deposits || []).filter((s) => s.Control.controller.id !== crew?.id && (!s.Deposit.initialYield || s.Deposit.remainingYield > 0)).sort(sampleSort),
-    (lot?.deposits || []).filter((s) => s.Control.controller.id !== crew?.id && s.Deposit.initialYield > 0 && s.Deposit.remainingYield === 0).sort(sampleSort),
+    (lot?.deposits || []).filter((s) => s.PrivateSale?.amount > 0 && (!s.Deposit.initialYield || s.Deposit.remainingYield > 0)).sort(sampleSort),
   ]), [crew?.id, lot?.deposits]);
 
   return (
@@ -473,15 +497,15 @@ const LotResources = () => {
 
         <DepositSection
           title="My Deposits"
+          type="sample"
           deposits={ownedSamples}
-          depleted={ownedSamplesDepleted}
           onSelect={setSelected}
           selected={selected} />
 
         <DepositSection
           title="For Sale"
+          type="forSale"
           deposits={forSaleSamples}
-          depleted={forSaleSamplesDepleted}
           onSelect={setSelected}
           selected={selected} />
       </Scrollable>

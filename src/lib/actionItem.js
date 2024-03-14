@@ -38,6 +38,7 @@ import {
   PermissionIcon,
   KeysIcon,
   EjectMyCrewIcon,
+  CoreSampleIcon,
 } from '~/components/Icons';
 import theme, { hexToRGB } from '~/theme';
 import { getProcessorProps, locationsArrToObj } from './utils';
@@ -415,6 +416,7 @@ const formatAsTx = (item) => {
       };
       break;
     }
+    case 'PurchaseDepositAndImprove':
     case 'SampleDepositImprove': {
       formatted.icon = <ImproveCoreSampleIcon />;
       formatted.label = `${Product.TYPES[item.meta?.resource]?.name || 'Core'} Resample`;
@@ -611,6 +613,7 @@ const formatAsTx = (item) => {
       break;
     }
 
+    case 'PurchaseDepositAndExtractResource':
     case 'ExtractResourceStart': {
       formatted.icon = <ExtractionIcon />;
       formatted.label = `${Product.TYPES[item.meta?.resourceId]?.name || 'Resource'} Extraction`;
@@ -916,6 +919,25 @@ const formatAsTx = (item) => {
       formatted.asteroidId = location?.asteroidId;
       formatted.lotId = location?.lotId;
       formatted.shipId = location?.shipId;
+      break;
+    }
+
+    case 'ListDepositForSale':
+    case 'UnlistDepositForSale': {
+      const location = locationsArrToObj(item.meta?.deposit?.Location?.locations || []);
+      formatted.icon = <CoreSampleIcon />;
+      formatted.label = `Update Deposit Listing`;
+      formatted.asteroidId = location?.asteroidId;
+      formatted.lotId = location?.lotId;
+      break;
+    }
+
+    case 'PurchaseDeposit': {
+      const location = locationsArrToObj(item.meta?.deposit?.Location?.locations || []);
+      formatted.icon = <CoreSampleIcon />;
+      formatted.label = `Purchase Deposit`;
+      formatted.asteroidId = location?.asteroidId;
+      formatted.lotId = location?.lotId;
       break;
     }
 

@@ -260,6 +260,14 @@ const customConfigs = {
     },
     equalityTest: ['asteroid.id']
   },
+  PurchaseDeposit: {
+    getTransferConfig: ({ recipient, deposit, price }) => ({
+      amount: BigInt(price),
+      recipient,
+      memo: Entity.packEntity(deposit)
+    }),
+    equalityTest: ['deposit.id']
+  },
   InitializeArvadian: { equalityTest: true },
   RecruitAdalian: {
     getPrice: async ({ crewmate }) => {
@@ -325,6 +333,16 @@ const customConfigs = {
   InitializeAndClaimPrepareForLaunchReward: {
     multisystemCalls: ['InitializeAsteroid', 'ClaimPrepareForLaunchReward'],
     equalityTest: ['asteroid.id'],
+    isVirtual: true
+  },
+  PurchaseDepositAndExtractResource: {
+    multisystemCalls: ['PurchaseDeposit', 'ExtractResourceStart'],
+    equalityTest: ['extractor.id'],
+    isVirtual: true
+  },
+  PurchaseDepositAndImprove: {
+    multisystemCalls: ['PurchaseDeposit', 'SampleDepositImprove'],
+    equalityTest: ['lot.id', 'caller_crew.id'],
     isVirtual: true
   },
   EscrowDepositAndCreateBuyOrder: {

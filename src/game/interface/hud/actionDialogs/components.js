@@ -35,7 +35,11 @@ import {
   CheckIcon,
   ProcessIcon,
   ShipIcon,
-  WarningIcon
+  WarningIcon,
+  CoreSampleIcon,
+  ResourceIcon,
+  CheckedIcon,
+  UncheckedIcon
 } from '~/components/Icons';
 import LiveFoodStatus from '~/components/LiveFoodStatus';
 import LiveTimer from '~/components/LiveTimer';
@@ -53,7 +57,7 @@ import useChainTime from '~/hooks/useChainTime';
 import useCrewContext from '~/hooks/useCrewContext';
 import useHydratedLocation from '~/hooks/useHydratedLocation';
 import useShip from '~/hooks/useShip';
-import { reactBool, formatFixed, formatTimer, nativeBool, locationsArrToObj } from '~/lib/utils';
+import { reactBool, formatFixed, formatTimer, nativeBool, locationsArrToObj, keyify, formatPrice } from '~/lib/utils';
 import actionStage from '~/lib/actionStages';
 import constants from '~/lib/constants';
 import { getBuildingIcon, getLotShipIcon, getShipIcon } from '~/lib/assetUtils';
@@ -1447,8 +1451,35 @@ export const ResourceSelectionDialog = ({ abundances, lotId, initialSelection, o
   );
 }
 
+const SelectionTableToggles = styled.div`
+  display: flex;
+  flex-direction: row;
+  height: 40px;
+  margin-top: -10px;
+`;
+const SelectionTableToggle = styled.div`
+  align-items: center;
+  color: #777;
+  cursor: ${p => p.theme.cursors.active};
+  display: flex;
+  font-size: 15px;
+  margin-right: 20px;
+  &:hover {
+    color: #888;
+  }
+
+  & > svg {
+    ${p => p.isOn ? `color: ${p.theme.colors.main};` : ``}
+    font-size: 125%;
+    margin-right: 4px;
+  }
+`;
+
 export const CoreSampleSelectionDialog = ({ lotId, options, initialSelection, onClose, onSelected, open }) => {
+  const { crew } = useCrewContext();
   const [selection, setSelection] = useState(initialSelection);
+  const [showForSale, setShowForSale] = useState(true);
+  const [showUsed, setShowUsed] = useState(true);
 
   useEffect(() => {
     setSelection(initialSelection);
@@ -1459,30 +1490,88 @@ export const CoreSampleSelectionDialog = ({ lotId, options, initialSelection, on
     onClose();
   }, [onClose, onSelected, selection]);
 
+  const [forSaleExist, usedExist] = useMemo(() => {
+    return [
+      !!options.find((s) => s.PrivateSale?.amount > 0),
+      !!options.find((s) => s.Deposit.remainingYield !== s.Deposit.initialYield),
+    ];
+  }, [options])
+
+  const samples = useMemo(() => {
+    return options
+      .filter((s) => (showForSale || !s.PrivateSale?.amount || crew?.id === s.Control?.controller?.id) && (showUsed || (s.Deposit.remainingYield === s.Deposit.initialYield)))
+      .sort((a, b) => {
+        // sort mine above others'
+        if ((crew?.id === a.Control?.controller?.id) !== (crew?.id === b.Control?.controller?.id)) {
+          return (crew?.id === a.Control?.controller?.id) ? -1 : 1;
+        }
+        
+        // sort by deposit size
+        return b.Deposit.remainingYield - a.Deposit.remainingYield;
+      })
+  }, [options, showForSale, showUsed]);
+
   return (
     <SelectionDialog
       isCompletable={selection?.id > 0}
       onClose={onClose}
       onComplete={onComplete}
       open={open}
-      title={formatters.lotName(lotId)}>
-      {/* TODO: replace with DataTable? */}
+      title={formatters.lotName(lotId)}
+      style={{ minWidth: 700 }}>
+      {(usedExist || forSaleExist) && (
+        <SelectionTableToggles>
+          {usedExist && (
+            <SelectionTableToggle isOn={showUsed} onClick={() => setShowUsed((e) => !e)}>
+              {showUsed ? <CheckedIcon /> : <UncheckedIcon />}
+              Show Used Deposits
+            </SelectionTableToggle>
+          )}
+          {forSaleExist && (
+            <SelectionTableToggle isOn={showForSale} onClick={() => setShowForSale((e) => !e)}>
+              {showForSale ? <CheckedIcon /> : <UncheckedIcon />}
+              Show For-Sale Deposits
+            </SelectionTableToggle>
+          )}
+        </SelectionTableToggles>
+      )}
       <SelectionTableWrapper>
         <table>
           <thead>
             <tr>
               <td>Resource</td>
-              <td>Deposit Amount</td>
+              <td>Deposit Size</td>
+              <td>Used Status</td>
+              <td>Owner</td>
+              <td>Price</td>
             </tr>
           </thead>
           <tbody>
-            {options.sort((a, b) => b.Deposit.remainingYield - a.Deposit.remainingYield).map((sample) => (
+            {samples.map((sample) => (
               <SelectionTableRow
                 key={sample.id}
                 onClick={() => setSelection(sample)}
-                selectedRow={selection?.id === sample.id}>
-                <td><ResourceColorIcon category={Product.TYPES[sample.Deposit.resource]?.category} /> {Product.TYPES[sample.Deposit.resource]?.name} #{sample.id.toLocaleString()}</td>
-                <td>{formatSampleMass(sample.Deposit.remainingYield * Product.TYPES[sample.Deposit.resource]?.massPerUnit)} tonnes</td>
+                selectedRow={selection?.id === sample.id}
+                style={{ height: 36 }}>
+                <td style={{ color: theme.colors.resources[keyify(Product.TYPES[sample.Deposit.resource]?.category)]}}>
+                  <CoreSampleIcon style={{ fontSize: '22px' }} /> {Product.TYPES[sample.Deposit.resource]?.name}
+                </td>
+                <td style={{ color: theme.colors.depositSize }}>
+                  <ResourceIcon style={{ fontSize: '22px' }} /> {formatSampleMass(sample.Deposit.remainingYield * Product.TYPES[sample.Deposit.resource]?.massPerUnit, 0)}t
+                </td>
+                <td>
+                  {sample.Deposit.remainingYield !== sample.Deposit.initialYield ? <span style={{ opacity: 0.5 }}>Used</span> : <>Unused</>}
+                </td>
+                <td>
+                  <EntityName {...sample.Control?.controller} />
+                  {crew?.id === sample.Control?.controller?.id ? <label style={{ color: theme.colors.main }}> (Me)</label> : null}
+                </td>
+                <td>
+                  {crew?.id !== sample.Control?.controller?.id && sample.PrivateSale?.amount > 0
+                    ? <><SwayIcon /> {formatFixed(sample.PrivateSale?.amount / 1e6, 0)}</>
+                    : <span style={{ opacity: 0.5 }}>N / A</span>
+                  }
+                </td>
               </SelectionTableRow>
             ))}
           </tbody>
@@ -4026,8 +4115,8 @@ export const TravelBonusTooltip = ({ bonus, totalTime, tripDetails, ...props }) 
 // utils
 //
 
-export const formatSampleMass = (grams) => {
-  return formatFixed(grams / 1e6, 1);
+export const formatSampleMass = (grams, maximumFractionDigits = 1) => {
+  return formatFixed(grams / 1e6, maximumFractionDigits);
 };
 
 export const formatSampleVolume = (volume) => {

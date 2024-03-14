@@ -60,7 +60,7 @@ const NewCoreSample = ({ asteroid, crew, lot, onSetAction, overrideResourceId, i
     }
 
     // always append which resource it is if not the selected one
-    if (currentSamplingAction.resourceId !== resourceId) {
+    if (currentSamplingAction.resourceId && currentSamplingAction.resourceId !== resourceId) {
       label += ` (${Product.TYPES[currentSamplingAction.resourceId]?.name})`;
     }
     
