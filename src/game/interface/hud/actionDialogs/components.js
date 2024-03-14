@@ -4084,7 +4084,7 @@ export const formatResourceMass = (units, resourceId, { abbrev = true, minPrecis
 }
 
 export const formatMass = (inputGrams, { abbrev = true, minPrecision = 3, fixedPrecision } = {}) => {
-  let sign = grams < 0 ? '-' : '';
+  let sign = inputGrams < 0 ? '-' : '';
 
   const grams = Math.abs(inputGrams);
   let unitLabel;
