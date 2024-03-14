@@ -16,7 +16,7 @@ export const useLotLink = ({ asteroidId: optAsteroidId, lotId: optLotId, resourc
   const dispatchResourceMapToggle = useStore(s => s.dispatchResourceMapToggle);
   const dispatchZoomScene = useStore(s => s.dispatchZoomScene);
   const updateZoomStatus = useStore(s => s.dispatchZoomStatusChanged);
-  const openHudMenu = useStore(s => s.asteroids.openHudMenu);
+  const openHudMenu = useStore(s => s.openHudMenu);
   const origin = useStore(s => s.asteroids.origin);
   const currentZoomScene = useStore(s => s.asteroids.zoomScene);
   const zoomStatus = useStore(s => s.asteroids.zoomStatus);

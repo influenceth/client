@@ -273,7 +273,7 @@ const useTutorial = () => {
   const dispatchZoomScene = useStore(s => s.dispatchZoomScene);
   const updateZoomStatus = useStore(s => s.dispatchZoomStatusChanged);
   const tutorialStep = useStore(s => s.tutorialStep);
-  const openHudMenu = useStore(s => s.asteroids.openHudMenu);
+  const openHudMenu = useStore(s => s.openHudMenu);
   const destination = useStore(s => s.asteroids.destination);
   const lot = useStore(s => s.asteroids.lot);
   const currentZoomScene = useStore(s => s.asteroids.zoomScene);
