@@ -471,6 +471,5 @@ const Launcher = (props) => {
     </StyledLauncher>
   );
 };
-Launcher.displayName = 'Launcher';
 
 export default Launcher;
