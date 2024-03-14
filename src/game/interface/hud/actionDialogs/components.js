@@ -4083,7 +4083,10 @@ export const formatResourceMass = (units, resourceId, { abbrev = true, minPrecis
   );
 }
 
-export const formatMass = (grams, { abbrev = true, minPrecision = 3, fixedPrecision } = {}) => {
+export const formatMass = (inputGrams, { abbrev = true, minPrecision = 3, fixedPrecision } = {}) => {
+  let sign = grams < 0 ? '-' : '';
+
+  const grams = Math.abs(inputGrams);
   let unitLabel;
   let scale;
   if (grams >= 1e18) {
@@ -4116,7 +4119,7 @@ export const formatMass = (grams, { abbrev = true, minPrecision = 3, fixedPrecis
       fixedPlaces++;
     }
   }
-  return `${formatFixed(workingUnits, fixedPlaces)} ${unitLabel}`;
+  return `${sign}${formatFixed(workingUnits, fixedPlaces)} ${unitLabel}`;
 };
 
 export const formatResourceVolume = (units, resourceId, { abbrev = true, minPrecision = 3, fixedPrecision } = {}) => {
