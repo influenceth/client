@@ -167,7 +167,7 @@ const ResourceIconBadge = styled.div`
 
   ${p => p.iconBadgeCorner && `
       & > svg {
-        color: white;
+        color: white !important;
         position: relative;
         top: -2px;
         z-index: 1;
