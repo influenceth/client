@@ -199,11 +199,12 @@ const VolumeBar = styled.div`
   z-index: -1;
 `;
 
-const centerPriceHeight = 36;
-const centerPriceMargin = 8;
+const centerPriceHeight = 48;
+const centerPriceMargin = 6;
 const SellTable = styled.div`
   display: flex;
   flex-direction: column-reverse;
+  justify-content: flex-start;
   height: calc(50% - ${(centerPriceHeight + 2 * centerPriceMargin) / 2}px);
   overflow: auto;
   table {
@@ -211,9 +212,10 @@ const SellTable = styled.div`
     width: 100%;
 
     tr > * {
-      border-bottom: 1px solid #222;
-      font-size: 95%;
-      padding: 1px 4px;
+      border-bottom: 1px solid #000;
+      color: #FFF;
+      font-size: 88%;
+      padding: 2px 10px 2px 4px;
       text-align: right;
       &:first-child {
         text-align: left;
@@ -221,16 +223,21 @@ const SellTable = styled.div`
     }
     th {
       background: black;
-      color: #777;
+      color: #888;
       font-size: 90%;
-      font-weight: normal;
+      font-weight: bold;
       position: sticky;
       top: 0;
       z-index: 1;
+      padding: 2px 10px 6px 0px;
     }
-    td:first-child {
-      color: ${p => p.theme.colors.main};
-      position: relative;
+    td {
+      font-family: 'Jetbrains Mono', sans-serif;
+      font-weight: 100;
+      &:first-child {
+        color: ${p => p.theme.colors.brightMain};
+        position: relative;
+      }
     }
   }
   ${VolumeBar} {
@@ -239,6 +246,7 @@ const SellTable = styled.div`
 `;
 
 const BuyTable = styled(SellTable)`
+  justify-content: flex-end;
   table tr td:first-child {
     color: ${p => p.theme.colors.green};
   }
@@ -249,26 +257,28 @@ const BuyTable = styled(SellTable)`
 
 const CenterPrice = styled.div`
   align-items: center;
-  background: #222;
+  background: #111;
   display: flex;
   flex-direction: row;
   height: ${centerPriceHeight}px;
   margin: ${centerPriceMargin}px 0;
+  font-weight: normal;
   &:after {
     color: #777;
     content: "Center Price";
+    font-weight: bold;
     font-size: 90%;
     margin-right: 10px;
   }
 
   & > svg {
-    font-size: 24px;
+    font-size: 36px;
   }
 `;
 
 const Price = styled.div`
   flex: 1 0 0;
-  font-size: 24px;
+  font-size: 30px;
   text-align: left;
   ${p => p.unit && `
     &:after {
