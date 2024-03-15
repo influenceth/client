@@ -2898,7 +2898,7 @@ export const RecipeSlider = ({ amount, disabled, increment = 0.001, processingTi
   );
 };
 
-export const ProcessInputOutputSection = ({ title, products, input, output, primaryOutput, setPrimaryOutput, source, ...props }) => {
+export const ProcessInputOutputSection = ({ title, products, input, output, primaryOutput, secondaryOutputsBonus, setPrimaryOutput, source, ...props }) => {
   const sourceContents = useMemo(() => (source?.contents || []).reduce((acc, cur) => ({ ...acc, [cur.product]: cur.amount }), {}), [source]);
   return (
     <FlexSectionBlock title={title} {...props} bodyStyle={{ padding: 0 }}>
@@ -2944,7 +2944,7 @@ export const ProcessInputOutputSection = ({ title, products, input, output, prim
                         <ClipCorner dimension={10} color={theme.colors.main} />
                       </>
                     )
-                    : `-50%`
+                    : <span style={{ textTransform: 'none'}}>-{formatFixed(100 - 50 * (secondaryOutputsBonus || 1), 1)}%</span>
                   }
                 </label>
               )}
