@@ -6,7 +6,7 @@ import cloneDeep from 'lodash/cloneDeep';
 import { CoreSampleIcon, ExtractionIcon, InventoryIcon, LocationIcon, ResourceIcon, SwayIcon, WarningIcon } from '~/components/Icons';
 import useCrewContext from '~/hooks/useCrewContext';
 import useExtractionManager from '~/hooks/actionManagers/useExtractionManager';
-import { reactBool, formatTimer, locationsArrToObj, getCrewAbilityBonuses, formatFixed, formatPrice } from '~/lib/utils';
+import { reactBool, formatTimer, locationsArrToObj, getCrewAbilityBonuses, formatFixed, formatPrice, keyify } from '~/lib/utils';
 
 import {
   ResourceAmountSlider,
@@ -35,7 +35,7 @@ import {
   TransferDistanceDetails,
   getTripDetails
 } from './components';
-import useLot, { useLotEntities } from '~/hooks/useLot';
+import useLot from '~/hooks/useLot';
 import useStore from '~/hooks/useStore';
 import { ActionDialogInner, theming, useAsteroidAndLot } from '../ActionDialog';
 import ResourceThumbnail from '~/components/ResourceThumbnail';
@@ -46,6 +46,7 @@ import useActionCrew from '~/hooks/useActionCrew';
 import { TextInputWrapper } from '~/components/TextInputUncontrolled';
 import CrewIndicator from '~/components/CrewIndicator';
 import useCrew from '~/hooks/useCrew';
+import theme from '~/theme';
 
 const InputLabel = styled.div`
   align-items: center;
@@ -359,7 +360,13 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
             title="Deposit"
             image={
               resource
-                ? <ResourceThumbnail resource={resource} tooltipContainer="none" />
+                ? (
+                  <ResourceThumbnail
+                    resource={resource}
+                    tooltipContainer="none"
+                    iconBadge={<CoreSampleIcon />}
+                    iconBadgeCorner={theme.colors.resources[keyify(resource.category)]} />
+                )
                 : <EmptyResourceImage iconOverride={<CoreSampleIcon />} />
             }
             isSelected={stage === actionStage.NOT_STARTED}

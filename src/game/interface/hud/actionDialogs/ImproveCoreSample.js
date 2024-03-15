@@ -3,11 +3,10 @@ import { Asteroid, Crewmate, Deposit, Lot, Product, Time } from '@influenceth/sd
 
 import { CoreSampleIcon, ImproveCoreSampleIcon, ResourceIcon, SwayIcon, WarningIcon } from '~/components/Icons';
 import ResourceThumbnail from '~/components/ResourceThumbnail';
-import useCrewContext from '~/hooks/useCrewContext';
 import useStore from '~/hooks/useStore';
 import useCoreSampleManager from '~/hooks/actionManagers/useCoreSampleManager';
 import actionStage from '~/lib/actionStages';
-import { reactBool, formatTimer, locationsArrToObj, getCrewAbilityBonuses, formatPrice } from '~/lib/utils';
+import { reactBool, formatTimer, locationsArrToObj, getCrewAbilityBonuses, formatPrice, keyify } from '~/lib/utils';
 
 import {
   ActionDialogBody,
@@ -40,6 +39,7 @@ import useCrew from '~/hooks/useCrew';
 import { TextInputWrapper } from '~/components/TextInputUncontrolled';
 import CrewIndicator from '~/components/CrewIndicator';
 import styled from 'styled-components';
+import theme from '~/theme';
 
 const InputLabel = styled.div`
   align-items: center;
@@ -301,7 +301,13 @@ const ImproveCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }
                 title="Deposit"
                 image={
                   resourceId
-                    ? <ResourceThumbnail resource={Product.TYPES[resourceId]} tooltipContainer="none" />
+                    ? (
+                      <ResourceThumbnail
+                        resource={Product.TYPES[resourceId]}
+                        tooltipContainer="none"
+                        iconBadge={<CoreSampleIcon />}
+                        iconBadgeCorner={theme.colors.resources[keyify(Product.TYPES[resourceId].category)]} />
+                    )
                     : <EmptyResourceImage iconOverride={<CoreSampleIcon />} />
                 }
                 isSelected={stage === actionStage.NOT_STARTED}
