@@ -248,12 +248,12 @@ const SaleDetails = ({ isMine, sample }) => {
       </div>
     )
     : (
-      sample?.Deposit?.status === Deposit.STATUSES.SAMPLED
+      sample?.Deposit?.status >= Deposit.STATUSES.SAMPLED
         ? (
           <Details>
             <SaleInfo notForSale={!(originalPrice > 0)}>
               <label>{originalPrice > 0 ? <><SwayIcon /> <span>{formatPrice(originalPrice)}</span></> : 'Not for Sale'}</label>
-              {isMine && sample?.Deposit?.status === Deposit.STATUSES.SAMPLED && (
+              {isMine && (
                 <Button size="small" onClick={() => setEditing((e) => !e)}>
                   {originalPrice > 0 ? 'Edit Sale' : 'List for Sale'}
                 </Button>
@@ -293,7 +293,6 @@ const DepositSection = ({ deposits = [], selected, onSelect, title, type }) => {
     <HudMenuCollapsibleSection
       titleText={title}
       titleLabel={`${deposits.length} Sample${deposits.length === 1 ? '' : 's'}`}
-      borderless
       collapsed={!(deposits.length > 0) || (selected?.type !== type)}>
       {usedDepositsExist && (
         <ShowAllRow showAll={showAll} onClick={() => setShowAll((e) => !e)} style={{ paddingTop: 0 }}>

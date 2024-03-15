@@ -216,6 +216,9 @@ const customConfigs = {
   ProcessProductsStart: { equalityTest: ['processor.id', 'processor_slot'] },
   ProcessProductsFinish: { equalityTest: ['processor.id', 'processor_slot'] },
 
+  ListDepositForSale: { equalityTest: ['deposit.id'] },
+  UnlistDepositForSale: { equalityTest: ['deposit.id'] },
+
   SampleDepositFinish: { equalityTest: ['lot.id', 'caller_crew.id'] },
   SampleDepositImprove: { equalityTest: ['lot.id', 'caller_crew.id'] },
   SampleDepositStart: { equalityTest: ['lot.id', 'caller_crew.id'] },
