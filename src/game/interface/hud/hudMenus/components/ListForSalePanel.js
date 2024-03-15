@@ -89,16 +89,14 @@ export const ListForSaleInner = ({ forSaleWarning, isSaving, onCancel, onSave, o
           <Button
             disabled={nativeBool(isSaving)}
             onClick={() => cancelForSale()}
-            size="small"
-            subtle>Cancel</Button>
+            size="small">Cancel</Button>
           <Button
             disabled={nativeBool(!isDirty || isIncomplete || isSaving)}
             loading={isSaving}
             isTransaction
             onClick={() => saveForSale()}
             size="small"
-            style={{ marginLeft: 6 }}
-            subtle>Update</Button>
+            style={{ marginLeft: 6 }}>Update</Button>
         </div>
       </Section>
     </>

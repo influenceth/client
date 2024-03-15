@@ -86,14 +86,14 @@ const ActionButton = styled.div`
   width: ${dimension}px;
   padding: ${padding}px;
   position: relative;
-  transition: color 250ms ease;
+  transition: color 100ms ease;
   & > svg {
     stroke: ${p => p.overrideColor || p.theme.colors.main} !important;
   }
 
   & > div {
     align-items: center;
-    background-color: rgba(${p => p.overrideColor ? hexToRGB(p.overrideColor) : p.theme.colors.mainRGB}, 0.2);
+    background-color: rgba(${p => p.overrideColor ? hexToRGB(p.overrideColor) : hexToRGB(p.theme.colors.darkMain)}, 0.5);
     ${p => p.theme.clipCorner(cornerSize - 4)};
     display: flex;
     font-size: 55px;

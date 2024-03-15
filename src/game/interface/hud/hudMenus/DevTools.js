@@ -237,8 +237,7 @@ const DevTools = () => {
 
           <Button
             disabled={nativeBool(isLoading)}
-            onClick={handleUploadClick('model')}
-            subtle>
+            onClick={handleUploadClick('model')}>
             Upload Model
           </Button>
 
@@ -255,8 +254,7 @@ const DevTools = () => {
         <InnerSection>
           <Button
             disabled={nativeBool(isLoading)}
-            onClick={handleUploadClick('bg')}
-            subtle>
+            onClick={handleUploadClick('bg')}>
             Upload Skybox
           </Button>
           {overrides.background && (
@@ -268,8 +266,7 @@ const DevTools = () => {
 
           <Button
             disabled={nativeBool(isLoading)}
-            onClick={handleUploadClick('env')}
-            subtle>
+            onClick={handleUploadClick('env')}>
             Upload EnvMap
           </Button>
           {overrides.envmap && (

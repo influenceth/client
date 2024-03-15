@@ -1307,7 +1307,7 @@ export const SelectionDialog = ({ children, isCompletable, open, onClose, onComp
       </SelectionBody>
       <SelectionButtons style={{ position: 'relative'}}>
         <Button onClick={onClose}>Cancel</Button>
-        <Button onClick={onComplete} disabled={!isCompletable}>Done</Button>
+        <Button disabled={!isCompletable} onClick={onComplete}>Done</Button>
       </SelectionButtons>
       <ClipCorner color={borderColor} dimension={selectionDialogCornerSize} />
     </Dialog>,
@@ -3712,8 +3712,8 @@ export const ActionDialogStats = ({ stage, stats: rawStats, wide }) => {
 const CrewBusyButton = ({ crew }) => {
   return (
     <Button
-      isTransaction
       disabled={nativeBool(true)}
+      isTransaction
       loading={reactBool(true)}>
       Crew Busy
     </Button>
@@ -3722,7 +3722,7 @@ const CrewBusyButton = ({ crew }) => {
 
 const CrewNotLaunchedButton = ({ crew }) => {
   return (
-    <Button isTransaction disabled={nativeBool(true)}>
+    <Button disabled={nativeBool(true)} isTransaction>
       Crew Not Launched
     </Button>
   );
@@ -3773,8 +3773,8 @@ export const ActionDialogFooter = ({
               {waitForCrewReady && crew?._launched && !crew?._ready && <CrewBusyButton crew={crew} />}
               {(!waitForCrewReady || (crew?._ready && crew?._launched)) && (
                 <Button
-                  isTransaction
                   disabled={nativeBool(disabled)}
+                  isTransaction
                   loading={reactBool(buttonsLoading)}
                   onClick={onGo}>{goLabel}</Button>
               )}
@@ -3788,8 +3788,8 @@ export const ActionDialogFooter = ({
                     loading={reactBool(buttonsLoading)}
                     onClick={onClose}>Close</Button>
                   <Button
-                    isTransaction
                     disabled={nativeBool(disabled)}
+                    isTransaction
                     loading={reactBool(buttonsLoading)}
                     onClick={onFinalize}>{finalizeLabel || 'Accept'}</Button>
                 </>
@@ -4172,7 +4172,10 @@ export const formatResourceMass = (units, resourceId, { abbrev = true, minPrecis
   );
 }
 
-export const formatMass = (grams, { abbrev = true, minPrecision = 3, fixedPrecision } = {}) => {
+export const formatMass = (inputGrams, { abbrev = true, minPrecision = 3, fixedPrecision } = {}) => {
+  let sign = inputGrams < 0 ? '-' : '';
+
+  const grams = Math.abs(inputGrams);
   let unitLabel;
   let scale;
   if (grams >= 1e18) {
@@ -4205,7 +4208,7 @@ export const formatMass = (grams, { abbrev = true, minPrecision = 3, fixedPrecis
       fixedPlaces++;
     }
   }
-  return `${formatFixed(workingUnits, fixedPlaces)} ${unitLabel}`;
+  return `${sign}${formatFixed(workingUnits, fixedPlaces)} ${unitLabel}`;
 };
 
 export const formatResourceVolume = (units, resourceId, { abbrev = true, minPrecision = 3, fixedPrecision } = {}) => {
@@ -4217,7 +4220,10 @@ export const formatResourceVolume = (units, resourceId, { abbrev = true, minPrec
   );
 }
 
-export const formatVolume = (ml, { abbrev = true, minPrecision = 3, fixedPrecision } = {}) => {
+export const formatVolume = (inputMl, { abbrev = true, minPrecision = 3, fixedPrecision } = {}) => {
+  let sign = inputMl < 0 ? '-' : '';
+
+  const ml = Math.abs(inputMl);
   let unitLabel;
   let scale;
   if (ml >= 1e6 || ml === 0) {
@@ -4239,7 +4245,7 @@ export const formatVolume = (ml, { abbrev = true, minPrecision = 3, fixedPrecisi
       fixedPlaces++;
     }
   }
-  return `${formatFixed(workingUnits, fixedPlaces)} ${unitLabel}`;
+  return `${sign}${formatFixed(workingUnits, fixedPlaces)} ${unitLabel}`;
 };
 
 export const formatSurfaceDistance = (km) => {
@@ -4257,7 +4263,10 @@ export const formatBeltDistance = (m) => {
   return `${Math.round(m / 1e3).toLocaleString()} km`;
 }
 
-export const formatVelocity = (metersPerSecond, { abbrev = true, minPrecision = 3, fixedPrecision } = {}) => {
+export const formatVelocity = (inputMetersPerSecond, { abbrev = true, minPrecision = 3, fixedPrecision } = {}) => {
+  let sign = inputMetersPerSecond < 0 ? '-' : '';
+
+  const metersPerSecond = Math.abs(inputMetersPerSecond);
   let unitLabel;
   let scale;
   if (metersPerSecond >= 1e3) {
@@ -4276,7 +4285,7 @@ export const formatVelocity = (metersPerSecond, { abbrev = true, minPrecision = 
       fixedPlaces++;
     }
   }
-  return `${formatFixed(workingUnits, fixedPlaces)} ${unitLabel}`;
+  return `${sign}${formatFixed(workingUnits, fixedPlaces)} ${unitLabel}`;
 };
 
 export const formatShipStatus = (ship) => {

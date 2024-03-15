@@ -469,16 +469,14 @@ const PolicyPanel = ({ editable = false, entity, permission }) => {
               <Button
                 disabled={nativeBool(saving)}
                 onClick={() => cancelEdits()}
-                size="small"
-                subtle>Cancel</Button>
+                size="small">Cancel</Button>
               <Button
                 disabled={nativeBool(!isDirty || isIncomplete || saving)}
                 loading={saving}
                 isTransaction
                 onClick={() => saveEdits()}
                 size="small"
-                style={{ marginLeft: 6 }}
-                subtle>Update</Button>
+                style={{ marginLeft: 6 }}>Update</Button>
             </div>
           </Section>
         </>
@@ -527,7 +525,7 @@ const PolicyPanel = ({ editable = false, entity, permission }) => {
 
           {editable && (
             <EditBlock>
-              <Button onClick={() => toggleEditing('policy')} subtle>Edit Permission Policy</Button>
+              <Button onClick={() => toggleEditing('policy')}>Edit Permission Policy</Button>
             </EditBlock>
           )}
 
@@ -539,7 +537,7 @@ const PolicyPanel = ({ editable = false, entity, permission }) => {
                     <DataRow><label>Allowlist</label><span>{(allowlist?.length || 0).toLocaleString()} Crew{allowlist?.length === 1 ? '' : 's'}</span></DataRow>
                   </DataBlock>
                   <EditBlock>
-                    <Button onClick={() => toggleEditing('allowlist')} subtle>Edit Allowlist</Button>
+                    <Button onClick={() => toggleEditing('allowlist')}>Edit Allowlist</Button>
                   </EditBlock>
                 </Section>
               )}

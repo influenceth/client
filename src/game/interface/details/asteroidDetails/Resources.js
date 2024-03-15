@@ -10,7 +10,6 @@ import BonusInfoPane from '~/components/BonusInfoPane';
 import ButtonPill from '~/components/ButtonPill';
 import Button from '~/components/ButtonAlt';
 import { CaretIcon, ResourceGroupIcons, WarningOutlineIcon } from '~/components/Icons';
-import useAsteroid from '~/hooks/useAsteroid';
 import useScanManager from '~/hooks/actionManagers/useScanManager';
 import useStore from '~/hooks/useStore';
 import AsteroidGraphic from './components/AsteroidGraphic';
@@ -536,9 +535,9 @@ const ResourceDetails = ({ abundances, asteroid, isManager }) => {
                       <p>{scanType === 'RESOURCE' ? 'Orbital resource' : 'Long-range surface'} scan is complete. Ready to retrieve results.</p>
                       <Button
                         disabled={nativeBool(scanStatus === 'FINISHING')}
+                        isTransaction
                         loading={reactBool(scanStatus === 'FINISHING')}
-                        onClick={finalizeAsteroidScan}
-                        isTransaction>
+                        onClick={finalizeAsteroidScan}>
                         Finalize
                       </Button>
                     </>

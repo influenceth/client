@@ -33,6 +33,7 @@ export const clipCorner = (size) => `
 
 const main = '#36a7cd';
 const brightMain = '#57d5ff';
+const darkMain = '#1c5063';
 const success = '#00ffe7';
 
 const green = '#88e675';
@@ -49,9 +50,10 @@ const red = '#df4300';
 const theme = {
   colors: {
     main,
+    brightMain,
+    darkMain,
     mainRGB: hexToRGB(main),
     mainBorder: 'rgba(255, 255, 255, 0.25)',
-    brightMain,
     mobileBackground: '#181818',
     contentBorder: '#666666',
     contentBackdrop: 'rgba(0, 0, 0, 0.5)',
@@ -104,7 +106,6 @@ const theme = {
         Scientist: hexToRGB(blue),
       }
     },
-    mainButton: main,
     disabledButton: '#676767',
     txButton: '#6c6adc',
   },

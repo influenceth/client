@@ -346,7 +346,7 @@ const CrewmateDetails = ({ crewmateId, crewmate, isOwnedCrewmate }) => {
             <CardWrapper>
               <CrewmateCard crewmate={crewmate} showClassInHeader />
             </CardWrapper>
-            <Button onClick={onBackToCrew} subtle width={150}>
+            <Button onClick={onBackToCrew} width={150}>
               <BackIcon /> <span>Crew</span>
             </Button>
           </CardSection>
@@ -393,12 +393,12 @@ const CrewmateDetails = ({ crewmateId, crewmate, isOwnedCrewmate }) => {
             
             {isOwnedCrewmate && (
               <div style={{ paddingTop: 15 }}>
-                <Button subtle disabled>Edit Bio</Button>
+                <Button disabled>Edit Bio</Button>
                 <MarketplaceLink
                   chain={crewmate?.Nft?.chain}
                   assetType="crewmate"
                   id={crewmate?.id}>
-                  {(onClick, setRefEl) => <Button setRef={setRefEl} subtle onClick={onClick}>List for Sale</Button>}
+                  {(onClick, setRefEl) => <Button setRef={setRefEl} onClick={onClick}>List for Sale</Button>}
                 </MarketplaceLink>
               </div>
             )}

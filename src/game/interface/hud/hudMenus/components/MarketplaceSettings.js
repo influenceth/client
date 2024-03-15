@@ -267,7 +267,6 @@ const MarketplaceSettings = ({ marketplace }) => {
         {isDirty && (
           <Button
             onClick={handleRevert}
-            subtle
             width={125}>
             <CloseIcon />
             Revert
@@ -278,7 +277,6 @@ const MarketplaceSettings = ({ marketplace }) => {
           disabled={nativeBool(!isDirty)}
           isTransaction
           onClick={saveChanges}
-          subtle
           width={125}>
           Update
         </Button>

@@ -54,20 +54,15 @@ const InnerWrapper = styled.div`
   }
 `;
 
-const StorageTotal = styled.div`
+const StorageLabel = styled.div`
   align-items: center;
-  color: #888;
+  color: white;
   display: flex;
   flex-direction: row;
   font-size: 14px;
-  padding-bottom: 4px;
-  & label {
-    flex: 1;
-    font-size: 90%;
-  }
+  justify-content: space-between;
+  padding-bottom: 8px;
   & > span {
-    color: white;
-    font-weight: normal;
     color: ${p =>
       p.utilization < 0.7
       ? p.theme.colors.success
@@ -77,6 +72,16 @@ const StorageTotal = styled.div`
         : p.theme.colors.error
       )
     };
+    font-weight: bold;
+  }
+`;
+
+const StorageLabelBottom = styled(StorageLabel)`
+  padding-top: 8px;
+  padding-bottom: 4px;
+  & > div > span {
+    color: #999;
+    margin-right: 3px
   }
 `;
 
@@ -97,17 +102,18 @@ const ProgressBar = styled.div`
 
   &:after {
     content: "";
-    background: ${p => p.theme.colors.main};
+    background: ${p => p.utilization <= 1.0 ? p.theme.colors.main : p.theme.colors.error};
     border-radius: 3px;
     position: absolute;
     left: 0;
     height: 100%;
     width: ${p => Math.min(1, p.progress) * 100}%;
   }
+
   ${p => p.secondaryProgress && `
     &:before {
       content: "";
-      background: white;
+      background: ${p.secondaryProgress <= 1 ? 'white' : p.theme.colors.error};
       border-radius: 3px;
       position: absolute;
       left: 0;
@@ -316,13 +322,19 @@ const LotInventory = () => {
     [inventories, inventorySlot]
   );
 
-  const { usedMass, usedOrReservedMass, usedVolume, usedOrReservedVolume } = useMemo(() => {
+  const { usedMass, usedOrReservedMass, maxMass, pctMass, pctOrReservedMass, usedVolume, usedOrReservedVolume, maxVolume, pctVolume, pctOrReservedVolume } = useMemo(() => {
     if (!inventory) {
       return {
         usedMass: 0,
         usedOrReservedMass: 0,
+        maxMass: 0,
+        pctMass: 0,
+        pctOrReservedMass: 0,
         usedVolume: 0,
         usedOrReservedVolume: 0,
+        maxVolume: 0,
+        pctVolume: 0,
+        pctOrReservedVolume: 0,
       };
     }
 
@@ -340,10 +352,16 @@ const LotInventory = () => {
     const volumeReservedUsage = reservedVolume / inventoryConfig.volumeConstraint;
 
     return {
-      usedMass: massUsage,
-      usedOrReservedMass: massUsage + massReservedUsage,
-      usedVolume: volumeUsage,
-      usedOrReservedVolume: volumeUsage + volumeReservedUsage,
+      usedMass: mass,
+      usedOrReservedMass: mass + reservedMass,
+      maxMass: inventoryConfig.massConstraint,
+      pctMass: massUsage,
+      pctOrReservedMass: massUsage + massReservedUsage,
+      usedVolume: volume,
+      usedOrReservedVolume: volume + reservedVolume,
+      maxVolume: inventoryConfig.volumeConstraint,
+      pctVolume: volumeUsage,
+      pctOrReservedVolume: volumeUsage + volumeReservedUsage,
     };
   }, [crew?._inventoryBonuses, inventory]);
 
@@ -445,22 +463,30 @@ const LotInventory = () => {
           )}
           <Charts>
             <div>
-              <StorageTotal utilization={usedOrReservedVolume}>
+              <StorageLabel utilization={pctOrReservedVolume}>
                 <label>Volume</label>
                 <span>
-                  {usedOrReservedVolume > 0 && usedOrReservedVolume < 0.01 ? '> ' : ''}{formatFixed(100 * usedOrReservedVolume, 1)}%
+                  {pctOrReservedVolume > 0 && pctOrReservedVolume < 0.01 ? '> ' : ''}{formatFixed(100 * pctOrReservedVolume, 1)}%
                 </span>
-              </StorageTotal>
-              <ProgressBar progress={usedVolume} secondaryProgress={usedOrReservedVolume} />
+              </StorageLabel>
+              <ProgressBar progress={pctVolume} secondaryProgress={pctOrReservedVolume} utilization={pctOrReservedVolume}/>
+              <StorageLabelBottom>
+                <div><span>Used:</span> {formatVolume(usedOrReservedVolume)}</div>
+                <div><span>Max:</span> {formatVolume(maxVolume)}</div>
+              </StorageLabelBottom>
             </div>
             <div>
-              <StorageTotal utilization={usedOrReservedMass}>
+              <StorageLabel utilization={pctOrReservedMass}>
                 <label>Mass</label>
                 <span>
-                  {usedOrReservedMass > 0 && usedOrReservedMass < 0.01 ? '> ' : ''}{formatFixed(100 * usedOrReservedMass, 1)}%
+                  {pctOrReservedMass > 0 && pctOrReservedMass < 0.01 ? '> ' : ''}{formatFixed(100 * pctOrReservedMass, 1)}%
                 </span>
-              </StorageTotal>
-              <ProgressBar progress={usedMass} secondaryProgress={usedOrReservedMass} />
+              </StorageLabel>
+              <ProgressBar progress={pctMass} secondaryProgress={pctOrReservedMass} utilization={pctOrReservedMass}/>
+              <StorageLabelBottom>
+                <div><span>Used:</span> {formatMass(usedOrReservedMass)}</div>
+                <div><span>Max:</span> {formatMass(maxMass)}</div>
+              </StorageLabelBottom>
             </div>
           </Charts>
           <Controls>
@@ -523,29 +549,28 @@ const LotInventory = () => {
               </ThumbnailWrapper>
             ))}
           </InventoryItems>
+          {(isIncomingDelivery || Object.keys(selectedItems).length > 0) && (
+          <Tray>
+            {trayLabel && <TrayLabel content={trayLabel} />}
+
+            {Object.keys(selectedItems).length > 0 && (
+              <actionButtons.SurfaceTransferOutgoing.Component
+                {...actionProps}
+                labelAddendum={canRemoveProducts ? '' : 'access restricted'}
+                flags={{ disabled: !canRemoveProducts }}
+                dialogProps={{ origin: entity, originSlot: inventorySlot, preselect: { selectedItems } }}
+              />
+            )}
+
+            {/* TODO: may only care about incoming transfer if have permission here */}
+            {/* TODO: is SurfaceTransferIncoming still supported? */}
+            {isIncomingDelivery && (
+              <actionButtons.SurfaceTransferIncoming.Component {...actionProps} />
+            )}
+          </Tray>
+          )}
         </InnerWrapper>
       </Wrapper>
-
-      {(isIncomingDelivery || Object.keys(selectedItems).length > 0) && (
-        <Tray>
-          {trayLabel && <TrayLabel content={trayLabel} />}
-
-          {Object.keys(selectedItems).length > 0 && (
-            <actionButtons.SurfaceTransferOutgoing.Component
-              {...actionProps}
-              labelAddendum={canRemoveProducts ? '' : 'access restricted'}
-              flags={{ disabled: !canRemoveProducts }}
-              dialogProps={{ origin: entity, originSlot: inventorySlot, preselect: { selectedItems } }}
-            />
-          )}
-
-          {/* TODO: may only care about incoming transfer if have permission here */}
-          {/* TODO: is SurfaceTransferIncoming still supported? */}
-          {isIncomingDelivery && (
-            <actionButtons.SurfaceTransferIncoming.Component {...actionProps} />
-          )}
-        </Tray>
-      )}
     </>
   );
 };
