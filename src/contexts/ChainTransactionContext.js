@@ -505,7 +505,7 @@ export function ChainTransactionProvider({ children }) {
       && crew?.Crew?.actionRound
       && (crew?.Crew?.actionRound + RandomEvent.MIN_ROUNDS) <= blockNumber
       && !crew?._actionTypeTriggered,
-    [blockNumber, crew]
+    [blockNumber, crew?.Crew?.actionType, crew?.Crew?.actionRound, crew?._actionTypeTriggered]
   );
 
   const contracts = useMemo(() => {
