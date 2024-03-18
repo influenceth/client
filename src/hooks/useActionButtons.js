@@ -10,7 +10,7 @@ import useShip from '~/hooks/useShip';
 import useStore from '~/hooks/useStore';
 import { locationsArrToObj } from '~/lib/utils';
 import actionButtons from '../game/interface/hud/actionButtons';
-import useAuth from './useAuth';
+import useSession from './useSession';
 
 // if selected asteroid (any zoom)
 //  - purchase asteroid
@@ -112,7 +112,7 @@ const useActionButtons = () => {
   const setAction = useStore(s => s.dispatchActionDialog);
 
   // account
-  const { account } = useAuth();
+  const { accountAddress } = useSession();
 
   // crew
   const { crew } = useCrewContext();
@@ -161,7 +161,7 @@ const useActionButtons = () => {
     if (asteroidIsLoading || lotIsLoading || crewedShipIsLoading || zoomedShipIsLoading) return [];
     return Object.keys(actionButtons)
       .filter((k) => !actionButtons[k].isVisible || actionButtons[k].isVisible({
-        account,
+        accountAddress,
         asteroid,
         crew,
         crewedShip,

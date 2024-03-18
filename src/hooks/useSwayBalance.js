@@ -1,20 +1,20 @@
 import { useQuery } from 'react-query';
 import { uint256 } from 'starknet';
 
-import useAuth from './useAuth';
+import useSession from './useSession';
 
 const useSwayBalance = (overrideAccount) => {
-  const { account: defaultAccount, walletContext: { starknet } } = useAuth();
-  const account = overrideAccount || defaultAccount;
+  const { accountAddress: defaultAccount, starknet } = useSession();
+  const accountAddress = overrideAccount || defaultAccount;
 
   return useQuery(
-    [ 'swayBalance', account ],
+    [ 'swayBalance', accountAddress ],
     async () => {
       try {
         const balance = await starknet.provider.callContract({
           contractAddress: process.env.REACT_APP_STARKNET_SWAY_TOKEN,
           entrypoint: 'balanceOf',
-          calldata: [account]
+          calldata: [accountAddress]
         });
         const unscaledSway = uint256.uint256ToBN({ low: balance.result[0], high: balance.result[1] });
         return unscaledSway / 1000000n;
@@ -23,7 +23,7 @@ const useSwayBalance = (overrideAccount) => {
       }
     },
     {
-      enabled: !!starknet?.provider && !!account,
+      enabled: !!starknet?.provider && !!accountAddress,
       refetchInterval: 300e3,
     }
   );

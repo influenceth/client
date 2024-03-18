@@ -2,13 +2,13 @@ import { useMemo } from 'react';
 import { Building, Entity, Lot } from '@influenceth/sdk';
 
 import { MyAssetIcon } from '~/components/Icons';
-import useAuth from '~/hooks/useAuth';
+import useSession from '~/hooks/useSession';
 import useCrewContext from '~/hooks/useCrewContext';
 import { LocationLink } from './components';
 import formatters from '~/lib/formatters';
 
 const useColumns = () => {
-  const { account } = useAuth();
+  const { accountAddress } = useSession();
   const { crew } = useCrewContext();
 
   return useMemo(() => {
@@ -112,8 +112,8 @@ const useColumns = () => {
       },
     ];
 
-    return columns.filter((c) => account || !c.requireLogin);
-  }, [account, crew?.id]);
+    return columns.filter((c) => accountAddress || !c.requireLogin);
+  }, [accountAddress, crew?.id]);
 };
 
 export default useColumns;

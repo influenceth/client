@@ -141,7 +141,8 @@ const Details = (props) => {
   const [showTooltip, setShowTooltip] = useState();
   useEffect(() => {
     setShowTooltip(false);
-    setTimeout(() => { setShowTooltip(true); }, 0);
+    const timeoutId = setTimeout(() => { setShowTooltip(true); }, 0);
+    return () => clearTimeout(timeoutId);
   }, [title]);
 
   return (

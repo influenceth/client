@@ -7,7 +7,7 @@ import CrewmateCardFramed from '~/components/CrewmateCardFramed';
 import CrewLocationLabel from '~/components/CrewLocationLabel';
 import LiveFoodStatus from '~/components/LiveFoodStatus';
 import { WarningOutlineIcon } from '~/components/Icons';
-import useAuth from '~/hooks/useAuth';
+import useSession from '~/hooks/useSession';
 import useCrewContext from '~/hooks/useCrewContext';
 import useHydratedLocation from '~/hooks/useHydratedLocation';
 import formatters from '~/lib/formatters';
@@ -116,7 +116,7 @@ const Crewmates = styled.div`
 `;
 
 const AvatarMenu = () => {
-  const { account } = useAuth();
+  const { authenticated } = useSession();
   const { captain, crew, loading: crewIsLoading } = useCrewContext();
   const history = useHistory();
 
@@ -134,8 +134,9 @@ const AvatarMenu = () => {
         rgb: theme.colors.mainRGB,
       };
     }
+
     return null;
-  }, [account, captain]);
+  }, [captain]);
 
   const onClick = useCallback(() => history.push('/crew'), []);
 
@@ -143,7 +144,7 @@ const AvatarMenu = () => {
   return (
     <Wrapper>
       <CollapsibleSection
-        borderless={!account}
+        borderless={!authenticated}
         containerHeight={140}
         title={(
           <>

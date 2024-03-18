@@ -75,7 +75,15 @@ class ErrorBoundary extends Component {
 
   componentDidCatch(error, errorInfo) {
     const redactedStore = JSON.parse(localStorage.getItem(STORE_NAME));
-    if (redactedStore?.state?.auth) redactedStore.state.auth = redactedStore.state.auth.token ? '<< LOGGED IN >>' : '<< LOGGED OUT >>';
+    if (Object.entries(redactedStore.currentSession || {}).length > 0) {
+      redactedStore.currentSession = {
+        accountAddress: redactedStore.currentSession.accountAddress,
+        walletId: redactedStore.currentSession.walletId,
+      };
+    }
+
+    delete redactedStore.sessions; // includes sensitive data
+
     // TODO (maybe):
     //  - current block number and block time
     //  - activities query cache
@@ -143,7 +151,7 @@ class ErrorBoundary extends Component {
                 <Button
                   background={`rgba(${hexToRGB(theme.colors.error)}, 0.2)`}
                   color={theme.colors.error}
-                  onClick={this.resetState}> 
+                  onClick={this.resetState}>
                   <WarningIcon /> <span>Reload State</span>
                 </Button>
               </Buttons>

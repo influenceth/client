@@ -3,21 +3,21 @@ import { Address } from '@influenceth/sdk';
 
 import MarketplaceLink from '~/components/MarketplaceLink';
 import OnClickLink from '~/components/OnClickLink';
-import useAuth from '~/hooks/useAuth';
+import useSession from '~/hooks/useSession';
 
 const AddressLink = (props) => {
   const { address, chain, truncate } = props;
-  const { account } = useAuth();
+  const { accountAddress } = useSession();
 
   const label = useMemo(() => {
-    return (account && account === address)
+    return (accountAddress && accountAddress === address)
       ? 'you'
       : (
         address && truncate
         ? `${address.substr(0, 6)}...${address.substr(-4)}`
         : address
       );
-  }, [account, address, truncate]);
+  }, [accountAddress, address, truncate]);
 
   if (address) {
     return (

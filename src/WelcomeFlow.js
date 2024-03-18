@@ -3,7 +3,7 @@ import styled from 'styled-components';
 import { useHistory } from 'react-router-dom';
 
 import Details from '~/components/DetailsV2';
-import useAuth from '~/hooks/useAuth';
+import useSession from '~/hooks/useSession';
 import useCrewContext from '~/hooks/useCrewContext';
 import useStore from '~/hooks/useStore';
 import { CrewmateSKU } from '~/game/launcher/Store';
@@ -74,7 +74,7 @@ const CrewmateCreditDialog = ({ onClose }) => (
 const DISABLE_LAUNCHER_TRAILER = true && process.env.NODE_ENV === 'development';
 
 const WelcomeFlow = () => {
-  const { token } = useAuth();
+  const { authenticated } = useSession();
   const { crew, loading, adalianRecruits, arvadianRecruits } = useCrewContext();
   const history = useHistory();
 
@@ -96,8 +96,10 @@ const WelcomeFlow = () => {
 
   useEffect(() => {
     let updatedStatus = STATUS.LOGGED_OUT;
-    if (token) {
+
+    if (authenticated) {
       updatedStatus = STATUS.LOGGED_IN;
+
       if (!loading) {
         if (crew && crew._crewmates?.length > 0) updatedStatus = STATUS.READY;
         else if (adalianRecruits?.length > 0 || arvadianRecruits?.length > 0) updatedStatus = STATUS.NEED_CREWMATE_INITIALIZED;
@@ -107,7 +109,7 @@ const WelcomeFlow = () => {
       }
     }
     setStatus(updatedStatus);
-  }, [token, crew, loading, adalianRecruits, arvadianRecruits]);
+  }, [authenticated, crew, loading, adalianRecruits, arvadianRecruits]);
 
   useEffect(() => {
     if (prompting && status > STATUS.LOGGED_OUT && status < STATUS.READY) {

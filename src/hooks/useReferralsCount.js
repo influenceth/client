@@ -1,10 +1,10 @@
 import { useQuery } from 'react-query';
 
-import useAuth from '~/hooks/useAuth';
+import useSession from '~/hooks/useSession';
 import api from '~/lib/api';
 
 const useReferralsCount = () => {
-  const { token } = useAuth();
+  const { token } = useSession();
 
   return useQuery(
     [ 'referrals', 'count', token ],

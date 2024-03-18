@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Address } from '@influenceth/sdk';
 
-import useAuth from '~/hooks/useAuth';
+import useSession from '~/hooks/useSession';
 import { RadioCheckedIcon, RadioUncheckedIcon } from '~/components/Icons';
 import TextInput from '~/components/TextInputUncontrolled';
 import { CheckboxButton, CheckboxRow, SearchMenu } from './components';
@@ -19,19 +19,19 @@ const initialValues = {
 const fieldName = 'owner';
 
 const CrewOwnershipFilter = ({ assetType, filters, onChange }) => {
-  const { account } = useAuth();
+  const { accountAddress } = useSession();
 
   const [types, setTypes] = useState(initialValues);
   const [ownedByAddress, setOwnedByAddress] =  useState('');
 
-  const addressInput = useRef(); 
+  const addressInput = useRef();
 
   useEffect(() => {
     const newTypes = { ...initialValues };
     if (filters[fieldName]) {
       const standardAddress = Address.toStandard(filters[fieldName]) || '';
       if (standardAddress) {
-        if (Address.areEqual(filters[fieldName], account)) {
+        if (Address.areEqual(filters[fieldName], accountAddress)) {
           newTypes.ownedByMe = true;
         } else {
           newTypes.ownedBy = standardAddress;
@@ -42,21 +42,21 @@ const CrewOwnershipFilter = ({ assetType, filters, onChange }) => {
       }
     }
     setTypes(newTypes);
-    
-  }, [filters[fieldName]]);
+
+  }, [accountAddress, filters[fieldName]]);
 
   const onClick = useCallback((k) => (e) => {
     e.stopPropagation();
     let value = k;
-    if (k === 'ownedByMe' && account && Address.toStandard(account)) {
-      value = Address.toStandard(account);
+    if (k === 'ownedByMe' && accountAddress && Address.toStandard(accountAddress)) {
+      value = Address.toStandard(accountAddress);
     } else if (k === 'ownedBy') {
       if (ownedByAddress && Address.toStandard(ownedByAddress)) {
         value = Address.toStandard(ownedByAddress);
 
         // if ownedByAddress is currently my address, could appear "stuck" on owned by me,
         // so clear the ownedByAddress if it's me when I click ownedBy
-        if (Address.areEqual(account, ownedByAddress)) {
+        if (Address.areEqual(accountAddress, ownedByAddress)) {
           value = 'ownedBy';
           setOwnedByAddress('');
         }
@@ -66,7 +66,7 @@ const CrewOwnershipFilter = ({ assetType, filters, onChange }) => {
       if (addressInput.current) addressInput.current.focus();
     }
     onChange({ [fieldName]: value });
-  }, [account, onChange, ownedByAddress]);
+  }, [accountAddress, onChange, ownedByAddress]);
 
   const handleEvent = useCallback((e) => {
     if (e.type === 'blur' || e.key === 'Enter' || e.key === 'Tab') {
@@ -95,7 +95,7 @@ const CrewOwnershipFilter = ({ assetType, filters, onChange }) => {
       fieldName={fieldName}
       filters={filters}
       title="Owner">
-      {Object.keys(options).map((k) => (!account && k === 'ownedByMe') ? null : (
+      {Object.keys(options).map((k) => (!accountAddress && k === 'ownedByMe') ? null : (
         <CheckboxRow key={k} onClick={onClick(k)}>
           <CheckboxButton checked={types[k]}>
             {types[k] ? <RadioCheckedIcon /> : <RadioUncheckedIcon />}

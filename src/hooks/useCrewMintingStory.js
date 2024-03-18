@@ -1,12 +1,12 @@
 // TODO: ecs refactor -- maybe deprecated?
 
 // import { useQuery } from 'react-query';
-// import useAuth from '~/hooks/useAuth';
+// import useSession from '~/hooks/useSession';
 
 // import api from '~/lib/api';
 
 // const useCrewMintingStory = () => {
-//   const { token } = useAuth();
+//   const { token } = useSession();
 
 //   return useQuery(
 //     [ 'stories', 'recruitment' ],

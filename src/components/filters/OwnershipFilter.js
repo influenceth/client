@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Address } from '@influenceth/sdk';
 
-import useAuth from '~/hooks/useAuth';
+import useSession from '~/hooks/useSession';
 import useStore from '~/hooks/useStore';
 import ColorPicker from '~/components/ColorPicker';
 import { RadioCheckedIcon, RadioUncheckedIcon } from '~/components/Icons';
@@ -33,7 +33,7 @@ const fieldName = 'ownedBy';
 const highlightFieldName = 'ownership';
 
 const OwnershipFilter = ({ assetType, filters, onChange }) => {
-  const { account } = useAuth();
+  const { accountAddress } = useSession();
   const highlight = useStore(s => s.assetSearch[assetType].highlight);
   const fieldHighlight = highlight && highlight.field === highlightFieldName;
 
@@ -53,7 +53,7 @@ const OwnershipFilter = ({ assetType, filters, onChange }) => {
       try {
         standardAddress = Address.toStandard(filters[fieldName]);
 
-        if (Address.areEqual(filters[fieldName], account)) {
+        if (Address.areEqual(filters[fieldName], accountAddress)) {
           newTypes.ownedByMe = true;
         } else {
           newTypes.ownedBy = standardAddress;
@@ -70,15 +70,15 @@ const OwnershipFilter = ({ assetType, filters, onChange }) => {
   const onClick = useCallback((k) => (e) => {
     e.stopPropagation();
     let value = k;
-    if (k === 'ownedByMe' && account && Address.toStandard(account)) {
-      value = Address.toStandard(account);
+    if (k === 'ownedByMe' && accountAddress && Address.toStandard(accountAddress)) {
+      value = Address.toStandard(accountAddress);
     } else if (k === 'ownedBy') {
       if (ownedByAddress && Address.toStandard(ownedByAddress)) {
         value = Address.toStandard(ownedByAddress);
 
         // if ownedByAddress is currently my address, could appear "stuck" on owned by me,
         // so clear the ownedByAddress if it's me when I click ownedBy
-        if (Address.areEqual(account, ownedByAddress)) {
+        if (Address.areEqual(accountAddress, ownedByAddress)) {
           value = 'ownedBy';
           setOwnedByAddress('');
         }
@@ -88,7 +88,7 @@ const OwnershipFilter = ({ assetType, filters, onChange }) => {
       if (addressInput.current) addressInput.current.focus();
     }
     onChange({ [fieldName]: value });
-  }, [account, onChange, ownedByAddress]);
+  }, [accountAddress, onChange, ownedByAddress]);
 
   const handleEvent = useCallback((e) => {
     if (e.type === 'blur' || e.key === 'Enter' || e.key === 'Tab') {
@@ -111,7 +111,7 @@ const OwnershipFilter = ({ assetType, filters, onChange }) => {
     if (addressInput.current) addressInput.current.value = ownedByAddress;
   }, [ownedByAddress]);
 
-  const highlightMetadata = useMemo(() => ({ myAddress: account, address: ownedByAddress }), [account, ownedByAddress]);
+  const highlightMetadata = useMemo(() => ({ myAddress: accountAddress, address: ownedByAddress }), [accountAddress, ownedByAddress]);
 
   return (
     <SearchMenu
@@ -122,7 +122,7 @@ const OwnershipFilter = ({ assetType, filters, onChange }) => {
       highlightMetadata={highlightMetadata}
       title="Owner"
       highlightColorMap={highlightColors}>
-      {Object.keys(options).map((k) => (!account && k === 'ownedByMe') ? null : (
+      {Object.keys(options).map((k) => (!accountAddress && k === 'ownedByMe') ? null : (
         <CheckboxRow key={k} onClick={onClick(k)}>
           <CheckboxButton checked={types[k]}>
             {types[k] ? <RadioCheckedIcon /> : <RadioUncheckedIcon />}

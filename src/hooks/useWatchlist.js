@@ -3,10 +3,10 @@ import { useQuery } from 'react-query';
 import { Entity } from '@influenceth/sdk';
 
 import api from '~/lib/api';
-import useAuth from '~/hooks/useAuth';
+import useSession from '~/hooks/useSession';
 
 const useWatchlist = () => {
-  const { token } = useAuth();
+  const { token } = useSession();
 
   const watchlist = useQuery(
     [ 'watchlist', token ],

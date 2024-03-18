@@ -1,10 +1,10 @@
 import { useQueryClient, useMutation } from 'react-query';
 
-import useAuth from '~/hooks/useAuth';
+import useSession from '~/hooks/useSession';
 import api from '~/lib/api';
 
 const useUnWatchAsteroid = () => {
-  const { token } = useAuth();
+  const { token } = useSession();
   const queryClient = useQueryClient();
   const watchedMapped = true;//useStore(s => s.asteroids.watched.mapped);
 

@@ -8,7 +8,7 @@ import { InfoIcon, CompositionIcon } from '~/components/Icons';
 import TabContainer from '~/components/TabContainer';
 import useAsteroidAbundances from '~/hooks/useAsteroidAbundances';
 import useAsteroid from '~/hooks/useAsteroid';
-import useAuth from '~/hooks/useAuth';
+import useSession from '~/hooks/useSession';
 import useStore from '~/hooks/useStore';
 import AsteroidInformation from './asteroidDetails/Information';
 import AsteroidResources from './asteroidDetails/Resources';
@@ -35,7 +35,7 @@ const tabContainerCss = css`
 
 // TODO (enhancement): would be nice if at least the asteroid render was shared between the tabs
 const AsteroidDetails = () => {
-  const { account } = useAuth();
+  const { accountAddress } = useSession();
   const history = useHistory();
   const { i, tab } = useParams();
   const { data: asteroid } = useAsteroid(Number(i));
@@ -48,7 +48,7 @@ const AsteroidDetails = () => {
     if (i) dispatchOriginSelected(Number(i));
   }, [ i, dispatchOriginSelected ]);
 
-  const isOwner = account && asteroid?.Nft?.owner && Address.areEqual(account, asteroid.Nft.owner);
+  const isOwner = accountAddress && asteroid?.Nft?.owner && Address.areEqual(accountAddress, asteroid.Nft.owner);
   const isManager = crew && asteroid?.Control?.controller?.id === crew.id;
 
   const onTabChange = (tabIndex) => {
