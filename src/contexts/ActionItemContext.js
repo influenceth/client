@@ -20,7 +20,7 @@ export function ActionItemProvider({ children }) {
   const { data: actionItems, isLoading: actionItemsLoading } = useQuery(
     [ 'actionItems', crew?.id ],
     async () => {
-      const activities = await api.getCrewActionItems();
+      const activities = await api.getCrewActionItems(crew?.id);
       await hydrateActivities(activities, queryClient);
       return activities;
     },
