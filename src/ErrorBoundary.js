@@ -82,6 +82,8 @@ class ErrorBoundary extends Component {
       };
     }
 
+    delete redactedStore.sessions; // includes sensitive data
+
     // TODO (maybe):
     //  - current block number and block time
     //  - activities query cache
