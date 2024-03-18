@@ -18,7 +18,7 @@ import {
   WalletIcon,
   WarningIcon
 } from '~/components/Icons';
-import useAuth from '~/hooks/useAuth';
+import useSession from '~/hooks/useSession';
 import useCrewContext from '~/hooks/useCrewContext';
 import useStore from '~/hooks/useStore';
 import DropdownNavMenu, { NavMenuLoggedInUser, menuAnimationTime } from './DropdownNavMenu';
@@ -69,7 +69,7 @@ const VerticalRule = styled.div`
 `;
 
 const SystemControls = () => {
-  const { account, login, logout, token, walletContext: { starknet } } = useAuth();
+  const { accountAddress, login, logout, token, starknet } = useSession();
 
   const { crews } = useCrewContext();
   const { data: swayBalance } = useSwayBalance();
@@ -179,7 +179,7 @@ const SystemControls = () => {
       <VerticalRule hide={menuOpen} />
 
       <DropdownNavMenu
-        header={<NavMenuLoggedInUser account={account} />}
+        header={<NavMenuLoggedInUser account={accountAddress} />}
         hCollapse
         isOpen={menuOpen}
         menuItems={menuItems}

@@ -10,7 +10,7 @@ import CollapsibleSection from '~/components/CollapsibleSection';
 import IconButton from '~/components/IconButton';
 import { CloseIcon, TutorialIcon } from '~/components/Icons';
 import { ZOOM_IN_ANIMATION_TIME, ZOOM_OUT_ANIMATION_TIME, ZOOM_TO_PLOT_ANIMATION_TIME } from '~/game/scene/Asteroid';
-import useAuth from '~/hooks/useAuth';
+import useSession from '~/hooks/useSession';
 import useCrewContext from '~/hooks/useCrewContext';
 import useStore from '~/hooks/useStore';
 import { reactBool } from '~/lib/utils';
@@ -295,7 +295,7 @@ const useTutorial = () => {
           {' '}<a href="https://wiki.influenceth.io/en/docs/user-guides" target="_blank" rel="noopener noreferrer">Wiki</a>
           {' '}or <a href="https://discord.com/invite/influenceth" target="_blank" rel="noopener noreferrer">Discord</a> for help getting started!
         </>
-      ),  
+      ),
       crewmateId: 7539,
       initialize: () => {
         setTimeout(() => { setTransitioning(false); }, DELAY_MESSAGE / 2);
@@ -303,9 +303,9 @@ const useTutorial = () => {
     },
     {
       title: 'The Asteroid Belt',
-      content: `Located partly inside the star's habitable "Goldilocks Zone," the Adalian asteroid belt is 
-        comprised of 250,000 asteroids with unique orbits & resource compositions. Aspiring colonists may 
-        purchase development rights to entire asteroids, or join with larger organizations attempting to 
+      content: `Located partly inside the star's habitable "Goldilocks Zone," the Adalian asteroid belt is
+        comprised of 250,000 asteroids with unique orbits & resource compositions. Aspiring colonists may
+        purchase development rights to entire asteroids, or join with larger organizations attempting to
         develop their own tracts of land in the belt.`,
       crewmateId: 7539,
       initialize: () => {
@@ -327,8 +327,8 @@ const useTutorial = () => {
     },
     {
       title: 'Adalia Prime - The First Colony',
-      content: `Adalia Prime is the single largest asteroid in the belt and the oldest hub of commerce and 
-        human activity. Every Adalian owes their life to The Arvad, the wayward colony ship that was moored 
+      content: `Adalia Prime is the single largest asteroid in the belt and the oldest hub of commerce and
+        human activity. Every Adalian owes their life to The Arvad, the wayward colony ship that was moored
         and dismantled here to form the first permanent settlements.`,
       crewmateId: 6891,
       initialize: () => {
@@ -351,9 +351,9 @@ const useTutorial = () => {
     },
     {
       title: 'Navigating The Belt',
-      content: `Adalian pilots burn from asteroid to asteroid using nuclear-powered torch ships. Traversing 
-        this vast network of individually orbiting bodies requires careful planning and preparation. Click 
-        on the Ballistic Transfer Graph to simulate possible routes, and consider re-fueling for the return 
+      content: `Adalian pilots burn from asteroid to asteroid using nuclear-powered torch ships. Traversing
+        this vast network of individually orbiting bodies requires careful planning and preparation. Click
+        on the Ballistic Transfer Graph to simulate possible routes, and consider re-fueling for the return
         journey!`,
       crewmateId: 6877,
       initialize: () => {
@@ -374,9 +374,9 @@ const useTutorial = () => {
     },
     {
       title: 'Resource Extraction',
-      content: `Raw asteroid ore contains all the basic ingredients to support life and create products 
-        for a thriving deep-space economy. Extractors such as this can harvest everything from frozen 
-        volatile gases to organic compounds. Deposits of metal, rare-earth, or fissile materials may 
+      content: `Raw asteroid ore contains all the basic ingredients to support life and create products
+        for a thriving deep-space economy. Extractors such as this can harvest everything from frozen
+        volatile gases to organic compounds. Deposits of metal, rare-earth, or fissile materials may
         also be discovered depending on an asteroid's composition and abundances.`,
       crewmateId: 7422,
       initialize: () => {
@@ -399,9 +399,9 @@ const useTutorial = () => {
     },
     {
       title: 'Warehousing & Logistics',
-      content: `Warehouses are another key component of the supply chain, providing secure storage 
-        facilities for stockpiling and construction. Most goods are shipped across the surface by 
-        low-velocity tug-boats called Hoppers, and travel distances are a critical factor to ensuring 
+      content: `Warehouses are another key component of the supply chain, providing secure storage
+        facilities for stockpiling and construction. Most goods are shipped across the surface by
+        low-velocity tug-boats called Hoppers, and travel distances are a critical factor to ensuring
         shipments arrive on time.`,
       crewmateId: 7305,
       initialize: () => {
@@ -424,9 +424,9 @@ const useTutorial = () => {
     },
     {
       title: 'Markets & Economy',
-      content: `The Adalian economy also heavily depends on Marketplaces to establish prices for goods, 
-        and the ever-shifting distances between asteroids provides nonstop opportunities for savvy 
-        merchants or intrepid haulers running trade routes. Click the Marketplace listings icon on the 
+      content: `The Adalian economy also heavily depends on Marketplaces to establish prices for goods,
+        and the ever-shifting distances between asteroids provides nonstop opportunities for savvy
+        merchants or intrepid haulers running trade routes. Click the Marketplace listings icon on the
         right to check this location's products and prices.`,
       crewmateId: 7538,
       initialize: () => {
@@ -449,9 +449,9 @@ const useTutorial = () => {
     },
     {
       title: 'Habitation & Life Support',
-      content: `Finally, Habitats provide life support and a base of operations from which the Crews 
-        stationed there venture out to perform jobs. They also serve as social centers and recruitment 
-        hubs for new Adalians coming of age in the belt. You may immediately begin your recruitment 
+      content: `Finally, Habitats provide life support and a base of operations from which the Crews
+        stationed there venture out to perform jobs. They also serve as social centers and recruitment
+        hubs for new Adalians coming of age in the belt. You may immediately begin your recruitment
         here; take your first steps as a member of Adalian society!`,
       crewmateId: 6980,
       initialize: () => {
@@ -510,7 +510,7 @@ const useTutorial = () => {
 }
 
 const TutorialItems = () => {
-  const { account, authenticating, login } = useAuth();
+  const { authenticating, authenticated, login } = useSession();
   const { crews, loading } = useCrewContext();
   const history = useHistory();
   const { updateStep, currentStep, currentStepIndex, hideMessage, isTransitioning, setHideMessage, steps } = useTutorial();
@@ -521,13 +521,13 @@ const TutorialItems = () => {
 
   const handleNext = useCallback(() => {
     if (currentStepIndex >= steps.length - 1) {
-      if (account) history.push('/crew')
+      if (authenticated) history.push('/crew')
       // TODO: see WelcomeFlow -- if want to start prompting for crewmate credit pack, do not want to do this redirect
       else login().then((success) => { if (success) { history.push('/crew'); } });
     } else {
       updateStep(currentStepIndex + 1);
     }
-  }, [account, currentStepIndex, history, login, updateStep]);
+  }, [authenticated, currentStepIndex, history, login, updateStep]);
 
   // hide if i have crews with crewmates on them
   const hide = useMemo(() => {

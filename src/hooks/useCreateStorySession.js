@@ -1,10 +1,10 @@
 import { useMutation, useQueryClient } from 'react-query';
 
-import useAuth from '~/hooks/useAuth';
+import useSession from '~/hooks/useSession';
 import api from '~/lib/api';
 
 const useCreateStorySession = () => {
-  const { token } = useAuth();
+  const { token } = useSession();
   const queryClient = useQueryClient();
 
   return useMutation(

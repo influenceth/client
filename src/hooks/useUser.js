@@ -1,10 +1,10 @@
 import { useQuery } from 'react-query';
 import api from '~/lib/api';
 
-import useAuth from '~/hooks/useAuth';
+import useSession from '~/hooks/useSession';
 
 const useUser = () => {
-  const { token } = useAuth();
+  const { token } = useSession();
   return useQuery(
     [ 'user', token ],
     () => api.getUser(),

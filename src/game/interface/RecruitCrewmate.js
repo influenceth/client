@@ -5,14 +5,14 @@ import SelectHabitatDialog from '~/components/SelectHabitatDialog';
 import SelectUninitializedCrewmateDialog from '~/components/SelectUninitializedCrewmateDialog';
 import CrewAssignmentCreate from '~/game/interface/details/crewAssignments/Create';
 import CrewAssignment from '~/game/interface/details/crewAssignments/Assignment';
-import useAuth from '~/hooks/useAuth';
+import useSession from '~/hooks/useSession';
 
 // /recruit/:crewId -- select location IF crew is 0
 // /recruit/:crewId/:locationId -- select crewmate credit
 // /recruit/:crewId/:locationId/:crewmateId -- crewmate assignment
 // /recruit/:crewId/:locationId/:crewmateId/create -- crewmate creation
 const RecruitCrewmate = () => {
-  const { account } = useAuth();
+  const { accountAddress, authenticated } = useSession();
   const history = useHistory();
   const { locationId, crewId, crewmateId, page } = useParams();
 
@@ -39,9 +39,10 @@ const RecruitCrewmate = () => {
   }, [crewId, locationId, crewmateId]);
 
   useEffect(() => {
-    if (!account) history.push('/');
-    if (!locationId) history.push(`/recruit/${crewId}/1`); // TODO: 1 should probably be in env (or a list of allowable starting habitats)
-  }, [account, crewId, locationId]);
+    if (!authenticated) history.push('/');
+    // TODO: 1 should probably be in env (or a list of allowable starting habitats)
+    if (!locationId) history.push(`/recruit/${crewId}/1`);
+  }, [authenticated, crewId, locationId]);
 
   // NOTE: as it is now, the useEffect line above checking !locationId will ensure this
   //  dialog is never rendered... remove this file if we truly want this deprecated

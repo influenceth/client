@@ -6,7 +6,7 @@ import Button from '~/components/ButtonAlt';
 
 import CrewmateCardFramed from '~/components/CrewmateCardFramed';
 import { PlusIcon } from '~/components/Icons';
-import useAuth from '~/hooks/useAuth';
+import useSession from '~/hooks/useSession';
 import theme from '~/theme';
 
 const Wrapper = styled.div`
@@ -34,19 +34,20 @@ const ButtonWrapper = styled.div`
 `;
 
 const LoginMenu = () => {
-  const { account, authenticating, login } = useAuth();
+  const { accountAddress, authenticating, authenticated, login } = useSession();
+
   const history = useHistory();
 
   const [tooltip, status, onClick] = useMemo(() => {
-    if (!account) return ['Log-In', 'Account Not Connected', login];
+    if (!authenticated) return ['Log-In', 'Account Not Connected', login];
     else return ['Start Crew', 'Crew Needs Recruits', () => history.push('/crew')];
-  }, [ account ]);
+  }, [ authenticated ]);
 
   useEffect(() => ReactTooltip.rebuild(), [tooltip]);
 
   return (
     <Wrapper>
-      {account && (
+      {authenticated && (
         <CrewmateCardFramed
           borderColor={`rgba(${theme.colors.mainRGB}, 0.4)`}
           crewmate={null}
@@ -62,9 +63,9 @@ const LoginMenu = () => {
           }}
           width={88} />
       )}
-      <ButtonWrapper loggedIn={!!account}>
+      <ButtonWrapper loggedIn={authenticated}>
         <label>{status}</label>
-        <Button onClick={onClick} disabled={authenticating} width={account ? 148 : 170}>
+        <Button onClick={onClick} disabled={authenticating} width={accountAddress ? 148 : 170}>
           {tooltip}
         </Button>
       </ButtonWrapper>

@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from 'react-query';
 import { Crewmate, Entity, Permission, RandomEvent, System } from '@influenceth/sdk';
 
 import api from '~/lib/api';
-import useAuth from '~/hooks/useAuth';
+import useSession from '~/hooks/useSession';
 import useConstants from '~/hooks/useConstants';
 import useEntity from '~/hooks/useEntity';
 import useStore from '~/hooks/useStore';
@@ -14,23 +14,20 @@ const CrewContext = createContext();
 const TOO_LONG_FOR_BLOCK = Math.max(expectedBlockSeconds * 1.5, expectedBlockSeconds + 60);
 
 export function CrewProvider({ children }) {
-  const { account, walletContext: { starknet, blockNumber, blockTime } } = useAuth();
+  const { accountAddress, authenticated, blockNumber, blockTime, starknet, token } = useSession();
   const queryClient = useQueryClient();
-
-  useEffect(() => { console.log({ blockTime, blockNumber }) }, [blockNumber, blockTime])
-
   const allPendingTransactions = useStore(s => s.pendingTransactions);
   const selectedCrewId = useStore(s => s.selectedCrewId);
   const dispatchCrewSelected = useStore(s => s.dispatchCrewSelected);
 
   const { data: TIME_ACCELERATION, isLoading: constantsLoading } = useConstants('TIME_ACCELERATION');
 
-  const ownedCrewsQueryKey = useMemo(() => ([ 'entities', Entity.IDS.CREW, 'owned', account ]), [account]);
+  const ownedCrewsQueryKey = useMemo(() => ([ 'entities', Entity.IDS.CREW, 'owned', accountAddress ]), [accountAddress]);
 
   const { data: rawCrews, isLoading: crewsLoading } = useQuery(
     ownedCrewsQueryKey,
-    () => api.getOwnedCrews(account),
-    { enabled: !!account }
+    () => api.getOwnedCrews(accountAddress),
+    { enabled: !!token }
   );
 
   const combinedCrewRoster = useMemo(() => (rawCrews || []).reduce((acc, c) => [...acc, ...c.Crew.roster], []), [rawCrews]);
@@ -41,9 +38,9 @@ export function CrewProvider({ children }) {
   );
 
   const { data: myOwnedCrewmates, isLoading: myOwnedCrewmatesLoading } = useQuery(
-    [ 'entities', Entity.IDS.CREWMATE, 'owned', account ],
-    () => api.getAccountCrewmates(account),
-    { enabled: !!account }
+    [ 'entities', Entity.IDS.CREWMATE, 'owned', accountAddress ],
+    () => api.getAccountCrewmates(accountAddress),
+    { enabled: !!token }
   );
 
   const [adalianRecruits, arvadianRecruits] = useMemo(() => {
@@ -225,10 +222,10 @@ export function CrewProvider({ children }) {
 
   // make sure a default-selected crew makes it into state (if logged in)
   useEffect(() => {
-    if (account && crewsAndCrewmatesReady && selectedCrew?.id !== selectedCrew) {
+    if (authenticated && crewsAndCrewmatesReady && selectedCrew?.id !== selectedCrew) {
       dispatchCrewSelected(selectedCrew?.id || undefined);
     }
-  }, [account, crewsAndCrewmatesReady, selectedCrew]);
+  }, [authenticated, crewsAndCrewmatesReady, selectedCrew]);
 
   const captain = useMemo(() => selectedCrew?._crewmates?.[0] || null, [crewmateMap, selectedCrew]);
 

@@ -11,7 +11,7 @@ const apiVersion = 'v2';
 
 // pass initial config to axios
 const config = { baseURL: process.env.REACT_APP_API_URL, headers: {} };
-const initialToken = useStore.getState().auth.token;
+const initialToken = useStore.getState().currentSession?.token;
 if (initialToken) config.headers = { Authorization: `Bearer ${initialToken}`};
 const initialCrew = useStore.getState().selectedCrewId;
 if (initialCrew) config.headers['X-Crew-Id'] = initialCrew;
@@ -19,7 +19,7 @@ const instance = axios.create(config);
 
 // subscribe to changes relevant to the config
 useStore.subscribe(
-  s => [s.auth.token, s.selectedCrewId],
+  s => [s.currentSession.token, s.selectedCrewId],
   ([newToken, crewId]) => {
     instance.defaults.headers = {
       Authorization: `Bearer ${newToken}`,

@@ -25,7 +25,7 @@ import actionStages from '~/lib/actionStages';
 import theme, { hexToRGB } from '~/theme';
 import CrewIndicator from '~/components/CrewIndicator';
 import useEntity from '~/hooks/useEntity';
-import useAuth from '~/hooks/useAuth';
+import useSession from '~/hooks/useSession';
 import useAgreementManager from '~/hooks/actionManagers/useAgreementManager';
 import useHydratedLocation from '~/hooks/useHydratedLocation';
 import useCrew from '~/hooks/useCrew';
@@ -141,7 +141,7 @@ const FormAgreement = ({
   stage,
   ...props
 }) => {
-  const { walletContext: { starknet } } = useAuth();
+  const { starknet } = useSession();
   const createAlert = useStore(s => s.dispatchAlertLogged);
 
   const { currentAgreement, currentPolicy, cancelAgreement, enterAgreement, extendAgreement, pendingChange } = agreementManager;

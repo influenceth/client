@@ -10,7 +10,7 @@ import LiveTimer from '~/components/LiveTimer';
 import { useLotLink } from '~/components/LotLink';
 import useActionItems from '~/hooks/useActionItems';
 import useAsteroid from '~/hooks/useAsteroid';
-import useAuth from '~/hooks/useAuth';
+import useSession from '~/hooks/useSession';
 import useCrewContext from '~/hooks/useCrewContext';
 import useGetActivityConfig from '~/hooks/useGetActivityConfig';
 import useLot from '~/hooks/useLot';
@@ -410,7 +410,7 @@ const ActionItem = ({ data, getActivityConfig }) => {
 };
 
 const ActionItems = () => {
-  const { account } = useAuth();
+  const { authenticated } = useSession();
   const { allVisibleItems: allItems } = useActionItems();
   const { captain, crew } = useCrewContext();
   const getActivityConfig = useGetActivityConfig();
@@ -471,7 +471,7 @@ const ActionItems = () => {
   if (!captain) return null;
   return (
     <OuterWrapper>
-      {account && (
+      {authenticated && (
         <CollapsibleSection
           borderless
           collapsibleProps={{ style: { width: SECTION_WIDTH - 32 } }}

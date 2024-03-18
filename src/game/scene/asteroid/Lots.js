@@ -22,7 +22,7 @@ import {
 import { useQueryClient } from 'react-query';
 import { Asteroid, Delivery, Entity, Lot } from '@influenceth/sdk';
 
-import useAuth from '~/hooks/useAuth';
+import useSession from '~/hooks/useSession';
 import useCrewContext from '~/hooks/useCrewContext';
 import useStore from '~/hooks/useStore';
 import useWebsocket from '~/hooks/useWebsocket';
@@ -75,7 +75,7 @@ const hasBuildingMask = 0b010000;
 const colorIndexMask  = 0b001111;
 
 const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, config, getLockToSurface, getRotation }) => {
-  const { token } = useAuth();
+  const { token } = useSession();
   const { crew } = useCrewContext();
   const { data: TIME_ACCELERATION } = useConstants('TIME_ACCELERATION');
 

@@ -2,7 +2,7 @@ import { createContext, useCallback, useEffect, useRef, useState } from 'react';
 import { useQueryClient } from 'react-query';
 import uniq from 'lodash.uniqby';
 
-import useAuth from '~/hooks/useAuth';
+import useSession from '~/hooks/useSession';
 import useCrewContext from '~/hooks/useCrewContext';
 import useGetActivityConfig from '~/hooks/useGetActivityConfig';
 import useStore from '~/hooks/useStore';
@@ -19,7 +19,7 @@ const ActivitiesContext = createContext();
 const ignoreEventTypes = ['CURRENT_ETH_BLOCK_NUMBER'];
 
 export function ActivitiesProvider({ children }) {
-  const { token, walletContext: { setBlockNumber } } = useAuth();
+  const { token, setBlockNumber } = useSession();
   const { crew, pendingTransactions, refreshReadyAt } = useCrewContext();
   const getActivityConfig = useGetActivityConfig();
   const queryClient = useQueryClient();
@@ -116,7 +116,7 @@ export function ActivitiesProvider({ children }) {
       if (shouldRefreshReadyAt) {
         refreshReadyAt();
       }
-      
+
     }, 2500);
   }, [getActivityConfig, refreshReadyAt]);
 
@@ -162,7 +162,7 @@ export function ActivitiesProvider({ children }) {
     // if authed, populate existing activities and start listening to user websocket
     // if have pending transactions, load back to the oldest one in case it missed the activity;
     // else, will just pull most recent X (limit set on server)
-    
+
     const pendingTxHashes = pendingTransactions
       .map((tx) => tx.txHash)
       .filter((txHash) => !!txHash);

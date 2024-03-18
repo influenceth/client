@@ -3,7 +3,7 @@ import styled from 'styled-components';
 import moment from 'moment';
 
 import { LinkIcon, } from '~/components/Icons';
-import useAuth from '~/hooks/useAuth';
+import useSession from '~/hooks/useSession';
 import useCrewContext from '~/hooks/useCrewContext';
 import { LocationLink } from './components';
 import OnClickLink from '~/components/OnClickLink';
@@ -20,7 +20,7 @@ const Content = styled.div`
   }
 `;
 // TODO: pointer-events is a bit hacky to reuse getLogContent,
-//  so if we come back and address that, we'll probably want to 
+//  so if we come back and address that, we'll probably want to
 //  remove this hack
 
 const LocationLabel = styled.span`
@@ -33,7 +33,7 @@ const BuildingLabel = styled.span`
 // TODO: ecs refactor
 
 const useColumns = () => {
-  const { account } = useAuth();
+  const { accountAddress } = useSession();
   const { crew } = useCrewContext();
 
   return useMemo(() => {
@@ -69,7 +69,7 @@ const useColumns = () => {
           const asteroid = row.e.linked.find((l) => l.type === 'Asteroid')?.asset;
           const lot = row.e.linked.find((l) => l.type === 'Lot')?.asset;
           const building = (lot && lot.building?.type) || 'Empty Lot';
-          
+
           if (!asteroid) return null;
           return (
             <>
@@ -96,8 +96,8 @@ const useColumns = () => {
       },
     ];
 
-    return columns.filter((c) => account || !c.requireLogin);
-  }, [account, crew?.id]);
+    return columns.filter((c) => accountAddress || !c.requireLogin);
+  }, [accountAddress, crew?.id]);
 };
 
 export default useColumns;

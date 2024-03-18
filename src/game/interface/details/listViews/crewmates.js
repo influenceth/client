@@ -6,14 +6,14 @@ import {
   CrewmateIcon,
   MyAssetIcon,
 } from '~/components/Icons';
-import useAuth from '~/hooks/useAuth';
+import useSession from '~/hooks/useSession';
 import OnClickLink from '~/components/OnClickLink';
 import MarketplaceLink from '~/components/MarketplaceLink';
 import useCrewContext from '~/hooks/useCrewContext';
 import formatters from '~/lib/formatters';
 
 const useColumns = () => {
-  const { account } = useAuth();
+  const { accountAddress } = useSession();
   const { crewmateMap } = useCrewContext();
 
   return useMemo(() => {
@@ -48,7 +48,7 @@ const useColumns = () => {
                 id={row.Nft.owner}>
                 {(onClick, setRefEl) => (
                   <OnClickLink ref={setRefEl} onClick={onClick}>
-                    {account && Address.areEqual(row.Nft.owner, account)
+                    {accountAddress && Address.areEqual(row.Nft.owner, accountAddress)
                       ? `you` // TODO: should this be <Me /> like in ships list config?
                       : `${row.Nft.owner.substr(0, 6)}...${row.Nft.owner.substr(-4)}`
                     }
@@ -93,8 +93,8 @@ const useColumns = () => {
       },
     ];
 
-    return columns.filter((c) => account || !c.requireLogin);
-  }, [account, crewmateMap]);
+    return columns.filter((c) => accountAddress || !c.requireLogin);
+  }, [accountAddress, crewmateMap]);
 };
 
 export default useColumns;

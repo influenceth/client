@@ -1,12 +1,12 @@
 // TODO: ecs refactor -- maybe deprecated? what about random event stories?
 
 // import { useQuery } from 'react-query';
-// import useAuth from '~/hooks/useAuth';
+// import useSession from '~/hooks/useSession';
 
 // import api from '~/lib/api';
 
 // const useCrewAssignments = () => {
-//   const { token } = useAuth();
+//   const { token } = useSession();
 
 //   return useQuery(
 //     [ 'assignments', token ],
