@@ -43,9 +43,6 @@ import {
   formatResourceAmount
 } from './components';
 
-const greenRGB = hexToRGB(theme.colors.green);
-const redRGB = hexToRGB(theme.colors.red);
-
 const FormSection = styled.div`
   margin-top: 12px;
   &:first-child {
@@ -76,27 +73,27 @@ const OrderAlert = styled.div`
   ${p => {
     if (p.isCancellation) {
       return `
-        background: rgba(${redRGB}, 0.2);
+        background: rgba(${hexToRGB(theme.colors.red)}, 0.2);
         & > div {
-          background: rgba(${redRGB}, 0.2);
+          background: rgba(${hexToRGB(theme.colors.red)}, 0.2);
           b { color: ${p.theme.colors.red}; }
         }
       `;
     }
     else if (p.mode === 'buy') {
       return `
-        background: rgba(${greenRGB}, 0.2);
+        background: rgba(${hexToRGB(theme.colors.buy)}, 0.2);
         & > div {
-          background: rgba(${greenRGB}, 0.2);
-          b { color: ${p.theme.colors.green}; }
+          background: rgba(${hexToRGB(theme.colors.buy)}, 0.2);
+          b { color: ${p.theme.colors.buy}; }
         }
       `;
     } else {
       return `
-        background: rgba(${p.theme.colors.mainRGB}, 0.2);
+        background: rgba(${hexToRGB(theme.colors.sell)}, 0.2);
         & > div {
-          background: rgba(${p.theme.colors.mainRGB}, 0.2);
-          b { color: ${p.theme.colors.main}; }
+          background: rgba(${hexToRGB(theme.colors.sell)}, 0.2);
+          b { color: ${p.theme.colors.sell}; }
         }
       `;
     }

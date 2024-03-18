@@ -51,7 +51,7 @@ const Header = styled.div`
       color: #999;
       line-height: 1em;
       padding-left: ${p => p.marketplace ? '56px' : '0'};
-      padding-top: 15px;
+      padding-top: 10px;
       span:not(:first-child) {
         border-left: 1px solid #777;
         margin-left: 10px;
@@ -147,7 +147,7 @@ const ListingAmount = styled.div`
   font-weight: normal;
   ${p => p.color && `
     color: ${
-      p.color === 'none' ? '#565656' : (p.color === 'buy' ? theme.colors.green : theme.colors.main)};
+      p.color === 'none' ? '#565656' : (p.color === 'buy' ? theme.colors.buy : theme.colors.sell)};
   `}
   font-size: 80%;
   margin-top: 2px;
@@ -221,7 +221,6 @@ const ListingOffer = styled.div`
     flex: 1 0 0;
     padding-left: 6px;
     text-align: left;
-    text-transform: uppercase;
   }
 
   ${p => p.theme.clipCorner(8)};
@@ -286,7 +285,6 @@ const Footer = styled.div`
   justify-content: flex-end;
 `;
 
-const greenRGB = hexToRGB(theme.colors.green);
 const pageSize = 25;
 
 const MarketplaceHome = ({ asteroid, listings, orderTally, onSelectListing, marketplace = null, marketplaceOwner = null, marketplaceTally }) => {
@@ -450,9 +448,9 @@ const MarketplaceHome = ({ asteroid, listings, orderTally, onSelectListing, mark
               let thumbBG = 'rgba(80, 80, 80, 0.1)';
               if (!!marketplace) {
                 if (mode === 'buy' && listing.forSale > 0) {
-                  thumbBG = `rgba(${greenRGB}, 0.1);`;//`#002511`;
+                  thumbBG = `rgba(${hexToRGB(theme.colors.buy)}, 0.1);`;//`#002511`;
                 } else if (mode === 'sell' && listing.forBuy > 0) {
-                  thumbBG = `rgba(${theme.colors.mainRGB}, 0.1);`//`#0d2a33`;
+                  thumbBG = `rgba(${hexToRGB(theme.colors.sell)}, 0.1);`//`#0d2a33`;
                 };
               }
               const resource = Product.TYPES[listing.product];

@@ -490,7 +490,7 @@ const HudMenu = ({ forceOpenMenu }) => {
     pageButtons.push(
       {
         key: 'MARKETPLACE_LISTINGS',
-        label: 'Marketplace Listings',
+        label: 'Marketplace Products',
         icon: <MarketplaceBuildingIcon />,
         onOpen: () => {
           history.push(`/marketplace/${asteroidId}/${Lot.toIndex(lotId)}`);

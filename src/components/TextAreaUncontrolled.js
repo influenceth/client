@@ -40,7 +40,7 @@ export const TextAreaWrapper = styled.div`
       opacity: 0.33;
       position: absolute;
       right: 8px;
-      height: 32px;
+      height: 132px;
       line-height: 32px;
     }
   `}

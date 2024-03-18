@@ -9,14 +9,14 @@ import {
   MarketBuyIcon,
   MarketplaceBuildingIcon,
   MarketSellIcon,
-  RadioCheckedIcon,
   RadioUncheckedIcon,
+  RadioCheckedIcon,
   SwayIcon
 } from '~/components/Icons';
 import CrewIndicator from '~/components/CrewIndicator';
 import ResourceThumbnail from '~/components/ResourceThumbnail';
 import Switcher from '~/components/SwitcherButton';
-import UncontrolledTextInput, { TextInputWrapper } from '~/components/TextInputUncontrolled';
+import UncontrolledTextInput, { TextInputWrapper, UncontrolledTextInputLarge } from '~/components/TextInputUncontrolled';
 import useScreenSize from '~/hooks/useScreenSize';
 import theme, { hexToRGB } from '~/theme';
 import { formatFixed, formatPrice, getCrewAbilityBonuses } from '~/lib/utils';
@@ -29,7 +29,8 @@ import useCrewContext from '~/hooks/useCrewContext';
 import { nativeBool } from '~/lib/utils';
 import useMarketplaceManager from '~/hooks/actionManagers/useMarketplaceManager';
 
-const greenRGB = hexToRGB(theme.colors.green);
+const buyRGB = hexToRGB(theme.colors.buy);
+const sellRGB = hexToRGB(theme.colors.sell);
 
 const Wrapper = styled.div`
   display: flex;
@@ -47,7 +48,7 @@ const Main = styled.div`
 
 const ActionPanel = styled.div`
   margin-left: 20px;
-  width: 320px;
+  width: 25%;
   & > div {
     background: #171717;
     ${p => p.theme.clipCorner(15)};
@@ -95,44 +96,26 @@ const Header = styled.div`
   border-bottom: 1px solid #333;
   display: flex;
   flex-direction: row;
-  height: 150px;
-  margin-top: -25px;
-  padding-bottom: 25px;
-  padding-top: 25px;
+  padding-bottom: 10px;
   position: relative;
 
-  & > div:first-child {
-    flex: 1;
+  & > div {
     h1 {
       align-items: center;
       display: flex;
       font-size: 50px;
       font-weight: normal;
       line-height: 1em;
-      margin: 0 0 32px;
+      margin: 0 0 4px;
       text-transform: uppercase;
       white-space: nowrap;
-      svg {
-        color: ${p => p.theme.colors.main};
-        height: 1em;
-        margin-right: 6px;
-      }
     }
     ${Subheader} {
-      position: absolute;
-      bottom: 12px;
-      left: 0;
-
-      span:first-child {
-        font-size: 28px;
-        text-transform: uppercase;
-      }
-      span:not(:first-child) {
+      font-weight: normal;
+      & span:not(:first-child) {
         border-left: 1px solid #777;
-        font-size: 110%;
         margin-left: 10px;
         padding-left: 10px;
-      }
     }
   }
 `;
@@ -160,7 +143,9 @@ const ChartArea = styled.div`
   }
 
   &:before {
-    color: #777;
+    color: ${theme.colors.secondaryText};
+    font-weight: bold;
+    font-size: 90%;
     content: "${p => p.spread > 0 ? 'Spread' : ''}";
     border-bottom: 2px solid #333;
     padding: 0 0 4px 8px;
@@ -187,7 +172,7 @@ const TableArea = styled.div`
   height: 100%;
   overflow: hidden;
   padding-left: 15px;
-  width: 360px;
+  width: 30%;
 `;
 
 const VolumeBar = styled.div`
@@ -212,6 +197,7 @@ const SellTable = styled.div`
     width: 100%;
 
     tr > * {
+      white-space: nowrap;
       border-bottom: 1px solid #000;
       color: #FFF;
       font-size: 88%;
@@ -223,7 +209,7 @@ const SellTable = styled.div`
     }
     th {
       background: black;
-      color: #888;
+      color: ${theme.colors.secondaryText};
       font-size: 90%;
       font-weight: bold;
       position: sticky;
@@ -235,23 +221,23 @@ const SellTable = styled.div`
       font-family: 'Jetbrains Mono', sans-serif;
       font-weight: 100;
       &:first-child {
-        color: ${p => p.theme.colors.brightMain};
+        color: ${p => p.theme.colors.buy};
         position: relative;
       }
     }
   }
   ${VolumeBar} {
-    background: rgba(${p => p.theme.colors.mainRGB}, 0.25);
+    background: rgba(${p => buyRGB}, 0.25);
   }
 `;
 
 const BuyTable = styled(SellTable)`
   justify-content: flex-end;
   table tr td:first-child {
-    color: ${p => p.theme.colors.green};
+    color: ${p => p.theme.colors.sell};
   }
   ${VolumeBar} {
-    background: rgba(${greenRGB}, 0.2);
+    background: rgba(${p => sellRGB}, 0.2);
   }
 `;
 
@@ -298,35 +284,37 @@ const FormSection = styled.div`
 
 const RadioRow = styled.label`
   align-items: center;
-  color: #888;
+  color: ${theme.colors.secondaryText};
   cursor: ${p => p.theme.cursors.active};
   display: flex;
   flex-direction: row;
-  height: 25px;
   width: 100%;
+  font-size: 90%;
+  padding: 8px 0 0 0;
+  &:hover {
+    color: white;
+    & > svg { color: white };
+  }
   ${p => p.selected
-    ? `& > svg { color: white; }`
+    ? `color: white;
+    & > svg { 
+      color: white; 
+    }`
     : `&:hover > svg { color: white; }`
   }
-
   & > span {
     flex: 1;
     padding-left: 6px;
   }
 `;
 
-const InfoTooltip = styled.div`
-  color: white;
-`;
-
 const InputLabel = styled.div`
-  align-items: center;
-  color: #888;
   display: flex;
   flex-direction: row;
   font-size: 14px;
-  margin-bottom: 3px;
+  padding: 6px 0 6px;
   & > label {
+    color: ${theme.colors.secondaryText};
     flex: 1;
   }
   & > span {
@@ -348,28 +336,26 @@ const Tray = styled.div`
 `;
 
 const Summary = styled.div`
-  & > div {
-    align-items: center;
-    display: flex;
-    flex-direction: row;
-    font-size: 28px;
-    & > svg {
-      font-size: 32px;
-    }
+  align-items: center;
+  display: flex;
+  flex-direction: row;
+  font-size: 36px;
+  & > svg {
+    font-size: 36px;
   }
 `;
 
-const SummaryLabel = styled.label`
+const SummaryHeader = styled.label`
   display: block;
   font-size: 90%;
-  margin-bottom: 3px;
+  margin-bottom: 4px;
   &:before {
     content: "${p => p.type === 'limit' ? 'Limit' : 'Market'} ${p => p.mode === 'buy' ? 'Buy' : 'Sell'} ";
-    color: ${p => p.mode === 'buy' ? p.theme.colors.green : p.theme.colors.main};
+    color: ${p => p.mode === 'buy' ? p.theme.colors.buy : p.theme.colors.sell};
   }
   &:after {
     content: "Preview";
-    color: #888;
+    color: ${theme.colors.secondaryText};
   }
 `;
 
@@ -665,67 +651,66 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
     <Wrapper>
       <Main>
         <Header>
-          <div>
-            <h1><MarketplaceBuildingIcon /> {formatters.buildingName(marketplace)}</h1>
-            <Subheader>
-              <span>{resource.name}</span>
-              <span style={{ color: theme.colors.brightMain }}>{formatResourceAmount(totalSelling || 0, resource.i)} Available</span>
-              <span style={{ color: theme.colors.green }}>{formatResourceAmount(totalBuying || 0, resource.i)} Sellable</span>
-            </Subheader>
-          </div>
+            <ResourceThumbnail resource={resource} size="110px" tooltipContainer={null} />
+            <div style={{ flex: 1, paddingLeft: 20 }}>
+              <h1>{resource.name}</h1>
+              <Subheader>
+                <span style={{ color: theme.colors.buy }}><b>{formatResourceAmount(totalSelling || 0, resource.i)}</b> Available</span>
+                <span style={{ color: theme.colors.sell }}><b>{formatResourceAmount(totalBuying || 0, resource.i)}</b> Sellable</span>
+              </Subheader>
+            </div>
           {marketplaceOwner && <CrewIndicator crew={marketplaceOwner} flip label="Managed by" />}
         </Header>
         <Body>
           <ChartArea ref={chartWrapperRef} spread={spread}>
-            <ResourceThumbWrapper>
-              <ResourceThumbnail
-                resource={resource}
-                size="110px"
-                tooltipContainer={null} />
-            </ResourceThumbWrapper>
             <svg focusable="false" viewBox={`0 0 ${xViewbox || 1} ${yViewbox || 1}`}>
               <g>
                 <polygon
                   points={sellPoints}
-                  fill={`rgba(${theme.colors.mainRGB}, 0.4)`}
-                  stroke={theme.colors.main}
+                  fill={`rgba(${hexToRGB(theme.colors.buy)}, 0.4)`}
+                  stroke={theme.colors.buy}
                   strokeWidth={STROKE_WIDTH} />
-                <path d={sellLine} stroke={`rgba(${theme.colors.mainRGB}, 0.35)`} strokeDasharray="3" />
+                <path d={sellLine} stroke={`rgba(${hexToRGB(theme.colors.buy)}, 0.35)`} strokeDasharray="3" />
               </g>
               <g>
                 <polygon
                   points={buyPoints}
-                  fill={`rgba(${greenRGB}, 0.4)`}
-                  stroke={theme.colors.green}
+                  fill={`rgba(${hexToRGB(theme.colors.sell)}, 0.4)`}
+                  stroke={theme.colors.sell}
                   strokeWidth={STROKE_WIDTH} />
-                <path d={buyLine} stroke={`rgba(${greenRGB}, 0.25)`} strokeDasharray="3" />
+                <path d={buyLine} stroke={`rgba(${hexToRGB(theme.colors.sell)}, 0.35)`} strokeDasharray="3" />
               </g>
             </svg>
           </ChartArea>
           <TableArea>
             <SellTable>
-              <table>
-                <thead>
-                  <tr>
-                    <th>Selling Price</th>
-                    <th>Quantity</th>
-                    <th>Total</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {sellBuckets.map(({ price, amount }, i) => {
-                    const rowVolume = rowSaleVolume;
-                    rowSaleVolume -= amount;
-                    return (
-                      <tr key={i}>
-                        <td><VolumeBar volume={volumeBenchmark > 0 ? rowVolume / volumeBenchmark : 0} />{price.toLocaleString()}</td>
-                        <td>{amount.toLocaleString()}</td>
-                        <td>{formatPrice(price * amount)}</td>
+                <table>
+                  <thead>
+                    {sellBuckets.length == 0 
+                      ? <tr>
+                        <th>No Sellers</th>
+                        </tr>
+                      : <tr>
+                        <th>Selling Price</th>
+                        <th>Quantity</th>
+                        <th>Total</th>
                       </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
+                    }
+                  </thead>
+                  <tbody>
+                    {sellBuckets.map(({ price, amount }, i) => {
+                      const rowVolume = rowSaleVolume;
+                      rowSaleVolume -= amount;
+                      return (
+                        <tr key={i}>
+                          <td><VolumeBar volume={volumeBenchmark > 0 ? rowVolume / volumeBenchmark : 0} />{price.toLocaleString()}</td>
+                          <td>{amount.toLocaleString()}</td>
+                          <td>{formatPrice(price * amount)}</td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
             </SellTable>
 
             <CenterPrice>
@@ -736,11 +721,16 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
             <BuyTable>
               <table>
                 <thead>
-                  <tr>
-                    <th>Buying Price</th>
-                    <th>Quantity</th>
-                    <th>Total</th>
-                  </tr>
+                  {buyBuckets.length == 0 
+                      ? <tr>
+                        <th>No Buyers</th>
+                        </tr>
+                      : <tr>
+                        <th>Buying Price</th>
+                        <th>Quantity</th>
+                        <th>Total</th>
+                      </tr>
+                    }
                 </thead>
                 <tbody>
                   {buyBuckets.map(({ price, amount }, i) => {
@@ -780,15 +770,16 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
                 </FormSection>
 
                 <FormSection>
+                  <InputLabel>
+                  <label>Order Type</label>
+                  </InputLabel>
                   <RadioRow onClick={() => setType('market')} selected={nativeBool(type === 'market')}>
                     {type === 'market' ? <RadioCheckedIcon /> : <RadioUncheckedIcon />}
                     <span>Market Order</span>
-                    <InfoTooltip data-tip="help" data-for="details"><InfoIcon /></InfoTooltip>
                   </RadioRow>
                   <RadioRow onClick={() => setType('limit')} selected={nativeBool(type === 'limit')}>
                     {type === 'limit' ? <RadioCheckedIcon /> : <RadioUncheckedIcon />}
                     <span>Limit Order</span>
-                    <InfoTooltip data-tip="help" data-for="details"><InfoIcon /></InfoTooltip>
                   </RadioRow>
                 </FormSection>
 
@@ -800,7 +791,7 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
                     )}
                   </InputLabel>
                   <TextInputWrapper rightLabel={resource.isAtomic ? '' : ' kg'}>
-                    <UncontrolledTextInput
+                    <UncontrolledTextInputLarge
                       disabled={nativeBool(type === 'market' && ((mode === 'buy' && !totalSelling) || (mode === 'sell' && !totalBuying)))}
                       min={0}
                       max={type === 'market' ? (mode === 'buy' ? totalSelling : totalBuying) : undefined}
@@ -818,7 +809,7 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
                       <label>Market Price</label>
                     </InputLabel>
                     <TextInputWrapper rightLabel={`SWAY${resource.isAtomic ? '' : ' / kg'}`}>
-                      <UncontrolledTextInput
+                      <UncontrolledTextInputLarge
                         disabled
                         value={formatPrice(avgMarketPrice ? (avgMarketPrice || 0) : ((centerPrice || 0) + (spread || 0) / 2))} />
                     </TextInputWrapper>
@@ -830,7 +821,7 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
                       <label>Price</label>
                     </InputLabel>
                     <TextInputWrapper rightLabel={`SWAY${resource.isAtomic ? '' : ' / kg'}`}>
-                      <UncontrolledTextInput
+                      <UncontrolledTextInputLarge
                         onChange={handleChangeLimitPrice}
                         placeholder="Specify Price"
                         value={limitPrice || ''} />
@@ -843,7 +834,7 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
                     <label>Subtotal</label>
                   </InputLabel>
                   <TextInputWrapper rightLabel="SWAY">
-                    <UncontrolledTextInput
+                    <UncontrolledTextInputLarge
                       disabled
                       value={formatPrice((type === 'market' ? totalMarketPrice : totalLimitPrice) || 0)} />
                   </TextInputWrapper>
@@ -866,7 +857,7 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
                       }}>{formatFixed(100 * marketplaceFee / Order.FEE_SCALE, 2)}%</span>
                   </InputLabel>
                   <TextInputWrapper rightLabel="SWAY">
-                    <UncontrolledTextInput
+                    <UncontrolledTextInputLarge
                       disabled
                       value={formatFixed(fee || 0, 2)} />
                   </TextInputWrapper>
@@ -874,25 +865,23 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
 
               </div>
 
+              <SummaryHeader type={type} mode={mode} />
               <Tray style={{ overflow: 'hidden' }}>
                 <Summary>
-                  {total > 0 && (
-                    <>
-                      <SummaryLabel type={type} mode={mode} />
-                      <div>
-                        <SwayIcon /> {formatPrice(total, { fixedPrecision: 2 })}
-                      </div>
-                    </>
-                  )}
+                  {total > 0 
+                    ? (<><SwayIcon /> {formatPrice(total, { fixedPrecision: 2 })}</>)
+                    : (<><SwayIcon /> <div style={{ color: theme.colors.disabledText }}>0</div></>)
+                  }
                 </Summary>
-
-                <ActionButton
-                  {...actionButtonDetails}
-                  flags={{
-                    disabled: loading || !hasPermission || !(total > 0),
-                    loading
-                  }}
-                  onClick={createOrder} />
+                {crew && (
+                  <ActionButton
+                    {...actionButtonDetails}
+                    flags={{
+                      disabled: loading || !hasPermission || !(total > 0),
+                      loading
+                    }}
+                    onClick={createOrder} />
+                )}
               </Tray>
             </PanelContent>
           </PanelInner>

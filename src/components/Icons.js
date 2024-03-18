@@ -97,6 +97,8 @@ import ProductSVG from '~/assets/icons/ProductIcon.svg';
 import ProductsSVG from '~/assets/icons/ProductsIcon.svg';
 import ProductionSVG from '~/assets/icons/ProductionIcon.svg';
 import PromoteSVG from '~/assets/icons/PromoteIcon.svg';
+import RadioEmptySVG from '~/assets/icons/RadioEmptyIcon.svg';
+import RadioSelectedSVG from '~/assets/icons/RadioSelectedIcon.svg';
 import RadiusSVG from '~/assets/icons/RadiusIcon.svg';
 import RecruitCrewmateSVG from '~/assets/icons/RecruitCrewmateIcon.svg';
 import RefineSVG from '~/assets/icons/RefineIcon.svg';
@@ -266,6 +268,8 @@ export const ProductsIcon = () => <ProductsSVG className="icon" />;
 export const ProductionIcon = () => <ProductionSVG className="icon" />;
 export const PromoteIcon = () => <PromoteSVG className="icon" />;
 export const RadiusIcon = () => <RadiusSVG className="icon" />;
+export const RadioUncheckedIcon = () => <RadioEmptySVG className="icon" />;
+export const RadioCheckedIcon = () => <RadioSelectedSVG className="icon" />;
 export const RecruitCrewmateIcon = () => <RecruitCrewmateSVG className="icon" />;
 export const RefineIcon = () => <RefineSVG className="icon" />;
 export const UpdateIcon = () => <UpdateSVG className="icon" />;
@@ -389,8 +393,6 @@ export {
   MdNavigateNext as NextIcon,
   MdPause as PauseIcon,
   MdPlayArrow as PlayIcon,
-  MdRadioButtonChecked as RadioCheckedIcon,
-  MdRadioButtonUnchecked as RadioUncheckedIcon,
   MdStop as StopIcon,
   RiLayoutGridFill as GridIcon,
   FiLogIn as LoginIcon, // TODO: ...
