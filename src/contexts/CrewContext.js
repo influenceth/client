@@ -15,6 +15,8 @@ const TOO_LONG_FOR_BLOCK = Math.max(expectedBlockSeconds * 1.5, expectedBlockSec
 
 export function CrewProvider({ children }) {
   const { accountAddress, authenticated, blockNumber, blockTime, starknet, token } = useSession();
+  useEffect(() => { console.log({ blockTime, blockNumber }) }, [blockNumber, blockTime]) // TODO: remove
+
   const queryClient = useQueryClient();
   const allPendingTransactions = useStore(s => s.pendingTransactions);
   const selectedCrewId = useStore(s => s.selectedCrewId);

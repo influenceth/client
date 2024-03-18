@@ -78,10 +78,6 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
     },
     lotsMappedAssetSearchResults: {},
 
-    auth: {
-      token: null
-    },
-
     currentSession: {},
     sessions: {},
 
