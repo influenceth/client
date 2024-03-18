@@ -22,14 +22,13 @@ import {
   formatResourceMass,
   formatResourceVolume
 } from './components';
-import useStore from '~/hooks/useStore';
 import { ActionDialogInner } from '../ActionDialog';
 import ResourceThumbnail from '~/components/ResourceThumbnail';
 import actionStages from '~/lib/actionStages';
 import theme, { hexToRGB } from '~/theme';
 import useAsteroid from '~/hooks/useAsteroid';
 import useShipEmergencyManager from '~/hooks/actionManagers/useShipEmergencyManager';
-import useChainTime from '~/hooks/useChainTime';
+import useSyncedTime from '~/hooks/useSyncedTime';
 
 // TODO: should probably be able to select a ship (based on ships on that lot -- i.e. might have two ships in a spaceport)
 //  - however, could you launch two ships at once? probably not because crew needs to be on ship?
@@ -55,7 +54,7 @@ const Note = styled.div`
 `;
 
 const EmergencyModeCollect = ({ asteroid, lot, manager, ship: maybeShip, stage, ...props }) => {
-  const chainTime = useChainTime();
+  const syncedTime = useSyncedTime();
 
   const { collectEmergencyPropellant, actionStage } = manager;
 
@@ -122,7 +121,7 @@ const EmergencyModeCollect = ({ asteroid, lot, manager, ship: maybeShip, stage, 
       value: formatTimer(
         Math.min(
           maxGenerationTime,
-          chainTime - ship.Ship.emergencyAt
+          syncedTime - ship.Ship.emergencyAt
         )
       ),
       direction: 0,
@@ -131,7 +130,7 @@ const EmergencyModeCollect = ({ asteroid, lot, manager, ship: maybeShip, stage, 
     {
       label: 'Remaining Time Until Limit',
       value: formatTimer(
-        Math.max(0, maxGenerationTime - (chainTime - ship.Ship.emergencyAt))
+        Math.max(0, maxGenerationTime - (syncedTime - ship.Ship.emergencyAt))
       ),
       direction: 0,
     },
@@ -145,7 +144,7 @@ const EmergencyModeCollect = ({ asteroid, lot, manager, ship: maybeShip, stage, 
       value: formatResourceVolume(collectableAmount, resourceId),
       direction: 0,
     },
-  ]), [chainTime, maxGenerationTime, ship]);
+  ]), [maxGenerationTime, ship, syncedTime]);
 
   const onCollect = useCallback(() => {
     collectEmergencyPropellant();

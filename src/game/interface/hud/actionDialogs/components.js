@@ -41,7 +41,6 @@ import {
   CheckedIcon,
   UncheckedIcon
 } from '~/components/Icons';
-import LiveFoodStatus from '~/components/LiveFoodStatus';
 import LiveTimer from '~/components/LiveTimer';
 import MouseoverInfoPane from '~/components/MouseoverInfoPane';
 import ResourceColorIcon from '~/components/ResourceColorIcon';
@@ -53,7 +52,7 @@ import TextInput from '~/components/TextInputUncontrolled';
 import useAsteroidBuildings from '~/hooks/useAsteroidBuildings';
 import useAccessibleAsteroidInventories from '~/hooks/useAccessibleAsteroidInventories';
 import useAsteroidLotData from '~/hooks/useAsteroidLotData';
-import useChainTime from '~/hooks/useChainTime';
+import useSyncedTime from '~/hooks/useSyncedTime';
 import useCrewContext from '~/hooks/useCrewContext';
 import useHydratedLocation from '~/hooks/useHydratedLocation';
 import useShip from '~/hooks/useShip';
@@ -2724,7 +2723,7 @@ export const ProgressBarSection = ({
   totalTime,
   width
 }) => {
-  const chainTime = useChainTime();
+  const syncedTime = useSyncedTime();
 
   const refEl = useRef();
   const [hovered, setHovered] = useState();
@@ -2740,9 +2739,9 @@ export const ProgressBarSection = ({
     }
     if (stage === actionStage.NOT_STARTED) {
       if (isCountDown) {
-        const isZero = chainTime > finishTime;
-        const progress = startTime && finishTime && chainTime
-          ? Math.max(0, 1 - (chainTime - startTime) / (finishTime - startTime))
+        const isZero = syncedTime > finishTime;
+        const progress = startTime && finishTime && syncedTime
+          ? Math.max(0, 1 - (syncedTime - startTime) / (finishTime - startTime))
           : 1;
         r.animating = !isZero;
         r.reverseAnimation = true;
@@ -2761,8 +2760,8 @@ export const ProgressBarSection = ({
       r.left = '0.0%';
 
     } else if (stage === actionStage.IN_PROGRESS) {
-      const progress = startTime && finishTime && chainTime
-        ? Math.min(1, (chainTime - startTime) / (finishTime - startTime))
+      const progress = startTime && finishTime && syncedTime
+        ? Math.min(1, (syncedTime - startTime) / (finishTime - startTime))
         : 0;
       r.animating = true;
       r.barWidth = progress;
@@ -2783,7 +2782,7 @@ export const ProgressBarSection = ({
       r.color = '#FFF';
     }
     return r;
-  }, [chainTime, finishTime, stage, startTime]);
+  }, [finishTime, stage, startTime, syncedTime]);
 
   const totalTimeNote = useMemo(() => {
     if (!totalTime) return '';

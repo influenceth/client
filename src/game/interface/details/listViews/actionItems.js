@@ -8,7 +8,7 @@ import { itemColors, statuses } from '~/lib/actionItem';
 import { LocationLink } from './components';
 import { LinkIcon } from '~/components/Icons';
 import LiveTimer from '~/components/LiveTimer';
-import useChainTime from '~/hooks/useChainTime';
+import useSyncedTime from '~/hooks/useSyncedTime';
 
 const AtRisk = styled.b`
   color: rgb(${itemColors.plans});
@@ -44,11 +44,8 @@ const Status = styled(Highlight)`
 `;
 
 const Progress = ({ start, finish }) => {
-  const chainTime = useChainTime();
-  const progress = useMemo(() => {
-    return 100 * (chainTime - start) / (finish - start);
-  }, [chainTime, start, finish])
-  return <ProgressBar progress={progress} />;
+  const syncedTime = useSyncedTime();
+  return <ProgressBar progress={100 * (syncedTime - start) / (finish - start)} />;
 }
 
 // TODO: ecs refactor

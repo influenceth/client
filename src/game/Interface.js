@@ -1,13 +1,13 @@
 import { useCallback, useEffect } from 'react';
-import styled, { css } from 'styled-components';
+import styled from 'styled-components';
 import ReactTooltip from 'react-tooltip';
 import { Switch, Route, Redirect } from 'react-router-dom';
-import { useIsFetching } from 'react-query'
-import LoadingAnimation from 'react-spinners/BarLoader';
+import moment from 'moment';
 
+import { PurchaseAsteroidIcon } from '~/components/Icons';
 import useScreenSize from '~/hooks/useScreenSize';
 import useStore from '~/hooks/useStore';
-import theme from '~/theme';
+import { earlyAccessJSTime, openAccessJSTime } from '~/lib/utils';
 import Alerts, { useControlledAlert } from './interface/Alerts';
 import Draggables from './interface/Draggables';
 import HUD from './interface/HUD';
@@ -15,7 +15,7 @@ import MainMenu from './interface/MainMenu';
 import RecruitCrewmate from './interface/RecruitCrewmate';
 import ListView from './interface/details/ListView';
 import AsteroidDetails from './interface/details/AsteroidDetails';
-import CrewAssignment from './interface/details/crewAssignments/Assignment';
+// import CrewAssignment from './interface/details/crewAssignments/Assignment';
 // import CrewAssignmentComplete from './interface/details/crewAssignments/Complete';
 import CrewmateDetails from './interface/details/CrewmateDetails';
 import Marketplace from './interface/details/Marketplace';
@@ -28,9 +28,8 @@ import Intro from './Intro';
 import Cutscene from './Cutscene';
 import Launcher from './Launcher';
 import RandomEvent from './interface/RandomEvent';
-import { PurchaseAsteroidIcon } from '~/components/Icons';
-import moment from 'moment';
-import { earlyAccessJSTime, openAccessJSTime } from '~/lib/utils';
+import QueryLoader from './QueryLoader';
+import theme from '~/theme';
 
 const StyledInterface = styled.div`
   align-items: stretch;
@@ -72,20 +71,10 @@ const MainContainer = styled.div`
   }
 `;
 
-const loadingCss = css`
-  left: 0;
-  position: absolute;
-  right: 0;
-  top: 0;
-  width: 100%;
-  z-index: 1;
-`;
-
 const DISABLE_INTRO_ANIMATION = true && process.env.NODE_ENV === 'development';
 
 const Interface = () => {
   const { isMobile } = useScreenSize();
-  const isFetching = useIsFetching();
   const cutscene = useStore(s => s.cutscene);
   const launcherPage = useStore(s => s.launcherPage);
   const interfaceHidden = useStore(s => s.graphics.hideInterface);
@@ -141,7 +130,7 @@ const Interface = () => {
       {showDevTools && <DevToolsViewer />}
       <StyledInterface hide={interfaceHidden}>
         {!isMobile && <ReactTooltip id="global" place="left" effect="solid" />}
-        {isFetching > 0 && <LoadingAnimation height={2} color={theme.colors.main} css={loadingCss} />}
+        <QueryLoader />
         <MainContainer>
           <Switch>
             <Route exact path="/listview/:assetType?">

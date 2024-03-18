@@ -28,6 +28,7 @@ import formatters from '~/lib/formatters';
 import useSale from '~/hooks/useSale';
 import useShip from '~/hooks/useShip';
 import LiveTimer from '~/components/LiveTimer';
+import LotLoadingProgress from './LotLoadingProgress';
 
 
 const opacityAnimation = keyframes`
@@ -97,26 +98,6 @@ const SubtitleLoader = styled.span`
   & > span {
     border-radius: 10px;
     display: block;
-  }
-`;
-
-const ProgressBar = styled.div`
-  ${p => p.progress === 0 ? css`animation: ${opacityAnimation} 1250ms ease infinite;` : ``}
-  background: #333;
-  border-radius: 10px;
-  height: 4px;
-  overflow: hidden;
-  position: relative;
-  width: 100%;
-  &:before {
-    content: ' ';
-    background: ${p => p.theme.colors.main};
-    position: absolute;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    transition: width 200ms ease;
-    width: ${p => 100 * p.progress}%;
   }
 `;
 
@@ -282,11 +263,11 @@ const CaptainCard = ({ crewId }) => {
 }
 
 const InfoPane = () => {
+  console.log('InfoPane')
   const history = useHistory();
 
   const asteroidId = useStore(s => s.asteroids.origin);
   const lotId = useStore(s => s.asteroids.lot);
-  const lotLoader = useStore(s => s.lotLoader);
   const inTravelMode = useStore(s => s.asteroids.travelMode);
   const zoomScene = useStore(s => s.asteroids.zoomScene);
   const zoomStatus = useStore(s => s.asteroids.zoomStatus);
@@ -475,9 +456,7 @@ const InfoPane = () => {
           <>
             {Asteroid.Entity.getSize(asteroid)} <b>{Asteroid.Entity.getSpectralType(asteroid)}-type</b>
             <SubtitleLoader>
-              {!(lotLoader.id === asteroidId && lotLoader.progress === 1) && (
-                <ProgressBar progress={lotLoader.id === asteroidId ? lotLoader.progress : 0} />
-              )}
+              <LotLoadingProgress asteroidId={asteroidId} />
             </SubtitleLoader>
           </>
         );
@@ -492,7 +471,6 @@ const InfoPane = () => {
     isAtRisk,
     lotId,
     lot,
-    lotLoader,
     saleIsActive,
     ship,
     zoomStatus,

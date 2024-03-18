@@ -730,11 +730,6 @@ export function ChainTransactionProvider({ children }) {
 
   const transactionWaiters = useRef([]);
 
-  // TODO: in the future, may want to accomodate for user's clocks being wrong by
-  //  passing back server time occasionally in websocket (maybe in headers?) and storing an offset
-  const [chainTime, setChainTime] = useState(getNow());
-  useInterval(() => setChainTime(getNow()), 1000);
-
   // on logout, clear pending (and failed) transactions
   useEffect(() => {
     if (!authenticated) dispatchClearTransactionHistory();
@@ -822,7 +817,7 @@ export function ChainTransactionProvider({ children }) {
     if (contracts && pendingTransactions?.length) {
       pendingTransactions.filter((tx) => !tx.txEvent).forEach((tx) => {
         // if it's been X+ seconds since submitted, check if it was reverted
-        if (chainTime > Math.floor(tx.timestamp / 1000) + 30) {
+        if (Math.floor(Date.now() / 1000) > Math.floor(tx.timestamp / 1000) + 30) {
           const { key, vars, txHash } = tx;
 
           starknet.account.getTransactionReceipt(txHash)
@@ -925,7 +920,6 @@ export function ChainTransactionProvider({ children }) {
 
   return (
     <ChainTransactionContext.Provider value={{
-      chainTime,
       execute,
       getStatus,
       getPendingTx,

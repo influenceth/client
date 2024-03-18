@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useThrottle } from '@react-hook/throttle';
 
 import theme from '~/theme';
@@ -21,7 +21,10 @@ const useScreenSize = () => {
     return () => window.removeEventListener('resize', updateSize);
   }, []);
 
-  return { isMobile, isTablet, isDesktop, height, width };
+  return useMemo(
+    () => ({ isMobile, isTablet, isDesktop, height, width }),
+    [isMobile, isTablet, isDesktop, height, width]
+  );
 };
 
 export default useScreenSize;

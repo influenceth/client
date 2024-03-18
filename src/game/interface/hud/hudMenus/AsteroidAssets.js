@@ -5,7 +5,7 @@ import { Building, Dock, Entity, Inventory, Lot, Ship, Station } from '@influenc
 import { useLotLink } from '~/components/LotLink';
 import useAsteroid from '~/hooks/useAsteroid';
 import useAsteroidCrewBuildings from '~/hooks/useAsteroidCrewBuildings';
-import useChainTime from '~/hooks/useChainTime';
+import useSyncedTime from '~/hooks/useSyncedTime';
 import useStore from '~/hooks/useStore';
 import { HudMenuCollapsibleSection, Rule, majorBorderColor } from './components/components';
 import ClipCorner from '~/components/ClipCorner';
@@ -169,7 +169,7 @@ const getBuildingIcon = (buildingType) => {
 }
 
 const BuildingRow = ({ building }) => {
-  const chainTime = useChainTime();
+  const syncedTime = useSyncedTime();
   const { crew } = useCrewContext();
   const buildingLoc = locationsArrToObj(building?.Location?.locations);
   const onClick = useLotLink(buildingLoc);
@@ -206,13 +206,13 @@ const BuildingRow = ({ building }) => {
 
       else if (building?.Building?.buildingType === Building.IDS.EXTRACTOR) {
         return [
-          Math.min(1, (chainTime - building?.Extractors?.[0]?.event?.timestamp) / (building?.Extractors?.[0]?.finishTime - building?.Extractors?.[0]?.event?.timestamp)),
+          Math.min(1, (syncedTime - building?.Extractors?.[0]?.event?.timestamp) / (building?.Extractors?.[0]?.finishTime - building?.Extractors?.[0]?.event?.timestamp)),
           'main'
         ];
       }
       else if (building?.Processors?.length) {
         return [
-          Math.min(1, (chainTime - building?.Processors?.[0]?.event?.timestamp) / (building?.Processors?.[0]?.finishTime - building?.Processors?.[0]?.event?.timestamp)),
+          Math.min(1, (syncedTime - building?.Processors?.[0]?.event?.timestamp) / (building?.Processors?.[0]?.finishTime - building?.Processors?.[0]?.event?.timestamp)),
           'main'
         ];
       }
@@ -220,19 +220,19 @@ const BuildingRow = ({ building }) => {
 
     if (building?.Building?.status === Building.CONSTRUCTION_STATUSES.PLANNED) {
       return [
-        Math.min(1, 1 - (building?.Building?.plannedAt + Building.GRACE_PERIOD - chainTime) / Building.GRACE_PERIOD),
+        Math.min(1, 1 - (building?.Building?.plannedAt + Building.GRACE_PERIOD - syncedTime) / Building.GRACE_PERIOD),
         'error'
       ];
     }
 
     if (building?.Building?.status === Building.CONSTRUCTION_STATUSES.UNDER_CONSTRUCTION) {
       return [
-        Math.min(1, (chainTime - building?.Building?.event?.timestamp) / (building?.Building?.finishTime - building?.Building?.event?.timestamp)),
+        Math.min(1, (syncedTime - building?.Building?.event?.timestamp) / (building?.Building?.finishTime - building?.Building?.event?.timestamp)),
         'main'
       ];
     }
     return [0];
-  }, [chainTime, crew?._inventoryBonuses, building]);
+  }, [building, crew?._inventoryBonuses, syncedTime]);
 
   const status = useMemo(() => {
     if (building?.Building?.status === Building.CONSTRUCTION_STATUSES.OPERATIONAL) {
@@ -247,11 +247,11 @@ const BuildingRow = ({ building }) => {
       }
       return 'Idle';
     }
-    if (building?.construction?.status === Building.CONSTRUCTION_STATUSES.PLANNED && building?.Building?.plannedAt + Building.GRACE_PERIOD < chainTime) {
+    if (building?.construction?.status === Building.CONSTRUCTION_STATUSES.PLANNED && building?.Building?.plannedAt + Building.GRACE_PERIOD < syncedTime) {
       return 'At Risk';
     }
     return Building.CONSTRUCTION_STATUSES[building?.Building?.status || 0];
-  }, [building, progress]);
+  }, [building, progress, syncedTime]);
 
   return (
     <LotRow onClick={onClick}>

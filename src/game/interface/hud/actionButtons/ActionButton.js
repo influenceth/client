@@ -4,7 +4,7 @@ import ReactTooltip from 'react-tooltip';
 import { Permission } from '@influenceth/sdk';
 
 import ClipCorner from '~/components/ClipCorner';
-import useChainTime from '~/hooks/useChainTime';
+import useSyncedTime from '~/hooks/useSyncedTime';
 import { formatTimer, nativeBool, reactBool } from "~/lib/utils";
 import { hexToRGB } from '~/theme';
 
@@ -223,11 +223,10 @@ const CompletionTime = styled.label`
 // or not rather than true/false OR would pass 1/0 instead
 
 const LoadingTimer = ({ finishTime }) => {
-  const chainTime = useChainTime();
-  const timeLeft = finishTime - chainTime;
+  const syncedTime = useSyncedTime();
   return (
     <CompletionTime>
-      {timeLeft > 0 ? formatTimer(timeLeft, 1) : '...'}
+      {finishTime > syncedTime ? formatTimer(finishTime - syncedTime, 1) : '...'}
     </CompletionTime>
   );
 };

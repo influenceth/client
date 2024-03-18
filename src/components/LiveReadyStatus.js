@@ -1,11 +1,7 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import styled, { keyframes } from 'styled-components';
-import { Crew, Time } from '@influenceth/sdk';
 
 import { CrewBusyIcon, CrewIdleIcon, RandomEventIcon } from '~/components/AnimatedIcons';
-import useChainTime from '~/hooks/useChainTime';
-import useConstants from '~/hooks/useConstants';
-import { hexToRGB } from '~/theme';
 import useBlockTime from '~/hooks/useBlockTime';
 import LiveTimer from './LiveTimer';
 import { TimerIcon } from './Icons';

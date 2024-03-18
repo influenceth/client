@@ -20,7 +20,7 @@ const LotViewer = () => {
       return getBuildingModel(lot.building.Building.buildingType);
     }
     return getBuildingModel(0);
-  }, [lot?.building, zoomScene?.overrides?.buildingType]);
+  }, [lot?.building?.Building, zoomScene?.overrides?.buildingType]);
 
   if (zoomScene?.type !== 'LOT' || isLoading) return null;
   return (
