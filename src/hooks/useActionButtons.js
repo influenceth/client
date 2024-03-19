@@ -161,7 +161,7 @@ const useActionButtons = () => {
     if (asteroidIsLoading || lotIsLoading || crewedShipIsLoading || zoomedShipIsLoading) return [];
     return Object.keys(actionButtons)
       .filter((k) => !actionButtons[k].isVisible || actionButtons[k].isVisible({
-        accountAddress,
+        account: accountAddress,
         asteroid,
         crew,
         crewedShip,
