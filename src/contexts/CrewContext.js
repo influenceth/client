@@ -268,7 +268,11 @@ export function CrewProvider({ children }) {
       isBlurred.current = false;
 
       const now = Date.now() / 1e3;
-      const currentBlockIsMissing = blockTime > 0 && ((now - blockTime) > TOO_LONG_FOR_BLOCK);
+
+      // disable current-block-presumed-missing on goerli since so many network issues
+      const currentBlockIsMissing = (`${process.env.REACT_APP_CHAIN_ID}` !== `0x534e5f474f45524c49`)
+        && blockTime > 0 && ((now - blockTime) > TOO_LONG_FOR_BLOCK);
+
       if (blockHasBeenMissed.current || currentBlockIsMissing) {
         window.location.reload();
       }
