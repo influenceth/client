@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import { useHistory, useLocation, useParams } from 'react-router-dom';
 import { Entity, Lot, Product } from '@influenceth/sdk';
 
+import OnClickLink from '~/components/OnClickLink';
 import Pagination from '~/components/Pagination';
 import Details from '~/components/DetailsModal';
 import { OrderIcon } from '~/components/Icons';
@@ -65,6 +66,9 @@ const FooterLeft = styled.div`
   flex: 1;
   display: flex;
   justify-content: flex-start;
+  & > button {
+    margin-right: 10px;
+  }
 `;
 const FooterRight = styled.div`
   flex: 1;
@@ -74,22 +78,23 @@ const FooterRight = styled.div`
 const OrderTally = styled.div`
   flex: 1;
   display: flex;
+  align-items: center;
   justify-content: center;
-  font-size: 95%;
-  & span {
-    margin-left: 4px;
-    text-decoration: underline
-  }
-  & a {
-    color: ${p => p.theme.colors.main};
-    display: flex;
-    align-items:center;
-    & > svg {
-      font-size: 175%;
-      margin-right: 4px;
-    }
+  & > span {
+    margin-left: 6px;
   }
 `;
+
+const OpenOrdersButton = styled(OnClickLink)`
+  color: ${p => p.theme.colors.main};
+  display: flex;
+  align-items:center;
+  & > svg {
+    font-size: 175%;
+    margin-right: 4px;
+  }
+`
+
 const StyledPagination = styled(Pagination)`
   bottom: 0px;
 `;
@@ -196,6 +201,10 @@ const Marketplace = () => {
     }
   }, [backOverride, product]);
 
+  const goToListings = useCallback(() => {
+    history.push(`/marketplace/${asteroidId}/${lotIndex}`);
+  }, []);
+
   const goToMyOrders = useCallback(() => {
     history.push(`/marketplace/${asteroidId}/${lotIndex}/orders`);
   }, []);
@@ -216,7 +225,7 @@ const Marketplace = () => {
       }
       title={`${formatters.asteroidName(asteroid, '...')} > ${lotIndex === 'all' ? 'Markets' : formatters.buildingName(marketplace)}`}
       headerProps={{ underlineHeader: 'true' }}
-      contentProps={{ style: { marginBottom: 0 } }}
+      contentProps={{ style: { marginBottom: 0, overflow: 'hidden' } }}
       maxWidth="1600px"
       width="max">
       <Wrapper>
@@ -256,8 +265,11 @@ const Marketplace = () => {
                 {discriminator && <Button flip onClick={goBack}>Back</Button>}
               </FooterLeft>
               <OrderTally>
-              {crew?.id && (!discriminator || (discriminator !== 'orders' && marketplace)) && (
-                <a onClick={goToMyOrders} ><OrderIcon />Open Limit Orders: <span>{myLocalOrders.length} {myLocalOrders.length === 1 ? '' : 's'} {marketplace ? 'at this Marketplace' : 'on this Asteroid'}</span></a>
+              {myLocalOrders.length > 0 && (
+                <>
+                <OpenOrdersButton onClick={goToMyOrders} ><OrderIcon />My Open Limit Orders</OpenOrdersButton>
+                <span>{myLocalOrders.length} {marketplace ? 'at this Marketplace' : 'on this Asteroid'}</span>
+                </>
               )}
               </OrderTally>
               <FooterRight>

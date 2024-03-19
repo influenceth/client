@@ -7,7 +7,7 @@ import Button from '~/components/ButtonAlt';
 import ClipCorner from '~/components/ClipCorner';
 import CrewIndicator from '~/components/CrewIndicator';
 import DataTable from '~/components/DataTable';
-import { OrderIcon, SwayIcon } from '~/components/Icons';
+import { MarketplaceBuildingIcon, SwayIcon } from '~/components/Icons';
 import ResourceThumbnail from '~/components/ResourceThumbnail';
 import { formatResourceAmount } from '~/game/interface/hud/actionDialogs/components';
 import useCrew from '~/hooks/useCrew';
@@ -216,11 +216,12 @@ const AsteroidResourcePrices = ({ asteroid, resource }) => {
         sortField: 'marketplaceName',
         selector: row => (
           <>
-            <IconLink
+            <IconLink 
+              style={{ margin: '0 6px 0 0' }}
               onClick={() => history.push(`/marketplace/${asteroid.id}/${Lot.toIndex(row.lotId)}/${resource.i}?back=all`)}
               tooltip="View Marketplace Orderbook"
               data-for="details">
-              <OrderIcon />
+              <MarketplaceBuildingIcon />
             </IconLink>
             <span>{row.marketplaceName}</span>
           </>

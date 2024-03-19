@@ -1,3 +1,4 @@
+import { useHistory, useLocation, useParams } from 'react-router-dom';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import styled from 'styled-components';
 import { Crewmate, Entity, Order, Permission } from '@influenceth/sdk';
@@ -13,6 +14,7 @@ import {
   RadioCheckedIcon,
   SwayIcon
 } from '~/components/Icons';
+import OnClickLink from '~/components/OnClickLink';
 import CrewIndicator from '~/components/CrewIndicator';
 import ResourceThumbnail from '~/components/ResourceThumbnail';
 import Switcher from '~/components/SwitcherButton';
@@ -112,10 +114,12 @@ const Header = styled.div`
     }
     ${Subheader} {
       font-weight: normal;
+      & span:first-child {
+        padding-right: 10px;
+      }
       & span:not(:first-child) {
-        border-left: 1px solid #777;
         margin-left: 10px;
-        padding-left: 10px;
+      }
     }
   }
 `;
@@ -290,7 +294,10 @@ const RadioRow = styled.label`
   flex-direction: row;
   width: 100%;
   font-size: 90%;
-  padding: 8px 0 0 0;
+  padding: 6px 0 0 0;
+  & > svg {
+    font-size: 120%
+  }
   &:hover {
     color: white;
     & > svg { color: white };
@@ -362,6 +369,9 @@ const SummaryHeader = styled.label`
 const STROKE_WIDTH = 2;
 
 const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource }) => {
+  const history = useHistory();
+  const { asteroidId, lotIndex } = useParams();
+
   const { width, height } = useScreenSize();
   const { crew, crewCan } = useCrewContext();
 
@@ -647,6 +657,10 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
     return a;
   }, [crew, loading, hasPermission, mode, sameAsteroid, total, type]);
 
+  const goToListings = useCallback(() => {
+    history.push(`/marketplace/${asteroidId}/${lotIndex}`);
+  }, []);
+
   return (
     <Wrapper>
       <Main>
@@ -655,8 +669,16 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
             <div style={{ flex: 1, paddingLeft: 20 }}>
               <h1>{resource.name}</h1>
               <Subheader>
-                <span style={{ color: theme.colors.buy }}><b>{formatResourceAmount(totalSelling || 0, resource.i)}</b> Available</span>
-                <span style={{ color: theme.colors.sell }}><b>{formatResourceAmount(totalBuying || 0, resource.i)}</b> Sellable</span>
+                {totalSelling > 0 
+                  ? (<span style={{ color: theme.colors.buy }}><b>{formatResourceAmount(totalSelling || 0, resource.i)}</b> Available</span>)
+                  : (<span style={{ color: theme.colors.secondaryText }}>None Available</span>)
+                }
+                <>  |  </>
+                {totalBuying > 0 
+                  ? (<span style={{ color: theme.colors.sell }}><b>{formatResourceAmount(totalBuying, resource.i)}</b> Sellable</span>)
+                  : (<span style={{ color: theme.colors.secondaryText }}>None Sellable</span>)
+                }
+                <span>at <OnClickLink onClick={goToListings}> {formatters.buildingName(marketplace)} </OnClickLink></span>
               </Subheader>
             </div>
           {marketplaceOwner && <CrewIndicator crew={marketplaceOwner} flip label="Managed by" />}
@@ -705,7 +727,7 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
                         <tr key={i}>
                           <td><VolumeBar volume={volumeBenchmark > 0 ? rowVolume / volumeBenchmark : 0} />{price.toLocaleString()}</td>
                           <td>{amount.toLocaleString()}</td>
-                          <td>{formatPrice(price * amount)}</td>
+                          <td>{formatPrice(price * amount)}</td>              
                         </tr>
                       )
                     })}
@@ -739,7 +761,7 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
                       <tr key={i}>
                         <td><VolumeBar volume={volumeBenchmark > 0 ? rowBuyVolume / volumeBenchmark : 0} />{price.toLocaleString()}</td>
                         <td>{amount.toLocaleString()}</td>
-                        <td>{formatPrice(price * amount)}</td>
+                        <td>{price.toLocaleString(undefined, { maximumFractionDigits: 3, minimumFractionDigits: 3 } )}</td>
                       </tr>
                     );
                   })}
@@ -836,7 +858,7 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
                   <TextInputWrapper rightLabel="SWAY">
                     <UncontrolledTextInputLarge
                       disabled
-                      value={formatPrice((type === 'market' ? totalMarketPrice : totalLimitPrice) || 0)} />
+                      value={formatFixed((type === 'market' ? totalMarketPrice : totalLimitPrice) || 0)} />
                   </TextInputWrapper>
                 </FormSection>
 
@@ -869,8 +891,8 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
               <Tray style={{ overflow: 'hidden' }}>
                 <Summary>
                   {total > 0 
-                    ? (<><SwayIcon /> {formatPrice(total, { fixedPrecision: 2 })}</>)
-                    : (<><SwayIcon /> <div style={{ color: theme.colors.disabledText }}>0</div></>)
+                    ? (<><SwayIcon /> {formatFixed(total)}</>)
+                    : (<><SwayIcon /> <div>0</div></>)
                   }
                 </Summary>
                 {crew && (
