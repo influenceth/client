@@ -210,7 +210,7 @@ const HudMenu = ({ forceOpenMenu }) => {
   const { authenticated } = useSession();
   const { crew } = useCrewContext();
 
-  const createAlert = useStore(s => s.dispatchAlertLogged);
+  // const createAlert = useStore(s => s.dispatchAlertLogged);
   const asteroidId = useStore(s => s.asteroids.origin);
   const destination = useStore(s => s.asteroids.destination);
   const lotId = useStore(s => s.asteroids.lot);

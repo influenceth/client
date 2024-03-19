@@ -263,7 +263,6 @@ const CaptainCard = ({ crewId }) => {
 }
 
 const InfoPane = () => {
-  console.log('InfoPane')
   const history = useHistory();
 
   const asteroidId = useStore(s => s.asteroids.origin);

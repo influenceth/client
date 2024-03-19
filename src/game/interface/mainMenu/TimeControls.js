@@ -184,7 +184,7 @@ const TimeController = ({ open }) => {
   );
 };
 
-const TimeControls = (props) => {
+const TimeControls = () => {
   const { displayTime } = useContext(ClockContext);
   const timeOverride = useStore(s => s.timeOverride);
 
@@ -194,7 +194,7 @@ const TimeControls = (props) => {
   }, []);
 
   return (
-    <StyledTime {...props}>
+    <StyledTime>
       <TimeController open={open} />
       <TimeIcon
         motionBlur={Math.abs(timeOverride?.speed || 0) > 10000}

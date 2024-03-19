@@ -3,8 +3,6 @@ import esb from 'elastic-builder';
 
 import { BioreactorBuildingIcon, ManufactureIcon, RefineIcon } from '~/components/Icons';
 
-export const getNowSeconds = () => Math.floor(Date.now() / 1000);
-
 const timerIncrements = { d: 86400, h: 3600, m: 60, s: 1 };
 export const formatTimer = (secondsRemaining, maxPrecision = null) => {
   if (isNaN(secondsRemaining)) return '';
