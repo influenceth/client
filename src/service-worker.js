@@ -19,6 +19,23 @@ clientsClaim();
 // Their URLs are injected into the manifest variable below.
 // This variable must be present somewhere in your service worker file,
 // even if you decide not to use precaching. See https://cra.link/PWA
+const modelsBase = `${process.env.REACT_APP_CLOUDFRONT_OTHER_URL}/models`;
+precache([
+  { url: `${modelsBase}/buildings/Bioreactor.v1.glb`, revision: null },
+  { url: `${modelsBase}/buildings/EmptyLot.v2.glb`, revision: null },
+  { url: `${modelsBase}/buildings/Extractor.v3.glb`, revision: null },
+  { url: `${modelsBase}/buildings/Factory.v1.glb`, revision: null },
+  { url: `${modelsBase}/buildings/Habitat.v1.glb`, revision: null },
+  { url: `${modelsBase}/buildings/Marketplace.v1.glb`, revision: null },
+  { url: `${modelsBase}/buildings/Refinery.v1.glb`, revision: null },
+  { url: `${modelsBase}/buildings/Shipyard.v1.glb`, revision: null },
+  { url: `${modelsBase}/buildings/Spaceport.v1.glb`, revision: null },
+  { url: `${modelsBase}/buildings/Warehouse.v3.glb`, revision: null },
+  { url: `${modelsBase}/ships/HeavyTransport.v1.glb`, revision: null },
+  { url: `${modelsBase}/ships/LightTransport.v1.glb`, revision: null },
+  { url: `${modelsBase}/ships/Shuttle.v1.glb`, revision: null }
+]);
+
 precacheAndRoute(self.__WB_MANIFEST);
 
 // Set up App Shell-style routing, so that all navigation requests

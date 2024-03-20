@@ -15,11 +15,11 @@ const addGlslifyLoader = () => config => {
   return config;
 };
 
-// Adjust precache maximum to 25 MB
+// Adjust precache maximum to 30 MB
 const adjustWorkbox = () => config => {
   config.plugins.forEach(p => {
     if (p.constructor.name === 'InjectManifest') {
-      p.config.maximumFileSizeToCacheInBytes = 25 * 1024 * 1024;
+      p.config.maximumFileSizeToCacheInBytes = 30 * 1024 * 1024;
     }
   });
 
