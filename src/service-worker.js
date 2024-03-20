@@ -20,8 +20,8 @@ clientsClaim();
 // Their URLs are injected into the manifest variable below.
 // This variable must be present somewhere in your service worker file,
 // even if you decide not to use precaching. See https://cra.link/PWA
-// precache(getBuildingModels().map(m => { return { url: m, revision: null }; }));
-// precache(getShipModels().map(m => { return { url: m, revision: null }; }));
+precache(getBuildingModels().map(m => { return { url: m, revision: null }; }));
+precache(getShipModels().map(m => { return { url: m, revision: null }; }));
 precacheAndRoute(self.__WB_MANIFEST);
 
 // Set up App Shell-style routing, so that all navigation requests
