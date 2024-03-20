@@ -96,6 +96,8 @@ export function SessionProvider({ children }) {
   const dispatchSessionResumed = useStore(s => s.dispatchSessionResumed);
   const dispatchSessionEnded = useStore(s => s.dispatchSessionEnded);
 
+  const [readyForChildren, setReadyForChildren] = useState(false);
+
   const [status, setStatus] = useState(STATUSES.DISCONNECTED);
   const [starknet, setStarknet] = useState(false);
   const [starknetSession, setStarknetSession] = useState();
@@ -148,7 +150,7 @@ export function SessionProvider({ children }) {
           });
 
           localStorage.setItem('starknetLastConnectedWallet', wallet.id);
-          connect(true);
+          await connect(true);
           return;
         }
 
@@ -327,9 +329,18 @@ export function SessionProvider({ children }) {
   // Connect / auth flow manager
   useEffect(() => {
     console.log(Object.keys(STATUSES).find(key => STATUSES[key] === status));
-    if (status === STATUSES.DISCONNECTED && currentSession?.walletId) connect();
-    if (status === STATUSES.CONNECTED) authenticate();
-  }, [authenticate, connect, currentSession, status]);
+    if (status === STATUSES.DISCONNECTED) {
+      if (currentSession?.walletId) {
+        connect(true).finally(() => setReadyForChildren(true));
+      } else {
+        setReadyForChildren(true);
+      }
+    }
+    else if (status === STATUSES.CONNECTED) {
+      authenticate();
+      setReadyForChildren(true);
+    }
+  }, [/*authenticate, connect,*/ currentSession, status]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Catch errors and display in an alert
   useEffect(() => {
@@ -429,7 +440,7 @@ export function SessionProvider({ children }) {
 
   return (
     <SessionContext.Provider value={{
-      login: async () => await connect(),
+      login: async () => { console.log('login route'); await connect(); },
       logout,
       authenticating: status === STATUSES.AUTHENTICATING,
       authenticated,
@@ -448,7 +459,7 @@ export function SessionProvider({ children }) {
       blockNumber,
       blockTime
     }}>
-      {children}
+      {readyForChildren && children}
     </SessionContext.Provider>
   );
 };

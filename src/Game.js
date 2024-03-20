@@ -81,6 +81,7 @@ const LauncherRedirect = () => {
       wasLoggedIn.current = true;
     } else {
       if (wasLoggedIn.current && !launcherPage) {
+        console.log('login change');
         dispatchLauncherPage(true);
       }
       wasLoggedIn.current = false;
