@@ -68,6 +68,10 @@ export const getBuildingModel = (i) => {
   return ASSET_CACHE[cacheKey];
 };
 
+export const getBuildingModels = () => {
+  return Object.keys(Building.TYPES).map(i => getBuildingModel(i));
+};
+
 export const getLotShipIcon = (i, size) => {
   let useSize = size;
   if (!size || !BUILDING_SIZES[size]) {
@@ -137,4 +141,8 @@ export const getShipModel = (i) => {
     ASSET_CACHE[cacheKey] = getModelUrl('ships', Ship.TYPES[i]?.name, Assets.Ship[i]?.modelVersion);
   }
   return ASSET_CACHE[cacheKey];
+};
+
+export const getShipModels = () => {
+  return Object.keys(Ship.TYPES).map(i => getShipModel(i));
 };

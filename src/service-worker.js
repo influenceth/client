@@ -12,6 +12,7 @@ import { ExpirationPlugin } from 'workbox-expiration';
 import { precacheAndRoute, createHandlerBoundToURL } from 'workbox-precaching';
 import { registerRoute } from 'workbox-routing';
 import { StaleWhileRevalidate } from 'workbox-strategies';
+import { getBuildingModels, getShipModels } from './lib/assetUtils';
 
 clientsClaim();
 
@@ -19,7 +20,10 @@ clientsClaim();
 // Their URLs are injected into the manifest variable below.
 // This variable must be present somewhere in your service worker file,
 // even if you decide not to use precaching. See https://cra.link/PWA
-precacheAndRoute(self.__WB_MANIFEST);
+let manifestRoutes = self.__WB_MANIFEST;
+manifestRoutes = manifestRoutes.concat(getBuildingModels().map(m => { return { url: m, revision: null }; }));
+manifestRoutes = manifestRoutes.concat(getShipModels().map(m => { return { url: m, revision: null }; }));
+precacheAndRoute(manifestRoutes);
 
 // Set up App Shell-style routing, so that all navigation requests
 // are fulfilled with your index.html shell. Learn more at
