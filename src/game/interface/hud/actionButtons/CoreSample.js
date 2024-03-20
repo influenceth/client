@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useMemo } from 'react';
-import { Asteroid, Building, Lot, Product } from '@influenceth/sdk';
+import { useCallback, useMemo } from 'react';
+import { Asteroid, Building, Deposit, Lot, Product } from '@influenceth/sdk';
 
 import { NewCoreSampleIcon, ImproveCoreSampleIcon } from '~/components/Icons';
 import useCoreSampleManager from '~/hooks/actionManagers/useCoreSampleManager';
@@ -60,7 +60,7 @@ const NewCoreSample = ({ asteroid, crew, lot, onSetAction, overrideResourceId, i
     }
 
     // always append which resource it is if not the selected one
-    if (currentSamplingAction.resourceId !== resourceId) {
+    if (currentSamplingAction.resourceId && currentSamplingAction.resourceId !== resourceId) {
       label += ` (${Product.TYPES[currentSamplingAction.resourceId]?.name})`;
     }
     
@@ -86,8 +86,9 @@ const NewCoreSample = ({ asteroid, crew, lot, onSetAction, overrideResourceId, i
 
   const disabledReason = useMemo(() => {
     if (_disabled) return 'loading...';
+    if (improveSample && improveSample?.Deposit?.status !== Deposit.STATUSES.SAMPLED) return 'already used';
     return getCrewDisabledReason({ asteroid, crew });
-  }, [_disabled, asteroid, crew]);
+  }, [_disabled, asteroid, crew, improveSample]);
 
   const isImprovement = improveSample || (currentSamplingAction && !currentSamplingAction.isNew);
   return (

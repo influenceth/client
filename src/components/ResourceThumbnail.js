@@ -160,10 +160,30 @@ const ResourceBadge = styled.div`
 `;
 
 const ResourceIconBadge = styled.div`
-  position: absolute;
   font-size: 18px;
-  top: 2px;
   left: 0px;
+  position: absolute;
+  top: 0px;
+
+  ${p => p.iconBadgeCorner && `
+      & > svg {
+        color: white !important;
+        position: relative;
+        top: -2px;
+        z-index: 1;
+      }
+      &:before {
+        border: 15px solid ${p.iconBadgeCorner};
+        border-bottom-color: transparent;
+        border-right-color: transparent;
+        content: "";
+        height: 0px;
+        position: absolute;
+        width: 0px;
+        z-index: 0;
+      }
+    `
+  };
 `;
 
 const ThumbnailIconOverlay = styled.div`
@@ -208,6 +228,7 @@ const Menu = ({ children }) => {
   badgeColor,
   badgeDenominator,
   iconBadge,
+  iconBadgeCorner,
   menu,
   outlineColor,
   outlineStyle,
@@ -239,7 +260,7 @@ const Menu = ({ children }) => {
       <ResourceImage contain={props.contain} src={getProductIcon(resource.i, parseInt(size) > 125 ? 'w400' : 'w125')} />
       <ClipCorner dimension={10} color={outlineColor || defaultBorderColor} />
       {badge !== undefined && <ResourceBadge badge={badge} badgeDenominator={badgeDenominator} />}
-      {iconBadge !== undefined && <ResourceIconBadge>{iconBadge}</ResourceIconBadge>}
+      {iconBadge !== undefined && <ResourceIconBadge iconBadgeCorner={iconBadgeCorner}>{iconBadge}</ResourceIconBadge>}
       {progress !== undefined && <ResourceProgress progress={progress} />}
       {overlayIcon && <ThumbnailIconOverlay color={badgeColor}>{overlayIcon}</ThumbnailIconOverlay>}
       {menu && <Menu>{menu}</Menu>}

@@ -84,6 +84,7 @@ const theme = {
       Exceptional: orange,
       Incomparable: yellow
     },
+    depositSize: '#a97c4f',
     resources: {
       Fissile: '#8a1aff',
       Metal: '#f8852c',

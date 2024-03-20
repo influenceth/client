@@ -31,15 +31,15 @@ const Extract = ({ onSetAction, asteroid, crew, lot, preselect, _disabled }) => 
   )), [lot?.deposits, crew?.id]);
 
   // add attention flag if any of those ^ are mine
-  const myUsableSamples = useMemo(() => usableSamples.filter((c) => c.Control.controller.id === crew?.id), [crew?.id, usableSamples]);
+  const myUsableSamples = useMemo(() => usableSamples.filter((c) => (c.Control.controller.id === crew?.id) || c.PrivateSale?.amount > 0), [crew?.id, usableSamples]);
 
   const attention = !_disabled && (extractionStatus === 'READY_TO_FINISH' || (myUsableSamples?.length > 0) && extractionStatus === 'READY');
   const badge = ((extractionStatus === 'READY' && !preselect) ? usableSamples?.length : 0);
   let disabledReason = useMemo(() => {
     if (_disabled) return 'loading...';
     if (extractionStatus === 'READY') {
-      // if (myUsableSamples?.length === 0) return 'requires core sample';
-      if (usableSamples?.length === 0) return 'requires core sample'; // TODO: does above line make more sense?
+      if (myUsableSamples?.length === 0) return 'requires core sample'; // TODO: does below line make more sense?
+      // if (usableSamples?.length === 0) return 'requires core sample';
       return getCrewDisabledReason({ asteroid, crew, permission: Permission.IDS.EXTRACT_RESOURCES, permissionTarget: lot?.building });
     } else if (!currentExtraction?._isMyAction) {
       return 'in use';

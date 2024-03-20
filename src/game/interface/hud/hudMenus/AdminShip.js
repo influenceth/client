@@ -52,7 +52,9 @@ const AdminShip = ({}) => {
         <HudMenuCollapsibleSection titleText="Ship Settings" collapsed>
           <CrewIndicator crew={controller} label="Flight Crew" />
           <div style={{ height: 15 }} />
-          <ListForSalePanel entity={ship} />
+          <ListForSalePanel
+            entity={ship}
+            forSaleWarning="Note: Control of the ship's manifest and inventories will transfer with any sale." />
         </HudMenuCollapsibleSection>
 
       </Scrollable>

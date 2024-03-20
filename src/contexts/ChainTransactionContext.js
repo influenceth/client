@@ -216,6 +216,9 @@ const customConfigs = {
   ProcessProductsStart: { equalityTest: ['processor.id', 'processor_slot'] },
   ProcessProductsFinish: { equalityTest: ['processor.id', 'processor_slot'] },
 
+  ListDepositForSale: { equalityTest: ['deposit.id'] },
+  UnlistDepositForSale: { equalityTest: ['deposit.id'] },
+
   SampleDepositFinish: { equalityTest: ['lot.id', 'caller_crew.id'] },
   SampleDepositImprove: { equalityTest: ['lot.id', 'caller_crew.id'] },
   SampleDepositStart: { equalityTest: ['lot.id', 'caller_crew.id'] },
@@ -259,6 +262,14 @@ const customConfigs = {
       return base + lot * BigInt(Asteroid.Entity.getSurfaceArea(asteroid));
     },
     equalityTest: ['asteroid.id']
+  },
+  PurchaseDeposit: {
+    getTransferConfig: ({ recipient, deposit, price }) => ({
+      amount: BigInt(price),
+      recipient,
+      memo: Entity.packEntity(deposit)
+    }),
+    equalityTest: ['deposit.id']
   },
   InitializeArvadian: { equalityTest: true },
   RecruitAdalian: {
@@ -325,6 +336,16 @@ const customConfigs = {
   InitializeAndClaimPrepareForLaunchReward: {
     multisystemCalls: ['InitializeAsteroid', 'ClaimPrepareForLaunchReward'],
     equalityTest: ['asteroid.id'],
+    isVirtual: true
+  },
+  PurchaseDepositAndExtractResource: {
+    multisystemCalls: ['PurchaseDeposit', 'ExtractResourceStart'],
+    equalityTest: ['extractor.id'],
+    isVirtual: true
+  },
+  PurchaseDepositAndImprove: {
+    multisystemCalls: ['PurchaseDeposit', 'SampleDepositImprove'],
+    equalityTest: ['lot.id', 'caller_crew.id'],
     isVirtual: true
   },
   EscrowDepositAndCreateBuyOrder: {
