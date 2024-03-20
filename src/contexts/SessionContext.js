@@ -10,6 +10,7 @@ import { createOffchainSession, OffchainSessionAccount } from '@argent/x-session
 import { getStarkKey, utils } from 'micro-starknet';
 import { Address } from '@influenceth/sdk';
 
+import Reconnecting from '~/components/Reconnecting';
 import api from '~/lib/api';
 import { getBlockTime } from '~/lib/utils';
 import useStore from '~/hooks/useStore';
@@ -98,6 +99,7 @@ export function SessionProvider({ children }) {
 
   const [readyForChildren, setReadyForChildren] = useState(false);
 
+  const [connecting, setConnecting] = useState(false);
   const [status, setStatus] = useState(STATUSES.DISCONNECTED);
   const [starknet, setStarknet] = useState(false);
   const [starknetSession, setStarknetSession] = useState();
@@ -137,6 +139,7 @@ export function SessionProvider({ children }) {
       };
 
       setError();
+      setConnecting(true);
       const { wallet } = await starknetConnect(connectionOptions);
 
       if (wallet && wallet.isConnected && wallet.account?.address) {
@@ -151,6 +154,7 @@ export function SessionProvider({ children }) {
 
           localStorage.setItem('starknetLastConnectedWallet', wallet.id);
           await connect(true);
+          setConnecting(false);
           return;
         }
 
@@ -161,10 +165,16 @@ export function SessionProvider({ children }) {
         console.error('No connected wallet or missing address');
       }
     } catch(e) {
-      if (e.message === 'User rejected request') return;
-      setError(e);
+      if (e.message !== 'User rejected request') {
+        setError(e);
+      }
     }
+    setConnecting(false);
   }, [currentSession, sessions]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    console.log('effect connecting', connecting);
+  }, [connecting]);
 
   // Disconnect from the wallet provider and suspend session (don't fully logout)
   const disconnect = useCallback(() => {
@@ -459,7 +469,14 @@ export function SessionProvider({ children }) {
       blockNumber,
       blockTime
     }}>
-      {readyForChildren && children}
+      {readyForChildren
+        ? children
+        : (
+          connecting
+            ? <Reconnecting walletName={window[`starknet_${currentSession?.walletId}`]?.name} onLogout={logout} />
+            : null
+        )
+      }
     </SessionContext.Provider>
   );
 };
