@@ -33,7 +33,7 @@ const useLot = (lotId) => {
         match: { 'Location.locations.uuid': lotEntity.uuid },
         components: [ // this should include all default components returned for relevant entities (buildings, ships, deposits)
           'Building', 'Control', 'Dock', 'DryDock', 'Exchange', 'Extractor', 'Inventory', 'Location', 'Name', 'Processor', 'Station',
-          /*'Control',*/ 'Deposit', /*'Location',*/
+          /*'Control',*/ 'Deposit', /*'Location',*/ 'PrivateSale',
           /*'Control', 'Inventory', 'Location', 'Name',*/ 'Nft', 'Ship', /*'Station',*/
 
           // these are on both buildings and ships:

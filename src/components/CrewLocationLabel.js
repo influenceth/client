@@ -4,7 +4,7 @@ import { LocationIcon } from './Icons';
 const CrewLocationLabel = ({ hydratedLocation }) => {
   return (
     <>      
-      <LocationIcon />
+      <label><LocationIcon /></label>
       {hydratedLocation.asteroid ? formatters.asteroidName(hydratedLocation.asteroid) : 'In Flight'}
       {(() => {
         const { ship, building, lotIndex } = hydratedLocation;
