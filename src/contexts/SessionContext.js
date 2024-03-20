@@ -440,7 +440,7 @@ export function SessionProvider({ children }) {
 
   return (
     <SessionContext.Provider value={{
-      login: async () => { console.log('login route'); await connect(); },
+      login: async () => await connect(),
       logout,
       authenticating: status === STATUSES.AUTHENTICATING,
       authenticated,
