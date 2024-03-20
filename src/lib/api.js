@@ -11,21 +11,14 @@ const apiVersion = 'v2';
 
 // pass initial config to axios
 const config = { baseURL: process.env.REACT_APP_API_URL, headers: {} };
-const initialToken = useStore.getState().auth.token;
+const initialToken = useStore.getState().currentSession?.token;
 if (initialToken) config.headers = { Authorization: `Bearer ${initialToken}`};
-const initialCrew = useStore.getState().selectedCrewId;
-if (initialCrew) config.headers['X-Crew-Id'] = initialCrew;
 const instance = axios.create(config);
 
 // subscribe to changes relevant to the config
 useStore.subscribe(
-  s => [s.auth.token, s.selectedCrewId],
-  ([newToken, crewId]) => {
-    instance.defaults.headers = {
-      Authorization: `Bearer ${newToken}`,
-      'X-Crew-Id': crewId || 0
-    };
-  }
+  s => [s.currentSession.token],
+  ([newToken]) => instance.defaults.headers = { Authorization: `Bearer ${newToken}` }
 );
 
 // const arrayComponents = {
@@ -92,8 +85,8 @@ const api = {
     return response.data;
   },
 
-  getCrewActionItems: async () => {
-    const response = await instance.get(`/${apiVersion}/user/activity/unresolved`);
+  getCrewActionItems: async (crewId) => {
+    const response = await instance.get(`/${apiVersion}/user/activity/unresolved?crewId=${crewId}`);
     return response.data;
   },
 

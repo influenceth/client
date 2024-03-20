@@ -1,11 +1,11 @@
 import { useQueryClient, useMutation } from 'react-query';
 
-import useAuth from '~/hooks/useAuth';
+import useSession from '~/hooks/useSession';
 import useStore from '~/hooks/useStore';
 import api from '~/lib/api';
 
 const useCreateReferral = (i) => {
-  useAuth();
+  useSession();
   const referrer = useStore(s => s.referrer);
   const setRefCode = useStore(s => s.dispatchReferrerSet);
   const queryClient = useQueryClient();

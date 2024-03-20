@@ -245,7 +245,7 @@ const Menu = ({ children }) => {
     'data-tip': tooltipOverride || resource.name,
     'data-for': tooltipContainer
   } : {};
-  useEffect(() => ReactTooltip.rebuild(), []);
+  // useEffect(() => ReactTooltip.rebuild(), []); // this was causing performance issues on refinery process selection dialog
   return (
     <ResourceThumbnailWrapper
       backgroundColor={backgroundColor}

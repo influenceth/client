@@ -27,7 +27,7 @@ import {
   SimulateRouteIcon,
   StationCrewIcon,
 } from '~/components/Icons';
-import useAuth from '~/hooks/useAuth';
+import useSession from '~/hooks/useSession';
 import useLot from '~/hooks/useLot';
 import useStore from '~/hooks/useStore';
 import hudMenus from './hudMenus';
@@ -207,7 +207,7 @@ const PanelContent = styled.div`
 
 const HudMenu = ({ forceOpenMenu }) => {
   const history = useHistory();
-  const { account } = useAuth();
+  const { authenticated } = useSession();
   const { crew } = useCrewContext();
 
   const createAlert = useStore(s => s.dispatchAlertLogged);
@@ -565,19 +565,19 @@ const HudMenu = ({ forceOpenMenu }) => {
   }, [menuButtons, openHudMenu]);
 
   const [visibleMenuButtons, visiblePageButtons] = useMemo(() => ([
-    menuButtons.filter((b) => b.isVisible && (!b.requireLogin || !!account)),
-    pageButtons.filter((b) => b.isVisible && (!b.requireLogin || !!account)),
-  ]), [!!account, menuButtons]);
+    menuButtons.filter((b) => b.isVisible && (!b.requireLogin || authenticated)),
+    pageButtons.filter((b) => b.isVisible && (!b.requireLogin || authenticated)),
+  ]), [authenticated, menuButtons]);
 
   // if open hud menu is no longer visible (or if get logged out and "requireLogin" menu), close
   useEffect(() => {
     if (openHudMenu) {
       const openMenuConfig = menuButtons.find((b) => b.key === openHudMenu);
-      if (!openMenuConfig?.isVisible || (openMenuConfig?.requireLogin && !account)) {
+      if (!openMenuConfig?.isVisible || (openMenuConfig?.requireLogin && !authenticated)) {
         handleButtonClick(openHudMenu, null, openMenuConfig?.hideInsteadOfClose);
       }
     }
-  }, [account, handleButtonClick, openHudMenu, visibleMenuButtons]);
+  }, [authenticated, handleButtonClick, openHudMenu, visibleMenuButtons]);
 
   return (
     <Wrapper>

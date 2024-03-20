@@ -13,7 +13,7 @@ import {
 } from '~/components/Icons';
 import LogEntry from '~/components/LogEntry';
 import useActivities from '~/hooks/useActivities';
-import useAuth from '~/hooks/useAuth';
+import useSession from '~/hooks/useSession';
 import useConstants from '~/hooks/useConstants';
 import useCrewContext from '~/hooks/useCrewContext';
 import useStore from '~/hooks/useStore';
@@ -374,7 +374,7 @@ const CrewmateDetails = ({ crewmateId, crewmate, isOwnedCrewmate }) => {
                 ? ` is an Adalian, born after the arrival of the Arvad to the Belt.`
                 : ` is one of the rare surviving members of the Arvad manifest.`}
               {crewmate?.Crewmate?.title > 0
-                ? ` Officially, their title is ${Crewmate.Entity.getTitle(crewmate)?.name}, but they have functioned 
+                ? ` Officially, their title is ${Crewmate.Entity.getTitle(crewmate)?.name}, but they have functioned
                     as a ${Crewmate.Entity.getClass(crewmate)?.name} in Adalia since ${formationDate}.`
                 : ` They officially began as a ${Crewmate.Entity.getClass(crewmate)?.name} in Adalia in ${formationDate}.`
               }
@@ -388,9 +388,9 @@ const CrewmateDetails = ({ crewmateId, crewmate, isOwnedCrewmate }) => {
             <Stat label="Start Date">{formationDate}</Stat>
             {crewmate?.Crewmate?.title > 0 && <Stat label="Title">{Crewmate.Entity.getTitle(crewmate)?.name}</Stat>}
             <Stat label="Collection">{Crewmate.Entity.getCollection(crewmate)?.name}</Stat>
-            
+
             <div style={{ flex: 1 }} />
-            
+
             {isOwnedCrewmate && (
               <div style={{ paddingTop: 15 }}>
                 <Button disabled>Edit Bio</Button>
@@ -438,12 +438,12 @@ const CrewmateDetails = ({ crewmateId, crewmate, isOwnedCrewmate }) => {
 
 const Wrapper = () => {
   const { i } = useParams();
-  const { account } = useAuth();
+  const { accountAddress } = useSession();
   const { crewmateMap, loading: myCrewLoading } = useCrewContext();
   const history = useHistory();
 
   const { data: crewmate, isLoading: crewmateLoading } = useCrewmate(Number(i));
-  
+
   const createAlert = useStore(s => s.dispatchAlertLogged);
 
   useEffect(() => {
@@ -486,7 +486,7 @@ const Wrapper = () => {
         <CrewmateDetails
           crewmateId={i}
           crewmate={crewmate}
-          isOwnedCrewmate={Address.areEqual(crewmateMap[i]?.Nft?.owner, account)}
+          isOwnedCrewmate={Address.areEqual(crewmateMap[i]?.Nft?.owner, accountAddress)}
         />
       )}
     </Details>

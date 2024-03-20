@@ -16,7 +16,7 @@ import {
   SemiMajorAxisIcon,
   WalletIcon
 } from '~/components/Icons';
-import useAuth from '~/hooks/useAuth';
+import useSession from '~/hooks/useSession';
 import useWatchlist from '~/hooks/useWatchlist';
 import useWatchAsteroid from '~/hooks/useWatchAsteroid';
 import useUnWatchAsteroid from '~/hooks/useUnWatchAsteroid';
@@ -41,7 +41,7 @@ const FavoriteToggle = styled.span`
 `;
 
 const useColumns = () => {
-  const { account } = useAuth();
+  const { accountAddress } = useSession();
   const { ids: watchlistIds } = useWatchlist();
   const watchAsteroid = useWatchAsteroid();
   const unWatchAsteroid = useUnWatchAsteroid();
@@ -64,7 +64,7 @@ const useColumns = () => {
           // TODO: ecs refactor
           // TODO: or
           // selector: row => row.Control?.controller?.id === crew?.id ? <MyAssetIcon /> : null,
-          if (account && row.Nft?.owner && Address.areEqual(row.Nft.owner, account)) {
+          if (accountAddress && row.Nft?.owner && Address.areEqual(row.Nft.owner, accountAddress)) {
             return <MyAssetIcon />
           }
           return '';
@@ -120,7 +120,7 @@ const useColumns = () => {
                 id={row.Nft.owner}>
                 {(onClick, setRefEl) => (
                   <OnClickLink ref={setRefEl} onClick={onClick}>
-                    {account && Address.areEqual(row.Nft.owner, account)
+                    {accountAddress && Address.areEqual(row.Nft.owner, accountAddress)
                       ? `you`
                       : `${row.Nft.owner.substr(0, 6)}...${row.Nft.owner.substr(-4)}`
                     }
@@ -188,8 +188,8 @@ const useColumns = () => {
       }
     ];
 
-    return columns.filter((c) => account || !c.requireLogin);
-  }, [account, watchlistIds]);
+    return columns.filter((c) => accountAddress || !c.requireLogin);
+  }, [accountAddress, watchlistIds]);
 };
 
 export default useColumns;

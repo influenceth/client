@@ -78,9 +78,8 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
     },
     lotsMappedAssetSearchResults: {},
 
-    auth: {
-      token: null
-    },
+    currentSession: {},
+    sessions: {},
 
     selectedCrewId: null,
     crewAssignments: {},
@@ -408,12 +407,26 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
       state.timeOverride = anchor ? { anchor, speed, ts: Date.now() } : null;
     }))),
 
-    dispatchAuthenticated: (token) => set(produce(state => {
-      state.auth.token = token;
+    // Starts a session and sets it as the current session
+    dispatchSessionStarted: (session) => set(produce(state => {
+      state.currentSession = session;
+      state.sessions[session.accountAddress] = session;
     })),
 
-    dispatchTokenInvalidated: () => set(produce(state => {
-      state.auth.token = null;
+    // Unsets the current session but keeps it in the sessions list
+    dispatchSessionSuspended: () => set(produce(state => {
+      state.currentSession = {};
+    })),
+
+    // Resumes a session that was suspended
+    dispatchSessionResumed: (session) => set(produce(state => {
+      state.currentSession = session;
+    })),
+
+    // Ends a session and removes it from the sessions list
+    dispatchSessionEnded: () => set(produce(state => {
+      delete state.sessions[state.currentSession?.accountAddress];
+      state.currentSession = {};
       state.tutorialStep = -1;
     })),
 

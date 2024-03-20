@@ -23,7 +23,7 @@ import {
   TransactionIcon
 } from '~/components/Icons';
 import PrereleaseLogoSVG from '~/assets/images/logo-prerelease.svg';
-import useAuth from '~/hooks/useAuth';
+import useSession from '~/hooks/useSession';
 // import useCrewAssignments from '~/hooks/useCrewAssignments';
 import useCrewContext from '~/hooks/useCrewContext';
 import useStore from '~/hooks/useStore';
@@ -143,7 +143,7 @@ const MainMenu = () => {
   const dispatchZoomScene = useStore(s => s.dispatchZoomScene);
   const updateZoomStatus = useStore(s => s.dispatchZoomStatusChanged);
 
-  const { account } = useAuth();
+  const { accountAddress } = useSession();
   // const { data: crewAssignmentData } = useCrewAssignments();
 
   const [ fullscreen, setFullscreen ] = useState(screenfull.isEnabled && screenfull.isFullscreen);
@@ -223,7 +223,7 @@ const MainMenu = () => {
         </LeftHudButtonArea>
 
         {/* <MenuWrapper>
-          {!!account && (
+          {!!accountAddress && (
             <Menu title="Assets">
               <MenuItem
                 name="My Asteroids"
@@ -255,7 +255,7 @@ const MainMenu = () => {
                 onClick={() => openSection('belt.Favorites')} />
             </Menu>
           )}
-          {!!account && (
+          {!!accountAddress && (
             <Menu title="Events">
               <MenuItem
                 name="Captain's Log"

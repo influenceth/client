@@ -3,7 +3,7 @@
 // import styled, { keyframes } from 'styled-components';
 // import { Crewmate } from '@influenceth/sdk';
 
-// import useAuth from '~/hooks/useAuth';
+// import useSession from '~/hooks/useSession';
 // import Button from '~/components/Button';
 // import CopyReferralLink from '~/components/CopyReferralLink';
 // import CrewmateCard from '~/components/CrewmateCard';
@@ -108,7 +108,7 @@
 //   }
 // `;
 // const CardWrapper = styled.div`
-//   align-items: center;  
+//   align-items: center;
 //   display: flex;
 //   flex-direction: row;
 //   flex-wrap: wrap;
@@ -172,7 +172,7 @@
 //       margin: 0 0 16px;
 //       padding-bottom: 16px;
 //       @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
-        
+
 //         font-size: 14px;
 //         font-weight: bold;
 //       }
@@ -199,7 +199,7 @@
 //         }
 //       }
 //     }
-  
+
 //     @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
 //       padding: 12px 25px 0;
 //       width: 100%;
@@ -262,7 +262,7 @@
 //     transition: color 100ms ease;
 //   }
 //   & > span {
-//     margin-left: 4px; 
+//     margin-left: 4px;
 //   }
 //   &:hover > * {
 //     color: #EEE;
@@ -284,7 +284,7 @@
 // `;
 
 // const CrewAssignmentComplete = () => {
-//   const { account } = useAuth();
+//   const { accountAddress } = useSession();
 //   const { id: sessionId } = useParams();
 //   const history = useHistory();
 //   const { crewmateMap } = useCrewContext();
@@ -315,12 +315,12 @@
 //         `Join Now:`,
 //       ].join('\n\n'),
 //       hashtags: 'PlayToEarn,NFTGaming',
-//       url: `${document.location.origin}/play/crew-assignment/${sessionId}?r=${account}`,
+//       url: `${document.location.origin}/play/crew-assignment/${sessionId}?r=${accountAddress}`,
 //       //via: 'influenceth'
 //     });
 //     window.open(`https://twitter.com/intent/tweet?${params.toString()}`, '_blank');
-//   }, [account, sessionId, storyState]);
-  
+//   }, [accountAddress, sessionId, storyState]);
+
 //   const handleFinish = useCallback(() => {
 //     history.push(onCloseDestination);
 //   }, [history, onCloseDestination]);

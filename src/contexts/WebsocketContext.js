@@ -1,7 +1,7 @@
 import { createContext, useCallback, useEffect, useRef, useState } from 'react';
 import { io } from 'socket.io-client';
 
-import useAuth from '~/hooks/useAuth';
+import useSession from '~/hooks/useSession';
 
 const WebsocketContext = createContext();
 
@@ -9,7 +9,7 @@ const DEFAULT_ROOM = '_';
 
 // NOTE: could maybe roll this back into ActivitiesContext if there was a reason to combine them
 export function WebsocketProvider({ children }) {
-  const { token } = useAuth();
+  const { token } = useSession();
 
   const socket = useRef();
   const registeredHandlers = useRef({});
@@ -26,7 +26,7 @@ export function WebsocketProvider({ children }) {
     if (type !== 'CURRENT_STARKNET_BLOCK_NUMBER') {
       body.id = body.event.id;  // TODO: this is a hack to make it look like an activity
     }
-    
+
     const roomKey = (room || '').includes('::') ? room : DEFAULT_ROOM;
     if (registeredHandlers.current[roomKey]) {
       if (process.env.NODE_ENV !== 'production') console.log('handleMessage', roomKey, { type, body });

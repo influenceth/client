@@ -32,7 +32,6 @@ import {
   ProgressBarSection
 } from './components';
 import useLot from '~/hooks/useLot';
-import useStore from '~/hooks/useStore';
 import { ActionDialogInner, useAsteroidAndLot } from '../ActionDialog';
 import actionStages from '~/lib/actionStages';
 import ClipCorner from '~/components/ClipCorner';
@@ -140,7 +139,7 @@ const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...pro
     setAmount(1);
   }, [currentProcess, process]);
 
-  const [crewTravelBonus, processingTimeBonus] = useMemo(() => {
+  const [crewTravelBonus, processingTimeBonus, secondaryOutputsBonus] = useMemo(() => {
     const bonusIds = [Crewmate.ABILITY_IDS.HOPPER_TRANSPORT_TIME];
     if (processor.processorType === Processor.IDS.BIOREACTOR) {
       bonusIds.push(Crewmate.ABILITY_IDS.REACTION_TIME);
@@ -149,6 +148,7 @@ const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...pro
     } else {
       bonusIds.push(Crewmate.ABILITY_IDS.MANUFACTURING_TIME);
     }
+    bonusIds.push(Crewmate.ABILITY_IDS.SECONDARY_REFINING_YIELD);
     const abilities = getCrewAbilityBonuses(bonusIds, crew);
     return bonusIds.map((id) => abilities[id] || {});
   }, [crew]);
@@ -495,6 +495,7 @@ const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...pro
 
           <ProcessInputOutputSection
             disabled={stage !== actionStages.NOT_STARTED}
+            secondaryOutputsBonus={secondaryOutputsBonus?.totalBonus}
             output
             title={
               process

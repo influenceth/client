@@ -4,7 +4,7 @@ import { isEqual, get } from 'lodash';
 import { hash, shortString, uint256 } from 'starknet';
 
 import useActivitiesContext from '~/hooks/useActivitiesContext';
-import useAuth from '~/hooks/useAuth';
+import useSession from '~/hooks/useSession';
 import useCrewContext from '~/hooks/useCrewContext';
 import useStore from '~/hooks/useStore';
 import useInterval from '~/hooks/useInterval';
@@ -504,7 +504,7 @@ const getSystemCallAndProcessedVars = (runSystem, rawVars, encodeEntrypoint = fa
 }
 
 export function ChainTransactionProvider({ children }) {
-  const { account, walletContext: { starknet, blockNumber, blockTime } } = useAuth();
+  const { accountAddress, authenticated, blockNumber, blockTime, starknet, starknetSession } = useSession();
   const activities = useActivitiesContext();
   const { crew, pendingTransactions } = useCrewContext();
 
@@ -526,7 +526,7 @@ export function ChainTransactionProvider({ children }) {
       && crew?.Crew?.actionRound
       && (crew?.Crew?.actionRound + RandomEvent.MIN_ROUNDS) <= blockNumber
       && !crew?._actionTypeTriggered,
-    [blockNumber, crew]
+    [blockNumber, crew?.Crew?.actionType, crew?.Crew?.actionRound, crew?._actionTypeTriggered]
   );
 
   const contracts = useMemo(() => {
@@ -700,7 +700,14 @@ export function ChainTransactionProvider({ children }) {
             }
 
             console.log('execute', calls);
-            return starknet.account.execute(calls);
+
+            // Check if we can utilize a signed session to execute calls
+            const canUseSession = !!starknetSession?.account && !calls.some((c) => {
+              return c.contractAddress !== process.env.REACT_APP_STARKNET_DISPATCHER || c.entrypoint !== 'run_system';
+            });
+
+            if (canUseSession) console.log('starknetSession', starknetSession);
+            return canUseSession ? starknetSession.execute(calls) : starknet.account.execute(calls);
           },
 
           onConfirmed: (event, vars) => {
@@ -719,7 +726,7 @@ export function ChainTransactionProvider({ children }) {
       }, {});
     }
     return null;
-  }, [createAlert, prependEventAutoresolve, starknet?.account?.address]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [createAlert, prependEventAutoresolve, accountAddress]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const transactionWaiters = useRef([]);
 
@@ -730,8 +737,8 @@ export function ChainTransactionProvider({ children }) {
 
   // on logout, clear pending (and failed) transactions
   useEffect(() => {
-    if (!account) dispatchClearTransactionHistory();
-  }, [!account, dispatchClearTransactionHistory]);
+    if (!authenticated) dispatchClearTransactionHistory();
+  }, [authenticated, dispatchClearTransactionHistory]);
 
   // on initial load, set provider.waitForTransaction for any pendingTransactions
   // so that we can throw any extension-related or timeout errors needed

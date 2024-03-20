@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
 import { RingLoader as Loader } from 'react-spinners';
 
-import useAuth from '~/hooks/useAuth';
+import useSession from '~/hooks/useSession';
 import useStore from '~/hooks/useStore';
 import Badge from '~/components/Badge';
 import {
@@ -293,7 +293,7 @@ const Footer = styled.div`
 const StyledNavIcon = () => <Icon><NavIcon selected selectedColor="#777" /></Icon>;
 
 const Launcher = (props) => {
-  const { account, authenticating, login, logout, walletContext } = useAuth();
+  const { accountAddress, authenticating, authenticated, walletId, login, logout, status } = useSession();
   const { crews } = useCrewContext();
   const { data: priceConstants, isLoading: priceConstantsLoading } = usePriceConstants();
 
@@ -305,9 +305,6 @@ const Launcher = (props) => {
   const hasSeenIntroVideo = useStore(s => s.hasSeenIntroVideo);
 
   const [menuOpen, setMenuOpen] = useState(false);
-
-  const walletId = walletContext?.starknet?.id;
-  const loggedIn = !!account;
 
   useEffect(() => {
     if (!interfaceHidden) {
@@ -322,14 +319,14 @@ const Launcher = (props) => {
 
   useEffect(() => {
     // only allow account and settings unless logged in
-    if (!loggedIn && !['account', 'settings'].includes(launcherPage)) {
+    if (!authenticated && !['account', 'settings'].includes(launcherPage)) {
       dispatchLauncherPage('account');
     }
     // disallow store if no sale available
     else if (!priceConstantsLoading && !priceConstants?.ADALIAN_PRICE_ETH && launcherPage === 'store') {
       dispatchLauncherPage('account');
     }
-  }, [launcherPage, loggedIn, priceConstants, priceConstantsLoading]);
+  }, [launcherPage, authenticated, priceConstants, priceConstantsLoading]);
 
   const menuItems = useMemo(() => {
     const items = [{
@@ -376,14 +373,14 @@ const Launcher = (props) => {
             selected={launcherPage === 'settings'}>
             <StyledNavIcon /> Settings
           </NavItem>
-          {loggedIn && !!priceConstants?.ADALIAN_PRICE_ETH && (
+          {authenticated && !!priceConstants?.ADALIAN_PRICE_ETH && (
             <NavItem
               onClick={() => dispatchLauncherPage('store')}
               selected={launcherPage === 'store'}>
               <StyledNavIcon /> Store
             </NavItem>
           )}
-          {loggedIn && crews?.length > 0 && (
+          {authenticated && crews?.length > 0 && (
             <>
               <NavItem isRule />
               <NavItem
@@ -397,11 +394,11 @@ const Launcher = (props) => {
         </Nav>
       </TopLeftMenu>
 
-      <TopRightMenu noPadding={reactBool(loggedIn)}>
-        {loggedIn
+      <TopRightMenu noPadding={reactBool(authenticated)}>
+        {authenticated
           ? (
             <DropdownNavMenu
-              header={<NavMenuLoggedInUser account={account} />}
+              header={<NavMenuLoggedInUser account={accountAddress} />}
               isOpen={menuOpen}
               menuItems={menuItems}
               onClickHeader={() => setMenuOpen((o) => !o)}
@@ -423,7 +420,7 @@ const Launcher = (props) => {
             )
             : (
               <AccountButton onClick={login}>
-                <LeftIcon connected={loggedIn}><UserIcon /></LeftIcon>
+                <LeftIcon connected={authenticated}><UserIcon /></LeftIcon>
                 <label>Log-In</label>
                 <RightIcon><ChevronDoubleRightIcon /></RightIcon>
               </AccountButton>
@@ -435,9 +432,9 @@ const Launcher = (props) => {
 
       {/* TODO: animate transitions between menus (slide in/out hudmenu, slide in/out crew, slide nav diamond between selections) */}
       <BottomLeftMenu>
-        {loggedIn && launcherPage === 'crews' && <Crews />}
+        {authenticated && launcherPage === 'crews' && <Crews />}
       </BottomLeftMenu>
-      {loggedIn && launcherPage === 'crews' && <HudMenu forceOpenMenu="MY_CREWS" />}
+      {authenticated && launcherPage === 'crews' && <HudMenu forceOpenMenu="MY_CREWS" />}
 
       <ContentWrapper>
         <MainContent>
@@ -447,7 +444,7 @@ const Launcher = (props) => {
         </MainContent>
 
         <PlayButton disabled={authenticating} onClick={onClickPlay}>
-          {loggedIn ? 'Play' : 'Explore'}
+          {authenticated ? 'Play' : 'Explore'}
         </PlayButton>
 
         <Footer>
@@ -462,7 +459,7 @@ const Launcher = (props) => {
             {process.env.REACT_APP_BRIDGE_URL &&
               <a href={process.env.REACT_APP_BRIDGE_URL} target="_blank" rel="noopener noreferrer"><MyAssetIcon /> Assets Portal</a>
             }
-            {!!window.installPrompt && 
+            {!!window.installPrompt &&
               <OnClickLink onClick={onInstallApp} target="_blank" rel="noopener noreferrer"><DownloadIcon /> Install App</OnClickLink>
             }
           </div>

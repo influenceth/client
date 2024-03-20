@@ -22,7 +22,7 @@ import AdaliansImages from '~/assets/images/sales/adalians.png';
 import AsteroidsImage from '~/assets/images/sales/asteroids.png';
 import { ChevronRightIcon, PlusIcon, SwayIcon, WarningOutlineIcon } from '~/components/Icons';
 import Details from '~/components/DetailsV2';
-import useAuth from '~/hooks/useAuth';
+import useSession from '~/hooks/useSession';
 import useInterval from '~/hooks/useInterval';
 import BrightButton from '~/components/BrightButton';
 import MouseoverInfoPane from '~/components/MouseoverInfoPane';
@@ -245,7 +245,7 @@ const layerSwapChains = {
 };
 
 export const FundingDialog = ({ onClose, onSelect, targetAmount }) => {
-  const { account, walletContext: { starknet } } = useAuth();
+  const { accountAddress, starknet } = useSession();
   const [hoveredRampButton, setHoveredRampButton] = useState(false);
 
   const to = useRef();
@@ -263,29 +263,29 @@ export const FundingDialog = ({ onClose, onSelect, targetAmount }) => {
   const selectBridge = useCallback(() => {
     const fromChain = layerSwapChains[starknet?.chainId]?.ethereum;
     const toChain = layerSwapChains[starknet?.chainId]?.starknet;
-    const url = `https://www.layerswap.io/app/?from=${fromChain}&to=${toChain}&asset=ETH&destAddress=${account}
+    const url = `https://www.layerswap.io/app/?from=${fromChain}&to=${toChain}&asset=ETH&destAddress=${accountAddress}
       &lockAddress=true&amount=${targetAmount}&actionButtonText=Fund%20Account`;
 
     window.open(url, '_blank');
-  }, [starknet?.chainId, account, targetAmount]);
+  }, [starknet?.chainId, accountAddress, targetAmount]);
 
   const selectStripe = useCallback(() => {
     const toChain = layerSwapChains[starknet?.chainId]?.starknet;
-    const url = `https://www.layerswap.io/app/?from=STRIPE&to=${toChain}&asset=ETH&destAddress=${account}
+    const url = `https://www.layerswap.io/app/?from=STRIPE&to=${toChain}&asset=ETH&destAddress=${accountAddress}
       &lockAddress=true&amount=${targetAmount}&actionButtonText=Fund%20Account`;
 
     window.open(url, '_blank');
-  }, [starknet?.chainId, account, targetAmount]);
+  }, [starknet?.chainId, accountAddress, targetAmount]);
 
   const selectRamp = useCallback(() => {
     const logoUrl = window.location.origin + '/maskable-logo-192x192.png';
     // TODO: url params are confusing/not working here `&swapAsset=ETH&swapAmount=${targetAmount}`
     const url = `https://app.${process.env.NODE_ENV === 'production' ? '' : 'demo.'}ramp.network
       ?hostApiKey=${process.env.REACT_APP_RAMP_API_KEY}&hostAppName=Influence&hostLogoUrl=${logoUrl}
-      &userAddress=${account}&defaultAsset=STARKNET_ETH`;
+      &userAddress=${accountAddress}&defaultAsset=STARKNET_ETH`;
 
     window.open(url, '_blank');
-  }, [account]);
+  }, [accountAddress]);
 
   const onClick = useCallback((which) => {
     switch (which) {
@@ -536,7 +536,7 @@ export const AsteroidSKU = () => {
 };
 
 export const SwaySKU = () => {
-  const { walletContext: { starknet } } = useAuth();
+  const { accountAddress, starknet } = useSession();
   const { data: ethBalance, refetch: refetchEth } = useEthBalance();
 
   const [ethToSell, setEthToSell] = useState(0.01);
@@ -565,7 +565,7 @@ export const SwaySKU = () => {
           sellToken: process.env.REACT_APP_ERC20_TOKEN_ADDRESS,
           buyToken: process.env.REACT_APP_STARKNET_SWAY_TOKEN,
           amount: parseUnits(ethToSell.toString(10)),
-          account: starknet?.account?.address
+          account: accountAddress
         });
 
         if (quote) {
@@ -579,7 +579,7 @@ export const SwaySKU = () => {
     };
 
     getPrice();
-  }, [starknet?.account?.address, ethToSell]);
+  }, [accountAddress, ethToSell]);
 
   const onFundWallet = () => {
     setFunding(true);
@@ -688,7 +688,7 @@ export const SwaySKU = () => {
 };
 
 export const FaucetSKU = () => {
-  const { walletContext: { starknet } } = useAuth();
+  const { starknet } = useSession();
   const queryClient = useQueryClient();
   const { data: faucetInfo, isLoading: faucetInfoLoading } = useFaucetInfo();
   const createAlert = useStore(s => s.dispatchAlertLogged);

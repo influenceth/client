@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from 'react-query';
 import { Building } from '@influenceth/sdk';
 
-import useAuth from '~/hooks/useAuth';
+import useSession from '~/hooks/useSession';
 import useCrewContext from '~/hooks/useCrewContext';
 import useGetActivityConfig from '~/hooks/useGetActivityConfig';
 import useStore from '~/hooks/useStore';
@@ -12,7 +12,7 @@ import { hydrateActivities } from '~/lib/activities';
 const ActionItemContext = React.createContext();
 
 export function ActionItemProvider({ children }) {
-  const { account, token, walletContext: { blockTime } } = useAuth();
+  const { authenticated, blockTime } = useSession();
   const { crew, pendingTransactions } = useCrewContext();
   const getActivityConfig = useGetActivityConfig();
   const queryClient = useQueryClient();
@@ -20,17 +20,17 @@ export function ActionItemProvider({ children }) {
   const { data: actionItems, isLoading: actionItemsLoading } = useQuery(
     [ 'actionItems', crew?.id ],
     async () => {
-      const activities = await api.getCrewActionItems();
+      const activities = await api.getCrewActionItems(crew?.id);
       await hydrateActivities(activities, queryClient);
       return activities;
     },
-    { enabled: !!crew?.id }
+    { enabled: !!crew }
   );
 
   const { data: plannedBuildings, isLoading: plannedBuildingsLoading } = useQuery(
     [ 'planned', crew?.id ],
     () => api.getCrewPlannedBuildings(crew?.id),
-    { enabled: !!crew?.id }
+    { enabled: !!crew }
   );
 
   const failedTransactions = useStore(s => s.failedTransactions);
@@ -77,7 +77,7 @@ export function ActionItemProvider({ children }) {
   }, [actionItems, plannedBuildings, blockTime]);
 
   const allVisibleItems = useMemo(() => {
-    if (!account || !token) return [];
+    if (!authenticated) return [];
 
     // return the readyItems whose "finishing transaction" is not already pending
     const visibleReadyItems = readyItems.filter((item) => {
@@ -109,8 +109,16 @@ export function ActionItemProvider({ children }) {
       return x;
     });
 
-  }, [getActivityConfig, pendingTransactions, failedTransactions, randomEventItems, readyItems, plannedItems, unreadyItems, account, token]);
-
+  }, [
+    authenticated,
+    failedTransactions,
+    getActivityConfig,
+    pendingTransactions,
+    plannedItems,
+    randomEventItems,
+    readyItems,
+    unreadyItems
+  ]);
 
   // TODO: clear timers in the serviceworker
   //  for not yet ready to finish, set new timers based on time remaining
@@ -148,8 +156,6 @@ export function ActionItemProvider({ children }) {
       {children}
     </ActionItemContext.Provider>
   );
-
-
 
   // console.log(actionItems);
 

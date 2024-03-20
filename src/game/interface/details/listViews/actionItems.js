@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import styled from 'styled-components';
 import { Lot } from '@influenceth/sdk';
 
-import useAuth from '~/hooks/useAuth';
+import useSession from '~/hooks/useSession';
 import useCrewContext from '~/hooks/useCrewContext';
 import { itemColors, statuses } from '~/lib/actionItem';
 import { LocationLink } from './components';
@@ -53,7 +53,7 @@ const Progress = ({ start, finish }) => {
 
 // TODO: ecs refactor
 const useColumns = () => {
-  const { account } = useAuth();
+  const { accountAddress } = useSession();
   const { crew } = useCrewContext();
 
   return useMemo(() => {
@@ -142,8 +142,8 @@ const useColumns = () => {
       },
     ];
 
-    return columns.filter((c) => account || !c.requireLogin);
-  }, [account, crew?.id]);
+    return columns.filter((c) => accountAddress || !c.requireLogin);
+  }, [accountAddress, crew?.id]);
 };
 
 export default useColumns;
