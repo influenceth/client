@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import styled, { keyframes } from 'styled-components';
 
 import { InfluenceIcon } from '~/components/Icons';
@@ -34,12 +35,25 @@ const Message = styled.div`
   margin: 20px 0 30px;
 `;
 
-const Reconnecting = ({ onLogout, walletName }) => (
-  <Wrapper>
-    <LogoWrapper><InfluenceIcon /></LogoWrapper>
-    <Message>Attempting to reconnect to {walletName || 'your Starknet wallet'}...</Message>
-    <Button onClick={onLogout} size="small">Skip Login</Button>
-  </Wrapper>
-);
+const Reconnecting = ({ onLogout, walletName }) => {
+  const [show, setShow] = useState(false);
+
+  // give a moment to successfully connect without showing an extra screen...
+  useEffect(() => {
+    const to = setTimeout(() => {
+      setShow(true);
+    }, 1500);
+    return () => clearTimeout(to);
+  }, []);
+
+  if (!show) return null;
+  return (
+    <Wrapper>
+      <LogoWrapper><InfluenceIcon /></LogoWrapper>
+      <Message>Attempting to reconnect to {walletName || 'your Starknet wallet'}...</Message>
+      <Button onClick={onLogout} size="small">Skip Login</Button>
+    </Wrapper>
+  );
+}
 
 export default Reconnecting;
