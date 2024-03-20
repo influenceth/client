@@ -1882,7 +1882,8 @@ const activities = {
       icon: <MarketBuyIcon />,
       content: (
         <>
-          {Product.TYPES[deposit?.Deposit?.resource]?.name} deposit purchased for
+          {Product.TYPES[deposit?.Deposit?.resource]?.name} deposit
+          {' '}{(viewingAs?.label === Entity.IDS.CREW && viewingAs?.id === returnValues.sellerCrew?.id) ? 'sold' : 'purchased'} for
           {' '}<SwayIcon />{formatPrice(returnValues.price / 1e6)}
           {' '}at <EntityLink {...deposit?.Location?.location} />
         </>
