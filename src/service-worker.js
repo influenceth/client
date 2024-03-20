@@ -63,17 +63,36 @@ registerRoute(
   createHandlerBoundToURL(process.env.PUBLIC_URL + '/index.html')
 );
 
-// An example runtime caching route for requests that aren't handled by the
-// precache, in this case same-origin .png requests like those from in public/
+// Cache images that aren't handled by the precache
 registerRoute(
-  // Add in any other file extensions or routing criteria as needed.
-  ({ url }) => url.origin === self.location.origin && url.pathname.endsWith('.png'), // Customize this strategy as needed, e.g., by changing to CacheFirst.
+  ({ url }) => {
+    if (url.pathname.endsWith('.png')) return true;
+    if (url.pathname.endsWith('.jpg')) return true;
+    if (url.pathname.endsWith('.jpeg')) return true;
+    if (url.pathname.endsWith('.gif')) return true;
+    if (url.pathname.endsWith('.webp')) return true;
+    if (url.pathname.endsWith('.svg')) return true;
+    return false;
+  },
   new StaleWhileRevalidate({
     cacheName: 'images',
     plugins: [
-      // Ensure that once this runtime cache reaches a maximum size the
-      // least-recently used images are removed.
-      new ExpirationPlugin({ maxEntries: 50 }),
+      // Ensure that once this runtime cache reaches a maximum size the least-recently used images are removed
+      new ExpirationPlugin({ maxEntries: 100 }),
+    ],
+  })
+);
+
+registerRoute(
+  ({ url }) => {
+    if (url.pathname.endsWith('lots/packed')) return true;
+    return false;
+  },
+  new StaleWhileRevalidate({
+    cacheName: 'lots',
+    plugins: [
+      // Ensure that once this runtime cache reaches a maximum size the least-recently used images are removed
+      new ExpirationPlugin({ maxEntries: 5 }),
     ],
   })
 );
