@@ -147,7 +147,7 @@ const ListingAmount = styled.div`
   font-weight: normal;
   ${p => p.color && `
     color: ${
-      p.color === 'none' ? '#565656' : (p.color === 'buy' ? theme.colors.buy : theme.colors.sell)};
+      p.color === 'none' ? theme.colors.secondaryText : (p.color === 'buy' ? theme.colors.buy : theme.colors.sell)};
   `}
   font-size: 80%;
   margin-top: 2px;

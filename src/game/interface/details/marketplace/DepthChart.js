@@ -725,7 +725,7 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
                       rowSaleVolume -= amount;
                       return (
                         <tr key={i}>
-                          <td><VolumeBar volume={volumeBenchmark > 0 ? rowVolume / volumeBenchmark : 0} />{price.toLocaleString()}</td>
+                          <td><VolumeBar volume={volumeBenchmark > 0 ? rowVolume / volumeBenchmark : 0} />{price.toLocaleString(undefined, { maximumFractionDigits: 4, minimumFractionDigits: 4 } )}</td>
                           <td>{amount.toLocaleString()}</td>
                           <td>{formatPrice(price * amount)}</td>              
                         </tr>
@@ -759,9 +759,9 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
                     rowBuyVolume += amount;
                     return (
                       <tr key={i}>
-                        <td><VolumeBar volume={volumeBenchmark > 0 ? rowBuyVolume / volumeBenchmark : 0} />{price.toLocaleString()}</td>
+                        <td><VolumeBar volume={volumeBenchmark > 0 ? rowBuyVolume / volumeBenchmark : 0} />{price.toLocaleString(undefined, { maximumFractionDigits: 4, minimumFractionDigits: 4 } )}</td>
                         <td>{amount.toLocaleString()}</td>
-                        <td>{price.toLocaleString(undefined, { maximumFractionDigits: 3, minimumFractionDigits: 3 } )}</td>
+                        <td>{formatPrice(price * amount)}</td>
                       </tr>
                     );
                   })}
