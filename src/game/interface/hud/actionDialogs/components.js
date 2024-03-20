@@ -2610,7 +2610,7 @@ export const TransferDistanceDetails = ({ distance, crewTravelBonus}) => {
             <div>Transfers less than {crewFreeTransferRadius.toFixed(1)}km in distance are instantaneous.</div>
           </FreeTransferNote>
         )}>
-          <label><WarningOutlineIcon /> {Math.round(distance)}km Away</label>
+          <label><SurfaceTransferIcon /> {Math.round(distance)}km Away</label>
         </Mouseoverable>
       ) : ''}
       {distance && distance >= crewFreeTransferRadius ? `${Math.round(distance)}km Away` : ''}

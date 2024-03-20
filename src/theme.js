@@ -45,14 +45,17 @@ const purple = '#884fff';
 const lightOrange = '#faaf42';
 const orange = '#ff984f';
 const yellow = '#ffd94f';
-const red = '#df4300';
+const red = '#ff564d';
+const darkRed = '#ee4036';
 
 const theme = {
   colors: {
     main,
-    brightMain,
-    darkMain,
     mainRGB: hexToRGB(main),
+    brightMain,
+    brightMainRGB: hexToRGB(brightMain),
+    darkMain,
+    darkMainRGB: hexToRGB(darkMain),
     mainBorder: 'rgba(255, 255, 255, 0.25)',
     mobileBackground: '#181818',
     disabledBackground: '#666666',
@@ -73,7 +76,7 @@ const theme = {
     successRGB: hexToRGB(success),
     warning: orange,
     error: red,
-    teal, blue, lightPurple, purple, lightOrange, orange, yellow, red, green,
+    teal, blue, lightPurple, purple, lightOrange, orange, yellow, red, darkRed, green,
     bonus: {
       level0: '#999999',
       level1: 'rgb(105, 235, 244)',
