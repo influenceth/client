@@ -38,11 +38,12 @@ const StyledMain = styled.main`
   width: 100%;
 `;
 
-// for starknet modals
 const GlobalStyle = createGlobalStyle`
   label {
     cursor: inherit;
   }
+
+  /* for starknet modals */
   .s-dialog {
     z-index: 1010 !important;
   }
@@ -140,46 +141,63 @@ const Game = () => {
   }, [createAlert, updateNeeded, onUpdateVersion]);
 
   return (
-    <SessionProvider>
-      <CrewProvider>
-        <DevToolProvider>
+    <>
+      <GlobalStyle />
+
+      {/* global contexts (i.e. needed by interface and scene) */}
+      <SessionProvider>
+        <CrewProvider>
           <WebsocketProvider>
-            <ActivitiesProvider>
-              <ChainTransactionProvider>
-                <SyncedTimeProvider>
-                  <ActionItemProvider>
-                    <ThemeProvider theme={theme}>
-                      <ScreensizeProvider>
-                        <GlobalStyle />
-                        <Router>
-                          <Referral />
-                          <Switch>
-                            {/* for socialmedia links that need to pull opengraph tags (will redirect to discord or main app) */}
-                            <Route path="/play">
-                              <LandingPage />
-                            </Route>
-                            {/* for everything else */}
-                            <Route>
-                              <LauncherRedirect />
-                              <StyledMain>
-                                <Interface />
-                                {showScene && <Scene />}
-                                <Audio />
-                                <WelcomeFlow />
-                              </StyledMain>
-                            </Route>
-                          </Switch>
-                        </Router>
-                      </ScreensizeProvider>
-                    </ThemeProvider>
-                  </ActionItemProvider>
-                </SyncedTimeProvider>
-              </ChainTransactionProvider>
-            </ActivitiesProvider>
+            <Router>
+              <Referral />
+              <Switch>
+
+                {/* for socialmedia links that need to pull opengraph tags (will redirect to discord or main app) */}
+                <Route path="/play">
+                  <LandingPage />
+                </Route>
+
+                {/* for everything else */}
+                <Route>
+
+                  {/* redirect user to launcher (when appropraite) */}
+                  <LauncherRedirect />
+
+                  {/* main app wrapper */}
+                  <StyledMain>
+
+                    {/* all ui-specific context providers wrapping interface and new-user flow */}
+                    <ActivitiesProvider>
+                      <ChainTransactionProvider>
+                        <SyncedTimeProvider>
+                          <ActionItemProvider>
+                            <DevToolProvider>
+                              <ThemeProvider theme={theme}>
+                                <ScreensizeProvider>
+                                  <Interface />
+                                  <WelcomeFlow />
+                                </ScreensizeProvider>
+                              </ThemeProvider>
+                            </DevToolProvider>
+                          </ActionItemProvider>
+                        </SyncedTimeProvider>
+                      </ChainTransactionProvider>
+                    </ActivitiesProvider>
+
+                    {/* 3d scene */}
+                    {showScene && <Scene />}
+
+                    {/* audio */}
+                    <Audio />
+
+                  </StyledMain>
+                </Route>
+              </Switch>
+            </Router>
           </WebsocketProvider>
-        </DevToolProvider>
-      </CrewProvider>
-    </SessionProvider>
+        </CrewProvider>
+      </SessionProvider>
+    </>
   );
 };
 
