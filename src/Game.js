@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { Profiler, useEffect, useRef, useState } from 'react';
 import styled from 'styled-components';
 import { ThemeProvider, createGlobalStyle } from 'styled-components';
 import { BrowserRouter as Router, Switch, Route, useHistory } from 'react-router-dom';
@@ -9,7 +9,6 @@ import { ActivitiesProvider } from '~/contexts/ActivitiesContext';
 import { SessionProvider } from '~/contexts/SessionContext';
 import { CrewProvider } from './contexts/CrewContext';
 import { ChainTransactionProvider } from '~/contexts/ChainTransactionContext';
-import { ClockProvider } from '~/contexts/ClockContext';
 import { DevToolProvider } from '~/contexts/DevToolContext';
 import { ScreensizeProvider } from '~/contexts/ScreensizeContext';
 import { SyncedTimeProvider } from '~/contexts/SyncedTimeContext';
@@ -162,14 +161,12 @@ const Game = () => {
                             {/* for everything else */}
                             <Route>
                               <LauncherRedirect />
-                              <ClockProvider>
-                                <StyledMain>
-                                  <Interface />
-                                  {showScene && <Scene />}
-                                  <Audio />
-                                  <WelcomeFlow />
-                                </StyledMain>
-                              </ClockProvider>
+                              <StyledMain>
+                                <Interface />
+                                {showScene && <Scene />}
+                                <Audio />
+                                <WelcomeFlow />
+                              </StyledMain>
                             </Route>
                           </Switch>
                         </Router>

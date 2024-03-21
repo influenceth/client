@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import styled from 'styled-components';
-import { DISPLAY_TIME_FRACTION_DIGITS } from '~/contexts/ClockContext';
+import { displayTimeFractionDigits } from '~/lib/utils';
 
 const diamondDimension = 35;
 const halfDimension = diamondDimension / 2;
@@ -44,7 +44,7 @@ const BlurCircle = styled.circle`
 
 const TimeIcon = ({ time, motionBlur, ...props }) => {
   const position = useMemo(() => {
-    const t = parseInt(time.substr(-DISPLAY_TIME_FRACTION_DIGITS)) / Math.pow(10, DISPLAY_TIME_FRACTION_DIGITS);
+    const t = parseInt(time.substr(-displayTimeFractionDigits)) / Math.pow(10, displayTimeFractionDigits);
     if (isNaN(t)) return { x: -100, y: -100 };
     const theta = 2 * Math.PI * t;
     return {

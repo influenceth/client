@@ -1,4 +1,4 @@
-import { useContext, useCallback, useEffect, useRef, useState, useMemo } from 'react';
+import { useCallback, useEffect, useRef, useState, useMemo } from 'react';
 import styled from 'styled-components';
 import { AxesHelper, Color, Vector3 } from 'three';
 import { useThrottleCallback } from '@react-hook/throttle';
@@ -9,10 +9,10 @@ import { cloneDeep } from 'lodash';
 import { Entity } from '@influenceth/sdk';
 
 import { CaptainIcon, MyAssetIcon, ShipMarkerIcon } from '~/components/Icons';
-import ClockContext from '~/contexts/ClockContext';
 import useCrewContext from '~/hooks/useCrewContext';
 import useAsteroid from '~/hooks/useAsteroid';
 import useAssetSearch from '~/hooks/useAssetSearch';
+import useCoarseTime from '~/hooks/useCoarseTime';
 import useControlledAsteroids from '~/hooks/useControlledAsteroids';
 import useOwnedShips from '~/hooks/useOwnedShips';
 import useStore from '~/hooks/useStore';
@@ -93,7 +93,7 @@ const Asteroids = () => {
   const { data: asteroidSearch } = useAssetSearch('asteroidsMapped');
   const { data: origin } = useAsteroid(originId);
   const { data: destination } = useAsteroid(destinationId);
-  const { coarseTime } = useContext(ClockContext);
+  const coarseTime = useCoarseTime();
   const { data: controlledAsteroids } = useControlledAsteroids();
   const { data: ownedShips } = useOwnedShips();
   const { watchlist: { data: watchlist }} = useWatchlist();

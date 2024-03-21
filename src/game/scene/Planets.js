@@ -1,18 +1,18 @@
-import { useContext, useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { AdditiveBlending, Float32BufferAttribute } from 'three';
 import { useTexture } from '@react-three/drei';
 import { Planet } from '@influenceth/sdk';
 
-import ClockContext from '~/contexts/ClockContext';
-import useWebWorker from '~/hooks/useWebWorker';
+import useCoarseTime from '~/hooks/useCoarseTime';
 import useStore from '~/hooks/useStore';
-import Orbit from './planets/Orbit';
+import useWebWorker from '~/hooks/useWebWorker';
 import theme from '~/theme';
+import Orbit from './planets/Orbit';
 
 const Planets = () => {
   const planets = Planet.planets;
   const zoomStatus = useStore(s => s.asteroids.zoomStatus);
-  const { coarseTime } = useContext(ClockContext);
+  const coarseTime = useCoarseTime();
 
   const texture = useTexture(`${process.env.PUBLIC_URL}/textures/circleFaded.png`);
   const { processInBackground } = useWebWorker();

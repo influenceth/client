@@ -1,13 +1,13 @@
-import { useContext, useMemo } from 'react';
+import { useMemo } from 'react';
 import styled from 'styled-components';
 import { Crew, Inventory, Ship, Time } from '@influenceth/sdk';
 
-import ClockContext from '~/contexts/ClockContext';
+import { WarningIcon } from '~/components/Icons';
+import useCoarseTime from '~/hooks/useCoarseTime';
+import useConstants from '~/hooks/useConstants';
 import useCrewContext from '~/hooks/useCrewContext';
 import useStore from '~/hooks/useStore';
-import { WarningIcon } from '../Icons';
 import { formatFixed } from '~/lib/utils';
-import useConstants from '~/hooks/useConstants';
 
 const tagHeight = 22;
 const halfTagHeight = tagHeight / 2;
@@ -261,7 +261,7 @@ const DelayLabel = styled(TopLevelLabel)`
 `;
 
 const SolutionLabels = ({ center, emode, lastFedAt, mousePos, shipParams }) => {
-  const { coarseTime } = useContext(ClockContext);
+  const coarseTime = useCoarseTime();
   const { data: TIME_ACCELERATION } = useConstants('TIME_ACCELERATION');
   
   const { crew } = useCrewContext();
@@ -283,7 +283,7 @@ const SolutionLabels = ({ center, emode, lastFedAt, mousePos, shipParams }) => {
       usedPropellant: Math.ceil(travelSolution.usedPropellantPercent),
       invalid: travelSolution.invalid,
     }
-  }, [travelSolution]);
+  }, [coarseTime, travelSolution]); // TODO: coarseTime dependency?
 
   const [currentFood, usedFood] = useMemo(() => {
     if (emode || !lastFedAt || !travelSolution?.arrivalTime) return [100, 100];
@@ -295,7 +295,7 @@ const SolutionLabels = ({ center, emode, lastFedAt, mousePos, shipParams }) => {
       currentFood,
       formatFixed(100 * (currentFoodIfMaxed - arrivalFoodIfMaxed) / currentFood, 1)
     ];
-  }, [emode, travelSolution?.arrivalTime, coarseTime, crew?._foodBonuses?.consumption, lastFedAt]);
+  }, [coarseTime, crew?._foodBonuses?.consumption, emode, lastFedAt, travelSolution?.arrivalTime]);
 
   // only report the >100% values if they are within the ship/crew's capabilities
   const [maxReportableFood, maxReportablePropellant] = useMemo(() => {
