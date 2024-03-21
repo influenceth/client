@@ -130,7 +130,7 @@ const MenuWrapper = styled.div`
 `;
 
 const MainMenu = () => {
-  const playSound = useStore(s => s.dispatchSoundRequested);
+  const playSound = useStore(s => s.dispatchEffectStartRequested);
   const { isMobile } = useScreenSize();
   const history = useHistory();
 
@@ -160,7 +160,7 @@ const MainMenu = () => {
   const openSection = useCallback((section) => {
     // activateSection(section);
     // TODO: ... this used to reference outliner, but outliner is gone
-    playSound('effects.click');
+    playSound('click');
     if (isMobile) setShowMenu(false);
   }, [isMobile]);
 

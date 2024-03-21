@@ -85,6 +85,22 @@ registerRoute(
 
 registerRoute(
   ({ url }) => {
+    if (url.pathname.endsWith('.mp3')) return true;
+    if (url.pathname.endsWith('.m4a')) return true;
+    if (url.pathname.endsWith('.wav')) return true;
+    return false;
+  },
+  new StaleWhileRevalidate({
+    cacheName: 'sounds',
+    plugins: [
+      // Ensure that once this runtime cache reaches a maximum size the least-recently used images are removed
+      new ExpirationPlugin({ maxEntries: 25 }),
+    ],
+  })
+);
+
+registerRoute(
+  ({ url }) => {
     if (url.pathname.endsWith('lots/packed')) return true;
     return false;
   },

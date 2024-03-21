@@ -120,8 +120,9 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
     sounds: {
       music: process.env.NODE_ENV === 'development' ? 0 : 100,
       effects: process.env.NODE_ENV === 'development' ? 0 : 100,
-      toPlay: null
     },
+
+    effects: {},
 
     referrer: null,
 
@@ -138,12 +139,20 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
       });
     })),
 
-    dispatchSoundPlayed: () => set(produce(state => {
-      state.sounds.toPlay = null;
+    dispatchEffectStartRequested: (sound, options) => set(produce(state => {
+      state.effects[sound] = { status: 'play', ...options };
     })),
 
-    dispatchSoundRequested: (sound) => set(produce(state => {
-      state.sounds.toPlay = sound;
+    dispatchEffectStarted: (sound) => set(produce(state => {
+      state.effects[sound] = { status: 'playing' };
+    })),
+
+    dispatchEffectStopRequested: (sound, options) => set(produce(state => {
+      state.effects[sound] = { status: 'stop', ...options };
+    })),
+
+    dispatchEffectStopped: (sound) => set(produce(state => {
+      delete state.effects[sound];
     })),
 
     dispatchMusicVolumeSet: (volume) => set(produce(state => {

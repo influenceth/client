@@ -12,10 +12,10 @@ const StyledClipboard = styled(Clipboard)`
 const CopyReferralLink = ({ children, fallbackContent }) => {
   const { accountAddress } = useSession();
   const createAlert = useStore(s => s.dispatchAlertLogged);
-  const playSound = useStore(s => s.dispatchSoundRequested);
+  const playSound = useStore(s => s.dispatchEffectStartRequested);
 
   const handleClick = useCallback(() => {
-    playSound('effects.click');
+    playSound('click');
     createAlert({
       type: 'ClipboardAlert',
       data: { content: 'Recruitment link copied to clipboard.' },

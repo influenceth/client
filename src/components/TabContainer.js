@@ -56,7 +56,7 @@ const Tab = styled.div`
   & > * {
     line-height: ${p => p.tabHeight};
   }
-  
+
   ${p => p.css || ''}
 `;
 
@@ -69,7 +69,7 @@ const TabLabel = styled.div`
   position: relative;
   white-space: nowrap;
   ${p => p.css || ''}
-  
+
   &:after {
     bottom: 0;
     border-bottom: 4px solid currentColor;
@@ -89,7 +89,7 @@ const Pane = styled.div`
   ${p => p.css || ''}
 `;
 
-const TabContainer = ({ 
+const TabContainer = ({
   containerCss,
   containerHeight,
   controller,
@@ -103,7 +103,7 @@ const TabContainer = ({
   tabs,
   tabCss
 }) => {
-  const playSound = useStore(s => s.dispatchSoundRequested);
+  const playSound = useStore(s => s.dispatchEffectStartRequested);
 
   const [_active, _setActive] = useState(initialActive || 0);
 
@@ -113,9 +113,9 @@ const TabContainer = ({
 
   const onClick = useCallback((i) => () => {
     if (tabs[i].disabled) {
-      playSound('effects.failure');
+      playSound('failure');
     } else {
-      playSound('effects.click');
+      playSound('click');
       setActive(i);
       if (onChange) onChange(i);
     }

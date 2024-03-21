@@ -324,7 +324,7 @@ const CrewAssignments = () => {
   const { crew, crewmateMap } = useCrewContext();
   const { data: book, isError } = useBook(bookId);
   const createAlert = useStore(s => s.dispatchAlertLogged);
-  const playSound = useStore(s => s.dispatchSoundRequested);
+  const playSound = useStore(s => s.dispatchEffectStartRequested);
 
   const [collapsedParts, setCollapsedParts] = useState([]);
   const [bookReady, setBookReady] = useState(false);
@@ -346,11 +346,11 @@ const CrewAssignments = () => {
 
   const selectStory = useCallback((story) => () => {
     if (story) {
-      playSound('effects.click');
+      playSound('click');
       setSelectedStory(story);
       setMobileView('crew');
     } else {
-      playSound('effects.failure');
+      playSound('failure');
     }
   }, [playSound]);
 
@@ -375,7 +375,7 @@ const CrewAssignments = () => {
         }
 
         if (session) {
-          playSound('effects.success');
+          playSound('success');
           history.push(`/crew-assignment/${session.id}`);
           return;
         }
@@ -383,7 +383,7 @@ const CrewAssignments = () => {
       return;
     }
 
-    playSound('effects.failure');
+    playSound('failure');
   }, [bookId, bookReady, createStorySession, history, playSound, selectedStory]);
 
   useEffect(() => {
@@ -459,7 +459,7 @@ const CrewAssignments = () => {
   }, [book, eligibleCrew, initialSelectedId]);
 
   const togglePart = useCallback((partId) => () => {
-    playSound('effects.click');
+    playSound('click');
     if (collapsedParts.includes(partId)) {
       setCollapsedParts(
         collapsedParts.filter((p) => p !== partId)

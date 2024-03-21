@@ -113,7 +113,7 @@ const CrewAssignment = ({ crewId, crewmateId, crewmateMap, onFinish, overrides =
     undoPath
   } = useBookSession(crewId, crewmateId);
 
-  const playSound = useStore(s => s.dispatchSoundRequested);
+  const playSound = useStore(s => s.dispatchEffectStartRequested);
 
   const [confirmingExitStoryMode, setConfirmingExitStoryMode] = useState();
   const [pathLoading, setPathLoading] = useState();
@@ -139,12 +139,12 @@ const CrewAssignment = ({ crewId, crewmateId, crewmateMap, onFinish, overrides =
   }, [storySession?.currentStep]);
 
   const confirmPath = useCallback(() => {
-    playSound('effects.click');
+    playSound('click');
     choosePath(selection.id);
   }, [choosePath, playSound, selection]);
 
   const selectPath = useCallback((path) => () => {
-    playSound('effects.click' );
+    playSound('click' );
 
     // if only one choice (or auto confirming), don't need to confirm
     if (!REQUIRE_CONFIRM || storySession?.linkedPaths?.length === 1) {
@@ -157,7 +157,7 @@ const CrewAssignment = ({ crewId, crewmateId, crewmateMap, onFinish, overrides =
   }, [choosePath, playSound, storySession]);
 
   const onGoBack = useCallback(() => {
-    playSound('effects.click');
+    playSound('click');
     history.push(onCloseDestination);
   }, [history, playSound, onCloseDestination]);
 
@@ -170,7 +170,7 @@ const CrewAssignment = ({ crewId, crewmateId, crewmateMap, onFinish, overrides =
       overrides?.onFinish();
       return;
     }
-    playSound('effects.success');
+    playSound('success');
     choosePath('x');
     onFinish(); // ${bookSession?.isMintingStory ? 'create' : 'complete'}
   }, [history, playSound, bookSession?.isMintingStory, overrides?.onFinish]);

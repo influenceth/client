@@ -192,12 +192,12 @@ const StandardButton = (props) => {
     children,
     ...restProps } = props;
 
-  const playSound = useStore(s => s.dispatchSoundRequested);
+  const playSound = useStore(s => s.dispatchEffectStartRequested);
   const sizeParams = sizes[props.size] || sizes.medium;
   const { style, ...nonStyleProps } = restProps;
 
   const _onClick = (e) => {
-    playSound('effects.click');
+    playSound('click');
     if (onClick) onClick(e);
   }
 

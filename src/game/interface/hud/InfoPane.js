@@ -23,7 +23,7 @@ import useStore from '~/hooks/useStore';
 import useCrew from '~/hooks/useCrew';
 import useCrewContext from '~/hooks/useCrewContext';
 import RouteSelection from './actionForms/RouteSelection';
-import { getBuildingIcon, getLotShipIcon, getShipIcon } from '~/lib/assetUtils';
+import { getBuildingIcon, getLotShipIcon } from '~/lib/assetUtils';
 import formatters from '~/lib/formatters';
 import useSale from '~/hooks/useSale';
 import useShip from '~/hooks/useShip';
@@ -295,6 +295,8 @@ const InfoPane = () => {
   const dispatchLotSelected = useStore(s => s.dispatchLotSelected);
   const dispatchZoomScene = useStore(s => s.dispatchZoomScene);
   const updateZoomStatus = useStore(s => s.dispatchZoomStatusChanged);
+  const playSound = useStore(s => s.dispatchEffectStartRequested);
+  const stopSound = useStore(s => s.dispatchEffectStopRequested);
 
   const { actions, props: actionProps } = useActionButtons();
   const { data: asteroid, isLoading: asteroidIsLoading } = useAsteroid(asteroidId);
@@ -303,6 +305,11 @@ const InfoPane = () => {
   const { data: lot, isLoading: lotIsLoading } = useLot(lotId);
   const { data: ship, isLoading: shipIsLoading } = useShip(zoomScene?.type === 'SHIP' ? zoomScene.shipId : undefined);
   const saleIsActive = useSale(Entity.IDS.ASTEROID);
+
+  const [hover, setHover] = useState();
+  const [currentSound, setCurrentSound] = useState();
+
+  const onMouseEvent = (e) => setHover(e.type === 'mouseenter');
 
   const onClickPane = useCallback(() => {
     // open lot
@@ -334,8 +341,19 @@ const InfoPane = () => {
     return false;
   }, [asteroidId, lotId, zoomStatus]);
 
-  const [hover, setHover] = useState();
-  const onMouseEvent = (e) => setHover(e.type === 'mouseenter');
+  // Control sounds for buildings
+  useEffect(() => {
+    if (currentSound) {
+      stopSound(currentSound, { fadeOut: 500 });
+      setCurrentSound(null);
+    }
+
+    if (lot?.building) {
+      const soundName = Building.TYPES[lot?.building?.Building?.buildingType]?.name?.toLowerCase();
+      playSound(soundName, { loop: false, duration: 4000, fadeOut: 1000 });
+      setCurrentSound(soundName);
+    }
+  }, [lot]);
 
   useEffect(() => {
     setHover(false);
