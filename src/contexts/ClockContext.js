@@ -1,12 +1,14 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Time } from '@influenceth/sdk';
 
 import useGetTime from '~/hooks/useGetTime';
 import useInterval from '~/hooks/useInterval';
 import useConstants from '~/hooks/useConstants';
+import useStore from '~/hooks/useStore';
 
 
-const INTERVAL_LENGTH = 1000 / 30;  // denominator is FPS for clock check
+const MIN_INTERVAL_LENGTH = 1000 / 30;  // denominator is FPS for clock check
+const MAX_INTERVAL_LENGTH = 5000;
 
 export const DISPLAY_TIME_FRACTION_DIGITS = 2;
 
@@ -18,11 +20,27 @@ export function ClockProvider({ children }) {
   const getTime = useGetTime();
   const { data: TIME_ACCELERATION } = useConstants('TIME_ACCELERATION');
 
+  const timeOverride = useStore(s => s.timeOverride);
+
   const [contextValue, setContextValue] = useState({
     coarseTime: 0,
     displayTime: '',
     realWorldTime: 0,
   });
+
+
+  // this only needs to run as often as 0.01 adays in real time (0.01 * 86400e3 == 864e3)
+  const interval = useMemo(
+    () => 
+    Math.min(
+      Math.max(
+        MIN_INTERVAL_LENGTH,
+        Time.toRealDuration(864e3, TIME_ACCELERATION || Time.DEFAULT_TIME_ACCELERATION) / Math.abs(timeOverride?.speed || 1)
+      ),
+      MAX_INTERVAL_LENGTH
+    ),
+    [TIME_ACCELERATION, timeOverride?.speed]
+  );
 
   const updateClock = useCallback(() => {
     const coarseTimeInterval = 100 / (TIME_ACCELERATION / Time.DEFAULT_TIME_ACCELERATION);
@@ -39,7 +57,7 @@ export function ClockProvider({ children }) {
     }
   }, [contextValue, getTime, TIME_ACCELERATION]);
   useEffect(updateClock, []); // eslint-disable-line react-hooks/exhaustive-deps
-  useInterval(updateClock, INTERVAL_LENGTH);
+  useInterval(updateClock, interval);
 
   return (
     <ClockContext.Provider value={contextValue}>
