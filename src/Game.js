@@ -1,4 +1,4 @@
-import { Profiler, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import styled from 'styled-components';
 import { ThemeProvider, createGlobalStyle } from 'styled-components';
 import { BrowserRouter as Router, Switch, Route, useHistory } from 'react-router-dom';
