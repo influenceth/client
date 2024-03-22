@@ -4,7 +4,7 @@ import { Crew, Crewmate, Entity, Inventory, Ship, Time } from '@influenceth/sdk'
 
 import { CrewCaptainCardFramed } from '~/components/CrewmateCardFramed';
 import Dropdown from '~/components/Dropdown';
-import { CheckedIcon, CloseIcon, UncheckedIcon, WarningIcon } from '~/components/Icons';
+import { CheckedIcon, CloseIcon, RefreshIcon, UncheckedIcon, WarningIcon } from '~/components/Icons';
 import MouseoverInfoPane from '~/components/MouseoverInfoPane';
 import NumberInput from '~/components/NumberInput';
 import Porkchop from '~/components/Porkchop';
@@ -269,7 +269,6 @@ const RoutePlanner = () => {
       ...Object.keys(Ship.TYPES).map((s, i) => ({
         label: Entity.IDS.SHIP,
         id: -(1 + i),
-        i: -(1 + i),
         Name: { name: `Simulated ${Ship.TYPES[s].name}` },
         Ship: { shipType: Number(s), status: Ship.STATUSES.AVAILABLE },
         Location: { location: { label: Entity.IDS.ASTEROID, id: originId } },
@@ -382,13 +381,15 @@ const RoutePlanner = () => {
   }, [dispatchReorientCamera]);
 
   // baseTime is zero-time of the chart rendered. update if...
-  //  - not set yet
+  //  - not set yet OR significantly different (i.e. time_acceleration changed)
   //  - use was fast-forwarding and is no longer
   //  - travel-solution was just cleared because no longer valid
   const isFastForwarding = (Math.abs(timeOverride?.speed) > 1);
   useEffect(() => {
-    if (!baseTime) setBaseTime(coarseTime);
-  }, [!coarseTime]);
+    if (!baseTime || ((coarseTime - baseTime) / baseTime > 0.05)) {
+      setBaseTime(coarseTime);
+    }
+  }, [coarseTime, TIME_ACCELERATION]);
   useEffect(() => {
     if (!isFastForwarding) setBaseTime(coarseTime);
   }, [isFastForwarding]);
@@ -449,7 +450,7 @@ const RoutePlanner = () => {
             labelKey="_name"
             onChange={setShip}
             options={shipList}
-            valueKey="i"
+            valueKey="id"
             size="small"
             style={{ textTransform: 'none', fontSize: '80%' }}
             width={230} />
@@ -526,6 +527,9 @@ const RoutePlanner = () => {
 
       <SectionHeader style={{ marginBottom: 10 }}>
         <span>Ballistic Transfer Graph</span>
+        {!travelSolution && (coarseTime > (baseTime + 5)) && (
+          <Closer onClick={() => setBaseTime(coarseTime)}><RefreshIcon /></Closer>
+        )}
         {travelSolution && (
           <Closer onClick={dispatchTravelSolution}><CloseIcon /></Closer>
         )}
