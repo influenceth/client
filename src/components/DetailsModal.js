@@ -152,8 +152,7 @@ const Details = (props) => {
         {title && <Header {...headerProps}><span>{title}</span></Header>}
         <CloseButton
           onClick={onClose || (() => history.push(onCloseDestination || '/'))}
-          hasBackground={edgeToEdge}
-          borderless>
+          hasBackground={edgeToEdge}>
           <CloseIcon />
         </CloseButton>
         <Content edgeToEdge={edgeToEdge} hasTitle={!!title} {...contentProps}>
