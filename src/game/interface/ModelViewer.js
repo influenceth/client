@@ -11,7 +11,7 @@ import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader';
 import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader';
 import { useFrame, useThree, Canvas } from '@react-three/fiber';
 import { useCubeTexture } from '@react-three/drei';
-import { RingLoader } from 'react-spinners';
+import { PropagateLoader } from 'react-spinners';
 import styled, { css } from 'styled-components';
 
 import Details from '~/components/DetailsFullsize';
@@ -735,18 +735,10 @@ const Lighting = ({ keylightIntensity = 1.0, rimlightIntensity = 0.25 }) => {
   return null;
 };
 
-const fudgeAmount = 10;
-const Loader = ({ progress }) => {
-  const [fudge, setFudge] = useState(0);
-  useInterval(() => {
-    if (progress === 1) {
-      setFudge((f) => f + (1 - f) / 5);
-    }
-  }, 100);
+const Loader = () => {
   return (
     <LoadingContainer>
-      <RingLoader color="#fff" size={80} />
-      <div>{((100 - fudgeAmount) * progress + fudgeAmount * fudge).toFixed(1)}%</div>
+      <PropagateLoader color="#aaa" />
     </LoadingContainer>
   );
 };

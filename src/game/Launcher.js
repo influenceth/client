@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
-import { RingLoader as Loader } from 'react-spinners';
+import { PuffLoader as Loader } from 'react-spinners';
 
 import useSession from '~/hooks/useSession';
 import useStore from '~/hooks/useStore';
