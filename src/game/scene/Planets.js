@@ -17,11 +17,13 @@ const Planets = () => {
   const texture = useTexture(`${process.env.PUBLIC_URL}/textures/circleFaded.png`);
   const { processInBackground } = useWebWorker();
 
+  const isUpdating = useRef(false);
   const geometry = useRef();
 
   // Listen for changes to planets data or global time and update planet positions
   useEffect(() => {
-    if (planets && coarseTime) {
+    if (planets && coarseTime && !isUpdating.current) {
+      isUpdating.current = true;
       processInBackground(
         {
           topic: 'updatePlanetPositions',
@@ -33,6 +35,7 @@ const Planets = () => {
           _cacheable: 'planets'
         },
         (data) => {
+          isUpdating.current = false;
           if (geometry.current && data.positions) {
             geometry.current.setAttribute(
               'position',
