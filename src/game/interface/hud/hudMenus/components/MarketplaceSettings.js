@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
 import { Exchange, Product } from '@influenceth/sdk';
-import { RingLoader as Loader } from 'react-spinners';
+import { PuffLoader as Loader } from 'react-spinners';
 
 import UncontrolledTextInput, { TextInputWrapper } from '~/components/TextInputUncontrolled';
 import useMarketplaceAdmin from '~/hooks/actionManagers/useMarketplaceAdmin';
@@ -30,7 +30,7 @@ const InputBlock = styled.div`
     flex-direction: row;
     justify-content: space-between;
   }
-  
+
   & > div {
     align-items: flex-end;
     display: flex;
@@ -90,7 +90,7 @@ const MarketplaceSettings = ({ marketplace }) => {
   const [ products, setProducts ] = useState(exchange.allowedProducts || []);
   const [ makerFee, setMakerFee ] = useState(exchange.makerFee / 100);
   const [ takerFee, setTakerFee ] = useState(exchange.takerFee / 100);
-  
+
   const handleChange = useCallback((setter, defaultValue) => (e) => {
     setter(
       Math.max(
@@ -116,7 +116,7 @@ const MarketplaceSettings = ({ marketplace }) => {
     if (changingSettings) setLoading(true);
   }, [changingSettings]);
   useEffect(() => {
-    setLoading(false); 
+    setLoading(false);
   }, [handleRevert]);
 
   const handleBlur = useCallback((index) => (e) => {

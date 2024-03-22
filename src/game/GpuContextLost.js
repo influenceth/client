@@ -3,7 +3,7 @@ import { useThree } from '@react-three/fiber';
 import styled from 'styled-components';
 
 import useStore from '~/hooks/useStore';
-import Button from '~/components/ButtonAlt';
+import Button from '~/components/ButtonDumb';
 import OnClickLink from '~/components/OnClickLink';
 
 const GpuContextLostContainer = styled.div`

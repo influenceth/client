@@ -123,7 +123,7 @@ export function ActionItemProvider({ children }) {
   // TODO: clear timers in the serviceworker
   //  for not yet ready to finish, set new timers based on time remaining
 
-  // without memoizing, triggers as if new value on every chainTime update
+  // without memoizing, triggers as if new value on every syncedTime update
   const contextValue = useMemo(() => ({
     allVisibleItems,
     pendingTransactions,
@@ -182,7 +182,7 @@ export function ActionItemProvider({ children }) {
   //       // }
   //       openItems.push({
   //         ...event,
-  //         isReady: chainTime >= event.returnValues.finishTime,
+  //         isReady: syncedTime >= event.returnValues.finishTime,
   //         waitingOn
   //       });
   //     }
@@ -206,7 +206,7 @@ export function ActionItemProvider({ children }) {
   // useEffect(() => {
   //   actionItemz.forEach((ai) => {
   //     if (!ai.isReady && !nextTimer.current) {
-  //       const readyIn = (ai.returnValues.finishTime - chainTime) + 5;
+  //       const readyIn = (ai.returnValues.finishTime - syncedTime) + 5;
   //       nextTimer.current = setTimeout(() => {
   //         console.log('Something is ready.');
   //         setReadyTally((i) => i + 1);

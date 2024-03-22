@@ -11,13 +11,14 @@ import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader';
 import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader';
 import { useFrame, useThree, Canvas } from '@react-three/fiber';
 import { useCubeTexture } from '@react-three/drei';
-import BarLoader from 'react-spinners/BarLoader';
+import { PropagateLoader } from 'react-spinners';
 import styled, { css } from 'styled-components';
 
 import Details from '~/components/DetailsFullsize';
-import Postprocessor from '../Postprocessor';
+import useInterval from '~/hooks/useInterval';
 import useStore from '~/hooks/useStore';
 import { formatFixed } from '~/lib/utils';
+import Postprocessor from '../Postprocessor';
 
 // TODO: connect to gpu-graphics settings?
 const ENABLE_SHADOWS = true;
@@ -73,12 +74,21 @@ const CameraInfo = styled.div`
   z-index: 1000;
 `;
 
-const loadingCss = css`
+const LoadingContainer = styled.div`
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  justify-content: center;
   left: 0;
-  position: absolute;
   top: 0;
-  width: 100%;
+  width: 100vw;
+  position: absolute;
   z-index: 10;
+  & > div:last-child {
+    font-weight: bold;
+    margin-top: 8px;
+  }
 `;
 
 export const toneMaps = [
@@ -166,7 +176,7 @@ const loadTexture = (file, filename = '') => {
 
 let currentModelLoadId;
 
-const Model = ({ url, onLoaded, onCameraUpdate, ...settings }) => {
+const Model = ({ url, onLoaded, onProgress, onCameraUpdate, ...settings }) => {
   const { camera, clock, gl, scene } = useThree();
   const pixelRatio = useStore(s => s.graphics.pixelRatio);
 
@@ -434,7 +444,7 @@ const Model = ({ url, onLoaded, onCameraUpdate, ...settings }) => {
       // onprogress
       // TODO (enhancement): share the below with user
       (xhr) => {
-        // console.log((xhr.loaded / xhr.total) * 100 + '% loaded');
+        onProgress(xhr.loaded / xhr.total);
       },
 
       // onerror
@@ -725,9 +735,16 @@ const Lighting = ({ keylightIntensity = 1.0, rimlightIntensity = 0.25 }) => {
   return null;
 };
 
+const Loader = () => {
+  return (
+    <LoadingContainer>
+      <PropagateLoader color="#aaa" />
+    </LoadingContainer>
+  );
+};
+
 const ModelViewer = ({ assetType, modelUrl, ...overrides }) => {
   const canvasStack = useStore(s => s.canvasStack);
-  const pixelRatio = useStore(s => s.graphics.pixelRatio);
   const dispatchCanvasStacked = useStore(s => s.dispatchCanvasStacked);
   const dispatchCanvasUnstacked = useStore(s => s.dispatchCanvasUnstacked);
 
@@ -752,17 +769,7 @@ const ModelViewer = ({ assetType, modelUrl, ...overrides }) => {
 
   useEffect(() => {
     setLoadingSkybox(true);
-  }, [settings.background, settings.envmap])
-
-  const bloomParams = useMemo(() => ({
-    radius: settings.bloomRadius,
-    strength: settings.bloomStrength
-  }), [settings]);
-
-  const toneMappingParams = useMemo(() => ({
-    toneMapping: settings.toneMapping || LinearToneMapping,
-    toneMappingExposure: settings.toneMappingExposure
-  }), [settings]);
+  }, [settings.background, settings.envmap]);
 
   const onModelLoaded = useCallback(() => setLoadingModel(false), []);
   const onSkyboxLoaded = useCallback(() => setLoadingSkybox(false), []);
@@ -771,6 +778,8 @@ const ModelViewer = ({ assetType, modelUrl, ...overrides }) => {
     setIsLoading(loadingModel || loadingSkybox);
   }, [ loadingModel, loadingSkybox ]);
 
+  const [progress, setProgress] = useState(0);
+
   // TODO: is Details best component to wrap this in?
   // TODO: is canvasStack assetType causing a problem since it might change?
   return (
@@ -778,7 +787,9 @@ const ModelViewer = ({ assetType, modelUrl, ...overrides }) => {
       edgeToEdge
       hideClose
       lowerZIndex>
-      <BarLoader color="#AAA" height={3} loading={isLoading} css={loadingCss} />
+      {isLoading && (
+        <Loader progress={progress} />
+      )}
 
       <CanvasContainer ready={!isLoading}>
         <Canvas
@@ -800,6 +811,7 @@ const ModelViewer = ({ assetType, modelUrl, ...overrides }) => {
             <Model
               onCameraUpdate={settings.trackCamera ? setCameraInfo : null}
               onLoaded={onModelLoaded}
+              onProgress={setProgress}
               url={modelUrl}
               {...settings} />
           )}

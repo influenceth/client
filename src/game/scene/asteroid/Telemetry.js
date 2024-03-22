@@ -574,6 +574,7 @@ const Telemetry = ({ axis, getPosition, getRotation, hasAccess, initialCameraPos
           shipGroup.current.lookAt(solar);
         }
 
+        // TODO: should below technically use a Time function from sdk to account for time_acceleration?
         const now = getTime() * 86400;
         const shipDelta = now - (shipTime.current || now);
         // rotate children instead of group because otherwise "inclination" mode breaks (due to repeated lookAt's)

@@ -350,7 +350,7 @@ export function SessionProvider({ children }) {
       authenticate();
       setReadyForChildren(true);
     }
-  }, [/*authenticate, connect,*/ currentSession, status]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [currentSession, status]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Catch errors and display in an alert
   useEffect(() => {

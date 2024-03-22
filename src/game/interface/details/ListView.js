@@ -357,7 +357,7 @@ const ListViewComponent = ({ assetType, onAssetTypeChange, params }) => {
                 data-for="global"
                 data-place="right"
                 data-tip={filtersOpen ? 'Hide Filters' : 'Show Filters'}
-                background={filtersOpen ? theme.colors.main : undefined}
+                background={filtersOpen ? `rgba(${theme.colors.mainRGB}, 0.6)` : undefined}
                 badge={filtersOpen ? undefined : activeFilters}
                 disabled={disableFilters}
                 onClick={onToggleFilters}

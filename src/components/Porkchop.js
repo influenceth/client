@@ -54,15 +54,20 @@ const Solutionless = styled.div`
   }
 `;
 
-const TimeBlock = styled.div`
+const TimeBlock = styled.div.attrs((p) => ({
+  style: {
+    borderRightWidth: p.percentage > 0 ? '1px' : 0,
+    width: `${Math.max(0, 100 * p.percentage)}%`
+  }
+}))`
   background: rgba(0, 0, 0, 0.7);
-  border-right: ${p => p.width > 0 ? 1 : 0}px solid rgba(150, 0, 0, 0.7);
+  // border-right: solid rgba(150, 0, 0, 0.7);
+  border-right: solid rgba(68, 68, 68, 0.7);
   left: 0;
   height: 100%;
   pointer-events: none;
   position: absolute;
   top: 0;
-  width: ${p => Math.max(0, 100 * p.width)}%;
 `;
 
 const colorRange = [
@@ -366,7 +371,7 @@ const Porkchop = ({
         {selectionPos && <Reticule selected center={selectionPos} fade={!!mousePos} invalid={!travelSolutionIsValid} />}
         {mousePos && <Reticule center={mousePos} />}
       </PorkchopContainer>
-      <TimeBlock width={(nowTime - baseTime) / (maxDelay - minDelay)} />
+      <TimeBlock percentage={(nowTime - baseTime) / (maxDelay - minDelay)} />
       <Solutionless show={!solutionsExist && !loading}>
         <WarningOutlineIcon />
         <h3>No Possible Routes</h3>

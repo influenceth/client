@@ -9,8 +9,9 @@ import { ActivitiesProvider } from '~/contexts/ActivitiesContext';
 import { SessionProvider } from '~/contexts/SessionContext';
 import { CrewProvider } from './contexts/CrewContext';
 import { ChainTransactionProvider } from '~/contexts/ChainTransactionContext';
-import { ClockProvider } from '~/contexts/ClockContext';
 import { DevToolProvider } from '~/contexts/DevToolContext';
+import { ScreensizeProvider } from '~/contexts/ScreensizeContext';
+import { SyncedTimeProvider } from '~/contexts/SyncedTimeContext';
 import { WebsocketProvider } from '~/contexts/WebsocketContext';
 import Audio from '~/game/Audio';
 import Interface from '~/game/Interface';
@@ -37,11 +38,12 @@ const StyledMain = styled.main`
   width: 100%;
 `;
 
-// for starknet modals
 const GlobalStyle = createGlobalStyle`
   label {
     cursor: inherit;
   }
+
+  /* for starknet modals */
   .s-dialog {
     z-index: 1010 !important;
   }
@@ -139,44 +141,63 @@ const Game = () => {
   }, [createAlert, updateNeeded, onUpdateVersion]);
 
   return (
-    <SessionProvider>
-      <CrewProvider>
-        <DevToolProvider>
+    <>
+      <GlobalStyle />
+
+      {/* global contexts (i.e. needed by interface and scene) */}
+      <SessionProvider>
+        <CrewProvider>
           <WebsocketProvider>
-            <ActivitiesProvider>
-              <ChainTransactionProvider>
-                <ActionItemProvider>
-                  <ThemeProvider theme={theme}>
-                    <GlobalStyle />
-                    <Router>
-                      <Referral />
-                      <Switch>
-                        {/* for socialmedia links that need to pull opengraph tags (will redirect to discord or main app) */}
-                        <Route path="/play">
-                          <LandingPage />
-                        </Route>
-                        {/* for everything else */}
-                        <Route>
-                          <LauncherRedirect />
-                          <ClockProvider>
-                            <StyledMain>
-                              <Interface />
-                              {showScene && <Scene />}
-                              <Audio />
-                              <WelcomeFlow />
-                            </StyledMain>
-                          </ClockProvider>
-                        </Route>
-                      </Switch>
-                    </Router>
-                  </ThemeProvider>
-                </ActionItemProvider>
-              </ChainTransactionProvider>
-            </ActivitiesProvider>
+            <Router>
+              <Referral />
+              <Switch>
+
+                {/* for socialmedia links that need to pull opengraph tags (will redirect to discord or main app) */}
+                <Route path="/play">
+                  <LandingPage />
+                </Route>
+
+                {/* for everything else */}
+                <Route>
+
+                  {/* redirect user to launcher (when appropraite) */}
+                  <LauncherRedirect />
+
+                  {/* main app wrapper */}
+                  <StyledMain>
+
+                    {/* all ui-specific context providers wrapping interface and new-user flow */}
+                    <ActivitiesProvider>
+                      <ChainTransactionProvider>
+                        <SyncedTimeProvider>
+                          <ActionItemProvider>
+                            <DevToolProvider>
+                              <ThemeProvider theme={theme}>
+                                <ScreensizeProvider>
+                                  <Interface />
+                                  <WelcomeFlow />
+                                </ScreensizeProvider>
+                              </ThemeProvider>
+                            </DevToolProvider>
+                          </ActionItemProvider>
+                        </SyncedTimeProvider>
+                      </ChainTransactionProvider>
+                    </ActivitiesProvider>
+
+                    {/* 3d scene */}
+                    {showScene && <Scene />}
+
+                    {/* audio */}
+                    <Audio />
+
+                  </StyledMain>
+                </Route>
+              </Switch>
+            </Router>
           </WebsocketProvider>
-        </DevToolProvider>
-      </CrewProvider>
-    </SessionProvider>
+        </CrewProvider>
+      </SessionProvider>
+    </>
   );
 };
 

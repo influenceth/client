@@ -1,6 +1,6 @@
-import { useQuery, useQueryClient } from 'react-query';
 import { useMemo } from 'react';
-import { Deposit, Entity, Lot, Permission, Ship } from '@influenceth/sdk';
+import { useQuery, useQueryClient,  } from 'react-query';
+import { Entity, Lot, Permission, Ship } from '@influenceth/sdk';
 
 import api from '~/lib/api';
 import useEntity from './useEntity';
@@ -70,7 +70,10 @@ const useLot = (lotId) => {
   const { data: deposits, isLoading: depositsLoading } = useLotEntities(lotId, Entity.IDS.DEPOSIT, !!lotDataPrepopped);
   const { data: ships, isLoading: shipsLoading } = useLotEntities(lotId, Entity.IDS.SHIP, !!lotDataPrepopped);
 
-  return useMemo(() => {
+  const isLoading = lotEntity?.uuid && (lotIsLoading || lotDataIsLoading || asteroidLoading || buildingsLoading || depositsLoading || shipsLoading);
+  const data = useMemo(() => {
+    if (isLoading) return undefined;
+
     const { asteroidId, lotIndex } = Lot.toPosition(lotId) || {};
     const agreement = (lot?.PrepaidAgreements || lot?.ContractAgreements || []).find((a) => a.permission === Permission.IDS.USE_LOT);
     const building = (buildings || []).find((e) => e.Building.status > 0);
@@ -79,42 +82,41 @@ const useLot = (lotId) => {
     const surfaceShip = !building && shipsToShow.find((e) => e.Ship.status === Ship.STATUSES.AVAILABLE && e.Location.location.label === Entity.IDS.LOT);
 
     return {
-      data: lotId ? {
-        ...lotEntity,
-        ...lot,
-        Location: {
-          location: { label: Entity.IDS.ASTEROID, id: asteroidId },
-          locations: [
-            lotEntity,
-            { label: Entity.IDS.ASTEROID, id: asteroidId },
-          ]
-        },
-        building,
-        deposits: depositsToShow,
-        ships: shipsToShow,
-        surfaceShip,
+      ...lotEntity,
+      ...lot,
+      Location: {
+        location: { label: Entity.IDS.ASTEROID, id: asteroidId },
+        locations: [
+          lotEntity,
+          { label: Entity.IDS.ASTEROID, id: asteroidId },
+        ]
+      },
+      building,
+      deposits: depositsToShow,
+      ships: shipsToShow,
+      surfaceShip,
 
-        Control: agreement?.permitted?.id
-          ? { controller: { id: agreement.permitted.id, label: Entity.IDS.CREW }, isExplicit: true }
-          : asteroid?.Control,
-        ContractPolicies: asteroid?.ContractPolicies,
-        PrepaidPolicies: (asteroid?.PrepaidPolicies || []).map((p) => {
-          // for simplicity, apply AP's special lot rating here so don't have to apply it everywhere else
-          if (p.permission === Permission.IDS.USE_LOT && asteroid.id === 1) {
-            return {
-              ...p,
-              rate: Math.floor(Permission.getAdaliaPrimeLotRate(p, lotIndex))
-            }
+      Control: agreement?.permitted?.id
+        ? { controller: { id: agreement.permitted.id, label: Entity.IDS.CREW }, isExplicit: true }
+        : asteroid?.Control,
+      ContractPolicies: asteroid?.ContractPolicies,
+      PrepaidPolicies: (asteroid?.PrepaidPolicies || []).map((p) => {
+        // for simplicity, apply AP's special lot rating here so don't have to apply it everywhere else
+        if (p.permission === Permission.IDS.USE_LOT && asteroid.id === 1) {
+          return {
+            ...p,
+            rate: Math.floor(Permission.getAdaliaPrimeLotRate(p, lotIndex))
           }
-          return p;
-        }),
-        // 'ContractAgreement', 'PrepaidAgreement' should be on lot record
-        // unclear what happens to 'WhitelistAgreement' or PublicPolicies
-      } : undefined,
-      isLoading: lotIsLoading || lotDataIsLoading || asteroidLoading || buildingsLoading || depositsLoading || shipsLoading
+        }
+        return p;
+      }),
+      // 'ContractAgreement', 'PrepaidAgreement' should be on lot record
+      // unclear what happens to 'WhitelistAgreement' or PublicPolicies
     };
-  }, [lotId, lot, lotEntity, asteroid, buildings, deposits, ships, lotIsLoading, lotDataIsLoading, asteroidLoading, buildingsLoading, depositsLoading, shipsLoading])
 
+  }, [lotEntity?.uuid, isLoading])
+
+  return useMemo(() => ({ data, isLoading }), [data, isLoading]);
 };
 
 export default useLot;

@@ -7,7 +7,6 @@ import styled from 'styled-components';
 
 import { TrackballModControls } from '~/components/TrackballModControls';
 import SessionContext from '~/contexts/SessionContext';
-import ClockContext from '~/contexts/ClockContext';
 import CrewContext from '~/contexts/CrewContext';
 import useStore from '~/hooks/useStore';
 import constants from '~/lib/constants';
@@ -83,7 +82,6 @@ const Scene = () => {
   // Use ContextBridge to make wallet available within canvas
   const ContextBridge = useContextBridge(
     SessionContext,
-    ClockContext,
     CrewContext,
     WebsocketContext
   );

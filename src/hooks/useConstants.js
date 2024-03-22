@@ -3,7 +3,6 @@ import { useQuery } from 'react-query';
 import api from '~/lib/api';
 
 const useConstants = (constantOrConstants) => {
-  // TODO: should we set this to get refetched on an interval?
   return useQuery(
     [ 'constants', constantOrConstants ],
     async () => {

@@ -3,7 +3,6 @@ import styled from 'styled-components';
 import { Crew, Time } from '@influenceth/sdk';
 
 import { FoodIcon, WarningOutlineIcon } from '~/components/Icons';
-import useChainTime from '~/hooks/useChainTime';
 import useConstants from '~/hooks/useConstants';
 import { hexToRGB } from '~/theme';
 import useBlockTime from '~/hooks/useBlockTime';

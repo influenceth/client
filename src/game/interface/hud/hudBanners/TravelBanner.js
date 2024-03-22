@@ -1,15 +1,13 @@
-import { useCallback, useContext, useMemo } from 'react';
+import { useMemo } from 'react';
 import styled from 'styled-components';
+
 import { GasIcon, ShipMarkerIcon, TimerIcon, WarningIcon } from '~/components/Icons';
-import ClockContext from '~/contexts/ClockContext';
+import useCoarseTime from '~/hooks/useCoarseTime';
 import useStore from '~/hooks/useStore';
+import useTravelSolutionIsValid from '~/hooks/useTravelSolutionIsValid';
 import { formatFixed } from '~/lib/utils';
 import theme from '~/theme';
-
 import Banner from './Banner';
-import useCrewContext from '~/hooks/useCrewContext';
-import useShip from '~/hooks/useShip';
-import useTravelSolutionIsValid from '~/hooks/useTravelSolutionIsValid';
 
 const Side = styled.div`
   align-items: center;
@@ -61,7 +59,7 @@ const Content = styled.div`
 `;
 
 const TravelBanner = ({ visible }) => {
-  const { coarseTime } = useContext(ClockContext);
+  const coarseTime = useCoarseTime();
   const travelSolution = useStore(s => s.asteroids.travelSolution);
   const dispatchHudMenuOpened = useStore(s => s.dispatchHudMenuOpened);
 

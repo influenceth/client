@@ -190,3 +190,4 @@ export const getBlockTime = async (starknet, blockNumber = 'pending') => {
 export const earlyAccessJSTime = 1708527600e3;
 export const openAccessJSTime = 1709046000e3;
 export const expectedBlockSeconds = 180;
+export const displayTimeFractionDigits = 2;

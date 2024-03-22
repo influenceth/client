@@ -280,7 +280,9 @@ const ActionItem = ({ data, getActivityConfig }) => {
   const history = useHistory();
 
   const createAlert = useStore(s => s.dispatchAlertLogged);
-  const currentAsteroid = useStore(s => s.asteroids);
+  const currentAsteroidId = useStore(s => s.asteroids.origin);
+  const currentLotId = useStore(s => s.asteroids.lot);
+  const zoomStatus = useStore(s => s.asteroids.zoomStatus);
   const resourceMap = useStore(s => s.asteroids.resourceMap);
   const dispatchActionDialog = useStore(s => s.dispatchActionDialog);
   const dispatchLauncherPage = useStore(s => s.dispatchLauncherPage);
@@ -312,10 +314,10 @@ const ActionItem = ({ data, getActivityConfig }) => {
     if (item.onClick) {
       // delay dialog opening based on how far camera needs to fly to get there
       let dialogDelay = 0;
-      if (item.asteroidId && (currentAsteroid.origin !== item.asteroidId || currentAsteroid.zoomStatus !== 'in')) {
+      if (item.asteroidId && (currentAsteroidId !== item.asteroidId || zoomStatus !== 'in')) {
         dialogDelay = 3250;
         if (item.lotId) dialogDelay += 750;
-      } else if (item.lotId && currentAsteroid.lot?.lotId !== item.lotId) {
+      } else if (item.lotId && currentLotId !== item.lotId) {
         dialogDelay = 400;
       // TODO: implement these?
       } else if (item.buildingId) {
@@ -345,12 +347,12 @@ const ActionItem = ({ data, getActivityConfig }) => {
     }
   }, [
     goToAction,
-    currentAsteroid?.origin,
-    currentAsteroid?.lot?.lotId,
-    currentAsteroid?.zoomStatus,
+    currentAsteroidId,
+    currentLotId,
     item.asteroidId,
     item.lotId,
-    item.onClick
+    item.onClick,
+    zoomStatus,
   ]);
 
   const onDismiss = useCallback((e) => {
@@ -494,7 +496,6 @@ const ActionItems = () => {
               {filteredDisplayItems.map((item) => (
                 <ActionItem
                   key={item.uniqueKey}
-                  crew={crew}
                   data={item}
                   getActivityConfig={getActivityConfig}
                 />

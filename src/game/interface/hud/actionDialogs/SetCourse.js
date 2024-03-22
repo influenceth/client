@@ -1,4 +1,4 @@
-import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import styled from 'styled-components';
 import { Crewmate, Product, Ship, Time } from '@influenceth/sdk';
 
@@ -10,8 +10,19 @@ import {
   RotatedShipMarkerIcon,
   WarningOutlineIcon
 } from '~/components/Icons';
-import { formatFixed, formatTimer, getCrewAbilityBonuses, reactBool } from '~/lib/utils';
+import useActionCrew from '~/hooks/useActionCrew';
+import useAsteroid from '~/hooks/useAsteroid';
+import useCoarseTime from '~/hooks/useCoarseTime';
+import useCrewContext from '~/hooks/useCrewContext';
+import useShip from '~/hooks/useShip';
+import useStore from '~/hooks/useStore';
+import useShipTravelManager from '~/hooks/actionManagers/useShipTravelManager';
+import actionStages from '~/lib/actionStages';
+import formatters from '~/lib/formatters';
+import { displayTimeFractionDigits, formatFixed, formatTimer, getCrewAbilityBonuses, reactBool } from '~/lib/utils';
+import theme from '~/theme';
 
+import { ActionDialogInner } from '../ActionDialog';
 import {
   ActionDialogFooter,
   ActionDialogHeader,
@@ -30,18 +41,6 @@ import {
   MaterialBonusTooltip,
   getBonusDirection,
 } from './components';
-import useStore from '~/hooks/useStore';
-import { ActionDialogInner } from '../ActionDialog';
-import actionStages from '~/lib/actionStages';
-import theme from '~/theme';
-import useAsteroid from '~/hooks/useAsteroid';
-import useCrewContext from '~/hooks/useCrewContext';
-import ClockContext, { DISPLAY_TIME_FRACTION_DIGITS } from '~/contexts/ClockContext';
-import formatters from '~/lib/formatters';
-import useShipTravelManager from '~/hooks/actionManagers/useShipTravelManager';
-import useShip from '~/hooks/useShip';
-import useActionCrew from '~/hooks/useActionCrew';
-
 const Banner = styled.div`
   align-items: center;
   background: rgba(${p => p.theme.colors.mainRGB}, 0.5);
@@ -202,7 +201,7 @@ const LocationDiamond = () => (
 const propellantProduct = Product.TYPES[Product.IDS.HYDROGEN_PROPELLANT];
 
 const SetCourse = ({ origin, destination, manager, ship, stage, travelSolution, ...props }) => {
-  const { coarseTime } = useContext(ClockContext);
+  const coarseTime = useCoarseTime();
   const createAlert = useStore(s => s.dispatchAlertLogged);
   const dispatchHudMenuOpened = useStore(s => s.dispatchHudMenuOpened);
   const dispatchTravelMode = useStore(s => s.dispatchTravelMode);
@@ -420,7 +419,7 @@ const SetCourse = ({ origin, destination, manager, ship, stage, travelSolution, 
                 <div>
                   <label>Depart</label>
                   <span>
-                    {(Time.fromOrbitADays(travelSolution.departureTime, crew._timeAcceleration).toGameClockADays() || 0).toLocaleString(undefined, { minimumFractionDigits: DISPLAY_TIME_FRACTION_DIGITS })}
+                    {(Time.fromOrbitADays(travelSolution.departureTime, crew._timeAcceleration).toGameClockADays() || 0).toLocaleString(undefined, { minimumFractionDigits: displayTimeFractionDigits })}
                     <i>DAYS</i>
                   </span>
                 </div>
@@ -428,7 +427,7 @@ const SetCourse = ({ origin, destination, manager, ship, stage, travelSolution, 
                   <div>
                     <label>Time in Flight</label>
                     <span>
-                      {(travelSolution.arrivalTime - travelSolution.departureTime).toLocaleString(undefined, { minimumFractionDigits: DISPLAY_TIME_FRACTION_DIGITS })}
+                      {(travelSolution.arrivalTime - travelSolution.departureTime).toLocaleString(undefined, { minimumFractionDigits: displayTimeFractionDigits })}
                       <i>DAYS</i>
                     </span>
                   </div>
@@ -436,7 +435,7 @@ const SetCourse = ({ origin, destination, manager, ship, stage, travelSolution, 
                 <div>
                   <label>Arrive</label>
                   <span>
-                    {(Time.fromOrbitADays(travelSolution.arrivalTime, crew._timeAcceleration).toGameClockADays() || 0).toLocaleString(undefined, { minimumFractionDigits: DISPLAY_TIME_FRACTION_DIGITS })}
+                    {(Time.fromOrbitADays(travelSolution.arrivalTime, crew._timeAcceleration).toGameClockADays() || 0).toLocaleString(undefined, { minimumFractionDigits: displayTimeFractionDigits })}
                     <i>DAYS</i>
                   </span>
                 </div>

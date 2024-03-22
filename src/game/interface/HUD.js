@@ -1,7 +1,6 @@
 import styled from 'styled-components';
 
 import useCrewContext from '~/hooks/useCrewContext';
-import useStore from '~/hooks/useStore';
 import ActionDialog from './hud/ActionDialog';
 import ActionItems from './hud/ActionItems';
 import TutorialItems from './hud/TutorialItems';
