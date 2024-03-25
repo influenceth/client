@@ -301,7 +301,7 @@ const ChoicesDialog = ({
           <Footer>
             <Rule />
             <div style={{ alignItems: 'center', display: 'flex', height: 'calc(100% - 1px)', justifyContent: 'space-between' }}>
-              <div>{leftButton && <Button {...(leftButton.props || {})} onClick={leftButton.onClick}>{leftButton.label}</Button>}</div>
+              <div>{leftButton && <Button flip {...(leftButton.props || {})} onClick={leftButton.onClick}>{leftButton.label}</Button>}</div>
               {rightButton
                 ? (
                   <div style={{ alignItems: 'center', display: 'flex' }}>
