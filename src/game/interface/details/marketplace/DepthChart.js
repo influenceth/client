@@ -375,10 +375,13 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
 
   const { getPendingOrder } = useMarketplaceManager(marketplace?.id);
 
-  const [buyOrders, sellOrders] = useMemo(() => ([
-    (orders || []).filter((o) => o.orderType === Order.IDS.LIMIT_BUY),
-    (orders || []).filter((o) => o.orderType === Order.IDS.LIMIT_SELL),
-  ]), [orders]);
+  const [buyOrders, sellOrders, bid, ask] = useMemo(() => {
+    const buys = (orders || []).filter((o) => o.orderType === Order.IDS.LIMIT_BUY);
+    const sells = (orders || []).filter((o) => o.orderType === Order.IDS.LIMIT_SELL);
+    const highestBuy = Math.max(...buys.map(b => b.price));
+    const lowestSell = Math.min(...sells.map(s => s.price));
+    return [buys, sells, highestBuy, lowestSell];
+  }, [orders]);
 
   const buyBuckets = useMemo(() => {
     const buckets = buyOrders.reduce((acc, { price, amount }) => ({
@@ -547,7 +550,6 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
   const [limitPrice, setLimitPrice] = useState();
 
   useEffect(() => {
-    setQuantity(0);
     setLimitPrice(0);
   }, [mode, type]);
 
@@ -572,9 +574,16 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
     setQuantity(input);
   }, [mode, type, totalBuying, totalSelling]);
 
-  const handleChangeLimitPrice = useCallback((e) => {
-    setLimitPrice(e.currentTarget.value);
-  }, []);
+  const handleChangeLimitPrice = useCallback((price, blur = false) => {
+    if (blur) {
+      if ((mode === 'buy' && price >= ask) || (mode === 'sell' && price <= bid)) {
+        setType('market');
+        return;
+      }
+    }
+
+    setLimitPrice(price);
+  }, [bid, ask, mode]);
 
   // TODO: is quantity right here for non-atomic?
   const [totalMarketPrice, avgMarketPrice] = useMemo(() => {
@@ -821,7 +830,8 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
                     </InputLabel>
                     <TextInputWrapper rightLabel={`SWAY${resource.isAtomic ? '' : ' / kg'}`}>
                       <UncontrolledTextInput
-                        onChange={handleChangeLimitPrice}
+                        onChange={(e) => handleChangeLimitPrice(e.currentTarget.value)}
+                        onBlur={(e) => handleChangeLimitPrice(e.currentTarget.value, true)}
                         placeholder="Specify Price"
                         value={limitPrice || ''} />
                     </TextInputWrapper>
