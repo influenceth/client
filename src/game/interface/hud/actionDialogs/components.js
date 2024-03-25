@@ -151,11 +151,11 @@ const FlexSectionBlockInner = styled.div`
   padding: 8px 16px 8px 8px;
 `;
 
-
 export const FlexSection = styled(Section)`
-  align-items: flex-end;
+  align-items: flex-start;
   display: flex;
 `;
+
 export const SectionTitle = styled.div`
   align-items: center;
   border-bottom: 1px solid ${borderColor};
@@ -1504,7 +1504,7 @@ export const CoreSampleSelectionDialog = ({ lotId, options, initialSelection, on
         if ((crew?.id === a.Control?.controller?.id) !== (crew?.id === b.Control?.controller?.id)) {
           return (crew?.id === a.Control?.controller?.id) ? -1 : 1;
         }
-        
+
         // sort by deposit size
         return b.Deposit.remainingYield - a.Deposit.remainingYield;
       })
@@ -2054,6 +2054,14 @@ export const InventorySelectionDialog = ({
   const specifiedItems = !!itemIds;
   const soloItem = itemIds?.length === 1 ? itemIds[0] : null;
 
+  const invCompare = (a, b) => {
+    if (a.itemTally && b.itemTally) {
+      return a.distance > b.distance ? 1 : -1;
+    } else {
+      return a.itemTally ? -1 : 1;
+    }
+  };
+
   return (
     <SelectionDialog
       isCompletable={!!selection}
@@ -2083,7 +2091,7 @@ export const InventorySelectionDialog = ({
                 </tr>
               </thead>
               <tbody>
-                {inventories.map((inv) => {
+                {inventories.sort(invCompare).map((inv) => {
                   return (
                     <SelectionTableRow
                       key={inv.key}
@@ -2106,7 +2114,6 @@ export const InventorySelectionDialog = ({
     </SelectionDialog>
   );
 };
-
 
 //
 //  FORMATTERS
