@@ -200,6 +200,16 @@ const assetTypes = {
     title: 'Ships',
     useColumns: listConfigs.ships,
   },
+  agreements: {
+    keyField: 'key',
+    icon: <AssetAgreementsIcon />,
+    title: 'Agreements',
+    useColumns: listConfigs.agreements,
+    // TODO: link to agreements on asset
+    usePagedAssetsOverride: usePagedAgreements,
+    // hideInDropdown: true,
+    // disableFilters: true
+  },
   // orders: {
   //   keyField: 'i',
   //   icon: <RocketIcon />, // TODO
@@ -243,15 +253,6 @@ const assetTypes = {
     title: 'Logged Events',
     useColumns: listConfigs.events,
     usePagedAssetsOverride: usePagedEvents,
-    disableFilters: true
-  },
-  agreements: {
-    keyField: 'key',
-    icon: <AssetAgreementsIcon />,
-    title: 'Agreements',
-    useColumns: listConfigs.agreements,
-    usePagedAssetsOverride: usePagedAgreements,
-    hideInDropdown: true,
     disableFilters: true
   }
 }

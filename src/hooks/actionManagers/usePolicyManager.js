@@ -19,7 +19,7 @@ const usePolicyManager = (target, permission) => {
 
   const meta = useMemo(() => ({
     asteroidId: target?.label === Entity.IDS.ASTEROID ? target?.id : undefined,
-    lotId: target?.Location?.locations?.find((l) => l.label === Entity.IDS.LOT)?.id,
+    lotId: (target?.Location?.locations || []).find((l) => l?.label === Entity.IDS.LOT)?.id,
     shipId: target?.label === Entity.IDS.SHIP ? target?.id : undefined,
   }), [target]);
 

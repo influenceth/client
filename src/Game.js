@@ -185,7 +185,7 @@ const Game = () => {
                     </ActivitiesProvider>
 
                     {/* 3d scene */}
-                    {showScene && <Scene />}
+                    {false && showScene && <Scene />}
 
                     {/* audio */}
                     <Audio />

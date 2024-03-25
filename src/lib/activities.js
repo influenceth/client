@@ -115,8 +115,17 @@ const invalidationDefaults = (labelOrEntity, optId) => {
   return i;
 };
 
-const getAgreementInvalidations = ({ event: { returnValues } }) => {
-  return invalidationDefaults(returnValues.target);
+const agreementEventConfig = {
+  getInvalidations: ({ event: { returnValues } }, { target = {} }) => {
+    return [
+      ...invalidationDefaults(returnValues.target),
+      ['agreements', returnValues.permitted?.id],
+      ['agreements', target?.Control?.controller?.id]
+    ];
+  },
+  getPrepopEntities: ({ event: { returnValues } }) => ({
+    target: returnValues.target,
+  }),
 };
 
 const getPolicyInvalidations = ({ event: { returnValues } }) => {
@@ -1903,11 +1912,11 @@ const activities = {
   PrepaidMerklePolicyAssigned: { getInvalidations: getPolicyInvalidations },
   PrepaidMerklePolicyRemoved: { getInvalidations: getPolicyInvalidations },
 
-  ContractAgreementAccepted: { getInvalidations: getAgreementInvalidations },
-  PrepaidMerkleAgreementAccepted: { getInvalidations: getAgreementInvalidations },
-  PrepaidAgreementAccepted: { getInvalidations: getAgreementInvalidations },
-  PrepaidAgreementExtended: { getInvalidations: getAgreementInvalidations },
-  PrepaidAgreementCancelled: { getInvalidations: getAgreementInvalidations },
+  ContractAgreementAccepted: agreementEventConfig,
+  PrepaidMerkleAgreementAccepted: agreementEventConfig,
+  PrepaidAgreementAccepted: agreementEventConfig,
+  PrepaidAgreementExtended: agreementEventConfig,
+  PrepaidAgreementCancelled: agreementEventConfig,
 };
 
 /**
