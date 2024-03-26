@@ -88,7 +88,7 @@ const useColumns = () => {
         sortField: '_agreement._type',
         selector: row => (
           <Highlight>
-           {Permission.POLICY_TYPES[row._agreement._type]?.name || 'Whitelisted'}
+           {Permission.POLICY_TYPES[row._agreement._type]?.name || 'On Allowlist'}
           </Highlight>
         )
       },
