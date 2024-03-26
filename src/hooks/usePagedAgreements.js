@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import get from 'lodash/get';
-import { Entity, Permission } from '@influenceth/sdk';
+import { Entity, Lot } from '@influenceth/sdk';
 
 import useCrewAgreements from '~/hooks/useCrewAgreements';
 import useEntity from '~/hooks/useEntity';
@@ -8,6 +8,7 @@ import useStore from '~/hooks/useStore';
 import { entityToAgreements } from '~/lib/utils';
 import useCrewContext from './useCrewContext';
 import useBlockTime from './useBlockTime';
+import useAsteroid from './useAsteroid';
 
 const assetType = 'agreements';
 const pageSize = 25;
@@ -47,15 +48,20 @@ const usePagedAgreements = (params) => {
   // get data for crewAgreements or entityAgreements, depending on if uuid is specified or not
   const { data: crewAgreements, isLoading: crewAgreementsLoading } = useCrewAgreements(undefined, !params.uuid);
   const { data: entity, isLoading: entityLoading } = useEntity(params.uuid ? Entity.unpackEntity(params.uuid) : null);
+  const { data: asteroid } = useAsteroid(entity?.label === Entity.IDS.LOT ? Lot.toPosition(entity.id)?.asteroidId : null);
 
   const isLoading = params.uuid ? entityLoading : crewAgreementsLoading;
 
   const data = useMemo(() => {
     if (isLoading) return undefined;
     if (!params.uuid && crewAgreements) return crewAgreements;
-    if (params.uuid && entity) return entityToAgreements(entity).filter((a) => !params.permission || (a._agreement.permission === Number(params.permission)));
+    if (params.uuid && entity) {
+      return entityToAgreements(entity)
+        .filter((a) => !params.permission || (a._agreement.permission === Number(params.permission)))
+        .map((a) => a.label === Entity.IDS.LOT ? ({ ...a, Control: asteroid.Control }) : a);
+    }
     return [];
-  }, [crewAgreements, entity, isLoading, params.permission, params.uuid]);
+  }, [asteroid, crewAgreements, entity, isLoading, params.permission, params.uuid]);
 
   // TODO: should almost certainly move filter application into elasticsearch instead of loading all upfront
   const filteredData = useMemo(() => {

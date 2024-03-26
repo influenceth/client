@@ -97,8 +97,15 @@ const useLot = (lotId) => {
       surfaceShip,
 
       Control: agreement?.permitted?.id
-        ? { controller: { id: agreement.permitted.id, label: Entity.IDS.CREW }, isExplicit: true }
-        : asteroid?.Control,
+        ? {
+          controller: { id: agreement.permitted.id, label: Entity.IDS.CREW },
+          _superController: asteroid?.control,
+          _isExplicit: true,
+        }
+        : {
+          ...asteroid?.Control,
+          _superController: asteroid?.control
+        },
       ContractPolicies: asteroid?.ContractPolicies,
       PrepaidPolicies: (asteroid?.PrepaidPolicies || []).map((p) => {
         // for simplicity, apply AP's special lot rating here so don't have to apply it everywhere else
