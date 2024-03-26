@@ -507,7 +507,7 @@ const InfoPane = () => {
             hasCaptainCard={!!captainCard}>
             {hover ? <DetailsIcon /> : <ForwardIcon />}
             <ThumbPreview visible={thumbVisible}>
-              <CloseButton onClick={onClosePane}>
+              <CloseButton onClick={onClosePane} borderless>
                 <CloseIcon />
               </CloseButton>
               {thumbnail}

@@ -17,21 +17,7 @@ import { CrewCaptainCardFramed } from '~/components/CrewmateCardFramed';
 
 const RecruitingDiv = styled.div`
   border: 1px solid rgba(${p => p.theme.colors.mainRGB}, 0.3);
-  padding: 10px;
-`;
-const CrewContainer = styled.div`
-  ${p => p.isMintingStory ? `
-    width: 260px;
-    min-width: 210px;
-  ` : `
-    width: 220px;
-    min-width: 210px;
-  `}
-  padding: 0 12px 12px 0;
-
-  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
-    display: none;
-  }
+  padding: 4px;
 `;
 
 const SilhouetteWrapper = styled.div`
@@ -61,6 +47,7 @@ const Progress = styled.div`
   flex-direction: row;
   & > label {
     font-size: 20px;
+    color: ${p => p.theme.colors.secondaryText};
   }
   & > div {
     align-items: center;
@@ -81,21 +68,34 @@ const PromptDetails = styled.div`
   }
 `;
 
+const AdalianFlourishWidth = 280;
 const AdalianFlourish = styled.div`
   display: block;
   height: 100%;
   width: 100%;
+  padding-left: 20px;
   &:before {
     content: "";
     background-image: url(${adalianImage});
-    background-position: center center;
+    background-position: top center;
     background-repeat: no-repeat;
-    background-size: 165%;
+    background-size: 200%;
     display: block;
     filter: contrast(0%) sepia(100%) hue-rotate(150deg) saturate(150%);
     height: 100%;
     opacity: 0.65;
-    width: 100%;
+  }
+`;
+
+const CrewmateFlourishWidth = 380;
+const CrewContainer = styled.div`
+  width: ${CrewmateFlourishWidth};
+  padding: 0px 12px 12px 30px;
+  
+  background-position: top center;
+
+  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
+    display: none;
   }
 `;
 
@@ -184,7 +184,7 @@ const CrewAssignment = ({ crewId, crewmateId, crewmateMap, onFinish, overrides =
   }, []);
 
   const backButton = useMemo(() => {
-    if (!(bookSession && storySession)) return null;
+    if (!(bookSession && storySession)  || (bookSession.currentStoryIndex === 0 && storySession.currentStep === 0))  return null;
     return {
       label: 'Back',
       onClick: overrides?.onBack || ((bookSession.currentStoryIndex > 0 || storySession.currentStep > 0) ? onUndoPath : onGoBack),
@@ -209,7 +209,7 @@ const CrewAssignment = ({ crewId, crewmateId, crewmateMap, onFinish, overrides =
         content={storySession.content}
         contentOverride={overrides?.content}
         choices={storySession.isLastPage ? null : storySession.linkedPaths}
-        choicelessButton={{
+        choicelessButton={(bookSession.isMintingStory && storySession.isLastPage) ? null : {
           label: overrides?.finishButtonLabel || (
             bookSession.isLastStory && storySession.isLastPage
             ? (bookSession.isMintingStory ? 'Create Your Crewmate' : 'Finish')
@@ -235,7 +235,6 @@ const CrewAssignment = ({ crewId, crewmateId, crewmateMap, onFinish, overrides =
                       {bookSession.crewmate
                         ? <CrewmateCard
                             crewmate={bookSession.crewmate}
-                            hideFooter
                             hideIfNoName
                             noWrapName
                             showClassInHeader />
@@ -247,18 +246,28 @@ const CrewAssignment = ({ crewId, crewmateId, crewmateMap, onFinish, overrides =
               </CrewContainer>
             )
         }
-        flourishWidth={bookSession.isMintingStory ? undefined : 220}
-        leftButton={bookSession.isMintingStory
-          ? {
+        flourishWidth={
+          bookSession.isMintingStory 
+          ? (bookSession.bookId === bookIds.ADALIAN_RECRUITMENT ? AdalianFlourishWidth : CrewmateFlourishWidth) 
+          : 220
+        }
+        rightButton={(bookSession.isMintingStory && 
+          (bookSession.currentStoryIndex === 0 && storySession.currentStep === 0)) 
+          ?{
             label: 'Skip Story',
             onClick: confirmExitStoryMode,
             props: {
               disabled: (storySession.isLastPage && bookSession.isLastStory) ? 'true' : undefined
             }
-          }
-          : backButton
+          } 
+          : ((storySession.isLastPage) && {
+            label: (bookSession.isLastStory && storySession.isLastPage) ? 'Finalize Crewmate' : 'Next Chapter',
+            onClick: (bookSession.isLastStory && storySession.isLastPage) ? finish : selectPath(storySession.linkedPaths[0]),
+            props: overrides?.finishButtonProps || undefined
+          })
         }
-        rightButton={bookSession.isMintingStory ? backButton : undefined}
+
+        leftButton={bookSession.isMintingStory ? backButton : undefined}
         title={storySession.title}
         subtitle={storySession.totalSteps > 1 && (
           <Progress>

@@ -17,6 +17,7 @@ const Flourish = styled.div`
   font-size: 175px;
   height: 100%;
   opacity: 0.5;
+  padding-left: 30px;
 `;
 
 const Subtitle = styled.span`
