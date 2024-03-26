@@ -91,8 +91,9 @@ const actionItemStatusOptions = [
   { key: 'pending', label: 'Pending', initialValue: true },
   { key: 'failed', label: 'Failed', initialValue: true },
   { key: 'ready', label: 'Ready', initialValue: true },
-  { key: 'unready', label: 'Not Ready', initialValue: true },
-  { key: 'plans', label: 'Planned', initialValue: true },
+  { key: 'unready', label: 'In Progress', initialValue: true },
+  { key: 'plan', label: 'Planned', initialValue: true },
+  { key: 'agreement', label: 'Expiring Agreements', initialValue: true },
 ];
 
 // resource type filter configs

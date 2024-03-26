@@ -69,6 +69,7 @@ const theme = {
     successRGB: hexToRGB(success),
     warning: orange,
     error: red,
+    expired: '#f6574d',
     teal, blue, lightPurple, purple, lightOrange, orange, yellow, red, green,
     bonus: {
       level0: '#999999',

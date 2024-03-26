@@ -8,7 +8,7 @@ import useGetActivityConfig from './useGetActivityConfig';
 const assetType = 'actionitems';
 const pageSize = 25;
 
-const typeOrder = ['pending', 'failed', 'ready', 'unready', 'plans'];
+const typeOrder = ['pending', 'failed', 'ready', 'unready', 'plan', 'agreement'];
 
 const usePagedActionItems = () => {
   const getActivityConfig = useGetActivityConfig();

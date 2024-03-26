@@ -241,8 +241,10 @@ const assetTypes = {
     useColumns: listConfigs.actionItems,
     usePagedAssetsOverride: usePagedActionItems,
     getRowProps: (row) => {
-      if (statuses[row.type]) {
-        return { status: row.type };
+      if (row._expired || statuses[row.type]) {
+        return {
+          status: row._expired ? '_expired' : row.type
+        };
       }
       return {};
     }

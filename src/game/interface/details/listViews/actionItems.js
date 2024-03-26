@@ -4,16 +4,12 @@ import { Lot } from '@influenceth/sdk';
 
 import useSession from '~/hooks/useSession';
 import useCrewContext from '~/hooks/useCrewContext';
-import { itemColors, statuses } from '~/lib/actionItem';
+import { statuses } from '~/lib/actionItem';
 import { LocationLink } from './components';
 import { LinkIcon } from '~/components/Icons';
 import LiveTimer from '~/components/LiveTimer';
 import useSyncedTime from '~/hooks/useSyncedTime';
 
-const AtRisk = styled.b`
-  color: rgb(${itemColors.plans});
-  text-transform: uppercase;
-`;
 const Highlight = styled.i`
   font-style: normal;
 `;
@@ -40,7 +36,7 @@ const ProgressBar = styled.div`
 `;
 const Status = styled(Highlight)`
   text-transform: uppercase;
-  margin-right: 8px;
+  margin-right: 6px;
 `;
 
 const Progress = ({ start, finish }) => {
@@ -68,7 +64,7 @@ const useColumns = () => {
         sortField: 'label',
         selector: row => (
           <>
-            {statuses[row.type] && <Status>{statuses[row.type]}</Status>}
+            {(row._expired || statuses[row.type]) && <Status>{statuses[row._expired ? '_expired' : row.type]}</Status>}
             {row.label}
           </>
         ),
@@ -88,10 +84,23 @@ const useColumns = () => {
               {row.type === 'pending' && 'Just Now'}
               {(row.type === 'ready' || row.type === 'failed') && row.ago}
               {row.type === 'unready' && row.finishTime && <MainColor><LiveTimer target={row.finishTime} maxPrecision={2} /></MainColor>}
-              {row.type === 'plans' && (
+              {row.type === 'agreement' && (
                 row.finishTime
-                  ? <LiveTimer target={row.finishTime} maxPrecision={2} prefix="remaining " />
-                  : <AtRisk>at risk</AtRisk>
+                  ? (
+                    <LiveTimer target={row.finishTime} maxPrecision={1}>
+                      {(formattedTime, isTimer) => isTimer ? <>Expiring in <span style={{ color: 'white' }}>{formattedTime}</span></> : <b>{formattedTime}</b>}
+                    </LiveTimer>
+                  )
+                  : `Expired`
+              )}
+              {row.type === 'plan' && (
+                row.finishTime
+                  ? (
+                    <LiveTimer target={row.finishTime} maxPrecision={2}>
+                      {(formattedTime, isTimer) => isTimer ? <>Timer <span style={{ color: 'white' }}>{formattedTime}</span></> : <b>{formattedTime}</b>}
+                    </LiveTimer>
+                  )
+                  : `Materials at Risk`
               )}
             </Highlight>
           </>

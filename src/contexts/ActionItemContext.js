@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from 'react-query';
 import { Building } from '@influenceth/sdk';
 
 import useSession from '~/hooks/useSession';
+import useCrewAgreements from '~/hooks/useCrewAgreements';
 import useCrewContext from '~/hooks/useCrewContext';
 import useGetActivityConfig from '~/hooks/useGetActivityConfig';
 import useStore from '~/hooks/useStore';
@@ -14,28 +15,31 @@ const ActionItemContext = React.createContext();
 export function ActionItemProvider({ children }) {
   const { authenticated, blockTime } = useSession();
   const { crew, pendingTransactions } = useCrewContext();
+  const { data: crewAgreements } = useCrewAgreements();
   const getActivityConfig = useGetActivityConfig();
   const queryClient = useQueryClient();
 
+  const crewId = crew?.id;
   const { data: actionItems, isLoading: actionItemsLoading } = useQuery(
-    [ 'actionItems', crew?.id ],
+    [ 'actionItems', crewId ],
     async () => {
-      const activities = await api.getCrewActionItems(crew?.id);
+      const activities = await api.getCrewActionItems(crewId);
       await hydrateActivities(activities, queryClient);
       return activities;
     },
-    { enabled: !!crew }
+    { enabled: !!crewId }
   );
 
   const { data: plannedBuildings, isLoading: plannedBuildingsLoading } = useQuery(
-    [ 'planned', crew?.id ],
-    () => api.getCrewPlannedBuildings(crew?.id),
-    { enabled: !!crew }
+    [ 'planned', crewId ],
+    () => api.getCrewPlannedBuildings(crewId),
+    { enabled: !!crewId }
   );
 
   const failedTransactions = useStore(s => s.failedTransactions);
   const [readyItems, setReadyItems] = useState([]);
   const [unreadyItems, setUnreadyItems] = useState([]);
+  const [agreementItems, setAgreementItems] = useState([]);
   const [plannedItems, setPlannedItems] = useState([]);
 
   const randomEventItems = useMemo(() => {
@@ -74,7 +78,17 @@ export function ActionItemProvider({ children }) {
         })
         .sort((a, b) => a.plannedAt - b.plannedAt)
     );
-  }, [actionItems, plannedBuildings, blockTime]);
+
+    setAgreementItems(
+      (crewAgreements || [])
+        .filter((a) => a._agreement?.permitted?.id === crewId && !!a._agreement?.endTime && (a._agreement.endTime < blockTime + 700/*TODO: 7 */ * 86400))
+        .map((a) => ({
+          ...a,
+          waitingFor: a._agreement.endTime > blockTime ? a._agreement.endTime : null
+        }))
+        .sort((a, b) => a._agreement.endTime - b._agreement.endTime)
+    );
+  }, [actionItems, crewAgreements, plannedBuildings, blockTime]);
 
   const allVisibleItems = useMemo(() => {
     if (!authenticated) return [];
@@ -98,14 +112,15 @@ export function ActionItemProvider({ children }) {
     });
 
     return [
-      ...(pendingTransactions || []).map((item) => ({ ...item, type: 'pending' })),
-      ...(failedTransactions || []).map((item) => ({ ...item, type: 'failed' })),
-      ...(randomEventItems || []).map((item) => ({ ...item, type: 'randomEvent' })),
-      ...(visibleReadyItems || []).map((item) => ({ ...item, type: 'ready' })),
-      ...(visiblePlannedItems || []).map((item) => ({ ...item, type: 'plans' })),
-      ...(unreadyItems || []).map((item) => ({ ...item, type: 'unready' }))
-    ].map((x) => {  // make sure everything has a unique key (only plans should fall through to the label_id option)
-      x.uniqueKey = `${x.type}_${x._id || x.txHash || x.timestamp || `${x.label}_${x.id}`}`;
+      ...(pendingTransactions || []).map((item) => ({ ...item, type: 'pending', category: 'tx' })),
+      ...(failedTransactions || []).map((item) => ({ ...item, type: 'failed', category: 'tx' })),
+      ...(randomEventItems || []).map((item) => ({ ...item, type: 'randomEvent', category: 'ready' })),
+      ...(visibleReadyItems || []).map((item) => ({ ...item, type: 'ready', category: 'ready' })),
+      ...(visiblePlannedItems || []).map((item) => ({ ...item, type: 'plan', category: 'warning' })),
+      ...(agreementItems || []).map((item) => ({ ...item, type: 'agreement', category: 'warning' })),
+      ...(unreadyItems || []).map((item) => ({ ...item, type: 'unready', category: 'unready' }))
+    ].map((x) => {  // make sure everything has a unique key (only `plan` should fall through to the label_id option)
+      x.uniqueKey = `${x.type}_${x._id || x.txHash || x.timestamp || x.key || `${x.label}_${x.id}`}`;
       return x;
     });
 
