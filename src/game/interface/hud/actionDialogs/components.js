@@ -638,6 +638,10 @@ const PropulsionTypeOption = styled.div`
     }
   `}
 
+  ${p => p.disabled && `
+    color: ${p.theme.colors.disabledButton};
+  `}
+
   ${p => p.selected && `
     color: white;
     opacity: 1;
@@ -645,6 +649,9 @@ const PropulsionTypeOption = styled.div`
 
   & svg {
     color: ${p => p.theme.colors.main};
+    ${p => p.disabled && `
+      color: ${p.theme.colors.disabledButton};
+    `}
     font-size: 22px;
     margin-right: 5px;
   }
@@ -3098,13 +3105,14 @@ export const ProcessInputSquareSection = ({ title, products, input, output, prim
   );
 };
 
-export const PropulsionTypeSection = ({ objectLabel, propulsiveTime, tugTime, powered, onSetPowered, warning }) => {
+export const PropulsionTypeSection = ({ disabled, objectLabel, propulsiveTime, tugTime, powered, onSetPowered, warning }) => {
   return (
     <FlexSectionBlock title={`${objectLabel} Type`} bodyStyle={{ padding: 0 }}>
       <>
         {(onSetPowered || powered) && (
           <PropulsionTypeOption
-            onClick={onSetPowered ? () => onSetPowered(true) : undefined}
+            disabled={disabled}
+            onClick={!disabled && onSetPowered ? () => onSetPowered(true) : undefined}
             selected={powered}>
             {onSetPowered && (powered ? <RadioCheckedIcon /> : <RadioUncheckedIcon />)}
             <div style={{ flex: 1 }}>
@@ -3115,7 +3123,8 @@ export const PropulsionTypeSection = ({ objectLabel, propulsiveTime, tugTime, po
         )}
         {(onSetPowered || !powered) && (
           <PropulsionTypeOption
-            onClick={onSetPowered ? () => onSetPowered(false) : undefined}
+            disabled={disabled}
+            onClick={!disabled && onSetPowered ? () => onSetPowered(false) : undefined}
             selected={!powered}>
             {onSetPowered && (!powered ? <RadioCheckedIcon /> : <RadioUncheckedIcon />)}
             <div style={{ flex: 1 }}>

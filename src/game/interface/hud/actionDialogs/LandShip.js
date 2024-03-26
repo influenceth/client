@@ -206,6 +206,7 @@ const LandShip = ({ asteroid, manager, ship, stage, ...props }) => {
 
             <FlexSection style={{ marginBottom: -15 }}>
               <PropulsionTypeSection
+                disabled={stage !== actionStages.NOT_STARTED}
                 objectLabel="Landing"
                 onSetPowered={(x) => stage === actionStages.NOT_STARTED ? setPowered(x) : null}
                 powered={powered}
