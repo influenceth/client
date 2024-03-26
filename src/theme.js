@@ -37,6 +37,7 @@ const darkMain = '#1c5063';
 const success = '#00ffe7';
 
 const green = '#88e675';
+const darkGreen = '#59b366';
 const gray = '#bbbbbb';
 const teal = '#69ebf4';
 const blue = '#4f90ff';
