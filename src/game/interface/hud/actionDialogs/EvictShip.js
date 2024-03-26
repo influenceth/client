@@ -152,6 +152,7 @@ const EvictShip = ({ asteroid, lot, manager, stage, ...props }) => {
 
             <FlexSection>
               <PropulsionTypeSection
+                disabled={stage !== actionStages.NOT_STARTED}
                 objectLabel="Launch"
                 selected="tug"
                 warning={`Evicted ships must use\nHopper-assisted launch.`} />
