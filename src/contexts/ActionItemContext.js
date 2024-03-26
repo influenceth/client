@@ -81,7 +81,7 @@ export function ActionItemProvider({ children }) {
 
     setAgreementItems(
       (crewAgreements || [])
-        .filter((a) => a._agreement?.permitted?.id === crewId && !!a._agreement?.endTime && (a._agreement.endTime < blockTime + 700/*TODO: 7 */ * 86400))
+        .filter((a) => a._agreement?.permitted?.id === crewId && !!a._agreement?.endTime && (a._agreement.endTime < blockTime + 7 * 86400))
         .map((a) => ({
           ...a,
           waitingFor: a._agreement.endTime > blockTime ? a._agreement.endTime : null
