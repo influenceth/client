@@ -130,7 +130,7 @@ const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...pro
   useEffect(() => {
     // For actions that are already in progress etc., just trust the recipeTally for amount.
     // The maxAmount (which depends on *current* origin inventory stock) is not relevant in that case.
-    if (stage != 'NOT_STARTED') return;
+    if (stage != actionStages.NOT_STARTED) return;
     if (amount > maxAmount) setAmount(maxAmount);
     if (amount < recipeStepSize) setAmount(recipeStepSize);
   }, [recipeStepSize, maxAmount, stage]);
@@ -465,6 +465,7 @@ const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...pro
                 : []
             }
             source={originInventory}
+            stage={stage}
             style={{ alignSelf: 'flex-start', width: '66.7%' }} />
 
         </FlexSection>
@@ -511,6 +512,7 @@ const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...pro
                 : []
             }
             primaryOutput={primaryOutput}
+            stage={stage}
             setPrimaryOutput={stage === actionStages.NOT_STARTED ? setPrimaryOutput : null}
             style={{ alignSelf: 'flex-start', width: '66.7%' }} />
 
