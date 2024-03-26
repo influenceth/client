@@ -100,7 +100,7 @@ const useColumns = () => {
           const loc = locationsArrToObj(row.Location?.locations || []);
           return (
             <>
-              <LocationLink asteroidId={loc?.asteroidId} lotId={loc?.lotId} />
+              <LocationLink asteroidId={loc?.asteroidId} lotId={loc?.lotId || row?.id} />
               <span>
                 {row.label === Entity.IDS.BUILDING && formatters.buildingName(row)}
                 {row.label === Entity.IDS.LOT && formatters.lotName(row)}

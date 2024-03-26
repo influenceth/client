@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import get from 'lodash/get';
 import { Entity, Permission } from '@influenceth/sdk';
 
@@ -19,31 +19,50 @@ const usePagedAgreements = (params) => {
 
   const filters = useStore(s => s.assetSearch[assetType]?.filters);
   const sort = useStore(s => s.assetSearch[assetType]?.sort);
+  const updateFilters = useStore(s => s.dispatchFiltersUpdated(assetType));
   const setSort = useStore(s => s.dispatchSortUpdated(assetType));
 
   useEffect(() => {
     setPage(1);
   }, [filters, sort]);
 
+  // override perm filter from url, but reset to pre-existing on unmount
+  const previousPermFilter = useRef();
+  useEffect(() => {
+    if (params.permission) {
+      previousPermFilter.current = filters.permission;
+
+      const newFilter = {...(filters || {})};
+      newFilter.permission = [params.permission];
+      updateFilters(newFilter);
+
+      return () => {
+        const oldFilter = {...(filters || {})};
+        oldFilter.permission = previousPermFilter.current
+        updateFilters(oldFilter);
+      }
+    }
+  }, [params.permission]);
+
   // get data for crewAgreements or entityAgreements, depending on if uuid is specified or not
   const { data: crewAgreements, isLoading: crewAgreementsLoading } = useCrewAgreements(undefined, !params.uuid);
   const { data: entity, isLoading: entityLoading } = useEntity(params.uuid ? Entity.unpackEntity(params.uuid) : null);
 
-  const isLoading = crewAgreementsLoading || entityLoading;
+  const isLoading = params.uuid ? entityLoading : crewAgreementsLoading;
 
   const data = useMemo(() => {
     if (isLoading) return undefined;
-    if (crewAgreements) return crewAgreements;
-    if (entity) return entityToAgreements(entity).filter((a) => !params.permission || (a._agreement.permission === Number(params.permission)));
+    if (!params.uuid && crewAgreements) return crewAgreements;
+    if (params.uuid && entity) return entityToAgreements(entity).filter((a) => !params.permission || (a._agreement.permission === Number(params.permission)));
     return [];
-  }, [crewAgreements, entity, isLoading, params.permission]);
+  }, [crewAgreements, entity, isLoading, params.permission, params.uuid]);
 
   // TODO: should almost certainly move filter application into elasticsearch instead of loading all upfront
   const filteredData = useMemo(() => {
     return (data || [])
       .filter((a) => {
         if (filters.permission) {
-          if (!filters.permission.includes(a._agreement.permission)) return false;
+          if (!filters.permission.includes(String(a._agreement.permission))) return false;
         }
         if (filters.role) {
           if (!(
