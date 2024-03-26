@@ -5,18 +5,18 @@ import { formatTimer } from '~/lib/utils';
 
 const LiveTimer = ({ children, prefix = '', target, maxPrecision }) => {
   const syncedTime = useSyncedTime();
-  const formattedTime = useMemo(() => {
+  const [formattedTime, isTimer] = useMemo(() => {
     const remaining = target === null ? NaN : target - syncedTime;
     if (isNaN(remaining)) {
-      return 'Initializing...';
+      return ['Initializing...', false];
     } else if (remaining < 0) { // TODO: potentially also use liveblocktime in here
-      return 'Waiting for block...';
+      return ['Waiting for block...', false];
     } else {
-      return `${prefix}${formatTimer(remaining, maxPrecision)}`;
+      return [`${prefix}${formatTimer(remaining, maxPrecision)}`, true];
     }
   }, [syncedTime, maxPrecision, target]);
 
-  return children ? children(formattedTime) : formattedTime;
+  return children ? children(formattedTime, isTimer) : formattedTime;
 };
 
 export default LiveTimer;

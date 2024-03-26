@@ -1,5 +1,5 @@
-import { Crew, Entity, Lot, Processor, Time } from '@influenceth/sdk';
 import esb from 'elastic-builder';
+import { Crew, Entity, Lot, Permission, Processor, Time } from '@influenceth/sdk';
 
 import { BioreactorBuildingIcon, ManufactureIcon, RefineIcon } from '~/components/Icons';
 
@@ -186,6 +186,33 @@ export const getBlockTime = async (starknet, blockNumber = 'pending') => {
     console.error(e);
   }
 }
+
+export const entityToAgreements = (entity) => {
+  const acc = [];
+  ['PrepaidAgreements', 'ContractAgreements', 'WhitelistAgreements'].forEach((agreementType) => {
+    (entity[agreementType] || []).forEach((agreement, j) => {
+      const formatted = {
+        key: `${entity.uuid}_${agreementType}_${j}`,
+        id: entity.id,
+        label: entity.label,
+        uuid: entity.uuid,
+        _agreement: {
+          _type: agreementType === 'PrepaidAgreements'
+            ? Permission.POLICY_IDS.PREPAID
+            : (agreementType === 'ContractAgreements' ? Permission.POLICY_IDS.CONTRACT : 5),
+          ...agreement
+        },
+      };
+      formatted.Control = entity.Control;
+      formatted.Location = entity.Location;
+      formatted.Name = entity.Name;
+      if (entity.Building) formatted.Building = entity.Building;
+      if (entity.Ship) formatted.Ship = entity.Ship;
+      acc.push(formatted);
+    })
+  });
+  return acc;
+};
 
 export const earlyAccessJSTime = 1708527600e3;
 export const openAccessJSTime = 1709046000e3;

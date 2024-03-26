@@ -62,7 +62,7 @@ const useLot = (lotId) => {
   );
 
   // (presuming this is already loaded so doesn't cause any overhead)
-  const { data: asteroid, isLoading: asteroidLoading } = useEntity({ label: Entity.IDS.ASTEROID, id: Lot.toPosition(lotId)?.asteroidId });
+  const { data: asteroid, isLoading: asteroidLoading } = useEntity(lotId ? { label: Entity.IDS.ASTEROID, id: Lot.toPosition(lotId)?.asteroidId } : undefined);
 
   // we try to prepop all the below in a single call above so the
   // below queries only get refreshed invididually when invalidated
@@ -72,7 +72,7 @@ const useLot = (lotId) => {
 
   const isLoading = lotEntity?.uuid && (lotIsLoading || lotDataIsLoading || asteroidLoading || buildingsLoading || depositsLoading || shipsLoading);
   const data = useMemo(() => {
-    if (isLoading) return undefined;
+    if (isLoading || !lotEntity?.uuid) return undefined;
 
     const { asteroidId, lotIndex } = Lot.toPosition(lotId) || {};
     const agreement = (lot?.PrepaidAgreements || lot?.ContractAgreements || []).find((a) => a.permission === Permission.IDS.USE_LOT);

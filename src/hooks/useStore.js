@@ -21,7 +21,7 @@ const buildingIds = Object.values(Building.IDS).filter((k) => k > 0).map((k) => 
 
 const assetSearchDefaults = {
   actionitems: { filters: {}, sort: ['time', 'asc'] },
-  agreements: { filters: {}, sort: ['event.timestamp', 'asc'] },
+  agreements: { filters: {}, sort: ['_agreement.endTime', 'asc'] },
   asteroids: { filters: {}, sort: ['Celestial.radius', 'desc'] },
   asteroidsMapped: { filters: {}, sort: ['Celestial.radius', 'desc'], highlight: null },
   buildings: { filters: {}, sort: ['Building.buildingType', 'asc'] },

@@ -200,6 +200,16 @@ const assetTypes = {
     title: 'Ships',
     useColumns: listConfigs.ships,
   },
+  agreements: {
+    keyField: 'key',
+    icon: <AssetAgreementsIcon />,
+    title: 'Agreements',
+    useColumns: listConfigs.agreements,
+    // TODO: link to agreements on asset
+    usePagedAssetsOverride: usePagedAgreements,
+    // hideInDropdown: true,
+    // disableFilters: true
+  },
   // orders: {
   //   keyField: 'i',
   //   icon: <RocketIcon />, // TODO
@@ -231,8 +241,10 @@ const assetTypes = {
     useColumns: listConfigs.actionItems,
     usePagedAssetsOverride: usePagedActionItems,
     getRowProps: (row) => {
-      if (statuses[row.type]) {
-        return { status: row.type };
+      if (row._expired || statuses[row.type]) {
+        return {
+          status: row._expired ? '_expired' : row.type
+        };
       }
       return {};
     }
@@ -243,15 +255,6 @@ const assetTypes = {
     title: 'Logged Events',
     useColumns: listConfigs.events,
     usePagedAssetsOverride: usePagedEvents,
-    disableFilters: true
-  },
-  agreements: {
-    keyField: 'key',
-    icon: <AssetAgreementsIcon />,
-    title: 'Agreements',
-    useColumns: listConfigs.agreements,
-    usePagedAssetsOverride: usePagedAgreements,
-    hideInDropdown: true,
     disableFilters: true
   }
 }

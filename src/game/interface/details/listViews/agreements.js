@@ -1,19 +1,19 @@
 import { useMemo } from 'react';
 import styled from 'styled-components';
-import { Building, Entity, Permission } from '@influenceth/sdk';
+import { Entity, Permission } from '@influenceth/sdk';
 
-import { MyAssetIcon, SwayIcon } from '~/components/Icons';
+import { MyAssetIcon, SwayIcon, WarningIcon } from '~/components/Icons';
 import useSession from '~/hooks/useSession';
 import useCrewContext from '~/hooks/useCrewContext';
 import { LocationLink } from './components';
 import formatters from '~/lib/formatters';
-import EntityName from '~/components/EntityName';
 
-import { formatFixed, formatTimer, monthsToSeconds, secondsToMonths } from '~/lib/utils';
+import { formatFixed, formatTimer, locationsArrToObj, monthsToSeconds, secondsToMonths } from '~/lib/utils';
 import useBlockTime from '~/hooks/useBlockTime';
 import actionButtons from '../../hud/actionButtons';
 import useActionButtons from '~/hooks/useActionButtons';
 import { getAgreementPath } from '~/hooks/actionManagers/useAgreementManager';
+import EntityLink from '~/components/EntityLink';
 
 const Highlight = styled.span`
   color: ${p => p.theme.colors.main};
@@ -28,13 +28,20 @@ const ProgressBar = styled.div`
   width: 150px;
   &:before {
     content: ' ';
-    background: ${p => p.theme.colors.main};
+    background: ${p => p.theme.colors[p.overrideColor || 'main']};
     border-radius: 3px;
     position: absolute;
     top: 0;
     bottom: 0;
     left: 0;
     width: ${p => p.progress}%;
+  }
+`;
+
+const Expired = styled.span`
+  color: ${p => p.theme.colors.error};
+  & > svg {
+    font-size: 20px;
   }
 `;
 
@@ -45,7 +52,13 @@ const Remaining = styled.span`
   width: 40px;
 `;
 
-const Progress = ({ start, finish }) => {
+const My = styled.span`
+  color: white;
+  font-size: 20px;
+  margin-right: 4px;
+`;
+
+const Progress = ({ start, finish, overrideColor }) => {
   const blockTime = useBlockTime();
 
   const [progress, timeRemaining] = useMemo(() => ([
@@ -56,7 +69,7 @@ const Progress = ({ start, finish }) => {
   return (
     <>
       <Remaining>{timeRemaining}</Remaining>
-      <ProgressBar progress={progress} />
+      <ProgressBar progress={progress} overrideColor={overrideColor} />
     </>
   );
 }
@@ -65,98 +78,144 @@ const useColumns = () => {
   const { accountAddress } = useSession();
   const { crew } = useCrewContext();
   const { props: actionProps } = useActionButtons();
+  const blockTime = useBlockTime();
 
   return useMemo(() => {
     const columns = [
-      /* TODO: "mine" if controller or permitted
-      {
-        key: 'my',
-        align: 'center',
-        icon: <MyAssetIcon />,
-        selector: row => true? <MyAssetIcon /> : null,
-        bodyStyle: { fontSize: '24px' },
-        requireLogin: true,
-        unhideable: true
-      },
-      */
       {
         key: 'type',
         label: 'Agreement Type',
-        sortField: 'address',
+        sortField: '_agreement._type',
         selector: row => (
           <Highlight>
-           {Permission.POLICY_TYPES[Permission.POLICY_IDS[row.address ? 'CONTRACT' : 'PREPAID']].name}
+           {Permission.POLICY_TYPES[row._agreement._type]?.name || 'Whitelisted'}
           </Highlight>
         )
       },
       {
+        key: 'target',
+        label: 'Target',
+        sortField: 'uuid',
+        selector: row => {
+          const loc = locationsArrToObj(row.Location?.locations || []);
+          return (
+            <>
+              <LocationLink asteroidId={loc?.asteroidId} lotId={loc?.lotId} />
+              <span>
+                {row.label === Entity.IDS.BUILDING && formatters.buildingName(row)}
+                {row.label === Entity.IDS.LOT && formatters.lotName(row)}
+                {row.label === Entity.IDS.SHIP && formatters.shipName(row)}
+              </span>
+            </>
+          )
+        },
+        unhideable: true
+      },
+      {
+        key: 'controller',
+        label: 'Controlling Crew',
+        sortField: 'Control.controller.id',
+        selector: row => (
+          <>
+            {crew?.id === row.Control?.controller?.id && <My><MyAssetIcon /></My>}
+            <EntityLink {...row.Control?.controller} />
+          </>
+        ), // TODO: is meta.crew.name populated?
+        // unhideable: true
+      },
+      {
         key: 'permitted',
         label: 'Permitted Crew',
-        sortField: 'permitted.id',
-        selector: row => <EntityName {...row.permitted} />, // TODO: is meta.crew.name populated?
-        unhideable: true
+        sortField: '_agreement.permitted.id',
+        selector: row => (
+          <>
+            {crew?.id === row._agreement?.permitted?.id && <My><MyAssetIcon /></My>}
+            <EntityLink {...row._agreement?.permitted} />
+          </>
+        ), // TODO: is meta.crew.name populated?
+        // unhideable: true
       },
       {
         key: 'permission',
         label: 'Permission',
-        sortField: 'permission',
-        selector: row => Permission.TYPES[row.permission].name
+        sortField: '_agreement.permission',
+        selector: row => Permission.TYPES[row._agreement.permission].name
       },
       {
         key: 'time',
         label: 'Time Remaining',
-        sortField: 'endTime',
-        selector: row => row.address
-          ? <>until canceled</>
-          : <Progress start={row.startTime} finish={row.endTime} /> // TODO: factor in noticeTime?
+        sortField: '_agreement.endTime',
+        selector: row => {
+          if (row._agreement._type === Permission.POLICY_IDS.PREPAID) { // TODO: factor in noticeTime?
+            const timeRemaining = row._agreement.endTime - blockTime;
+            if (timeRemaining > 0) {
+              return (
+                <Progress
+                  start={row._agreement.startTime}
+                  finish={row._agreement.endTime}
+                  overrideColor={timeRemaining < 7 * 86400 ? 'error' : 'main'} />
+              );
+            }
+            return <Expired><WarningIcon /> <span>Expired</span></Expired>;
+          }
+          return <>until canceled</>;
+        }
       },
       {
         key: 'rate',
         label: 'Rate',
-        sortField: 'rate',
-        selector: row => row.address ? `n/a` : (
-          <>
-            <SwayIcon />
-            {formatFixed((monthsToSeconds(1) * row.rate / 3600) / 1e6, 2)}
-            {' '}/ mo
-          </>
-        )
+        sortField: '_agreement.rate',
+        selector: row => row._agreement._type === Permission.POLICY_IDS.PREPAID
+          ? (
+            <>
+              <SwayIcon />
+              {formatFixed((monthsToSeconds(1) * row._agreement.rate / 3600) / 1e6, 2)}
+              {' '}/ mo
+            </>
+          )
+          : `n/a` 
       },
       {
         key: 'min',
         label: 'Minimum',
-        sortField: 'initialTerm',
-        selector: row => row.address ? `n/a` : `${formatFixed(secondsToMonths(row.initialTerm), 2)} mo`
+        sortField: '_agreement.initialTerm',
+        selector: row => row._agreement._type === Permission.POLICY_IDS.PREPAID
+          ? `${formatFixed(secondsToMonths(row._agreement.initialTerm), 2)} mo`
+          : `n/a`
       },
       {
         key: 'notice',
         label: 'Notice',
-        sortField: 'noticePeriod',
-        selector: row => row.address ? `n/a` : `${formatFixed(secondsToMonths(row.noticePeriod), 2)} mo`
+        sortField: '_agreement.noticePeriod',
+        selector: row => row._agreement._type === Permission.POLICY_IDS.PREPAID
+          ? `${formatFixed(secondsToMonths(row._agreement.noticePeriod), 2)} mo`
+          : `n/a`
       },
       {
         key: '_expandable',
         skip: true,
         selector: row => {
-          if (row.entity.Control?.controller?.id === crew?.id) {
-            return (
-              <div style={{ padding: '10px 15px' }}>
-                <actionButtons.EndAgreement.Component
-                  {...actionProps}
-                  entity={row.entity}
-                  permission={row.permission}
-                  agreementPath={getAgreementPath(row.entity, row.permission, row.permitted)} />
-              </div>
-            )
-          } else if (row.permitted?.id === crew?.id) {
-            return (
-              <div style={{ padding: '10px 15px' }}>
-                <actionButtons.ExtendAgreement.Component
-                  {...actionProps}
-                  entity={row.entity}
-                  permission={row.permission} />
-              </div>
-            )
+          if (row._agreement._type === Permission.POLICY_IDS.PREPAID) {
+            if (row.Control?.controller?.id === crew?.id) {
+              return (
+                <div style={{ padding: '10px 15px' }}>
+                  <actionButtons.EndAgreement.Component
+                    {...actionProps}
+                    entity={row}
+                    permission={row._agreement.permission}
+                    agreementPath={getAgreementPath(row, row._agreement.permission, row._agreement.permitted)} />
+                </div>
+              )
+            } else if (row._agreement.permitted?.id === crew?.id) {
+              return (
+                <div style={{ padding: '10px 15px' }}>
+                  <actionButtons.ExtendAgreement.Component
+                    {...actionProps}
+                    entity={row}
+                    permission={row._agreement.permission} />
+                </div>
+              )
+            }
           }
           return null;
         }
@@ -164,7 +223,7 @@ const useColumns = () => {
     ];
 
     return columns.filter((c) => accountAddress || !c.requireLogin);
-  }, [accountAddress, crew?.id]);
+  }, [accountAddress, blockTime, crew?.id]);
 };
 
 export default useColumns;

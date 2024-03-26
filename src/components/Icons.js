@@ -13,6 +13,7 @@ import {
   MdExpandMore,
   MdFastRewind,
   MdFastForward,
+  MdNotificationsActive,
   MdPlayArrow,
   MdPause,
   MdRadioButtonChecked,
@@ -350,6 +351,7 @@ export const ResourceGroupIcons = {
 };
 
 export {
+  MdNotificationsActive as BellIcon,
   AiFillEdit as EditIcon,
   AiFillEye as EyeIcon,
   AiFillStar as StarIcon,
