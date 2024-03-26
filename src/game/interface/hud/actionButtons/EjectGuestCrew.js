@@ -41,6 +41,11 @@ const EjectGuestCrew = ({ asteroid, crew, lot, ship, onSetAction, dialogProps = 
     return currentEjections?.filter((e) => e.vars.ejected_crew.id === crew?.id);
   }, [currentEjections, crew?.id]);
 
+  // Differentiate between a Habitat and a ship
+  const actionLabel = useMemo(() => {
+    return `Force Eject ${ship == undefined ? 'Resident' : 'Passenger'} Crew`;
+  }, [ship]);
+
   const disabledReason = useMemo(() => {
     if (_disabled) return 'loading...';
     if (allGuestCrews?.length === 0) return 'no guests';
@@ -50,7 +55,7 @@ const EjectGuestCrew = ({ asteroid, crew, lot, ship, onSetAction, dialogProps = 
 
   return (
     <ActionButton
-      label="Force Eject Passenger Crew"
+      label={actionLabel}
       labelAddendum={disabledReason}
       flags={{
         disabled: disabledReason,
