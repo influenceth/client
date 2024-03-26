@@ -203,7 +203,11 @@ export const entityToAgreements = (entity) => {
           ...agreement
         },
       };
-      formatted.Control = entity.Control;
+      // for the sake of agreements, the lot controller is *always* the asteroid controller
+      // because that is who is the administrator of lot agreements
+      // NOTE: this is different from elsewhere in the client, where the controller is
+      //       whoever has LOT_USE (fallback to asteroid controller)
+      formatted.Control = entity.label === Entity.IDS.LOT ? entity.meta?.asteroid?.Control : entity.Control;
       formatted.Location = entity.Location;
       formatted.Name = entity.Name;
       if (entity.Building) formatted.Building = entity.Building;

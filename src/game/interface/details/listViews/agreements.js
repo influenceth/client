@@ -25,7 +25,7 @@ const ProgressBar = styled.div`
   height: 6px;
   margin-right: 15px;
   position: relative;
-  width: 150px;
+  width: 115px;
   &:before {
     content: ' ';
     background: ${p => p.theme.colors[p.overrideColor || 'main']};
@@ -47,9 +47,9 @@ const Expired = styled.span`
 
 const Remaining = styled.span`
   display: inline-block;
-  text-align: right;
+  text-align: left;
   padding-right: 8px;
-  width: 40px;
+  width: 75px;
 `;
 
 const My = styled.span`
@@ -63,7 +63,7 @@ const Progress = ({ start, finish, overrideColor }) => {
 
   const [progress, timeRemaining] = useMemo(() => ([
     100 * (Date.now() / 1000 - start) / (finish - start),
-    formatTimer(finish - (Date.now() / 1000), 1)
+    formatTimer(finish - (Date.now() / 1000), 2)
   ]), [blockTime, start, finish])
 
   return (

@@ -93,8 +93,6 @@ const api = {
   getCrewAgreements: async (crewId) => {
     const queryPromises = [];
 
-    // TODO: should this only pull active + recently expired?
-
     const hasAgreementShouldQuery = [
       esb.boolQuery().must([
         esb.termQuery('Control.controller.id', crewId),
@@ -132,7 +130,19 @@ const api = {
 
     // LOTS...
     const lotQueryBuilding = esb.boolQuery();
-    lotQueryBuilding.should(hasAgreementShouldQuery);
+    lotQueryBuilding.should([
+      esb.boolQuery().must([
+        esb.termQuery('meta.asteroid.Control.controller.id', crewId),
+        esb.boolQuery().should([
+          esb.nestedQuery().path('PrepaidAgreements').query(esb.existsQuery('PrepaidAgreements')),
+          esb.nestedQuery().path('ContractAgreements').query(esb.existsQuery('ContractAgreements')),
+          esb.nestedQuery().path('WhitelistAgreements').query(esb.existsQuery('WhitelistAgreements')),
+        ])
+      ]),
+      esb.nestedQuery().path('PrepaidAgreements').query(esb.termQuery('PrepaidAgreements.permitted.id', crewId)),
+      esb.nestedQuery().path('ContractAgreements').query(esb.termQuery('ContractAgreements.permitted.id', crewId)),
+      esb.nestedQuery().path('WhitelistAgreements').query(esb.termQuery('WhitelistAgreements.permitted.id', crewId)),
+    ]);
 
     const lotQ = esb.requestBodySearch();
     lotQ.query(lotQueryBuilding);
