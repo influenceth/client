@@ -122,7 +122,7 @@ const Subtitle = styled.div`
 `;
 
 const Body = styled.div`
-  width: 100%;
+  flex: ${p => p.flourishWidth ? '1' : '0'} 1 840px;
   height: 100%;
   overflow: hidden;
   padding: 0 35px ${p => p.hasContentOverride ? '0' : '25px'} 25px;
@@ -143,9 +143,11 @@ const BodyInner = styled.div`
 `;
 
 const FlourishWrapper = styled.div`
+  align-items: center;
   display: flex;
-  flex: 1 1 ${p => p.flourishWidth}px;
+  flex: ${p => p.flourishWidth ? `0 0 ${p.flourishWidth}px` : '1 0 250px'};
   flex-direction: column;
+  margin-left: 20px;
   overflow: hidden;
 
   @media (max-width: 1300px) {
@@ -301,12 +303,18 @@ const ChoicesDialog = ({
           <Footer>
             <Rule />
             <div style={{ alignItems: 'center', display: 'flex', height: 'calc(100% - 1px)', justifyContent: 'space-between' }}>
-              <div>{leftButton && <Button flip {...(leftButton.props || {})} onClick={leftButton.onClick}>{leftButton.label}</Button>}</div>
+              <div>
+                {leftButton && (
+                  <Button flip onClick={leftButton.onClick} {...(leftButton.props || {})}>
+                    {leftButton.label}
+                  </Button>
+                )}
+              </div>
               {rightButton
                 ? (
                   <div style={{ alignItems: 'center', display: 'flex' }}>
                     {rightButton.preLabel || ''}
-                    <Button {...(rightButton.props || {})} onClick={rightButton.onClick}>{rightButton.label}</Button>
+                    <Button onClick={rightButton.onClick} {...(rightButton.props || {})}>{rightButton.label}</Button>
                   </div>
                 )
                 : (

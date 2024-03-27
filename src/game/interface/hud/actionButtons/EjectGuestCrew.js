@@ -1,10 +1,11 @@
 import { useCallback, useMemo } from 'react';
+import { Entity } from '@influenceth/sdk';
 
 import { EjectPassengersIcon } from '~/components/Icons';
 import useEjectCrewManager from '~/hooks/actionManagers/useEjectCrewManager';
+import useStationedCrews from '~/hooks/useStationedCrews';
 import theme from '~/theme';
 import ActionButton, { getCrewDisabledReason } from './ActionButton';
-import useStationedCrews from '~/hooks/useStationedCrews';
 
 const isVisible = ({ crew, building, ship }) => {
   // TODO: ...and there are other crews in station (guestCrewsOnShip exists)
@@ -43,8 +44,8 @@ const EjectGuestCrew = ({ asteroid, crew, lot, ship, onSetAction, dialogProps = 
 
   // Differentiate between a Habitat and a ship
   const actionLabel = useMemo(() => {
-    return `Force Eject ${ship == undefined ? 'Resident' : 'Passenger'} Crew`;
-  }, [ship]);
+    return `Force Eject ${entityId?.label === Entity.IDS.SHIP ? 'Passenger' : 'Resident'} Crew`;
+  }, [entityId]);
 
   const disabledReason = useMemo(() => {
     if (_disabled) return 'loading...';
