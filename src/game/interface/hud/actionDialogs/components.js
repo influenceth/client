@@ -1862,7 +1862,7 @@ export const ProcessSelectionDialog = ({ initialSelection, onClose, forceProcess
 
   const processes = useMemo(() => {
     const unSorted = forceProcesses || Object.values(Process.TYPES).filter((p) => p.processorType === processorType);
-    return unSorted.sort((a, b) => { return a.name > b.name ? 1 : -1 });
+    return unSorted.sort((a, b) => a.name > b.name ? 1 : -1);
   }, [forceProcesses, processorType])
 
   const onComplete = useCallback(() => {
