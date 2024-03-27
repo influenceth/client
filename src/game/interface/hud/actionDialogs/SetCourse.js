@@ -448,8 +448,8 @@ const SetCourse = ({ origin, destination, manager, ship, stage, travelSolution, 
                 title="Requirements"
                 deltaVRequired={travelSolution.deltaV}
                 deltaVLoaded={deltaVLoaded}
-                propellantRequired={travelSolution.usedPropellantMass / propellantProduct.massPerUnit}
-                propellantLoaded={propellantMassLoaded / propellantProduct.massPerUnit}
+                propellantRequired={travelSolution.usedPropellantMass}
+                propellantLoaded={propellantMassLoaded}
               />
             </FlexSection>
           </>

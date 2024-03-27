@@ -366,7 +366,7 @@ const customConfigs = {
   },
   EscrowWithdrawalAndFillBuyOrders: {
     getEscrowAmount: ({ price, amount, makerFee }) => {
-      return BigInt((price * amount * (1 + makerFee)) || 0);
+      return BigInt(Math.round(price * amount * (1 + makerFee)) || 0);
     },
     escrowConfig: {
       entrypoint: 'withdraw',
@@ -376,10 +376,6 @@ const customConfigs = {
       withdrawHookKeys: ['buyer_crew', 'exchange', 'product', 'price', 'storage', 'storage_slot'],
       withdrawDataKeys: ['amount', 'origin', 'origin_slot', 'caller_crew'],
       getWithdrawals: ({ exchange_owner_account, seller_account, payments }) => {
-        // console.log([
-        //   { recipient: seller_account, amount: BigInt(payments.toPlayer) },
-        //   { recipient: exchange_owner_account, amount: BigInt(payments.toExchange) },
-        // ]);
         return [
           { recipient: seller_account, amount: BigInt(payments.toPlayer) },
           { recipient: exchange_owner_account, amount: BigInt(payments.toExchange) },
@@ -739,7 +735,7 @@ export function ChainTransactionProvider({ children }) {
   // on initial load, set provider.waitForTransaction for any pendingTransactions
   // so that we can throw any extension-related or timeout errors needed
   useEffect(() => {
-    if (starknet?.account && contracts && pendingTransactions?.length) {
+    if (starknet?.provider && contracts && pendingTransactions?.length) {
       pendingTransactions.forEach(({ key, vars, txHash }) => {
         // (sanity check) this should not be possible since pendingTransaction should not be created
         // without txHash... so we aren't even reporting this error to user since should not happen
@@ -751,7 +747,7 @@ export function ChainTransactionProvider({ children }) {
           // NOTE: waitForTransaction is slow -- often slower than server to receive and process
           //  event and send back to frontend... so we are using it just to listen for errors
           //  (activities from backend will demonstrate success)
-          starknet.account.waitForTransaction(txHash, { retryInterval: RETRY_INTERVAL })
+          starknet.provider.waitForTransaction(txHash, { retryInterval: RETRY_INTERVAL })
             // .then((receipt) => {
             //   if (receipt) {
             //     console.log('transaction settled');
@@ -821,7 +817,7 @@ export function ChainTransactionProvider({ children }) {
         if (Math.floor(Date.now() / 1000) > Math.floor(tx.timestamp / 1000) + 30) {
           const { key, vars, txHash } = tx;
 
-          starknet.account.getTransactionReceipt(txHash)
+          starknet.provider.getTransactionReceipt(txHash)
             .then((receipt) => {
               if (receipt && receipt.execution_status === 'REVERTED') {
                 contracts[key].onTransactionError(receipt, vars);
