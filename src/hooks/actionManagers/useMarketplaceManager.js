@@ -98,7 +98,7 @@ const useMarketplaceManager = (buildingId) => {
             toExchange: order.paymentsE6.toExchange,
             toPlayer: order.paymentsE6.toPlayer
           },
-  
+
           origin: { id: origin?.id, label: origin?.label },
           origin_slot: originSlot,
           product,
@@ -107,7 +107,7 @@ const useMarketplaceManager = (buildingId) => {
           price: Math.round(order.price * 1e6),
           storage: { id: order.storage?.id, label: order.storage?.label },
           storage_slot: order.storageSlot,
-  
+
           ...payload
         })),
         {
@@ -134,13 +134,13 @@ const useMarketplaceManager = (buildingId) => {
             toExchange: order.paymentsE6.toExchange,
             toPlayer: order.paymentsE6.toPlayer
           },
-  
+
           seller_crew: { id: order.crew?.id, label: order.crew?.label },
           amount: order.fillAmount,
           price: Math.round(order.price * 1e6),
           storage: { id: order.storage?.id, label: order.storage?.label },
           storage_slot: order.storageSlot,
-          
+
           product,
           destination: { id: destination?.id, label: destination?.label },
           destination_slot: destinationSlot,

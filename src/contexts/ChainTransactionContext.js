@@ -366,7 +366,7 @@ const customConfigs = {
   },
   EscrowWithdrawalAndFillBuyOrders: {
     getEscrowAmount: ({ price, amount, makerFee }) => {
-      return BigInt((price * amount * (1 + makerFee)) || 0);
+      return BigInt(Math.round(price * amount * (1 + makerFee)) || 0);
     },
     escrowConfig: {
       entrypoint: 'withdraw',
@@ -376,10 +376,6 @@ const customConfigs = {
       withdrawHookKeys: ['buyer_crew', 'exchange', 'product', 'price', 'storage', 'storage_slot'],
       withdrawDataKeys: ['amount', 'origin', 'origin_slot', 'caller_crew'],
       getWithdrawals: ({ exchange_owner_account, seller_account, payments }) => {
-        // console.log([
-        //   { recipient: seller_account, amount: BigInt(payments.toPlayer) },
-        //   { recipient: exchange_owner_account, amount: BigInt(payments.toExchange) },
-        // ]);
         return [
           { recipient: seller_account, amount: BigInt(payments.toPlayer) },
           { recipient: exchange_owner_account, amount: BigInt(payments.toExchange) },
