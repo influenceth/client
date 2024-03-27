@@ -93,10 +93,6 @@ const OpenOrdersButton = styled(OnClickLink)`
     font-size: 175%;
     margin-right: 4px;
   }
-`
-
-const StyledPagination = styled(Pagination)`
-  bottom: 0px;
 `;
 
 const pageSize = 25;
@@ -273,13 +269,6 @@ const Marketplace = () => {
               )}
               </OrderTally>
               <FooterRight>
-                {!discriminator && (filteredCount >= pageSize) &&
-                  <StyledPagination
-                  currentPage={currentPage}
-                  rowsPerPage={pageSize}
-                  rowCount={filteredCount}
-                  onChangePage={(page) => setCurrentPage(page)} />
-                }
               </FooterRight>
           </Footer>
       </Wrapper>

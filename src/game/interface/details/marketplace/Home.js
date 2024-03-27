@@ -272,14 +272,14 @@ const StyledPagination = styled(Pagination)`
   bottom: 0px;
 `;
 
-const footerHeight = 70;
 const Footer = styled.div`
   align-items: center;
   border-top: 1px solid #333;
   display: flex;
   flex-direction: row;
-  height: ${footerHeight}px;
+  height: 70px;
   justify-content: flex-end;
+  margin-bottom: -70px;
 `;
 
 const pageSize = 25;
@@ -488,13 +488,14 @@ const MarketplaceHome = ({ asteroid, listings, orderTally, onSelectListing, mark
             })}
         </Listings>
       </Body>
-        <Footer>
-          <StyledPagination
-            currentPage={currentPage}
-            rowsPerPage={pageSize}
-            rowCount={filteredCount}
-            onChangePage={(page) => setCurrentPage(page)} />
-        </Footer>
+      
+      <Footer>
+        <StyledPagination
+          currentPage={currentPage}
+          rowsPerPage={pageSize}
+          rowCount={filteredCount}
+          onChangePage={(page) => setCurrentPage(page)} />
+      </Footer>
     </>
   );
 };
