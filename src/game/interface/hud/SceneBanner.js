@@ -27,7 +27,7 @@ const SceneBanner = () => {
       enabled: zoomStatus === 'out',
       visible: origin && destination && origin !== destination
     }
-  }), [assetSearch, destination, openHudMenu, origin, zoomStatus, zoomScene]);
+  }), [assetSearch, destination, openHudMenu, origin, zoomStatus, !zoomScene]);
 
   return (
     <>

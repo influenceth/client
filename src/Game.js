@@ -6,12 +6,12 @@ import { useDetectGPU } from '@react-three/drei';
 
 import { ActionItemProvider } from '~/contexts/ActionItemContext';
 import { ActivitiesProvider } from '~/contexts/ActivitiesContext';
-import { AuthProvider } from '~/contexts/AuthContext';
+import { SessionProvider } from '~/contexts/SessionContext';
 import { CrewProvider } from './contexts/CrewContext';
 import { ChainTransactionProvider } from '~/contexts/ChainTransactionContext';
-import { ClockProvider } from '~/contexts/ClockContext';
 import { DevToolProvider } from '~/contexts/DevToolContext';
-import { WalletProvider } from '~/contexts/WalletContext';
+import { ScreensizeProvider } from '~/contexts/ScreensizeContext';
+import { SyncedTimeProvider } from '~/contexts/SyncedTimeContext';
 import { WebsocketProvider } from '~/contexts/WebsocketContext';
 import Audio from '~/game/Audio';
 import Interface from '~/game/Interface';
@@ -22,7 +22,7 @@ import useServiceWorker from '~/hooks/useServiceWorker';
 import useStore from '~/hooks/useStore';
 import constants from '~/lib/constants';
 import theme from '~/theme';
-import useAuth from './hooks/useAuth';
+import useSession from './hooks/useSession';
 import WelcomeFlow from './WelcomeFlow';
 
 
@@ -38,11 +38,12 @@ const StyledMain = styled.main`
   width: 100%;
 `;
 
-// for starknet modals
 const GlobalStyle = createGlobalStyle`
   label {
     cursor: inherit;
   }
+
+  /* for starknet modals */
   .s-dialog {
     z-index: 1010 !important;
   }
@@ -54,7 +55,7 @@ const GlobalStyle = createGlobalStyle`
 const DISABLE_LAUNCHER_LANDING = true && process.env.NODE_ENV === 'development';
 
 const LauncherRedirect = () => {
-  const { account } = useAuth();
+  const { authenticated } = useSession();
   const history = useHistory();
 
   const launcherPage = useStore(s => s.launcherPage);
@@ -78,7 +79,7 @@ const LauncherRedirect = () => {
   // redirect to launcher if was logged in and is now logged out (and not already on launcher)
   const wasLoggedIn = useRef(false);
   useEffect(() => {
-    if (account) {
+    if (authenticated) {
       wasLoggedIn.current = true;
     } else {
       if (wasLoggedIn.current && !launcherPage) {
@@ -86,7 +87,7 @@ const LauncherRedirect = () => {
       }
       wasLoggedIn.current = false;
     }
-  }, [!account]);
+  }, [!authenticated]);
 
   return null;
 };
@@ -140,46 +141,63 @@ const Game = () => {
   }, [createAlert, updateNeeded, onUpdateVersion]);
 
   return (
-    <WalletProvider>
-      <AuthProvider>
+    <>
+      <GlobalStyle />
+
+      {/* global contexts (i.e. needed by interface and scene) */}
+      <SessionProvider>
         <CrewProvider>
-          <DevToolProvider>
-            <WebsocketProvider>
-              <ActivitiesProvider>
-                <ChainTransactionProvider>
-                  <ActionItemProvider>
-                    <ThemeProvider theme={theme}>
-                      <GlobalStyle />
-                      <Router>
-                        <Referral />
-                        <Switch>
-                          {/* for socialmedia links that need to pull opengraph tags (will redirect to discord or main app) */}
-                          <Route path="/play">
-                            <LandingPage />
-                          </Route>
-                          {/* for everything else */}
-                          <Route>
-                            <LauncherRedirect />
-                            <ClockProvider>
-                              <StyledMain>
-                                <Interface />
-                                {showScene && <Scene />}
-                                <Audio />
-                                <WelcomeFlow />
-                              </StyledMain>
-                            </ClockProvider>
-                          </Route>
-                        </Switch>
-                      </Router>
-                    </ThemeProvider>
-                  </ActionItemProvider>
-                </ChainTransactionProvider>
-              </ActivitiesProvider>
-            </WebsocketProvider>
-          </DevToolProvider>
+          <WebsocketProvider>
+            <Router>
+              <Referral />
+              <Switch>
+
+                {/* for socialmedia links that need to pull opengraph tags (will redirect to discord or main app) */}
+                <Route path="/play">
+                  <LandingPage />
+                </Route>
+
+                {/* for everything else */}
+                <Route>
+
+                  {/* redirect user to launcher (when appropraite) */}
+                  <LauncherRedirect />
+
+                  {/* main app wrapper */}
+                  <StyledMain>
+
+                    {/* all ui-specific context providers wrapping interface and new-user flow */}
+                    <ActivitiesProvider>
+                      <ChainTransactionProvider>
+                        <SyncedTimeProvider>
+                          <ActionItemProvider>
+                            <DevToolProvider>
+                              <ThemeProvider theme={theme}>
+                                <ScreensizeProvider>
+                                  <Interface />
+                                  <WelcomeFlow />
+                                </ScreensizeProvider>
+                              </ThemeProvider>
+                            </DevToolProvider>
+                          </ActionItemProvider>
+                        </SyncedTimeProvider>
+                      </ChainTransactionProvider>
+                    </ActivitiesProvider>
+
+                    {/* 3d scene */}
+                    {showScene && <Scene />}
+
+                    {/* audio */}
+                    <Audio />
+
+                  </StyledMain>
+                </Route>
+              </Switch>
+            </Router>
+          </WebsocketProvider>
         </CrewProvider>
-      </AuthProvider>
-    </WalletProvider>
+      </SessionProvider>
+    </>
   );
 };
 

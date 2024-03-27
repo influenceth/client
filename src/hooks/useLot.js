@@ -1,6 +1,6 @@
-import { useQuery, useQueryClient } from 'react-query';
 import { useMemo } from 'react';
-import { Deposit, Entity, Lot, Permission, Ship } from '@influenceth/sdk';
+import { useQuery, useQueryClient,  } from 'react-query';
+import { Entity, Lot, Permission, Ship } from '@influenceth/sdk';
 
 import api from '~/lib/api';
 import useEntity from './useEntity';
@@ -33,7 +33,7 @@ const useLot = (lotId) => {
         match: { 'Location.locations.uuid': lotEntity.uuid },
         components: [ // this should include all default components returned for relevant entities (buildings, ships, deposits)
           'Building', 'Control', 'Dock', 'DryDock', 'Exchange', 'Extractor', 'Inventory', 'Location', 'Name', 'Processor', 'Station',
-          /*'Control',*/ 'Deposit', /*'Location',*/
+          /*'Control',*/ 'Deposit', /*'Location',*/ 'PrivateSale',
           /*'Control', 'Inventory', 'Location', 'Name',*/ 'Nft', 'Ship', /*'Station',*/
 
           // these are on both buildings and ships:
@@ -62,7 +62,7 @@ const useLot = (lotId) => {
   );
 
   // (presuming this is already loaded so doesn't cause any overhead)
-  const { data: asteroid, isLoading: asteroidLoading } = useEntity({ label: Entity.IDS.ASTEROID, id: Lot.toPosition(lotId)?.asteroidId });
+  const { data: asteroid, isLoading: asteroidLoading } = useEntity(lotId ? { label: Entity.IDS.ASTEROID, id: Lot.toPosition(lotId)?.asteroidId } : undefined);
 
   // we try to prepop all the below in a single call above so the
   // below queries only get refreshed invididually when invalidated
@@ -70,7 +70,10 @@ const useLot = (lotId) => {
   const { data: deposits, isLoading: depositsLoading } = useLotEntities(lotId, Entity.IDS.DEPOSIT, !!lotDataPrepopped);
   const { data: ships, isLoading: shipsLoading } = useLotEntities(lotId, Entity.IDS.SHIP, !!lotDataPrepopped);
 
-  return useMemo(() => {
+  const isLoading = lotEntity?.uuid && (lotIsLoading || lotDataIsLoading || asteroidLoading || buildingsLoading || depositsLoading || shipsLoading);
+  const data = useMemo(() => {
+    if (isLoading || !lotEntity?.uuid) return undefined;
+
     const { asteroidId, lotIndex } = Lot.toPosition(lotId) || {};
     const agreement = (lot?.PrepaidAgreements || lot?.ContractAgreements || []).find((a) => a.permission === Permission.IDS.USE_LOT);
     const building = (buildings || []).find((e) => e.Building.status > 0);
@@ -79,42 +82,48 @@ const useLot = (lotId) => {
     const surfaceShip = !building && shipsToShow.find((e) => e.Ship.status === Ship.STATUSES.AVAILABLE && e.Location.location.label === Entity.IDS.LOT);
 
     return {
-      data: lotId ? {
-        ...lotEntity,
-        ...lot,
-        Location: {
-          location: { label: Entity.IDS.ASTEROID, id: asteroidId },
-          locations: [
-            lotEntity,
-            { label: Entity.IDS.ASTEROID, id: asteroidId },
-          ]
+      ...lotEntity,
+      ...lot,
+      Location: {
+        location: { label: Entity.IDS.ASTEROID, id: asteroidId },
+        locations: [
+          lotEntity,
+          { label: Entity.IDS.ASTEROID, id: asteroidId },
+        ]
+      },
+      building,
+      deposits: depositsToShow,
+      ships: shipsToShow,
+      surfaceShip,
+
+      Control: agreement?.permitted?.id
+        ? {
+          controller: { id: agreement.permitted.id, label: Entity.IDS.CREW },
+          _superController: asteroid?.control,
+          _isExplicit: true,
+        }
+        : {
+          ...asteroid?.Control,
+          _superController: asteroid?.control
         },
-        building,
-        deposits: depositsToShow,
-        ships: shipsToShow,
-        surfaceShip,
-
-        Control: agreement?.permitted?.id
-          ? { controller: { id: agreement.permitted.id, label: Entity.IDS.CREW }, isExplicit: true }
-          : asteroid?.Control,
-        ContractPolicies: asteroid?.ContractPolicies,
-        PrepaidPolicies: (asteroid?.PrepaidPolicies || []).map((p) => {
-          // for simplicity, apply AP's special lot rating here so don't have to apply it everywhere else
-          if (p.permission === Permission.IDS.USE_LOT && asteroid.id === 1) {
-            return {
-              ...p,
-              rate: Math.floor(Permission.getAdaliaPrimeLotRate(p, lotIndex))
-            }
+      ContractPolicies: asteroid?.ContractPolicies,
+      PrepaidPolicies: (asteroid?.PrepaidPolicies || []).map((p) => {
+        // for simplicity, apply AP's special lot rating here so don't have to apply it everywhere else
+        if (p.permission === Permission.IDS.USE_LOT && asteroid.id === 1) {
+          return {
+            ...p,
+            rate: Math.floor(Permission.getAdaliaPrimeLotRate(p, lotIndex))
           }
-          return p;
-        }),
-        // 'ContractAgreement', 'PrepaidAgreement' should be on lot record
-        // unclear what happens to 'WhitelistAgreement' or PublicPolicies
-      } : undefined,
-      isLoading: lotIsLoading || lotDataIsLoading || asteroidLoading || buildingsLoading || depositsLoading || shipsLoading
+        }
+        return p;
+      }),
+      // 'ContractAgreement', 'PrepaidAgreement' should be on lot record
+      // unclear what happens to 'WhitelistAgreement' or PublicPolicies
     };
-  }, [lotId, lot, lotEntity, asteroid, buildings, deposits, ships, lotIsLoading, lotDataIsLoading, asteroidLoading, buildingsLoading, depositsLoading, shipsLoading])
 
+  }, [lotEntity?.uuid, isLoading])
+
+  return useMemo(() => ({ data, isLoading }), [data, isLoading]);
 };
 
 export default useLot;

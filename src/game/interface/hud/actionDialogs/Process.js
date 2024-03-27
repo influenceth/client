@@ -32,7 +32,6 @@ import {
   ProgressBarSection
 } from './components';
 import useLot from '~/hooks/useLot';
-import useStore from '~/hooks/useStore';
 import { ActionDialogInner, useAsteroidAndLot } from '../ActionDialog';
 import actionStages from '~/lib/actionStages';
 import ClipCorner from '~/components/ClipCorner';
@@ -68,7 +67,7 @@ const IconWrapper = styled.div`
 `;
 const RightIconWrapper = styled.div``;
 
-const noop = () => {};
+const noop = () => { };
 
 const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...props }) => {
   const { currentProcess, processStatus, startProcess, finishProcess } = processManager;
@@ -129,9 +128,12 @@ const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...pro
 
   // Ensure amount is within bounds when origin inventory or recipe changes
   useEffect(() => {
+    // For actions that are already in progress etc., just trust the recipeTally for amount.
+    // The maxAmount (which depends on *current* origin inventory stock) is not relevant in that case.
+    if (stage !== actionStages.NOT_STARTED) return;
     if (amount > maxAmount) setAmount(maxAmount);
     if (amount < recipeStepSize) setAmount(recipeStepSize);
-  }, [recipeStepSize, maxAmount]);
+  }, [recipeStepSize, maxAmount, stage]);
 
   useEffect(() => {
     if (!process) return;
@@ -140,7 +142,7 @@ const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...pro
     setAmount(1);
   }, [currentProcess, process]);
 
-  const [crewTravelBonus, processingTimeBonus] = useMemo(() => {
+  const [crewTravelBonus, processingTimeBonus, secondaryOutputsBonus] = useMemo(() => {
     const bonusIds = [Crewmate.ABILITY_IDS.HOPPER_TRANSPORT_TIME];
     if (processor.processorType === Processor.IDS.BIOREACTOR) {
       bonusIds.push(Crewmate.ABILITY_IDS.REACTION_TIME);
@@ -149,6 +151,7 @@ const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...pro
     } else {
       bonusIds.push(Crewmate.ABILITY_IDS.MANUFACTURING_TIME);
     }
+    bonusIds.push(Crewmate.ABILITY_IDS.SECONDARY_REFINING_YIELD);
     const abilities = getCrewAbilityBonuses(bonusIds, crew);
     return bonusIds.map((id) => abilities[id] || {});
   }, [crew]);
@@ -439,8 +442,8 @@ const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...pro
             style={{ marginBottom: 20, width: '33.3%' }}
             sublabel={
               originLot
-              ? <><LocationIcon /> {formatters.lotName(originLotIndex)}</>
-              : 'Inventory'
+                ? <><LocationIcon /> {formatters.lotName(originLotIndex)}</>
+                : 'Inventory'
             }
             transferMass={inputMass}
             transferVolume={inputVolume} />
@@ -462,6 +465,7 @@ const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...pro
                 : []
             }
             source={originInventory}
+            stage={stage}
             style={{ alignSelf: 'flex-start', width: '66.7%' }} />
 
         </FlexSection>
@@ -483,8 +487,8 @@ const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...pro
             style={{ marginBottom: 20, width: '33.3%' }}
             sublabel={
               destinationLot
-              ? <><LocationIcon /> {formatters.lotName(destinationLotIndex)}</>
-              : 'Inventory'
+                ? <><LocationIcon /> {formatters.lotName(destinationLotIndex)}</>
+                : 'Inventory'
             }
             transferMass={outputMass}
             transferVolume={outputVolume} />
@@ -495,6 +499,7 @@ const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...pro
 
           <ProcessInputOutputSection
             disabled={stage !== actionStages.NOT_STARTED}
+            secondaryOutputsBonus={secondaryOutputsBonus?.totalBonus}
             output
             title={
               process
@@ -507,6 +512,7 @@ const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...pro
                 : []
             }
             primaryOutput={primaryOutput}
+            stage={stage}
             setPrimaryOutput={stage === actionStages.NOT_STARTED ? setPrimaryOutput : null}
             style={{ alignSelf: 'flex-start', width: '66.7%' }} />
 

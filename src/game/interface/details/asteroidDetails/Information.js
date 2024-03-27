@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
 import { Asteroid, Entity, Name } from '@influenceth/sdk';
 
-import useAuth from '~/hooks/useAuth';
+import useSession from '~/hooks/useSession';
 import useWebWorker from '~/hooks/useWebWorker';
 import useBuyAsteroid from '~/hooks/actionManagers/useBuyAsteroid';
 import useChangeName from '~/hooks/actionManagers/useChangeName';
@@ -270,7 +270,7 @@ const SmHidden = styled.span`
 `;
 
 const AsteroidInformation = ({ abundances, asteroid, isManager, isOwner }) => {
-  const { account } = useAuth();
+  const { authenticated } = useSession();
   const createReferral = useCreateReferral(Number(asteroid.id));
   const isNameValid = useNameAvailability(Entity.IDS.ASTEROID);
   const { data: activities } = useActivities({ id: asteroid.id, label: Entity.IDS.ASTEROID });
@@ -475,7 +475,7 @@ const AsteroidInformation = ({ abundances, asteroid, isManager, isOwner }) => {
                 <Button
                   data-tip="Purchase development rights"
                   data-for="global"
-                  disabled={nativeBool(!account || buying)}
+                  disabled={nativeBool(!authenticated || buying)}
                   isTransaction
                   loading={reactBool(buying)}
                   onClick={attemptBuyAsteroid}>

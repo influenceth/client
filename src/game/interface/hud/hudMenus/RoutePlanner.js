@@ -1,26 +1,25 @@
-import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import styled from 'styled-components';
 import { Crew, Crewmate, Entity, Inventory, Ship, Time } from '@influenceth/sdk';
 
+import { CrewCaptainCardFramed } from '~/components/CrewmateCardFramed';
 import Dropdown from '~/components/Dropdown';
-import { CheckedIcon, CloseIcon, UncheckedIcon, WarningIcon } from '~/components/Icons';
+import { CheckedIcon, CloseIcon, RefreshIcon, UncheckedIcon, WarningIcon } from '~/components/Icons';
+import MouseoverInfoPane from '~/components/MouseoverInfoPane';
 import NumberInput from '~/components/NumberInput';
 import Porkchop from '~/components/Porkchop';
 import SliderInput from '~/components/SliderInput';
-import ClockContext from '~/contexts/ClockContext';
 import useAsteroid from '~/hooks/useAsteroid';
-import useStore from '~/hooks/useStore';
-import { sampleAsteroidOrbit } from '~/lib/geometryUtils';
-import { reactBool, formatFixed, nativeBool } from '~/lib/utils';
-import { MaterialBonusTooltip, MouseoverContent, ShipImage, formatMass } from '../actionDialogs/components';
-import { Scrollable } from './components/components';
+import useCoarseTime from '~/hooks/useCoarseTime';
+import useConstants from '~/hooks/useConstants';
 import useCrewContext from '~/hooks/useCrewContext';
 import useOwnedShips from '~/hooks/useOwnedShips';
+import useStore from '~/hooks/useStore';
 import formatters from '~/lib/formatters';
-import useConstants from '~/hooks/useConstants';
-import { getCrewAbilityBonuses } from '~/lib/utils';
-import { CrewCaptainCardFramed } from '~/components/CrewmateCardFramed';
-import MouseoverInfoPane from '~/components/MouseoverInfoPane';
+import { sampleAsteroidOrbit } from '~/lib/geometryUtils';
+import { getCrewAbilityBonuses, reactBool, formatFixed, nativeBool } from '~/lib/utils';
+import { MaterialBonusTooltip, MouseoverContent, ShipImage, formatMass } from '../actionDialogs/components';
+import { Scrollable } from './components/components';
 
 const ShipSelection = styled.div`
   align-items: center;
@@ -149,7 +148,7 @@ const Closer = styled.span`
 `;
 
 const resolution = 1;
-const minDelay = 0.1;
+const minDelay = 0.1; // TODO: could switch to 0 safely it seems
 const maxDelay = minDelay + 365;
 const minTof = Math.max(resolution, 1);
 const maxTof = minTof + 365;
@@ -210,7 +209,7 @@ const InfoRowWithTooltip = ({ children, tooltip }) => {
 };
 
 const RoutePlanner = () => {
-  const { coarseTime } = useContext(ClockContext);
+  const coarseTime = useCoarseTime();
   const { crew, loading: crewIsLoading } = useCrewContext();
 
   const originId = useStore(s => s.asteroids.origin);
@@ -226,7 +225,6 @@ const RoutePlanner = () => {
   const { data: TIME_ACCELERATION } = useConstants('TIME_ACCELERATION');
 
   const [baseTime, setBaseTime] = useState();
-  const [nowTime, setNowTime] = useState();
 
   const [emode, setEmode] = useState(false);
   const [cargoMass, setCargoMass] = useState(0);
@@ -234,6 +232,7 @@ const RoutePlanner = () => {
   const [propellantMass, setPropellantMass] = useState(0);
   const [ship, setShip] = useState();
 
+  // TODO: should this use baseTime instead?
   const crewFoodSupplies = useMemo(() => {
     if (!crew) return 100;
     const realTime = Time.fromOrbitADays(coarseTime, TIME_ACCELERATION).toDate().getTime() / 1000;
@@ -270,7 +269,6 @@ const RoutePlanner = () => {
       ...Object.keys(Ship.TYPES).map((s, i) => ({
         label: Entity.IDS.SHIP,
         id: -(1 + i),
-        i: -(1 + i),
         Name: { name: `Simulated ${Ship.TYPES[s].name}` },
         Ship: { shipType: Number(s), status: Ship.STATUSES.AVAILABLE },
         Location: { location: { label: Entity.IDS.ASTEROID, id: originId } },
@@ -382,16 +380,24 @@ const RoutePlanner = () => {
     }
   }, [dispatchReorientCamera]);
 
+  // baseTime is zero-time of the chart rendered. update if...
+  //  - not set yet OR significantly different (i.e. time_acceleration changed)
+  //  - use was fast-forwarding and is no longer
+  //  - travel-solution was just cleared because no longer valid
+  const isFastForwarding = (Math.abs(timeOverride?.speed) > 1);
   useEffect(() => {
-    if (!nowTime || !timeOverride?.speed || Math.abs(timeOverride.speed) <= 1) {
-      setNowTime(coarseTime);
-
-      if (!baseTime || !travelSolution || travelSolution?.departureTime < coarseTime) {
-        setBaseTime(coarseTime);
-      }
+    if (!baseTime || ((coarseTime - baseTime) / baseTime > 0.05)) {
+      setBaseTime(coarseTime);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [coarseTime, travelSolution]);
+  }, [coarseTime, TIME_ACCELERATION]);
+  useEffect(() => {
+    if (!isFastForwarding) setBaseTime(coarseTime);
+  }, [isFastForwarding]);
+  useEffect(() => {
+    if (travelSolution?.departureTime && travelSolution?.departureTime < coarseTime) {
+      setBaseTime(coarseTime);
+    }
+  }, [coarseTime, travelSolution?.departureTime]);
 
   const { originPath, destinationPath } = useMemo(() => {
     if (!origin || !destination || !baseTime) return {};
@@ -420,8 +426,8 @@ const RoutePlanner = () => {
   }, [baseTime, origin, destination]);
 
   const lastFedAt = useMemo(() => {
-    return coarseTime - Crew.getTimeSinceFed(foodSupplies / 100, crew?._foodBonuses?.consumption) / 86400;
-  }, [coarseTime, crew, foodSupplies]);
+    return baseTime - Crew.getTimeSinceFed(foodSupplies / 100, crew?._foodBonuses?.consumption) / 86400;
+  }, [baseTime, crew, foodSupplies]);
 
   const propellantBonus = useMemo(() => getCrewAbilityBonuses(Crewmate.ABILITY_IDS.PROPELLANT_EXHAUST_VELOCITY, crew), [crew]);
 
@@ -444,7 +450,7 @@ const RoutePlanner = () => {
             labelKey="_name"
             onChange={setShip}
             options={shipList}
-            valueKey="i"
+            valueKey="id"
             size="small"
             style={{ textTransform: 'none', fontSize: '80%' }}
             width={230} />
@@ -521,6 +527,9 @@ const RoutePlanner = () => {
 
       <SectionHeader style={{ marginBottom: 10 }}>
         <span>Ballistic Transfer Graph</span>
+        {!travelSolution && (coarseTime > (baseTime + 5)) && (
+          <Closer onClick={() => setBaseTime(coarseTime)}><RefreshIcon /></Closer>
+        )}
         {travelSolution && (
           <Closer onClick={dispatchTravelSolution}><CloseIcon /></Closer>
         )}
@@ -533,7 +542,7 @@ const RoutePlanner = () => {
             baseTime={baseTime}
             emode={shipConfig?.emode}
             lastFedAt={lastFedAt}
-            nowTime={nowTime}
+            nowTime={coarseTime}
             originPath={originPath}
             destinationPath={destinationPath}
             minDelay={minDelay}

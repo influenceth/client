@@ -1,4 +1,4 @@
-import { useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import styled from 'styled-components';
 import { useFrame } from '@react-three/fiber';
 import { Html } from '@react-three/drei';
@@ -6,17 +6,18 @@ import { Color, Vector3 } from 'three';
 import { AdalianOrbit, Crewmate } from '@influenceth/sdk';
 import { cloneDeep } from 'lodash';
 
-import ClockContext from '~/contexts/ClockContext';
-import useStore from '~/hooks/useStore';
+import { RouteInvalidIcon, RouteValidIcon } from '~/components/Icons';
+import { formatBeltDistance } from '~/game/interface/hud/actionDialogs/components';
+import useCoarseTime from '~/hooks/useCoarseTime';
+import useCrewContext from '~/hooks/useCrewContext';
 import useAsteroid from '~/hooks/useAsteroid';
+import useStore from '~/hooks/useStore';
+import useTravelSolutionIsValid from '~/hooks/useTravelSolutionIsValid';
+import { getCrewAbilityBonuses } from '~/lib/utils';
+
 import orbitColors from './orbit/orbitColors';
 import frag from './orbit/orbit.frag';
 import vert from './orbit/orbit.vert';
-import { RouteInvalidIcon, RouteValidIcon } from '~/components/Icons';
-import { formatBeltDistance } from '~/game/interface/hud/actionDialogs/components';
-import useTravelSolutionIsValid from '~/hooks/useTravelSolutionIsValid';
-import { getCrewAbilityBonuses } from '~/lib/utils';
-import useCrewContext from '~/hooks/useCrewContext';
 
 const RouteMarker = styled.div`
   align-items: center;
@@ -50,7 +51,7 @@ const initialUniforms = {
 };
 
 const TravelSolution = ({}) => {
-  const { coarseTime } = useContext(ClockContext);
+  const coarseTime = useCoarseTime();
   const { crew } = useCrewContext();
 
   const uniforms = useRef({
@@ -88,7 +89,7 @@ const TravelSolution = ({}) => {
     if (!travelSolution) return;
 
     const propellantBonus = getCrewAbilityBonuses(Crewmate.ABILITY_IDS.PROPELLANT_EXHAUST_VELOCITY, crew);
-    console.log('travelSolution', travelSolution, 'propellantBonus', propellantBonus);
+    // console.log('travelSolution', travelSolution, 'propellantBonus', propellantBonus);
 
     // clear travel solution...
     if (

@@ -6,8 +6,7 @@ import { useContextBridge, Stats } from '@react-three/drei';
 import styled from 'styled-components';
 
 import { TrackballModControls } from '~/components/TrackballModControls';
-import AuthContext from '~/contexts/AuthContext';
-import ClockContext from '~/contexts/ClockContext';
+import SessionContext from '~/contexts/SessionContext';
 import CrewContext from '~/contexts/CrewContext';
 import useStore from '~/hooks/useStore';
 import constants from '~/lib/constants';
@@ -82,8 +81,7 @@ const Scene = () => {
 
   // Use ContextBridge to make wallet available within canvas
   const ContextBridge = useContextBridge(
-    AuthContext,
-    ClockContext,
+    SessionContext,
     CrewContext,
     WebsocketContext
   );

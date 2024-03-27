@@ -1,10 +1,8 @@
-import { useMemo } from 'react';
-import { Building, Entity, Permission } from '@influenceth/sdk';
+import { Building, Entity } from '@influenceth/sdk';
 
 import useLot from '~/hooks/useLot';
 import useStore from '~/hooks/useStore';
 import { HudMenuCollapsibleSection, Scrollable } from './components/components';
-import EntityDescriptionForm from './components/EntityDescriptionForm';
 import EntityNameForm from './components/EntityNameForm';
 import LotTitleArea from './components/LotTitleArea';
 import MarketplaceSettings from './components/MarketplaceSettings';
@@ -13,7 +11,7 @@ import PolicyPanels from './components/PolicyPanels';
 const AdminBuilding = ({}) => {
   const lotId = useStore(s => s.asteroids.lot);
   const { data: lot } = useLot(lotId);
- 
+
   return (
     <>
       <Scrollable>

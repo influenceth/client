@@ -1,28 +1,17 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Link, useHistory } from 'react-router-dom';
-import styled, { css, keyframes } from 'styled-components';
-import BarLoader from 'react-spinners/BarLoader';
+import { Link } from 'react-router-dom';
+import styled from 'styled-components';
 
-import { CloseIcon as DismissIcon, PopoutIcon } from '~/components/Icons';
-import { FailedIcon, RandomEventIcon, ReadyIcon } from '~/components/AnimatedIcons';
+import { BellIcon, EyeIcon, ListIcon } from '~/components/Icons';
 import CollapsibleSection from '~/components/CollapsibleSection';
-import LiveTimer from '~/components/LiveTimer';
-import { useLotLink } from '~/components/LotLink';
 import useActionItems from '~/hooks/useActionItems';
-import useAsteroid from '~/hooks/useAsteroid';
-import useAuth from '~/hooks/useAuth';
+import useSession from '~/hooks/useSession';
 import useCrewContext from '~/hooks/useCrewContext';
 import useGetActivityConfig from '~/hooks/useGetActivityConfig';
-import useLot from '~/hooks/useLot';
-import useStore from '~/hooks/useStore';
-import { formatActionItem, itemColors, statuses } from '~/lib/actionItem';
 import { hexToRGB } from '~/theme';
-import formatters from '~/lib/formatters';
+import ActionItem, { ITEM_WIDTH, TRANSITION_TIME } from './ActionItem';
 
-const ICON_WIDTH = 34;
-const ITEM_WIDTH = 410;
-const SECTION_WIDTH = 450;
-const TRANSITION_TIME = 400;
+const SECTION_WIDTH = ITEM_WIDTH + 30;
 
 const TitleWrapper = styled.div`
   display: flex;
@@ -40,56 +29,112 @@ const ActionItemWrapper = styled.div`
   width: ${ITEM_WIDTH}px;
 `;
 
+const filterRowPadding = 9;
+const selectionIndicatorHeight = 3;
+const selectionIndicatorWidth = 30;
 const Filters = styled.div`
+  align-items: center;
+  border-bottom: 1px solid #444;
+  display: flex;
+  flex-direction: row;
+  overflow: hidden;
+  padding: ${filterRowPadding}px 0;
+  width: 100%;
+  & > a {
+    display: inline-block;
+    font-size: 18px;
+    height: 26px;
+    padding: 4px 6px;
+  }
+`;
+const Filter = styled.div`
+  cursor: ${p => p.theme.cursors.active};
+  font-size: 90%;
+  font-weight: bold;
+  height: 26px;
+  margin-right: 8px;
+  padding: 4px 15px;
+  position: relative;
+  text-transform: uppercase;
+
+  & > svg {
+    font-size: 22px;
+  }
+  & > b {
+    color: white;
+    margin-right: 2px;
+  }
+
+  &:after {
+    content: "";
+    background: currentColor;
+    bottom: -${filterRowPadding + selectionIndicatorHeight}px;
+    height: ${selectionIndicatorHeight}px;
+    margin-left: 0;
+    left: 50%;
+    position: absolute;
+    width: 0;
+    transition: bottom 150ms ease, margin-left 150ms ease 50ms, width 150ms ease 50ms;
+  }
+
+  ${p => p.selected ? `` : `&:hover {`}
+    &:after {
+      bottom: -${filterRowPadding}px;
+      margin-left: -${selectionIndicatorWidth / 2}px;
+      width: ${selectionIndicatorWidth}px;
+    }
+  ${p => p.selected ? `` : `}`}
+`;
+const IconFilter = styled(Filter)`
   align-items: center;
   display: flex;
   flex-direction: row;
-  width: 100%;
+  opacity: ${p => p.selected ? 1 : 0.8};
+  transition: opacity 150ms ease;
+  ${p => p.selected ? `` : `&:hover { opacity: 0.9; }`}
+  & > b {
+    margin: 0 0 0 6px;
+  }
+
+  &:after {
+    background: ${p => p.theme.colors.main};
+  }
 `;
-const Filter = styled.div`
+const AllFilter = styled(IconFilter)`
+  padding-left: 5px;
+  padding-right: 2px;
+
+  &:after {
+    // left: ${selectionIndicatorWidth / 2}px;
+  }
+`;
+const HiddenFilter = styled(IconFilter)`
+  color: #CCC;
+  padding-left: 0;
+  padding-right: 0;
+`;
+const PillFilter = styled(Filter)`
   border-radius: 20px;
-  cursor: ${p => p.theme.cursors.active};
-  font-size: 90%;
-  margin-right: 8px;
-  padding: 3px 12px;
-  &:before {
-    content: "${p => p.tally}";
-    color: white;
-    margin-right: 8px;
-  }
+  border: 1px solid ${p => p.selected ? 'currentColor' : 'transparent'};
+  transition: border-color 150ms ease;
 `;
-const ReadyFilter = styled(Filter)`
+const ReadyFilter = styled(PillFilter)`
   background: rgba(${p => hexToRGB(p.theme.colors.success)}, 0.2);
-  border: 1px solid ${p => p.selected ? `rgba(${hexToRGB(p.theme.colors.success)}, 0.5)` : 'transparent'};
-  &:hover {
-    border: 1px solid rgba(${p => hexToRGB(p.theme.colors.success)}, 0.3);
-  }
-  &:after {
-    content: "Ready";
-    color: ${p => p.theme.colors.success};
-  }
-`;
-const InProgressFilter = styled(Filter)`
-  background: rgba(${p => p.theme.colors.mainRGB}, 0.2);
-  border: 1px solid ${p => p.selected ? `rgba(${p.theme.colors.mainRGB}, 0.5)` : 'transparent'};
-  &:hover {
-    border: 1px solid rgba(${p => p.theme.colors.mainRGB}, 0.3);
-  }
-  &:after {
-    content: "In Progress";
-    color: ${p => p.theme.colors.main};
-  }
-`;
-const LinkContainer = styled.div`
-  flex: 1;
-  text-align: right;
-  & > a {
-    color: ${p => p.theme.colors.main} !important;
+  color: ${p => p.theme.colors.success};
+  ${p => p.selected && `
     &:hover {
-      color: white !important;
+      border-color: rgba(${hexToRGB(p.theme.colors.success)}, 0.3);
     }
-    transition: color 250ms ease;
-  }
+  `}
+`;
+const InProgressFilter = styled(PillFilter)`
+  background: rgba(${p => p.theme.colors.mainRGB}, 0.4);
+  color: ${p => p.theme.colors.brightMain};
+  ${p => !p.selected && `
+    &:hover {
+      border-color: rgba(${hexToRGB(p.theme.colors.brightMain)}, 0.3);
+    }
+  `}
 `;
 
 const OuterWrapper = styled.div`
@@ -97,7 +142,7 @@ const OuterWrapper = styled.div`
   height: 0;
   pointer-events: none;
   position: relative;
-  width: 100%;
+  width: ${SECTION_WIDTH}px;
 `;
 
 const ActionItemContainer = styled.div`
@@ -108,311 +153,26 @@ const ActionItemContainer = styled.div`
   width: ${ITEM_WIDTH}px;
 `;
 
-const opacityKeyframes = keyframes`
-  0% {
-    opacity: 1;
+const ActionItemCategory = styled.div`
+  margin-top: 8px;
+  &:not(:first-child) {
+    margin-top: 10px;
   }
-  50% {
-    opacity: 0.4;
-  }
-  100% {
-    opacity: 1;
-  }
-`;
-const Icon = styled.div`
-  & svg {
-    filter: drop-shadow(1px 1px 1px #333);
-    ${p => p.animate && css`
-      animation: ${opacityKeyframes} 1000ms ease infinite;
-    `}
-  }
-`;
-
-const Status = styled.div``;
-const Label = styled.div`
-  white-space: nowrap;
-`;
-const Details = styled.div``;
-const Timing = styled.div`
-  b {
-    font-weight: normal;
-    text-transform: uppercase;
-  }
-`;
-const Location = styled.div`
-  color: rgba(255, 255, 255, 0.6);
-  b {
-    color: white;
-    font-weight: normal;
+  &:not(:last-child) {
     &:after {
-      content: '>';
-      color: rgba(255, 255, 255, 0.6);
-      display: inline-block;
-      padding: 0 5px;
-    }
-  }
-`;
-const Dismissal = styled.div`
-  align-items: center;
-  color: white;
-  display: flex;
-  width: 80px;
-  & > div {
-    align-items: center;
-    border: 1px solid orangered;
-    color: ${p => p.theme.colors.error};
-    display: flex;
-    font-size: 20px;
-    justify-content: center;
-    margin-left: 4px;
-  }
-  &:hover {
-    & > div {
-      background: rgba(255, 255, 255, 0.15);
-      color: white;
-    }
-  }
-`;
-const Progress = styled.div``;
-const ActionItemRow = styled.div`
-  align-items: center;
-  overflow: hidden;
-  pointer-events: all;
-  text-shadow: 1px 1px 2px black;
-
-  ${p => {
-    if (p.transitionOut === 'right') {
-      return `
-        background: rgba(255, 255, 255, 0.9);
-        height: 0;
-        margin-bottom: 0;
-        transform: translateX(${ITEM_WIDTH});
-        & > * { opacity: 0; }
-      `;
-    } else if (p.transitionOut === 'left') {
-      return `
-        height: 0;
-        margin-bottom: 0;
-        opacity: 0;
-        transform: translateX(-${ITEM_WIDTH});
-      `;
-    }
-    return `
-      background: rgba(${p.color}, 0.2);
-      color: rgb(${p.color});
-      height: 34px;
-      margin-bottom: 2px;
-      opacity: 1;
-      transform: translateX(0);
-      &:hover {
-        background: rgba(${p.color}, 0.4);
-        ${!p.oneRow && `
-          ${Details} > * {
-            transform: translateY(-34px);
-          }
-        `}
-      }
-    `;
-  }}
-
-  cursor: ${p => p.theme.cursors.active};
-  display: flex;
-  flex-direction: row;
-  font-size: 85%;
-  position: relative;
-  transition:
-    opacity ${TRANSITION_TIME * 0.75}ms ease,
-    transform ${TRANSITION_TIME * 0.75}ms ease,
-    height ${TRANSITION_TIME * 0.25}ms ease ${TRANSITION_TIME * 0.75}ms,
-    margin-bottom 1ms ease ${TRANSITION_TIME * 0.75}ms;
-  ${Icon} {
-    align-items: center;
-    background: rgba(${p => p.color}, 0.2);
-    display: flex;
-    font-size: ${ICON_WIDTH}px;
-    height: ${ICON_WIDTH}px;
-    justify-content: center;
-    margin-right: 8px;
-    width: ${ICON_WIDTH}px;
-    & span {
-      font-size: 24px;
-      line-height: 0;
-    }
-  }
-  ${Status} {
-    margin-right: 8px;
-    text-transform: uppercase;
-  }
-  ${Label} {
-    color: white;
-    white-space: nowrap;
-  }
-  ${Details} {
-    flex: 1;
-    height: 100%;
-    margin-right: 8px;
-    overflow: hidden;
-    & > * {
-      align-items: center;
-      display: flex;
-      flex-direction: row;
-      flex-wrap: wrap;
-      height: 100%;
-      justify-content: flex-end;
-      transition: transform 150ms ease;
-      white-space: nowrap;
-    }
-  }
-  ${Progress} {
-    position: absolute;
-    bottom: 0;
-    left: ${ICON_WIDTH}px;
-    height: 4px;
-    right: 0;
-    & > * {
+      border-bottom: 1px solid #444;
+      content: "";
       display: block;
+      padding-bottom: 10px;
       width: 100%;
     }
   }
 `;
 
-const ActionItem = ({ data, getActivityConfig }) => {
-  const history = useHistory();
-
-  const createAlert = useStore(s => s.dispatchAlertLogged);
-  const currentAsteroid = useStore(s => s.asteroids);
-  const resourceMap = useStore(s => s.asteroids.resourceMap);
-  const dispatchActionDialog = useStore(s => s.dispatchActionDialog);
-  const dispatchLauncherPage = useStore(s => s.dispatchLauncherPage);
-  const dismissFailedTx = useStore(s => s.dispatchFailedTransactionDismissed);
-  const type = data?.type;
-
-  // TODO: can probably clean up the `formatted` structure
-  const item = useMemo(() => {
-    return formatActionItem(
-      data,
-      !['randomEvent', 'plans', 'pending'].includes(data.type) ? getActivityConfig(data)?.actionItem : {}
-    );
-  }, [data, getActivityConfig]);
-
-  const { data: asteroid } = useAsteroid(item.asteroidId);
-  const { data: lot } = useLot(item.lotId);
-
-  const goToAction = useLotLink({
-    asteroidId: item.asteroidId,
-    lotId: item.lotId,
-    resourceId: resourceMap?.active ? item.resourceId : undefined,  // only open resourcemap if a resourcemap is open
-  });
-
-  const onClick = useCallback(() => {
-    if (item.asteroidId) {
-      goToAction();
-    }
-
-    if (item.onClick) {
-      // delay dialog opening based on how far camera needs to fly to get there
-      let dialogDelay = 0;
-      if (item.asteroidId && (currentAsteroid.origin !== item.asteroidId || currentAsteroid.zoomStatus !== 'in')) {
-        dialogDelay = 3250;
-        if (item.lotId) dialogDelay += 750;
-      } else if (item.lotId && currentAsteroid.lot?.lotId !== item.lotId) {
-        dialogDelay = 400;
-      // TODO: implement these?
-      } else if (item.buildingId) {
-      } else if (item.shipId) {
-      }
-      setTimeout(() => {
-        item.onClick({
-          openDialog: (dialog, vars) => dispatchActionDialog(dialog, { asteroidId: item.asteroidId, lotId: item.lotId, ...vars }),
-          openLauncher: (launcherPage) => dispatchLauncherPage(launcherPage),
-          history,
-          asteroid,
-          lot
-        });
-      }, dialogDelay)
-    }
-
-    if (type === 'failed' && item.txHash && process.env.REACT_APP_STARKNET_EXPLORER_URL) {
-      try {
-        navigator.clipboard.writeText(JSON.stringify(data));
-        createAlert({
-          type: 'ClipboardAlert',
-          data: { content: 'Transaction error copied to clipboard. If you are stuck, contact the Influence team in Discord.' }
-        });
-      } catch (e) {}
-
-      window.open(`${process.env.REACT_APP_STARKNET_EXPLORER_URL}/tx/${item.txHash}`, '_blank');
-    }
-  }, [
-    goToAction,
-    currentAsteroid?.origin,
-    currentAsteroid?.lot?.lotId,
-    currentAsteroid?.zoomStatus,
-    item.asteroidId,
-    item.lotId,
-    item.onClick
-  ]);
-
-  const onDismiss = useCallback((e) => {
-    e.stopPropagation();
-    dismissFailedTx(item._timestamp);
-    return false;
-  }, [item]);
-
-  return (
-    <ActionItemRow
-      color={itemColors[type]}
-      onClick={onClick}
-      oneRow={type !== 'failed' && !asteroid}
-      transitionOut={data.transitionOut ? (type === 'failed' ? 'left' : 'right') : undefined}>
-      <Icon animate={type === 'pending'}>
-        {type === 'failed' && <FailedIcon />}
-        {type === 'randomEvent' && <RandomEventIcon size="0.77em" />}
-        {type === 'ready' && <ReadyIcon />}
-        {(type === 'pending' || type === 'unready' || type === 'plans') && <span>{item.icon}</span>}
-      </Icon>
-      <Status>{statuses[type]}</Status>
-      <Label>{item.label}</Label>
-      <Details>
-        <Timing>
-          {type === 'pending' && 'Just Now'}
-          {(type === 'ready' || type === 'failed' || type === 'randomEvent') && item.ago}
-          {type === 'unready' && item.finishTime && <LiveTimer target={item.finishTime} maxPrecision={2} prefix="in " />}
-          {/* TODO: would be nice for this to have different level warning intensity based on time-left and/or presence of inventory on the lot */}
-          {type === 'plans' && (
-            item.finishTime
-              ? <LiveTimer target={item.finishTime} maxPrecision={2} prefix="remaining " />
-              : <b>at risk</b>
-          )}
-        </Timing>
-        {type === 'failed' && (
-          <div>
-            <Dismissal onClick={onDismiss}>
-              Dismiss <div><DismissIcon /></div>
-            </Dismissal>
-          </div>
-        )}
-        {type !== 'failed' && asteroid && (
-          <Location>
-            {item.locationDetail && <><b>{item.locationDetail}</b></>}
-            <span>{formatters.asteroidName(asteroid)}</span>
-            {/* TODO: use <EntityName /> instead? */}
-          </Location>
-        )}
-      </Details>
-      {type === 'pending' && (
-        <Progress>
-          <BarLoader color="currentColor" />
-        </Progress>
-      )}
-    </ActionItemRow>
-  )
-};
-
 const ActionItems = () => {
-  const { account } = useAuth();
+  const { authenticated } = useSession();
   const { allVisibleItems: allItems } = useActionItems();
-  const { captain, crew } = useCrewContext();
+  const { captain } = useCrewContext();
   const getActivityConfig = useGetActivityConfig();
 
   const [displayItems, setDisplayItems] = useState();
@@ -438,7 +198,7 @@ const ActionItems = () => {
     }
   }, [allItems]);
 
-  const [selectedFilter, setSelectedFilter] = useState('ready');
+  const [selectedFilter, setSelectedFilter] = useState('all');
   const [lastClick, setLastClick] = useState();
 
   const onClickFilter = useCallback((filter) => (e) => {
@@ -450,28 +210,52 @@ const ActionItems = () => {
   const tallies = useMemo(() => {
     return (displayItems || []).reduce(
       (acc, cur) => {
-        if (cur.type === 'ready' || cur.type === 'plans') acc.ready++;
-        if (cur.type === 'unready') acc.progress++;
+        if (!cur.hidden) {
+          acc.all++;
+          if (['pending', 'failed', 'randomEvent', 'ready'].includes(cur.type)) acc.ready++;
+          if (cur.type === 'unready') acc.progress++;
+        } else {
+          acc.hidden++;
+        }
         return acc;
       },
       {
+        all: 0,
         ready: 0,
-        progress: 0
+        progress: 0,
+        hidden: 0
       }
     )
   }, [displayItems]);
 
   const filteredDisplayItems = useMemo(() => {
-    const filter = selectedFilter === 'ready'
-      ? (i) => i.type !== 'unready'
-      : (i) => i.type !== 'ready' && i.type !== 'plans';
-    return (displayItems || []).filter(filter)
+    let filter;
+    if (selectedFilter === 'all') filter = (i) => !i.hidden;
+    if (selectedFilter === 'ready') filter = (i) => !i.hidden && ['pending', 'failed', 'randomEvent', 'ready'].includes(i.type);
+    if (selectedFilter === 'progress') filter = (i) => !i.hidden && i.type === 'unready';
+    if (selectedFilter === 'hidden') filter = (i) => i.hidden;
+
+    return (displayItems || []).filter(filter);
   }, [displayItems, selectedFilter]);
+
+  const filteredDisplayCategories = useMemo(() => {
+    const categorized = {};
+    filteredDisplayItems.forEach((i) => {
+      if (!categorized[i.category]) {
+        categorized[i.category] = {
+          category: i.category,
+          items: []
+        }
+      }
+      categorized[i.category].items.push(i);
+    })
+    return Object.values(categorized);
+  }, [filteredDisplayItems])
 
   if (!captain) return null;
   return (
     <OuterWrapper>
-      {account && (
+      {authenticated && (
         <CollapsibleSection
           borderless
           collapsibleProps={{ style: { width: SECTION_WIDTH - 32 } }}
@@ -479,25 +263,27 @@ const ActionItems = () => {
           title={(
             <TitleWrapper>
               <Filters>
-                <ReadyFilter tally={tallies.ready} onClick={onClickFilter('ready')} selected={selectedFilter === 'ready'} />
-                <InProgressFilter tally={tallies.progress} onClick={onClickFilter('progress')} selected={selectedFilter === 'progress'} />
-                <LinkContainer style={{ flex: 1, textAlign: 'left' }}>
-                  <Link to="/listview/actionitems" onClick={(e) => e.stopPropagation()}>
-                    <PopoutIcon />
-                  </Link>
-                </LinkContainer>
+                <AllFilter onClick={onClickFilter('all')} selected={selectedFilter === 'all'}><BellIcon /> <b>{(tallies.all || 0).toLocaleString()}</b></AllFilter>
+                <ReadyFilter onClick={onClickFilter('ready')} selected={selectedFilter === 'ready'}><b>{(tallies.ready || 0).toLocaleString()}</b> Ready</ReadyFilter>
+                <InProgressFilter onClick={onClickFilter('progress')} selected={selectedFilter === 'progress'}><b>{(tallies.progress || 0).toLocaleString()}</b> In Progress</InProgressFilter>
+                {/* TODO: <HiddenFilter onClick={onClickFilter('hidden')} selected={selectedFilter === 'hidden'}><EyeIcon /> <b>{(tallies.hidden || 0).toLocaleString()}</b></HiddenFilter> */}
+                <div style={{ flex: 1 }} />
+                <Link to="/listview/actionitems" onClick={(e) => e.stopPropagation()}><ListIcon /></Link>
               </Filters>
             </TitleWrapper>
           )}>
           <ActionItemWrapper>
             <ActionItemContainer>
-              {filteredDisplayItems.map((item) => (
-                <ActionItem
-                  key={item.uniqueKey}
-                  crew={crew}
-                  data={item}
-                  getActivityConfig={getActivityConfig}
-                />
+              {filteredDisplayCategories.map(({ category, items }) => (
+                <ActionItemCategory key={category}>
+                  {items.map((item) => (
+                    <ActionItem
+                      key={item.uniqueKey}
+                      data={item}
+                      getActivityConfig={getActivityConfig}
+                    />
+                  ))}
+                </ActionItemCategory>
               ))}
             </ActionItemContainer>
           </ActionItemWrapper>

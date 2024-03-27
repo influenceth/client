@@ -141,7 +141,8 @@ const Details = (props) => {
   const [showTooltip, setShowTooltip] = useState();
   useEffect(() => {
     setShowTooltip(false);
-    setTimeout(() => { setShowTooltip(true); }, 0);
+    const timeoutId = setTimeout(() => { setShowTooltip(true); }, 0);
+    return () => clearTimeout(timeoutId);
   }, [title]);
 
   return (
@@ -151,8 +152,7 @@ const Details = (props) => {
         {title && <Header {...headerProps}><span>{title}</span></Header>}
         <CloseButton
           onClick={onClose || (() => history.push(onCloseDestination || '/'))}
-          hasBackground={edgeToEdge}
-          borderless>
+          hasBackground={edgeToEdge}>
           <CloseIcon />
         </CloseButton>
         <Content edgeToEdge={edgeToEdge} hasTitle={!!title} {...contentProps}>

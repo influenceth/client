@@ -53,7 +53,7 @@ const StyledClipboard = styled(Clipboard)`
 
 const DataReadout = (props) => {
   const { copyable, ...restProps } = props;
-  const playSound = useStore(s => s.dispatchSoundRequested);
+  const playSound = useStore(s => s.dispatchEffectStartRequested);
 
   return (
     <StyledDataReadout {...restProps}>
@@ -63,7 +63,7 @@ const DataReadout = (props) => {
         {copyable && (
           <StyledClipboard
             data-clipboard-text={copyable}
-            onClick={() => playSound('effects.click')}>
+            onClick={() => playSound('click')}>
             <CopyIcon />
           </StyledClipboard>
         )}

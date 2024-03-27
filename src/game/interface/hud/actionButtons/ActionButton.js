@@ -4,7 +4,7 @@ import ReactTooltip from 'react-tooltip';
 import { Permission } from '@influenceth/sdk';
 
 import ClipCorner from '~/components/ClipCorner';
-import useChainTime from '~/hooks/useChainTime';
+import useSyncedTime from '~/hooks/useSyncedTime';
 import { formatTimer, nativeBool, reactBool } from "~/lib/utils";
 import { hexToRGB } from '~/theme';
 
@@ -86,14 +86,14 @@ const ActionButton = styled.div`
   width: ${dimension}px;
   padding: ${padding}px;
   position: relative;
-  transition: color 250ms ease;
+  transition: color 100ms ease;
   & > svg {
     stroke: ${p => p.overrideColor || p.theme.colors.main} !important;
   }
 
   & > div {
     align-items: center;
-    background-color: rgba(${p => p.overrideColor ? hexToRGB(p.overrideColor) : p.theme.colors.mainRGB}, 0.2);
+    background-color: rgba(${p => p.overrideColor ? hexToRGB(p.overrideColor) : hexToRGB(p.theme.colors.darkMain)}, 0.5);
     ${p => p.theme.clipCorner(cornerSize - 4)};
     display: flex;
     font-size: 55px;
@@ -223,11 +223,10 @@ const CompletionTime = styled.label`
 // or not rather than true/false OR would pass 1/0 instead
 
 const LoadingTimer = ({ finishTime }) => {
-  const chainTime = useChainTime();
-  const timeLeft = finishTime - chainTime;
+  const syncedTime = useSyncedTime();
   return (
     <CompletionTime>
-      {timeLeft > 0 ? formatTimer(timeLeft, 1) : '...'}
+      {finishTime > syncedTime ? formatTimer(finishTime - syncedTime, 1) : '...'}
     </CompletionTime>
   );
 };

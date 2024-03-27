@@ -1,8 +1,8 @@
 import styled from 'styled-components';
 
 const OnClickLink = styled.span`
-  color: ${p => p.theme.colors.mainText};
-  cursor: ${p => p.theme.cursors.active};
+  color: ${p => p.theme?.colors?.mainText || '#ccc'};
+  cursor: ${p => p.theme?.cursors?.active || 'pointer'};
   text-decoration: ${p => p.noUnderline ? 'none' : 'underline'};
   &:active,
   &:hover {

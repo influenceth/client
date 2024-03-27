@@ -33,7 +33,6 @@ import {
   LandingSelectionDialog
 } from './components';
 import useLot from '~/hooks/useLot';
-import useStore from '~/hooks/useStore';
 import { ActionDialogInner, useAsteroidAndLot } from '../ActionDialog';
 import actionStages from '~/lib/actionStages';
 import theme, { hexToRGB } from '~/theme';
@@ -68,8 +67,6 @@ const IconWrapper = styled.div`
   justify-content: center;
   width: 50px;
 `;
-const RightIconWrapper = styled.div``;
-
 
 const shipContructionProcesses = [Ship.IDS.SHUTTLE, Ship.IDS.LIGHT_TRANSPORT, Ship.IDS.HEAVY_TRANSPORT].map((i) => ({
   i,
@@ -349,17 +346,19 @@ const AssembleShip = ({ asteroid, lot, dryDockManager, stage, ...props }) => {
               transferMass={0/* TODO */}
               transferVolume={0/* TODO */} />
 
-            <LotInputBlock
-              title="Delivery Destination"
-              titleDetails={<TransferDistanceDetails distance={outputTransportDistance} crewTravelBonus={crewTravelBonus} />}
-              disabled={stage !== actionStages.READY_TO_COMPLETE}
-              lot={destinationLot}
-              isSelected={stage === actionStages.READY_TO_COMPLETE}
-              onClick={() => { setDestinationSelectorOpen(true) }}
-              style={{ marginBottom: 20, width: '100%' }}
-              fallbackSublabel={stage !== actionStages.READY_TO_COMPLETE ? 'Upon Completion' : 'Destination'} />
+            {['READY_TO_COMPLETE', 'COMPLETING', 'COMPLETED'].includes(stage) && (
+              <LotInputBlock
+                title="Delivery Destination"
+                titleDetails={<TransferDistanceDetails distance={outputTransportDistance} crewTravelBonus={crewTravelBonus} />}
+                disabled={stage !== actionStages.READY_TO_COMPLETE}
+                lot={destinationLot}
+                isSelected={stage === actionStages.READY_TO_COMPLETE}
+                onClick={() => { setDestinationSelectorOpen(true) }}
+                style={{ marginBottom: 20, width: '100%' }}
+                fallbackSublabel="Destination" />
+            )}
           </div>
-          
+
           <FlexSectionSpacer style={{ alignItems: 'flex-start', paddingTop: '54px' }}>
             <ForwardIcon />
           </FlexSectionSpacer>
@@ -380,7 +379,7 @@ const AssembleShip = ({ asteroid, lot, dryDockManager, stage, ...props }) => {
               source={originInventory}
               style={{ width: '100%' }} />
           </div>
-          
+
           <FlexSectionSpacer />
 
           <div style={{ alignSelf: 'flex-start', height: '280px', width: '280px' }}>

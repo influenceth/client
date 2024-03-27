@@ -4,12 +4,12 @@ import { Address } from '@influenceth/sdk';
 import { MyAssetIcon } from '~/components/Icons';
 import OnClickLink from '~/components/OnClickLink';
 import MarketplaceLink from '~/components/MarketplaceLink';
-import useAuth from '~/hooks/useAuth';
+import useSession from '~/hooks/useSession';
 import useCrewContext from '~/hooks/useCrewContext';
 import formatters from '~/lib/formatters';
 
 const useColumns = () => {
-  const { account } = useAuth();
+  const { accountAddress } = useSession();
 
   return useMemo(() => {
     const columns = [
@@ -18,7 +18,7 @@ const useColumns = () => {
         align: 'center',
         icon: <MyAssetIcon />,
         selector: row => {
-          if (account && row.Nft?.owner && Address.areEqual(row.Nft.owner, account)) {
+          if (accountAddress && row.Nft?.owner && Address.areEqual(row.Nft.owner, accountAddress)) {
             return <MyAssetIcon />
           }
           return '';
@@ -47,7 +47,7 @@ const useColumns = () => {
                 id={row.Nft.owner}>
                 {(onClick, setRefEl) => (
                   <OnClickLink ref={setRefEl} onClick={onClick}>
-                    {account && Address.areEqual(row.Nft.owner, account)
+                    {accountAddress && Address.areEqual(row.Nft.owner, accountAddress)
                       ? `you`
                       : `${row.Nft.owner.substr(0, 6)}...${row.Nft.owner.substr(-4)}`
                     }
@@ -74,8 +74,8 @@ const useColumns = () => {
       }
     ];
 
-    return columns.filter((c) => account || !c.requireLogin);
-  }, [account]);
+    return columns.filter((c) => accountAddress || !c.requireLogin);
+  }, [accountAddress]);
 };
 
 export default useColumns;

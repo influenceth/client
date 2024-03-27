@@ -9,29 +9,14 @@ import useStore from '~/hooks/useStore';
 import ConfirmationDialog from '~/components/ConfirmationDialog';
 import CrewmateCard from '~/components/CrewmateCard';
 import NavIcon from '~/components/NavIcon';
-
 import CrewSilhouetteCard from '~/components/CrewSilhouetteCard';
 import ChoicesDialog from '~/components/ChoicesDialog';
-import CrewmateCardFramed from '~/components/CrewmateCardFramed';
 import { CrewCaptainCardFramed } from '~/components/CrewmateCardFramed';
+import { nativeBool } from '~/lib/utils';
 
 const RecruitingDiv = styled.div`
   border: 1px solid rgba(${p => p.theme.colors.mainRGB}, 0.3);
-  padding: 10px;
-`;
-const CrewContainer = styled.div`
-  ${p => p.isMintingStory ? `
-    width: 260px;
-    min-width: 210px;
-  ` : `
-    width: 220px;
-    min-width: 210px;
-  `}
-  padding: 0 12px 12px 0;
-
-  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
-    display: none;
-  }
+  padding: 4px;
 `;
 
 const SilhouetteWrapper = styled.div`
@@ -61,6 +46,7 @@ const Progress = styled.div`
   flex-direction: row;
   & > label {
     font-size: 20px;
+    color: ${p => p.theme.colors.secondaryText};
   }
   & > div {
     align-items: center;
@@ -81,6 +67,7 @@ const PromptDetails = styled.div`
   }
 `;
 
+
 const AdalianFlourish = styled.div`
   display: block;
   height: 100%;
@@ -88,21 +75,31 @@ const AdalianFlourish = styled.div`
   &:before {
     content: "";
     background-image: url(${adalianImage});
-    background-position: center center;
+    background-position: top center;
     background-repeat: no-repeat;
-    background-size: 165%;
+    background-size: 200%;
     display: block;
     filter: contrast(0%) sepia(100%) hue-rotate(150deg) saturate(150%);
     height: 100%;
     opacity: 0.65;
-    width: 100%;
+  }
+`;
+
+const CrewContainer = styled.div`
+  min-width: 200px;
+  padding-bottom: 12px;
+
+  background-position: top center;
+
+  @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
+    display: none;
   }
 `;
 
 const REQUIRE_CONFIRM = false;
 
 const CrewAssignment = ({ crewId, crewmateId, crewmateMap, onFinish, overrides = {} }) => {
-  const { crew } = useCrewContext();
+  const { captain, crew } = useCrewContext();
   const history = useHistory();
 
   const {
@@ -113,7 +110,7 @@ const CrewAssignment = ({ crewId, crewmateId, crewmateMap, onFinish, overrides =
     undoPath
   } = useBookSession(crewId, crewmateId);
 
-  const playSound = useStore(s => s.dispatchSoundRequested);
+  const playSound = useStore(s => s.dispatchEffectStartRequested);
 
   const [confirmingExitStoryMode, setConfirmingExitStoryMode] = useState();
   const [pathLoading, setPathLoading] = useState();
@@ -139,12 +136,12 @@ const CrewAssignment = ({ crewId, crewmateId, crewmateMap, onFinish, overrides =
   }, [storySession?.currentStep]);
 
   const confirmPath = useCallback(() => {
-    playSound('effects.click');
+    playSound('click');
     choosePath(selection.id);
   }, [choosePath, playSound, selection]);
 
   const selectPath = useCallback((path) => () => {
-    playSound('effects.click' );
+    playSound('click' );
 
     // if only one choice (or auto confirming), don't need to confirm
     if (!REQUIRE_CONFIRM || storySession?.linkedPaths?.length === 1) {
@@ -157,7 +154,7 @@ const CrewAssignment = ({ crewId, crewmateId, crewmateMap, onFinish, overrides =
   }, [choosePath, playSound, storySession]);
 
   const onGoBack = useCallback(() => {
-    playSound('effects.click');
+    playSound('click');
     history.push(onCloseDestination);
   }, [history, playSound, onCloseDestination]);
 
@@ -170,7 +167,7 @@ const CrewAssignment = ({ crewId, crewmateId, crewmateMap, onFinish, overrides =
       overrides?.onFinish();
       return;
     }
-    playSound('effects.success');
+    playSound('success');
     choosePath('x');
     onFinish(); // ${bookSession?.isMintingStory ? 'create' : 'complete'}
   }, [history, playSound, bookSession?.isMintingStory, overrides?.onFinish]);
@@ -184,81 +181,112 @@ const CrewAssignment = ({ crewId, crewmateId, crewmateMap, onFinish, overrides =
   }, []);
 
   const backButton = useMemo(() => {
-    if (!(bookSession && storySession)) return null;
-    return {
-      label: 'Back',
-      onClick: overrides?.onBack || ((bookSession.currentStoryIndex > 0 || storySession.currentStep > 0) ? onUndoPath : onGoBack),
-    };
+    if (bookSession && storySession && !(bookSession.currentStoryIndex === 0 && storySession.currentStep === 0)) {
+      return {
+        label: 'Back',
+        onClick: overrides?.onBack || ((bookSession.currentStoryIndex > 0 || storySession.currentStep > 0) ? onUndoPath : onGoBack),
+      };
+    }
+    return null;
   }, [bookSession, onUndoPath, onGoBack, overrides?.onBack, storySession]);
 
+  const dialogProps = useMemo(() => {
+    if (!bookSession || !storySession) return {};
+
+    const isMintingStory = bookSession.isMintingStory;
+    const isLastPageOfStory = storySession.isLastPage;
+    const isLastPageOfBook = isLastPageOfStory && bookSession.isLastStory;
+
+    const nextButton = {
+      label: overrides?.finishButtonLabel || (isLastPageOfBook ? 'Finish' : (isLastPageOfStory ? 'Next Chapter' : 'Next') ),
+      onClick: isLastPageOfBook ? finish : selectPath(storySession.linkedPaths[0]),
+      props: overrides?.finishButtonProps || undefined
+    }
+    
+    // assignment defaults
+    const p = {
+      choicelessInFooter: true,
+      choicelessButton: { ...nextButton },
+      dialogTitle: 'Random Event',
+      flourish: (
+        <CrewContainer>
+          <CrewCaptainCardFramed crewId={crewId || crew?.id} width={200} />
+        </CrewContainer>
+      ),
+      flourishWidth: 220,
+      leftButton: backButton,
+      rightButton: isLastPageOfStory ? { ...nextButton } : null,
+    };
+
+    // minting story overrides
+    if (isMintingStory) {
+      p.choicelessInFooter = false;
+      p.dialogTitle = 'Crewmate Creation';
+
+      // flourish
+      if (bookSession.bookId === bookIds.ADALIAN_RECRUITMENT) {
+        p.flourish = <AdalianFlourish />;
+        p.flourishWidth = 205;
+
+      } else {
+        p.flourish = (
+          <CrewContainer isMintingStory>
+            <RecruitingDiv>
+              {bookSession.crewmate
+                ? <CrewmateCard
+                    crewmate={captain || bookSession.crewmate}
+                    hideIfNoName
+                    noWrapName
+                    showClassInHeader
+                    width="225px" />
+                : <SilhouetteWrapper><CrewSilhouetteCard /></SilhouetteWrapper>
+              }
+            </RecruitingDiv>
+          </CrewContainer>
+        );
+        p.flourishWidth = 250;
+      }
+
+      // don't use choiceless button on last page of minting story + update rightButton text
+      if (isLastPageOfStory) {
+        p.choicelessButton = null;
+        if (p.rightButton && isLastPageOfBook) {
+          p.rightButton.label = 'Finalize Crewmate';
+        }
+
+      // on minting story, offer "skip story" button on first page
+      } else if (bookSession.currentStoryIndex === 0 && storySession.currentStep === 0) {
+        p.rightButton = {
+          label: 'Skip Story',
+          onClick: confirmExitStoryMode,
+          props: {
+            disabled: nativeBool(isLastPageOfBook)
+          }
+        };
+      }
+    }
+
+    return p;
+  }, [backButton, bookSession, confirmExitStoryMode, crewId, overrides, storySession]);
+  console.log({ dialogProps })
+
+  // TODO: v should probably redirect somewhere
   if (!bookSession || !storySession) return null;
-  // TODO: ^ should probably redirect somewhere
-
-  // TODO: contentReady seems unnecessary
-  const contentReady = true; // crewmate || storySession.ownerType !== 'CREW_MEMBER';
-
-  if (bookSession.isMintingStory && !contentReady) return null;
-
   return (
     <>
       <ChoicesDialog
-        dialogTitle={bookSession.isMintingStory ? 'Crewmate Creation' : 'Random Event'}
+        {...dialogProps}
         onCloseDestination={onCloseDestination}
         coverImage={storySession.image}
         coverImageCenter={storySession.imageCenter}
         content={storySession.content}
         contentOverride={overrides?.content}
         choices={storySession.isLastPage ? null : storySession.linkedPaths}
-        choicelessButton={{
-          label: overrides?.finishButtonLabel || (
-            bookSession.isLastStory && storySession.isLastPage
-            ? (bookSession.isMintingStory ? 'Create Your Crewmate' : 'Finish')
-            : (storySession.isLastPage ? 'Next Chapter' : 'Next')
-          ),
-          onClick: (bookSession.isLastStory && storySession.isLastPage) ? finish : selectPath(storySession.linkedPaths[0]),
-          props: overrides?.finishButtonProps || undefined
-        }}
-        choicelessInFooter={!bookSession.isMintingStory}
         isHTML={storySession.isHTML}
-        isLoading={overrides?.isLoading || !contentReady}
-        isLoadingChoice={!contentReady || pathLoading}
+        isLoading={overrides?.isLoading}
+        isLoadingChoice={pathLoading}
         onSelect={selectPath}
         prompt={storySession.prompt}
-        flourish={
-          bookSession.bookId === bookIds.ADALIAN_RECRUITMENT
-            ? <AdalianFlourish />
-            : (
-              <CrewContainer isMintingStory={bookSession.isMintingStory}>
-                {bookSession.isMintingStory
-                  ? (
-                    <RecruitingDiv>
-                      {bookSession.crewmate
-                        ? <CrewmateCard
-                            crewmate={bookSession.crewmate}
-                            hideFooter
-                            hideIfNoName
-                            noWrapName
-                            showClassInHeader />
-                        : <SilhouetteWrapper><CrewSilhouetteCard /></SilhouetteWrapper>}
-                    </RecruitingDiv>
-                  )
-                  : <CrewCaptainCardFramed crewId={crewId || crew?.id} width={200} />
-                }
-              </CrewContainer>
-            )
-        }
-        flourishWidth={bookSession.isMintingStory ? undefined : 220}
-        leftButton={bookSession.isMintingStory
-          ? {
-            label: 'Skip Story',
-            onClick: confirmExitStoryMode,
-            props: {
-              disabled: (storySession.isLastPage && bookSession.isLastStory) ? 'true' : undefined
-            }
-          }
-          : backButton
-        }
-        rightButton={bookSession.isMintingStory ? backButton : undefined}
         title={storySession.title}
         subtitle={storySession.totalSteps > 1 && (
           <Progress>
@@ -286,6 +314,7 @@ const CrewAssignment = ({ crewId, crewmateId, crewmateMap, onFinish, overrides =
           </Progress>
         )}
       />
+
       {confirmingExitStoryMode && (
         <ConfirmationDialog
           body={(
@@ -304,6 +333,7 @@ const CrewAssignment = ({ crewId, crewmateId, crewmateMap, onFinish, overrides =
           onReject={() => setConfirmingExitStoryMode()}
         />
       )}
+
       {REQUIRE_CONFIRM && selection && (
         <ConfirmationDialog
           title="Your Selection:"

@@ -204,6 +204,7 @@ const LaunchShip = ({ asteroid, originLot, manager, ship, shipCrews, stage, ...p
               <>
                 <FlexSection style={{ marginBottom: -15 }}>
                   <PropulsionTypeSection
+                    disabled={stage !== actionStages.NOT_STARTED}
                     objectLabel="Launch"
                     onSetPowered={(x) => setPowered(x)}
                     powered={powered}

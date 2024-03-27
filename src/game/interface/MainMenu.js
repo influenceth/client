@@ -1,35 +1,15 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useHistory } from 'react-router-dom';
+import { useEffect, useMemo, useState } from 'react';
+// import { useHistory } from 'react-router-dom';
 import styled from 'styled-components';
 import {
   MdFullscreen as FullscreenIcon,
   MdFullscreenExit as ExitFullscreenIcon } from 'react-icons/md';
 import screenfull from 'screenfull';
 
-import {
-  BackIcon,
-  BuildingIcon,
-  CoreSampleIcon,
-  CrewIcon,
-  CrewStoryIcon,
-  EyeIcon,
-  FavoriteIcon,
-  LeaseIcon,
-  OrderIcon,
-  RadiusIcon,
-  ResourceIcon,
-  RouteIcon,
-  ShipIcon,
-  TransactionIcon
-} from '~/components/Icons';
+import { BackIcon } from '~/components/Icons';
 import PrereleaseLogoSVG from '~/assets/images/logo-prerelease.svg';
-import useAuth from '~/hooks/useAuth';
-// import useCrewAssignments from '~/hooks/useCrewAssignments';
-import useCrewContext from '~/hooks/useCrewContext';
 import useStore from '~/hooks/useStore';
 import useScreenSize from '~/hooks/useScreenSize';
-import Menu from './mainMenu/Menu';
-import MenuItem from './mainMenu/MenuItem';
 import HudIconButton from '~/components/HudIconButton';
 import TimeControls from './mainMenu/TimeControls';
 
@@ -113,56 +93,55 @@ const TimeSection = styled.div`
   bottom: ${barHeight - dipAmount}px;
 `;
 
-const MenuWrapper = styled.div`
-  display: flex;
-  flex-direction: row;
+// const MenuWrapper = styled.div`
+//   display: flex;
+//   flex-direction: row;
 
-  align-items: flex-end;
-  justify-content: space-around;
+//   align-items: flex-end;
+//   justify-content: space-around;
 
-  position: absolute;
-  left: 50%;
-  bottom: ${barHeight - 1.5 * dipAmount}px;
-  margin-left: -${centerAreaHalfWidth}px;
-  width: ${centerAreaWidth}px;
+//   position: absolute;
+//   left: 50%;
+//   bottom: ${barHeight - 1.5 * dipAmount}px;
+//   margin-left: -${centerAreaHalfWidth}px;
+//   width: ${centerAreaWidth}px;
 
-  z-index: 4;
-`;
+//   z-index: 4;
+// `;
 
 const MainMenu = () => {
-  const playSound = useStore(s => s.dispatchSoundRequested);
+  // const playSound = useStore(s => s.dispatchSoundRequested);
   const { isMobile } = useScreenSize();
-  const history = useHistory();
 
   const lotId = useStore(s => s.asteroids.lot);
   const zoomScene = useStore(s => s.asteroids.zoomScene);
   const zoomStatus = useStore(s => s.asteroids.zoomStatus);
 
-  const createAlert = useStore(s => s.dispatchAlertLogged);
+  // const createAlert = useStore(s => s.dispatchAlertLogged);
   const dispatchLotSelected = useStore(s => s.dispatchLotSelected);
   const dispatchZoomScene = useStore(s => s.dispatchZoomScene);
   const updateZoomStatus = useStore(s => s.dispatchZoomStatusChanged);
 
-  const { account } = useAuth();
+  // const { accountAddress } = useSession();
   // const { data: crewAssignmentData } = useCrewAssignments();
 
   const [ fullscreen, setFullscreen ] = useState(screenfull.isEnabled && screenfull.isFullscreen);
 
   // TODO: genesis book deprecation vvv
-  const { crew, crewmateMap } = useCrewContext();
-  const hasGenesisCrewmate = useMemo(() => {
-    return crew && crew?._crewmates && crewmateMap && crew._crewmates.find((i) => [1,2,3].includes(crewmateMap[i]?.coll));
-  }, [crew?._crewmates, crewmateMap]); // eslint-disable-line react-hooks/exhaustive-deps
+  // const { crew, crewmateMap } = useCrewContext();
+  // const hasGenesisCrewmate = useMemo(() => {
+  //   return crew && crew?._crewmates && crewmateMap && crew._crewmates.find((i) => [1,2,3].includes(crewmateMap[i]?.coll));
+  // }, [crew?._crewmates, crewmateMap]); // eslint-disable-line react-hooks/exhaustive-deps
   // ^^^
 
-  const [ showMenu, setShowMenu ] = useState(!isMobile);
+  // const [ showMenu, setShowMenu ] = useState(!isMobile);
 
-  const openSection = useCallback((section) => {
-    // activateSection(section);
-    // TODO: ... this used to reference outliner, but outliner is gone
-    playSound('effects.click');
-    if (isMobile) setShowMenu(false);
-  }, [isMobile]);
+  // const openSection = useCallback((section) => {
+  //   // activateSection(section);
+  //   // TODO: ... this used to reference outliner, but outliner is gone
+  //   playSound('effects.click');
+  //   if (isMobile) setShowMenu(false);
+  // }, [isMobile]);
 
   useEffect(() => {
     if (screenfull.isEnabled) {
@@ -180,7 +159,7 @@ const MainMenu = () => {
         onClickBack: () => dispatchZoomScene()
       }
     }
-    if (lotId) {
+    if (!!lotId) {
       return {
         backLabel: 'Deselect Lot',
         onClickBack: () => dispatchLotSelected()
@@ -190,16 +169,7 @@ const MainMenu = () => {
       backLabel: 'Back to Belt',
       onClickBack: () => updateZoomStatus('zooming-out')
     }
-  }, [lotId, zoomScene, zoomStatus]);
-
-  const notYet = useCallback(() => {
-    createAlert({
-      type: 'GenericAlert',
-      level: 'warning',
-      data: { content: 'Not yet.' },
-      duration: 1000
-    });
-  }, []);
+  }, [!!lotId, zoomScene?.type, zoomStatus]);
 
   return (
     <StyledMainMenu>
@@ -223,7 +193,7 @@ const MainMenu = () => {
         </LeftHudButtonArea>
 
         {/* <MenuWrapper>
-          {!!account && (
+          {!!accountAddress && (
             <Menu title="Assets">
               <MenuItem
                 name="My Asteroids"
@@ -255,7 +225,7 @@ const MainMenu = () => {
                 onClick={() => openSection('belt.Favorites')} />
             </Menu>
           )}
-          {!!account && (
+          {!!accountAddress && (
             <Menu title="Events">
               <MenuItem
                 name="Captain's Log"

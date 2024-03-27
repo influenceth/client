@@ -25,7 +25,9 @@ const AssembleShip = ({ asteroid, crew, lot, onSetAction, _disabled }) => {
   const disabledReason = useMemo(() => {
     if (_disabled) return 'loading...';
     if (assemblyStatus === 'READY') {
-      return getCrewDisabledReason({ asteroid, crew, permission: Permission.IDS.ASSEMBLE_SHIP, permissionTarget: lot?.building });
+      return getCrewDisabledReason({
+        asteroid, crew, permission: Permission.IDS.ASSEMBLE_SHIP, permissionTarget: lot?.building
+      });
     } else if (!currentAssembly?._isMyAction) {
       return 'in use';
     }

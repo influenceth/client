@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { Entity } from '@influenceth/sdk';
 import { useQueryClient } from 'react-query';
 
 import { hydrateActivities, typesWithLogContent } from '~/lib/activities';
@@ -13,6 +12,7 @@ const pageSize = 25;
 
 const usePagedEvents = () => {
   const getActivityConfig = useGetActivityConfig();
+  const { crew } = useCrewContext();
   const queryClient = useQueryClient();
   const [data, setData] = useState({ hits: [], total: 0 });
   const [loading, setLoading] = useState();
@@ -32,7 +32,7 @@ const usePagedEvents = () => {
     // TODO (enhancement): if not using any filters, should probably use react-query here...
     //  but will need to invalidate these queries when get event updates from WS
 
-    api.getActivities({ page, pageSize, types: typesWithLogContent, returnTotal: true })
+    api.getActivities({ crewId: crew?.id, page, pageSize, types: typesWithLogContent, returnTotal: true })
       .then(async ({ activities, totalHits }) => {
         await hydrateActivities(activities, queryClient);
         setData({

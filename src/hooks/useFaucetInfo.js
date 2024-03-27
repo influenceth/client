@@ -1,10 +1,10 @@
 import { useQuery } from 'react-query';
 
-import useAuth from '~/hooks/useAuth';
+import useSession from '~/hooks/useSession';
 import api from '~/lib/api';
 
 const useFaucetInfo = () => {
-  const { walletContext: { starknet } } = useAuth();
+  const { starknet } = useSession();
   return useQuery(
     [ 'faucetInfo', starknet?.account ],
     () => api.faucetInfo(),

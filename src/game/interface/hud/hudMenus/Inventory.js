@@ -340,26 +340,30 @@ const LotInventory = () => {
 
     // TODO: use Inventory.getFilledCapacity() instead?
     const inventoryConfig = Inventory.getType(inventory.inventoryType, crew?._inventoryBonuses) || {};
+    const inventoryCapacity = Inventory.getFilledCapacity(inventory.inventoryType, crew?._inventoryBonuses) || {};
+
+    const massConstraint = inventoryCapacity.filledMass || inventoryConfig.massConstraint;
+    const volumeConstraint = inventoryCapacity.filledVolume || inventoryConfig.volumeConstraint;
 
     const mass = inventory?.mass || 0;
     const reservedMass = inventory?.reservedMass || 0;
-    const massUsage = mass / inventoryConfig.massConstraint;
-    const massReservedUsage = reservedMass / inventoryConfig.massConstraint;
+    const massUsage = mass / massConstraint;
+    const massReservedUsage = reservedMass / massConstraint;
 
     const volume = inventory?.volume || 0;
     const reservedVolume = inventory?.reservedVolume || 0;
-    const volumeUsage = volume / inventoryConfig.volumeConstraint;
-    const volumeReservedUsage = reservedVolume / inventoryConfig.volumeConstraint;
+    const volumeUsage = volume / volumeConstraint;
+    const volumeReservedUsage = reservedVolume / volumeConstraint;
 
     return {
       usedMass: mass,
       usedOrReservedMass: mass + reservedMass,
-      maxMass: inventoryConfig.massConstraint,
+      maxMass: massConstraint,
       pctMass: massUsage,
       pctOrReservedMass: massUsage + massReservedUsage,
       usedVolume: volume,
       usedOrReservedVolume: volume + reservedVolume,
-      maxVolume: inventoryConfig.volumeConstraint,
+      maxVolume: volumeConstraint,
       pctVolume: volumeUsage,
       pctOrReservedVolume: volumeUsage + volumeReservedUsage,
     };

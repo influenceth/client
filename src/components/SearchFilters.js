@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo } from 'react';
-import { Asteroid, Building, Crewmate, Product } from '@influenceth/sdk';
+import { Asteroid, Building, Crewmate, Permission, Product } from '@influenceth/sdk';
 
 import useStore from '~/hooks/useStore';
 import AsteroidNameFilter from './filters/AsteroidNameFilter';
@@ -34,6 +34,21 @@ const scanStatusColors = {
   [Asteroid.SCAN_STATUSES.SURFACE_SCANNED]: '#00c7ff',
   [Asteroid.SCAN_STATUSES.RESOURCE_SCANNED]: '#ff00f2'
 };
+
+const agreementRoleOptions = [
+  { key: 'lessor', label: 'Lessor', initialValue: true },
+  { key: 'lessee', label: 'Lessee', initialValue: true },
+];
+
+const agreementTimingOptions = [
+  { key: 'active', label: 'Active', initialValue: true },
+  { key: 'recently_expired', label: 'Recently Expired', initialValue: true },
+  { key: 'old_expired', label: 'Long Expired', initialValue: false },
+];
+
+const agreementPermissions = Object.keys(Permission.TYPES).map((key) => ({
+  key, label: Permission.TYPES[key].name, initialValue: true
+})).sort((a, b) => a.label < b.label ? -1 : 1);
 
 const spectralTypeColors = {
   1: '#6efaf4',
@@ -91,8 +106,9 @@ const actionItemStatusOptions = [
   { key: 'pending', label: 'Pending', initialValue: true },
   { key: 'failed', label: 'Failed', initialValue: true },
   { key: 'ready', label: 'Ready', initialValue: true },
-  { key: 'unready', label: 'Not Ready', initialValue: true },
-  { key: 'plans', label: 'Planned', initialValue: true },
+  { key: 'unready', label: 'In Progress', initialValue: true },
+  { key: 'plan', label: 'Planned', initialValue: true },
+  { key: 'agreement', label: 'Expiring Agreements', initialValue: true },
 ];
 
 // resource type filter configs
@@ -200,6 +216,33 @@ const SearchFilters = ({ assetType, highlighting, isListView = false }) => {
     }
   }, [asteroidId, assetType, zoomStatus]);
 
+  if (assetType === 'agreements') {
+    return (
+      <>
+        {/* TODO: asteroid */}
+        {/* TODO: crew search */}
+        {/* TODO: agreement type */}
+
+        <CheckboxFilter
+          {...filterProps}
+          fieldName="role"
+          options={agreementRoleOptions}
+          title="Role" />
+      
+        <CheckboxFilter
+          {...filterProps}
+          fieldName="timing"
+          options={agreementTimingOptions}
+          title="Expiration" />
+
+        <CheckboxFilter
+          {...filterProps}
+          fieldName="permission"
+          options={agreementPermissions}
+          title="Permission" />
+      </>
+    );
+  }
 
   if (assetType === 'asteroids' || assetType === 'asteroidsMapped') {
     return (

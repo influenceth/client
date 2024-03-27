@@ -350,10 +350,9 @@ const MarketplaceOrder = ({
     [exchange, feeEnforcementBonus, feeReductionBonus, type]
   );
 
-  const feeTotal = useMemo(
-    () => Math.floor(feeRate * (type === 'market' ? totalMarketPrice : totalLimitPrice)),
-    [feeRate, totalLimitPrice, totalMarketPrice, type]
-  );
+  const feeTotal = useMemo(() => {
+    return Math.floor(1e6 * feeRate * (type === 'market' ? totalMarketPrice : totalLimitPrice)) / 1e6;
+  }, [feeRate, totalLimitPrice, totalMarketPrice, type]);
 
   const stats = useMemo(() => {
     const baseFeeRate = exchange?.Exchange?.[type === 'limit' ? 'makerFee' : 'takerFee'] / Order.FEE_SCALE;

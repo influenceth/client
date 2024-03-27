@@ -23,11 +23,12 @@ import useStore from '~/hooks/useStore';
 import useCrew from '~/hooks/useCrew';
 import useCrewContext from '~/hooks/useCrewContext';
 import RouteSelection from './actionForms/RouteSelection';
-import { getBuildingIcon, getLotShipIcon, getShipIcon } from '~/lib/assetUtils';
+import { getBuildingIcon, getLotShipIcon } from '~/lib/assetUtils';
 import formatters from '~/lib/formatters';
 import useSale from '~/hooks/useSale';
 import useShip from '~/hooks/useShip';
 import LiveTimer from '~/components/LiveTimer';
+import LotLoadingProgress from './LotLoadingProgress';
 
 
 const opacityAnimation = keyframes`
@@ -97,26 +98,6 @@ const SubtitleLoader = styled.span`
   & > span {
     border-radius: 10px;
     display: block;
-  }
-`;
-
-const ProgressBar = styled.div`
-  ${p => p.progress === 0 ? css`animation: ${opacityAnimation} 1250ms ease infinite;` : ``}
-  background: #333;
-  border-radius: 10px;
-  height: 4px;
-  overflow: hidden;
-  position: relative;
-  width: 100%;
-  &:before {
-    content: ' ';
-    background: ${p => p.theme.colors.main};
-    position: absolute;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    transition: width 200ms ease;
-    width: ${p => 100 * p.progress}%;
   }
 `;
 
@@ -286,7 +267,6 @@ const InfoPane = () => {
 
   const asteroidId = useStore(s => s.asteroids.origin);
   const lotId = useStore(s => s.asteroids.lot);
-  const lotLoader = useStore(s => s.lotLoader);
   const inTravelMode = useStore(s => s.asteroids.travelMode);
   const zoomScene = useStore(s => s.asteroids.zoomScene);
   const zoomStatus = useStore(s => s.asteroids.zoomStatus);
@@ -295,6 +275,8 @@ const InfoPane = () => {
   const dispatchLotSelected = useStore(s => s.dispatchLotSelected);
   const dispatchZoomScene = useStore(s => s.dispatchZoomScene);
   const updateZoomStatus = useStore(s => s.dispatchZoomStatusChanged);
+  const playSound = useStore(s => s.dispatchEffectStartRequested);
+  const stopSound = useStore(s => s.dispatchEffectStopRequested);
 
   const { actions, props: actionProps } = useActionButtons();
   const { data: asteroid, isLoading: asteroidIsLoading } = useAsteroid(asteroidId);
@@ -303,6 +285,11 @@ const InfoPane = () => {
   const { data: lot, isLoading: lotIsLoading } = useLot(lotId);
   const { data: ship, isLoading: shipIsLoading } = useShip(zoomScene?.type === 'SHIP' ? zoomScene.shipId : undefined);
   const saleIsActive = useSale(Entity.IDS.ASTEROID);
+
+  const [hover, setHover] = useState();
+  const [currentSound, setCurrentSound] = useState();
+
+  const onMouseEvent = (e) => setHover(e.type === 'mouseenter');
 
   const onClickPane = useCallback(() => {
     // open lot
@@ -334,8 +321,19 @@ const InfoPane = () => {
     return false;
   }, [asteroidId, lotId, zoomStatus]);
 
-  const [hover, setHover] = useState();
-  const onMouseEvent = (e) => setHover(e.type === 'mouseenter');
+  // Control sounds for buildings
+  useEffect(() => {
+    if (currentSound) {
+      stopSound(currentSound, { fadeOut: 500 });
+      setCurrentSound(null);
+    }
+
+    if (lot?.building) {
+      const soundName = Building.TYPES[lot?.building?.Building?.buildingType]?.name?.toLowerCase();
+      playSound(soundName, { loop: false, duration: 4000, fadeOut: 1000 });
+      setCurrentSound(soundName);
+    }
+  }, [lot]);
 
   useEffect(() => {
     setHover(false);
@@ -398,7 +396,7 @@ const InfoPane = () => {
 
     } else if (zoomStatus === 'in') {
       const isIncompleteBuilding = lot?.building && !['OPERATIONAL', 'DECONSTRUCTING'].includes(constructionStatus);
-      const explicitLotControllerId = lot?.Control?.isExplicit ? lot?.Control?.controller?.id : undefined;
+      const explicitLotControllerId = lot?.Control?._isExplicit ? lot?.Control?.controller?.id : undefined;
       if (zoomScene?.type === 'LOT') {
         if (zoomScene?.overrides?.buildingType) {
           pane.title = Building.TYPES[zoomScene?.overrides?.buildingType]?.name;
@@ -457,9 +455,7 @@ const InfoPane = () => {
           <>
             {Asteroid.Entity.getSize(asteroid)} <b>{Asteroid.Entity.getSpectralType(asteroid)}-type</b>
             <SubtitleLoader>
-              {!(lotLoader.id === asteroidId && lotLoader.progress === 1) && (
-                <ProgressBar progress={lotLoader.id === asteroidId ? lotLoader.progress : 0} />
-              )}
+              <LotLoadingProgress asteroidId={asteroidId} />
             </SubtitleLoader>
           </>
         );
@@ -474,7 +470,6 @@ const InfoPane = () => {
     isAtRisk,
     lotId,
     lot,
-    lotLoader,
     saleIsActive,
     ship,
     zoomStatus,
@@ -512,7 +507,7 @@ const InfoPane = () => {
             hasCaptainCard={!!captainCard}>
             {hover ? <DetailsIcon /> : <ForwardIcon />}
             <ThumbPreview visible={thumbVisible}>
-              <CloseButton onClick={onClosePane}>
+              <CloseButton onClick={onClosePane} borderless>
                 <CloseIcon />
               </CloseButton>
               {thumbnail}

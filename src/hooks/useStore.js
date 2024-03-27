@@ -21,7 +21,7 @@ const buildingIds = Object.values(Building.IDS).filter((k) => k > 0).map((k) => 
 
 const assetSearchDefaults = {
   actionitems: { filters: {}, sort: ['time', 'asc'] },
-  agreements: { filters: {}, sort: ['event.timestamp', 'asc'] },
+  agreements: { filters: { timing: ['active', 'recently_expired'] }, sort: ['_agreement.endTime', 'asc'] },
   asteroids: { filters: {}, sort: ['Celestial.radius', 'desc'] },
   asteroidsMapped: { filters: {}, sort: ['Celestial.radius', 'desc'], highlight: null },
   buildings: { filters: {}, sort: ['Building.buildingType', 'asc'] },
@@ -78,9 +78,8 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
     },
     lotsMappedAssetSearchResults: {},
 
-    auth: {
-      token: null
-    },
+    currentSession: {},
+    sessions: {},
 
     selectedCrewId: null,
     crewAssignments: {},
@@ -121,8 +120,9 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
     sounds: {
       music: process.env.NODE_ENV === 'development' ? 0 : 100,
       effects: process.env.NODE_ENV === 'development' ? 0 : 100,
-      toPlay: null
     },
+
+    effects: {},
 
     referrer: null,
 
@@ -139,12 +139,20 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
       });
     })),
 
-    dispatchSoundPlayed: () => set(produce(state => {
-      state.sounds.toPlay = null;
+    dispatchEffectStartRequested: (sound, options) => set(produce(state => {
+      state.effects[sound] = { status: 'play', ...options };
     })),
 
-    dispatchSoundRequested: (sound) => set(produce(state => {
-      state.sounds.toPlay = sound;
+    dispatchEffectStarted: (sound) => set(produce(state => {
+      state.effects[sound] = { status: 'playing' };
+    })),
+
+    dispatchEffectStopRequested: (sound, options) => set(produce(state => {
+      state.effects[sound] = { status: 'stop', ...options };
+    })),
+
+    dispatchEffectStopped: (sound) => set(produce(state => {
+      delete state.effects[sound];
     })),
 
     dispatchMusicVolumeSet: (volume) => set(produce(state => {
@@ -408,12 +416,26 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
       state.timeOverride = anchor ? { anchor, speed, ts: Date.now() } : null;
     }))),
 
-    dispatchAuthenticated: (token) => set(produce(state => {
-      state.auth.token = token;
+    // Starts a session and sets it as the current session
+    dispatchSessionStarted: (session) => set(produce(state => {
+      state.currentSession = session;
+      state.sessions[session.accountAddress] = session;
     })),
 
-    dispatchTokenInvalidated: () => set(produce(state => {
-      state.auth.token = null;
+    // Unsets the current session but keeps it in the sessions list
+    dispatchSessionSuspended: () => set(produce(state => {
+      state.currentSession = {};
+    })),
+
+    // Resumes a session that was suspended
+    dispatchSessionResumed: (session) => set(produce(state => {
+      state.currentSession = session;
+    })),
+
+    // Ends a session and removes it from the sessions list
+    dispatchSessionEnded: () => set(produce(state => {
+      delete state.sessions[state.currentSession?.accountAddress];
+      state.currentSession = {};
       state.tutorialStep = -1;
     })),
 

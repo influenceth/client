@@ -36,7 +36,7 @@ const CoverImage = styled.div`
     display: block;
     opacity: ${p => p.ready ? 1 : 0};
     height: 100%;
-    mask-image: linear-gradient(to bottom, transparent 0%, black 10%, black 75%, transparent 100%);
+    mask-image: linear-gradient(to bottom, transparent 0%, black 20%, black 40%, transparent 98%);
     transition:
       background-position 750ms ease-out,
       opacity 750ms ease-out;
@@ -78,7 +78,7 @@ const BelowFold = styled.div`
   display: flex;
   flex-direction: row;
   height: calc(50% - ${foldOffset}px);
-  padding: 10px 0 10px 35px;
+  padding: 20px 0 10px 20px;
   position: relative;
   @media (min-width: ${p => p.theme.breakpoints.mobile}px) {
     min-height: ${belowFoldMin}px;
@@ -137,7 +137,7 @@ const BodyInner = styled.div`
   height: 100%;
   line-height: 1.25em;
   overflow: auto;
-  padding-right: 65px;
+  padding-right: 35px;
   width: 100%;
   scrollbar-width: thin;
 `;
@@ -147,7 +147,7 @@ const FlourishWrapper = styled.div`
   display: flex;
   flex: ${p => p.flourishWidth ? `0 0 ${p.flourishWidth}px` : '1 0 250px'};
   flex-direction: column;
-  justify-content: center;
+  margin-left: 20px;
   overflow: hidden;
 
   @media (max-width: 1300px) {
@@ -303,12 +303,18 @@ const ChoicesDialog = ({
           <Footer>
             <Rule />
             <div style={{ alignItems: 'center', display: 'flex', height: 'calc(100% - 1px)', justifyContent: 'space-between' }}>
-              <div>{leftButton && <Button {...(leftButton.props || {})} onClick={leftButton.onClick}>{leftButton.label}</Button>}</div>
+              <div>
+                {leftButton && (
+                  <Button flip onClick={leftButton.onClick} {...(leftButton.props || {})}>
+                    {leftButton.label}
+                  </Button>
+                )}
+              </div>
               {rightButton
                 ? (
                   <div style={{ alignItems: 'center', display: 'flex' }}>
                     {rightButton.preLabel || ''}
-                    <Button {...(rightButton.props || {})} onClick={rightButton.onClick}>{rightButton.label}</Button>
+                    <Button onClick={rightButton.onClick} {...(rightButton.props || {})}>{rightButton.label}</Button>
                   </div>
                 )
                 : (

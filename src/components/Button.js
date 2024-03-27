@@ -97,10 +97,10 @@ const Button = (props) => {
     loading,
     setRef,
     ...restProps } = props;
-  const playSound = useStore(s => s.dispatchSoundRequested);
+  const playSound = useStore(s => s.dispatchEffectStartRequested);
 
   const _onClick = (e) => {
-    playSound('effects.click');
+    playSound('click');
     if (onClick) onClick(e);
   }
 

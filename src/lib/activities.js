@@ -35,7 +35,8 @@ import {
   LimitSellIcon,
   MarketBuyIcon,
   BecomeAdminIcon,
-  EjectMyCrewIcon
+  EjectMyCrewIcon,
+  SwayIcon
 } from '~/components/Icons';
 import LotLink from '~/components/LotLink';
 
@@ -114,8 +115,17 @@ const invalidationDefaults = (labelOrEntity, optId) => {
   return i;
 };
 
-const getAgreementInvalidations = ({ event: { returnValues } }) => {
-  return invalidationDefaults(returnValues.target);
+const agreementEventConfig = {
+  getInvalidations: ({ event: { returnValues } }, { target = {} }) => {
+    return [
+      ...invalidationDefaults(returnValues.target),
+      ['agreements', returnValues.permitted?.id],
+      ['agreements', target?.Control?.controller?.id]
+    ];
+  },
+  getPrepopEntities: ({ event: { returnValues } }) => ({
+    target: returnValues.target,
+  }),
 };
 
 const getPolicyInvalidations = ({ event: { returnValues } }) => {
@@ -1689,11 +1699,6 @@ const activities = {
     // }),
   },
 
-  // ShipAssemblyFinished,
-  // ShipAssemblyStarted,
-  // ShipCommandeered,
-  // ShipDocked,
-
   Transfer: {
     getInvalidations: ({ entities, event: { returnValues } }) => {
       if (!entities?.[0]?.label) return [];
@@ -1830,6 +1835,72 @@ const activities = {
     }),
   },
 
+  DepositListedForSale: {
+    getInvalidations: ({ event: { returnValues } }, { deposit = {} }) => {
+      return [
+        ...invalidationDefaults(Entity.IDS.DEPOSIT, returnValues.deposit.id),
+      ];
+    },
+    getPrepopEntities: ({ event: { returnValues } }) => ({
+      deposit: returnValues.deposit,
+    }),
+    getLogContent: ({ event: { returnValues } }, viewingAs, { deposit = {} }) => ({
+      icon: <LimitSellIcon />,
+      content: (
+        <>
+          {Product.TYPES[deposit?.Deposit?.resource]?.name} deposit listed for
+          {' '}<SwayIcon />{formatPrice(returnValues.price / 1e6)}
+          {' '}at <EntityLink {...deposit?.Location?.location} />
+        </>
+      ),
+    }),
+    // TODO: trigger alert to extractor / lot controller?
+  },
+
+  DepositUnlistedForSale: {
+    getInvalidations: ({ event: { returnValues } }, { deposit = {} }) => {
+      return [
+        ...invalidationDefaults(Entity.IDS.DEPOSIT, returnValues.deposit.id),
+      ];
+    },
+    getPrepopEntities: ({ event: { returnValues } }) => ({
+      deposit: returnValues.deposit,
+    }),
+    getLogContent: ({ event: { returnValues } }, viewingAs, { deposit = {} }) => ({
+      icon: <LimitSellIcon />,
+      content: (
+        <>
+          {Product.TYPES[deposit?.Deposit?.resource]?.name} deposit sale cancelled at
+          {' '}<EntityLink {...deposit?.Location?.location} />
+        </>
+      ),
+    }),
+  },
+
+  DepositPurchased: {
+    getInvalidations: ({ event: { returnValues } }, { deposit = {} }) => {
+      return [
+        ...invalidationDefaults(Entity.IDS.DEPOSIT, returnValues.deposit.id),
+        ['swayBalance']
+      ];
+    },
+    getPrepopEntities: ({ event: { returnValues } }) => ({
+      deposit: returnValues.deposit,
+    }),
+    getLogContent: ({ event: { returnValues } }, viewingAs, { deposit = {} }) => ({
+      icon: <MarketBuyIcon />,
+      content: (
+        <>
+          {Product.TYPES[deposit?.Deposit?.resource]?.name} deposit
+          {' '}{(viewingAs?.label === Entity.IDS.CREW && viewingAs?.id === returnValues.sellerCrew?.id) ? 'sold' : 'purchased'} for
+          {' '}<SwayIcon />{formatPrice(returnValues.price / 1e6)}
+          {' '}at <EntityLink {...deposit?.Location?.location} />
+        </>
+      ),
+    }),
+    triggerAlert: true
+  },
+
   AddedToWhitelist: { getInvalidations: getPolicyInvalidations },
   RemovedFromWhitelist: { getInvalidations: getPolicyInvalidations },
   ContractPolicyAssigned: { getInvalidations: getPolicyInvalidations },
@@ -1841,11 +1912,11 @@ const activities = {
   PrepaidMerklePolicyAssigned: { getInvalidations: getPolicyInvalidations },
   PrepaidMerklePolicyRemoved: { getInvalidations: getPolicyInvalidations },
 
-  ContractAgreementAccepted: { getInvalidations: getAgreementInvalidations },
-  PrepaidMerkleAgreementAccepted: { getInvalidations: getAgreementInvalidations },
-  PrepaidAgreementAccepted: { getInvalidations: getAgreementInvalidations },
-  PrepaidAgreementExtended: { getInvalidations: getAgreementInvalidations },
-  PrepaidAgreementCancelled: { getInvalidations: getAgreementInvalidations },
+  ContractAgreementAccepted: agreementEventConfig,
+  PrepaidMerkleAgreementAccepted: agreementEventConfig,
+  PrepaidAgreementAccepted: agreementEventConfig,
+  PrepaidAgreementExtended: agreementEventConfig,
+  PrepaidAgreementCancelled: agreementEventConfig,
 };
 
 /**

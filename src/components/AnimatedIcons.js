@@ -13,7 +13,7 @@ const LottieIcon = ({ animation, isPaused = false, size = "1em" }) => {
     autoplay: true,
     animationData: animation
   }), [animation]);
-  return <Lottie options={options} isPaused={isPaused} height={size} width={size} style={{ lineHeight: 0 }} />;
+  return <Lottie options={options} isPaused={isPaused} height={size} width={size} />;
 };
 
 export const CrewBusyIcon = (props) => <LottieIcon animation={CrewBusy} {...props} />;

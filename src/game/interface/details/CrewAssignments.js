@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useHistory, useParams } from 'react-router-dom';
 import styled from 'styled-components';
 
-import useAuth from '~/hooks/useAuth';
+import useSession from '~/hooks/useSession';
 import useBook from '~/hooks/useBook';
 import useCreateStorySession from '~/hooks/useCreateStorySession';
 import useCrewContext from '~/hooks/useCrewContext';
@@ -151,16 +151,16 @@ const CrewlessSection = styled(SectionBody)`
     & > a {
       white-space: nowrap;
     }
-  } 
+  }
 `;
 
 const SectionTitle = styled.div`
-  font-size: 16px;  
+  font-size: 16px;
   font-weight: bold;
 `;
 
 const SectionSubtitle = styled.div`
-  font-size: 13px;  
+  font-size: 13px;
   line-height: 1.6em;
   opacity: 0.6;
   @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
@@ -181,7 +181,7 @@ const BookHeader = styled(SectionHeader)`
   }
 `;
 const BookIcon = styled.div`
-  font-size: 2em;  
+  font-size: 2em;
   margin-right: 12px;
   margin-bottom: 12px;
 `;
@@ -212,7 +212,7 @@ const PartSection = styled.div`
     display: flex;
     justifyContent: space-between;
     height: 24px;
-    width: 100%; 
+    width: 100%;
   }
 `;
 
@@ -318,19 +318,19 @@ const ProgressIcon = styled.span`
 const CrewAssignments = () => {
   const { id: bookId, selected: initialSelectedId } = useParams();
   const history = useHistory();
-  const { account } = useAuth();
+  const { authenticated } = useSession();
 
   const createStorySession = useCreateStorySession();
   const { crew, crewmateMap } = useCrewContext();
   const { data: book, isError } = useBook(bookId);
   const createAlert = useStore(s => s.dispatchAlertLogged);
-  const playSound = useStore(s => s.dispatchSoundRequested);
+  const playSound = useStore(s => s.dispatchEffectStartRequested);
 
   const [collapsedParts, setCollapsedParts] = useState([]);
   const [bookReady, setBookReady] = useState(false);
   const [mobileView, setMobileView] = useState('book');
   const [selectedStory, setSelectedStory] = useState();
-  
+
   // TODO: genesis book deprecation vvv
   const eligibleCrew = useMemo(() => {
     if (crew && crewmateMap) {
@@ -346,11 +346,11 @@ const CrewAssignments = () => {
 
   const selectStory = useCallback((story) => () => {
     if (story) {
-      playSound('effects.click');
+      playSound('click');
       setSelectedStory(story);
       setMobileView('crew');
     } else {
-      playSound('effects.failure');
+      playSound('failure');
     }
   }, [playSound]);
 
@@ -375,15 +375,15 @@ const CrewAssignments = () => {
         }
 
         if (session) {
-          playSound('effects.success');
+          playSound('success');
           history.push(`/crew-assignment/${session.id}`);
           return;
         }
       }
       return;
     }
-    
-    playSound('effects.failure');
+
+    playSound('failure');
   }, [bookId, bookReady, createStorySession, history, playSound, selectedStory]);
 
   useEffect(() => {
@@ -459,7 +459,7 @@ const CrewAssignments = () => {
   }, [book, eligibleCrew, initialSelectedId]);
 
   const togglePart = useCallback((partId) => () => {
-    playSound('effects.click');
+    playSound('click');
     if (collapsedParts.includes(partId)) {
       setCollapsedParts(
         collapsedParts.filter((p) => p !== partId)
@@ -552,10 +552,10 @@ const CrewAssignments = () => {
         </SectionContainer>
 
         <SectionSpacer />
-        
+
         <SectionContainer visible={mobileView === 'crew'}>
-          {account && !eligibleCrew && <Loader />}
-          {!(account && !eligibleCrew) && (
+          {authenticated && !eligibleCrew && <Loader />}
+          {!(authenticated && !eligibleCrew) && (
             <>
               <CrewHeader>
                 <SectionTitle>Owned Crew ({eligibleCrew?.length || 0})</SectionTitle>

@@ -85,7 +85,7 @@ const useCoreSampleManager = (lotId) => {
         status = 'SAMPLING';
         stage = actionStages.IN_PROGRESS;
       } else {
-        const improveSampleTx = getPendingTx('SampleDepositImprove', payload);
+        const improveSampleTx = getPendingTx('PurchaseDepositAndImprove', payload) || getPendingTx('SampleDepositImprove', payload);
         if (improveSampleTx) {
           current.isNew = false;
           current.owner = improveSampleTx.vars.crewId;
@@ -132,15 +132,17 @@ const useCoreSampleManager = (lotId) => {
     })
   }, [payload]);
 
-  const startImproving = useCallback((depositId, coreDrillSource) => {
+  const startImproving = useCallback((depositId, coreDrillSource, depositOwnerCrew) => {
     const sample = (lot?.deposits || []).find((c) => c.id === depositId);
     execute(
-      'SampleDepositImprove',
+      depositOwnerCrew ? 'PurchaseDepositAndImprove' : 'SampleDepositImprove',
       {
+        ...payload,
         deposit: { id: depositId, label: Entity.IDS.DEPOSIT },
         origin: { id: coreDrillSource.id, label: coreDrillSource.label },
         origin_slot: coreDrillSource.slot,
-        ...payload
+        recipient: depositOwnerCrew?.Crew?.delegatedTo,
+        price: sample.PrivateSale?.amount || 0
       },
       {
         lotId,

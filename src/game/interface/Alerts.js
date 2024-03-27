@@ -171,7 +171,7 @@ export const useControlledAlert = () => {
 const Alerts = () => {
   const alerts = useStore(s => s.logs.alerts);
   const notifyAlert = useStore(s => s.dispatchAlertNotified);
-  const playSound = useStore(s => s.dispatchSoundRequested);
+  const playSound = useStore(s => s.dispatchEffectStartRequested);
 
   useEffect(() => {
     if (alerts?.length === 0) return;
@@ -197,9 +197,9 @@ const Alerts = () => {
           getOptions(a)
         );
         if (level === 'warning') {
-          playSound('effects.failure');
+          playSound('failure');
         } else {
-          playSound('effects.success');
+          playSound('success');
         }
       }
 

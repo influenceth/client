@@ -1,9 +1,9 @@
 import { useContext } from 'react';
 
-import WalletContext from '~/contexts/WalletContext';
+import SessionContext from '~/contexts/SessionContext';
 
 const useBlockTime = () => {
-  const { blockTime } = useContext(WalletContext);
+  const { blockTime } = useContext(SessionContext);
   return blockTime;
 };
 

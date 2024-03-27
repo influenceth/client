@@ -76,7 +76,7 @@ const useExtractionManager = (lotId, slot = 1) => {
         stage = actionStages.IN_PROGRESS;
       }
     } else {
-      const startTx = getPendingTx('ExtractResourceStart', payload);
+      const startTx = getPendingTx('PurchaseDepositAndExtractResource', payload) || getPendingTx('ExtractResourceStart', payload);
       if (startTx) {
         current.depositId = startTx.vars.deposit.id;
         current.destination = startTx.vars.destination;
@@ -95,15 +95,17 @@ const useExtractionManager = (lotId, slot = 1) => {
     ];
   }, [actionItems, blockTime, readyItems, getPendingTx, getStatus, payload, slotExtractor?.status]);
 
-  const startExtraction = useCallback((amount, deposit, destination, destinationSlot) => {
+  const startExtraction = useCallback((amount, deposit, destination, destinationSlot, depositOwnerCrew) => {
     execute(
-      'ExtractResourceStart',
+      depositOwnerCrew ? 'PurchaseDepositAndExtractResource' : 'ExtractResourceStart',
       {
         ...payload,
         yield: amount,
         deposit: { id: deposit.id, label: deposit.label },
         destination: { id: destination.id, label: destination.label },
-        destination_slot: destinationSlot
+        destination_slot: destinationSlot,
+        recipient: depositOwnerCrew?.Crew?.delegatedTo,
+        price: deposit.PrivateSale?.amount || 0
       },
       {
         resourceId: deposit.Deposit.resource,

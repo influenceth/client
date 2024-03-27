@@ -1,13 +1,16 @@
-import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
+import { Time } from '@influenceth/sdk';
 
-import ClockContext from '~/contexts/ClockContext';
 import useGetTime from '~/hooks/useGetTime';
 import useStore from '~/hooks/useStore';
 import IconButton from '~/components/IconButton';
 import TimeComponent from '~/components/Time';
 import { RewindIcon, FastForwardIcon, PlayIcon, PauseIcon } from '~/components/Icons';
 import TimeIcon from '~/components/TimeIcon';
+import useConstants from '~/hooks/useConstants';
+import useCoarseTime from '~/hooks/useCoarseTime';
+import { displayTimeFractionDigits } from '~/lib/utils';
 
 
 const StyledTime = styled.div`
@@ -184,8 +187,9 @@ const TimeController = ({ open }) => {
   );
 };
 
-const TimeControls = (props) => {
-  const { displayTime } = useContext(ClockContext);
+const TimeControls = () => {
+  const coarseTime = useCoarseTime();
+  const { data: TIME_ACCELERATION, isLoading } = useConstants('TIME_ACCELERATION');
   const timeOverride = useStore(s => s.timeOverride);
 
   const [open, setOpen] = useState(false);
@@ -193,8 +197,15 @@ const TimeControls = (props) => {
     setOpen((o) => !o);
   }, []);
 
+  const displayTime = useMemo(() => {
+    if (!coarseTime || isLoading) return '';
+    return Time.fromOrbitADays(coarseTime, TIME_ACCELERATION || Time.DEFAULT_TIME_ACCELERATION)
+      .toGameClockADays()
+      .toLocaleString(undefined, { minimumFractionDigits: displayTimeFractionDigits });
+  }, [coarseTime, isLoading, TIME_ACCELERATION])
+
   return (
-    <StyledTime {...props}>
+    <StyledTime>
       <TimeController open={open} />
       <TimeIcon
         motionBlur={Math.abs(timeOverride?.speed || 0) > 10000}

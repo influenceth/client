@@ -569,7 +569,7 @@ const PolicyPanels = ({ editable, entity }) => {
 
   // show lot warning if building controller does not have lot permission
   const showLotWarning = useMemo(() => {
-    if (!lot) return false;
+    if (!lot || !entity) return false;
 
     const lotPerm = Permission.getPolicyDetails(lot, entity.Control?.controller?.id)[Permission.IDS.USE_LOT];
     return !(lotPerm?.crewStatus === 'controller' || lotPerm?.crewStatus === 'granted');

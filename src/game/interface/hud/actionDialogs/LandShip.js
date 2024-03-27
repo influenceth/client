@@ -3,7 +3,7 @@ import { Asteroid, Crewmate, Dock, Entity, Inventory, Lot, Permission, Product, 
 
 import { LandShipIcon, RouteIcon, ShipIcon, WarningOutlineIcon } from '~/components/Icons';
 import useCrewContext from '~/hooks/useCrewContext';
-import { reactBool, formatTimer, formatFixed, locationsArrToObj, getCrewAbilityBonuses } from '~/lib/utils';
+import { reactBool, formatTimer, formatFixed, getCrewAbilityBonuses } from '~/lib/utils';
 
 import {
   ActionDialogFooter,
@@ -16,7 +16,6 @@ import {
   FlexSectionSpacer,
   ProgressBarSection,
   AsteroidImage,
-  ProgressBarNote,
   PropellantSection,
   ShipTab,
   LandingSelectionDialog,
@@ -28,19 +27,15 @@ import {
   MaterialBonusTooltip
 } from './components';
 import useLot from '~/hooks/useLot';
-import useStore from '~/hooks/useStore';
-import { ActionDialogInner, useAsteroidAndLot } from '../ActionDialog';
+import { ActionDialogInner } from '../ActionDialog';
 import actionStages from '~/lib/actionStages';
 import theme from '~/theme';
 import formatters from '~/lib/formatters';
 import useShip from '~/hooks/useShip';
-import useEntity from '~/hooks/useEntity';
 import useShipDockingManager from '~/hooks/actionManagers/useShipDockingManager';
 import useAsteroid from '~/hooks/useAsteroid';
 
 const LandShip = ({ asteroid, manager, ship, stage, ...props }) => {
-  const createAlert = useStore(s => s.dispatchAlertLogged);
-
   const { currentDockingAction, dockShip } = manager;
   const { crew, crewCan } = useCrewContext();
 
@@ -91,7 +86,7 @@ const LandShip = ({ asteroid, manager, ship, stage, ...props }) => {
       deltaV
     ];
   }, [ship]);
-  
+
   const launchTime = useMemo(() => groundDelay + (powered ? poweredTime : tugTime), [groundDelay, powered, poweredTime, tugTime]);
 
   const [crewTimeRequirement, taskTimeRequirement] = useMemo(() => {
@@ -211,8 +206,9 @@ const LandShip = ({ asteroid, manager, ship, stage, ...props }) => {
 
             <FlexSection style={{ marginBottom: -15 }}>
               <PropulsionTypeSection
+                disabled={stage !== actionStages.NOT_STARTED}
                 objectLabel="Landing"
-                onSetPowered={(x) => setPowered(x)}
+                onSetPowered={(x) => stage === actionStages.NOT_STARTED ? setPowered(x) : null}
                 powered={powered}
                 propulsiveTime={poweredTime}
                 tugTime={tugTime} />

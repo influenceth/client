@@ -24,7 +24,7 @@ import LogEntry from '~/components/LogEntry';
 import TabContainer from '~/components/TabContainer';
 import TextInput from '~/components/TextInput';
 import useActivities from '~/hooks/useActivities';
-import useAuth from '~/hooks/useAuth';
+import useSession from '~/hooks/useSession';
 import useChangeName from '~/hooks/actionManagers/useChangeName';
 import useConstants from '~/hooks/useConstants';
 import useCrewContext from '~/hooks/useCrewContext';
@@ -288,7 +288,7 @@ const BaseLocation = styled.div`
   &:hover, &:hover span {
     color: ${p => p.theme.colors.main};
   }
-  
+
   svg {
     margin-right: 2px;
     vertical-align: middle;
@@ -323,7 +323,7 @@ const PopperWrapper = (props) => {
 }
 
 const CrewDetails = ({ crewId, crew, isMyCrew, isOwnedCrew, selectCrew }) => {
-  const { account } = useAuth();
+  const { accountAddress } = useSession();
   const history = useHistory();
 
   const onSetAction = useStore(s => s.dispatchActionDialog);
@@ -342,7 +342,9 @@ const CrewDetails = ({ crewId, crew, isMyCrew, isOwnedCrew, selectCrew }) => {
   const [newName, setNewName] = useState(crew.Name?.name || '');
 
   const viewingAs = useMemo(() => ({ id: crewId, label: Entity.IDS.CREW }), [crewId]);
-  const hasMyCrewmates = useMemo(() => crew._crewmates.filter((c) => account && Address.areEqual(account, c.Nft?.owner))?.length, [account, crew._crewmates]);
+  const hasMyCrewmates = useMemo(() => {
+    return crew._crewmates.filter((c) => accountAddress && Address.areEqual(accountAddress, c.Nft?.owner))?.length;
+  }, [accountAddress, crew._crewmates]);
 
   // reset
   useEffect(() => {
@@ -619,7 +621,7 @@ const CrewDetails = ({ crewId, crew, isMyCrew, isOwnedCrew, selectCrew }) => {
 
 const Wrapper = () => {
   const { i } = useParams();
-  const { account } = useAuth();
+  const { accountAddress, authenticated } = useSession();
   const { crew: myCrew, selectCrew, loading: myCrewLoading } = useCrewContext();
   const history = useHistory();
 
@@ -643,7 +645,7 @@ const Wrapper = () => {
       }
 
     // if i is not specified, but I am logged in...
-    } else if (account) {
+    } else if (authenticated) {
       // ...if my crew is done loading...
       if (!myCrewLoading) {
         // ...if my crew exists, redirect to it
@@ -658,7 +660,7 @@ const Wrapper = () => {
     } else {
       history.replace('/');
     }
-  }, [account, crewLoading, crew, i, myCrew, myCrewLoading]);
+  }, [authenticated, crewLoading, crew, i, myCrew, myCrewLoading]);
 
   const loading = myCrewLoading || crewLoading;
   return (
@@ -680,7 +682,7 @@ const Wrapper = () => {
           crewId={crewId}
           crew={crew}
           isMyCrew={crewId === myCrew?.id}
-          isOwnedCrew={Address.areEqual(crew?.Nft?.owner || '', account || '')}
+          isOwnedCrew={Address.areEqual(crew?.Nft?.owner || '', accountAddress || '')}
           selectCrew={selectCrew}
         />
       )}

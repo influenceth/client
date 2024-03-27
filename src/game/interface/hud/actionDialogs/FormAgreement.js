@@ -25,7 +25,7 @@ import actionStages from '~/lib/actionStages';
 import theme, { hexToRGB } from '~/theme';
 import CrewIndicator from '~/components/CrewIndicator';
 import useEntity from '~/hooks/useEntity';
-import useAuth from '~/hooks/useAuth';
+import useSession from '~/hooks/useSession';
 import useAgreementManager from '~/hooks/actionManagers/useAgreementManager';
 import useHydratedLocation from '~/hooks/useHydratedLocation';
 import useCrew from '~/hooks/useCrew';
@@ -141,7 +141,7 @@ const FormAgreement = ({
   stage,
   ...props
 }) => {
-  const { walletContext: { starknet } } = useAuth();
+  const { starknet } = useSession();
   const createAlert = useStore(s => s.dispatchAlertLogged);
 
   const { currentAgreement, currentPolicy, cancelAgreement, enterAgreement, extendAgreement, pendingChange } = agreementManager;
@@ -568,7 +568,6 @@ const Wrapper = ({ entity: entityId, permission, isExtension, agreementPath, ...
   const { crewIsLoading } = useCrewContext();
   const { data: asset, isLoading: assetIsLoading } = useEntity(entityId?.label === Entity.IDS.LOT ? undefined : entityId);
   const { data: lot, isLoading: lotIsLoading } = useLot(entityId?.label === Entity.IDS.LOT ? entityId?.id : undefined);
-
   const entity = asset || lot;
   const entityIsLoading = assetIsLoading || lotIsLoading;
 

@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 
-import useAuth from '~/hooks/useAuth'
+import useSession from '~/hooks/useSession'
 import { useControlledAlert } from '~/game/interface/Alerts';
 import { InfluenceIcon } from '~/components/Icons';
 import styled from 'styled-components';
@@ -17,7 +17,7 @@ const Content = styled.div`
 `;
 
 const Account = () => {
-  // const { token } = useAuth();
+  // const { token } = useSession();
   // const { create, destroy } = useControlledAlert();
 
   // useEffect(() => {

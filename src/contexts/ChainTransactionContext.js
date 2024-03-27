@@ -4,7 +4,7 @@ import { isEqual, get } from 'lodash';
 import { hash, shortString, uint256 } from 'starknet';
 
 import useActivitiesContext from '~/hooks/useActivitiesContext';
-import useAuth from '~/hooks/useAuth';
+import useSession from '~/hooks/useSession';
 import useCrewContext from '~/hooks/useCrewContext';
 import useStore from '~/hooks/useStore';
 import useInterval from '~/hooks/useInterval';
@@ -216,6 +216,9 @@ const customConfigs = {
   ProcessProductsStart: { equalityTest: ['processor.id', 'processor_slot'] },
   ProcessProductsFinish: { equalityTest: ['processor.id', 'processor_slot'] },
 
+  ListDepositForSale: { equalityTest: ['deposit.id'] },
+  UnlistDepositForSale: { equalityTest: ['deposit.id'] },
+
   SampleDepositFinish: { equalityTest: ['lot.id', 'caller_crew.id'] },
   SampleDepositImprove: { equalityTest: ['lot.id', 'caller_crew.id'] },
   SampleDepositStart: { equalityTest: ['lot.id', 'caller_crew.id'] },
@@ -259,6 +262,14 @@ const customConfigs = {
       return base + lot * BigInt(Asteroid.Entity.getSurfaceArea(asteroid));
     },
     equalityTest: ['asteroid.id']
+  },
+  PurchaseDeposit: {
+    getTransferConfig: ({ recipient, deposit, price }) => ({
+      amount: BigInt(price),
+      recipient,
+      memo: Entity.packEntity(deposit)
+    }),
+    equalityTest: ['deposit.id']
   },
   InitializeArvadian: { equalityTest: true },
   RecruitAdalian: {
@@ -327,6 +338,16 @@ const customConfigs = {
     equalityTest: ['asteroid.id'],
     isVirtual: true
   },
+  PurchaseDepositAndExtractResource: {
+    multisystemCalls: ['PurchaseDeposit', 'ExtractResourceStart'],
+    equalityTest: ['extractor.id'],
+    isVirtual: true
+  },
+  PurchaseDepositAndImprove: {
+    multisystemCalls: ['PurchaseDeposit', 'SampleDepositImprove'],
+    equalityTest: ['lot.id', 'caller_crew.id'],
+    isVirtual: true
+  },
   EscrowDepositAndCreateBuyOrder: {
     getEscrowAmount: ({ price, amount, feeTotal }) => {
       return BigInt((price * amount + feeTotal) || 0);
@@ -345,7 +366,7 @@ const customConfigs = {
   },
   EscrowWithdrawalAndFillBuyOrders: {
     getEscrowAmount: ({ price, amount, makerFee }) => {
-      return BigInt((price * amount * (1 + makerFee)) || 0);
+      return BigInt(Math.round(price * amount * (1 + makerFee)) || 0);
     },
     escrowConfig: {
       entrypoint: 'withdraw',
@@ -355,10 +376,6 @@ const customConfigs = {
       withdrawHookKeys: ['buyer_crew', 'exchange', 'product', 'price', 'storage', 'storage_slot'],
       withdrawDataKeys: ['amount', 'origin', 'origin_slot', 'caller_crew'],
       getWithdrawals: ({ exchange_owner_account, seller_account, payments }) => {
-        // console.log([
-        //   { recipient: seller_account, amount: BigInt(payments.toPlayer) },
-        //   { recipient: exchange_owner_account, amount: BigInt(payments.toExchange) },
-        // ]);
         return [
           { recipient: seller_account, amount: BigInt(payments.toPlayer) },
           { recipient: exchange_owner_account, amount: BigInt(payments.toExchange) },
@@ -483,7 +500,7 @@ const getSystemCallAndProcessedVars = (runSystem, rawVars, encodeEntrypoint = fa
 }
 
 export function ChainTransactionProvider({ children }) {
-  const { account, walletContext: { starknet, blockNumber, blockTime } } = useAuth();
+  const { accountAddress, authenticated, blockNumber, blockTime, starknet, starknetSession } = useSession();
   const activities = useActivitiesContext();
   const { crew, pendingTransactions } = useCrewContext();
 
@@ -505,7 +522,7 @@ export function ChainTransactionProvider({ children }) {
       && crew?.Crew?.actionRound
       && (crew?.Crew?.actionRound + RandomEvent.MIN_ROUNDS) <= blockNumber
       && !crew?._actionTypeTriggered,
-    [blockNumber, crew]
+    [blockNumber, crew?.Crew?.actionType, crew?.Crew?.actionRound, crew?._actionTypeTriggered]
   );
 
   const contracts = useMemo(() => {
@@ -562,7 +579,8 @@ export function ChainTransactionProvider({ children }) {
             // prepend resolveRandomEvent with choice 0 so that the event is cleared
             if (prependEventAutoresolve && !(config.noSystemCalls || config.isUnblockable)) { // TODO: fill in these isUnblockable's
               const caller_crew = (Array.isArray(rawVars) ? rawVars.find((rv) => !!rv.caller_crew) : rawVars)?.caller_crew;
-              if (caller_crew) {
+
+              if (caller_crew && caller_crew.id !== 0) {
                 systemCalls.unshift({
                   runSystem: 'ResolveRandomEvent',
                   rawVars: { caller_crew, choice: 0 }
@@ -679,7 +697,14 @@ export function ChainTransactionProvider({ children }) {
             }
 
             console.log('execute', calls);
-            return starknet.account.execute(calls);
+
+            // Check if we can utilize a signed session to execute calls
+            const canUseSession = !!starknetSession?.account && !calls.some((c) => {
+              return c.contractAddress !== process.env.REACT_APP_STARKNET_DISPATCHER || c.entrypoint !== 'run_system';
+            });
+
+            if (canUseSession) console.log('starknetSession', starknetSession);
+            return canUseSession ? starknetSession.execute(calls) : starknet.account.execute(calls);
           },
 
           onConfirmed: (event, vars) => {
@@ -698,24 +723,19 @@ export function ChainTransactionProvider({ children }) {
       }, {});
     }
     return null;
-  }, [createAlert, prependEventAutoresolve, starknet?.account?.address]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [createAlert, prependEventAutoresolve, accountAddress]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const transactionWaiters = useRef([]);
 
-  // TODO: in the future, may want to accomodate for user's clocks being wrong by
-  //  passing back server time occasionally in websocket (maybe in headers?) and storing an offset
-  const [chainTime, setChainTime] = useState(getNow());
-  useInterval(() => setChainTime(getNow()), 1000);
-
   // on logout, clear pending (and failed) transactions
   useEffect(() => {
-    if (!account) dispatchClearTransactionHistory();
-  }, [!account, dispatchClearTransactionHistory]);
+    if (!authenticated) dispatchClearTransactionHistory();
+  }, [authenticated, dispatchClearTransactionHistory]);
 
   // on initial load, set provider.waitForTransaction for any pendingTransactions
   // so that we can throw any extension-related or timeout errors needed
   useEffect(() => {
-    if (starknet?.account && contracts && pendingTransactions?.length) {
+    if (starknet?.provider && contracts && pendingTransactions?.length) {
       pendingTransactions.forEach(({ key, vars, txHash }) => {
         // (sanity check) this should not be possible since pendingTransaction should not be created
         // without txHash... so we aren't even reporting this error to user since should not happen
@@ -727,7 +747,7 @@ export function ChainTransactionProvider({ children }) {
           // NOTE: waitForTransaction is slow -- often slower than server to receive and process
           //  event and send back to frontend... so we are using it just to listen for errors
           //  (activities from backend will demonstrate success)
-          starknet.account.waitForTransaction(txHash, { retryInterval: RETRY_INTERVAL })
+          starknet.provider.waitForTransaction(txHash, { retryInterval: RETRY_INTERVAL })
             // .then((receipt) => {
             //   if (receipt) {
             //     console.log('transaction settled');
@@ -794,10 +814,10 @@ export function ChainTransactionProvider({ children }) {
     if (contracts && pendingTransactions?.length) {
       pendingTransactions.filter((tx) => !tx.txEvent).forEach((tx) => {
         // if it's been X+ seconds since submitted, check if it was reverted
-        if (chainTime > Math.floor(tx.timestamp / 1000) + 30) {
+        if (Math.floor(Date.now() / 1000) > Math.floor(tx.timestamp / 1000) + 30) {
           const { key, vars, txHash } = tx;
 
-          starknet.account.getTransactionReceipt(txHash)
+          starknet.provider.getTransactionReceipt(txHash)
             .then((receipt) => {
               if (receipt && receipt.execution_status === 'REVERTED') {
                 contracts[key].onTransactionError(receipt, vars);
@@ -897,7 +917,6 @@ export function ChainTransactionProvider({ children }) {
 
   return (
     <ChainTransactionContext.Provider value={{
-      chainTime,
       execute,
       getStatus,
       getPendingTx,

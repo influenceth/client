@@ -76,6 +76,7 @@ const theme = {
     successRGB: hexToRGB(success),
     warning: orange,
     error: red,
+    expired: '#f6574d',
     teal, blue, lightPurple, purple, lightOrange, orange, yellow, red, darkRed, green,
     bonus: {
       level0: '#999999',
@@ -91,6 +92,7 @@ const theme = {
       Exceptional: orange,
       Incomparable: yellow
     },
+    depositSize: '#a97c4f',
     resources: {
       Fissile: '#8a1aff',
       Metal: '#f8852c',

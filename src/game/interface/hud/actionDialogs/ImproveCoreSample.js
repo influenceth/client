@@ -1,13 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Asteroid, Crewmate, Deposit, Lot, Product, Time } from '@influenceth/sdk';
 
-import { CoreSampleIcon, ImproveCoreSampleIcon, ResourceIcon } from '~/components/Icons';
+import { CoreSampleIcon, ImproveCoreSampleIcon, ResourceIcon, SwayIcon, WarningIcon } from '~/components/Icons';
 import ResourceThumbnail from '~/components/ResourceThumbnail';
-import useCrewContext from '~/hooks/useCrewContext';
 import useStore from '~/hooks/useStore';
 import useCoreSampleManager from '~/hooks/actionManagers/useCoreSampleManager';
 import actionStage from '~/lib/actionStages';
-import { reactBool, formatTimer, locationsArrToObj, getCrewAbilityBonuses } from '~/lib/utils';
+import { reactBool, formatTimer, locationsArrToObj, getCrewAbilityBonuses, formatPrice, keyify } from '~/lib/utils';
 
 import {
   ActionDialogBody,
@@ -28,11 +27,50 @@ import {
   CoreSampleSelectionDialog,
   SublabelBanner,
   getTripDetails,
-  InventorySelectionDialog
+  InventorySelectionDialog,
+  Section,
+  SectionTitle,
+  SectionBody
 } from './components';
 import { ActionDialogInner, theming, useAsteroidAndLot } from '../ActionDialog';
 import useEntity from '~/hooks/useEntity';
 import useActionCrew from '~/hooks/useActionCrew';
+import useCrew from '~/hooks/useCrew';
+import { TextInputWrapper } from '~/components/TextInputUncontrolled';
+import CrewIndicator from '~/components/CrewIndicator';
+import styled from 'styled-components';
+import theme from '~/theme';
+
+const InputLabel = styled.div`
+  align-items: center;
+  color: #888;
+  display: flex;
+  flex-direction: row;
+  font-size: 14px;
+  margin-bottom: 3px;
+  & > label {
+    flex: 1;
+  }
+  & > span {
+    b {
+      color: white;
+      font-weight: normal;
+    }
+  }
+`;
+
+const Warning = styled.div`
+  align-items: center;
+  color: ${p => p.theme.colors.main};
+  display: flex;
+  flex-direction: row;
+  font-size: 13px;
+  margin-top: 8px;
+  & > span:first-child {
+    margin-right: 8px;
+    width: 16px;
+  }
+`;
 
 // TODO: combine this ui with "NewCoreSample" dialog if possible
 const ImproveCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }) => {
@@ -51,7 +89,11 @@ const ImproveCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }
 
   const improvableSamples = useMemo(() => {
     return (lot?.deposits || [])
-      .filter((c) => (c.Control.controller.id === crew?.id && c.Deposit.initialYield > 0 && c.Deposit.status !== Deposit.STATUSES.USED))
+      .filter((c) => (
+        (c.Control.controller.id === crew?.id || c.PrivateSale?.amount > 0)
+        && c.Deposit.initialYield > 0
+        && c.Deposit.status !== Deposit.STATUSES.USED
+      ))
       .map((c) => ({ ...c, tonnage: c.Deposit.initialYield * Product.TYPES[c.Deposit.resource].massPerUnit }));
   }, [lot?.deposits]);
 
@@ -206,6 +248,19 @@ const ImproveCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }
     lastStatus.current = samplingStatus;
   }, [samplingStatus]);
 
+  const isPurchase = useMemo(
+    () => selectedSample && selectedSample?.Control?.controller?.id !== crew?.id,
+    [crew?.id, selectedSample?.Control?.controller?.id]
+  );
+
+  const { data: depositOwner } = useCrew(isPurchase ? selectedSample?.Control?.controller?.id : null);
+
+  const onImprove = useCallback(() => {
+    if (isPurchase && !depositOwner) return;
+
+    startImproving(selectedSample?.id, drillSource, depositOwner);
+  }, [startImproving, selectedSample, drillSource, isPurchase, depositOwner]);
+
   return (
     <>
       <ActionDialogHeader
@@ -240,41 +295,80 @@ const ImproveCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }
           </FlexSection>
         )}
         {stage !== actionStage.COMPLETED && (
-          <FlexSection>
-            <FlexSectionInputBlock
-              title="Deposit"
-              image={
-                resourceId
-                  ? <ResourceThumbnail resource={Product.TYPES[resourceId]} tooltipContainer="none" />
-                  : <EmptyResourceImage iconOverride={<CoreSampleIcon />} />
-              }
-              isSelected={stage === actionStage.NOT_STARTED}
-              label={resourceId ? Product.TYPES[resourceId].name : 'Select'}
-              onClick={() => setSampleSelectorOpen(true)}
-              disabled={stage !== actionStage.NOT_STARTED}
-              sublabel={
-                resourceId
-                ? <><ResourceIcon /> {formatSampleMass(originalTonnage)}t</>
-                : 'Resource'
-              }
-            />
-            
-            <FlexSectionSpacer />
+          <>
+            <FlexSection>
+              <FlexSectionInputBlock
+                title="Deposit"
+                image={
+                  resourceId
+                    ? (
+                      <ResourceThumbnail
+                        resource={Product.TYPES[resourceId]}
+                        tooltipContainer="none"
+                        iconBadge={<CoreSampleIcon />}
+                        iconBadgeCorner={theme.colors.resources[keyify(Product.TYPES[resourceId].category)]} />
+                    )
+                    : <EmptyResourceImage iconOverride={<CoreSampleIcon />} />
+                }
+                isSelected={stage === actionStage.NOT_STARTED}
+                label={resourceId ? Product.TYPES[resourceId].name : 'Select'}
+                onClick={() => setSampleSelectorOpen(true)}
+                disabled={stage !== actionStage.NOT_STARTED}
+                sublabel={
+                  resourceId
+                  ? <><ResourceIcon /> {formatSampleMass(originalTonnage)}t</>
+                  : 'Resource'
+                }
+              />
+              
+              <FlexSectionSpacer />
 
-            <FlexSectionInputBlock
-              title="Tool"
-              image={
-                drillSource
-                  ? <ResourceThumbnail badge="1" resource={Product.TYPES[175]} tooltipContainer="none" />
-                  : <EmptyResourceImage />
-              }
-              isSelected={stage === actionStage.NOT_STARTED}
-              label={drillSource ? 'Core Drill' : 'Select'} // TODO: same as above, select an origin for tool
-              onClick={() => setSourceSelectorOpen(true)}
-              disabled={stage !== actionStage.NOT_STARTED}
-              sublabel={drillSource ? 'Tool' : 'Select'}
-            />
-          </FlexSection>
+              <FlexSectionInputBlock
+                title="Tool"
+                image={
+                  drillSource
+                    ? <ResourceThumbnail badge="1" resource={Product.TYPES[175]} tooltipContainer="none" />
+                    : <EmptyResourceImage />
+                }
+                isSelected={stage === actionStage.NOT_STARTED}
+                label={drillSource ? 'Core Drill' : 'Select'} // TODO: same as above, select an origin for tool
+                onClick={() => setSourceSelectorOpen(true)}
+                disabled={stage !== actionStage.NOT_STARTED}
+                sublabel={drillSource ? 'Tool' : 'Select'}
+              />
+            </FlexSection>
+
+            {stage === actionStage.NOT_STARTED && isPurchase && (
+              <Section>
+                <SectionTitle>Purchase Deposit</SectionTitle>
+                <SectionBody style={{ alignItems: 'center', paddingTop: 5 }}>
+                  <div style={{ flex: 1 }}>
+                    <InputLabel>
+                      <label>Price</label>
+                    </InputLabel>
+                    <TextInputWrapper>
+                      <div style={{ background: '#09191f', color: 'white', fontSize: '26px', padding: '4px 2px' }}>
+                        <SwayIcon />{formatPrice(selectedSample.PrivateSale?.amount / 1e6)}
+                      </div>
+                    </TextInputWrapper>
+                    <Warning>
+                      <span><WarningIcon /></span>
+                      <span>
+                        You are purchasing rights to an entire deposit
+                        for optimization before resale or extraction.
+                      </span>
+                    </Warning>
+                  </div>
+
+                  <FlexSectionSpacer />
+
+                  <div style={{ flex: 1, marginTop: 10 }}>
+                    <CrewIndicator crew={selectedSample.Control.controller} label="Deposit Sold by" />
+                  </div>
+                </SectionBody>
+              </Section>
+            )}
+          </>
         )}
 
         {stage !== actionStage.NOT_STARTED && stage !== actionStage.COMPLETED && (
@@ -295,8 +389,8 @@ const ImproveCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }
 
       <ActionDialogFooter
         disabled={stage === actionStage.NOT_STARTED && (!selectedSample || !drillSource)}
-        goLabel="Optimize"
-        onGo={() => startImproving(selectedSample?.id, drillSource)}
+        goLabel={isPurchase ? 'Purchase & Optimize' : 'Optimize'}
+        onGo={onImprove}
         finalizeLabel="Analyze"
         onFinalize={finishSampling}
         stage={stage}

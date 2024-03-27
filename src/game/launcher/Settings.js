@@ -4,7 +4,7 @@ import screenfull from 'screenfull';
 import { FiCheckSquare as CheckedIcon, FiSquare as UncheckedIcon } from 'react-icons/fi';
 import { useDetectGPU } from '@react-three/drei';
 
-import useAuth from '~/hooks/useAuth';
+import useSession from '~/hooks/useSession';
 import useStore from '~/hooks/useStore';
 import useReferralsCount from '~/hooks/useReferralsCount';
 import useScreenSize from '~/hooks/useScreenSize';
@@ -84,7 +84,7 @@ const AutodetectButton = styled(Button)`
 const Settings = () => {
   const gpuInfo = useDetectGPU();
 
-  const { account } = useAuth();
+  const { authenticated } = useSession();
   const { isMobile } = useScreenSize();
   const { data: referralsCount } = useReferralsCount();
   const graphics = useStore(s => s.graphics);
@@ -306,7 +306,7 @@ const Settings = () => {
               <Button>Generate Link</Button>
             </CopyReferralLink>
           </StyledDataReadout>
-          {account && (
+          {authenticated && (
             <StyledDataReadout label="Recruitments Count">{referralsCount || 0}</StyledDataReadout>
           )}
         </div>

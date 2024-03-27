@@ -1,26 +1,22 @@
-import { useMemo } from "react";
+import { useMemo } from 'react';
 
-import useChainTime from "~/hooks/useChainTime";
-import { formatTimer } from "~/lib/utils";
+import useSyncedTime from '~/hooks/useSyncedTime';
+import { formatTimer } from '~/lib/utils';
 
 const LiveTimer = ({ children, prefix = '', target, maxPrecision }) => {
-  // TODO: instead of this context re-rendering entire app every second, we could sync
-  //  multiple setIntervals by using a setTimeout to get to a Date.now where %1000 === 0
-  //  (i.e. setTimeout(setInterval(..., 1000), Math.ceil(Date.now() / 1e3) * 1e3 - Date.now())
-  //  multiple setIntervals are also a potential performance issue, but worth benchmarking
-  const chainTime = useChainTime();
-  const formattedTime = useMemo(() => {
-    const remaining = target === null ? NaN : target - chainTime;
+  const syncedTime = useSyncedTime();
+  const [formattedTime, isTimer] = useMemo(() => {
+    const remaining = target === null ? NaN : target - syncedTime;
     if (isNaN(remaining)) {
-      return 'Initializing...';
+      return ['Initializing...', false];
     } else if (remaining < 0) { // TODO: potentially also use liveblocktime in here
-      return 'Waiting for block...';
+      return ['Waiting for block...', false];
     } else {
-      return `${prefix}${formatTimer(remaining, maxPrecision)}`;
+      return [`${prefix}${formatTimer(remaining, maxPrecision)}`, true];
     }
-  }, [chainTime, maxPrecision, target]);
+  }, [syncedTime, maxPrecision, target]);
 
-  return children ? children(formattedTime) : formattedTime;
+  return children ? children(formattedTime, isTimer) : formattedTime;
 };
 
 export default LiveTimer;
