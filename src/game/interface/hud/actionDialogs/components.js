@@ -413,20 +413,20 @@ const StatRow = styled.div`
   }
   & > span {
     color: ${p => {
-    if (p.isTimeStat && p.direction < 0) return p.theme.colors.error;
-    if (p.isTimeStat && p.direction > 0) return p.theme.colors.success;
-    if (p.direction > 0) return p.theme.colors.success;
-    if (p.direction < 0) return p.theme.colors.error;
-    return 'white';
-  }};
+      if (p.isTimeStat && p.direction < 0) return p.theme.colors.error;
+      if (p.isTimeStat && p.direction > 0) return p.theme.colors.success;
+      if (p.direction > 0) return p.theme.colors.success;
+      if (p.direction < 0) return p.theme.colors.error;
+      return 'white';
+    }};
     font-weight: bold;
     white-space: nowrap;
     &:after {
       content: "${p => {
-    if (!p.direction) return ' —';
-    if ((p.isTimeStat ? -1 : 1) * p.direction > 0) return ' ▲';
-    return ' ▼';
-  }}";
+        if (!p.direction) return ' —';
+        if ((p.isTimeStat ? -1 : 1) * p.direction > 0) return ' ▲';
+        return ' ▼';
+      }}";
       font-size: 50%;
       padding-left: 2px;
       vertical-align: middle;
@@ -1107,12 +1107,9 @@ const MiniBar = styled.div`
       width: ${Math.abs(100 * p.deltaValue)}%;
       z-index: 1;
       ${p.deltaValue < 0
-      ? `
-          right: ${100 * (1 - (p.value - p.deltaValue))}%;
-        `
-      : `
-          left: ${100 * (p.value - p.deltaValue)}%;
-        `}
+        ? `right: ${100 * (1 - (p.value - p.deltaValue))}%;`
+        : `left: ${100 * (p.value - p.deltaValue)}%;`
+      }
     }
   `}
 `;
@@ -1159,18 +1156,18 @@ const ShipStatus = styled.span`
     color: ${p => p.theme.colors.main};
     text-transform: uppercase;
     ${p => {
-    switch (p.status) {
-      case 'IN_FLIGHT':
-      case 'LAUNCHING':
-      case 'LANDING':
-        return `color: ${p.theme.colors.warning};`;
-      case 'IN_ORBIT':
-        return `color: ${p.theme.colors.main};`;
-      case 'IN_PORT':
-      case 'ON_SURFACE':
-        return `color: ${p.theme.colors.purple};`;
-    }
-  }}
+      switch (p.status) {
+        case 'IN_FLIGHT':
+        case 'LAUNCHING':
+        case 'LANDING':
+          return `color: ${p.theme.colors.warning};`;
+        case 'IN_ORBIT':
+          return `color: ${p.theme.colors.main};`;
+        case 'IN_PORT':
+        case 'ON_SURFACE':
+          return `color: ${p.theme.colors.purple};`;
+      }
+    }}
   }
 `;
 
@@ -2869,18 +2866,17 @@ export const ResourceAmountSlider = ({ amount, extractionTime, min, max, resourc
     <SliderWrapper>
       <SliderInfoRow>
         <SliderLabel onMouseEnter={onMouseEvent} onMouseLeave={onMouseEvent}>
-          {(mouseIn || focusOn) ? (
-            <SliderTextInput
-              type="number"
-              step={0.1}
-              value={tonnageValue}
-              onChange={onChangeInput}
-              onBlur={onFocusEvent}
-              onFocus={onFocusEvent} />
-          )
-            : (
-              <b>{formatSampleMass(grams)}</b>
+          {(mouseIn || focusOn)
+            ? (
+              <SliderTextInput
+                type="number"
+                step={0.1}
+                value={tonnageValue}
+                onChange={onChangeInput}
+                onBlur={onFocusEvent}
+                onFocus={onFocusEvent} />
             )
+            : <b>{formatSampleMass(grams)}</b>
           }
           {' '}
           tonnes
@@ -3007,10 +3003,11 @@ export const ProcessInputOutputSection = ({ title, products, input, output, prim
       <ProductWrapper>
         {products.map(({ i: resourceId, recipe, amount }) => {
           const thumbProps = {};
-          if (output || stage !== actionStage.NOT_STARTED) {
+          if (output) {
             thumbProps.backgroundColor = `rgba(${hexToRGB(theme.colors.green)}, 0.15)`;
             thumbProps.badgeColor = theme.colors.green;
-          } else if ((sourceContents[resourceId] || 0) >= amount) {
+          // don't show insufficient input if already started
+          } else if ((sourceContents[resourceId] >= amount) || (stage !== actionStage.NOT_STARTED))  {
             thumbProps.backgroundColor = `rgba(${theme.colors.mainRGB}, 0.15)`;
             thumbProps.badgeColor = theme.colors.main;
             thumbProps.progress = 1;
@@ -3203,7 +3200,7 @@ export const PropellantSection = ({ title, narrow, deltaVLoaded, deltaVRequired,
             <div>
               <b>Required: </b>
               {propellantRequired
-                ? (deltaVMode ? formatVelocity(deltaVRequired) : formatMass(propellantRequired * 1e3))
+                ? (deltaVMode ? formatVelocity(deltaVRequired) : formatMass(propellantRequired))
                 : 'NONE'
               }
             </div>
@@ -3217,8 +3214,8 @@ export const PropellantSection = ({ title, narrow, deltaVLoaded, deltaVRequired,
           </div>
           {!narrow && (
             <div>
-              <b>Loaded:</b> {deltaVMode ? formatVelocity(deltaVLoaded) : formatMass(propellantLoaded * 1e3)}
-              {/* TODO: tooltip this? <small style={{ color: '#667'}}> / {formatMass(propellantMax * 1e3)} max</small>*/}
+              <b>Loaded:</b> {deltaVMode ? formatVelocity(deltaVLoaded) : formatMass(propellantLoaded)}
+              {/* TODO: tooltip this? <small style={{ color: '#667'}}> / {formatMass(propellantMax)} max</small>*/}
             </div>
           )}
         </BarChartNotes>
