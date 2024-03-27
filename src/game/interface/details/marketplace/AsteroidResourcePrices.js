@@ -148,7 +148,11 @@ const AsteroidResourcePrices = ({ asteroid, resource }) => {
 
   const { crew } = useCrewContext();
   const [selected, setSelected] = useState();
-  const [sort, setSort] = useState(['distance', 'desc']);
+  const [sort, setSort] = useState(
+    crew?._location?.asteroidId === asteroid.id
+      ? ['distance', 'desc']
+      : ['centerPrice', 'asc']
+  );
   const [sortField, sortDirection] = sort;
 
   const { data: selectedLot } = useLot(selected);
@@ -219,7 +223,7 @@ const AsteroidResourcePrices = ({ asteroid, resource }) => {
         selector: row => (
           <>
             <IconLink 
-              style={{ margin: '0 6px 0 0' }}
+              style={{ marginRight: 6 }}
               onClick={() => history.push(`/marketplace/${asteroid.id}/${Lot.toIndex(row.lotId)}/${resource.i}?back=all`)}
               tooltip="View in Marketplace"
               data-for="details">

@@ -6,8 +6,8 @@ const UncontrolledTextInput = styled.input`
   border: 1px solid rgba(${p => p.theme.colors.mainRGB}, 0.8);
   color: ${p => p.theme.colors.mainText};
   font-family: inherit;
-  font-size: ${p => p.theme.fontSizes.detailText};
-  height: 32px;
+  font-size: ${p => p.size === 'large' ? p.theme.fontSizes.featureText : p.theme.fontSizes.detailText};
+  height: ${p => p.size === 'large' ? 40 : 32}px;
   outline: none;
   padding: 0 5px;
   transition: background-color 250ms ease, border-color 250ms ease;
@@ -17,7 +17,7 @@ const UncontrolledTextInput = styled.input`
     transition: opacity 250ms ease;
   }
   &:focus {
-    background-color: rgba(${p => hexToRGB(theme.colors.inputBackground)}, 1);
+    background-color: ${p => p.theme.colors.inputBackground};
   }
   &:hover, &:focus {
     border-color: rgba(${p => p.theme.colors.mainRGB}, 1);
@@ -31,32 +31,31 @@ const UncontrolledTextInput = styled.input`
     border-color: transparent;
     cursor: ${p => p.theme.cursors.default};
   }
-`;
 
-export const UncontrolledTextInputLarge = styled(UncontrolledTextInput)`
+  ${p => p.monospace && `
+    font-family: 'Jetbrains Mono', sans-serif;
+    font-weight: 100;
+    &::placeholder {
+      font-size: 90%;
+      font-family: 'Jura', sans-serif !important;
+    }
+  `}
+
+  ${p => p.large && `
   height: 40px;
   font-size: ${p => p.theme.fontSizes.featureText};
-  font-family: 'Jetbrains Mono', sans-serif;
-  font-weight: 100;
-  &::placeholder {
-    font-size: 90%;
-    font-family: 'Jura', sans-serif;
-  }
-  &:hover, &:focus {
-    &::placeholder {
-      font-family: 'Jura', sans-serif;
-    }
-  }
+  `}
 `;
 
 export const TextInputWrapper = styled.div`
-  position: relative;
   align-items: center;
   display: flex;
   flex-direction: row;
+  position: relative;
   ${p => p.rightLabel && `
     &:after {
       content: "${p.rightLabel}";
+      line-height: 0;
       opacity: 0.33;
       position: absolute;
       right: 8px;

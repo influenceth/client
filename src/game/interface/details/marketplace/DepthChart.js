@@ -1,14 +1,12 @@
-import { useHistory, useLocation, useParams } from 'react-router-dom';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useHistory, useParams } from 'react-router-dom';
 import styled from 'styled-components';
-import { Crewmate, Entity, Order, Permission } from '@influenceth/sdk';
+import { Crewmate, Entity, Lot, Order, Permission } from '@influenceth/sdk';
 
 import {
-  InfoIcon,
   LimitBuyIcon,
   LimitSellIcon,
   MarketBuyIcon,
-  MarketplaceBuildingIcon,
   MarketSellIcon,
   RadioUncheckedIcon,
   RadioCheckedIcon,
@@ -18,21 +16,17 @@ import OnClickLink from '~/components/OnClickLink';
 import CrewIndicator from '~/components/CrewIndicator';
 import ResourceThumbnail from '~/components/ResourceThumbnail';
 import Switcher from '~/components/SwitcherButton';
-import UncontrolledTextInput, { TextInputWrapper, UncontrolledTextInputLarge } from '~/components/TextInputUncontrolled';
-import useScreenSize from '~/hooks/useScreenSize';
-import theme, { hexToRGB } from '~/theme';
-import { formatFixed, formatPrice, getCrewAbilityBonuses } from '~/lib/utils';
+import UncontrolledTextInput, { TextInputWrapper } from '~/components/TextInputUncontrolled';
 import ActionButton from '~/game/interface/hud/actionButtons/ActionButton';
+import useMarketplaceManager from '~/hooks/actionManagers/useMarketplaceManager';
+import useCrewContext from '~/hooks/useCrewContext';
+import useOrderList from '~/hooks/useOrderList';
+import useScreenSize from '~/hooks/useScreenSize';
 import useStore from '~/hooks/useStore';
 import formatters from '~/lib/formatters';
-import useOrderList from '~/hooks/useOrderList';
+import { formatFixed, formatPrice, getCrewAbilityBonuses, nativeBool } from '~/lib/utils';
+import theme, { hexToRGB } from '~/theme';
 import { formatResourceAmount } from '../../hud/actionDialogs/components';
-import useCrewContext from '~/hooks/useCrewContext';
-import { nativeBool } from '~/lib/utils';
-import useMarketplaceManager from '~/hooks/actionManagers/useMarketplaceManager';
-
-const buyRGB = hexToRGB(theme.colors.buy);
-const sellRGB = hexToRGB(theme.colors.sell);
 
 const Wrapper = styled.div`
   display: flex;
@@ -43,14 +37,13 @@ const Wrapper = styled.div`
 const Main = styled.div`
   display: flex;
   flex-direction: column;
-  flex: 1;
+  flex: 3;
   height: 100%;
-  width: 100%;
 `;
 
 const ActionPanel = styled.div`
+  flex: 1;
   margin-left: 20px;
-  width: 25%;
   & > div {
     background: #171717;
     ${p => p.theme.clipCorner(15)};
@@ -136,7 +129,7 @@ const Body = styled.div`
 const ChartArea = styled.div`
   border: 1px solid #333;
   height: 100%;
-  flex: 1;
+  flex: 2;
   position: relative;
   & > svg {
     position: absolute;
@@ -166,17 +159,13 @@ const ChartArea = styled.div`
   }
 `;
 
-const ResourceThumbWrapper = styled.div`
-  padding: 6px;
-`;
-
 const TableArea = styled.div`
   display: flex;
+  flex: 1;
   flex-direction: column;
   height: 100%;
   overflow: hidden;
   padding-left: 15px;
-  width: 30%;
 `;
 
 const VolumeBar = styled.div`
@@ -207,9 +196,6 @@ const SellTable = styled.div`
       font-size: 88%;
       padding: 2px 10px 2px 4px;
       text-align: right;
-      &:first-child {
-        text-align: left;
-      }
     }
     th {
       background: black;
@@ -227,11 +213,12 @@ const SellTable = styled.div`
       &:first-child {
         color: ${p => p.theme.colors.buy};
         position: relative;
+        width: 135px;
       }
     }
   }
   ${VolumeBar} {
-    background: rgba(${p => buyRGB}, 0.25);
+    background: rgba(${p => hexToRGB(p.theme.colors.buy)}, 0.25);
   }
 `;
 
@@ -241,7 +228,7 @@ const BuyTable = styled(SellTable)`
     color: ${p => p.theme.colors.sell};
   }
   ${VolumeBar} {
-    background: rgba(${p => sellRGB}, 0.2);
+    background: rgba(${p => hexToRGB(p.theme.colors.sell)}, 0.2);
   }
 `;
 
@@ -288,8 +275,6 @@ const FormSection = styled.div`
 
 const RadioRow = styled.label`
   align-items: center;
-  color: ${theme.colors.secondaryText};
-  cursor: ${p => p.theme.cursors.active};
   display: flex;
   flex-direction: row;
   width: 100%;
@@ -298,17 +283,22 @@ const RadioRow = styled.label`
   & > svg {
     font-size: 120%
   }
-  &:hover {
-    color: white;
-    & > svg { color: white };
-  }
+
   ${p => p.selected
-    ? `color: white;
-    & > svg { 
-      color: white; 
-    }`
-    : `&:hover > svg { color: white; }`
+    ? `
+      color: white;
+      & > svg { color: white };
+    `
+    : `
+      color: ${theme.colors.secondaryText};
+      cursor: ${p.theme.cursors.active};
+      &:hover {
+        color: white;
+        & > svg { color: white };
+      }
+    `
   }
+
   & > span {
     flex: 1;
     padding-left: 6px;
@@ -370,7 +360,6 @@ const STROKE_WIDTH = 2;
 
 const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource }) => {
   const history = useHistory();
-  const { asteroidId, lotIndex } = useParams();
 
   const { width, height } = useScreenSize();
   const { crew, crewCan } = useCrewContext();
@@ -658,8 +647,9 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
   }, [crew, loading, hasPermission, mode, sameAsteroid, total, type]);
 
   const goToListings = useCallback(() => {
+    const { asteroidId, lotIndex } = Lot.toPosition(lot?.id) || {};
     history.push(`/marketplace/${asteroidId}/${lotIndex}`);
-  }, []);
+  }, [lot]);
 
   return (
     <Wrapper>
@@ -709,14 +699,18 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
                 <table>
                   <thead>
                     {sellBuckets.length == 0 
-                      ? <tr>
-                        <th>No Sellers</th>
+                      ? (
+                        <tr>
+                          <th>No Sellers</th>
                         </tr>
-                      : <tr>
-                        <th>Selling Price</th>
-                        <th>Quantity</th>
-                        <th>Total</th>
-                      </tr>
+                      )
+                      : (
+                        <tr>
+                          <th>Selling Price</th>
+                          <th>Quantity</th>
+                          <th>Total</th>
+                        </tr>
+                      )
                     }
                   </thead>
                   <tbody>
@@ -744,14 +738,18 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
               <table>
                 <thead>
                   {buyBuckets.length == 0 
-                      ? <tr>
-                        <th>No Buyers</th>
+                      ? (
+                        <tr>
+                          <th>No Buyers</th>
                         </tr>
-                      : <tr>
-                        <th>Buying Price</th>
-                        <th>Quantity</th>
-                        <th>Total</th>
-                      </tr>
+                      )
+                      : (
+                        <tr>
+                          <th>Buying Price</th>
+                          <th>Quantity</th>
+                          <th>Total</th>
+                        </tr>
+                      )
                     }
                 </thead>
                 <tbody>
@@ -793,7 +791,7 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
 
                 <FormSection>
                   <InputLabel>
-                  <label>Order Type</label>
+                    <label>Order Type</label>
                   </InputLabel>
                   <RadioRow onClick={() => setType('market')} selected={nativeBool(type === 'market')}>
                     {type === 'market' ? <RadioCheckedIcon /> : <RadioUncheckedIcon />}
@@ -813,7 +811,9 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
                     )}
                   </InputLabel>
                   <TextInputWrapper rightLabel={resource.isAtomic ? '' : ' kg'}>
-                    <UncontrolledTextInputLarge
+                    <UncontrolledTextInput
+                      monospace
+                      size="large" 
                       disabled={nativeBool(type === 'market' && ((mode === 'buy' && !totalSelling) || (mode === 'sell' && !totalBuying)))}
                       min={0}
                       max={type === 'market' ? (mode === 'buy' ? totalSelling : totalBuying) : undefined}
@@ -831,7 +831,9 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
                       <label>Market Price</label>
                     </InputLabel>
                     <TextInputWrapper rightLabel={`SWAY${resource.isAtomic ? '' : ' / kg'}`}>
-                      <UncontrolledTextInputLarge
+                      <UncontrolledTextInput
+                        monospace
+                        size="large"
                         disabled
                         value={formatPrice(avgMarketPrice ? (avgMarketPrice || 0) : ((centerPrice || 0) + (spread || 0) / 2))} />
                     </TextInputWrapper>
@@ -843,7 +845,9 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
                       <label>Price</label>
                     </InputLabel>
                     <TextInputWrapper rightLabel={`SWAY${resource.isAtomic ? '' : ' / kg'}`}>
-                      <UncontrolledTextInputLarge
+                      <UncontrolledTextInput
+                        monospace
+                        size="large"
                         onChange={handleChangeLimitPrice}
                         placeholder="Specify Price"
                         value={limitPrice || ''} />
@@ -856,7 +860,9 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
                     <label>Subtotal</label>
                   </InputLabel>
                   <TextInputWrapper rightLabel="SWAY">
-                    <UncontrolledTextInputLarge
+                    <UncontrolledTextInput
+                      monospace
+                      size="large"
                       disabled
                       value={formatFixed((type === 'market' ? totalMarketPrice : totalLimitPrice) || 0)} />
                   </TextInputWrapper>
@@ -879,7 +885,9 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
                       }}>{formatFixed(100 * marketplaceFee / Order.FEE_SCALE, 2)}%</span>
                   </InputLabel>
                   <TextInputWrapper rightLabel="SWAY">
-                    <UncontrolledTextInputLarge
+                    <UncontrolledTextInput
+                      monospace
+                      size="large"
                       disabled
                       value={formatFixed(fee || 0, 2)} />
                   </TextInputWrapper>
@@ -888,12 +896,10 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
               </div>
 
               <SummaryHeader type={type} mode={mode} />
+
               <Tray style={{ overflow: 'hidden' }}>
                 <Summary>
-                  {total > 0 
-                    ? (<><SwayIcon /> {formatFixed(total)}</>)
-                    : (<><SwayIcon /> <div>0</div></>)
-                  }
+                  <SwayIcon /> <span>{total > 0 ? formatFixed(total) : 0}</span>
                 </Summary>
                 {crew && (
                   <ActionButton

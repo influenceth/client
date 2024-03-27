@@ -653,13 +653,15 @@ const MarketplaceOrder = ({
       <ActionDialogBody>
         <FlexSection>
           <FlexSectionInputBlock
-              title="Product"
-              image={<ResourceThumbnail resource={resource} tooltipContainer="none" />}
-              label={resource?.name}
-              disabled
-              sublabel={resource?.classification}
-            />
+            title="Product"
+            image={<ResourceThumbnail resource={resource || {}} tooltipContainer="none" />}
+            label={resource?.name}
+            disabled
+            sublabel={resource?.classification}
+          />
+
           <FlexSectionSpacer />
+
           <LotInputBlock
             title="At Marketplace"
             lot={lot}
@@ -752,6 +754,7 @@ const MarketplaceOrder = ({
           </FlexSectionBlock>
 
           <FlexSectionSpacer />
+
           <InventoryInputBlock
             title={mode === 'buy' ? 'Deliver To' : 'Source From'}
             titleDetails={<TransferDistanceDetails distance={transportDistance} crewTravelBonus={hopperTransportBonus} />}
@@ -767,8 +770,6 @@ const MarketplaceOrder = ({
               ? <><LocationIcon /> {formatters.lotName(storageLot?.id)}</>
               : 'Inventory'
             } />
-
-
         </FlexSection>
 
         <FlexSection>

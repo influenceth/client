@@ -271,7 +271,7 @@ export function CrewProvider({ children }) {
       const now = Date.now() / 1e3;
       const currentBlockIsMissing = blockTime > 0 && ((now - blockTime) > TOO_LONG_FOR_BLOCK);
       if (blockHasBeenMissed.current || currentBlockIsMissing) {
-        window.location.reload();
+        // window.location.reload();
       }
     }
   }, [blockTime]);

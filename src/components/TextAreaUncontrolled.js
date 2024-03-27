@@ -17,7 +17,7 @@ const UncontrolledTextArea = styled.textarea`
     transition: opacity 250ms ease;
   }
   &:focus {
-    background-color: rgba(255, 255, 255, 0.08);
+    background-color: ${p => p.theme.colors.inputBackground};
   }
   &:hover, &:focus {
     border-color: rgba(${p => p.theme.colors.mainRGB}, 1);
@@ -40,7 +40,7 @@ export const TextAreaWrapper = styled.div`
       opacity: 0.33;
       position: absolute;
       right: 8px;
-      height: 132px;
+      height: 32px;
       line-height: 32px;
     }
   `}

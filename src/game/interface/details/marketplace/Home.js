@@ -145,10 +145,7 @@ const ListingTitle = styled.div`
 
 const ListingAmount = styled.div`
   font-weight: normal;
-  ${p => p.color && `
-    color: ${
-      p.color === 'none' ? theme.colors.secondaryText : (p.color === 'buy' ? theme.colors.buy : theme.colors.sell)};
-  `}
+  color: ${p => p.theme.colors[p.color || 'secondaryText']};
   font-size: 80%;
   margin-top: 2px;
 `;
@@ -468,7 +465,7 @@ const MarketplaceHome = ({ asteroid, listings, orderTally, onSelectListing, mark
                     style={amount === 0 ? { opacity: 0.5 } : {}}
                     tooltipContainer={null} />
                   <ListingTitle>{resource.name}</ListingTitle>
-                  <ListingAmount color={amount > 0 ? mode : 'none'}>
+                  <ListingAmount color={amount > 0 ? mode : null}>
                     {amount > 0 ? formatResourceAmount(amount, listing.product) : 'None'} {mode === 'buy' ? 'Available' : 'Sellable'}
                   </ListingAmount>
                   {amount > 0
