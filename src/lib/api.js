@@ -252,8 +252,28 @@ const api = {
     }, []);
   },
 
-  getDeliveries: async (destination, destinationSlot, origin, originSlot, status) => {
+  getDeliveries: async (destination, origin, statuses) => {
 
+    // BUILDINGS...
+    const queryBuilder = esb.boolQuery();
+
+    if (destination) {
+      queryBuilder.filter(esb.termQuery('Delivery.dest.uuid', destination.uuid));
+    }
+    if (origin) {
+      queryBuilder.filter(esb.termQuery('Delivery.origin.uuid', origin.uuid));
+    }
+    if (statuses) {
+      queryBuilder.filter(esb.termsQuery('Delivery.status', statuses));
+    };
+
+    const q = esb.requestBodySearch();
+    q.query(queryBuilder);
+    q.from(0);
+    q.size(10000);
+    const response = await instance.post(`/_search/delivery`, q.toJSON());
+
+    return formatESEntityData(response.data);
   },
 
   // TODO: will we want this for "random" story events
@@ -593,22 +613,6 @@ const api = {
 
   getAccountCrewmates: async (account) => {
     return getEntities({ match: { 'Nft.owners.starknet': account }, label: Entity.IDS.CREWMATE });
-  },
-
-  getStationedCrews: async (entityUuid, hydrateCrewmates = false) => {
-    const crews = await getEntities({
-      match: { 'Location.location.uuid': entityUuid },
-      label: Entity.IDS.CREW
-    });
-    if (hydrateCrewmates) {
-      const crewmateIds = crews.reduce((acc, c) => ([...acc, ...c.Crew.roster]), []);
-      const crewmates = await getEntities({ ids: crewmateIds, label: Entity.IDS.CREWMATE });
-      return crews.map((c) => ({
-        ...c,
-        _crewmates: crewmates.filter((cm) => c.Crew.roster.includes(cm.id))
-      }));
-    }
-    return crews;
   },
 
   getConstants: async (names) => {

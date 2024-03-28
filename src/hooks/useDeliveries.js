@@ -23,7 +23,7 @@ const useDeliveries = ({ destination, destinationSlot, origin, originSlot, statu
   );
 
   return useMemo(() => ({
-    data: rawData.filter((d) => {
+    data: queryProps.isLoading ? undefined : (rawData || []).filter((d) => {
       if (destinationSlot && d.Delivery.destinationSlot !== destinationSlot) return false;
       if (originSlot && d.Delivery.originSlot !== originSlot) return false;
       return true;

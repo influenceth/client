@@ -34,12 +34,14 @@ const useDeliveryManager = ({ destination, destinationSlot, origin, originSlot, 
   const [deliveries, isLoading] = useMemo(() => {
     if (deliveryId) {
       return [
-        [deliveryById].filter((d) => managedStatuses.includes(d.Delivery.status)),
+        deliveryIsLoading
+          ? undefined
+          : (deliveryById ? [deliveryById] : []).filter((d) => managedStatuses.includes(d.Delivery.status)),
         deliveryIsLoading
       ];
     }
     return [
-      deliveriesByLoc,
+      deliveriesIsLoading ? undefined : deliveriesByLoc,
       deliveriesIsLoading
     ];
   }, [deliveryId, deliveryById, deliveryIsLoading, deliveriesByLoc, deliveriesIsLoading]);

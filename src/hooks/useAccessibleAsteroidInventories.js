@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { useQuery } from 'react-query';
 import { Entity, Permission } from '@influenceth/sdk';
 
