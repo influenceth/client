@@ -40,7 +40,8 @@ const useColumns = () => {
       {
         key: 'asteroid',
         label: 'Asteroid',
-        sortField: 'Location.locations[0].id', // TODO: will this work? does sequential sorting matter?
+        sortOptions: { nested: { path: 'Location.locations' } },
+        sortField: 'Location.locations.id',
         selector: row => {
           const loc = Lot.toPosition(row.Location?.location);
           return (
@@ -54,7 +55,8 @@ const useColumns = () => {
       {
         key: 'lot',
         label: 'Lot',
-        sortField: 'Location.locations[1].id', // TODO: will this work? does sequential sorting matter?
+        sortOptions: { nested: { path: 'Location.locations' } },
+        sortField: 'Location.locations.id',
         selector: row => {
           const loc = Lot.toPosition(row.Location?.location);
           return (
