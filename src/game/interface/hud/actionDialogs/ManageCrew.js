@@ -433,7 +433,7 @@ const ManageCrew = ({ altCrews, crew, isForeignCrew, manager, stage, ...props })
                 </Button>
               </FlexSectionBlock>
             )}
-            {altCrews.length > 0 && (
+            {crew._ready === true && altCrews.length > 0 && (
               <FlexSectionInputBlock
                 image={<EmptyResourceImage iconOverride={<CrewIcon />} />}
                 isSelected={reactBool(stage === actionStages.NOT_STARTED)}
@@ -492,6 +492,7 @@ const Wrapper = ({ crew, loading, ...props }) => {
       crew.Location.location.label === c.Location.location.label
       && crew.Location.location.id === c.Location.location.id
       && crew.id !== c.id
+      && c._ready === true // only show crews that are ready
     ));
   }, [crew?._location]);
 
