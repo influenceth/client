@@ -3463,7 +3463,7 @@ export const BuildingInputBlock = ({ building, imageProps = {}, ...props }) => {
           : <EmptyBuildingImage {...imageProps} />
       }
       label={building?.Name?.name ? formatters.buildingName(building) : `${Building.TYPES[buildingType].name}${unfinished ? ' (Site)' : ''}`}
-      sublabel={building?.Name?.name ? Building.TYPES[buildingType].name : formatters.lotName(Lot.toPosition(building.Location?.location)?.lotIndex || 0)}
+      sublabel={building?.Name?.name ? Building.TYPES[buildingType].name : formatters.lotName(Lot.toPosition(building?.Location?.location)?.lotIndex || 0)}
       {...props}
     />
   );
