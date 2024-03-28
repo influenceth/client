@@ -143,16 +143,20 @@ const PseudoFooterButton = styled(Button)`
   right: 0px;
 `;
 
-const AsteroidResourcePrices = ({ asteroid, resource }) => {
+const Empty = styled.span`
+  opacity: 0.33;
+  text-transform: uppercase;
+`;
+
+const AsteroidResourcePrices = ({ asteroid, mode, resource }) => {
   const history = useHistory();
 
   const { crew } = useCrewContext();
   const [selected, setSelected] = useState();
-  const [sort, setSort] = useState(
-    crew?._location?.asteroidId === asteroid.id
-      ? ['distance', 'desc']
-      : ['centerPrice', 'asc']
-  );
+  const [sort, setSort] = useState([
+    `${mode === 'sell' ? 'buy' : 'sell'}Price`,
+    mode === 'sell' ? 'asc' : 'desc'
+  ]);
   const [sortField, sortDirection] = sort;
 
   const { data: selectedLot } = useLot(selected);
@@ -240,20 +244,20 @@ const AsteroidResourcePrices = ({ asteroid, resource }) => {
         selector: row => (
           <>
           {row.supply === 0 
-            ? ('NONE')
-            : (<>{formatResourceAmount(row.supply, resource.i)}</>)
+            ? <Empty>None</Empty>
+            : formatResourceAmount(row.supply, resource.i)
           }
           </>
         )
       },
       {
         key: 'sellPrice',
-        label: 'Lowest Buy',
+        label: 'Selling Price',
         sortField: 'sellPrice',
         selector: row => (
           <>
           {row.sellPrice === 0 
-            ? ('N/A')
+            ? <Empty>N/A</Empty>
             : (<><IconWrapper><SwayIcon /></IconWrapper> {formatPrice(row.sellPrice)}</>)
           }
           </>
@@ -266,21 +270,21 @@ const AsteroidResourcePrices = ({ asteroid, resource }) => {
         selector: row => (
           <>
           {row.demand === 0 
-            ? ('NONE')
-            : (<>{formatResourceAmount(row.demand, resource.i)}</>)
+            ? <Empty>None</Empty>
+            : formatResourceAmount(row.demand, resource.i)
           }
           </>
         )
       },
       {
         key: 'buyPrice',
-        label: 'Highest Sell',
+        label: 'Buying Price',
         sortField: 'buyPrice',
         selector: row => (
           <>
           {row.buyPrice === 0 
-            ? ('N/A')
-            : (<><IconWrapper><SwayIcon /></IconWrapper> {formatPrice(row.buyPrice)}</>)
+            ? <Empty>N/A</Empty>
+            : <><IconWrapper><SwayIcon /></IconWrapper> {formatPrice(row.buyPrice)}</>
           }
           </>
         )
@@ -299,32 +303,32 @@ const AsteroidResourcePrices = ({ asteroid, resource }) => {
         sortField: 'takerFee',
         selector: row => `${(row.takerFee / 100).toFixed(2)}%`,
       },
-      {
-        key: 'lotId',
-        label: 'Lot ID',
-        sortField: 'lotId',
-        selector: row => (
-          <>
-            <LocationLink
-              asteroidId={asteroid.id}
-              lotId={row.lotId}
-              zoomToLot
-              data-for="details" />
-            <span>{formatters.lotName(row.lotId)}</span>
-          </>
-        )
-      },
-      {
-        key: 'centerPrice',
-        label: 'Center Price',
-        sortField: 'centerPrice',
-        selector: row => (
-          <>
-            <IconWrapper><SwayIcon /></IconWrapper>
-            {formatPrice(row.centerPrice)}
-          </>
-        )
-      },
+      // {
+      //   key: 'lotId',
+      //   label: 'Lot ID',
+      //   sortField: 'lotId',
+      //   selector: row => (
+      //     <>
+      //       <LocationLink
+      //         asteroidId={asteroid.id}
+      //         lotId={row.lotId}
+      //         zoomToLot
+      //         data-for="details" />
+      //       <span>{formatters.lotName(row.lotId)}</span>
+      //     </>
+      //   )
+      // },
+      // {
+      //   key: 'centerPrice',
+      //   label: 'Center Price',
+      //   sortField: 'centerPrice',
+      //   selector: row => (
+      //     <>
+      //       <IconWrapper><SwayIcon /></IconWrapper>
+      //       {formatPrice(row.centerPrice)}
+      //     </>
+      //   )
+      // },
     ];
     if (crew?._location?.asteroidId === asteroid.id) {
       c.splice(1, 0, ({

@@ -604,12 +604,13 @@ const MarketplaceOrder = ({
   }, [storageInventory, resourceId]);
 
   const insufficientAssets = useMemo(() => {
+    if (isCancellation) return false;
     if (mode === 'buy') {
       return total > swayBalance;
     } else {
       return quantityToUnits(quantity) > amountInInventory;
     }
-  }, [mode, quantity, amountInInventory, swayBalance, total]);
+  }, [isCancellation, mode, quantity, amountInInventory, swayBalance, total]);
 
   const insufficientCapacity = useMemo(() => {
     if (mode === 'buy' && storageInventory) {

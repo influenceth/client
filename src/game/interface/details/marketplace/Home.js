@@ -284,8 +284,7 @@ const Footer = styled.div`
 
 const pageSize = 25;
 
-const MarketplaceHome = ({ asteroid, listings, orderTally, onSelectListing, marketplace = null, marketplaceOwner = null, marketplaceTally }) => {
-  const [mode, setMode] = useState('buy');
+const MarketplaceHome = ({ asteroid, listings, mode, setMode, orderTally, onSelectListing, marketplace = null, marketplaceOwner = null, marketplaceTally }) => {
   const [nameFilter, setNameFilter] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [sort, setSort] = useState('liquidity');

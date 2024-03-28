@@ -225,11 +225,7 @@ const HudMenu = ({ forceOpenMenu }) => {
   const { data: lot } = useLot(lotId);
   const { data: zoomShip } = useShip(zoomScene?.type === 'SHIP' && zoomScene.shipId);
   const ship = useMemo(() => zoomScene?.type === 'SHIP' ? zoomShip : lot?.surfaceShip, [lot, zoomShip, zoomScene]);
-  // const { data: marketplaces } = useAsteroidBuildings(
-  //   asteroidId,
-  //   'Exchange',
-  //   [Permission.IDS.BUY, Permission.IDS.SELL, Permission.IDS.LIMIT_BUY, Permission.IDS.LIMIT_BUY]
-  // );
+  const { data: marketplaces } = useAsteroidBuildings(asteroidId, 'Exchange');
 
   const dispatchHudMenuOpened = useStore(s => s.dispatchHudMenuOpened);
 
@@ -513,7 +509,7 @@ const HudMenu = ({ forceOpenMenu }) => {
         label: 'Asteroid Markets',
         icon: <MarketsIcon />,
         onOpen: () => {
-          // if (marketplaces?.length > 0) {
+          // if (hasSomeMarketplacePermission) {
             history.push(`/marketplace/${asteroidId}/all`);
           // } else {
           //   createAlert({
@@ -524,7 +520,7 @@ const HudMenu = ({ forceOpenMenu }) => {
           //   });
           // }
         },
-        isVisible: focus === 'asteroid' || scope === 'asteroid'
+        isVisible: (focus === 'asteroid' || scope === 'asteroid') && marketplaces?.length > 0
       },
       {
         key: 'ASTEROID_ADVANCED_SEARCH',

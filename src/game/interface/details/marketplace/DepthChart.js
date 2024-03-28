@@ -710,7 +710,7 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
                     {sellBuckets.length == 0 
                       ? (
                         <tr>
-                          <th>No Sellers</th>
+                          <th style={{ textAlign: 'center' }}>No Sellers</th>
                         </tr>
                       )
                       : (
@@ -730,7 +730,7 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
                         <tr key={i}>
                           <td><VolumeBar volume={volumeBenchmark > 0 ? rowVolume / volumeBenchmark : 0} />{price.toLocaleString(undefined, { maximumFractionDigits: 4, minimumFractionDigits: 4 } )}</td>
                           <td>{amount.toLocaleString()}</td>
-                          <td>{formatPrice(price * amount)}</td>              
+                          <td>{formatPrice(price * amount, { fixedPrecision: 2, minPrecision: 2 })}</td>              
                         </tr>
                       )
                     })}
@@ -749,7 +749,7 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
                   {buyBuckets.length == 0 
                       ? (
                         <tr>
-                          <th>No Buyers</th>
+                          <th style={{ textAlign: 'center' }}>No Buyers</th>
                         </tr>
                       )
                       : (
@@ -768,7 +768,7 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
                       <tr key={i}>
                         <td><VolumeBar volume={volumeBenchmark > 0 ? rowBuyVolume / volumeBenchmark : 0} />{price.toLocaleString(undefined, { maximumFractionDigits: 4, minimumFractionDigits: 4 } )}</td>
                         <td>{amount.toLocaleString()}</td>
-                        <td>{formatPrice(price * amount)}</td>
+                        <td>{formatPrice(price * amount, { fixedPrecision: 2, minPrecision: 2 })}</td>
                       </tr>
                     );
                   })}

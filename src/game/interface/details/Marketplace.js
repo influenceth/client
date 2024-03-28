@@ -243,6 +243,7 @@ const Marketplace = () => {
           {discriminator && discriminator !== 'orders' && !marketplace && (
             <AsteroidResourcePrices
               asteroid={asteroid}
+              mode={mode}
               resource={Product.TYPES[product]} />
           )}
           {!discriminator && (
@@ -252,6 +253,8 @@ const Marketplace = () => {
               marketplace={marketplace}
               marketplaceOwner={marketplaceOwner}
               marketplaceTally={marketplaceTally}
+              mode={mode}
+              setMode={setMode}
               orderTally={orderTally}
               onSelectListing={onSelectListing} />
           )}
