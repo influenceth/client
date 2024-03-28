@@ -2048,7 +2048,19 @@ export const InventorySelectionDialog = ({
       });
     });
 
-    return display.sort((a, b) => a.distance - b.distance);
+    return display.sort((a, b) => {
+      if (a.isMine && !b.isMine) return -1;
+      if (!a.isMine && b.isMine) return 1;
+      if (a.isMine && b.isMine) return a.distance - b.distance;
+
+      if (isSourcing && !!itemIds) {
+        if (a.itemTally && !b.itemTally) return -1;
+        if (!a.itemTally && b.itemTally) return 1;
+        if (a.itemTally && b.itemTally) return a.distance - b.distance;
+      }
+
+      return a.distance - b.distance;
+    });
   }, [crewedShip, inventoryData, itemIds, otherLocation]);
 
   const onComplete = useCallback(() => {
@@ -2058,14 +2070,6 @@ export const InventorySelectionDialog = ({
 
   const specifiedItems = !!itemIds;
   const soloItem = itemIds?.length === 1 ? itemIds[0] : null;
-
-  const invCompare = (a, b) => {
-    if (a.itemTally && b.itemTally) {
-      return a.distance > b.distance ? 1 : -1;
-    } else {
-      return a.itemTally ? -1 : 1;
-    }
-  };
 
   return (
     <SelectionDialog
@@ -2096,7 +2100,7 @@ export const InventorySelectionDialog = ({
                 </tr>
               </thead>
               <tbody>
-                {inventories.sort(invCompare).map((inv) => {
+                {inventories.map((inv) => {
                   return (
                     <SelectionTableRow
                       key={inv.key}

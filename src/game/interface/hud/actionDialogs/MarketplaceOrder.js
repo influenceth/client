@@ -310,7 +310,7 @@ const MarketplaceOrder = ({
     orders.every((order) => {
       const { amount, price } = order;
       const levelAmount = Math.min(needed, amount);
-      const levelValue = levelAmount * price;
+      const levelValue = Math.round(1e6 * levelAmount * price) / 1e6;
       total += levelValue;
       needed -= levelAmount;
       if (levelAmount > 0) {
