@@ -1,12 +1,13 @@
 import { useQuery } from 'react-query';
+import { Entity } from '@influenceth/sdk';
 
 import api from '~/lib/api';
 
-const useOrderList = (exchange, product) => {
+const useOrderList = (exchangeId, productId) => {
   return useQuery(
-    [ 'orderList', product, exchange.id ],
-    () => api.getOrderList(exchange, product),
-    { enabled: !!exchange && !!product }
+    [ 'entities', Entity.IDS.ORDER, { exchangeId, productId } ],
+    () => api.getOrderList(exchangeId, productId),
+    { enabled: !!exchangeId && !!productId }
   );
 };
 

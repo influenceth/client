@@ -4,11 +4,11 @@ import useSession from '~/hooks/useSession';
 import api from '~/lib/api';
 
 const useFaucetInfo = () => {
-  const { starknet } = useSession();
+  const { accountAddress } = useSession();
   return useQuery(
-    [ 'faucetInfo', starknet?.account ],
+    [ 'faucetInfo', accountAddress ],
     () => api.faucetInfo(),
-    { enabled: !!starknet?.account }
+    { enabled: !!accountAddress }
   );
 };
 

@@ -1,6 +1,7 @@
 import { createContext, useCallback, useEffect, useRef, useState } from 'react';
 import { useQueryClient } from 'react-query';
 import uniq from 'lodash.uniqby';
+import { Entity } from '@influenceth/sdk';
 
 import useSession from '~/hooks/useSession';
 import useCrewContext from '~/hooks/useCrewContext';
@@ -56,46 +57,84 @@ export function ActivitiesProvider({ children }) {
           shouldRefreshReadyAt = shouldRefreshReadyAt || !!activityConfig?.requiresCrewTime;
 
           // console.log('invalidations', activityConfig?.invalidations);
-          (activityConfig?.invalidations || []).forEach((queryKey) => {
+          (activityConfig?.invalidations || []).forEach((invalidationConfig) => {
+            const invalidations = [];
 
-            // if this is invalidation of a single entity, search for any ['entities', label, *] collections
-            // that include the id and invalidate those as well (if none found, invalidate all since probably
-            // a new entity in that case)
-            // TODO: with a more formulaic 'entities' caching structure, may be able to replace in-place in the
-            //  future, but that gets pretty complicated with in the case of new/removed entries
-            if (queryKey[0] === 'entity' && queryKey[2]) {
-              let foundSomewhere = false;
-              const collectionQueryKey = ['entities', queryKey[1]];
-              const labelCollections = queryClient.getQueriesData(collectionQueryKey);
-              labelCollections.forEach(([collectionQueryKey, collectionData]) => {
-                const found = (collectionData || []).find((e) => e.id === queryKey[2]);
-                if (found) {
-                  if (debugInvalidation) console.log('invalidate', collectionQueryKey);
-                  queryClient.invalidateQueries({ queryKey: collectionQueryKey, refetchType: 'none' });
-                  queryClient.refetchQueries({ queryKey: collectionQueryKey, type: 'active' });
-                  foundSomewhere = true;
-                }
+            // this is a raw queryKey
+            // (i.e. `[ 'ethBalance', walletAddress ]`)
+            if (Array.isArray(invalidationConfig)) {
+              invalidations.push(invalidationConfig)
+
+            // else, this is an entity object
+            } else {
+              // NOTE: if key is not present in updated values, value was not updated
+              const { id, label, updatedValues } = invalidationConfig;
+              
+              // invalidate `entity` entry
+              invalidations.push(['entity', label, id]);
+
+              // walk through `entities` entries of label type
+              // refetch group keys no longer part of, and refetch group keys it just became part of
+              queryClient.getQueriesData(['entities', label]).forEach(([ queryKey, data ]) => {
+                // if updatedValues do not exclude entity from potentially joining
+                // a collection according to that query filter, must invalidate that
+                // collection as a precaution
+
+                // is impossible could be added to collection if...
+                // 1) no updatedValue keys are in collectionFilter
+                //      - either is already part of results (will be updated/removed below))
+                //        OR not possible to be newly part of results
+                // 2) updatedValue key is in collectionFilter with non-matching value
+                //      - not newly part of results (if already part of results, will be removed below)
+
+                const collectionFilter = queryKey[2] === 'object' ? queryKey[2] : {};
+                const isPossibleThatAddedToCollection = !( // !impossible
+                  // no updatedValues are filtered on
+                  !Object.keys(updatedValues).find((k) => collectionFilter.hasOwnProperty(k))
+                  // OR at least one updatedValue disqualifies from being in filter
+                  // NOTE: `!=` is deliberate to be looser
+                  || Object.keys(updatedValues).find((k) => updatedValues[k] != collectionFilter[k])
+                );
+                if (debugInvalidation && isPossibleThatAddedToCollection) console.log(`${label}.${id} might be joining collection`, queryKey);
+
+                const isAlreadyInCollection = data.find((d) => d.id === id && d.label === label);
+                if (debugInvalidation && isAlreadyInCollection) console.log(`${label}.${id} is already in collection`, queryKey);
+
+                if (isAlreadyInCollection || isPossibleThatAddedToCollection) {
+                  invalidations.push(queryKey);
+                };
               });
+              
+              // invalidate searches potentially a part of
+              // TODO: would be nice to check against criteria similar to 'entities' above
+              let searchAssets = [];
+              if (label === Entity.IDS.ASTEROID)
+                searchAssets = ['asteroids'/*, 'asteroidsMapped'*/]; // asteroidsMapped uses asteroids
+              if (label === Entity.IDS.BUILDING)
+                searchAssets = ['buildings'];
+              if (label === Entity.IDS.CREW)
+                searchAssets = ['crews'];
+              if (label === Entity.IDS.CREWMATE)
+                searchAssets = ['crewmates'];
+              if (label === Entity.IDS.DEPOSIT)
+                searchAssets = ['coresamples'];
+              if (label === Entity.IDS.LOT)
+                searchAssets = ['lots'/*, 'lotsMapped'*/]; // lotsMapped uses packed data
+              if (label === Entity.IDS.ORDER)
+                searchAssets = ['orders'];
+              if (label === Entity.IDS.SHIP)
+                searchAssets = ['ships'];
 
-              // if not found, we invalidate all collections of label since this is probably a new entity
-              // TODO: isn't possible this is new to *some* 'entities' results? we may always need to do this:
-              if (!foundSomewhere) {
-                // TODO: there is an argument for loading the entity in this case, replacing in-place in
-                // its own query key, then figuring out which lot should actually reload all for (since
-                // this invalidation may result in lots of requests)... but we would need a more explicit 'entities'
-                // caching key structure -- this is not just for 'lot' based collections!
-                if (debugInvalidation) console.log('invalidate', collectionQueryKey);
-                queryClient.invalidateQueries({ queryKey: collectionQueryKey, refetchType: 'none' });
-                queryClient.refetchQueries({ queryKey: collectionQueryKey, type: 'active' });
-              }
+              searchAssets.forEach((assetType) => {
+                invalidations.push(['search', assetType])
+              });
             }
 
-            // invalidation seems to refetch very inconsistently... so we try to invalidate all, but refetch active explicitly
-            // TODO: search "joined key" -- these queryKeys cause inefficiency because may be refetched after actually inactive here...
-            //  we should ideally collapse those into named queries where possible (as long as can still trigger updates accurately)
-            if (debugInvalidation) console.log('invalidate', queryKey);
-            queryClient.invalidateQueries({ queryKey, refetchType: 'none' });
-            queryClient.refetchQueries({ queryKey, type: 'active' });
+            if (debugInvalidation) console.log('invalidate', invalidationConfig, invalidations);
+            invalidations.forEach((queryKey) => {
+              queryClient.invalidateQueries({ queryKey, refetchType: 'none' });
+              queryClient.refetchQueries({ queryKey, type: 'active' });
+            });
           });
 
           if (activityConfig?.triggerAlert) {

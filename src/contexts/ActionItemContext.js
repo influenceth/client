@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from 'react-query';
-import { Building } from '@influenceth/sdk';
+import { Building, Entity } from '@influenceth/sdk';
 
 import useSession from '~/hooks/useSession';
 import useCrewContext from '~/hooks/useCrewContext';
@@ -17,20 +17,22 @@ export function ActionItemProvider({ children }) {
   const getActivityConfig = useGetActivityConfig();
   const queryClient = useQueryClient();
 
+  const crewId = crew?.id;
+
   const { data: actionItems, isLoading: actionItemsLoading } = useQuery(
-    [ 'actionItems', crew?.id ],
+    [ 'actionItems', crewId ],
     async () => {
-      const activities = await api.getCrewActionItems(crew?.id);
+      const activities = await api.getCrewActionItems(crewId);
       await hydrateActivities(activities, queryClient);
       return activities;
     },
-    { enabled: !!crew }
+    { enabled: !!crewId }
   );
 
   const { data: plannedBuildings, isLoading: plannedBuildingsLoading } = useQuery(
-    [ 'planned', crew?.id ],
-    () => api.getCrewPlannedBuildings(crew?.id),
-    { enabled: !!crew }
+    [ 'entities', Entity.IDS.BUILDING, { controllerId: crewId, status: Building.CONSTRUCTION_STATUSES.PLANNED } ],
+    () => api.getCrewPlannedBuildings(crewId),
+    { enabled: !!crewId }
   );
 
   const failedTransactions = useStore(s => s.failedTransactions);

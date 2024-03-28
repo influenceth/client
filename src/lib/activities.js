@@ -127,11 +127,27 @@ const getPolicyInvalidations = ({ event: { returnValues } }) => {
 const activities = {
 
   AsteroidInitialized: {
-    getInvalidations: ({ event: { returnValues } }) => invalidationDefaults(Entity.IDS.ASTEROID, returnValues.asteroid.id)
+    getInvalidations: ({ event: { returnValues } }) => {
+      return [
+        {
+          label: Entity.IDS.ASTEROID,
+          id: returnValues.asteroid.id,
+          update: { 'AsteroidProof.used': true }
+        }
+      ]
+    },
   },
 
   AsteroidManaged: {
-    getInvalidations: ({ event: { returnValues } }) => invalidationDefaults(Entity.IDS.ASTEROID, returnValues.asteroid.id),
+    getInvalidations: ({ event: { returnValues } }) => {
+      return [
+        {
+          label: Entity.IDS.ASTEROID,
+          id: returnValues.asteroid.id,
+          update: { 'Control.controller.id': returnValues.callerCrew.id }
+        },
+      ]
+    },
     getLogContent: ({ event: { returnValues } }) => ({
       icon: <BecomeAdminIcon />,
       content: (
@@ -144,7 +160,19 @@ const activities = {
   },
 
   AsteroidPurchased: {
-    getInvalidations: ({ event: { returnValues } }) => invalidationDefaults(Entity.IDS.ASTEROID, returnValues.asteroid.id),
+    // getInvalidations: ({ event: { returnValues } }) => invalidationDefaults(Entity.IDS.ASTEROID, returnValues.asteroid.id),
+    getInvalidations: ({ event: { returnValues } }) => {
+      return [
+        {
+          label: Entity.IDS.ASTEROID,
+          id: returnValues.asteroid.id,
+          update: {
+            'Nft.owner': returnValues.caller,
+          }
+        },
+        [ 'ethBalance', returnValues.caller ],
+      ]
+    },
     getLogContent: ({ event: { returnValues } }) => ({
       icon: <PurchaseAsteroidIcon />,
       content: (
@@ -158,6 +186,16 @@ const activities = {
   },
 
   AsteroidScanned: {
+    // getInvalidations: ({ event: { returnValues } }) => invalidationDefaults(Entity.IDS.ASTEROID, returnValues.asteroid.id),
+    getInvalidations: ({ event: { returnValues } }) => {
+      return [
+        {
+          label: Entity.IDS.ASTEROID,
+          id: returnValues.asteroid.id,
+          component: 'Celestial'
+        }
+      ]
+    },
     getLogContent: ({ event: { returnValues } }) => {
       const entity = { label: Entity.IDS.ASTEROID, id: returnValues.asteroidId };
 
@@ -181,14 +219,19 @@ const activities = {
   BridgedToL1: {},
 
   BuildingRepossessed: {
-    getInvalidations: ({ event: { returnValues } }, { building = {} }) => {
-      const loc = locationsArrToObj(building?.Location?.locations || []);
+    // TODO: need to invalidate for the original crew (through asteroid ws?) AND trigger alert for them
+    getInvalidations: ({ event: { returnValues } }) => {
       return [
-        ...invalidationDefaults(returnValues.building),
-        ['planned'],  // TODO: only if a construction site
-        ['asteroidCrewBuildings', loc.asteroidId, returnValues.callerCrew.id],
+        {
+          label: Entity.IDS.BUILDING,
+          id: returnValues.building.id,
+          update: {
+            'Control.controller.id': returnValues.callerCrew.id
+          },
+          component: 'Building' // if planned, reset plannedAt
+        }
       ]
-    }, // TODO: need to invalidate for the original crew (through asteroid ws?) AND trigger alert for them
+    },
     
     getPrepopEntities: ({ event: { returnValues } }) => ({
       building: returnValues.building,
@@ -204,17 +247,40 @@ const activities = {
 
   BuyOrderCancelled: {
     getInvalidations: ({ event: { returnValues } }, { exchange = {} }) => {
+      const orderPath = ''; // TODO: buyer_crew, exchange, order_types::LIMIT_BUY, product, price, storage, storage_slot
       const { asteroidId, lotId } = locationsArrToObj(exchange?.Location?.locations || []) || {};
       return [
-        ...invalidationDefaults(returnValues.exchange),
-        ...invalidationDefaults(returnValues.storage),
+        {
+          label: returnValues.exchange.label,
+          id: returnValues.exchange.id,
+          component: 'Exchange' // TODO: just `Exchange.orders` probably
+        },
+        {
+          label: returnValues.storage.label,
+          id: returnValues.storage.id,
+          component: 'Inventories' // TODO: have slot, so could probably drill down farther
+        },
+        {
+          label: Entity.IDS.ORDER,
+          path: orderPath
+        },
+
         [ 'swayBalance' ],
-        [ 'crewOpenOrders' ],
-        [ 'orderList', returnValues.product, returnValues.exchange.id ],
         [ 'exchangeOrderSummary', asteroidId, returnValues.product ],
         [ 'productOrderSummary', Entity.IDS.ASTEROID, asteroidId ],
         [ 'productOrderSummary', Entity.IDS.LOT, lotId ],
-      ];
+      ]
+
+      // return [
+      //   ...invalidationDefaults(returnValues.exchange),
+      //   ...invalidationDefaults(returnValues.storage),
+      //   [ 'crewOpenOrders' ],
+      //   [ 'orderList', returnValues.product, returnValues.exchange.id ],
+      //   [ 'swayBalance' ],
+      //   [ 'exchangeOrderSummary', asteroidId, returnValues.product ],
+      //   [ 'productOrderSummary', Entity.IDS.ASTEROID, asteroidId ],
+      //   [ 'productOrderSummary', Entity.IDS.LOT, lotId ],
+      // ];
     },
 
     getPrepopEntities: ({ event: { returnValues } }) => ({
@@ -225,15 +291,37 @@ const activities = {
     getInvalidations: ({ event: { returnValues } }, { exchange = {} }) => {
       const { asteroidId, lotId } = locationsArrToObj(exchange?.Location?.locations || []) || {};
       return [
-        ...invalidationDefaults(returnValues.exchange),
-        ...invalidationDefaults(returnValues.storage),
+        {
+          label: returnValues.exchange.id,
+          id: returnValues.exchange.id,
+          component: 'Exchange' // TODO: just `Exchange.orders` probably
+        },
+        {
+          label: returnValues.storage.id,
+          id: returnValues.storage.id,
+          component: 'Inventories' // TODO: have slot, so could probably drill down farther
+        },
+        {
+          label: Entity.IDS.ORDER,
+          path: orderPath
+        },
+
         [ 'swayBalance' ],
-        [ 'crewOpenOrders' ],
-        [ 'orderList', returnValues.product, returnValues.exchange.id ],
         [ 'exchangeOrderSummary', asteroidId, returnValues.product ],
         [ 'productOrderSummary', Entity.IDS.ASTEROID, asteroidId ],
         [ 'productOrderSummary', Entity.IDS.LOT, lotId ],
-      ];
+      ]
+
+      // return [
+      //   ...invalidationDefaults(returnValues.exchange),
+      //   ...invalidationDefaults(returnValues.storage),
+      //   [ 'swayBalance' ],
+      //   [ 'crewOpenOrders' ],
+      //   [ 'orderList', returnValues.product, returnValues.exchange.id ],
+      //   [ 'exchangeOrderSummary', asteroidId, returnValues.product ],
+      //   [ 'productOrderSummary', Entity.IDS.ASTEROID, asteroidId ],
+      //   [ 'productOrderSummary', Entity.IDS.LOT, lotId ],
+      // ];
     },
 
     getPrepopEntities: ({ event: { returnValues } }) => ({
@@ -247,16 +335,43 @@ const activities = {
     getInvalidations: ({ event: { returnValues } }, { exchange = {} }) => {
       const { asteroidId, lotId } = locationsArrToObj(exchange?.Location?.locations || []) || {};
       return [
-        ...invalidationDefaults(returnValues.exchange),
-        ...invalidationDefaults(returnValues.origin),
-        ...invalidationDefaults(returnValues.storage),
+        {
+          label: returnValues.exchange.id,
+          id: returnValues.exchange.id,
+          component: 'Exchange' // TODO: just `Exchange.orders` probably
+        },
+        {
+          label: returnValues.origin.id,
+          id: returnValues.origin.id,
+          component: 'Inventories' // TODO: have slot, so could probably drill down farther
+        },
+        {
+          label: returnValues.storage.id,
+          id: returnValues.storage.id,
+          component: 'Inventories' // TODO: have slot, so could probably drill down farther
+        },
+        {
+          label: Entity.IDS.ORDER,
+          path: orderPath
+        },
+
         [ 'swayBalance' ],
-        [ 'crewOpenOrders' ],
-        [ 'orderList', returnValues.product, returnValues.exchange.id ],
         [ 'exchangeOrderSummary', asteroidId, returnValues.product ],
         [ 'productOrderSummary', Entity.IDS.ASTEROID, asteroidId ],
         [ 'productOrderSummary', Entity.IDS.LOT, lotId ],
-      ];
+      ]
+
+      // return [
+      //   ...invalidationDefaults(returnValues.exchange),
+      //   ...invalidationDefaults(returnValues.origin),
+      //   ...invalidationDefaults(returnValues.storage),
+      //   [ 'swayBalance' ],
+      //   [ 'crewOpenOrders' ],
+      //   [ 'orderList', returnValues.product, returnValues.exchange.id ],
+      //   [ 'exchangeOrderSummary', asteroidId, returnValues.product ],
+      //   [ 'productOrderSummary', Entity.IDS.ASTEROID, asteroidId ],
+      //   [ 'productOrderSummary', Entity.IDS.LOT, lotId ],
+      // ];
     },
 
     getLogContent: ({ event: { returnValues } }, viewingAs, { exchange = {} }) => {
@@ -293,11 +408,23 @@ const activities = {
     getInvalidations: ({ event: { returnValues } }, { building = {} }) => {
       const lotId = locationsArrToObj(building?.Location?.locations || [])?.lotId;
       return [
-        ...invalidationDefaults(Entity.IDS.BUILDING, returnValues.building.id),
-        ['entities', Entity.IDS.BUILDING, 'lot', lotId],
-        ['planned'],
-        ['asteroidCrewBuildings', returnValues.asteroid.id, returnValues.callerCrew.id],
-      ];
+        {
+          label: Entity.IDS.BUILDING,
+          id: returnValues.building.id,
+          update: {
+            asteroidId: returnValues.asteroid.id,
+            lotId,
+            crewId: returnValues.callerCrew.id,
+            status: 'planned'
+          }
+        }
+      ]
+      // return [
+      //   ...invalidationDefaults(Entity.IDS.BUILDING, returnValues.building.id),
+      //   ['entities', Entity.IDS.BUILDING, 'lot', lotId],
+      //   ['planned'],
+      //   ['asteroidCrewBuildings', returnValues.asteroid.id, returnValues.callerCrew.id],
+      // ];
     },
     getPrepopEntities: ({ event: { returnValues } }) => ({
       building: returnValues.building,
@@ -318,11 +445,18 @@ const activities = {
     getInvalidations: ({ event: { returnValues } }, { building = {} }) => {
       const { asteroidId } = locationsArrToObj(building?.Location?.locations || []) || {};
       return [
-        ...invalidationDefaults(Entity.IDS.BUILDING, returnValues.building.id),
-        ['planned'],
-        // ['asteroidLots', asteroidId], (handled by asteroid room connection now)
-        ['asteroidCrewBuildings', asteroidId, returnValues.callerCrew.id],
+        {
+          label: Entity.IDS.BUILDING,
+          id: returnValues.building.id,
+        }
       ]
+
+      // return [
+      //   ...invalidationDefaults(Entity.IDS.BUILDING, returnValues.building.id),
+      //   ['planned'],
+      //   // ['asteroidPackedLotData', asteroidId], (handled by asteroid room connection now)
+      //   ['asteroidCrewBuildings', asteroidId, returnValues.callerCrew.id],
+      // ]
     },
     getLogContent: ({ event: { returnValues } }, viewingAs, { building = {} }) => ({
       icon: <UnplanBuildingIcon />,
@@ -1970,52 +2104,8 @@ export const typesWithLogContent = Object.keys(activities).filter((type) => !!ac
 
 export default activities;
 
-
-// TODO: remove references to old methods below when no longer need the reference
-
-// useQuery cache keys:
-// [ 'actionItems', crew?.id ],
-// [ 'activities', entity.label, entity.id ],
-// [ 'asteroidLots', asteroid?.id ],  // TODO: two of these references
-// [ 'asteroidCrewBuildings', asteroidId, crewId ],
-// [ 'asteroidCrewSampledLots', asteroidId, resourceId, crew?.id ],
-// [ 'crewLocation', id ],
-// [ 'planned', crew?.id ],
-// [ 'priceConstants' ],
-// [ 'referrals', 'count', token ],
-// [ 'user', token ],
-// [ 'watchlist', token ],
-
-// [ 'entities', Entity.IDS.ASTEROID, 'owned', account ],
-// [ 'entities', Entity.IDS.ASTEROID, 'controlled', crew?.id ],
-// [ 'entities', Entity.IDS.CREW, 'owned', account ],
-// [ 'entities', Entity.IDS.CREW, 'ship', shipId ],
-// [ 'entities', Entity.IDS.CREWMATE, ids.join(',') ],
-// [ 'entities', Entity.IDS.CREWMATE, 'owned', account ],
-// [ 'entities', Entity.IDS.SHIP, 'asteroid', i ],
-// [ 'entities', Entity.IDS.SHIP, 'owned', useCrewId ],
-// [ 'entity', Entity.IDS.ASTEROID, id ],
-// [ 'entity', Entity.IDS.CREWMATE, id ],
-// [ 'entity', Entity.IDS.BUILDING, id ],
-// [ 'entity', Entity.IDS.CREW, id ],
-// [ 'entity', Entity.IDS.LOT, id ],
-// [ 'entity', Entity.IDS.SHIP, id ],
-
-// [ 'search', assetType, query ],
-
-
 // TODO: move toward entity-based cache naming
 // ['entity', label, id]
 // ['entities', label, query/queryLabel, data ] --> should mutate individual results in above value
 //                                                  (and then return a reference to those individual results)
 // (...special stuff)
-
-// TODO: old events that do not have a corresponding entry yet:
-// Inventory_ReservedChanged: [
-//   ['lots', getLinkedAsset(linked, 'Asteroid').id, getLinkedAsset(linked, 'Lot').id],
-//   ['asteroidCrewBuildings',  getLinkedAsset(linked, 'Asteroid').id, getLinkedAsset(linked, 'Crew').id],
-// ],
-// Inventory_Changed: [
-//   ['lots', getLinkedAsset(linked, 'Asteroid').id, getLinkedAsset(linked, 'Lot').id],
-//   ['asteroidCrewBuildings',  getLinkedAsset(linked, 'Asteroid').id, getLinkedAsset(linked, 'Crew').id],
-// ],

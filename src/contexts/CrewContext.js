@@ -24,7 +24,7 @@ export function CrewProvider({ children }) {
 
   const { data: TIME_ACCELERATION, isLoading: constantsLoading } = useConstants('TIME_ACCELERATION');
 
-  const ownedCrewsQueryKey = useMemo(() => ([ 'entities', Entity.IDS.CREW, 'owned', accountAddress ]), [accountAddress]);
+  const ownedCrewsQueryKey = useMemo(() => ([ 'entities', Entity.IDS.CREW, { owner: accountAddress } ]), [accountAddress]);
 
   const { data: rawCrews, isLoading: crewsLoading } = useQuery(
     ownedCrewsQueryKey,
@@ -40,7 +40,7 @@ export function CrewProvider({ children }) {
   );
 
   const { data: myOwnedCrewmates, isLoading: myOwnedCrewmatesLoading } = useQuery(
-    [ 'entities', Entity.IDS.CREWMATE, 'owned', accountAddress ],
+    [ 'entities', Entity.IDS.CREWMATE, { owner: accountAddress } ],
     () => api.getAccountCrewmates(accountAddress),
     { enabled: !!token }
   );

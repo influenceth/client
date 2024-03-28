@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { useQuery } from 'react-query';
+import { Building, Entity } from '@influenceth/sdk';
 
 import useCrewContext from '~/hooks/useCrewContext';
 import api from '~/lib/api';
@@ -8,7 +9,7 @@ const useAsteroidBuildings = (asteroidId, reqComponent = 'Building', reqOneOfPer
   const { crewCan } = useCrewContext();
 
   const { data: allData, ...queryProps } = useQuery(
-    [ 'asteroidBuildings', asteroidId, reqComponent ],
+    [ 'entities', Entity.IDS.BUILDING, { asteroidId, hasComponent: reqComponent, status: Building.CONSTRUCTION_STATUSES.OPERATIONAL }],
     () => api.getBuildingsWithComponent(asteroidId, reqComponent),
     { enabled: !!asteroidId && !!reqComponent }
   );

@@ -8,11 +8,12 @@ const useOwnedAsteroids = () => {
   const { accountAddress, authenticated } = useSession();
 
   return useQuery(
-    [ 'entities', Entity.IDS.ASTEROID, 'owned', accountAddress ],
+    [ 'entities', Entity.IDS.ASTEROID, { owner: accountAddress } ],
     async () => {
       if (!authenticated) return [];
       return await api.getEntities({ match: { 'Nft.owners.starknet': accountAddress }, label: Entity.IDS.ASTEROID });
-    }
+    },
+    { enabled: !!accountAddress }
   );
 };
 

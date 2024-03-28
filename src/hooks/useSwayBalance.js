@@ -5,8 +5,8 @@ import useSession from './useSession';
 
 const useSwayBalance = (overrideAccount) => {
   const { accountAddress: defaultAccount, starknet } = useSession();
+  
   const accountAddress = overrideAccount || defaultAccount;
-
   return useQuery(
     [ 'swayBalance', accountAddress ],
     async () => {

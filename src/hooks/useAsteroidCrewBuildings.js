@@ -1,16 +1,16 @@
 import { useQuery } from 'react-query';
+import { Entity } from '@influenceth/sdk';
 
 import api from '~/lib/api';
 import useCrewContext from './useCrewContext';
 
 const useAsteroidCrewBuildings = (asteroidId, explicitCrewId) => {
   const { crew } = useCrewContext();
-  const crewId = explicitCrewId || crew?.id;
+  const controllerId = explicitCrewId || crew?.id;
   return useQuery(
-    // TODO: convert this to 'entities' model of cache keys?
-    [ 'asteroidCrewBuildings', asteroidId, crewId ],
-    () => api.getCrewBuildingsOnAsteroid(asteroidId, crewId),
-    { enabled: !!(asteroidId && crewId) }
+    [ 'entities', Entity.IDS.BUILDING, { asteroidId, controllerId } ],
+    () => api.getCrewBuildingsOnAsteroid(asteroidId, controllerId),
+    { enabled: !!(asteroidId && controllerId) }
   );
 };
 

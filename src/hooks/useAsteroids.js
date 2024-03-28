@@ -8,7 +8,7 @@ const useAsteroids = (ids) => {
     [ 'entities', Entity.IDS.ASTEROID, ids.join(',') ], // TODO: joined key
     async () => {
       const asteroids = await api.getAsteroids(ids);
-      return ids.map((id) => asteroids.find((c) => c.id === id));
+      return ids.map((id) => asteroids.find((c) => c.id === id)); // sort by order of ids
     },
     { enabled: ids?.length > 0 }
   );

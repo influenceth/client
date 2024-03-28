@@ -7,7 +7,7 @@ import useEntity from './useEntity';
 
 const useLotEntities = (lotId, entityLabel, isPreloaded) => {
   return useQuery(
-    ['entities', entityLabel, 'lot', lotId],
+    ['entities', entityLabel, { lotId }],
     () => {
       const lotEntity = Entity.formatEntity({ id: lotId, label: Entity.IDS.LOT });
       return api.getEntities({ label: entityLabel, match: { 'Location.locations.uuid': lotEntity?.uuid } });
@@ -25,7 +25,7 @@ const useLot = (lotId) => {
 
   // prepop all the entities on the lot in the cache (so can do in a single query)
   const { data: lotDataPrepopped, isLoading: lotDataIsLoading } = useQuery(
-    ['lotData', lotId],
+    ['lotEntitiesPrepopulation', lotId],
     async () => {
 
       // populate from single query... set query data
@@ -41,8 +41,8 @@ const useLot = (lotId) => {
         ]
       })) || [];
 
-      // update queryClient for individual entities, so that when invalidated, they are refetched
-      // (when the data on the lot gets updated)
+      // update queryClient for individual entities, so that when lot data invalidated, they are refetched
+      // TODO: not sure why we would do this here if we are not doing everywhere with an 'entities' key?
       lotEntities.forEach((e) => {
         if ([Entity.IDS.BUILDING, Entity.IDS.DEPOSIT, Entity.IDS.SHIP].includes(e.label)) {
           queryClient.setQueryData([ 'entity', e.label, e.id ], e);
@@ -51,7 +51,7 @@ const useLot = (lotId) => {
 
       [Entity.IDS.BUILDING, Entity.IDS.DEPOSIT, Entity.IDS.SHIP].forEach((label) => {
         queryClient.setQueryData(
-          ['entities', label, 'lot', lotId],
+          ['entities', label, { lotId }],
           lotEntities.filter((e) => e.label === label)
         );
       })

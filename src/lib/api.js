@@ -252,6 +252,10 @@ const api = {
     }, []);
   },
 
+  getDeliveries: async (destination, destinationSlot, origin, originSlot, status) => {
+
+  },
+
   // TODO: will we want this for "random" story events
   // getUserAssignments: async () => {
   //   const response = await instance.get(`/${apiVersion}/user/assignments`);
@@ -416,14 +420,14 @@ const api = {
     }));
   },
 
-  getOrderList: async (exchange, product) => {
+  getOrderList: async (exchangeId, productId) => {
     const queryBuilder = esb.boolQuery();
 
     // exchange
-    queryBuilder.filter(esb.termQuery('entity.id', exchange.id));
+    queryBuilder.filter(esb.termQuery('entity.id', exchangeId));
 
     // product
-    queryBuilder.filter(esb.termQuery('product', product));
+    queryBuilder.filter(esb.termQuery('product', productId));
 
     // status
     queryBuilder.filter(esb.termQuery('status', Order.STATUSES.OPEN));

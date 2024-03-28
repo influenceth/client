@@ -1,13 +1,13 @@
 import { useQuery } from 'react-query';
+import { Entity, Order } from '@influenceth/sdk';
 
 import api from '~/lib/api';
 
-const useCrewOrders = (crewId) => {
+const useCrewOrders = (controllerId) => {
   return useQuery(
-    // TODO: convert this to 'entities' model of cache keys?
-    [ 'crewOpenOrders', crewId ],
-    () => api.getCrewOpenOrders(crewId),
-    { enabled: !!crewId }
+    [ 'entities', Entity.IDS.ORDER, { controllerId, status: Order.STATUSES.OPEN } ],
+    () => api.getCrewOpenOrders(controllerId),
+    { enabled: !!controllerId }
   );
 };
 

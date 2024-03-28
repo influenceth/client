@@ -325,9 +325,9 @@ const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, co
       return () => {
         unregisterWSHandler(roomName);
 
-        // since will not be listening to asteroid room when zoomed away, remove ['asteroidLots', asteroidId]
+        // since will not be listening to asteroid room when zoomed away, remove ['asteroidPackedLotData', asteroidId]
         // and all [ 'entity', Entity.IDS.LOT, * ] that are on the asteroid but not occupied by me
-        queryClient.removeQueries({ queryKey: [ 'asteroidLots', asteroidId ] });
+        queryClient.removeQueries({ queryKey: [ 'asteroidPackedLotData', asteroidId ] });
         queryClient.getQueriesData([ 'entity', Entity.IDS.LOT ]).forEach(([ queryKey, data ]) => {
           const lotAsteroidId = Lot.toPosition(lotId)?.asteroidId;
           if (asteroidId === lotAsteroidId) {

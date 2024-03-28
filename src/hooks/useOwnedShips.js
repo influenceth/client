@@ -7,12 +7,11 @@ import useCrewContext from './useCrewContext';
 const useOwnedShips = (otherCrew = null) => {
   const { crew } = useCrewContext();
 
-  const useCrewId = otherCrew?.id || crew?.id;
-
+  const controllerId = otherCrew?.id || crew?.id;
   return useQuery(
-    [ 'entities', Entity.IDS.SHIP, 'owned', useCrewId ],
-    () => api.getCrewShips(useCrewId),
-    { enabled: !!useCrewId }
+    [ 'entities', Entity.IDS.SHIP, { controllerId } ],
+    () => api.getCrewShips(controllerId),
+    { enabled: !!controllerId }
   );
 };
 

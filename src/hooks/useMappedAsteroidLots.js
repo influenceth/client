@@ -254,7 +254,7 @@ const useMappedAsteroidLots = (i) => {
     if (asteroidId && lotIndex && buildingType !== undefined) {
       // TODO: these events could/should technically go through the same invalidation process as primary events
       //  (it's just that these events won't match as much data b/c most may not be relevant to my crew)
-      queryClient.setQueryData([ 'asteroidLots', asteroidId ], (currentLotsValue) => {
+      queryClient.setQueryData([ 'asteroidPackedLotData', asteroidId ], (currentLotsValue) => {
         const newLotsValue = currentLotsValue.slice();
         newLotsValue[lotIndex] =
           (newLotsValue[lotIndex] & 0b00001111)  // clear existing building
