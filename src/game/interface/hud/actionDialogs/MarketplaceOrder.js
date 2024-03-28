@@ -888,7 +888,7 @@ const MarketplaceOrder = ({
 const Wrapper = (props) => {
   const { asteroid, lot, isLoading } = useAsteroidAndLot(props);
   const manager = useMarketplaceManager(lot?.building?.id);
-  const pendingOrder = manager.getPendingOrder(props.mode, props.type, { exchange: lot.building, product: props.resourceId });
+  const pendingOrder = manager.getPendingOrder(props.mode, props.type, { exchange: lot?.building, product: props.resourceId });
   const actionStage = pendingOrder ? actionStages.STARTING : actionStages.NOT_STARTED;
 
   useEffect(() => {
