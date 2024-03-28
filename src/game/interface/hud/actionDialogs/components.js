@@ -479,7 +479,7 @@ const EmptyThumbnail = styled.div`
 `;
 
 const AsteroidThumbnailWrapper = styled(ResourceThumbnailWrapper)`
-  background-color: rgba(0, 0, 0, 0.6);
+  background-color: rgba(0, 0, 0, 0.75);
 `;
 const BuildingThumbnailWrapper = styled(ResourceThumbnailWrapper)`
   height: 92px;
@@ -2710,7 +2710,7 @@ export const TransferDistanceDetails = ({ distance, crewTravelBonus }) => {
             <div>Transfers less than {crewFreeTransferRadius.toFixed(1)}km in distance are instantaneous.</div>
           </FreeTransferNote>
         )}>
-          <label><WarningOutlineIcon /> {Math.round(distance)}km Away</label>
+          <label><SurfaceTransferIcon /> {Math.round(distance)}km Away</label>
         </Mouseoverable>
       ) : ''}
       {distance && distance >= crewFreeTransferRadius ? `${Math.round(distance)}km Away` : ''}

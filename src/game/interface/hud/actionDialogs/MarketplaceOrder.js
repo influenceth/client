@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import styled from 'styled-components';
 import { Asteroid, Crewmate, Inventory, Lot, Order, Permission, Product, Time } from '@influenceth/sdk';
 
-import { BanIcon, InventoryIcon, WarningOutlineIcon, SwayIcon, MarketBuyIcon, MarketSellIcon, LimitBuyIcon, LimitSellIcon, CancelLimitOrderIcon, LocationIcon, CloseIcon } from '~/components/Icons';
+import { BanIcon, InventoryIcon, WarningIcon, SwayIcon, MarketBuyIcon, MarketSellIcon, LimitBuyIcon, LimitSellIcon, CancelLimitOrderIcon, LocationIcon, CloseIcon } from '~/components/Icons';
 import Button from '~/components/ButtonAlt';
 import useCrewContext from '~/hooks/useCrewContext';
 import useLot from '~/hooks/useLot';
@@ -43,9 +43,6 @@ import {
   formatResourceAmount
 } from './components';
 
-const greenRGB = hexToRGB(theme.colors.green);
-const redRGB = hexToRGB(theme.colors.red);
-
 const FormSection = styled.div`
   margin-top: 12px;
   &:first-child {
@@ -74,29 +71,29 @@ const InputLabel = styled.div`
 const TotalSway = styled.span``;
 const OrderAlert = styled.div`
   ${p => {
-    if (p.isCancellation) {
+    if (p.isCancellation || p.insufficientAssets || p.insufficientInventory) {
       return `
-        background: rgba(${redRGB}, 0.2);
+        background: rgba(${hexToRGB(theme.colors.darkRed)}, 0.1);
         & > div {
-          background: rgba(${redRGB}, 0.2);
+          background: rgba(${hexToRGB(theme.colors.darkRed)}, 0.2);
           b { color: ${p.theme.colors.red}; }
         }
       `;
     }
     else if (p.mode === 'buy') {
       return `
-        background: rgba(${greenRGB}, 0.2);
+        background: rgba(${p.theme.colors.darkMainRGB}, 0.1);
         & > div {
-          background: rgba(${greenRGB}, 0.2);
-          b { color: ${p.theme.colors.green}; }
+          background: rgba(${hexToRGB(theme.colors.buy)}, 0.2);
+          b { color: ${p.theme.colors.buy}; }
         }
       `;
     } else {
       return `
-        background: rgba(${p.theme.colors.mainRGB}, 0.2);
+      background: rgba(${p.theme.colors.darkMainRGB}, 0.1);
         & > div {
-          background: rgba(${p.theme.colors.mainRGB}, 0.2);
-          b { color: ${p.theme.colors.main}; }
+          background: rgba(${hexToRGB(theme.colors.sell)}, 0.2);
+          b { color: ${p.theme.colors.sell}; }
         }
       `;
     }
@@ -104,7 +101,8 @@ const OrderAlert = styled.div`
 
   ${p => p.insufficientAssets && `
     &:before {
-      content: "Insufficient ${p.mode === 'buy' ? 'Wallet Balance' : 'Product in Inventory'}";
+      content: "Insufficient ${p.mode === 'buy' ? 'Wallet Balance' : 'Product at Source'}";
+      font-weight: bold;
       color: ${p.theme.colors.red};
       display: inline-block;
       margin: 3px 5px 7px;
@@ -595,8 +593,10 @@ const MarketplaceOrder = ({
 
   const goLabel = useMemo(() => {
     if (isCancellation) return `Cancel Order`;
-    if (type === 'market') return `Submit Order`;
-    else return `Create Order`;
+    if (type === 'market' && mode === 'buy') return `Market Buy`;
+    if (type === 'market' && mode === 'sell') return `Market Sell`;
+    if (type === 'limit' && mode === 'buy') return `Limit Buy`;
+    if (type === 'limit' && mode === 'sell') return `Limit Sell`;
   }, [type, isCancellation]);
 
   const amountInInventory = useMemo(() => {
@@ -604,12 +604,13 @@ const MarketplaceOrder = ({
   }, [storageInventory, resourceId]);
 
   const insufficientAssets = useMemo(() => {
+    if (isCancellation) return false;
     if (mode === 'buy') {
       return total > swayBalance;
     } else {
       return quantityToUnits(quantity) > amountInInventory;
     }
-  }, [mode, quantity, amountInInventory, swayBalance, total]);
+  }, [isCancellation, mode, quantity, amountInInventory, swayBalance, total]);
 
   const insufficientCapacity = useMemo(() => {
     if (mode === 'buy' && storageInventory) {
@@ -651,44 +652,25 @@ const MarketplaceOrder = ({
 
       <ActionDialogBody>
         <FlexSection>
-          <LotInputBlock
-            title="Marketplace"
-            lot={lot}
+          <FlexSectionInputBlock
+            title="Product"
+            image={<ResourceThumbnail resource={resource || {}} tooltipContainer="none" />}
+            label={resource?.name}
             disabled
+            sublabel={resource?.classification}
           />
 
           <FlexSectionSpacer />
 
-          <FlexSectionInputBlock
-            title="Order Details"
-            image={<ResourceThumbnail resource={resource} tooltipContainer="none" />}
-            label={resource?.name}
+          <LotInputBlock
+            title="At Marketplace"
+            lot={lot}
             disabled
-            sublabel={resource?.classification}
-            bodyStyle={{ background: 'transparent' }}
           />
         </FlexSection>
 
         <FlexSection>
-          <InventoryInputBlock
-            title={mode === 'buy' ? 'Deliver To' : 'Source From'}
-            titleDetails={<TransferDistanceDetails distance={transportDistance} crewTravelBonus={hopperTransportBonus} />}
-            disabled={isCancellation || stage !== actionStages.NOT_STARTED}
-            entity={storage}
-            inventorySlot={storageInventory?.slot}
-            inventoryBonuses={crew?._inventoryBonuses}
-            imageProps={{ iconOverride: <InventoryIcon /> }}
-            isSelected={!isCancellation && stage === actionStages.NOT_STARTED}
-            onClick={() => setStorageSelectorOpen(true)}
-            sublabel={
-              storageLot
-              ? <><LocationIcon /> {formatters.lotName(storageLot?.id)}</>
-              : 'Inventory'
-            } />
-
-          <FlexSectionSpacer />
-
-          <FlexSectionBlock style={{ alignSelf: 'flex-start', marginTop: -10 }} bodyStyle={{ padding: '0 0 0 8px' }}>
+          <FlexSectionBlock style={{ alignSelf: 'flex-start' }} bodyStyle={{ padding: '8px 0 0 8px' }}>
             <FormSection>
               <InputLabel>
                 <label>{type === 'market' ? '' : 'Max'} Quantity</label>
@@ -719,7 +701,7 @@ const MarketplaceOrder = ({
               <TextInputWrapper rightLabel={`SWAY / ${resourceByMass ? 'kg' : 'unit'}`}>
                 <UncontrolledTextInput
                   disabled={isCancellation || type === 'market' || stage !== actionStages.NOT_STARTED}
-                  style={type === 'market' ? { backgroundColor: '#09191f' } : {}}
+                  style={type === 'market' ? { backgroundColor: `rgba(${hexToRGB(theme.colors.disabledBackground)}, 0.2)` } : {}}
                   min={0}
                   onChange={handleChangeLimitPrice}
                   type="number"
@@ -771,6 +753,23 @@ const MarketplaceOrder = ({
             )}
           </FlexSectionBlock>
 
+          <FlexSectionSpacer />
+
+          <InventoryInputBlock
+            title={mode === 'buy' ? 'Deliver To' : 'Source From'}
+            titleDetails={<TransferDistanceDetails distance={transportDistance} crewTravelBonus={hopperTransportBonus} />}
+            disabled={isCancellation || stage !== actionStages.NOT_STARTED}
+            entity={storage}
+            inventorySlot={storageInventory?.slot}
+            inventoryBonuses={crew?._inventoryBonuses}
+            imageProps={{ iconOverride: <InventoryIcon /> }}
+            isSelected={!isCancellation && stage === actionStages.NOT_STARTED}
+            onClick={() => setStorageSelectorOpen(true)}
+            sublabel={
+              storageLot
+              ? <><LocationIcon /> {formatters.lotName(storageLot?.id)}</>
+              : 'Inventory'
+            } />
         </FlexSection>
 
         <FlexSection>
@@ -778,18 +777,13 @@ const MarketplaceOrder = ({
           <FlexSectionBlock
             title="Order"
             bodyStyle={{ height: 'auto', padding: 0 }}
-            style={{ width: '100%' }}>
+            style={{ width: '100%', marginTop: 20 }}>
             <OrderAlert
               mode={mode}
               insufficientAssets={reactBool(insufficientAssets)}
               insufficientInventory={reactBool(insufficientCapacity)}
               isCancellation={reactBool(isCancellation)}>
               <div>
-                {type === 'limit' && (
-                  <div style={{ fontSize: '35px', lineHeight: '30px' }}>
-                    <b>{isCancellation ? <BanIcon /> : <WarningOutlineIcon />}</b>
-                  </div>
-                )}
                 <div style={{ flex: 1 }}>
                   <div><b>{isCancellation ? 'Cancel ': ''}{type} {mode}</b></div>
                   <div>
@@ -809,8 +803,8 @@ const MarketplaceOrder = ({
                     {type === 'limit' && mode === 'sell' && (isCancellation ? 'All Items Returned' : 'Receive up to')}
                   </b>
                   {!(type === 'limit' && mode === 'sell' && isCancellation) && (
-                    <span style={{ display: 'inline-flex', fontSize: '35px', lineHeight: '30px' }}>
-                      <SwayIcon /> <TotalSway>{type === 'market' && (mode === 'buy' ? '-' : '+')}{formatFixed(total || 0)}</TotalSway>
+                    <span style={{ display: 'inline-flex', fontSize: '36px', lineHeight: '36px' }}>
+                      <SwayIcon /><TotalSway>{type === 'market' && (mode === 'buy' ? '-' : '+')}{formatFixed(total || 0)}</TotalSway>
                     </span>
                   )}
                 </div>

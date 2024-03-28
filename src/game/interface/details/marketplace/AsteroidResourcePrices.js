@@ -7,7 +7,7 @@ import Button from '~/components/ButtonAlt';
 import ClipCorner from '~/components/ClipCorner';
 import CrewIndicator from '~/components/CrewIndicator';
 import DataTable from '~/components/DataTable';
-import { OrderIcon, SwayIcon } from '~/components/Icons';
+import { MarketplaceBuildingIcon, SwayIcon } from '~/components/Icons';
 import ResourceThumbnail from '~/components/ResourceThumbnail';
 import { formatResourceAmount } from '~/game/interface/hud/actionDialogs/components';
 import useCrew from '~/hooks/useCrew';
@@ -143,12 +143,20 @@ const PseudoFooterButton = styled(Button)`
   right: 0px;
 `;
 
-const AsteroidResourcePrices = ({ asteroid, resource }) => {
+const Empty = styled.span`
+  opacity: 0.33;
+  text-transform: uppercase;
+`;
+
+const AsteroidResourcePrices = ({ asteroid, mode, resource }) => {
   const history = useHistory();
 
   const { crew } = useCrewContext();
   const [selected, setSelected] = useState();
-  const [sort, setSort] = useState(['centerPrice', 'asc']);
+  const [sort, setSort] = useState([
+    `${mode === 'sell' ? 'buy' : 'sell'}Price`,
+    mode === 'sell' ? 'asc' : 'desc'
+  ]);
   const [sortField, sortDirection] = sort;
 
   const { data: selectedLot } = useLot(selected);
@@ -163,6 +171,8 @@ const AsteroidResourcePrices = ({ asteroid, resource }) => {
       supply: o.sell.amount,
       demand: o.buy.amount,
       distance: crew?._location?.asteroidId === asteroid.id ? Asteroid.getLotDistance(asteroid.id, crew?._location?.lotIndex, Lot.toIndex(o.marketplace?.Location?.location?.id)) : 0,
+      buyPrice: o.buy.price,
+      sellPrice: o.sell.price,
       centerPrice: (o.sell.price && o.buy.price) ? (o.sell.price + o.buy.price) / 2 : (o.sell.price || o.buy.price || 0),
       makerFee: o.marketplace?.Exchange?.makerFee,
       takerFee: o.marketplace?.Exchange?.takerFee,
@@ -216,51 +226,66 @@ const AsteroidResourcePrices = ({ asteroid, resource }) => {
         sortField: 'marketplaceName',
         selector: row => (
           <>
-            <IconLink
+            <IconLink 
+              style={{ marginRight: 6 }}
               onClick={() => history.push(`/marketplace/${asteroid.id}/${Lot.toIndex(row.lotId)}/${resource.i}?back=all`)}
-              tooltip="View Marketplace Orderbook"
+              tooltip="View in Marketplace"
               data-for="details">
-              <OrderIcon />
+              <MarketplaceBuildingIcon />
             </IconLink>
             <span>{row.marketplaceName}</span>
           </>
         ),
       },
       {
-        key: 'lotId',
-        label: 'Lot ID',
-        sortField: 'lotId',
+        key: 'supply',
+        label: 'Supply',
+        sortField: 'supply',
         selector: row => (
           <>
-            <LocationLink
-              asteroidId={asteroid.id}
-              lotId={row.lotId}
-              zoomToLot
-              data-for="details" />
-            <span>{formatters.lotName(row.lotId)}</span>
+          {row.supply === 0 
+            ? <Empty>None</Empty>
+            : formatResourceAmount(row.supply, resource.i)
+          }
           </>
         )
       },
       {
-        key: 'supply',
-        label: 'Listed Supply',
-        sortField: 'supply',
-        selector: row => formatResourceAmount(row.supply, resource.i),
+        key: 'sellPrice',
+        label: 'Selling Price',
+        sortField: 'sellPrice',
+        selector: row => (
+          <>
+          {row.sellPrice === 0 
+            ? <Empty>N/A</Empty>
+            : (<><IconWrapper><SwayIcon /></IconWrapper> {formatPrice(row.sellPrice)}</>)
+          }
+          </>
+        )
       },
       {
         key: 'demand',
-        label: 'Listed Demand',
+        label: 'Demand',
         sortField: 'demand',
-        selector: row => formatResourceAmount(row.demand, resource.i),
-      },
-      {
-        key: 'centerPrice',
-        label: 'Center Price',
-        sortField: 'centerPrice',
         selector: row => (
           <>
-            <IconWrapper><SwayIcon /></IconWrapper>
-            {formatPrice(row.centerPrice)}
+          {row.demand === 0 
+            ? <Empty>None</Empty>
+            : formatResourceAmount(row.demand, resource.i)
+          }
+          </>
+        )
+      },
+      {
+        key: 'buyPrice',
+        label: 'Buying Price',
+        sortField: 'buyPrice',
+        selector: row => (
+          <>
+          {row.buyPrice === 0 
+            ? <Empty>N/A</Empty>
+            : <><IconWrapper><SwayIcon /></IconWrapper> {formatPrice(row.buyPrice)}</>
+          }
           </>
         )
       },
@@ -278,11 +303,37 @@ const AsteroidResourcePrices = ({ asteroid, resource }) => {
         sortField: 'takerFee',
         selector: row => `${(row.takerFee / 100).toFixed(2)}%`,
       },
+      // {
+      //   key: 'lotId',
+      //   label: 'Lot ID',
+      //   sortField: 'lotId',
+      //   selector: row => (
+      //     <>
+      //       <LocationLink
+      //         asteroidId={asteroid.id}
+      //         lotId={row.lotId}
+      //         zoomToLot
+      //         data-for="details" />
+      //       <span>{formatters.lotName(row.lotId)}</span>
+      //     </>
+      //   )
+      // },
+      // {
+      //   key: 'centerPrice',
+      //   label: 'Center Price',
+      //   sortField: 'centerPrice',
+      //   selector: row => (
+      //     <>
+      //       <IconWrapper><SwayIcon /></IconWrapper>
+      //       {formatPrice(row.centerPrice)}
+      //     </>
+      //   )
+      // },
     ];
     if (crew?._location?.asteroidId === asteroid.id) {
-      c.splice(3, 0, ({
+      c.splice(1, 0, ({
         key: 'distance',
-        label: 'Distance',
+        label: 'Distance to Crew',
         sortField: 'distance',
         selector: row => `${formatFixed(row.distance, 1)} km`,
       }))
@@ -311,7 +362,6 @@ const AsteroidResourcePrices = ({ asteroid, resource }) => {
         d += m.demand;
       });
 
-      resourceMarketplaces.sort((a, b) => a.centerPrice < b.centerPrice ? -1 : 1);
       if (resourceMarketplaces.length % 2 === 1) {
         m = resourceMarketplaces[(resourceMarketplaces.length / 2) - 0.5].centerPrice;
       } else {

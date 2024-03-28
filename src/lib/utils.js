@@ -30,23 +30,23 @@ export const formatPrecision = (value, maximumPrecision = 0) => {
   return formatFixed(value, allowedDecimals);
 };
 
-export const formatPrice = (inputSway, { minPrecision = 3, fixedPrecision = 4 } = {}) => {
+export const formatPrice = (inputSway, { minPrecision = 3, fixedPrecision = 4, forcedAbbrev } = {}) => {
   let sign = inputSway < 0 ? '-' : '';
 
   const sway = Math.abs(inputSway);
   let unitLabel;
   let scale;
-  if (sway >= 1e6) {
+  if ((sway >= 1e6 && forcedAbbrev === undefined) || forcedAbbrev === 6) {
     scale = 1e6;
     unitLabel = 'M';
-  } else if (sway >= 1e3) {
+  } else if ((sway >= 1e3 && forcedAbbrev === undefined) || forcedAbbrev === 3) {
     scale = 1e3;
     unitLabel = 'k';
-  } else if (sway >= 1) {
+  } else if ((sway >= 1 && forcedAbbrev === undefined) || forcedAbbrev === 0) {
     scale = 1;
     unitLabel = '';
   } else {
-    return Number(sway || 0).toFixed(fixedPrecision).replace(/0$/g, '');
+    return Number(sway || 0).toLocaleString(undefined, { minimumFractionDigits: minPrecision, maximumFractionDigits: fixedPrecision });
   }
 
   const workingUnits = (sway / scale);
@@ -57,7 +57,7 @@ export const formatPrice = (inputSway, { minPrecision = 3, fixedPrecision = 4 } 
       fixedPlaces++;
     }
   }
-  return `${sign}${formatFixed(workingUnits, fixedPlaces)}${unitLabel}`;
+  return `${sign}${(workingUnits || 0).toLocaleString(undefined, { minimumFractionDigits: minPrecision, maximumFractionDigits: fixedPlaces })}${unitLabel}`;
 };
 
 export const keyify = (str) => (str || '').replace(/[^a-zA-Z0-9_]/g, '');
