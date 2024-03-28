@@ -171,10 +171,6 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
       state.actionDialog = { type, params };
     })),
 
-    dispatchHasClickedPlay: () => set(produce(state => {
-      state.tutorialStep = state.tutorialStep > 0 ? 0 : state.tutorialStep;
-    })),
-
     dispatchLauncherPage: (page) => set(produce(state => {
       if (page === 'crews' || page === 'settings' || page === 'store') state.launcherPage = page;
       else if (page) state.launcherPage = 'account';
@@ -425,6 +421,7 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
     // Unsets the current session but keeps it in the sessions list
     dispatchSessionSuspended: () => set(produce(state => {
       state.currentSession = {};
+      state.tutorialStep = -1;
     })),
 
     // Resumes a session that was suspended
@@ -635,10 +632,8 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
     'cameraNeedsReorientation',
     'cutscene',
     'draggables',
-    // 'failedTransactions',
     'lotLoader',
-    'timeOverride',  // should this be in ClockContext?
-    'tutorialStep'
+    'timeOverride' // should this be in ClockContext?
   ]
 })));
 
