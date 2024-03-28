@@ -274,7 +274,7 @@ export function CrewProvider({ children }) {
         && blockTime > 0 && ((now - blockTime) > TOO_LONG_FOR_BLOCK);
 
       if (blockHasBeenMissed.current || currentBlockIsMissing) {
-        // window.location.reload();
+        window.location.reload();
       }
     }
   }, [blockTime]);
