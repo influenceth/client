@@ -1,4 +1,4 @@
-import { Address, Building, Entity, Lot, Process, Product, RandomEvent, Ship } from '@influenceth/sdk';
+import { Address, Building, Delivery, Entity, Lot, Order, Permission, Process, Product, RandomEvent, Ship } from '@influenceth/sdk';
 import { AiFillEdit as NameIcon } from 'react-icons/ai';
 import { BiTransfer as TransferIcon } from 'react-icons/bi';
 
@@ -67,60 +67,68 @@ const getEntityName = (entity) => {
   }
 };
 
+const getComponentNames = (entity) => {
+  const { id, label, uuid, ...Components } = entity || {};
+  return Object.keys(Components);
+}
+
+const getApplicablePermissions = (entity) => {
+  return Object.keys(Permission.TYPES)
+    .filter((id) => Permission.TYPES[id].isApplicable(entity))
+    .map((id) => id)
+}
+
+
 // TODO: instead of guessing at what should be invalidated with each event,
 //  should we just have a more standard invalidation on ComponentUpdated
 //  (that also travels up to lot since lot is an aggregation)
 // ... would need to emit these from the server to the relevant crew and asteroid rooms
 
+// TODO: if finishTime, add ActionItems to invalidations? if getActionItem entry?
+//  these work for Start event, but not finish, so probably better to do explicitly
+//  so the invalidation isn't forgotten
 
-// TODO (enhancement): some of the invalidations may be overkill by using this
-const invalidationDefaults = (labelOrEntity, optId) => {
-  let label, id;
-  if (!optId) {
-    label = labelOrEntity.label;
-    id = labelOrEntity.id;
-  } else {
-    label = labelOrEntity;
-    id = optId;
+const getAgreementInvalidations = (couldAddToCollection = false) => ({ event: { returnValues } }, { entity = {} }) => {
+  const invalidation = { ...returnValues.target };
+  if (couldAddToCollection) {
+    const _location = locationsArrToObj(entity?.Location?.locations || []) || {};
+    invalidation.newGroupEval = {
+      updatedValues: { hasPermission: returnValues.permission },
+      filters: {
+        asteroidId: _location.asteroidId,
+        controllerId: entity?.Control?.controller?.id,
+        hasComponent: getComponentNames(entity),
+        lotId: _location.lotId,
+        status:
+          entity?.label === Entity.IDS.SHIP
+            ? entity?.Ship?.status
+            : (entity?.label === Entity.IDS.BUILDING ? entity?.Building?.status : undefined)
+      }
+    };
   }
-  const i = [];
-
-  // the specific affected record (and its activities)
-  // NOTE: 'entity' invalidation will also invalidate any ['entities', label, *] groups where find id
-  if (id) {
-    i.push(['entity', label, id]);
-    i.push(['activities', label, id]);
-
-  // if no id included, dump all group queries
-  } else {
-    i.push(['entities', label]);
-  }
-
-  // search results that might included the affected record
-  // TODO: convert search keys to entity-based labels
-  let searchKey;
-  if (label === Entity.IDS.ASTEROID) searchKey = 'asteroids';
-  if (label === Entity.IDS.BUILDING) searchKey = 'buildings';
-  if (label === Entity.IDS.CREW) searchKey = 'crews';
-  if (label === Entity.IDS.CREWMATE) searchKey = 'crewmates';
-  if (label === Entity.IDS.DEPOSIT) searchKey = 'deposits';
-  if (label === Entity.IDS.ORDER) searchKey = 'orders';
-  if (label === Entity.IDS.SHIP) searchKey = 'ships';
-  if (searchKey) i.push(['search', searchKey]);
-
-  // TODO: if finishTime, add ActionItems to invalidations? if getActionItem entry?
-  //  these work for Start event, but not finish, so probably better to do explicitly
-  //  so the invalidation isn't forgotten
-
-  return i;
+  return invalidation;
 };
 
-const getAgreementInvalidations = ({ event: { returnValues } }) => {
-  return invalidationDefaults(returnValues.target);
-};
-
-const getPolicyInvalidations = ({ event: { returnValues } }) => {
-  return invalidationDefaults(returnValues.entity || returnValues.target);
+const getPolicyInvalidations = (couldAddToCollection = false) => ({ event: { returnValues } }, { entity = {} }) => {
+  const entityId = returnValues.entity ? returnValues.entity : returnValues.target;
+  const invalidation = { ...entityId };
+  if (couldAddToCollection) {
+    const _location = locationsArrToObj(entity?.Location?.locations || []) || {};
+    invalidation.newGroupEval = {
+      updatedValues: { hasPermission: returnValues.permission },
+      filters: {
+        asteroidId: _location.asteroidId,
+        controllerId: entity?.Control?.controller?.id,
+        hasComponent: getComponentNames(entity),
+        lotId: _location.lotId,
+        status:
+          entity?.label === Entity.IDS.SHIP
+            ? entity?.Ship?.status
+            : (entity?.label === Entity.IDS.BUILDING ? entity?.Building?.status : undefined)
+      }
+    };
+  }
+  return invalidation;
 };
 
 // TODO: write a test to make sure all activities (from sdk) have a config
@@ -128,13 +136,7 @@ const activities = {
 
   AsteroidInitialized: {
     getInvalidations: ({ event: { returnValues } }) => {
-      return [
-        {
-          label: Entity.IDS.ASTEROID,
-          id: returnValues.asteroid.id,
-          update: { 'AsteroidProof.used': true }
-        }
-      ]
+      return [{ ...returnValues.asteroid }]
     },
   },
 
@@ -142,9 +144,10 @@ const activities = {
     getInvalidations: ({ event: { returnValues } }) => {
       return [
         {
-          label: Entity.IDS.ASTEROID,
-          id: returnValues.asteroid.id,
-          update: { 'Control.controller.id': returnValues.callerCrew.id }
+          ...returnValues.asteroid,
+          newGroupEval: {
+            updatedValues: { controllerId: returnValues.callerCrew.id }
+          }
         },
       ]
     },
@@ -160,14 +163,12 @@ const activities = {
   },
 
   AsteroidPurchased: {
-    // getInvalidations: ({ event: { returnValues } }) => invalidationDefaults(Entity.IDS.ASTEROID, returnValues.asteroid.id),
     getInvalidations: ({ event: { returnValues } }) => {
       return [
         {
-          label: Entity.IDS.ASTEROID,
-          id: returnValues.asteroid.id,
-          update: {
-            'Nft.owner': returnValues.caller,
+          ...returnValues.asteroid,
+          newGroupEval: {
+            updatedValues: { owner: returnValues.caller }
           }
         },
         [ 'ethBalance', returnValues.caller ],
@@ -186,15 +187,8 @@ const activities = {
   },
 
   AsteroidScanned: {
-    // getInvalidations: ({ event: { returnValues } }) => invalidationDefaults(Entity.IDS.ASTEROID, returnValues.asteroid.id),
     getInvalidations: ({ event: { returnValues } }) => {
-      return [
-        {
-          label: Entity.IDS.ASTEROID,
-          id: returnValues.asteroid.id,
-          component: 'Celestial'
-        }
-      ]
+      return [{ ...returnValues.asteroid }]
     },
     getLogContent: ({ event: { returnValues } }) => {
       const entity = { label: Entity.IDS.ASTEROID, id: returnValues.asteroidId };
@@ -220,15 +214,23 @@ const activities = {
 
   BuildingRepossessed: {
     // TODO: need to invalidate for the original crew (through asteroid ws?) AND trigger alert for them
-    getInvalidations: ({ event: { returnValues } }) => {
+    getInvalidations: ({ event: { returnValues } }, { building = {} }) => {
+      const _location = locationsArrToObj(building?.locations || []) || {};
       return [
         {
-          label: Entity.IDS.BUILDING,
-          id: returnValues.building.id,
-          update: {
-            'Control.controller.id': returnValues.callerCrew.id
-          },
-          component: 'Building' // if planned, reset plannedAt
+          ...returnValues.building,
+          newGroupEval: {
+            updatedValues: {
+              controllerId: returnValues.callerCrew.id,
+              hasPermission: getApplicablePermissions(building || returnValues.building), // new controller may now all relevant permissions 
+            },
+            filters: {
+              asteroidId: _location.asteroidId,
+              hasComponent: getComponentNames(building),
+              lotId: _location.lotId,
+              status: building?.Building?.status
+            }
+          }
         }
       ]
     },
@@ -250,37 +252,25 @@ const activities = {
       const orderPath = ''; // TODO: buyer_crew, exchange, order_types::LIMIT_BUY, product, price, storage, storage_slot
       const { asteroidId, lotId } = locationsArrToObj(exchange?.Location?.locations || []) || {};
       return [
-        {
-          label: returnValues.exchange.label,
-          id: returnValues.exchange.id,
-          component: 'Exchange' // TODO: just `Exchange.orders` probably
-        },
-        {
-          label: returnValues.storage.label,
-          id: returnValues.storage.id,
-          component: 'Inventories' // TODO: have slot, so could probably drill down farther
-        },
+        { ...returnValues.exchange },
+        { ...returnValues.storage },
         {
           label: Entity.IDS.ORDER,
-          path: orderPath
+          path: orderPath,
+          newGroupEval: {
+            updatedValues: { status: Order.STATUSES.CANCELLED },
+            filters: {
+              controllerId: returnValues.buyerCrew.id,
+              exchangeId: returnValues.exchange.id,
+              productId: returnValues.product
+            }
+          }
         },
-
         [ 'swayBalance' ],
         [ 'exchangeOrderSummary', asteroidId, returnValues.product ],
         [ 'productOrderSummary', Entity.IDS.ASTEROID, asteroidId ],
         [ 'productOrderSummary', Entity.IDS.LOT, lotId ],
       ]
-
-      // return [
-      //   ...invalidationDefaults(returnValues.exchange),
-      //   ...invalidationDefaults(returnValues.storage),
-      //   [ 'crewOpenOrders' ],
-      //   [ 'orderList', returnValues.product, returnValues.exchange.id ],
-      //   [ 'swayBalance' ],
-      //   [ 'exchangeOrderSummary', asteroidId, returnValues.product ],
-      //   [ 'productOrderSummary', Entity.IDS.ASTEROID, asteroidId ],
-      //   [ 'productOrderSummary', Entity.IDS.LOT, lotId ],
-      // ];
     },
 
     getPrepopEntities: ({ event: { returnValues } }) => ({
@@ -289,39 +279,28 @@ const activities = {
   },
   BuyOrderCreated: {
     getInvalidations: ({ event: { returnValues } }, { exchange = {} }) => {
+      const orderPath = ''; // TODO: buyer_crew, exchange, order_types::LIMIT_BUY, product, price, storage, storage_slot
       const { asteroidId, lotId } = locationsArrToObj(exchange?.Location?.locations || []) || {};
       return [
-        {
-          label: returnValues.exchange.id,
-          id: returnValues.exchange.id,
-          component: 'Exchange' // TODO: just `Exchange.orders` probably
-        },
-        {
-          label: returnValues.storage.id,
-          id: returnValues.storage.id,
-          component: 'Inventories' // TODO: have slot, so could probably drill down farther
-        },
+        { ...returnValues.exchange },
+        { ...returnValues.storage },
         {
           label: Entity.IDS.ORDER,
-          path: orderPath
+          path: orderPath,
+          newGroupEval: {
+            updatedValues: {
+              controllerId: returnValues.callerCrew.id,
+              exchangeId: returnValues.exchange.id,
+              productId: returnValues.product,
+              status: Order.STATUSES.OPEN
+            }
+          }
         },
-
         [ 'swayBalance' ],
         [ 'exchangeOrderSummary', asteroidId, returnValues.product ],
         [ 'productOrderSummary', Entity.IDS.ASTEROID, asteroidId ],
         [ 'productOrderSummary', Entity.IDS.LOT, lotId ],
-      ]
-
-      // return [
-      //   ...invalidationDefaults(returnValues.exchange),
-      //   ...invalidationDefaults(returnValues.storage),
-      //   [ 'swayBalance' ],
-      //   [ 'crewOpenOrders' ],
-      //   [ 'orderList', returnValues.product, returnValues.exchange.id ],
-      //   [ 'exchangeOrderSummary', asteroidId, returnValues.product ],
-      //   [ 'productOrderSummary', Entity.IDS.ASTEROID, asteroidId ],
-      //   [ 'productOrderSummary', Entity.IDS.LOT, lotId ],
-      // ];
+      ];
     },
 
     getPrepopEntities: ({ event: { returnValues } }) => ({
@@ -333,45 +312,31 @@ const activities = {
   BuyOrderFilled: {
     // amount, buyerCrew, caller, callerCrew, exchange, origin, originSlot, price, product, storage, storageSlot
     getInvalidations: ({ event: { returnValues } }, { exchange = {} }) => {
+      const orderPath = '';
       const { asteroidId, lotId } = locationsArrToObj(exchange?.Location?.locations || []) || {};
       return [
-        {
-          label: returnValues.exchange.id,
-          id: returnValues.exchange.id,
-          component: 'Exchange' // TODO: just `Exchange.orders` probably
-        },
-        {
-          label: returnValues.origin.id,
-          id: returnValues.origin.id,
-          component: 'Inventories' // TODO: have slot, so could probably drill down farther
-        },
-        {
-          label: returnValues.storage.id,
-          id: returnValues.storage.id,
-          component: 'Inventories' // TODO: have slot, so could probably drill down farther
-        },
+        { ...returnValues.exchange },
+        { ...returnValues.origin },
+        { ...returnValues.storage },
         {
           label: Entity.IDS.ORDER,
-          path: orderPath
+          path: orderPath,
+          newGroupEval: {
+            updatedValues: {
+              status: Order.STATUSES.FILLED // optimistic, more likely to cause over-refetching than under
+            },
+            filters: {
+              controllerId: returnValues.buyerCrew.id,
+              exchangeId: returnValues.exchange.id,
+              productId: returnValues.product
+            }
+          }
         },
-
         [ 'swayBalance' ],
         [ 'exchangeOrderSummary', asteroidId, returnValues.product ],
         [ 'productOrderSummary', Entity.IDS.ASTEROID, asteroidId ],
         [ 'productOrderSummary', Entity.IDS.LOT, lotId ],
       ]
-
-      // return [
-      //   ...invalidationDefaults(returnValues.exchange),
-      //   ...invalidationDefaults(returnValues.origin),
-      //   ...invalidationDefaults(returnValues.storage),
-      //   [ 'swayBalance' ],
-      //   [ 'crewOpenOrders' ],
-      //   [ 'orderList', returnValues.product, returnValues.exchange.id ],
-      //   [ 'exchangeOrderSummary', asteroidId, returnValues.product ],
-      //   [ 'productOrderSummary', Entity.IDS.ASTEROID, asteroidId ],
-      //   [ 'productOrderSummary', Entity.IDS.LOT, lotId ],
-      // ];
     },
 
     getLogContent: ({ event: { returnValues } }, viewingAs, { exchange = {} }) => {
@@ -406,25 +371,22 @@ const activities = {
 
   ConstructionPlanned: {
     getInvalidations: ({ event: { returnValues } }, { building = {} }) => {
-      const lotId = locationsArrToObj(building?.Location?.locations || [])?.lotId;
+      const { asteroidId, lotId } = locationsArrToObj(building?.Location?.locations || []);
       return [
         {
-          label: Entity.IDS.BUILDING,
-          id: returnValues.building.id,
-          update: {
-            asteroidId: returnValues.asteroid.id,
-            lotId,
-            crewId: returnValues.callerCrew.id,
-            status: 'planned'
+          ...returnValues.building,
+          newGroupEval: {
+            updatedValues: {
+              asteroidId,
+              controllerId: returnValues.callerCrew.id,
+              hasComponent: getComponentNames(building),
+              hasPermission: getApplicablePermissions(building || returnValues.building),
+              lotId,
+              status: Building.CONSTRUCTION_STATUSES.PLANNED,
+            }
           }
         }
       ]
-      // return [
-      //   ...invalidationDefaults(Entity.IDS.BUILDING, returnValues.building.id),
-      //   ['entities', Entity.IDS.BUILDING, 'lot', lotId],
-      //   ['planned'],
-      //   ['asteroidCrewBuildings', returnValues.asteroid.id, returnValues.callerCrew.id],
-      // ];
     },
     getPrepopEntities: ({ event: { returnValues } }) => ({
       building: returnValues.building,
@@ -443,20 +405,23 @@ const activities = {
 
   ConstructionAbandoned: {
     getInvalidations: ({ event: { returnValues } }, { building = {} }) => {
-      const { asteroidId } = locationsArrToObj(building?.Location?.locations || []) || {};
+      const { asteroidId, lotId } = locationsArrToObj(building?.Location?.locations || []) || {};
       return [
         {
-          label: Entity.IDS.BUILDING,
-          id: returnValues.building.id,
+          ...returnValues.building,
+          newGroupEval: {
+            updatedValues: {
+              status: Building.CONSTRUCTION_STATUSES.UNPLANNED
+            },
+            filters: {
+              asteroidId,
+              controllerId: returnValues.callerCrew.id,
+              hasComponent: getComponentNames(building),
+              lotId
+            }
+          }
         }
       ]
-
-      // return [
-      //   ...invalidationDefaults(Entity.IDS.BUILDING, returnValues.building.id),
-      //   ['planned'],
-      //   // ['asteroidPackedLotData', asteroidId], (handled by asteroid room connection now)
-      //   ['asteroidCrewBuildings', asteroidId, returnValues.callerCrew.id],
-      // ]
     },
     getLogContent: ({ event: { returnValues } }, viewingAs, { building = {} }) => ({
       icon: <UnplanBuildingIcon />,
@@ -493,17 +458,24 @@ const activities = {
       ))
     },
     getInvalidations: ({ event: { returnValues } }, { building = {} }) => {
-      const invs = [
-        ...invalidationDefaults(Entity.IDS.BUILDING, returnValues.building.id),
-        ['planned'],
+      const { asteroidId, lotId } = locationsArrToObj(building?.Location?.locations || []) || {};
+      return [
+        {
+          ...returnValues.building,
+          newGroupEval: {
+            updatedValues: {
+              status: Building.CONSTRUCTION_STATUSES.UNDER_CONSTRUCTION
+            },
+            filters: {
+              asteroidId,
+              controllerId: returnValues.callerCrew.id,
+              hasComponent: getComponentNames(building),
+              lotId
+            }
+          }
+        },
         ['actionItems'],
-      ];
-
-      const _location = locationsArrToObj(building?.Location?.locations || []);
-      if (_location.asteroidId) {
-        invs.push(['asteroidCrewBuildings', _location.asteroidId, returnValues.callerCrew.id]);
-      }
-      return invs;
+      ]
     },
     getPrepopEntities: ({ event: { returnValues } }) => ({
       building: returnValues.building,
@@ -513,12 +485,24 @@ const activities = {
 
   ConstructionFinished: {
     getInvalidations: ({ event: { returnValues } }, { building = {} }) => {
-      const { asteroidId } = locationsArrToObj(building?.Location?.locations || []) || {};
+      const { asteroidId, lotId } = locationsArrToObj(building?.Location?.locations || []) || {};
       return [
-        ...invalidationDefaults(Entity.IDS.BUILDING, returnValues.building.id),
+        {
+          ...returnValues.building,
+          newGroupEval: {
+            updatedValues: {
+              status: Building.CONSTRUCTION_STATUSES.OPERATIONAL
+            },
+            filters: {
+              asteroidId,
+              controllerId: returnValues.callerCrew.id,
+              hasComponent: getComponentNames(building),
+              lotId
+            }
+          }
+        },
         ['actionItems'],
-        ['asteroidCrewBuildings', asteroidId, returnValues.callerCrew.id],
-      ]
+      ];
     },
     getLogContent: ({ event: { returnValues } }, viewingAs, { building = {} }) => {
       return {
@@ -539,11 +523,24 @@ const activities = {
 
   ConstructionDeconstructed: {
     getInvalidations: ({ event: { returnValues } }, { building = {} }) => {
-      const { asteroidId } = locationsArrToObj(building?.Location?.locations || []) || {};
+      const { asteroidId, lotId } = locationsArrToObj(building?.Location?.locations || []) || {};
       return [
-        ...invalidationDefaults(Entity.IDS.BUILDING, returnValues.building.id),
-        ['asteroidCrewBuildings', asteroidId, returnValues.callerCrew.id],
-      ]
+        {
+          ...returnValues.building,
+          newGroupEval: {
+            updatedValues: {
+              status: Building.CONSTRUCTION_STATUSES.PLANNED
+            },
+            filters: {
+              asteroidId,
+              controllerId: returnValues.callerCrew.id,
+              hasComponent: getComponentNames(building),
+              lotId
+            }
+          }
+        },
+        ['actionItems'],
+      ];
     },
     getLogContent: ({ event: { returnValues } }, viewingAs, { building = {} }) => ({
       icon: <ConstructIcon />,
@@ -561,7 +558,16 @@ const activities = {
   },
 
   CrewDelegated: {
-    getInvalidations: ({ event: { returnValues } }) => invalidationDefaults(Entity.IDS.CREW, returnValues.crew.id),
+    getInvalidations: ({ event: { returnValues } }) => {
+      return [
+        {
+          ...returnValues.crew,
+          newGroupEval: {
+            updatedValues: { owner: returnValues.delegatedTo }
+          }
+        }
+      ]
+    },
     getLogContent: ({ event: { returnValues } }) => ({
       icon: <CrewIcon />,
       content: (
@@ -574,22 +580,17 @@ const activities = {
     triggerAlert: true
   },
 
-  CrewFormed: {
-    getInvalidations: ({ event: { returnValues } }) => invalidationDefaults(Entity.IDS.CREW),
-    getLogContent: ({ event: { returnValues } }) => ({
-      icon: <CrewIcon />,
-      content: (
-        <>
-          <EntityLink {...returnValues.callerCrew} />
-          {' '}was formed by <AddressLink address={returnValues.caller} maxWidth={addressMaxWidth} />
-        </>
-      ),
-    }),
-    triggerAlert: true
-  },
-
   CrewmatePurchased: {
-    getInvalidations: ({ event: { returnValues } }) => invalidationDefaults(Entity.IDS.CREWMATE),
+    getInvalidations: ({ event: { returnValues } }) => {
+      return [
+        {
+          ...returnValues.crewmate,
+          newGroupEval: {
+            updatedValues: { owner: returnValues.caller }
+          }
+        }
+      ]
+    },
     getLogContent: ({ event: { returnValues } }) => ({
       icon: <CrewmateIcon />,
       content: (
@@ -603,11 +604,30 @@ const activities = {
   },
 
   CrewmateRecruited: {
-    getInvalidations: ({ event: { returnValues } }) => ([
-      ...invalidationDefaults(Entity.IDS.CREW, returnValues.callerCrew.id),
-      ...invalidationDefaults(Entity.IDS.CREWMATE, returnValues.crewmate.id),
-      ...invalidationDefaults(Entity.IDS.BUILDING, returnValues.station.id) // station population
-    ]),
+    getInvalidations: ({ event: { returnValues } }, { crew = {} }) => {
+      return [
+        {
+          ...returnValues.crewmate,
+          // (this crewmate may or may not have already existed as a credit)
+          newGroupEval: {
+            updatedValues: { owner: returnValues.caller }
+          },
+        },
+        // crew roster (+- entirely new crew)
+        {
+          ...returnValues.callerCrew,
+          newGroupEval: crew?.Crew?.roster?.length <= 1  // if roster length of 0/1, assume crew is new
+            ? {
+              updatedValues: {
+                owner: crew?.Crew?.delegatedTo || returnValues.caller,
+                stationUuid: returnValues.station.uuid
+              }
+            }
+            : undefined
+        },
+        { ...returnValues.station }, // station population
+      ];
+    },
     // v0 and v1 are the same content
     getLogContent: ({ event: { returnValues, version } }) => ({
       icon: <CrewmateIcon />,
@@ -618,11 +638,18 @@ const activities = {
         </>
       ),
     }),
+
+    getPrepopEntities: ({ event: { returnValues } }) => ({
+      crew: returnValues.callerCrew,
+    }),
+
     triggerAlert: true
   },
 
   CrewmatesArranged: {
-    getInvalidations: ({ event: { returnValues } }) => invalidationDefaults(Entity.IDS.CREW, returnValues.callerCrew.id),
+    getInvalidations: ({ event: { returnValues } }) => ([
+      { ...returnValues.callerCrew }
+    ]),
     getLogContent: ({ event: { returnValues, version } }, viewingAs = {}) => {
       if (version === 0) {
         // v0 does not have oldCrew included, so this is presumptive and potentially inaccurate
@@ -677,9 +704,14 @@ const activities = {
 
   CrewmatesExchanged: {
     getInvalidations: ({ event: { returnValues } }) => ([
-      [ 'entities', Entity.IDS.CREW, 'owned' ],  // in case created a crew
-      ...invalidationDefaults(Entity.IDS.CREW, returnValues.crew1.id),
-      ...invalidationDefaults(Entity.IDS.CREW, returnValues.crew2.id),
+      { ...returnValues.crew1 },
+      {
+        ...returnValues.crew2,
+        // in case created new crew:
+        newGroupEval: {
+          updatedValues: { owner: returnValues.caller }
+        }
+      },
     ]),
     getLogContent: ({ event: { returnValues } }, viewingAs = {}) => {
       const crew1CompositionOld = returnValues.crew1CompositionOld.map(({ id }) => id);
@@ -774,9 +806,15 @@ const activities = {
 
   CrewEjected: {
     getInvalidations: ({ event: { returnValues } }) => ([
-      ...invalidationDefaults(returnValues.callerCrew.label, returnValues.callerCrew.id),
-      ...invalidationDefaults(returnValues.ejectedCrew.label, returnValues.ejectedCrew.id),
-      ...invalidationDefaults(returnValues.station.label, returnValues.station.id),
+      {
+        ...returnValues.ejectedCrew,
+        newGroupEval: {
+          updatedValues: {
+            stationUuid: returnValues.ejectedCrew.uuid // new station is crew's escape module
+          }
+        }
+      },
+      { ...returnValues.station }
     ]),
 
     getLogContent: ({ event: { returnValues } }, { viewingAs }) => {
@@ -799,8 +837,13 @@ const activities = {
 
   CrewStationed: {
     getInvalidations: ({ event: { returnValues } }) => ([
-      ...invalidationDefaults(returnValues.callerCrew.label, returnValues.callerCrew.id),
-      ...invalidationDefaults(returnValues.station.label, returnValues.station.id),
+      {
+        ...returnValues.callerCrew,
+        newGroupEval: {
+          updatedValues: { stationUuid: returnValues.station.uuid }
+        }
+      },
+      { ...returnValues.station },
       // TODO: previous station
     ]),
 
@@ -819,53 +862,10 @@ const activities = {
     requiresCrewTime: true
   },
 
-  // deprecated vvv
-  DeliveryStarted: {
-    getActionItem: ({ returnValues }, { destination = {} }) => {
-      const _location = locationsArrToObj(destination?.Location?.locations || []);
-      return {
-        icon: <SurfaceTransferIcon />,
-        label: 'Surface Transfer',
-        asteroidId: _location.asteroidId,
-        lotId: _location.lotId,
-        locationDetail: getEntityName(destination),
-        onClick: ({ openDialog }) => {
-          openDialog('SURFACE_TRANSFER', { deliveryId: returnValues.delivery.id });
-        }
-      };
-    },
-    getIsActionItemHidden: ({ returnValues }) => (pendingTransactions) => {
-      return pendingTransactions.find((tx) => (
-        tx.key === 'TransferInventoryFinish'
-        && tx.vars.delivery.id === returnValues.delivery.id
-      ))
-    },
-    getPrepopEntities: ({ event: { returnValues } }) => ({
-      destination: returnValues.dest,
-    }),
-  },
-  DeliveryFinished: {
-    getLogContent: (activity, viewingAs, { delivery }) => {
-      if (!delivery) return null;
-      return {
-        icon: <SurfaceTransferIcon />,
-        content: (
-          <>
-            <span>Delivery completed to </span> <EntityLink {...delivery.Delivery.dest} />
-          </>
-        ),
-      };
-    },
-    getPrepopEntities: ({ event: { returnValues } }) => ({
-      delivery: returnValues.delivery,
-    }),
-  },
-  // deprecated ^^^
-
   DeliveryCancelled: {
     getInvalidations: ({ event: { returnValues, version } }) => ([
-      ...invalidationDefaults(Entity.IDS.DELIVERY, returnValues.delivery.id),
-      ...invalidationDefaults(returnValues.origin.label, returnValues.origin.id),
+      { ...returnValues.delivery },
+      { ...returnValues.origin },
       ['actionItems']
     ]),
   },
@@ -891,8 +891,17 @@ const activities = {
     },
 
     getInvalidations: ({ event: { returnValues, version } }) => ([
-      ...invalidationDefaults(Entity.IDS.DELIVERY, returnValues.delivery.id),
-      ...invalidationDefaults(returnValues.origin.label, returnValues.origin.id),
+      {
+        ...returnValues.delivery,
+        newGroupEval: {
+          updatedValues: {
+            origin: returnValues.origin,
+            destination: returnValues.dest,
+            status: Delivery.STATUSES.PACKAGED
+          }
+        }
+      },
+      { ...returnValues.origin },
       ['actionItems']
     ]),
 
@@ -919,33 +928,33 @@ const activities = {
   },
 
   DeliveryReceived: {
-    getInvalidations: ({ event: { returnValues } }, { delivery = {} }) => {
-      const invs = [
-        ...invalidationDefaults(Entity.IDS.DELIVERY, returnValues.delivery?.id),
-        ['actionItems']
-      ];
-
-      if (delivery?.Delivery) {
-        invs.unshift(...invalidationDefaults(delivery.Delivery.origin.label, delivery.Delivery.origin.id));
-        invs.unshift(...invalidationDefaults(delivery.Delivery.dest.label, delivery.Delivery.dest.id));
-      }
-
-      return invs;
-    },
-    getLogContent: ({ event: { returnValues } }, viewingAs, { delivery }) => {
-      if (!delivery) return null;
+    getInvalidations: ({ event: { returnValues } }) => ([
+      {
+        ...returnValues.delivery,
+        newGroupEval: {
+          updatedValues: {
+            status: Delivery.STATUSES.COMPLETE
+          },
+          filters: {
+            destination: returnValues.dest,
+            origin: returnValues.origin
+          }
+        }
+      },
+      { ...returnValues.origin },
+      { ...returnValues.dest },
+      ['actionItems']
+    ]),
+    getLogContent: ({ event: { returnValues } }) => {
       return {
         icon: <SurfaceTransferIcon />,
         content: (
           <>
-            <span>Delivery completed to </span> <EntityLink {...delivery.Delivery.dest} />
+            <span>Delivery completed to </span> <EntityLink {...returnValues.dest} />
           </>
         ),
       };
     },
-    getPrepopEntities: ({ event: { returnValues } }) => ({
-      delivery: returnValues.delivery,
-    }),
     triggerAlert: true
   },
 
@@ -971,9 +980,18 @@ const activities = {
     },
 
     getInvalidations: ({ event: { returnValues, version } }) => ([
-      ...invalidationDefaults(Entity.IDS.DELIVERY, returnValues.delivery.id),
-      ...invalidationDefaults(returnValues.dest.label, returnValues.dest.id),
-      ...invalidationDefaults(returnValues.origin.label, returnValues.origin.id),
+      {
+        ...returnValues.delivery,
+        newGroupEval: {
+          updatedValues: {
+            origin: returnValues.origin,
+            destination: returnValues.dest,
+            status: Delivery.STATUSES.SENT
+          }
+        }
+      },
+      { ...returnValues.origin },
+      { ...returnValues.dest },
       ['actionItems'],
       ['swayBalance'] // (in case this was p2p)
     ]),
@@ -1001,11 +1019,9 @@ const activities = {
   },
 
   EmergencyActivated: {
-    getInvalidations: ({ event: { returnValues } }) => {
-      return [
-        ...invalidationDefaults(returnValues.ship.label, returnValues.ship.id),
-      ];
-    },
+    getInvalidations: ({ event: { returnValues } }) => ([
+      { ...returnValues.ship }
+    ]),
     getLogContent: ({ event: { returnValues } }) => {
       return {
         icon: <EmergencyModeEnterIcon />,
@@ -1021,11 +1037,9 @@ const activities = {
     triggerAlert: true
   },
   EmergencyDeactivated: {
-    getInvalidations: ({ event: { returnValues } }) => {
-      return [
-        ...invalidationDefaults(returnValues.ship.label, returnValues.ship.id),
-      ];
-    },
+    getInvalidations: ({ event: { returnValues } }) => ([
+      { ...returnValues.ship }
+    ]),
     getLogContent: ({ event: { returnValues } }) => {
       return {
         icon: <EmergencyModeExitIcon />,
@@ -1041,11 +1055,9 @@ const activities = {
     triggerAlert: true
   },
   EmergencyPropellantCollected: {
-    getInvalidations: ({ event: { returnValues } }) => {
-      return [
-        ...invalidationDefaults(returnValues.ship.label, returnValues.ship.id),
-      ];
-    },
+    getInvalidations: ({ event: { returnValues } }) => ([
+      { ...returnValues.ship }
+    ]),
     // TODO: log content seems like overkill here?
     getLogContent: ({ event: { returnValues } }) => {
       return {
@@ -1063,18 +1075,16 @@ const activities = {
 
   ExchangeConfigured: {
     getInvalidations: ({ event: { returnValues } }) => ([
-      ...invalidationDefaults(returnValues.exchange.label, returnValues.exchange.id),
+      { ...returnValues.exchange }
     ]),
   },
 
   FoodSupplied: {
-    getInvalidations: ({ event: { returnValues } }) => {
-      // TODO: replace lastFed in place
-      return [
-        ...invalidationDefaults(Entity.IDS.CREW, returnValues.callerCrew.id),
-        ...(returnValues.origin ? invalidationDefaults(returnValues.origin.label, returnValues.origin.id) : []),
-      ];
-    },
+    // TODO: replace lastFed in place
+    getInvalidations: ({ event: { returnValues } }) => ([
+      { ...returnValues.callerCrew },
+      returnValues.origin ? { ...returnValues.origin } : null
+    ]),
     getLogContent: ({ event: { returnValues } }, viewingAs) => {
       return {
         icon: <FoodIcon />,
@@ -1093,12 +1103,10 @@ const activities = {
   },
 
   ArrivalRewardClaimed: {
-    getInvalidations: ({ event: { returnValues } }) => {
-      return [
-        ...invalidationDefaults(Entity.IDS.ASTEROID, returnValues.asteroid.id),
-        ...invalidationDefaults(Entity.IDS.CREW, returnValues.callerCrew.id)
-      ];
-    },
+    getInvalidations: ({ event: { returnValues } }) => ([
+      { ...returnValues.asteroid },
+      { ...returnValues.callerCrew },
+    ]),
     getLogContent: ({ event: { returnValues } }, viewingAs) => {
       return {
         icon: <ClaimRewardIcon />,
@@ -1116,11 +1124,9 @@ const activities = {
   },
 
   PrepareForLaunchRewardClaimed: {
-    getInvalidations: ({ event: { returnValues } }) => {
-      return [
-        ...invalidationDefaults(Entity.IDS.ASTEROID, returnValues.asteroid.id)
-      ];
-    },
+    getInvalidations: ({ event: { returnValues } }) => ([
+      { ...returnValues.asteroid },
+    ]),
     getLogContent: ({ event: { returnValues } }, viewingAs) => {
       return {
         icon: <ClaimRewardIcon />,
@@ -1161,20 +1167,12 @@ const activities = {
       ))
     },
 
-    getInvalidations: ({ event: { returnValues, version } }) => {
-      const inv = [
-        ...invalidationDefaults(returnValues.processor.label, returnValues.processor.id),
-        ...invalidationDefaults(returnValues.destination.label, returnValues.destination.id),
-        ['actionItems']
-      ];
-
-      // (v1 only)
-      if (returnValues.origin) inv.unshift(...invalidationDefaults(returnValues.origin.label, returnValues.origin.id));
-
-      // TODO: do we need this for building status?
-      // ['asteroidCrewBuildings', returnValues.asteroidId, returnValues.crewId],
-      return inv;
-    },
+    getInvalidations: ({ event: { returnValues, version } }) => ([
+      { ...returnValues.processor },
+      { ...returnValues.destination },
+      returnValues.origin ? { ...returnValues.origin } : null, // (v1 only)
+      ['actionItems']
+    ]),
 
     getPrepopEntities: ({ event: { returnValues } }) => ({
       building: returnValues.processor,
@@ -1199,19 +1197,12 @@ const activities = {
   },
   MaterialProcessingFinished: {
     getInvalidations: ({ event: { returnValues, version } }, { building = {} }) => {
-
-      const invs = [
-        ...invalidationDefaults(returnValues.processor.label, returnValues.processor.id),
+      const processor = (building?.Processors || []).find((p) => p.slot === returnValues.processorSlot);
+      return [
+        { ...returnValues.processor },
+        processor?.destination ? { ...processor.destination } : null,
         ['actionItems']
       ];
-
-      const processor = (building?.Processors || []).find((p) => p.slot === returnValues.processorSlot);
-      if (processor?.destination) invs.unshift(...invalidationDefaults(processor.destination.label, processor.destination.id));
-
-      // TODO: do we need this for building status?
-      // ['asteroidCrewBuildings', returnValues.asteroidId, returnValues.crewId],
-
-      return invs;
     },
 
     getPrepopEntities: ({ event: { returnValues } }) => ({
@@ -1242,15 +1233,15 @@ const activities = {
       let invalidation;
 
       if (returnValues.entity) {
-        invalidation = invalidationDefaults(returnValues.entity.label, returnValues.entity.id);
+        invalidation = returnValues.entity;
       } else if (returnValues.asteroidId) {
-        invalidation = invalidationDefaults(Entity.IDS.ASTEROID, returnValues.asteroidId);
+        invalidation = { label: Entity.IDS.ASTEROID, id: returnValues.asteroidId };
       } else if (returnValues.crewId) {
-        invalidation = invalidationDefaults(Entity.IDS.CREWMATE, returnValues.crewId);
+        invalidation = { label: Entity.IDS.CREWMATE, id: returnValues.crewId };
       }
 
       return [
-        ...invalidation,
+        invalidation,
         ['activities'], // (to update name in already-fetched activities)
         ['watchlist']
       ];
@@ -1282,7 +1273,7 @@ const activities = {
 
   RandomEventResolved: {
     getInvalidations: ({ event: { returnValues } }) => ([
-      // ...invalidationDefaults(returnValues.callerCrew.label, returnValues.callerCrew.id), // this is redundant to `requiresCrewTime`
+      { ...returnValues.callerCrew }, // this is redundant to `requiresCrewTime`
       [ 'swayBalance' ],
     ]),
 
@@ -1325,14 +1316,23 @@ const activities = {
     },
 
     getInvalidations: ({ event: { returnValues, version } }, { extractor = {} }) => {
-      const _location = locationsArrToObj(extractor?.Location?.locations || []);
+      const { asteroidId, lotId } = locationsArrToObj(extractor?.Location?.locations || []) || {};
       return [
-        ...invalidationDefaults(Entity.IDS.DEPOSIT, returnValues.deposit.id),
-        ...invalidationDefaults(returnValues.extractor.label, returnValues.extractor.id),
-        ...invalidationDefaults(returnValues.destination.label, returnValues.destination.id),
+        {
+          ...returnValues.deposit,
+          newGroupEval: {
+            updatedValues: { depleted: true }, // optimistic
+            filters: {
+              asteroidId,
+              resourceId: returnValues.resource,
+              controllerId: returnValues.callerCrew?.id,
+              lotId
+            }
+          }
+        },
+        { ...returnValues.extractor },
+        { ...returnValues.destination },
         ['actionItems'],
-        ['asteroidCrewBuildings', _location.asteroidId, returnValues.callerCrew?.id],
-        ['asteroidCrewSampledLots', _location.asteroidId, returnValues.resource, returnValues.callerCrew?.id],
       ];
     },
 
@@ -1358,13 +1358,11 @@ const activities = {
   },
 
   ResourceExtractionFinished: {
-    getInvalidations: ({ event: { returnValues, version } }, { extractor = {} }) => {
-      const _location = locationsArrToObj(extractor?.Location?.locations || []);
+    getInvalidations: ({ event: { returnValues, version } }) => {
       return [
-        ...invalidationDefaults(returnValues.extractor.label, returnValues.extractor.id),
-        ...invalidationDefaults(returnValues.destination.label, returnValues.destination.id),
+        { ...returnValues.extractor },
+        { ...returnValues.destination },
         ['actionItems'],
-        ['asteroidCrewBuildings', _location.asteroidId, returnValues.callerCrew?.id],
       ];
     },
 
@@ -1390,7 +1388,7 @@ const activities = {
 
   ResourceScanFinished: {
     getInvalidations: ({ event: { returnValues } }) => ([
-      ...invalidationDefaults(Entity.IDS.ASTEROID, returnValues.asteroid.id),
+      { ...returnValues.asteroid },
       ['actionItems'],
       ['watchlist']
     ]),
@@ -1422,7 +1420,7 @@ const activities = {
       ))
     },
     getInvalidations: ({ event: { returnValues } }) => ([
-      ...invalidationDefaults(Entity.IDS.ASTEROID, returnValues.asteroid.id),
+      { ...returnValues.asteroid },
       ['actionItems'],
       ['watchlist']
     ]),
@@ -1439,7 +1437,7 @@ const activities = {
 
   SamplingDepositFinished: {
     getInvalidations: ({ event: { returnValues } }) => ([
-      ...invalidationDefaults(Entity.IDS.DEPOSIT, returnValues.deposit?.id),
+      { ...returnValues.deposit },
       ['actionItems']
     ]),
     getLogContent: (activity, viewingAs, { deposit = {} }) => {
@@ -1478,12 +1476,20 @@ const activities = {
         && tx.vars.deposit.id === returnValues.deposit.id
       ));
     },
-    getInvalidations: ({ event: { returnValues, version } }) => ([
-      ...invalidationDefaults(Entity.IDS.DEPOSIT, returnValues.deposit.id), // (not sure this exists)
-      ...(version > 0 ? invalidationDefaults(returnValues.origin.label, returnValues.origin.id) : []), // source inventory
+    getInvalidations: ({ event: { returnValues } }) => ([
+      {
+        ...returnValues.deposit,
+        newGroupEval: {
+          updatedValues: {
+            asteroidId: Lot.toPosition(returnValues.lot.id)?.asteroidId,
+            controllerId: returnValues.callerCrew?.id,
+            lotId: returnValues.lot?.id,
+            resourceId: returnValues.resource
+          }
+        }
+      },
+      returnValues.origin ? { ...returnValues.origin } : null, // source inventory (v1+ only)
       ['actionItems'],
-      ['entities', Entity.IDS.DEPOSIT, 'lot', returnValues.lot.id], // b/c can be new in search
-      ['asteroidCrewSampledLots', Lot.toPosition(returnValues.lot.id)?.asteroidId, returnValues.resource],
     ]),
     // getLogContent: ({ event: { returnValues } }) => {
     //   return {
@@ -1501,21 +1507,24 @@ const activities = {
 
   SellOrderCancelled: {
     getInvalidations: ({ event: { returnValues } }, { exchange = {} }) => {
+      const orderPath = ''; // TODO: buyer_crew, exchange, order_types::LIMIT_BUY, product, price, storage, storage_slot
       const { asteroidId, lotId } = locationsArrToObj(exchange?.Location?.locations || []) || {};
-      // console.log('invalidate on SellOrderCancelled', [
-      //   ...invalidationDefaults(returnValues.exchange),
-      //   ...invalidationDefaults(returnValues.storage),
-      //   [ 'crewOpenOrders' ],
-      //   [ 'orderList', returnValues.product, returnValues.exchange.id ],
-      //   [ 'exchangeOrderSummary', asteroidId, returnValues.product ],
-      //   [ 'productOrderSummary', Entity.IDS.ASTEROID, asteroidId ],
-      //   [ 'productOrderSummary', Entity.IDS.LOT, lotId ],
-      // ]);
       return [
-        ...invalidationDefaults(returnValues.exchange),
-        ...invalidationDefaults(returnValues.storage),
-        [ 'crewOpenOrders' ],
-        [ 'orderList', returnValues.product, returnValues.exchange.id ],
+        { ...returnValues.exchange },
+        { ...returnValues.storage },
+        {
+          label: Entity.IDS.ORDER,
+          path: orderPath,
+          newGroupEval: {
+            updatedValues: { status: Order.STATUSES.CANCELLED },
+            filters: {
+              controllerId: returnValues.sellerCrew.id,
+              exchangeId: returnValues.exchange.id,
+              productId: returnValues.product
+            }
+          }
+        },
+        [ 'swayBalance' ],
         [ 'exchangeOrderSummary', asteroidId, returnValues.product ],
         [ 'productOrderSummary', Entity.IDS.ASTEROID, asteroidId ],
         [ 'productOrderSummary', Entity.IDS.LOT, lotId ],
@@ -1528,12 +1537,24 @@ const activities = {
   },
   SellOrderCreated: {
     getInvalidations: ({ event: { returnValues } }, { exchange = {} }) => {
+      const orderPath = ''; // TODO: buyer_crew, exchange, order_types::LIMIT_BUY, product, price, storage, storage_slot
       const { asteroidId, lotId } = locationsArrToObj(exchange?.Location?.locations || []) || {};
       return [
-        ...invalidationDefaults(returnValues.exchange),
-        ...invalidationDefaults(returnValues.storage),
-        [ 'crewOpenOrders' ],
-        [ 'orderList', returnValues.product, returnValues.exchange.id ],
+        { ...returnValues.exchange },
+        { ...returnValues.storage },
+        {
+          label: Entity.IDS.ORDER,
+          path: orderPath,
+          newGroupEval: {
+            updatedValues: {
+              controllerId: returnValues.callerCrew.id,
+              exchangeId: returnValues.exchange.id,
+              productId: returnValues.product,
+              status: Order.STATUSES.OPEN
+            }
+          }
+        },
+        [ 'swayBalance' ],
         [ 'exchangeOrderSummary', asteroidId, returnValues.product ],
         [ 'productOrderSummary', Entity.IDS.ASTEROID, asteroidId ],
         [ 'productOrderSummary', Entity.IDS.LOT, lotId ],
@@ -1552,12 +1573,10 @@ const activities = {
   SellOrderSet: {
     getInvalidations: ({ entities, event: { returnValues } }) => {
       // TODO: entities should be coming back from ws now, so should be able to remove the else...
-      const entity = entities?.[0];
-      if (entity) {
-        return [...invalidationDefaults(entity.label, entity.id)];
-      } else {
-        return [...invalidationDefaults(Entity.IDS.SHIP, returnValues.tokenId)];
-      }
+      const [entity] = entities || [];
+      return [
+        entity ? { ...entity } : { label: Entity.IDS.SHIP, id: returnValues.tokenId }
+      ];
     },
   },
   // this applies BOTH to nfts being sold for sway AND marketplace sell orders
@@ -1570,14 +1589,27 @@ const activities = {
 
       // marketplace
       } else {
+        const orderPath = '';
         const { asteroidId, lotId } = locationsArrToObj(exchange?.Location?.locations || []) || {};
         return [
-          ...invalidationDefaults(returnValues.exchange),
-          ...invalidationDefaults(returnValues.destination),
-          ...invalidationDefaults(returnValues.storage),
+          { ...returnValues.exchange },
+          { ...returnValues.destination },
+          { ...returnValues.storage },
+          {
+            label: Entity.IDS.ORDER,
+            path: orderPath,
+            newGroupEval: {
+              updatedValues: {
+                status: Order.STATUSES.FILLED // optimistic, more likely to cause over-refetching than under
+              },
+              filters: {
+                controllerId: returnValues.sellerCrew.id,
+                exchangeId: returnValues.exchange.id,
+                productId: returnValues.product
+              }
+            }
+          },
           [ 'swayBalance' ],
-          [ 'crewOpenOrders' ],
-          [ 'orderList', returnValues.product, returnValues.exchange.id ],
           [ 'exchangeOrderSummary', asteroidId, returnValues.product ],
           [ 'productOrderSummary', Entity.IDS.ASTEROID, asteroidId ],
           [ 'productOrderSummary', Entity.IDS.LOT, lotId ],
@@ -1653,16 +1685,32 @@ const activities = {
       ))
     },
 
-    getInvalidations: ({ event: { returnValues, version } }) => ([
-      ...invalidationDefaults(returnValues.dryDock.label, returnValues.dryDock.id),
-      ...invalidationDefaults(returnValues.origin.label, returnValues.origin.id),
-      ['actionItems']
-      // TODO: do we need this for building status?
-      // ['asteroidCrewBuildings', returnValues.asteroidId, returnValues.crewId],
-    ]),
+    getInvalidations: ({ event: { returnValues, version } }, { building = {}, ship = {} }) => {
+      const _location = locationsArrToObj(building?.Location?.locations || []);
+      return [
+        { ...returnValues.dryDock },
+        { ...returnValues.origin },
+        {
+          ...returnValues.ship,
+          newGroupEval: {
+            updatedValues: {
+              asteroidId: _location?.asteroidId,
+              controllerId: returnValues.callerCrew?.id,
+              hasComponent: getComponentNames(ship),
+              hasPermission: getApplicablePermissions(ship || returnValues.ship),
+              isOnSurface: true,
+              lotId: _location?.lotId,
+              status: Ship.STATUSES.UNDER_CONSTRUCTION
+            }
+          }
+        },
+        ['actionItems']
+      ];
+    },
 
     getPrepopEntities: ({ event: { returnValues } }) => ({
       building: returnValues.dryDock,
+      ship: returnValues.ship,
     }),
 
     // getLogContent: ({ event: { returnValues } }, viewingAs, { building = {} }) => {
@@ -1681,30 +1729,35 @@ const activities = {
     requiresCrewTime: true
   },
   ShipAssemblyFinished: {
-    getInvalidations: ({ event: { returnValues } }, { building = {}, destination = {} }) => {
+    getInvalidations: ({ event: { returnValues } }, { destination = {}, ship = {} }) => {
       const lotId = destination?.label === Entity.IDS.LOT ? destination.id : locationsArrToObj(destination?.Location?.locations || [])?.lotId;
-      const invs = [
-        ...invalidationDefaults(returnValues.dryDock.label, returnValues.dryDock.id),
-        ...invalidationDefaults(returnValues.destination.label, returnValues.destination.id),
-        ['entities', Entity.IDS.SHIP, 'lot', lotId], // (b/c will be new in search)
+      const asteroidId = lotId ? Lot.toPosition(lotId).asteroidId : undefined;
+      return [
+        { ...returnValues.dryDock },
+        { ...returnValues.destination },
+        {
+          ...returnValues.ship,
+          newGroupEval: {
+            updatedValues: {
+              lotId,
+              status: Ship.STATUSES.AVAILABLE
+            },
+            filters: {
+              asteroidId,
+              controllerId: returnValues.callerCrew?.id,
+              hasComponent: getComponentNames(ship),
+              isOnSurface: true
+            }
+          }
+        },
         ['actionItems'],
-        // TODO: ...
-        // ['asteroidInventories', asteroidId],
-        // ['asteroidCrewShips', returnValues.asteroidId, returnValues.crewId],
       ];
-
-      const dryDock = (building?.DryDocks || []).find((p) => p.slot === returnValues.dryDockSlot);
-      if (dryDock?.outputShip) invs.unshift(...invalidationDefaults(dryDock.outputShip.label, dryDock.outputShip.id));
-
-      // TODO: do we need this for building status?
-      // ['asteroidCrewBuildings', returnValues.asteroidId, returnValues.crewId],
-
-      return invs;
     },
 
     getPrepopEntities: ({ event: { returnValues } }) => ({
       building: returnValues.dryDock,
       destination: returnValues.destination,
+      ship: returnValues.ship
     }),
 
     getLogContent: ({ event: { returnValues } }, viewingAs, { building = {}, destination = {} }) => {
@@ -1727,11 +1780,23 @@ const activities = {
   ShipDocked: {
     getInvalidations: ({ event: { returnValues } }, { dock = {} }) => {
       const lotId = dock?.label === Entity.IDS.LOT ? dock.id : locationsArrToObj(dock?.Location?.locations || [])?.lotId;
+      const asteroidId = lotId ? Lot.toPosition(lotId).asteroidId : undefined;
       return [
-        ...invalidationDefaults(returnValues.ship.label, returnValues.ship.id),
-        ...invalidationDefaults(returnValues.dock.label, returnValues.dock.id),
-        ...invalidationDefaults(returnValues.callerCrew.label, returnValues.callerCrew.id),
-        ['entities', Entity.IDS.SHIP, 'lot', lotId], // (b/c will be new in search)
+        {
+          ...returnValues.ship,
+          newGroupEval: {
+            updatedValues: {
+              lotId,
+              isOnSurface: true
+            },
+            filters: {
+              asteroidId,
+              controllerId: returnValues.callerCrew?.id,
+            }
+          }
+        },
+        { ...returnValues.dock },
+        { ...returnValues.callerCrew }, // location change
         // TODO: any others? passenger crews?
       ];
     },
@@ -1751,13 +1816,30 @@ const activities = {
   },
 
   ShipUndocked: {
-    getInvalidations: ({ event: { returnValues } }, { dock = {} }) => ([
-      ...invalidationDefaults(returnValues.ship.label, returnValues.ship.id),
-      ...invalidationDefaults(returnValues.dock.label, returnValues.dock.id),
-      ...invalidationDefaults(returnValues.callerCrew.label, returnValues.callerCrew.id),
-      [ 'entities', Entity.IDS.SHIP, 'asteroid', (dock?.Location?.locations || []).find((l) => l.label === Entity.IDS.ASTEROID)?.id ],
-      // TODO: any others? passenger crews?
-    ]),
+    getInvalidations: ({ event: { returnValues } }, { dock = {} }) => {
+      const { asteroidId } = locationsArrToObj(dock?.Location?.locations || []);
+      return [
+        {
+          ...returnValues.ship,
+          newGroupEval: {
+            updatedValues: {
+              lotId: 0,
+              isOnSurface: false
+            },
+            filters: {
+              asteroidId,
+              // controllerId: returnValues.callerCrew?.id // TODO: if ship is evicted, callerCrew does not match
+            }
+          }
+        },
+        { ...returnValues.dock },
+        { ...returnValues.callerCrew }, // location change
+        // TODO: any others? passenger crews?
+      ];
+    },
+    getPrepopEntities: ({ event: { returnValues } }) => ({
+      dock: returnValues.dock
+    }),
     getLogContent: ({ event: { returnValues } }) => {
       return {
         icon: <LaunchShipIcon />,
@@ -1768,16 +1850,13 @@ const activities = {
         )
       };
     },
-    getPrepopEntities: ({ event: { returnValues } }) => ({
-      dock: returnValues.dock,
-    }),
     requiresCrewTime: true, // only true currently if !powered
     triggerAlert: true
   },
 
   SurfaceScanFinished: {
     getInvalidations: ({ event: { returnValues } }) => ([
-      ...invalidationDefaults(Entity.IDS.ASTEROID, returnValues.asteroid.id),
+      { ...returnValues.asteroid },
       ['actionItems'],
       ['watchlist']
     ]),
@@ -1809,7 +1888,7 @@ const activities = {
       ))
     },
     getInvalidations: ({ event: { returnValues } }) => ([
-      ...invalidationDefaults(Entity.IDS.ASTEROID, returnValues.asteroid.id),
+      { ...returnValues.asteroid },
       ['actionItems'],
       ['watchlist']
     ]),
@@ -1826,8 +1905,19 @@ const activities = {
 
   Transfer: {
     getInvalidations: ({ entities, event: { returnValues } }) => {
-      if (!entities?.[0]?.label) return [];
-      return invalidationDefaults(entities[0].label, entities[0].id)
+      const entity = entities?.[0];
+      if (!entity?.label) return [];
+      return [
+        {
+          ...entity,
+          newGroupEval: {
+            updatedValues: {
+              owner: returnValues.to,
+              hasPermission: getApplicablePermissions(entity) // may not be necessary... probably controller is more relevant
+            }
+          }
+        }
+      ];
     },
     getLogContent: ({ entities, event: { returnValues } }) => {
       if (!entities?.[0]?.label) {
@@ -1887,9 +1977,14 @@ const activities = {
     },
 
     getInvalidations: ({ event: { returnValues, version } }) => ([
-      ...invalidationDefaults(returnValues.ship.label, returnValues.ship.id),
-      ...invalidationDefaults(returnValues.origin.label, returnValues.origin.id),
-      ...invalidationDefaults(returnValues.callerCrew.label, returnValues.callerCrew.id),
+      {
+        ...returnValues.ship,
+        newGroupEval: {
+          updatedValues: { asteroidId: null, }, // TODO: correct value?
+          filters: { controllerId: returnValues.callerCrew?.id }
+        }
+      },
+      { ...returnValues.callerCrew }, // location update
       ['actionItems'],
     ]),
 
@@ -1916,9 +2011,16 @@ const activities = {
 
   TransitFinished: {
     getInvalidations: ({ event: { returnValues, version } }) => ([
-      ...invalidationDefaults(returnValues.ship.label, returnValues.ship.id),
-      ...invalidationDefaults(returnValues.destination.label, returnValues.destination.id),
-      ...invalidationDefaults(returnValues.callerCrew.label, returnValues.callerCrew.id),
+      {
+        ...returnValues.ship,
+        newGroupEval: {
+          updatedValues: { asteroidId: returnValues.destination.id, },
+          filters: {
+            controllerId: returnValues.callerCrew?.id
+          }
+        }
+      },
+      { ...returnValues.callerCrew }, // location update
       ['actionItems'],
     ]),
 
@@ -1940,10 +2042,23 @@ const activities = {
 
   ShipCommandeered: {
     getInvalidations: ({ event: { returnValues } }, { ship = {} }) => {
-      const location = locationsArrToObj(ship?.Location?.locations || []);
+      const _location = locationsArrToObj(ship?.Location?.locations || []) || {};
       return [
-        ...invalidationDefaults(Entity.IDS.SHIP, returnValues.ship.id),
-        [ 'asteroidInventories', location?.asteroidId ],
+        {
+          ...returnValues.ship,
+          newGroupEval: {
+            updatedValues: {
+              controllerId: returnValues.callerCrew?.id,
+              hasPermission: getApplicablePermissions(ship || returnValues.ship)
+            },
+            filters: {
+              asteroidId: _location?.asteroidId,
+              hasComponent: getComponentNames(ship),
+              lotId: _location?.lotId,
+              status: ship?.Ship?.status,
+            }
+          }
+        }
       ];
     },
     getPrepopEntities: ({ event: { returnValues } }) => ({
@@ -1961,11 +2076,9 @@ const activities = {
   },
 
   DepositListedForSale: {
-    getInvalidations: ({ event: { returnValues } }, { deposit = {} }) => {
-      return [
-        ...invalidationDefaults(Entity.IDS.DEPOSIT, returnValues.deposit.id),
-      ];
-    },
+    getInvalidations: ({ event: { returnValues } }) => ([
+      { ...returnValues.deposit }
+    ]),
     getPrepopEntities: ({ event: { returnValues } }) => ({
       deposit: returnValues.deposit,
     }),
@@ -1983,11 +2096,9 @@ const activities = {
   },
 
   DepositUnlistedForSale: {
-    getInvalidations: ({ event: { returnValues } }, { deposit = {} }) => {
-      return [
-        ...invalidationDefaults(Entity.IDS.DEPOSIT, returnValues.deposit.id),
-      ];
-    },
+    getInvalidations: ({ event: { returnValues } }) => ([
+      { ...returnValues.deposit }
+    ]),
     getPrepopEntities: ({ event: { returnValues } }) => ({
       deposit: returnValues.deposit,
     }),
@@ -2004,8 +2115,22 @@ const activities = {
 
   DepositPurchased: {
     getInvalidations: ({ event: { returnValues } }, { deposit = {} }) => {
+      const _location = locationsArrToObj(deposit?.Location?.locations || []) || {};
       return [
-        ...invalidationDefaults(Entity.IDS.DEPOSIT, returnValues.deposit.id),
+        {
+          ...returnValues.deposit,
+          newGroupEval: {
+            updatedValues: {
+              controllerId: returnValues.callerCrew.id
+            },
+            filters: {
+              asteroidId: _location?.asteroidId,
+              depleted: false,
+              resourceId: deposit.Deposit?.resource,
+              lotId: _location?.lotId,
+            }
+          }
+        },
         ['swayBalance']
       ];
     },
@@ -2026,22 +2151,50 @@ const activities = {
     triggerAlert: true
   },
 
-  AddedToWhitelist: { getInvalidations: getPolicyInvalidations },
-  RemovedFromWhitelist: { getInvalidations: getPolicyInvalidations },
-  ContractPolicyAssigned: { getInvalidations: getPolicyInvalidations },
-  ContractPolicyRemoved: { getInvalidations: getPolicyInvalidations },
-  PrepaidPolicyAssigned: { getInvalidations: getPolicyInvalidations },
-  PrepaidPolicyRemoved: { getInvalidations: getPolicyInvalidations },
-  PublicPolicyAssigned: { getInvalidations: getPolicyInvalidations },
-  PublicPolicyRemoved: { getInvalidations: getPolicyInvalidations },
-  PrepaidMerklePolicyAssigned: { getInvalidations: getPolicyInvalidations },
-  PrepaidMerklePolicyRemoved: { getInvalidations: getPolicyInvalidations },
+  // if policy was changed, the only way it resulted this entity
+  //  entering a new permissioned collection would be if it became public,
+  //  so adding a public policy is handled differently from the others
+  AddedToWhitelist: {
+    getInvalidations: getPolicyInvalidations(true),
+    getPrepopEntities: ({ event: { returnValues } }) => ({
+      entity: returnValues.entity ? returnValues.entity : returnValues.target,
+    }),
+  },
+  PublicPolicyAssigned: {
+    getInvalidations: getPolicyInvalidations(true),
+    getPrepopEntities: ({ event: { returnValues } }) => ({
+      entity: returnValues.entity
+    }),
+  },
+  RemovedFromWhitelist: { getInvalidations: getPolicyInvalidations() },
+  PublicPolicyRemoved: { getInvalidations: getPolicyInvalidations() },
+  ContractPolicyAssigned: { getInvalidations: getPolicyInvalidations() },
+  ContractPolicyRemoved: { getInvalidations: getPolicyInvalidations() },
+  PrepaidPolicyAssigned: { getInvalidations: getPolicyInvalidations() },
+  PrepaidPolicyRemoved: { getInvalidations: getPolicyInvalidations() },
+  PrepaidMerklePolicyAssigned: { getInvalidations: getPolicyInvalidations() },
+  PrepaidMerklePolicyRemoved: { getInvalidations: getPolicyInvalidations() },
 
-  ContractAgreementAccepted: { getInvalidations: getAgreementInvalidations },
-  PrepaidMerkleAgreementAccepted: { getInvalidations: getAgreementInvalidations },
-  PrepaidAgreementAccepted: { getInvalidations: getAgreementInvalidations },
-  PrepaidAgreementExtended: { getInvalidations: getAgreementInvalidations },
-  PrepaidAgreementCancelled: { getInvalidations: getAgreementInvalidations },
+  ContractAgreementAccepted: {
+    getInvalidations: getAgreementInvalidations(true),
+    getPrepopEntities: ({ event: { returnValues } }) => ({
+      entity: returnValues.entity
+    }),
+  },
+  PrepaidMerkleAgreementAccepted: {
+    getInvalidations: getAgreementInvalidations(true),
+    getPrepopEntities: ({ event: { returnValues } }) => ({
+      entity: returnValues.entity
+    }),
+  },
+  PrepaidAgreementAccepted: {
+    getInvalidations: getAgreementInvalidations(true),
+    getPrepopEntities: ({ event: { returnValues } }) => ({
+      entity: returnValues.entity
+    }),
+  },
+  PrepaidAgreementExtended: { getInvalidations: getAgreementInvalidations() },
+  PrepaidAgreementCancelled: { getInvalidations: getAgreementInvalidations() },
 };
 
 /**

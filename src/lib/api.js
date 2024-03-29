@@ -177,10 +177,7 @@ const api = {
     return formatESEntityData(response.data);
   },
 
-  getCrewAccessibleInventories: async (asteroidId, crewId, withPermission) => {
-    const queryPromises = [];
-
-    // BUILDINGS...
+  getAsteroidBuildingsWithAccessibleInventories: async (asteroidId, crewId, withPermission) => {
     const buildingQueryBuilder = esb.boolQuery();
 
     // Exclude unplanned buildings
@@ -203,9 +200,13 @@ const api = {
     buildingQ.query(buildingQueryBuilder);
     buildingQ.from(0);
     buildingQ.size(10000);
-    queryPromises.push(instance.post(`/_search/building`, buildingQ.toJSON()));
 
-    // SHIPS...
+    const response = instance.post(`/_search/building`, buildingQ.toJSON());
+    
+    return formatESEntityData(response.data);
+  },
+
+  getAsteroidShipsWithAccessibleInventories: async (asteroidId, crewId, withPermission) => {
     const shipQueryBuilder = esb.boolQuery();
 
     // has permission
@@ -240,16 +241,10 @@ const api = {
     shipQ.query(shipQueryBuilder);
     shipQ.from(0);
     shipQ.size(10000);
-    queryPromises.push(instance.post(`/_search/ship`, shipQ.toJSON()));
 
-    // COMBINE...
-    const responses = await Promise.allSettled(queryPromises);
-    return responses.reduce((acc, r) => {
-      if (r.status === 'fulfilled') {
-        acc.push(...formatESEntityData(r.value.data));
-      }
-      return acc;
-    }, []);
+    const response = instance.post(`/_search/ship`, shipQ.toJSON());
+    
+    return formatESEntityData(response.data);
   },
 
   getDeliveries: async (destination, origin, statuses) => {

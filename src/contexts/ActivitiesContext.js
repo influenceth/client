@@ -69,9 +69,19 @@ export function ActivitiesProvider({ children }) {
             } else {
               // NOTE: if key is not present in updated values, value was not updated
               const { id, label, updatedValues } = invalidationConfig;
-              
+
+              // if (id) {
+              //   i.push(['entity', label, id]);
+              //   i.push(['activities', label, id]);
+            
+              // // if no id included, dump all group queries
+              // } else {
+              //   i.push(['entities', label]);
+              // }
+
               // invalidate `entity` entry
               invalidations.push(['entity', label, id]);
+              invalidations.push(['activities', label, id]);
 
               // walk through `entities` entries of label type
               // refetch group keys no longer part of, and refetch group keys it just became part of
@@ -93,7 +103,7 @@ export function ActivitiesProvider({ children }) {
                   !Object.keys(updatedValues).find((k) => collectionFilter.hasOwnProperty(k))
                   // OR at least one updatedValue disqualifies from being in filter
                   // NOTE: `!=` is deliberate to be looser
-                  || Object.keys(updatedValues).find((k) => updatedValues[k] != collectionFilter[k])
+                  || Object.keys(updatedValues).find((k) => collectionFilter.hasOwnProperty(k) && updatedValues[k] != collectionFilter[k])
                 );
                 if (debugInvalidation && isPossibleThatAddedToCollection) console.log(`${label}.${id} might be joining collection`, queryKey);
 
