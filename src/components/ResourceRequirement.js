@@ -1,12 +1,13 @@
 import React from 'react';
 import styled, { keyframes } from 'styled-components';
-import { CheckIcon } from '~/components/Icons';
+import { CheckSmallIcon } from '~/components/Icons';
 import ResourceThumbnail from '~/components/ResourceThumbnail';
 import { formatResourceAmount } from '~/game/interface/hud/actionDialogs/components';
 
 import theme, { hexToRGB } from '~/theme';
 
-const lightOrangeRGB = hexToRGB(theme.colors.lightOrange);
+const incompleteRGB = hexToRGB(theme.colors.lightOrange);
+const completeRGB = hexToRGB(theme.colors.darkGreen);
 
 const opacityAnimation = keyframes`
   0% { opacity: 0.9; }
@@ -43,24 +44,28 @@ const ResourceRequirement = ({ isGathering, item, noStyles, ...props }) => {
   if (!noStyles) {
     // (needs not yet met)
     if (item.denominator && item.numerator < item.denominator) {
-      props.backgroundColor = `rgba(${lightOrangeRGB}, 0.15)`;
+      props.backgroundColor = `rgba(${incompleteRGB}, 0.15)`;
       props.badgeColor = theme.colors.lightOrange;
-      props.outlineColor = `rgba(${lightOrangeRGB}, 0.4)`;
+      props.outlineColor = `rgba(${incompleteRGB}, 0.75)`;
       if (item.numerator > 0) { // (needs partially met)
         props.underlay = <PartialUnderlay />;
       }
 
     // (needs met or no needs specified)
     } else {
-      props.backgroundColor = `rgba(${theme.colors.mainRGB}, 0.1)`;
-      props.badgeColor = theme.colors.main;
-      props.outlineColor = `rgba(${theme.colors.mainRGB}, 0.4)`;
+      props.backgroundColor = `rgba(${completeRGB}, 0.1)`;
+      props.badgeColor = theme.colors.darkGreen;
+      props.outlineColor = `rgba(${completeRGB}, 0.5)`;
       if (item.denominator) { // (needs met)
-        props.overlayIcon = <div style={{ fontSize: 16, padding: '3px 0 0 3px' }}><CheckIcon /></div>;
+        props.overlayIcon = <div style={{ fontSize: 16, padding: '3px 0 0 3px' }}><CheckSmallIcon /></div>;
       }
     }
 
     if (item.customIcon) { // TODO: use for inTransit
+      props.backgroundColor = `rgba(${theme.colors.mainRGB}, 0.15)`;
+      props.badgeColor = theme.colors.main;
+      props.outlineColor = `rgba(${theme.colors.mainRGB}, 0.5)`;
+      props.overlayStripes = true;
       props.overlayIcon = item.customIcon.animated
         ? <Animation>{item.customIcon.icon}</Animation>
         : <div>{item.customIcon.icon}</div>;

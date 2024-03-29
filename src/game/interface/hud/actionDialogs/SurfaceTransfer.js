@@ -434,7 +434,7 @@ const SurfaceTransfer = ({
             {(!destinationLot || !isP2P)
               ? (
                 <ItemSelectionSection
-                  label="Transfer Items"
+                  label="Items"
                   items={selectedItems}
                   onClick={stage === actionStage.NOT_STARTED ? (() => setTransferSelectorOpen(true)) : undefined}
                   stage={stage} />
@@ -444,7 +444,7 @@ const SurfaceTransfer = ({
                   <FlexSectionBlock title="Offered Items" bodyStyle={{ height: 'auto', padding: 0 }}>
                     <ItemSelectionSection
                       columns={3}
-                      label="Transfer Items"
+                      label="Items"
                       items={selectedItems}
                       onClick={stage === actionStage.NOT_STARTED ? (() => setTransferSelectorOpen(true)) : undefined}
                       stage={stage}

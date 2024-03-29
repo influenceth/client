@@ -43,12 +43,16 @@ const TransferToSite = styled.div`
   align-items: center;
   display: flex;
   flex-direction: row;
-  font-size: 18px;
+  font-size: 14px;
   height: 100%;
   padding-left: 10px;
   & > label {
-    color: ${p => p.theme.colors.orange};
+    color: ${p => p.theme.colors.lightOrange};
     padding-left: 4px;
+    & > span {
+      color: white;
+      font-weight: bold;
+    }
   }
 `;
 
@@ -175,16 +179,12 @@ const Construct = ({ asteroid, lot, constructionManager, stage, ...props }) => {
             lot={lot}
             fallbackSublabel="Building"
             imageProps={{
-              iconOverlay: requirementsMet ? null : <WarningOutlineIcon />,
+              iconOverlay: (requirementsMet  && !waitingOnTransfer) ? null : <WarningIcon />,
               iconOverlayColor: theme.colors.lightOrange,
+              inventory:false,
+              iconBorderColor: (requirementsMet  && !waitingOnTransfer) ? null : `rgba(${hexToRGB(theme.colors.lightOrange)}, 0.5)`,
             }}
-            bodyStyle={requirementsMet ? {} : { background: `rgba(${hexToRGB(theme.colors.lightOrange)}, 0.15)` }}
-            tooltip={!requirementsMet && (
-              <>
-                This site is missing construction materials. Use <b>Transfer Materials to Site</b> to transfer
-                all required materials to the site before construction can begin.
-              </>
-            )}
+            bodyStyle={(requirementsMet  && !waitingOnTransfer) ? {} : { background: `rgba(${hexToRGB(theme.colors.lightOrange)}, 0.1)` }}
           />
 
           {!requirementsMet && (
@@ -192,14 +192,12 @@ const Construct = ({ asteroid, lot, constructionManager, stage, ...props }) => {
               <FlexSectionSpacer />
 
               <FlexSectionInputBlock
-                bodyStyle={{ borderColor: '#333', background: 'transparent' }}
                 isSelected
                 onClick={transferToSite}>
                 <TransferToSite>
                   <ActionButtonComponent icon={<TransferToSiteIcon />} style={{ pointerEvents: 'none' }} />
                   <label>
-                    Transfer Materials<br/>
-                    To Site
+                      <span>Send Materials to Site</span><br/>This site is missing construction materials.
                   </label>
                 </TransferToSite>
               </FlexSectionInputBlock>
@@ -209,7 +207,7 @@ const Construct = ({ asteroid, lot, constructionManager, stage, ...props }) => {
 
         {stage === actionStage.NOT_STARTED && (
           <BuildingRequirementsSection
-            label="Construction Requirements"
+            label="Materials On Site"
             mode="gathering"
             requirementsMet={requirementsMet && !waitingOnTransfer}
             requirements={buildingRequirements} />

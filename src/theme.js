@@ -78,7 +78,7 @@ const theme = {
     warning: orange,
     error: red,
     expired: '#f6574d',
-    teal, blue, lightPurple, purple, lightOrange, orange, yellow, red, darkRed, green,
+    teal, blue, lightPurple, purple, lightOrange, orange, yellow, red, darkRed, green, darkGreen,
     bonus: {
       level0: '#999999',
       level1: 'rgb(105, 235, 244)',
