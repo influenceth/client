@@ -12,14 +12,10 @@ const isVisible = ({ crew, ship }) => {
     // if already in emode, show so can toggle off
     if (ship.Ship.emergencyAt > 0) return true;
 
-    // show if food is low
-    if (crew?._foodBonuses < 1) return true;
+    // hide if food is not low
+    if (crew?._foodBonuses >= 1) return false;
 
-    // show if propellant is low
-    const shipConfig = Ship.TYPES[ship.Ship.shipType];
-    const propellantInventory = ship.Inventories.find((i) => i.slot === Ship.TYPES[ship.Ship.shipType].propellantSlot);
-    const propellantInventoryMassMax = Inventory.getType(propellantInventory?.inventoryType, crew._inventoryBonuses)?.massConstraint;
-    return (propellantInventory.mass <= shipConfig.emergencyPropellantCap * propellantInventoryMassMax);
+    return true;
   }
   return false;
 };
@@ -38,6 +34,7 @@ const EmergencyModeToggle = ({ crew, onSetAction, _disabled }) => {
     if (!crewedShip) return 'ship is not crewed';
     if (crewedShip?._location.lotId || crewedShip?._location.spaceId) return 'must be in orbit';
     if (!ready) return 'ship is busy';
+    if (crew.Crew?.roster?.length < crewedShip.Station?.population) return 'must eject passenger crew';
     return getCrewDisabledReason({ crew });
   }, [_disabled, crewedShip, ready]);
 
