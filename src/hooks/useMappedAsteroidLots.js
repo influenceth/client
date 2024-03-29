@@ -102,7 +102,7 @@ const useMappedAsteroidLots = (i) => {
     const filters = mappedLotSearch?.filters || {};
     if (searchIsOn) {
       if (filters.type && !filters.type.includes(unpacked.type.toString())) return false;
-      if (filters.leasability && filters.leasability !== unpacked.leaseStatus) return false;
+      if (filters.leasability && filters.leasability !== unpacked.leasability) return false;
       if (filters.occupiedBy && filters.occupiedBy !== unpacked.occupiedBy) return false;
       if (filters.hasCrew && !unpacked.crewPresent) return false;
       if (filters.hasCoresForSale && !unpacked.coresPresent) return false;
