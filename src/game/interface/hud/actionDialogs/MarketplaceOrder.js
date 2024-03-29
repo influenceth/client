@@ -186,6 +186,7 @@ const TooltipBody = styled.div`
 const MarketplaceOrder = ({
   asteroid,
   lot,
+  exchange,
   manager,
   stage,
   isCancellation,
@@ -200,8 +201,7 @@ const MarketplaceOrder = ({
   const createAlert = useStore(s => s.dispatchAlertLogged);
   const resource = Product.TYPES[resourceId] || {};
   const resourceByMass = !resource?.isAtomic;
-  const exchange = lot.building;  // TODO: ...
-  const { data: exchangeController } = useHydratedCrew(lot.building?.Control?.controller?.id);
+  const { data: exchangeController } = useHydratedCrew(exchange.Control?.controller?.id);
 
   const { data: swayBalance } = useSwayBalance();
 
@@ -881,8 +881,9 @@ const MarketplaceOrder = ({
 
 const Wrapper = (props) => {
   const { asteroid, lot, isLoading } = useAsteroidAndLot(props);
-  const manager = useMarketplaceManager(lot?.building?.id);
-  const pendingOrder = manager.getPendingOrder(props.mode, props.type, { exchange: lot?.building, product: props.resourceId });
+  const exchange = props.exchange || lot?.building;
+  const manager = useMarketplaceManager(exchange.id);
+  const pendingOrder = manager.getPendingOrder(props.mode, props.type, { exchange, product: props.resourceId });
   const actionStage = pendingOrder ? actionStages.STARTING : actionStages.NOT_STARTED;
 
   useEffect(() => {

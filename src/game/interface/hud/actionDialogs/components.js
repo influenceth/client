@@ -2048,7 +2048,7 @@ export const InventorySelectionDialog = ({
       });
     });
 
-    return display.sort((a, b) => {
+    return display.filter(i => !i.disabled).sort((a, b) => {
       if (a.isMine && !b.isMine) return -1;
       if (!a.isMine && b.isMine) return 1;
       if (a.isMine && b.isMine) return a.distance - b.distance;

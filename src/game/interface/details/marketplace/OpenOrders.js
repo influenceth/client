@@ -94,7 +94,8 @@ const MarketplaceOpenOrders = ({ asteroid, orders, marketplace = null, marketpla
   const onSetAction = useStore(s => s.dispatchActionDialog);
 
   const onCancelOrder = useCallback((order) => {
-    onSetAction('MARKETPLACE_ORDER', { 
+    onSetAction('MARKETPLACE_ORDER', {
+      exchange: order?.marketplace,
       asteroidId: asteroid?.id,
       lotId: order.lotId,
       mode: order.orderType === Order.IDS.LIMIT_BUY ? 'buy' : 'sell',
