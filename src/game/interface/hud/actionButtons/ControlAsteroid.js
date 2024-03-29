@@ -29,7 +29,7 @@ const ControlAsteroid = ({ asteroid, onSetAction, _disabled }) => {
   // by a different one of your crews)
   return (
     <ActionButton
-      label="Become Administrator"
+      label="Administer Asteroid"
       labelAddendum={disabledReason}
       flags={{
         attention: (!asteroid?.Control?.controller && !disabledReason),
