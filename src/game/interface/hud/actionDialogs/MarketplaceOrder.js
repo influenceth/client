@@ -198,7 +198,6 @@ const MarketplaceOrder = ({
   preselect,
   ...props
 }) => {
-  const createAlert = useStore(s => s.dispatchAlertLogged);
   const resource = Product.TYPES[resourceId] || {};
   const resourceByMass = !resource?.isAtomic;
   const { data: exchangeController } = useHydratedCrew(exchange.Control?.controller?.id);
@@ -911,6 +910,7 @@ const Wrapper = (props) => {
       <MarketplaceOrder
         asteroid={asteroid}
         lot={lot}
+        exchange={exchange}
         manager={manager}
         stage={actionStage}
         {...props} />

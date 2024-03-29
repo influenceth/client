@@ -130,7 +130,7 @@ export function SessionProvider({ children }) {
       connectors.push(new ArgentMobileConnector());
 
       const connectionOptions = {
-        dappName: 'Influence Asset Manager',
+        dappName: 'Influence',
         modalMode: auto ? 'neverAsk' : 'alwaysAsk',
         modalTheme: 'dark',
         projectId: 'influence',
