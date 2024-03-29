@@ -25,4 +25,3 @@ const LinkedViewer = () => {
 }
 
 export default LinkedViewer;
-        
