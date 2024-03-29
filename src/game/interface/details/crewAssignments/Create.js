@@ -2,17 +2,8 @@ import React, { Fragment, useCallback, useContext, useEffect, useMemo, useRef, u
 import { useHistory } from 'react-router-dom';
 import styled, { css, keyframes } from 'styled-components';
 import { Crewmate, Entity, Name } from '@influenceth/sdk';
-import {
-  BiMinus as LockedIcon,
-  BiRedo as RedoIcon,
-  BiUndo as UndoIcon,
-
-} from 'react-icons/bi';
-import {
-  VscTriangleLeft as LeftArrowIcon,
-  VscTriangleRight as RightArrowIcon,
-
-} from 'react-icons/vsc';
+import { BiMinus as LockedIcon, BiRedo as RedoIcon, BiUndo as UndoIcon } from 'react-icons/bi';
+import { VscTriangleLeft as LeftArrowIcon, VscTriangleRight as RightArrowIcon } from 'react-icons/vsc';
 import LoadingAnimation from 'react-spinners/PuffLoader';
 import { cloneDeep } from 'lodash';
 
@@ -33,6 +24,7 @@ import IconButton from '~/components/IconButton';
 import MouseoverInfoPane from '~/components/MouseoverInfoPane';
 import TextInput from '~/components/TextInput';
 import TriangleTip from '~/components/TriangleTip';
+import useSession from '~/hooks/useSession';
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
 import useBookSession, { bookIds, getBookCompletionImage } from '~/hooks/useBookSession';
 import useCrewManager from '~/hooks/actionManagers/useCrewManager';
@@ -1176,38 +1168,34 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
   const [requestedEth, setRequestedEth] = useState();
   const [requestingEth, setRequestingEth] = useState();
   const createAlert = useStore(s => s.dispatchAlertLogged);
+  const { starknet } = useSession();
+
   const getEthFromFaucet = useCallback(async () => {
-    setRequestedEth(true);
     setRequestingEth(true);
+
     try {
-      await api.requestTokens('ETH');
+      const txHash = await api.requestTokens('ETH');
+      await starknet.account.waitForTransaction(txHash);
+      setRequestingEth(false);
+      refetchEth();
+      setRequestedEth(true);
+
+      createAlert({
+        type: 'WalletAlert',
+        data: { content: 'Added 0.015 ETH to your account.' },
+        duration: 5000
+      });
     } catch (e) {
+      console.error(e);
+      setRequestingEth(false);
       createAlert({
         type: 'GenericAlert',
-        data: { content: 'Faucet already used today.' },
+        data: { content: 'Faucet request failed, please try again later.' },
         level: 'warning',
         duration: 5000
       });
-      setRequestingEth(false);
     }
-  }, []);
-
-  useEffect(() => {
-    if (requestingEth) {
-      const i = setInterval(() => {
-        refetchEth();
-        if (true) {
-          setRequestingEth(false);
-          createAlert({
-            type: 'WalletAlert',
-            data: { content: 'Added 0.015 ETH to your account.' },
-            duration: 5000
-          });
-        }
-      }, 5e3);
-      return () => clearInterval(i);
-    }
-  }, [requestingEth]);
+  }, [starknet]);
 
   const ethClaimEnabled = useMemo(() => {
     if (!faucetInfo) return false;

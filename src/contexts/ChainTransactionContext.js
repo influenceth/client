@@ -839,58 +839,75 @@ export function ChainTransactionProvider({ children }) {
   }, [blockNumber]);
 
   const execute = useCallback(async (key, vars, meta = {}) => {
-    if (starknet?.account && contracts && contracts[key]) {
-      const { execute, onTransactionError } = contracts[key];
-
-      setPromptingTransaction(true);
-
-      try {
-        // execute
-        const tx = await execute(vars);
-        dispatchPendingTransaction({
-          key,
-          vars,
-          meta,
-          timestamp: blockTime ? (blockTime * 1000) : null,
-          txHash: cleanseTxHash(tx.transaction_hash),
-          waitingOn: 'TRANSACTION'
-        });
-      } catch (e) {
-        // "User abort" is argent, 'Execute failed' is braavos
-        // TODO: in Braavos, is "Execute failed" a generic error? in that case, we should still show
-        // (and it will just be annoying that it shows a failure on declines)
-        // console.log('failed', e);
-        if (!['User abort', 'Execute failed', 'Timeout'].includes(e?.message)) {
-          dispatchFailedTransaction({
-            key,
-            vars,
-            meta,
-            txHash: null,
-            err: e?.message || e
-          });
-        }
-
-        // "Timeout" is in argent (at least) for when tx is auto-rejected b/c previous tx is still pending
-        // TODO: should hopefully be able to remove Timeout because would make sessions feel pretty useless
-        if (e?.message === 'Timeout') {
-          createAlert({
-            type: 'GenericAlert',
-            data: { content: 'Previous tx is not yet accepted on l2. Wait for the extension notification and try again.' },
-            level: 'warning',
-            duration: 5000
-          });
-        }
-
-        onTransactionError(e, vars);
-      }
-      setPromptingTransaction(false);
-    } else {
+    if (!starknet?.account || !contracts || !contracts[key]) {
       createAlert({
         type: 'GenericAlert',
         data: { content: 'Account is disconnected or contract is invalid.' },
         level: 'warning',
       });
+
+      return;
     }
+
+    // Check that the account isn't locked, and prompt to unlock if it is
+    if (!await starknet.isPreauthorized()) {
+      try {
+        await starknet.enable();
+      } catch (e) {
+        createAlert({
+          type: 'GenericAlert',
+          data: { content: 'Account is unavailable.' },
+          level: 'warning',
+        });
+
+        return;
+      }
+    }
+
+    const { execute, onTransactionError } = contracts[key];
+    setPromptingTransaction(true);
+
+    try {
+      // execute
+      const tx = await execute(vars);
+      dispatchPendingTransaction({
+        key,
+        vars,
+        meta,
+        timestamp: blockTime ? (blockTime * 1000) : null,
+        txHash: cleanseTxHash(tx.transaction_hash),
+        waitingOn: 'TRANSACTION'
+      });
+    } catch (e) {
+      // "User abort" is argent, 'Execute failed' is braavos
+      // TODO: in Braavos, is "Execute failed" a generic error? in that case, we should still show
+      // (and it will just be annoying that it shows a failure on declines)
+      // console.log('failed', e);
+      if (!['User abort', 'Execute failed', 'Timeout'].includes(e?.message)) {
+        dispatchFailedTransaction({
+          key,
+          vars,
+          meta,
+          txHash: null,
+          err: e?.message || e
+        });
+      }
+
+      // "Timeout" is in argent (at least) for when tx is auto-rejected b/c previous tx is still pending
+      // TODO: should hopefully be able to remove Timeout because would make sessions feel pretty useless
+      if (e?.message === 'Timeout') {
+        createAlert({
+          type: 'GenericAlert',
+          data: { content: 'Previous tx is not yet accepted on l2. Wait for the extension notification and try again.' },
+          level: 'warning',
+          duration: 5000
+        });
+      }
+
+      onTransactionError(e, vars);
+    }
+
+    setPromptingTransaction(false);
   }, [blockTime, contracts]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const getPendingTx = useCallback((key, vars) => {

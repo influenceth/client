@@ -712,8 +712,10 @@ export const FaucetSKU = () => {
     setRequestingEth(true);
 
     try {
-      await api.requestTokens('ETH');
+      const txHash = await api.requestTokens('ETH');
       setRequestingEth(false);
+      await starknet.account.waitForTransaction(txHash);
+
       createAlert({
         type: 'WalletAlert',
         data: { content: 'Added 0.015 ETH to your account.' },
@@ -739,14 +741,13 @@ export const FaucetSKU = () => {
     try {
       const txHash = await api.requestTokens('SWAY');
       setRequestingSway(false);
+      await starknet.account.waitForTransaction(txHash);
+
       createAlert({
         type: 'WalletAlert',
         data: { content: 'Added 400,000 SWAY to your account.' },
         duration: 5000
       });
-
-      // TODO: should we move waitForTransaction above the alert?
-      await starknet.account.waitForTransaction(txHash);
     } catch (e) {
       console.error(e);
       setRequestingSway(false);

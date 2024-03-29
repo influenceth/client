@@ -172,10 +172,6 @@ export function SessionProvider({ children }) {
     setConnecting(false);
   }, [currentSession, sessions]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  useEffect(() => {
-    console.log('effect connecting', connecting);
-  }, [connecting]);
-
   // Disconnect from the wallet provider and suspend session (don't fully logout)
   const disconnect = useCallback(() => {
     dispatchSessionSuspended();

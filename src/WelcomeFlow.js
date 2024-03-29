@@ -8,7 +8,6 @@ import useCrewContext from '~/hooks/useCrewContext';
 import useStore from '~/hooks/useStore';
 import { CrewmateSKU } from '~/game/launcher/Store';
 
-
 const STATUS = {
   LOGGED_OUT: 0,
   LOGGED_IN: 1,
@@ -16,7 +15,6 @@ const STATUS = {
   NEED_CREWMATE_INITIALIZED: 3,
   READY: 4,
 };
-
 
 const Container = styled.div`
   display: flex;
@@ -112,12 +110,6 @@ const WelcomeFlow = () => {
   }, [authenticated, crew, loading, adalianRecruits, arvadianRecruits]);
 
   useEffect(() => {
-    if (prompting && status > STATUS.LOGGED_OUT && status < STATUS.READY) {
-      if (launcherPage) {
-        dispatchLauncherPage();
-        dispatchToggleInterface(false);
-      }
-    }
     if (prompting && status === STATUS.NEED_CREWMATE_INITIALIZED) {
       setPrompting(false);
       if (!window.location.href.includes(`/recruit`)) {
