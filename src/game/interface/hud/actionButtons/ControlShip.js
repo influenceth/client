@@ -29,7 +29,7 @@ const ControlShip = ({ ship, onSetAction, _disabled }) => {
   // by a different one of your crews)
   return (
     <ActionButton
-      label="Become Administrator"
+      label="Administer Ship"
       labelAddendum={disabledReason}
       flags={{
         attention: (!ship?.Control?.controller && !disabledReason),
