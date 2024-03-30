@@ -154,7 +154,7 @@ const LogoWrapper = styled.span`
 `;
 
 const OpenerAsButtonWrapper = styled.div`
-  align-items: center;  
+  align-items: center;
   display: flex;
   font-size: 18px;
   height: 40px;

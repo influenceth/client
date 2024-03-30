@@ -140,7 +140,8 @@ export function SessionProvider({ children }) {
 
       setError();
       setConnecting(true);
-      const { wallet } = await starknetConnect(connectionOptions);
+      const { connector: wallet } = await starknetConnect(connectionOptions);
+      console.log(wallet);
 
       if (wallet && wallet.isConnected && wallet.account?.address) {
         // Default to provider chainId if not set (starknetkit doesn't set for braavos)
