@@ -121,8 +121,8 @@ const useLot = (lotId) => {
       // unclear what happens to 'WhitelistAgreement' or PublicPolicies
     };
 
-  }, [lotEntity?.uuid, isLoading])
-
+  }, [lotEntity?.uuid, isLoading, asteroid, buildings, deposits, ships]);
+  
   return useMemo(() => ({ data, isLoading }), [data, isLoading]);
 };
 
