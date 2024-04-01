@@ -249,24 +249,13 @@ const activities = {
 
   BuyOrderCancelled: {
     getInvalidations: ({ event: { returnValues } }, { exchange = {} }) => {
-      const orderPath = ''; // TODO: buyer_crew, exchange, order_types::LIMIT_BUY, product, price, storage, storage_slot
       const { asteroidId, lotId } = locationsArrToObj(exchange?.Location?.locations || []) || {};
       return [
         { ...returnValues.exchange },
         { ...returnValues.storage },
-        {
-          label: Entity.IDS.ORDER,
-          path: orderPath,
-          newGroupEval: {
-            updatedValues: { status: Order.STATUSES.CANCELLED },
-            filters: {
-              controllerId: returnValues.buyerCrew.id,
-              exchangeId: returnValues.exchange.id,
-              productId: returnValues.product
-            }
-          }
-        },
         [ 'swayBalance' ],
+        [ 'orderList', returnValues.exchange.id, returnValues.product ],
+        [ 'crewOpenOrders', returnValues.buyerCrew.id ],
         [ 'exchangeOrderSummary', asteroidId, returnValues.product ],
         [ 'productOrderSummary', Entity.IDS.ASTEROID, asteroidId ],
         [ 'productOrderSummary', Entity.IDS.LOT, lotId ],
@@ -279,24 +268,13 @@ const activities = {
   },
   BuyOrderCreated: {
     getInvalidations: ({ event: { returnValues } }, { exchange = {} }) => {
-      const orderPath = ''; // TODO: buyer_crew, exchange, order_types::LIMIT_BUY, product, price, storage, storage_slot
       const { asteroidId, lotId } = locationsArrToObj(exchange?.Location?.locations || []) || {};
       return [
         { ...returnValues.exchange },
         { ...returnValues.storage },
-        {
-          label: Entity.IDS.ORDER,
-          path: orderPath,
-          newGroupEval: {
-            updatedValues: {
-              controllerId: returnValues.callerCrew.id,
-              exchangeId: returnValues.exchange.id,
-              productId: returnValues.product,
-              status: Order.STATUSES.OPEN
-            }
-          }
-        },
         [ 'swayBalance' ],
+        [ 'orderList', returnValues.exchange.id, returnValues.product ],
+        [ 'crewOpenOrders', returnValues.callerCrew.id ],
         [ 'exchangeOrderSummary', asteroidId, returnValues.product ],
         [ 'productOrderSummary', Entity.IDS.ASTEROID, asteroidId ],
         [ 'productOrderSummary', Entity.IDS.LOT, lotId ],
@@ -312,27 +290,14 @@ const activities = {
   BuyOrderFilled: {
     // amount, buyerCrew, caller, callerCrew, exchange, origin, originSlot, price, product, storage, storageSlot
     getInvalidations: ({ event: { returnValues } }, { exchange = {} }) => {
-      const orderPath = '';
       const { asteroidId, lotId } = locationsArrToObj(exchange?.Location?.locations || []) || {};
       return [
         { ...returnValues.exchange },
         { ...returnValues.origin },
         { ...returnValues.storage },
-        {
-          label: Entity.IDS.ORDER,
-          path: orderPath,
-          newGroupEval: {
-            updatedValues: {
-              status: Order.STATUSES.FILLED // optimistic, more likely to cause over-refetching than under
-            },
-            filters: {
-              controllerId: returnValues.buyerCrew.id,
-              exchangeId: returnValues.exchange.id,
-              productId: returnValues.product
-            }
-          }
-        },
         [ 'swayBalance' ],
+        [ 'orderList', returnValues.exchange.id, returnValues.product ],
+        [ 'crewOpenOrders', returnValues.buyerCrew.id ],
         [ 'exchangeOrderSummary', asteroidId, returnValues.product ],
         [ 'productOrderSummary', Entity.IDS.ASTEROID, asteroidId ],
         [ 'productOrderSummary', Entity.IDS.LOT, lotId ],
@@ -1516,19 +1481,9 @@ const activities = {
       return [
         { ...returnValues.exchange },
         { ...returnValues.storage },
-        {
-          label: Entity.IDS.ORDER,
-          path: orderPath,
-          newGroupEval: {
-            updatedValues: { status: Order.STATUSES.CANCELLED },
-            filters: {
-              controllerId: returnValues.sellerCrew.id,
-              exchangeId: returnValues.exchange.id,
-              productId: returnValues.product
-            }
-          }
-        },
         [ 'swayBalance' ],
+        [ 'orderList', returnValues.exchange.id, returnValues.product ],
+        [ 'crewOpenOrders', returnValues.sellerCrew.id ],
         [ 'exchangeOrderSummary', asteroidId, returnValues.product ],
         [ 'productOrderSummary', Entity.IDS.ASTEROID, asteroidId ],
         [ 'productOrderSummary', Entity.IDS.LOT, lotId ],
@@ -1546,19 +1501,9 @@ const activities = {
       return [
         { ...returnValues.exchange },
         { ...returnValues.storage },
-        {
-          label: Entity.IDS.ORDER,
-          path: orderPath,
-          newGroupEval: {
-            updatedValues: {
-              controllerId: returnValues.callerCrew.id,
-              exchangeId: returnValues.exchange.id,
-              productId: returnValues.product,
-              status: Order.STATUSES.OPEN
-            }
-          }
-        },
         [ 'swayBalance' ],
+        [ 'orderList', returnValues.exchange.id, returnValues.product ],
+        [ 'crewOpenOrders', returnValues.callerCrew.id ],
         [ 'exchangeOrderSummary', asteroidId, returnValues.product ],
         [ 'productOrderSummary', Entity.IDS.ASTEROID, asteroidId ],
         [ 'productOrderSummary', Entity.IDS.LOT, lotId ],
@@ -1599,21 +1544,9 @@ const activities = {
           { ...returnValues.exchange },
           { ...returnValues.destination },
           { ...returnValues.storage },
-          {
-            label: Entity.IDS.ORDER,
-            path: orderPath,
-            newGroupEval: {
-              updatedValues: {
-                status: Order.STATUSES.FILLED // optimistic, more likely to cause over-refetching than under
-              },
-              filters: {
-                controllerId: returnValues.sellerCrew.id,
-                exchangeId: returnValues.exchange.id,
-                productId: returnValues.product
-              }
-            }
-          },
           [ 'swayBalance' ],
+          [ 'orderList', returnValues.exchange.id, returnValues.product ],
+          [ 'crewOpenOrders', returnValues.sellerCrew.id ],
           [ 'exchangeOrderSummary', asteroidId, returnValues.product ],
           [ 'productOrderSummary', Entity.IDS.ASTEROID, asteroidId ],
           [ 'productOrderSummary', Entity.IDS.LOT, lotId ],

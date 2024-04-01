@@ -425,14 +425,7 @@ const xapi = {
       price: h._source.price / 1e6,
     })) || [];
 
-    const exchangeIds = Array.from(new Set(orders.map((o) => o.entity.id)));
-
-    // TODO: this is outside of cache invalidation scope... may want to re-work
-    const exchanges = exchangeIds.length > 0 ? await getEntities({ ids: exchangeIds, label: Entity.IDS.BUILDING, components: ['Building', 'Exchange', 'Location', 'Name'] }) : [];
-    return orders.map((o) => ({
-      ...o,
-      marketplace: exchanges.find(e => Number(e.id) === Number(o.entity.id))
-    }));
+    return orders;
   },
 
   getOrderList: async (exchangeId, productId) => {

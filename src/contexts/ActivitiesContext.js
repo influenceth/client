@@ -182,8 +182,6 @@ export function ActivitiesProvider({ children }) {
                 searchAssets = ['coresamples'];
               if (label === Entity.IDS.LOT)
                 searchAssets = ['lots'/*, 'lotsMapped'*/]; // lotsMapped uses packed data
-              if (label === Entity.IDS.ORDER)
-                searchAssets = ['orders'];
               if (label === Entity.IDS.SHIP)
                 searchAssets = ['ships'];
 

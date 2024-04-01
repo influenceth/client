@@ -200,12 +200,6 @@ const assetTypes = {
     title: 'Ships',
     useColumns: listConfigs.ships,
   },
-  // orders: {
-  //   keyField: 'i',
-  //   icon: <RocketIcon />, // TODO
-  //   title: 'Market Orders',
-  //   useColumns: listConfigs.asteroids,
-  // },
   // leases: {
   //   keyField: 'i',
   //   icon: <RocketIcon />, // TODO
