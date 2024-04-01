@@ -181,7 +181,7 @@ const Construct = ({ asteroid, lot, constructionManager, stage, ...props }) => {
             fallbackSublabel="Building"
             imageProps={{
               iconOverlay: (requirementsMet  && !waitingOnTransfer) ? <CheckSmallIcon /> : <WarningIcon />,
-              iconOverlayColor: theme.colors.lightOrange,
+              iconOverlayColor: (requirementsMet  && !waitingOnTransfer) ? theme.colors.green : theme.colors.lightOrange,
               inventory:false,
               iconBorderColor: (requirementsMet  && !waitingOnTransfer) ? `rgba(${hexToRGB(theme.colors.darkGreen)}, 0.5)` : `rgba(${hexToRGB(theme.colors.lightOrange)}, 0.5)`,
             }}
