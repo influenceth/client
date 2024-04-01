@@ -92,8 +92,9 @@ const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, co
 
   const selectedLotIndex = useMemo(() => Lot.toIndex(lotId), [lotId]);
   const { data: lotDetails } = useLot(lotId);
-  const { data: outboundDeliveries } = useDeliveries({ origin: lotDetails?.building, status: Delivery.STATUSES.SENT });
-  const { data: inboundDeliveries } = useDeliveries({ destination: lotDetails?.building, status: Delivery.STATUSES.SENT });
+  const deliveryEndpoint = useMemo(() => lotDetails?.building || lotDetails?.surfaceShip, [lotDetails]);
+  const { data: outboundDeliveries } = useDeliveries({ origin: deliveryEndpoint, status: Delivery.STATUSES.SENT });
+  const { data: inboundDeliveries } = useDeliveries({ destination: deliveryEndpoint, status: Delivery.STATUSES.SENT });
 
   const [positionsReady, setPositionsReady] = useState(false);
   const [regionsByDistance, setRegionsByDistance] = useState([]);
@@ -817,7 +818,7 @@ const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, co
       depthWrite: false
     });
 
-    if (outboundDeliveries && lotDetails?.building && positions.current && positionsReady) {
+    if (outboundDeliveries && deliveryEndpoint && positions.current && positionsReady) {
       outboundDeliveries.forEach((delivery) => {
         const maybeLot = delivery.Delivery?.dest?.Location?.locations.find(l => l.label === Entity.IDS.LOT);
         if (maybeLot?.id) newDeliveries.push({
@@ -827,7 +828,7 @@ const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, co
       });
     }
 
-    if (inboundDeliveries && lotDetails?.building && positions.current && positionsReady) {
+    if (inboundDeliveries && deliveryEndpoint && positions.current && positionsReady) {
       inboundDeliveries.forEach((delivery) => {
         const maybeLot = delivery.Delivery?.origin?.Location?.locations.find(l => l.label === Entity.IDS.LOT);
         if (maybeLot?.id) newDeliveries.push({
@@ -881,7 +882,7 @@ const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, co
       deliveryArcs.current?.forEach((arc) => (attachTo || scene).remove(arc));
       deliveryArcs.current = [];
     };
-  }, [selectedLotIndex, lotDetails, inboundDeliveries, outboundDeliveries]);
+  }, [selectedLotIndex, deliveryEndpoint, inboundDeliveries, outboundDeliveries]);
 
   const selectionAnimationTime = useRef(0);
   useEffect(() => {
