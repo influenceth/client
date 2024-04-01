@@ -23,7 +23,9 @@ const useAccessibleAsteroidInventories = (asteroidId, isSourcing) => {
   );
 
   return useMemo(() => ({
-    data: [...(buildings || []), ...(ships || [])],
+    data: buildingsLoading || shipsLoading
+      ? undefined
+      : [...(buildings || []), ...(ships || [])],
     isLoading: buildingsLoading || shipsLoading
   }), [buildings, ships, buildingsLoading, shipsLoading])
 };

@@ -19,6 +19,24 @@ import api from '~/lib/api';
 const ActivitiesContext = createContext();
 const ignoreEventTypes = ['CURRENT_ETH_BLOCK_NUMBER'];
 
+const isMismatch = (updateValue, queryCacheValue) => {
+  // entity mismatch
+  if (updateValue?.uuid) {
+    return updateValue.uuid !== queryCacheValue.uuid;
+  }
+  if (updateValue?.id && updateValue?.label) {
+    return !((updateValue.id == queryCacheValue.id) && (updateValue.label == queryCacheValue.label));
+  }
+
+  // array of possible updates (NOTE: `==` is deliberate for looseness)
+  if (Array.isArray(updateValue)) {
+    return !updateValue.find((v) => v == queryCacheValue);
+  }
+
+  // straightforward (NOTE: `!=` is deliberate for looseness)
+  return updateValue != queryCacheValue;
+}
+
 export function ActivitiesProvider({ children }) {
   const { token, setBlockNumber } = useSession();
   const { crew, pendingTransactions, refreshReadyAt } = useCrewContext();
@@ -32,6 +50,25 @@ export function ActivitiesProvider({ children }) {
 
   const pendingBatchActivities = useRef([]);
   const pendingTimeout = useRef();
+
+  // useEffect(() => {
+  //   const onKeydown = (e) => {
+  //     if (e.shiftKey && e.which === 32) {
+  //       console.log('fake event')
+  //       handleActivities([
+  //         {
+  //           event: {
+  //             // ...
+  //           }
+  //         }
+  //       ]);
+  //     }
+  //   };
+  //   document.addEventListener('keydown', onKeydown);
+  //   return () => {
+  //     document.removeEventListener('keydown', onKeydown);
+  //   }
+  // }, []);
 
   const handleActivities = useCallback((newActivities, skipInvalidations) => {
     // return;
@@ -66,18 +103,10 @@ export function ActivitiesProvider({ children }) {
               invalidations.push(invalidationConfig)
 
             // else, this is an entity object
-            } else {
+            } else if (invalidationConfig) {
               // NOTE: if key is not present in updated values, value was not updated
-              const { id, label, updatedValues } = invalidationConfig;
-
-              // if (id) {
-              //   i.push(['entity', label, id]);
-              //   i.push(['activities', label, id]);
-            
-              // // if no id included, dump all group queries
-              // } else {
-              //   i.push(['entities', label]);
-              // }
+              const { id, label, newGroupEval } = invalidationConfig;
+              if (debugInvalidation && newGroupEval?.updatedValues) console.log(`${label}.${id} updates include`, newGroupEval);
 
               // invalidate `entity` entry
               invalidations.push(['entity', label, id]);
@@ -85,34 +114,57 @@ export function ActivitiesProvider({ children }) {
 
               // walk through `entities` entries of label type
               // refetch group keys no longer part of, and refetch group keys it just became part of
+              // TODO: just fetch active?
               queryClient.getQueriesData(['entities', label]).forEach(([ queryKey, data ]) => {
-                // if updatedValues do not exclude entity from potentially joining
-                // a collection according to that query filter, must invalidate that
-                // collection as a precaution
+                if (data === undefined) {
+                  console.log('bad query cache value', queryKey, data);
+                  return;
+                }
 
-                // is impossible could be added to collection if...
-                // 1) no updatedValue keys are in collectionFilter
-                //      - either is already part of results (will be updated/removed below))
-                //        OR not possible to be newly part of results
-                // 2) updatedValue key is in collectionFilter with non-matching value
-                //      - not newly part of results (if already part of results, will be removed below)
-
-                const collectionFilter = queryKey[2] === 'object' ? queryKey[2] : {};
-                const isPossibleThatAddedToCollection = !( // !impossible
-                  // no updatedValues are filtered on
-                  !Object.keys(updatedValues).find((k) => collectionFilter.hasOwnProperty(k))
-                  // OR at least one updatedValue disqualifies from being in filter
-                  // NOTE: `!=` is deliberate to be looser
-                  || Object.keys(updatedValues).find((k) => collectionFilter.hasOwnProperty(k) && updatedValues[k] != collectionFilter[k])
-                );
-                if (debugInvalidation && isPossibleThatAddedToCollection) console.log(`${label}.${id} might be joining collection`, queryKey);
-
-                const isAlreadyInCollection = data.find((d) => d.id === id && d.label === label);
-                if (debugInvalidation && isAlreadyInCollection) console.log(`${label}.${id} is already in collection`, queryKey);
-
-                if (isAlreadyInCollection || isPossibleThatAddedToCollection) {
+                // if updated entity is already in entity group, invalidate (to update/delete)
+                // TODO (enhancement): update-in-place
+                if (!!(data || []).find((d) => ((d.id === id) && (d.label === label)))) {
+                  if (debugInvalidation) console.log(`${label}.${id} is already in collection`, queryKey);
                   invalidations.push(queryKey);
-                };
+
+                // else, check if it is technically possible (to the best of our knowledge)
+                // that the updated entity now *should be* part of a new entity group based
+                // on what changed about it... we will rely on newGroupEval to guide us
+                } else if (newGroupEval?.updatedValues) {
+                  const { updatedValues, filters } = newGroupEval;
+                  const collectionFilter = typeof queryKey[2] === 'object' ? queryKey[2] : {};
+                  let skip = false;
+
+                  // if none of the updatedValue keys appear in the group filter, it's impossible that
+                  // the updatedValue would cause this entity to now belong to this group... skip
+                  // (this assumes we have written our useQuery keys to be comprehensive!)
+                  // i.e. if ship controller changed, may not need to invalidate a group specifying all ships on a lot
+                  if (!Object.keys(updatedValues).find((k) => collectionFilter.hasOwnProperty(k))) {
+                    // if (debugInvalidation) console.log('not in filter', queryKey[2], collectionFilter);
+                    skip = true;
+                  }
+
+                  // if at least one of the updatedValues would exclude the updated entity from the
+                  // group, then impossible it would be added to this group... skip
+                  else if (Object.keys(updatedValues).find((k) => collectionFilter.hasOwnProperty(k) && isMismatch(updatedValues[k], collectionFilter[k]))) {
+                    // if (debugInvalidation) console.log('change excluded');
+                    skip = true;
+                  }
+
+                  // if at least one of the filters exclude this queryKey from including updated entity... skip
+                  // i.e. if ship status changed, may only need to invalidate groups scoped to one asteroid
+                  else if (filters && Object.keys(filters).find((k) => collectionFilter.hasOwnProperty(k) && filters[k] !== undefined && isMismatch(filters[k], collectionFilter[k]))) {
+                    if (debugInvalidation) console.log('filter excluded');
+                    skip = true;
+                  }
+
+                  // if didn't skip... invalidate as a precaution
+                  if (!skip) {
+                    if (debugInvalidation) console.log(`${label}.${id} might be joining collection`, JSON.stringify(queryKey));
+                    invalidations.push(queryKey);
+                  }
+                  // else if (debugInvalidation) console.log(`${label}.${id} will NOT be joining collection`, JSON.stringify(queryKey));
+                }
               });
               
               // invalidate searches potentially a part of
@@ -142,8 +194,8 @@ export function ActivitiesProvider({ children }) {
 
             if (debugInvalidation) console.log('invalidate', invalidationConfig, invalidations);
             invalidations.forEach((queryKey) => {
-              queryClient.invalidateQueries({ queryKey, refetchType: 'none' });
-              queryClient.refetchQueries({ queryKey, type: 'active' });
+              // console.log('state', queryClient.getQueryState(queryKey))
+              queryClient.invalidateQueries({ queryKey, refetchType: 'active' });
             });
           });
 

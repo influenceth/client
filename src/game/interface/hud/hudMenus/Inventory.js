@@ -271,7 +271,7 @@ const LotInventory = () => {
 
   const zoomShipId = zoomScene?.type === 'SHIP' ? zoomScene.shipId : null;
   const { data: zoomShip } = useShip(zoomShipId);
-  const ship = useMemo(() => zoomShipId ? zoomShip : lot?.surfaceShip, [lot, zoomShip, zoomShipId]);
+  const ship = useMemo(() => zoomShipId ? zoomShip : lot?.surfaceShip, [lot?.surfaceShip, zoomShip, zoomShipId]);
 
   const entity = useMemo(() => ship || lot?.building, [lot, ship]);
 

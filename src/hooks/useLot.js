@@ -27,6 +27,7 @@ const useLot = (lotId) => {
   const { data: lotDataPrepopped, isLoading: lotDataIsLoading } = useQuery(
     ['lotEntitiesPrepopulation', lotId],
     async () => {
+      if (!lotId) console.error('useLot has bad lotId');
 
       // populate from single query... set query data
       const lotEntities = (await api.getEntities({
@@ -114,7 +115,7 @@ const useLot = (lotId) => {
       // unclear what happens to 'WhitelistAgreement' or PublicPolicies
     };
 
-  }, [lotEntity?.uuid, isLoading])
+  }, [lotEntity?.uuid, isLoading, asteroid, buildings, deposits, ships])
 
   return useMemo(() => ({ data, isLoading }), [data, isLoading]);
 };

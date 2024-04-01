@@ -187,6 +187,21 @@ export const getBlockTime = async (starknet, blockNumber = 'pending') => {
   }
 }
 
+export const safeEntityId = (variablyHydratedEntity) => {
+  if (variablyHydratedEntity) {
+    const e = {
+      id: variablyHydratedEntity?.id,
+      label: variablyHydratedEntity?.label,
+      uuid: variablyHydratedEntity?.uuid
+    };
+    if (e.id && e.label && !e.uuid) {
+      e.uuid = Entity.packEntity(e);
+    }
+    return e;
+  }
+  return undefined;
+};
+
 export const earlyAccessJSTime = 1708527600e3;
 export const openAccessJSTime = 1709046000e3;
 export const expectedBlockSeconds = 180;

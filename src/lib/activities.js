@@ -371,18 +371,22 @@ const activities = {
 
   ConstructionPlanned: {
     getInvalidations: ({ event: { returnValues } }, { building = {} }) => {
-      const { asteroidId, lotId } = locationsArrToObj(building?.Location?.locations || []);
+      const extraUpdatedValues = building?.id
+        ? {
+          hasComponent: getComponentNames(building),
+          hasPermission: getApplicablePermissions(building)
+        }
+        : {};
       return [
         {
           ...returnValues.building,
           newGroupEval: {
             updatedValues: {
-              asteroidId,
-              controllerId: returnValues.callerCrew.id,
-              hasComponent: getComponentNames(building),
-              hasPermission: getApplicablePermissions(building || returnValues.building),
-              lotId,
+              asteroidId: returnValues.asteroid?.id,
+              controllerId: returnValues.callerCrew?.id,
+              lotId: returnValues.lot?.id,
               status: Building.CONSTRUCTION_STATUSES.PLANNED,
+              ...extraUpdatedValues
             }
           }
         }
@@ -1321,7 +1325,7 @@ const activities = {
         {
           ...returnValues.deposit,
           newGroupEval: {
-            updatedValues: { depleted: true }, // optimistic
+            updatedValues: { isDepleted: true }, // optimistic
             filters: {
               asteroidId,
               resourceId: returnValues.resource,
@@ -2125,7 +2129,7 @@ const activities = {
             },
             filters: {
               asteroidId: _location?.asteroidId,
-              depleted: false,
+              isDepleted: false,
               resourceId: deposit.Deposit?.resource,
               lotId: _location?.lotId,
             }

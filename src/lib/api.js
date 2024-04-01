@@ -4,7 +4,7 @@ import esb from 'elastic-builder';
 import { executeSwap, fetchQuotes } from "@avnu/avnu-sdk";
 
 import useStore from '~/hooks/useStore';
-import { esbLocationQuery, esbPermissionQuery } from './utils';
+import { esbLocationQuery, esbPermissionQuery, safeEntityId } from './utils';
 
 // set default app version
 const apiVersion = 'v2';
@@ -74,7 +74,7 @@ const getEntities = async ({ ids, match, label, components }) => {
   return response.data;
 };
 
-const api = {
+const xapi = {
   getUser: async () => {
     const response = await instance.get(`/${apiVersion}/user`);
     return response.data;
@@ -201,7 +201,7 @@ const api = {
     buildingQ.from(0);
     buildingQ.size(10000);
 
-    const response = instance.post(`/_search/building`, buildingQ.toJSON());
+    const response = await instance.post(`/_search/building`, buildingQ.toJSON());
     
     return formatESEntityData(response.data);
   },
@@ -242,7 +242,7 @@ const api = {
     shipQ.from(0);
     shipQ.size(10000);
 
-    const response = instance.post(`/_search/ship`, shipQ.toJSON());
+    const response = await instance.post(`/_search/ship`, shipQ.toJSON());
     
     return formatESEntityData(response.data);
   },
@@ -253,10 +253,10 @@ const api = {
     const queryBuilder = esb.boolQuery();
 
     if (destination) {
-      queryBuilder.filter(esb.termQuery('Delivery.dest.uuid', destination.uuid));
+      queryBuilder.filter(esb.termQuery('Delivery.dest.uuid', safeEntityId(destination)?.uuid));
     }
     if (origin) {
-      queryBuilder.filter(esb.termQuery('Delivery.origin.uuid', origin.uuid));
+      queryBuilder.filter(esb.termQuery('Delivery.origin.uuid', safeEntityId(origin)?.uuid));
     }
     if (statuses) {
       queryBuilder.filter(esb.termsQuery('Delivery.status', statuses));
@@ -719,5 +719,14 @@ const api = {
     return response.data;
   }
 };
+
+// TODO: remove debug
+const api = Object.keys(xapi).reduce((acc, k) => {
+  acc[k] = (...args) => {
+    console.log(k, args);
+    return xapi[k](...args);
+  }
+  return acc;
+}, {});
 
 export default api;
