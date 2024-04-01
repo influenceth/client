@@ -44,18 +44,26 @@ const ResourceRequirement = ({ isGathering, item, noStyles, ...props }) => {
   if (!noStyles) {
     // (needs not yet met)
     if (item.denominator && item.numerator < item.denominator) {
-      props.backgroundColor = `rgba(${incompleteRGB}, 0.15)`;
+      props.backgroundColor = `rgba(${incompleteRGB}, 0.25)`;
       props.badgeColor = theme.colors.lightOrange;
       props.outlineColor = `rgba(${incompleteRGB}, 0.75)`;
       if (item.numerator > 0) { // (needs partially met)
         props.underlay = <PartialUnderlay />;
       }
 
-    // (needs met or no needs specified)
-    } else {
-      props.backgroundColor = `rgba(${completeRGB}, 0.1)`;
+    // (needs met)
+    } else if (item.denominator && item.numerator === item.denominator) {
+      props.backgroundColor = `rgba(${completeRGB}, 0.25)`;
       props.badgeColor = theme.colors.darkGreen;
       props.outlineColor = `rgba(${completeRGB}, 0.5)`;
+      if (item.denominator) { // (needs met)
+        props.overlayIcon = <div style={{ fontSize: 16, padding: '3px 0 0 3px' }}><CheckSmallIcon /></div>;
+      }
+
+    // (no needs specified)
+    } else {
+      props.backgroundColor = `rgba(${theme.colors.mainRGB}, 0.25)`;
+      props.outlineColor = `rgba(${theme.colors.mainRGB}, 0.75)`;
       if (item.denominator) { // (needs met)
         props.overlayIcon = <div style={{ fontSize: 16, padding: '3px 0 0 3px' }}><CheckSmallIcon /></div>;
       }
