@@ -5,7 +5,8 @@ import { Building, Crewmate, Lot, Time } from '@influenceth/sdk';
 import {
   ConstructIcon, WarningOutlineIcon,
   TransferToSiteIcon,
-  WarningIcon
+  WarningIcon,
+  CheckSmallIcon
 } from '~/components/Icons';
 import theme, { hexToRGB } from '~/theme';
 import useConstructionManager from '~/hooks/actionManagers/useConstructionManager';
@@ -179,10 +180,10 @@ const Construct = ({ asteroid, lot, constructionManager, stage, ...props }) => {
             lot={lot}
             fallbackSublabel="Building"
             imageProps={{
-              iconOverlay: (requirementsMet  && !waitingOnTransfer) ? null : <WarningIcon />,
+              iconOverlay: (requirementsMet  && !waitingOnTransfer) ? <CheckSmallIcon /> : <WarningIcon />,
               iconOverlayColor: theme.colors.lightOrange,
               inventory:false,
-              iconBorderColor: (requirementsMet  && !waitingOnTransfer) ? null : `rgba(${hexToRGB(theme.colors.lightOrange)}, 0.5)`,
+              iconBorderColor: (requirementsMet  && !waitingOnTransfer) ? `rgba(${hexToRGB(theme.colors.darkGreen)}, 0.5)` : `rgba(${hexToRGB(theme.colors.lightOrange)}, 0.5)`,
             }}
             bodyStyle={(requirementsMet  && !waitingOnTransfer) ? {} : { background: `rgba(${hexToRGB(theme.colors.lightOrange)}, 0.1)` }}
           />
