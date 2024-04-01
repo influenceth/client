@@ -829,7 +829,7 @@ const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, co
 
     if (inboundDeliveries && lotDetails?.building && positions.current && positionsReady) {
       inboundDeliveries.forEach((delivery) => {
-        const maybeLot = delivery.Delivery?.dest?.Location?.locations.find(l => l.label === Entity.IDS.LOT);
+        const maybeLot = delivery.Delivery?.origin?.Location?.locations.find(l => l.label === Entity.IDS.LOT);
         if (maybeLot?.id) newDeliveries.push({
           originIndex: Lot.toIndex(maybeLot.id),
           destinationIndex: selectedLotIndex
