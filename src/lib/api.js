@@ -74,7 +74,7 @@ const getEntities = async ({ ids, match, label, components }) => {
   return response.data;
 };
 
-const xapi = {
+const api = {
   getUser: async () => {
     const response = await instance.get(`/${apiVersion}/user`);
     return response.data;
@@ -787,14 +787,5 @@ const xapi = {
     return response.data;
   }
 };
-
-// TODO: remove debug
-const api = Object.keys(xapi).reduce((acc, k) => {
-  acc[k] = (...args) => {
-    console.log(k, args);
-    return xapi[k](...args);
-  }
-  return acc;
-}, {});
 
 export default api;
