@@ -114,15 +114,15 @@ const useMappedAsteroidLots = (i) => {
 
   // build sparse array of search results
   // TODO (enhancement): should send this to a worker if possible
-  const [lotDisplayMap, buildingTally, resultTally] = useMemo(() => {
-    const results = [];
+  const [lotResultMap, lotUseMap, lotColorMap, lotUseTallies, resultTally] = useMemo(() => {
+    const lotResult = {};
+    const lotColor = {};
+    const lotUse = {};
 
     let unpacked = {};
     let isResult = false;
-    let hasBuilding = false;
-    let color = false;
-
-    let buildingTally = 0;
+    let hasLotUse = false;
+    let lotUseTallies = {};
     let resultTally = 0;
 
     if (lotData && myOccupationMap && myShipMap) {
@@ -147,46 +147,38 @@ const useMappedAsteroidLots = (i) => {
           );
 
         // determine if this lot should be "bright"
-        isResult = 0;
+        isResult = false;
         if (isFilterMatch(unpacked)) {
-          isResult = 1;
+          isResult = true;
           resultTally++;
         }
 
         // determine if this lot should be outlined
-        hasBuilding = 0;
         if (unpacked.type > 0) {
-          hasBuilding = 1;
-          buildingTally++;
+          lotUse[i] = unpacked.type;
+          lotUseTallies[unpacked.type] = (lotUseTallies[unpacked.type] || 0) + 1;
+          lotUseTallies.total = (lotUseTallies.total || 0) + 1;
         }
 
         // if this lot has something, include in the results
-        if (isResult || hasBuilding) {
+        if (isResult || hasLotUse) {
+          lotResult[i] = isResult;
 
           // (if including, also calculate the color)
           if (highlightConfig) {    // custom highlight colors
-            color = highlightValueMap[unpacked[highlightConfig.field]];
+            lotColor[i] = highlightValueMap[unpacked[highlightConfig.field]];
           } else if (searchIsOn) {  // (default in search mode) 0 magenta
-            color = 0;
+            lotColor[i] = 0;
           } else {                  // (default in non-search mode) 0 blue, 1 white
-            color = (myOccupationMap[i] || myShipMap[i]) ? 1 : 0;
+            lotColor[i] = (myOccupationMap[i] || myShipMap[i]) ? 1 : 0;
           }
-
-          // pack into sparse results array
-          // TODO (maybe): could fit this in Uint8Array if that was preferred
-          results[i] =
-            (isResult << 5)       // 100000
-            + (hasBuilding << 4)  // 010000
-            + color;              // 001111;
-
-          // console.log(i + 1, { isResult, hasBuilding, color });
         }
       }
     }
 
     // console.log('results', results);
 
-    return [results, buildingTally, resultTally];
+    return [lotResult, lotUse, lotColor, lotUseTallies, resultTally];
   }, [lotData, myOccupationMap, isFilterMatch, highlightValueMap, rebuildTally]);
 
   const refetch = useCallback(() => {
@@ -270,11 +262,13 @@ const useMappedAsteroidLots = (i) => {
     // console.log('re memoize -- make sure this is not happening more than expected');
     return {
       data: {
-        buildingTally,
+        lotUseTallies,
         fillTally,
         resultTally,
         colorMap: highlightColorMap,
-        lotDisplayMap,
+        lotResultMap,
+        lotUseMap,
+        lotColorMap,
         lotSampledMap,
         lastLotUpdate: Date.now()
       },
@@ -283,11 +277,13 @@ const useMappedAsteroidLots = (i) => {
       refetch
     };
   }, [
-    buildingTally,
+    lotUseTallies,
     fillTally,
     resultTally,
     highlightColorMap,
-    lotDisplayMap,
+    lotResultMap,
+    lotUseMap,
+    lotColorMap,
     lotSampledMap,
     isLoading,
     processEvent,
