@@ -12,13 +12,13 @@ const useAccessibleAsteroidInventories = (asteroidId, isSourcing) => {
 
   const permissionCrewId = crew?.id;
   const { data: buildings, isLoading: buildingsLoading } = useQuery(
-    entitiesCacheKey(Entity.IDS.BUILDING, { asteroidId, hasComponent: 'Inventories', hasPermission: permission }),
+    entitiesCacheKey(Entity.IDS.BUILDING, { asteroidId, hasComponent: 'Inventories', hasPermission: permission, permissionCrewId }),
     () => api.getAsteroidBuildingsWithAccessibleInventories(asteroidId, permissionCrewId, permission),
     { enabled: !!(asteroidId && permission && permissionCrewId) }
   );
 
   const { data: ships, isLoading: shipsLoading } = useQuery(
-    entitiesCacheKey(Entity.IDS.SHIP, { asteroidId, hasComponent: 'Inventories', hasPermission: permission, isOnSurface: true, status: Ship.STATUSES.AVAILABLE }),
+    entitiesCacheKey(Entity.IDS.SHIP, { asteroidId, hasComponent: 'Inventories', hasPermission: permission, permissionCrewId, isOnSurface: true, status: Ship.STATUSES.AVAILABLE }),
     () => api.getAsteroidShipsWithAccessibleInventories(asteroidId, permissionCrewId, permission),
     { enabled: !!(asteroidId && permission && permissionCrewId) }
   );

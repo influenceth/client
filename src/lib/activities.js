@@ -92,6 +92,11 @@ const getApplicablePermissions = (entity) => {
 //  these work for Start event, but not finish, so probably better to do explicitly
 //  so the invalidation isn't forgotten
 
+// NOTE: we mostly exclude permissionCrewId here since the permission change
+// is what is important to trigger an invalidate; permissionCrewId is mostly
+// to represent the logged-in crew, and there isn't much overhead to invalidate
+// these queries on all logged-in crews
+
 const getPolicyAndAgreementConfig = (couldAddToCollection = false, invalidateAgreements = false) => {
   return {
     getInvalidations: ({ event: { returnValues } }, { entity = {} }) => {
@@ -468,7 +473,7 @@ const activities = {
             },
             filters: {
               asteroidId,
-              controllerId: returnValues.callerCrew.id,
+              controllerId: returnValues.callerCrew?.id,
               lotId
             }
           }
