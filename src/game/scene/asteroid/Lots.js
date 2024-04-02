@@ -113,7 +113,9 @@ const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, co
     [Building.IDS.SHIPYARD]: `${process.env.PUBLIC_URL}/textures/buildings/Shipyard.png`,
     [Building.IDS.SPACEPORT]: `${process.env.PUBLIC_URL}/textures/buildings/Spaceport.png`,
     [Building.IDS.MARKETPLACE]: `${process.env.PUBLIC_URL}/textures/buildings/Marketplace.png`,
-    [Building.IDS.HABITAT]: `${process.env.PUBLIC_URL}/textures/buildings/Habitat.png`
+    [Building.IDS.HABITAT]: `${process.env.PUBLIC_URL}/textures/buildings/Habitat.png`,
+    14: `${process.env.PUBLIC_URL}/textures/buildings/Construction.png`,
+    15: `${process.env.PUBLIC_URL}/textures/buildings/Ship.png`
   });
 
   const texturesLoaded = useMemo(() => {
@@ -424,18 +426,10 @@ const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, co
     meshes[0] = new InstancedMesh(new CircleGeometry(PIP_RADIUS, 6), pipMaterial, visibleLotTally);
     meshes[0].setColorAt(0, GRAY_COLOR);
 
-    const circle = new CircleGeometry(BUILDING_RADIUS, 6);
-    const defaultMaterial = new MeshBasicMaterial(materialOpts);
-    meshes[14] = new InstancedMesh(circle, defaultMaterial, lotUseTallies[14]);
-    meshes[14].setColorAt(0, new Color());
-    meshes[14].userData.bloom = true;
-
-    meshes[15] = new InstancedMesh(circle, defaultMaterial, lotUseTallies[15]);
-    meshes[15].setColorAt(0, new Color());
-    meshes[15].userData.bloom = true;
-
     const plane = new PlaneGeometry(BUILDING_RADIUS * 5, BUILDING_RADIUS * 5);
-    for (let use = 1; use <= 9; use++) {
+    const uses = [1, 2, 3, 4, 5, 6, 7, 8, 9, 14, 15];
+
+    for (const use of uses) {
       const material = new MeshBasicMaterial({ map: textures[use], ...materialOpts });
       meshes[use] = new InstancedMesh(plane, material, lotUseTallies[use]);
       meshes[use].userData.bloom = true;
