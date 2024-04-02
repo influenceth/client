@@ -1,10 +1,72 @@
 import { Entity } from '@influenceth/sdk';
 
-// TODO: write comments on why this is important
-// TODO: - how to write filters for entities queries
-// TODO: - how to review / add to activities.js
+/*              CACHE KEY DICTIONARY
+non-entity based
+- [ 'actionItems', crewId ],
+- [ 'activities', entityLabel, entityId, 'earliest' ],
+- [ 'activities', entityLabel, entityId ],
+- [ 'agreements', crewId ],
+- [ 'asteroidPackedLotData', asteroidId ]
+- [ 'constants', constantOrConstants ],
+- [ 'lotEntitiesPrepopulation', lotId ],
+- [ 'ethBalance', accountAddress ],
+- [ 'exchangeOrderSummary', asteroidId, product ],
+- [ 'faucetInfo', account ],
+- [ 'productOrderSummary', entityLabel, entityId ],
+- [ 'referrals', 'count', token ],
+- [ 'search', assetType, query ],
+- [ 'swayBalance', accountAddress ],
+- [ 'user', token ],
+- [ 'watchlist', token ],
 
-// TODO: probably drop the rest of the cache keys in here or activities.js and drop README.cache.js
+entity-based
+- [ 'entity', label, id ],
+- [ 'entities', label, filters ]
+*/
+
+/*            README
+Entity-based cache keys are written in to enable accurate cache invalidation
+with each received chain event. This happens in ActivitiesContext, and the
+invalidation configs are defined per event type in lib/activities.js.
+
+Each getInvalidation returns an array of one or more raw queryKeys (an array)
+that will be passed directly to queryClient.invalidateQueries and one or more
+entity invalidation configs (an object).
+
+Each entity-based invalidation config contains id and label (required) and
+newGroupEval (optional). The id and label will invalidate the individual cached
+entity (i.e. ['entity', label, id]), then it will search all 'entities' cache
+entries of that label for the presences of that specific label-id combo. If found,
+it will also invalidate that specific 'entities' (group) cache key.
+
+That leaves handling 'entities' group cache keys where whatever just changed
+about the entity *might* mean the updated entity should now show up in the
+'entities' group. That is where `newGroupEval` comes in.
+
+newGroupEval contains two keys:
+- updatedValues: the most optimistic changes possible from the event
+    (i.e. for extraction, a deposit may or may not become depleted, so we
+    optimistically assume for the updatedValues that { isDepleted: true })
+- filters (optional): anything else we know to be true about the filterable
+    values for that entity label
+
+For newly created entities, all values should be in updatedValues since
+they all are changes that could result in the new entity belonging to an
+entities group in the cache.
+
+For this to work properly, we must:
+1) Accurately write the filter on each `entities` cache key to cover all
+   possible discriminating keys for whether or not an entity would be included
+2) Accurately maintain newGroupEval values (whether a new event is introduced
+   or a new validFilterKey is introduced)
+
+If a new 'entities' filterKey is added, we need to review all existing
+entity newGroupEval's for that entity label and (as needed/possible), add to
+the updatedValues or filters for that eval.
+
+NOTE: this file is mostly overkill to try to ensure that new filter keys
+are only introduced in the context of these guidelines :)
+*/
 
 const validFilterKeys = {
   // ['entities', Entity.IDS.ASTEROID, { controllerId }]

@@ -127,6 +127,13 @@ const getPolicyAndAgreementConfig = (couldAddToCollection = false, invalidateAgr
   };
 };
 
+// NOTE: activities.getInvalidations should return an array of cache key invalidation configs
+// - config of type array will be passed as-is to queryClient.invalidateQueries
+// - config of type object is a special "entity" invalidation
+//    - id, label are the minimum keys for "entity" invalidation
+//    - newGroupEval may also be included... explanation for that structure is
+//      included in lib/cacheKey.js
+
 // TODO: write a test to make sure all activities (from sdk) have a config
 const activities = {
   AsteroidInitialized: {

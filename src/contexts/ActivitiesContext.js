@@ -13,8 +13,6 @@ import api from '~/lib/api';
 
 // TODO (enhancement): rather than invalidating, make optimistic updates to cache value directly
 // (i.e. update asteroid name wherever asteroid referenced rather than invalidating large query results)
-// TODO: would be nice if the cached lot collections was somehow a collection of ['lots', asteroid.id, lot.id], so when we invalidate the relevant lot, the "collection" is updated
-// TODO: would be nice to replace the query results using the linked asset we've already been passed (where that is possible)
 
 const ActivitiesContext = createContext();
 const ignoreEventTypes = ['CURRENT_ETH_BLOCK_NUMBER'];
@@ -125,6 +123,7 @@ export function ActivitiesProvider({ children }) {
               invalidations.push(invalidationConfig)
 
             // else, this is an entity object
+            // NOTE: read more about newGroupEval and invalidation configs in lib/cacheKey.js
             } else if (invalidationConfig) {
               // NOTE: if key is not present in updated values, value was not updated
               const { id, label, newGroupEval } = invalidationConfig;
@@ -139,7 +138,7 @@ export function ActivitiesProvider({ children }) {
               // TODO: just fetch active?
               queryClient.getQueriesData(['entities', label]).forEach(([ queryKey, data ]) => {
                 if (data === undefined) {
-                  console.log('bad query cache value', queryKey, data);
+                  if (debugInvalidation) console.log('bad query cache value', queryKey, data);
                   return;
                 }
 
