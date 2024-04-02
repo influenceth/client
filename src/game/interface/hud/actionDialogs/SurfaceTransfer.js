@@ -151,7 +151,6 @@ const SurfaceTransfer = ({
     const { id, label, slot } = destinationSelection || {};
     if (id !== selection.id || label !== selection.label || slot !== selection.slot) {
       setDestinationSelection(selection);
-      setSelectedItems({});
     }
   }, [destinationSelection]);
 
@@ -167,7 +166,7 @@ const SurfaceTransfer = ({
   }, [currentDelivery]);
 
   useEffect(() => {
-    if (stage === actionStage.NOT_STARTED) {
+    if (stage === actionStage.NOT_STARTED && originInventory) {
       const destInvConfig = (Inventory.getType(destinationInventory?.inventoryType, crew?._inventoryBonuses) || {});
       const destInvConstraints = destInvConfig.productConstraints;
 
