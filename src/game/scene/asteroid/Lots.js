@@ -168,7 +168,6 @@ const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, co
     processEvent,
     refetch: refetchLots
   } = useMappedAsteroidLots(asteroidId);
-  const lotsReady = !isLoading && lotResultMap;
 
   useEffect(() => {
     dispatchSearchResults({ total: resultTally, isLoading });
@@ -182,7 +181,7 @@ const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, co
 
   // if just navigated to asteroid and lots already loaded, refetch
   // (b/c might have missed ws updates while on a different asteroid)
-  // TODO: probably technically need to capture allLotsReloading / lotsReady alongside lastLotUpdate in dependency arrays
+  // TODO: probably technically need to capture allLotsReloading alongside lastLotUpdate in dependency arrays
   useEffect(() => {
     if (lotResultMap) refetchLots();
   }, []);
@@ -537,15 +536,23 @@ const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, co
     return Math.max(1, Math.min(500 / BUILDING_RADIUS, cameraAltitude / 15000));
   }, [cameraAltitude]);
 
+  const lotsReady = useMemo(() => {
+    return !isLoading &&
+      lotResultMap &&
+      meshesInitialized &&
+      positions.current &&
+      regionsByDistance?.length &&
+      lotsByRegion.current?.length &&
+      resultsByRegion.current;
+  }, [
+    isLoading,
+    lotResultMap,
+    meshesInitialized,
+    regionsByDistance
+  ]);
+
   useEffect(() => {
-    if (
-      !lotsReady ||
-      !meshesInitialized ||
-      !positions.current ||
-      !regionsByDistance?.length ||
-      !lotsByRegion.current?.length ||
-      !resultsByRegion.current
-    ) return;
+    if (!lotsReady) return;
 
     try {
       const dummy = new Object3D();
@@ -657,7 +664,6 @@ const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, co
 
       if (mouseableMesh.current) mouseableMesh.current.count = cameraAltitude > PIP_VISIBILITY_ALTITUDE ? 0 : visibleLotTally;
       if (mouseableMesh.current && updateMouseableMatrix) mouseableMesh.current.instanceMatrix.needsUpdate = true;
-
       for (const use in lotMeshes.current) {
         lotMeshes.current[use].count = lotUsesRendered[use] || 0;
         lotMeshes.current[use].instanceMatrix.needsUpdate = !!updateLotUseMatrix[use];
@@ -675,15 +681,9 @@ const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, co
     chunkyAltitude,
     cameraNormalized?.string,
     lastLotUpdate,
-    lotColorMap,
-    lotResultMap,
-    lotSampledMap,
-    lotScale,
-    lotUseMap,
     lotsReady,
     meshesInitialized,
-    positionsReady,
-    regionsByDistance
+    positionsReady
   ]);
 
   const highlightLot = useCallback((lotIndex) => {
