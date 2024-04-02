@@ -568,7 +568,6 @@ const Wrapper = ({ entity: entityId, permission, isExtension, agreementPath, ...
   const { crewIsLoading } = useCrewContext();
   const { data: asset, isLoading: assetIsLoading } = useEntity(entityId?.label === Entity.IDS.LOT ? undefined : entityId);
   const { data: lot, isLoading: lotIsLoading } = useLot(entityId?.label === Entity.IDS.LOT ? entityId?.id : undefined);
-
   const entity = asset || lot;
   const entityIsLoading = assetIsLoading || lotIsLoading;
 

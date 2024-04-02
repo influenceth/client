@@ -121,9 +121,9 @@ const SelectUninitializedCrewmateDialog = ({ onSelect }) => {
                 <CrewmateCard
                   crewmate={crewmate}
                   hasOverlay
-                  showClassInHeader
-                  hideFooter
+                  hideIfNoName
                   noWrapName
+                  showClassInHeader
                   onClick={() => setSelected(crewmate.id)} />
               </CardOuter>
             ))}
@@ -131,7 +131,7 @@ const SelectUninitializedCrewmateDialog = ({ onSelect }) => {
         </Wrapper>
       )}
       flourish={<Flourish><GenesisIcon /></Flourish>}
-      flourishWidth={cardWidth}
+      flourishWidth={170}
       leftButton={{
         label: 'Create New Adalian',
         onClick: () => onSelect(adalianRecruits?.[0]?.id || 0),

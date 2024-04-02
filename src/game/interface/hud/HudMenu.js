@@ -18,6 +18,7 @@ import {
   KeysIcon,
   ListViewIcon,
   LotSearchIcon,
+  MarketsIcon,
   MarketplaceBuildingIcon,
   MyAssetsIcon,
   OrderIcon,
@@ -224,11 +225,7 @@ const HudMenu = ({ forceOpenMenu }) => {
   const { data: lot } = useLot(lotId);
   const { data: zoomShip } = useShip(zoomScene?.type === 'SHIP' && zoomScene.shipId);
   const ship = useMemo(() => zoomScene?.type === 'SHIP' ? zoomShip : lot?.surfaceShip, [lot, zoomShip, zoomScene]);
-  // const { data: marketplaces } = useAsteroidBuildings(
-  //   asteroidId,
-  //   'Exchange',
-  //   [Permission.IDS.BUY, Permission.IDS.SELL, Permission.IDS.LIMIT_BUY, Permission.IDS.LIMIT_BUY]
-  // );
+  const { data: marketplaces } = useAsteroidBuildings(asteroidId, 'Exchange');
 
   const dispatchHudMenuOpened = useStore(s => s.dispatchHudMenuOpened);
 
@@ -489,8 +486,8 @@ const HudMenu = ({ forceOpenMenu }) => {
     pageButtons.push(
       {
         key: 'MARKETPLACE_LISTINGS',
-        label: 'Marketplace Listings',
-        icon: <OrderIcon />,
+        label: 'Marketplace Products',
+        icon: <MarketplaceBuildingIcon />,
         onOpen: () => {
           history.push(`/marketplace/${asteroidId}/${Lot.toIndex(lotId)}`);
         },
@@ -510,9 +507,9 @@ const HudMenu = ({ forceOpenMenu }) => {
       {
         key: 'ASTEROID_MARKETS',
         label: 'Asteroid Markets',
-        icon: <MarketplaceBuildingIcon />,
+        icon: <MarketsIcon />,
         onOpen: () => {
-          // if (marketplaces?.length > 0) {
+          // if (hasSomeMarketplacePermission) {
             history.push(`/marketplace/${asteroidId}/all`);
           // } else {
           //   createAlert({
@@ -523,7 +520,7 @@ const HudMenu = ({ forceOpenMenu }) => {
           //   });
           // }
         },
-        isVisible: focus === 'asteroid' || scope === 'asteroid'
+        isVisible: (focus === 'asteroid' || scope === 'asteroid') && marketplaces?.length > 0
       },
       {
         key: 'ASTEROID_ADVANCED_SEARCH',

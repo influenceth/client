@@ -14,14 +14,14 @@ const AssetBlock = styled.div`
   }
 
   ${p => p.isSelected ? `
-      background: rgba(${p.theme.colors.mainRGB}, 0.22);
+      background: rgba(${p.theme.colors.darkMainRGB}, 0.3);
       border: 1px solid rgba(${p.theme.colors.mainRGB}, 0.7);
       & > svg {
         stroke: rgba(${p.theme.colors.mainRGB}, 0.7);
       }
     `
     : `
-      background: ${p.subtle ? '#1c1c1c' : `rgba(${p.theme.colors.mainRGB}, 0.15)`};
+      background: ${p.subtle ? '#1c1c1c' : `rgba(${p.theme.colors.darkMainRGB}, 0.1)`};
       border: 1px solid transparent;
       & > svg {
         stroke: transparent;
@@ -32,7 +32,7 @@ const AssetBlock = styled.div`
   ${p => p.onClick && !p.disabled && `
     cursor: ${p.theme.cursors.active};
     &:hover {
-      background: rgba(${p.theme.colors.mainRGB}, 0.25) !important;
+      background: rgba(${p.theme.colors.darkMainRGB}, 0.5) !important;
       border-color: rgba(${p.theme.colors.mainRGB}, 0.9) !important;
       & > svg {
         stroke: rgba(${p.theme.colors.mainRGB}, 0.9) !important;

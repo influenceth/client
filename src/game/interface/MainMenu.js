@@ -1,9 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
-// import { useHistory } from 'react-router-dom';
+import { useLocation, useHistory } from 'react-router-dom';
 import styled from 'styled-components';
-import {
-  MdFullscreen as FullscreenIcon,
-  MdFullscreenExit as ExitFullscreenIcon } from 'react-icons/md';
+import { MdFullscreen as FullscreenIcon, MdFullscreenExit as ExitFullscreenIcon } from 'react-icons/md';
 import screenfull from 'screenfull';
 
 import { BackIcon } from '~/components/Icons';
@@ -112,6 +110,8 @@ const TimeSection = styled.div`
 const MainMenu = () => {
   // const playSound = useStore(s => s.dispatchSoundRequested);
   const { isMobile } = useScreenSize();
+  const location = useLocation();
+  const history = useHistory();
 
   const lotId = useStore(s => s.asteroids.lot);
   const zoomScene = useStore(s => s.asteroids.zoomScene);
@@ -152,6 +152,13 @@ const MainMenu = () => {
   }, []);
 
   const { backLabel, onClickBack } = useMemo(() => {
+    if (location.pathname.includes('/model/resource')) {
+      return {
+        backLabel: 'Exit',
+        onClickBack: () => history.goBack()
+      }
+    }
+
     if (zoomStatus !== 'in') return {};
     if (zoomScene?.type === 'LOT' || zoomScene?.type === 'SHIP') {
       return {
@@ -169,7 +176,7 @@ const MainMenu = () => {
       backLabel: 'Back to Belt',
       onClickBack: () => updateZoomStatus('zooming-out')
     }
-  }, [!!lotId, zoomScene?.type, zoomStatus]);
+  }, [!!lotId, zoomScene?.type, zoomStatus, location]);
 
   return (
     <StyledMainMenu>

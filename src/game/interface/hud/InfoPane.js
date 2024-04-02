@@ -396,7 +396,7 @@ const InfoPane = () => {
 
     } else if (zoomStatus === 'in') {
       const isIncompleteBuilding = lot?.building && !['OPERATIONAL', 'DECONSTRUCTING'].includes(constructionStatus);
-      const explicitLotControllerId = lot?.Control?.isExplicit ? lot?.Control?.controller?.id : undefined;
+      const explicitLotControllerId = lot?.Control?._isExplicit ? lot?.Control?.controller?.id : undefined;
       if (zoomScene?.type === 'LOT') {
         if (zoomScene?.overrides?.buildingType) {
           pane.title = Building.TYPES[zoomScene?.overrides?.buildingType]?.name;
@@ -507,7 +507,7 @@ const InfoPane = () => {
             hasCaptainCard={!!captainCard}>
             {hover ? <DetailsIcon /> : <ForwardIcon />}
             <ThumbPreview visible={thumbVisible}>
-              <CloseButton onClick={onClosePane}>
+              <CloseButton onClick={onClosePane} borderless>
                 <CloseIcon />
               </CloseButton>
               {thumbnail}

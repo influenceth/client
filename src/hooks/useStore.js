@@ -21,7 +21,7 @@ const buildingIds = Object.values(Building.IDS).filter((k) => k > 0).map((k) => 
 
 const assetSearchDefaults = {
   actionitems: { filters: {}, sort: ['time', 'asc'] },
-  agreements: { filters: {}, sort: ['event.timestamp', 'asc'] },
+  agreements: { filters: { timing: ['active', 'recently_expired'] }, sort: ['_agreement.endTime', 'asc'] },
   asteroids: { filters: {}, sort: ['Celestial.radius', 'desc'] },
   asteroidsMapped: { filters: {}, sort: ['Celestial.radius', 'desc'], highlight: null },
   buildings: { filters: {}, sort: ['Building.buildingType', 'asc'] },
@@ -169,10 +169,6 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
 
     dispatchActionDialog: (type, params = {}) => set(produce(state => {
       state.actionDialog = { type, params };
-    })),
-
-    dispatchHasClickedPlay: () => set(produce(state => {
-      state.tutorialStep = state.tutorialStep > 0 ? 0 : state.tutorialStep;
     })),
 
     dispatchLauncherPage: (page) => set(produce(state => {
@@ -425,6 +421,7 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
     // Unsets the current session but keeps it in the sessions list
     dispatchSessionSuspended: () => set(produce(state => {
       state.currentSession = {};
+      state.tutorialStep = -1;
     })),
 
     // Resumes a session that was suspended
@@ -635,10 +632,8 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
     'cameraNeedsReorientation',
     'cutscene',
     'draggables',
-    // 'failedTransactions',
     'lotLoader',
-    'timeOverride',  // should this be in ClockContext?
-    'tutorialStep'
+    'timeOverride' // should this be in ClockContext?
   ]
 })));
 

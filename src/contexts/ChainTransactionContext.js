@@ -366,7 +366,7 @@ const customConfigs = {
   },
   EscrowWithdrawalAndFillBuyOrders: {
     getEscrowAmount: ({ price, amount, makerFee }) => {
-      return BigInt((price * amount * (1 + makerFee)) || 0);
+      return BigInt(Math.round(price * amount * (1 + makerFee)) || 0);
     },
     escrowConfig: {
       entrypoint: 'withdraw',
@@ -376,10 +376,6 @@ const customConfigs = {
       withdrawHookKeys: ['buyer_crew', 'exchange', 'product', 'price', 'storage', 'storage_slot'],
       withdrawDataKeys: ['amount', 'origin', 'origin_slot', 'caller_crew'],
       getWithdrawals: ({ exchange_owner_account, seller_account, payments }) => {
-        // console.log([
-        //   { recipient: seller_account, amount: BigInt(payments.toPlayer) },
-        //   { recipient: exchange_owner_account, amount: BigInt(payments.toExchange) },
-        // ]);
         return [
           { recipient: seller_account, amount: BigInt(payments.toPlayer) },
           { recipient: exchange_owner_account, amount: BigInt(payments.toExchange) },
@@ -583,7 +579,8 @@ export function ChainTransactionProvider({ children }) {
             // prepend resolveRandomEvent with choice 0 so that the event is cleared
             if (prependEventAutoresolve && !(config.noSystemCalls || config.isUnblockable)) { // TODO: fill in these isUnblockable's
               const caller_crew = (Array.isArray(rawVars) ? rawVars.find((rv) => !!rv.caller_crew) : rawVars)?.caller_crew;
-              if (caller_crew) {
+
+              if (caller_crew && caller_crew.id !== 0) {
                 systemCalls.unshift({
                   runSystem: 'ResolveRandomEvent',
                   rawVars: { caller_crew, choice: 0 }
@@ -738,7 +735,7 @@ export function ChainTransactionProvider({ children }) {
   // on initial load, set provider.waitForTransaction for any pendingTransactions
   // so that we can throw any extension-related or timeout errors needed
   useEffect(() => {
-    if (starknet?.account && contracts && pendingTransactions?.length) {
+    if (starknet?.provider && contracts && pendingTransactions?.length) {
       pendingTransactions.forEach(({ key, vars, txHash }) => {
         // (sanity check) this should not be possible since pendingTransaction should not be created
         // without txHash... so we aren't even reporting this error to user since should not happen
@@ -750,7 +747,7 @@ export function ChainTransactionProvider({ children }) {
           // NOTE: waitForTransaction is slow -- often slower than server to receive and process
           //  event and send back to frontend... so we are using it just to listen for errors
           //  (activities from backend will demonstrate success)
-          starknet.account.waitForTransaction(txHash, { retryInterval: RETRY_INTERVAL })
+          starknet.provider.waitForTransaction(txHash, { retryInterval: RETRY_INTERVAL })
             // .then((receipt) => {
             //   if (receipt) {
             //     console.log('transaction settled');
@@ -820,7 +817,7 @@ export function ChainTransactionProvider({ children }) {
         if (Math.floor(Date.now() / 1000) > Math.floor(tx.timestamp / 1000) + 30) {
           const { key, vars, txHash } = tx;
 
-          starknet.account.getTransactionReceipt(txHash)
+          starknet.provider.getTransactionReceipt(txHash)
             .then((receipt) => {
               if (receipt && receipt.execution_status === 'REVERTED') {
                 contracts[key].onTransactionError(receipt, vars);
@@ -842,58 +839,75 @@ export function ChainTransactionProvider({ children }) {
   }, [blockNumber]);
 
   const execute = useCallback(async (key, vars, meta = {}) => {
-    if (starknet?.account && contracts && contracts[key]) {
-      const { execute, onTransactionError } = contracts[key];
-
-      setPromptingTransaction(true);
-
-      try {
-        // execute
-        const tx = await execute(vars);
-        dispatchPendingTransaction({
-          key,
-          vars,
-          meta,
-          timestamp: blockTime ? (blockTime * 1000) : null,
-          txHash: cleanseTxHash(tx.transaction_hash),
-          waitingOn: 'TRANSACTION'
-        });
-      } catch (e) {
-        // "User abort" is argent, 'Execute failed' is braavos
-        // TODO: in Braavos, is "Execute failed" a generic error? in that case, we should still show
-        // (and it will just be annoying that it shows a failure on declines)
-        // console.log('failed', e);
-        if (!['User abort', 'Execute failed', 'Timeout'].includes(e?.message)) {
-          dispatchFailedTransaction({
-            key,
-            vars,
-            meta,
-            txHash: null,
-            err: e?.message || e
-          });
-        }
-
-        // "Timeout" is in argent (at least) for when tx is auto-rejected b/c previous tx is still pending
-        // TODO: should hopefully be able to remove Timeout because would make sessions feel pretty useless
-        if (e?.message === 'Timeout') {
-          createAlert({
-            type: 'GenericAlert',
-            data: { content: 'Previous tx is not yet accepted on l2. Wait for the extension notification and try again.' },
-            level: 'warning',
-            duration: 5000
-          });
-        }
-
-        onTransactionError(e, vars);
-      }
-      setPromptingTransaction(false);
-    } else {
+    if (!starknet?.account || !contracts || !contracts[key]) {
       createAlert({
         type: 'GenericAlert',
         data: { content: 'Account is disconnected or contract is invalid.' },
         level: 'warning',
       });
+
+      return;
     }
+
+    // Check that the account isn't locked, and prompt to unlock if it is
+    if (!await starknet.isPreauthorized()) {
+      try {
+        await starknet.enable();
+      } catch (e) {
+        createAlert({
+          type: 'GenericAlert',
+          data: { content: 'Account is unavailable.' },
+          level: 'warning',
+        });
+
+        return;
+      }
+    }
+
+    const { execute, onTransactionError } = contracts[key];
+    setPromptingTransaction(true);
+
+    try {
+      // execute
+      const tx = await execute(vars);
+      dispatchPendingTransaction({
+        key,
+        vars,
+        meta,
+        timestamp: blockTime ? (blockTime * 1000) : null,
+        txHash: cleanseTxHash(tx.transaction_hash),
+        waitingOn: 'TRANSACTION'
+      });
+    } catch (e) {
+      // "User abort" is argent, 'Execute failed' is braavos
+      // TODO: in Braavos, is "Execute failed" a generic error? in that case, we should still show
+      // (and it will just be annoying that it shows a failure on declines)
+      // console.log('failed', e);
+      if (!['User abort', 'Execute failed', 'Timeout'].includes(e?.message)) {
+        dispatchFailedTransaction({
+          key,
+          vars,
+          meta,
+          txHash: null,
+          err: e?.message || e
+        });
+      }
+
+      // "Timeout" is in argent (at least) for when tx is auto-rejected b/c previous tx is still pending
+      // TODO: should hopefully be able to remove Timeout because would make sessions feel pretty useless
+      if (e?.message === 'Timeout') {
+        createAlert({
+          type: 'GenericAlert',
+          data: { content: 'Previous tx is not yet accepted on l2. Wait for the extension notification and try again.' },
+          level: 'warning',
+          duration: 5000
+        });
+      }
+
+      onTransactionError(e, vars);
+    }
+
+    setPromptingTransaction(false);
   }, [blockTime, contracts]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const getPendingTx = useCallback((key, vars) => {

@@ -200,6 +200,16 @@ const assetTypes = {
     title: 'Ships',
     useColumns: listConfigs.ships,
   },
+  agreements: {
+    keyField: 'key',
+    icon: <AssetAgreementsIcon />,
+    title: 'Agreements',
+    useColumns: listConfigs.agreements,
+    // TODO: link to agreements on asset
+    usePagedAssetsOverride: usePagedAgreements,
+    // hideInDropdown: true,
+    // disableFilters: true
+  },
   // leases: {
   //   keyField: 'i',
   //   icon: <RocketIcon />, // TODO
@@ -225,8 +235,10 @@ const assetTypes = {
     useColumns: listConfigs.actionItems,
     usePagedAssetsOverride: usePagedActionItems,
     getRowProps: (row) => {
-      if (statuses[row.type]) {
-        return { status: row.type };
+      if (row._expired || statuses[row.type]) {
+        return {
+          status: row._expired ? '_expired' : row.type
+        };
       }
       return {};
     }
@@ -237,15 +249,6 @@ const assetTypes = {
     title: 'Logged Events',
     useColumns: listConfigs.events,
     usePagedAssetsOverride: usePagedEvents,
-    disableFilters: true
-  },
-  agreements: {
-    keyField: 'key',
-    icon: <AssetAgreementsIcon />,
-    title: 'Agreements',
-    useColumns: listConfigs.agreements,
-    usePagedAssetsOverride: usePagedAgreements,
-    hideInDropdown: true,
     disableFilters: true
   }
 }
@@ -261,7 +264,7 @@ const assetsAsOptions = Object.keys(assetTypes)
 const ListViewComponent = ({ assetType, onAssetTypeChange, params }) => {
   const { keyField, getRowProps, useColumns, usePagedAssetsOverride, disableFilters } = assetTypes[assetType];
   const { query, page, perPage, setPage, sort, setSort, disablePagination } = usePagedAssetsOverride ? usePagedAssetsOverride(params) : usePagedAssets(assetType, params); // eslint-disable-line react-hooks/rules-of-hooks
-  const [sortField, sortDirection] = sort || [];
+  const [sortField, sortDirection, sortOptions] = sort || [];
 
   const filters = useStore(s => s.assetSearch[assetType].filters);
   const isAssetSearchFilterMatchingDefault = useStore(s => s.isAssetSearchFilterMatchingDefault);
@@ -289,7 +292,7 @@ const ListViewComponent = ({ assetType, onAssetTypeChange, params }) => {
     setFiltersOpen(true);
   }, []);
 
-  const handleSort = useCallback((field) => () => {
+  const handleSort = useCallback((field, options = {}) => () => {
     if (!field) return;
 
     let updatedSortField = sortField;
@@ -301,11 +304,8 @@ const ListViewComponent = ({ assetType, onAssetTypeChange, params }) => {
       updatedSortDirection = 'desc';
     }
 
-    setSort([
-      updatedSortField,
-      updatedSortDirection
-    ]);
-  }, [sortDirection, sortField]);
+    setSort([updatedSortField, updatedSortDirection, options]);
+  }, [sortDirection, sortField, sortOptions]);
 
   useEffect(() => {
     if (query?.data?.length === 0) setPage(1);
@@ -395,6 +395,7 @@ const ListViewComponent = ({ assetType, onAssetTypeChange, params }) => {
               getRowProps={getRowProps}
               keyField={keyField}
               onClickColumn={handleSort}
+              sortOptions={sort[2]}
               sortDirection={sort[1]}
               sortField={sort[0]}
             />

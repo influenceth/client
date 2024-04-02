@@ -151,11 +151,11 @@ const FlexSectionBlockInner = styled.div`
   padding: 8px 16px 8px 8px;
 `;
 
-
 export const FlexSection = styled(Section)`
-  align-items: flex-end;
+  align-items: flex-start;
   display: flex;
 `;
+
 export const SectionTitle = styled.div`
   align-items: center;
   border-bottom: 1px solid ${borderColor};
@@ -479,7 +479,7 @@ const EmptyThumbnail = styled.div`
 `;
 
 const AsteroidThumbnailWrapper = styled(ResourceThumbnailWrapper)`
-  background-color: rgba(0, 0, 0, 0.6);
+  background-color: rgba(0, 0, 0, 0.75);
 `;
 const BuildingThumbnailWrapper = styled(ResourceThumbnailWrapper)`
   height: 92px;
@@ -638,6 +638,10 @@ const PropulsionTypeOption = styled.div`
     }
   `}
 
+  ${p => p.disabled && `
+    color: ${p.theme.colors.disabledButton};
+  `}
+
   ${p => p.selected && `
     color: white;
     opacity: 1;
@@ -645,6 +649,9 @@ const PropulsionTypeOption = styled.div`
 
   & svg {
     color: ${p => p.theme.colors.main};
+    ${p => p.disabled && `
+      color: ${p.theme.colors.disabledButton};
+    `}
     font-size: 22px;
     margin-right: 5px;
   }
@@ -1100,12 +1107,9 @@ const MiniBar = styled.div`
       width: ${Math.abs(100 * p.deltaValue)}%;
       z-index: 1;
       ${p.deltaValue < 0
-        ? `
-          right: ${100 * (1 - (p.value - p.deltaValue))}%;
-        `
-        : `
-          left: ${100 * (p.value - p.deltaValue)}%;
-        `}
+        ? `right: ${100 * (1 - (p.value - p.deltaValue))}%;`
+        : `left: ${100 * (p.value - p.deltaValue)}%;`
+      }
     }
   `}
 `;
@@ -1304,7 +1308,7 @@ export const SelectionDialog = ({ children, isCompletable, open, onClose, onComp
       <SelectionBody>
         <div>{children}</div>
       </SelectionBody>
-      <SelectionButtons style={{ position: 'relative'}}>
+      <SelectionButtons style={{ position: 'relative' }}>
         <Button onClick={onClose}>Cancel</Button>
         <Button disabled={!isCompletable} onClick={onComplete}>Done</Button>
       </SelectionButtons>
@@ -1345,8 +1349,8 @@ export const CrewSelectionDialog = ({ crews, onClose, onSelected, open, title })
               onClick={() => setSelection(crew)}
               title={
                 i === 0
-                ? <CrewLocationWrapper><CrewLocationLabel hydratedLocation={hydratedLocation} /></CrewLocationWrapper>
-                : ''
+                  ? <CrewLocationWrapper><CrewLocationLabel hydratedLocation={hydratedLocation} /></CrewLocationWrapper>
+                  : ''
               }
               style={{ marginBottom: 8, width: '100%' }} />
           );
@@ -1504,7 +1508,7 @@ export const CoreSampleSelectionDialog = ({ lotId, options, initialSelection, on
         if ((crew?.id === a.Control?.controller?.id) !== (crew?.id === b.Control?.controller?.id)) {
           return (crew?.id === a.Control?.controller?.id) ? -1 : 1;
         }
-        
+
         // sort by deposit size
         return b.Deposit.remainingYield - a.Deposit.remainingYield;
       })
@@ -1552,7 +1556,7 @@ export const CoreSampleSelectionDialog = ({ lotId, options, initialSelection, on
                 onClick={() => setSelection(sample)}
                 selectedRow={selection?.id === sample.id}
                 style={{ height: 36 }}>
-                <td style={{ color: theme.colors.resources[keyify(Product.TYPES[sample.Deposit.resource]?.category)]}}>
+                <td style={{ color: theme.colors.resources[keyify(Product.TYPES[sample.Deposit.resource]?.category)] }}>
                   <CoreSampleIcon style={{ fontSize: '22px' }} /> {Product.TYPES[sample.Deposit.resource]?.name}
                 </td>
                 <td style={{ color: theme.colors.depositSize }}>
@@ -1618,7 +1622,7 @@ export const TransferSelectionDialog = ({
 
   const onSelectItem = useCallback((resourceId) => (selectedAmount) => {
     setSelection((currentlySelected) => {
-      const updated = {...currentlySelected};
+      const updated = { ...currentlySelected };
       if (selectedAmount > 0) {
         updated[resourceId] = Math.floor(selectedAmount);
       } else {
@@ -1655,7 +1659,7 @@ export const TransferSelectionDialog = ({
           }
           maxSelectable = Math.min(Math.max(0, productConstraint - alreadyInTarget - enrouteToTarget), amount);
 
-        // not present means not allowed
+          // not present means not allowed
         } else {
           maxSelectable = 0;
         }
@@ -1857,7 +1861,8 @@ export const ProcessSelectionDialog = ({ initialSelection, onClose, forceProcess
   const [selection, setSelection] = useState(initialSelection);
 
   const processes = useMemo(() => {
-    return forceProcesses || Object.values(Process.TYPES).filter((p) => p.processorType === processorType);
+    const unSorted = forceProcesses || Object.values(Process.TYPES).filter((p) => p.processorType === processorType);
+    return unSorted.sort((a, b) => a.name > b.name ? 1 : -1);
   }, [forceProcesses, processorType])
 
   const onComplete = useCallback(() => {
@@ -1880,8 +1885,8 @@ export const ProcessSelectionDialog = ({ initialSelection, onClose, forceProcess
           <thead>
             <tr>
               <td>Process Name</td>
-              <td style={{ textAlign: 'left'}}>Inputs</td>
-              {processes[0]?.outputs && <td style={{ textAlign: 'left'}}>Outputs</td>}
+              <td style={{ textAlign: 'left' }}>Inputs</td>
+              {processes[0]?.outputs && <td style={{ textAlign: 'left' }}>Outputs</td>}
             </tr>
           </thead>
           <tbody>
@@ -1922,7 +1927,7 @@ export const ProcessSelectionDialog = ({ initialSelection, onClose, forceProcess
 
 // TODO: should this be in sdk?
 const getInventorySublabel = (inventoryType) => {
-  switch(inventoryType) {
+  switch (inventoryType) {
     case Inventory.IDS.WAREHOUSE_SITE:
     case Inventory.IDS.EXTRACTOR_SITE:
     case Inventory.IDS.REFINERY_SITE:
@@ -1991,7 +1996,7 @@ export const InventorySelectionDialog = ({
       entity.Inventories.forEach((inv) => {
         // (can't send to same entity and slot)
         if (otherEntity) {
-          if (entity.id === otherEntity.id && entity.label === otherEntity.label){
+          if (entity.id === otherEntity.id && entity.label === otherEntity.label) {
             if (!otherInvSlot || otherInvSlot === inv.slot) return;
           }
         }
@@ -2043,7 +2048,19 @@ export const InventorySelectionDialog = ({
       });
     });
 
-    return display.sort((a, b) => a.distance - b.distance);
+    return display.filter(i => !i.disabled).sort((a, b) => {
+      if (a.isMine && !b.isMine) return -1;
+      if (!a.isMine && b.isMine) return 1;
+      if (a.isMine && b.isMine) return a.distance - b.distance;
+
+      if (isSourcing && !!itemIds) {
+        if (a.itemTally && !b.itemTally) return -1;
+        if (!a.itemTally && b.itemTally) return 1;
+        if (a.itemTally && b.itemTally) return a.distance - b.distance;
+      }
+
+      return a.distance - b.distance;
+    });
   }, [crewedShip, inventoryData, itemIds, otherLocation]);
 
   const onComplete = useCallback(() => {
@@ -2074,7 +2091,7 @@ export const InventorySelectionDialog = ({
                 <tr>
                   <td></td>{/* isMine */}
                   <td style={{ textAlign: 'left' }}>Name</td>
-                  {!limitToPrimary &&<td>Distance</td>}
+                  {!limitToPrimary && <td>Distance</td>}
                   {isSourcing && specifiedItems && (
                     <td>
                       {soloItem ? `# ${Product.TYPES[soloItem].name}` : 'Needed Products'}
@@ -2106,7 +2123,6 @@ export const InventorySelectionDialog = ({
     </SelectionDialog>
   );
 };
-
 
 //
 //  FORMATTERS
@@ -2687,7 +2703,7 @@ export const ItemSelectionSection = ({ columns = 7, label, items, onClick, stage
     );
 };
 
-export const TransferDistanceDetails = ({ distance, crewTravelBonus}) => {
+export const TransferDistanceDetails = ({ distance, crewTravelBonus }) => {
   const crewFreeTransferRadius = Asteroid.FREE_TRANSPORT_RADIUS * (crewTravelBonus?.totalBonus || 1) / (crewTravelBonus?.timeMultiplier || 1);
   return (
     <TransferDistanceTitleDetails>
@@ -2698,7 +2714,7 @@ export const TransferDistanceDetails = ({ distance, crewTravelBonus}) => {
             <div>Transfers less than {crewFreeTransferRadius.toFixed(1)}km in distance are instantaneous.</div>
           </FreeTransferNote>
         )}>
-          <label><WarningOutlineIcon /> {Math.round(distance)}km Away</label>
+          <label><SurfaceTransferIcon /> {Math.round(distance)}km Away</label>
         </Mouseoverable>
       ) : ''}
       {distance && distance >= crewFreeTransferRadius ? `${Math.round(distance)}km Away` : ''}
@@ -2855,18 +2871,17 @@ export const ResourceAmountSlider = ({ amount, extractionTime, min, max, resourc
     <SliderWrapper>
       <SliderInfoRow>
         <SliderLabel onMouseEnter={onMouseEvent} onMouseLeave={onMouseEvent}>
-          {(mouseIn || focusOn) ? (
-            <SliderTextInput
-              type="number"
-              step={0.1}
-              value={tonnageValue}
-              onChange={onChangeInput}
-              onBlur={onFocusEvent}
-              onFocus={onFocusEvent} />
+          {(mouseIn || focusOn)
+            ? (
+              <SliderTextInput
+                type="number"
+                step={0.1}
+                value={tonnageValue}
+                onChange={onChangeInput}
+                onBlur={onFocusEvent}
+                onFocus={onFocusEvent} />
             )
-            : (
-              <b>{formatSampleMass(grams)}</b>
-            )
+            : <b>{formatSampleMass(grams)}</b>
           }
           {' '}
           tonnes
@@ -2957,7 +2972,7 @@ export const RecipeSlider = ({ amount, disabled, increment = 0.001, processingTi
                   onBlur={onFocusEvent}
                   onFocus={onFocusEvent}
                   style={{ marginTop: -2 }} />
-                )
+              )
                 : (
                   <b>{amount.toLocaleString(undefined, { minimumFractionDigits: increment % 1 === 0 ? 0 : 3 })}</b>
                 )
@@ -2986,7 +3001,7 @@ export const RecipeSlider = ({ amount, disabled, increment = 0.001, processingTi
   );
 };
 
-export const ProcessInputOutputSection = ({ title, products, input, output, primaryOutput, secondaryOutputsBonus, setPrimaryOutput, source, ...props }) => {
+export const ProcessInputOutputSection = ({ title, products, input, output, primaryOutput, secondaryOutputsBonus, setPrimaryOutput, source, stage, ...props }) => {
   const sourceContents = useMemo(() => (source?.contents || []).reduce((acc, cur) => ({ ...acc, [cur.product]: cur.amount }), {}), [source]);
   return (
     <FlexSectionBlock title={title} {...props} bodyStyle={{ padding: 0 }}>
@@ -2996,7 +3011,8 @@ export const ProcessInputOutputSection = ({ title, products, input, output, prim
           if (output) {
             thumbProps.backgroundColor = `rgba(${hexToRGB(theme.colors.green)}, 0.15)`;
             thumbProps.badgeColor = theme.colors.green;
-          } else if ((sourceContents[resourceId] || 0) >= amount) {
+          // don't show insufficient input if already started
+          } else if ((sourceContents[resourceId] >= amount) || (stage !== actionStage.NOT_STARTED))  {
             thumbProps.backgroundColor = `rgba(${theme.colors.mainRGB}, 0.15)`;
             thumbProps.badgeColor = theme.colors.main;
             thumbProps.progress = 1;
@@ -3091,13 +3107,14 @@ export const ProcessInputSquareSection = ({ title, products, input, output, prim
   );
 };
 
-export const PropulsionTypeSection = ({ objectLabel, propulsiveTime, tugTime, powered, onSetPowered, warning }) => {
+export const PropulsionTypeSection = ({ disabled, objectLabel, propulsiveTime, tugTime, powered, onSetPowered, warning }) => {
   return (
     <FlexSectionBlock title={`${objectLabel} Type`} bodyStyle={{ padding: 0 }}>
       <>
         {(onSetPowered || powered) && (
           <PropulsionTypeOption
-            onClick={onSetPowered ? () => onSetPowered(true) : undefined}
+            disabled={disabled}
+            onClick={!disabled && onSetPowered ? () => onSetPowered(true) : undefined}
             selected={powered}>
             {onSetPowered && (powered ? <RadioCheckedIcon /> : <RadioUncheckedIcon />)}
             <div style={{ flex: 1 }}>
@@ -3108,7 +3125,8 @@ export const PropulsionTypeSection = ({ objectLabel, propulsiveTime, tugTime, po
         )}
         {(onSetPowered || !powered) && (
           <PropulsionTypeOption
-            onClick={onSetPowered ? () => onSetPowered(false) : undefined}
+            disabled={disabled}
+            onClick={!disabled && onSetPowered ? () => onSetPowered(false) : undefined}
             selected={!powered}>
             {onSetPowered && (!powered ? <RadioCheckedIcon /> : <RadioUncheckedIcon />)}
             <div style={{ flex: 1 }}>
@@ -3156,8 +3174,34 @@ export const PropellantSection = ({ title, narrow, deltaVLoaded, deltaVRequired,
       )}
       bodyStyle={{ padding: '1px 0' }}
       style={narrow ? {} : { width: '100%' }}>
-        {narrow && (
-          <BarChartNotes color={deltaVMode ? '#aaaaaa' : theme.colors.main}>
+      {narrow && (
+        <BarChartNotes color={deltaVMode ? '#aaaaaa' : theme.colors.main}>
+          <div>
+            <b>Required: </b>
+            {propellantRequired
+              ? (deltaVMode ? formatVelocity(deltaVRequired) : formatMass(propellantRequired))
+              : 'NONE'
+            }
+          </div>
+          <div />
+          <div>
+            <b>Loaded:</b> {deltaVMode ? formatVelocity(deltaVLoaded) : formatMass(propellantLoaded)}
+            {/* TODO: tooltip this? <small style={{ color: '#667'}}> / {formatMass(propellantMax)} max</small> */}
+          </div>
+        </BarChartNotes>
+      )}
+      {deltaVMode
+        ? <BarChart
+          color="#cccccc"
+          value={Math.min(1, deltaVUse)} />
+        : <BarChart
+          color={theme.colors[(deltaVMode ? deltaVUse : propellantUse) > 1 ? 'error' : 'orange']}
+          bgColor={theme.colors.main}
+          value={Math.min(1, propellantUse)} />
+      }
+      {!(narrow && !propellantRequired) && (
+        <BarChartNotes color={deltaVMode ? '#aaaaaa' : theme.colors.main}>
+          {!narrow && (
             <div>
               <b>Required: </b>
               {propellantRequired
@@ -3165,48 +3209,22 @@ export const PropellantSection = ({ title, narrow, deltaVLoaded, deltaVRequired,
                 : 'NONE'
               }
             </div>
-            <div />
+          )}
+          <div style={{ color: deltaVMode ? '#ccc' : theme.colors.orange, ...(narrow ? { textAlign: 'center', width: '100%' } : {}) }}>
+            {(deltaVMode ? deltaVUse : propellantUse) > 1
+              ? <span style={{ alignItems: 'center', color: theme.colors.error, display: 'flex', justifyContent: 'center' }}><WarningOutlineIcon /><span style={{ marginLeft: 4 }}>Insufficient Loaded</span></span>
+              : <>{formatFixed(100 * (deltaVMode ? deltaVUse : propellantUse))}% of Loaded</>
+            }
+
+          </div>
+          {!narrow && (
             <div>
               <b>Loaded:</b> {deltaVMode ? formatVelocity(deltaVLoaded) : formatMass(propellantLoaded)}
-              {/* TODO: tooltip this? <small style={{ color: '#667'}}> / {formatMass(propellantMax)} max</small> */}
+              {/* TODO: tooltip this? <small style={{ color: '#667'}}> / {formatMass(propellantMax)} max</small>*/}
             </div>
-          </BarChartNotes>
-        )}
-        {deltaVMode
-          ? <BarChart
-              color="#cccccc"
-              value={Math.min(1, deltaVUse)} />
-          : <BarChart
-              color={theme.colors[(deltaVMode ? deltaVUse : propellantUse) > 1 ? 'error' : 'orange']}
-              bgColor={theme.colors.main}
-              value={Math.min(1, propellantUse)} />
-        }
-        {!(narrow && !propellantRequired) && (
-          <BarChartNotes color={deltaVMode ? '#aaaaaa' : theme.colors.main}>
-            {!narrow && (
-              <div>
-                <b>Required: </b>
-                {propellantRequired
-                  ? (deltaVMode ? formatVelocity(deltaVRequired) : formatMass(propellantRequired * 1e3))
-                  : 'NONE'
-                }
-              </div>
-            )}
-            <div style={{ color: deltaVMode ? '#ccc' : theme.colors.orange, ...(narrow ? { textAlign: 'center', width: '100%'} : {}) }}>
-              {(deltaVMode ? deltaVUse : propellantUse) > 1
-                ? <span style={{ alignItems: 'center', color: theme.colors.error, display: 'flex', justifyContent: 'center' }}><WarningOutlineIcon /><span style={{ marginLeft: 4 }}>Insufficient Loaded</span></span>
-                : <>{formatFixed(100 * (deltaVMode ? deltaVUse : propellantUse))}% of Loaded</>
-              }
-
-            </div>
-            {!narrow && (
-              <div>
-                <b>Loaded:</b> {deltaVMode ? formatVelocity(deltaVLoaded) : formatMass(propellantLoaded * 1e3)}
-                {/* TODO: tooltip this? <small style={{ color: '#667'}}> / {formatMass(propellantMax * 1e3)} max</small>*/}
-              </div>
-            )}
-          </BarChartNotes>
-        )}
+          )}
+        </BarChartNotes>
+      )}
     </FlexSectionBlock>
   );
 };
@@ -3218,23 +3236,23 @@ export const EmergencyPropellantSection = ({ title, propellantPregeneration, pro
       title={title}
       bodyStyle={{ padding: '1px 0' }}
       style={{ width: '100%' }}>
-        <BarChart
-          color={theme.colors.warning}
-          bgColor={theme.colors.main}
-          value={propellantPregeneration / propellantTankMax}
-          postValue={propellantPostgeneration / propellantTankMax}>
-          {emergencyPropellantCap < 1 && <BarChartLimitLine position={emergencyPropellantCap} />}
-        </BarChart>
-        <BarChartNotes color={theme.colors.main}>
-          <div>
-            <span style={{ color: theme.colors.warning }}>Current: </span>
-            <b>{formatMass(propellantPostgeneration)}</b>
-          </div>
-          <div>
-            <span style={{ color: theme.colors.red, textTransform: 'uppercase' }}>Emergency Limit {formatFixed(emergencyPropellantCap * 100, 1)}%: </span>
-            <b>{formatMass(emergencyPropellantCap * propellantTankMax)}</b>
-          </div>
-        </BarChartNotes>
+      <BarChart
+        color={theme.colors.warning}
+        bgColor={theme.colors.main}
+        value={propellantPregeneration / propellantTankMax}
+        postValue={propellantPostgeneration / propellantTankMax}>
+        {emergencyPropellantCap < 1 && <BarChartLimitLine position={emergencyPropellantCap} />}
+      </BarChart>
+      <BarChartNotes color={theme.colors.main}>
+        <div>
+          <span style={{ color: theme.colors.warning }}>Current: </span>
+          <b>{formatMass(propellantPostgeneration)}</b>
+        </div>
+        <div>
+          <span style={{ color: theme.colors.red, textTransform: 'uppercase' }}>Emergency Limit {formatFixed(emergencyPropellantCap * 100, 1)}%: </span>
+          <b>{formatMass(emergencyPropellantCap * propellantTankMax)}</b>
+        </div>
+      </BarChartNotes>
     </FlexSectionBlock>
   );
 };
@@ -3449,7 +3467,7 @@ export const BuildingInputBlock = ({ building, imageProps = {}, ...props }) => {
           : <EmptyBuildingImage {...imageProps} />
       }
       label={building?.Name?.name ? formatters.buildingName(building) : `${Building.TYPES[buildingType].name}${unfinished ? ' (Site)' : ''}`}
-      sublabel={building?.Name?.name ? Building.TYPES[buildingType].name : formatters.lotName(Lot.toPosition(building.Location?.location)?.lotIndex || 0)}
+      sublabel={building?.Name?.name ? Building.TYPES[buildingType].name : formatters.lotName(Lot.toPosition(building?.Location?.location)?.lotIndex || 0)}
       {...props}
     />
   );
@@ -3564,7 +3582,7 @@ export const ShipTab = ({ pilotCrew, inventoryBonuses, ship, stage, deltas = {},
       </FlexSection>
 
       <FlexSection>
-        <div style={{ width: '50%'}}>
+        <div style={{ width: '50%' }}>
           <MiniBarChartSection>
             {Object.keys(charts).map((key) => (
               <MiniBarChart
@@ -3644,7 +3662,7 @@ export const InventoryChangeCharts = ({ inventory, inventoryBonuses, deltaMass, 
   );
 }
 
-const ActionDialogStat = ({ stat: { isTimeStat, label, value, direction, tooltip, warning }}) => {
+const ActionDialogStat = ({ stat: { isTimeStat, label, value, direction, tooltip, warning } }) => {
   const refEl = useRef();
   const [hovered, setHovered] = useState();
   return (
@@ -3695,7 +3713,7 @@ export const ActionDialogStats = ({ stage, stats: rawStats, wide }) => {
         <ChevronRightIcon /> Details
       </SectionTitle>
       <SectionBody collapsible isOpen={open}>
-        {[0,1].map((statGroup) => (
+        {[0, 1].map((statGroup) => (
           <div key={statGroup}>
             {(statGroup === 0
               ? stats.slice(0, Math.ceil(stats.length / 2))
@@ -3780,7 +3798,7 @@ export const ActionDialogFooter = ({
             </>
           )
           : (
-              stage === actionStage.READY_TO_COMPLETE
+            stage === actionStage.READY_TO_COMPLETE
               ? (
                 <>
                   <Button

@@ -1,4 +1,4 @@
-import { Building, Entity, Lot, Order, Process, Product, RandomEvent, Ship } from '@influenceth/sdk';
+import { Building, Entity, Lot, Order, Permission, Process, Product, RandomEvent, Ship } from '@influenceth/sdk';
 import moment from 'moment';
 
 import {
@@ -39,11 +39,14 @@ import {
   KeysIcon,
   EjectMyCrewIcon,
   CoreSampleIcon,
+  AssetAgreementsIcon,
+  WarningIcon,
 } from '~/components/Icons';
 import theme, { hexToRGB } from '~/theme';
 import { getProcessorProps, locationsArrToObj } from './utils';
 import formatters from './formatters';
 import { RandomEventIcon } from '~/components/AnimatedIcons';
+import EntityName from '~/components/EntityName';
 
 const formatAsItem = (activity, actionItem = {}) => {
   // console.log('formatAsItem', activity, actionItem);
@@ -58,7 +61,7 @@ const formatAsItem = (activity, actionItem = {}) => {
     locationDetail: '',
     finishTime: activity.event.returnValues.finishTime || activity.event.timestamp || 0,
     startTime: activity.event.timestamp || 0,
-    ago: (new moment(new Date(1000 * (activity.event.returnValues.finishTime || activity.event.timestamp || 0)))).fromNow(),
+    ago: (new moment(new Date(1000 * (activity.event.returnValues.finishTime || activity.event.timestamp || 0)))).fromNow(true),
     onClick: null,
 
     // overwrite with formatted actionItem keys
@@ -72,12 +75,13 @@ const formatAsItem = (activity, actionItem = {}) => {
   return formatted;
 };
 
-const formatAsPlans = (item) => {
+const formatAsPlan = (item) => {
   return {
     key: item.key,
     type: item.type,
+    _expired: !item.waitingFor,
     icon: <PlanBuildingIcon />,
-    label: `${Building.TYPES[item.Building?.buildingType].name || ''} Site Plan`,
+    label: `${Building.TYPES[item.Building?.buildingType].name || ''} Site`,
     crewId: item.Control?.controller?.id,
     asteroidId: Number((item.Location?.locations || []).find((l) => l.label === Entity.IDS.ASTEROID)?.id),
     lotId: Number((item.Location?.locations || []).find((l) => l.label === Entity.IDS.LOT)?.id),
@@ -91,12 +95,37 @@ const formatAsPlans = (item) => {
   };
 };
 
+const formatAsAgreement = (item) => {
+  return {
+    key: item.key,
+    type: item.type,
+    _expired: !item.waitingFor,
+    icon: <WarningIcon />,
+    label: Permission.TYPES[item._agreement?.permission]?.name,
+    crewId: item.Control?.controller?.id,
+    asteroidId: Number((item.Location?.locations || []).find((l) => l.label === Entity.IDS.ASTEROID)?.id),
+    lotId: Number(item.label === Entity.IDS.LOT ? item.id : (item.Location?.locations || []).find((l) => l.label === Entity.IDS.LOT)?.id),
+    shipId: Number((item.Location?.locations || []).find((l) => l.label === Entity.IDS.SHIP)?.id),
+    resourceId: null,
+    locationDetail: item.Name?.name || (
+      item.label === Entity.IDS.BUILDING ? formatters.buildingName(item) : (
+        item.label === Entity.IDS.SHIP ? formatters.shipName(item) : formatters.lotName(item)
+      )
+    ),
+    finishTime: item.waitingFor,
+    startTime: null,
+    onClick: ({ openDialog }) => {
+      openDialog('EXTEND_AGREEMENT', { entity: { id: item.id, label: item.label }, permission: item._agreement.permission });
+    }
+  };
+};
+
 const formatAsRandomEvent = (item) => {
   return {
     key: item.pendingEvent,
     type: item.type,
     label: RandomEvent.TYPES[item.pendingEvent]?.name || 'Unknown',
-    ago: (new moment(new Date(1000 * (item.timestamp || 0)))).fromNow(),
+    ago: (new moment(new Date(1000 * (item.timestamp || 0)))).fromNow(true),
     onClick: ({ history }) => {
       history.push(`/random-event`)
     }
@@ -956,7 +985,8 @@ export const formatActionItem = (item, actionItem) => {
   try {
     if (item.type === 'pending' || item.type === 'failed') return formatAsTx(item);
     if (item.type === 'randomEvent') return formatAsRandomEvent(item);
-    if (item.type === 'plans') return formatAsPlans(item);
+    if (item.type === 'plan') return formatAsPlan(item);
+    if (item.type === 'agreement') return formatAsAgreement(item);
     return formatAsItem(item, actionItem);
   } catch (e) {
     console.error('Error formatting action item', item, e);
@@ -966,11 +996,13 @@ export const formatActionItem = (item, actionItem) => {
 
 export const itemColors = {
   pending: hexToRGB(theme.colors.purple),
-  failed: hexToRGB(theme.colors.error),
+  failed: '241, 131, 97',//hexToRGB(theme.colors.error),
   randomEvent: '232, 211, 117',
   ready: theme.colors.successRGB,
   unready: theme.colors.mainRGB,
-  plans: '248, 133, 44',
+  plan: '248, 133, 44',
+  agreement: '248, 133, 44',
+  _expired: hexToRGB(theme.colors.expired)
 };
 
 export const statuses = {
@@ -979,5 +1011,7 @@ export const statuses = {
   randomEvent: 'Event',
   ready: 'Ready',
   unready: '',
-  plans: ''
+  plan: 'Site Active',
+  agreement: 'Lease Expiring',
+  _expired: 'Expired'
 };

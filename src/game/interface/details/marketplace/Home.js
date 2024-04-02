@@ -51,7 +51,7 @@ const Header = styled.div`
       color: #999;
       line-height: 1em;
       padding-left: ${p => p.marketplace ? '56px' : '0'};
-      padding-top: 15px;
+      padding-top: 10px;
       span:not(:first-child) {
         border-left: 1px solid #777;
         margin-left: 10px;
@@ -102,6 +102,7 @@ const Body = styled.div`
   flex: 1;
   overflow-x: hidden;
   overflow-y: auto;
+  margin: 0px 0px 10px;
 `;
 
 const Listings = styled.div`
@@ -119,13 +120,17 @@ const Listing = styled.div`
   padding: 4px;
   position: relative;
   text-align: center;
-  width: 180px;
+  width: 178px;
 
   ${p => p.theme.clipCorner(10)};
 
-  transition: background 250ms ease;
+  transition: background 100ms ease;
   &:hover {
-    background: #111;
+    background: rgba(${p => hexToRGB(p.theme.colors.main)}, 0.2);
+    border-color: ${theme.colors.main};
+  }
+  &:hover > svg {
+    stroke: ${theme.colors.main};
   }
 `;
 
@@ -139,10 +144,8 @@ const ListingTitle = styled.div`
 `;
 
 const ListingAmount = styled.div`
-  color: #565656;
-  ${p => p.color && `
-    color: ${p.color === 'buy' ? theme.colors.green : theme.colors.main};
-  `}
+  font-weight: normal;
+  color: ${p => p.theme.colors[p.color || 'secondaryText']};
   font-size: 80%;
   margin-top: 2px;
 `;
@@ -210,12 +213,11 @@ const ListingOffer = styled.div`
   flex-direction: row;
   height: 32px;
   margin-top: 10px;
-  transition: background 250ms ease;
+  transition: background 100ms ease;
   & label {
     flex: 1 0 0;
     padding-left: 6px;
     text-align: left;
-    text-transform: uppercase;
   }
 
   ${p => p.theme.clipCorner(8)};
@@ -240,11 +242,12 @@ const TickerItem = styled.div`
   flex-direction: row;
   font-size: 15px;
   font-weight: bold;
-  padding: 5px 10px 5px 0;
+  padding: 5px 20px 5px 0;
 
   &:before {
-    padding-right: 10px;
-    content: "•";
+    opacity: 0.6;
+    padding-right: 20px;
+    content: "|";
   }
 
   &:hover {
@@ -264,15 +267,24 @@ const TickerItem = styled.div`
 `;
 
 const StyledPagination = styled(Pagination)`
-  bottom: 15px;
-  position: absolute;
+  display: flex;
+  justify-content: flex-end;
+  bottom: 0px;
 `;
 
-const greenRGB = hexToRGB(theme.colors.green);
+const Footer = styled.div`
+  align-items: center;
+  border-top: 1px solid #333;
+  display: flex;
+  flex-direction: row;
+  height: 70px;
+  justify-content: flex-end;
+  margin-bottom: -70px;
+`;
+
 const pageSize = 25;
 
-const MarketplaceHome = ({ asteroid, listings, orderTally, onSelectListing, marketplace = null, marketplaceOwner = null, marketplaceTally }) => {
-  const [mode, setMode] = useState('buy');
+const MarketplaceHome = ({ asteroid, listings, mode, setMode, orderTally, onSelectListing, marketplace = null, marketplaceOwner = null, marketplaceTally }) => {
   const [nameFilter, setNameFilter] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [sort, setSort] = useState('liquidity');
@@ -389,7 +401,6 @@ const MarketplaceHome = ({ asteroid, listings, orderTally, onSelectListing, mark
       )}
 
       <BodyNav style={tickerListings?.length > 0 ? { borderTop: '1px solid #333' } : {}}>
-        <IconPillow><GridIcon /></IconPillow>
         <TextInput
           initialValue={nameFilter}
           onChange={setNameFilter}
@@ -430,12 +441,12 @@ const MarketplaceHome = ({ asteroid, listings, orderTally, onSelectListing, mark
         <Listings>
           {filteredListings
             .map((listing) => {
-              let thumbBG = 'rgba(170, 170, 170, 0.2)';
+              let thumbBG = 'rgba(80, 80, 80, 0.1)';
               if (!!marketplace) {
                 if (mode === 'buy' && listing.forSale > 0) {
-                  thumbBG = `rgba(${greenRGB}, 0.2);`;//`#002511`;
+                  thumbBG = `rgba(${hexToRGB(theme.colors.buy)}, 0.1);`;//`#002511`;
                 } else if (mode === 'sell' && listing.forBuy > 0) {
-                  thumbBG = `rgba(${theme.colors.mainRGB}, 0.2);`//`#0d2a33`;
+                  thumbBG = `rgba(${hexToRGB(theme.colors.sell)}, 0.1);`//`#0d2a33`;
                 };
               }
               const resource = Product.TYPES[listing.product];
@@ -453,7 +464,7 @@ const MarketplaceHome = ({ asteroid, listings, orderTally, onSelectListing, mark
                     style={amount === 0 ? { opacity: 0.5 } : {}}
                     tooltipContainer={null} />
                   <ListingTitle>{resource.name}</ListingTitle>
-                  <ListingAmount color={amount > 0 ? mode : 'none'}>
+                  <ListingAmount color={amount > 0 ? mode : null}>
                     {amount > 0 ? formatResourceAmount(amount, listing.product) : 'None'} {mode === 'buy' ? 'Available' : 'Sellable'}
                   </ListingAmount>
                   {amount > 0
@@ -476,11 +487,14 @@ const MarketplaceHome = ({ asteroid, listings, orderTally, onSelectListing, mark
             })}
         </Listings>
       </Body>
-      <StyledPagination
+      
+      <Footer>
+        <StyledPagination
           currentPage={currentPage}
           rowsPerPage={pageSize}
           rowCount={filteredCount}
           onChangePage={(page) => setCurrentPage(page)} />
+      </Footer>
     </>
   );
 };

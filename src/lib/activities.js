@@ -92,52 +92,43 @@ const getApplicablePermissions = (entity) => {
 //  these work for Start event, but not finish, so probably better to do explicitly
 //  so the invalidation isn't forgotten
 
-const getAgreementInvalidations = (couldAddToCollection = false) => ({ event: { returnValues } }, { entity = {} }) => {
-  const invalidation = { ...returnValues.target };
-  if (couldAddToCollection) {
-    const _location = locationsArrToObj(entity?.Location?.locations || []) || {};
-    invalidation.newGroupEval = {
-      updatedValues: { hasPermission: returnValues.permission },
-      filters: {
-        asteroidId: _location.asteroidId,
-        controllerId: entity?.Control?.controller?.id,
-        hasComponent: getComponentNames(entity),
-        lotId: _location.lotId,
-        status:
-          entity?.label === Entity.IDS.SHIP
-            ? entity?.Ship?.status
-            : (entity?.label === Entity.IDS.BUILDING ? entity?.Building?.status : undefined)
+const getPolicyAndAgreementConfig = (couldAddToCollection = false, invalidateAgreements = false) => {
+  return {
+    getInvalidations: ({ event: { returnValues } }, { entity = {} }) => {
+      const entityId = returnValues.entity ? returnValues.entity : returnValues.target;
+      const entityInvalidation = { ...entityId };
+      if (couldAddToCollection) {
+        const _location = locationsArrToObj(entity?.Location?.locations || []) || {};
+        entityInvalidation.newGroupEval = {
+          updatedValues: { hasPermission: returnValues.permission },
+          filters: {
+            asteroidId: _location.asteroidId,
+            controllerId: entity?.Control?.controller?.id,
+            hasComponent: getComponentNames(entity),
+            lotId: _location.lotId,
+            status:
+              entity?.label === Entity.IDS.SHIP
+                ? entity?.Ship?.status
+                : (entity?.label === Entity.IDS.BUILDING ? entity?.Building?.status : undefined)
+          }
+        };
       }
-    };
-  }
-  return [invalidation];
-};
 
-const getPolicyInvalidations = (couldAddToCollection = false) => ({ event: { returnValues } }, { entity = {} }) => {
-  const entityId = returnValues.entity ? returnValues.entity : returnValues.target;
-  const invalidation = { ...entityId };
-  if (couldAddToCollection) {
-    const _location = locationsArrToObj(entity?.Location?.locations || []) || {};
-    invalidation.newGroupEval = {
-      updatedValues: { hasPermission: returnValues.permission },
-      filters: {
-        asteroidId: _location.asteroidId,
-        controllerId: entity?.Control?.controller?.id,
-        hasComponent: getComponentNames(entity),
-        lotId: _location.lotId,
-        status:
-          entity?.label === Entity.IDS.SHIP
-            ? entity?.Ship?.status
-            : (entity?.label === Entity.IDS.BUILDING ? entity?.Building?.status : undefined)
+      const invs = [entityInvalidation];
+      if (invalidateAgreements) {
+        invs.push(['agreements', returnValues.permitted?.id]);
+        invs.push(['agreements', entity?.Control?.controller?.id]);
       }
-    };
-  }
-  return [invalidation];
+      return invs;
+    },
+    getPrepopEntities: ({ event: { returnValues } }) => ({
+      entity: returnValues.entity ? returnValues.entity : returnValues.target,
+    })
+  };
 };
 
 // TODO: write a test to make sure all activities (from sdk) have a config
 const activities = {
-
   AsteroidInitialized: {
     getInvalidations: ({ event: { returnValues } }) => {
       return [{ ...returnValues.asteroid }]
@@ -2101,47 +2092,22 @@ const activities = {
   // if policy was changed, the only way it resulted this entity
   //  entering a new permissioned collection would be if it became public,
   //  so adding a public policy is handled differently from the others
-  AddedToWhitelist: {
-    getInvalidations: getPolicyInvalidations(true),
-    getPrepopEntities: ({ event: { returnValues } }) => ({
-      entity: returnValues.entity ? returnValues.entity : returnValues.target,
-    }),
-  },
-  PublicPolicyAssigned: {
-    getInvalidations: getPolicyInvalidations(true),
-    getPrepopEntities: ({ event: { returnValues } }) => ({
-      entity: returnValues.entity
-    }),
-  },
-  RemovedFromWhitelist: { getInvalidations: getPolicyInvalidations() },
-  PublicPolicyRemoved: { getInvalidations: getPolicyInvalidations() },
-  ContractPolicyAssigned: { getInvalidations: getPolicyInvalidations() },
-  ContractPolicyRemoved: { getInvalidations: getPolicyInvalidations() },
-  PrepaidPolicyAssigned: { getInvalidations: getPolicyInvalidations() },
-  PrepaidPolicyRemoved: { getInvalidations: getPolicyInvalidations() },
-  PrepaidMerklePolicyAssigned: { getInvalidations: getPolicyInvalidations() },
-  PrepaidMerklePolicyRemoved: { getInvalidations: getPolicyInvalidations() },
+  AddedToWhitelist: getPolicyAndAgreementConfig(true, true),
+  RemovedFromWhitelist: getPolicyAndAgreementConfig(false, true),
+  PublicPolicyAssigned: getPolicyAndAgreementConfig(true),
+  PublicPolicyRemoved: getPolicyAndAgreementConfig(),
+  ContractPolicyAssigned: getPolicyAndAgreementConfig(),
+  ContractPolicyRemoved: getPolicyAndAgreementConfig(),
+  PrepaidPolicyAssigned: getPolicyAndAgreementConfig(),
+  PrepaidPolicyRemoved: getPolicyAndAgreementConfig(),
+  PrepaidMerklePolicyAssigned: getPolicyAndAgreementConfig(),
+  PrepaidMerklePolicyRemoved: getPolicyAndAgreementConfig(),
 
-  ContractAgreementAccepted: {
-    getInvalidations: getAgreementInvalidations(true),
-    getPrepopEntities: ({ event: { returnValues } }) => ({
-      entity: returnValues.entity
-    }),
-  },
-  PrepaidMerkleAgreementAccepted: {
-    getInvalidations: getAgreementInvalidations(true),
-    getPrepopEntities: ({ event: { returnValues } }) => ({
-      entity: returnValues.entity
-    }),
-  },
-  PrepaidAgreementAccepted: {
-    getInvalidations: getAgreementInvalidations(true),
-    getPrepopEntities: ({ event: { returnValues } }) => ({
-      entity: returnValues.entity
-    }),
-  },
-  PrepaidAgreementExtended: { getInvalidations: getAgreementInvalidations() },
-  PrepaidAgreementCancelled: { getInvalidations: getAgreementInvalidations() },
+  ContractAgreementAccepted: getPolicyAndAgreementConfig(true, true),
+  PrepaidMerkleAgreementAccepted: getPolicyAndAgreementConfig(true, true),
+  PrepaidAgreementAccepted: getPolicyAndAgreementConfig(true, true),
+  PrepaidAgreementExtended: getPolicyAndAgreementConfig(false, true),
+  PrepaidAgreementCancelled: getPolicyAndAgreementConfig(false, true),
 };
 
 /**

@@ -1,8 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" viewBox="0 0 24 24">
-  <rect x="3" y="15.31" width="2" height="5"/>
-  <rect x="7" y="12.31" width="2" height="8"/>
-  <rect x="11" y="13.31" width="2" height="7"/>
-  <rect x="15" y="10.31" width="2" height="10"/>
-  <rect x="19" y="8.31" width="2" height="12"/>
-  <polygon points="21 4.68 18.91 2.59 11.5 9.99 8.47 6.96 3 12.43 3 14.22 8.47 8.75 11.5 11.78 18.91 4.38 21 6.47 21 4.68"/>
+  <rect x="2.54" y="16.11" width="2.1" height="5.26"/>
+  <rect x="6.74" y="12.27" width="2.1" height="9.1"/>
+  <rect x="10.95" y="14.01" width="2.1" height="7.36"/>
+  <rect x="15.15" y="10.86" width="2.1" height="10.51"/>
+  <rect x="19.36" y="9.81" width="2.1" height="11.56"/>
+  <polygon points="11.89 11.05 18.64 4.29 21.46 7.12 21.46 5.24 18.64 2.41 11.89 9.17 8.7 5.98 2.54 12.14 2.54 14.02 8.7 7.86 11.89 11.05"/>
 </svg>

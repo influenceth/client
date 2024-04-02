@@ -38,7 +38,7 @@ const LotLeaseFilter = ({ assetType, filters, onChange }) => {
     if (filters[fieldName] && filters[fieldName].length > 0) {
       const filterArr = filters[fieldName];
       Object.keys(newTypes).forEach((k) => {
-        newTypes[k] = filterArr.includes(k);
+        newTypes[k] = filterArr === k;
       });
     }
     setTypes(newTypes);

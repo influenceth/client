@@ -1,35 +1,32 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useHistory, useParams } from 'react-router-dom';
 import styled from 'styled-components';
-import { Crewmate, Entity, Order, Permission } from '@influenceth/sdk';
+import { Crewmate, Entity, Lot, Order, Permission } from '@influenceth/sdk';
 
 import {
-  InfoIcon,
   LimitBuyIcon,
   LimitSellIcon,
   MarketBuyIcon,
-  MarketplaceBuildingIcon,
   MarketSellIcon,
-  RadioCheckedIcon,
   RadioUncheckedIcon,
+  RadioCheckedIcon,
   SwayIcon
 } from '~/components/Icons';
+import OnClickLink from '~/components/OnClickLink';
 import CrewIndicator from '~/components/CrewIndicator';
 import ResourceThumbnail from '~/components/ResourceThumbnail';
 import Switcher from '~/components/SwitcherButton';
 import UncontrolledTextInput, { TextInputWrapper } from '~/components/TextInputUncontrolled';
-import useScreenSize from '~/hooks/useScreenSize';
-import theme, { hexToRGB } from '~/theme';
-import { formatFixed, formatPrice, getCrewAbilityBonuses } from '~/lib/utils';
 import ActionButton from '~/game/interface/hud/actionButtons/ActionButton';
+import useMarketplaceManager from '~/hooks/actionManagers/useMarketplaceManager';
+import useCrewContext from '~/hooks/useCrewContext';
+import useOrderList from '~/hooks/useOrderList';
+import useScreenSize from '~/hooks/useScreenSize';
 import useStore from '~/hooks/useStore';
 import formatters from '~/lib/formatters';
-import useOrderList from '~/hooks/useOrderList';
+import { formatFixed, formatPrice, getCrewAbilityBonuses, nativeBool } from '~/lib/utils';
+import theme, { hexToRGB } from '~/theme';
 import { formatResourceAmount } from '../../hud/actionDialogs/components';
-import useCrewContext from '~/hooks/useCrewContext';
-import { nativeBool } from '~/lib/utils';
-import useMarketplaceManager from '~/hooks/actionManagers/useMarketplaceManager';
-
-const greenRGB = hexToRGB(theme.colors.green);
 
 const Wrapper = styled.div`
   display: flex;
@@ -40,14 +37,13 @@ const Wrapper = styled.div`
 const Main = styled.div`
   display: flex;
   flex-direction: column;
-  flex: 1;
+  flex: 3;
   height: 100%;
-  width: 100%;
 `;
 
 const ActionPanel = styled.div`
+  flex: 1;
   margin-left: 20px;
-  width: 320px;
   & > div {
     background: #171717;
     ${p => p.theme.clipCorner(15)};
@@ -95,43 +91,27 @@ const Header = styled.div`
   border-bottom: 1px solid #333;
   display: flex;
   flex-direction: row;
-  height: 150px;
-  margin-top: -25px;
-  padding-bottom: 25px;
-  padding-top: 25px;
+  padding-bottom: 10px;
   position: relative;
 
-  & > div:first-child {
-    flex: 1;
+  & > div {
     h1 {
       align-items: center;
       display: flex;
       font-size: 50px;
       font-weight: normal;
       line-height: 1em;
-      margin: 0 0 32px;
+      margin: 0 0 4px;
       text-transform: uppercase;
       white-space: nowrap;
-      svg {
-        color: ${p => p.theme.colors.main};
-        height: 1em;
-        margin-right: 6px;
-      }
     }
     ${Subheader} {
-      position: absolute;
-      bottom: 12px;
-      left: 0;
-
-      span:first-child {
-        font-size: 28px;
-        text-transform: uppercase;
+      font-weight: normal;
+      & span:first-child {
+        padding-right: 10px;
       }
-      span:not(:first-child) {
-        border-left: 1px solid #777;
-        font-size: 110%;
+      & span:not(:first-child) {
         margin-left: 10px;
-        padding-left: 10px;
       }
     }
   }
@@ -149,7 +129,7 @@ const Body = styled.div`
 const ChartArea = styled.div`
   border: 1px solid #333;
   height: 100%;
-  flex: 1;
+  flex: 2;
   position: relative;
   & > svg {
     position: absolute;
@@ -160,7 +140,9 @@ const ChartArea = styled.div`
   }
 
   &:before {
-    color: #777;
+    color: ${theme.colors.secondaryText};
+    font-weight: bold;
+    font-size: 90%;
     content: "${p => p.spread > 0 ? 'Spread' : ''}";
     border-bottom: 2px solid #333;
     padding: 0 0 4px 8px;
@@ -177,17 +159,13 @@ const ChartArea = styled.div`
   }
 `;
 
-const ResourceThumbWrapper = styled.div`
-  padding: 6px;
-`;
-
 const TableArea = styled.div`
   display: flex;
+  flex: 1;
   flex-direction: column;
   height: 100%;
   overflow: hidden;
   padding-left: 15px;
-  width: 360px;
 `;
 
 const VolumeBar = styled.div`
@@ -199,11 +177,12 @@ const VolumeBar = styled.div`
   z-index: -1;
 `;
 
-const centerPriceHeight = 36;
-const centerPriceMargin = 8;
+const centerPriceHeight = 48;
+const centerPriceMargin = 6;
 const SellTable = styled.div`
   display: flex;
   flex-direction: column-reverse;
+  justify-content: flex-start;
   height: calc(50% - ${(centerPriceHeight + 2 * centerPriceMargin) / 2}px);
   overflow: auto;
   table {
@@ -211,64 +190,72 @@ const SellTable = styled.div`
     width: 100%;
 
     tr > * {
-      border-bottom: 1px solid #222;
-      font-size: 95%;
-      padding: 1px 4px;
+      white-space: nowrap;
+      border-bottom: 1px solid #000;
+      color: #FFF;
+      font-size: 88%;
+      padding: 2px 10px 2px 4px;
       text-align: right;
-      &:first-child {
-        text-align: left;
-      }
     }
     th {
       background: black;
-      color: #777;
+      color: ${theme.colors.secondaryText};
       font-size: 90%;
-      font-weight: normal;
+      font-weight: bold;
       position: sticky;
       top: 0;
       z-index: 1;
+      padding: 2px 10px 6px 0px;
     }
-    td:first-child {
-      color: ${p => p.theme.colors.main};
-      position: relative;
+    td {
+      font-family: 'Jetbrains Mono', sans-serif;
+      font-weight: 100;
+      &:first-child {
+        color: ${p => p.theme.colors.buy};
+        position: relative;
+        width: 135px;
+      }
     }
   }
   ${VolumeBar} {
-    background: rgba(${p => p.theme.colors.mainRGB}, 0.25);
+    background: rgba(${p => hexToRGB(p.theme.colors.buy)}, 0.25);
   }
 `;
 
 const BuyTable = styled(SellTable)`
+  justify-content: flex-end;
   table tr td:first-child {
-    color: ${p => p.theme.colors.green};
+    color: ${p => p.theme.colors.sell};
   }
   ${VolumeBar} {
-    background: rgba(${greenRGB}, 0.2);
+    background: rgba(${p => hexToRGB(p.theme.colors.sell)}, 0.2);
   }
 `;
 
 const CenterPrice = styled.div`
   align-items: center;
-  background: #222;
+  background: #111;
   display: flex;
   flex-direction: row;
   height: ${centerPriceHeight}px;
   margin: ${centerPriceMargin}px 0;
+  font-weight: normal;
   &:after {
     color: #777;
     content: "Center Price";
+    font-weight: bold;
     font-size: 90%;
     margin-right: 10px;
   }
 
   & > svg {
-    font-size: 24px;
+    font-size: 36px;
   }
 `;
 
 const Price = styled.div`
   flex: 1 0 0;
-  font-size: 24px;
+  font-size: 30px;
   text-align: left;
   ${p => p.unit && `
     &:after {
@@ -288,15 +275,28 @@ const FormSection = styled.div`
 
 const RadioRow = styled.label`
   align-items: center;
-  color: #888;
-  cursor: ${p => p.theme.cursors.active};
   display: flex;
   flex-direction: row;
-  height: 25px;
   width: 100%;
+  font-size: 90%;
+  padding: 6px 0 0 0;
+  & > svg {
+    font-size: 120%
+  }
+
   ${p => p.selected
-    ? `& > svg { color: white; }`
-    : `&:hover > svg { color: white; }`
+    ? `
+      color: white;
+      & > svg { color: white };
+    `
+    : `
+      color: ${theme.colors.secondaryText};
+      cursor: ${p.theme.cursors.active};
+      &:hover {
+        color: white;
+        & > svg { color: white };
+      }
+    `
   }
 
   & > span {
@@ -305,18 +305,13 @@ const RadioRow = styled.label`
   }
 `;
 
-const InfoTooltip = styled.div`
-  color: white;
-`;
-
 const InputLabel = styled.div`
-  align-items: center;
-  color: #888;
   display: flex;
   flex-direction: row;
   font-size: 14px;
-  margin-bottom: 3px;
+  padding: 6px 0 6px;
   & > label {
+    color: ${theme.colors.secondaryText};
     flex: 1;
   }
   & > span {
@@ -338,34 +333,34 @@ const Tray = styled.div`
 `;
 
 const Summary = styled.div`
-  & > div {
-    align-items: center;
-    display: flex;
-    flex-direction: row;
-    font-size: 28px;
-    & > svg {
-      font-size: 32px;
-    }
+  align-items: center;
+  display: flex;
+  flex-direction: row;
+  font-size: 36px;
+  & > svg {
+    font-size: 36px;
   }
 `;
 
-const SummaryLabel = styled.label`
+const SummaryHeader = styled.label`
   display: block;
   font-size: 90%;
-  margin-bottom: 3px;
+  margin-bottom: 4px;
   &:before {
     content: "${p => p.type === 'limit' ? 'Limit' : 'Market'} ${p => p.mode === 'buy' ? 'Buy' : 'Sell'} ";
-    color: ${p => p.mode === 'buy' ? p.theme.colors.green : p.theme.colors.main};
+    color: ${p => p.mode === 'buy' ? p.theme.colors.buy : p.theme.colors.sell};
   }
   &:after {
     content: "Preview";
-    color: #888;
+    color: ${theme.colors.secondaryText};
   }
 `;
 
 const STROKE_WIDTH = 2;
 
 const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource }) => {
+  const history = useHistory();
+
   const { width, height } = useScreenSize();
   const { crew, crewCan } = useCrewContext();
 
@@ -375,10 +370,13 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
 
   const { getPendingOrder } = useMarketplaceManager(marketplace?.id);
 
-  const [buyOrders, sellOrders] = useMemo(() => ([
-    (orders || []).filter((o) => o.orderType === Order.IDS.LIMIT_BUY),
-    (orders || []).filter((o) => o.orderType === Order.IDS.LIMIT_SELL),
-  ]), [orders]);
+  const [buyOrders, sellOrders, bid, ask] = useMemo(() => {
+    const buys = (orders || []).filter((o) => o.orderType === Order.IDS.LIMIT_BUY);
+    const sells = (orders || []).filter((o) => o.orderType === Order.IDS.LIMIT_SELL);
+    const highestBuy = Math.max(...buys.map(b => b.price));
+    const lowestSell = Math.min(...sells.map(s => s.price));
+    return [buys, sells, highestBuy, lowestSell];
+  }, [orders]);
 
   const buyBuckets = useMemo(() => {
     const buckets = buyOrders.reduce((acc, { price, amount }) => ({
@@ -547,7 +545,6 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
   const [limitPrice, setLimitPrice] = useState();
 
   useEffect(() => {
-    setQuantity(0);
     setLimitPrice(0);
   }, [mode, type]);
 
@@ -572,9 +569,16 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
     setQuantity(input);
   }, [mode, type, totalBuying, totalSelling]);
 
-  const handleChangeLimitPrice = useCallback((e) => {
-    setLimitPrice(e.currentTarget.value);
-  }, []);
+  const handleChangeLimitPrice = useCallback((price, blur = false) => {
+    if (blur) {
+      if ((mode === 'buy' && price >= ask) || (mode === 'sell' && price <= bid)) {
+        setType('market');
+        return;
+      }
+    }
+
+    setLimitPrice(price);
+  }, [bid, ask, mode]);
 
   // TODO: is quantity right here for non-atomic?
   const [totalMarketPrice, avgMarketPrice] = useMemo(() => {
@@ -651,71 +655,87 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
     return a;
   }, [crew, loading, hasPermission, mode, sameAsteroid, total, type]);
 
+  const goToListings = useCallback(() => {
+    const { asteroidId, lotIndex } = Lot.toPosition(lot?.id) || {};
+    history.push(`/marketplace/${asteroidId}/${lotIndex}`);
+  }, [lot]);
+
   return (
     <Wrapper>
       <Main>
         <Header>
-          <div>
-            <h1><MarketplaceBuildingIcon /> {formatters.buildingName(marketplace)}</h1>
-            <Subheader>
-              <span>{resource.name}</span>
-              <span style={{ color: theme.colors.brightMain }}>{formatResourceAmount(totalSelling || 0, resource.i)} Available</span>
-              <span style={{ color: theme.colors.green }}>{formatResourceAmount(totalBuying || 0, resource.i)} Sellable</span>
-            </Subheader>
-          </div>
+            <ResourceThumbnail resource={resource} size="110px" tooltipContainer={null} />
+            <div style={{ flex: 1, paddingLeft: 20 }}>
+              <h1>{resource.name}</h1>
+              <Subheader>
+                {totalSelling > 0 
+                  ? (<span style={{ color: theme.colors.buy }}><b>{formatResourceAmount(totalSelling || 0, resource.i)}</b> Available</span>)
+                  : (<span style={{ color: theme.colors.secondaryText }}>None Available</span>)
+                }
+                <>  |  </>
+                {totalBuying > 0 
+                  ? (<span style={{ color: theme.colors.sell }}><b>{formatResourceAmount(totalBuying, resource.i)}</b> Sellable</span>)
+                  : (<span style={{ color: theme.colors.secondaryText }}>None Sellable</span>)
+                }
+                <span>at <OnClickLink onClick={goToListings}> {formatters.buildingName(marketplace)} </OnClickLink></span>
+              </Subheader>
+            </div>
           {marketplaceOwner && <CrewIndicator crew={marketplaceOwner} flip label="Managed by" />}
         </Header>
         <Body>
           <ChartArea ref={chartWrapperRef} spread={spread}>
-            <ResourceThumbWrapper>
-              <ResourceThumbnail
-                resource={resource}
-                size="110px"
-                tooltipContainer={null} />
-            </ResourceThumbWrapper>
             <svg focusable="false" viewBox={`0 0 ${xViewbox || 1} ${yViewbox || 1}`}>
               <g>
                 <polygon
                   points={sellPoints}
-                  fill={`rgba(${theme.colors.mainRGB}, 0.4)`}
-                  stroke={theme.colors.main}
+                  fill={`rgba(${hexToRGB(theme.colors.buy)}, 0.4)`}
+                  stroke={theme.colors.buy}
                   strokeWidth={STROKE_WIDTH} />
-                <path d={sellLine} stroke={`rgba(${theme.colors.mainRGB}, 0.35)`} strokeDasharray="3" />
+                <path d={sellLine} stroke={`rgba(${hexToRGB(theme.colors.buy)}, 0.35)`} strokeDasharray="3" />
               </g>
               <g>
                 <polygon
                   points={buyPoints}
-                  fill={`rgba(${greenRGB}, 0.4)`}
-                  stroke={theme.colors.green}
+                  fill={`rgba(${hexToRGB(theme.colors.sell)}, 0.4)`}
+                  stroke={theme.colors.sell}
                   strokeWidth={STROKE_WIDTH} />
-                <path d={buyLine} stroke={`rgba(${greenRGB}, 0.25)`} strokeDasharray="3" />
+                <path d={buyLine} stroke={`rgba(${hexToRGB(theme.colors.sell)}, 0.35)`} strokeDasharray="3" />
               </g>
             </svg>
           </ChartArea>
           <TableArea>
             <SellTable>
-              <table>
-                <thead>
-                  <tr>
-                    <th>Selling Price</th>
-                    <th>Quantity</th>
-                    <th>Total</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {sellBuckets.map(({ price, amount }, i) => {
-                    const rowVolume = rowSaleVolume;
-                    rowSaleVolume -= amount;
-                    return (
-                      <tr key={i}>
-                        <td><VolumeBar volume={volumeBenchmark > 0 ? rowVolume / volumeBenchmark : 0} />{price.toLocaleString()}</td>
-                        <td>{amount.toLocaleString()}</td>
-                        <td>{formatPrice(price * amount)}</td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
+                <table>
+                  <thead>
+                    {sellBuckets.length == 0 
+                      ? (
+                        <tr>
+                          <th style={{ textAlign: 'center' }}>No Sellers</th>
+                        </tr>
+                      )
+                      : (
+                        <tr>
+                          <th>Selling Price</th>
+                          <th>Quantity</th>
+                          <th>Total</th>
+                        </tr>
+                      )
+                    }
+                  </thead>
+                  <tbody>
+                    {sellBuckets.map(({ price, amount }, i) => {
+                      const rowVolume = rowSaleVolume;
+                      rowSaleVolume -= amount;
+                      return (
+                        <tr key={i}>
+                          <td><VolumeBar volume={volumeBenchmark > 0 ? rowVolume / volumeBenchmark : 0} />{price.toLocaleString(undefined, { maximumFractionDigits: 4, minimumFractionDigits: 4 } )}</td>
+                          <td>{amount.toLocaleString()}</td>
+                          <td>{formatPrice(price * amount, { fixedPrecision: 2, minPrecision: 2 })}</td>              
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
             </SellTable>
 
             <CenterPrice>
@@ -726,20 +746,29 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
             <BuyTable>
               <table>
                 <thead>
-                  <tr>
-                    <th>Buying Price</th>
-                    <th>Quantity</th>
-                    <th>Total</th>
-                  </tr>
+                  {buyBuckets.length == 0 
+                      ? (
+                        <tr>
+                          <th style={{ textAlign: 'center' }}>No Buyers</th>
+                        </tr>
+                      )
+                      : (
+                        <tr>
+                          <th>Buying Price</th>
+                          <th>Quantity</th>
+                          <th>Total</th>
+                        </tr>
+                      )
+                    }
                 </thead>
                 <tbody>
                   {buyBuckets.map(({ price, amount }, i) => {
                     rowBuyVolume += amount;
                     return (
                       <tr key={i}>
-                        <td><VolumeBar volume={volumeBenchmark > 0 ? rowBuyVolume / volumeBenchmark : 0} />{price.toLocaleString()}</td>
+                        <td><VolumeBar volume={volumeBenchmark > 0 ? rowBuyVolume / volumeBenchmark : 0} />{price.toLocaleString(undefined, { maximumFractionDigits: 4, minimumFractionDigits: 4 } )}</td>
                         <td>{amount.toLocaleString()}</td>
-                        <td>{formatPrice(price * amount)}</td>
+                        <td>{formatPrice(price * amount, { fixedPrecision: 2, minPrecision: 2 })}</td>
                       </tr>
                     );
                   })}
@@ -770,15 +799,16 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
                 </FormSection>
 
                 <FormSection>
+                  <InputLabel>
+                    <label>Order Type</label>
+                  </InputLabel>
                   <RadioRow onClick={() => setType('market')} selected={nativeBool(type === 'market')}>
                     {type === 'market' ? <RadioCheckedIcon /> : <RadioUncheckedIcon />}
                     <span>Market Order</span>
-                    <InfoTooltip data-tip="help" data-for="details"><InfoIcon /></InfoTooltip>
                   </RadioRow>
                   <RadioRow onClick={() => setType('limit')} selected={nativeBool(type === 'limit')}>
                     {type === 'limit' ? <RadioCheckedIcon /> : <RadioUncheckedIcon />}
                     <span>Limit Order</span>
-                    <InfoTooltip data-tip="help" data-for="details"><InfoIcon /></InfoTooltip>
                   </RadioRow>
                 </FormSection>
 
@@ -791,6 +821,8 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
                   </InputLabel>
                   <TextInputWrapper rightLabel={resource.isAtomic ? '' : ' kg'}>
                     <UncontrolledTextInput
+                      monospace
+                      size="large" 
                       disabled={nativeBool(type === 'market' && ((mode === 'buy' && !totalSelling) || (mode === 'sell' && !totalBuying)))}
                       min={0}
                       max={type === 'market' ? (mode === 'buy' ? totalSelling : totalBuying) : undefined}
@@ -809,6 +841,8 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
                     </InputLabel>
                     <TextInputWrapper rightLabel={`SWAY${resource.isAtomic ? '' : ' / kg'}`}>
                       <UncontrolledTextInput
+                        monospace
+                        size="large"
                         disabled
                         value={formatPrice(avgMarketPrice ? (avgMarketPrice || 0) : ((centerPrice || 0) + (spread || 0) / 2))} />
                     </TextInputWrapper>
@@ -821,7 +855,10 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
                     </InputLabel>
                     <TextInputWrapper rightLabel={`SWAY${resource.isAtomic ? '' : ' / kg'}`}>
                       <UncontrolledTextInput
-                        onChange={handleChangeLimitPrice}
+                        monospace
+                        size="large"
+                        onChange={(e) => handleChangeLimitPrice(e.currentTarget.value)}
+                        onBlur={(e) => handleChangeLimitPrice(e.currentTarget.value, true)}
                         placeholder="Specify Price"
                         value={limitPrice || ''} />
                     </TextInputWrapper>
@@ -834,8 +871,10 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
                   </InputLabel>
                   <TextInputWrapper rightLabel="SWAY">
                     <UncontrolledTextInput
+                      monospace
+                      size="large"
                       disabled
-                      value={formatPrice((type === 'market' ? totalMarketPrice : totalLimitPrice) || 0)} />
+                      value={formatFixed((type === 'market' ? totalMarketPrice : totalLimitPrice) || 0)} />
                   </TextInputWrapper>
                 </FormSection>
 
@@ -857,6 +896,8 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
                   </InputLabel>
                   <TextInputWrapper rightLabel="SWAY">
                     <UncontrolledTextInput
+                      monospace
+                      size="large"
                       disabled
                       value={formatFixed(fee || 0, 2)} />
                   </TextInputWrapper>
@@ -864,25 +905,21 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
 
               </div>
 
+              <SummaryHeader type={type} mode={mode} />
+
               <Tray style={{ overflow: 'hidden' }}>
                 <Summary>
-                  {total > 0 && (
-                    <>
-                      <SummaryLabel type={type} mode={mode} />
-                      <div>
-                        <SwayIcon /> {formatPrice(total, { fixedPrecision: 2 })}
-                      </div>
-                    </>
-                  )}
+                  <SwayIcon /> <span>{total > 0 ? formatFixed(total) : 0}</span>
                 </Summary>
-
-                <ActionButton
-                  {...actionButtonDetails}
-                  flags={{
-                    disabled: loading || !hasPermission || !(total > 0),
-                    loading
-                  }}
-                  onClick={createOrder} />
+                {crew && (
+                  <ActionButton
+                    {...actionButtonDetails}
+                    flags={{
+                      disabled: loading || !hasPermission || !(total > 0),
+                      loading
+                    }}
+                    onClick={createOrder} />
+                )}
               </Tray>
             </PanelContent>
           </PanelInner>

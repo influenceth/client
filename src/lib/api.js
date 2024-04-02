@@ -1,10 +1,10 @@
 import axios from 'axios';
-import { Asteroid, Building, Deposit, Entity, Inventory, Order, Ship } from '@influenceth/sdk';
+import { Asteroid, Building, Deposit, Entity, Inventory, Order, Permission, Ship } from '@influenceth/sdk';
 import esb from 'elastic-builder';
 import { executeSwap, fetchQuotes } from "@avnu/avnu-sdk";
 
 import useStore from '~/hooks/useStore';
-import { esbLocationQuery, esbPermissionQuery, safeEntityId } from './utils';
+import { entityToAgreements, esbLocationQuery, esbPermissionQuery, safeEntityId } from './utils';
 
 // set default app version
 const apiVersion = 'v2';
@@ -88,6 +88,81 @@ const xapi = {
   getCrewActionItems: async (crewId) => {
     const response = await instance.get(`/${apiVersion}/user/activity/unresolved?crewId=${crewId}`);
     return response.data;
+  },
+
+  getCrewAgreements: async (crewId) => {
+    const queryPromises = [];
+
+    const hasAgreementShouldQuery = [
+      esb.boolQuery().must([
+        esb.termQuery('Control.controller.id', crewId),
+        esb.boolQuery().should([
+          esb.nestedQuery().path('PrepaidAgreements').query(esb.existsQuery('PrepaidAgreements')),
+          esb.nestedQuery().path('ContractAgreements').query(esb.existsQuery('ContractAgreements')),
+          esb.nestedQuery().path('WhitelistAgreements').query(esb.existsQuery('WhitelistAgreements')),
+        ])
+      ]),
+      esb.nestedQuery().path('PrepaidAgreements').query(esb.termQuery('PrepaidAgreements.permitted.id', crewId)),
+      esb.nestedQuery().path('ContractAgreements').query(esb.termQuery('ContractAgreements.permitted.id', crewId)),
+      esb.nestedQuery().path('WhitelistAgreements').query(esb.termQuery('WhitelistAgreements.permitted.id', crewId)),
+    ];
+
+    // BUILDINGS...
+    const buildingQueryBuilder = esb.boolQuery();
+    buildingQueryBuilder.mustNot(esb.termQuery('Building.status', Building.CONSTRUCTION_STATUSES.UNPLANNED));
+    buildingQueryBuilder.should(hasAgreementShouldQuery);
+
+    const buildingQ = esb.requestBodySearch();
+    buildingQ.query(buildingQueryBuilder);
+    buildingQ.from(0);
+    buildingQ.size(10000);
+    queryPromises.push(instance.post(`/_search/building`, buildingQ.toJSON()));
+
+    // SHIPS...
+    const shipQueryBuilder = esb.boolQuery();
+    shipQueryBuilder.should(hasAgreementShouldQuery);
+
+    const shipQ = esb.requestBodySearch();
+    shipQ.query(shipQueryBuilder);
+    shipQ.from(0);
+    shipQ.size(10000);
+    queryPromises.push(instance.post(`/_search/ship`, shipQ.toJSON()));
+
+    // LOTS...
+    const lotQueryBuilding = esb.boolQuery();
+    lotQueryBuilding.should([
+      esb.boolQuery().must([
+        esb.termQuery('meta.asteroid.Control.controller.id', crewId),
+        esb.boolQuery().should([
+          esb.nestedQuery().path('PrepaidAgreements').query(esb.existsQuery('PrepaidAgreements')),
+          esb.nestedQuery().path('ContractAgreements').query(esb.existsQuery('ContractAgreements')),
+          esb.nestedQuery().path('WhitelistAgreements').query(esb.existsQuery('WhitelistAgreements')),
+        ])
+      ]),
+      esb.nestedQuery().path('PrepaidAgreements').query(esb.termQuery('PrepaidAgreements.permitted.id', crewId)),
+      esb.nestedQuery().path('ContractAgreements').query(esb.termQuery('ContractAgreements.permitted.id', crewId)),
+      esb.nestedQuery().path('WhitelistAgreements').query(esb.termQuery('WhitelistAgreements.permitted.id', crewId)),
+    ]);
+
+    const lotQ = esb.requestBodySearch();
+    lotQ.query(lotQueryBuilding);
+    lotQ.from(0);
+    lotQ.size(10000);
+    queryPromises.push(instance.post(`/_search/lot`, lotQ.toJSON()));
+
+    // COMBINE...
+    const responses = await Promise.allSettled(queryPromises);
+    return responses.reduce((acc, r) => {
+      if (r.status === 'fulfilled') {
+        formatESEntityData(r.value.data).forEach((entity) => {
+          acc.push(...entityToAgreements(entity))
+        });
+      }
+      return acc.filter((a) => (
+        (a._agreement.permitted?.id !== a.Control?.controller?.id)
+        && (a.Control?.controller?.id === crewId || a._agreement.permitted?.id === crewId)
+      ));
+    }, []);
   },
 
   getCrewPlannedBuildings: async (crewId) => {

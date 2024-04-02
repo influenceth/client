@@ -99,6 +99,7 @@ const opacityKeyframes = keyframes`
     opacity: 1;
   }
 `;
+
 const Icon = styled.div`
   & svg {
     filter: drop-shadow(1px 1px 1px #333);
@@ -111,9 +112,11 @@ const Icon = styled.div`
 const Status = styled.div`
   text-shadow: none;
 `;
+
 const Label = styled.div`
   white-space: nowrap;
 `;
+
 const ActionItemRow = styled.div`
   align-items: center;
   overflow: hidden;
@@ -196,6 +199,7 @@ const TutorialMessage = styled.div`
     z-index: -1;
   }
 `;
+
 const TutorialContent = styled.div`
   display: flex;
   flex-direction: column;
@@ -238,12 +242,14 @@ const CrewmateWrapper = styled.div`
   );
   flex: 0 0 ${crewmateWidth}px;
 `;
+
 const CrewmateOverflow = styled.div`
   height: ${messageHeight + crewmateOverflow}px;
   overflow: hidden;
   position: relative;
   top: -${crewmateOverflow}px;
 `;
+
 const CrewmateImage = styled.div`
   background-image: ${p => p.crewmateId ? `url("${process.env.REACT_APP_IMAGES_URL}/v1/crew/${p.crewmateId}/image.svg?bustOnly=true")` : 'none'};
   background-position: top center;

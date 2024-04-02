@@ -83,7 +83,7 @@ const Audio = () => {
   }, [effectsVolume, effectEnded]);
 
   const playEffect = useCallback((toPlay, { loop, duration }) => {
-    if (!toPlay) return;
+    if (!toPlay || soundEnabled) return;
 
     try {
       const sound = effects[toPlay];
@@ -104,7 +104,7 @@ const Audio = () => {
     } catch (e) {
       console.error(e);
     }
-  }, [effectsVolume, effectEnded, stopEffect]);
+  }, [effectsVolume, effectEnded, stopEffect, soundEnabled]);
 
   useEffect(() => {
     const onClick = () => {

@@ -218,7 +218,13 @@ const useAssetSearch = (assetType, { from = 0, size = 2000 } = {}) => {
       const q = esb.requestBodySearch();
       q.query(filtersToQuery[esAssetType](throttledFilters || {}));
       if (esAssetType === 'asteroids') q.source({ excludes: [ 'AsteroidProof' ]});
-      if (sort) q.sort(esb.sort(...sort));
+      if (sort) {
+        if (sort[2]) {
+          q.sort(esb.sort({ [sort[0]]: { order: sort[1], ...sort[2] } }));
+        } else {
+          q.sort(esb.sort(...sort));
+        }
+      }
       q.from(from);
       q.size(size);
       q.trackTotalHits(true);

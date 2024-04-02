@@ -1,5 +1,5 @@
-import { Crew, Entity, Lot, Processor, Time } from '@influenceth/sdk';
 import esb from 'elastic-builder';
+import { Crew, Entity, Lot, Permission, Processor, Time } from '@influenceth/sdk';
 
 import { BioreactorBuildingIcon, ManufactureIcon, RefineIcon } from '~/components/Icons';
 
@@ -30,23 +30,23 @@ export const formatPrecision = (value, maximumPrecision = 0) => {
   return formatFixed(value, allowedDecimals);
 };
 
-export const formatPrice = (inputSway, { minPrecision = 3, fixedPrecision = 4 } = {}) => {
+export const formatPrice = (inputSway, { minPrecision = 3, fixedPrecision = 4, forcedAbbrev } = {}) => {
   let sign = inputSway < 0 ? '-' : '';
 
   const sway = Math.abs(inputSway);
   let unitLabel;
   let scale;
-  if (sway >= 1e6) {
+  if ((sway >= 1e6 && forcedAbbrev === undefined) || forcedAbbrev === 6) {
     scale = 1e6;
     unitLabel = 'M';
-  } else if (sway >= 1e3) {
+  } else if ((sway >= 1e3 && forcedAbbrev === undefined) || forcedAbbrev === 3) {
     scale = 1e3;
     unitLabel = 'k';
-  } else if (sway >= 1) {
+  } else if ((sway >= 1 && forcedAbbrev === undefined) || forcedAbbrev === 0) {
     scale = 1;
     unitLabel = '';
   } else {
-    return Number(sway || 0).toFixed(fixedPrecision).replace(/0$/g, '');
+    return Number(sway || 0).toLocaleString(undefined, { minimumFractionDigits: minPrecision, maximumFractionDigits: fixedPrecision });
   }
 
   const workingUnits = (sway / scale);
@@ -57,7 +57,7 @@ export const formatPrice = (inputSway, { minPrecision = 3, fixedPrecision = 4 } 
       fixedPlaces++;
     }
   }
-  return `${sign}${formatFixed(workingUnits, fixedPlaces)}${unitLabel}`;
+  return `${sign}${(workingUnits || 0).toLocaleString(undefined, { minimumFractionDigits: minPrecision, maximumFractionDigits: fixedPlaces })}${unitLabel}`;
 };
 
 export const keyify = (str) => (str || '').replace(/[^a-zA-Z0-9_]/g, '');
@@ -200,6 +200,37 @@ export const safeEntityId = (variablyHydratedEntity) => {
     return e;
   }
   return undefined;
+};
+
+export const entityToAgreements = (entity) => {
+  const acc = [];
+  ['PrepaidAgreements', 'ContractAgreements', 'WhitelistAgreements'].forEach((agreementType) => {
+    (entity[agreementType] || []).forEach((agreement, j) => {
+      const formatted = {
+        key: `${entity.uuid}_${agreementType}_${j}`,
+        id: entity.id,
+        label: entity.label,
+        uuid: entity.uuid,
+        _agreement: {
+          _type: agreementType === 'PrepaidAgreements'
+            ? Permission.POLICY_IDS.PREPAID
+            : (agreementType === 'ContractAgreements' ? Permission.POLICY_IDS.CONTRACT : 5),
+          ...agreement
+        },
+      };
+      // for the sake of agreements, the lot controller is *always* the asteroid controller
+      // because that is who is the administrator of lot agreements
+      // NOTE: this is different from elsewhere in the client, where the controller is
+      //       whoever has LOT_USE (fallback to asteroid controller)
+      formatted.Control = entity.label === Entity.IDS.LOT ? entity.meta?.asteroid?.Control : entity.Control;
+      formatted.Location = entity.Location;
+      formatted.Name = entity.Name;
+      if (entity.Building) formatted.Building = entity.Building;
+      if (entity.Ship) formatted.Ship = entity.Ship;
+      acc.push(formatted);
+    })
+  });
+  return acc;
 };
 
 export const earlyAccessJSTime = 1708527600e3;

@@ -45,31 +45,39 @@ const purple = '#884fff';
 const lightOrange = '#faaf42';
 const orange = '#ff984f';
 const yellow = '#ffd94f';
-const red = '#df4300';
+const red = '#ff564d';
+const darkRed = '#ee4036';
 
 const theme = {
   colors: {
     main,
-    brightMain,
-    darkMain,
     mainRGB: hexToRGB(main),
+    brightMain,
+    brightMainRGB: hexToRGB(brightMain),
+    darkMain,
+    darkMainRGB: hexToRGB(darkMain),
     mainBorder: 'rgba(255, 255, 255, 0.25)',
     mobileBackground: '#181818',
+    disabledBackground: '#666666',
+    inputBackground: '#0d2933',
     contentBorder: '#666666',
     contentBackdrop: 'rgba(0, 0, 0, 0.5)',
     contentHighlight: 'rgba(40, 40, 40, 0.5)',
     contentDark: 'rgb(40, 40, 40)',
     hudMenuBackground: 'rgba(15, 15, 15, 0.85)',
     mainText: '#cccccc',
-    secondaryText: '#999999',
+    secondaryText: '#a0a0a0',
     disabledText: 'rgba(255,255,255,0.4)',
     borderBottom: '#555555',
     borderBottomAlt: 'rgba(85, 85, 85, 0.5)',
+    sell: '#57d5ff',
+    buy: '#88e675',
     success,
     successRGB: hexToRGB(success),
     warning: orange,
     error: red,
-    teal, blue, lightPurple, purple, lightOrange, orange, yellow, red, green,
+    expired: '#f6574d',
+    teal, blue, lightPurple, purple, lightOrange, orange, yellow, red, darkRed, green,
     bonus: {
       level0: '#999999',
       level1: 'rgb(105, 235, 244)',
