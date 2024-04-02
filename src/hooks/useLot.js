@@ -123,9 +123,8 @@ const useLot = (lotId) => {
       // 'ContractAgreement', 'PrepaidAgreement' should be on lot record
       // unclear what happens to 'WhitelistAgreement' or PublicPolicies
     };
-
-  }, [lotEntity?.uuid, isLoading, asteroid, buildings, deposits, ships])
-
+  }, [lotEntity?.uuid, isLoading, asteroid, buildings, deposits, ships]);
+  
   return useMemo(() => ({ data, isLoading }), [data, isLoading]);
 };
 
