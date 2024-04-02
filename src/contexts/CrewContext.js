@@ -8,6 +8,7 @@ import useConstants from '~/hooks/useConstants';
 import useEntity from '~/hooks/useEntity';
 import useStore from '~/hooks/useStore';
 import { earlyAccessJSTime, expectedBlockSeconds, getBlockTime, getCrewAbilityBonuses, locationsArrToObj, openAccessJSTime } from '~/lib/utils';
+import { entitiesCacheKey } from '~/lib/cacheKey';
 
 const CrewContext = createContext();
 
@@ -24,7 +25,10 @@ export function CrewProvider({ children }) {
 
   const { data: TIME_ACCELERATION, isLoading: constantsLoading } = useConstants('TIME_ACCELERATION');
 
-  const ownedCrewsQueryKey = useMemo(() => ([ 'entities', Entity.IDS.CREW, { owner: accountAddress } ]), [accountAddress]);
+  const ownedCrewsQueryKey = useMemo(
+    () => entitiesCacheKey(Entity.IDS.CREW, { owner: accountAddress }),
+    [accountAddress]
+  );
 
   const { data: rawCrews, isLoading: crewsLoading } = useQuery(
     ownedCrewsQueryKey,
@@ -34,13 +38,13 @@ export function CrewProvider({ children }) {
 
   const combinedCrewRoster = useMemo(() => (rawCrews || []).reduce((acc, c) => [...acc, ...c.Crew.roster], []), [rawCrews]);
   const { data: myCrewCrewmates, isLoading: crewmatesLoading } = useQuery(
-    [ 'entities', Entity.IDS.CREWMATE, combinedCrewRoster.join(',') ], // TODO: joined key
+    entitiesCacheKey(Entity.IDS.CREWMATE, combinedCrewRoster.join(',')), // TODO: joined key
     () => api.getCrewmates(combinedCrewRoster),
     { enabled: combinedCrewRoster?.length > 0 }
   );
 
   const { data: myOwnedCrewmates, isLoading: myOwnedCrewmatesLoading } = useQuery(
-    [ 'entities', Entity.IDS.CREWMATE, { owner: accountAddress } ],
+    entitiesCacheKey(Entity.IDS.CREWMATE, { owner: accountAddress }),
     () => api.getAccountCrewmates(accountAddress),
     { enabled: !!token }
   );

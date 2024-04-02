@@ -4,10 +4,11 @@ import { Entity, Lot, Permission, Ship } from '@influenceth/sdk';
 
 import api from '~/lib/api';
 import useEntity from './useEntity';
+import { entitiesCacheKey } from '~/lib/cacheKey';
 
 const useLotEntities = (lotId, entityLabel, isPreloaded) => {
   return useQuery(
-    ['entities', entityLabel, { lotId }],
+    entitiesCacheKey(entityLabel, { lotId }),
     () => {
       const lotEntity = Entity.formatEntity({ id: lotId, label: Entity.IDS.LOT });
       return api.getEntities({ label: entityLabel, match: { 'Location.locations.uuid': lotEntity?.uuid } });
@@ -20,6 +21,7 @@ const useLot = (lotId) => {
   const queryClient = useQueryClient();
 
   const lotEntity = useMemo(() => lotId ? Entity.formatEntity({ id: lotId, label: Entity.IDS.LOT }) : null, [lotId]);
+  // console.log('lotId',{ lotId, lotEntity});
 
   const { data: lot, isLoading: lotIsLoading } = useEntity(lotId ? { id: lotId, label: Entity.IDS.LOT } : undefined);
 
@@ -52,7 +54,7 @@ const useLot = (lotId) => {
 
       [Entity.IDS.BUILDING, Entity.IDS.DEPOSIT, Entity.IDS.SHIP].forEach((label) => {
         queryClient.setQueryData(
-          ['entities', label, { lotId }],
+          entitiesCacheKey(label, { lotId }),
           lotEntities.filter((e) => e.label === label)
         );
       })
@@ -73,7 +75,7 @@ const useLot = (lotId) => {
 
   const isLoading = lotEntity?.uuid && (lotIsLoading || lotDataIsLoading || asteroidLoading || buildingsLoading || depositsLoading || shipsLoading);
   const data = useMemo(() => {
-    if (isLoading) return undefined;
+    if (isLoading || !lotEntity?.uuid) return undefined;
 
     const { asteroidId, lotIndex } = Lot.toPosition(lotId) || {};
     const agreement = (lot?.PrepaidAgreements || lot?.ContractAgreements || []).find((a) => a.permission === Permission.IDS.USE_LOT);

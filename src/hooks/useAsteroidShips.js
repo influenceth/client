@@ -2,10 +2,11 @@ import { useQuery } from 'react-query';
 import { Entity, Ship } from '@influenceth/sdk';
 
 import api from '~/lib/api';
+import { entitiesCacheKey } from '~/lib/cacheKey';
 
 const useAsteroidShips = (asteroidId) => {
   return useQuery(
-    [ 'entities', Entity.IDS.SHIP, { asteroidId, status: Ship.STATUSES.AVAILABLE } ],
+    entitiesCacheKey(Entity.IDS.SHIP, { asteroidId, status: Ship.STATUSES.AVAILABLE }),
     () => api.getAsteroidShips(asteroidId),
     { enabled: !!asteroidId }
   );

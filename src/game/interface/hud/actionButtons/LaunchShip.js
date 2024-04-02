@@ -18,7 +18,7 @@ const isVisible = ({ crew, ship }) => {
 const LaunchShip = ({ asteroid, lot, onSetAction, _disabled }) => {
   const { crew } = useCrewContext();
   const { currentUndockingAction } = useShipDockingManager(crew?._location?.shipId);
-  const { currentDeliveries } = useDeliveryManager({ destination: { label: Entity.IDS.SHIP, id: crew?._location?.shipId } });
+  const { currentDeliveries } = useDeliveryManager(crew?._location?.shipId ? { destination: { label: Entity.IDS.SHIP, id: crew._location.shipId } } : {});
   const crewedShip = useMemo(() => lot?.ships?.find((s) => s.id === crew?._location?.shipId), [crew?._location?.shipId, lot?.ships]);
   const ready = useReadyAtWatcher(crewedShip?.Ship?.readyAt);
 

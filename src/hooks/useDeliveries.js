@@ -4,6 +4,7 @@ import { Entity } from '@influenceth/sdk';
 
 import api from '~/lib/api';
 import { safeEntityId } from '~/lib/utils';
+import { entitiesCacheKey } from '~/lib/cacheKey';
 
 
 // cache by endpoint entity + status, filter before response
@@ -19,7 +20,7 @@ const useDeliveries = ({ destination, destinationSlot, origin, originSlot, statu
   }, [ destination, origin, status ]);
 
   const { data: rawData, isLoading } = useQuery(
-    [ 'entities', Entity.IDS.DELIVERY, cacheKey ],
+    entitiesCacheKey(Entity.IDS.DELIVERY, cacheKey),
     () => api.getDeliveries(destination, origin, status),
     { enabled: !!(destination || origin) }
   );

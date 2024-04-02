@@ -12,7 +12,7 @@ const useCrewOrders = (controllerId) => {
     { enabled: !!controllerId }
   );
 
-  const exchangeIds = useMemo(() => Array.from(new Set(orders.map((o) => o.entity.id))), [orders]);
+  const exchangeIds = useMemo(() => Array.from(new Set((orders || []).map((o) => o.entity.id))), [orders]);
   const { data: exchanges, isLoading: exchangesLoading } = useEntities({
     ids: exchangeIds,
     label: Entity.IDS.BUILDING
@@ -23,7 +23,7 @@ const useCrewOrders = (controllerId) => {
     return {
       data: isLoading
         ? undefined
-        : orders.map((o) => ({
+        : (orders || []).map((o) => ({
           ...o,
           marketplace: exchanges.find(e => Number(e.id) === Number(o.entity.id))
         })),

@@ -8,6 +8,7 @@ import useGetActivityConfig from '~/hooks/useGetActivityConfig';
 import useStore from '~/hooks/useStore';
 import api from '~/lib/api';
 import { hydrateActivities } from '~/lib/activities';
+import { entitiesCacheKey } from '~/lib/cacheKey';
 
 const ActionItemContext = React.createContext();
 
@@ -30,7 +31,7 @@ export function ActionItemProvider({ children }) {
   );
 
   const { data: plannedBuildings, isLoading: plannedBuildingsLoading } = useQuery(
-    [ 'entities', Entity.IDS.BUILDING, { controllerId: crewId, status: Building.CONSTRUCTION_STATUSES.PLANNED } ],
+    entitiesCacheKey(Entity.IDS.BUILDING, { controllerId: crewId, status: Building.CONSTRUCTION_STATUSES.PLANNED }),
     () => api.getCrewPlannedBuildings(crewId),
     { enabled: !!crewId }
   );

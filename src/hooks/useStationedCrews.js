@@ -3,11 +3,12 @@ import { useQuery } from 'react-query';
 import { Entity } from '@influenceth/sdk';
 
 import api from '~/lib/api';
+import { entitiesCacheKey } from '~/lib/cacheKey';
 
 const useStationedCrews = (entityId, hydrateCrewmates = false) => {
   const entityUuid = useMemo(() => entityId ? Entity.packEntity(entityId) : undefined, [entityId]);
   const { data: stationedCrews, isLoading: crewsLoading } = useQuery(
-    [ 'entities', Entity.IDS.CREW, { stationUuid: entityUuid } ],
+    entitiesCacheKey(Entity.IDS.CREW, { stationUuid: entityUuid }),
     () => api.getEntities({ match: { 'Location.location.uuid': entityUuid }, label: Entity.IDS.CREW }),
     { enabled: !!entityUuid }
   );
@@ -19,7 +20,7 @@ const useStationedCrews = (entityId, hydrateCrewmates = false) => {
   ), [hydrateCrewmates, stationedCrews]);
 
   const { data: stationedCrewmates, isLoading: crewmatesLoading } = useQuery(
-    [ 'entities', Entity.IDS.CREWMATE, crewmateIds.join(',') ], // TODO: joined key
+    entitiesCacheKey(Entity.IDS.CREWMATE, crewmateIds.join(',')), // TODO: joined key
     () => api.getCrewmates(crewmateIds),
     { enabled: crewmateIds?.length > 0 }
   );

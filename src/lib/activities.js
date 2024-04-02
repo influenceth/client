@@ -40,7 +40,7 @@ import {
 } from '~/components/Icons';
 import LotLink from '~/components/LotLink';
 
-import { andList, formatPrice, getProcessorProps, locationsArrToObj, ucfirst } from './utils';
+import { andList, formatPrice, getProcessorProps, locationsArrToObj, safeEntityId, ucfirst } from './utils';
 import api from './api';
 import formatters from './formatters';
 import EntityName from '~/components/EntityName';
@@ -69,7 +69,11 @@ const getEntityName = (entity) => {
 
 const getComponentNames = (entity) => {
   const { id, label, uuid, ...Components } = entity || {};
-  return Object.keys(Components);
+  return Object.keys(Components).filter((k) => {
+    const v = Components[k];
+    return v !== null && v !== undefined
+      && (!Array.isArray(v) || v?.length > 0)
+  });
 }
 
 const getApplicablePermissions = (entity) => {
@@ -106,7 +110,7 @@ const getAgreementInvalidations = (couldAddToCollection = false) => ({ event: { 
       }
     };
   }
-  return invalidation;
+  return [invalidation];
 };
 
 const getPolicyInvalidations = (couldAddToCollection = false) => ({ event: { returnValues } }, { entity = {} }) => {
@@ -128,7 +132,7 @@ const getPolicyInvalidations = (couldAddToCollection = false) => ({ event: { ret
       }
     };
   }
-  return invalidation;
+  return [invalidation];
 };
 
 // TODO: write a test to make sure all activities (from sdk) have a config
@@ -460,12 +464,13 @@ const activities = {
           ...returnValues.building,
           newGroupEval: {
             updatedValues: {
-              status: Building.CONSTRUCTION_STATUSES.OPERATIONAL
+              status: Building.CONSTRUCTION_STATUSES.OPERATIONAL,
+              hasComponent: getComponentNames(building),
+              hasPermission: getApplicablePermissions(building)
             },
             filters: {
               asteroidId,
               controllerId: returnValues.callerCrew.id,
-              hasComponent: getComponentNames(building),
               lotId
             }
           }
@@ -498,12 +503,13 @@ const activities = {
           ...returnValues.building,
           newGroupEval: {
             updatedValues: {
-              status: Building.CONSTRUCTION_STATUSES.PLANNED
+              status: Building.CONSTRUCTION_STATUSES.PLANNED,
+              hasComponent: getComponentNames(building),
+              hasPermission: getApplicablePermissions(building)
             },
             filters: {
               asteroidId,
               controllerId: returnValues.callerCrew.id,
-              hasComponent: getComponentNames(building),
               lotId
             }
           }
@@ -589,7 +595,7 @@ const activities = {
             ? {
               updatedValues: {
                 owner: crew?.Crew?.delegatedTo || returnValues.caller,
-                stationUuid: returnValues.station.uuid
+                stationUuid: safeEntityId(returnValues.station)?.uuid
               }
             }
             : undefined
@@ -779,7 +785,7 @@ const activities = {
         ...returnValues.ejectedCrew,
         newGroupEval: {
           updatedValues: {
-            stationUuid: returnValues.ejectedCrew.uuid // new station is crew's escape module
+            stationUuid: safeEntityId(returnValues.ejectedCrew)?.uuid // new station is crew's escape module
           }
         }
       },
@@ -809,7 +815,7 @@ const activities = {
       {
         ...returnValues.callerCrew,
         newGroupEval: {
-          updatedValues: { stationUuid: returnValues.station.uuid }
+          updatedValues: { stationUuid: safeEntityId(returnValues.station)?.uuid }
         }
       },
       { ...returnValues.station },
@@ -1212,7 +1218,7 @@ const activities = {
       return [
         invalidation,
         ['activities'], // (to update name in already-fetched activities)
-        ['watchlist']
+        returnValues.asteroidId ? ['watchlist'] : null
       ];
     },
     getLogContent: ({ event: { returnValues } }) => {
@@ -1476,7 +1482,6 @@ const activities = {
 
   SellOrderCancelled: {
     getInvalidations: ({ event: { returnValues } }, { exchange = {} }) => {
-      const orderPath = ''; // TODO: buyer_crew, exchange, order_types::LIMIT_BUY, product, price, storage, storage_slot
       const { asteroidId, lotId } = locationsArrToObj(exchange?.Location?.locations || []) || {};
       return [
         { ...returnValues.exchange },
@@ -1496,7 +1501,6 @@ const activities = {
   },
   SellOrderCreated: {
     getInvalidations: ({ event: { returnValues } }, { exchange = {} }) => {
-      const orderPath = ''; // TODO: buyer_crew, exchange, order_types::LIMIT_BUY, product, price, storage, storage_slot
       const { asteroidId, lotId } = locationsArrToObj(exchange?.Location?.locations || []) || {};
       return [
         { ...returnValues.exchange },
@@ -1538,7 +1542,6 @@ const activities = {
 
       // marketplace
       } else {
-        const orderPath = '';
         const { asteroidId, lotId } = locationsArrToObj(exchange?.Location?.locations || []) || {};
         return [
           { ...returnValues.exchange },
@@ -1677,12 +1680,13 @@ const activities = {
           newGroupEval: {
             updatedValues: {
               lotId,
-              status: Ship.STATUSES.AVAILABLE
+              status: Ship.STATUSES.AVAILABLE,
+              hasComponent: getComponentNames(ship),
+              hasPermission: getApplicablePermissions(ship || returnValues.ship),
             },
             filters: {
               asteroidId,
               controllerId: returnValues.callerCrew?.id,
-              hasComponent: getComponentNames(ship),
               isOnSurface: true
             }
           }
@@ -1754,7 +1758,13 @@ const activities = {
 
   ShipUndocked: {
     getInvalidations: ({ event: { returnValues } }, { dock = {} }) => {
-      const { asteroidId } = locationsArrToObj(dock?.Location?.locations || []);
+      // dock might be lot or building
+      let asteroidId;
+      if (dock?.label === Entity.IDS.BUILDING) {
+        asteroidId = locationsArrToObj(dock.Location?.locations || []).asteroidId;
+      } else {
+        asteroidId = Lot.toPosition(dock.id)?.asteroidId;
+      }
       return [
         {
           ...returnValues.ship,
@@ -1917,7 +1927,7 @@ const activities = {
       {
         ...returnValues.ship,
         newGroupEval: {
-          updatedValues: { asteroidId: null, }, // TODO: correct value?
+          updatedValues: { asteroidId: undefined, },
           filters: { controllerId: returnValues.callerCrew?.id }
         }
       },

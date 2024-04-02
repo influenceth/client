@@ -4,6 +4,7 @@ import { Entity, Permission, Ship } from '@influenceth/sdk';
 
 import useCrewContext from '~/hooks/useCrewContext';
 import api from '~/lib/api';
+import { entitiesCacheKey } from '~/lib/cacheKey';
 
 const useAccessibleAsteroidInventories = (asteroidId, isSourcing) => {
   const { crew } = useCrewContext();
@@ -11,13 +12,13 @@ const useAccessibleAsteroidInventories = (asteroidId, isSourcing) => {
 
   const permissionCrewId = crew?.id;
   const { data: buildings, isLoading: buildingsLoading } = useQuery(
-    ['entities', Entity.IDS.BUILDING, { asteroidId, hasComponent: 'Inventories', hasPermission: permission }],
+    entitiesCacheKey(Entity.IDS.BUILDING, { asteroidId, hasComponent: 'Inventories', hasPermission: permission }),
     () => api.getAsteroidBuildingsWithAccessibleInventories(asteroidId, permissionCrewId, permission),
     { enabled: !!(asteroidId && permission && permissionCrewId) }
   );
 
   const { data: ships, isLoading: shipsLoading } = useQuery(
-    ['entities', Entity.IDS.SHIP, { asteroidId, hasComponent: 'Inventories', hasPermission: permission, isOnSurface: true, status: Ship.STATUSES.AVAILABLE }],
+    entitiesCacheKey(Entity.IDS.SHIP, { asteroidId, hasComponent: 'Inventories', hasPermission: permission, isOnSurface: true, status: Ship.STATUSES.AVAILABLE }),
     () => api.getAsteroidShipsWithAccessibleInventories(asteroidId, permissionCrewId, permission),
     { enabled: !!(asteroidId && permission && permissionCrewId) }
   );

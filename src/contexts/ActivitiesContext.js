@@ -33,6 +33,11 @@ const isMismatch = (updateValue, queryCacheValue) => {
     return !updateValue.find((v) => v == queryCacheValue);
   }
 
+  // array of included values (i.e. multiple statuses in filter, this changed to one of them)
+  if (Array.isArray(queryCacheValue)) {
+    return !queryCacheValue.find((v) => v == updateValue);
+  }
+
   // straightforward (NOTE: `!=` is deliberate for looseness)
   return updateValue != queryCacheValue;
 }
@@ -54,14 +59,31 @@ export function ActivitiesProvider({ children }) {
   // useEffect(() => {
   //   const onKeydown = (e) => {
   //     if (e.shiftKey && e.which === 32) {
-  //       console.log('fake event')
-  //       handleActivities([
+  //       const events = [
   //         {
   //           event: {
-  //             // ...
-  //           }
+  //             "name": "ShipDocked",
+  //             "version": 0,
+  //             "event": "ShipDocked",
+  //             "returnValues": {
+  //               // asteroid: { label: 3, id: 26267 },
+  //               // building: { label: 5, id: 83 },
+  //               // finishTime: Math.floor(Date.now() / 1000) + 3600,
+  //               dock: { label: 4, id: 6913102050230273 },
+  //               // dock: { label: 5, id: 41 },
+  //               ship: { label: 6, id: 1 },
+  //               callerCrew: { label: 1, id: 9 },
+  //               caller: '0x04b4e621185c5a62dd145edAAAA6f42BE775b5E34571bBDb0F05d91b1cA03A06'
+  //             }
+  //           },
   //         }
-  //       ]);
+  //       ];
+
+  //       console.log('fake event', events[0]?.event?.name);
+  //       hydrateActivities(events, queryClient).then(() => {
+  //         console.log('hydrated');
+  //         handleActivities(events);
+  //       })
   //     }
   //   };
   //   document.addEventListener('keydown', onKeydown);
@@ -89,7 +111,7 @@ export function ActivitiesProvider({ children }) {
     setTimeout(() => {
       transformedActivities.forEach(activity => {
         if (!skipInvalidations) {
-          const debugInvalidation = true;
+          const debugInvalidation = false;
           const activityConfig = getActivityConfig(activity);
           shouldRefreshReadyAt = shouldRefreshReadyAt || !!activityConfig?.requiresCrewTime;
 
@@ -128,7 +150,7 @@ export function ActivitiesProvider({ children }) {
                   invalidations.push(queryKey);
 
                 // else, check if it is technically possible (to the best of our knowledge)
-                // that the updated entity now *should be* part of a new entity group based
+                // that the updated entity now *could be* part of a new entity group based
                 // on what changed about it... we will rely on newGroupEval to guide us
                 } else if (newGroupEval?.updatedValues) {
                   const { updatedValues, filters } = newGroupEval;
@@ -140,14 +162,14 @@ export function ActivitiesProvider({ children }) {
                   // (this assumes we have written our useQuery keys to be comprehensive!)
                   // i.e. if ship controller changed, may not need to invalidate a group specifying all ships on a lot
                   if (!Object.keys(updatedValues).find((k) => collectionFilter.hasOwnProperty(k))) {
-                    // if (debugInvalidation) console.log('not in filter', queryKey[2], collectionFilter);
+                    if (debugInvalidation) console.log('not in filter', updatedValues, collectionFilter);
                     skip = true;
                   }
 
                   // if at least one of the updatedValues would exclude the updated entity from the
                   // group, then impossible it would be added to this group... skip
                   else if (Object.keys(updatedValues).find((k) => collectionFilter.hasOwnProperty(k) && isMismatch(updatedValues[k], collectionFilter[k]))) {
-                    // if (debugInvalidation) console.log('change excluded');
+                    if (debugInvalidation) console.log('change excluded');
                     skip = true;
                   }
 
