@@ -73,18 +73,18 @@ const buildingTypeOptions = Object.keys(Building.TYPES)
   ]), []);
 
   const buildingTypeColors = {
-    0: '#666666',
-    1: '#ff8c00',
-    2: '#e81123',
-    3: '#ec008c',
-    4: '#68217a',
-    5: '#00188f',
-    6: '#00bcf2',
-    7: '#00b294',
-    8: '#009e49',
-    9: '#bad80a',
+    0: '#666666', // empty lot
+    1: '#2bf3ff', // WAREHOUSE
+    2: '#f7811b', // EXTRACTOR
+    3: '#419dff', // REFINERY
+    4: '#1bcc00', // BIOREACTOR
+    5: '#ff6164', // FACTORY
+    6: '#ff2424', // SHIPYARD
+    7: '#8c00ff', // SPACEPORT
+    8: '#fff700', // MARKETPLACE
+    9: '#ff00ff', // HABITAT
     // (extras)
-    14: '#999999',  // construction site
+    14: '#bfbfbf',  // construction site
     15: '#fff100',  // landed light transport
   };
 
@@ -228,7 +228,7 @@ const SearchFilters = ({ assetType, highlighting, isListView = false }) => {
           fieldName="role"
           options={agreementRoleOptions}
           title="Role" />
-      
+
         <CheckboxFilter
           {...filterProps}
           fieldName="timing"
