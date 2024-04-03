@@ -27,6 +27,8 @@ const getActivityConfig = (queryClient, defaultViewingAs) => (activity, override
 
   const invalidations = config?.getInvalidations ? config.getInvalidations(activity, prepopped) : [];
 
+  const onBeforeReceived = config?.onBeforeReceived ? config.onBeforeReceived(activity) : (async () => {});
+
   const logContent = config?.getLogContent ? config.getLogContent(activity, viewingAs, prepopped) : null;
   if (logContent && activity.event.transactionHash) logContent.txLink = `${process.env.REACT_APP_STARKNET_EXPLORER_URL}/tx/${activity.event.transactionHash}`;
   // TODO: support L1? __t is in event record, but is not included in activity record...
@@ -47,6 +49,7 @@ const getActivityConfig = (queryClient, defaultViewingAs) => (activity, override
     invalidations,
     logContent,
     isActionItemHidden,
+    onBeforeReceived,
     requiresCrewTime,
     triggerAlert
   };

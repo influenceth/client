@@ -176,6 +176,9 @@ const customConfigs = {
       ]
     })
   },
+  AnnotateEvent: {
+    equalityTest: ['transaction_hash', 'log_index'],
+  },
   CancelPrepaidAgreement: {
     equalityTest: ['target.id', 'target.label', 'permission'],
     getTransferConfig: ({ agreementPath, refundAmount, recipient }) => ({

@@ -1051,6 +1051,20 @@ const activities = {
     },
   },
 
+  EventAnnotated: {
+    onBeforeReceived: ({ event: { returnValues } }) => (pendingTransaction) => {
+      console.log({ returnValues, pendingTransaction });
+      return api.saveAnnotation({
+        annotation: pendingTransaction?.meta?.annotation,
+        crewId: returnValues.callerCrew?.id,
+        ...returnValues
+      })
+    },
+    getInvalidations: ({ event: { returnValues } }) => ([
+      'annotations' // TODO: ...
+    ])
+  },
+
   ExchangeConfigured: {
     getInvalidations: ({ event: { returnValues } }) => ([
       { ...returnValues.exchange }

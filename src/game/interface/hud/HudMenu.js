@@ -342,8 +342,8 @@ const HudMenu = ({ forceOpenMenu }) => {
         noDetail: true,
         Component: hudMenus.AdminBuilding,
         isVisible: focus === 'lot'
-          && lot?.building?.Building?.status === Building.CONSTRUCTION_STATUSES.OPERATIONAL
-          && lot.building.Control?.controller?.id === crew?.id
+          // && lot?.building?.Building?.status === Building.CONSTRUCTION_STATUSES.OPERATIONAL
+          && lot?.building?.Control?.controller?.id === crew?.id
       },
       {
         key: 'ASTEROID_ADMIN',

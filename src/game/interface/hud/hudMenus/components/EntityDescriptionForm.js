@@ -5,8 +5,7 @@ import Button from '~/components/ButtonAlt';
 import UncontrolledTextArea from '~/components/TextAreaUncontrolled';
 import { InputBlock } from '~/components/filters/components';
 import { nativeBool } from '~/lib/utils';
-import useNameAvailability from '~/hooks/useNameAvailability';
-import useChangeName from '~/hooks/actionManagers/useChangeName';
+import useAnnotationManager, { isValidAnnotation } from '~/hooks/actionManagers/useAnnotationManager';
 
 const ErrorContainer = styled.div`
   color: ${p => p.theme.colors.error};
@@ -14,54 +13,49 @@ const ErrorContainer = styled.div`
 `;
 
 // TODO: create validity functions for annotaions
-// TODO: connect to annotations
 const EntityDescriptionForm = ({ entity, label, originalDesc, ...props }) => {
-  const isNameValid = useNameAvailability(entity?.label);
-
-  const { changeName, changingName } = useChangeName(entity);
+  const { saveAnnotation, savingAnnotation } = useAnnotationManager(entity);
 
   const [error, setError] = useState();
-  const [name, setDesc] = useState();
+  const [desc, setDesc] = useState();
   useEffect(() => {
-    if (!name) setDesc(originalDesc)
+    if (!desc) setDesc(originalDesc)
   }, [originalDesc])
 
   const handleDescChange = useCallback(async (e) => {
     const val = e.currentTarget.value || '';
     setDesc(val);
-    const err = await isNameValid(val, entity.id, true, 'string');
-    setError(typeof err === 'string' ? err : false);
+    const err = !isValidAnnotation(val, entity.id, true, 'string'); // TODO: ...
+    setError(typeof err === 'string' ? err : false); // TODO: ...
   }, [entity?.id]);
 
   const saveDescChange = useCallback(async () => {
-    if (await isNameValid(name, entity?.id)) {
-      changeName(name);
-
-      // TODO: building names only have to be unique per asteroid, not globally
+    if (isValidAnnotation(desc)) {
+      saveAnnotation(desc);
     }
-  }, [entity?.id, name]);
+  }, [entity?.id, desc]);
 
   return (
     <InputBlock>
       <label>{label}</label>
       <div>
         <UncontrolledTextArea
-          disabled={nativeBool(!entity || changingName)}
+          disabled={nativeBool(!entity || savingAnnotation)}
           onChange={handleDescChange}
           placeholder="Type a custom description..."
-          value={name === undefined ? originalDesc : name} />
+          value={desc === undefined ? originalDesc : desc} />
       </div>
       <ErrorContainer>{error}</ErrorContainer>
       <div style={{ borderTop: '1px solid #333' }}>
         <div style={{ flex: 1 }} />
         <Button
-          disabled={nativeBool(!entity || changingName || !name || error || (name === originalDesc))}
+          disabled={nativeBool(!entity || savingAnnotation || !desc || error || (desc === originalDesc))}
           size="small"
           onClick={() => setDesc(originalDesc)}
           style={{ marginRight: 6 }}>Cancel</Button>
         <Button
-          disabled={nativeBool(!entity || changingName || !name || error || (name === originalDesc))}
-          loading={changingName}
+          disabled={nativeBool(!entity || savingAnnotation || !desc || error || (desc === originalDesc))}
+          loading={savingAnnotation}
           size="small"
           isTransaction
           onClick={saveDescChange}>Update</Button>

@@ -13,6 +13,7 @@ import { HudMenuCollapsibleSection, Scrollable, Tray } from './components/compon
 import LotTitleArea from './components/LotTitleArea';
 import PolicyPanels from './components/PolicyPanels';
 import useCrew from '~/hooks/useCrew';
+import { useDescriptionAnnotation } from '~/hooks/useAnnotations';
 
 const Description = styled.div`
   color: ${p => p.theme.colors.main};
@@ -23,6 +24,7 @@ const Description = styled.div`
 const LotInfo = () => {
   const lotId = useStore(s => s.asteroids.lot);
   const { data: lot } = useLot(lotId);
+  const { data: annotation, isLoading: isAnnotationLoading } = useDescriptionAnnotation(lot?.building || lot?.surfaceShip);
   const { data: controller } = useCrew(lot?.building?.Control?.controller?.id);
 
   const dispatchZoomScene = useStore(s => s.dispatchZoomScene);
@@ -40,15 +42,23 @@ const LotInfo = () => {
 
   const siteOrBuilding = (lot?.building?.Building?.status === Building.CONSTRUCTION_STATUSES.OPERATIONAL ? 'Building' : 'Site');
 
-  if (!lot) return null;
+  if (!lot || isAnnotationLoading) return null;
   return (
     <>
       <Scrollable hasTray={reactBool(!isZoomedToLot)}>
         <LotTitleArea lot={lot} />
 
+        {annotation && (
+          <HudMenuCollapsibleSection titleText="Description">
+            <Description>
+              {annotation}
+            </Description>
+          </HudMenuCollapsibleSection>
+        )}
+
         {lot?.building && (
           <>
-            <HudMenuCollapsibleSection titleText="Description">
+            <HudMenuCollapsibleSection titleText="Type Description" collapsed={!!annotation}>
               <Description>
                 {lot.building.Building?.status === Building.CONSTRUCTION_STATUSES.OPERATIONAL
                   ? Building.TYPES[lot.building.Building.buildingType].description

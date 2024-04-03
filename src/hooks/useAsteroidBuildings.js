@@ -14,7 +14,6 @@ const useAsteroidBuildings = (asteroidId, reqComponent = 'Building', reqOneOfPer
     () => api.getBuildingsWithComponent(asteroidId, reqComponent),
     { enabled: !!asteroidId && !!reqComponent }
   );
-  console.log(entitiesCacheKey(Entity.IDS.BUILDING, { asteroidId, hasComponent: reqComponent, status: Building.CONSTRUCTION_STATUSES.OPERATIONAL }));
 
   const perms = useMemo(() =>
     Array.isArray(reqOneOfPermissions) ? reqOneOfPermissions : (reqOneOfPermissions ? [reqOneOfPermissions] : []),
