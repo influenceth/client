@@ -121,7 +121,6 @@ const useMappedAsteroidLots = (i) => {
 
     let unpacked = {};
     let isResult = false;
-    let hasLotUse = false;
     let lotUseTallies = {};
     let resultTally = 0;
 
@@ -161,7 +160,7 @@ const useMappedAsteroidLots = (i) => {
         }
 
         // if this lot has something, include in the results
-        if (isResult || hasLotUse) {
+        if (isResult) {
           lotResult[i] = isResult;
 
           // (if including, also calculate the color)
@@ -176,10 +175,8 @@ const useMappedAsteroidLots = (i) => {
       }
     }
 
-    // console.log('results', results);
-
     return [lotResult, lotUse, lotColor, lotUseTallies, resultTally];
-  }, [lotData, myOccupationMap, isFilterMatch, highlightValueMap, rebuildTally]);
+  }, [lotData, myOccupationMap, myShipMap, isFilterMatch, highlightValueMap, rebuildTally]);
 
   const refetch = useCallback(() => {
     setRebuildTally((t) => t + 1);
@@ -259,7 +256,6 @@ const useMappedAsteroidLots = (i) => {
   const isLoading = lotDataLoading || sampledLotsLoading || crewLotsLoading;
 
   return useMemo(() => {
-    // console.log('re memoize -- make sure this is not happening more than expected');
     return {
       data: {
         lotUseTallies,

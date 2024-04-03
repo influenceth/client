@@ -180,7 +180,7 @@ const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, co
   // (b/c might have missed ws updates while on a different asteroid)
   // TODO: probably technically need to capture allLotsReloading alongside lastLotUpdate in dependency arrays
   useEffect(() => {
-    if (lotResultMap) refetchLots();
+    if (Object.values(lotResultMap).length > 0) refetchLots();
   }, []);
 
   // position lots and bucket into regions (as needed)
@@ -522,12 +522,12 @@ const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, co
   const lotScale = useMemo(() => Math.max(1, Math.sqrt(cameraAltitude / 10000)), [cameraAltitude]);
   const lotsReady = useMemo(() => {
     return !isLoading &&
-      lotResultMap &&
-      meshesInitialized &&
-      positions.current &&
-      regionsByDistance?.length &&
-      lotsByRegion.current?.length &&
-      resultsByRegion.current;
+      !!lotResultMap &&
+      !!meshesInitialized &&
+      !!positions.current &&
+      !!regionsByDistance?.length &&
+      !!lotsByRegion.current?.length &&
+      !!resultsByRegion.current;
   }, [
     isLoading,
     lotResultMap,
