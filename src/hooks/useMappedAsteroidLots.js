@@ -40,7 +40,7 @@ const useMappedAsteroidLots = (i) => {
               [_locations.lotIndex]: true
             };
           }, {})
-        : (sampledLotsLoading ? {} : null),
+        : {},
       sampledLots?.length || 0
     ];
   }, [sampledLots]);
