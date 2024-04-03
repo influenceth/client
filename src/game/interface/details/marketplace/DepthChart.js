@@ -103,7 +103,6 @@ const Header = styled.div`
       line-height: 1em;
       margin: 0 0 4px;
       text-transform: uppercase;
-      white-space: nowrap;
     }
     ${Subheader} {
       font-weight: normal;
