@@ -74,18 +74,18 @@ const buildingTypeOptions = Object.keys(Building.TYPES)
 
   const buildingTypeColors = {
     0: '#666666', // empty lot
-    1: '#2bf3ff', // WAREHOUSE
-    2: '#f7811b', // EXTRACTOR
-    3: '#419dff', // REFINERY
-    4: '#1bcc00', // BIOREACTOR
-    5: '#ff6164', // FACTORY
-    6: '#ff2424', // SHIPYARD
-    7: '#8c00ff', // SPACEPORT
-    8: '#fff700', // MARKETPLACE
-    9: '#ff00ff', // HABITAT
+    1: '#ff9900', // WAREHOUSE
+    2: '#d9352b', // EXTRACTOR
+    3: '#cc1061', // REFINERY
+    4: '#0a9900', // BIOREACTOR
+    5: '#b3855c', // FACTORY
+    6: '#4848b3', // SHIPYARD
+    7: '#19d9ff', // SPACEPORT
+    8: '#57ff65', // MARKETPLACE
+    9: '#ffff00', // HABITAT
     // (extras)
-    14: '#bfbfbf',  // construction site
-    15: '#fff100',  // landed light transport
+    14: '#808080',  // construction site
+    15: '#ffffff',  // landed light transport
   };
 
 const lotSearchBuildingTypeOptions = Object.keys(Building.TYPES).reduce((acc, key) => ([
