@@ -432,7 +432,7 @@ const AsteroidResourcePrices = ({ asteroid, mode, resource }) => {
       </Body>
 
       <PseudoFooterButton disabled={nativeBool(!selected)} onClick={onViewMarketplace}>
-        View Marketplace
+        Transact
       </PseudoFooterButton>
     </>
   );
