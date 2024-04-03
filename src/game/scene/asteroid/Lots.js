@@ -519,7 +519,7 @@ const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, co
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const lotScale = useMemo(() => Math.max(1, cameraAltitude / 20000), [cameraAltitude]);
+  const lotScale = useMemo(() => Math.max(1, Math.sqrt(cameraAltitude / 10000)), [cameraAltitude]);
   const lotsReady = useMemo(() => {
     return !isLoading &&
       lotResultMap &&
@@ -579,42 +579,40 @@ const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, co
             // > if has a result, always need to rebuild entire matrix for this lot (to update scale with altitude)
             // > otherwise, only need to (re)build matrix on (re)initialization or if lot visibility is dynamic
             //   (note: building source and fill source changes will result in updated lastLotUpdate update)
-            if (hasResult || lotTally > visibleLotTally || !lotsInitialized) {
-              const lotZeroIndex = lotIndex - 1;
+            const lotZeroIndex = lotIndex - 1;
 
-              dummy.position.set(
-                positions.current[lotZeroIndex * 3 + 0],
-                positions.current[lotZeroIndex * 3 + 1],
-                positions.current[lotZeroIndex * 3 + 2]
-              );
+            dummy.position.set(
+              positions.current[lotZeroIndex * 3 + 0],
+              positions.current[lotZeroIndex * 3 + 1],
+              positions.current[lotZeroIndex * 3 + 2]
+            );
 
-              dummy.lookAt(
-                orientations.current[lotZeroIndex * 3 + 0],
-                orientations.current[lotZeroIndex * 3 + 1],
-                orientations.current[lotZeroIndex * 3 + 2]
-              );
+            dummy.lookAt(
+              orientations.current[lotZeroIndex * 3 + 0],
+              orientations.current[lotZeroIndex * 3 + 1],
+              orientations.current[lotZeroIndex * 3 + 2]
+            );
 
-              dummy.scale.set(lotScale, lotScale, lotScale);
-              dummy.updateMatrix();
+            dummy.scale.set(lotScale, lotScale, lotScale);
+            dummy.updateMatrix();
 
-              // everything else is only in visible-lot area
-              if (lotUse !== 0 && (totalRendered < visibleLotTally || hasResult)) {
-                lotMeshes.current[lotUse].setMatrixAt(lotUseRendered, dummy.matrix);
-                lotUsesRendered[lotUse] = (lotUsesRendered[lotUse] || 0) + 1;
-                updateLotUseMatrix[lotUse] = true;
-              }
-
-              if (lotUse === 0 && ((totalRendered < visibleLotTally && cameraAltitude <= PIP_VISIBILITY_ALTITUDE) || hasResult)) {
-                lotMeshes.current[0].setMatrixAt(lotUseRendered, dummy.matrix);
-                lotUsesRendered[0] = (lotUsesRendered[0] || 0) + 1;
-                updateLotUseMatrix[0] = true;
-              }
-
-              // update mouseable matrix
-              // TODO: should these always face the camera? or have a slight bias towards camera at least?
-              mouseableMesh.current.setMatrixAt(totalRendered, dummy.matrix);
-              updateMouseableMatrix = true;
+            // everything else is only in visible-lot area
+            if (lotUse !== 0 && (totalRendered < visibleLotTally || hasResult)) {
+              lotMeshes.current[lotUse].setMatrixAt(lotUseRendered, dummy.matrix);
+              lotUsesRendered[lotUse] = (lotUsesRendered[lotUse] || 0) + 1;
+              updateLotUseMatrix[lotUse] = true;
             }
+
+            if (lotUse === 0 && ((totalRendered < visibleLotTally && cameraAltitude <= PIP_VISIBILITY_ALTITUDE) || hasResult)) {
+              lotMeshes.current[0].setMatrixAt(lotUseRendered, dummy.matrix);
+              lotUsesRendered[0] = (lotUsesRendered[0] || 0) + 1;
+              updateLotUseMatrix[0] = true;
+            }
+
+            // update mouseable matrix
+            // TODO: should these always face the camera? or have a slight bias towards camera at least?
+            mouseableMesh.current.setMatrixAt(totalRendered, dummy.matrix);
+            updateMouseableMatrix = true;
 
             // COLOR
             // > if has a result, must always update color (because matrix always updated, so instance indexes will change position)
