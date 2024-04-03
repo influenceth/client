@@ -234,7 +234,7 @@ const CrewAssignment = ({ crewId, crewmateId, crewmateMap, onFinish, overrides =
             <RecruitingDiv>
               {bookSession.crewmate
                 ? <CrewmateCard
-                    crewmate={captain || bookSession.crewmate}
+                    crewmate={bookSession.crewmate || captain}
                     hideIfNoName
                     noWrapName
                     showClassInHeader
