@@ -2,11 +2,11 @@ import { useQuery } from 'react-query';
 
 import api from '~/lib/api';
 
-const useAsteroidLotData = (id) => {
+const useAsteroidLotData = (asteroidId) => {
   return useQuery(
-    [ 'asteroidLots', id ],
-    () => api.getAsteroidLotData(id),
-    { enabled: !!id }
+    [ 'asteroidPackedLotData', asteroidId ],
+    () => api.getAsteroidLotData(asteroidId),
+    { enabled: !!asteroidId }
   );
 };
 

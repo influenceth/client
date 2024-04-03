@@ -4,10 +4,11 @@ import { Entity, Lot, Permission, Ship } from '@influenceth/sdk';
 
 import api from '~/lib/api';
 import useEntity from './useEntity';
+import { entitiesCacheKey } from '~/lib/cacheKey';
 
 const useLotEntities = (lotId, entityLabel, isPreloaded) => {
   return useQuery(
-    ['entities', entityLabel, 'lot', lotId],
+    entitiesCacheKey(entityLabel, { lotId }),
     () => {
       const lotEntity = Entity.formatEntity({ id: lotId, label: Entity.IDS.LOT });
       return api.getEntities({ label: entityLabel, match: { 'Location.locations.uuid': lotEntity?.uuid } });
@@ -20,13 +21,15 @@ const useLot = (lotId) => {
   const queryClient = useQueryClient();
 
   const lotEntity = useMemo(() => lotId ? Entity.formatEntity({ id: lotId, label: Entity.IDS.LOT }) : null, [lotId]);
+  // console.log('lotId',{ lotId, lotEntity});
 
   const { data: lot, isLoading: lotIsLoading } = useEntity(lotId ? { id: lotId, label: Entity.IDS.LOT } : undefined);
 
   // prepop all the entities on the lot in the cache (so can do in a single query)
   const { data: lotDataPrepopped, isLoading: lotDataIsLoading } = useQuery(
-    ['lotData', lotId],
+    ['lotEntitiesPrepopulation', lotId],
     async () => {
+      if (!lotId) console.error('useLot has bad lotId');
 
       // populate from single query... set query data
       const lotEntities = (await api.getEntities({
@@ -41,8 +44,8 @@ const useLot = (lotId) => {
         ]
       })) || [];
 
-      // update queryClient for individual entities, so that when invalidated, they are refetched
-      // (when the data on the lot gets updated)
+      // update queryClient for individual entities, so that when lot data invalidated, they are refetched
+      // TODO: not sure why we would do this here if we are not doing everywhere with an 'entities' key?
       lotEntities.forEach((e) => {
         if ([Entity.IDS.BUILDING, Entity.IDS.DEPOSIT, Entity.IDS.SHIP].includes(e.label)) {
           queryClient.setQueryData([ 'entity', e.label, e.id ], e);
@@ -51,7 +54,7 @@ const useLot = (lotId) => {
 
       [Entity.IDS.BUILDING, Entity.IDS.DEPOSIT, Entity.IDS.SHIP].forEach((label) => {
         queryClient.setQueryData(
-          ['entities', label, 'lot', lotId],
+          entitiesCacheKey(label, { lotId }),
           lotEntities.filter((e) => e.label === label)
         );
       })
@@ -120,7 +123,6 @@ const useLot = (lotId) => {
       // 'ContractAgreement', 'PrepaidAgreement' should be on lot record
       // unclear what happens to 'WhitelistAgreement' or PublicPolicies
     };
-
   }, [lotEntity?.uuid, isLoading, asteroid, buildings, deposits, ships]);
   
   return useMemo(() => ({ data, isLoading }), [data, isLoading]);

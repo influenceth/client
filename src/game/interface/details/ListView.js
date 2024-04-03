@@ -210,12 +210,6 @@ const assetTypes = {
     // hideInDropdown: true,
     // disableFilters: true
   },
-  // orders: {
-  //   keyField: 'i',
-  //   icon: <RocketIcon />, // TODO
-  //   title: 'Market Orders',
-  //   useColumns: listConfigs.asteroids,
-  // },
   // leases: {
   //   keyField: 'i',
   //   icon: <RocketIcon />, // TODO

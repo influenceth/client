@@ -217,7 +217,7 @@ const MarketplaceOrder = ({
     currentOrder = {}
   } = manager;
   const { crew, crewCan } = useCrewContext();
-  const { data: orders, refetch } = useOrderList(exchange, resourceId);
+  const { data: orders, refetch } = useOrderList(exchange?.id, resourceId);
 
   const [buyOrders, sellOrders] = useMemo(() => ([
     (orders || []).filter((o) => o.orderType === Order.IDS.LIMIT_BUY),

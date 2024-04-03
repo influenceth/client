@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from 'react-query';
-import { Building } from '@influenceth/sdk';
+import { Building, Entity } from '@influenceth/sdk';
 
 import useSession from '~/hooks/useSession';
 import useCrewAgreements from '~/hooks/useCrewAgreements';
@@ -9,6 +9,7 @@ import useGetActivityConfig from '~/hooks/useGetActivityConfig';
 import useStore from '~/hooks/useStore';
 import api from '~/lib/api';
 import { hydrateActivities } from '~/lib/activities';
+import { entitiesCacheKey } from '~/lib/cacheKey';
 
 const ActionItemContext = React.createContext();
 
@@ -31,7 +32,7 @@ export function ActionItemProvider({ children }) {
   );
 
   const { data: plannedBuildings, isLoading: plannedBuildingsLoading } = useQuery(
-    [ 'planned', crewId ],
+    entitiesCacheKey(Entity.IDS.BUILDING, { controllerId: crewId, status: Building.CONSTRUCTION_STATUSES.PLANNED }),
     () => api.getCrewPlannedBuildings(crewId),
     { enabled: !!crewId }
   );

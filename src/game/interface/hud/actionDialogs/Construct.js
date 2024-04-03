@@ -54,7 +54,7 @@ const TransferToSite = styled.div`
 
 const Construct = ({ asteroid, lot, constructionManager, stage, ...props }) => {
   const { currentConstructionAction, constructionStatus, startConstruction, finishConstruction, isAtRisk } = constructionManager;
-  const { currentDeliveryActions } = useDeliveryManager({ destination: lot.building });
+  const { currentDeliveryActions } = useDeliveryManager({ destination: lot?.building });
   
   const crew = useActionCrew(currentConstructionAction);
 

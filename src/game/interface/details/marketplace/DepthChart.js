@@ -366,7 +366,7 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
 
   const onSetAction = useStore(s => s.dispatchActionDialog);
 
-  const { data: orders } = useOrderList(marketplace, resource?.i);
+  const { data: orders } = useOrderList(marketplace?.id, resource?.i);
 
   const { getPendingOrder } = useMarketplaceManager(marketplace?.id);
 

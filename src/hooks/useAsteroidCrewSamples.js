@@ -1,15 +1,18 @@
 import { useQuery } from 'react-query';
+import { Entity } from '@influenceth/sdk';
 
 import api from '~/lib/api';
 import useCrewContext from './useCrewContext';
+import { entitiesCacheKey } from '~/lib/cacheKey';
 
 const useAsteroidCrewSamples = (asteroidId, resourceId) => {
   const { crew } = useCrewContext();
+
+  const controllerId = crew?.id;
   return useQuery(
-    // TODO: convert this to 'entities' model of cache keys (update invalidations!)
-    [ 'asteroidCrewSampledLots', asteroidId, resourceId, crew?.id ],
-    () => api.getCrewSamplesOnAsteroid(asteroidId, crew?.id, resourceId),
-    { enabled: !!(asteroidId && crew?.id && resourceId) }
+    entitiesCacheKey(Entity.IDS.DEPOSIT, { asteroidId, resourceId, controllerId, isDepleted: false }),
+    () => api.getCrewSamplesOnAsteroid(asteroidId, controllerId, resourceId),
+    { enabled: !!(asteroidId && controllerId && resourceId) }
   );
 };
 

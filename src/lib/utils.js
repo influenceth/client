@@ -187,6 +187,21 @@ export const getBlockTime = async (starknet, blockNumber = 'pending') => {
   }
 }
 
+export const safeEntityId = (variablyHydratedEntity) => {
+  if (variablyHydratedEntity) {
+    const e = {
+      id: variablyHydratedEntity?.id,
+      label: variablyHydratedEntity?.label,
+      uuid: variablyHydratedEntity?.uuid
+    };
+    if (e.id && e.label && !e.uuid) {
+      e.uuid = Entity.packEntity(e);
+    }
+    return e;
+  }
+  return undefined;
+};
+
 export const entityToAgreements = (entity) => {
   const acc = [];
   ['PrepaidAgreements', 'ContractAgreements', 'WhitelistAgreements'].forEach((agreementType) => {

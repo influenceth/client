@@ -7,6 +7,7 @@ import useBlockTime from '~/hooks/useBlockTime';
 import useCrewContext from '~/hooks/useCrewContext';
 import useDeliveries from '~/hooks/useDeliveries';
 import actionStages from '~/lib/actionStages';
+import useEntity from '../useEntity';
 
 // start delivery:
 //  - button loading
@@ -19,15 +20,31 @@ import actionStages from '~/lib/actionStages';
 // { destination, destinationSlot, origin, originSlot, deliveryId }
 // must include destination OR origin OR deliveryId
 // if more input is included, will filter to those results
+const managedStatuses = [Delivery.STATUSES.ON_HOLD, Delivery.STATUSES.PACKAGED, Delivery.STATUSES.SENT];
+
 const useDeliveryManager = ({ destination, destinationSlot, origin, originSlot, deliveryId, txHash }) => {
   const { actionItems, readyItems } = useActionItems();
   const blockTime = useBlockTime();
   const { execute, getStatus, getPendingTx } = useContext(ChainTransactionContext);
   const { crew, pendingTransactions } = useCrewContext();
 
-  const { data: deliveries, isLoading } = useDeliveries({ destination, destinationSlot, origin, originSlot, deliveryId, status: [
-    Delivery.STATUSES.ON_HOLD, Delivery.STATUSES.PACKAGED, Delivery.STATUSES.SENT,
-  ] });
+  const { data: deliveryById, isLoading: deliveryIsLoading } = useEntity(deliveryId ? { label: Entity.IDS.DELIVERY, id: deliveryId } : undefined)
+  const { data: deliveriesByLoc, isLoading: deliveriesIsLoading } = useDeliveries({ destination, destinationSlot, origin, originSlot, status: managedStatuses });
+
+  const [deliveries, isLoading] = useMemo(() => {
+    if (deliveryId) {
+      return [
+        deliveryIsLoading
+          ? undefined
+          : (deliveryById ? [deliveryById] : []).filter((d) => managedStatuses.includes(d.Delivery.status)),
+        deliveryIsLoading
+      ];
+    }
+    return [
+      deliveriesIsLoading ? undefined : deliveriesByLoc,
+      deliveriesIsLoading
+    ];
+  }, [deliveryId, deliveryById, deliveryIsLoading, deliveriesByLoc, deliveriesIsLoading]);
 
   const payload = useMemo(() => ({
     caller_crew: { id: crew?.id, label: Entity.IDS.CREW }

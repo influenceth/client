@@ -271,7 +271,7 @@ const LotInventory = () => {
 
   const zoomShipId = zoomScene?.type === 'SHIP' ? zoomScene.shipId : null;
   const { data: zoomShip } = useShip(zoomShipId);
-  const ship = useMemo(() => zoomShipId ? zoomShip : lot?.surfaceShip, [lot, zoomShip, zoomShipId]);
+  const ship = useMemo(() => zoomShipId ? zoomShip : lot?.surfaceShip, [lot?.surfaceShip, zoomShip, zoomShipId]);
 
   const entity = useMemo(() => ship || lot?.building, [lot, ship]);
 
@@ -314,7 +314,11 @@ const LotInventory = () => {
     setSelectedItems({}); // clear selected items when switching inventories
   }, [inventorySlot])
 
-  const { data: incomingDeliveries } = useDeliveries(entity && inventorySlot ? { destination: entity, destinationSlot: inventorySlot } : undefined);
+  const { data: incomingDeliveries } = useDeliveries(
+    entity && inventorySlot
+      ? { destination: entity, destinationSlot: inventorySlot, status: Delivery.STATUSES.SENT }
+      : undefined
+  );
 
   // get selected inventory
   const inventory = useMemo(
@@ -382,9 +386,7 @@ const LotInventory = () => {
     });
   }, [inventory?.contentsObj, order]);
 
-  const isIncomingDelivery = useMemo(() => {
-    return (incomingDeliveries || []).find((d) => d.Delivery.status !== Delivery.STATUSES.COMPLETE)  
-  }, [incomingDeliveries]);
+  const isIncomingDelivery = useMemo(() => incomingDeliveries?.length > 0, [incomingDeliveries]);
 
   const handleSelected = useCallback((resourceId, newTotal) => {
     setSelectedItems((s) => {

@@ -4,7 +4,7 @@ import esb from 'elastic-builder';
 import { executeSwap, fetchQuotes } from "@avnu/avnu-sdk";
 
 import useStore from '~/hooks/useStore';
-import { entityToAgreements, esbLocationQuery, esbPermissionQuery } from './utils';
+import { entityToAgreements, esbLocationQuery, esbPermissionQuery, safeEntityId } from './utils';
 
 // set default app version
 const apiVersion = 'v2';
@@ -252,10 +252,7 @@ const api = {
     return formatESEntityData(response.data);
   },
 
-  getCrewAccessibleInventories: async (asteroidId, crewId, withPermission) => {
-    const queryPromises = [];
-
-    // BUILDINGS...
+  getAsteroidBuildingsWithAccessibleInventories: async (asteroidId, crewId, withPermission) => {
     const buildingQueryBuilder = esb.boolQuery();
 
     // Exclude unplanned buildings
@@ -278,9 +275,13 @@ const api = {
     buildingQ.query(buildingQueryBuilder);
     buildingQ.from(0);
     buildingQ.size(10000);
-    queryPromises.push(instance.post(`/_search/building`, buildingQ.toJSON()));
 
-    // SHIPS...
+    const response = await instance.post(`/_search/building`, buildingQ.toJSON());
+    
+    return formatESEntityData(response.data);
+  },
+
+  getAsteroidShipsWithAccessibleInventories: async (asteroidId, crewId, withPermission) => {
     const shipQueryBuilder = esb.boolQuery();
 
     // has permission
@@ -315,16 +316,34 @@ const api = {
     shipQ.query(shipQueryBuilder);
     shipQ.from(0);
     shipQ.size(10000);
-    queryPromises.push(instance.post(`/_search/ship`, shipQ.toJSON()));
 
-    // COMBINE...
-    const responses = await Promise.allSettled(queryPromises);
-    return responses.reduce((acc, r) => {
-      if (r.status === 'fulfilled') {
-        acc.push(...formatESEntityData(r.value.data));
-      }
-      return acc;
-    }, []);
+    const response = await instance.post(`/_search/ship`, shipQ.toJSON());
+    
+    return formatESEntityData(response.data);
+  },
+
+  getDeliveries: async (destination, origin, statuses) => {
+
+    // BUILDINGS...
+    const queryBuilder = esb.boolQuery();
+
+    if (destination) {
+      queryBuilder.filter(esb.termQuery('Delivery.dest.uuid', safeEntityId(destination)?.uuid));
+    }
+    if (origin) {
+      queryBuilder.filter(esb.termQuery('Delivery.origin.uuid', safeEntityId(origin)?.uuid));
+    }
+    if (statuses) {
+      queryBuilder.filter(esb.termsQuery('Delivery.status', statuses));
+    };
+
+    const q = esb.requestBodySearch();
+    q.query(queryBuilder);
+    q.from(0);
+    q.size(10000);
+    const response = await instance.post(`/_search/delivery`, q.toJSON());
+
+    return formatESEntityData(response.data);
   },
 
   // TODO: will we want this for "random" story events
@@ -481,24 +500,17 @@ const api = {
       price: h._source.price / 1e6,
     })) || [];
 
-    const exchangeIds = Array.from(new Set(orders.map((o) => o.entity.id)));
-
-    // TODO: this is outside of cache invalidation scope... may want to re-work
-    const exchanges = exchangeIds.length > 0 ? await getEntities({ ids: exchangeIds, label: Entity.IDS.BUILDING, components: ['Building', 'Exchange', 'Location', 'Name'] }) : [];
-    return orders.map((o) => ({
-      ...o,
-      marketplace: exchanges.find(e => Number(e.id) === Number(o.entity.id))
-    }));
+    return orders;
   },
 
-  getOrderList: async (exchange, product) => {
+  getOrderList: async (exchangeId, productId) => {
     const queryBuilder = esb.boolQuery();
 
     // exchange
-    queryBuilder.filter(esb.termQuery('entity.id', exchange.id));
+    queryBuilder.filter(esb.termQuery('entity.id', exchangeId));
 
     // product
-    queryBuilder.filter(esb.termQuery('product', product));
+    queryBuilder.filter(esb.termQuery('product', productId));
 
     // status
     queryBuilder.filter(esb.termQuery('status', Order.STATUSES.OPEN));
@@ -664,22 +676,6 @@ const api = {
 
   getAccountCrewmates: async (account) => {
     return getEntities({ match: { 'Nft.owners.starknet': account }, label: Entity.IDS.CREWMATE });
-  },
-
-  getStationedCrews: async (entityUuid, hydrateCrewmates = false) => {
-    const crews = await getEntities({
-      match: { 'Location.location.uuid': entityUuid },
-      label: Entity.IDS.CREW
-    });
-    if (hydrateCrewmates) {
-      const crewmateIds = crews.reduce((acc, c) => ([...acc, ...c.Crew.roster]), []);
-      const crewmates = await getEntities({ ids: crewmateIds, label: Entity.IDS.CREWMATE });
-      return crews.map((c) => ({
-        ...c,
-        _crewmates: crewmates.filter((cm) => c.Crew.roster.includes(cm.id))
-      }));
-    }
-    return crews;
   },
 
   getConstants: async (names) => {

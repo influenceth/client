@@ -57,7 +57,7 @@ const useAutocomplete = (assetType) => {
   }, [ assetType, searchTerm, sort ]);
 
   const { data, isLoading } = useQuery(
-    // TODO: convert this to 'entities' model of cache keys
+    // TODO: convert this to 'entities' model of cache keys?
     [ 'search', assetType, query ],
     () => assetType && query ? api.searchAssets(assetType, query) : [],
     { enabled: !!query }
