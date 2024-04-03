@@ -14,7 +14,7 @@ import useCrew from '~/hooks/useCrew';
 import useLot from '~/hooks/useLot';
 import { formatFixed, formatPrice, nativeBool } from '~/lib/utils';
 import theme from '~/theme';
-import { IconLink, LocationLink } from '../listViews/components';
+import { LocationLink } from '../listViews/components';
 import { getBuildingIcon } from '~/lib/assetUtils';
 import formatters from '~/lib/formatters';
 import useOrderSummaryByExchange from '~/hooks/useOrderSummaryByMarket';
@@ -222,17 +222,15 @@ const AsteroidResourcePrices = ({ asteroid, mode, resource }) => {
       // },
       {
         key: 'marketplaceName',
-        label: 'Marketplace Name',
+        label: 'Marketplace',
         sortField: 'marketplaceName',
         selector: row => (
           <>
-            <IconLink 
+            <LocationLink
               style={{ marginRight: 6 }}
-              onClick={() => history.push(`/marketplace/${asteroid.id}/${Lot.toIndex(row.lotId)}/${resource.i}?back=all`)}
-              tooltip="View in Marketplace"
-              data-for="details">
-              <MarketplaceBuildingIcon />
-            </IconLink>
+              asteroidId={asteroid.id}
+              lotId={row.lotId}
+              data-for="details" />
             <span>{row.marketplaceName}</span>
           </>
         ),
