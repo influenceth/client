@@ -30,7 +30,7 @@ const UnplanBuilding = ({ asteroid, crew, lot, onSetAction, _disabled }) => {
   const disabledReason = useMemo(() => {
     if (_disabled) return 'loading...';
     if (!siteEmpty) return 'not empty';
-    return getCrewDisabledReason({ asteroid, crew });
+    return getCrewDisabledReason({ asteroid, crew, requireReady: false });
   }, [_disabled, asteroid, crew, siteEmpty]);
 
   return (

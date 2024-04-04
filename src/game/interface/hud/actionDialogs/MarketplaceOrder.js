@@ -856,7 +856,7 @@ const MarketplaceOrder = ({
         goLabel={goLabel}
         onGo={onSubmitOrder}
         stage={stage}
-        waitForCrewReady
+        waitForCrewReady={type === 'limit'}
         wide
         {...props} />
 

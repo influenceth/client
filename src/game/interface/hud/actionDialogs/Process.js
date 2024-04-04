@@ -2,7 +2,19 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import styled from 'styled-components';
 import { Asteroid, Crewmate, Lot, Permission, Process, Processor, Product, Time } from '@influenceth/sdk';
 
-import { BackIcon, CaretIcon, CloseIcon, ForwardIcon, RefineIcon, ProcessIcon, BioreactorBuildingIcon, ShipyardBuildingIcon, InventoryIcon, LocationIcon, RefineryBuildingIcon, ManufactureIcon } from '~/components/Icons';
+import {
+  BackIcon,
+  CaretIcon,
+  CloseIcon,
+  ForwardIcon,
+  RefineIcon,
+  ProcessIcon,
+  BioreactorBuildingIcon,
+  ShipyardBuildingIcon,
+  InventoryIcon,
+  LocationIcon,
+  ManufactureIcon
+} from '~/components/Icons';
 import useCrewContext from '~/hooks/useCrewContext';
 import { reactBool, formatTimer, locationsArrToObj, getCrewAbilityBonuses, formatFixed } from '~/lib/utils';
 
@@ -65,9 +77,6 @@ const IconWrapper = styled.div`
   justify-content: center;
   width: 50px;
 `;
-const RightIconWrapper = styled.div``;
-
-const noop = () => { };
 
 const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...props }) => {
   const { currentProcess, processStatus, startProcess, finishProcess } = processManager;
@@ -212,7 +221,7 @@ const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...pro
   const [crewTimeRequirement, taskTimeRequirement] = useMemo(() => {
     const onewayCrewTravelTime = crewTravelTime / 2;
     return [
-      Math.max(onewayCrewTravelTime, inputTransportTime) + setupTime + onewayCrewTravelTime,
+      Math.max(onewayCrewTravelTime, inputTransportTime) + (setupTime + processingTime) / 5 + onewayCrewTravelTime,
       Math.max(onewayCrewTravelTime, inputTransportTime) + setupTime + processingTime + outputTransportTime
     ];
   }, [crewTravelTime, inputTransportTime, setupTime, processingTime, outputTransportTime]);

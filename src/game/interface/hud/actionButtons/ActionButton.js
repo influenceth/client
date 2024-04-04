@@ -264,7 +264,9 @@ const ActionButtonComponent = ({ label, labelAddendum, flags = {}, icon, onClick
   );
 }
 
-export const getCrewDisabledReason = ({ asteroid, crew, permission, permissionTarget, requireAsteroid = true, requireSurface = true }) => {
+export const getCrewDisabledReason = ({
+  asteroid, crew, permission, permissionTarget, requireAsteroid = true, requireSurface = true, requireReady = true
+}) => {
   if (!crew?._launched) return 'not yet launched';
   if (permission && permissionTarget) {
     if (!crew || !Permission.isPermitted(crew, permission, permissionTarget)) return 'access restricted';
@@ -277,7 +279,7 @@ export const getCrewDisabledReason = ({ asteroid, crew, permission, permissionTa
     }
   }
   if (!!crew._actionTypeTriggered) return 'crew event pending';
-  if (!crew?._ready) return 'crew is busy';
+  if (!crew?._ready && requireReady) return 'crew is busy';
   return null;
 };
 

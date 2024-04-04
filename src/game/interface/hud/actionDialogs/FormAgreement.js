@@ -558,7 +558,6 @@ const FormAgreement = ({
         goLabel={actionDetails.goLabel}
         onGo={actionDetails.onGo}
         stage={stage}
-        waitForCrewReady
         {...props} />
     </>
   );

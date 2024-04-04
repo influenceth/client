@@ -648,7 +648,7 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
       if (!sameAsteroid) a.labelAddendum = 'different asteroid';
       if (!crew?._location?.lotId) a.labelAddendum = 'in orbit';
       if (!hasPermission) a.labelAddendum = 'restricted';
-      if (!crew?._ready) a.labelAddendum = 'crew busy';
+      if (!crew?._ready && type === 'limit') a.labelAddendum = 'crew busy';
     }
 
     return a;
@@ -667,12 +667,12 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
             <div style={{ flex: 1, paddingLeft: 20 }}>
               <h1>{resource.name}</h1>
               <Subheader>
-                {totalSelling > 0 
+                {totalSelling > 0
                   ? (<span style={{ color: theme.colors.buy }}><b>{formatResourceAmount(totalSelling || 0, resource.i)}</b> Available</span>)
                   : (<span style={{ color: theme.colors.secondaryText }}>None Available</span>)
                 }
                 <>  |  </>
-                {totalBuying > 0 
+                {totalBuying > 0
                   ? (<span style={{ color: theme.colors.sell }}><b>{formatResourceAmount(totalBuying, resource.i)}</b> Sellable</span>)
                   : (<span style={{ color: theme.colors.secondaryText }}>None Sellable</span>)
                 }
@@ -706,7 +706,7 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
             <SellTable>
                 <table>
                   <thead>
-                    {sellBuckets.length == 0 
+                    {sellBuckets.length == 0
                       ? (
                         <tr>
                           <th style={{ textAlign: 'center' }}>No Sellers</th>
@@ -729,7 +729,7 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
                         <tr key={i}>
                           <td><VolumeBar volume={volumeBenchmark > 0 ? rowVolume / volumeBenchmark : 0} />{price.toLocaleString(undefined, { maximumFractionDigits: 4, minimumFractionDigits: 4 } )}</td>
                           <td>{amount.toLocaleString()}</td>
-                          <td>{formatPrice(price * amount, { fixedPrecision: 2, minPrecision: 2 })}</td>              
+                          <td>{formatPrice(price * amount, { fixedPrecision: 2, minPrecision: 2 })}</td>
                         </tr>
                       )
                     })}
@@ -745,7 +745,7 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
             <BuyTable>
               <table>
                 <thead>
-                  {buyBuckets.length == 0 
+                  {buyBuckets.length == 0
                       ? (
                         <tr>
                           <th style={{ textAlign: 'center' }}>No Buyers</th>
@@ -821,7 +821,7 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
                   <TextInputWrapper rightLabel={resource.isAtomic ? '' : ' kg'}>
                     <UncontrolledTextInput
                       monospace
-                      size="large" 
+                      size="large"
                       disabled={nativeBool(type === 'market' && ((mode === 'buy' && !totalSelling) || (mode === 'sell' && !totalBuying)))}
                       min={0}
                       max={type === 'market' ? (mode === 'buy' ? totalSelling : totalBuying) : undefined}

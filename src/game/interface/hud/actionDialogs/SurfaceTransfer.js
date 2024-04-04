@@ -564,7 +564,6 @@ const SurfaceTransfer = ({
         goLabel="Transfer"
         onGo={onStartDelivery}
         stage={stage}
-        waitForCrewReady
         {...finalizeActions}
         {...props} />
 

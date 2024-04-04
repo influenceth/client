@@ -59,10 +59,10 @@ const LandShip = ({ asteroid, manager, ship, stage, ...props }) => {
     return bonusIds.map((id) => abilities[id] || {});
   }, [crew]);
 
-  const groundDelay = useMemo(
-    () => Time.toRealDuration(destinationLot?.building ? Dock.Entity.getGroundDelay(destinationLot.building) : 0, crew?._timeAcceleration),
-    [crew?._timeAcceleration, destinationLot?.building]
-  );
+  const groundDelay = useMemo(() => {
+    const delay = destinationLot?.building ? Dock.Entity.getGroundDelay(destinationLot.building) : 0;
+    return Time.toRealDuration(delay, crew?._timeAcceleration);
+  }, [crew?._timeAcceleration, destinationLot?.building]);
 
   const [escapeVelocity, propellantRequirement, poweredTime, tugTime] = useMemo(() => {
     const escapeVelocity = Asteroid.Entity.getEscapeVelocity(asteroid) * 1000;
@@ -87,7 +87,9 @@ const LandShip = ({ asteroid, manager, ship, stage, ...props }) => {
     ];
   }, [ship]);
 
-  const launchTime = useMemo(() => groundDelay + (powered ? poweredTime : tugTime), [groundDelay, powered, poweredTime, tugTime]);
+  const launchTime = useMemo(() => {
+    return groundDelay + (powered ? poweredTime : tugTime);
+  }, [groundDelay, powered, poweredTime, tugTime]);
 
   const [crewTimeRequirement, taskTimeRequirement] = useMemo(() => {
     return [ launchTime, launchTime ];

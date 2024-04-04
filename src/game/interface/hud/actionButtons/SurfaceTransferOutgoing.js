@@ -30,7 +30,7 @@ const SurfaceTransferOutgoing = ({ asteroid, crew, lot, ship, onSetAction, dialo
     if (!hasMass) return 'inventory empty';
 
     return getCrewDisabledReason({
-      asteroid, crew, permission: Permission.IDS.REMOVE_PRODUCTS, permissionTarget: origin
+      asteroid, crew, permission: Permission.IDS.REMOVE_PRODUCTS, permissionTarget: origin, requireReady: false
     });
   }, [origin, crew]);
 
