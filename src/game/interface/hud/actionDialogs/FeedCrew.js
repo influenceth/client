@@ -99,7 +99,6 @@ const FeedCrew = ({
 
   const crewTravelBonus = useMemo(() => {
     if (!crew) return {};
-    console.log(getCrewAbilityBonuses(Crewmate.ABILITY_IDS.HOPPER_TRANSPORT_TIME, crew));
     return getCrewAbilityBonuses(Crewmate.ABILITY_IDS.HOPPER_TRANSPORT_TIME, crew) || {};
   }, [crew]);
 
