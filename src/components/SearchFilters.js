@@ -74,9 +74,9 @@ const buildingTypeOptions = Object.keys(Building.TYPES)
 
   const buildingTypeColors = {
     0: '#666666', // empty lot
-    1: '#ff9900', // WAREHOUSE
+    1: '#ff8c00', // WAREHOUSE
     2: '#d9352b', // EXTRACTOR
-    3: '#cc1061', // REFINERY
+    3: '#cc3777', // REFINERY
     4: '#0a9900', // BIOREACTOR
     5: '#b3855c', // FACTORY
     6: '#4848b3', // SHIPYARD
@@ -84,7 +84,7 @@ const buildingTypeOptions = Object.keys(Building.TYPES)
     8: '#57ff65', // MARKETPLACE
     9: '#ffff00', // HABITAT
     // (extras)
-    14: '#808080',  // construction site
+    14: '#777777',  // construction site
     15: '#ffffff',  // landed light transport
   };
 
