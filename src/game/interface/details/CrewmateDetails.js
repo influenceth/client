@@ -24,26 +24,36 @@ import CrewmateCard from '~/components/CrewmateCard';
 import CrewTraitIcon from '~/components/CrewTraitIcon';
 import MouseoverInfoPane from '~/components/MouseoverInfoPane';
 import formatters from '~/lib/formatters';
+import TabContainer from '~/components/TabContainer';
+import AnnotationBio from '~/components/AnnotationBio';
 
 const borderColor = 'rgba(200, 200, 200, 0.15)';
 const breakpoint = 1375;
+
+const tabContainerCss = css`
+  color: white;
+  font-size: 15px;
+  flex: 1;
+  @media (min-height: 950px) {
+    max-height: 500px;
+  }
+  @media (max-width: ${breakpoint}px) {
+    background: rgba(${p => p.theme.colors.mainRGB}, 0.05);
+    border: 2px solid rgba(${p => p.theme.colors.mainRGB}, 0.15);
+    border-left: none;
+    border-right: none;
+    box-shadow: -4px 0 8px rgba(${p => p.theme.colors.mainRGB}, 0.25);
+    margin-top: 0;
+  }
+`;
 
 const History = styled.div`
   display: flex;
   flex: 1;
   flex-direction: column;
-  margin-top: 10px;
+  margin-top: 5px;
   overflow: hidden;
-  padding: 0;
-
-  & > h3 {
-    border-bottom: 1px solid #222;
-    color: #888;
-    font-size: 14px;
-    margin: 15px 0 0;
-    padding-bottom: 6px;
-    text-transform: uppercase;
-  }
+  padding: 0 15px;
 `;
 
 const LogHeader = styled.ul``;
@@ -266,6 +276,7 @@ const Stat = styled.div`
 const BelowFold = styled.div`
   flex: 1;
   height: 0;
+  padding-top: 10px;
 `;
 
 const noop = () => {/* noop */};
@@ -406,30 +417,56 @@ const CrewmateDetails = ({ crewmateId, crewmate, isOwnedCrewmate }) => {
         </AboveFold>
 
         <BelowFold>
-          <History>
-            <h3>Crewmate Log</h3>
-            <Log>
-              <LogHeader>
-                <LogEntry isHeaderRow isTabular />
-              </LogHeader>
-              <div>
-                <ul>
-                  {/* TODO: totalCount from api, pagination, custom columns (see mocks) */}
-                  {activities?.length > 0
-                    ? activities.map((activity) => (
-                      <LogEntry
-                        key={activity.id}
-                        activity={activity}
-                        timestampBreakpoint="1500px"
-                        isTabular
-                        viewingAs={viewingAs} />
-                    ))
-                    : <EmptyLogEntry>No logs recorded yet.</EmptyLogEntry>
-                  }
-                </ul>
-              </div>
-            </Log>
-          </History>
+          <TabContainer
+            containerCss={tabContainerCss}
+            containerHeight="36px"
+            iconCss={{}}
+            labelCss={{
+              minWidth: '50px',
+              textAlign: 'center',
+              textTransform: 'uppercase'
+            }}
+            tabCss={{ padding: '0 30px', width: 'auto' }}
+            tabs={[
+              {
+                label: 'Crewmate Log',
+              },
+              {
+                label: 'Crewmate Bio',
+              }
+            ]}
+            paneCss={{ display: 'flex', flexDirection: 'column', height: '100%', overflowY: 'hidden' }}
+            panes={[
+              (
+                <History>
+                  <Log>
+                    <LogHeader>
+                      <LogEntry isHeaderRow isTabular />
+                    </LogHeader>
+                    <div>
+                      <ul>
+                        {/* TODO: totalCount from api, pagination, custom columns (see mocks) */}
+                        {activities?.length > 0
+                          ? activities.map((activity) => (
+                            <LogEntry
+                              key={activity.id}
+                              activity={activity}
+                              timestampBreakpoint="1500px"
+                              isTabular
+                              viewingAs={viewingAs} />
+                          ))
+                          : <EmptyLogEntry>No logs recorded yet.</EmptyLogEntry>
+                        }
+                      </ul>
+                    </div>
+                  </Log>
+                </History>
+              ),
+              (
+                <AnnotationBio entity={crewmate} isEditable={isOwnedCrewmate} />
+              )
+            ]}
+          />
         </BelowFold>
       </MainContainer>
     </>

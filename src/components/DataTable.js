@@ -220,7 +220,7 @@ const DataTableComponent = ({
             key={c.key}
             align={c.align}
             isIconColumn={!c.label}
-            onClick={onClickColumn(c.sortField, c.sortOptions)}
+            onClick={onClickColumn ? onClickColumn(c.sortField, c.sortOptions) : undefined}
             sortable={!!c.sortField}
             sorted={sortField && sortField === c.sortField ? sortDirection : ''}
             style={c.headStyle || {}}>

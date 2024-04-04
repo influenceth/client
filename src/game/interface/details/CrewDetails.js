@@ -35,7 +35,9 @@ import useNameAvailability from '~/hooks/useNameAvailability';
 import useStore from '~/hooks/useStore';
 import formatters from '~/lib/formatters';
 import { nativeBool, reactBool } from '~/lib/utils';
-import theme, { hexToRGB } from '~/theme';
+import theme from '~/theme';
+import DataTableComponent from '~/components/DataTable';
+import AnnotationBio from '~/components/AnnotationBio';
 
 const borderColor = 'rgba(200, 200, 200, 0.15)';
 const breakpoint = 1375;
@@ -61,7 +63,7 @@ const History = styled.div`
   display: flex;
   flex: 1;
   flex-direction: column;
-  margin-top: 10px;
+  margin-top: 5px;
   overflow: hidden;
   padding: 0 15px;
 `;
@@ -389,6 +391,24 @@ const CrewDetails = ({ crewId, crew, isMyCrew, isOwnedCrew, selectCrew }) => {
     return `${Time.fromUnixSeconds(earliestActivity?.event?.timestamp, TIME_ACCELERATION).toGameClockADays(true)} SA`;
   }, [earliestActivity, earliestLoading]);
 
+  const columns = useMemo(() => {
+    return [{
+      key: 'createdAt',
+      selector: (row) => row.createdAt,
+      unhideable: true,
+    },
+    {
+      key: 'label',
+      label: 'Action',
+      sortField: 'label',
+      selector: row => (
+        <>
+        </>
+      ),
+      unhideable: true,
+    },]; // TODO: ...
+  }, [viewingAs])
+
   // TODO: was this just debug? remove?
   const ready = true;
   // const [ready, setReady] = useState();
@@ -565,23 +585,23 @@ const CrewDetails = ({ crewId, crew, isMyCrew, isOwnedCrew, selectCrew }) => {
         <BelowFold>
           <TabContainer
             containerCss={tabContainerCss}
+            containerHeight="36px"
             iconCss={{}}
             labelCss={{
               minWidth: '50px',
               textAlign: 'center',
               textTransform: 'uppercase'
             }}
-            tabCss={{ padding: '0 15px', width: 'auto' }}
+            tabCss={{ padding: '0 30px', width: 'auto' }}
             tabs={[
               {
                 label: 'Crew Log',
               },
               {
-                label: 'Mission Statement',
-                disabled: true
+                label: 'Crew Bio',
               }
             ]}
-            paneCss={{ display: 'flex', flexDirection: 'column', overflowY: 'hidden' }}
+            paneCss={{ display: 'flex', flexDirection: 'column', height: '100%', overflowY: 'hidden' }}
             panes={[
               (
                 <History>
@@ -606,10 +626,25 @@ const CrewDetails = ({ crewId, crew, isMyCrew, isOwnedCrew, selectCrew }) => {
                       </ul>
                     </div>
                   </Log>
+                  {/*activities?.length > 0
+                    ? (
+                      <DataTableComponent
+                        columns={columns}
+                        data={activities || []}
+                        keyField="id"
+                        sortDirection="desc"
+                        sortField="createdAt"
+                      />
+                    )
+                    : (
+                      <EmptyLogEntry>No logs recorded yet.</EmptyLogEntry>
+                    )
+                  */}
                 </History>
               ),
-              null,
-              null
+              (
+                <AnnotationBio entity={crew} isEditable={isMyCrew} />
+              )
             ]}
           />
 

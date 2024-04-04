@@ -233,6 +233,11 @@ export const entityToAgreements = (entity) => {
   return acc;
 };
 
+export const cleanseTxHash = function (txHash) {
+  if (!txHash) return null;
+  return `0x${BigInt(txHash).toString(16).padStart(64, '0')}`;
+};
+
 export const earlyAccessJSTime = 1708527600e3;
 export const openAccessJSTime = 1709046000e3;
 export const expectedBlockSeconds = 180;

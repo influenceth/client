@@ -13,7 +13,8 @@ import { HudMenuCollapsibleSection, Scrollable, Tray } from './components/compon
 import LotTitleArea from './components/LotTitleArea';
 import PolicyPanels from './components/PolicyPanels';
 import useCrew from '~/hooks/useCrew';
-import { useDescriptionAnnotation } from '~/hooks/useAnnotations';
+import useDescriptionAnnotation from '~/hooks/useDescriptionAnnotation';
+import useAnnotationContent from '~/hooks/useAnnotationContent';
 
 const Description = styled.div`
   color: ${p => p.theme.colors.main};
@@ -25,6 +26,7 @@ const LotInfo = () => {
   const lotId = useStore(s => s.asteroids.lot);
   const { data: lot } = useLot(lotId);
   const { data: annotation, isLoading: isAnnotationLoading } = useDescriptionAnnotation(lot?.building || lot?.surfaceShip);
+  const { data: description, isLoading: isContentLoading } = useAnnotationContent(annotation);
   const { data: controller } = useCrew(lot?.building?.Control?.controller?.id);
 
   const dispatchZoomScene = useStore(s => s.dispatchZoomScene);
@@ -42,23 +44,23 @@ const LotInfo = () => {
 
   const siteOrBuilding = (lot?.building?.Building?.status === Building.CONSTRUCTION_STATUSES.OPERATIONAL ? 'Building' : 'Site');
 
-  if (!lot || isAnnotationLoading) return null;
+  if (!lot || isAnnotationLoading || isContentLoading) return null;
   return (
     <>
       <Scrollable hasTray={reactBool(!isZoomedToLot)}>
         <LotTitleArea lot={lot} />
 
-        {annotation && (
+        {description && (
           <HudMenuCollapsibleSection titleText="Description">
             <Description>
-              {annotation}
+              {description}
             </Description>
           </HudMenuCollapsibleSection>
         )}
 
         {lot?.building && (
           <>
-            <HudMenuCollapsibleSection titleText="Type Description" collapsed={!!annotation}>
+            <HudMenuCollapsibleSection titleText="Type Description" collapsed={!!description}>
               <Description>
                 {lot.building.Building?.status === Building.CONSTRUCTION_STATUSES.OPERATIONAL
                   ? Building.TYPES[lot.building.Building.buildingType].description

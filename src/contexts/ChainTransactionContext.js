@@ -7,8 +7,8 @@ import useActivitiesContext from '~/hooks/useActivitiesContext';
 import useSession from '~/hooks/useSession';
 import useCrewContext from '~/hooks/useCrewContext';
 import useStore from '~/hooks/useStore';
-import useInterval from '~/hooks/useInterval';
 import api from '~/lib/api';
+import { cleanseTxHash } from '~/lib/utils';
 
 // import { CallData, shortString, uint256, ec } from 'starknet';
 // const Systems = System.Systems;
@@ -139,12 +139,6 @@ const RETRY_INTERVAL = 5e3; // 5 seconds
 const ChainTransactionContext = createContext();
 
 const getNow = () => Math.floor(Date.now() / 1000);
-
-// this matches the
-const cleanseTxHash = function (txHash) {
-  if (!txHash) return null;
-  return `0x${BigInt(txHash).toString(16).padStart(64, '0')}`;
-};
 
 // TODO: equalityTest default of 'i' doesn't make sense anymore
 

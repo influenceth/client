@@ -55,7 +55,8 @@ const useAnnotationManager = (entity) => {
 
   return {
     saveAnnotation,
-    savingAnnotation: saving || (status === 'pending')
+    savingAnnotation: saving || (status === 'pending'),
+    txPending: (status === 'pending')
   };
 };
 

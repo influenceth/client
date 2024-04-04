@@ -19,7 +19,8 @@ import usePriceConstants from '~/hooks/usePriceConstants';
 import Button from '~/components/ButtonAlt';
 import AsteroidTitleArea from './components/AsteroidTitleArea';
 import PolicyPanels from './components/PolicyPanels';
-import { useDescriptionAnnotation } from '~/hooks/useAnnotations';
+import useDescriptionAnnotation from '~/hooks/useDescriptionAnnotation';
+import useAnnotationContent from '~/hooks/useAnnotationContent';
 
 const Description = styled.div`
   color: ${p => p.theme.colors.main};
@@ -61,6 +62,7 @@ const AsteroidInfo = ({ onClose }) => {
 
   const { data: asteroid } = useAsteroid(asteroidId);
   const { data: annotation, isLoading: isAnnotationLoading } = useDescriptionAnnotation(asteroid);
+  const { data: description, isLoading: isContentLoading } = useAnnotationContent(annotation);
   const { data: ships } = useAsteroidShips(asteroidId);
   const { data: lotData } = useAsteroidLotData(asteroidId);
   const { data: administrator } = useCrew(asteroid?.Control?.controller?.id);
@@ -87,7 +89,7 @@ const AsteroidInfo = ({ onClose }) => {
   }, []);
 
 
-  if (!asteroid || isAnnotationLoading) return null;
+  if (!asteroid || isAnnotationLoading || isContentLoading) return null;
   return (
     <>
       <Scrollable hasTray={reactBool(zoomStatus === 'out')}>
@@ -170,10 +172,10 @@ const AsteroidInfo = ({ onClose }) => {
           </HudMenuCollapsibleSection>
         )}
 
-        {annotation && (
+        {description && (
           <HudMenuCollapsibleSection titleText="Description">
             <Description>
-              {annotation}
+              {description}
             </Description>
           </HudMenuCollapsibleSection>
         )}

@@ -6,6 +6,8 @@ import UncontrolledTextArea from '~/components/TextAreaUncontrolled';
 import { InputBlock } from '~/components/filters/components';
 import { nativeBool } from '~/lib/utils';
 import useAnnotationManager, { isValidAnnotation } from '~/hooks/actionManagers/useAnnotationManager';
+import useDescriptionAnnotation from '~/hooks/useDescriptionAnnotation';
+import useAnnotationContent from '~/hooks/useAnnotationContent';
 
 const ErrorContainer = styled.div`
   color: ${p => p.theme.colors.error};
@@ -13,8 +15,11 @@ const ErrorContainer = styled.div`
 `;
 
 // TODO: create validity functions for annotaions
-const EntityDescriptionForm = ({ entity, label, originalDesc, ...props }) => {
-  const { saveAnnotation, savingAnnotation } = useAnnotationManager(entity);
+const EntityDescriptionForm = ({ buttonSize = 'small', buttonText = 'Update', entity, label, minTextareaHeight = '200px', onCancel, onSave }) => {
+  const { saveAnnotation, savingAnnotation, txPending } = useAnnotationManager(entity);
+  const { data: annotation, isLoading: annotationLoading } = useDescriptionAnnotation(entity);
+  const { data: originalDesc, isLoading: contentLoading } = useAnnotationContent(annotation);
+  const isLoading = annotationLoading || contentLoading;
 
   const [error, setError] = useState();
   const [desc, setDesc] = useState();
@@ -35,6 +40,17 @@ const EntityDescriptionForm = ({ entity, label, originalDesc, ...props }) => {
     }
   }, [entity?.id, desc]);
 
+  const handleCancel = useCallback(async () => {
+    setDesc(originalDesc);
+    if (onCancel) onCancel();
+  }, [onCancel, originalDesc]);
+
+  useEffect(() => {
+    if (txPending && onSave) {
+      onSave();
+    }
+  }, [txPending]);
+
   return (
     <InputBlock>
       <label>{label}</label>
@@ -43,22 +59,23 @@ const EntityDescriptionForm = ({ entity, label, originalDesc, ...props }) => {
           disabled={nativeBool(!entity || savingAnnotation)}
           onChange={handleDescChange}
           placeholder="Type a custom description..."
+          style={{ minHeight: minTextareaHeight }}
           value={desc === undefined ? originalDesc : desc} />
       </div>
       <ErrorContainer>{error}</ErrorContainer>
       <div style={{ borderTop: '1px solid #333' }}>
         <div style={{ flex: 1 }} />
         <Button
-          disabled={nativeBool(!entity || savingAnnotation || !desc || error || (desc === originalDesc))}
-          size="small"
-          onClick={() => setDesc(originalDesc)}
+          disabled={nativeBool(!entity || savingAnnotation || !desc || error)}
+          size={buttonSize}
+          onClick={handleCancel}
           style={{ marginRight: 6 }}>Cancel</Button>
         <Button
-          disabled={nativeBool(!entity || savingAnnotation || !desc || error || (desc === originalDesc))}
+          disabled={nativeBool(isLoading || !entity || savingAnnotation || !desc || error || (desc === originalDesc))}
           loading={savingAnnotation}
-          size="small"
+          size={buttonSize}
           isTransaction
-          onClick={saveDescChange}>Update</Button>
+          onClick={saveDescChange}>{buttonText}</Button>
       </div>
     </InputBlock>
   );

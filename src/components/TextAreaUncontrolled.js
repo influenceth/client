@@ -6,7 +6,7 @@ const UncontrolledTextArea = styled.textarea`
   color: ${p => p.theme.colors.mainText};
   font-family: inherit;
   font-size: ${p => p.theme.colors.detailText};
-  height: 200px;
+  height: 100%;
   outline: none;
   padding: 10px 5px;
   resize: none;
