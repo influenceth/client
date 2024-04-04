@@ -501,11 +501,13 @@ const PolicyPanel = ({ editable = false, entity, permission }) => {
               )}
               {([Permission.POLICY_IDS.CONTRACT, Permission.POLICY_IDS.PREPAID].includes(policyType)) && (
                 <div style={{ paddingTop: 15 }}>
-                  {entity?.Control?.controller?.id !== crew?.id
-                    && !(entity?.label === Entity.IDS.ASTEROID && permission === Permission.IDS.USE_LOT)
-                    && (
+                  {!(entity?.label === Entity.IDS.ASTEROID && permission === Permission.IDS.USE_LOT) && (
                     <actionButtons.FormAgreement.Component
-                      _disabled={Permission.TYPES[permission].isExclusive && (jitStatus === 'controlled' || agreements?.length > 0)}
+                      _disabled={
+                        Permission.TYPES[permission].isExclusive &&
+                        (jitStatus === 'controlled' || agreements?.length > 0) &&
+                        entity?.Control?.controller?.id !== crew?.id
+                      }
                       entity={entity}
                       permission={permission} />
                   )}

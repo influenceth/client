@@ -1,9 +1,7 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback } from 'react';
 import { useHistory } from 'react-router-dom';
 
 import { AssetAgreementsIcon } from '~/components/Icons';
-import useAsteroid from '~/hooks/useAsteroid';
-import useControlAsteroid from '~/hooks/actionManagers/useControlAsteroid';
 import ActionButton from './ActionButton';
 
 const isVisible = () => false;
