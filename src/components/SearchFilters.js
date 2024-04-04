@@ -72,21 +72,21 @@ const buildingTypeOptions = Object.keys(Building.TYPES)
     { key, label: Building.TYPES[key].name, initialValue: true }
   ]), []);
 
-  const buildingTypeColors = {
-    0: '#666666', // empty lot
-    1: '#ff8c00', // WAREHOUSE
-    2: '#d9352b', // EXTRACTOR
-    3: '#cc3777', // REFINERY
-    4: '#0a9900', // BIOREACTOR
-    5: '#b3855c', // FACTORY
-    6: '#4848b3', // SHIPYARD
-    7: '#19d9ff', // SPACEPORT
-    8: '#57ff65', // MARKETPLACE
-    9: '#ffff00', // HABITAT
-    // (extras)
-    14: '#777777',  // construction site
-    15: '#ffffff',  // landed light transport
-  };
+const buildingTypeColors = {
+  0: '#666666', // empty lot
+  1: '#ff8c00', // WAREHOUSE
+  2: '#d9352b', // EXTRACTOR
+  3: '#cc3777', // REFINERY
+  4: '#0a9900', // BIOREACTOR
+  5: '#0c00c8', // FACTORY
+  6: '#00936b', // SHIPYARD
+  7: '#b521ff', // SPACEPORT
+  8: '#ffff00', // MARKETPLACE
+  9: '#19d9ff', // HABITAT
+  // (extras)
+  14: '#777777',  // construction site
+  15: '#ffffff',  // landed light transport
+};
 
 const lotSearchBuildingTypeOptions = Object.keys(Building.TYPES).reduce((acc, key) => ([
   ...acc,
@@ -188,7 +188,7 @@ const SearchFilters = ({ assetType, highlighting, isListView = false }) => {
   }, [priceConstants]);
 
   const onFiltersChange = useCallback((update) => {
-    const newFilters = {...(filters || {})};
+    const newFilters = { ...(filters || {}) };
     Object.keys(update).forEach((k) => {
       if (update[k] === undefined) {
         delete newFilters[k];
@@ -208,7 +208,7 @@ const SearchFilters = ({ assetType, highlighting, isListView = false }) => {
 
   useEffect(() => {
     // for most types, default filter to asteroid if one is selected
-    if (['buildings','coresamples','leases','lots'].includes(assetType)) {
+    if (['buildings', 'coresamples', 'leases', 'lots'].includes(assetType)) {
       onFiltersChange({ asteroid: asteroidId });
     }
     else if (['actionitems'].includes(assetType)) {
