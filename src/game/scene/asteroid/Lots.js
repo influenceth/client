@@ -86,16 +86,16 @@ const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, co
   const { data: outboundDeliveries } = useDeliveries({ origin: lotDetails?.building, status: Delivery.STATUSES.SENT });
   const { data: inboundDeliveries } = useDeliveries({ destination: lotDetails?.building, status: Delivery.STATUSES.SENT });
 
-  const [positionsReady, setPositionsReady] = useState(false);
   const [regionsByDistance, setRegionsByDistance] = useState([]);
   const [lastClick, setLastClick] = useState();
+  const [positionsReady, setPositionsReady] = useState(false);
   const [lotsInitialized, setLotsInitialized] = useState(false);
   const [meshesInitialized, setMeshesInitialized] = useState(false);
+  const [resultsByRegion, setResultsByRegion] = useState([]);
 
   const positions = useRef();
   const orientations = useRef();
   const lotsByRegion = useRef([]);
-  const resultsByRegion = useRef([]);
 
   const mouseableMesh = useRef();
   const lotMeshes = useRef({});
@@ -268,9 +268,12 @@ const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, co
   // run this when lots changes (after its initial run through the effect that follows this one)
   useEffect(() => {
     if (lotResultMap && lotsByRegion.current?.length && positionsReady) {
+      const results = [];
       Object.keys(lotsByRegion.current).forEach((region) => {
-        resultsByRegion.current[region] = lotsByRegion.current[region].filter((lotIndex) => lotResultMap[lotIndex]);
+        results[region] = lotsByRegion.current[region].filter((lotIndex) => lotResultMap[lotIndex]);
       });
+
+      setResultsByRegion(results);
     }
   }, [lotResultMap, lastLotUpdate, positionsReady]);
 
@@ -346,7 +349,6 @@ const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, co
       }
     }
   }, [token, handleWSMessage, wsReady]);
-
 
   // listen for click events
   // NOTE: if just use onclick, then fires on drag events too :(
@@ -523,16 +525,17 @@ const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, co
   const lotsReady = useMemo(() => {
     return !isLoading &&
       !!lotResultMap &&
-      !!meshesInitialized &&
-      !!positions.current &&
+      meshesInitialized &&
+      positionsReady &&
       !!regionsByDistance?.length &&
-      !!lotsByRegion.current?.length &&
-      !!resultsByRegion.current;
+      !!resultsByRegion?.length;
   }, [
     isLoading,
     lotResultMap,
     meshesInitialized,
-    regionsByDistance
+    positionsReady,
+    regionsByDistance,
+    resultsByRegion
   ]);
 
   useEffect(() => {
@@ -560,7 +563,7 @@ const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, co
         // (without this, imagine all the unnecessary loops if there were a single search result on AP)
         const lotSource = (totalRendered < visibleLotTally && (cameraAltitude <= PIP_VISIBILITY_ALTITUDE || !lotsInitialized))
           ? lotsByRegion.current
-          : resultsByRegion.current;
+          : resultsByRegion;
         if (!lotSource[lotRegion]) return true;
 
         // TODO (enhancement): on altitude change (where rotation has not changed), don't need to recalculate pip matrixes, etc
@@ -676,7 +679,8 @@ const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, co
     lastLotUpdate,
     lotsReady,
     meshesInitialized,
-    positionsReady
+    positionsReady,
+    resultsByRegion
   ]);
 
   const highlightLot = useCallback((lotIndex) => {
