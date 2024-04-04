@@ -20,9 +20,10 @@ const AdminBuilding = ({}) => {
 
         <HudMenuCollapsibleSection titleText="Update Name" collapsed>
           <EntityNameForm
-            entity={lot?.building ? { id: lot.building.id, label: Entity.IDS.BUILDING } : null}
+            entity={lot?.building}
             originalName={lot?.building?.Name?.name}
-            label="Building Name" />
+            label="Building Name"
+            skipCollisionCheck={false} />
         </HudMenuCollapsibleSection>
 
         <HudMenuCollapsibleSection titleText="Update Description" collapsed>

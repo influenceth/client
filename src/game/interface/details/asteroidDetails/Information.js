@@ -268,7 +268,7 @@ const SmHidden = styled.span`
 const AsteroidInformation = ({ abundances, asteroid, isManager, isOwner }) => {
   const { authenticated } = useSession();
   const createReferral = useCreateReferral(Number(asteroid.id));
-  const isNameValid = useNameAvailability(Entity.IDS.ASTEROID);
+  const isNameValid = useNameAvailability(asteroid);
   const { data: activities } = useActivities({ id: asteroid.id, label: Entity.IDS.ASTEROID });
   const { buyAsteroid, checkForLimit, buying } = useBuyAsteroid(Number(asteroid.id));
   const { controlAsteroid, takingControl } = useControlAsteroid(Number(asteroid.id));

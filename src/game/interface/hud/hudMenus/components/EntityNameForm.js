@@ -13,8 +13,8 @@ const ErrorContainer = styled.div`
   min-height: 25px;
 `;
 
-const EntityNameForm = ({ entity, label, originalName, ...props }) => {
-  const isNameValid = useNameAvailability(entity?.label);
+const EntityNameForm = ({ entity, label, originalName, skipCollisionCheck = false, ...props }) => {
+  const isNameValid = useNameAvailability(entity);
 
   const { changeName, changingName } = useChangeName(entity);
 
@@ -27,7 +27,7 @@ const EntityNameForm = ({ entity, label, originalName, ...props }) => {
   const handleNameChange = useCallback(async (e) => {
     const val = e.currentTarget.value || '';
     setName(val);
-    const err = await isNameValid(val, entity.id, true, 'string');
+    const err = await isNameValid(val, entity.id, skipCollisionCheck, 'string');
     setError(typeof err === 'string' ? err : false);
   }, [entity?.id]);
 
