@@ -1348,6 +1348,7 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
                     <article>
                       <h4>Collection</h4>
                       <div>{Crewmate.getCollection(crewmate.Crewmate.coll)?.name}</div>
+                      <div style={{color: theme.colors.secondaryText}}>{Crewmate.getTitle(crewmate.Crewmate.title)?.name}</div>
                     </article>
                     <TipHolder>
                       <TriangleTip strokeWidth="1" rotate="90" />
