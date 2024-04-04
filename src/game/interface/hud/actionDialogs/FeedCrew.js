@@ -132,8 +132,9 @@ const FeedCrew = ({
     const originLotIndex = Lot.toIndex(originLot?.id);
     const destinationLotIndex = crew?._location?.lotIndex;
     const transportDistance = Asteroid.getLotDistance(asteroid?.id, originLotIndex, destinationLotIndex);
+    const effBonus = Math.max(crewTravelBonus.totalBonus, 1); // no penalty for food resupply
     const transportTime = Time.toRealDuration(
-      Asteroid.getLotTravelTime(asteroid?.id, originLotIndex, destinationLotIndex, crewTravelBonus.totalBonus),
+      Asteroid.getLotTravelTime(asteroid?.id, originLotIndex, destinationLotIndex, effBonus),
       crew?._timeAcceleration
     );
     return [transportDistance, transportTime];
@@ -158,11 +159,11 @@ const FeedCrew = ({
     {
       label: 'Task Duration',
       value: formatTimer(transportTime),
-      direction: getBonusDirection(crewTravelBonus),
+      direction: getBonusDirection(crewTravelBonus) === -1 ? 0 : 1,
       isTimeStat: true,
       tooltip: (
         <TimeBonusTooltip
-          bonus={crewTravelBonus}
+          bonus={crewTravelBonus.totalBonus < 1 ? {} : crewTravelBonus}
           title="Transport Time"
           totalTime={transportTime}
           crewRequired="start" />

@@ -26,7 +26,7 @@ const SurfaceTransferIncoming = ({ asteroid, crew, lot, ship, onSetAction, dialo
     if (!destination) return '';
     const _location = locationsArrToObj(destination.Location?.locations || []);
     if (!_location?.lotId) return 'not on surface';
-    
+
     const hasCapacity = !!(destination?.Inventories || []).find((i) => {
       if (i.status === Inventory.STATUSES.AVAILABLE) {
         const invConfig = Inventory.getType(i?.inventoryType, crew?._inventoryBonuses) || {};
@@ -37,7 +37,7 @@ const SurfaceTransferIncoming = ({ asteroid, crew, lot, ship, onSetAction, dialo
     });
     if (!hasCapacity) return 'over capacity';
 
-    return getCrewDisabledReason({ asteroid, crew });
+    return getCrewDisabledReason({ asteroid, crew, requireReady: false });
   }, [destination, crew]);
 
   const isP2P = useMemo(() => !Permission.isPermitted(crew, Permission.IDS.ADD_PRODUCTS, destination), [crew, destination]);

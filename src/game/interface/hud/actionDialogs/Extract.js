@@ -224,7 +224,7 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
   const [crewTimeRequirement, taskTimeRequirement] = useMemo(() => {
     const oneWayCrewTravelTime = crewTravelTime / 2;
     return [
-      crewTravelTime + Time.toRealDuration(Extractor.EXTRACTION_SETUP_TIME, crew?._timeAcceleration),
+      crewTravelTime + extractionTime / 5,
       destinationLot ? (oneWayCrewTravelTime + extractionTime + transportTime) : undefined
     ];
   }, [crew?._timeAcceleration, extractionTime, crewTravelTime, transportTime]);
@@ -483,7 +483,15 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
       </ActionDialogBody>
 
       <ActionDialogFooter
-        disabled={stage !== actionStage.READY_TO_COMPLETE && (!destinationLot || !selectedCoreSample || amount === 0 || !crewCan(Permission.IDS.EXTRACT_RESOURCES, lot.building))}
+        disabled={
+          stage !== actionStage.READY_TO_COMPLETE &&
+          (
+            !destinationLot ||
+            !selectedCoreSample ||
+            amount === 0 ||
+            !crewCan(Permission.IDS.EXTRACT_RESOURCES, lot.building)
+          )
+        }
         goLabel={isPurchase ? 'Purchase & Extract' : 'Extract'}
         onGo={onStartExtraction}
         finalizeLabel="Complete"

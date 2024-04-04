@@ -279,7 +279,7 @@ const ManageCrew = ({ altCrews, crew, isForeignCrew, manager, stage, ...props })
         createAlert({
           type: 'GenericAlert',
           level: 'warning',
-          data: { 
+          data: {
             content: 'Crew is not under your control. You may transfer crewmates you own, '
               + 'but other modifications are prohibited.'
           },
@@ -452,7 +452,6 @@ const ManageCrew = ({ altCrews, crew, isForeignCrew, manager, stage, ...props })
         goLabel="Save Changes"
         onGo={onSaveChanges}
         stage={stage}
-        waitForCrewReady
         {...props} />
 
 
