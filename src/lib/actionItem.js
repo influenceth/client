@@ -156,7 +156,7 @@ const formatAsTx = (item) => {
   switch(eventName) {
     case 'AnnotateEvent': {
       formatted.icon = <EditIcon />;
-      formatted.label = `Annotate ${ucfirst(Entity.TYPES[item.meta?.entity?.label]?.label) || 'Asset'}`;
+      formatted.label = `Annotate ${ucfirst(Entity.TYPES[item.meta?.entity?.label]?.label) || 'Event'}`;
       formatted.onClick = ({ history }) => {
         if (item.meta?.entity?.label === Entity.IDS.ASTEROID) {
           history.push(`/asteroids/${item.meta?.entity?.id}`);

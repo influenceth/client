@@ -3,27 +3,25 @@ import { Entity } from '@influenceth/sdk';
 
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
 import useCrewContext from '~/hooks/useCrewContext';
-import useEarliestActivity from '~/hooks/useEarliestActivity';
 import api from '~/lib/api';
 
 export const isValidAnnotation = () => {
   return true;
 };
 
-const useAnnotationManager = (entity) => {
+const useAnnotationManager = (activity, metaEntity) => {
   const { crew } = useCrewContext();
   const { execute, getStatus } = useContext(ChainTransactionContext);
-  const { data: earliest } = useEarliestActivity(entity);
 
   const crewId = crew?.id;
 
   const [saving, setSaving] = useState();
 
   const payload = useMemo(() => ({
-    transaction_hash: earliest?.event?.transactionHash,
-    log_index: earliest?.event?.logIndex,
+    transaction_hash: activity?.event?.transactionHash,
+    log_index: activity?.event?.logIndex,
     caller_crew: { id: crewId, label: Entity.IDS.CREW }
-  }), [earliest]);
+  }), [activity]);
 
   const saveAnnotation = useCallback(
     async (content) => {
@@ -38,14 +36,15 @@ const useAnnotationManager = (entity) => {
           content_hash: hash.match(/.{1,31}/g) // chunk into shortstrings (max-length 31)
         },
         {
-          entity,
-          annotation
+          annotation,
+          entity: metaEntity,
+          entities: activity.entities || (metaEntity ? [metaEntity] : [])
         }
       );
 
       setSaving(false);
     },
-    [execute, payload]
+    [execute, metaEntity, payload]
   );
 
   const status = useMemo(

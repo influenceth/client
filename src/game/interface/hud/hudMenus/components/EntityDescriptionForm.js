@@ -8,6 +8,7 @@ import { nativeBool } from '~/lib/utils';
 import useAnnotationManager, { isValidAnnotation } from '~/hooks/actionManagers/useAnnotationManager';
 import useDescriptionAnnotation from '~/hooks/useDescriptionAnnotation';
 import useAnnotationContent from '~/hooks/useAnnotationContent';
+import useEarliestActivity from '~/hooks/useEarliestActivity';
 
 const ErrorContainer = styled.div`
   color: ${p => p.theme.colors.error};
@@ -16,7 +17,8 @@ const ErrorContainer = styled.div`
 
 // TODO: create validity functions for annotaions
 const EntityDescriptionForm = ({ buttonSize = 'small', buttonText = 'Update', entity, label, minTextareaHeight = '200px', onCancel, onSave }) => {
-  const { saveAnnotation, savingAnnotation, txPending } = useAnnotationManager(entity);
+  const { data: earliest } = useEarliestActivity(entity);
+  const { saveAnnotation, savingAnnotation, txPending } = useAnnotationManager(earliest, entity);
   const { data: annotation, isLoading: annotationLoading } = useDescriptionAnnotation(entity);
   const { data: originalDesc, isLoading: contentLoading } = useAnnotationContent(annotation);
   const isLoading = annotationLoading || contentLoading;

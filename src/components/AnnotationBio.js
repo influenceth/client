@@ -9,6 +9,7 @@ import EntityDescriptionForm from '~/game/interface/hud/hudMenus/components/Enti
 import useAnnotationContent from '~/hooks/useAnnotationContent';
 import useAnnotationManager from '~/hooks/actionManagers/useAnnotationManager';
 import useDescriptionAnnotation from '~/hooks/useDescriptionAnnotation';
+import useEarliestActivity from '~/hooks/useEarliestActivity';
 
 const Wrapper = styled.div`
   display: flex;
@@ -103,9 +104,10 @@ const Footer = styled.span`
 `;
 
 const AnnotationBio = ({ entity, isEditable }) => {
+  const { data: earliest } = useEarliestActivity(entity);
   const { data: annotation, isLoading: annotationLoading } = useDescriptionAnnotation(entity);
   const { data: content, isLoading: contentLoading } = useAnnotationContent(annotation);
-  const { savingAnnotation } = useAnnotationManager(entity);
+  const { savingAnnotation } = useAnnotationManager(earliest, entity);
 
   const [editing, setEditing] = useState();
 

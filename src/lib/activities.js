@@ -1052,12 +1052,16 @@ const activities = {
   },
 
   EventAnnotated: {
-    onBeforeReceived: ({ event: { returnValues } }) => (pendingTransaction) => {
-      return api.saveAnnotation({
+    onBeforeReceived: ({ event: { returnValues } }) => async (pendingTransaction) => {
+      await api.saveAnnotation({
         annotation: pendingTransaction?.meta?.annotation,
         crewId: returnValues.callerCrew?.id,
         ...returnValues
-      })
+      });
+
+      return (pendingTransaction?.meta?.entities || []).map(
+        (entity) => (['activities', entity.label, entity.id])
+      );
     },
     getInvalidations: ({ event: { returnValues } }) => ([
       ['annotations', cleanseTxHash(returnValues.transactionHash), `${returnValues.logIndex}`]

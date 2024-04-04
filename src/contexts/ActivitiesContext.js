@@ -110,13 +110,18 @@ export function ActivitiesProvider({ children }) {
       transformedActivities.forEach((activity) => {
         const activityConfig = getActivityConfig(activity);
         const pendingTransaction = (pendingTransactions || []).find((p) => p.txHash === activity.event?.transactionHash);
-        activityConfig.onBeforeReceived(pendingTransaction).then((onBeforeReleasedOutput) => {
+        activityConfig.onBeforeReceived(pendingTransaction).then((extraInvalidations) => {
           if (!skipInvalidations) {
             const debugInvalidation = false;
+            if (debugInvalidation) console.log('extraInvalidations', extraInvalidations); // TODO: hide
             shouldRefreshReadyAt = shouldRefreshReadyAt || !!activityConfig?.requiresCrewTime;
 
             // console.log('invalidations', activityConfig?.invalidations);
-            (activityConfig?.invalidations || []).forEach((invalidationConfig) => {
+            const allInvalidations = [
+              ...(activityConfig?.invalidations || []),
+              ...(extraInvalidations || [])
+            ]
+            allInvalidations.forEach((invalidationConfig) => {
               const invalidations = [];
 
               // this is a raw queryKey
