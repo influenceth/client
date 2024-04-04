@@ -28,7 +28,7 @@ const tabContainerCss = css`
   font-size: 15px;
   flex: 1;
   height: 40px;
-  margin: -6px;
+  margin: -8px 0;
 `;
 
 const Wrapper = styled.div`
@@ -462,7 +462,7 @@ const LotInventory = () => {
                 containerCss={tabContainerCss}
                 labelCss={{ flex: 1, textAlign: 'center' }}
                 onChange={(v) => setInventorySlot(inventories[v].slot)}
-                tabCss={{ flex: 1 }}
+                tabCss={{ borderRadius: 0, flex: 1 }}
                 tabs={inventories.map(({ label }) => ({ label }))}
               />
             </div>
