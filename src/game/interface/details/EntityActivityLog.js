@@ -22,6 +22,7 @@ import useAnnotationManager, { isValidAnnotation } from '~/hooks/actionManagers/
 import UncontrolledTextArea, { resizeOnKeydown } from '~/components/TextAreaUncontrolled';
 import { maxAnnotationLength, nativeBool, reactPreline } from '~/lib/utils';
 import Button from '~/components/ButtonAlt';
+import theme from '~/theme';
 
 const History = styled.div`
   flex: 1;
@@ -41,10 +42,10 @@ const Icon = styled.div`
 `;
 const LabelHolder = styled.span`
   align-items: center;
-  ${p => p.highlight ? `color: ${p.theme.colors.main};` : ''}
+  ${p => p.color ? `color: ${p.color};` : ''}
   display: flex;
   & > ${Icon} {
-    color: ${p => p.highlight ? `${p.theme.colors.main};` : 'white'};
+    color: ${p => p.color || 'white'};
   }
   & > span {
     font-size: 90%;
@@ -294,15 +295,12 @@ const EntityActivityLog = ({ entity, viewingAs }) => {
         noMinWidth: true,
         selector: row => {
           const tally = row._virtuals?.annotations?.event?.count || 0;
-          if (tally > 0) {
-            return (
-              <LabelHolder highlight>
-                <Icon><ChatIcon /></Icon>
-                <span>{row._virtuals?.annotations?.event?.count}</span>
-              </LabelHolder>
-            );
-          }
-          return `NONE`;
+          return (
+            <LabelHolder color={tally > 0 ? theme.colors.main : '#444'}>
+              <Icon><ChatIcon /></Icon>
+              <span>{row._virtuals?.annotations?.event?.count}</span>
+            </LabelHolder>
+          );
         }
       },
       {

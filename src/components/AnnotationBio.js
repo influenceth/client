@@ -112,7 +112,7 @@ const AnnotationBio = ({ entity, isEditable }) => {
 
   const [editing, setEditing] = useState();
 
-  const isLoading = annotationLoading || contentLoading;
+  const isLoading = annotationLoading || contentLoading || savingAnnotation;
   return (
     <Wrapper>
       <FlourishWrapper>
@@ -129,8 +129,8 @@ const AnnotationBio = ({ entity, isEditable }) => {
             {isEditable && (
               <Footer>
                 <Button
-                  disabled={isLoading || savingAnnotation}
-                  loading={isLoading || savingAnnotation}
+                  disabled={isLoading}
+                  loading={isLoading}
                   onClick={() => setEditing(true)} size="medium">Edit Bio</Button>
               </Footer>
             )}
