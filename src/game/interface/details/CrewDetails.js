@@ -268,7 +268,8 @@ const CrewDetails = ({ crewId, crew, isMyCrew, isOwnedCrew, selectCrew }) => {
 
   const onSetAction = useStore(s => s.dispatchActionDialog);
   const createAlert = useStore(s => s.dispatchAlertLogged);
-  const isNameValid = useNameAvailability(Entity.IDS.CREW);
+  const isNameValid = useNameAvailability(crew);
+  const { data: activities } = useActivities({ id: crewId, label: Entity.IDS.CREW });
   const { data: earliestActivity, isLoading: earliestLoading } = useEarliestActivity({ id: crewId, label: Entity.IDS.CREW });
   const { changeName, changingName } = useChangeName({ id: crewId, label: Entity.IDS.CREW });
 
