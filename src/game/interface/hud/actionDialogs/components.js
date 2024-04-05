@@ -4176,6 +4176,25 @@ export const getTripDetails = (asteroidId, crewTravelBonus, originLotIndex, step
   return { totalDistance, totalTime, tripDetails };
 };
 
+export const formatResourceAmountRatio = (numerator, denominator, resourceId, options = {}) => {
+  if (!Product.TYPES[resourceId].isAtomic) {
+    const _numerator = numerator * Product.TYPES[resourceId].massPerUnit;
+    const _denominator = denominator * Product.TYPES[resourceId].massPerUnit;
+    const { unitLabel, scale } = getUnitLabelAndScale(_denominator, options);
+
+    return {
+      numerator: formatMass(_numerator, { ...options, unitLabel, scale }),
+      denominator: formatMass(_denominator, { ...options, unitLabel, scale }),
+    }
+  }
+
+  // granular units
+  return {
+    numerator: numerator.toLocaleString(),
+    denominator: denominator.toLocaleString()
+  }
+};
+
 export const formatResourceAmount = (units, resourceId, { abbrev = true, minPrecision = 3, fixedPrecision } = {}) => {
   if (!Product.TYPES[resourceId].isAtomic) {
     return formatResourceMass(units, resourceId, { abbrev, minPrecision, fixedPrecision });
@@ -4184,19 +4203,18 @@ export const formatResourceAmount = (units, resourceId, { abbrev = true, minPrec
   return units.toLocaleString();
 };
 
-export const formatResourceMass = (units, resourceId, { abbrev = true, minPrecision = 3, fixedPrecision } = {}) => {
+export const formatResourceMass = (units, resourceId, { abbrev = true, minPrecision = 3, fixedPrecision, unitLabel, scale } = {}) => {
   return formatMass(
     resourceId
       ? units * Product.TYPES[resourceId].massPerUnit
       : 0,
-    { abbrev, minPrecision, fixedPrecision }
+    { abbrev, minPrecision, fixedPrecision, unitLabel, scale }
   );
 }
 
-export const formatMass = (inputGrams, { abbrev = true, minPrecision = 3, fixedPrecision } = {}) => {
-  let sign = inputGrams < 0 ? '-' : '';
-
+export const getUnitLabelAndScale = (inputGrams, { abbrev = true, minPrecision = 3, fixedPrecision } = {}) => {
   const grams = Math.abs(inputGrams);
+
   let unitLabel;
   let scale;
   if (grams >= 1e18) {
@@ -4221,6 +4239,20 @@ export const formatMass = (inputGrams, { abbrev = true, minPrecision = 3, fixedP
     unitLabel = abbrev ? 'g' : 'grams';
   }
 
+  return { unitLabel, scale };
+}
+
+export const formatMass = (inputGrams, { abbrev = true, minPrecision = 3, fixedPrecision, ...options } = {}) => {
+  let sign = inputGrams < 0 ? '-' : '';
+  let unitLabel = options.unitLabel;
+  let scale = options.scale;
+  if (!unitLabel || !scale) {
+    const config = getUnitLabelAndScale(inputGrams, { abbrev, minPrecision, fixedPrecision });
+    if (!unitLabel) unitLabel = config.unitLabel
+    if (!scale) scale = config.scale;
+  }
+
+  const grams = Math.abs(inputGrams);
   const workingUnits = (grams / scale);
 
   let fixedPlaces = fixedPrecision || 0;
