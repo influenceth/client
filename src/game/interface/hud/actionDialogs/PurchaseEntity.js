@@ -3,7 +3,7 @@ import styled from 'styled-components';
 import { Entity, Ship } from '@influenceth/sdk';
 
 import {
-  PurchaseAsteroidIcon,
+  PurchaseEntityIcon,
   SwayIcon,
   UnplanBuildingIcon,
   WarningOutlineIcon
@@ -131,7 +131,7 @@ const PurchaseEntity = ({ asteroid, lot, entity, actionManager, stage, ...props 
     <>
       <ActionDialogHeader
         action={{
-          icon: <PurchaseAsteroidIcon />,
+          icon: <PurchaseEntityIcon />,
           label: 'Buy Ship',
           status: stage === actionStages.NOT_STARTED ? 'Purchase Agreement' : '',
         }}
