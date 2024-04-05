@@ -1,5 +1,10 @@
 import styled from 'styled-components';
 
+export const resizeOnKeydown = (max) => (e) => {
+  e.target.style.height = '0px'; // reset field height (in case deleting)
+  e.target.style.height = `${Math.min(max, e.target.scrollHeight)}px`; // increase to fit (incl padding + border)
+};
+
 const UncontrolledTextArea = styled.textarea`
   background-color: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(${p => p.theme.colors.mainRGB}, 0.8);

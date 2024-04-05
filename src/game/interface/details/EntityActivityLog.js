@@ -19,7 +19,7 @@ import EntityName from '~/components/EntityName';
 import useCrewContext from '~/hooks/useCrewContext';
 import formatters from '~/lib/formatters';
 import useAnnotationManager, { isValidAnnotation } from '~/hooks/actionManagers/useAnnotationManager';
-import UncontrolledTextArea from '~/components/TextAreaUncontrolled';
+import UncontrolledTextArea, { resizeOnKeydown } from '~/components/TextAreaUncontrolled';
 import { maxAnnotationLength, nativeBool, reactPreline } from '~/lib/utils';
 import Button from '~/components/ButtonAlt';
 
@@ -177,6 +177,7 @@ const AddAnnotationItem = ({ activity }) => {
 
   const handleChange = useCallback(async (e) => {
     setAnnotation(e.currentTarget.value || '');
+    resizeOnKeydown(95)(e);
   }, []);
 
   const saveNewAnnotation = useCallback(async () => {
@@ -205,7 +206,7 @@ const AddAnnotationItem = ({ activity }) => {
                   disabled={nativeBool(savingAnnotation)}
                   onChange={handleChange}
                   placeholder="Add annotation..."
-                  style={{ height: '3em' }}
+                  style={{ height: 36 }}
                   value={annotation} />
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6 }}>
