@@ -6,7 +6,10 @@ import { connect as starknetConnect, disconnect as starknetDisconnect } from 'st
 import { ArgentMobileConnector } from 'starknetkit/argentMobile';
 import { InjectedConnector } from 'starknetkit/injected';
 import { WebWalletConnector } from 'starknetkit/webwallet';
-import { createOffchainSession, OffchainSessionAccount } from '@argent/x-sessions';
+import {
+  createOffchainSessionV5 as createOffchainSession,
+  OffchainSessionAccountV5 as OffchainSessionAccount
+} from '@argent/x-sessions';
 import { getStarkKey, utils } from 'micro-starknet';
 import { Address } from '@influenceth/sdk';
 
@@ -120,9 +123,12 @@ export function SessionProvider({ children }) {
     try {
       const connectors = [];
       const customProvider = new RpcProvider({ nodeUrl: process.env.REACT_APP_STARKNET_PROVIDER });
+      console.log(customProvider);
 
       if (!!process.env.REACT_APP_ARGENT_WEB_WALLET_URL) {
-        connectors.push(new WebWalletConnector({ url: process.env.REACT_APP_ARGENT_WEB_WALLET_URL }));
+        connectors.push(new WebWalletConnector({
+          url: process.env.REACT_APP_ARGENT_WEB_WALLET_URL, provider: customProvider
+        }));
       }
 
       connectors.push(new InjectedConnector({ options: { id: 'argentX', provider: customProvider }}));
@@ -141,7 +147,7 @@ export function SessionProvider({ children }) {
       setError();
       setConnecting(true);
       const { wallet } = await starknetConnect(connectionOptions);
-
+      console.log(wallet);
       if (wallet && wallet.isConnected && wallet.account?.address) {
         // Default to provider chainId if not set (starknetkit doesn't set for braavos)
         wallet.chainId = wallet.chainId || wallet?.provider?.chainId || wallet?.account?.provider?.chainId;
