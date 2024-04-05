@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useHistory, useParams } from 'react-router-dom';
+import { useHistory, useLocation } from 'react-router-dom';
 import styled from 'styled-components';
 import { Crewmate, Entity, Lot, Order, Permission } from '@influenceth/sdk';
 
@@ -359,6 +359,12 @@ const STROKE_WIDTH = 2;
 
 const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource }) => {
   const history = useHistory();
+  const { search } = useLocation();
+
+  const urlMode = useMemo(() => {
+    const q = new URLSearchParams(search);
+    return q.get('mode');
+  }, [search]);
 
   const { width, height } = useScreenSize();
   const { crew, crewCan } = useCrewContext();
@@ -397,7 +403,7 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
       .sort((a, b) => a.price > b.price ? -1 : 1);
   }, [sellOrders]);
 
-  const [mode, setMode] = useState('buy');
+  const [mode, setMode] = useState(urlMode || 'buy');
   const [type, setType] = useState('market');
   const chartWrapperRef = useRef({ clientHeight: 0, clientWidth: 0 });
 
