@@ -7,7 +7,6 @@ import useActivitiesContext from '~/hooks/useActivitiesContext';
 import useSession from '~/hooks/useSession';
 import useCrewContext from '~/hooks/useCrewContext';
 import useStore from '~/hooks/useStore';
-import useInterval from '~/hooks/useInterval';
 import api from '~/lib/api';
 
 // import { CallData, shortString, uint256, ec } from 'starknet';
@@ -699,7 +698,6 @@ export function ChainTransactionProvider({ children }) {
             console.log('execute', calls);
 
             // Check if we can utilize a signed session to execute calls
-            console.log(starknetSession);
             const canUseSession = !!starknetSession?.account && !calls.some((c) => {
               return c.contractAddress !== process.env.REACT_APP_STARKNET_DISPATCHER || c.entrypoint !== 'run_system';
             });

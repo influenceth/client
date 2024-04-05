@@ -268,7 +268,7 @@ export function SessionProvider({ children }) {
         const sessionSigner = '0x' + Buffer.from(utils.randomPrivateKey()).toString('hex');
         const requestSession = {
           sessionKey: getStarkKey(sessionSigner),
-          expirationTime: Math.floor(Date.now() / 1000) + 10,
+          expirationTime: Math.floor(Date.now() / 1000) + 86400 * 14,
           allowedMethods: [
             {
               contractAddress: process.env.REACT_APP_STARKNET_DISPATCHER,
