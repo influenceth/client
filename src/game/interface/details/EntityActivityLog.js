@@ -12,7 +12,6 @@ import {
 import DataTableComponent from '~/components/DataTable';
 import useActivities from '~/hooks/useActivities';
 import useGetActivityConfig from '~/hooks/useGetActivityConfig';
-import useActivityAnnotations from '~/hooks/useActivityAnnotations';
 import { CrewCaptainCardFramed } from '~/components/CrewmateCardFramed';
 import useAnnotationContent from '~/hooks/useAnnotationContent';
 import EntityName from '~/components/EntityName';
@@ -234,23 +233,15 @@ const fallbackTime = '2000-01-01T00:00:00.000Z';
 
 const AnnotationsList = ({ activity }) => {
   const { crew } = useCrewContext();
-  const { data: annotations, isLoading } = useActivityAnnotations(activity._virtuals?.annotations?.event?.count ? activity : undefined);
-  if (!crew && !annotations && !isLoading) return null;
+  if (!crew && !activity?._virtuals?.eventAnnotations) return null;
   return (
     <ListWrapper>
       <Flourish><CaretIcon /></Flourish>
       <List>
-        {isLoading
-          ? <Loading><LoadingAnimation color="white" loading /></Loading>
-          : (
-            <>
-              {crew && <AddAnnotationItem key={annotations?.length} activity={activity} />}
-              {(annotations || [])
-                .sort((a, b) => (a.createdAt || fallbackTime) > (b.createdAt || fallbackTime) ? -1 : 1)
-                .map((a) => <AnnotationItem key={a?.ipfs?.hash} annotation={a} />)}
-            </>
-          )
-        }
+        {crew && <AddAnnotationItem key={activity._virtuals.eventAnnotations.length} activity={activity} />}
+        {activity._virtuals.eventAnnotations
+          .sort((a, b) => (a.createdAt || fallbackTime) > (b.createdAt || fallbackTime) ? -1 : 1)
+          .map((a) => <AnnotationItem key={a?.ipfs?.hash} annotation={a} />)}
       </List>
     </ListWrapper>
   );
@@ -294,11 +285,11 @@ const EntityActivityLog = ({ entity, viewingAs }) => {
         label: 'Annotations',
         noMinWidth: true,
         selector: row => {
-          const tally = row._virtuals?.annotations?.event?.count || 0;
+          const tally = row._virtuals?.eventAnnotations?.length || 0;
           return (
             <LabelHolder color={tally > 0 ? theme.colors.main : '#444'}>
               <Icon><ChatIcon /></Icon>
-              <span>{row._virtuals?.annotations?.event?.count}</span>
+              <span>{row._virtuals?.eventAnnotations?.length || 0}</span>
             </LabelHolder>
           );
         }
