@@ -11,8 +11,6 @@ import {
   BackIcon,
   MyAssetIcon
 } from '~/components/Icons';
-import LogEntry from '~/components/LogEntry';
-import useActivities from '~/hooks/useActivities';
 import useSession from '~/hooks/useSession';
 import useConstants from '~/hooks/useConstants';
 import useCrewContext from '~/hooks/useCrewContext';
@@ -26,6 +24,7 @@ import MouseoverInfoPane from '~/components/MouseoverInfoPane';
 import formatters from '~/lib/formatters';
 import TabContainer from '~/components/TabContainer';
 import AnnotationBio from '~/components/AnnotationBio';
+import EntityActivityLog from './EntityActivityLog';
 
 const borderColor = 'rgba(200, 200, 200, 0.15)';
 const breakpoint = 1375;
@@ -100,10 +99,6 @@ const Log = styled.div`
     display: block;
     margin: 0 -10px;
   }
-`;
-const EmptyLogEntry = styled.li`
-  padding-top: 50px;
-  text-align: center;
 `;
 
 const foldOffset = 28;
@@ -330,7 +325,6 @@ const MouseableCrewTrait = (props) => {
 const CrewmateDetails = ({ crewmateId, crewmate, isOwnedCrewmate }) => {
   const history = useHistory();
 
-  const { data: activities } = useActivities({ id: crewmateId, label: Entity.IDS.CREWMATE });
   const { data: earliestActivity, isLoading: earliestLoading } = useEarliestActivity({ id: crewmateId, label: Entity.IDS.CREWMATE });
 
   const { data: TIME_ACCELERATION } = useConstants('TIME_ACCELERATION');
@@ -437,34 +431,8 @@ const CrewmateDetails = ({ crewmateId, crewmate, isOwnedCrewmate }) => {
             ]}
             paneCss={{ display: 'flex', flexDirection: 'column', height: '100%', overflowY: 'hidden' }}
             panes={[
-              (
-                <History>
-                  <Log>
-                    <LogHeader>
-                      <LogEntry isHeaderRow isTabular />
-                    </LogHeader>
-                    <div>
-                      <ul>
-                        {/* TODO: totalCount from api, pagination, custom columns (see mocks) */}
-                        {activities?.length > 0
-                          ? activities.map((activity) => (
-                            <LogEntry
-                              key={activity.id}
-                              activity={activity}
-                              timestampBreakpoint="1500px"
-                              isTabular
-                              viewingAs={viewingAs} />
-                          ))
-                          : <EmptyLogEntry>No logs recorded yet.</EmptyLogEntry>
-                        }
-                      </ul>
-                    </div>
-                  </Log>
-                </History>
-              ),
-              (
-                <AnnotationBio entity={crewmate} isEditable={isOwnedCrewmate} />
-              )
+              <EntityActivityLog entity={crewmate} viewingAs={viewingAs} />,
+              <AnnotationBio entity={crewmate} isEditable={isOwnedCrewmate} />
             ]}
           />
         </BelowFold>

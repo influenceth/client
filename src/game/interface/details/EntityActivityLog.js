@@ -20,7 +20,7 @@ import useCrewContext from '~/hooks/useCrewContext';
 import formatters from '~/lib/formatters';
 import useAnnotationManager, { isValidAnnotation } from '~/hooks/actionManagers/useAnnotationManager';
 import UncontrolledTextArea from '~/components/TextAreaUncontrolled';
-import { nativeBool } from '~/lib/utils';
+import { maxAnnotationLength, nativeBool, reactPreline } from '~/lib/utils';
 import Button from '~/components/ButtonAlt';
 
 const History = styled.div`
@@ -34,14 +34,17 @@ const History = styled.div`
   }
 `;
 
+const Icon = styled.div`
+  font-size: 25px;
+  margin-right: 10px;
+  width: 25px;
+`;
 const LabelHolder = styled.span`
   align-items: center;
   ${p => p.highlight ? `color: ${p.theme.colors.main};` : ''}
   display: flex;
-  & > svg {
+  & > ${Icon} {
     color: ${p => p.highlight ? `${p.theme.colors.main};` : 'white'};
-    font-size: 25px;
-    margin-right: 10px;
   }
   & > span {
     font-size: 90%;
@@ -57,7 +60,7 @@ const Loading = styled.div`
   width: 100%;
 `;
 
-const EmptyLogEntry = styled.li`
+const EmptyLogEntry = styled.div`
   padding-top: 50px;
   text-align: center;
 `;
@@ -111,11 +114,13 @@ const ItemWrapper = styled.div`
   padding: 8px;
 `;
 const CrewDetails = styled.div`
-  flex: 1;
+  flex: 0 0 175px;
   padding: 8px 12px;
   & > div {
     color: white;
     font-weight: bold;
+    white-space: normal;
+    word-break: break-word;
   }
   & > span {
     font-size: 85%;
@@ -123,9 +128,13 @@ const CrewDetails = styled.div`
 `;
 const Content = styled.div`
   color: ${p => p.theme.colors.main};
-  flex: 0 0 850px;
+  flex: 0 1 850px;
   min-height: 100px;
+  max-height: 150px;
+  overflow: hidden auto;
   padding: 8px 12px;
+  white-space: normal;
+  word-break: break-word;
 `;
 const RemainingChars = styled.div`
   color: ${p => p.remaining < 0
@@ -143,7 +152,9 @@ const AnnotationItem = ({ annotation }) => {
   })
   return (
     <ItemWrapper>
-      <CrewCaptainCardFramed crewId={annotation.crew} width={65} />
+      <div>
+        <CrewCaptainCardFramed crewId={annotation.crew} width={65} />
+      </div>
       <CrewDetails>
         <div><EntityName label={Entity.IDS.CREW} id={annotation.crew} /></div>
         <span>{ago}</span>
@@ -151,27 +162,21 @@ const AnnotationItem = ({ annotation }) => {
       <Content>
         {isLoading
           ? <Loading><LoadingAnimation color="white" loading /></Loading>
-          : (content || '').split('\n').map((line, i) => i > 0 ? [<br key={i} />, line] : line)
+          : reactPreline(content)
         }
       </Content>
     </ItemWrapper>
   );
 }
 
-const MAX_ANNOTATION_LENGTH = 750;
-
 const AddAnnotationItem = ({ activity }) => {
   const { crew } = useCrewContext();
   const { saveAnnotation, savingAnnotation, txPending } = useAnnotationManager(activity);
 
-  const [error, setError] = useState();
   const [annotation, setAnnotation] = useState();
 
   const handleChange = useCallback(async (e) => {
-    const val = e.currentTarget.value || '';
-    setAnnotation(val);
-    const err = !isValidAnnotation(val, true, 'string'); // TODO: ...
-    setError(typeof err === 'string' ? err : false); // TODO: ...
+    setAnnotation(e.currentTarget.value || '');
   }, []);
 
   const saveNewAnnotation = useCallback(async () => {
@@ -180,11 +185,13 @@ const AddAnnotationItem = ({ activity }) => {
     }
   }, [annotation]);
 
-  const remaining = useMemo(() => MAX_ANNOTATION_LENGTH - (annotation?.length || 0), [annotation?.length]);
+  const remaining = useMemo(() => maxAnnotationLength - (annotation?.length || 0), [annotation?.length]);
 
   return (
     <ItemWrapper>
-      <CrewCaptainCardFramed crewId={crew.id} width={65} />
+      <div>
+        <CrewCaptainCardFramed crewId={crew.id} width={65} />
+      </div>
       <CrewDetails>
         <div>{formatters.crewName(crew)}</div>
       </CrewDetails>
@@ -204,7 +211,7 @@ const AddAnnotationItem = ({ activity }) => {
               <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6 }}>
                 <RemainingChars remaining={remaining}>{remaining.toLocaleString()} Remaining</RemainingChars>
                 <Button
-                  disabled={nativeBool(savingAnnotation || !annotation || error)}
+                  disabled={nativeBool(savingAnnotation || !annotation || remaining < 0)}
                   loading={savingAnnotation}
                   size="small"
                   isTransaction
@@ -265,16 +272,17 @@ const EntityActivityLog = ({ entity, viewingAs }) => {
         noMinWidth: true,
         selector: (row) => {
           const m = moment(new Date(row.event.timestamp * 1000));
-          return <span style={{ color: 'white', fontWeight: 'bold', marginRight: 40 }}>{m.fromNow()}</span>;
+          return <span style={{ color: 'white', fontWeight: 'bold', marginRight: 10 }}>{m.fromNow()}</span>;
         },
       },
       {
         key: 'label',
-        bodyStyle: { width: '100%' },
+        bodyStyle: { whiteSpace: 'wrap', width: '100%' },
         label: 'Event',
+        wrap: true,
         selector: row => (
           <LabelHolder>
-            {row._logContent.icon}
+            <Icon>{row._logContent.icon}</Icon>
             <span>{row._logContent.content}</span>
           </LabelHolder>
         ),
@@ -288,7 +296,7 @@ const EntityActivityLog = ({ entity, viewingAs }) => {
           if (tally > 0) {
             return (
               <LabelHolder highlight>
-                <ChatIcon />
+                <Icon><ChatIcon /></Icon>
                 <span>{row._virtuals?.annotations?.event?.count}</span>
               </LabelHolder>
             );
@@ -319,7 +327,7 @@ const EntityActivityLog = ({ entity, viewingAs }) => {
   }, []);
 
   return (
-    <History>
+    <History style={{ maxWidth: '100%' }}>
       {activityRows?.length > 0
         ? (
           <DataTableComponent

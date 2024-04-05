@@ -8,11 +8,16 @@ import { HudMenuCollapsibleSection, Scrollable } from './components/components';
 import ShipTitleArea from './components/ShipTitleArea';
 import PolicyPanels from './components/PolicyPanels';
 import useAnnotationContent from '~/hooks/useAnnotationContent';
+import { reactPreline } from '~/lib/utils';
 
 const Description = styled.div`
   color: ${p => p.theme.colors.main};
   font-size: 14px;
   line-height: 20px;
+
+  max-height: 272px;
+  overflow: hidden auto;
+  word-break: break-word;
 `;
 
 const ShipInfo = () => {
@@ -31,7 +36,8 @@ const ShipInfo = () => {
         {description && (
           <HudMenuCollapsibleSection titleText="Description">
             <Description>
-              {description}
+              {reactPreline(description)}
+              {reactPreline(description)}
             </Description>
           </HudMenuCollapsibleSection>
         )}

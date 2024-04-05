@@ -10,6 +10,7 @@ import useAnnotationContent from '~/hooks/useAnnotationContent';
 import useAnnotationManager from '~/hooks/actionManagers/useAnnotationManager';
 import useDescriptionAnnotation from '~/hooks/useDescriptionAnnotation';
 import useEarliestActivity from '~/hooks/useEarliestActivity';
+import { reactPreline } from '~/lib/utils';
 
 const Wrapper = styled.div`
   display: flex;
@@ -123,11 +124,7 @@ const AnnotationBio = ({ entity, isEditable }) => {
           <>
             {isLoading
               ? <Loading><LoadingAnimation color="white" loading /></Loading>
-              : (
-                <p>
-                  {(content || '').split('\n').map((line, i) => i > 0 ? [<br key={i} />, line] : line)}
-                </p>
-              )
+              : <p>{reactPreline(content)}</p>
             }
             {isEditable && (
               <Footer>

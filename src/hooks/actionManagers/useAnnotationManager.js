@@ -4,8 +4,11 @@ import { Entity } from '@influenceth/sdk';
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
 import useCrewContext from '~/hooks/useCrewContext';
 import api from '~/lib/api';
+import { maxAnnotationLength } from '~/lib/utils';
 
-export const isValidAnnotation = () => {
+export const isValidAnnotation = (val) => {
+  if (val.length > maxAnnotationLength) return false;
+  if (val.length === 0) return false;
   return true;
 };
 

@@ -152,6 +152,9 @@ const DataTableCell = styled.td`
     }
   }
 `;
+const CellInner = styled.div`
+  ${p => p.wrap && `white-space: normal !important;`}
+`;
 
 const getEmptyObj = () => ({});
 
@@ -187,9 +190,9 @@ const ExpandableDataTableRow = ({ columns, getRowProps, row, sortDirection, sort
             noMinWidth={c.noMinWidth}
             sorted={sortField && sortField === c.sortField ? sortDirection : ''}
             style={c.bodyStyle || {}}>
-            <div>
+            <CellInner wrap={!!c.wrap}>
               {c.selector(row)}
-            </div>
+            </CellInner>
           </DataTableCell>
         ))}
       </DataTableRow>

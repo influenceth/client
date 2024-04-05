@@ -7,7 +7,7 @@ import useStore from '~/hooks/useStore';
 import { MagnifyingIcon } from '~/components/Icons';
 import useLot from '~/hooks/useLot';
 import Button from '~/components/ButtonAlt';
-import { reactBool } from '~/lib/utils';
+import { reactBool, reactPreline } from '~/lib/utils';
 import CrewIndicator from '~/components/CrewIndicator';
 import { HudMenuCollapsibleSection, Scrollable, Tray } from './components/components';
 import LotTitleArea from './components/LotTitleArea';
@@ -20,6 +20,9 @@ const Description = styled.div`
   color: ${p => p.theme.colors.main};
   font-size: 14px;
   line-height: 20px;
+  max-height: 272px;
+  overflow: hidden auto;
+  word-break: break-word;
 `;
 
 const LotInfo = () => {
@@ -53,7 +56,7 @@ const LotInfo = () => {
         {description && (
           <HudMenuCollapsibleSection titleText="Description">
             <Description>
-              {description}
+              {reactPreline(description)}
             </Description>
           </HudMenuCollapsibleSection>
         )}
@@ -84,7 +87,7 @@ const LotInfo = () => {
 
         {!lot?.building && lot?.surfaceShip && (
           <>
-            <HudMenuCollapsibleSection titleText="Landed Ship Description">
+            <HudMenuCollapsibleSection titleText="Landed Ship Description" collapsed={!!description}>
               <Description>
                 {Ship.TYPES[lot.surfaceShip.Ship.shipType]?.description}
               </Description>

@@ -7,7 +7,7 @@ import CrewIndicator from '~/components/CrewIndicator';
 import Ether from '~/components/Ether';
 import { EccentricityIcon, InclinationIcon, LinkIcon, MagnifyingIcon, OrbitalPeriodIcon, RadiusIcon, ResourceGroupIcons, ScanAsteroidIcon, SemiMajorAxisIcon, SurfaceAreaIcon, WalletIcon } from '~/components/Icons';
 import formatters from '~/lib/formatters';
-import { reactBool } from '~/lib/utils';
+import { reactBool, reactPreline } from '~/lib/utils';
 import useAsteroid from '~/hooks/useAsteroid';
 import useStore from '~/hooks/useStore';
 import { HudMenuCollapsibleSection, Scrollable, Tray } from './components/components';
@@ -26,6 +26,10 @@ const Description = styled.div`
   color: ${p => p.theme.colors.main};
   font-size: 14px;
   line-height: 20px;
+
+  max-height: 272px;
+  overflow: hidden auto;
+  word-break: break-word;
 `;
 
 const InfoRow = styled.div`
@@ -175,7 +179,7 @@ const AsteroidInfo = ({ onClose }) => {
         {description && (
           <HudMenuCollapsibleSection titleText="Description">
             <Description>
-              {description}
+              {reactPreline(description)}
             </Description>
           </HudMenuCollapsibleSection>
         )}

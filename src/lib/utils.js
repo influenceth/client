@@ -65,6 +65,8 @@ export const keyify = (str) => (str || '').replace(/[^a-zA-Z0-9_]/g, '');
 export const reactBool = (value) => value ? 'true' : undefined;
 export const nativeBool = (value) => Boolean(value);
 
+export const reactPreline = (value) => (value || '').split('\n').map((line, i) => i > 0 ? [<br key={i} />, line] : line);
+
 export const locationsArrToObj = (locations) => {
   const asteroidId = locations.find((l) => Number(l.label) === Entity.IDS.ASTEROID)?.id;
   const lotLocation = locations.find((l) => l.label === Entity.IDS.LOT);
@@ -242,3 +244,4 @@ export const earlyAccessJSTime = 1708527600e3;
 export const openAccessJSTime = 1709046000e3;
 export const expectedBlockSeconds = 180;
 export const displayTimeFractionDigits = 2;
+export const maxAnnotationLength = 750;
