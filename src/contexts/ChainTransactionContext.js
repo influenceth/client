@@ -7,7 +7,6 @@ import useActivitiesContext from '~/hooks/useActivitiesContext';
 import useSession from '~/hooks/useSession';
 import useCrewContext from '~/hooks/useCrewContext';
 import useStore from '~/hooks/useStore';
-import useInterval from '~/hooks/useInterval';
 import api from '~/lib/api';
 
 // import { CallData, shortString, uint256, ec } from 'starknet';
@@ -703,7 +702,6 @@ export function ChainTransactionProvider({ children }) {
               return c.contractAddress !== process.env.REACT_APP_STARKNET_DISPATCHER || c.entrypoint !== 'run_system';
             });
 
-            if (canUseSession) console.log('starknetSession', starknetSession);
             return canUseSession ? starknetSession.execute(calls) : starknet.account.execute(calls);
           },
 
@@ -723,7 +721,7 @@ export function ChainTransactionProvider({ children }) {
       }, {});
     }
     return null;
-  }, [createAlert, prependEventAutoresolve, accountAddress]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [createAlert, prependEventAutoresolve, accountAddress, starknetSession]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const transactionWaiters = useRef([]);
 
