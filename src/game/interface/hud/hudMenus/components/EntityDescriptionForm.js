@@ -1,70 +1,83 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
 
 import Button from '~/components/ButtonAlt';
 import UncontrolledTextArea from '~/components/TextAreaUncontrolled';
 import { InputBlock } from '~/components/filters/components';
-import { nativeBool } from '~/lib/utils';
-import useNameAvailability from '~/hooks/useNameAvailability';
-import useChangeName from '~/hooks/actionManagers/useChangeName';
+import { maxAnnotationLength, nativeBool } from '~/lib/utils';
+import useAnnotationManager, { isValidAnnotation } from '~/hooks/actionManagers/useAnnotationManager';
+import useDescriptionAnnotation from '~/hooks/useDescriptionAnnotation';
+import useAnnotationContent from '~/hooks/useAnnotationContent';
+import useEarliestActivity from '~/hooks/useEarliestActivity';
 
-const ErrorContainer = styled.div`
-  color: ${p => p.theme.colors.error};
-  min-height: 25px;
+const RemainingChars = styled.div`
+  color: ${p => p.remaining < 0
+    ? p.theme.colors.error
+    : (p.remaining < 50 ? p.theme.colors.orange : '#777')
+  };
 `;
 
 // TODO: create validity functions for annotaions
-// TODO: connect to annotations
-const EntityDescriptionForm = ({ entity, label, originalDesc, ...props }) => {
-  const isNameValid = useNameAvailability(entity?.label);
+const EntityDescriptionForm = ({ buttonSize = 'small', buttonText = 'Update', entity, label, minTextareaHeight = '200px', onCancel, onSave }) => {
+  const { data: earliest } = useEarliestActivity(entity);
+  const { saveAnnotation, savingAnnotation, txPending } = useAnnotationManager(earliest, entity);
+  const { data: annotation, isLoading: annotationLoading } = useDescriptionAnnotation(entity);
+  const { data: originalDesc, isLoading: contentLoading } = useAnnotationContent(annotation);
+  const isLoading = annotationLoading || contentLoading;
 
-  const { changeName, changingName } = useChangeName(entity);
-
-  const [error, setError] = useState();
-  const [name, setDesc] = useState();
+  const [desc, setDesc] = useState();
   useEffect(() => {
-    if (!name) setDesc(originalDesc)
+    if (!desc) setDesc(originalDesc)
   }, [originalDesc])
 
   const handleDescChange = useCallback(async (e) => {
-    const val = e.currentTarget.value || '';
-    setDesc(val);
-    const err = await isNameValid(val, entity.id, true, 'string');
-    setError(typeof err === 'string' ? err : false);
-  }, [entity?.id]);
+    setDesc(e.currentTarget.value || '');
+  }, []);
 
   const saveDescChange = useCallback(async () => {
-    if (await isNameValid(name, entity?.id)) {
-      changeName(name);
-
-      // TODO: building names only have to be unique per asteroid, not globally
+    if (isValidAnnotation(desc)) {
+      saveAnnotation(desc);
     }
-  }, [entity?.id, name]);
+  }, [entity?.id, desc]);
+
+  const handleCancel = useCallback(async () => {
+    setDesc(originalDesc);
+    if (onCancel) onCancel();
+  }, [onCancel, originalDesc]);
+
+  useEffect(() => {
+    if (txPending && onSave) {
+      onSave();
+    }
+  }, [txPending]);
+
+  const remaining = useMemo(() => maxAnnotationLength - (desc?.length || 0), [desc?.length]);
 
   return (
     <InputBlock>
       <label>{label}</label>
       <div>
         <UncontrolledTextArea
-          disabled={nativeBool(!entity || changingName)}
+          disabled={nativeBool(!entity || savingAnnotation)}
           onChange={handleDescChange}
           placeholder="Type a custom description..."
-          value={name === undefined ? originalDesc : name} />
+          style={{ minHeight: minTextareaHeight }}
+          value={desc === undefined ? originalDesc : desc} />
       </div>
-      <ErrorContainer>{error}</ErrorContainer>
       <div style={{ borderTop: '1px solid #333' }}>
+        <RemainingChars remaining={remaining}>{remaining.toLocaleString()} Remaining</RemainingChars>
         <div style={{ flex: 1 }} />
         <Button
-          disabled={nativeBool(!entity || changingName || !name || error || (name === originalDesc))}
-          size="small"
-          onClick={() => setDesc(originalDesc)}
+          disabled={nativeBool(!entity || savingAnnotation || !desc)}
+          size={buttonSize}
+          onClick={handleCancel}
           style={{ marginRight: 6 }}>Cancel</Button>
         <Button
-          disabled={nativeBool(!entity || changingName || !name || error || (name === originalDesc))}
-          loading={changingName}
-          size="small"
+          disabled={nativeBool(isLoading || !entity || savingAnnotation || !desc || remaining < 0 || (desc === originalDesc))}
+          loading={savingAnnotation}
+          size={buttonSize}
           isTransaction
-          onClick={saveDescChange}>Update</Button>
+          onClick={saveDescChange}>{buttonText}</Button>
       </div>
     </InputBlock>
   );

@@ -785,6 +785,21 @@ const api = {
   requestTokens: async (token) => {
     const response = await instance.post(`/${apiVersion}/faucet/${token}`);
     return response.data;
+  },
+
+  getAnnotations: async (query) => {
+    const response = await instance.get(`/${apiVersion}/annotations?${buildQuery(query)}`);
+    return response.data;
+  },
+
+  getAnnotationHash: async (annotation) => {
+    const response = await instance.post(`/${apiVersion}/annotations/hash`, { annotation });
+    return response.data?.hash;
+  },
+
+  saveAnnotation: async (params) => {
+    const response = await instance.post(`/${apiVersion}/annotations`, params);
+    return response.data;
   }
 };
 

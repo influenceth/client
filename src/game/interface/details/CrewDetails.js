@@ -5,6 +5,7 @@ import { Address, Building, Entity, Name, Time } from '@influenceth/sdk';
 import LoadingAnimation from 'react-spinners/PuffLoader';
 
 import CoverImageSrc from '~/assets/images/modal_headers/OwnedCrew.png';
+import AnnotationBio from '~/components/AnnotationBio';
 import Button from '~/components/ButtonAlt';
 import CrewmateCardFramed, { EmptyCrewmateCardFramed } from '~/components/CrewmateCardFramed';
 import CrewmateInfoPane from '~/components/CrewmateInfoPane';
@@ -20,10 +21,8 @@ import {
   MyAssetIcon,
   PlusIcon
 } from '~/components/Icons';
-import LogEntry from '~/components/LogEntry';
 import TabContainer from '~/components/TabContainer';
 import TextInput from '~/components/TextInput';
-import useActivities from '~/hooks/useActivities';
 import useSession from '~/hooks/useSession';
 import useChangeName from '~/hooks/actionManagers/useChangeName';
 import useConstants from '~/hooks/useConstants';
@@ -35,9 +34,9 @@ import useNameAvailability from '~/hooks/useNameAvailability';
 import useStore from '~/hooks/useStore';
 import formatters from '~/lib/formatters';
 import { nativeBool, reactBool } from '~/lib/utils';
-import theme, { hexToRGB } from '~/theme';
+import theme from '~/theme';
+import EntityActivityLog from './EntityActivityLog';
 
-const borderColor = 'rgba(200, 200, 200, 0.15)';
 const breakpoint = 1375;
 
 const tabContainerCss = css`
@@ -55,65 +54,6 @@ const tabContainerCss = css`
     box-shadow: -4px 0 8px rgba(${p => p.theme.colors.mainRGB}, 0.25);
     margin-top: 0;
   }
-`;
-
-const History = styled.div`
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  margin-top: 10px;
-  overflow: hidden;
-  padding: 0 15px;
-`;
-
-const LogHeader = styled.ul``;
-const Log = styled.div`
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  overflow: hidden;
-  & ul {
-    display: flex;
-    flex-direction: column;
-    list-style-type: none;
-    margin: 0;
-    padding: 5px 0;
-  }
-  & ${LogHeader} {
-    @media (max-width: ${breakpoint}px) {
-      display: none;
-    }
-  }
-
-  & > div {
-    border-top: 1px solid ${borderColor};
-    flex: 1;
-    height: 100%;
-    overflow-y: auto;
-    padding-right: 5px;
-    margin-right: -5px;
-    & ul {
-      margin-right: -5px;
-      @media (max-width: ${breakpoint}px) {
-        margin-right: 0;
-      }
-    }
-
-    @media (max-width: ${breakpoint}px) {
-      border-top: none;
-      height: auto;
-      max-height: calc(100vh - 200px);
-    }
-  }
-
-  @media (max-width: ${breakpoint}px) {
-    display: block;
-    margin: 0 -10px;
-  }
-`;
-const EmptyLogEntry = styled.li`
-  padding-top: 50px;
-  text-align: center;
 `;
 
 const foldOffset = 28;
@@ -329,7 +269,6 @@ const CrewDetails = ({ crewId, crew, isMyCrew, isOwnedCrew, selectCrew }) => {
   const onSetAction = useStore(s => s.dispatchActionDialog);
   const createAlert = useStore(s => s.dispatchAlertLogged);
   const isNameValid = useNameAvailability(Entity.IDS.CREW);
-  const { data: activities } = useActivities({ id: crewId, label: Entity.IDS.CREW });
   const { data: earliestActivity, isLoading: earliestLoading } = useEarliestActivity({ id: crewId, label: Entity.IDS.CREW });
   const { changeName, changingName } = useChangeName({ id: crewId, label: Entity.IDS.CREW });
 
@@ -388,6 +327,7 @@ const CrewDetails = ({ crewId, crew, isMyCrew, isOwnedCrew, selectCrew }) => {
     if (!earliestActivity) return 'Unknown';
     return `${Time.fromUnixSeconds(earliestActivity?.event?.timestamp, TIME_ACCELERATION).toGameClockADays(true)} SA`;
   }, [earliestActivity, earliestLoading]);
+
 
   // TODO: was this just debug? remove?
   const ready = true;
@@ -565,51 +505,26 @@ const CrewDetails = ({ crewId, crew, isMyCrew, isOwnedCrew, selectCrew }) => {
         <BelowFold>
           <TabContainer
             containerCss={tabContainerCss}
+            containerHeight="36px"
             iconCss={{}}
             labelCss={{
               minWidth: '50px',
               textAlign: 'center',
               textTransform: 'uppercase'
             }}
-            tabCss={{ padding: '0 15px', width: 'auto' }}
+            tabCss={{ padding: '0 30px', width: 'auto' }}
             tabs={[
               {
                 label: 'Crew Log',
               },
               {
-                label: 'Mission Statement',
-                disabled: true
+                label: 'Crew Bio',
               }
             ]}
-            paneCss={{ display: 'flex', flexDirection: 'column', overflowY: 'hidden' }}
+            paneCss={{ display: 'flex', flexDirection: 'column', height: '100%', overflowY: 'hidden' }}
             panes={[
-              (
-                <History>
-                  <Log>
-                    <LogHeader>
-                      <LogEntry isHeaderRow isTabular />
-                    </LogHeader>
-                    <div>
-                      <ul>
-                        {/* TODO: totalCount from api, pagination, custom columns (see mocks) */}
-                        {activities?.length > 0
-                          ? activities.map((activity) => (
-                            <LogEntry
-                              key={activity.id}
-                              activity={activity}
-                              timestampBreakpoint="1500px"
-                              isTabular
-                              viewingAs={viewingAs} />
-                          ))
-                          : <EmptyLogEntry>No logs recorded yet.</EmptyLogEntry>
-                        }
-                      </ul>
-                    </div>
-                  </Log>
-                </History>
-              ),
-              null,
-              null
+              <EntityActivityLog entity={crew} viewingAs={viewingAs} />,
+              <AnnotationBio entity={crew} isEditable={isMyCrew} />
             ]}
           />
 

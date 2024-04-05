@@ -102,6 +102,9 @@
     },
     "REACT_APP_AVNU_API_URL": {
       "required": false
+    },
+    "REACT_APP_IPFS_URL": {
+      "required": true
     }
   }
 }

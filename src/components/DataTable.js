@@ -59,7 +59,7 @@ const DataTableRow = styled.tr`
       p.isSelected
         ? `
           td {
-            background: rgba(255, 255, 255, 0.15) !important;
+            background: rgba(${p.theme.colors.mainRGB}, 0.3);
           }
         `
         : `
@@ -97,7 +97,7 @@ const DataTableHeadCell = styled.th`
         width: ${iconColumnWidth}px !important;
       `
       : `
-        min-width: ${minColumnWidth}px;  
+        min-width: ${p.noMinWidth ? 0 : minColumnWidth}px;
       `
     }
 
@@ -137,6 +137,7 @@ const DataTableCell = styled.td`
   height: 40px;
   ${p => p.isIconColumn && `width: 45px;`}
   ${p => p.sorted && `color: white !important;`}
+  ${p => p.expandableContent && `background: rgba(255, 255, 255, 0.15) !important;`}
   & > div {
     ${p => p.align && `justify-content: ${align[p.align]} !important;`}
     ${p => p.sorted && `background: rgba(255, 255, 255, 0.1);`}
@@ -146,10 +147,13 @@ const DataTableCell = styled.td`
         width: 100% !important;
       `
       : `
-        min-width: ${minColumnWidth}px;  
+        min-width: ${p.noMinWidth ? 0 : minColumnWidth}px;
       `
     }
   }
+`;
+const CellInner = styled.div`
+  ${p => p.wrap && `white-space: normal !important;`}
 `;
 
 const getEmptyObj = () => ({});
@@ -183,17 +187,18 @@ const ExpandableDataTableRow = ({ columns, getRowProps, row, sortDirection, sort
             key={c.key}
             align={c.align}
             isIconColumn={!c.label}
+            noMinWidth={c.noMinWidth}
             sorted={sortField && sortField === c.sortField ? sortDirection : ''}
             style={c.bodyStyle || {}}>
-            <div>
+            <CellInner wrap={!!c.wrap}>
               {c.selector(row)}
-            </div>
+            </CellInner>
           </DataTableCell>
         ))}
       </DataTableRow>
       {expanded && expandableContent && (
         <DataTableRow isSelected>
-          <DataTableCell colSpan={columns.filter((c) => !c.skip).length}>
+          <DataTableCell expandableContent colSpan={columns.filter((c) => !c.skip).length}>
             {expandableContent}
           </DataTableCell>
         </DataTableRow>
@@ -220,7 +225,8 @@ const DataTableComponent = ({
             key={c.key}
             align={c.align}
             isIconColumn={!c.label}
-            onClick={onClickColumn(c.sortField, c.sortOptions)}
+            noMinWidth={c.noMinWidth}
+            onClick={onClickColumn ? onClickColumn(c.sortField, c.sortOptions) : undefined}
             sortable={!!c.sortField}
             sorted={sortField && sortField === c.sortField ? sortDirection : ''}
             style={c.headStyle || {}}>

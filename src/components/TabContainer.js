@@ -26,39 +26,6 @@ const Tabs = styled.div`
   flex-direction: row;
   width: 100%;
 `;
-const Tab = styled.div`
-  align-items: center;
-  display: flex;
-  margin-bottom: -1px;
-  pointer-events: auto;
-  transition: color 250ms ease;
-
-  ${p => p.disabled
-    ? `
-      color: #555;
-    `
-    : `
-      cursor: ${p.theme.cursors.active};
-      ${p.active
-        ? `
-          color: ${p.theme.colors.main};
-          opacity: 1;
-        `
-        : `
-          color: inherit;
-          opacity: 0.8;
-          &:hover {
-            color: white;
-            opacity: 1;
-          }
-      `}
-  `}
-  & > * {
-    line-height: ${p => p.tabHeight};
-  }
-
-  ${p => p.css || ''}
-`;
 
 const TabIcon = styled.div`
   font-size: 120%;
@@ -77,8 +44,48 @@ const TabLabel = styled.div`
     left: 50%;
     margin-left: -16px;
     position: absolute;
+    transition: borderBottomColor 250ms ease;
     width: 32px;
   }
+`;
+
+const Tab = styled.div`
+  align-items: center;
+  border-radius: 0.33em 0.33em 0 0;
+  display: flex;
+  margin-bottom: -1px;
+  pointer-events: auto;
+  transition: background 250ms ease, color 250ms ease, opacity 250ms ease;
+
+  ${p => p.disabled
+    ? `
+      color: #555;
+    `
+    : `
+      cursor: ${p.theme.cursors.active};
+      ${p.active
+        ? `
+          color: white;
+          background: rgba(${p.theme.colors.mainRGB}, 0.3);
+          opacity: 1;
+          & ${TabLabel} {
+            &:after { border-bottom-color: ${p.theme.colors.brightMain}; }
+          }
+        `
+        : `
+          color: inherit;
+          opacity: 0.5;
+          &:hover {
+            color: white;
+            opacity: 1;
+          }
+      `}
+  `}
+  & > * {
+    line-height: ${p => p.tabHeight};
+  }
+
+  ${p => p.css || ''}
 `;
 
 const Pane = styled.div`

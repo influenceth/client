@@ -292,7 +292,7 @@ const ActionItem = ({ data, getActivityConfig }) => {
       <Details>
         <Timing>
           {type === 'pending' && <b>Just Now</b>}
-          {(type === 'ready' || type === 'failed' || type === 'randomEvent') && <>{item.ago} <b style={{ marginLeft: 4 }}>ago</b></>}
+          {((type === 'ready' || type === 'failed' || type === 'randomEvent') && item.ago) && <>{item.ago} <b style={{ marginLeft: 4 }}>ago</b></>}
           {type === 'unready' && item.finishTime && (
             <LiveTimer target={item.finishTime} maxPrecision={2}>
               {(formattedTime, isTimer) => isTimer ? <><b style={{ marginRight: 4 }}>Remaining</b> {formattedTime}</> : <b>{formattedTime}</b>}

@@ -12,7 +12,7 @@ import { entitiesCacheKey } from '~/lib/cacheKey';
 
 const CrewContext = createContext();
 
-const TOO_LONG_FOR_BLOCK = Math.max(expectedBlockSeconds * 1.5, expectedBlockSeconds + 60);
+const TOO_LONG_FOR_BLOCK = Math.max(expectedBlockSeconds * 2, expectedBlockSeconds + 60);
 
 export function CrewProvider({ children }) {
   const { accountAddress, authenticated, blockNumber, blockTime, starknet, token } = useSession();
@@ -155,6 +155,7 @@ export function CrewProvider({ children }) {
   const [actionTypeTriggered, setActionTypeTriggered] = useState(false);
   useEffect(() => {
     if (!actionTypeTriggered) {
+      console.log('EVAL ACTION TRIGGER', selectedCrew);
       if (selectedCrew?.Crew?.actionType && selectedCrew.Crew.actionRound && (selectedCrew.Crew.actionRound + RandomEvent.MIN_ROUNDS) <= blockNumber) {
         starknet.provider.callContract(
           System.getRunSystemCall(
@@ -164,9 +165,16 @@ export function CrewProvider({ children }) {
           )
         )
         .then((response) => {
+          console.log('EVAL ACTION TRIGGER RESPONSE', response);
           const pendingEvent = response?.result?.[1] ? parseInt(response?.result?.[1]) : null;
           if (pendingEvent > 0) {
             getBlockTime(starknet, selectedCrew.Crew.actionRound + RandomEvent.MIN_ROUNDS).then((timestamp) => {
+              console.log('SET TRIGGER', {
+                actionType: selectedCrew.Crew.actionType,
+                pendingEvent,
+                timestamp,
+                _now: Math.floor(Date.now() / 1000)
+              });
               setActionTypeTriggered({
                 actionType: selectedCrew.Crew.actionType,
                 pendingEvent,

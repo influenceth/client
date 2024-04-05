@@ -16,7 +16,6 @@ import Button from '~/components/ButtonAlt';
 import DataReadout from '~/components/DataReadout';
 import Ether from '~/components/Ether';
 import IconButton from '~/components/IconButton';
-import LogEntry from '~/components/LogEntry';
 import MarketplaceLink from '~/components/MarketplaceLink';
 import StaticForm from '~/components/StaticForm';
 import Text from '~/components/Text';
@@ -38,6 +37,7 @@ import { nativeBool, reactBool } from '~/lib/utils';
 import usePriceConstants from '~/hooks/usePriceConstants';
 import useControlAsteroid from '~/hooks/actionManagers/useControlAsteroid';
 import useActivities from '~/hooks/useActivities';
+import EntityActivityLog from '../EntityActivityLog';
 
 const paneStackBreakpoint = 720;
 
@@ -61,7 +61,7 @@ const Wrapper = styled.div`
   }
 `;
 const LeftPane = styled.div`
-  flex: 0 1 540px;
+  flex: 0 0 540px;
   overflow: hidden;
   padding-top: 30px;
   @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
@@ -69,7 +69,7 @@ const LeftPane = styled.div`
   }
 `;
 const RightPane = styled.div`
-  flex: 2;
+  flex: 1;
   margin-left: 30px;
   padding-top: 40px;
   & > div:first-child {
@@ -250,10 +250,6 @@ const Log = styled.div`
     margin: 0 -10px;
   }
 `;
-const EmptyLogEntry = styled.li`
-  padding-top: 50px;
-  text-align: center;
-`;
 
 const NameForm = styled.div`
   display: flex;
@@ -377,28 +373,7 @@ const AsteroidInformation = ({ abundances, asteroid, isManager, isOwner }) => {
         <div>
           <SectionHeader>Asteroid Log</SectionHeader>
           <SectionBody>
-            <Log>
-              <LogHeader>
-                <LogEntry isHeaderRow isTabular css={{ fontSize: '14px' }} />
-              </LogHeader>
-              <div>
-                <ul>
-                  {/* TODO: totalCount from api, pagination, custom columns (see mocks) */}
-                  {activities?.length > 0
-                    ? activities.map((activity) => (
-                      <LogEntry
-                        key={activity.id}
-                        activity={activity}
-                        css={{ fontSize: '13px', fontWeight: 'bold', padding: '6px 4px' }}
-                        timestampBreakpoint="1400px"
-                        isTabular
-                        viewingAs={viewingAs} />
-                    ))
-                    : <EmptyLogEntry>No logs recorded yet.</EmptyLogEntry>
-                  }
-                </ul>
-              </div>
-            </Log>
+            <EntityActivityLog entity={asteroid} viewingAs={viewingAs} />
           </SectionBody>
         </div>
 

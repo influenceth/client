@@ -40,7 +40,7 @@ import {
 } from '~/components/Icons';
 import LotLink from '~/components/LotLink';
 
-import { andList, formatPrice, getProcessorProps, locationsArrToObj, safeEntityId, ucfirst } from './utils';
+import { andList, cleanseTxHash, formatPrice, getProcessorProps, locationsArrToObj, safeEntityId, ucfirst } from './utils';
 import api from './api';
 import formatters from './formatters';
 import EntityName from '~/components/EntityName';
@@ -1049,6 +1049,23 @@ const activities = {
         ),
       };
     },
+  },
+
+  EventAnnotated: {
+    onBeforeReceived: ({ event: { returnValues } }) => async (pendingTransaction) => {
+      await api.saveAnnotation({
+        annotation: pendingTransaction?.meta?.annotation,
+        crewId: returnValues.callerCrew?.id,
+        ...returnValues
+      });
+
+      return (pendingTransaction?.meta?.entities || []).map(
+        (entity) => (['activities', entity.label, entity.id])
+      );
+    },
+    getInvalidations: ({ event: { returnValues } }) => ([
+      ['annotations', cleanseTxHash(returnValues.transactionHash), `${returnValues.logIndex}`]
+    ])
   },
 
   ExchangeConfigured: {
