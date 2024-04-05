@@ -4,11 +4,12 @@ import { Entity, Lot, Ship } from '@influenceth/sdk';
 import { MyAssetIcon, SwayIcon } from '~/components/Icons';
 import useSession from '~/hooks/useSession';
 import useCrewContext from '~/hooks/useCrewContext';
-import { LocationLink } from './components';
+import { LocationLink, ShipLocationLink } from './components';
 import formatters from '~/lib/formatters';
 import { formatFixed, locationsArrToObj } from '~/lib/utils';
 import EntityName from '~/components/EntityName';
 import styled from 'styled-components';
+import theme from '~/theme';
 
 const Me = styled.span`
   color: ${p => p.theme.colors.main};
@@ -38,7 +39,12 @@ const useColumns = () => {
         key: 'name',
         label: 'Name',
         sortField: 'Name.name.raw',
-        selector: row => <span>{formatters.shipName(row)}</span>,
+        selector: row => (
+          <>
+            <ShipLocationLink shipId={row} closeWindow={true} />
+            <span>{formatters.shipName(row)}</span>
+          </>
+          ),
         unhideable: true
       },
       {
@@ -58,8 +64,8 @@ const useColumns = () => {
           const loc = locationsArrToObj(row.Location?.locations || []);
           if (loc.buildingId) return 'Docked';
           if (loc.lotId) return 'Landed';
-          if (loc.asteroidId) return 'In Orbit';
-          if (loc.spaceId) return 'In Flight';
+          if (loc.asteroidId) return <div style={{color: theme.colors.main}}>In Orbit</div>;
+          if (loc.spaceId) return <div style={{color: theme.colors.lightOrange}}>In Flight</div>;
           return '';
         },
       },

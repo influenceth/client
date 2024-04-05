@@ -5,6 +5,7 @@ import styled from 'styled-components';
 
 import { LocationIcon } from '~/components/Icons';
 import { useLotLink } from '~/components/LotLink';
+import { useShipLink } from '~/components/ShipLink';
 
 const StyledIconLink = styled.span`
   color: white;
@@ -21,18 +22,42 @@ const StyledIconLink = styled.span`
   }
 `;
 
-export const IconLink = ({ children, onClick, tooltip, ...props }) => {
+export const IconLink = ({ children, onClick, tooltip, closeWindow, ...props }) => {
+  const history = useHistory();
   useEffect(() => ReactTooltip.rebuild(), [tooltip]);
   return (
     <StyledIconLink
       data-for="listView"
       data-tip={tooltip}
       data-place="left"
-      onClick={onClick}
+      onClick={() => {
+        if (closeWindow) {
+          history.push('/');
+        }
+        onClick();
+      }}
       {...props}>
       {children}
     </StyledIconLink>
   );
+};
+
+export const ShipLocationLink = ({ shipId, zoomToShip, closeWindow, ...props }) => {
+  const history = useHistory();
+  const _onClick = useShipLink({ shipId,  zoomToShip: true });
+  return (
+    <IconLink
+      tooltip={'View Ship'}
+      onClick={() => {
+        if (closeWindow) {
+          history.push('/');
+        }
+        _onClick();
+      }}
+      {...props}>
+      <LocationIcon />
+    </IconLink>
+  )
 };
 
 export const LocationLink = ({ asteroidId, lotId, resourceId, zoomToLot, ...props }) => {
