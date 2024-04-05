@@ -1,6 +1,5 @@
 import { useMemo } from 'react';
 
-import useActivityAnnotations from '~/hooks/useActivityAnnotations';
 import useEarliestActivity from '~/hooks/useEarliestActivity';
 import useEntity from '~/hooks/useEntity';
 
@@ -11,18 +10,18 @@ const fallbackTime = '2000-01-01T00:00:00.000Z';
 const useDescriptionAnnotation = (entityId) => {
   const { data: earliest, isLoading: activityIsLoading } = useEarliestActivity(entityId);
   const { data: entity, isLoading: entityIsLoading } = useEntity(entityId);
-  const { data: annotations, isLoading } = useActivityAnnotations(earliest);
   
   return useMemo(() => {
-    if (isLoading || activityIsLoading || entityIsLoading) return { data: undefined, isLoading: true };
+    if (activityIsLoading || entityIsLoading) return { data: undefined, isLoading: true };
+    const annotations = earliest?._virtuals?.eventAnnotations || [];
     const preferred = annotations?.filter((a) => a.crew === entity?.Control?.controller?.id);
-    const sorted = (preferred?.length ? preferred : [...(annotations || [])])
+    const sorted = (preferred?.length ? preferred : [...annotations])
       .sort((a, b) => (a.createdAt || fallbackTime) > (b.createdAt || fallbackTime) ? -1 : 1);
     return {
       data: sorted[0],
       isLoading: false
     };
-  }, [annotations, isLoading, activityIsLoading, entityIsLoading])
+  }, [earliest, activityIsLoading, entityIsLoading])
 };
 
 export default useDescriptionAnnotation;

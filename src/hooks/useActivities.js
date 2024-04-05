@@ -8,7 +8,7 @@ const useActivities = (entity) => {
   return useQuery(
     [ 'activities', entity.label, entity.id ],
     async () => {
-      const activities = await api.getEntityActivities(entity, { withAnnotationCounts: true });
+      const activities = await api.getEntityActivities(entity, { withAnnotations: true });
       await hydrateActivities(activities, queryClient);
       return activities;
     },
