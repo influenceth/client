@@ -123,7 +123,6 @@ export function SessionProvider({ children }) {
     try {
       const connectors = [];
       const customProvider = new RpcProvider({ nodeUrl: process.env.REACT_APP_STARKNET_PROVIDER });
-      console.log(customProvider);
 
       if (!!process.env.REACT_APP_ARGENT_WEB_WALLET_URL) {
         connectors.push(new WebWalletConnector({
@@ -147,7 +146,7 @@ export function SessionProvider({ children }) {
       setError();
       setConnecting(true);
       const { wallet } = await starknetConnect(connectionOptions);
-      console.log(wallet);
+
       if (wallet && wallet.isConnected && wallet.account?.address) {
         // Default to provider chainId if not set (starknetkit doesn't set for braavos)
         wallet.chainId = wallet.chainId || wallet?.provider?.chainId || wallet?.account?.provider?.chainId;
@@ -269,17 +268,17 @@ export function SessionProvider({ children }) {
         const sessionSigner = '0x' + Buffer.from(utils.randomPrivateKey()).toString('hex');
         const requestSession = {
           sessionKey: getStarkKey(sessionSigner),
-          expirationTime: Math.floor(Date.now() / 1000) + 86400 * 7,
+          expirationTime: Math.floor(Date.now() / 1000) + 10,
           allowedMethods: [
             {
-              contractAddress: '0x20cd0c1f8cc0ca293d17b8184a6d51605ef4175827432ed24818ce24891bcdf',
+              contractAddress: process.env.REACT_APP_STARKNET_DISPATCHER,
               method: 'run_system'
             }
           ]
         };
 
         const gasFees = {
-          tokenAddress: '0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7',
+          tokenAddress: process.env.REACT_APP_ERC20_TOKEN_ADDRESS,
           maximumAmount: { low: '0x2386f26fc10000', high: '0x0' }
         };
 
@@ -329,6 +328,7 @@ export function SessionProvider({ children }) {
         starknet.account // the actual account
       );
 
+      console.log('offchainSessionAccount', offchainSessionAccount);
       setStarknetSession(offchainSessionAccount);
     }
   }, [authenticated, currentSession, starknet]);
@@ -347,6 +347,8 @@ export function SessionProvider({ children }) {
       } else {
         setReadyForChildren(true);
       }
+
+      setStarknetSession(null); // clear session key if it exists
     }
     else if (status === STATUSES.CONNECTED) {
       authenticate();

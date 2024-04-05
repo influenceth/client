@@ -699,11 +699,11 @@ export function ChainTransactionProvider({ children }) {
             console.log('execute', calls);
 
             // Check if we can utilize a signed session to execute calls
+            console.log(starknetSession);
             const canUseSession = !!starknetSession?.account && !calls.some((c) => {
               return c.contractAddress !== process.env.REACT_APP_STARKNET_DISPATCHER || c.entrypoint !== 'run_system';
             });
 
-            if (canUseSession) console.log('starknetSession', starknetSession);
             return canUseSession ? starknetSession.execute(calls) : starknet.account.execute(calls);
           },
 
@@ -723,7 +723,7 @@ export function ChainTransactionProvider({ children }) {
       }, {});
     }
     return null;
-  }, [createAlert, prependEventAutoresolve, accountAddress]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [createAlert, prependEventAutoresolve, accountAddress, starknetSession]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const transactionWaiters = useRef([]);
 
