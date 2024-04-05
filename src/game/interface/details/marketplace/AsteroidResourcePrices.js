@@ -11,14 +11,14 @@ import { MarketplaceBuildingIcon, SwayIcon } from '~/components/Icons';
 import ResourceThumbnail from '~/components/ResourceThumbnail';
 import { formatResourceAmount } from '~/game/interface/hud/actionDialogs/components';
 import useCrew from '~/hooks/useCrew';
+import useCrewContext from '~/hooks/useCrewContext';
+import useOrderSummaryByExchange from '~/hooks/useOrderSummaryByMarket';
 import useLot from '~/hooks/useLot';
 import { formatFixed, formatPrice, nativeBool } from '~/lib/utils';
-import theme from '~/theme';
-import { LocationLink } from '../listViews/components';
 import { getBuildingIcon } from '~/lib/assetUtils';
 import formatters from '~/lib/formatters';
-import useOrderSummaryByExchange from '~/hooks/useOrderSummaryByMarket';
-import useCrewContext from '~/hooks/useCrewContext';
+import theme from '~/theme';
+import { IconLink, LocationLink } from '../listViews/components';
 
 
 const Header = styled.div`
@@ -241,10 +241,17 @@ const AsteroidResourcePrices = ({ asteroid, mode, resource }) => {
         sortField: 'supply',
         selector: row => (
           <>
-          {row.supply === 0 
-            ? <Empty>None</Empty>
-            : formatResourceAmount(row.supply, resource.i)
-          }
+            <IconLink 
+              style={{ marginRight: 6 }}
+              onClick={() => history.push(`/marketplace/${asteroid.id}/${Lot.toIndex(row.lotId)}/${resource.i}?back=all&mode=buy`)}
+              tooltip="View Orderbook"
+              data-for="details">
+              <MarketplaceBuildingIcon />
+            </IconLink>
+            {row.supply === 0 
+              ? <Empty>—</Empty>
+              : formatResourceAmount(row.supply, resource.i)
+            }
           </>
         )
       },
@@ -254,10 +261,10 @@ const AsteroidResourcePrices = ({ asteroid, mode, resource }) => {
         sortField: 'sellPrice',
         selector: row => (
           <>
-          {row.sellPrice === 0 
-            ? <Empty>N/A</Empty>
-            : (<><IconWrapper><SwayIcon /></IconWrapper> {formatPrice(row.sellPrice)}</>)
-          }
+            {row.sellPrice === 0 
+              ? <Empty>—</Empty>
+              : (<><IconWrapper><SwayIcon /></IconWrapper> {formatPrice(row.sellPrice)}</>)
+            }
           </>
         )
       },
@@ -267,10 +274,17 @@ const AsteroidResourcePrices = ({ asteroid, mode, resource }) => {
         sortField: 'demand',
         selector: row => (
           <>
-          {row.demand === 0 
-            ? <Empty>None</Empty>
-            : formatResourceAmount(row.demand, resource.i)
-          }
+            <IconLink 
+              style={{ marginRight: 6 }}
+              onClick={() => history.push(`/marketplace/${asteroid.id}/${Lot.toIndex(row.lotId)}/${resource.i}?back=all&mode=sell`)}
+              tooltip="View Orderbook"
+              data-for="details">
+              <MarketplaceBuildingIcon />
+            </IconLink>
+            {row.demand === 0 
+              ? <Empty>—</Empty>
+              : formatResourceAmount(row.demand, resource.i)
+            }
           </>
         )
       },
@@ -281,7 +295,7 @@ const AsteroidResourcePrices = ({ asteroid, mode, resource }) => {
         selector: row => (
           <>
           {row.buyPrice === 0 
-            ? <Empty>N/A</Empty>
+            ? <Empty>—</Empty>
             : <><IconWrapper><SwayIcon /></IconWrapper> {formatPrice(row.buyPrice)}</>
           }
           </>
