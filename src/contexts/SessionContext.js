@@ -328,7 +328,6 @@ export function SessionProvider({ children }) {
         starknet.account // the actual account
       );
 
-      console.log('offchainSessionAccount', offchainSessionAccount);
       setStarknetSession(offchainSessionAccount);
     }
   }, [authenticated, currentSession, starknet]);
