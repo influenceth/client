@@ -242,6 +242,6 @@ export const cleanseTxHash = function (txHash) {
 
 export const earlyAccessJSTime = 1708527600e3;
 export const openAccessJSTime = 1709046000e3;
-export const expectedBlockSeconds = 180;
+export const expectedBlockSeconds = 240;
 export const displayTimeFractionDigits = 2;
 export const maxAnnotationLength = 750;

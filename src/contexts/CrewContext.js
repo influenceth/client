@@ -12,7 +12,7 @@ import { entitiesCacheKey } from '~/lib/cacheKey';
 
 const CrewContext = createContext();
 
-const TOO_LONG_FOR_BLOCK = Math.max(expectedBlockSeconds * 1.5, expectedBlockSeconds + 60);
+const TOO_LONG_FOR_BLOCK = Math.max(expectedBlockSeconds * 2, expectedBlockSeconds + 60);
 
 export function CrewProvider({ children }) {
   const { accountAddress, authenticated, blockNumber, blockTime, starknet, token } = useSession();
