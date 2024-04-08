@@ -6,6 +6,8 @@ import useRepoManager from '~/hooks/actionManagers/useRepoManager';
 import theme from '~/theme';
 
 const isVisible = ({ crew, isAtRisk, lot }) => {
+  if (!crew || !lot) return false;
+
   if (lot?.building) {
     // if i am the lot controller but not the building controller...
     if (crew?.id === lot?.Control?.controller?.id && crew?.id !== lot?.building?.Control?.controller?.id) {
@@ -17,6 +19,7 @@ const isVisible = ({ crew, isAtRisk, lot }) => {
       return true;
     }
   }
+
   return false;
 };
 
