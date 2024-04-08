@@ -32,6 +32,7 @@ import {
 } from '~/components/Icons';
 import { renderDummyAsteroid } from '~/game/scene/asteroid/helpers/utils';
 import AsteroidGraphic from './components/AsteroidGraphic';
+import useActivities from '~/hooks/useActivities';
 import useNameAvailability from '~/hooks/useNameAvailability';
 import { nativeBool, reactBool } from '~/lib/utils';
 import usePriceConstants from '~/hooks/usePriceConstants';
