@@ -1,7 +1,9 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState, useMemo } from 'react';
 import styled from 'styled-components';
 import { FaEllipsisH as MenuIcon } from 'react-icons/fa';
 import ReactTooltip from 'react-tooltip';
+import Lottie from 'react-lottie';
+import MovingStripesSquare from '~/assets/icons/animated/MovingStripesSquare.json';
 
 import ClipCorner from '~/components/ClipCorner';
 import { getProductIcon } from '~/lib/assetUtils';
@@ -40,6 +42,16 @@ const MenuOpenWrapper = styled.div`
   width: 90px;
 `;
 
+const LottieOverlayTexture = ({ animation, isPaused = false, size = "100%"}) => {
+  const options = useMemo(() => ({
+    loop: true,
+    autoplay: true,
+    animationData: animation
+  }), [animation]);
+  return <Lottie options={options} isPaused={isPaused} height={size} width={size} style={{opacity: 0.2}} />;
+};
+export const AnimatedStripes = (props) => <LottieOverlayTexture animation={MovingStripesSquare} {...props} />;
+
 export const ResourceThumbnailWrapper = styled.div`
   border: 1px solid;
   ${p => p.theme.clipCorner(10)};
@@ -65,8 +77,8 @@ export const ResourceThumbnailWrapper = styled.div`
     ${p.badgeColor && p.hasDenominator ? `${ResourceBadge} { &:after { color: ${p.badgeColor} !important; } }` : ''}
     ${p.badgeColor && !p.hasDenominator ? `${ResourceBadge} { &:before { color: ${p.badgeColor} !important; } }` : ''}
     ${(p.requirementMet || p.disabled) ? `
-      & > * { opacity: 0.35; }
-      & > svg, ${ThumbnailIconOverlay} { opacity: 1; }
+      & > * { opacity: 1; }
+      & > svg, ${ThumbnailCorner} { opacity: 1; }
     ` : ''}
   `}
 `;
@@ -141,6 +153,7 @@ export const ResourceProgress = styled.div`
   `}
 `;
 
+//Item count label
 const ResourceBadge = styled.div`
   position: absolute;
   bottom: 5px;
@@ -186,8 +199,8 @@ const ResourceIconBadge = styled.div`
   };
 `;
 
-const ThumbnailIconOverlay = styled.div`
-  background-color: ${p => `rgba(${hexToRGB(p.color)}, 0.7)`};
+const ThumbnailCorner = styled.div`
+  background-color: ${p => `rgba(${hexToRGB(p.color)}, 1.0)`};
   clip-path: polygon(0 0, 100% 0, 0 100%);
   color: white;
   font-size: 24px;
@@ -233,6 +246,7 @@ const Menu = ({ children }) => {
   outlineColor,
   outlineStyle,
   overlayIcon,
+  overlayStripes,
   progress,
   size,
   tooltipContainer = 'global',
@@ -262,7 +276,8 @@ const Menu = ({ children }) => {
       {badge !== undefined && <ResourceBadge badge={badge} badgeDenominator={badgeDenominator} />}
       {iconBadge !== undefined && <ResourceIconBadge iconBadgeCorner={iconBadgeCorner}>{iconBadge}</ResourceIconBadge>}
       {progress !== undefined && <ResourceProgress progress={progress} />}
-      {overlayIcon && <ThumbnailIconOverlay color={badgeColor}>{overlayIcon}</ThumbnailIconOverlay>}
+      {overlayStripes !== undefined && <AnimatedStripes />}
+      {overlayIcon && <ThumbnailCorner color={badgeColor}>{overlayIcon}</ThumbnailCorner>}
       {menu && <Menu>{menu}</Menu>}
     </ResourceThumbnailWrapper>
   );
