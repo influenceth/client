@@ -14,7 +14,7 @@ const useNameAvailability = (entity) => {
       const standardError = Name.getNameError(name, Name.getType(entity?.label));
       if (standardError) {
         nameError = standardError;
-      
+
       // TODO: vvv move these extras to sdk? only really make sense if also true in the contract
       } else if (/^ /.test(name) || / $/.test(name)) {
         nameError = 'Name cannot have leading or trailing spaces.';
