@@ -23,6 +23,7 @@ import {
 } from '~/components/Icons';
 import TabContainer from '~/components/TabContainer';
 import TextInput from '~/components/TextInput';
+import useActivities from '~/hooks/useActivities';
 import useSession from '~/hooks/useSession';
 import useChangeName from '~/hooks/actionManagers/useChangeName';
 import useConstants from '~/hooks/useConstants';
