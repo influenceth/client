@@ -23,7 +23,6 @@ import {
 } from '~/components/Icons';
 import TabContainer from '~/components/TabContainer';
 import TextInput from '~/components/TextInput';
-import useActivities from '~/hooks/useActivities';
 import useSession from '~/hooks/useSession';
 import useChangeName from '~/hooks/actionManagers/useChangeName';
 import useConstants from '~/hooks/useConstants';
@@ -270,7 +269,6 @@ const CrewDetails = ({ crewId, crew, isMyCrew, isOwnedCrew, selectCrew }) => {
   const onSetAction = useStore(s => s.dispatchActionDialog);
   const createAlert = useStore(s => s.dispatchAlertLogged);
   const isNameValid = useNameAvailability(crew);
-  const { data: activities } = useActivities({ id: crewId, label: Entity.IDS.CREW });
   const { data: earliestActivity, isLoading: earliestLoading } = useEarliestActivity({ id: crewId, label: Entity.IDS.CREW });
   const { changeName, changingName } = useChangeName({ id: crewId, label: Entity.IDS.CREW });
 

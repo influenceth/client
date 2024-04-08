@@ -32,7 +32,6 @@ import {
 } from '~/components/Icons';
 import { renderDummyAsteroid } from '~/game/scene/asteroid/helpers/utils';
 import AsteroidGraphic from './components/AsteroidGraphic';
-import useActivities from '~/hooks/useActivities';
 import useNameAvailability from '~/hooks/useNameAvailability';
 import { nativeBool, reactBool } from '~/lib/utils';
 import usePriceConstants from '~/hooks/usePriceConstants';
@@ -269,7 +268,6 @@ const AsteroidInformation = ({ abundances, asteroid, isManager, isOwner }) => {
   const { authenticated } = useSession();
   const createReferral = useCreateReferral(Number(asteroid.id));
   const isNameValid = useNameAvailability(Entity.IDS.ASTEROID);
-  const { data: activities } = useActivities({ id: asteroid.id, label: Entity.IDS.ASTEROID });
   const { buyAsteroid, checkForLimit, buying } = useBuyAsteroid(Number(asteroid.id));
   const { controlAsteroid, takingControl } = useControlAsteroid(Number(asteroid.id));
   const { changeName, changingName } = useChangeName({ id: Number(asteroid.id), label: Entity.IDS.ASTEROID });
