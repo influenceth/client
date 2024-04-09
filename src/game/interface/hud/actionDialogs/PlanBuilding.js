@@ -30,6 +30,7 @@ import {
   LotControlWarning
 } from './components';
 import actionStage from '~/lib/actionStages';
+import useSession from '~/hooks/useSession';
 
 const MouseoverWarning = styled.span`
   & b { color: ${theme.colors.error}; }
@@ -37,6 +38,7 @@ const MouseoverWarning = styled.span`
 `;
 
 const PlanBuilding = ({ asteroid, lot, constructionManager, stage, ...props }) => {
+  const { accountAddress } = useSession();
   const { currentConstructionAction, planConstruction } = constructionManager;
   const { crew } = useCrewContext();
 
@@ -49,13 +51,13 @@ const PlanBuilding = ({ asteroid, lot, constructionManager, stage, ...props }) =
 
   const { totalTime: crewTravelTime, tripDetails } = useMemo(() => {
     if (!asteroid?.id || !crew?._location?.lotId || !lot?.id) return {};
-    if (Permission.isPermitted(crew, Permission.IDS.USE_LOT, lot)) return { totalTime: 0, tripDetails: null };
+    if (Permission.isPermitted(accountAddress, crew, Permission.IDS.USE_LOT, lot)) return { totalTime: 0, tripDetails: null };
     const crewLotIndex = Lot.toIndex(crew?._location?.lotId);
     return getTripDetails(asteroid.id, crewTravelBonus, crewLotIndex, [
       { label: 'Travel to Construction Site', lotIndex: Lot.toIndex(lot.id) },
       { label: 'Return to Crew Station', lotIndex: crewLotIndex },
     ], crew?._timeAcceleration);
-  }, [asteroid?.id, lot, crew?._location?.lotId, crew?._timeAcceleration, crewTravelBonus]);
+  }, [accountAddress, asteroid?.id, lot, crew?._location?.lotId, crew?._timeAcceleration, crewTravelBonus]);
 
   const [crewTimeRequirement, taskTimeRequirement] = useMemo(() => {
     if (!tripDetails) return [];

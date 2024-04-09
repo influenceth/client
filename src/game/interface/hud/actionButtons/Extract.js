@@ -18,7 +18,7 @@ const isVisible = ({ building, crew }) => {
 };
 
 // TODO: for multiple extractors, need one of these (and an extraction manager) per extractor
-const Extract = ({ onSetAction, asteroid, crew, lot, preselect, _disabled }) => {
+const Extract = ({ onSetAction, accountAddress, asteroid, crew, lot, preselect, _disabled }) => {
   const { currentExtraction, extractionStatus } = useExtractionManager(lot?.id);
   const handleClick = useCallback(() => {
     onSetAction('EXTRACT_RESOURCE', { preselect });
@@ -40,11 +40,11 @@ const Extract = ({ onSetAction, asteroid, crew, lot, preselect, _disabled }) => 
     if (extractionStatus === 'READY') {
       if (myUsableSamples?.length === 0) return 'requires core sample'; // TODO: does below line make more sense?
       // if (usableSamples?.length === 0) return 'requires core sample';
-      return getCrewDisabledReason({ asteroid, crew, permission: Permission.IDS.EXTRACT_RESOURCES, permissionTarget: lot?.building });
+      return getCrewDisabledReason({ accountAddress, asteroid, crew, permission: Permission.IDS.EXTRACT_RESOURCES, permissionTarget: lot?.building });
     } else if (!currentExtraction?._isMyAction) {
       return 'in use';
     }
-  }, [_disabled, crew, currentExtraction, extractionStatus, lot?.building, myUsableSamples?.length]);
+  }, [_disabled, accountAddress, crew, currentExtraction, extractionStatus, lot?.building, myUsableSamples?.length]);
   
   const loading = ['EXTRACTING', 'FINISHING'].includes(extractionStatus);
   return (

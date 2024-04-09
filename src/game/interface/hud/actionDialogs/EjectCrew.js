@@ -35,9 +35,11 @@ import actionStages from '~/lib/actionStages';
 import formatters from '~/lib/formatters';
 import theme from '~/theme';
 import { ActionDialogInner } from '../ActionDialog';
+import useSession from '~/hooks/useSession';
 
 const EjectCrew = ({ asteroid, origin, originLot, stationedCrews, manager, stage, ...props }) => {
   const { currentEjection, ejectCrew, actionStage: ejectionStatus } = manager;
+  const { accountAddress } = useSession();
 
   // TODO: only if specified id
   const { crew } = useCrewContext();
@@ -80,12 +82,12 @@ const EjectCrew = ({ asteroid, origin, originLot, stationedCrews, manager, stage
 
   const hasPermission = useMemo(() => {
     if (targetCrewId && origin) {
-      const perm = Permission.getPolicyDetails(origin, targetCrewId)[Permission.IDS.STATION_CREW];
+      const perm = Permission.getPolicyDetails(origin, accountAddress, targetCrewId)[Permission.IDS.STATION_CREW];
       return perm ? perm.crewStatus === 'controller' || perm.crewStatus === 'granted' : false;
     }
 
     return false;
-  }, [targetCrewId, origin]);
+  }, [accountAddress, targetCrewId, origin]);
 
   const onEject = useCallback(() => {
     ejectCrew(targetCrewId);

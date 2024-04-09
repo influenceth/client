@@ -20,7 +20,7 @@ const isVisible = ({ crew, building, ship }) => {
 
 // NOTE: this is "eject self"
 // (can eject self from ship or building, whether own it or not)
-const EjectCrew = ({ asteroid, crew, ship, onSetAction, _disabled }) => {
+const EjectCrew = ({ accountAddress, asteroid, crew, ship, onSetAction, _disabled }) => {
   const { currentEjections } = useEjectCrewManager(crew?.Location?.location);
   const handleClick = useCallback(() => {
     onSetAction('EJECT_CREW');
@@ -33,8 +33,8 @@ const EjectCrew = ({ asteroid, crew, ship, onSetAction, _disabled }) => {
   const disabledReason = useMemo(() => {
     if (_disabled) return 'loading...';
     if (ship?.Ship?.emergencyAt > 0) return 'emergency mode';
-    return getCrewDisabledReason({ asteroid, crew, requireSurface: false });
-  }, [_disabled, asteroid, crew]);
+    return getCrewDisabledReason({ accountAddress, asteroid, crew, requireSurface: false });
+  }, [_disabled, accountAddress, asteroid, crew]);
 
   return (
     <ActionButton

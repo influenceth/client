@@ -27,7 +27,7 @@ const isVisible = ({ asteroid, crew, lot, openHudMenu }) => {
     ); 
 };
 
-const NewCoreSample = ({ asteroid, crew, lot, onSetAction, overrideResourceId, improveSample, _disabled }) => {
+const NewCoreSample = ({ accountAddress, asteroid, crew, lot, onSetAction, overrideResourceId, improveSample, _disabled }) => {
   const defaultResourceId = useStore(s => s.asteroids.resourceMap?.active && s.asteroids.resourceMap?.selected);
   const { currentSamplingAction: actualCurrentSample, samplingStatus: actualSamplingStatus } = useCoreSampleManager(lot?.id);
 
@@ -87,8 +87,8 @@ const NewCoreSample = ({ asteroid, crew, lot, onSetAction, overrideResourceId, i
   const disabledReason = useMemo(() => {
     if (_disabled) return 'loading...';
     if (improveSample && improveSample?.Deposit?.status !== Deposit.STATUSES.SAMPLED) return 'already used';
-    return getCrewDisabledReason({ asteroid, crew });
-  }, [_disabled, asteroid, crew, improveSample]);
+    return getCrewDisabledReason({ accountAddress, asteroid, crew });
+  }, [_disabled, accountAddress, asteroid, crew, improveSample]);
 
   const isImprovement = improveSample || (currentSamplingAction && !currentSamplingAction.isNew);
   return (

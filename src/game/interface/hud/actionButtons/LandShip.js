@@ -18,7 +18,7 @@ const isVisible = ({ asteroid, crew, crewedShip, lot }) => {
   return true;
 };
 
-const LandShip = ({ asteroid, lot, onSetAction, _disabled }) => {
+const LandShip = ({ accountAddress, asteroid, lot, onSetAction, _disabled }) => {
   const { crew } = useCrewContext();
   const { currentDockingAction } = useShipDockingManager(crew?._location?.shipId);
   const { data: crewedShip } = useShip(crew?._location?.shipId)
@@ -58,8 +58,8 @@ const LandShip = ({ asteroid, lot, onSetAction, _disabled }) => {
       }
     }
     if (crewedShip.Ship.emergencyAt > 0) return 'in emergency mode';
-    return getCrewDisabledReason({ asteroid, crew, requireSurface: false, ...permChecks });
-  }, [_disabled, asteroid, crewedShip, lot, ready]);
+    return getCrewDisabledReason({ accountAddress, asteroid, crew, requireSurface: false, ...permChecks });
+  }, [_disabled, accountAddress, asteroid, crewedShip, lot, ready]);
 
   return (
     <ActionButton
