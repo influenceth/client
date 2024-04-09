@@ -1,13 +1,15 @@
 import { useCallback, useContext, useMemo } from 'react';
-import { Entity, Permission } from '@influenceth/sdk';
+import { Address, Entity, Permission } from '@influenceth/sdk';
 
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
 import useCrewContext from '~/hooks/useCrewContext';
 import { monthsToSeconds, secondsToMonths } from '~/lib/utils';
+import useSession from '~/hooks/useSession';
 
 const hoursPerMonth = monthsToSeconds(1) / 3600;
 
 const usePolicyManager = (target, permission) => {
+  const { accountAddress } = useSession();
   const { crew } = useCrewContext();
   const { execute, getStatus } = useContext(ChainTransactionContext);
 
@@ -25,7 +27,7 @@ const usePolicyManager = (target, permission) => {
 
   const currentPolicy = useMemo(() => {
     if (!target) return undefined;
-    const pol = Permission.getPolicyDetails(target, crew?.id)[permission];
+    const pol = Permission.getPolicyDetails(target, accountAddress, crew?.id)[permission];
 
     if (pol?.policyDetails && pol.policyType === Permission.POLICY_IDS.CONTRACT) pol.policyDetails.contract = pol.policyDetails.address;
     if (pol?.policyDetails && pol.policyType === Permission.POLICY_IDS.PREPAID) {
@@ -38,14 +40,16 @@ const usePolicyManager = (target, permission) => {
     };
 
     return pol;
-  }, [crew?.id, target, permission]);
+  }, [accountAddress, crew?.id, target, permission]);
 
-  const updateAllowlist = useCallback((newAllowlist) => {
+  const updateAllowlists = useCallback((newAllowlist, newAccountAllowlist) => {
     execute(
-      'UpdateAllowlist',
+      'UpdateAllowlists',
       {
         additions: (newAllowlist || []).filter((a) => !(currentPolicy?.allowlist || []).find((b) => a.id === b.id)),
         removals: (currentPolicy?.allowlist || []).filter((a) => !newAllowlist.find((b) => a.id === b.id)),
+        accountAdditions: (newAccountAllowlist || []).filter((a) => !(currentPolicy?.accountAllowlist || []).find((b) => Address.areEqual(a, b))),
+        accountRemovals: (currentPolicy?.allowlist || []).filter((a) => !newAccountAllowlist.find((b) => Address.areEqual(a, b))),
         ...payload
       },
       meta
@@ -79,7 +83,7 @@ const usePolicyManager = (target, permission) => {
   );
 
   const allowlistChangePending = useMemo(
-    () => (getStatus ? getStatus('UpdateAllowlist', { ...payload }) : 'ready') === 'pending',
+    () => (getStatus ? getStatus('updateAllowlists', { ...payload }) : 'ready') === 'pending',
     [payload, getStatus]
   );
   const policyChangePending = useMemo(
@@ -89,7 +93,7 @@ const usePolicyManager = (target, permission) => {
 
   return {
     currentPolicy,
-    updateAllowlist,
+    updateAllowlists,
     updatePolicy,
 
     allowlistChangePending,

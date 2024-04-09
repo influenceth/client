@@ -14,7 +14,7 @@ const isVisible = ({ crew, ship }) => {
   return false;
 };
 
-const EmergencyModeCollect = ({ crew, onSetAction, _disabled }) => {
+const EmergencyModeCollect = ({ accountAddress, crew, onSetAction, _disabled }) => {
   const { data: maybeShip } = useShip(crew?._location?.shipId);
 
   const ship = useMemo(() => {
@@ -62,8 +62,8 @@ const EmergencyModeCollect = ({ crew, onSetAction, _disabled }) => {
     if (_disabled) return 'loading...';
     if (!ship) return 'ship is not crewed';
     if (hasCollectedMax) return 'max reached';
-    return getCrewDisabledReason({ crew });
-  }, [_disabled, crew, hasCollectedMax, ship]);
+    return getCrewDisabledReason({ accountAddress, crew });
+  }, [_disabled, accountAddress, crew, hasCollectedMax, ship]);
 
   return (
     <ActionButton

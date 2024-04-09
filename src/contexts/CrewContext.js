@@ -244,10 +244,10 @@ export function CrewProvider({ children }) {
   const captain = useMemo(() => selectedCrew?._crewmates?.[0] || null, [crewmateMap, selectedCrew]);
 
   const crewCan = useCallback(
-    (permission, hydratedTarget) => (finalSelectedCrew && hydratedTarget)
-      ? Permission.isPermitted(finalSelectedCrew, permission, hydratedTarget)
+    (permission, hydratedTarget) => (accountAddress && finalSelectedCrew && hydratedTarget)
+      ? Permission.isPermitted(accountAddress, finalSelectedCrew, permission, hydratedTarget)
       : false,
-    [finalSelectedCrew]
+    [accountAddress, finalSelectedCrew]
   );
 
   const lastBlockNumber = useRef(blockNumber);

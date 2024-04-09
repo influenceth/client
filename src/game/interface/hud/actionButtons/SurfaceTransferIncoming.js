@@ -5,13 +5,14 @@ import { TransferP2PIcon, TransferToIcon } from '~/components/Icons';
 import useDeliveryManager from '~/hooks/actionManagers/useDeliveryManager';
 import ActionButton, { getCrewDisabledReason } from './ActionButton';
 import { locationsArrToObj } from '~/lib/utils';
+import useSession from '~/hooks/useSession';
 
 const isVisible = ({ crew, lot, ship }) => {
   const entity = ship || lot?.surfaceShip || lot?.building;
   return crew && ((entity?.Inventories || []).find((i) => i.status === Inventory.STATUSES.AVAILABLE));
 };
 
-const SurfaceTransferIncoming = ({ asteroid, crew, lot, ship, onSetAction, dialogProps = {}, _disabled }) => {
+const SurfaceTransferIncoming = ({ accountAddress, asteroid, crew, lot, ship, onSetAction, dialogProps = {}, _disabled }) => {
   const destination = useMemo(() => ship || lot?.surfaceShip || lot?.building, [ship, lot]);
   const { currentDeliveryActions, isLoading } = useDeliveryManager({ destination });
   const deliveryDeparting = useMemo(() => {
@@ -37,10 +38,10 @@ const SurfaceTransferIncoming = ({ asteroid, crew, lot, ship, onSetAction, dialo
     });
     if (!hasCapacity) return 'over capacity';
 
-    return getCrewDisabledReason({ asteroid, crew, requireReady: false });
-  }, [destination, crew]);
+    return getCrewDisabledReason({ accountAddress, asteroid, crew, requireReady: false });
+  }, [accountAddress, destination, crew]);
 
-  const isP2P = useMemo(() => !Permission.isPermitted(crew, Permission.IDS.ADD_PRODUCTS, destination), [crew, destination]);
+  const isP2P = useMemo(() => !Permission.isPermitted(accountAddress, crew, Permission.IDS.ADD_PRODUCTS, destination), [accountAddress, crew, destination]);
 
   return (
     <ActionButton

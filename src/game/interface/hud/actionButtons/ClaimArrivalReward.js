@@ -10,7 +10,7 @@ const isVisible = ({ account, asteroid, crew }) => {
   return controller && asteroid?.AsteroidReward?.hasArrivalStarterPack;
 };
 
-const ClaimArrivalReward = ({ asteroid, crew, onSetAction, _disabled }) => {
+const ClaimArrivalReward = ({ accountAddress, asteroid, crew, onSetAction, _disabled }) => {
   const handleClick = useCallback(() => {
     onSetAction('CLAIM_ARRIVAL_REWARD', { asteroid, crew});
   }, [onSetAction]);
@@ -18,8 +18,8 @@ const ClaimArrivalReward = ({ asteroid, crew, onSetAction, _disabled }) => {
   const disabledReason = useMemo(() => {
     if (_disabled) return 'loading...';
     if (asteroid?.Celestial?.scanStatus < Asteroid.SCAN_STATUSES.SURFACE_SCANNED) return 'asteroid un-scanned';
-    return getCrewDisabledReason({ asteroid, crew, requireAsteroid: false, requireSurface: false });
-  }, [_disabled, asteroid, crew]);
+    return getCrewDisabledReason({ accountAddress, asteroid, crew, requireAsteroid: false, requireSurface: false });
+  }, [_disabled, accountAddress, asteroid, crew]);
 
   return (
     <ActionButton

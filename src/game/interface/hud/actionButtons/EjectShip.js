@@ -20,7 +20,7 @@ const isVisible = ({ crew, building, lot, ship }) => {
   return false;
 };
 
-const EjectShip = ({ asteroid, crew, lot, ship, onSetAction, _disabled }) => {
+const EjectShip = ({ accountAddress, asteroid, crew, lot, ship, onSetAction, _disabled }) => {
   const { currentUndockingAction } = useShipDockingManager(ship?.id);
   const handleClick = useCallback(() => {
     onSetAction('LAUNCH_SHIP', { shipId: ship?.id });
@@ -31,11 +31,11 @@ const EjectShip = ({ asteroid, crew, lot, ship, onSetAction, _disabled }) => {
     if (lot?.building) {
       // cannot force eject if ship has permission to be there
       // NOTE: do not need to check on lot perms since done implicitly by lot controller check
-      const perm = Permission.getPolicyDetails(lot?.building, ship?.Control?.controller?.id)[Permission.IDS.DOCK_SHIP];
+      const perm = Permission.getPolicyDetails(lot?.building, accountAddress, ship?.Control?.controller?.id)[Permission.IDS.DOCK_SHIP];
       if (perm.crewStatus === 'controller' || perm.crewStatus === 'granted') return 'access restricted';
     }
-    return getCrewDisabledReason({ asteroid, crew, requireSurface: false });
-  }, [_disabled, asteroid, crew]);
+    return getCrewDisabledReason({ accountAddress, asteroid, crew, requireSurface: false });
+  }, [_disabled, accountAddress, asteroid, crew]);
 
   return (
     <ActionButton

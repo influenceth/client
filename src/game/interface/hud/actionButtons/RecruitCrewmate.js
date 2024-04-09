@@ -12,7 +12,7 @@ const isVisible = ({ account, building }) => {
   return account && building?.Building?.buildingType === Building.IDS.HABITAT;
 };
 
-const RecruitCrewmate = ({ asteroid, crew, lot, _disabled }) => {  
+const RecruitCrewmate = ({ accountAddress, asteroid, crew, lot, _disabled }) => {  
   const { getPendingCrewmate } = useCrewManager();
   const history = useHistory();
 
@@ -64,13 +64,14 @@ const RecruitCrewmate = ({ asteroid, crew, lot, _disabled }) => {
     if (_disabled) return 'loading...';
     if (pendingCrewmate) return 'recruiting...';
     // if recruiting to new crew, there is no crew to check permissions on, so just check if public
+    // TODO: should we check account-whitelist here (even though crew not set)?
     if (recruitToCrew === 0) {
       const policy = Permission.getPolicyDetails(lot?.building)[Permission.IDS.RECRUIT_CREWMATE];
       if (policy.policyType === Permission.POLICY_IDS.PUBLIC) return '';
     }
     // else, check for crew permission
-    return getCrewDisabledReason({ asteroid, crew, permission: Permission.IDS.RECRUIT_CREWMATE, permissionTarget: lot?.building });
-  }, [asteroid, crew, lot?.building, pendingCrewmate, recruitToCrew]);
+    return getCrewDisabledReason({ accountAddress, asteroid, crew, permission: Permission.IDS.RECRUIT_CREWMATE, permissionTarget: lot?.building });
+  }, [accountAddress, asteroid, crew, lot?.building, pendingCrewmate, recruitToCrew]);
 
   // TODO: attention always?
   return (
