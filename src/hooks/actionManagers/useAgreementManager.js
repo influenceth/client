@@ -69,7 +69,7 @@ const useAgreementManager = (target, permission, agreementPath) => {
       { ...payload, added_term: term, ...params },
       meta
     );
-  }, []);
+  }, [meta, payload]);
 
   const cancelAgreement = useCallback((params = {}) => {
     execute(
