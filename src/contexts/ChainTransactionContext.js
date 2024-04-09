@@ -700,7 +700,9 @@ export function ChainTransactionProvider({ children }) {
               return c.contractAddress !== process.env.REACT_APP_STARKNET_DISPATCHER || c.entrypoint !== 'run_system';
             });
 
-            return canUseSession ? starknetSession.execute(calls) : starknet.account.execute(calls);
+            const account = canUseSession ? starknetSession : starknet.account;
+            const options = process.env.REACT_APP_CHAIN_ID === '0x534e5f4d41494e' ? {} : { maxFee: 1000000000000000n };
+            return account.execute(calls, [], {});
           },
 
           onConfirmed: (event, vars) => {

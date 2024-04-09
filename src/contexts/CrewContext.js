@@ -166,7 +166,7 @@ export function CrewProvider({ children }) {
         )
         .then((response) => {
           console.log('EVAL ACTION TRIGGER RESPONSE', response);
-          const pendingEvent = response?.result?.[1] ? parseInt(response?.result?.[1]) : null;
+          const pendingEvent = response ? parseInt(response[1]) : null;
           if (pendingEvent > 0) {
             getBlockTime(starknet, selectedCrew.Crew.actionRound + RandomEvent.MIN_ROUNDS).then((timestamp) => {
               console.log('SET TRIGGER', {
