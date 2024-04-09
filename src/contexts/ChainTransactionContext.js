@@ -701,8 +701,7 @@ export function ChainTransactionProvider({ children }) {
             });
 
             const account = canUseSession ? starknetSession : starknet.account;
-            const options = process.env.REACT_APP_CHAIN_ID === '0x534e5f4d41494e' ? {} : { maxFee: 1000000000000000n };
-            return account.execute(calls, [], {});
+            return account.execute(calls);
           },
 
           onConfirmed: (event, vars) => {
