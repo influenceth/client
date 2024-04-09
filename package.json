@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "engines": {
-    "node": ">=18 <19"
+    "node": "20.x"
   },
   "dependencies": {
     "@argent/x-sessions": "^6.5.4",
