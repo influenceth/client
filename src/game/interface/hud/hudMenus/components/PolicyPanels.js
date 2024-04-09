@@ -171,12 +171,12 @@ const getPolicyColor = (policyType) => {
 
 const getStatusColor = (status) => {
   switch (status) {
-    case 'controller':
+    case 'controller': 
     case 'granted': return '#336342';
     case 'available': return '#363d65';
     case 'restricted': return '#7e2b2a';
     case 'under notice': return '#8c520b';
-    case 'controlled':
+    case 'Unleasable': return '#555555';
     case 'under contract': return '#555555';
     default: return '#333333';
   }
@@ -282,8 +282,8 @@ const PolicyPanel = ({ editable = false, entity, permission }) => {
     if (Permission.TYPES[permission].isExclusive) {
       if (currentPolicy?.agreements?.[0]?.noticeTime > 0) return 'under notice';
       if (currentPolicy?.crewStatus === 'available' && permission === Permission.IDS.USE_LOT) {
-        if (entity?.building?.Control?.controller?.id === entity?.Control?.controller?.id) return 'controlled';
-        if (entity?.surfaceShip?.Control?.controller?.id === entity?.Control?.controller?.id) return 'controlled';
+        if (entity?.building?.Control?.controller?.id === entity?.Control?.controller?.id) return 'Unleasable';
+        if (entity?.surfaceShip?.Control?.controller?.id === entity?.Control?.controller?.id) return 'Unleasable';
       }
 
     // else, only the crew cares
@@ -327,7 +327,7 @@ const PolicyPanel = ({ editable = false, entity, permission }) => {
         <span style={{ color: config.color }}>
           {editable
             ? (config.nameShort || config.name)
-            : (permission === Permission.IDS.USE_LOT && entity?.Control?.controller?.id === crew?.id
+            : (permission === Permission.IDS.USE_LOT && entity?.label === Entity.IDS.ASTEROID && entity?.Control?.controller?.id === crew?.id 
                 ? 'Administrator'
                 : config.crewStatus
             )
@@ -505,7 +505,7 @@ const PolicyPanel = ({ editable = false, entity, permission }) => {
                     <actionButtons.FormAgreement.Component
                       _disabled={
                         Permission.TYPES[permission].isExclusive &&
-                        (jitStatus === 'controlled' || agreements?.length > 0) &&
+                        (jitStatus === 'Unleasable' || agreements?.length > 0) &&
                         entity?.Control?.controller?.id !== crew?.id
                       }
                       entity={entity}
@@ -588,29 +588,11 @@ const PolicyPanels = ({ editable, entity }) => {
     return 0;
   }, [lot]);
 
-  const [ crewHasAgreements, crewCanMakeAgreements ] = useMemo(() => {
-    let hasAgreement = false;
-    let isAgreeable = false;
-    Object.keys(permPolicies).forEach((permission) => {
-      const { crewStatus } = permPolicies[permission];
-      if (crewStatus === 'granted') hasAgreement = true;
-      else if (crewStatus === 'available') isAgreeable = true;
-    });
-    return [hasAgreement, isAgreeable];
-  }, [permPolicies]);
-
   return (
     <div>
       {showLotWarning && <PermSummaryWarning style={{ paddingBottom: 10 }}><WarningIcon /><span>Lot not controlled. {buildingOrSite} is vulnerable to <EntityLink {...(lot?.Control?.controller || {})} />.</span></PermSummaryWarning>}
       {showStagingWarning === 2 && <PermSummaryWarning><WarningIcon /><span>Staging Time expired. Construction Site is vulnerable to any crew.</span></PermSummaryWarning>}
       {showStagingWarning === 1 && <PermSummary><WarningIcon /><span><LiveTimer target={lot?.building?.Building?.plannedAt + Building.GRACE_PERIOD} maxPrecision={2} /> Staging Time Remaining</span></PermSummary>}
-
-      {(crewHasAgreements || crewCanMakeAgreements) && (
-        <PermSummary success={crewHasAgreements}>
-          <FormAgreementIcon />
-          {crewHasAgreements ? 'This asset has agreements with my crew.' : 'This asset has permission agreements.'}
-        </PermSummary>
-      )}
       {Object.keys(permPolicies).map((permission) => (
         <PolicyPanel
           key={permission}
