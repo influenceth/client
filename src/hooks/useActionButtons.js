@@ -57,6 +57,7 @@ const buttonOrder = [
   'ControlShip',
   'PurchaseEntity',
   'ScanAsteroid',
+  'FormLotLeaseAgreement',
 
   // launch/land
   'LandShip',
