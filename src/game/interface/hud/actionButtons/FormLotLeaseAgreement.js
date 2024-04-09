@@ -7,7 +7,10 @@ import ActionButton from './ActionButton';
 import { Entity, Permission } from '@influenceth/sdk';
 
 const isVisible = ({ lot, crew }) => {
-  if (!lot) return false;
+  if ((!lot) ||
+    (lot?.building?.Control?.controller?.id === lot?.Control?.controller?.id) ||
+    (lot?.surfaceShip?.Control?.controller?.id === lot?.Control?.controller?.id)
+  ) return false;
   else {
     const policy = Permission.getPolicyDetails(lot, crew?.id)[Permission.IDS.USE_LOT];
     return lot && policy.crewStatus === 'available'
