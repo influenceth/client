@@ -15,6 +15,7 @@ import EndAgreement from './EndAgreement';
 import ExtendAgreement from './ExtendAgreement';
 import Extract from './Extract';
 import FormAgreement from './FormAgreement';
+import FormLotLeaseAgreement from './FormLotLeaseAgreement';
 import LandShip from './LandShip';
 import LaunchShip from './LaunchShip';
 import PlanBuilding from './PlanBuilding';
@@ -50,6 +51,7 @@ const ActionsButtons = {
   ExtendAgreement,
   Extract,
   FormAgreement,
+  FormLotLeaseAgreement,
   LandShip,
   LaunchShip,
   PlanBuilding,
