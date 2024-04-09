@@ -237,7 +237,7 @@ const FormAgreement = ({
           { label: crew?.label, id: crew?.id },   // permitted
         ]
       });
-      setEligible(response?.result?.[0] === "0x1");
+      setEligible(response?.[0] === "0x1");
     } catch (e) {
       console.warn(e);
     }

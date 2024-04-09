@@ -5,7 +5,7 @@ import useSession from './useSession';
 
 const useSwayBalance = (overrideAccount) => {
   const { accountAddress: defaultAccount, starknet } = useSession();
-  
+
   const accountAddress = overrideAccount || defaultAccount;
   return useQuery(
     [ 'swayBalance', accountAddress ],
@@ -16,7 +16,7 @@ const useSwayBalance = (overrideAccount) => {
           entrypoint: 'balanceOf',
           calldata: [accountAddress]
         });
-        const unscaledSway = uint256.uint256ToBN({ low: balance.result[0], high: balance.result[1] });
+        const unscaledSway = uint256.uint256ToBN({ low: balance?.[0], high: balance?.[1] });
         return unscaledSway / 1000000n;
       } catch (e) {
         console.error(e);
