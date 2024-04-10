@@ -19,7 +19,6 @@ import useCrewContext from '~/hooks/useCrewContext';
 import useLot from '~/hooks/useLot';
 import LiveTimer from '~/components/LiveTimer';
 import useConstructionManager from '~/hooks/actionManagers/useConstructionManager';
-import useCrew from '~/hooks/useCrew';
 import EntityLink from '~/components/EntityLink';
 import useSession from '~/hooks/useSession';
 import AddressLink from '~/components/AddressLink';
@@ -623,9 +622,12 @@ const PolicyPanels = ({ editable, entity }) => {
   // show lot warning if building controller does not have lot permission
   const showLotWarning = useMemo(() => {
     if (!lot || !entityController) return false;
-
     const lotPerm = Permission.getPolicyDetails(lot, entityController)[Permission.IDS.USE_LOT];
-    return !(lotPerm?.crewStatus === 'controller' || lotPerm?.crewStatus === 'granted');
+    return !(
+      lotPerm?.crewStatus === 'controller' ||
+      lotPerm?.crewStatus === 'granted' ||
+      lotPerm?.crewStatus === 'under contract'
+    );
   }, [entity, entityController, lot]);
 
   const buildingOrSite = useMemo(() => lot?.building?.Building?.status < Building.CONSTRUCTION_STATUSES.OPERATIONAL ? 'Construction Site' : 'Building', [lot]);
