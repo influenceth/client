@@ -309,7 +309,11 @@ const PolicyPanel = ({ editable = false, entity, permission }) => {
 
     // else, only the crew cares
     } else if (currentPolicy?.crewStatus === 'granted') {
-      if ((currentPolicy?.agreements || []).find((a) => a.permitted.id === crew?.id && a.noticeTime > 0)) return 'under notice';
+      const noticeGiven = (currentPolicy?.agreements || []).find((a) => (
+        ((crew?.Crew.delegatedTo && a.permitted === crew?.Crew.delegatedTo) || (a.permitted?.id === crew?.id))
+        && a.noticeTime > 0
+      ));
+      if (noticeGiven) return 'under notice';
     }
 
     return null;

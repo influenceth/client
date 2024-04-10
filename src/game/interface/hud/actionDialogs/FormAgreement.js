@@ -153,6 +153,7 @@ const FormAgreement = ({
   const location = useHydratedLocation(locationsArrToObj(entity?.Location?.locations || []));
 
   const { data: controller } = useCrew((entity?.label === Entity.IDS.LOT ? asteroid : entity)?.Control?.controller?.id);
+  // NOTE: this flow is only relevant to prepaid and contract policy types now, so no account-permitted stuff here yet
   const { data: permitted } = useCrew(currentAgreement?.permitted?.id);
 
   const maxTerm = useMemo(() => {

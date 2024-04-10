@@ -429,9 +429,9 @@ const customConfigs = {
           system: 'WhitelistAccount',
           vars: { ...vars, permitted: a }
         })),
-        ...accountRemovals.map((a) => ({
+        ...accountRemovals.map((r) => ({
           system: 'RemoveAccountFromWhitelist',
-          vars: { ...vars, permitted: a }
+          vars: { ...vars, permitted: r }
         })),
       ]
     },

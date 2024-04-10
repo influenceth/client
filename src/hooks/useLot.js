@@ -78,6 +78,7 @@ const useLot = (lotId) => {
     if (isLoading || !lotEntity?.uuid) return undefined;
 
     const { asteroidId, lotIndex } = Lot.toPosition(lotId) || {};
+    // TODO: do we need Whitelist*Agreements here?
     const agreement = (lot?.PrepaidAgreements || lot?.ContractAgreements || []).find((a) => a.permission === Permission.IDS.USE_LOT);
     const building = (buildings || []).find((e) => e.Building.status > 0);
     const depositsToShow = (deposits || []).filter((e) => e.Deposit.status > 0);// && !(e.Deposit.status === Deposit.STATUSES.USED && e.Deposit.remainingYield === 0));

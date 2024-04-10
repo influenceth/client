@@ -5,7 +5,7 @@ non-entity based
 - [ 'actionItems', crewId ],
 - [ 'activities', entityLabel, entityId, 'earliest' ],
 - [ 'activities', entityLabel, entityId ],
-- [ 'agreements', crewId ],
+- [ 'agreements', crewId, crewDelegatedTo ],
 - [ 'asteroidPackedLotData', asteroidId ]
 - [ 'constants', constantOrConstants ],
 - [ 'lotEntitiesPrepopulation', lotId ],
@@ -74,11 +74,11 @@ const validFilterKeys = {
   [Entity.IDS.ASTEROID]: ['controllerId', 'owner'],
 
   // ['entities', Entity.IDS.BUILDING, { controllerId, status }]
-  // ['entities', Entity.IDS.BUILDING, { asteroidId, hasPermission, permissionCrewId, hasComponent }]
+  // ['entities', Entity.IDS.BUILDING, { asteroidId, hasPermission, permissionCrewId, permissionAccount, hasComponent }]
   // ['entities', Entity.IDS.BUILDING, { asteroidId, hasComponent, status }]
   // ['entities', Entity.IDS.BUILDING, { asteroidId, controllerId }]
   // ['entities', Entity.IDS.BUILDING, { lotId }]
-  [Entity.IDS.BUILDING]: ['asteroidId', 'controllerId', 'hasComponent', 'hasPermission', 'permissionCrewId', 'lotId', 'status'],
+  [Entity.IDS.BUILDING]: ['asteroidId', 'controllerId', 'hasComponent', 'hasPermission', 'permissionCrewId', 'permissionAccount', 'lotId', 'status'],
 
   // ['entities', Entity.IDS.CREW, { owner }]
   // ['entities', Entity.IDS.CREW, { stationUuid }]
@@ -95,11 +95,11 @@ const validFilterKeys = {
   // ['entities', Entity.IDS.DEPOSIT, { lotId }]
   [Entity.IDS.DEPOSIT]: ['asteroidId', 'controllerId', 'isDepleted', 'lotId', 'resourceId'],
 
-  // ['entities', Entity.IDS.SHIP, { asteroidId, hasPermission, permissionCrewId, hasComponent, isOnSurface, status }]
+  // ['entities', Entity.IDS.SHIP, { asteroidId, hasPermission, permissionCrewId, permissionAccount, hasComponent, isOnSurface, status }]
   // ['entities', Entity.IDS.SHIP, { asteroidId, status }]
   // ['entities', Entity.IDS.SHIP, { controllerId }]
   // ['entities', Entity.IDS.SHIP, { lotId }]
-  [Entity.IDS.SHIP]: ['asteroidId', 'controllerId', 'hasComponent', 'hasPermission', 'permissionCrewId', 'isOnSurface', 'lotId', 'status']
+  [Entity.IDS.SHIP]: ['asteroidId', 'controllerId', 'hasComponent', 'hasPermission', 'permissionCrewId', 'permissionAccount', 'isOnSurface', 'lotId', 'status']
 }
 
 export const entitiesCacheKey = (label, filters) => {
