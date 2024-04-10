@@ -23,7 +23,7 @@ const isVisible = ({ crew, isAtRisk, lot }) => {
   return false;
 };
 
-const RepoBuilding = ({ accountAddress, asteroid, crew, lot, onSetAction, _disabled }) => {
+const RepoBuilding = ({ asteroid, crew, lot, onSetAction, _disabled }) => {
   const { currentRepo } = useRepoManager(lot?.id);
 
   const handleClick = useCallback(() => {
@@ -32,9 +32,9 @@ const RepoBuilding = ({ accountAddress, asteroid, crew, lot, onSetAction, _disab
 
   const disabledReason = useMemo(() => {
     if (_disabled || !!currentRepo) return 'loading...';
-    if (!currentRepo) return getCrewDisabledReason({ accountAddress, asteroid, crew });
+    if (!currentRepo) return getCrewDisabledReason({ asteroid, crew });
     return '';
-  }, [_disabled, accountAddress, asteroid, crew]);
+  }, [_disabled, asteroid, crew]);
 
   const buttonParams = useMemo(() => {
     // if i am the lot controller but not the building controller...

@@ -20,7 +20,7 @@ const isVisible = ({ crew, ship }) => {
   return false;
 };
 
-const EmergencyModeToggle = ({ accountAddress, crew, onSetAction, _disabled }) => {
+const EmergencyModeToggle = ({ crew, onSetAction, _disabled }) => {
   const manager = useShipEmergencyManager();
   const { data: crewedShip } = useShip(crew?._location?.shipId);
   const ready = useReadyAtWatcher(crewedShip?.Ship?.readyAt);
@@ -35,8 +35,8 @@ const EmergencyModeToggle = ({ accountAddress, crew, onSetAction, _disabled }) =
     if (crewedShip?._location.lotId || crewedShip?._location.spaceId) return 'must be in orbit';
     if (!ready) return 'ship is busy';
     if (crew.Crew?.roster?.length < crewedShip.Station?.population) return 'must eject passenger crew';
-    return getCrewDisabledReason({ accountAddress, crew });
-  }, [_disabled, accountAddress, crewedShip, ready]);
+    return getCrewDisabledReason({ crew });
+  }, [_disabled, crewedShip, ready]);
 
   return (
     <ActionButton

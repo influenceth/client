@@ -17,7 +17,7 @@ const isVisible = ({ constructionStatus, crew, lot }) => {
     && ['PLANNED', 'UNDER_CONSTRUCTION', 'READY_TO_FINISH', 'FINISHING'].includes(constructionStatus);
 };
 
-const Construct = ({ accountAddress, asteroid, crew, lot, onSetAction, _disabled }) => {
+const Construct = ({ asteroid, crew, lot, onSetAction, _disabled }) => {
   const { constructionStatus } = useConstructionManager(lot?.id);
   const handleClick = useCallback(() => {
     onSetAction('CONSTRUCT');
@@ -25,8 +25,8 @@ const Construct = ({ accountAddress, asteroid, crew, lot, onSetAction, _disabled
 
   const disabledReason = useMemo(() => {
     if (_disabled) return 'loading...';
-    return constructionStatus === 'PLANNED' ? getCrewDisabledReason({ accountAddress, asteroid, crew }) : '';
-  }, [_disabled, accountAddress, asteroid, constructionStatus, crew]);
+    return constructionStatus === 'PLANNED' ? getCrewDisabledReason({ asteroid, crew }) : '';
+  }, [_disabled, asteroid, constructionStatus, crew]);
 
   const attention = !disabledReason && (constructionStatus === 'PLANNED' || constructionStatus === 'READY_TO_FINISH');
   const loading = constructionStatus === 'UNDER_CONSTRUCTION' || constructionStatus === 'FINISHING';

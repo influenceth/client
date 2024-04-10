@@ -11,7 +11,7 @@ const isVisible = ({ crew, lot, ship }) => {
   return crew && ((entity?.Inventories || []).find((i) => i.status === Inventory.STATUSES.AVAILABLE));
 };
 
-const SurfaceTransferOutgoing = ({ accountAddress, asteroid, crew, lot, ship, onSetAction, dialogProps = {}, _disabled }) => {
+const SurfaceTransferOutgoing = ({ asteroid, crew, lot, ship, onSetAction, dialogProps = {}, _disabled }) => {
   const origin = useMemo(() => ship || lot?.surfaceShip || lot?.building, [ship, lot]);
   const { currentDeliveryActions, isLoading } = useDeliveryManager({ origin });
   const deliveryDeparting = useMemo(() => {
@@ -30,9 +30,9 @@ const SurfaceTransferOutgoing = ({ accountAddress, asteroid, crew, lot, ship, on
     if (!hasMass) return 'inventory empty';
 
     return getCrewDisabledReason({
-      accountAddress, asteroid, crew, permission: Permission.IDS.REMOVE_PRODUCTS, permissionTarget: origin, requireReady: false
+      asteroid, crew, permission: Permission.IDS.REMOVE_PRODUCTS, permissionTarget: origin, requireReady: false
     });
-  }, [origin, accountAddress, crew]);
+  }, [origin, crew]);
 
   return (
     <ActionButton

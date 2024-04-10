@@ -15,7 +15,7 @@ const isVisible = ({ crew, ship }) => {
     && ship._location.lotId  // on surface
 };
 
-const LaunchShip = ({ accountAddress, asteroid, lot, onSetAction, _disabled }) => {
+const LaunchShip = ({ asteroid, lot, onSetAction, _disabled }) => {
   const { crew } = useCrewContext();
   const { currentUndockingAction } = useShipDockingManager(crew?._location?.shipId);
   const { currentDeliveries } = useDeliveryManager(crew?._location?.shipId ? { destination: { label: Entity.IDS.SHIP, id: crew._location.shipId } } : {});
@@ -35,8 +35,8 @@ const LaunchShip = ({ accountAddress, asteroid, lot, onSetAction, _disabled }) =
     const invReserved = (crewedShip?.Inventories || []).find((i) => i.reservedMass > 0)
       || currentDeliveries?.length > 0;
     if (invReserved) return 'delivery pending';
-    return getCrewDisabledReason({ accountAddress, asteroid, crew });
-  }, [_disabled, accountAddress, crew, crewedShip, currentDeliveries, lot, ready]);
+    return getCrewDisabledReason({ asteroid, crew });
+  }, [_disabled, crew, crewedShip, currentDeliveries, lot, ready]);
 
   return (
     <ActionButton

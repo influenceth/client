@@ -16,7 +16,7 @@ const isVisible = ({ constructionStatus, building, crew, ship }) => {
     && ['OPERATIONAL', 'DECONSTRUCTING'].includes(constructionStatus);
 };
 
-const Deconstruct = ({ accountAddress, asteroid, crew, lot, onSetAction, _disabled }) => {
+const Deconstruct = ({ asteroid, crew, lot, onSetAction, _disabled }) => {
   const { constructionStatus, requireReadyCrew } = useConstructionManager(lot?.id);
 
   const handleClick = useCallback(() => {
@@ -43,11 +43,11 @@ const Deconstruct = ({ accountAddress, asteroid, crew, lot, onSetAction, _disabl
     }
 
     if (constructionStatus === 'OPERATIONAL') {
-      return getCrewDisabledReason({ accountAddress, asteroid, crew });
+      return getCrewDisabledReason({ asteroid, crew });
     }
 
     return null;
-  }, [accountAddress, asteroid, lot?.building, crew]);
+  }, [asteroid, lot?.building, crew]);
 
   return (
     <ActionButton

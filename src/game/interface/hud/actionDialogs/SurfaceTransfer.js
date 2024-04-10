@@ -43,6 +43,7 @@ import useEntity from '~/hooks/useEntity';
 import formatters from '~/lib/formatters';
 import useActionCrew from '~/hooks/useActionCrew';
 import { TransferP2PIcon } from '~/components/Icons';
+import useHydratedCrew from '~/hooks/useHydratedCrew';
 
 const P2PSection = styled.div`
   align-self: flex-start;
@@ -71,6 +72,7 @@ const SurfaceTransfer = ({
   const { startDelivery, finishDelivery, packageDelivery, acceptDelivery, cancelDelivery } = deliveryManager;
   const currentDelivery = useMemo(() => currentDeliveryAction?.action, [currentDeliveryAction]);
   const crew = useActionCrew(currentDelivery);
+  const { data: currentDeliveryCallerCrew } = useHydratedCrew(currentDelivery?.callerCrew?.id);
   const { crewCan } = useCrewContext();
 
   const crewTravelBonus = useMemo(() => {
@@ -231,9 +233,9 @@ const SurfaceTransfer = ({
 
   const senderHasDestPerm = useMemo(() => {
     if (!destination) return true;
-    if (currentDelivery) return currentDelivery?.callerCrew ? Permission.isPermitted(currentDelivery.caller, currentDelivery.callerCrew, Permission.IDS.ADD_PRODUCTS, destination) : true;
+    if (currentDelivery) return currentDeliveryCallerCrew ? Permission.isPermitted(currentDeliveryCallerCrew, Permission.IDS.ADD_PRODUCTS, destination) : true;
     return crewCan(Permission.IDS.ADD_PRODUCTS, destination);
-  }, [crew, currentDelivery, destination]);
+  }, [crew, currentDelivery, currentDeliveryCallerCrew, destination]);
 
   const isP2P = useMemo(() => currentDelivery?.isProposal || !senderHasDestPerm, [currentDelivery?.isProposal, senderHasDestPerm]);
 

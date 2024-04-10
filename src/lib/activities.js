@@ -2122,7 +2122,9 @@ const activities = {
   //  entering a new permissioned collection would be if it became public,
   //  so adding a public policy is handled differently from the others
   AddedToWhitelist: getPolicyAndAgreementConfig(true, true),
+  AddedAccountToWhitelist: getPolicyAndAgreementConfig(true, true),
   RemovedFromWhitelist: getPolicyAndAgreementConfig(false, true),
+  RemovedAccountFromWhitelist: getPolicyAndAgreementConfig(false, true),
   PublicPolicyAssigned: getPolicyAndAgreementConfig(true),
   PublicPolicyRemoved: getPolicyAndAgreementConfig(),
   ContractPolicyAssigned: getPolicyAndAgreementConfig(),

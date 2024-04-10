@@ -23,6 +23,7 @@ import useCrew from '~/hooks/useCrew';
 import EntityLink from '~/components/EntityLink';
 import useSession from '~/hooks/useSession';
 import AddressLink from '~/components/AddressLink';
+import useHydratedCrew from '~/hooks/useHydratedCrew';
 
 const borderColor = `rgba(255, 255, 255, 0.15)`;
 const DataBlock = styled.div``;
@@ -600,19 +601,20 @@ const PolicyPanels = ({ editable, entity }) => {
   const { crew } = useCrewContext();
   const { data: lot } = useLot(entity?.label === Entity.IDS.BUILDING ? entity.Location.location.id : null);
   const { isAtRisk } = useConstructionManager(lot?.id);
+  const { data: entityController } = useHydratedCrew(entity.Control?.controller?.id);
 
   const permPolicies = useMemo(
-    () => entity ? Permission.getPolicyDetails(entity, accountAddress, crew?.id) : {},
-    [accountAddress, crew?.id, entity]
+    () => entity ? Permission.getPolicyDetails(entity, crew) : {},
+    [accountAddress, crew, entity]
   );
 
   // show lot warning if building controller does not have lot permission
   const showLotWarning = useMemo(() => {
-    if (!lot || !entity) return false;
+    if (!lot || !entityController) return false;
 
-    const lotPerm = Permission.getPolicyDetails(lot, accountAddress, entity.Control?.controller?.id)[Permission.IDS.USE_LOT];
+    const lotPerm = Permission.getPolicyDetails(lot, entityController)[Permission.IDS.USE_LOT];
     return !(lotPerm?.crewStatus === 'controller' || lotPerm?.crewStatus === 'granted');
-  }, [accountAddress, entity, lot]);
+  }, [entity, entityController, lot]);
 
   const buildingOrSite = useMemo(() => lot?.building?.Building?.status < Building.CONSTRUCTION_STATUSES.OPERATIONAL ? 'Construction Site' : 'Building', [lot]);
 

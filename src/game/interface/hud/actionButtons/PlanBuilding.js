@@ -19,7 +19,7 @@ const isVisible = ({ constructionStatus, crew, lot, ship }) => {
   );
 };
 
-const PlanBuilding = ({ accountAddress, asteroid, crew, lot, onSetAction, _disabled }) => {
+const PlanBuilding = ({ asteroid, crew, lot, onSetAction, _disabled }) => {
   const { constructionStatus } = useConstructionManager(lot?.id);
   const handleClick = useCallback(() => {
     onSetAction('PLAN_BUILDING');
@@ -28,9 +28,9 @@ const PlanBuilding = ({ accountAddress, asteroid, crew, lot, onSetAction, _disab
   const disabledReason = useMemo(() => {
     if (_disabled) return 'loading...';
     if (constructionStatus === 'READY_TO_PLAN') {
-      return getCrewDisabledReason({ accountAddress, asteroid, crew });
+      return getCrewDisabledReason({ asteroid, crew });
     }
-  }, [_disabled, accountAddress, asteroid, constructionStatus, crew]);
+  }, [_disabled, asteroid, constructionStatus, crew]);
 
   return (
     <ActionButton

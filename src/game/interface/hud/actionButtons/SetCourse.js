@@ -19,7 +19,7 @@ const isVisible = ({ openHudMenu, /*asteroid, crew, ship, zoomStatus*/ }) => {
   // );
 };
 
-const SetCourse = ({ accountAddress, asteroid, crew, ship, onSetAction, _disabled }) => {
+const SetCourse = ({ asteroid, crew, ship, onSetAction, _disabled }) => {
   const { currentTravelAction, travelStatus } = useShipTravelManager(crew?._location?.shipId);
   const travelSolutionIsValid = useTravelSolutionIsValid();
   const travelSolution = useStore(s => s.asteroids.travelSolution);
@@ -44,10 +44,10 @@ const SetCourse = ({ accountAddress, asteroid, crew, ship, onSetAction, _disable
       if (ship?.Ship?.transitDeparture > 0) return 'ship is in flight';
       if (ship?._location?.lotId) return 'ship is docked';
       if (!validDestination) return 'destination not scanned';
-      return getCrewDisabledReason({ accountAddress, crew });
+      return getCrewDisabledReason({ crew });
     }
     return '';
-  }, [_disabled, accountAddress, asteroid, crew, ship, travelSolution, travelSolutionIsValid]);
+  }, [_disabled, asteroid, crew, ship, travelSolution, travelSolutionIsValid]);
 
   return (
     <ActionButton
