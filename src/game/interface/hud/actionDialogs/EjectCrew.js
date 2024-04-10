@@ -35,11 +35,9 @@ import actionStages from '~/lib/actionStages';
 import formatters from '~/lib/formatters';
 import theme from '~/theme';
 import { ActionDialogInner } from '../ActionDialog';
-import useSession from '~/hooks/useSession';
 
 const EjectCrew = ({ asteroid, origin, originLot, stationedCrews, manager, stage, ...props }) => {
   const { currentEjection, ejectCrew, actionStage: ejectionStatus } = manager;
-  const { accountAddress } = useSession();
 
   // TODO: only if specified id
   const { crew } = useCrewContext();
@@ -87,7 +85,7 @@ const EjectCrew = ({ asteroid, origin, originLot, stationedCrews, manager, stage
     }
 
     return false;
-  }, [accountAddress, targetCrew, origin]);
+  }, [targetCrew, origin]);
 
   const onEject = useCallback(() => {
     ejectCrew(targetCrewId);
