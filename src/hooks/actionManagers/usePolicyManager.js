@@ -47,12 +47,12 @@ const usePolicyManager = (target, permission) => {
         additions: (newAllowlist || []).filter((a) => !(currentPolicy?.allowlist || []).find((b) => a.id === b.id)),
         removals: (currentPolicy?.allowlist || []).filter((a) => !newAllowlist.find((b) => a.id === b.id)),
         accountAdditions: (newAccountAllowlist || []).filter((a) => !(currentPolicy?.accountAllowlist || []).find((b) => Address.areEqual(a, b))),
-        accountRemovals: (currentPolicy?.allowlist || []).filter((a) => !newAccountAllowlist.find((b) => Address.areEqual(a, b))),
+        accountRemovals: (currentPolicy?.accountAllowlist || []).filter((a) => !newAccountAllowlist.find((b) => Address.areEqual(a, b))),
         ...payload
       },
       meta
     );
-  }, [currentPolicy?.allowlist, meta, payload]);
+  }, [currentPolicy?.allowlist, currentPolicy?.accountAllowlist, meta, payload]);
 
   const updatePolicy = useCallback(
     (newPolicyType, newPolicyDetails) => {

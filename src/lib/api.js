@@ -107,7 +107,7 @@ const api = {
       esb.nestedQuery().path('PrepaidAgreements').query(esb.termQuery('PrepaidAgreements.permitted.id', crewId)),
       esb.nestedQuery().path('ContractAgreements').query(esb.termQuery('ContractAgreements.permitted.id', crewId)),
       esb.nestedQuery().path('WhitelistAgreements').query(esb.termQuery('WhitelistAgreements.permitted.id', crewId)),
-      esb.nestedQuery().path('WhitelistAccountAgreements').query(esb.existsQuery('WhitelistAccountAgreements.permitted', crewDelegatedTo)),
+      esb.nestedQuery().path('WhitelistAccountAgreements').query(esb.termQuery('WhitelistAccountAgreements.permitted', crewDelegatedTo)),
     ];
 
     // BUILDINGS...
@@ -146,7 +146,7 @@ const api = {
       esb.nestedQuery().path('PrepaidAgreements').query(esb.termQuery('PrepaidAgreements.permitted.id', crewId)),
       esb.nestedQuery().path('ContractAgreements').query(esb.termQuery('ContractAgreements.permitted.id', crewId)),
       esb.nestedQuery().path('WhitelistAgreements').query(esb.termQuery('WhitelistAgreements.permitted.id', crewId)),
-      esb.nestedQuery().path('WhitelistAccountAgreements').query(esb.existsQuery('WhitelistAccountAgreements.permitted', crewDelegatedTo)),
+      esb.nestedQuery().path('WhitelistAccountAgreements').query(esb.termQuery('WhitelistAccountAgreements.permitted', crewDelegatedTo)),
     ]);
 
     const lotQ = esb.requestBodySearch();
