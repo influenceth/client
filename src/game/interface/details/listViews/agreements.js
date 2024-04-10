@@ -139,7 +139,7 @@ const useColumns = () => {
             : (
               <>
                 {crew?.Crew?.delegatedTo && crew?.Crew?.delegatedTo === row._agreement?.permitted && <My><MyAssetIcon /></My>}
-                <AddressLink address={row._agreement?.permitted} truncate />
+                <AddressLink address={row._agreement?.permitted} doNotReplaceYou truncate />
               </>
             )
         ), // TODO: is meta.crew.name populated?

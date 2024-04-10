@@ -381,7 +381,7 @@ const PolicyPanel = ({ editable = false, entity, permission }) => {
                 <Allowlist>
                   {(accountAllowlist || []).map((a) => (
                     <AllowCrew key={a}>
-                      <label><AddressLink truncate address={a} /></label>
+                      <label><AddressLink address={a} doNotReplaceYou truncate /></label>
                       <span>Wallet</span>
                       <IconButton
                         borderless
@@ -574,7 +574,15 @@ const PolicyPanel = ({ editable = false, entity, permission }) => {
               {editable && (
                 <Section style={{ borderTop: 0, marginTop: 5 }}>
                   <DataBlock style={{ paddingBottom: 5 }}>
-                    <DataRow><label>Allowlist</label><span>{(allowlist?.length || 0).toLocaleString()} Crew{allowlist?.length === 1 ? '' : 's'}</span></DataRow>
+                    <DataRow>
+                      <label>Allowlist</label>
+                      <span>
+                        {(allowlist?.length || 0).toLocaleString()} Crew{allowlist?.length === 1 ? '' : 's'}
+                        {accountAllowlist?.length > 0 && (
+                          <> | {(accountAllowlist?.length || 0).toLocaleString()} Wallet{accountAllowlist?.length === 1 ? '' : 's'}</>
+                        )}
+                      </span>
+                    </DataRow>
                   </DataBlock>
                   <EditBlock>
                     <Button onClick={() => toggleEditing('allowlist')}>Edit Allowlist</Button>
@@ -605,7 +613,7 @@ const PolicyPanels = ({ editable, entity }) => {
   const { crew } = useCrewContext();
   const { data: lot } = useLot(entity?.label === Entity.IDS.BUILDING ? entity.Location.location.id : null);
   const { isAtRisk } = useConstructionManager(lot?.id);
-  const { data: entityController } = useHydratedCrew(entity.Control?.controller?.id);
+  const { data: entityController } = useHydratedCrew(entity?.Control?.controller?.id);
 
   const permPolicies = useMemo(
     () => entity ? Permission.getPolicyDetails(entity, crew) : {},
