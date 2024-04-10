@@ -326,6 +326,7 @@ const PolicyPanel = ({ editable = false, entity, permission }) => {
           {editable
             ? (config.nameShort || config.name)
             : (permission === Permission.IDS.USE_LOT && entity?.label === Entity.IDS.ASTEROID && entity?.Control?.controller?.id === crew?.id 
+            : (permission === Permission.IDS.USE_LOT && entity?.label === Entity.IDS.ASTEROID && entity?.Control?.controller?.id === crew?.id 
                 ? 'Administrator'
                 : config.crewStatus
             )
