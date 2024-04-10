@@ -414,8 +414,8 @@ const customConfigs = {
     equalityTest: ['target.label', 'target.id', 'permission'],
     isVirtual: true
   },
-  UpdateAllowlist: {
-    multisystemCalls: ({ additions, removals, ...vars }) => {
+  UpdateAllowlists: {
+    multisystemCalls: ({ additions, removals, accountAdditions, accountRemovals, ...vars }) => {
       return [
         ...removals.map((r) => ({
           system: 'RemoveFromWhitelist',
@@ -424,6 +424,14 @@ const customConfigs = {
         ...additions.map((a) => ({
           system: 'Whitelist',
           vars: { ...vars, permitted: a }
+        })),
+        ...accountAdditions.map((a) => ({
+          system: 'WhitelistAccount',
+          vars: { ...vars, permitted: a }
+        })),
+        ...accountRemovals.map((r) => ({
+          system: 'RemoveAccountFromWhitelist',
+          vars: { ...vars, permitted: r }
         })),
       ]
     },

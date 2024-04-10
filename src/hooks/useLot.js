@@ -40,7 +40,7 @@ const useLot = (lotId) => {
           /*'Control', 'Inventory', 'Location', 'Name',*/ 'Nft', 'Ship', /*'Station',*/
 
           // these are on both buildings and ships:
-          'ContractPolicy', 'PrepaidPolicy', 'PublicPolicy', 'ContractAgreement', 'PrepaidAgreement', 'WhitelistAgreement',
+          'ContractPolicy', 'PrepaidPolicy', 'PublicPolicy', 'ContractAgreement', 'PrepaidAgreement', 'WhitelistAgreement', 'WhitelistAccountAgreement',
         ]
       })) || [];
 
@@ -78,6 +78,7 @@ const useLot = (lotId) => {
     if (isLoading || !lotEntity?.uuid) return undefined;
 
     const { asteroidId, lotIndex } = Lot.toPosition(lotId) || {};
+    // TODO: do we need Whitelist*Agreements here?
     const agreement = (lot?.PrepaidAgreements || lot?.ContractAgreements || []).find((a) => a.permission === Permission.IDS.USE_LOT);
     const building = (buildings || []).find((e) => e.Building.status > 0);
     const depositsToShow = (deposits || []).filter((e) => e.Deposit.status > 0);// && !(e.Deposit.status === Deposit.STATUSES.USED && e.Deposit.remainingYield === 0));

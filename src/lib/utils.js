@@ -130,7 +130,7 @@ export const esbLocationQuery = ({ asteroidId, lotId }, path = 'Location.locatio
     )
 };
 
-export const esbPermissionQuery = (crewId, permissionId) => {
+export const esbPermissionQuery = (crewId, crewDelegatedTo, permissionId) => {
   return esb.boolQuery().should([
     esb.termQuery('Control.controller.id', crewId),
     esb.nestedQuery()
@@ -158,6 +158,14 @@ export const esbPermissionQuery = (crewId, permissionId) => {
         esb.boolQuery().must([
           esb.termQuery('WhitelistAgreements.permission', permissionId),
           esb.termQuery('WhitelistAgreements.permitted.id', crewId),
+        ])
+      ),
+    esb.nestedQuery()
+      .path('WhitelistAccountAgreements')
+      .query(
+        esb.boolQuery().must([
+          esb.termQuery('WhitelistAccountAgreements.permission', permissionId),
+          esb.termQuery('WhitelistAccountAgreements.permitted', crewDelegatedTo),
         ])
       )
   ])
@@ -206,7 +214,7 @@ export const safeEntityId = (variablyHydratedEntity) => {
 
 export const entityToAgreements = (entity) => {
   const acc = [];
-  ['PrepaidAgreements', 'ContractAgreements', 'WhitelistAgreements'].forEach((agreementType) => {
+  ['PrepaidAgreements', 'ContractAgreements', 'WhitelistAgreements', 'WhitelistAccountAgreements'].forEach((agreementType) => {
     (entity[agreementType] || []).forEach((agreement, j) => {
       const formatted = {
         key: `${entity.uuid}_${agreementType}_${j}`,

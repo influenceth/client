@@ -268,7 +268,6 @@ const CrewAssignment = ({ crewId, crewmateId, crewmateMap, onFinish, overrides =
 
     return p;
   }, [backButton, bookSession, confirmExitStoryMode, crewId, overrides, storySession]);
-  console.log({ dialogProps })
 
   // TODO: v should probably redirect somewhere
   if (!bookSession || !storySession) return null;

@@ -7,9 +7,10 @@ const useCrewAgreements = (otherCrew = null, enabled = true) => {
   const { crew } = useCrewContext();
 
   const crewId = otherCrew?.id || crew?.id;
+  const crewDelegatedTo = otherCrew?.Crew?.delegatedTo || crew?.Crew?.delegatedTo;
   return useQuery(
-    [ 'agreements', crewId ],
-    () => enabled ? api.getCrewAgreements(crewId) : undefined,
+    [ 'agreements', crewId, crewDelegatedTo ],
+    () => enabled ? api.getCrewAgreements(crewId, crewDelegatedTo) : undefined,
     { enabled: !!crewId && enabled }
   );
 };
