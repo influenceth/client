@@ -701,8 +701,7 @@ export function ChainTransactionProvider({ children }) {
             });
 
             const account = canUseSession ? starknetSession : starknet.account;
-            const { suggestedMaxFee } = await account.estimateFee(calls);
-            return account.execute(calls, [], { maxFee: suggestedMaxFee });
+            return account.execute(calls);
           },
 
           onConfirmed: (event, vars) => {
