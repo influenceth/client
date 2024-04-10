@@ -543,7 +543,9 @@ const activities = {
           newGroupEval: {
             updatedValues: { owner: returnValues.delegatedTo }
           }
-        }
+        },
+        // must invalidate crew agreements here to catch WhitelistAccountAgreements
+        ['agreements', returnValues.crew?.id]
       ]
     },
     getLogContent: ({ event: { returnValues } }) => ({

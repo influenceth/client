@@ -32,6 +32,7 @@ useStore.subscribe(
 //   Processor: 'Processors',
 //   PublicPolicy: 'PublicPolicies',
 //   WhitelistAgreement: 'WhitelistAgreements',
+//   WhitelistAccountAgreement: 'WhitelistAccountAgreements',
 // };
 
 const formatESEntityData = (responseData) => {
@@ -90,7 +91,7 @@ const api = {
     return response.data;
   },
 
-  getCrewAgreements: async (crewId) => {
+  getCrewAgreements: async (crewId, crewDelegatedTo) => {
     const queryPromises = [];
 
     const hasAgreementShouldQuery = [
@@ -100,11 +101,13 @@ const api = {
           esb.nestedQuery().path('PrepaidAgreements').query(esb.existsQuery('PrepaidAgreements')),
           esb.nestedQuery().path('ContractAgreements').query(esb.existsQuery('ContractAgreements')),
           esb.nestedQuery().path('WhitelistAgreements').query(esb.existsQuery('WhitelistAgreements')),
+          esb.nestedQuery().path('WhitelistAccountAgreements').query(esb.existsQuery('WhitelistAccountAgreements')),
         ])
       ]),
       esb.nestedQuery().path('PrepaidAgreements').query(esb.termQuery('PrepaidAgreements.permitted.id', crewId)),
       esb.nestedQuery().path('ContractAgreements').query(esb.termQuery('ContractAgreements.permitted.id', crewId)),
       esb.nestedQuery().path('WhitelistAgreements').query(esb.termQuery('WhitelistAgreements.permitted.id', crewId)),
+      esb.nestedQuery().path('WhitelistAccountAgreements').query(esb.existsQuery('WhitelistAccountAgreements.permitted', crewDelegatedTo)),
     ];
 
     // BUILDINGS...
@@ -137,11 +140,13 @@ const api = {
           esb.nestedQuery().path('PrepaidAgreements').query(esb.existsQuery('PrepaidAgreements')),
           esb.nestedQuery().path('ContractAgreements').query(esb.existsQuery('ContractAgreements')),
           esb.nestedQuery().path('WhitelistAgreements').query(esb.existsQuery('WhitelistAgreements')),
+          esb.nestedQuery().path('WhitelistAccountAgreements').query(esb.existsQuery('WhitelistAccountAgreements')),
         ])
       ]),
       esb.nestedQuery().path('PrepaidAgreements').query(esb.termQuery('PrepaidAgreements.permitted.id', crewId)),
       esb.nestedQuery().path('ContractAgreements').query(esb.termQuery('ContractAgreements.permitted.id', crewId)),
       esb.nestedQuery().path('WhitelistAgreements').query(esb.termQuery('WhitelistAgreements.permitted.id', crewId)),
+      esb.nestedQuery().path('WhitelistAccountAgreements').query(esb.existsQuery('WhitelistAccountAgreements.permitted', crewDelegatedTo)),
     ]);
 
     const lotQ = esb.requestBodySearch();
@@ -160,7 +165,11 @@ const api = {
       }
       return acc.filter((a) => (
         (a._agreement.permitted?.id !== a.Control?.controller?.id)
-        && (a.Control?.controller?.id === crewId || a._agreement.permitted?.id === crewId)
+        && (
+          a.Control?.controller?.id === crewId
+          || a._agreement.permitted?.id === crewId
+          || (crewDelegatedTo && a._agreement.permitted === crewDelegatedTo)
+        )
       ));
     }, []);
   },
@@ -252,14 +261,14 @@ const api = {
     return formatESEntityData(response.data);
   },
 
-  getAsteroidBuildingsWithAccessibleInventories: async (asteroidId, crewId, withPermission) => {
+  getAsteroidBuildingsWithAccessibleInventories: async (asteroidId, crewId, crewDelegatedTo, withPermission) => {
     const buildingQueryBuilder = esb.boolQuery();
 
     // Exclude unplanned buildings
     buildingQueryBuilder.mustNot(esb.termQuery('Building.status', Building.CONSTRUCTION_STATUSES.UNPLANNED))
 
     // has permission
-    if (withPermission) buildingQueryBuilder.filter(esbPermissionQuery(crewId, withPermission));
+    if (withPermission) buildingQueryBuilder.filter(esbPermissionQuery(crewId, crewDelegatedTo, withPermission));
 
     // on asteroid
     buildingQueryBuilder.filter(esbLocationQuery({ asteroidId }));
@@ -281,11 +290,11 @@ const api = {
     return formatESEntityData(response.data);
   },
 
-  getAsteroidShipsWithAccessibleInventories: async (asteroidId, crewId, withPermission) => {
+  getAsteroidShipsWithAccessibleInventories: async (asteroidId, crewId, crewDelegatedTo, withPermission) => {
     const shipQueryBuilder = esb.boolQuery();
 
     // has permission
-    if (withPermission) shipQueryBuilder.filter(esbPermissionQuery(crewId, withPermission));
+    if (withPermission) shipQueryBuilder.filter(esbPermissionQuery(crewId, crewDelegatedTo, withPermission));
 
     // on asteroid
     // (and not in orbit -- i.e. lotId is present and !== 0)

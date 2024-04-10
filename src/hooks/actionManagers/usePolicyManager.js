@@ -14,7 +14,7 @@ const usePolicyManager = (target, permission) => {
   const payload = useMemo(() => ({
     target: { id: target?.id, label: target?.label },
     permission,
-    caller_crew: { id: crew?.id, label: Entity.IDS.CREW }, // "permitted"
+    caller_crew: { id: crew?.id, label: Entity.IDS.CREW },
   }), [crew?.id, target, permission]);
 
   const meta = useMemo(() => ({
