@@ -87,6 +87,8 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
     cameraNeedsRecenter: false,
     cameraNeedsReorientation: false,
 
+    chatHistory: [],
+
     hasSeenIntroVideo: false,
     canvasStack: [],
 
@@ -550,6 +552,13 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
 
     dispatchZoomScene: (details) => set(produce(state => {
       state.asteroids.zoomScene = details || null;
+    })),
+
+    dispatchChatMessage: (body) => set(produce(state => {
+      state.chatHistory = [
+        ...(state.chatHistory || []).slice(0, 249),
+        { ...body, timestamp: Date.now() }
+      ];
     })),
 
     //
