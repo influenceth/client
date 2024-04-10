@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
 import { Building, Entity, Permission } from '@influenceth/sdk';
 
-import { CloseIcon, FormAgreementIcon, LotControlIcon, PermissionIcon, RadioCheckedIcon, RadioUncheckedIcon, SwayIcon, WarningIcon } from '~/components/Icons';
+import { CloseIcon, AssetAgreementsIcon, LotControlIcon, PermissionIcon, RadioCheckedIcon, RadioUncheckedIcon, SwayIcon, WarningIcon } from '~/components/Icons';
 import CollapsibleBlock from '~/components/CollapsibleBlock';
 import Button from '~/components/ButtonAlt';
 import Autocomplete from '~/components/Autocomplete';
@@ -21,6 +21,7 @@ import LiveTimer from '~/components/LiveTimer';
 import useConstructionManager from '~/hooks/actionManagers/useConstructionManager';
 import useCrew from '~/hooks/useCrew';
 import EntityLink from '~/components/EntityLink';
+import theme from '~/theme';
 
 const borderColor = `rgba(255, 255, 255, 0.15)`;
 const DataBlock = styled.div``;
@@ -37,13 +38,13 @@ const EditBlock = styled.div`
 
 const DataRow = styled.div`
   align-items: center;
-  color: white;
+  color: ${theme.colors.secondaryText};
   display: flex;
   font-size: 90%;
   justify-content: space-between;
   line-height: 1.7em;
-  &:not(:first-child) label {
-    opacity: 0.5;
+  & > span {
+    color: white;
   }
 `;
 
@@ -171,13 +172,13 @@ const getPolicyColor = (policyType) => {
 
 const getStatusColor = (status) => {
   switch (status) {
-    case 'controller': 
-    case 'granted': return '#336342';
-    case 'available': return '#363d65';
-    case 'restricted': return '#7e2b2a';
-    case 'under notice': return '#8c520b';
-    case 'Unleasable': return '#555555';
-    case 'under contract': return '#555555';
+    case 'controller': return theme.colors.success;
+    case 'granted': return theme.colors.success;
+    case 'available': return theme.colors.brightMain;
+    case 'restricted': return theme.colors.red;
+    case 'under notice': return theme.colors.orange;
+    case 'unleasable': return theme.colors.secondaryText;
+    case 'under contract': return theme.colors.main;
     default: return '#333333';
   }
 }
@@ -282,8 +283,8 @@ const PolicyPanel = ({ editable = false, entity, permission }) => {
     if (Permission.TYPES[permission].isExclusive) {
       if (currentPolicy?.agreements?.[0]?.noticeTime > 0) return 'under notice';
       if (currentPolicy?.crewStatus === 'available' && permission === Permission.IDS.USE_LOT) {
-        if (entity?.building?.Control?.controller?.id === entity?.Control?.controller?.id) return 'Unleasable';
-        if (entity?.surfaceShip?.Control?.controller?.id === entity?.Control?.controller?.id) return 'Unleasable';
+        if (entity?.building?.Control?.controller?.id === entity?.Control?.controller?.id) return 'unleasable';
+        if (entity?.surfaceShip?.Control?.controller?.id === entity?.Control?.controller?.id) return 'unleasable';
       }
 
     // else, only the crew cares
@@ -319,9 +320,6 @@ const PolicyPanel = ({ editable = false, entity, permission }) => {
       }}
       onClose={editing ? () => { toggleEditing() } : null}
       outerStyle={{ marginBottom: 8 }}
-      uncollapsibleProps={{
-        headerColor: config.color
-      }}
       title={permission === Permission.IDS.USE_LOT ? <><LotControlIcon /> Lot Control</> : <><PermissionIcon /> {Permission.TYPES[permission]?.name}</>}
       titleAction={() => (
         <span style={{ color: config.color }}>
@@ -334,7 +332,7 @@ const PolicyPanel = ({ editable = false, entity, permission }) => {
           }
         </span>
       )}
-      initiallyClosed>
+      >
       {editing && (
         <>
           <Section>
@@ -505,7 +503,7 @@ const PolicyPanel = ({ editable = false, entity, permission }) => {
                     <actionButtons.FormAgreement.Component
                       _disabled={
                         Permission.TYPES[permission].isExclusive &&
-                        (jitStatus === 'Unleasable' || agreements?.length > 0) &&
+                        (jitStatus === 'unleasable' || agreements?.length > 0) &&
                         entity?.Control?.controller?.id !== crew?.id
                       }
                       entity={entity}
@@ -549,7 +547,7 @@ const PolicyPanel = ({ editable = false, entity, permission }) => {
                   <DataBlock>
                     <DataRow>
                       <label>Allowlist</label>
-                      <span style={{ color: onAllowlist ? '#00db51' : '#777' }}>{onAllowlist ? 'Allowed' : 'Not on List'}</span>
+                      <span style={{ color: onAllowlist ? theme.colors.success : theme.colors.secondaryText }}>{onAllowlist ? 'Allowed' : 'Not on List'}</span>
                     </DataRow>
                   </DataBlock>
                 </Section>
@@ -588,11 +586,32 @@ const PolicyPanels = ({ editable, entity }) => {
     return 0;
   }, [lot]);
 
+  const [ crewHasAgreements, crewCanMakeAgreements, othersHaveAgreements ] = useMemo(() => {
+    let hasAgreement = false;
+    let isAgreeable = false;
+    let agreementsWithOthers = false;
+    Object.keys(permPolicies).forEach((permission) => {
+      const { crewStatus, agreements } = permPolicies[permission];
+      if (crewStatus === 'granted' || crewStatus === 'controller') hasAgreement = true;
+      else if (crewStatus === 'available') isAgreeable = true;
+      if ((agreements?.length > 0) && !(Permission.TYPES[permission].isExclusive)) agreementsWithOthers = true;
+    });
+    return [hasAgreement, isAgreeable, agreementsWithOthers];
+  }, [permPolicies]);
+
   return (
     <div>
       {showLotWarning && <PermSummaryWarning style={{ paddingBottom: 10 }}><WarningIcon /><span>Lot not controlled. {buildingOrSite} is vulnerable to <EntityLink {...(lot?.Control?.controller || {})} />.</span></PermSummaryWarning>}
       {showStagingWarning === 2 && <PermSummaryWarning><WarningIcon /><span>Staging Time expired. Construction Site is vulnerable to any crew.</span></PermSummaryWarning>}
       {showStagingWarning === 1 && <PermSummary><WarningIcon /><span><LiveTimer target={lot?.building?.Building?.plannedAt + Building.GRACE_PERIOD} maxPrecision={2} /> Staging Time Remaining</span></PermSummary>}
+
+      {(othersHaveAgreements) && (
+        <PermSummary>
+          <AssetAgreementsIcon />
+          Asset has active agreements with other crews.
+        </PermSummary>
+      )}
+
       {Object.keys(permPolicies).map((permission) => (
         <PolicyPanel
           key={permission}
