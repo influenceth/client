@@ -6,18 +6,18 @@ import OnClickLink from '~/components/OnClickLink';
 import useSession from '~/hooks/useSession';
 
 const AddressLink = (props) => {
-  const { address, chain, truncate } = props;
+  const { address, chain, doNotReplaceYou, truncate } = props;
   const { accountAddress } = useSession();
 
   const label = useMemo(() => {
-    return (accountAddress && accountAddress === address)
+    return (accountAddress && accountAddress === address && !doNotReplaceYou)
       ? 'you'
       : (
         address && truncate
         ? `${address.substr(0, 6)}...${address.substr(-4)}`
         : address
       );
-  }, [accountAddress, address, truncate]);
+  }, [accountAddress, address, doNotReplaceYou, truncate]);
 
   if (address) {
     return (

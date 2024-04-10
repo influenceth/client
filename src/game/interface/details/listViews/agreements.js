@@ -14,6 +14,7 @@ import actionButtons from '../../hud/actionButtons';
 import useActionButtons from '~/hooks/useActionButtons';
 import { getAgreementPath } from '~/hooks/actionManagers/useAgreementManager';
 import EntityLink from '~/components/EntityLink';
+import AddressLink from '~/components/AddressLink';
 
 const Highlight = styled.span`
   color: ${p => p.theme.colors.main};
@@ -125,13 +126,22 @@ const useColumns = () => {
       },
       {
         key: 'permitted',
-        label: 'Permitted Crew',
+        label: 'Permitted Entity',
         sortField: '_agreement.permitted.id',
         selector: row => (
-          <>
-            {crew?.id === row._agreement?.permitted?.id && <My><MyAssetIcon /></My>}
-            <EntityLink {...row._agreement?.permitted} />
-          </>
+          row._agreement?.permitted?.id
+            ? (
+              <>
+                {crew?.id === row._agreement?.permitted?.id && <My><MyAssetIcon /></My>}
+                <EntityLink {...row._agreement?.permitted} />
+              </>
+            )
+            : (
+              <>
+                {crew?.Crew?.delegatedTo && crew?.Crew?.delegatedTo === row._agreement?.permitted && <My><MyAssetIcon /></My>}
+                <AddressLink address={row._agreement?.permitted} doNotReplaceYou truncate />
+              </>
+            )
         ), // TODO: is meta.crew.name populated?
         // unhideable: true
       },
@@ -206,7 +216,7 @@ const useColumns = () => {
                     agreementPath={getAgreementPath(row, row._agreement.permission, row._agreement.permitted)} />
                 </div>
               )
-            } else if (row._agreement.permitted?.id === crew?.id) {
+            } else if (row._agreement.permitted?.id === crew?.id || (crew?.Crew?.delegatedTo && row._agreement.permitted === crew.Crew.delegatedTo)) {
               return (
                 <div style={{ padding: '10px 15px' }}>
                   <actionButtons.ExtendAgreement.Component

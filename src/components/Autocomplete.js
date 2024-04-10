@@ -50,6 +50,7 @@ const Loading = styled.div`
 `;
 
 const AutocompleteComponent = ({
+  allowCustomInput,
   dropdownProps = {},
   excludeFunc,
   formatFootnote,
@@ -94,33 +95,29 @@ const AutocompleteComponent = ({
     [excludeFunc, rawOptions]
   );
 
-  const handleKeyDown = useCallback((e) => {
-    if (e.key === 'Escape') {
-      textInputEl.current.blur();
-    } else if (e.key === 'Enter') {
-      if (options[highlighted]) {
-        handleSelection(options[highlighted]);
-      }
-    } else if (e.key === 'ArrowUp') {
-      setHighlighted((h) => Math.max(h - 1, 0));
-    } else if (e.key === 'ArrowDown') {
-      setHighlighted((h) => Math.min(h + 1, options.length - 1));
-    }
-  }, [highlighted, options]);
-
-  useEffect(() => {
-    if (!focused && !hovered) {
-      setHighlighted(0);
-      setSearchTerm('');
-    }
-  }, [focused, hovered]);
-
   const handleSelection = useCallback((s) => {
     onSelect(s);
     setFocused(false);
     setHovered(false);
     textInputEl.current.blur();
   }, [onSelect]);
+
+  const handleKeyDown = useCallback((e) => {
+    if (e.key === 'Escape') {
+      textInputEl.current.blur();
+    } else if (e.key === 'Enter') {
+      if (options[highlighted]) {
+        handleSelection(options[highlighted]);
+      } else if (allowCustomInput && searchTerm) {
+        console.log('on enter');
+        handleSelection(searchTerm);
+      }
+    } else if (e.key === 'ArrowUp') {
+      setHighlighted((h) => Math.max(h - 1, 0));
+    } else if (e.key === 'ArrowDown') {
+      setHighlighted((h) => Math.min(h + 1, options.length - 1));
+    }
+  }, [allowCustomInput, handleSelection, highlighted, options]);
 
   const handleOptionHover = useCallback((e) => {
     if (e.type === 'mouseenter') {
@@ -139,6 +136,13 @@ const AutocompleteComponent = ({
     setFocused(true);
     if (userOnFocus) userOnFocus(e);
   }, [userOnFocus]);
+
+  useEffect(() => {
+    if (!focused && !hovered) {
+      setHighlighted(0);
+      setSearchTerm('');
+    }
+  }, [focused, hovered]);
 
   return (
     <Wrapper onKeyDown={handleKeyDown}>
@@ -165,7 +169,7 @@ const AutocompleteComponent = ({
             width={width}
             {...dropdownProps}>
             {options.map((o, i) => (
-              <Option key={o[valueKey]} isHighlighted={i === highlighted} onClick={() => handleSelection(o)}>
+              <Option key={o[valueKey]} isHighlighted={i === highlighted} onClick={() => { console.log('onclick'); handleSelection(o)}}>
                 <label>{formatLabel(o)}</label>
                 {formatFootnote && <Footnote>{formatFootnote(o)}</Footnote>}
               </Option>
@@ -226,6 +230,7 @@ export const StaticAutocomplete = ({
 };
 
 const Autocomplete = ({
+  allowCustomInput,
   assetType,
   dropdownProps = {},
   excludeFunc,
@@ -246,6 +251,7 @@ const Autocomplete = ({
 
   return (
     <AutocompleteComponent
+      allowCustomInput={allowCustomInput}
       dropdownProps={dropdownProps}
       excludeFunc={excludeFunc}
       formatFootnote={formatFootnote}

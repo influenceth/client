@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
-import { Building, Entity, Permission } from '@influenceth/sdk';
+import { Address, Building, Entity, Permission } from '@influenceth/sdk';
 
 import { CloseIcon, FormAgreementIcon, LotControlIcon, PermissionIcon, RadioCheckedIcon, RadioUncheckedIcon, SwayIcon, WarningIcon } from '~/components/Icons';
 import CollapsibleBlock from '~/components/CollapsibleBlock';
@@ -19,8 +19,10 @@ import useCrewContext from '~/hooks/useCrewContext';
 import useLot from '~/hooks/useLot';
 import LiveTimer from '~/components/LiveTimer';
 import useConstructionManager from '~/hooks/actionManagers/useConstructionManager';
-import useCrew from '~/hooks/useCrew';
 import EntityLink from '~/components/EntityLink';
+import useSession from '~/hooks/useSession';
+import AddressLink from '~/components/AddressLink';
+import useHydratedCrew from '~/hooks/useHydratedCrew';
 
 const borderColor = `rgba(255, 255, 255, 0.15)`;
 const DataBlock = styled.div``;
@@ -183,17 +185,20 @@ const getStatusColor = (status) => {
 }
 
 const PolicyPanel = ({ editable = false, entity, permission }) => {
+  const { accountAddress } = useSession();
   const { crew } = useCrewContext();
-  const { currentPolicy, updateAllowlist, updatePolicy, allowlistChangePending, policyChangePending } = usePolicyManager(entity, permission);
+  const { currentPolicy, updateAllowlists, updatePolicy, allowlistChangePending, policyChangePending } = usePolicyManager(entity, permission);
   const {
     policyType: originalPolicyType,
     policyDetails: originalPolicyDetails,
     allowlist: originalAllowlist,
+    accountAllowlist: originalAccountAllowlist,
     agreements = [],  // TODO: ...?
   } = currentPolicy || {};
 
   const [policyType, setPolicyType] = useState(Number(originalPolicyType));
   const [details, setDetails] = useState(originalPolicyDetails);
+  const [accountAllowlist, setAccountAllowlist] = useState(originalAccountAllowlist || []);
   const [allowlist, setAllowlist] = useState(originalAllowlist || []);
 
   /**
@@ -211,9 +216,10 @@ const PolicyPanel = ({ editable = false, entity, permission }) => {
   }, [editing, originalPolicyType, originalPolicyDetails]);
 
   useEffect(() => {
-    setAllowlist(originalAllowlist);
+    setAllowlist(originalAllowlist || []);
+    setAccountAllowlist(originalAccountAllowlist || []);
     setAllowlistDirty(false);
-  }, [editing, originalAllowlist]);
+  }, [editing, originalAllowlist, originalAccountAllowlist]);
 
   const handleChange = useCallback((key) => (e) => {
     let newVal = e.currentTarget.value;
@@ -239,12 +245,23 @@ const PolicyPanel = ({ editable = false, entity, permission }) => {
   }, [policyType, details]);
 
   const allowlistAdd = useCallback((crew) => {
-    setAllowlist((a) => [...a, crew].sort((a, b) => formatters.crewName(a).localeCompare(formatters.crewName(b))));
+    if (!crew) return;
+    if (typeof crew === 'object') {
+      setAllowlist((a) => [...a, crew].sort((a, b) => formatters.crewName(a).localeCompare(formatters.crewName(b))));
+    }
+    if (typeof crew === 'string') {
+      if (!Address.toStandard(crew)) return;
+      setAccountAllowlist((a) => Array.from(new Set([...a, crew])).sort());
+    }
     setAllowlistDirty(true);
   }, []);
 
   const allowlistRemove = useCallback((crew) => {
-    setAllowlist((a) => a.filter((c) => c.id !== crew.id));
+    if (typeof crew === 'object') {
+      setAllowlist((a) => a.filter((c) => c.id !== crew.id));
+    } else {
+      setAccountAllowlist((a) => a.filter((c) => c !== crew));
+    }
     setAllowlistDirty(true);
   }, []);
 
@@ -258,11 +275,11 @@ const PolicyPanel = ({ editable = false, entity, permission }) => {
 
   const saveEdits = useCallback(() => {
     if (editing === 'allowlist') {
-      updateAllowlist(allowlist);
+      updateAllowlists(allowlist, accountAllowlist);
     } else {
       updatePolicy(policyType, details);
     }
-  }, [allowlist, editing, policyType, details]);
+  }, [accountAllowlist, allowlist, editing, policyType, details]);
 
   const toggleEditing = useCallback((which) => {
     setEditing(which);
@@ -273,8 +290,11 @@ const PolicyPanel = ({ editable = false, entity, permission }) => {
    */
 
   const onAllowlist = useMemo(
-    () => currentPolicy?.allowlist?.find((c) => c.id === crew?.id),
-    [crew, currentPolicy]
+    () => (
+      currentPolicy?.allowlist?.find((c) => c.id === crew?.id)
+      || currentPolicy?.accountAllowlist?.find((c) => Address.areEqual(accountAddress, c))
+    ),
+    [accountAddress, crew, currentPolicy]
   );
 
   const jitStatus = useMemo(() => {
@@ -288,7 +308,11 @@ const PolicyPanel = ({ editable = false, entity, permission }) => {
 
     // else, only the crew cares
     } else if (currentPolicy?.crewStatus === 'granted') {
-      if ((currentPolicy?.agreements || []).find((a) => a.permitted.id === crew?.id && a.noticeTime > 0)) return 'under notice';
+      const noticeGiven = (currentPolicy?.agreements || []).find((a) => (
+        ((crew?.Crew.delegatedTo && a.permitted === crew?.Crew.delegatedTo) || (a.permitted?.id === crew?.id))
+        && a.noticeTime > 0
+      ));
+      if (noticeGiven) return 'under notice';
     }
 
     return null;
@@ -299,7 +323,7 @@ const PolicyPanel = ({ editable = false, entity, permission }) => {
       return {
         name: 'Allowlist',
         color: '#225e75',
-        description: `The permission is granted to all crews on the list.`,
+        description: `The permission is granted to individually listed crews or all crews of any listed wallets.`,
       };
     }
     const crewStatus = jitStatus || currentPolicy?.crewStatus;
@@ -345,18 +369,31 @@ const PolicyPanel = ({ editable = false, entity, permission }) => {
             <>
               <Section>
                 <Autocomplete
+                  allowCustomInput
                   assetType="crews"
                   disabled={nativeBool(saving)}
                   excludeFunc={allowlistExclude}
-                  onSelect={(c) => allowlistAdd(c)}
-                  placeholder="Search Crew Name or ID"
+                  onSelect={allowlistAdd}
+                  placeholder="Search Crew or Paste Wallet Address"
                   width={300}
                 />
                 <Allowlist>
+                  {(accountAllowlist || []).map((a) => (
+                    <AllowCrew key={a}>
+                      <label><AddressLink address={a} doNotReplaceYou truncate /></label>
+                      <span>Wallet</span>
+                      <IconButton
+                        borderless
+                        disabled={nativeBool(saving)}
+                        onClick={() => allowlistRemove(a)}>
+                        <CloseIcon />
+                      </IconButton>
+                    </AllowCrew>
+                  ))}
                   {(allowlist || []).map((a) => (
                     <AllowCrew key={a.id}>
                       <label>{a?.Crew ? formatters.crewName(a) : <EntityName {...a} />}</label>
-                      <span>ID: {a.id.toLocaleString()}</span>
+                      <span>Crew #{a.id.toLocaleString()}</span>
                       <IconButton
                         borderless
                         disabled={nativeBool(saving)}
@@ -536,7 +573,15 @@ const PolicyPanel = ({ editable = false, entity, permission }) => {
               {editable && (
                 <Section style={{ borderTop: 0, marginTop: 5 }}>
                   <DataBlock style={{ paddingBottom: 5 }}>
-                    <DataRow><label>Allowlist</label><span>{(allowlist?.length || 0).toLocaleString()} Crew{allowlist?.length === 1 ? '' : 's'}</span></DataRow>
+                    <DataRow>
+                      <label>Allowlist</label>
+                      <span>
+                        {(allowlist?.length || 0).toLocaleString()} Crew{allowlist?.length === 1 ? '' : 's'}
+                        {accountAllowlist?.length > 0 && (
+                          <> | {(accountAllowlist?.length || 0).toLocaleString()} Wallet{accountAllowlist?.length === 1 ? '' : 's'}</>
+                        )}
+                      </span>
+                    </DataRow>
                   </DataBlock>
                   <EditBlock>
                     <Button onClick={() => toggleEditing('allowlist')}>Edit Allowlist</Button>
@@ -563,19 +608,27 @@ const PolicyPanel = ({ editable = false, entity, permission }) => {
 };
 
 const PolicyPanels = ({ editable, entity }) => {
+  const { accountAddress } = useSession();
   const { crew } = useCrewContext();
   const { data: lot } = useLot(entity?.label === Entity.IDS.BUILDING ? entity.Location.location.id : null);
   const { isAtRisk } = useConstructionManager(lot?.id);
+  const { data: entityController } = useHydratedCrew(entity?.Control?.controller?.id);
 
-  const permPolicies = useMemo(() => entity ? Permission.getPolicyDetails(entity, crew?.id) : {}, [crew?.id, entity]);
+  const permPolicies = useMemo(
+    () => entity ? Permission.getPolicyDetails(entity, crew) : {},
+    [accountAddress, crew, entity]
+  );
 
   // show lot warning if building controller does not have lot permission
   const showLotWarning = useMemo(() => {
-    if (!lot || !entity) return false;
-
-    const lotPerm = Permission.getPolicyDetails(lot, entity.Control?.controller?.id)[Permission.IDS.USE_LOT];
-    return !(lotPerm?.crewStatus === 'controller' || lotPerm?.crewStatus === 'granted');
-  }, [lot]);
+    if (!lot || !entityController) return false;
+    const lotPerm = Permission.getPolicyDetails(lot, entityController)[Permission.IDS.USE_LOT];
+    return !(
+      lotPerm?.crewStatus === 'controller' ||
+      lotPerm?.crewStatus === 'granted' ||
+      lotPerm?.crewStatus === 'under contract'
+    );
+  }, [entity, entityController, lot]);
 
   const buildingOrSite = useMemo(() => lot?.building?.Building?.status < Building.CONSTRUCTION_STATUSES.OPERATIONAL ? 'Construction Site' : 'Building', [lot]);
 

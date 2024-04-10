@@ -109,6 +109,8 @@ export function ActivitiesProvider({ children }) {
     setTimeout(() => {
       transformedActivities.forEach((activity) => {
         const activityConfig = getActivityConfig(activity);
+        if (!activityConfig) return;
+        
         const pendingTransaction = (pendingTransactions || []).find((p) => p.txHash === activity.event?.transactionHash);
         activityConfig.onBeforeReceived(pendingTransaction).then((extraInvalidations) => {
           if (!skipInvalidations) {
