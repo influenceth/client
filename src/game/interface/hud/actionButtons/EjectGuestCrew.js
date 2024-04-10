@@ -23,7 +23,7 @@ const isVisible = ({ crew, building, ship }) => {
 
 // NOTE: this is "eject guest(s)"
 // (can eject guests from ship or building i control)
-const EjectGuestCrew = ({ accountAddress, asteroid, crew, lot, ship, onSetAction, dialogProps = {}, _disabled }) => {
+const EjectGuestCrew = ({ asteroid, crew, lot, ship, onSetAction, dialogProps = {}, _disabled }) => {
   const [station, entityId] = useMemo(() => {
     const station = ship || lot?.building;
     const entityId = { id: station.id, label: station.label };
@@ -51,8 +51,8 @@ const EjectGuestCrew = ({ accountAddress, asteroid, crew, lot, ship, onSetAction
     if (_disabled) return 'loading...';
     if (allGuestCrews?.length === 0) return 'no guests';
     // TODO: does controller need to be on asteroid? on entity?
-    return getCrewDisabledReason({ accountAddress, crew });
-  }, [_disabled, accountAddress, allGuestCrews, asteroid, crew]);
+    return getCrewDisabledReason({ crew });
+  }, [_disabled, allGuestCrews, asteroid, crew]);
 
   return (
     <ActionButton

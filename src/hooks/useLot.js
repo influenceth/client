@@ -40,7 +40,7 @@ const useLot = (lotId) => {
           /*'Control', 'Inventory', 'Location', 'Name',*/ 'Nft', 'Ship', /*'Station',*/
 
           // these are on both buildings and ships:
-          'ContractPolicy', 'PrepaidPolicy', 'PublicPolicy', 'ContractAgreement', 'PrepaidAgreement', 'WhitelistAgreement',
+          'ContractPolicy', 'PrepaidPolicy', 'PublicPolicy', 'ContractAgreement', 'PrepaidAgreement', 'WhitelistAgreement', 'WhitelistAccountAgreement',
         ]
       })) || [];
 

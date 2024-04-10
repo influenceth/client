@@ -27,7 +27,7 @@ const usePolicyManager = (target, permission) => {
 
   const currentPolicy = useMemo(() => {
     if (!target) return undefined;
-    const pol = Permission.getPolicyDetails(target, accountAddress, crew?.id)[permission];
+    const pol = Permission.getPolicyDetails(target, crew)[permission];
 
     if (pol?.policyDetails && pol.policyType === Permission.POLICY_IDS.CONTRACT) pol.policyDetails.contract = pol.policyDetails.address;
     if (pol?.policyDetails && pol.policyType === Permission.POLICY_IDS.PREPAID) {
@@ -40,7 +40,7 @@ const usePolicyManager = (target, permission) => {
     };
 
     return pol;
-  }, [accountAddress, crew?.id, target, permission]);
+  }, [accountAddress, crew, target, permission]);
 
   const updateAllowlists = useCallback((newAllowlist, newAccountAllowlist) => {
     execute(

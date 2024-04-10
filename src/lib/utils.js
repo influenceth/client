@@ -206,7 +206,7 @@ export const safeEntityId = (variablyHydratedEntity) => {
 
 export const entityToAgreements = (entity) => {
   const acc = [];
-  ['PrepaidAgreements', 'ContractAgreements', 'WhitelistAgreements'].forEach((agreementType) => {
+  ['PrepaidAgreements', 'ContractAgreements', 'WhitelistAgreements', 'WhitelistAccountAgreements'].forEach((agreementType) => {
     (entity[agreementType] || []).forEach((agreement, j) => {
       const formatted = {
         key: `${entity.uuid}_${agreementType}_${j}`,
@@ -232,6 +232,7 @@ export const entityToAgreements = (entity) => {
       acc.push(formatted);
     })
   });
+  console.log('entity', entity, acc);
   return acc;
 };
 

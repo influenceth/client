@@ -16,7 +16,7 @@ const isVisible = ({ constructionStatus, crew, lot }) => {
     && ['PLANNED', 'CANCELING'].includes(constructionStatus);
 };
 
-const UnplanBuilding = ({ accountAddress, asteroid, crew, lot, onSetAction, _disabled }) => {
+const UnplanBuilding = ({ asteroid, crew, lot, onSetAction, _disabled }) => {
   const { constructionStatus } = useConstructionManager(lot?.id);
   const handleClick = useCallback(() => {
     onSetAction('UNPLAN_BUILDING');
@@ -30,8 +30,8 @@ const UnplanBuilding = ({ accountAddress, asteroid, crew, lot, onSetAction, _dis
   const disabledReason = useMemo(() => {
     if (_disabled) return 'loading...';
     if (!siteEmpty) return 'not empty';
-    return getCrewDisabledReason({ accountAddress, asteroid, crew, requireReady: false });
-  }, [_disabled, accountAddress, asteroid, crew, siteEmpty]);
+    return getCrewDisabledReason({ asteroid, crew, requireReady: false });
+  }, [_disabled, asteroid, crew, siteEmpty]);
 
   return (
     <ActionButton
