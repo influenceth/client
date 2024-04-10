@@ -232,7 +232,6 @@ export const entityToAgreements = (entity) => {
       acc.push(formatted);
     })
   });
-  console.log('entity', entity, acc);
   return acc;
 };
 

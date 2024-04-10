@@ -4,12 +4,10 @@ import { Address, Entity, Permission } from '@influenceth/sdk';
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
 import useCrewContext from '~/hooks/useCrewContext';
 import { monthsToSeconds, secondsToMonths } from '~/lib/utils';
-import useSession from '~/hooks/useSession';
 
 const hoursPerMonth = monthsToSeconds(1) / 3600;
 
 const usePolicyManager = (target, permission) => {
-  const { accountAddress } = useSession();
   const { crew } = useCrewContext();
   const { execute, getStatus } = useContext(ChainTransactionContext);
 
@@ -40,7 +38,7 @@ const usePolicyManager = (target, permission) => {
     };
 
     return pol;
-  }, [accountAddress, crew, target, permission]);
+  }, [crew, target, permission]);
 
   const updateAllowlists = useCallback((newAllowlist, newAccountAllowlist) => {
     execute(

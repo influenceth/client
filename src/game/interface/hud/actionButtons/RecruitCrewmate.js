@@ -64,7 +64,6 @@ const RecruitCrewmate = ({ asteroid, crew, lot, _disabled }) => {
     if (_disabled) return 'loading...';
     if (pendingCrewmate) return 'recruiting...';
     // if recruiting to new crew, there is no crew to check permissions on, so just check if public
-    // TODO: should we check account-whitelist here (even though crew not set)?
     if (recruitToCrew === 0) {
       const policy = Permission.getPolicyDetails(lot?.building)[Permission.IDS.RECRUIT_CREWMATE];
       if (policy.policyType === Permission.POLICY_IDS.PUBLIC) return '';
