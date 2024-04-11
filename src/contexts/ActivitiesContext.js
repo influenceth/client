@@ -45,7 +45,13 @@ export function ActivitiesProvider({ children }) {
   const { crew, pendingTransactions, refreshReadyAt } = useCrewContext();
   const getActivityConfig = useGetActivityConfig();
   const queryClient = useQueryClient();
-  const { registerMessageHandler, unregisterMessageHandler, wsReady } = useWebsocket();
+  const {
+    registerConnectionHandler,
+    registerMessageHandler,
+    unregisterConnectionHandler,
+    unregisterMessageHandler,
+    wsReady
+  } = useWebsocket();
 
   const createAlert = useStore(s => s.dispatchAlertLogged);
 
@@ -267,6 +273,27 @@ export function ActivitiesProvider({ children }) {
     }
   }, [handleActivities]);
 
+  const [disconnected, setDisconnected] = useState();
+  const [stale, setStale] = useState();
+  const onWSConnection = useCallback((isOpen) => {
+    if (isOpen && stale) {
+      queryClient.resetQueries();
+      setStale(false);
+    }
+    setDisconnected(!isOpen);
+  }, [stale]);
+
+  useEffect(() => {
+    // if disconnected for more than X seconds, set state to `stale`. this will refetch
+    // everything once the connection is restored. any value of X is technically imperfect
+    // here, but it also seems excessive to reset state on any microsecond disconnection
+    if (disconnected) {
+      const to = setTimeout(() => setStale(true), 5e3);
+      // (if reconnects before timeout, do not set to stale)
+      return () => clearTimeout(to);
+    }
+  }, [disconnected]);
+
   const onWSMessage = useCallback((message) => {
     if (process.env.NODE_ENV !== 'production') console.log('onWSMessage', message);
     const { type, body } = message;
@@ -315,18 +342,20 @@ export function ActivitiesProvider({ children }) {
     const crewRoom = crew?.id ? `Crew::${crew.id}` : null;
     
     // setup ws listeners
-    const wsListenerRegIds = [];
-    wsListenerRegIds.push(registerMessageHandler(onWSMessage));
+    const connListenerRegId = registerConnectionHandler(onWSConnection);
+    const messageListenerRegIds = [];
+    messageListenerRegIds.push(registerMessageHandler(onWSMessage));
     if (crewRoom) {
-      wsListenerRegIds.push(registerMessageHandler(onWSMessage, crewRoom));
+      messageListenerRegIds.push(registerMessageHandler(onWSMessage, crewRoom));
     }
 
     // reset on logout / disconnect
     return () => {
       setActivities([]);
-      wsListenerRegIds.forEach((regId) => unregisterMessageHandler(regId));
+      unregisterConnectionHandler(connListenerRegId);
+      messageListenerRegIds.forEach((regId) => unregisterMessageHandler(regId));
     }
-  }, [crew?.id, onWSMessage, token, wsReady]);
+  }, [crew?.id, onWSConnection, onWSMessage, token, wsReady]);
 
   return (
     <ActivitiesContext.Provider value={activities}>

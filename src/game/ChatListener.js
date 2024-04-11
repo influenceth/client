@@ -32,7 +32,7 @@ const ChatListener = () => {
         dispatchChatDisconnectedMessage();
       }, 1000);
       return () => {  // if reconnects before timeout, no message added
-        clearInterval(to);
+        clearTimeout(to);
       }
     }
   }, [disconnected]);
