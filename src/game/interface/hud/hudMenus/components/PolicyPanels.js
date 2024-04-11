@@ -162,11 +162,11 @@ const PermSummaryWarning = styled(PermSummary)`
 
 const getPolicyColor = (policyType) => {
   switch (Number(policyType)) {
-    case Permission.POLICY_IDS.PRIVATE: return '#7e2b2a';
-    case Permission.POLICY_IDS.PUBLIC: return '#336342';
-    case Permission.POLICY_IDS.PREPAID: return '#185c5c';
-    case Permission.POLICY_IDS.CONTRACT: return '#363d65';
-    default: return '#333333';
+    case Permission.POLICY_IDS.PRIVATE: return theme.colors.red;
+    case Permission.POLICY_IDS.PUBLIC: return theme.colors.green;
+    case Permission.POLICY_IDS.PREPAID: return '#70cad0';
+    case Permission.POLICY_IDS.CONTRACT: return '#8687c1';
+    default: return '#666666';
   }
 }
 
@@ -179,7 +179,7 @@ const getStatusColor = (status) => {
     case 'under notice': return theme.colors.orange;
     case 'unleasable': return theme.colors.secondaryText;
     case 'under contract': return theme.colors.main;
-    default: return '#333333';
+    default: return '#666666';
   }
 }
 
@@ -593,7 +593,7 @@ const PolicyPanels = ({ editable, entity }) => {
     Object.keys(permPolicies).forEach((permission) => {
       const { crewStatus, agreements } = permPolicies[permission];
       if (crewStatus === 'granted' || crewStatus === 'controller') hasAgreement = true;
-      else if (crewStatus === 'available') isAgreeable = true;
+      if (crewStatus === 'available') isAgreeable = true;
       if ((agreements?.length > 0) && !(Permission.TYPES[permission].isExclusive)) agreementsWithOthers = true;
     });
     return [hasAgreement, isAgreeable, agreementsWithOthers];
