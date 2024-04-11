@@ -1,5 +1,6 @@
 import esb from 'elastic-builder';
 import { Crew, Entity, Lot, Permission, Processor, Time } from '@influenceth/sdk';
+import trim from 'lodash/trim';
 
 import { BioreactorBuildingIcon, ManufactureIcon, RefineIcon } from '~/components/Icons';
 
@@ -65,7 +66,22 @@ export const keyify = (str) => (str || '').replace(/[^a-zA-Z0-9_]/g, '');
 export const reactBool = (value) => value ? 'true' : undefined;
 export const nativeBool = (value) => Boolean(value);
 
-export const reactPreline = (value) => (value || '').split('\n').map((line, i) => i > 0 ? [<br key={i} />, line] : line);
+export const reactPreline = (value, maxInARow = 2) => {
+  return (value || '')
+    .split('\n')
+    .map((line) => trim(line))
+    .filter((c, i, arr) => {
+      if (c.length) return true;
+      if (i < maxInARow) return true;
+      
+      // this line is blank... make sure it is not creating > maxInARow
+      for (let j = 1; j <= maxInARow - 1; j++) {
+        if (arr[i - j].length > 0) return true;
+      }
+      return false;
+    })
+    .map((line, i) => i > 0 ? [<br key={i} />, line] : line)
+};
 
 export const locationsArrToObj = (locations) => {
   const asteroidId = locations.find((l) => Number(l.label) === Entity.IDS.ASTEROID)?.id;

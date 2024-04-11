@@ -8,7 +8,7 @@ import EntityLink from '~/components/EntityLink';
 import { InputBlock } from '~/components/filters/components';
 import UncontrolledTextArea, { resizeOnKeydown } from '~/components/TextAreaUncontrolled';
 import useStore from '~/hooks/useStore';
-import { nativeBool } from '~/lib/utils';
+import { nativeBool, reactPreline } from '~/lib/utils';
 import useWebsocket from '~/hooks/useWebsocket';
 import useCrewContext from '~/hooks/useCrewContext';
 
@@ -129,7 +129,7 @@ const AsteroidChat = () => {
       // console.log('ack', ack);
       if (ack) {
         setNewChat('');
-        resizeOnKeydown(maxChatInputHeight)(chatInputRef);
+        resizeOnKeydown(maxChatInputHeight)(chatInputRef.current);
         scrollToBottom();
       } else {
         createAlert({
@@ -196,7 +196,7 @@ const AsteroidChat = () => {
                   </div>
                   <div>
                     <EntityLink id={chat.crewId} label={Entity.IDS.CREW} />
-                    {' '}<span>{chat.content}</span>
+                    {' '}<span>{reactPreline(chat.message)}</span>
                   </div>
                 </Chat>
               );

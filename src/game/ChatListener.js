@@ -14,6 +14,8 @@ const ChatListener = () => {
 
   const dispatchChatMessage = useStore(s => s.dispatchChatMessage);
   const dispatchChatDisconnectedMessage = useStore(s => s.dispatchChatDisconnectedMessage);
+  
+  // for debug:
   // const dispatchClearChatHistory = useStore(s => s.dispatchClearChatHistory);
   // useEffect(() => {
   //   dispatchClearChatHistory();
@@ -40,7 +42,11 @@ const ChatListener = () => {
 
     const { type, body } = message;
     if (type === 'chat-message-received') {
-      dispatchChatMessage(body);
+      dispatchChatMessage({
+        asteroidId: body?.asteroid?.id,
+        crewId: body?.from?.id,
+        message: body?.message
+      });
     }
   }, [dispatchChatMessage]);
 

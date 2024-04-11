@@ -7,6 +7,11 @@ const WebsocketContext = createContext();
 
 const DEFAULT_ROOM = '_';
 
+const nonEventTypes = [
+  'chat-message-received',
+  'CURRENT_STARKNET_BLOCK_NUMBER'
+];
+
 // NOTE: could maybe roll this back into ActivitiesContext if there was a reason to combine them
 export function WebsocketProvider({ children }) {
   const { token } = useSession();
@@ -18,14 +23,19 @@ export function WebsocketProvider({ children }) {
   const [wsReady, setWsReady] = useState(false);
 
   const handleMessage = useCallback((messageLabel, payload) => {
+    // for consistency, set type from messageLabel if not set
+    if (messageLabel && !payload.type) payload.type = messageLabel;
+
     // NOTES:
     // - messageLabel can be "event" or "NameChanged" or anything... we do not use the value currently
     // - payload also contains type, most of which are ignored (i.e. CURRENT_STARKNET_BLOCK_NUMBER, ActionItem, etc.)
     // - for all but CURRENT_STARKNET_BLOCK_NUMBER, body contains { event }
     const { type, body, room } = payload;
 
-    if (type !== 'CURRENT_STARKNET_BLOCK_NUMBER') {
-      body.id = body.event.id;  // TODO: this is a hack to make it look like an activity
+    // shape ws emitted activity-events to look like activities (id will not be correct, but nbd)
+    // (skip any messages that are not activities)
+    if (!nonEventTypes.includes(type)) {
+      body.id = body.event.id;
     }
 
     const roomKey = (room || '').includes('::') ? room : DEFAULT_ROOM;
@@ -86,18 +96,19 @@ export function WebsocketProvider({ children }) {
   }, []);
 
   useEffect(() => {
-    if (token) {
-      socket.current = new io(process.env.REACT_APP_API_URL, {
-        transports: [ 'websocket' ],
-        query: `token=${token}`,
-      });
-      socket.current.onAny(handleMessage);
-      socket.current.on('connect', () => handleConnection(true));
-      socket.current.on('disconnect', () => handleConnection(false));
-      setWsReady(true);
-    }
+    const config = {};
+    config.transports = [ 'websocket' ];
+    if (token) config.query = `token=${token}`;
+
+    socket.current = new io(process.env.REACT_APP_API_URL, config);
+    socket.current.onAny(handleMessage);
+    socket.current.on('connect', () => handleConnection(true));
+    socket.current.on('disconnect', () => handleConnection(false));
+    setWsReady(true);
+
     return () => {
       if (socket.current) {
+        console.log('disconnect socket');
         socket.current.disconnect();
         socket.current.off(); // removes all listeners for all events
       }
