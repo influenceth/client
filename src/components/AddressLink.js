@@ -1,23 +1,13 @@
-import { useMemo } from 'react';
 import { Address } from '@influenceth/sdk';
 
 import MarketplaceLink from '~/components/MarketplaceLink';
 import OnClickLink from '~/components/OnClickLink';
-import useSession from '~/hooks/useSession';
+import useAccountFormatted from '~/hooks/useAccountFormatted';
 
 const AddressLink = (props) => {
-  const { address, chain, doNotReplaceYou, truncate } = props;
-  const { accountAddress } = useSession();
+  const { address, chain, doNotReplaceYou, truncate, doNotUseName } = props;
 
-  const label = useMemo(() => {
-    return (accountAddress && accountAddress === address && !doNotReplaceYou)
-      ? 'you'
-      : (
-        address && truncate
-        ? `${address.substr(0, 6)}...${address.substr(-4)}`
-        : address
-      );
-  }, [accountAddress, address, doNotReplaceYou, truncate]);
+  const label = useAccountFormatted({ address, doNotReplaceYou, doNotUseName, truncate });
 
   if (address) {
     return (
