@@ -12,6 +12,7 @@ const ChatListener = () => {
     wsReady
   } = useWebsocket();
 
+  const createAlert = useStore(s => s.dispatchAlertLogged);
   const dispatchChatMessage = useStore(s => s.dispatchChatMessage);
   const dispatchChatDisconnectedMessage = useStore(s => s.dispatchChatDisconnectedMessage);
   
@@ -40,12 +41,19 @@ const ChatListener = () => {
   const handleWSMessage = useCallback((message) => {
     if (process.env.NODE_ENV !== 'production') console.log('onWSMessage', message);
 
-    const { type, body } = message;
+    const { type, body, message: errorMessage } = message;
     if (type === 'chat-message-received') {
       dispatchChatMessage({
         asteroidId: body?.asteroid?.id,
         crewId: body?.from?.id,
         message: body?.message
+      });
+    } else if (type === 'send-message-failure') {
+      createAlert({
+        type: 'GenericAlert',
+        data: { content: `Message failed to send. ${errorMessage || 'Please try again'}.` },
+        duration: 3000,
+        level: 'warning',
       });
     }
   }, [dispatchChatMessage]);
