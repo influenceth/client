@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from 'react';
 
-import { FormAgreementIcon } from '~/components/Icons';
+import { FormLotAgreementIcon } from '~/components/Icons';
 import useAgreementManager from '~/hooks/actionManagers/useAgreementManager';
 import useStore from '~/hooks/useStore';
 import ActionButton from './ActionButton';
@@ -40,7 +40,7 @@ const FormLotLeaseAgreement = ({ lot, entity, permission, _disabled }) => {
         disabled: _disabled || disabledReason,
         loading: pendingChange
       }}
-      icon={<FormAgreementIcon />}
+      icon={<FormLotAgreementIcon />}
       onClick={handleClick} />
   );
 };

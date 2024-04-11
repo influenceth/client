@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
 import { Building, Entity, Permission } from '@influenceth/sdk';
 
-import { CloseIcon, AssetAgreementsIcon, LotControlIcon, PermissionIcon, RadioCheckedIcon, RadioUncheckedIcon, SwayIcon, WarningIcon } from '~/components/Icons';
+import { CloseIcon, AgreementIcon, LotControlIcon, PermissionIcon, RadioCheckedIcon, RadioUncheckedIcon, SwayIcon, WarningIcon } from '~/components/Icons';
 import CollapsibleBlock from '~/components/CollapsibleBlock';
 import Button from '~/components/ButtonAlt';
 import Autocomplete from '~/components/Autocomplete';
@@ -607,7 +607,7 @@ const PolicyPanels = ({ editable, entity }) => {
 
       {(othersHaveAgreements) && (
         <PermSummary>
-          <AssetAgreementsIcon />
+          <AgreementIcon />
           Asset has active agreements with other crews.
         </PermSummary>
       )}

@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import { useHistory } from 'react-router-dom';
 
-import { AssetAgreementsIcon } from '~/components/Icons';
+import { AgreementsListIcon } from '~/components/Icons';
 import ActionButton from './ActionButton';
 
 const isVisible = () => false;
@@ -19,7 +19,7 @@ const ViewAgreements = ({ entity, permission, tally, _disabled }) => {
         badge: tally,
         disabled: _disabled
       }}
-      icon={<AssetAgreementsIcon />}
+      icon={<AgreementsListIcon /> }
       onClick={handleClick} />
   );
 };
