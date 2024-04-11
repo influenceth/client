@@ -45,7 +45,7 @@ export function ActivitiesProvider({ children }) {
   const { crew, pendingTransactions, refreshReadyAt } = useCrewContext();
   const getActivityConfig = useGetActivityConfig();
   const queryClient = useQueryClient();
-  const { registerWSHandler, unregisterWSHandler, wsReady } = useWebsocket();
+  const { registerMessageHandler, unregisterMessageHandler, wsReady } = useWebsocket();
 
   const createAlert = useStore(s => s.dispatchAlertLogged);
 
@@ -312,16 +312,19 @@ export function ActivitiesProvider({ children }) {
     // on missing pending activities here, we DO need to invalidate the cache values
     isFirstLoad.current = false;
 
-    // setup ws listeners
-    registerWSHandler(onWSMessage);
     const crewRoom = crew?.id ? `Crew::${crew.id}` : null;
-    if (crewRoom) registerWSHandler(onWSMessage, crewRoom);
+    
+    // setup ws listeners
+    const wsListenerRegIds = [];
+    wsListenerRegIds.push(registerMessageHandler(onWSMessage));
+    if (crewRoom) {
+      wsListenerRegIds.push(registerMessageHandler(onWSMessage, crewRoom));
+    }
 
     // reset on logout / disconnect
     return () => {
       setActivities([]);
-      unregisterWSHandler();
-      if (crewRoom) unregisterWSHandler(crewRoom);
+      wsListenerRegIds.forEach((regId) => unregisterMessageHandler(regId));
     }
   }, [crew?.id, onWSMessage, token, wsReady]);
 

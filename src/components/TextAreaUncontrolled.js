@@ -1,8 +1,9 @@
 import styled from 'styled-components';
 
-export const resizeOnKeydown = (max) => (e) => {
-  e.target.style.height = '0px'; // reset field height (in case deleting)
-  e.target.style.height = `${Math.min(max, e.target.scrollHeight)}px`; // increase to fit (incl padding + border)
+export const resizeOnKeydown = (max) => (eOrRef) => {
+  const ref = eOrRef?.target || eOrRef;
+  ref.style.height = '0px'; // reset field height (in case deleting)
+  ref.style.height = `${Math.min(max, ref.scrollHeight)}px`; // increase to fit (incl padding + border)
 };
 
 const UncontrolledTextArea = styled.textarea`

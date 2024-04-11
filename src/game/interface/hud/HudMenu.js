@@ -424,13 +424,14 @@ const HudMenu = ({ forceOpenMenu }) => {
         },
         isVisible: scope === 'asteroid'
       },
-      // {
-      //   key: 'ASTEROID_CHAT',
-      //   label: 'Asteroid Chat',
-      //   icon: <ChatIcon />,
-      //   Component: hudMenus.AsteroidChat
-      //   isVisible: scope === 'asteroid' || scope === 'lot'
-      // },
+      {
+        key: 'ASTEROID_CHAT',
+        label: 'Asteroid Chat',
+        icon: <ChatIcon />,
+        Component: hudMenus.AsteroidChat,
+        noDetail: true,
+        isVisible: scope === 'asteroid' || scope === 'lot'
+      },
       {
         key: 'ASTEROID_ASSETS',
         label: 'My Assets',
