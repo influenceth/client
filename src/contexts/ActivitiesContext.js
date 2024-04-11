@@ -90,11 +90,9 @@ export function ActivitiesProvider({ children }) {
   //   }
   // }, []);
 
+  const debugInvalidation = false;
   const handleActivities = useCallback((newActivities, skipInvalidations) => {
     // return;
-
-    // refresh crew's readyAt
-    let shouldRefreshReadyAt = false;
 
     // prep activities, then handle
     const transformedActivities = newActivities.map((e) => {
@@ -103,140 +101,143 @@ export function ActivitiesProvider({ children }) {
       return e;
     });
 
-    // (hopefully cure any race conditions with the setTimeout)
-    // TODO: this timeout can be removed if/when we start optimistically updating query cache from
-    //        the event's linked assets
-    setTimeout(() => {
-      transformedActivities.forEach((activity) => {
-        const activityConfig = getActivityConfig(activity);
-        if (!activityConfig) return;
-        
-        const pendingTransaction = (pendingTransactions || []).find((p) => p.txHash === activity.event?.transactionHash);
-        activityConfig.onBeforeReceived(pendingTransaction).then((extraInvalidations) => {
-          if (!skipInvalidations) {
-            const debugInvalidation = false;
-            if (debugInvalidation) console.log('extraInvalidations', extraInvalidations); // TODO: hide
-            shouldRefreshReadyAt = shouldRefreshReadyAt || !!activityConfig?.requiresCrewTime;
+    // if nothing to do, can return
+    if (transformedActivities.length === 0) return;
 
-            // console.log('invalidations', activityConfig?.invalidations);
-            const allInvalidations = [
-              ...(activityConfig?.invalidations || []),
-              ...(extraInvalidations || [])
-            ]
-            allInvalidations.forEach((invalidationConfig) => {
-              const invalidations = [];
+    // this timeout is to hopefully give enough time for all relevant assets to be updated 
+    // in mongo and/or elasticsearch before invaliding/re-requesting them
+    setTimeout(async () => {
+      let shouldRefreshReadyAt = false;
 
-              // this is a raw queryKey
-              // (i.e. `[ 'ethBalance', walletAddress ]`)
-              if (Array.isArray(invalidationConfig)) {
-                invalidations.push(invalidationConfig)
+      if (!skipInvalidations) {
+        for (let activity of transformedActivities) {
+          const activityConfig = getActivityConfig(activity);
+          if (!activityConfig) continue;
 
-              // else, this is an entity object
-              // NOTE: read more about newGroupEval and invalidation configs in lib/cacheKey.js
-              } else if (invalidationConfig) {
-                // NOTE: if key is not present in updated values, value was not updated
-                const { id, label, newGroupEval } = invalidationConfig;
-                if (debugInvalidation && newGroupEval?.updatedValues) console.log(`${label}.${id} updates include`, newGroupEval);
+          const pendingTransaction = (pendingTransactions || []).find((p) => p.txHash === activity.event?.transactionHash);
+          const extraInvalidations = await activityConfig.onBeforeReceived(pendingTransaction);
 
-                // invalidate `entity` entry
-                invalidations.push(['entity', label, id]);
-                invalidations.push(['activities', label, id]);
+          if (debugInvalidation) console.log('extraInvalidations', extraInvalidations);
+          shouldRefreshReadyAt = shouldRefreshReadyAt || !!activityConfig?.requiresCrewTime;
 
-                // walk through `entities` entries of label type
-                // refetch group keys no longer part of, and refetch group keys it just became part of
-                // TODO: just fetch active?
-                queryClient.getQueriesData(['entities', label]).forEach(([ queryKey, data ]) => {
-                  if (data === undefined) {
-                    if (debugInvalidation) console.log('bad query cache value', queryKey, data);
-                    return;
+          // console.log('invalidations', activityConfig?.invalidations);
+          const allInvalidations = [
+            ...(activityConfig?.invalidations || []),
+            ...(extraInvalidations || [])
+          ]
+          allInvalidations.forEach((invalidationConfig) => {
+            const invalidations = [];
+
+            // this is a raw queryKey
+            // (i.e. `[ 'ethBalance', walletAddress ]`)
+            if (Array.isArray(invalidationConfig)) {
+              invalidations.push(invalidationConfig)
+
+            // else, this is an entity object
+            // NOTE: read more about newGroupEval and invalidation configs in lib/cacheKey.js
+            } else if (invalidationConfig) {
+              // NOTE: if key is not present in updated values, value was not updated
+              const { id, label, newGroupEval } = invalidationConfig;
+              if (debugInvalidation && newGroupEval?.updatedValues) console.log(`${label}.${id} updates include`, newGroupEval);
+
+              // invalidate `entity` entry
+              invalidations.push(['entity', label, id]);
+              invalidations.push(['activities', label, id]);
+
+              // walk through `entities` entries of label type
+              // refetch group keys no longer part of, and refetch group keys it just became part of
+              // TODO: just fetch active?
+              queryClient.getQueriesData(['entities', label]).forEach(([ queryKey, data ]) => {
+                if (data === undefined) {
+                  if (debugInvalidation) console.log('bad query cache value', queryKey, data);
+                  return;
+                }
+
+                // if updated entity is already in entity group, invalidate (to update/delete)
+                // TODO (enhancement): update-in-place
+                if (!!(data || []).find((d) => ((d.id === id) && (d.label === label)))) {
+                  if (debugInvalidation) console.log(`${label}.${id} is already in collection`, queryKey);
+                  invalidations.push(queryKey);
+
+                // else, check if it is technically possible (to the best of our knowledge)
+                // that the updated entity now *could be* part of a new entity group based
+                // on what changed about it... we will rely on newGroupEval to guide us
+                } else if (newGroupEval?.updatedValues) {
+                  const { updatedValues, filters } = newGroupEval;
+                  const collectionFilter = typeof queryKey[2] === 'object' ? queryKey[2] : {};
+                  let skip = false;
+
+                  // if none of the updatedValue keys appear in the group filter, it's impossible that
+                  // the updatedValue would cause this entity to now belong to this group... skip
+                  // (this assumes we have written our useQuery keys to be comprehensive!)
+                  // i.e. if ship controller changed, may not need to invalidate a group specifying all ships on a lot
+                  if (!Object.keys(updatedValues).find((k) => collectionFilter.hasOwnProperty(k))) {
+                    if (debugInvalidation) console.log('not in filter', updatedValues, collectionFilter);
+                    skip = true;
                   }
 
-                  // if updated entity is already in entity group, invalidate (to update/delete)
-                  // TODO (enhancement): update-in-place
-                  if (!!(data || []).find((d) => ((d.id === id) && (d.label === label)))) {
-                    if (debugInvalidation) console.log(`${label}.${id} is already in collection`, queryKey);
+                  // if at least one of the updatedValues would exclude the updated entity from the
+                  // group, then impossible it would be added to this group... skip
+                  else if (Object.keys(updatedValues).find((k) => collectionFilter.hasOwnProperty(k) && isMismatch(updatedValues[k], collectionFilter[k]))) {
+                    if (debugInvalidation) console.log('change excluded');
+                    skip = true;
+                  }
+
+                  // if at least one of the filters exclude this queryKey from including updated entity... skip
+                  // i.e. if ship status changed, may only need to invalidate groups scoped to one asteroid
+                  else if (filters && Object.keys(filters).find((k) => collectionFilter.hasOwnProperty(k) && filters[k] !== undefined && isMismatch(filters[k], collectionFilter[k]))) {
+                    if (debugInvalidation) console.log('filter excluded');
+                    skip = true;
+                  }
+
+                  // if didn't skip... invalidate as a precaution
+                  if (!skip) {
+                    if (debugInvalidation) console.log(`${label}.${id} might be joining collection`, JSON.stringify(queryKey));
                     invalidations.push(queryKey);
-
-                  // else, check if it is technically possible (to the best of our knowledge)
-                  // that the updated entity now *could be* part of a new entity group based
-                  // on what changed about it... we will rely on newGroupEval to guide us
-                  } else if (newGroupEval?.updatedValues) {
-                    const { updatedValues, filters } = newGroupEval;
-                    const collectionFilter = typeof queryKey[2] === 'object' ? queryKey[2] : {};
-                    let skip = false;
-
-                    // if none of the updatedValue keys appear in the group filter, it's impossible that
-                    // the updatedValue would cause this entity to now belong to this group... skip
-                    // (this assumes we have written our useQuery keys to be comprehensive!)
-                    // i.e. if ship controller changed, may not need to invalidate a group specifying all ships on a lot
-                    if (!Object.keys(updatedValues).find((k) => collectionFilter.hasOwnProperty(k))) {
-                      if (debugInvalidation) console.log('not in filter', updatedValues, collectionFilter);
-                      skip = true;
-                    }
-
-                    // if at least one of the updatedValues would exclude the updated entity from the
-                    // group, then impossible it would be added to this group... skip
-                    else if (Object.keys(updatedValues).find((k) => collectionFilter.hasOwnProperty(k) && isMismatch(updatedValues[k], collectionFilter[k]))) {
-                      if (debugInvalidation) console.log('change excluded');
-                      skip = true;
-                    }
-
-                    // if at least one of the filters exclude this queryKey from including updated entity... skip
-                    // i.e. if ship status changed, may only need to invalidate groups scoped to one asteroid
-                    else if (filters && Object.keys(filters).find((k) => collectionFilter.hasOwnProperty(k) && filters[k] !== undefined && isMismatch(filters[k], collectionFilter[k]))) {
-                      if (debugInvalidation) console.log('filter excluded');
-                      skip = true;
-                    }
-
-                    // if didn't skip... invalidate as a precaution
-                    if (!skip) {
-                      if (debugInvalidation) console.log(`${label}.${id} might be joining collection`, JSON.stringify(queryKey));
-                      invalidations.push(queryKey);
-                    }
-                    // else if (debugInvalidation) console.log(`${label}.${id} will NOT be joining collection`, JSON.stringify(queryKey));
                   }
-                });
-                
-                // invalidate searches potentially a part of
-                // TODO: would be nice to check against criteria similar to 'entities' above
-                let searchAssets = [];
-                if (label === Entity.IDS.ASTEROID)
-                  searchAssets = ['asteroids'/*, 'asteroidsMapped'*/]; // asteroidsMapped uses asteroids
-                if (label === Entity.IDS.BUILDING)
-                  searchAssets = ['buildings'];
-                if (label === Entity.IDS.CREW)
-                  searchAssets = ['crews'];
-                if (label === Entity.IDS.CREWMATE)
-                  searchAssets = ['crewmates'];
-                if (label === Entity.IDS.DEPOSIT)
-                  searchAssets = ['coresamples'];
-                if (label === Entity.IDS.LOT)
-                  searchAssets = ['lots'/*, 'lotsMapped'*/]; // lotsMapped uses packed data
-                if (label === Entity.IDS.SHIP)
-                  searchAssets = ['ships'];
-
-                searchAssets.forEach((assetType) => {
-                  invalidations.push(['search', assetType])
-                });
-              }
-
-              if (debugInvalidation) console.log('invalidate', invalidationConfig, invalidations);
-              invalidations.forEach((queryKey) => {
-                console.log('invalidate', queryKey);
-                queryClient.invalidateQueries({ queryKey, refetchType: 'active' });
+                  // else if (debugInvalidation) console.log(`${label}.${id} will NOT be joining collection`, JSON.stringify(queryKey));
+                }
               });
-            });
+              
+              // invalidate searches potentially a part of
+              // TODO: would be nice to check against criteria similar to 'entities' above
+              let searchAssets = [];
+              if (label === Entity.IDS.ASTEROID)
+                searchAssets = ['asteroids'/*, 'asteroidsMapped'*/]; // asteroidsMapped uses asteroids
+              if (label === Entity.IDS.BUILDING)
+                searchAssets = ['buildings'];
+              if (label === Entity.IDS.CREW)
+                searchAssets = ['crews'];
+              if (label === Entity.IDS.CREWMATE)
+                searchAssets = ['crewmates'];
+              if (label === Entity.IDS.DEPOSIT)
+                searchAssets = ['coresamples'];
+              if (label === Entity.IDS.LOT)
+                searchAssets = ['lots'/*, 'lotsMapped'*/]; // lotsMapped uses packed data
+              if (label === Entity.IDS.SHIP)
+                searchAssets = ['ships'];
 
-            if (activityConfig?.triggerAlert) {
-              createAlert({
-                type: 'ActivityLog',
-                data: activityConfig?.logContent,
-                duration: 10000
-              })
-            };
-          }
-        });
-      });
+              searchAssets.forEach((assetType) => {
+                invalidations.push(['search', assetType])
+              });
+            }
+
+            if (debugInvalidation) console.log('invalidate', invalidationConfig, invalidations);
+            invalidations.forEach((queryKey) => {
+              console.log('invalidate', queryKey);
+              queryClient.invalidateQueries({ queryKey, refetchType: 'active' });
+            });
+          });
+
+          if (activityConfig?.triggerAlert) {
+            createAlert({
+              type: 'ActivityLog',
+              data: activityConfig?.logContent,
+              duration: 10000
+            })
+          };
+        }
+      }
 
       setActivities((prevActivities) => uniq([
         ...transformedActivities,

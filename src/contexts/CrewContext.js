@@ -155,7 +155,6 @@ export function CrewProvider({ children }) {
   const [actionTypeTriggered, setActionTypeTriggered] = useState(false);
   useEffect(() => {
     if (!actionTypeTriggered) {
-      console.log('EVAL ACTION TRIGGER', selectedCrew);
       if (selectedCrew?.Crew?.actionType && selectedCrew.Crew.actionRound && (selectedCrew.Crew.actionRound + RandomEvent.MIN_ROUNDS) <= blockNumber) {
         starknet.provider.callContract(
           System.getRunSystemCall(
@@ -165,7 +164,6 @@ export function CrewProvider({ children }) {
           )
         )
         .then((response) => {
-          console.log('EVAL ACTION TRIGGER RESPONSE', response);
           const pendingEvent = response ? parseInt(response[1]) : null;
           if (pendingEvent > 0) {
             getBlockTime(starknet, selectedCrew.Crew.actionRound + RandomEvent.MIN_ROUNDS).then((timestamp) => {
