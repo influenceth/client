@@ -7,11 +7,6 @@ const WebsocketContext = createContext();
 
 const DEFAULT_ROOM = '_';
 
-const nonEventTypes = [
-  'chat-message-received',
-  'CURRENT_STARKNET_BLOCK_NUMBER'
-];
-
 // NOTE: could maybe roll this back into ActivitiesContext if there was a reason to combine them
 export function WebsocketProvider({ children }) {
   const { token } = useSession();
@@ -30,19 +25,19 @@ export function WebsocketProvider({ children }) {
     // - messageLabel can be "event" or "NameChanged" or anything... we do not use the value currently
     // - payload also contains type, most of which are ignored (i.e. CURRENT_STARKNET_BLOCK_NUMBER, ActionItem, etc.)
     // - for all but CURRENT_STARKNET_BLOCK_NUMBER, body contains { event }
-    const { type, body, room } = payload;
+    const { type, body, room, ...others } = payload;
 
     // shape ws emitted activity-events to look like activities (id will not be correct, but nbd)
     // (skip any messages that are not activities)
-    if (!nonEventTypes.includes(type)) {
+    if (body?.event && !body.id) {
       body.id = body.event.id;
     }
 
     const roomKey = (room || '').includes('::') ? room : DEFAULT_ROOM;
     Object.values(messageHandlers.current).forEach((handler) => {
       if (handler.room === roomKey) {
-        if (process.env.NODE_ENV !== 'production') console.log('handleMessage', roomKey, { type, body });
-        handler.callback({ type, body });
+        if (process.env.NODE_ENV !== 'production') console.log('handleMessage', roomKey, { type, body, ...others });
+        handler.callback({ type, body, ...others });
       }
     });
   }, []);
