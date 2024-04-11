@@ -9,6 +9,8 @@ import { InputBlock } from '~/components/filters/components';
 import UncontrolledTextArea, { resizeOnKeydown } from '~/components/TextAreaUncontrolled';
 import useStore from '~/hooks/useStore';
 import { nativeBool } from '~/lib/utils';
+import useWebsocket from '~/hooks/useWebsocket';
+import useCrewContext from '~/hooks/useCrewContext';
 
 const Wrapper = styled.div`
   display: flex;
@@ -95,62 +97,15 @@ const isValidChatMessage = (content) => {
   return true;
 }
 
-const fakeChats = [
-  {
-    asteroidId: 1,
-    crewId: 1,
-    content: 'Here is a message.'
-  },
-  {
-    asteroidId: 1,
-    crewId: 2,
-    content: 'Here is a message.'
-  },
-  {
-    asteroidId: 1,
-    crewId: 3,
-    content: 'Here is a message. And here is something else I feel like I need to say. Take it or leave it. Also, I\'m having a pretty good time here, so that\'s cool.'
-  },
-  {
-    asteroidId: 1,
-    crewId: 4,
-    content: 'Here is a message.'
-  },
-  {
-    asteroidId: 1,
-    crewId: 5,
-    content: 'Here is a message.'
-  },
-  {
-    asteroidId: 1,
-    crewId: 6,
-    content: 'Here is a message.'
-  },
-  {
-    asteroidId: 1,
-    crewId: 6,
-    content: 'Here is a message.'
-  },
-  {
-    isConnectionBreak: true
-  },
-  {
-    asteroidId: 1,
-    crewId: 6,
-    content: 'Here is a message.'
-  },
-  {
-    asteroidId: 1,
-    crewId: 6,
-    content: 'Here is a message.'
-  },
-];
-
 const maxChatInputHeight = 95;
 
 const AsteroidChat = () => {
+  const { crew } = useCrewContext();
+  const { emitMessage } = useWebsocket();
+
   const asteroidId = useStore(s => s.asteroids.origin);
-  const chatHistory = useStore(s => fakeChats || s.chatHistory);
+  const chatHistory = useStore(s => s.chatHistory);
+  const createAlert = useStore(s => s.dispatchAlertLogged);
 
   const chatInputRef = useRef();
   const chatScrollRef = useRef();
@@ -160,6 +115,34 @@ const AsteroidChat = () => {
   const scrollToBottom = useCallback(() => {
     if (chatScrollRef.current) chatScrollRef.current.scrollTop = chatScrollRef.current.scrollHeight;
   }, []);
+  
+  const [submitting, setSubmitting] = useState();
+  const submitNewChat = useCallback(async () => {
+    if (asteroidId && crew?.id && isValidChatMessage(newChat)) {
+      setSubmitting(true);
+      const ack = await emitMessage('send-message', {
+        from: { label: Entity.IDS.CREW, id: crew?.id },
+        asteroid: { label: Entity.IDS.ASTEROID, id: asteroidId },
+        message: newChat
+      });
+
+      // console.log('ack', ack);
+      if (ack) {
+        setNewChat('');
+        resizeOnKeydown(maxChatInputHeight)(chatInputRef);
+        scrollToBottom();
+      } else {
+        createAlert({
+          type: 'GenericAlert',
+          data: { content: 'Message failed to send. Please try again.' },
+          duration: 3000,
+          level: 'warning',
+        });
+      }
+
+      setSubmitting(false);
+    }
+  }, [asteroidId, crew?.id, emitMessage, newChat, createAlert]);
 
   const handleNewChatChange = useCallback(async (e) => {
     setNewChat(e.currentTarget.value || '');
@@ -167,27 +150,29 @@ const AsteroidChat = () => {
     scrollToBottom();
   }, [scrollToBottom]);
 
-  const submitNewChat = useCallback(async () => {
-    if (isValidChatMessage(newChat)) {
-      // TODO: send on websocket connection
-      // send({
-      //   crewId,
-      //   asteroidId,
-      //   body: newChat
-      // });
-      // TODO: if ack
-      setNewChat('');
-      resizeOnKeydown(maxChatInputHeight)(chatInputRef);
-      scrollToBottom();
+  const handleKeyDown = useCallback((e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      submitNewChat();
     }
-  }, [newChat]);
+  }, [submitNewChat]);
 
   const remaining = useMemo(() => maxChatMessageLength - (newChat?.length || 0), [newChat?.length]);
 
   const asteroidChats = useMemo(
-    () => (chatHistory || []).filter((c) => c.isConnectionBreak || c.asteroidId === asteroidId),
+    () => (chatHistory || [])
+      // filter to asteroid (and connection breaks)
+      .filter((c) => c.isConnectionBreak || c.asteroidId === asteroidId)
+      // filter out consecutive connection breaks
+      .filter((c, i, arr) => i === 0 || !(c.isConnectionBreak && arr[i - 1].isConnectionBreak))
+      // filter out connection break if first or last element
+      .filter((c, i, arr) => (i > 0 && i < arr.length - 1) || !c.isConnectionBreak),
     [asteroidId, chatHistory]
   );
+  
+  // useEffect(() => {
+  //   console.log({ chatHistory, asteroidChats });
+  // }, [chatHistory, asteroidChats])
+  
 
   useEffect(() => {
     scrollToBottom();
@@ -199,7 +184,11 @@ const AsteroidChat = () => {
         <Chats>
           {asteroidChats.map((chat, i) => {
             return chat.isConnectionBreak
-              ? <Break key={i} />
+              ? (
+                <Break key={i}
+                  data-tip="Connection interruption (messages may be missing)"
+                  data-for="hudMenu" />
+              )
               : (
                 <Chat key={chat?.timestamp}>
                   <div>
@@ -217,7 +206,9 @@ const AsteroidChat = () => {
       <InputBlock>
         <div>
           <UncontrolledTextArea
+            disabled={nativeBool(!asteroidId || !crew || submitting)}
             onChange={handleNewChatChange}
+            onKeyDown={handleKeyDown}
             placeholder="Add message..."
             ref={chatInputRef}
             style={{ height: 36 }}
@@ -226,7 +217,8 @@ const AsteroidChat = () => {
         <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6 }}>
           <RemainingChars remaining={remaining}>{remaining.toLocaleString()} Remaining</RemainingChars>
           <Button
-            disabled={nativeBool(!newChat || remaining < 0)}
+            disabled={nativeBool(!newChat || remaining < 0 || !asteroidId || !crew || submitting)}
+            loading={!!submitting}
             size="small"
             onClick={submitNewChat}>
             Send

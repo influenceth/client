@@ -554,11 +554,71 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
       state.asteroids.zoomScene = details || null;
     })),
 
+    dispatchClearChatHistory: () => set(produce(state => {
+      state.chatHistory = [
+        // {
+        //   asteroidId: 1,
+        //   crewId: 1,
+        //   content: 'Here is a message.'
+        // },
+        // {
+        //   asteroidId: 1,
+        //   crewId: 2,
+        //   content: 'Here is a message.'
+        // },
+        // {
+        //   asteroidId: 1,
+        //   crewId: 3,
+        //   content: 'Here is a message. And here is something else I feel like I need to say. Take it or leave it. Also, I\'m having a pretty good time here, so that\'s cool.'
+        // },
+        // {
+        //   asteroidId: 1,
+        //   crewId: 4,
+        //   content: 'Here is a message.'
+        // },
+        // {
+        //   asteroidId: 1,
+        //   crewId: 5,
+        //   content: 'Here is a message.'
+        // },
+        // {
+        //   asteroidId: 1,
+        //   crewId: 6,
+        //   content: 'Here is a message.'
+        // },
+        // {
+        //   asteroidId: 1,
+        //   crewId: 6,
+        //   content: 'Here is a message.'
+        // },
+        // {
+        //   isConnectionBreak: true
+        // },
+        // {
+        //   asteroidId: 1,
+        //   crewId: 6,
+        //   content: 'Here is a message.'
+        // },
+        // {
+        //   asteroidId: 1,
+        //   crewId: 6,
+        //   content: 'Here is a message.'
+        // },
+      ];
+    })),
+
     dispatchChatMessage: (body) => set(produce(state => {
       state.chatHistory = [
         ...(state.chatHistory || []).slice(0, 249),
         { ...body, timestamp: Date.now() }
       ];
+    })),
+
+    dispatchChatDisconnectedMessage: () => set(produce(state => {
+      if (!state.chatHistory) state.chatHistory = [];
+      if (state.chatHistory.length > 0 && !state.chatHistory[state.chatHistory.length - 1].isConnectionBreak) {
+        state.chatHistory.push({ isConnectionBreak: true });
+      }  
     })),
 
     //

@@ -12,7 +12,8 @@ export function WebsocketProvider({ children }) {
   const { token } = useSession();
 
   const socket = useRef();
-  const registeredHandlers = useRef({});
+  const connectionHandlers = useRef({});
+  const messageHandlers = useRef({});
 
   const [wsReady, setWsReady] = useState(false);
 
@@ -28,66 +29,98 @@ export function WebsocketProvider({ children }) {
     }
 
     const roomKey = (room || '').includes('::') ? room : DEFAULT_ROOM;
-    if (registeredHandlers.current[roomKey]) {
-      if (process.env.NODE_ENV !== 'production') console.log('handleMessage', roomKey, { type, body });
-      registeredHandlers.current[roomKey]({ type, body });
-    }
+    Object.values(messageHandlers.current).forEach((handler) => {
+      if (handler.room === roomKey) {
+        if (process.env.NODE_ENV !== 'production') console.log('handleMessage', roomKey, { type, body });
+        handler.callback({ type, body });
+      }
+    });
+  }, []);
+
+  const handleConnection = useCallback((isConnected) => {
+    Object.values(connectionHandlers.current).forEach((callback) => callback(isConnected));
   }, []);
 
   // NOTE: this is currently limited to one callback registered per room b/c that's
   //  all we need, but it could always be switched to an array of listeners if needed
-  const registerWSHandler = useCallback((callback, room = null) => {
+  const registerMessageHandler = useCallback((callback, room = null) => {
     if (!socket.current) return;
+
+    const regId = Date.now();
     if (room) {
       const [type, id] = room.split('::');
       if (type && id) {
         socket.current.emit('join-room-request', { type, id: Number(id) });
-        registeredHandlers.current[room] = callback;
+        messageHandlers.current[regId] = { room, callback };
       } else {
         console.error('Invalid websocket room! (join)', room);
       }
     } else {
-      registeredHandlers.current[DEFAULT_ROOM] = callback;
+      messageHandlers.current[regId] = { room: DEFAULT_ROOM, callback };
+    }
+    return regId;
+  }, []);
+
+  const unregisterMessageHandler = useCallback((regId) => {
+    if (!socket.current) return;
+    const handler = messageHandlers.current[regId];
+    if (handler) {
+      if (handler.room !== DEFAULT_ROOM) {
+        const [type, id] = handler.room.split('::');
+        if (type && id) {
+          socket.current.emit('leave-room-request', { type, id: Number(id) });
+        }
+      }
+      delete messageHandlers.current[regId];
     }
   }, []);
 
-  const unregisterWSHandler = useCallback((room) => {
-    if (!socket.current) return;
-    if (room) {
-      const [type, id] = room.split('::');
-      if (type && id) {
-        socket.current.emit('leave-room-request', { type, id: Number(id) });
-        delete registeredHandlers.current[room];
-      } else {
-        console.error('Invalid websocket room! (leave)', room);
-      }
-    } else {
-      delete registeredHandlers.current[DEFAULT_ROOM];
-    }
+  const registerConnectionHandler = useCallback((callback) => {
+    const regId = Date.now();
+    connectionHandlers.current[regId] = callback;
+    return regId;
+  }, []);
+
+  const unregisterConnectionHandler = useCallback((regId) => {
+    delete connectionHandlers.current[regId];
   }, []);
 
   useEffect(() => {
     if (token) {
       socket.current = new io(process.env.REACT_APP_API_URL, {
         transports: [ 'websocket' ],
-        query: `token=${token}`
+        query: `token=${token}`,
       });
       socket.current.onAny(handleMessage);
+      socket.current.on('connect', () => handleConnection(true));
+      socket.current.on('disconnect', () => handleConnection(false));
       setWsReady(true);
     }
     return () => {
       if (socket.current) {
-        socket.current.off(); // removes all listeners for all events
         socket.current.disconnect();
+        socket.current.off(); // removes all listeners for all events
       }
       setWsReady(false);
     }
   }, [token]);
 
+  const emitMessage = useCallback(async (eventName, eventArgs, timeout = 5000) => {
+    try {
+      if (!socket.current) throw new Error('no websocket connection');
+      return await socket.current?.timeout(timeout).emitWithAck(eventName, eventArgs);
+    } catch (e) {
+      console.warn(e);
+    }
+  }, []);
+
   return (
     <WebsocketContext.Provider value={{
-      registerWSHandler,
-      unregisterWSHandler,
+      emitMessage,
+      registerMessageHandler,
+      unregisterMessageHandler,
+      registerConnectionHandler,
+      unregisterConnectionHandler,
       wsReady
     }}>
       {children}

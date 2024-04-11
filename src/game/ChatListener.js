@@ -1,29 +1,60 @@
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import useStore from '~/hooks/useStore';
 import useWebsocket from '~/hooks/useWebsocket';
 
 const ChatListener = () => {
-  const { registerWSHandler, unregisterWSHandler, wsReady } = useWebsocket();
+  const {
+    registerConnectionHandler,
+    registerMessageHandler,
+    unregisterConnectionHandler,
+    unregisterMessageHandler,
+    wsReady
+  } = useWebsocket();
 
   const dispatchChatMessage = useStore(s => s.dispatchChatMessage);
+  const dispatchChatDisconnectedMessage = useStore(s => s.dispatchChatDisconnectedMessage);
+  // const dispatchClearChatHistory = useStore(s => s.dispatchClearChatHistory);
+  // useEffect(() => {
+  //   dispatchClearChatHistory();
+  // }, [])
+
+  const [disconnected, setDisconnected] = useState();
+  const handleWSConnection = useCallback((isOpen) => {
+    setDisconnected(!isOpen);
+  }, []);
+
+  useEffect(() => {
+    if (disconnected) {
+      const to = setTimeout(() => {
+        dispatchChatDisconnectedMessage();
+      }, 1000);
+      return () => {  // if reconnects before timeout, no message added
+        clearInterval(to);
+      }
+    }
+  }, [disconnected]);
 
   const handleWSMessage = useCallback((message) => {
     if (process.env.NODE_ENV !== 'production') console.log('onWSMessage', message);
 
     const { type, body } = message;
-    dispatchChatMessage(body);
+    if (type === 'chat-message-received') {
+      dispatchChatMessage(body);
+    }
   }, [dispatchChatMessage]);
 
   useEffect(() => {
     if (wsReady) {
-      let roomName = `Chat`;
-      registerWSHandler(handleWSMessage, roomName);
+      const connectionRegId = registerConnectionHandler(handleWSConnection);
+      const messageRegId = registerMessageHandler(handleWSMessage);
+      dispatchChatDisconnectedMessage(); // on mount, must of been disconnected previously
       return () => {
-        unregisterWSHandler(roomName);
+        unregisterConnectionHandler(connectionRegId);
+        unregisterMessageHandler(messageRegId);
       };
     }
-  }, [wsReady]);
+  }, [handleWSConnection, handleWSMessage, wsReady]);
 
   return null;
 };
