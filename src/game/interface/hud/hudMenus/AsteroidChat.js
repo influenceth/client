@@ -126,11 +126,15 @@ const AsteroidChat = () => {
         message: newChat
       });
 
-      // console.log('ack', ack);
       if (ack) {
         setNewChat('');
         resizeOnKeydown(maxChatInputHeight)(chatInputRef.current);
         scrollToBottom();
+
+        // reset focus on textarea
+        setTimeout(() => {
+          chatInputRef.current.focus();
+        }, 0);
       } else {
         createAlert({
           type: 'GenericAlert',
