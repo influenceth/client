@@ -14,15 +14,16 @@ import { ScreensizeProvider } from '~/contexts/ScreensizeContext';
 import { SyncedTimeProvider } from '~/contexts/SyncedTimeContext';
 import { WebsocketProvider } from '~/contexts/WebsocketContext';
 import Audio from '~/game/Audio';
+import ChatListener from '~/game/ChatListener';
 import Interface from '~/game/Interface';
 import LandingPage from '~/game/Landing';
 import Referral from '~/game/Referral';
 import Scene from '~/game/Scene';
+import useSession from '~/hooks/useSession';
 import useServiceWorker from '~/hooks/useServiceWorker';
 import useStore from '~/hooks/useStore';
 import constants from '~/lib/constants';
 import theme from '~/theme';
-import useSession from './hooks/useSession';
 import WelcomeFlow from './WelcomeFlow';
 
 
@@ -148,6 +149,7 @@ const Game = () => {
       <SessionProvider>
         <CrewProvider>
           <WebsocketProvider>
+            <ChatListener />
             <Router>
               <Referral />
               <Switch>

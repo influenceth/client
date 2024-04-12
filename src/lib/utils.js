@@ -1,5 +1,6 @@
 import esb from 'elastic-builder';
 import { Crew, Entity, Lot, Permission, Processor, Time } from '@influenceth/sdk';
+import trim from 'lodash/trim';
 
 import { BioreactorBuildingIcon, ManufactureIcon, RefineIcon } from '~/components/Icons';
 
@@ -65,7 +66,22 @@ export const keyify = (str) => (str || '').replace(/[^a-zA-Z0-9_]/g, '');
 export const reactBool = (value) => value ? 'true' : undefined;
 export const nativeBool = (value) => Boolean(value);
 
-export const reactPreline = (value) => (value || '').split('\n').map((line, i) => i > 0 ? [<br key={i} />, line] : line);
+export const reactPreline = (value, maxInARow = 2) => {
+  return (value || '')
+    .split('\n')
+    .map((line) => trim(line))
+    .filter((c, i, arr) => {
+      if (c.length) return true;
+      if (i < maxInARow) return true;
+      
+      // this line is blank... make sure it is not creating > maxInARow
+      for (let j = 1; j <= maxInARow - 1; j++) {
+        if (arr[i - j].length > 0) return true;
+      }
+      return false;
+    })
+    .map((line, i) => i > 0 ? [<br key={i} />, line] : line)
+};
 
 export const locationsArrToObj = (locations) => {
   const asteroidId = locations.find((l) => Number(l.label) === Entity.IDS.ASTEROID)?.id;
@@ -130,7 +146,7 @@ export const esbLocationQuery = ({ asteroidId, lotId }, path = 'Location.locatio
     )
 };
 
-export const esbPermissionQuery = (crewId, permissionId) => {
+export const esbPermissionQuery = (crewId, crewDelegatedTo, permissionId) => {
   return esb.boolQuery().should([
     esb.termQuery('Control.controller.id', crewId),
     esb.nestedQuery()
@@ -158,6 +174,14 @@ export const esbPermissionQuery = (crewId, permissionId) => {
         esb.boolQuery().must([
           esb.termQuery('WhitelistAgreements.permission', permissionId),
           esb.termQuery('WhitelistAgreements.permitted.id', crewId),
+        ])
+      ),
+    esb.nestedQuery()
+      .path('WhitelistAccountAgreements')
+      .query(
+        esb.boolQuery().must([
+          esb.termQuery('WhitelistAccountAgreements.permission', permissionId),
+          esb.termQuery('WhitelistAccountAgreements.permitted', crewDelegatedTo),
         ])
       )
   ])
@@ -206,7 +230,7 @@ export const safeEntityId = (variablyHydratedEntity) => {
 
 export const entityToAgreements = (entity) => {
   const acc = [];
-  ['PrepaidAgreements', 'ContractAgreements', 'WhitelistAgreements'].forEach((agreementType) => {
+  ['PrepaidAgreements', 'ContractAgreements', 'WhitelistAgreements', 'WhitelistAccountAgreements'].forEach((agreementType) => {
     (entity[agreementType] || []).forEach((agreement, j) => {
       const formatted = {
         key: `${entity.uuid}_${agreementType}_${j}`,
@@ -242,6 +266,5 @@ export const cleanseTxHash = function (txHash) {
 
 export const earlyAccessJSTime = 1708527600e3;
 export const openAccessJSTime = 1709046000e3;
-export const expectedBlockSeconds = 240; // TODO: calculate average based on time of 10 blocks ago
 export const displayTimeFractionDigits = 2;
 export const maxAnnotationLength = 750;

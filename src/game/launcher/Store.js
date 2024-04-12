@@ -713,7 +713,6 @@ export const FaucetSKU = () => {
 
     try {
       const txHash = await api.requestTokens('ETH');
-      setRequestingEth(false);
       await starknet.account.waitForTransaction(txHash);
 
       createAlert({
@@ -723,13 +722,15 @@ export const FaucetSKU = () => {
       });
     } catch (e) {
       console.error(e);
-      setRequestingEth(false);
+
       createAlert({
         type: 'GenericAlert',
         data: { content: 'Faucet request failed, please try again later.' },
         level: 'warning',
         duration: 5000
       });
+    } finally {
+      setRequestingEth(false);
     }
 
     onComplete();
@@ -740,7 +741,6 @@ export const FaucetSKU = () => {
 
     try {
       const txHash = await api.requestTokens('SWAY');
-      setRequestingSway(false);
       await starknet.account.waitForTransaction(txHash);
 
       createAlert({
@@ -750,13 +750,14 @@ export const FaucetSKU = () => {
       });
     } catch (e) {
       console.error(e);
-      setRequestingSway(false);
       createAlert({
         type: 'GenericAlert',
         data: { content: 'Faucet request failed, please try again later.' },
         level: 'warning',
         duration: 5000
       });
+    } finally {
+      setRequestingSway(false);
     }
 
     onComplete();

@@ -83,7 +83,7 @@ export function ActionItemProvider({ children }) {
     setAgreementItems(
       (crewAgreements || [])
         .filter((a) => (
-          a._agreement?.permitted?.id === crewId
+          ((a._agreement?.permitted?.id === crew?.id) || (crew?.Crew?.delegatedTo && a._agreement?.permitted === crew?.Crew?.delegatedTo))
           && !!a._agreement?.endTime
           && (a._agreement.endTime < blockTime - 7 * 86400) && (a._agreement.endTime < blockTime + 7 * 86400)
         ))
@@ -93,7 +93,7 @@ export function ActionItemProvider({ children }) {
         }))
         .sort((a, b) => a._agreement.endTime - b._agreement.endTime)
     );
-  }, [actionItems, crewAgreements, plannedBuildings, blockTime]);
+  }, [actionItems, crew, crewAgreements, plannedBuildings, blockTime]);
 
   const allVisibleItems = useMemo(() => {
     if (!authenticated) return [];

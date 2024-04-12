@@ -121,8 +121,18 @@ const getPolicyAndAgreementConfig = (couldAddToCollection = false, invalidateAgr
 
       const invs = [entityInvalidation];
       if (invalidateAgreements) {
-        invs.push(['agreements', returnValues.permitted?.id]);
-        invs.push(['agreements', entity?.Control?.controller?.id]);
+        if (returnValues.permitted?.id) {
+          invs.push(['agreements', returnValues.permitted.id]);
+          if (entity?.Control?.controller?.id) {
+            invs.push(['agreements', entity?.Control?.controller?.id]);
+          }
+
+        // if account whitelist, just invalidate all agreements (for all crews)
+        // TODO (maybe): in the future, we potentially separate the queries for agreements and account-agreements
+        //  so could have separate cacheKeys and thus separate invalidations
+        } else if (returnValues.permitted) {
+          invs.push(['agreements']);
+        }
       }
       return invs;
     },
@@ -543,7 +553,9 @@ const activities = {
           newGroupEval: {
             updatedValues: { owner: returnValues.delegatedTo }
           }
-        }
+        },
+        // must invalidate crew agreements here to catch WhitelistAccountAgreements
+        ['agreements', returnValues.crew?.id]
       ]
     },
     getLogContent: ({ event: { returnValues } }) => ({
@@ -993,7 +1005,7 @@ const activities = {
     //   };
     // },
 
-    requiresCrewTime: true
+    requiresCrewTime: true  // TODO: is this right?
   },
 
   EmergencyActivated: {
@@ -2122,7 +2134,9 @@ const activities = {
   //  entering a new permissioned collection would be if it became public,
   //  so adding a public policy is handled differently from the others
   AddedToWhitelist: getPolicyAndAgreementConfig(true, true),
+  AddedAccountToWhitelist: getPolicyAndAgreementConfig(true, true),
   RemovedFromWhitelist: getPolicyAndAgreementConfig(false, true),
+  RemovedAccountFromWhitelist: getPolicyAndAgreementConfig(false, true),
   PublicPolicyAssigned: getPolicyAndAgreementConfig(true),
   PublicPolicyRemoved: getPolicyAndAgreementConfig(),
   ContractPolicyAssigned: getPolicyAndAgreementConfig(),

@@ -4,7 +4,6 @@ import { Crewmate, Inventory, Product, Ship, Time } from '@influenceth/sdk';
 import { EmergencyModeCollectIcon } from '~/components/Icons';
 import useShip from '~/hooks/useShip';
 import ActionButton, { getCrewDisabledReason } from './ActionButton';
-import { getCrewAbilityBonuses } from '~/lib/utils';
 
 const resourceId = Product.IDS.HYDROGEN_PROPELLANT;
 
