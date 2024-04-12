@@ -5,6 +5,7 @@ import Button from '~/components/ButtonAlt';
 
 import HudIconButton from '~/components/HudIconButton';
 import { InfluenceIcon } from '~/components/Icons';
+import useAccountFormatted from '../../../hooks/useAccountFormatted';
 
 export const menuAnimationTime = 250;
 
@@ -116,22 +117,6 @@ const LoggedInUser = styled.div`
   text-overflow: ellipsis;
   white-space: nowrap;
   width: 100%;
-
-  ${p => p.account
-    ? `
-      &:before {
-        content: "${p.account.substr(0, 6)}"
-      }
-      &:after {
-        content: "...${p.account.substr(-6)}"
-      }
-    `
-    : `
-      &:before {
-        content: "";
-      }
-    `
-  }
 `;
 
 const LogoWrapper = styled.span`
@@ -154,7 +139,7 @@ const LogoWrapper = styled.span`
 `;
 
 const OpenerAsButtonWrapper = styled.div`
-  align-items: center;  
+  align-items: center;
   display: flex;
   font-size: 18px;
   height: 40px;
@@ -162,15 +147,19 @@ const OpenerAsButtonWrapper = styled.div`
   width: 40px;
 `;
 
-export const NavMenuLoggedInUser = ({ account }) => (
-  <>
-    <LogoWrapper connected={!!account}>
-      <InfluenceIcon />
-    </LogoWrapper>
+export const NavMenuLoggedInUser = ({ account }) => {
+  const formattedAccount = useAccountFormatted({ address: account, truncate: true, doNotReplaceYou: true });
 
-    <LoggedInUser account={account} />
-  </>
-);
+  return (
+    <>
+      <LogoWrapper connected={!!account}>
+        <InfluenceIcon />
+      </LogoWrapper>
+
+      <LoggedInUser>{formattedAccount}</LoggedInUser>
+    </>
+  );
+};
 
 const DropdownNavMenu = ({
   menuItems,

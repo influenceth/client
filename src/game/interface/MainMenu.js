@@ -159,8 +159,19 @@ const MainMenu = () => {
       }
     }
 
+    // ship zoom scene can be in OR out
+    if (zoomScene?.type === 'SHIP') {
+      if (zoomStatus === 'in' || zoomStatus === 'out') {
+        return {
+          backLabel: zoomStatus === 'in' ? 'Back to Asteroid' : 'Back to Belt',
+          onClickBack: () => dispatchZoomScene()
+        }
+      }
+    }
+
+    // if get here and not zoomed in, don't show the back link (because already zoomed/zooming out, so nowhere to go "back" to)
     if (zoomStatus !== 'in') return {};
-    if (zoomScene?.type === 'LOT' || zoomScene?.type === 'SHIP') {
+    if (zoomScene?.type === 'LOT') {
       return {
         backLabel: 'Back to Asteroid',
         onClickBack: () => dispatchZoomScene()
@@ -184,7 +195,7 @@ const MainMenu = () => {
         <LeftHudButtonArea>
           {onClickBack && (
             <HudIconButton
-              data-tip={backLabel}
+              dataTip={backLabel}
               onClick={onClickBack}>
               <BackIcon />
             </HudIconButton>

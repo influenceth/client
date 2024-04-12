@@ -72,7 +72,7 @@ const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, co
 
   const { gl, scene } = useThree();
   const queryClient = useQueryClient();
-  const { registerWSHandler, unregisterWSHandler, wsReady } = useWebsocket();
+  const { registerMessageHandler, unregisterMessageHandler, wsReady } = useWebsocket();
   const { processInBackground } = useWebWorker();
 
   const textureQuality = useStore(s => s.graphics.textureQuality);
@@ -331,10 +331,9 @@ const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, co
 
   useEffect(() => {
     if (token && wsReady) {
-      let roomName = `Asteroid::${asteroidId}`;
-      registerWSHandler(handleWSMessage, roomName);
+      const regId = registerMessageHandler(handleWSMessage, `Asteroid::${asteroidId}`);
       return () => {
-        unregisterWSHandler(roomName);
+        unregisterMessageHandler(regId);
 
         // since will not be listening to asteroid room when zoomed away, remove ['asteroidPackedLotData', asteroidId]
         // and all [ 'entity', Entity.IDS.LOT, * ] that are on the asteroid but not occupied by me

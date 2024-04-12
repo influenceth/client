@@ -184,6 +184,7 @@ const useActionButtons = () => {
   return {
     actions,
     props: {
+      accountAddress,
       asteroid,
       crew,
       lot,

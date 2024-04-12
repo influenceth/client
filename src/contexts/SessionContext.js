@@ -122,7 +122,13 @@ export function SessionProvider({ children }) {
 
     try {
       const connectors = [];
-      const customProvider = new RpcProvider({ nodeUrl: process.env.REACT_APP_STARKNET_PROVIDER });
+      let nodeUrl = process.env.REACT_APP_STARKNET_PROVIDER;
+
+      if (process.env.REACT_APP_STARKNET_PROVIDER_BACKUP) {
+        nodeUrl = Math.random() > 0.5 ? process.env.REACT_APP_STARKNET_PROVIDER : process.env.REACT_APP_STARKNET_PROVIDER_BACKUP;
+      }
+
+      const customProvider = new RpcProvider({ nodeUrl });
 
       if (!!process.env.REACT_APP_ARGENT_WEB_WALLET_URL) {
         connectors.push(new WebWalletConnector({
@@ -261,8 +267,10 @@ export function SessionProvider({ children }) {
       await provider.getClassAt(account?.address); // if this throws, the contract is not deployed
       isDeployed = true;
     } catch (e) {
-      console.error(e);
+      if (!e.message.includes('Contract not found')) console.error(e);
     }
+
+    const newSession = { isDeployed };
 
     // Start authenticating by requesting a login message from API
     setStatus(STATUSES.AUTHENTICATING);
@@ -270,7 +278,11 @@ export function SessionProvider({ children }) {
     let newToken = null;
 
     try {
-      if (id === 'argentWebWallet') {
+      if (!isDeployed) {
+        // If the wallet is not yet deployed, create an insecure session
+        newToken = await api.verifyLogin(connectedAddress, { signature: 'insecure' });
+        Object.assign(newSession, { walletId: id, accountAddress: connectedAddress, token: newToken });
+      } else if (id === 'argentWebWallet') {
         // Connect via Argent Web Wallet and automatically create a session
         const sessionSigner = '0x' + Buffer.from(utils.randomPrivateKey()).toString('hex');
         const requestSession = {
@@ -284,28 +296,28 @@ export function SessionProvider({ children }) {
           ]
         };
 
-        const gasFees = {
-          tokenAddress: process.env.REACT_APP_ERC20_TOKEN_ADDRESS,
-          maximumAmount: { low: '0x2386f26fc10000', high: '0x0' }
-        };
+        const low = resolveChainId(process.env.REACT_APP_CHAIN_ID) === 'SN_MAIN' ? '0x2386f26fc10000' : '0x16345785d8a0000'
+        const gasFees = { tokenAddress: process.env.REACT_APP_ERC20_TOKEN_ADDRESS, maximumAmount: { low, high: '0x0' }};
 
         const sessionSignature = await createOffchainSession(requestSession, account, gasFees);
 
         if (sessionSignature) {
           const message = await buildSessionMessage({ session: requestSession, account, gasFees });
           newToken = await api.verifyLogin(connectedAddress, { message, signature: sessionSignature.join(',') });
-          dispatchSessionStarted({
+          Object.assign(newSession, {
             walletId: id, accountAddress: connectedAddress, token: newToken, sessionSigner, sessionSignature
           });
+
         }
       } else {
         // Connect via a traditional browser extension wallet
-        const signature = isDeployed ? await account.signMessage(loginMessage) : ['insecure'];
+        const signature = await account.signMessage(loginMessage);
         if (signature?.code === 'CANCELED') throw new Error('User abort');
-        if (signature) newToken = await api.verifyLogin(connectedAddress, { signature: signature.join(',') });
-        dispatchSessionStarted({ walletId: id, accountAddress: connectedAddress, token: newToken });
+        newToken = await api.verifyLogin(connectedAddress, { signature: signature.join(',') });
+        Object.assign(newSession, { walletId: id, accountAddress: connectedAddress, token: newToken });
       }
 
+      dispatchSessionStarted(newSession);
       setStatus(STATUSES.AUTHENTICATED);
       return true;
     } catch (e) {
@@ -464,6 +476,7 @@ export function SessionProvider({ children }) {
       logout,
       authenticating: status === STATUSES.AUTHENTICATING,
       authenticated,
+      isDeployed: authenticated ? currentSession?.isDeployed : null,
       token: authenticated ? currentSession?.token : null,
       accountAddress: authenticated ? currentSession?.accountAddress : null,
       walletId: authenticated ? currentSession?.walletId : null,

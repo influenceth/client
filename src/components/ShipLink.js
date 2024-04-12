@@ -7,6 +7,7 @@ import useStore from '~/hooks/useStore';
 import { useLotLink } from './LotLink';
 import OnClickLink from './OnClickLink';
 import EntityName from './EntityName';
+import { ZOOM_OUT_ANIMATION_TIME } from '~/game/scene/Asteroid';
 
 export const useShipLink = ({ shipId, zoomToShip }) => {
   const dispatchHudMenuOpened = useStore(s => s.dispatchHudMenuOpened);
@@ -24,10 +25,15 @@ export const useShipLink = ({ shipId, zoomToShip }) => {
   const zoomToShipAsNeeded = useCallback(() => {
     if (!ship) return;
 
+    let delayToZoomScene = 500;
+
     // if ship is in_flight, zoom "out", show zoomScene of ship
     if (ship.Ship?.transitDeparture > 0) {
       // TODO (later): zoom to ship location or at least show reticule on it
-      if (zoomStatus === 'in') updateZoomStatus('zooming-out');
+      if (zoomStatus === 'in') {
+        updateZoomStatus('zooming-out');
+        delayToZoomScene += ZOOM_OUT_ANIMATION_TIME;
+      }
 
     // if ship is in_port / on_surface, zoom to lot, show zoomScene of ship
     } else if (!!ship?._location.lotId) {
@@ -50,7 +56,7 @@ export const useShipLink = ({ shipId, zoomToShip }) => {
             dispatchHudMenuOpened(zoomToShip);
           }, 0);
         }
-      }, 500);
+      }, delayToZoomScene);
     }
   }, [currentZoomScene, ship, zoomToAsteroid, zoomToLot, zoomToShip, dispatchZoomScene, dispatchHudMenuOpened]);
 
