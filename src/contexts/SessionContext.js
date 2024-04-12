@@ -19,9 +19,9 @@ import { getBlockTime } from '~/lib/utils';
 import useStore from '~/hooks/useStore';
 
 const resolveChainId = (chainId) => {
-  if (chainId === '0x534e5f4d41494e' || chainId === 'SN_MAIN') return 'SN_MAIN';
-  if (chainId === '0x534e5f474f45524c49' || chainId === 'SN_GOERLI') return 'SN_GOERLI';
-  if (chainId === '0x534e5f5345504f4c4941' || chainId === 'SN_SEPOLIA') return 'SN_SEPOLIA';
+  if (['0x534e5f4d41494e', 'SN_MAIN'].includes(chainId)) return 'SN_MAIN';
+  if (['0x534e5f474f45524c49', 'SN_GOERLI'].includes(chainId)) return 'SN_GOERLI';
+  if (['0x534e5f5345504f4c4941', 'SN_SEPOLIA', 'sepolia-alpha'].includes(chainId)) return 'SN_SEPOLIA';
   return 'SN_DEV';
 };
 
