@@ -79,18 +79,13 @@ const Chat = styled.div`
     flex: 0 0 60px;
   }
   & > div:last-child {
-    display: flex;
-    flex-direction: column;
+    align-self: center;
     flex: 1;
-    padding-top: 2px;
-    & > div:first-child {
-      flex: 1;
-    }
   }
 `;
 const Ago = styled.div`
   font-size: 85%;
-  margin-top: 10px;
+  margin-top: 6px;
   opacity: 0.6;
 `;
 
