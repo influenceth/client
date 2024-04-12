@@ -149,7 +149,7 @@ const AnnotationItem = ({ annotation }) => {
     if (!annotation.createdAt) return 'a long time ago';
     const m = moment(new Date(annotation.createdAt));
     return m.fromNow();
-  })
+  }, [annotation.createdAt]);
   return (
     <ItemWrapper>
       <div>
