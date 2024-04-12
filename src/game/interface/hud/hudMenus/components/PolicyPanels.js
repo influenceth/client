@@ -561,7 +561,7 @@ const PolicyPanel = ({ editable = false, entity, permission }) => {
 
           {editable && (
             <EditBlock>
-              <Button onClick={() => toggleEditing('policy')}>Edit Permission Policy</Button>
+              <Button size="small" onClick={() => toggleEditing('policy')}>Edit Permission Policy</Button>
             </EditBlock>
           )}
 
@@ -581,7 +581,7 @@ const PolicyPanel = ({ editable = false, entity, permission }) => {
                     </DataRow>
                   </DataBlock>
                   <EditBlock>
-                    <Button onClick={() => toggleEditing('allowlist')}>Edit Allowlist</Button>
+                    <Button size="small" onClick={() => toggleEditing('allowlist')}>Edit Allowlist</Button>
                   </EditBlock>
                 </Section>
               )}
