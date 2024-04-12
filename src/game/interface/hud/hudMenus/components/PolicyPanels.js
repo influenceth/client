@@ -303,8 +303,9 @@ const PolicyPanel = ({ editable = false, entity, permission }) => {
     if (Permission.TYPES[permission].isExclusive) {
       if (currentPolicy?.agreements?.[0]?.noticeTime > 0) return 'under notice';
       if (currentPolicy?.crewStatus === 'available' && permission === Permission.IDS.USE_LOT) {
-        if (entity?.building?.Control?.controller?.id === entity?.Control?.controller?.id) return 'unleasable';
-        if (entity?.surfaceShip?.Control?.controller?.id === entity?.Control?.controller?.id) return 'unleasable';
+        if (entity?.Control?.controller?.id) {
+          if ((entity.building || entity?.surfaceShip)?.Control?.controller?.id === entity.Control.controller.id) return 'unleasable';
+        }
       }
 
     // else, only the crew cares
