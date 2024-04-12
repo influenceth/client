@@ -73,7 +73,7 @@ const usePagedAgreements = (params) => {
         if (filters.role) {
           if (!(
             (filters.role.includes('lessor') && a.Control?.controller?.id === crew?.id)
-            || (filters.role.includes('lessee') && a._agreement.permitted?.id === crew?.id)
+            || (filters.role.includes('lessee') && ((a._agreement.permitted?.id === crew?.id) || (crew?.Crew?.delegatedTo && a._agreement.permitted === crew.Crew.delegatedTo)))
           )) return false;
         }
         if (filters.timing) {
@@ -86,7 +86,7 @@ const usePagedAgreements = (params) => {
         return true;
       })
       .sort((a, b) => (sort[1] === 'asc' ? 1 : -1) * (get(a, sort[0]) < get(b, sort[0]) ? -1 : 1));
-  }, [blockTime, data, sort, filters]);
+  }, [blockTime, crew, data, sort, filters]);
 
   const dataPage = useMemo(() => filteredData.slice(pageSize * (page - 1), pageSize * page), [filteredData, page])
 

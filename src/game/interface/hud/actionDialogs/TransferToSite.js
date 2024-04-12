@@ -254,7 +254,7 @@ const TransferToSite = ({ asteroid, lot: destinationLot, deliveryManager, stage,
         </FlexSection>
 
         <TransferBuildingRequirementsSection
-          label="Construction Requirements"
+          label="Items"
           onClick={originLot ? () => setTransferSelectorOpen(true) : null}
           requirements={buildingRequirements}
           selectedItems={selectedItems}

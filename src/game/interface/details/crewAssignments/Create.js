@@ -811,7 +811,7 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
 
   const dispatchCrewAssignmentRestart = useStore((s) => s.dispatchCrewAssignmentRestart);
 
-  const isNameValid = useNameAvailability(Entity.IDS.CREWMATE);
+  const isNameValid = useNameAvailability({ id: crewmateId, label: Entity.IDS.CREWMATE });
   const { purchaseAndOrInitializeCrewmate } = useCrewManager();
   const { crew, crewmateMap, adalianRecruits, arvadianRecruits } = useCrewContext();
   const { promptingTransaction } = useContext(ChainTransactionContext);

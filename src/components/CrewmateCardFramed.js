@@ -173,12 +173,14 @@ const CrewmateCardAbstract = ({
         )}
       </Avatar>
       <AvatarFlourish>
-        {isCaptain && <StyledCaptainIcon isEmpty={isEmpty} />}
         {!props.noArrow && (
-          <StyledTriangleTip
-            fillColor={bgColor}
-            strokeColor={borderColor || defaultBorderColor}
-            strokeWidth={2} />
+          <>
+            {isCaptain && <StyledCaptainIcon isEmpty={isEmpty} />}
+            <StyledTriangleTip
+              fillColor={bgColor}
+              strokeColor={borderColor || defaultBorderColor}
+              strokeWidth={2} />
+          </>
         )}
       </AvatarFlourish>
     </AvatarWrapper>

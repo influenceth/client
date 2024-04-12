@@ -68,7 +68,8 @@ const AsteroidDetails = () => {
           containerCss={tabContainerCss}
           initialActive={tab === 'resources' ? 1 : 0}
           onChange={onTabChange}
-          tabCss={{ textTransform: 'uppercase', width: '200px' }}
+          labelCss={{ textAlign: 'center', textTransform: 'uppercase' }}
+          tabCss={{ color: 'white', justifyContent: 'center', width: '180px' }}
           tabs={[
             {
               icon: <InfoIcon />,

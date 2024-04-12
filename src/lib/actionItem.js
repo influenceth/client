@@ -1,6 +1,7 @@
 import { Building, Entity, Lot, Order, Permission, Process, Product, RandomEvent, Ship } from '@influenceth/sdk';
 import moment from 'moment';
 
+import { RandomEventIcon } from '~/components/AnimatedIcons';
 import {
   ClaimRewardIcon,
   CrewIcon,
@@ -41,12 +42,11 @@ import {
   CoreSampleIcon,
   AssetAgreementsIcon,
   WarningIcon,
+  EditIcon,
 } from '~/components/Icons';
+import formatters from '~/lib/formatters';
+import { getProcessorProps, locationsArrToObj, ucfirst } from '~/lib/utils';
 import theme, { hexToRGB } from '~/theme';
-import { getProcessorProps, locationsArrToObj } from './utils';
-import formatters from './formatters';
-import { RandomEventIcon } from '~/components/AnimatedIcons';
-import EntityName from '~/components/EntityName';
 
 const formatAsItem = (activity, actionItem = {}) => {
   // console.log('formatAsItem', activity, actionItem);
@@ -154,6 +154,24 @@ const formatAsTx = (item) => {
   //  if so, copy in all the deprecated / not-yet-implemented items as well for reference
   const eventName = item.event?.event || item.key;
   switch(eventName) {
+    case 'AnnotateEvent': {
+      formatted.icon = <EditIcon />;
+      formatted.label = `Annotate ${ucfirst(Entity.TYPES[item.meta?.entity?.label]?.label) || 'Event'}`;
+      formatted.onClick = ({ history }) => {
+        if (item.meta?.entity?.label === Entity.IDS.ASTEROID) {
+          history.push(`/asteroids/${item.meta?.entity?.id}`);
+        } else if (item.meta?.entity?.label === Entity.IDS.BUILDING) {
+          history.push(`/building/${item.meta?.entity?.id}`);
+        } else if (item.meta?.entity?.label === Entity.IDS.CREW) {
+          history.push(`/crew/${item.meta?.entity?.id}`);
+        } else if (item.meta?.entity?.label === Entity.IDS.CREWMATE) {
+          history.push(`/crewmate/${item.meta?.entity?.id}`);
+        } else if (item.meta?.entity?.label === Entity.IDS.SHIP) {
+          history.push(`/ship/${item.meta?.entity?.id}`);
+        }
+      };
+      break;
+    }
     case 'ArrangeCrew': {
       formatted.icon = <ManageCrewIcon />;
       formatted.label = 'Manage Crew';
@@ -806,7 +824,7 @@ const formatAsTx = (item) => {
       break;
     }
 
-    case 'UpdateAllowlist': {
+    case 'UpdateAllowlists': {
       formatted.icon = <PermissionIcon />;
       formatted.label = 'Update Allowlist';
       formatted.asteroidId = item.meta?.asteroidId || Lot.toPosition(item.meta?.lotId)?.asteroidId;

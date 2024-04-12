@@ -45,7 +45,13 @@ export function ActivitiesProvider({ children }) {
   const { crew, pendingTransactions, refreshReadyAt } = useCrewContext();
   const getActivityConfig = useGetActivityConfig();
   const queryClient = useQueryClient();
-  const { registerWSHandler, unregisterWSHandler, wsReady } = useWebsocket();
+  const {
+    registerConnectionHandler,
+    registerMessageHandler,
+    unregisterConnectionHandler,
+    unregisterMessageHandler,
+    wsReady
+  } = useWebsocket();
 
   const createAlert = useStore(s => s.dispatchAlertLogged);
 
@@ -90,11 +96,9 @@ export function ActivitiesProvider({ children }) {
   //   }
   // }, []);
 
+  const debugInvalidation = false;
   const handleActivities = useCallback((newActivities, skipInvalidations) => {
     // return;
-
-    // refresh crew's readyAt
-    let shouldRefreshReadyAt = false;
 
     // prep activities, then handle
     const transformedActivities = newActivities.map((e) => {
@@ -103,18 +107,31 @@ export function ActivitiesProvider({ children }) {
       return e;
     });
 
-    // (hopefully cure any race conditions with the setTimeout)
-    // TODO: this timeout can be removed if/when we start optimistically updating query cache from
-    //        the event's linked assets
-    setTimeout(() => {
-      transformedActivities.forEach(activity => {
-        if (!skipInvalidations) {
-          const debugInvalidation = false;
+    // if nothing to do, can return
+    if (transformedActivities.length === 0) return;
+
+    // this timeout is to hopefully give enough time for all relevant assets to be updated 
+    // in mongo and/or elasticsearch before invaliding/re-requesting them
+    setTimeout(async () => {
+      let shouldRefreshReadyAt = false;
+
+      if (!skipInvalidations) {
+        for (let activity of transformedActivities) {
           const activityConfig = getActivityConfig(activity);
+          if (!activityConfig) continue;
+
+          const pendingTransaction = (pendingTransactions || []).find((p) => p.txHash === activity.event?.transactionHash);
+          const extraInvalidations = await activityConfig.onBeforeReceived(pendingTransaction);
+
+          if (debugInvalidation) console.log('extraInvalidations', extraInvalidations);
           shouldRefreshReadyAt = shouldRefreshReadyAt || !!activityConfig?.requiresCrewTime;
 
           // console.log('invalidations', activityConfig?.invalidations);
-          (activityConfig?.invalidations || []).forEach((invalidationConfig) => {
+          const allInvalidations = [
+            ...(activityConfig?.invalidations || []),
+            ...(extraInvalidations || [])
+          ]
+          allInvalidations.forEach((invalidationConfig) => {
             const invalidations = [];
 
             // this is a raw queryKey
@@ -213,7 +230,7 @@ export function ActivitiesProvider({ children }) {
 
             if (debugInvalidation) console.log('invalidate', invalidationConfig, invalidations);
             invalidations.forEach((queryKey) => {
-              // console.log('state', queryClient.getQueryState(queryKey))
+              console.log('invalidate', queryKey);
               queryClient.invalidateQueries({ queryKey, refetchType: 'active' });
             });
           });
@@ -226,7 +243,7 @@ export function ActivitiesProvider({ children }) {
             })
           };
         }
-      });
+      }
 
       setActivities((prevActivities) => uniq([
         ...transformedActivities,
@@ -238,7 +255,7 @@ export function ActivitiesProvider({ children }) {
       }
 
     }, 2500);
-  }, [getActivityConfig, refreshReadyAt]);
+  }, [getActivityConfig, pendingTransactions, refreshReadyAt]);
 
   // try to process WS activities grouped by block
   const processPendingWSBatch = useCallback(async () => {
@@ -255,6 +272,27 @@ export function ActivitiesProvider({ children }) {
       handleActivities(activitiesToProcess);
     }
   }, [handleActivities]);
+
+  const [disconnected, setDisconnected] = useState();
+  const [stale, setStale] = useState();
+  const onWSConnection = useCallback((isOpen) => {
+    if (isOpen && stale) {
+      queryClient.resetQueries();
+      setStale(false);
+    }
+    setDisconnected(!isOpen);
+  }, [stale]);
+
+  useEffect(() => {
+    // if disconnected for more than X seconds, set state to `stale`. this will refetch
+    // everything once the connection is restored. any value of X is technically imperfect
+    // here, but it also seems excessive to reset state on any microsecond disconnection
+    if (disconnected) {
+      const to = setTimeout(() => setStale(true), 5e3);
+      // (if reconnects before timeout, do not set to stale)
+      return () => clearTimeout(to);
+    }
+  }, [disconnected]);
 
   const onWSMessage = useCallback((message) => {
     if (process.env.NODE_ENV !== 'production') console.log('onWSMessage', message);
@@ -301,18 +339,23 @@ export function ActivitiesProvider({ children }) {
     // on missing pending activities here, we DO need to invalidate the cache values
     isFirstLoad.current = false;
 
-    // setup ws listeners
-    registerWSHandler(onWSMessage);
     const crewRoom = crew?.id ? `Crew::${crew.id}` : null;
-    if (crewRoom) registerWSHandler(onWSMessage, crewRoom);
+    
+    // setup ws listeners
+    const connListenerRegId = registerConnectionHandler(onWSConnection);
+    const messageListenerRegIds = [];
+    messageListenerRegIds.push(registerMessageHandler(onWSMessage));
+    if (crewRoom) {
+      messageListenerRegIds.push(registerMessageHandler(onWSMessage, crewRoom));
+    }
 
     // reset on logout / disconnect
     return () => {
       setActivities([]);
-      unregisterWSHandler();
-      if (crewRoom) unregisterWSHandler(crewRoom);
+      unregisterConnectionHandler(connListenerRegId);
+      messageListenerRegIds.forEach((regId) => unregisterMessageHandler(regId));
     }
-  }, [crew?.id, onWSMessage, token, wsReady]);
+  }, [crew?.id, onWSConnection, onWSMessage, token, wsReady]);
 
   return (
     <ActivitiesContext.Provider value={activities}>

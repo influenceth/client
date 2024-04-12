@@ -7,7 +7,7 @@ import CrewIndicator from '~/components/CrewIndicator';
 import Ether from '~/components/Ether';
 import { EccentricityIcon, InclinationIcon, LinkIcon, MagnifyingIcon, OrbitalPeriodIcon, RadiusIcon, ResourceGroupIcons, ScanAsteroidIcon, SemiMajorAxisIcon, SurfaceAreaIcon, WalletIcon } from '~/components/Icons';
 import formatters from '~/lib/formatters';
-import { reactBool } from '~/lib/utils';
+import { reactBool, reactPreline } from '~/lib/utils';
 import useAsteroid from '~/hooks/useAsteroid';
 import useStore from '~/hooks/useStore';
 import { HudMenuCollapsibleSection, Scrollable, Tray } from './components/components';
@@ -19,6 +19,18 @@ import usePriceConstants from '~/hooks/usePriceConstants';
 import Button from '~/components/ButtonAlt';
 import AsteroidTitleArea from './components/AsteroidTitleArea';
 import PolicyPanels from './components/PolicyPanels';
+import useDescriptionAnnotation from '~/hooks/useDescriptionAnnotation';
+import useAnnotationContent from '~/hooks/useAnnotationContent';
+
+const Description = styled.div`
+  color: ${p => p.theme.colors.main};
+  font-size: 14px;
+  line-height: 20px;
+
+  max-height: 272px;
+  overflow: hidden auto;
+  word-break: break-word;
+`;
 
 const InfoRow = styled.div`
   align-items: center;
@@ -53,6 +65,8 @@ const AsteroidInfo = ({ onClose }) => {
   const dispatchZoomStatus = useStore(s => s.dispatchZoomStatusChanged);
 
   const { data: asteroid } = useAsteroid(asteroidId);
+  const { data: annotation, isLoading: isAnnotationLoading } = useDescriptionAnnotation(asteroid);
+  const { data: description, isLoading: isContentLoading } = useAnnotationContent(annotation);
   const { data: ships } = useAsteroidShips(asteroidId);
   const { data: lotData } = useAsteroidLotData(asteroidId);
   const { data: administrator } = useCrew(asteroid?.Control?.controller?.id);
@@ -79,7 +93,7 @@ const AsteroidInfo = ({ onClose }) => {
   }, []);
 
 
-  if (!asteroid) return null;
+  if (!asteroid || isAnnotationLoading || isContentLoading) return null;
   return (
     <>
       <Scrollable hasTray={reactBool(zoomStatus === 'out')}>
@@ -162,8 +176,13 @@ const AsteroidInfo = ({ onClose }) => {
           </HudMenuCollapsibleSection>
         )}
 
-        <HudMenuCollapsibleSection title="Description" collapsed>
-        </HudMenuCollapsibleSection>
+        {description && (
+          <HudMenuCollapsibleSection titleText="Description">
+            <Description>
+              {reactPreline(description)}
+            </Description>
+          </HudMenuCollapsibleSection>
+        )}
 
         <HudMenuCollapsibleSection title="Lot Policy" collapsed>
           <PolicyPanels entity={asteroid} />

@@ -6,9 +6,9 @@ import api from '~/lib/api';
 const useEarliestActivity = (entity) => {
   const queryClient = useQueryClient();
   return useQuery(
-    [ 'activities', entity.label, entity.id, 'earliest' ],
+    [ 'activities', entity?.label, entity?.id, 'earliest' ],
     async () => {
-      const arr = await api.getEntityActivities(entity, { pageSize: 1, order: 'asc' });
+      const arr = await api.getEntityActivities(entity, { pageSize: 1, order: 'asc', withAnnotations: true });
       await hydrateActivities(arr, queryClient); // NOTE: this is probably not necessary in any case
       return arr?.[0];
     },

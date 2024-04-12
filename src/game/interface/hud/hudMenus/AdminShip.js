@@ -12,6 +12,7 @@ import PolicyPanels from './components/PolicyPanels';
 import CrewIndicator from '~/components/CrewIndicator';
 import useCrew from '~/hooks/useCrew';
 import ListForSalePanel from './components/ListForSalePanel';
+import EntityDescriptionForm from './components/EntityDescriptionForm';
 
 const AdminShip = ({}) => {
   const lotId = useStore(s => s.asteroids.lot);
@@ -36,14 +37,12 @@ const AdminShip = ({}) => {
             label="Ship Name" />
         </HudMenuCollapsibleSection>
 
-        {/* TODO:
         <HudMenuCollapsibleSection titleText="Update Description" collapsed>
           <EntityDescriptionForm
             entity={ship ? { id: ship.id, label: Entity.IDS.SHIP } : null}
             originalDesc={``}
             label="Ship Description" />
         </HudMenuCollapsibleSection>
-        */}
 
         <HudMenuCollapsibleSection titleText="Update Permissions" collapsed>
           <PolicyPanels editable entity={ship} />

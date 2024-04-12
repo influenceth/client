@@ -7,22 +7,29 @@ import useStore from '~/hooks/useStore';
 import { MagnifyingIcon } from '~/components/Icons';
 import useLot from '~/hooks/useLot';
 import Button from '~/components/ButtonAlt';
-import { reactBool } from '~/lib/utils';
+import { reactBool, reactPreline } from '~/lib/utils';
 import CrewIndicator from '~/components/CrewIndicator';
 import { HudMenuCollapsibleSection, Scrollable, Tray } from './components/components';
 import LotTitleArea from './components/LotTitleArea';
 import PolicyPanels from './components/PolicyPanels';
 import useCrew from '~/hooks/useCrew';
+import useDescriptionAnnotation from '~/hooks/useDescriptionAnnotation';
+import useAnnotationContent from '~/hooks/useAnnotationContent';
 
 const Description = styled.div`
   color: ${p => p.theme.colors.main};
   font-size: 14px;
   line-height: 20px;
+  max-height: 272px;
+  overflow: hidden auto;
+  word-break: break-word;
 `;
 
 const LotInfo = () => {
   const lotId = useStore(s => s.asteroids.lot);
   const { data: lot } = useLot(lotId);
+  const { data: annotation, isLoading: isAnnotationLoading } = useDescriptionAnnotation(lot?.building || lot?.surfaceShip);
+  const { data: description, isLoading: isContentLoading } = useAnnotationContent(annotation);
   const { data: controller } = useCrew(lot?.building?.Control?.controller?.id);
 
   const dispatchZoomScene = useStore(s => s.dispatchZoomScene);
@@ -40,15 +47,23 @@ const LotInfo = () => {
 
   const siteOrBuilding = (lot?.building?.Building?.status === Building.CONSTRUCTION_STATUSES.OPERATIONAL ? 'Building' : 'Site');
 
-  if (!lot) return null;
+  if (!lot || isAnnotationLoading || isContentLoading) return null;
   return (
     <>
       <Scrollable hasTray={reactBool(!isZoomedToLot)}>
         <LotTitleArea lot={lot} />
 
+        {description && (
+          <HudMenuCollapsibleSection titleText="Description">
+            <Description>
+              {reactPreline(description)}
+            </Description>
+          </HudMenuCollapsibleSection>
+        )}
+
         {lot?.building && (
           <>
-            <HudMenuCollapsibleSection titleText="Description">
+            <HudMenuCollapsibleSection titleText="Type Description" collapsed={!!description}>
               <Description>
                 {lot.building.Building?.status === Building.CONSTRUCTION_STATUSES.OPERATIONAL
                   ? Building.TYPES[lot.building.Building.buildingType].description
@@ -72,7 +87,7 @@ const LotInfo = () => {
 
         {!lot?.building && lot?.surfaceShip && (
           <>
-            <HudMenuCollapsibleSection titleText="Landed Ship Description">
+            <HudMenuCollapsibleSection titleText="Landed Ship Description" collapsed={!!description}>
               <Description>
                 {Ship.TYPES[lot.surfaceShip.Ship.shipType]?.description}
               </Description>

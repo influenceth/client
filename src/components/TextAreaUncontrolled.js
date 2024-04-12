@@ -1,12 +1,18 @@
 import styled from 'styled-components';
 
+export const resizeOnKeydown = (max) => (eOrRef) => {
+  const ref = eOrRef?.target || eOrRef;
+  ref.style.height = '0px'; // reset field height (in case deleting)
+  ref.style.height = `${Math.min(max, ref.scrollHeight)}px`; // increase to fit (incl padding + border)
+};
+
 const UncontrolledTextArea = styled.textarea`
   background-color: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(${p => p.theme.colors.mainRGB}, 0.8);
   color: ${p => p.theme.colors.mainText};
   font-family: inherit;
   font-size: ${p => p.theme.colors.detailText};
-  height: 200px;
+  height: 100%;
   outline: none;
   padding: 10px 5px;
   resize: none;

@@ -10,7 +10,7 @@ import { monthsToSeconds, secondsToMonths } from '~/lib/utils';
 const hoursPerMonth = monthsToSeconds(1) / 3600;
 
 export const getAgreementPath = (target, permission, permitted) => {
-  return `${target ? Entity.packEntity(target) : ''}.${permission || ''}.${permitted ? Entity.packEntity(permitted) : ''}`;
+  return `${target ? Entity.packEntity(target) : ''}.${permission || ''}.${permitted?.id ? Entity.packEntity(permitted) : (permitted || '')}`;
 }
 
 const useAgreementManager = (target, permission, agreementPath) => {
@@ -21,7 +21,10 @@ const useAgreementManager = (target, permission, agreementPath) => {
   const currentAgreement = useMemo(() => {
     const agreement = (currentPolicy?.agreements || []).find((a) => {
       if (agreementPath) return getAgreementPath(target, permission, a.permitted) === agreementPath;
-      return a.permitted?.id === crew?.id && a.permission === Number(permission)
+      return (
+        ((a.permitted?.id === crew?.id) || (crew?.Crew?.delegatedTo && a.permitted === crew?.Crew?.delegatedTo))
+        && a.permission === Number(permission)
+      );
     });
 
     if (agreement) {
@@ -41,6 +44,8 @@ const useAgreementManager = (target, permission, agreementPath) => {
   const payload = useMemo(() => ({
     target: { id: target?.id, label: target?.label },
     permission,
+    // NOTE: this does not currently support account-level `permitted` values because that is
+    // (currently) only relevant to whitelist and this is only used for contract + prepaid agreements
     permitted: { id: currentAgreement?.permitted?.id || crew?.id, label: Entity.IDS.CREW },
     caller_crew: { id: crew?.id, label: Entity.IDS.CREW },
   }), [crew?.id, currentAgreement, target, permission]);
@@ -69,7 +74,7 @@ const useAgreementManager = (target, permission, agreementPath) => {
       { ...payload, added_term: term, ...params },
       meta
     );
-  }, []);
+  }, [meta, payload]);
 
   const cancelAgreement = useCallback((params = {}) => {
     execute(

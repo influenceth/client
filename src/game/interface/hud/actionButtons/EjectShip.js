@@ -5,6 +5,7 @@ import { LaunchShipIcon } from '~/components/Icons';
 import ActionButton, { getCrewDisabledReason } from './ActionButton';
 import useShipDockingManager from '~/hooks/actionManagers/useShipDockingManager';
 import theme from '~/theme';
+import useHydratedCrew from '~/hooks/useHydratedCrew';
 
 const isVisible = ({ crew, building, lot, ship }) => {
   if (crew && ship && crew?.id !== ship?.Control?.controller?.id) {
@@ -26,16 +27,18 @@ const EjectShip = ({ asteroid, crew, lot, ship, onSetAction, _disabled }) => {
     onSetAction('LAUNCH_SHIP', { shipId: ship?.id });
   }, [onSetAction, ship?.id]);
 
+  const { data: shipController } = useHydratedCrew(ship?.Control?.controller?.id);
+
   const disabledReason = useMemo(() => {
     if (_disabled) return 'loading...';
     if (lot?.building) {
       // cannot force eject if ship has permission to be there
       // NOTE: do not need to check on lot perms since done implicitly by lot controller check
-      const perm = Permission.getPolicyDetails(lot?.building, ship?.Control?.controller?.id)[Permission.IDS.DOCK_SHIP];
+      const perm = Permission.getPolicyDetails(lot?.building, shipController)[Permission.IDS.DOCK_SHIP];
       if (perm.crewStatus === 'controller' || perm.crewStatus === 'granted') return 'access restricted';
     }
     return getCrewDisabledReason({ asteroid, crew, requireSurface: false });
-  }, [_disabled, asteroid, crew]);
+  }, [_disabled, asteroid, crew, shipController]);
 
   return (
     <ActionButton

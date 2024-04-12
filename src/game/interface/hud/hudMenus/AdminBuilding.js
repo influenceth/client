@@ -7,6 +7,7 @@ import EntityNameForm from './components/EntityNameForm';
 import LotTitleArea from './components/LotTitleArea';
 import MarketplaceSettings from './components/MarketplaceSettings';
 import PolicyPanels from './components/PolicyPanels';
+import EntityDescriptionForm from './components/EntityDescriptionForm';
 
 const AdminBuilding = ({}) => {
   const lotId = useStore(s => s.asteroids.lot);
@@ -19,19 +20,18 @@ const AdminBuilding = ({}) => {
 
         <HudMenuCollapsibleSection titleText="Update Name" collapsed>
           <EntityNameForm
-            entity={lot?.building ? { id: lot.building.id, label: Entity.IDS.BUILDING } : null}
+            entity={lot?.building}
             originalName={lot?.building?.Name?.name}
-            label="Building Name" />
+            label="Building Name"
+            skipCollisionCheck={false} />
         </HudMenuCollapsibleSection>
 
-        {/* TODO:
         <HudMenuCollapsibleSection titleText="Update Description" collapsed>
           <EntityDescriptionForm
             entity={lot?.building ? { id: lot.building.id, label: Entity.IDS.BUILDING } : null}
             originalDesc={``}
             label="Building Description" />
         </HudMenuCollapsibleSection>
-        */}
 
         <HudMenuCollapsibleSection titleText="Update Permissions" collapsed>
           <PolicyPanels editable entity={lot?.building} />

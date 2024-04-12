@@ -6,7 +6,10 @@ import { connect as starknetConnect, disconnect as starknetDisconnect } from 'st
 import { ArgentMobileConnector } from 'starknetkit/argentMobile';
 import { InjectedConnector } from 'starknetkit/injected';
 import { WebWalletConnector } from 'starknetkit/webwallet';
-import { createOffchainSession, OffchainSessionAccount } from '@argent/x-sessions';
+import {
+  createOffchainSessionV5 as createOffchainSession,
+  OffchainSessionAccountV5 as OffchainSessionAccount
+} from '@argent/x-sessions';
 import { getStarkKey, utils } from 'micro-starknet';
 import { Address } from '@influenceth/sdk';
 
@@ -119,10 +122,18 @@ export function SessionProvider({ children }) {
 
     try {
       const connectors = [];
-      const customProvider = new RpcProvider({ nodeUrl: process.env.REACT_APP_STARKNET_PROVIDER });
+      let nodeUrl = process.env.REACT_APP_STARKNET_PROVIDER;
+
+      if (process.env.REACT_APP_STARKNET_PROVIDER_BACKUP) {
+        nodeUrl = Math.random() > 0.5 ? process.env.REACT_APP_STARKNET_PROVIDER : process.env.REACT_APP_STARKNET_PROVIDER_BACKUP;
+      }
+
+      const customProvider = new RpcProvider({ nodeUrl });
 
       if (!!process.env.REACT_APP_ARGENT_WEB_WALLET_URL) {
-        connectors.push(new WebWalletConnector({ url: process.env.REACT_APP_ARGENT_WEB_WALLET_URL }));
+        connectors.push(new WebWalletConnector({
+          url: process.env.REACT_APP_ARGENT_WEB_WALLET_URL, provider: customProvider
+        }));
       }
 
       connectors.push(new InjectedConnector({ options: { id: 'argentX', provider: customProvider }}));
@@ -144,7 +155,10 @@ export function SessionProvider({ children }) {
 
       if (wallet && wallet.isConnected && wallet.account?.address) {
         // Default to provider chainId if not set (starknetkit doesn't set for braavos)
-        wallet.chainId = wallet.chainId || wallet?.provider?.chainId || wallet?.account?.provider?.chainId;
+        wallet.chainId = wallet.chainId ||
+          wallet?.provider?.chainId ||
+          wallet?.account?.provider?.chainId ||
+          wallet?.provider?.channel?.chainId;
 
         if (!isAllowedChain(wallet.chainId)) {
           await wallet.request({
@@ -165,6 +179,10 @@ export function SessionProvider({ children }) {
         console.error('No connected wallet or missing address');
       }
     } catch(e) {
+      if (e.message === 'Not implemented') {
+        setError(`Incorrect chain, please switch to ${resolveChainId(process.env.REACT_APP_CHAIN_ID)}`);
+      }
+
       if (e.message !== 'User rejected request') {
         setError(e);
       }
@@ -249,8 +267,10 @@ export function SessionProvider({ children }) {
       await provider.getClassAt(account?.address); // if this throws, the contract is not deployed
       isDeployed = true;
     } catch (e) {
-      console.error(e);
+      if (!e.message.includes('Contract not found')) console.error(e);
     }
+
+    const newSession = { isDeployed };
 
     // Start authenticating by requesting a login message from API
     setStatus(STATUSES.AUTHENTICATING);
@@ -258,7 +278,11 @@ export function SessionProvider({ children }) {
     let newToken = null;
 
     try {
-      if (id === 'argentWebWallet') {
+      if (!isDeployed) {
+        // If the wallet is not yet deployed, create an insecure session
+        newToken = await api.verifyLogin(connectedAddress, { signature: 'insecure' });
+        Object.assign(newSession, { walletId: id, accountAddress: connectedAddress, token: newToken });
+      } else if (id === 'argentWebWallet') {
         // Connect via Argent Web Wallet and automatically create a session
         const sessionSigner = '0x' + Buffer.from(utils.randomPrivateKey()).toString('hex');
         const requestSession = {
@@ -266,34 +290,34 @@ export function SessionProvider({ children }) {
           expirationTime: Math.floor(Date.now() / 1000) + 86400 * 7,
           allowedMethods: [
             {
-              contractAddress: '0x20cd0c1f8cc0ca293d17b8184a6d51605ef4175827432ed24818ce24891bcdf',
+              contractAddress: process.env.REACT_APP_STARKNET_DISPATCHER,
               method: 'run_system'
             }
           ]
         };
 
-        const gasFees = {
-          tokenAddress: '0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7',
-          maximumAmount: { low: '0x2386f26fc10000', high: '0x0' }
-        };
+        const low = resolveChainId(process.env.REACT_APP_CHAIN_ID) === 'SN_MAIN' ? '0x2386f26fc10000' : '0x16345785d8a0000'
+        const gasFees = { tokenAddress: process.env.REACT_APP_ERC20_TOKEN_ADDRESS, maximumAmount: { low, high: '0x0' }};
 
         const sessionSignature = await createOffchainSession(requestSession, account, gasFees);
 
         if (sessionSignature) {
           const message = await buildSessionMessage({ session: requestSession, account, gasFees });
           newToken = await api.verifyLogin(connectedAddress, { message, signature: sessionSignature.join(',') });
-          dispatchSessionStarted({
+          Object.assign(newSession, {
             walletId: id, accountAddress: connectedAddress, token: newToken, sessionSigner, sessionSignature
           });
+
         }
       } else {
         // Connect via a traditional browser extension wallet
-        const signature = isDeployed ? await account.signMessage(loginMessage) : ['insecure'];
+        const signature = await account.signMessage(loginMessage);
         if (signature?.code === 'CANCELED') throw new Error('User abort');
-        if (signature) newToken = await api.verifyLogin(connectedAddress, { signature: signature.join(',') });
-        dispatchSessionStarted({ walletId: id, accountAddress: connectedAddress, token: newToken });
+        newToken = await api.verifyLogin(connectedAddress, { signature: signature.join(',') });
+        Object.assign(newSession, { walletId: id, accountAddress: connectedAddress, token: newToken });
       }
 
+      dispatchSessionStarted(newSession);
       setStatus(STATUSES.AUTHENTICATED);
       return true;
     } catch (e) {
@@ -341,6 +365,8 @@ export function SessionProvider({ children }) {
       } else {
         setReadyForChildren(true);
       }
+
+      setStarknetSession(null); // clear session key if it exists
     }
     else if (status === STATUSES.CONNECTED) {
       authenticate();
@@ -450,6 +476,7 @@ export function SessionProvider({ children }) {
       logout,
       authenticating: status === STATUSES.AUTHENTICATING,
       authenticated,
+      isDeployed: authenticated ? currentSession?.isDeployed : null,
       token: authenticated ? currentSession?.token : null,
       accountAddress: authenticated ? currentSession?.accountAddress : null,
       walletId: authenticated ? currentSession?.walletId : null,

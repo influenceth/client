@@ -527,7 +527,7 @@ const MarketplaceOrder = ({
 
   const matchBestLimitOrder = useCallback((e) => {
     if (mode === 'buy') {
-      setLimitPrice(buyOrders[0].price);
+      setLimitPrice(buyOrders[0]?.price || sellOrders[sellOrders.length - 1].price);
     } else {
       setLimitPrice(sellOrders[sellOrders.length - 1].price);
     }
@@ -555,7 +555,7 @@ const MarketplaceOrder = ({
   const exceedsOtherSide = useMemo(() => {
     if (type === 'limit') {
       if (mode === 'buy') {
-        return limitPrice >= sellOrders?.[sellOrders?.length - 1]?.price;
+        return limitPrice > sellOrders?.[sellOrders?.length - 1]?.price;
       } else {
         return limitPrice <= buyOrders?.[0]?.price;
       }
@@ -704,7 +704,7 @@ const MarketplaceOrder = ({
                   min={0}
                   onChange={handleChangeLimitPrice}
                   type="number"
-                  value={type === 'market' ? formatPrice(avgMarketPrice) : limitPrice} />
+                  value={type === 'market' ? avgMarketPrice : limitPrice} />
               </TextInputWrapper>
             </FormSection>
 

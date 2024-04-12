@@ -25,6 +25,7 @@ import {
   PlusIcon,
   WarningOutlineIcon,
   SurfaceTransferIcon,
+  TransferToSiteIcon,
   GasIcon,
   SwayIcon,
   RadioCheckedIcon,
@@ -675,10 +676,10 @@ const TugWarning = styled.div`
 
 const IngredientsList = styled(FlexSectionInputBody)`
   ${p => p.theming === 'warning' && `
-    background: rgba(${hexToRGB(p.theme.colors.lightOrange)}, 0.15);
+    background: rgba(${hexToRGB(p.theme.colors.lightOrange)}, 0.1);
   `}
   ${p => p.theming === 'success' && `
-    background: rgba(${p.theme.colors.successRGB}, 0.15);
+    background: rgba(${p.theme.colors.successRGB}, 0.1);
   `}
   column-gap: 5px;
   display: grid;
@@ -708,15 +709,19 @@ const IngredientSummary = styled.div`
   bottom: 0;
   left: 0;
   right: 0;
-  & > span {
-    background:
-      ${p => p.theming === 'error' && `rgba(${hexToRGB(p.theme.colors.error)}, 0.45)`}
-      ${p => p.theming === 'warning' && `rgba(${hexToRGB(p.theme.colors.lightOrange)}, 0.45)`}
-      ${p => p.theming === 'success' && `rgba(${p.theme.colors.successRGB}, 0.2)`}
-      ${p => (!p.theming || p.theming === 'default') && `rgba(${p.theme.colors.mainRGB}, 0.45)`}
+  font-size: 14px;
+  & > span:first-child {
+    color:
+      ${p => p.theming === 'error' && `rgba(${hexToRGB(p.theme.colors.error)}, 1)`}
+      ${p => p.theming === 'warning' && `rgba(${hexToRGB(p.theme.colors.lightOrange)}, 1)`}
+      ${p => p.theming === 'success' && `rgba(${p.theme.colors.successRGB},1)`}
+      ${p => (!p.theming || p.theming === 'default') && `rgba(${p.theme.colors.mainRGB}, 1)`}
     ;
+    padding: 5px 0;
+  }
+  & span:not(:first-child) {
     color: white;
-    padding: 5px 32px;
+    padding: 5px 5px;
   }
 `;
 const SelectionTableRow = styled.tr`
@@ -2241,14 +2246,14 @@ export const LotShipImage = ({ shipType, iconBadge, iconBadgeColor, iconOverlay,
   );
 };
 
-export const BuildingImage = ({ buildingType, error, iconOverlay, iconOverlayColor, inventory, inventoryBonuses, inventories, showInventoryStatusForType, unfinished }) => {
+export const BuildingImage = ({ buildingType, error, iconOverlay, iconOverlayColor, iconBorderColor, inventory, inventoryBonuses, inventories, showInventoryStatusForType, unfinished }) => {
   const buildingAsset = Building.TYPES[buildingType];
   if (!buildingAsset) return null;
 
   const capacity = inventory ? getCapacityStats(inventory, inventoryBonuses) : getCapacityUsage(inventories, showInventoryStatusForType, inventoryBonuses);
   const closerLimit = (capacity.volume.used + capacity.volume.reserved) / capacity.volume.max > (capacity.mass.used + capacity.mass.reserved) / capacity.mass.max ? 'volume' : 'mass';
   return (
-    <BuildingThumbnailWrapper>
+    <BuildingThumbnailWrapper outlineColor={iconBorderColor}>
       <ResourceImage src={getBuildingIcon(buildingAsset.i, 'w150', unfinished)} />
       {inventory !== false && capacity && (
         <>
@@ -2263,7 +2268,7 @@ export const BuildingImage = ({ buildingType, error, iconOverlay, iconOverlayCol
         </>
       )}
       {iconOverlay && <ThumbnailOverlay color={iconOverlayColor}>{iconOverlay}</ThumbnailOverlay>}
-      <ClipCorner dimension={10} />
+      <ClipCorner dimension={10} color={iconBorderColor} />
     </BuildingThumbnailWrapper>
   );
 };
@@ -2565,9 +2570,8 @@ export const ResourceGridSectionInner = ({
             ))}
             {!hideTotals && (
               <IngredientSummary theming={theming}>
-                <span>
-                  {totalItems} Items: {formatMass(totalMass)} | {formatVolume(totalVolume)}
-                </span>
+                <span>{theming === 'warning' ? 'Total Requirements:' : 'Total Transfer:'}</span>
+                <span>{formatMass(totalMass)} | {formatVolume(totalVolume)}</span>
               </IngredientSummary>
             )}
           </>
@@ -2613,7 +2617,7 @@ export const BuildingRequirementsSection = ({ mode, label, requirements, require
       customIcon: item.inTransit > 0
         ? {
           animated: true,
-          icon: <SurfaceTransferIcon />
+          icon: <TransferToSiteIcon />
         }
         : undefined
     }));
@@ -2640,7 +2644,7 @@ export const TransferBuildingRequirementsSection = ({ label, onClick, requiremen
     customIcon: item.inTransit > 0
       ? {
         animated: true,
-        icon: <SurfaceTransferIcon />
+        icon: <TransferToSiteIcon />
       }
       : undefined
   })), [requirements, selectedItems]);
@@ -2760,7 +2764,7 @@ export const ProgressBarSection = ({
           ? Math.max(0, 1 - (syncedTime - startTime) / (finishTime - startTime))
           : 1;
         r.animating = !isZero;
-        r.reverseAnimation = true;
+        r.reverseAnimation = false;
         r.barWidth = progress;
         r.left = `${formatFixed(100 * progress, 1)}%`;
         r.right = isZero

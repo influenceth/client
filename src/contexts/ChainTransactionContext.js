@@ -7,8 +7,8 @@ import useActivitiesContext from '~/hooks/useActivitiesContext';
 import useSession from '~/hooks/useSession';
 import useCrewContext from '~/hooks/useCrewContext';
 import useStore from '~/hooks/useStore';
-import useInterval from '~/hooks/useInterval';
 import api from '~/lib/api';
+import { cleanseTxHash } from '~/lib/utils';
 
 // import { CallData, shortString, uint256, ec } from 'starknet';
 // const Systems = System.Systems;
@@ -140,12 +140,6 @@ const ChainTransactionContext = createContext();
 
 const getNow = () => Math.floor(Date.now() / 1000);
 
-// this matches the
-const cleanseTxHash = function (txHash) {
-  if (!txHash) return null;
-  return `0x${BigInt(txHash).toString(16).padStart(64, '0')}`;
-};
-
 // TODO: equalityTest default of 'i' doesn't make sense anymore
 
 // TODO: move systems into their own util file (like activities)
@@ -175,6 +169,9 @@ const customConfigs = {
         Entity.packEntity(permitted),
       ]
     })
+  },
+  AnnotateEvent: {
+    equalityTest: ['transaction_hash', 'log_index'],
   },
   CancelPrepaidAgreement: {
     equalityTest: ['target.id', 'target.label', 'permission'],
@@ -417,8 +414,8 @@ const customConfigs = {
     equalityTest: ['target.label', 'target.id', 'permission'],
     isVirtual: true
   },
-  UpdateAllowlist: {
-    multisystemCalls: ({ additions, removals, ...vars }) => {
+  UpdateAllowlists: {
+    multisystemCalls: ({ additions, removals, accountAdditions, accountRemovals, ...vars }) => {
       return [
         ...removals.map((r) => ({
           system: 'RemoveFromWhitelist',
@@ -427,6 +424,14 @@ const customConfigs = {
         ...additions.map((a) => ({
           system: 'Whitelist',
           vars: { ...vars, permitted: a }
+        })),
+        ...accountAdditions.map((a) => ({
+          system: 'WhitelistAccount',
+          vars: { ...vars, permitted: a }
+        })),
+        ...accountRemovals.map((r) => ({
+          system: 'RemoveAccountFromWhitelist',
+          vars: { ...vars, permitted: r }
         })),
       ]
     },
@@ -703,8 +708,8 @@ export function ChainTransactionProvider({ children }) {
               return c.contractAddress !== process.env.REACT_APP_STARKNET_DISPATCHER || c.entrypoint !== 'run_system';
             });
 
-            if (canUseSession) console.log('starknetSession', starknetSession);
-            return canUseSession ? starknetSession.execute(calls) : starknet.account.execute(calls);
+            const account = canUseSession ? starknetSession : starknet.account;
+            return account.execute(calls);
           },
 
           onConfirmed: (event, vars) => {
@@ -723,7 +728,7 @@ export function ChainTransactionProvider({ children }) {
       }, {});
     }
     return null;
-  }, [createAlert, prependEventAutoresolve, accountAddress]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [createAlert, prependEventAutoresolve, accountAddress, starknetSession]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const transactionWaiters = useRef([]);
 

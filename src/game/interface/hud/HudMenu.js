@@ -343,7 +343,7 @@ const HudMenu = ({ forceOpenMenu }) => {
         Component: hudMenus.AdminBuilding,
         isVisible: focus === 'lot'
           && lot?.building?.Building?.status === Building.CONSTRUCTION_STATUSES.OPERATIONAL
-          && lot.building.Control?.controller?.id === crew?.id
+          && lot?.building?.Control?.controller?.id === crew?.id
       },
       {
         key: 'ASTEROID_ADMIN',
@@ -424,13 +424,14 @@ const HudMenu = ({ forceOpenMenu }) => {
         },
         isVisible: scope === 'asteroid'
       },
-      // {
-      //   key: 'ASTEROID_CHAT',
-      //   label: 'Asteroid Chat',
-      //   icon: <ChatIcon />,
-      //   Component: hudMenus.AsteroidChat
-      //   isVisible: scope === 'asteroid' || scope === 'lot'
-      // },
+      {
+        key: 'ASTEROID_CHAT',
+        label: 'Asteroid Chat',
+        icon: <ChatIcon />,
+        Component: hudMenus.AsteroidChat,
+        noDetail: true,
+        isVisible: scope === 'asteroid' || scope === 'lot'
+      },
       {
         key: 'ASTEROID_ASSETS',
         label: 'My Assets',

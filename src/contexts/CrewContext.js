@@ -7,12 +7,10 @@ import useSession from '~/hooks/useSession';
 import useConstants from '~/hooks/useConstants';
 import useEntity from '~/hooks/useEntity';
 import useStore from '~/hooks/useStore';
-import { earlyAccessJSTime, expectedBlockSeconds, getBlockTime, getCrewAbilityBonuses, locationsArrToObj, openAccessJSTime } from '~/lib/utils';
+import { earlyAccessJSTime, getBlockTime, getCrewAbilityBonuses, locationsArrToObj, openAccessJSTime } from '~/lib/utils';
 import { entitiesCacheKey } from '~/lib/cacheKey';
 
 const CrewContext = createContext();
-
-const TOO_LONG_FOR_BLOCK = Math.max(expectedBlockSeconds * 1.5, expectedBlockSeconds + 60);
 
 export function CrewProvider({ children }) {
   const { accountAddress, authenticated, blockNumber, blockTime, starknet, token } = useSession();
@@ -164,9 +162,15 @@ export function CrewProvider({ children }) {
           )
         )
         .then((response) => {
-          const pendingEvent = response?.result?.[1] ? parseInt(response?.result?.[1]) : null;
+          const pendingEvent = response ? parseInt(response[1]) : null;
           if (pendingEvent > 0) {
             getBlockTime(starknet, selectedCrew.Crew.actionRound + RandomEvent.MIN_ROUNDS).then((timestamp) => {
+              console.log('SET TRIGGER', {
+                actionType: selectedCrew.Crew.actionType,
+                pendingEvent,
+                timestamp,
+                _now: Math.floor(Date.now() / 1000)
+              });
               setActionTypeTriggered({
                 actionType: selectedCrew.Crew.actionType,
                 pendingEvent,
@@ -271,13 +275,8 @@ export function CrewProvider({ children }) {
     if (isBlurred.current) {
       isBlurred.current = false;
 
-      const now = Date.now() / 1e3;
-
-      // disable current-block-presumed-missing on goerli since so many network issues
-      const currentBlockIsMissing = (`${process.env.REACT_APP_CHAIN_ID}` !== `0x534e5f474f45524c49`)
-        && blockTime > 0 && ((now - blockTime) > TOO_LONG_FOR_BLOCK);
-
-      if (blockHasBeenMissed.current || currentBlockIsMissing) {
+      // reload if explicitly missed a block and window has returned to focus
+      if (blockHasBeenMissed.current) {
         window.location.reload();
       }
     }
