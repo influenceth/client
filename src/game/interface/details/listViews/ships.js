@@ -40,11 +40,11 @@ const useColumns = () => {
         label: 'Name',
         sortField: 'Name.name.raw',
         selector: row => (
-          <>
-            <ShipLocationLink shipId={row} closeWindow={true} />
+          <div>
+            <ShipLocationLink shipId={row?.id} data-place="top" />
             <span>{formatters.shipName(row)}</span>
-          </>
-          ),
+          </div>
+        ),
         unhideable: true
       },
       {
@@ -64,8 +64,8 @@ const useColumns = () => {
           const loc = locationsArrToObj(row.Location?.locations || []);
           if (loc.buildingId) return 'Docked';
           if (loc.lotId) return 'Landed';
-          if (loc.asteroidId) return <div style={{color: theme.colors.main}}>In Orbit</div>;
-          if (loc.spaceId) return <div style={{color: theme.colors.lightOrange}}>In Flight</div>;
+          if (loc.asteroidId) return <span style={{color: theme.colors.main}}>In Orbit</span>;
+          if (loc.spaceId) return <span style={{color: theme.colors.lightOrange}}>In Flight</span>;
           return '';
         },
       },

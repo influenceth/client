@@ -22,7 +22,7 @@ const StyledIconLink = styled.span`
   }
 `;
 
-export const IconLink = ({ children, onClick, tooltip, closeWindow, ...props }) => {
+export const IconLink = ({ children, onClick, tooltip, ...props }) => {
   const history = useHistory();
   useEffect(() => ReactTooltip.rebuild(), [tooltip]);
   return (
@@ -30,34 +30,11 @@ export const IconLink = ({ children, onClick, tooltip, closeWindow, ...props }) 
       data-for="listView"
       data-tip={tooltip}
       data-place="left"
-      onClick={() => {
-        if (closeWindow) {
-          history.push('/');
-        }
-        onClick();
-      }}
+      onClick={onClick}
       {...props}>
       {children}
     </StyledIconLink>
   );
-};
-
-export const ShipLocationLink = ({ shipId, zoomToShip, closeWindow, ...props }) => {
-  const history = useHistory();
-  const _onClick = useShipLink({ shipId,  zoomToShip: true });
-  return (
-    <IconLink
-      tooltip={'View Ship'}
-      onClick={() => {
-        if (closeWindow) {
-          history.push('/');
-        }
-        _onClick();
-      }}
-      {...props}>
-      <LocationIcon />
-    </IconLink>
-  )
 };
 
 export const LocationLink = ({ asteroidId, lotId, resourceId, zoomToLot, ...props }) => {
@@ -71,6 +48,22 @@ export const LocationLink = ({ asteroidId, lotId, resourceId, zoomToLot, ...prop
           history.push('/');
           _onClick();
         }
+      }}
+      {...props}>
+      <LocationIcon />
+    </IconLink>
+  )
+};
+
+export const ShipLocationLink = ({ shipId, ...props }) => {
+  const history = useHistory();
+  const _onClick = useShipLink({ shipId, zoomToShip: true });
+  return (
+    <IconLink
+      tooltip={'View Ship'}
+      onClick={() => {
+        history.push('/');
+        _onClick();
       }}
       {...props}>
       <LocationIcon />

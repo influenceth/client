@@ -350,7 +350,17 @@ const InfoPane = () => {
   } = useMemo(() => {
     const pane = {};
 
-    if (zoomStatus === 'out' && asteroid) {
+    if (zoomStatus === 'out' && zoomScene?.type === 'SHIP') {
+      if (ship) {
+        pane.title = formatters.shipName(ship);
+        if (ship.Ship?.transitDeparture > 0) {
+          pane.subtitle = 'In Flight';
+        } else {
+          pane.subtitle = <>{formatters.asteroidName(asteroid)} &gt; <b>{lotId ? formatters.lotName(lotId) : 'In Orbit'}</b></>;
+        }
+        pane.captainCard = ship.Control?.controller?.id;
+      }
+    } else if (zoomStatus === 'out' && asteroid) {
       pane.title = formatters.asteroidName(asteroid);
       pane.titleLink = `/asteroids/${asteroid.id}`;
       pane.subtitle = <>{Asteroid.Entity.getSize(asteroid)} <b>{Asteroid.Entity.getSpectralType(asteroid)}-type</b></>;
