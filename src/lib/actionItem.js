@@ -40,7 +40,6 @@ import {
   KeysIcon,
   EjectMyCrewIcon,
   CoreSampleIcon,
-  AssetAgreementsIcon,
   WarningIcon,
   EditIcon,
 } from '~/components/Icons';

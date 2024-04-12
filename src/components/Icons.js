@@ -38,6 +38,7 @@ import { VscDebugDisconnect } from 'react-icons/vsc';
 
 import AdalianSVG from '~/assets/icons/AdalianIcon.svg';
 import AddRationsSVG from '~/assets/icons/AddRationsIcon.svg';
+import AgreementSVG from '~/assets/icons/AgreementIcon.svg';
 import ArvadSVG from '~/assets/icons/ArvadIcon.svg';
 import AssignmentsSVG from '~/assets/icons/AssignmentsIcon.svg';
 import AsteroidSearchSVG from '~/assets/icons/AsteroidSearchIcon.svg';
@@ -76,7 +77,6 @@ import InfoSVG from '~/assets/icons/InfoIcon.svg';
 import InventorySVG from '~/assets/icons/InventoryIcon.svg';
 import KeysSVG from '~/assets/icons/KeysIcon.svg';
 import LeaderboardSVG from '~/assets/icons/LeaderboardIcon.svg';
-import AgreementSVG from '~/assets/icons/AgreementIcon.svg';
 import LinkSVG from '~/assets/icons/LinkIcon.svg';
 import ListViewSVG from '~/assets/icons/ListViewIcon.svg';
 import LocationSVG from '~/assets/icons/LocationIcon.svg';
@@ -125,7 +125,9 @@ import WalletSVG from '~/assets/icons/WalletIcon.svg';
 import WarningSVG from '~/assets/icons/WarningIcon.svg';
 import WarningOutlineSVG from '~/assets/icons/WarningOutlineIcon.svg';
 
+import AgreementsListSVG from '~/assets/icons/action_buttons/AgreementsList.svg';
 import BecomeAdminSVG from '~/assets/icons/action_buttons/BecomeAdmin.svg';
+import CancelAgreementSVG from '~/assets/icons/action_buttons/CancelAgreement.svg';
 import CancelLimitOrderSVG from '~/assets/icons/action_buttons/CancelLimitOrder.svg';
 import ClaimRewardSVG from '~/assets/icons/action_buttons/ClaimReward.svg';
 import ConstructSVG from '~/assets/icons/action_buttons/Construct.svg';
@@ -141,8 +143,6 @@ import ExtractResourceSVG from '~/assets/icons/action_buttons/ExtractResource.sv
 import FormAgreementSVG from '~/assets/icons/action_buttons/FormAgreement.svg';
 import FormLotAgreementSVG from '~/assets/icons/action_buttons/FormLotAgreement.svg';
 import GiveNoticeSVG from '~/assets/icons/action_buttons/GiveNotice.svg';
-import CancelAgreementSVG from '~/assets/icons/action_buttons/CancelAgreement.svg';
-import AgreementsListSVG from '~/assets/icons/action_buttons/AgreementsList.svg';
 import ImproveCoreSampleSVG from '~/assets/icons/action_buttons/ImproveCoreSample.svg';
 import LandShipSVG from '~/assets/icons/action_buttons/LandShip.svg';
 import LaunchShipSVG from '~/assets/icons/action_buttons/LaunchShip.svg';
@@ -207,6 +207,7 @@ export const RotatedShipMarkerIcon = () => <ShipMarkerSVG style={{ transform: 'r
 // general icons
 export const AdalianIcon = () => <AdalianSVG className="icon" />;
 export const AddRationsIcon = () => <AddRationsSVG className="icon" />;
+export const AgreementIcon = () => <AgreementSVG className="icon" />;
 export const ArvadIcon = () => <ArvadSVG className="icon" style={{ width: '1.94em' }} />;
 export const AssignmentsIcon = () => <AssignmentsSVG className="icon" />;
 export const AsteroidSearchIcon = () => <AsteroidSearchSVG className="icon" />;
@@ -250,7 +251,6 @@ export const InfluenceIcon = () => <InfluenceSVG className="icon" />;
 export const InventoryIcon = () => <InventorySVG className="icon" />;
 export const KeysIcon = () => <KeysSVG className="icon" />;
 export const LeaderboardIcon = () => <LeaderboardSVG className="icon" />;
-export const AgreementIcon = () => <AgreementSVG className="icon" />;
 export const LinkIcon = () => <LinkSVG className="icon" />;
 export const ListViewIcon = () => <ListViewSVG className="icon" />;
 export const LocationIcon = () => <LocationSVG className="icon" />;
@@ -306,6 +306,7 @@ export const WarningOutlineIcon = () => <WarningOutlineSVG className="icon" />;
 // action icons
 export const AgreementsListIcon = () => <AgreementsListSVG className="icon" />;
 export const BecomeAdminIcon = () => <BecomeAdminSVG className="icon" />;
+export const CancelAgreementIcon = () => <CancelAgreementSVG className="icon" />;
 export const CancelLimitOrderIcon = () => <CancelLimitOrderSVG className="icon" />;
 export const ClaimRewardIcon = () => <ClaimRewardSVG className="icon" />;
 export const ConstructIcon = () => <ConstructSVG className="icon" />;
@@ -318,7 +319,6 @@ export const ExtractionIcon = () => <ExtractResourceSVG className="icon" />;
 export const FormAgreementIcon = () => <FormAgreementSVG className="icon" />;
 export const FormLotAgreementIcon = () => <FormLotAgreementSVG className="icon" />;
 export const GiveNoticeIcon = () => <GiveNoticeSVG className="icon" />;
-export const CancelAgreementIcon = () => <CancelAgreementSVG className="icon" />;
 export const ImproveCoreSampleIcon = () => <ImproveCoreSampleSVG className="icon" />;
 export const LandShipIcon = () => <LandShipSVG className="icon" />;
 export const LaunchShipIcon = () => <LaunchShipSVG className="icon" />;
