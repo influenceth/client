@@ -3,7 +3,7 @@ import { Entity, Permission, Time } from '@influenceth/sdk';
 import styled from 'styled-components';
 import Clipboard from 'react-clipboard.js';
 
-import { BanIcon, CheckIcon, CloseIcon, DisconnectIcon, ExtendAgreementIcon, FormAgreementIcon, GiveNoticeIcon, LinkIcon, CancelAgreementIcon, LotControlIcon, PermissionIcon, RefreshIcon, StopIcon, SwayIcon } from '~/components/Icons';
+import { BanIcon, CheckIcon, CloseIcon, DisconnectIcon, ExtendAgreementIcon, FormAgreementIcon, FormLotAgreementIcon, GiveNoticeIcon, LinkIcon, CancelAgreementIcon, LotControlIcon, PermissionIcon, RefreshIcon, StopIcon, SwayIcon } from '~/components/Icons';
 import useCrewContext from '~/hooks/useCrewContext';
 import useStore from '~/hooks/useStore';
 import { reactBool, locationsArrToObj, formatFixed, monthsToSeconds, secondsToMonths, nativeBool } from '~/lib/utils';
@@ -308,7 +308,7 @@ const FormAgreement = ({
       };
     }
     return {
-      icon: <FormAgreementIcon />,
+      icon: entity.label === Entity.IDS.LOT ? <FormLotAgreementIcon /> : <FormAgreementIcon />,
       label: `Form ${entity.label === Entity.IDS.LOT ? 'Lot' : 'Asset'} Agreement`,
       status: stage === actionStages.NOT_STARTED
         ? (policyType === Permission.POLICY_IDS.PREPAID ? 'Prepaid Lease' : 'Custom Contract')
