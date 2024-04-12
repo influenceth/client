@@ -1,7 +1,7 @@
 import { useCallback, useMemo } from 'react';
 import { Address } from '@influenceth/sdk';
 
-import { PurchaseAsteroidIcon } from '~/components/Icons';
+import { PurchaseEntityIcon } from '~/components/Icons';
 import useNftSaleManager from '~/hooks/actionManagers/useNftSaleManager';
 import ActionButton from './ActionButton';
 
@@ -31,7 +31,7 @@ const PurchaseEntity = ({ ship, onSetAction, _disabled }) => {
         disabled: disabledReason,
         loading: isPendingPurchase
       }}
-      icon={<PurchaseAsteroidIcon />}
+      icon={<PurchaseEntityIcon />}
       onClick={handleClick} />
   );
 };
