@@ -79,7 +79,7 @@ const Chat = styled.div`
     flex: 0 0 60px;
   }
   & > div:last-child {
-    align-self: center;
+    ${p => p.showTimestamp ? 'align-self: center;' : 'padding-top: 2px;'}
     flex: 1;
   }
 `;
@@ -111,7 +111,7 @@ const ChatItem = ({ chat, showTimestamp }) => {
     return m.fromNow();
   }, [chat.timestamp]);
   return (
-    <Chat>
+    <Chat showTimestamp={showTimestamp}>
       <div>
         <CrewCaptainCardFramed crewId={chat.crewId} noArrow width={50} />
       </div>
