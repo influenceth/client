@@ -10,7 +10,7 @@ import SearchFilters from '~/components/SearchFilters';
 import SearchFilterTray from '~/components/SearchFilterTray';
 import InProgressIcon from '~/components/InProgressIcon';
 import {
-  AssetAgreementsIcon,
+  AgreementIcon,
   AsteroidSearchIcon,
   BuildingIcon,
   ColumnsIcon,
@@ -202,7 +202,7 @@ const assetTypes = {
   },
   agreements: {
     keyField: 'key',
-    icon: <AssetAgreementsIcon />,
+    icon: <AgreementIcon />,
     title: 'Agreements',
     useColumns: listConfigs.agreements,
     // TODO: link to agreements on asset

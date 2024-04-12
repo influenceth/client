@@ -89,17 +89,17 @@ const Title = styled.div`
   color: white;
   display: flex;
   flex: 1;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: bold;
   height: ${titleHeight}px;
   transition: border-color 250ms ease;
   & > svg {
-    font-size: 24px;
+    font-size: 20px;
     margin-right: 3px;
   }
   & label {
     flex: 1;
-    font-size: 18px;
+    font-size: 14px;
     padding-left: 8px;
   }
 `;
@@ -131,11 +131,9 @@ const Collapsible = styled.div`
 `;
 
 const TitleAction = styled.div`
-  font-size: 90%;
+  font-size: 85%;
   font-weight: bold;
-  margin-right: 3px;
   text-transform: uppercase;
-  filter: brightness(2) saturate(2);
 `;
 
 const CollapsibleBlock = ({

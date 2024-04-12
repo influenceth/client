@@ -1,8 +1,9 @@
 import { useMemo } from 'react';
+import theme from '~/theme';
 import styled from 'styled-components';
 import { Entity, Permission } from '@influenceth/sdk';
 
-import { MyAssetIcon, SwayIcon, WarningIcon } from '~/components/Icons';
+import { MyAssetIcon, SwayIcon, WarningIcon, ChevronRightIcon } from '~/components/Icons';
 import useSession from '~/hooks/useSession';
 import useCrewContext from '~/hooks/useCrewContext';
 import { LocationLink } from './components';
@@ -16,8 +17,12 @@ import { getAgreementPath } from '~/hooks/actionManagers/useAgreementManager';
 import EntityLink from '~/components/EntityLink';
 import AddressLink from '~/components/AddressLink';
 
-const Highlight = styled.span`
-  color: ${p => p.theme.colors.main};
+const ExpandableIcon = styled(ChevronRightIcon)`
+  color: white;
+  font-size: 150%;
+  transform: rotate(0);
+  transition: transform 150ms ease;
+  ${p => p.isExpanded && `transform: rotate(90deg);`}
 `;
 
 const ProgressBar = styled.div`
@@ -84,13 +89,26 @@ const useColumns = () => {
   return useMemo(() => {
     const columns = [
       {
+        key: 'expandedIcon',
+        align: 'right',
+        selector: (row, isExpanded) => {
+          if (row._agreement._type === Permission.POLICY_IDS.PREPAID) {
+            if (crew?.id === row._agreement?.permitted?.id || row.Control?.controller?.id === crew?.id) {
+              return <ExpandableIcon isExpanded={isExpanded} />;
+            }
+          }
+          return null;
+        },
+        unhideable: true
+      },
+      {
         key: 'type',
         label: 'Agreement Type',
         sortField: '_agreement._type',
         selector: row => (
-          <Highlight>
-           {Permission.POLICY_TYPES[row._agreement._type]?.name || 'On Allowlist'}
-          </Highlight>
+            <span style={{ color: Permission.POLICY_TYPES[row._agreement._type]?.name ? 'white' : theme.colors.success }}>
+              {Permission.POLICY_TYPES[row._agreement._type]?.name || 'On Allowlist'}
+            </span>
         )
       },
       {
@@ -168,7 +186,7 @@ const useColumns = () => {
             }
             return <Expired><WarningIcon /> <span>Expired</span></Expired>;
           }
-          return <>until canceled</>;
+          return <>N / A</>;
         }
       },
       {
@@ -183,7 +201,7 @@ const useColumns = () => {
               {' '}/ mo
             </>
           )
-          : `n/a` 
+          : `N / A` 
       },
       {
         key: 'min',
@@ -191,7 +209,7 @@ const useColumns = () => {
         sortField: '_agreement.initialTerm',
         selector: row => row._agreement._type === Permission.POLICY_IDS.PREPAID
           ? `${formatFixed(secondsToMonths(row._agreement.initialTerm), 2)} mo`
-          : `n/a`
+          : `N / A`
       },
       {
         key: 'notice',
@@ -199,7 +217,7 @@ const useColumns = () => {
         sortField: '_agreement.noticePeriod',
         selector: row => row._agreement._type === Permission.POLICY_IDS.PREPAID
           ? `${formatFixed(secondsToMonths(row._agreement.noticePeriod), 2)} mo`
-          : `n/a`
+          : `N / A`
       },
       {
         key: '_expandable',

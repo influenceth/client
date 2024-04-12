@@ -3,7 +3,7 @@ import { Entity, Permission, Time } from '@influenceth/sdk';
 import styled from 'styled-components';
 import Clipboard from 'react-clipboard.js';
 
-import { BanIcon, CheckIcon, CloseIcon, DisconnectIcon, ExtendAgreementIcon, FormAgreementIcon, GiveNoticeIcon, LinkIcon, LogoutIcon, LotControlIcon, PermissionIcon, RefreshIcon, StopIcon, SwayIcon } from '~/components/Icons';
+import { BanIcon, CheckIcon, CloseIcon, DisconnectIcon, ExtendAgreementIcon, FormAgreementIcon, FormLotAgreementIcon, GiveNoticeIcon, LinkIcon, CancelAgreementIcon, LotControlIcon, PermissionIcon, RefreshIcon, StopIcon, SwayIcon } from '~/components/Icons';
 import useCrewContext from '~/hooks/useCrewContext';
 import useStore from '~/hooks/useStore';
 import { reactBool, locationsArrToObj, formatFixed, monthsToSeconds, secondsToMonths, nativeBool } from '~/lib/utils';
@@ -292,7 +292,7 @@ const FormAgreement = ({
     const policyType = currentPolicy?.policyType;
     if (isTermination) {
       return {
-        icon: currentAgreement?.noticePeriod > 0 ? <GiveNoticeIcon /> : <LogoutIcon />,
+        icon: currentAgreement?.noticePeriod > 0 ? <GiveNoticeIcon /> : <CancelAgreementIcon />,
         label: currentAgreement?.noticePeriod > 0 ? 'Give Notice' : 'Terminate Agreement',
         status: stage === actionStages.NOT_STARTED ? 'Owner Action' : undefined,
         goLabel: currentAgreement?.noticePeriod > 0 ? 'Give Notice' : 'Terminate',
@@ -309,7 +309,7 @@ const FormAgreement = ({
       };
     }
     return {
-      icon: <FormAgreementIcon />,
+      icon: entity.label === Entity.IDS.LOT ? <FormLotAgreementIcon /> : <FormAgreementIcon />,
       label: `Form ${entity.label === Entity.IDS.LOT ? 'Lot' : 'Asset'} Agreement`,
       status: stage === actionStages.NOT_STARTED
         ? (policyType === Permission.POLICY_IDS.PREPAID ? 'Prepaid Lease' : 'Custom Contract')

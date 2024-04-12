@@ -73,7 +73,7 @@ const CrewIndicator = ({ cardWidth = 60, crew: inputCrew, noCrewText, flip, labe
                 {myCrew?.id === crew?.id ? <label> (Me)</label> : null}
               </>
             )
-            : (noCrewText || 'N/A')}
+            : (noCrewText || 'N / A')}
         </h3>
       </CrewLabel>
     </CrewmateCards>

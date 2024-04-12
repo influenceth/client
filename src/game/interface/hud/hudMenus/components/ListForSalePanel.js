@@ -8,6 +8,7 @@ import { CheckboxButton, CheckboxRow } from '~/components/filters/components';
 import { nativeBool } from '~/lib/utils';
 import UncontrolledTextInput from '~/components/TextInputUncontrolled';
 import useNftSaleManager from '~/hooks/actionManagers/useNftSaleManager';
+import theme from '~/theme';
 
 const borderColor = `rgba(255, 255, 255, 0.15)`;
 
@@ -28,7 +29,7 @@ const Warning = styled.div`
     margin-right: 4px;
   }
   & span {
-    color: ${p => p.theme.colors.main};
+    color: ${p => p.theme.colors.darkRed};
     display: inline-block;
   }
 `;
@@ -86,10 +87,12 @@ export const ListForSaleInner = ({ forSaleWarning, isSaving, onCancel, onSave, o
 
       <Section style={{ paddingBottom: 0 }}>
         <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-          <Button
-            disabled={nativeBool(isSaving)}
-            onClick={() => cancelForSale()}
-            size="small">Cancel</Button>
+          {isDirty &&
+            <Button
+              disabled={nativeBool(isSaving)}
+              onClick={() => cancelForSale()}
+              size="small">Cancel</Button>
+          }
           <Button
             disabled={nativeBool(!isDirty || isIncomplete || isSaving)}
             loading={isSaving}
@@ -110,16 +113,14 @@ const ListForSalePanel = ({ entity, forSaleWarning }) => {
 
   const config = useMemo(() => {
     return {
-      color: originalPrice ? '#363d65' : '#7e2b2a'
+      color: originalPrice ? theme.colors.brightMain : theme.colors.red
     };
   }, [originalPrice]);
 
   return (
     <CollapsibleBlock
-      uncollapsibleProps={{ headerColor: config.color }}
       title="List for Sale"
-      titleAction={(isOpen) => !isOpen && (<span style={{ color: config.color }}>{originalPrice > 0 ? '' : 'Not '} For Sale</span>)}
-      initiallyClosed>
+      titleAction={() => (<span style={{ color: config.color }}>{originalPrice > 0 ? '' : 'Not '} For Sale</span>)} >
       <ListForSaleInner
         forSaleWarning={forSaleWarning}
         originalPrice={originalPrice}

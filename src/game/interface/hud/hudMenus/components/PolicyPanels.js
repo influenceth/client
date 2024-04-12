@@ -2,27 +2,28 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
 import { Address, Building, Entity, Permission } from '@influenceth/sdk';
 
-import { CloseIcon, FormAgreementIcon, LotControlIcon, PermissionIcon, RadioCheckedIcon, RadioUncheckedIcon, SwayIcon, WarningIcon } from '~/components/Icons';
-import CollapsibleBlock from '~/components/CollapsibleBlock';
-import Button from '~/components/ButtonAlt';
-import Autocomplete from '~/components/Autocomplete';
-import formatters from '~/lib/formatters';
-import IconButton from '~/components/IconButton';
 import { InputBlock } from '~/components/filters/components';
-import { formatFixed, nativeBool, reactBool } from '~/lib/utils';
-import UncontrolledTextInput from '~/components/TextInputUncontrolled';
-import UncontrolledTextArea from '~/components/TextAreaUncontrolled';
-import usePolicyManager from '~/hooks/actionManagers/usePolicyManager';
-import EntityName from '~/components/EntityName';
-import actionButtons from '../../actionButtons';
-import useCrewContext from '~/hooks/useCrewContext';
-import useLot from '~/hooks/useLot';
-import LiveTimer from '~/components/LiveTimer';
-import useConstructionManager from '~/hooks/actionManagers/useConstructionManager';
-import EntityLink from '~/components/EntityLink';
-import useSession from '~/hooks/useSession';
 import AddressLink from '~/components/AddressLink';
+import Autocomplete from '~/components/Autocomplete';
+import Button from '~/components/ButtonAlt';
+import CollapsibleBlock from '~/components/CollapsibleBlock';
+import EntityLink from '~/components/EntityLink';
+import EntityName from '~/components/EntityName';
+import IconButton from '~/components/IconButton';
+import { CloseIcon, AgreementIcon, LotControlIcon, PermissionIcon, RadioCheckedIcon, RadioUncheckedIcon, SwayIcon, WarningIcon } from '~/components/Icons';
+import LiveTimer from '~/components/LiveTimer';
+import UncontrolledTextArea from '~/components/TextAreaUncontrolled';
+import UncontrolledTextInput from '~/components/TextInputUncontrolled';
+import useConstructionManager from '~/hooks/actionManagers/useConstructionManager';
+import usePolicyManager from '~/hooks/actionManagers/usePolicyManager';
+import useCrewContext from '~/hooks/useCrewContext';
 import useHydratedCrew from '~/hooks/useHydratedCrew';
+import useLot from '~/hooks/useLot';
+import useSession from '~/hooks/useSession';
+import formatters from '~/lib/formatters';
+import { formatFixed, nativeBool, reactBool } from '~/lib/utils';
+import theme from '~/theme';
+import actionButtons from '../../actionButtons';
 
 const borderColor = `rgba(255, 255, 255, 0.15)`;
 const DataBlock = styled.div``;
@@ -39,13 +40,13 @@ const EditBlock = styled.div`
 
 const DataRow = styled.div`
   align-items: center;
-  color: white;
+  color: ${theme.colors.secondaryText};
   display: flex;
   font-size: 90%;
   justify-content: space-between;
   line-height: 1.7em;
-  &:not(:first-child) label {
-    opacity: 0.5;
+  & > span {
+    color: white;
   }
 `;
 
@@ -163,24 +164,24 @@ const PermSummaryWarning = styled(PermSummary)`
 
 const getPolicyColor = (policyType) => {
   switch (Number(policyType)) {
-    case Permission.POLICY_IDS.PRIVATE: return '#7e2b2a';
-    case Permission.POLICY_IDS.PUBLIC: return '#336342';
-    case Permission.POLICY_IDS.PREPAID: return '#185c5c';
-    case Permission.POLICY_IDS.CONTRACT: return '#363d65';
-    default: return '#333333';
+    case Permission.POLICY_IDS.PRIVATE: return theme.colors.red;
+    case Permission.POLICY_IDS.PUBLIC: return theme.colors.green;
+    case Permission.POLICY_IDS.PREPAID: return '#70cad0';
+    case Permission.POLICY_IDS.CONTRACT: return '#8687c1';
+    default: return '#666666';
   }
 }
 
 const getStatusColor = (status) => {
   switch (status) {
     case 'controller':
-    case 'granted': return '#336342';
-    case 'available': return '#363d65';
-    case 'restricted': return '#7e2b2a';
-    case 'under notice': return '#8c520b';
-    case 'controlled':
-    case 'under contract': return '#555555';
-    default: return '#333333';
+    case 'granted': return theme.colors.success;
+    case 'available': return theme.colors.brightMain;
+    case 'restricted': return theme.colors.red;
+    case 'under notice': return theme.colors.orange;
+    case 'unleasable': return theme.colors.secondaryText;
+    case 'under contract': return theme.colors.main;
+    default: return '#666666';
   }
 }
 
@@ -302,8 +303,9 @@ const PolicyPanel = ({ editable = false, entity, permission }) => {
     if (Permission.TYPES[permission].isExclusive) {
       if (currentPolicy?.agreements?.[0]?.noticeTime > 0) return 'under notice';
       if (currentPolicy?.crewStatus === 'available' && permission === Permission.IDS.USE_LOT) {
-        if (entity?.building?.Control?.controller?.id === entity?.Control?.controller?.id) return 'controlled';
-        if (entity?.surfaceShip?.Control?.controller?.id === entity?.Control?.controller?.id) return 'controlled';
+        if (entity?.Control?.controller?.id) {
+          if ((entity.building || entity?.surfaceShip)?.Control?.controller?.id === entity.Control.controller.id) return 'unleasable';
+        }
       }
 
     // else, only the crew cares
@@ -343,22 +345,18 @@ const PolicyPanel = ({ editable = false, entity, permission }) => {
       }}
       onClose={editing ? () => { toggleEditing() } : null}
       outerStyle={{ marginBottom: 8 }}
-      uncollapsibleProps={{
-        headerColor: config.color
-      }}
       title={permission === Permission.IDS.USE_LOT ? <><LotControlIcon /> Lot Control</> : <><PermissionIcon /> {Permission.TYPES[permission]?.name}</>}
       titleAction={() => (
         <span style={{ color: config.color }}>
           {editable
             ? (config.nameShort || config.name)
-            : (permission === Permission.IDS.USE_LOT && entity?.Control?.controller?.id === crew?.id
+            : (permission === Permission.IDS.USE_LOT && entity?.label === Entity.IDS.ASTEROID && entity?.Control?.controller?.id === crew?.id 
                 ? 'Administrator'
                 : config.crewStatus
             )
           }
         </span>
-      )}
-      initiallyClosed>
+      )}>
       {editing && (
         <>
           <Section>
@@ -542,7 +540,7 @@ const PolicyPanel = ({ editable = false, entity, permission }) => {
                     <actionButtons.FormAgreement.Component
                       _disabled={
                         Permission.TYPES[permission].isExclusive &&
-                        (jitStatus === 'controlled' || agreements?.length > 0) &&
+                        (jitStatus === 'unleasable' || agreements?.length > 0) &&
                         entity?.Control?.controller?.id !== crew?.id
                       }
                       entity={entity}
@@ -564,7 +562,7 @@ const PolicyPanel = ({ editable = false, entity, permission }) => {
 
           {editable && (
             <EditBlock>
-              <Button onClick={() => toggleEditing('policy')}>Edit Permission Policy</Button>
+              <Button size="small" onClick={() => toggleEditing('policy')}>Edit Permission Policy</Button>
             </EditBlock>
           )}
 
@@ -584,7 +582,7 @@ const PolicyPanel = ({ editable = false, entity, permission }) => {
                     </DataRow>
                   </DataBlock>
                   <EditBlock>
-                    <Button onClick={() => toggleEditing('allowlist')}>Edit Allowlist</Button>
+                    <Button size="small" onClick={() => toggleEditing('allowlist')}>Edit Allowlist</Button>
                   </EditBlock>
                 </Section>
               )}
@@ -594,7 +592,7 @@ const PolicyPanel = ({ editable = false, entity, permission }) => {
                   <DataBlock>
                     <DataRow>
                       <label>Allowlist</label>
-                      <span style={{ color: onAllowlist ? '#00db51' : '#777' }}>{onAllowlist ? 'Allowed' : 'Not on List'}</span>
+                      <span style={{ color: onAllowlist ? theme.colors.success : theme.colors.secondaryText }}>{onAllowlist ? 'Allowed' : 'Not on List'}</span>
                     </DataRow>
                   </DataBlock>
                 </Section>
@@ -641,15 +639,15 @@ const PolicyPanels = ({ editable, entity }) => {
     return 0;
   }, [lot]);
 
-  const [ crewHasAgreements, crewCanMakeAgreements ] = useMemo(() => {
-    let hasAgreement = false;
-    let isAgreeable = false;
-    Object.keys(permPolicies).forEach((permission) => {
-      const { crewStatus } = permPolicies[permission];
-      if (crewStatus === 'granted') hasAgreement = true;
-      else if (crewStatus === 'available') isAgreeable = true;
+  // find out if any others have access to this asset via any perm
+  const othersHaveAgreementsOnThisAsset = useMemo(() => {
+    return !!Object.keys(permPolicies).find((permission) => {
+      const { agreements, allowlist, accountAllowlist } = permPolicies[permission];
+      if ((agreements || []).find((a) => a.permitted.id !== crew?.id)) return true;
+      if ((allowlist || []).find((a) => a.permitted.id !== crew?.id)) return true;
+      if ((accountAllowlist || []).find((a) => a.permitted !== crew?.delegatedTo)) return true;
+      return false;
     });
-    return [hasAgreement, isAgreeable];
   }, [permPolicies]);
 
   return (
@@ -658,12 +656,13 @@ const PolicyPanels = ({ editable, entity }) => {
       {showStagingWarning === 2 && <PermSummaryWarning><WarningIcon /><span>Staging Time expired. Construction Site is vulnerable to any crew.</span></PermSummaryWarning>}
       {showStagingWarning === 1 && <PermSummary><WarningIcon /><span><LiveTimer target={lot?.building?.Building?.plannedAt + Building.GRACE_PERIOD} maxPrecision={2} /> Staging Time Remaining</span></PermSummary>}
 
-      {(crewHasAgreements || crewCanMakeAgreements) && (
-        <PermSummary success={crewHasAgreements}>
-          <FormAgreementIcon />
-          {crewHasAgreements ? 'This asset has agreements with my crew.' : 'This asset has permission agreements.'}
+      {othersHaveAgreementsOnThisAsset && (
+        <PermSummary>
+          <AgreementIcon />
+          Asset has active agreements with other crews.
         </PermSummary>
       )}
+
       {Object.keys(permPolicies).map((permission) => (
         <PolicyPanel
           key={permission}

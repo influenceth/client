@@ -1,6 +1,7 @@
 import { useCallback, useMemo } from 'react';
+import { Permission } from '@influenceth/sdk';
 
-import { FormAgreementIcon } from '~/components/Icons';
+import { FormAgreementIcon, FormLotAgreementIcon } from '~/components/Icons';
 import useAgreementManager from '~/hooks/actionManagers/useAgreementManager';
 import useStore from '~/hooks/useStore';
 import ActionButton from './ActionButton';
@@ -30,7 +31,7 @@ const FormAgreement = ({ entity, permission, _disabled }) => {
         disabled: _disabled || disabledReason,
         loading: pendingChange
       }}
-      icon={<FormAgreementIcon />}
+      icon={permission === Permission.IDS.USE_LOT ? <FormLotAgreementIcon /> : <FormAgreementIcon /> }
       onClick={handleClick} />
   );
 };
