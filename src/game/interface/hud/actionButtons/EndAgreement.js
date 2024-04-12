@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from 'react';
 
-import { CancelAgreementIcon } from '~/components/Icons';
+import { CancelAgreementIcon, GiveNoticeIcon } from '~/components/Icons';
 import useAgreementManager from '~/hooks/actionManagers/useAgreementManager';
 import useStore from '~/hooks/useStore';
 import ActionButton from './ActionButton';
@@ -29,13 +29,13 @@ const EndAgreement = ({ entity, permission, agreementPath, _disabled }) => {
 
   return (
     <ActionButton
-      label="End Agreement"
+      label={currentAgreement?.noticeTime > 0 ? "Give Notice" : "End Agreement"}
       labelAddendum={disabledReason}
       flags={{
         disabled: _disabled || disabledReason,
         loading: pendingChange
       }}
-      icon={<CancelAgreementIcon />}
+      icon={currentAgreement?.noticeTime > 0 ? <GiveNoticeIcon /> : <CancelAgreementIcon />}
       onClick={handleClick} />
   );
 };

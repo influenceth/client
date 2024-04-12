@@ -1,8 +1,9 @@
 import { useMemo } from 'react';
+import theme from '~/theme';
 import styled from 'styled-components';
 import { Entity, Permission } from '@influenceth/sdk';
 
-import { MyAssetIcon, SwayIcon, WarningIcon } from '~/components/Icons';
+import { MyAssetIcon, SwayIcon, WarningIcon, ChevronRightIcon } from '~/components/Icons';
 import useSession from '~/hooks/useSession';
 import useCrewContext from '~/hooks/useCrewContext';
 import { LocationLink } from './components';
@@ -15,8 +16,13 @@ import useActionButtons from '~/hooks/useActionButtons';
 import { getAgreementPath } from '~/hooks/actionManagers/useAgreementManager';
 import EntityLink from '~/components/EntityLink';
 
-const Highlight = styled.span`
-  color: ${p => p.theme.colors.main};
+const Highlight = styled.div`
+  color: white;
+  display: flex;
+  align-items: center;
+  & svg {
+    font-size: 150%;
+  }
 `;
 
 const ProgressBar = styled.div`
@@ -88,7 +94,9 @@ const useColumns = () => {
         sortField: '_agreement._type',
         selector: row => (
           <Highlight>
-           {Permission.POLICY_TYPES[row._agreement._type]?.name || 'On Allowlist'}
+            { row._agreement._type === Permission.POLICY_IDS.PREPAID && crew?.id === row._agreement?.permitted?.id && <ChevronRightIcon /> } 
+            { row._agreement._type === Permission.POLICY_IDS.PREPAID && row.Control?.controller?.id === crew?.id && <ChevronRightIcon /> }
+            { Permission.POLICY_TYPES[row._agreement._type]?.name || <span style={{color:theme.colors.success}}>On Allowlist</span> }
           </Highlight>
         )
       },
@@ -158,7 +166,7 @@ const useColumns = () => {
             }
             return <Expired><WarningIcon /> <span>Expired</span></Expired>;
           }
-          return <>until canceled</>;
+          return <>N / A</>;
         }
       },
       {
@@ -173,7 +181,7 @@ const useColumns = () => {
               {' '}/ mo
             </>
           )
-          : `n/a` 
+          : `N / A` 
       },
       {
         key: 'min',
@@ -181,7 +189,7 @@ const useColumns = () => {
         sortField: '_agreement.initialTerm',
         selector: row => row._agreement._type === Permission.POLICY_IDS.PREPAID
           ? `${formatFixed(secondsToMonths(row._agreement.initialTerm), 2)} mo`
-          : `n/a`
+          : `N / A`
       },
       {
         key: 'notice',
@@ -189,7 +197,7 @@ const useColumns = () => {
         sortField: '_agreement.noticePeriod',
         selector: row => row._agreement._type === Permission.POLICY_IDS.PREPAID
           ? `${formatFixed(secondsToMonths(row._agreement.noticePeriod), 2)} mo`
-          : `n/a`
+          : `N / A`
       },
       {
         key: '_expandable',
