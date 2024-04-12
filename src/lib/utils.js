@@ -233,10 +233,9 @@ export const entityToAgreements = (entity) => {
   ['PrepaidAgreements', 'ContractAgreements', 'WhitelistAgreements', 'WhitelistAccountAgreements'].forEach((agreementType) => {
     (entity[agreementType] || []).forEach((agreement, j) => {
       const formatted = {
+        ...entity,
+        
         key: `${entity.uuid}_${agreementType}_${j}`,
-        id: entity.id,
-        label: entity.label,
-        uuid: entity.uuid,
         _agreement: {
           _type: agreementType === 'PrepaidAgreements'
             ? Permission.POLICY_IDS.PREPAID
@@ -249,10 +248,6 @@ export const entityToAgreements = (entity) => {
       // NOTE: this is different from elsewhere in the client, where the controller is
       //       whoever has LOT_USE (fallback to asteroid controller)
       formatted.Control = entity.label === Entity.IDS.LOT ? entity.meta?.asteroid?.Control : entity.Control;
-      formatted.Location = entity.Location;
-      formatted.Name = entity.Name;
-      if (entity.Building) formatted.Building = entity.Building;
-      if (entity.Ship) formatted.Ship = entity.Ship;
       acc.push(formatted);
     })
   });

@@ -17,13 +17,12 @@ import { getAgreementPath } from '~/hooks/actionManagers/useAgreementManager';
 import EntityLink from '~/components/EntityLink';
 import AddressLink from '~/components/AddressLink';
 
-const Highlight = styled.div`
+const ExpandableIcon = styled(ChevronRightIcon)`
   color: white;
-  display: flex;
-  align-items: center;
-  & svg {
-    font-size: 150%;
-  }
+  font-size: 150%;
+  transform: rotate(0);
+  transition: transform 150ms ease;
+  ${p => p.isExpanded && `transform: rotate(90deg);`}
 `;
 
 const ProgressBar = styled.div`
@@ -90,15 +89,26 @@ const useColumns = () => {
   return useMemo(() => {
     const columns = [
       {
+        key: 'expandedIcon',
+        align: 'right',
+        selector: (row, isExpanded) => {
+          if (row._agreement._type === Permission.POLICY_IDS.PREPAID) {
+            if (crew?.id === row._agreement?.permitted?.id || row.Control?.controller?.id === crew?.id) {
+              return <ExpandableIcon isExpanded={isExpanded} />;
+            }
+          }
+          return null;
+        },
+        unhideable: true
+      },
+      {
         key: 'type',
         label: 'Agreement Type',
         sortField: '_agreement._type',
         selector: row => (
-          <Highlight>
-            { row._agreement._type === Permission.POLICY_IDS.PREPAID && crew?.id === row._agreement?.permitted?.id && <ChevronRightIcon /> } 
-            { row._agreement._type === Permission.POLICY_IDS.PREPAID && row.Control?.controller?.id === crew?.id && <ChevronRightIcon /> }
-            { Permission.POLICY_TYPES[row._agreement._type]?.name || <span style={{color:theme.colors.success}}>On Allowlist</span> }
-          </Highlight>
+            <span style={{ color: Permission.POLICY_TYPES[row._agreement._type]?.name ? 'white' : theme.colors.success }}>
+              {Permission.POLICY_TYPES[row._agreement._type]?.name || 'On Allowlist'}
+            </span>
         )
       },
       {

@@ -191,7 +191,7 @@ const ExpandableDataTableRow = ({ columns, getRowProps, row, sortDirection, sort
             sorted={sortField && sortField === c.sortField ? sortDirection : ''}
             style={c.bodyStyle || {}}>
             <CellInner wrap={!!c.wrap}>
-              {c.selector(row)}
+              {c.selector(row, !!expanded)}
             </CellInner>
           </DataTableCell>
         ))}

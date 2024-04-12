@@ -87,7 +87,7 @@ export const ListForSaleInner = ({ forSaleWarning, isSaving, onCancel, onSave, o
 
       <Section style={{ paddingBottom: 0 }}>
         <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-          {nativeBool(isDirty) &&
+          {isDirty &&
             <Button
               disabled={nativeBool(isSaving)}
               onClick={() => cancelForSale()}
@@ -120,9 +120,7 @@ const ListForSalePanel = ({ entity, forSaleWarning }) => {
   return (
     <CollapsibleBlock
       title="List for Sale"
-      titleAction={(isOpen) => (<span style={{ color: config.color }}>{originalPrice > 0 ? '' : 'Not '} For Sale</span>)}
-      >
-
+      titleAction={() => (<span style={{ color: config.color }}>{originalPrice > 0 ? '' : 'Not '} For Sale</span>)} >
       <ListForSaleInner
         forSaleWarning={forSaleWarning}
         originalPrice={originalPrice}

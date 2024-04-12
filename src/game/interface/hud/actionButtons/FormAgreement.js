@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from 'react';
-
 import { Permission } from '@influenceth/sdk';
+
 import { FormAgreementIcon, FormLotAgreementIcon } from '~/components/Icons';
 import useAgreementManager from '~/hooks/actionManagers/useAgreementManager';
 import useStore from '~/hooks/useStore';

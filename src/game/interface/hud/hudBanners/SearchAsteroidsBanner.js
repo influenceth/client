@@ -94,7 +94,7 @@ const SearchAsteroidsBanner = ({ visible }) => {
       loadingMessage="Searching"
       wide>
       <Showing>
-        Showing: {data.showing > 0 ? `1 - ${data.showing.toLocaleString()}` : 'n/a'}
+        Showing: {data.showing > 0 ? `1 - ${data.showing.toLocaleString()}` : 'N / A'}
       </Showing>
       <SortDirection onClick={toggleSortOrder}>
         {sort[1] === 'asc' ? 'Low > High' : 'High > Low'}

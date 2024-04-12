@@ -174,7 +174,7 @@ const getPolicyColor = (policyType) => {
 
 const getStatusColor = (status) => {
   switch (status) {
-    case 'controller': return theme.colors.success;
+    case 'controller':
     case 'granted': return theme.colors.success;
     case 'available': return theme.colors.brightMain;
     case 'restricted': return theme.colors.red;
@@ -355,8 +355,7 @@ const PolicyPanel = ({ editable = false, entity, permission }) => {
             )
           }
         </span>
-      )}
-      >
+      )}>
       {editing && (
         <>
           <Section>
@@ -639,17 +638,15 @@ const PolicyPanels = ({ editable, entity }) => {
     return 0;
   }, [lot]);
 
-  const [ crewHasAgreements, crewCanMakeAgreements, othersHaveAgreements ] = useMemo(() => {
-    let hasAgreement = false;
-    let isAgreeable = false;
-    let agreementsWithOthers = false;
-    Object.keys(permPolicies).forEach((permission) => {
-      const { crewStatus, agreements } = permPolicies[permission];
-      if (crewStatus === 'granted' || crewStatus === 'controller') hasAgreement = true;
-      if (crewStatus === 'available') isAgreeable = true;
-      if ((agreements?.length > 0) && !(Permission.TYPES[permission].isExclusive)) agreementsWithOthers = true;
+  // find out if any others have access to this asset via any perm
+  const othersHaveAgreementsOnThisAsset = useMemo(() => {
+    return !!Object.keys(permPolicies).find((permission) => {
+      const { agreements, allowlist, accountAllowlist } = permPolicies[permission];
+      if ((agreements || []).find((a) => a.permitted.id !== crew?.id)) return true;
+      if ((allowlist || []).find((a) => a.permitted.id !== crew?.id)) return true;
+      if ((accountAllowlist || []).find((a) => a.permitted !== crew?.delegatedTo)) return true;
+      return false;
     });
-    return [hasAgreement, isAgreeable, agreementsWithOthers];
   }, [permPolicies]);
 
   return (
@@ -658,7 +655,7 @@ const PolicyPanels = ({ editable, entity }) => {
       {showStagingWarning === 2 && <PermSummaryWarning><WarningIcon /><span>Staging Time expired. Construction Site is vulnerable to any crew.</span></PermSummaryWarning>}
       {showStagingWarning === 1 && <PermSummary><WarningIcon /><span><LiveTimer target={lot?.building?.Building?.plannedAt + Building.GRACE_PERIOD} maxPrecision={2} /> Staging Time Remaining</span></PermSummary>}
 
-      {(othersHaveAgreements) && (
+      {othersHaveAgreementsOnThisAsset && (
         <PermSummary>
           <AgreementIcon />
           Asset has active agreements with other crews.

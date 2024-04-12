@@ -29,13 +29,13 @@ const EndAgreement = ({ entity, permission, agreementPath, _disabled }) => {
 
   return (
     <ActionButton
-      label={currentAgreement?.noticeTime > 0 ? "Give Notice" : "End Agreement"}
+      label={currentAgreement?.noticePeriod > 0 ? "Give Notice" : "End Agreement"}
       labelAddendum={disabledReason}
       flags={{
         disabled: _disabled || disabledReason,
         loading: pendingChange
       }}
-      icon={currentAgreement?.noticeTime > 0 ? <GiveNoticeIcon /> : <CancelAgreementIcon />}
+      icon={currentAgreement?.noticePeriod > 0 ? <GiveNoticeIcon /> : <CancelAgreementIcon />}
       onClick={handleClick} />
   );
 };

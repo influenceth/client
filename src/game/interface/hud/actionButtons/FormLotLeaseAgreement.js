@@ -4,30 +4,29 @@ import { FormLotAgreementIcon } from '~/components/Icons';
 import useAgreementManager from '~/hooks/actionManagers/useAgreementManager';
 import useStore from '~/hooks/useStore';
 import ActionButton from './ActionButton';
-import { Entity, Permission } from '@influenceth/sdk';
+import { Permission } from '@influenceth/sdk';
 
+// TODO: arguably, it would be more consistent to show this button in a disabled state, at least in some conditions
 const isVisible = ({ lot, crew }) => {
-  if ((!lot) ||
-    (lot?.building?.Control?.controller?.id === lot?.Control?.controller?.id) ||
-    (lot?.surfaceShip?.Control?.controller?.id === lot?.Control?.controller?.id)
-  ) return false;
-  else {
-    const policy = Permission.getPolicyDetails(lot, crew?.id)[Permission.IDS.USE_LOT];
-    return lot && policy.crewStatus === 'available'
+  // visible when lot selected and lot is available to crew (and uncontrolled or not controlled by occupant)
+  if (lot && Permission.getPolicyDetails(lot, crew?.id)[Permission.IDS.USE_LOT]?.crewStatus === 'available') {
+    if (!lot.Control?.controller?.id) return true;
+    if ((lot.building || lot.surfaceShip)?.Control?.controller?.id !== lot.Control.controller.id) return true;
   }
+  return false;
 };
 
-const FormLotLeaseAgreement = ({ lot, entity, permission, _disabled }) => {
+const FormLotLeaseAgreement = ({ lot, permission, _disabled }) => {
   const { pendingChange } = useAgreementManager(lot, permission);
   
   const onSetAction = useStore(s => s.dispatchActionDialog);
 
   const handleClick = useCallback(() => {
     onSetAction('FORM_AGREEMENT', { entity: lot, permission: Permission.IDS.USE_LOT });
-  }, [entity, permission]);
+  }, [lot, permission]);
 
   const disabledReason = useMemo(() => {
-    // if (_disabled) return 'loading...';
+    if (_disabled) return 'loading...';
     if (pendingChange) return 'updating...';
     return '';
   }, [_disabled, pendingChange]);
