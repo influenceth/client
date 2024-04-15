@@ -295,7 +295,7 @@ export function ActivitiesProvider({ children }) {
   }, [disconnected]);
 
   const onWSMessage = useCallback((message) => {
-    if (process.env.NODE_ENV !== 'production') console.log('onWSMessage', message);
+    if (process.env.NODE_ENV !== 'production') console.log('onWSMessage (activities)', message);
     const { type, body } = message;
     if (ignoreEventTypes.includes(type)) return;
     if (type === 'CURRENT_STARKNET_BLOCK_NUMBER') {

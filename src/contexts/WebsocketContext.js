@@ -7,6 +7,8 @@ const WebsocketContext = createContext();
 
 const DEFAULT_ROOM = '_';
 
+let wsUuid = 1;
+
 // NOTE: could maybe roll this back into ActivitiesContext if there was a reason to combine them
 export function WebsocketProvider({ children }) {
   const { token } = useSession();
@@ -51,7 +53,7 @@ export function WebsocketProvider({ children }) {
   const registerMessageHandler = useCallback((callback, room = null) => {
     if (!socket.current) return;
 
-    const regId = Date.now();
+    const regId = wsUuid++;
     if (room) {
       const [type, id] = room.split('::');
       if (type && id) {

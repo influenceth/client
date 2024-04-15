@@ -278,8 +278,9 @@ const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, co
     }
   }, [lotResultMap, lastLotUpdate, positionsReady]);
 
-  const handleWSMessage = useCallback(({ type: eventType, body, ...props }) => {
-    console.log('asteroid handleWSMessage', {eventType, body, props});
+  const handleWSMessage = useCallback((message) => {
+    if (process.env.NODE_ENV !== 'production') console.log('onWSMessage (lots)', message);
+    const { type: eventType, body } = message;
 
     // pass the event to useMappedAsteroidLots hook to update scene
     processEvent(eventType, body);
