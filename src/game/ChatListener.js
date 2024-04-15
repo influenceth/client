@@ -39,7 +39,7 @@ const ChatListener = () => {
   }, [disconnected]);
 
   const handleWSMessage = useCallback((message) => {
-    if (process.env.NODE_ENV !== 'production') console.log('onWSMessage', message);
+    if (process.env.NODE_ENV !== 'production') console.log('onWSMessage (chat)', message);
 
     const { type, body, message: errorMessage } = message;
     if (type === 'chat-message-received') {
