@@ -350,7 +350,7 @@ const PolicyPanel = ({ editable = false, entity, permission }) => {
         <span style={{ color: config.color }}>
           {editable
             ? (config.nameShort || config.name)
-            : (permission === Permission.IDS.USE_LOT && entity?.label === Entity.IDS.ASTEROID && entity?.Control?.controller?.id === crew?.id 
+            : (permission === Permission.IDS.USE_LOT && entity?.label === Entity.IDS.ASTEROID && entity?.Control?.controller?.id === crew?.id
                 ? 'Administrator'
                 : config.crewStatus
             )
@@ -643,9 +643,9 @@ const PolicyPanels = ({ editable, entity }) => {
   const othersHaveAgreementsOnThisAsset = useMemo(() => {
     return !!Object.keys(permPolicies).find((permission) => {
       const { agreements, allowlist, accountAllowlist } = permPolicies[permission];
-      if ((agreements || []).find((a) => a.permitted.id !== crew?.id)) return true;
-      if ((allowlist || []).find((a) => a.permitted.id !== crew?.id)) return true;
-      if ((accountAllowlist || []).find((a) => a.permitted !== crew?.delegatedTo)) return true;
+      if ((agreements || []).find((a) => a?.permitted?.id !== crew?.id)) return true;
+      if ((allowlist || []).find((a) => a?.permitted?.id !== crew?.id)) return true;
+      if ((accountAllowlist || []).find((a) => a?.permitted !== crew?.delegatedTo)) return true;
       return false;
     });
   }, [permPolicies]);
