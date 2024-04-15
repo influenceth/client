@@ -454,7 +454,6 @@ const ManageCrew = ({ altCrews, crew, isForeignCrew, manager, stage, ...props })
         stage={stage}
         {...props} />
 
-
       {dragging >= 0 && createPortal(
         <Dragging offset={dragOffset} position={dragPosition}>
           <CrewmateCardFramed
