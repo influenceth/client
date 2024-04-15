@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import styled from 'styled-components';
 import { Entity } from '@influenceth/sdk';
+import moment from 'moment';
 
 import Button from '~/components/ButtonAlt';
 import { CrewCaptainCardFramed } from '~/components/CrewmateCardFramed';
@@ -78,10 +79,14 @@ const Chat = styled.div`
     flex: 0 0 60px;
   }
   & > div:last-child {
+    ${p => p.showTimestamp ? 'align-self: center;' : 'padding-top: 2px;'}
     flex: 1;
-    padding-top: 2px;
   }
-
+`;
+const Ago = styled.div`
+  font-size: 85%;
+  margin-top: 6px;
+  opacity: 0.6;
 `;
 
 const RemainingChars = styled.div`
@@ -98,6 +103,27 @@ const isValidChatMessage = (content) => {
 }
 
 const maxChatInputHeight = 95;
+
+const ChatItem = ({ chat, showTimestamp }) => {
+  const ago = useMemo(() => {
+    if (!chat.timestamp) return 'a long time ago';
+    const m = moment(new Date(chat.timestamp));
+    return m.fromNow();
+  }, [chat.timestamp]);
+  return (
+    <Chat showTimestamp={showTimestamp}>
+      <div>
+        <CrewCaptainCardFramed crewId={chat.crewId} noArrow width={50} />
+      </div>
+      <div>
+        <div>
+          <EntityLink id={chat.crewId} label={Entity.IDS.CREW} />{' '}<span>{reactPreline(chat.message)}</span>
+        </div>
+        {showTimestamp && <Ago>{ago}</Ago>}
+      </div>
+    </Chat>
+  )
+};
 
 const AsteroidChat = () => {
   const { crew } = useCrewContext();
@@ -193,17 +219,7 @@ const AsteroidChat = () => {
                   data-tip="Connection interruption (messages may be missing)"
                   data-for="hudMenu" />
               )
-              : (
-                <Chat key={chat?.timestamp}>
-                  <div>
-                    <CrewCaptainCardFramed crewId={chat.crewId} noArrow width={50} />
-                  </div>
-                  <div>
-                    <EntityLink id={chat.crewId} label={Entity.IDS.CREW} />
-                    {' '}<span>{reactPreline(chat.message)}</span>
-                  </div>
-                </Chat>
-              );
+              : <ChatItem key={chat.timestamp} chat={chat} showTimestamp={!!crew} />;
           })}
         </Chats>
       </ChatsWrapper>
