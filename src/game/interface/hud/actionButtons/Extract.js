@@ -4,6 +4,7 @@ import { Deposit, Permission } from '@influenceth/sdk';
 import { ExtractionIcon } from '~/components/Icons';
 import useExtractionManager from '~/hooks/actionManagers/useExtractionManager';
 import ActionButton, { getCrewDisabledReason } from './ActionButton';
+import useCrewContext from '~/hooks/useCrewContext';
 
 const labelDict = {
   READY: 'Extract Resource',
@@ -19,28 +20,37 @@ const isVisible = ({ building, crew }) => {
 
 // TODO: for multiple extractors, need one of these (and an extraction manager) per extractor
 const Extract = ({ onSetAction, asteroid, crew, lot, preselect, _disabled }) => {
+  const { crewCan } = useCrewContext();
   const { currentExtraction, extractionStatus } = useExtractionManager(lot?.id);
   const handleClick = useCallback(() => {
     onSetAction('EXTRACT_RESOURCE', { preselect });
   }, [onSetAction, preselect]);
 
-  // badge shows full count of *useable* core samples of *any* resource on lot, owned by *anyone*
+  // badge shows full count of *useable* core samples of crew
   // TODO: this should ideally also check for pending use of samples (i.e. in core sample improvement)
-  const usableSamples = useMemo(() => (lot?.deposits || []).filter((c) => (
-    c.Deposit.status >= Deposit.STATUSES.SAMPLED && c.Deposit.remainingYield > 0
-  )), [lot?.deposits, crew?.id]);
-
-  // add attention flag if any of those ^ are mine
-  const myUsableSamples = useMemo(() => usableSamples.filter((c) => (c.Control.controller.id === crew?.id) || c.PrivateSale?.amount > 0), [crew?.id, usableSamples]);
+  const myUsableSamples = useMemo(() => {
+    // if no access to use extractor, then 0 usable samples
+    if (!crewCan(Permission.IDS.EXTRACT_RESOURCES, lot?.building)) return 0;
+    
+    // else, samples are usable if i control them or they are for sale
+    return (lot?.deposits || []).filter((c) => (
+      c.Deposit.status >= Deposit.STATUSES.SAMPLED
+      && c.Deposit.remainingYield > 0
+      && (
+        (c.Control.controller.id === crew?.id)
+        || (c.PrivateSale?.amount > 0)
+      )
+    ));
+  }, [lot?.deposits, crew?.id]);
 
   const attention = !_disabled && (extractionStatus === 'READY_TO_FINISH' || (myUsableSamples?.length > 0) && extractionStatus === 'READY');
-  const badge = ((extractionStatus === 'READY' && !preselect) ? usableSamples?.length : 0);
+  const badge = ((extractionStatus === 'READY' && !preselect) ? myUsableSamples?.length : 0);
   let disabledReason = useMemo(() => {
     if (_disabled) return 'loading...';
     if (extractionStatus === 'READY') {
-      if (myUsableSamples?.length === 0) return 'requires core sample'; // TODO: does below line make more sense?
-      // if (usableSamples?.length === 0) return 'requires core sample';
-      return getCrewDisabledReason({ asteroid, crew, permission: Permission.IDS.EXTRACT_RESOURCES, permissionTarget: lot?.building });
+      const crewDisabledReason = getCrewDisabledReason({ asteroid, crew, permission: Permission.IDS.EXTRACT_RESOURCES, permissionTarget: lot?.building });
+      if (crewDisabledReason) return crewDisabledReason;
+      if (myUsableSamples?.length === 0) return 'requires core sample';
     } else if (!currentExtraction?._isMyAction) {
       return 'in use';
     }
