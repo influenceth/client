@@ -58,7 +58,7 @@ const usePagedAgreements = (params) => {
     if (params.uuid && entity) {
       return entityToAgreements(entity)
         .filter((a) => !params.permission || (a._agreement.permission === Number(params.permission)))
-        .map((a) => a.label === Entity.IDS.LOT ? ({ ...a, Control: asteroid.Control }) : a);
+        .map((a) => a.label === Entity.IDS.LOT ? ({ ...a, Control: asteroid?.Control }) : a);
     }
     return [];
   }, [asteroid, crewAgreements, entity, isLoading, params.permission, params.uuid]);
