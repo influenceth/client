@@ -15,28 +15,31 @@ const isVisible = ({ crew, ship }) => {
     && ship._location.lotId  // on surface
 };
 
-const LaunchShip = ({ asteroid, lot, onSetAction, _disabled }) => {
+const LaunchShip = ({ asteroid, lot, onSetAction, _disabled, ...props }) => {
   const { crew } = useCrewContext();
-  const { currentUndockingAction } = useShipDockingManager(crew?._location?.shipId);
-  const { currentDeliveries } = useDeliveryManager(crew?._location?.shipId ? { destination: { label: Entity.IDS.SHIP, id: crew._location.shipId } } : {});
-  const crewedShip = useMemo(() => lot?.ships?.find((s) => s.id === crew?._location?.shipId), [crew?._location?.shipId, lot?.ships]);
-  const ready = useReadyAtWatcher(crewedShip?.Ship?.readyAt);
+
+  const crewedShip = useMemo(() => lot?.ships?.find((s) => s.id === crew?._location?.shipId), [crew?._location?.shipId]);
+  const ship = useMemo(() => props.ship || crewedShip, [crewedShip, props.ship]);
+  
+  const { currentUndockingAction } = useShipDockingManager(ship?.id);
+  const { currentDeliveries } = useDeliveryManager(ship?.id ? { destination: { label: Entity.IDS.SHIP, id: ship?.id } } : {});
+  const shipReady = useReadyAtWatcher(ship?.Ship?.readyAt);
 
   const handleClick = useCallback(() => {
-    onSetAction('LAUNCH_SHIP', { shipId: crew?._location.shipId });
-  }, []);
+    onSetAction('LAUNCH_SHIP', { shipId: ship?.id });
+  }, [ship?.id]);
 
   const disabledReason = useMemo(() => {
     if (_disabled) return 'loading...';
-    if (!crewedShip) return 'ship is not crewed';
-    if (!ready) return 'ship is busy';
+    if (ship?.id !== crewedShip?.id) return 'ship is not crewed';
+    if (!shipReady) return 'ship is busy';
 
     // disable if waiting on delivery
-    const invReserved = (crewedShip?.Inventories || []).find((i) => i.reservedMass > 0)
+    const invReserved = (ship?.Inventories || []).find((i) => i.reservedMass > 0)
       || currentDeliveries?.length > 0;
     if (invReserved) return 'delivery pending';
     return getCrewDisabledReason({ asteroid, crew });
-  }, [_disabled, crew, crewedShip, currentDeliveries, lot, ready]);
+  }, [_disabled, crew, crewedShip, ship, currentDeliveries, shipReady]);
 
   return (
     <ActionButton

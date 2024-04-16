@@ -2,9 +2,11 @@ import { useCallback, useContext, useMemo } from 'react';
 import { Entity } from '@influenceth/sdk';
 
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
+import useCrewContext from '~/hooks/useCrewContext';
 import actionStages from '~/lib/actionStages';
 
 const useCrewSwapManager = (props) => {
+  const { crew } = useCrewContext();
   const { execute, getPendingTx } = useContext(ChainTransactionContext);
 
   const reorderRoster = useCallback(({ crewId, newRoster }) => {
@@ -25,9 +27,10 @@ const useCrewSwapManager = (props) => {
 
   const getPendingChange = useCallback(
     () => {
-      return getPendingTx('ArrangeCrew', {}) || getPendingTx('ExchangeCrew', {});
+      return getPendingTx('ArrangeCrew', { caller_crew: { id: crew?.id, label: Entity.IDS.CREW } })
+        || getPendingTx('ExchangeCrew', {});
     },
-    [getPendingTx]
+    [crew?.id, getPendingTx]
   );
 
   const actionStage = useMemo(() => {

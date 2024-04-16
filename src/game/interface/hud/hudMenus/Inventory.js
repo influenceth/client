@@ -421,6 +421,10 @@ const LotInventory = () => {
     }
   }, [amount, splittingResourceId]);
 
+  const onInventoryScroll = useCallback(() => {
+    setSplittingResourceId();
+  }, []);
+
   const onMouseLeave = useCallback(() => {
     if (!focused) {
       setSplittingResourceId();
@@ -507,7 +511,7 @@ const LotInventory = () => {
             
             {/* TODO: mass / volume view toggle */}
           </Controls>
-          <InventoryItems>
+          <InventoryItems onScroll={onInventoryScroll}>
             {splittingResourceId && (
               <StackSplitterPopper referenceEl={resourceItemRefs.current[splittingResourceId]}>
                 <StackSplitter onMouseLeave={onMouseLeave}>

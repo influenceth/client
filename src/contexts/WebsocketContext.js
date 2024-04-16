@@ -83,7 +83,7 @@ export function WebsocketProvider({ children }) {
   }, []);
 
   const registerConnectionHandler = useCallback((callback) => {
-    const regId = Date.now();
+    const regId = wsUuid++;
     connectionHandlers.current[regId] = callback;
     return regId;
   }, []);
