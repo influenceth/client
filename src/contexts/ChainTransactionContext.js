@@ -505,7 +505,7 @@ const getSystemCallAndProcessedVars = (runSystem, rawVars, encodeEntrypoint = fa
 }
 
 export function ChainTransactionProvider({ children }) {
-  const { accountAddress, authenticated, blockNumber, blockTime, starknet, starknetSession } = useSession();
+  const { accountAddress, authenticated, blockNumber, blockTime, logout, starknet, starknetSession } = useSession();
   const activities = useActivitiesContext();
   const { crew, pendingTransactions } = useCrewContext();
 
@@ -792,7 +792,7 @@ export function ChainTransactionProvider({ children }) {
 
   const getTxEvent = useCallback((txHash) => {
     const txHashBInt = BigInt(txHash);
-    return (activities || []).find((a) => a.event.transactionHash && BigInt(a.event.transactionHash) === txHashBInt)?.event;
+    return (activities || []).find((a) => a.event?.transactionHash && BigInt(a.event?.transactionHash) === txHashBInt)?.event;
   }, [activities?.length]);
 
   useEffect(() => {
@@ -907,6 +907,18 @@ export function ChainTransactionProvider({ children }) {
           level: 'warning',
           duration: 5000
         });
+      }
+
+      // Session expired for Argent web wallet sessions, user should be logged out
+      if (e?.message && e?.message.includes('session expired')) {
+        createAlert({
+          type: 'GenericAlert',
+          data: { content: 'Session expired. Please log in again.' },
+          level: 'warning',
+          duration: 5000
+        });
+
+        logout();
       }
 
       onTransactionError(e, vars);
