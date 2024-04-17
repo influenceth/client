@@ -59,7 +59,7 @@ const formatAsItem = (activity, actionItem = {}) => {
     resourceId: null,
     locationDetail: '',
     finishTime: activity.event.returnValues.finishTime || activity.event.timestamp || 0,
-    startTime: activity.event.timestamp || 0,
+    startTime: activity.event.returnValues.startTime || activity.event.timestamp || 0,
     ago: (new moment(new Date(1000 * (activity.event.returnValues.finishTime || activity.event.timestamp || 0)))).fromNow(true),
     onClick: null,
 
@@ -1017,6 +1017,7 @@ export const itemColors = {
   randomEvent: '232, 211, 117',
   ready: theme.colors.successRGB,
   unready: theme.colors.mainRGB,
+  unstarted: '47, 133, 220',
   plan: '248, 133, 44',
   agreement: '248, 133, 44',
   _expired: hexToRGB(theme.colors.expired)
@@ -1027,7 +1028,8 @@ export const statuses = {
   failed: 'Failed',
   randomEvent: 'Event',
   ready: 'Ready',
-  unready: '',
+  unready: 'In Progress',
+  unstarted: 'Scheduled',
   plan: 'Site Active',
   agreement: 'Lease Expiring',
   _expired: 'Expired'

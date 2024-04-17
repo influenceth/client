@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from 'react-query';
 import { Building, Entity } from '@influenceth/sdk';
+import cloneDeep from 'lodash/cloneDeep';
 
 import useSession from '~/hooks/useSession';
 import useCrewAgreements from '~/hooks/useCrewAgreements';
@@ -40,6 +41,7 @@ export function ActionItemProvider({ children }) {
   const failedTransactions = useStore(s => s.failedTransactions);
   const [readyItems, setReadyItems] = useState([]);
   const [unreadyItems, setUnreadyItems] = useState([]);
+  const [unstartedItems, setUnstartedItems] = useState([]);
   const [agreementItems, setAgreementItems] = useState([]);
   const [plannedItems, setPlannedItems] = useState([]);
 
@@ -63,8 +65,23 @@ export function ActionItemProvider({ children }) {
 
     setUnreadyItems(
       (actionItems || [])
-        .filter((a) => a.event.returnValues?.finishTime > blockTime)
+        .filter((a) => a.event.returnValues?.finishTime > blockTime && (!a.event.returnValues?.startTime || a.event.returnValues.startTime <= blockTime))
         .sort((a, b) => a.event.returnValues?.finishTime - b.event.returnValues?.finishTime)
+    );
+
+    setUnstartedItems(
+      (actionItems || [])
+        .filter((a) => a.event.returnValues?.startTime && a.event.returnValues.startTime > blockTime)
+        // // TODO: use this ^ not that v
+        // .filter((a) => a.event.returnValues?.finishTime > blockTime && (!a.event.returnValues?.startTime || a.event.returnValues.startTime <= blockTime))
+        // // TODO: remove map
+        // .map((a) => {
+        //   const b = cloneDeep(a);
+        //   b.event.returnValues.startTime = a.event.returnValues.finishTime + 1;
+        //   b.event.returnValues.finishTime = a.event.returnValues.startTime + 10000;
+        //   return b;
+        // })
+        .sort((a, b) => a.event.returnValues?.startTime - b.event.returnValues?.startTime)
     );
 
     setPlannedItems(
@@ -123,7 +140,8 @@ export function ActionItemProvider({ children }) {
       ...(visibleReadyItems || []).map((item) => ({ ...item, type: 'ready', category: 'ready' })),
       ...(visiblePlannedItems || []).map((item) => ({ ...item, type: 'plan', category: 'warning' })),
       ...(agreementItems || []).map((item) => ({ ...item, type: 'agreement', category: 'warning' })),
-      ...(unreadyItems || []).map((item) => ({ ...item, type: 'unready', category: 'unready' }))
+      ...(unreadyItems || []).map((item) => ({ ...item, type: 'unready', category: 'unready' })),
+      ...(unstartedItems || []).map((item) => ({ ...item, type: 'unstarted', category: 'unstarted' }))
     ].map((x) => {  // make sure everything has a unique key (only `plan` should fall through to the label_id option)
       x.uniqueKey = `${x.type}_${x._id || x.txHash || x.timestamp || x.key || `${x.label}_${x.id}`}`;
       return x;
@@ -137,7 +155,8 @@ export function ActionItemProvider({ children }) {
     plannedItems,
     randomEventItems,
     readyItems,
-    unreadyItems
+    unreadyItems,
+    unstartedItems
   ]);
 
   // TODO: clear timers in the serviceworker
@@ -152,6 +171,7 @@ export function ActionItemProvider({ children }) {
     readyItems,
     plannedItems,
     unreadyItems,
+    unstartedItems,
     actionItems,
     isLoading: actionItemsLoading || plannedBuildingsLoading
   }), [
@@ -162,6 +182,7 @@ export function ActionItemProvider({ children }) {
     readyItems,
     plannedItems,
     unreadyItems,
+    unstartedItems,
     actionItems,
     actionItemsLoading,
     plannedBuildingsLoading

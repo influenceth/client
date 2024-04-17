@@ -14,7 +14,7 @@ import { formatActionItem, itemColors, statuses } from '~/lib/actionItem';
 import formatters from '~/lib/formatters';
 
 const ICON_WIDTH = 34;
-export const ITEM_WIDTH = 420;
+export const ITEM_WIDTH = 425;
 export const TRANSITION_TIME = 400;
 
 const opacityKeyframes = keyframes`
@@ -39,6 +39,9 @@ const Icon = styled.div`
 
 const Status = styled.div``;
 const Label = styled.div`
+  white-space: nowrap;
+`;
+const Delay = styled.div`
   white-space: nowrap;
 `;
 const Details = styled.div``;
@@ -157,6 +160,10 @@ const ActionItemRow = styled.div`
   ${Label} {
     color: white;
     white-space: nowrap;
+  }
+  ${Delay} {
+    margin-left: 5px;
+    margin-right: 5px;
   }
   ${Details} {
     flex: 1;
@@ -285,17 +292,20 @@ const ActionItem = ({ data, getActivityConfig }) => {
         {type === 'failed' && <FailedIcon />}
         {type === 'randomEvent' && <RandomEventIcon size="0.77em" />}
         {type === 'ready' && <ReadyIcon />}
-        {(type === 'pending' || type === 'unready' || type === 'plan' || type === 'agreement') && <span>{item.icon}</span>}
+        {['pending', 'unready', 'unstarted', 'plan', 'agreement'].includes(type) && <span>{item.icon}</span>}
       </Icon>
       <Status>{statuses[item._expired ? '_expired' : item.type]}</Status>
       <Label>{item.label}</Label>
+      {type === 'unstarted' && item.startTime && (
+        <Delay>(+<LiveTimer target={item.startTime} maxPrecision={1} />)</Delay>
+      )}
       <Details>
         <Timing>
           {type === 'pending' && <b>Just Now</b>}
           {((type === 'ready' || type === 'failed' || type === 'randomEvent') && item.ago) && <>{item.ago} <b style={{ marginLeft: 4 }}>ago</b></>}
-          {type === 'unready' && item.finishTime && (
+          {(type === 'unready' || type === 'unstarted') && item.finishTime && (
             <LiveTimer target={item.finishTime} maxPrecision={2}>
-              {(formattedTime, isTimer) => isTimer ? <><b style={{ marginRight: 4 }}>Remaining</b> {formattedTime}</> : <b>{formattedTime}</b>}
+              {(formattedTime, isTimer) => isTimer ? <><b style={{ marginRight: 4 }}>Ready In</b> {formattedTime}</> : <b>{formattedTime}</b>}
             </LiveTimer>
           )}
           {/* TODO: would be nice for this to have different level warning intensity based on time-left and/or presence of inventory on the lot */}

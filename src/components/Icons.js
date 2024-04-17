@@ -13,11 +13,10 @@ import {
   MdExpandMore,
   MdFastRewind,
   MdFastForward,
+  MdHourglassBottom,
   MdNotificationsActive,
   MdPlayArrow,
   MdPause,
-  MdRadioButtonChecked,
-  MdRadioButtonUnchecked,
   MdStop,
   MdNavigateBefore,
   MdNavigateNext,
@@ -29,7 +28,6 @@ import {
   RiTableFill,
   RiRepeatFill,
   RiRouteFill,
-  RiAlertFill,
   RiSortDesc
 } from 'react-icons/ri';
 import { TiArrowRight } from 'react-icons/ti';
@@ -403,6 +401,7 @@ export {
   MdNavigateNext as NextIcon,
   MdPause as PauseIcon,
   MdPlayArrow as PlayIcon,
+  MdHourglassBottom as ScheduleFullIcon,
   MdStop as StopIcon,
   RiLayoutGridFill as GridIcon,
   FiLogIn as LoginIcon, // TODO: ...

@@ -1276,17 +1276,6 @@ const FreeTransferNote = styled.div`
   }
 `;
 
-export const CrewLocationWrapper = styled.div`
-  text-transform: none;
-  & span {
-    opacity: 0.6;
-    &:before {
-      content: ">";
-      margin: 0 4px;
-    }
-  }
-`;
-
 const ControlWarning = styled.div`
   align-items: center;
   color: ${p => p.theme.colors.error};
@@ -1354,7 +1343,7 @@ export const CrewSelectionDialog = ({ crews, onClose, onSelected, open, title })
               onClick={() => setSelection(crew)}
               title={
                 i === 0
-                  ? <CrewLocationWrapper><CrewLocationLabel hydratedLocation={hydratedLocation} /></CrewLocationWrapper>
+                  ? <CrewLocationLabel hydratedLocation={hydratedLocation} />
                   : ''
               }
               style={{ marginBottom: 8, width: '100%' }} />
@@ -1370,7 +1359,7 @@ export const CrewSelectionDialog = ({ crews, onClose, onSelected, open, title })
               inlineDetails
               isSelected={crew.id === selection?.id}
               onClick={() => setSelection(crew)}
-              title={i === 0 ? <CrewLocationWrapper style={{ marginTop: 8 }}>Empty Crews</CrewLocationWrapper> : ''}
+              title={i === 0 ? <div style={{ marginTop: 8, textTransform: 'none' }}>Empty Crews</div> : ''}
               style={{ marginBottom: 8, width: '100%' }} />
           );
         })}
@@ -2123,7 +2112,11 @@ export const InventorySelectionDialog = ({
             </table>
           </SelectionTableWrapper>
         )
-        : <EmptyMessage>You have no {otherEntity ? 'other ' : ''}available inventories on this asteroid.</EmptyMessage>
+        : (
+          requirePresenceOfItemIds
+          ? <EmptyMessage>You have no accessible inventories with these items on this asteroid.</EmptyMessage>
+          : <EmptyMessage>You have no {otherEntity ? 'other ' : ''}available inventories on this asteroid.</EmptyMessage>
+        )
       }
     </SelectionDialog>
   );

@@ -11,7 +11,7 @@ import useGetActivityConfig from '~/hooks/useGetActivityConfig';
 import { hexToRGB } from '~/theme';
 import ActionItem, { ITEM_WIDTH, TRANSITION_TIME } from './ActionItem';
 
-const SECTION_WIDTH = ITEM_WIDTH + 30;
+export const SECTION_WIDTH = ITEM_WIDTH + 30;
 
 const TitleWrapper = styled.div`
   display: flex;
@@ -213,7 +213,7 @@ const ActionItems = () => {
         if (!cur.hidden) {
           acc.all++;
           if (['pending', 'failed', 'randomEvent', 'ready'].includes(cur.type)) acc.ready++;
-          if (cur.type === 'unready') acc.progress++;
+          if (cur.type === 'unready' || cur.type === 'unstarted') acc.progress++;
         } else {
           acc.hidden++;
         }
@@ -232,7 +232,7 @@ const ActionItems = () => {
     let filter;
     if (selectedFilter === 'all') filter = (i) => !i.hidden;
     if (selectedFilter === 'ready') filter = (i) => !i.hidden && ['pending', 'failed', 'randomEvent', 'ready'].includes(i.type);
-    if (selectedFilter === 'progress') filter = (i) => !i.hidden && i.type === 'unready';
+    if (selectedFilter === 'progress') filter = (i) => !i.hidden && ['unready', 'unstarted'].includes(i.type);
     if (selectedFilter === 'hidden') filter = (i) => i.hidden;
 
     return (displayItems || []).filter(filter);

@@ -1,10 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import styled, { keyframes } from 'styled-components';
 
 import { CrewBusyIcon, CrewIdleIcon, RandomEventIcon } from '~/components/AnimatedIcons';
 import useBlockTime from '~/hooks/useBlockTime';
 import LiveTimer from './LiveTimer';
-import { TimerIcon } from './Icons';
+import { ScheduleFullIcon, TimerIcon } from './Icons';
 
 
 const opacityKeyframes = keyframes`
@@ -25,11 +25,13 @@ const StatusContainer = styled.div`
   align-items: center;
   color: white;
   display: flex;
-  flex-direction: row;
+  flex-direction: ${p => p.flip ? 'row-reverse': 'row'};
+  
   line-height: 0;
   justify-content: flex-end;
   & > label {
     color: #BBB;
+    font-weight: bold;
     padding-left: 6px;
     text-transform: uppercase;
   }
@@ -43,17 +45,6 @@ const StatusContainer = styled.div`
     margin-left: 4px;
     height: 24px;
     width: 24px;
-  }
-`;
-const BusyStatusContainer = styled(StatusContainer)`
-  & > label {
-    color: ${p => p.theme.colors.main};
-  }
-  & > ${IconWrapper} {
-    color: ${p => p.theme.colors.main};
-    & > svg {
-      animation: ${opacityKeyframes} 2000ms infinite;
-    }
   }
 `;
 
@@ -77,6 +68,23 @@ const TimerWrapper = styled.span.attrs((p) => {
   `}
 `;
 
+const BusyStatusContainer = styled(StatusContainer)`
+  & > label {
+    color: ${p => p.color || p.theme.colors.main};
+  }
+  & > ${IconWrapper} {
+    color: ${p => p.color || p.theme.colors.main};
+    & > svg {
+      animation: ${opacityKeyframes} 2000ms infinite;
+    }
+  }
+  & > ${TimerWrapper} {
+    ${p => p.flip && `
+      text-align: left;
+    `};
+  }
+`;
+
 
 const LiveReadyStatus = ({ crew, ...props }) => {
   const blockTime = useBlockTime();
@@ -98,7 +106,10 @@ const LiveReadyStatus = ({ crew, ...props }) => {
 
   useEffect(() => {
     setWaitingOnBlock(blockTime < (crew?.Crew?.readyAt || 0));
-  }, [blockTime, crew?.Crew?.readyAt])
+  }, [blockTime, crew?.Crew?.readyAt]);
+
+  // TODO: move scheduleEnd time to utils or constants
+  const scheduleEnd = useMemo(() => blockTime + 24 * 3600, [blockTime]);
 
   if (!crew || !blockTime) return null;
   if (crew?._actionTypeTriggered?.pendingEvent) {
@@ -111,12 +122,30 @@ const LiveReadyStatus = ({ crew, ...props }) => {
   }
   if (crewIsBusy || waitingOnBlock) {
     return (
-      <BusyStatusContainer {...props}>
+      <BusyStatusContainer {...props} color={crew.Crew?.readyAt < scheduleEnd ? '' : '#fab040'}>
         <LiveTimer target={crew.Crew.readyAt} maxPrecision={2}>
-          {(formattedTime) => <TimerWrapper len={formattedTime.length} waitingOnBlock={!crewIsBusy}>{formattedTime}</TimerWrapper>}
+          {(formattedTime) => (
+            <TimerWrapper
+              len={formattedTime.length}
+              waitingOnBlock={!crewIsBusy}>
+              {formattedTime}
+            </TimerWrapper>
+          )}
         </LiveTimer>
-        {crewIsBusy && <label>Busy</label>}
-        <IconWrapper><CrewBusyIcon /></IconWrapper>
+        {crew.Crew?.readyAt < scheduleEnd
+          ? (
+            <>
+              {crewIsBusy && <label>Working</label>}
+              <IconWrapper><CrewBusyIcon /></IconWrapper>
+            </>
+          )
+          : (
+            <>
+              <label>Schedule Full</label>
+              <IconWrapper><ScheduleFullIcon /></IconWrapper>
+            </>
+          )
+        }
       </BusyStatusContainer>
     );
   }
@@ -130,7 +159,7 @@ const LiveReadyStatus = ({ crew, ...props }) => {
   }
   return (
     <StatusContainer {...props}>
-      <label>Idle</label> 
+      <label>Ready</label> 
       <IconWrapper><CrewIdleIcon /></IconWrapper>
     </StatusContainer>
   );

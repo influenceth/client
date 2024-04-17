@@ -54,22 +54,6 @@ const TitleBar = styled.div`
   }
 `;
 
-const BaseLocation = styled.div`
-  color: white;
-  cursor: ${p => p.theme.cursors.active};
-  font-size: 14.5px;
-  span {
-    color: #AAA;
-    &:before {
-      content: " > ";
-    }
-  }
-  svg {
-    margin-right: 2px;
-    vertical-align: middle;
-  }
-`;
-
 
 const Crewmates = styled.div`
   align-items: flex-start;
@@ -145,9 +129,7 @@ const Crews = () => {
           {/* NOTE: this info is null in practice for empty crew (even if set) */}
           {crew?._crewmates?.[0] && (
             <TitleBar>
-              <BaseLocation>
-                <CrewLocationLabel hydratedLocation={hydratedLocation} />
-              </BaseLocation>
+              <CrewLocationLabel hydratedLocation={hydratedLocation} />
 
               <LiveFoodStatus crew={crew} />
             </TitleBar>

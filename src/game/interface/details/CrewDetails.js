@@ -7,9 +7,9 @@ import LoadingAnimation from 'react-spinners/PuffLoader';
 import CoverImageSrc from '~/assets/images/modal_headers/OwnedCrew.png';
 import AnnotationBio from '~/components/AnnotationBio';
 import Button from '~/components/ButtonAlt';
+import CrewLocationLabel from '~/components/CrewLocationLabel';
 import CrewmateCardFramed, { EmptyCrewmateCardFramed } from '~/components/CrewmateCardFramed';
 import CrewmateInfoPane from '~/components/CrewmateInfoPane';
-import CrewLocationLabel from '~/components/CrewLocationLabel';
 import Details from '~/components/DetailsModal';
 import LiveFoodStatus from '~/components/LiveFoodStatus';
 import LiveReadyStatus from '~/components/LiveReadyStatus';
@@ -213,28 +213,6 @@ const TitleBar = styled.div`
     }
   }
 `;
-
-const BaseLocation = styled.div`
-  color: white;
-  cursor: ${p => p.theme.cursors.active};
-  font-size: 14.5px;
-  span {
-    color: #AAA;
-    &:before {
-      content: " > ";
-    }
-  }
-
-  &:hover, &:hover span {
-    color: ${p => p.theme.colors.main};
-  }
-
-  svg {
-    margin-right: 2px;
-    vertical-align: middle;
-  }
-`;
-
 
 const Crewmates = styled.div`
   align-items: flex-start;
@@ -461,9 +439,10 @@ const CrewDetails = ({ crewId, crew, isMyCrew, isOwnedCrew, selectCrew }) => {
                 </Crewmates>
 
                 <TitleBar>
-                  <BaseLocation onClick={onClickLocation}>
-                    <CrewLocationLabel hydratedLocation={hydratedLocation} />
-                  </BaseLocation>
+                  <CrewLocationLabel
+                    hydratedLocation={hydratedLocation}
+                    onClick={onClickLocation}
+                  />
 
                   <LiveFoodStatus crew={crew} onClick={isMyCrew ? () => { onSetAction('FEED_CREW'); } : undefined} />
                 </TitleBar>
