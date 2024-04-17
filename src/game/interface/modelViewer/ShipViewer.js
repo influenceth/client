@@ -11,8 +11,8 @@ const ShipViewer = () => {
   const { data: ship, isLoading } = useShip(zoomScene?.shipId);
 
   const modelUrl = useMemo(() => {
-    return getShipModel(ship?.Ship?.shipType);
-  }, [ship?.Ship?.shipType]);
+    return getShipModel(ship?.Ship?.shipType, ship?.Ship?.variant);
+  }, [ship?.Ship?.shipType, ship?.Ship?.variant]);
 
   if (zoomScene?.type !== 'SHIP' || isLoading) return null;
   return (
