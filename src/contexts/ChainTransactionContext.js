@@ -525,7 +525,7 @@ export function ChainTransactionProvider({ children }) {
     //  ... or we could also refetch crew again first
     () => crew?.Crew?.actionType
       && crew?.Crew?.actionRound
-      && (crew?.Crew?.actionRound + RandomEvent.MIN_ROUNDS) <= blockNumber
+      // && (crew?.Crew?.actionRound + RandomEvent.MIN_ROUNDS) <= blockNumber // TODO: actionRound tmp fix
       && !crew?._actionTypeTriggered,
     [blockNumber, crew?.Crew?.actionType, crew?.Crew?.actionRound, crew?._actionTypeTriggered]
   );
