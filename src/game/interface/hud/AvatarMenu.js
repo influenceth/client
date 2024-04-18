@@ -79,7 +79,7 @@ const TitleBar = styled.div`
     ${p => p.showBusy && css`
       &:before {
         content: "";
-        animation: ${actionProgressBarAnimation} 1s linear infinite reverse;
+        animation: ${actionProgressBarAnimation} 2.5s linear infinite reverse;
         background: repeating-linear-gradient(
           ${gradientAngle}deg,
           ${p.theme.colors.brightMain} 0,

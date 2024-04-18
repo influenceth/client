@@ -85,7 +85,6 @@ const BusyStatusContainer = styled(StatusContainer)`
   }
 `;
 
-
 const LiveReadyStatus = ({ crew, ...props }) => {
   const blockTime = useBlockTime();
 
@@ -108,8 +107,7 @@ const LiveReadyStatus = ({ crew, ...props }) => {
     setWaitingOnBlock(blockTime < (crew?.Crew?.readyAt || 0));
   }, [blockTime, crew?.Crew?.readyAt]);
 
-  // TODO: move scheduleEnd time to utils or constants
-  const scheduleEnd = useMemo(() => blockTime + 24 * 3600, [blockTime]);
+  const scheduleEnd = useMemo(() => blockTime + crew?._scheduleBuffer, [blockTime, crew?._scheduleBuffer]);
 
   if (!crew || !blockTime) return null;
   if (crew?._actionTypeTriggered?.pendingEvent) {

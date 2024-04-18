@@ -270,6 +270,7 @@ const ImproveCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }
         }}
         actionCrew={crew}
         location={{ asteroid, lot }}
+        delayUntil={currentSamplingAction?.startTime || crew?.Crew?.readyAt}
         crewAvailableTime={crewTimeRequirement}
         taskCompleteTime={taskTimeRequirement}
         onClose={props.onClose}
@@ -392,6 +393,7 @@ const ImproveCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }
         goLabel={isPurchase ? 'Purchase & Optimize' : 'Optimize'}
         onGo={onImprove}
         finalizeLabel="Analyze"
+        isSequenceable
         onFinalize={finishSampling}
         stage={stage}
         waitForCrewReady

@@ -41,7 +41,7 @@ const Status = styled(Highlight)`
 
 const Progress = ({ start, finish }) => {
   const syncedTime = useSyncedTime();
-  return <ProgressBar progress={100 * (syncedTime - start) / (finish - start)} />;
+  return <ProgressBar progress={syncedTime < start ? 0 : 100 * (syncedTime - start) / (finish - start)} />;
 }
 
 // TODO: ecs refactor
@@ -77,12 +77,13 @@ const useColumns = () => {
         bodyStyle: { width: '272px' },
         selector: row => (
           <>
-            {row.type === 'unready' && row.finishTime && (
+            {['unready', 'unstarted'].includes(row.type) && row.finishTime && (
               <Progress start={row.startTime} finish={row.finishTime} />
             )}
             <Highlight style={{ display: 'inline-block' }}>
               {row.type === 'pending' && 'Just Now'}
               {(row.type === 'ready' || row.type === 'failed') && row.ago}
+              {row.type === 'unstarted' && 'WAIT'}
               {row.type === 'unready' && row.finishTime && <MainColor><LiveTimer target={row.finishTime} maxPrecision={2} /></MainColor>}
               {row.type === 'agreement' && (
                 row.finishTime

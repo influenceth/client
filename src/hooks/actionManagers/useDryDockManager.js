@@ -50,7 +50,7 @@ const useDryDockManager = (lotId, slot = 1) => {
         current.origin = actionItem.event.returnValues.origin;
         current.originSlot = actionItem.event.returnValues.originSlot;
         current.shipType = actionItem.event.returnValues.shipType;
-        current.startTime = actionItem.event.timestamp;
+        current.startTime = actionItem.event.returnValues.startTime || actionItem.event.timestamp;
       } else {
         current._isMyAction = false;
       }

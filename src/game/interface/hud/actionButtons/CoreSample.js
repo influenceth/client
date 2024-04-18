@@ -87,7 +87,7 @@ const NewCoreSample = ({ asteroid, crew, lot, onSetAction, overrideResourceId, i
   const disabledReason = useMemo(() => {
     if (_disabled) return 'loading...';
     if (improveSample && improveSample?.Deposit?.status !== Deposit.STATUSES.SAMPLED) return 'already used';
-    return getCrewDisabledReason({ asteroid, crew });
+    return getCrewDisabledReason({ asteroid, isSequenceable: true, crew });
   }, [_disabled, asteroid, crew, improveSample]);
 
   const isImprovement = improveSample || (currentSamplingAction && !currentSamplingAction.isNew);
@@ -102,7 +102,8 @@ const NewCoreSample = ({ asteroid, crew, lot, onSetAction, overrideResourceId, i
         finishTime: currentSamplingAction?.finishTime
       }}
       icon={isImprovement ? <ImproveCoreSampleIcon /> : <NewCoreSampleIcon />}
-      onClick={handleClick} />
+      onClick={handleClick}
+      sequenceMode={!crew?._ready} />
   );
 };
 

@@ -79,6 +79,21 @@ const ActionButtonWrapper = styled.div`
   `}
 `;
 
+const CornerBadge = styled.span`
+  background: #0f365c;
+  clip-path: polygon(0 0, 100% 0, 0 100%);
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 24px;
+  height: 28px;
+  left: 0;
+  line-height: 12px;
+  padding: 2px 0 0 2px;
+  position: absolute;
+  top: 0;
+  width: 28px;
+  z-index: 1;
+`;
+
 const ActionButton = styled.div`
   border: 1px solid ${p => p.overrideColor || p.theme.colors.main};
   ${p => p.theme.clipCorner(cornerSize)};
@@ -158,6 +173,9 @@ const ActionButton = styled.div`
       & > svg {
         stroke: #444 !important;
       }
+      & ${CornerBadge} {
+        filter: saturate(0);
+      }
     `
     : `
       &:hover {
@@ -231,7 +249,7 @@ const LoadingTimer = ({ finishTime }) => {
   );
 };
 
-const ActionButtonComponent = ({ label, labelAddendum, flags = {}, icon, onClick, ...props }) => {
+const ActionButtonComponent = ({ label, labelAddendum, flags = {}, icon, onClick, sequenceMode, ...props }) => {
   const _onClick = useCallback(() => {
     if (!flags?.disabled && onClick) onClick();
   }, [flags, onClick]);
@@ -257,6 +275,7 @@ const ActionButtonComponent = ({ label, labelAddendum, flags = {}, icon, onClick
       {flags.loading && <LoadingAnimation />}
       <ActionButton {...safeFlags} overrideColor={props.overrideColor}>
         <ClipCorner dimension={cornerSize} />
+        {sequenceMode && !safeFlags.disabled && !flags.loading && <CornerBadge>+</CornerBadge>}
         <div>{icon}</div>
         {flags.loading && <LoadingTimer finishTime={flags.finishTime} />}
       </ActionButton>
@@ -265,7 +284,14 @@ const ActionButtonComponent = ({ label, labelAddendum, flags = {}, icon, onClick
 }
 
 export const getCrewDisabledReason = ({
-  asteroid, crew, permission, permissionTarget, requireAsteroid = true, requireSurface = true, requireReady = true
+  asteroid,
+  crew,
+  isSequenceable = false,
+  permission,
+  permissionTarget,
+  requireAsteroid = true,
+  requireSurface = true,
+  requireReady = true
 }) => {
   if (!crew?._launched) return 'not yet launched';
   if (permission && permissionTarget) {
@@ -279,7 +305,8 @@ export const getCrewDisabledReason = ({
     }
   }
   if (!!crew._actionTypeTriggered) return 'crew event pending';
-  if (!crew?._ready && requireReady) return 'crew is busy';
+  if (requireReady && isSequenceable && !crew?._readyToSequence) return 'crew is fully scheduled';
+  if (requireReady && !isSequenceable && !crew?._ready) return 'crew is busy';
   return null;
 };
 

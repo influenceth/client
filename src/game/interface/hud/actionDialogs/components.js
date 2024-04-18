@@ -40,7 +40,8 @@ import {
   CoreSampleIcon,
   ResourceIcon,
   CheckedIcon,
-  UncheckedIcon
+  UncheckedIcon,
+  ScheduleFullIcon
 } from '~/components/Icons';
 import LiveTimer from '~/components/LiveTimer';
 import MouseoverInfoPane from '~/components/MouseoverInfoPane';
@@ -336,9 +337,14 @@ const IconContainer = styled.div`
   font-size: 48px;
   padding: 0 10px;
 `;
-const TimePill = styled.div`
+const pillColors = {
+  crew: { bg: 'main', color: 'brightMain' },
+  delay: { bg: 'sequence', color: 'sequenceLight' },
+  total: { bg: 'success', color: 'success' },
+};
+const TimePillComponent = styled.div`
   align-items: center;
-  background: rgba(${p => hexToRGB(p.type === 'crew' ? p.theme.colors.main : p.theme.colors.success)}, 0.4);
+  background: rgba(${p => hexToRGB(p.theme.colors[pillColors[p.type].bg])}, 0.4);
   border-radius: 20px;
   color: white;
   display: flex;
@@ -346,8 +352,13 @@ const TimePill = styled.div`
   padding: 3px 12px;
   text-align: center;
   text-transform: none;
+  & > label {
+    color: ${p => p.theme.colors[pillColors[p.type].color]};
+    margin-right: 6px;
+    text-transform: uppercase;
+  }
   & > svg {
-    color: ${p => p.type === 'crew' ? p.theme.colors.brightMain : p.theme.colors.success};
+    color: ${p => p.theme.colors[pillColors[p.type].color]};
     opacity: 0.7;
     margin-right: 4px;
   }
@@ -373,7 +384,7 @@ const LabelContainer = styled.div`
       flex: 1;
       margin: 6px 0 0;
     }
-    ${TimePill} {
+    ${TimePillComponent} {
       margin-top: 3px;
     }
   }
@@ -2394,7 +2405,61 @@ const ActionDialogActionBar = ({ location, onClose, overrideColor, stage }) => (
   </ActionBar>
 );
 
-export const ActionDialogHeader = ({ action, actionCrew, crewAvailableTime, location, onClose, overrideColor, stage, taskCompleteTime, wide }) => {
+
+const mouseoverPaneProps = (visible) => ({
+  css: css`
+    padding: 10px;
+    pointer-events: ${visible ? 'auto' : 'none'};
+    width: 400px;
+  `,
+  placement: 'top',
+  visible
+});
+
+const TimerInfoBody = styled.div`
+  color: #999;
+  font-size: 15px;
+  & > b {
+    color: white;
+    font-weight: normal;
+  }
+`;
+
+const TimePill = ({ children, type }) => {
+  const [hovered, setHovered] = useState();
+  const [refEl, setRefEl] = useState();
+  return (
+    <TimePillComponent
+      ref={setRefEl}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered()}
+      type={type}>
+      {children}
+
+      <MouseoverInfoPane referenceEl={refEl} {...mouseoverPaneProps(hovered)}>
+        <TimerInfoBody>
+          {type === 'delay' && (
+            <>
+              <b>Scheduled Wait:</b> Time until my crew initiates this action, if other actions have been scheduled ahead of it. The maximum waiting period is 24h.
+            </>
+          )}
+          {type === 'crew' && (
+            <>
+              <b>Crew Ready In:</b> Time until all my crew's current and scheduled actions are finished.
+            </>
+          )}
+          {type === 'total' && (
+            <>
+              <b>Action Ready In:</b> Time until the action outcome is finalized (The crew performing the action will often be ready sooner.)
+            </>
+          )}
+        </TimerInfoBody>
+      </MouseoverInfoPane>
+    </TimePillComponent>
+  );
+};
+
+export const ActionDialogHeader = ({ action, actionCrew, crewAvailableTime, delayUntil, location, onClose, overrideColor, stage, taskCompleteTime, wide }) => {
   return (
     <>
       <ActionDialogActionBar
@@ -2416,7 +2481,22 @@ export const ActionDialogHeader = ({ action, actionCrew, crewAvailableTime, loca
             <h1>{action.label}</h1>
             <div>
               <h2>{action.status || theming[stage]?.label}</h2>
-              {crewAvailableTime !== undefined && <TimePill type="crew"><CrewBusyIcon isPaused /> {formatTimer(crewAvailableTime, 2)}</TimePill>}
+              {delayUntil !== undefined && (
+                <LiveTimer target={delayUntil} maxPrecision={2}>
+                  {(formattedTime, isTimer) => {
+                    const pills = [];
+                    if (isTimer) {
+                      pills.push(<TimePill type="delay"><ScheduleFullIcon /><label>Wait</label> {formattedTime}</TimePill>); 
+                    }
+                    if (crewAvailableTime !== undefined) {
+                      const delayDuration = isTimer ? (delayUntil - Math.floor(Date.now() / 1000)) : 0;
+                      pills.push(<TimePill type="crew"><CrewBusyIcon isPaused /> {formatTimer(delayDuration + crewAvailableTime, 2)}</TimePill>)
+                    }
+                    return pills;
+                  }}
+                </LiveTimer>
+              )}
+              {delayUntil === undefined && crewAvailableTime !== undefined && <TimePill type="crew"><CrewBusyIcon isPaused /> {formatTimer(crewAvailableTime, 2)}</TimePill>}
               {taskCompleteTime !== undefined && <TimePill type="total"><AlertIcon /> {formatTimer(taskCompleteTime, 2)}</TimePill>}
             </div>
           </LabelContainer>
@@ -3723,20 +3803,17 @@ export const ActionDialogStats = ({ stage, stats: rawStats, wide }) => {
   );
 };
 
-const CrewBusyButton = ({ crew }) => {
+const CrewBusyButton = ({ isSequenceable }) => {
   return (
-    <Button
-      disabled={nativeBool(true)}
-      isTransaction
-      loading={reactBool(true)}>
-      Crew Busy
+    <Button disabled isTransaction loading>
+      {isSequenceable ? 'Schedule Full' : 'Crew Busy'}
     </Button>
   );
 };
 
-const CrewNotLaunchedButton = ({ crew }) => {
+const CrewNotLaunchedButton = () => {
   return (
-    <Button disabled={nativeBool(true)} isTransaction>
+    <Button disabled isTransaction>
       Crew Not Launched
     </Button>
   );
@@ -3747,6 +3824,7 @@ export const ActionDialogFooter = ({
   disabled,
   finalizeLabel,
   goLabel,
+  isSequenceable = false,
   onClose,
   onFinalize,
   onGo,
@@ -3766,6 +3844,7 @@ export const ActionDialogFooter = ({
     setNotificationsEnabled((x) => !x);
   }, []);
 
+  const isReady = isSequenceable ? crew?._readyToSequence : crew?._ready;
   return (
     <Footer wide={wide}>
       <SectionBody>
@@ -3783,9 +3862,9 @@ export const ActionDialogFooter = ({
               <Button
                 loading={reactBool(buttonsLoading)}
                 onClick={onClose}>Cancel</Button>
-              {waitForCrewReady && !crew?._launched && <CrewNotLaunchedButton crew={crew} />}
-              {waitForCrewReady && crew?._launched && !crew?._ready && <CrewBusyButton crew={crew} />}
-              {(!waitForCrewReady || (crew?._ready && crew?._launched)) && (
+              {waitForCrewReady && !crew?._launched && <CrewNotLaunchedButton />}
+              {waitForCrewReady && crew?._launched && !isReady && <CrewBusyButton isSequenceable={isSequenceable} />}
+              {(!waitForCrewReady || (isReady && crew?._launched)) && (
                 <Button
                   disabled={nativeBool(disabled)}
                   isTransaction
