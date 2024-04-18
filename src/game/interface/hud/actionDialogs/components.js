@@ -4177,21 +4177,19 @@ export const getTripDetails = (asteroidId, crewTravelBonus, originLotIndex, step
 };
 
 export const formatResourceAmountRatio = (numerator, denominator, resourceId, options = {}) => {
+  // if non-atomic, determine common unit and scale based on denominator
   if (!Product.TYPES[resourceId].isAtomic) {
-    const _numerator = numerator * Product.TYPES[resourceId].massPerUnit;
-    const _denominator = denominator * Product.TYPES[resourceId].massPerUnit;
-    const { unitLabel, scale } = getUnitLabelAndScale(_denominator, options);
-
+    const { unitLabel, scale } = getUnitLabelAndScale(Product.TYPES[resourceId].massPerUnit * denominator, options);
+    console.log('scale: ', scale);
     return {
-      numerator: formatMass(_numerator, { ...options, unitLabel, scale }),
-      denominator: formatMass(_denominator, { ...options, unitLabel, scale }),
-    }
+      numerator: formatResourceMass(numerator, resourceId, { ...options, unitLabel, scale }),
+      denominator: formatResourceMass(denominator, resourceId, { ...options, unitLabel, scale }),
+      deficit: (numerator < denominator) ? formatMass((denominator - numerator) * Product.TYPES[resourceId].massPerUnit, { ...options, fixedPrecision: 2 }) : 0
+    };
   }
-
-  // granular units
   return {
-    numerator: numerator.toLocaleString(),
-    denominator: denominator.toLocaleString()
+    numerator: formatResourceAmount(numerator, resourceId),
+    denominator: formatResourceAmount(denominator, resourceId)
   }
 };
 
