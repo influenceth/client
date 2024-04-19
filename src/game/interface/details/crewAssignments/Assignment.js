@@ -215,7 +215,7 @@ const CrewAssignment = ({ crewId, crewmateId, crewmateMap, onFinish, overrides =
       ),
       flourishWidth: 220,
       leftButton: backButton,
-      rightButton: isLastPageOfStory ? { ...nextButton } : null,
+      rightButton: (isLastPageOfStory && isMintingStory) ? { ...nextButton } : null,
     };
 
     // minting story overrides
@@ -250,7 +250,7 @@ const CrewAssignment = ({ crewId, crewmateId, crewmateMap, onFinish, overrides =
       // don't use choiceless button on last page of minting story + update rightButton text
       if (isLastPageOfStory) {
         p.choicelessButton = null;
-        if (p.rightButton && isLastPageOfBook) {
+        if (isMintingStory && p.rightButton && isLastPageOfBook) {
           p.rightButton.label = 'Finalize Crewmate';
         }
 
