@@ -119,6 +119,12 @@ const useColumns = () => {
         }
       },
       {
+        key: 'variant',
+        label: 'Variant',
+        sortField: 'Ship.variant',
+        selector: row => Ship.getVariant(row.Ship?.variant)?.name || '',
+      },
+      {
         key: 'price',
         label: 'Sale Price',
         sortField: 'Nft.price',
