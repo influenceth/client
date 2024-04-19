@@ -24,7 +24,7 @@ export function CrewProvider({ children }) {
   const { data: constants, isLoading: constantsLoading } = useConstants(['CREW_SCHEDULE_BUFFER','TIME_ACCELERATION']);
   const [CREW_SCHEDULE_BUFFER, TIME_ACCELERATION] = useMemo(() => {
     if (!constants) return [];
-    return [constants.CREW_SCHEDULE_BUFFER || 86400, constants.TIME_ACCELERATION];
+    return [constants.CREW_SCHEDULE_BUFFER, constants.TIME_ACCELERATION];
   }, [constants]);
 
   const ownedCrewsQueryKey = useMemo(
