@@ -53,7 +53,7 @@ const useCoreSampleManager = (lotId) => {
         current._cachedData = actionItem.data;
         current.origin = actionItem.event.returnValues.origin;
         current.originSlot = actionItem.event.returnValues.originSlot;
-        current.startTime = actionItem.event.returnValues.startTime || actionItem.event.timestamp;
+        current.startTime = actionItem._startTime || actionItem.event.timestamp;
       }
       current.finishTime = activeSample.Deposit.finishTime;
       current.isNew = !activeSample.Deposit.initialYield;

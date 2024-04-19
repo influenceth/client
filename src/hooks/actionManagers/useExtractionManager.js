@@ -53,7 +53,7 @@ const useExtractionManager = (lotId, slot = 1) => {
       if (actionItem) {
         current._cachedData = actionItem.data;
         current.depositId = actionItem.event.returnValues.deposit.id;
-        current.startTime = actionItem.event.returnValues.startTime || actionItem.event.timestamp;
+        current.startTime = actionItem._startTime || actionItem.event.timestamp;
       } else {
         current._isMyAction = false;
       }

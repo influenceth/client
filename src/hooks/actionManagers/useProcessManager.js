@@ -52,7 +52,7 @@ const useProcessManager = (lotId, slot) => {
         current._cachedData = actionItem.data;
         current.origin = actionItem.event.returnValues.origin;
         current.originSlot = actionItem.event.returnValues.originSlot;
-        current.startTime = actionItem.event.returnValues.startTime || actionItem.event.timestamp;
+        current.startTime = actionItem._startTime || actionItem.event.timestamp;
       } else {
         current._isMyAction = false;
       }

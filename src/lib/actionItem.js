@@ -59,7 +59,7 @@ const formatAsItem = (activity, actionItem = {}) => {
     resourceId: null,
     locationDetail: '',
     finishTime: activity.event.returnValues.finishTime || activity.event.timestamp || 0,
-    startTime: activity.event.returnValues.startTime || activity.event.timestamp || 0,
+    startTime: activity._startTime || activity.event.timestamp || 0,
     ago: (new moment(new Date(1000 * (activity.event.returnValues.finishTime || activity.event.timestamp || 0)))).fromNow(true),
     onClick: null,
 

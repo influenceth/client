@@ -26,6 +26,14 @@ export function ActionItemProvider({ children }) {
     [ 'actionItems', crewId ],
     async () => {
       const activities = await api.getCrewActionItems(crewId);
+      
+      // add startTime to all for consistency
+      activities.forEach((a) => {
+        if (a.data?.crew?.Crew?.lastReadyAt > a.event?.timestamp) {
+          a._startTime = a.data?.crew?.Crew?.lastReadyAt;
+        }
+      });
+
       await hydrateActivities(activities, queryClient);
       return activities;
     },
@@ -67,14 +75,14 @@ export function ActionItemProvider({ children }) {
 
     setUnreadyItems(
       (actionItems || [])
-        .filter((a) => a.event.returnValues?.finishTime > blockTime && (!a.event.returnValues?.startTime || a.event.returnValues.startTime <= blockTime))
+        .filter((a) => a.event.returnValues?.finishTime > blockTime && (!a._startTime || a._startTime <= blockTime))
         .sort((a, b) => a.event.returnValues?.finishTime - b.event.returnValues?.finishTime)
     );
 
     setUnstartedItems(
       (actionItems || [])
-        .filter((a) => a.event.returnValues?.startTime && a.event.returnValues.startTime > blockTime)
-        .sort((a, b) => a.event.returnValues?.startTime - b.event.returnValues?.startTime)
+        .filter((a) => a._startTime && a._startTime > blockTime)
+        .sort((a, b) => a._startTime - b._startTime)
     );
 
     setPlannedItems(
