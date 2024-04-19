@@ -240,6 +240,7 @@ const Menu = ({ children }) => {
   badge,
   badgeColor,
   badgeDenominator,
+  deficit,
   iconBadge,
   iconBadgeCorner,
   menu,
@@ -254,9 +255,10 @@ const Menu = ({ children }) => {
   underlay,
   ...props
 }) => {
+  // const tip = (deficit) ? `${resource.name} (<span>${deficit}<span>)` : resource.name;
   const tooltipProps = tooltipContainer ? {
     'data-place': 'top',
-    'data-tip': tooltipOverride || resource.name,
+    'data-tip': tooltipOverride || ((deficit) ? `${resource.name} (${deficit})` : resource.name),
     'data-for': tooltipContainer
   } : {};
   // useEffect(() => ReactTooltip.rebuild(), []); // this was causing performance issues on refinery process selection dialog
