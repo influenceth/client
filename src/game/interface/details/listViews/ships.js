@@ -57,6 +57,12 @@ const useColumns = () => {
         unhideable: true
       },
       {
+        key: 'variant',
+        label: 'Variant',
+        sortField: 'Ship.variant',
+        selector: row => Ship.getVariant(row.Ship?.variant)?.name || '',
+      },
+      {
         key: 'status',
         label: 'Status',
         sortField: 'Location.location.label',
@@ -117,12 +123,6 @@ const useColumns = () => {
           }
           return null;
         }
-      },
-      {
-        key: 'variant',
-        label: 'Variant',
-        sortField: 'Ship.variant',
-        selector: row => Ship.getVariant(row.Ship?.variant)?.name || '',
       },
       {
         key: 'price',
