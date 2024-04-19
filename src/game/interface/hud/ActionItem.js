@@ -3,7 +3,7 @@ import { useHistory } from 'react-router-dom';
 import styled, { css, keyframes } from 'styled-components';
 import BarLoader from 'react-spinners/BarLoader';
 
-import { CloseIcon as DismissIcon } from '~/components/Icons';
+import { CloseIcon as DismissIcon, EyeIcon } from '~/components/Icons';
 import { FailedIcon, RandomEventIcon, ReadyIcon } from '~/components/AnimatedIcons';
 import LiveTimer from '~/components/LiveTimer';
 import { useLotLink } from '~/components/LotLink';
@@ -12,6 +12,7 @@ import useLot from '~/hooks/useLot';
 import useStore from '~/hooks/useStore';
 import { formatActionItem, itemColors, statuses } from '~/lib/actionItem';
 import formatters from '~/lib/formatters';
+import IconButton from '~/components/IconButton';
 
 const ICON_WIDTH = 34;
 export const ITEM_WIDTH = 425;
@@ -62,6 +63,9 @@ const Location = styled.div`
       display: inline-block;
       padding: 0 5px;
     }
+  }
+  b, span {
+    white-space: nowrap;
   }
 `;
 const Dismissal = styled.div`
@@ -206,6 +210,7 @@ const ActionItem = ({ data, getActivityConfig }) => {
   const zoomStatus = useStore(s => s.asteroids.zoomStatus);
   const resourceMap = useStore(s => s.asteroids.resourceMap);
   const dispatchActionDialog = useStore(s => s.dispatchActionDialog);
+  const dispatchToggleHideActionItem = useStore(s => s.dispatchToggleHideActionItem);
   const dispatchLauncherPage = useStore(s => s.dispatchLauncherPage);
   const dismissFailedTx = useStore(s => s.dispatchFailedTransactionDismissed);
   const type = data?.type;
@@ -282,6 +287,11 @@ const ActionItem = ({ data, getActivityConfig }) => {
     return false;
   }, [item]);
 
+  const handleToggleHide = useCallback((key) => (e) => {
+    e.stopPropagation();
+    dispatchToggleHideActionItem(key);
+  }, []);
+
   return (
     <ActionItemRow
       color={itemColors[item._expired ? '_expired' : item.type]}
@@ -336,12 +346,25 @@ const ActionItem = ({ data, getActivityConfig }) => {
           </div>
         )}
         {type !== 'failed' && asteroid && (
-          <Location>
-            {item.locationDetail && <><b>{item.locationDetail}</b></>}
-            <span>{formatters.asteroidName(asteroid)}</span>
-            {/* TODO: use <EntityName /> instead? */}
-          </Location>
+          <div style={{ flexWrap: 'nowrap' }}>
+            <Location style={{ flex: 1, textAlign: 'right', whiteSpace: 'wrap' }}>
+              {item.locationDetail && <><b>{item.locationDetail}</b></>}
+              <span>{formatters.asteroidName(asteroid)}</span>
+              {/* TODO: use <EntityName /> instead? */}
+            </Location>
+            {(type === 'plan' || type === 'agreement') && (
+              <IconButton
+                borderless
+                dataTip={data.hidden ? 'Unhide' : 'Hide'}
+                onClick={handleToggleHide(data?.uniqueKey, data.hidden)}
+                themeColor="mainText"
+                style={{ flex: '0 0 30px', marginLeft: 2, marginRight: 0 }}>
+                <EyeIcon />
+              </IconButton>
+            )}
+          </div>
         )}
+
       </Details>
       {type === 'pending' && (
         <Progress>

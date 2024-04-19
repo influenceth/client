@@ -130,6 +130,8 @@ const getPolicyAndAgreementConfig = (couldAddToCollection = false, invalidateAgr
         // if account whitelist, just invalidate all agreements (for all crews)
         // TODO (maybe): in the future, we potentially separate the queries for agreements and account-agreements
         //  so could have separate cacheKeys and thus separate invalidations
+        // TODO (maybe): we could also use onBeforeReceived to query and uncover more accurate invalidations, but
+        //  it seems unlikely that would ever be worth the extra queries
         } else if (returnValues.permitted) {
           invs.push(['agreements']);
         }
