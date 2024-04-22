@@ -240,7 +240,7 @@ const PopperWrapper = (props) => {
   return props.children(refEl, props.disableRefSetter ? noop : setRefEl);
 }
 
-const CrewDetails = ({ crewId, crew, isMyCrew, isOwnedCrew, selectCrew }) => {
+const CrewDetails = ({ activeCrew, crewId, crew, isMyCrew, isOwnedCrew, selectCrew }) => {
   const { accountAddress } = useSession();
   const history = useHistory();
 
@@ -315,7 +315,6 @@ const CrewDetails = ({ crewId, crew, isMyCrew, isOwnedCrew, selectCrew }) => {
   // }, []);
 
   // TODO: we need to support empty crews here
-
   return (
     <>
       <MainContainer>
@@ -468,7 +467,7 @@ const CrewDetails = ({ crewId, crew, isMyCrew, isOwnedCrew, selectCrew }) => {
                 <Button disabled={nativeBool(crew.Crew?.roster?.length >= 5) || !crew._ready} onClick={onClickRecruit}>Recruit to Crew</Button>
               </div>
             )}
-            {isOwnedCrew && !isMyCrew && (
+            {isMyCrew && crewId !== activeCrew?.id && (
               <div style={{ paddingTop: 15 }}>
                 <Button onClick={() => selectCrew(crewId)}>Switch to Crew</Button>
               </div>
@@ -573,9 +572,10 @@ const Wrapper = () => {
       )}
       {crew && !loading && (
         <CrewDetails
+          activeCrew={myCrew}
           crewId={crewId}
           crew={crew}
-          isMyCrew={crewId === myCrew?.id}
+          isMyCrew={Address.areEqual(myCrew?.Crew?.delegatedTo || '', accountAddress || '')}
           isOwnedCrew={Address.areEqual(crew?.Nft?.owner || '', accountAddress || '')}
           selectCrew={selectCrew}
         />
