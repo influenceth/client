@@ -1,4 +1,5 @@
 import { useCallback, useContext, useMemo } from 'react';
+import { Entity } from '@influenceth/sdk';
 
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
 import useAsteroid from './useAsteroid';
@@ -9,10 +10,15 @@ import api from '~/lib/api';
 const useBuyAsteroid = (id) => {
   const { execute, getStatus } = useContext(ChainTransactionContext);
   const { data: asteroid } = useAsteroid(id);
-  const { crew: caller_crew } = useCrewContext();
+  const { crew } = useCrewContext();
   const createAlert = useStore(s => s.dispatchAlertLogged);
 
   const system = asteroid?.AsteroidProof?.used ? 'PurchaseAsteroid' : 'InitializeAndPurchaseAsteroid';
+
+  const caller_crew = useMemo(() => {
+    if (!crew) return { id: 0, label: Entity.IDS.CREW };
+    return crew;
+  }, [crew]);
 
   const buyAsteroid = useCallback(
     () => execute(system, { asteroid, caller_crew }),
