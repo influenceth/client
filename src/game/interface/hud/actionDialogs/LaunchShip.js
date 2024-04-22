@@ -60,7 +60,7 @@ const LaunchShip = ({ asteroid, originLot, manager, ship, shipCrews, stage, ...p
     const abilities = getCrewAbilityBonuses(bonusIds, flightCrew) || {};
     return bonusIds.map((id) => abilities[id] || {});
   }, [flightCrew]);
-  
+
   const groundDelay = useMemo(
     () => Time.toRealDuration(originLot?.building ? Dock.Entity.getGroundDelay(originLot.building) : 0, crew?._timeAcceleration),
     [crew?._timeAcceleration, originLot?.building]
@@ -228,7 +228,7 @@ const LaunchShip = ({ asteroid, originLot, manager, ship, shipCrews, stage, ...p
                     overrides={{
                       barColor: theme.colors.lightOrange,
                       color: theme.colors.lightOrange,
-                      left: <><WarningOutlineIcon /> Landing Delay</>,
+                      left: <><WarningOutlineIcon /> Launch Delay</>,
                       right: formatTimer(groundDelay)
                     }}
                     stage={stage}

@@ -158,7 +158,8 @@ export function CrewProvider({ children }) {
   const [actionTypeTriggered, setActionTypeTriggered] = useState(false);
   useEffect(() => {
     if (!actionTypeTriggered) {
-      if (selectedCrew?.Crew?.actionType && selectedCrew.Crew.actionRound && (selectedCrew.Crew.actionRound + RandomEvent.MIN_ROUNDS) <= blockNumber) {
+      // TODO: actionRound tmp fix
+      if (selectedCrew?.Crew?.actionType && selectedCrew.Crew.actionRound) {// && (selectedCrew.Crew.actionRound + RandomEvent.MIN_ROUNDS) <= blockNumber) {
         starknet.provider.callContract(
           System.getRunSystemCall(
             'CheckForRandomEvent',
@@ -169,19 +170,25 @@ export function CrewProvider({ children }) {
         .then((response) => {
           const pendingEvent = response ? parseInt(response[1]) : null;
           if (pendingEvent > 0) {
-            getBlockTime(starknet, selectedCrew.Crew.actionRound + RandomEvent.MIN_ROUNDS).then((timestamp) => {
-              console.log('SET TRIGGER', {
-                actionType: selectedCrew.Crew.actionType,
-                pendingEvent,
-                timestamp,
-                _now: Math.floor(Date.now() / 1000)
-              });
-              setActionTypeTriggered({
-                actionType: selectedCrew.Crew.actionType,
-                pendingEvent,
-                timestamp
-              });
-            })
+            // TODO: actionRound tmp fix
+            // getBlockTime(starknet, selectedCrew.Crew.actionRound + RandomEvent.MIN_ROUNDS).then((timestamp) => {
+            //   console.log('SET TRIGGER', {
+            //     actionType: selectedCrew.Crew.actionType,
+            //     pendingEvent,
+            //     timestamp,
+            //     _now: Math.floor(Date.now() / 1000)
+            //   });
+            //   setActionTypeTriggered({
+            //     actionType: selectedCrew.Crew.actionType,
+            //     pendingEvent,
+            //     timestamp
+            //   });
+            // })
+            setActionTypeTriggered({
+              actionType: selectedCrew.Crew.actionType,
+              pendingEvent,
+              timestamp: Math.floor(Date.now() / 1000)
+            });
           }
         })
         .catch((err) => {

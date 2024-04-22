@@ -2,7 +2,7 @@ import React from 'react';
 import styled, { keyframes } from 'styled-components';
 import { CheckSmallIcon } from '~/components/Icons';
 import ResourceThumbnail from '~/components/ResourceThumbnail';
-import { formatResourceAmount } from '~/game/interface/hud/actionDialogs/components';
+import { formatResourceAmount, formatResourceAmountRatio } from '~/game/interface/hud/actionDialogs/components';
 
 import theme, { hexToRGB } from '~/theme';
 
@@ -29,12 +29,13 @@ const PartialUnderlay = styled.div`
 `;
 
 const ResourceRequirement = ({ isGathering, item, noStyles, ...props }) => {
-
   // badge amounts
   // (if gathering, show numerator and denominator)
   if (isGathering) {
-    props.badge = formatResourceAmount(item.numerator, props.resource.i);
-    props.badgeDenominator = formatResourceAmount(item.denominator, props.resource.i);
+    const { numerator, denominator, deficit } = formatResourceAmountRatio(item.numerator, item.denominator, props.resource.i);
+    props.badge = numerator;
+    props.badgeDenominator = denominator;
+    props.deficit = deficit;
   // (else, show denominator if set (showing requirements) or numerator if not (showing something else))
   } else {
     props.badge = formatResourceAmount(item.denominator || item.numerator, props.resource.i);
