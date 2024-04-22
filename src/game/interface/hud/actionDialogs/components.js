@@ -2853,14 +2853,23 @@ export const ProgressBarSection = ({
       r.left = '0.0%';
 
     } else if (stage === actionStage.IN_PROGRESS) {
-      const progress = startTime && finishTime && syncedTime
-        ? Math.min(1, (syncedTime - startTime) / (finishTime - startTime))
-        : 0;
-      r.animating = true;
-      r.barWidth = progress;
-      r.color = '#FFF';
-      r.left = `${formatFixed(100 * progress, 1)}%`;
-      r.right = <LiveTimer target={finishTime} />
+      if (syncedTime < startTime) {
+        r.animating = true;
+        r.reverseAnimation = true;
+        r.barWidth = 0;
+        r.left = 'WAITING';
+        r.right = <>Scheduled in <LiveTimer target={startTime} maxPrecision={2} /></>;
+        r.color = theme.colors.sequence;
+      } else {
+        const progress = startTime && finishTime && syncedTime
+          ? Math.min(1, (syncedTime - startTime) / (finishTime - startTime))
+          : 0;
+        r.animating = true;
+        r.barWidth = progress;
+        r.color = '#FFF';
+        r.left = `${formatFixed(100 * progress, 1)}%`;
+        r.right = <LiveTimer target={finishTime} />
+      }
 
     } else if (stage === actionStage.READY_TO_COMPLETE) {
       r.barWidth = 1;
