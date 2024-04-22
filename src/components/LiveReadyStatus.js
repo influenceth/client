@@ -3,6 +3,7 @@ import styled, { keyframes } from 'styled-components';
 
 import { CrewBusyIcon, CrewIdleIcon, RandomEventIcon } from '~/components/AnimatedIcons';
 import useBlockTime from '~/hooks/useBlockTime';
+import useConstants from '~/hooks/useConstants';
 import LiveTimer from './LiveTimer';
 import { ScheduleFullIcon, TimerIcon } from './Icons';
 
@@ -86,6 +87,7 @@ const BusyStatusContainer = styled(StatusContainer)`
 `;
 
 const LiveReadyStatus = ({ crew, ...props }) => {
+  const { data: CREW_SCHEDULE_BUFFER } = useConstants('CREW_SCHEDULE_BUFFER');
   const blockTime = useBlockTime();
 
   const [crewIsBusy, setCrewIsBusy] = useState(false);
@@ -107,7 +109,7 @@ const LiveReadyStatus = ({ crew, ...props }) => {
     setWaitingOnBlock(blockTime < (crew?.Crew?.readyAt || 0));
   }, [blockTime, crew?.Crew?.readyAt]);
 
-  const scheduleEnd = useMemo(() => blockTime + crew?._scheduleBuffer, [blockTime, crew?._scheduleBuffer]);
+  const scheduleEnd = useMemo(() => blockTime + CREW_SCHEDULE_BUFFER, [blockTime, CREW_SCHEDULE_BUFFER]);
 
   if (!crew || !blockTime) return null;
   if (crew?._actionTypeTriggered?.pendingEvent) {
