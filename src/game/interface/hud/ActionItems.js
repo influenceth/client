@@ -10,8 +10,9 @@ import useCrewContext from '~/hooks/useCrewContext';
 import useGetActivityConfig from '~/hooks/useGetActivityConfig';
 import { hexToRGB } from '~/theme';
 import ActionItem, { ITEM_WIDTH, TRANSITION_TIME } from './ActionItem';
+import useStore from '~/hooks/useStore';
 
-const SECTION_WIDTH = ITEM_WIDTH + 30;
+export const SECTION_WIDTH = ITEM_WIDTH + 30;
 
 const TitleWrapper = styled.div`
   display: flex;
@@ -169,11 +170,31 @@ const ActionItemCategory = styled.div`
   }
 `;
 
+const UnhideAll = styled.div`
+  align-items: center;
+  color: ${p => p.theme.colors.main};
+  cursor: ${p => p.theme.cursors.active};
+  display: flex;
+  font-size: 14px;
+  height: 34px;
+  margin-bottom: -8px;
+  pointer-events: all;
+  & > svg {
+    font-size: 22px;
+    margin-right: 4px;
+  }
+  &:hover {
+    text-decoration: underline;
+  }
+`;
+
 const ActionItems = () => {
   const { authenticated } = useSession();
   const { allVisibleItems: allItems } = useActionItems();
   const { captain } = useCrewContext();
   const getActivityConfig = useGetActivityConfig();
+
+  const dispatchUnhideAllActionItems = useStore(s => s.dispatchUnhideAllActionItems);
 
   const [displayItems, setDisplayItems] = useState();
   useEffect(() => {
@@ -207,13 +228,19 @@ const ActionItems = () => {
     setLastClick(Date.now());
   }, []);
 
+  const onUnhideAll = useCallback(() => {
+    dispatchUnhideAllActionItems();
+    setSelectedFilter('all');
+    setLastClick(Date.now());
+  }, []);
+
   const tallies = useMemo(() => {
     return (displayItems || []).reduce(
       (acc, cur) => {
         if (!cur.hidden) {
           acc.all++;
           if (['pending', 'failed', 'randomEvent', 'ready'].includes(cur.type)) acc.ready++;
-          if (cur.type === 'unready') acc.progress++;
+          if (cur.type === 'unready' || cur.type === 'unstarted') acc.progress++;
         } else {
           acc.hidden++;
         }
@@ -232,7 +259,7 @@ const ActionItems = () => {
     let filter;
     if (selectedFilter === 'all') filter = (i) => !i.hidden;
     if (selectedFilter === 'ready') filter = (i) => !i.hidden && ['pending', 'failed', 'randomEvent', 'ready'].includes(i.type);
-    if (selectedFilter === 'progress') filter = (i) => !i.hidden && i.type === 'unready';
+    if (selectedFilter === 'progress') filter = (i) => !i.hidden && ['unready', 'unstarted'].includes(i.type);
     if (selectedFilter === 'hidden') filter = (i) => i.hidden;
 
     return (displayItems || []).filter(filter);
@@ -266,12 +293,13 @@ const ActionItems = () => {
                 <AllFilter onClick={onClickFilter('all')} selected={selectedFilter === 'all'}><BellIcon /> <b>{(tallies.all || 0).toLocaleString()}</b></AllFilter>
                 <ReadyFilter onClick={onClickFilter('ready')} selected={selectedFilter === 'ready'}><b>{(tallies.ready || 0).toLocaleString()}</b> Ready</ReadyFilter>
                 <InProgressFilter onClick={onClickFilter('progress')} selected={selectedFilter === 'progress'}><b>{(tallies.progress || 0).toLocaleString()}</b> In Progress</InProgressFilter>
-                {/* TODO: <HiddenFilter onClick={onClickFilter('hidden')} selected={selectedFilter === 'hidden'}><EyeIcon /> <b>{(tallies.hidden || 0).toLocaleString()}</b></HiddenFilter> */}
+                {tallies.hidden > 0 && <HiddenFilter onClick={onClickFilter('hidden')} selected={selectedFilter === 'hidden'}><EyeIcon /> <b>{(tallies.hidden || 0).toLocaleString()}</b></HiddenFilter>}
                 <div style={{ flex: 1 }} />
                 <Link to="/listview/actionitems" onClick={(e) => e.stopPropagation()}><ListIcon /></Link>
               </Filters>
             </TitleWrapper>
           )}>
+          {selectedFilter === 'hidden' && <UnhideAll onClick={onUnhideAll}><EyeIcon /> Unhide All</UnhideAll>}
           <ActionItemWrapper>
             <ActionItemContainer>
               {filteredDisplayCategories.map(({ category, items }) => (

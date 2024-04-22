@@ -33,7 +33,6 @@ import {
   BuildingInputBlock,
   EmptyResourceImage,
   CrewSelectionDialog,
-  CrewLocationWrapper,
 } from './components';
 
 const Instructions = styled.div`
@@ -397,7 +396,7 @@ const ManageCrew = ({ altCrews, crew, isForeignCrew, manager, stage, ...props })
           <FlexSection>
             <FlexSectionBlock
               title="Exchanging Crew"
-              titleDetails={<CrewLocationWrapper style={{ fontSize: '15px' }}><CrewLocationLabel hydratedLocation={hydratedLocation} /></CrewLocationWrapper>}
+              titleDetails={<CrewLocationLabel hydratedLocation={hydratedLocation} style={{ fontSize: '15px' }} />}
               bodyStyle={{ height: 'auto', paddingRight: 0 }}
               style={{ width: '100%' }}>
               <CrewDraggable

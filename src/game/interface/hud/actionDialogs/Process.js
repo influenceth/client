@@ -378,6 +378,7 @@ const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...pro
         action={headerAction}
         actionCrew={crew}
         location={{ asteroid, lot }}
+        delayUntil={currentProcess?.startTime || crew?.Crew?.readyUntil}
         crewAvailableTime={crewTimeRequirement}
         taskCompleteTime={taskTimeRequirement}
         onClose={props.onClose}
@@ -562,6 +563,7 @@ const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...pro
         goLabel="Begin"
         onGo={onStartProcess}
         finalizeLabel="Finish"
+        isSequenceable
         onFinalize={onFinishProcess}
         stage={stage}
         waitForCrewReady

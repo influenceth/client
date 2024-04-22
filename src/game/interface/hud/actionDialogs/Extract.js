@@ -348,6 +348,7 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
         }}
         actionCrew={crew}
         location={{ asteroid, lot }}
+        delayUntil={currentExtraction?.startTime || crew?.Crew?.readyAt}
         crewAvailableTime={crewTimeRequirement}
         taskCompleteTime={taskTimeRequirement}
         onClose={props.onClose}
@@ -495,6 +496,7 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
         goLabel={isPurchase ? 'Purchase & Extract' : 'Extract'}
         onGo={onStartExtraction}
         finalizeLabel="Complete"
+        isSequenceable
         onFinalize={finishExtraction}
         stage={stage}
         waitForCrewReady
@@ -513,7 +515,7 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
 
           {/* TODO: reset if resource changes? */}
           <InventorySelectionDialog
-            asteroidId={asteroid.id}
+            asteroidId={asteroid?.id}
             excludeSites
             otherEntity={lot?.building}
             itemIds={[selectedCoreSample?.Deposit?.resource]}

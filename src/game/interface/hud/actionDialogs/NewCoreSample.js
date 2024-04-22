@@ -219,6 +219,7 @@ const NewCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }) =>
         }}
         actionCrew={crew}
         location={{ asteroid, lot }}
+        delayUntil={currentSamplingAction?.startTime || crew?.Crew?.readyAt}
         crewAvailableTime={crewTimeRequirement}
         taskCompleteTime={taskTimeRequirement}
         onClose={props.onClose}
@@ -300,6 +301,7 @@ const NewCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }) =>
         goLabel="Prospect"
         onGo={() => startSampling(resourceId, drillSource)}
         finalizeLabel="Analyze"
+        isSequenceable
         onFinalize={finishSampling}
         stage={stage}
         waitForCrewReady

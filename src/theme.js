@@ -73,6 +73,8 @@ const theme = {
     borderBottomAlt: 'rgba(85, 85, 85, 0.5)',
     sell: '#57d5ff',
     buy: '#88e675',
+    sequence: '#2f85dc',
+    sequenceLight: '#98c4ec',
     success,
     successRGB: hexToRGB(success),
     warning: orange,

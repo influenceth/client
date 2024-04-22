@@ -90,6 +90,7 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
     chatHistory: [],
 
     hasSeenIntroVideo: false,
+    hiddenActionItems: [],
     canvasStack: [],
 
     logs: {
@@ -619,6 +620,20 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
       if (state.chatHistory.length > 0 && !state.chatHistory[state.chatHistory.length - 1].isConnectionBreak) {
         state.chatHistory.push({ isConnectionBreak: true });
       }  
+    })),
+
+    dispatchToggleHideActionItem: (key) => set(produce(state => {
+      if (!key) return;
+
+      if (!state.hiddenActionItems) state.hiddenActionItems = [];
+      if (state.hiddenActionItems.includes(key)) {
+        state.hiddenActionItems = state.hiddenActionItems.filter((a) => a !== key);
+      } else {
+        state.hiddenActionItems = [...(state.hiddenActionItems || []), key];
+      }
+    })),
+    dispatchUnhideAllActionItems: () => set(produce(state => {
+      state.hiddenActionItems = [];
     })),
 
     //

@@ -268,6 +268,7 @@ const AssembleShip = ({ asteroid, lot, dryDockManager, stage, ...props }) => {
         }}
         actionCrew={crew}
         location={{ asteroid, lot }}
+        delayUntil={currentAssembly?.startTime || crew?.Crew?.readyAt}
         crewAvailableTime={crewTimeRequirement}
         taskCompleteTime={taskTimeRequirement}
         onClose={props.onClose}
@@ -429,6 +430,7 @@ const AssembleShip = ({ asteroid, lot, dryDockManager, stage, ...props }) => {
           || (stage === actionStages.READY_TO_COMPLETE && destination)
         )}
         finalizeLabel="Deliver Ship"
+        isSequenceable
         onFinalize={onFinish}
         goLabel="Begin Assembly"
         onGo={onStart}
