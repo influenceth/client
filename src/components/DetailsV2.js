@@ -12,7 +12,7 @@ const Wrapper = styled.div`
   align-items: center;
   backdrop-filter: blur(2px);
   display: flex;
-  flex: 1;
+  flex: 8;
   height: 100%;
   justify-content: center;
   padding: 25px;
