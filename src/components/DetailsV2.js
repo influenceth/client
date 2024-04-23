@@ -12,11 +12,11 @@ const Wrapper = styled.div`
   align-items: center;
   backdrop-filter: blur(2px);
   display: flex;
-  flex: 8;
+  flex: 1;
   height: 100%;
   justify-content: center;
   padding: 25px;
-  position: relative;
+  position: fixed;
   overflow: hidden;
   width: 100%;
   z-index: ${p => p.modalMode ? 1001 : 4};
