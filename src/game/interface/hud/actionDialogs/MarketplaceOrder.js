@@ -290,7 +290,7 @@ const MarketplaceOrder = ({
 
   const [crewTimeRequirement, taskTimeRequirement] = useMemo(() => {
     return [
-      type === 'market' ? 0 : (Math.max(crewTravelTime / 2, transportTime) + crewTravelTime / 2),
+      (isCancellation || type === 'market') ? 0 : (Math.max(crewTravelTime / 2, transportTime) + crewTravelTime / 2),
       0
     ];
   }, [transportTime, crewTravelTime, type]);
