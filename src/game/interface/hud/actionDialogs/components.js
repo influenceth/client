@@ -3123,6 +3123,7 @@ export const ProcessInputOutputSection = ({ title, products, input, output, prim
                 badge={`${output ? '+' : '-'}${resource.isAtomic ? amount : formatResourceMass(amount, resourceId)}`}
                 iconBadge={<RecipeLabel>{recipe.toLocaleString()}</RecipeLabel>}
                 tooltipContainer="actionDialog"
+                refreshTooltip={true}
                 {...thumbProps}
               />
               {output && (
@@ -4261,7 +4262,6 @@ export const formatResourceAmountRatio = (numerator, denominator, resourceId, op
   // if non-atomic, determine common unit and scale based on denominator
   if (!Product.TYPES[resourceId].isAtomic) {
     const { unitLabel, scale } = getUnitLabelAndScale(Product.TYPES[resourceId].massPerUnit * denominator, options);
-    console.log('scale: ', scale);
     return {
       numerator: formatResourceMass(numerator, resourceId, { ...options, unitLabel, scale }),
       denominator: formatResourceMass(denominator, resourceId, { ...options, unitLabel, scale }),

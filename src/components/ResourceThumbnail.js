@@ -249,19 +249,24 @@ const Menu = ({ children }) => {
   overlayIcon,
   overlayStripes,
   progress,
+  refreshTooltip = false,
   size,
   tooltipContainer = 'global',
   tooltipOverride,
   underlay,
   ...props
 }) => {
-  // const tip = (deficit) ? `${resource.name} (<span>${deficit}<span>)` : resource.name;
   const tooltipProps = tooltipContainer ? {
     'data-place': 'top',
-    'data-tip': tooltipOverride || ((deficit) ? `${resource.name} (${deficit})` : resource.name),
+    'data-tip': tooltipOverride || resource.name,
     'data-for': tooltipContainer
   } : {};
-  // useEffect(() => ReactTooltip.rebuild(), []); // this was causing performance issues on refinery process selection dialog
+
+  // this was causing performance issues on refinery process selection dialog
+  useEffect(() => {
+    if (refreshTooltip) ReactTooltip.rebuild();
+  }, []);
+
   return (
     <ResourceThumbnailWrapper
       backgroundColor={backgroundColor}
