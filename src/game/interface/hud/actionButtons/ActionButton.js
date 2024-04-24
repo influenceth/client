@@ -266,6 +266,7 @@ const ActionButtonComponent = ({ label, labelAddendum, flags = {}, icon, onClick
       data-arrow-color="transparent"
       data-tooltip-id="global"
       data-tooltip-place="top"
+      data-tooltip-delay-hide={100}
       data-tooltip-content={`${label}${labelAddendum ? ` (${labelAddendum})` : ''}`}
       onClick={_onClick}
       {...safeFlags}
