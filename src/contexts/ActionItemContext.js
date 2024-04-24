@@ -14,6 +14,13 @@ import { entitiesCacheKey } from '~/lib/cacheKey';
 
 const ActionItemContext = React.createContext();
 
+const sequenceableSystems = [
+  'MaterialProcessingStarted',
+  'ResourceExtractionStarted',
+  'SamplingDepositStarted',
+  'ShipAssemblyStarted'
+];
+
 export function ActionItemProvider({ children }) {
   const { authenticated, blockTime } = useSession();
   const { crew, pendingTransactions } = useCrewContext();
@@ -29,8 +36,10 @@ export function ActionItemProvider({ children }) {
       
       // add startTime to all for consistency
       activities.forEach((a) => {
-        if (a.data?.crew?.Crew?.lastReadyAt > a.event?.timestamp) {
-          a._startTime = a.data?.crew?.Crew?.lastReadyAt;
+        if (sequenceableSystems.includes(a.event.name)) {
+          if (a.data?.crew?.Crew?.lastReadyAt > a.event?.timestamp) {
+            a._startTime = a.data?.crew?.Crew?.lastReadyAt;
+          }
         }
       });
 
