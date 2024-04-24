@@ -94,6 +94,21 @@ const CornerBadge = styled.span`
   z-index: 1;
 `;
 
+const CompletionTime = styled.label`
+  align-items: center;
+  bottom: 0;
+  color: rgba(255, 255, 255, 0.85);
+  display: flex;
+  font-weight: bold;
+  left: 0;
+  position: absolute;
+  justify-content: center;
+  right: 0;
+  text-shadow: 0px 0px 1px black;
+  transition: color 100ms ease;
+  top: 0;
+`;
+
 const ActionButton = styled.div`
   border: 1px solid ${p => p.overrideColor || p.theme.colors.main};
   ${p => p.theme.clipCorner(cornerSize)};
@@ -223,19 +238,6 @@ const LoadingAnimation = styled.div`
   }
 `;
 
-const CompletionTime = styled.label`
-  align-items: center;
-  display: flex;
-  font-weight: bold;
-  position: absolute;
-  justify-content: center;
-  text-shadow: 0px 0px 1px black;
-  top: 0;
-  left: 0;
-  bottom: 0;
-  right: 0;
-`;
-
 // TODO: consider a booleanProp wrapper so could wrap boolean props in
 // {...booleanProps({ a, b, c })} where booleanProps(props) would either include
 // or not rather than true/false OR would pass 1/0 instead
@@ -245,6 +247,14 @@ const LoadingTimer = ({ finishTime }) => {
   return (
     <CompletionTime>
       {finishTime > syncedTime ? formatTimer(finishTime - syncedTime, 1) : '...'}
+    </CompletionTime>
+  );
+};
+
+const StackTally = ({ tally }) => {
+  return (
+    <CompletionTime>
+      {tally > 1 ? `(${tally})` : ``}
     </CompletionTime>
   );
 };
@@ -277,7 +287,8 @@ const ActionButtonComponent = ({ label, labelAddendum, flags = {}, icon, onClick
         <ClipCorner dimension={cornerSize} />
         {sequenceMode && !safeFlags.disabled && !flags.loading && <CornerBadge>+</CornerBadge>}
         <div>{icon}</div>
-        {flags.loading && <LoadingTimer finishTime={flags.finishTime} />}
+        {flags.tally > 1 && <StackTally tally={flags.tally} />}
+        {!(flags.tally > 1) && flags.loading && <LoadingTimer finishTime={flags.finishTime} />}
       </ActionButton>
     </ActionButtonWrapper>
   );

@@ -364,7 +364,7 @@ const LotResources = () => {
 
   const { data: asteroid } = useAsteroid(asteroidId);
   const { data: lot } = useLot(lotId);
-  const { currentSamplingAction } = useCoreSampleManager(lotId);
+  const { currentSamplingActions } = useCoreSampleManager(lotId);
   const { currentExtraction } = useExtractionManager(lotId);
   const dispatchResourceMapSelect = useStore(s => s.dispatchResourceMapSelect);
   const dispatchResourceMapToggle = useStore(s => s.dispatchResourceMapToggle);
@@ -431,15 +431,13 @@ const LotResources = () => {
 
   const extraSampleParams = useMemo(() => {
     const params = {};
-    if (!currentSamplingAction) {
-      if (selectedSample?.id) {
-        params.improveSample = { ...selectedSample };
-      } else if (selectedResource?.i) {
-        params.overrideResourceId = Number(selectedResource?.i);
-      }
+    if (selectedSample?.id) {
+      params.improveSample = { ...selectedSample };
+    } else if (selectedResource?.i) {
+      params.overrideResourceId = Number(selectedResource?.i);
     }
     return params;
-  }, [currentSamplingAction, selectedResource, selectedSample]);
+  }, [currentSamplingActions, selectedResource, selectedSample]);
 
   const extraExtractParams = useMemo(() => {
     const params = {};
@@ -461,7 +459,7 @@ const LotResources = () => {
 
   return (
     <>
-      <Scrollable hasTray={currentSamplingAction || selectedResource || selectedSample || currentExtraction}>
+      <Scrollable hasTray={currentSamplingActions || selectedResource || selectedSample || currentExtraction}>
         <HudMenuCollapsibleSection titleText="Lot Resources" titleLabel="Abundance">
           
           {showAbundances.map(({ i, abundance }) => {
@@ -508,10 +506,10 @@ const LotResources = () => {
           selected={selected} />
       </Scrollable>
 
-      {(currentSamplingAction || selectedResource || selectedSample || currentExtraction) && (
+      {(currentSamplingActions?.length || selectedResource || selectedSample || currentExtraction) && (
         <Tray>
           <>
-            {(currentSamplingAction || selectedResource || selectedSample) && (
+            {(currentSamplingActions?.length || selectedResource || selectedSample) && (
               <actionButtons.CoreSample.Component {...actionProps} {...extraSampleParams} />
             )}
             {/* TODO: list sample for sale */}

@@ -1476,7 +1476,10 @@ const activities = {
       resourceId: returnValues.resource,
       locationDetail: Product.TYPES[returnValues.resource].name,
       onClick: ({ openDialog }) => {
-        openDialog(returnValues.improving ? 'IMPROVE_CORE_SAMPLE' : 'NEW_CORE_SAMPLE');
+        openDialog(
+          returnValues.improving ? 'IMPROVE_CORE_SAMPLE' : 'NEW_CORE_SAMPLE',
+          { sampleId: returnValues.deposit?.id }
+        );
       }
     }),
     getIsActionItemHidden: ({ returnValues }) => (pendingTransactions) => {
