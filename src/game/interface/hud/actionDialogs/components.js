@@ -2018,8 +2018,8 @@ export const InventorySelectionDialog = ({
         // skip if is source and cannot contain ANY of the itemIds, or is destination and cannot contain ALL of the itemIds
         if (itemIds && Inventory.TYPES[inv.inventoryType].productConstraints) {
           const allowedMaterials = Object.keys(Inventory.TYPES[inv.inventoryType].productConstraints).map((i) => Number(i));
-          if (isSourcing && !itemIds.find((i) => allowedMaterials.includes(i))) return;
-          if (!isSourcing && itemIds.find((i) => !allowedMaterials.includes(i))) return;
+          if (!isSourcing && itemIds.find((i) => allowedMaterials.includes(i))) return;
+          if (isSourcing && !itemIds.find((i) => !allowedMaterials.includes(i))) return;
         }
 
         const entityLotId = entity.Location.locations.find((l) => l.label === Entity.IDS.LOT)?.id;
