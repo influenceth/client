@@ -257,7 +257,7 @@ const Menu = ({ children }) => {
   // const tip = (deficit) ? `${resource.name} (<span>${deficit}<span>)` : resource.name;
   const tooltipProps = tooltipContainer ? {
     'data-tooltip-place': 'top',
-    'data-tooltip-content': tooltipOverride || ((deficit) ? `${resource.name} (${deficit})` : resource.name),
+    'data-tooltip-content': tooltipOverride || resource.name,
     'data-tooltip-id': tooltipContainer
   } : {};
   return (

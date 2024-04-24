@@ -35,7 +35,7 @@ const ResourceRequirement = ({ isGathering, item, noStyles, ...props }) => {
     const { numerator, denominator, deficit } = formatResourceAmountRatio(item.numerator, item.denominator, props.resource.i);
     props.badge = numerator;
     props.badgeDenominator = denominator;
-    props.deficit = deficit;
+    props.tooltipOverride = `${props.resource?.name} (${deficit})`;
   // (else, show denominator if set (showing requirements) or numerator if not (showing something else))
   } else {
     props.badge = formatResourceAmount(item.denominator || item.numerator, props.resource.i);
