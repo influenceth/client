@@ -574,7 +574,7 @@ const Wrapper = () => {
         <CrewDetails
           crewId={crewId}
           crew={crew}
-          isDelegatedCrew={Address.areEqual(myCrew?.Crew?.delegatedTo || '', accountAddress || '')}
+          isDelegatedCrew={Address.areEqual(crew?.Crew?.delegatedTo || '', accountAddress || '')}
           isMyCrew={crewId === myCrew?.id}
           isOwnedCrew={Address.areEqual(crew?.Nft?.owner || '', accountAddress || '')}
           selectCrew={selectCrew}
