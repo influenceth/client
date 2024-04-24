@@ -1,6 +1,4 @@
-import { useEffect } from 'react';
 import styled from 'styled-components';
-import ReactTooltip from 'react-tooltip';
 
 import useStore from '~/hooks/useStore';
 
@@ -43,8 +41,8 @@ const Button = styled.button`
 const ButtonRounded = (props) => {
   const {
     onClick,
-    'data-tip': dataTip,
-    'data-place': dataPlace,
+    'data-tooltip-content': dataTip,
+    'data-tooltip-place': dataPlace,
     setRef,
     ...restProps } = props;
   const playSound = useStore(s => s.dispatchEffectStartRequested);
@@ -54,14 +52,12 @@ const ButtonRounded = (props) => {
     if (onClick) onClick(e);
   }
 
-  useEffect(() => ReactTooltip.rebuild(), []);
-
   if (setRef) restProps.ref = setRef;
   return (
     <Button
       onClick={_onClick}
-      data-tip={dataTip}
-      data-place={dataPlace || "right"}
+      data-tooltip-content={dataTip}
+      data-tooltip-place={dataPlace || "right"}
       key={dataTip}
       {...restProps}>
       {props.children}

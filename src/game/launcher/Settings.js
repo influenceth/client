@@ -187,8 +187,8 @@ const Settings = () => {
               <>
                 <StyledDataReadout label="Dynamic Shadows">
                   <IconButton
-                    data-tip="Toggle Shadows"
-                    data-for="global"
+                    data-tooltip-content="Toggle Shadows"
+                    data-tooltip-id="global"
                     onClick={() => setShadowQuality(graphics.shadowQuality > 0 ? 0 : 1)}
                     borderless>
                     {graphics.shadowQuality > 0 ? <CheckedIcon /> : <UncheckedIcon />}
@@ -234,8 +234,8 @@ const Settings = () => {
             {screenfull.isEnabled && (
               <StyledDataReadout label="Fullscreen">
                 <IconButton
-                  data-tip="Toggle Fullscreen"
-                  data-for="global"
+                  data-tooltip-content="Toggle Fullscreen"
+                  data-tooltip-id="global"
                   onClick={() => fullscreen ? screenfull.exit() : screenfull.request()}
                   borderless>
                   {fullscreen ? <CheckedIcon /> : <UncheckedIcon />}
@@ -244,8 +244,8 @@ const Settings = () => {
             )}
             <StyledDataReadout label="Skybox">
               <IconButton
-                data-tip="Toggle Skybox"
-                data-for="global"
+                data-tooltip-content="Toggle Skybox"
+                data-tooltip-id="global"
                 onClick={() => graphics.skybox ? turnOffSkybox() : turnOnSkybox()}
                 borderless>
                 {graphics.skybox ? <CheckedIcon /> : <UncheckedIcon />}
@@ -253,8 +253,8 @@ const Settings = () => {
             </StyledDataReadout>
             <StyledDataReadout label="Stellar Lensflare">
               <IconButton
-                data-tip="Toggle Stellar Lensflare"
-                data-for="global"
+                data-tooltip-content="Toggle Stellar Lensflare"
+                data-tooltip-id="global"
                 onClick={() => graphics.lensflare ? turnOffLensflare() : turnOnLensflare()}
                 borderless>
                 {graphics.lensflare ? <CheckedIcon /> : <UncheckedIcon />}
@@ -262,8 +262,8 @@ const Settings = () => {
             </StyledDataReadout>
             <StyledDataReadout label="Performance Stats">
               <IconButton
-                data-tip="Toggle Performance Stats"
-                data-for="global"
+                data-tooltip-content="Toggle Performance Stats"
+                data-tooltip-id="global"
                 onClick={() => graphics.stats ? turnOffStats() : turnOnStats()}
                 borderless>
                 {graphics.stats ? <CheckedIcon /> : <UncheckedIcon />}

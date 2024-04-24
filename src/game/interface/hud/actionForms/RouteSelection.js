@@ -78,8 +78,8 @@ const RouteSelection = () => {
           {origin && destination && (
             <IconButton
               borderless
-              data-tip="Swap origin/destination..."
-              data-place="right"
+              data-tooltip-content="Swap origin/destination..."
+              data-tooltip-place="right"
               onClick={handleSwap}
               style={{ color: '#777' }}><SwapIcon /></IconButton>
           )}
@@ -94,8 +94,8 @@ const RouteSelection = () => {
             selected={destination}
             width={180} />
           <IconButton
-            data-tip="Close Route Selection"
-            data-place="right"
+            data-tooltip-content="Close Route Selection"
+            data-tooltip-place="right"
             onClick={handleClose}><CloseIcon /></IconButton>
         </Row>
         <Flourish />

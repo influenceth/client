@@ -104,8 +104,8 @@ const Highlighter = (props) => {
 
   return (
     <HighlightToggle
-      data-tip={active ? 'Disable highlighting' : 'Enable highlighting'}
-      data-for="global"
+      data-tooltip-content={active ? 'Disable highlighting' : 'Enable highlighting'}
+      data-tooltip-id="global"
       borderless
       enabled={active}
       onClick={onClick}>
@@ -178,8 +178,8 @@ export const SearchMenu = ({
           )}
           {filterIsOn && (
             <Resetter
-              data-tip="Reset Filter"
-              data-place="left"
+              data-tooltip-content="Reset Filter"
+              data-tooltip-place="left"
               onClick={resetFilter}>
               <CloseIcon />
             </Resetter>

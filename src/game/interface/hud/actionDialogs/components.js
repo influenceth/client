@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import styled, { css, keyframes } from 'styled-components';
 import { createPortal } from 'react-dom';
-import ReactTooltip from 'react-tooltip';
+import { Tooltip } from 'react-tooltip';
 import { TbBellRingingFilled as AlertIcon } from 'react-icons/tb';
 import { BarLoader } from 'react-spinners';
 import { Asteroid, Building, Crewmate, Dock, Entity, Inventory, Lot, Order, Permission, Process, Product, Ship, Station, Time } from '@influenceth/sdk';
@@ -1303,7 +1303,7 @@ export const SelectionDialog = ({ children, isCompletable, open, onClose, onComp
   if (!open) return null;
   return createPortal(
     <Dialog opaque dialogCss={dialogCss} dialogStyle={style}>
-      <ReactTooltip id="selectionDialog" effect="solid" />
+      <Tooltip id="selectionDialog" />
       <SelectionTitle>
         <div>{title}</div>
         <IconButton backgroundColor={`rgba(0, 0, 0, 0.15)`} marginless onClick={onClose}>
@@ -3234,7 +3234,6 @@ export const PropulsionTypeSection = ({ disabled, objectLabel, propulsiveTime, t
 
 export const PropellantSection = ({ title, narrow, deltaVLoaded, deltaVRequired, propellantLoaded, propellantRequired }) => {
   const [deltaVMode, setDeltaVMode] = useState(false);
-  // useEffect(() => ReactTooltip.rebuild(), []);
 
   const propellantUse = propellantLoaded > 0 ? propellantRequired / propellantLoaded : (propellantRequired > 0 ? Infinity : 0);
   const deltaVUse = deltaVLoaded > 0 ? deltaVRequired / deltaVLoaded : (deltaVRequired > 0 ? Infinity : 0);
@@ -3245,15 +3244,15 @@ export const PropellantSection = ({ title, narrow, deltaVLoaded, deltaVRequired,
       titleDetails={(
         <SectionTitleRightTabs>
           <SectionTitleTab
-            data-for="actionDialog"
-            data-tip="Propellant Usage"
-            data-place="left"
+            data-tooltip-id="actionDialog"
+            data-tooltip-content="Propellant Usage"
+            data-tooltip-place="left"
             onClick={() => setDeltaVMode(false)}
             isSelected={!deltaVMode}><GasIcon /></SectionTitleTab>
           <SectionTitleTab
-            data-for="actionDialog"
-            data-tip="Delta-V Usage"
-            data-place="left"
+            data-tooltip-id="actionDialog"
+            data-tooltip-content="Delta-V Usage"
+            data-tooltip-place="left"
             onClick={() => setDeltaVMode(true)}
             isSelected={!!deltaVMode}><DeltaVIcon /></SectionTitleTab>
         </SectionTitleRightTabs>
@@ -3316,7 +3315,6 @@ export const PropellantSection = ({ title, narrow, deltaVLoaded, deltaVRequired,
 };
 
 export const EmergencyPropellantSection = ({ title, propellantPregeneration, propellantPostgeneration, propellantTankMax, emergencyPropellantCap }) => {
-  // useEffect(() => ReactTooltip.rebuild(), []);
   return (
     <FlexSectionBlock
       title={title}
@@ -4261,7 +4259,6 @@ export const formatResourceAmountRatio = (numerator, denominator, resourceId, op
   // if non-atomic, determine common unit and scale based on denominator
   if (!Product.TYPES[resourceId].isAtomic) {
     const { unitLabel, scale } = getUnitLabelAndScale(Product.TYPES[resourceId].massPerUnit * denominator, options);
-    console.log('scale: ', scale);
     return {
       numerator: formatResourceMass(numerator, resourceId, { ...options, unitLabel, scale }),
       denominator: formatResourceMass(denominator, resourceId, { ...options, unitLabel, scale }),

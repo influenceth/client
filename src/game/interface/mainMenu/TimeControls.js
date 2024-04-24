@@ -150,8 +150,8 @@ const TimeController = ({ open }) => {
       </SpeedMult>
 
       <TimeButton
-        data-tip="Rewind"
-        data-place="top"
+        data-tooltip-content="Rewind"
+        data-tooltip-place="top"
         disabled={speedSetting <= -5}
         onClick={() => changeSpeed(-1)}>
         <RewindIcon />
@@ -160,16 +160,16 @@ const TimeController = ({ open }) => {
       {isPaused
         ? (
           <TimeButton
-            data-tip="Reset to Current Time"
-            data-place="top"
+            data-tooltip-content="Reset to Current Time"
+            data-tooltip-place="top"
             onClick={reset}>
             <PlayIcon />
           </TimeButton>
         )
         : (
           <TimeButton
-            data-tip="Pause"
-            data-place="top"
+            data-tooltip-content="Pause"
+            data-tooltip-place="top"
             onClick={pause}>
             <PauseIcon />
           </TimeButton>
@@ -177,8 +177,8 @@ const TimeController = ({ open }) => {
       }
 
       <TimeButton
-        data-tip="Fast Forward"
-        data-place="top"
+        data-tooltip-content="Fast Forward"
+        data-tooltip-place="top"
         disabled={speedSetting >= 5}
         onClick={() => changeSpeed(1)}>
         <FastForwardIcon />

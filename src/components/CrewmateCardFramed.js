@@ -159,9 +159,9 @@ const CrewmateCardAbstract = ({
   const cardWidth = width || 96;
   return (
     <AvatarWrapper
-      data-tip={tooltip}
-      data-for="global"
-      data-place={tooltipPlace}
+      data-tooltip-content={tooltip}
+      data-tooltip-id="global"
+      data-tooltip-place={tooltipPlace}
       clickable={!!onClick}
       onClick={onClick || noop}
       width={cardWidth}

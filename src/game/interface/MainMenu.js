@@ -284,14 +284,14 @@ const MainMenu = () => {
         <RightHudButtonArea>
           {screenfull.isEnabled && !fullscreen && !isMobile && (
             <HudIconButton
-              data-tip="Go Fullscreen"
+              data-tooltip-content="Go Fullscreen"
               onClick={() => screenfull.request()}>
               <FullscreenIcon />
             </HudIconButton>
           )}
           {screenfull.isEnabled && fullscreen && !isMobile && (
             <HudIconButton
-              data-tip="Exit Fullscreen"
+              data-tooltip-content="Exit Fullscreen"
               onClick={() => screenfull.exit()}>
               <ExitFullscreenIcon />
             </HudIconButton>

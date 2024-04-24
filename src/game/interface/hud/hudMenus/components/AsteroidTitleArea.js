@@ -1,6 +1,5 @@
-import { useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 import styled from 'styled-components';
-import ReactTooltip from 'react-tooltip';
 import { Asteroid, Product } from '@influenceth/sdk';
 
 import { LocationIcon, ResourceGroupIcons } from '~/components/Icons';
@@ -63,8 +62,6 @@ const AsteroidTitleArea = ({ asteroid }) => {
     }, []);
   }, [asteroid?.Celestial?.celestialType]);
 
-  useEffect(() => ReactTooltip.rebuild(), [resourceCategories]);
-
   if (!asteroid) return null;
   return (
     <TitleArea
@@ -104,9 +101,9 @@ const AsteroidTitleArea = ({ asteroid }) => {
             <Resource
               key={category}
               category={keyify(category)}
-              data-tip={category}
-              data-place="left"
-              data-for="hudMenu">
+              data-tooltip-content={category}
+              data-tooltip-place="left"
+              data-tooltip-id="hudMenu">
               {ResourceGroupIcons[keyify(category).toLowerCase()]}
             </Resource>
           ))}

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useHistory, useParams } from 'react-router-dom';
 import styled from 'styled-components';
-import ReactTooltip from 'react-tooltip';
+import { Tooltip } from 'react-tooltip';
 import { Asteroid } from '@influenceth/sdk';
 import { BsChevronRight as NextIcon } from 'react-icons/bs';
 
@@ -425,7 +425,7 @@ const ResourceDetails = ({ abundances, asteroid, isManager }) => {
 
   const goToResourceViewer = useCallback((resource) => (e) => {
     e.stopPropagation();
-    ReactTooltip.hide();
+    Tooltip.hide();
     history.push(`/model/resource/${resource.name}?back=${encodeURIComponent(history.location.pathname)}`)
     return false;
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -457,8 +457,6 @@ const ResourceDetails = ({ abundances, asteroid, isManager }) => {
 
   const unpackedBonuses = useMemo(() => Asteroid.Entity.getBonuses(asteroid) || [], [asteroid]);
   const nonzeroBonuses = useMemo(() => unpackedBonuses.filter((b) => b.level > 0), [unpackedBonuses]);
-
-  useEffect(() => ReactTooltip.rebuild(), [selected]);
 
   return (
     <Wrapper>
@@ -633,9 +631,9 @@ const ResourceDetails = ({ abundances, asteroid, isManager }) => {
                           {resources.map((resource) => (
                             <div
                               key={resource.i}
-                              data-place="left"
-                              data-tip={resource.name}
-                              data-for="global"
+                              data-tooltip-place="left"
+                              data-tooltip-content={resource.name}
+                              data-tooltip-id="global"
                               onClick={goToResourceViewer(resource)}
                               style={{ backgroundImage: `url(${getProductIcon(resource.i, 'w25')})` }} />
                           ))}
