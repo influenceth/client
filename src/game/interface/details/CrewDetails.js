@@ -240,7 +240,7 @@ const PopperWrapper = (props) => {
   return props.children(refEl, props.disableRefSetter ? noop : setRefEl);
 }
 
-const CrewDetails = ({ activeCrew, crewId, crew, isMyCrew, isOwnedCrew, selectCrew }) => {
+const CrewDetails = ({ crewId, crew, isMyCrew, isDelegatedCrew, isOwnedCrew, selectCrew }) => {
   const { accountAddress } = useSession();
   const history = useHistory();
 
@@ -467,7 +467,7 @@ const CrewDetails = ({ activeCrew, crewId, crew, isMyCrew, isOwnedCrew, selectCr
                 <Button disabled={nativeBool(crew.Crew?.roster?.length >= 5) || !crew._ready} onClick={onClickRecruit}>Recruit to Crew</Button>
               </div>
             )}
-            {isMyCrew && crewId !== activeCrew?.id && (
+            {!isMyCrew && isDelegatedCrew && (
               <div style={{ paddingTop: 15 }}>
                 <Button onClick={() => selectCrew(crewId)}>Switch to Crew</Button>
               </div>
@@ -572,10 +572,10 @@ const Wrapper = () => {
       )}
       {crew && !loading && (
         <CrewDetails
-          activeCrew={myCrew}
           crewId={crewId}
           crew={crew}
-          isMyCrew={Address.areEqual(myCrew?.Crew?.delegatedTo || '', accountAddress || '')}
+          isDelegatedCrew={Address.areEqual(myCrew?.Crew?.delegatedTo || '', accountAddress || '')}
+          isMyCrew={crewId === myCrew?.id}
           isOwnedCrew={Address.areEqual(crew?.Nft?.owner || '', accountAddress || '')}
           selectCrew={selectCrew}
         />
