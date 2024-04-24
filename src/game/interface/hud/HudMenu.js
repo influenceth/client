@@ -530,7 +530,7 @@ const HudMenu = ({ forceOpenMenu }) => {
         onOpen: () => {
           history.push(`/listview`);  // TODO: should probably also go to /listview/lots
         },
-        isVisible: scope === 'asteroid'
+        isVisible: ['asteroid', 'lot'].includes(scope)
       },
 
       {

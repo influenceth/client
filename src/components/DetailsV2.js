@@ -16,7 +16,7 @@ const Wrapper = styled.div`
   height: 100%;
   justify-content: center;
   padding: 25px;
-  position: relative;
+  position: fixed;
   overflow: hidden;
   width: 100%;
   z-index: ${p => p.modalMode ? 1001 : 4};
