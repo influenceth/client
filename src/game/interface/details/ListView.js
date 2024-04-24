@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
-import ReactTooltip from 'react-tooltip';
+import { Tooltip } from 'react-tooltip';
 
 import usePagedAssets from '~/hooks/usePagedAssets';
 import DataTable from '~/components/DataTable';
@@ -315,9 +315,7 @@ const ListViewComponent = ({ assetType, onAssetTypeChange, params }) => {
   useEffect(() => {
     setDisabledColumns([]);
     setPage(1);
-  }, [assetType, setPage])
-
-  useEffect(() => ReactTooltip.rebuild(), [query?.data?.hits]);
+  }, [assetType, setPage]);
 
   const enabledColumns = useMemo(() => {
     return columns.filter((c) => !disabledColumns.includes(c.key));
@@ -336,7 +334,7 @@ const ListViewComponent = ({ assetType, onAssetTypeChange, params }) => {
 
   return (
     <Details fullWidth title="Advanced Search" contentProps={{ hasFooter: true }}>
-      <ReactTooltip id="listView" effect="solid" />
+      <Tooltip id="listView" />
       <Wrapper>
         <Controls>
           <LeftControls filtersOpen={filtersOpen}>
@@ -348,9 +346,9 @@ const ListViewComponent = ({ assetType, onAssetTypeChange, params }) => {
               width={272} />
             <div style={{ marginLeft: 6 }}>
               <Button
-                data-for="global"
-                data-place="right"
-                data-tip={filtersOpen ? 'Hide Filters' : 'Show Filters'}
+                data-tooltip-id="global"
+                data-tooltip-place="right"
+                data-tooltip-content={filtersOpen ? 'Hide Filters' : 'Show Filters'}
                 background={filtersOpen ? `rgba(${theme.colors.mainRGB}, 0.6)` : undefined}
                 badge={filtersOpen ? undefined : activeFilters}
                 disabled={disableFilters}

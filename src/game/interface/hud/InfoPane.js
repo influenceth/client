@@ -3,7 +3,7 @@ import { useHistory } from 'react-router-dom';
 import styled, { css, keyframes } from 'styled-components';
 import { Asteroid, Building, Entity } from '@influenceth/sdk';
 import { FaSearchPlus as DetailsIcon } from 'react-icons/fa';
-import ReactTooltip from 'react-tooltip';
+import { Tooltip } from 'react-tooltip';
 
 import ClipCorner from '~/components/ClipCorner';
 import { CrewCaptainCardFramed } from '~/components/CrewmateCardFramed';
@@ -392,9 +392,9 @@ const InfoPane = () => {
           {thumbBanner && <ThumbBanner color={thumbBannerColor}>{thumbBanner}</ThumbBanner>}
           {asteroid.Celestial.scanStatus >= Asteroid.SCAN_STATUSES.SURFACE_SCANNED && (
             <RarityEarmark
-              data-for="infoPane"
-              data-tip={rarity}
-              data-place="right"
+              data-tooltip-id="infoPane"
+              data-tooltip-content={rarity}
+              data-tooltip-place="right"
               rarity={rarity} />
           )}
           <AsteroidRendering
@@ -490,12 +490,10 @@ const InfoPane = () => {
     history.push(titleLink);
   };
 
-  useEffect(() => ReactTooltip.rebuild(), [actions]);
-
   if (lotIsLoading || asteroidIsLoading || shipIsLoading) return null;
   return (
     <Pane visible={asteroidId && ['out','in'].includes(zoomStatus)}>
-      <ReactTooltip id="infoPane" effect="solid" />
+      <Tooltip id="infoPane" />
       <OuterTitleRow style={captainCard && !thumbnail ? { marginBottom: 8 } : {}}>
         {captainCard && <CaptainCardContainer><CaptainCard crewId={captainCard} /></CaptainCardContainer>}
         <div style={captainCard && !thumbnail ? { marginTop: -8 } : {}}>

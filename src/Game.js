@@ -43,6 +43,12 @@ const GlobalStyle = createGlobalStyle`
   label {
     cursor: inherit;
   }
+  .react-tooltip {
+    background: #222 !important;
+    font-size: 13px !important;
+    padding: 8px 21px !important;
+    z-index: 999;
+  }
 
   /* for starknet modals */
   .s-dialog {

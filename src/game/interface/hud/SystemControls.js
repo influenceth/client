@@ -162,7 +162,7 @@ const SystemControls = () => {
       </MobileWarning>
 
       <Button
-        data-tip="Realign camera to poles"
+        data-tooltip-content="Realign camera to poles"
         onClick={dispatchReorientCamera}
         size="bigicon"
         style={{ fontSize: '26px', marginRight: swayBalance === undefined ? 15 : 0 }}>

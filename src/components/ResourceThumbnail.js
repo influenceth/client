@@ -1,7 +1,6 @@
-import React, { useCallback, useEffect, useState, useMemo } from 'react';
+import React, { useCallback, useState, useMemo } from 'react';
 import styled from 'styled-components';
 import { FaEllipsisH as MenuIcon } from 'react-icons/fa';
-import ReactTooltip from 'react-tooltip';
 import Lottie from 'react-lottie';
 import MovingStripesSquare from '~/assets/icons/animated/MovingStripesSquare.json';
 
@@ -257,11 +256,10 @@ const Menu = ({ children }) => {
 }) => {
   // const tip = (deficit) ? `${resource.name} (<span>${deficit}<span>)` : resource.name;
   const tooltipProps = tooltipContainer ? {
-    'data-place': 'top',
-    'data-tip': tooltipOverride || ((deficit) ? `${resource.name} (${deficit})` : resource.name),
-    'data-for': tooltipContainer
+    'data-tooltip-place': 'top',
+    'data-tooltip-content': tooltipOverride || ((deficit) ? `${resource.name} (${deficit})` : resource.name),
+    'data-tooltip-id': tooltipContainer
   } : {};
-  // useEffect(() => ReactTooltip.rebuild(), []); // this was causing performance issues on refinery process selection dialog
   return (
     <ResourceThumbnailWrapper
       backgroundColor={backgroundColor}

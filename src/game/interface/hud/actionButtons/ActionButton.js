@@ -1,6 +1,5 @@
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import styled, { css, keyframes } from 'styled-components';
-import ReactTooltip from 'react-tooltip';
 import { Permission } from '@influenceth/sdk';
 
 import ClipCorner from '~/components/ClipCorner';
@@ -262,13 +261,12 @@ const ActionButtonComponent = ({ label, labelAddendum, flags = {}, icon, onClick
     }, {})
   }, [flags]);
 
-  useEffect(() => ReactTooltip.rebuild(), []);
   return (
     <ActionButtonWrapper
       data-arrow-color="transparent"
-      data-for="global"
-      data-place="top"
-      data-tip={`${label}${labelAddendum ? ` (${labelAddendum})` : ''}`}
+      data-tooltip-id="global"
+      data-tooltip-place="top"
+      data-tooltip-content={`${label}${labelAddendum ? ` (${labelAddendum})` : ''}`}
       onClick={_onClick}
       {...safeFlags}
       {...props}>

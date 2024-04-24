@@ -1,7 +1,7 @@
 import { useEffect, useMemo } from 'react';
 import styled, { keyframes } from 'styled-components';
 import { PuffLoader } from 'react-spinners';
-import ReactTooltip from 'react-tooltip';
+import { Tooltip } from 'react-tooltip';
 import { Lot } from '@influenceth/sdk';
 
 import modalHeaders from '~/assets/images/modal_headers';
@@ -196,7 +196,7 @@ export const ActionDialogInner = ({ actionImage, children, isLoading, stage }) =
         </>
       )}
     </ModalInner>
-    <ReactTooltip id="actionDialog" place="left" effect="solid" />
+    <Tooltip id="actionDialog" place="left" />
     <ClipCorner dimension={cornerSize} color={theming[stage]?.borderColor} />
   </Modal>
 );
