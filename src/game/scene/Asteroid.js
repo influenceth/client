@@ -853,7 +853,7 @@ const AsteroidComponent = () => {
         lerpPoints.forEach((p) => timeline.to(controls.object.position, { ...p, ease: 'linear' }));
   
         // run the timeline as a single animation
-        gsap.to(timeline, 10 * animationTime / 1e3, { progress: 1, ease: 'power4.out' })
+        gsap.to(timeline, animationTime / 1e3, { progress: 1, ease: 'power4.out' })
 
       } else {
         gsap.timeline({
