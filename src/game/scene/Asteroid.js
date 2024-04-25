@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
-import { AxesHelper, CameraHelper, Color, DirectionalLight, DirectionalLightHelper, Vector3 } from 'three';
+import { AxesHelper, CameraHelper, Color, DirectionalLight, DirectionalLightHelper, Euler, Quaternion, Vector3 } from 'three';
 import gsap from 'gsap';
 import { AdalianOrbit, Asteroid, Entity, Lot, Product, Ship } from '@influenceth/sdk';
 
@@ -18,6 +18,20 @@ import Telemetry from './asteroid/Telemetry';
 import { pointCircleClosest } from '~/lib/geometryUtils';
 import { keyify } from '~/lib/utils';
 import useAsteroidShips from '~/hooks/useAsteroidShips';
+
+const trajDebugColors = [
+  0xe81416,
+  0xffa500,
+  0xfaeb36,
+  0x79c314,
+  0x487de7,
+  0x4b369d,
+  0x70369d,
+  0xffffff,
+  0xcccccc,
+  0x999999,
+  0x555555
+];
 
 const {
   CHUNK_SPLIT_DISTANCE,
@@ -715,6 +729,8 @@ const AsteroidComponent = () => {
     }
   }, [cameraNeedsRecenter]);
 
+  const [debugTrajectory, setDebugTrajectory] = useState([]);
+
   const automatingCamera = useRef();
   useEffect(() => {
     if (selectedLot?.lotIndex > 0 && zoomedIntoAsteroidId === selectedLot?.asteroidId && config?.radiusNominal && zoomStatus === 'in') {
@@ -792,15 +808,62 @@ const AsteroidComponent = () => {
         }
       }
 
-      gsap
-      .timeline({
-        defaults: { duration: animationTime / 1e3, ease: shortTrip ? 'power1.out' : 'power4.out' }, // power>1.out seems to have bounce artifact for short trips
-        onComplete: () => {
-          // setTimeout(() => { console.log('final is', controls.object.position.length(), 'of', lotPosition.length()); console.groupEnd(); }, 3500)
-          automatingCamera.current = false;
+      const lerpPoints = [];
+      
+      const midpointTally = Math.floor(2 * controls.object.position.angleTo(lotPosition));
+      if (midpointTally > 0) {
+        const quatA = (new Quaternion()).setFromUnitVectors(
+          new Vector3(0, 0, 1),
+          controls.object.position.clone().normalize()
+        );
+        const heightA = controls.object.position.length();
+        const quatB = (new Quaternion()).setFromUnitVectors(
+          new Vector3(0, 0, 1),
+          lotPosition.clone().normalize()
+        );
+        const heightB = lotPosition.length();
+
+        for (let i = 0; i < midpointTally; i++) {
+          const lerp = (i + 1) / (midpointTally + 1);
+
+          const midQ = quatA.clone().slerp(quatB, lerp);
+          const midpoint = new Vector3(0, 0, 1).applyQuaternion(midQ);
+
+          const lerpHeight = heightA * (1 - lerp) + heightB * lerp;
+          const minHeight = midpoint.clone().setLength(config.radius).multiply(config.stretch); // best guess of surface at midpoint
+          minHeight.setLength(minHeight.length() + Math.min(config.radius, targetAltitude * 20)); // aim for target altitude (with 20x buffer)
+          
+          midpoint.setLength(Math.max(lerpHeight, minHeight.length()));
+
+          lerpPoints.push({ ...midpoint });
         }
-      })
-      .to(controls.object.position, { ...lotPosition });
+
+        // add final destination
+        lerpPoints.push({ ...lotPosition });
+
+        setDebugTrajectory(lerpPoints);
+
+        // create a linear animation sequence
+        const timeline = gsap.timeline({
+          paused: true,
+          onComplete: () => {
+            automatingCamera.current = false;
+          }
+        });
+        lerpPoints.forEach((p) => timeline.to(controls.object.position, { ...p, ease: 'linear' }));
+  
+        // run the timeline as a single animation
+        gsap.to(timeline, 10 * animationTime / 1e3, { progress: 1, ease: 'power4.out' })
+
+      } else {
+        gsap.timeline({
+          defaults: { duration: animationTime / 1e3, ease: shortTrip ? 'power1.out' : 'power4.out' }, // power>1.out seems to have bounce artifact for short trips
+          onComplete: () => {
+            automatingCamera.current = false;
+          }
+        })
+        .to(controls.object.position, { ...lotPosition });
+      }
     }
   }, [cameraRecenterTimestamp, zoomedIntoAsteroidId, origin, selectedLot, config?.radiusNominal, zoomStatus]);
 
@@ -1077,6 +1140,16 @@ const AsteroidComponent = () => {
       )}
       {false && light.current?.shadow?.camera && <primitive object={new CameraHelper(light.current.shadow.camera)} />}
       {false && <primitive object={new AxesHelper(config?.radius * 2)} />}
+      {false && debugTrajectory?.length && (
+        <group>
+          {debugTrajectory.map((pos, i) => (
+            <mesh position={[ ...Object.values(pos) ]}>
+              <sphereGeometry args={[5000]} />
+              <meshBasicMaterial color={trajDebugColors[i]} opacity={0.8} transparent={true} />
+            </mesh>
+          ))}
+        </group>
+      )}
     </group>
   );
 }
