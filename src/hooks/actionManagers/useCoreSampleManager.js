@@ -68,7 +68,7 @@ const useCoreSampleManager = (lotId) => {
           current.sampleId = activeSample.id;
 
           if (activeSample.Deposit.finishTime <= blockTime) {
-            if (getStatus('SampleDepositFinish', payload) === 'pending') {
+            if (getStatus('SampleDepositFinish', { deposit: { id: activeSample.id, label: Entity.IDS.DEPOSIT } }) === 'pending') {
               status = 'FINISHING';
               stage = actionStages.COMPLETING;
               if (!completingSamples.includes(current.sampleId)) {

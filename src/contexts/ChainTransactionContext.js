@@ -216,8 +216,8 @@ const customConfigs = {
   ListDepositForSale: { equalityTest: ['deposit.id'] },
   UnlistDepositForSale: { equalityTest: ['deposit.id'] },
 
-  SampleDepositFinish: { equalityTest: ['lot.id', 'caller_crew.id'] },
-  SampleDepositImprove: { equalityTest: ['lot.id', 'caller_crew.id'] },
+  SampleDepositFinish: { equalityTest: ['deposit.id'] },
+  SampleDepositImprove: { equalityTest: ['deposit.id'] },
   SampleDepositStart: { equalityTest: ['lot.id', 'caller_crew.id'] },
 
   ExchangeCrew: { equalityTest: true },
