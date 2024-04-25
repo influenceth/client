@@ -2486,11 +2486,11 @@ export const ActionDialogHeader = ({ action, actionCrew, crewAvailableTime, dela
                   {(formattedTime, isTimer) => {
                     const pills = [];
                     if (isTimer) {
-                      pills.push(<TimePill type="delay"><ScheduleFullIcon /><label>Wait</label> {formattedTime}</TimePill>); 
+                      pills.push(<TimePill key="delay" type="delay"><ScheduleFullIcon /><label>Wait</label> {formattedTime}</TimePill>); 
                     }
                     if (crewAvailableTime !== undefined) {
                       const delayDuration = isTimer ? (delayUntil - Math.floor(Date.now() / 1000)) : 0;
-                      pills.push(<TimePill type="crew"><CrewBusyIcon isPaused /> {formatTimer(delayDuration + crewAvailableTime, 2)}</TimePill>)
+                      pills.push(<TimePill key="crew" type="crew"><CrewBusyIcon isPaused /> {formatTimer(delayDuration + crewAvailableTime, 2)}</TimePill>)
                     }
                     return pills;
                   }}
