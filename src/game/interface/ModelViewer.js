@@ -105,10 +105,10 @@ export const getModelViewerSettings = (assetType, overrides = {}) => {
     background: null,
     bloomRadius: 0.25,
     bloomStrength: 1,
-    enableZoomLimits: true,
+    enableZoomLimits: false,
     enableModelLights: true,
     envmap: '/textures/model-viewer/resource_envmap.hdr',
-    envmapStrength: 4.5,
+    envmapStrength: 1,
   };
 
   // modify default settings by asset type
@@ -135,13 +135,12 @@ export const getModelViewerSettings = (assetType, overrides = {}) => {
 
   } else if (assetType === 'ship') {
     s.emissiveAsBloom = true;
-    s.emissiveMapAsLightMap = true;
-    s.enableModelLights = true;
     s.enablePostprocessing = true;
-    s.envmapStrength = 0.1;
     s.enableDefaultLights = true;
-    s.keylightIntensity = 0.25;
-    s.rimlightIntensity = 0;
+    s.enableRotation = true;
+    s.envmapStrength = 5;
+    s.keylightIntensity = 0.5;
+    s.rimlightIntensity = 1;
   }
 
   if (s.enablePostprocessing) {
