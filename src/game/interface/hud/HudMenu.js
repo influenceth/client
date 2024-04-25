@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useHistory } from 'react-router-dom';
-import ReactTooltip from 'react-tooltip';
+import { Tooltip } from 'react-tooltip';
 import styled from 'styled-components';
 import { Building, Inventory, Lot, Permission } from '@influenceth/sdk';
 import { BiWrench as WrenchIcon } from 'react-icons/bi';
@@ -28,16 +28,16 @@ import {
   SimulateRouteIcon,
   StationCrewIcon,
 } from '~/components/Icons';
-import useSession from '~/hooks/useSession';
-import useLot from '~/hooks/useLot';
-import useStore from '~/hooks/useStore';
-import hudMenus from './hudMenus';
-import { reactBool } from '~/lib/utils';
-import useCrewContext from '~/hooks/useCrewContext';
-import theme from '~/theme';
-import useAsteroidBuildings from '~/hooks/useAsteroidBuildings';
-import useShip from '~/hooks/useShip';
 import useAsteroid from '~/hooks/useAsteroid';
+import useAsteroidBuildings from '~/hooks/useAsteroidBuildings';
+import useCrewContext from '~/hooks/useCrewContext';
+import useLot from '~/hooks/useLot';
+import useSession from '~/hooks/useSession';
+import useShip from '~/hooks/useShip';
+import useStore from '~/hooks/useStore';
+import { reactBool } from '~/lib/utils';
+import theme from '~/theme';
+import hudMenus from './hudMenus';
 
 const cornerWidth = 8;
 const bumpHeightHalf = 100;
@@ -530,7 +530,7 @@ const HudMenu = ({ forceOpenMenu }) => {
         onOpen: () => {
           history.push(`/listview`);  // TODO: should probably also go to /listview/lots
         },
-        isVisible: scope === 'asteroid'
+        isVisible: ['asteroid', 'lot'].includes(scope)
       },
 
       {
@@ -581,7 +581,7 @@ const HudMenu = ({ forceOpenMenu }) => {
     <Wrapper>
       {!forceOpenMenu && (
         <>
-          <ReactTooltip id="hudMenu" effect="solid" />
+          <Tooltip id="hudMenu" />
           <Buttons open={open}>
             {visibleMenuButtons.length > 0 && (
               <ButtonSection>
@@ -591,9 +591,9 @@ const HudMenu = ({ forceOpenMenu }) => {
                     style={highlightIcon ? { color: theme.colors.main } : {}}
                     onClick={() => handleButtonClick(key, onOpen, hideInsteadOfClose)}
                     selected={key === openHudMenu}
-                    data-for="hudMenu"
-                    data-place="left"
-                    data-tip={label}>
+                    data-tooltip-id="hudMenu"
+                    data-tooltip-place="left"
+                    data-tooltip-content={label}>
                     {icon}
                   </Button>
                 ))}
@@ -607,9 +607,9 @@ const HudMenu = ({ forceOpenMenu }) => {
                     style={highlightIcon ? { color: theme.colors.main } : {}}
                     onClick={() => handleButtonClick(key, onOpen, hideInsteadOfClose)}
                     selected={key === openHudMenu}
-                    data-for="hudMenu"
-                    data-place="left"
-                    data-tip={label}>
+                    data-tooltip-id="hudMenu"
+                    data-tooltip-place="left"
+                    data-tooltip-content={label}>
                     {icon}
                   </PageButton>
                 ))}
@@ -624,9 +624,9 @@ const HudMenu = ({ forceOpenMenu }) => {
             <span style={{ flex: 1 }}>{label}</span>
             {!noDetail && (
               <IconButton
-                data-for="global"
-                data-tip={detailType === 'detail' ? 'Detail View' : 'Advanced Search'}
-                data-place="left"
+                data-tooltip-id="global"
+                data-tooltip-content={detailType === 'detail' ? 'Detail View' : 'Advanced Search'}
+                data-tooltip-place="left"
                 onClick={onDetailClick}>
                 {detailType === 'detail' ? <DetailIcon /> : <ListViewIcon />}
               </IconButton>

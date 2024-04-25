@@ -1,6 +1,6 @@
-import { useContext, useEffect, useMemo } from 'react';
+import { useContext, useMemo } from 'react';
 import styled, { css, keyframes } from 'styled-components';
-import ReactTooltip from 'react-tooltip';
+import { Tooltip } from 'react-tooltip';
 import BarLoader from 'react-spinners/BarLoader';
 import { uniqueId } from 'lodash';
 
@@ -184,8 +184,8 @@ const loadingCss = css`
 
 const StandardButton = (props) => {
   const {
-    'data-place': dataPlace,
-    'data-tip': dataTip,
+    'data-tooltip-place': dataPlace,
+    'data-tooltip-content': dataTip,
     loading,
     onClick,
     setRef,
@@ -201,8 +201,6 @@ const StandardButton = (props) => {
     if (onClick) onClick(e);
   }
 
-  useEffect(() => ReactTooltip.rebuild(), [dataTip, props.disabledTooltip]);
-
   if (setRef) restProps.ref = setRef;
 
   return (
@@ -210,8 +208,8 @@ const StandardButton = (props) => {
       {props.badge ? <StyledBadge value={props.badge} {...nonStyleProps} sizeParams={sizeParams} /> : null}
       <StyledButton
         onClick={_onClick}
-        data-tip={dataTip}
-        data-place={dataPlace || "right"}
+        data-tooltip-content={dataTip}
+        data-tooltip-place={dataPlace || "right"}
         sizeParams={sizeParams}
         background={sizeParams.background}
         {...restProps}>
@@ -253,9 +251,9 @@ const TransactionButton = (props) => {
         disabled: true,
         loadingAnimation: true,
         disabledTooltip: {
-          'data-tip': 'Waiting on Wallet...',
-          'data-place': props['data-place'] || 'top',
-          'data-for': tooltipId
+          'data-tooltip-content': 'Waiting on Wallet...',
+          'data-tooltip-place': props['data-tooltip-place'] || 'top',
+          'data-tooltip-id': tooltipId
         }
       };
     }
@@ -264,7 +262,7 @@ const TransactionButton = (props) => {
 
   return (
     <>
-      <ReactTooltip id={tooltipId} effect="solid"></ReactTooltip>
+      <Tooltip id={tooltipId}></Tooltip>
       <StandardButton {...props} {...extraProps} />
     </>
   );

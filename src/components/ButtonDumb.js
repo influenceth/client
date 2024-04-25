@@ -1,6 +1,4 @@
-import { useEffect } from 'react';
-import styled, { css, keyframes } from 'styled-components';
-import ReactTooltip from 'react-tooltip';
+import styled, { css } from 'styled-components';
 import BarLoader from 'react-spinners/BarLoader';
 
 import Badge from '~/components/Badge';
@@ -41,8 +39,8 @@ const loadingCss = css`
 
 const Button = (props) => {
   const {
-    'data-place': dataPlace,
-    'data-tip': dataTip,
+    'data-tooltip-place': dataPlace,
+    'data-tooltip-content': dataTip,
     loading,
     setRef,
     children,
@@ -51,16 +49,14 @@ const Button = (props) => {
   const sizeParams = sizes[props.size] || sizes.medium;
   const { style, ...nonStyleProps } = restProps;
 
-  useEffect(() => ReactTooltip.rebuild(), [dataTip, props.disabledTooltip]);
-
   if (setRef) restProps.ref = setRef;
 
   return (
     <>
       {props.badge ? <StyledBadge value={props.badge} {...nonStyleProps} sizeParams={sizeParams} /> : null}
       <StyledButton
-        data-tip={dataTip}
-        data-place={dataPlace || "right"}
+        data-tooltip-content={dataTip}
+        data-tooltip-place={dataPlace || "right"}
         sizeParams={sizeParams}
         background={sizeParams.background}
         theme={theme}

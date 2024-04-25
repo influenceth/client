@@ -41,7 +41,7 @@ const useColumns = () => {
         sortField: 'Name.name.raw',
         selector: row => (
           <div>
-            <ShipLocationLink shipId={row?.id} data-place="top" />
+            <ShipLocationLink shipId={row?.id} data-tooltip-place="top" />
             <span>{formatters.shipName(row)}</span>
           </div>
         ),

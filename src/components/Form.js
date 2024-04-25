@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import styled, { css } from 'styled-components';
-import ReactTooltip from 'react-tooltip';
+import { Tooltip } from 'react-tooltip';
 import LoadingAnimation from 'react-spinners/BarLoader';
 
 import IconButton from '~/components/IconButton';
@@ -74,13 +74,13 @@ const Form = (props) => {
 
   return (
     <StyledForm {...restProps}
-      data-tip-disable={open}
-      data-place="right"
+      data-tooltip-hidden={open}
+      data-tooltip-place="right"
       open={open}
       onClick={() => {
         if (!open) {
           setOpen(true);
-          ReactTooltip.hide();
+          Tooltip.hide();
         }
       }}>
       {loading && <LoadingAnimation height={2} color={theme.colors.main} css={loadingCss} />}

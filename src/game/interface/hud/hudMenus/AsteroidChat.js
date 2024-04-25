@@ -216,8 +216,8 @@ const AsteroidChat = () => {
             return chat.isConnectionBreak
               ? (
                 <Break key={i}
-                  data-tip="Connection interruption (messages may be missing)"
-                  data-for="hudMenu" />
+                  data-tooltip-content="Connection interruption (messages may be missing)"
+                  data-tooltip-id="hudMenu" />
               )
               : <ChatItem key={chat.timestamp} chat={chat} showTimestamp={!!crew} />;
           })}

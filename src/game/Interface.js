@@ -1,6 +1,6 @@
 import { useCallback, useEffect } from 'react';
-import styled from 'styled-components';
-import ReactTooltip from 'react-tooltip';
+import styled, { css } from 'styled-components';
+import { Tooltip } from 'react-tooltip';
 import { Switch, Route, Redirect } from 'react-router-dom';
 import moment from 'moment';
 
@@ -129,7 +129,7 @@ const Interface = () => {
       {launcherPage && <Launcher />}
       {showDevTools && <DevToolsViewer />}
       <StyledInterface hide={interfaceHidden}>
-        {!isMobile && <ReactTooltip id="global" place="left" effect="solid" />}
+        {!isMobile && <Tooltip id="global" place="left" delayHide={60000} />}
         <QueryLoader />
         <MainContainer>
           <Switch>
