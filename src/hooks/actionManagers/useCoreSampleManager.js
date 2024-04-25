@@ -1,4 +1,4 @@
-import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { Deposit, Entity } from '@influenceth/sdk';
 
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
@@ -23,7 +23,7 @@ const useCoreSampleManager = (lotId) => {
 
   const [completingSamples, setCompletingSamples] = useState([]);
 
-  const [currentSamplings, currentSamplingsVersion] = useMemo(() => {
+  const [currentSamplings, completedSamplings, currentSamplingsVersion] = useMemo(() => {
     const template = {
       _cachedData: null,
       finishTime: null,
@@ -150,7 +150,11 @@ const useCoreSampleManager = (lotId) => {
       }
     });
 
-    return [activeSamples, Date.now()];
+    return [
+      activeSamples.filter((c) => c.stage !== actionStages.COMPLETED),
+      activeSamples.filter((c) => c.stage === actionStages.COMPLETED),
+      Date.now()
+    ];
   }, [actionItems, blockTime, completingSamples, pendingTransactions, readyItems, getPendingTx, getStatus, payload, lot?.deposits]);
 
   const startSampling = useCallback((resourceId, coreDrillSource) => {
@@ -197,6 +201,7 @@ const useCoreSampleManager = (lotId) => {
 
   return {
     currentSamplingActions: currentSamplings,
+    completedSamplingActions: completedSamplings,
     currentVersion: currentSamplingsVersion,
 
     startSampling,

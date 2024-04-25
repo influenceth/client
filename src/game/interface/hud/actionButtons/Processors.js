@@ -39,7 +39,7 @@ const Button = ({ asteroid, crew, lot, processor, onSetAction, _disabled }) => {
           finishTime: processor?.finishTime
         }}
         onClick={handleClick}
-        sequenceMode={!crew?._ready} />
+        sequenceMode={!crew?._ready && processStatus === 'READY'} />
     </>
   );
 };

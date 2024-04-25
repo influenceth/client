@@ -346,13 +346,16 @@ const NewCoreSample = ({ asteroid, lot, coreSampleManager, currentSamplingAction
 const Wrapper = (props) => {
   const { asteroid, lot, isLoading } = useAsteroidAndLot(props);
   const coreSampleManager = useCoreSampleManager(lot?.id);
-  const { currentSamplingActions } = coreSampleManager;
+  const { currentSamplingActions, completedSamplingActions } = coreSampleManager;
 
   const currentSamplingAction = useMemo(() => {
     return props.sampleId
-      ? currentSamplingActions.find((c) => c.action?.sampleId === props.sampleId)
+      ? (
+        currentSamplingActions.find((c) => c.action?.sampleId === props.sampleId)
+        || completedSamplingActions.find((c) => c.action?.sampleId === props.sampleId)
+      )
       : currentSamplingActions.find((c) => !c.action?.sampleId);
-  }, [currentSamplingActions, props.sampleId]);
+  }, [completedSamplingActions, currentSamplingActions, props.sampleId]);
 
   useEffect(() => {
     if (!asteroid || !lot) {

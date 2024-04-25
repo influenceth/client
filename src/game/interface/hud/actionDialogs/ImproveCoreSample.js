@@ -443,12 +443,13 @@ const ImproveCoreSample = ({ asteroid, lot, coreSampleManager, currentSamplingAc
 const Wrapper = (props) => {
   const { asteroid, lot, isLoading } = useAsteroidAndLot(props);
   const coreSampleManager = useCoreSampleManager(lot?.id);
-  const { currentSamplingActions } = coreSampleManager;
+  const { currentSamplingActions, completedSamplingActions } = coreSampleManager;
 
   const currentSamplingAction = useMemo(() => {
     const sampleId = props.sampleId || props.preselect?.id;
-    return currentSamplingActions.find((c) => c.action?.sampleId === sampleId);
-  }, [currentSamplingActions, props.sampleId]);
+    return currentSamplingActions.find((c) => c.action?.sampleId === sampleId)
+      || completedSamplingActions.find((c) => c.action?.sampleId === sampleId);
+  }, [completedSamplingActions, currentSamplingActions, props.sampleId]);
 
   useEffect(() => {
     if (!asteroid || !lot) {

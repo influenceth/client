@@ -70,7 +70,7 @@ const Extract = ({ onSetAction, asteroid, crew, lot, preselect, _disabled }) => 
       }}
       icon={<ExtractionIcon />}
       onClick={handleClick}
-      sequenceMode={!crew?._ready} />
+      sequenceMode={!crew?._ready && extractionStatus === 'READY'} />
   );
 };
 

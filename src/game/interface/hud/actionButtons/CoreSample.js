@@ -66,9 +66,10 @@ const NewCoreSample = ({ asteroid, crew, lot, onSetAction, overrideResourceId, i
   const disabledReason = useMemo(() => {
     if (_disabled) return 'loading...';
     if (improveSample && improveSample?.Deposit?.status === Deposit.STATUSES.USED) return 'already used';
-    if (improveSample && improveSample?.Deposit?.status !== Deposit.STATUSES.SAMPLED) return 'in progress';
+    if (improveSample && improveSample?.Deposit?.status !== Deposit.STATUSES.SAMPLED) return 'not yet analyzed';
+    if (currentSamplingActions.find((c) => c.stage === 'STARTING')) return 'pending';
     return getCrewDisabledReason({ asteroid, isSequenceable: true, crew });
-  }, [_disabled, asteroid, crew, improveSample]);
+  }, [_disabled, asteroid, crew, currentSamplingActions, improveSample]);
 
   let label = labelDict.READY;
   if (!crew?._ready) label = `Schedule Next: ${label}`;
@@ -101,11 +102,10 @@ const NewCoreSample = ({ asteroid, crew, lot, onSetAction, overrideResourceId, i
           icon={stackIsImprovement ? <ImproveCoreSampleIcon /> : <NewCoreSampleIcon />}
           onClick={handleClick(true)} />
       )}
-
       <ActionButton
         label={label}
         labelAddendum={disabledReason}
-        flags={{ disabled: _disabled || disabledReason, }}
+        flags={{ disabled: _disabled || disabledReason }}
         icon={improveSample ? <ImproveCoreSampleIcon /> : <NewCoreSampleIcon />}
         onClick={handleClick()}
         sequenceMode={!crew?._ready || currentSamplingActions.length > 0} />
