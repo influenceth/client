@@ -195,21 +195,21 @@ const DevTools = () => {
             size="small"
             onClick={() => setters.setAssetType('building')}
             background={settings.assetType === 'building' ? theme.colors.main : undefined }
-            style={{ minWidth: 90 }}>
+            style={settings.assetType === 'building' ? {minWidth: 90,  color:'black'} : { minWidth: 90 }}>
             Buildings
           </Button>
           <Button
             size="small"
             onClick={() => setters.setAssetType('resource')}
             background={settings.assetType === 'resource' ? theme.colors.main : undefined }
-            style={{ minWidth: 90 }}>
+            style={settings.assetType === 'resource' ? {minWidth: 90,  color:'black'} : { minWidth: 90 }}>
             Resources
           </Button>
           <Button
             size="small"
             onClick={() => setters.setAssetType('ship')}
             background={settings.assetType === 'ship' ? theme.colors.main : undefined }
-            style={{ minWidth: 90 }}>
+            style={settings.assetType === 'ship' ? {minWidth: 90,  color:'black'} : { minWidth: 90 }}>
             Ships
           </Button>
         </div>

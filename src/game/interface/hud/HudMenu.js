@@ -551,7 +551,8 @@ const HudMenu = ({ forceOpenMenu }) => {
         icon: <WrenchIcon />,
         noDetail: true,
         Component: hudMenus.DevTools,
-        hideInsteadOfClose: true
+        hideInsteadOfClose: true,
+        isVisible: true
       });
     }
 
