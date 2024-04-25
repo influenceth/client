@@ -43,7 +43,8 @@ const Extract = ({ onSetAction, asteroid, crew, lot, preselect, _disabled }) => 
     ));
   }, [lot?.deposits, crew?.id]);
 
-  const attention = !_disabled && (extractionStatus === 'READY_TO_FINISH' || (myUsableSamples?.length > 0) && extractionStatus === 'READY');
+  // const attention = !_disabled && (extractionStatus === 'READY_TO_FINISH' || (myUsableSamples?.length > 0) && extractionStatus === 'READY');
+  const attention = !_disabled && extractionStatus === 'READY_TO_FINISH';
   const badge = ((extractionStatus === 'READY' && !preselect) ? myUsableSamples?.length : 0);
   let disabledReason = useMemo(() => {
     if (_disabled) return 'loading...';
