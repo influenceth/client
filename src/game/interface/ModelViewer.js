@@ -105,7 +105,7 @@ export const getModelViewerSettings = (assetType, overrides = {}) => {
     background: null,
     bloomRadius: 0.25,
     bloomStrength: 1,
-    enableZoomLimits: false,
+    enableZoomLimits: true,
     enableModelLights: true,
     envmap: '/textures/model-viewer/resource_envmap.hdr',
     envmapStrength: 1,
@@ -141,6 +141,7 @@ export const getModelViewerSettings = (assetType, overrides = {}) => {
     s.envmapStrength = 5;
     s.keylightIntensity = 0.5;
     s.rimlightIntensity = 1;
+    s.simpleZoomConstraints = [0.1, 5];
   }
 
   if (s.enablePostprocessing) {
