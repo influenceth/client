@@ -62,7 +62,7 @@ const SwayBalance = styled.div`
 const VerticalRule = styled.div`
   border-left: 1px solid #444;
   height: 28px;
-  margin-left: 14px;
+  margin-left: 12px;
   opacity: ${p => p.hide ? 0 : 1};
   padding-left: 14px;
   transition: opacity ${menuAnimationTime}ms ease;
@@ -75,7 +75,6 @@ const SystemControls = () => {
   const { data: swayBalance } = useSwayBalance();
 
   const dispatchLauncherPage = useStore(s => s.dispatchLauncherPage);
-  const dispatchReorientCamera = useStore(s => s.dispatchReorientCamera);
 
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -161,6 +160,7 @@ const SystemControls = () => {
         <span>Mobile is not well supported, please use desktop.</span>
       </MobileWarning>
 
+      {/*
       <Button
         data-tooltip-content="Realign camera to poles"
         onClick={dispatchReorientCamera}
@@ -168,15 +168,17 @@ const SystemControls = () => {
         style={{ fontSize: '26px', marginRight: swayBalance === undefined ? 15 : 0 }}>
         <ResetCameraIcon />
       </Button>
+      */}
 
       {swayBalance !== undefined && (
-        <SwayBalance>
-          <SwayIcon />
-          <label>{swayBalance.toLocaleString({ maximumFractionDigits: 0 })}</label>
-        </SwayBalance>
+        <>
+          <SwayBalance>
+            <SwayIcon />
+            <label>{swayBalance.toLocaleString({ maximumFractionDigits: 0 })}</label>
+          </SwayBalance>
+          <VerticalRule hide={menuOpen} />
+        </>
       )}
-
-      <VerticalRule hide={menuOpen} />
 
       <DropdownNavMenu
         header={<NavMenuLoggedInUser account={accountAddress} />}
