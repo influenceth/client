@@ -583,7 +583,8 @@ const HudMenu = ({ forceOpenMenu }) => {
       {!forceOpenMenu && (
         <>
           <Tooltip id="hudMenuTooltip" />
-          <Buttons open={open}>
+          {/* NOTE: the hudMenu id is in use by third-party extensions */}
+          <Buttons id="hudMenu" open={open}>
             {visibleMenuButtons.length > 0 && (
               <ButtonSection>
                 {visibleMenuButtons.map(({ key, label, highlightIcon, icon, onOpen, hideInsteadOfClose }) => (
@@ -619,7 +620,8 @@ const HudMenu = ({ forceOpenMenu }) => {
           </Buttons>
         </>
       )}
-      <Panel open={open && !hidden} forcedOpen={reactBool(forceOpenMenu)}>
+      {/* NOTE: the hudMenu id is in use by third-party extensions */}
+      <Panel id="hudMenuPanel" open={open && !hidden} forcedOpen={reactBool(forceOpenMenu)}>
         <PanelInner>
           <PanelTitle>
             <span style={{ flex: 1 }}>{label}</span>
