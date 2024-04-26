@@ -162,7 +162,7 @@ const Details = (props) => {
         </Content>
         <ClipCorner dimension={cornerWidth} color={theme.colors.borderBottom} />
       </StyledDetails>
-      {showTooltip && <Tooltip id="details" />}
+      {showTooltip && <Tooltip id="detailsTooltip" />}
     </Wrapper>
   );
 };

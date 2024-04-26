@@ -196,7 +196,7 @@ export const ActionDialogInner = ({ actionImage, children, isLoading, stage }) =
         </>
       )}
     </ModalInner>
-    <Tooltip id="actionDialog" place="left" />
+    <Tooltip id="actionDialogTooltip" place="left" />
     <ClipCorner dimension={cornerSize} color={theming[stage]?.borderColor} />
   </Modal>
 );

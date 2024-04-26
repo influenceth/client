@@ -16,7 +16,7 @@ const useSwayBalance = (overrideAccount) => {
           entrypoint: 'balanceOf',
           calldata: [accountAddress]
         });
-        const unscaledSway = uint256.uint256ToBN({ low: balance?.[0], high: balance?.[1] });
+        const unscaledSway = uint256.uint256ToBN({ low: balance?.[0] || 0, high: balance?.[1] || 0 });
         return unscaledSway / 1000000n;
       } catch (e) {
         console.error(e);

@@ -425,7 +425,6 @@ const ResourceDetails = ({ abundances, asteroid, isManager }) => {
 
   const goToResourceViewer = useCallback((resource) => (e) => {
     e.stopPropagation();
-    Tooltip.hide();
     history.push(`/model/resource/${resource.name}?back=${encodeURIComponent(history.location.pathname)}`)
     return false;
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -578,7 +577,7 @@ const ResourceDetails = ({ abundances, asteroid, isManager }) => {
                   <label>Bonus Yield: +{selected.bonus.modifier}%</label>
                 </BonusItem>
               )}
-              {selected.resources.map((resource) => { return (
+              {selected.resources.map((resource) => (
                 <ResourceRow key={resource.i} category={selected.categoryKey} onClick={goToResourceViewer(resource)}>
                   <ResourceIcon style={{ backgroundImage: `url(${getProductIcon(resource.i, 'w85')})` }} />
                   <ResourceInfo>
@@ -596,7 +595,7 @@ const ResourceDetails = ({ abundances, asteroid, isManager }) => {
                     </ButtonPill>
                   </ResourceAction>
                 </ResourceRow>
-              )})}
+              ))}
             </ResourceSectionBody>
           </div>
         )}
@@ -633,7 +632,7 @@ const ResourceDetails = ({ abundances, asteroid, isManager }) => {
                               key={resource.i}
                               data-tooltip-place="left"
                               data-tooltip-content={resource.name}
-                              data-tooltip-id="global"
+                              data-tooltip-id="globalTooltip"
                               onClick={goToResourceViewer(resource)}
                               style={{ backgroundImage: `url(${getProductIcon(resource.i, 'w25')})` }} />
                           ))}

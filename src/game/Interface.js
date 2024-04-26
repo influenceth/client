@@ -129,7 +129,7 @@ const Interface = () => {
       {launcherPage && <Launcher />}
       {showDevTools && <DevToolsViewer />}
       <StyledInterface hide={interfaceHidden}>
-        {!isMobile && <Tooltip id="global" place="left" delayHide={60000} />}
+        {!isMobile && <Tooltip id="globalTooltip" place="left" delayHide={60000} />}
         <QueryLoader />
         <MainContainer>
           <Switch>

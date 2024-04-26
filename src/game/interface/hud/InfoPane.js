@@ -392,7 +392,7 @@ const InfoPane = () => {
           {thumbBanner && <ThumbBanner color={thumbBannerColor}>{thumbBanner}</ThumbBanner>}
           {asteroid.Celestial.scanStatus >= Asteroid.SCAN_STATUSES.SURFACE_SCANNED && (
             <RarityEarmark
-              data-tooltip-id="infoPane"
+              data-tooltip-id="infoPaneTooltip"
               data-tooltip-content={rarity}
               data-tooltip-place="right"
               rarity={rarity} />
@@ -493,7 +493,7 @@ const InfoPane = () => {
   if (lotIsLoading || asteroidIsLoading || shipIsLoading) return null;
   return (
     <Pane visible={asteroidId && ['out','in'].includes(zoomStatus)}>
-      <Tooltip id="infoPane" />
+      <Tooltip id="infoPaneTooltip" />
       <OuterTitleRow style={captainCard && !thumbnail ? { marginBottom: 8 } : {}}>
         {captainCard && <CaptainCardContainer><CaptainCard crewId={captainCard} /></CaptainCardContainer>}
         <div style={captainCard && !thumbnail ? { marginTop: -8 } : {}}>

@@ -320,7 +320,7 @@ const DepositSection = ({ deposits = [], selected, onSelect, title, type }) => {
                         iconBadgeCorner={theme.colors.resources[categoryKey]}
                         resource={Product.TYPES[sample.Deposit.resource]}
                         size="75px"
-                        tooltipContainer="hudMenu" />
+                        tooltipContainer="hudMenuTooltip" />
                     </div>
                     <DepositInfo>
                       <label>{name}</label>

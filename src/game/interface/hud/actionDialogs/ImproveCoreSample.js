@@ -295,7 +295,7 @@ const ImproveCoreSample = ({ asteroid, lot, coreSampleManager, currentSamplingAc
           <FlexSection>
             <FlexSectionInputBlock
               title="New Result"
-              image={<ResourceThumbnail resource={Product.TYPES[resourceId]} tooltipContainer="none" />}
+              image={<ResourceThumbnail resource={Product.TYPES[resourceId]} tooltipContainer={null} />}
               label={`${Product.TYPES[resourceId]?.name} Deposit`}
               disabled
               style={{ width: '100%' }}
@@ -319,7 +319,7 @@ const ImproveCoreSample = ({ asteroid, lot, coreSampleManager, currentSamplingAc
                     ? (
                       <ResourceThumbnail
                         resource={Product.TYPES[resourceId]}
-                        tooltipContainer="none"
+                        tooltipContainer={null}
                         iconBadge={<CoreSampleIcon />}
                         iconBadgeCorner={theme.colors.resources[keyify(Product.TYPES[resourceId].category)]} />
                     )
@@ -342,7 +342,7 @@ const ImproveCoreSample = ({ asteroid, lot, coreSampleManager, currentSamplingAc
                 title="Tool"
                 image={
                   drillSource
-                    ? <ResourceThumbnail badge="1" resource={Product.TYPES[175]} tooltipContainer="none" />
+                    ? <ResourceThumbnail badge="1" resource={Product.TYPES[175]} tooltipContainer={null} />
                     : <EmptyResourceImage />
                 }
                 isSelected={stage === actionStage.NOT_STARTED}

@@ -249,7 +249,7 @@ const Menu = ({ children }) => {
   overlayStripes,
   progress,
   size,
-  tooltipContainer = 'global',
+  tooltipContainer = 'globalTooltip',
   tooltipOverride,
   underlay,
   ...props
