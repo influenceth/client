@@ -429,7 +429,7 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
                   <label>Price</label>
                 </InputLabel>
                 <TextInputWrapper>
-                  <div style={{ background: '#09191f', color: 'white', fontSize: '26px', padding: '4px 2px' }}>
+                  <div style={{ background: '#09191f', color: 'white', fontSize: '26px', padding: '4px 2px', width: '100%' }}>
                     <SwayIcon />{formatPrice(selectedCoreSample.PrivateSale?.amount / 1e6)}
                   </div>
                 </TextInputWrapper>
