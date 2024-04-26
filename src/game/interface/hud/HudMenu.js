@@ -582,7 +582,7 @@ const HudMenu = ({ forceOpenMenu }) => {
     <Wrapper>
       {!forceOpenMenu && (
         <>
-          <Tooltip id="hudMenu" />
+          <Tooltip id="hudMenuTooltip" />
           <Buttons open={open}>
             {visibleMenuButtons.length > 0 && (
               <ButtonSection>
@@ -592,7 +592,7 @@ const HudMenu = ({ forceOpenMenu }) => {
                     style={highlightIcon ? { color: theme.colors.main } : {}}
                     onClick={() => handleButtonClick(key, onOpen, hideInsteadOfClose)}
                     selected={key === openHudMenu}
-                    data-tooltip-id="hudMenu"
+                    data-tooltip-id="hudMenuTooltip"
                     data-tooltip-place="left"
                     data-tooltip-content={label}>
                     {icon}
@@ -608,7 +608,7 @@ const HudMenu = ({ forceOpenMenu }) => {
                     style={highlightIcon ? { color: theme.colors.main } : {}}
                     onClick={() => handleButtonClick(key, onOpen, hideInsteadOfClose)}
                     selected={key === openHudMenu}
-                    data-tooltip-id="hudMenu"
+                    data-tooltip-id="hudMenuTooltip"
                     data-tooltip-place="left"
                     data-tooltip-content={label}>
                     {icon}
@@ -625,7 +625,7 @@ const HudMenu = ({ forceOpenMenu }) => {
             <span style={{ flex: 1 }}>{label}</span>
             {!noDetail && (
               <IconButton
-                data-tooltip-id="global"
+                data-tooltip-id="globalTooltip"
                 data-tooltip-content={detailType === 'detail' ? 'Detail View' : 'Advanced Search'}
                 data-tooltip-place="left"
                 onClick={onDetailClick}>

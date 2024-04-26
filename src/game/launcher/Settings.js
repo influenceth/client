@@ -188,7 +188,7 @@ const Settings = () => {
                 <StyledDataReadout label="Dynamic Shadows">
                   <IconButton
                     data-tooltip-content="Toggle Shadows"
-                    data-tooltip-id="global"
+                    data-tooltip-id="globalTooltip"
                     onClick={() => setShadowQuality(graphics.shadowQuality > 0 ? 0 : 1)}
                     borderless>
                     {graphics.shadowQuality > 0 ? <CheckedIcon /> : <UncheckedIcon />}
@@ -235,7 +235,7 @@ const Settings = () => {
               <StyledDataReadout label="Fullscreen">
                 <IconButton
                   data-tooltip-content="Toggle Fullscreen"
-                  data-tooltip-id="global"
+                  data-tooltip-id="globalTooltip"
                   onClick={() => fullscreen ? screenfull.exit() : screenfull.request()}
                   borderless>
                   {fullscreen ? <CheckedIcon /> : <UncheckedIcon />}
@@ -245,7 +245,7 @@ const Settings = () => {
             <StyledDataReadout label="Skybox">
               <IconButton
                 data-tooltip-content="Toggle Skybox"
-                data-tooltip-id="global"
+                data-tooltip-id="globalTooltip"
                 onClick={() => graphics.skybox ? turnOffSkybox() : turnOnSkybox()}
                 borderless>
                 {graphics.skybox ? <CheckedIcon /> : <UncheckedIcon />}
@@ -254,7 +254,7 @@ const Settings = () => {
             <StyledDataReadout label="Stellar Lensflare">
               <IconButton
                 data-tooltip-content="Toggle Stellar Lensflare"
-                data-tooltip-id="global"
+                data-tooltip-id="globalTooltip"
                 onClick={() => graphics.lensflare ? turnOffLensflare() : turnOnLensflare()}
                 borderless>
                 {graphics.lensflare ? <CheckedIcon /> : <UncheckedIcon />}
@@ -263,7 +263,7 @@ const Settings = () => {
             <StyledDataReadout label="Performance Stats">
               <IconButton
                 data-tooltip-content="Toggle Performance Stats"
-                data-tooltip-id="global"
+                data-tooltip-id="globalTooltip"
                 onClick={() => graphics.stats ? turnOffStats() : turnOnStats()}
                 borderless>
                 {graphics.stats ? <CheckedIcon /> : <UncheckedIcon />}

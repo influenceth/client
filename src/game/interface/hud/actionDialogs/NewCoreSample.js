@@ -230,7 +230,7 @@ const NewCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }) =>
           <FlexSection>
             <FlexSectionInputBlock
               title="Discovered"
-              image={<ResourceThumbnail resource={Product.TYPES[resourceId]} tooltipContainer="none" />}
+              image={<ResourceThumbnail resource={Product.TYPES[resourceId]} tooltipContainer={null} />}
               label={`${Product.TYPES[resourceId]?.name} Deposit`}
               disabled
               style={{ width: '100%' }}
@@ -248,7 +248,7 @@ const NewCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }) =>
               title="Resource"
               image={
                 resourceId
-                  ? <ResourceThumbnail resource={Product.TYPES[resourceId]} tooltipContainer="none" />
+                  ? <ResourceThumbnail resource={Product.TYPES[resourceId]} tooltipContainer={null} />
                   : <EmptyResourceImage iconOverride={<ResourceIcon />} />
               }
               isSelected={stage === actionStage.NOT_STARTED}
@@ -268,7 +268,7 @@ const NewCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }) =>
               title="Tool"
               image={
                 drillSource
-                  ? <ResourceThumbnail badge="1" resource={Product.TYPES[175]} tooltipContainer="none" />
+                  ? <ResourceThumbnail badge="1" resource={Product.TYPES[175]} tooltipContainer={null} />
                   : <EmptyResourceImage />
               }
               isSelected={stage === actionStage.NOT_STARTED}

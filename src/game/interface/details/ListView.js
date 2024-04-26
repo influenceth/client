@@ -334,7 +334,7 @@ const ListViewComponent = ({ assetType, onAssetTypeChange, params }) => {
 
   return (
     <Details fullWidth title="Advanced Search" contentProps={{ hasFooter: true }}>
-      <Tooltip id="listView" />
+      <Tooltip id="listViewTooltip" />
       <Wrapper>
         <Controls>
           <LeftControls filtersOpen={filtersOpen}>
@@ -346,7 +346,7 @@ const ListViewComponent = ({ assetType, onAssetTypeChange, params }) => {
               width={272} />
             <div style={{ marginLeft: 6 }}>
               <Button
-                data-tooltip-id="global"
+                data-tooltip-id="globalTooltip"
                 data-tooltip-place="right"
                 data-tooltip-content={filtersOpen ? 'Hide Filters' : 'Show Filters'}
                 background={filtersOpen ? `rgba(${theme.colors.mainRGB}, 0.6)` : undefined}

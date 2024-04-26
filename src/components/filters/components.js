@@ -105,7 +105,7 @@ const Highlighter = (props) => {
   return (
     <HighlightToggle
       data-tooltip-content={active ? 'Disable highlighting' : 'Enable highlighting'}
-      data-tooltip-id="global"
+      data-tooltip-id="globalTooltip"
       borderless
       enabled={active}
       onClick={onClick}>
