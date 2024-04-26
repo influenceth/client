@@ -553,7 +553,7 @@ const LotInventory = () => {
                     ? inventory.contentsObj[resourceId] * Product.TYPES[resourceId].volumePerUnit / inventory.volume
                     : undefined}
                   resource={Product.TYPES[resourceId]}
-                  tooltipContainer="hudMenu" />
+                  tooltipContainer="hudMenuTooltip" />
               </ThumbnailWrapper>
             ))}
           </InventoryItems>

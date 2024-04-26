@@ -160,7 +160,7 @@ const CrewmateCardAbstract = ({
   return (
     <AvatarWrapper
       data-tooltip-content={tooltip}
-      data-tooltip-id="global"
+      data-tooltip-id="globalTooltip"
       data-tooltip-place={tooltipPlace}
       clickable={!!onClick}
       onClick={onClick || noop}

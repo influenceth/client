@@ -24,7 +24,7 @@ export const IconLink = ({ children, onClick, tooltip, ...props }) => {
   const history = useHistory();
   return (
     <StyledIconLink
-      data-tooltip-id="listView"
+      data-tooltip-id="listViewTooltip"
       data-tooltip-content={tooltip}
       data-tooltip-place="left"
       onClick={onClick}

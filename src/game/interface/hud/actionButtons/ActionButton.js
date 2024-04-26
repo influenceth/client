@@ -264,7 +264,7 @@ const ActionButtonComponent = ({ label, labelAddendum, flags = {}, icon, onClick
   return (
     <ActionButtonWrapper
       data-arrow-color="transparent"
-      data-tooltip-id="global"
+      data-tooltip-id="globalTooltip"
       data-tooltip-place="top"
       data-tooltip-delay-hide={100}
       data-tooltip-content={`${label}${labelAddendum ? ` (${labelAddendum})` : ''}`}

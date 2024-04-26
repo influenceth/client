@@ -230,7 +230,7 @@ const AsteroidResourcePrices = ({ asteroid, mode, resource }) => {
               style={{ marginRight: 6 }}
               asteroidId={asteroid.id}
               lotId={row.lotId}
-              data-tooltip-id="details" />
+              data-tooltip-id="detailsTooltip" />
             <span>{row.marketplaceName}</span>
           </>
         ),
@@ -245,7 +245,7 @@ const AsteroidResourcePrices = ({ asteroid, mode, resource }) => {
               style={{ marginRight: 6 }}
               onClick={() => history.push(`/marketplace/${asteroid.id}/${Lot.toIndex(row.lotId)}/${resource.i}?back=all&mode=buy`)}
               tooltip="View Orderbook"
-              data-tooltip-id="details">
+              data-tooltip-id="detailsTooltip">
               <MarketplaceBuildingIcon />
             </IconLink>
             {row.supply === 0 
@@ -278,7 +278,7 @@ const AsteroidResourcePrices = ({ asteroid, mode, resource }) => {
               style={{ marginRight: 6 }}
               onClick={() => history.push(`/marketplace/${asteroid.id}/${Lot.toIndex(row.lotId)}/${resource.i}?back=all&mode=sell`)}
               tooltip="View Orderbook"
-              data-tooltip-id="details">
+              data-tooltip-id="detailsTooltip">
               <MarketplaceBuildingIcon />
             </IconLink>
             {row.demand === 0 
@@ -325,7 +325,7 @@ const AsteroidResourcePrices = ({ asteroid, mode, resource }) => {
       //         asteroidId={asteroid.id}
       //         lotId={row.lotId}
       //         zoomToLot
-      //         data-tooltip-id="details" />
+      //         data-tooltip-id="detailsTooltip" />
       //       <span>{formatters.lotName(row.lotId)}</span>
       //     </>
       //   )

@@ -653,7 +653,7 @@ const MarketplaceOrder = ({
         <FlexSection>
           <FlexSectionInputBlock
             title="Product"
-            image={<ResourceThumbnail resource={resource || {}} tooltipContainer="none" />}
+            image={<ResourceThumbnail resource={resource || {}} tooltipContainer={null} />}
             label={resource?.name}
             disabled
             sublabel={resource?.classification}

@@ -103,7 +103,7 @@ const AsteroidTitleArea = ({ asteroid }) => {
               category={keyify(category)}
               data-tooltip-content={category}
               data-tooltip-place="left"
-              data-tooltip-id="hudMenu">
+              data-tooltip-id="hudMenuTooltip">
               {ResourceGroupIcons[keyify(category).toLowerCase()]}
             </Resource>
           ))}

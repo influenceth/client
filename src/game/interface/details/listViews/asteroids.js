@@ -81,7 +81,7 @@ const useColumns = () => {
           const isFavorited = watchlistIds.includes(row.id);
           return (
             <FavoriteToggle
-              data-tooltip-id="listView"
+              data-tooltip-id="listViewTooltip"
               data-tooltip-content={isFavorited ? 'Favorited' : 'Add to Favorites'}
               data-tooltip-place="top"
               favorited={isFavorited}

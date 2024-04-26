@@ -582,8 +582,9 @@ const HudMenu = ({ forceOpenMenu }) => {
     <Wrapper>
       {!forceOpenMenu && (
         <>
-          <Tooltip id="hudMenu" />
-          <Buttons open={open}>
+          <Tooltip id="hudMenuTooltip" />
+          {/* NOTE: the hudMenu id is in use by third-party extensions */}
+          <Buttons id="hudMenu" open={open}>
             {visibleMenuButtons.length > 0 && (
               <ButtonSection>
                 {visibleMenuButtons.map(({ key, label, highlightIcon, icon, onOpen, hideInsteadOfClose }) => (
@@ -592,7 +593,7 @@ const HudMenu = ({ forceOpenMenu }) => {
                     style={highlightIcon ? { color: theme.colors.main } : {}}
                     onClick={() => handleButtonClick(key, onOpen, hideInsteadOfClose)}
                     selected={key === openHudMenu}
-                    data-tooltip-id="hudMenu"
+                    data-tooltip-id="hudMenuTooltip"
                     data-tooltip-place="left"
                     data-tooltip-content={label}>
                     {icon}
@@ -608,7 +609,7 @@ const HudMenu = ({ forceOpenMenu }) => {
                     style={highlightIcon ? { color: theme.colors.main } : {}}
                     onClick={() => handleButtonClick(key, onOpen, hideInsteadOfClose)}
                     selected={key === openHudMenu}
-                    data-tooltip-id="hudMenu"
+                    data-tooltip-id="hudMenuTooltip"
                     data-tooltip-place="left"
                     data-tooltip-content={label}>
                     {icon}
@@ -619,13 +620,14 @@ const HudMenu = ({ forceOpenMenu }) => {
           </Buttons>
         </>
       )}
-      <Panel open={open && !hidden} forcedOpen={reactBool(forceOpenMenu)}>
+      {/* NOTE: the hudMenu id is in use by third-party extensions */}
+      <Panel id="hudMenuPanel" open={open && !hidden} forcedOpen={reactBool(forceOpenMenu)}>
         <PanelInner>
           <PanelTitle>
             <span style={{ flex: 1 }}>{label}</span>
             {!noDetail && (
               <IconButton
-                data-tooltip-id="global"
+                data-tooltip-id="globalTooltip"
                 data-tooltip-content={detailType === 'detail' ? 'Detail View' : 'Advanced Search'}
                 data-tooltip-place="left"
                 onClick={onDetailClick}>
