@@ -632,7 +632,7 @@ const ResourceDetails = ({ abundances, asteroid, isManager }) => {
                               key={resource.i}
                               data-tooltip-place="left"
                               data-tooltip-content={resource.name}
-                              data-tooltip-id="global"
+                              data-tooltip-id="globalTooltip"
                               onClick={goToResourceViewer(resource)}
                               style={{ backgroundImage: `url(${getProductIcon(resource.i, 'w25')})` }} />
                           ))}

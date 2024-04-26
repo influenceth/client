@@ -364,7 +364,7 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
                 ? (
                   <ResourceThumbnail
                     resource={resource}
-                    tooltipContainer="none"
+                    tooltipContainer={null}
                     iconBadge={<CoreSampleIcon />}
                     iconBadgeCorner={theme.colors.resources[keyify(resource.category)]} />
                 )

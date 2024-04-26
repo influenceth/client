@@ -1303,7 +1303,7 @@ export const SelectionDialog = ({ children, isCompletable, open, onClose, onComp
   if (!open) return null;
   return createPortal(
     <Dialog opaque dialogCss={dialogCss} dialogStyle={style}>
-      <Tooltip id="selectionDialog" />
+      <Tooltip id="selectionDialogTooltip" />
       <SelectionTitle>
         <div>{title}</div>
         <IconButton backgroundColor={`rgba(0, 0, 0, 0.15)`} marginless onClick={onClose}>
@@ -1906,7 +1906,7 @@ export const ProcessSelectionDialog = ({ initialSelection, onClose, forceProcess
                     <InputOutputTableCell>
                       <label>{Object.keys(inputs).length}</label>
                       {Object.keys(inputs).map((resourceId) => (
-                        <ResourceThumbnail key={resourceId} resource={Product.TYPES[resourceId]} size="45px" tooltipContainer="selectionDialog" />
+                        <ResourceThumbnail key={resourceId} resource={Product.TYPES[resourceId]} size="45px" tooltipContainer="selectionDialogTooltip" />
                       ))}
                     </InputOutputTableCell>
                   </td>
@@ -1915,7 +1915,7 @@ export const ProcessSelectionDialog = ({ initialSelection, onClose, forceProcess
                       <InputOutputTableCell>
                         <label>{Object.keys(outputs).length}</label>
                         {Object.keys(outputs).map((resourceId) => (
-                          <ResourceThumbnail key={resourceId} resource={Product.TYPES[resourceId]} size="45px" tooltipContainer="selectionDialog" />
+                          <ResourceThumbnail key={resourceId} resource={Product.TYPES[resourceId]} size="45px" tooltipContainer="selectionDialogTooltip" />
                         ))}
                       </InputOutputTableCell>
                     </td>
@@ -2636,7 +2636,7 @@ export const ResourceGridSectionInner = ({
                 resource={Product.TYPES[item.i]}
                 noStyles={noCellStyles}
                 size="96px"
-                tooltipContainer="actionDialog" />
+                tooltipContainer="actionDialogTooltip" />
             ))}
             {Array.from({ length: Math.max(0, minCells - items.length) }).map((_, i) => (
               <EmptyResourceImage key={i} noIcon outlineColor="transparent" style={{ background: 'rgba(0, 0, 0, 0.25)' }} />
@@ -3122,7 +3122,7 @@ export const ProcessInputOutputSection = ({ title, products, input, output, prim
                 resource={resource}
                 badge={`${output ? '+' : '-'}${resource.isAtomic ? amount : formatResourceMass(amount, resourceId)}`}
                 iconBadge={<RecipeLabel>{recipe.toLocaleString()}</RecipeLabel>}
-                tooltipContainer="actionDialog"
+                tooltipContainer="actionDialogTooltip"
                 {...thumbProps}
               />
               {output && (
@@ -3181,7 +3181,7 @@ export const ProcessInputSquareSection = ({ title, products, input, output, prim
                 badge={`${output ? '+' : '-'}${resource.isAtomic ? amount : formatResourceMass(amount, resourceId)}`}
                 iconBadge={<RecipeLabel>{(recipe || 0).toLocaleString()}</RecipeLabel>}
                 size="87px"
-                tooltipContainer="actionDialog"
+                tooltipContainer="actionDialogTooltip"
                 {...thumbProps}
               />
               {output && <label>{primaryOutput === resourceId ? <><CheckIcon /> Primary</> : `-50%`}</label>}
@@ -3244,13 +3244,13 @@ export const PropellantSection = ({ title, narrow, deltaVLoaded, deltaVRequired,
       titleDetails={(
         <SectionTitleRightTabs>
           <SectionTitleTab
-            data-tooltip-id="actionDialog"
+            data-tooltip-id="actionDialogTooltip"
             data-tooltip-content="Propellant Usage"
             data-tooltip-place="left"
             onClick={() => setDeltaVMode(false)}
             isSelected={!deltaVMode}><GasIcon /></SectionTitleTab>
           <SectionTitleTab
-            data-tooltip-id="actionDialog"
+            data-tooltip-id="actionDialogTooltip"
             data-tooltip-content="Delta-V Usage"
             data-tooltip-place="left"
             onClick={() => setDeltaVMode(true)}

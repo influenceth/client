@@ -181,7 +181,7 @@ const EmergencyModeCollect = ({ asteroid, lot, manager, ship: maybeShip, stage, 
 
           <FlexSectionInputBlock
             title="Propellant"
-            image={<ResourceThumbnail resource={Product.TYPES[resourceId]} tooltipContainer="none" />}
+            image={<ResourceThumbnail resource={Product.TYPES[resourceId]} tooltipContainer={null} />}
             label={(
               <>
                 <div style={{ color: theme.colors.orange }}>EMERGENCY</div>

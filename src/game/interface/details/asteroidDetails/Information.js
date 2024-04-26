@@ -408,7 +408,7 @@ const AsteroidInformation = ({ abundances, asteroid, isManager, isOwner }) => {
                         onChange={(v) => setNewName(v)} />
                       <IconButton
                         data-tooltip-content="Submit"
-                        data-tooltip-id="global"
+                        data-tooltip-id="globalTooltip"
                         disabled={nativeBool(changingName)}
                         onClick={attemptUpdateAsteroidName}>
                         <CheckCircleIcon />
@@ -447,7 +447,7 @@ const AsteroidInformation = ({ abundances, asteroid, isManager, isOwner }) => {
               {priceConstants && !asteroid.Nft?.owner && (
                 <Button
                   data-tooltip-content="Purchase development rights"
-                  data-tooltip-id="global"
+                  data-tooltip-id="globalTooltip"
                   disabled={nativeBool(!authenticated || buying)}
                   isTransaction
                   loading={reactBool(buying)}

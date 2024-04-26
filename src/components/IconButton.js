@@ -69,7 +69,7 @@ const CancelIndicator = styled.svg`
 `;
 
 const IconButton = (props) => {
-  const { active, dataTip, dataFor = 'global', onClick, setRef, ...restProps} = props;
+  const { active, dataTip, dataFor = 'globalTooltip', onClick, setRef, ...restProps} = props;
   const playSound = useStore(s => s.dispatchEffectStartRequested);
 
   const _onClick = (e) => {
