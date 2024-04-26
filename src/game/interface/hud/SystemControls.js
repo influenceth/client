@@ -64,7 +64,7 @@ const VerticalRule = styled.div`
   height: 28px;
   margin-left: 12px;
   opacity: ${p => p.hide ? 0 : 1};
-  padding-left: 14px;
+  padding-left: 13px;
   transition: opacity ${menuAnimationTime}ms ease;
 `;
 
