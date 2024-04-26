@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from 'react';
-import { Lot } from '@influenceth/sdk';
+import { Lot, Permission } from '@influenceth/sdk';
 
 import { PlanBuildingIcon } from '~/components/Icons';
 import useConstructionManager from '~/hooks/actionManagers/useConstructionManager';
@@ -11,8 +11,11 @@ const labelDict = {
 };
 
 const isVisible = ({ constructionStatus, crew, lot, ship }) => {
+  const isPermitted = (lot?.PrepaidAgreements?.length > 0 || lot?.ContractAgreements?.length > 0 ) ? 
+    Permission.isPermitted(crew, Permission.IDS.USE_LOT, lot) : true;
+
   return crew && lot && !ship && (
-    constructionStatus === 'READY_TO_PLAN' || (
+    constructionStatus === 'READY_TO_PLAN' && isPermitted || (
       lot?.building?.Control?.controller?.id === crew.id
       && constructionStatus === 'PLANNING'
     )
