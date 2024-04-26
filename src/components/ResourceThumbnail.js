@@ -75,8 +75,8 @@ export const ResourceThumbnailWrapper = styled.div`
     color: ${p.outlineColor || defaultBorderColor};
     ${p.badgeColor && p.hasDenominator ? `${ResourceBadge} { &:after { color: ${p.badgeColor} !important; } }` : ''}
     ${p.badgeColor && !p.hasDenominator ? `${ResourceBadge} { &:before { color: ${p.badgeColor} !important; } }` : ''}
-    ${(p.requirementMet || p.disabled) ? `
-      & > * { opacity: 1; }
+    ${p.disabled ? `
+      & > * { opacity: 0.35; }
       & > svg, ${ThumbnailCorner} { opacity: 1; }
     ` : ''}
   `}
