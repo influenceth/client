@@ -35,7 +35,7 @@ import useEntity from '~/hooks/useEntity';
 import useActionCrew from '~/hooks/useActionCrew';
 
 const NewCoreSample = ({ asteroid, lot, coreSampleManager, currentSamplingAction, stage, ...props }) => {
-  const { startSampling, finishSampling, samplingStatus } = coreSampleManager;
+  const { startSampling, finishSampling } = coreSampleManager;
   const crew = useActionCrew(currentSamplingAction);
 
   const dispatchResourceMapSelect = useStore(s => s.dispatchResourceMapSelect);
@@ -204,16 +204,19 @@ const NewCoreSample = ({ asteroid, lot, coreSampleManager, currentSamplingAction
   ]), [crew?._timeAcceleration, crewTravelBonus, crewTravelTime, sampleBounds, sampleQualityBonus, sampleTime, tripDetails]);
 
   // handle auto-closing
-  const lastStatus = useRef();
+  const miniStatus = useRef();
   useEffect(() => {
-    // (close on status change from)
-    if (['READY'].includes(lastStatus.current)) {
-      if (samplingStatus !== lastStatus.current) {
-        props.onClose();
-      }
+    let newMiniStatus = 1;
+    if (currentSamplingAction) newMiniStatus = 2;
+    if (currentSamplingAction?.sampleId) newMiniStatus = 3;
+
+    // (close on status change from no sampleId to sampleId)
+    if (miniStatus.current && miniStatus.current !== newMiniStatus) {
+      props.onClose();
     }
-    lastStatus.current = samplingStatus;
-  }, [samplingStatus]);
+    
+    miniStatus.current = newMiniStatus;
+  }, [currentSamplingAction]);
 
   const onFinish = useCallback(() => {
     finishSampling(currentSamplingAction?.sampleId)
