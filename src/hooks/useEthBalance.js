@@ -16,7 +16,7 @@ const useEthBalance = (overrideAccount) => {
           entrypoint: 'balanceOf',
           calldata: [accountAddress]
         });
-        return uint256.uint256ToBN({ low: balance?.[0], high: balance?.[1] });
+        return uint256.uint256ToBN({ low: balance?.[0] || 0, high: balance?.[1] || 0 });
       } catch (e) {
         console.error(e);
       }
