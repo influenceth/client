@@ -3,7 +3,7 @@ import { Entity, Permission, Time } from '@influenceth/sdk';
 import styled from 'styled-components';
 import Clipboard from 'react-clipboard.js';
 
-import { BanIcon, CheckIcon, CloseIcon, DisconnectIcon, ExtendAgreementIcon, FormAgreementIcon, FormLotAgreementIcon, GiveNoticeIcon, LinkIcon, CancelAgreementIcon, LotControlIcon, PermissionIcon, RefreshIcon, StopIcon, SwayIcon } from '~/components/Icons';
+import { CheckIcon, CloseIcon, ExtendAgreementIcon, FormAgreementIcon, FormLotAgreementIcon, GiveNoticeIcon, LinkIcon, CancelAgreementIcon, LotControlIcon, PermissionIcon, RefreshIcon, SwayIcon } from '~/components/Icons';
 import useCrewContext from '~/hooks/useCrewContext';
 import useStore from '~/hooks/useStore';
 import { reactBool, locationsArrToObj, formatFixed, monthsToSeconds, secondsToMonths, nativeBool } from '~/lib/utils';
@@ -243,7 +243,7 @@ const FormAgreement = ({
       console.warn(e);
     }
     setEligibilityLoading(false);
-  }, [crew?.id, currentPolicy?.policyDetails?.contract, entity, permission, starknet]);
+  }, [crew?.id, crew?.label, currentPolicy?.policyDetails?.contract, entity, permission, starknet]);
   useEffect(() => updateContractEligibility(), [updateContractEligibility]);
 
   const handleCopyAddress = useCallback(() => {
@@ -255,6 +255,9 @@ const FormAgreement = ({
   }, [createAlert]);
 
   const handlePeriodChange = useCallback((e) => {
+    // const value = numeral(e.currentTarget.value);
+    if (e.currentTarget.value === '') return setInitialPeriod('');
+    // if (value.value() === null) return setInitialPeriod(e.currentTarget.value);
     setInitialPeriod(Math.max(currentPolicy?.policyDetails?.initialTerm, Math.min(e.currentTarget.value, maxTerm)));
   }, [currentPolicy?.policyDetails?.initialTerm, maxTerm]);
 
@@ -264,7 +267,7 @@ const FormAgreement = ({
     const term = monthsToSeconds(initialPeriod);
     const termPrice = Math.ceil(totalLeaseCost * 1e6);
     enterAgreement({ recipient, term, termPrice });
-  }, [controller?.Crew?.delegatedTo, initialPeriod, totalLeaseCost]);
+  }, [controller?.Crew?.delegatedTo, enterAgreement, initialPeriod, totalLeaseCost]);
 
   const onExtendAgreement = useCallback(() => {
     const recipient = controller?.Crew?.delegatedTo;
@@ -272,14 +275,14 @@ const FormAgreement = ({
     const term = monthsToSeconds(initialPeriod);
     const termPrice = Math.ceil(totalLeaseCost * 1e6);
     extendAgreement({ recipient, term, termPrice });
-  }, [controller?.Crew?.delegatedTo, initialPeriod, totalLeaseCost]);
+  }, [controller?.Crew?.delegatedTo, extendAgreement, initialPeriod, totalLeaseCost]);
 
   const onTerminateAgreement = useCallback(() => {
     cancelAgreement({
       recipient: permitted?.Crew?.delegatedTo,
       refundAmount: Math.ceil(refundableAmount * 1e6)
     })
-  }, [permitted, refundableAmount]);
+  }, [cancelAgreement, permitted, refundableAmount]);
 
   const alertScheme = useMemo(() => {
     if (currentPolicy?.policyType === Permission.POLICY_IDS.CONTRACT) {
@@ -317,13 +320,14 @@ const FormAgreement = ({
       goLabel: 'Create Agreement',
       onGo: onEnterAgreement
     }
-  }, [currentAgreement?.noticePeriod, entity, isExtension, isTermination, onEnterAgreement, onExtendAgreement, onTerminateAgreement, stage]);
+  }, [currentAgreement?.noticePeriod, currentPolicy?.policyType, entity, isExtension, isTermination, onEnterAgreement, onExtendAgreement, onTerminateAgreement, stage]);
 
   const disableGo = useMemo(() => {
     if (insufficientAssets) return true;
     if (isTermination && currentAgreement?._canGiveNoticeStart > blockTime) return true;
+    if (initialPeriod === '' || initialPeriod <= 0) return true;
     return false;
-  }, [blockTime, insufficientAssets, isTermination, currentAgreement])
+  }, [blockTime, initialPeriod, insufficientAssets, isTermination, currentAgreement])
 
   return (
     <>
@@ -416,7 +420,7 @@ const FormAgreement = ({
                 <TextInputWrapper rightLabel="months">
                   <UncontrolledTextInput
                     disabled={stage !== actionStages.NOT_STARTED}
-                    min={currentPolicy?.policyDetails?.initialTerm}
+                    // min={currentPolicy?.policyDetails?.initialTerm}
                     max={12}
                     onBlur={handlePeriodChange}
                     onChange={handlePeriodChange}
@@ -583,13 +587,13 @@ const Wrapper = ({ entity: entityId, permission, isExtension, agreementPath, ...
     if (!lastStatus.current) {
       lastStatus.current = stage;
     }
-  }, [stage]);
+  }, [stage, props]);
 
   useEffect(() => {
     if (!entityIsLoading && !entity) {
       props.onClose();
     }
-  }, [entity, entityIsLoading]);
+  }, [entity, entityIsLoading, props]);
 
   return (
     <ActionDialogInner
