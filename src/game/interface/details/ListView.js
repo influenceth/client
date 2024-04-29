@@ -14,15 +14,11 @@ import {
   AsteroidSearchIcon,
   BuildingIcon,
   ColumnsIcon,
-  CoreSampleIcon,
   CrewIcon,
   CrewmateIcon,
-  LotSearchIcon,
-  RocketIcon,
-  ScanAsteroidIcon,
+  LoggedEventsIcon,
   ShipIcon,
-  SlidersIcon,
-  TransactionIcon
+  SlidersIcon
 } from '~/components/Icons';
 import Button from '~/components/ButtonAlt';
 import Dropdown from '~/components/Dropdown';
@@ -245,7 +241,7 @@ const assetTypes = {
   },
   eventlog: {
     keyField: 'i',
-    icon: <ListViewIcon />,
+    icon: <LoggedEventsIcon />,
     title: 'Logged Events',
     useColumns: listConfigs.events,
     usePagedAssetsOverride: usePagedEvents,

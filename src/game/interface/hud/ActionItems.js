@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import styled from 'styled-components';
 
-import { BellIcon, EyeIcon, ListIcon } from '~/components/Icons';
+import { BellIcon, EyeIcon, LoggedEventsIcon } from '~/components/Icons';
 import CollapsibleSection from '~/components/CollapsibleSection';
 import useActionItems from '~/hooks/useActionItems';
 import useSession from '~/hooks/useSession';
@@ -42,10 +42,12 @@ const Filters = styled.div`
   padding: ${filterRowPadding}px 0;
   width: 100%;
   & > a {
-    display: inline-block;
-    font-size: 18px;
+    display: block;
+    font-size: 24px;
     height: 26px;
-    padding: 4px 6px;
+    line-height: 24px;
+    margin-top: -2px;
+    padding: 0 6px;
   }
 `;
 const Filter = styled.div`
@@ -295,7 +297,7 @@ const ActionItems = () => {
                 <InProgressFilter onClick={onClickFilter('progress')} selected={selectedFilter === 'progress'}><b>{(tallies.progress || 0).toLocaleString()}</b> In Progress</InProgressFilter>
                 {tallies.hidden > 0 && <HiddenFilter onClick={onClickFilter('hidden')} selected={selectedFilter === 'hidden'}><EyeIcon /> <b>{(tallies.hidden || 0).toLocaleString()}</b></HiddenFilter>}
                 <div style={{ flex: 1 }} />
-                <Link to="/listview/actionitems" onClick={(e) => e.stopPropagation()}><ListIcon /></Link>
+                <Link to="/listview/eventlog" onClick={(e) => e.stopPropagation()}><LoggedEventsIcon /></Link>
               </Filters>
             </TitleWrapper>
           )}>
