@@ -340,6 +340,11 @@ const DevTools = () => {
               <label>Auto Rotation</label>
             </CheckboxRow>
 
+            <CheckboxRow onClick={() => toggleSetting(setters.setEnableRevolution)}>
+              {settings.enableRevolution ? <CheckedIcon /> : <UncheckedIcon />}
+              <label>Auto Revolution</label>
+            </CheckboxRow>
+
             <CheckboxRow onClick={() => toggleSetting(setters.setEnableZoomLimits)}>
               {settings.enableZoomLimits ? <CheckedIcon /> : <UncheckedIcon />}
               <label>Camera Zoom Limits</label>

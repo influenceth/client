@@ -137,7 +137,7 @@ export const getModelViewerSettings = (assetType, overrides = {}) => {
     s.emissiveAsBloom = true;
     s.enablePostprocessing = true;
     s.enableDefaultLights = true;
-    s.enableRotation = true;
+    s.enableRevolution = true;
     s.envmapStrength = 5;
     s.keylightIntensity = 0.5;
     s.rimlightIntensity = 1;
@@ -481,6 +481,13 @@ const Model = ({ url, onLoaded, onProgress, onCameraUpdate, ...settings }) => {
     });
   }, [settings.envmapStrength]);
 
+  useEffect(() => {
+    if (!!controls?.current) {
+      controls.current.autoRotate = !!settings.enableRevolution;
+      controls.current.autoRotateSpeed = -0.15;
+    }
+  }, [!!controls?.current, settings.enableRevolution]);
+
   useFrame((state, delta) => {
     if (model.current && settings.enableRotation) {
       model.current.rotation.y += 0.0025;
@@ -490,9 +497,9 @@ const Model = ({ url, onLoaded, onProgress, onCameraUpdate, ...settings }) => {
     }
 
     // apply camera constraints to building scene
-    if (maxCameraDistance.current || collisionFloor.current) {
-      if (controls.current.object && controls.current.target) {
-        let updateControls = false;
+    if (controls.current.object && controls.current.target) {
+      let updateControls = false;
+      if (maxCameraDistance.current || collisionFloor.current) {
 
         // collision detection on asteroid terrain
         if (collisionFloor.current) {
@@ -531,10 +538,10 @@ const Model = ({ url, onLoaded, onProgress, onCameraUpdate, ...settings }) => {
             updateControls = true;
           }
         }
+      }
 
-        if (updateControls) {
-          controls.current.update();
-        }
+      if (updateControls || settings.enableRevolution) {
+        controls.current.update();
       }
     }
 
