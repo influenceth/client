@@ -8,10 +8,11 @@ import { entitiesCacheKey } from '~/lib/cacheKey';
 const useControlledAsteroids = () => {
   const { crew } = useCrewContext();
 
+  const { id: controllerId, uuid } = crew || {};
   return useQuery(
-    entitiesCacheKey(Entity.IDS.ASTEROID, { controllerId: crew?.id }),
-    () => api.getEntities({ match: { 'Control.controller.uuid': crew?.uuid }, label: Entity.IDS.ASTEROID }),
-    { enabled: !!crew?.id }
+    entitiesCacheKey(Entity.IDS.ASTEROID, { controllerId }),
+    () => api.getEntities({ match: { 'Control.controller.uuid': uuid }, label: Entity.IDS.ASTEROID }),
+    { enabled: !!controllerId }
   );
 };
 
