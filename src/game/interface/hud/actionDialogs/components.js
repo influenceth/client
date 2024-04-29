@@ -1323,7 +1323,7 @@ export const SelectionDialog = ({ children, isCompletable, open, onClose, onComp
   );
 };
 
-export const CrewSelectionDialog = ({ crews, onClose, onSelected, open, title }) => {
+export const CrewSelectionDialog = ({ crews, disabler, onClose, onSelected, open, title }) => {
   const [selection, setSelection] = useState();
 
   const onComplete = useCallback(() => {
@@ -1344,11 +1344,13 @@ export const CrewSelectionDialog = ({ crews, onClose, onSelected, open, title })
       title={title || 'Crew Selection'}>
       <div style={{ minHeight: 300 }}>
         {nonEmptyCrews.map((crew, i) => {
+          const disabled = disabler ? disabler(crew) : false;
           return (
             <CrewInputBlock
               key={crew.id}
               cardWidth={64}
               crew={crew}
+              disabled={reactBool(disabled)}
               inlineDetails
               isSelected={crew.id === selection?.id}
               onClick={() => setSelection(crew)}
@@ -1357,21 +1359,25 @@ export const CrewSelectionDialog = ({ crews, onClose, onSelected, open, title })
                   ? <CrewLocationLabel hydratedLocation={hydratedLocation} />
                   : ''
               }
-              style={{ marginBottom: 8, width: '100%' }} />
+              data-tooltip-content={disabled || null}
+              data-tooltip-id="selectionDialogTooltip"
+              style={{ marginBottom: 8, opacity: disabled ? 0.5 : 1, width: '100%' }} />
           );
         })}
         {emptyCrews.map((crew, i) => {
+          const disabled = disabler ? disabler(crew) : false;
           return (
             <CrewInputBlock
               key={crew.id}
               cardWidth={64}
               crew={crew}
+              disabled={reactBool(disabled)}
               hideCrewmates
               inlineDetails
               isSelected={crew.id === selection?.id}
               onClick={() => setSelection(crew)}
               title={i === 0 ? <div style={{ marginTop: 8, textTransform: 'none' }}>Empty Crews</div> : ''}
-              style={{ marginBottom: 8, width: '100%' }} />
+              style={{ marginBottom: 8, opacity: disabled ? 0.5 : 1, width: '100%' }} />
           );
         })}
       </div>
