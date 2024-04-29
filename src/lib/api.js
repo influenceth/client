@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { Asteroid, Building, Deposit, Entity, Inventory, Order, Permission, Ship } from '@influenceth/sdk';
+import { Asteroid, Building, Deposit, Entity, Inventory, Order, Ship } from '@influenceth/sdk';
 import esb from 'elastic-builder';
 import { executeSwap, fetchQuotes } from "@avnu/avnu-sdk";
 
@@ -524,6 +524,9 @@ const api = {
     // status
     queryBuilder.filter(esb.termQuery('status', Order.STATUSES.OPEN));
 
+    // valid
+    queryBuilder.filter(esb.rangeQuery('validTime').lte(Math.floor(Date.now() / 1000)));
+
     const q = esb.requestBodySearch();
     q.query(queryBuilder);
     q.from(0);
@@ -561,6 +564,7 @@ const api = {
             esb.boolQuery().must([
               esb.termQuery('orderType', Order.IDS.LIMIT_BUY),
               esb.termQuery('status', Order.STATUSES.OPEN),
+              esb.rangeQuery('validTime').lte(Math.floor(Date.now() / 1000))
             ])
           )
           .aggs([
@@ -575,6 +579,7 @@ const api = {
             esb.boolQuery().must([
               esb.termQuery('orderType', Order.IDS.LIMIT_SELL),
               esb.termQuery('status', Order.STATUSES.OPEN),
+              esb.rangeQuery('validTime').lte(Math.floor(Date.now() / 1000))
             ])
           )
           .aggs([
@@ -631,6 +636,7 @@ const api = {
             esb.boolQuery().must([
               esb.termQuery('orderType', Order.IDS.LIMIT_BUY),
               esb.termQuery('status', Order.STATUSES.OPEN),
+              esb.rangeQuery('validTime').lte(Math.floor(Date.now() / 1000))
             ])
           )
           .aggs([
@@ -645,6 +651,7 @@ const api = {
             esb.boolQuery().must([
               esb.termQuery('orderType', Order.IDS.LIMIT_SELL),
               esb.termQuery('status', Order.STATUSES.OPEN),
+              esb.rangeQuery('validTime').lte(Math.floor(Date.now() / 1000))
             ])
           )
           .aggs([

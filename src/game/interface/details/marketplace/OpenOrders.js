@@ -171,7 +171,7 @@ const MarketplaceOpenOrders = ({ asteroid, orders, marketplace = null, marketpla
         key: 'validTime',
         label: 'Placed',
         sortField: 'validTime',
-        selector: row => row.ago,
+        selector: row => <span style={row.validTime > Date.now() / 1e3 ? { color: theme.colors.warning } : {}}>{row.ago}</span>,
       },
       {
         key: 'amount',
@@ -222,8 +222,9 @@ const MarketplaceOpenOrders = ({ asteroid, orders, marketplace = null, marketpla
       {
         key: 'cancel',
         label: '',
-        selector: row => (
-          <>
+        selector: row => {
+          if (row.validTime > (Date.now() / 1000)) return <div />;
+          return (
             <IconButton
               borderless
               dataTip="Cancel Order"
@@ -231,8 +232,8 @@ const MarketplaceOpenOrders = ({ asteroid, orders, marketplace = null, marketpla
               themeColor="error">
               <CloseIcon />
             </IconButton>
-          </>
-        )
+          );
+        }
       },
     ];
     if (!marketplace) {

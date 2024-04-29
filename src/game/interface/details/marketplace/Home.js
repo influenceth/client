@@ -282,7 +282,7 @@ const Footer = styled.div`
   margin-bottom: -70px;
 `;
 
-const pageSize = 25;
+const pageSize = 24;
 
 const MarketplaceHome = ({ asteroid, listings, mode, setMode, orderTally, onSelectListing, marketplace = null, marketplaceOwner = null, marketplaceTally }) => {
   const [nameFilter, setNameFilter] = useState('');
