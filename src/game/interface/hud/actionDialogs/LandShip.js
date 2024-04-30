@@ -82,7 +82,7 @@ const LandShip = ({ asteroid, manager, ship, stage, ...props }) => {
         crew?._timeAcceleration
       )
     ];
-  }, [asteroid, destinationLot?.id, hopperBonus, powered, propellantBonus, ship]);
+  }, [asteroid, destinationLot?.id, distBonus, hopperBonus, powered, propellantBonus, ship]);
 
   const [propellantLoaded, deltaVLoaded] = useMemo(() => {
     if (!ship) return 0;

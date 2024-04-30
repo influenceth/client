@@ -289,7 +289,7 @@ const MarketplaceOrder = ({
       crew?._timeAcceleration
     );
     return [transportDistance, transportTime];
-  }, [asteroid?.id, exchange?.id, storageLot?.id, hopperTransportBonus, crew?._timeAcceleration]);
+  }, [asteroid?.id, distBonus, exchange?.id, storageLot?.id, hopperTransportBonus, crew?._timeAcceleration]);
 
   const [crewTimeRequirement, taskTimeRequirement] = useMemo(() => {
     return [

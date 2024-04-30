@@ -122,7 +122,7 @@ const TransferToSite = ({ asteroid, lot: destinationLot, deliveryManager, stage,
       crew?._timeAcceleration
     );
     return [transportDistance, transportTime];
-  }, [asteroid?.id, originLot?.id, destinationLot?.id, crew?._timeAcceleration, crewTravelBonus]);
+  }, [asteroid?.id, originLot?.id, destinationLot?.id, crew?._timeAcceleration, crewDistBonus, crewTravelBonus]);
 
   const { totalMass, totalVolume } = useMemo(() => {
     return Object.keys(selectedItems).reduce((acc, resourceId) => {

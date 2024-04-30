@@ -61,7 +61,7 @@ const EjectCrew = ({ asteroid, origin, originLot, stationedCrews, manager, stage
       return Time.toRealDuration(travelTime, crew?._timeAcceleration);
     }
     return 0;
-  }, [asteroid, crew?._timeAcceleration, hopperBonus, originLot]);
+  }, [asteroid, crew?._timeAcceleration, distBonus, hopperBonus, originLot]);
 
   const stats = useMemo(() => ([
     ejectionTime > 0 && {

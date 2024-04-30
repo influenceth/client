@@ -87,7 +87,7 @@ const StationCrew = ({ asteroid, destination: rawDestination, lot, origin: rawOr
         crew?._timeAcceleration
       )
     ];
-  }, [asteroid?.id, origin?.id, destination?.id, crewTravelBonus, crew?._timeAcceleration]);
+  }, [asteroid?.id, origin?.id, destination?.id, crewDistBonus, crewTravelBonus, crew?._timeAcceleration]);
 
   const [crewTimeRequirement, taskTimeRequirement] = useMemo(() => {
     return [ travelTime, 0 ];

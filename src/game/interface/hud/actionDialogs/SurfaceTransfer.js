@@ -223,7 +223,7 @@ const SurfaceTransfer = ({
       crew?._timeAcceleration
     );
     return [transportDistance, transportTime];
-  }, [asteroid?.id, originLot?.id, destinationLot?.id, crewTravelBonus, crew?._timeAcceleration]);
+  }, [asteroid?.id, originLot?.id, destinationLot?.id, crewDistBonus, crewTravelBonus, crew?._timeAcceleration]);
 
   const { totalMass, totalVolume } = useMemo(() => {
     return Object.keys(selectedItems).reduce((acc, resourceId) => {

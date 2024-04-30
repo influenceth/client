@@ -85,7 +85,7 @@ const LaunchShip = ({ asteroid, originLot, manager, ship, shipCrews, stage, ...p
         crew?._timeAcceleration
       )
     ];
-  }, [asteroid, hopperBonus, originLot?.id, powered, propellantBonus, ship]);
+  }, [asteroid, distBonus, hopperBonus, originLot?.id, powered, propellantBonus, ship]);
 
   const isDeliveryPending = useMemo(() => !!(ship?.Inventories || []).find((inv) => inv.reservedMass > 0), [ship])
 

@@ -162,7 +162,7 @@ const AssembleShip = ({ asteroid, lot, dryDockManager, stage, ...props }) => {
         crew?._timeAcceleration
       )
     ];
-  }, [asteroid?.id, lot?.id, crew?._timeAcceleration, originLot?.id, crewTravelBonus]);
+  }, [asteroid?.id, lot?.id, crew?._timeAcceleration, originLot?.id, crewDistBonus, crewTravelBonus]);
 
   const [outputTransportDistance, outputTransportTime] = useMemo(() => {
     if (!lot?.id || !destinationLot?.id) return [];
@@ -179,7 +179,7 @@ const AssembleShip = ({ asteroid, lot, dryDockManager, stage, ...props }) => {
         crew?._timeAcceleration
       )
     ];
-  }, [asteroid?.id, lot?.id, crew?._timeAcceleration, destinationLot?.id, crewTravelBonus]);
+  }, [asteroid?.id, lot?.id, crew?._timeAcceleration, destinationLot?.id, crewDistBonus, crewTravelBonus]);
 
   const [inputArr, inputMass, inputVolume] = useMemo(() => {
     if (!process || !amount) return [[], 0, 0, [], 0, 0];

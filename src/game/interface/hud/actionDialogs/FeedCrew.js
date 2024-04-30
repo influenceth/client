@@ -144,7 +144,7 @@ const FeedCrew = ({
       crew?._timeAcceleration
     );
     return [transportDistance, transportTime];
-  }, [asteroid?.id, originLot?.id, crewTravelBonus, crew?._location?.lotIndex, crew?._timeAcceleration]);
+  }, [asteroid?.id, originLot?.id, crewTravelBonus, crewDistBonus, crew?._location?.lotIndex, crew?._timeAcceleration]);
 
   const { totalMass, totalVolume } = useMemo(() => {
     return Object.keys(selectedItems).reduce((acc, resourceId) => {

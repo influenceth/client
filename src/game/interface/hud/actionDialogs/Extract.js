@@ -226,7 +226,7 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
         crew?._timeAcceleration
       )
     ];
-  }, [asteroid?.id, lot?.id, crew?._timeAcceleration, destinationLot?.id, crewTravelBonus]);
+  }, [asteroid?.id, lot?.id, crew?._timeAcceleration, destinationLot?.id, crewDistBonus, crewTravelBonus]);
 
   const [crewTimeRequirement, taskTimeRequirement] = useMemo(() => {
     const oneWayCrewTravelTime = crewTravelTime / 2;
