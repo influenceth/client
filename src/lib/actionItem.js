@@ -466,18 +466,11 @@ const formatAsTx = (item) => {
     case 'SampleDepositImprove': {
       formatted.icon = <ImproveCoreSampleIcon />;
       formatted.label = `${Product.TYPES[item.meta?.resource]?.name || 'Core'} Resample`;
-      // formatted.sampleId = item.vars.deposit?.id; // TODO: this seems deprecated?
       formatted.asteroidId = Lot.toPosition(item.meta?.lotId)?.asteroidId;
       formatted.lotId = item.meta?.lotId;
       // formatted.resourceId = item.meta.resource; // not necessarily forcing open resourcemap
       formatted.onClick = ({ openDialog }) => {
-        openDialog('IMPROVE_CORE_SAMPLE', {
-          preselect: {
-            id: item.vars.deposit.id,
-            origin: item.vars.origin
-            // NOTE: slot is not repopulated here (but not currently displayed anyway)
-          }
-        });
+        openDialog('IMPROVE_CORE_SAMPLE', { sampleId: item.vars?.deposit?.id });
       };
       break;
     }
@@ -485,12 +478,14 @@ const formatAsTx = (item) => {
       const isImprovement = !item.meta?.isNew;
       formatted.icon = isImprovement ? <ImproveCoreSampleIcon /> : <NewCoreSampleIcon />;
       formatted.label = `${isImprovement ? 'Optimized ' : ''}Core Analysis`;
-      // formatted.sampleId = item.vars.deposit?.id; // TODO: this seems deprecated?
       formatted.asteroidId = Lot.toPosition(item.meta?.lotId)?.asteroidId;
       formatted.lotId = item.meta?.lotId;
       // formatted.resourceId = item.vars.resourceId; // not necessarily forcing open resourcemap
       formatted.onClick = ({ openDialog }) => {
-        openDialog(isImprovement ? 'IMPROVE_CORE_SAMPLE' : 'NEW_CORE_SAMPLE');
+        openDialog(
+          isImprovement ? 'IMPROVE_CORE_SAMPLE' : 'NEW_CORE_SAMPLE',
+          { sampleId: item.vars.deposit.id }
+        );
       };
       break;
     }

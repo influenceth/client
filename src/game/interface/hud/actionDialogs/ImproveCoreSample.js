@@ -73,16 +73,23 @@ const Warning = styled.div`
 `;
 
 // TODO: combine this ui with "NewCoreSample" dialog if possible
-const ImproveCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }) => {
-  const { currentSamplingAction, startImproving, finishSampling, samplingStatus } = coreSampleManager;
+const ImproveCoreSample = ({ asteroid, lot, coreSampleManager, currentSamplingAction, stage, ...props }) => {
+  const { startImproving, finishSampling } = coreSampleManager;
   const crew = useActionCrew(currentSamplingAction);
-  const { data: originEntity } = useEntity(currentSamplingAction?.origin ? { ...currentSamplingAction.origin } : props.preselect?.origin);
 
   const dispatchResourceMapSelect = useStore(s => s.dispatchResourceMapSelect);
   const resourceMap = useStore(s => s.asteroids.resourceMap);
+
+  const prepop = useMemo(() => ({
+    sampleId: currentSamplingAction?.sampleId || props.preselect?.sampleId,
+    resourceId: currentSamplingAction?.resourceId || props.preselect?.resourceId,
+    origin: currentSamplingAction?.origin ? { ...currentSamplingAction.origin } : props.preselect?.origin,
+  }), [currentSamplingAction, props.preselect]);
+
+  const { data: originEntity } = useEntity(prepop.origin);
   
   // if an active sample is detected, set "sample" for remainder of dialog's lifespan
-  const [sampleId, setSampleId] = useState(props.preselect?.id);
+  const [sampleId, setSampleId] = useState(prepop.sampleId);
   const [drillSource, setDrillSource] = useState();
   const [sampleSelectorOpen, setSampleSelectorOpen] = useState(false);
   const [sourceSelectorOpen, setSourceSelectorOpen] = useState(false);
@@ -90,9 +97,12 @@ const ImproveCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }
   const improvableSamples = useMemo(() => {
     return (lot?.deposits || [])
       .filter((c) => (
-        (c.Control.controller.id === crew?.id || c.PrivateSale?.amount > 0)
-        && c.Deposit.initialYield > 0
-        && c.Deposit.status !== Deposit.STATUSES.USED
+        (c.id === currentSamplingAction?.sampleId)
+        || (
+          (c.Control.controller.id === crew?.id || c.PrivateSale?.amount > 0)
+          && c.Deposit.initialYield > 0
+          && c.Deposit.status !== Deposit.STATUSES.USED
+        )
       ))
       .map((c) => ({ ...c, tonnage: c.Deposit.initialYield * Product.TYPES[c.Deposit.resource].massPerUnit }));
   }, [lot?.deposits]);
@@ -113,8 +123,8 @@ const ImproveCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }
       setSampleId(currentSamplingAction.sampleId);
     } else {
       let defaultSelection;
-      if (props.preselect) {
-        defaultSelection = (improvableSamples || []).find((s) => s.id === props.preselect.id);
+      if (prepop.sampleId) {
+        defaultSelection = (improvableSamples || []).find((s) => s.id === prepop.sampleId);
       } else if (improvableSamples.length === 1) {
         defaultSelection = improvableSamples[0];
       }
@@ -130,7 +140,7 @@ const ImproveCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }
         slot: currentSamplingAction?.originSlot || null
       });
     }
-  }, [currentSamplingAction, originEntity, improvableSamples, props.preselect]);
+  }, [currentSamplingAction, originEntity, improvableSamples, prepop.sampleId]);
 
   const lotAbundance = useMemo(() => {
     if (!resourceId || !asteroid?.Celestial?.abundances || !lot?.id) return 0;
@@ -237,16 +247,19 @@ const ImproveCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }
   ]), [crew?._timeAcceleration, crewTravelBonus, crewTravelTime, sampleBounds, sampleQualityBonus, sampleTime, tripDetails]);
 
   // handle auto-closing
-  const lastStatus = useRef();
+  const miniStatus = useRef();
   useEffect(() => {
-    // (close on status change from)
-    if (['READY'].includes(lastStatus.current)) {
-      if (samplingStatus !== lastStatus.current) {
-        props.onClose();
-      }
+    let newMiniStatus = 1;
+    if (currentSamplingAction) newMiniStatus = 2;
+    if (currentSamplingAction?.sampleId) newMiniStatus = 3;
+
+    // (close on status change from no sampleId to sampleId)
+    if (miniStatus.current && miniStatus.current !== newMiniStatus) {
+      props.onClose();
     }
-    lastStatus.current = samplingStatus;
-  }, [samplingStatus]);
+    
+    miniStatus.current = newMiniStatus;
+  }, [currentSamplingAction]);
 
   const isPurchase = useMemo(
     () => selectedSample && selectedSample?.Control?.controller?.id !== crew?.id,
@@ -261,6 +274,10 @@ const ImproveCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }
     startImproving(selectedSample?.id, drillSource, depositOwner);
   }, [startImproving, selectedSample, drillSource, isPurchase, depositOwner]);
 
+  const onFinish = useCallback(() => {
+    finishSampling(currentSamplingAction?.sampleId)
+  }, [finishSampling, currentSamplingAction]);
+
   return (
     <>
       <ActionDialogHeader
@@ -270,7 +287,7 @@ const ImproveCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }
         }}
         actionCrew={crew}
         location={{ asteroid, lot }}
-        delayUntil={currentSamplingAction?.startTime || crew?.Crew?.readyAt}
+        delayUntil={currentSamplingAction?.startTime || ([actionStage.NOT_STARTED, actionStage.STARTING].includes(stage) ? crew?.Crew?.readyAt : undefined)}
         crewAvailableTime={crewTimeRequirement}
         taskCompleteTime={taskTimeRequirement}
         onClose={props.onClose}
@@ -348,7 +365,7 @@ const ImproveCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }
                       <label>Price</label>
                     </InputLabel>
                     <TextInputWrapper>
-                      <div style={{ background: '#09191f', color: 'white', fontSize: '26px', padding: '4px 2px' }}>
+                      <div style={{ background: '#09191f', color: 'white', fontSize: '26px', padding: '4px 2px', width: '100%' }}>
                         <SwayIcon />{formatPrice(selectedSample.PrivateSale?.amount / 1e6)}
                       </div>
                     </TextInputWrapper>
@@ -394,7 +411,7 @@ const ImproveCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }
         onGo={onImprove}
         finalizeLabel="Analyze"
         isSequenceable
-        onFinalize={finishSampling}
+        onFinalize={onFinish}
         stage={stage}
         waitForCrewReady
         {...props} />
@@ -429,7 +446,13 @@ const ImproveCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }
 const Wrapper = (props) => {
   const { asteroid, lot, isLoading } = useAsteroidAndLot(props);
   const coreSampleManager = useCoreSampleManager(lot?.id);
-  const { actionStage } = coreSampleManager;
+  const { currentSamplingActions, completedSamplingActions } = coreSampleManager;
+
+  const currentSamplingAction = useMemo(() => {
+    const sampleId = props.sampleId || props.preselect?.id;
+    return currentSamplingActions.find((c) => c.action?.sampleId === sampleId)
+      || completedSamplingActions.find((c) => c.action?.sampleId === sampleId);
+  }, [completedSamplingActions, currentSamplingActions, props.sampleId]);
 
   useEffect(() => {
     if (!asteroid || !lot) {
@@ -439,16 +462,18 @@ const Wrapper = (props) => {
     }
   }, [asteroid, lot, isLoading]);
 
+  const stage = currentSamplingAction?.stage || actionStage.NOT_STARTED;
   return (
     <ActionDialogInner
       actionImage="CoreSample"
       isLoading={reactBool(isLoading)}
-      stage={actionStage}>
+      stage={stage}>
       <ImproveCoreSample
         asteroid={asteroid}
         lot={lot}
         coreSampleManager={coreSampleManager}
-        stage={actionStage}
+        currentSamplingAction={currentSamplingAction?.action}
+        stage={stage}
         {...props} />
     </ActionDialogInner>
   )
