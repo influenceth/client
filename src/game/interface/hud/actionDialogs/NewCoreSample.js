@@ -277,7 +277,7 @@ const NewCoreSample = ({ asteroid, lot, coreSampleManager, currentSamplingAction
               disabled={stage !== actionStage.NOT_STARTED}
               sublabel={
                 resourceId
-                ? <><b style={{ color: 'white' }}>{formatFixed(100 * lotAbundance, 0)}%</b> Lot Abundance</>
+                ? <><b style={{ color: 'white' }}>{formatFixed(100 * lotAbundance, 1)}%</b> Lot Abundance</>
                 : 'Resource'
               }
             />

@@ -110,6 +110,13 @@ const TransferToSite = ({ asteroid, lot: destinationLot, deliveryManager, stage,
   //   if (!currentDeliveryAction) setSelectedItems(props.preselect?.selectedItems || {});
   // }, [originLot]);
 
+  // reset selectedItems if not in a ready state (to avoid double-counting)
+  useEffect(() => {
+    if (stage !== actionStage.NOT_STARTED) {
+      setSelectedItems({});
+    }
+  }, [stage])
+
   const [transportDistance, transportTime] = useMemo(() => {
     if (!asteroid?.id || !originLot?.id || !destinationLot?.id) return [0, 0];
     const originLotIndex = Lot.toIndex(originLot?.id);

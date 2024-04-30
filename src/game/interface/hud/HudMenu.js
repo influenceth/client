@@ -374,6 +374,14 @@ const HudMenu = ({ forceOpenMenu }) => {
           && lot.building.Dock
       },
       {
+        key: 'ORBITING_SHIPS',
+        label: 'Orbiting Ships',
+        icon: <ShipIcon />,
+        Component: hudMenus.OrbitDetails,
+        noDetail: true,
+        isVisible: focus === 'asteroid' && scope === 'asteroid'
+      },
+      {
         key: 'STATIONED_CREW',
         label: 'Station Manifest',
         icon: <StationCrewIcon />,

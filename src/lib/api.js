@@ -481,17 +481,6 @@ const api = {
     return formatESEntityData(response.data);
   },
 
-  getCrewShips: async (c) => {
-    if (!c) {
-      console.warn('missing crew id param');
-      return [];
-    }
-    return getEntities({
-      match: { 'Control.controller.uuid': Entity.packEntity({ id: c, label: Entity.IDS.CREW }) },
-      label: Entity.IDS.SHIP
-    })
-  },
-
   getCrewOpenOrders: async (c) => {
     const queryBuilder = esb.boolQuery();
 

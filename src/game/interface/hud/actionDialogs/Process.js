@@ -225,10 +225,18 @@ const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...pro
       inputArr.reduce((sum, i) => sum + process.inputs[i] * amount * (Product.TYPES[i].massPerUnit || 0), 0),
       inputArr.reduce((sum, i) => sum + process.inputs[i] * amount * (Product.TYPES[i].volumePerUnit || 0), 0),
       outputArr,
-      outputArr.reduce((sum, i) => sum + process.outputs[i] * amount * (Product.TYPES[i].massPerUnit || 0), 0),
-      outputArr.reduce((sum, i) => sum + process.outputs[i] * amount * (Product.TYPES[i].volumePerUnit || 0), 0),
+      outputArr.reduce((sum, i) => {
+        let productAmount = process.outputs[i] * amount;
+        if (i !== primaryOutput) productAmount *= 0.5 * (secondaryOutputsBonus?.totalBonus || 1);
+        return sum + productAmount * (Product.TYPES[i].massPerUnit || 0);
+      }, 0),
+      outputArr.reduce((sum, i) => {
+        let productAmount = process.outputs[i] * amount;
+        if (i !== primaryOutput) productAmount *= 0.5 * (secondaryOutputsBonus?.totalBonus || 1);
+        return sum + productAmount * (Product.TYPES[i].volumePerUnit || 0);
+      }, 0),
     ];
-  }, [process, amount, primaryOutput]);
+  }, [process, amount, primaryOutput, secondaryOutputsBonus]);
 
   const [crewTimeRequirement, taskTimeRequirement] = useMemo(() => {
     const onewayCrewTravelTime = crewTravelTime / 2;

@@ -740,7 +740,7 @@ const MarketplaceOrder = ({
                           {exceedsOtherSide ? `Exceeds Buy Side` : ''}
                           {!exceedsOtherSide && limitPrice < bestOrderPrice && `Current Lowest`}
                           {limitPrice === bestOrderPrice && `Equal to Lowest`}
-                          {betterOrderTally > 0 ? <>Higher than <b>{betterOrderTally} Sellers{betterOrderTally === 1 ? '' : 's'}</b></> : ''}
+                          {betterOrderTally > 0 ? <>Higher than <b>{betterOrderTally} Seller{betterOrderTally === 1 ? '' : 's'}</b></> : ''}
                         </>
                       )}
                     </CompetitionSummary>
