@@ -42,6 +42,11 @@ const TransferToSite = ({ asteroid, lot: destinationLot, deliveryManager, stage,
     return getCrewAbilityBonuses(Crewmate.ABILITY_IDS.HOPPER_TRANSPORT_TIME, crew) || {};
   }, [crew]);
 
+  const crewDistBonus = useMemo(() => {
+    if (!crew) return {};
+    return getCrewAbilityBonuses(Crewmate.ABILITY_IDS.FREE_TRANSPORT_DISTANCE, crew) || {};
+  }, [crew]);
+
   const [originSelectorOpen, setOriginSelectorOpen] = useState(false);
   const [transferSelectorOpen, setTransferSelectorOpen] = useState();
   const [selectedItems, setSelectedItems] = useState(props.preselect?.selectedItems || {});
@@ -54,7 +59,7 @@ const TransferToSite = ({ asteroid, lot: destinationLot, deliveryManager, stage,
     slot: destinationLot?.building?.Inventories.find((i) => i.status === Inventory.STATUSES.AVAILABLE)?.slot
   }), [destinationLot]);
   const destinationInventory = useMemo(() => (destinationLot?.building?.Inventories || []).find((i) => i.slot === destination?.slot), [destinationLot, destination?.slot]);
-  
+
   // get originLot and originInventory
   const [origin, setOrigin] = useState();
   const originLotId = useMemo(() => Lot.toId(asteroid?.id, origin?.lotIndex), [asteroid?.id, origin?.lotIndex]);
@@ -111,11 +116,13 @@ const TransferToSite = ({ asteroid, lot: destinationLot, deliveryManager, stage,
     const destinationLotIndex = Lot.toIndex(destinationLot?.id);
     const transportDistance = Asteroid.getLotDistance(asteroid?.id, originLotIndex, destinationLotIndex);
     const transportTime = Time.toRealDuration(
-      Asteroid.getLotTravelTime(asteroid?.id, originLotIndex, destinationLotIndex, crewTravelBonus.totalBonus),
+      Asteroid.getLotTravelTime(
+        asteroid?.id, originLotIndex, destinationLotIndex, crewTravelBonus.totalBonus, crewDistBonus.totalBonus
+      ),
       crew?._timeAcceleration
     );
     return [transportDistance, transportTime];
-  }, [asteroid?.id, originLot?.id, destinationLot?.id, crew?._timeAcceleration, crewTravelBonus]);
+  }, [asteroid?.id, originLot?.id, destinationLot?.id, crew?._timeAcceleration, crewDistBonus, crewTravelBonus]);
 
   const { totalMass, totalVolume } = useMemo(() => {
     return Object.keys(selectedItems).reduce((acc, resourceId) => {
@@ -234,7 +241,7 @@ const TransferToSite = ({ asteroid, lot: destinationLot, deliveryManager, stage,
             onClick={() => { setOriginSelectorOpen(true) }}
             disabled={stage !== actionStage.NOT_STARTED}
           />
-          
+
           <FlexSectionSpacer>
             <ForwardIcon />
           </FlexSectionSpacer>

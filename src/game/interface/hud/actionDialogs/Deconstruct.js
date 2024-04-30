@@ -30,15 +30,16 @@ const Deconstruct = ({ asteroid, lot, constructionManager, stage, ...props }) =>
   const { deconstruct } = constructionManager;
 
   const crewTravelBonus = useMemo(() => getCrewAbilityBonuses(Crewmate.ABILITY_IDS.HOPPER_TRANSPORT_TIME, crew), [crew]);
+  const crewDistBonus = useMemo(() => getCrewAbilityBonuses(Crewmate.ABILITY_IDS.FREE_TRANSPORT_DISTANCE, crew), [crew]);
 
   const { totalTime: crewTravelTime, tripDetails } = useMemo(() => {
     if (!asteroid?.id || !crew?._location?.lotId || !lot?.id) return {};
     const crewLotIndex = Lot.toIndex(crew?._location?.lotId);
-    return getTripDetails(asteroid.id, crewTravelBonus, crewLotIndex, [
+    return getTripDetails(asteroid.id, crewTravelBonus, crewDistBonus, crewLotIndex, [
       { label: 'Travel to Site', lotIndex: Lot.toIndex(lot.id) },
       { label: 'Return to Crew Station', lotIndex: crewLotIndex },
     ], crew?._timeAcceleration);
-  }, [asteroid?.id, lot?.id, crew?._location?.lotId, crew?._timeAcceleration, crewTravelBonus]);
+  }, [asteroid?.id, lot?.id, crew?._location?.lotId, crew?._timeAcceleration, crewTravelBonus, crewDistBonus]);
 
   const [crewTimeRequirement, taskTimeRequirement] = useMemo(() => {
     return [crewTravelTime, 0];

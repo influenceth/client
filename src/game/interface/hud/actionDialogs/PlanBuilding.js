@@ -47,15 +47,20 @@ const PlanBuilding = ({ asteroid, lot, constructionManager, stage, ...props }) =
     return getCrewAbilityBonuses(Crewmate.ABILITY_IDS.HOPPER_TRANSPORT_TIME, crew) || {};
   }, [crew]);
 
+  const crewDistBonus = useMemo(() => {
+    if (!crew) return {};
+    return getCrewAbilityBonuses(Crewmate.ABILITY_IDS.FREE_TRANSPORT_DISTANCE, crew) || {};
+  }, [crew]);
+
   const { totalTime: crewTravelTime, tripDetails } = useMemo(() => {
     if (!asteroid?.id || !crew?._location?.lotId || !lot?.id) return {};
     if (Permission.isPermitted(crew, Permission.IDS.USE_LOT, lot)) return { totalTime: 0, tripDetails: null };
     const crewLotIndex = Lot.toIndex(crew?._location?.lotId);
-    return getTripDetails(asteroid.id, crewTravelBonus, crewLotIndex, [
+    return getTripDetails(asteroid.id, crewTravelBonus, crewDistBonus, crewLotIndex, [
       { label: 'Travel to Construction Site', lotIndex: Lot.toIndex(lot.id) },
       { label: 'Return to Crew Station', lotIndex: crewLotIndex },
     ], crew?._timeAcceleration);
-  }, [asteroid?.id, lot, crew?._location?.lotId, crew?._timeAcceleration, crewTravelBonus]);
+  }, [asteroid?.id, lot, crew?._location?.lotId, crew?._timeAcceleration, crewTravelBonus, crewDistBonus]);
 
   const [crewTimeRequirement, taskTimeRequirement] = useMemo(() => {
     if (!tripDetails) return [];
