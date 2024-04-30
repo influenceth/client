@@ -44,7 +44,7 @@ const AssembleShip = ({ asteroid, crew, lot, onSetAction, _disabled }) => {
       }}
       icon={<ShipIcon />}
       onClick={handleClick}
-      sequenceMode={!crew?._ready} />
+      sequenceMode={!crew?._ready && assemblyStatus === 'READY'} />
   );
 };
 

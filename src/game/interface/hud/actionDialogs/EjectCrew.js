@@ -52,11 +52,11 @@ const EjectCrew = ({ asteroid, origin, originLot, stationedCrews, manager, stage
   const hopperBonus = useMemo(() => getCrewAbilityBonuses(Crewmate.ABILITY_IDS.HOPPER_TRANSPORT_TIME, crew), [crew]);
 
   const ejectionTime = useMemo(() => {
-    if (myCrewIsTarget && originLot) {
+    if (originLot) {
       return Time.toRealDuration(Asteroid.getLotTravelTime(asteroid?.id, originLot.index, 0, hopperBonus.totalBonus), crew?._timeAcceleration);
     }
     return 0;
-  }, [myCrewIsTarget, asteroid, crew?._timeAcceleration, hopperBonus, originLot]);
+  }, [asteroid, crew?._timeAcceleration, hopperBonus, originLot]);
 
   const stats = useMemo(() => ([
     ejectionTime > 0 && {
@@ -126,11 +126,11 @@ const EjectCrew = ({ asteroid, origin, originLot, stationedCrews, manager, stage
       <ActionDialogHeader
         action={actionDetails}
         actionCrew={crew}
-        crewAvailableTime={ejectionTime}
+        crewAvailableTime={myCrewIsTarget ? ejectionTime : 0}
         location={{ asteroid, lot: originLot, ship: origin.Ship ? origin : undefined }}
         onClose={props.onClose}
         overrideColor={stage === actionStages.NOT_STARTED ? (myCrewIsTarget ? theme.colors.main : theme.colors.red) : undefined}
-        taskCompleteTime={ejectionTime}
+        taskCompleteTime={myCrewIsTarget ? ejectionTime : 0}
         stage={stage} />
 
       <ActionDialogBody>

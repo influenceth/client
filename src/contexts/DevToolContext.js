@@ -14,6 +14,7 @@ export function DevToolProvider({ children }) {
   const [enableDefaultLights, setEnableDefaultLights] = useState();
   const [enablePostprocessing, setEnablePostprocessing] = useState();
   const [enableRotation, setEnableRotation] = useState();
+  const [enableRevolution, setEnableRevolution] = useState();
   const [enableZoomLimits, setEnableZoomLimits] = useState();
   const [envmap, setEnvmap] = useState();
   const [envmapOverrideName, setEnvmapOverrideName] = useState();
@@ -29,6 +30,7 @@ export function DevToolProvider({ children }) {
     setEnableDefaultLights();
     setEnablePostprocessing();
     setEnableRotation();
+    setEnableRevolution();
     setEnableZoomLimits();
     setEnvmap();
     setEnvmapOverrideName();
@@ -46,6 +48,7 @@ export function DevToolProvider({ children }) {
       enableDefaultLights,
       enablePostprocessing,
       enableRotation,
+      enableRevolution,
       enableZoomLimits,
       envmap,
       envmapOverrideName,
@@ -63,6 +66,7 @@ export function DevToolProvider({ children }) {
     setEnableDefaultLights,
     setEnablePostprocessing,
     setEnableRotation,
+    setEnableRevolution,
     setEnableZoomLimits,
     setEnvmap,
     setEnvmapOverrideName,
@@ -80,6 +84,7 @@ export function DevToolProvider({ children }) {
     enableDefaultLights,
     enablePostprocessing,
     enableRotation,
+    enableRevolution,
     enableZoomLimits,
     envmap,
     envmapOverrideName,

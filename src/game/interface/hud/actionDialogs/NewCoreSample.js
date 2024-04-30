@@ -3,7 +3,6 @@ import { Asteroid, Crewmate, Deposit, Lot, Product, Time } from '@influenceth/sd
 
 import { NewCoreSampleIcon, ResourceIcon } from '~/components/Icons';
 import ResourceThumbnail from '~/components/ResourceThumbnail';
-import useCrewContext from '~/hooks/useCrewContext';
 import useStore from '~/hooks/useStore';
 import useCoreSampleManager from '~/hooks/actionManagers/useCoreSampleManager';
 import actionStage from '~/lib/actionStages';
@@ -35,18 +34,24 @@ import { ActionDialogInner, theming, useAsteroidAndLot } from '../ActionDialog';
 import useEntity from '~/hooks/useEntity';
 import useActionCrew from '~/hooks/useActionCrew';
 
-const NewCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }) => {
-  const { currentSamplingAction, startSampling, finishSampling, samplingStatus } = coreSampleManager;
+const NewCoreSample = ({ asteroid, lot, coreSampleManager, currentSamplingAction, stage, ...props }) => {
+  const { startSampling, finishSampling } = coreSampleManager;
   const crew = useActionCrew(currentSamplingAction);
-  const { data: originEntity } = useEntity(currentSamplingAction?.origin ? { ...currentSamplingAction.origin } : props.preselect?.origin);
 
   const dispatchResourceMapSelect = useStore(s => s.dispatchResourceMapSelect);
   const dispatchResourceMapToggle = useStore(s => s.dispatchResourceMapToggle);
   const resourceMap = useStore(s => s.asteroids.resourceMap);
 
+  const prepop = useMemo(() => ({
+    origin: currentSamplingAction?.origin ? { ...currentSamplingAction.origin } : props.preselect?.origin,
+    resourceId: props.preselect?.resourceId || (resourceMap?.active && resourceMap?.selected || undefined)
+  }), [currentSamplingAction, props.preselect, resourceMap]);
+
+  const { data: originEntity } = useEntity(prepop.origin);
+
   // if an active sample is detected, set "sample" for remainder of dialog's lifespan
   const [sampleId, setSampleId] = useState();
-  const [resourceId, setResourceId] = useState(props.preselect?.resourceId || (resourceMap?.active && resourceMap?.selected || undefined));
+  const [resourceId, setResourceId] = useState(prepop.resourceId);
   const [drillSource, setDrillSource] = useState();
   const [resourceSelectorOpen, setResourceSelectorOpen] = useState(false);
   const [sourceSelectorOpen, setSourceSelectorOpen] = useState(false);
@@ -199,16 +204,23 @@ const NewCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }) =>
   ]), [crew?._timeAcceleration, crewTravelBonus, crewTravelTime, sampleBounds, sampleQualityBonus, sampleTime, tripDetails]);
 
   // handle auto-closing
-  const lastStatus = useRef();
+  const miniStatus = useRef();
   useEffect(() => {
-    // (close on status change from)
-    if (['READY'].includes(lastStatus.current)) {
-      if (samplingStatus !== lastStatus.current) {
-        props.onClose();
-      }
+    let newMiniStatus = 1;
+    if (currentSamplingAction) newMiniStatus = 2;
+    if (currentSamplingAction?.sampleId) newMiniStatus = 3;
+
+    // (close on status change from no sampleId to sampleId)
+    if (miniStatus.current && miniStatus.current !== newMiniStatus) {
+      props.onClose();
     }
-    lastStatus.current = samplingStatus;
-  }, [samplingStatus]);
+    
+    miniStatus.current = newMiniStatus;
+  }, [currentSamplingAction]);
+
+  const onFinish = useCallback(() => {
+    finishSampling(currentSamplingAction?.sampleId)
+  }, [finishSampling, currentSamplingAction]);
 
   return (
     <>
@@ -302,7 +314,7 @@ const NewCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }) =>
         onGo={() => startSampling(resourceId, drillSource)}
         finalizeLabel="Analyze"
         isSequenceable
-        onFinalize={finishSampling}
+        onFinalize={onFinish}
         stage={stage}
         waitForCrewReady
         {...props} />
@@ -337,7 +349,16 @@ const NewCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }) =>
 const Wrapper = (props) => {
   const { asteroid, lot, isLoading } = useAsteroidAndLot(props);
   const coreSampleManager = useCoreSampleManager(lot?.id);
-  const { actionStage } = coreSampleManager;
+  const { currentSamplingActions, completedSamplingActions } = coreSampleManager;
+
+  const currentSamplingAction = useMemo(() => {
+    return props.sampleId
+      ? (
+        currentSamplingActions.find((c) => c.action?.sampleId === props.sampleId)
+        || completedSamplingActions.find((c) => c.action?.sampleId === props.sampleId)
+      )
+      : currentSamplingActions.find((c) => !c.action?.sampleId);
+  }, [completedSamplingActions, currentSamplingActions, props.sampleId]);
 
   useEffect(() => {
     if (!asteroid || !lot) {
@@ -347,16 +368,18 @@ const Wrapper = (props) => {
     }
   }, [asteroid, lot, isLoading]);
 
+  const stage = currentSamplingAction?.stage || actionStage.NOT_STARTED;
   return (
     <ActionDialogInner
       actionImage="CoreSample"
       isLoading={reactBool(isLoading)}
-      stage={actionStage}>
+      stage={stage}>
       <NewCoreSample
         asteroid={asteroid}
         lot={lot}
         coreSampleManager={coreSampleManager}
-        stage={actionStage}
+        currentSamplingAction={currentSamplingAction?.action}
+        stage={stage}
         {...props} />
     </ActionDialogInner>
   )
