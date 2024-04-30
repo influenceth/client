@@ -533,7 +533,6 @@ const api = {
   },
 
   getOrderSummaryByExchange: async (asteroidId, product) => {
-    console.log('DEBUG, getOrderSummaryByExchange');
     const queryBuilder = esb.boolQuery();
 
     // asteroid
