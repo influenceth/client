@@ -28,6 +28,7 @@ import {
 } from './components';
 import useEjectCrewManager from '~/hooks/actionManagers/useEjectCrewManager';
 import useAsteroid from '~/hooks/useAsteroid';
+import useBlockTime from '~/hooks/useBlockTime';
 import useEntity from '~/hooks/useEntity';
 import useHydratedCrew from '~/hooks/useHydratedCrew';
 import useLot from '~/hooks/useLot';
@@ -37,6 +38,7 @@ import theme from '~/theme';
 import { ActionDialogInner } from '../ActionDialog';
 
 const EjectCrew = ({ asteroid, origin, originLot, stationedCrews, manager, stage, ...props }) => {
+  const blockTime = useBlockTime();
   const { currentEjection, ejectCrew, actionStage: ejectionStatus } = manager;
 
   // TODO: only if specified id
@@ -52,11 +54,20 @@ const EjectCrew = ({ asteroid, origin, originLot, stationedCrews, manager, stage
   const hopperBonus = useMemo(() => getCrewAbilityBonuses(Crewmate.ABILITY_IDS.HOPPER_TRANSPORT_TIME, crew), [crew]);
 
   const ejectionTime = useMemo(() => {
+    // if from surface
     if (originLot) {
       return Time.toRealDuration(Asteroid.getLotTravelTime(asteroid?.id, originLot.index, 0, hopperBonus.totalBonus), crew?._timeAcceleration);
+
+    // if from in-flight ship
+    } else if (origin?.Ship?.transitArrival) {
+      const arrivalTime = origin.Ship.transitArrival / 86400;
+      const realTime = Math.ceil(Time.fromOrbitADays(arrivalTime, crew?._timeAcceleration).toDate().getTime() / 1000);
+      return Math.max(0, realTime - blockTime);
     }
+
+    // else, orbit-to-orbit ejection
     return 0;
-  }, [asteroid, crew?._timeAcceleration, hopperBonus, originLot]);
+  }, [asteroid, blockTime, crew?._timeAcceleration, hopperBonus, originLot, origin?.Ship?.transitArrival]);
 
   const stats = useMemo(() => ([
     ejectionTime > 0 && {
@@ -261,7 +272,8 @@ const Wrapper = (props) => {
   const { data: origin, isLoading: entityIsLoading } = useEntity(originEntity);
   const originLocation = useMemo(() => locationsArrToObj(origin?.Location?.locations || []), [origin]);
 
-  const { data: asteroid, isLoading: asteroidIsLoading } = useAsteroid(originLocation?.asteroidId);
+  // asteroid is origin's asteroid OR destination asteroid (if origin is ship in flight)
+  const { data: asteroid, isLoading: asteroidIsLoading } = useAsteroid(originLocation?.asteroidId || origin?.Ship?.transitDestination?.id);
   const { data: originLot, isLoading: lotIsLoading } = useLot(originLocation?.lotId);
 
   const ejectCrewManager = useEjectCrewManager(origin);
