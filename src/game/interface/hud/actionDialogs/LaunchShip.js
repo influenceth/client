@@ -36,6 +36,7 @@ import useAsteroid from '~/hooks/useAsteroid';
 import { getBonusDirection } from './components';
 import { TimeBonusTooltip } from './components';
 import useStationedCrews from '~/hooks/useStationedCrews';
+import useBlockTime from '~/hooks/useBlockTime';
 
 
 const propellantProduct = Product.TYPES[Product.IDS.HYDROGEN_PROPELLANT];
@@ -44,6 +45,7 @@ const LaunchShip = ({ asteroid, originLot, manager, ship, shipCrews, stage, ...p
   const createAlert = useStore(s => s.dispatchAlertLogged);
 
   const { currentUndockingAction, undockShip } = manager;
+  const blockTime = useBlockTime();
   const { crew } = useCrewContext();
 
   const isForceLaunch = crew?.id !== ship?.Control?.controller?.id;
@@ -79,7 +81,11 @@ const LaunchShip = ({ asteroid, originLot, manager, ship, shipCrews, stage, ...p
     ];
   }, [asteroid, hopperBonus, originLot?.id, powered, propellantBonus, ship]);
 
-  const isDeliveryPending = useMemo(() => !!(ship?.Inventories || []).find((inv) => inv.reservedMass > 0), [ship])
+  const isDeliveryPending = useMemo(() => !!(ship?.Inventories || []).find((inv) => inv.reservedMass > 0), [ship]);
+
+  const isGuestCrewBusy = useMemo(() => {
+    return !!shipCrews.find((c) => c.id !== ship.Control?.Controller?.id && blockTime >= c.Crew.readyAt);
+  }, [blockTime, shipCrews]);
 
   const [propellantLoaded, deltaVLoaded] = useMemo(() => {
     if (!ship) return [0, 0];
@@ -260,7 +266,7 @@ const LaunchShip = ({ asteroid, originLot, manager, ship, shipCrews, stage, ...p
       </ActionDialogBody>
 
       <ActionDialogFooter
-        disabled={isDeliveryPending || (powered && propellantRequirement > propellantLoaded)}
+        disabled={isDeliveryPending || isGuestCrewBusy || (powered && propellantRequirement > propellantLoaded)}
         goLabel="Launch"
         onGo={onLaunch}
         stage={stage}
