@@ -198,17 +198,12 @@ const useMappedAsteroidLots = (i) => {
 
     // construction site -> building (14 -> buildingType)
     } else if (eventType === 'ConstructionFinished') {
-      const building = await getAndCacheEntity({ id: 7912, label: Entity.IDS.BUILDING }, queryClient);
-      asteroidId = 1;
-      lotIndex = 1631867;
+      const building = await getAndCacheEntity(body.event.returnValues.building, queryClient);
+      const _location = locationsArrToObj(building?.Location?.locations || []);
+      asteroidId = _location.asteroidId;
+      lotIndex = _location.lotIndex;
       buildingType = building?.Building?.buildingType; // TODO: should we cast this?
-
-      // const building = await getAndCacheEntity(body.event.returnValues.building, queryClient);
-      // const _location = locationsArrToObj(building?.Location?.locations || []);
-      // asteroidId = _location.asteroidId;
-      // lotIndex = _location.lotIndex;
-      // buildingType = building?.Building?.buildingType; // TODO: should we cast this?
-      console.log('PMK ConstructionFinished', { asteroidId, lotIndex, buildingType });
+      // console.log('PMK ConstructionFinished', { asteroidId, lotIndex, buildingType });
 
     // building -> construction site (buildingType -> 14)
     } else if (eventType === 'ConstructionDeconstructed') {
@@ -260,14 +255,6 @@ const useMappedAsteroidLots = (i) => {
   }, []);
 
   const isLoading = lotDataLoading || sampledLotsLoading || crewLotsLoading;
-
-  useEffect(() => {
-    setTimeout(() => {
-      console.log('fire event');
-      processEvent('ConstructionFinished', {});
-    }, 10000);
-  }, []);
-
 
   return useMemo(() => {
     return {
