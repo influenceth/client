@@ -1,11 +1,11 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQueryClient } from 'react-query';
 import { Entity, Lot } from '@influenceth/sdk';
 
 import { options as lotLeaseOptions } from '~/components/filters/LotLeaseFilter';
 import useAsteroidCrewSamples from '~/hooks/useAsteroidCrewSamples';
 import useAsteroidCrewBuildings from '~/hooks/useAsteroidCrewBuildings';
-import useOwnedShips from './useOwnedShips';
+import useControlledShips from './useControlledShips';
 import useAsteroidLotData from '~/hooks/useAsteroidLotData';
 import useStore from '~/hooks/useStore';
 import { getAndCacheEntity } from '~/lib/activities';
@@ -59,7 +59,7 @@ const useMappedAsteroidLots = (i) => {
   }, [crewLots, crewLotsLoading]);
 
   // get all occupied-by-me ships from the server
-  const { data: crewShips, isLoading: crewShipsLoading } = useOwnedShips();
+  const { data: crewShips, isLoading: crewShipsLoading } = useControlledShips();
   const myShipMap = useMemo(() => {
     if (crewShipsLoading) return null;
     return (crewShips || []).reduce((acc, p) => {
@@ -198,11 +198,17 @@ const useMappedAsteroidLots = (i) => {
 
     // construction site -> building (14 -> buildingType)
     } else if (eventType === 'ConstructionFinished') {
-      const building = await getAndCacheEntity(body.event.returnValues.building, queryClient);
-      const _location = locationsArrToObj(building?.Location?.locations || []);
-      asteroidId = _location.asteroidId;
-      lotIndex = _location.lotIndex;
-      buildingType = building?.Building?.buildingType;
+      const building = await getAndCacheEntity({ id: 7912, label: Entity.IDS.BUILDING }, queryClient);
+      asteroidId = 1;
+      lotIndex = 1631867;
+      buildingType = building?.Building?.buildingType; // TODO: should we cast this?
+
+      // const building = await getAndCacheEntity(body.event.returnValues.building, queryClient);
+      // const _location = locationsArrToObj(building?.Location?.locations || []);
+      // asteroidId = _location.asteroidId;
+      // lotIndex = _location.lotIndex;
+      // buildingType = building?.Building?.buildingType; // TODO: should we cast this?
+      console.log('PMK ConstructionFinished', { asteroidId, lotIndex, buildingType });
 
     // building -> construction site (buildingType -> 14)
     } else if (eventType === 'ConstructionDeconstructed') {
@@ -254,6 +260,14 @@ const useMappedAsteroidLots = (i) => {
   }, []);
 
   const isLoading = lotDataLoading || sampledLotsLoading || crewLotsLoading;
+
+  useEffect(() => {
+    setTimeout(() => {
+      console.log('fire event');
+      processEvent('ConstructionFinished', {});
+    }, 10000);
+  }, []);
+
 
   return useMemo(() => {
     return {

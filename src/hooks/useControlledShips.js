@@ -6,7 +6,7 @@ import api from '~/lib/api';
 import useCrewContext from './useCrewContext';
 import { entitiesCacheKey } from '~/lib/cacheKey';
 
-const useOwnedShips = (otherCrew = null) => {
+const useControlledShips = (otherCrew = null) => {
   const { crew } = useCrewContext();
 
   const { id: controllerId, uuid } = useMemo(() => otherCrew || crew || {}, [otherCrew, crew]);
@@ -17,4 +17,4 @@ const useOwnedShips = (otherCrew = null) => {
   );
 };
 
-export default useOwnedShips;
+export default useControlledShips;
