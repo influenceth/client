@@ -65,7 +65,7 @@ const getEntities = async ({ ids, match, label, components }) => {
     query.match = `${Object.keys(match)[0]}:${JSON.stringify(Object.values(match)[0])}`;
   }
   if (label) {
-    query.label = label;  // i.e. 'asteroid'
+    query.label = label;  // i.e. 3 (Entity.IDS.ASTEROID)
   }
   if (components) {
     query.components = components.join(',');  // i.e. [ 'Celestial', 'Control' ]
@@ -482,8 +482,12 @@ const api = {
   },
 
   getCrewShips: async (c) => {
+    if (!c) {
+      console.warn('missing crew id param');
+      return [];
+    }
     return getEntities({
-      match: { 'Control.controller.id': c },
+      match: { 'Control.controller.uuid': Entity.packEntity({ id: c, label: Entity.IDS.CREW }) },
       label: Entity.IDS.SHIP
     })
   },
