@@ -2781,10 +2781,7 @@ export const ItemSelectionSection = ({ columns = 7, label, items, onClick, stage
 };
 
 export const TransferDistanceDetails = ({ distance, crewDistBonus }) => {
-  const crewFreeTransferRadius = Asteroid.FREE_TRANSPORT_RADIUS *
-    (crewDistBonus?.totalBonus || 1) /
-    (crewDistBonus?.timeMultiplier || 1);
-
+  const crewFreeTransferRadius = Asteroid.FREE_TRANSPORT_RADIUS * (crewDistBonus?.totalBonus || 1);
   return (
     <TransferDistanceTitleDetails>
       {distance && distance < crewFreeTransferRadius ? (
@@ -4041,13 +4038,6 @@ const extractBonuses = (bonusObj, isTimeStat) => {
   (bonusObj.others || []).forEach(({ text, bonus, direction }) => {
     x.push({ text, bonus, direction });
   });
-  if (bonusObj.timeMultiplier > 0 && bonusObj.timeMultiplier !== 1) {
-    x.push({
-      text: `Time Acceleration`,
-      multiplier: bonusObj.timeMultiplier,
-      direction: getBonusDirection({ totalBonus: bonusObj.timeMultiplier })
-    });
-  }
 
   return x
     .filter((b) => (b.multiplier !== undefined && b.multiplier !== 1) || (b.bonus !== undefined && b.bonus !== 0))
