@@ -35,6 +35,7 @@ import Button from '~/components/ButtonAlt';
 import useBlockTime from '~/hooks/useBlockTime';
 import useLot from '~/hooks/useLot';
 import useAsteroid from '~/hooks/useAsteroid';
+import { max } from 'moment/moment';
 
 const FormSection = styled.div`
   margin-top: 12px;
@@ -159,7 +160,7 @@ const FormAgreement = ({
   const maxTerm = useMemo(() => {
     const now = Math.floor(Date.now() / 1000);
     if (isExtension && currentAgreement?.endTime > now) {
-      return 12 - secondsToMonths(Math.max(0, currentAgreement?.endTime - now - 3600));
+      return 12 - secondsToMonths(Math.max(0, currentAgreement?.endTime - currentAgreement?.startTime));
     }
     return 12;
   }, [currentAgreement, isExtension]);
@@ -255,9 +256,7 @@ const FormAgreement = ({
   }, [createAlert]);
 
   const handlePeriodChange = useCallback((e) => {
-    // const value = numeral(e.currentTarget.value);
     if (e.currentTarget.value === '') return setInitialPeriod('');
-    // if (value.value() === null) return setInitialPeriod(e.currentTarget.value);
     setInitialPeriod(Math.max(currentPolicy?.policyDetails?.initialTerm, Math.min(e.currentTarget.value, maxTerm)));
   }, [currentPolicy?.policyDetails?.initialTerm, maxTerm]);
 
@@ -420,8 +419,8 @@ const FormAgreement = ({
                 <TextInputWrapper rightLabel="months">
                   <UncontrolledTextInput
                     disabled={stage !== actionStages.NOT_STARTED}
-                    // min={currentPolicy?.policyDetails?.initialTerm}
-                    max={12}
+                    min={currentPolicy?.policyDetails?.initialTerm}
+                    max={maxTermFloored}
                     onBlur={handlePeriodChange}
                     onChange={handlePeriodChange}
                     step={0.1}
@@ -433,7 +432,7 @@ const FormAgreement = ({
                     ? <div>Min <b>{formatFixed(0, 1)} months</b></div>
                     : <div>Min <b>{formatFixed(currentPolicy?.policyDetails?.initialTerm || 0, 1)} month{currentPolicy?.policyDetails?.initialTerm === 1 ? '' : 's'}</b></div>
                   }
-                  <div>Max <b>{formatFixed(maxTerm, 1)} months</b></div>
+                  <div>Max <b>{formatFixed(maxTermFloored, 1)} months</b></div>
                 </InputSublabels>
               </FormSection>
 
