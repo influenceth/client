@@ -233,11 +233,12 @@ const MarketplaceOrder = ({
   // const destinationInventory = useMemo(() => (destination?.Inventories || []).find((i) => i.slot === destinationSelection?.slot), [destination, destinationSelection]);
   // const { data: destinationController } = useCrew(destination?.Control?.controller?.id);
 
-  const [hopperTransportBonus, feeReductionBonus] = useMemo(() => {
+  const [hopperTransportBonus, distBonus, feeReductionBonus] = useMemo(() => {
     if (!crew) return [];
 
     const bonusIds = [
       Crewmate.ABILITY_IDS.HOPPER_TRANSPORT_TIME,
+      Crewmate.ABILITY_IDS.FREE_TRANSPORT_DISTANCE,
       Crewmate.ABILITY_IDS.MARKETPLACE_FEE_REDUCTION,
     ];
 
@@ -270,11 +271,11 @@ const MarketplaceOrder = ({
 
   const { totalTime: crewTravelTime, tripDetails } = useMemo(() => {
     if (!asteroid?.id || !crew?._location?.lotId || !lot?.id) return {};
-    return getTripDetails(asteroid.id, hopperTransportBonus, crew?._location?.lotIndex, [
+    return getTripDetails(asteroid.id, hopperTransportBonus, distBonus, crew?._location?.lotIndex, [
       { label: 'Travel to Marketplace', lotIndex: Lot.toIndex(lot.id) },
       { label: 'Return to Crew Station', lotIndex: crew?._location?.lotIndex },
     ], crew?._timeAcceleration);
-  }, [asteroid?.id, lot?.id, crew?._location?.lotId, crew?._timeAcceleration, hopperTransportBonus]);
+  }, [asteroid?.id, lot?.id, crew?._location?.lotId, crew?._timeAcceleration, hopperTransportBonus, distBonus]);
 
   const [transportDistance, transportTime] = useMemo(() => {
     if (!asteroid?.id || !exchange?.id || !storageLot?.id) return [0, 0];
@@ -282,7 +283,9 @@ const MarketplaceOrder = ({
     const storageLotIndex = Lot.toIndex(storageLot?.id);
     const transportDistance = Asteroid.getLotDistance(asteroid?.id, exchangeLotIndex, storageLotIndex);
     const transportTime = Time.toRealDuration(
-      Asteroid.getLotTravelTime(asteroid?.id, exchangeLotIndex, storageLotIndex, hopperTransportBonus?.totalBonus),
+      Asteroid.getLotTravelTime(
+        asteroid?.id, exchangeLotIndex, storageLotIndex, hopperTransportBonus?.totalBonus, distBonus?.totalBonus
+      ),
       crew?._timeAcceleration
     );
     return [transportDistance, transportTime];
@@ -756,7 +759,7 @@ const MarketplaceOrder = ({
 
           <InventoryInputBlock
             title={mode === 'buy' ? 'Deliver To' : 'Source From'}
-            titleDetails={<TransferDistanceDetails distance={transportDistance} crewTravelBonus={hopperTransportBonus} />}
+            titleDetails={<TransferDistanceDetails distance={transportDistance} crewDistBonus={distBonus} />}
             disabled={isCancellation || stage !== actionStages.NOT_STARTED}
             entity={storage}
             inventorySlot={storageInventory?.slot}

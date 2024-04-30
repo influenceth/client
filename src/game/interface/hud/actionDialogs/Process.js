@@ -151,8 +151,8 @@ const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...pro
     setAmount(1);
   }, [currentProcess, process]);
 
-  const [crewTravelBonus, processingTimeBonus, secondaryOutputsBonus] = useMemo(() => {
-    const bonusIds = [Crewmate.ABILITY_IDS.HOPPER_TRANSPORT_TIME];
+  const [crewTravelBonus, crewDistBonus, processingTimeBonus, secondaryOutputsBonus] = useMemo(() => {
+    const bonusIds = [Crewmate.ABILITY_IDS.HOPPER_TRANSPORT_TIME, Crewmate.ABILITY_IDS.FREE_TRANSPORT_DISTANCE];
     if (processor.processorType === Processor.IDS.BIOREACTOR) {
       bonusIds.push(Crewmate.ABILITY_IDS.REACTION_TIME);
     } else if (processor.processorType === Processor.IDS.REFINERY) {
@@ -176,18 +176,24 @@ const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...pro
   const { totalTime: crewTravelTime, tripDetails } = useMemo(() => {
     if (!asteroid?.id || !crew?._location?.lotId || !lot?.id) return {};
     const crewLotIndex = Lot.toIndex(crew?._location?.lotId);
-    return getTripDetails(asteroid.id, crewTravelBonus, crewLotIndex, [
+    return getTripDetails(asteroid.id, crewTravelBonus, crewDistBonus, crewLotIndex, [
       { label: 'Travel to Processor', lotIndex: Lot.toIndex(lot.id) },
       { label: 'Return to Crew Station', lotIndex: crewLotIndex },
     ], crew?._timeAcceleration);
-  }, [asteroid?.id, lot?.id, crew?._location?.lotId, crew?._timeAcceleration, crewTravelBonus]);
+  }, [asteroid?.id, lot?.id, crew?._location?.lotId, crew?._timeAcceleration, crewTravelBonus, crewDistBonus]);
 
   const [inputTransportDistance, inputTransportTime] = useMemo(() => {
     if (!originLot?.id) return [];
     return [
       Asteroid.getLotDistance(asteroid?.id, Lot.toIndex(originLot?.id), Lot.toIndex(lot?.id)) || 0,
       Time.toRealDuration(
-        Asteroid.getLotTravelTime(asteroid?.id, Lot.toIndex(originLot?.id), Lot.toIndex(lot?.id), crewTravelBonus.totalBonus) || 0,
+        Asteroid.getLotTravelTime(
+          asteroid?.id,
+          Lot.toIndex(originLot?.id),
+          Lot.toIndex(lot?.id),
+          crewTravelBonus.totalBonus,
+          crewDistBonus.totalBonus
+        ) || 0,
         crew?._timeAcceleration
       )
     ];
@@ -198,7 +204,13 @@ const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...pro
     return [
       Asteroid.getLotDistance(asteroid?.id, Lot.toIndex(lot?.id), Lot.toIndex(destinationLot?.id)) || 0,
       Time.toRealDuration(
-        Asteroid.getLotTravelTime(asteroid?.id, Lot.toIndex(lot?.id), Lot.toIndex(destinationLot?.id), crewTravelBonus.totalBonus) || 0,
+        Asteroid.getLotTravelTime(
+          asteroid?.id,
+          Lot.toIndex(lot?.id),
+          Lot.toIndex(destinationLot?.id),
+          crewTravelBonus.totalBonus,
+          crewDistBonus.totalBonus
+        ) || 0,
         crew?._timeAcceleration
       )
     ];
@@ -438,7 +450,7 @@ const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...pro
 
           <InventoryInputBlock
             title="Input Inventory"
-            titleDetails={<TransferDistanceDetails distance={inputTransportDistance} crewTravelBonus={crewTravelBonus} />}
+            titleDetails={<TransferDistanceDetails distance={inputTransportDistance} crewDistBonus={crewDistBonus} />}
             disabled={!process || stage !== actionStages.NOT_STARTED}
             entity={origin}
             inventorySlot={selectedOrigin?.slot}
@@ -484,7 +496,7 @@ const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...pro
 
           <InventoryInputBlock
             title="Output Inventory"
-            titleDetails={<TransferDistanceDetails distance={outputTransportDistance} crewTravelBonus={crewTravelBonus} />}
+            titleDetails={<TransferDistanceDetails distance={outputTransportDistance} crewDistBonus={crewDistBonus} />}
             disabled={!process || stage !== actionStages.NOT_STARTED}
             entity={destination}
             inventorySlot={selectedDestination?.slot}

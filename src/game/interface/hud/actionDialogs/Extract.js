@@ -118,9 +118,10 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
     }
   }, [currentExtraction?.destination]);
 
-  const [crewTravelBonus, extractionBonus] = useMemo(() => {
+  const [crewTravelBonus, crewDistBonus, extractionBonus] = useMemo(() => {
     const bonusIds = [
       Crewmate.ABILITY_IDS.HOPPER_TRANSPORT_TIME,
+      Crewmate.ABILITY_IDS.FREE_TRANSPORT_DISTANCE,
       Crewmate.ABILITY_IDS.EXTRACTION_TIME,
     ];
     const abilities = getCrewAbilityBonuses(bonusIds, crew);
@@ -204,18 +205,24 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
   const { totalTime: crewTravelTime, tripDetails } = useMemo(() => {
     if (!asteroid?.id || !crew?._location?.lotId || !lot?.id) return {};
     const crewLotIndex = Lot.toIndex(crew?._location?.lotId);
-    return getTripDetails(asteroid.id, crewTravelBonus, crewLotIndex, [
+    return getTripDetails(asteroid.id, crewTravelBonus, crewDistBonus, crewLotIndex, [
       { label: 'Travel to Extraction Site', lotIndex: Lot.toIndex(lot.id) },
       { label: 'Return to Crew Station', lotIndex: crewLotIndex },
     ], crew?._timeAcceleration);
-  }, [asteroid?.id, lot?.id, crew?._location?.lotId, crew?._timeAcceleration, crewTravelBonus]);
+  }, [asteroid?.id, lot?.id, crew?._location?.lotId, crew?._timeAcceleration, crewTravelBonus, crewDistBonus]);
 
   const [transportDistance, transportTime] = useMemo(() => {
     if (!destinationLot?.id) return [];
     return [
       Asteroid.getLotDistance(asteroid?.id, Lot.toIndex(lot?.id), Lot.toIndex(destinationLot?.id)) || 0,
       Time.toRealDuration(
-        Asteroid.getLotTravelTime(asteroid?.id, Lot.toIndex(lot?.id), Lot.toIndex(destinationLot?.id), crewTravelBonus.totalBonus) || 0,
+        Asteroid.getLotTravelTime(
+          asteroid?.id,
+          Lot.toIndex(lot?.id),
+          Lot.toIndex(destinationLot?.id),
+          crewTravelBonus.totalBonus,
+          crewDistBonus.totalBonus
+        ) || 0,
         crew?._timeAcceleration
       )
     ];
@@ -400,7 +407,7 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
 
           <InventoryInputBlock
             title="Destination"
-            titleDetails={<TransferDistanceDetails distance={transportDistance} crewTravelBonus={crewTravelBonus} />}
+            titleDetails={<TransferDistanceDetails distance={transportDistance} crewDistBonus={crewDistBonus} />}
             entity={destination}
             inventorySlot={destinationInventory?.slot}
             inventoryBonuses={crew?._inventoryBonuses}

@@ -115,8 +115,14 @@ const NewCoreSample = ({ asteroid, lot, coreSampleManager, currentSamplingAction
 
   const lotAbundance = resourceId ? lotAbundances[resourceId] : 0;
 
-  const [crewTravelBonus, sampleQualityBonus, sampleTimeBonus] = useMemo(() => {
-    const bonusIds = [Crewmate.ABILITY_IDS.HOPPER_TRANSPORT_TIME, Crewmate.ABILITY_IDS.CORE_SAMPLE_QUALITY, Crewmate.ABILITY_IDS.CORE_SAMPLE_TIME];
+  const [crewTravelBonus, crewDistBonus, sampleQualityBonus, sampleTimeBonus] = useMemo(() => {
+    const bonusIds = [
+      Crewmate.ABILITY_IDS.HOPPER_TRANSPORT_TIME,
+      Crewmate.ABILITY_IDS.FREE_TRANSPORT_DISTANCE,
+      Crewmate.ABILITY_IDS.CORE_SAMPLE_QUALITY,
+      Crewmate.ABILITY_IDS.CORE_SAMPLE_TIME
+    ];
+
     const abilities = getCrewAbilityBonuses(bonusIds, crew);
     return bonusIds.map((id) => abilities[id] || {});
   }, [crew]);
@@ -124,11 +130,11 @@ const NewCoreSample = ({ asteroid, lot, coreSampleManager, currentSamplingAction
   const { totalTime: crewTravelTime, tripDetails } = useMemo(() => {
     if (!asteroid?.id || !crew?._location?.lotId || !lot?.id) return {};
     const crewLotIndex = Lot.toIndex(crew?._location?.lotId);
-    return getTripDetails(asteroid.id, crewTravelBonus, crewLotIndex, [
+    return getTripDetails(asteroid.id, crewTravelBonus, crewDistBonus, crewLotIndex, [
       { label: 'Travel to Sampling Site', lotIndex: Lot.toIndex(lot.id) },
       { label: 'Return to Crew Station', lotIndex: crewLotIndex },
     ], crew?._timeAcceleration);
-  }, [asteroid?.id, lot?.id, crew?._location?.lotId, crew?._timeAcceleration, crewTravelBonus]);
+  }, [asteroid?.id, lot?.id, crew?._location?.lotId, crew?._timeAcceleration, crewTravelBonus, crewDistBonus]);
 
   const [sampleBounds, sampleTime] = useMemo(() => {
     return [
@@ -141,7 +147,9 @@ const NewCoreSample = ({ asteroid, lot, coreSampleManager, currentSamplingAction
     if (!asteroid?.id || !crew?._location?.lotId || !lot?.id || !drillSource?.lotIndex) return [];
     const oneWayCrewTravelTime = crewTravelTime / 2;
     const drillTravelTime = Time.toRealDuration(
-      Asteroid.getLotTravelTime(asteroid.id, drillSource?.lotIndex, Lot.toIndex(lot.id), crewTravelBonus.totalBonus),
+      Asteroid.getLotTravelTime(
+        asteroid.id, drillSource?.lotIndex, Lot.toIndex(lot.id), crewTravelBonus.totalBonus, crewDistBonus.totalBonus
+      ),
       crew?._timeAcceleration
     );
     return [
@@ -214,7 +222,7 @@ const NewCoreSample = ({ asteroid, lot, coreSampleManager, currentSamplingAction
     if (miniStatus.current && miniStatus.current !== newMiniStatus) {
       props.onClose();
     }
-    
+
     miniStatus.current = newMiniStatus;
   }, [currentSamplingAction]);
 
@@ -273,7 +281,7 @@ const NewCoreSample = ({ asteroid, lot, coreSampleManager, currentSamplingAction
                 : 'Resource'
               }
             />
-            
+
             <FlexSectionSpacer />
 
             <FlexSectionInputBlock

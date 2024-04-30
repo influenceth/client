@@ -50,10 +50,15 @@ const EjectCrew = ({ asteroid, origin, originLot, stationedCrews, manager, stage
   const myCrewIsTarget = targetCrew?.id === crew?.id;
 
   const hopperBonus = useMemo(() => getCrewAbilityBonuses(Crewmate.ABILITY_IDS.HOPPER_TRANSPORT_TIME, crew), [crew]);
+  const distBonus = useMemo(() => getCrewAbilityBonuses(Crewmate.ABILITY_IDS.FREE_TRANSPORT_DISTANCE, crew), [crew]);
 
   const ejectionTime = useMemo(() => {
     if (originLot) {
-      return Time.toRealDuration(Asteroid.getLotTravelTime(asteroid?.id, originLot.index, 0, hopperBonus.totalBonus), crew?._timeAcceleration);
+      const travelTime = Asteroid.getLotTravelTime(
+        asteroid?.id, originLot.index, 0, hopperBonus.totalBonus, distBonus.totalBonus
+      );
+
+      return Time.toRealDuration(travelTime, crew?._timeAcceleration);
     }
     return 0;
   }, [asteroid, crew?._timeAcceleration, hopperBonus, originLot]);

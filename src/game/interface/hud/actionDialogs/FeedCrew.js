@@ -102,6 +102,11 @@ const FeedCrew = ({
     return getCrewAbilityBonuses(Crewmate.ABILITY_IDS.HOPPER_TRANSPORT_TIME, crew) || {};
   }, [crew]);
 
+  const crewDistBonus = useMemo(() => {
+    if (!crew) return {};
+    return getCrewAbilityBonuses(Crewmate.ABILITY_IDS.FREE_TRANSPORT_DISTANCE, crew) || {};
+  }, [crew]);
+
   const [originSelectorOpen, setOriginSelectorOpen] = useState(false);
   const [tab, setTab] = useState(0);
   const [transferSelectorOpen, setTransferSelectorOpen] = useState();
@@ -133,8 +138,9 @@ const FeedCrew = ({
     const destinationLotIndex = crew?._location?.lotIndex;
     const transportDistance = Asteroid.getLotDistance(asteroid?.id, originLotIndex, destinationLotIndex);
     const effBonus = Math.max(crewTravelBonus.totalBonus, 1); // no penalty for food resupply
+    const distBonus = Math.max(crewDistBonus.totalBonus, 1); // no penalty for food resupply
     const transportTime = Time.toRealDuration(
-      Asteroid.getLotTravelTime(asteroid?.id, originLotIndex, destinationLotIndex, effBonus),
+      Asteroid.getLotTravelTime(asteroid?.id, originLotIndex, destinationLotIndex, effBonus, distBonus),
       crew?._timeAcceleration
     );
     return [transportDistance, transportTime];
@@ -248,7 +254,7 @@ const FeedCrew = ({
         <FlexSection>
           <InventoryInputBlock
             title="Origin"
-            titleDetails={<TransferDistanceDetails distance={transportDistance} />}
+            titleDetails={<TransferDistanceDetails distance={transportDistance} crewDistBonus={crewDistBonus} />}
             disabled={stage !== actionStages.NOT_STARTED}
             entity={origin}
             inventorySlot={originSelection?.slot}

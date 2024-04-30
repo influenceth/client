@@ -54,9 +54,14 @@ const LaunchShip = ({ asteroid, originLot, manager, ship, shipCrews, stage, ...p
   const [powered, setPowered] = useState(isForceLaunch ? false : true);
   const [tab, setTab] = useState(0);
 
-  const [hopperBonus, propellantBonus] = useMemo(() => {
+  const [hopperBonus, distBonus, propellantBonus] = useMemo(() => {
     if (!flightCrew) return {};
-    const bonusIds = [Crewmate.ABILITY_IDS.HOPPER_TRANSPORT_TIME, Crewmate.ABILITY_IDS.PROPELLANT_EXHAUST_VELOCITY];
+    const bonusIds = [
+      Crewmate.ABILITY_IDS.HOPPER_TRANSPORT_TIME,
+      Crewmate.ABILITY_IDS.FREE_TRANSPORT_DISTANCE,
+      Crewmate.ABILITY_IDS.PROPELLANT_EXHAUST_VELOCITY
+    ];
+
     const abilities = getCrewAbilityBonuses(bonusIds, flightCrew) || {};
     return bonusIds.map((id) => abilities[id] || {});
   }, [flightCrew]);
@@ -75,7 +80,10 @@ const LaunchShip = ({ asteroid, originLot, manager, ship, shipCrews, stage, ...p
       escapeVelocity,
       propellantRequired,
       0, // TODO: poweredTime may be a thing in the future
-      Time.toRealDuration(Asteroid.getLotTravelTime(asteroid?.id, originLotIndex, 0, hopperBonus.totalBonus), crew?._timeAcceleration)
+      Time.toRealDuration(
+        Asteroid.getLotTravelTime(asteroid?.id, originLotIndex, 0, hopperBonus.totalBonus, distBonus.totalBonus),
+        crew?._timeAcceleration
+      )
     ];
   }, [asteroid, hopperBonus, originLot?.id, powered, propellantBonus, ship]);
 
