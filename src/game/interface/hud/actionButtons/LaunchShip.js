@@ -24,7 +24,7 @@ const LaunchShip = ({ asteroid, lot, onSetAction, _disabled, ...props }) => {
   const ship = useMemo(() => props.ship || crewedShip, [crewedShip, props.ship]);
 
   const { data: shipCrews } = useStationedCrews(ship);
-  
+
   const { currentUndockingAction } = useShipDockingManager(ship?.id);
   const { currentDeliveries } = useDeliveryManager(ship?.id ? { destination: { label: Entity.IDS.SHIP, id: ship?.id } } : {});
   const shipReady = useReadyAtWatcher(ship?.Ship?.readyAt);
@@ -44,8 +44,8 @@ const LaunchShip = ({ asteroid, lot, onSetAction, _disabled, ...props }) => {
     if (invReserved) return 'delivery or order pending';
 
     // check if any guest crews busy
-    if (!!(shipCrews || []).find((c) => c.id !== ship?.Control?.Controller?.id && blockTime >= c.Crew.readyAt)) {
-      return 'guest crews not ready';
+    if ((shipCrews || []).some((c) => c.id !== ship?.Control?.Controller?.id && c.Crew?.readyAt < blockTime)) {
+      return 'guest crews busy';
     }
 
     return getCrewDisabledReason({ asteroid, crew });
