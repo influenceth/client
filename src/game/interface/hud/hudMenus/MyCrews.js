@@ -37,6 +37,7 @@ const LocationCrews = ({ locationCrews, selectedCrewId, onSelectCrew }) => {
   const hydratedLocation = useHydratedLocation(locationsArrToObj(locationCrews[0].Location.locations));
   return (
     <HudMenuCollapsibleSection
+      containerHeight={152 * locationCrews.length}
       titleText={<CrewLocationLabel hydratedLocation={hydratedLocation} style={{ fontSize: 'inherit' }} />}>
       <SectionBody>
         {(locationCrews || []).map((crew, i) => {
