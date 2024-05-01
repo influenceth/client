@@ -44,7 +44,7 @@ const LaunchShip = ({ asteroid, lot, onSetAction, _disabled, ...props }) => {
     if (invReserved) return 'delivery or order pending';
 
     // check if any guest crews busy
-    if ((shipCrews || []).some((c) => c.id !== ship?.Control?.Controller?.id && c.Crew?.readyAt > blockTime)) {
+    if ((shipCrews || []).some((c) => c.id !== ship?.Control?.controller?.id && c.Crew?.readyAt > blockTime)) {
       return 'guest crews busy';
     }
 

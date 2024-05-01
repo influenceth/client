@@ -92,7 +92,7 @@ const LaunchShip = ({ asteroid, originLot, manager, ship, shipCrews, stage, ...p
   const isDeliveryPending = useMemo(() => !!(ship?.Inventories || []).find((inv) => inv.reservedMass > 0), [ship]);
 
   const isGuestCrewBusy = useMemo(() => {
-    return !!shipCrews.find((c) => c.id !== ship.Control?.Controller?.id && blockTime >= c.Crew.readyAt);
+    return shipCrews.some((c) => c.id !== ship?.Control?.controller?.id && c.Crew?.readyAt > blockTime);
   }, [blockTime, shipCrews]);
 
   const [propellantLoaded, deltaVLoaded] = useMemo(() => {
