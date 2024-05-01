@@ -986,7 +986,7 @@ const formatAsTx = (item) => {
 
     case 'FinishAllReady': {
       formatted.icon = <CheckCircleIcon />;
-      formatted.label = `Bulk Finish Actions`;
+      formatted.label = `Finish Multiple Actions`;
       break;
     }
 

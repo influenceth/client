@@ -338,7 +338,7 @@ const ActionItems = () => {
               </Filters>
             </TitleWrapper>
           )}>
-          {['all', 'ready'].includes(selectedFilter) && autoFinishCalls?.length > 1 && !isFinishingAll && <FinishAll onClick={onFinishAll}><CheckCircleIcon /> Bulk Finish Ready Items</FinishAll>}
+          {['all', 'ready'].includes(selectedFilter) && autoFinishCalls?.length > 1 && !isFinishingAll && <FinishAll onClick={onFinishAll}><CheckCircleIcon /> Finish All Ready Items</FinishAll>}
           {selectedFilter === 'hidden' && <UnhideAll onClick={onUnhideAll}><EyeIcon /> Unhide All</UnhideAll>}
           <ActionItemWrapper>
             <ActionItemContainer>
