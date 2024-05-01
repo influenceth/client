@@ -601,10 +601,12 @@ const api = {
 
     // TODO: this is outside of cache invalidation scope... may want to re-work
     const exchanges = exchangeIds.length > 0 ? await getEntities({ ids: exchangeIds, label: Entity.IDS.BUILDING, components: ['Building', 'Exchange', 'Location', 'Name'] }) : [];
-    return exchangeIds.map((key) => ({
-      ...buckets[key],
-      marketplace: exchanges.find(e => Number(e.id) === Number(key))
-    }));
+    return exchanges.reduce((acc, marketplace) => {
+      if (marketplace.Building.status !== Building.CONSTRUCTION_STATUSES.UNPLANNED) {
+        acc.push({ ...buckets[marketplace.id], marketplace });
+      }
+      return acc;
+    }, []);
   },
 
   getOrderSummaryByProduct: async (entity) => {
