@@ -310,6 +310,11 @@ const customConfigs = {
     isBatchable: true,
     isVirtual: true
   },
+  FinishAllReady: {
+    multisystemCalls: ({ finishCalls }) => finishCalls.map(({ key, vars }) => ({ system: key, vars })),
+    equalityTest: true,
+    isVirtual: true,
+  },
   InitializeAndManageAsteroid: {
     multisystemCalls: ['InitializeAsteroid', 'ManageAsteroid'],
     equalityTest: ['asteroid.id'],

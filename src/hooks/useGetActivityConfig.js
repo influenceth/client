@@ -25,6 +25,8 @@ const getActivityConfig = (queryClient, defaultViewingAs) => (activity, override
 
   const actionItem = config?.getActionItem ? config.getActionItem(activity.event, viewingAs, prepopped) : null;
 
+  const getActionItemFinishCall = config?.getActionItemFinishCall ? config.getActionItemFinishCall(activity, prepopped) : null;
+
   const invalidations = config?.getInvalidations ? config.getInvalidations(activity, prepopped) : [];
 
   const onBeforeReceived = config?.onBeforeReceived ? config.onBeforeReceived(activity) : (async () => {});
@@ -46,6 +48,7 @@ const getActivityConfig = (queryClient, defaultViewingAs) => (activity, override
 
   return {
     actionItem,
+    getActionItemFinishCall,
     invalidations,
     logContent,
     isActionItemHidden,

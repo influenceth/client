@@ -42,6 +42,7 @@ import {
   CoreSampleIcon,
   WarningIcon,
   EditIcon,
+  CheckCircleIcon,
 } from '~/components/Icons';
 import formatters from '~/lib/formatters';
 import { getProcessorProps, locationsArrToObj, ucfirst } from '~/lib/utils';
@@ -980,6 +981,12 @@ const formatAsTx = (item) => {
       formatted.label = `Purchase Deposit`;
       formatted.asteroidId = location?.asteroidId;
       formatted.lotId = location?.lotId;
+      break;
+    }
+
+    case 'FinishAllReady': {
+      formatted.icon = <CheckCircleIcon />;
+      formatted.label = `Bulk Finish Actions`;
       break;
     }
 

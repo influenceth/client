@@ -239,16 +239,6 @@ const useShipTravelManager = (shipId) => {
   }, [caller_crew, destination, proposedTravelSolution, shipId]);
 
   const arrive = useCallback(() => {
-    console.log(
-      'TransitBetweenFinish',
-      {
-        caller_crew
-      },
-      {
-        destination,
-        shipId
-      }
-    );
     execute(
       'TransitBetweenFinish',
       {
