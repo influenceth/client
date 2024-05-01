@@ -796,6 +796,7 @@ const formatAsTx = (item) => {
       break;
     }
 
+    case 'InitializeAndStartTransit':
     case 'TransitBetweenStart': {
       formatted.icon = <SetCourseIcon />;
       formatted.label = item.meta?.destination ? `Departure for ${formatters.asteroidName(item.meta?.destination)}` : `Departure Sequence`;

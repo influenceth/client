@@ -447,7 +447,7 @@ const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, co
         (attachTo || scene).remove(mesh);
       });
     };
-  }, [visibleResultTally, texturesLoaded, lotUseTallies?.total]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [visibleResultTally, texturesLoaded, lotUseTallies]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Create mesh for core samples
   useEffect(() => {

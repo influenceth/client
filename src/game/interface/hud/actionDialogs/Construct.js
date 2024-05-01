@@ -174,6 +174,7 @@ const Construct = ({ asteroid, lot, constructionManager, stage, ...props }) => {
         }}
         actionCrew={crew}
         location={{ asteroid, lot }}
+        delayUntil={currentConstructionAction?.startTime || crew?.Crew?.readyAt}
         crewAvailableTime={crewTimeRequirement}
         taskCompleteTime={taskTimeRequirement}
         onClose={props.onClose}
@@ -275,6 +276,7 @@ const Construct = ({ asteroid, lot, constructionManager, stage, ...props }) => {
         goLabel="Construct"
         onGo={startConstruction}
         finalizeLabel="Complete"
+        isSequenceable
         onFinalize={finishConstruction}
         stage={stage}
         waitForCrewReady

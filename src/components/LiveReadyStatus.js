@@ -35,6 +35,7 @@ const StatusContainer = styled.div`
     font-weight: bold;
     padding-left: 6px;
     text-transform: uppercase;
+    white-space: nowrap;
   }
   & > ${IconWrapper} {
     align-items: center;

@@ -62,7 +62,7 @@ const useConstructionManager = (lotId) => {
 
       if (actionItem) {
         current._cachedData = actionItem.data;
-        current.startTime = actionItem.event.timestamp;
+        current.startTime = actionItem._startTime || actionItem.event.timestamp;
       } else {
         current._isMyAction = false;
       }

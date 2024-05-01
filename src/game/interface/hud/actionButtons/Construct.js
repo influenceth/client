@@ -25,10 +25,10 @@ const Construct = ({ asteroid, crew, lot, onSetAction, _disabled }) => {
 
   const disabledReason = useMemo(() => {
     if (_disabled) return 'loading...';
-    return constructionStatus === 'PLANNED' ? getCrewDisabledReason({ asteroid, crew }) : '';
+    return constructionStatus === 'PLANNED' ? getCrewDisabledReason({ asteroid, crew, isSequenceable: true }) : '';
   }, [_disabled, asteroid, constructionStatus, crew]);
 
-  const attention = !disabledReason && (constructionStatus === 'PLANNED' || constructionStatus === 'READY_TO_FINISH');
+  const attention = !disabledReason && constructionStatus === 'READY_TO_FINISH';
   const loading = constructionStatus === 'UNDER_CONSTRUCTION' || constructionStatus === 'FINISHING';
   return (
     <ActionButton
@@ -41,7 +41,8 @@ const Construct = ({ asteroid, crew, lot, onSetAction, _disabled }) => {
         finishTime: lot?.building?.Building?.finishTime
       }}
       icon={<ConstructIcon />}
-      onClick={handleClick} />
+      onClick={handleClick}
+      sequenceMode={!crew?._ready && constructionStatus === 'PLANNED'} />
   );
 };
 
