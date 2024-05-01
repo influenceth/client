@@ -91,6 +91,7 @@ const Crews = () => {
   }, [screenSize?.width])
 
   if (loading || !screenSize?.width) return null;
+  if (!crew) return null;
   return (
     <>
       <CrewTitle>{formatters.crewName(crew)}</CrewTitle>
