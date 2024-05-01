@@ -886,7 +886,8 @@ const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, co
     const now = Date.now();
     if (now - lastMouseUpdateTime.current < mouseThrottleTime) return;
 
-    // FINALLY, find the closest intersection
+    // FINALLY, find the closest intersection (if the mouse is on the screen)
+    if (mouseVector.x === 0 && mouseVector.y === 0) return;
     lastMouseUpdatePosition.current = mouseVector.clone();
     lastMouseUpdateTime.current = now;
     const intersections = state.raycaster.intersectObject(mouseableMesh.current);
