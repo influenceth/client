@@ -307,7 +307,9 @@ const ActionItem = ({ data, getActivityConfig }) => {
       <Status>{statuses[item._expired ? '_expired' : item.type]}</Status>
       <Label>{item.label}</Label>
       {type === 'unstarted' && item.startTime && (
-        <Delay>(+<LiveTimer target={item.startTime} maxPrecision={1} />)</Delay>
+        <LiveTimer target={item.startTime} maxPrecision={1}>
+          {(formattedTime, isTimer) => isTimer ? <Delay>(+{formattedTime})</Delay> : null}
+        </LiveTimer>
       )}
       <Details>
         <Timing>
