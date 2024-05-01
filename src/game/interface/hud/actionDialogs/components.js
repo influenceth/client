@@ -1323,7 +1323,7 @@ export const SelectionDialog = ({ children, isCompletable, open, onClose, onComp
   );
 };
 
-export const CrewSelectionDialog = ({ crews, onClose, onSelected, open, title }) => {
+export const CrewSelectionDialog = ({ crews, disabler, onClose, onSelected, open, title }) => {
   const [selection, setSelection] = useState();
 
   const onComplete = useCallback(() => {
@@ -1344,11 +1344,13 @@ export const CrewSelectionDialog = ({ crews, onClose, onSelected, open, title })
       title={title || 'Crew Selection'}>
       <div style={{ minHeight: 300 }}>
         {nonEmptyCrews.map((crew, i) => {
+          const disabled = disabler ? disabler(crew) : false;
           return (
             <CrewInputBlock
               key={crew.id}
               cardWidth={64}
               crew={crew}
+              disabled={reactBool(disabled)}
               inlineDetails
               isSelected={crew.id === selection?.id}
               onClick={() => setSelection(crew)}
@@ -1357,21 +1359,25 @@ export const CrewSelectionDialog = ({ crews, onClose, onSelected, open, title })
                   ? <CrewLocationLabel hydratedLocation={hydratedLocation} />
                   : ''
               }
-              style={{ marginBottom: 8, width: '100%' }} />
+              data-tooltip-content={disabled || null}
+              data-tooltip-id="selectionDialogTooltip"
+              style={{ marginBottom: 8, opacity: disabled ? 0.5 : 1, width: '100%' }} />
           );
         })}
         {emptyCrews.map((crew, i) => {
+          const disabled = disabler ? disabler(crew) : false;
           return (
             <CrewInputBlock
               key={crew.id}
               cardWidth={64}
               crew={crew}
+              disabled={reactBool(disabled)}
               hideCrewmates
               inlineDetails
               isSelected={crew.id === selection?.id}
               onClick={() => setSelection(crew)}
               title={i === 0 ? <div style={{ marginTop: 8, textTransform: 'none' }}>Empty Crews</div> : ''}
-              style={{ marginBottom: 8, width: '100%' }} />
+              style={{ marginBottom: 8, opacity: disabled ? 0.5 : 1, width: '100%' }} />
           );
         })}
       </div>
@@ -2486,7 +2492,7 @@ export const ActionDialogHeader = ({ action, actionCrew, crewAvailableTime, dela
                   {(formattedTime, isTimer) => {
                     const pills = [];
                     if (isTimer) {
-                      pills.push(<TimePill key="delay" type="delay"><ScheduleFullIcon /><label>Wait</label> {formattedTime}</TimePill>); 
+                      pills.push(<TimePill key="delay" type="delay"><ScheduleFullIcon /><label>Wait</label> {formattedTime}</TimePill>);
                     }
                     if (crewAvailableTime !== undefined) {
                       const delayDuration = isTimer ? (delayUntil - Math.floor(Date.now() / 1000)) : 0;
@@ -2780,8 +2786,8 @@ export const ItemSelectionSection = ({ columns = 7, label, items, onClick, stage
     );
 };
 
-export const TransferDistanceDetails = ({ distance, crewTravelBonus }) => {
-  const crewFreeTransferRadius = Asteroid.FREE_TRANSPORT_RADIUS * (crewTravelBonus?.totalBonus || 1) / (crewTravelBonus?.timeMultiplier || 1);
+export const TransferDistanceDetails = ({ distance, crewDistBonus }) => {
+  const crewFreeTransferRadius = Asteroid.FREE_TRANSPORT_RADIUS * (crewDistBonus?.totalBonus || 1);
   return (
     <TransferDistanceTitleDetails>
       {distance && distance < crewFreeTransferRadius ? (
@@ -4038,13 +4044,6 @@ const extractBonuses = (bonusObj, isTimeStat) => {
   (bonusObj.others || []).forEach(({ text, bonus, direction }) => {
     x.push({ text, bonus, direction });
   });
-  if (bonusObj.timeMultiplier > 0 && bonusObj.timeMultiplier !== 1) {
-    x.push({
-      text: `Time Acceleration`,
-      multiplier: bonusObj.timeMultiplier,
-      direction: getBonusDirection({ totalBonus: bonusObj.timeMultiplier })
-    });
-  }
 
   return x
     .filter((b) => (b.multiplier !== undefined && b.multiplier !== 1) || (b.bonus !== undefined && b.bonus !== 0))
@@ -4228,7 +4227,7 @@ export const getBonusDirection = ({ totalBonus } = {}, biggerIsBetter = true) =>
   return (biggerIsBetter === (totalBonus > 1)) ? 1 : -1;
 };
 
-export const getTripDetails = (asteroidId, crewTravelBonus, originLotIndex, steps, timeAcceleration) => {
+export const getTripDetails = (asteroidId, crewTravelBonus, crewDistBonus, originLotIndex, steps, timeAcceleration) => {
   let currentLotIndex = originLotIndex;
   let totalDistance = 0;
   let totalTime = 0;
@@ -4236,7 +4235,9 @@ export const getTripDetails = (asteroidId, crewTravelBonus, originLotIndex, step
   const tripDetails = steps.map(({ label, lotIndex, skipToLotIndex }) => {
     const stepDistance = Asteroid.getLotDistance(asteroidId, currentLotIndex, lotIndex) || 0;
     const stepTime = Time.toRealDuration(
-      Asteroid.getLotTravelTime(asteroidId, currentLotIndex, lotIndex, crewTravelBonus.totalBonus) || 0,
+      Asteroid.getLotTravelTime(
+        asteroidId, currentLotIndex, lotIndex, crewTravelBonus.totalBonus, crewDistBonus.totalBonus
+      ) || 0,
       timeAcceleration
     );
     currentLotIndex = skipToLotIndex || lotIndex;

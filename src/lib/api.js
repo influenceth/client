@@ -481,17 +481,6 @@ const api = {
     return formatESEntityData(response.data);
   },
 
-  getCrewShips: async (c) => {
-    if (!c) {
-      console.warn('missing crew id param');
-      return [];
-    }
-    return getEntities({
-      match: { 'Control.controller.uuid': Entity.packEntity({ id: c, label: Entity.IDS.CREW }) },
-      label: Entity.IDS.SHIP
-    })
-  },
-
   getCrewOpenOrders: async (c) => {
     const queryBuilder = esb.boolQuery();
 
@@ -612,10 +601,12 @@ const api = {
 
     // TODO: this is outside of cache invalidation scope... may want to re-work
     const exchanges = exchangeIds.length > 0 ? await getEntities({ ids: exchangeIds, label: Entity.IDS.BUILDING, components: ['Building', 'Exchange', 'Location', 'Name'] }) : [];
-    return exchangeIds.map((key) => ({
-      ...buckets[key],
-      marketplace: exchanges.find(e => Number(e.id) === Number(key))
-    }));
+    return exchanges.reduce((acc, marketplace) => {
+      if (marketplace.Building.status !== Building.CONSTRUCTION_STATUSES.UNPLANNED) {
+        acc.push({ ...buckets[marketplace.id], marketplace });
+      }
+      return acc;
+    }, []);
   },
 
   getOrderSummaryByProduct: async (entity) => {

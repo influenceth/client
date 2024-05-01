@@ -80,6 +80,11 @@ const SurfaceTransfer = ({
     return getCrewAbilityBonuses(Crewmate.ABILITY_IDS.HOPPER_TRANSPORT_TIME, crew) || {};
   }, [crew]);
 
+  const crewDistBonus = useMemo(() => {
+    if (!crew) return {};
+    return getCrewAbilityBonuses(Crewmate.ABILITY_IDS.FREE_TRANSPORT_DISTANCE, crew) || {};
+  }, [crew]);
+
   const [tab, setTab] = useState(0);
   const [transferSelectorOpen, setTransferSelectorOpen] = useState();
   const [selectedItems, setSelectedItems] = useState(props.preselect?.selectedItems || {});
@@ -212,11 +217,13 @@ const SurfaceTransfer = ({
     const destinationLotIndex = Lot.toIndex(destinationLot?.id);
     const transportDistance = Asteroid.getLotDistance(asteroid?.id, originLotIndex, destinationLotIndex);
     const transportTime = Time.toRealDuration(
-      Asteroid.getLotTravelTime(asteroid?.id, originLotIndex, destinationLotIndex, crewTravelBonus.totalBonus),
+      Asteroid.getLotTravelTime(
+        asteroid?.id, originLotIndex, destinationLotIndex, crewTravelBonus.totalBonus, crewDistBonus.totalBonus
+      ),
       crew?._timeAcceleration
     );
     return [transportDistance, transportTime];
-  }, [asteroid?.id, originLot?.id, destinationLot?.id, crewTravelBonus, crew?._timeAcceleration]);
+  }, [asteroid?.id, originLot?.id, destinationLot?.id, crewDistBonus, crewTravelBonus, crew?._timeAcceleration]);
 
   const { totalMass, totalVolume } = useMemo(() => {
     return Object.keys(selectedItems).reduce((acc, resourceId) => {
@@ -413,7 +420,7 @@ const SurfaceTransfer = ({
 
           <InventoryInputBlock
             title="Destination"
-            titleDetails={<TransferDistanceDetails distance={transportDistance} crewTravelBonus={crewTravelBonus} />}
+            titleDetails={<TransferDistanceDetails distance={transportDistance} crewDistBonus={crewDistBonus} />}
             disabled={stage !== actionStage.NOT_STARTED || (fixedDestination && destinationInventoryTally === 1)}
             entity={destination}
             inventorySlot={destinationInventory?.slot}

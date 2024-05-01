@@ -142,19 +142,18 @@ const config = {
     bloom: true
   },
   accessControl: {
-    enabled: true,
+    enabled: false,
     orientation: 'equator',  // equator, planar // TODO: equator does not support camera following
     bloom: { disc: false, circle: true, sign: true }
   },
   shipCircle: {
-    enabled: true,
+    enabled: false,
     dashed: false,
     hideCircle: false,
     onEmpty: 'show', // dash, hide
     orientation: 'equator', // equator, inclination, planar
     bloom: { circle: false, ship: true },
     scale: 1.0,//0.8,//1.2,
-    shipsPerLot: 0.0001
   }
 };
 
@@ -331,7 +330,6 @@ const Telemetry = ({ axis, getPosition, getRotation, hasAccess, initialCameraPos
     }
 
     if (config.shipCircle.enabled) {
-      // const shipTally = Math.min(200, Math.round(config.shipCircle.shipsPerLot * 4 * Math.PI * Math.pow(radius / 1e3, 2)) + Math.round(Math.random()));
       if (shipTally > 0 || config.shipCircle.onEmpty !== 'hide') {
         const shipSprite = new TextureLoader().load('/disc.png');
 
@@ -505,25 +503,25 @@ const Telemetry = ({ axis, getPosition, getRotation, hasAccess, initialCameraPos
     // helper.current = new AxesHelper(2 * radius);
     // helper.current = new BoxHelper(accessGroup.current);
 
-    // if (accessGroup.current) attachTo.add(accessGroup.current);
-    // if (equatorCircle.current) attachTo.add(equatorCircle.current);
+    if (accessGroup.current) attachTo.add(accessGroup.current);
+    if (equatorCircle.current) attachTo.add(equatorCircle.current);
     if (helper.current) attachTo.add(helper.current);
-    // if (inclinationCircle.current) attachTo.add(inclinationCircle.current);
+    if (inclinationCircle.current) attachTo.add(inclinationCircle.current);
     if (rotationalMarkersGroup.current) attachTo.add(rotationalMarkersGroup.current);
-    // if (planarCircle.current) attachTo.add(planarCircle.current);
+    if (planarCircle.current) attachTo.add(planarCircle.current);
     if (rotationalAxis.current) attachTo.add(rotationalAxis.current);
-    // if (shipGroup.current) attachTo.add(shipGroup.current);
+    if (shipGroup.current) attachTo.add(shipGroup.current);
     if (trajectory.current) attachTo.add(trajectory.current);
 
     return () => {
-      // if (accessGroup.current) attachTo.remove(accessGroup.current);
-      // if (equatorCircle.current) attachTo.remove(equatorCircle.current);
+      if (accessGroup.current) attachTo.remove(accessGroup.current);
+      if (equatorCircle.current) attachTo.remove(equatorCircle.current);
       if (helper.current) attachTo.remove(helper.current); // eslint-disable-line react-hooks/exhaustive-deps
-      // if (inclinationCircle.current) attachTo.remove(inclinationCircle.current);
+      if (inclinationCircle.current) attachTo.remove(inclinationCircle.current);
       if (rotationalMarkersGroup.current) attachTo.remove(rotationalMarkersGroup.current);
-      // if (planarCircle.current) attachTo.remove(planarCircle.current);
+      if (planarCircle.current) attachTo.remove(planarCircle.current);
       if (rotationalAxis.current) attachTo.remove(rotationalAxis.current);
-      // if (shipGroup.current) attachTo.remove(shipGroup.current);
+      if (shipGroup.current) attachTo.remove(shipGroup.current);
       if (trajectory.current) attachTo.remove(trajectory.current);
     };
   }, [!attachTo, radius]); // eslint-disable-line react-hooks/exhaustive-deps

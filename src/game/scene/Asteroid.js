@@ -160,7 +160,7 @@ const AsteroidComponent = () => {
 
   const shipsInOrbitTally = useMemo(() => {
     return (ships || []).filter((ship) => {
-      return ship.Location.location.label === Entity.IDS.ASTEROID && ship.Ship.status === Ship.STATUSES.AVAILABLE;
+      return ship.Location.location.label === Entity.IDS.ASTEROID && !ship.Ship.transitDestination && ship.Ship.status === Ship.STATUSES.AVAILABLE;
     }).length;
   }, [ships]);
 

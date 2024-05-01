@@ -43,6 +43,11 @@ const StationCrew = ({ asteroid, destination: rawDestination, lot, origin: rawOr
     return getCrewAbilityBonuses(Crewmate.ABILITY_IDS.HOPPER_TRANSPORT_TIME, crew) || {};
   }, [crew]);
 
+  const crewDistBonus = useMemo(() => {
+    if (!crew) return {};
+    return getCrewAbilityBonuses(Crewmate.ABILITY_IDS.FREE_TRANSPORT_DISTANCE, crew) || {};
+  }, [crew]);
+
   const origin = useMemo(() => {
     if (!rawOrigin) return null;
     const newOrigin = cloneDeep(rawOrigin);
@@ -72,11 +77,17 @@ const StationCrew = ({ asteroid, destination: rawDestination, lot, origin: rawOr
     return [
       Asteroid.getLotDistance(asteroid?.id, origin._location.lotIndex || 0, destination._location.lotIndex || 0),
       Time.toRealDuration(
-        Asteroid.getLotTravelTime(asteroid?.id, origin._location.lotIndex || 0, destination._location.lotIndex || 0, crewTravelBonus.totalBonus),
+        Asteroid.getLotTravelTime(
+          asteroid?.id,
+          origin._location.lotIndex || 0,
+          destination._location.lotIndex || 0,
+          crewTravelBonus.totalBonus,
+          crewDistBonus.totalBonus
+        ),
         crew?._timeAcceleration
       )
     ];
-  }, [asteroid?.id, origin?.id, destination?.id, crewTravelBonus, crew?._timeAcceleration]);
+  }, [asteroid?.id, origin?.id, destination?.id, crewDistBonus, crewTravelBonus, crew?._timeAcceleration]);
 
   const [crewTimeRequirement, taskTimeRequirement] = useMemo(() => {
     return [ travelTime, 0 ];
@@ -178,7 +189,7 @@ const StationCrew = ({ asteroid, destination: rawDestination, lot, origin: rawOr
                 titleDetails={
                   origin._location.lotIndex === 0 && destination._location.lotIndex === 0
                     ? <TransferDistanceTitleDetails><label>Orbital Transfer</label></TransferDistanceTitleDetails>
-                    : <TransferDistanceDetails distance={travelDistance} crewTravelBonus={crewTravelBonus} />
+                    : <TransferDistanceDetails distance={travelDistance} crewDistBonus={crewDistBonus} />
                 }
                 ship={destination}
                 disabled={stage !== actionStages.NOT_STARTED} />
@@ -189,7 +200,7 @@ const StationCrew = ({ asteroid, destination: rawDestination, lot, origin: rawOr
                 titleDetails={
                   origin._location.lotIndex === 0 && destination._location.lotIndex === 0
                     ? <TransferDistanceTitleDetails><label>Orbital Transfer</label></TransferDistanceTitleDetails>
-                    : <TransferDistanceDetails distance={travelDistance} crewTravelBonus={crewTravelBonus} />
+                    : <TransferDistanceDetails distance={travelDistance} crewDistBonus={crewDistBonus} />
                 }
                 lot={destinationLot}
                 disabled={stage !== actionStages.NOT_STARTED} />

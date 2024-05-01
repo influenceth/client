@@ -1,7 +1,7 @@
 import { useCallback, useMemo } from 'react';
 import { Entity, Ship } from '@influenceth/sdk';
 
-import useOwnedShips from '~/hooks/useOwnedShips';
+import useControlledShips from '~/hooks/useControlledShips';
 import useShip from '~/hooks/useShip';
 import useStore from '~/hooks/useStore';
 import { useLotLink } from './LotLink';
@@ -66,18 +66,18 @@ export const useShipLink = ({ shipId, zoomToShip }) => {
 export const ShipLink = ({ shipId, zoomToShip }) => {
   const onClick = useShipLink({ shipId, zoomToShip });
 
-  const { data: owned, isLoading: ownedAreLoading } = useOwnedShips();
+  const { data: controlled, isLoading: controlledAreLoading } = useControlledShips();
   const shipName = useMemo(() => {
-    if (owned) {
-      const match = owned.find(a => a.id === Number(shipId));
+    if (controlled) {
+      const match = controlled.find(a => a.id === Number(shipId));
       return match?.name || `Ship #${shipId.toLocaleString()}`;
     }
     return null;
-  }, [ owned, shipId ])
+  }, [ controlled, shipId ])
 
   return (
     <OnClickLink onClick={onClick}>
-      {ownedAreLoading
+      {controlledAreLoading
         ? `Ship #${shipId.toLocaleString()}`
         : (shipName || <EntityName id={shipId} label={Entity.IDS.SHIP} />)}
     </OnClickLink>

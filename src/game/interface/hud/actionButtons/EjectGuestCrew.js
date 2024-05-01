@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from 'react';
-import { Entity } from '@influenceth/sdk';
+import { Entity, Permission } from '@influenceth/sdk';
 
 import { EjectPassengersIcon } from '~/components/Icons';
 import useEjectCrewManager from '~/hooks/actionManagers/useEjectCrewManager';
@@ -50,9 +50,23 @@ const EjectGuestCrew = ({ asteroid, crew, lot, ship, onSetAction, dialogProps = 
   const disabledReason = useMemo(() => {
     if (_disabled) return 'loading...';
     if (allGuestCrews?.length === 0) return 'no guests';
+    if (station) {
+      if (dialogProps?.guestId) {
+        const targetCrew = allGuestCrews.find((c) => c.id === dialogProps?.guestId);
+        const perm = Permission.getPolicyDetails(station, targetCrew)[Permission.IDS.STATION_CREW];
+        if ((perm && (perm.crewStatus === 'controller' || perm.crewStatus === 'granted'))) return 'guest has permission';
+      } else {
+        const atLeastOneCrewIsEjectable = allGuestCrews.find((c) => {
+          const perm = Permission.getPolicyDetails(station, c)[Permission.IDS.STATION_CREW];
+          return !(perm && (perm.crewStatus === 'controller' || perm.crewStatus === 'granted'));
+        });
+        if (!atLeastOneCrewIsEjectable) return 'all guests have permission';
+      }
+    }
+
     // TODO: does controller need to be on asteroid? on entity?
     return getCrewDisabledReason({ crew });
-  }, [_disabled, allGuestCrews, asteroid, crew]);
+  }, [_disabled, allGuestCrews, asteroid, crew, station]);
 
   return (
     <ActionButton

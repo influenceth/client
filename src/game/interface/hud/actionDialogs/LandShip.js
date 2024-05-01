@@ -52,9 +52,14 @@ const LandShip = ({ asteroid, manager, ship, stage, ...props }) => {
     || undefined;
   const { data: destinationLot, isLoading: destLotLoading } = useLot(destinationLotId);
 
-  const [hopperBonus, propellantBonus] = useMemo(() => {
+  const [hopperBonus, distBonus, propellantBonus] = useMemo(() => {
     if (!crew) return {};
-    const bonusIds = [Crewmate.ABILITY_IDS.HOPPER_TRANSPORT_TIME, Crewmate.ABILITY_IDS.PROPELLANT_EXHAUST_VELOCITY];
+    const bonusIds = [
+      Crewmate.ABILITY_IDS.HOPPER_TRANSPORT_TIME,
+      Crewmate.ABILITY_IDS.FREE_TRANSPORT_DISTANCE,
+      Crewmate.ABILITY_IDS.PROPELLANT_EXHAUST_VELOCITY
+    ];
+
     const abilities = getCrewAbilityBonuses(bonusIds, crew) || {};
     return bonusIds.map((id) => abilities[id] || {});
   }, [crew]);
@@ -72,9 +77,12 @@ const LandShip = ({ asteroid, manager, ship, stage, ...props }) => {
       escapeVelocity,
       propellantRequired,
       0, // TODO: poweredTime may be a thing in the future
-      Time.toRealDuration(Asteroid.getLotTravelTime(asteroid?.id, 0, destinationLotIndex, hopperBonus.totalBonus), crew?._timeAcceleration)
+      Time.toRealDuration(
+        Asteroid.getLotTravelTime(asteroid?.id, 0, destinationLotIndex, hopperBonus.totalBonus, distBonus.totalBonus),
+        crew?._timeAcceleration
+      )
     ];
-  }, [asteroid, destinationLot?.id, hopperBonus, powered, propellantBonus, ship]);
+  }, [asteroid, destinationLot?.id, distBonus, hopperBonus, powered, propellantBonus, ship]);
 
   const [propellantLoaded, deltaVLoaded] = useMemo(() => {
     if (!ship) return 0;

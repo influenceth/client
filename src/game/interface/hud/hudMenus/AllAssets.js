@@ -11,7 +11,7 @@ import formatters from '~/lib/formatters';
 import useCrewContext from '~/hooks/useCrewContext';
 import useControlledAsteroids from '~/hooks/useControlledAsteroids';
 import useOwnedAsteroids from '~/hooks/useOwnedAsteroids';
-import useOwnedShips from '~/hooks/useOwnedShips';
+import useControlledShips from '~/hooks/useControlledShips';
 import useStore from '~/hooks/useStore';
 import theme from '~/theme';
 import { HudMenuCollapsibleSection, majorBorderColor } from './components/components';
@@ -115,7 +115,7 @@ const AllAssets = ({ onClose }) => {
   const updateZoomStatus = useStore(s => s.dispatchZoomStatusChanged);
   const { data: controlledAsteroids, isLoading: isControlledLoading } = useControlledAsteroids();
   const { data: ownedAsteroids, isLoading: isOwnedLoading } = useOwnedAsteroids();
-  const { data: ownedShips } = useOwnedShips(); // TODO: filter for AVAILABLE/IN_FLIGHT
+  const { data: controlledShips } = useControlledShips(); // TODO: filter for AVAILABLE/IN_FLIGHT
 
   const [rendersReady, setRendersReady] = useState(0);
 
@@ -150,7 +150,7 @@ const AllAssets = ({ onClose }) => {
         <HudMenuCollapsibleSection
           titleText={`Ships`}
           collapsed>
-          {(ownedShips || []).map((ship) => <ShipRow key={ship.id} ship={ship} />)}
+          {(controlledShips || []).map((ship) => <ShipRow key={ship.id} ship={ship} />)}
         </HudMenuCollapsibleSection>
         
         <HudMenuCollapsibleSection

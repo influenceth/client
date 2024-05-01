@@ -16,7 +16,7 @@ import { useShipLink } from '~/components/ShipLink';
 import { getShipIcon } from '~/lib/assetUtils';
 import useBuilding from '~/hooks/useBuilding';
 import useCrewContext from '~/hooks/useCrewContext';
-import useOwnedShips from '~/hooks/useOwnedShips';
+import useControlledShips from '~/hooks/useControlledShips';
 import formatters from '~/lib/formatters';
 
 const Wrapper = styled.div`
@@ -331,7 +331,7 @@ const AsteroidAssets = () => {
   const asteroidId = useStore(s => s.asteroids.origin);
   const { data: asteroid } = useAsteroid(asteroidId);
   const { data: buildings, isLoading: buildingsLoading } = useAsteroidCrewBuildings(asteroidId);
-  const { data: allShips, isLoading: shipsLoading } = useOwnedShips();
+  const { data: allShips, isLoading: shipsLoading } = useControlledShips();
   
   const ships = useMemo(() => {
     return (allShips || [])
