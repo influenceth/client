@@ -15,6 +15,7 @@ import { entitiesCacheKey } from '~/lib/cacheKey';
 const ActionItemContext = React.createContext();
 
 const sequenceableSystems = [
+  'ConstructionStarted',
   'MaterialProcessingStarted',
   'ResourceExtractionStarted',
   'SamplingDepositStarted',
