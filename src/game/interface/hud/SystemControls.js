@@ -147,7 +147,7 @@ const SystemControls = () => {
     if (process.env.REACT_APP_HELP_URL) {
       items.push({
         onClick: openHelpChannel,
-        content: <><BugIcon /> <label>Bug Report</label></>
+        content: <><BugIcon /> <label>Support</label></>
       })
     }
 
