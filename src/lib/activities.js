@@ -82,6 +82,8 @@ const getApplicablePermissions = (entity) => {
     .map((id) => id)
 }
 
+const isInFinishAllTx = (tx, txCheck) => tx.key === 'FinishAllReady' && (tx.vars.finishCalls || []).find(txCheck);
+
 
 // TODO: instead of guessing at what should be invalidated with each event,
 //  should we just have a more standard invalidation on ComponentUpdated
@@ -440,11 +442,17 @@ const activities = {
       };
     },
     getIsActionItemHidden: ({ returnValues }) => (pendingTransactions) => {
-      return pendingTransactions.find((tx) => (
-        tx.key === 'ConstructionFinish'
-        && tx.vars.building.id === returnValues.building.id
-      ))
+      const txCheck = (tx) => tx.key === 'ConstructionFinish' && tx.vars.building.id === returnValues.building.id;
+      return pendingTransactions.find((tx) => txCheck(tx) || isInFinishAllTx(tx, txCheck));
     },
+    getActionItemFinishCall: (actionItem) => (caller_crew) => ({
+      key: 'ConstructionFinish',
+      vars: {
+        building: actionItem?.event?.returnValues?.building,
+        caller_crew
+      }
+    }),
+
     getInvalidations: ({ event: { returnValues } }, { building = {} }) => {
       const { asteroidId, lotId } = locationsArrToObj(building?.Location?.locations || []) || {};
       return [
@@ -965,11 +973,16 @@ const activities = {
       };
     },
     getIsActionItemHidden: ({ returnValues }) => (pendingTransactions) => {
-      return pendingTransactions.find((tx) => (
-        tx.key === 'ReceiveDelivery'
-        && tx.vars.delivery.id === returnValues.delivery.id
-      ))
+      const txCheck = (tx) => tx.key === 'ReceiveDelivery' && tx.vars.delivery.id === returnValues.delivery.id;
+      return pendingTransactions.find((tx) => txCheck(tx) || isInFinishAllTx(tx, txCheck));
     },
+    getActionItemFinishCall: (actionItem) => (caller_crew) => ({
+      key: 'ReceiveDelivery',
+      vars: {
+        delivery: actionItem?.event?.returnValues?.delivery,
+        caller_crew
+      }
+    }),
 
     getInvalidations: ({ event: { returnValues, version } }) => ([
       {
@@ -1169,12 +1182,21 @@ const activities = {
       };
     },
     getIsActionItemHidden: ({ returnValues }) => (pendingTransactions) => {
-      return pendingTransactions.find((tx) => (
+      const txCheck = (tx) => (
         tx.key === 'ProcessProductsFinish'
         && tx.vars.processor.id === returnValues.processor.id
         && tx.vars.processor_slot === returnValues.processorSlot
-      ))
+      );
+      return pendingTransactions.find((tx) => txCheck(tx) || isInFinishAllTx(tx, txCheck));
     },
+    getActionItemFinishCall: (actionItem) => (caller_crew) => ({
+      key: 'ProcessProductsFinish',
+      vars: {
+        processor: actionItem?.event?.returnValues?.processor,
+        processor_slot: actionItem?.event?.returnValues?.processorSlot,
+        caller_crew
+      }
+    }),
 
     getInvalidations: ({ event: { returnValues, version } }) => ([
       { ...returnValues.processor },
@@ -1317,12 +1339,21 @@ const activities = {
       };
     },
     getIsActionItemHidden: ({ returnValues }) => (pendingTransactions) => {
-      return pendingTransactions.find((tx) => (
+      const txCheck = (tx) => (
         tx.key === 'ExtractResourceFinish'
         && tx.vars.extractor.id === returnValues.extractor.id
         && tx.vars.extractor_slot === returnValues.extractorSlot
-      ))
+      );
+      return pendingTransactions.find((tx) => txCheck(tx) || isInFinishAllTx(tx, txCheck));
     },
+    getActionItemFinishCall: (actionItem) => (caller_crew) => ({
+      key: 'ExtractResourceFinish',
+      vars: {
+        extractor: actionItem?.event?.returnValues?.extractor,
+        extractor_slot: actionItem?.event?.returnValues?.extractorSlot,
+        caller_crew
+      }
+    }),
 
     getInvalidations: ({ event: { returnValues, version } }, { extractor = {} }) => {
       const { asteroidId, lotId } = locationsArrToObj(extractor?.Location?.locations || []) || {};
@@ -1423,11 +1454,17 @@ const activities = {
       }
     }),
     getIsActionItemHidden: ({ returnValues }) => (pendingTransactions) => {
-      return pendingTransactions.find((tx) => (
-        tx.key === 'ScanResourcesFinish'
-        && tx.vars.asteroid.id === returnValues.asteroid.id
-      ))
+      const txCheck = (tx) => tx.key === 'ScanResourcesFinish' && tx.vars.asteroid.id === returnValues.asteroid.id;
+      return pendingTransactions.find((tx) => txCheck(tx) || isInFinishAllTx(tx, txCheck));
     },
+    getActionItemFinishCall: (actionItem) => (caller_crew) => ({
+      key: 'ScanResourcesFinish',
+      vars: {
+        asteroid: actionItem?.event?.returnValues?.asteroid,
+        caller_crew
+      }
+    }),
+
     getInvalidations: ({ event: { returnValues } }) => ([
       { ...returnValues.asteroid },
       ['actionItems'],
@@ -1483,11 +1520,18 @@ const activities = {
       }
     }),
     getIsActionItemHidden: ({ returnValues }) => (pendingTransactions) => {
-      return pendingTransactions.find((tx) => (
-        tx.key === 'SampleDepositFinish'
-        && tx.vars.deposit.id === returnValues.deposit.id
-      ));
+      const txCheck = (tx) => tx.key === 'SampleDepositFinish' && tx.vars.deposit.id === returnValues.deposit.id;
+      return pendingTransactions.find((tx) => txCheck(tx) || isInFinishAllTx(tx, txCheck));
     },
+    getActionItemFinishCall: (actionItem) => (caller_crew) => ({
+      key: 'SampleDepositFinish',
+      vars: {
+        deposit: actionItem?.event?.returnValues?.deposit,
+        lot: actionItem?.event?.returnValues?.lot,
+        caller_crew
+      }
+    }),
+
     getInvalidations: ({ event: { returnValues } }) => ([
       {
         ...returnValues.deposit,
@@ -1866,11 +1910,17 @@ const activities = {
       }
     }),
     getIsActionItemHidden: ({ returnValues }) => (pendingTransactions) => {
-      return pendingTransactions.find((tx) => (
-        tx.key === 'ScanSurfaceFinish'
-        && tx.vars.asteroid.id === returnValues.asteroid.id
-      ))
+      const txCheck = (tx) => tx.key === 'ScanSurfaceFinish' && tx.vars.asteroid.id === returnValues.asteroid.id;
+      return pendingTransactions.find((tx) => txCheck(tx) || isInFinishAllTx(tx, txCheck));
     },
+    getActionItemFinishCall: (actionItem) => (caller_crew) => ({
+      key: 'ScanSurfaceFinish',
+      vars: {
+        asteroid: actionItem?.event?.returnValues?.asteroid,
+        caller_crew
+      }
+    }),
+
     getInvalidations: ({ event: { returnValues } }) => ([
       { ...returnValues.asteroid },
       ['actionItems'],
@@ -1957,8 +2007,13 @@ const activities = {
       };
     },
     getIsActionItemHidden: ({ returnValues }) => (pendingTransactions) => {
-      return pendingTransactions.find((tx) => tx.key === 'TransitBetweenFinish')
+      const txCheck = (tx) => tx.key === 'TransitBetweenFinish';
+      return pendingTransactions.find((tx) => txCheck(tx) || isInFinishAllTx(tx, txCheck));
     },
+    getActionItemFinishCall: (actionItem) => (caller_crew) => ({
+      key: 'TransitBetweenFinish',
+      vars: { caller_crew }
+    }),
 
     getInvalidations: ({ event: { returnValues, version } }) => ([
       {

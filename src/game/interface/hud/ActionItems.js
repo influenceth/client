@@ -1,16 +1,17 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import styled from 'styled-components';
 
-import { BellIcon, EyeIcon, LoggedEventsIcon } from '~/components/Icons';
+import { BellIcon, CheckCircleIcon, EyeIcon, LoggedEventsIcon } from '~/components/Icons';
 import CollapsibleSection from '~/components/CollapsibleSection';
+import ChainTransactionContext from '~/contexts/ChainTransactionContext';
 import useActionItems from '~/hooks/useActionItems';
-import useSession from '~/hooks/useSession';
 import useCrewContext from '~/hooks/useCrewContext';
 import useGetActivityConfig from '~/hooks/useGetActivityConfig';
+import useSession from '~/hooks/useSession';
+import useStore from '~/hooks/useStore';
 import { hexToRGB } from '~/theme';
 import ActionItem, { ITEM_WIDTH, TRANSITION_TIME } from './ActionItem';
-import useStore from '~/hooks/useStore';
 
 export const SECTION_WIDTH = ITEM_WIDTH + 30;
 
@@ -172,7 +173,7 @@ const ActionItemCategory = styled.div`
   }
 `;
 
-const UnhideAll = styled.div`
+const AllAction = styled.div`
   align-items: center;
   color: ${p => p.theme.colors.main};
   cursor: ${p => p.theme.cursors.active};
@@ -181,19 +182,31 @@ const UnhideAll = styled.div`
   height: 34px;
   margin-bottom: -8px;
   pointer-events: all;
+  &:hover {
+    text-decoration: underline;
+  }
+`;
+
+const FinishAll = styled(AllAction)`
+  color: ${p => p.theme.colors.success};
+  & > svg {
+    margin-left: 9px;
+    margin-right: 9px;
+  }
+`;
+
+const UnhideAll = styled(AllAction)`
   & > svg {
     font-size: 22px;
     margin-right: 4px;
-  }
-  &:hover {
-    text-decoration: underline;
   }
 `;
 
 const ActionItems = () => {
   const { authenticated } = useSession();
   const { allVisibleItems: allItems } = useActionItems();
-  const { captain } = useCrewContext();
+  const { captain, crew } = useCrewContext();
+  const { execute, getStatus } = useContext(ChainTransactionContext);
   const getActivityConfig = useGetActivityConfig();
 
   const dispatchUnhideAllActionItems = useStore(s => s.dispatchUnhideAllActionItems);
@@ -235,6 +248,30 @@ const ActionItems = () => {
     setSelectedFilter('all');
     setLastClick(Date.now());
   }, []);
+
+  const isFinishingAll = useMemo(
+    () => getStatus('FinishAllReady') === 'pending',
+    [getStatus]
+  );
+
+  const autoFinishCalls = useMemo(() => {
+    return allItems
+      .map((a) => {
+        if (a.type === 'ready') {
+          const c = getActivityConfig(a);
+          if (c.getActionItemFinishCall) {
+            return c.getActionItemFinishCall({ id: crew?.id, label: crew?.label });
+          }
+        }
+        return null;
+      })
+      .filter((a) => !!a);
+  }, [allItems, crew, getActivityConfig]);
+
+  const onFinishAll = useCallback(() => {
+    if (isFinishingAll) return;
+    execute('FinishAllReady', { finishCalls: autoFinishCalls });
+  }, [autoFinishCalls, execute, isFinishingAll]);
 
   const tallies = useMemo(() => {
     return (displayItems || []).reduce(
@@ -301,6 +338,7 @@ const ActionItems = () => {
               </Filters>
             </TitleWrapper>
           )}>
+          {['all', 'ready'].includes(selectedFilter) && autoFinishCalls?.length > 1 && !isFinishingAll && <FinishAll onClick={onFinishAll}><CheckCircleIcon /> Finish All Ready Items</FinishAll>}
           {selectedFilter === 'hidden' && <UnhideAll onClick={onUnhideAll}><EyeIcon /> Unhide All</UnhideAll>}
           <ActionItemWrapper>
             <ActionItemContainer>
