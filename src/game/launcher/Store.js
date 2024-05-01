@@ -35,7 +35,8 @@ const Wrapper = styled.div`
   align-items: center;
   display: flex;
   flex-direction: row;
-  height: 100%;
+  height: 570px;
+  max-height: calc(100vh - 291px);
   justify-content: center;
   width: 100%;
 `;
@@ -57,7 +58,7 @@ const SKUInner = styled.div`
   border: 1px solid ${borderColor};
   display: flex;
   flex-direction: column;
-  height: 530px;
+  max-height: 530px;
   justify-content: space-between;
   padding: ${innerPadding}px;
   position: relative;
@@ -76,13 +77,18 @@ const Imagery = styled.div`
   display: flex;
   justify-content: center;
   padding: 10px 10px 20px;
-  & > img {
+  & > img,
+  & > svg.icon {
     height: 200px;
+    max-height: calc(100vh - 650px);
   }
 
   & > svg.icon {
-    height: 200px;
     width: auto;
+  }
+
+  @media (max-height: 720px) {
+    display: none;
   }
 `;
 
