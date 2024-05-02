@@ -85,7 +85,6 @@ const Interface = () => {
   const dispatchToggleDevTools = useStore(s => s.dispatchToggleDevTools);
 
   const handleInterfaceShortcut = useCallback((e) => {
-    console.log(e.which)
     // ctrl+f9
     if (e.ctrlKey && e.which === 120) dispatchToggleInterface();
     // ctrl+f10
