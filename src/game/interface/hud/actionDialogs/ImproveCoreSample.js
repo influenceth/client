@@ -181,7 +181,7 @@ const ImproveCoreSample = ({ asteroid, lot, coreSampleManager, currentSamplingAc
 
   const [sampleBounds, sampleTime] = useMemo(() => {
     return [
-      lotAbundance ? Deposit.getSampleBounds(lotAbundance, originalYield, sampleQualityBonus.totalBonus) : null,
+      lotAbundance ? Deposit.getSampleBounds(lotAbundance, originalYield * 1e3, sampleQualityBonus.totalBonus) : null,
       Time.toRealDuration(Deposit.getSampleTime(sampleTimeBonus.totalBonus), crew?._timeAcceleration)
     ];
   }, [lotAbundance, originalYield, sampleQualityBonus, sampleTimeBonus, crew?._timeAcceleration]);
@@ -235,7 +235,7 @@ const ImproveCoreSample = ({ asteroid, lot, coreSampleManager, currentSamplingAc
       )
     },
     {
-      label: 'Discovery Minimum',
+      label: 'Improved Minimum',
       value: sampleBounds ? `${formatSampleMass(sampleBounds?.lower)} tonnes` : '',
       direction: sampleQualityBonus.totalBonus > 1 ? getBonusDirection(sampleQualityBonus) : 0,
       tooltip: sampleQualityBonus.totalBonus > 1 && (
@@ -246,7 +246,7 @@ const ImproveCoreSample = ({ asteroid, lot, coreSampleManager, currentSamplingAc
       )
     },
     {
-      label: 'Discovery Maximum',
+      label: 'Improved Maximum',
       value: sampleBounds ? `${formatSampleMass(sampleBounds?.upper)} tonnes` : '',
       direction: sampleQualityBonus.totalBonus < 1 ? getBonusDirection(sampleQualityBonus) : 0,
       tooltip: sampleQualityBonus.totalBonus < 1 && (
