@@ -20,8 +20,8 @@ const SceneBanner = () => {
       visible: openHudMenu === 'BELT_MAP_SEARCH' || !isAssetSearchMatchingDefault('asteroidsMapped')
     },
     searchLots: {
-      enabled: zoomStatus === 'in' && !zoomScene,
-      visible: openHudMenu === 'ASTEROID_MAP_SEARCH' || !isAssetSearchMatchingDefault('lotsMapped')
+      // enabled: false && zoomStatus === 'in' && !zoomScene,
+      // visible: openHudMenu === 'ASTEROID_MAP_SEARCH' || !isAssetSearchMatchingDefault('lotsMapped')
     },
     travel: {
       enabled: zoomStatus === 'out',

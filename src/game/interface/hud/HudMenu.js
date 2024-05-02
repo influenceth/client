@@ -131,17 +131,22 @@ const Button = styled.div`
 
   ${p => p.badge > 0 && `
     &:before {
-      color: white;
-      content: "${p.badge > 9 ? '9+' : p.badge}";
-      background: ${p.theme.colors.main};
+      align-items: center;
+      background: ${p.theme.colors[p.selected ? 'darkMain' : 'main']};
+      border: 1px solid rgba(15, 15, 15, 0.85);
       border-radius: 20px;
-      font-size: 12px;
-      padding: 1px 0;
+      color: white;
+      content: "${p.badge > 9 ? '9⁺' : p.badge}";
+      display: flex;
+      font-size: 13px;
+      font-weight: bold;
+      height: 19px;
+      line-height: 0;
+      justify-content: center;
       position: absolute;
       left: 5px;
-      text-align: center;
       top: 2px;
-      width: 20px;
+      width: 19px;
     }
   `}
 `;
@@ -236,6 +241,10 @@ const HudMenu = ({ forceOpenMenu }) => {
   const zoomScene = useStore(s => s.asteroids.zoomScene);
   const zoomStatus = useStore(s => s.asteroids.zoomStatus);
   const showDevTools = useStore(s => s.graphics.showDevTools);
+  const lotFilters = useStore(s => s.assetSearch.lotsMapped?.filters);
+  const asteroidFilters = useStore(s => s.assetSearch.asteroidsMapped?.filters);
+  const isAssetSearchFilterMatchingDefault = useStore(s => s.isAssetSearchFilterMatchingDefault);
+
   const openHudMenu = useStore(s => forceOpenMenu || s.openHudMenu);
 
   const { data: asteroid } = useAsteroid(asteroidId);
@@ -298,6 +307,16 @@ const HudMenu = ({ forceOpenMenu }) => {
   useEffect(() => {
     setOpen(!!openHudMenu);
   }, [openHudMenu]);
+
+  const asteroidFilterTally = useMemo(() => {
+    return Object.keys(asteroidFilters || {})
+      .reduce((acc, fieldName) => acc + (isAssetSearchFilterMatchingDefault('asteroidsMapped', fieldName) ? 0 : 1), 0)
+  }, [asteroidFilters]);
+
+  const lotFilterTally = useMemo(() => {
+    return Object.keys(lotFilters || {})
+      .reduce((acc, fieldName) => acc + (isAssetSearchFilterMatchingDefault('lotsMapped', fieldName) ? 0 : 1), 0)
+  }, [lotFilters]);
 
   const unreadChatTally = useMemo(() => {
     return chatHistory.filter((c) => c.asteroidId === asteroidId && c.unread)?.length;
@@ -445,6 +464,8 @@ const HudMenu = ({ forceOpenMenu }) => {
         key: 'ASTEROID_MAP_SEARCH',
         label: 'Lot Search',
         icon: <LotSearchIcon />,
+        highlightIcon: lotFilterTally > 0,
+        badge: lotFilterTally,
         Component: hudMenus.SearchMap,
         noDetail: true,
         componentProps: { assetType: 'lotsMapped' },
@@ -478,6 +499,8 @@ const HudMenu = ({ forceOpenMenu }) => {
         key: 'BELT_MAP_SEARCH',
         label: 'System Search',
         icon: <AsteroidSearchIcon />,
+        badge: asteroidFilterTally,
+        highlightIcon: asteroidFilterTally > 0,
         Component: hudMenus.SearchMap,
         componentProps: { assetType: 'asteroidsMapped' },
         detailType: 'list',
@@ -588,7 +611,19 @@ const HudMenu = ({ forceOpenMenu }) => {
     }
 
     return [menuButtons, pageButtons];
-  }, [asteroid, asteroidId, crew?.id, destination, lot, lotId, showDevTools, unreadChatTally, zoomStatus, zoomScene]);
+  }, [
+    asteroid,
+    asteroidFilterTally,
+    asteroidId,
+    crew?.id,
+    destination,
+    lot,
+    lotFilterTally,
+    lotId,
+    showDevTools,
+    unreadChatTally,
+    zoomStatus,
+    zoomScene]);
 
   const { label, onDetailClick, detailType, Component, componentProps, hideInsteadOfClose, noClose, noDetail } = useMemo(() => {
     return menuButtons.find((b) => b.key === openHudMenu) || {};
