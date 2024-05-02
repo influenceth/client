@@ -107,6 +107,7 @@ const Button = styled.div`
   justify-content: center;
   margin: 3px 0;
   padding: 6px 16px;
+  position: relative;
   transition: background 250ms ease, border-color 250ms ease, color 250ms ease, opacity 250ms ease;
   width: ${buttonsWidth}px;
 
@@ -127,6 +128,22 @@ const Button = styled.div`
       }
     `
   }
+
+  ${p => p.badge > 0 && `
+    &:before {
+      color: white;
+      content: "${p.badge > 9 ? '9+' : p.badge}";
+      background: ${p.theme.colors.main};
+      border-radius: 20px;
+      font-size: 12px;
+      padding: 1px 0;
+      position: absolute;
+      left: 5px;
+      text-align: center;
+      top: 2px;
+      width: 20px;
+    }
+  `}
 `;
 
 const initialBorder = 3;
@@ -227,6 +244,7 @@ const HudMenu = ({ forceOpenMenu }) => {
   const ship = useMemo(() => zoomScene?.type === 'SHIP' ? zoomShip : lot?.surfaceShip, [lot, zoomShip, zoomScene]);
   const { data: marketplaces } = useAsteroidBuildings(asteroidId, 'Exchange');
 
+  const chatHistory = useStore(s => s.chatHistory);
   const dispatchHudMenuOpened = useStore(s => s.dispatchHudMenuOpened);
 
   const [open, setOpen] = useState();
@@ -280,6 +298,10 @@ const HudMenu = ({ forceOpenMenu }) => {
   useEffect(() => {
     setOpen(!!openHudMenu);
   }, [openHudMenu]);
+
+  const unreadChatTally = useMemo(() => {
+    return chatHistory.filter((c) => c.asteroidId === asteroidId && c.unread)?.length;
+  }, [asteroidId, chatHistory]);
 
   const [menuButtons, pageButtons] = useMemo(() => {
     const menuButtons = [];
@@ -436,6 +458,7 @@ const HudMenu = ({ forceOpenMenu }) => {
         key: 'ASTEROID_CHAT',
         label: 'Asteroid Chat',
         icon: <ChatIcon />,
+        badge: unreadChatTally,
         Component: hudMenus.AsteroidChat,
         noDetail: true,
         isVisible: scope === 'asteroid' || scope === 'lot'
@@ -565,7 +588,7 @@ const HudMenu = ({ forceOpenMenu }) => {
     }
 
     return [menuButtons, pageButtons];
-  }, [asteroid, asteroidId, crew?.id, destination, lot, lotId, showDevTools, zoomStatus, zoomScene]);
+  }, [asteroid, asteroidId, crew?.id, destination, lot, lotId, showDevTools, unreadChatTally, zoomStatus, zoomScene]);
 
   const { label, onDetailClick, detailType, Component, componentProps, hideInsteadOfClose, noClose, noDetail } = useMemo(() => {
     return menuButtons.find((b) => b.key === openHudMenu) || {};
@@ -595,10 +618,11 @@ const HudMenu = ({ forceOpenMenu }) => {
           <Buttons id="hudMenu" open={open}>
             {visibleMenuButtons.length > 0 && (
               <ButtonSection>
-                {visibleMenuButtons.map(({ key, label, highlightIcon, icon, onOpen, hideInsteadOfClose }) => (
+                {visibleMenuButtons.map(({ key, badge, label, highlightIcon, icon, onOpen, hideInsteadOfClose }) => (
                   <Button
                     key={key}
                     style={highlightIcon ? { color: theme.colors.main } : {}}
+                    badge={badge}
                     onClick={() => handleButtonClick(key, onOpen, hideInsteadOfClose)}
                     selected={key === openHudMenu}
                     data-tooltip-id="hudMenuTooltip"

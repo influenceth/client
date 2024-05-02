@@ -22,6 +22,17 @@ const ChatListener = () => {
   //   dispatchClearChatHistory();
   // }, [])
 
+  // useEffect(() => {
+  //   const i = setInterval(() => {
+  //     dispatchChatMessage({
+  //       asteroidId: 1,
+  //       crewId: 1,
+  //       message: "This is a test message."
+  //     })
+  //   }, 10000);
+  //   return () => clearInterval(i);
+  // }, []);
+
   const [disconnected, setDisconnected] = useState();
   const handleWSConnection = useCallback((isOpen) => {
     setDisconnected(!isOpen);

@@ -611,8 +611,15 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
     dispatchChatMessage: (body) => set(produce(state => {
       state.chatHistory = [
         ...(state.chatHistory || []).slice(0, 249),
-        { ...body, timestamp: Date.now() }
+        { ...body, timestamp: Date.now(), unread: true }
       ];
+    })),
+
+    dispatchChatRoomView: (asteroidId) => set(produce(state => {
+      state.chatHistory = state.chatHistory.map((c) => ({
+        ...c,
+        unread: c.asteroidId === asteroidId ? false : c.unread
+      }));
     })),
 
     dispatchChatDisconnectedMessage: () => set(produce(state => {
