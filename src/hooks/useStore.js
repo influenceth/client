@@ -610,7 +610,7 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
 
     dispatchChatMessage: (body) => set(produce(state => {
       state.chatHistory = [
-        ...(state.chatHistory || []).slice(0, 249),
+        ...(state.chatHistory || []).slice(-249),
         { ...body, timestamp: Date.now(), unread: true }
       ];
     })),

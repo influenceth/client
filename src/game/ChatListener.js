@@ -27,7 +27,7 @@ const ChatListener = () => {
   //     dispatchChatMessage({
   //       asteroidId: 1,
   //       crewId: 1,
-  //       message: "This is a test message."
+  //       message: `This is a test message. ${Date.now()}`
   //     })
   //   }, 10000);
   //   return () => clearInterval(i);
