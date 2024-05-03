@@ -681,6 +681,7 @@ const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, co
     lotsReady,
     meshesInitialized,
     positionsReady,
+    regionsByDistance,
     resultsByRegion
   ]);
 
