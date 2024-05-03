@@ -31,7 +31,8 @@ const useNameAvailability = (entity) => {
             const collisionAsteroid = c.Location?.locations?.find((l) => l.label === Entity.IDS.ASTEROID);
             return buildingAsteroid && collisionAsteroid && buildingAsteroid?.uuid == collisionAsteroid?.uuid;
           }
-          return c.id === entityId;
+
+          return true; // if anything is found it's a collision
         });
         if (collision) nameError = `The name "${name}" is already taken.`;
       }
