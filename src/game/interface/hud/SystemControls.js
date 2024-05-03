@@ -51,8 +51,10 @@ const SwayBalance = styled.div`
   align-items: center;
   color: white;
   display: flex;
+  filter: drop-shadow(0px 0px 2px rgb(0 0 0));
   font-size: 24px;
   margin-left: 25px;
+
   & label {
     color: #FFF;
     font-size: 85%;

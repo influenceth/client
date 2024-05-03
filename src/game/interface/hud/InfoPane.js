@@ -53,10 +53,12 @@ const CaptainCardContainer = styled.div`
 
 const TitleRow = styled.div`
   display: flex;
+  filter: drop-shadow(0px 0px 2px rgb(0 0 0));
   flex-direction: row;
   ${p => p.hasLink && `
     cursor: ${p.theme.cursors.active};
   `}
+
   & > svg {
     color: ${p => p.theme.colors.main};
     margin-top: 10px;
@@ -64,6 +66,7 @@ const TitleRow = styled.div`
     opacity: 0.7;
     transition: opacity 250ms ease;
   }
+
   &:hover > svg {
     opacity: 1;
   }
@@ -78,10 +81,13 @@ const Title = styled.div`
   text-overflow: ellipsis;
   white-space: nowrap;
 `;
+
 const Subtitle = styled.div`
   color: #999;
+  filter: drop-shadow(0px 0px 2px rgb(0 0 0));
   font-size: 15px;
   margin-bottom: 12px;
+
   & b {
     color: white;
   }

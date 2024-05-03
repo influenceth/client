@@ -42,8 +42,10 @@ const Filters = styled.div`
   overflow: hidden;
   padding: ${filterRowPadding}px 0;
   width: 100%;
+
   & > a {
     display: block;
+    filter: drop-shadow(0px 0px 2px rgb(0 0 0));
     font-size: 24px;
     height: 26px;
     line-height: 24px;
@@ -51,6 +53,7 @@ const Filters = styled.div`
     padding: 0 6px;
   }
 `;
+
 const Filter = styled.div`
   cursor: ${p => p.theme.cursors.active};
   font-size: 90%;
@@ -59,11 +62,14 @@ const Filter = styled.div`
   margin-right: 8px;
   padding: 4px 15px;
   position: relative;
+  text-shadow: 0 0 2px #000;
   text-transform: uppercase;
 
   & > svg {
+    filter: drop-shadow(0px 0px 2px rgb(0 0 0));
     font-size: 22px;
   }
+
   & > b {
     color: white;
     margin-right: 2px;
@@ -89,6 +95,7 @@ const Filter = styled.div`
     }
   ${p => p.selected ? `` : `}`}
 `;
+
 const IconFilter = styled(Filter)`
   align-items: center;
   display: flex;
@@ -104,6 +111,7 @@ const IconFilter = styled(Filter)`
     background: ${p => p.theme.colors.main};
   }
 `;
+
 const AllFilter = styled(IconFilter)`
   padding-left: 5px;
   padding-right: 2px;
@@ -112,16 +120,19 @@ const AllFilter = styled(IconFilter)`
     // left: ${selectionIndicatorWidth / 2}px;
   }
 `;
+
 const HiddenFilter = styled(IconFilter)`
   color: #CCC;
   padding-left: 0;
   padding-right: 0;
 `;
+
 const PillFilter = styled(Filter)`
   border-radius: 20px;
   border: 1px solid ${p => p.selected ? 'currentColor' : 'transparent'};
   transition: border-color 150ms ease;
 `;
+
 const ReadyFilter = styled(PillFilter)`
   background: rgba(${p => hexToRGB(p.theme.colors.success)}, 0.2);
   color: ${p => p.theme.colors.success};
@@ -131,6 +142,7 @@ const ReadyFilter = styled(PillFilter)`
     }
   `}
 `;
+
 const InProgressFilter = styled(PillFilter)`
   background: rgba(${p => p.theme.colors.mainRGB}, 0.4);
   color: ${p => p.theme.colors.brightMain};
