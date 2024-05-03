@@ -255,8 +255,10 @@ export function SessionProvider({ children }) {
     }
 
     // Check for pre-existing session and use it if it's still valid
-    if (sessions[connectedAddress] && !isExpired(sessions[connectedAddress].token)) {
-      const existingSession = Object.assign({}, sessions[connectedAddress], { startTime: Date.now() });
+    const existingSession = Object.assign({}, sessions[connectedAddress]);
+
+    if (existingSession && !isExpired(existingSession.token) && existingSession.isDeployed) {
+      existingSession.startTime = Date.now();
       dispatchSessionStarted(existingSession);
       setStatus(STATUSES.AUTHENTICATED);
       return true;
