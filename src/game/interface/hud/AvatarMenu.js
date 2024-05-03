@@ -117,14 +117,17 @@ const Crewmates = styled.div`
 const TitleWrapper = styled.div`
   align-items: center;
   display: flex;
+  filter: drop-shadow(0px 0px 2px rgb(0 0 0));
   flex-direction: row;
   justify-content: space-between;
   width: ${menuWidth - 30}px;
+
   & > * {
     flex: 1 1 ${(menuWidth - 30)/2}px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+
     &:first-child {
       padding-right: 10px;
     }

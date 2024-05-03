@@ -11,6 +11,7 @@ const Hoverable = styled.div`
   height: ${hoverableHeight}px;
   overflow: hidden;
   text-align: right;
+
   & > div {
     height: 100%;
     overflow: hidden;
@@ -28,6 +29,7 @@ const Wrapper = styled.div`
   flex-direction: ${p => p.flip ? 'row-reverse' : 'row'};
   font-size: 15px;
   height: 24px;
+
   & > svg {
     font-size: 22px;
     line-height: 22px;

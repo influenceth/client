@@ -132,6 +132,7 @@ const AsteroidChat = () => {
   const asteroidId = useStore(s => s.asteroids.origin);
   const chatHistory = useStore(s => s.chatHistory);
   const createAlert = useStore(s => s.dispatchAlertLogged);
+  const dispatchChatRoomView = useStore(s => s.dispatchChatRoomView);
 
   const chatInputRef = useRef();
   const chatScrollRef = useRef();
@@ -198,11 +199,13 @@ const AsteroidChat = () => {
       .filter((c, i, arr) => (i > 0 && i < arr.length - 1) || !c.isConnectionBreak),
     [asteroidId, chatHistory]
   );
-  
-  // useEffect(() => {
-  //   console.log({ chatHistory, asteroidChats });
-  // }, [chatHistory, asteroidChats])
-  
+
+  const lastChat = asteroidChats?.[asteroidChats?.length - 1];
+  useEffect(() => {
+    if (asteroidId && lastChat?.unread) {
+      dispatchChatRoomView(asteroidId);
+    }
+  }, [asteroidId, lastChat?.timestamp]);
 
   useEffect(() => {
     scrollToBottom();

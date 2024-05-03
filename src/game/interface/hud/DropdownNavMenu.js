@@ -106,6 +106,7 @@ const MainMenuItem = styled.li`
 `;
 
 const LoggedInUser = styled.div`
+  cursor: ${p => p.theme.cursors.active};
   flex: 1;
   font-size: 15px;
   margin-left: 10px;
@@ -147,6 +148,13 @@ const OpenerAsButtonWrapper = styled.div`
 
 export const NavMenuLoggedInUser = ({ account }) => {
   const formattedAccount = useAccountFormatted({ address: account, truncate: true, doNotReplaceYou: true });
+  const copyToClipboard = () => {
+    try {
+      navigator.clipboard.writeText(account);
+    } catch (e) {
+      console.warn(e);
+    }
+  }
 
   return (
     <>
@@ -154,7 +162,7 @@ export const NavMenuLoggedInUser = ({ account }) => {
         <InfluenceIcon />
       </LogoWrapper>
 
-      <LoggedInUser>{formattedAccount}</LoggedInUser>
+      <LoggedInUser onClick={copyToClipboard}>{formattedAccount}</LoggedInUser>
     </>
   );
 };

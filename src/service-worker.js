@@ -31,8 +31,12 @@ precache([
   { url: `${modelsBase}/buildings/Shipyard.v1.glb`, revision: null },
   { url: `${modelsBase}/buildings/Spaceport.v1.glb`, revision: null },
   { url: `${modelsBase}/buildings/Warehouse.v3.glb`, revision: null },
+  { url: `${modelsBase}/ships/EscapeModule.v1.glb`, revision: null },
   { url: `${modelsBase}/ships/HeavyTransport.v1.glb`, revision: null },
   { url: `${modelsBase}/ships/LightTransport.v1.glb`, revision: null },
+  { url: `${modelsBase}/ships/LightTransport_Variant2.v1.glb`, revision: null },
+  { url: `${modelsBase}/ships/LightTransport_Variant3.v1.glb`, revision: null },
+  { url: `${modelsBase}/ships/LightTransport_Variant4.v1.glb`, revision: null },
   { url: `${modelsBase}/ships/Shuttle.v1.glb`, revision: null }
 ]);
 
