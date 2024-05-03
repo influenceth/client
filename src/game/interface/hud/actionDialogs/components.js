@@ -41,7 +41,8 @@ import {
   ResourceIcon,
   CheckedIcon,
   UncheckedIcon,
-  ScheduleFullIcon
+  ScheduleFullIcon,
+  CheckSmallIcon
 } from '~/components/Icons';
 import LiveTimer from '~/components/LiveTimer';
 import MouseoverInfoPane from '~/components/MouseoverInfoPane';
@@ -70,7 +71,9 @@ import AssetBlock, { assetBlockCornerSize } from '~/components/AssetBlock';
 import LiveReadyStatus from '~/components/LiveReadyStatus';
 import useConstructionManager from '~/hooks/actionManagers/useConstructionManager';
 import EntityName from '~/components/EntityName';
-
+import DataTableComponent from '~/components/DataTable';
+import UncontrolledTextInput from '~/components/TextInputUncontrolled';
+import Autocomplete, { StaticAutocomplete } from '~/components/Autocomplete';
 
 const SECTION_WIDTH = 780;
 
@@ -746,9 +749,6 @@ const SelectionTableRow = styled.tr`
       background: rgba(${p.theme.colors.mainRGB}, 0.3) !important;
     }
   `}
-  & > td > small {
-    color: #aaa;
-  }
 `;
 const SelectionTableWrapper = styled.div`
   border: solid ${borderColor};
@@ -910,6 +910,20 @@ const SelectionGrid = styled.div`
   grid-template-columns: calc(50% - 5px) calc(50% - 5px);
   row-gap: 10px;
   width: 100%;
+`;
+
+const InvSelectionTableWrapper = styled.div`
+  border-top: 1px solid #333;
+  flex: 1;
+  max-width: 100%;
+  min-height: 250px;
+  overflow: auto;
+  & > table {
+    width: 100%;
+    th {
+      color: white;
+    }
+  }
 `;
 
 
@@ -1961,6 +1975,80 @@ const getInventorySublabel = (inventoryType) => {
   }
 }
 
+const PermType = styled.span`
+  color: white;
+  &:before {
+    content: "${p => p.type}";
+    ${p => p.type === 'Permitted' && `color: ${p.theme.colors.main};`}
+    ${p => p.type === 'Public' && `color: ${p.theme.colors.green};`}
+  }
+`;
+const InvType = styled.span`
+  color: ${p => p.isPropellant ? p.theme.colors.purple : p.theme.colors.orange};
+  margin-left: 4px;
+`;
+const FilterRow = styled.div`
+  display: flex;
+  flex-direction: row;
+  padding-bottom: 12px;
+  & > *:not(:first-child) {
+    margin-left: 15px;
+  }
+`;
+const FilterRowLabel = styled.label`
+  align-items: center;
+  color: #ccc;
+  cursor: ${p => p.theme.cursors.active};
+  display: flex;
+  transition: color 150ms ease;
+  white-space: nowrap;
+  & > svg {
+    color: ${p => p.isOn ? p.theme.colors.main : '#777'};
+    margin-right: 6px;
+  }
+  &:hover {
+    color: white;
+  }
+`;
+const ItemFilterRow = styled.div`
+  &:before {
+    content: "Available Inventories with: ";
+    opacity: 0.5;
+  }
+  align-items: center;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  padding-bottom: 12px;
+`;
+const ItemFilterLabel = styled.div`
+  align-items: center;
+  color: ${p => p.isOn ? p.theme.colors.green : p.theme.colors.red};
+  cursor: ${p => p.theme.cursors.active};
+  display: flex;
+  padding: 4px 8px;
+  transition: color 150ms ease;
+  & > svg {
+    display: none;
+    margin-right: 4px;
+    width: 16px;
+    ${p => p.isOn
+      ? `&:nth-child(1) { display: inline-block; }`
+      : `&:nth-child(2) { display: inline-block; }`
+    }
+  }
+  &:hover {
+    color: white;
+    & > svg {
+      display: inline-block;
+      ${p => p.isOn
+        ? `&:nth-child(1) { display: none; }`
+        : `&:nth-child(2) { display: none; }`
+      }
+    }
+  }
+`;
+
 export const InventorySelectionDialog = ({
   asteroidId,
   excludeSites,
@@ -1978,7 +2066,12 @@ export const InventorySelectionDialog = ({
 }) => {
   const { crew } = useCrewContext();
 
+  const [filterItemIds, setFilterItemIds] = useState();
+  const [filterValue, setFilterValue] = useState('');
   const [selection, setSelection] = useState(initialSelection);
+  const [showPermittedInventories, setShowPermittedInventories] = useState(true);
+  const [showPublicInventories, setShowPublicInventories] = useState(true);
+  const [sort, setSort] = useState(['distance', 'asc']);
 
   const otherLocation = useMemo(() => {
     if (!otherEntity) return {};
@@ -1987,6 +2080,7 @@ export const InventorySelectionDialog = ({
 
   // if off the surface, cannot access inventories on the surface...
   const { data: inventoryData } = useAccessibleAsteroidInventories(otherLocation.lotIndex === 0 ? null : asteroidId, isSourcing);
+  const permission = isSourcing ? Permission.IDS.REMOVE_PRODUCTS : Permission.IDS.ADD_PRODUCTS;
 
   // ... but can access inventories on their crewed ship (assuming not sending things elsewhere)
   const { data: crewedShip } = useShip((otherLocation.lotIndex === 0 && crew?._location?.shipId === otherLocation.shipId) ? otherLocation.shipId : null);
@@ -2042,45 +2136,172 @@ export const InventorySelectionDialog = ({
         const nonPrimaryType = getInventorySublabel(inv.inventoryType);
         if (isSourcing && nonPrimaryType && itemIds?.length && itemTally === 0) return;
 
+        // build contents obj for more flexible filtering
+        const contentsObj = (inv.contents || []).reduce((acc, p) => {
+          if (p.amount > 0) acc[p.product] = p.amount;
+          return acc;
+        }, {});
+
         // disable if !available or does not contain itemId
         display.push({
+          key: JSON.stringify({ id: entity.id, label: entity.label, lotId: entityLotId, asteroidId, lotIndex: entityLotIndex, slot: inv.slot }),
+
           disabled: (requirePresenceOfItemIds && !itemTally) || (isSourcing && inv.mass === 0),
           distance: Asteroid.getLotDistance(asteroidId, entityLotIndex, otherLocation.lotIndex), // distance to source + distance to destination
-          isMine: entity.Control.controller.id === crew?.id,
-          isShip: !!entity.Ship,
-          itemTally,
-          key: JSON.stringify({ id: entity.id, label: entity.label, lotId: entityLotId, asteroidId, lotIndex: entityLotIndex, slot: inv.slot }),
-          label: entity.Ship ? formatters.shipName(entity) : formatters.buildingName(entity),
-          sublabel: nonPrimaryType,
+          isControlled: entity.Control.controller.id === crew?.id,
+          isPermitted: !(entity.PublicPolicies || []).find((p) => p.permission === permission),
+
+          contentsObj, 
+          name: entity.Ship ? formatters.shipName(entity) : formatters.buildingName(entity),
+          type: entity.Ship ? Ship.TYPES[entity.Ship?.shipType]?.name : Building.TYPES[entity.Building?.buildingType]?.name,
+          slot: inv.slot,
+          slotLabel: getInventorySublabel(inv.inventoryType),
+          
           lotId: entityLotId,
           lotIndex: entityLotIndex,
-          slot: inv.slot,
         })
       });
     });
 
-    return display.filter(i => !i.disabled).sort((a, b) => {
-      if (a.isMine && !b.isMine) return -1;
-      if (!a.isMine && b.isMine) return 1;
-      if (a.isMine && b.isMine) return a.distance - b.distance;
-
-      if (isSourcing && !!itemIds) {
-        if (a.itemTally && !b.itemTally) return -1;
-        if (!a.itemTally && b.itemTally) return 1;
-        if (a.itemTally && b.itemTally) return a.distance - b.distance;
-      }
-
-      return a.distance - b.distance;
-    });
-  }, [crewedShip, inventoryData, itemIds, otherLocation]);
+    return display;
+  }, [crewedShip, inventoryData, itemIds, otherLocation, sort]);
 
   const onComplete = useCallback(() => {
     onSelected(selection ? JSON.parse(selection) : null);
     onClose();
   }, [onClose, onSelected, selection]);
 
-  const specifiedItems = !!itemIds;
+  const specifiedItems = !!filterItemIds;
   const soloItem = itemIds?.length === 1 ? itemIds[0] : null;
+
+  const columns = useMemo(() => {
+    const useItemAmount = Object.values(filterItemIds || {}).filter((x) => !!x).length === 1
+      ? Object.keys(filterItemIds).find((k) => filterItemIds[k])
+      : false;
+    return [
+      {
+        key: 'isMine',
+        label: <span style={{ fontSize: '16px' }}><MyAssetIcon /></span>,
+        selector: (row) => row.isControlled ? <MyAssetIcon /> : null,
+        noMinWidth: true,
+      },
+      {
+        key: 'name',
+        label: 'Name',
+        sortField: 'name',
+        selector: (row) => <div style={{ maxWidth: 220, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{row.name}</div>,
+        noMinWidth: true,
+      },
+      (
+        limitToPrimary
+          ? null
+          : {
+            key: 'distance',
+            label: 'Distance',
+            sortField: 'distance',
+            selector: (row) => formatSurfaceDistance(row.distance),
+            noMinWidth: true,
+          }
+      ),
+      {
+        key: 'type',
+        label: 'Type',
+        sortField: 'type',
+        selector: (row) => (
+          <>
+            {row.type} {row.slotLabel && <InvType isPropellant={row.slotLabel === 'Propellant'}>({row.slotLabel})</InvType>}
+          </>
+        ),
+        noMinWidth: true,
+      },
+      {
+        key: 'permission',
+        label: 'Permission',
+        sortField: 'isControlled',
+        selector: (row) => <PermType type={row.isControlled ? 'Controller' : (row.isPermitted ? 'Permitted' : 'Public')}></PermType>,
+        noMinWidth: true,
+      },
+      (
+        isSourcing && specifiedItems
+          ? {
+            key: 'itemTally',
+            label: <span style={{ fontSize: '16px' }}>{useItemAmount ? `#` : <CheckSmallIcon />}</span>,
+            // sortField: 'itemTally',
+            align: 'center',
+            noMinWidth: true,
+            selector: (row) => (
+              useItemAmount
+                ? formatResourceAmount(row.filteredItemAmount || 0, useItemAmount)
+                : row.filteredItemTally.toLocaleString()
+            ),
+            noMinWidth: true,
+          }
+          : null
+      ),
+    ].filter((x) => !!x);
+  }, [filterItemIds, isSourcing, limitToPrimary, specifiedItems]);
+
+  const handleSort = useCallback((field) => () => {
+    if (!field) return;
+
+    let [updatedSortField, updatedSortDirection] = sort;
+    if (field === sort[0]) {
+      updatedSortDirection = sort[1] === 'desc' ? 'asc' : 'desc';
+    } else {
+      updatedSortField = field;
+      updatedSortDirection = 'desc';
+    }
+
+    setSort([updatedSortField, updatedSortDirection]);
+  }, [sort]);
+
+  const getRowProps = useCallback((row) => ({
+    disable: row.disabled,
+    onClick: () => setSelection(row.key),
+    isSelected: (selection === row.key),
+  }), [selection]);
+
+  const handleFilterChange = useCallback((e) => {
+    setFilterValue(e.target.value);
+  }, []);
+
+  useEffect(() => {
+    setFilterItemIds(
+      itemIds?.length
+      ? itemIds
+        .sort((a, b) => Product.TYPES[a].name < Product.TYPES[b].name ? -1 : 1)
+        .reduce((acc, k) => ({ ...acc, [k]: true }), {})
+      : null
+    );
+  }, [itemIds]);
+
+  const toggleFilterItem = useCallback((itemId) => {
+    setFilterItemIds((x) => ({ ...x, [itemId]: !x[itemId] }));
+  }, []);
+
+  const filteredInventories = useMemo(() => {
+    const filterProductIds = Object.keys(filterItemIds || {}).filter((k) => filterItemIds[k]);
+    return inventories
+      .map((inv) => ({
+        ...inv,
+        filteredItemAmount: filterProductIds?.length === 1
+          ? (inv.contentsObj[filterProductIds[0]] || 0)
+          : null,
+        filteredItemTally: filterProductIds.reduce((acc, k) => acc + (inv.contentsObj[k] ? 1 : 0), 0)
+      }))
+      .filter((inv) => {
+        if (inv.disabled) return false;
+        if (filterValue) {
+          const lcFilterValue = (filterValue || '').toLowerCase();
+          if (!inv.name.toLowerCase().includes(lcFilterValue)) return false;
+        }
+        if (!showPermittedInventories && !inv.isControlled && inv.isPermitted) return false;
+        if (!showPublicInventories && !inv.isControlled && !inv.isPermitted) return false;
+        if (filterProductIds?.length > 0 && inv.filteredItemTally === 0) return false;
+        return true;
+      })
+      .sort((a, b) => (sort[1] === 'desc' ? -1 : 1) * (a[sort[0]] < b[sort[0]] ? -1 : 1));
+  }, [filterItemIds, filterValue, inventories, showPermittedInventories, showPublicInventories, sort]);
 
   return (
     <SelectionDialog
@@ -2088,46 +2309,79 @@ export const InventorySelectionDialog = ({
       onClose={onClose}
       onComplete={onComplete}
       open={open}
+      style={{ width: 820, maxWidth: 820 }}
       title={isSourcing && soloItem
         ? `Available ${Product.TYPES[soloItem].name}s`
         : 'Available Inventories'}>
       {/* TODO: isLoading */}
-      {/* TODO: replace with DataTable? */}
-      <div style={{ minWidth: 500 }}></div>
+      <FilterRow>
+        <div>
+          <UncontrolledTextInput
+            onChange={handleFilterChange}
+            placeholder="Filter by Name..."
+            value={filterValue || ''}
+            width={185} />
+        </div>
+
+        {isSourcing && !itemIds && (
+          <div>
+            <StaticAutocomplete
+              labelKey="name"
+              footnoteKey="category"
+              onSelect={(value) => {
+                const itemId = value?.i;
+                if (itemId) {
+                  setFilterItemIds((x) => ({ ...x, [value?.i]: true }))
+                }
+              }}
+              options={Object.values(Product.TYPES)}
+              placeholder="Filter by Contents..."
+              valueKey="i"
+              width={185}
+            />
+          </div>
+        )}
+
+        <div style={{ flex: 1 }} />
+
+        <FilterRowLabel isOn={showPermittedInventories} onClick={() => setShowPermittedInventories((p) => !p)}>
+          {showPermittedInventories ? <CheckedIcon /> : <UncheckedIcon />}
+          <span>Permitted Inventories</span>
+        </FilterRowLabel>
+        
+        <FilterRowLabel isOn={showPublicInventories} onClick={() => setShowPublicInventories((p) => !p)}>
+          {showPublicInventories ? <CheckedIcon /> : <UncheckedIcon />}
+          <span>Public Inventories</span>
+        </FilterRowLabel>
+      </FilterRow>
+
+      {isSourcing && filterItemIds && (
+        <ItemFilterRow>
+          {Object.keys(filterItemIds)
+            .sort((a, b) => Product.TYPES[a]?.name < Product.TYPES[b]?.name ? -1 : 1)
+            .map((itemId) => (
+            <ItemFilterLabel key={itemId} isOn={filterItemIds[itemId]} onClick={() => toggleFilterItem(itemId)}>
+              <CheckSmallIcon />
+              <CloseIcon />
+              <span>{Product.TYPES[itemId].name}</span>
+            </ItemFilterLabel>
+          ))}
+        </ItemFilterRow>
+      )}
+
       {inventories.length > 0
         ? (
-          <SelectionTableWrapper style={{ minHeight: 200 }}>
-            <table>
-              <thead>
-                <tr>
-                  <td></td>{/* isMine */}
-                  <td style={{ textAlign: 'left' }}>Name</td>
-                  {!limitToPrimary && <td>Distance</td>}
-                  {isSourcing && specifiedItems && (
-                    <td>
-                      {soloItem ? `# ${Product.TYPES[soloItem].name}` : 'Needed Products'}
-                    </td>
-                  )}
-                </tr>
-              </thead>
-              <tbody>
-                {inventories.map((inv) => {
-                  return (
-                    <SelectionTableRow
-                      key={inv.key}
-                      disabledRow={inv.disabled}
-                      onClick={() => setSelection(inv.key)}
-                      selectedRow={inv.key === selection}>
-                      <td>{inv.isMine && <MyAssetIcon />}</td>
-                      <td style={{ textAlign: 'left' }}>{inv.label}{inv.sublabel && <small> ({inv.sublabel})</small>} {inv.isShip && <ShipIcon />}</td>
-                      {!limitToPrimary && <td>{formatSurfaceDistance(inv.distance)}</td>}
-                      {isSourcing && specifiedItems && <td>{inv.itemTally.toLocaleString()}</td>}
-                    </SelectionTableRow>
-                  );
-                })}
-              </tbody>
-            </table>
-          </SelectionTableWrapper>
+          <InvSelectionTableWrapper>
+            <DataTableComponent
+              columns={columns}
+              data={filteredInventories}
+              getRowProps={getRowProps}
+              keyField="key"
+              onClickColumn={handleSort}
+              sortDirection={sort[1]}
+              sortField={sort[0]}
+            />
+          </InvSelectionTableWrapper>
         )
         : (
           requirePresenceOfItemIds
