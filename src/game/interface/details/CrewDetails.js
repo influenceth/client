@@ -252,7 +252,7 @@ const CrewDetails = ({ crewId, crew, isMyCrew, isDelegatedCrew, isOwnedCrew, sel
 
   const { data: TIME_ACCELERATION } = useConstants('TIME_ACCELERATION');
 
-  const hydratedLocation = useHydratedLocation(crew._location);
+  const hydratedLocation = useHydratedLocation(crew._location, crew.id);
 
   const [editing, setEditing] = useState();
   const [hovered, setHovered] = useState();

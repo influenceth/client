@@ -1,22 +1,25 @@
 import { useCallback, useMemo } from 'react';
-import { Entity, Ship } from '@influenceth/sdk';
+import { Entity } from '@influenceth/sdk';
 
+import { ZOOM_OUT_ANIMATION_TIME } from '~/game/scene/Asteroid';
 import useControlledShips from '~/hooks/useControlledShips';
+import useCrew from '~/hooks/useCrew';
 import useShip from '~/hooks/useShip';
 import useStore from '~/hooks/useStore';
 import { useLotLink } from './LotLink';
 import OnClickLink from './OnClickLink';
 import EntityName from './EntityName';
-import { ZOOM_OUT_ANIMATION_TIME } from '~/game/scene/Asteroid';
 
-export const useShipLink = ({ shipId, zoomToShip }) => {
+export const useShipLink = ({ crewId, shipId, zoomToShip }) => {
   const dispatchHudMenuOpened = useStore(s => s.dispatchHudMenuOpened);
   const dispatchZoomScene = useStore(s => s.dispatchZoomScene);
   const updateZoomStatus = useStore(s => s.dispatchZoomStatusChanged);
   const currentZoomScene = useStore(s => s.asteroids.zoomScene);
   const zoomStatus = useStore(s => s.asteroids.zoomStatus);  
 
-  const { data: ship } = useShip(shipId);
+  const { data: shipShip } = useShip(shipId);
+  const { data: crewShip } = useCrew(shipId ? undefined : crewId);
+  const ship = useMemo(() => shipShip || crewShip, [shipShip, crewShip]);
 
   const zoomToAsteroid = useLotLink({ asteroidId: ship?._location?.asteroidId });
 
@@ -46,9 +49,10 @@ export const useShipLink = ({ shipId, zoomToShip }) => {
     }
 
     // show zoomScene of ship
-    if (zoomToShip && !(currentZoomScene?.type === 'SHIP' && currentZoomScene?.shipId === ship.id)) {
+    const shipShipId = ship.label === Entity.IDS.SHIP ? ship.id : null;
+    if (zoomToShip && !(currentZoomScene?.type === 'SHIP' && currentZoomScene?.shipId === shipShipId)) {
       setTimeout(() => {
-        dispatchZoomScene(zoomToShip ? { type: 'SHIP', shipId: ship.id } : null);
+        dispatchZoomScene(zoomToShip ? { type: 'SHIP', shipId: shipShipId } : null);
 
         // if this is not just a boolean, it is assumed to be a hudmenu to open upon arrival
         if (zoomToShip && zoomToShip !== true) {

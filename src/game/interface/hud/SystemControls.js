@@ -66,7 +66,7 @@ const VerticalRule = styled.div`
   height: 28px;
   margin-left: 14px;
   opacity: ${p => p.hide ? 0 : 1};
-  padding-left: 14px;
+  padding-left: 13px;
   transition: opacity ${menuAnimationTime}ms ease;
 `;
 
@@ -77,7 +77,7 @@ const SystemControls = () => {
   const { data: swayBalance } = useSwayBalance();
 
   const dispatchLauncherPage = useStore(s => s.dispatchLauncherPage);
-  const dispatchReorientCamera = useStore(s => s.dispatchReorientCamera);
+  // const dispatchReorientCamera = useStore(s => s.dispatchReorientCamera);
 
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -163,6 +163,7 @@ const SystemControls = () => {
         <span>Mobile is not well supported, please use desktop.</span>
       </MobileWarning>
 
+      {/*
       <Button
         data-tooltip-content="Realign camera to poles"
         onClick={dispatchReorientCamera}
@@ -170,6 +171,7 @@ const SystemControls = () => {
         style={{ fontSize: '26px', marginRight: swayBalance === undefined ? 15 : 0 }}>
         <ResetCameraIcon />
       </Button>
+      */}
 
       {swayBalance !== undefined && (
         <SwayBalance>

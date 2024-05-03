@@ -48,7 +48,7 @@ const Wrapper = styled.div`
 `;
 
 const CrewLocationCompactLabel = ({ crew, zoomedToAsteroid, ...props }) => {
-  const { asteroid, building, lotIndex, onLink, ship } = useHydratedLocation(crew?._location);
+  const { asteroid, building, lotIndex, onLink, ship } = useHydratedLocation(crew?._location, crew?.id);
 
   const genericLabel = useMemo(() => {
     if (asteroid) return formatters.asteroidName(asteroid);
