@@ -2232,7 +2232,14 @@ export const InventorySelectionDialog = ({
             selector: (row) => (
               useItemAmount
                 ? formatResourceAmount(row.filteredItemAmount || 0, useItemAmount)
-                : row.filteredItemTally.toLocaleString()
+                : (
+                  <div
+                    data-tooltip-content={row.filteredItemString}
+                    data-tooltip-id="selectionDialogTooltip"
+                    data-tooltip-place="left">
+                    {row.filteredItemTally.toLocaleString()}
+                  </div>
+                )
             ),
             noMinWidth: true,
           }
@@ -2282,13 +2289,24 @@ export const InventorySelectionDialog = ({
   const filteredInventories = useMemo(() => {
     const filterProductIds = Object.keys(filterItemIds || {}).filter((k) => filterItemIds[k]);
     return inventories
-      .map((inv) => ({
-        ...inv,
-        filteredItemAmount: filterProductIds?.length === 1
-          ? (inv.contentsObj[filterProductIds[0]] || 0)
-          : null,
-        filteredItemTally: filterProductIds.reduce((acc, k) => acc + (inv.contentsObj[k] ? 1 : 0), 0)
-      }))
+      .map((inv) => {
+        const productIdsInInv = filterProductIds.filter((k) => !!inv.contentsObj[k]);
+        return {
+          ...inv,
+          filteredItemAmount: filterProductIds?.length === 1
+            ? (inv.contentsObj[filterProductIds[0]] || 0)
+            : null,
+          filteredItemTally: productIdsInInv.length,
+          // TODO: this might be better as a mouseover that could show the full inventory
+          //  just like the inventory contents appearance in the hud menu
+          filteredItemString: (
+            productIdsInInv
+              .map((i) => `${Product.TYPES[i]?.name} (${formatResourceAmount(inv.contentsObj[i] || 0, i)})`)
+              .sort()
+              .join(', ')
+          )
+        };
+      })
       .filter((inv) => {
         if (inv.disabled) return false;
         if (filterValue) {
