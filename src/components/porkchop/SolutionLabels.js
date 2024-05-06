@@ -263,7 +263,7 @@ const DelayLabel = styled(TopLevelLabel)`
 const SolutionLabels = ({ center, emode, lastFedAt, mousePos, shipParams }) => {
   const coarseTime = useCoarseTime();
   const { data: TIME_ACCELERATION } = useConstants('TIME_ACCELERATION');
-  
+
   const { crew } = useCrewContext();
   const travelSolution = useStore(s => s.asteroids.travelSolution);
 
@@ -288,12 +288,10 @@ const SolutionLabels = ({ center, emode, lastFedAt, mousePos, shipParams }) => {
   const [currentFood, usedFood] = useMemo(() => {
     if (emode || !lastFedAt || !travelSolution?.arrivalTime) return [100, 100];
     const currentFood = Math.round(100 * Crew.getCurrentFoodRatio((coarseTime - lastFedAt) * 86400, crew?._foodBonuses?.consumption));
-    
-    const currentFoodIfMaxed = 100;
-    const arrivalFoodIfMaxed = Math.round(100 * Crew.getCurrentFoodRatio((travelSolution?.arrivalTime - coarseTime) * 86400, crew?._foodBonuses?.consumption));
+    const arrivalFood = Math.round(100 * Crew.getCurrentFoodRatio((travelSolution?.arrivalTime - lastFedAt) * 86400, crew?._foodBonuses?.consumption));
     return [
       currentFood,
-      formatFixed(100 * (currentFoodIfMaxed - arrivalFoodIfMaxed) / currentFood, 1)
+      formatFixed(100 * (currentFood - arrivalFood) / currentFood, 1)
     ];
   }, [coarseTime, crew?._foodBonuses?.consumption, emode, lastFedAt, travelSolution?.arrivalTime]);
 

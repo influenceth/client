@@ -211,7 +211,9 @@ const SetCourse = ({ origin, destination, manager, ship, stage, travelSolution, 
 
   const [tab, setTab] = useState(0);
 
-  const propellantBonus = useMemo(() => getCrewAbilityBonuses(Crewmate.ABILITY_IDS.PROPELLANT_EXHAUST_VELOCITY, crew), [crew]);
+  const exhaustBonus = useMemo(() => {
+    return getCrewAbilityBonuses(Crewmate.ABILITY_IDS.PROPELLANT_EXHAUST_VELOCITY, crew);
+  }, [crew]);
 
   const [shipConfig, cargoInv, propellantInv] = useMemo(() => {
     if (!ship) return [];
@@ -238,9 +240,8 @@ const SetCourse = ({ origin, destination, manager, ship, stage, travelSolution, 
 
   const deltaVLoaded = useMemo(() => {
     if (!ship || !propellantMassLoaded) return 0;
-    const propellantToDeltaVBonus = 1; // TODO: is this ever going to be a thing?
-    return Ship.Entity.propellantToDeltaV(ship, propellantMassLoaded, propellantToDeltaVBonus);
-  }, [propellantMassLoaded, ship]);
+    return Ship.Entity.propellantToDeltaV(ship, propellantMassLoaded, exhaustBonus?.totalBonus);
+  }, [propellantMassLoaded, exhaustBonus, ship]);
 
   const [crewTimeRequirement, taskTimeRequirement] = useMemo(() => {
     const timeRequirement = currentTravelAction
@@ -253,14 +254,14 @@ const SetCourse = ({ origin, destination, manager, ship, stage, travelSolution, 
     {
       label: 'Propellant Used',
       value: formatMass(travelSolution.usedPropellantMass),
-      direction: getBonusDirection(propellantBonus),
+      direction: getBonusDirection(exhaustBonus),
       isTimeStat: true,
-      tooltip: propellantBonus.totalBonus !== 1 && (
+      tooltip: exhaustBonus.totalBonus !== 1 && (
         <MaterialBonusTooltip
-          bonus={propellantBonus}
+          bonus={exhaustBonus}
           isTimeStat
           title="Propellant Utilization"
-          titleValue={`${formatFixed(100 / propellantBonus.totalBonus, 1)}%`} />
+          titleValue={`${formatFixed(100 / exhaustBonus.totalBonus, 1)}%`} />
       )
     },
     {
@@ -299,7 +300,7 @@ const SetCourse = ({ origin, destination, manager, ship, stage, travelSolution, 
       value: ship.Station?.population || crew.Crew?.roster.length || 0,
       direction: 0,
     },
-  ]), [arrivingIn, cargoInv, travelSolution, propellantBonus, propellantInv, shipConfig]);
+  ]), [arrivingIn, cargoInv, travelSolution, exhaustBonus, propellantInv, shipConfig]);
 
   const onDepart = useCallback(() => {
     depart();
