@@ -13,7 +13,7 @@ export const LotDeepLink = () => {
   const onLink = useLotLink({ lotId: id });
 
   useEffect(() => {
-    history.push('/'); // cleanup url
+    history.replace('/'); // cleanup url
     if (id) {
       onLink();
     }
@@ -32,7 +32,7 @@ export const ShipDeepLink = () => {
   useEffect(() => {
     if (isLoading) return;
 
-    history.push('/'); // cleanup url
+    history.replace('/'); // cleanup url
     if (id) {
       onLink();
     }
@@ -50,7 +50,7 @@ export const BuildingDeepLink = () => {
   useEffect(() => {
     if (isLoading) return;
 
-    history.push('/'); // cleanup url
+    history.replace('/'); // cleanup url
     if (building?.Location?.location?.id) {
       onLink();
     }

@@ -168,7 +168,7 @@ const Game = () => {
                 {/* for everything else */}
                 <Route>
 
-                  {/* redirect user to launcher (when appropraite) */}
+                  {/* redirect user to launcher (when appropriate) */}
                   <LauncherRedirect />
 
                   {/* main app wrapper */}
