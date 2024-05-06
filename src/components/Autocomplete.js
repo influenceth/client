@@ -109,7 +109,6 @@ const AutocompleteComponent = ({
       if (options[highlighted]) {
         handleSelection(options[highlighted]);
       } else if (allowCustomInput && searchTerm) {
-        console.log('on enter');
         handleSelection(searchTerm);
       }
     } else if (e.key === 'ArrowUp') {
@@ -162,7 +161,7 @@ const AutocompleteComponent = ({
       </span>
 
       {(focused || hovered) && createPortal(
-        <div ref={setPopperEl} style={{ ...styles.popper, zIndex: 1000 }} {...attributes.popper}>
+        <div ref={setPopperEl} style={{ ...styles.popper, zIndex: 10002 }} {...attributes.popper}>
           <Options
             onMouseEnter={handleOptionHover}
             onMouseLeave={handleOptionHover}
