@@ -742,7 +742,7 @@ const AsteroidComponent = () => {
   const automatingCamera = useRef();
   useEffect(() => {
     if (selectedLot?.lotIndex > 0 && zoomedIntoAsteroidId === selectedLot?.asteroidId && config?.radiusNominal && zoomStatus === 'in') {
-      const lotTally = Math.floor(4 * Math.PI * (config?.radiusNominal / 1000) ** 2);
+      const lotTally = Asteroid.getSurfaceArea(selectedLot?.asteroidId);
       if (lotTally < selectedLot.lotIndex) { dispatchLotSelected(); return; }
 
       automatingCamera.current = true;
