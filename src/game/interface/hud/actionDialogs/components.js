@@ -5,6 +5,7 @@ import { Tooltip } from 'react-tooltip';
 import { TbBellRingingFilled as AlertIcon } from 'react-icons/tb';
 import { BarLoader } from 'react-spinners';
 import { Asteroid, Building, Crewmate, Dock, Entity, Inventory, Lot, Order, Permission, Process, Product, Ship, Station, Time } from '@influenceth/sdk';
+import numeral from 'numeral';
 
 import AsteroidRendering from '~/components/AsteroidRendering';
 import Button from '~/components/ButtonAlt';
@@ -3020,16 +3021,19 @@ export const RecipeSlider = ({ amount, disabled, increment = 0.001, processingTi
   }, []);
 
   const onSetAmount = useCallback((value) => {
+    let cleansed = numeral(value);
+    if (cleansed.value() === null) cleansed = numeral(min);
+
     // apply max, then min, then single increment
-    let cleansed = Math.min(max, value);
+    if (cleansed.value() > max) cleansed = Math.min(max, cleansed.value());
 
     // apply min / single increment
-    cleansed = Math.max(cleansed, min, increment);
+    if (cleansed.value() < min) cleansed = numeral(Math.max(min, increment));
 
     // round to nearest increment
-    cleansed = Math.floor(cleansed / increment) * increment;
+    cleansed = numeral(Math.floor(cleansed.value() / increment) * increment);
 
-    setAmount(cleansed);
+    setAmount(cleansed.value());
   }, [increment, min, max]);
 
   const onChangeInput = useCallback((e) => {
