@@ -7,7 +7,7 @@ import useAsteroid from '~/hooks/useAsteroid';
 import useBuilding from '~/hooks/useBuilding';
 import useShip from '~/hooks/useShip';
 
-const useHydratedLocation = (location, escapeModuleCrewId) => {
+const useHydratedLocation = (location = {}, escapeModuleCrewId) => {
   const onLotLink = useLotLink(location);
   const onShipLink = useShipLink((location?.shipId || escapeModuleCrewId) ? { crewId: escapeModuleCrewId, shipId: location?.shipId, zoomToShip: true } : {});
 
