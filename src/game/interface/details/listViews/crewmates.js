@@ -22,7 +22,7 @@ const useColumns = () => {
         key: 'my',
         align: 'center',
         icon: <MyAssetIcon />,
-        selector: row => !!crewmateMap[row.id] ? <MyAssetIcon /> : null,
+        selector: row => !!crewmateMap?.[row.id] ? <MyAssetIcon /> : null,
         bodyStyle: { fontSize: '24px' },
         requireLogin: true,
         unhideable: true

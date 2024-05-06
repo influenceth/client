@@ -388,7 +388,7 @@ const ListViewComponent = ({ assetType, onAssetTypeChange, onParamsApplied, para
             }
           </ResultContainer>
           <div style={{ flex: 1 }} />
-          {!!activeFilters && (
+          {!!activeFilters && !usePagedAssetsOverride && (
             <div style={{ marginRight: 6 }}>
               <Button
                 data-tooltip-content="Copy Search Link"
