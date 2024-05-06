@@ -2287,7 +2287,7 @@ export const InventorySelectionDialog = ({
   }, []);
 
   const filteredInventories = useMemo(() => {
-    const filterProductIds = Object.keys(filterItemIds || {}).filter((k) => filterItemIds[k]);
+    const filterProductIds = isSourcing ? Object.keys(filterItemIds || {}).filter((k) => filterItemIds[k]) : [];
     return inventories
       .map((inv) => {
         const productIdsInInv = filterProductIds.filter((k) => !!inv.contentsObj[k]);
@@ -2319,7 +2319,7 @@ export const InventorySelectionDialog = ({
         return true;
       })
       .sort((a, b) => (sort[1] === 'desc' ? -1 : 1) * (a[sort[0]] < b[sort[0]] ? -1 : 1));
-  }, [filterItemIds, filterValue, inventories, showPermittedInventories, showPublicInventories, sort]);
+  }, [filterItemIds, filterValue, inventories, isSourcing, showPermittedInventories, showPublicInventories, sort]);
 
   return (
     <SelectionDialog
