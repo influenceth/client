@@ -2,11 +2,12 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Entity, Permission, Time } from '@influenceth/sdk';
 import styled from 'styled-components';
 import Clipboard from 'react-clipboard.js';
+import numeral from 'numeral';
 
 import { CheckIcon, CloseIcon, ExtendAgreementIcon, FormAgreementIcon, FormLotAgreementIcon, GiveNoticeIcon, LinkIcon, CancelAgreementIcon, LotControlIcon, PermissionIcon, RefreshIcon, SwayIcon } from '~/components/Icons';
 import useCrewContext from '~/hooks/useCrewContext';
 import useStore from '~/hooks/useStore';
-import { reactBool, locationsArrToObj, formatFixed, monthsToSeconds, secondsToMonths, nativeBool } from '~/lib/utils';
+import { daysToSeconds, reactBool, locationsArrToObj, formatFixed, monthsToSeconds, secondsToMonths, nativeBool, secondsToDays } from '~/lib/utils';
 import {
   ActionDialogFooter,
   ActionDialogHeader,
@@ -35,7 +36,6 @@ import Button from '~/components/ButtonAlt';
 import useBlockTime from '~/hooks/useBlockTime';
 import useLot from '~/hooks/useLot';
 import useAsteroid from '~/hooks/useAsteroid';
-import { max } from 'moment/moment';
 
 const FormSection = styled.div`
   margin-top: 12px;
@@ -160,9 +160,9 @@ const FormAgreement = ({
   const maxTerm = useMemo(() => {
     const now = Math.floor(Date.now() / 1000);
     if (isExtension && currentAgreement?.endTime > now) {
-      return 12 - secondsToMonths(Math.max(0, currentAgreement?.endTime - currentAgreement?.startTime));
+      return 365 - secondsToDays(Math.max(0, currentAgreement?.endTime - currentAgreement?.startTime));
     }
-    return 12;
+    return 365;
   }, [currentAgreement, isExtension]);
 
   const maxTermFloored = useMemo(
@@ -170,9 +170,13 @@ const FormAgreement = ({
     [maxTerm]
   );
 
+  const minTerm = useMemo(() => {
+    return (isExtension) ? 1 : currentPolicy?.policyDetails?.initialTerm || 0
+  }, [currentPolicy]);
+
   const [initialPeriod, setInitialPeriod] = useState(
     (pendingChange?.vars?.term || pendingChange?.vars?.added_term)
-      ? secondsToMonths(pendingChange.vars.term || pendingChange.vars.added_term)
+      ? secondsToDays(pendingChange.vars.term || pendingChange.vars.added_term)
       : (isExtension ? maxTermFloored : (currentPolicy?.policyDetails?.initialTerm || 0))
   );
 
@@ -199,14 +203,14 @@ const FormAgreement = ({
       return [
         {
           label: `${isExtension ? 'Added ' : ''}Lease Length`,
-          value: `${initialPeriod} month${initialPeriod === 1 ? '' : 's'}`,
+          value: `${initialPeriod} day${initialPeriod === 1 ? '' : 's'}`,
           direction: 0,
         },
         {
           label: 'Notice Period',
           value: isExtension
-            ? `${currentAgreement?.noticePeriod || 0} month${currentAgreement?.noticePeriod === 1 ? '' : 's'}`
-            : `${currentPolicy?.policyDetails?.noticePeriod || 0} month${currentPolicy?.policyDetails?.noticePeriod === 1 ? '' : 's'}`,
+            ? `${currentAgreement?.noticePeriod || 0} day${currentAgreement?.noticePeriod === 1 ? '' : 's'}`
+            : `${currentPolicy?.policyDetails?.noticePeriod || 0} day${currentPolicy?.policyDetails?.noticePeriod === 1 ? '' : 's'}`,
           direction: 0,
         },
       ];
@@ -257,13 +261,21 @@ const FormAgreement = ({
 
   const handlePeriodChange = useCallback((e) => {
     if (e.currentTarget.value === '') return setInitialPeriod('');
-    setInitialPeriod(Math.max(currentPolicy?.policyDetails?.initialTerm, Math.min(e.currentTarget.value, maxTerm)));
+    const parsed = numeral(e.currentTarget.value);
+    if (!parsed) return setInitialPeriod(e.currentTarget.value);
+    setInitialPeriod(parsed.value());
+  });
+
+  const handlePeriodBlur = useCallback((e) => {
+    if (e.currentTarget.value === '') return setInitialPeriod('');
+    const parsed = numeral(e.currentTarget.value);
+    setInitialPeriod(numeral(Math.max(minTerm, Math.min(parsed.value(), maxTerm))).format('0.00'));
   }, [currentPolicy?.policyDetails?.initialTerm, maxTerm]);
 
   const onEnterAgreement = useCallback(() => {
     const recipient = controller?.Crew?.delegatedTo;
     // TODO: should these conversions be in useAgreementManager?
-    const term = monthsToSeconds(initialPeriod);
+    const term = daysToSeconds(initialPeriod);
     const termPrice = Math.ceil(totalLeaseCost * 1e6);
     enterAgreement({ recipient, term, termPrice });
   }, [controller?.Crew?.delegatedTo, enterAgreement, initialPeriod, totalLeaseCost]);
@@ -271,7 +283,7 @@ const FormAgreement = ({
   const onExtendAgreement = useCallback(() => {
     const recipient = controller?.Crew?.delegatedTo;
     // TODO: should these conversions be in useAgreementManager?
-    const term = monthsToSeconds(initialPeriod);
+    const term = daysToSeconds(initialPeriod);
     const termPrice = Math.ceil(totalLeaseCost * 1e6);
     extendAgreement({ recipient, term, termPrice });
   }, [controller?.Crew?.delegatedTo, extendAgreement, initialPeriod, totalLeaseCost]);
@@ -327,7 +339,6 @@ const FormAgreement = ({
     if (initialPeriod === '' || initialPeriod <= 0) return true;
     return false;
   }, [blockTime, initialPeriod, insufficientAssets, isTermination, currentAgreement])
-
   return (
     <>
       <ActionDialogHeader
@@ -372,7 +383,7 @@ const FormAgreement = ({
                 <InputLabel>
                   <label>Notice Period</label>
                 </InputLabel>
-                <TextInputWrapper rightLabel="months">
+                <TextInputWrapper rightLabel="days">
                   <DisabledUncontrolledTextInput
                     disabled
                     value={(currentAgreement?.noticePeriod || 0)} />
@@ -383,7 +394,7 @@ const FormAgreement = ({
                 <InputLabel>
                   <label>Excess Prepaid</label>
                 </InputLabel>
-                <TextInputWrapper rightLabel="months">
+                <TextInputWrapper rightLabel="days">
                   <DisabledUncontrolledTextInput
                     disabled
                     style={refundableAmount > 0 ? { backgroundColor: '#300c0c', color: theme.colors.red, fontWeight: 'bold' } : {}}
@@ -416,23 +427,23 @@ const FormAgreement = ({
                 <InputLabel>
                   <label>{isExtension ? 'Added' : 'Leasing'} Period</label>
                 </InputLabel>
-                <TextInputWrapper rightLabel="months">
+                <TextInputWrapper rightLabel="days">
                   <UncontrolledTextInput
                     disabled={stage !== actionStages.NOT_STARTED}
                     min={currentPolicy?.policyDetails?.initialTerm}
                     max={maxTermFloored}
-                    onBlur={handlePeriodChange}
+                    onBlur={handlePeriodBlur}
                     onChange={handlePeriodChange}
-                    step={0.1}
+                    step={1}
                     type="number"
                     value={initialPeriod} />
                 </TextInputWrapper>
                 <InputSublabels>
                   {isExtension
-                    ? <div>Min <b>{formatFixed(0, 1)} months</b></div>
-                    : <div>Min <b>{formatFixed(currentPolicy?.policyDetails?.initialTerm || 0, 1)} month{currentPolicy?.policyDetails?.initialTerm === 1 ? '' : 's'}</b></div>
+                    ? <div>Min <b>{minTerm} day</b></div>
+                    : <div>Min <b>{formatFixed(currentPolicy?.policyDetails?.initialTerm || 0, 2)} day{currentPolicy?.policyDetails?.initialTerm === 1 ? '' : 's'}</b></div>
                   }
-                  <div>Max <b>{formatFixed(maxTermFloored, 1)} months</b></div>
+                  <div>Max <b>{formatFixed(maxTermFloored, 1)} days</b></div>
                 </InputSublabels>
               </FormSection>
 
@@ -440,7 +451,7 @@ const FormAgreement = ({
                 <InputLabel>
                   <label>Price</label>
                 </InputLabel>
-                <TextInputWrapper rightLabel="SWAY / month">
+                <TextInputWrapper rightLabel="SWAY / day">
                   <DisabledUncontrolledTextInput
                     disabled
                     value={formatFixed(currentPolicy?.policyDetails?.rate || 0)} />
@@ -530,7 +541,7 @@ const FormAgreement = ({
                         <div>
                           {insufficientAssets
                             ? <InsufficientAssets>Insufficient Wallet Balance</InsufficientAssets>
-                            : <>Granted For: <b>{' '}{initialPeriod} months</b></>
+                            : <>Granted For: <b>{' '}{initialPeriod} days</b></>
                           }
                         </div>
                         <div style={{ position: 'relative', top: 4 }}>

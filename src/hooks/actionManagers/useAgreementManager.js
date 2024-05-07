@@ -5,9 +5,7 @@ import { cloneDeep } from 'lodash';
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
 import usePolicyManager from '~/hooks/actionManagers/usePolicyManager';
 import useCrewContext from '~/hooks/useCrewContext';
-import { monthsToSeconds, secondsToMonths } from '~/lib/utils';
-
-const hoursPerMonth = monthsToSeconds(1) / 3600;
+import { daysToSeconds, secondsToDays } from '~/lib/utils';
 
 export const getAgreementPath = (target, permission, permitted) => {
   return `${target ? Entity.packEntity(target) : ''}.${permission || ''}.${permitted?.id ? Entity.packEntity(permitted) : (permitted || '')}`;
@@ -31,11 +29,11 @@ const useAgreementManager = (target, permission, agreementPath) => {
       const agg = cloneDeep(agreement);
       if (agg?.rate) {
         agg.rate_swayPerSec = agg.rate / 1e6 / 3600; // (need this precision to avoid rounding issues)
-        agg.rate = agg.rate / 1e6 * hoursPerMonth;  // stored in microsway per hour, UI in sway/mo
+        agg.rate = agg.rate / 1e6 * 24;  // stored in microsway per hour, UI in sway/day
       }
-      if (agg?.initialTerm) agg.initialTerm = secondsToMonths(agg.initialTerm); // stored in seconds, UI in months
-      if (agg?.noticePeriod) agg.noticePeriod = secondsToMonths(agg.noticePeriod); // stored in seconds, UI in months
-      agg._canGiveNoticeStart = agg.startTime + monthsToSeconds(agg.initialTerm - agg.noticePeriod);
+      if (agg?.initialTerm) agg.initialTerm = secondsToDays(agg.initialTerm); // stored in seconds, UI in days
+      if (agg?.noticePeriod) agg.noticePeriod = secondsToDays(agg.noticePeriod); // stored in seconds, UI in days
+      agg._canGiveNoticeStart = agg.startTime + daysToSeconds(agg.initialTerm - agg.noticePeriod);
       return agg;
     }
     return null;

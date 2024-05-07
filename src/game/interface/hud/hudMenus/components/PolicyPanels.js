@@ -449,7 +449,7 @@ const PolicyPanel = ({ editable = false, entity, permission }) => {
                         step={1}
                         type="number"
                         value={`${details.rate}`} />
-                      <span>SWAY per month</span>
+                      <span>SWAY per day</span>
                     </div>
                   </PrepaidInputBlock>
                   <PrepaidInputBlock>
@@ -460,10 +460,10 @@ const PolicyPanel = ({ editable = false, entity, permission }) => {
                         max={12}
                         min={0}
                         onChange={handleChange('initialTerm')}
-                        step={0.1}
+                        step={1}
                         type="number"
                         value={`${details.initialTerm}`} />
-                      <span>months</span>
+                      <span>days</span>
                     </div>
                   </PrepaidInputBlock>
                   <PrepaidInputBlock>
@@ -474,10 +474,10 @@ const PolicyPanel = ({ editable = false, entity, permission }) => {
                         max={12}
                         min={0}
                         onChange={handleChange('noticePeriod')}
-                        step={0.1}
+                        step={1}
                         type="number"
                         value={`${details.noticePeriod}`} />
-                      <span>months</span>
+                      <span>days</span>
                     </div>
                   </PrepaidInputBlock>
                 </>
@@ -524,14 +524,14 @@ const PolicyPanel = ({ editable = false, entity, permission }) => {
               {policyType === Permission.POLICY_IDS.PREPAID && (
                 <>
                   <DataRow>
-                    <label>Price per Month</label>
+                    <label>Price per Day</label>
                     {permission === Permission.IDS.USE_LOT && entity?.label === Entity.IDS.ASTEROID && entity?.id === 1
                       ? <span><SwayIcon /> Variable by Lot</span>
                       : <span><SwayIcon /> {formatFixed(originalPolicyDetails?.rate || 0)}</span>
                     }
                   </DataRow>
-                  <DataRow><label>Minimum Period</label><span>{formatFixed(originalPolicyDetails?.initialTerm, 3)} mo</span></DataRow>
-                  <DataRow><label>Notice Period</label><span>{formatFixed(originalPolicyDetails?.noticePeriod, 3)} mo</span></DataRow>
+                  <DataRow><label>Minimum Period</label><span>{formatFixed(originalPolicyDetails?.initialTerm, 3)} day</span></DataRow>
+                  <DataRow><label>Notice Period</label><span>{formatFixed(originalPolicyDetails?.noticePeriod, 3)} day</span></DataRow>
                 </>
               )}
               {([Permission.POLICY_IDS.CONTRACT, Permission.POLICY_IDS.PREPAID].includes(policyType)) && (

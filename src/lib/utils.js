@@ -202,6 +202,8 @@ export const arrToXYZ = (arr) => ({ x: arr[0], y: arr[1], z: arr[2] });
 const yearOfSeconds = 31536000;
 export const secondsToMonths = (seconds) => Math.floor(1000 * 12 * seconds / yearOfSeconds) / 1000;
 export const monthsToSeconds = (months) => Math.floor(yearOfSeconds * months / 12);
+export const secondsToDays = (seconds) => formatFixed(seconds / 86400, 2);
+export const daysToSeconds = (days) => days * 86400;
 
 export const getBlockTime = async (starknet, blockNumber = 'pending') => {
   try {
