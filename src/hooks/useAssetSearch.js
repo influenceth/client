@@ -215,21 +215,26 @@ const useAssetSearch = (assetType, { from = 0, size = 2000 } = {}) => {
 
   const query = useMemo(() => {
     if (esAssetType) {
-      const q = esb.requestBodySearch();
-      q.query(filtersToQuery[esAssetType](throttledFilters || {}));
-      if (esAssetType === 'asteroids') q.source({ excludes: [ 'AsteroidProof' ]});
-      if (sort) {
-        if (sort[2]) {
-          q.sort(esb.sort({ [sort[0]]: { order: sort[1], ...sort[2] } }));
-        } else {
-          q.sort(esb.sort(...sort));
+      try {
+        const q = esb.requestBodySearch();
+        q.query(filtersToQuery[esAssetType](throttledFilters || {}));
+        if (esAssetType === 'asteroids') q.source({ excludes: [ 'AsteroidProof' ]});
+        if (sort) {
+          if (sort[2]) {
+            q.sort(esb.sort({ [sort[0]]: { order: sort[1], ...sort[2] } }));
+          } else {
+            q.sort(esb.sort(...sort));
+          }
         }
-      }
-      q.from(from);
-      q.size(size);
-      q.trackTotalHits(true);
+        q.from(from);
+        q.size(size);
+        q.trackTotalHits(true);
 
-      return q.toJSON();
+        return q.toJSON();
+      } catch (e) {
+        console.error(e);
+        return esb.requestBodySearch().toJSON();
+      }
     }
     return null;
   }, [esAssetType, from, size, sort, throttledFilters]);
