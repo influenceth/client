@@ -11,11 +11,8 @@ const labelDict = {
 };
 
 const isVisible = ({ constructionStatus, crew, lot, ship }) => {
-  const isPermitted = (lot?.PrepaidAgreements?.length > 0 || lot?.ContractAgreements?.length > 0 ) ? 
-    Permission.isPermitted(crew, Permission.IDS.USE_LOT, lot) : true;
-
   return crew && lot && !ship && (
-    constructionStatus === 'READY_TO_PLAN' && isPermitted || (
+    constructionStatus === 'READY_TO_PLAN' || (
       lot?.building?.Control?.controller?.id === crew.id
       && constructionStatus === 'PLANNING'
     )
@@ -29,11 +26,13 @@ const PlanBuilding = ({ asteroid, crew, lot, onSetAction, _disabled }) => {
   }, [onSetAction]);
 
   const disabledReason = useMemo(() => {
+    const isPermitted = (lot?.PrepaidAgreements?.length > 0 || lot?.ContractAgreements?.length > 0 ) ? 
+    Permission.isPermitted(crew, Permission.IDS.USE_LOT, lot) : true;
+
     if (_disabled) return 'loading...';
-    if (constructionStatus === 'READY_TO_PLAN') {
-      return getCrewDisabledReason({ asteroid, crew });
-    }
-  }, [_disabled, asteroid, constructionStatus, crew]);
+    if (!isPermitted) return 'not permitted';
+    if (constructionStatus === 'READY_TO_PLAN') return getCrewDisabledReason({ asteroid, crew });
+  }, [_disabled, asteroid, constructionStatus, crew, lot]);
 
   return (
     <ActionButton
