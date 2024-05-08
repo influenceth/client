@@ -30,7 +30,7 @@ const PlanBuilding = ({ asteroid, crew, lot, onSetAction, _disabled }) => {
     Permission.isPermitted(crew, Permission.IDS.USE_LOT, lot) : true;
 
     if (_disabled) return 'loading...';
-    if (!isPermitted) return 'not permitted';
+    if (!isPermitted) return 'lot reserved';
     if (constructionStatus === 'READY_TO_PLAN') return getCrewDisabledReason({ asteroid, crew });
   }, [_disabled, asteroid, constructionStatus, crew, lot]);
 
