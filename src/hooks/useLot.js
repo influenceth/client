@@ -34,22 +34,14 @@ const useLot = (lotId) => {
       // populate from single query... set query data
       const lotEntities = (await api.getEntities({
         match: { 'Location.locations.uuid': lotEntity.uuid },
-        components: [ // this should include all default components returned for relevant entities (buildings, ships, deposits)
-          'Building', 'Control', 'Dock', 'DryDock', 'Exchange', 'Extractor', 'Inventory', 'Location', 'Name', 'Processor', 'Station',
-          /*'Control',*/ 'Deposit', /*'Location',*/ 'PrivateSale',
-          /*'Control', 'Inventory', 'Location', 'Name',*/ 'Nft', 'Ship', /*'Station',*/
-
-          // these are on both buildings and ships:
-          'ContractPolicy', 'PrepaidPolicy', 'PublicPolicy', 'ContractAgreement', 'PrepaidAgreement', 'WhitelistAgreement', 'WhitelistAccountAgreement',
-        ]
+        label: [Entity.IDS.BUILDING, Entity.IDS.DEPOSIT, Entity.IDS.SHIP],
       })) || [];
+      console.log({ lotEntities })
 
       // update queryClient for individual entities, so that when lot data invalidated, they are refetched
       // TODO: not sure why we would do this here if we are not doing everywhere with an 'entities' key?
       lotEntities.forEach((e) => {
-        if ([Entity.IDS.BUILDING, Entity.IDS.DEPOSIT, Entity.IDS.SHIP].includes(e.label)) {
-          queryClient.setQueryData([ 'entity', e.label, e.id ], e);
-        }
+        queryClient.setQueryData([ 'entity', e.label, e.id ], e);
       });
 
       [Entity.IDS.BUILDING, Entity.IDS.DEPOSIT, Entity.IDS.SHIP].forEach((label) => {
