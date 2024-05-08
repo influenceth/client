@@ -9,7 +9,11 @@
     "@argent/x-sessions": "^6.5.5",
     "@avnu/avnu-sdk": "^1.2.4",
     "@influenceth/astro": "^0.2.5",
+<<<<<<< HEAD
     "@influenceth/sdk": "^2.1.0-beta.90",
+=======
+    "@influenceth/sdk": "^2.1.0-beta.91",
+>>>>>>> c8f0d1cf (Bumped sdk to fix bonus usage)
     "@popperjs/core": "^2.11.6",
     "@react-hook/throttle": "^2.2.0",
     "@react-three/drei": "^8.8.1",
