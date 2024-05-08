@@ -36,7 +36,6 @@ const useLot = (lotId) => {
         match: { 'Location.locations.uuid': lotEntity.uuid },
         label: [Entity.IDS.BUILDING, Entity.IDS.DEPOSIT, Entity.IDS.SHIP],
       })) || [];
-      console.log({ lotEntities })
 
       // update queryClient for individual entities, so that when lot data invalidated, they are refetched
       // TODO: not sure why we would do this here if we are not doing everywhere with an 'entities' key?
