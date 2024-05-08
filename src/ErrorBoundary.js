@@ -82,7 +82,11 @@ class ErrorBoundary extends Component {
       };
     }
 
-    delete redactedStore.sessions; // includes sensitive data
+    // remove token data
+    delete redactedStore.state.currentSession.token;
+    Object.keys(redactedStore.state.sessions).forEach((key) => {
+      delete redactedStore.state.sessions[key].token;
+    });
 
     // TODO (maybe):
     //  - current block number and block time
