@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from 'react';
-import { Permission } from '@influenceth/sdk';
+import { DryDock, Permission } from '@influenceth/sdk';
 
 import { ShipIcon } from '~/components/Icons';
 import useDryDockManager from '~/hooks/actionManagers/useDryDockManager';
@@ -32,6 +32,7 @@ const AssembleShip = ({ asteroid, crew, lot, onSetAction, _disabled }) => {
       return 'in use';
     }
   }, [_disabled, assemblyStatus, asteroid, crew, currentAssembly, lot?.building]);
+  const finishTime = lot?.building?.DryDocks.find((dryDock) => dryDock.status === DryDock.STATUSES.RUNNING)?.finishTime;
 
   return (
     <ActionButton
@@ -40,6 +41,7 @@ const AssembleShip = ({ asteroid, crew, lot, onSetAction, _disabled }) => {
       flags={{
         disabled: _disabled || disabledReason,
         attention: !_disabled && assemblyStatus === 'READY_TO_FINISH',
+        finishTime,
         loading: assemblyStatus === 'ASSEMBLING' || assemblyStatus === 'FINISHING'
       }}
       icon={<ShipIcon />}
