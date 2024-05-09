@@ -123,7 +123,7 @@ const LiveReadyStatus = ({ crew, ...props }) => {
   }
   if (crewIsBusy || waitingOnBlock) {
     return (
-      <BusyStatusContainer {...props} color={crew._location.asteroidId && crew.Crew?.readyAt < scheduleEnd ? '' : '#fab040'}>
+      <BusyStatusContainer {...props} color={crew._location?.asteroidId && crew.Crew?.readyAt < scheduleEnd ? '' : '#fab040'}>
         <LiveTimer target={crew.Crew.readyAt} maxPrecision={2}>
           {(formattedTime) => (
             <TimerWrapper
@@ -133,13 +133,13 @@ const LiveReadyStatus = ({ crew, ...props }) => {
             </TimerWrapper>
           )}
         </LiveTimer>
-        {!crew._location.asteroidId && (
+        {!crew._location?.asteroidId && (
           <>
             <label>In Flight</label>
             <IconWrapper><ShipIcon /></IconWrapper>
           </>
         )}
-        {crew._location.asteroidId && (
+        {crew._location?.asteroidId && (
           crew.Crew?.readyAt < scheduleEnd
           ? (
             <>

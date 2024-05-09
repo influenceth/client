@@ -18,7 +18,7 @@ const isVisible = ({ asteroid, crew, ship, zoomStatus }) => {
 };
 
 const SelectTravelDestination = ({ crew }) => {
-  const { travelStatus } = useShipTravelManager(crew?._location?.shipId);
+  const { travelStatus, inOrbit } = useShipTravelManager(crew?._location?.shipId);
   const origin = useStore(s => s.asteroids.origin);
   const destination = useStore(s => s.asteroids.destination);
   const inTravelMode = useStore(s => s.asteroids.travelMode);
@@ -29,7 +29,6 @@ const SelectTravelDestination = ({ crew }) => {
   const zoomStatus = useStore(s => s.asteroids.zoomStatus);
 
   const canSelect = inTravelMode && zoomStatus === 'out';
-
   const handleClick = useCallback(() => {
     if (zoomStatus !== 'out') {
       dispatchZoomStatusChanged('zooming-out');
@@ -48,8 +47,7 @@ const SelectTravelDestination = ({ crew }) => {
       dispatchHudMenuOpened('BELT_PLAN_FLIGHT');
     }
   }, [dispatchHudMenuOpened, destination, inTravelMode, origin]);
-
-  const canBeReal = (crew?._location?.shipId || crew?.Ship.emergencyAt > 0) && travelStatus === 'READY';
+  const canBeReal = (crew?._location?.shipId || crew?.Ship.emergencyAt > 0) && travelStatus === 'READY' && inOrbit;
   const planOrSimulate = canBeReal ? 'Create' : 'Simulate';
   const planningOrSimulation = canBeReal ? 'Planning' : 'Simulation';
 
