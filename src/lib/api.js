@@ -65,7 +65,7 @@ const getEntities = async ({ ids, match, label, components }) => {
     query.match = `${Object.keys(match)[0]}:${JSON.stringify(Object.values(match)[0])}`;
   }
   if (label) {
-    query.label = label;  // i.e. 3 (Entity.IDS.ASTEROID)
+    query.label = Array.isArray(label) ? label.join(',') : label;  // i.e. 3 (Entity.IDS.ASTEROID)
   }
   if (components) {
     query.components = components.join(',');  // i.e. [ 'Celestial', 'Control' ]
