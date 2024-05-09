@@ -261,6 +261,7 @@ const useShipTravelManager = (shipId) => {
     travelStatus: status,
     actionStage: stage,
 
+    inOrbit: !ship?._location?.lotId,
     isLoading: currentTravelAction && !currentTravelSolution
   };
 };
