@@ -109,7 +109,6 @@ const AutocompleteComponent = ({
       if (options[highlighted]) {
         handleSelection(options[highlighted]);
       } else if (allowCustomInput && searchTerm) {
-        console.log('on enter');
         handleSelection(searchTerm);
       }
     } else if (e.key === 'ArrowUp') {
@@ -169,7 +168,7 @@ const AutocompleteComponent = ({
             width={width}
             {...dropdownProps}>
             {options.map((o, i) => (
-              <Option key={o[valueKey]} isHighlighted={i === highlighted} onClick={() => { console.log('onclick'); handleSelection(o)}}>
+              <Option key={o[valueKey]} isHighlighted={i === highlighted} onClick={() => handleSelection(o)}>
                 <label>{formatLabel(o)}</label>
                 {formatFootnote && <Footnote>{formatFootnote(o)}</Footnote>}
               </Option>
