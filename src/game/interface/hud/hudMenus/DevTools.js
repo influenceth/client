@@ -258,7 +258,7 @@ const DevTools = () => {
               initialValue={settings.rimlightIntensity}
               min="0"
               step="0.01"
-              onChange={(v) => setters.setRimlightIntensity(parseFloat(v) || 1)} />
+              onChange={(v) => setters.setRimlightIntensity(parseFloat(v) || 0)} />
           </Miniform>
 
           <Miniform>
@@ -268,7 +268,7 @@ const DevTools = () => {
               initialValue={settings.keylightIntensity}
               min="0"
               step="0.01"
-              onChange={(v) => setters.setKeylightIntensity(parseFloat(v) || 1)} />
+              onChange={(v) => setters.setKeylightIntensity(parseFloat(v) || 0)} />
           </Miniform>
 
           <Miniform>
@@ -278,7 +278,7 @@ const DevTools = () => {
               initialValue={settings.lightmapStrength}
               min="0"
               step="0.01"
-              onChange={(v) => setters.setLightmapIntensity(parseFloat(v) || 1)} />
+              onChange={(v) => setters.setLightmapIntensity(parseFloat(v) || 0)} />
           </Miniform>
 
           <Miniform>

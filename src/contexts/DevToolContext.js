@@ -40,6 +40,10 @@ export function DevToolProvider({ children }) {
     setEnvmap();
     setEnvmapOverrideName();
     setEnvmapStrength();
+    setKeylightIntensity();
+    setLightmapIntensity();
+    setRimlightIntensity();
+    setSpotlightReduction();
   }, [assetType])
 
   const contextValue = useMemo(() => ({
