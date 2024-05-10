@@ -36,16 +36,17 @@ import useConstants from '~/hooks/useConstants';
 
 import frag from './shaders/delivery.frag';
 import vert from './shaders/delivery.vert';
+import theme from '~/theme';
 
 const { MAX_LOTS_RENDERED } = constants;
 
-const WHITE_COLOR = new Color().setHex(0xffffff).convertSRGBToLinear();
-const GRAY_COLOR = new Color().setHex(0xaaaaaa).convertSRGBToLinear();
+const WHITE_COLOR = new Color().setHex(0xffffff);
+const GRAY_COLOR = new Color().setHex(0xcccccc);
 
 const colorCache = {};
 const getColor = (hex) => {
   if (!hex) return GRAY_COLOR;
-  if (!colorCache[hex]) colorCache[hex] = new Color(hex).convertSRGBToLinear();
+  if (!colorCache[hex]) colorCache[hex] = new Color(hex);
   return colorCache[hex];
 }
 
@@ -65,7 +66,7 @@ const MAX_FILL_INSTANCES = getMaxInstancesForAltitude(FILL_VISIBILITY_ALTITUDE);
 const MOUSE_THROTTLE_DISTANCE = 50 ** 2;
 const MOUSE_THROTTLE_TIME = 1000 / 30; // ms
 
-const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, config, getLockToSurface, getRotation }) => {
+const Lots = ({ attachTo: overrideAttachTo, asteroidId, axis, cameraAltitude, cameraNormalized, config, getLockToSurface, getRotation }) => {
   const { token } = useSession();
   const { crew } = useCrewContext();
   const { data: TIME_ACCELERATION } = useConstants('TIME_ACCELERATION');
@@ -74,6 +75,8 @@ const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, co
   const queryClient = useQueryClient();
   const { registerMessageHandler, unregisterMessageHandler, wsReady } = useWebsocket();
   const { processInBackground } = useWebWorker();
+
+  const attachTo = useMemo(() => overrideAttachTo || scene, [overrideAttachTo, scene]);
 
   const textureQuality = useStore(s => s.graphics.textureQuality);
   const lotId = useStore(s => s.asteroids.lot);
@@ -131,7 +134,7 @@ const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, co
     uTime: { value: 0 },
     uAlpha: { value: 1.0 },
     uCount: { value: 51 },
-    uCol: { type: 'c', value: new Color('#20bde5').convertSRGBToLinear() },
+    uCol: { type: 'c', value: new Color(theme.colors.main) },
   });
 
   const lastMouseUpdatePosition = useRef(new Vector2());
@@ -391,21 +394,19 @@ const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, co
       opacity: 0,
       depthTest: false,
       depthWrite: false,
-      toneMapped: false,
       transparent: true,
     });
 
     mouseableMesh.current = new InstancedMesh(mouseableGeometry, mouseableMaterial, visibleLotTally);
     mouseableMesh.current.renderOrder = 999;
-    (attachTo || scene).add(mouseableMesh.current);
-
+    attachTo.add(mouseableMesh.current);
     return () => {
       if (mouseableMesh.current) {
-        (attachTo || scene).remove(mouseableMesh.current);
+        attachTo.remove(mouseableMesh.current);
       }
     };
 
-  }, [visibleLotTally]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [attachTo, visibleLotTally]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Lot meshes
   useEffect(() => {
@@ -415,7 +416,6 @@ const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, co
       color: new Color().setHex(0xffffff),
       depthTest: false,
       depthWrite: false,
-      toneMapped: false,
       transparent: true,
     };
 
@@ -436,7 +436,7 @@ const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, co
 
     Object.values(meshes).forEach((mesh) => {
       mesh.renderOrder = 999;
-      (attachTo || scene).add(mesh);
+      attachTo.add(mesh);
     });
 
     lotMeshes.current = meshes;
@@ -444,10 +444,10 @@ const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, co
 
     return () => {
       Object.values(lotMeshes.current).forEach((mesh) => {
-        (attachTo || scene).remove(mesh);
+        attachTo.remove(mesh);
       });
     };
-  }, [visibleResultTally, texturesLoaded, lotUseTallies]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [attachTo, visibleResultTally, texturesLoaded, lotUseTallies]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Create mesh for core samples
   useEffect(() => {
@@ -460,20 +460,19 @@ const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, co
       depthWrite: false,
       opacity: 0.5,
       side: FrontSide,
-      toneMapped: false,
       transparent: true
     });
 
     lotSamplesMesh.current = new InstancedMesh(fillGeometry, fillMaterial, visibleFillTally);
     lotSamplesMesh.current.renderOrder = 998;
-    (attachTo || scene).add(lotSamplesMesh.current);
+    attachTo.add(lotSamplesMesh.current);
 
     return () => {
       if (lotSamplesMesh.current) {
-        (attachTo || scene).remove(lotSamplesMesh.current);
+        attachTo.remove(lotSamplesMesh.current);
       }
     };
-  }, [visibleFillTally, PLOT_WIDTH]);
+  }, [attachTo, visibleFillTally, PLOT_WIDTH]);
 
   // instantiate mouse mesh
   useEffect(() => {
@@ -485,19 +484,18 @@ const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, co
         map: new TextureLoader().load('/textures/asteroid/reticule.png'),
         opacity: 0.5,
         side: FrontSide,
-        toneMapped: false,
         transparent: true
       })
     );
     mouseHoverMesh.current.renderOrder = 999;
     mouseHoverMesh.current.userData.bloom = true;
-    (attachTo || scene).add(mouseHoverMesh.current);
+    attachTo.add(mouseHoverMesh.current);
     return () => {
       if (mouseHoverMesh.current) {
-        (attachTo || scene).remove(mouseHoverMesh.current);
+        attachTo.remove(mouseHoverMesh.current);
       }
     };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [attachTo]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Instantiate selection mesh
   useEffect(() => {
@@ -508,19 +506,18 @@ const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, co
         depthTest: false,
         map: new TextureLoader().load('/textures/asteroid/reticule.png'),
         side: FrontSide,
-        toneMapped: false,
         transparent: true
       })
     );
     selectionMesh.current.renderOrder = 999;
     selectionMesh.current.userData.bloom = true;
-    (attachTo || scene).add(selectionMesh.current);
+    attachTo.add(selectionMesh.current);
     return () => {
       if (selectionMesh.current) {
-        (attachTo || scene).remove(selectionMesh.current);
+        attachTo.remove(selectionMesh.current);
       }
     };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [attachTo]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const lotScale = useMemo(() => Math.max(1, Math.sqrt(cameraAltitude / 10000)), [cameraAltitude]);
   const lotsReady = useMemo(() => {
@@ -615,7 +612,7 @@ const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, co
 
             // update mouseable matrix
             // TODO: should these always face the camera? or have a slight bias towards camera at least?
-            mouseableMesh.current.setMatrixAt(totalRendered, dummy.matrix);
+            if (mouseableMesh.current) mouseableMesh.current.setMatrixAt(totalRendered, dummy.matrix);
             updateMouseableMatrix = true;
 
             // COLOR
@@ -656,15 +653,22 @@ const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, co
       });
 
       if (mouseableMesh.current) mouseableMesh.current.count = cameraAltitude > PIP_VISIBILITY_ALTITUDE ? 0 : visibleLotTally;
-      if (mouseableMesh.current && updateMouseableMatrix) mouseableMesh.current.instanceMatrix.needsUpdate = true;
+      if (mouseableMesh.current && updateMouseableMatrix) {
+        mouseableMesh.current.instanceMatrix.needsUpdate = true;
+        mouseableMesh.current.computeBoundingSphere();
+      }
 
-      if (lotSamplesMesh.current && updateSamplesMatrix) lotSamplesMesh.current.instanceMatrix.needsUpdate = true;
+      if (lotSamplesMesh.current && updateSamplesMatrix) {
+        lotSamplesMesh.current.instanceMatrix.needsUpdate = true;
+        lotSamplesMesh.current.computeBoundingSphere();
+      }
       if (lotSamplesMesh.current) lotSamplesMesh.current.count = visibleFillTally;
 
       for (const use in lotMeshes.current) {
         lotMeshes.current[use].count = lotUsesRendered[use] || 0;
         lotMeshes.current[use].instanceMatrix.needsUpdate = !!updateLotUseMatrix[use];
         lotMeshes.current[use].instanceColor.needsUpdate = !!updateResultColor[use];
+        lotMeshes.current[use].computeBoundingSphere();
       };
 
       setLotsInitialized(true);
@@ -686,6 +690,8 @@ const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, co
   ]);
 
   const highlightLot = useCallback((lotIndex) => {
+    if (!attachTo) return;
+
     highlighted.current = null;
     // if a new lotIndex was passed to highlight, do it
     if (lotIndex !== undefined && lotIndex !== selectedLotIndex) {
@@ -708,10 +714,10 @@ const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, co
       mouseHoverMesh.current.lookAt(orientation);
       mouseHoverMesh.current.material.opacity = 0.5;
       highlighted.current = lotIndex;
-    } else {
+    } else if (mouseHoverMesh.current) {
       mouseHoverMesh.current.material.opacity = 0;
     }
-  }, [attachTo.quaternion, selectedLotIndex]);
+  }, [attachTo?.quaternion, selectedLotIndex]);
 
   // Calculates the control point for the delivery bezier curve
   const calculateControlPoint = useCallback((origin, dest, distance, frac = 0.5) => {
@@ -786,18 +792,20 @@ const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, co
       geometry.setAttribute('order', new BufferAttribute(order, 1));
 
       const curveGeom = new Line(geometry, material);
-      (attachTo || scene).add(curveGeom);
+      attachTo.add(curveGeom);
       deliveryArcs.current.push(curveGeom);
     });
 
     return () => {
-      deliveryArcs.current?.forEach((arc) => (attachTo || scene).remove(arc));
+      deliveryArcs.current?.forEach((arc) => attachTo.remove(arc));
       deliveryArcs.current = [];
     };
-  }, [selectedLotIndex, deliveryEndpoint, inboundDeliveries, outboundDeliveries]);
+  }, [attachTo, selectedLotIndex, deliveryEndpoint, inboundDeliveries, outboundDeliveries]);
 
   const selectionAnimationTime = useRef(0);
   useEffect(() => {
+    if (!attachTo) return;
+
     if (selectionMesh.current && positions.current && positionsReady && selectedLotIndex) {
       const lotZeroIndex = selectedLotIndex - 1;
 
@@ -821,7 +829,7 @@ const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, co
     } else {
       selectionMesh.current.material.opacity = 0;
     }
-  }, [attachTo.quaternion, selectedLotIndex, positionsReady]);
+  }, [attachTo?.quaternion, selectedLotIndex, positionsReady]);
 
   // when camera angle changes, sort all regions by closest, then display
   // up to max lots (ordered by region proximity)
@@ -888,8 +896,10 @@ const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, co
     if (now - lastMouseUpdateTime.current < mouseThrottleTime) return;
 
     // FINALLY, find the closest intersection (if the mouse is on the screen)
+    if (!mouseableMesh.current) return;
     lastMouseUpdatePosition.current = mouseVector.clone();
     lastMouseUpdateTime.current = now;
+
     const intersections = state.raycaster.intersectObject(mouseableMesh.current);
 
     // if no intersections, clear any highlights

@@ -1,11 +1,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { AmbientLight, Color, DirectionalLight} from 'three';
+import { AmbientLight, Color, DirectionalLight } from 'three';
 import { Canvas, useThree } from '@react-three/fiber';
 
 import { cleanupScene, renderDummyAsteroid } from '~/game/scene/asteroid/helpers/utils';
 import useWebWorker from '~/hooks/useWebWorker';
 import theme from '~/theme';
 import constants from '~/lib/constants';
+
+const mainColor = new Color(theme.colors.main).convertLinearToSRGB();
+const materialColor = mainColor.clone().multiplyScalar(0.3);
 
 const RenderedAsteroid = ({ asteroid, brightness = 1, varyDistance = false, onReady, webWorkerPool }) => {
   const { camera, gl, scene } = useThree();
@@ -17,17 +20,17 @@ const RenderedAsteroid = ({ asteroid, brightness = 1, varyDistance = false, onRe
         asteroidModel.traverse(function (node) {
           if (node.isMesh) {
             node.material.map = null;
-            node.material.color = new Color(theme.colors.main).multiplyScalar(0.3);
+            node.material.color = materialColor;
           }
         });
 
         const radiusMeters = asteroid.Celestial.radius * 1000; // km -> m
         scene.add(asteroidModel);
 
-        const lightColor = new Color(theme.colors.main);
-        const lightIntensity = brightness * 0.7;
+        const lightColor = mainColor;
+        const lightIntensity = brightness * 7;
 
-        const ambientLight = new AmbientLight(lightColor, 0.15 * lightIntensity);
+        const ambientLight = new AmbientLight(lightColor, 0.2 * lightIntensity);
         scene.add(ambientLight);
 
         const depth = -0.5 * radiusMeters;
@@ -103,8 +106,8 @@ const RenderedAsteroidInCanvas = ({ onReady, ...props }) => {
     : (
       <Canvas
         ref={canvas}
-        antialias
         frameloop="never"
+        linear
         style={style}>
         <RenderedAsteroid {...props} onReady={onReadyInternal} webWorkerPool={webWorkerPool} />
       </Canvas>

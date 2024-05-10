@@ -101,7 +101,7 @@ class TerrainChunk {
         ${shader.vertexShader.replace(
           '#include <displacementmap_vertex>',
           `#ifdef USE_DISPLACEMENTMAP
-            vec2 disp16 = texture2D(displacementMap, vUv).xy;
+            vec2 disp16 = texture2D(displacementMap, vDisplacementMapUv).xy;
             float disp = (disp16.x * 255.0 + disp16.y) / 256.0;
             // set height along normal (which is set to spherical position)
             transformed = normalize(objectNormal) * (uRadius + disp * displacementScale + displacementBias);

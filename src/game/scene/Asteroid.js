@@ -45,7 +45,8 @@ const INITIAL_ZOOM_MIN = 6000;
 const MIN_ZOOM_DEFAULT = 1.2;
 const MAX_ZOOM = 20;
 const DIRECTIONAL_LIGHT_DISTANCE = 10;
-const DARK_LIGHT_INTENSITY = 0.1;
+const LIGHT_INTENSITY_ADJ = 4;//6;//1;
+const DARK_LIGHT_INTENSITY = 0.75;//1.2;//0.1;
 
 const LIGHT_ANIMATION_TIME = 500;
 export const ZOOM_IN_ANIMATION_TIME = 3000;
@@ -349,13 +350,14 @@ const AsteroidComponent = () => {
 
   const defaultLightIntensity = useMemo(() => {
     if (!position.current || !config?.radius) return 0;
-    return constants.STAR_INTENSITY / (new Vector3(...position.current).length() / constants.AU);
+    return Math.max(0.175, LIGHT_INTENSITY_ADJ * constants.STAR_INTENSITY / (new Vector3(...position.current).length() / constants.AU));
   }, [config?.radius]);
 
   // turn down the sun while in resource mode
   const currentLightIntensity = useMemo(() => {
     return (resourceMap?.active && resourceMap?.selected) ? Math.min(0.175, defaultLightIntensity) : defaultLightIntensity;
   }, [defaultLightIntensity, resourceMap]);
+
   useEffect(() => {
     if (light.current && light.current.intensity !== currentLightIntensity) {
       gsap.timeline().to(light.current, { intensity: currentLightIntensity, ease: 'power4.out', duration: LIGHT_ANIMATION_TIME / 1e3 });
@@ -390,7 +392,7 @@ const AsteroidComponent = () => {
 
     // init params
     const posVec = new Vector3(...position.current);
-    const lightColor = 0xffeedd;
+    const lightColor = 0xfffbf6;//0xffeedd;
     const lightDistance = config.radius * DIRECTIONAL_LIGHT_DISTANCE;
     const lightDirection = posVec.clone().normalize();
 
@@ -622,7 +624,6 @@ const AsteroidComponent = () => {
     if (resourceMapActive && resourceMapId && terrainInitialized) {
       const categoryKey = keyify(Product.TYPES[resourceMapId]?.category);
       const color = new Color(theme.colors.resources[categoryKey]);
-      color.convertSRGBToLinear();
 
       // Collect relevant settings for generating procedural resource map
       const settings = Asteroid.getAbundanceMapSettings(
@@ -853,7 +854,7 @@ const AsteroidComponent = () => {
         for (let i = 0; i < midpointTally; i++) {
           const lerp = (i + 1) / (midpointTally + 1);
 
-          const midQ = quatA.clone().slerp(quatB, lerp);
+          const midQ = quatA.clone().slerp(quatB, lerp).normalize();
           const midpoint = new Vector3(0, 0, 1).applyQuaternion(midQ);
           
           // get simple lerp height between initial camera position and final
@@ -919,8 +920,8 @@ const AsteroidComponent = () => {
     if (asteroidOrbit.current && time) {
       position.current = Object.values(asteroidOrbit.current.getPositionAtTime(time));
 
-      // update object and camera position (if zoomed in)
-      if (zoomStatus === 'in') {
+      // update object and camera position (if zoomed in to the correct asteroid)
+      if (zoomStatus === 'in' && zoomedIntoAsteroidId === origin) {
         const positionVec3 = new Vector3(...position.current);
         group.current.position.copy(positionVec3);
         controls.targetScene.position.copy(positionVec3.negate());
@@ -1157,12 +1158,12 @@ const AsteroidComponent = () => {
       {false && (
         <mesh>
           <sphereGeometry args={[config?.radius * 1.25]} />
-          <meshStandardMaterial color={0x0000ff} opacity={0.8} transparent={true} />
+          <meshStandardMaterial color={0x0000ff} opacity={0.8} transparent />
         </mesh>
       )}
       {false && (
         <points ref={debug}>
-          <pointsMaterial attach="material" size={500} sizeAttenuation={true} color={0xff0000} />
+          <pointsMaterial attach="material" size={500} sizeAttenuation color={0xff0000} />
         </points>
       )}
       {false && darkLight.current && (
@@ -1175,7 +1176,7 @@ const AsteroidComponent = () => {
           {debugTrajectory.map((pos, i) => (
             <mesh position={[ ...Object.values(pos) ]}>
               <sphereGeometry args={[5000]} />
-              <meshBasicMaterial color={trajDebugColors[i % trajDebugColors.length]} opacity={0.8} transparent={true} />
+              <meshBasicMaterial color={trajDebugColors[i % trajDebugColors.length]} opacity={0.8} transparent />
             </mesh>
           ))}
         </group>

@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { ACESFilmicToneMapping } from 'three';
 
 const DevToolContext = React.createContext();
 
@@ -9,9 +10,9 @@ export function DevToolProvider({ children }) {
   // overrides (if null/undefined, modelviewer will use default for asset type)
   const [background, setBackground] = useState();
   const [backgroundOverrideName, setBackgroundOverrideName] = useState();
+  const [backgroundStrength, setBackgroundStrength] = useState();
   const [bloomRadius, setBloomRadius] = useState();
   const [bloomStrength, setBloomStrength] = useState();
-  const [enableDefaultLights, setEnableDefaultLights] = useState();
   const [enablePostprocessing, setEnablePostprocessing] = useState();
   const [enableRotation, setEnableRotation] = useState();
   const [enableRevolution, setEnableRevolution] = useState();
@@ -19,15 +20,19 @@ export function DevToolProvider({ children }) {
   const [envmap, setEnvmap] = useState();
   const [envmapOverrideName, setEnvmapOverrideName] = useState();
   const [envmapStrength, setEnvmapStrength] = useState();
-  const [toneMapping, setToneMapping] = useState();
-  const [toneMappingExposure, setToneMappingExposure] = useState();
+  const [keylightIntensity, setKeylightIntensity] = useState();
+  const [lightmapStrength, setLightmapIntensity] = useState();
+  const [rimlightIntensity, setRimlightIntensity] = useState();
+  const [spotlightReduction, setSpotlightReduction] = useState();
+  const [toneMapping, setToneMapping] = useState(ACESFilmicToneMapping);
+  const [toneMappingExposure, setToneMappingExposure] = useState(1);
   const [trackCamera, setTrackCamera] = useState();
 
   // reset most overrides on change of asset type
   useEffect(() => {
+    setBackgroundStrength();
     setBloomRadius();
     setBloomStrength();
-    setEnableDefaultLights();
     setEnablePostprocessing();
     setEnableRotation();
     setEnableRevolution();
@@ -43,9 +48,9 @@ export function DevToolProvider({ children }) {
       modelUrl,
       background,
       backgroundOverrideName,
+      backgroundStrength,
       bloomRadius,
       bloomStrength,
-      enableDefaultLights,
       enablePostprocessing,
       enableRotation,
       enableRevolution,
@@ -53,6 +58,10 @@ export function DevToolProvider({ children }) {
       envmap,
       envmapOverrideName,
       envmapStrength,
+      keylightIntensity,
+      lightmapStrength,
+      rimlightIntensity,
+      spotlightReduction,
       toneMapping,
       toneMappingExposure,
       trackCamera
@@ -61,9 +70,9 @@ export function DevToolProvider({ children }) {
     setModelUrl,
     setBackground,
     setBackgroundOverrideName,
+    setBackgroundStrength,
     setBloomRadius,
     setBloomStrength,
-    setEnableDefaultLights,
     setEnablePostprocessing,
     setEnableRotation,
     setEnableRevolution,
@@ -71,6 +80,10 @@ export function DevToolProvider({ children }) {
     setEnvmap,
     setEnvmapOverrideName,
     setEnvmapStrength,
+    setKeylightIntensity,
+    setLightmapIntensity,
+    setRimlightIntensity,
+    setSpotlightReduction,
     setToneMapping,
     setToneMappingExposure,
     setTrackCamera
@@ -79,9 +92,9 @@ export function DevToolProvider({ children }) {
     modelUrl,
     background,
     backgroundOverrideName,
+    backgroundStrength,
     bloomRadius,
     bloomStrength,
-    enableDefaultLights,
     enablePostprocessing,
     enableRotation,
     enableRevolution,
@@ -89,6 +102,10 @@ export function DevToolProvider({ children }) {
     envmap,
     envmapOverrideName,
     envmapStrength,
+    keylightIntensity,
+    lightmapStrength,
+    rimlightIntensity,
+    spotlightReduction,
     toneMapping,
     toneMappingExposure,
     trackCamera

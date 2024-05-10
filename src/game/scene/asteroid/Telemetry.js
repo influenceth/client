@@ -30,11 +30,10 @@ import { useFrame, useThree } from '@react-three/fiber';
 const { AU, TELEMETRY_SCALE } = constants;
 
 const hexToGLSL = (hex) => {
-  const color = new Color().setStyle(hex);
-  return color.convertSRGBToLinear().toArray();
+  return new Color().setStyle(hex).toArray();
 };
-const MAIN_COLOR = new Color(theme.colors.main).convertSRGBToLinear();
-const SUCCESS_COLOR = new Color(theme.colors.success).convertSRGBToLinear();
+const MAIN_COLOR = new Color(theme.colors.main);
+const SUCCESS_COLOR = new Color(theme.colors.success);
 const DISABLED_COLOR = MAIN_COLOR;  // TODO: ...
 
 const BLUE_GLSL = hexToGLSL(theme.colors.main);
@@ -297,7 +296,6 @@ const Telemetry = ({ axis, getPosition, getRotation, hasAccess, initialCameraPos
           color: MAIN_COLOR,
           map: new TextureLoader().load('/textures/asteroid/marker_pole_n.png'),
           side: DoubleSide,
-          toneMapped: false,
           transparent: true
         })
       );
@@ -317,7 +315,6 @@ const Telemetry = ({ axis, getPosition, getRotation, hasAccess, initialCameraPos
           color: MAIN_COLOR,
           map: new TextureLoader().load('/textures/asteroid/marker_pole_s.png'),
           side: DoubleSide,
-          toneMapped: false,
           transparent: true
         })
       );
@@ -405,7 +402,6 @@ const Telemetry = ({ axis, getPosition, getRotation, hasAccess, initialCameraPos
           color: hasAccess ? SUCCESS_COLOR : MAIN_COLOR,
           opacity: 0.25,
           side: DoubleSide,
-          toneMapped: false,
           transparent: true
         })
       );
@@ -452,7 +448,6 @@ const Telemetry = ({ axis, getPosition, getRotation, hasAccess, initialCameraPos
           color: isScanned ? MAIN_COLOR : DISABLED_COLOR,
           map: hGateSprite,
           side: DoubleSide,
-          toneMapped: false,
           transparent: true
         })
       );
@@ -467,7 +462,6 @@ const Telemetry = ({ axis, getPosition, getRotation, hasAccess, initialCameraPos
           color: isScanned ? MAIN_COLOR : DISABLED_COLOR,
           map: vGateSprite,
           side: DoubleSide,
-          toneMapped: false,
           transparent: true
         })
       );
@@ -492,7 +486,7 @@ const Telemetry = ({ axis, getPosition, getRotation, hasAccess, initialCameraPos
         if (controls) {
           // get initialCameraPosition in equatorial plane
           // then rotate accessGroup so sign is facing camera
-          const adjustedCameraPosition = initialCameraPosition.clone().applyQuaternion(accessGroup.current.quaternion.clone().invert());
+          const adjustedCameraPosition = initialCameraPosition.clone().applyQuaternion(accessGroup.current.quaternion.clone().invert().normalize());
           let signRotation = Math.atan(adjustedCameraPosition.y / adjustedCameraPosition.x);
           if (adjustedCameraPosition.x < 0) signRotation += Math.PI;
           accessGroup.current.rotateZ(signRotation + 0.05);

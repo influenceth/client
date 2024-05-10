@@ -28,7 +28,7 @@ const Orbit = (props) => {
   return (
     <lineLoop>
       <bufferGeometry ref={geometry}>
-        <bufferAttribute attachObject={[ 'attributes', 'position' ]} args={[ positions, 3]} />
+        <bufferAttribute attach="attributes-position" args={[ positions, 3]} />
       </bufferGeometry>
       <lineBasicMaterial
         color={theme.colors.main}

@@ -6,7 +6,7 @@ import { Color } from 'three';
 import useStore from '~/hooks/useStore';
 
 const SettingsManager = () => {
-  const { gl, scene, camera } = useThree();
+  const { gl, scene, camera, renderer } = useThree();
   const fov = useStore(s => s.graphics.fov);
   const pixelRatio = useStore(s => s.graphics.pixelRatio);
   const skyboxVisible = useStore(s => s.graphics.skybox);
@@ -23,8 +23,8 @@ const SettingsManager = () => {
   // toggle background on / off per settings
   useEffect(() => {
     if (skyboxVisible && (!scene.background || scene.background.isColor) && skybox) {
-      skybox.encoding = 3001;
       scene.background = skybox;
+      scene.backgroundIntensity = 1;
     } else if (!skyboxVisible && scene.background) {
       scene.background = new Color(0x000000);
     }

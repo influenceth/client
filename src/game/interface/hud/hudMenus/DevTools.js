@@ -181,9 +181,9 @@ const DevTools = () => {
 
   const onChangeToneMapping = useCallback((selection) => {
     setters.setToneMapping(selection?.value);
-    if (selection?.value === NoToneMapping) {
-      setters.setToneMappingExposure();
-    }
+    // if (selection?.value === NoToneMapping) {
+    //   setters.setToneMappingExposure();
+    // }
   }, []);
 
   if (!process.env.REACT_APP_ENABLE_DEV_TOOLS) return null;
@@ -213,17 +213,15 @@ const DevTools = () => {
             Ships
           </Button>
         </div>
-      </HudMenuCollapsibleSection>
-
-      <HudMenuCollapsibleSection titleText="Model">
-        <InnerSection>
+        
+        <InnerSection style={{ marginTop: 10 }}>
           {categories?.length > 1 && (
             <Dropdown
               disabled={isLoading || modelOverride}
               options={categories}
               onChange={(c) => setCategory(c?.value)}
               size="small"
-              style={{ textTransform: 'none', width: '250px' }} />
+              style={{ textTransform: 'none', width: '300px' }} />
           )}
           <Dropdown
             disabled={isLoading || modelOverride}
@@ -233,7 +231,7 @@ const DevTools = () => {
             options={categoryModels}
             onChange={(a) => selectModel(a)}
             size="small"
-            style={{ textTransform: 'none', width: '250px' }} />
+            style={{ textTransform: 'none', width: '300px' }} />
 
           <Button
             disabled={nativeBool(isLoading)}
@@ -250,12 +248,111 @@ const DevTools = () => {
         </InnerSection>
       </HudMenuCollapsibleSection>
 
-      <HudMenuCollapsibleSection titleText="Environment">
+      <HudMenuCollapsibleSection titleText="Lighting">
+        {/* many of these are reset on assetType change */}
+        <InnerSection key={settings.assetType}>
+          <Miniform>
+            <label>Rimlight Intensity</label>
+            <NumberInput
+              disabled={nativeBool(isLoading)}
+              initialValue={settings.rimlightIntensity}
+              min="0"
+              step="0.01"
+              onChange={(v) => setters.setRimlightIntensity(parseFloat(v) || 1)} />
+          </Miniform>
+
+          <Miniform>
+            <label>Keylight Intensity</label>
+            <NumberInput
+              disabled={nativeBool(isLoading)}
+              initialValue={settings.keylightIntensity}
+              min="0"
+              step="0.01"
+              onChange={(v) => setters.setKeylightIntensity(parseFloat(v) || 1)} />
+          </Miniform>
+
+          <Miniform>
+            <label>Lightmap Strength</label>
+            <NumberInput
+              disabled={nativeBool(isLoading)}
+              initialValue={settings.lightmapStrength}
+              min="0"
+              step="0.01"
+              onChange={(v) => setters.setLightmapIntensity(parseFloat(v) || 1)} />
+          </Miniform>
+
+          <Miniform>
+            <label>In-Scene Spotlight Reduction</label>
+            <NumberInput
+              disabled={nativeBool(isLoading)}
+              initialValue={settings.spotlightReduction}
+              min="0"
+              step="1"
+              onChange={(v) => setters.setSpotlightReduction(parseFloat(v) || 1)} />
+          </Miniform>
+            
+        </InnerSection>
+      </HudMenuCollapsibleSection>
+
+      <HudMenuCollapsibleSection titleText="Postprocessing">
+        <InnerSection key={settings.assetType}>
+          <CheckboxRow onClick={() => toggleSetting(setters.setEnablePostprocessing)}>
+            {settings.enablePostprocessing ? <CheckedIcon /> : <UncheckedIcon />}
+            <label>Bloom</label>
+          </CheckboxRow>
+
+          {settings.enablePostprocessing && (
+            <div style={{ marginTop: 8 }}>
+              <Dropdown
+                disabled={nativeBool(isLoading)}
+                initialSelection={toneMaps.find((t) => t.value === settings.toneMapping)?.value}
+                options={toneMaps}
+                onChange={onChangeToneMapping}
+                size="small"
+                style={{ textTransform: 'none', width: '250px' }} />
+
+              {settings.toneMapping !== NoToneMapping && (
+                <Miniform>
+                  <label>Tone Mapping Exposure</label>
+                  <NumberInput
+                    disabled={nativeBool(isLoading)}
+                    initialValue={settings.toneMappingExposure}
+                    min="0"
+                    step="0.01"
+                    onChange={(v) => setters.setToneMappingExposure(parseFloat(v) || 1)} />
+                </Miniform>
+              )}
+
+              <Miniform>
+                <label>Bloom Radius</label>
+                <NumberInput
+                  disabled={nativeBool(isLoading)}
+                  initialValue={settings.bloomRadius}
+                  min="0"
+                  step="0.01"
+                  onChange={(v) => setters.setBloomRadius(parseFloat(v))} />
+              </Miniform>
+
+              <Miniform>
+                <label>Bloom Strength</label>
+                <NumberInput
+                  disabled={nativeBool(isLoading)}
+                  initialValue={settings.bloomStrength}
+                  min="0"
+                  step="0.01"
+                  onChange={(v) => setters.setBloomStrength(parseFloat(v))} />
+              </Miniform>
+            </div>
+          )}
+        </InnerSection>
+      </HudMenuCollapsibleSection>
+
+      <HudMenuCollapsibleSection titleText="Environment" collapsed>
         <InnerSection>
           <Button
             disabled={nativeBool(isLoading)}
             onClick={handleUploadClick('bg')}>
-            Upload Skybox
+            Override Background
           </Button>
           {overrides.background && (
             <OverrideLabel style={{ marginBottom: 20 }}>
@@ -264,10 +361,22 @@ const DevTools = () => {
             </OverrideLabel>
           )}
 
+          <Miniform>
+            <label>Background Strength</label>
+            <NumberInput
+              disabled={nativeBool(isLoading)}
+              initialValue={defaultSettings.backgroundStrength}
+              min="0.0"
+              step="0.01"
+              onChange={(v) => setters.setBackgroundStrength(parseFloat(v))} />
+          </Miniform>
+
+          <div style={{ margin: 20 }} />
+
           <Button
             disabled={nativeBool(isLoading)}
             onClick={handleUploadClick('env')}>
-            Upload EnvMap
+            Override EnvMap
           </Button>
           {overrides.envmap && (
             <OverrideLabel>
@@ -275,96 +384,39 @@ const DevTools = () => {
               <label>{overrides.envmapOverrideName}</label>
             </OverrideLabel>
           )}
+
+          <Miniform>
+            <label>EnvMap Strength</label>
+            <NumberInput
+              disabled={nativeBool(isLoading)}
+              initialValue={defaultSettings.envmapStrength}
+              min="0.0"
+              step="0.01"
+              onChange={(v) => setters.setEnvmapStrength(parseFloat(v))} />
+          </Miniform>
         </InnerSection>
       </HudMenuCollapsibleSection>
 
-      <HudMenuCollapsibleSection titleText="Other Settings">
-        {/* many of these are reset on assetType change */}
-        <InnerSection key={settings.assetType}>
-            <CheckboxRow onClick={() => toggleSetting(setters.setEnablePostprocessing)}>
-              {settings.enablePostprocessing ? <CheckedIcon /> : <UncheckedIcon />}
-              <label>Bloom</label>
-            </CheckboxRow>
+      <HudMenuCollapsibleSection titleText="Camera" collapsed>
+        <CheckboxRow onClick={() => toggleSetting(setters.setEnableRotation)}>
+          {settings.enableRotation ? <CheckedIcon /> : <UncheckedIcon />}
+          <label>Auto Rotation</label>
+        </CheckboxRow>
 
-            {settings.enablePostprocessing && (
-              <div style={{ marginTop: 8 }}>
-                <Dropdown
-                  disabled={nativeBool(isLoading)}
-                  initialSelection={toneMaps.find((t) => t.value === settings.toneMapping)?.value}
-                  options={toneMaps}
-                  onChange={onChangeToneMapping}
-                  size="small"
-                  style={{ textTransform: 'none', width: '250px' }} />
+        <CheckboxRow onClick={() => toggleSetting(setters.setEnableRevolution)}>
+          {settings.enableRevolution ? <CheckedIcon /> : <UncheckedIcon />}
+          <label>Auto Revolution</label>
+        </CheckboxRow>
 
-                {settings.toneMapping !== NoToneMapping && (
-                  <Miniform>
-                    <label>Tone Mapping Exposure</label>
-                    <NumberInput
-                      disabled={nativeBool(isLoading)}
-                      initialValue={settings.toneMappingExposure}
-                      min="0.5"
-                      step="0.5"
-                      onChange={(v) => setters.setToneMappingExposure(parseFloat(v) || 1)} />
-                  </Miniform>
-                )}
+        <CheckboxRow onClick={() => toggleSetting(setters.setEnableZoomLimits)}>
+          {settings.enableZoomLimits ? <CheckedIcon /> : <UncheckedIcon />}
+          <label>Camera Zoom Limits</label>
+        </CheckboxRow>
 
-                <Miniform>
-                  <label>Bloom Radius</label>
-                  <NumberInput
-                    disabled={nativeBool(isLoading)}
-                    initialValue={settings.bloomRadius}
-                    min="0"
-                    step="0.05"
-                    onChange={(v) => setters.setBloomRadius(parseFloat(v))} />
-                </Miniform>
-
-                <Miniform>
-                  <label>Bloom Strength</label>
-                  <NumberInput
-                    disabled={nativeBool(isLoading)}
-                    initialValue={settings.bloomStrength}
-                    min="0"
-                    step="0.5"
-                    onChange={(v) => setters.setBloomStrength(parseFloat(v))} />
-                </Miniform>
-              </div>
-            )}
-
-            <CheckboxRow onClick={() => toggleSetting(setters.setEnableDefaultLights)}>
-              {settings.enableDefaultLights ? <CheckedIcon /> : <UncheckedIcon />}
-              <label>Additional Lighting</label>
-            </CheckboxRow>
-
-            <CheckboxRow onClick={() => toggleSetting(setters.setEnableRotation)}>
-              {settings.enableRotation ? <CheckedIcon /> : <UncheckedIcon />}
-              <label>Auto Rotation</label>
-            </CheckboxRow>
-
-            <CheckboxRow onClick={() => toggleSetting(setters.setEnableRevolution)}>
-              {settings.enableRevolution ? <CheckedIcon /> : <UncheckedIcon />}
-              <label>Auto Revolution</label>
-            </CheckboxRow>
-
-            <CheckboxRow onClick={() => toggleSetting(setters.setEnableZoomLimits)}>
-              {settings.enableZoomLimits ? <CheckedIcon /> : <UncheckedIcon />}
-              <label>Camera Zoom Limits</label>
-            </CheckboxRow>
-
-            <CheckboxRow onClick={() => toggleSetting(setters.setTrackCamera)}>
-              {settings.trackCamera ? <CheckedIcon /> : <UncheckedIcon />}
-              <label>Track Camera</label>
-            </CheckboxRow>
-
-            <Miniform>
-              <label>Env Map Strength</label>
-              <NumberInput
-                disabled={nativeBool(isLoading)}
-                initialValue={defaultSettings.envmapStrength}
-                min="0.1"
-                step="0.1"
-                onChange={(v) => setters.setEnvmapStrength(parseFloat(v))} />
-            </Miniform>
-        </InnerSection>
+        <CheckboxRow onClick={() => toggleSetting(setters.setTrackCamera)}>
+          {settings.trackCamera ? <CheckedIcon /> : <UncheckedIcon />}
+          <label>Track Camera</label>
+        </CheckboxRow>
       </HudMenuCollapsibleSection>
 
       <input

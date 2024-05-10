@@ -51,8 +51,8 @@ const Orbit = ({ asteroid, color, opacityMult = 1, staticOpacity }) => {
   return (
     <lineLoop>
       <bufferGeometry>
-        <bufferAttribute attachObject={[ 'attributes', 'position' ]} args={[ positions, 3 ]} />
-        <bufferAttribute attachObject={[ 'attributes', 'order' ]} args={[ order, 1 ]} />
+        <bufferAttribute attach="attributes-position" args={[ positions, 3 ]} />
+        <bufferAttribute attach="attributes-order" args={[ order, 1 ]} />
       </bufferGeometry>
       {staticOpacity && (
         <lineBasicMaterial

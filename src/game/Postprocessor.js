@@ -1,10 +1,13 @@
 import { useEffect, useRef } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
-import { MeshBasicMaterial, ShaderMaterial, Vector2, WebGLRenderTarget, FloatType, RGBAFormat } from 'three';
+import { MeshBasicMaterial, ShaderMaterial, Vector2, WebGLRenderTarget, FloatType, RGBAFormat, SRGBColorSpace, ACESFilmicToneMapping } from 'three';
+
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer';
+import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass';
 import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass';
+
 import useStore from '~/hooks/useStore';
 
 const VERTEX_SHADER = `
@@ -22,14 +25,15 @@ const FRAGMENT_SHADER = `
 
   varying vec2 vUv;
 
-  vec4 gammaCorrection (vec4 color, float gamma) {
-    return vec4(pow(color.rgb, vec3(1. / gamma)).rgb, color.a);
-  }
+  // vec4 gammaCorrection (vec4 color, float gamma) {
+  //   return vec4(pow(color.rgb, vec3(1. / gamma)).rgb, color.a);
+  // }
 
   void main() {
-    vec4 preGamma = vec4(1.5) * texture2D(baseTexture, vUv) + vec4(0.75) * texture2D(bloomTexture, vUv);
-    gl_FragColor = preGamma;
-    gl_FragColor = gammaCorrection(preGamma, 1.5);
+    // vec4 preGamma = vec4(1.5) * texture2D(baseTexture, vUv) + vec4(0.75) * texture2D(bloomTexture, vUv);
+    // gl_FragColor = preGamma;
+    // gl_FragColor = gammaCorrection(preGamma, 1.5);
+    gl_FragColor = ( texture2D( baseTexture, vUv ) + vec4( 1.0 ) * texture2D( bloomTexture, vUv ) );
   }
 `;
 
@@ -58,11 +62,11 @@ const materials = {};
 
 const defaultBloomParams = {
   threshold: 0,
-  strength: 1,
-  radius: 0.1
+  strength: 0.8,
+  radius: 0.5,//0.1
 }
 
-const Postprocessor = ({ enabled, bloomParams = {}, toneMappingParams = {} }) => {
+const Postprocessor = ({ enabled, bloomParams = {} }) => {
   const { gl: renderer, camera, scene, size } = useThree();
 
   const pixelRatio = useStore(s => s.graphics.pixelRatio || 1);
@@ -120,6 +124,14 @@ const Postprocessor = ({ enabled, bloomParams = {}, toneMappingParams = {} }) =>
   }
 
   useEffect(() => {
+    renderer.toneMapping = bloomParams?.toneMapping === undefined ? ACESFilmicToneMapping : bloomParams?.toneMapping;
+  }, [bloomParams?.toneMapping]);
+
+  useEffect(() => {
+    renderer.toneMappingExposure = bloomParams?.toneMappingExposure || 1;
+  }, [bloomParams?.toneMappingExposure]);
+
+  useEffect(() => {
     renderer.setPixelRatio(pixelRatio);
     const renderScene = new RenderPass(scene, camera);
 
@@ -130,7 +142,7 @@ const Postprocessor = ({ enabled, bloomParams = {}, toneMappingParams = {} }) =>
 
     const target = new WebGLRenderTarget(size.width * pixelRatio, size.height * pixelRatio, {
       format: RGBAFormat,
-      encoding: 3001,
+      colorSpace: SRGBColorSpace,
       type: FloatType
     });
 
@@ -153,11 +165,14 @@ const Postprocessor = ({ enabled, bloomParams = {}, toneMappingParams = {} }) =>
     );
 
     selectiveBloomPass.needsSwap = true;
+    
+    const outputPass = new OutputPass();
 
     finalComposer.current = new EffectComposer(renderer, target);
     finalComposer.current.addPass(renderScene);
     finalComposer.current.addPass(selectiveBloomPass);
-  }, [size.width, size.height, pixelRatio]); // eslint-disable-line react-hooks/exhaustive-deps
+    finalComposer.current.addPass(outputPass);
+  }, [bloomParams, size.width, size.height, pixelRatio]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useFrame(({ camera, gl, scene }) => {
     try {

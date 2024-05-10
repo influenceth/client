@@ -19,6 +19,7 @@ import Postprocessor from './Postprocessor';
 import WebsocketContext from '~/contexts/WebsocketContext';
 import { GpuContextLostMessage, GpuContextLostReporter } from './GpuContextLost';
 
+// TODO: 3js upgrade -- was antialias=false
 const glConfig = {
   shadows: true,
   camera: {
@@ -72,6 +73,8 @@ const WrappedScene = () => {
   );
 }
 
+const postprocessingEnabled = true;
+
 const Scene = () => {
   /**
    * Grab reference to queryClient to recreate QueryClientProvider within Canvas element
@@ -87,7 +90,7 @@ const Scene = () => {
   );
 
   // Orient such that z is up, perpindicular to the stellar plane
-  Object3D.DefaultUp = new Vector3(0, 0, 1);
+  Object3D.DEFAULT_UP = new Vector3(0, 0, 1);
 
   const canvasStack = useStore(s => s.canvasStack); // TODO: this might be easier to manage in a dedicated context
   const zoomedFrom = useStore(s => s.asteroids.zoomedFrom);
@@ -115,11 +118,15 @@ const Scene = () => {
     <StyledContainer>
       {statsOn && <Stats />}
       {contextLost && <GpuContextLostMessage />}
-      <Canvas key={pixelRatio} {...glConfig} frameloop={frameloop} style={canvasStyle}>
+      <Canvas key={pixelRatio}
+        {...glConfig}
+        linear={postprocessingEnabled/* postprocessing will handle gamma autocorrection */}
+        frameloop={frameloop}
+        style={canvasStyle}>
         <GpuContextLostReporter setContextLost={setContextLost} />
         <ContextBridge>
           <SettingsManager />
-          <Postprocessor enabled={true} />
+          <Postprocessor enabled={postprocessingEnabled} />
           <QueryClientProvider client={queryClient} contextSharing={true}>
             <TrackballModControls>
               <WrappedScene />

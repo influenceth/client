@@ -362,7 +362,7 @@ export function SessionProvider({ children }) {
 
   // Connect / auth flow manager
   useEffect(() => {
-    console.log(Object.keys(STATUSES).find(key => STATUSES[key] === status));
+    // console.log(Object.keys(STATUSES).find(key => STATUSES[key] === status));
     if (status === STATUSES.DISCONNECTED) {
       if (currentSession?.walletId) {
         connect(true).finally(() => setReadyForChildren(true));
@@ -441,7 +441,7 @@ export function SessionProvider({ children }) {
       console.error('failed to init block data', e)
     }
   }, [canCheckBlock, starknet?.provider]);
-  useEffect(initializeBlockData, [initializeBlockData]);
+  useEffect(() => { initializeBlockData(); }, [initializeBlockData]);
 
   const reattempts = useRef();
   const capturePendingBlockTimestampUpdate = useCallback(async () => {
