@@ -3,9 +3,7 @@ import { Address, Entity, Permission } from '@influenceth/sdk';
 
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
 import useCrewContext from '~/hooks/useCrewContext';
-import { monthsToSeconds, secondsToMonths } from '~/lib/utils';
-
-const hoursPerMonth = monthsToSeconds(1) / 3600;
+import { daysToSeconds, monthsToSeconds, secondsToDays, secondsToMonths } from '~/lib/utils';
 
 const usePolicyManager = (target, permission) => {
   const { crew } = useCrewContext();
@@ -30,11 +28,11 @@ const usePolicyManager = (target, permission) => {
     if (pol?.policyDetails && pol.policyType === Permission.POLICY_IDS.CONTRACT) pol.policyDetails.contract = pol.policyDetails.address;
     if (pol?.policyDetails && pol.policyType === Permission.POLICY_IDS.PREPAID) {
       // stored in microsway per hour, UI in sway/mo
-      pol.policyDetails.rate = Number(BigInt(pol.policyDetails.rate) * BigInt(hoursPerMonth)) / 1e6;
+      pol.policyDetails.rate = Number(BigInt(pol.policyDetails.rate)) / 1e6;
       // stored in seconds, UI in months
-      pol.policyDetails.initialTerm = secondsToMonths(pol.policyDetails.initialTerm);
-       // stored in seconds, UI in months
-      pol.policyDetails.noticePeriod = secondsToMonths(pol.policyDetails.noticePeriod);
+      pol.policyDetails.initialTerm = secondsToDays(pol.policyDetails.initialTerm);
+      // stored in seconds, UI in months
+      pol.policyDetails.noticePeriod = secondsToDays(pol.policyDetails.noticePeriod);
     };
 
     return pol;
@@ -59,9 +57,9 @@ const usePolicyManager = (target, permission) => {
       const params = {
         ...payload,
         // for prepaid...
-        rate: Math.floor(newPolicyDetails.rate * 1e6 / hoursPerMonth), // sway/mo --> msway/hr
-        initial_term: monthsToSeconds(newPolicyDetails.initialTerm),
-        notice_period: monthsToSeconds(newPolicyDetails.noticePeriod),
+        rate: Math.floor(newPolicyDetails.rate * 1e6), // sway/mo --> msway/hr
+        initial_term: daysToSeconds(newPolicyDetails.initialTerm),
+        notice_period: daysToSeconds(newPolicyDetails.noticePeriod),
         // for contract...
         contract: newPolicyDetails.contract,
       };

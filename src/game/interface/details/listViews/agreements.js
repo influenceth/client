@@ -9,7 +9,7 @@ import useCrewContext from '~/hooks/useCrewContext';
 import { LocationLink } from './components';
 import formatters from '~/lib/formatters';
 
-import { formatFixed, formatTimer, locationsArrToObj, monthsToSeconds, secondsToMonths } from '~/lib/utils';
+import { formatFixed, formatTimer, locationsArrToObj, monthsToSeconds, secondsToDays, secondsToMonths } from '~/lib/utils';
 import useBlockTime from '~/hooks/useBlockTime';
 import actionButtons from '../../hud/actionButtons';
 import useActionButtons from '~/hooks/useActionButtons';
@@ -208,7 +208,7 @@ const useColumns = () => {
         label: 'Minimum',
         sortField: '_agreement.initialTerm',
         selector: row => row._agreement._type === Permission.POLICY_IDS.PREPAID
-          ? `${formatFixed(secondsToMonths(row._agreement.initialTerm), 2)} mo`
+          ? `${formatFixed(secondsToDays(row._agreement.initialTerm), 2)} day`
           : `N / A`
       },
       {
@@ -216,7 +216,7 @@ const useColumns = () => {
         label: 'Notice',
         sortField: '_agreement.noticePeriod',
         selector: row => row._agreement._type === Permission.POLICY_IDS.PREPAID
-          ? `${formatFixed(secondsToMonths(row._agreement.noticePeriod), 2)} mo`
+          ? `${formatFixed(secondsToDays(row._agreement.noticePeriod), 2)} day`
           : `N / A`
       },
       {
