@@ -506,7 +506,7 @@ const LotInventory = () => {
               textTransform="none"
               style={{ flex: 1, width: 170 }}
             />
-            
+
             {/* TODO: mass / volume view toggle */}
           </Controls>
           <InventoryItems onScroll={onInventoryScroll}>
@@ -516,7 +516,7 @@ const LotInventory = () => {
                   <label>Selected Amount ({Product.TYPES[splittingResourceId].isAtomic ? '' : 'kg'})</label>
                   <QuantaInput
                     type="number"
-                    max={inventory.contentsObj[splittingResourceId]}
+                    max={inventory?.contentsObj[splittingResourceId]}
                     min={0}
                     onBlur={onFocusAmount}
                     onChange={onChangeAmount}

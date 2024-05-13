@@ -2152,12 +2152,12 @@ export const InventorySelectionDialog = ({
           isControlled: entity.Control.controller.id === crew?.id,
           isPermitted: !(entity.PublicPolicies || []).find((p) => p.permission === permission),
 
-          contentsObj, 
+          contentsObj,
           name: entity.Ship ? formatters.shipName(entity) : formatters.buildingName(entity),
           type: entity.Ship ? Ship.TYPES[entity.Ship?.shipType]?.name : Building.TYPES[entity.Building?.buildingType]?.name,
           slot: inv.slot,
           slotLabel: getInventorySublabel(inv.inventoryType),
-          
+
           lotId: entityLotId,
           lotIndex: entityLotIndex,
         })
@@ -2367,7 +2367,7 @@ export const InventorySelectionDialog = ({
           {showPermittedInventories ? <CheckedIcon /> : <UncheckedIcon />}
           <span>Permitted Inventories</span>
         </FilterRowLabel>
-        
+
         <FilterRowLabel isOn={showPublicInventories} onClick={() => setShowPublicInventories((p) => !p)}>
           {showPublicInventories ? <CheckedIcon /> : <UncheckedIcon />}
           <span>Public Inventories</span>
@@ -3371,6 +3371,7 @@ export const RecipeSlider = ({ amount, disabled, increment = 0.001, processingTi
 
 export const ProcessInputOutputSection = ({ title, products, input, output, primaryOutput, secondaryOutputsBonus, setPrimaryOutput, source, stage, ...props }) => {
   const sourceContents = useMemo(() => (source?.contents || []).reduce((acc, cur) => ({ ...acc, [cur.product]: cur.amount }), {}), [source]);
+
   return (
     <FlexSectionBlock title={title} {...props} bodyStyle={{ padding: 0 }}>
       <ProductWrapper>
@@ -3416,7 +3417,7 @@ export const ProcessInputOutputSection = ({ title, products, input, output, prim
                         <ClipCorner dimension={10} color={theme.colors.main} />
                       </>
                     )
-                    : `-${formatFixed(100 - 50 * (secondaryOutputsBonus || 1), 1)}%`
+                    : `-${formatFixed(100 * Math.min(0.5 / (secondaryOutputsBonus || 1), 1), 1)}%`
                   }
                 </label>
               )}

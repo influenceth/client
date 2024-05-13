@@ -219,22 +219,15 @@ const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...pro
   const [inputArr, inputMass, inputVolume, outputArr, outputMass, outputVolume] = useMemo(() => {
     if (!process || !amount) return [[], 0, 0, [], 0, 0];
     const inputArr = Object.keys(process.inputs || {}).map(Number);
-    const outputArr = Object.keys(process.outputs || {}).map(Number);
+    const outputArr = Process.getOutputs(processId, amount, primaryOutput, secondaryOutputsBonus?.totalBonus);
+
     return [
       inputArr,
       inputArr.reduce((sum, i) => sum + process.inputs[i] * amount * (Product.TYPES[i].massPerUnit || 0), 0),
       inputArr.reduce((sum, i) => sum + process.inputs[i] * amount * (Product.TYPES[i].volumePerUnit || 0), 0),
       outputArr,
-      outputArr.reduce((sum, i) => {
-        let productAmount = process.outputs[i] * amount;
-        if (i !== primaryOutput) productAmount *= 0.5 * (secondaryOutputsBonus?.totalBonus || 1);
-        return sum + productAmount * (Product.TYPES[i].massPerUnit || 0);
-      }, 0),
-      outputArr.reduce((sum, i) => {
-        let productAmount = process.outputs[i] * amount;
-        if (i !== primaryOutput) productAmount *= 0.5 * (secondaryOutputsBonus?.totalBonus || 1);
-        return sum + productAmount * (Product.TYPES[i].volumePerUnit || 0);
-      }, 0),
+      outputArr.reduce((sum, o) => sum + o.amount * (Product.TYPES[o.id].massPerUnit || 0), 0),
+      outputArr.reduce((sum, o) => sum + o.amount * (Product.TYPES[o.id].volumePerUnit || 0), 0)
     ];
   }, [process, amount, primaryOutput, secondaryOutputsBonus]);
 
@@ -538,7 +531,7 @@ const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...pro
             }
             products={
               process
-                ? outputArr.map((i) => ({ i, recipe: process.outputs[i], amount: process.outputs[i] * amount }))
+                ? outputArr.map((o) => ({ i: o.id, recipe: process.outputs[o.id], amount: o.amount }))
                 : []
             }
             primaryOutput={primaryOutput}
@@ -616,7 +609,7 @@ const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...pro
           <InventorySelectionDialog
             asteroidId={asteroid?.id}
             otherEntity={lot?.building}
-            itemIds={outputArr}
+            itemIds={outputArr.map(o => o.id)}
             onClose={() => setDestinationSelectorOpen(false)}
             onSelected={setSelectedDestination}
             open={destinationSelectorOpen}

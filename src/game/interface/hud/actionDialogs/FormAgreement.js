@@ -219,7 +219,7 @@ const FormAgreement = ({
   }, [crew, currentAgreement, currentPolicy, initialPeriod, isExtension, isTermination, remainingPeriod]);
 
   const totalLeaseCost = useMemo(() => {
-    return (initialPeriod || 0) * (currentPolicy?.policyDetails?.rate || 0)
+    return (initialPeriod || 0) * 24 * (currentPolicy?.policyDetails?.rate || 0);
   }, [initialPeriod, currentPolicy]);
 
   const insufficientAssets = useMemo(
@@ -454,7 +454,7 @@ const FormAgreement = ({
                 <TextInputWrapper rightLabel="SWAY / day">
                   <DisabledUncontrolledTextInput
                     disabled
-                    value={formatFixed(currentPolicy?.policyDetails?.rate || 0)} />
+                    value={formatFixed((currentPolicy?.policyDetails?.rate || 0) * 24)} />
                 </TextInputWrapper>
               </FormSection>
 
