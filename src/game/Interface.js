@@ -1,6 +1,6 @@
 import { useCallback, useEffect } from 'react';
 import styled from 'styled-components';
-import ReactTooltip from 'react-tooltip';
+import { Tooltip } from 'react-tooltip';
 import { Switch, Route, Redirect } from 'react-router-dom';
 import moment from 'moment';
 
@@ -24,10 +24,13 @@ import ShipViewer from './interface/modelViewer/ShipViewer';
 import LinkedViewer from './interface/modelViewer/LinkedViewer';
 import DevToolsViewer from './interface/modelViewer/DevToolsViewer';
 import CrewDetails from './interface/details/CrewDetails';
+import { BuildingDeepLink } from './interface/DeepLink';
+import { LotDeepLink } from './interface/DeepLink';
+import { ShipDeepLink } from './interface/DeepLink';
+import RandomEvent from './interface/RandomEvent';
 import Intro from './Intro';
 import Cutscene from './Cutscene';
 import Launcher from './Launcher';
-import RandomEvent from './interface/RandomEvent';
 import QueryLoader from './QueryLoader';
 import theme from '~/theme';
 
@@ -79,6 +82,8 @@ const Interface = () => {
   const launcherPage = useStore(s => s.launcherPage);
   const interfaceHidden = useStore(s => s.graphics.hideInterface);
   const showDevTools = useStore(s => s.graphics.showDevTools);
+  const dispatchRecenterCamera = useStore(s => s.dispatchRecenterCamera);
+  const dispatchReorientCamera = useStore(s => s.dispatchReorientCamera);
   const dispatchToggleInterface = useStore(s => s.dispatchToggleInterface);
   const dispatchToggleDevTools = useStore(s => s.dispatchToggleDevTools);
 
@@ -87,7 +92,11 @@ const Interface = () => {
     if (e.ctrlKey && e.which === 120) dispatchToggleInterface();
     // ctrl+f10
     if (e.ctrlKey && e.which === 121) dispatchToggleDevTools();
-  }, [dispatchToggleInterface, dispatchToggleDevTools]);
+    // ctrl+period
+    if (e.ctrlKey && e.which === 190) dispatchRecenterCamera(true);
+    // ctrl+backslash
+    if (e.ctrlKey && e.which === 220) dispatchReorientCamera(true);
+  }, [dispatchToggleInterface, dispatchToggleDevTools, dispatchRecenterCamera, dispatchReorientCamera]);
 
   useEffect(() => {
     document.addEventListener('keyup', handleInterfaceShortcut);
@@ -129,21 +138,31 @@ const Interface = () => {
       {launcherPage && <Launcher />}
       {showDevTools && <DevToolsViewer />}
       <StyledInterface hide={interfaceHidden}>
-        {!isMobile && <ReactTooltip id="global" place="left" effect="solid" />}
+        {!isMobile && <Tooltip id="globalTooltip" place="left" delayHide={60000} />}
         <QueryLoader />
         <MainContainer>
           <Switch>
-            <Route exact path="/listview/:assetType?">
-              <ListView />
-            </Route>
-            <Route path="/model/:assetType/:assetName?">
-              <LinkedViewer />
+            <Redirect from="/:i(\d+)" to="/asteroids/:i" />
+            <Route path="/asteroids/:i(\d+)/:tab?/:category?">
+              <AsteroidDetails />
             </Route>
             <Route path="/crew/:i(\d+)?">
               <CrewDetails />
             </Route>
             <Route path="/crewmate/:i(\d+)">
               <CrewmateDetails />
+            </Route>
+            <Route exact path="/listview/:assetType?">
+              <ListView />
+            </Route>
+            <Route path="/model/:assetType/:assetName?">
+              <LinkedViewer />
+            </Route>
+            <Route path="/marketplace/:asteroidId([0-9]+)/:lotIndex(all|[0-9]+)?/:discriminator?">
+              <Marketplace />
+            </Route>
+            <Route path="/random-event">
+              <RandomEvent />
             </Route>
           </Switch>
 
@@ -155,18 +174,17 @@ const Interface = () => {
 
         {/* TODO: ecs refactor -- it's unclear why this switch is different from the above... maybe reconcile? */}
         <Switch>
-          <Redirect from="/:i(\d+)" to="/asteroids/:i" />
-          <Route path="/asteroids/:i(\d+)/:tab?/:category?">
-            <AsteroidDetails />
+          <Route path="/building/:id(\d+)">
+            <BuildingDeepLink />
+          </Route>
+          <Route path="/lot/:id(\d+)">
+            <LotDeepLink />
+          </Route>
+          <Route path="/ship/:id(\d+)">
+            <ShipDeepLink />
           </Route>
           <Route path="/recruit/:crewId([0-9]+)/:locationId([0-9]+)?/:crewmateId([0-9]+)?/:page?">
             <RecruitCrewmate />
-          </Route>
-          <Route path="/random-event">
-            <RandomEvent />
-          </Route>
-          <Route path="/marketplace/:asteroidId([0-9]+)/:lotIndex(all|[0-9]+)?/:discriminator?">
-            <Marketplace />
           </Route>
         </Switch>
         <Draggables />

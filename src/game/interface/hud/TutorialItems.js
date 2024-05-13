@@ -9,7 +9,7 @@ import ClipCorner from '~/components/ClipCorner';
 import CollapsibleSection from '~/components/CollapsibleSection';
 import IconButton from '~/components/IconButton';
 import { CloseIcon, TutorialIcon } from '~/components/Icons';
-import { ZOOM_IN_ANIMATION_TIME, ZOOM_OUT_ANIMATION_TIME, ZOOM_TO_PLOT_ANIMATION_TIME } from '~/game/scene/Asteroid';
+import { ZOOM_IN_ANIMATION_TIME, ZOOM_OUT_ANIMATION_TIME, ZOOM_TO_PLOT_ANIMATION_MAX_TIME, ZOOM_TO_PLOT_ANIMATION_MIN_TIME } from '~/game/scene/Asteroid';
 import useSession from '~/hooks/useSession';
 import useCrewContext from '~/hooks/useCrewContext';
 import useStore from '~/hooks/useStore';
@@ -398,7 +398,7 @@ const useTutorial = () => {
             setTimeout(() => {
               dispatchZoomScene({ type: 'LOT', overrides: { buildingType: Building.IDS.EXTRACTOR } });
               setTimeout(() => { setTransitioning(false); }, DELAY_MESSAGE);
-            }, ZOOM_TO_PLOT_ANIMATION_TIME);
+            }, ZOOM_TO_PLOT_ANIMATION_MAX_TIME);
           }, delay);
         }, 0);
       },
@@ -423,7 +423,7 @@ const useTutorial = () => {
             setTimeout(() => {
               dispatchZoomScene({ type: 'LOT', overrides: { buildingType: Building.IDS.WAREHOUSE } });
               setTimeout(() => { setTransitioning(false); }, DELAY_MESSAGE);
-            }, ZOOM_TO_PLOT_ANIMATION_TIME);
+            }, ZOOM_TO_PLOT_ANIMATION_MIN_TIME);
           }, delay);
         }, 0);
       },
@@ -448,7 +448,7 @@ const useTutorial = () => {
             setTimeout(() => {
               dispatchZoomScene({ type: 'LOT', overrides: { buildingType: Building.IDS.MARKETPLACE } });
               setTimeout(() => { setTransitioning(false); }, DELAY_MESSAGE);
-            }, ZOOM_TO_PLOT_ANIMATION_TIME);
+            }, ZOOM_TO_PLOT_ANIMATION_MIN_TIME);
           }, delay);
         }, 0);
       },
@@ -473,7 +473,7 @@ const useTutorial = () => {
             setTimeout(() => {
               dispatchZoomScene({ type: 'LOT', overrides: { buildingType: Building.IDS.HABITAT } });
               setTimeout(() => { setTransitioning(false); }, DELAY_MESSAGE);
-            }, ZOOM_TO_PLOT_ANIMATION_TIME);
+            }, ZOOM_TO_PLOT_ANIMATION_MIN_TIME);
           }, delay);
         }, 0);
       },

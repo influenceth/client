@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import styled, { css } from 'styled-components';
 import { usePopper } from 'react-popper';
-import ReactTooltip from 'react-tooltip';
+import { Tooltip } from 'react-tooltip';
 import { Delivery, Inventory, Permission, Product } from '@influenceth/sdk';
 
 import Dropdown from '~/components/Dropdown';
@@ -453,8 +453,6 @@ const LotInventory = () => {
     return null;
   }, [selectedItems]);
 
-  useEffect(() => ReactTooltip.rebuild(), []);
-
   if (!inventory === 0) return null;
   return (
     <>
@@ -555,7 +553,7 @@ const LotInventory = () => {
                     ? inventory.contentsObj[resourceId] * Product.TYPES[resourceId].volumePerUnit / inventory.volume
                     : undefined}
                   resource={Product.TYPES[resourceId]}
-                  tooltipContainer="hudMenu" />
+                  tooltipContainer="hudMenuTooltip" />
               </ThumbnailWrapper>
             ))}
           </InventoryItems>

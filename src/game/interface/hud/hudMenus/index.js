@@ -11,6 +11,7 @@ import Favorites from './Favorites';
 import Inventory from './Inventory';
 import LotInfo from './LotInfo';
 import MyCrews from './MyCrews';
+import OrbitDetails from './OrbitDetails';
 import Resources from './Resources';
 import RoutePlanner from './RoutePlanner';
 import SearchMap from './SearchMap';
@@ -31,6 +32,7 @@ const HudMenus = {
   Inventory,
   LotInfo,
   MyCrews,
+  OrbitDetails,
   Resources,
   RoutePlanner,
   SearchMap,

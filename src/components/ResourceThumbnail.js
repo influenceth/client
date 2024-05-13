@@ -1,7 +1,6 @@
-import React, { useCallback, useEffect, useState, useMemo } from 'react';
+import React, { useCallback, useState, useMemo } from 'react';
 import styled from 'styled-components';
 import { FaEllipsisH as MenuIcon } from 'react-icons/fa';
-import ReactTooltip from 'react-tooltip';
 import Lottie from 'react-lottie';
 import MovingStripesSquare from '~/assets/icons/animated/MovingStripesSquare.json';
 
@@ -76,8 +75,8 @@ export const ResourceThumbnailWrapper = styled.div`
     color: ${p.outlineColor || defaultBorderColor};
     ${p.badgeColor && p.hasDenominator ? `${ResourceBadge} { &:after { color: ${p.badgeColor} !important; } }` : ''}
     ${p.badgeColor && !p.hasDenominator ? `${ResourceBadge} { &:before { color: ${p.badgeColor} !important; } }` : ''}
-    ${(p.requirementMet || p.disabled) ? `
-      & > * { opacity: 1; }
+    ${p.disabled ? `
+      & > * { opacity: 0.35; }
       & > svg, ${ThumbnailCorner} { opacity: 1; }
     ` : ''}
   `}
@@ -240,6 +239,7 @@ const Menu = ({ children }) => {
   badge,
   badgeColor,
   badgeDenominator,
+  deficit,
   iconBadge,
   iconBadgeCorner,
   menu,
@@ -249,17 +249,17 @@ const Menu = ({ children }) => {
   overlayStripes,
   progress,
   size,
-  tooltipContainer = 'global',
+  tooltipContainer = 'globalTooltip',
   tooltipOverride,
   underlay,
   ...props
 }) => {
+  // const tip = (deficit) ? `${resource.name} (<span>${deficit}<span>)` : resource.name;
   const tooltipProps = tooltipContainer ? {
-    'data-place': 'top',
-    'data-tip': tooltipOverride || resource.name,
-    'data-for': tooltipContainer
+    'data-tooltip-place': 'top',
+    'data-tooltip-content': tooltipOverride || resource.name,
+    'data-tooltip-id': tooltipContainer
   } : {};
-  // useEffect(() => ReactTooltip.rebuild(), []); // this was causing performance issues on refinery process selection dialog
   return (
     <ResourceThumbnailWrapper
       backgroundColor={backgroundColor}

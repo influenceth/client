@@ -14,7 +14,7 @@ import useAsteroid from '~/hooks/useAsteroid';
 import useAssetSearch from '~/hooks/useAssetSearch';
 import useCoarseTime from '~/hooks/useCoarseTime';
 import useControlledAsteroids from '~/hooks/useControlledAsteroids';
-import useOwnedShips from '~/hooks/useOwnedShips';
+import useControlledShips from '~/hooks/useControlledShips';
 import useStore from '~/hooks/useStore';
 import useTravelSolutionIsValid from '~/hooks/useTravelSolutionIsValid';
 import useWatchlist from '~/hooks/useWatchlist';
@@ -95,7 +95,7 @@ const Asteroids = () => {
   const { data: destination } = useAsteroid(destinationId);
   const coarseTime = useCoarseTime();
   const { data: controlledAsteroids } = useControlledAsteroids();
-  const { data: ownedShips } = useOwnedShips();
+  const { data: controlledShips } = useControlledShips();
   const { watchlist: { data: watchlist }} = useWatchlist();
   const travelSolutionValid = useTravelSolutionIsValid();
 
@@ -128,7 +128,7 @@ const Asteroids = () => {
       if (asseted[crewAsteroidId]) asseted[crewAsteroidId].crew = crew;
     }
 
-    (ownedShips || []).forEach((s) => {
+    (controlledShips || []).forEach((s) => {
       const shipAsteroidId = s.Location?.locations?.find((l) => l.label === Entity.IDS.ASTEROID)?.id;
 
       if (shipAsteroidId && !asseted[shipAsteroidId]) {
@@ -140,7 +140,7 @@ const Asteroids = () => {
     });
 
     return asseted;
-  }, [asteroids, controlledAsteroids, crew, ownedShips]);
+  }, [asteroids, controlledAsteroids, crew, controlledShips]);
 
   // Update state when asteroids from server, origin, or destination change
   const isZoomedIn = zoomStatus === 'in';

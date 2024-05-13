@@ -60,11 +60,16 @@ const TransferToSite = styled.div`
 const Construct = ({ asteroid, lot, constructionManager, stage, ...props }) => {
   const { currentConstructionAction, constructionStatus, startConstruction, finishConstruction, isAtRisk } = constructionManager;
   const { currentDeliveryActions } = useDeliveryManager({ destination: lot?.building });
-  
+
   const crew = useActionCrew(currentConstructionAction);
 
-  const [crewTravelBonus, constructionBonus] = useMemo(() => {
-    const bonusIds = [Crewmate.ABILITY_IDS.HOPPER_TRANSPORT_TIME, Crewmate.ABILITY_IDS.CONSTRUCTION_TIME];
+  const [crewTravelBonus, crewDistBonus, constructionBonus] = useMemo(() => {
+    const bonusIds = [
+      Crewmate.ABILITY_IDS.HOPPER_TRANSPORT_TIME,
+      Crewmate.ABILITY_IDS.FREE_TRANSPORT_DISTANCE,
+      Crewmate.ABILITY_IDS.CONSTRUCTION_TIME
+    ];
+
     const abilities = getCrewAbilityBonuses(bonusIds, crew);
     return bonusIds.map((id) => abilities[id] || {});
   }, [crew]);
@@ -72,11 +77,11 @@ const Construct = ({ asteroid, lot, constructionManager, stage, ...props }) => {
   const { totalTime: crewTravelTime, tripDetails } = useMemo(() => {
     if (!asteroid?.id || !crew?._location?.lotId || !lot?.id) return {};
     const crewLotIndex = crew?._location?.asteroidId === asteroid.id ? Lot.toIndex(crew?._location?.lotId) : 0;
-    return getTripDetails(asteroid.id, crewTravelBonus, crewLotIndex, [
+    return getTripDetails(asteroid.id, crewTravelBonus, crewDistBonus, crewLotIndex, [
       { label: 'Travel to Construction Site', lotIndex: Lot.toIndex(lot.id) },
       { label: 'Return to Crew Station', lotIndex: crewLotIndex },
     ], crew?._timeAcceleration);
-  }, [asteroid?.id, lot?.id, crew?._location?.lotId, crew?._timeAcceleration, crewTravelBonus]);
+  }, [asteroid?.id, lot?.id, crew?._location?.lotId, crew?._timeAcceleration, crewTravelBonus, crewDistBonus]);
 
   const constructionTime = useMemo(() =>
     Time.toRealDuration(
@@ -169,6 +174,7 @@ const Construct = ({ asteroid, lot, constructionManager, stage, ...props }) => {
         }}
         actionCrew={crew}
         location={{ asteroid, lot }}
+        delayUntil={currentConstructionAction?.startTime || crew?.Crew?.readyAt}
         crewAvailableTime={crewTimeRequirement}
         taskCompleteTime={taskTimeRequirement}
         onClose={props.onClose}
@@ -270,6 +276,7 @@ const Construct = ({ asteroid, lot, constructionManager, stage, ...props }) => {
         goLabel="Construct"
         onGo={startConstruction}
         finalizeLabel="Complete"
+        isSequenceable
         onFinalize={finishConstruction}
         stage={stage}
         waitForCrewReady

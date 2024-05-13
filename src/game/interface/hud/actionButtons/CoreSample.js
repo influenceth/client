@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
 import { Asteroid, Building, Deposit, Lot, Product } from '@influenceth/sdk';
 
 import { NewCoreSampleIcon, ImproveCoreSampleIcon } from '~/components/Icons';
@@ -29,16 +29,9 @@ const isVisible = ({ asteroid, crew, lot, openHudMenu }) => {
 
 const NewCoreSample = ({ asteroid, crew, lot, onSetAction, overrideResourceId, improveSample, _disabled }) => {
   const defaultResourceId = useStore(s => s.asteroids.resourceMap?.active && s.asteroids.resourceMap?.selected);
-  const { currentSamplingAction: actualCurrentSample, samplingStatus: actualSamplingStatus } = useCoreSampleManager(lot?.id);
+  const { currentSamplingActions } = useCoreSampleManager(lot?.id);
 
   const resourceId = overrideResourceId || defaultResourceId;
-
-  let currentSamplingAction = actualCurrentSample;
-  let samplingStatus = actualSamplingStatus;
-  if (improveSample && (currentSamplingAction?.sampleId !== improveSample.sampleId || currentSamplingAction?.isNew)) {
-    currentSamplingAction = null;
-    samplingStatus = 'READY';
-  }
 
   // get lot abundance
   const lotAbundance = useMemo(() => {
@@ -46,63 +39,77 @@ const NewCoreSample = ({ asteroid, crew, lot, onSetAction, overrideResourceId, i
     return Asteroid.Entity.getAbundanceAtLot(asteroid, Lot.toIndex(lot.id), resourceId);
   }, [asteroid, lot, resourceId]);
 
-  let label = labelDict[samplingStatus];
-  let attention = undefined;
-  let loading = undefined;
+  const clickTally = useRef(0);
+  const handleClick = useCallback((isStackClick) => () => {
 
-  // if there is a current sample ongoing
-  if (currentSamplingAction) {
-    // if it's ready to finish, show in "attention" mode (else, loading if loading)
-    if (samplingStatus === 'READY_TO_FINISH') {
-      attention = true;
-    } else if (samplingStatus === 'SAMPLING' || samplingStatus === 'FINISHING') {
-      loading = true;
-    }
+    // for now, clicking just cycles through concurrent actions' dialogs
+    if (isStackClick) {
+      const currentSamplingAction = currentSamplingActions[clickTally.current % currentSamplingActions?.length];
+      if (currentSamplingAction) {
+        onSetAction(
+          currentSamplingAction.action?.isNew ? 'NEW_CORE_SAMPLE' : 'IMPROVE_CORE_SAMPLE',
+          { sampleId: currentSamplingAction.action?.sampleId }
+        );
+      }
+      clickTally.current++;
 
-    // always append which resource it is if not the selected one
-    if (currentSamplingAction.resourceId && currentSamplingAction.resourceId !== resourceId) {
-      label += ` (${Product.TYPES[currentSamplingAction.resourceId]?.name})`;
-    }
-    
-  // else if there is not at current sample, if it is ready...
-  } else if (samplingStatus === 'READY') {
-    if (improveSample) {
-      label = 'Improve Core Sample';
-    }
-    else if (lotAbundance > 0) {
-      label += ` (${formatFixed(100 * lotAbundance, 1)}%)`;
-    }
-  }
-
-  const handleClick = useCallback(() => {
-    if (currentSamplingAction && !currentSamplingAction.isNew) {
-      onSetAction('IMPROVE_CORE_SAMPLE');
-    } else if (improveSample) {
-      onSetAction('IMPROVE_CORE_SAMPLE', { preselect: { ...improveSample } });
+    // else, open for new...
     } else {
-      onSetAction('NEW_CORE_SAMPLE', resourceId ? { preselect: { resourceId } } : undefined);
+      if (improveSample) {
+        onSetAction('IMPROVE_CORE_SAMPLE', { preselect: { ...improveSample, sampleId: improveSample.id } });
+      } else {
+        onSetAction('NEW_CORE_SAMPLE', resourceId ? { preselect: { resourceId } } : undefined);
+      }
     }
-  }, [currentSamplingAction, improveSample, onSetAction, resourceId]);
+  }, [currentSamplingActions, improveSample, onSetAction, resourceId]);
 
   const disabledReason = useMemo(() => {
     if (_disabled) return 'loading...';
-    if (improveSample && improveSample?.Deposit?.status !== Deposit.STATUSES.SAMPLED) return 'already used';
-    return getCrewDisabledReason({ asteroid, crew });
-  }, [_disabled, asteroid, crew, improveSample]);
+    if (improveSample && improveSample?.Deposit?.status === Deposit.STATUSES.USED) return 'already used';
+    if (improveSample && improveSample?.Deposit?.status !== Deposit.STATUSES.SAMPLED) return 'not yet analyzed';
+    if (currentSamplingActions.find((c) => c.stage === 'STARTING')) return 'pending';
+    return getCrewDisabledReason({ asteroid, isSequenceable: true, crew });
+  }, [_disabled, asteroid, crew, currentSamplingActions, improveSample]);
 
-  const isImprovement = improveSample || (currentSamplingAction && !currentSamplingAction.isNew);
+  let label = labelDict.READY;
+  if (!crew?._ready) label = `Schedule Next: ${label}`;
+  if (improveSample) label = 'Improve Core Sample';
+  else if (lotAbundance > 0) label += ` (${formatFixed(100 * lotAbundance, 1)}%)`;
+
+  const stackAttention = useMemo(() => {
+    return currentSamplingActions.find((a) => a.status === 'READY_TO_FINISH')
+  }, [currentSamplingActions]);
+
+  const stackIsImprovement = useMemo(() => {
+    return !currentSamplingActions.find((a) => a.action?.isNew);
+  }, [currentSamplingActions])
+
   return (
-    <ActionButton
-      label={label}
-      labelAddendum={disabledReason}
-      flags={{
-        attention: (!disabledReason && attention),
-        disabled: _disabled || disabledReason,
-        loading,
-        finishTime: currentSamplingAction?.finishTime
-      }}
-      icon={isImprovement ? <ImproveCoreSampleIcon /> : <NewCoreSampleIcon />}
-      onClick={handleClick} />
+    <>
+      {currentSamplingActions.length > 0 && (
+        <ActionButton
+          label={
+            currentSamplingActions.length > 1
+            ? `${currentSamplingActions.length} Core Samples Started`
+            : `${labelDict[currentSamplingActions[0].status]} (${Product.TYPES[currentSamplingActions[0]?.action?.resourceId]?.name})`
+          }
+          flags={{
+            attention: stackAttention,
+            loading: !stackAttention,
+            tally: currentSamplingActions.length,
+            finishTime: currentSamplingActions.length > 1 ? undefined : currentSamplingActions[0]?.action?.finishTime
+          }}
+          icon={stackIsImprovement ? <ImproveCoreSampleIcon /> : <NewCoreSampleIcon />}
+          onClick={handleClick(true)} />
+      )}
+      <ActionButton
+        label={label}
+        labelAddendum={disabledReason}
+        flags={{ disabled: _disabled || disabledReason }}
+        icon={improveSample ? <ImproveCoreSampleIcon /> : <NewCoreSampleIcon />}
+        onClick={handleClick()}
+        sequenceMode={!crew?._ready || currentSamplingActions.length > 0} />
+    </>
   );
 };
 

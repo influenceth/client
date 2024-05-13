@@ -21,7 +21,11 @@ export function CrewProvider({ children }) {
   const selectedCrewId = useStore(s => s.selectedCrewId);
   const dispatchCrewSelected = useStore(s => s.dispatchCrewSelected);
 
-  const { data: TIME_ACCELERATION, isLoading: constantsLoading } = useConstants('TIME_ACCELERATION');
+  const { data: constants, isLoading: constantsLoading } = useConstants(['CREW_SCHEDULE_BUFFER','TIME_ACCELERATION']);
+  const [CREW_SCHEDULE_BUFFER, TIME_ACCELERATION] = useMemo(() => {
+    if (!constants) return [];
+    return [constants.CREW_SCHEDULE_BUFFER, constants.TIME_ACCELERATION];
+  }, [constants]);
 
   const ownedCrewsQueryKey = useMemo(
     () => entitiesCacheKey(Entity.IDS.CREW, { owner: accountAddress }),
@@ -104,6 +108,7 @@ export function CrewProvider({ children }) {
       }
       if (c.Crew) {
         c._ready = blockTime >= c.Crew.readyAt;
+        c._readyToSequence = blockTime + CREW_SCHEDULE_BUFFER >= c.Crew.readyAt;
       }
 
       // TODO: vvv remove this whole block (and _launched references) after
@@ -134,7 +139,7 @@ export function CrewProvider({ children }) {
 
       return c;
     })
-  }, [blockTime, rawCrews, crewmateMap, crewsAndCrewmatesReady]);
+  }, [blockTime, rawCrews, crewmateMap, crewsAndCrewmatesReady, CREW_SCHEDULE_BUFFER]);
 
   const selectedCrew = useMemo(() => {
     if (crews && crews.length > 0) {
@@ -153,7 +158,8 @@ export function CrewProvider({ children }) {
   const [actionTypeTriggered, setActionTypeTriggered] = useState(false);
   useEffect(() => {
     if (!actionTypeTriggered) {
-      if (selectedCrew?.Crew?.actionType && selectedCrew.Crew.actionRound && (selectedCrew.Crew.actionRound + RandomEvent.MIN_ROUNDS) <= blockNumber) {
+      // TODO: actionRound tmp fix
+      if (selectedCrew?.Crew?.actionType && selectedCrew.Crew.actionRound) {// && (selectedCrew.Crew.actionRound + RandomEvent.MIN_ROUNDS) <= blockNumber) {
         starknet.provider.callContract(
           System.getRunSystemCall(
             'CheckForRandomEvent',
@@ -164,19 +170,25 @@ export function CrewProvider({ children }) {
         .then((response) => {
           const pendingEvent = response ? parseInt(response[1]) : null;
           if (pendingEvent > 0) {
-            getBlockTime(starknet, selectedCrew.Crew.actionRound + RandomEvent.MIN_ROUNDS).then((timestamp) => {
-              console.log('SET TRIGGER', {
-                actionType: selectedCrew.Crew.actionType,
-                pendingEvent,
-                timestamp,
-                _now: Math.floor(Date.now() / 1000)
-              });
-              setActionTypeTriggered({
-                actionType: selectedCrew.Crew.actionType,
-                pendingEvent,
-                timestamp
-              });
-            })
+            // TODO: actionRound tmp fix
+            // getBlockTime(starknet, selectedCrew.Crew.actionRound + RandomEvent.MIN_ROUNDS).then((timestamp) => {
+            //   console.log('SET TRIGGER', {
+            //     actionType: selectedCrew.Crew.actionType,
+            //     pendingEvent,
+            //     timestamp,
+            //     _now: Math.floor(Date.now() / 1000)
+            //   });
+            //   setActionTypeTriggered({
+            //     actionType: selectedCrew.Crew.actionType,
+            //     pendingEvent,
+            //     timestamp
+            //   });
+            // })
+            setActionTypeTriggered({
+              actionType: selectedCrew.Crew.actionType,
+              pendingEvent,
+              timestamp: Math.floor(Date.now() / 1000)
+            });
           }
         })
         .catch((err) => {
@@ -195,10 +207,11 @@ export function CrewProvider({ children }) {
       _actionTypeTriggered: actionTypeTriggered,
       _ready: selectedCrew?._ready && !actionTypeTriggered,
       _station: selectedCrewLocation?.Station || {},
+      _scheduleBuffer: parseInt(CREW_SCHEDULE_BUFFER),
       _timeAcceleration: parseInt(TIME_ACCELERATION) // (attach to crew for easy use in bonus calcs)
     }
   // (launched and ready are required for some reason to get final to update)
-  }, [actionTypeTriggered, selectedCrew, selectedCrew?._launched, selectedCrew?._ready, selectedCrewLocation, TIME_ACCELERATION]);
+  }, [actionTypeTriggered, selectedCrew, selectedCrew?._launched, selectedCrew?._ready, selectedCrewLocation, CREW_SCHEDULE_BUFFER, TIME_ACCELERATION]);
 
   // return all pending transactions that are specific to this crew AND those that are not specific to any crew
   const pendingTransactions = useMemo(() => {

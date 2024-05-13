@@ -1,6 +1,4 @@
-import { useEffect } from 'react';
 import { useHistory } from 'react-router-dom';
-import ReactTooltip from 'react-tooltip';
 import styled from 'styled-components';
 
 import { LocationIcon } from '~/components/Icons';
@@ -24,12 +22,11 @@ const StyledIconLink = styled.span`
 
 export const IconLink = ({ children, onClick, tooltip, ...props }) => {
   const history = useHistory();
-  useEffect(() => ReactTooltip.rebuild(), [tooltip]);
   return (
     <StyledIconLink
-      data-for="listView"
-      data-tip={tooltip}
-      data-place="left"
+      data-tooltip-id="listViewTooltip"
+      data-tooltip-content={tooltip}
+      data-tooltip-place="left"
       onClick={onClick}
       {...props}>
       {children}

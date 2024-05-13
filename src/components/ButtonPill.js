@@ -1,6 +1,4 @@
-import { useEffect } from 'react';
 import styled, { css } from 'styled-components';
-import ReactTooltip from 'react-tooltip';
 import LoadingAnimation from 'react-spinners/BarLoader';
 
 import useStore from '~/hooks/useStore';
@@ -77,8 +75,8 @@ const loadingCss = css`
 const Button = (props) => {
   const {
     onClick,
-    'data-tip': dataTip,
-    'data-place': dataPlace,
+    'data-tooltip-content': dataTip,
+    'data-tooltip-place': dataPlace,
     loading,
     setRef,
     ...restProps } = props;
@@ -89,14 +87,12 @@ const Button = (props) => {
     if (onClick) onClick(e);
   }
 
-  useEffect(() => ReactTooltip.rebuild(), []);
-
   if (setRef) restProps.ref = setRef;
   return (
     <StyledButton
       onClick={_onClick}
-      data-tip={dataTip}
-      data-place={dataPlace || "right"}
+      data-tooltip-content={dataTip}
+      data-tooltip-place={dataPlace || "right"}
       key={dataTip}
       {...restProps}>
       {loading && <LoadingAnimation height={2} color={theme.colors.main} css={loadingCss} />}

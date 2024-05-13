@@ -3,7 +3,6 @@ import { Asteroid, Crewmate, Deposit, Lot, Product, Time } from '@influenceth/sd
 
 import { NewCoreSampleIcon, ResourceIcon } from '~/components/Icons';
 import ResourceThumbnail from '~/components/ResourceThumbnail';
-import useCrewContext from '~/hooks/useCrewContext';
 import useStore from '~/hooks/useStore';
 import useCoreSampleManager from '~/hooks/actionManagers/useCoreSampleManager';
 import actionStage from '~/lib/actionStages';
@@ -35,18 +34,24 @@ import { ActionDialogInner, theming, useAsteroidAndLot } from '../ActionDialog';
 import useEntity from '~/hooks/useEntity';
 import useActionCrew from '~/hooks/useActionCrew';
 
-const NewCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }) => {
-  const { currentSamplingAction, startSampling, finishSampling, samplingStatus } = coreSampleManager;
+const NewCoreSample = ({ asteroid, lot, coreSampleManager, currentSamplingAction, stage, ...props }) => {
+  const { startSampling, finishSampling } = coreSampleManager;
   const crew = useActionCrew(currentSamplingAction);
-  const { data: originEntity } = useEntity(currentSamplingAction?.origin ? { ...currentSamplingAction.origin } : props.preselect?.origin);
 
   const dispatchResourceMapSelect = useStore(s => s.dispatchResourceMapSelect);
   const dispatchResourceMapToggle = useStore(s => s.dispatchResourceMapToggle);
   const resourceMap = useStore(s => s.asteroids.resourceMap);
 
+  const prepop = useMemo(() => ({
+    origin: currentSamplingAction?.origin ? { ...currentSamplingAction.origin } : props.preselect?.origin,
+    resourceId: props.preselect?.resourceId || (resourceMap?.active && resourceMap?.selected || undefined)
+  }), [currentSamplingAction, props.preselect, resourceMap]);
+
+  const { data: originEntity } = useEntity(prepop.origin);
+
   // if an active sample is detected, set "sample" for remainder of dialog's lifespan
   const [sampleId, setSampleId] = useState();
-  const [resourceId, setResourceId] = useState(props.preselect?.resourceId || (resourceMap?.active && resourceMap?.selected || undefined));
+  const [resourceId, setResourceId] = useState(prepop.resourceId);
   const [drillSource, setDrillSource] = useState();
   const [resourceSelectorOpen, setResourceSelectorOpen] = useState(false);
   const [sourceSelectorOpen, setSourceSelectorOpen] = useState(false);
@@ -110,8 +115,14 @@ const NewCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }) =>
 
   const lotAbundance = resourceId ? lotAbundances[resourceId] : 0;
 
-  const [crewTravelBonus, sampleQualityBonus, sampleTimeBonus] = useMemo(() => {
-    const bonusIds = [Crewmate.ABILITY_IDS.HOPPER_TRANSPORT_TIME, Crewmate.ABILITY_IDS.CORE_SAMPLE_QUALITY, Crewmate.ABILITY_IDS.CORE_SAMPLE_TIME];
+  const [crewTravelBonus, crewDistBonus, sampleQualityBonus, sampleTimeBonus] = useMemo(() => {
+    const bonusIds = [
+      Crewmate.ABILITY_IDS.HOPPER_TRANSPORT_TIME,
+      Crewmate.ABILITY_IDS.FREE_TRANSPORT_DISTANCE,
+      Crewmate.ABILITY_IDS.CORE_SAMPLE_QUALITY,
+      Crewmate.ABILITY_IDS.CORE_SAMPLE_TIME
+    ];
+
     const abilities = getCrewAbilityBonuses(bonusIds, crew);
     return bonusIds.map((id) => abilities[id] || {});
   }, [crew]);
@@ -119,11 +130,11 @@ const NewCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }) =>
   const { totalTime: crewTravelTime, tripDetails } = useMemo(() => {
     if (!asteroid?.id || !crew?._location?.lotId || !lot?.id) return {};
     const crewLotIndex = Lot.toIndex(crew?._location?.lotId);
-    return getTripDetails(asteroid.id, crewTravelBonus, crewLotIndex, [
+    return getTripDetails(asteroid.id, crewTravelBonus, crewDistBonus, crewLotIndex, [
       { label: 'Travel to Sampling Site', lotIndex: Lot.toIndex(lot.id) },
       { label: 'Return to Crew Station', lotIndex: crewLotIndex },
     ], crew?._timeAcceleration);
-  }, [asteroid?.id, lot?.id, crew?._location?.lotId, crew?._timeAcceleration, crewTravelBonus]);
+  }, [asteroid?.id, lot?.id, crew?._location?.lotId, crew?._timeAcceleration, crewTravelBonus, crewDistBonus]);
 
   const [sampleBounds, sampleTime] = useMemo(() => {
     return [
@@ -136,14 +147,16 @@ const NewCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }) =>
     if (!asteroid?.id || !crew?._location?.lotId || !lot?.id || !drillSource?.lotIndex) return [];
     const oneWayCrewTravelTime = crewTravelTime / 2;
     const drillTravelTime = Time.toRealDuration(
-      Asteroid.getLotTravelTime(asteroid.id, drillSource?.lotIndex, Lot.toIndex(lot.id), crewTravelBonus.totalBonus),
+      Asteroid.getLotTravelTime(
+        asteroid.id, drillSource?.lotIndex, Lot.toIndex(lot.id), crewTravelBonus.totalBonus, crewDistBonus.totalBonus
+      ),
       crew?._timeAcceleration
     );
     return [
       Math.max(oneWayCrewTravelTime, drillTravelTime) + sampleTime + oneWayCrewTravelTime,
       Math.max(oneWayCrewTravelTime, drillTravelTime) + sampleTime
     ];
-  }, [asteroid?.id, crew?._location?.lotId, crew?._timeAcceleration, drillSource?.lotIndex, lot?.id, crewTravelBonus]);
+  }, [asteroid?.id, crew?._location?.lotId, crew?._timeAcceleration, drillSource?.lotIndex, lot?.id, crewDistBonus, crewTravelBonus]);
 
   const stats = useMemo(() => ([
     {
@@ -199,16 +212,23 @@ const NewCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }) =>
   ]), [crew?._timeAcceleration, crewTravelBonus, crewTravelTime, sampleBounds, sampleQualityBonus, sampleTime, tripDetails]);
 
   // handle auto-closing
-  const lastStatus = useRef();
+  const miniStatus = useRef();
   useEffect(() => {
-    // (close on status change from)
-    if (['READY'].includes(lastStatus.current)) {
-      if (samplingStatus !== lastStatus.current) {
-        props.onClose();
-      }
+    let newMiniStatus = 1;
+    if (currentSamplingAction) newMiniStatus = 2;
+    if (currentSamplingAction?.sampleId) newMiniStatus = 3;
+
+    // (close on status change from no sampleId to sampleId)
+    if (miniStatus.current && miniStatus.current !== newMiniStatus) {
+      props.onClose();
     }
-    lastStatus.current = samplingStatus;
-  }, [samplingStatus]);
+
+    miniStatus.current = newMiniStatus;
+  }, [currentSamplingAction]);
+
+  const onFinish = useCallback(() => {
+    finishSampling(currentSamplingAction?.sampleId)
+  }, [finishSampling, currentSamplingAction]);
 
   return (
     <>
@@ -219,6 +239,7 @@ const NewCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }) =>
         }}
         actionCrew={crew}
         location={{ asteroid, lot }}
+        delayUntil={currentSamplingAction?.startTime || crew?.Crew?.readyAt}
         crewAvailableTime={crewTimeRequirement}
         taskCompleteTime={taskTimeRequirement}
         onClose={props.onClose}
@@ -229,7 +250,7 @@ const NewCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }) =>
           <FlexSection>
             <FlexSectionInputBlock
               title="Discovered"
-              image={<ResourceThumbnail resource={Product.TYPES[resourceId]} tooltipContainer="none" />}
+              image={<ResourceThumbnail resource={Product.TYPES[resourceId]} tooltipContainer={null} />}
               label={`${Product.TYPES[resourceId]?.name} Deposit`}
               disabled
               style={{ width: '100%' }}
@@ -247,7 +268,7 @@ const NewCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }) =>
               title="Resource"
               image={
                 resourceId
-                  ? <ResourceThumbnail resource={Product.TYPES[resourceId]} tooltipContainer="none" />
+                  ? <ResourceThumbnail resource={Product.TYPES[resourceId]} tooltipContainer={null} />
                   : <EmptyResourceImage iconOverride={<ResourceIcon />} />
               }
               isSelected={stage === actionStage.NOT_STARTED}
@@ -256,18 +277,18 @@ const NewCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }) =>
               disabled={stage !== actionStage.NOT_STARTED}
               sublabel={
                 resourceId
-                ? <><b style={{ color: 'white' }}>{formatFixed(100 * lotAbundance, 0)}%</b> Lot Abundance</>
+                ? <><b style={{ color: 'white' }}>{formatFixed(100 * lotAbundance, 1)}%</b> Lot Abundance</>
                 : 'Resource'
               }
             />
-            
+
             <FlexSectionSpacer />
 
             <FlexSectionInputBlock
               title="Tool"
               image={
                 drillSource
-                  ? <ResourceThumbnail badge="1" resource={Product.TYPES[175]} tooltipContainer="none" />
+                  ? <ResourceThumbnail badge="1" resource={Product.TYPES[175]} tooltipContainer={null} />
                   : <EmptyResourceImage />
               }
               isSelected={stage === actionStage.NOT_STARTED}
@@ -300,7 +321,8 @@ const NewCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }) =>
         goLabel="Prospect"
         onGo={() => startSampling(resourceId, drillSource)}
         finalizeLabel="Analyze"
-        onFinalize={finishSampling}
+        isSequenceable
+        onFinalize={onFinish}
         stage={stage}
         waitForCrewReady
         {...props} />
@@ -335,7 +357,16 @@ const NewCoreSample = ({ asteroid, lot, coreSampleManager, stage, ...props }) =>
 const Wrapper = (props) => {
   const { asteroid, lot, isLoading } = useAsteroidAndLot(props);
   const coreSampleManager = useCoreSampleManager(lot?.id);
-  const { actionStage } = coreSampleManager;
+  const { currentSamplingActions, completedSamplingActions } = coreSampleManager;
+
+  const currentSamplingAction = useMemo(() => {
+    return props.sampleId
+      ? (
+        currentSamplingActions.find((c) => c.action?.sampleId === props.sampleId)
+        || completedSamplingActions.find((c) => c.action?.sampleId === props.sampleId)
+      )
+      : currentSamplingActions.find((c) => !c.action?.sampleId);
+  }, [completedSamplingActions, currentSamplingActions, props.sampleId]);
 
   useEffect(() => {
     if (!asteroid || !lot) {
@@ -345,16 +376,18 @@ const Wrapper = (props) => {
     }
   }, [asteroid, lot, isLoading]);
 
+  const stage = currentSamplingAction?.stage || actionStage.NOT_STARTED;
   return (
     <ActionDialogInner
       actionImage="CoreSample"
       isLoading={reactBool(isLoading)}
-      stage={actionStage}>
+      stage={stage}>
       <NewCoreSample
         asteroid={asteroid}
         lot={lot}
         coreSampleManager={coreSampleManager}
-        stage={actionStage}
+        currentSamplingAction={currentSamplingAction?.action}
+        stage={stage}
         {...props} />
     </ActionDialogInner>
   )

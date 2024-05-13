@@ -88,8 +88,8 @@ const TravelSolution = ({}) => {
   useEffect(() => {
     if (!travelSolution) return;
 
-    const propellantBonus = getCrewAbilityBonuses(Crewmate.ABILITY_IDS.PROPELLANT_EXHAUST_VELOCITY, crew);
-    // console.log('travelSolution', travelSolution, 'propellantBonus', propellantBonus);
+    const exhaustBonus = getCrewAbilityBonuses(Crewmate.ABILITY_IDS.PROPELLANT_EXHAUST_VELOCITY, crew);
+    // console.log('travelSolution', travelSolution, 'exhaustBonus', exhaustBonus);
 
     // clear travel solution...
     if (
@@ -107,7 +107,7 @@ const TravelSolution = ({}) => {
       || timeOverride && ![0, 1].includes(Number(timeOverride.speed))
 
       // ...crew's propellant bonus has changed
-      || travelSolution.propellantBonus !== (propellantBonus.totalBonus || 1)
+      || travelSolution.exhaustBonus !== (exhaustBonus.totalBonus || 1)
     ) {
       dispatchTravelSolution();
     }

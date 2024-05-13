@@ -26,7 +26,7 @@ const AssembleShip = ({ asteroid, crew, lot, onSetAction, _disabled }) => {
     if (_disabled) return 'loading...';
     if (assemblyStatus === 'READY') {
       return getCrewDisabledReason({
-        asteroid, crew, permission: Permission.IDS.ASSEMBLE_SHIP, permissionTarget: lot?.building
+        asteroid, crew, isSequenceable: true, permission: Permission.IDS.ASSEMBLE_SHIP, permissionTarget: lot?.building
       });
     } else if (!currentAssembly?._isMyAction) {
       return 'in use';
@@ -43,7 +43,8 @@ const AssembleShip = ({ asteroid, crew, lot, onSetAction, _disabled }) => {
         loading: assemblyStatus === 'ASSEMBLING' || assemblyStatus === 'FINISHING'
       }}
       icon={<ShipIcon />}
-      onClick={handleClick} />
+      onClick={handleClick}
+      sequenceMode={!crew?._ready && assemblyStatus === 'READY'} />
   );
 };
 

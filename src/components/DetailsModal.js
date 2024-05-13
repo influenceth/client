@@ -1,6 +1,6 @@
 import styled from 'styled-components';
 import { useHistory } from 'react-router-dom';
-import ReactTooltip from 'react-tooltip';
+import { Tooltip } from 'react-tooltip';
 
 import IconButton from '~/components/IconButton';
 import { CloseIcon } from '~/components/Icons';
@@ -162,7 +162,7 @@ const Details = (props) => {
         </Content>
         <ClipCorner dimension={cornerWidth} color={theme.colors.borderBottom} />
       </StyledDetails>
-      {showTooltip && <ReactTooltip id="details" effect="solid" />}
+      {showTooltip && <Tooltip id="detailsTooltip" />}
     </Wrapper>
   );
 };

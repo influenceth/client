@@ -1,6 +1,5 @@
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import styled, { css, keyframes } from 'styled-components';
-import ReactTooltip from 'react-tooltip';
 import { Permission } from '@influenceth/sdk';
 
 import ClipCorner from '~/components/ClipCorner';
@@ -77,6 +76,36 @@ const ActionButtonWrapper = styled.div`
       background-color: #777;
     }
   `}
+`;
+
+const CornerBadge = styled.span`
+  background: #0f365c;
+  clip-path: polygon(0 0, 100% 0, 0 100%);
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 24px;
+  height: 28px;
+  left: 0;
+  line-height: 12px;
+  padding: 2px 0 0 2px;
+  position: absolute;
+  top: 0;
+  width: 28px;
+  z-index: 1;
+`;
+
+const CompletionTime = styled.label`
+  align-items: center;
+  bottom: 0;
+  color: rgba(255, 255, 255, 0.85);
+  display: flex;
+  font-weight: bold;
+  left: 0;
+  position: absolute;
+  justify-content: center;
+  right: 0;
+  text-shadow: 0px 0px 1px black;
+  transition: color 100ms ease;
+  top: 0;
 `;
 
 const ActionButton = styled.div`
@@ -158,6 +187,9 @@ const ActionButton = styled.div`
       & > svg {
         stroke: #444 !important;
       }
+      & ${CornerBadge} {
+        filter: saturate(0);
+      }
     `
     : `
       &:hover {
@@ -205,19 +237,6 @@ const LoadingAnimation = styled.div`
   }
 `;
 
-const CompletionTime = styled.label`
-  align-items: center;
-  display: flex;
-  font-weight: bold;
-  position: absolute;
-  justify-content: center;
-  text-shadow: 0px 0px 1px black;
-  top: 0;
-  left: 0;
-  bottom: 0;
-  right: 0;
-`;
-
 // TODO: consider a booleanProp wrapper so could wrap boolean props in
 // {...booleanProps({ a, b, c })} where booleanProps(props) would either include
 // or not rather than true/false OR would pass 1/0 instead
@@ -231,7 +250,15 @@ const LoadingTimer = ({ finishTime }) => {
   );
 };
 
-const ActionButtonComponent = ({ label, labelAddendum, flags = {}, icon, onClick, ...props }) => {
+const StackTally = ({ tally }) => {
+  return (
+    <CompletionTime>
+      {tally > 1 ? `(${tally})` : ``}
+    </CompletionTime>
+  );
+};
+
+const ActionButtonComponent = ({ label, labelAddendum, flags = {}, icon, onClick, sequenceMode, ...props }) => {
   const _onClick = useCallback(() => {
     if (!flags?.disabled && onClick) onClick();
   }, [flags, onClick]);
@@ -244,28 +271,37 @@ const ActionButtonComponent = ({ label, labelAddendum, flags = {}, icon, onClick
     }, {})
   }, [flags]);
 
-  useEffect(() => ReactTooltip.rebuild(), []);
   return (
     <ActionButtonWrapper
       data-arrow-color="transparent"
-      data-for="global"
-      data-place="top"
-      data-tip={`${label}${labelAddendum ? ` (${labelAddendum})` : ''}`}
+      data-tooltip-id="globalTooltip"
+      data-tooltip-place="top"
+      data-tooltip-delay-hide={100}
+      data-tooltip-content={`${label}${labelAddendum ? ` (${labelAddendum})` : ''}`}
       onClick={_onClick}
       {...safeFlags}
       {...props}>
       {flags.loading && <LoadingAnimation />}
       <ActionButton {...safeFlags} overrideColor={props.overrideColor}>
         <ClipCorner dimension={cornerSize} />
+        {sequenceMode && !safeFlags.disabled && !flags.loading && <CornerBadge>+</CornerBadge>}
         <div>{icon}</div>
-        {flags.loading && <LoadingTimer finishTime={flags.finishTime} />}
+        {flags.tally > 1 && <StackTally tally={flags.tally} />}
+        {!(flags.tally > 1) && flags.loading && <LoadingTimer finishTime={flags.finishTime} />}
       </ActionButton>
     </ActionButtonWrapper>
   );
 }
 
 export const getCrewDisabledReason = ({
-  asteroid, crew, permission, permissionTarget, requireAsteroid = true, requireSurface = true, requireReady = true
+  asteroid,
+  crew,
+  isSequenceable = false,
+  permission,
+  permissionTarget,
+  requireAsteroid = true,
+  requireSurface = true,
+  requireReady = true
 }) => {
   if (!crew?._launched) return 'not yet launched';
   if (permission && permissionTarget) {
@@ -279,7 +315,8 @@ export const getCrewDisabledReason = ({
     }
   }
   if (!!crew._actionTypeTriggered) return 'crew event pending';
-  if (!crew?._ready && requireReady) return 'crew is busy';
+  if (requireReady && isSequenceable && !crew?._readyToSequence) return 'crew is fully scheduled';
+  if (requireReady && !isSequenceable && !crew?._ready) return 'crew is busy';
   return null;
 };
 

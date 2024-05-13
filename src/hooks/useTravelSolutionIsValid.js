@@ -1,9 +1,10 @@
 import { useMemo } from 'react';
-import { Ship, Time } from '@influenceth/sdk';
+import { Crewmate, Ship, Time } from '@influenceth/sdk';
 
 import useCrewContext from './useCrewContext';
 import useShip from './useShip';
 import useStore from './useStore';
+import { getCrewAbilityBonuses } from '~/lib/utils';
 
 export const maxFoodUtilizationAdays = 1.5 * 365; // 1.5 years
 
@@ -13,6 +14,9 @@ const useTravelSolutionIsValid = () => {
   const { data: ship } = useShip(shipId);
 
   const travelSolution = useStore(s => s.asteroids.travelSolution);
+  const exhaustBonus = useMemo(() => {
+    return getCrewAbilityBonuses(Crewmate.ABILITY_IDS.PROPELLANT_EXHAUST_VELOCITY, crew);
+  }, [crew]);
 
   return useMemo(() => {
     if (!travelSolution) return false;
@@ -22,15 +26,10 @@ const useTravelSolutionIsValid = () => {
 
     const shipConfig = Ship.TYPES[ship.Ship?.shipType];
 
-    const cargoInventory = ship.Inventories.find((i) => i.slot === shipConfig.cargoSlot);
     const propellantInventory = ship.Inventories.find((i) => i.slot === shipConfig.propellantSlot);
-
-    const cargoMass = cargoInventory?.mass || 0;
     const propellantMass = propellantInventory?.mass || 0;
-    const dryMass = shipConfig.hullMass + cargoMass;
-    const wetMass = propellantMass + dryMass;
 
-    const maxDeltaV = shipConfig.exhaustVelocity * Math.log(wetMass / dryMass);
+    const maxDeltaV = Ship.Entity.propellantToDeltaV(ship, propellantMass, exhaustBonus?.totalBonus);
     if (travelSolution.deltaV > maxDeltaV) return false;
 
     if (ship.Ship?.emergencyAt > 0) {

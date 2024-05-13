@@ -216,8 +216,8 @@ const customConfigs = {
   ListDepositForSale: { equalityTest: ['deposit.id'] },
   UnlistDepositForSale: { equalityTest: ['deposit.id'] },
 
-  SampleDepositFinish: { equalityTest: ['lot.id', 'caller_crew.id'] },
-  SampleDepositImprove: { equalityTest: ['lot.id', 'caller_crew.id'] },
+  SampleDepositFinish: { equalityTest: ['deposit.id'] },
+  SampleDepositImprove: { equalityTest: ['deposit.id'] },
   SampleDepositStart: { equalityTest: ['lot.id', 'caller_crew.id'] },
 
   ExchangeCrew: { equalityTest: true },
@@ -309,6 +309,11 @@ const customConfigs = {
     batchableSystemCall: 'FillSellOrder',
     isBatchable: true,
     isVirtual: true
+  },
+  FinishAllReady: {
+    multisystemCalls: ({ finishCalls }) => finishCalls.map(({ key, vars }) => ({ system: key, vars })),
+    equalityTest: true,
+    isVirtual: true,
   },
   InitializeAndManageAsteroid: {
     multisystemCalls: ['InitializeAsteroid', 'ManageAsteroid'],
@@ -525,7 +530,7 @@ export function ChainTransactionProvider({ children }) {
     //  ... or we could also refetch crew again first
     () => crew?.Crew?.actionType
       && crew?.Crew?.actionRound
-      && (crew?.Crew?.actionRound + RandomEvent.MIN_ROUNDS) <= blockNumber
+      // && (crew?.Crew?.actionRound + RandomEvent.MIN_ROUNDS) <= blockNumber // TODO: actionRound tmp fix
       && !crew?._actionTypeTriggered,
     [blockNumber, crew?.Crew?.actionType, crew?.Crew?.actionRound, crew?._actionTypeTriggered]
   );
@@ -704,7 +709,7 @@ export function ChainTransactionProvider({ children }) {
             console.log('execute', calls);
 
             // Check if we can utilize a signed session to execute calls
-            const canUseSession = !!starknetSession?.account && !calls.some((c) => {
+            const canUseSession = !!starknetSession?.account && !!starknetSession?.sessionSignature && !calls.some((c) => {
               return c.contractAddress !== process.env.REACT_APP_STARKNET_DISPATCHER || c.entrypoint !== 'run_system';
             });
 
@@ -730,12 +735,49 @@ export function ChainTransactionProvider({ children }) {
     return null;
   }, [createAlert, prependEventAutoresolve, accountAddress, starknetSession]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const getTxEvent = useCallback((txHash) => {
+    const txHashBInt = BigInt(txHash);
+    return (activities || []).find((a) => a.event?.transactionHash && BigInt(a.event?.transactionHash) === txHashBInt)?.event;
+  }, [activities?.length]);
+
   const transactionWaiters = useRef([]);
 
   // on logout, clear pending (and failed) transactions
   useEffect(() => {
     if (!authenticated) dispatchClearTransactionHistory();
   }, [authenticated, dispatchClearTransactionHistory]);
+
+  // handle newlyFailedTx in state + effect flow b/c doing directly in catch uses old values
+  // of state (i.e. from when the callback was created)
+  const [newlyFailedTx, setNewlyFailedTx] = useState();
+  useEffect(() => {
+    if (newlyFailedTx) {
+      const { err, key, vars, txHash } = newlyFailedTx;
+
+      // this somewhat commonly times out even when tx has gone through, so before reporting an error
+      // check again that we have not received a related activity
+      const txEvent = getTxEvent(txHash);
+      if (txEvent) {
+        console.warn(`txEvent already exists for "failed" tx ${txHash}`, err);
+        contracts[key].onConfirmed(txEvent, vars);
+        dispatchPendingTransactionComplete(txHash);
+      } else {
+        contracts[key].onTransactionError(err, vars);
+        if (txHash) { // TODO: may want to display pre-tx failures if using session wallet
+          dispatchFailedTransaction({
+            key,
+            vars,
+            txHash,
+            err: err?.message || 'Transaction was rejected.'
+          });
+          dispatchPendingTransactionComplete(txHash);
+        }
+      }
+
+      // now that processed, clear this failure
+      setNewlyFailedTx();
+    }
+  }, [contracts, getTxEvent, newlyFailedTx]);
 
   // on initial load, set provider.waitForTransaction for any pendingTransactions
   // so that we can throw any extension-related or timeout errors needed
@@ -763,24 +805,7 @@ export function ChainTransactionProvider({ children }) {
             //     dispatchPendingTransactionComplete(txHash);
             //   }
             // })
-            .catch((err) => {
-              // this somewhat commonly times out even when tx has gone through, so before reporting an error
-              // check again that we have not received a related activity
-              if (getTxEvent(txHash)) {
-                console.warn(`txEvent already exists for "failed" tx ${txHash}`, err);
-              } else {
-                contracts[key].onTransactionError(err, vars);
-                if (txHash) { // TODO: may want to display pre-tx failures if using session wallet
-                  dispatchFailedTransaction({
-                    key,
-                    vars,
-                    txHash,
-                    err: err?.message || 'Transaction was rejected.'
-                  });
-                  dispatchPendingTransactionComplete(txHash);
-                }
-              }
-            })
+            .catch((err) => setNewlyFailedTx({ err, key, vars, txHash }))
             .finally(() => {
               // NOTE: keep this in "finally" so also performed on success (even though not handling success)
               transactionWaiters.current = transactionWaiters.current.filter((tx) => tx.txHash !== txHash);
@@ -789,11 +814,6 @@ export function ChainTransactionProvider({ children }) {
       });
     }
   }, [contracts, pendingTransactions]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const getTxEvent = useCallback((txHash) => {
-    const txHashBInt = BigInt(txHash);
-    return (activities || []).find((a) => a.event?.transactionHash && BigInt(a.event?.transactionHash) === txHashBInt)?.event;
-  }, [activities?.length]);
 
   useEffect(() => {
     // console.log('trigger activities effect', activities, pendingTransactions);

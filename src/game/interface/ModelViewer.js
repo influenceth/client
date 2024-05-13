@@ -108,7 +108,7 @@ export const getModelViewerSettings = (assetType, overrides = {}) => {
     enableZoomLimits: true,
     enableModelLights: true,
     envmap: '/textures/model-viewer/resource_envmap.hdr',
-    envmapStrength: 4.5,
+    envmapStrength: 1,
   };
 
   // modify default settings by asset type
@@ -135,13 +135,13 @@ export const getModelViewerSettings = (assetType, overrides = {}) => {
 
   } else if (assetType === 'ship') {
     s.emissiveAsBloom = true;
-    s.emissiveMapAsLightMap = true;
-    s.enableModelLights = true;
     s.enablePostprocessing = true;
-    s.envmapStrength = 0.1;
     s.enableDefaultLights = true;
-    s.keylightIntensity = 0.25;
-    s.rimlightIntensity = 0;
+    s.enableRevolution = true;
+    s.envmapStrength = 5;
+    s.keylightIntensity = 0.5;
+    s.rimlightIntensity = 1;
+    s.simpleZoomConstraints = [0.1, 5];
   }
 
   if (s.enablePostprocessing) {
@@ -481,6 +481,13 @@ const Model = ({ url, onLoaded, onProgress, onCameraUpdate, ...settings }) => {
     });
   }, [settings.envmapStrength]);
 
+  useEffect(() => {
+    if (!!controls?.current) {
+      controls.current.autoRotate = !!settings.enableRevolution;
+      controls.current.autoRotateSpeed = -0.15;
+    }
+  }, [!!controls?.current, settings.enableRevolution]);
+
   useFrame((state, delta) => {
     if (model.current && settings.enableRotation) {
       model.current.rotation.y += 0.0025;
@@ -490,9 +497,9 @@ const Model = ({ url, onLoaded, onProgress, onCameraUpdate, ...settings }) => {
     }
 
     // apply camera constraints to building scene
-    if (maxCameraDistance.current || collisionFloor.current) {
-      if (controls.current.object && controls.current.target) {
-        let updateControls = false;
+    if (controls.current.object && controls.current.target) {
+      let updateControls = false;
+      if (maxCameraDistance.current || collisionFloor.current) {
 
         // collision detection on asteroid terrain
         if (collisionFloor.current) {
@@ -531,10 +538,10 @@ const Model = ({ url, onLoaded, onProgress, onCameraUpdate, ...settings }) => {
             updateControls = true;
           }
         }
+      }
 
-        if (updateControls) {
-          controls.current.update();
-        }
+      if (updateControls || settings.enableRevolution) {
+        controls.current.update();
       }
     }
 

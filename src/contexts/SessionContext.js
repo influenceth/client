@@ -1,4 +1,5 @@
 import { createContext, useCallback, useEffect, useRef, useMemo, useState } from 'react';
+import { useQueryClient } from 'react-query';
 import { isExpired } from 'react-jwt';
 
 import { RpcProvider } from 'starknet';
@@ -91,6 +92,7 @@ const STATUSES = {
 const SessionContext = createContext();
 
 export function SessionProvider({ children }) {
+  const queryClient = useQueryClient();
   const createAlert = useStore(s => s.dispatchAlertLogged);
 
   const currentSession = useStore(s => s.currentSession);
@@ -253,8 +255,10 @@ export function SessionProvider({ children }) {
     }
 
     // Check for pre-existing session and use it if it's still valid
-    if (sessions[connectedAddress] && !isExpired(sessions[connectedAddress].token)) {
-      const existingSession = Object.assign({}, sessions[connectedAddress], { startTime: Date.now() });
+    const existingSession = Object.assign({}, sessions[connectedAddress]);
+
+    if (existingSession && !isExpired(existingSession.token) && existingSession.isDeployed) {
+      existingSession.startTime = Date.now();
       dispatchSessionStarted(existingSession);
       setStatus(STATUSES.AUTHENTICATED);
       return true;
@@ -469,6 +473,17 @@ export function SessionProvider({ children }) {
       capturePendingBlockTimestampUpdate();
     }
   }, [blockNumber, capturePendingBlockTimestampUpdate]);
+
+  // reset any cached, but time-dependent queries
+  useEffect(() => {
+    [
+      [ 'orderList' ],
+      [ 'exchangeOrderSummary' ],
+      [ 'productOrderSummary' ],
+    ].forEach((queryKey) => {
+      queryClient.invalidateQueries({ queryKey, refetchType: 'active' });
+    });
+  }, [blockTime]);
 
   return (
     <SessionContext.Provider value={{

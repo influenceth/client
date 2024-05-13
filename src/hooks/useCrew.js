@@ -3,7 +3,7 @@ import { Entity } from '@influenceth/sdk';
 
 import useEntity from '~/hooks/useEntity';
 import useBlockTime from '~/hooks/useBlockTime';
-import { openAccessJSTime } from '~/lib/utils';
+import { locationsArrToObj, openAccessJSTime } from '~/lib/utils';
 
 // TODO: could deprecate this and just use useEntity directly
 const useCrew = (id) => {
@@ -19,6 +19,9 @@ const useCrew = (id) => {
           Math.min(blockTime || (Date.now() / 1e3), openAccessJSTime / 1e3), response.data.Crew.lastFed
         );
       }
+    }
+    if (response?.data) {
+      response.data._location = locationsArrToObj(response.data.Location.locations || []);
     }
     return response;
   }, [blockTime, response]);

@@ -1,17 +1,19 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import styled from 'styled-components';
 
-import { BellIcon, EyeIcon, ListIcon } from '~/components/Icons';
+import { BellIcon, CheckCircleIcon, EyeIcon, LoggedEventsIcon } from '~/components/Icons';
 import CollapsibleSection from '~/components/CollapsibleSection';
+import ChainTransactionContext from '~/contexts/ChainTransactionContext';
 import useActionItems from '~/hooks/useActionItems';
-import useSession from '~/hooks/useSession';
 import useCrewContext from '~/hooks/useCrewContext';
 import useGetActivityConfig from '~/hooks/useGetActivityConfig';
+import useSession from '~/hooks/useSession';
+import useStore from '~/hooks/useStore';
 import { hexToRGB } from '~/theme';
 import ActionItem, { ITEM_WIDTH, TRANSITION_TIME } from './ActionItem';
 
-const SECTION_WIDTH = ITEM_WIDTH + 30;
+export const SECTION_WIDTH = ITEM_WIDTH + 30;
 
 const TitleWrapper = styled.div`
   display: flex;
@@ -40,13 +42,18 @@ const Filters = styled.div`
   overflow: hidden;
   padding: ${filterRowPadding}px 0;
   width: 100%;
+
   & > a {
-    display: inline-block;
-    font-size: 18px;
+    display: block;
+    filter: drop-shadow(0px 0px 2px rgb(0 0 0));
+    font-size: 24px;
     height: 26px;
-    padding: 4px 6px;
+    line-height: 24px;
+    margin-top: -2px;
+    padding: 0 6px;
   }
 `;
+
 const Filter = styled.div`
   cursor: ${p => p.theme.cursors.active};
   font-size: 90%;
@@ -55,11 +62,14 @@ const Filter = styled.div`
   margin-right: 8px;
   padding: 4px 15px;
   position: relative;
+  text-shadow: 0 0 2px #000;
   text-transform: uppercase;
 
   & > svg {
+    filter: drop-shadow(0px 0px 2px rgb(0 0 0));
     font-size: 22px;
   }
+
   & > b {
     color: white;
     margin-right: 2px;
@@ -85,6 +95,7 @@ const Filter = styled.div`
     }
   ${p => p.selected ? `` : `}`}
 `;
+
 const IconFilter = styled(Filter)`
   align-items: center;
   display: flex;
@@ -100,6 +111,7 @@ const IconFilter = styled(Filter)`
     background: ${p => p.theme.colors.main};
   }
 `;
+
 const AllFilter = styled(IconFilter)`
   padding-left: 5px;
   padding-right: 2px;
@@ -108,16 +120,19 @@ const AllFilter = styled(IconFilter)`
     // left: ${selectionIndicatorWidth / 2}px;
   }
 `;
+
 const HiddenFilter = styled(IconFilter)`
   color: #CCC;
   padding-left: 0;
   padding-right: 0;
 `;
+
 const PillFilter = styled(Filter)`
   border-radius: 20px;
   border: 1px solid ${p => p.selected ? 'currentColor' : 'transparent'};
   transition: border-color 150ms ease;
 `;
+
 const ReadyFilter = styled(PillFilter)`
   background: rgba(${p => hexToRGB(p.theme.colors.success)}, 0.2);
   color: ${p => p.theme.colors.success};
@@ -127,6 +142,7 @@ const ReadyFilter = styled(PillFilter)`
     }
   `}
 `;
+
 const InProgressFilter = styled(PillFilter)`
   background: rgba(${p => p.theme.colors.mainRGB}, 0.4);
   color: ${p => p.theme.colors.brightMain};
@@ -169,11 +185,43 @@ const ActionItemCategory = styled.div`
   }
 `;
 
+const AllAction = styled.div`
+  align-items: center;
+  color: ${p => p.theme.colors.main};
+  cursor: ${p => p.theme.cursors.active};
+  display: flex;
+  font-size: 14px;
+  height: 34px;
+  margin-bottom: -8px;
+  pointer-events: all;
+  &:hover {
+    text-decoration: underline;
+  }
+`;
+
+const FinishAll = styled(AllAction)`
+  color: ${p => p.theme.colors.success};
+  & > svg {
+    margin-left: 9px;
+    margin-right: 9px;
+  }
+`;
+
+const UnhideAll = styled(AllAction)`
+  & > svg {
+    font-size: 22px;
+    margin-right: 4px;
+  }
+`;
+
 const ActionItems = () => {
   const { authenticated } = useSession();
   const { allVisibleItems: allItems } = useActionItems();
-  const { captain } = useCrewContext();
+  const { captain, crew } = useCrewContext();
+  const { execute, getStatus } = useContext(ChainTransactionContext);
   const getActivityConfig = useGetActivityConfig();
+
+  const dispatchUnhideAllActionItems = useStore(s => s.dispatchUnhideAllActionItems);
 
   const [displayItems, setDisplayItems] = useState();
   useEffect(() => {
@@ -207,13 +255,43 @@ const ActionItems = () => {
     setLastClick(Date.now());
   }, []);
 
+  const onUnhideAll = useCallback(() => {
+    dispatchUnhideAllActionItems();
+    setSelectedFilter('all');
+    setLastClick(Date.now());
+  }, []);
+
+  const isFinishingAll = useMemo(
+    () => getStatus('FinishAllReady') === 'pending',
+    [getStatus]
+  );
+
+  const autoFinishCalls = useMemo(() => {
+    return allItems
+      .map((a) => {
+        if (a.type === 'ready') {
+          const c = getActivityConfig(a);
+          if (c.getActionItemFinishCall) {
+            return c.getActionItemFinishCall({ id: crew?.id, label: crew?.label });
+          }
+        }
+        return null;
+      })
+      .filter((a) => !!a);
+  }, [allItems, crew, getActivityConfig]);
+
+  const onFinishAll = useCallback(() => {
+    if (isFinishingAll) return;
+    execute('FinishAllReady', { finishCalls: autoFinishCalls });
+  }, [autoFinishCalls, execute, isFinishingAll]);
+
   const tallies = useMemo(() => {
     return (displayItems || []).reduce(
       (acc, cur) => {
         if (!cur.hidden) {
           acc.all++;
           if (['pending', 'failed', 'randomEvent', 'ready'].includes(cur.type)) acc.ready++;
-          if (cur.type === 'unready') acc.progress++;
+          if (cur.type === 'unready' || cur.type === 'unstarted') acc.progress++;
         } else {
           acc.hidden++;
         }
@@ -232,7 +310,7 @@ const ActionItems = () => {
     let filter;
     if (selectedFilter === 'all') filter = (i) => !i.hidden;
     if (selectedFilter === 'ready') filter = (i) => !i.hidden && ['pending', 'failed', 'randomEvent', 'ready'].includes(i.type);
-    if (selectedFilter === 'progress') filter = (i) => !i.hidden && i.type === 'unready';
+    if (selectedFilter === 'progress') filter = (i) => !i.hidden && ['unready', 'unstarted'].includes(i.type);
     if (selectedFilter === 'hidden') filter = (i) => i.hidden;
 
     return (displayItems || []).filter(filter);
@@ -266,12 +344,14 @@ const ActionItems = () => {
                 <AllFilter onClick={onClickFilter('all')} selected={selectedFilter === 'all'}><BellIcon /> <b>{(tallies.all || 0).toLocaleString()}</b></AllFilter>
                 <ReadyFilter onClick={onClickFilter('ready')} selected={selectedFilter === 'ready'}><b>{(tallies.ready || 0).toLocaleString()}</b> Ready</ReadyFilter>
                 <InProgressFilter onClick={onClickFilter('progress')} selected={selectedFilter === 'progress'}><b>{(tallies.progress || 0).toLocaleString()}</b> In Progress</InProgressFilter>
-                {/* TODO: <HiddenFilter onClick={onClickFilter('hidden')} selected={selectedFilter === 'hidden'}><EyeIcon /> <b>{(tallies.hidden || 0).toLocaleString()}</b></HiddenFilter> */}
+                {tallies.hidden > 0 && <HiddenFilter onClick={onClickFilter('hidden')} selected={selectedFilter === 'hidden'}><EyeIcon /> <b>{(tallies.hidden || 0).toLocaleString()}</b></HiddenFilter>}
                 <div style={{ flex: 1 }} />
-                <Link to="/listview/actionitems" onClick={(e) => e.stopPropagation()}><ListIcon /></Link>
+                <Link to="/listview/eventlog" onClick={(e) => e.stopPropagation()}><LoggedEventsIcon /></Link>
               </Filters>
             </TitleWrapper>
           )}>
+          {['all', 'ready'].includes(selectedFilter) && autoFinishCalls?.length > 1 && !isFinishingAll && <FinishAll onClick={onFinishAll}><CheckCircleIcon /> Finish All Ready Items</FinishAll>}
+          {selectedFilter === 'hidden' && <UnhideAll onClick={onUnhideAll}><EyeIcon /> Unhide All</UnhideAll>}
           <ActionItemWrapper>
             <ActionItemContainer>
               {filteredDisplayCategories.map(({ category, items }) => (

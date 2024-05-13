@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
-import ReactTooltip from 'react-tooltip';
+import { Tooltip } from 'react-tooltip';
 
 import usePagedAssets from '~/hooks/usePagedAssets';
 import DataTable from '~/components/DataTable';
@@ -14,15 +14,12 @@ import {
   AsteroidSearchIcon,
   BuildingIcon,
   ColumnsIcon,
-  CoreSampleIcon,
   CrewIcon,
   CrewmateIcon,
-  LotSearchIcon,
-  RocketIcon,
-  ScanAsteroidIcon,
+  LinkIcon,
+  LoggedEventsIcon,
   ShipIcon,
-  SlidersIcon,
-  TransactionIcon
+  SlidersIcon
 } from '~/components/Icons';
 import Button from '~/components/ButtonAlt';
 import Dropdown from '~/components/Dropdown';
@@ -35,9 +32,10 @@ import usePagedEvents from '~/hooks/usePagedEvents';
 import useStore from '~/hooks/useStore';
 import theme from '~/theme';
 import listConfigs from './listViews';
-import { reactBool } from '~/lib/utils';
+import { nativeBool, reactBool } from '~/lib/utils';
 import { TimerIcon } from '~/components/Icons';
 import { ListViewIcon } from '~/components/Icons';
+import IconButton from '~/components/IconButton';
 
 const footerMargin = 12;
 const filterWidth = 344;
@@ -245,7 +243,7 @@ const assetTypes = {
   },
   eventlog: {
     keyField: 'i',
-    icon: <ListViewIcon />,
+    icon: <LoggedEventsIcon />,
     title: 'Logged Events',
     useColumns: listConfigs.events,
     usePagedAssetsOverride: usePagedEvents,
@@ -261,19 +259,44 @@ const assetsAsOptions = Object.keys(assetTypes)
     icon: assetTypes[key].icon
   }));
 
-const ListViewComponent = ({ assetType, onAssetTypeChange, params }) => {
+const ListViewComponent = ({ assetType, onAssetTypeChange, onParamsApplied, params }) => {
   const { keyField, getRowProps, useColumns, usePagedAssetsOverride, disableFilters } = assetTypes[assetType];
-  const { query, page, perPage, setPage, sort, setSort, disablePagination } = usePagedAssetsOverride ? usePagedAssetsOverride(params) : usePagedAssets(assetType, params); // eslint-disable-line react-hooks/rules-of-hooks
+  const { query, page, perPage, setPage, sort, setSort, disablePagination } = usePagedAssetsOverride ? usePagedAssetsOverride(params) : usePagedAssets(assetType); // eslint-disable-line react-hooks/rules-of-hooks
   const [sortField, sortDirection, sortOptions] = sort || [];
 
   const filters = useStore(s => s.assetSearch[assetType].filters);
   const isAssetSearchFilterMatchingDefault = useStore(s => s.isAssetSearchFilterMatchingDefault);
+  const createAlert = useStore(s => s.dispatchAlertLogged);
   const updateFilters = useStore(s => s.dispatchFiltersUpdated(assetType));
 
   const columns = useColumns();
 
   const [disabledColumns, setDisabledColumns] = useState([]);
   const [filtersOpen, setFiltersOpen] = useState();
+
+  const onCopyLink = useCallback(() => {
+    try {
+      const { origin, pathname } = window.location || {};
+      navigator.clipboard.writeText(`${origin}${pathname}?filters=${JSON.stringify(filters)}&sort=${JSON.stringify(sort)}`);
+      createAlert({
+        type: 'ClipboardAlert',
+        data: { content: 'Advanced search link copied to clipboard.' },
+        duration: 3000
+      });
+    } catch (e) {
+      console.warn(e);
+    }
+  }, [filters, sort]);
+
+  useEffect(() => {
+    try {
+      if (params?.filters) updateFilters(JSON.parse(params?.filters));
+      if (params?.sort) setSort(JSON.parse(params?.sort));
+      if (params?.filters || params?.sort) onParamsApplied();
+    } catch (e) {
+      console.error(e);
+    }
+  }, [params])
 
   const onToggleColumns = useCallback((col) => () => {
     setDisabledColumns((colKeys) => {
@@ -315,9 +338,7 @@ const ListViewComponent = ({ assetType, onAssetTypeChange, params }) => {
   useEffect(() => {
     setDisabledColumns([]);
     setPage(1);
-  }, [assetType, setPage])
-
-  useEffect(() => ReactTooltip.rebuild(), [query?.data?.hits]);
+  }, [assetType, setPage]);
 
   const enabledColumns = useMemo(() => {
     return columns.filter((c) => !disabledColumns.includes(c.key));
@@ -336,7 +357,7 @@ const ListViewComponent = ({ assetType, onAssetTypeChange, params }) => {
 
   return (
     <Details fullWidth title="Advanced Search" contentProps={{ hasFooter: true }}>
-      <ReactTooltip id="listView" effect="solid" />
+      <Tooltip id="listViewTooltip" />
       <Wrapper>
         <Controls>
           <LeftControls filtersOpen={filtersOpen}>
@@ -348,9 +369,9 @@ const ListViewComponent = ({ assetType, onAssetTypeChange, params }) => {
               width={272} />
             <div style={{ marginLeft: 6 }}>
               <Button
-                data-for="global"
-                data-place="right"
-                data-tip={filtersOpen ? 'Hide Filters' : 'Show Filters'}
+                data-tooltip-id="globalTooltip"
+                data-tooltip-place="right"
+                data-tooltip-content={filtersOpen ? 'Hide Filters' : 'Show Filters'}
                 background={filtersOpen ? `rgba(${theme.colors.mainRGB}, 0.6)` : undefined}
                 badge={filtersOpen ? undefined : activeFilters}
                 disabled={disableFilters}
@@ -367,6 +388,18 @@ const ListViewComponent = ({ assetType, onAssetTypeChange, params }) => {
             }
           </ResultContainer>
           <div style={{ flex: 1 }} />
+          {!!activeFilters && !usePagedAssetsOverride && (
+            <div style={{ marginRight: 6 }}>
+              <Button
+                data-tooltip-content="Copy Search Link"
+                data-tooltip-id="listViewTooltip"
+                data-tooltip-place="left"
+                onClick={onCopyLink}
+                size="bigicon" >
+                <LinkIcon />
+              </Button>
+            </div>
+          )}
           <Multiselect
             enabledKeys={enabledColumnKeys}
             buttonIcon={<ColumnsIcon />}
@@ -452,10 +485,21 @@ const ListView = () => {
   }, [assetType]);
 
   const params = useMemo(() => Object.fromEntries(new URLSearchParams(search)), [search]);
+  const onParamsApplied = useCallback(() => {
+    history.replace(`/listview/${assetType}`);
+  }, [assetType]);
 
   if (!assetType) return null;
+
   // (NOTE: key forces remount so that doesn't complain about hook order changing due to useColumns)
-  return <ListViewComponent key={assetType} assetType={assetType} onAssetTypeChange={onAssetTypeChange} params={params} />;
+  return (
+    <ListViewComponent
+      key={assetType}
+      assetType={assetType}
+      onAssetTypeChange={onAssetTypeChange}
+      onParamsApplied={onParamsApplied}
+      params={params} />
+  );
 };
 
 export default ListView;

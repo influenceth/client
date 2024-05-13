@@ -1,6 +1,4 @@
-import { useEffect } from 'react';
 import styled from 'styled-components';
-import ReactTooltip from 'react-tooltip';
 
 import useStore from '~/hooks/useStore';
 import { hexToRGB } from '~/theme';
@@ -71,7 +69,7 @@ const CancelIndicator = styled.svg`
 `;
 
 const IconButton = (props) => {
-  const { active, dataTip, dataFor = 'global', onClick, setRef, ...restProps} = props;
+  const { active, dataTip, dataFor = 'globalTooltip', onClick, setRef, ...restProps} = props;
   const playSound = useStore(s => s.dispatchEffectStartRequested);
 
   const _onClick = (e) => {
@@ -79,12 +77,10 @@ const IconButton = (props) => {
     if (onClick) onClick(e);
   }
 
-  useEffect(() => ReactTooltip.rebuild(), [ dataTip ]);
-
   if (setRef) restProps.ref = setRef;
   return (
-    // Adding 'key' forces data-tip to actually update on the tooltip
-    <StyledIconButton {...restProps} onClick={_onClick} data-tip={dataTip} data-for={dataFor} key={dataTip}>
+    // Adding 'key' forces data-tooltip-content to actually update on the tooltip
+    <StyledIconButton {...restProps} onClick={_onClick} data-tooltip-content={dataTip} data-tooltip-id={dataFor} key={dataTip}>
       {props.children}
       {active && (
         <CancelIndicator viewBox="0 0 30 30" xmlns="http://www.w3.org/2000/svg">

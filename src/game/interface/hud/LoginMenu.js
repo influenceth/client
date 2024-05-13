@@ -1,9 +1,8 @@
-import { useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 import { useHistory } from 'react-router-dom';
-import ReactTooltip from 'react-tooltip';
 import styled from 'styled-components';
-import Button from '~/components/ButtonAlt';
 
+import Button from '~/components/ButtonAlt';
 import CrewmateCardFramed from '~/components/CrewmateCardFramed';
 import { PlusIcon } from '~/components/Icons';
 import useSession from '~/hooks/useSession';
@@ -42,8 +41,6 @@ const LoginMenu = () => {
     if (!authenticated) return ['Log-In', 'Account Not Connected', login];
     else return ['Start Crew', 'Crew Needs Recruits', () => history.push('/crew')];
   }, [ authenticated ]);
-
-  useEffect(() => ReactTooltip.rebuild(), [tooltip]);
 
   return (
     <Wrapper>

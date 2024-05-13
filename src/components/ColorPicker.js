@@ -88,8 +88,8 @@ const ColorPicker = ({ onChange, initialColor, ...restProps}) => {
     <>
       <StyledColorPicker ref={setReferenceEl} {...restProps}>
         <Toggle
-          data-tip="Change highlight color"
-          data-for="global"
+          data-tooltip-content="Change highlight color"
+          data-tooltip-id="globalTooltip"
           color={color}
           onClick={onClick} />
       </StyledColorPicker>

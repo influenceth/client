@@ -43,12 +43,13 @@ const Extract = ({ onSetAction, asteroid, crew, lot, preselect, _disabled }) => 
     ));
   }, [lot?.deposits, crew?.id]);
 
-  const attention = !_disabled && (extractionStatus === 'READY_TO_FINISH' || (myUsableSamples?.length > 0) && extractionStatus === 'READY');
+  // const attention = !_disabled && (extractionStatus === 'READY_TO_FINISH' || (myUsableSamples?.length > 0) && extractionStatus === 'READY');
+  const attention = !_disabled && extractionStatus === 'READY_TO_FINISH';
   const badge = ((extractionStatus === 'READY' && !preselect) ? myUsableSamples?.length : 0);
   let disabledReason = useMemo(() => {
     if (_disabled) return 'loading...';
     if (extractionStatus === 'READY') {
-      const crewDisabledReason = getCrewDisabledReason({ asteroid, crew, permission: Permission.IDS.EXTRACT_RESOURCES, permissionTarget: lot?.building });
+      const crewDisabledReason = getCrewDisabledReason({ asteroid, crew, isSequenceable: true, permission: Permission.IDS.EXTRACT_RESOURCES, permissionTarget: lot?.building });
       if (crewDisabledReason) return crewDisabledReason;
       if (myUsableSamples?.length === 0) return 'requires core sample';
     } else if (!currentExtraction?._isMyAction) {
@@ -69,7 +70,8 @@ const Extract = ({ onSetAction, asteroid, crew, lot, preselect, _disabled }) => 
         finishTime: lot?.building?.Extractors?.[0]?.finishTime
       }}
       icon={<ExtractionIcon />}
-      onClick={handleClick} />
+      onClick={handleClick}
+      sequenceMode={!crew?._ready && extractionStatus === 'READY'} />
   );
 };
 

@@ -407,8 +407,8 @@ const AsteroidInformation = ({ abundances, asteroid, isManager, isOwner }) => {
                         pattern={Name.getTypeRegex(Entity.IDS.ASTEROID)}
                         onChange={(v) => setNewName(v)} />
                       <IconButton
-                        data-tip="Submit"
-                        data-for="global"
+                        data-tooltip-content="Submit"
+                        data-tooltip-id="globalTooltip"
                         disabled={nativeBool(changingName)}
                         onClick={attemptUpdateAsteroidName}>
                         <CheckCircleIcon />
@@ -446,8 +446,8 @@ const AsteroidInformation = ({ abundances, asteroid, isManager, isOwner }) => {
 
               {priceConstants && !asteroid.Nft?.owner && (
                 <Button
-                  data-tip="Purchase development rights"
-                  data-for="global"
+                  data-tooltip-content="Purchase development rights"
+                  data-tooltip-id="globalTooltip"
                   disabled={nativeBool(!authenticated || buying)}
                   isTransaction
                   loading={reactBool(buying)}

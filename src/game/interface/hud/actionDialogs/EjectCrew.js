@@ -28,6 +28,7 @@ import {
 } from './components';
 import useEjectCrewManager from '~/hooks/actionManagers/useEjectCrewManager';
 import useAsteroid from '~/hooks/useAsteroid';
+import useBlockTime from '~/hooks/useBlockTime';
 import useEntity from '~/hooks/useEntity';
 import useHydratedCrew from '~/hooks/useHydratedCrew';
 import useLot from '~/hooks/useLot';
@@ -37,6 +38,7 @@ import theme from '~/theme';
 import { ActionDialogInner } from '../ActionDialog';
 
 const EjectCrew = ({ asteroid, origin, originLot, stationedCrews, manager, stage, ...props }) => {
+  const blockTime = useBlockTime();
   const { currentEjection, ejectCrew, actionStage: ejectionStatus } = manager;
 
   // TODO: only if specified id
@@ -50,13 +52,24 @@ const EjectCrew = ({ asteroid, origin, originLot, stationedCrews, manager, stage
   const myCrewIsTarget = targetCrew?.id === crew?.id;
 
   const hopperBonus = useMemo(() => getCrewAbilityBonuses(Crewmate.ABILITY_IDS.HOPPER_TRANSPORT_TIME, crew), [crew]);
+  const distBonus = useMemo(() => getCrewAbilityBonuses(Crewmate.ABILITY_IDS.FREE_TRANSPORT_DISTANCE, crew), [crew]);
 
   const ejectionTime = useMemo(() => {
-    if (myCrewIsTarget && originLot) {
-      return Time.toRealDuration(Asteroid.getLotTravelTime(asteroid?.id, originLot.index, 0, hopperBonus.totalBonus), crew?._timeAcceleration);
+    // if from surface
+    if (originLot) {
+      const travelTime = Asteroid.getLotTravelTime(asteroid?.id, originLot.index, 0, hopperBonus.totalBonus, distBonus.totalBonus);
+      return Time.toRealDuration(travelTime, crew?._timeAcceleration);
+
+    // if from in-flight ship
+    } else if (origin?.Ship?.transitArrival) {
+      const arrivalTime = origin.Ship.transitArrival / 86400;
+      const realTime = Math.ceil(Time.fromOrbitADays(arrivalTime, crew?._timeAcceleration).toDate().getTime() / 1000);
+      return Math.max(0, realTime - blockTime);
     }
+
+    // else, orbit-to-orbit ejection
     return 0;
-  }, [myCrewIsTarget, asteroid, crew?._timeAcceleration, hopperBonus, originLot]);
+  }, [asteroid, blockTime, crew?._timeAcceleration, distBonus, hopperBonus, originLot, origin?.Ship?.transitArrival]);
 
   const stats = useMemo(() => ([
     ejectionTime > 0 && {
@@ -78,14 +91,17 @@ const EjectCrew = ({ asteroid, origin, originLot, stationedCrews, manager, stage
     },
   ]), [targetCrew]);
 
-  const hasPermission = useMemo(() => {
-    if (targetCrew && origin) {
-      const perm = Permission.getPolicyDetails(origin, targetCrew)[Permission.IDS.STATION_CREW];
-      return perm ? perm.crewStatus === 'controller' || perm.crewStatus === 'granted' : false;
+  const crewHasPermission = useCallback((c) => {
+    if (c && origin) {
+      const perm = Permission.getPolicyDetails(origin, c)[Permission.IDS.STATION_CREW];
+      if (perm && (perm.crewStatus === 'controller' || perm.crewStatus === 'granted')) {
+        return 'Crew currently has permission to be here.';
+      }
     }
-
     return false;
-  }, [targetCrew, origin]);
+  }, [origin]);
+
+  const targetCrewHasPermission = useMemo(() => crewHasPermission(targetCrew), [origin, targetCrew]);
 
   const onEject = useCallback(() => {
     ejectCrew(targetCrewId);
@@ -111,21 +127,23 @@ const EjectCrew = ({ asteroid, origin, originLot, stationedCrews, manager, stage
   }, [myCrewIsTarget, origin, stage]);
 
   const allowAction = useMemo(() => {
-    if (myCrewIsTarget && targetCrew) return true;
-    if (!myCrewIsTarget && targetCrew && !hasPermission) return true;
+    if (targetCrew) {
+      // can eject if ejecting self OR the crew does not have permission to be there
+      if (myCrewIsTarget || !targetCrewHasPermission) return true;
+    }
     return false;
-  }, [myCrewIsTarget, targetCrew, hasPermission]);
+  }, [myCrewIsTarget, targetCrew, targetCrewHasPermission]);
 
   return (
     <>
       <ActionDialogHeader
         action={actionDetails}
         actionCrew={crew}
-        crewAvailableTime={ejectionTime}
+        crewAvailableTime={myCrewIsTarget ? ejectionTime : 0}
         location={{ asteroid, lot: originLot, ship: origin.Ship ? origin : undefined }}
         onClose={props.onClose}
         overrideColor={stage === actionStages.NOT_STARTED ? (myCrewIsTarget ? theme.colors.main : theme.colors.red) : undefined}
-        taskCompleteTime={ejectionTime}
+        taskCompleteTime={myCrewIsTarget ? ejectionTime : 0}
         stage={stage} />
 
       <ActionDialogBody>
@@ -243,6 +261,7 @@ const EjectCrew = ({ asteroid, origin, originLot, stationedCrews, manager, stage
       {stage === actionStages.NOT_STARTED && (
         <CrewSelectionDialog
           crews={stationedCrews || []}
+          disabler={crewHasPermission}
           onClose={() => setCrewSelectorOpen(false)}
           onSelected={setTargetCrewId}
           open={crewSelectorOpen}
@@ -261,7 +280,8 @@ const Wrapper = (props) => {
   const { data: origin, isLoading: entityIsLoading } = useEntity(originEntity);
   const originLocation = useMemo(() => locationsArrToObj(origin?.Location?.locations || []), [origin]);
 
-  const { data: asteroid, isLoading: asteroidIsLoading } = useAsteroid(originLocation?.asteroidId);
+  // asteroid is origin's asteroid OR destination asteroid (if origin is ship in flight)
+  const { data: asteroid, isLoading: asteroidIsLoading } = useAsteroid(originLocation?.asteroidId || origin?.Ship?.transitDestination?.id);
   const { data: originLot, isLoading: lotIsLoading } = useLot(originLocation?.lotId);
 
   const ejectCrewManager = useEjectCrewManager(origin);

@@ -3,23 +3,26 @@ import { cloneDeep } from 'lodash';
 import { Crewmate } from '@influenceth/sdk';
 
 import { getCrewAbilityBonuses, locationsArrToObj } from '~/lib/utils';
-import useCrew from './useCrew';
-import useCrewmates from './useCrewmates';
-import useBlockTime from './useBlockTime';
+import useBlockTime from '~/hooks/useBlockTime';
+import useConstants from '~/hooks/useConstants';
+import useCrew from '~/hooks/useCrew';
+import useCrewmates from '~/hooks/useCrewmates';
 
 const useHydratedCrew = (id) => {
   const { data: crew, isLoading: crewLoading } = useCrew(id);
   const { data: crewmates, isLoading: crewmatesLoading } = useCrewmates(crew?.Crew?.roster);
+  const { data: CREW_SCHEDULE_BUFFER, isLoading: constantsLoading } = useConstants('CREW_SCHEDULE_BUFFER');
   const blockTime = useBlockTime();
 
   return useMemo(() => {
     let data = null;
     let isLoading = true;
-    if (crew && !crewLoading && !crewmatesLoading) {
+    if (crew && !crewLoading && !crewmatesLoading && !constantsLoading) {
       data = cloneDeep(crew);
       data._crewmates = (crewmates || []).map((c) => cloneDeep(c));
       data._location = locationsArrToObj(crew.Location?.locations);
       data._ready = blockTime >= data.Crew?.readyAt;
+      data._readyToSequence = blockTime + CREW_SCHEDULE_BUFFER >= data.Crew.readyAt;
 
       const foodBonuses = getCrewAbilityBonuses([Crewmate.ABILITY_IDS.FOOD_CONSUMPTION_TIME, Crewmate.ABILITY_IDS.FOOD_RATIONING_PENALTY], data);
       data._foodBonuses = {
@@ -37,7 +40,7 @@ const useHydratedCrew = (id) => {
       isLoading = false;
     }
     return { data, isLoading };
-  }, [blockTime, crew, crewmates, crewLoading, crewmatesLoading]);
+  }, [blockTime, crew, crewmates, crewLoading, crewmatesLoading, CREW_SCHEDULE_BUFFER]);
 };
 
 export default useHydratedCrew;

@@ -112,10 +112,6 @@ const expandedAnim = keyframes`
 
 const Collapsible = styled.div`
   border-bottom: 1px solid transparent;
-  ${p => p.containerHeight ?
-    `max-height: ${p.containerHeight + titleHeight + marginBottom}px;` :
-    `max-height: calc(100% - ${titleHeight + marginBottom}px)`
-  };
   margin-bottom: ${marginBottom}px;
   overflow: hidden;
   transition: max-height 250ms ease, border-color 250ms ease, margin-bottom 250ms ease;
@@ -126,7 +122,11 @@ const Collapsible = styled.div`
   `};
   ${p => !p.collapsed && css`
     animation: ${expandedAnim} 500ms;
-    max-height: 2000px;
+    ${p.containerHeight
+      ? `max-height: ${p.containerHeight + titleHeight + marginBottom}px;`
+      // : `max-height: calc(100% - ${titleHeight + marginBottom}px)`
+      : `max-height: 2000px`
+    }}
   `};
 `;
 

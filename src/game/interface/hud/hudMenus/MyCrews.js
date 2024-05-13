@@ -5,20 +5,14 @@ import { useHistory } from 'react-router-dom';
 import useCrewContext from '~/hooks/useCrewContext';
 import { HudMenuCollapsibleSection, Scrollable } from './components/components';
 import useHydratedLocation from '~/hooks/useHydratedLocation';
-import { CrewInputBlock, CrewLocationWrapper } from '../actionDialogs/components';
+import { CrewInputBlock } from '../actionDialogs/components';
 import { locationsArrToObj } from '~/lib/utils';
 import CrewLocationLabel from '~/components/CrewLocationLabel';
 import useStore from '~/hooks/useStore';
 import useHydratedCrew from '~/hooks/useHydratedCrew';
-import { WarningIcon, WarningOutlineIcon } from '~/components/Icons';
+import { WarningIcon } from '~/components/Icons';
 
 const defaultBlockStyle = { marginBottom: 8, width: '100%' };
-
-const Wrapper = styled.div`
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-`;
 
 const SectionBody = styled.div``;
 
@@ -43,7 +37,8 @@ const LocationCrews = ({ locationCrews, selectedCrewId, onSelectCrew }) => {
   const hydratedLocation = useHydratedLocation(locationsArrToObj(locationCrews[0].Location.locations));
   return (
     <HudMenuCollapsibleSection
-      titleText={<CrewLocationWrapper><CrewLocationLabel hydratedLocation={hydratedLocation} /></CrewLocationWrapper>}>
+      containerHeight={152 * locationCrews.length}
+      titleText={<CrewLocationLabel hydratedLocation={hydratedLocation} style={{ fontSize: 'inherit' }} />}>
       <SectionBody>
         {(locationCrews || []).map((crew, i) => {
           return (

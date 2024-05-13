@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from 'react-query';
 import { Building, Entity } from '@influenceth/sdk';
+import cloneDeep from 'lodash/cloneDeep';
 
 import useSession from '~/hooks/useSession';
 import useCrewAgreements from '~/hooks/useCrewAgreements';
@@ -13,10 +14,18 @@ import { entitiesCacheKey } from '~/lib/cacheKey';
 
 const ActionItemContext = React.createContext();
 
+const sequenceableSystems = [
+  'ConstructionStarted',
+  'MaterialProcessingStarted',
+  'ResourceExtractionStarted',
+  'SamplingDepositStarted',
+  'ShipAssemblyStarted'
+];
+
 export function ActionItemProvider({ children }) {
   const { authenticated, blockTime } = useSession();
   const { crew, pendingTransactions } = useCrewContext();
-  const { data: crewAgreements } = useCrewAgreements();
+  const { data: crewAgreements, isLoading: agreementsLoading } = useCrewAgreements();
   const getActivityConfig = useGetActivityConfig();
   const queryClient = useQueryClient();
 
@@ -25,6 +34,16 @@ export function ActionItemProvider({ children }) {
     [ 'actionItems', crewId ],
     async () => {
       const activities = await api.getCrewActionItems(crewId);
+      
+      // add startTime to all for consistency
+      activities.forEach((a) => {
+        if (sequenceableSystems.includes(a.event.name)) {
+          if (a.data?.crew?.Crew?.lastReadyAt > a.event?.timestamp) {
+            a._startTime = a.data?.crew?.Crew?.lastReadyAt;
+          }
+        }
+      });
+
       await hydrateActivities(activities, queryClient);
       return activities;
     },
@@ -38,8 +57,11 @@ export function ActionItemProvider({ children }) {
   );
 
   const failedTransactions = useStore(s => s.failedTransactions);
+  const hiddenActionItems = useStore(s => s.hiddenActionItems);
+  const dispatchToggleHideActionItem = useStore(s => s.dispatchToggleHideActionItem);
   const [readyItems, setReadyItems] = useState([]);
   const [unreadyItems, setUnreadyItems] = useState([]);
+  const [unstartedItems, setUnstartedItems] = useState([]);
   const [agreementItems, setAgreementItems] = useState([]);
   const [plannedItems, setPlannedItems] = useState([]);
 
@@ -63,8 +85,14 @@ export function ActionItemProvider({ children }) {
 
     setUnreadyItems(
       (actionItems || [])
-        .filter((a) => a.event.returnValues?.finishTime > blockTime)
+        .filter((a) => a.event.returnValues?.finishTime > blockTime && (!a._startTime || a._startTime <= blockTime))
         .sort((a, b) => a.event.returnValues?.finishTime - b.event.returnValues?.finishTime)
+    );
+
+    setUnstartedItems(
+      (actionItems || [])
+        .filter((a) => a._startTime && a._startTime > blockTime)
+        .sort((a, b) => a._startTime - b._startTime)
     );
 
     setPlannedItems(
@@ -85,7 +113,7 @@ export function ActionItemProvider({ children }) {
         .filter((a) => (
           ((a._agreement?.permitted?.id === crew?.id) || (crew?.Crew?.delegatedTo && a._agreement?.permitted === crew?.Crew?.delegatedTo))
           && !!a._agreement?.endTime
-          && (a._agreement.endTime < blockTime - 7 * 86400) && (a._agreement.endTime < blockTime + 7 * 86400)
+          && (a._agreement.endTime > blockTime - 7 * 86400) && (a._agreement.endTime < blockTime + 7 * 86400)
         ))
         .map((a) => ({
           ...a,
@@ -123,9 +151,11 @@ export function ActionItemProvider({ children }) {
       ...(visibleReadyItems || []).map((item) => ({ ...item, type: 'ready', category: 'ready' })),
       ...(visiblePlannedItems || []).map((item) => ({ ...item, type: 'plan', category: 'warning' })),
       ...(agreementItems || []).map((item) => ({ ...item, type: 'agreement', category: 'warning' })),
-      ...(unreadyItems || []).map((item) => ({ ...item, type: 'unready', category: 'unready' }))
+      ...(unreadyItems || []).map((item) => ({ ...item, type: 'unready', category: 'unready' })),
+      ...(unstartedItems || []).map((item) => ({ ...item, type: 'unstarted', category: 'unstarted' }))
     ].map((x) => {  // make sure everything has a unique key (only `plan` should fall through to the label_id option)
       x.uniqueKey = `${x.type}_${x._id || x.txHash || x.timestamp || x.key || `${x.label}_${x.id}`}`;
+      x.hidden = (hiddenActionItems || []).includes(x.uniqueKey);
       return x;
     });
 
@@ -133,12 +163,26 @@ export function ActionItemProvider({ children }) {
     authenticated,
     failedTransactions,
     getActivityConfig,
+    hiddenActionItems,
     pendingTransactions,
     plannedItems,
     randomEventItems,
     readyItems,
-    unreadyItems
+    unreadyItems,
+    unstartedItems
   ]);
+
+  // if there is data for all types (i.e. we know loaded successfully), clean out all
+  // hidden keys that no longer exist to minimize long-term state bloat
+  useEffect(() => {
+    if (allVisibleItems?.length > 0 && actionItems?.length > 0 && crewAgreements?.length > 0 && plannedBuildings?.length > 0) {
+      hiddenActionItems.forEach((key) => {
+        if (!allVisibleItems.find((i) => i.uniqueKey === key)) {
+          dispatchToggleHideActionItem(key);
+        }
+      })
+    }
+  }, [actionItems, allVisibleItems, crewAgreements, hiddenActionItems, plannedBuildings])
 
   // TODO: clear timers in the serviceworker
   //  for not yet ready to finish, set new timers based on time remaining
@@ -152,8 +196,9 @@ export function ActionItemProvider({ children }) {
     readyItems,
     plannedItems,
     unreadyItems,
+    unstartedItems,
     actionItems,
-    isLoading: actionItemsLoading || plannedBuildingsLoading
+    isLoading: actionItemsLoading || agreementsLoading || plannedBuildingsLoading
   }), [
     allVisibleItems,
     pendingTransactions,
@@ -162,6 +207,7 @@ export function ActionItemProvider({ children }) {
     readyItems,
     plannedItems,
     unreadyItems,
+    unstartedItems,
     actionItems,
     actionItemsLoading,
     plannedBuildingsLoading

@@ -1,11 +1,11 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQueryClient } from 'react-query';
 import { Entity, Lot } from '@influenceth/sdk';
 
 import { options as lotLeaseOptions } from '~/components/filters/LotLeaseFilter';
 import useAsteroidCrewSamples from '~/hooks/useAsteroidCrewSamples';
 import useAsteroidCrewBuildings from '~/hooks/useAsteroidCrewBuildings';
-import useOwnedShips from './useOwnedShips';
+import useControlledShips from './useControlledShips';
 import useAsteroidLotData from '~/hooks/useAsteroidLotData';
 import useStore from '~/hooks/useStore';
 import { getAndCacheEntity } from '~/lib/activities';
@@ -59,7 +59,7 @@ const useMappedAsteroidLots = (i) => {
   }, [crewLots, crewLotsLoading]);
 
   // get all occupied-by-me ships from the server
-  const { data: crewShips, isLoading: crewShipsLoading } = useOwnedShips();
+  const { data: crewShips, isLoading: crewShipsLoading } = useControlledShips();
   const myShipMap = useMemo(() => {
     if (crewShipsLoading) return null;
     return (crewShips || []).reduce((acc, p) => {
@@ -202,7 +202,8 @@ const useMappedAsteroidLots = (i) => {
       const _location = locationsArrToObj(building?.Location?.locations || []);
       asteroidId = _location.asteroidId;
       lotIndex = _location.lotIndex;
-      buildingType = building?.Building?.buildingType;
+      buildingType = building?.Building?.buildingType; // TODO: should we cast this?
+      // console.log('PMK ConstructionFinished', { asteroidId, lotIndex, buildingType });
 
     // building -> construction site (buildingType -> 14)
     } else if (eventType === 'ConstructionDeconstructed') {

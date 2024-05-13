@@ -42,6 +42,7 @@ import {
   CoreSampleIcon,
   WarningIcon,
   EditIcon,
+  CheckCircleIcon,
 } from '~/components/Icons';
 import formatters from '~/lib/formatters';
 import { getProcessorProps, locationsArrToObj, ucfirst } from '~/lib/utils';
@@ -59,7 +60,7 @@ const formatAsItem = (activity, actionItem = {}) => {
     resourceId: null,
     locationDetail: '',
     finishTime: activity.event.returnValues.finishTime || activity.event.timestamp || 0,
-    startTime: activity.event.timestamp || 0,
+    startTime: activity._startTime || activity.event.timestamp || 0,
     ago: (new moment(new Date(1000 * (activity.event.returnValues.finishTime || activity.event.timestamp || 0)))).fromNow(true),
     onClick: null,
 
@@ -466,18 +467,11 @@ const formatAsTx = (item) => {
     case 'SampleDepositImprove': {
       formatted.icon = <ImproveCoreSampleIcon />;
       formatted.label = `${Product.TYPES[item.meta?.resource]?.name || 'Core'} Resample`;
-      // formatted.sampleId = item.vars.deposit?.id; // TODO: this seems deprecated?
       formatted.asteroidId = Lot.toPosition(item.meta?.lotId)?.asteroidId;
       formatted.lotId = item.meta?.lotId;
       // formatted.resourceId = item.meta.resource; // not necessarily forcing open resourcemap
       formatted.onClick = ({ openDialog }) => {
-        openDialog('IMPROVE_CORE_SAMPLE', {
-          preselect: {
-            id: item.vars.deposit.id,
-            origin: item.vars.origin
-            // NOTE: slot is not repopulated here (but not currently displayed anyway)
-          }
-        });
+        openDialog('IMPROVE_CORE_SAMPLE', { sampleId: item.vars?.deposit?.id });
       };
       break;
     }
@@ -485,12 +479,14 @@ const formatAsTx = (item) => {
       const isImprovement = !item.meta?.isNew;
       formatted.icon = isImprovement ? <ImproveCoreSampleIcon /> : <NewCoreSampleIcon />;
       formatted.label = `${isImprovement ? 'Optimized ' : ''}Core Analysis`;
-      // formatted.sampleId = item.vars.deposit?.id; // TODO: this seems deprecated?
       formatted.asteroidId = Lot.toPosition(item.meta?.lotId)?.asteroidId;
       formatted.lotId = item.meta?.lotId;
       // formatted.resourceId = item.vars.resourceId; // not necessarily forcing open resourcemap
       formatted.onClick = ({ openDialog }) => {
-        openDialog(isImprovement ? 'IMPROVE_CORE_SAMPLE' : 'NEW_CORE_SAMPLE');
+        openDialog(
+          isImprovement ? 'IMPROVE_CORE_SAMPLE' : 'NEW_CORE_SAMPLE',
+          { sampleId: item.vars.deposit.id }
+        );
       };
       break;
     }
@@ -801,6 +797,7 @@ const formatAsTx = (item) => {
       break;
     }
 
+    case 'InitializeAndStartTransit':
     case 'TransitBetweenStart': {
       formatted.icon = <SetCourseIcon />;
       formatted.label = item.meta?.destination ? `Departure for ${formatters.asteroidName(item.meta?.destination)}` : `Departure Sequence`;
@@ -987,6 +984,12 @@ const formatAsTx = (item) => {
       break;
     }
 
+    case 'FinishAllReady': {
+      formatted.icon = <CheckCircleIcon />;
+      formatted.label = `Finish Multiple Actions`;
+      break;
+    }
+
     default:
       console.log('Unhandled ActionItems tx', item);
       break;
@@ -1017,6 +1020,7 @@ export const itemColors = {
   randomEvent: '232, 211, 117',
   ready: theme.colors.successRGB,
   unready: theme.colors.mainRGB,
+  unstarted: hexToRGB(theme.colors.sequence),
   plan: '248, 133, 44',
   agreement: '248, 133, 44',
   _expired: hexToRGB(theme.colors.expired)
@@ -1027,7 +1031,8 @@ export const statuses = {
   failed: 'Failed',
   randomEvent: 'Event',
   ready: 'Ready',
-  unready: '',
+  unready: 'In Progress',
+  unstarted: 'Scheduled',
   plan: 'Site Active',
   agreement: 'Lease Expiring',
   _expired: 'Expired'

@@ -37,7 +37,7 @@ const LandShip = ({ asteroid, lot, onSetAction, _disabled }) => {
   const disabledReason = useMemo(() => {
     if (_disabled) return 'loading...';
     if (!crewedShip) return 'ship is not crewed';
-    if (!ready) return 'ship is in flight';
+    if (!ready) return 'ship is not ready'; // in flight or stuck in port traffic
     if (asteroid?.Celestial?.scanStatus < Asteroid.SCAN_STATUSES.RESOURCE_SCANNED) return 'asteroid un-scanned';
     let permChecks = {};
 

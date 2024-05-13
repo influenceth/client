@@ -51,8 +51,10 @@ const SwayBalance = styled.div`
   align-items: center;
   color: white;
   display: flex;
+  filter: drop-shadow(0px 0px 2px rgb(0 0 0));
   font-size: 24px;
   margin-left: 25px;
+
   & label {
     color: #FFF;
     font-size: 85%;
@@ -64,7 +66,7 @@ const VerticalRule = styled.div`
   height: 28px;
   margin-left: 14px;
   opacity: ${p => p.hide ? 0 : 1};
-  padding-left: 14px;
+  padding-left: 13px;
   transition: opacity ${menuAnimationTime}ms ease;
 `;
 
@@ -75,7 +77,7 @@ const SystemControls = () => {
   const { data: swayBalance } = useSwayBalance();
 
   const dispatchLauncherPage = useStore(s => s.dispatchLauncherPage);
-  const dispatchReorientCamera = useStore(s => s.dispatchReorientCamera);
+  // const dispatchReorientCamera = useStore(s => s.dispatchReorientCamera);
 
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -147,7 +149,7 @@ const SystemControls = () => {
     if (process.env.REACT_APP_HELP_URL) {
       items.push({
         onClick: openHelpChannel,
-        content: <><BugIcon /> <label>Bug Report</label></>
+        content: <><BugIcon /> <label>Support</label></>
       })
     }
 
@@ -161,13 +163,15 @@ const SystemControls = () => {
         <span>Mobile is not well supported, please use desktop.</span>
       </MobileWarning>
 
+      {/*
       <Button
-        data-tip="Realign camera to poles"
+        data-tooltip-content="Realign camera to poles"
         onClick={dispatchReorientCamera}
         size="bigicon"
         style={{ fontSize: '26px', marginRight: swayBalance === undefined ? 15 : 0 }}>
         <ResetCameraIcon />
       </Button>
+      */}
 
       {swayBalance !== undefined && (
         <SwayBalance>

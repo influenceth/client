@@ -13,11 +13,10 @@ import {
   MdExpandMore,
   MdFastRewind,
   MdFastForward,
+  MdHourglassBottom,
   MdNotificationsActive,
   MdPlayArrow,
   MdPause,
-  MdRadioButtonChecked,
-  MdRadioButtonUnchecked,
   MdStop,
   MdNavigateBefore,
   MdNavigateNext,
@@ -29,7 +28,6 @@ import {
   RiTableFill,
   RiRepeatFill,
   RiRouteFill,
-  RiAlertFill,
   RiSortDesc
 } from 'react-icons/ri';
 import { TiArrowRight } from 'react-icons/ti';
@@ -81,6 +79,7 @@ import LinkSVG from '~/assets/icons/LinkIcon.svg';
 import ListViewSVG from '~/assets/icons/ListViewIcon.svg';
 import LocationSVG from '~/assets/icons/LocationIcon.svg';
 import LockSVG from '~/assets/icons/LockIcon.svg';
+import LoggedEventsSVG from '~/assets/icons/LoggedEventsIcon.svg';
 import LogoutSVG from '~/assets/icons/LogoutIcon.svg';
 import LotControlSVG from '~/assets/icons/LotControlIcon.svg';
 import LotSearchSVG from '~/assets/icons/LotSearchIcon.svg';
@@ -255,6 +254,7 @@ export const LinkIcon = () => <LinkSVG className="icon" />;
 export const ListViewIcon = () => <ListViewSVG className="icon" />;
 export const LocationIcon = () => <LocationSVG className="icon" />;
 export const LockIcon = () => <LockSVG className="icon" />;
+export const LoggedEventsIcon = () => <LoggedEventsSVG className="icon" />;
 export const LogoutIcon = () => <LogoutSVG className="icon" />;
 export const LotControlIcon = () => <LotControlSVG className="icon" />;
 export const LotSearchIcon = () => <LotSearchSVG className="icon" />;
@@ -403,6 +403,7 @@ export {
   MdNavigateNext as NextIcon,
   MdPause as PauseIcon,
   MdPlayArrow as PlayIcon,
+  MdHourglassBottom as ScheduleFullIcon,
   MdStop as StopIcon,
   RiLayoutGridFill as GridIcon,
   FiLogIn as LoginIcon, // TODO: ...

@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { Asteroid, Building, Deposit, Entity, Inventory, Order, Permission, Ship } from '@influenceth/sdk';
+import { Asteroid, Building, Deposit, Entity, Inventory, Order, Ship } from '@influenceth/sdk';
 import esb from 'elastic-builder';
 import { executeSwap, fetchQuotes } from "@avnu/avnu-sdk";
 
@@ -65,7 +65,7 @@ const getEntities = async ({ ids, match, label, components }) => {
     query.match = `${Object.keys(match)[0]}:${JSON.stringify(Object.values(match)[0])}`;
   }
   if (label) {
-    query.label = label;  // i.e. 'asteroid'
+    query.label = label;  // i.e. 3 (Entity.IDS.ASTEROID)
   }
   if (components) {
     query.components = components.join(',');  // i.e. [ 'Celestial', 'Control' ]
@@ -481,13 +481,6 @@ const api = {
     return formatESEntityData(response.data);
   },
 
-  getCrewShips: async (c) => {
-    return getEntities({
-      match: { 'Control.controller.id': c },
-      label: Entity.IDS.SHIP
-    })
-  },
-
   getCrewOpenOrders: async (c) => {
     const queryBuilder = esb.boolQuery();
 
@@ -523,6 +516,9 @@ const api = {
 
     // status
     queryBuilder.filter(esb.termQuery('status', Order.STATUSES.OPEN));
+
+    // valid
+    queryBuilder.filter(esb.rangeQuery('validTime').lte(Math.floor(Date.now() / 1000)));
 
     const q = esb.requestBodySearch();
     q.query(queryBuilder);
@@ -561,6 +557,7 @@ const api = {
             esb.boolQuery().must([
               esb.termQuery('orderType', Order.IDS.LIMIT_BUY),
               esb.termQuery('status', Order.STATUSES.OPEN),
+              esb.rangeQuery('validTime').lte(Math.floor(Date.now() / 1000))
             ])
           )
           .aggs([
@@ -575,6 +572,7 @@ const api = {
             esb.boolQuery().must([
               esb.termQuery('orderType', Order.IDS.LIMIT_SELL),
               esb.termQuery('status', Order.STATUSES.OPEN),
+              esb.rangeQuery('validTime').lte(Math.floor(Date.now() / 1000))
             ])
           )
           .aggs([
@@ -603,10 +601,12 @@ const api = {
 
     // TODO: this is outside of cache invalidation scope... may want to re-work
     const exchanges = exchangeIds.length > 0 ? await getEntities({ ids: exchangeIds, label: Entity.IDS.BUILDING, components: ['Building', 'Exchange', 'Location', 'Name'] }) : [];
-    return exchangeIds.map((key) => ({
-      ...buckets[key],
-      marketplace: exchanges.find(e => Number(e.id) === Number(key))
-    }));
+    return exchanges.reduce((acc, marketplace) => {
+      if (marketplace.Building.status !== Building.CONSTRUCTION_STATUSES.UNPLANNED) {
+        acc.push({ ...buckets[marketplace.id], marketplace });
+      }
+      return acc;
+    }, []);
   },
 
   getOrderSummaryByProduct: async (entity) => {
@@ -631,6 +631,7 @@ const api = {
             esb.boolQuery().must([
               esb.termQuery('orderType', Order.IDS.LIMIT_BUY),
               esb.termQuery('status', Order.STATUSES.OPEN),
+              esb.rangeQuery('validTime').lte(Math.floor(Date.now() / 1000))
             ])
           )
           .aggs([
@@ -645,6 +646,7 @@ const api = {
             esb.boolQuery().must([
               esb.termQuery('orderType', Order.IDS.LIMIT_SELL),
               esb.termQuery('status', Order.STATUSES.OPEN),
+              esb.rangeQuery('validTime').lte(Math.floor(Date.now() / 1000))
             ])
           )
           .aggs([

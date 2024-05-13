@@ -1,10 +1,11 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import styled, { css, keyframes } from 'styled-components';
 import { createPortal } from 'react-dom';
-import ReactTooltip from 'react-tooltip';
+import { Tooltip } from 'react-tooltip';
 import { TbBellRingingFilled as AlertIcon } from 'react-icons/tb';
 import { BarLoader } from 'react-spinners';
 import { Asteroid, Building, Crewmate, Dock, Entity, Inventory, Lot, Order, Permission, Process, Product, Ship, Station, Time } from '@influenceth/sdk';
+import numeral from 'numeral';
 
 import AsteroidRendering from '~/components/AsteroidRendering';
 import Button from '~/components/ButtonAlt';
@@ -40,7 +41,9 @@ import {
   CoreSampleIcon,
   ResourceIcon,
   CheckedIcon,
-  UncheckedIcon
+  UncheckedIcon,
+  ScheduleFullIcon,
+  CheckSmallIcon
 } from '~/components/Icons';
 import LiveTimer from '~/components/LiveTimer';
 import MouseoverInfoPane from '~/components/MouseoverInfoPane';
@@ -69,7 +72,9 @@ import AssetBlock, { assetBlockCornerSize } from '~/components/AssetBlock';
 import LiveReadyStatus from '~/components/LiveReadyStatus';
 import useConstructionManager from '~/hooks/actionManagers/useConstructionManager';
 import EntityName from '~/components/EntityName';
-
+import DataTableComponent from '~/components/DataTable';
+import UncontrolledTextInput from '~/components/TextInputUncontrolled';
+import Autocomplete, { StaticAutocomplete } from '~/components/Autocomplete';
 
 const SECTION_WIDTH = 780;
 
@@ -336,9 +341,14 @@ const IconContainer = styled.div`
   font-size: 48px;
   padding: 0 10px;
 `;
-const TimePill = styled.div`
+const pillColors = {
+  crew: { bg: 'main', color: 'brightMain' },
+  delay: { bg: 'sequence', color: 'sequenceLight' },
+  total: { bg: 'success', color: 'success' },
+};
+const TimePillComponent = styled.div`
   align-items: center;
-  background: rgba(${p => hexToRGB(p.type === 'crew' ? p.theme.colors.main : p.theme.colors.success)}, 0.4);
+  background: rgba(${p => hexToRGB(p.theme.colors[pillColors[p.type].bg])}, 0.4);
   border-radius: 20px;
   color: white;
   display: flex;
@@ -346,8 +356,13 @@ const TimePill = styled.div`
   padding: 3px 12px;
   text-align: center;
   text-transform: none;
+  & > label {
+    color: ${p => p.theme.colors[pillColors[p.type].color]};
+    margin-right: 6px;
+    text-transform: uppercase;
+  }
   & > svg {
-    color: ${p => p.type === 'crew' ? p.theme.colors.brightMain : p.theme.colors.success};
+    color: ${p => p.theme.colors[pillColors[p.type].color]};
     opacity: 0.7;
     margin-right: 4px;
   }
@@ -373,7 +388,7 @@ const LabelContainer = styled.div`
       flex: 1;
       margin: 6px 0 0;
     }
-    ${TimePill} {
+    ${TimePillComponent} {
       margin-top: 3px;
     }
   }
@@ -735,9 +750,6 @@ const SelectionTableRow = styled.tr`
       background: rgba(${p.theme.colors.mainRGB}, 0.3) !important;
     }
   `}
-  & > td > small {
-    color: #aaa;
-  }
 `;
 const SelectionTableWrapper = styled.div`
   border: solid ${borderColor};
@@ -899,6 +911,20 @@ const SelectionGrid = styled.div`
   grid-template-columns: calc(50% - 5px) calc(50% - 5px);
   row-gap: 10px;
   width: 100%;
+`;
+
+const InvSelectionTableWrapper = styled.div`
+  border-top: 1px solid #333;
+  flex: 1;
+  max-width: 100%;
+  min-height: 250px;
+  overflow: auto;
+  & > table {
+    width: 100%;
+    th {
+      color: white;
+    }
+  }
 `;
 
 
@@ -1276,17 +1302,6 @@ const FreeTransferNote = styled.div`
   }
 `;
 
-export const CrewLocationWrapper = styled.div`
-  text-transform: none;
-  & span {
-    opacity: 0.6;
-    &:before {
-      content: ">";
-      margin: 0 4px;
-    }
-  }
-`;
-
 const ControlWarning = styled.div`
   align-items: center;
   color: ${p => p.theme.colors.error};
@@ -1303,7 +1318,7 @@ export const SelectionDialog = ({ children, isCompletable, open, onClose, onComp
   if (!open) return null;
   return createPortal(
     <Dialog opaque dialogCss={dialogCss} dialogStyle={style}>
-      <ReactTooltip id="selectionDialog" effect="solid" />
+      <Tooltip id="selectionDialogTooltip" />
       <SelectionTitle>
         <div>{title}</div>
         <IconButton backgroundColor={`rgba(0, 0, 0, 0.15)`} marginless onClick={onClose}>
@@ -1323,7 +1338,7 @@ export const SelectionDialog = ({ children, isCompletable, open, onClose, onComp
   );
 };
 
-export const CrewSelectionDialog = ({ crews, onClose, onSelected, open, title }) => {
+export const CrewSelectionDialog = ({ crews, disabler, onClose, onSelected, open, title }) => {
   const [selection, setSelection] = useState();
 
   const onComplete = useCallback(() => {
@@ -1344,34 +1359,40 @@ export const CrewSelectionDialog = ({ crews, onClose, onSelected, open, title })
       title={title || 'Crew Selection'}>
       <div style={{ minHeight: 300 }}>
         {nonEmptyCrews.map((crew, i) => {
+          const disabled = disabler ? disabler(crew) : false;
           return (
             <CrewInputBlock
               key={crew.id}
               cardWidth={64}
               crew={crew}
+              disabled={reactBool(disabled)}
               inlineDetails
               isSelected={crew.id === selection?.id}
               onClick={() => setSelection(crew)}
               title={
                 i === 0
-                  ? <CrewLocationWrapper><CrewLocationLabel hydratedLocation={hydratedLocation} /></CrewLocationWrapper>
+                  ? <CrewLocationLabel hydratedLocation={hydratedLocation} />
                   : ''
               }
-              style={{ marginBottom: 8, width: '100%' }} />
+              data-tooltip-content={disabled || null}
+              data-tooltip-id="selectionDialogTooltip"
+              style={{ marginBottom: 8, opacity: disabled ? 0.5 : 1, width: '100%' }} />
           );
         })}
         {emptyCrews.map((crew, i) => {
+          const disabled = disabler ? disabler(crew) : false;
           return (
             <CrewInputBlock
               key={crew.id}
               cardWidth={64}
               crew={crew}
+              disabled={reactBool(disabled)}
               hideCrewmates
               inlineDetails
               isSelected={crew.id === selection?.id}
               onClick={() => setSelection(crew)}
-              title={i === 0 ? <CrewLocationWrapper style={{ marginTop: 8 }}>Empty Crews</CrewLocationWrapper> : ''}
-              style={{ marginBottom: 8, width: '100%' }} />
+              title={i === 0 ? <div style={{ marginTop: 8, textTransform: 'none' }}>Empty Crews</div> : ''}
+              style={{ marginBottom: 8, opacity: disabled ? 0.5 : 1, width: '100%' }} />
           );
         })}
       </div>
@@ -1906,7 +1927,7 @@ export const ProcessSelectionDialog = ({ initialSelection, onClose, forceProcess
                     <InputOutputTableCell>
                       <label>{Object.keys(inputs).length}</label>
                       {Object.keys(inputs).map((resourceId) => (
-                        <ResourceThumbnail key={resourceId} resource={Product.TYPES[resourceId]} size="45px" tooltipContainer="selectionDialog" />
+                        <ResourceThumbnail key={resourceId} resource={Product.TYPES[resourceId]} size="45px" tooltipContainer="selectionDialogTooltip" />
                       ))}
                     </InputOutputTableCell>
                   </td>
@@ -1915,7 +1936,7 @@ export const ProcessSelectionDialog = ({ initialSelection, onClose, forceProcess
                       <InputOutputTableCell>
                         <label>{Object.keys(outputs).length}</label>
                         {Object.keys(outputs).map((resourceId) => (
-                          <ResourceThumbnail key={resourceId} resource={Product.TYPES[resourceId]} size="45px" tooltipContainer="selectionDialog" />
+                          <ResourceThumbnail key={resourceId} resource={Product.TYPES[resourceId]} size="45px" tooltipContainer="selectionDialogTooltip" />
                         ))}
                       </InputOutputTableCell>
                     </td>
@@ -1955,6 +1976,80 @@ const getInventorySublabel = (inventoryType) => {
   }
 }
 
+const PermType = styled.span`
+  color: white;
+  &:before {
+    content: "${p => p.type}";
+    ${p => p.type === 'Permitted' && `color: ${p.theme.colors.main};`}
+    ${p => p.type === 'Public' && `color: ${p.theme.colors.green};`}
+  }
+`;
+const InvType = styled.span`
+  color: ${p => p.isPropellant ? p.theme.colors.purple : p.theme.colors.orange};
+  margin-left: 4px;
+`;
+const FilterRow = styled.div`
+  display: flex;
+  flex-direction: row;
+  padding-bottom: 12px;
+  & > *:not(:first-child) {
+    margin-left: 15px;
+  }
+`;
+const FilterRowLabel = styled.label`
+  align-items: center;
+  color: #ccc;
+  cursor: ${p => p.theme.cursors.active};
+  display: flex;
+  transition: color 150ms ease;
+  white-space: nowrap;
+  & > svg {
+    color: ${p => p.isOn ? p.theme.colors.main : '#777'};
+    margin-right: 6px;
+  }
+  &:hover {
+    color: white;
+  }
+`;
+const ItemFilterRow = styled.div`
+  &:before {
+    content: "Available Inventories with: ";
+    opacity: 0.5;
+  }
+  align-items: center;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  padding-bottom: 12px;
+`;
+const ItemFilterLabel = styled.div`
+  align-items: center;
+  color: ${p => p.isOn ? p.theme.colors.green : p.theme.colors.red};
+  cursor: ${p => p.theme.cursors.active};
+  display: flex;
+  padding: 4px 8px;
+  transition: color 150ms ease;
+  & > svg {
+    display: none;
+    margin-right: 4px;
+    width: 16px;
+    ${p => p.isOn
+      ? `&:nth-child(1) { display: inline-block; }`
+      : `&:nth-child(2) { display: inline-block; }`
+    }
+  }
+  &:hover {
+    color: white;
+    & > svg {
+      display: inline-block;
+      ${p => p.isOn
+        ? `&:nth-child(1) { display: none; }`
+        : `&:nth-child(2) { display: none; }`
+      }
+    }
+  }
+`;
+
 export const InventorySelectionDialog = ({
   asteroidId,
   excludeSites,
@@ -1972,7 +2067,12 @@ export const InventorySelectionDialog = ({
 }) => {
   const { crew } = useCrewContext();
 
+  const [filterItemIds, setFilterItemIds] = useState();
+  const [filterValue, setFilterValue] = useState('');
   const [selection, setSelection] = useState(initialSelection);
+  const [showPermittedInventories, setShowPermittedInventories] = useState(true);
+  const [showPublicInventories, setShowPublicInventories] = useState(true);
+  const [sort, setSort] = useState(['distance', 'asc']);
 
   const otherLocation = useMemo(() => {
     if (!otherEntity) return {};
@@ -1981,6 +2081,7 @@ export const InventorySelectionDialog = ({
 
   // if off the surface, cannot access inventories on the surface...
   const { data: inventoryData } = useAccessibleAsteroidInventories(otherLocation.lotIndex === 0 ? null : asteroidId, isSourcing);
+  const permission = isSourcing ? Permission.IDS.REMOVE_PRODUCTS : Permission.IDS.ADD_PRODUCTS;
 
   // ... but can access inventories on their crewed ship (assuming not sending things elsewhere)
   const { data: crewedShip } = useShip((otherLocation.lotIndex === 0 && crew?._location?.shipId === otherLocation.shipId) ? otherLocation.shipId : null);
@@ -2018,8 +2119,8 @@ export const InventorySelectionDialog = ({
         // skip if is source and cannot contain ANY of the itemIds, or is destination and cannot contain ALL of the itemIds
         if (itemIds && Inventory.TYPES[inv.inventoryType].productConstraints) {
           const allowedMaterials = Object.keys(Inventory.TYPES[inv.inventoryType].productConstraints).map((i) => Number(i));
-          if (isSourcing && !itemIds.find((i) => allowedMaterials.includes(i))) return;
-          if (!isSourcing && itemIds.find((i) => !allowedMaterials.includes(i))) return;
+          if (isSourcing && !itemIds.find((i) => allowedMaterials.includes(Number(i)))) return;
+          if (!isSourcing && itemIds.find((i) => !allowedMaterials.includes(Number(i)))) return;
         }
 
         const entityLotId = entity.Location.locations.find((l) => l.label === Entity.IDS.LOT)?.id;
@@ -2036,45 +2137,190 @@ export const InventorySelectionDialog = ({
         const nonPrimaryType = getInventorySublabel(inv.inventoryType);
         if (isSourcing && nonPrimaryType && itemIds?.length && itemTally === 0) return;
 
+        // build contents obj for more flexible filtering
+        const contentsObj = (inv.contents || []).reduce((acc, p) => {
+          if (p.amount > 0) acc[p.product] = p.amount;
+          return acc;
+        }, {});
+
         // disable if !available or does not contain itemId
         display.push({
+          key: JSON.stringify({ id: entity.id, label: entity.label, lotId: entityLotId, asteroidId, lotIndex: entityLotIndex, slot: inv.slot }),
+
           disabled: (requirePresenceOfItemIds && !itemTally) || (isSourcing && inv.mass === 0),
           distance: Asteroid.getLotDistance(asteroidId, entityLotIndex, otherLocation.lotIndex), // distance to source + distance to destination
-          isMine: entity.Control.controller.id === crew?.id,
-          isShip: !!entity.Ship,
-          itemTally,
-          key: JSON.stringify({ id: entity.id, label: entity.label, lotId: entityLotId, asteroidId, lotIndex: entityLotIndex, slot: inv.slot }),
-          label: entity.Ship ? formatters.shipName(entity) : formatters.buildingName(entity),
-          sublabel: nonPrimaryType,
+          isControlled: entity.Control.controller.id === crew?.id,
+          isPermitted: !(entity.PublicPolicies || []).find((p) => p.permission === permission),
+
+          contentsObj, 
+          name: entity.Ship ? formatters.shipName(entity) : formatters.buildingName(entity),
+          type: entity.Ship ? Ship.TYPES[entity.Ship?.shipType]?.name : Building.TYPES[entity.Building?.buildingType]?.name,
+          slot: inv.slot,
+          slotLabel: getInventorySublabel(inv.inventoryType),
+          
           lotId: entityLotId,
           lotIndex: entityLotIndex,
-          slot: inv.slot,
         })
       });
     });
 
-    return display.filter(i => !i.disabled).sort((a, b) => {
-      if (a.isMine && !b.isMine) return -1;
-      if (!a.isMine && b.isMine) return 1;
-      if (a.isMine && b.isMine) return a.distance - b.distance;
-
-      if (isSourcing && !!itemIds) {
-        if (a.itemTally && !b.itemTally) return -1;
-        if (!a.itemTally && b.itemTally) return 1;
-        if (a.itemTally && b.itemTally) return a.distance - b.distance;
-      }
-
-      return a.distance - b.distance;
-    });
-  }, [crewedShip, inventoryData, itemIds, otherLocation]);
+    return display;
+  }, [crewedShip, inventoryData, itemIds, otherLocation, sort]);
 
   const onComplete = useCallback(() => {
     onSelected(selection ? JSON.parse(selection) : null);
     onClose();
   }, [onClose, onSelected, selection]);
 
-  const specifiedItems = !!itemIds;
+  const specifiedItems = !!filterItemIds;
   const soloItem = itemIds?.length === 1 ? itemIds[0] : null;
+
+  const columns = useMemo(() => {
+    const useItemAmount = Object.values(filterItemIds || {}).filter((x) => !!x).length === 1
+      ? Object.keys(filterItemIds).find((k) => filterItemIds[k])
+      : false;
+    return [
+      {
+        key: 'isMine',
+        label: <span style={{ fontSize: '16px' }}><MyAssetIcon /></span>,
+        selector: (row) => row.isControlled ? <MyAssetIcon /> : null,
+        noMinWidth: true,
+      },
+      {
+        key: 'name',
+        label: 'Name',
+        sortField: 'name',
+        selector: (row) => <div style={{ maxWidth: 220, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{row.name}</div>,
+        noMinWidth: true,
+      },
+      (
+        limitToPrimary
+          ? null
+          : {
+            key: 'distance',
+            label: 'Distance',
+            sortField: 'distance',
+            selector: (row) => formatSurfaceDistance(row.distance),
+            noMinWidth: true,
+          }
+      ),
+      {
+        key: 'type',
+        label: 'Type',
+        sortField: 'type',
+        selector: (row) => (
+          <>
+            {row.type} {row.slotLabel && <InvType isPropellant={row.slotLabel === 'Propellant'}>({row.slotLabel})</InvType>}
+          </>
+        ),
+        noMinWidth: true,
+      },
+      {
+        key: 'permission',
+        label: 'Permission',
+        sortField: 'isControlled',
+        selector: (row) => <PermType type={row.isControlled ? 'Controller' : (row.isPermitted ? 'Permitted' : 'Public')}></PermType>,
+        noMinWidth: true,
+      },
+      (
+        isSourcing && specifiedItems
+          ? {
+            key: 'itemTally',
+            label: <span style={{ fontSize: '16px' }}>{useItemAmount ? `#` : <CheckSmallIcon />}</span>,
+            // sortField: 'itemTally',
+            align: 'center',
+            noMinWidth: true,
+            selector: (row) => (
+              useItemAmount
+                ? formatResourceAmount(row.filteredItemAmount || 0, useItemAmount)
+                : (
+                  <div
+                    data-tooltip-content={row.filteredItemString}
+                    data-tooltip-id="selectionDialogTooltip"
+                    data-tooltip-place="left">
+                    {row.filteredItemTally.toLocaleString()}
+                  </div>
+                )
+            ),
+            noMinWidth: true,
+          }
+          : null
+      ),
+    ].filter((x) => !!x);
+  }, [filterItemIds, isSourcing, limitToPrimary, specifiedItems]);
+
+  const handleSort = useCallback((field) => () => {
+    if (!field) return;
+
+    let [updatedSortField, updatedSortDirection] = sort;
+    if (field === sort[0]) {
+      updatedSortDirection = sort[1] === 'desc' ? 'asc' : 'desc';
+    } else {
+      updatedSortField = field;
+      updatedSortDirection = 'desc';
+    }
+
+    setSort([updatedSortField, updatedSortDirection]);
+  }, [sort]);
+
+  const getRowProps = useCallback((row) => ({
+    disable: row.disabled,
+    onClick: () => setSelection(row.key),
+    isSelected: (selection === row.key),
+  }), [selection]);
+
+  const handleFilterChange = useCallback((e) => {
+    setFilterValue(e.target.value);
+  }, []);
+
+  useEffect(() => {
+    setFilterItemIds(
+      itemIds?.length
+      ? itemIds
+        .sort((a, b) => Product.TYPES[a].name < Product.TYPES[b].name ? -1 : 1)
+        .reduce((acc, k) => ({ ...acc, [k]: true }), {})
+      : null
+    );
+  }, [itemIds]);
+
+  const toggleFilterItem = useCallback((itemId) => {
+    setFilterItemIds((x) => ({ ...x, [itemId]: !x[itemId] }));
+  }, []);
+
+  const filteredInventories = useMemo(() => {
+    const filterProductIds = isSourcing ? Object.keys(filterItemIds || {}).filter((k) => filterItemIds[k]) : [];
+    return inventories
+      .map((inv) => {
+        const productIdsInInv = filterProductIds.filter((k) => !!inv.contentsObj[k]);
+        return {
+          ...inv,
+          filteredItemAmount: filterProductIds?.length === 1
+            ? (inv.contentsObj[filterProductIds[0]] || 0)
+            : null,
+          filteredItemTally: productIdsInInv.length,
+          // TODO: this might be better as a mouseover that could show the full inventory
+          //  just like the inventory contents appearance in the hud menu
+          filteredItemString: (
+            productIdsInInv
+              .map((i) => `${Product.TYPES[i]?.name} (${formatResourceAmount(inv.contentsObj[i] || 0, i)})`)
+              .sort()
+              .join(', ')
+          )
+        };
+      })
+      .filter((inv) => {
+        if (inv.disabled) return false;
+        if (filterValue) {
+          const lcFilterValue = (filterValue || '').toLowerCase();
+          if (!inv.name.toLowerCase().includes(lcFilterValue)) return false;
+        }
+        if (!showPermittedInventories && !inv.isControlled && inv.isPermitted) return false;
+        if (!showPublicInventories && !inv.isControlled && !inv.isPermitted) return false;
+        if (filterProductIds?.length > 0 && inv.filteredItemTally === 0) return false;
+        return true;
+      })
+      .sort((a, b) => (sort[1] === 'desc' ? -1 : 1) * (a[sort[0]] < b[sort[0]] ? -1 : 1));
+  }, [filterItemIds, filterValue, inventories, isSourcing, showPermittedInventories, showPublicInventories, sort]);
 
   return (
     <SelectionDialog
@@ -2082,48 +2328,85 @@ export const InventorySelectionDialog = ({
       onClose={onClose}
       onComplete={onComplete}
       open={open}
+      style={{ width: 820, maxWidth: 820 }}
       title={isSourcing && soloItem
         ? `Available ${Product.TYPES[soloItem].name}s`
         : 'Available Inventories'}>
       {/* TODO: isLoading */}
-      {/* TODO: replace with DataTable? */}
-      <div style={{ minWidth: 500 }}></div>
+      <FilterRow>
+        <div>
+          <UncontrolledTextInput
+            onChange={handleFilterChange}
+            placeholder="Filter by Name..."
+            value={filterValue || ''}
+            width={185} />
+        </div>
+
+        {isSourcing && !itemIds && (
+          <div>
+            <StaticAutocomplete
+              labelKey="name"
+              footnoteKey="category"
+              onSelect={(value) => {
+                const itemId = value?.i;
+                if (itemId) {
+                  setFilterItemIds((x) => ({ ...x, [value?.i]: true }))
+                }
+              }}
+              options={Object.values(Product.TYPES)}
+              placeholder="Filter by Contents..."
+              valueKey="i"
+              width={185}
+            />
+          </div>
+        )}
+
+        <div style={{ flex: 1 }} />
+
+        <FilterRowLabel isOn={showPermittedInventories} onClick={() => setShowPermittedInventories((p) => !p)}>
+          {showPermittedInventories ? <CheckedIcon /> : <UncheckedIcon />}
+          <span>Permitted Inventories</span>
+        </FilterRowLabel>
+        
+        <FilterRowLabel isOn={showPublicInventories} onClick={() => setShowPublicInventories((p) => !p)}>
+          {showPublicInventories ? <CheckedIcon /> : <UncheckedIcon />}
+          <span>Public Inventories</span>
+        </FilterRowLabel>
+      </FilterRow>
+
+      {isSourcing && filterItemIds && (
+        <ItemFilterRow>
+          {Object.keys(filterItemIds)
+            .sort((a, b) => Product.TYPES[a]?.name < Product.TYPES[b]?.name ? -1 : 1)
+            .map((itemId) => (
+            <ItemFilterLabel key={itemId} isOn={filterItemIds[itemId]} onClick={() => toggleFilterItem(itemId)}>
+              <CheckSmallIcon />
+              <CloseIcon />
+              <span>{Product.TYPES[itemId].name}</span>
+            </ItemFilterLabel>
+          ))}
+        </ItemFilterRow>
+      )}
+
       {inventories.length > 0
         ? (
-          <SelectionTableWrapper style={{ minHeight: 200 }}>
-            <table>
-              <thead>
-                <tr>
-                  <td></td>{/* isMine */}
-                  <td style={{ textAlign: 'left' }}>Name</td>
-                  {!limitToPrimary && <td>Distance</td>}
-                  {isSourcing && specifiedItems && (
-                    <td>
-                      {soloItem ? `# ${Product.TYPES[soloItem].name}` : 'Needed Products'}
-                    </td>
-                  )}
-                </tr>
-              </thead>
-              <tbody>
-                {inventories.map((inv) => {
-                  return (
-                    <SelectionTableRow
-                      key={inv.key}
-                      disabledRow={inv.disabled}
-                      onClick={() => setSelection(inv.key)}
-                      selectedRow={inv.key === selection}>
-                      <td>{inv.isMine && <MyAssetIcon />}</td>
-                      <td style={{ textAlign: 'left' }}>{inv.label}{inv.sublabel && <small> ({inv.sublabel})</small>} {inv.isShip && <ShipIcon />}</td>
-                      {!limitToPrimary && <td>{formatSurfaceDistance(inv.distance)}</td>}
-                      {isSourcing && specifiedItems && <td>{inv.itemTally.toLocaleString()}</td>}
-                    </SelectionTableRow>
-                  );
-                })}
-              </tbody>
-            </table>
-          </SelectionTableWrapper>
+          <InvSelectionTableWrapper>
+            <DataTableComponent
+              columns={columns}
+              data={filteredInventories}
+              getRowProps={getRowProps}
+              keyField="key"
+              onClickColumn={handleSort}
+              sortDirection={sort[1]}
+              sortField={sort[0]}
+            />
+          </InvSelectionTableWrapper>
         )
-        : <EmptyMessage>You have no {otherEntity ? 'other ' : ''}available inventories on this asteroid.</EmptyMessage>
+        : (
+          requirePresenceOfItemIds
+          ? <EmptyMessage>You have no accessible inventories with these items on this asteroid.</EmptyMessage>
+          : <EmptyMessage>You have no {otherEntity ? 'other ' : ''}available inventories on this asteroid.</EmptyMessage>
+        )
       }
     </SelectionDialog>
   );
@@ -2401,7 +2684,61 @@ const ActionDialogActionBar = ({ location, onClose, overrideColor, stage }) => (
   </ActionBar>
 );
 
-export const ActionDialogHeader = ({ action, actionCrew, crewAvailableTime, location, onClose, overrideColor, stage, taskCompleteTime, wide }) => {
+
+const mouseoverPaneProps = (visible) => ({
+  css: css`
+    padding: 10px;
+    pointer-events: ${visible ? 'auto' : 'none'};
+    width: 400px;
+  `,
+  placement: 'top',
+  visible
+});
+
+const TimerInfoBody = styled.div`
+  color: #999;
+  font-size: 15px;
+  & > b {
+    color: white;
+    font-weight: normal;
+  }
+`;
+
+const TimePill = ({ children, type }) => {
+  const [hovered, setHovered] = useState();
+  const [refEl, setRefEl] = useState();
+  return (
+    <TimePillComponent
+      ref={setRefEl}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered()}
+      type={type}>
+      {children}
+
+      <MouseoverInfoPane referenceEl={refEl} {...mouseoverPaneProps(hovered)}>
+        <TimerInfoBody>
+          {type === 'delay' && (
+            <>
+              <b>Scheduled Wait:</b> Time until my crew initiates this action, if other actions have been scheduled ahead of it. The maximum waiting period is 24h.
+            </>
+          )}
+          {type === 'crew' && (
+            <>
+              <b>Crew Ready In:</b> Time until all my crew's current and scheduled actions are finished.
+            </>
+          )}
+          {type === 'total' && (
+            <>
+              <b>Action Ready In:</b> Time until the action outcome is finalized (The crew performing the action will often be ready sooner.)
+            </>
+          )}
+        </TimerInfoBody>
+      </MouseoverInfoPane>
+    </TimePillComponent>
+  );
+};
+
+export const ActionDialogHeader = ({ action, actionCrew, crewAvailableTime, delayUntil, location, onClose, overrideColor, stage, taskCompleteTime, wide }) => {
   return (
     <>
       <ActionDialogActionBar
@@ -2423,7 +2760,22 @@ export const ActionDialogHeader = ({ action, actionCrew, crewAvailableTime, loca
             <h1>{action.label}</h1>
             <div>
               <h2>{action.status || theming[stage]?.label}</h2>
-              {crewAvailableTime !== undefined && <TimePill type="crew"><CrewBusyIcon isPaused /> {formatTimer(crewAvailableTime, 2)}</TimePill>}
+              {delayUntil !== undefined && (
+                <LiveTimer target={delayUntil} maxPrecision={2}>
+                  {(formattedTime, isTimer) => {
+                    const pills = [];
+                    if (isTimer) {
+                      pills.push(<TimePill key="delay" type="delay"><ScheduleFullIcon /><label>Wait</label> {formattedTime}</TimePill>);
+                    }
+                    if (crewAvailableTime !== undefined) {
+                      const delayDuration = isTimer ? (delayUntil - Math.floor(Date.now() / 1000)) : 0;
+                      pills.push(<TimePill key="crew" type="crew"><CrewBusyIcon isPaused /> {formatTimer(delayDuration + crewAvailableTime, 2)}</TimePill>)
+                    }
+                    return pills;
+                  }}
+                </LiveTimer>
+              )}
+              {delayUntil === undefined && crewAvailableTime !== undefined && <TimePill type="crew"><CrewBusyIcon isPaused /> {formatTimer(crewAvailableTime, 2)}</TimePill>}
               {taskCompleteTime !== undefined && <TimePill type="total"><AlertIcon /> {formatTimer(taskCompleteTime, 2)}</TimePill>}
             </div>
           </LabelContainer>
@@ -2563,7 +2915,7 @@ export const ResourceGridSectionInner = ({
                 resource={Product.TYPES[item.i]}
                 noStyles={noCellStyles}
                 size="96px"
-                tooltipContainer="actionDialog" />
+                tooltipContainer="actionDialogTooltip" />
             ))}
             {Array.from({ length: Math.max(0, minCells - items.length) }).map((_, i) => (
               <EmptyResourceImage key={i} noIcon outlineColor="transparent" style={{ background: 'rgba(0, 0, 0, 0.25)' }} />
@@ -2707,8 +3059,8 @@ export const ItemSelectionSection = ({ columns = 7, label, items, onClick, stage
     );
 };
 
-export const TransferDistanceDetails = ({ distance, crewTravelBonus }) => {
-  const crewFreeTransferRadius = Asteroid.FREE_TRANSPORT_RADIUS * (crewTravelBonus?.totalBonus || 1) / (crewTravelBonus?.timeMultiplier || 1);
+export const TransferDistanceDetails = ({ distance, crewDistBonus }) => {
+  const crewFreeTransferRadius = Asteroid.FREE_TRANSPORT_RADIUS * (crewDistBonus?.totalBonus || 1);
   return (
     <TransferDistanceTitleDetails>
       {distance && distance < crewFreeTransferRadius ? (
@@ -2780,14 +3132,23 @@ export const ProgressBarSection = ({
       r.left = '0.0%';
 
     } else if (stage === actionStage.IN_PROGRESS) {
-      const progress = startTime && finishTime && syncedTime
-        ? Math.min(1, (syncedTime - startTime) / (finishTime - startTime))
-        : 0;
-      r.animating = true;
-      r.barWidth = progress;
-      r.color = '#FFF';
-      r.left = `${formatFixed(100 * progress, 1)}%`;
-      r.right = <LiveTimer target={finishTime} />
+      if (syncedTime < startTime) {
+        r.animating = true;
+        r.reverseAnimation = true;
+        r.barWidth = 0;
+        r.left = 'WAITING';
+        r.right = <>Scheduled in <LiveTimer target={startTime} maxPrecision={2} /></>;
+        r.color = theme.colors.sequence;
+      } else {
+        const progress = startTime && finishTime && syncedTime
+          ? Math.min(1, (syncedTime - startTime) / (finishTime - startTime))
+          : 0;
+        r.animating = true;
+        r.barWidth = progress;
+        r.color = '#FFF';
+        r.left = `${formatFixed(100 * progress, 1)}%`;
+        r.right = <LiveTimer target={finishTime} />
+      }
 
     } else if (stage === actionStage.READY_TO_COMPLETE) {
       r.barWidth = 1;
@@ -2932,16 +3293,19 @@ export const RecipeSlider = ({ amount, disabled, increment = 0.001, processingTi
   }, []);
 
   const onSetAmount = useCallback((value) => {
+    let cleansed = numeral(value);
+    if (cleansed.value() === null) cleansed = numeral(min);
+
     // apply max, then min, then single increment
-    let cleansed = Math.min(max, value);
+    if (cleansed.value() > max) cleansed = Math.min(max, cleansed.value());
 
     // apply min / single increment
-    cleansed = Math.max(cleansed, min, increment);
+    if (cleansed.value() < min) cleansed = numeral(Math.max(min, increment));
 
     // round to nearest increment
-    cleansed = Math.floor(cleansed / increment) * increment;
+    cleansed = numeral(Math.floor(cleansed.value() / increment) * increment);
 
-    setAmount(cleansed);
+    setAmount(cleansed.value());
   }, [increment, min, max]);
 
   const onChangeInput = useCallback((e) => {
@@ -3040,7 +3404,7 @@ export const ProcessInputOutputSection = ({ title, products, input, output, prim
                 resource={resource}
                 badge={`${output ? '+' : '-'}${resource.isAtomic ? amount : formatResourceMass(amount, resourceId)}`}
                 iconBadge={<RecipeLabel>{recipe.toLocaleString()}</RecipeLabel>}
-                tooltipContainer="actionDialog"
+                tooltipContainer="actionDialogTooltip"
                 {...thumbProps}
               />
               {output && (
@@ -3099,7 +3463,7 @@ export const ProcessInputSquareSection = ({ title, products, input, output, prim
                 badge={`${output ? '+' : '-'}${resource.isAtomic ? amount : formatResourceMass(amount, resourceId)}`}
                 iconBadge={<RecipeLabel>{(recipe || 0).toLocaleString()}</RecipeLabel>}
                 size="87px"
-                tooltipContainer="actionDialog"
+                tooltipContainer="actionDialogTooltip"
                 {...thumbProps}
               />
               {output && <label>{primaryOutput === resourceId ? <><CheckIcon /> Primary</> : `-50%`}</label>}
@@ -3152,7 +3516,6 @@ export const PropulsionTypeSection = ({ disabled, objectLabel, propulsiveTime, t
 
 export const PropellantSection = ({ title, narrow, deltaVLoaded, deltaVRequired, propellantLoaded, propellantRequired }) => {
   const [deltaVMode, setDeltaVMode] = useState(false);
-  // useEffect(() => ReactTooltip.rebuild(), []);
 
   const propellantUse = propellantLoaded > 0 ? propellantRequired / propellantLoaded : (propellantRequired > 0 ? Infinity : 0);
   const deltaVUse = deltaVLoaded > 0 ? deltaVRequired / deltaVLoaded : (deltaVRequired > 0 ? Infinity : 0);
@@ -3163,15 +3526,15 @@ export const PropellantSection = ({ title, narrow, deltaVLoaded, deltaVRequired,
       titleDetails={(
         <SectionTitleRightTabs>
           <SectionTitleTab
-            data-for="actionDialog"
-            data-tip="Propellant Usage"
-            data-place="left"
+            data-tooltip-id="actionDialogTooltip"
+            data-tooltip-content="Propellant Usage"
+            data-tooltip-place="left"
             onClick={() => setDeltaVMode(false)}
             isSelected={!deltaVMode}><GasIcon /></SectionTitleTab>
           <SectionTitleTab
-            data-for="actionDialog"
-            data-tip="Delta-V Usage"
-            data-place="left"
+            data-tooltip-id="actionDialogTooltip"
+            data-tooltip-content="Delta-V Usage"
+            data-tooltip-place="left"
             onClick={() => setDeltaVMode(true)}
             isSelected={!!deltaVMode}><DeltaVIcon /></SectionTitleTab>
         </SectionTitleRightTabs>
@@ -3234,7 +3597,6 @@ export const PropellantSection = ({ title, narrow, deltaVLoaded, deltaVRequired,
 };
 
 export const EmergencyPropellantSection = ({ title, propellantPregeneration, propellantPostgeneration, propellantTankMax, emergencyPropellantCap }) => {
-  // useEffect(() => ReactTooltip.rebuild(), []);
   return (
     <FlexSectionBlock
       title={title}
@@ -3730,20 +4092,17 @@ export const ActionDialogStats = ({ stage, stats: rawStats, wide }) => {
   );
 };
 
-const CrewBusyButton = ({ crew }) => {
+const CrewBusyButton = ({ isSequenceable }) => {
   return (
-    <Button
-      disabled={nativeBool(true)}
-      isTransaction
-      loading={reactBool(true)}>
-      Crew Busy
+    <Button disabled isTransaction loading>
+      {isSequenceable ? 'Schedule Full' : 'Crew Busy'}
     </Button>
   );
 };
 
-const CrewNotLaunchedButton = ({ crew }) => {
+const CrewNotLaunchedButton = () => {
   return (
-    <Button disabled={nativeBool(true)} isTransaction>
+    <Button disabled isTransaction>
       Crew Not Launched
     </Button>
   );
@@ -3754,6 +4113,7 @@ export const ActionDialogFooter = ({
   disabled,
   finalizeLabel,
   goLabel,
+  isSequenceable = false,
   onClose,
   onFinalize,
   onGo,
@@ -3773,6 +4133,7 @@ export const ActionDialogFooter = ({
     setNotificationsEnabled((x) => !x);
   }, []);
 
+  const isReady = isSequenceable ? crew?._readyToSequence : crew?._ready;
   return (
     <Footer wide={wide}>
       <SectionBody>
@@ -3790,9 +4151,9 @@ export const ActionDialogFooter = ({
               <Button
                 loading={reactBool(buttonsLoading)}
                 onClick={onClose}>Cancel</Button>
-              {waitForCrewReady && !crew?._launched && <CrewNotLaunchedButton crew={crew} />}
-              {waitForCrewReady && crew?._launched && !crew?._ready && <CrewBusyButton crew={crew} />}
-              {(!waitForCrewReady || (crew?._ready && crew?._launched)) && (
+              {waitForCrewReady && !crew?._launched && <CrewNotLaunchedButton />}
+              {waitForCrewReady && crew?._launched && !isReady && <CrewBusyButton isSequenceable={isSequenceable} />}
+              {(!waitForCrewReady || (isReady && crew?._launched)) && (
                 <Button
                   disabled={nativeBool(disabled)}
                   isTransaction
@@ -3959,13 +4320,6 @@ const extractBonuses = (bonusObj, isTimeStat) => {
   (bonusObj.others || []).forEach(({ text, bonus, direction }) => {
     x.push({ text, bonus, direction });
   });
-  if (bonusObj.timeMultiplier > 0 && bonusObj.timeMultiplier !== 1) {
-    x.push({
-      text: `Time Acceleration`,
-      multiplier: bonusObj.timeMultiplier,
-      direction: getBonusDirection({ totalBonus: bonusObj.timeMultiplier })
-    });
-  }
 
   return x
     .filter((b) => (b.multiplier !== undefined && b.multiplier !== 1) || (b.bonus !== undefined && b.bonus !== 0))
@@ -4149,7 +4503,7 @@ export const getBonusDirection = ({ totalBonus } = {}, biggerIsBetter = true) =>
   return (biggerIsBetter === (totalBonus > 1)) ? 1 : -1;
 };
 
-export const getTripDetails = (asteroidId, crewTravelBonus, originLotIndex, steps, timeAcceleration) => {
+export const getTripDetails = (asteroidId, crewTravelBonus, crewDistBonus, originLotIndex, steps, timeAcceleration) => {
   let currentLotIndex = originLotIndex;
   let totalDistance = 0;
   let totalTime = 0;
@@ -4157,7 +4511,9 @@ export const getTripDetails = (asteroidId, crewTravelBonus, originLotIndex, step
   const tripDetails = steps.map(({ label, lotIndex, skipToLotIndex }) => {
     const stepDistance = Asteroid.getLotDistance(asteroidId, currentLotIndex, lotIndex) || 0;
     const stepTime = Time.toRealDuration(
-      Asteroid.getLotTravelTime(asteroidId, currentLotIndex, lotIndex, crewTravelBonus.totalBonus) || 0,
+      Asteroid.getLotTravelTime(
+        asteroidId, currentLotIndex, lotIndex, crewTravelBonus.totalBonus, crewDistBonus.totalBonus
+      ) || 0,
       timeAcceleration
     );
     currentLotIndex = skipToLotIndex || lotIndex;
@@ -4176,6 +4532,22 @@ export const getTripDetails = (asteroidId, crewTravelBonus, originLotIndex, step
   return { totalDistance, totalTime, tripDetails };
 };
 
+export const formatResourceAmountRatio = (numerator, denominator, resourceId, options = {}) => {
+  // if non-atomic, determine common unit and scale based on denominator
+  if (!Product.TYPES[resourceId].isAtomic) {
+    const { unitLabel, scale } = getUnitLabelAndScale(Product.TYPES[resourceId].massPerUnit * denominator, options);
+    return {
+      numerator: formatResourceMass(numerator, resourceId, { ...options, unitLabel, scale }),
+      denominator: formatResourceMass(denominator, resourceId, { ...options, unitLabel, scale }),
+      deficit: (numerator < denominator) ? formatMass((denominator - numerator) * Product.TYPES[resourceId].massPerUnit, { ...options, fixedPrecision: 2 }) : 0
+    };
+  }
+  return {
+    numerator: formatResourceAmount(numerator, resourceId),
+    denominator: formatResourceAmount(denominator, resourceId)
+  }
+};
+
 export const formatResourceAmount = (units, resourceId, { abbrev = true, minPrecision = 3, fixedPrecision } = {}) => {
   if (!Product.TYPES[resourceId].isAtomic) {
     return formatResourceMass(units, resourceId, { abbrev, minPrecision, fixedPrecision });
@@ -4184,19 +4556,18 @@ export const formatResourceAmount = (units, resourceId, { abbrev = true, minPrec
   return units.toLocaleString();
 };
 
-export const formatResourceMass = (units, resourceId, { abbrev = true, minPrecision = 3, fixedPrecision } = {}) => {
+export const formatResourceMass = (units, resourceId, { abbrev = true, minPrecision = 3, fixedPrecision, unitLabel, scale } = {}) => {
   return formatMass(
     resourceId
       ? units * Product.TYPES[resourceId].massPerUnit
       : 0,
-    { abbrev, minPrecision, fixedPrecision }
+    { abbrev, minPrecision, fixedPrecision, unitLabel, scale }
   );
 }
 
-export const formatMass = (inputGrams, { abbrev = true, minPrecision = 3, fixedPrecision } = {}) => {
-  let sign = inputGrams < 0 ? '-' : '';
-
+export const getUnitLabelAndScale = (inputGrams, { abbrev = true, minPrecision = 3, fixedPrecision } = {}) => {
   const grams = Math.abs(inputGrams);
+
   let unitLabel;
   let scale;
   if (grams >= 1e18) {
@@ -4221,6 +4592,20 @@ export const formatMass = (inputGrams, { abbrev = true, minPrecision = 3, fixedP
     unitLabel = abbrev ? 'g' : 'grams';
   }
 
+  return { unitLabel, scale };
+}
+
+export const formatMass = (inputGrams, { abbrev = true, minPrecision = 3, fixedPrecision, ...options } = {}) => {
+  let sign = inputGrams < 0 ? '-' : '';
+  let unitLabel = options.unitLabel;
+  let scale = options.scale;
+  if (!unitLabel || !scale) {
+    const config = getUnitLabelAndScale(inputGrams, { abbrev, minPrecision, fixedPrecision });
+    if (!unitLabel) unitLabel = config.unitLabel
+    if (!scale) scale = config.scale;
+  }
+
+  const grams = Math.abs(inputGrams);
   const workingUnits = (grams / scale);
 
   let fixedPlaces = fixedPrecision || 0;

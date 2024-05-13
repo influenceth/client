@@ -120,9 +120,10 @@ const AssembleShip = ({ asteroid, lot, dryDockManager, stage, ...props }) => {
   const shipConfig = shipType ? Ship.getType(shipType) : null;
   const shipConstruction = shipType ? Ship.getConstructionType(shipType) : null;
 
-  const [crewTravelBonus, assemblyTimeBonus] = useMemo(() => {
+  const [crewTravelBonus, crewDistBonus, assemblyTimeBonus] = useMemo(() => {
     const bonusIds = [
       Crewmate.ABILITY_IDS.HOPPER_TRANSPORT_TIME,
+      Crewmate.ABILITY_IDS.FREE_TRANSPORT_DISTANCE,
       Crewmate.ABILITY_IDS.SHIP_INTEGRATION_TIME,
     ];
     const abilities = getCrewAbilityBonuses(bonusIds, crew);
@@ -140,33 +141,45 @@ const AssembleShip = ({ asteroid, lot, dryDockManager, stage, ...props }) => {
   const { totalTime: crewTravelTime, tripDetails } = useMemo(() => {
     if (!asteroid?.id || !crew?._location?.lotId || !lot?.id) return {};
     const crewLotIndex = Lot.toIndex(crew?._location?.lotId);
-    return getTripDetails(asteroid.id, crewTravelBonus, crewLotIndex, [
+    return getTripDetails(asteroid.id, crewTravelBonus, crewDistBonus, crewLotIndex, [
       { label: 'Travel to Dry Dock', lotIndex: Lot.toIndex(lot.id) },
       { label: 'Return to Crew Station', lotIndex: crewLotIndex },
     ], crew?._timeAcceleration);
-  }, [asteroid?.id, lot?.id, crew?._location?.lotId, crew?._timeAcceleration, crewTravelBonus]);
+  }, [asteroid?.id, lot?.id, crew?._location?.lotId, crew?._timeAcceleration, crewTravelBonus, crewDistBonus]);
 
   const [inputTransportDistance, inputTransportTime] = useMemo(() => {
     if (!originLot?.id) return [];
     return [
       Asteroid.getLotDistance(asteroid?.id, Lot.toIndex(originLot?.id), Lot.toIndex(lot?.id)) || 0,
       Time.toRealDuration(
-        Asteroid.getLotTravelTime(asteroid?.id, Lot.toIndex(originLot?.id), Lot.toIndex(lot?.id), crewTravelBonus.totalBonus) || 0,
+        Asteroid.getLotTravelTime(
+          asteroid?.id,
+          Lot.toIndex(originLot?.id),
+          Lot.toIndex(lot?.id),
+          crewTravelBonus.totalBonus,
+          crewDistBonus.totalBonus
+        ) || 0,
         crew?._timeAcceleration
       )
     ];
-  }, [asteroid?.id, lot?.id, crew?._timeAcceleration, originLot?.id, crewTravelBonus]);
+  }, [asteroid?.id, lot?.id, crew?._timeAcceleration, originLot?.id, crewDistBonus, crewTravelBonus]);
 
   const [outputTransportDistance, outputTransportTime] = useMemo(() => {
     if (!lot?.id || !destinationLot?.id) return [];
     return [
       Asteroid.getLotDistance(asteroid?.id, Lot.toIndex(lot?.id), Lot.toIndex(destinationLot?.id)) || 0,
       Time.toRealDuration(
-        Asteroid.getLotTravelTime(asteroid?.id, Lot.toIndex(lot?.id), Lot.toIndex(destinationLot?.id), crewTravelBonus.totalBonus) || 0,
+        Asteroid.getLotTravelTime(
+          asteroid?.id,
+          Lot.toIndex(lot?.id),
+          Lot.toIndex(destinationLot?.id),
+          crewTravelBonus.totalBonus,
+          crewDistBonus.totalBonus
+        ) || 0,
         crew?._timeAcceleration
       )
     ];
-  }, [asteroid?.id, lot?.id, crew?._timeAcceleration, destinationLot?.id, crewTravelBonus]);
+  }, [asteroid?.id, lot?.id, crew?._timeAcceleration, destinationLot?.id, crewDistBonus, crewTravelBonus]);
 
   const [inputArr, inputMass, inputVolume] = useMemo(() => {
     if (!process || !amount) return [[], 0, 0, [], 0, 0];
@@ -268,6 +281,7 @@ const AssembleShip = ({ asteroid, lot, dryDockManager, stage, ...props }) => {
         }}
         actionCrew={crew}
         location={{ asteroid, lot }}
+        delayUntil={currentAssembly?.startTime || crew?.Crew?.readyAt}
         crewAvailableTime={crewTimeRequirement}
         taskCompleteTime={taskTimeRequirement}
         onClose={props.onClose}
@@ -327,7 +341,7 @@ const AssembleShip = ({ asteroid, lot, dryDockManager, stage, ...props }) => {
           <div style={{ width: 350 }}>
             <InventoryInputBlock
               title="Input Inventory"
-              titleDetails={<TransferDistanceDetails distance={inputTransportDistance} crewTravelBonus={crewTravelBonus} />}
+              titleDetails={<TransferDistanceDetails distance={inputTransportDistance} crewDistBonus={crewDistBonus} />}
               disabled={!shipType || stage !== actionStages.NOT_STARTED}
               entity={origin}
               inventorySlot={selectedOrigin?.slot}
@@ -349,7 +363,7 @@ const AssembleShip = ({ asteroid, lot, dryDockManager, stage, ...props }) => {
             {['READY_TO_COMPLETE', 'COMPLETING', 'COMPLETED'].includes(stage) && (
               <LotInputBlock
                 title="Delivery Destination"
-                titleDetails={<TransferDistanceDetails distance={outputTransportDistance} crewTravelBonus={crewTravelBonus} />}
+                titleDetails={<TransferDistanceDetails distance={outputTransportDistance} crewDistBonus={crewDistBonus} />}
                 disabled={stage !== actionStages.READY_TO_COMPLETE}
                 lot={destinationLot}
                 isSelected={stage === actionStages.READY_TO_COMPLETE}
@@ -429,6 +443,7 @@ const AssembleShip = ({ asteroid, lot, dryDockManager, stage, ...props }) => {
           || (stage === actionStages.READY_TO_COMPLETE && destination)
         )}
         finalizeLabel="Deliver Ship"
+        isSequenceable
         onFinalize={onFinish}
         goLabel="Begin Assembly"
         onGo={onStart}

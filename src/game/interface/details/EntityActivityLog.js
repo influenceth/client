@@ -25,6 +25,7 @@ import theme from '~/theme';
 
 const History = styled.div`
   flex: 1;
+  max-width: 100%;
   overflow: auto;
   & > table {
     width: 100%;
@@ -317,7 +318,7 @@ const EntityActivityLog = ({ entity, viewingAs }) => {
   }, []);
 
   return (
-    <History style={{ maxWidth: '100%' }}>
+    <History>
       {activityRows?.length > 0
         ? (
           <DataTableComponent

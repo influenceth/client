@@ -130,7 +130,7 @@ const Porkchop = ({
   maxTof,
   shipParams,
   size,
-  propellantBonus = 1
+  exhaustBonus = 1
 }) => {
   const { processInBackground, cancelBackgroundProcesses } = useWebWorker();
 
@@ -146,8 +146,6 @@ const Porkchop = ({
 
   const canvasRef = useRef();
   const runRef = useRef();
-
-  const maxDeltaV = useMemo(() => shipParams?.maxDeltaV * propellantBonus, [propellantBonus, shipParams]);
 
   const setCanvasRef = useCallback((canvas) => {
     canvasRef.current = canvas;
@@ -224,12 +222,13 @@ const Porkchop = ({
             isFoodInvalid = true;
           }
 
-          if (zeroSolutionsExist && deltaVs[i] > 0 && deltaVs[i] < maxDeltaV) {
+          if (zeroSolutionsExist && deltaVs[i] > 0 && deltaVs[i] < shipParams.maxDeltaV) {
             zeroSolutionsExist = false;
           }
-          canvasCtx.fillStyle = deltaVColor(deltaVs[i], maxDeltaV, isFoodInvalid);
+
+          canvasCtx.fillStyle = deltaVColor(deltaVs[i], shipParams.maxDeltaV, isFoodInvalid);
           canvasCtx.fillRect(col, height - i, 1, -1);
-          currentBucket = Math.floor(isobuckets * deltaVs[i] / maxDeltaV);
+          currentBucket = Math.floor(isobuckets * deltaVs[i] / shipParams.maxDeltaV);
           if (previousBucket !== null && currentBucket !== previousBucket) {
             if (currentBucket < isobuckets && previousBucket < isobuckets) {
               canvasCtx.fillStyle = 'rgba(0, 0, 0, 0.3)';
@@ -239,7 +238,7 @@ const Porkchop = ({
           previousBucket = currentBucket;
 
           if (!wasFoodInvalid && isFoodInvalid) {
-            if (deltaVs[i] > 0 && deltaVs[i] < maxDeltaV) {
+            if (deltaVs[i] > 0 && deltaVs[i] < shipParams.maxDeltaV) {
               canvasCtx.fillStyle = 'rgba(0, 0, 0, 0.3)';
               canvasCtx.fillRect(col, height - i - 2, 1, 4);
             }
@@ -255,7 +254,7 @@ const Porkchop = ({
         }
       })
     }
-  }, [canvasRefIsSet, lastFedAt, originPath, destinationPath, maxDeltaV]);
+  }, [canvasRefIsSet, lastFedAt, originPath, destinationPath, shipParams]);
 
   useEffect(() => {
     if (!travelSolution) setSelectionPos();
@@ -303,7 +302,7 @@ const Porkchop = ({
       dVel.toArray(),
     );
 
-    const insufficientPropellant = solution.deltaV > maxDeltaV;
+    const insufficientPropellant = solution.deltaV > shipParams.maxDeltaV;
 
     // deltav = v_e * ln(wetmass / drymass)
     let usedPropellantMass;
@@ -319,9 +318,6 @@ const Porkchop = ({
       let wetmass = (shipParams.hullMass + shipParams.actualCargoMass + shipParams.actualPropellantMass);
       usedPropellantMass = wetmass * (1 - 1 / Math.exp(solution.deltaV / shipParams.exhaustVelocity));
     }
-
-    // apply propellant bonus
-    usedPropellantMass /= propellantBonus;
 
     const departureTime = baseTime + delay;
     const arrivalTime = departureTime + tof;
@@ -340,10 +336,10 @@ const Porkchop = ({
       originPosition: oPos.toArray(),
       originVelocity: oVel.toArray(),
       destinationPosition: dPos.toArray(),
-      propellantBonus,
+      exhaustBonus,
       key: Date.now()
     });
-  }, [emode, originPath, destinationPath, lastFedAt, maxDeltaV, shipParams]);
+  }, [emode, originPath, destinationPath, lastFedAt, shipParams]);
 
   const handleMouseMove = useCallback((e) => {
     if (loading) return;

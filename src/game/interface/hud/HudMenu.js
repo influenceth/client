@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useHistory } from 'react-router-dom';
-import ReactTooltip from 'react-tooltip';
+import { Tooltip } from 'react-tooltip';
 import styled from 'styled-components';
 import { Building, Inventory, Lot, Permission } from '@influenceth/sdk';
 import { BiWrench as WrenchIcon } from 'react-icons/bi';
@@ -28,16 +28,16 @@ import {
   SimulateRouteIcon,
   StationCrewIcon,
 } from '~/components/Icons';
-import useSession from '~/hooks/useSession';
-import useLot from '~/hooks/useLot';
-import useStore from '~/hooks/useStore';
-import hudMenus from './hudMenus';
-import { reactBool } from '~/lib/utils';
-import useCrewContext from '~/hooks/useCrewContext';
-import theme from '~/theme';
-import useAsteroidBuildings from '~/hooks/useAsteroidBuildings';
-import useShip from '~/hooks/useShip';
 import useAsteroid from '~/hooks/useAsteroid';
+import useAsteroidBuildings from '~/hooks/useAsteroidBuildings';
+import useCrewContext from '~/hooks/useCrewContext';
+import useLot from '~/hooks/useLot';
+import useSession from '~/hooks/useSession';
+import useShip from '~/hooks/useShip';
+import useStore from '~/hooks/useStore';
+import { reactBool } from '~/lib/utils';
+import theme from '~/theme';
+import hudMenus from './hudMenus';
 
 const cornerWidth = 8;
 const bumpHeightHalf = 100;
@@ -107,6 +107,7 @@ const Button = styled.div`
   justify-content: center;
   margin: 3px 0;
   padding: 6px 16px;
+  position: relative;
   transition: background 250ms ease, border-color 250ms ease, color 250ms ease, opacity 250ms ease;
   width: ${buttonsWidth}px;
 
@@ -127,6 +128,27 @@ const Button = styled.div`
       }
     `
   }
+
+  ${p => p.badge > 0 && `
+    &:before {
+      align-items: center;
+      background: ${p.theme.colors[p.selected ? 'darkMain' : 'main']};
+      border: 1px solid rgba(15, 15, 15, 0.85);
+      border-radius: 20px;
+      color: white;
+      content: "${p.badge > 9 ? '9⁺' : p.badge}";
+      display: flex;
+      font-size: 13px;
+      font-weight: bold;
+      height: 19px;
+      line-height: 0;
+      justify-content: center;
+      position: absolute;
+      left: 5px;
+      top: 2px;
+      width: 19px;
+    }
+  `}
 `;
 
 const initialBorder = 3;
@@ -219,6 +241,10 @@ const HudMenu = ({ forceOpenMenu }) => {
   const zoomScene = useStore(s => s.asteroids.zoomScene);
   const zoomStatus = useStore(s => s.asteroids.zoomStatus);
   const showDevTools = useStore(s => s.graphics.showDevTools);
+  const lotFilters = useStore(s => s.assetSearch.lotsMapped?.filters);
+  const asteroidFilters = useStore(s => s.assetSearch.asteroidsMapped?.filters);
+  const isAssetSearchFilterMatchingDefault = useStore(s => s.isAssetSearchFilterMatchingDefault);
+
   const openHudMenu = useStore(s => forceOpenMenu || s.openHudMenu);
 
   const { data: asteroid } = useAsteroid(asteroidId);
@@ -227,6 +253,7 @@ const HudMenu = ({ forceOpenMenu }) => {
   const ship = useMemo(() => zoomScene?.type === 'SHIP' ? zoomShip : lot?.surfaceShip, [lot, zoomShip, zoomScene]);
   const { data: marketplaces } = useAsteroidBuildings(asteroidId, 'Exchange');
 
+  const chatHistory = useStore(s => s.chatHistory);
   const dispatchHudMenuOpened = useStore(s => s.dispatchHudMenuOpened);
 
   const [open, setOpen] = useState();
@@ -280,6 +307,20 @@ const HudMenu = ({ forceOpenMenu }) => {
   useEffect(() => {
     setOpen(!!openHudMenu);
   }, [openHudMenu]);
+
+  const asteroidFilterTally = useMemo(() => {
+    return Object.keys(asteroidFilters || {})
+      .reduce((acc, fieldName) => acc + (isAssetSearchFilterMatchingDefault('asteroidsMapped', fieldName) ? 0 : 1), 0)
+  }, [asteroidFilters]);
+
+  const lotFilterTally = useMemo(() => {
+    return Object.keys(lotFilters || {})
+      .reduce((acc, fieldName) => acc + (isAssetSearchFilterMatchingDefault('lotsMapped', fieldName) ? 0 : 1), 0)
+  }, [lotFilters]);
+
+  const unreadChatTally = useMemo(() => {
+    return chatHistory.filter((c) => c.asteroidId === asteroidId && c.unread)?.length;
+  }, [asteroidId, chatHistory]);
 
   const [menuButtons, pageButtons] = useMemo(() => {
     const menuButtons = [];
@@ -374,6 +415,14 @@ const HudMenu = ({ forceOpenMenu }) => {
           && lot.building.Dock
       },
       {
+        key: 'ORBITING_SHIPS',
+        label: 'Orbiting Ships',
+        icon: <ShipIcon />,
+        Component: hudMenus.OrbitDetails,
+        noDetail: true,
+        isVisible: focus === 'asteroid' && scope === 'asteroid'
+      },
+      {
         key: 'STATIONED_CREW',
         label: 'Station Manifest',
         icon: <StationCrewIcon />,
@@ -415,6 +464,8 @@ const HudMenu = ({ forceOpenMenu }) => {
         key: 'ASTEROID_MAP_SEARCH',
         label: 'Lot Search',
         icon: <LotSearchIcon />,
+        highlightIcon: lotFilterTally > 0,
+        badge: lotFilterTally,
         Component: hudMenus.SearchMap,
         noDetail: true,
         componentProps: { assetType: 'lotsMapped' },
@@ -428,6 +479,7 @@ const HudMenu = ({ forceOpenMenu }) => {
         key: 'ASTEROID_CHAT',
         label: 'Asteroid Chat',
         icon: <ChatIcon />,
+        badge: unreadChatTally,
         Component: hudMenus.AsteroidChat,
         noDetail: true,
         isVisible: scope === 'asteroid' || scope === 'lot'
@@ -447,6 +499,8 @@ const HudMenu = ({ forceOpenMenu }) => {
         key: 'BELT_MAP_SEARCH',
         label: 'System Search',
         icon: <AsteroidSearchIcon />,
+        badge: asteroidFilterTally,
+        highlightIcon: asteroidFilterTally > 0,
         Component: hudMenus.SearchMap,
         componentProps: { assetType: 'asteroidsMapped' },
         detailType: 'list',
@@ -530,7 +584,7 @@ const HudMenu = ({ forceOpenMenu }) => {
         onOpen: () => {
           history.push(`/listview`);  // TODO: should probably also go to /listview/lots
         },
-        isVisible: scope === 'asteroid'
+        isVisible: ['asteroid', 'lot'].includes(scope)
       },
 
       {
@@ -551,12 +605,25 @@ const HudMenu = ({ forceOpenMenu }) => {
         icon: <WrenchIcon />,
         noDetail: true,
         Component: hudMenus.DevTools,
-        hideInsteadOfClose: true
+        hideInsteadOfClose: true,
+        isVisible: true
       });
     }
 
     return [menuButtons, pageButtons];
-  }, [asteroid, asteroidId, crew?.id, destination, lot, lotId, showDevTools, zoomStatus, zoomScene]);
+  }, [
+    asteroid,
+    asteroidFilterTally,
+    asteroidId,
+    crew?.id,
+    destination,
+    lot,
+    lotFilterTally,
+    lotId,
+    showDevTools,
+    unreadChatTally,
+    zoomStatus,
+    zoomScene]);
 
   const { label, onDetailClick, detailType, Component, componentProps, hideInsteadOfClose, noClose, noDetail } = useMemo(() => {
     return menuButtons.find((b) => b.key === openHudMenu) || {};
@@ -581,19 +648,21 @@ const HudMenu = ({ forceOpenMenu }) => {
     <Wrapper>
       {!forceOpenMenu && (
         <>
-          <ReactTooltip id="hudMenu" effect="solid" />
-          <Buttons open={open}>
+          <Tooltip id="hudMenuTooltip" />
+          {/* NOTE: the hudMenu id is in use by third-party extensions */}
+          <Buttons id="hudMenu" open={open}>
             {visibleMenuButtons.length > 0 && (
               <ButtonSection>
-                {visibleMenuButtons.map(({ key, label, highlightIcon, icon, onOpen, hideInsteadOfClose }) => (
+                {visibleMenuButtons.map(({ key, badge, label, highlightIcon, icon, onOpen, hideInsteadOfClose }) => (
                   <Button
                     key={key}
                     style={highlightIcon ? { color: theme.colors.main } : {}}
+                    badge={badge}
                     onClick={() => handleButtonClick(key, onOpen, hideInsteadOfClose)}
                     selected={key === openHudMenu}
-                    data-for="hudMenu"
-                    data-place="left"
-                    data-tip={label}>
+                    data-tooltip-id="hudMenuTooltip"
+                    data-tooltip-place="left"
+                    data-tooltip-content={label}>
                     {icon}
                   </Button>
                 ))}
@@ -607,9 +676,9 @@ const HudMenu = ({ forceOpenMenu }) => {
                     style={highlightIcon ? { color: theme.colors.main } : {}}
                     onClick={() => handleButtonClick(key, onOpen, hideInsteadOfClose)}
                     selected={key === openHudMenu}
-                    data-for="hudMenu"
-                    data-place="left"
-                    data-tip={label}>
+                    data-tooltip-id="hudMenuTooltip"
+                    data-tooltip-place="left"
+                    data-tooltip-content={label}>
                     {icon}
                   </PageButton>
                 ))}
@@ -618,15 +687,16 @@ const HudMenu = ({ forceOpenMenu }) => {
           </Buttons>
         </>
       )}
-      <Panel open={open && !hidden} forcedOpen={reactBool(forceOpenMenu)}>
+      {/* NOTE: the hudMenu id is in use by third-party extensions */}
+      <Panel id="hudMenuPanel" open={open && !hidden} forcedOpen={reactBool(forceOpenMenu)}>
         <PanelInner>
           <PanelTitle>
             <span style={{ flex: 1 }}>{label}</span>
             {!noDetail && (
               <IconButton
-                data-for="global"
-                data-tip={detailType === 'detail' ? 'Detail View' : 'Advanced Search'}
-                data-place="left"
+                data-tooltip-id="globalTooltip"
+                data-tooltip-content={detailType === 'detail' ? 'Detail View' : 'Advanced Search'}
+                data-tooltip-place="left"
                 onClick={onDetailClick}>
                 {detailType === 'detail' ? <DetailIcon /> : <ListViewIcon />}
               </IconButton>

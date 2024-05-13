@@ -233,11 +233,12 @@ const MarketplaceOrder = ({
   // const destinationInventory = useMemo(() => (destination?.Inventories || []).find((i) => i.slot === destinationSelection?.slot), [destination, destinationSelection]);
   // const { data: destinationController } = useCrew(destination?.Control?.controller?.id);
 
-  const [hopperTransportBonus, feeReductionBonus] = useMemo(() => {
+  const [hopperTransportBonus, distBonus, feeReductionBonus] = useMemo(() => {
     if (!crew) return [];
 
     const bonusIds = [
       Crewmate.ABILITY_IDS.HOPPER_TRANSPORT_TIME,
+      Crewmate.ABILITY_IDS.FREE_TRANSPORT_DISTANCE,
       Crewmate.ABILITY_IDS.MARKETPLACE_FEE_REDUCTION,
     ];
 
@@ -270,11 +271,11 @@ const MarketplaceOrder = ({
 
   const { totalTime: crewTravelTime, tripDetails } = useMemo(() => {
     if (!asteroid?.id || !crew?._location?.lotId || !lot?.id) return {};
-    return getTripDetails(asteroid.id, hopperTransportBonus, crew?._location?.lotIndex, [
+    return getTripDetails(asteroid.id, hopperTransportBonus, distBonus, crew?._location?.lotIndex, [
       { label: 'Travel to Marketplace', lotIndex: Lot.toIndex(lot.id) },
       { label: 'Return to Crew Station', lotIndex: crew?._location?.lotIndex },
     ], crew?._timeAcceleration);
-  }, [asteroid?.id, lot?.id, crew?._location?.lotId, crew?._timeAcceleration, hopperTransportBonus]);
+  }, [asteroid?.id, lot?.id, crew?._location?.lotId, crew?._timeAcceleration, hopperTransportBonus, distBonus]);
 
   const [transportDistance, transportTime] = useMemo(() => {
     if (!asteroid?.id || !exchange?.id || !storageLot?.id) return [0, 0];
@@ -282,15 +283,17 @@ const MarketplaceOrder = ({
     const storageLotIndex = Lot.toIndex(storageLot?.id);
     const transportDistance = Asteroid.getLotDistance(asteroid?.id, exchangeLotIndex, storageLotIndex);
     const transportTime = Time.toRealDuration(
-      Asteroid.getLotTravelTime(asteroid?.id, exchangeLotIndex, storageLotIndex, hopperTransportBonus?.totalBonus),
+      Asteroid.getLotTravelTime(
+        asteroid?.id, exchangeLotIndex, storageLotIndex, hopperTransportBonus?.totalBonus, distBonus?.totalBonus
+      ),
       crew?._timeAcceleration
     );
     return [transportDistance, transportTime];
-  }, [asteroid?.id, exchange?.id, storageLot?.id, hopperTransportBonus, crew?._timeAcceleration]);
+  }, [asteroid?.id, distBonus, exchange?.id, storageLot?.id, hopperTransportBonus, crew?._timeAcceleration]);
 
   const [crewTimeRequirement, taskTimeRequirement] = useMemo(() => {
     return [
-      type === 'market' ? 0 : (Math.max(crewTravelTime / 2, transportTime) + crewTravelTime / 2),
+      (isCancellation || type === 'market') ? 0 : (Math.max(crewTravelTime / 2, transportTime) + crewTravelTime / 2),
       0
     ];
   }, [transportTime, crewTravelTime, type]);
@@ -653,7 +656,7 @@ const MarketplaceOrder = ({
         <FlexSection>
           <FlexSectionInputBlock
             title="Product"
-            image={<ResourceThumbnail resource={resource || {}} tooltipContainer="none" />}
+            image={<ResourceThumbnail resource={resource || {}} tooltipContainer={null} />}
             label={resource?.name}
             disabled
             sublabel={resource?.classification}
@@ -737,7 +740,7 @@ const MarketplaceOrder = ({
                           {exceedsOtherSide ? `Exceeds Buy Side` : ''}
                           {!exceedsOtherSide && limitPrice < bestOrderPrice && `Current Lowest`}
                           {limitPrice === bestOrderPrice && `Equal to Lowest`}
-                          {betterOrderTally > 0 ? <>Higher than <b>{betterOrderTally} Sellers{betterOrderTally === 1 ? '' : 's'}</b></> : ''}
+                          {betterOrderTally > 0 ? <>Higher than <b>{betterOrderTally} Seller{betterOrderTally === 1 ? '' : 's'}</b></> : ''}
                         </>
                       )}
                     </CompetitionSummary>
@@ -756,7 +759,7 @@ const MarketplaceOrder = ({
 
           <InventoryInputBlock
             title={mode === 'buy' ? 'Deliver To' : 'Source From'}
-            titleDetails={<TransferDistanceDetails distance={transportDistance} crewTravelBonus={hopperTransportBonus} />}
+            titleDetails={<TransferDistanceDetails distance={transportDistance} crewDistBonus={distBonus} />}
             disabled={isCancellation || stage !== actionStages.NOT_STARTED}
             entity={storage}
             inventorySlot={storageInventory?.slot}

@@ -3,7 +3,7 @@ import { useHistory } from 'react-router-dom';
 import styled, { css, keyframes } from 'styled-components';
 import BarLoader from 'react-spinners/BarLoader';
 
-import { CloseIcon as DismissIcon } from '~/components/Icons';
+import { CloseIcon as DismissIcon, EyeIcon } from '~/components/Icons';
 import { FailedIcon, RandomEventIcon, ReadyIcon } from '~/components/AnimatedIcons';
 import LiveTimer from '~/components/LiveTimer';
 import { useLotLink } from '~/components/LotLink';
@@ -12,9 +12,10 @@ import useLot from '~/hooks/useLot';
 import useStore from '~/hooks/useStore';
 import { formatActionItem, itemColors, statuses } from '~/lib/actionItem';
 import formatters from '~/lib/formatters';
+import IconButton from '~/components/IconButton';
 
 const ICON_WIDTH = 34;
-export const ITEM_WIDTH = 420;
+export const ITEM_WIDTH = 425;
 export const TRANSITION_TIME = 400;
 
 const opacityKeyframes = keyframes`
@@ -41,6 +42,9 @@ const Status = styled.div``;
 const Label = styled.div`
   white-space: nowrap;
 `;
+const Delay = styled.div`
+  white-space: nowrap;
+`;
 const Details = styled.div``;
 const Timing = styled.div`
   color: white;
@@ -59,6 +63,9 @@ const Location = styled.div`
       display: inline-block;
       padding: 0 5px;
     }
+  }
+  b, span {
+    white-space: nowrap;
   }
 `;
 const Dismissal = styled.div`
@@ -158,6 +165,10 @@ const ActionItemRow = styled.div`
     color: white;
     white-space: nowrap;
   }
+  ${Delay} {
+    margin-left: 5px;
+    margin-right: 5px;
+  }
   ${Details} {
     flex: 1;
     height: 100%;
@@ -199,6 +210,7 @@ const ActionItem = ({ data, getActivityConfig }) => {
   const zoomStatus = useStore(s => s.asteroids.zoomStatus);
   const resourceMap = useStore(s => s.asteroids.resourceMap);
   const dispatchActionDialog = useStore(s => s.dispatchActionDialog);
+  const dispatchToggleHideActionItem = useStore(s => s.dispatchToggleHideActionItem);
   const dispatchLauncherPage = useStore(s => s.dispatchLauncherPage);
   const dismissFailedTx = useStore(s => s.dispatchFailedTransactionDismissed);
   const type = data?.type;
@@ -275,6 +287,11 @@ const ActionItem = ({ data, getActivityConfig }) => {
     return false;
   }, [item]);
 
+  const handleToggleHide = useCallback((key) => (e) => {
+    e.stopPropagation();
+    dispatchToggleHideActionItem(key);
+  }, []);
+
   return (
     <ActionItemRow
       color={itemColors[item._expired ? '_expired' : item.type]}
@@ -285,17 +302,22 @@ const ActionItem = ({ data, getActivityConfig }) => {
         {type === 'failed' && <FailedIcon />}
         {type === 'randomEvent' && <RandomEventIcon size="0.77em" />}
         {type === 'ready' && <ReadyIcon />}
-        {(type === 'pending' || type === 'unready' || type === 'plan' || type === 'agreement') && <span>{item.icon}</span>}
+        {['pending', 'unready', 'unstarted', 'plan', 'agreement'].includes(type) && <span>{item.icon}</span>}
       </Icon>
       <Status>{statuses[item._expired ? '_expired' : item.type]}</Status>
       <Label>{item.label}</Label>
+      {type === 'unstarted' && item.startTime && (
+        <LiveTimer target={item.startTime} maxPrecision={1}>
+          {(formattedTime, isTimer) => isTimer ? <Delay>(+{formattedTime})</Delay> : null}
+        </LiveTimer>
+      )}
       <Details>
         <Timing>
           {type === 'pending' && <b>Just Now</b>}
           {((type === 'ready' || type === 'failed' || type === 'randomEvent') && item.ago) && <>{item.ago} <b style={{ marginLeft: 4 }}>ago</b></>}
-          {type === 'unready' && item.finishTime && (
+          {(type === 'unready' || type === 'unstarted') && item.finishTime && (
             <LiveTimer target={item.finishTime} maxPrecision={2}>
-              {(formattedTime, isTimer) => isTimer ? <><b style={{ marginRight: 4 }}>Remaining</b> {formattedTime}</> : <b>{formattedTime}</b>}
+              {(formattedTime, isTimer) => isTimer ? <><b style={{ marginRight: 4 }}>Ready In</b> {formattedTime}</> : <b>{formattedTime}</b>}
             </LiveTimer>
           )}
           {/* TODO: would be nice for this to have different level warning intensity based on time-left and/or presence of inventory on the lot */}
@@ -326,12 +348,25 @@ const ActionItem = ({ data, getActivityConfig }) => {
           </div>
         )}
         {type !== 'failed' && asteroid && (
-          <Location>
-            {item.locationDetail && <><b>{item.locationDetail}</b></>}
-            <span>{formatters.asteroidName(asteroid)}</span>
-            {/* TODO: use <EntityName /> instead? */}
-          </Location>
+          <div style={{ flexWrap: 'nowrap' }}>
+            <Location style={{ flex: 1, textAlign: 'right', whiteSpace: 'wrap' }}>
+              {item.locationDetail && <><b>{item.locationDetail}</b></>}
+              <span>{formatters.asteroidName(asteroid)}</span>
+              {/* TODO: use <EntityName /> instead? */}
+            </Location>
+            {(type === 'plan' || type === 'agreement') && (
+              <IconButton
+                borderless
+                dataTip={data.hidden ? 'Unhide' : 'Hide'}
+                onClick={handleToggleHide(data?.uniqueKey, data.hidden)}
+                themeColor="mainText"
+                style={{ flex: '0 0 30px', marginLeft: 2, marginRight: 0 }}>
+                <EyeIcon />
+              </IconButton>
+            )}
+          </div>
         )}
+
       </Details>
       {type === 'pending' && (
         <Progress>

@@ -7,9 +7,9 @@ import useAsteroid from '~/hooks/useAsteroid';
 import useBuilding from '~/hooks/useBuilding';
 import useShip from '~/hooks/useShip';
 
-const useHydratedLocation = (location = {}) => {
+const useHydratedLocation = (location = {}, escapeModuleCrewId) => {
   const onLotLink = useLotLink(location);
-  const onShipLink = useShipLink(location?.shipId ? { shipId: location?.shipId, zoomToShip: true } : {});
+  const onShipLink = useShipLink((location?.shipId || escapeModuleCrewId) ? { crewId: escapeModuleCrewId, shipId: location?.shipId, zoomToShip: true } : {});
 
   const { data: asteroid } = useAsteroid(location?.asteroidId);
   const { data: building } = useBuilding(location?.buildingId);
@@ -22,7 +22,7 @@ const useHydratedLocation = (location = {}) => {
       lotId: location?.lotId,
       lotIndex: Lot.toIndex(location?.lotId),
       ship,
-      onLink: (ship && !location?.lotId) ? onShipLink : onLotLink
+      onLink: (location?.lotId ? onLotLink : onShipLink) || (() => {})
     };
   }, [asteroid, building, location?.lotId, ship, onShipLink, onLotLink]);
 };

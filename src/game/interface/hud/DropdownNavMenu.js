@@ -1,5 +1,3 @@
-import { useEffect } from 'react';
-import ReactTooltip from 'react-tooltip';
 import styled from 'styled-components';
 import Button from '~/components/ButtonAlt';
 
@@ -108,6 +106,7 @@ const MainMenuItem = styled.li`
 `;
 
 const LoggedInUser = styled.div`
+  cursor: ${p => p.theme.cursors.active};
   flex: 1;
   font-size: 15px;
   margin-left: 10px;
@@ -149,6 +148,13 @@ const OpenerAsButtonWrapper = styled.div`
 
 export const NavMenuLoggedInUser = ({ account }) => {
   const formattedAccount = useAccountFormatted({ address: account, truncate: true, doNotReplaceYou: true });
+  const copyToClipboard = () => {
+    try {
+      navigator.clipboard.writeText(account);
+    } catch (e) {
+      console.warn(e);
+    }
+  }
 
   return (
     <>
@@ -156,7 +162,7 @@ export const NavMenuLoggedInUser = ({ account }) => {
         <InfluenceIcon />
       </LogoWrapper>
 
-      <LoggedInUser>{formattedAccount}</LoggedInUser>
+      <LoggedInUser onClick={copyToClipboard}>{formattedAccount}</LoggedInUser>
     </>
   );
 };
@@ -173,44 +179,40 @@ const DropdownNavMenu = ({
   onClickOpener,
   isOpen,
   onClose
-}) => {
-  useEffect(() => ReactTooltip.rebuild(), [openerTooltip]);
+}) => (
+  <MainMenuWrapper open={isOpen} hCollapse={hCollapse} itemTally={menuItems.length}>
+    <MainMenu open={isOpen}>
+      <div>
+        <HeaderWrapper onClick={onClickHeader}>{header}</HeaderWrapper>
 
-  return (
-    <MainMenuWrapper open={isOpen} hCollapse={hCollapse} itemTally={menuItems.length}>
-      <MainMenu open={isOpen}>
-        <div>
-          <HeaderWrapper onClick={onClickHeader}>{header}</HeaderWrapper>
-
-          {openerAsButton
-            ? (
-              <OpenerAsButtonWrapper>
-                <Button data-tip={openerTooltip} onClick={onClickOpener} size="icon">{openerIcon}</Button>
-              </OpenerAsButtonWrapper>
-            )
+        {openerAsButton
+          ? (
+            <OpenerAsButtonWrapper>
+              <Button data-tooltip-content={openerTooltip} onClick={onClickOpener} size="icon">{openerIcon}</Button>
+            </OpenerAsButtonWrapper>
+          )
+          : (
+            <HudIconButton
+              data-tooltip-content={openerTooltip}
+              isActive={openerHighlight && isOpen}
+              onClick={onClickOpener}>
+              {openerIcon}
+            </HudIconButton>
+          )}
+      </div>
+      <ul onClick={onClose}>
+        {menuItems.map((item, i) => {
+          return item.isRule
+            ? <MainMenuItem key={i} isRule />
             : (
-              <HudIconButton
-                data-tip={openerTooltip}
-                isActive={openerHighlight && isOpen}
-                onClick={onClickOpener}>
-                {openerIcon}
-              </HudIconButton>
-            )}
-        </div>
-        <ul onClick={onClose}>
-          {menuItems.map((item, i) => {
-            return item.isRule
-              ? <MainMenuItem key={i} isRule />
-              : (
-                <MainMenuItem key={i} onClick={item.onClick}>
-                  {item.content}
-                </MainMenuItem>
-              )
-          })}
-        </ul>
-      </MainMenu>
-    </MainMenuWrapper>
-  );
-}
+              <MainMenuItem key={i} onClick={item.onClick}>
+                {item.content}
+              </MainMenuItem>
+            )
+        })}
+      </ul>
+    </MainMenu>
+  </MainMenuWrapper>
+);
 
 export default DropdownNavMenu;

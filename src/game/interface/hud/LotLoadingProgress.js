@@ -32,7 +32,7 @@ const ProgressBar = styled.div`
 const LotLoadingProgress = ({ asteroidId }) => {
   const lotLoader = useStore(s => s.lotLoader);
   if (!(lotLoader.id === asteroidId && lotLoader.progress === 1)) {
-    return <ProgressBar progress={lotLoader.id === asteroidId ? lotLoader.progress : 0} />;;
+    return <ProgressBar progress={lotLoader.id === asteroidId ? lotLoader.progress : 0} />;
   }
   return null;
 }

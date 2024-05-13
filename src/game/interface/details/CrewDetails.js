@@ -7,9 +7,9 @@ import LoadingAnimation from 'react-spinners/PuffLoader';
 import CoverImageSrc from '~/assets/images/modal_headers/OwnedCrew.png';
 import AnnotationBio from '~/components/AnnotationBio';
 import Button from '~/components/ButtonAlt';
+import CrewLocationLabel from '~/components/CrewLocationLabel';
 import CrewmateCardFramed, { EmptyCrewmateCardFramed } from '~/components/CrewmateCardFramed';
 import CrewmateInfoPane from '~/components/CrewmateInfoPane';
-import CrewLocationLabel from '~/components/CrewLocationLabel';
 import Details from '~/components/DetailsModal';
 import LiveFoodStatus from '~/components/LiveFoodStatus';
 import LiveReadyStatus from '~/components/LiveReadyStatus';
@@ -214,28 +214,6 @@ const TitleBar = styled.div`
   }
 `;
 
-const BaseLocation = styled.div`
-  color: white;
-  cursor: ${p => p.theme.cursors.active};
-  font-size: 14.5px;
-  span {
-    color: #AAA;
-    &:before {
-      content: " > ";
-    }
-  }
-
-  &:hover, &:hover span {
-    color: ${p => p.theme.colors.main};
-  }
-
-  svg {
-    margin-right: 2px;
-    vertical-align: middle;
-  }
-`;
-
-
 const Crewmates = styled.div`
   align-items: flex-start;
   display: flex;
@@ -262,7 +240,7 @@ const PopperWrapper = (props) => {
   return props.children(refEl, props.disableRefSetter ? noop : setRefEl);
 }
 
-const CrewDetails = ({ crewId, crew, isMyCrew, isOwnedCrew, selectCrew }) => {
+const CrewDetails = ({ crewId, crew, isMyCrew, isDelegatedCrew, isOwnedCrew, selectCrew }) => {
   const { accountAddress } = useSession();
   const history = useHistory();
 
@@ -274,7 +252,7 @@ const CrewDetails = ({ crewId, crew, isMyCrew, isOwnedCrew, selectCrew }) => {
 
   const { data: TIME_ACCELERATION } = useConstants('TIME_ACCELERATION');
 
-  const hydratedLocation = useHydratedLocation(crew._location);
+  const hydratedLocation = useHydratedLocation(crew._location, crew.id);
 
   const [editing, setEditing] = useState();
   const [hovered, setHovered] = useState();
@@ -337,7 +315,6 @@ const CrewDetails = ({ crewId, crew, isMyCrew, isOwnedCrew, selectCrew }) => {
   // }, []);
 
   // TODO: we need to support empty crews here
-
   return (
     <>
       <MainContainer>
@@ -461,9 +438,10 @@ const CrewDetails = ({ crewId, crew, isMyCrew, isOwnedCrew, selectCrew }) => {
                 </Crewmates>
 
                 <TitleBar>
-                  <BaseLocation onClick={onClickLocation}>
-                    <CrewLocationLabel hydratedLocation={hydratedLocation} />
-                  </BaseLocation>
+                  <CrewLocationLabel
+                    hydratedLocation={hydratedLocation}
+                    onClick={onClickLocation}
+                  />
 
                   <LiveFoodStatus crew={crew} onClick={isMyCrew ? () => { onSetAction('FEED_CREW'); } : undefined} />
                 </TitleBar>
@@ -489,7 +467,7 @@ const CrewDetails = ({ crewId, crew, isMyCrew, isOwnedCrew, selectCrew }) => {
                 <Button disabled={nativeBool(crew.Crew?.roster?.length >= 5) || !crew._ready} onClick={onClickRecruit}>Recruit to Crew</Button>
               </div>
             )}
-            {isOwnedCrew && !isMyCrew && (
+            {!isMyCrew && isDelegatedCrew && (
               <div style={{ paddingTop: 15 }}>
                 <Button onClick={() => selectCrew(crewId)}>Switch to Crew</Button>
               </div>
@@ -596,6 +574,7 @@ const Wrapper = () => {
         <CrewDetails
           crewId={crewId}
           crew={crew}
+          isDelegatedCrew={Address.areEqual(crew?.Crew?.delegatedTo || '', accountAddress || '')}
           isMyCrew={crewId === myCrew?.id}
           isOwnedCrew={Address.areEqual(crew?.Nft?.owner || '', accountAddress || '')}
           selectCrew={selectCrew}

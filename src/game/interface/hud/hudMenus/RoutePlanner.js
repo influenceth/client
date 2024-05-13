@@ -13,7 +13,7 @@ import useAsteroid from '~/hooks/useAsteroid';
 import useCoarseTime from '~/hooks/useCoarseTime';
 import useConstants from '~/hooks/useConstants';
 import useCrewContext from '~/hooks/useCrewContext';
-import useOwnedShips from '~/hooks/useOwnedShips';
+import useControlledShips from '~/hooks/useControlledShips';
 import useStore from '~/hooks/useStore';
 import formatters from '~/lib/formatters';
 import { sampleAsteroidOrbit } from '~/lib/geometryUtils';
@@ -221,7 +221,7 @@ const RoutePlanner = () => {
 
   const { data: origin } = useAsteroid(originId);
   const { data: destination } = useAsteroid(destinationId);
-  const { data: myShips, isLoading: myShipsLoading } = useOwnedShips();
+  const { data: myShips, isLoading: myShipsLoading } = useControlledShips();
   const { data: TIME_ACCELERATION } = useConstants('TIME_ACCELERATION');
 
   const [baseTime, setBaseTime] = useState();
@@ -357,10 +357,14 @@ const RoutePlanner = () => {
     setFoodSupplies(Math.max(0, Math.min(100, Math.floor(parsed))));
   }, [shipConfig]);
 
+  const exhaustBonus = useMemo(() => getCrewAbilityBonuses(Crewmate.ABILITY_IDS.PROPELLANT_EXHAUST_VELOCITY, crew), [crew]);
+
   const shipParams = useMemo(() => {
     if (!ship) return 0;
-    const exhaustVelocity = Ship.TYPES[ship.Ship.shipType]?.exhaustVelocity || 0;
+    const exhaustVelocity = (Ship.TYPES[ship.Ship.shipType]?.exhaustVelocity * exhaustBonus?.totalBonus) || 0;
     const hullMass = Ship.TYPES[ship.Ship.shipType]?.hullMass || 0;
+    const wetMass = hullMass + cargoMass + propellantMass;
+    const maxDeltaV = Ship.propellantToDeltaV(ship.Ship.shipType, wetMass, propellantMass, exhaustBonus?.totalBonus);
 
     return {
       ...ship,
@@ -368,9 +372,9 @@ const RoutePlanner = () => {
       actualPropellantMass: propellantMass,
       exhaustVelocity,
       hullMass,
-      maxDeltaV: exhaustVelocity * Math.log((hullMass + cargoMass + propellantMass) / (hullMass + cargoMass))
+      maxDeltaV
     };
-  }, [ship, cargoMass, propellantMass]);
+  }, [ship, cargoMass, propellantMass, exhaustBonus]);
 
   useEffect(() => {
     dispatchReorientCamera(true);
@@ -428,8 +432,6 @@ const RoutePlanner = () => {
   const lastFedAt = useMemo(() => {
     return baseTime - Crew.getTimeSinceFed(foodSupplies / 100, crew?._foodBonuses?.consumption) / 86400;
   }, [baseTime, crew, foodSupplies]);
-
-  const propellantBonus = useMemo(() => getCrewAbilityBonuses(Crewmate.ABILITY_IDS.PROPELLANT_EXHAUST_VELOCITY, crew), [crew]);
 
   return (
     <Scrollable style={{ marginLeft: -12, paddingLeft: 12 }}>
@@ -549,7 +551,7 @@ const RoutePlanner = () => {
             maxDelay={maxDelay}
             minTof={minTof}
             maxTof={maxTof}
-            propellantBonus={propellantBonus?.totalBonus}
+            exhaustBonus={exhaustBonus?.totalBonus}
             shipParams={shipParams}
             size={348}
           />
@@ -583,12 +585,12 @@ const RoutePlanner = () => {
               </InfoRow>
 
               <InfoRowWithTooltip
-                tooltip={propellantBonus.totalBonus && propellantBonus.totalBonus !== 1 && (
+                tooltip={exhaustBonus.totalBonus && exhaustBonus.totalBonus !== 1 && (
                   <MaterialBonusTooltip
-                    bonus={propellantBonus}
+                    bonus={exhaustBonus}
                     isTimeStat
                     title="Propellant Utilization"
-                    titleValue={`${formatFixed(100 / propellantBonus.totalBonus, 1)}%`} />
+                    titleValue={`${formatFixed(100 / exhaustBonus.totalBonus, 1)}%`} />
                 )}>
                 <label>Propellant</label>
                 <Note isError={travelSolution.usedPropellantPercent > 100}>
@@ -597,7 +599,7 @@ const RoutePlanner = () => {
                     : `${formatFixed(travelSolution.usedPropellantPercent, 1)}%`
                   }
                 </Note>
-                <Value bonus={propellantBonus.totalBonus}>
+                <Value bonus={exhaustBonus.totalBonus}>
                   {formatMass(travelSolution.usedPropellantMass, { minPrecision: 4 })}
                 </Value>
               </InfoRowWithTooltip>

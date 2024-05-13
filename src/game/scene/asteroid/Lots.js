@@ -447,7 +447,7 @@ const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, co
         (attachTo || scene).remove(mesh);
       });
     };
-  }, [visibleResultTally, texturesLoaded, lotUseTallies?.total]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [visibleResultTally, texturesLoaded, lotUseTallies]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Create mesh for core samples
   useEffect(() => {
@@ -681,6 +681,7 @@ const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, co
     lotsReady,
     meshesInitialized,
     positionsReady,
+    regionsByDistance,
     resultsByRegion
   ]);
 
@@ -886,7 +887,7 @@ const Lots = ({ attachTo, asteroidId, axis, cameraAltitude, cameraNormalized, co
     const now = Date.now();
     if (now - lastMouseUpdateTime.current < mouseThrottleTime) return;
 
-    // FINALLY, find the closest intersection
+    // FINALLY, find the closest intersection (if the mouse is on the screen)
     lastMouseUpdatePosition.current = mouseVector.clone();
     lastMouseUpdateTime.current = now;
     const intersections = state.raycaster.intersectObject(mouseableMesh.current);

@@ -118,9 +118,10 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
     }
   }, [currentExtraction?.destination]);
 
-  const [crewTravelBonus, extractionBonus] = useMemo(() => {
+  const [crewTravelBonus, crewDistBonus, extractionBonus] = useMemo(() => {
     const bonusIds = [
       Crewmate.ABILITY_IDS.HOPPER_TRANSPORT_TIME,
+      Crewmate.ABILITY_IDS.FREE_TRANSPORT_DISTANCE,
       Crewmate.ABILITY_IDS.EXTRACTION_TIME,
     ];
     const abilities = getCrewAbilityBonuses(bonusIds, crew);
@@ -204,22 +205,28 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
   const { totalTime: crewTravelTime, tripDetails } = useMemo(() => {
     if (!asteroid?.id || !crew?._location?.lotId || !lot?.id) return {};
     const crewLotIndex = Lot.toIndex(crew?._location?.lotId);
-    return getTripDetails(asteroid.id, crewTravelBonus, crewLotIndex, [
+    return getTripDetails(asteroid.id, crewTravelBonus, crewDistBonus, crewLotIndex, [
       { label: 'Travel to Extraction Site', lotIndex: Lot.toIndex(lot.id) },
       { label: 'Return to Crew Station', lotIndex: crewLotIndex },
     ], crew?._timeAcceleration);
-  }, [asteroid?.id, lot?.id, crew?._location?.lotId, crew?._timeAcceleration, crewTravelBonus]);
+  }, [asteroid?.id, lot?.id, crew?._location?.lotId, crew?._timeAcceleration, crewTravelBonus, crewDistBonus]);
 
   const [transportDistance, transportTime] = useMemo(() => {
     if (!destinationLot?.id) return [];
     return [
       Asteroid.getLotDistance(asteroid?.id, Lot.toIndex(lot?.id), Lot.toIndex(destinationLot?.id)) || 0,
       Time.toRealDuration(
-        Asteroid.getLotTravelTime(asteroid?.id, Lot.toIndex(lot?.id), Lot.toIndex(destinationLot?.id), crewTravelBonus.totalBonus) || 0,
+        Asteroid.getLotTravelTime(
+          asteroid?.id,
+          Lot.toIndex(lot?.id),
+          Lot.toIndex(destinationLot?.id),
+          crewTravelBonus.totalBonus,
+          crewDistBonus.totalBonus
+        ) || 0,
         crew?._timeAcceleration
       )
     ];
-  }, [asteroid?.id, lot?.id, crew?._timeAcceleration, destinationLot?.id, crewTravelBonus]);
+  }, [asteroid?.id, lot?.id, crew?._timeAcceleration, destinationLot?.id, crewDistBonus, crewTravelBonus]);
 
   const [crewTimeRequirement, taskTimeRequirement] = useMemo(() => {
     const oneWayCrewTravelTime = crewTravelTime / 2;
@@ -348,6 +355,7 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
         }}
         actionCrew={crew}
         location={{ asteroid, lot }}
+        delayUntil={currentExtraction?.startTime || crew?.Crew?.readyAt}
         crewAvailableTime={crewTimeRequirement}
         taskCompleteTime={taskTimeRequirement}
         onClose={props.onClose}
@@ -363,7 +371,7 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
                 ? (
                   <ResourceThumbnail
                     resource={resource}
-                    tooltipContainer="none"
+                    tooltipContainer={null}
                     iconBadge={<CoreSampleIcon />}
                     iconBadgeCorner={theme.colors.resources[keyify(resource.category)]} />
                 )
@@ -399,7 +407,7 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
 
           <InventoryInputBlock
             title="Destination"
-            titleDetails={<TransferDistanceDetails distance={transportDistance} crewTravelBonus={crewTravelBonus} />}
+            titleDetails={<TransferDistanceDetails distance={transportDistance} crewDistBonus={crewDistBonus} />}
             entity={destination}
             inventorySlot={destinationInventory?.slot}
             inventoryBonuses={crew?._inventoryBonuses}
@@ -428,7 +436,7 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
                   <label>Price</label>
                 </InputLabel>
                 <TextInputWrapper>
-                  <div style={{ background: '#09191f', color: 'white', fontSize: '26px', padding: '4px 2px' }}>
+                  <div style={{ background: '#09191f', color: 'white', fontSize: '26px', padding: '4px 2px', width: '100%' }}>
                     <SwayIcon />{formatPrice(selectedCoreSample.PrivateSale?.amount / 1e6)}
                   </div>
                 </TextInputWrapper>
@@ -495,6 +503,7 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
         goLabel={isPurchase ? 'Purchase & Extract' : 'Extract'}
         onGo={onStartExtraction}
         finalizeLabel="Complete"
+        isSequenceable
         onFinalize={finishExtraction}
         stage={stage}
         waitForCrewReady
@@ -513,7 +522,7 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
 
           {/* TODO: reset if resource changes? */}
           <InventorySelectionDialog
-            asteroidId={asteroid.id}
+            asteroidId={asteroid?.id}
             excludeSites
             otherEntity={lot?.building}
             itemIds={[selectedCoreSample?.Deposit?.resource]}
