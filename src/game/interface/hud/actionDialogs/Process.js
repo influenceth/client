@@ -241,7 +241,7 @@ const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...pro
   const [crewTimeRequirement, taskTimeRequirement] = useMemo(() => {
     const onewayCrewTravelTime = crewTravelTime / 2;
     return [
-      Math.max(onewayCrewTravelTime, inputTransportTime) + (setupTime + processingTime) / 5 + onewayCrewTravelTime,
+      Math.max(onewayCrewTravelTime, inputTransportTime) + (setupTime + processingTime) / 8 + onewayCrewTravelTime,
       Math.max(onewayCrewTravelTime, inputTransportTime) + setupTime + processingTime + outputTransportTime
     ];
   }, [crewTravelTime, inputTransportTime, setupTime, processingTime, outputTransportTime]);
