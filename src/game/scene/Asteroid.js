@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
-import { AxesHelper, CameraHelper, Color, DirectionalLight, DirectionalLightHelper, Quaternion, Vector3 } from 'three';
+import { ACESFilmicToneMapping, AxesHelper, CameraHelper, Color, DirectionalLight, DirectionalLightHelper, Quaternion, Vector3 } from 'three';
 import gsap from 'gsap';
 import { AdalianOrbit, Asteroid, Entity, Lot, Product, Ship } from '@influenceth/sdk';
 
@@ -18,6 +18,24 @@ import Telemetry from './asteroid/Telemetry';
 import { pointCircleClosest } from '~/lib/geometryUtils';
 import { keyify } from '~/lib/utils';
 import useAsteroidShips from '~/hooks/useAsteroidShips';
+import DevToolContext from '~/contexts/DevToolContext';
+
+export const sceneVisualDefaults = {
+  starColor: 'fffbf6',// 0xffeedd,
+  starStrength: 4,//6,//1,
+  darklightColor: 'd8ddff',
+  darklightStrength: 0.75,//1.2,//0.1,
+
+  enablePostprocessing: true,
+  bloomRadius: 1,
+  bloomStrength: 0.8,
+  toneMapping: ACESFilmicToneMapping,
+  toneMappingExposure: 1,
+
+  backgroundStrength: 1,
+};
+
+const validateHex = (v) => /[a-f0-9]{6}/i.test(v) ? v : '';
 
 const trajDebugColors = [
   0xe81416,
@@ -45,8 +63,6 @@ const INITIAL_ZOOM_MIN = 6000;
 const MIN_ZOOM_DEFAULT = 1.2;
 const MAX_ZOOM = 20;
 const DIRECTIONAL_LIGHT_DISTANCE = 10;
-const LIGHT_INTENSITY_ADJ = 4;//6;//1;
-const DARK_LIGHT_INTENSITY = 0.75;//1.2;//0.1;
 
 const LIGHT_ANIMATION_TIME = 500;
 export const ZOOM_IN_ANIMATION_TIME = 3000;
@@ -153,6 +169,18 @@ const AsteroidComponent = () => {
   const dispatchLotSelected = useStore(s => s.dispatchLotSelected);
   const resourceMap = useStore(s => s.asteroids.resourceMap);
   const lotId = useStore(s => s.asteroids.lot);
+
+  const { overrides } = useContext(DevToolContext);
+
+  const [STAR_COLOR, STAR_INTENSITY_ADJ, DARKLIGHT_COLOR, DARKLIGHT_INTENSITY] = useMemo(() => {
+    const o = overrides?.assetType === 'scene' ? overrides : {};
+    return [
+      `#${validateHex(o?.starColor) || sceneVisualDefaults.starColor}`,
+      o?.starStrength || sceneVisualDefaults.starStrength,
+      `#${validateHex(o?.darklightColor) || sceneVisualDefaults.darklightColor}`,
+      o?.darklightStrength || sceneVisualDefaults.darklightStrength,
+    ];
+  }, [overrides]);
 
   const selectedLot = useMemo(() => Lot.toPosition(lotId), [lotId]);
 
@@ -350,8 +378,8 @@ const AsteroidComponent = () => {
 
   const defaultLightIntensity = useMemo(() => {
     if (!position.current || !config?.radius) return 0;
-    return Math.max(0.175, LIGHT_INTENSITY_ADJ * constants.STAR_INTENSITY / (new Vector3(...position.current).length() / constants.AU));
-  }, [config?.radius]);
+    return Math.max(0.175, STAR_INTENSITY_ADJ * constants.STAR_INTENSITY / (new Vector3(...position.current).length() / constants.AU));
+  }, [config?.radius, STAR_INTENSITY_ADJ]);
 
   // turn down the sun while in resource mode
   const currentLightIntensity = useMemo(() => {
@@ -392,11 +420,11 @@ const AsteroidComponent = () => {
 
     // init params
     const posVec = new Vector3(...position.current);
-    const lightColor = 0xfffbf6;//0xffeedd;
+    const lightColor = new Color().setStyle(STAR_COLOR);
     const lightDistance = config.radius * DIRECTIONAL_LIGHT_DISTANCE;
     const lightDirection = posVec.clone().normalize();
 
-    const darkLightColor = 0xd8ddff;
+    const darkLightColor = new Color().setStyle(DARKLIGHT_COLOR);
     const darkLightDistance = config.radius * DIRECTIONAL_LIGHT_DISTANCE;
     const darkLightDirection = posVec.negate().clone().normalize();
 
@@ -426,7 +454,7 @@ const AsteroidComponent = () => {
     }
 
     // create "dark light"
-    darkLight.current = new DirectionalLight(darkLightColor, DARK_LIGHT_INTENSITY);
+    darkLight.current = new DirectionalLight(darkLightColor, DARKLIGHT_INTENSITY);
     darkLight.current.position.copy(darkLightDirection.negate().multiplyScalar(darkLightDistance));
     group.current.add(darkLight.current);
 
@@ -435,6 +463,14 @@ const AsteroidComponent = () => {
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [config, ringsPresent, shadowMode, shadowSize, textureSize, surfaceDistance]);
+
+  useEffect(() => {
+    if (light.current) light.current.color = new Color().setStyle(STAR_COLOR);
+  }, [STAR_COLOR]);
+
+  useEffect(() => {
+    if (darkLight.current) darkLight.current.color = new Color().setStyle(DARKLIGHT_COLOR);
+  }, [DARKLIGHT_COLOR]);
 
   // Zooms the camera to the correct location
   useEffect(() => {
@@ -938,7 +974,7 @@ const AsteroidComponent = () => {
         if (darkLight.current) {
           const falloff = Math.min(config.radius / 4, 25000);
           const intensity = Math.max(0.25, Math.min(Math.sqrt(falloff / cameraAltitude), 0.75));
-          darkLight.current.intensity = DARK_LIGHT_INTENSITY * intensity;
+          darkLight.current.intensity = DARKLIGHT_INTENSITY * intensity;
           darkLight.current.position.copy(
             new Vector3(...position.current).normalize().multiplyScalar(config.radius * DIRECTIONAL_LIGHT_DISTANCE)
           );

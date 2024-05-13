@@ -10,6 +10,8 @@ import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPa
 
 import useStore from '~/hooks/useStore';
 
+export const BLOOM_LAYER = 11;
+
 const VERTEX_SHADER = `
   varying vec2 vUv;
 
@@ -42,31 +44,13 @@ const backgrounds = {};
 const colors = {};
 const materials = {};
 
-// let taskTotal = 0;
-// let taskTally = 0;
-// setInterval(() => {
-//   if (taskTally > 0) {
-//     console.log(
-//       `avg children time (over ${taskTally}): ${Math.round(1000 * taskTotal / taskTally) / 1000}ms`,
-//     );
-//   }
-// }, 5000);
-// setTimeout(() => {
-//   taskTally = 0;
-//   taskTotal = 0;
-// }, 4000);
-// const debug = (start) => {
-//   taskTally++;
-//   taskTotal += performance.now() - start;
-// };
-
 const defaultBloomParams = {
   threshold: 0,
   strength: 0.8,
-  radius: 0.5,//0.1
+  radius: 0.5,
 }
 
-const Postprocessor = ({ enabled, bloomParams = {} }) => {
+const Postprocessor = ({ enabled, bloomParams = defaultBloomParams }) => {
   const { gl: renderer, camera, scene, size } = useThree();
 
   const pixelRatio = useStore(s => s.graphics.pixelRatio || 1);
@@ -88,7 +72,7 @@ const Postprocessor = ({ enabled, bloomParams = {} }) => {
       //  generating darkMaterial as needed for each opacity (i.e. darkMaterials[opacity])
       //  ... will only need to generate on first pass
     } else if (obj.material) {
-      if (!obj.userData.bloom) {
+      if (!obj.layers.isEnabled(BLOOM_LAYER)) {
         // TODO: is double-traversing some nodes, that's why these if's are here
         //  why is this happening?
         if (obj.material.displacementMap) {

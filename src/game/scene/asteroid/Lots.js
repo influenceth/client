@@ -22,6 +22,7 @@ import {
 import { useQueryClient } from 'react-query';
 import { Asteroid, Building, Delivery, Entity, Lot } from '@influenceth/sdk';
 
+import { BLOOM_LAYER } from '~/game/Postprocessor';
 import useSession from '~/hooks/useSession';
 import useCrewContext from '~/hooks/useCrewContext';
 import useStore from '~/hooks/useStore';
@@ -33,10 +34,10 @@ import useLot from '~/hooks/useLot';
 import constants from '~/lib/constants';
 import { getLotGeometryHeightMaps, getLotGeometryHeightMapResolution } from './helpers/LotGeometry';
 import useConstants from '~/hooks/useConstants';
+import theme from '~/theme';
 
 import frag from './shaders/delivery.frag';
 import vert from './shaders/delivery.vert';
-import theme from '~/theme';
 
 const { MAX_LOTS_RENDERED } = constants;
 
@@ -430,7 +431,7 @@ const Lots = ({ attachTo: overrideAttachTo, asteroidId, axis, cameraAltitude, ca
     for (const use of uses) {
       const material = new MeshBasicMaterial({ map: textures[use], ...materialOpts });
       meshes[use] = new InstancedMesh(plane, material, lotUseTallies[use]);
-      meshes[use].userData.bloom = true;
+      meshes[use].layers.enable(BLOOM_LAYER);
       meshes[use].setColorAt(0, new Color());
     }
 
@@ -488,7 +489,7 @@ const Lots = ({ attachTo: overrideAttachTo, asteroidId, axis, cameraAltitude, ca
       })
     );
     mouseHoverMesh.current.renderOrder = 999;
-    mouseHoverMesh.current.userData.bloom = true;
+    mouseHoverMesh.current.layers.enable(BLOOM_LAYER);
     attachTo.add(mouseHoverMesh.current);
     return () => {
       if (mouseHoverMesh.current) {
@@ -510,7 +511,7 @@ const Lots = ({ attachTo: overrideAttachTo, asteroidId, axis, cameraAltitude, ca
       })
     );
     selectionMesh.current.renderOrder = 999;
-    selectionMesh.current.userData.bloom = true;
+    selectionMesh.current.layers.enable(BLOOM_LAYER);
     attachTo.add(selectionMesh.current);
     return () => {
       if (selectionMesh.current) {
@@ -887,8 +888,8 @@ const Lots = ({ attachTo: overrideAttachTo, asteroidId, axis, cameraAltitude, ca
     // if lastMouseIntersect.current is null, it is in the middle of finding the closest point, so return
     if (!lastMouseIntersect.current) return;
 
-    // if lockedToSurface mode, state.mouse must have changed to be worth re-evaluating
-    const mouseVector = state.pointer || state.mouse;
+    // if lockedToSurface mode, state.pointer must have changed to be worth re-evaluating
+    const mouseVector = state.pointer;
     if (getLockToSurface() && lastMouseUpdatePosition.current.equals(mouseVector)) return;
 
     // throttle by time as well

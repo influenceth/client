@@ -14,6 +14,7 @@ import { getModelViewerSettings, toneMaps } from '../../ModelViewer';
 import { HudMenuCollapsibleSection, Scrollable } from './components/components';
 import { getBuildingModel, getProductModel, getShipModel } from '~/lib/assetUtils';
 import { nativeBool } from '~/lib/utils';
+import TextInput from '~/components/TextInput';
 
 const InnerSection = styled.div`
   & > * {
@@ -212,85 +213,135 @@ const DevTools = () => {
             style={{ minWidth: 90, color: settings.assetType === 'ship' ? 'black' : undefined }}>
             Ships
           </Button>
+          
+          {settings.assetType !== 'scene' && (
+            <Button size="icon" onClick={() => setters.setAssetType('scene')}><CloseIcon /></Button>
+          )}
         </div>
         
         <InnerSection style={{ marginTop: 10 }}>
-          {categories?.length > 1 && (
-            <Dropdown
-              disabled={isLoading || modelOverride}
-              options={categories}
-              onChange={(c) => setCategory(c?.value)}
-              size="small"
-              style={{ textTransform: 'none', width: '300px' }} />
-          )}
-          <Dropdown
-            disabled={isLoading || modelOverride}
-            initialSelection={categoryModels?.find((m) => m.modelUrl === settings.modelUrl)?.id}
-            labelKey="name"
-            valueKey="i"
-            options={categoryModels}
-            onChange={(a) => selectModel(a)}
-            size="small"
-            style={{ textTransform: 'none', width: '300px' }} />
+          {settings.assetType !== 'scene' && (
+            <>
+              {categories?.length > 1 && (
+                <Dropdown
+                  disabled={isLoading || modelOverride}
+                  options={categories}
+                  onChange={(c) => setCategory(c?.value)}
+                  size="small"
+                  style={{ textTransform: 'none', width: '300px' }} />
+              )}
+              <Dropdown
+                disabled={isLoading || modelOverride}
+                initialSelection={categoryModels?.find((m) => m.modelUrl === settings.modelUrl)?.id}
+                labelKey="name"
+                valueKey="i"
+                options={categoryModels}
+                onChange={(a) => selectModel(a)}
+                size="small"
+                style={{ textTransform: 'none', width: '300px' }} />
 
-          <Button
-            disabled={nativeBool(isLoading)}
-            onClick={handleUploadClick('model')}>
-            Upload Model
-          </Button>
+              <Button
+                disabled={nativeBool(isLoading)}
+                onClick={handleUploadClick('model')}>
+                Upload Model
+              </Button>
 
-          {modelOverride && (
-            <OverrideLabel>
-              <IconButton onClick={removeOverride('model')}><CloseIcon /></IconButton>
-              <label>{modelOverride.name}</label>
-            </OverrideLabel>
+              {modelOverride && (
+                <OverrideLabel>
+                  <IconButton onClick={removeOverride('model')}><CloseIcon /></IconButton>
+                  <label>{modelOverride.name}</label>
+                </OverrideLabel>
+              )}
+            </>
           )}
         </InnerSection>
       </HudMenuCollapsibleSection>
 
       <HudMenuCollapsibleSection titleText="Lighting">
         {/* many of these are reset on assetType change */}
-        <InnerSection key={settings.assetType}>
-          <Miniform>
-            <label>Rimlight Intensity</label>
-            <NumberInput
-              disabled={nativeBool(isLoading)}
-              initialValue={settings.rimlightIntensity}
-              min="0"
-              step="0.01"
-              onChange={(v) => setters.setRimlightIntensity(parseFloat(v) || 0)} />
-          </Miniform>
+        <InnerSection key={`${settings.assetType}_${settings.ready}`}>
+          {settings.assetType === 'scene' && (
+              <>
+                <Miniform>
+                  <label>Star Intensity (scales by distance)</label>
+                  <NumberInput
+                    disabled={nativeBool(isLoading)}
+                    initialValue={settings.starStrength}
+                    min="0"
+                    step="0.01"
+                    onChange={(v) => setters.setStarStrength(parseFloat(v) || 0)} />
+                </Miniform>
 
-          <Miniform>
-            <label>Keylight Intensity</label>
-            <NumberInput
-              disabled={nativeBool(isLoading)}
-              initialValue={settings.keylightIntensity}
-              min="0"
-              step="0.01"
-              onChange={(v) => setters.setKeylightIntensity(parseFloat(v) || 0)} />
-          </Miniform>
+                <Miniform>
+                  <label>Star Color (hex code)</label>
+                  <TextInput
+                    disabled={nativeBool(isLoading)}
+                    initialValue={settings.starColor}
+                    onChange={(v) => setters.setStarColor((v || '').replace(/[^a-f0-9]/gi, ''))} />
+                </Miniform>
 
-          <Miniform>
-            <label>Lightmap Strength</label>
-            <NumberInput
-              disabled={nativeBool(isLoading)}
-              initialValue={settings.lightmapStrength}
-              min="0"
-              step="0.01"
-              onChange={(v) => setters.setLightmapIntensity(parseFloat(v) || 0)} />
-          </Miniform>
+                <Miniform>
+                  <label>Dark Light Intensity</label>
+                  <NumberInput
+                    disabled={nativeBool(isLoading)}
+                    initialValue={settings.darklightStrength}
+                    min="0"
+                    step="0.01"
+                    onChange={(v) => setters.setDarklightStrength(parseFloat(v) || 0)} />
+                </Miniform>
 
-          <Miniform>
-            <label>In-Scene Spotlight Reduction</label>
-            <NumberInput
-              disabled={nativeBool(isLoading)}
-              initialValue={settings.spotlightReduction}
-              min="0"
-              step="1"
-              onChange={(v) => setters.setSpotlightReduction(parseFloat(v) || 1)} />
-          </Miniform>
-            
+                <Miniform>
+                  <label>Dark Light Color (hex code)</label>
+                  <TextInput
+                    disabled={nativeBool(isLoading)}
+                    initialValue={settings.darklightColor}
+                    onChange={(v) => setters.setDarklightColor((v || '').replace(/[^a-f0-9]/gi, ''))} />
+                </Miniform>
+              </>
+          )}
+          {settings.assetType !== 'scene' && (
+            <>
+              <Miniform>
+                <label>Rimlight Intensity</label>
+                <NumberInput
+                  disabled={nativeBool(isLoading)}
+                  initialValue={settings.rimlightIntensity}
+                  min="0"
+                  step="0.01"
+                  onChange={(v) => setters.setRimlightIntensity(parseFloat(v) || 0)} />
+              </Miniform>
+
+              <Miniform>
+                <label>Keylight Intensity</label>
+                <NumberInput
+                  disabled={nativeBool(isLoading)}
+                  initialValue={settings.keylightIntensity}
+                  min="0"
+                  step="0.01"
+                  onChange={(v) => setters.setKeylightIntensity(parseFloat(v) || 0)} />
+              </Miniform>
+
+              <Miniform>
+                <label>Lightmap Strength</label>
+                <NumberInput
+                  disabled={nativeBool(isLoading)}
+                  initialValue={settings.lightmapStrength}
+                  min="0"
+                  step="0.01"
+                  onChange={(v) => setters.setLightmapIntensity(parseFloat(v) || 0)} />
+              </Miniform>
+
+              <Miniform>
+                <label>In-Scene Spotlight Reduction</label>
+                <NumberInput
+                  disabled={nativeBool(isLoading)}
+                  initialValue={settings.spotlightReduction}
+                  min="0"
+                  step="1"
+                  onChange={(v) => setters.setSpotlightReduction(parseFloat(v) || 1)} />
+              </Miniform>
+            </>
+          )}
         </InnerSection>
       </HudMenuCollapsibleSection>
 
@@ -302,47 +353,75 @@ const DevTools = () => {
           </CheckboxRow>
 
           {settings.enablePostprocessing && (
-            <div style={{ marginTop: 8 }}>
-              <Dropdown
-                disabled={nativeBool(isLoading)}
-                initialSelection={toneMaps.find((t) => t.value === settings.toneMapping)?.value}
-                options={toneMaps}
-                onChange={onChangeToneMapping}
-                size="small"
-                style={{ textTransform: 'none', width: '250px' }} />
-
-              {settings.toneMapping !== NoToneMapping && (
+            <>
+              <div style={{ marginTop: 8 }}>
                 <Miniform>
-                  <label>Tone Mapping Exposure</label>
+                  <label>Bloom Strength</label>
                   <NumberInput
                     disabled={nativeBool(isLoading)}
-                    initialValue={settings.toneMappingExposure}
+                    initialValue={settings.bloomStrength}
                     min="0"
                     step="0.01"
-                    onChange={(v) => setters.setToneMappingExposure(parseFloat(v) || 1)} />
+                    onChange={(v) => setters.setBloomStrength(parseFloat(v))} />
                 </Miniform>
-              )}
 
-              <Miniform>
-                <label>Bloom Radius</label>
-                <NumberInput
-                  disabled={nativeBool(isLoading)}
-                  initialValue={settings.bloomRadius}
-                  min="0"
-                  step="0.01"
-                  onChange={(v) => setters.setBloomRadius(parseFloat(v))} />
-              </Miniform>
+                <Miniform>
+                  <label>Bloom Radius</label>
+                  <NumberInput
+                    disabled={nativeBool(isLoading)}
+                    initialValue={settings.bloomRadius}
+                    min="0"
+                    step="0.01"
+                    onChange={(v) => setters.setBloomRadius(parseFloat(v))} />
+                </Miniform>
 
-              <Miniform>
-                <label>Bloom Strength</label>
-                <NumberInput
+                {/* NOTE: for @react-three/postprocessing bloom
+                  <Miniform>
+                    <label>Bloom Smoothing (0 - 1)</label>
+                    <NumberInput
+                      disabled={nativeBool(isLoading)}
+                      initialValue={settings.bloomSmoothing}
+                      max="1"
+                      min="0"
+                      step="0.001"
+                      onChange={(v) => setters.setBloomSmoothing(parseFloat(v))} />
+                  </Miniform>
+
+                  <Miniform>
+                    <label>Bloom Radius (1,2,3,4,5)</label>
+                    <NumberInput
+                      disabled={nativeBool(isLoading)}
+                      initialValue={settings.bloomRadius}
+                      max="5"
+                      min="1"
+                      step="1"
+                      onChange={(v) => setters.setBloomRadius(parseFloat(v))} />
+                  </Miniform>
+                */}
+              </div>
+
+              <div style={{ marginTop: 8 }}>
+                <Dropdown
                   disabled={nativeBool(isLoading)}
-                  initialValue={settings.bloomStrength}
-                  min="0"
-                  step="0.01"
-                  onChange={(v) => setters.setBloomStrength(parseFloat(v))} />
-              </Miniform>
-            </div>
+                  initialSelection={toneMaps.find((t) => t.value === settings.toneMapping)?.value}
+                  options={toneMaps}
+                  onChange={onChangeToneMapping}
+                  size="small"
+                  style={{ textTransform: 'none', width: '250px' }} />
+
+                {settings.toneMapping !== NoToneMapping && (
+                  <Miniform>
+                    <label>Tone Mapping Exposure</label>
+                    <NumberInput
+                      disabled={nativeBool(isLoading)}
+                      initialValue={settings.toneMappingExposure}
+                      min="0"
+                      step="0.01"
+                      onChange={(v) => setters.setToneMappingExposure(parseFloat(v) || 1)} />
+                  </Miniform>
+                )}
+              </div>
+            </>
           )}
         </InnerSection>
       </HudMenuCollapsibleSection>
@@ -371,53 +450,59 @@ const DevTools = () => {
               onChange={(v) => setters.setBackgroundStrength(parseFloat(v))} />
           </Miniform>
 
-          <div style={{ margin: 20 }} />
+          {settings.assetType !== 'scene' && (
+            <>
+              <div style={{ margin: 20 }} />
 
-          <Button
-            disabled={nativeBool(isLoading)}
-            onClick={handleUploadClick('env')}>
-            Override EnvMap
-          </Button>
-          {overrides.envmap && (
-            <OverrideLabel>
-              <IconButton onClick={removeOverride('env')}><CloseIcon /></IconButton>
-              <label>{overrides.envmapOverrideName}</label>
-            </OverrideLabel>
+              <Button
+                disabled={nativeBool(isLoading)}
+                onClick={handleUploadClick('env')}>
+                Override EnvMap
+              </Button>
+              {overrides.envmap && (
+                <OverrideLabel>
+                  <IconButton onClick={removeOverride('env')}><CloseIcon /></IconButton>
+                  <label>{overrides.envmapOverrideName}</label>
+                </OverrideLabel>
+              )}
+
+              <Miniform>
+                <label>EnvMap Strength</label>
+                <NumberInput
+                  disabled={nativeBool(isLoading)}
+                  initialValue={defaultSettings.envmapStrength}
+                  min="0.0"
+                  step="0.01"
+                  onChange={(v) => setters.setEnvmapStrength(parseFloat(v))} />
+              </Miniform>
+            </>
           )}
-
-          <Miniform>
-            <label>EnvMap Strength</label>
-            <NumberInput
-              disabled={nativeBool(isLoading)}
-              initialValue={defaultSettings.envmapStrength}
-              min="0.0"
-              step="0.01"
-              onChange={(v) => setters.setEnvmapStrength(parseFloat(v))} />
-          </Miniform>
         </InnerSection>
       </HudMenuCollapsibleSection>
 
-      <HudMenuCollapsibleSection titleText="Camera" collapsed>
-        <CheckboxRow onClick={() => toggleSetting(setters.setEnableRotation)}>
-          {settings.enableRotation ? <CheckedIcon /> : <UncheckedIcon />}
-          <label>Auto Rotation</label>
-        </CheckboxRow>
+      {settings.assetType !== 'scene' && (
+        <HudMenuCollapsibleSection titleText="Camera" collapsed>
+          <CheckboxRow onClick={() => toggleSetting(setters.setEnableRotation)}>
+            {settings.enableRotation ? <CheckedIcon /> : <UncheckedIcon />}
+            <label>Auto Rotation</label>
+          </CheckboxRow>
 
-        <CheckboxRow onClick={() => toggleSetting(setters.setEnableRevolution)}>
-          {settings.enableRevolution ? <CheckedIcon /> : <UncheckedIcon />}
-          <label>Auto Revolution</label>
-        </CheckboxRow>
+          <CheckboxRow onClick={() => toggleSetting(setters.setEnableRevolution)}>
+            {settings.enableRevolution ? <CheckedIcon /> : <UncheckedIcon />}
+            <label>Auto Revolution</label>
+          </CheckboxRow>
 
-        <CheckboxRow onClick={() => toggleSetting(setters.setEnableZoomLimits)}>
-          {settings.enableZoomLimits ? <CheckedIcon /> : <UncheckedIcon />}
-          <label>Camera Zoom Limits</label>
-        </CheckboxRow>
+          <CheckboxRow onClick={() => toggleSetting(setters.setEnableZoomLimits)}>
+            {settings.enableZoomLimits ? <CheckedIcon /> : <UncheckedIcon />}
+            <label>Camera Zoom Limits</label>
+          </CheckboxRow>
 
-        <CheckboxRow onClick={() => toggleSetting(setters.setTrackCamera)}>
-          {settings.trackCamera ? <CheckedIcon /> : <UncheckedIcon />}
-          <label>Track Camera</label>
-        </CheckboxRow>
-      </HudMenuCollapsibleSection>
+          <CheckboxRow onClick={() => toggleSetting(setters.setTrackCamera)}>
+            {settings.trackCamera ? <CheckedIcon /> : <UncheckedIcon />}
+            <label>Track Camera</label>
+          </CheckboxRow>
+        </HudMenuCollapsibleSection>
+      )}
 
       <input
         ref={fileInput}

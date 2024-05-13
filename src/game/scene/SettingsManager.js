@@ -1,15 +1,27 @@
-import { useEffect } from 'react';
+import { useContext, useEffect, useMemo } from 'react';
 import { useThree } from '@react-three/fiber';
 import { useCubeTexture } from '@react-three/drei';
 import { Color } from 'three';
 
 import useStore from '~/hooks/useStore';
+import DevToolContext from '~/contexts/DevToolContext';
+import { sceneVisualDefaults } from './Asteroid';
 
 const SettingsManager = () => {
   const { gl, scene, camera, renderer } = useThree();
   const fov = useStore(s => s.graphics.fov);
   const pixelRatio = useStore(s => s.graphics.pixelRatio);
   const skyboxVisible = useStore(s => s.graphics.skybox);
+
+  const { overrides } = useContext(DevToolContext);
+
+  const [BACKGROUND_INTENSITY] = useMemo(() => {
+    console.log({ overrides })
+    const o = overrides?.assetType === 'scene' ? overrides : {};
+    return [
+      isNaN(o?.backgroundStrength) ? sceneVisualDefaults.backgroundStrength : o.backgroundStrength
+    ];
+  }, [overrides]);
 
   useEffect(() => {
     gl.setPixelRatio(pixelRatio || 1);
@@ -24,11 +36,14 @@ const SettingsManager = () => {
   useEffect(() => {
     if (skyboxVisible && (!scene.background || scene.background.isColor) && skybox) {
       scene.background = skybox;
-      scene.backgroundIntensity = 1;
     } else if (!skyboxVisible && scene.background) {
-      scene.background = new Color(0x000000);
+      scene.background = new Color(0x0000ff);
     }
   }, [ scene, skyboxVisible, skybox ]);
+
+  useEffect(() => {
+    scene.backgroundIntensity = BACKGROUND_INTENSITY;
+  }, [BACKGROUND_INTENSITY]);
 
   // toggle fov as needed
   useEffect(() => {

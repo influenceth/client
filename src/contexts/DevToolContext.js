@@ -1,6 +1,8 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { ACESFilmicToneMapping } from 'three';
 
+import { sceneVisualDefaults } from '~/game/scene/Asteroid';
+
 const DevToolContext = React.createContext();
 
 export function DevToolProvider({ children }) {
@@ -13,6 +15,7 @@ export function DevToolProvider({ children }) {
   const [backgroundStrength, setBackgroundStrength] = useState();
   const [bloomRadius, setBloomRadius] = useState();
   const [bloomStrength, setBloomStrength] = useState();
+  const [bloomSmoothing, setBloomSmoothing] = useState();
   const [enablePostprocessing, setEnablePostprocessing] = useState();
   const [enableRotation, setEnableRotation] = useState();
   const [enableRevolution, setEnableRevolution] = useState();
@@ -27,11 +30,17 @@ export function DevToolProvider({ children }) {
   const [toneMapping, setToneMapping] = useState(ACESFilmicToneMapping);
   const [toneMappingExposure, setToneMappingExposure] = useState(1);
   const [trackCamera, setTrackCamera] = useState();
+  const [darklightColor, setDarklightColor] = useState();
+  const [darklightStrength, setDarklightStrength] = useState();
+  const [starColor, setStarColor] = useState();
+  const [starStrength, setStarStrength] = useState();
+  const [ready, setReady] = useState(0);
 
   // reset most overrides on change of asset type
   useEffect(() => {
     setBackgroundStrength();
     setBloomRadius();
+    setBloomSmoothing();
     setBloomStrength();
     setEnablePostprocessing();
     setEnableRotation();
@@ -44,7 +53,24 @@ export function DevToolProvider({ children }) {
     setLightmapIntensity();
     setRimlightIntensity();
     setSpotlightReduction();
-  }, [assetType])
+
+    if (assetType === 'scene') {
+      setBackgroundStrength(sceneVisualDefaults.backgroundStrength);
+      setBloomRadius(sceneVisualDefaults.bloomRadius);
+      setBloomSmoothing(sceneVisualDefaults.bloomSmoothing);
+      setBloomStrength(sceneVisualDefaults.bloomStrength);
+      setEnablePostprocessing(sceneVisualDefaults.enablePostprocessing);
+
+      setStarColor(sceneVisualDefaults.starColor);
+      setStarStrength(sceneVisualDefaults.starStrength);
+      setDarklightColor(sceneVisualDefaults.darklightColor);
+      setDarklightStrength(sceneVisualDefaults.darklightStrength);
+
+      setToneMapping(sceneVisualDefaults.toneMapping);
+      setToneMappingExposure(sceneVisualDefaults.toneMappingExposure);
+      setReady(1);
+    }
+  }, [assetType]);
 
   const contextValue = useMemo(() => ({
     overrides: {
@@ -54,7 +80,10 @@ export function DevToolProvider({ children }) {
       backgroundOverrideName,
       backgroundStrength,
       bloomRadius,
+      bloomSmoothing,
       bloomStrength,
+      darklightColor,
+      darklightStrength,
       enablePostprocessing,
       enableRotation,
       enableRevolution,
@@ -64,8 +93,11 @@ export function DevToolProvider({ children }) {
       envmapStrength,
       keylightIntensity,
       lightmapStrength,
+      ready,
       rimlightIntensity,
       spotlightReduction,
+      starColor,
+      starStrength,
       toneMapping,
       toneMappingExposure,
       trackCamera
@@ -76,7 +108,10 @@ export function DevToolProvider({ children }) {
     setBackgroundOverrideName,
     setBackgroundStrength,
     setBloomRadius,
+    setBloomSmoothing,
     setBloomStrength,
+    setDarklightColor,
+    setDarklightStrength,
     setEnablePostprocessing,
     setEnableRotation,
     setEnableRevolution,
@@ -88,6 +123,8 @@ export function DevToolProvider({ children }) {
     setLightmapIntensity,
     setRimlightIntensity,
     setSpotlightReduction,
+    setStarColor,
+    setStarStrength,
     setToneMapping,
     setToneMappingExposure,
     setTrackCamera
@@ -98,7 +135,10 @@ export function DevToolProvider({ children }) {
     backgroundOverrideName,
     backgroundStrength,
     bloomRadius,
+    bloomSmoothing,
     bloomStrength,
+    darklightColor,
+    darklightStrength,
     enablePostprocessing,
     enableRotation,
     enableRevolution,
@@ -108,8 +148,11 @@ export function DevToolProvider({ children }) {
     envmapStrength,
     keylightIntensity,
     lightmapStrength,
+    ready,
     rimlightIntensity,
     spotlightReduction,
+    starColor,
+    starStrength,
     toneMapping,
     toneMappingExposure,
     trackCamera

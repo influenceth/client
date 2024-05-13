@@ -173,31 +173,31 @@ const Game = () => {
 
                   {/* main app wrapper */}
                   <StyledMain>
+                    <DevToolProvider>
 
-                    {/* all ui-specific context providers wrapping interface and new-user flow */}
-                    <ActivitiesProvider>
-                      <ChainTransactionProvider>
-                        <SyncedTimeProvider>
-                          <ActionItemProvider>
-                            <DevToolProvider>
-                              <ThemeProvider theme={theme}>
-                                <ScreensizeProvider>
-                                  <Interface />
-                                  <WelcomeFlow />
-                                </ScreensizeProvider>
-                              </ThemeProvider>
-                            </DevToolProvider>
-                          </ActionItemProvider>
-                        </SyncedTimeProvider>
-                      </ChainTransactionProvider>
-                    </ActivitiesProvider>
+                      {/* all ui-specific context providers wrapping interface and new-user flow */}
+                      <ActivitiesProvider>
+                        <ChainTransactionProvider>
+                          <SyncedTimeProvider>
+                            <ActionItemProvider>
+                                <ThemeProvider theme={theme}>
+                                  <ScreensizeProvider>
+                                    <Interface />
+                                    <WelcomeFlow />
+                                  </ScreensizeProvider>
+                                </ThemeProvider>
+                            </ActionItemProvider>
+                          </SyncedTimeProvider>
+                        </ChainTransactionProvider>
+                      </ActivitiesProvider>
 
-                    {/* 3d scene */}
-                    {showScene && <Scene />}
+                      {/* 3d scene */}
+                      {showScene && <Scene />}
 
-                    {/* audio */}
-                    <Audio />
+                      {/* audio */}
+                      <Audio />
 
+                    </DevToolProvider>
                   </StyledMain>
                 </Route>
               </Switch>

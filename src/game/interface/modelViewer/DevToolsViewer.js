@@ -8,11 +8,11 @@ const DevToolsViewer = () => {
 
   useEffect(() => {
     if (!overrides.assetType) {
-      setters.setAssetType('building');
+      setters.setAssetType('scene');
     }
   }, [overrides.assetType]);
 
-  if (!overrides.assetType) return null;
+  if (!overrides.assetType || overrides.assetType === 'scene') return null;
   return (
     <ModelViewer key={overrides.assetType} {...overrides} />
   );

@@ -15,10 +15,9 @@ import { PropagateLoader } from 'react-spinners';
 import styled, { css } from 'styled-components';
 
 import Details from '~/components/DetailsFullsize';
-import useInterval from '~/hooks/useInterval';
+import Postprocessor, { BLOOM_LAYER } from '~/game/Postprocessor';
 import useStore from '~/hooks/useStore';
 import { formatFixed } from '~/lib/utils';
-import Postprocessor from '../Postprocessor';
 
 // TODO: connect to gpu-graphics settings?
 const ENABLE_SHADOWS = true;
@@ -331,8 +330,7 @@ const Model = ({ url, onLoaded, onProgress, onCameraUpdate, ...settings }) => {
                   console.warn(`emissiveIntensity > 1 on material "${node.material.name}" @ node "${node.name}"`);
                   node.material.emissiveIntensity = Math.min(node.material.emissiveIntensity, 1);
                 }
-                // node.material.toneMapped = false;
-                node.userData.bloom = true;
+                node.layers.enable(BLOOM_LAYER);
               }
             }
 
@@ -848,11 +846,12 @@ const ModelViewer = ({ assetType, modelUrl, ...overrides }) => {
         {/* TODO: was antialias={false} */}
         <Canvas
           frameloop={canvasStack[0] === assetType ? 'always' : 'never'}
+          linear={settings.enablePostprocessing/* postprocessing will handle gamma autocorrection */}
           resize={{ debounce: 5, scroll: false }}
           shadows
           style={{ height: '100%', width: '100%' }}>
 
-          <Postprocessor enabled={true} bloomParams={bloomParams} />
+          <Postprocessor enabled={settings.enablePostprocessing} bloomParams={bloomParams} />
           <Skybox
             background={settings.background}
             envmap={settings.envmap}

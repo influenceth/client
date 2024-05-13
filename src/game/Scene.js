@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useContext, useEffect, useMemo, useState } from 'react';
 import { useQueryClient, QueryClientProvider } from 'react-query';
 import { Object3D, Vector3 } from 'three';
 import { Canvas, useThree } from '@react-three/fiber';
@@ -6,17 +6,18 @@ import { useContextBridge, Stats } from '@react-three/drei';
 import styled from 'styled-components';
 
 import { TrackballModControls } from '~/components/TrackballModControls';
-import SessionContext from '~/contexts/SessionContext';
 import CrewContext from '~/contexts/CrewContext';
+import DevToolContext from '~/contexts/DevToolContext';
+import SessionContext from '~/contexts/SessionContext';
+import WebsocketContext from '~/contexts/WebsocketContext';
 import useStore from '~/hooks/useStore';
 import constants from '~/lib/constants';
 import Star from './scene/Star';
 import Planets from './scene/Planets';
 import Asteroids from './scene/Asteroids';
-import Asteroid from './scene/Asteroid';
+import Asteroid, { sceneVisualDefaults } from './scene/Asteroid';
 import SettingsManager from './scene/SettingsManager';
 import Postprocessor from './Postprocessor';
-import WebsocketContext from '~/contexts/WebsocketContext';
 import { GpuContextLostMessage, GpuContextLostReporter } from './GpuContextLost';
 
 // TODO: 3js upgrade -- was antialias=false
@@ -73,7 +74,8 @@ const WrappedScene = () => {
   );
 }
 
-const postprocessingEnabled = true;
+// Orient such that z is up, perpindicular to the stellar plane
+Object3D.DEFAULT_UP = new Vector3(0, 0, 1);
 
 const Scene = () => {
   /**
@@ -86,11 +88,9 @@ const Scene = () => {
   const ContextBridge = useContextBridge(
     SessionContext,
     CrewContext,
+    DevToolContext,
     WebsocketContext
   );
-
-  // Orient such that z is up, perpindicular to the stellar plane
-  Object3D.DEFAULT_UP = new Vector3(0, 0, 1);
 
   const canvasStack = useStore(s => s.canvasStack); // TODO: this might be easier to manage in a dedicated context
   const zoomedFrom = useStore(s => s.asteroids.zoomedFrom);
@@ -112,6 +112,23 @@ const Scene = () => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const { overrides } = useContext(DevToolContext);
+
+  const [postprocessingEnabled, bloomParams] = useMemo(() => {
+    const o = overrides?.assetType === 'scene' ? overrides : {};
+    return [
+      o.enablePostprocessing !== undefined ? o.enablePostprocessing : true,
+      {
+        radius: o?.bloomRadius || sceneVisualDefaults.bloomRadius,
+        smoothing: o?.bloomSmoothing || sceneVisualDefaults.bloomSmoothing,
+        strength: o?.bloomStrength || sceneVisualDefaults.bloomStrength,
+        threshold: o?.bloomThreshold || sceneVisualDefaults.bloomThreshold,
+        toneMapping: o?.toneMapping || sceneVisualDefaults.toneMapping,
+        toneMappingExposure: o?.toneMappingExposure || sceneVisualDefaults.toneMappingExposure,
+      }
+    ];
+  }, [overrides]);
+
   const frameloop = useMemo(() => canvasStack?.length === 0 ? 'always' : 'never', [canvasStack]);
 
   return (
@@ -126,7 +143,7 @@ const Scene = () => {
         <GpuContextLostReporter setContextLost={setContextLost} />
         <ContextBridge>
           <SettingsManager />
-          <Postprocessor enabled={postprocessingEnabled} />
+          <Postprocessor enabled={postprocessingEnabled} bloomParams={bloomParams} />
           <QueryClientProvider client={queryClient} contextSharing={true}>
             <TrackballModControls>
               <WrappedScene />
