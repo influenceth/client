@@ -113,7 +113,7 @@ const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...pro
   const recipeStepSize = useMemo(() => {
     if (process) {
       return Object.keys(process.outputs).reduce((acc, i) => {
-        const outputStep = Product.TYPES[i].isAtomic ? 1 : 0.001;
+        const outputStep = Product.TYPES[i].isAtomic ? 0.1 : 0.001;
         return Math.max(acc, outputStep);
       }, 0.001);
     }
@@ -392,6 +392,18 @@ const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...pro
     return [{}, ''];
   }, [processor.processorType]);
 
+  const _setAmount = useCallback((value) => {
+    if (outputArr.length === 0) setAmount(value);
+    outputArr.forEach((i) => {
+      const output = value * process.outputs[i];
+      if (Math.floor(output) !== output && Product.TYPES[i]?.isAtomic) {
+        setAmount(Math.floor(output) / process.outputs[i]);
+      } else {
+        setAmount(value);
+      }
+    });
+  }, [process, setAmount, outputArr]);
+
   return (
     <>
       <ActionDialogHeader
@@ -449,7 +461,7 @@ const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...pro
               processingTime={processingTime}
               min={0}
               max={maxAmount}
-              setAmount={setAmount}
+              setAmount={_setAmount}
             />
           </FlexSectionBlock>
         </FlexSection>

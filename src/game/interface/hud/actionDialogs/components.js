@@ -3279,15 +3279,6 @@ export const RecipeSlider = ({ amount, disabled, increment = 0.001, processingTi
     ];
   }, [increment, rawMin, rawMax]);
 
-  const onFocusEvent = useCallback((e) => {
-    if (e.type === 'focus') {
-      setFocusOn(true);
-      e.target.select();
-    } else {
-      setFocusOn(false);
-    }
-  }, []);
-
   const onMouseEvent = useCallback((e) => {
     setMouseIn(e.type === 'mouseenter')
   }, []);
@@ -3308,8 +3299,18 @@ export const RecipeSlider = ({ amount, disabled, increment = 0.001, processingTi
     setAmount(cleansed.value());
   }, [increment, min, max]);
 
+  const onFocusEvent = useCallback((e) => {
+    if (e.type === 'focus') {
+      setFocusOn(true);
+      e.target.select();
+    } else {
+      setFocusOn(false);
+      onSetAmount(e.currentTarget.value);
+    }
+  }, [onSetAmount]);
+
   const onChangeInput = useCallback((e) => {
-    onSetAmount(e.currentTarget.value);
+    setAmount(e.currentTarget.value);
   }, [onSetAmount]);
 
   const onRound = useCallback(() => {
