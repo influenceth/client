@@ -12,12 +12,13 @@ import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader';
 import { useFrame, useThree, Canvas } from '@react-three/fiber';
 import { useCubeTexture } from '@react-three/drei';
 import { PropagateLoader } from 'react-spinners';
-import styled, { css } from 'styled-components';
+import styled from 'styled-components';
 
 import Details from '~/components/DetailsFullsize';
 import Postprocessor, { BLOOM_LAYER } from '~/game/Postprocessor';
 import useStore from '~/hooks/useStore';
 import { formatFixed } from '~/lib/utils';
+import visualConfigs from '~/lib/visuals';
 
 // TODO: connect to gpu-graphics settings?
 const ENABLE_SHADOWS = true;
@@ -90,86 +91,6 @@ const LoadingContainer = styled.div`
   }
 `;
 
-export const toneMaps = [
-  { label: 'NoToneMapping', value: NoToneMapping },
-  { label: 'LinearToneMapping', value: LinearToneMapping },
-  { label: 'ReinhardToneMapping', value: ReinhardToneMapping },
-  { label: 'CineonToneMapping', value: CineonToneMapping },
-  { label: 'ACESFilmicToneMapping', value: ACESFilmicToneMapping },
-  { label: 'AgXToneMapping', value: AgXToneMapping },
-  { label: 'NeutralToneMapping', value: NeutralToneMapping },
-];
-
-export const getModelViewerSettings = (assetType, overrides = {}) => {
-  // get default settings (for all)
-  const s = {
-    background: null,
-    backgroundStrength: 1,
-    bloomRadius: 0.25,
-    bloomStrength: 1,
-    enableZoomLimits: true,
-    enableModelLights: true,
-    envmap: '/textures/model-viewer/resource_envmap.hdr',
-    envmapStrength: 1,
-    lightmapStrength: 3,
-    spotlightReduction: 150,
-  };
-
-  // modify default settings by asset type
-  if (assetType === 'building') {
-    s.backgroundStrength = 0.7;
-    s.bloomRadius = 1;
-    s.bloomStrength = 1;
-    s.emissiveAsBloom = true;
-    s.emissiveMapAsLightMap = true;
-    s.enablePostprocessing = true;
-    s.envmapStrength = 0.1;
-    s.floorNodeName = 'Asteroid_Terrain'; // (enforces collision detection with this node (only in y-axis direction))
-    s.maxCameraDistance = 0.2;  // NOTE: use this or simple zoom constraints, not both
-    s.initialZoom = 0.1;
-    s.keylightIntensity = 0.25;
-    s.rimlightIntensity = 0;
-
-  } else if (assetType === 'resource') {
-    s.background = '/textures/model-viewer/resource_skybox.hdr';
-    s.initialZoom = 1.75;
-    s.enableRotation = true;
-    // TODO: if using simple zoom constraints, should probably not allow panning... maybe all should use maxCameraDistance?
-    s.simpleZoomConstraints = [0.85, 5];
-
-  } else if (assetType === 'ship') {
-    s.backgroundStrength = 2.5;
-    s.bloomRadius = 1;
-    s.bloomStrength = 1;
-    s.emissiveAsBloom = true;
-    s.enablePostprocessing = true;
-    s.enableRevolution = true;
-    s.envmapStrength = 5;
-    s.keylightIntensity = 0.5;
-    s.rimlightIntensity = 1;
-    s.simpleZoomConstraints = [0.1, 5];
-  }
-
-  if (s.enablePostprocessing) {
-    s.toneMapping = s.toneMapping || NoToneMapping;
-  } else {
-    s.toneMapping = NoToneMapping;
-  }
-
-  // apply overrides
-  // NOTE: currently not override-able:
-  //  emissiveAsBloom, emissiveMapAsLightMap, enableModelLights,
-  //  floorNodeName, maxCameraDistance, initialZoom, keylightIntensity,
-  //  simpleZoomConstraints
-  Object.keys(overrides).forEach((k) => {
-    if (overrides[k] !== null && overrides[k] !== undefined) {
-      s[k] = overrides[k];
-    }
-  });
-
-  return s;
-};
-
 const loadTexture = (file, filename = '') => {
   return new Promise((resolve) => {
     if (/\.hdr$/i.test(filename || file || '')) {
@@ -234,7 +155,7 @@ const Model = ({ url, onLoaded, onProgress, onCameraUpdate, ...settings }) => {
     return () => {
       controls.current.dispose();
     };
-  }, [camera, gl, url]);
+  }, [camera, gl, settings.enablePostprocessing, url]);
 
   useEffect(() => {
     if (settings.enableZoomLimits && settings.simpleZoomConstraints) {
@@ -480,7 +401,7 @@ const Model = ({ url, onLoaded, onProgress, onCameraUpdate, ...settings }) => {
     }
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [onLoaded, url]);
+  }, [onLoaded, url]); // (do not include settings here, update in their own hooks)
 
   useEffect(() => {
     if (!model.current) return;
@@ -533,7 +454,7 @@ const Model = ({ url, onLoaded, onProgress, onCameraUpdate, ...settings }) => {
     }
 
     // apply camera constraints to building scene
-    if (controls.current.object && controls.current.target) {
+    if (controls.current && controls.current.object && controls.current.target) {
       let updateControls = false;
       if (maxCameraDistance.current || collisionFloor.current) {
 
@@ -796,10 +717,16 @@ const ModelViewer = ({ assetType, modelUrl, ...overrides }) => {
   const [loadingModel, setLoadingModel] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
 
-  const settings = useMemo(
-    () => getModelViewerSettings(assetType, overrides),
-    [assetType, overrides]
-  );
+  const settings = useMemo(() => {
+    const overridden = { ...visualConfigs.modelViewer[assetType] };
+    Object.keys(overrides).forEach((k) => {
+      if (overrides[k] !== null && overrides[k] !== undefined) {
+        overridden[k] = overrides[k];
+      }
+    });
+    return overridden;
+  }, [assetType, overrides]);
+  console.log({ settings, assetType })
 
   useEffect(() => {
     dispatchCanvasStacked(assetType);
@@ -830,6 +757,7 @@ const ModelViewer = ({ assetType, modelUrl, ...overrides }) => {
     toneMapping: settings?.toneMapping,
     toneMappingExposure: settings?.toneMappingExposure,
   }), [settings]);
+  console.log({ bloomParams })
 
   // TODO: is Details best component to wrap this in?
   // TODO: is canvasStack assetType causing a problem since it might change?

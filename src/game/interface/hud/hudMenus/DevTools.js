@@ -10,11 +10,11 @@ import { CheckedIcon, CloseIcon, UncheckedIcon } from '~/components/Icons';
 import NumberInput from '~/components/NumberInput';
 import DevToolContext from '~/contexts/DevToolContext';
 import theme from '~/theme';
-import { getModelViewerSettings, toneMaps } from '../../ModelViewer';
 import { HudMenuCollapsibleSection, Scrollable } from './components/components';
 import { getBuildingModel, getProductModel, getShipModel } from '~/lib/assetUtils';
 import { nativeBool } from '~/lib/utils';
 import TextInput from '~/components/TextInput';
+import visualConfigs, { toneMaps } from '~/lib/visuals';
 
 const InnerSection = styled.div`
   & > * {
@@ -75,10 +75,20 @@ const CheckboxRow = styled.div`
 const reader = new FileReader();
 
 const DevTools = () => {
-  const { overrides, ...setters } = useContext(DevToolContext);
+  const { assetType, overrides, ...setters } = useContext(DevToolContext);
 
-  const defaultSettings = getModelViewerSettings(overrides.assetType, {});
-  const settings = getModelViewerSettings(overrides.assetType, overrides);
+  const [defaultSettings, settings] = useMemo(() => {
+    if (!assetType) return [{}, {}];
+
+    const defaults = assetType === 'scene' ? visualConfigs.scene : visualConfigs.modelViewer[assetType];
+    const overridden = { ...defaults };
+    Object.keys(overrides).forEach((k) => {
+      if (overrides[k] !== null && overrides[k] !== undefined) {
+        overridden[k] = overrides[k];
+      }
+    });
+    return [defaults, overridden];
+  }, [assetType, overrides]);
   
   const fileInput = useRef();
   const uploadType = useRef();
@@ -91,10 +101,10 @@ const DevTools = () => {
   const [modelOverride, setModelOverride] = useState();
 
   const assets = useMemo(() => {
-    if (settings.assetType === 'building') return Object.keys(Building.TYPES).map((i) => ({ ...Building.TYPES[i], modelUrl: getBuildingModel(i) }));
-    if (settings.assetType === 'resource') return Object.keys(Product.TYPES).map((i) => ({ ...Product.TYPES[i], modelUrl: getProductModel(i) }));
-    if (settings.assetType === 'ship') return Object.keys(Ship.TYPES).map((i) => ({ ...Ship.TYPES[i], modelUrl: getShipModel(i) }));
-  }, [settings.assetType]);
+    if (assetType === 'building') return Object.keys(Building.TYPES).map((i) => ({ ...Building.TYPES[i], modelUrl: getBuildingModel(i) }));
+    if (assetType === 'resource') return Object.keys(Product.TYPES).map((i) => ({ ...Product.TYPES[i], modelUrl: getProductModel(i) }));
+    if (assetType === 'ship') return Object.keys(Ship.TYPES).map((i) => ({ ...Ship.TYPES[i], modelUrl: getShipModel(i) }));
+  }, [assetType]);
   
   useEffect(() => {
     setCategories();
@@ -107,19 +117,20 @@ const DevTools = () => {
       const currentModel = assets.find((a) => a?.modelUrl === settings.modelUrl);
       setCategory(categoryArr.find((c) => c.value === currentModel?.category) || categoryArr[0]);
     }
-  }, [assets]);
+  }, [assetType]);
 
   useEffect(() => {
-    if (!!assets && category !== undefined) {
+    if (!!assets) {
       const bAssets = assets
         .filter((a) => (a.category || '') === category)
         .sort((a, b) => a.name < b.name ? -1 : 1);
+        console.log('bas', bAssets)
       setCategoryModels(bAssets);
 
       const currentModel = bAssets.find((a) => a?.modelUrl === settings.modelUrl);
       setModelSelection(currentModel || bAssets[0]);
     }
-  }, [category]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [assetType, category]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     setters.setModelUrl(modelOverride?.url || modelSelection?.modelUrl);
@@ -195,32 +206,32 @@ const DevTools = () => {
           <Button
             size="small"
             onClick={() => setters.setAssetType('building')}
-            background={settings.assetType === 'building' ? theme.colors.main : undefined }
-            style={{ minWidth: 90, color: settings.assetType === 'building' ? 'black' : undefined }}>
+            background={assetType === 'building' ? theme.colors.main : undefined }
+            style={{ minWidth: 90, color: assetType === 'building' ? 'black' : undefined }}>
             Buildings
           </Button>
           <Button
             size="small"
             onClick={() => setters.setAssetType('resource')}
-            background={settings.assetType === 'resource' ? theme.colors.main : undefined }
-            style={{ minWidth: 90, color: settings.assetType === 'resource' ? 'black' : undefined }}>
+            background={assetType === 'resource' ? theme.colors.main : undefined }
+            style={{ minWidth: 90, color: assetType === 'resource' ? 'black' : undefined }}>
             Resources
           </Button>
           <Button
             size="small"
             onClick={() => setters.setAssetType('ship')}
-            background={settings.assetType === 'ship' ? theme.colors.main : undefined }
-            style={{ minWidth: 90, color: settings.assetType === 'ship' ? 'black' : undefined }}>
+            background={assetType === 'ship' ? theme.colors.main : undefined }
+            style={{ minWidth: 90, color: assetType === 'ship' ? 'black' : undefined }}>
             Ships
           </Button>
           
-          {settings.assetType !== 'scene' && (
+          {assetType !== 'scene' && (
             <Button size="icon" onClick={() => setters.setAssetType('scene')}><CloseIcon /></Button>
           )}
         </div>
         
         <InnerSection style={{ marginTop: 10 }}>
-          {settings.assetType !== 'scene' && (
+          {assetType !== 'scene' && (
             <>
               {categories?.length > 1 && (
                 <Dropdown
@@ -259,8 +270,8 @@ const DevTools = () => {
 
       <HudMenuCollapsibleSection titleText="Lighting">
         {/* many of these are reset on assetType change */}
-        <InnerSection key={`${settings.assetType}_${settings.ready}`}>
-          {settings.assetType === 'scene' && (
+        <InnerSection key={assetType}>
+          {assetType === 'scene' && (
               <>
                 <Miniform>
                   <label>Star Intensity (scales by distance)</label>
@@ -273,7 +284,7 @@ const DevTools = () => {
                 </Miniform>
 
                 <Miniform>
-                  <label>Star Color (hex code)</label>
+                  <label>Star Color (6-digit hex)</label>
                   <TextInput
                     disabled={nativeBool(isLoading)}
                     initialValue={settings.starColor}
@@ -291,7 +302,7 @@ const DevTools = () => {
                 </Miniform>
 
                 <Miniform>
-                  <label>Dark Light Color (hex code)</label>
+                  <label>Dark Light Color (6-digit hex)</label>
                   <TextInput
                     disabled={nativeBool(isLoading)}
                     initialValue={settings.darklightColor}
@@ -299,7 +310,7 @@ const DevTools = () => {
                 </Miniform>
               </>
           )}
-          {settings.assetType !== 'scene' && (
+          {assetType !== 'scene' && (
             <>
               <Miniform>
                 <label>Rimlight Intensity</label>
@@ -346,7 +357,7 @@ const DevTools = () => {
       </HudMenuCollapsibleSection>
 
       <HudMenuCollapsibleSection titleText="Postprocessing">
-        <InnerSection key={settings.assetType}>
+        <InnerSection key={assetType}>
           <CheckboxRow onClick={() => toggleSetting(setters.setEnablePostprocessing)}>
             {settings.enablePostprocessing ? <CheckedIcon /> : <UncheckedIcon />}
             <label>Bloom</label>
@@ -426,7 +437,7 @@ const DevTools = () => {
         </InnerSection>
       </HudMenuCollapsibleSection>
 
-      <HudMenuCollapsibleSection titleText="Environment" collapsed>
+      <HudMenuCollapsibleSection titleText="Environment">
         <InnerSection>
           <Button
             disabled={nativeBool(isLoading)}
@@ -444,13 +455,13 @@ const DevTools = () => {
             <label>Background Strength</label>
             <NumberInput
               disabled={nativeBool(isLoading)}
-              initialValue={defaultSettings.backgroundStrength}
+              initialValue={settings.backgroundStrength}
               min="0.0"
               step="0.01"
               onChange={(v) => setters.setBackgroundStrength(parseFloat(v))} />
           </Miniform>
 
-          {settings.assetType !== 'scene' && (
+          {assetType !== 'scene' && (
             <>
               <div style={{ margin: 20 }} />
 
@@ -470,7 +481,7 @@ const DevTools = () => {
                 <label>EnvMap Strength</label>
                 <NumberInput
                   disabled={nativeBool(isLoading)}
-                  initialValue={defaultSettings.envmapStrength}
+                  initialValue={settings.envmapStrength}
                   min="0.0"
                   step="0.01"
                   onChange={(v) => setters.setEnvmapStrength(parseFloat(v))} />
@@ -480,7 +491,7 @@ const DevTools = () => {
         </InnerSection>
       </HudMenuCollapsibleSection>
 
-      {settings.assetType !== 'scene' && (
+      {assetType !== 'scene' && (
         <HudMenuCollapsibleSection titleText="Camera" collapsed>
           <CheckboxRow onClick={() => toggleSetting(setters.setEnableRotation)}>
             {settings.enableRotation ? <CheckedIcon /> : <UncheckedIcon />}

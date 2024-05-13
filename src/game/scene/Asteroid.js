@@ -170,17 +170,17 @@ const AsteroidComponent = () => {
   const resourceMap = useStore(s => s.asteroids.resourceMap);
   const lotId = useStore(s => s.asteroids.lot);
 
-  const { overrides } = useContext(DevToolContext);
+  const { assetType, overrides } = useContext(DevToolContext);
 
   const [STAR_COLOR, STAR_INTENSITY_ADJ, DARKLIGHT_COLOR, DARKLIGHT_INTENSITY] = useMemo(() => {
-    const o = overrides?.assetType === 'scene' ? overrides : {};
+    const o = assetType === 'scene' ? overrides : {};
     return [
       `#${validateHex(o?.starColor) || sceneVisualDefaults.starColor}`,
       o?.starStrength || sceneVisualDefaults.starStrength,
       `#${validateHex(o?.darklightColor) || sceneVisualDefaults.darklightColor}`,
       o?.darklightStrength || sceneVisualDefaults.darklightStrength,
     ];
-  }, [overrides]);
+  }, [assetType, overrides]);
 
   const selectedLot = useMemo(() => Lot.toPosition(lotId), [lotId]);
 

@@ -112,10 +112,10 @@ const Scene = () => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const { overrides } = useContext(DevToolContext);
+  const { assetType, overrides } = useContext(DevToolContext);
 
   const [postprocessingEnabled, bloomParams] = useMemo(() => {
-    const o = overrides?.assetType === 'scene' ? overrides : {};
+    const o = assetType === 'scene' ? overrides : {};
     return [
       o.enablePostprocessing !== undefined ? o.enablePostprocessing : true,
       {

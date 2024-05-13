@@ -2,10 +2,13 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { ACESFilmicToneMapping } from 'three';
 
 import { sceneVisualDefaults } from '~/game/scene/Asteroid';
+import useStore from '~/hooks/useStore';
 
 const DevToolContext = React.createContext();
 
 export function DevToolProvider({ children }) {
+  const showDevTools = useStore(s => s.graphics.showDevTools);
+
   const [assetType, setAssetType] = useState();
   const [modelUrl, setModelUrl] = useState();
 
@@ -14,8 +17,10 @@ export function DevToolProvider({ children }) {
   const [backgroundOverrideName, setBackgroundOverrideName] = useState();
   const [backgroundStrength, setBackgroundStrength] = useState();
   const [bloomRadius, setBloomRadius] = useState();
-  const [bloomStrength, setBloomStrength] = useState();
   const [bloomSmoothing, setBloomSmoothing] = useState();
+  const [bloomStrength, setBloomStrength] = useState();
+  const [darklightColor, setDarklightColor] = useState();
+  const [darklightStrength, setDarklightStrength] = useState();
   const [enablePostprocessing, setEnablePostprocessing] = useState();
   const [enableRotation, setEnableRotation] = useState();
   const [enableRevolution, setEnableRevolution] = useState();
@@ -27,21 +32,22 @@ export function DevToolProvider({ children }) {
   const [lightmapStrength, setLightmapIntensity] = useState();
   const [rimlightIntensity, setRimlightIntensity] = useState();
   const [spotlightReduction, setSpotlightReduction] = useState();
-  const [toneMapping, setToneMapping] = useState(ACESFilmicToneMapping);
-  const [toneMappingExposure, setToneMappingExposure] = useState(1);
+  const [toneMapping, setToneMapping] = useState();
+  const [toneMappingExposure, setToneMappingExposure] = useState();
   const [trackCamera, setTrackCamera] = useState();
-  const [darklightColor, setDarklightColor] = useState();
-  const [darklightStrength, setDarklightStrength] = useState();
   const [starColor, setStarColor] = useState();
   const [starStrength, setStarStrength] = useState();
-  const [ready, setReady] = useState(0);
 
   // reset most overrides on change of asset type
   useEffect(() => {
+    setBackground();
+    setBackgroundOverrideName();
     setBackgroundStrength();
     setBloomRadius();
     setBloomSmoothing();
     setBloomStrength();
+    setDarklightColor();
+    setDarklightStrength();
     setEnablePostprocessing();
     setEnableRotation();
     setEnableRevolution();
@@ -53,28 +59,16 @@ export function DevToolProvider({ children }) {
     setLightmapIntensity();
     setRimlightIntensity();
     setSpotlightReduction();
-
-    if (assetType === 'scene') {
-      setBackgroundStrength(sceneVisualDefaults.backgroundStrength);
-      setBloomRadius(sceneVisualDefaults.bloomRadius);
-      setBloomSmoothing(sceneVisualDefaults.bloomSmoothing);
-      setBloomStrength(sceneVisualDefaults.bloomStrength);
-      setEnablePostprocessing(sceneVisualDefaults.enablePostprocessing);
-
-      setStarColor(sceneVisualDefaults.starColor);
-      setStarStrength(sceneVisualDefaults.starStrength);
-      setDarklightColor(sceneVisualDefaults.darklightColor);
-      setDarklightStrength(sceneVisualDefaults.darklightStrength);
-
-      setToneMapping(sceneVisualDefaults.toneMapping);
-      setToneMappingExposure(sceneVisualDefaults.toneMappingExposure);
-      setReady(1);
-    }
+    setStarColor();
+    setStarStrength();
+    setToneMapping();
+    setToneMappingExposure();
+    setTrackCamera();
   }, [assetType]);
 
   const contextValue = useMemo(() => ({
-    overrides: {
-      assetType,
+    assetType,
+    overrides: showDevTools ? {
       modelUrl,
       background,
       backgroundOverrideName,
@@ -93,7 +87,6 @@ export function DevToolProvider({ children }) {
       envmapStrength,
       keylightIntensity,
       lightmapStrength,
-      ready,
       rimlightIntensity,
       spotlightReduction,
       starColor,
@@ -101,7 +94,7 @@ export function DevToolProvider({ children }) {
       toneMapping,
       toneMappingExposure,
       trackCamera
-    },
+    } : {},
     setAssetType,
     setModelUrl,
     setBackground,
@@ -148,8 +141,8 @@ export function DevToolProvider({ children }) {
     envmapStrength,
     keylightIntensity,
     lightmapStrength,
-    ready,
     rimlightIntensity,
+    showDevTools,
     spotlightReduction,
     starColor,
     starStrength,

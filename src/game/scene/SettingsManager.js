@@ -13,15 +13,14 @@ const SettingsManager = () => {
   const pixelRatio = useStore(s => s.graphics.pixelRatio);
   const skyboxVisible = useStore(s => s.graphics.skybox);
 
-  const { overrides } = useContext(DevToolContext);
+  const { assetType, overrides } = useContext(DevToolContext);
 
   const [BACKGROUND_INTENSITY] = useMemo(() => {
-    console.log({ overrides })
-    const o = overrides?.assetType === 'scene' ? overrides : {};
+    const o = assetType === 'scene' ? overrides : {};
     return [
       isNaN(o?.backgroundStrength) ? sceneVisualDefaults.backgroundStrength : o.backgroundStrength
     ];
-  }, [overrides]);
+  }, [assetType, overrides]);
 
   useEffect(() => {
     gl.setPixelRatio(pixelRatio || 1);

@@ -4,17 +4,17 @@ import DevToolContext from '~/contexts/DevToolContext';
 import ModelViewer from '../ModelViewer';
 
 const DevToolsViewer = () => {
-  const { overrides, ...setters } = useContext(DevToolContext);
+  const { assetType, overrides, ...setters } = useContext(DevToolContext);
 
   useEffect(() => {
-    if (!overrides.assetType) {
+    if (!assetType) {
       setters.setAssetType('scene');
     }
-  }, [overrides.assetType]);
+  }, [assetType]);
 
-  if (!overrides.assetType || overrides.assetType === 'scene') return null;
+  if (!assetType || assetType === 'scene') return null;
   return (
-    <ModelViewer key={overrides.assetType} {...overrides} />
+    <ModelViewer key={assetType} assetType={assetType} {...overrides} />
   );
 }
 
