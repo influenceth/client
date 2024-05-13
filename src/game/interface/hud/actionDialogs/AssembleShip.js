@@ -194,7 +194,7 @@ const AssembleShip = ({ asteroid, lot, dryDockManager, stage, ...props }) => {
   const [crewTimeRequirement, taskTimeRequirement] = useMemo(() => {
     const onewayCrewTravelTime = crewTravelTime / 2;
     return [
-      Math.max(onewayCrewTravelTime, inputTransportTime) + setupTime + onewayCrewTravelTime,
+      Math.max(onewayCrewTravelTime, inputTransportTime) + (setupTime + assemblyTime) / 8 + onewayCrewTravelTime,
       Math.max(onewayCrewTravelTime, inputTransportTime) + setupTime + assemblyTime
     ];
   }, [crewTravelTime, inputTransportTime, setupTime, assemblyTime]);
