@@ -33,8 +33,8 @@ const getIconUrl = (type, assetName, iconVersion, { append, w, h, f } = {}) => {
   );
 }
 
-const getModelUrl = (type, assetName, modelVersion) => {
-  const slug = `models/${type}/${getSlug(assetName)}.v${modelVersion || '1'}.glb`;
+const getModelUrl = (type, assetName, modelVersion, { append } = {}) => {
+  const slug = `models/${type}/${getSlug(assetName)}${append || ''}.v${modelVersion || '1'}.glb`;
   return `${process.env.REACT_APP_CLOUDFRONT_OTHER_URL}/${slug}`;
 }
 
@@ -131,10 +131,12 @@ export const getShipIcon = (i, size, isHologram) => {
   return ASSET_CACHE[cacheKey];
 };
 
-export const getShipModel = (i) => {
-  const cacheKey = `shipModel_${i}`;
+export const getShipModel = (i, variant = 1) => {
+  const cacheKey = `shipModel_${i}_${variant}`;
   if (!ASSET_CACHE[cacheKey]) {
-    ASSET_CACHE[cacheKey] = getModelUrl('ships', Ship.TYPES[i]?.name, Assets.Ship[i]?.modelVersion);
+    const conf = {};
+    if (variant > 1) conf.append = `_Variant${variant}`;
+    ASSET_CACHE[cacheKey] = getModelUrl('ships', Ship.TYPES[i]?.name, Assets.Ship[i]?.modelVersion, conf);
   }
   return ASSET_CACHE[cacheKey];
 };
