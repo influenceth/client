@@ -1,11 +1,12 @@
-import { useContext, useEffect, useMemo } from 'react';
+import { useContext, useEffect, useMemo, useState } from 'react';
 import { useThree } from '@react-three/fiber';
 import { useCubeTexture } from '@react-three/drei';
-import { Color } from 'three';
+import { Color, EquirectangularReflectionMapping, TextureLoader } from 'three';
 
 import useStore from '~/hooks/useStore';
 import DevToolContext from '~/contexts/DevToolContext';
-import { sceneVisualDefaults } from './Asteroid';
+import visualConfigs from '~/lib/visuals';
+import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader';
 
 const SettingsManager = () => {
   const { gl, scene, camera, renderer } = useThree();
@@ -15,34 +16,62 @@ const SettingsManager = () => {
 
   const { assetType, overrides } = useContext(DevToolContext);
 
-  const [BACKGROUND_INTENSITY] = useMemo(() => {
+  const [overrideTexture, setOverrideTexture] = useState();
+
+  const [backgroundOverride, backgroundOverrideName, backgroundIntensity] = useMemo(() => {
+    const defaults = visualConfigs.scene;
     const o = assetType === 'scene' ? overrides : {};
     return [
-      isNaN(o?.backgroundStrength) ? sceneVisualDefaults.backgroundStrength : o.backgroundStrength
+      o.background,
+      o.backgroundOverrideName,
+      isNaN(o?.backgroundStrength) ? defaults.backgroundStrength : o.backgroundStrength
     ];
   }, [assetType, overrides]);
-
-  useEffect(() => {
-    gl.setPixelRatio(pixelRatio || 1);
-  }, [pixelRatio]);
 
   // Import skybox textures
   const skybox = useCubeTexture([
     'sky_pos_x.jpg', 'sky_neg_x.jpg', 'sky_pos_y.jpg', 'sky_neg_y.jpg', 'sky_pos_z.jpg', 'sky_neg_z.jpg'
   ], { path: `${process.env.PUBLIC_URL}/textures/skybox/`});
 
-  // toggle background on / off per settings
   useEffect(() => {
-    if (skyboxVisible && (!scene.background || scene.background.isColor) && skybox) {
-      scene.background = skybox;
-    } else if (!skyboxVisible && scene.background) {
-      scene.background = new Color(0x0000ff);
+    if (backgroundOverride && backgroundOverrideName) {
+      const cleanupTextures = [];
+      const resolve = function (texture) {
+        cleanupTextures.push(texture);
+        texture.mapping = EquirectangularReflectionMapping;
+        
+        setOverrideTexture(texture);
+      }
+
+      if (/\.hdr$/i.test(backgroundOverrideName || backgroundOverride || '')) {
+        new RGBELoader().load(backgroundOverride, resolve);
+      } else {
+        new TextureLoader().load(backgroundOverride, resolve);
+      }
+
+      return () => {
+        cleanupTextures.forEach((t) => t.dispose());
+        setOverrideTexture();
+      };
     }
-  }, [ scene, skyboxVisible, skybox ]);
+  }, [backgroundOverride, backgroundOverrideName]);
 
   useEffect(() => {
-    scene.backgroundIntensity = BACKGROUND_INTENSITY;
-  }, [BACKGROUND_INTENSITY]);
+    gl.setPixelRatio(pixelRatio || 1);
+  }, [pixelRatio]);
+
+  // toggle background on / off per settings
+  useEffect(() => {
+    if (skyboxVisible && skybox) {
+      scene.background = overrideTexture || skybox;
+    } else if (!skyboxVisible) {
+      scene.background = new Color(0x0000ff);
+    }
+  }, [ overrideTexture, skyboxVisible, skybox ]);
+
+  useEffect(() => {
+    scene.backgroundIntensity = backgroundIntensity;
+  }, [backgroundIntensity]);
 
   // toggle fov as needed
   useEffect(() => {

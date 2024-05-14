@@ -12,10 +12,11 @@ import SessionContext from '~/contexts/SessionContext';
 import WebsocketContext from '~/contexts/WebsocketContext';
 import useStore from '~/hooks/useStore';
 import constants from '~/lib/constants';
+import visualConfigs from '~/lib/visuals';
 import Star from './scene/Star';
 import Planets from './scene/Planets';
 import Asteroids from './scene/Asteroids';
-import Asteroid, { sceneVisualDefaults } from './scene/Asteroid';
+import Asteroid from './scene/Asteroid';
 import SettingsManager from './scene/SettingsManager';
 import Postprocessor from './Postprocessor';
 import { GpuContextLostMessage, GpuContextLostReporter } from './GpuContextLost';
@@ -115,16 +116,17 @@ const Scene = () => {
   const { assetType, overrides } = useContext(DevToolContext);
 
   const [postprocessingEnabled, bloomParams] = useMemo(() => {
+    const defaults = visualConfigs.scene;
     const o = assetType === 'scene' ? overrides : {};
     return [
       o.enablePostprocessing !== undefined ? o.enablePostprocessing : true,
       {
-        radius: o?.bloomRadius || sceneVisualDefaults.bloomRadius,
-        smoothing: o?.bloomSmoothing || sceneVisualDefaults.bloomSmoothing,
-        strength: o?.bloomStrength || sceneVisualDefaults.bloomStrength,
-        threshold: o?.bloomThreshold || sceneVisualDefaults.bloomThreshold,
-        toneMapping: o?.toneMapping || sceneVisualDefaults.toneMapping,
-        toneMappingExposure: o?.toneMappingExposure || sceneVisualDefaults.toneMappingExposure,
+        radius: o?.bloomRadius || defaults.bloomRadius,
+        smoothing: o?.bloomSmoothing || defaults.bloomSmoothing,
+        strength: o?.bloomStrength || defaults.bloomStrength,
+        threshold: o?.bloomThreshold || defaults.bloomThreshold,
+        toneMapping: o?.toneMapping || defaults.toneMapping,
+        toneMappingExposure: o?.toneMappingExposure || defaults.toneMappingExposure,
       }
     ];
   }, [overrides]);

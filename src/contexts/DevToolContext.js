@@ -1,7 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { ACESFilmicToneMapping } from 'three';
 
-import { sceneVisualDefaults } from '~/game/scene/Asteroid';
 import useStore from '~/hooks/useStore';
 
 const DevToolContext = React.createContext();

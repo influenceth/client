@@ -124,7 +124,6 @@ const DevTools = () => {
       const bAssets = assets
         .filter((a) => (a.category || '') === category)
         .sort((a, b) => a.name < b.name ? -1 : 1);
-        console.log('bas', bAssets)
       setCategoryModels(bAssets);
 
       const currentModel = bAssets.find((a) => a?.modelUrl === settings.modelUrl);
@@ -157,7 +156,7 @@ const DevTools = () => {
         });
         setIsLoading(false);
       };
-    } else if (file.name.match(/\.(hdr|jpg)$/i)) {
+    } else if (file.name.match(/\.(hdr|jpe?g)$/i)) {
       setIsLoading(true);
       reader.readAsDataURL(file);
       reader.onload = () => {
@@ -198,7 +197,16 @@ const DevTools = () => {
     // }
   }, []);
 
-  if (!process.env.REACT_APP_ENABLE_DEV_TOOLS) return null;
+  // (make sure form values all get reset on asset change)
+  const [resetting, setResetting] = useState();
+  useEffect(() => {
+    setResetting(true);
+    setTimeout(() => {
+      setResetting(false);
+    }, 100);
+  }, [assetType]);
+
+  if (!process.env.REACT_APP_ENABLE_DEV_TOOLS || resetting) return null;
   return (
     <Scrollable>
       <HudMenuCollapsibleSection titleText="Viewer">
@@ -269,8 +277,7 @@ const DevTools = () => {
       </HudMenuCollapsibleSection>
 
       <HudMenuCollapsibleSection titleText="Lighting">
-        {/* many of these are reset on assetType change */}
-        <InnerSection key={assetType}>
+        <InnerSection>
           {assetType === 'scene' && (
               <>
                 <Miniform>
@@ -357,7 +364,7 @@ const DevTools = () => {
       </HudMenuCollapsibleSection>
 
       <HudMenuCollapsibleSection titleText="Postprocessing">
-        <InnerSection key={assetType}>
+        <InnerSection>
           <CheckboxRow onClick={() => toggleSetting(setters.setEnablePostprocessing)}>
             {settings.enablePostprocessing ? <CheckedIcon /> : <UncheckedIcon />}
             <label>Bloom</label>

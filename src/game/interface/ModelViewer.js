@@ -224,12 +224,11 @@ const Model = ({ url, onLoaded, onProgress, onCameraUpdate, ...settings }) => {
 
             // env-map intensity
             if (node.material?.envMapIntensity) {
-              node.material.envMapIntensity = settings.envmapStrength;
+              node.material.envMapIntensity = settings.envmapStrength || 1;
             }
 
             // rewrite emissive map to lightmap
             if (settings.emissiveMapAsLightMap) {
-              node.material.envMapIntensity = settings.envmapOverrideName ? settings.envmapStrength : 0;
               if (node.material?.emissiveMap) {
                 if (node.material.lightMap) console.warn('LIGHTMAP overwritten by emissiveMap', node);
 
@@ -404,6 +403,8 @@ const Model = ({ url, onLoaded, onProgress, onCameraUpdate, ...settings }) => {
   }, [onLoaded, url]); // (do not include settings here, update in their own hooks)
 
   useEffect(() => {
+    scene.environmentIntensity = settings.envmapStrength;
+
     if (!model.current) return;
     model.current.traverse(function (node) {
       if (node.isMesh) {
@@ -757,7 +758,6 @@ const ModelViewer = ({ assetType, modelUrl, ...overrides }) => {
     toneMapping: settings?.toneMapping,
     toneMappingExposure: settings?.toneMappingExposure,
   }), [settings]);
-  console.log({ bloomParams })
 
   // TODO: is Details best component to wrap this in?
   // TODO: is canvasStack assetType causing a problem since it might change?

@@ -19,21 +19,7 @@ import { pointCircleClosest } from '~/lib/geometryUtils';
 import { keyify } from '~/lib/utils';
 import useAsteroidShips from '~/hooks/useAsteroidShips';
 import DevToolContext from '~/contexts/DevToolContext';
-
-export const sceneVisualDefaults = {
-  starColor: 'fffbf6',// 0xffeedd,
-  starStrength: 4,//6,//1,
-  darklightColor: 'd8ddff',
-  darklightStrength: 0.75,//1.2,//0.1,
-
-  enablePostprocessing: true,
-  bloomRadius: 1,
-  bloomStrength: 0.8,
-  toneMapping: ACESFilmicToneMapping,
-  toneMappingExposure: 1,
-
-  backgroundStrength: 1,
-};
+import visualConfigs from '~/lib/visuals';
 
 const validateHex = (v) => /[a-f0-9]{6}/i.test(v) ? v : '';
 
@@ -173,12 +159,13 @@ const AsteroidComponent = () => {
   const { assetType, overrides } = useContext(DevToolContext);
 
   const [STAR_COLOR, STAR_INTENSITY_ADJ, DARKLIGHT_COLOR, DARKLIGHT_INTENSITY] = useMemo(() => {
+    const defaults = visualConfigs.scene;
     const o = assetType === 'scene' ? overrides : {};
     return [
-      `#${validateHex(o?.starColor) || sceneVisualDefaults.starColor}`,
-      o?.starStrength || sceneVisualDefaults.starStrength,
-      `#${validateHex(o?.darklightColor) || sceneVisualDefaults.darklightColor}`,
-      o?.darklightStrength || sceneVisualDefaults.darklightStrength,
+      `#${validateHex(o?.starColor) || defaults.starColor}`,
+      o?.starStrength || defaults.starStrength,
+      `#${validateHex(o?.darklightColor) || defaults.darklightColor}`,
+      o?.darklightStrength || defaults.darklightStrength,
     ];
   }, [assetType, overrides]);
 
