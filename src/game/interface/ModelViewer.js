@@ -536,12 +536,9 @@ const Skybox = ({ background, envmap, onLoaded, backgroundOverrideName = '', env
   useEffect(() => {
     let cleanupTextures = [];
 
-    if (!background) {
-      scene.background = defaultBackground;
-      scene.environment = defaultBackground;
-      onLoaded();
-    } else {
-      let waitingOn = background === envmap ? 1 : 2;
+    let waitingOn = 0;
+    if (background) {
+      waitingOn++;
       loadTexture(background, backgroundOverrideName).then(function (texture) {
         cleanupTextures.push(texture);
         texture.mapping = EquirectangularReflectionMapping;
@@ -554,18 +551,28 @@ const Skybox = ({ background, envmap, onLoaded, backgroundOverrideName = '', env
         waitingOn--;
         if (waitingOn === 0) onLoaded();
       });
+    } else {
+      scene.background = defaultBackground;
+    }
 
+    if (envmap) {
       if (background !== envmap) {
+        waitingOn++;
         loadTexture(envmap, envmapOverrideName).then(function (texture) {
           cleanupTextures.push(texture);
           texture.mapping = EquirectangularReflectionMapping;
           scene.environment = texture;
+          console.log('env is set to', texture)
 
           waitingOn--;
           if (waitingOn === 0) onLoaded();
         });
       }
+    } else {
+      scene.environment = defaultBackground;
     }
+
+    if (waitingOn === 0) onLoaded();
 
     return () => {
       scene.background = null;
