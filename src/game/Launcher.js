@@ -8,9 +8,12 @@ import Badge from '~/components/Badge';
 import {
   ChevronDoubleRightIcon,
   CloseIcon,
+  CrewmateCreditIcon,
+  CrewmateIcon,
   DownloadIcon,
   LogoutIcon,
   MyAssetIcon,
+  SwayIcon,
   UserIcon,
   WalletIcon
 } from '~/components/Icons';
@@ -20,12 +23,16 @@ import OnClickLink from '~/components/OnClickLink';
 import useCrewContext from '~/hooks/useCrewContext';
 import usePriceConstants from '~/hooks/usePriceConstants';
 import { reactBool } from '~/lib/utils';
-import Account from './launcher/Account';
-import Crews from './launcher/Crews';
+import Play from './launcher/Play';
 import Settings from './launcher/Settings';
 import Store from './launcher/Store';
 import HudMenu from './interface/hud/HudMenu';
-import DropdownNavMenu, { NavMenuLoggedInUser } from './interface/hud/DropdownNavMenu';
+import DropdownNavMenu, { LoggedInIcon, NavMenuLoggedInUser } from './interface/hud/DropdownNavMenu';
+import IconButton from '~/components/IconButton';
+import { BiRightArrow } from 'react-icons/bi';
+import { FaCaretRight } from 'react-icons/fa';
+import useSwayBalance from '~/hooks/useSwayBalance';
+import useAccountFormatted from '~/hooks/useAccountFormatted';
 
 const menuPadding = 25;
 const headerHeight = 68;
@@ -62,7 +69,13 @@ const TopRightMenu = styled.div`
   position: absolute;
   top: 0;
   right: 0;
-  padding: ${p => p.noPadding ? 0 : menuPadding}px;
+  padding: ${menuPadding}px ${menuPadding/2}px;
+
+  display: flex;
+  flex-direction: row;
+  & > *:not(:first-child) {
+    margin-left: 24px;
+  }
 `;
 
 const BottomLeftMenu = styled.div`
@@ -78,16 +91,19 @@ const Nav = styled.div`
 `;
 
 const Icon = styled.div``;
+
+const initialBorder = 3;
+const hoverBorder = 4;
 const NavItem = styled.div`
   align-items: center;
-  color: ${p => p.selected ? 'white' : '#b7b7b7'};
+  color: ${p => p.selected ? 'white' : (p.isExternal ? '#777' : p.theme.colors.main)};
   cursor: ${p => p.selected ? p.theme.cursors.default : p.theme.cursors.active};
   display: flex;
   flex-direction: row;
-  font-size: 17px;
-  height: 40px;
+  font-size: ${p => p.selected ? 24 : 17}px;
+  height: 38px;
   text-transform: uppercase;
-  transition: color 250ms ease;
+  transition: color 250ms ease, font-size 250ms ease;
 
   ${p => p.isRule && `
     height: 24px;
@@ -100,15 +116,40 @@ const NavItem = styled.div`
     }
   `}
 
-  &:hover {
-    color: white;
-  }
-
   & ${Icon} {
     color: ${p => p.theme.colors.main};
-    margin-right: 8px;
+    font-size: 17px;
+    margin-right: 12px;
     opacity: ${p => p.selected ? 1 : 0};
     transition: opacity 250ms ease;
+  }
+
+  ${p => p.isExternal && `
+    margin-left: -25px;
+    padding-left: 25px;
+    position: relative;
+    &:before {
+      border: solid transparent;
+      border-width: ${initialBorder}px 0 ${initialBorder}px ${initialBorder}px;
+      border-left-color: #555;
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 3px;
+      bottom: 3px;
+
+      transition: border-color 250ms ease, border-width 250ms ease;
+    }
+  `}
+
+  &:hover {
+    color: white;
+    ${p => p.isExternal && `
+      &:before {
+        border-left-color: white;
+        border-width: ${hoverBorder}px 0 ${hoverBorder}px ${hoverBorder}px;
+      }
+    `}
   }
 `;
 
@@ -163,6 +204,9 @@ const RightIcon = styled.div``;
 const HoverContent = styled.label`
   display: none;
 `;
+const NoHoverContent = styled.label`
+  display: block;
+`;
 
 const AccountButton = styled.div`
   align-items: center;
@@ -174,7 +218,7 @@ const AccountButton = styled.div`
   display: flex;
   height: 48px;
   padding: 3px 12px 3px 4px;
-  width: 280px;
+  width: 300px;
   & label {
     flex: 1;
     font-weight: bold;
@@ -192,13 +236,17 @@ const AccountButton = styled.div`
         display: none;
       }
       & ${HoverContent} {
-        color: ${p.theme.colors.error};
         display: block;
       }
-      & ${RightIcon} {
-        color: ${p.theme.colors.error};
+      & ${NoHoverContent} {
+        display: none;
       }
     `}
+  }
+`;
+const LoggedInButton = styled(AccountButton)`
+  & > *:last-child > svg {
+    font-size: 25px;
   }
 `;
 
@@ -212,7 +260,7 @@ const PlayButton = styled.div`
   display: flex;
   font-size: 26px;
   justify-content: center;
-  margin: 40px 0 20px;
+  margin: 20px 0 20px;
   opacity: 1;
   padding: 0.5em;
   position: relative;
@@ -259,16 +307,7 @@ const Footer = styled.div`
 
   & > div {
     flex: 1;
-
-    &:first-child,
-    &:last-child {
-      flex: 0 1 400px;
-      text-align: right;
-      text-transform: uppercase;
-      & > a {
-        border-left: 0 !important;
-      }
-    }
+    align-content: center;
 
     & > a, & > span {
       border-left: 1px solid #777;
@@ -290,11 +329,35 @@ const Footer = styled.div`
   }
 `;
 
+const SwayBalance = styled.div`
+  align-items: center;
+  color: white;
+  display: flex;
+  filter: drop-shadow(0px 0px 2px rgb(0 0 0));
+  font-size: 24px;
+  margin-left: 25px;
+
+  & label {
+    color: #FFF;
+    font-size: 85%;
+  }
+`;
+
+const CrewmateCreditBalance = styled(SwayBalance)`
+  & > svg {
+    color: ${p => p.theme.colors.main};
+  }
+  & label {
+    font-size: 70%;
+    margin-left: 6px;
+  }
+`;
+
 const StyledNavIcon = () => <Icon><NavIcon selected selectedColor="#777" /></Icon>;
 
 const Launcher = (props) => {
   const { accountAddress, authenticating, authenticated, walletId, login, logout, status } = useSession();
-  const { crews } = useCrewContext();
+  const { crews, adalianRecruits, arvadianRecruits } = useCrewContext();
   const { data: priceConstants, isLoading: priceConstantsLoading } = usePriceConstants();
 
   const launcherPage = useStore(s => s.launcherPage);
@@ -304,6 +367,8 @@ const Launcher = (props) => {
   const hasSeenIntroVideo = useStore(s => s.hasSeenIntroVideo);
 
   const [menuOpen, setMenuOpen] = useState(false);
+
+  const { data: swayBalance } = useSwayBalance();
 
   useEffect(() => {
     if (!interfaceHidden) {
@@ -318,30 +383,14 @@ const Launcher = (props) => {
 
   useEffect(() => {
     // only allow account and settings unless logged in
-    if (!authenticated && !['account', 'settings'].includes(launcherPage)) {
-      dispatchLauncherPage('account');
+    if (!authenticated && !['play', 'settings'].includes(launcherPage)) {
+      dispatchLauncherPage('play');
     }
     // disallow store if no sale available
     else if (!priceConstantsLoading && !priceConstants?.ADALIAN_PRICE_ETH && launcherPage === 'store') {
-      dispatchLauncherPage('account');
+      dispatchLauncherPage('play');
     }
   }, [launcherPage, authenticated, priceConstants, priceConstantsLoading]);
-
-  const menuItems = useMemo(() => {
-    const items = [{
-      onClick: logout,
-      content: <><LogoutIcon /> <label>Log Out</label></>
-    }];
-
-    if (walletId === 'argentWebWallet') {
-      items.push({
-        onClick: () => window.open(process.env.REACT_APP_ARGENT_WEB_WALLET_URL, '_blank', 'noopener,noreferrer'),
-        content: <><WalletIcon /> <label>My Wallet</label></>
-      });
-    }
-
-    return items;
-  }, [logout, walletId]);
 
   const onInstallApp = useCallback(async () => {
     window.installPrompt.prompt();
@@ -355,6 +404,17 @@ const Launcher = (props) => {
     dispatchLauncherPage();
   }, [hasSeenIntroVideo]);
 
+  const openHelpChannel = useCallback(() => {
+    window.open(process.env.REACT_APP_HELP_URL, '_blank');
+  }, []);
+
+  const openAssetsPortal = useCallback(() => {
+    window.open(process.env.REACT_APP_BRIDGE_URL, '_blank');
+  }, []);
+
+  const totalRecruitCredits = useMemo(() => (adalianRecruits + arvadianRecruits), [adalianRecruits, arvadianRecruits])
+  const formattedAccount = useAccountFormatted({ address: accountAddress, truncate: true, doNotReplaceYou: true });
+
   return (
     <StyledLauncher {...props}>
 
@@ -362,14 +422,9 @@ const Launcher = (props) => {
         <LogoWrapper><InfluenceLogo /></LogoWrapper>
         <Nav>
           <NavItem
-            onClick={() => dispatchLauncherPage('account')}
-            selected={launcherPage === 'account'}>
-            <StyledNavIcon /> Account
-          </NavItem>
-          <NavItem
-            onClick={() => dispatchLauncherPage('settings')}
-            selected={launcherPage === 'settings'}>
-            <StyledNavIcon /> Settings
+            onClick={() => dispatchLauncherPage('play')}
+            selected={launcherPage === 'play'}>
+            <StyledNavIcon /> Play
           </NavItem>
           {authenticated && !!priceConstants?.ADALIAN_PRICE_ETH && (
             <NavItem
@@ -378,68 +433,104 @@ const Launcher = (props) => {
               <StyledNavIcon /> Store
             </NavItem>
           )}
-          {authenticated && crews?.length > 0 && (
-            <>
-              <NavItem isRule />
-              <NavItem
-                onClick={() => dispatchLauncherPage('crews')}
-                selected={launcherPage === 'crews'}>
-                <StyledNavIcon /> My Crews
-                <Badge subtler value={crews?.length} />
-              </NavItem>
-            </>
+          <NavItem
+            onClick={() => dispatchLauncherPage('help')}
+            selected={launcherPage === 'help'}>
+            <StyledNavIcon /> Help
+          </NavItem>
+          <NavItem
+            onClick={() => dispatchLauncherPage('rewards')}
+            selected={launcherPage === 'rewards'}>
+            <StyledNavIcon /> Rewards
+          </NavItem>
+          <NavItem
+            onClick={() => dispatchLauncherPage('settings')}
+            selected={launcherPage === 'settings'}>
+            <StyledNavIcon /> Settings
+          </NavItem>
+
+          <NavItem isRule />
+
+          {process.env.REACT_APP_BRIDGE_URL && (
+            <NavItem onClick={openAssetsPortal} isExternal>
+              <StyledNavIcon /> Assets Portal
+            </NavItem>
           )}
+
+          {process.env.REACT_APP_HELP_URL && (
+            <NavItem onClick={openHelpChannel} isExternal>
+              <StyledNavIcon /> Bug Report
+            </NavItem>
+          )}
+
+          {!!window.installPrompt && (
+            <NavItem onClick={onInstallApp} isExternal>
+              <StyledNavIcon /> Desktop App
+            </NavItem>
+          )}
+          
         </Nav>
       </TopLeftMenu>
 
-      <TopRightMenu noPadding={reactBool(authenticated)}>
-        {authenticated
-          ? (
-            <DropdownNavMenu
-              header={<NavMenuLoggedInUser account={accountAddress} />}
-              isOpen={menuOpen}
-              menuItems={menuItems}
-              onClickHeader={() => setMenuOpen((o) => !o)}
-              onClose={() => setMenuOpen(false)}
-              openerIcon={<CloseIcon />}
-              openerAsButton
-              openerTooltip="Back to Game"
-              onClickOpener={onClickPlay}
-            />
-          )
-          : (
-            authenticating
-            ? (
-              <AccountButton>
-                <LeftIcon connecting><Loader color="currentColor" size="0.9em" /></LeftIcon>
-                <label>Logging In</label>
-                <RightIcon><ChevronDoubleRightIcon /></RightIcon>
-              </AccountButton>
-            )
-            : (
-              <AccountButton onClick={login}>
-                <LeftIcon connected={authenticated}><UserIcon /></LeftIcon>
-                <label>Log-In</label>
-                <RightIcon><ChevronDoubleRightIcon /></RightIcon>
-              </AccountButton>
-            )
-          )
-        }
-        <br /><br />
+      <TopRightMenu>
+
+        {totalRecruitCredits && (
+          <CrewmateCreditBalance>
+            <CrewmateCreditIcon />
+            <label>{(totalRecruitCredits || 0).toLocaleString()} Crewmate Credit{totalRecruitCredits === 1 ? '' : 's'}</label>
+          </CrewmateCreditBalance>
+        )}
+
+        {swayBalance !== undefined && (
+          <SwayBalance>
+            <SwayIcon />
+            <label>{swayBalance.toLocaleString({ maximumFractionDigits: 0 })}</label>
+          </SwayBalance>
+        )}
+
+        <IconButton onClick={onClickPlay} style={{ fontSize: 17 }}>
+          <FaCaretRight />
+        </IconButton>
       </TopRightMenu>
 
       {/* TODO: animate transitions between menus (slide in/out hudmenu, slide in/out crew, slide nav diamond between selections) */}
       <BottomLeftMenu>
-        {authenticated && launcherPage === 'crews' && <Crews />}
+        
       </BottomLeftMenu>
-      {authenticated && launcherPage === 'crews' && <HudMenu forceOpenMenu="MY_CREWS" />}
+
+      {authenticated && launcherPage === 'play' && <HudMenu forceOpenMenu="MY_CREWS" />}
 
       <ContentWrapper>
         <MainContent>
-          {launcherPage === 'account' && <Account />}
+          {launcherPage === 'play' && <Play />}
           {launcherPage === 'settings' && <Settings />}
           {launcherPage === 'store' && <Store />}
         </MainContent>
+
+        {authenticated && (
+          <LoggedInButton onClick={logout} hasHoverContent>
+            <LeftIcon connected><LoggedInIcon walletId={walletId} /></LeftIcon>
+
+            <NoHoverContent>{formattedAccount}</NoHoverContent>
+            <HoverContent>Log Out</HoverContent>
+
+            <RightIcon><LogoutIcon /></RightIcon>
+          </LoggedInButton>
+        )}
+        {authenticating && (
+          <AccountButton onClick={login}>
+            <LeftIcon connecting><Loader color="currentColor" size="0.9em" /></LeftIcon>
+            <label>Logging In</label>
+            <RightIcon><ChevronDoubleRightIcon /></RightIcon>
+          </AccountButton>
+        )}
+        {!authenticated && !authenticating && (
+          <AccountButton onClick={login}>
+            <LeftIcon connected={authenticated}><UserIcon /></LeftIcon>
+            <label>Log-In</label>
+            <RightIcon><ChevronDoubleRightIcon /></RightIcon>
+          </AccountButton>
+        )}
 
         <PlayButton disabled={authenticating} onClick={onClickPlay}>
           {authenticated ? 'Play' : 'Explore'}
@@ -447,19 +538,9 @@ const Launcher = (props) => {
 
         <Footer>
           <div>
-          </div>
-          <div>
             <a href="https://influenceth.io" target="_blank" rel="noopener noreferrer">About</a>
             <a href="https://discord.gg/influenceth" target="_blank" rel="noopener noreferrer">Discord</a>
             <a href="https://wiki.influenceth.io" target="_blank" rel="noopener noreferrer">Wiki</a>
-          </div>
-          <div>
-            {process.env.REACT_APP_BRIDGE_URL &&
-              <a href={process.env.REACT_APP_BRIDGE_URL} target="_blank" rel="noopener noreferrer"><MyAssetIcon /> Assets Portal</a>
-            }
-            {!!window.installPrompt &&
-              <OnClickLink onClick={onInstallApp} target="_blank" rel="noopener noreferrer"><DownloadIcon /> Install App</OnClickLink>
-            }
           </div>
         </Footer>
       </ContentWrapper>

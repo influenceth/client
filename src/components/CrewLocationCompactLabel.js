@@ -10,7 +10,7 @@ const Hoverable = styled.div`
   color: white;
   height: ${hoverableHeight}px;
   overflow: hidden;
-  text-align: right;
+  text-align: ${p => p.alignLeft ? 'left' : 'right'};
 
   & > div {
     height: 100%;
@@ -24,10 +24,10 @@ const Hoverable = styled.div`
 const Wrapper = styled.div`
   align-items: center;
   color: ${p => p.status ? (p.status === 'In Flight' ? '#fab040' : p.theme.colors.main) : 'white'};
-  cursor: ${p => p.theme.cursors.active};
+  cursor: ${p => p.theme.cursors[p.onClick ? 'active' : 'default']};
   display: flex;
   flex-direction: ${p => p.flip ? 'row-reverse' : 'row'};
-  font-size: 15px;
+  font-size: ${p => p.fontSize || '15px'};
   height: 24px;
 
   & > svg {
@@ -40,14 +40,14 @@ const Wrapper = styled.div`
     transition: transform 150ms ease;
   }
   &:hover {
-    opacity: 0.9;
+    opacity: ${p => p.onClick ? 0.9 : 1};
     ${Hoverable} > div {
       transform: translateY(${p => p.defaultToSpecific ? 0 : -hoverableHeight}px);
     }
   }
 `;
 
-const CrewLocationCompactLabel = ({ crew, zoomedToAsteroid, ...props }) => {
+const CrewLocationCompactLabel = ({ alignLeft, crew, noClick, zoomedToAsteroid, ...props }) => {
   const { asteroid, building, lotIndex, onLink, ship } = useHydratedLocation(crew?._location, crew?.id);
 
   const genericLabel = useMemo(() => {
@@ -77,7 +77,7 @@ const CrewLocationCompactLabel = ({ crew, zoomedToAsteroid, ...props }) => {
 
   return (
     <Wrapper
-      onClick={handleClick}
+      onClick={noClick ? undefined : handleClick}
       defaultToSpecific={zoomedToAsteroid === asteroid?.id}
       status={status}
       {...props}>
@@ -89,7 +89,7 @@ const CrewLocationCompactLabel = ({ crew, zoomedToAsteroid, ...props }) => {
         </>
       )}
       <div style={{ width: 5 }} />
-      <Hoverable>
+      <Hoverable alignLeft={alignLeft}>
         <div>{genericLabel}</div>
         <div>{specificLabel}</div>
       </Hoverable>

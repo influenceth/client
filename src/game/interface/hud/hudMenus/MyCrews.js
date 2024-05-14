@@ -1,6 +1,7 @@
 import { useCallback, useMemo } from 'react';
 import styled, { keyframes } from 'styled-components';
 import { useHistory } from 'react-router-dom';
+import { Entity } from '@influenceth/sdk';
 
 import useCrewContext from '~/hooks/useCrewContext';
 import { HudMenuCollapsibleSection, Scrollable } from './components/components';
@@ -11,6 +12,7 @@ import CrewLocationLabel from '~/components/CrewLocationLabel';
 import useStore from '~/hooks/useStore';
 import useHydratedCrew from '~/hooks/useHydratedCrew';
 import { WarningIcon } from '~/components/Icons';
+import EntityName from '~/components/EntityName';
 
 const defaultBlockStyle = { marginBottom: 8, width: '100%' };
 
@@ -89,13 +91,14 @@ const MyCrews = () => {
   const emptyCrews = useMemo(() => crews.filter((c) => c.Crew.roster.length === 0), [crews]);
 
   const nonEmptyCrewsByLocation = useMemo(() => {
-    const groupedCrews = nonEmptyCrews.reduce((acc, cur) => {
+    return nonEmptyCrews.reduce((acc, cur) => {
+      const asteroidId = locationsArrToObj(cur.Location.locations)?.asteroidId || '_';
       const locationKey = JSON.stringify(locationsArrToObj(cur.Location.locations));
-      if (!acc[locationKey]) acc[locationKey] = [];
-      acc[locationKey].push(cur);
+      if (!acc[asteroidId]) acc[asteroidId] = {};
+      if (!acc[asteroidId][locationKey]) acc[asteroidId][locationKey] = [];
+      acc[asteroidId][locationKey].push(cur);
       return acc;
     }, {});
-    return Object.values(groupedCrews);
   }, [nonEmptyCrews]);
 
   const uncontrolledCrewIds = useMemo(() => {
@@ -112,12 +115,35 @@ const MyCrews = () => {
 
   return (
     <Scrollable>
-      {(nonEmptyCrewsByLocation || []).map((locationCrews, i) => (
-        <LocationCrews
-          key={i}
-          locationCrews={locationCrews}
-          selectedCrewId={crew?.id}
-          onSelectCrew={(c) => selectCrew(c.id)} />
+      {Object.keys(nonEmptyCrewsByLocation || {}).map((asteroidId) => (
+        <HudMenuCollapsibleSection
+          titleText={asteroidId === '_' ? 'In Flight' : <EntityName label={Entity.IDS.ASTEROID} id={asteroidId} />}>
+          {Object.keys(nonEmptyCrewsByLocation[asteroidId]).map((locationKey) => {
+            const locationCrews = nonEmptyCrewsByLocation[asteroidId][locationKey];
+            const location = locationsArrToObj(locationCrews[0]?.Location?.locations || []);
+            return (
+              <HudMenuCollapsibleSection
+                key={locationKey}
+                containerHeight={152 * locationCrews.length}
+                titleProps={{ style: { textTransform: 'none' } }}
+                titleText={asteroidId === '_' && !location?.shipId ? 'Escape Module' : <EntityName {...locationCrews[0]?.Location?.location} />}>
+                <SectionBody>
+                  {(locationCrews || []).map((c) => (
+                    <CrewInputBlock
+                      key={c.id}
+                      cardWidth={64}
+                      crew={c}
+                      inlineDetails
+                      isSelected={c.id === crew?.id}
+                      onClick={() => selectCrew(c.id)}
+                      subtle
+                      style={defaultBlockStyle} />
+                  ))}
+                </SectionBody>
+              </HudMenuCollapsibleSection>
+            );
+          })}
+        </HudMenuCollapsibleSection>
       ))}
 
       {Object.keys(uncontrolledCrewIds)?.length > 0 && (

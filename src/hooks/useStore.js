@@ -175,8 +175,8 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
     })),
 
     dispatchLauncherPage: (page) => set(produce(state => {
-      if (page === 'crews' || page === 'settings' || page === 'store') state.launcherPage = page;
-      else if (page) state.launcherPage = 'account';
+      if (page === 'settings' || page === 'store') state.launcherPage = page;
+      else if (page) state.launcherPage = 'play';
       else state.launcherPage = null;
     })),
 

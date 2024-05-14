@@ -66,9 +66,9 @@ export const Rule = styled.div`
   width: 100%;
 `;
 
-export const HudMenuCollapsibleSection = ({ children, collapsed, titleText, titleLabel, titleAction, ...props }) => (
+export const HudMenuCollapsibleSection = ({ children, collapsed, titleText, titleLabel, titleAction, titleProps, ...props }) => (
   <CollapsibleSection
-    title={<SectionTitle label={titleLabel}>{titleText}</SectionTitle>}
+    title={<SectionTitle label={titleLabel} {...titleProps}>{titleText}</SectionTitle>}
     titleAction={titleAction}
     collapsibleProps={{
       borderColor: majorBorderColor,

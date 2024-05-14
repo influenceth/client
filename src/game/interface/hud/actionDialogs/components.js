@@ -3660,7 +3660,6 @@ export const CrewInputBlock = ({ cardWidth, crew, hideCrewmates, highlightCrewma
         {crew && inlineDetails && (
           <div style={{ display: 'flex', alignItems: 'center', marginBottom: 8 }}>
             <div>
-              <CrewIcon />
               <span style={{ marginLeft: 4 }}>
                 {formatters.crewName(crew)}
               </span>

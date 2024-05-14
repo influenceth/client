@@ -98,7 +98,7 @@ const SystemControls = () => {
 
     if (token) {
       items.push({
-        onClick: () => dispatchLauncherPage('crews'),
+        onClick: () => dispatchLauncherPage('play'),
         content: <><CrewIcon /> <label>My Crews <Badge subtler value={crews?.length} /></label></>
       });
     }
