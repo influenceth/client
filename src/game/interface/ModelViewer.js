@@ -727,7 +727,6 @@ const ModelViewer = ({ assetType, modelUrl, ...overrides }) => {
     });
     return overridden;
   }, [assetType, overrides]);
-  console.log({ settings, assetType })
 
   useEffect(() => {
     dispatchCanvasStacked(assetType);
