@@ -276,7 +276,7 @@ const MainMenu = () => {
         </MenuWrapper> */}
 
         {!isMobile && (
-          <TimeSection>
+          <TimeSection id="timeMenu">
             <TimeControls />
           </TimeSection>
         )}
