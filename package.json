@@ -6,7 +6,7 @@
     "node": "20.x"
   },
   "dependencies": {
-    "@argent/x-sessions": "^6.5.5",
+    "@argent/x-sessions": "^6.6.2",
     "@avnu/avnu-sdk": "^1.2.4",
     "@influenceth/astro": "^0.2.5",
     "@influenceth/sdk": "^2.1.0-beta.96",
