@@ -71,6 +71,7 @@ const Play = () => {
         <LiveFoodStatus crew={crew} fontSize="inherit" />
       </StatusRow>
       <CaptainWrapper>
+        {/* TODO: would be nice to shrink this portrait to accomadate view height without scrolling */}
         <CrewCaptainCardFramed borderColor={theme.colors.darkMain} crewId={crew.id} width={captainWidth} />
       </CaptainWrapper>
       <CrewmatesWrapper>

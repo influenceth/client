@@ -1,7 +1,6 @@
 import styled, { keyframes } from 'styled-components';
 import LoadingIcon from 'react-spinners/PuffLoader';
 
-
 const fadeOut = keyframes`
   0% { opacity: 0.8; }
   50% { opacity: 0.8; }

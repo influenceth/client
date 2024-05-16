@@ -6,6 +6,7 @@ import useBlockTime from '~/hooks/useBlockTime';
 import useConstants from '~/hooks/useConstants';
 import LiveTimer from './LiveTimer';
 import { ScheduleFullIcon, ShipIcon, TimerIcon } from './Icons';
+import theme from '~/theme';
 
 
 const opacityKeyframes = keyframes`
@@ -123,7 +124,7 @@ const LiveReadyStatus = ({ crew, ...props }) => {
   }
   if (crewIsBusy || waitingOnBlock) {
     return (
-      <BusyStatusContainer {...props} color={crew._location?.asteroidId && crew.Crew?.readyAt < scheduleEnd ? '' : '#fab040'}>
+      <BusyStatusContainer {...props} color={crew._location?.asteroidId && crew.Crew?.readyAt < scheduleEnd ? '' : theme.colors.inFlight}>
         <LiveTimer target={crew.Crew.readyAt} maxPrecision={2}>
           {(formattedTime) => (
             <TimerWrapper

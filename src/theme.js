@@ -71,6 +71,7 @@ const theme = {
     disabledText: 'rgba(255,255,255,0.4)',
     borderBottom: '#555555',
     borderBottomAlt: 'rgba(85, 85, 85, 0.5)',
+    inFlight: '#fab040',
     sell: '#57d5ff',
     buy: '#88e675',
     sequence: '#2f85dc',

@@ -91,12 +91,14 @@ const api = {
     return response.data;
   },
 
-  getCrewAgreements: async (crewId, crewDelegatedTo) => {
+  getCrewAgreements: async (crewIdOrCrewIds, crewDelegatedTo) => {
     const queryPromises = [];
+
+    const crewIds = Array.isArray(crewIdOrCrewIds) ? crewIdOrCrewIds : [crewIdOrCrewIds];
 
     const hasAgreementShouldQuery = [
       esb.boolQuery().must([
-        esb.termQuery('Control.controller.id', crewId),
+        esb.termsQuery('Control.controller.id', crewIds),
         esb.boolQuery().should([
           esb.nestedQuery().path('PrepaidAgreements').query(esb.existsQuery('PrepaidAgreements')),
           esb.nestedQuery().path('ContractAgreements').query(esb.existsQuery('ContractAgreements')),
@@ -104,10 +106,10 @@ const api = {
           esb.nestedQuery().path('WhitelistAccountAgreements').query(esb.existsQuery('WhitelistAccountAgreements')),
         ])
       ]),
-      esb.nestedQuery().path('PrepaidAgreements').query(esb.termQuery('PrepaidAgreements.permitted.id', crewId)),
-      esb.nestedQuery().path('ContractAgreements').query(esb.termQuery('ContractAgreements.permitted.id', crewId)),
-      esb.nestedQuery().path('WhitelistAgreements').query(esb.termQuery('WhitelistAgreements.permitted.id', crewId)),
-      esb.nestedQuery().path('WhitelistAccountAgreements').query(esb.termQuery('WhitelistAccountAgreements.permitted', crewDelegatedTo)),
+      esb.nestedQuery().path('PrepaidAgreements').query(esb.termsQuery('PrepaidAgreements.permitted.id', crewIds)),
+      esb.nestedQuery().path('ContractAgreements').query(esb.termsQuery('ContractAgreements.permitted.id', crewIds)),
+      esb.nestedQuery().path('WhitelistAgreements').query(esb.termsQuery('WhitelistAgreements.permitted.id', crewIds)),
+      esb.nestedQuery().path('WhitelistAccountAgreements').query(esb.termsQuery('WhitelistAccountAgreements.permitted', crewDelegatedTo)),
     ];
 
     // BUILDINGS...
@@ -135,7 +137,7 @@ const api = {
     const lotQueryBuilding = esb.boolQuery();
     lotQueryBuilding.should([
       esb.boolQuery().must([
-        esb.termQuery('meta.asteroid.Control.controller.id', crewId),
+        esb.termsQuery('meta.asteroid.Control.controller.id', crewIds),
         esb.boolQuery().should([
           esb.nestedQuery().path('PrepaidAgreements').query(esb.existsQuery('PrepaidAgreements')),
           esb.nestedQuery().path('ContractAgreements').query(esb.existsQuery('ContractAgreements')),
@@ -143,10 +145,10 @@ const api = {
           esb.nestedQuery().path('WhitelistAccountAgreements').query(esb.existsQuery('WhitelistAccountAgreements')),
         ])
       ]),
-      esb.nestedQuery().path('PrepaidAgreements').query(esb.termQuery('PrepaidAgreements.permitted.id', crewId)),
-      esb.nestedQuery().path('ContractAgreements').query(esb.termQuery('ContractAgreements.permitted.id', crewId)),
-      esb.nestedQuery().path('WhitelistAgreements').query(esb.termQuery('WhitelistAgreements.permitted.id', crewId)),
-      esb.nestedQuery().path('WhitelistAccountAgreements').query(esb.termQuery('WhitelistAccountAgreements.permitted', crewDelegatedTo)),
+      esb.nestedQuery().path('PrepaidAgreements').query(esb.termsQuery('PrepaidAgreements.permitted.id', crewIds)),
+      esb.nestedQuery().path('ContractAgreements').query(esb.termsQuery('ContractAgreements.permitted.id', crewIds)),
+      esb.nestedQuery().path('WhitelistAgreements').query(esb.termsQuery('WhitelistAgreements.permitted.id', crewIds)),
+      esb.nestedQuery().path('WhitelistAccountAgreements').query(esb.termsQuery('WhitelistAccountAgreements.permitted', crewDelegatedTo)),
     ]);
 
     const lotQ = esb.requestBodySearch();
@@ -166,8 +168,8 @@ const api = {
       return acc.filter((a) => (
         (a._agreement.permitted?.id !== a.Control?.controller?.id)
         && (
-          a.Control?.controller?.id === crewId
-          || a._agreement.permitted?.id === crewId
+          crewIds.includes(a.Control?.controller?.id)
+          || crewIds.includes(a._agreement.permitted?.id)
           || (crewDelegatedTo && a._agreement.permitted === crewDelegatedTo)
         )
       ));

@@ -230,6 +230,10 @@ export const safeEntityId = (variablyHydratedEntity) => {
   return undefined;
 };
 
+export const getAgreementPath = (target, permission, permitted) => {
+  return `${target ? Entity.packEntity(target) : ''}.${permission || ''}.${permitted?.id ? Entity.packEntity(permitted) : (permitted || '')}`;
+};
+
 export const entityToAgreements = (entity) => {
   const acc = [];
   ['PrepaidAgreements', 'ContractAgreements', 'WhitelistAgreements', 'WhitelistAccountAgreements'].forEach((agreementType) => {
@@ -239,6 +243,7 @@ export const entityToAgreements = (entity) => {
         
         key: `${entity.uuid}_${agreementType}_${j}`,
         _agreement: {
+          _path: getAgreementPath(entity, agreement.permission, agreement.permitted),
           _type: agreementType === 'PrepaidAgreements'
             ? Permission.POLICY_IDS.PREPAID
             : (agreementType === 'ContractAgreements' ? Permission.POLICY_IDS.CONTRACT : 5),

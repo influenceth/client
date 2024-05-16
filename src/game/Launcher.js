@@ -366,8 +366,6 @@ const Launcher = (props) => {
   const interfaceHidden = useStore(s => s.graphics.hideInterface);
   const hasSeenIntroVideo = useStore(s => s.hasSeenIntroVideo);
 
-  const [menuOpen, setMenuOpen] = useState(false);
-
   const { data: swayBalance } = useSwayBalance();
 
   useEffect(() => {
@@ -417,6 +415,7 @@ const Launcher = (props) => {
 
   return (
     <StyledLauncher {...props}>
+      {launcherPage === 'play' && <HudMenu />}
 
       <TopLeftMenu>
         <LogoWrapper><InfluenceLogo /></LogoWrapper>
@@ -493,13 +492,6 @@ const Launcher = (props) => {
         </IconButton>
       </TopRightMenu>
 
-      {/* TODO: animate transitions between menus (slide in/out hudmenu, slide in/out crew, slide nav diamond between selections) */}
-      <BottomLeftMenu>
-        
-      </BottomLeftMenu>
-
-      {authenticated && launcherPage === 'play' && <HudMenu forceOpenMenu="MY_CREWS" />}
-
       <ContentWrapper>
         <MainContent>
           {launcherPage === 'play' && <Play />}
@@ -533,7 +525,7 @@ const Launcher = (props) => {
         )}
 
         <PlayButton disabled={authenticating} onClick={onClickPlay}>
-          {authenticated ? 'Play' : 'Explore'}
+          {authenticated ? 'Play' : 'Explore World'}
         </PlayButton>
 
         <Footer>

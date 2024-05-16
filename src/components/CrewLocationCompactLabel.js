@@ -23,7 +23,7 @@ const Hoverable = styled.div`
 
 const Wrapper = styled.div`
   align-items: center;
-  color: ${p => p.status ? (p.status === 'In Flight' ? '#fab040' : p.theme.colors.main) : 'white'};
+  color: ${p => p.status ? (p.status === 'In Flight' ? p.theme.colors.inFlight : p.theme.colors.main) : 'white'};
   cursor: ${p => p.theme.cursors[p.onClick ? 'active' : 'default']};
   display: flex;
   flex-direction: ${p => p.flip ? 'row-reverse' : 'row'};

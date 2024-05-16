@@ -5,11 +5,7 @@ import { cloneDeep } from 'lodash';
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
 import usePolicyManager from '~/hooks/actionManagers/usePolicyManager';
 import useCrewContext from '~/hooks/useCrewContext';
-import { daysToSeconds, secondsToDays } from '~/lib/utils';
-
-export const getAgreementPath = (target, permission, permitted) => {
-  return `${target ? Entity.packEntity(target) : ''}.${permission || ''}.${permitted?.id ? Entity.packEntity(permitted) : (permitted || '')}`;
-}
+import { daysToSeconds, getAgreementPath, secondsToDays } from '~/lib/utils';
 
 const useAgreementManager = (target, permission, agreementPath) => {
   const { crew } = useCrewContext();

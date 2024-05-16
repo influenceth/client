@@ -117,6 +117,7 @@ const MyCrews = () => {
     <Scrollable>
       {Object.keys(nonEmptyCrewsByLocation || {}).map((asteroidId) => (
         <HudMenuCollapsibleSection
+          key={asteroidId}
           titleText={asteroidId === '_' ? 'In Flight' : <EntityName label={Entity.IDS.ASTEROID} id={asteroidId} />}>
           {Object.keys(nonEmptyCrewsByLocation[asteroidId]).map((locationKey) => {
             const locationCrews = nonEmptyCrewsByLocation[asteroidId][locationKey];
