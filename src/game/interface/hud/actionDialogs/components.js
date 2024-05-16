@@ -3417,7 +3417,7 @@ export const ProcessInputOutputSection = ({ title, products, input, output, prim
                         <ClipCorner dimension={10} color={theme.colors.main} />
                       </>
                     )
-                    : `-${formatFixed(100 * Math.min(0.5 / (secondaryOutputsBonus || 1), 1), 1)}%`
+                    : `-${formatFixed(100 * Math.min(0.375 / (secondaryOutputsBonus || 1), 1), 1)}%`
                   }
                 </label>
               )}
