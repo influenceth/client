@@ -401,8 +401,8 @@ const CrewmateCreditBalance = styled(SwayBalance)`
 const StyledNavIcon = () => <Icon><NavIcon selected selectedColor="#777" /></Icon>;
 
 const Launcher = (props) => {
-  const { accountAddress, authenticating, authenticated, walletId, login, logout, status } = useSession();
-  const { crews, adalianRecruits, arvadianRecruits } = useCrewContext();
+  const { accountAddress, authenticating, authenticated, login, logout } = useSession();
+  const { adalianRecruits, arvadianRecruits } = useCrewContext();
   const { data: priceConstants, isLoading: priceConstantsLoading } = usePriceConstants();
 
   const launcherPage = useStore(s => s.launcherPage);

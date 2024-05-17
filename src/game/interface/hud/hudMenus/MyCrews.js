@@ -35,31 +35,6 @@ const AttnTitle = styled.span`
   }
 `;
 
-const LocationCrews = ({ locationCrews, selectedCrewId, onSelectCrew }) => {
-  const hydratedLocation = useHydratedLocation(locationsArrToObj(locationCrews[0].Location.locations));
-  return (
-    <HudMenuCollapsibleSection
-      containerHeight={152 * locationCrews.length}
-      titleText={<CrewLocationLabel hydratedLocation={hydratedLocation} style={{ fontSize: 'inherit' }} />}>
-      <SectionBody>
-        {(locationCrews || []).map((crew, i) => {
-          return (
-            <CrewInputBlock
-              key={crew.id}
-              cardWidth={64}
-              crew={crew}
-              inlineDetails
-              isSelected={crew.id === selectedCrewId}
-              onClick={() => onSelectCrew(crew)}
-              subtle
-              style={defaultBlockStyle} />
-          );
-        })}
-      </SectionBody>
-    </HudMenuCollapsibleSection>
-  );
-}
-
 const UncontrolledCrewBlock = ({ crewId, crewmateIds }) => {
   const dispatchLauncherPage = useStore(s => s.dispatchLauncherPage);
 

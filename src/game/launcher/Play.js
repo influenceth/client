@@ -10,6 +10,7 @@ import CrewmateCardFramed, { CrewCaptainCardFramed, EmptyCrewmateCardFramed } fr
 import theme from '~/theme';
 import LiveFoodStatus from '~/components/LiveFoodStatus';
 import CrewLocationCompactLabel from '~/components/CrewLocationCompactLabel';
+import useStore from '~/hooks/useStore';
 
 const captainWidth = 232;
 const crewmateWidth = 72;
@@ -60,7 +61,17 @@ const CrewmatesWrapper = styled.div`
 `;
 
 const Play = () => {
-  const { crew } = useCrewContext();
+  const { crew, crews } = useCrewContext();
+  const dispatchHudMenuOpened = useStore(s => s.dispatchHudMenuOpened);
+
+  useEffect(() => {
+    if (crews?.length) {
+      dispatchHudMenuOpened('MY_CREWS');
+    }
+    return () => {
+      dispatchHudMenuOpened();
+    }
+  }, [!!crews?.length]);
   
   if (!crew) return null;
   return (

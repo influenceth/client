@@ -3653,7 +3653,10 @@ export const CrewInputBlock = ({ cardWidth, crew, hideCrewmates, highlightCrewma
           </span>
         </div>
       )}
-      bodyStyle={{ paddingRight: 8, ...(hideCrewmates ? { paddingBottom: 0 } : (crew?.Crew?.roster?.length === 0 ? { paddingBottom: 20 } : {})) }}
+      bodyStyle={{
+        paddingRight: 8,
+        ...(hideCrewmates ? { paddingBottom: 0 } : (crew?.Crew?.roster?.length === 0 ? { paddingBottom: 20 } : {}))
+      }}
       innerBodyStyle={{ height: 'auto' }}
       {...props}>
       <div>
