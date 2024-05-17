@@ -94,9 +94,10 @@ const MyCrews = () => {
     return nonEmptyCrews.reduce((acc, cur) => {
       const asteroidId = locationsArrToObj(cur.Location.locations)?.asteroidId || '_';
       const locationKey = JSON.stringify(locationsArrToObj(cur.Location.locations));
-      if (!acc[asteroidId]) acc[asteroidId] = {};
-      if (!acc[asteroidId][locationKey]) acc[asteroidId][locationKey] = [];
-      acc[asteroidId][locationKey].push(cur);
+      if (!acc[asteroidId]) acc[asteroidId] = { locations: {}, tally: 0 };
+      if (!acc[asteroidId].locations[locationKey]) acc[asteroidId].locations[locationKey] = [];
+      acc[asteroidId].locations[locationKey].push(cur);
+      acc[asteroidId].tally++
       return acc;
     }, {});
   }, [nonEmptyCrews]);
@@ -118,9 +119,10 @@ const MyCrews = () => {
       {Object.keys(nonEmptyCrewsByLocation || {}).map((asteroidId) => (
         <HudMenuCollapsibleSection
           key={asteroidId}
-          titleText={asteroidId === '_' ? 'In Flight' : <EntityName label={Entity.IDS.ASTEROID} id={asteroidId} />}>
-          {Object.keys(nonEmptyCrewsByLocation[asteroidId]).map((locationKey) => {
-            const locationCrews = nonEmptyCrewsByLocation[asteroidId][locationKey];
+          titleText={asteroidId === '_' ? 'In Flight' : <EntityName label={Entity.IDS.ASTEROID} id={asteroidId} />}
+          titleLabel={`${nonEmptyCrewsByLocation[asteroidId].tally} Crew${nonEmptyCrewsByLocation[asteroidId].tally === 1 ? '' : 's'}`}>
+          {Object.keys(nonEmptyCrewsByLocation[asteroidId].locations).map((locationKey) => {
+            const locationCrews = nonEmptyCrewsByLocation[asteroidId].locations[locationKey];
             const location = locationsArrToObj(locationCrews[0]?.Location?.locations || []);
             return (
               <HudMenuCollapsibleSection
@@ -150,6 +152,7 @@ const MyCrews = () => {
       {Object.keys(uncontrolledCrewIds)?.length > 0 && (
         <HudMenuCollapsibleSection
           titleText={<AttnTitle><WarningIcon /> <span>Recoverable Crewmates</span></AttnTitle>}
+          titleLabel={`${Object.keys(uncontrolledCrewIds)?.length} Crew${Object.keys(uncontrolledCrewIds)?.length === 1 ? '' : 's'}`}
           collapsed>
           <SectionBody>
             {Object.keys(uncontrolledCrewIds || {}).map((crewId) => (
@@ -159,25 +162,30 @@ const MyCrews = () => {
         </HudMenuCollapsibleSection>
       )}
       
-      <HudMenuCollapsibleSection titleText="Empty Crews" collapsed>
-        <SectionBody>
-          {emptyCrews.map((emptyCrew) => {
-            return (
-              <CrewInputBlock
-                key={emptyCrew.id}
-                cardWidth={64}
-                crew={emptyCrew}
-                hideCrewmates
-                inlineDetails
-                select
-                isSelected={emptyCrew.id === crew?.id}
-                onClick={() => selectCrew(emptyCrew.id)}
-                subtle
-                style={defaultBlockStyle} />
-            );
-          })}
-        </SectionBody>
-      </HudMenuCollapsibleSection>
+      {emptyCrews.length > 0 && (
+        <HudMenuCollapsibleSection
+          titleText="Empty Crews"
+          titleLabel={`${emptyCrews?.length} Crew${emptyCrews?.length === 1 ? '' : 's'}`}
+          collapsed>
+          <SectionBody>
+            {emptyCrews.map((emptyCrew) => {
+              return (
+                <CrewInputBlock
+                  key={emptyCrew.id}
+                  cardWidth={64}
+                  crew={emptyCrew}
+                  hideCrewmates
+                  inlineDetails
+                  select
+                  isSelected={emptyCrew.id === crew?.id}
+                  onClick={() => selectCrew(emptyCrew.id)}
+                  subtle
+                  style={defaultBlockStyle} />
+              );
+            })}
+          </SectionBody>
+        </HudMenuCollapsibleSection>
+      )}
     </Scrollable>
   );
 };

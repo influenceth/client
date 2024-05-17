@@ -73,9 +73,6 @@ const TopRightMenu = styled.div`
 
   display: flex;
   flex-direction: row;
-  & > *:not(:first-child) {
-    margin-left: 24px;
-  }
 `;
 
 const BottomLeftMenu = styled.div`
@@ -244,9 +241,51 @@ const AccountButton = styled.div`
     `}
   }
 `;
-const LoggedInButton = styled(AccountButton)`
-  & > *:last-child > svg {
-    font-size: 25px;
+
+const LoggedInButton = styled.div`
+  align-items: center;
+  background: rgba(${p => p.theme.colors.darkMainRGB}, 0.2);
+  border: 1px solid;
+  border-color: rgba(${p => p.theme.colors.mainRGB}, 0.4);
+  border-radius: 20px;
+  cursor: ${p => p.theme.cursors.active};
+  display: flex;
+  height: 34px;
+  justify-content: center;
+  margin-right: 16px;
+  position: relative;
+  width: 220px;
+
+  &:hover {
+    background: rgba(${p => p.theme.colors.mainRGB}, 0.3);
+    border-color: rgba(${p => p.theme.colors.mainRGB}, 0.8);
+    color: white;
+    & ${HoverContent} {
+      display: block;
+    }
+    & ${NoHoverContent} {
+      display: none;
+    }
+  }
+`;
+const GreenDot = styled.div`
+  align-items: center;
+  background: rgba(${p => p.theme.colors.successRGB}, 0.15);
+  border-radius: 100%;
+  display: flex;
+  justify-content: center;
+  height: 18px;
+  left: 8px;
+  position: absolute;
+  top: 8px;
+  width: 18px;
+  &:before {
+    content: "";
+    background: rgba(${p => p.theme.colors.successRGB},1);
+    border-radius: 100%;
+    display: block;
+    height: 10px;
+    width: 10px;
   }
 `;
 
@@ -331,11 +370,13 @@ const Footer = styled.div`
 
 const SwayBalance = styled.div`
   align-items: center;
+  border-right: 1px solid rgba(255, 255, 255, 0.15);
   color: white;
   display: flex;
   filter: drop-shadow(0px 0px 2px rgb(0 0 0));
   font-size: 24px;
-  margin-left: 25px;
+  padding-right: 16px;
+  margin-right: 16px;
 
   & label {
     color: #FFF;
@@ -350,6 +391,10 @@ const CrewmateCreditBalance = styled(SwayBalance)`
   & label {
     font-size: 70%;
     margin-left: 6px;
+    & b {
+      color: ${p => p.theme.colors.main};
+      font-weight: normal;
+    }
   }
 `;
 
@@ -410,7 +455,7 @@ const Launcher = (props) => {
     window.open(process.env.REACT_APP_BRIDGE_URL, '_blank');
   }, []);
 
-  const totalRecruitCredits = useMemo(() => (adalianRecruits + arvadianRecruits), [adalianRecruits, arvadianRecruits])
+  const totalRecruitCredits = useMemo(() => 5 || (adalianRecruits + arvadianRecruits), [adalianRecruits, arvadianRecruits])
   const formattedAccount = useAccountFormatted({ address: accountAddress, truncate: true, doNotReplaceYou: true });
 
   return (
@@ -476,7 +521,7 @@ const Launcher = (props) => {
         {totalRecruitCredits && (
           <CrewmateCreditBalance>
             <CrewmateCreditIcon />
-            <label>{(totalRecruitCredits || 0).toLocaleString()} Crewmate Credit{totalRecruitCredits === 1 ? '' : 's'}</label>
+            <label>{(totalRecruitCredits || 0).toLocaleString()} <b>Crewmate Credit{totalRecruitCredits === 1 ? '' : 's'}</b></label>
           </CrewmateCreditBalance>
         )}
 
@@ -485,6 +530,14 @@ const Launcher = (props) => {
             <SwayIcon />
             <label>{swayBalance.toLocaleString({ maximumFractionDigits: 0 })}</label>
           </SwayBalance>
+        )}
+
+        {authenticated && (
+          <LoggedInButton onClick={logout} hasHoverContent>
+            <GreenDot />
+            <NoHoverContent>{formattedAccount}</NoHoverContent>
+            <HoverContent>Log Out</HoverContent>
+          </LoggedInButton>
         )}
 
         <IconButton onClick={onClickPlay} style={{ fontSize: 17 }}>
@@ -499,34 +552,28 @@ const Launcher = (props) => {
           {launcherPage === 'store' && <Store />}
         </MainContent>
 
-        {authenticated && (
-          <LoggedInButton onClick={logout} hasHoverContent>
-            <LeftIcon connected><LoggedInIcon walletId={walletId} /></LeftIcon>
+        {launcherPage === 'play' && (
+          <>
+            {authenticating && (
+              <AccountButton onClick={login}>
+                <LeftIcon connecting><Loader color="currentColor" size="0.9em" /></LeftIcon>
+                <label>Logging In</label>
+                <RightIcon><ChevronDoubleRightIcon /></RightIcon>
+              </AccountButton>
+            )}
+            {!authenticated && !authenticating && (
+              <AccountButton onClick={login}>
+                <LeftIcon connected={authenticated}><UserIcon /></LeftIcon>
+                <label>Log-In</label>
+                <RightIcon><ChevronDoubleRightIcon /></RightIcon>
+              </AccountButton>
+            )}
 
-            <NoHoverContent>{formattedAccount}</NoHoverContent>
-            <HoverContent>Log Out</HoverContent>
-
-            <RightIcon><LogoutIcon /></RightIcon>
-          </LoggedInButton>
+            <PlayButton disabled={authenticating} onClick={onClickPlay}>
+              {authenticated ? 'Play' : 'Explore World'}
+            </PlayButton>
+          </>
         )}
-        {authenticating && (
-          <AccountButton onClick={login}>
-            <LeftIcon connecting><Loader color="currentColor" size="0.9em" /></LeftIcon>
-            <label>Logging In</label>
-            <RightIcon><ChevronDoubleRightIcon /></RightIcon>
-          </AccountButton>
-        )}
-        {!authenticated && !authenticating && (
-          <AccountButton onClick={login}>
-            <LeftIcon connected={authenticated}><UserIcon /></LeftIcon>
-            <label>Log-In</label>
-            <RightIcon><ChevronDoubleRightIcon /></RightIcon>
-          </AccountButton>
-        )}
-
-        <PlayButton disabled={authenticating} onClick={onClickPlay}>
-          {authenticated ? 'Play' : 'Explore World'}
-        </PlayButton>
 
         <Footer>
           <div>

@@ -55,7 +55,7 @@ const CrewmatesWrapper = styled.div`
     margin-left: 8px;
   }
   margin-bottom: 15px;
-  padding: 12px 12px 15px;
+  padding: 12px 12px 20px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.2);
 `;
 
