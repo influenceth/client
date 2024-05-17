@@ -133,7 +133,7 @@ const Model = ({ url, onLoaded, onProgress, onCameraUpdate, ...settings }) => {
     // TODO (enhancement): on mobile, aspect ratio is such that zoomed out to 1 may not have
     //  view of full width of 1.0 at 0,0,0... so on mobile, should probably set this to 1.5+
     const zoom = settings.initialZoom || 1;
-    camera.position.set(0, 0.75 * zoom, 1.25 * zoom);
+    camera.position.set(0, 0.75 * zoom, 1.5 * zoom);
     camera.up.set(0, 1, 0);
     camera.fov = 50;
     camera.updateProjectionMatrix();
@@ -592,7 +592,7 @@ const Lighting = ({ keylightIntensity = 1.0, rimlightIntensity = 0.25 }) => {
     if (keylightIntensity > 0) {
       keyLight = new DirectionalLight(0xFFFFFF);
       keyLight.intensity = keylightIntensity;
-      keyLight.position.set(-2, 2, 2);
+      keyLight.position.set(-2, 2, -1);
       scene.add(keyLight);
 
       if (ENABLE_SHADOWS) {
@@ -612,7 +612,7 @@ const Lighting = ({ keylightIntensity = 1.0, rimlightIntensity = 0.25 }) => {
     if (rimlightIntensity > 0) {
       rimLight = new DirectionalLight(0x9ECFFF);
       rimLight.intensity = rimlightIntensity;
-      rimLight.position.set(4, 2, 4);
+      rimLight.position.set(4, 2, -2);
       scene.add(rimLight);
     }
 
