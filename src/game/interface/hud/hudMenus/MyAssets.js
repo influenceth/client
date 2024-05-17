@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import styled, { keyframes } from 'styled-components';
+import { useCallback, useMemo, useState } from 'react';
+import styled from 'styled-components';
 import { Building, Entity, Permission, Ship } from '@influenceth/sdk';
 import Loader from 'react-spinners/PuffLoader';
 
@@ -128,32 +128,6 @@ const AsteroidBlocks = ({ asteroids, onSelectCrew, selectedCrew }) => {
   ));
 };
 
-const GroupedBlocks = ({ assets, assetHeight, children }) => {
-  const groupedAssets = useMemo(() => {
-    return assets.reduce((acc, asset) => {
-      const asteroidId = locationsArrToObj(asset.Location?.locations || [])?.asteroidId || '_';
-      if (!acc[asteroidId]) acc[asteroidId] = [];
-      acc[asteroidId].push(asset);
-      return acc;
-    }, {});
-  }, [assets]);
-
-  return (
-    <>
-      {Object.keys(groupedAssets).map((asteroidId) => {
-        const groupAssets = groupedAssets[asteroidId];
-        <HudMenuCollapsibleSection
-          key={asteroidId}
-          containerHeight={assetHeight * groupAssets.length + containerHeightBuffer}
-          titleProps={{ style: { textTransform: 'none' } }}
-          titleText={asteroidId === '_' ? 'In Flight' : <EntityName label={Entity.IDS.ASTEROID} id={asteroidId} />}>
-          {groupAssets.map(children)}
-        </HudMenuCollapsibleSection>
-      })}
-    </>
-  );
-};
-
 const groupAssets = (assets) => {
   return assets.reduce((acc, asset) => {
     const asteroidId = locationsArrToObj(asset.Location?.locations || [])?.asteroidId || '_';
@@ -199,7 +173,7 @@ const GroupedAssets = ({ assetTally, groupedAssets, isLoading, itemHeight, itemG
   );
 }
 
-const MyAssets = ({}) => {
+const MyAssets = () => {
   const { accountAddress } = useSession();
   const { crew, crews, selectCrew } = useCrewContext();
   const { data: walletAgreementsWithDupes, isLoading: agreementsLoading } = useWalletAgreements();

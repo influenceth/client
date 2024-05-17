@@ -1,14 +1,21 @@
 import esb from 'elastic-builder';
+import { Entity } from '@influenceth/sdk';
 
 import useSession from '~/hooks/useSession';
 import useCrewContext from '~/hooks/useCrewContext';
 import api from '~/lib/api';
 import { useQuery } from 'react-query';
 import { useMemo } from 'react';
+import { entitiesCacheKey } from '~/lib/cacheKey';
+
+// TODO: should we filter out disabled ships? not a thing yet
+//  what about under_construction ships?
 
 const useWalletShips = () => {
   const { accountAddress } = useSession();
   const { crews, loading: crewsLoading } = useCrewContext();
+
+  const controllerIds = useMemo(() => (crews || []).map((c) => c.id), [crews]);
 
   const query = useMemo(() => {
     if (!accountAddress || crewsLoading) return null;
@@ -17,7 +24,7 @@ const useWalletShips = () => {
       const qb = esb.boolQuery();
       qb.should([
         esb.termQuery('Nft.owner', accountAddress),
-        esb.termsQuery('Control.controller.id', (crews || []).map((c) => c.id)),
+        esb.termsQuery('Control.controller.id', controllerIds),
       ]);
       
       const q = esb.requestBodySearch();
@@ -32,17 +39,13 @@ const useWalletShips = () => {
     }
 
     return null;
-  }, [accountAddress, crews, crewsLoading]);
+  }, [accountAddress, controllerIds, crewsLoading]);
 
   return useQuery(
-    [ 'search', 'ships', query ],
+    entitiesCacheKey(Entity.IDS.SHIP, { owner: accountAddress, controllerId: controllerIds }),
     () => api.searchAssets('ships', query),
     { enabled: !!query }
   );
-
-  // TODO: 
-  // update useOwnedShips to use this
-  // update useControlledShips (per crew) to use this
 };
 
 export default useWalletShips;

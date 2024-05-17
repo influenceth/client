@@ -1,21 +1,31 @@
 import esb from 'elastic-builder';
-import { Building } from '@influenceth/sdk';
+import { Building, Entity } from '@influenceth/sdk';
 
 import useSession from '~/hooks/useSession';
 import useCrewContext from '~/hooks/useCrewContext';
 import api from '~/lib/api';
 import { useQuery } from 'react-query';
 import { useMemo } from 'react';
+import { entitiesCacheKey } from '~/lib/cacheKey';
+
+const statuses = [
+  Building.CONSTRUCTION_STATUSES.PLANNED,
+  Building.CONSTRUCTION_STATUSES.UNDER_CONSTRUCTION,
+  Building.CONSTRUCTION_STATUSES.OPERATIONAL,
+];
 
 const useWalletBuildings = () => {
+  const { accountAddress } = useSession();
   const { crews, loading: crewsLoading } = useCrewContext();
 
+  const controllerIds = useMemo(() => (crews || []).map((c) => c.id), [crews]);
+
   const query = useMemo(() => {
-    if (crewsLoading) return null;
+    if (!accountAddress || crewsLoading) return null;
 
     try {
       const qb = esb.boolQuery();
-      qb.filter(esb.termsQuery('Control.controller.id', (crews || []).map((c) => c.id)));
+      qb.filter(esb.termsQuery('Control.controller.id', controllerIds));
       qb.mustNot(esb.termQuery('Building.status', Building.CONSTRUCTION_STATUSES.UNPLANNED));
       
       const q = esb.requestBodySearch();
@@ -30,16 +40,13 @@ const useWalletBuildings = () => {
     }
 
     return null;
-  }, [crews, crewsLoading]);
+  }, [accountAddress, controllerIds, crewsLoading]);
 
   return useQuery(
-    [ 'search', 'buildings', query ],
+    entitiesCacheKey(Entity.IDS.BUILDING, { controllerId: controllerIds, status: statuses }),
     () => api.searchAssets('buildings', query),
     { enabled: !!query }
   );
-
-  // TODO: 
-  // update useBuildings? to use this
 };
 
 export default useWalletBuildings;

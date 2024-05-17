@@ -123,20 +123,24 @@ const getPolicyAndAgreementConfig = (couldAddToCollection = false, invalidateAgr
 
       const invs = [entityInvalidation];
       if (invalidateAgreements) {
-        if (returnValues.permitted?.id) {
-          invs.push(['agreements', returnValues.permitted.id]);
-          if (entity?.Control?.controller?.id) {
-            invs.push(['agreements', entity?.Control?.controller?.id]);
-          }
+        // if (returnValues.permitted?.id) {
+        //   invs.push(['agreements', returnValues.permitted.id]);
+        //   if (entity?.Control?.controller?.id) {
+        //     invs.push(['agreements', entity?.Control?.controller?.id]);
+        //   }
 
-        // if account whitelist, just invalidate all agreements (for all crews)
-        // TODO (maybe): in the future, we potentially separate the queries for agreements and account-agreements
-        //  so could have separate cacheKeys and thus separate invalidations
-        // TODO (maybe): we could also use onBeforeReceived to query and uncover more accurate invalidations, but
-        //  it seems unlikely that would ever be worth the extra queries
-        } else if (returnValues.permitted) {
-          invs.push(['agreements']);
-        }
+        // // if account whitelist, just invalidate all agreements (for all crews)
+        // // TODO (maybe): in the future, we potentially separate the queries for agreements and account-agreements
+        // //  so could have separate cacheKeys and thus separate invalidations
+        // // TODO (maybe): we could also use onBeforeReceived to query and uncover more accurate invalidations, but
+        // //  it seems unlikely that would ever be worth the extra queries
+        // } else if (returnValues.permitted) {
+        //   invs.push(['agreements']);
+        // }
+
+        // since there is now just one query to manage user's agreements (as lessor and lessee),
+        // just invalidate that whole thing... this may be overkill in the future
+        invs.push(['agreements']);
       }
       return invs;
     },
@@ -1720,6 +1724,7 @@ const activities = {
               hasComponent: getComponentNames(ship),
               hasPermission: getApplicablePermissions(ship || returnValues.ship),
               isOnSurface: true,
+              owner: returnValues.caller,
               lotId: _location?.lotId,
               status: Ship.STATUSES.UNDER_CONSTRUCTION
             }
@@ -2087,6 +2092,8 @@ const activities = {
           ...returnValues.ship,
           newGroupEval: {
             updatedValues: {
+              // TODO: in this case, if was commandeered from self, should technically
+              //  not have to invalidate the useWalletShips response, but it will anyway
               controllerId: returnValues.callerCrew?.id,
               hasPermission: getApplicablePermissions(ship || returnValues.ship)
             },

@@ -176,6 +176,7 @@ const api = {
     }, []);
   },
 
+  // NOTE (deprecated)
   getCrewPlannedBuildings: async (crewId) => {
     const queryBuilder = esb.boolQuery();
     queryBuilder.filter(esb.termQuery('Building.status', Building.CONSTRUCTION_STATUSES.PLANNED));
@@ -191,6 +192,7 @@ const api = {
     return formatESEntityData(response.data);
   },
 
+  // NOTE (deprecated)
   getCrewBuildingsOnAsteroid: async (asteroidId, crewId) => {
     const queryBuilder = esb.boolQuery();
 

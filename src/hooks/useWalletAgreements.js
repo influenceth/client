@@ -15,13 +15,10 @@ const useWalletAgreements = () => {
   }, [crews, crewsLoading]);
 
   return useQuery(
-    [ 'search', 'agreements', crewIds ],
+    [ 'agreements', accountAddress ],
     async () => api.getCrewAgreements(crewIds, accountAddress),
     { enabled: !!(accountAddress && crewIds) }
   );
-
-  // TODO: 
-  // update useBuildings? to use this
 };
 
 export default useWalletAgreements;

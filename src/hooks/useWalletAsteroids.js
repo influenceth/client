@@ -1,14 +1,18 @@
+import { useMemo } from 'react';
+import { useQuery } from 'react-query';
 import esb from 'elastic-builder';
+import { Entity } from '@influenceth/sdk';
 
 import useSession from '~/hooks/useSession';
 import useCrewContext from '~/hooks/useCrewContext';
 import api from '~/lib/api';
-import { useQuery } from 'react-query';
-import { useMemo } from 'react';
+import { entitiesCacheKey } from '~/lib/cacheKey';
 
 const useWalletAsteroids = () => {
   const { accountAddress } = useSession();
   const { crews, loading: crewsLoading } = useCrewContext();
+
+  const controllerIds = useMemo(() => (crews || []).map((c) => c.id), [crews]);
 
   const query = useMemo(() => {
     if (!accountAddress || crewsLoading) return null;
@@ -17,7 +21,7 @@ const useWalletAsteroids = () => {
       const qb = esb.boolQuery();
       qb.should([
         esb.termQuery('Nft.owner', accountAddress),
-        esb.termsQuery('Control.controller.id', (crews || []).map((c) => c.id)),
+        esb.termsQuery('Control.controller.id', controllerIds),
         // esb.termsQuery('id', [1,12,123,1234,1234,12345,123456])  // TODO: remove this debug line
       ]);
       
@@ -34,17 +38,13 @@ const useWalletAsteroids = () => {
     }
 
     return null;
-  }, [accountAddress, crews, crewsLoading]);
+  }, [accountAddress, controllerIds, crewsLoading]);
 
   return useQuery(
-    [ 'search', 'asteroids', query ],
+    entitiesCacheKey(Entity.IDS.ASTEROID, { owner: accountAddress, controllerId: controllerIds }),
     () => api.searchAssets('asteroids', query),
     { enabled: !!query }
   );
-
-  // TODO: 
-  // update useOwnedAsteroids to use this
-  // update useControlledAsteroids (per crew) to use this
 };
 
 export default useWalletAsteroids;

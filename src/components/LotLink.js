@@ -1,11 +1,11 @@
 import { useCallback, useMemo } from 'react';
 import { Entity, Lot } from '@influenceth/sdk';
 
-import useOwnedAsteroids from '~/hooks/useOwnedAsteroids';
 import useStore from '~/hooks/useStore';
-import OnClickLink from './OnClickLink';
+import useWalletAsteroids from '~/hooks/useWalletAsteroids';
 import formatters from '~/lib/formatters';
 import EntityName from './EntityName';
+import OnClickLink from './OnClickLink';
 
 export const useLotLink = ({ asteroidId: optAsteroidId, lotId: optLotId, resourceId, zoomToLot }) => {
   const dispatchHudMenuOpened = useStore(s => s.dispatchHudMenuOpened);
@@ -96,11 +96,12 @@ export const LotLink = ({ asteroidId: optAsteroidId, lotId: optLotId, resourceId
 
   const onClick = useLotLink({ asteroidId, lotId, resourceId, zoomToLot });
 
-  // TODO: this should probably rely on useAsteroid? lotlink may not be to asteroid crew owns
-  const { data: owned, isLoading: ownedAreLoading } = useOwnedAsteroids();
+  // NOTE: this should only tries grabbing the name from owned asteroids to save a load...
+  // (will fallback to loading name if it is not an owned asteroid)
+  const { data: owned, isLoading: ownedAreLoading } = useWalletAsteroids();
   const asteroidName = useMemo(() => {
     if (owned) {
-      const match = owned.find(a => a.id === Number(asteroidId));
+      const match = owned.hits?.find(a => a.id === Number(asteroidId));
       if (match) {
         return formatters.asteroidName(match);
       }
