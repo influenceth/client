@@ -15,17 +15,17 @@ export const validateHex = (v) => /[a-f0-9]{6}/i.test(v) ? v : '';
 const modelviewerDefaults = {
   background: null,
   backgroundStrength: 1,
-  bloomRadius: 1,
-  bloomStrength: 1,
+  bloomRadius: 0.6,
+  bloomStrength: 0.5,
   enablePostprocessing: true,
   enableModelLights: true,
   enableZoomLimits: true,
   envmap: '/textures/model-viewer/resource_envmap.hdr',
-  envmapStrength: 1,
+  envmapStrength: 0.5,
   lightmapStrength: 3,
   spotlightReduction: 150,
-  toneMapping: ACESFilmicToneMapping,
-  toneMappingExposure: 1,
+  toneMapping: CineonToneMapping,
+  toneMappingExposure: 2,
 };
 
 const visualConfigs = {
@@ -33,46 +33,44 @@ const visualConfigs = {
     building: {
       ...modelviewerDefaults,
       background: '/textures/model-viewer/building_skybox.jpg',
-      backgroundStrength: 0.5,
+      backgroundStrength: 0.4,
       emissiveAsBloom: true,
       emissiveMapAsLightMap: true,
-      enableRevolution: true,
-      envmapStrength: 0.2,
       lightmapStrength: 5,
       envmap: '/textures/model-viewer/forest.hdr',
-      floorNodeName: 'Asteroid_Terrain', // (enforces collision detection with this node (only in y-axis direction))
+      envmapStrength: 0.2,
+      keylightIntensity: 0,
+      rimlightIntensity: 0.5,
+      enableRevolution: true,
       initialZoom: 0.1,
-      keylightIntensity: 0.5,
       maxCameraDistance: 0.2,  // NOTE: use this or simple zoom constraints, not both
-      rimlightIntensity: 1,
+      floorNodeName: 'Asteroid_Terrain', // (enforces collision detection with this node (only in y-axis direction))
     },
     resource: {
       ...modelviewerDefaults,
       backgroundStrength: 0,
-      keylightIntensity: 2,
+      envmap: '/textures/model-viewer/forest.hdr',
+      keylightIntensity: 1,
       rimlightIntensity: 1,
-      envmapStrength: 2,
-      enablePostprocessing: false,
       enableRotation: true,
-      initialZoom: 1.2,
+      initialZoom: 1.5,
       simpleZoomConstraints: [0.85, 5], // TODO: if using simple zoom constraints, should probably not allow panning... maybe all should use maxCameraDistance?
     },
     ship: {
       ...modelviewerDefaults,
       background: '/textures/model-viewer/building_skybox.jpg',
-      backgroundStrength: 0.5,
+      backgroundStrength: 0.4,
       emissiveAsBloom: true,
-      enableRevolution: true,
       envmap: '/textures/model-viewer/forest.hdr',
-      envmapStrength: 1,
       keylightIntensity: 1,
       rimlightIntensity: 2,
+      enableRevolution: true,
       simpleZoomConstraints: [0.1, 5],
     },
   },
   scene: {
     background: '/textures/model-viewer/building_skybox.jpg',
-    backgroundStrength: 0.5,
+    backgroundStrength: 0.4,
     bloomRadius: 0.6,
     bloomStrength: 0.5,
     enablePostprocessing: true,
@@ -81,7 +79,7 @@ const visualConfigs = {
     darklightColor: 'd8ddff',
     darklightStrength: 0.75,//1.2,//0.1,
     starColor: 'ffeed9',// 0xffeedd,
-    starStrength: 4,//6,//1,
+    starStrength: 3,//6,//1,
   }
 };
 
