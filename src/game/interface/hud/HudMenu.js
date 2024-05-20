@@ -329,20 +329,7 @@ const HudMenu = () => {
     const menuButtons = [];
     const pageButtons = [];
 
-    if (launcherPage === 'play') {
-      menuButtons.push(
-        {
-          key: 'MY_CREWS',
-          label: 'My Crews',
-          icon: <CrewIcon />,
-          Component: hudMenus.MyCrews,
-          noDetail: true,
-          isVisible: true,
-          requireLogin: true,
-        }
-      );
-
-    } else {
+    if (!launcherPage) {
       let scope = 'belt'; // belt, asteroid, lot, ship
       if (zoomStatus === 'in') scope = 'asteroid';
       if (zoomScene?.type === 'LOT') scope = 'lot';
@@ -598,12 +585,22 @@ const HudMenu = () => {
 
     menuButtons.push(
       {
+        key: 'MY_CREWS',
+        label: 'My Crews',
+        icon: <CrewIcon />,
+        Component: hudMenus.MyCrews,
+        noDetail: true,
+        isUniversal: true,
+        isVisible: true,
+        requireLogin: true,
+      },
+      {
         key: 'MY_ASSETS',
         label: 'My Assets',
         icon: <MyAssetsIcon />,
-        highlightIcon: true,
         Component: hudMenus.MyAssets,
         noDetail: true,
+        isUniversal: true,
         isVisible: true,
         requireLogin: true,
       }
@@ -630,10 +627,12 @@ const HudMenu = () => {
     return menuButtons.find((b) => b.key === openHudMenu) || {};
   }, [menuButtons, openHudMenu]);
 
-  const [visibleMenuButtons, visiblePageButtons] = useMemo(() => ([
-    menuButtons.filter((b) => b.isVisible && (!b.requireLogin || authenticated)),
+  const [visibleMenuButtons, visibleUniversalButtons, visiblePageButtons] = useMemo(() => ([
+    menuButtons.filter((b) => b.isVisible && !b.isUniversal && (!b.requireLogin || authenticated)),
+    menuButtons.filter((b) => b.isVisible && b.isUniversal && (!b.requireLogin || authenticated)),
     pageButtons.filter((b) => b.isVisible && (!b.requireLogin || authenticated)),
   ]), [authenticated, menuButtons]);
+  console.log({ menuButtons, visibleMenuButtons, visibleUniversalButtons, visiblePageButtons })
 
   // if open hud menu is no longer visible (or if get logged out and "requireLogin" menu), close
   useEffect(() => {
@@ -651,8 +650,25 @@ const HudMenu = () => {
       
       {/* NOTE: the hudMenu id is in use by third-party extensions */}
       <Buttons id="hudMenu" open={open}>
-        {visibleMenuButtons.length > 0 && (
+        {visibleUniversalButtons.length > 0 && (
           <ButtonSection>
+            {visibleUniversalButtons.map(({ key, badge, label, highlightIcon, icon, onOpen, hideInsteadOfClose }) => (
+              <Button
+                key={key}
+                style={highlightIcon ? { color: theme.colors.main } : {}}
+                badge={badge}
+                onClick={() => handleButtonClick(key, onOpen, hideInsteadOfClose)}
+                selected={key === openHudMenu}
+                data-tooltip-id="hudMenuTooltip"
+                data-tooltip-place="left"
+                data-tooltip-content={label}>
+                {icon}
+              </Button>
+            ))}
+          </ButtonSection>
+        )}
+        {visibleMenuButtons.length > 0 && (
+          <ButtonSection showSeparator={visibleUniversalButtons.length > 0}>
             {visibleMenuButtons.map(({ key, badge, label, highlightIcon, icon, onOpen, hideInsteadOfClose }) => (
               <Button
                 key={key}
@@ -669,7 +685,7 @@ const HudMenu = () => {
           </ButtonSection>
         )}
         {visiblePageButtons.length > 0 && (
-          <ButtonSection showSeparator={menuButtons.length > 0}>
+          <ButtonSection showSeparator={(visibleMenuButtons.length || visibleUniversalButtons.length) > 0}>
             {visiblePageButtons.map(({ key, label, highlightIcon, icon, onOpen, hideInsteadOfClose }) => (
               <PageButton
                 key={key}

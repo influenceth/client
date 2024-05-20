@@ -1,28 +1,33 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
 
-import Badge from '~/components/Badge';
-import Button from '~/components/ButtonAlt';
 import {
-  BugIcon,
-  CrewIcon,
-  DiscordIcon,
-  LoginIcon,
-  LogoutIcon,
+  CrewmateCreditIcon,
   MenuIcon,
-  MyAssetIcon,
-  ResetCameraIcon,
-  SettingsIcon,
-  StoreIcon,
   SwayIcon,
-  WalletIcon,
   WarningIcon
 } from '~/components/Icons';
 import useSession from '~/hooks/useSession';
 import useCrewContext from '~/hooks/useCrewContext';
 import useStore from '~/hooks/useStore';
-import DropdownNavMenu, { NavMenuLoggedInUser, menuAnimationTime } from './DropdownNavMenu';
 import useSwayBalance from '~/hooks/useSwayBalance';
+import useAccountFormatted from '~/hooks/useAccountFormatted';
+import IconButton from '~/components/IconButton';
+import { FaCaretRight } from 'react-icons/fa';
+import { menuPadding } from '~/game/Launcher';
+
+const StyledSystemControls = styled.div`
+  align-items: center;
+  display: flex;
+  flex-direction: row;
+  padding: ${menuPadding}px 6px 0 0;
+  pointer-events: all;
+  position: absolute;
+  right: 0;
+  top: 0;
+  transition: opacity 250ms ease;
+  z-index: 2;
+`;
 
 const MobileWarning = styled.div`
   align-items: center;
@@ -34,26 +39,15 @@ const MobileWarning = styled.div`
   }
 `;
 
-const StyledSystemControls = styled.div`
-  align-items: center;
-  display: flex;
-  flex-direction: row;
-  height: 50px;
-  pointer-events: all;
-  position: absolute;
-  right: 0;
-  top: 0;
-  transition: opacity 250ms ease;
-  z-index: 2;
-`;
-
 const SwayBalance = styled.div`
   align-items: center;
+  border-right: 1px solid rgba(255, 255, 255, 0.15);
   color: white;
   display: flex;
   filter: drop-shadow(0px 0px 2px rgb(0 0 0));
   font-size: 24px;
-  margin-left: 25px;
+  padding-right: 16px;
+  margin-right: 16px;
 
   & label {
     color: #FFF;
@@ -61,100 +55,111 @@ const SwayBalance = styled.div`
   }
 `;
 
-const VerticalRule = styled.div`
-  border-left: 1px solid #444;
-  height: 28px;
-  margin-left: 14px;
-  opacity: ${p => p.hide ? 0 : 1};
-  padding-left: 13px;
-  transition: opacity ${menuAnimationTime}ms ease;
+const CrewmateCreditBalance = styled(SwayBalance)`
+  & > svg {
+    color: ${p => p.theme.colors.main};
+  }
+  & label {
+    font-size: 70%;
+    margin-left: 6px;
+    & b {
+      color: ${p => p.theme.colors.main};
+      font-weight: normal;
+    }
+  }
+`;
+
+const HoverContent = styled.label`
+  display: none;
+`;
+const NoHoverContent = styled.label`
+  display: block;
+`;
+
+const LoggedInButton = styled.div`
+  align-items: center;
+  background: rgba(${p => p.theme.colors.darkMainRGB}, 0.2);
+  border: 1px solid;
+  border-color: rgba(${p => p.theme.colors.mainRGB}, 0.4);
+  border-radius: 20px;
+  cursor: ${p => p.theme.cursors.active};
+  display: flex;
+  height: 34px;
+  justify-content: center;
+  margin-right: 16px;
+  overflow: hidden;
+  position: relative;
+  transition: margin-right 150ms ease, width 150ms ease;
+  ${p => p.isVisible
+    ? `
+      border-width: 1px;
+      margin-right: 16px;
+      width: 220px;
+    `
+    : `
+      border-width: 0px;
+      margin: 0;
+      width: 0;
+    `
+  }
+
+  &:hover {
+    background: rgba(${p => p.theme.colors.mainRGB}, 0.3);
+    border-color: rgba(${p => p.theme.colors.mainRGB}, 0.8);
+    color: white;
+    & ${HoverContent} {
+      display: block;
+    }
+    & ${NoHoverContent} {
+      display: none;
+    }
+  }
+`;
+
+const GreenDot = styled.div`
+  align-items: center;
+  background: rgba(${p => p.theme.colors.successRGB}, 0.15);
+  border-radius: 100%;
+  display: flex;
+  justify-content: center;
+  height: 18px;
+  left: 8px;
+  position: absolute;
+  top: 8px;
+  width: 18px;
+  &:before {
+    content: "";
+    background: rgba(${p => p.theme.colors.successRGB},1);
+    border-radius: 100%;
+    display: block;
+    height: 10px;
+    width: 10px;
+  }
 `;
 
 const SystemControls = () => {
-  const { accountAddress, login, logout, token, starknet } = useSession();
+  const { accountAddress, authenticated, logout } = useSession();
+  const { adalianRecruits, arvadianRecruits } = useCrewContext();
 
-  const { crews } = useCrewContext();
   const { data: swayBalance } = useSwayBalance();
 
+  const launcherPage = useStore(s => s.launcherPage);
   const dispatchLauncherPage = useStore(s => s.dispatchLauncherPage);
-  // const dispatchReorientCamera = useStore(s => s.dispatchReorientCamera);
 
-  const [menuOpen, setMenuOpen] = useState(false);
+  const [showAuthedButton, setShowAuthedButton] = useState(!(authenticated && launcherPage));
 
-  const openDiscord = useCallback(() => {
-    window.open('https://discord.gg/influenceth', '_blank');
-  }, []);
+  const totalRecruitCredits = useMemo(() => 5 || (adalianRecruits + arvadianRecruits), [adalianRecruits, arvadianRecruits])
+  const formattedAccount = useAccountFormatted({ address: accountAddress, truncate: true, doNotReplaceYou: true });
 
-  const openHelpChannel = useCallback(() => {
-    window.open(process.env.REACT_APP_HELP_URL, '_blank');
-  }, []);
+  const onToggleLauncher = useCallback(() => {
+    if (launcherPage) dispatchLauncherPage();
+    else dispatchLauncherPage('play');
+  }, [launcherPage]);
 
-  const openAssetsPortal = useCallback(() => {
-    window.open(process.env.REACT_APP_BRIDGE_URL, '_blank');
-  }, []);
-
-  const menuItems = useMemo(() => {
-    const items = [];
-
-    if (token) {
-      items.push({
-        onClick: () => dispatchLauncherPage('play'),
-        content: <><CrewIcon /> <label>My Crews <Badge subtler value={crews?.length} /></label></>
-      });
-    }
-
-    items.push({
-      onClick: () => dispatchLauncherPage('settings'),
-      content: <><SettingsIcon /> <label>Settings</label></>
-    });
-
-    if (token) {
-      items.push({
-        onClick: () => dispatchLauncherPage('store'),
-        content: <><StoreIcon /> <label>Store</label></>
-      })
-    }
-
-    items.push({ isRule: true });
-
-    if (token) {
-      items.push({
-        onClick: logout,
-        content: <><LogoutIcon /> <label>Log Out</label></>
-      })
-    } else {
-      items.push({
-        onClick: login,
-        content: <><LoginIcon /> <label>Log In</label></>
-      })
-    }
-
-    if (token && starknet?.id === 'argentWebWallet') {
-      items.push({
-        onClick: () => window.open(process.env.REACT_APP_ARGENT_WEB_WALLET_URL, '_blank', 'noopener,noreferrer'),
-        content: <><WalletIcon /> <label>My Wallet</label></>
-      });
-    }
-
-    items.push({
-      onClick: openDiscord,
-      content: <><DiscordIcon /> <label>Discord</label></>
-    });
-
-    items.push({
-      onClick: openAssetsPortal,
-      content: <><MyAssetIcon /> <label>Assets Portal</label></>
-    });
-
-    if (process.env.REACT_APP_HELP_URL) {
-      items.push({
-        onClick: openHelpChannel,
-        content: <><BugIcon /> <label>Support</label></>
-      })
-    }
-
-    return items;
-  }, [crews?.length, login, logout, token])
+  // (just used for animation in/out of auth button)
+  useEffect(() => {
+    setTimeout(() => { setShowAuthedButton(authenticated && launcherPage); }, 0);
+  }, [authenticated, !launcherPage]);
 
   return (
     <StyledSystemControls>
@@ -163,15 +168,12 @@ const SystemControls = () => {
         <span>Mobile is not well supported, please use desktop.</span>
       </MobileWarning>
 
-      {/*
-      <Button
-        data-tooltip-content="Realign camera to poles"
-        onClick={dispatchReorientCamera}
-        size="bigicon"
-        style={{ fontSize: '26px', marginRight: swayBalance === undefined ? 15 : 0 }}>
-        <ResetCameraIcon />
-      </Button>
-      */}
+      {totalRecruitCredits && (
+        <CrewmateCreditBalance>
+          <CrewmateCreditIcon />
+          <label>{(totalRecruitCredits || 0).toLocaleString()} <b>Crewmate Credit{totalRecruitCredits === 1 ? '' : 's'}</b></label>
+        </CrewmateCreditBalance>
+      )}
 
       {swayBalance !== undefined && (
         <SwayBalance>
@@ -180,18 +182,18 @@ const SystemControls = () => {
         </SwayBalance>
       )}
 
-      <VerticalRule hide={menuOpen} />
+      {authenticated && (
+        <LoggedInButton onClick={logout} isVisible={!!showAuthedButton}>
+          <GreenDot />
+          <NoHoverContent>{formattedAccount}</NoHoverContent>
+          <HoverContent>Log Out</HoverContent>
+        </LoggedInButton>
+      )}
 
-      <DropdownNavMenu
-        header={<NavMenuLoggedInUser account={accountAddress} />}
-        hCollapse
-        isOpen={menuOpen}
-        menuItems={menuItems}
-        onClickOpener={() => setMenuOpen((o) => !o)}
-        onClose={() => setMenuOpen(false)}
-        openerIcon={<MenuIcon />}
-        openerHighlight
-      />
+      <IconButton onClick={onToggleLauncher} style={{ fontSize: 17 }}>
+        {launcherPage ? <FaCaretRight /> : <MenuIcon />}
+      </IconButton>
+
     </StyledSystemControls>
   );
 };

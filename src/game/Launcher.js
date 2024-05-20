@@ -1,40 +1,26 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import styled from 'styled-components';
 import { PuffLoader as Loader } from 'react-spinners';
 
 import useSession from '~/hooks/useSession';
 import useStore from '~/hooks/useStore';
-import Badge from '~/components/Badge';
 import {
   ChevronDoubleRightIcon,
-  CloseIcon,
-  CrewmateCreditIcon,
-  CrewmateIcon,
-  DownloadIcon,
-  LogoutIcon,
-  MyAssetIcon,
-  SwayIcon,
   UserIcon,
-  WalletIcon
 } from '~/components/Icons';
 import InfluenceLogo from '~/components/InfluenceLogo';
 import NavIcon from '~/components/NavIcon';
-import OnClickLink from '~/components/OnClickLink';
 import useCrewContext from '~/hooks/useCrewContext';
 import usePriceConstants from '~/hooks/usePriceConstants';
-import { reactBool } from '~/lib/utils';
 import Play from './launcher/Play';
 import Settings from './launcher/Settings';
 import Store from './launcher/Store';
 import HudMenu from './interface/hud/HudMenu';
-import DropdownNavMenu, { LoggedInIcon, NavMenuLoggedInUser } from './interface/hud/DropdownNavMenu';
-import IconButton from '~/components/IconButton';
-import { BiRightArrow } from 'react-icons/bi';
-import { FaCaretRight } from 'react-icons/fa';
 import useSwayBalance from '~/hooks/useSwayBalance';
 import useAccountFormatted from '~/hooks/useAccountFormatted';
+import SystemControls from './interface/hud/SystemControls';
 
-const menuPadding = 25;
+export const menuPadding = 25;
 const headerHeight = 68;
 const footerHeight = 80;
 
@@ -242,52 +228,6 @@ const AccountButton = styled.div`
   }
 `;
 
-const LoggedInButton = styled.div`
-  align-items: center;
-  background: rgba(${p => p.theme.colors.darkMainRGB}, 0.2);
-  border: 1px solid;
-  border-color: rgba(${p => p.theme.colors.mainRGB}, 0.4);
-  border-radius: 20px;
-  cursor: ${p => p.theme.cursors.active};
-  display: flex;
-  height: 34px;
-  justify-content: center;
-  margin-right: 16px;
-  position: relative;
-  width: 220px;
-
-  &:hover {
-    background: rgba(${p => p.theme.colors.mainRGB}, 0.3);
-    border-color: rgba(${p => p.theme.colors.mainRGB}, 0.8);
-    color: white;
-    & ${HoverContent} {
-      display: block;
-    }
-    & ${NoHoverContent} {
-      display: none;
-    }
-  }
-`;
-const GreenDot = styled.div`
-  align-items: center;
-  background: rgba(${p => p.theme.colors.successRGB}, 0.15);
-  border-radius: 100%;
-  display: flex;
-  justify-content: center;
-  height: 18px;
-  left: 8px;
-  position: absolute;
-  top: 8px;
-  width: 18px;
-  &:before {
-    content: "";
-    background: rgba(${p => p.theme.colors.successRGB},1);
-    border-radius: 100%;
-    display: block;
-    height: 10px;
-    width: 10px;
-  }
-`;
 
 const PlayButton = styled.div`
   align-items: center;
@@ -364,36 +304,6 @@ const Footer = styled.div`
       &:hover {
         color: #CCC;
       }
-    }
-  }
-`;
-
-const SwayBalance = styled.div`
-  align-items: center;
-  border-right: 1px solid rgba(255, 255, 255, 0.15);
-  color: white;
-  display: flex;
-  filter: drop-shadow(0px 0px 2px rgb(0 0 0));
-  font-size: 24px;
-  padding-right: 16px;
-  margin-right: 16px;
-
-  & label {
-    color: #FFF;
-    font-size: 85%;
-  }
-`;
-
-const CrewmateCreditBalance = styled(SwayBalance)`
-  & > svg {
-    color: ${p => p.theme.colors.main};
-  }
-  & label {
-    font-size: 70%;
-    margin-left: 6px;
-    & b {
-      color: ${p => p.theme.colors.main};
-      font-weight: normal;
     }
   }
 `;
@@ -516,34 +426,7 @@ const Launcher = (props) => {
         </Nav>
       </TopLeftMenu>
 
-      <TopRightMenu>
-
-        {totalRecruitCredits && (
-          <CrewmateCreditBalance>
-            <CrewmateCreditIcon />
-            <label>{(totalRecruitCredits || 0).toLocaleString()} <b>Crewmate Credit{totalRecruitCredits === 1 ? '' : 's'}</b></label>
-          </CrewmateCreditBalance>
-        )}
-
-        {swayBalance !== undefined && (
-          <SwayBalance>
-            <SwayIcon />
-            <label>{swayBalance.toLocaleString({ maximumFractionDigits: 0 })}</label>
-          </SwayBalance>
-        )}
-
-        {authenticated && (
-          <LoggedInButton onClick={logout} hasHoverContent>
-            <GreenDot />
-            <NoHoverContent>{formattedAccount}</NoHoverContent>
-            <HoverContent>Log Out</HoverContent>
-          </LoggedInButton>
-        )}
-
-        <IconButton onClick={onClickPlay} style={{ fontSize: 17 }}>
-          <FaCaretRight />
-        </IconButton>
-      </TopRightMenu>
+      <SystemControls />
 
       <ContentWrapper>
         <MainContent>
