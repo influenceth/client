@@ -51,7 +51,7 @@ const visualConfigs = {
       backgroundStrength: 0,
       envmap: '/textures/model-viewer/forest.hdr',
       keylightIntensity: 1,
-      rimlightIntensity: 1,
+      rimlightIntensity: 2,
       enableRotation: true,
       initialZoom: 1.5,
       simpleZoomConstraints: [0.85, 5], // TODO: if using simple zoom constraints, should probably not allow panning... maybe all should use maxCameraDistance?
