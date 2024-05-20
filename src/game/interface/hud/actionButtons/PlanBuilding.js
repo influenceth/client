@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from 'react';
-import { Lot } from '@influenceth/sdk';
+import { Lot, Permission } from '@influenceth/sdk';
 
 import { PlanBuildingIcon } from '~/components/Icons';
 import useConstructionManager from '~/hooks/actionManagers/useConstructionManager';
@@ -26,11 +26,13 @@ const PlanBuilding = ({ asteroid, crew, lot, onSetAction, _disabled }) => {
   }, [onSetAction]);
 
   const disabledReason = useMemo(() => {
+    const isPermitted = (lot?.PrepaidAgreements?.length > 0 || lot?.ContractAgreements?.length > 0 ) ? 
+    Permission.isPermitted(crew, Permission.IDS.USE_LOT, lot) : true;
+
     if (_disabled) return 'loading...';
-    if (constructionStatus === 'READY_TO_PLAN') {
-      return getCrewDisabledReason({ asteroid, crew });
-    }
-  }, [_disabled, asteroid, constructionStatus, crew]);
+    if (!isPermitted) return 'lot reserved';
+    if (constructionStatus === 'READY_TO_PLAN') return getCrewDisabledReason({ asteroid, crew });
+  }, [_disabled, asteroid, constructionStatus, crew, lot]);
 
   return (
     <ActionButton
