@@ -8,19 +8,20 @@ import useSession from '~/hooks/useSession';
 import useStore from '~/hooks/useStore';
 import useReferralsCount from '~/hooks/useReferralsCount';
 import useScreenSize from '~/hooks/useScreenSize';
-import CopyReferralLink from '~/components/CopyReferralLink';
 import DataReadout from '~/components/DataReadout';
 import Button from '~/components/ButtonPill';
 import IconButton from '~/components/IconButton';
 import NumberInput from '~/components/NumberInput';
 import Range from '~/components/Range';
 import constants from '~/lib/constants';
+import LauncherDialog from './components/LauncherDialog';
 
 const { ENABLE_SHADOWS, MIN_FOV, MAX_FOV } = constants;
 
 const StyledSettings = styled.div`
-  height: 100%;
-  width: 100%;
+  max-width: 100%;
+  padding: 30px 20px;
+  width: 720px;
 `;
 
 const Section = styled.div`
@@ -81,12 +82,10 @@ const AutodetectButton = styled(Button)`
   }
 `;
 
-const Settings = () => {
+const SettingsPane = () => {
   const gpuInfo = useDetectGPU();
 
-  const { authenticated } = useSession();
   const { isMobile } = useScreenSize();
-  const { data: referralsCount } = useReferralsCount();
   const graphics = useStore(s => s.graphics);
   const sounds = useStore(s => s.sounds);
   const turnOnSkybox = useStore(s => s.dispatchSkyboxUnhidden);
@@ -294,25 +293,79 @@ const Settings = () => {
           </StyledDataReadout>
         </div>
       </Section>
+    </StyledSettings>
+  );
+}
 
+// TODO: connect these
+const menuShortcuts = [
+  { label: 'Play Menu', shortcut: 'Ctrl + -' },
+  { label: 'Settings Menu', shortcut: 'Ctrl + 1' },
+  { label: 'Help Menu', shortcut: 'Ctrl + 2' },
+  { label: 'Store Menu', shortcut: 'Ctrl + 3' },
+  { label: 'Rewards Menu', shortcut: 'Ctrl + 4' },
+];
+const cameraShortcuts = [
+  { label: 'Recenter Selected Lot', shortcut: 'Ctrl + .' },
+  { label: 'Camera to North', shortcut: 'Ctrl + \\' },
+  { label: 'Hide / Show HUD', shortcut: 'Ctrl + F9' },
+];
+
+const Shortcut = styled.div`
+  align-items: center;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  padding-bottom: 20px;
+  padding-left: 20px;
+  & > label {
+    color: #888;
+  }
+  & > span {
+    color: white;
+  }
+`;
+
+const ShortcutsPane = () => {
+  return (
+    <StyledSettings>
       <Section>
-        <h3>Recruitment</h3>
+        <h3>Menus</h3>
         <div>
-          <StyledDataReadout label="Recruitment Link">
-            <CopyReferralLink
-              fallbackContent={(
-                <span>Connect wallet to generate link</span>
-              )}>
-              <Button>Generate Link</Button>
-            </CopyReferralLink>
-          </StyledDataReadout>
-          {authenticated && (
-            <StyledDataReadout label="Recruitments Count">{referralsCount || 0}</StyledDataReadout>
-          )}
+          {menuShortcuts.map(({ label, shortcut }) => (
+            <Shortcut key={label}>
+              <label>{label}</label>
+              <span>{shortcut}</span>
+            </Shortcut>
+          ))}
+        </div>
+      </Section>
+      <Section>
+        <h3>Camera</h3>
+        <div>
+          {cameraShortcuts.map(({ label, shortcut }) => (
+            <Shortcut key={label}>
+              <label>{label}</label>
+              <span>{shortcut}</span>
+            </Shortcut>
+          ))}
         </div>
       </Section>
     </StyledSettings>
   );
-};
+}
+
+const panes = [
+  {
+    label: 'Graphics & Sound',
+    pane: <SettingsPane />
+  },
+  {
+    label: 'Keyboard Shortcuts',
+    pane: <ShortcutsPane />
+  }
+];
+
+const Settings = () => <LauncherDialog panes={panes} />;
 
 export default Settings;

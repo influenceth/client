@@ -175,7 +175,7 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
     })),
 
     dispatchLauncherPage: (page) => set(produce(state => {
-      if (page === 'settings' || page === 'store') state.launcherPage = page;
+      if (['play', 'store', 'help', 'rewards', 'settings'].includes(page)) state.launcherPage = page;
       else if (page) state.launcherPage = 'play';
       else state.launcherPage = null;
     })),

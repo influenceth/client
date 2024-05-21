@@ -148,7 +148,7 @@ const SystemControls = () => {
 
   const [showAuthedButton, setShowAuthedButton] = useState(!(authenticated && launcherPage));
 
-  const totalRecruitCredits = useMemo(() => 5 || (adalianRecruits + arvadianRecruits), [adalianRecruits, arvadianRecruits])
+  const totalRecruitCredits = useMemo(() => (adalianRecruits?.length + arvadianRecruits?.length), [adalianRecruits, arvadianRecruits])
   const formattedAccount = useAccountFormatted({ address: accountAddress, truncate: true, doNotReplaceYou: true });
 
   const onToggleLauncher = useCallback(() => {

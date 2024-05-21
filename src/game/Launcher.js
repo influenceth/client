@@ -19,10 +19,13 @@ import HudMenu from './interface/hud/HudMenu';
 import useSwayBalance from '~/hooks/useSwayBalance';
 import useAccountFormatted from '~/hooks/useAccountFormatted';
 import SystemControls from './interface/hud/SystemControls';
+import Help from './launcher/Help';
+import Rewards from './launcher/Rewards';
 
 export const menuPadding = 25;
 const headerHeight = 68;
 const footerHeight = 80;
+export const navMenuWidth = 250;
 
 // TODO: should add in/out transitions to this page
 const StyledLauncher = styled.div`
@@ -51,26 +54,9 @@ const TopLeftMenu = styled.div`
   padding: ${menuPadding}px;
 `;
 
-const TopRightMenu = styled.div`
-  position: absolute;
-  top: 0;
-  right: 0;
-  padding: ${menuPadding}px ${menuPadding/2}px;
-
-  display: flex;
-  flex-direction: row;
-`;
-
-const BottomLeftMenu = styled.div`
-  position: absolute;
-  bottom: ${footerHeight / 4}px;
-  left: 0;
-  padding: ${menuPadding}px;
-`;
-
 const Nav = styled.div`
   margin-top: ${menuPadding}px;
-  width: 225px;
+  width: ${navMenuWidth - menuPadding}px;
 `;
 
 const Icon = styled.div``;
@@ -271,7 +257,7 @@ const MainContent = styled.div`
   flex: 1;
   justify-content: center;
   overflow: auto;
-  padding-right: 15px;
+  width: 100%;
 `;
 
 const Footer = styled.div`
@@ -335,8 +321,8 @@ const Launcher = (props) => {
   }, [interfaceHidden]);
 
   useEffect(() => {
-    // only allow account and settings unless logged in
-    if (!authenticated && !['play', 'settings'].includes(launcherPage)) {
+    // limit selection if logged out
+    if (!authenticated && !['play', 'help', 'settings'].includes(launcherPage)) {
       dispatchLauncherPage('play');
     }
     // disallow store if no sale available
@@ -364,9 +350,6 @@ const Launcher = (props) => {
   const openAssetsPortal = useCallback(() => {
     window.open(process.env.REACT_APP_BRIDGE_URL, '_blank');
   }, []);
-
-  const totalRecruitCredits = useMemo(() => 5 || (adalianRecruits + arvadianRecruits), [adalianRecruits, arvadianRecruits])
-  const formattedAccount = useAccountFormatted({ address: accountAddress, truncate: true, doNotReplaceYou: true });
 
   return (
     <StyledLauncher {...props}>
@@ -428,11 +411,13 @@ const Launcher = (props) => {
 
       <SystemControls />
 
-      <ContentWrapper>
+      <ContentWrapper id="contentwrapper">
         <MainContent>
           {launcherPage === 'play' && <Play />}
-          {launcherPage === 'settings' && <Settings />}
           {launcherPage === 'store' && <Store />}
+          {launcherPage === 'help' && <Help />}
+          {launcherPage === 'rewards' && <Rewards />}
+          {launcherPage === 'settings' && <Settings />}
         </MainContent>
 
         {launcherPage === 'play' && (

@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
 
-import ChoicesDialog from '~/components/ChoicesDialog';
 import CrewmateCard from '~/components/CrewmateCard';
+import Details from '~/components/DetailsModal';
+import HeroLayout from '~/components/HeroLayout';
 import { GenesisIcon } from '~/components/Icons';
 import useCrewContext from '~/hooks/useCrewContext';
 import { getCloudfrontUrl } from '~/lib/assetUtils';
@@ -108,12 +109,30 @@ const SelectUninitializedCrewmateDialog = ({ onSelect }) => {
   }, [adalianRecruits, arvadianRecruits?.length, loading])
 
   return (
-    <ChoicesDialog
-      dialogTitle="Crewmate Creation"
+    <Details
+      edgeToEdge
+      headerProps={{ background: 'true', v2: 'true' }}
       onCloseDestination={onCloseDestination}
-      coverImage={coverImage}
-      coverImageCenter="35% 75%"
-      contentOverride={(
+      title="Crewmate Creation"
+      width="1150px">
+      <HeroLayout
+        coverImage={coverImage}
+        coverImageCenter="35% 75%"
+        flourish={<Flourish><GenesisIcon /></Flourish>}
+        flourishWidth={170}
+        leftButton={{
+          label: 'Create New Adalian',
+          onClick: () => onSelect(adalianRecruits?.[0]?.id || 0),
+          props: { badge: adalianRecruits?.length || 0, width: cardWidth }
+        }}
+        rightButton={{
+          label: 'Next',
+          onClick: () => selected ? onSelect(selected) : null,
+          props: { disabled: nativeBool(!selected) },
+          preLabel: <RecruitTally>Unrecruited Arvad Crewmates: <b>{arvadianRecruits.length}</b></RecruitTally>
+        }}
+        title="Arvad Crewmates"
+        subtitle={<Subtitle>Your account has <b>Arvad Crewmates</b> that can be recruited</Subtitle>}>
         <Wrapper>
           <CardWrapper>
             {arvadianRecruits.map((crewmate) => (
@@ -129,23 +148,8 @@ const SelectUninitializedCrewmateDialog = ({ onSelect }) => {
             ))}
           </CardWrapper>
         </Wrapper>
-      )}
-      flourish={<Flourish><GenesisIcon /></Flourish>}
-      flourishWidth={170}
-      leftButton={{
-        label: 'Create New Adalian',
-        onClick: () => onSelect(adalianRecruits?.[0]?.id || 0),
-        props: { badge: adalianRecruits?.length || 0, width: cardWidth }
-      }}
-      rightButton={{
-        label: 'Next',
-        onClick: () => selected ? onSelect(selected) : null,
-        props: { disabled: nativeBool(!selected) },
-        preLabel: <RecruitTally>Unrecruited Arvad Crewmates: <b>{arvadianRecruits.length}</b></RecruitTally>
-      }}
-      title="Arvad Crewmates"
-      subtitle={<Subtitle>Your account has <b>Arvad Crewmates</b> that can be recruited</Subtitle>}
-    />
+      </HeroLayout>
+    </Details>
   );
 };
 

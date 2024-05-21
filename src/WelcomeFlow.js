@@ -6,7 +6,7 @@ import Details from '~/components/DetailsV2';
 import useSession from '~/hooks/useSession';
 import useCrewContext from '~/hooks/useCrewContext';
 import useStore from '~/hooks/useStore';
-import { CrewmateSKU } from '~/game/launcher/Store';
+import { CrewmateSKU } from '~/game/launcher/components/CrewmateSKU';
 
 const STATUS = {
   LOGGED_OUT: 0,

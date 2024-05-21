@@ -53,10 +53,11 @@ export function CrewProvider({ children }) {
 
   const [adalianRecruits, arvadianRecruits] = useMemo(() => {
     if (!myOwnedCrewmates) return [[], []];
-    const allRecruits = myOwnedCrewmates.filter((c) => !c.Control?.controller?.id);
+    // const allRecruits = myOwnedCrewmates.filter((c) => !c.Control?.controller?.id);
+    const allRecruits = myOwnedCrewmates.slice(0, 8);
     return [
       allRecruits.filter((c) => !c.Crewmate.class),
-      allRecruits.filter((c) => [
+      allRecruits.filter((c) => true || [
         Crewmate.COLLECTION_IDS.ARVAD_CITIZEN,
         Crewmate.COLLECTION_IDS.ARVAD_SPECIALIST,
         Crewmate.COLLECTION_IDS.ARVAD_LEADERSHIP

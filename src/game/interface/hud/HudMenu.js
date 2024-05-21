@@ -632,7 +632,6 @@ const HudMenu = () => {
     menuButtons.filter((b) => b.isVisible && b.isUniversal && (!b.requireLogin || authenticated)),
     pageButtons.filter((b) => b.isVisible && (!b.requireLogin || authenticated)),
   ]), [authenticated, menuButtons]);
-  console.log({ menuButtons, visibleMenuButtons, visibleUniversalButtons, visiblePageButtons })
 
   // if open hud menu is no longer visible (or if get logged out and "requireLogin" menu), close
   useEffect(() => {
