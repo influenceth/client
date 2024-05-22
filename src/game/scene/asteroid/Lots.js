@@ -421,7 +421,7 @@ const Lots = ({ attachTo: overrideAttachTo, asteroidId, axis, cameraAltitude, ca
     };
 
     const meshes = {};
-    const pipMaterial = new MeshBasicMaterial({ ...materialOpts, opacity: 0.6, color: GRAY_COLOR });
+    const pipMaterial = new MeshBasicMaterial({ ...materialOpts, opacity: 0.4, color: GRAY_COLOR });
     meshes[0] = new InstancedMesh(new CircleGeometry(PIP_RADIUS, 6), pipMaterial, visibleLotTally);
     meshes[0].setColorAt(0, GRAY_COLOR);
 

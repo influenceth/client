@@ -959,8 +959,8 @@ const AsteroidComponent = () => {
         }
 
         if (darkLight.current) {
-          const falloff = Math.min(config.radius / 4, 25000);
-          const intensity = Math.max(0.25, Math.min(Math.sqrt(falloff / cameraAltitude), 0.75));
+          const falloff = Math.min(config.radius / 4, 1500);
+          const intensity = Math.max(0.25, Math.min(Math.sqrt(falloff / cameraAltitude), 0.5));
           darkLight.current.intensity = DARKLIGHT_INTENSITY * intensity;
           darkLight.current.position.copy(
             new Vector3(...position.current).normalize().multiplyScalar(config.radius * DIRECTIONAL_LIGHT_DISTANCE)
