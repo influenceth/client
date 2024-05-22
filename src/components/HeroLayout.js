@@ -146,8 +146,8 @@ const FlourishWrapper = styled.div`
 
 const Footer = styled.div`
   background: black;
+  flex: 0 0 80px;
   padding: 0 35px;
-  height: 80px;
 `;
 
 const HeroLayout = ({

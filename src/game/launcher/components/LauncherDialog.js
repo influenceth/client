@@ -34,7 +34,7 @@ const PaneWrapper = styled.div`
   border-left: 1px solid ${borderColor};
   ${p => p.singlePane ? 'max-height' : 'height'}: calc(100vh - 250px);
   overflow: hidden auto;
-  width: 1000px;
+  width: 1075px;
 `;
 const TabWrapper = styled.div`
   flex: 0 0 300px;

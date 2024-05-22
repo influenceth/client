@@ -12,6 +12,8 @@ import UncontrolledTextInput from '~/components/TextInputUncontrolled';
 import { PurchaseAsteroidIcon, SwayIcon } from '~/components/Icons';
 import useStore from '~/hooks/useStore';
 import useAsteroidSale from '~/hooks/useAsteroidSale';
+import useBlockTime from '~/hooks/useBlockTime';
+import { formatTimer } from '~/lib/utils';
 
 
 const Flourish = styled.div`
@@ -34,7 +36,7 @@ const Wrapper = styled.div`
 
 const Description = styled.div`
   color: ${p => p.theme.colors.main};
-  font-size: 15px;
+  font-size: 16px;
   padding-right: 20px;
   & > p {
     margin: 0 0 1em;
@@ -43,15 +45,27 @@ const Description = styled.div`
 
 const PurchaseForm = styled.div`
   background: linear-gradient(to bottom, #163041, transparent);
-  flex: 0 0 265px;
+  flex: 0 0 280px;
+  align-self: stretch;
   padding: 5px;
   & > h3 {
+    align-items: center;
     background: rgba(${p => p.theme.colors.mainRGB}, 0.4);
+    display: flex;
     font-size: 15px;
-    font-weight: normal;
+    justify-content: space-between;
     margin: 0;
     padding: 8px 12px;
     text-transform: uppercase;
+    & > span:last-child {
+      color: rgba(255, 255, 255, 0.5);
+      font-weight: normal;
+      & > b {
+        color: white;
+        font-weight: normal;
+        margin-left: 4px;
+      }
+    }
   }
   & > footer {
     color: #777;
@@ -102,12 +116,14 @@ const AsteroidBanner = styled.div`
   display: flex;
   flex-direction: row;
   margin-top: 10px;
+  padding-left: 10px;
   & > div:first-child {
     font-size: 60px;
     line-height: 0;
   }
   & > div:last-child {
     label {
+      font-size: 17px;
       font-weight: bold;
     }
     span {
@@ -120,7 +136,21 @@ const AsteroidBanner = styled.div`
 
 const AsteroidSKU = () => {
   const { data: asteroidSale } = useAsteroidSale();
-  const remaining = asteroidSale ? (Number(asteroidSale.limit) - Number(asteroidSale.volume)) : 0;
+  const blockTime = useBlockTime();
+
+  const [remaining, remainingTime, trendingToSellOut] = useMemo(() => {
+    if (!asteroidSale) return [0, 0, false];
+
+    const asteroidSaleEnd = ((asteroidSale.period || 0) + 1) * 1e6;
+    const remaining = asteroidSale ? (Number(asteroidSale.limit) - Number(asteroidSale.volume)) : 0;
+    const remainingTime = asteroidSaleEnd - blockTime;
+    return [
+      remainingTime > 0 ? remaining : 0,
+      remainingTime,
+      (remaining / remainingTime) <= (asteroidSale.limit / 1e6)
+    ];
+  }, [asteroidSale, blockTime]);
+
   return (
     <Wrapper>
       <Description>
@@ -137,14 +167,31 @@ const AsteroidSKU = () => {
         </p>
       </Description>
       <PurchaseForm>
-        <h3>Sale Active</h3>
+        <h3>
+          <span>
+            {remainingTime > 0 && remaining > 0 && `Sale Active`}
+            {remainingTime > 0 && remaining === 0 && `Sold Out`}
+            {remainingTime <= 0 && `Sale Inactive`}
+          </span>
+          <span>
+            {remainingTime > 0 && (trendingToSellOut || remaining <= 0)
+              ? (
+                <>
+                  {remaining > 0 ? 'Ends in' : 'Reopens in'}
+                  <b>{formatTimer(remainingTime, 2)}</b>
+                </>
+              )
+              : null
+            }
+          </span>
+        </h3>
         <div>
           <AsteroidBanner>
             <div>
               <PurchaseAsteroidIcon />
             </div>
             <div>
-              <label>{asteroidSale ? remaining.toLocaleString() : '...'} Asteroids</label>
+              <label>{asteroidSale ? remaining.toLocaleString() : '...'} Asteroid{remaining === 1 ? '' : 's'}</label>
               <span>Remaining in sale period</span>
             </div>
           </AsteroidBanner>
@@ -285,6 +332,7 @@ const SKU = ({ asset, onBack }) => {
       return {
         coverImage: AsteroidsHeroImage,
         title: 'Buy Asteroids',
+        bodyStyle: { padding: '10px 0 20px 10px' },
         content: <AsteroidSKU />,
         flourishWidth: 145,
         rightButton: {
@@ -321,8 +369,8 @@ const SKU = ({ asset, onBack }) => {
   return (
     <HeroLayout
       autoHeight
-      belowFoldMin={180}
-      bodyStyle={{ padding: 0 }}
+      belowFoldMin={192}
+      bodyStyle={{ padding: '10px 0 20px 0' }}
       leftButton={{
         label: 'Back',
         onClick: onBack

@@ -148,15 +148,20 @@ const SkuSelector = ({ onSelect }) => {
     const asteroidExtra = {};
 
     const asteroidSaleEnd = ((asteroidSale?.period || 0) + 1) * 1e6;
-
-    if (asteroidSaleEnd > blockTime) {
+    const remainingTime = asteroidSaleEnd - blockTime;
+    if (remainingTime > 0) {
       const remaining = asteroidSale ? (Number(asteroidSale.limit) - Number(asteroidSale.volume)) : 0;
+      const trendingToSellOut = asteroidSale && ((remaining / remainingTime) <= (asteroidSale.limit / 1e6));
       asteroidExtra.leftNote = <><b>{remaining.toLocaleString()}</b> Remaining</>;
-      asteroidExtra.rightNote = asteroidSaleEnd > blockTime
-        ? <><b>{formatTimer(asteroidSaleEnd - blockTime, 2)}</b> {remaining > 0 ? `Left in` : `Until Next`} Sales Period</>
-        : <>Sale Ended</>;
+      if (trendingToSellOut) {
+        asteroidExtra.rightNote = (
+          <>
+            <b>{formatTimer(remainingTime, 2)}</b> {remaining > 0 ? `Left in` : `Until Next`} Sales Period
+          </>
+        );
+      }
     } else {
-      asteroidExtra.rightNote = `Sale Currently Closed`;
+      asteroidExtra.rightNote = `Sale Inactive`;
     }
 
     return {
