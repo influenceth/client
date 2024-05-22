@@ -154,7 +154,6 @@ const HeroLayout = ({
   autoHeight,
   children,
   belowFoldMin = 256,
-  bodyStyle,
   coverImage,
   coverImageCenter,
   flourish, // TODO: default?
@@ -162,7 +161,8 @@ const HeroLayout = ({
   leftButton,
   rightButton,
   title,
-  subtitle
+  subtitle,
+  styleOverrides = {}
 }) => {
   const [imageLoaded, setImageLoaded] = useState();
 
@@ -183,17 +183,17 @@ const HeroLayout = ({
         belowFoldMin={belowFoldMin}
         center={coverImageCenter}
         ready={coverImage === imageLoaded} />
-      <AboveFold ready={!!imageLoaded} hasSubtitle={!!subtitle}>
-        {title && <Title>{title}</Title>}
+      <AboveFold ready={!!imageLoaded} hasSubtitle={!!subtitle} style={styleOverrides?.aboveFold}>
+        {title && <Title style={styleOverrides?.title}>{title}</Title>}
         {subtitle && <Subtitle>{subtitle}</Subtitle>}
-        <Rule />
+        <Rule style={styleOverrides?.rule} />
       </AboveFold>
-      <BelowFold autoHeight={autoHeight} belowFoldMin={belowFoldMin} style={bodyStyle}>
+      <BelowFold autoHeight={autoHeight} belowFoldMin={belowFoldMin} style={styleOverrides?.belowFold}>
         {!imageLoaded && <Loader />}
         {imageLoaded && (
           <>
             {flourish && <FlourishWrapper flourishWidth={flourishWidth}>{flourish}</FlourishWrapper>}
-            <Body flourishWidth={flourishWidth}>
+            <Body flourishWidth={flourishWidth} style={styleOverrides?.body}>
               {children}
             </Body>
           </>

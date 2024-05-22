@@ -188,7 +188,7 @@ const SkuSelector = ({ onSelect }) => {
     <SKUButtons>
       {Object.keys(storeAssets).map((asset, i) => (
         <SKUButton key={asset} onClick={() => onSelect(i)}>
-          <label>{asset}</label>
+          <label>{storeAssets[asset]}</label>
           <SKUImagery src={paneMeta[asset].imagery} />
           <SKUFooter>
             {paneMeta[asset].leftNote && <SKULeftNote>{paneMeta[asset].leftNote}</SKULeftNote>}

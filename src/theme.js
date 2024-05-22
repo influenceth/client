@@ -135,7 +135,8 @@ const theme = {
     mobile: 1023,
     xl: 1599
   },
-  clipCorner
+  clipCorner,
+  hexToRGB
 };
 
 export default theme;
