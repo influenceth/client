@@ -329,17 +329,20 @@ const InfoPane = () => {
 
   // Control sounds for buildings
   useEffect(() => {
-    if (currentSound) {
+    let soundName;
+    if (lot?.building) soundName = Building.TYPES[lot?.building?.Building?.buildingType]?.name?.toLowerCase();
+
+    // stop previous sound if it's not the same as the current sound
+    if (currentSound && currentSound !== soundName) {
       stopSound(currentSound, { fadeOut: 500 });
       setCurrentSound(null);
     }
 
-    if (lot?.building) {
-      const soundName = Building.TYPES[lot?.building?.Building?.buildingType]?.name?.toLowerCase();
+    if (soundName) {
       playSound(soundName, { loop: false, duration: 4000, fadeOut: 1000 });
       setCurrentSound(soundName);
     }
-  }, [lot]);
+  }, [lot, setCurrentSound, stopSound, playSound, currentSound]);
 
   useEffect(() => {
     setHover(false);

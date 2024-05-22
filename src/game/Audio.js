@@ -83,7 +83,7 @@ const Audio = () => {
   }, [effectsVolume, effectEnded]);
 
   const playEffect = useCallback((toPlay, { loop, duration }) => {
-    if (!toPlay || soundEnabled) return;
+    if (!toPlay || !soundEnabled) return;
 
     try {
       const sound = effects[toPlay];
