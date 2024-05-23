@@ -13,7 +13,7 @@ const DialogWrapper = styled.div`
   justify-content: center;
   margin-left: 250px;
   padding: 0 25px;
-  width: calc(100% - 250px);
+  width: calc(100% - 285px);
 `;
 
 const Padding = styled.div`

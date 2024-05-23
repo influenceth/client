@@ -21,6 +21,7 @@ import useAccountFormatted from '~/hooks/useAccountFormatted';
 import SystemControls from './interface/hud/SystemControls';
 import Help from './launcher/Help';
 import Rewards from './launcher/Rewards';
+import { Tooltip } from 'react-tooltip';
 
 export const menuPadding = 25;
 const headerHeight = 68;
@@ -412,6 +413,8 @@ const Launcher = (props) => {
       <SystemControls />
 
       <ContentWrapper id="contentwrapper">
+        <Tooltip id="launcherTooltip" place="left" delayHide={1000} />
+        
         <MainContent>
           {launcherPage === 'play' && <Play />}
           {launcherPage === 'store' && <Store />}

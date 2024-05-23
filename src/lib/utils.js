@@ -22,7 +22,7 @@ export const formatTimer = (secondsRemaining, maxPrecision = null) => {
 
 export const formatFixed = (value, maximumFractionDigits = 0) => {
   const div = 10 ** maximumFractionDigits;
-  return (Math.round((value || 0) * div) / div).toLocaleString();
+  return (Math.round((value || 0) * div) / div).toLocaleString(undefined, { maximumFractionDigits });
 };
 
 export const formatPrecision = (value, maximumPrecision = 0) => {
