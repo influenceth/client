@@ -174,7 +174,7 @@ const Model = ({ url, onLoaded, onProgress, onCameraUpdate, ...settings }) => {
   //   return () => {
   //     scene.remove(axesHelper);
   //   };
-  // }, []); // eslint-disable-line react-hooks/exhaustive-deps=
+  // }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // load the model on url change
   useEffect(() => {
