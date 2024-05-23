@@ -3,6 +3,8 @@ import styled from 'styled-components';
 import useStore from '~/hooks/useStore';
 import { hexToRGB } from '~/theme';
 
+// background-color: rgba(${p => p.backgroundColor || hexToRGB(p.theme.colors.darkMain)}, 0.5);
+
 const StyledIconButton = styled.button`
   align-items: center;
   border: ${p => p.borderless ? '0px' : '1px'} solid ${p => p.theme.colors[p.themeColor || 'main']};
@@ -15,7 +17,7 @@ const StyledIconButton = styled.button`
   justify-content: center;
   height: 2em;
   width: 2em;
-  transition: all 300ms ease;
+  transition: all 100ms ease;
   ${p => p.scale && `transform: scale(${p.scale});`}
   position: relative;
   margin-right: ${p => p.marginless ? 0 : '10px'};
@@ -32,6 +34,7 @@ const StyledIconButton = styled.button`
       rgba(${p => hexToRGB(p.theme.colors[p.themeColor || 'main'])}, 0.25)
     );
     color: white;
+    border-color: ${p => p.theme.colors.brightMain};
   }
 
   &:active {
