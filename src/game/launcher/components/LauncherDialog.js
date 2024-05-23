@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import styled from 'styled-components';
 import ClipCorner from '~/components/ClipCorner';
 import NavIcon from '~/components/NavIcon';
@@ -92,6 +92,14 @@ const LauncherDialog = ({ panes = [], preselect = 0, singlePane, bottomLeftMenu 
     }
   }, [!!panes, preselect]);
 
+  const handleClick = useCallback((pane) => {
+    if (pane.link) {
+      window.open(pane.link);
+    } else {
+      setSelected(pane);
+    }
+  }, []);
+
   return (
     <DialogWrapper id="DialogWrapper">
       <Padding>
@@ -102,7 +110,7 @@ const LauncherDialog = ({ panes = [], preselect = 0, singlePane, bottomLeftMenu 
                 <Tab
                   key={pane.label}
                   isSelected={selected?.label === pane.label}
-                  onClick={() => setSelected(pane)}>
+                  onClick={() => handleClick(pane)}>
                   <span><NavIcon color={theme.colors.main} /></span>
                   <label>{pane.label}</label>
                 </Tab>
