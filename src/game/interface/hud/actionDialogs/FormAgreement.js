@@ -31,7 +31,7 @@ import useAgreementManager from '~/hooks/actionManagers/useAgreementManager';
 import useHydratedLocation from '~/hooks/useHydratedLocation';
 import useCrew from '~/hooks/useCrew';
 import UncontrolledTextInput, { TextInputWrapper } from '~/components/TextInputUncontrolled';
-import useSwayBalance from '~/hooks/useSwayBalance';
+import { useSwayBalance } from '~/hooks/useWalletBalance';
 import Button from '~/components/ButtonAlt';
 import useBlockTime from '~/hooks/useBlockTime';
 import useLot from '~/hooks/useLot';

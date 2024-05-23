@@ -14,7 +14,7 @@ import useMarketplaceManager from '~/hooks/actionManagers/useMarketplaceManager'
 import useEntity from '~/hooks/useEntity';
 import useHydratedCrew from '~/hooks/useHydratedCrew';
 import useOrderList from '~/hooks/useOrderList';
-import useSwayBalance from '~/hooks/useSwayBalance';
+import { useSwayBalance } from '~/hooks/useWalletBalance';
 import formatters from '~/lib/formatters';
 import actionStages from '~/lib/actionStages';
 import { reactBool, formatFixed, formatTimer, getCrewAbilityBonuses, locationsArrToObj, formatPrice } from '~/lib/utils';

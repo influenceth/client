@@ -53,8 +53,7 @@ export function CrewProvider({ children }) {
 
   const [adalianRecruits, arvadianRecruits] = useMemo(() => {
     if (!myOwnedCrewmates) return [[], []];
-    // const allRecruits = myOwnedCrewmates.filter((c) => !c.Control?.controller?.id);
-    const allRecruits = myOwnedCrewmates.slice(0, 8);
+    const allRecruits = myOwnedCrewmates.filter((c) => !c.Control?.controller?.id);
     return [
       allRecruits.filter((c) => !c.Crewmate.class),
       allRecruits.filter((c) => true || [

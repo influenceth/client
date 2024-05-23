@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 
 import useCrewContext from '~/hooks/useCrewContext';
-import useSwayBalance from '~/hooks/useSwayBalance';
+import { useSwayBalance } from '~/hooks/useWalletBalance';
 import formatters from '~/lib/formatters';
 
 const useBookTokens = (bookId) => {

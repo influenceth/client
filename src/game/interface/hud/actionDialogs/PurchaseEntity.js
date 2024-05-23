@@ -29,7 +29,7 @@ import useEntity from '~/hooks/useEntity';
 import useCrew from '~/hooks/useCrew';
 import { hexToRGB } from '~/theme';
 import formatters from '~/lib/formatters';
-import useSwayBalance from '~/hooks/useSwayBalance';
+import { useSwayBalance } from '~/hooks/useWalletBalance';
 import useAsteroid from '~/hooks/useAsteroid';
 
 const Alert = styled.div`

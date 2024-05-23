@@ -51,13 +51,26 @@ const purchasePacksPadding = 15;
 const purchaseFormMargin = 15;
 const purchaseFormWidth = 280;
 const PurchaseForm = styled.div`
-  background: linear-gradient(to bottom, rgba(${p => p.isPurple ? `70, 68, 134` : '48, 88, 114'}, 0.7), transparent);
+  background: linear-gradient(
+    to bottom,
+    ${p => p.isOrange
+        ? 'rgba(127, 98, 54, 0.7)'
+        : (p.isPurple ? 'rgba(70, 68, 134, 0.7)' : 'rgba(48, 88, 114, 0.7)')
+    },
+    transparent
+  );
+
   flex: 0 0 ${purchaseFormWidth}px;
   align-self: stretch;
   padding: 5px;
   & > h3 {
     align-items: center;
-    background: rgba(${p => p.isPurple ? p.theme.hexToRGB(p.theme.colors.txButton) : p.theme.colors.mainRGB}, 0.5);
+    background: rgba(
+      ${p => p.isOrange
+      ? p.theme.hexToRGB(p.theme.colors.inFlight)
+      : (p.isPurple ? p.theme.hexToRGB(p.theme.colors.txButton) : p.theme.colors.mainRGB)},
+      0.5
+    );
     display: flex;
     font-size: 16px;
     justify-content: space-between;
@@ -122,9 +135,10 @@ const AsteroidBanner = styled.div`
   align-items: center;
   display: flex;
   flex-direction: row;
-  margin-top: 10px;
-  padding-left: 10px;
+  margin-top: 6px;
+  padding: 0 10px;
   & > div:first-child {
+    color: ${p => p.inactive ? p.theme.colors.inFlight : 'white'};
     font-size: 60px;
     line-height: 0;
   }
@@ -134,9 +148,9 @@ const AsteroidBanner = styled.div`
       font-weight: bold;
     }
     span {
-      color: ${p => p.theme.colors.main};
+      color: ${p => p.inactive ? p.theme.colors.inFlight : p.theme.colors.main};
       display: block;
-      font-size: 90%;
+      font-size: 85%;
     }
   }
 `;
@@ -244,18 +258,18 @@ const AsteroidSKU = () => {
           considered before buying.
         </p>
       </Description>
-      <PurchaseForm>
+      <PurchaseForm isOrange={remaining === 0 || remainingTime <= 0}>
         <h3>
           <span>
             {remainingTime > 0 && remaining > 0 && `Sale Active`}
-            {remainingTime > 0 && remaining === 0 && `Sold Out`}
+            {remainingTime > 0 && remaining === 0 && `Next Sale`}
             {remainingTime <= 0 && `Sale Inactive`}
           </span>
           <span>
             {remainingTime > 0 && (trendingToSellOut || remaining <= 0)
               ? (
                 <>
-                  {remaining > 0 ? 'Ends in' : 'Reopens in'}
+                  {remaining > 0 ? 'Ends in' : 'Starts in'}
                   <b>{formatTimer(remainingTime, 2)}</b>
                 </>
               )
@@ -264,14 +278,22 @@ const AsteroidSKU = () => {
           </span>
         </h3>
         <div>
-          <AsteroidBanner>
+          <AsteroidBanner inactive={remaining === 0 || remainingTime <= 0}>
             <div>
               <PurchaseAsteroidIcon />
             </div>
-            <div>
-              <label>{asteroidSale ? remaining.toLocaleString() : '...'} Asteroid{remaining === 1 ? '' : 's'}</label>
-              <span>Remaining in sale period</span>
-            </div>
+            {(remaining > 0 && remainingTime > 0)
+              ? (
+                <div>
+                  <label>{asteroidSale ? remaining.toLocaleString() : '...'} Asteroid{remaining === 1 ? '' : 's'}</label>
+                  <span>Remaining in sale period</span>
+                </div>
+              )
+              : (
+                <div>
+                  <span>All asteroids in this sale period have been purchased.</span>
+                </div>
+              )}
           </AsteroidBanner>
         </div>
         <footer style={{ fontSize: '85%', marginTop: 10, padding: '0 10px', textAlign: 'left' }}>
@@ -573,6 +595,11 @@ const SKU = ({ asset, onBack }) => {
       flourishWidth: 145
     };
   }, [asset, filterUnownedAsteroidsAndClose]);
+
+  // price constants (i.e. price of crewmate, etc)
+  // sway/usd conversion
+  // eth/usd conversion
+  // eth/sway conversion
 
   return (
     <HeroLayout

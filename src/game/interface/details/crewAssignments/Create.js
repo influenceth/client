@@ -29,7 +29,7 @@ import ChainTransactionContext from '~/contexts/ChainTransactionContext';
 import useBookSession, { bookIds, getBookCompletionImage } from '~/hooks/useBookSession';
 import useCrewManager from '~/hooks/actionManagers/useCrewManager';
 import useCrewContext from '~/hooks/useCrewContext';
-import useEthBalance from '~/hooks/useEthBalance';
+import { useEthBalance } from '~/hooks/useWalletBalance';
 import useFaucetInfo from '~/hooks/useFaucetInfo';
 import useNameAvailability from '~/hooks/useNameAvailability';
 import usePriceConstants from '~/hooks/usePriceConstants';

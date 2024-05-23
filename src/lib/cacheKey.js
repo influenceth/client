@@ -9,13 +9,13 @@ non-entity based
 - [ 'asteroidPackedLotData', asteroidId ]
 - [ 'constants', constantOrConstants ],
 - [ 'lotEntitiesPrepopulation', lotId ],
-- [ 'ethBalance', accountAddress ],
 - [ 'exchangeOrderSummary', asteroidId, product ],
 - [ 'faucetInfo', account ],
 - [ 'productOrderSummary', entityLabel, entityId ],
 - [ 'referrals', 'count', token ],
 - [ 'search', assetType, query ],
-- [ 'swayBalance', accountAddress ],
+- [ 'walletBalance', 'eth', accountAddress ],
+- [ 'walletBalance', 'sway', accountAddress ],
 - [ 'user', token ],
 - [ 'watchlist', token ],
 

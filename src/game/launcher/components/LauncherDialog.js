@@ -37,6 +37,8 @@ const PaneWrapper = styled.div`
   width: 1075px;
 `;
 const TabWrapper = styled.div`
+  display: flex;
+  flex-direction: column;
   flex: 0 0 300px;
   padding: 15px 0;
 `;
@@ -49,7 +51,7 @@ const Tab = styled.div`
   display: flex;
   flex-direction: row;
   font-size: 17px;
-  margin: 5px 0 5px 20px;
+  margin: 0 0 5px 20px;
   padding: 10px;
   text-transform: uppercase;
   transition:
@@ -79,7 +81,9 @@ const Tab = styled.div`
   `};
 `;
 
-const LauncherDialog = ({ panes = [], preselect = 0, singlePane }) => {
+const BottomLeft = styled.div``;
+
+const LauncherDialog = ({ panes = [], preselect = 0, singlePane, bottomLeftMenu }) => {
   const [selected, setSelected] = useState();
 
   useEffect(() => {
@@ -103,6 +107,14 @@ const LauncherDialog = ({ panes = [], preselect = 0, singlePane }) => {
                   <label>{pane.label}</label>
                 </Tab>
               ))}
+              {bottomLeftMenu && (
+                <>
+                  <div style={{ flex: 1 }} />
+                  <BottomLeft>
+                    {bottomLeftMenu}
+                  </BottomLeft>
+                </>
+              )}
             </TabWrapper>
           )}
           <PaneWrapper singlePane={!!reactBool(singlePane)}>

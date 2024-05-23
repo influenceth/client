@@ -13,6 +13,9 @@ import { formatTimer } from '~/lib/utils';
 import LauncherDialog from './components/LauncherDialog';
 import SKU from './components/SKU';
 import useAsteroidSale from '~/hooks/useAsteroidSale';
+import Button from '~/components/ButtonAlt';
+import { ChevronRightIcon } from '~/components/Icons';
+import { useEthBalance, useSwayBalance, useUSDCBalance } from '~/hooks/useWalletBalance';
 
 const storeAssets = {
   crewmates: 'Crewmates',
@@ -201,6 +204,64 @@ const SkuSelector = ({ onSelect }) => {
   );
 };
 
+const FundWrapper = styled.div`
+  padding: 0 20px 5px;
+  & > h3 {
+    font-size: 15px;
+    font-weight: normal;
+    margin-bottom: 15px;
+    opacity: 0.65;
+  }
+  & > label {
+    display: block;
+    font-size: 32px;
+    line-height: 32px;
+    margin-bottom: 20px;
+  }
+  & > button {
+    & > div {
+      padding: 7px 5px 7px 10px !important;
+    }
+    width: 100%;
+  }
+`;
+const FundButtonInner = styled.div`
+  align-items: center;
+  color: white;
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  & > label {
+    font-size: 15px;
+  }
+  & > svg {
+    font-size: 28px;
+  }
+`;
+
+const FundingMenu = () => {
+  const { data: weiBalance } = useEthBalance();
+  const { data: usdcBalance } = useUSDCBalance();
+  const { data: swayBalance } = useSwayBalance();
+
+  useEffect(() => {
+    console.log({ weiBalance, swayBalance, usdcBalance });
+  }, [weiBalance, swayBalance, usdcBalance]);
+
+  return (
+    <FundWrapper>
+      <h3>Wallet Balance:</h3>
+      <label>$11.24</label>
+      <Button>
+        <FundButtonInner>
+          <label>Add Funds</label>
+          <ChevronRightIcon />
+        </FundButtonInner>
+      </Button>
+    </FundWrapper>
+  );
+};
+
 const Store = () => {
   const [selection, setSelection] = useState();
   const isSelected = selection !== undefined;
@@ -214,6 +275,7 @@ const Store = () => {
 
   return (
     <LauncherDialog
+      bottomLeftMenu={<FundingMenu />}
       panes={isSelected ? panes : []}
       preselect={selection}
       singlePane={isSelected ? null : <SkuSelector onSelect={setSelection} />} />

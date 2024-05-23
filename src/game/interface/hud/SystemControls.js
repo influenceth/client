@@ -10,7 +10,7 @@ import {
 import useSession from '~/hooks/useSession';
 import useCrewContext from '~/hooks/useCrewContext';
 import useStore from '~/hooks/useStore';
-import useSwayBalance from '~/hooks/useSwayBalance';
+import { useSwayBalance } from '~/hooks/useWalletBalance';
 import useAccountFormatted from '~/hooks/useAccountFormatted';
 import IconButton from '~/components/IconButton';
 import { FaCaretRight } from 'react-icons/fa';
@@ -168,12 +168,15 @@ const SystemControls = () => {
         <span>Mobile is not well supported, please use desktop.</span>
       </MobileWarning>
 
-      {totalRecruitCredits && (
-        <CrewmateCreditBalance>
-          <CrewmateCreditIcon />
-          <label>{(totalRecruitCredits || 0).toLocaleString()} <b>Crewmate Credit{totalRecruitCredits === 1 ? '' : 's'}</b></label>
-        </CrewmateCreditBalance>
-      )}
+      {totalRecruitCredits
+        ? (
+          <CrewmateCreditBalance>
+            <CrewmateCreditIcon />
+            <label>{(totalRecruitCredits || 0).toLocaleString()} <b>Crewmate Credit{totalRecruitCredits === 1 ? '' : 's'}</b></label>
+          </CrewmateCreditBalance>
+        )
+        : null
+      }
 
       {swayBalance !== undefined && (
         <SwayBalance>

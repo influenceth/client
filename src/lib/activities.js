@@ -196,7 +196,7 @@ const activities = {
             updatedValues: { owner: returnValues.caller }
           }
         },
-        [ 'ethBalance', returnValues.caller ],
+        [ 'walletBalance', 'eth', returnValues.caller ],
       ]
     },
     getLogContent: ({ event: { returnValues } }) => ({
@@ -278,7 +278,7 @@ const activities = {
       return [
         { ...returnValues.exchange },
         { ...returnValues.storage },
-        [ 'swayBalance' ],
+        [ 'walletBalance', 'sway' ],
         [ 'orderList', returnValues.exchange.id, returnValues.product ],
         [ 'crewOpenOrders', returnValues.buyerCrew.id ],
         [ 'exchangeOrderSummary', asteroidId, returnValues.product ],
@@ -297,7 +297,7 @@ const activities = {
       return [
         { ...returnValues.exchange },
         { ...returnValues.storage },
-        [ 'swayBalance' ],
+        [ 'walletBalance', 'sway' ],
         [ 'orderList', returnValues.exchange.id, returnValues.product ],
         [ 'crewOpenOrders', returnValues.callerCrew.id ],
         [ 'exchangeOrderSummary', asteroidId, returnValues.product ],
@@ -320,7 +320,7 @@ const activities = {
         { ...returnValues.exchange },
         { ...returnValues.origin },
         { ...returnValues.storage },
-        [ 'swayBalance' ],
+        [ 'walletBalance', 'sway' ],
         [ 'orderList', returnValues.exchange.id, returnValues.product ],
         [ 'crewOpenOrders', returnValues.buyerCrew.id ],
         [ 'exchangeOrderSummary', asteroidId, returnValues.product ],
@@ -1002,7 +1002,7 @@ const activities = {
       { ...returnValues.origin },
       { ...returnValues.dest },
       ['actionItems'],
-      ['swayBalance'] // (in case this was p2p)
+      ['walletBalance', 'sway'] // (in case this was p2p)
     ]),
 
     getPrepopEntities: ({ event: { returnValues } }) => ({
@@ -1309,7 +1309,7 @@ const activities = {
   RandomEventResolved: {
     getInvalidations: ({ event: { returnValues } }) => ([
       { ...returnValues.callerCrew }, // this is redundant to `requiresCrewTime`
-      [ 'swayBalance' ],
+      [ 'walletBalance', 'sway' ],
     ]),
 
     getLogContent: ({ event: { returnValues } }, viewingAs) => {
@@ -1571,7 +1571,7 @@ const activities = {
       return [
         { ...returnValues.exchange },
         { ...returnValues.storage },
-        [ 'swayBalance' ],
+        [ 'walletBalance', 'sway' ],
         [ 'orderList', returnValues.exchange.id, returnValues.product ],
         [ 'crewOpenOrders', returnValues.sellerCrew.id ],
         [ 'exchangeOrderSummary', asteroidId, returnValues.product ],
@@ -1590,7 +1590,7 @@ const activities = {
       return [
         { ...returnValues.exchange },
         { ...returnValues.storage },
-        [ 'swayBalance' ],
+        [ 'walletBalance', 'sway' ],
         [ 'orderList', returnValues.exchange.id, returnValues.product ],
         [ 'crewOpenOrders', returnValues.callerCrew.id ],
         [ 'exchangeOrderSummary', asteroidId, returnValues.product ],
@@ -1623,7 +1623,7 @@ const activities = {
       // nft
       if (returnValues.tokenId) {
         // TODO: use entities here? currently just relying on Transfer event to invalidate entity
-        return [[ 'swayBalance' ]];
+        return [[ 'walletBalance', 'sway' ]];
 
       // marketplace
       } else {
@@ -1632,7 +1632,7 @@ const activities = {
           { ...returnValues.exchange },
           { ...returnValues.destination },
           { ...returnValues.storage },
-          [ 'swayBalance' ],
+          [ 'walletBalance', 'sway' ],
           [ 'orderList', returnValues.exchange.id, returnValues.product ],
           [ 'crewOpenOrders', returnValues.sellerCrew.id ],
           [ 'exchangeOrderSummary', asteroidId, returnValues.product ],
@@ -2177,7 +2177,7 @@ const activities = {
             }
           }
         },
-        ['swayBalance']
+        ['walletBalance', 'sway']
       ];
     },
     getPrepopEntities: ({ event: { returnValues } }) => ({

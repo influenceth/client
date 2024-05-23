@@ -9,7 +9,7 @@ import Ether from '~/components/Ether';
 import { PlusIcon } from '~/components/Icons';
 import UncontrolledTextInput, { safeValue } from '~/components/TextInputUncontrolled';
 import useCrewManager from '~/hooks/actionManagers/useCrewManager';
-import useEthBalance from '~/hooks/useEthBalance';
+import { useEthBalance } from '~/hooks/useWalletBalance';
 import useInterval from '~/hooks/useInterval';
 import usePriceConstants from '~/hooks/usePriceConstants';
 import formatters from '~/lib/formatters';
@@ -160,7 +160,7 @@ const ButtonWarning = styled(ButtonExtra)`
 export const CrewmateSKU = () => {
   const { purchaseCredits, getPendingCreditPurchase } = useCrewManager();
   const { data: priceConstants } = usePriceConstants();
-  const { data: ethBalance, refetch: refetchEth } = useEthBalance();
+  const { data: weiBalance, refetch: refetchEth } = useEthBalance();
 
   const [tally, setTally] = useState(5);
 
@@ -189,9 +189,9 @@ export const CrewmateSKU = () => {
   }, [getPendingCreditPurchase]);
 
   const isInsufficientBalance = useMemo(() => {
-    if (ethBalance === null) return false;
-    return totalCost > ethBalance;
-  }, [ethBalance, totalCost]);
+    if (weiBalance === null) return false;
+    return totalCost > weiBalance;
+  }, [weiBalance, totalCost]);
 
   // TODO: would it make more sense to just check on each new block?
   // TODO: definitely don't need this on both SKUs

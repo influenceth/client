@@ -16,7 +16,7 @@ import Play from './launcher/Play';
 import Settings from './launcher/Settings';
 import Store from './launcher/Store';
 import HudMenu from './interface/hud/HudMenu';
-import useSwayBalance from '~/hooks/useSwayBalance';
+import { useSwayBalance } from '~/hooks/useWalletBalance';
 import useAccountFormatted from '~/hooks/useAccountFormatted';
 import SystemControls from './interface/hud/SystemControls';
 import Help from './launcher/Help';
