@@ -11,7 +11,7 @@ const useAsteroidCrewBuildings = (asteroidId) => {
   return useMemo(() => {
     return {
       data: crew?.id && asteroidId && data
-        ? (data.hits || []).filter((a) => (
+        ? (data || []).filter((a) => (
             a.Control?.controller?.id === crew?.id
             && (a.Location?.locations || []).find((l) => l.label === Entity.IDS.ASTEROID && l.id === asteroidId)
           ))

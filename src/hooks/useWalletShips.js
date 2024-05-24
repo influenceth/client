@@ -43,7 +43,10 @@ const useWalletShips = () => {
 
   return useQuery(
     entitiesCacheKey(Entity.IDS.SHIP, { owner: accountAddress, controllerId: controllerIds }),
-    () => api.searchAssets('ships', query),
+    async () => {
+      const response = await api.searchAssets('ships', query);
+      return response?.hits || [];
+    },
     { enabled: !!query }
   );
 };

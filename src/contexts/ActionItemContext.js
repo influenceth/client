@@ -53,7 +53,7 @@ export function ActionItemProvider({ children }) {
   const { data: walletBuildings, isLoading: plannedBuildingsLoading } = useWalletBuildings();
   const plannedBuildings = useMemo(() => {
     return walletBuildings && crewId
-      ? (walletBuildings.hits || []).filter((a) => (
+      ? (walletBuildings || []).filter((a) => (
         a.Control?.controller?.id === crewId
         && a.Building?.status === Building.CONSTRUCTION_STATUSES.PLANNED
       ))

@@ -10,7 +10,7 @@ const useControlledAsteroids = () => {
   return useMemo(() => {
     return {
       data: crew?.id && data
-        ? (data.hits || []).filter((a) => a.Control?.controller?.id === crew?.id)
+        ? (data || []).filter((a) => a.Control?.controller?.id === crew?.id)
         : undefined,
       isLoading
     }

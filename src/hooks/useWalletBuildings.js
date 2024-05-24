@@ -44,7 +44,10 @@ const useWalletBuildings = () => {
 
   return useQuery(
     entitiesCacheKey(Entity.IDS.BUILDING, { controllerId: controllerIds, status: statuses }),
-    () => api.searchAssets('buildings', query),
+    async () => {
+      const response = await api.searchAssets('buildings', query);
+      return response?.hits || [];
+    },
     { enabled: !!query }
   );
 };

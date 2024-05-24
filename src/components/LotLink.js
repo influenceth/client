@@ -101,7 +101,7 @@ export const LotLink = ({ asteroidId: optAsteroidId, lotId: optLotId, resourceId
   const { data: owned, isLoading: ownedAreLoading } = useWalletAsteroids();
   const asteroidName = useMemo(() => {
     if (owned) {
-      const match = owned.hits?.find(a => a.id === Number(asteroidId));
+      const match = owned.find(a => a.id === Number(asteroidId));
       if (match) {
         return formatters.asteroidName(match);
       }

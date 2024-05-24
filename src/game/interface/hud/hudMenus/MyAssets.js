@@ -239,10 +239,10 @@ const MyAssets = () => {
       });
     const groups = groupAssets(ungrouped);
     return [groups, ungrouped.length];
-  }, [walletAgreementsWithDupes?.hits, allAsteroidsMode, allCrewsMode]);
+  }, [walletAgreementsWithDupes, allAsteroidsMode, allCrewsMode]);
 
   const [asteroids, asteroidTally] = useMemo(() => {
-    const a = (walletAsteroids?.hits || [])
+    const a = (walletAsteroids || [])
       .filter((a) => {
         if (allAsteroidsMode || a.id === origin) {
           if (allCrewsMode || a.Control?.controller?.id === crew?.id) {
@@ -262,10 +262,10 @@ const MyAssets = () => {
         return a.id - b.id;
       });
     return [a, a.length, 1];
-  }, [walletAsteroids?.hits, allAsteroidsMode, allCrewsMode]);
+  }, [walletAsteroids, allAsteroidsMode, allCrewsMode]);
 
   const [buildings, buildingTally] = useMemo(() => {
-    const ungrouped = (walletBuildings?.hits || [])
+    const ungrouped = (walletBuildings || [])
       .filter((a) => {
         const asteroidId = (a.Location?.locations || []).find((l) => l.label === Entity.IDS.ASTEROID)?.id;
         if (allAsteroidsMode || asteroidId === origin) {
@@ -288,10 +288,10 @@ const MyAssets = () => {
       });
     const groups = groupAssets(ungrouped);
     return [groups, ungrouped.length];
-  }, [walletBuildings?.hits, allAsteroidsMode, allCrewsMode]);
+  }, [walletBuildings, allAsteroidsMode, allCrewsMode]);
 
   const [ships, shipTally] = useMemo(() => {
-    const ungrouped = (walletShips?.hits || [])
+    const ungrouped = (walletShips || [])
       .filter((a) => {
         const asteroidId = (a.Location?.locations || []).find((l) => l.label === Entity.IDS.ASTEROID)?.id
           || a.Ship.transitDestination?.id;
@@ -312,7 +312,7 @@ const MyAssets = () => {
       });
     const groups = groupAssets(ungrouped);
     return [groups, ungrouped.length];
-  }, [walletShips?.hits, allAsteroidsMode, allCrewsMode]);
+  }, [walletShips, allAsteroidsMode, allCrewsMode]);
 
   return (
     <Wrapper>

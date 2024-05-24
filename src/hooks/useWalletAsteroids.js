@@ -42,7 +42,10 @@ const useWalletAsteroids = () => {
 
   return useQuery(
     entitiesCacheKey(Entity.IDS.ASTEROID, { owner: accountAddress, controllerId: controllerIds }),
-    () => api.searchAssets('asteroids', query),
+    async () => {
+      const response = await api.searchAssets('asteroids', query);
+      return response?.hits || [];
+    },
     { enabled: !!query }
   );
 };
