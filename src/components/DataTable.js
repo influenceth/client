@@ -190,7 +190,7 @@ const ExpandableDataTableRow = ({ columns, getRowProps, row, sortDirection, sort
             noMinWidth={c.noMinWidth}
             sorted={sortField && sortField === c.sortField ? sortDirection : ''}
             style={c.bodyStyle || {}}>
-            <CellInner wrap={!!c.wrap}>
+            <CellInner wrap={reactBool(!!c.wrap)}>
               {c.selector(row, !!expanded)}
             </CellInner>
           </DataTableCell>
