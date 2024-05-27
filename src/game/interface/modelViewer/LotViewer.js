@@ -4,7 +4,7 @@ import { Building } from '@influenceth/sdk';
 import useLot from '~/hooks/useLot';
 import useStore from '~/hooks/useStore';
 import ModelViewer from '../ModelViewer';
-import { getBuildingModel } from '~/lib/assetUtils';
+import { getBuildingModel, getModelUrl } from '~/lib/assetUtils';
 
 const LotViewer = () => {
   const lotId = useStore(s => s.asteroids.lot);
@@ -14,11 +14,18 @@ const LotViewer = () => {
 
   const modelUrl = useMemo(() => {
     if (zoomScene?.overrides?.buildingType) {
-      return getBuildingModel(zoomScene.overrides.buildingType);  
+      return getBuildingModel(zoomScene.overrides.buildingType);
     }
+
     if (lot?.building?.Building?.status === Building.CONSTRUCTION_STATUSES.OPERATIONAL) {
       return getBuildingModel(lot.building.Building.buildingType);
     }
+
+    // TODO: abstract for future ship types able to land on surface
+    if (lot?.surfaceShip) {
+      return getModelUrl({ type: 'buildings', assetName: 'LandedLightTransport' });
+    }
+
     return getBuildingModel(0);
   }, [lot?.building?.Building, zoomScene?.overrides?.buildingType]);
 

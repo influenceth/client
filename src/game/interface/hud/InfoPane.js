@@ -416,15 +416,8 @@ const InfoPane = () => {
     } else if (zoomStatus === 'in') {
       const isIncompleteBuilding = lot?.building && !['OPERATIONAL', 'DECONSTRUCTING'].includes(constructionStatus);
       const explicitLotControllerId = lot?.Control?._isExplicit ? lot?.Control?.controller?.id : undefined;
-      if (zoomScene?.type === 'LOT') {
-        if (zoomScene?.overrides?.buildingType) {
-          pane.title = Building.TYPES[zoomScene?.overrides?.buildingType]?.name;
-        } else {
-          pane.title = lot?.building ? `${formatters.buildingName(lot.building)}${isIncompleteBuilding ? ' (Site)' : ''}` : 'Empty Lot';
-        }
-        pane.subtitle = <>{formatters.asteroidName(asteroid)} &gt; <b>{formatters.lotName(lotId)}</b></>;
-        pane.captainCard = lot?.building?.Control?.controller?.id || explicitLotControllerId;
-      } else if (zoomScene?.type === 'SHIP' && ship) {
+
+      if (zoomScene?.type === 'SHIP' && ship) {
         pane.title = formatters.shipName(ship);
         if (ship.Ship?.transitDeparture > 0) {
           pane.subtitle = 'In Flight';
@@ -444,7 +437,13 @@ const InfoPane = () => {
         let hologram = !!(isAtRisk || isIncompleteBuilding);
         hologram = lot.building ? hologram : false;
         const thumbUrl = getBuildingIcon(lot.building?.Building?.buildingType || 0, 'w400', hologram);
-        pane.title = lot?.building ? `${formatters.buildingName(lot.building)}${isIncompleteBuilding ? ' (Site)' : ''}` : 'Empty Lot';
+
+        if (zoomScene?.overrides?.buildingType)
+          pane.title = Building.TYPES[zoomScene?.overrides?.buildingType]?.name;
+        else {
+          pane.title = lot?.building ? `${formatters.buildingName(lot.building)}${isIncompleteBuilding ? ' (Site)' : ''}` : 'Empty Lot';
+        }
+
         pane.subtitle = <>{formatters.asteroidName(asteroid)} &gt; <b>{formatters.lotName(lotId)}</b></>;
         pane.captainCard = lot.building?.Control?.controller?.id || explicitLotControllerId;
         pane.hoverSubtitle = 'Zoom to Lot';
