@@ -1,5 +1,5 @@
-import { useMemo } from 'react';
-import Lottie from 'react-lottie';
+import { useEffect, useMemo, useRef } from 'react';
+import Lottie from 'lottie-react';
 
 import CrewBusy from '~/assets/icons/animated/CrewBusy.json';
 import CrewIdle from '~/assets/icons/animated/CrewIdle.json';
@@ -7,13 +7,16 @@ import Failed from '~/assets/icons/animated/Failed.json';
 import RandomEvent from '~/assets/icons/animated/RandomEvent.json';
 import Ready from '~/assets/icons/animated/Ready.json';
 
-const LottieIcon = ({ animation, isPaused = false, size = "1em" }) => {
-  const options = useMemo(() => ({
-    loop: true,
-    autoplay: true,
-    animationData: animation
-  }), [animation]);
-  return <Lottie options={options} isPaused={isPaused} height={size} width={size} />;
+const LottieIcon = ({ animation, isPaused = false, size = '1em' }) => {
+  const lottieRef = useRef();
+  const style = useMemo(() => ({ width: size, height: size }), [size]);
+
+  useEffect(() => {
+    if (isPaused) lottieRef.current.pause();
+    else lottieRef.current.play();
+  }, [isPaused]);
+
+  return <Lottie lottieRef={lottieRef} animationData={animation} loop={true} autoplay={true} style={style} />;
 };
 
 export const CrewBusyIcon = (props) => <LottieIcon animation={CrewBusy} {...props} />;

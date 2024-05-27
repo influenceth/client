@@ -1,7 +1,7 @@
-import React, { useCallback, useState, useMemo } from 'react';
+import React, { useCallback, useEffect, useState, useMemo, useRef } from 'react';
 import styled from 'styled-components';
 import { FaEllipsisH as MenuIcon } from 'react-icons/fa';
-import Lottie from 'react-lottie';
+import Lottie from 'lottie-react';
 import MovingStripesSquare from '~/assets/icons/animated/MovingStripesSquare.json';
 
 import ClipCorner from '~/components/ClipCorner';
@@ -41,13 +41,16 @@ const MenuOpenWrapper = styled.div`
   width: 90px;
 `;
 
-const LottieOverlayTexture = ({ animation, isPaused = false, size = "100%"}) => {
-  const options = useMemo(() => ({
-    loop: true,
-    autoplay: true,
-    animationData: animation
-  }), [animation]);
-  return <Lottie options={options} isPaused={isPaused} height={size} width={size} style={{opacity: 0.2}} />;
+const LottieOverlayTexture = ({ animation, isPaused = false, size = '100%' }) => {
+  const lottieRef = useRef();
+  const style = useMemo(() => ({ opacity: 0.2, width: size, height: size }), [size]);
+
+  useEffect(() => {
+    if (isPaused) lottieRef.current.pause();
+    else lottieRef.current.play();
+  }, [isPaused]);
+
+  return <Lottie lottieRef={lottieRef} animationData={animation} loop={true} autoplay={true} style={style} />;
 };
 export const AnimatedStripes = (props) => <LottieOverlayTexture animation={MovingStripesSquare} {...props} />;
 
