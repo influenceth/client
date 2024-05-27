@@ -13,7 +13,6 @@ export const toneMaps = [
 export const validateHex = (v) => /[a-f0-9]{6}/i.test(v) ? v : '';
 
 const modelviewerDefaults = {
-  background: '/textures/model-viewer/building_skybox.jpg',
   backgroundStrength: 0.4,
   bloomRadius: 0.6,
   bloomStrength: 0.5,
@@ -64,7 +63,6 @@ const visualConfigs = {
     },
   },
   scene: {
-    background: '/textures/model-viewer/building_skybox.jpg',
     backgroundStrength: 0.4,
     bloomRadius: 0.6,
     bloomStrength: 0.5,
