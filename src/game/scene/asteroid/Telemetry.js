@@ -21,20 +21,20 @@ import {
   TextureLoader,
   PlaneGeometry,
 } from 'three';
+import { useFrame, useThree } from '@react-three/fiber';
 
+import { BLOOM_LAYER } from '~/game/Postprocessor';
 import useGetTime from '~/hooks/useGetTime';
 import constants from '~/lib/constants';
 import theme from '~/theme';
-import { useFrame, useThree } from '@react-three/fiber';
 
 const { AU, TELEMETRY_SCALE } = constants;
 
 const hexToGLSL = (hex) => {
-  const color = new Color().setStyle(hex);
-  return color.convertSRGBToLinear().toArray();
+  return new Color().setStyle(hex).toArray();
 };
-const MAIN_COLOR = new Color(theme.colors.main).convertSRGBToLinear();
-const SUCCESS_COLOR = new Color(theme.colors.success).convertSRGBToLinear();
+const MAIN_COLOR = new Color(theme.colors.main);
+const SUCCESS_COLOR = new Color(theme.colors.success);
 const DISABLED_COLOR = MAIN_COLOR;  // TODO: ...
 
 const BLUE_GLSL = hexToGLSL(theme.colors.main);
@@ -173,6 +173,10 @@ const densityByType = {
 
 const GRAV = 6.6743E-11;
 
+const toggleBloom = (object, which) => {
+  object.layers[which ? 'enable' : 'disable'](BLOOM_LAYER);
+}
+
 const Telemetry = ({ axis, getPosition, getRotation, hasAccess, initialCameraPosition, isScanned, attachTo, radius, scaleHelper, shipTally, spectralType }) => {
   const { controls } = useThree();
   const getTime = useGetTime();
@@ -241,7 +245,7 @@ const Telemetry = ({ axis, getPosition, getRotation, hasAccess, initialCameraPos
     if (config.equatorCircle.enabled) {
       equatorCircle.current = new LineLoop(geometry.clone(), config.equatorCircle.dashed ? getDashedMaterial() : material.clone());
       if (config.equatorCircle.dashed) equatorCircle.current.computeLineDistances();
-      equatorCircle.current.userData.bloom = config.equatorCircle.bloom;
+      toggleBloom(equatorCircle.current, config.equatorCircle.bloom);
 
       equatorCircle.current.lookAt(axis.clone().normalize());
     }
@@ -253,13 +257,13 @@ const Telemetry = ({ axis, getPosition, getRotation, hasAccess, initialCameraPos
     if (config.planarCircle.enabled) {
       planarCircle.current = new LineLoop(geometry.clone(), config.planarCircle.dashed ? getDashedMaterial() : material.clone());
       if (config.planarCircle.dashed) planarCircle.current.computeLineDistances();
-      planarCircle.current.userData.bloom = config.planarCircle.bloom;
+      toggleBloom(planarCircle.current, config.planarCircle.bloom);
     }
 
     if (config.inclinationCircle.enabled) {
       inclinationCircle.current = new LineLoop(geometry.clone(), config.inclinationCircle.dashed ? getDashedMaterial() : material.clone());
       if (config.inclinationCircle.dashed) inclinationCircle.current.computeLineDistances();
-      inclinationCircle.current.userData.bloom = config.inclinationCircle.bloom;
+      toggleBloom(inclinationCircle.current, config.inclinationCircle.bloom);
     }
 
     if (config.rotationalAxis.enabled) {
@@ -267,7 +271,7 @@ const Telemetry = ({ axis, getPosition, getRotation, hasAccess, initialCameraPos
         new BufferGeometry(),
         config.rotationalAxis.dashed ? getDashedMaterial() : getLineMaterial(BLUE_GLSL, circleAttenuation)
       );
-      rotationalAxis.current.userData.bloom = config.rotationalAxis.bloom;
+      toggleBloom(rotationalAxis.current, config.rotationalAxis.bloom);
 
       // orient
       const vertices = [];
@@ -286,7 +290,7 @@ const Telemetry = ({ axis, getPosition, getRotation, hasAccess, initialCameraPos
         new BufferGeometry(),
         getLineMaterial(BLUE_GLSL, trajectoryAttenuation)
       );
-      trajectory.current.userData.bloom = config.trajectoryLine.bloom;
+      toggleBloom(trajectory.current, config.trajectoryLine.bloom);
     }
 
     if (config.northPole.enabled) {
@@ -297,14 +301,13 @@ const Telemetry = ({ axis, getPosition, getRotation, hasAccess, initialCameraPos
           color: MAIN_COLOR,
           map: new TextureLoader().load('/textures/asteroid/marker_pole_n.png'),
           side: DoubleSide,
-          toneMapped: false,
           transparent: true
         })
       );
 
       northPole.position.set(0, 0, circleRadius + poleMarkerSize * 0.2);
       northPole.rotateX(Math.PI / 2);
-      northPole.userData.bloom = config.northPole.bloom;
+      toggleBloom(northPole, config.northPole.bloom);
 
       rotationalMarkersGroup.current.add(northPole);
     }
@@ -317,14 +320,13 @@ const Telemetry = ({ axis, getPosition, getRotation, hasAccess, initialCameraPos
           color: MAIN_COLOR,
           map: new TextureLoader().load('/textures/asteroid/marker_pole_s.png'),
           side: DoubleSide,
-          toneMapped: false,
           transparent: true
         })
       );
 
       southPole.position.set(0, 0, -1 * (circleRadius + poleMarkerSize * 0.2));
       southPole.rotateX(Math.PI / 2);
-      southPole.userData.bloom = config.southPole.bloom;
+      toggleBloom(southPole, config.southPole.bloom);
 
       rotationalMarkersGroup.current.add(southPole);
     }
@@ -343,7 +345,7 @@ const Telemetry = ({ axis, getPosition, getRotation, hasAccess, initialCameraPos
           dashCircle ? getDashedMaterial() : material.clone()
         );
         if (dashCircle) shipCircle.computeLineDistances();
-        shipCircle.userData.bloom = config.shipCircle.bloom.circle;
+        toggleBloom(shipCircle, config.shipCircle.bloom.circle);
 
         const shipVertices = [];
         const shipRadius = TELEMETRY_SCALE * config.shipCircle.scale * radius;
@@ -367,7 +369,7 @@ const Telemetry = ({ axis, getPosition, getRotation, hasAccess, initialCameraPos
             sizeAttenuation: true
           })
         );
-        shipCirclePoints.userData.bloom = config.shipCircle.bloom.ship;
+        toggleBloom(shipCirclePoints, config.shipCircle.bloom.ship);
 
         shipGroup.current = new Group();
         if (!config.shipCircle.hideCircle) shipGroup.current.add(shipCircle);
@@ -405,11 +407,10 @@ const Telemetry = ({ axis, getPosition, getRotation, hasAccess, initialCameraPos
           color: hasAccess ? SUCCESS_COLOR : MAIN_COLOR,
           opacity: 0.25,
           side: DoubleSide,
-          toneMapped: false,
           transparent: true
         })
       );
-      accessDisc.current.userData.bloom = config.accessControl.bloom.disc;
+      toggleBloom(accessDisc.current, config.accessControl.bloom.disc);
 
       // circle
       const accessCircleVertices = [];
@@ -439,7 +440,7 @@ const Telemetry = ({ axis, getPosition, getRotation, hasAccess, initialCameraPos
         accessCircleGeometry,
         accessLineMaterial.clone()
       );
-      accessCircle.current.material.userData.bloom = config.accessControl.bloom.circle;
+      toggleBloom(accessCircle.current, config.accessControl.bloom.circle);
       accessCircle.current.material.needsUpdate = true;
 
       // "gate"
@@ -452,12 +453,11 @@ const Telemetry = ({ axis, getPosition, getRotation, hasAccess, initialCameraPos
           color: isScanned ? MAIN_COLOR : DISABLED_COLOR,
           map: hGateSprite,
           side: DoubleSide,
-          toneMapped: false,
           transparent: true
         })
       );
       dockingGateHorizontal.rotateZ(Math.PI / 2);
-      dockingGateHorizontal.userData.bloom = true;
+      toggleBloom(dockingGateHorizontal, true);
 
       const vGateSprite = new TextureLoader().load('/textures/asteroid/docking_gate_v.png');
       const dockingGateVertical = new Mesh(
@@ -467,13 +467,12 @@ const Telemetry = ({ axis, getPosition, getRotation, hasAccess, initialCameraPos
           color: isScanned ? MAIN_COLOR : DISABLED_COLOR,
           map: vGateSprite,
           side: DoubleSide,
-          toneMapped: false,
           transparent: true
         })
       );
       dockingGateVertical.rotateY(Math.PI / 2);
       dockingGateVertical.rotateZ(Math.PI / 2);
-      dockingGateVertical.userData.bloom = true;
+      toggleBloom(dockingGateVertical, true);
 
       const accessGroupSign = new Group();
       accessGroupSign.add(dockingGateHorizontal);
@@ -492,7 +491,7 @@ const Telemetry = ({ axis, getPosition, getRotation, hasAccess, initialCameraPos
         if (controls) {
           // get initialCameraPosition in equatorial plane
           // then rotate accessGroup so sign is facing camera
-          const adjustedCameraPosition = initialCameraPosition.clone().applyQuaternion(accessGroup.current.quaternion.clone().invert());
+          const adjustedCameraPosition = initialCameraPosition.clone().applyQuaternion(accessGroup.current.quaternion.clone().invert().normalize());
           let signRotation = Math.atan(adjustedCameraPosition.y / adjustedCameraPosition.x);
           if (adjustedCameraPosition.x < 0) signRotation += Math.PI;
           accessGroup.current.rotateZ(signRotation + 0.05);

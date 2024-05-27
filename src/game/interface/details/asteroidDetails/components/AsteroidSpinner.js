@@ -1,20 +1,23 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import {
   CircleGeometry,
   Mesh,
   ShaderMaterial,
   Vector2,
-  sRGBEncoding
 } from 'three';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 
 import { cleanupScene } from '~/game/scene/asteroid/helpers/utils';
 
 const AsteroidSpinner = () => {
-  const { camera, scene, size } = useThree();
+  const { camera, gl, scene, size, ...props } = useThree();
   
   const meshRef = useRef();
   const initialTime = useRef(Date.now());
+
+  const pixelDensity = useMemo(() => {
+    return gl.getPixelRatio() || 1;   // or viewport.dpr?
+  }, []);
 
   useEffect(() => {
     const geometry = new CircleGeometry(1.2, 120);
@@ -85,8 +88,8 @@ const AsteroidSpinner = () => {
 
   useFrame(() => {
     if (meshRef.current?.material?.uniforms) {
-      meshRef.current.material.uniforms.uResolution.value.x = size.width;
-      meshRef.current.material.uniforms.uResolution.value.y = size.height;
+      meshRef.current.material.uniforms.uResolution.value.x = size.width * pixelDensity;
+      meshRef.current.material.uniforms.uResolution.value.y = size.height * pixelDensity;
       meshRef.current.material.uniforms.uTime.value = (Date.now() - initialTime.current) / 1000;
     }
   });
@@ -95,10 +98,7 @@ const AsteroidSpinner = () => {
 };
 
 const AsteroidSpinnerInCanvas = () => (
-  <Canvas
-    antialias
-    frameloop="always"
-    outputEncoding={sRGBEncoding}>
+  <Canvas frameloop="always" linear>
     <AsteroidSpinner />
   </Canvas>
 );

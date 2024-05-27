@@ -9,7 +9,6 @@ import {
   RingGeometry,
   Texture,
   Vector3,
-  sRGBEncoding,
 } from 'three';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 
@@ -17,7 +16,7 @@ import { cleanupScene } from '~/game/scene/asteroid/helpers/utils';
 import theme from '~/theme';
 import { keyify } from '~/lib/utils';
 
-const hexToLinear = (hex) => new Color(hex).convertSRGBToLinear();
+const hexToColor = (hex) => new Color().setStyle(hex);//.convertSRGBToLinear();
 
 const margin = 0.001 * 2 * Math.PI;
 const rotationPerFrame = 0.1;
@@ -62,10 +61,9 @@ const AsteroidComposition = ({ abundances, asteroid, focus, noColor, noGradient,
         const sliceTheta = 2 * Math.PI * abundance;
         const geometry = new CircleGeometry(1.0, getSegments(sliceTheta), totalTheta + margin, sliceTheta - 2 * margin);
         const material = new MeshBasicMaterial({
-          color: noColor ? hexToLinear('#222222') : (hexToLinear(theme.colors.resources[categoryKey] || '#222222')),
-          alphaMap: new Texture(),  // include so vUv is set
+          color: noColor ? hexToColor('#222222') : (hexToColor(theme.colors.resources[categoryKey] || '#222222')),
+          alphaMap: new Texture(),  // include so vAlphaMapUv is set
           side: BackSide, // (to make angles work as designed)
-          toneMapped: false,
           transparent: true
         });
         material.onBeforeCompile = (shader) => {
@@ -78,7 +76,7 @@ const AsteroidComposition = ({ abundances, asteroid, focus, noColor, noGradient,
             .replace(
               '#include <alphamap_fragment>',
               `
-                float len = length(vUv - 0.5) / 0.5;
+                float len = length(vAlphaMapUv - 0.5) / 0.5;
 
                 float fade = ${noGradient ? `0.0` : `max(
                   0.4 * (1.0 - step(0.8 + (0.2 * uHover), len)),
@@ -113,10 +111,7 @@ const AsteroidComposition = ({ abundances, asteroid, focus, noColor, noGradient,
 
       const coverInner = new Mesh(
         new CircleGeometry(0.70, segmentsPerCircle),
-        new MeshBasicMaterial({
-          color: hexToLinear('#061317'),
-          toneMapped: false,
-        })
+        new MeshBasicMaterial({ color: hexToColor('#27505d') })
       );
       coverInner.position.add(new Vector3(0, 0, 0.002));
       scene.add(coverInner);
@@ -172,8 +167,8 @@ const AsteroidComposition = ({ abundances, asteroid, focus, noColor, noGradient,
         useWidth--;
 
         const subSliceMaterial = new MeshBasicMaterial({
-          color: hexToLinear(theme.colors.resources[target.categoryKey]),
-          alphaMap: new Texture(),  // include so vUv is set
+          color: hexToColor(theme.colors.resources[target.categoryKey]),
+          alphaMap: new Texture(),  // include so vAlphaMapUv is set
           side: BackSide, // (to make angles work as designed),
           toneMapped: false,
           transparent: true
@@ -190,7 +185,7 @@ const AsteroidComposition = ({ abundances, asteroid, focus, noColor, noGradient,
             .replace(
               '#include <alphamap_fragment>',
               `
-                float len = length(vUv - 0.5) / 0.5;
+                float len = length(vAlphaMapUv - 0.5) / 0.5;
                 diffuseColor.a *= uOpacity * (1.0 - smoothstep(uReveal, uReveal + 0.1, len));
               `
             )
@@ -320,10 +315,7 @@ const AsteroidCompositionInCanvas = ({ animationDelay, ready, ...props }) => {
   }, [ready]);
 
   return (
-    <Canvas
-      antialias
-      frameloop={frameloop}
-      outputEncoding={sRGBEncoding}>
+    <Canvas frameloop={frameloop} linear>
       <AsteroidComposition
         onAnimationChange={onAnimationChange}
         ready={delayedReady ? 1 : 0}

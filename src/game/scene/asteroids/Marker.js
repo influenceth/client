@@ -146,7 +146,7 @@ const Marker = (props) => {
             {showReticule && (
               <points ref={reticulePoints} renderOrder={1}>
                 <bufferGeometry>
-                  <bufferAttribute attachObject={[ 'attributes', 'position' ]} args={[ points.slice(0, 3), 3 ]} />
+                  <bufferAttribute attach="attributes-position" args={[ points.slice(0, 3), 3 ]} />
                 </bufferGeometry>
                 <pointsMaterial
                   map={reticuleTexture}
@@ -159,7 +159,7 @@ const Marker = (props) => {
 
             <points renderOrder={1}>
               <bufferGeometry>
-                <bufferAttribute attachObject={[ 'attributes', 'position' ]} args={[ points.slice(0, 3), 3 ]} />
+                <bufferAttribute attach="attributes-position" args={[ points.slice(0, 3), 3 ]} />
               </bufferGeometry>
               <pointsMaterial
                 {...outerProps}
@@ -171,7 +171,7 @@ const Marker = (props) => {
             {showInner && (
               <points renderOrder={1}>
                 <bufferGeometry>
-                  <bufferAttribute attachObject={[ 'attributes', 'position' ]} args={[ points.slice(0, 3), 3 ]} />
+                  <bufferAttribute attach="attributes-position" args={[ points.slice(0, 3), 3 ]} />
                 </bufferGeometry>
                 <pointsMaterial
                   {...innerProps}
@@ -187,7 +187,7 @@ const Marker = (props) => {
         : (
           <points renderOrder={1}>
             <bufferGeometry>
-              <bufferAttribute attachObject={[ 'attributes', 'position' ]} args={[ points.slice(0, 3), 3 ]} />
+              <bufferAttribute attach="attributes-position" args={[ points.slice(0, 3), 3 ]} />
             </bufferGeometry>
             <pointsMaterial
               blending={AdditiveBlending}
@@ -207,7 +207,7 @@ const Marker = (props) => {
           {/* line from marker to stellar plan */}
           <line renderOrder={1}>
             <bufferGeometry>
-              <bufferAttribute attachObject={[ 'attributes', 'position' ]} args={[ points, 3 ]} />
+              <bufferAttribute attach="attributes-position" args={[ points, 3 ]} />
             </bufferGeometry>
             <lineBasicMaterial
               color={theme.colors.main}
@@ -219,7 +219,7 @@ const Marker = (props) => {
           {/* point on stellar plan */}
           <points renderOrder={1}>
             <bufferGeometry>
-              <bufferAttribute attachObject={[ 'attributes', 'position' ]} args={[ points.slice(3), 3 ]} />
+              <bufferAttribute attach="attributes-position" args={[ points.slice(3), 3 ]} />
             </bufferGeometry>
             <pointsMaterial
               blending={AdditiveBlending}

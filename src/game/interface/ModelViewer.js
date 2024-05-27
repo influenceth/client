@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  ACESFilmicToneMapping, AnimationMixer, Box3, CineonToneMapping, Color, DirectionalLight,
-  EquirectangularReflectionMapping, LinearToneMapping, LoopRepeat, NoToneMapping, Raycaster,
-  ReinhardToneMapping, Vector2, Vector3
+  ACESFilmicToneMapping, AgXToneMapping, AnimationMixer, Box3, CineonToneMapping, Color,
+  DirectionalLight, EquirectangularReflectionMapping, LinearToneMapping, LoopRepeat,
+  NeutralToneMapping, NoToneMapping, Raycaster, ReinhardToneMapping, Vector2, Vector3
 } from 'three';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
@@ -12,13 +12,13 @@ import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader';
 import { useFrame, useThree, Canvas } from '@react-three/fiber';
 import { useCubeTexture } from '@react-three/drei';
 import { PropagateLoader } from 'react-spinners';
-import styled, { css } from 'styled-components';
+import styled from 'styled-components';
 
 import Details from '~/components/DetailsFullsize';
-import useInterval from '~/hooks/useInterval';
+import Postprocessor, { BLOOM_LAYER } from '~/game/Postprocessor';
 import useStore from '~/hooks/useStore';
 import { formatFixed } from '~/lib/utils';
-import Postprocessor from '../Postprocessor';
+import visualConfigs from '~/lib/visuals';
 
 // TODO: connect to gpu-graphics settings?
 const ENABLE_SHADOWS = true;
@@ -91,79 +91,6 @@ const LoadingContainer = styled.div`
   }
 `;
 
-export const toneMaps = [
-  { label: 'NoToneMapping', value: NoToneMapping },
-  { label: 'LinearToneMapping', value: LinearToneMapping },
-  { label: 'ReinhardToneMapping', value: ReinhardToneMapping },
-  { label: 'CineonToneMapping', value: CineonToneMapping },
-  { label: 'ACESFilmicToneMapping', value: ACESFilmicToneMapping },
-];
-
-export const getModelViewerSettings = (assetType, overrides = {}) => {
-  // get default settings (for all)
-  const s = {
-    background: null,
-    bloomRadius: 0.25,
-    bloomStrength: 1,
-    enableZoomLimits: true,
-    enableModelLights: true,
-    envmap: '/textures/model-viewer/resource_envmap.hdr',
-    envmapStrength: 1,
-  };
-
-  // modify default settings by asset type
-  if (assetType === 'building') {
-    s.emissiveAsBloom = true;
-    s.emissiveMapAsLightMap = true;
-    s.enableModelLights = true;
-    s.enablePostprocessing = true;
-    s.envmapStrength = 0.1;
-    s.floorNodeName = 'Asteroid_Terrain'; // (enforces collision detection with this node (only in y-axis direction))
-    s.maxCameraDistance = 0.2;  // NOTE: use this or simple zoom constraints, not both
-    s.initialZoom = 0.1;
-    s.enableDefaultLights = true;
-    s.keylightIntensity = 0.25;
-    s.rimlightIntensity = 0;
-
-  } else if (assetType === 'resource') {
-    s.background = '/textures/model-viewer/resource_skybox.hdr';
-    s.initialZoom = 1.75;
-    s.enableDefaultLights = true;
-    s.enableRotation = true;
-    // TODO: if using simple zoom constraints, should probably not allow panning... maybe all should use maxCameraDistance?
-    s.simpleZoomConstraints = [0.85, 5];
-
-  } else if (assetType === 'ship') {
-    s.emissiveAsBloom = true;
-    s.enablePostprocessing = true;
-    s.enableDefaultLights = true;
-    s.enableRevolution = true;
-    s.envmapStrength = 5;
-    s.keylightIntensity = 0.5;
-    s.rimlightIntensity = 1;
-    s.simpleZoomConstraints = [0.1, 5];
-  }
-
-  if (s.enablePostprocessing) {
-    s.toneMapping = s.toneMapping || NoToneMapping;
-  } else {
-    s.toneMapping = NoToneMapping;
-  }
-
-  // apply overrides
-  // NOTE: currently not override-able:
-  //  emissiveAsBloom, emissiveMapAsLightMap, enableModelLights,
-  //  floorNodeName, maxCameraDistance, initialZoom, keylightIntensity,
-  //  simpleZoomConstraints
-  Object.keys(overrides).forEach((k) => {
-    if (overrides[k] !== null && overrides[k] !== undefined) {
-      s[k] = overrides[k];
-    }
-  });
-
-  return s;
-};
-
 const loadTexture = (file, filename = '') => {
   return new Promise((resolve) => {
     if (/\.hdr$/i.test(filename || file || '')) {
@@ -206,7 +133,7 @@ const Model = ({ url, onLoaded, onProgress, onCameraUpdate, ...settings }) => {
     // TODO (enhancement): on mobile, aspect ratio is such that zoomed out to 1 may not have
     //  view of full width of 1.0 at 0,0,0... so on mobile, should probably set this to 1.5+
     const zoom = settings.initialZoom || 1;
-    camera.position.set(0, 0.75 * zoom, 1.25 * zoom);
+    camera.position.set(0, 0.75 * zoom, 1.5 * zoom);
     camera.up.set(0, 1, 0);
     camera.fov = 50;
     camera.updateProjectionMatrix();
@@ -228,7 +155,7 @@ const Model = ({ url, onLoaded, onProgress, onCameraUpdate, ...settings }) => {
     return () => {
       controls.current.dispose();
     };
-  }, [camera, gl, url]);
+  }, [camera, gl, settings.enablePostprocessing, url]);
 
   useEffect(() => {
     if (settings.enableZoomLimits && settings.simpleZoomConstraints) {
@@ -247,7 +174,7 @@ const Model = ({ url, onLoaded, onProgress, onCameraUpdate, ...settings }) => {
   //   return () => {
   //     scene.remove(axesHelper);
   //   };
-  // }, []); // eslint-disable-line react-hooks/exhaustive-deps=
+  // }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // load the model on url change
   useEffect(() => {
@@ -297,19 +224,22 @@ const Model = ({ url, onLoaded, onProgress, onCameraUpdate, ...settings }) => {
 
             // env-map intensity
             if (node.material?.envMapIntensity) {
-              node.material.envMapIntensity = settings.envmapStrength;
+              node.material.envMapIntensity = settings.envmapStrength || 1;
             }
 
             // rewrite emissive map to lightmap
             if (settings.emissiveMapAsLightMap) {
-              node.material.envMapIntensity = settings.envmapOverrideName ? settings.envmapStrength : 0;
               if (node.material?.emissiveMap) {
                 if (node.material.lightMap) console.warn('LIGHTMAP overwritten by emissiveMap', node);
 
                 node.material.lightMap = node.material.emissiveMap;
+                node.material.lightMapIntensity = settings.lightmapStrength;
+
                 node.material.emissive = new Color(0x0);
                 node.material.emissiveMap = null;
               }
+            } else if (node.material.lightMap) {
+              node.material.lightMapIntensity = settings.lightmapStrength;
             }
 
             // use no-map emissive color as indication mesh should be bloomed
@@ -320,8 +250,7 @@ const Model = ({ url, onLoaded, onProgress, onCameraUpdate, ...settings }) => {
                   console.warn(`emissiveIntensity > 1 on material "${node.material.name}" @ node "${node.name}"`);
                   node.material.emissiveIntensity = Math.min(node.material.emissiveIntensity, 1);
                 }
-                node.material.toneMapped = false;
-                node.userData.bloom = true;
+                node.layers.enable(BLOOM_LAYER);
               }
             }
 
@@ -335,7 +264,8 @@ const Model = ({ url, onLoaded, onProgress, onCameraUpdate, ...settings }) => {
               if (totalLights < MAX_LIGHTS) {
                 node.castShadow = true;
                 node.shadow.bias = -0.0001;
-                node.intensity /= 8;
+                node.userData.initIntensity = node.intensity;
+                node.intensity /= (settings.spotlightReduction || 1);
               } else {
                 console.warn(`excessive light (#${totalLights}) removed: `, node.name);
               }
@@ -375,6 +305,8 @@ const Model = ({ url, onLoaded, onProgress, onCameraUpdate, ...settings }) => {
         // resize shadow cameras (these don't automatically resize with the rest of the model)
         model.current.traverse(function (node) {
           if (node.isSpotLight) {
+            node.decay = 1;
+
             // NOTE: if near and far are able to be set by blender / exported into the glb (it seems they are not)
             //  we would *= the near and far by scaleValue here instead
             node.shadow.camera.near = 0.00001;
@@ -468,9 +400,11 @@ const Model = ({ url, onLoaded, onProgress, onCameraUpdate, ...settings }) => {
     }
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [onLoaded, url]);
+  }, [onLoaded, url]); // (do not include settings here, update in their own hooks)
 
   useEffect(() => {
+    scene.environmentIntensity = settings.envmapStrength;
+
     if (!model.current) return;
     model.current.traverse(function (node) {
       if (node.isMesh) {
@@ -480,6 +414,30 @@ const Model = ({ url, onLoaded, onProgress, onCameraUpdate, ...settings }) => {
       }
     });
   }, [settings.envmapStrength]);
+
+  useEffect(() => {
+    if (!model.current) return;
+    model.current.traverse(function (node) {
+      if (node.isMesh) {
+        if (node.material?.lightMap) {
+          node.material.lightMapIntensity = settings.lightmapStrength;
+        }
+      }
+    });
+  }, [settings.lightmapStrength]);
+
+  useEffect(() => {
+    if (!model.current) return;
+    model.current.traverse(function (node) {
+      if (node.isSpotLight) {
+        node.intensity = node.userData.initIntensity / (settings.spotlightReduction || 1);
+      }
+    });
+  }, [settings.spotlightReduction]);
+
+  useEffect(() => {
+    scene.backgroundIntensity = settings.backgroundStrength;
+  }, [settings.backgroundStrength]);
 
   useEffect(() => {
     if (!!controls?.current) {
@@ -497,7 +455,7 @@ const Model = ({ url, onLoaded, onProgress, onCameraUpdate, ...settings }) => {
     }
 
     // apply camera constraints to building scene
-    if (controls.current.object && controls.current.target) {
+    if (controls.current && controls.current.object && controls.current.target) {
       let updateControls = false;
       if (maxCameraDistance.current || collisionFloor.current) {
 
@@ -578,12 +536,9 @@ const Skybox = ({ background, envmap, onLoaded, backgroundOverrideName = '', env
   useEffect(() => {
     let cleanupTextures = [];
 
-    if (!background) {
-      scene.background = defaultBackground;
-      scene.environment = defaultBackground;
-      onLoaded();
-    } else {
-      let waitingOn = background === envmap ? 1 : 2;
+    let waitingOn = 0;
+    if (background) {
+      waitingOn++;
       loadTexture(background, backgroundOverrideName).then(function (texture) {
         cleanupTextures.push(texture);
         texture.mapping = EquirectangularReflectionMapping;
@@ -596,18 +551,28 @@ const Skybox = ({ background, envmap, onLoaded, backgroundOverrideName = '', env
         waitingOn--;
         if (waitingOn === 0) onLoaded();
       });
+    } else {
+      scene.background = defaultBackground;
+    }
 
+    if (envmap) {
       if (background !== envmap) {
+        waitingOn++;
         loadTexture(envmap, envmapOverrideName).then(function (texture) {
           cleanupTextures.push(texture);
           texture.mapping = EquirectangularReflectionMapping;
           scene.environment = texture;
+          console.log('env is set to', texture)
 
           waitingOn--;
           if (waitingOn === 0) onLoaded();
         });
       }
+    } else {
+      scene.environment = defaultBackground;
     }
+
+    if (waitingOn === 0) onLoaded();
 
     return () => {
       scene.background = null;
@@ -627,7 +592,7 @@ const Lighting = ({ keylightIntensity = 1.0, rimlightIntensity = 0.25 }) => {
     if (keylightIntensity > 0) {
       keyLight = new DirectionalLight(0xFFFFFF);
       keyLight.intensity = keylightIntensity;
-      keyLight.position.set(-2, 2, 2);
+      keyLight.position.set(-2, 2, -1);
       scene.add(keyLight);
 
       if (ENABLE_SHADOWS) {
@@ -647,7 +612,7 @@ const Lighting = ({ keylightIntensity = 1.0, rimlightIntensity = 0.25 }) => {
     if (rimlightIntensity > 0) {
       rimLight = new DirectionalLight(0x9ECFFF);
       rimLight.intensity = rimlightIntensity;
-      rimLight.position.set(4, 2, 4);
+      rimLight.position.set(4, 2, -2);
       scene.add(rimLight);
     }
 
@@ -737,7 +702,7 @@ const Lighting = ({ keylightIntensity = 1.0, rimlightIntensity = 0.25 }) => {
       // if (helper4) scene.remove(helper4);
       // if (helper5) scene.remove(helper5);
     };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [keylightIntensity, rimlightIntensity]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return null;
 };
@@ -760,10 +725,15 @@ const ModelViewer = ({ assetType, modelUrl, ...overrides }) => {
   const [loadingModel, setLoadingModel] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
 
-  const settings = useMemo(
-    () => getModelViewerSettings(assetType, overrides),
-    [assetType, overrides]
-  );
+  const settings = useMemo(() => {
+    const overridden = { ...visualConfigs.modelViewer[assetType] };
+    Object.keys(overrides).forEach((k) => {
+      if (overrides[k] !== null && overrides[k] !== undefined) {
+        overridden[k] = overrides[k];
+      }
+    });
+    return overridden;
+  }, [assetType, overrides]);
 
   useEffect(() => {
     dispatchCanvasStacked(assetType);
@@ -787,6 +757,14 @@ const ModelViewer = ({ assetType, modelUrl, ...overrides }) => {
 
   const [progress, setProgress] = useState(0);
 
+  const bloomParams = useMemo(() => ({
+    radius: settings?.bloomRadius,
+    strength: settings?.bloomStrength,
+    threshold: settings?.bloomThreshold,
+    toneMapping: settings?.toneMapping,
+    toneMappingExposure: settings?.toneMappingExposure,
+  }), [settings]);
+
   // TODO: is Details best component to wrap this in?
   // TODO: is canvasStack assetType causing a problem since it might change?
   return (
@@ -799,13 +777,15 @@ const ModelViewer = ({ assetType, modelUrl, ...overrides }) => {
       )}
 
       <CanvasContainer ready={!isLoading}>
+        {/* TODO: was antialias={false} */}
         <Canvas
           frameloop={canvasStack[0] === assetType ? 'always' : 'never'}
+          linear={settings.enablePostprocessing/* postprocessing will handle gamma autocorrection */}
           resize={{ debounce: 5, scroll: false }}
           shadows
           style={{ height: '100%', width: '100%' }}>
 
-          <Postprocessor enabled={true} />
+          <Postprocessor enabled={settings.enablePostprocessing} bloomParams={bloomParams} />
           <Skybox
             background={settings.background}
             envmap={settings.envmap}
@@ -823,11 +803,9 @@ const ModelViewer = ({ assetType, modelUrl, ...overrides }) => {
               {...settings} />
           )}
 
-          {settings.enableDefaultLights && (
-            <Lighting
-              keylightIntensity={settings.keylightIntensity}
-              rimlightIntensity={settings.rimlightIntensity} />
-          )}
+          <Lighting
+            keylightIntensity={settings.keylightIntensity}
+            rimlightIntensity={settings.rimlightIntensity} />
         </Canvas>
       </CanvasContainer>
 

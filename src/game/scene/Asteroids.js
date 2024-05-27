@@ -28,9 +28,10 @@ import vert from './asteroids/asteroids.vert';
 import frag from './asteroids/asteroids.frag';
 import { formatBeltDistance } from '../interface/hud/actionDialogs/components';
 import formatters from '~/lib/formatters';
+import theme from '~/theme';
 
-const blueMarkerColor = new Color('#20bde5').convertSRGBToLinear();
-const redMarkerColor = new Color('#fd7056').convertSRGBToLinear();
+const blueMarkerColor = new Color(theme.colors.brightMain);
+const redMarkerColor = new Color(theme.colors.red);
 
 const AsteroidTooltip = styled.div`
   align-items: flex-end;
@@ -250,7 +251,7 @@ const Asteroids = () => {
   useEffect(() => {
     const newColors = mappedAsteroids.map(a => {
       if (highlightConfig) return highlighters[highlightConfig.field](a, highlightConfig);
-      return [ 0.87, 0.87, 0.87 ];
+      return [ 1, 1, 1 ];
     });
 
     setColors(new Float32Array([].concat.apply([], newColors)));
@@ -415,10 +416,9 @@ const Asteroids = () => {
                     size={15}
                     sizeAttenuation={false}
                     map={diamondMarker}
-                    toneMapped={false}
                     transparent />
                   <bufferGeometry>
-                    <bufferAttribute attachObject={[ 'attributes', 'position' ]} args={[ assetPositions, 3 ]} />
+                    <bufferAttribute attach="attributes-position" args={[ assetPositions, 3 ]} />
                   </bufferGeometry>
                 </points>
               )}
@@ -430,10 +430,9 @@ const Asteroids = () => {
                     size={15}
                     sizeAttenuation={false}
                     map={diamondMarker}
-                    toneMapped={false}
                     transparent />
                   <bufferGeometry>
-                    <bufferAttribute attachObject={[ 'attributes', 'position' ]} args={[ watchlistPositions, 3 ]} />
+                    <bufferAttribute attach="attributes-position" args={[ watchlistPositions, 3 ]} />
                   </bufferGeometry>
                 </points>
               )}
@@ -447,8 +446,8 @@ const Asteroids = () => {
               onPointerOver={zoomStatus === 'out' && setMousePos}
               onPointerOut={zoomStatus === 'out' && setMousePos}>
               <bufferGeometry ref={asteroidsGeom}>
-                <bufferAttribute attachObject={[ 'attributes', 'position' ]} args={[ positions, 3 ]} />
-                <bufferAttribute attachObject={[ 'attributes', 'highlightColor' ]} args={[ colors, 3 ]} />
+                <bufferAttribute attach="attributes-position" args={[ positions, 3 ]} />
+                <bufferAttribute attach="attributes-highlightColor" args={[ colors, 3 ]} />
               </bufferGeometry>
               <shaderMaterial args={[{
                 depthWrite: false,
@@ -491,7 +490,7 @@ const Asteroids = () => {
                 <>
                   <line>
                     <bufferGeometry>
-                      <bufferAttribute attachObject={[ 'attributes', 'position' ]} args={[ originToDestination, 3 ]} />
+                      <bufferAttribute attach="attributes-position" args={[ originToDestination, 3 ]} />
                     </bufferGeometry>
                     <lineBasicMaterial color={0x777777} />
                   </line>

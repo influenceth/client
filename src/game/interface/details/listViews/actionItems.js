@@ -44,7 +44,6 @@ const Progress = ({ start, finish }) => {
   return <ProgressBar progress={syncedTime < start ? 0 : 100 * (syncedTime - start) / (finish - start)} />;
 }
 
-// TODO: ecs refactor
 const useColumns = () => {
   const { accountAddress } = useSession();
   const { crew } = useCrewContext();
