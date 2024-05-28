@@ -87,6 +87,7 @@ const api = {
   },
 
   getCrewActionItems: async (crewId) => {
+    if (!crewId) return [];
     const response = await instance.get(`/${apiVersion}/user/activity/unresolved?crewId=${crewId}`);
     return response.data;
   },

@@ -231,7 +231,7 @@ export function ActivitiesProvider({ children }) {
             if (debugInvalidation) console.log('invalidate', invalidationConfig, invalidations);
             invalidations.forEach((queryKey) => {
               console.log('invalidate', queryKey);
-              queryClient.invalidateQueries({ queryKey, refetchType: 'active' });
+              queryClient.invalidateQueries({ queryKey, refetchActive: true });
             });
           });
 
