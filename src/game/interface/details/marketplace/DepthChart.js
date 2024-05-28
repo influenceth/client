@@ -651,10 +651,16 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
     }
 
     if (!loading) {
-      if (!sameAsteroid) a.labelAddendum = 'different asteroid';
-      if (!crew?._location?.lotId) a.labelAddendum = 'in orbit';
-      if (!hasPermission) a.labelAddendum = 'restricted';
-      if (!crew?._ready && type === 'limit') a.labelAddendum = 'crew busy';
+      let disabledReason;
+      if (!sameAsteroid) disabledReason = 'different asteroid';
+      else if (!crew?._location?.lotId) disabledReason = 'in orbit';
+      else if (!hasPermission) disabledReason = 'restricted';
+      else if (!crew?._ready && type === 'limit') disabledReason = 'crew busy';
+      
+      if (disabledReason) {
+        a.labelAddendum = disabledReason;
+        a._disabled = true;
+      }
     }
 
     return a;
@@ -920,7 +926,7 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
                   <ActionButton
                     {...actionButtonDetails}
                     flags={{
-                      disabled: loading || !hasPermission || !(total > 0),
+                      disabled: loading || !hasPermission || !(total > 0) || actionButtonDetails?._disabled,
                       loading
                     }}
                     onClick={createOrder} />
