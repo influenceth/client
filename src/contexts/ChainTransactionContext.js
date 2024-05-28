@@ -714,7 +714,33 @@ export function ChainTransactionProvider({ children }) {
             });
 
             const account = canUseSession ? starknetSession : starknet.account;
-            return account.execute(calls);
+
+            // Simulate the tx and check for revert reasons, if found show alert
+            const simulation = await account.simulateTransaction(
+              [{ type: 'INVOKE_FUNCTION', payload: calls }],
+              { skipValidate: true }
+            );
+
+            if (simulation[0]?.transaction_trace?.execute_invocation?.revert_reason) {
+              const reason = simulation[0].transaction_trace.execute_invocation.revert_reason;
+              const match = reason.match(/Failure reason: 0x([a-fA-F0-9]+) \('([^']+)'\)/);
+
+              // If there is a match, we can show the friendly error message
+              // TODO: map "E" codes to more user-friendly messages
+              if (match) {
+                createAlert({
+                  type: 'GenericAlert',
+                  data: { content: match[2] },
+                  level: 'warning',
+                });
+              } else {
+                // If no match, show the raw error message
+                throw new Error(reason);
+              }
+            } else {
+              // Execute the transaction if no simulation issues
+              return account.execute(calls);
+            }
           },
 
           onConfirmed: (event, vars) => {
