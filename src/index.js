@@ -13,7 +13,6 @@ import * as serviceWorkerRegistration from './serviceWorkerRegistration';
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      refetchOnMount: false,
       staleTime: 60000 * 5
     }
   }
