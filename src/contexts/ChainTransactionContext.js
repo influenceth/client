@@ -1,7 +1,7 @@
 import { createContext, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Asteroid, Entity, Order, RandomEvent, System } from '@influenceth/sdk';
 import { isEqual, get } from 'lodash';
-import { hash, shortString, uint256 } from 'starknet';
+import { Account, hash, shortString, uint256 } from 'starknet';
 
 import useActivitiesContext from '~/hooks/useActivitiesContext';
 import useSession from '~/hooks/useSession';
@@ -716,7 +716,9 @@ export function ChainTransactionProvider({ children }) {
             const account = canUseSession ? starknetSession : starknet.account;
 
             // Simulate the tx and check for revert reasons, if found show alert
-            const simulation = await account.simulateTransaction(
+            // Combining `simAccount` and `skipValidate = true` allows sim signing for any wallet
+            const simAccount = new Account(account.provider, account.address, '0x1234');
+            const simulation = await simAccount.simulateTransaction(
               [{ type: 'INVOKE_FUNCTION', payload: calls }],
               { skipValidate: true }
             );
