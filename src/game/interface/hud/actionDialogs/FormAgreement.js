@@ -165,10 +165,7 @@ const FormAgreement = ({
     return 365;
   }, [currentAgreement, isExtension]);
 
-  const maxTermFloored = useMemo(
-    () => Math.floor(maxTerm * 10) / 10,
-    [maxTerm]
-  );
+  const maxTermFloored = useMemo(() => Math.floor(maxTerm * 10) / 10, [maxTerm]);
 
   const minTerm = useMemo(() => {
     return (isExtension) ? 1 : currentPolicy?.policyDetails?.initialTerm || 0

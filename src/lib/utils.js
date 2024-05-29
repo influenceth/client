@@ -73,7 +73,7 @@ export const reactPreline = (value, maxInARow = 2) => {
     .filter((c, i, arr) => {
       if (c.length) return true;
       if (i < maxInARow) return true;
-      
+
       // this line is blank... make sure it is not creating > maxInARow
       for (let j = 1; j <= maxInARow - 1; j++) {
         if (arr[i - j].length > 0) return true;
@@ -202,7 +202,7 @@ export const arrToXYZ = (arr) => ({ x: arr[0], y: arr[1], z: arr[2] });
 const yearOfSeconds = 31536000;
 export const secondsToMonths = (seconds) => Math.floor(1000 * 12 * seconds / yearOfSeconds) / 1000;
 export const monthsToSeconds = (months) => Math.floor(yearOfSeconds * months / 12);
-export const secondsToDays = (seconds) => formatFixed(seconds / 86400, 2);
+export const secondsToDays = (seconds) => seconds / 86400;
 export const daysToSeconds = (days) => days * 86400;
 
 export const getBlockTime = async (starknet, blockNumber = 'pending') => {
@@ -236,7 +236,7 @@ export const entityToAgreements = (entity) => {
     (entity[agreementType] || []).forEach((agreement, j) => {
       const formatted = {
         ...entity,
-        
+
         key: `${entity.uuid}_${agreementType}_${j}`,
         _agreement: {
           _type: agreementType === 'PrepaidAgreements'
