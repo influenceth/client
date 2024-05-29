@@ -110,7 +110,7 @@ export function ActivitiesProvider({ children }) {
     // if nothing to do, can return
     if (transformedActivities.length === 0) return;
 
-    // this timeout is to hopefully give enough time for all relevant assets to be updated 
+    // this timeout is to hopefully give enough time for all relevant assets to be updated
     // in mongo and/or elasticsearch before invaliding/re-requesting them
     setTimeout(async () => {
       let shouldRefreshReadyAt = false;
@@ -204,7 +204,7 @@ export function ActivitiesProvider({ children }) {
                   // else if (debugInvalidation) console.log(`${label}.${id} will NOT be joining collection`, JSON.stringify(queryKey));
                 }
               });
-              
+
               // invalidate searches potentially a part of
               // TODO: would be nice to check against criteria similar to 'entities' above
               let searchAssets = [];
@@ -231,7 +231,7 @@ export function ActivitiesProvider({ children }) {
             if (debugInvalidation) console.log('invalidate', invalidationConfig, invalidations);
             invalidations.forEach((queryKey) => {
               console.log('invalidate', queryKey);
-              queryClient.invalidateQueries({ queryKey, refetchActive: true });
+              queryClient.invalidateQueries({ queryKey, refetchType: 'active' });
             });
           });
 
@@ -340,7 +340,7 @@ export function ActivitiesProvider({ children }) {
     isFirstLoad.current = false;
 
     const crewRoom = crew?.id ? `Crew::${crew.id}` : null;
-    
+
     // setup ws listeners
     const connListenerRegId = registerConnectionHandler(onWSConnection);
     const messageListenerRegIds = [];

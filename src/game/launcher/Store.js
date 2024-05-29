@@ -496,7 +496,9 @@ export const AsteroidSKU = () => {
     setAsteroidSale(salesData || {});
   }, []);
 
-  useEffect(() => updateSale(), [updateSale]);
+  useEffect(() => {
+    updateSale();
+  }, [updateSale]);
 
   const filterAndClose = useCallback(() => {
     updateFilters(Object.assign({}, filters, { ownedBy: 'unowned' }));
