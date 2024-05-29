@@ -26,10 +26,10 @@ const useMappedAsteroidLots = (i) => {
   const [rebuildTally, setRebuildTally] = useState(0);
 
   // get all packed lot data from server
-  const { data: lotData, isLoading: lotDataLoading } = useAsteroidLotData(i);
+  const { data: lotData, isLoading: lotDataLoading, dataUpdatedAt: lotDataUpdatedAt } = useAsteroidLotData(i);
 
   // get all sampled lots (for this resource) from the server
-  const { data: sampledLots, isLoading: sampledLotsLoading } = useAsteroidCrewSamples(i, mapResourceId);
+  const { data: sampledLots, isLoading: sampledLotsLoading, dataUpdatedAt: dataUpdatedAt1 } = useAsteroidCrewSamples(i, mapResourceId);
   const [lotSampledMap, fillTally] = useMemo(() => {
     return [
       sampledLots
@@ -43,10 +43,10 @@ const useMappedAsteroidLots = (i) => {
         : {},
       sampledLots?.length || 0
     ];
-  }, [sampledLots]);
+  }, [sampledLots, dataUpdatedAt1]);
 
   // get all occupied-by-me buildings from the server
-  const { data: crewLots, isLoading: crewLotsLoading } = useAsteroidCrewBuildings(i);
+  const { data: crewLots, isLoading: crewLotsLoading, dataUpdatedAt: dataUpdatedAt2 } = useAsteroidCrewBuildings(i);
   const myOccupationMap = useMemo(() => {
     if (crewLotsLoading) return null;
     return (crewLots || []).reduce((acc, p) => {
@@ -56,10 +56,10 @@ const useMappedAsteroidLots = (i) => {
         [_locations.lotIndex]: true
       };
     }, {});
-  }, [crewLots, crewLotsLoading]);
+  }, [crewLots, crewLotsLoading, dataUpdatedAt2]);
 
   // get all occupied-by-me ships from the server
-  const { data: crewShips, isLoading: crewShipsLoading } = useControlledShips();
+  const { data: crewShips, isLoading: crewShipsLoading, dataUpdatedAt: dataUpdatedAt3 } = useControlledShips();
   const myShipMap = useMemo(() => {
     if (crewShipsLoading) return null;
     return (crewShips || []).reduce((acc, p) => {
@@ -69,7 +69,7 @@ const useMappedAsteroidLots = (i) => {
         [_locations.lotIndex]: true
       };
     }, {});
-  }, [crewShips, crewShipsLoading]);
+  }, [crewShips, crewShipsLoading, dataUpdatedAt3]);
 
   // determine if search is on or not
   const searchIsOn = useMemo(() => {
@@ -176,7 +176,7 @@ const useMappedAsteroidLots = (i) => {
     }
 
     return [lotResult, lotUse, lotColor, lotUseTallies, resultTally];
-  }, [lotData, myOccupationMap, myShipMap, isFilterMatch, highlightValueMap, rebuildTally]);
+  }, [lotData, lotDataUpdatedAt, myOccupationMap, myShipMap, isFilterMatch, highlightValueMap, rebuildTally]);
 
   const refetch = useCallback(() => {
     setRebuildTally((t) => t + 1);
