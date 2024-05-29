@@ -19,7 +19,7 @@ const useDeliveries = ({ destination, destinationSlot, origin, originSlot, statu
     return k;
   }, [ destination, origin, status ]);
 
-  const { data: rawData, isLoading } = useQuery(
+  const { data: rawData, isLoading, dataUpdatedAt } = useQuery(
     entitiesCacheKey(Entity.IDS.DELIVERY, cacheKey),
     () => api.getDeliveries(destination, origin, status),
     { enabled: !!(destination || origin) }
@@ -32,7 +32,7 @@ const useDeliveries = ({ destination, destinationSlot, origin, originSlot, statu
       return true;
     }),
     isLoading
-  }), [rawData, isLoading]);
+  }), [rawData, isLoading, dataUpdatedAt, destinationSlot, originSlot]);
 };
 
 export default useDeliveries;

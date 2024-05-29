@@ -60,11 +60,12 @@ const useLot = (lotId) => {
 
   // we try to prepop all the below in a single call above so the
   // below queries only get refreshed invididually when invalidated
-  const { data: buildings, isLoading: buildingsLoading } = useLotEntities(lotId, Entity.IDS.BUILDING, !!lotDataPrepopped);
-  const { data: deposits, isLoading: depositsLoading } = useLotEntities(lotId, Entity.IDS.DEPOSIT, !!lotDataPrepopped);
-  const { data: ships, isLoading: shipsLoading } = useLotEntities(lotId, Entity.IDS.SHIP, !!lotDataPrepopped);
+  const { data: buildings, isLoading: buildingsLoading, dataUpdatedAt: bUpdatedAt } = useLotEntities(lotId, Entity.IDS.BUILDING, !!lotDataPrepopped);
+  const { data: deposits, isLoading: depositsLoading, dataUpdatedAt: dUpdatedAt } = useLotEntities(lotId, Entity.IDS.DEPOSIT, !!lotDataPrepopped);
+  const { data: ships, isLoading: shipsLoading , dataUpdatedAt: sUpdatedAt} = useLotEntities(lotId, Entity.IDS.SHIP, !!lotDataPrepopped);
 
   const isLoading = lotEntity?.uuid && (lotIsLoading || lotDataIsLoading || asteroidLoading || buildingsLoading || depositsLoading || shipsLoading);
+  const objArrDataUpdatedAt = Math.max(bUpdatedAt, dUpdatedAt, sUpdatedAt);
   const data = useMemo(() => {
     if (isLoading || !lotEntity?.uuid) return undefined;
 
@@ -115,7 +116,7 @@ const useLot = (lotId) => {
       // 'ContractAgreement', 'PrepaidAgreement' should be on lot record
       // unclear what happens to 'WhitelistAgreement' or PublicPolicies
     };
-  }, [lotEntity?.uuid, isLoading, asteroid, buildings, deposits, ships]);
+  }, [lotEntity?.uuid, isLoading, asteroid, buildings, deposits, ships, objArrDataUpdatedAt]);
 
   return useMemo(() => ({ data, isLoading }), [data, isLoading]);
 };

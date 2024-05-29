@@ -13,7 +13,7 @@ const useCrewOrders = (controllerId) => {
   );
 
   const exchangeIds = useMemo(() => Array.from(new Set((orders || []).map((o) => o.entity.id))), [orders]);
-  const { data: exchanges, isLoading: exchangesLoading } = useEntities({
+  const { data: exchanges, isLoading: exchangesLoading, dataUpdatedAt } = useEntities({
     ids: exchangeIds,
     label: Entity.IDS.BUILDING
   });
@@ -29,7 +29,7 @@ const useCrewOrders = (controllerId) => {
         })),
       isLoading
     }
-  }, [exchanges, exchangesLoading, orders, ordersLoading]);
+  }, [exchanges, exchangesLoading, orders, ordersLoading, dataUpdatedAt]);
 };
 
 export default useCrewOrders;
