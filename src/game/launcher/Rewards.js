@@ -82,6 +82,42 @@ const Banner = styled.div`
   }
 `;
 
+const ZeroReferrals = styled.div`
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  justify-content: center;
+  & > svg {
+    font-size: 150px;
+    margin-top: -80px;
+    margin-bottom: 20px;
+  }
+  ${Banner} {
+    flex-direction: column;
+    height: auto;
+    padding: 25px 80px;
+    text-align: center;
+
+    & > h3 {
+      margin: 0;
+      text-transform: uppercase;
+    }
+    & > p {
+      color: ${p => p.theme.colors.main};
+      margin: 15px 0 20px;
+      & > b {
+        color: white;
+        font-weight: normal;
+      }
+    }
+    & > button {
+      width: 250px;
+    }
+    
+  }
+`;
+
 const OuterTableWrapper = styled.div`
   flex: 1;
   overflow: hidden;
@@ -127,6 +163,25 @@ const LinkWrapper = styled.span`
       color: white;
       text-decoration: underline;
     }
+  }
+`;
+
+const EarningsWrapper = styled.div`
+  padding: 0 16px 12px;
+
+  & > h3 {
+    color: #888;
+    font-size: 15px;
+    font-weight: normal;
+    margin-bottom: 8px;
+    & > b {
+      color: white;
+      font-weight: normal;
+    }
+  }
+  & > label {
+    font-size: 32px;
+    line-height: 32px;
   }
 `;
 
@@ -222,54 +277,52 @@ const ReferralRewards = () => {
   return (
     <Wrapper>
       <CoverImage />
-      <Banner>
-        <SwayIcon />
-        <div>
-          <h3>Refer Friends &amp; Earn Sway</h3>
-          <p>Receive SWAY equal to <b>10%</b> of any crewmate or asteroid purchases<br/>made from Influence through your referral link.</p>
-        </div>
-        <div>
-          <Button onClick={handleCopyLink} style={{ width: '100%' }}>
-            <LinkIcon /> <span>Copy Referral Link</span>
-          </Button>
-        </div>
-      </Banner>
-      {isLoading ? <PageLoader /> : (
-        <OuterTableWrapper>
-          <TableWrapper>
-            <DataTableComponent
-              columns={columns}
-              data={filteredData}
-              keyField="uuid"
-              onClickColumn={handleSort}
-              sortDirection={sort[1]}
-              sortField={sort[0]}
-            />
-          </TableWrapper>
-        </OuterTableWrapper>
+
+      {isLoading && <PageLoader />}
+      {!isLoading && referrals?.length === 0 && (
+        <ZeroReferrals>
+          <SwayIcon />
+          <Banner>
+            <h3>Refer Friends &amp; Earn Sway</h3>
+            <p>Receive SWAY equal to <b>10%</b> of any crewmate or asteroid purchases<br/>made from Influence through your referral link.</p>
+            <Button onClick={handleCopyLink}>
+              <LinkIcon /> <span>Copy Referral Link</span>
+            </Button>
+          </Banner>
+        </ZeroReferrals>
+      )}
+      {!isLoading && referrals?.length > 0 && (
+        <>
+          <Banner>
+            <SwayIcon />
+            <div>
+              <h3>Refer Friends &amp; Earn Sway</h3>
+              <p>Receive SWAY equal to <b>10%</b> of any crewmate or asteroid purchases<br/>made from Influence through your referral link.</p>
+            </div>
+            <div>
+              <Button onClick={handleCopyLink} style={{ width: '100%' }}>
+                <LinkIcon /> <span>Copy Referral Link</span>
+              </Button>
+            </div>
+          </Banner>
+
+          <OuterTableWrapper>
+            <TableWrapper>
+              <DataTableComponent
+                columns={columns}
+                data={filteredData}
+                keyField="uuid"
+                onClickColumn={handleSort}
+                sortDirection={sort[1]}
+                sortField={sort[0]}
+              />
+            </TableWrapper>
+          </OuterTableWrapper>
+        </>
       )}
     </Wrapper>
   );
 };
-
-const EarningsWrapper = styled.div`
-  padding: 0 16px 12px;
-
-  & > h3 {
-    color: #888;
-    font-size: 15px;
-    font-weight: normal;
-    margin-bottom: 8px;
-    & > b {
-      color: white;
-      font-weight: normal;
-    }
-  }
-  & > label {
-    font-size: 32px;
-    line-height: 32px;
-  }
-`;
 
 const ReferralEarningsMenu = () => {
   const { data: referrals, isLoading } = useReferrals();
