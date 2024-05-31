@@ -103,7 +103,7 @@ const CompletionTime = styled.label`
   position: absolute;
   justify-content: center;
   right: 0;
-  text-shadow: 0px 0px 1px black;
+  filter: drop-shadow(0px 0px 2px rgba(0, 0, 0, 0.5));
   transition: color 100ms ease;
   top: 0;
 `;

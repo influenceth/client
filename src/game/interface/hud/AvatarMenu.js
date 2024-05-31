@@ -117,7 +117,7 @@ const Crewmates = styled.div`
 const TitleWrapper = styled.div`
   align-items: center;
   display: flex;
-  filter: drop-shadow(0px 0px 2px rgb(0 0 0));
+  filter: drop-shadow(0px 0px 2px rgba(0, 0, 0, 0.5));
   flex-direction: row;
   justify-content: space-between;
   width: ${menuWidth - 30}px;

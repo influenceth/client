@@ -51,7 +51,7 @@ const SwayBalance = styled.div`
   align-items: center;
   color: white;
   display: flex;
-  filter: drop-shadow(0px 0px 2px rgb(0 0 0));
+  filter: drop-shadow(0px 0px 2px rgba(0, 0, 0, 0.5));
   font-size: 24px;
   margin-left: 25px;
 
@@ -62,7 +62,7 @@ const SwayBalance = styled.div`
 `;
 
 const VerticalRule = styled.div`
-  border-left: 1px solid #444;
+  border-left: 1px solid rgba(255, 255, 255, .25);
   height: 28px;
   margin-left: 14px;
   opacity: ${p => p.hide ? 0 : 1};
