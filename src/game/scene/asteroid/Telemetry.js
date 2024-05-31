@@ -522,6 +522,18 @@ const Telemetry = ({
     if (rotationalAxis.current) group.current.add(rotationalAxis.current);
     if (shipGroup.current) group.current.add(shipGroup.current);
     if (trajectory.current) group.current.add(trajectory.current);
+
+    return () => {
+      if (accessGroup.current) group.current.remove(accessGroup.current);
+      if (equatorCircle.current) group.current.remove(equatorCircle.current);
+      if (helper.current) group.current.remove(helper.current); // eslint-disable-line react-hooks/exhaustive-deps
+      if (inclinationCircle.current) group.current.remove(inclinationCircle.current);
+      if (rotationalMarkersGroup.current) group.current.remove(rotationalMarkersGroup.current);
+      if (planarCircle.current) group.current.remove(planarCircle.current);
+      if (rotationalAxis.current) group.current.remove(rotationalAxis.current);
+      if (shipGroup.current) group.current.remove(shipGroup.current);
+      if (trajectory.current) group.current.remove(trajectory.current);
+    };
   }, [radius]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {

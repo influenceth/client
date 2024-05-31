@@ -27,12 +27,6 @@ const ShipViewer = () => {
         setPendingSound(null);
       }
     }
-
-    if (pendingSound) {
-      clearTimeout(pendingSound);
-      stopSound('ship', { fadeOut: 500 });
-      setPendingSound(null);
-    }
   }, [zoomScene]);
 
   const modelUrl = useMemo(() => {

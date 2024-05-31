@@ -25,11 +25,6 @@ const LotViewer = () => {
         setPendingSound(null);
       }
     }
-
-    if (pendingSound) {
-      clearTimeout(pendingSound);
-      setPendingSound(null);
-    }
   }, [zoomScene, lot]);
 
   const modelUrl = useMemo(() => {
