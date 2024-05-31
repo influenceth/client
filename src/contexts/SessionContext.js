@@ -7,10 +7,7 @@ import { connect as starknetConnect, disconnect as starknetDisconnect } from 'st
 import { ArgentMobileConnector } from 'starknetkit/argentMobile';
 import { InjectedConnector } from 'starknetkit/injected';
 import { WebWalletConnector } from 'starknetkit/webwallet';
-import {
-  createOffchainSessionV5 as createOffchainSession,
-  OffchainSessionAccountV5 as OffchainSessionAccount
-} from '@argent/x-sessions';
+import { createSessionRequest, openSession } from '@argent/x-sessions';
 import { getStarkKey, utils } from 'micro-starknet';
 import { Address } from '@influenceth/sdk';
 
@@ -155,6 +152,7 @@ export function SessionProvider({ children }) {
       setConnecting(true);
       const { wallet } = await starknetConnect(connectionOptions);
 
+      console.log(wallet);
       if (wallet && wallet.isConnected && wallet.account?.address) {
         // Default to provider chainId if not set (starknetkit doesn't set for braavos)
         wallet.chainId = wallet.chainId ||
@@ -288,31 +286,42 @@ export function SessionProvider({ children }) {
         Object.assign(newSession, { walletId: id, accountAddress: connectedAddress, token: newToken });
       } else if (id === 'argentWebWallet') {
         // Connect via Argent Web Wallet and automatically create a session
-        const sessionSigner = '0x' + Buffer.from(utils.randomPrivateKey()).toString('hex');
-        const requestSession = {
-          sessionKey: getStarkKey(sessionSigner),
-          expirationTime: Math.floor(Date.now() / 1000) + 86400 * 7,
-          allowedMethods: [
-            {
-              contractAddress: process.env.REACT_APP_STARKNET_DISPATCHER,
-              method: 'run_system'
-            }
-          ]
+        const privateKey = utils.randomPrivateKey();
+        const dappKey = {
+          privateKey,
+          publicKey: getStarkKey(privateKey),
         };
 
         const low = resolveChainId(process.env.REACT_APP_CHAIN_ID) === 'SN_MAIN' ? '0x2386f26fc10000' : '0x16345785d8a0000'
-        const gasFees = { tokenAddress: process.env.REACT_APP_ERC20_TOKEN_ADDRESS, maximumAmount: { low, high: '0x0' }};
+        const gasFees = { tokenAddress: process.env.REACT_APP_ERC20_TOKEN_ADDRESS, maxAmount: { low, high: '0x0' }};
+        const allowedMethods = [{ 'Contract Address': process.env.REACT_APP_STARKNET_DISPATCHER, selector: 'run_system' }];
+        const expiry = Math.floor(Date.now() / 1000) + 86400 * 7;
+        const sessionParams = {
+          allowedMethods,
+          expiry,
+          metaData: {
+            projectID: 'influence',
+            txFees: [ gasFees ],
+          },
+          publicDappKey: dappKey.publicKey,
+        };
 
-        const sessionSignature = await createOffchainSession(requestSession, account, gasFees);
+        const requestSession = createSessionRequest(allowedMethods, expiry, false, dappKey.publicKey);
+        const sessionSignature = await openSession({
+          chainId: await provider.getChainId(),
+          wallet: account,
+          sessionParams,
+        });
 
-        if (sessionSignature) {
-          const message = await buildSessionMessage({ session: requestSession, account, gasFees });
-          newToken = await api.verifyLogin(connectedAddress, { message, signature: sessionSignature.join(',') });
-          Object.assign(newSession, {
-            walletId: id, accountAddress: connectedAddress, token: newToken, sessionSigner, sessionSignature
-          });
+        console.log(sessionSignature);
 
-        }
+        // if (sessionSignature) {
+        //   const message = await buildSessionMessage({ session: requestSession, account, gasFees });
+        //   newToken = await api.verifyLogin(connectedAddress, { message, signature: sessionSignature.join(',') });
+        //   Object.assign(newSession, {
+        //     walletId: id, accountAddress: connectedAddress, token: newToken, sessionSigner, sessionSignature
+        //   });
+        // }
       } else {
         // Connect via a traditional browser extension wallet
         const signature = await account.signMessage(loginMessage);
@@ -342,17 +351,17 @@ export function SessionProvider({ children }) {
 
   // Start a session with the Argent Web Wallet
   useEffect(() => {
-    if (authenticated && starknet?.id === 'argentWebWallet') {
-      const offchainSessionAccount = new OffchainSessionAccount(
-        starknet.provider, // provider, in this example RpcProvider
-        currentSession.accountAddress, // current account address
-        currentSession.sessionSigner, // session signer pkey
-        currentSession.sessionSignature, // signature for session
-        starknet.account // the actual account
-      );
+    // if (authenticated && starknet?.id === 'argentWebWallet') {
+    //   const offchainSessionAccount = new OffchainSessionAccount(
+    //     starknet.provider, // provider, in this example RpcProvider
+    //     currentSession.accountAddress, // current account address
+    //     currentSession.sessionSigner, // session signer pkey
+    //     currentSession.sessionSignature, // signature for session
+    //     starknet.account // the actual account
+    //   );
 
-      setStarknetSession(offchainSessionAccount);
-    }
+    //   setStarknetSession(offchainSessionAccount);
+    // }
   }, [authenticated, currentSession, starknet]);
 
   // End session and disconnect wallet if session expires
