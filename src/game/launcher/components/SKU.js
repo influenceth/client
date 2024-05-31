@@ -13,10 +13,14 @@ import { CheckIcon, PurchaseAsteroidIcon, SwayIcon } from '~/components/Icons';
 import useStore from '~/hooks/useStore';
 import useAsteroidSale from '~/hooks/useAsteroidSale';
 import useBlockTime from '~/hooks/useBlockTime';
-import { formatTimer } from '~/lib/utils';
+import { formatTimer, formatUSD } from '~/lib/utils';
 import NavIcon from '~/components/NavIcon';
 import theme from '~/theme';
 import Button from '~/components/ButtonAlt';
+import useWalletUSD from '~/hooks/useWalletUSD';
+import useCrewManager from '~/hooks/actionManagers/useCrewManager';
+import usePriceConstants from '~/hooks/usePriceConstants';
+import useSwapQuote from '~/hooks/useSwapQuote';
 
 const Flourish = styled.div`
   background: url(${p => p.src});
@@ -304,12 +308,22 @@ const AsteroidSKU = () => {
   );
 };
 
-const CrewmateSKU = ({ onUpdateTotalPrice }) => {
+const CrewmateSKU = ({ onUpdatePurchase }) => {
+  const { purchaseCredits, getPendingCreditPurchase } = useCrewManager();
+  const { data: priceConstants } = usePriceConstants();
+  const { data: usdcPerEth } = useSwapQuote(process.env.REACT_APP_ERC20_TOKEN_ADDRESS, process.env.REACT_APP_USDC_TOKEN_ADDRESS, /* 1, accountAddress */);
   const [quantity, setQuantity] = useState(1);
 
+  const usdPricePer = useMemo(() => {
+    return parseFloat(priceConstants?.ADALIAN_PRICE_ETH) / 1e18 * parseFloat(usdcPerEth || 3807.62);
+  }, [priceConstants, usdcPerEth]);
+
   useEffect(() => {
-    onUpdateTotalPrice(quantity * 5);
-  }, [quantity, onUpdateTotalPrice]);
+    onUpdatePurchase({
+      totalPrice: quantity * usdPricePer,
+      onPurchase: () => purchaseCredits(quantity)
+    })
+  }, [quantity, onUpdatePurchase, usdPricePer]);
 
   return (
     <Wrapper>
@@ -332,7 +346,7 @@ const CrewmateSKU = ({ onUpdateTotalPrice }) => {
           </div>
           <div>
             <label>Price</label>
-            <span>$5 Each</span>
+            <span>{usdPricePer ? formatUSD(usdPricePer) : '-'} Each</span>
           </div>
           <div>
             <label>Quantity</label>
@@ -437,12 +451,15 @@ const StarterPackSKU = () => {
 };
 
 // TODO: wrap in launch feature flag
-const SwaySKU = ({ onUpdateTotalPrice }) => {
+const SwaySKU = ({ onUpdatePurchase }) => {
   const [quantity, setQuantity] = useState(1);
 
   useEffect(() => {
-    onUpdateTotalPrice(quantity);
-  }, [quantity, onUpdateTotalPrice]);
+    onUpdatePurchase({
+      totalPrice: quantity,
+      // onPurchase: () => purchaseCredits(quantity)
+    })
+  }, [quantity, onUpdatePurchase]);
 
   return (
     <Wrapper>
@@ -499,6 +516,8 @@ const defaultStyleOverrides = {
 };
 
 const SKU = ({ asset, onBack }) => {
+  const { data: wallet } = useWalletUSD();
+
   const filters = useStore(s => s.assetSearch['asteroidsMapped'].filters);
   const updateFilters = useStore(s => s.dispatchFiltersUpdated('asteroidsMapped'));
   const zoomStatus = useStore(s => s.asteroids.zoomStatus);
@@ -507,7 +526,7 @@ const SKU = ({ asset, onBack }) => {
   const dispatchZoomScene = useStore(s => s.dispatchZoomScene);
   const updateZoomStatus = useStore(s => s.dispatchZoomStatusChanged);
 
-  const [totalPrice, setTotalPrice] = useState(0);
+  const [purchase, setPurchase] = useState({ totalPrice: 0 });
 
   const filterUnownedAsteroidsAndClose = useCallback(() => {
     updateFilters(Object.assign({}, filters, { ownedBy: 'unowned' }));
@@ -543,9 +562,9 @@ const SKU = ({ asset, onBack }) => {
       return {
         coverImage: CrewmatesHeroImage,
         title: 'Buy Crewmates',
-        content: <CrewmateSKU onUpdateTotalPrice={(total) => setTotalPrice(total)} />,
+        content: <CrewmateSKU onUpdatePurchase={setPurchase} />,
         flourish: <AdalianFlourish filter="saturate(125%)" style={{ marginLeft: 35 }} />,
-        flourishWidth: 145
+        flourishWidth: 145,
       };
     }
     if (asset === 'packs') {
@@ -590,7 +609,7 @@ const SKU = ({ asset, onBack }) => {
     return {
       coverImage: SwayHeroImage,
       title: 'Buy Sway',
-      content: <SwaySKU onUpdateTotalPrice={(total) => setTotalPrice(total)} />,
+      content: <SwaySKU onUpdatePurchase={setPurchase} />,
       flourish: <Flourish src={SwayImage} />,
       flourishWidth: 145
     };
@@ -600,6 +619,20 @@ const SKU = ({ asset, onBack }) => {
   // sway/usd conversion
   // eth/usd conversion
   // eth/sway conversion
+
+  const handlePurchase = useCallback(() => {
+    if (wallet?.totalUSD >= purchase?.totalPrice) {
+      if (wallet?.ethBalanceUSD >= purchase?.totalPrice) {
+        purchase.onPurchase();
+      } else {
+        // TODO: USDC -> ETH, purchase call
+        console.log('convert + purchase', purchase?.totalPrice, wallet)
+      }
+    } else {
+      // TODO: funding dialog
+      console.log('fund + purchase', purchase?.totalPrice, wallet)
+    }
+  }, [purchase?.totalPrice, wallet]);
 
   return (
     <HeroLayout
@@ -615,13 +648,13 @@ const SKU = ({ asset, onBack }) => {
           <PurchaseButtonInner>
             <label>Purchase</label>
             <span>
-              ${Math.round(totalPrice || 0)}
+              ${Math.round(purchase?.totalPrice || 0)}
               {/* ${(totalPrice || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} */}
             </span>
           </PurchaseButtonInner>
         ),
-        onClick: () => {},
-        props: { disabled: !(totalPrice > 0), isTransaction: true }
+        onClick: handlePurchase,
+        props: { disabled: !(purchase?.totalPrice > 0), isTransaction: true }
       }}
       {...props}>
       {content}

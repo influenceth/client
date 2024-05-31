@@ -61,6 +61,10 @@ export const formatPrice = (inputSway, { minPrecision = 3, fixedPrecision = 4, f
   return `${sign}${(workingUnits || 0).toLocaleString(undefined, { minimumFractionDigits: minPrecision, maximumFractionDigits: fixedPlaces })}${unitLabel}`;
 };
 
+export const formatUSD = (usd) => {
+  return `$${(usd || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+};
+
 export const keyify = (str) => (str || '').replace(/[^a-zA-Z0-9_]/g, '');
 
 export const reactBool = (value) => value ? 'true' : undefined;

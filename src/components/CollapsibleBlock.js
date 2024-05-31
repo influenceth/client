@@ -128,6 +128,19 @@ const Collapsible = styled.div`
       : `max-height: 2000px`
     }}
   `};
+  ${p => !p.clickable && `
+    position: relative;
+    &:after {
+      content: "";
+      background: transparent;
+      pointer-events: all;
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      right: 0;
+    }
+  `}
 `;
 
 const TitleAction = styled.div`
@@ -147,6 +160,7 @@ const CollapsibleBlock = ({
   titleAction,
   ...props
 }) => {
+  const [clickable, setClickable] = useState();
   const [collapsed, setCollapsed] = useState(!!initiallyClosed);
   const toggleCollapse = useCallback(() => {
     if (onClose) return;
@@ -162,6 +176,14 @@ const CollapsibleBlock = ({
       hasLoaded.current = true;
     }
   }, [openOnChange, toggleCollapse]);
+
+  useEffect(() => {
+    if (!collapsed) {
+      setTimeout(() => { setClickable(true); }, 250)
+    } else {
+      setClickable(false);
+    }
+  }, [collapsed]);
 
   return (
     <Wrapper
@@ -192,6 +214,7 @@ const CollapsibleBlock = ({
         </Toggle>
       </Uncollapsible>
       <Collapsible
+        clickable={clickable}
         collapsed={collapsed}
         containerHeight={containerHeight}
         {...props.collapsibleProps}>

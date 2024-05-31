@@ -2,11 +2,14 @@ import { createContext, useCallback, useEffect, useMemo, useRef, useState } from
 import { Asteroid, Entity, Order, RandomEvent, System } from '@influenceth/sdk';
 import { isEqual, get } from 'lodash';
 import { hash, shortString, uint256 } from 'starknet';
+import { fetchBuildExecuteTransaction, fetchQuotes } from '@avnu/avnu-sdk';
 
 import useActivitiesContext from '~/hooks/useActivitiesContext';
 import useSession from '~/hooks/useSession';
 import useCrewContext from '~/hooks/useCrewContext';
 import useStore from '~/hooks/useStore';
+import { useUsdcPerEth } from '~/hooks/useSwapQuote';
+import useWalletUSD from '~/hooks/useWalletUSD';
 import api from '~/lib/api';
 import { cleanseTxHash } from '~/lib/utils';
 
@@ -513,6 +516,11 @@ export function ChainTransactionProvider({ children }) {
   const { accountAddress, authenticated, blockNumber, blockTime, logout, starknet, starknetSession } = useSession();
   const activities = useActivitiesContext();
   const { crew, pendingTransactions } = useCrewContext();
+  const { data: wallet } = useWalletUSD();
+  const { data: usdcPerEth } = useUsdcPerEth();
+  useEffect(() => {
+    console.log('usdcPerEth', usdcPerEth);
+  }, [usdcPerEth]);
 
   const createAlert = useStore(s => s.dispatchAlertLogged);
   const dispatchFailedTransaction = useStore(s => s.dispatchFailedTransaction);
@@ -700,20 +708,81 @@ export function ChainTransactionProvider({ children }) {
               ));
             }
 
-            if (totalPrice > 0n) {
-              calls.unshift(System.getApproveErc20Call(
-                totalPrice, process.env.REACT_APP_ERC20_TOKEN_ADDRESS, process.env.REACT_APP_STARKNET_DISPATCHER
-              ));
-            }
-
-            console.log('execute', calls);
-
             // Check if we can utilize a signed session to execute calls
             const canUseSession = !!starknetSession?.account && !!starknetSession?.sessionSignature && !calls.some((c) => {
               return c.contractAddress !== process.env.REACT_APP_STARKNET_DISPATCHER || c.entrypoint !== 'run_system';
             });
 
             const account = canUseSession ? starknetSession : starknet.account;
+
+            // approve USDC to make purchase
+            if (totalPrice > 0n) {
+              calls.unshift(System.getApproveErc20Call(
+                totalPrice, process.env.REACT_APP_USDC_TOKEN_ADDRESS, process.env.REACT_APP_STARKNET_DISPATCHER
+              ));
+
+              if (!wallet) throw new Error('Wallet balance not loaded');
+
+              // if don't have enough USDC + ETH to cover it, return funds error
+              if (totalPrice > wallet?.totalUSD) {
+                const fundsError = new Error();
+                fundsError.additionalUSDCRequired = totalPrice - wallet?.totalUSD;
+                throw fundsError;
+
+              // else (have enough USDC + ETH) if don't have enough USDC to cover it
+              // prepend ETH -> USDC swap call(s) as well
+              } else if (totalPrice > wallet?.usdcBalanceUSD) {
+                if (!usdcPerEth) throw new Error('Conversion rate not loaded');
+
+                // TODO: use 1% slippage and expect conversion rate to work
+
+                // buy enough excess to cover slippage
+                const slippage = 0.02;
+                const targetSwapAmount = (1 / (1 - slippage)) * (totalPrice - wallet?.usdcBalanceUSD);
+
+                // usdcPerEth is estimated from a small amount (presumably the best price) so
+                // sellAmount may be too low to end up with the required buyAmount...
+
+                // iterate based on the response until we have sufficient buyAmount to cover the purchase
+                // TODO: would be nice for AVNU to have buyAmount as an option here instead (to avoid loop)
+                let quote;
+                let actualUsdcPerEth = usdcPerEth;
+                while (quote?.buyAmount < targetSwapAmount) {
+                  const quotes = await fetchQuotes({
+                    sellTokenAddress: process.env.REACT_APP_ERC20_TOKEN_ADDRESS,
+                    buyTokenAddress: process.env.REACT_APP_USDC_TOKEN_ADDRESS,
+                    sellAmount: BigInt(targetSwapAmount / actualUsdcPerEth),
+                    takerAddress: account.address
+                  }, { baseUrl: process.env.REACT_APP_AVNU_API_URL });
+                  if (!quotes?.[0]) throw new Error('Insufficient swap liquidity');
+                  
+                  // set quote
+                  quote = quotes[0];
+
+                  // improve conversion rate from the purchase size quote (in case need to iterate)
+                  // (if conversion rate unchanged but have not reached target, break loop so not stuck)
+                  const newUsdcPerEth = quote.buyAmount / quote.sellAmount;
+                  if (newUsdcPerEth === actualUsdcPerEth) {
+                    if (quote.buyAmount < targetSwapAmount) {
+                      throw new Error('Swap pricing issue encountered.');
+                    }
+                  }
+                  actualUsdcPerEth = newUsdcPerEth;
+                }
+
+                // prepend swap calls
+                const { calls } = await fetchBuildExecuteTransaction(
+                  quote.id,
+                  account.address,
+                  slippage,
+                  true,
+                  { baseUrl: process.env.REACT_APP_AVNU_API_URL }
+                );
+                calls.unshift(...calls);
+              }
+            }
+
+            console.log('execute', calls);
             return account.execute(calls);
           },
 
@@ -733,7 +802,7 @@ export function ChainTransactionProvider({ children }) {
       }, {});
     }
     return null;
-  }, [createAlert, prependEventAutoresolve, accountAddress, starknetSession]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [createAlert, prependEventAutoresolve, accountAddress, starknetSession, usdcPerEth, wallet]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const getTxEvent = useCallback((txHash) => {
     const txHashBInt = BigInt(txHash);
@@ -904,6 +973,12 @@ export function ChainTransactionProvider({ children }) {
         waitingOn: 'TRANSACTION'
       });
     } catch (e) {
+      // handle additional funds required
+      if (e?.additionalUSDCRequired) {
+        setPromptingTransaction(false);
+        return e.additionalUSDCRequired;
+      }
+
       // "User abort" is argent, 'Execute failed' is braavos
       // TODO: in Braavos, is "Execute failed" a generic error? in that case, we should still show
       // (and it will just be annoying that it shows a failure on declines)
