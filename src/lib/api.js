@@ -397,7 +397,7 @@ const api = {
     return response.data;
   },
 
-  getReferralCount: async () => {
+  getReferrals: async () => {
     const response = await instance.get(`/${apiVersion}/user/referrals`);
     return response.data;
   },
@@ -704,12 +704,12 @@ const api = {
   },
 
   // AVNU endpoints
-  getSwayQuote: async ({ sellToken, buyToken, amount, account }) => {
+  getSwapQuote: async ({ sellToken, buyToken, amount, account }) => {
     const options = { baseUrl: process.env.REACT_APP_AVNU_API_URL };
     return fetchQuotes({
       sellTokenAddress: sellToken,
       buyTokenAddress: buyToken,
-      sellAmount: amount,
+      sellAmount: BigInt(amount),
       takerAddress: account
     }, options);
   },

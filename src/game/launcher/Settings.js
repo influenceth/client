@@ -4,9 +4,7 @@ import screenfull from 'screenfull';
 import { FiCheckSquare as CheckedIcon, FiSquare as UncheckedIcon } from 'react-icons/fi';
 import { useDetectGPU } from '@react-three/drei';
 
-import useSession from '~/hooks/useSession';
 import useStore from '~/hooks/useStore';
-import useReferralsCount from '~/hooks/useReferralsCount';
 import useScreenSize from '~/hooks/useScreenSize';
 import DataReadout from '~/components/DataReadout';
 import Button from '~/components/ButtonPill';

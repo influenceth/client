@@ -6,7 +6,7 @@ import ClipCorner from '~/components/ClipCorner';
 import Button from '~/components/ButtonAlt';
 import useSession from '~/hooks/useSession';
 import useStore from '~/hooks/useStore';
-import useReferralsCount from '~/hooks/useReferralsCount';
+import useReferrals from '~/hooks/useReferrals';
 
 const Wrapper = styled.div`
   padding: 0 16px;
@@ -72,9 +72,22 @@ const RecruitmentBox = styled.div`
 `;
 
 const RecruitmentMenu = () => {
-  const { data: referralsCount, isLoading } = useReferralsCount();
+  const { data: referrals, isLoading } = useReferrals();
   const { accountAddress } = useSession();
   const createAlert = useStore(s => s.dispatchAlertLogged);
+
+  const [referralsCount, referralsTotal] = useMemo(() => {
+    const referred = new Set();
+    let total = 0;
+    (referrals || []).forEach((r) => {
+      referred.add(r.buyer)
+      total += r.price * 0.1;
+    });
+    return [
+      Array.from(referred).length,
+      total
+    ];
+  }, [referrals]);
 
   const handleClick = useCallback(() => {
     navigator.clipboard.writeText(`${document.location.origin}/play?r=${accountAddress}`);
@@ -89,8 +102,8 @@ const RecruitmentMenu = () => {
     <Wrapper>
       {!isLoading && (
         <>
-          <h3>Earned from <b>{(referralsCount || 0).toLocaleString()}</b> Recruitment{referralsCount === 1 ? '' : 's'}:</h3>
-          <label><SwayIcon /> {((referralsCount || 0) * 1000).toLocaleString()}</label>
+          <h3>Earned from <b>{(referralsCount || 0).toLocaleString()}</b> Referral{referralsCount === 1 ? '' : 's'}:</h3>
+          <label><SwayIcon /> {(referralsTotal || 0).toLocaleString()}</label>
         </>
       )}
       <RecruitmentBox>
@@ -99,10 +112,10 @@ const RecruitmentMenu = () => {
           <ChevronDoubleRightIcon />
         </h3>
         <div>
-          Earn SWAY for each friend who uses your recruitment link to purchase at least 1 crewmate.
+          Earn SWAY for each friend who uses your referral link to purchase at least 1 crewmate.
         </div>
         <Button onClick={handleClick} size="small" style={{ marginBottom: 8, width: '100%' }}>
-          <LinkIcon /> <span>Copy Recruitment Link</span>
+          <LinkIcon /> <span>Copy Referral Link</span>
         </Button>
         <ClipCorner dimension={recruitMenuCornerSize} />
       </RecruitmentBox>

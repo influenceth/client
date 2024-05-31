@@ -9,10 +9,13 @@ import Button from '~/components/ButtonAlt';
 import DataTableComponent from '~/components/DataTable';
 import EntityName from '~/components/EntityName';
 import { CrewmateIcon, LinkIcon, PurchaseAsteroidIcon, SwayIcon } from '~/components/Icons';
-import useReferralsCount from '~/hooks/useReferralsCount';
+import PageLoader from '~/components/PageLoader';
+import useReferrals from '~/hooks/useReferrals';
 import useSession from '~/hooks/useSession';
 import useStore from '~/hooks/useStore';
+import { reactBool } from '~/lib/utils';
 import LauncherDialog from './components/LauncherDialog';
+
 
 const Wrapper = styled.div`
   display: flex;
@@ -103,27 +106,29 @@ const IconCell = styled.div`
     font-size: 133%;
   }
 `;
+const PossiblyPendingCell = styled(IconCell)`
+  color: white;
+  font-weight: bold;
+  ${p => p.pending && `
+    color: inherit;
+    filter: saturate(0);
+    &:after {
+      content: "(Pending)";
+      margin-left: 4px;
+    }
+  `}
+`;
 
-const ref1 = `0x0123456789abcdef9eed98e63520641e4c72521ec64b73e90123456789abcded`;
-const ref2 = `0x0123456789abcdef9eed98e63520641e4c72521ec64b73e90123456789abcdee`;
-const ref3 = `0x0123456789abcdef9eed98e63520641e4c72521ec64b73e90123456789abcdef`;
-const referrals = [
-  { entity: { label: 3, id: 123 }, referrer: ref1, earnings: 123, createdAt: 1716996392 },
-  { entity: { label: 3, id: 123444 }, referrer: ref1, earnings: 1000, createdAt: 1716997392 },
-  { entity: { label: 2, id: 123 }, referrer: ref1, earnings: 1293, createdAt: 1716992392 },
-  { entity: { label: 2, id: 124 }, referrer: ref2, earnings: 1323, createdAt: 1716992392 },
-  { entity: { label: 2, id: 125 }, referrer: ref3, earnings: 12223, createdAt: 1716994392 },
-  { entity: { label: 2, id: 126 }, referrer: ref3, earnings: 1223, createdAt: 1716995392 },
-  { entity: { label: 2, id: 127 }, referrer: ref3, earnings: 12883, createdAt: 1716986392 },
-  { entity: { label: 2, id: 128 }, referrer: ref3, earnings: 2300, createdAt: 1716989392 },
-  { entity: { label: 2, id: 129 }, referrer: ref3, earnings: 2300, createdAt: 1716989392 },
-  { entity: { label: 2, id: 130 }, referrer: ref3, earnings: 2300, createdAt: 1716989392 },
-  { entity: { label: 2, id: 131 }, referrer: ref3, earnings: 2300, createdAt: 1716989392 },
-  { entity: { label: 2, id: 132 }, referrer: ref3, earnings: 2300, createdAt: 1716989392 },
-  { entity: { label: 2, id: 133 }, referrer: ref3, earnings: 2300, createdAt: 1716989392 },
-  { entity: { label: 2, id: 134 }, referrer: ref3, earnings: 2300, createdAt: 1716989392 },
-  
-];
+const LinkWrapper = styled.span`
+  & span {
+    color: inherit;
+    text-decoration: none;
+    &:hover {
+      color: white;
+      text-decoration: underline;
+    }
+  }
+`;
 
 const columns = [
   {
@@ -133,10 +138,14 @@ const columns = [
     selector: row => (new moment(new Date(1000 * (row.createdAt || 0)))).fromNow(),
   },
   {
-    key: 'referrer',
-    sortField: 'referrer',
+    key: 'buyer',
+    sortField: 'buyer',
     label: 'Referred Account',
-    selector: row => <AddressLink address={row.referrer} truncate style={{ color: 'inherit', textDecoration: 'none' }} />
+    selector: row => (
+      <LinkWrapper>
+        <AddressLink address={row.buyer} truncate />
+      </LinkWrapper>
+    )
   },
   {
     key: 'uuid',
@@ -156,10 +165,10 @@ const columns = [
     label: 'Amount Earned (10%)',
     align: 'right',
     selector: row => (
-      <IconCell style={{ fontWeight: 'bold' }}>
+      <PossiblyPendingCell pending={reactBool(!row.processed)}>
         <SwayIcon />
-        {(row.earnings || 0).toLocaleString()}
-      </IconCell>
+        {((row.price || 0) * 0.1).toLocaleString()}
+      </PossiblyPendingCell>
     )
   }
 ];
@@ -168,6 +177,8 @@ const columns = [
 const ReferralRewards = () => {
   const { accountAddress } = useSession();
   const createAlert = useStore(s => s.dispatchAlertLogged);
+
+  const { data: referrals, isLoading } = useReferrals();
 
   const [sort, setSort] = useState(['createdAt', 'asc']);
 
@@ -196,7 +207,7 @@ const ReferralRewards = () => {
   }, [sort]);
 
   const transformedData = useMemo(() => {
-    return referrals.map((r) => ({
+    return (referrals || []).map((r) => ({
       uuid: Entity.packEntity(r.entity),
       ...r
     }))
@@ -223,18 +234,20 @@ const ReferralRewards = () => {
           </Button>
         </div>
       </Banner>
-      <OuterTableWrapper>
-        <TableWrapper>
-          <DataTableComponent
-            columns={columns}
-            data={filteredData}
-            keyField="uuid"
-            onClickColumn={handleSort}
-            sortDirection={sort[1]}
-            sortField={sort[0]}
-          />
-        </TableWrapper>
-      </OuterTableWrapper>
+      {isLoading ? <PageLoader /> : (
+        <OuterTableWrapper>
+          <TableWrapper>
+            <DataTableComponent
+              columns={columns}
+              data={filteredData}
+              keyField="uuid"
+              onClickColumn={handleSort}
+              sortDirection={sort[1]}
+              sortField={sort[0]}
+            />
+          </TableWrapper>
+        </OuterTableWrapper>
+      )}
     </Wrapper>
   );
 };
@@ -259,13 +272,27 @@ const EarningsWrapper = styled.div`
 `;
 
 const ReferralEarningsMenu = () => {
-  const { data: referralsCount, isLoading } = useReferralsCount();
-  return (
+  const { data: referrals, isLoading } = useReferrals();
+
+  const [referralsCount, referralsTotal] = useMemo(() => {
+    const referred = new Set();
+    let total = 0;
+    (referrals || []).forEach((r) => {
+      referred.add(r.buyer)
+      total += r.price * 0.1
+    });
+    return [
+      Array.from(referred).length,
+      total
+    ];
+  }, [referrals]);
+
+  return isLoading ? null : (
     <EarningsWrapper>
       {!isLoading && (
         <>
           <h3>Earned from <b>{(referralsCount || 0).toLocaleString()}</b> Referral{referralsCount === 1 ? '' : 's'}:</h3>
-          <label><SwayIcon /> {((referralsCount || 0) * 1000).toLocaleString()}</label>
+          <label><SwayIcon /> {(referralsTotal || 0).toLocaleString()}</label>
         </>
       )}
     </EarningsWrapper>

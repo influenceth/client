@@ -12,7 +12,7 @@ non-entity based
 - [ 'exchangeOrderSummary', asteroidId, product ],
 - [ 'faucetInfo', account ],
 - [ 'productOrderSummary', entityLabel, entityId ],
-- [ 'referrals', 'count', token ],
+- [ 'referrals', token ],
 - [ 'search', assetType, query ],
 - [ 'walletBalance', 'eth', accountAddress ],
 - [ 'walletBalance', 'sway', accountAddress ],

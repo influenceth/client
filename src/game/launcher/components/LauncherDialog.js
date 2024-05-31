@@ -32,7 +32,13 @@ const Dialog = styled.div`
 `;
 const PaneWrapper = styled.div`
   border-left: 1px solid ${borderColor};
-  ${p => p.singlePane ? 'max-height' : 'height'}: calc(100vh - 250px);
+  ${p => p.singlePane
+      ? 'max-height: calc(100vh - 250px);'
+      : `
+        height: calc(100vh - 250px);
+        max-height: calc(100vh - 175px);
+      `
+  }
   overflow: hidden auto;
   width: 1075px;
 `;
@@ -83,12 +89,12 @@ const Tab = styled.div`
 
 const BottomLeft = styled.div``;
 
-const LauncherDialog = ({ panes = [], preselect = 0, singlePane, bottomLeftMenu }) => {
+const LauncherDialog = ({ panes = [], preselect, singlePane, bottomLeftMenu }) => {
   const [selected, setSelected] = useState();
 
   useEffect(() => {
     if (!!panes) {
-      setSelected(panes[preselect]);
+      setSelected(panes[preselect || 0]);
     }
   }, [!!panes, preselect]);
 

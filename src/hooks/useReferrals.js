@@ -3,14 +3,14 @@ import { useQuery } from 'react-query';
 import useSession from '~/hooks/useSession';
 import api from '~/lib/api';
 
-const useReferralsCount = () => {
+const useReferrals = () => {
   const { token } = useSession();
 
   return useQuery(
-    [ 'referrals', 'count', token ],
-    () => api.getReferralCount(),
+    [ 'referrals', token ],
+    () => api.getReferrals(),
     { enabled: !!token }
   );
 };
 
-export default useReferralsCount;
+export default useReferrals;
