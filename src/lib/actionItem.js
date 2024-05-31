@@ -1018,12 +1018,24 @@ export const itemColors = {
   pending: hexToRGB(theme.colors.purple),
   failed: '241, 131, 97',//hexToRGB(theme.colors.error),
   randomEvent: '232, 211, 117',
-  ready: theme.colors.successRGB,
-  unready: theme.colors.mainRGB,
+  ready: hexToRGB('#00fff0'),
+  unready: hexToRGB(theme.colors.brightMain),
   unstarted: hexToRGB(theme.colors.sequence),
   plan: '248, 133, 44',
   agreement: '248, 133, 44',
-  _expired: hexToRGB(theme.colors.expired)
+  _expired: hexToRGB(theme.colors.red)
+};
+
+export const backgroundColors = {
+  pending: hexToRGB('#424278'),
+  failed: hexToRGB('#7a211c'),
+  randomEvent: hexToRGB('#8c8148'),
+  ready: hexToRGB('#006962'),
+  unready: hexToRGB(theme.colors.darkMain),
+  unstarted: hexToRGB('#1e558c'),
+  plan: hexToRGB('#80592c'),
+  agreement: hexToRGB('#853217'),
+  _expired: hexToRGB('#7a211c')
 };
 
 export const statuses = {
@@ -1033,7 +1045,7 @@ export const statuses = {
   ready: 'Ready',
   unready: 'In Progress',
   unstarted: 'Scheduled',
-  plan: 'Site Active',
+  plan: 'Staging',
   agreement: 'Lease Expiring',
   _expired: 'Expired'
 };

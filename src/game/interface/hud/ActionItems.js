@@ -2,7 +2,7 @@ import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import styled from 'styled-components';
 
-import { BellIcon, CheckCircleIcon, EyeIcon, LoggedEventsIcon } from '~/components/Icons';
+import { BellIcon, CheckCircleIcon, EyeIcon, LoggedEventsIcon, FinishAllIcon } from '~/components/Icons';
 import CollapsibleSection from '~/components/CollapsibleSection';
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
 import useActionItems from '~/hooks/useActionItems';
@@ -36,16 +36,16 @@ const selectionIndicatorHeight = 3;
 const selectionIndicatorWidth = 30;
 const Filters = styled.div`
   align-items: center;
-  border-bottom: 1px solid #444;
+  border-bottom: 1px solid rgba(255, 255, 255, .25);
   display: flex;
   flex-direction: row;
   overflow: hidden;
-  padding: ${filterRowPadding}px 0;
+  padding: ${filterRowPadding}px 0px 8px 0px;
   width: 100%;
 
   & > a {
     display: block;
-    filter: drop-shadow(0px 0px 2px rgb(0 0 0));
+    filter: drop-shadow(0px 0px 3px rgba(0, 0, 0, 0.3));
     font-size: 24px;
     height: 26px;
     line-height: 24px;
@@ -62,11 +62,11 @@ const Filter = styled.div`
   margin-right: 8px;
   padding: 4px 15px;
   position: relative;
-  text-shadow: 0 0 2px #000;
+  text-shadow: 0 0 3px rgba(0, 0, 0, 0.3);
   text-transform: uppercase;
 
   & > svg {
-    filter: drop-shadow(0px 0px 2px rgb(0 0 0));
+    filter: drop-shadow(0px 0px 3px rgba(0, 0, 0, 0.3));
     font-size: 22px;
   }
 
@@ -102,7 +102,12 @@ const IconFilter = styled(Filter)`
   flex-direction: row;
   opacity: ${p => p.selected ? 1 : 0.8};
   transition: opacity 150ms ease;
-  ${p => p.selected ? `` : `&:hover { opacity: 0.9; }`}
+  ${p => p.selected ? `border: 1.5px solid ${p => p.selected ? 'currentColor' : 'transparent'};` : `
+
+    &:hover { 
+      opacity: 0.9; 
+    }`
+  }
   & > b {
     margin: 0 0 0 6px;
   }
@@ -115,7 +120,13 @@ const IconFilter = styled(Filter)`
 const AllFilter = styled(IconFilter)`
   padding-left: 5px;
   padding-right: 2px;
-
+  color: rgba(255, 255, 255, 0.5);
+  &:hover {
+    color: rgba(255, 255, 255, 1.0);
+  }
+  ${p => p.selected && `
+    color: rgb(255, 255, 255, 1.0);
+  `}
   &:after {
     // left: ${selectionIndicatorWidth / 2}px;
   }
@@ -129,26 +140,34 @@ const HiddenFilter = styled(IconFilter)`
 
 const PillFilter = styled(Filter)`
   border-radius: 20px;
-  border: 1px solid ${p => p.selected ? 'currentColor' : 'transparent'};
+  border: 1.5px solid ${p => p.selected ? 'currentColor' : 'transparent'};
   transition: border-color 150ms ease;
 `;
 
 const ReadyFilter = styled(PillFilter)`
-  background: rgba(${p => hexToRGB(p.theme.colors.success)}, 0.2);
+  background: rgba(${p => hexToRGB(p.theme.colors.success)}, 0.25);
   color: ${p => p.theme.colors.success};
+  &:hover {
+    background: rgba(${p => hexToRGB(p.theme.colors.success)}, 0.5);
+  }
   ${p => p.selected && `
+    background: rgba(${p => hexToRGB(p.theme.colors.success)}, 0.5);
     &:hover {
-      border-color: rgba(${hexToRGB(p.theme.colors.success)}, 0.3);
+      background: rgba(${p => hexToRGB(p.theme.colors.success)}, 0.75);
     }
   `}
 `;
 
 const InProgressFilter = styled(PillFilter)`
-  background: rgba(${p => p.theme.colors.mainRGB}, 0.4);
+  background: rgba(${p => hexToRGB(p.theme.colors.main)}, 0.25);
   color: ${p => p.theme.colors.brightMain};
+  &:hover {
+    background: rgba(${p => p.theme.colors.mainRGB}, 0.5);
+  }
   ${p => !p.selected && `
+    background: rgba(${p => p.theme.colors.mainRGB}, 0.5);
     &:hover {
-      border-color: rgba(${hexToRGB(p.theme.colors.brightMain)}, 0.3);
+      background: rgba(${p => p.theme.colors.mainRGB}, 0.75);
     }
   `}
 `;
@@ -162,7 +181,7 @@ const OuterWrapper = styled.div`
 `;
 
 const ActionItemContainer = styled.div`
-  max-height: 275px;
+  height: 35vh;
   overflow-y: auto;
   overflow-x: hidden;
   pointer-events: auto;
@@ -176,7 +195,7 @@ const ActionItemCategory = styled.div`
   }
   &:not(:last-child) {
     &:after {
-      border-bottom: 1px solid #444;
+      border-bottom: 1px solid rgba(255, 255, 255, .25);
       content: "";
       display: block;
       padding-bottom: 10px;
@@ -194,16 +213,19 @@ const AllAction = styled.div`
   height: 34px;
   margin-bottom: -8px;
   pointer-events: all;
-  &:hover {
-    text-decoration: underline;
-  }
 `;
 
 const FinishAll = styled(AllAction)`
   color: ${p => p.theme.colors.success};
+  filter: drop-shadow(0px 0px 2px rgba(0, 0, 0, 0.3));
   & > svg {
-    margin-left: 9px;
+    margin-left: 4px;
     margin-right: 9px;
+    font-size: 150%;
+  }
+  &:hover {
+    color: white;
+    text-decoration: underline;
   }
 `;
 
@@ -350,7 +372,7 @@ const ActionItems = () => {
               </Filters>
             </TitleWrapper>
           )}>
-          {['all', 'ready'].includes(selectedFilter) && autoFinishCalls?.length > 1 && !isFinishingAll && <FinishAll onClick={onFinishAll}><CheckCircleIcon /> Finish All Ready Items</FinishAll>}
+          {['all', 'ready'].includes(selectedFilter) && autoFinishCalls?.length > 1 && !isFinishingAll && <FinishAll onClick={onFinishAll}><FinishAllIcon /> Finish All Ready Items</FinishAll>}
           {selectedFilter === 'hidden' && <UnhideAll onClick={onUnhideAll}><EyeIcon /> Unhide All</UnhideAll>}
           <ActionItemWrapper>
             <ActionItemContainer>

@@ -10,7 +10,7 @@ import { useLotLink } from '~/components/LotLink';
 import useAsteroid from '~/hooks/useAsteroid';
 import useLot from '~/hooks/useLot';
 import useStore from '~/hooks/useStore';
-import { formatActionItem, itemColors, statuses } from '~/lib/actionItem';
+import { formatActionItem, itemColors, backgroundColors, statuses } from '~/lib/actionItem';
 import formatters from '~/lib/formatters';
 import IconButton from '~/components/IconButton';
 
@@ -31,7 +31,6 @@ const opacityKeyframes = keyframes`
 `;
 const Icon = styled.div`
   & svg {
-    filter: drop-shadow(1px 1px 1px #333);
     ${p => p.animate && css`
       animation: ${opacityKeyframes} 1000ms ease infinite;
     `}
@@ -94,7 +93,7 @@ const ActionItemRow = styled.div`
   align-items: center;
   overflow: hidden;
   pointer-events: all;
-  text-shadow: 1px 1px 2px black;
+  text-shadow: 0px 0px 3px black;
 
   ${p => {
     if (p.transitionOut === 'right') {
@@ -114,7 +113,7 @@ const ActionItemRow = styled.div`
       `;
     }
     return `
-      background: rgba(${p.color}, 0.2);
+      background: rgba(${p.bgColor}, 0.6);
       color: rgb(${p.color});
       height: 34px;
       opacity: 1;
@@ -123,7 +122,7 @@ const ActionItemRow = styled.div`
         margin-bottom: 2px;
       }
       &:hover {
-        background: rgba(${p.color}, 0.4);
+        background: rgba(${p.color}, 0.3);
         ${!p.oneRow && `
           ${Details} > * {
             transform: translateY(-34px);
@@ -295,10 +294,11 @@ const ActionItem = ({ data, getActivityConfig }) => {
   return (
     <ActionItemRow
       color={itemColors[item._expired ? '_expired' : item.type]}
+      bgColor={backgroundColors[item._expired ? '_expired' : item.type]}
       onClick={onClick}
       oneRow={type !== 'failed' && !asteroid}
       transitionOut={data.transitionOut ? (type === 'failed' ? 'left' : 'right') : undefined}>
-      <Icon animate={type === 'pending'}>
+      <Icon animate={type === 'unready' || item._expired}>
         {type === 'failed' && <FailedIcon />}
         {type === 'randomEvent' && <RandomEventIcon size="0.77em" />}
         {type === 'ready' && <ReadyIcon />}
