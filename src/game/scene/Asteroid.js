@@ -860,7 +860,7 @@ const AsteroidComponent = () => {
       const maxCoarseDisp = (config.dispWeight || 1) * (1 - config.fineDispFraction || 1);
       // console.log({ maxCoarseDisp })
       const lerpPoints = [];
-      
+
       if (radiansBetween > (config.radius > 5000 ? 0.5 : 1)) {
         const midpointTally = Math.floor(12 * radiansBetween);
         const quatA = (new Quaternion()).setFromUnitVectors(
@@ -879,7 +879,7 @@ const AsteroidComponent = () => {
 
           const midQ = quatA.clone().slerp(quatB, lerp).normalize();
           const midpoint = new Vector3(0, 0, 1).applyQuaternion(midQ);
-          
+
           // get simple lerp height between initial camera position and final
           const lerpHeight = heightA * (1 - lerp) + heightB * lerp;
 
@@ -887,7 +887,7 @@ const AsteroidComponent = () => {
           const safeHeight = midpoint.clone().applyAxisAngle(rotationAxis.current, -willBeRotation);  // get unrotated position so can stretch properly
           safeHeight.setLength(config.radius).multiply(config.stretch); // best guess of highest possible surface at midpoint
           safeHeight.setLength(safeHeight.length() * (1 + maxCoarseDisp) + targetAltitude); // aim for target altitude
-          
+
           // apply the height to the minpoint
           midpoint.setLength(Math.max(lerpHeight, safeHeight.length()));
           lerpPoints.push({ ...midpoint });
@@ -904,7 +904,7 @@ const AsteroidComponent = () => {
           onComplete: onZoomComplete
         });
         lerpPoints.forEach((p) => timeline.to(controls.object.position, { ...p, ease: 'linear' }));
-  
+
         // run the timeline as a single animation
         gsap.to(timeline, animationTime / 1e3, { progress: 1, ease: 'power4.out' })
 
@@ -1156,7 +1156,6 @@ const AsteroidComponent = () => {
       {/* TODO: fade telemetry out at higher zooms */}
       {config?.radius && zoomStatus !== 'out' && initialOrientation?.objectPosition && (
         <Telemetry
-          attachTo={group.current}
           axis={rotationAxis.current}
           getPosition={() => position.current}
           getRotation={() => rotation.current}

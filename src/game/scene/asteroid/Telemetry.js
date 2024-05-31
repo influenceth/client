@@ -177,10 +177,22 @@ const toggleBloom = (object, which) => {
   object.layers[which ? 'enable' : 'disable'](BLOOM_LAYER);
 }
 
-const Telemetry = ({ axis, getPosition, getRotation, hasAccess, initialCameraPosition, isScanned, attachTo, radius, scaleHelper, shipTally, spectralType }) => {
+const Telemetry = ({
+  axis,
+  getPosition,
+  getRotation,
+  hasAccess,
+  initialCameraPosition,
+  isScanned,
+  radius,
+  scaleHelper,
+  shipTally,
+  spectralType
+}) => {
   const { controls } = useThree();
   const getTime = useGetTime();
 
+  const group = useRef();
   const rotationalAxis = useRef();
   const equatorCircle = useRef();
   const shipGroup = useRef();
@@ -206,7 +218,6 @@ const Telemetry = ({ axis, getPosition, getRotation, hasAccess, initialCameraPos
   }, [spectralType]);
 
   useEffect(() => {
-    if (!attachTo) return;
     const circleSegments = 360;
 
     const material = getLineMaterial(BLUE_GLSL, circleAttenuation, 0.7);
@@ -502,28 +513,16 @@ const Telemetry = ({ axis, getPosition, getRotation, hasAccess, initialCameraPos
     // helper.current = new AxesHelper(2 * radius);
     // helper.current = new BoxHelper(accessGroup.current);
 
-    if (accessGroup.current) attachTo.add(accessGroup.current);
-    if (equatorCircle.current) attachTo.add(equatorCircle.current);
-    if (helper.current) attachTo.add(helper.current);
-    if (inclinationCircle.current) attachTo.add(inclinationCircle.current);
-    if (rotationalMarkersGroup.current) attachTo.add(rotationalMarkersGroup.current);
-    if (planarCircle.current) attachTo.add(planarCircle.current);
-    if (rotationalAxis.current) attachTo.add(rotationalAxis.current);
-    if (shipGroup.current) attachTo.add(shipGroup.current);
-    if (trajectory.current) attachTo.add(trajectory.current);
-
-    return () => {
-      if (accessGroup.current) attachTo.remove(accessGroup.current);
-      if (equatorCircle.current) attachTo.remove(equatorCircle.current);
-      if (helper.current) attachTo.remove(helper.current); // eslint-disable-line react-hooks/exhaustive-deps
-      if (inclinationCircle.current) attachTo.remove(inclinationCircle.current);
-      if (rotationalMarkersGroup.current) attachTo.remove(rotationalMarkersGroup.current);
-      if (planarCircle.current) attachTo.remove(planarCircle.current);
-      if (rotationalAxis.current) attachTo.remove(rotationalAxis.current);
-      if (shipGroup.current) attachTo.remove(shipGroup.current);
-      if (trajectory.current) attachTo.remove(trajectory.current);
-    };
-  }, [!attachTo, radius]); // eslint-disable-line react-hooks/exhaustive-deps
+    if (accessGroup.current) group.current.add(accessGroup.current);
+    if (equatorCircle.current) group.current.add(equatorCircle.current);
+    if (helper.current) group.current.add(helper.current);
+    if (inclinationCircle.current) group.current.add(inclinationCircle.current);
+    if (rotationalMarkersGroup.current) group.current.add(rotationalMarkersGroup.current);
+    if (planarCircle.current) group.current.add(planarCircle.current);
+    if (rotationalAxis.current) group.current.add(rotationalAxis.current);
+    if (shipGroup.current) group.current.add(shipGroup.current);
+    if (trajectory.current) group.current.add(trajectory.current);
+  }, [radius]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     // TODO: update the number of ships on the ship circle (or dash if empty)
@@ -596,7 +595,7 @@ const Telemetry = ({ axis, getPosition, getRotation, hasAccess, initialCameraPos
     }
   });
 
-  return null;
+  return <group ref={group} />;
 };
 
 export default Telemetry;

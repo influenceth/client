@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Building } from '@influenceth/sdk';
 
 import useLot from '~/hooks/useLot';
@@ -9,8 +9,28 @@ import { getBuildingModel, getModelUrl } from '~/lib/assetUtils';
 const LotViewer = () => {
   const lotId = useStore(s => s.asteroids.lot);
   const zoomScene = useStore(s => s.asteroids.zoomScene);
+  const playSound = useStore(s => s.dispatchEffectStartRequested);
 
   const { data: lot, isLoading } = useLot(lotId);
+
+  const [pendingSound, setPendingSound] = useState(null);
+
+  // Play chatter after a delay, clear timeout if scene changes
+  useEffect(() => {
+    if (zoomScene?.type === 'LOT' && lot?.building?.Building?.buildingType > 0) {
+      const id = setTimeout(() => playSound(`buildingChatter.${lot?.building?.Building?.buildingType}`), 10000);
+      setPendingSound(id);
+      return () => {
+        clearTimeout(id);
+        setPendingSound(null);
+      }
+    }
+
+    if (pendingSound) {
+      clearTimeout(pendingSound);
+      setPendingSound(null);
+    }
+  }, [zoomScene, lot]);
 
   const modelUrl = useMemo(() => {
     if (zoomScene?.overrides?.buildingType) {

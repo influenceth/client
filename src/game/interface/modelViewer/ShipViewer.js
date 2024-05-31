@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Ship } from '@influenceth/sdk';
 
 import useShip from '~/hooks/useShip';
@@ -8,8 +8,32 @@ import { getShipModel } from '~/lib/assetUtils';
 
 const ShipViewer = () => {
   const zoomScene = useStore(s => s.asteroids.zoomScene);
+  const playSound = useStore(s => s.dispatchEffectStartRequested);
+  const stopSound = useStore(s => s.dispatchEffectStopRequested);
 
   const { data: ship, isLoading } = useShip(zoomScene?.shipId);
+
+  const [pendingSound, setPendingSound] = useState(null);
+
+  // Play ship thruster loop
+  useEffect(() => {
+    if (zoomScene?.type === 'SHIP') {
+      const id = setTimeout(() => playSound('ship'));
+      setPendingSound(id);
+
+      return () => {
+        clearTimeout(id);
+        stopSound('ship', { fadeOut: 500 });
+        setPendingSound(null);
+      }
+    }
+
+    if (pendingSound) {
+      clearTimeout(pendingSound);
+      stopSound('ship', { fadeOut: 500 });
+      setPendingSound(null);
+    }
+  }, [zoomScene]);
 
   const modelUrl = useMemo(() => {
     return getShipModel(
