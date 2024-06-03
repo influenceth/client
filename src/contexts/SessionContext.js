@@ -478,6 +478,7 @@ export function SessionProvider({ children }) {
   useEffect(() => {
     [
       [ 'orderList' ],
+      [ 'inventoryOrders' ],
       [ 'exchangeOrderSummary' ],
       [ 'productOrderSummary' ],
     ].forEach((queryKey) => {

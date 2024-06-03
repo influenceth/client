@@ -182,7 +182,7 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
         selectCoreSample(defaultSelection);
       }
     }
-  }, [!currentExtraction, !selectedCoreSample, lot?.deposits, usableSamples]);
+  }, [currentExtraction, !selectedCoreSample, lot?.deposits, usableSamples]);
 
   const resource = useMemo(() => {
     if (!selectedCoreSample) return null;

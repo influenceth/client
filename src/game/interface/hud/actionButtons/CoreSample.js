@@ -82,7 +82,7 @@ const NewCoreSample = ({ asteroid, crew, lot, onSetAction, overrideResourceId, i
 
   const stackIsImprovement = useMemo(() => {
     return !currentSamplingActions.find((a) => a.action?.isNew);
-  }, [currentSamplingActions])
+  }, [currentSamplingActions]);
 
   return (
     <>

@@ -636,6 +636,7 @@ const Wrapper = (props) => {
     if (origin) return { origin, originSlot };
     return {};
   }, [deliveryId, destination, destinationSlot, origin, originSlot, txHash])
+  deliveryManagerQuery.debug = true;
   const deliveryManager = useDeliveryManager(deliveryManagerQuery);
 
   const currentDeliveryAction = useMemo(() => {
