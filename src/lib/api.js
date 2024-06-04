@@ -533,6 +533,28 @@ const api = {
     })) || [];
   },
 
+  getOrdersByInventory: async (storage) => {
+    const queryBuilder = esb.boolQuery();
+
+    // storage
+    queryBuilder.filter(esb.termQuery('storage.label', storage?.label));
+    queryBuilder.filter(esb.termQuery('storage.id', storage?.id));
+
+    // status
+    queryBuilder.filter(esb.termQuery('status', Order.STATUSES.OPEN));
+
+    const q = esb.requestBodySearch();
+    q.query(queryBuilder);
+    q.from(0);
+    q.size(10000);
+    const response = await instance.post(`/_search/order`, q.toJSON());
+
+    return response?.data?.hits?.hits?.map((h) => ({
+      ...h._source,
+      price: h._source.price / 1e6,
+    })) || [];
+  },
+
   getOrderSummaryByExchange: async (asteroidId, product) => {
     const queryBuilder = esb.boolQuery();
 

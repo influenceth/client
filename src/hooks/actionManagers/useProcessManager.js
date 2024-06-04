@@ -1,19 +1,19 @@
 import { useCallback, useContext, useMemo } from 'react';
-import { Entity, Processor } from '@influenceth/sdk';
+import { Entity, Permission, Processor } from '@influenceth/sdk';
 
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
-import useActionItems from '~/hooks/useActionItems';
 import useBlockTime from '~/hooks/useBlockTime';
 import useCrewContext from '~/hooks/useCrewContext';
 import useLot from '~/hooks/useLot';
+import useUnresolvedActivities from '~/hooks/useUnresolvedActivities';
 import actionStages from '~/lib/actionStages';
 
 const useProcessManager = (lotId, slot) => {
-  const { actionItems, readyItems } = useActionItems();
   const blockTime = useBlockTime();
   const { execute, getPendingTx, getStatus } = useContext(ChainTransactionContext);
-  const { crew } = useCrewContext();
+  const { crew, crewCan } = useCrewContext();
   const { data: lot } = useLot(lotId);
+  const { data: actionItems } = useUnresolvedActivities(lot?.building);
 
   const payload = useMemo(() => ({
     processor: { id: lot?.building?.id, label: Entity.IDS.BUILDING },
@@ -28,7 +28,7 @@ const useProcessManager = (lotId, slot) => {
   const [currentProcess, processStatus, actionStage] = useMemo(() => {
     let current = {
       _cachedData: null,
-      _isMyAction: true,
+      _isAccessible: false,
       finishTime: null,
       destination: null,
       destinationSlot: null,
@@ -53,8 +53,10 @@ const useProcessManager = (lotId, slot) => {
         current.origin = actionItem.event.returnValues.origin;
         current.originSlot = actionItem.event.returnValues.originSlot;
         current.startTime = actionItem._startTime || actionItem.event.timestamp;
-      } else {
-        current._isMyAction = false;
+        current._isAccessible = (
+          (actionItem.event.returnValues.callerCrew.id === crew?.id)
+          || crewCan(Permission.IDS.RUN_PROCESS, lot.building)
+        );
       }
       current.destination = processor?.destination;
       current.destinationSlot = processor?.destinationSlot;
@@ -94,7 +96,7 @@ const useProcessManager = (lotId, slot) => {
       status,
       stage
     ];
-  }, [actionItems, blockTime, readyItems, getPendingTx, getStatus, payload, processor?.status]);
+  }, [actionItems, blockTime, crew?.id, crewCan, getPendingTx, getStatus, payload, processor?.status]);
 
   const startProcess = useCallback(({ processId, primaryOutputId, recipeTally, origin, originSlot, destination, destinationSlot }) => {
     execute(

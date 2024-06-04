@@ -278,6 +278,7 @@ const activities = {
         [ 'orderList', returnValues.exchange.id, returnValues.product ],
         [ 'crewOpenOrders', returnValues.buyerCrew.id ],
         [ 'exchangeOrderSummary', asteroidId, returnValues.product ],
+        [ 'inventoryOrders', returnValues.storage?.label, returnValues.storage?.id ],
         [ 'productOrderSummary', Entity.IDS.ASTEROID, asteroidId ],
         [ 'productOrderSummary', Entity.IDS.LOT, lotId ],
       ]
@@ -297,6 +298,7 @@ const activities = {
         [ 'orderList', returnValues.exchange.id, returnValues.product ],
         [ 'crewOpenOrders', returnValues.callerCrew.id ],
         [ 'exchangeOrderSummary', asteroidId, returnValues.product ],
+        [ 'inventoryOrders', returnValues.storage?.label, returnValues.storage?.id ],
         [ 'productOrderSummary', Entity.IDS.ASTEROID, asteroidId ],
         [ 'productOrderSummary', Entity.IDS.LOT, lotId ],
       ];
@@ -320,6 +322,7 @@ const activities = {
         [ 'orderList', returnValues.exchange.id, returnValues.product ],
         [ 'crewOpenOrders', returnValues.buyerCrew.id ],
         [ 'exchangeOrderSummary', asteroidId, returnValues.product ],
+        [ 'inventoryOrders', returnValues.storage?.label, returnValues.storage?.id ],
         [ 'productOrderSummary', Entity.IDS.ASTEROID, asteroidId ],
         [ 'productOrderSummary', Entity.IDS.LOT, lotId ],
       ]
@@ -1571,6 +1574,7 @@ const activities = {
         [ 'orderList', returnValues.exchange.id, returnValues.product ],
         [ 'crewOpenOrders', returnValues.sellerCrew.id ],
         [ 'exchangeOrderSummary', asteroidId, returnValues.product ],
+        [ 'inventoryOrders', returnValues.storage?.label, returnValues.storage?.id ],
         [ 'productOrderSummary', Entity.IDS.ASTEROID, asteroidId ],
         [ 'productOrderSummary', Entity.IDS.LOT, lotId ],
       ];
@@ -1590,6 +1594,7 @@ const activities = {
         [ 'orderList', returnValues.exchange.id, returnValues.product ],
         [ 'crewOpenOrders', returnValues.callerCrew.id ],
         [ 'exchangeOrderSummary', asteroidId, returnValues.product ],
+        [ 'inventoryOrders', returnValues.storage?.label, returnValues.storage?.id ],
         [ 'productOrderSummary', Entity.IDS.ASTEROID, asteroidId ],
         [ 'productOrderSummary', Entity.IDS.LOT, lotId ],
       ];
@@ -1632,6 +1637,7 @@ const activities = {
           [ 'orderList', returnValues.exchange.id, returnValues.product ],
           [ 'crewOpenOrders', returnValues.sellerCrew.id ],
           [ 'exchangeOrderSummary', asteroidId, returnValues.product ],
+          [ 'inventoryOrders', returnValues.storage?.label, returnValues.storage?.id ],
           [ 'productOrderSummary', Entity.IDS.ASTEROID, asteroidId ],
           [ 'productOrderSummary', Entity.IDS.LOT, lotId ],
         ];

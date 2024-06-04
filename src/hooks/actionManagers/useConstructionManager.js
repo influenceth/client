@@ -2,10 +2,10 @@ import { useCallback, useContext, useMemo } from 'react';
 import { Asteroid, Building, Entity, Lot } from '@influenceth/sdk';
 
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
+import useActionItems from '~/hooks/useActionItems';
 import useBlockTime from '~/hooks/useBlockTime';
 import useCrewContext from '~/hooks/useCrewContext';
 import useLot from '~/hooks/useLot';
-import useActionItems from '~/hooks/useActionItems';
 import useAsteroid from '~/hooks/useAsteroid';
 import actionStage from '~/lib/actionStages';
 
@@ -36,7 +36,7 @@ const useConstructionManager = (lotId) => {
   const [currentConstructionAction, constructionStatus, isAtRisk, stageByActivity] = useMemo(() => {
     let current = {
       _cachedData: null,
-      _isMyAction: true,
+      _isAccessible: true,
       buildingId: null,
       buildingType: null,
       finishTime: null,
@@ -64,7 +64,7 @@ const useConstructionManager = (lotId) => {
         current._cachedData = actionItem.data;
         current.startTime = actionItem._startTime || actionItem.event.timestamp;
       } else {
-        current._isMyAction = false;
+        current._isAccessible = false;
       }
 
       current.buildingId = lot.building.id;
