@@ -5,12 +5,12 @@ import useSession from '~/hooks/useSession';
 
 const useAccountFormatted = (props) => {
   const { address, doNotReplaceYou, truncate, doNotUseName } = props;
-  const { starknet, accountAddress } = useSession();
+  const { accountAddress, provider } = useSession();
 
   // const { data: starkName } = useQuery(
   //   [ 'starkName', address ],
   //   async () => {
-  //     return await starknet.provider.getStarkName(address);
+  //     return await provider.getStarkName(address);
   //   },
   //   { enabled: !!address }
   // );
@@ -23,7 +23,7 @@ const useAccountFormatted = (props) => {
         ? `${address.substr(0, 6)}...${address.substr(-4)}`
         : address
       );
-  }, [accountAddress, address, doNotReplaceYou, truncate, starknet?.provider]);
+  }, [accountAddress, address, doNotReplaceYou, truncate, provider]);
 
   return useMemo(() => {
     if (!address) return null;

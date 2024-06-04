@@ -4,8 +4,14 @@ import { uint256 } from 'starknet';
 import useSession from '~/hooks/useSession';
 import { TOKEN } from '~/lib/priceUtils';
 
+<<<<<<< HEAD:src/hooks/useWalletTokenBalance.js
 const useWalletTokenBalance = (tokenLabel, tokenAddress, overrideAccount) => {
   const { accountAddress: defaultAccount, starknet } = useSession();
+=======
+const useEthBalance = (overrideAccount) => {
+  const { accountAddress: defaultAccount, provider } = useSession();
+  const accountAddress = overrideAccount || defaultAccount;
+>>>>>>> fbdbd861 (More sessions work):src/hooks/useEthBalance.js
 
   const accountAddress = overrideAccount || defaultAccount;
   return useQuery(
@@ -13,8 +19,13 @@ const useWalletTokenBalance = (tokenLabel, tokenAddress, overrideAccount) => {
     async () => {
       if (!accountAddress) return undefined; // shouldn't happen (but seemingly does)
       try {
+<<<<<<< HEAD:src/hooks/useWalletTokenBalance.js
         const balance = await starknet.provider.callContract({
           contractAddress: tokenAddress,
+=======
+        const balance = await provider.callContract({
+          contractAddress: process.env.REACT_APP_ERC20_TOKEN_ADDRESS,
+>>>>>>> fbdbd861 (More sessions work):src/hooks/useEthBalance.js
           entrypoint: 'balanceOf',
           calldata: [accountAddress]
         });
@@ -25,7 +36,7 @@ const useWalletTokenBalance = (tokenLabel, tokenAddress, overrideAccount) => {
       }
     },
     {
-      enabled: !!starknet?.provider && !!accountAddress,
+      enabled: !!provider && !!accountAddress,
       refetchInterval: 300e3,
     }
   );

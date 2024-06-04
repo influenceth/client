@@ -213,9 +213,9 @@ export const monthsToSeconds = (months) => Math.floor(yearOfSeconds * months / 1
 export const secondsToDays = (seconds) => seconds / 86400;
 export const daysToSeconds = (days) => days * 86400;
 
-export const getBlockTime = async (starknet, blockNumber = 'pending') => {
+export const getBlockTime = async (provider, blockNumber = 'pending') => {
   try {
-    const block = await starknet.provider.getBlock(blockNumber > 0 ? blockNumber : 'pending');
+    const block = await provider.getBlock(blockNumber > 0 ? blockNumber : 'pending');
     // console.log('block', block);
     return block?.timestamp;
   } catch (e) {

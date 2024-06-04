@@ -142,7 +142,7 @@ const FormAgreement = ({
   stage,
   ...props
 }) => {
-  const { starknet } = useSession();
+  const { provider } = useSession();
   const createAlert = useStore(s => s.dispatchAlertLogged);
 
   const { currentAgreement, currentPolicy, cancelAgreement, enterAgreement, extendAgreement, pendingChange } = agreementManager;
@@ -227,11 +227,11 @@ const FormAgreement = ({
   const [eligible, setEligible] = useState(false);
   const [eligibilityLoading, setEligibilityLoading] = useState(false);
   const updateContractEligibility = useCallback(async () => {
-    if (!starknet?.provider) return;
+    if (!provider) return;
     if (!currentPolicy?.policyDetails?.contract) return;
     try {
       setEligibilityLoading(true);
-      const response = await starknet.provider.callContract({
+      const response = await provider.callContract({
         contractAddress: currentPolicy?.policyDetails?.contract,
         entrypoint: 'accept',
         calldata: [
@@ -245,7 +245,7 @@ const FormAgreement = ({
       console.warn(e);
     }
     setEligibilityLoading(false);
-  }, [crew?.id, crew?.label, currentPolicy?.policyDetails?.contract, entity, permission, starknet]);
+  }, [crew?.id, crew?.label, currentPolicy?.policyDetails?.contract, entity, permission, provider]);
 
   useEffect(() => {
     updateContractEligibility()

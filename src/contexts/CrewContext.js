@@ -13,8 +13,7 @@ import { entitiesCacheKey } from '~/lib/cacheKey';
 const CrewContext = createContext();
 
 export function CrewProvider({ children }) {
-  const { accountAddress, authenticated, blockNumber, blockTime, starknet, token } = useSession();
-  useEffect(() => { console.log({ blockTime, blockNumber }) }, [blockNumber, blockTime]) // TODO: remove
+  const { accountAddress, authenticated, blockNumber, blockTime, provider, token } = useSession();
 
   const queryClient = useQueryClient();
   const allPendingTransactions = useStore(s => s.pendingTransactions);
@@ -163,7 +162,7 @@ export function CrewProvider({ children }) {
     if (!actionTypeTriggered) {
       // TODO: actionRound tmp fix
       if (selectedCrew?.Crew?.actionType && selectedCrew.Crew.actionRound) {// && (selectedCrew.Crew.actionRound + RandomEvent.MIN_ROUNDS) <= blockNumber) {
-        starknet.provider.callContract(
+        provider.callContract(
           System.getRunSystemCall(
             'CheckForRandomEvent',
             { caller_crew: { id: selectedCrew.id, label: selectedCrew.label }},
@@ -174,7 +173,7 @@ export function CrewProvider({ children }) {
           const pendingEvent = response ? parseInt(response[1]) : null;
           if (pendingEvent > 0) {
             // TODO: actionRound tmp fix
-            // getBlockTime(starknet, selectedCrew.Crew.actionRound + RandomEvent.MIN_ROUNDS).then((timestamp) => {
+            // getBlockTime(provider, selectedCrew.Crew.actionRound + RandomEvent.MIN_ROUNDS).then((timestamp) => {
             //   console.log('SET TRIGGER', {
             //     actionType: selectedCrew.Crew.actionType,
             //     pendingEvent,
@@ -200,7 +199,7 @@ export function CrewProvider({ children }) {
         });
       }
     }
-  }, [actionTypeTriggered, selectedCrew?.Crew?.actionType, selectedCrew?.Crew?.actionRound, blockNumber, starknet]);
+  }, [actionTypeTriggered, selectedCrew?.Crew?.actionType, selectedCrew?.Crew?.actionRound, blockNumber, provider]);
 
   // add final data to selected crew
   const finalSelectedCrew = useMemo(() => {

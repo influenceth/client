@@ -63,7 +63,7 @@
     "react-virtualized": "^9.22.5",
     "screenfull": "^5.1.0",
     "socket.io-client": "^4.7.5",
-    "starknet": "^6.7.0",
+    "starknet": "6.7",
     "starknetkit": "^2.2.7",
     "styled-components": "^5.3.0",
     "three": "^0.164.1",

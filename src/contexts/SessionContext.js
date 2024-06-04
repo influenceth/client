@@ -2,7 +2,7 @@ import { createContext, useCallback, useEffect, useRef, useMemo, useState } from
 import { useQueryClient } from 'react-query';
 import { isExpired } from 'react-jwt';
 
-import { RpcProvider } from 'starknet';
+import { RpcProvider, WalletAccount } from 'starknet';
 import { connect as starknetConnect, disconnect as starknetDisconnect } from 'starknetkit';
 import { ArgentMobileConnector } from 'starknetkit/argentMobile';
 import { InjectedConnector } from 'starknetkit/injected';
@@ -106,11 +106,25 @@ export function SessionProvider({ children }) {
   const [starknet, setStarknet] = useState(false);
   const [starknetSession, setStarknetSession] = useState();
 
+  const [connectedAccount, setConnectedAccount] = useState();
+  const [connectedChainId, setConnectedChainId] = useState();
+  const [connectedWalletId, setConnectedWalletId] = useState();
+  const [walletAccount, setWalletAccount] = useState();
+
   const [blockNumber, setBlockNumber] = useState(0);
   const [blockTime, setBlockTime] = useState(0);
   const [error, setError] = useState();
 
   const authenticated = useMemo(() => status === STATUSES.AUTHENTICATED, [status]);
+  const provider = useMemo(() => {
+    let nodeUrl = process.env.REACT_APP_STARKNET_PROVIDER;
+
+    if (process.env.REACT_APP_STARKNET_PROVIDER_BACKUP && Math.random() > 0.5) {
+      nodeUrl = process.env.REACT_APP_STARKNET_PROVIDER_BACKUP;
+    }
+
+    return new RpcProvider({ nodeUrl });
+  }, []);
 
   // Login entry point, starts by connecting to wallet provider
   const connect = useCallback(async (auto = false) => {
@@ -121,22 +135,13 @@ export function SessionProvider({ children }) {
 
     try {
       const connectors = [];
-      let nodeUrl = process.env.REACT_APP_STARKNET_PROVIDER;
-
-      if (process.env.REACT_APP_STARKNET_PROVIDER_BACKUP) {
-        nodeUrl = Math.random() > 0.5 ? process.env.REACT_APP_STARKNET_PROVIDER : process.env.REACT_APP_STARKNET_PROVIDER_BACKUP;
-      }
-
-      const customProvider = nodeUrl ? new RpcProvider({ nodeUrl }) : undefined;
 
       if (!!process.env.REACT_APP_ARGENT_WEB_WALLET_URL) {
-        connectors.push(new WebWalletConnector({
-          url: process.env.REACT_APP_ARGENT_WEB_WALLET_URL, provider: customProvider
-        }));
+        connectors.push(new WebWalletConnector({ url: process.env.REACT_APP_ARGENT_WEB_WALLET_URL, provider }));
       }
 
-      connectors.push(new InjectedConnector({ options: { id: 'argentX', provider: customProvider }}));
-      connectors.push(new InjectedConnector({ options: { id: 'braavos', provider: customProvider }}));
+      connectors.push(new InjectedConnector({ options: { id: 'argentX', provider }}));
+      connectors.push(new InjectedConnector({ options: { id: 'braavos', provider }}));
       connectors.push(new ArgentMobileConnector());
 
       const connectionOptions = {
@@ -145,22 +150,22 @@ export function SessionProvider({ children }) {
         modalTheme: 'dark',
         projectId: 'influence',
         connectors,
-        provider: customProvider
+        provider
       };
 
       setError();
       setConnecting(true);
-      const { wallet } = await starknetConnect(connectionOptions);
+      const { connectorData, wallet } = await starknetConnect(connectionOptions);
 
-      console.log(wallet);
-      if (wallet && wallet.isConnected && wallet.account?.address) {
+      if (wallet && connectorData) {
+        const chainId = resolveChainId(connectorData.chainId);
+        setConnectedAccount(Address.toStandard(connectorData.account));
+        setConnectedChainId(chainId);
+        setConnectedWalletId(wallet.id);
+        setWalletAccount(new WalletAccount(provider, wallet, '1'));
+
         // Default to provider chainId if not set (starknetkit doesn't set for braavos)
-        wallet.chainId = wallet.chainId ||
-          wallet?.provider?.chainId ||
-          wallet?.account?.provider?.chainId ||
-          wallet?.provider?.channel?.chainId;
-
-        if (!isAllowedChain(wallet.chainId)) {
+          if (!isAllowedChain(chainId)) {
           await wallet.request({
             type: 'wallet_switchStarknetChain',
             params: { chainId: process.env.REACT_APP_CHAIN_ID }
@@ -187,6 +192,7 @@ export function SessionProvider({ children }) {
         setError(e);
       }
     }
+
     setConnecting(false);
   }, [currentSession, sessions]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -227,33 +233,30 @@ export function SessionProvider({ children }) {
     };
 
     const startListening = () => {
-      starknet.on('accountsChanged', onAccountsChanged);
-      starknet.on('networkChanged', onNetworkChanged);
+      walletAccount.walletProvider.on('accountsChanged', onAccountsChanged);
+      walletAccount.walletProvider.on('networkChanged', onNetworkChanged);
     }
 
     const stopListening = () => {
-      if (!starknet) return;
-      starknet.off('accountsChanged', onAccountsChanged);
-      starknet.off('networkChanged', onNetworkChanged);
+      if (!walletAccount) return;
+      walletAccount.walletProvider.off('accountsChanged', onAccountsChanged);
+      walletAccount.walletProvider.off('networkChanged', onNetworkChanged);
     };
 
-    if (starknet) startListening();
+    if (walletAccount) startListening();
     return stopListening;
-  }, [currentSession, sessions, starknet, status]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [currentSession, sessions, status, walletAccount ]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Authenticate with a signed message against the API
   const authenticate = useCallback(async () => {
-    const { account, id, provider } = starknet;
-    const connectedAddress = Address.toStandard(account?.address);
-
     // If somehow we've lost wallet connection, disconnect
-    if (!account || !provider) {
+    if (!connectedAccount || !walletAccount) {
       disconnect();
       return false;
     }
 
     // Check for pre-existing session and use it if it's still valid
-    const existingSession = Object.assign({}, sessions[connectedAddress]);
+    const existingSession = Object.assign({}, sessions[connectedAccount]);
 
     if (existingSession && !isExpired(existingSession.token) && existingSession.isDeployed) {
       existingSession.startTime = Date.now();
@@ -266,7 +269,7 @@ export function SessionProvider({ children }) {
     let isDeployed = false;
 
     try {
-      await provider.getClassAt(account?.address); // if this throws, the contract is not deployed
+      await provider.getClassAt(connectedAccount); // if this throws, the contract is not deployed
       isDeployed = true;
     } catch (e) {
       if (!e.message.includes('Contract not found')) console.error(e);
@@ -276,15 +279,15 @@ export function SessionProvider({ children }) {
 
     // Start authenticating by requesting a login message from API
     setStatus(STATUSES.AUTHENTICATING);
-    const loginMessage = await api.requestLogin(account.address);
+    const loginMessage = await api.requestLogin(connectedAccount);
     let newToken = null;
 
     try {
       if (!isDeployed) {
         // If the wallet is not yet deployed, create an insecure session
-        newToken = await api.verifyLogin(connectedAddress, { signature: 'insecure' });
-        Object.assign(newSession, { walletId: id, accountAddress: connectedAddress, token: newToken });
-      } else if (id === 'argentWebWallet') {
+        newToken = await api.verifyLogin(connectedAccount, { signature: 'insecure' });
+        Object.assign(newSession, { walletId: connectedWalletId, accountAddress: connectedAccount, token: newToken });
+      } else if (connectedWalletId === 'argentWebWallet') {
         // Connect via Argent Web Wallet and automatically create a session
         const privateKey = utils.randomPrivateKey();
         const dappKey = {
@@ -308,9 +311,7 @@ export function SessionProvider({ children }) {
 
         const requestSession = createSessionRequest(allowedMethods, expiry, false, dappKey.publicKey);
         const sessionSignature = await openSession({
-          chainId: await provider.getChainId(),
-          wallet: account,
-          sessionParams,
+          chainId: '0x534e5f5345504f4c4941', wallet: walletAccount?.walletProvider, sessionParams
         });
 
         console.log(sessionSignature);
@@ -324,10 +325,11 @@ export function SessionProvider({ children }) {
         // }
       } else {
         // Connect via a traditional browser extension wallet
-        const signature = await account.signMessage(loginMessage);
+        const signature = await walletAccount.signMessage(loginMessage);
         if (signature?.code === 'CANCELED') throw new Error('User abort');
-        newToken = await api.verifyLogin(connectedAddress, { signature: signature.join(',') });
-        Object.assign(newSession, { walletId: id, accountAddress: connectedAddress, token: newToken });
+        newToken = await api.verifyLogin(connectedAccount, { signature: signature.join(',') });
+        const walletId = walletAccount?.walletProvider?.id;
+        Object.assign(newSession, { walletId, accountAddress: connectedAccount, token: newToken });
       }
 
       dispatchSessionStarted(newSession);
@@ -347,7 +349,17 @@ export function SessionProvider({ children }) {
 
     disconnect();
     return false;
-  }, [ createAlert, disconnect, dispatchSessionStarted, logout, sessions, starknet ]);
+  }, [
+    connectedAccount,
+    connectedChainId,
+    connectedWalletId,
+    createAlert,
+    dispatchSessionStarted,
+    sessions,
+    walletAccount,
+    disconnect,
+    logout
+  ]);
 
   // Start a session with the Argent Web Wallet
   useEffect(() => {
@@ -380,8 +392,7 @@ export function SessionProvider({ children }) {
       }
 
       setStarknetSession(null); // clear session key if it exists
-    }
-    else if (status === STATUSES.CONNECTED) {
+    } else if (status === STATUSES.CONNECTED) {
       authenticate();
       setReadyForChildren(true);
     }
@@ -416,15 +427,15 @@ export function SessionProvider({ children }) {
 
   // Argent is slow to put together it's final "starknet" object, so we check explicitly for getBlock method
   const canCheckBlock = useMemo(() => {
-    return status >= STATUSES.CONNECTED && !!starknet?.provider?.getBlock;
-  }, [starknet?.provider?.getBlock, status]);
+    return status >= STATUSES.CONNECTED && !!provider?.getBlock;
+  }, [provider?.getBlock, status]);
 
   // Initialize block number and block time
   const lastBlockNumberTime = useRef(0);
   const initializeBlockData = useCallback(async () => {
     if (!canCheckBlock) return;
     try {
-      const block = await starknet.provider.getBlock('pending');
+      const block = await provider.getBlock('pending');
       if (block?.timestamp) {
         setBlockTime(block?.timestamp);
 
@@ -435,7 +446,7 @@ export function SessionProvider({ children }) {
 
         // ... so we get the block number from the parent (which matches what ws reports)
         } else if (block.parent_hash) {
-          const parent = await starknet.provider.getBlock(block.parent_hash);
+          const parent = await provider.getBlock(block.parent_hash);
           if (parent?.block_number > 0) {
             lastBlockNumberTime.current = parent.block_number;
             setBlockNumber(parent.block_number);
@@ -449,16 +460,16 @@ export function SessionProvider({ children }) {
     } catch (e) {
       console.error('failed to init block data', e)
     }
-  }, [canCheckBlock, starknet?.provider]);
+  }, [canCheckBlock, provider]);
   useEffect(() => { initializeBlockData(); }, [initializeBlockData]);
 
   const reattempts = useRef();
   const capturePendingBlockTimestampUpdate = useCallback(async () => {
-    if (!starknet?.provider) return;
+    if (!provider) return;
 
     reattempts.current++;
     console.log(`blocktime update attempt #${reattempts.current}`);
-    getBlockTime(starknet).then((timestamp) => {
+    getBlockTime(provider).then((timestamp) => {
       if (timestamp > blockTime) {
         lastBlockNumberTime.current = blockNumber;
         setBlockTime(timestamp);
@@ -471,7 +482,7 @@ export function SessionProvider({ children }) {
         console.warn('gave up on pending blocktime update!');
       }
     });
-  }, [blockNumber, blockTime, starknet]);
+  }, [blockNumber, blockTime, provider]);
 
   // get pending block time on every new block
   // TODO: if no crew, then we won't receive websockets, and blockNumber will not get updated
@@ -499,15 +510,17 @@ export function SessionProvider({ children }) {
     <SessionContext.Provider value={{
       login: async () => await connect(),
       logout,
+      accountAddress: authenticated ? currentSession?.accountAddress : null,
       authenticating: [STATUSES.AUTHENTICATING, STATUSES.CONNECTING].includes(status),
       authenticated,
+      chainId: authenticated ? connectedChainId : null,
       isDeployed: authenticated ? currentSession?.isDeployed : null,
+      provider,
       token: authenticated ? currentSession?.token : null,
-      accountAddress: authenticated ? currentSession?.accountAddress : null,
       walletId: authenticated ? currentSession?.walletId : null,
       status,
-      starknet,
       starknetSession,
+      walletAccount,
 
       // NOTE:
       // - blockNumber is updated from websocket change or initial pull of activities from server

@@ -527,10 +527,10 @@ export function ChainTransactionProvider({ children }) {
     authenticated,
     blockNumber,
     blockTime,
-    isDeployed,
     logout,
-    starknet,
-    starknetSession
+    provider,
+    starknetSession,
+    walletAccount
   } = useSession();
   const activities = useActivitiesContext();
   const { crew, pendingTransactions } = useCrewContext();
@@ -571,10 +571,10 @@ export function ChainTransactionProvider({ children }) {
 
     const account = canUseSession ? starknetSession : starknet.account;
     return account.execute(calls);
-  }, [createAlert, isDeployed, starknetSession, starknet?.account]);
+  }, [createAlert, starknetSession, starknet?.account]);
 
   const contracts = useMemo(() => {
-    if (!!starknet?.account) {
+    if (!!walletAccount) {
 
       // include all default systems + any virtuals included in customConfigs
       const systemKeys = [
@@ -893,7 +893,7 @@ export function ChainTransactionProvider({ children }) {
   // on initial load, set provider.waitForTransaction for any pendingTransactions
   // so that we can throw any extension-related or timeout errors needed
   useEffect(() => {
-    if (starknet?.provider && contracts && pendingTransactions?.length) {
+    if (provider && contracts && pendingTransactions?.length) {
       pendingTransactions.forEach(({ key, vars, txHash }) => {
         // (sanity check) this should not be possible since pendingTransaction should not be created
         // without txHash... so we aren't even reporting this error to user since should not happen
@@ -905,7 +905,7 @@ export function ChainTransactionProvider({ children }) {
           // NOTE: waitForTransaction is slow -- often slower than server to receive and process
           //  event and send back to frontend... so we are using it just to listen for errors
           //  (activities from backend will demonstrate success)
-          starknet.provider.waitForTransaction(txHash, { retryInterval: RETRY_INTERVAL })
+          provider.waitForTransaction(txHash, { retryInterval: RETRY_INTERVAL })
             // .then((receipt) => {
             //   if (receipt) {
             //     console.log('transaction settled');
@@ -953,7 +953,7 @@ export function ChainTransactionProvider({ children }) {
         if (Math.floor(Date.now() / 1000) > Math.floor(tx.timestamp / 1000) + 30) {
           const { key, vars, txHash } = tx;
 
-          starknet.provider.getTransactionReceipt(txHash)
+          provider.getTransactionReceipt(txHash)
             .then((receipt) => {
               if (receipt && receipt.execution_status === 'REVERTED') {
                 contracts[key].onTransactionError(receipt, vars);
@@ -1021,7 +1021,7 @@ export function ChainTransactionProvider({ children }) {
   }, [createAlert, isAccountLocked, executeWithAccount])
 
   const execute = useCallback(async (key, vars, meta = {}) => {
-    if (!starknet?.account || !contracts || !contracts[key]) {
+    if (!walletAccount || !contracts || !contracts[key]) {
       createAlert({
         type: 'GenericAlert',
         data: { content: 'Account is disconnected or contract is invalid.' },
