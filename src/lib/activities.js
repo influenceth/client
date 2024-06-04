@@ -846,7 +846,9 @@ const activities = {
           updatedValues: { stationUuid: safeEntityId(returnValues.station)?.uuid }
         }
       },
-      { ...returnValues.station },
+      { ...returnValues.station }, // v0
+      { ...returnValues.originStation }, // v1
+      { ...returnValues.destinationStation }, /v1
       // TODO: previous station
     ]),
 
