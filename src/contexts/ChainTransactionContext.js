@@ -510,7 +510,16 @@ const getSystemCallAndProcessedVars = (runSystem, rawVars, encodeEntrypoint = fa
 }
 
 export function ChainTransactionProvider({ children }) {
-  const { accountAddress, authenticated, blockNumber, blockTime, logout, starknet, starknetSession } = useSession();
+  const {
+    accountAddress,
+    authenticated,
+    blockNumber,
+    blockTime,
+    isDeployed,
+    logout,
+    starknet,
+    starknetSession
+  } = useSession();
   const activities = useActivitiesContext();
   const { crew, pendingTransactions } = useCrewContext();
 
@@ -718,10 +727,10 @@ export function ChainTransactionProvider({ children }) {
             // Simulate the tx and check for revert reasons, if found show alert
             // Combining `simAccount` and `skipValidate = true` allows sim signing for any wallet
             const simAccount = new Account(account.provider, account.address, '0x1234');
-            const simulation = await simAccount.simulateTransaction(
+            const simulation = isDeployed ? await simAccount.simulateTransaction(
               [{ type: 'INVOKE_FUNCTION', payload: calls }],
               { skipValidate: true }
-            );
+            ) : [];
 
             if (simulation[0]?.transaction_trace?.execute_invocation?.revert_reason) {
               const reason = simulation[0].transaction_trace.execute_invocation.revert_reason;
