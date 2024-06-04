@@ -1,74 +1,20 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
-import { Inventory, Order, Permission } from '@influenceth/sdk';
+import { useCallback, useMemo } from 'react';
+import { Inventory, Order, Permission, Process } from '@influenceth/sdk';
 
 import { TransferP2PIcon, TransferToIcon } from '~/components/Icons';
 import useDeliveryManager from '~/hooks/actionManagers/useDeliveryManager';
 import useUnresolvedActivities from '~/hooks/useUnresolvedActivities';
-import ActionButton, { getCrewDisabledReason } from './ActionButton';
-import { locationsArrToObj } from '~/lib/utils';
-import useEntity from '~/hooks/useEntity';
-import useBlockTime from '~/hooks/useBlockTime';
+import { getProcessorProps, locationsArrToObj } from '~/lib/utils';
 import useOrdersByInventory from '~/hooks/useOrdersByInventory';
+import ActionButton, { getCrewDisabledReason } from './ActionButton';
+import ActionButtonStack from './ActionButtonStack';
 
 const isVisible = ({ crew, lot, ship }) => {
   const entity = ship || lot?.surfaceShip || lot?.building;
   return crew && ((entity?.Inventories || []).find((i) => i.status === Inventory.STATUSES.AVAILABLE));
 };
 
-const StackButton = ({ delivery, onClick, onSetAction, order, otherAction, ...props }) => {
-  const { data: originEntity } = useEntity(
-    otherAction?.event?.returnValues?.extractor
-    || otherAction?.event?.returnValues?.processor
-    || order?.entity
-  );
-
-  const handleClick = useCallback(() => {
-    if (delivery) {
-      onSetAction('SURFACE_TRANSFER', { deliveryId: delivery.action?.deliveryId });
-    } else if (order && originEntity) {
-      const exchangeLoc = locationsArrToObj(originEntity?.Location?.locations || []);
-      onSetAction('MARKETPLACE_ORDER', {
-        exchange: originEntity,
-        asteroidId: exchangeLoc?.asteroidId,
-        lotId: exchangeLoc?.lotId,
-        mode: 'buy',
-        type: 'limit',
-        resourceId: order.product,
-        isCancellation: true,
-        cancellationMakerFee: order.makerFee,
-        preselect: {
-          limitPrice: order.price,
-          quantity: order.amount,
-          storage: order.storage,
-          storageSlot: order.storageSlot
-        }
-      });
-    } else if (originEntity) {
-      const lotId = locationsArrToObj(originEntity.Location?.locations || [])?.lotId;
-      switch(otherAction.event?.name) {
-        case 'MaterialProcessingStarted':
-          onSetAction('PROCESS', { lotId, processorSlot: otherAction.event?.returnValues?.processorSlot });
-          break;
-        case 'ResourceExtractionStarted':
-          onSetAction('EXTRACT_RESOURCE', { lotId });
-          break;
-      }
-    } else {
-      return; // (presumably wait for load)
-    }
-
-    if (onClick) onClick();
-  }, [delivery, onSetAction, onClick, order, originEntity, otherAction]);
-
-  return (
-    <ActionButton
-      {...props}
-      onClick={handleClick} />
-  );
-};
-
 const SurfaceTransferIncoming = ({ asteroid, crew, lot, ship, onSetAction, dialogProps = {}, _disabled }) => {
-  const blockTime = useBlockTime();
   const destination = useMemo(() => ship || lot?.surfaceShip || lot?.building, [ship, lot]);
   const { data: inventoryOrders } = useOrdersByInventory(destination);
   const { currentDeliveryActions: destDeliveryActions, isLoading } = useDeliveryManager({ destination });
@@ -78,38 +24,84 @@ const SurfaceTransferIncoming = ({ asteroid, crew, lot, ship, onSetAction, dialo
     return (destDeliveryActions || []).find((a) => a.status === 'DEPARTING');
   }, [destDeliveryActions]);
 
-  const [clickTally, setClickTally] = useState(0);
-
-  const currentDeliveryStack = useMemo(
-    () => {
-      const actionStack = [];
-      if (Permission.isPermitted(crew, Permission.IDS.ADD_PRODUCTS, destination)) {
-        (destDeliveryActions || []).forEach((d) => {
-          if (['PACKAGED','IN_TRANSIT','READY_TO_FINISH'].includes(d.status)) {
-            actionStack.push({ delivery: d })
-          }
-        });
-        (inventoryOrders || []).forEach((o) => {
-          if (o.orderType === Order.IDS.LIMIT_BUY) {
-            actionStack.push({ order: o });
-          }
-        });
-        (destActionItems || []).forEach((a) => {
-          if (['MaterialProcessingStarted', 'ResourceExtractionStarted'].includes(a.event.name)) {
-            if (a.event?.returnValues?.destination?.label === destination?.label && a.event?.returnValues?.destination?.id === destination?.id) {
-              actionStack.push({ otherAction: a });
+  const currentDeliveryStack = useMemo(() => {
+    const actionStack = [];
+    if (Permission.isPermitted(crew, Permission.IDS.ADD_PRODUCTS, destination)) {
+      (destDeliveryActions || []).forEach((delivery) => {
+        if (['PACKAGED','IN_TRANSIT','READY_TO_FINISH'].includes(delivery.status)) {
+          actionStack.push({
+            label: `Incoming Delivery${delivery.status === 'PACKAGED' ? ' Proposal' : ''}`,
+            finishTime: delivery.status === 'PACKAGED' ? undefined : delivery.action?.finishTime,
+            onClick: () => onSetAction('SURFACE_TRANSFER', { deliveryId: delivery.action?.deliveryId })
+          });
+        }
+      });
+      (inventoryOrders || []).forEach((order) => {
+        if (order.orderType === Order.IDS.LIMIT_BUY) {
+          actionStack.push({
+            label: `Limit Buy`,
+            preloadEntity: order?.entity,
+            onClick: (entity) => {
+              const exchangeLoc = locationsArrToObj(entity?.Location?.locations || []);
+              onSetAction('MARKETPLACE_ORDER',  {
+                exchange: entity,
+                asteroidId: exchangeLoc?.asteroidId,
+                lotId: exchangeLoc?.lotId,
+                mode: 'buy',
+                type: 'limit',
+                resourceId: order.product,
+                isCancellation: true,
+                cancellationMakerFee: order.makerFee,
+                preselect: {
+                  limitPrice: order.price,
+                  quantity: order.amount,
+                  storage: order.storage,
+                  storageSlot: order.storageSlot
+                }
+              })
             }
-          }
-        });
+          });
+        }
+      });
+      (destActionItems || []).forEach((a) => {
+        if (a.event.name === 'MaterialProcessingStarted') {
+          const processLabel = getProcessorProps(Process.TYPES[a.event?.returnValues?.process]?.processorType)?.typeLabel || 'Process';
+          actionStack.push({
+            label: `Incoming ${processLabel} Output`, // TODO: per processor type?
+            finishTime: a.event?.returnValues?.finishTime,
+            preloadEntity: a.event?.returnValues?.processor,
+            onClick: (entity) => {
+              const lotId = locationsArrToObj(entity?.Location?.locations || [])?.lotId;
+              onSetAction('PROCESS', { lotId, processorSlot: a.event?.returnValues?.processorSlot });
+            }
+          });
+        }
+        if (a.event.name === 'ResourceExtractionStarted') {
+          actionStack.push({
+            label: `Incoming Extraction`,
+            finishTime: a.event?.returnValues?.finishTime,
+            preloadEntity: a.event?.returnValues?.extractor,
+            onClick: (entity) => {
+              const lotId = locationsArrToObj(entity?.Location?.locations || [])?.lotId;
+              onSetAction('EXTRACT_RESOURCE', { lotId });
+            }
+          });
+        }
+      });
+    }
+    return actionStack.sort((a, b) => {
+      if (a.finishTime && b.finishTime) {
+        return a.finishTime - b.finishTime;
       }
-      return actionStack;
-    },
-    [crew, destination, destDeliveryActions, destActionItems, inventoryOrders]
-  );
+      if (a.finishTime) return -1;
+      if (b.finishTime) return 1;
+      return 0;
+    });
+  }, [crew, destination, destDeliveryActions, destActionItems, inventoryOrders]);
 
   const handleClick = useCallback(() => {
     onSetAction('SURFACE_TRANSFER', { deliveryId: 0, destination, ...dialogProps });
-  }, [currentDeliveryStack, onSetAction, destination, dialogProps]);
+  }, [onSetAction, destination, dialogProps]);
 
   const disabledReason = useMemo(() => {
     if (!destination) return '';
@@ -128,37 +120,20 @@ const SurfaceTransferIncoming = ({ asteroid, crew, lot, ship, onSetAction, dialo
 
     return getCrewDisabledReason({ asteroid, crew, requireReady: false });
   }, [destination, crew]);
-
-  const [stackAttention, stackTime] = useMemo(() => {
-    return [
-      currentDeliveryStack
-        .find((a) => a.delivery?.status === 'READY_TO_FINISH'
-          || a.otherAction?.event?.returnValues?.finishTime <= blockTime),
-      currentDeliveryStack[0]?.delivery?.action?.finishTime
-    ];
-  }, [blockTime, currentDeliveryStack]);
   
   const isP2P = useMemo(() => !Permission.isPermitted(crew, Permission.IDS.ADD_PRODUCTS, destination), [crew, destination]);
 
   return (
     <>
       {currentDeliveryStack.length > 0 && (
-        <StackButton
-          {...currentDeliveryStack[clickTally % currentDeliveryStack?.length]}
-          label={
+        <ActionButtonStack
+          stack={currentDeliveryStack}
+          stackLabel={
             currentDeliveryStack.length > 1
             ? `${currentDeliveryStack.length} Incoming Deliver${currentDeliveryStack.length === 1 ? 'y' : 'ies'}`
             : `Receive Delivery`
           }
-          flags={{
-            attention: stackAttention,
-            loading: !stackAttention,
-            tally: currentDeliveryStack.length,
-            finishTime: currentDeliveryStack.length > 1 ? undefined : stackTime
-          }}
           icon={<TransferToIcon />}
-          onClick={() => setClickTally((c) => c + 1)}
-          onSetAction={onSetAction}
         />
       )}
       <ActionButton

@@ -189,10 +189,10 @@ export const esbPermissionQuery = (crewId, crewDelegatedTo, permissionId) => {
 
 export const getProcessorProps = (processorType) => {
   switch (processorType) {
-    case Processor.IDS.REFINERY: return { label: 'Refine Material', icon: <RefineIcon /> };
-    case Processor.IDS.FACTORY: return { label: 'Manufacture Goods', icon: <ManufactureIcon /> };
-    case Processor.IDS.BIOREACTOR: return { label: 'Manufacture Organic Goods', icon: <BioreactorBuildingIcon /> };
-    case Processor.IDS.SHIPYARD: return { label: 'Manufacture Ship Parts', icon: <ManufactureIcon /> };
+    case Processor.IDS.REFINERY: return { label: 'Refine Material', typeLabel: 'Refinery', icon: <RefineIcon /> };
+    case Processor.IDS.FACTORY: return { label: 'Manufacture Goods', typeLabel: 'Factory', icon: <ManufactureIcon /> };
+    case Processor.IDS.BIOREACTOR: return { label: 'Manufacture Organic Goods', typeLabel: 'Bioreactor', icon: <BioreactorBuildingIcon /> };
+    case Processor.IDS.SHIPYARD: return { label: 'Manufacture Ship Parts', typeLabel: 'Shipyard', icon: <ManufactureIcon /> };
     default: return {};
   }
 }
