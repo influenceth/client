@@ -15,7 +15,8 @@ const MouseoverPanel = styled.div`
 `;
 const MouseoverTitle = styled.div`
   border-bottom: 1px solid #333;
-  color: white;
+  color: #656565;
+  font-size: 14px;
   margin-bottom: 4px;
   padding-bottom: 8px;
   text-transform: uppercase;
