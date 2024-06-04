@@ -23,19 +23,20 @@ import useEntity from '../useEntity';
 // if more input is included, will filter to those results
 const managedStatuses = [Delivery.STATUSES.ON_HOLD, Delivery.STATUSES.PACKAGED, Delivery.STATUSES.SENT];
 
-const useDeliveryManager = ({ destination, destinationSlot, origin, originSlot, deliveryId, txHash, debug = false }) => {
+const useDeliveryManager = ({ destination, destinationSlot, origin, originSlot, deliveryId, txHash }) => {
   const blockTime = useBlockTime();
   const { execute, getStatus } = useContext(ChainTransactionContext);
   const { crew, crewCan, pendingTransactions } = useCrewContext();
-  const { actionItems: crewActionItems } = useActionItems();
-  const { data: destActionItems } = useUnresolvedActivities(destination);
-  const { data: origActionItems } = useUnresolvedActivities(origin);
-  if (debug) console.log({ destination, origin, crewActionItems, destActionItems, origActionItems })
+
+  const { data: deliveryById, isLoading: deliveryIsLoading } = useEntity(deliveryId ? { label: Entity.IDS.DELIVERY, id: deliveryId } : undefined)
+  const { data: deliveriesByLoc, isLoading: deliveriesIsLoading } = useDeliveries({ destination, destinationSlot, origin, originSlot, status: managedStatuses });
+
+  const { data: destActionItems } = useUnresolvedActivities(destination || deliveryById?.Delivery?.destination);
+  const { data: origActionItems } = useUnresolvedActivities(origin || deliveryById?.Delivery?.origin);
 
   const actionItems = useMemo(() => {
     const deliveryIds = [];
     return [
-      // ...(crewActionItems || []),
       ...(destActionItems || []),
       ...(origActionItems || []),
     ].reduce((acc, cur) => {
@@ -46,10 +47,7 @@ const useDeliveryManager = ({ destination, destinationSlot, origin, originSlot, 
       }
       return acc;
     }, [])
-  }, [crewActionItems, destActionItems, origActionItems]);
-
-  const { data: deliveryById, isLoading: deliveryIsLoading } = useEntity(deliveryId ? { label: Entity.IDS.DELIVERY, id: deliveryId } : undefined)
-  const { data: deliveriesByLoc, isLoading: deliveriesIsLoading } = useDeliveries({ destination, destinationSlot, origin, originSlot, status: managedStatuses });
+  }, [destActionItems, origActionItems]);
 
   const [deliveries, isLoading] = useMemo(() => {
     if (deliveryId) {
@@ -202,7 +200,6 @@ const useDeliveryManager = ({ destination, destinationSlot, origin, originSlot, 
     });
     return [allDeliveries, Date.now()];
   }, [blockTime, crew?.id, crewCan, deliveries, pendingDeliveries, getStatus, payload]);
-  if (debug) console.log('currentDeliveries', currentDeliveries, { destination, destinationSlot, origin, originSlot, deliveryId, txHash });
 
   const acceptDelivery = useCallback((selectedDeliveryId, meta) => {
     const delivery = currentDeliveries.find((d) => d.action.deliveryId === (selectedDeliveryId || deliveryId));

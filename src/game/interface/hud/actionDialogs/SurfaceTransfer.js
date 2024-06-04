@@ -66,7 +66,7 @@ const SurfaceTransfer = ({
   stage,
   ...props
 }) => {
-  const { crew: currentCrew } = useCrewContext();
+  const { crew: currentCrew, crewCan: currentCrewCan } = useCrewContext();
   const createAlert = useStore(s => s.dispatchAlertLogged);
 
   const { startDelivery, finishDelivery, packageDelivery, acceptDelivery, cancelDelivery } = deliveryManager;
@@ -238,6 +238,16 @@ const SurfaceTransfer = ({
     return true;
   }, [currentCrew, currentDelivery]);
 
+  const currentCrewHasOriginPerms = useMemo(() => {
+    if (origin) return currentCrewCan(Permission.IDS.REMOVE_PRODUCTS, origin);
+    return true;
+  }, [currentCrewCan, origin]);
+
+  const currentCrewHasDestinationPerms = useMemo(() => {
+    if (destination) return currentCrewCan(Permission.IDS.ADD_PRODUCTS, destination);
+    return true;
+  }, [currentCrewCan, destination]);
+
   const senderHasDestPerm = useMemo(() => {
     if (!destination) return true;
     if (currentDelivery) return currentDeliveryCallerCrew ? Permission.isPermitted(currentDeliveryCallerCrew, Permission.IDS.ADD_PRODUCTS, destination) : true;
@@ -334,7 +344,7 @@ const SurfaceTransfer = ({
     let status = undefined;
     if (stage === actionStage.NOT_STARTED || ['READY','PACKAGED'].includes(currentDeliveryAction?.status)) {
       if (isP2P) {
-        if (currentCrewIsSender) {
+        if (currentCrewHasOriginPerms) {
           status = 'Send to Crew';
           overrideColor = theme.colors.green;
         } else {
@@ -347,19 +357,19 @@ const SurfaceTransfer = ({
       }
     }
     return { overrideColor, status, stage };
-  }, [crew, currentCrewIsSender, currentDeliveryAction?.status, destination, isP2P, stage]);
+  }, [crew, currentCrewHasOriginPerms, currentDeliveryAction?.status, destination, isP2P, stage]);
 
   const finalizeActions = useMemo(() => {
     if (currentDeliveryAction?.status === 'PACKAGED') {
-      if (currentCrewIsSender) {
-        return {
-          finalizeLabel: 'Cancel Proposal',
-          onFinalize: onCancelDelivery,
-        };
-      } else {
+      if (currentCrewHasDestinationPerms) {
         return {
           finalizeLabel: 'Accept Proposal',
           onFinalize: onAcceptDelivery,
+        };
+      } else {
+        return {
+          finalizeLabel: 'Cancel Proposal',
+          onFinalize: onCancelDelivery,
         };
       }
     }
@@ -367,7 +377,7 @@ const SurfaceTransfer = ({
       finalizeLabel: 'Complete',
       onFinalize: onFinishDelivery,
     };
-  }, [currentDeliveryAction?.status, crew, currentCrewIsSender, onAcceptDelivery, onCancelDelivery, onFinishDelivery]);
+  }, [currentDeliveryAction?.status, crew, currentCrewHasDestinationPerms, onAcceptDelivery, onCancelDelivery, onFinishDelivery]);
 
   return (
     <>
@@ -464,7 +474,7 @@ const SurfaceTransfer = ({
 
                   {/* TODO: might be reasonable to warn user if about to send products to a place have ADD_PRODUCTS perm for, but not REMOVE_PRODUCTS */}
                   <P2PSection>
-                    {currentCrewIsSender
+                    {(currentCrewIsSender || (currentCrewHasOriginPerms && !currentCrewHasDestinationPerms))
                       ? (
                         <>
                           <CrewIndicator crew={destinationController} label={'Destination Controller'} />
@@ -636,7 +646,6 @@ const Wrapper = (props) => {
     if (origin) return { origin, originSlot };
     return {};
   }, [deliveryId, destination, destinationSlot, origin, originSlot, txHash])
-  deliveryManagerQuery.debug = true;
   const deliveryManager = useDeliveryManager(deliveryManagerQuery);
 
   const currentDeliveryAction = useMemo(() => {

@@ -121,6 +121,12 @@ const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...pro
     return 0.001;
   }, [process]);
 
+  useEffect(() => {
+    if (currentProcess && !selectedOrigin) {
+      setSelectedOrigin({ ...currentProcess?.origin, slot: currentProcess?.originSlot })
+    }
+  }, [currentProcess]);
+
   const maxAmount = useMemo(() => {
     let maxPossible = 1;
 

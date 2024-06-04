@@ -85,7 +85,7 @@ const SurfaceTransferIncoming = ({ asteroid, crew, lot, ship, onSetAction, dialo
       const actionStack = [];
       if (Permission.isPermitted(crew, Permission.IDS.ADD_PRODUCTS, destination)) {
         (destDeliveryActions || []).forEach((d) => {
-          if (['IN_TRANSIT','READY_TO_FINISH'].includes(d.status)) {
+          if (['PACKAGED','IN_TRANSIT','READY_TO_FINISH'].includes(d.status)) {
             actionStack.push({ delivery: d })
           }
         });
@@ -96,7 +96,9 @@ const SurfaceTransferIncoming = ({ asteroid, crew, lot, ship, onSetAction, dialo
         });
         (destActionItems || []).forEach((a) => {
           if (['MaterialProcessingStarted', 'ResourceExtractionStarted'].includes(a.event.name)) {
-            actionStack.push({ otherAction: a });
+            if (a.event?.returnValues?.destination?.label === destination?.label && a.event?.returnValues?.destination?.id === destination?.id) {
+              actionStack.push({ otherAction: a });
+            }
           }
         });
       }
