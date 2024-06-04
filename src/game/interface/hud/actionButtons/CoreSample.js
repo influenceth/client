@@ -6,6 +6,7 @@ import useCoreSampleManager from '~/hooks/actionManagers/useCoreSampleManager';
 import useStore from '~/hooks/useStore';
 import { formatFixed } from '~/lib/utils';
 import ActionButton, { getCrewDisabledReason } from './ActionButton';
+import ActionButtonStack from './ActionButtonStack';
 
 const labelDict = {
   READY: 'Start Core Sample',
@@ -33,35 +34,32 @@ const NewCoreSample = ({ asteroid, crew, lot, onSetAction, overrideResourceId, i
 
   const resourceId = overrideResourceId || defaultResourceId;
 
+  const currentSamplingStack = useMemo(() => {
+    return (currentSamplingActions || [])
+      .map((sampling) => ({
+        label: `${labelDict[sampling.status]} (${Product.TYPES[sampling?.action?.resourceId]?.name})`,
+        finishTime: sampling.action?.finishTime,
+        onClick: () => onSetAction(
+          sampling.action?.isNew ? 'NEW_CORE_SAMPLE' : 'IMPROVE_CORE_SAMPLE',
+          { sampleId: sampling.action?.sampleId }
+        )
+      }))
+      .sort((a, b) => (a.finishTime || 0) - (b.finishTime || 0));
+  }, [currentSamplingActions, onSetAction]);
+
   // get lot abundance
   const lotAbundance = useMemo(() => {
     if (!resourceId || !asteroid?.Celestial?.abundanceSeed || !asteroid.Celestial?.abundances) return 0;
     return Asteroid.Entity.getAbundanceAtLot(asteroid, Lot.toIndex(lot.id), resourceId);
   }, [asteroid, lot, resourceId]);
 
-  const clickTally = useRef(0);
-  const handleClick = useCallback((isStackClick) => () => {
-
-    // for now, clicking just cycles through concurrent actions' dialogs
-    if (isStackClick) {
-      const currentSamplingAction = currentSamplingActions[clickTally.current % currentSamplingActions?.length];
-      if (currentSamplingAction) {
-        onSetAction(
-          currentSamplingAction.action?.isNew ? 'NEW_CORE_SAMPLE' : 'IMPROVE_CORE_SAMPLE',
-          { sampleId: currentSamplingAction.action?.sampleId }
-        );
-      }
-      clickTally.current++;
-
-    // else, open for new...
+  const handleClick = useCallback(() => {
+    if (improveSample) {
+      onSetAction('IMPROVE_CORE_SAMPLE', { preselect: { ...improveSample, sampleId: improveSample.id } });
     } else {
-      if (improveSample) {
-        onSetAction('IMPROVE_CORE_SAMPLE', { preselect: { ...improveSample, sampleId: improveSample.id } });
-      } else {
-        onSetAction('NEW_CORE_SAMPLE', resourceId ? { preselect: { resourceId } } : undefined);
-      }
+      onSetAction('NEW_CORE_SAMPLE', resourceId ? { preselect: { resourceId } } : undefined);
     }
-  }, [currentSamplingActions, improveSample, onSetAction, resourceId]);
+  }, [improveSample, onSetAction, resourceId]);
 
   const disabledReason = useMemo(() => {
     if (_disabled) return 'loading...';
@@ -76,39 +74,31 @@ const NewCoreSample = ({ asteroid, crew, lot, onSetAction, overrideResourceId, i
   if (improveSample) label = 'Improve Core Sample';
   else if (lotAbundance > 0) label += ` (${formatFixed(100 * lotAbundance, 1)}%)`;
 
-  const stackAttention = useMemo(() => {
-    return currentSamplingActions.find((a) => a.status === 'READY_TO_FINISH')
-  }, [currentSamplingActions]);
-
   const stackIsImprovement = useMemo(() => {
     return !currentSamplingActions.find((a) => a.action?.isNew);
   }, [currentSamplingActions]);
 
   return (
     <>
-      {currentSamplingActions.length > 0 && (
-        <ActionButton
-          label={
-            currentSamplingActions.length > 1
-            ? `${currentSamplingActions.length} Core Samples Started`
-            : `${labelDict[currentSamplingActions[0].status]} (${Product.TYPES[currentSamplingActions[0]?.action?.resourceId]?.name})`
+      {currentSamplingStack.length > 0 && (
+        <ActionButtonStack
+          stack={currentSamplingStack}
+          stackLabel={
+            currentSamplingStack.length > 1
+            ? `${currentSamplingStack.length} Core Samples Started`
+            : `${labelDict[currentSamplingStack[0].status]} (${Product.TYPES[currentSamplingStack[0]?.action?.resourceId]?.name})`
           }
-          flags={{
-            attention: stackAttention,
-            loading: !stackAttention,
-            tally: currentSamplingActions.length,
-            finishTime: currentSamplingActions.length > 1 ? undefined : currentSamplingActions[0]?.action?.finishTime
-          }}
           icon={stackIsImprovement ? <ImproveCoreSampleIcon /> : <NewCoreSampleIcon />}
-          onClick={handleClick(true)} />
+        />
       )}
+
       <ActionButton
         label={label}
         labelAddendum={disabledReason}
         flags={{ disabled: _disabled || disabledReason }}
         icon={improveSample ? <ImproveCoreSampleIcon /> : <NewCoreSampleIcon />}
-        onClick={handleClick()}
-        sequenceMode={!crew?._ready || currentSamplingActions.length > 0} />
+        onClick={handleClick}
+        sequenceMode={!crew?._ready || currentSamplingStack.length > 0} />
     </>
   );
 };

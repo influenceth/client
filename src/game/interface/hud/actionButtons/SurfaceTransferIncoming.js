@@ -97,7 +97,7 @@ const SurfaceTransferIncoming = ({ asteroid, crew, lot, ship, onSetAction, dialo
       if (b.finishTime) return 1;
       return 0;
     });
-  }, [crew, destination, destDeliveryActions, destActionItems, inventoryOrders]);
+  }, [crew, destination, destDeliveryActions, destActionItems, inventoryOrders, onSetAction]);
 
   const handleClick = useCallback(() => {
     onSetAction('SURFACE_TRANSFER', { deliveryId: 0, destination, ...dialogProps });

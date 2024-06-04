@@ -58,7 +58,7 @@ const mouseoverPaneProps = (visible) => ({
     margin-bottom: 0;
     padding-bottom: 6px;
     pointer-events: ${visible ? 'auto' : 'none'};
-    width: 400px;
+    width: 320px;
   `,
   placement: 'top',
   visible
@@ -76,7 +76,7 @@ const StackItem = ({ label, finishTime, preloadEntity, onClick }) => {
     <Item onClick={handleClick}>
       <label>{label}</label>
       {finishTime && finishTime < blockTime && <Ready>Ready</Ready>}
-      {finishTime && !(finishTime < blockTime) && <span><LiveTimer target={finishTime} maxPrecision={2} /></span>}
+      {finishTime && !(finishTime < blockTime) && <span><LiveTimer target={finishTime} maxPrecision={2} waitingForBlockText='...' /></span>}
       {!finishTime && <Pending>Pending</Pending>}
     </Item>
   )
@@ -90,7 +90,7 @@ const StackItemButton = ({ label, finishTime, preloadEntity, onClick, ...props }
     onClick(entity);
   }, [entity, onClick]);
 
-  const attention = useMemo(() => !finishTime || finishTime <= blockTime, [blockTime, finishTime])
+  const attention = useMemo(() => finishTime && (finishTime <= blockTime), [blockTime, finishTime])
 
   return (
     <ActionButton
@@ -113,7 +113,7 @@ const ActionButtonStack = ({ stack, stackLabel, ...props }) => {
   const [stackHovered, setStackHovered] = useState();
 
   const stackAttention = useMemo(() => {
-    return stack.find((a) => !a.finishTime || a.finishTime <= blockTime);
+    return stack.find((a) => a.finishTime && (a.finishTime <= blockTime));
   }, [blockTime, stack]);
 
   const handleClick = useCallback((onClick) => (...args) => {
