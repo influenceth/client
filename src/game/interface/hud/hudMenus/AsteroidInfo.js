@@ -1,10 +1,10 @@
 import { useCallback, useMemo } from 'react';
 import styled from 'styled-components';
-import { Entity, Ship } from '@influenceth/sdk';
+import { Asteroid, Entity, Ship } from '@influenceth/sdk';
 
 import AddressLink from '~/components/AddressLink';
+import { AsteroidUserPrice } from '~/components/UserPrice';
 import CrewIndicator from '~/components/CrewIndicator';
-import Ether from '~/components/Ether';
 import { EccentricityIcon, InclinationIcon, LinkIcon, MagnifyingIcon, OrbitalPeriodIcon, RadiusIcon, ResourceGroupIcons, ScanAsteroidIcon, SemiMajorAxisIcon, SurfaceAreaIcon, WalletIcon } from '~/components/Icons';
 import formatters from '~/lib/formatters';
 import { reactBool, reactPreline } from '~/lib/utils';
@@ -139,7 +139,9 @@ const AsteroidInfo = ({ onClose }) => {
             <InfoRow>
               <WalletIcon />
               <label>Price</label>
-              <span style={{ color: theme.colors.main }}><Ether>{formatters.asteroidPrice(asteroid.Celestial.radius, priceConstants)}</Ether></span>
+              <span style={{ color: theme.colors.main }}>
+                <AsteroidUserPrice lots={Asteroid.getSurfaceArea(undefined, asteroid.Celestial.radius)} />
+              </span>
             </InfoRow>
           )}
         </HudMenuCollapsibleSection>

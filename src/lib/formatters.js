@@ -38,16 +38,6 @@ const formatters = {
     return a.Name?.name || (a.Celestial && Asteroid.Entity.getBaseName(a)) || `#${a.id.toLocaleString()}`;
   },
 
-  asteroidPrice: (r, priceConstants) => {
-    if (!priceConstants?.ASTEROID_PURCHASE_BASE_PRICE || !priceConstants?.ASTEROID_PURCHASE_LOT_PRICE) return '?';
-    const base = Number(formatEther(String(priceConstants.ASTEROID_PURCHASE_BASE_PRICE)));
-    const lot = Number(formatEther(String(priceConstants.ASTEROID_PURCHASE_LOT_PRICE)));
-
-    const lotCount = Asteroid.getSurfaceArea(0, r);
-    const price = base + lot * lotCount;
-    return price.toLocaleString([], { maximumFractionDigits: 3 });
-  },
-
   buildingName: (b, fallbackText) => {
     if (!b) return fallbackText || 'Building';
     return b.Name?.name || `${Building.TYPES[b.Building?.buildingType]?.name || 'Building'} #${b.id.toLocaleString()}`;

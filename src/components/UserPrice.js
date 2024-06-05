@@ -1,3 +1,5 @@
+import { useMemo } from 'react';
+
 import usePriceConstants from '~/hooks/usePriceConstants';
 import usePriceHelper from '~/hooks/usePriceHelper';
 import useStore from '~/hooks/useStore';
@@ -20,6 +22,22 @@ const UserPrice = ({ price, priceToken, format }) => {
     </>
   );
 };
+
+export const AsteroidUserPrice = ({ lots = 0n, format = true }) => {
+  const { data: priceConstants } = usePriceConstants();
+
+  const price = useMemo(() => {
+    return priceConstants.ASTEROID_PURCHASE_BASE_PRICE + BigInt(lots) * priceConstants.ASTEROID_PURCHASE_LOT_PRICE;
+  }, [lots, priceConstants]);
+
+  return (
+    <UserPrice
+      price={price}
+      priceToken={priceConstants.ASTEROID_PURCHASE_TOKEN}
+      format={format}
+    />
+  );
+}
 
 export const CrewmateUserPrice = ({ format = true }) => {
   const { data: priceConstants } = usePriceConstants();

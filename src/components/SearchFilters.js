@@ -1,7 +1,10 @@
 import { useCallback, useEffect, useMemo } from 'react';
 import { Asteroid, Building, Crewmate, Permission, Product } from '@influenceth/sdk';
 
+import { AsteroidUserPrice } from '~/components/UserPrice';
+import usePriceConstants from '~/hooks/usePriceConstants';
 import useStore from '~/hooks/useStore';
+import constants from '~/lib/constants';
 import AsteroidNameFilter from './filters/AsteroidNameFilter';
 import OwnershipFilter from './filters/OwnershipFilter';
 import CrewOwnershipFilter from './filters/CrewOwnershipFilter';
@@ -11,11 +14,7 @@ import LotLeaseFilter from './filters/LotLeaseFilter';
 import BooleanFilter from './filters/BooleanFilter';
 import CheckboxFilter from './filters/CheckboxFilter';
 import RangeFilter from './filters/RangeFilter';
-import constants from '~/lib/constants';
-import Ether from './Ether';
-import formatters from '~/lib/formatters';
 import TextFilter from './filters/TextFilter';
-import usePriceConstants from '~/hooks/usePriceConstants';
 
 // spectral type filter configs
 const spectralTypeOptions = Object.keys(Asteroid.SPECTRAL_TYPES).reduce((acc, spectralId) => ([
@@ -179,13 +178,8 @@ const SearchFilters = ({ assetType, highlighting, isListView = false }) => {
   const updateFilters = useStore(s => s.dispatchFiltersUpdated(assetType));
   const { data: priceConstants } = usePriceConstants();
 
-  const radiusFieldNote = useCallback((value) => {
-    return priceConstants && <Ether>{formatters.asteroidPrice(value, priceConstants)}</Ether>
-  }, [priceConstants]);
-
   const surfaceAreaFieldNote = useCallback((value) => {
-    const radius = Math.sqrt(value / (4 * Math.PI));
-    return priceConstants && <Ether>{formatters.asteroidPrice(radius, priceConstants)}</Ether>
+    return priceConstants && <AsteroidUserPrice lots={value} />;
   }, [priceConstants]);
 
   const onFiltersChange = useCallback((update) => {
