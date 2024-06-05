@@ -20,9 +20,13 @@ export const formatTimer = (secondsRemaining, maxPrecision = null) => {
   return parts.join(' ');
 };
 
-export const formatFixed = (value, maximumFractionDigits = 0) => {
+export const roundToPlaces = (value, maximumFractionDigits = 0) => {
   const div = 10 ** maximumFractionDigits;
-  return (Math.round((value || 0) * div) / div).toLocaleString(undefined, { maximumFractionDigits });
+  return (Math.round((value || 0) * div) / div);
+}
+
+export const formatFixed = (value, maximumFractionDigits = 0) => {
+  return roundToPlaces(value, maximumFractionDigits).toLocaleString(undefined, { maximumFractionDigits });
 };
 
 export const formatPrecision = (value, maximumPrecision = 0) => {

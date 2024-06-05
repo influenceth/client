@@ -6,9 +6,9 @@ const useSale = (type) => {
   const { data: priceConstants, isLoading } = usePriceConstants();
   if (!isLoading) {
     if (type === Entity.IDS.ASTEROID) {
-      return !!(priceConstants.ASTEROID_BASE_PRICE_ETH && priceConstants.ASTEROID_LOT_PRICE_ETH);
+      return !!(priceConstants.ASTEROID_PURCHASE_BASE_PRICE && priceConstants.ASTEROID_PURCHASE_LOT_PRICE && priceConstants.ASTEROID_PURCHASE_TOKEN);
     } else if (type === Entity.IDS.CREWMATE) {
-      return !!priceConstants.ADALIAN_PRICE_ETH;
+      return !!(priceConstants.ADALIAN_PURCHASE_PRICE && priceConstants.ADALIAN_PURCHASE_TOKEN);
     }
   }
   return false;

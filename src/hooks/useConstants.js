@@ -1,11 +1,14 @@
 import { useQuery } from 'react-query';
+import { Address } from '@influenceth/sdk';
 
 import api from '~/lib/api';
 
 const parseAs = {
-  ADALIAN_PRICE_ETH: BigInt,
-  ASTEROID_BASE_PRICE_ETH: BigInt,
-  ASTEROID_LOT_PRICE_ETH: BigInt,
+  ADALIAN_PURCHASE_PRICE: BigInt,
+  ADALIAN_PURCHASE_TOKEN: Address.toStandard,
+  ASTEROID_PURCHASE_BASE_PRICE: BigInt,
+  ASTEROID_PURCHASE_LOT_PRICE: BigInt,
+  ASTEROID_PURCHASE_TOKEN: Address.toStandard,
   // ASTEROID_MERKLE_ROOT: null,
   // ASTEROID_SALE_LIMIT: null,
   CREW_SCHEDULE_BUFFER: parseInt,

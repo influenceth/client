@@ -6,13 +6,15 @@ import CrewmatesImage from '~/assets/images/sales/crewmates.png';
 import SwayImage from '~/assets/images/sales/sway.png';
 import StarterPackImage from '~/assets/images/sales/starter_packs.png';
 import ClipCorner from '~/components/ClipCorner';
+import UserPrice from '~/components/UserPrice';
+import useAsteroidSale from '~/hooks/useAsteroidSale';
+import usePriceConstants from '~/hooks/usePriceConstants';
 import useBlockTime from '~/hooks/useBlockTime';
+import { TOKEN, TOKEN_FORMAT, TOKEN_SCALE } from '~/lib/priceUtils';
 import { formatTimer } from '~/lib/utils';
-
+import FundingMenu from './components/FundingMenu';
 import LauncherDialog from './components/LauncherDialog';
 import SKU from './components/SKU';
-import useAsteroidSale from '~/hooks/useAsteroidSale';
-import FundingMenu from './components/FundingMenu';
 
 const storeAssets = {
   crewmates: 'Crewmates',
@@ -20,6 +22,9 @@ const storeAssets = {
   asteroids: 'Asteroids',
   packs: 'Starter Packs'
 };
+
+export const basicPackPriceUSD = 25;
+export const advPackPriceUSD = 60;
 
 const skuButtonCornerSize = 20;
 const skuButtonMargin = 20;
@@ -143,6 +148,8 @@ const SKUImagery = styled.div`
 const SkuSelector = ({ onSelect }) => {
   const blockTime = useBlockTime();
   const { data: asteroidSale } = useAsteroidSale();
+  const { data: priceConstants } = usePriceConstants();
+  // console.log('priceConstants', priceConstants);
 
   const paneMeta = useMemo(() => {
     const asteroidExtra = {};
@@ -171,18 +178,34 @@ const SkuSelector = ({ onSelect }) => {
       },
       'crewmates': {
         imagery: CrewmatesImage,
-        leftNote: '$5 Each', // TODO: use price constants? that's an eth value. what are we pegged to?
+        leftNote: (
+          <>
+            <UserPrice
+              price={priceConstants?.ADALIAN_PURCHASE_PRICE}
+              priceToken={priceConstants?.ADALIAN_PURCHASE_TOKEN}
+              format={TOKEN_FORMAT.SHORT} />
+            {' '}Each
+          </>
+        )
       },
       'packs': {
         imagery: StarterPackImage,
-        leftNote: 'From $20', // TODO: use price constants?
+        leftNote: (
+          <>
+            From{' '}
+            <UserPrice
+              price={basicPackPriceUSD * TOKEN_SCALE[TOKEN.USDC]}
+              priceToken={TOKEN.USDC}
+              format={TOKEN_FORMAT.SHORT} />
+          </>
+        )
       },
       'sway': {
         imagery: SwayImage,
         leftNote: 'Buy on Exchange',
       }
     };
-  }, [asteroidSale, blockTime])
+  }, [asteroidSale, blockTime, priceConstants])
 
   return (
     <SKUButtons>

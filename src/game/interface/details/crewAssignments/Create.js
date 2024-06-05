@@ -38,6 +38,10 @@ import formatters from '~/lib/formatters';
 import { reactBool } from '~/lib/utils';
 import theme from '~/theme';
 import api from '~/lib/api';
+import usePriceHelper from '~/hooks/usePriceHelper';
+import useWalletUSD from '~/hooks/useWalletUSD';
+import { TOKEN } from '~/lib/priceUtils';
+import UserPrice, { CrewmateUserPrice } from '~/components/UserPrice';
 
 const CollectionImages = {
   1: Collection1,
@@ -816,6 +820,8 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
   const { crew, crewmateMap, adalianRecruits, arvadianRecruits } = useCrewContext();
   const { promptingTransaction } = useContext(ChainTransactionContext);
   const { data: priceConstants } = usePriceConstants();
+  const priceHelper = usePriceHelper();
+  const { data: wallet } = useWalletUSD();
   const { data: weiBalance, refetch: refetchEth } = useEthBalance();
 
   const [confirming, setConfirming] = useState();
@@ -1207,11 +1213,14 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
 
   const confirmationProps = useMemo(() => {
     if (process.env.REACT_APP_CHAIN_ID === '0x534e5f5345504f4c4941') {
-      if (ethClaimEnabled && (BigInt(priceConstants.ADALIAN_PRICE_ETH) > (weiBalance || 0n))) {
-        return {
-          onConfirm: getEthFromFaucet,
-          loading: !!requestingEth,
-          confirmText: <Ether>Request ETH</Ether>
+      if (ethClaimEnabled) {
+        const price = priceHelper.from(priceConstants.ADALIAN_PURCHASE_PRICE, priceConstants.ADALIAN_PURCHASE_TOKEN);
+        if (price.usdcValue > wallet.getCombinedSwappableBalance(TOKEN.USDC)) {
+          return {
+            onConfirm: getEthFromFaucet,
+            loading: !!requestingEth,
+            confirmText: <Ether>Request ETH</Ether>
+          }
         }
       }
     }
@@ -1222,8 +1231,7 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
           {crewmate.id ? 'Confirm' : 'Purchase Crewmate'}
           {!crewmate.id && priceConstants && (
             <span style={{ color: 'white', flex: 1, fontSize: '90%', textAlign: 'right', marginLeft: 15 }}>
-              {/* TODO: should this update price before "approve"? what about asteroids? */}
-              <Ether>{formatters.crewmatePrice(priceConstants)}</Ether>
+              <CrewmateUserPrice />
             </span>
           )}
         </>
@@ -1570,7 +1578,10 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
           body={(
             <PromptBody highlight>
               The Crewmate you are about to recruit will be minted as a new digital asset
-              {crewmate.id ? '.' : <>, which currently costs <b><Ether>{formatters.crewmatePrice(priceConstants)}</Ether></b> and helps to fund game development.</>}
+              {crewmate.id
+                ? '.'
+                : <>, which currently costs <b><CrewmateUserPrice /></b> and helps to fund game development.</>
+              }
               <br/><br/>
               {crewmate.id ? 'You' : 'Once minted, you'}{' '}will be the sole owner of the Crewmate; nobody can
               delete them or take them from you. They will be yours to keep or trade forever. All of their

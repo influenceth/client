@@ -6,18 +6,39 @@ import LayerswapImage from '~/assets/images/sales/logo_layerswap.svg';
 import RampImage from '~/assets/images/sales/logo_ramp.svg';
 import Button from '~/components/ButtonAlt';
 import CollapsibleBlock from '~/components/CollapsibleBlock';
+import { EthIcon, UsdcIcon } from '~/components/Icons';
 import MouseoverInfoPane from '~/components/MouseoverInfoPane';
+import Switcher from '~/components/SwitcherButton';
+import { TOKEN, TOKEN_FORMAT } from '~/lib/priceUtils';
 import useSession from '~/hooks/useSession';
+import useStore from '~/hooks/useStore';
 import useWalletUSD from '~/hooks/useWalletUSD';
 import { formatFixed, formatUSD } from '~/lib/utils';
 
 const FundWrapper = styled.div`
   padding: 0 20px 5px;
-  & > h3 {
-    font-size: 15px;
-    font-weight: normal;
-    margin-bottom: 15px;
-    opacity: 0.65;
+  & > div:first-child {
+    align-items: center;
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    & > h3 {
+      flex: 1;
+      font-size: 15px;
+      font-weight: normal;
+      margin-bottom: 15px;
+      opacity: 0.65;
+      white-space: nowrap;
+    }
+    & > div {
+      opacity: 0.5;
+      transition: opacity 250ms ease;
+      &:hover { opacity: 1; }
+
+      & button svg {
+        margin-right: 0;
+      }
+    }
   }
   & > label {
     font-size: 32px;
@@ -93,10 +114,6 @@ const Disclaimer = styled.div`
   }
 `;
 
-const ethToken = process.env.REACT_APP_ERC20_TOKEN_ADDRESS;
-const usdcToken = process.env.REACT_APP_USDC_TOKEN_ADDRESS;
-const swayToken = process.env.REACT_APP_STARKNET_SWAY_TOKEN;
-
 const layerSwapChains = {
   '0x534e5f4d41494e': { ethereum: 'ETHEREUM_MAINNET', starknet: 'STARKNET_MAINNET' },
   'SN_MAIN': { ethereum: 'ETHEREUM_MAINNET', starknet: 'STARKNET_MAINNET' },
@@ -109,6 +126,9 @@ const layerSwapChains = {
 const FundingMenu = () => {
   const { accountAddress, starknet } = useSession();
   const { data: wallet } = useWalletUSD();
+
+  const preferredUiCurrency = useStore(s => s.getPreferredUiCurrency());
+  const dispatchPreferredUiCurrency = useStore(s => s.dispatchPreferredUiCurrency);
 
   const [hoveredRampButton, setHoveredRampButton] = useState(false);
 
@@ -158,16 +178,36 @@ const FundingMenu = () => {
 
   const tooltipContent = useMemo(() => ReactDOMServer.renderToStaticMarkup(
     <Subtotals>
-      <div><label>{formatFixed(wallet?.ethBalance || 0, 5)} ETH</label><span>{formatUSD(wallet?.ethBalanceUSD || 0)}</span></div>
-      <div><label>{formatFixed(wallet?.usdcBalance || 0, 2)} USDC</label><span>{formatUSD(wallet?.usdcBalanceUSD || 0)}</span></div>
+      <div>
+        <label>{wallet.getTokenBalance(TOKEN.ETH, null, TOKEN_FORMAT.UNLABELED)} ETH</label>
+        <span>{wallet.getTokenBalance(TOKEN.ETH, preferredUiCurrency, true)}</span>
+      </div>
+      <div>
+        <label>{wallet.getTokenBalance(TOKEN.USDC, null, TOKEN_FORMAT.UNLABELED)} USDC</label>
+        <span>{wallet.getTokenBalance(TOKEN.USDC, preferredUiCurrency, true)}</span>
+      </div>
     </Subtotals>
-  ), [wallet]);
+  ), [preferredUiCurrency, wallet]);
 
   return (
     <FundWrapper>
-      <h3>Wallet Balance:</h3>
+      <div>
+        <h3>Wallet Balance:</h3>
+        <div>
+          <Switcher
+            buttons={[
+              { icon: <UsdcIcon />, value: TOKEN.USDC, tooltip: 'Display Prices in USD' },
+              { icon: <EthIcon />, value: TOKEN.ETH, tooltip: 'Display Prices in ETH' }
+            ]}
+            onChange={dispatchPreferredUiCurrency}
+            size="icon"
+            tooltipContainer="launcherTooltip"
+            value={preferredUiCurrency}
+          />
+        </div>
+      </div>
       <label data-tooltip-id="launcherTooltip" data-tooltip-html={tooltipContent} data-tooltip-place="top">
-        {formatUSD(wallet?.totalUSD)}
+        {wallet.getCombinedSwappableBalance(preferredUiCurrency, true)}
       </label>
       <CollapsibleBlock
         containerHeight={250}

@@ -9,18 +9,22 @@ import StarterPackHeroImage from '~/assets/images/sales/starter_packs_hero.jpg';
 import AdalianFlourish from '~/components/AdalianFlourish';
 import HeroLayout from '~/components/HeroLayout';
 import UncontrolledTextInput from '~/components/TextInputUncontrolled';
-import { CheckIcon, PurchaseAsteroidIcon, SwayIcon } from '~/components/Icons';
+import { CheckIcon, EthIcon, PurchaseAsteroidIcon, SwayIcon } from '~/components/Icons';
 import useStore from '~/hooks/useStore';
 import useAsteroidSale from '~/hooks/useAsteroidSale';
 import useBlockTime from '~/hooks/useBlockTime';
-import { formatTimer, formatUSD } from '~/lib/utils';
+import { formatTimer, formatUSD, roundToPlaces } from '~/lib/utils';
 import NavIcon from '~/components/NavIcon';
 import theme from '~/theme';
 import Button from '~/components/ButtonAlt';
 import useWalletUSD from '~/hooks/useWalletUSD';
 import useCrewManager from '~/hooks/actionManagers/useCrewManager';
 import usePriceConstants from '~/hooks/usePriceConstants';
-import useSwapQuote from '~/hooks/useSwapQuote';
+import useSwapQuote, { useSwayPerUsdc, useUsdcPerEth } from '~/hooks/useSwapQuote';
+import { TOKEN, TOKEN_FORMAT, TOKEN_SCALE } from '~/lib/priceUtils';
+import usePriceHelper from '~/hooks/usePriceHelper';
+import UserPrice from '~/components/UserPrice';
+import { advPackPriceUSD, basicPackPriceUSD } from '../Store';
 
 const Flourish = styled.div`
   background: url(${p => p.src});
@@ -182,6 +186,7 @@ const PackContents = styled.div`
       flex: 1;
       font-size: 18px;
       font-weight: bold;
+      white-space: nowrap;
     }
     & > span {
       opacity: 0.6;
@@ -311,19 +316,19 @@ const AsteroidSKU = () => {
 const CrewmateSKU = ({ onUpdatePurchase }) => {
   const { purchaseCredits, getPendingCreditPurchase } = useCrewManager();
   const { data: priceConstants } = usePriceConstants();
-  const { data: usdcPerEth } = useSwapQuote(process.env.REACT_APP_ERC20_TOKEN_ADDRESS, process.env.REACT_APP_USDC_TOKEN_ADDRESS, /* 1, accountAddress */);
+  const priceHelper = usePriceHelper();
   const [quantity, setQuantity] = useState(1);
 
-  const usdPricePer = useMemo(() => {
-    return parseFloat(priceConstants?.ADALIAN_PRICE_ETH) / 1e18 * parseFloat(usdcPerEth || 3807.62);
-  }, [priceConstants, usdcPerEth]);
-
   useEffect(() => {
+    const totalPrice = priceHelper.from(
+      BigInt(quantity) * priceConstants?.ADALIAN_PURCHASE_PRICE,
+      priceConstants?.ADALIAN_PURCHASE_TOKEN
+    );
     onUpdatePurchase({
-      totalPrice: quantity * usdPricePer,
+      totalPrice,
       onPurchase: () => purchaseCredits(quantity)
     })
-  }, [quantity, onUpdatePurchase, usdPricePer]);
+  }, [onUpdatePurchase, priceHelper, quantity]);
 
   return (
     <Wrapper>
@@ -346,7 +351,12 @@ const CrewmateSKU = ({ onUpdatePurchase }) => {
           </div>
           <div>
             <label>Price</label>
-            <span>{usdPricePer ? formatUSD(usdPricePer) : '-'} Each</span>
+            <span>
+              <UserPrice
+                price={priceConstants?.ADALIAN_PURCHASE_PRICE}
+                priceToken={priceConstants?.ADALIAN_PURCHASE_TOKEN}
+                format /> Each
+            </span>
           </div>
           <div>
             <label>Quantity</label>
@@ -370,6 +380,43 @@ const CrewmateSKU = ({ onUpdatePurchase }) => {
 
 // TODO: wrap in launch feature flag
 const StarterPackSKU = () => {
+  const { data: priceConstants } = usePriceConstants();
+  const priceHelper = usePriceHelper();
+
+  const adalianPrice = useMemo(() => {
+    if (!priceConstants) return priceHelper.from(0);
+    return priceHelper.from(priceConstants?.ADALIAN_PURCHASE_PRICE, priceConstants?.ADALIAN_PURCHASE_TOKEN);
+  }, [priceConstants]);
+
+  const packs = useMemo(() => {
+    const basicPrice = priceHelper.from(basicPackPriceUSD * TOKEN_SCALE[TOKEN.USDC], TOKEN.USDC);
+    const basicCrewmates = 1;
+    const basicCrewmatesValue = priceHelper.from(basicCrewmates * adalianPrice.usdcValue, TOKEN.USDC);
+    const basicSwayValue = priceHelper.from(basicPrice.usdcValue - basicCrewmatesValue.usdcValue, TOKEN.USDC);
+
+    const advPrice = priceHelper.from(advPackPriceUSD * TOKEN_SCALE[TOKEN.USDC], TOKEN.USDC);
+    const advCrewmates = 5;
+    const advCrewmatesValue = priceHelper.from(advCrewmates * adalianPrice.usdcValue, TOKEN.USDC)
+    const advSwayValue = priceHelper.from(advPrice.usdcValue - advCrewmatesValue.usdcValue, TOKEN.USDC);
+
+    return {
+      basic: {
+        price: basicPrice,
+        crewmates: basicCrewmates,
+        crewmatesValue: basicCrewmatesValue,
+        swayFormatted: basicSwayValue.to(TOKEN.SWAY, TOKEN_FORMAT.UNLABELED),
+        swayValue: basicSwayValue
+      },
+      adv: {
+        price: basicPrice,
+        crewmates: advCrewmates,
+        crewmatesValue: advCrewmatesValue,
+        swayFormatted: advSwayValue.to(TOKEN.SWAY, TOKEN_FORMAT.UNLABELED),
+        swayValue: advSwayValue
+      }
+    }
+  }, [adalianPrice, priceHelper]);
+
   return (
     <Wrapper>
       <Description>
@@ -388,13 +435,25 @@ const StarterPackSKU = () => {
             <PackContents>
               <div>
                 <span><NavIcon color={theme.colors.main} /></span>
-                <label>1 Crewmate</label>
-                <span>$5 Value</span>
+                <label>{packs.basic.crewmates} Crewmate{packs.basic.crewmates === 1 ? '' : 's'}</label>
+                <span>
+                  <UserPrice
+                    price={packs.basic.crewmatesValue.usdcValue}
+                    priceToken={TOKEN.USDC}
+                    format={TOKEN_FORMAT.SHORT} />
+                  {' '}Value
+                </span>
               </div>
               <div>
                 <span><NavIcon color={theme.colors.main} /></span>
-                <label>122,276 SWAY</label>
-                <span>$20 Value</span>
+                <label>{packs.basic.swayFormatted}{' '}SWAY</label>
+                <span>
+                  <UserPrice
+                    price={packs.basic.swayValue.usdcValue}
+                    priceToken={TOKEN.USDC}
+                    format={TOKEN_FORMAT.SHORT} />
+                  {' '}Value
+                </span>
               </div>
             </PackContents>
             <PackChecks>
@@ -404,7 +463,7 @@ const StarterPackSKU = () => {
               </div>
               <div>
                 <span><CheckIcon /></span>
-                <label>1x Crewmate to perform game tasks (Recommended <b>Miner</b> class)</label>
+                <label>{packs.basic.crewmates}x Crewmate{packs.basic.crewmates === 1 ? '' : 's'} to perform game tasks (Recommended <b>Miner</b> class)</label>
               </div>
               <div>
                 <span><CheckIcon /></span>
@@ -420,13 +479,25 @@ const StarterPackSKU = () => {
             <PackContents>
               <div>
                 <span><NavIcon color={theme.colors.main} /></span>
-                <label>5 Crewmates</label>
-                <span>$25 Value</span>
+                <label>{packs.adv.crewmates} Crewmate{packs.adv.crewmates === 1 ? '' : 's'}</label>
+                <span>
+                  <UserPrice
+                    price={packs.adv.crewmatesValue.usdcValue}
+                    priceToken={TOKEN.USDC}
+                    format={TOKEN_FORMAT.SHORT} />
+                  {' '}Value
+                </span>
               </div>
               <div>
                 <span><NavIcon color={theme.colors.main} /></span>
-                <label>243,276 SWAY</label>
-                <span>$35 Value</span>
+                <label>{packs.adv.swayFormatted}{' '}SWAY</label>
+                <span>
+                  <UserPrice
+                    price={packs.adv.swayValue.usdcValue}
+                    priceToken={TOKEN.USDC}
+                    format={TOKEN_FORMAT.SHORT} />
+                  {' '}Value
+                </span>
               </div>
             </PackContents>
             <PackChecks>
@@ -436,7 +507,7 @@ const StarterPackSKU = () => {
               </div>
               <div>
                 <span><CheckIcon /></span>
-                <label>5x crewmates to form a full crew and perform game tasks efficiently</label>
+                <label>{packs.adv.crewmates}x Crewmate{packs.adv.crewmates === 1 ? '' : 's'} to form a full crew and perform game tasks efficiently</label>
               </div>
               <div>
                 <span><CheckIcon /></span>
@@ -452,14 +523,51 @@ const StarterPackSKU = () => {
 
 // TODO: wrap in launch feature flag
 const SwaySKU = ({ onUpdatePurchase }) => {
-  const [quantity, setQuantity] = useState(1);
+  const priceHelper = usePriceHelper();
+  const preferredUiCurrency = useStore(s => s.getPreferredUiCurrency());
+
+  const [eth, setETH] = useState();
+  const [sway, setSway] = useState();
+  const [usdc, setUSDC] = useState();
+
+  const handleEthChange = useCallback((newValue) => {
+    setETH(newValue);
+
+    const value = priceHelper.from(newValue * TOKEN_SCALE[TOKEN.ETH], TOKEN.ETH);
+    setUSDC(roundToPlaces(value.to(TOKEN.USDC) / TOKEN_SCALE[TOKEN.USDC], 2));
+    setSway(roundToPlaces(value.to(TOKEN.SWAY) / TOKEN_SCALE[TOKEN.SWAY], 0));
+  }, [priceHelper]);
+
+  const handleSwayChange = useCallback((newValue) => {
+    setSway(newValue);
+    
+    const value = priceHelper.from(newValue * TOKEN_SCALE[TOKEN.SWAY], TOKEN.SWAY);
+    setETH(roundToPlaces(value.to(TOKEN.ETH) / TOKEN_SCALE[TOKEN.ETH], 6));
+    setUSDC(roundToPlaces(value.to(TOKEN.USDC) / TOKEN_SCALE[TOKEN.USDC], 2));
+  }, [priceHelper]);
+
+  const handleUsdcChange = useCallback((newValue) => {
+    setUSDC(newValue);
+    
+    const value = priceHelper.from(newValue * TOKEN_SCALE[TOKEN.USDC], TOKEN.USDC);
+    setETH(roundToPlaces(value.to(TOKEN.ETH) / TOKEN_SCALE[TOKEN.ETH], 6));
+    setSway(roundToPlaces(value.to(TOKEN.SWAY) / TOKEN_SCALE[TOKEN.SWAY], 0));
+  }, [priceHelper]);
+
+  useEffect(() => {
+    if (preferredUiCurrency === TOKEN.ETH) {
+      handleEthChange(0.001);
+    } else {
+      handleUsdcChange(1);
+    }
+  }, []);
 
   useEffect(() => {
     onUpdatePurchase({
-      totalPrice: quantity,
+      totalPrice: priceHelper.from((usdc || 0) * TOKEN_SCALE[TOKEN.USDC], TOKEN.USDC),
       // onPurchase: () => purchaseCredits(quantity)
     })
-  }, [quantity, onUpdatePurchase]);
+  }, [usdc, onUpdatePurchase]);
 
   return (
     <Wrapper>
@@ -472,31 +580,48 @@ const SwaySKU = ({ onUpdatePurchase }) => {
       <PurchaseForm>
         <h3>Sway Exchange</h3>
         <SwayExchangeRows style={{ paddingTop: 6 }}>
-          <div style={{ margin: '6px 0' }}>
-            <span>
-              <UncontrolledTextInput
-                max={99}
-                min={1}
-                onChange={(e) => setQuantity(e.currentTarget.value)}
-                step={1}
-                style={{ height: 28 }}
-                type="number"
-                value={quantity || ''} />
-            </span>
-            <span>
-              USD
-            </span>
-          </div>
+          {preferredUiCurrency === TOKEN.USDC && (
+            <div style={{ margin: '6px 0' }}>
+              <span>
+                <UncontrolledTextInput
+                  min={0.01}
+                  onChange={(e) => handleUsdcChange(e.currentTarget.value)}
+                  step={0.01}
+                  style={{ height: 28 }}
+                  type="number"
+                  value={usdc || ''} />
+              </span>
+              <span>
+                USD
+              </span>
+            </div>
+          )}
+          {preferredUiCurrency === TOKEN.ETH && (
+            <div style={{ margin: '6px 0' }}>
+              <span>
+                <UncontrolledTextInput
+                  min={0.00001}
+                  onChange={(e) => handleEthChange(e.currentTarget.value)}
+                  step={0.00001}
+                  style={{ height: 28 }}
+                  type="number"
+                  value={eth || ''} />
+                  <span style={{ fontSize: '24px' }}><EthIcon /></span>
+              </span>
+              <span>
+                ETH
+              </span>
+            </div>
+          )}
           <div>
             <span>
               <UncontrolledTextInput
-                max={99}
                 min={1}
-                onChange={(e) => setQuantity(e.currentTarget.value)}
+                onChange={(e) => handleSwayChange(e.currentTarget.value)}
                 step={1}
                 style={{ height: 28 }}
                 type="number"
-                value={quantity || ''} />
+                value={sway || ''} />
               <span style={{ fontSize: '24px' }}><SwayIcon /></span>
             </span>
             <span>
@@ -517,7 +642,9 @@ const defaultStyleOverrides = {
 
 const SKU = ({ asset, onBack }) => {
   const { data: wallet } = useWalletUSD();
+  const priceHelper = usePriceHelper();
 
+  const preferredUiCurrency = useStore(s => s.getPreferredUiCurrency());
   const filters = useStore(s => s.assetSearch['asteroidsMapped'].filters);
   const updateFilters = useStore(s => s.dispatchFiltersUpdated('asteroidsMapped'));
   const zoomStatus = useStore(s => s.asteroids.zoomStatus);
@@ -526,7 +653,7 @@ const SKU = ({ asset, onBack }) => {
   const dispatchZoomScene = useStore(s => s.dispatchZoomScene);
   const updateZoomStatus = useStore(s => s.dispatchZoomStatusChanged);
 
-  const [purchase, setPurchase] = useState({ totalPrice: 0 });
+  const [purchase, setPurchase] = useState();
 
   const filterUnownedAsteroidsAndClose = useCallback(() => {
     updateFilters(Object.assign({}, filters, { ownedBy: 'unowned' }));
@@ -584,7 +711,13 @@ const SKU = ({ asset, onBack }) => {
           label: (
             <PurchaseButtonInner>
               <label>Purchase Pack</label>
-              <span>$60</span>
+              <span>
+                <UserPrice
+                  price={advPackPriceUSD * TOKEN_SCALE[TOKEN.USDC]}
+                  priceToken={TOKEN.USDC}
+                  format={TOKEN_FORMAT.SHORT}
+                />
+              </span>
             </PurchaseButtonInner>
           ),
           props: {
@@ -599,7 +732,13 @@ const SKU = ({ asset, onBack }) => {
               width={purchaseFormWidth - 2 * purchasePacksPadding}>
               <PurchaseButtonInner>
                 <label>Purchase Pack</label>
-                <span>$20</span>
+                <span>
+                  <UserPrice
+                    price={basicPackPriceUSD * TOKEN_SCALE[TOKEN.USDC]}
+                    priceToken={TOKEN.USDC}
+                    format={TOKEN_FORMAT.SHORT}
+                  />
+                </span>
               </PurchaseButtonInner>
             </Button>
           )
@@ -621,7 +760,7 @@ const SKU = ({ asset, onBack }) => {
   // eth/sway conversion
 
   const handlePurchase = useCallback(() => {
-    if (wallet?.totalUSD >= purchase?.totalPrice) {
+    if (wallet?.totalValueUSD >= purchase?.totalPrice) {
       if (wallet?.ethBalanceUSD >= purchase?.totalPrice) {
         purchase.onPurchase();
       } else {
@@ -648,13 +787,12 @@ const SKU = ({ asset, onBack }) => {
           <PurchaseButtonInner>
             <label>Purchase</label>
             <span>
-              ${Math.round(purchase?.totalPrice || 0)}
-              {/* ${(totalPrice || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} */}
+              {(purchase?.totalPrice || priceHelper.from(0n)).to(preferredUiCurrency, true)}
             </span>
           </PurchaseButtonInner>
         ),
         onClick: handlePurchase,
-        props: { disabled: !(purchase?.totalPrice > 0), isTransaction: true }
+        props: { disabled: !(purchase?.totalPrice?.usdcValue > 0), isTransaction: true }
       }}
       {...props}>
       {content}

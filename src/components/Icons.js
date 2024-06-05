@@ -1,6 +1,6 @@
 import { AiFillEdit, AiFillEye, AiFillStar, AiOutlineNumber } from 'react-icons/ai';
 import { BsFillPersonFill, BsCheckCircle, BsSliders, BsStopwatch, BsThreeDots } from 'react-icons/bs';
-import { FaBan, FaCaretDown, FaCaretUp, FaCogs, FaCopy, FaEthereum, FaList, FaMapMarkedAlt } from 'react-icons/fa';
+import { FaBan, FaCaretDown, FaCaretUp, FaCogs, FaCopy, FaDollarSign, FaEthereum, FaList, FaMapMarkedAlt } from 'react-icons/fa';
 import { FiCheckSquare, FiDownload, FiExternalLink, FiLogIn, FiMenu, FiSearch, FiSquare } from 'react-icons/fi';
 import { HiClock, HiCog, HiChevronDoubleLeft, HiChevronDoubleRight } from 'react-icons/hi';
 import {
@@ -423,5 +423,7 @@ export {
   FiCheckSquare as CheckedIcon,
   FiSquare as UncheckedIcon,
   FiSearch as MagnifyingIcon,
-  BsFillPersonFill as UserIcon
+  BsFillPersonFill as UserIcon,
+  FaDollarSign as UsdcIcon,
+  FaEthereum as EthIcon
 };

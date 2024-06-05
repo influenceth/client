@@ -1,8 +1,9 @@
 import { useQuery } from 'react-query';
 
 import api from '~/lib/api';
+import { TOKEN, TOKEN_SCALE } from '~/lib/priceUtils';
 
-const useSwapQuote = (sellToken, buyToken, amount = 1, accountAddress = false) => {
+const useSwapQuote = (sellToken, buyToken, amount, accountAddress = false) => {
   return useQuery(
     [ 'swapQuote', sellToken, buyToken, amount, accountAddress ],
     async () => {
@@ -12,7 +13,7 @@ const useSwapQuote = (sellToken, buyToken, amount = 1, accountAddress = false) =
         amount,
         account: accountAddress || undefined
       });
-      return quotes?.[0] ? (quotes[0].buyAmount / quotes[0].sellAmount) : 0n;
+      return quotes?.[0] ? (parseInt(quotes[0].buyAmount) / parseInt(quotes[0].sellAmount)) : 0;
     },
     {
       enabled: !!(sellToken && buyToken),
@@ -21,17 +22,21 @@ const useSwapQuote = (sellToken, buyToken, amount = 1, accountAddress = false) =
   );
 };
 
-export const useSwayPerUsdc = () => {
+export const useSwayPerUsdc = (accountAddress, amount) => {
   return useSwapQuote(
-    process.env.REACT_APP_USDC_TOKEN_ADDRESS,
-    process.env.REACT_APP_STARKNET_SWAY_TOKEN
+    TOKEN.USDC,
+    TOKEN.SWAY,
+    amount || (2500 * TOKEN_SCALE[TOKEN.SWAY]), // approx $1 worth
+    accountAddress
   )
 };
 
-export const useUsdcPerEth = () => {
+export const useUsdcPerEth = (accountAddress, amount) => {
   return useSwapQuote(
-    process.env.REACT_APP_ERC20_TOKEN_ADDRESS,
-    process.env.REACT_APP_USDC_TOKEN_ADDRESS
+    TOKEN.ETH,
+    TOKEN.USDC,
+    amount || (0.00025 * TOKEN_SCALE[TOKEN.ETH]), // approx $1 worth
+    accountAddress
   )
 };
 

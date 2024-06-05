@@ -246,20 +246,21 @@ const customConfigs = {
   ManageAsteroid: { equalityTest: ['asteroid.id'] },
   PurchaseAdalian: {
     getPrice: async () => {
-      const { ADALIAN_PRICE_ETH } = await api.getConstants('ADALIAN_PRICE_ETH');
-      return BigInt(ADALIAN_PRICE_ETH);
+      const { ADALIAN_PURCHASE_PRICE, ADALIAN_PURCHASE_TOKEN } = await api.getConstants(['ADALIAN_PURCHASE_PRICE', 'ADALIAN_PURCHASE_TOKEN']);
+      return [ADALIAN_PURCHASE_PRICE, ADALIAN_PURCHASE_TOKEN];
     },
     equalityTest: true
   },
   PurchaseAsteroid: {
     getPrice: async ({ asteroid }) => {
-      const { ASTEROID_BASE_PRICE_ETH, ASTEROID_LOT_PRICE_ETH } = await api.getConstants([
-        'ASTEROID_BASE_PRICE_ETH',
-        'ASTEROID_LOT_PRICE_ETH'
+      const { ASTEROID_PURCHASE_BASE_PRICE, ASTEROID_PURCHASE_LOT_PRICE, ASTEROID_PURCHASE_TOKEN } = await api.getConstants([
+        'ASTEROID_PURCHASE_BASE_PRICE',
+        'ASTEROID_PURCHASE_LOT_PRICE',
+        'ASTEROID_PURCHASE_TOKEN'
       ]);
-      const base = BigInt(ASTEROID_BASE_PRICE_ETH);
-      const lot = BigInt(ASTEROID_LOT_PRICE_ETH);
-      return base + lot * BigInt(Asteroid.Entity.getSurfaceArea(asteroid));
+      const base = BigInt(ASTEROID_PURCHASE_BASE_PRICE);
+      const lot = BigInt(ASTEROID_PURCHASE_LOT_PRICE);
+      return [base + lot * BigInt(Asteroid.Entity.getSurfaceArea(asteroid)), ASTEROID_PURCHASE_TOKEN];
     },
     equalityTest: ['asteroid.id']
   },
@@ -275,8 +276,8 @@ const customConfigs = {
   RecruitAdalian: {
     getPrice: async ({ crewmate }) => {
       if (crewmate?.id > 0) return 0n; // if recruiting existing crewmate, no cost
-      const { ADALIAN_PRICE_ETH } = await api.getConstants('ADALIAN_PRICE_ETH');
-      return BigInt(ADALIAN_PRICE_ETH);
+      const { ADALIAN_PURCHASE_PRICE, ADALIAN_PURCHASE_TOKEN } = await api.getConstants(['ADALIAN_PURCHASE_PRICE', 'ADALIAN_PURCHASE_TOKEN']);
+      return [BigInt(ADALIAN_PURCHASE_PRICE), ADALIAN_PURCHASE_TOKEN];
     },
     equalityTest: true
   },
@@ -518,9 +519,6 @@ export function ChainTransactionProvider({ children }) {
   const { crew, pendingTransactions } = useCrewContext();
   const { data: wallet } = useWalletUSD();
   const { data: usdcPerEth } = useUsdcPerEth();
-  useEffect(() => {
-    console.log('usdcPerEth', usdcPerEth);
-  }, [usdcPerEth]);
 
   const createAlert = useStore(s => s.dispatchAlertLogged);
   const dispatchFailedTransaction = useStore(s => s.dispatchFailedTransaction);
@@ -608,6 +606,7 @@ export function ChainTransactionProvider({ children }) {
 
             let totalEscrow = 0n;
             let totalPrice = 0n;
+            let totalPriceToken;
             const calls = config.getNonsystemCalls ? config.getNonsystemCalls(rawVars) : [];
             for (let { runSystem, rawVars, escrowConfig } of systemCalls) {
               console.log('systemCall', runSystem, rawVars, escrowConfig);
@@ -698,7 +697,11 @@ export function ChainTransactionProvider({ children }) {
               }
 
               if (customConfigs[runSystem]?.getPrice) {
-                totalPrice += await customConfigs[runSystem].getPrice(processedVars);
+                const [tokenAmount, token] = await customConfigs[runSystem].getPrice(processedVars);
+                if (![process.env.REACT_APP_ERC20_TOKEN_ADDRESS, process.env.REACT_APP_ERC20_TOKEN_ADDRESS].includes(totalPriceToken)) throw new 'Invalid pricing token (only ETH or USDC supported).';
+                if (totalPriceToken && totalPriceToken !== token) throw new 'Mixed currency transactions are not supported.';
+                totalPrice += tokenAmount;
+                totalPriceToken = token;
               }
             }
 
@@ -715,70 +718,80 @@ export function ChainTransactionProvider({ children }) {
 
             const account = canUseSession ? starknetSession : starknet.account;
 
-            // approve USDC to make purchase
+            // approve totalPriceToken to make purchase
             if (totalPrice > 0n) {
               calls.unshift(System.getApproveErc20Call(
-                totalPrice, process.env.REACT_APP_USDC_TOKEN_ADDRESS, process.env.REACT_APP_STARKNET_DISPATCHER
+                totalPrice,
+                totalPriceToken,
+                process.env.REACT_APP_STARKNET_DISPATCHER
               ));
 
               if (!wallet) throw new Error('Wallet balance not loaded');
+              const totalWalletValueInToken = wallet.getCombinedSwappableBalance(totalPriceToken);
 
-              // if don't have enough USDC + ETH to cover it, return funds error
-              if (totalPrice > wallet?.totalUSD) {
+              // if don't have enough USDC + ETH to cover it, throw funds error
+              if (totalPrice > totalWalletValueInToken) {
                 const fundsError = new Error();
-                fundsError.additionalUSDCRequired = totalPrice - wallet?.totalUSD;
+                fundsError.additionalFundsRequired = totalPrice - totalWalletValueInToken;
+                fundsError.additionalFundsToken = totalPriceToken;
                 throw fundsError;
 
-              // else (have enough USDC + ETH) if don't have enough USDC to cover it
-              // prepend ETH -> USDC swap call(s) as well
-              } else if (totalPrice > wallet?.usdcBalanceUSD) {
-                if (!usdcPerEth) throw new Error('Conversion rate not loaded');
+              // else (have enough USDC + ETH) if don't have enough in totalPriceToken
+              // to cover tx, prepend swap calls to cover it as well
+              } else {
+                const balanceInTargetToken = wallet.getTokenBalance(totalPriceToken);
+                if (totalPrice > balanceInTargetToken) {
+                  if (!usdcPerEth) throw new Error('Conversion rate not loaded');
 
-                // TODO: use 1% slippage and expect conversion rate to work
+                  const isEthToUsdc = totalPriceToken === process.env.REACT_APP_USDC_TOKEN_ADDRESS;
+                  const fromAddress = isEthToUsdc ? process.env.REACT_APP_ERC20_TOKEN_ADDRESS : process.env.REACT_APP_USDC_TOKEN_ADDRESS;
+                  const toAddress = isEthToUsdc ? process.env.REACT_APP_USDC_TOKEN_ADDRESS : process.env.REACT_APP_ERC20_TOKEN_ADDRESS;
+                  const amount = totalPrice - balanceInTargetToken;
 
-                // buy enough excess to cover slippage
-                const slippage = 0.02;
-                const targetSwapAmount = (1 / (1 - slippage)) * (totalPrice - wallet?.usdcBalanceUSD);
+                  // buy enough excess to cover slippage
+                  const slippage = 0.01;
+                  const targetSwapAmount = (1 / (1 - slippage)) * amount;
 
-                // usdcPerEth is estimated from a small amount (presumably the best price) so
-                // sellAmount may be too low to end up with the required buyAmount...
+                  // usdcPerEth is estimated from a small amount (presumably the best price) so
+                  // sellAmount may be too low to end up with the required buyAmount...
 
-                // iterate based on the response until we have sufficient buyAmount to cover the purchase
-                // TODO: would be nice for AVNU to have buyAmount as an option here instead (to avoid loop)
-                let quote;
-                let actualUsdcPerEth = usdcPerEth;
-                while (quote?.buyAmount < targetSwapAmount) {
-                  const quotes = await fetchQuotes({
-                    sellTokenAddress: process.env.REACT_APP_ERC20_TOKEN_ADDRESS,
-                    buyTokenAddress: process.env.REACT_APP_USDC_TOKEN_ADDRESS,
-                    sellAmount: BigInt(targetSwapAmount / actualUsdcPerEth),
-                    takerAddress: account.address
-                  }, { baseUrl: process.env.REACT_APP_AVNU_API_URL });
-                  if (!quotes?.[0]) throw new Error('Insufficient swap liquidity');
-                  
-                  // set quote
-                  quote = quotes[0];
+                  // iterate based on the response until we have sufficient buyAmount to cover the purchase
+                  // TODO: would be nice for AVNU to have buyAmount as an option here instead (to avoid loop)
+                  let quote;
+                  let actualConv = isEthToUsdc ? usdcPerEth : (1 / usdcPerEth);
+                  while (quote?.buyAmount < targetSwapAmount) {
+                    const quotes = await fetchQuotes({
+                      sellTokenAddress: fromAddress,
+                      buyTokenAddress: toAddress,
+                      sellAmount: BigInt(targetSwapAmount / actualConv),
+                      takerAddress: account.address
+                    }, { baseUrl: process.env.REACT_APP_AVNU_API_URL });
+                    if (!quotes?.[0]) throw new Error('Insufficient swap liquidity');
+                    
+                    // set quote
+                    quote = quotes[0];
 
-                  // improve conversion rate from the purchase size quote (in case need to iterate)
-                  // (if conversion rate unchanged but have not reached target, break loop so not stuck)
-                  const newUsdcPerEth = quote.buyAmount / quote.sellAmount;
-                  if (newUsdcPerEth === actualUsdcPerEth) {
-                    if (quote.buyAmount < targetSwapAmount) {
-                      throw new Error('Swap pricing issue encountered.');
+                    // improve conversion rate from the purchase size quote (in case need to iterate)
+                    // (if conversion rate unchanged but have not reached target, break loop so not stuck)
+                    const newConv = quote.buyAmount / quote.sellAmount;
+                    if (newConv === actualConv) {
+                      if (quote.buyAmount < targetSwapAmount) {
+                        throw new Error('Swap pricing issue encountered.');
+                      }
                     }
+                    actualConv = newConv;
                   }
-                  actualUsdcPerEth = newUsdcPerEth;
-                }
 
-                // prepend swap calls
-                const { calls } = await fetchBuildExecuteTransaction(
-                  quote.id,
-                  account.address,
-                  slippage,
-                  true,
-                  { baseUrl: process.env.REACT_APP_AVNU_API_URL }
-                );
-                calls.unshift(...calls);
+                  // prepend swap calls
+                  const { calls } = await fetchBuildExecuteTransaction(
+                    quote.id,
+                    account.address,
+                    slippage,
+                    true,
+                    { baseUrl: process.env.REACT_APP_AVNU_API_URL }
+                  );
+                  calls.unshift(...calls);
+                }
               }
             }
 

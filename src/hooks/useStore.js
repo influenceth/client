@@ -6,6 +6,7 @@ import isEqual from 'lodash/isEqual';
 import { Building, Lot } from '@influenceth/sdk';
 
 import constants from '~/lib/constants';
+import { TOKEN } from '~/lib/priceUtils';
 
 export const STORE_NAME = 'influence';
 
@@ -128,6 +129,8 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
     effects: {},
 
     referrer: null,
+
+    preferredUiCurrency: null,
 
     //
     // DISPATCHERS
@@ -642,9 +645,19 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
     dispatchUnhideAllActionItems: () => set(produce(state => {
       state.hiddenActionItems = [];
     })),
+    dispatchPreferredUiCurrency: (token) => set(produce(state => {
+      state.preferredUiCurrency = token;
+    })),
 
     //
     // SPECIAL GETTERS
+
+    getPreferredUiCurrency: () => {
+      const s = get();
+      if ([TOKEN.ETH, TOKEN.USDC].includes(s.preferredUiCurrency)) return s.preferredUiCurrency;
+      else if (s.currentSession?.walletId && s.currentSession.walletId !== 'argentWebWallet') return TOKEN.ETH;
+      return TOKEN.USDC;
+    },
 
     getShadowQuality: () => {
       // NOTE: 0 is no shadows, 1 is single-light shadows, 2 is CSMs

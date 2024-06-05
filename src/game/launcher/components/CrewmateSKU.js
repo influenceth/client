@@ -1,21 +1,20 @@
 import { useCallback, useMemo, useState } from 'react';
 import styled from 'styled-components';
-import { formatEther } from 'ethers';
 
 import CrewmatesImage from '~/assets/images/sales/crewmates.png';
 import Button from '~/components/ButtonAlt';
 import ClipCorner from '~/components/ClipCorner';
-import Ether from '~/components/Ether';
 import { PlusIcon } from '~/components/Icons';
 import UncontrolledTextInput, { safeValue } from '~/components/TextInputUncontrolled';
+import UserPrice, { CrewmateUserPrice } from '~/components/UserPrice';
 import useCrewManager from '~/hooks/actionManagers/useCrewManager';
-import { useEthBalance } from '~/hooks/useWalletBalance';
-import useInterval from '~/hooks/useInterval';
 import usePriceConstants from '~/hooks/usePriceConstants';
+import useWalletUSD from '~/hooks/useWalletUSD';
 import formatters from '~/lib/formatters';
 import { nativeBool, reactBool } from '~/lib/utils';
 import theme from '~/theme';
 import { FundingDialog } from './FundingDialog';
+import { TOKEN_FORMAT } from '~/lib/priceUtils';
 
 const borderColor = `rgba(${theme.colors.mainRGB}, 0.5)`;
 
@@ -160,13 +159,9 @@ const ButtonWarning = styled(ButtonExtra)`
 export const CrewmateSKU = () => {
   const { purchaseCredits, getPendingCreditPurchase } = useCrewManager();
   const { data: priceConstants } = usePriceConstants();
-  const { data: weiBalance, refetch: refetchEth } = useEthBalance();
+  const { data: wallet } = useWalletUSD();
 
   const [tally, setTally] = useState(5);
-
-  const totalCost = useMemo(() => {
-    return BigInt(tally) * BigInt(priceConstants?.ADALIAN_PRICE_ETH || 0);
-  }, [tally, priceConstants?.ADALIAN_PRICE_ETH]);
 
   const [funding, setFunding] = useState(false);
   const [polling, setPolling] = useState(false);
@@ -189,16 +184,14 @@ export const CrewmateSKU = () => {
   }, [getPendingCreditPurchase]);
 
   const isInsufficientBalance = useMemo(() => {
-    if (weiBalance === null) return false;
-    return totalCost > weiBalance;
-  }, [weiBalance, totalCost]);
+    if (!wallet || !priceConstants?.ADALIAN_PURCHASE_PRICE || !priceConstants?.ADALIAN_PURCHASE_TOKEN) return false;
+    return BigInt(tally) * priceConstants?.ADALIAN_PURCHASE_PRICE > wallet.getCombinedSwappableBalance(priceConstants?.ADALIAN_PURCHASE_TOKEN);
+  }, [priceConstants, tally, wallet]);
 
-  // TODO: would it make more sense to just check on each new block?
-  // TODO: definitely don't need this on both SKUs
-  useInterval(() => {
-    if (polling && isInsufficientBalance) refetchEth();
-  }, 5e3);
-
+  const isDisabled = isPendingPurchase
+    || !priceConstants?.ADALIAN_PURCHASE_PRICE
+    || !priceConstants?.ADALIAN_PURCHASE_TOKEN
+    || Number(tally) === 0;
   return (
     <>
       <SKUWrapper>
@@ -222,22 +215,24 @@ export const CrewmateSKU = () => {
             <label>Crewmate{Number(tally) === 1 ? '' : 's'}</label>
           </Main>
           <Price>
-            <span>{formatters.crewmatePrice(priceConstants, 4)}</span>
+            <span><CrewmateUserPrice format={TOKEN_FORMAT.UNLABELED} /></span>
             <label>Eth each</label>
           </Price>
-          {(isPendingPurchase || !priceConstants?.ADALIAN_PRICE_ETH || Number(tally) === 0 || !isInsufficientBalance)
+          {(isDisabled || !isInsufficientBalance)
             ? (
               <Button
                 loading={reactBool(isPendingPurchase)}
-                disabled={nativeBool(isPendingPurchase || !priceConstants?.ADALIAN_PRICE_ETH || Number(tally) === 0)}
+                disabled={nativeBool(isDisabled)}
                 isTransaction
                 onClick={onPurchaseCrewmates}
                 style={{ width: '100%' }}>
                 Purchase
                 {priceConstants && (
                   <ButtonExtra>
-                    {/* TODO: should this update price before "approve"? what about asteroids? */}
-                    <Ether>{formatters.ethPrice(totalCost, 4)}</Ether>
+                    <UserPrice 
+                      price={BigInt(tally) * priceConstants?.ADALIAN_PURCHASE_PRICE}
+                      priceToken={priceConstants?.ADALIAN_PURCHASE_TOKEN}
+                      format />
                   </ButtonExtra>
                 )}
               </Button>
@@ -261,7 +256,7 @@ export const CrewmateSKU = () => {
 
       {funding && (
         <FundingDialog
-          targetAmount={Math.max(formatEther(totalCost || 0n) || 0, 0.01)}
+          targetAmount={0.01/* TODO: ...*/}
           onClose={() => setFunding(false)}
           onSelect={onSelectFundingOption}
         />

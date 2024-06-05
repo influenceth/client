@@ -34,11 +34,11 @@ export const useEthBalance = (overrideAccount) => {
 };
 
 export const useSwayBalance = (overrideAccount) => {
-  return useWalletBalance('sway', process.env.REACT_APP_STARKNET_SWAY_TOKEN, overrideAccount, 1000000);
+  return useWalletBalance('sway', process.env.REACT_APP_STARKNET_SWAY_TOKEN, overrideAccount, 1e6);
 }
 
 export const useUSDCBalance = (overrideAccount) => {
-  return useWalletBalance('usdc', process.env.REACT_APP_USDC_TOKEN_ADDRESS, overrideAccount);
+  return useWalletBalance('usdc', process.env.REACT_APP_USDC_TOKEN_ADDRESS, overrideAccount, 1e6);
 }
 
 export default useWalletBalance;

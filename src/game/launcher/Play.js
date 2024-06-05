@@ -98,7 +98,7 @@ const Play = () => {
                 width={crewmateWidth} />
             );
           }
-          return <EmptyCrewmateCardFramed width={crewmateWidth} hideHeader />
+          return <EmptyCrewmateCardFramed key={i} width={crewmateWidth} hideHeader />
         })}
       </CrewmatesWrapper>
     </Wrapper>

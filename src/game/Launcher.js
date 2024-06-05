@@ -327,7 +327,7 @@ const Launcher = (props) => {
       dispatchLauncherPage('play');
     }
     // disallow store if no sale available
-    else if (!priceConstantsLoading && !priceConstants?.ADALIAN_PRICE_ETH && launcherPage === 'store') {
+    else if (!priceConstantsLoading && !priceConstants?.ADALIAN_PURCHASE_PRICE && launcherPage === 'store') {
       dispatchLauncherPage('play');
     }
   }, [launcherPage, authenticated, priceConstants, priceConstantsLoading]);
@@ -364,7 +364,7 @@ const Launcher = (props) => {
             selected={launcherPage === 'play'}>
             <StyledNavIcon /> Play
           </NavItem>
-          {authenticated && !!priceConstants?.ADALIAN_PRICE_ETH && (
+          {authenticated && !!priceConstants?.ADALIAN_PURCHASE_PRICE && (
             <NavItem
               onClick={() => dispatchLauncherPage('store')}
               selected={launcherPage === 'store'}>
@@ -413,7 +413,7 @@ const Launcher = (props) => {
       <SystemControls />
 
       <ContentWrapper id="contentwrapper">
-        <Tooltip id="launcherTooltip" place="left" delayHide={1000} />
+        <Tooltip id="launcherTooltip" place="left" delayHide={150} />
         
         <MainContent>
           {launcherPage === 'play' && <Play />}

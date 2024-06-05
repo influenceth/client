@@ -1,25 +1,44 @@
 import { useMemo } from 'react';
 
-import useSwapQuote from '~/hooks/useSwapQuote';
+import usePriceHelper from '~/hooks/usePriceHelper';
+import { useUsdcPerEth } from '~/hooks/useSwapQuote';
 import { useEthBalance, useUSDCBalance } from '~/hooks/useWalletBalance';
+import { TOKEN } from '~/lib/priceUtils';
 
+// TODO: rename useWalletHelper or something
+// (or deprecate since this is mostly handled by priceHelper)
 const useWalletUSD = (overrideAccount) => {
+  const priceHelper = usePriceHelper();
   const { data: weiBalance, isLoading: isLoading1 } = useEthBalance(overrideAccount);
   const { data: usdcBalance, isLoading: isLoading2 } = useUSDCBalance(overrideAccount);
-  const { data: usdcPerEth, isLoading: isLoading3 } = useSwapQuote(process.env.REACT_APP_ERC20_TOKEN_ADDRESS, process.env.REACT_APP_USDC_TOKEN_ADDRESS, /* 1, accountAddress */);
+  const { data: usdcPerEth, isLoading: isLoading3 } = useUsdcPerEth(overrideAccount);
 
   const isLoading = isLoading1 || isLoading2 || isLoading3;
   return useMemo(() => {
-    const ethBalance = (parseFloat(weiBalance) || 0) / 1e18;
-    const ethBalanceUSD = ethBalance * parseFloat(usdcPerEth || 3807.62);// TODO: || 0);
-    const usdcBalanceUSD = parseFloat(usdcBalance) || 0;
     return {
       data: isLoading ? null : {
-        totalUSD: ethBalanceUSD + usdcBalanceUSD,
-        ethBalance,
-        ethBalanceUSD,
-        usdcBalance: parseFloat(usdcBalance),
-        usdcBalanceUSD,
+        getCombinedSwappableBalance: (denomToken, format) => {
+          const combined = priceHelper.from(weiBalance, TOKEN.ETH);
+          combined.usdcBalance += priceHelper.from(usdcBalance, TOKEN.USDC)?.usdcBalance;
+          return combined.to(denomToken, format);
+        },
+        getTokenBalance: (token, denomToken, format) => {
+          let balance;
+          if (token === TOKEN.USDC) {
+            balance = priceHelper.from(usdcBalance, TOKEN.USDC);
+          } else if (token === TOKEN.ETH) {
+            balance = priceHelper.from(weiBalance, TOKEN.ETH);
+          } else {
+            throw new Error('invalid token');
+          }
+          return balance.to(denomToken || token, format);
+        },
+        // TODO: these should be deprecated?
+        ethBalance: 0,
+        usdcBalance: 0,
+        ethBalanceUSD: 0,
+        usdcBalanceUSD: 0,
+        totalValueUSD: 0,
       },
       isLoading
     };
