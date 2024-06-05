@@ -243,7 +243,7 @@ const activities = {
           newGroupEval: {
             updatedValues: {
               controllerId: returnValues.callerCrew.id,
-              hasPermission: getApplicablePermissions(building || returnValues.building), // new controller may now all relevant permissions 
+              hasPermission: getApplicablePermissions(building || returnValues.building), // new controller may now all relevant permissions
             },
             filters: {
               asteroidId: _location.asteroidId,
@@ -255,7 +255,7 @@ const activities = {
         }
       ]
     },
-    
+
     getPrepopEntities: ({ event: { returnValues } }) => ({
       building: returnValues.building,
     }),
@@ -848,7 +848,7 @@ const activities = {
       },
       { ...returnValues.station }, // v0
       { ...returnValues.originStation }, // v1
-      { ...returnValues.destinationStation }, /v1
+      { ...returnValues.destinationStation }, // v1
       // TODO: previous station
     ]),
 
