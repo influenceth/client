@@ -3285,6 +3285,7 @@ export const RecipeSlider = ({ amount, disabled, increment = 0.001, processingTi
 
   const onSetAmount = useCallback((value) => {
     let cleansed = numeral(value);
+
     if (cleansed.value() === null) cleansed = numeral(min);
 
     // apply max, then min, then single increment
@@ -3335,7 +3336,7 @@ export const RecipeSlider = ({ amount, disabled, increment = 0.001, processingTi
                 <SliderTextInput
                   type="number"
                   disabled={disabled}
-                  step={0.001}
+                  step={increment}
                   value={amount}
                   onChange={onChangeInput}
                   onBlur={onFocusEvent}
@@ -3343,7 +3344,7 @@ export const RecipeSlider = ({ amount, disabled, increment = 0.001, processingTi
                   style={{ marginTop: -2 }} />
               )
                 : (
-                  <b>{amount.toLocaleString(undefined, { minimumFractionDigits: increment % 1 === 0 ? 0 : 3 })}</b>
+                  <b>{amount.toLocaleString()}</b>
                 )
               }
               {' '}

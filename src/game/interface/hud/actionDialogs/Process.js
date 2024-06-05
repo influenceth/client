@@ -110,15 +110,14 @@ const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...pro
 
   const process = Process.TYPES[processId];
 
-  const recipeStepSize = useMemo(() => {
+  const { recipeStepSize } = useMemo(() => {
     if (process) {
-      return Object.keys(process.outputs).reduce((acc, i) => {
-        const outputStep = Product.TYPES[i].isAtomic ? 0.1 : 0.001;
-        return Math.max(acc, outputStep);
-      }, 0.001);
+      const placesAfterDecimal = Math.ceil(Math.log10(Math.max(...Object.values(process.outputs))));
+      const recipeStepSize = 1 / Math.pow(10, placesAfterDecimal);
+      return { placesAfterDecimal, recipeStepSize };
     }
 
-    return 0.001;
+    return { placesAfterDecimal: 3, recipeStepSize: 0.001 };
   }, [process]);
 
   useEffect(() => {
