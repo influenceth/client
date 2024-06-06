@@ -29,8 +29,9 @@ import useEntity from '~/hooks/useEntity';
 import useCrew from '~/hooks/useCrew';
 import { hexToRGB } from '~/theme';
 import formatters from '~/lib/formatters';
-import { useSwayBalance } from '~/hooks/useWalletBalance';
+import { useSwayBalance } from '~/hooks/useWalletTokenBalance';
 import useAsteroid from '~/hooks/useAsteroid';
+import { TOKEN, TOKEN_SCALE } from '~/lib/priceUtils';
 
 const Alert = styled.div`
   ${p => p.theme.clipCorner(10)};
@@ -124,7 +125,7 @@ const PurchaseEntity = ({ asteroid, lot, entity, actionManager, stage, ...props 
   }, [entity]);
 
   const insufficientSway = useMemo(() => {
-    return swayBalance < price;
+    return price > swayBalance / TOKEN_SCALE[TOKEN.SWAY];
   }, [swayBalance, price]);
 
   return (

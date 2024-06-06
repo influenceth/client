@@ -13,18 +13,18 @@ import { CheckIcon, EthIcon, PurchaseAsteroidIcon, SwayIcon } from '~/components
 import useStore from '~/hooks/useStore';
 import useAsteroidSale from '~/hooks/useAsteroidSale';
 import useBlockTime from '~/hooks/useBlockTime';
-import { formatTimer, formatUSD, roundToPlaces } from '~/lib/utils';
+import { formatTimer, roundToPlaces } from '~/lib/utils';
 import NavIcon from '~/components/NavIcon';
 import theme from '~/theme';
 import Button from '~/components/ButtonAlt';
-import useWalletUSD from '~/hooks/useWalletUSD';
+import useWalletBalances from '~/hooks/useWalletBalances';
 import useCrewManager from '~/hooks/actionManagers/useCrewManager';
 import usePriceConstants from '~/hooks/usePriceConstants';
-import useSwapQuote, { useSwayPerUsdc, useUsdcPerEth } from '~/hooks/useSwapQuote';
 import { TOKEN, TOKEN_FORMAT, TOKEN_SCALE } from '~/lib/priceUtils';
 import usePriceHelper from '~/hooks/usePriceHelper';
 import UserPrice from '~/components/UserPrice';
 import { advPackPriceUSD, basicPackPriceUSD } from '../Store';
+import FundingFlow from './FundingFlow';
 
 const Flourish = styled.div`
   background: url(${p => p.src});
@@ -57,7 +57,7 @@ const Description = styled.div`
 
 const purchasePacksPadding = 15;
 const purchaseFormMargin = 15;
-const purchaseFormWidth = 280;
+const purchaseFormWidth = 290;
 const PurchaseForm = styled.div`
   background: linear-gradient(
     to bottom,
@@ -213,10 +213,12 @@ const PackChecks = styled.div`
       color: ${p => p.theme.colors.main};
       flex: 0 0 32px;
       font-size: 12px;
+      padding-top: 3px;
     }
     & > label {
       color: ${p => p.theme.colors.main};
       font-size: 13px;
+      line-height: 18px;
       & > b {
         color: white;
         font-weight: normal;
@@ -404,14 +406,14 @@ const StarterPackSKU = () => {
         price: basicPrice,
         crewmates: basicCrewmates,
         crewmatesValue: basicCrewmatesValue,
-        swayFormatted: basicSwayValue.to(TOKEN.SWAY, TOKEN_FORMAT.UNLABELED),
+        swayFormatted: basicSwayValue.to(TOKEN.SWAY, TOKEN_FORMAT.VERBOSE),
         swayValue: basicSwayValue
       },
       adv: {
         price: basicPrice,
         crewmates: advCrewmates,
         crewmatesValue: advCrewmatesValue,
-        swayFormatted: advSwayValue.to(TOKEN.SWAY, TOKEN_FORMAT.UNLABELED),
+        swayFormatted: advSwayValue.to(TOKEN.SWAY, TOKEN_FORMAT.VERBOSE),
         swayValue: advSwayValue
       }
     }
@@ -428,7 +430,7 @@ const StarterPackSKU = () => {
         </p>
       </Description>
 
-      <div style={{ display: 'flex', flex: '0 0 570px', height: 317, marginTop: -125 }}>
+      <div style={{ display: 'flex', flex: `0 0 ${2 * purchaseFormWidth + purchaseFormMargin}px`, height: 317, marginTop: -125 }}>
         <PurchaseForm style={{ marginRight: purchaseFormMargin, height: '100%' }}>
           <h3>Basic Starter Pack</h3>
           <PackWrapper>
@@ -446,7 +448,7 @@ const StarterPackSKU = () => {
               </div>
               <div>
                 <span><NavIcon color={theme.colors.main} /></span>
-                <label>{packs.basic.swayFormatted}{' '}SWAY</label>
+                <label>{packs.basic.swayFormatted}</label>
                 <span>
                   <UserPrice
                     price={packs.basic.swayValue.usdcValue}
@@ -490,7 +492,7 @@ const StarterPackSKU = () => {
               </div>
               <div>
                 <span><NavIcon color={theme.colors.main} /></span>
-                <label>{packs.adv.swayFormatted}{' '}SWAY</label>
+                <label>{packs.adv.swayFormatted}</label>
                 <span>
                   <UserPrice
                     price={packs.adv.swayValue.usdcValue}
@@ -641,7 +643,7 @@ const defaultStyleOverrides = {
 };
 
 const SKU = ({ asset, onBack }) => {
-  const { data: wallet } = useWalletUSD();
+  const { data: wallet } = useWalletBalances();
   const priceHelper = usePriceHelper();
 
   const preferredUiCurrency = useStore(s => s.getPreferredUiCurrency());
@@ -654,6 +656,7 @@ const SKU = ({ asset, onBack }) => {
   const updateZoomStatus = useStore(s => s.dispatchZoomStatusChanged);
 
   const [purchase, setPurchase] = useState();
+  const [fundingPurchase, setFundingPurchase] = useState();
 
   const filterUnownedAsteroidsAndClose = useCallback(() => {
     updateFilters(Object.assign({}, filters, { ownedBy: 'unowned' }));
@@ -754,49 +757,61 @@ const SKU = ({ asset, onBack }) => {
     };
   }, [asset, filterUnownedAsteroidsAndClose]);
 
-  // price constants (i.e. price of crewmate, etc)
-  // sway/usd conversion
-  // eth/usd conversion
-  // eth/sway conversion
-
-  const handlePurchase = useCallback(() => {
-    if (wallet?.totalValueUSD >= purchase?.totalPrice) {
-      if (wallet?.ethBalanceUSD >= purchase?.totalPrice) {
-        purchase.onPurchase();
-      } else {
-        // TODO: USDC -> ETH, purchase call
-        console.log('convert + purchase', purchase?.totalPrice, wallet)
-      }
+  const handlePurchase = useCallback((recursed) => {
+    const totalPriceUSD = purchase?.totalPrice?.to(TOKEN.USDC);
+    const totalWalletUSD = wallet.combinedBalance?.to(TOKEN.USDC);
+    if (recursed === true && totalWalletUSD > totalPriceUSD) {
+      purchase.onPurchase();
     } else {
-      // TODO: funding dialog
-      console.log('fund + purchase', purchase?.totalPrice, wallet)
+      setFundingPurchase(purchase);
     }
+    console.log('totalPriceUSD', totalPriceUSD, totalWalletUSD);
+
+    // if (wallet?.totalValueUSD >= purchase?.totalPrice) {
+    //   if (wallet?.ethBalanceUSD >= purchase?.totalPrice) {
+    //     purchase.onPurchase();
+    //   } else {
+    //     // TODO: USDC -> ETH, purchase call
+    //     console.log('convert + purchase', purchase?.totalPrice, wallet)
+    //   }
+    // } else {
+    //   // TODO: funding dialog
+    //   console.log('fund + purchase', purchase?.totalPrice, wallet)
+    // }
   }, [purchase?.totalPrice, wallet]);
 
   return (
-    <HeroLayout
-      autoHeight
-      belowFoldMin={192}
-      styleOverrides={defaultStyleOverrides}
-      leftButton={{
-        label: 'Back',
-        onClick: onBack
-      }}
-      rightButton={{
-        label: (
-          <PurchaseButtonInner>
-            <label>Purchase</label>
-            <span>
-              {(purchase?.totalPrice || priceHelper.from(0n)).to(preferredUiCurrency, true)}
-            </span>
-          </PurchaseButtonInner>
-        ),
-        onClick: handlePurchase,
-        props: { disabled: !(purchase?.totalPrice?.usdcValue > 0), isTransaction: true }
-      }}
-      {...props}>
-      {content}
-    </HeroLayout>
+    <>
+      <HeroLayout
+        autoHeight
+        belowFoldMin={192}
+        styleOverrides={defaultStyleOverrides}
+        leftButton={{
+          label: 'Back',
+          onClick: onBack
+        }}
+        rightButton={{
+          label: (
+            <PurchaseButtonInner>
+              <label>Purchase</label>
+              <span>
+                {(purchase?.totalPrice || priceHelper.from(0n)).to(preferredUiCurrency, true)}
+              </span>
+            </PurchaseButtonInner>
+          ),
+          onClick: handlePurchase,
+          props: { disabled: !(purchase?.totalPrice?.usdcValue > 0), isTransaction: true }
+        }}
+        {...props}>
+        {content}
+      </HeroLayout>
+      {fundingPurchase && (
+        <FundingFlow
+          totalPrice={fundingPurchase.totalPrice}
+          onClose={() => setFundingPurchase()}
+          onFunded={fundingPurchase.onPurchase} />
+      )}
+    </>
   );
 };
 

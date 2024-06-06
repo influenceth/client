@@ -3,6 +3,9 @@ import { useCallback, useMemo } from 'react';
 import { useSwayPerUsdc, useUsdcPerEth } from '~/hooks/useSwapQuote';
 import { TOKEN, TOKEN_FORMATTER, TOKEN_SCALE } from '~/lib/priceUtils';
 
+const defaultSwayPerUsdc = 2500 * parseFloat(TOKEN_SCALE[TOKEN.SWAY] / TOKEN_SCALE[TOKEN.USDC]);
+const defaultUsdcPerEth = 3800 * parseFloat(TOKEN_SCALE[TOKEN.USDC] / TOKEN_SCALE[TOKEN.ETH]);
+
 class Price {
   constructor (usdcValue, convs) {
     this.usdcValue = usdcValue;
@@ -28,27 +31,28 @@ class Price {
       ? TOKEN_FORMATTER[tokenAddress](tokenValue, format)
       : tokenValue;
   }
+
+  clone() {
+    return new Price(this.usdcValue, this.convs);
+  }
 }
 
 const usePriceHelper = () => {
   const { data: swayPerUsdc } = useSwayPerUsdc();
   const { data: usdcPerEth } = useUsdcPerEth();
-
-  const convs = useMemo(() => ({
-    swayPerUsdc: swayPerUsdc || (2500 * parseFloat(TOKEN_SCALE[TOKEN.SWAY] / TOKEN_SCALE[TOKEN.USDC])),
-    usdcPerEth: usdcPerEth || (3800 * parseFloat(TOKEN_SCALE[TOKEN.USDC] / TOKEN_SCALE[TOKEN.ETH])),
-  }), [swayPerUsdc, usdcPerEth]);
   
   const from = useCallback((value, originToken) => {
-    return Price.from(value, originToken, convs);
-  }, [swayPerUsdc, usdcPerEth, convs]);
+    return Price.from(
+      value,
+      originToken,
+      {
+        swayPerUsdc: swayPerUsdc || defaultSwayPerUsdc,
+        usdcPerEth: usdcPerEth || defaultUsdcPerEth,
+      }
+    );
+  }, [swayPerUsdc, usdcPerEth]);
 
-  // TODO: disable this?
-  const fromAddress = useCallback((value, originToken) => {
-    return Price.from(value, originToken, convs);
-  }, [swayPerUsdc, usdcPerEth, convs]);
-
-  return useMemo(() => ({ from, fromAddress }), [from, fromAddress]);
+  return useMemo(() => ({ from }), [from]);
 };
 
 export default usePriceHelper;

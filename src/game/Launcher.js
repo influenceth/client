@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect } from 'react';
 import styled from 'styled-components';
 import { PuffLoader as Loader } from 'react-spinners';
 
@@ -10,14 +10,11 @@ import {
 } from '~/components/Icons';
 import InfluenceLogo from '~/components/InfluenceLogo';
 import NavIcon from '~/components/NavIcon';
-import useCrewContext from '~/hooks/useCrewContext';
 import usePriceConstants from '~/hooks/usePriceConstants';
 import Play from './launcher/Play';
 import Settings from './launcher/Settings';
 import Store from './launcher/Store';
 import HudMenu from './interface/hud/HudMenu';
-import { useSwayBalance } from '~/hooks/useWalletBalance';
-import useAccountFormatted from '~/hooks/useAccountFormatted';
 import SystemControls from './interface/hud/SystemControls';
 import Help from './launcher/Help';
 import Rewards from './launcher/Rewards';
@@ -298,8 +295,7 @@ const Footer = styled.div`
 const StyledNavIcon = () => <Icon><NavIcon selected selectedColor="#777" /></Icon>;
 
 const Launcher = (props) => {
-  const { accountAddress, authenticating, authenticated, login, logout } = useSession();
-  const { adalianRecruits, arvadianRecruits } = useCrewContext();
+  const { authenticating, authenticated, login } = useSession();
   const { data: priceConstants, isLoading: priceConstantsLoading } = usePriceConstants();
 
   const launcherPage = useStore(s => s.launcherPage);
@@ -307,8 +303,6 @@ const Launcher = (props) => {
   const dispatchToggleInterface = useStore(s => s.dispatchToggleInterface);
   const interfaceHidden = useStore(s => s.graphics.hideInterface);
   const hasSeenIntroVideo = useStore(s => s.hasSeenIntroVideo);
-
-  const { data: swayBalance } = useSwayBalance();
 
   useEffect(() => {
     if (!interfaceHidden) {

@@ -22,7 +22,7 @@ import AsteroidsImage from '~/assets/images/sales/asteroids.png';
 import { ChevronRightIcon, PlusIcon, SwayIcon, WarningOutlineIcon } from '~/components/Icons';
 import useSession from '~/hooks/useSession';
 import useInterval from '~/hooks/useInterval';
-import { useEthBalance } from '~/hooks/useWalletBalance';
+import { useEthBalance } from '~/hooks/useWalletTokenBalance';
 import useFaucetInfo from '~/hooks/useFaucetInfo';
 import { CrewmateSKU } from './components/CrewmateSKU';
 

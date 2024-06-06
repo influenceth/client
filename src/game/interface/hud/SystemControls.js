@@ -10,11 +10,12 @@ import {
 import useSession from '~/hooks/useSession';
 import useCrewContext from '~/hooks/useCrewContext';
 import useStore from '~/hooks/useStore';
-import { useSwayBalance } from '~/hooks/useWalletBalance';
+import { useSwayBalance } from '~/hooks/useWalletTokenBalance';
 import useAccountFormatted from '~/hooks/useAccountFormatted';
 import IconButton from '~/components/IconButton';
 import { FaCaretRight } from 'react-icons/fa';
 import { menuPadding } from '~/game/Launcher';
+import { TOKEN, TOKEN_FORMATTER } from '~/lib/priceUtils';
 
 const StyledSystemControls = styled.div`
   align-items: center;
@@ -45,13 +46,13 @@ const SwayBalance = styled.div`
   color: white;
   display: flex;
   filter: drop-shadow(0px 0px 2px rgb(0 0 0));
-  font-size: 24px;
+  font-size: 20px;
   padding-right: 16px;
   margin-right: 16px;
 
-  & label {
-    color: #FFF;
-    font-size: 85%;
+  & > svg {
+    font-size: 24px;
+    margin-right: 2px;
   }
 `;
 
@@ -180,8 +181,7 @@ const SystemControls = () => {
 
       {swayBalance !== undefined && (
         <SwayBalance>
-          <SwayIcon />
-          <label>{swayBalance.toLocaleString({ maximumFractionDigits: 0 })}</label>
+          {TOKEN_FORMATTER[TOKEN.SWAY](swayBalance)}
         </SwayBalance>
       )}
 

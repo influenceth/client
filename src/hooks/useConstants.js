@@ -24,6 +24,9 @@ const useConstants = (constantOrConstants) => {
       const isArr = Array.isArray(constantOrConstants);
       const c = await api.getConstants(isArr ? constantOrConstants : [constantOrConstants]);
       Object.keys(c).forEach((k) => c[k] = parseAs[k] ? parseAs[k](c[k]) : c[k]);
+      if (c.ADALIAN_PURCHASE_TOKEN) {
+        console.log('c.ADALIAN_PURCHASE_TOKEN', c.ADALIAN_PURCHASE_TOKEN, Address.toStandard(c.ADALIAN_PURCHASE_TOKEN))
+      }
       return isArr ? c : c[constantOrConstants];
     },
     { enabled: !!constantOrConstants }

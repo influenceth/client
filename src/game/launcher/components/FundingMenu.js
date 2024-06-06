@@ -6,14 +6,16 @@ import LayerswapImage from '~/assets/images/sales/logo_layerswap.svg';
 import RampImage from '~/assets/images/sales/logo_ramp.svg';
 import Button from '~/components/ButtonAlt';
 import CollapsibleBlock from '~/components/CollapsibleBlock';
-import { EthIcon, UsdcIcon } from '~/components/Icons';
+import { ChevronRightIcon, EthIcon, UsdcIcon } from '~/components/Icons';
 import MouseoverInfoPane from '~/components/MouseoverInfoPane';
 import Switcher from '~/components/SwitcherButton';
 import { TOKEN, TOKEN_FORMAT } from '~/lib/priceUtils';
 import useSession from '~/hooks/useSession';
 import useStore from '~/hooks/useStore';
-import useWalletUSD from '~/hooks/useWalletUSD';
+import useWalletBalances from '~/hooks/useWalletBalances';
 import { formatFixed, formatUSD } from '~/lib/utils';
+import FundingFlow from './FundingFlow';
+import usePriceHelper from '~/hooks/usePriceHelper';
 
 const FundWrapper = styled.div`
   padding: 0 20px 5px;
@@ -100,6 +102,23 @@ const FundingOption = styled.div`
   }
 `;
 
+const AddFundsButton = styled(Button)`
+  color: white;
+  font-weight: bold;
+  & > div {
+    display: flex;
+    flex-direction: row;
+    & > span {
+      flex: 1;
+      font-size: 15px;
+      text-align: left;
+    }
+    & > svg {
+      font-size: 25px;
+    }
+  }
+`;
+
 const Disclaimer = styled.div`
   color: ${p => p.theme.colors.main};
   font-size: 12px;
@@ -124,68 +143,25 @@ const layerSwapChains = {
 };
 
 const FundingMenu = () => {
-  const { accountAddress, starknet } = useSession();
-  const { data: wallet } = useWalletUSD();
+  const priceHelper = usePriceHelper();
+  const { data: wallet } = useWalletBalances();
 
   const preferredUiCurrency = useStore(s => s.getPreferredUiCurrency());
   const dispatchPreferredUiCurrency = useStore(s => s.dispatchPreferredUiCurrency);
 
-  const [hoveredRampButton, setHoveredRampButton] = useState(false);
-
-  const to = useRef();
-  const onRampHover = useCallback((which) => (e) => {
-    if (to.current) clearTimeout(to.current);
-    if (which) {
-      setHoveredRampButton(e.target);
-    } else {  // close on delay so have time to click the link
-      to.current = setTimeout(() => {
-        setHoveredRampButton();
-      }, 1500);
-    }
-  }, []);
-
-  const selectLayerswap = useCallback(() => {
-    const fromChain = layerSwapChains[starknet?.chainId]?.ethereum;
-    const toChain = layerSwapChains[starknet?.chainId]?.starknet;
-    const url = `https://www.layerswap.io/app/`
-      + `?from=${fromChain}`
-      + `&to=${toChain}`
-      + `&asset=ETH`
-      + `&destAddress=${accountAddress}`
-      + `&lockAddress=true`
-      // + `&amount=${targetAmount}`
-      + `&actionButtonText=Fund%20Account`;
-
-    window.open(url, '_blank');
-  }, [starknet?.chainId, accountAddress]);
-
-  const selectRamp = useCallback(() => {
-    const logoUrl = window.location.origin + '/maskable-logo-192x192.png';
-    
-    const url = `https://app.${process.env.NODE_ENV === 'production' ? '' : 'demo.'}ramp.network`
-      + `?hostApiKey=${process.env.REACT_APP_RAMP_API_KEY}`
-      + `&hostAppName=Influence`
-      + `&hostLogoUrl=${logoUrl}`
-      + `&userAddress=${accountAddress}`
-      // TODO: url params are confusing/not working here:
-      // + `&defaultAsset=ETH_ETH`
-      // + `&swapAsset=ETH_ETH,ETH_USDC`
-      // + `&swapAmount=${targetAmount}`
-      ;
-
-    window.open(url, '_blank');
-  }, [accountAddress]);
+  const [isFunding, setIsFunding] = useState();
 
   const tooltipContent = useMemo(() => ReactDOMServer.renderToStaticMarkup(
     <Subtotals>
-      <div>
-        <label>{wallet.getTokenBalance(TOKEN.ETH, null, TOKEN_FORMAT.UNLABELED)} ETH</label>
-        <span>{wallet.getTokenBalance(TOKEN.ETH, preferredUiCurrency, true)}</span>
-      </div>
-      <div>
-        <label>{wallet.getTokenBalance(TOKEN.USDC, null, TOKEN_FORMAT.UNLABELED)} USDC</label>
-        <span>{wallet.getTokenBalance(TOKEN.USDC, preferredUiCurrency, true)}</span>
-      </div>
+      {Object.keys(wallet.tokenBalance).map((tokenAddress) => {
+        const balance = priceHelper.from(wallet.tokenBalance[tokenAddress], tokenAddress);
+        return (
+          <div key={tokenAddress}>
+            <label>{balance?.to(tokenAddress, TOKEN_FORMAT.VERBOSE)}</label>
+            <span>{balance?.to(preferredUiCurrency, true)}</span>
+          </div>
+        );
+      })}
     </Subtotals>
   ), [preferredUiCurrency, wallet]);
 
@@ -207,8 +183,15 @@ const FundingMenu = () => {
         </div>
       </div>
       <label data-tooltip-id="launcherTooltip" data-tooltip-html={tooltipContent} data-tooltip-place="top">
-        {wallet.getCombinedSwappableBalance(preferredUiCurrency, true)}
+        {wallet.combinedBalance?.to(preferredUiCurrency, true)}
       </label>
+      <AddFundsButton onClick={() => setIsFunding(true)}>
+        <span>Add Funds</span>
+        <ChevronRightIcon />
+      </AddFundsButton>
+      {isFunding && <FundingFlow onClose={() => setIsFunding()} />}
+
+      {/* 
       <CollapsibleBlock
         containerHeight={250}
         initiallyClosed
@@ -249,6 +232,7 @@ const FundingMenu = () => {
           </Button>
         </FundingOption>
       </CollapsibleBlock>
+      */}
     </FundWrapper>
   );
 };

@@ -1,5 +1,5 @@
 import { createContext, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Asteroid, Entity, Order, RandomEvent, System } from '@influenceth/sdk';
+import { Address, Asteroid, Entity, Order, System } from '@influenceth/sdk';
 import { isEqual, get } from 'lodash';
 import { hash, shortString, uint256 } from 'starknet';
 import { fetchBuildExecuteTransaction, fetchQuotes } from '@avnu/avnu-sdk';
@@ -9,9 +9,10 @@ import useSession from '~/hooks/useSession';
 import useCrewContext from '~/hooks/useCrewContext';
 import useStore from '~/hooks/useStore';
 import { useUsdcPerEth } from '~/hooks/useSwapQuote';
-import useWalletUSD from '~/hooks/useWalletUSD';
+import useWalletBalances from '~/hooks/useWalletBalances';
 import api from '~/lib/api';
 import { cleanseTxHash } from '~/lib/utils';
+import { TOKEN } from '~/lib/priceUtils';
 
 // import { CallData, shortString, uint256, ec } from 'starknet';
 // const Systems = System.Systems;
@@ -247,7 +248,7 @@ const customConfigs = {
   PurchaseAdalian: {
     getPrice: async () => {
       const { ADALIAN_PURCHASE_PRICE, ADALIAN_PURCHASE_TOKEN } = await api.getConstants(['ADALIAN_PURCHASE_PRICE', 'ADALIAN_PURCHASE_TOKEN']);
-      return [ADALIAN_PURCHASE_PRICE, ADALIAN_PURCHASE_TOKEN];
+      return [BigInt(ADALIAN_PURCHASE_PRICE), Address.toStandard(ADALIAN_PURCHASE_TOKEN)];
     },
     equalityTest: true
   },
@@ -260,7 +261,7 @@ const customConfigs = {
       ]);
       const base = BigInt(ASTEROID_PURCHASE_BASE_PRICE);
       const lot = BigInt(ASTEROID_PURCHASE_LOT_PRICE);
-      return [base + lot * BigInt(Asteroid.Entity.getSurfaceArea(asteroid)), ASTEROID_PURCHASE_TOKEN];
+      return [base + lot * BigInt(Asteroid.Entity.getSurfaceArea(asteroid)), Address.toStandard(ASTEROID_PURCHASE_TOKEN)];
     },
     equalityTest: ['asteroid.id']
   },
@@ -277,7 +278,7 @@ const customConfigs = {
     getPrice: async ({ crewmate }) => {
       if (crewmate?.id > 0) return 0n; // if recruiting existing crewmate, no cost
       const { ADALIAN_PURCHASE_PRICE, ADALIAN_PURCHASE_TOKEN } = await api.getConstants(['ADALIAN_PURCHASE_PRICE', 'ADALIAN_PURCHASE_TOKEN']);
-      return [BigInt(ADALIAN_PURCHASE_PRICE), ADALIAN_PURCHASE_TOKEN];
+      return [BigInt(ADALIAN_PURCHASE_PRICE), Address.toStandard(ADALIAN_PURCHASE_TOKEN)];
     },
     equalityTest: true
   },
@@ -517,7 +518,7 @@ export function ChainTransactionProvider({ children }) {
   const { accountAddress, authenticated, blockNumber, blockTime, logout, starknet, starknetSession } = useSession();
   const activities = useActivitiesContext();
   const { crew, pendingTransactions } = useCrewContext();
-  const { data: wallet } = useWalletUSD();
+  const { data: wallet } = useWalletBalances();
   const { data: usdcPerEth } = useUsdcPerEth();
 
   const createAlert = useStore(s => s.dispatchAlertLogged);
@@ -698,8 +699,8 @@ export function ChainTransactionProvider({ children }) {
 
               if (customConfigs[runSystem]?.getPrice) {
                 const [tokenAmount, token] = await customConfigs[runSystem].getPrice(processedVars);
-                if (![process.env.REACT_APP_ERC20_TOKEN_ADDRESS, process.env.REACT_APP_ERC20_TOKEN_ADDRESS].includes(totalPriceToken)) throw new 'Invalid pricing token (only ETH or USDC supported).';
-                if (totalPriceToken && totalPriceToken !== token) throw new 'Mixed currency transactions are not supported.';
+                if (![TOKEN.ETH, TOKEN.USDC].includes(token)) throw new Error('Invalid pricing token (only ETH or USDC supported).');
+                if (totalPriceToken && totalPriceToken !== token) throw new Error('Mixed currency transactions are not supported.');
                 totalPrice += tokenAmount;
                 totalPriceToken = token;
               }
@@ -719,6 +720,7 @@ export function ChainTransactionProvider({ children }) {
             const account = canUseSession ? starknetSession : starknet.account;
 
             // approve totalPriceToken to make purchase
+            console.log('tpltal price', totalPrice);
             if (totalPrice > 0n) {
               calls.unshift(System.getApproveErc20Call(
                 totalPrice,
@@ -727,7 +729,7 @@ export function ChainTransactionProvider({ children }) {
               ));
 
               if (!wallet) throw new Error('Wallet balance not loaded');
-              const totalWalletValueInToken = wallet.getCombinedSwappableBalance(totalPriceToken);
+              const totalWalletValueInToken = wallet.combinedBalance?.to(totalPriceToken);
 
               // if don't have enough USDC + ETH to cover it, throw funds error
               if (totalPrice > totalWalletValueInToken) {
@@ -739,7 +741,7 @@ export function ChainTransactionProvider({ children }) {
               // else (have enough USDC + ETH) if don't have enough in totalPriceToken
               // to cover tx, prepend swap calls to cover it as well
               } else {
-                const balanceInTargetToken = wallet.getTokenBalance(totalPriceToken);
+                const balanceInTargetToken = wallet.tokenBalance[totalPriceToken];
                 if (totalPrice > balanceInTargetToken) {
                   if (!usdcPerEth) throw new Error('Conversion rate not loaded');
 

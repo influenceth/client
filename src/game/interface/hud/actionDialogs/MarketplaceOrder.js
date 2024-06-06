@@ -14,7 +14,7 @@ import useMarketplaceManager from '~/hooks/actionManagers/useMarketplaceManager'
 import useEntity from '~/hooks/useEntity';
 import useHydratedCrew from '~/hooks/useHydratedCrew';
 import useOrderList from '~/hooks/useOrderList';
-import { useSwayBalance } from '~/hooks/useWalletBalance';
+import { useSwayBalance } from '~/hooks/useWalletTokenBalance';
 import formatters from '~/lib/formatters';
 import actionStages from '~/lib/actionStages';
 import { reactBool, formatFixed, formatTimer, getCrewAbilityBonuses, locationsArrToObj, formatPrice } from '~/lib/utils';
@@ -42,6 +42,7 @@ import {
   FeeBonusTooltip,
   formatResourceAmount
 } from './components';
+import { TOKEN, TOKEN_SCALE } from '~/lib/priceUtils';
 
 const FormSection = styled.div`
   margin-top: 12px;
@@ -608,7 +609,7 @@ const MarketplaceOrder = ({
   const insufficientAssets = useMemo(() => {
     if (isCancellation) return false;
     if (mode === 'buy') {
-      return total > swayBalance;
+      return total > swayBalance / TOKEN_SCALE[TOKEN.SWAY]; // TODO: should this parseInt? 
     } else {
       return quantityToUnits(quantity) > amountInInventory;
     }

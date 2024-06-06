@@ -19,7 +19,7 @@ import CrewClassIcon from '~/components/CrewClassIcon';
 import CrewTraitIcon from '~/components/CrewTraitIcon';
 import Details from '~/components/DetailsModal';
 import Ether from '~/components/Ether';
-import { CheckIcon, CloseIcon, LinkIcon } from '~/components/Icons';
+import { CheckIcon, CloseIcon, EthIcon, LinkIcon } from '~/components/Icons';
 import IconButton from '~/components/IconButton';
 import MouseoverInfoPane from '~/components/MouseoverInfoPane';
 import TextInput from '~/components/TextInput';
@@ -29,7 +29,7 @@ import ChainTransactionContext from '~/contexts/ChainTransactionContext';
 import useBookSession, { bookIds, getBookCompletionImage } from '~/hooks/useBookSession';
 import useCrewManager from '~/hooks/actionManagers/useCrewManager';
 import useCrewContext from '~/hooks/useCrewContext';
-import { useEthBalance } from '~/hooks/useWalletBalance';
+import { useEthBalance } from '~/hooks/useWalletTokenBalance';
 import useFaucetInfo from '~/hooks/useFaucetInfo';
 import useNameAvailability from '~/hooks/useNameAvailability';
 import usePriceConstants from '~/hooks/usePriceConstants';
@@ -39,7 +39,7 @@ import { reactBool } from '~/lib/utils';
 import theme from '~/theme';
 import api from '~/lib/api';
 import usePriceHelper from '~/hooks/usePriceHelper';
-import useWalletUSD from '~/hooks/useWalletUSD';
+import useWalletBalances from '~/hooks/useWalletBalances';
 import { TOKEN } from '~/lib/priceUtils';
 import UserPrice, { CrewmateUserPrice } from '~/components/UserPrice';
 
@@ -821,7 +821,7 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
   const { promptingTransaction } = useContext(ChainTransactionContext);
   const { data: priceConstants } = usePriceConstants();
   const priceHelper = usePriceHelper();
-  const { data: wallet } = useWalletUSD();
+  const { data: wallet } = useWalletBalances();
   const { data: weiBalance, refetch: refetchEth } = useEthBalance();
 
   const [confirming, setConfirming] = useState();
@@ -1215,11 +1215,11 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
     if (process.env.REACT_APP_CHAIN_ID === '0x534e5f5345504f4c4941') {
       if (ethClaimEnabled) {
         const price = priceHelper.from(priceConstants.ADALIAN_PURCHASE_PRICE, priceConstants.ADALIAN_PURCHASE_TOKEN);
-        if (price.usdcValue > wallet.getCombinedSwappableBalance(TOKEN.USDC)) {
+        if (price.usdcValue > wallet.combinedBalance?.to(TOKEN.USDC)) {
           return {
             onConfirm: getEthFromFaucet,
             loading: !!requestingEth,
-            confirmText: <Ether>Request ETH</Ether>
+            confirmText: <><EthIcon /> <span>Request ETH</span></>
           }
         }
       }

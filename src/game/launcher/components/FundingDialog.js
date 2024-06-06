@@ -88,6 +88,7 @@ const layerSwapChains = {
   'SN_SEPOLIA': { ethereum: 'ETHEREUM_SEPOLIA', starknet: 'STARKNET_SEPOLIA' }
 };
 
+// TODO: deprecate this
 export const FundingDialog = ({ onClose, onSelect, targetAmount }) => {
   const { accountAddress, starknet } = useSession();
   const [hoveredRampButton, setHoveredRampButton] = useState(false);

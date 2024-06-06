@@ -39,6 +39,17 @@ const Button = styled.button`
     outline-width: 4px;
     z-index: 1001;
   `}
+  ${p => p.subtle && `
+    background: rgba(${p.theme.colors.darkMainRGB}, 0.5);
+    outline: 1px solid ${p.theme.colors.brightMain};
+    color: ${p.theme.colors.brightMain};
+    opacity: 0.5;
+    &:hover {
+      color: white;
+      opacity: 1;
+      outline-color: white;
+    }
+  `};
 
   & > div:last-child {
     flex: 1;

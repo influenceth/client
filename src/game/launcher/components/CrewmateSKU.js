@@ -9,7 +9,7 @@ import UncontrolledTextInput, { safeValue } from '~/components/TextInputUncontro
 import UserPrice, { CrewmateUserPrice } from '~/components/UserPrice';
 import useCrewManager from '~/hooks/actionManagers/useCrewManager';
 import usePriceConstants from '~/hooks/usePriceConstants';
-import useWalletUSD from '~/hooks/useWalletUSD';
+import useWalletBalances from '~/hooks/useWalletBalances';
 import formatters from '~/lib/formatters';
 import { nativeBool, reactBool } from '~/lib/utils';
 import theme from '~/theme';
@@ -159,7 +159,7 @@ const ButtonWarning = styled(ButtonExtra)`
 export const CrewmateSKU = () => {
   const { purchaseCredits, getPendingCreditPurchase } = useCrewManager();
   const { data: priceConstants } = usePriceConstants();
-  const { data: wallet } = useWalletUSD();
+  const { data: wallet } = useWalletBalances();
 
   const [tally, setTally] = useState(5);
 
@@ -185,7 +185,7 @@ export const CrewmateSKU = () => {
 
   const isInsufficientBalance = useMemo(() => {
     if (!wallet || !priceConstants?.ADALIAN_PURCHASE_PRICE || !priceConstants?.ADALIAN_PURCHASE_TOKEN) return false;
-    return BigInt(tally) * priceConstants?.ADALIAN_PURCHASE_PRICE > wallet.getCombinedSwappableBalance(priceConstants?.ADALIAN_PURCHASE_TOKEN);
+    return BigInt(tally) * priceConstants?.ADALIAN_PURCHASE_PRICE > wallet.combinedBalance?.to(priceConstants?.ADALIAN_PURCHASE_TOKEN);
   }, [priceConstants, tally, wallet]);
 
   const isDisabled = isPendingPurchase
@@ -215,8 +215,8 @@ export const CrewmateSKU = () => {
             <label>Crewmate{Number(tally) === 1 ? '' : 's'}</label>
           </Main>
           <Price>
-            <span><CrewmateUserPrice format={TOKEN_FORMAT.UNLABELED} /></span>
-            <label>Eth each</label>
+            <span><CrewmateUserPrice format={TOKEN_FORMAT.VERBOSE} /></span>
+            <label>each</label>
           </Price>
           {(isDisabled || !isInsufficientBalance)
             ? (
