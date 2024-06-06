@@ -46,7 +46,7 @@ const usePagedAgreements = (params) => {
   }, [params.permission]);
 
   // get data for crewAgreements or entityAgreements, depending on if uuid is specified or not
-  const { data: crewAgreements, isLoading: crewAgreementsLoading } = useCrewAgreements(!params.uuid);
+  const { data: crewAgreements, isLoading: crewAgreementsLoading, dataUpdatedAt } = useCrewAgreements(!params.uuid);
   const { data: entity, isLoading: entityLoading } = useEntity(params.uuid ? Entity.unpackEntity(params.uuid) : null);
   const { data: asteroid } = useAsteroid(entity?.label === Entity.IDS.LOT ? Lot.toPosition(entity.id)?.asteroidId : null);
 
@@ -61,7 +61,7 @@ const usePagedAgreements = (params) => {
         .map((a) => a.label === Entity.IDS.LOT ? ({ ...a, Control: asteroid?.Control }) : a);
     }
     return [];
-  }, [asteroid, crewAgreements, entity, isLoading, params.permission, params.uuid]);
+  }, [asteroid, crewAgreements, dataUpdatedAt, entity, isLoading, params.permission, params.uuid]);
 
   // TODO: should almost certainly move filter application into elasticsearch instead of loading all upfront
   const filteredData = useMemo(() => {

@@ -10,7 +10,7 @@ import useCrewmates from '~/hooks/useCrewmates';
 
 const useHydratedCrew = (id) => {
   const { data: crew, isLoading: crewLoading } = useCrew(id);
-  const { data: crewmates, isLoading: crewmatesLoading } = useCrewmates(crew?.Crew?.roster);
+  const { data: crewmates, isLoading: crewmatesLoading, dataUpdatedAt } = useCrewmates(crew?.Crew?.roster);
   const { data: CREW_SCHEDULE_BUFFER, isLoading: constantsLoading } = useConstants('CREW_SCHEDULE_BUFFER');
   const blockTime = useBlockTime();
 
@@ -40,7 +40,7 @@ const useHydratedCrew = (id) => {
       isLoading = false;
     }
     return { data, isLoading };
-  }, [blockTime, crew, crewmates, crewLoading, crewmatesLoading, CREW_SCHEDULE_BUFFER]);
+  }, [blockTime, crew, crewmates, crewLoading, crewmatesLoading, dataUpdatedAt, CREW_SCHEDULE_BUFFER]);
 };
 
 export default useHydratedCrew;

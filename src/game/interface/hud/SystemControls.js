@@ -163,7 +163,7 @@ const SystemControls = () => {
   }, [authenticated, !launcherPage]);
 
   return (
-    <StyledSystemControls>
+    <StyledSystemControls id="topMenu">
       <MobileWarning>
         <WarningIcon />
         <span>Mobile is not well supported, please use desktop.</span>

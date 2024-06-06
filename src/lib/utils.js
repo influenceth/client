@@ -81,7 +81,7 @@ export const reactPreline = (value, maxInARow = 2) => {
     .filter((c, i, arr) => {
       if (c.length) return true;
       if (i < maxInARow) return true;
-      
+
       // this line is blank... make sure it is not creating > maxInARow
       for (let j = 1; j <= maxInARow - 1; j++) {
         if (arr[i - j].length > 0) return true;
@@ -197,10 +197,10 @@ export const esbPermissionQuery = (crewId, crewDelegatedTo, permissionId) => {
 
 export const getProcessorProps = (processorType) => {
   switch (processorType) {
-    case Processor.IDS.REFINERY: return { label: 'Refine Material', icon: <RefineIcon /> };
-    case Processor.IDS.FACTORY: return { label: 'Manufacture Goods', icon: <ManufactureIcon /> };
-    case Processor.IDS.BIOREACTOR: return { label: 'Manufacture Organic Goods', icon: <BioreactorBuildingIcon /> };
-    case Processor.IDS.SHIPYARD: return { label: 'Manufacture Ship Parts', icon: <ManufactureIcon /> };
+    case Processor.IDS.REFINERY: return { label: 'Refine Material', typeLabel: 'Refinery', icon: <RefineIcon /> };
+    case Processor.IDS.FACTORY: return { label: 'Manufacture Goods', typeLabel: 'Factory', icon: <ManufactureIcon /> };
+    case Processor.IDS.BIOREACTOR: return { label: 'Manufacture Organic Goods', typeLabel: 'Bioreactor', icon: <BioreactorBuildingIcon /> };
+    case Processor.IDS.SHIPYARD: return { label: 'Manufacture Ship Parts', typeLabel: 'Shipyard', icon: <ManufactureIcon /> };
     default: return {};
   }
 }
@@ -210,7 +210,7 @@ export const arrToXYZ = (arr) => ({ x: arr[0], y: arr[1], z: arr[2] });
 const yearOfSeconds = 31536000;
 export const secondsToMonths = (seconds) => Math.floor(1000 * 12 * seconds / yearOfSeconds) / 1000;
 export const monthsToSeconds = (months) => Math.floor(yearOfSeconds * months / 12);
-export const secondsToDays = (seconds) => formatFixed(seconds / 86400, 2);
+export const secondsToDays = (seconds) => seconds / 86400;
 export const daysToSeconds = (days) => days * 86400;
 
 export const getBlockTime = async (starknet, blockNumber = 'pending') => {
@@ -248,7 +248,7 @@ export const entityToAgreements = (entity) => {
     (entity[agreementType] || []).forEach((agreement, j) => {
       const formatted = {
         ...entity,
-        
+
         key: `${entity.uuid}_${agreementType}_${j}`,
         _agreement: {
           _path: getAgreementPath(entity, agreement.permission, agreement.permitted),

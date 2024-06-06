@@ -1,19 +1,19 @@
 import { useCallback, useContext, useMemo } from 'react';
-import { DryDock, Entity } from '@influenceth/sdk';
+import { DryDock, Entity, Permission } from '@influenceth/sdk';
 
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
-import useActionItems from '~/hooks/useActionItems';
 import useBlockTime from '~/hooks/useBlockTime';
 import useCrewContext from '~/hooks/useCrewContext';
 import useLot from '~/hooks/useLot';
+import useUnresolvedActivities from '~/hooks/useUnresolvedActivities';
 import actionStages from '~/lib/actionStages';
 
 const useDryDockManager = (lotId, slot = 1) => {
-  const { actionItems, readyItems } = useActionItems();
   const blockTime = useBlockTime();
   const { execute, getPendingTx, getStatus } = useContext(ChainTransactionContext);
-  const { crew } = useCrewContext();
+  const { crew, crewCan } = useCrewContext();
   const { data: lot } = useLot(lotId);
+  const { data: actionItems } = useUnresolvedActivities(lot?.building);
 
   const payload = useMemo(() => ({
     dry_dock: { id: lot?.building?.id, label: Entity.IDS.BUILDING },
@@ -28,7 +28,7 @@ const useDryDockManager = (lotId, slot = 1) => {
   const [currentAssembly, assemblyStatus, actionStage] = useMemo(() => {
     let current = {
       _cachedData: null,
-      _isMyAction: true,
+      _isAccessible: false,
       finishTime: null,
       origin: null,
       originSlot: null,
@@ -51,8 +51,10 @@ const useDryDockManager = (lotId, slot = 1) => {
         current.originSlot = actionItem.event.returnValues.originSlot;
         current.shipType = actionItem.event.returnValues.shipType;
         current.startTime = actionItem._startTime || actionItem.event.timestamp;
-      } else {
-        current._isMyAction = false;
+        current._isAccessible = (
+          (actionItem.event.returnValues.callerCrew.id === crew?.id)
+          || crewCan(Permission.IDS.ASSEMBLE_SHIP, lot.building)
+        );
       }
       current.shipId = slotDryDock?.outputShip.id;
       current.finishTime = slotDryDock?.finishTime;
@@ -83,7 +85,7 @@ const useDryDockManager = (lotId, slot = 1) => {
       status,
       stage
     ];
-  }, [actionItems, blockTime, readyItems, getPendingTx, getStatus, payload, slotDryDock?.status]);
+  }, [actionItems, blockTime, getPendingTx, getStatus, payload, slotDryDock?.status]);
 
   const startShipAssembly = useCallback((shipType, origin, originSlot) => {
     execute(

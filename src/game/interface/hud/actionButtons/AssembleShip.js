@@ -28,7 +28,7 @@ const AssembleShip = ({ asteroid, crew, lot, onSetAction, _disabled }) => {
       return getCrewDisabledReason({
         asteroid, crew, isSequenceable: true, permission: Permission.IDS.ASSEMBLE_SHIP, permissionTarget: lot?.building
       });
-    } else if (!currentAssembly?._isMyAction) {
+    } else if (!currentAssembly?._isAccessible) {
       return 'in use';
     }
   }, [_disabled, assemblyStatus, asteroid, crew, currentAssembly, lot?.building]);

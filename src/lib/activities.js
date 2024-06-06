@@ -247,7 +247,7 @@ const activities = {
           newGroupEval: {
             updatedValues: {
               controllerId: returnValues.callerCrew.id,
-              hasPermission: getApplicablePermissions(building || returnValues.building), // new controller may now all relevant permissions 
+              hasPermission: getApplicablePermissions(building || returnValues.building), // new controller may now all relevant permissions
             },
             filters: {
               asteroidId: _location.asteroidId,
@@ -259,7 +259,7 @@ const activities = {
         }
       ]
     },
-    
+
     getPrepopEntities: ({ event: { returnValues } }) => ({
       building: returnValues.building,
     }),
@@ -282,6 +282,7 @@ const activities = {
         [ 'orderList', returnValues.exchange.id, returnValues.product ],
         [ 'crewOpenOrders', returnValues.buyerCrew.id ],
         [ 'exchangeOrderSummary', asteroidId, returnValues.product ],
+        [ 'inventoryOrders', returnValues.storage?.label, returnValues.storage?.id ],
         [ 'productOrderSummary', Entity.IDS.ASTEROID, asteroidId ],
         [ 'productOrderSummary', Entity.IDS.LOT, lotId ],
       ]
@@ -301,6 +302,7 @@ const activities = {
         [ 'orderList', returnValues.exchange.id, returnValues.product ],
         [ 'crewOpenOrders', returnValues.callerCrew.id ],
         [ 'exchangeOrderSummary', asteroidId, returnValues.product ],
+        [ 'inventoryOrders', returnValues.storage?.label, returnValues.storage?.id ],
         [ 'productOrderSummary', Entity.IDS.ASTEROID, asteroidId ],
         [ 'productOrderSummary', Entity.IDS.LOT, lotId ],
       ];
@@ -324,6 +326,7 @@ const activities = {
         [ 'orderList', returnValues.exchange.id, returnValues.product ],
         [ 'crewOpenOrders', returnValues.buyerCrew.id ],
         [ 'exchangeOrderSummary', asteroidId, returnValues.product ],
+        [ 'inventoryOrders', returnValues.storage?.label, returnValues.storage?.id ],
         [ 'productOrderSummary', Entity.IDS.ASTEROID, asteroidId ],
         [ 'productOrderSummary', Entity.IDS.LOT, lotId ],
       ]
@@ -847,7 +850,9 @@ const activities = {
           updatedValues: { stationUuid: safeEntityId(returnValues.station)?.uuid }
         }
       },
-      { ...returnValues.station },
+      { ...returnValues.station }, // v0
+      { ...returnValues.originStation }, // v1
+      { ...returnValues.destinationStation }, // v1
       // TODO: previous station
     ]),
 
@@ -1575,6 +1580,7 @@ const activities = {
         [ 'orderList', returnValues.exchange.id, returnValues.product ],
         [ 'crewOpenOrders', returnValues.sellerCrew.id ],
         [ 'exchangeOrderSummary', asteroidId, returnValues.product ],
+        [ 'inventoryOrders', returnValues.storage?.label, returnValues.storage?.id ],
         [ 'productOrderSummary', Entity.IDS.ASTEROID, asteroidId ],
         [ 'productOrderSummary', Entity.IDS.LOT, lotId ],
       ];
@@ -1594,6 +1600,7 @@ const activities = {
         [ 'orderList', returnValues.exchange.id, returnValues.product ],
         [ 'crewOpenOrders', returnValues.callerCrew.id ],
         [ 'exchangeOrderSummary', asteroidId, returnValues.product ],
+        [ 'inventoryOrders', returnValues.storage?.label, returnValues.storage?.id ],
         [ 'productOrderSummary', Entity.IDS.ASTEROID, asteroidId ],
         [ 'productOrderSummary', Entity.IDS.LOT, lotId ],
       ];
@@ -1636,6 +1643,7 @@ const activities = {
           [ 'orderList', returnValues.exchange.id, returnValues.product ],
           [ 'crewOpenOrders', returnValues.sellerCrew.id ],
           [ 'exchangeOrderSummary', asteroidId, returnValues.product ],
+          [ 'inventoryOrders', returnValues.storage?.label, returnValues.storage?.id ],
           [ 'productOrderSummary', Entity.IDS.ASTEROID, asteroidId ],
           [ 'productOrderSummary', Entity.IDS.LOT, lotId ],
         ];

@@ -174,7 +174,7 @@ const TrackballModControls = function (object, domElement) {
         moveDirection.copy(objectUpDirection.add(objectSidewaysDirection));
         axis.crossVectors(moveDirection, _eye).normalize();
         angle *= _this.rotateSpeed;
-        quaternion.setFromAxisAngle(axis, angle);
+        quaternion.setFromAxisAngle(axis, angle).normalize();
         _eye.applyQuaternion(quaternion);
         _this.object.up.applyQuaternion(quaternion);
         _lastAxis.copy(axis);
@@ -182,7 +182,7 @@ const TrackballModControls = function (object, domElement) {
       } else if (! _this.staticMoving && _lastAngle) {
         _lastAngle *= Math.sqrt(1.0 - _this.dynamicDampingFactor);
         _eye.copy(_this.object.position).sub(_this.target);
-        quaternion.setFromAxisAngle(_lastAxis, _lastAngle);
+        quaternion.setFromAxisAngle(_lastAxis, _lastAngle).normalize();
         _eye.applyQuaternion(quaternion);
         _this.object.up.applyQuaternion(quaternion);
       }

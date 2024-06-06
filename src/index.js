@@ -1,5 +1,5 @@
 import { Suspense } from 'react';
-import ReactDOM from 'react-dom';
+import { createRoot } from 'react-dom/client';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import LoadingAnimation from 'react-spinners/PropagateLoader';
 import styled from 'styled-components';
@@ -13,7 +13,6 @@ import * as serviceWorkerRegistration from './serviceWorkerRegistration';
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      refetchOnMount: false,
       staleTime: 60000 * 5
     }
   }
@@ -30,15 +29,14 @@ const Loader = styled.div`
   z-index: 10000;
 `;
 
-ReactDOM.render(
-  <Suspense fallback={<Loader><LoadingAnimation color={'white'} loading={true} /></Loader>}>
+createRoot(document.getElementById('root')).render(
+  <Suspense fallback={<Loader><LoadingAnimation color="white" loading /></Loader>}>
     <ErrorBoundary>
-      <QueryClientProvider client={queryClient} contextSharing={true}>
+      <QueryClientProvider client={queryClient} contextSharing>
         <Game />
       </QueryClientProvider>
     </ErrorBoundary>
-  </Suspense>,
-  document.getElementById('root')
+  </Suspense>
 );
 
 // listen for installprompt (should keep this before serviceworker registration)

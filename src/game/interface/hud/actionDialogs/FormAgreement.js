@@ -165,10 +165,7 @@ const FormAgreement = ({
     return 365;
   }, [currentAgreement, isExtension]);
 
-  const maxTermFloored = useMemo(
-    () => Math.floor(maxTerm * 10) / 10,
-    [maxTerm]
-  );
+  const maxTermFloored = useMemo(() => Math.floor(maxTerm * 10) / 10, [maxTerm]);
 
   const minTerm = useMemo(() => {
     return (isExtension) ? 1 : currentPolicy?.policyDetails?.initialTerm || 0
@@ -249,7 +246,10 @@ const FormAgreement = ({
     }
     setEligibilityLoading(false);
   }, [crew?.id, crew?.label, currentPolicy?.policyDetails?.contract, entity, permission, starknet]);
-  useEffect(() => updateContractEligibility(), [updateContractEligibility]);
+
+  useEffect(() => {
+    updateContractEligibility()
+  }, [updateContractEligibility]);
 
   const handleCopyAddress = useCallback(() => {
     createAlert({
@@ -283,8 +283,8 @@ const FormAgreement = ({
   const onExtendAgreement = useCallback(() => {
     const recipient = controller?.Crew?.delegatedTo;
     // TODO: should these conversions be in useAgreementManager?
-    const term = daysToSeconds(initialPeriod);
-    const termPrice = Math.ceil(totalLeaseCost * 1e6);
+    const term = Math.round(daysToSeconds(initialPeriod));
+    const termPrice = Math.round(totalLeaseCost * 1e6);
     extendAgreement({ recipient, term, termPrice });
   }, [controller?.Crew?.delegatedTo, extendAgreement, initialPeriod, totalLeaseCost]);
 

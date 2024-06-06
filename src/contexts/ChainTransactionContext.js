@@ -1,7 +1,7 @@
 import { createContext, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Address, Asteroid, Entity, Order, System } from '@influenceth/sdk';
 import { isEqual, get } from 'lodash';
-import { hash, shortString, uint256 } from 'starknet';
+import { Account, hash, shortString, uint256 } from 'starknet';
 import { fetchBuildExecuteTransaction, fetchQuotes } from '@avnu/avnu-sdk';
 
 import useActivitiesContext from '~/hooks/useActivitiesContext';
@@ -515,7 +515,16 @@ const getSystemCallAndProcessedVars = (runSystem, rawVars, encodeEntrypoint = fa
 }
 
 export function ChainTransactionProvider({ children }) {
-  const { accountAddress, authenticated, blockNumber, blockTime, logout, starknet, starknetSession } = useSession();
+  const {
+    accountAddress,
+    authenticated,
+    blockNumber,
+    blockTime,
+    isDeployed,
+    logout,
+    starknet,
+    starknetSession
+  } = useSession();
   const activities = useActivitiesContext();
   const { crew, pendingTransactions } = useCrewContext();
   const { data: wallet } = useWalletBalances();
@@ -720,7 +729,6 @@ export function ChainTransactionProvider({ children }) {
             const account = canUseSession ? starknetSession : starknet.account;
 
             // approve totalPriceToken to make purchase
-            console.log('tpltal price', totalPrice);
             if (totalPrice > 0n) {
               calls.unshift(System.getApproveErc20Call(
                 totalPrice,
@@ -798,7 +806,35 @@ export function ChainTransactionProvider({ children }) {
             }
 
             console.log('execute', calls);
-            return account.execute(calls);
+
+            // Simulate the tx and check for revert reasons, if found show alert
+            // Combining `simAccount` and `skipValidate = true` allows sim signing for any wallet
+            const simAccount = new Account(account.provider, account.address, '0x1234');
+            const simulation = isDeployed ? await simAccount.simulateTransaction(
+              [{ type: 'INVOKE_FUNCTION', payload: calls }],
+              { skipValidate: true }
+            ) : [];
+
+            if (simulation[0]?.transaction_trace?.execute_invocation?.revert_reason) {
+              const reason = simulation[0].transaction_trace.execute_invocation.revert_reason;
+              const match = reason.match(/Failure reason: 0x([a-fA-F0-9]+) \('([^']+)'\)/);
+
+              // If there is a match, we can show the friendly error message
+              // TODO: map "E" codes to more user-friendly messages
+              if (match) {
+                createAlert({
+                  type: 'GenericAlert',
+                  data: { content: match[2] },
+                  level: 'warning',
+                });
+              } else {
+                // If no match, show the raw error message
+                throw new Error(reason);
+              }
+            } else {
+              // Execute the transaction if no simulation issues
+              return account.execute(calls);
+            }
           },
 
           onConfirmed: (event, vars) => {

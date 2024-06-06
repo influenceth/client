@@ -20,7 +20,7 @@ const useWatchlist = () => {
   const ids = useMemo(() => {
     if (watchlist.data) return watchlist.data.map(w => w.id);
     return [];
-  }, [watchlist.data]);
+  }, [watchlist.data, watchlist.dataUpdatedAt]);
 
   return { watchlist, ids };
 };

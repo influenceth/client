@@ -1,6 +1,6 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import Lottie from 'react-lottie';
+import Lottie from 'lottie-react';
 import styled from 'styled-components';
 import { gsap } from 'gsap';
 
@@ -18,19 +18,15 @@ const Wrapper = styled.div`
   z-index: 9999; /* above everything except Suspense */
 `;
 
-const animationOptions = {
-  loop: false,
-  autoplay: false,
-  animationData: IntroLottie
-};
-
 const Intro = () => {
   const container = useRef();
+  const lottieRef = useRef();
   const [complete, setComplete] = useState(false);
   const [hiding, setHiding] = useState(false);
   const [paused, setPaused] = useState(true);
 
-  const onDataReady = useCallback(() => {
+  const onReady = useCallback(() => {
+    setPaused(true);
     setTimeout(() => setPaused(false), 1000);
   }, []);
 
@@ -45,23 +41,23 @@ const Intro = () => {
     });
   }, []);
 
-  const eventListeners = useMemo(() => {
-    return [
-      { eventName: 'DOMLoaded', callback: onDataReady },
-      { eventName: 'complete', callback: onComplete }
-    ];
-  }, [onComplete, onDataReady]);
+  useEffect(() => {
+    if (paused) lottieRef.current.pause();
+    else lottieRef.current.play();
+  }, [paused]);
 
   if (complete) return null;
   return createPortal(
     (
       <Wrapper ref={container} hiding={hiding}>
         <Lottie
-          eventListeners={eventListeners}
-          options={animationOptions}
-          isPaused={paused}
-          height="200px"
-          width="75%" />
+          lottieRef={lottieRef}
+          animationData={IntroLottie}
+          loop={false}
+          autoplay={false}
+          onDOMLoaded={onReady}
+          onComplete={onComplete}
+          style={{ height: '200px', width: '100%' }} />
       </Wrapper>
     ),
     document.body

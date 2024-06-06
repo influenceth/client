@@ -97,7 +97,9 @@ const useBookSession = (crewId, crewmateId) => {
   const dispatchCrewAssignmentPathUndo = useStore(s => s.dispatchCrewAssignmentPathUndo);
   const dispatchCrewAssignmentRestart = useStore(s => s.dispatchCrewAssignmentRestart);
 
-  useEffect(() => fetchBook(bookId).then(setBook), [bookId]);
+  useEffect(() => {
+    fetchBook(bookId).then(setBook);
+  }, [bookId]);
 
   const { bookSession, storySession } = useMemo(() => {
     // console.log({ book, crewIsLoading, crewmateId, crewmate });

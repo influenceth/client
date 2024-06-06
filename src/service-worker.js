@@ -21,23 +21,24 @@ clientsClaim();
 // even if you decide not to use precaching. See https://cra.link/PWA
 const modelsBase = `${process.env.REACT_APP_CLOUDFRONT_OTHER_URL}/models`;
 precache([
-  { url: `${modelsBase}/buildings/Bioreactor.v1.glb`, revision: null },
-  { url: `${modelsBase}/buildings/EmptyLot.v2.glb`, revision: null },
-  { url: `${modelsBase}/buildings/Extractor.v3.glb`, revision: null },
-  { url: `${modelsBase}/buildings/Factory.v1.glb`, revision: null },
-  { url: `${modelsBase}/buildings/Habitat.v1.glb`, revision: null },
-  { url: `${modelsBase}/buildings/Marketplace.v1.glb`, revision: null },
-  { url: `${modelsBase}/buildings/Refinery.v1.glb`, revision: null },
-  { url: `${modelsBase}/buildings/Shipyard.v1.glb`, revision: null },
-  { url: `${modelsBase}/buildings/Spaceport.v1.glb`, revision: null },
-  { url: `${modelsBase}/buildings/Warehouse.v3.glb`, revision: null },
-  { url: `${modelsBase}/ships/EscapeModule.v1.glb`, revision: null },
-  { url: `${modelsBase}/ships/HeavyTransport.v1.glb`, revision: null },
-  { url: `${modelsBase}/ships/LightTransport.v1.glb`, revision: null },
-  { url: `${modelsBase}/ships/LightTransport_Variant2.v1.glb`, revision: null },
-  { url: `${modelsBase}/ships/LightTransport_Variant3.v1.glb`, revision: null },
-  { url: `${modelsBase}/ships/LightTransport_Variant4.v1.glb`, revision: null },
-  { url: `${modelsBase}/ships/Shuttle.v1.glb`, revision: null }
+  { url: `${modelsBase}/buildings/Bioreactor.glb`, revision: null },
+  { url: `${modelsBase}/buildings/EmptyLot.glb`, revision: null },
+  { url: `${modelsBase}/buildings/Extractor.glb`, revision: null },
+  { url: `${modelsBase}/buildings/Factory.glb`, revision: null },
+  { url: `${modelsBase}/buildings/Habitat.glb`, revision: null },
+  { url: `${modelsBase}/buildings/Marketplace.glb`, revision: null },
+  { url: `${modelsBase}/buildings/Refinery.glb`, revision: null },
+  { url: `${modelsBase}/buildings/Shipyard.glb`, revision: null },
+  { url: `${modelsBase}/buildings/Spaceport.glb`, revision: null },
+  { url: `${modelsBase}/buildings/Warehouse.glb`, revision: null },
+  { url: `${modelsBase}/buildings/LandedLightTransport.glb`, revision: null },
+  { url: `${modelsBase}/ships/EscapeModule.glb`, revision: null },
+  { url: `${modelsBase}/ships/HeavyTransport.glb`, revision: null },
+  { url: `${modelsBase}/ships/LightTransport.glb`, revision: null },
+  { url: `${modelsBase}/ships/LightTransport_Variant2.glb`, revision: null },
+  { url: `${modelsBase}/ships/LightTransport_Variant3.glb`, revision: null },
+  { url: `${modelsBase}/ships/LightTransport_Variant4.glb`, revision: null },
+  { url: `${modelsBase}/ships/Shuttle.glb`, revision: null }
 ]);
 
 precacheAndRoute(self.__WB_MANIFEST);

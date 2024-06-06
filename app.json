@@ -6,6 +6,10 @@
     }
   ],
   "env": {
+    "REACT_APP_DEPLOYMENT": {
+      "description": "The specific deployment tag for the client (i.e. prerelease, production, etc.)",
+      "required": true
+    },
     "REACT_APP_API_URL": {
       "description": "Base URL of the Influence API server, does not include trailing slash",
       "required": true

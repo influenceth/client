@@ -3417,7 +3417,7 @@ export const ProcessInputOutputSection = ({ title, products, input, output, prim
                         <ClipCorner dimension={10} color={theme.colors.main} />
                       </>
                     )
-                    : `-${formatFixed(100 * Math.min(0.5 / (secondaryOutputsBonus || 1), 1), 1)}%`
+                    : `-${formatFixed(100 * Math.min(0.375 / (secondaryOutputsBonus || 1), 1), 1)}%`
                   }
                 </label>
               )}
@@ -4612,7 +4612,7 @@ export const formatMass = (inputGrams, { abbrev = true, minPrecision = 3, fixedP
   const workingUnits = (grams / scale);
 
   let fixedPlaces = fixedPrecision || 0;
-  if (fixedPrecision === undefined) {
+  if (fixedPrecision === undefined && workingUnits > 0) {
     while (workingUnits * 10 ** (fixedPlaces + 1) < 10 ** minPrecision) {
       fixedPlaces++;
     }
@@ -4649,7 +4649,7 @@ export const formatVolume = (inputMl, { abbrev = true, minPrecision = 3, fixedPr
   const workingUnits = (ml / scale);
 
   let fixedPlaces = fixedPrecision || 0;
-  if (fixedPrecision === undefined) {
+  if (fixedPrecision === undefined && workingUnits > 0) {
     while (workingUnits * 10 ** (fixedPlaces + 1) < 10 ** minPrecision) {
       fixedPlaces++;
     }
@@ -4689,7 +4689,7 @@ export const formatVelocity = (inputMetersPerSecond, { abbrev = true, minPrecisi
   const workingUnits = (metersPerSecond / scale);
 
   let fixedPlaces = fixedPrecision || 0;
-  if (fixedPrecision === undefined) {
+  if (fixedPrecision === undefined && workingUnits > 0) {
     while (workingUnits * 10 ** (fixedPlaces + 1) < 10 ** minPrecision) {
       fixedPlaces++;
     }

@@ -101,7 +101,7 @@ class TerrainChunk {
         ${shader.vertexShader.replace(
           '#include <displacementmap_vertex>',
           `#ifdef USE_DISPLACEMENTMAP
-            vec2 disp16 = texture2D(displacementMap, vUv).xy;
+            vec2 disp16 = texture2D(displacementMap, vDisplacementMapUv).xy;
             float disp = (disp16.x * 255.0 + disp16.y) / 256.0;
             // set height along normal (which is set to spherical position)
             transformed = normalize(objectNormal) * (uRadius + disp * displacementScale + displacementBias);
@@ -232,7 +232,7 @@ class TerrainChunk {
       materialUpdates.color = 0x222222; // darker modulation for color map so light doesn't wash out emissivity map
       materialUpdates.emissive = this._params.emissiveParams.color;
       materialUpdates.emissiveMap = data.emissiveBitmap.image ? data.emissiveBitmap : new CanvasTexture(data.emissiveBitmap);
-      materialUpdates.emissiveIntensity = 0.135 * (this._params.emissiveParams.intensityMult || 1);
+      materialUpdates.emissiveIntensity = 0.05 * (this._params.emissiveParams.intensityMult || 1);
     }
     this._material.setValues({
       ...materialUpdates,

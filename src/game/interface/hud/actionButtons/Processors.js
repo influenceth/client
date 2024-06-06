@@ -21,7 +21,7 @@ const Button = ({ asteroid, crew, lot, processor, onSetAction, _disabled }) => {
     if (_disabled) return 'loading...';
     if (processStatus === 'READY') {
       return getCrewDisabledReason({ asteroid, crew, isSequenceable: true, permission: Permission.IDS.RUN_PROCESS, permissionTarget: lot?.building });
-    } else if (!currentProcess?._isMyAction) {
+    } else if (!currentProcess?._isAccessible) {
       return 'in use';
     }
   }, [asteroid, crew, currentProcess, processStatus]);

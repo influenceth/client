@@ -216,8 +216,8 @@ const TravelSolution = ({}) => {
       {trajectory && (
         <line renderOrder={0} userData={{ bloom: true }}>
           <bufferGeometry>
-            <bufferAttribute attachObject={[ 'attributes', 'position' ]} args={[ trajectory, 3 ]} />
-            <bufferAttribute attachObject={[ 'attributes', 'order' ]} args={[ order, 1 ]} />
+            <bufferAttribute attach="attributes-position" args={[ trajectory, 3 ]} />
+            <bufferAttribute attach="attributes-order" args={[ order, 1 ]} />
           </bufferGeometry>
           <shaderMaterial
             args={[{
@@ -232,7 +232,7 @@ const TravelSolution = ({}) => {
       {/*trajectoryDebug && (
         <line>
           <bufferGeometry>
-            <bufferAttribute attachObject={[ 'attributes', 'position' ]} args={[ trajectoryDebug, 3 ]} />
+            <bufferAttribute attach="attributes-position" args={[ trajectoryDebug, 3 ]} />
           </bufferGeometry>
           <lineBasicMaterial color={orbitColors.white} transparent opacity={0.2} />
         </line>
@@ -241,7 +241,7 @@ const TravelSolution = ({}) => {
       {predeparture && (
         <line>
           <bufferGeometry>
-            <bufferAttribute attachObject={[ 'attributes', 'position' ]} args={[ predeparture, 3 ]} />
+            <bufferAttribute attach="attributes-position" args={[ predeparture, 3 ]} />
           </bufferGeometry>
           <lineBasicMaterial color={orbitColors.main} />
         </line>
@@ -250,7 +250,7 @@ const TravelSolution = ({}) => {
       {prearrival && (
         <line>
           <bufferGeometry>
-            <bufferAttribute attachObject={[ 'attributes', 'position' ]} args={[ prearrival, 3 ]} />
+            <bufferAttribute attach="attributes-position" args={[ prearrival, 3 ]} />
           </bufferGeometry>
           <lineBasicMaterial color={travelSolutionIsValid ? orbitColors.success : orbitColors.error} />
         </line>

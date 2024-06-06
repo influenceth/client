@@ -4,6 +4,7 @@ import { Entity } from '@influenceth/sdk';
 non-entity based
 - [ 'actionItems', crewId ],
 - [ 'activities', entityLabel, entityId, 'earliest' ],
+- [ 'activities', entityLabel, entityId, 'unresolved' ],
 - [ 'activities', entityLabel, entityId ],
 - [ 'agreements', accountAddress ],
 - [ 'asteroidPackedLotData', asteroidId ]
@@ -11,6 +12,7 @@ non-entity based
 - [ 'lotEntitiesPrepopulation', lotId ],
 - [ 'exchangeOrderSummary', asteroidId, product ],
 - [ 'faucetInfo', account ],
+- [ 'inventoryOrders', inventory, inventorySlot ],
 - [ 'productOrderSummary', entityLabel, entityId ],
 - [ 'referrals', token ],
 - [ 'search', assetType, query ],

@@ -30,7 +30,7 @@ export function ActionItemProvider({ children }) {
   const queryClient = useQueryClient();
 
   const crewId = crew?.id;
-  const { data: actionItems, isLoading: actionItemsLoading } = useQuery(
+  const { data: actionItems, isLoading: actionItemsLoading, dataUpdatedAt: itemsUpdatedAt } = useQuery(
     [ 'actionItems', crewId ],
     async () => {
       const activities = await api.getCrewActionItems(crewId);
@@ -50,7 +50,7 @@ export function ActionItemProvider({ children }) {
     { enabled: !!crewId }
   );
 
-  const { data: walletBuildings, isLoading: plannedBuildingsLoading } = useWalletBuildings();
+  const { data: walletBuildings, isLoading: plannedBuildingsLoading, dataUpdatedAt: plansUpdatedAt } = useWalletBuildings();
   const plannedBuildings = useMemo(() => {
     return walletBuildings && crewId
       ? (walletBuildings || []).filter((a) => (
@@ -125,7 +125,7 @@ export function ActionItemProvider({ children }) {
         }))
         .sort((a, b) => a._agreement.endTime - b._agreement.endTime)
     );
-  }, [actionItems, crew, crewAgreements, plannedBuildings, blockTime]);
+  }, [actionItems, crew, crewAgreements, plannedBuildings, blockTime, itemsUpdatedAt, plansUpdatedAt]);
 
   const allVisibleItems = useMemo(() => {
     if (!authenticated) return [];
@@ -173,7 +173,8 @@ export function ActionItemProvider({ children }) {
     randomEventItems,
     readyItems,
     unreadyItems,
-    unstartedItems
+    unstartedItems,
+    plansUpdatedAt
   ]);
 
   // if there is data for all types (i.e. we know loaded successfully), clean out all
@@ -186,7 +187,7 @@ export function ActionItemProvider({ children }) {
         }
       })
     }
-  }, [actionItems, allVisibleItems, crewAgreements, hiddenActionItems, plannedBuildings])
+  }, [actionItems, allVisibleItems, crewAgreements, hiddenActionItems, plannedBuildings, itemsUpdatedAt, plansUpdatedAt])
 
   // TODO: clear timers in the serviceworker
   //  for not yet ready to finish, set new timers based on time remaining
@@ -214,7 +215,9 @@ export function ActionItemProvider({ children }) {
     unstartedItems,
     actionItems,
     actionItemsLoading,
-    plannedBuildingsLoading
+    plannedBuildingsLoading,
+    itemsUpdatedAt,
+    plansUpdatedAt
   ]);
 
   // TODO: pending and failed transactions are already in context
