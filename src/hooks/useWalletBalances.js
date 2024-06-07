@@ -1,11 +1,15 @@
 import { useMemo } from 'react';
 
 import usePriceHelper from '~/hooks/usePriceHelper';
+import useStore from '~/hooks/useStore';
 import { useEthBalance, useUSDCBalance } from '~/hooks/useWalletTokenBalance';
 import { TOKEN } from '~/lib/priceUtils';
+import usePriceConstants from './usePriceConstants';
+
 
 const useWalletBalances = (overrideAccount) => {
-  const swappableTokens = ['ETH', 'USDC'];  // TODO: put in store
+  const autoswap = useStore(s => s.gameplay.autoswap);
+  const { data: priceConstants } = usePriceConstants();
 
   const priceHelper = usePriceHelper();
   const { data: ethBalance, isLoading: isLoading1, refetch: refetch1 } = useEthBalance(overrideAccount);
@@ -13,13 +17,18 @@ const useWalletBalances = (overrideAccount) => {
 
   const swappableTokenBalances = useMemo(() => {
     const allTokens = {
-      ETH: ethBalance,
-      USDC: usdcBalance,
+      [TOKEN.ETH]: ethBalance,
+      [TOKEN.USDC]: usdcBalance,
     };
-    return swappableTokens.reduce((acc, cur) => {
-      acc[TOKEN[cur]] = allTokens[cur];
-      return acc;
-    }, {});
+
+    // if autoswap, return allTokens... else, return just the specified purchase token
+    if (autoswap) return allTokens;
+
+    // for sanity, just assuming this is the same as ASTEROID_PURCHASE_TOKEN *and*
+    // is represented in allTokens above...
+    if (!priceConstants?.ADALIAN_PURCHASE_TOKEN) return {};
+    const baseToken = priceConstants.ADALIAN_PURCHASE_TOKEN;
+    return { [baseToken]: allTokens[baseToken] };
   }, [ethBalance, usdcBalance]);
 
   const isLoading = isLoading1 || isLoading2;

@@ -63,7 +63,10 @@ const StyledDataReadout = styled(DataReadout)`
   padding: 7px 0 7px 15px;
 
   & label {
-    width: 175px;
+    ${p => p.wide
+      ? 'width: auto; white-space: nowrap;'
+      : 'width: 175px;'
+    }
   }
 
   & span {
@@ -80,12 +83,11 @@ const AutodetectButton = styled(Button)`
   }
 `;
 
-const SettingsPane = () => {
+const GraphicsPane = () => {
   const gpuInfo = useDetectGPU();
 
   const { isMobile } = useScreenSize();
   const graphics = useStore(s => s.graphics);
-  const sounds = useStore(s => s.sounds);
   const turnOnSkybox = useStore(s => s.dispatchSkyboxUnhidden);
   const turnOffSkybox = useStore(s => s.dispatchSkyboxHidden);
   const turnOnLensflare = useStore(s => s.dispatchLensflareUnhidden);
@@ -97,8 +99,6 @@ const SettingsPane = () => {
   const setFOV = useStore(s => s.dispatchFOVSet);
   const turnOnStats = useStore(s => s.dispatchStatsOn);
   const turnOffStats = useStore(s => s.dispatchStatsOff);
-  const adjustMusicVolume = useStore(s => s.dispatchMusicVolumeSet);
-  const adjustEffectsVolume = useStore(s => s.dispatchEffectsVolumeSet);
 
   const [ localFOV, setLocalFOV ] = useState(graphics.fov);
   const [ fullscreen, setFullscreen ] = useState(screenfull.isEnabled && screenfull.isFullscreen);
@@ -269,7 +269,17 @@ const SettingsPane = () => {
           </div>
         </Section>
       )}
+    </StyledSettings>
+  );
+}
 
+const SoundPane = () => {
+  const sounds = useStore(s => s.sounds);
+  const adjustMusicVolume = useStore(s => s.dispatchMusicVolumeSet);
+  const adjustEffectsVolume = useStore(s => s.dispatchEffectsVolumeSet);
+
+  return (
+    <StyledSettings>
       <Section>
         <h3>Sound</h3>
         <div>
@@ -288,6 +298,30 @@ const SettingsPane = () => {
               max={100}
               defaultValue={sounds.effects}
               onChange={adjustEffectsVolume} />
+          </StyledDataReadout>
+        </div>
+      </Section>
+    </StyledSettings>
+  );
+}
+
+const GameplayPane = () => {
+  const gameplay = useStore(s => s.gameplay);
+  const toggleAutoswap = useStore(s => s.dispatchAutoswapEnabled);
+  
+  return (
+    <StyledSettings>
+      <Section>
+        <h3>Gameplay</h3>
+        <div>
+          <StyledDataReadout label="Automatically swap ETH ⇌ USDC as needed" wide>
+            <IconButton
+              data-tooltip-content="Toggle Autoswap"
+              data-tooltip-id="globalTooltip"
+              onClick={() => toggleAutoswap(!gameplay.autoswap)}
+              borderless>
+              {gameplay.autoswap ? <CheckedIcon /> : <UncheckedIcon />}
+            </IconButton>
           </StyledDataReadout>
         </div>
       </Section>
@@ -355,8 +389,16 @@ const ShortcutsPane = () => {
 
 const panes = [
   {
-    label: 'Graphics & Sound',
-    pane: <SettingsPane />
+    label: 'Graphics',
+    pane: <GraphicsPane />
+  },
+  {
+    label: 'Sound',
+    pane: <SoundPane />
+  },
+  {
+    label: 'Gameplay',
+    pane: <GameplayPane />
   },
   {
     label: 'Keyboard Shortcuts',

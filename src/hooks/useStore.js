@@ -102,6 +102,10 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
 
     draggables: {},
 
+    gameplay: {
+      autoswap: true,
+    },
+
     graphics: {
       autodetect: true,
       fov: 75,
@@ -113,17 +117,17 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
       textureQuality: undefined,
     },
 
+    sounds: {
+      music: process.env.NODE_ENV === 'development' ? 0 : 100,
+      effects: process.env.NODE_ENV === 'development' ? 0 : 100,
+    },
+
     failedTransactions: [],
     pendingTransactions: [],
 
     lotLoader: {
       id: null,
       progress: 0
-    },
-
-    sounds: {
-      music: process.env.NODE_ENV === 'development' ? 0 : 100,
-      effects: process.env.NODE_ENV === 'development' ? 0 : 100,
     },
 
     effects: {},
@@ -649,6 +653,10 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
       state.preferredUiCurrency = token;
     })),
 
+    dispatchAutoswapEnabled: (which) => set(produce(state => {
+      state.gameplay.autoswap = !!which;
+    })),
+
     //
     // SPECIAL GETTERS
 
@@ -689,7 +697,7 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
 
 }), {
   name: STORE_NAME,
-  version: 4,
+  version: 5,
   migrate: (persistedState, oldVersion) => {
     const migrations = [
       (state, version) => {
@@ -711,6 +719,11 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
       (state, version) => {
         if (version >= 4) return;
         state.assetSearch = { ...assetSearchDefaults };
+        return state;
+      },
+      (state, version) => {
+        if (version >= 5) return;
+        state.gameplay = { autoswap: true };
         return state;
       },
     ];
