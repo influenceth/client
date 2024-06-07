@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQueryClient } from 'react-query';
 import styled from 'styled-components';
+import { fetchBuildExecuteTransaction } from '@avnu/avnu-sdk';
 
 import AsteroidsHeroImage from '~/assets/images/sales/asteroids_hero.png';
 import CrewmatesHeroImage from '~/assets/images/sales/crewmates_hero.png';
@@ -29,6 +30,8 @@ import { advPackPriceUSD, basicPackPriceUSD } from '../Store';
 import FundingFlow from './FundingFlow';
 import api from '~/lib/api';
 import useSession from '~/hooks/useSession';
+
+const avnuOptions = { baseUrl: process.env.REACT_APP_AVNU_API_URL };
 
 const Flourish = styled.div`
   background: url(${p => p.src});
@@ -537,7 +540,11 @@ const StarterPackSKU = () => {
 
 // TODO: wrap in launch feature flag
 const SwaySKU = ({ onUpdatePurchase }) => {
+  const { accountAddress, starknet } = useSession();
   const priceHelper = usePriceHelper();
+  const { data: wallet } = useWalletBalances();
+
+  const createAlert = useStore(s => s.dispatchAlertLogged);
   const preferredUiCurrency = useStore(s => s.getPreferredUiCurrency());
 
   const [eth, setETH] = useState();
@@ -579,9 +586,56 @@ const SwaySKU = ({ onUpdatePurchase }) => {
   useEffect(() => {
     onUpdatePurchase({
       totalPrice: priceHelper.from((usdc || 0) * TOKEN_SCALE[TOKEN.USDC], TOKEN.USDC),
-      // onPurchase: () => purchaseCredits(quantity)
+      onPurchase: async () => {
+        const swappableTokens = Object.keys(wallet?.tokenBalance);
+        swappableTokens.sort((a) => a === preferredUiCurrency ? -1 : 1);
+        
+        const calls = [];
+        const initialTargetUSDC = (usdc || 0) * TOKEN_SCALE[TOKEN.USDC];
+        let remainingTargetUSDC = initialTargetUSDC;
+        for (let i = 0; i < swappableTokens.length; i++) {
+          const token = swappableTokens[i];
+          const sellAmount = Math.min(
+            priceHelper.from(remainingTargetUSDC, TOKEN.USDC).to(token),
+            parseInt(wallet.tokenBalance[token])
+          );
+          if (sellAmount > 0) {
+            remainingTargetUSDC -= priceHelper.from(sellAmount, token).to(TOKEN.USDC);
+            
+            const quotes = await api.getSwapQuote({
+              sellToken: token,
+              buyToken: TOKEN.SWAY,
+              amount: sellAmount,
+              account: accountAddress
+            });
+            if (quotes?.[0]) {
+              console.log('quotes', quotes);
+              const tx = await fetchBuildExecuteTransaction(
+                quotes?.[0].quoteId,
+                accountAddress,
+                undefined,
+                true,
+                avnuOptions
+              );
+              calls.push(...tx.calls);
+            }
+          }
+        }
+
+        // if more than X% slippage, don't transact
+        if (remainingTargetUSDC > initialTargetUSDC * 0.1) {
+          createAlert({
+            type: 'GenericAlert',
+            data: { content: 'Insufficient swap liquidity! Try again later.' },
+            level: 'warning',
+            duration: 5000
+          });
+        } else {
+          return starknet.account.execute(calls);
+        }
+      }
     })
-  }, [usdc, onUpdatePurchase]);
+  }, [accountAddress, onUpdatePurchase, preferredUiCurrency, priceHelper, starknet?.account, usdc, wallet]);
 
   return (
     <Wrapper>
@@ -666,7 +720,7 @@ const SwayFaucetButton = () => {
   const swayEnabled = useMemo(() => {
     if (!faucetInfo) return false;
     const lastClaimed = faucetInfo.SWAY.lastClaimed || 0;
-    return Date.now() > (Date.parse(lastClaimed) + 23.5 * 3600 * 1000);
+    return Date.now() > (Date.parse(lastClaimed) + 23.5 * 3600e3);
   }, [faucetInfo]);
 
   const requestSway = useCallback(async () => {
@@ -708,7 +762,7 @@ const SwayFaucetButton = () => {
       loading={reactBool(requestingSway || faucetInfoLoading)}
       style={{ marginRight: 10 }}>
       <PurchaseButtonInner>
-        <label>SWAY Faucet</label>
+        <label>Daily Faucet</label>
         <span style={{ marginLeft: 10 }}>
           +<SwayIcon />{Number(400000).toLocaleString()}
         </span>
@@ -744,6 +798,16 @@ const SKU = ({ asset, onBack }) => {
     setTimeout(() => dispatchHudMenuOpened('BELT_MAP_SEARCH'), hudTimeout);
     dispatchLauncherPage();
   }, [filters, updateFilters, zoomStatus, dispatchHudMenuOpened, dispatchLauncherPage, dispatchZoomScene, updateZoomStatus]);
+
+  const handlePurchase = useCallback(() => {
+    const totalPriceUSD = purchase?.totalPrice?.to(TOKEN.USDC);
+    const totalWalletUSD = wallet.combinedBalance?.to(TOKEN.USDC);
+    if (totalWalletUSD > totalPriceUSD) {
+      purchase.onPurchase();
+    } else {
+      setFundingPurchase(purchase);
+    }
+  }, [purchase, wallet]);
 
   const { content, ...props } = useMemo(() => {
     if (asset === 'asteroids') {
@@ -842,6 +906,7 @@ const SKU = ({ asset, onBack }) => {
           </PurchaseButtonInner>
         ),
         props: {
+          onClick: handlePurchase,
           isTransaction: true,
         },
         preLabel: <SwayFaucetButton />
@@ -849,29 +914,6 @@ const SKU = ({ asset, onBack }) => {
     }
     return params;
   }, [asset, filterUnownedAsteroidsAndClose]);
-
-  const handlePurchase = useCallback((recursed) => {
-    const totalPriceUSD = purchase?.totalPrice?.to(TOKEN.USDC);
-    const totalWalletUSD = wallet.combinedBalance?.to(TOKEN.USDC);
-    if (recursed === true && totalWalletUSD > totalPriceUSD) {
-      purchase.onPurchase();
-    } else {
-      setFundingPurchase(purchase);
-    }
-    console.log('totalPriceUSD', totalPriceUSD, totalWalletUSD);
-
-    // if (wallet?.totalValueUSD >= purchase?.totalPrice) {
-    //   if (wallet?.ethBalanceUSD >= purchase?.totalPrice) {
-    //     purchase.onPurchase();
-    //   } else {
-    //     // TODO: USDC -> ETH, purchase call
-    //     console.log('convert + purchase', purchase?.totalPrice, wallet)
-    //   }
-    // } else {
-    //   // TODO: funding dialog
-    //   console.log('fund + purchase', purchase?.totalPrice, wallet)
-    // }
-  }, [purchase?.totalPrice, wallet]);
 
   return (
     <>

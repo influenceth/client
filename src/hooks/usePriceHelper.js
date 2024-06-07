@@ -29,7 +29,7 @@ class Price {
     else throw new Error(`invalid token address: "${tokenAddress}"`);
     return format
       ? TOKEN_FORMATTER[tokenAddress](tokenValue, format)
-      : tokenValue;
+      : Math.floor(tokenValue); // in "wei" form, likely to be cast to bigint
   }
 
   clone() {
