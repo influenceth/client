@@ -551,6 +551,44 @@ export function ChainTransactionProvider({ children }) {
     [blockNumber, crew?.Crew?.actionType, crew?.Crew?.actionRound, crew?._actionTypeTriggered]
   );
 
+  const simulateAndExecuteCalls = useCallback(async (calls) => {
+    // Check if we can utilize a signed session to execute calls
+    const canUseSession = !!starknetSession?.account && !!starknetSession?.sessionSignature && !calls.some((c) => {
+      return c.contractAddress !== process.env.REACT_APP_STARKNET_DISPATCHER || c.entrypoint !== 'run_system';
+    });
+
+    const account = canUseSession ? starknetSession : starknet.account;
+    
+    // Simulate the tx and check for revert reasons, if found show alert
+    // Combining `simAccount` and `skipValidate = true` allows sim signing for any wallet
+    const simAccount = new Account(account.provider, account.address, '0x1234');
+    const simulation = isDeployed ? await simAccount.simulateTransaction(
+      [{ type: 'INVOKE_FUNCTION', payload: calls }],
+      { skipValidate: true }
+    ) : [];
+
+    if (simulation[0]?.transaction_trace?.execute_invocation?.revert_reason) {
+      const reason = simulation[0].transaction_trace.execute_invocation.revert_reason;
+      const match = reason.match(/Failure reason: 0x([a-fA-F0-9]+) \('([^']+)'\)/);
+
+      // If there is a match, we can show the friendly error message
+      // TODO: map "E" codes to more user-friendly messages
+      if (match) {
+        createAlert({
+          type: 'GenericAlert',
+          data: { content: match[2] },
+          level: 'warning',
+        });
+      } else {
+        // If no match, show the raw error message
+        throw new Error(reason);
+      }
+    } else {
+      // Execute the transaction if no simulation issues
+      return account.execute(calls);
+    }
+  }, [createAlert, isDeployed, starknetSession, starknet?.account]);
+
   const contracts = useMemo(() => {
     if (!!starknet?.account) {
 
@@ -721,13 +759,6 @@ export function ChainTransactionProvider({ children }) {
               ));
             }
 
-            // Check if we can utilize a signed session to execute calls
-            const canUseSession = !!starknetSession?.account && !!starknetSession?.sessionSignature && !calls.some((c) => {
-              return c.contractAddress !== process.env.REACT_APP_STARKNET_DISPATCHER || c.entrypoint !== 'run_system';
-            });
-
-            const account = canUseSession ? starknetSession : starknet.account;
-
             // approve totalPriceToken to make purchase
             if (totalPrice > 0n) {
               calls.unshift(System.getApproveErc20Call(
@@ -774,7 +805,7 @@ export function ChainTransactionProvider({ children }) {
                       sellTokenAddress: fromAddress,
                       buyTokenAddress: toAddress,
                       sellAmount: BigInt(targetSwapAmount / actualConv),
-                      takerAddress: account.address
+                      takerAddress: starknet.account,
                     }, { baseUrl: process.env.REACT_APP_AVNU_API_URL });
                     if (!quotes?.[0]) throw new Error('Insufficient swap liquidity');
                     
@@ -795,7 +826,7 @@ export function ChainTransactionProvider({ children }) {
                   // prepend swap calls
                   const { calls } = await fetchBuildExecuteTransaction(
                     quote.id,
-                    account.address,
+                    starknet.account,
                     slippage,
                     true,
                     { baseUrl: process.env.REACT_APP_AVNU_API_URL }
@@ -806,35 +837,7 @@ export function ChainTransactionProvider({ children }) {
             }
 
             console.log('execute', calls);
-
-            // Simulate the tx and check for revert reasons, if found show alert
-            // Combining `simAccount` and `skipValidate = true` allows sim signing for any wallet
-            const simAccount = new Account(account.provider, account.address, '0x1234');
-            const simulation = isDeployed ? await simAccount.simulateTransaction(
-              [{ type: 'INVOKE_FUNCTION', payload: calls }],
-              { skipValidate: true }
-            ) : [];
-
-            if (simulation[0]?.transaction_trace?.execute_invocation?.revert_reason) {
-              const reason = simulation[0].transaction_trace.execute_invocation.revert_reason;
-              const match = reason.match(/Failure reason: 0x([a-fA-F0-9]+) \('([^']+)'\)/);
-
-              // If there is a match, we can show the friendly error message
-              // TODO: map "E" codes to more user-friendly messages
-              if (match) {
-                createAlert({
-                  type: 'GenericAlert',
-                  data: { content: match[2] },
-                  level: 'warning',
-                });
-              } else {
-                // If no match, show the raw error message
-                throw new Error(reason);
-              }
-            } else {
-              // Execute the transaction if no simulation issues
-              return account.execute(calls);
-            }
+            return simulateAndExecuteCalls(calls);
           },
 
           onConfirmed: (event, vars) => {
@@ -853,7 +856,7 @@ export function ChainTransactionProvider({ children }) {
       }, {});
     }
     return null;
-  }, [createAlert, prependEventAutoresolve, accountAddress, starknetSession, usdcPerEth, wallet]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [createAlert, prependEventAutoresolve, accountAddress, simulateAndExecuteCalls, starknetSession, usdcPerEth, wallet]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const getTxEvent = useCallback((txHash) => {
     const txHashBInt = BigInt(txHash);
@@ -879,10 +882,10 @@ export function ChainTransactionProvider({ children }) {
       const txEvent = getTxEvent(txHash);
       if (txEvent) {
         console.warn(`txEvent already exists for "failed" tx ${txHash}`, err);
-        contracts[key].onConfirmed(txEvent, vars);
+        contracts[key]?.onConfirmed(txEvent, vars);
         dispatchPendingTransactionComplete(txHash);
       } else {
-        contracts[key].onTransactionError(err, vars);
+        contracts[key]?.onTransactionError(err, vars);
         if (txHash) { // TODO: may want to display pre-tx failures if using session wallet
           dispatchFailedTransaction({
             key,
@@ -983,6 +986,50 @@ export function ChainTransactionProvider({ children }) {
     }
   }, [blockNumber]);
 
+  const isAccountLocked = useCallback(async () => {
+    // Check that the account isn't locked, and prompt to unlock if it is
+    if (!await starknet.isPreauthorized()) {
+      try {
+        await starknet.enable();
+      } catch (e) {
+        return true;
+      }
+    }
+    return false;
+  }, []);
+
+  const executeCalls = useCallback(async (calls) => {
+    if (!starknet?.account) {
+      createAlert({
+        type: 'GenericAlert',
+        data: { content: 'Account is disconnected.' },
+        level: 'warning',
+      });
+
+      return;
+    }
+    if (await isAccountLocked()) {
+      createAlert({
+        type: 'GenericAlert',
+        data: { content: 'Account is unavailable.' },
+        level: 'warning',
+      });
+
+      return;
+    }
+
+    // execute
+    setPromptingTransaction(true);
+    try {
+      const tx = await simulateAndExecuteCalls(calls);
+      setPromptingTransaction(false);
+      return tx;
+    } catch (e) {
+      setPromptingTransaction(false);
+      throw e;  // rethrow
+    }
+  }, [createAlert, isAccountLocked, simulateAndExecuteCalls])
+
   const execute = useCallback(async (key, vars, meta = {}) => {
     if (!starknet?.account || !contracts || !contracts[key]) {
       createAlert({
@@ -990,23 +1037,16 @@ export function ChainTransactionProvider({ children }) {
         data: { content: 'Account is disconnected or contract is invalid.' },
         level: 'warning',
       });
-
       return;
     }
 
-    // Check that the account isn't locked, and prompt to unlock if it is
-    if (!await starknet.isPreauthorized()) {
-      try {
-        await starknet.enable();
-      } catch (e) {
-        createAlert({
-          type: 'GenericAlert',
-          data: { content: 'Account is unavailable.' },
-          level: 'warning',
-        });
-
-        return;
-      }
+    if (await isAccountLocked()) {
+      createAlert({
+        type: 'GenericAlert',
+        data: { content: 'Account is unavailable.' },
+        level: 'warning',
+      });
+      return;
     }
 
     const { execute, onTransactionError } = contracts[key];
@@ -1098,6 +1138,7 @@ export function ChainTransactionProvider({ children }) {
   return (
     <ChainTransactionContext.Provider value={{
       execute,
+      executeCalls,
       getStatus,
       getPendingTx,
       promptingTransaction

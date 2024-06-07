@@ -13,9 +13,15 @@ import { TOKEN, TOKEN_FORMAT } from '~/lib/priceUtils';
 import useSession from '~/hooks/useSession';
 import useStore from '~/hooks/useStore';
 import useWalletBalances from '~/hooks/useWalletBalances';
-import { formatFixed, formatUSD } from '~/lib/utils';
+import { formatFixed, formatUSD, nativeBool, reactBool } from '~/lib/utils';
 import FundingFlow from './FundingFlow';
 import usePriceHelper from '~/hooks/usePriceHelper';
+import UserPrice from '~/components/UserPrice';
+import { PurchaseButton, PurchaseButtonInner } from './SKU';
+import theme from '~/theme';
+import api from '~/lib/api';
+import { useQueryClient } from 'react-query';
+import useFaucetInfo from '~/hooks/useFaucetInfo';
 
 const FundWrapper = styled.div`
   padding: 0 20px 5px;
@@ -119,28 +125,69 @@ const AddFundsButton = styled(Button)`
   }
 `;
 
-const Disclaimer = styled.div`
-  color: ${p => p.theme.colors.main};
-  font-size: 12px;
-  padding: 10px 10px 20px;
-  pointer-events: ${p => p.visible ? 'all' : 'none'};
-  & a {
-    color: white;
-    text-decoration: none;
-    &:hover {
-      text-decoration: underline;
-    }
-  }
-`;
+const EthFaucetButton = () => {
+  const queryClient = useQueryClient();
+  const { data: faucetInfo, isLoading: faucetInfoLoading } = useFaucetInfo();
+  const { starknet } = useSession();
 
-const layerSwapChains = {
-  '0x534e5f4d41494e': { ethereum: 'ETHEREUM_MAINNET', starknet: 'STARKNET_MAINNET' },
-  'SN_MAIN': { ethereum: 'ETHEREUM_MAINNET', starknet: 'STARKNET_MAINNET' },
-  '0x534e5f474f45524c49': { ethereum: 'ETHEREUM_GOERLI', starknet: 'STARKNET_GOERLI' },
-  'SN_GOERLI': { ethereum: 'ETHEREUM_GOERLI', starknet: 'STARKNET_GOERLI' },
-  '0x534e5f5345504f4c4941': { ethereum: 'ETHEREUM_SEPOLIA', starknet: 'STARKNET_SEPOLIA' },
-  'SN_SEPOLIA': { ethereum: 'ETHEREUM_SEPOLIA', starknet: 'STARKNET_SEPOLIA' }
-};
+  const createAlert = useStore(s => s.dispatchAlertLogged);
+
+  const [requestingEth, setRequestingEth] = useState();
+
+  const ethEnabled = useMemo(() => {
+    if (!faucetInfo) return false;
+    const lastClaimed = faucetInfo.ETH.lastClaimed || 0;
+    return Date.now() > (Date.parse(lastClaimed) + 23.5 * 3600e3);
+  }, [faucetInfo]);
+
+  const requestEth = useCallback(async () => {
+    setRequestingEth(true);
+
+    try {
+      const txHash = await api.requestTokens('ETH');
+      await starknet.account.waitForTransaction(txHash);
+
+      setRequestingEth(false);
+
+      createAlert({
+        type: 'WalletAlert',
+        data: { content: 'Added 0.015 ETH to your account.' },
+        duration: 5000
+      });
+    } catch (e) {
+      console.error(e);
+      setRequestingEth(false);
+      createAlert({
+        type: 'GenericAlert',
+        data: { content: 'Faucet request failed, please try again later.' },
+        level: 'warning',
+        duration: 5000
+      });
+    }
+
+    queryClient.invalidateQueries({ queryKey: 'faucetInfo', refetchType: 'none' });
+    queryClient.refetchQueries({ queryKey: 'faucetInfo', type: 'active' });
+    queryClient.invalidateQueries({ queryKey: ['walletBalance', 'eth'] });
+  }, []);
+
+  return (
+    <PurchaseButton
+      color={theme.colors.success}
+      contrastColor={theme.colors.disabledBackground}
+      background={`rgba(${theme.colors.successRGB}, 0.1)`}
+      onClick={requestEth}
+      disabled={nativeBool(!ethEnabled || requestingEth || faucetInfoLoading)}
+      loading={reactBool(requestingEth || faucetInfoLoading)}
+      style={{ marginBottom: -10 }}>
+      <PurchaseButtonInner style={{ lineHeight: '25px' }}>
+        <label>ETH Faucet (Daily)</label>
+        <span style={{ marginLeft: 10 }}>
+          +<UserPrice price={0.015e18} priceToken={TOKEN.ETH} format />
+        </span>
+      </PurchaseButtonInner>
+    </PurchaseButton>
+  );
+}
 
 const FundingMenu = () => {
   const priceHelper = usePriceHelper();
@@ -185,10 +232,11 @@ const FundingMenu = () => {
       <label data-tooltip-id="launcherTooltip" data-tooltip-html={tooltipContent} data-tooltip-place="top">
         {wallet.combinedBalance?.to(preferredUiCurrency, true)}
       </label>
-      <AddFundsButton onClick={() => setIsFunding(true)}>
-        <span>Add Funds</span>
-        <ChevronRightIcon />
-      </AddFundsButton>
+        <EthFaucetButton />
+        <AddFundsButton onClick={() => setIsFunding(true)}>
+          <span>Add Funds</span>
+          <ChevronRightIcon />
+        </AddFundsButton>
       {isFunding && <FundingFlow onClose={() => setIsFunding()} />}
 
       {/* 

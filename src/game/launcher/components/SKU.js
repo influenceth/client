@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useQueryClient } from 'react-query';
 import styled from 'styled-components';
 import { fetchBuildExecuteTransaction } from '@avnu/avnu-sdk';
@@ -16,7 +16,7 @@ import useStore from '~/hooks/useStore';
 import useAsteroidSale from '~/hooks/useAsteroidSale';
 import useBlockTime from '~/hooks/useBlockTime';
 import useFaucetInfo from '~/hooks/useFaucetInfo';
-import { formatTimer, nativeBool, reactBool, roundToPlaces } from '~/lib/utils';
+import { cleanseTxHash, formatTimer, nativeBool, reactBool, roundToPlaces } from '~/lib/utils';
 import NavIcon from '~/components/NavIcon';
 import theme from '~/theme';
 import Button from '~/components/ButtonAlt';
@@ -30,6 +30,7 @@ import { advPackPriceUSD, basicPackPriceUSD } from '../Store';
 import FundingFlow from './FundingFlow';
 import api from '~/lib/api';
 import useSession from '~/hooks/useSession';
+import ChainTransactionContext from '~/contexts/ChainTransactionContext';
 
 const avnuOptions = { baseUrl: process.env.REACT_APP_AVNU_API_URL };
 
@@ -234,7 +235,7 @@ const PackChecks = styled.div`
   }
 `;
 
-const PurchaseButtonInner = styled.div`
+export const PurchaseButtonInner = styled.div`
   display: flex;
   flex-direction: row;
   justify-content: space-between;
@@ -244,7 +245,7 @@ const PurchaseButtonInner = styled.div`
   }
 `;
 
-const PurchaseButton = styled(Button)`
+export const PurchaseButton = styled(Button)`
   ${p => p.disabled && `
     ${PurchaseButtonInner} > span {
       opacity: 0.5;
@@ -540,8 +541,10 @@ const StarterPackSKU = () => {
 
 // TODO: wrap in launch feature flag
 const SwaySKU = ({ onUpdatePurchase }) => {
-  const { accountAddress, starknet } = useSession();
+  const { executeCalls } = useContext(ChainTransactionContext);
   const priceHelper = usePriceHelper();
+  const queryClient = useQueryClient();
+  const { accountAddress, starknet } = useSession();
   const { data: wallet } = useWalletBalances();
 
   const createAlert = useStore(s => s.dispatchAlertLogged);
@@ -550,6 +553,7 @@ const SwaySKU = ({ onUpdatePurchase }) => {
   const [eth, setETH] = useState();
   const [sway, setSway] = useState();
   const [usdc, setUSDC] = useState();
+  const [isProcessing, setIsProcessing] = useState();
 
   const handleEthChange = useCallback((newValue) => {
     setETH(newValue);
@@ -585,6 +589,8 @@ const SwaySKU = ({ onUpdatePurchase }) => {
 
   useEffect(() => {
     onUpdatePurchase({
+      disabled: isProcessing,
+      loading: isProcessing,
       totalPrice: priceHelper.from((usdc || 0) * TOKEN_SCALE[TOKEN.USDC], TOKEN.USDC),
       onPurchase: async () => {
         const swappableTokens = Object.keys(wallet?.tokenBalance);
@@ -599,7 +605,8 @@ const SwaySKU = ({ onUpdatePurchase }) => {
             priceHelper.from(remainingTargetUSDC, TOKEN.USDC).to(token),
             parseInt(wallet.tokenBalance[token])
           );
-          if (sellAmount > 0) {
+          // (if remainingTarget < 0.1% of original, assume rounding error and no need to add additional swaps)
+          if (sellAmount > 0 && remainingTargetUSDC > initialTargetUSDC * 0.001) {
             remainingTargetUSDC -= priceHelper.from(sellAmount, token).to(TOKEN.USDC);
             
             const quotes = await api.getSwapQuote({
@@ -609,7 +616,6 @@ const SwaySKU = ({ onUpdatePurchase }) => {
               account: accountAddress
             });
             if (quotes?.[0]) {
-              console.log('quotes', quotes);
               const tx = await fetchBuildExecuteTransaction(
                 quotes?.[0].quoteId,
                 accountAddress,
@@ -630,12 +636,39 @@ const SwaySKU = ({ onUpdatePurchase }) => {
             level: 'warning',
             duration: 5000
           });
+
+        // else, run the transactions(s)
         } else {
-          return starknet.account.execute(calls);
+          try {
+            const tx = await executeCalls(calls);
+            setIsProcessing(true);
+
+            await starknet.account.waitForTransaction(cleanseTxHash(tx.transaction_hash), { retryInterval: 5e3 });
+
+            // refetch all wallet balances
+            queryClient.invalidateQueries({ queryKey: ['walletBalance'], refetchType: 'active' });
+
+            // alert user
+            createAlert({
+              type: 'WalletAlert',
+              data: { content: 'Sway swapped successfully.' },
+              duration: 5000
+            });
+
+          } catch (e) {
+            console.error(e);
+            createAlert({
+              type: 'GenericAlert',
+              data: { content: `SWAY swap failed: "${e?.message || e || 'Unknown error.'}"` },
+              level: 'warning',
+              duration: 5000
+            });
+          }
+          setIsProcessing(false);
         }
       }
     })
-  }, [accountAddress, onUpdatePurchase, preferredUiCurrency, priceHelper, starknet?.account, usdc, wallet]);
+  }, [accountAddress, executeCalls, isProcessing, onUpdatePurchase, preferredUiCurrency, priceHelper, queryClient, starknet?.account, usdc, wallet]);
 
   return (
     <Wrapper>
@@ -653,6 +686,7 @@ const SwaySKU = ({ onUpdatePurchase }) => {
               <span>
                 <UncontrolledTextInput
                   min={0.01}
+                  disabled={reactBool(isProcessing)}
                   onChange={(e) => handleUsdcChange(e.currentTarget.value)}
                   step={0.01}
                   style={{ height: 28 }}
@@ -669,6 +703,7 @@ const SwaySKU = ({ onUpdatePurchase }) => {
               <span>
                 <UncontrolledTextInput
                   min={0.00001}
+                  disabled={reactBool(isProcessing)}
                   onChange={(e) => handleEthChange(e.currentTarget.value)}
                   step={0.00001}
                   style={{ height: 28 }}
@@ -685,6 +720,7 @@ const SwaySKU = ({ onUpdatePurchase }) => {
             <span>
               <UncontrolledTextInput
                 min={1}
+                disabled={reactBool(isProcessing)}
                 onChange={(e) => handleSwayChange(e.currentTarget.value)}
                 step={1}
                 style={{ height: 28 }}
@@ -762,7 +798,7 @@ const SwayFaucetButton = () => {
       loading={reactBool(requestingSway || faucetInfoLoading)}
       style={{ marginRight: 10 }}>
       <PurchaseButtonInner>
-        <label>Daily Faucet</label>
+        <label>SWAY Faucet (Daily)</label>
         <span style={{ marginLeft: 10 }}>
           +<SwayIcon />{Number(400000).toLocaleString()}
         </span>
@@ -908,6 +944,8 @@ const SKU = ({ asset, onBack }) => {
         props: {
           onClick: handlePurchase,
           isTransaction: true,
+          disabled: purchase?.disabled,
+          loading: purchase?.loading,
         },
         preLabel: <SwayFaucetButton />
       };
@@ -935,7 +973,11 @@ const SKU = ({ asset, onBack }) => {
             </PurchaseButtonInner>
           ),
           onClick: handlePurchase,
-          props: { disabled: !(purchase?.totalPrice?.usdcValue > 0), isTransaction: true }
+          props: {
+            disabled: purchase?.disabled || !(purchase?.totalPrice?.usdcValue > 0),
+            loading: purchase?.loading,
+            isTransaction: true
+          }
         }}
         {...props}>
         {content}
