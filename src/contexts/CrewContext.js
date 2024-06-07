@@ -59,7 +59,7 @@ export function CrewProvider({ children }) {
     const allRecruits = myOwnedCrewmates.filter((c) => !c.Control?.controller?.id);
     return [
       allRecruits.filter((c) => !c.Crewmate.class),
-      allRecruits.filter((c) => true || [
+      allRecruits.filter((c) => [
         Crewmate.COLLECTION_IDS.ARVAD_CITIZEN,
         Crewmate.COLLECTION_IDS.ARVAD_SPECIALIST,
         Crewmate.COLLECTION_IDS.ARVAD_LEADERSHIP
