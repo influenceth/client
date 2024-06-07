@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useQueryClient } from 'react-query';
 import styled from 'styled-components';
 
 import AsteroidsHeroImage from '~/assets/images/sales/asteroids_hero.png';
@@ -9,11 +10,12 @@ import StarterPackHeroImage from '~/assets/images/sales/starter_packs_hero.jpg';
 import AdalianFlourish from '~/components/AdalianFlourish';
 import HeroLayout from '~/components/HeroLayout';
 import UncontrolledTextInput from '~/components/TextInputUncontrolled';
-import { CheckIcon, EthIcon, PurchaseAsteroidIcon, SwayIcon } from '~/components/Icons';
+import { CheckIcon, EthIcon, PlusIcon, PurchaseAsteroidIcon, SwayIcon } from '~/components/Icons';
 import useStore from '~/hooks/useStore';
 import useAsteroidSale from '~/hooks/useAsteroidSale';
 import useBlockTime from '~/hooks/useBlockTime';
-import { formatTimer, roundToPlaces } from '~/lib/utils';
+import useFaucetInfo from '~/hooks/useFaucetInfo';
+import { formatTimer, nativeBool, reactBool, roundToPlaces } from '~/lib/utils';
 import NavIcon from '~/components/NavIcon';
 import theme from '~/theme';
 import Button from '~/components/ButtonAlt';
@@ -25,6 +27,8 @@ import usePriceHelper from '~/hooks/usePriceHelper';
 import UserPrice from '~/components/UserPrice';
 import { advPackPriceUSD, basicPackPriceUSD } from '../Store';
 import FundingFlow from './FundingFlow';
+import api from '~/lib/api';
+import useSession from '~/hooks/useSession';
 
 const Flourish = styled.div`
   background: url(${p => p.src});
@@ -235,6 +239,14 @@ const PurchaseButtonInner = styled.div`
   & > span {
     color: white;
   }
+`;
+
+const PurchaseButton = styled(Button)`
+  ${p => p.disabled && `
+    ${PurchaseButtonInner} > span {
+      opacity: 0.5;
+    }
+  `}
 `;
 
 const AsteroidSKU = () => {
@@ -642,9 +654,72 @@ const defaultStyleOverrides = {
   title: { textTransform: 'uppercase' }
 };
 
+const SwayFaucetButton = () => {
+  const queryClient = useQueryClient();
+  const { data: faucetInfo, isLoading: faucetInfoLoading } = useFaucetInfo();
+  const { starknet } = useSession();
+
+  const createAlert = useStore(s => s.dispatchAlertLogged);
+
+  const [requestingSway, setRequestingSway] = useState();
+
+  const swayEnabled = useMemo(() => {
+    if (!faucetInfo) return false;
+    const lastClaimed = faucetInfo.SWAY.lastClaimed || 0;
+    return Date.now() > (Date.parse(lastClaimed) + 23.5 * 3600 * 1000);
+  }, [faucetInfo]);
+
+  const requestSway = useCallback(async () => {
+    setRequestingSway(true);
+
+    try {
+      const txHash = await api.requestTokens('SWAY');
+      await starknet.account.waitForTransaction(txHash);
+
+      createAlert({
+        type: 'WalletAlert',
+        data: { content: 'Added 400,000 SWAY to your account.' },
+        // duration: 5000
+      });
+    } catch (e) {
+      console.error(e);
+      createAlert({
+        type: 'GenericAlert',
+        data: { content: 'Faucet request failed, please try again later.' },
+        level: 'warning',
+        duration: 5000
+      });
+    } finally {
+      setRequestingSway(false);
+    }
+
+    queryClient.invalidateQueries({ queryKey: 'faucetInfo', refetchType: 'none' });
+    queryClient.refetchQueries({ queryKey: 'faucetInfo', type: 'active' });
+    queryClient.invalidateQueries({ queryKey: ['walletBalance', 'sway'] });
+  }, []);
+
+  return (
+    <PurchaseButton
+      color={theme.colors.success}
+      contrastColor={theme.colors.disabledBackground}
+      background={`rgba(${theme.colors.successRGB}, 0.1)`}
+      onClick={requestSway}
+      disabled={nativeBool(!swayEnabled || requestingSway || faucetInfoLoading)}
+      loading={reactBool(requestingSway || faucetInfoLoading)}
+      style={{ marginRight: 10 }}>
+      <PurchaseButtonInner>
+        <label>SWAY Faucet</label>
+        <span style={{ marginLeft: 10 }}>
+          +<SwayIcon />{Number(400000).toLocaleString()}
+        </span>
+      </PurchaseButtonInner>
+    </PurchaseButton>
+  );
+}
+
 const SKU = ({ asset, onBack }) => {
-  const { data: wallet } = useWalletBalances();
   const priceHelper = usePriceHelper();
+  const { data: wallet } = useWalletBalances();
 
   const preferredUiCurrency = useStore(s => s.getPreferredUiCurrency());
   const filters = useStore(s => s.assetSearch['asteroidsMapped'].filters);
@@ -748,13 +823,31 @@ const SKU = ({ asset, onBack }) => {
         }
       };
     }
-    return {
+    const params = {
       coverImage: SwayHeroImage,
       title: 'Buy Sway',
       content: <SwaySKU onUpdatePurchase={setPurchase} />,
       flourish: <Flourish src={SwayImage} />,
-      flourishWidth: 145
+      flourishWidth: 145,
     };
+    // conditionally include faucet
+    if (process.env.NODE_ENV !== '0x534e5f4d41494e') {
+      params.rightButton = {
+        label: (
+          <PurchaseButtonInner>
+            <label>Purchase</label>
+            <span>
+              {purchase?.totalPrice.to(preferredUiCurrency, TOKEN_FORMAT.SHORT)}
+            </span>
+          </PurchaseButtonInner>
+        ),
+        props: {
+          isTransaction: true,
+        },
+        preLabel: <SwayFaucetButton />
+      };
+    }
+    return params;
   }, [asset, filterUnownedAsteroidsAndClose]);
 
   const handlePurchase = useCallback((recursed) => {
