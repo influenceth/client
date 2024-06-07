@@ -196,7 +196,8 @@ const activities = {
             updatedValues: { owner: returnValues.caller }
           }
         },
-        [ 'walletBalance', 'eth', returnValues.caller ],
+        [ 'walletBalance', 'eth' ],
+        [ 'walletBalance', 'usdc' ],
       ]
     },
     getLogContent: ({ event: { returnValues } }) => ({
@@ -595,7 +596,9 @@ const activities = {
           newGroupEval: {
             updatedValues: { owner: returnValues.caller }
           }
-        }
+        },
+        [ 'walletBalance', 'eth' ],
+        [ 'walletBalance', 'usdc' ],
       ]
     },
     getLogContent: ({ event: { returnValues } }) => ({

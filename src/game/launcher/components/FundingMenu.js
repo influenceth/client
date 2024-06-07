@@ -1,27 +1,23 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import ReactDOMServer from 'react-dom/server';
-import styled, { css } from 'styled-components';
+import styled from 'styled-components';
+import { useQueryClient } from 'react-query';
 
-import LayerswapImage from '~/assets/images/sales/logo_layerswap.svg';
-import RampImage from '~/assets/images/sales/logo_ramp.svg';
 import Button from '~/components/ButtonAlt';
-import CollapsibleBlock from '~/components/CollapsibleBlock';
 import { ChevronRightIcon, EthIcon, UsdcIcon } from '~/components/Icons';
-import MouseoverInfoPane from '~/components/MouseoverInfoPane';
 import Switcher from '~/components/SwitcherButton';
-import { TOKEN, TOKEN_FORMAT } from '~/lib/priceUtils';
+import { TOKEN, TOKEN_FORMAT, TOKEN_SCALE } from '~/lib/priceUtils';
 import useSession from '~/hooks/useSession';
 import useStore from '~/hooks/useStore';
 import useWalletBalances from '~/hooks/useWalletBalances';
-import { formatFixed, formatUSD, nativeBool, reactBool } from '~/lib/utils';
-import FundingFlow from './FundingFlow';
+import { nativeBool, reactBool } from '~/lib/utils';
 import usePriceHelper from '~/hooks/usePriceHelper';
 import UserPrice from '~/components/UserPrice';
-import { PurchaseButton, PurchaseButtonInner } from './SKU';
 import theme from '~/theme';
 import api from '~/lib/api';
-import { useQueryClient } from 'react-query';
 import useFaucetInfo from '~/hooks/useFaucetInfo';
+import FundingFlow from './FundingFlow';
+import { PurchaseButton, PurchaseButtonInner } from './SKU';
 
 const FundWrapper = styled.div`
   padding: 0 20px 5px;
@@ -63,6 +59,7 @@ const FundWrapper = styled.div`
 
 const Subtotals = styled.div`
   & > div {
+    align-items: center;
     display: flex;
     flex-direction: row;
     font-size: 17px;
@@ -182,7 +179,7 @@ const EthFaucetButton = () => {
       <PurchaseButtonInner style={{ lineHeight: '25px' }}>
         <label>ETH Faucet (Daily)</label>
         <span style={{ marginLeft: 10 }}>
-          +<UserPrice price={0.015e18} priceToken={TOKEN.ETH} format />
+          +<UserPrice price={0.015 * TOKEN_SCALE[TOKEN.ETH]} priceToken={TOKEN.ETH} format />
         </span>
       </PurchaseButtonInner>
     </PurchaseButton>
@@ -200,7 +197,7 @@ const FundingMenu = () => {
 
   const tooltipContent = useMemo(() => ReactDOMServer.renderToStaticMarkup(
     <Subtotals>
-      {Object.keys(wallet.tokenBalance).map((tokenAddress) => {
+      {Object.keys(wallet?.tokenBalance || {}).map((tokenAddress) => {
         const balance = priceHelper.from(wallet.tokenBalance[tokenAddress], tokenAddress);
         return (
           <div key={tokenAddress}>
@@ -209,13 +206,19 @@ const FundingMenu = () => {
           </div>
         );
       })}
+      {wallet?.gasReserveBalance && (
+        <div>
+          <label>{wallet.gasReserveBalance.to(TOKEN.ETH, TOKEN_FORMAT.VERBOSE)}</label>
+          <span style={{ color: theme.colors.orange, fontSize: '85%', opacity: 1 }}>Gas Reserve (ETH)</span>
+        </div>
+      )}
     </Subtotals>
   ), [preferredUiCurrency, wallet]);
 
   return (
     <FundWrapper>
       <div>
-        <h3>Wallet Balance:</h3>
+        <h3>Available Wallet Balance:</h3>
         <div>
           <Switcher
             buttons={[

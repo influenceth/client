@@ -616,14 +616,14 @@ const SwaySKU = ({ onUpdatePurchase }) => {
               account: accountAddress
             });
             if (quotes?.[0]) {
-              const tx = await fetchBuildExecuteTransaction(
+              const swapTx = await fetchBuildExecuteTransaction(
                 quotes?.[0].quoteId,
                 accountAddress,
                 undefined,
                 true,
                 avnuOptions
               );
-              calls.push(...tx.calls);
+              calls.push(...swapTx.calls);
             }
           }
         }

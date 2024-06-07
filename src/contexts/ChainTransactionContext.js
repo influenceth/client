@@ -780,7 +780,7 @@ export function ChainTransactionProvider({ children }) {
               // else (have enough USDC + ETH) if don't have enough in totalPriceToken
               // to cover tx, prepend swap calls to cover it as well
               } else {
-                const balanceInTargetToken = wallet.tokenBalance[totalPriceToken];
+                let balanceInTargetToken = wallet.tokenBalance[totalPriceToken];
                 if (totalPrice > balanceInTargetToken) {
                   if (!usdcPerEth) throw new Error('Conversion rate not loaded');
 
@@ -791,7 +791,7 @@ export function ChainTransactionProvider({ children }) {
 
                   // buy enough excess to cover slippage
                   const slippage = 0.01;
-                  const targetSwapAmount = (1 / (1 - slippage)) * amount;
+                  const targetSwapAmount = (1 / (1 - slippage)) * parseInt(amount);
 
                   // usdcPerEth is estimated from a small amount (presumably the best price) so
                   // sellAmount may be too low to end up with the required buyAmount...
@@ -800,12 +800,12 @@ export function ChainTransactionProvider({ children }) {
                   // TODO: would be nice for AVNU to have buyAmount as an option here instead (to avoid loop)
                   let quote;
                   let actualConv = isEthToUsdc ? usdcPerEth : (1 / usdcPerEth);
-                  while (quote?.buyAmount < targetSwapAmount) {
+                  while (parseInt(quote?.buyAmount || 0) < targetSwapAmount) {
                     const quotes = await fetchQuotes({
                       sellTokenAddress: fromAddress,
                       buyTokenAddress: toAddress,
-                      sellAmount: BigInt(targetSwapAmount / actualConv),
-                      takerAddress: starknet.account,
+                      sellAmount: BigInt(Math.ceil(targetSwapAmount / actualConv)),
+                      takerAddress: starknet.account.address,
                     }, { baseUrl: process.env.REACT_APP_AVNU_API_URL });
                     if (!quotes?.[0]) throw new Error('Insufficient swap liquidity');
                     
@@ -814,7 +814,7 @@ export function ChainTransactionProvider({ children }) {
 
                     // improve conversion rate from the purchase size quote (in case need to iterate)
                     // (if conversion rate unchanged but have not reached target, break loop so not stuck)
-                    const newConv = quote.buyAmount / quote.sellAmount;
+                    const newConv = parseInt(quote.buyAmount) / parseInt(quote.sellAmount);
                     if (newConv === actualConv) {
                       if (quote.buyAmount < targetSwapAmount) {
                         throw new Error('Swap pricing issue encountered.');
@@ -824,14 +824,16 @@ export function ChainTransactionProvider({ children }) {
                   }
 
                   // prepend swap calls
-                  const { calls } = await fetchBuildExecuteTransaction(
-                    quote.id,
-                    starknet.account,
+                  const swapTx = await fetchBuildExecuteTransaction(
+                    quote.quoteId,
+                    starknet.account.address,
                     slippage,
                     true,
                     { baseUrl: process.env.REACT_APP_AVNU_API_URL }
                   );
-                  calls.unshift(...calls);
+
+                  console.log('prepend calls', swapTx.calls);
+                  calls.unshift(...swapTx.calls);
                 }
               }
             }
