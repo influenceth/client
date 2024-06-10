@@ -242,7 +242,8 @@ export const entityToAgreements = (entity) => {
           _type: agreementType === 'PrepaidAgreements'
             ? Permission.POLICY_IDS.PREPAID
             : (agreementType === 'ContractAgreements' ? Permission.POLICY_IDS.CONTRACT : 5),
-          ...agreement
+          ...agreement,
+          _isExpired: agreement.endTime < (Date.now() / 1000)
         },
       };
       // for the sake of agreements, the lot controller is *always* the asteroid controller
