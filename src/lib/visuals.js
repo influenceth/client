@@ -25,7 +25,7 @@ const modelviewerDefaults = {
   lightmapStrength: 3,
   spotlightReduction: 150,
   toneMapping: CineonToneMapping,
-  toneMappingExposure: 2,
+  toneMappingExposure: 1.6,
 };
 
 const visualConfigs = {
@@ -68,10 +68,10 @@ const visualConfigs = {
     bloomStrength: 0.5,
     enablePostprocessing: true,
     toneMapping: CineonToneMapping,
-    toneMappingExposure: 1.5,
+    toneMappingExposure: 1.6,
     darklightColor: 'd8ddff',
     darklightStrength: 1,//1.2,//0.1,
-    starColor: 'fffcf7',// 0xffeedd,
+    starColor: 'fff7ed',// 0xffeedd,
     starStrength: 3,//1,
   }
 };
