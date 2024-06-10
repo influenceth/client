@@ -33,8 +33,8 @@ const footerHeight = 80;
 
 // TODO: should add in/out transitions to this page
 const StyledLauncher = styled.div`
-  background: linear-gradient(to bottom, rgba(0,0,0,0.5), rgba(0,0,0,0.15) 25%, rgba(0,0,0,0.15) 75%, rgba(0,0,0,0.5) 100%);
-  backdrop-filter: blur(0.75px) saturate(70%);
+  background: linear-gradient(to bottom, rgba(0,0,0,0.75), rgba(0,0,0,0.05) 40%, rgba(0,0,0,0.05) 60%, rgba(0,0,0,0.75) 100%);
+  backdrop-filter: blur(4px) saturate(100%);
   height: 100vh;
   opacity: 1;
   padding: ${headerHeight + menuPadding}px 0 0;
