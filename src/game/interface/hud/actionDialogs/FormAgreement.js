@@ -174,7 +174,7 @@ const FormAgreement = ({
   const [initialPeriod, setInitialPeriod] = useState(
     (pendingChange?.vars?.term || pendingChange?.vars?.added_term)
       ? secondsToDays(pendingChange.vars.term || pendingChange.vars.added_term)
-      : (isExtension ? maxTermFloored : (currentPolicy?.policyDetails?.initialTerm || 0))
+      : (isExtension ? Math.min(maxTermFloored, 30) : (currentPolicy?.policyDetails?.initialTerm || 0))
   );
 
   const remainingPeriod = useMemo(() => currentAgreement?.endTime - blockTime, [blockTime, currentAgreement?.endTime]);
@@ -338,7 +338,7 @@ const FormAgreement = ({
     if (isTermination && currentAgreement?._canGiveNoticeStart > blockTime) return true;
     if (initialPeriod === '' || initialPeriod <= 0) return true;
     return false;
-  }, [blockTime, initialPeriod, insufficientAssets, isTermination, currentAgreement])
+  }, [blockTime, initialPeriod, insufficientAssets, isTermination, currentAgreement]);
   return (
     <>
       <ActionDialogHeader

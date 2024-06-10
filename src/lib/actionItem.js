@@ -115,7 +115,9 @@ const formatAsAgreement = (item) => {
     finishTime: item.waitingFor,
     startTime: null,
     onClick: ({ openDialog }) => {
-      openDialog('EXTEND_AGREEMENT', { entity: { id: item.id, label: item.label }, permission: item._agreement.permission });
+      openDialog((item._agreement?._isExpired) ? 'FORM_AGREEMENT' : 'EXTEND_AGREEMENT', { 
+        entity: { id: item.id, label: item.label }, permission: item._agreement.permission 
+      });
     }
   };
 };
