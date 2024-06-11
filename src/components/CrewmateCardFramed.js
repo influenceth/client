@@ -74,6 +74,7 @@ const AvatarWrapper = styled.div`
         padding: ${p.lessPadding ? 0 : `${3 * widthMult}px`};
       }
       ${StyledCaptainIcon} {
+        padding: ${p.largeDisplay ? 4 : 0}px;
         font-size: ${fontSize}px;
         margin-left: ${-iconWidth / 2.58}px;
         top: ${(p.lessPadding ? 1 : -2) * widthMult}px;
@@ -109,12 +110,12 @@ const AvatarWrapper = styled.div`
 export const EmptyCrewmateCardFramed = styled.div`
   border: 1px solid ${p => p.borderColor || `rgba(${p.theme.colors.mainRGB}, 0.4)`};
   background: black;
-  padding: 4px;
+  padding: 3px;
   position: relative;
   width: ${p => p.width || 96}px;
   &:before {
     content: "";
-    background: rgba(${p => p.theme.colors.mainRGB}, 0.13);
+    background: rgba(${p => p.theme.colors.mainRGB}, 0.05);
     display: block;
     height: 0;
     padding-top: ${p => p.hideHeader ? '128' : '137.5'}%;
@@ -144,6 +145,7 @@ export const EmptyCrewmateCardFramed = styled.div`
 const noop = () => {};
 
 const CrewmateCardAbstract = ({
+  largeDisplay,
   borderColor,
   children,
   CardProps,
@@ -159,6 +161,7 @@ const CrewmateCardAbstract = ({
   const cardWidth = width || 96;
   return (
     <AvatarWrapper
+      largeDisplay={largeDisplay}
       data-tooltip-content={tooltip}
       data-tooltip-id="globalTooltip"
       data-tooltip-place={tooltipPlace}
@@ -179,7 +182,7 @@ const CrewmateCardAbstract = ({
             <StyledTriangleTip
               fillColor={bgColor}
               strokeColor={borderColor || defaultBorderColor}
-              strokeWidth={2} />
+              strokeWidth={largeDisplay ? 1 : 2} />
           </>
         )}
       </AvatarFlourish>
