@@ -58,6 +58,7 @@ const theme = {
     darkMain,
     darkMainRGB: hexToRGB(darkMain),
     mainBorder: 'rgba(255, 255, 255, 0.25)',
+    badge: '#287d97',
     mobileBackground: '#181818',
     disabledBackground: '#666666',
     inputBackground: '#0d2933',

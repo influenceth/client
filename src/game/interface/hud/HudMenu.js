@@ -16,6 +16,7 @@ import {
   InfoIcon,
   InventoryIcon,
   KeysIcon,
+  SearchIcon,
   ListViewIcon,
   LotSearchIcon,
   MarketsIcon,
@@ -102,7 +103,7 @@ const Button = styled.div`
   align-items: center;
   border-radius: 8px 0 0 8px;
   border-right: 3px solid transparent;
-  color: #AAA;
+  color: rgba(255, 255, 255, 0.5);
   display: flex;
   font-size: 28px;
   height: 44px;
@@ -112,6 +113,16 @@ const Button = styled.div`
   position: relative;
   transition: background 250ms ease, border-color 250ms ease, color 250ms ease, opacity 250ms ease;
   width: ${buttonsWidth}px;
+  
+  ${p => p.iconColor
+    ? `
+      color: ${p.theme.colors.main};
+      &:hover {
+        color: white;
+      }
+    `
+    : ``
+  }
 
   ${p => p.selected
     ? `
@@ -134,8 +145,7 @@ const Button = styled.div`
   ${p => p.badge > 0 && `
     &:before {
       align-items: center;
-      background: ${p.theme.colors[p.selected ? 'darkMain' : 'main']};
-      border: 1px solid rgba(15, 15, 15, 0.85);
+      background: ${p.theme.colors.badge};
       border-radius: 20px;
       color: white;
       content: "${p.badge > 9 ? '9⁺' : p.badge}";
@@ -454,9 +464,8 @@ const HudMenu = () => {
         },
         {
           key: 'ASTEROID_MAP_SEARCH',
-          label: 'Lot Search',
+          label: 'Filter Lots',
           icon: <LotSearchIcon />,
-          highlightIcon: lotFilterTally > 0,
           badge: lotFilterTally,
           Component: hudMenus.SearchMap,
           noDetail: true,
@@ -479,10 +488,9 @@ const HudMenu = () => {
 
         {
           key: 'BELT_MAP_SEARCH',
-          label: 'System Search',
+          label: 'Filter Asteroids',
           icon: <AsteroidSearchIcon />,
           badge: asteroidFilterTally,
-          highlightIcon: asteroidFilterTally > 0,
           Component: hudMenus.SearchMap,
           componentProps: { assetType: 'asteroidsMapped' },
           detailType: 'list',
@@ -552,7 +560,7 @@ const HudMenu = () => {
         {
           key: 'ASTEROID_ADVANCED_SEARCH',
           label: 'Advanced Search',
-          icon: <ListViewIcon />,
+          icon: <SearchIcon />,
           onOpen: () => {
             history.push(`/listview`);  // TODO: should probably also go to /listview/lots
           },
@@ -562,7 +570,7 @@ const HudMenu = () => {
         {
           key: 'BELT_ADVANCED_SEARCH',
           label: 'Advanced Search',
-          icon: <ListViewIcon />,
+          icon: <SearchIcon />,
           onOpen: () => {
             history.push(`/listview/asteroids`);
           },
@@ -589,6 +597,7 @@ const HudMenu = () => {
         label: 'My Crews',
         icon: <CrewIcon />,
         Component: hudMenus.MyCrews,
+        useAltColor: true,
         noDetail: true,
         isUniversal: true,
         isVisible: true,
@@ -599,6 +608,7 @@ const HudMenu = () => {
         label: 'My Assets',
         icon: <MyAssetsIcon />,
         Component: hudMenus.MyAssets,
+        useAltColor: true,
         noDetail: true,
         isUniversal: true,
         isVisible: true,
@@ -649,12 +659,12 @@ const HudMenu = () => {
       
       {/* NOTE: the hudMenu id is in use by third-party extensions */}
       <Buttons id="hudMenu" open={open}>
-        {visibleUniversalButtons.length > 0 && (
+        {visibleMenuButtons.length > 0 && (
           <ButtonSection>
-            {visibleUniversalButtons.map(({ key, badge, label, highlightIcon, icon, onOpen, hideInsteadOfClose }) => (
+            {visibleMenuButtons.map(({ key, badge, label, useAltColor, icon, onOpen, hideInsteadOfClose }) => (
               <Button
                 key={key}
-                style={highlightIcon ? { color: theme.colors.main } : {}}
+                iconColor={useAltColor}
                 badge={badge}
                 onClick={() => handleButtonClick(key, onOpen, hideInsteadOfClose)}
                 selected={key === openHudMenu}
@@ -666,12 +676,12 @@ const HudMenu = () => {
             ))}
           </ButtonSection>
         )}
-        {visibleMenuButtons.length > 0 && (
-          <ButtonSection showSeparator={visibleUniversalButtons.length > 0}>
-            {visibleMenuButtons.map(({ key, badge, label, highlightIcon, icon, onOpen, hideInsteadOfClose }) => (
+        {visibleUniversalButtons.length > 0 && (
+          <ButtonSection showSeparator={visibleMenuButtons.length > 0}>
+            {visibleUniversalButtons.map(({ key, badge, label, useAltColor, icon, onOpen, hideInsteadOfClose }) => (
               <Button
                 key={key}
-                style={highlightIcon ? { color: theme.colors.main } : {}}
+                iconColor={useAltColor}
                 badge={badge}
                 onClick={() => handleButtonClick(key, onOpen, hideInsteadOfClose)}
                 selected={key === openHudMenu}
@@ -685,10 +695,10 @@ const HudMenu = () => {
         )}
         {visiblePageButtons.length > 0 && (
           <ButtonSection showSeparator={(visibleMenuButtons.length || visibleUniversalButtons.length) > 0}>
-            {visiblePageButtons.map(({ key, label, highlightIcon, icon, onOpen, hideInsteadOfClose }) => (
+            {visiblePageButtons.map(({ key, label, useAltColor, icon, onOpen, hideInsteadOfClose }) => (
               <PageButton
                 key={key}
-                style={highlightIcon ? { color: theme.colors.main } : {}}
+                iconColor={useAltColor}
                 onClick={() => handleButtonClick(key, onOpen, hideInsteadOfClose)}
                 selected={key === openHudMenu}
                 data-tooltip-id="hudMenuTooltip"
