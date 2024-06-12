@@ -74,7 +74,6 @@ const AvatarWrapper = styled.div`
         padding: ${p.lessPadding ? 0 : `${3 * widthMult}px`};
       }
       ${StyledCaptainIcon} {
-        padding: ${p.largeDisplay ? 4 : 0}px;
         font-size: ${fontSize}px;
         margin-left: ${-iconWidth / 2.58}px;
         top: ${(p.lessPadding ? 1 : -2) * widthMult}px;
@@ -145,7 +144,6 @@ export const EmptyCrewmateCardFramed = styled.div`
 const noop = () => {};
 
 const CrewmateCardAbstract = ({
-  largeDisplay,
   borderColor,
   children,
   CardProps,
@@ -161,7 +159,6 @@ const CrewmateCardAbstract = ({
   const cardWidth = width || 96;
   return (
     <AvatarWrapper
-      largeDisplay={largeDisplay}
       data-tooltip-content={tooltip}
       data-tooltip-id="globalTooltip"
       data-tooltip-place={tooltipPlace}

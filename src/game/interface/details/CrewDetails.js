@@ -377,7 +377,6 @@ const CrewDetails = ({ crewId, crew, isMyCrew, isDelegatedCrew, isOwnedCrew, sel
                     <>
                       <span ref={setRefEl}>
                         <CrewmateCardFramed
-                          largeDisplay={true}
                           borderColor={`rgba(${theme.colors.mainRGB}, 0.4)`}
                           CrewmateCardProps={{ hideHeader: false, noWrapName: true }}
                           crewmate={crewmate}
