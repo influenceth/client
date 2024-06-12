@@ -17,7 +17,6 @@ const useWalletTokenBalance = (tokenLabel, tokenAddress, overrideAccount) => {
           entrypoint: 'balanceOf',
           calldata: [accountAddress]
         });
-        console.log('balance', balance);
         return uint256.uint256ToBN({ low: balance?.[0] || 0, high: balance?.[1] || 0 });
       } catch (e) {
         console.error(e);

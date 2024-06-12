@@ -66,7 +66,7 @@ const AvatarWrapper = styled.div`
 
   ${p => {
     const widthMult = p.width / 96;
-    const iconWidth = p.lessPadding ? 58 * widthMult : 67 * widthMult;
+    const iconWidth = (p.lessPadding ? 58 : 63) * widthMult;
     const fontSize = iconWidth * 17 / 67;
     return `
       width: ${p.width}px;
@@ -182,7 +182,7 @@ const CrewmateCardAbstract = ({
             <StyledTriangleTip
               fillColor={bgColor}
               strokeColor={borderColor || defaultBorderColor}
-              strokeWidth={largeDisplay ? 1 : 2} />
+              strokeWidth={width > 160 ? 1 : 2} />
           </>
         )}
       </AvatarFlourish>

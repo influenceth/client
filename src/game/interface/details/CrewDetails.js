@@ -155,6 +155,7 @@ const NameWrapper = styled.div`
     margin-right: 15px;
   }
   & > input {
+    color: white;
     flex: 1;
     font-size: 30px;
     color: white;
@@ -167,6 +168,8 @@ const NameAndStatus = styled.div`
   flex: 1;
 
   & > h4 {
+    color: white;
+    filter: drop-shadow(0px 0px 4px rgba(0, 0, 0, 0.5));
     flex: 1;
     color: white;
     filter: drop-shadow(0px 0px 4px rgba(0, 0, 0, 0.5));

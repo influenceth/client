@@ -562,7 +562,7 @@ const Skybox = ({ background, envmap, onLoaded, backgroundOverrideName = '', env
           cleanupTextures.push(texture);
           texture.mapping = EquirectangularReflectionMapping;
           scene.environment = texture;
-          console.log('env is set to', texture)
+          // console.log('env is set to', texture)
 
           waitingOn--;
           if (waitingOn === 0) onLoaded();

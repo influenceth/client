@@ -22,8 +22,8 @@ const Wrapper = styled.div`
   max-height: 100%;
   overflow: auto;
   & > h2 {
-    filter: drop-shadow(0px 0px 4px rgba(0, 0, 0, 0.5));
     color: white;
+    filter: drop-shadow(0px 0px 4px rgba(0, 0, 0, 0.5));
     font-size: 35px;
     font-weight: normal;
     margin-top: 0;
@@ -34,6 +34,7 @@ const StatusRow = styled.div`
   border-top: 1px solid ${p => p.theme.colors.mainBorder};
   align-items: center;
   background: rgba(0, 0, 0, 0.7);
+  border-top: 1px solid ${p => p.theme.colors.mainBorder};
   clip-path: polygon(
     0 0,
     100% 0,
@@ -84,7 +85,10 @@ const Play = () => {
       </StatusRow>
       <CaptainWrapper>
         {/* TODO: would be nice to shrink this portrait to accomadate view height without scrolling */}
-        <CrewCaptainCardFramed borderColor={theme.colors.darkMain} crewId={crew.id} width={captainWidth} largeDisplay={true}/>
+        <CrewCaptainCardFramed
+          borderColor={theme.colors.darkMain}
+          crewId={crew.id}
+          width={captainWidth} />
       </CaptainWrapper>
       <CrewmatesWrapper>
         {[1,2,3,4].map((i) => {

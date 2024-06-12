@@ -19,7 +19,10 @@ const Backdrop = styled.div`
 `;
 
 const Button = styled.button`
-  background: linear-gradient(to right, #2b6caa, #35a4ca);
+  background: ${p => p.success
+    ? `linear-gradient(to right, #2baa54, #35ca6e)`
+    : `linear-gradient(to right, #2b6caa, #35a4ca)`
+  };
   border: 0;
   border-radius: 6px;
   color: white;
