@@ -52,7 +52,7 @@ const Extract = ({ onSetAction, asteroid, crew, lot, preselect, _disabled }) => 
       const crewDisabledReason = getCrewDisabledReason({ asteroid, crew, isSequenceable: true, permission: Permission.IDS.EXTRACT_RESOURCES, permissionTarget: lot?.building });
       if (crewDisabledReason) return crewDisabledReason;
       if (myUsableSamples?.length === 0) return 'requires core sample';
-    } else if (!currentExtraction?._isMyAction) {
+    } else if (!currentExtraction?._isAccessible) {
       return 'in use';
     }
   }, [_disabled, crew, currentExtraction, extractionStatus, lot?.building, myUsableSamples?.length]);

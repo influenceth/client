@@ -142,8 +142,9 @@ const Marketplace = () => {
   const [listings, orderTally] = useMemo(() => {
     let buyOrderTally = 0;
     let sellOrderTally = 0;
-    const productListings = products.map((i) => {
-      const summary = orderSummary?.[i] || {}; // TODO: combine
+    const allProducts = new Set([...products, ...Object.keys(orderSummary || {}).map(Number)]);
+    const productListings = ([...allProducts]).map((i) => {
+      const summary = orderSummary?.[i] || {};
       buyOrderTally += summary.buy?.orders || 0;
       sellOrderTally += summary.sell?.orders || 0;
       return {

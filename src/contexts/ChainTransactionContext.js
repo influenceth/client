@@ -1,14 +1,18 @@
 import { createContext, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Asteroid, Entity, Order, RandomEvent, System } from '@influenceth/sdk';
+import { Address, Asteroid, Entity, Order, System } from '@influenceth/sdk';
 import { isEqual, get } from 'lodash';
-import { hash, shortString, uint256 } from 'starknet';
+import { Account, hash, shortString, uint256 } from 'starknet';
+import { fetchBuildExecuteTransaction, fetchQuotes } from '@avnu/avnu-sdk';
 
 import useActivitiesContext from '~/hooks/useActivitiesContext';
 import useSession from '~/hooks/useSession';
 import useCrewContext from '~/hooks/useCrewContext';
 import useStore from '~/hooks/useStore';
+import { useUsdcPerEth } from '~/hooks/useSwapQuote';
+import useWalletBalances from '~/hooks/useWalletBalances';
 import api from '~/lib/api';
 import { cleanseTxHash } from '~/lib/utils';
+import { TOKEN } from '~/lib/priceUtils';
 
 // import { CallData, shortString, uint256, ec } from 'starknet';
 // const Systems = System.Systems;
@@ -243,20 +247,21 @@ const customConfigs = {
   ManageAsteroid: { equalityTest: ['asteroid.id'] },
   PurchaseAdalian: {
     getPrice: async () => {
-      const { ADALIAN_PRICE_ETH } = await api.getConstants('ADALIAN_PRICE_ETH');
-      return BigInt(ADALIAN_PRICE_ETH);
+      const { ADALIAN_PURCHASE_PRICE, ADALIAN_PURCHASE_TOKEN } = await api.getConstants(['ADALIAN_PURCHASE_PRICE', 'ADALIAN_PURCHASE_TOKEN']);
+      return [BigInt(ADALIAN_PURCHASE_PRICE), Address.toStandard(ADALIAN_PURCHASE_TOKEN)];
     },
     equalityTest: true
   },
   PurchaseAsteroid: {
     getPrice: async ({ asteroid }) => {
-      const { ASTEROID_BASE_PRICE_ETH, ASTEROID_LOT_PRICE_ETH } = await api.getConstants([
-        'ASTEROID_BASE_PRICE_ETH',
-        'ASTEROID_LOT_PRICE_ETH'
+      const { ASTEROID_PURCHASE_BASE_PRICE, ASTEROID_PURCHASE_LOT_PRICE, ASTEROID_PURCHASE_TOKEN } = await api.getConstants([
+        'ASTEROID_PURCHASE_BASE_PRICE',
+        'ASTEROID_PURCHASE_LOT_PRICE',
+        'ASTEROID_PURCHASE_TOKEN'
       ]);
-      const base = BigInt(ASTEROID_BASE_PRICE_ETH);
-      const lot = BigInt(ASTEROID_LOT_PRICE_ETH);
-      return base + lot * BigInt(Asteroid.Entity.getSurfaceArea(asteroid));
+      const base = BigInt(ASTEROID_PURCHASE_BASE_PRICE);
+      const lot = BigInt(ASTEROID_PURCHASE_LOT_PRICE);
+      return [base + lot * BigInt(Asteroid.Entity.getSurfaceArea(asteroid)), Address.toStandard(ASTEROID_PURCHASE_TOKEN)];
     },
     equalityTest: ['asteroid.id']
   },
@@ -272,8 +277,8 @@ const customConfigs = {
   RecruitAdalian: {
     getPrice: async ({ crewmate }) => {
       if (crewmate?.id > 0) return 0n; // if recruiting existing crewmate, no cost
-      const { ADALIAN_PRICE_ETH } = await api.getConstants('ADALIAN_PRICE_ETH');
-      return BigInt(ADALIAN_PRICE_ETH);
+      const { ADALIAN_PURCHASE_PRICE, ADALIAN_PURCHASE_TOKEN } = await api.getConstants(['ADALIAN_PURCHASE_PRICE', 'ADALIAN_PURCHASE_TOKEN']);
+      return [BigInt(ADALIAN_PURCHASE_PRICE), Address.toStandard(ADALIAN_PURCHASE_TOKEN)];
     },
     equalityTest: true
   },
@@ -493,6 +498,13 @@ const customConfigs = {
     equalityTest: ['tokenAddress', 'tokenId'],
     noSystemCalls: true,
     isVirtual: true,
+  },
+  PurchaseStarterPack: {
+    repeatableSystemCall: 'PurchaseAdalian',
+    getRepeatTally: (vars) => Math.max(1, Math.floor(vars.crewmateTally)),
+    getNonsystemCalls: ({ swapCalls }) => swapCalls,
+    equalityTest: true,
+    isVirtual: true
   }
 };
 
@@ -510,9 +522,25 @@ const getSystemCallAndProcessedVars = (runSystem, rawVars, encodeEntrypoint = fa
 }
 
 export function ChainTransactionProvider({ children }) {
-  const { accountAddress, authenticated, blockNumber, blockTime, logout, starknet, starknetSession } = useSession();
+  const {
+    accountAddress,
+    authenticated,
+    blockNumber,
+    blockTime,
+    isDeployed,
+    logout,
+    starknet,
+    starknetSession
+  } = useSession();
   const activities = useActivitiesContext();
   const { crew, pendingTransactions } = useCrewContext();
+  const { data: walletSource } = useWalletBalances();
+  const { data: usdcPerEth } = useUsdcPerEth();
+
+  // using a ref since execute is often called from a callback from funding (and
+  // it may not reliably get re-memoized with updated wallet values within callback)
+  const walletRef = useRef();
+  walletRef.current = walletSource;
 
   const createAlert = useStore(s => s.dispatchAlertLogged);
   const dispatchFailedTransaction = useStore(s => s.dispatchFailedTransaction);
@@ -534,6 +562,44 @@ export function ChainTransactionProvider({ children }) {
       && !crew?._actionTypeTriggered,
     [blockNumber, crew?.Crew?.actionType, crew?.Crew?.actionRound, crew?._actionTypeTriggered]
   );
+
+  const simulateAndExecuteCalls = useCallback(async (calls) => {
+    // Check if we can utilize a signed session to execute calls
+    const canUseSession = !!starknetSession?.account && !!starknetSession?.sessionSignature && !calls.some((c) => {
+      return c.contractAddress !== process.env.REACT_APP_STARKNET_DISPATCHER || c.entrypoint !== 'run_system';
+    });
+
+    const account = canUseSession ? starknetSession : starknet.account;
+    
+    // Simulate the tx and check for revert reasons, if found show alert
+    // Combining `simAccount` and `skipValidate = true` allows sim signing for any wallet
+    const simAccount = new Account(account.provider, account.address, '0x1234');
+    const simulation = isDeployed ? await simAccount.simulateTransaction(
+      [{ type: 'INVOKE_FUNCTION', payload: calls }],
+      { skipValidate: true }
+    ) : [];
+
+    if (simulation[0]?.transaction_trace?.execute_invocation?.revert_reason) {
+      const reason = simulation[0].transaction_trace.execute_invocation.revert_reason;
+      const match = reason.match(/Failure reason: 0x([a-fA-F0-9]+) \('([^']+)'\)/);
+
+      // If there is a match, we can show the friendly error message
+      // TODO: map "E" codes to more user-friendly messages
+      if (match) {
+        createAlert({
+          type: 'GenericAlert',
+          data: { content: match[2] },
+          level: 'warning',
+        });
+      } else {
+        // If no match, show the raw error message
+        throw new Error(reason);
+      }
+    } else {
+      // Execute the transaction if no simulation issues
+      return account.execute(calls);
+    }
+  }, [createAlert, isDeployed, starknetSession, starknet?.account]);
 
   const contracts = useMemo(() => {
     if (!!starknet?.account) {
@@ -600,6 +666,7 @@ export function ChainTransactionProvider({ children }) {
 
             let totalEscrow = 0n;
             let totalPrice = 0n;
+            let totalPriceToken;
             const calls = config.getNonsystemCalls ? config.getNonsystemCalls(rawVars) : [];
             for (let { runSystem, rawVars, escrowConfig } of systemCalls) {
               console.log('systemCall', runSystem, rawVars, escrowConfig);
@@ -690,7 +757,11 @@ export function ChainTransactionProvider({ children }) {
               }
 
               if (customConfigs[runSystem]?.getPrice) {
-                totalPrice += await customConfigs[runSystem].getPrice(processedVars);
+                const [tokenAmount, token] = await customConfigs[runSystem].getPrice(processedVars);
+                if (![TOKEN.ETH, TOKEN.USDC].includes(token)) throw new Error('Invalid pricing token (only ETH or USDC supported).');
+                if (totalPriceToken && totalPriceToken !== token) throw new Error('Mixed currency transactions are not supported.');
+                totalPrice += tokenAmount;
+                totalPriceToken = token;
               }
             }
 
@@ -700,47 +771,89 @@ export function ChainTransactionProvider({ children }) {
               ));
             }
 
+            // approve totalPriceToken to make purchase
             if (totalPrice > 0n) {
               calls.unshift(System.getApproveErc20Call(
-                totalPrice, process.env.REACT_APP_ERC20_TOKEN_ADDRESS, process.env.REACT_APP_STARKNET_DISPATCHER
+                totalPrice,
+                totalPriceToken,
+                process.env.REACT_APP_STARKNET_DISPATCHER
               ));
+
+              const wallet = walletRef.current;
+              if (!wallet) throw new Error('Wallet balance not loaded');
+              const totalWalletValueInToken = wallet.combinedBalance?.to(totalPriceToken);
+
+              // if don't have enough USDC + ETH to cover it, throw funds error
+              if (totalPrice > BigInt(totalWalletValueInToken)) {
+                console.log('EXECUTE', wallet, wallet.combinedBalance, wallet.combinedBalance, wallet.combinedBalance?.to(totalPriceToken));
+                const fundsError = new Error('Insufficient wallet balance.');
+                fundsError.additionalFundsRequired = parseInt(totalPrice - BigInt(totalWalletValueInToken));
+                fundsError.additionalFundsToken = totalPriceToken;
+                throw fundsError;
+
+              // else (have enough USDC + ETH) if don't have enough in totalPriceToken
+              // to cover tx, prepend swap calls to cover it as well
+              } else {
+                let balanceInTargetToken = wallet.tokenBalance[totalPriceToken];
+                if (totalPrice > balanceInTargetToken) {
+                  if (!usdcPerEth) throw new Error('Conversion rate not loaded');
+
+                  const isEthToUsdc = totalPriceToken === process.env.REACT_APP_USDC_TOKEN_ADDRESS;
+                  const fromAddress = isEthToUsdc ? process.env.REACT_APP_ERC20_TOKEN_ADDRESS : process.env.REACT_APP_USDC_TOKEN_ADDRESS;
+                  const toAddress = isEthToUsdc ? process.env.REACT_APP_USDC_TOKEN_ADDRESS : process.env.REACT_APP_ERC20_TOKEN_ADDRESS;
+                  const amount = totalPrice - balanceInTargetToken;
+
+                  // buy enough excess to cover slippage
+                  const slippage = 0.01;
+                  const targetSwapAmount = (1 / (1 - slippage)) * parseInt(amount);
+
+                  // usdcPerEth is estimated from a small amount (presumably the best price) so
+                  // sellAmount may be too low to end up with the required buyAmount...
+
+                  // iterate based on the response until we have sufficient buyAmount to cover the purchase
+                  // TODO: would be nice for AVNU to have buyAmount as an option here instead (to avoid loop)
+                  let quote;
+                  let actualConv = isEthToUsdc ? usdcPerEth : (1 / usdcPerEth);
+                  while (parseInt(quote?.buyAmount || 0) < targetSwapAmount) {
+                    const quotes = await fetchQuotes({
+                      sellTokenAddress: fromAddress,
+                      buyTokenAddress: toAddress,
+                      sellAmount: BigInt(Math.ceil(targetSwapAmount / actualConv)),
+                      takerAddress: starknet.account.address,
+                    }, { baseUrl: process.env.REACT_APP_AVNU_API_URL });
+                    if (!quotes?.[0]) throw new Error('Insufficient swap liquidity');
+                    
+                    // set quote
+                    quote = quotes[0];
+
+                    // improve conversion rate from the purchase size quote (in case need to iterate)
+                    // (if conversion rate unchanged but have not reached target, break loop so not stuck)
+                    const newConv = parseInt(quote.buyAmount) / parseInt(quote.sellAmount);
+                    if (newConv === actualConv) {
+                      if (quote.buyAmount < targetSwapAmount) {
+                        throw new Error('Swap pricing issue encountered.');
+                      }
+                    }
+                    actualConv = newConv;
+                  }
+
+                  // prepend swap calls
+                  const swapTx = await fetchBuildExecuteTransaction(
+                    quote.quoteId,
+                    starknet.account.address,
+                    slippage,
+                    true,
+                    { baseUrl: process.env.REACT_APP_AVNU_API_URL }
+                  );
+
+                  console.log('prepend calls', swapTx.calls);
+                  calls.unshift(...swapTx.calls);
+                }
+              }
             }
 
             console.log('execute', calls);
-
-            // Check if we can utilize a signed session to execute calls
-            const canUseSession = !!starknetSession?.account && !!starknetSession?.sessionSignature && !calls.some((c) => {
-              return c.contractAddress !== process.env.REACT_APP_STARKNET_DISPATCHER || c.entrypoint !== 'run_system';
-            });
-
-            const account = canUseSession ? starknetSession : starknet.account;
-
-            // Simulate the tx and check for revert reasons, if found show alert
-            const simulation = await account.simulateTransaction(
-              [{ type: 'INVOKE_FUNCTION', payload: calls }],
-              { skipValidate: true }
-            );
-
-            if (simulation[0]?.transaction_trace?.execute_invocation?.revert_reason) {
-              const reason = simulation[0].transaction_trace.execute_invocation.revert_reason;
-              const match = reason.match(/Failure reason: 0x([a-fA-F0-9]+) \('([^']+)'\)/);
-
-              // If there is a match, we can show the friendly error message
-              // TODO: map "E" codes to more user-friendly messages
-              if (match) {
-                createAlert({
-                  type: 'GenericAlert',
-                  data: { content: match[2] },
-                  level: 'warning',
-                });
-              } else {
-                // If no match, show the raw error message
-                throw new Error(reason);
-              }
-            } else {
-              // Execute the transaction if no simulation issues
-              return account.execute(calls);
-            }
+            return simulateAndExecuteCalls(calls);
           },
 
           onConfirmed: (event, vars) => {
@@ -759,7 +872,7 @@ export function ChainTransactionProvider({ children }) {
       }, {});
     }
     return null;
-  }, [createAlert, prependEventAutoresolve, accountAddress, starknetSession]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [createAlert, prependEventAutoresolve, accountAddress, simulateAndExecuteCalls, starknetSession, usdcPerEth]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const getTxEvent = useCallback((txHash) => {
     const txHashBInt = BigInt(txHash);
@@ -785,10 +898,10 @@ export function ChainTransactionProvider({ children }) {
       const txEvent = getTxEvent(txHash);
       if (txEvent) {
         console.warn(`txEvent already exists for "failed" tx ${txHash}`, err);
-        contracts[key].onConfirmed(txEvent, vars);
+        contracts[key]?.onConfirmed(txEvent, vars);
         dispatchPendingTransactionComplete(txHash);
       } else {
-        contracts[key].onTransactionError(err, vars);
+        contracts[key]?.onTransactionError(err, vars);
         if (txHash) { // TODO: may want to display pre-tx failures if using session wallet
           dispatchFailedTransaction({
             key,
@@ -889,6 +1002,50 @@ export function ChainTransactionProvider({ children }) {
     }
   }, [blockNumber]);
 
+  const isAccountLocked = useCallback(async () => {
+    // Check that the account isn't locked, and prompt to unlock if it is
+    if (!await starknet.isPreauthorized()) {
+      try {
+        await starknet.enable();
+      } catch (e) {
+        return true;
+      }
+    }
+    return false;
+  }, []);
+
+  const executeCalls = useCallback(async (calls) => {
+    if (!starknet?.account) {
+      createAlert({
+        type: 'GenericAlert',
+        data: { content: 'Account is disconnected.' },
+        level: 'warning',
+      });
+
+      return;
+    }
+    if (await isAccountLocked()) {
+      createAlert({
+        type: 'GenericAlert',
+        data: { content: 'Account is unavailable.' },
+        level: 'warning',
+      });
+
+      return;
+    }
+
+    // execute
+    setPromptingTransaction(true);
+    try {
+      const tx = await simulateAndExecuteCalls(calls);
+      setPromptingTransaction(false);
+      return tx;
+    } catch (e) {
+      setPromptingTransaction(false);
+      throw e;  // rethrow
+    }
+  }, [createAlert, isAccountLocked, simulateAndExecuteCalls])
+
   const execute = useCallback(async (key, vars, meta = {}) => {
     if (!starknet?.account || !contracts || !contracts[key]) {
       createAlert({
@@ -896,23 +1053,16 @@ export function ChainTransactionProvider({ children }) {
         data: { content: 'Account is disconnected or contract is invalid.' },
         level: 'warning',
       });
-
       return;
     }
 
-    // Check that the account isn't locked, and prompt to unlock if it is
-    if (!await starknet.isPreauthorized()) {
-      try {
-        await starknet.enable();
-      } catch (e) {
-        createAlert({
-          type: 'GenericAlert',
-          data: { content: 'Account is unavailable.' },
-          level: 'warning',
-        });
-
-        return;
-      }
+    if (await isAccountLocked()) {
+      createAlert({
+        type: 'GenericAlert',
+        data: { content: 'Account is unavailable.' },
+        level: 'warning',
+      });
+      return;
     }
 
     const { execute, onTransactionError } = contracts[key];
@@ -930,6 +1080,12 @@ export function ChainTransactionProvider({ children }) {
         waitingOn: 'TRANSACTION'
       });
     } catch (e) {
+      // handle additional funds required
+      if (e?.additionalUSDCRequired) {
+        setPromptingTransaction(false);
+        return e.additionalUSDCRequired;
+      }
+
       // "User abort" is argent, 'Execute failed' is braavos
       // TODO: in Braavos, is "Execute failed" a generic error? in that case, we should still show
       // (and it will just be annoying that it shows a failure on declines)
@@ -998,6 +1154,7 @@ export function ChainTransactionProvider({ children }) {
   return (
     <ChainTransactionContext.Provider value={{
       execute,
+      executeCalls,
       getStatus,
       getPendingTx,
       promptingTransaction

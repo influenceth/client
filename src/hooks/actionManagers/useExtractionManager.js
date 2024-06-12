@@ -1,20 +1,21 @@
 import { useCallback, useContext, useMemo } from 'react';
-import { Entity, Extractor } from '@influenceth/sdk';
+import { Entity, Extractor, Permission } from '@influenceth/sdk';
 
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
-import useActionItems from '~/hooks/useActionItems';
 import useBlockTime from '~/hooks/useBlockTime';
 import useCrewContext from '~/hooks/useCrewContext';
 import useLot from '~/hooks/useLot';
+import useUnresolvedActivities from '~/hooks/useUnresolvedActivities';
 import actionStages from '~/lib/actionStages';
 
 // TODO: truly support multiple extractors
 const useExtractionManager = (lotId, slot = 1) => {
-  const { actionItems, readyItems } = useActionItems();
+  // const { actionItems, readyItems } = useActionItems();
   const blockTime = useBlockTime();
   const { execute, getPendingTx, getStatus } = useContext(ChainTransactionContext);
-  const { crew } = useCrewContext();
+  const { crew, crewCan } = useCrewContext();
   const { data: lot } = useLot(lotId);
+  const { data: actionItems } = useUnresolvedActivities(lot?.building);
 
   const payload = useMemo(() => ({
     extractor: { id: lot?.building?.id, label: Entity.IDS.BUILDING },
@@ -29,7 +30,7 @@ const useExtractionManager = (lotId, slot = 1) => {
   const [currentExtraction, extractionStatus, actionStage] = useMemo(() => {
     let current = {
       _cachedData: null,
-      _isMyAction: true,
+      _isAccessible: false,
       finishTime: null,
       destination: null,
       destinationSlot: null,
@@ -54,8 +55,10 @@ const useExtractionManager = (lotId, slot = 1) => {
         current._cachedData = actionItem.data;
         current.depositId = actionItem.event.returnValues.deposit.id;
         current.startTime = actionItem._startTime || actionItem.event.timestamp;
-      } else {
-        current._isMyAction = false;
+        current._isAccessible = (
+          (actionItem.event.returnValues.callerCrew.id === crew?.id)
+          || crewCan(Permission.IDS.EXTRACT_RESOURCES, lot.building)
+        );
       }
       current.destination = slotExtractor?.destination;
       current.destinationSlot = slotExtractor?.destinationSlot;
@@ -93,7 +96,7 @@ const useExtractionManager = (lotId, slot = 1) => {
       status,
       stage
     ];
-  }, [actionItems, blockTime, readyItems, getPendingTx, getStatus, payload, slotExtractor?.status]);
+  }, [actionItems, blockTime, crew?.id, crewCan, getPendingTx, getStatus, payload, slotExtractor?.status]);
 
   const startExtraction = useCallback((amount, deposit, destination, destinationSlot, depositOwnerCrew) => {
     execute(

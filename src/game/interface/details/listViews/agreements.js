@@ -13,7 +13,6 @@ import { formatFixed, formatTimer, locationsArrToObj, monthsToSeconds, secondsTo
 import useBlockTime from '~/hooks/useBlockTime';
 import actionButtons from '../../hud/actionButtons';
 import useActionButtons from '~/hooks/useActionButtons';
-import { getAgreementPath } from '~/hooks/actionManagers/useAgreementManager';
 import EntityLink from '~/components/EntityLink';
 import AddressLink from '~/components/AddressLink';
 
@@ -22,7 +21,7 @@ const ExpandableIcon = styled(ChevronRightIcon)`
   font-size: 150%;
   transform: rotate(0);
   transition: transform 150ms ease;
-  ${p => p.isExpanded && `transform: rotate(90deg);`}
+  ${p => p.isexpanded && `transform: rotate(90deg);`}
 `;
 
 const ProgressBar = styled.div`
@@ -94,7 +93,7 @@ const useColumns = () => {
         selector: (row, isExpanded) => {
           if (row._agreement._type === Permission.POLICY_IDS.PREPAID) {
             if (crew?.id === row._agreement?.permitted?.id || row.Control?.controller?.id === crew?.id) {
-              return <ExpandableIcon isExpanded={isExpanded} />;
+              return <ExpandableIcon isexpanded={isExpanded} />;
             }
           }
           return null;
@@ -201,7 +200,7 @@ const useColumns = () => {
               {' '}/ mo
             </>
           )
-          : `N / A` 
+          : `N / A`
       },
       {
         key: 'min',
@@ -231,7 +230,7 @@ const useColumns = () => {
                     {...actionProps}
                     entity={row}
                     permission={row._agreement.permission}
-                    agreementPath={getAgreementPath(row, row._agreement.permission, row._agreement.permitted)} />
+                    agreementPath={row._agreement._path} />
                 </div>
               )
             } else if (row._agreement.permitted?.id === crew?.id || (crew?.Crew?.delegatedTo && row._agreement.permitted === crew.Crew.delegatedTo)) {

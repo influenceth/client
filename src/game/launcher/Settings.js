@@ -4,23 +4,22 @@ import screenfull from 'screenfull';
 import { FiCheckSquare as CheckedIcon, FiSquare as UncheckedIcon } from 'react-icons/fi';
 import { useDetectGPU } from '@react-three/drei';
 
-import useSession from '~/hooks/useSession';
 import useStore from '~/hooks/useStore';
-import useReferralsCount from '~/hooks/useReferralsCount';
 import useScreenSize from '~/hooks/useScreenSize';
-import CopyReferralLink from '~/components/CopyReferralLink';
 import DataReadout from '~/components/DataReadout';
 import Button from '~/components/ButtonPill';
 import IconButton from '~/components/IconButton';
 import NumberInput from '~/components/NumberInput';
 import Range from '~/components/Range';
 import constants from '~/lib/constants';
+import LauncherDialog from './components/LauncherDialog';
 
 const { ENABLE_SHADOWS, MIN_FOV, MAX_FOV } = constants;
 
 const StyledSettings = styled.div`
-  height: 100%;
-  width: 100%;
+  max-width: 100%;
+  padding: 30px 20px;
+  width: 720px;
 `;
 
 const Section = styled.div`
@@ -64,7 +63,10 @@ const StyledDataReadout = styled(DataReadout)`
   padding: 7px 0 7px 15px;
 
   & label {
-    width: 175px;
+    ${p => p.wide
+      ? 'width: auto; white-space: nowrap;'
+      : 'width: 175px;'
+    }
   }
 
   & span {
@@ -81,14 +83,11 @@ const AutodetectButton = styled(Button)`
   }
 `;
 
-const Settings = () => {
+const GraphicsPane = () => {
   const gpuInfo = useDetectGPU();
 
-  const { authenticated } = useSession();
   const { isMobile } = useScreenSize();
-  const { data: referralsCount } = useReferralsCount();
   const graphics = useStore(s => s.graphics);
-  const sounds = useStore(s => s.sounds);
   const turnOnSkybox = useStore(s => s.dispatchSkyboxUnhidden);
   const turnOffSkybox = useStore(s => s.dispatchSkyboxHidden);
   const turnOnLensflare = useStore(s => s.dispatchLensflareUnhidden);
@@ -100,8 +99,6 @@ const Settings = () => {
   const setFOV = useStore(s => s.dispatchFOVSet);
   const turnOnStats = useStore(s => s.dispatchStatsOn);
   const turnOffStats = useStore(s => s.dispatchStatsOff);
-  const adjustMusicVolume = useStore(s => s.dispatchMusicVolumeSet);
-  const adjustEffectsVolume = useStore(s => s.dispatchEffectsVolumeSet);
 
   const [ localFOV, setLocalFOV ] = useState(graphics.fov);
   const [ fullscreen, setFullscreen ] = useState(screenfull.isEnabled && screenfull.isFullscreen);
@@ -272,7 +269,17 @@ const Settings = () => {
           </div>
         </Section>
       )}
+    </StyledSettings>
+  );
+}
 
+const SoundPane = () => {
+  const sounds = useStore(s => s.sounds);
+  const adjustMusicVolume = useStore(s => s.dispatchMusicVolumeSet);
+  const adjustEffectsVolume = useStore(s => s.dispatchEffectsVolumeSet);
+
+  return (
+    <StyledSettings>
       <Section>
         <h3>Sound</h3>
         <div>
@@ -294,25 +301,111 @@ const Settings = () => {
           </StyledDataReadout>
         </div>
       </Section>
+    </StyledSettings>
+  );
+}
 
+const GameplayPane = () => {
+  const gameplay = useStore(s => s.gameplay);
+  const toggleAutoswap = useStore(s => s.dispatchAutoswapEnabled);
+  
+  return (
+    <StyledSettings>
       <Section>
-        <h3>Recruitment</h3>
+        <h3>Gameplay</h3>
         <div>
-          <StyledDataReadout label="Recruitment Link">
-            <CopyReferralLink
-              fallbackContent={(
-                <span>Connect wallet to generate link</span>
-              )}>
-              <Button>Generate Link</Button>
-            </CopyReferralLink>
+          <StyledDataReadout label="Automatically swap ETH ⇌ USDC as needed" wide>
+            <IconButton
+              data-tooltip-content="Toggle Autoswap"
+              data-tooltip-id="globalTooltip"
+              onClick={() => toggleAutoswap(!gameplay.autoswap)}
+              borderless>
+              {gameplay.autoswap ? <CheckedIcon /> : <UncheckedIcon />}
+            </IconButton>
           </StyledDataReadout>
-          {authenticated && (
-            <StyledDataReadout label="Recruitments Count">{referralsCount || 0}</StyledDataReadout>
-          )}
         </div>
       </Section>
     </StyledSettings>
   );
-};
+}
+
+// TODO: connect these
+const menuShortcuts = [
+  { label: 'Play Menu', shortcut: 'Ctrl + -' },
+  { label: 'Settings Menu', shortcut: 'Ctrl + 1' },
+  { label: 'Help Menu', shortcut: 'Ctrl + 2' },
+  { label: 'Store Menu', shortcut: 'Ctrl + 3' },
+  { label: 'Rewards Menu', shortcut: 'Ctrl + 4' },
+];
+const cameraShortcuts = [
+  { label: 'Recenter Selected Lot', shortcut: 'Ctrl + .' },
+  { label: 'Camera to North', shortcut: 'Ctrl + \\' },
+  { label: 'Hide / Show HUD', shortcut: 'Ctrl + F9' },
+];
+
+const Shortcut = styled.div`
+  align-items: center;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  padding-bottom: 20px;
+  padding-left: 20px;
+  & > label {
+    color: #888;
+  }
+  & > span {
+    color: white;
+  }
+`;
+
+const ShortcutsPane = () => {
+  return (
+    <StyledSettings>
+      <Section>
+        <h3>Menus</h3>
+        <div>
+          {menuShortcuts.map(({ label, shortcut }) => (
+            <Shortcut key={label}>
+              <label>{label}</label>
+              <span>{shortcut}</span>
+            </Shortcut>
+          ))}
+        </div>
+      </Section>
+      <Section>
+        <h3>Camera</h3>
+        <div>
+          {cameraShortcuts.map(({ label, shortcut }) => (
+            <Shortcut key={label}>
+              <label>{label}</label>
+              <span>{shortcut}</span>
+            </Shortcut>
+          ))}
+        </div>
+      </Section>
+    </StyledSettings>
+  );
+}
+
+const panes = [
+  {
+    label: 'Graphics',
+    pane: <GraphicsPane />
+  },
+  {
+    label: 'Sound',
+    pane: <SoundPane />
+  },
+  {
+    label: 'Gameplay',
+    pane: <GameplayPane />
+  },
+  {
+    label: 'Keyboard Shortcuts',
+    pane: <ShortcutsPane />
+  }
+];
+
+const Settings = () => <LauncherDialog panes={panes} />;
 
 export default Settings;

@@ -66,7 +66,7 @@ const AvatarWrapper = styled.div`
 
   ${p => {
     const widthMult = p.width / 96;
-    const iconWidth = p.lessPadding ? 58 * widthMult : 67 * widthMult;
+    const iconWidth = (p.lessPadding ? 58 : 63) * widthMult;
     const fontSize = iconWidth * 17 / 67;
     return `
       width: ${p.width}px;
@@ -109,12 +109,12 @@ const AvatarWrapper = styled.div`
 export const EmptyCrewmateCardFramed = styled.div`
   border: 1px solid ${p => p.borderColor || `rgba(${p.theme.colors.mainRGB}, 0.4)`};
   background: black;
-  padding: 4px;
+  padding: 3px;
   position: relative;
   width: ${p => p.width || 96}px;
   &:before {
     content: "";
-    background: rgba(${p => p.theme.colors.mainRGB}, 0.13);
+    background: rgba(${p => p.theme.colors.mainRGB}, 0.05);
     display: block;
     height: 0;
     padding-top: ${p => p.hideHeader ? '128' : '137.5'}%;
@@ -179,7 +179,7 @@ const CrewmateCardAbstract = ({
             <StyledTriangleTip
               fillColor={bgColor}
               strokeColor={borderColor || defaultBorderColor}
-              strokeWidth={2} />
+              strokeWidth={width > 160 ? 1 : 2} />
           </>
         )}
       </AvatarFlourish>

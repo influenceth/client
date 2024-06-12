@@ -32,13 +32,16 @@ export function CrewProvider({ children }) {
     [accountAddress]
   );
 
-  const { data: rawCrews, isLoading: crewsLoading } = useQuery(
+  const { data: rawCrews, isLoading: crewsLoading, dataUpdatedAt: rawCrewsUpdatedAt } = useQuery(
     ownedCrewsQueryKey,
     () => api.getOwnedCrews(accountAddress),
     { enabled: !!token }
   );
 
-  const combinedCrewRoster = useMemo(() => (rawCrews || []).reduce((acc, c) => [...acc, ...c.Crew.roster], []), [rawCrews]);
+  const combinedCrewRoster = useMemo(
+    () => (rawCrews || []).reduce((acc, c) => [...acc, ...c.Crew.roster], []),
+    [rawCrews, rawCrewsUpdatedAt]
+  );
   const { data: myCrewCrewmates, isLoading: crewmatesLoading } = useQuery(
     entitiesCacheKey(Entity.IDS.CREWMATE, combinedCrewRoster.join(',')), // TODO: joined key
     () => api.getCrewmates(combinedCrewRoster),
@@ -139,7 +142,7 @@ export function CrewProvider({ children }) {
 
       return c;
     })
-  }, [blockTime, rawCrews, crewmateMap, crewsAndCrewmatesReady, CREW_SCHEDULE_BUFFER]);
+  }, [blockTime, rawCrews, rawCrewsUpdatedAt, crewmateMap, crewsAndCrewmatesReady, CREW_SCHEDULE_BUFFER]);
 
   const selectedCrew = useMemo(() => {
     if (crews && crews.length > 0) {

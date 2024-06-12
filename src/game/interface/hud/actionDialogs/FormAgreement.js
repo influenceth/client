@@ -31,7 +31,7 @@ import useAgreementManager from '~/hooks/actionManagers/useAgreementManager';
 import useHydratedLocation from '~/hooks/useHydratedLocation';
 import useCrew from '~/hooks/useCrew';
 import UncontrolledTextInput, { TextInputWrapper } from '~/components/TextInputUncontrolled';
-import useSwayBalance from '~/hooks/useSwayBalance';
+import { useSwayBalance } from '~/hooks/useWalletTokenBalance';
 import Button from '~/components/ButtonAlt';
 import useBlockTime from '~/hooks/useBlockTime';
 import useLot from '~/hooks/useLot';
@@ -165,10 +165,7 @@ const FormAgreement = ({
     return 365;
   }, [currentAgreement, isExtension]);
 
-  const maxTermFloored = useMemo(
-    () => Math.floor(maxTerm * 10) / 10,
-    [maxTerm]
-  );
+  const maxTermFloored = useMemo(() => Math.floor(maxTerm * 10) / 10, [maxTerm]);
 
   const minTerm = useMemo(() => {
     return (isExtension) ? 1 : currentPolicy?.policyDetails?.initialTerm || 0
@@ -177,7 +174,7 @@ const FormAgreement = ({
   const [initialPeriod, setInitialPeriod] = useState(
     (pendingChange?.vars?.term || pendingChange?.vars?.added_term)
       ? secondsToDays(pendingChange.vars.term || pendingChange.vars.added_term)
-      : (isExtension ? maxTermFloored : (currentPolicy?.policyDetails?.initialTerm || 0))
+      : (isExtension ? Math.min(maxTermFloored, 30) : (currentPolicy?.policyDetails?.initialTerm || 0))
   );
 
   const remainingPeriod = useMemo(() => currentAgreement?.endTime - blockTime, [blockTime, currentAgreement?.endTime]);
@@ -249,7 +246,10 @@ const FormAgreement = ({
     }
     setEligibilityLoading(false);
   }, [crew?.id, crew?.label, currentPolicy?.policyDetails?.contract, entity, permission, starknet]);
-  useEffect(() => updateContractEligibility(), [updateContractEligibility]);
+
+  useEffect(() => {
+    updateContractEligibility()
+  }, [updateContractEligibility]);
 
   const handleCopyAddress = useCallback(() => {
     createAlert({
@@ -283,8 +283,8 @@ const FormAgreement = ({
   const onExtendAgreement = useCallback(() => {
     const recipient = controller?.Crew?.delegatedTo;
     // TODO: should these conversions be in useAgreementManager?
-    const term = daysToSeconds(initialPeriod);
-    const termPrice = Math.ceil(totalLeaseCost * 1e6);
+    const term = Math.round(daysToSeconds(initialPeriod));
+    const termPrice = Math.round(totalLeaseCost * 1e6);
     extendAgreement({ recipient, term, termPrice });
   }, [controller?.Crew?.delegatedTo, extendAgreement, initialPeriod, totalLeaseCost]);
 
@@ -338,7 +338,7 @@ const FormAgreement = ({
     if (isTermination && currentAgreement?._canGiveNoticeStart > blockTime) return true;
     if (initialPeriod === '' || initialPeriod <= 0) return true;
     return false;
-  }, [blockTime, initialPeriod, insufficientAssets, isTermination, currentAgreement])
+  }, [blockTime, initialPeriod, insufficientAssets, isTermination, currentAgreement]);
   return (
     <>
       <ActionDialogHeader

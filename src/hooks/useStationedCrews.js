@@ -7,7 +7,7 @@ import { entitiesCacheKey } from '~/lib/cacheKey';
 
 const useStationedCrews = (entityId, hydrateCrewmates = false) => {
   const entityUuid = useMemo(() => entityId ? Entity.packEntity(entityId) : undefined, [entityId]);
-  const { data: stationedCrews, isLoading: crewsLoading } = useQuery(
+  const { data: stationedCrews, isLoading: crewsLoading, dataUpdatedAt: crewsUpdatedAt } = useQuery(
     entitiesCacheKey(Entity.IDS.CREW, { stationUuid: entityUuid }),
     () => api.getEntities({ match: { 'Location.location.uuid': entityUuid }, label: Entity.IDS.CREW }),
     { enabled: !!entityUuid }
@@ -19,7 +19,7 @@ const useStationedCrews = (entityId, hydrateCrewmates = false) => {
       : []
   ), [hydrateCrewmates, stationedCrews]);
 
-  const { data: stationedCrewmates, isLoading: crewmatesLoading } = useQuery(
+  const { data: stationedCrewmates, isLoading: crewmatesLoading, dataUpdatedAt: crewmatesUpdatedAt } = useQuery(
     entitiesCacheKey(Entity.IDS.CREWMATE, crewmateIds.join(',')), // TODO: joined key
     () => api.getCrewmates(crewmateIds),
     { enabled: crewmateIds?.length > 0 }
@@ -39,7 +39,7 @@ const useStationedCrews = (entityId, hydrateCrewmates = false) => {
       }
     }
     return { data: stationedCrews, isLoading: false }
-  }, [crewsLoading, crewmatesLoading, hydrateCrewmates, stationedCrews, stationedCrewmates]);
+  }, [crewsLoading, crewmatesLoading, hydrateCrewmates, stationedCrews, stationedCrewmates, crewsUpdatedAt, crewmatesUpdatedAt]);
 };
 
 export default useStationedCrews;

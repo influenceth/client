@@ -20,9 +20,13 @@ export const formatTimer = (secondsRemaining, maxPrecision = null) => {
   return parts.join(' ');
 };
 
-export const formatFixed = (value, maximumFractionDigits = 0) => {
+export const roundToPlaces = (value, maximumFractionDigits = 0) => {
   const div = 10 ** maximumFractionDigits;
-  return (Math.round((value || 0) * div) / div).toLocaleString();
+  return (Math.round((value || 0) * div) / div);
+}
+
+export const formatFixed = (value, maximumFractionDigits = 0) => {
+  return roundToPlaces(value, maximumFractionDigits).toLocaleString(undefined, { maximumFractionDigits });
 };
 
 export const formatPrecision = (value, maximumPrecision = 0) => {
@@ -61,6 +65,10 @@ export const formatPrice = (inputSway, { minPrecision = 3, fixedPrecision = 4, f
   return `${sign}${(workingUnits || 0).toLocaleString(undefined, { minimumFractionDigits: minPrecision, maximumFractionDigits: fixedPlaces })}${unitLabel}`;
 };
 
+export const formatUSD = (usd) => {
+  return `$${(usd || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+};
+
 export const keyify = (str) => (str || '').replace(/[^a-zA-Z0-9_]/g, '');
 
 export const reactBool = (value) => value ? 'true' : undefined;
@@ -73,7 +81,7 @@ export const reactPreline = (value, maxInARow = 2) => {
     .filter((c, i, arr) => {
       if (c.length) return true;
       if (i < maxInARow) return true;
-      
+
       // this line is blank... make sure it is not creating > maxInARow
       for (let j = 1; j <= maxInARow - 1; j++) {
         if (arr[i - j].length > 0) return true;
@@ -189,10 +197,10 @@ export const esbPermissionQuery = (crewId, crewDelegatedTo, permissionId) => {
 
 export const getProcessorProps = (processorType) => {
   switch (processorType) {
-    case Processor.IDS.REFINERY: return { label: 'Refine Material', icon: <RefineIcon /> };
-    case Processor.IDS.FACTORY: return { label: 'Manufacture Goods', icon: <ManufactureIcon /> };
-    case Processor.IDS.BIOREACTOR: return { label: 'Manufacture Organic Goods', icon: <BioreactorBuildingIcon /> };
-    case Processor.IDS.SHIPYARD: return { label: 'Manufacture Ship Parts', icon: <ManufactureIcon /> };
+    case Processor.IDS.REFINERY: return { label: 'Refine Material', typeLabel: 'Refinery', icon: <RefineIcon /> };
+    case Processor.IDS.FACTORY: return { label: 'Manufacture Goods', typeLabel: 'Factory', icon: <ManufactureIcon /> };
+    case Processor.IDS.BIOREACTOR: return { label: 'Manufacture Organic Goods', typeLabel: 'Bioreactor', icon: <BioreactorBuildingIcon /> };
+    case Processor.IDS.SHIPYARD: return { label: 'Manufacture Ship Parts', typeLabel: 'Shipyard', icon: <ManufactureIcon /> };
     default: return {};
   }
 }
@@ -202,7 +210,7 @@ export const arrToXYZ = (arr) => ({ x: arr[0], y: arr[1], z: arr[2] });
 const yearOfSeconds = 31536000;
 export const secondsToMonths = (seconds) => Math.floor(1000 * 12 * seconds / yearOfSeconds) / 1000;
 export const monthsToSeconds = (months) => Math.floor(yearOfSeconds * months / 12);
-export const secondsToDays = (seconds) => formatFixed(seconds / 86400, 2);
+export const secondsToDays = (seconds) => seconds / 86400;
 export const daysToSeconds = (days) => days * 86400;
 
 export const getBlockTime = async (starknet, blockNumber = 'pending') => {
@@ -230,19 +238,25 @@ export const safeEntityId = (variablyHydratedEntity) => {
   return undefined;
 };
 
+export const getAgreementPath = (target, permission, permitted) => {
+  return `${target ? Entity.packEntity(target) : ''}.${permission || ''}.${permitted?.id ? Entity.packEntity(permitted) : (permitted || '')}`;
+};
+
 export const entityToAgreements = (entity) => {
   const acc = [];
   ['PrepaidAgreements', 'ContractAgreements', 'WhitelistAgreements', 'WhitelistAccountAgreements'].forEach((agreementType) => {
     (entity[agreementType] || []).forEach((agreement, j) => {
       const formatted = {
         ...entity,
-        
+
         key: `${entity.uuid}_${agreementType}_${j}`,
         _agreement: {
+          _path: getAgreementPath(entity, agreement.permission, agreement.permitted),
           _type: agreementType === 'PrepaidAgreements'
             ? Permission.POLICY_IDS.PREPAID
             : (agreementType === 'ContractAgreements' ? Permission.POLICY_IDS.CONTRACT : 5),
-          ...agreement
+          ...agreement,
+          _isExpired: agreement.endTime < (Date.now() / 1000)
         },
       };
       // for the sake of agreements, the lot controller is *always* the asteroid controller

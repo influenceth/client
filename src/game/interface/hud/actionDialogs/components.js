@@ -3653,14 +3653,16 @@ export const CrewInputBlock = ({ cardWidth, crew, hideCrewmates, highlightCrewma
           </span>
         </div>
       )}
-      bodyStyle={{ paddingRight: 8, ...(hideCrewmates ? { paddingBottom: 0 } : (crew?.Crew?.roster?.length === 0 ? { paddingBottom: 20 } : {})) }}
+      bodyStyle={{
+        paddingRight: 8,
+        ...(hideCrewmates ? { paddingBottom: 0 } : (crew?.Crew?.roster?.length === 0 ? { paddingBottom: 20 } : {}))
+      }}
       innerBodyStyle={{ height: 'auto' }}
       {...props}>
       <div>
         {crew && inlineDetails && (
           <div style={{ display: 'flex', alignItems: 'center', marginBottom: 8 }}>
             <div>
-              <CrewIcon />
               <span style={{ marginLeft: 4 }}>
                 {formatters.crewName(crew)}
               </span>

@@ -2,7 +2,7 @@ import styled from 'styled-components';
 import Button from '~/components/ButtonAlt';
 
 import HudIconButton from '~/components/HudIconButton';
-import { InfluenceIcon } from '~/components/Icons';
+import { ArgentXIcon, BraavosIcon, InfluenceIcon } from '~/components/Icons';
 import useAccountFormatted from '../../../hooks/useAccountFormatted';
 
 export const menuAnimationTime = 250;
@@ -146,7 +146,13 @@ const OpenerAsButtonWrapper = styled.div`
   width: 40px;
 `;
 
-export const NavMenuLoggedInUser = ({ account }) => {
+export const LoggedInIcon = ({ walletId }) => {
+  if (walletId === 'argentX') return <ArgentXIcon />;
+  if (walletId === 'braavos') return <BraavosIcon />;
+  return <InfluenceIcon />;
+}
+
+export const NavMenuLoggedInUser = ({ account, walletId }) => {
   const formattedAccount = useAccountFormatted({ address: account, truncate: true, doNotReplaceYou: true });
   const copyToClipboard = () => {
     try {
@@ -159,7 +165,7 @@ export const NavMenuLoggedInUser = ({ account }) => {
   return (
     <>
       <LogoWrapper connected={!!account}>
-        <InfluenceIcon />
+        <LoggedInIcon walletId={walletId} />
       </LogoWrapper>
 
       <LoggedInUser onClick={copyToClipboard}>{formattedAccount}</LoggedInUser>

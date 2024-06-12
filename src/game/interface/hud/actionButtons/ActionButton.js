@@ -253,12 +253,13 @@ const LoadingTimer = ({ finishTime }) => {
 const StackTally = ({ tally }) => {
   return (
     <CompletionTime>
-      {tally > 1 ? `(${tally})` : ``}
+      {tally > 1 ? `x${tally}` : ``}
     </CompletionTime>
   );
 };
 
-const ActionButtonComponent = ({ label, labelAddendum, flags = {}, icon, onClick, sequenceMode, ...props }) => {
+// (children used for mouseinfopane)
+const ActionButtonComponent = ({ children, label, labelAddendum, flags = {}, icon, onClick, sequenceMode, ...props }) => {
   const _onClick = useCallback(() => {
     if (!flags?.disabled && onClick) onClick();
   }, [flags, onClick]);
@@ -285,10 +286,11 @@ const ActionButtonComponent = ({ label, labelAddendum, flags = {}, icon, onClick
       <ActionButton {...safeFlags} overrideColor={props.overrideColor}>
         <ClipCorner dimension={cornerSize} />
         {sequenceMode && !safeFlags.disabled && !flags.loading && <CornerBadge>+</CornerBadge>}
-        <div>{icon}</div>
+        <div style={{ opacity: flags.tally > 1 ? 0.33 : 1 }}>{icon}</div>
         {flags.tally > 1 && <StackTally tally={flags.tally} />}
         {!(flags.tally > 1) && flags.loading && <LoadingTimer finishTime={flags.finishTime} />}
       </ActionButton>
+      {children}
     </ActionButtonWrapper>
   );
 }

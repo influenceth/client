@@ -8,9 +8,9 @@ import useCrewAgreements from '~/hooks/useCrewAgreements';
 import useCrewContext from '~/hooks/useCrewContext';
 import useGetActivityConfig from '~/hooks/useGetActivityConfig';
 import useStore from '~/hooks/useStore';
+import useWalletBuildings from '~/hooks/useWalletBuildings';
 import api from '~/lib/api';
 import { hydrateActivities } from '~/lib/activities';
-import { entitiesCacheKey } from '~/lib/cacheKey';
 
 const ActionItemContext = React.createContext();
 
@@ -30,7 +30,7 @@ export function ActionItemProvider({ children }) {
   const queryClient = useQueryClient();
 
   const crewId = crew?.id;
-  const { data: actionItems, isLoading: actionItemsLoading } = useQuery(
+  const { data: actionItems, isLoading: actionItemsLoading, dataUpdatedAt: itemsUpdatedAt } = useQuery(
     [ 'actionItems', crewId ],
     async () => {
       const activities = await api.getCrewActionItems(crewId);
@@ -50,11 +50,15 @@ export function ActionItemProvider({ children }) {
     { enabled: !!crewId }
   );
 
-  const { data: plannedBuildings, isLoading: plannedBuildingsLoading } = useQuery(
-    entitiesCacheKey(Entity.IDS.BUILDING, { controllerId: crewId, status: Building.CONSTRUCTION_STATUSES.PLANNED }),
-    () => api.getCrewPlannedBuildings(crewId),
-    { enabled: !!crewId }
-  );
+  const { data: walletBuildings, isLoading: plannedBuildingsLoading, dataUpdatedAt: plansUpdatedAt } = useWalletBuildings();
+  const plannedBuildings = useMemo(() => {
+    return walletBuildings && crewId
+      ? (walletBuildings || []).filter((a) => (
+        a.Control?.controller?.id === crewId
+        && a.Building?.status === Building.CONSTRUCTION_STATUSES.PLANNED
+      ))
+      : undefined;
+  }, [crewId, walletBuildings]);
 
   const failedTransactions = useStore(s => s.failedTransactions);
   const hiddenActionItems = useStore(s => s.hiddenActionItems);
@@ -121,7 +125,7 @@ export function ActionItemProvider({ children }) {
         }))
         .sort((a, b) => a._agreement.endTime - b._agreement.endTime)
     );
-  }, [actionItems, crew, crewAgreements, plannedBuildings, blockTime]);
+  }, [actionItems, crew, crewAgreements, plannedBuildings, blockTime, itemsUpdatedAt, plansUpdatedAt]);
 
   const allVisibleItems = useMemo(() => {
     if (!authenticated) return [];
@@ -169,7 +173,8 @@ export function ActionItemProvider({ children }) {
     randomEventItems,
     readyItems,
     unreadyItems,
-    unstartedItems
+    unstartedItems,
+    plansUpdatedAt
   ]);
 
   // if there is data for all types (i.e. we know loaded successfully), clean out all
@@ -182,7 +187,7 @@ export function ActionItemProvider({ children }) {
         }
       })
     }
-  }, [actionItems, allVisibleItems, crewAgreements, hiddenActionItems, plannedBuildings])
+  }, [actionItems, allVisibleItems, crewAgreements, hiddenActionItems, plannedBuildings, itemsUpdatedAt, plansUpdatedAt])
 
   // TODO: clear timers in the serviceworker
   //  for not yet ready to finish, set new timers based on time remaining
@@ -210,7 +215,9 @@ export function ActionItemProvider({ children }) {
     unstartedItems,
     actionItems,
     actionItemsLoading,
-    plannedBuildingsLoading
+    plannedBuildingsLoading,
+    itemsUpdatedAt,
+    plansUpdatedAt
   ]);
 
   // TODO: pending and failed transactions are already in context

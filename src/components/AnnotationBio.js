@@ -2,7 +2,7 @@ import { useState } from 'react';
 import styled from 'styled-components';
 import LoadingAnimation from 'react-spinners/PropagateLoader';
 
-import adalianImage from '~/assets/images/crew_collections/4.png'
+import AdalianFlourish from '~/components/AdalianFlourish';
 import Button from '~/components/ButtonAlt';
 import EntityName from '~/components/EntityName';
 import EntityDescriptionForm from '~/game/interface/hud/hudMenus/components/EntityDescriptionForm';
@@ -26,24 +26,6 @@ const FlourishWrapper = styled.div`
   flex-direction: column;
   margin-right: 50px;
   overflow: hidden;
-`;
-
-const AdalianFlourish = styled.div`
-  display: block;
-  height: 100%;
-  min-height: 150px;
-  width: 100%;
-  &:before {
-    content: "";
-    background-image: url(${adalianImage});
-    background-position: center center;
-    background-repeat: no-repeat;
-    background-size: auto 80%;
-    display: block;
-    filter: contrast(0%) sepia(100%) hue-rotate(150deg) saturate(150%);
-    height: 100%;
-    opacity: 0.65;
-  }
 `;
 
 const Content = styled.div`
@@ -116,7 +98,7 @@ const AnnotationBio = ({ entity, isEditable }) => {
   return (
     <Wrapper>
       <FlourishWrapper>
-        <AdalianFlourish />
+        <AdalianFlourish style={{ minHeight: '150px' }} />
       </FlourishWrapper>
       <Content empty={!annotation}>
         <h4><EntityName id={entity?.id} label={entity?.label} /> Public Bio</h4>

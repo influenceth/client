@@ -1,7 +1,13 @@
 import useConstants from './useConstants';
 
 const usePriceConstants = () => {
-  return useConstants(['ASTEROID_BASE_PRICE_ETH', 'ASTEROID_LOT_PRICE_ETH', 'ADALIAN_PRICE_ETH']);
+  return useConstants([
+    'ASTEROID_PURCHASE_BASE_PRICE',
+    'ASTEROID_PURCHASE_LOT_PRICE',
+    'ASTEROID_PURCHASE_TOKEN',
+    'ADALIAN_PURCHASE_PRICE',
+    'ADALIAN_PURCHASE_TOKEN'
+  ]);
 };
 
 export default usePriceConstants;

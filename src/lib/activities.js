@@ -123,20 +123,24 @@ const getPolicyAndAgreementConfig = (couldAddToCollection = false, invalidateAgr
 
       const invs = [entityInvalidation];
       if (invalidateAgreements) {
-        if (returnValues.permitted?.id) {
-          invs.push(['agreements', returnValues.permitted.id]);
-          if (entity?.Control?.controller?.id) {
-            invs.push(['agreements', entity?.Control?.controller?.id]);
-          }
+        // if (returnValues.permitted?.id) {
+        //   invs.push(['agreements', returnValues.permitted.id]);
+        //   if (entity?.Control?.controller?.id) {
+        //     invs.push(['agreements', entity?.Control?.controller?.id]);
+        //   }
 
-        // if account whitelist, just invalidate all agreements (for all crews)
-        // TODO (maybe): in the future, we potentially separate the queries for agreements and account-agreements
-        //  so could have separate cacheKeys and thus separate invalidations
-        // TODO (maybe): we could also use onBeforeReceived to query and uncover more accurate invalidations, but
-        //  it seems unlikely that would ever be worth the extra queries
-        } else if (returnValues.permitted) {
-          invs.push(['agreements']);
-        }
+        // // if account whitelist, just invalidate all agreements (for all crews)
+        // // TODO (maybe): in the future, we potentially separate the queries for agreements and account-agreements
+        // //  so could have separate cacheKeys and thus separate invalidations
+        // // TODO (maybe): we could also use onBeforeReceived to query and uncover more accurate invalidations, but
+        // //  it seems unlikely that would ever be worth the extra queries
+        // } else if (returnValues.permitted) {
+        //   invs.push(['agreements']);
+        // }
+
+        // since there is now just one query to manage user's agreements (as lessor and lessee),
+        // just invalidate that whole thing... this may be overkill in the future
+        invs.push(['agreements']);
       }
       return invs;
     },
@@ -192,7 +196,8 @@ const activities = {
             updatedValues: { owner: returnValues.caller }
           }
         },
-        [ 'ethBalance', returnValues.caller ],
+        [ 'walletBalance', 'eth' ],
+        [ 'walletBalance', 'usdc' ],
       ]
     },
     getLogContent: ({ event: { returnValues } }) => ({
@@ -243,7 +248,7 @@ const activities = {
           newGroupEval: {
             updatedValues: {
               controllerId: returnValues.callerCrew.id,
-              hasPermission: getApplicablePermissions(building || returnValues.building), // new controller may now all relevant permissions 
+              hasPermission: getApplicablePermissions(building || returnValues.building), // new controller may now all relevant permissions
             },
             filters: {
               asteroidId: _location.asteroidId,
@@ -255,7 +260,7 @@ const activities = {
         }
       ]
     },
-    
+
     getPrepopEntities: ({ event: { returnValues } }) => ({
       building: returnValues.building,
     }),
@@ -274,10 +279,11 @@ const activities = {
       return [
         { ...returnValues.exchange },
         { ...returnValues.storage },
-        [ 'swayBalance' ],
+        [ 'walletBalance', 'sway' ],
         [ 'orderList', returnValues.exchange.id, returnValues.product ],
         [ 'crewOpenOrders', returnValues.buyerCrew.id ],
         [ 'exchangeOrderSummary', asteroidId, returnValues.product ],
+        [ 'inventoryOrders', returnValues.storage?.label, returnValues.storage?.id ],
         [ 'productOrderSummary', Entity.IDS.ASTEROID, asteroidId ],
         [ 'productOrderSummary', Entity.IDS.LOT, lotId ],
       ]
@@ -293,10 +299,11 @@ const activities = {
       return [
         { ...returnValues.exchange },
         { ...returnValues.storage },
-        [ 'swayBalance' ],
+        [ 'walletBalance', 'sway' ],
         [ 'orderList', returnValues.exchange.id, returnValues.product ],
         [ 'crewOpenOrders', returnValues.callerCrew.id ],
         [ 'exchangeOrderSummary', asteroidId, returnValues.product ],
+        [ 'inventoryOrders', returnValues.storage?.label, returnValues.storage?.id ],
         [ 'productOrderSummary', Entity.IDS.ASTEROID, asteroidId ],
         [ 'productOrderSummary', Entity.IDS.LOT, lotId ],
       ];
@@ -316,10 +323,11 @@ const activities = {
         { ...returnValues.exchange },
         { ...returnValues.origin },
         { ...returnValues.storage },
-        [ 'swayBalance' ],
+        [ 'walletBalance', 'sway' ],
         [ 'orderList', returnValues.exchange.id, returnValues.product ],
         [ 'crewOpenOrders', returnValues.buyerCrew.id ],
         [ 'exchangeOrderSummary', asteroidId, returnValues.product ],
+        [ 'inventoryOrders', returnValues.storage?.label, returnValues.storage?.id ],
         [ 'productOrderSummary', Entity.IDS.ASTEROID, asteroidId ],
         [ 'productOrderSummary', Entity.IDS.LOT, lotId ],
       ]
@@ -588,7 +596,8 @@ const activities = {
           newGroupEval: {
             updatedValues: { owner: returnValues.caller }
           }
-        }
+        },
+        [ 'walletBalance' ],  // eth, usdc, sway (in case purchased directly or through starter pack)
       ]
     },
     getLogContent: ({ event: { returnValues } }) => ({
@@ -843,7 +852,9 @@ const activities = {
           updatedValues: { stationUuid: safeEntityId(returnValues.station)?.uuid }
         }
       },
-      { ...returnValues.station },
+      { ...returnValues.station }, // v0
+      { ...returnValues.originStation }, // v1
+      { ...returnValues.destinationStation }, // v1
       // TODO: previous station
     ]),
 
@@ -998,7 +1009,7 @@ const activities = {
       { ...returnValues.origin },
       { ...returnValues.dest },
       ['actionItems'],
-      ['swayBalance'] // (in case this was p2p)
+      ['walletBalance', 'sway'] // (in case this was p2p)
     ]),
 
     getPrepopEntities: ({ event: { returnValues } }) => ({
@@ -1305,7 +1316,7 @@ const activities = {
   RandomEventResolved: {
     getInvalidations: ({ event: { returnValues } }) => ([
       { ...returnValues.callerCrew }, // this is redundant to `requiresCrewTime`
-      [ 'swayBalance' ],
+      [ 'walletBalance', 'sway' ],
     ]),
 
     getLogContent: ({ event: { returnValues } }, viewingAs) => {
@@ -1567,10 +1578,11 @@ const activities = {
       return [
         { ...returnValues.exchange },
         { ...returnValues.storage },
-        [ 'swayBalance' ],
+        [ 'walletBalance', 'sway' ],
         [ 'orderList', returnValues.exchange.id, returnValues.product ],
         [ 'crewOpenOrders', returnValues.sellerCrew.id ],
         [ 'exchangeOrderSummary', asteroidId, returnValues.product ],
+        [ 'inventoryOrders', returnValues.storage?.label, returnValues.storage?.id ],
         [ 'productOrderSummary', Entity.IDS.ASTEROID, asteroidId ],
         [ 'productOrderSummary', Entity.IDS.LOT, lotId ],
       ];
@@ -1586,10 +1598,11 @@ const activities = {
       return [
         { ...returnValues.exchange },
         { ...returnValues.storage },
-        [ 'swayBalance' ],
+        [ 'walletBalance', 'sway' ],
         [ 'orderList', returnValues.exchange.id, returnValues.product ],
         [ 'crewOpenOrders', returnValues.callerCrew.id ],
         [ 'exchangeOrderSummary', asteroidId, returnValues.product ],
+        [ 'inventoryOrders', returnValues.storage?.label, returnValues.storage?.id ],
         [ 'productOrderSummary', Entity.IDS.ASTEROID, asteroidId ],
         [ 'productOrderSummary', Entity.IDS.LOT, lotId ],
       ];
@@ -1619,7 +1632,7 @@ const activities = {
       // nft
       if (returnValues.tokenId) {
         // TODO: use entities here? currently just relying on Transfer event to invalidate entity
-        return [[ 'swayBalance' ]];
+        return [[ 'walletBalance', 'sway' ]];
 
       // marketplace
       } else {
@@ -1628,10 +1641,11 @@ const activities = {
           { ...returnValues.exchange },
           { ...returnValues.destination },
           { ...returnValues.storage },
-          [ 'swayBalance' ],
+          [ 'walletBalance', 'sway' ],
           [ 'orderList', returnValues.exchange.id, returnValues.product ],
           [ 'crewOpenOrders', returnValues.sellerCrew.id ],
           [ 'exchangeOrderSummary', asteroidId, returnValues.product ],
+          [ 'inventoryOrders', returnValues.storage?.label, returnValues.storage?.id ],
           [ 'productOrderSummary', Entity.IDS.ASTEROID, asteroidId ],
           [ 'productOrderSummary', Entity.IDS.LOT, lotId ],
         ];
@@ -1720,6 +1734,7 @@ const activities = {
               hasComponent: getComponentNames(ship),
               hasPermission: getApplicablePermissions(ship || returnValues.ship),
               isOnSurface: true,
+              owner: returnValues.caller,
               lotId: _location?.lotId,
               status: Ship.STATUSES.UNDER_CONSTRUCTION
             }
@@ -2087,6 +2102,8 @@ const activities = {
           ...returnValues.ship,
           newGroupEval: {
             updatedValues: {
+              // TODO: in this case, if was commandeered from self, should technically
+              //  not have to invalidate the useWalletShips response, but it will anyway
               controllerId: returnValues.callerCrew?.id,
               hasPermission: getApplicablePermissions(ship || returnValues.ship)
             },
@@ -2170,7 +2187,7 @@ const activities = {
             }
           }
         },
-        ['swayBalance']
+        ['walletBalance', 'sway']
       ];
     },
     getPrepopEntities: ({ event: { returnValues } }) => ({

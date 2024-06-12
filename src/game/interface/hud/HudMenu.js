@@ -16,6 +16,7 @@ import {
   InfoIcon,
   InventoryIcon,
   KeysIcon,
+  SearchIcon,
   ListViewIcon,
   LotSearchIcon,
   MarketsIcon,
@@ -27,6 +28,8 @@ import {
   ShipIcon,
   SimulateRouteIcon,
   StationCrewIcon,
+  CrewIcon,
+  MyAssetIcon,
 } from '~/components/Icons';
 import useAsteroid from '~/hooks/useAsteroid';
 import useAsteroidBuildings from '~/hooks/useAsteroidBuildings';
@@ -100,7 +103,7 @@ const Button = styled.div`
   align-items: center;
   border-radius: 8px 0 0 8px;
   border-right: 3px solid transparent;
-  color: #AAA;
+  color: rgba(255, 255, 255, 0.5);
   display: flex;
   font-size: 28px;
   height: 44px;
@@ -110,6 +113,16 @@ const Button = styled.div`
   position: relative;
   transition: background 250ms ease, border-color 250ms ease, color 250ms ease, opacity 250ms ease;
   width: ${buttonsWidth}px;
+  
+  ${p => p.iconColor
+    ? `
+      color: ${p.theme.colors.main};
+      &:hover {
+        color: white;
+      }
+    `
+    : ``
+  }
 
   ${p => p.selected
     ? `
@@ -132,8 +145,7 @@ const Button = styled.div`
   ${p => p.badge > 0 && `
     &:before {
       align-items: center;
-      background: ${p.theme.colors[p.selected ? 'darkMain' : 'main']};
-      border: 1px solid rgba(15, 15, 15, 0.85);
+      background: ${p.theme.colors.badge};
       border-radius: 20px;
       color: white;
       content: "${p.badge > 9 ? '9⁺' : p.badge}";
@@ -228,7 +240,7 @@ const PanelContent = styled.div`
   height: 0;
 `;
 
-const HudMenu = ({ forceOpenMenu }) => {
+const HudMenu = () => {
   const history = useHistory();
   const { authenticated } = useSession();
   const { crew } = useCrewContext();
@@ -243,9 +255,10 @@ const HudMenu = ({ forceOpenMenu }) => {
   const showDevTools = useStore(s => s.graphics.showDevTools);
   const lotFilters = useStore(s => s.assetSearch.lotsMapped?.filters);
   const asteroidFilters = useStore(s => s.assetSearch.asteroidsMapped?.filters);
+  const launcherPage = useStore(s => s.launcherPage);
   const isAssetSearchFilterMatchingDefault = useStore(s => s.isAssetSearchFilterMatchingDefault);
 
-  const openHudMenu = useStore(s => forceOpenMenu || s.openHudMenu);
+  const openHudMenu = useStore(s => s.openHudMenu);
 
   const { data: asteroid } = useAsteroid(asteroidId);
   const { data: lot } = useLot(lotId);
@@ -326,289 +339,282 @@ const HudMenu = ({ forceOpenMenu }) => {
     const menuButtons = [];
     const pageButtons = [];
 
-    let scope = 'belt'; // belt, asteroid, lot, ship
-    if (zoomStatus === 'in') scope = 'asteroid';
-    if (zoomScene?.type === 'LOT') scope = 'lot';
-    if (zoomScene?.type === 'SHIP') scope = 'ship'; // TODO: probably only if ship is in flight should we change scope
+    if (!launcherPage) {
+      let scope = 'belt'; // belt, asteroid, lot, ship
+      if (zoomStatus === 'in') scope = 'asteroid';
+      if (zoomScene?.type === 'LOT') scope = 'lot';
+      if (zoomScene?.type === 'SHIP') scope = 'ship'; // TODO: probably only if ship is in flight should we change scope
 
-    let focus = ''; // asteroid, lot, ship
-    if (asteroidId) focus = 'asteroid';
-    if (lotId) focus = 'lot';
-    if (zoomScene?.type === 'SHIP') focus = 'ship';
+      let focus = ''; // asteroid, lot, ship
+      if (asteroidId) focus = 'asteroid';
+      if (lotId) focus = 'lot';
+      if (zoomScene?.type === 'SHIP') focus = 'ship';
 
-    // "force open" options
-    if (forceOpenMenu === "MY_CREWS") {
-      menuButtons.push({
-        key: 'MY_CREWS',
-        label: 'My Crews',
-        Component: hudMenus.MyCrews,
-        noClose: true,
-        noDetail: true,
-        isVisible: true
-      })
+      menuButtons.push(
+        {
+          key: 'SHIP_INFORMATION',
+          label: 'Ship Info',
+          icon: <InfoIcon />,
+          Component: hudMenus.ShipInfo,
+          isVisible: focus === 'ship'
+        },
+        {
+          key: 'LOT_INFORMATION',
+          label: 'Lot Info',
+          icon: <InfoIcon />,
+          Component: hudMenus.LotInfo,
+          isVisible: focus === 'lot'
+        },
+        {
+          key: 'ASTEROID_INFO',
+          label: 'Asteroid Info',
+          icon: <InfoIcon />,
+          Component: hudMenus.AsteroidInfo,
+          // detailType: 'detail',
+          // onDetailClick: () => {
+          //   if (asteroidId) {
+          //     history.push(`/asteroids/${asteroidId}`);
+          //   }
+          // }
+          isVisible: focus === 'asteroid'
+        },
+        {
+          key: 'BUILDING_ADMIN',
+          label: 'Building Management',
+          icon: <KeysIcon />,
+          noDetail: true,
+          Component: hudMenus.AdminBuilding,
+          isVisible: focus === 'lot'
+            && lot?.building?.Building?.status === Building.CONSTRUCTION_STATUSES.OPERATIONAL
+            && lot?.building?.Control?.controller?.id === crew?.id
+        },
+        {
+          key: 'ASTEROID_ADMIN',
+          label: 'Asteroid Management',
+          icon: <KeysIcon />,
+          noDetail: true,
+          Component: hudMenus.AdminAsteroid,
+          isVisible: focus === 'asteroid'
+            && asteroid?.Control?.controller?.id === crew?.id
+        },
+        {
+          key: 'SHIP_ADMIN',
+          label: 'Ship Management',
+          icon: <KeysIcon />,
+          noDetail: true,
+          Component: hudMenus.AdminShip,
+          isVisible: (focus === 'ship' || (focus === 'lot' && lot?.surfaceShip))
+            && ship?.Control?.controller?.id === crew?.id
+        },
+        {
+          key: 'DOCKED_SHIPS',
+          label: 'Docked Ships',
+          icon: <ShipIcon />,
+          Component: hudMenus.DockDetails,
+          noDetail: true,
+          isVisible: focus === 'lot'
+            && lot?.building?.Building?.status === Building.CONSTRUCTION_STATUSES.OPERATIONAL
+            && lot.building.Dock
+        },
+        {
+          key: 'ORBITING_SHIPS',
+          label: 'Orbiting Ships',
+          icon: <ShipIcon />,
+          Component: hudMenus.OrbitDetails,
+          noDetail: true,
+          isVisible: focus === 'asteroid' && scope === 'asteroid'
+        },
+        {
+          key: 'STATIONED_CREW',
+          label: 'Station Manifest',
+          icon: <StationCrewIcon />,
+          Component: hudMenus.StationManifest,
+          isVisible: focus === 'lot' && lot?.building?.Station
+        },
+        {
+          key: 'SHIP_INVENTORY',
+          label: 'Ship Inventory',
+          icon: <InventoryIcon />,
+          Component: hudMenus.Inventory,
+          isVisible: ((focus === 'ship' || (focus === 'lot' && lot?.surfaceShip))
+            && (ship?.Inventories || []).find((i) => i.status === Inventory.STATUSES.AVAILABLE))
+        },
+        {
+          key: 'SHIP_PASSENGERS',
+          label: 'Passenger Manifest',
+          icon: <PassengersIcon />,
+          Component: hudMenus.StationManifest,
+          isVisible: focus === 'ship' || (focus === 'lot' && lot?.surfaceShip)
+        },
+        {
+          key: 'RESOURCES',
+          label: 'Resources',
+          icon: <ResourceIcon />,
+          Component: hudMenus.Resources,
+          noDetail: true,
+          isVisible: scope === 'asteroid' || scope === 'lot'
+        },
+        {
+          key: 'LOT_INVENTORY',
+          label: 'Lot Inventory',
+          icon: <InventoryIcon />,
+          Component: hudMenus.Inventory,
+          isVisible: focus === 'lot'
+            && (lot?.building?.Inventories || []).find((i) => i.status === Inventory.STATUSES.AVAILABLE)
+        },
+        {
+          key: 'ASTEROID_MAP_SEARCH',
+          label: 'Filter Lots',
+          icon: <LotSearchIcon />,
+          badge: lotFilterTally,
+          Component: hudMenus.SearchMap,
+          noDetail: true,
+          componentProps: { assetType: 'lotsMapped' },
+          detailType: 'list',
+          onDetailClick: () => {
+            history.push(`/listview/lots`);
+          },
+          isVisible: scope === 'asteroid'
+        },
+        {
+          key: 'ASTEROID_CHAT',
+          label: 'Asteroid Chat',
+          icon: <ChatIcon />,
+          badge: unreadChatTally,
+          Component: hudMenus.AsteroidChat,
+          noDetail: true,
+          isVisible: scope === 'asteroid' || scope === 'lot'
+        },
+
+        {
+          key: 'BELT_MAP_SEARCH',
+          label: 'Filter Asteroids',
+          icon: <AsteroidSearchIcon />,
+          badge: asteroidFilterTally,
+          Component: hudMenus.SearchMap,
+          componentProps: { assetType: 'asteroidsMapped' },
+          detailType: 'list',
+          onDetailClick: () => {
+            history.push(`/listview/asteroids`);
+          },
+          isVisible: scope === 'belt'
+        },
+        {
+          key: 'BELT_FAVORITES',
+          label: 'Favorites',
+          icon: <FavoriteIcon />,
+          Component: hudMenus.Favorites,
+          noDetail: true,
+          requireLogin: true,
+          isVisible: scope === 'belt'
+        },
+        {
+          key: 'BELT_PLAN_FLIGHT',
+          label: 'Plan Flight',
+          icon: <SimulateRouteIcon />,
+          Component: hudMenus.RoutePlanner,
+          noDetail: true,
+          isVisible: scope === 'belt' && destination
+        },
+      );
+
+      pageButtons.push(
+        {
+          key: 'MARKETPLACE_LISTINGS',
+          label: 'Marketplace Products',
+          icon: <MarketplaceBuildingIcon />,
+          onOpen: () => {
+            history.push(`/marketplace/${asteroidId}/${Lot.toIndex(lotId)}`);
+          },
+          isVisible: focus === 'lot'
+            && lot?.building?.Building?.status === Building.CONSTRUCTION_STATUSES.OPERATIONAL
+            && lot.building.Building.buildingType === Building.IDS.MARKETPLACE
+        },
+        {
+          key: 'ASTEROID_DETAILS',
+          label: 'Asteroid Details',
+          icon: <CompositionIcon />,
+          onOpen: () => {
+            history.push(`/asteroids/${asteroidId}`);
+          },
+          isVisible: focus === 'asteroid' || scope === 'asteroid'
+        },
+        {
+          key: 'ASTEROID_MARKETS',
+          label: 'Asteroid Markets',
+          icon: <MarketsIcon />,
+          onOpen: () => {
+            // if (hasSomeMarketplacePermission) {
+              history.push(`/marketplace/${asteroidId}/all`);
+            // } else {
+            //   createAlert({
+            //     type: 'GenericAlert',
+            //     level: 'warning',
+            //     data: { content: 'Asteroid does not yet have any marketplaces accessible to your crew.' },
+            //     duration: 3000
+            //   });
+            // }
+          },
+          isVisible: (focus === 'asteroid' || scope === 'asteroid') && marketplaces?.length > 0
+        },
+        {
+          key: 'ASTEROID_ADVANCED_SEARCH',
+          label: 'Advanced Search',
+          icon: <SearchIcon />,
+          onOpen: () => {
+            history.push(`/listview`);  // TODO: should probably also go to /listview/lots
+          },
+          isVisible: ['asteroid', 'lot'].includes(scope)
+        },
+
+        {
+          key: 'BELT_ADVANCED_SEARCH',
+          label: 'Advanced Search',
+          icon: <SearchIcon />,
+          onOpen: () => {
+            history.push(`/listview/asteroids`);
+          },
+          isVisible: scope === 'belt'
+        }
+      );
+
+      if (process.env.REACT_APP_ENABLE_DEV_TOOLS && showDevTools) {
+        menuButtons.push({
+          key: 'DEV_TOOLS',
+          label: 'Dev Tools',
+          icon: <WrenchIcon />,
+          noDetail: true,
+          Component: hudMenus.DevTools,
+          hideInsteadOfClose: true,
+          isVisible: true
+        });
+      }
     }
 
     menuButtons.push(
       {
-        key: 'SHIP_INFORMATION',
-        label: 'Ship Info',
-        icon: <InfoIcon />,
-        Component: hudMenus.ShipInfo,
-        isVisible: focus === 'ship'
-      },
-      {
-        key: 'LOT_INFORMATION',
-        label: 'Lot Info',
-        icon: <InfoIcon />,
-        Component: hudMenus.LotInfo,
-        isVisible: focus === 'lot'
-      },
-      {
-        key: 'ASTEROID_INFO',
-        label: 'Asteroid Info',
-        icon: <InfoIcon />,
-        Component: hudMenus.AsteroidInfo,
-        // detailType: 'detail',
-        // onDetailClick: () => {
-        //   if (asteroidId) {
-        //     history.push(`/asteroids/${asteroidId}`);
-        //   }
-        // }
-        isVisible: focus === 'asteroid'
-      },
-      {
-        key: 'BUILDING_ADMIN',
-        label: 'Building Management',
-        icon: <KeysIcon />,
+        key: 'MY_CREWS',
+        label: 'My Crews',
+        icon: <CrewIcon />,
+        Component: hudMenus.MyCrews,
+        useAltColor: true,
         noDetail: true,
-        Component: hudMenus.AdminBuilding,
-        isVisible: focus === 'lot'
-          && lot?.building?.Building?.status === Building.CONSTRUCTION_STATUSES.OPERATIONAL
-          && lot?.building?.Control?.controller?.id === crew?.id
+        isUniversal: true,
+        isVisible: true,
+        requireLogin: true,
       },
       {
-        key: 'ASTEROID_ADMIN',
-        label: 'Asteroid Management',
-        icon: <KeysIcon />,
-        noDetail: true,
-        Component: hudMenus.AdminAsteroid,
-        isVisible: focus === 'asteroid'
-          && asteroid?.Control?.controller?.id === crew?.id
-      },
-      {
-        key: 'SHIP_ADMIN',
-        label: 'Ship Management',
-        icon: <KeysIcon />,
-        noDetail: true,
-        Component: hudMenus.AdminShip,
-        isVisible: (focus === 'ship' || (focus === 'lot' && lot?.surfaceShip))
-          && ship?.Control?.controller?.id === crew?.id
-      },
-      {
-        key: 'DOCKED_SHIPS',
-        label: 'Docked Ships',
-        icon: <ShipIcon />,
-        Component: hudMenus.DockDetails,
-        noDetail: true,
-        isVisible: focus === 'lot'
-          && lot?.building?.Building?.status === Building.CONSTRUCTION_STATUSES.OPERATIONAL
-          && lot.building.Dock
-      },
-      {
-        key: 'ORBITING_SHIPS',
-        label: 'Orbiting Ships',
-        icon: <ShipIcon />,
-        Component: hudMenus.OrbitDetails,
-        noDetail: true,
-        isVisible: focus === 'asteroid' && scope === 'asteroid'
-      },
-      {
-        key: 'STATIONED_CREW',
-        label: 'Station Manifest',
-        icon: <StationCrewIcon />,
-        Component: hudMenus.StationManifest,
-        isVisible: focus === 'lot' && lot?.building?.Station
-      },
-      {
-        key: 'SHIP_INVENTORY',
-        label: 'Ship Inventory',
-        icon: <InventoryIcon />,
-        Component: hudMenus.Inventory,
-        isVisible: ((focus === 'ship' || (focus === 'lot' && lot?.surfaceShip))
-          && (ship?.Inventories || []).find((i) => i.status === Inventory.STATUSES.AVAILABLE))
-      },
-      {
-        key: 'SHIP_PASSENGERS',
-        label: 'Passenger Manifest',
-        icon: <PassengersIcon />,
-        Component: hudMenus.StationManifest,
-        isVisible: focus === 'ship' || (focus === 'lot' && lot?.surfaceShip)
-      },
-      {
-        key: 'RESOURCES',
-        label: 'Resources',
-        icon: <ResourceIcon />,
-        Component: hudMenus.Resources,
-        noDetail: true,
-        isVisible: scope === 'asteroid' || scope === 'lot'
-      },
-      {
-        key: 'LOT_INVENTORY',
-        label: 'Lot Inventory',
-        icon: <InventoryIcon />,
-        Component: hudMenus.Inventory,
-        isVisible: focus === 'lot'
-          && (lot?.building?.Inventories || []).find((i) => i.status === Inventory.STATUSES.AVAILABLE)
-      },
-      {
-        key: 'ASTEROID_MAP_SEARCH',
-        label: 'Lot Search',
-        icon: <LotSearchIcon />,
-        highlightIcon: lotFilterTally > 0,
-        badge: lotFilterTally,
-        Component: hudMenus.SearchMap,
-        noDetail: true,
-        componentProps: { assetType: 'lotsMapped' },
-        detailType: 'list',
-        onDetailClick: () => {
-          history.push(`/listview/lots`);
-        },
-        isVisible: scope === 'asteroid'
-      },
-      {
-        key: 'ASTEROID_CHAT',
-        label: 'Asteroid Chat',
-        icon: <ChatIcon />,
-        badge: unreadChatTally,
-        Component: hudMenus.AsteroidChat,
-        noDetail: true,
-        isVisible: scope === 'asteroid' || scope === 'lot'
-      },
-      {
-        key: 'ASTEROID_ASSETS',
+        key: 'MY_ASSETS',
         label: 'My Assets',
-        highlightIcon: true,
         icon: <MyAssetsIcon />,
-        Component: hudMenus.AsteroidAssets,
+        Component: hudMenus.MyAssets,
+        useAltColor: true,
         noDetail: true,
+        isUniversal: true,
+        isVisible: true,
         requireLogin: true,
-        isVisible: scope === 'asteroid'
-      },
-
-      {
-        key: 'BELT_MAP_SEARCH',
-        label: 'System Search',
-        icon: <AsteroidSearchIcon />,
-        badge: asteroidFilterTally,
-        highlightIcon: asteroidFilterTally > 0,
-        Component: hudMenus.SearchMap,
-        componentProps: { assetType: 'asteroidsMapped' },
-        detailType: 'list',
-        onDetailClick: () => {
-          history.push(`/listview/asteroids`);
-        },
-        isVisible: scope === 'belt'
-      },
-      {
-        key: 'BELT_FAVORITES',
-        label: 'Favorites',
-        icon: <FavoriteIcon />,
-        Component: hudMenus.Favorites,
-        noDetail: true,
-        requireLogin: true,
-        isVisible: scope === 'belt'
-      },
-      {
-        key: 'BELT_PLAN_FLIGHT',
-        label: 'Plan Flight',
-        icon: <SimulateRouteIcon />,
-        Component: hudMenus.RoutePlanner,
-        noDetail: true,
-        isVisible: scope === 'belt' && destination
-      },
-      {
-        key: 'BELT_ASSETS',
-        label: 'My Assets',
-        highlightIcon: true,
-        icon: <MyAssetsIcon />,
-        Component: hudMenus.AllAssets,
-        noDetail: true,
-        requireLogin: true,
-        isVisible: scope === 'belt'
-      },
-    );
-
-    pageButtons.push(
-      {
-        key: 'MARKETPLACE_LISTINGS',
-        label: 'Marketplace Products',
-        icon: <MarketplaceBuildingIcon />,
-        onOpen: () => {
-          history.push(`/marketplace/${asteroidId}/${Lot.toIndex(lotId)}`);
-        },
-        isVisible: focus === 'lot'
-          && lot?.building?.Building?.status === Building.CONSTRUCTION_STATUSES.OPERATIONAL
-          && lot.building.Building.buildingType === Building.IDS.MARKETPLACE
-      },
-      {
-        key: 'ASTEROID_DETAILS',
-        label: 'Asteroid Details',
-        icon: <CompositionIcon />,
-        onOpen: () => {
-          history.push(`/asteroids/${asteroidId}`);
-        },
-        isVisible: focus === 'asteroid' || scope === 'asteroid'
-      },
-      {
-        key: 'ASTEROID_MARKETS',
-        label: 'Asteroid Markets',
-        icon: <MarketsIcon />,
-        onOpen: () => {
-          // if (hasSomeMarketplacePermission) {
-            history.push(`/marketplace/${asteroidId}/all`);
-          // } else {
-          //   createAlert({
-          //     type: 'GenericAlert',
-          //     level: 'warning',
-          //     data: { content: 'Asteroid does not yet have any marketplaces accessible to your crew.' },
-          //     duration: 3000
-          //   });
-          // }
-        },
-        isVisible: (focus === 'asteroid' || scope === 'asteroid') && marketplaces?.length > 0
-      },
-      {
-        key: 'ASTEROID_ADVANCED_SEARCH',
-        label: 'Advanced Search',
-        icon: <ListViewIcon />,
-        onOpen: () => {
-          history.push(`/listview`);  // TODO: should probably also go to /listview/lots
-        },
-        isVisible: ['asteroid', 'lot'].includes(scope)
-      },
-
-      {
-        key: 'BELT_ADVANCED_SEARCH',
-        label: 'Advanced Search',
-        icon: <ListViewIcon />,
-        onOpen: () => {
-          history.push(`/listview/asteroids`);
-        },
-        isVisible: scope === 'belt'
       }
     );
-
-    if (process.env.REACT_APP_ENABLE_DEV_TOOLS && showDevTools) {
-      menuButtons.push({
-        key: 'DEV_TOOLS',
-        label: 'Dev Tools',
-        icon: <WrenchIcon />,
-        noDetail: true,
-        Component: hudMenus.DevTools,
-        hideInsteadOfClose: true,
-        isVisible: true
-      });
-    }
 
     return [menuButtons, pageButtons];
   }, [
@@ -617,20 +623,23 @@ const HudMenu = ({ forceOpenMenu }) => {
     asteroidId,
     crew?.id,
     destination,
+    launcherPage,
     lot,
     lotFilterTally,
     lotId,
     showDevTools,
     unreadChatTally,
     zoomStatus,
-    zoomScene]);
+    zoomScene
+  ]);
 
   const { label, onDetailClick, detailType, Component, componentProps, hideInsteadOfClose, noClose, noDetail } = useMemo(() => {
     return menuButtons.find((b) => b.key === openHudMenu) || {};
   }, [menuButtons, openHudMenu]);
 
-  const [visibleMenuButtons, visiblePageButtons] = useMemo(() => ([
-    menuButtons.filter((b) => b.isVisible && (!b.requireLogin || authenticated)),
+  const [visibleMenuButtons, visibleUniversalButtons, visiblePageButtons] = useMemo(() => ([
+    menuButtons.filter((b) => b.isVisible && !b.isUniversal && (!b.requireLogin || authenticated)),
+    menuButtons.filter((b) => b.isVisible && b.isUniversal && (!b.requireLogin || authenticated)),
     pageButtons.filter((b) => b.isVisible && (!b.requireLogin || authenticated)),
   ]), [authenticated, menuButtons]);
 
@@ -646,49 +655,64 @@ const HudMenu = ({ forceOpenMenu }) => {
 
   return (
     <Wrapper>
-      {!forceOpenMenu && (
-        <>
-          <Tooltip id="hudMenuTooltip" />
-          {/* NOTE: the hudMenu id is in use by third-party extensions */}
-          <Buttons id="hudMenu" open={open}>
-            {visibleMenuButtons.length > 0 && (
-              <ButtonSection>
-                {visibleMenuButtons.map(({ key, badge, label, highlightIcon, icon, onOpen, hideInsteadOfClose }) => (
-                  <Button
-                    key={key}
-                    style={highlightIcon ? { color: theme.colors.main } : {}}
-                    badge={badge}
-                    onClick={() => handleButtonClick(key, onOpen, hideInsteadOfClose)}
-                    selected={key === openHudMenu}
-                    data-tooltip-id="hudMenuTooltip"
-                    data-tooltip-place="left"
-                    data-tooltip-content={label}>
-                    {icon}
-                  </Button>
-                ))}
-              </ButtonSection>
-            )}
-            {visiblePageButtons.length > 0 && (
-              <ButtonSection showSeparator={menuButtons.length > 0}>
-                {visiblePageButtons.map(({ key, label, highlightIcon, icon, onOpen, hideInsteadOfClose }) => (
-                  <PageButton
-                    key={key}
-                    style={highlightIcon ? { color: theme.colors.main } : {}}
-                    onClick={() => handleButtonClick(key, onOpen, hideInsteadOfClose)}
-                    selected={key === openHudMenu}
-                    data-tooltip-id="hudMenuTooltip"
-                    data-tooltip-place="left"
-                    data-tooltip-content={label}>
-                    {icon}
-                  </PageButton>
-                ))}
-              </ButtonSection>
-            )}
-          </Buttons>
-        </>
-      )}
+      <Tooltip id="hudMenuTooltip" />
+      
       {/* NOTE: the hudMenu id is in use by third-party extensions */}
-      <Panel id="hudMenuPanel" open={open && !hidden} forcedOpen={reactBool(forceOpenMenu)}>
+      <Buttons id="hudMenu" open={open}>
+        {visibleMenuButtons.length > 0 && (
+          <ButtonSection>
+            {visibleMenuButtons.map(({ key, badge, label, useAltColor, icon, onOpen, hideInsteadOfClose }) => (
+              <Button
+                key={key}
+                iconColor={useAltColor}
+                badge={badge}
+                onClick={() => handleButtonClick(key, onOpen, hideInsteadOfClose)}
+                selected={key === openHudMenu}
+                data-tooltip-id="hudMenuTooltip"
+                data-tooltip-place="left"
+                data-tooltip-content={label}>
+                {icon}
+              </Button>
+            ))}
+          </ButtonSection>
+        )}
+        {visibleUniversalButtons.length > 0 && (
+          <ButtonSection showSeparator={visibleMenuButtons.length > 0}>
+            {visibleUniversalButtons.map(({ key, badge, label, useAltColor, icon, onOpen, hideInsteadOfClose }) => (
+              <Button
+                key={key}
+                iconColor={useAltColor}
+                badge={badge}
+                onClick={() => handleButtonClick(key, onOpen, hideInsteadOfClose)}
+                selected={key === openHudMenu}
+                data-tooltip-id="hudMenuTooltip"
+                data-tooltip-place="left"
+                data-tooltip-content={label}>
+                {icon}
+              </Button>
+            ))}
+          </ButtonSection>
+        )}
+        {visiblePageButtons.length > 0 && (
+          <ButtonSection showSeparator={(visibleMenuButtons.length || visibleUniversalButtons.length) > 0}>
+            {visiblePageButtons.map(({ key, label, useAltColor, icon, onOpen, hideInsteadOfClose }) => (
+              <PageButton
+                key={key}
+                iconColor={useAltColor}
+                onClick={() => handleButtonClick(key, onOpen, hideInsteadOfClose)}
+                selected={key === openHudMenu}
+                data-tooltip-id="hudMenuTooltip"
+                data-tooltip-place="left"
+                data-tooltip-content={label}>
+                {icon}
+              </PageButton>
+            ))}
+          </ButtonSection>
+        )}
+      </Buttons>
+
+      {/* NOTE: the hudMenu id is in use by third-party extensions */}
+      <Panel id="hudMenuPanel" open={open && !hidden}>
         <PanelInner>
           <PanelTitle>
             <span style={{ flex: 1 }}>{label}</span>
