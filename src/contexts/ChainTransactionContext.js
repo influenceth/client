@@ -534,8 +534,13 @@ export function ChainTransactionProvider({ children }) {
   } = useSession();
   const activities = useActivitiesContext();
   const { crew, pendingTransactions } = useCrewContext();
-  const { data: wallet } = useWalletBalances();
+  const { data: walletSource } = useWalletBalances();
   const { data: usdcPerEth } = useUsdcPerEth();
+
+  // using a ref since execute is often called from a callback from funding (and
+  // it may not reliably get re-memoized with updated wallet values within callback)
+  const walletRef = useRef();
+  walletRef.current = walletSource;
 
   const createAlert = useStore(s => s.dispatchAlertLogged);
   const dispatchFailedTransaction = useStore(s => s.dispatchFailedTransaction);
@@ -774,11 +779,13 @@ export function ChainTransactionProvider({ children }) {
                 process.env.REACT_APP_STARKNET_DISPATCHER
               ));
 
+              const wallet = walletRef.current;
               if (!wallet) throw new Error('Wallet balance not loaded');
               const totalWalletValueInToken = wallet.combinedBalance?.to(totalPriceToken);
 
               // if don't have enough USDC + ETH to cover it, throw funds error
               if (totalPrice > BigInt(totalWalletValueInToken)) {
+                console.log('EXECUTE', wallet, wallet.combinedBalance, wallet.combinedBalance, wallet.combinedBalance?.to(totalPriceToken));
                 const fundsError = new Error('Insufficient wallet balance.');
                 fundsError.additionalFundsRequired = parseInt(totalPrice - BigInt(totalWalletValueInToken));
                 fundsError.additionalFundsToken = totalPriceToken;
@@ -865,7 +872,7 @@ export function ChainTransactionProvider({ children }) {
       }, {});
     }
     return null;
-  }, [createAlert, prependEventAutoresolve, accountAddress, simulateAndExecuteCalls, starknetSession, usdcPerEth, wallet]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [createAlert, prependEventAutoresolve, accountAddress, simulateAndExecuteCalls, starknetSession, usdcPerEth]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const getTxEvent = useCallback((txHash) => {
     const txHashBInt = BigInt(txHash);
