@@ -4,8 +4,8 @@ import styled, { css, keyframes } from 'styled-components';
 import { CollapsedIcon } from '~/components/Icons';
 
 const toggleWidth = 32;
-const titleHeight = 48;
-const marginBottom = 12;
+const titleHeight = 36;
+const marginBottom = 4;
 
 const Uncollapsible = styled.div`
   align-items: center;
@@ -58,7 +58,6 @@ const expandedAnim = keyframes`
 `;
 
 const Collapsible = styled.div`
-  border-bottom: 1px solid transparent;
   margin-left: ${toggleWidth}px;
   margin-bottom: ${marginBottom}px;
   overflow: hidden;
