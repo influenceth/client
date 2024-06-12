@@ -122,70 +122,6 @@ const AddFundsButton = styled(Button)`
   }
 `;
 
-const EthFaucetButton = () => {
-  const queryClient = useQueryClient();
-  const { data: faucetInfo, isLoading: faucetInfoLoading } = useFaucetInfo();
-  const { starknet } = useSession();
-
-  const createAlert = useStore(s => s.dispatchAlertLogged);
-
-  const [requestingEth, setRequestingEth] = useState();
-
-  const ethEnabled = useMemo(() => {
-    if (!faucetInfo) return false;
-    const lastClaimed = faucetInfo.ETH.lastClaimed || 0;
-    return Date.now() > (Date.parse(lastClaimed) + 23.5 * 3600e3);
-  }, [faucetInfo]);
-
-  const requestEth = useCallback(async () => {
-    setRequestingEth(true);
-
-    try {
-      const txHash = await api.requestTokens('ETH');
-      await starknet.account.waitForTransaction(txHash);
-
-      setRequestingEth(false);
-
-      createAlert({
-        type: 'WalletAlert',
-        data: { content: 'Added 0.015 ETH to your account.' },
-        duration: 5000
-      });
-    } catch (e) {
-      console.error(e);
-      setRequestingEth(false);
-      createAlert({
-        type: 'GenericAlert',
-        data: { content: 'Faucet request failed, please try again later.' },
-        level: 'warning',
-        duration: 5000
-      });
-    }
-
-    queryClient.invalidateQueries({ queryKey: 'faucetInfo', refetchType: 'none' });
-    queryClient.refetchQueries({ queryKey: 'faucetInfo', type: 'active' });
-    queryClient.invalidateQueries({ queryKey: ['walletBalance', 'eth'] });
-  }, []);
-
-  return (
-    <PurchaseButton
-      color={theme.colors.success}
-      contrastColor={theme.colors.disabledBackground}
-      background={`rgba(${theme.colors.successRGB}, 0.1)`}
-      onClick={requestEth}
-      disabled={nativeBool(!ethEnabled || requestingEth || faucetInfoLoading)}
-      loading={reactBool(requestingEth || faucetInfoLoading)}
-      style={{ marginBottom: -10 }}>
-      <PurchaseButtonInner style={{ lineHeight: '25px' }}>
-        <label>ETH Faucet (Daily)</label>
-        <span style={{ marginLeft: 10 }}>
-          +<UserPrice price={0.015 * TOKEN_SCALE[TOKEN.ETH]} priceToken={TOKEN.ETH} format />
-        </span>
-      </PurchaseButtonInner>
-    </PurchaseButton>
-  );
-}
-
 const FundingMenu = () => {
   const priceHelper = usePriceHelper();
   const { data: wallet } = useWalletBalances();
@@ -235,7 +171,6 @@ const FundingMenu = () => {
       <label data-tooltip-id="launcherTooltip" data-tooltip-html={tooltipContent} data-tooltip-place="top">
         {wallet?.combinedBalance?.to(preferredUiCurrency, true)}
       </label>
-        <EthFaucetButton />
         <AddFundsButton onClick={() => setIsFunding(true)}>
           <span>Add Funds</span>
           <ChevronRightIcon />

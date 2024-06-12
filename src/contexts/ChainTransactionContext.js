@@ -778,9 +778,9 @@ export function ChainTransactionProvider({ children }) {
               const totalWalletValueInToken = wallet.combinedBalance?.to(totalPriceToken);
 
               // if don't have enough USDC + ETH to cover it, throw funds error
-              if (totalPrice > totalWalletValueInToken) {
-                const fundsError = new Error();
-                fundsError.additionalFundsRequired = totalPrice - totalWalletValueInToken;
+              if (totalPrice > BigInt(totalWalletValueInToken)) {
+                const fundsError = new Error('Insufficient wallet balance.');
+                fundsError.additionalFundsRequired = parseInt(totalPrice - BigInt(totalWalletValueInToken));
                 fundsError.additionalFundsToken = totalPriceToken;
                 throw fundsError;
 

@@ -14,6 +14,7 @@ import UserPrice from '~/components/UserPrice';
 import { TOKEN, TOKEN_FORMAT, TOKEN_FORMATTER } from '~/lib/priceUtils';
 import usePriceHelper from '~/hooks/usePriceHelper';
 import useStore from '~/hooks/useStore';
+import EthFaucetButton from './EthFaucetButton';
 
 const layerSwapChains = {
   '0x534e5f4d41494e': { ethereum: 'ETHEREUM_MAINNET', starknet: 'STARKNET_MAINNET' },
@@ -46,7 +47,7 @@ const FundingButtons = styled.div`
   padding: 0px 0 20px;
   width: 100%;
   & button {
-    margin-bottom: 15px;
+    margin-bottom: 10px;
     padding: 15px 10px;
     text-transform: none;
     width: 100%;
@@ -286,6 +287,7 @@ export const FundingFlow = ({ totalPrice, onClose, onFunded }) => {
         // if there are now sufficient funds (or there was no target price), call onFunded && onClose
         // else (there is an unmet totalPrice), keep flow open (but will be back at beginning)
         if (!totalPrice || wallet.combinedBalance.usdcValue > totalPrice.usdcValue) {
+          // console.log('FUNDING FLOW', { wallet, combinedBalance: wallet?.combinedBalance })
           if (onFunded) onFunded();
           if (onClose) onClose();
         }
@@ -380,6 +382,16 @@ export const FundingFlow = ({ totalPrice, onClose, onFunded }) => {
     setWaiting(true);
   }, []);
 
+  const onFaucetError = useCallback(() => {
+    createAlert({
+      type: 'GenericAlert',
+      data: { content: 'Faucet request failed, please try again later.' },
+      level: 'warning',
+      duration: 5000
+    });
+    onClose();
+  }, [onClose]);
+
   return createPortal(
     (
       <Details
@@ -410,6 +422,20 @@ export const FundingFlow = ({ totalPrice, onClose, onFunded }) => {
 
             {walletId === 'argentWebWallet' && (
               <FundingButtons>
+
+                {process.env.REACT_APP_CHAIN_ID === '0x534e5f5345504f4c4941' && (
+                  <>
+                    <h4>
+                      <span>Request Free ETH</span>
+                    </h4>
+                    <ButtonRow style={{ marginBottom: 10 }}>
+                      <EthFaucetButton
+                        onError={onFaucetError}
+                        onProcessing={(started) => setWaiting(!!started)} />
+                    </ButtonRow>
+                  </>
+                )}
+
                 <h4>
                   <span>Recharge Wallet</span>
                   <label onMouseEnter={onRampHover(true)} onMouseLeave={onRampHover(false)}>Disclaimer</label>
@@ -454,12 +480,18 @@ export const FundingFlow = ({ totalPrice, onClose, onFunded }) => {
 
             {walletId !== 'argentWebWallet' && (
               <FundingButtons>
+                {process.env.REACT_APP_CHAIN_ID === '0x534e5f5345504f4c4941' && (
+                  <EthFaucetButton
+                    onError={onFaucetError}
+                    onProcessing={(started) => setWaiting(!!started)} />
+                )}
+
                 <BrightButton onClick={onClickStarkgate}>
                   <span>Bridge Funds from L1</span>
                   <ChevronRightIcon />
                 </BrightButton>
 
-                <ButtonRow style={{ marginTop: -5 }}>
+                <ButtonRow>
                   <BrightButton subtle onClick={onClickLayerswap}>
                     <span>Swap L2 Funds</span> <ChevronRightIcon />
                   </BrightButton>
