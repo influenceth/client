@@ -1046,7 +1046,8 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
 
     // get random class if one is not yet selected
     if (!c.Crewmate.class) {
-      c.Crewmate.class = Object.values(Crewmate.CLASS_IDS)[Math.floor(Math.random() * Object.values(Crewmate.CLASS_IDS).length)];
+      const validClassIds = Object.values(Crewmate.CLASS_IDS).filter((id) => id > 0);
+      c.Crewmate.class = validClassIds[Math.floor(Math.random() * validClassIds.length)];
       setSelectedClass(c.Crewmate.class);
     }
 
