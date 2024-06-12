@@ -1,10 +1,15 @@
+import { SurfaceTransferIcon } from '~/components/Icons';
+import ResourceRequirement from '~/components/ResourceRequirement';
+import { getBuildingRequirements } from '../actionDialogs/components';
+import useDeliveryManager from '~/hooks/actionManagers/useDeliveryManager';
+
 import { useCallback, useMemo } from 'react';
 import styled from 'styled-components';
-import { Building, Ship } from '@influenceth/sdk';
+import { Building, Ship, Product } from '@influenceth/sdk';
 import moment from 'moment';
 
 import useStore from '~/hooks/useStore';
-import { MagnifyingIcon } from '~/components/Icons';
+import { MagnifyingIcon, TransferToSiteIcon } from '~/components/Icons';
 import useLot from '~/hooks/useLot';
 import Button from '~/components/ButtonAlt';
 import { reactBool, reactPreline } from '~/lib/utils';
@@ -24,6 +29,67 @@ const Description = styled.div`
   overflow: hidden auto;
   word-break: break-word;
 `;
+
+const Requirements = styled.div`
+  label {
+    color: ${p => p.theme.colors.secondaryText};
+    display: block;
+    font-size: 14px;
+    margin-bottom: 8px;
+  }
+`;
+
+const ItemsList = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  & > div {
+    flex-shrink: 0;
+    margin-right: 6px;
+    margin-bottom: 4px;
+    &:last-child {
+      margin-right: 0;
+    }
+  }
+`;
+
+const ConstructionMaterialsGrid = ({ buildingType, planningLot }) => {
+  const buildingRequirements = useMemo(() => getBuildingRequirements({ Building: { buildingType } }), [buildingType]);
+  const { currentDeliveryActions } = useDeliveryManager({ destination: planningLot?.building });
+
+  const items = useMemo(() => {
+    const requirements = buildingRequirements
+    return requirements.map((item) => ({
+      i: Number(item.i), 
+      numerator: item.inInventory + item.inTransit,
+      denominator: item.totalRequired,
+      customIcon: item.inTransit > 0
+        ? {
+          animated: true,
+          icon: <SurfaceTransferIcon />
+        }
+        : undefined
+    }));
+  }, [planningLot, currentDeliveryActions]);
+
+  return (
+    <>
+      <Requirements>
+        <label>Required Materials</label>
+        <ItemsList>
+          {items.map((item) => (
+            <ResourceRequirement
+              key={item.i}
+              noStyles={!planningLot}
+              item={item}
+              resource={Product.TYPES[item.i]}
+              size="85px"
+              tooltipContainer="hudMenuTooltip" />
+          ))}
+        </ItemsList>
+      </Requirements>
+    </>
+  );
+};
 
 const LotInfo = () => {
   const lotId = useStore(s => s.asteroids.lot);
@@ -63,7 +129,7 @@ const LotInfo = () => {
 
         {lot?.building && (
           <>
-            <HudMenuCollapsibleSection titleText="Type Description" collapsed={!!description}>
+            <HudMenuCollapsibleSection titleText="Description" collapsed={!!description}>
               <Description>
                 {lot.building.Building?.status === Building.CONSTRUCTION_STATUSES.OPERATIONAL
                   ? Building.TYPES[lot.building.Building.buildingType].description
@@ -74,6 +140,15 @@ const LotInfo = () => {
                     become public.
                   `}
               </Description>
+            </HudMenuCollapsibleSection>
+
+            <HudMenuCollapsibleSection
+              titleText="Construction"
+              collapsed={lot.building.Building.status === Building.CONSTRUCTION_STATUSES.OPERATIONAL}
+              borderless>
+              <ConstructionMaterialsGrid
+                buildingType={lot.building.Building.buildingType}
+                planningLot={lot.building.Building.status === Building.CONSTRUCTION_STATUSES.PLANNED ? lot : null} />
             </HudMenuCollapsibleSection>
 
             <HudMenuCollapsibleSection titleText={`${siteOrBuilding} Permissions`} collapsed>
