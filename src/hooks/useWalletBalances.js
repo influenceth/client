@@ -6,7 +6,7 @@ import { useEthBalance, useUSDCBalance } from '~/hooks/useWalletTokenBalance';
 import { TOKEN, TOKEN_SCALE } from '~/lib/priceUtils';
 import usePriceConstants from './usePriceConstants';
 
-const GAS_BUFFER_VALUE_USDC = 2 * TOKEN_SCALE[TOKEN.USDC];
+export const GAS_BUFFER_VALUE_USDC = 2 * TOKEN_SCALE[TOKEN.USDC];
 
 const useWalletBalances = (overrideAccount) => {
   const autoswap = useStore(s => s.gameplay.autoswap);

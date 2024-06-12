@@ -1,7 +1,7 @@
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useQueryClient } from 'react-query';
 import styled from 'styled-components';
-import { fetchBuildExecuteTransaction } from '@avnu/avnu-sdk';
+import { Crewmate } from '@influenceth/sdk';
 
 import AsteroidsHeroImage from '~/assets/images/sales/asteroids_hero.png';
 import CrewmatesHeroImage from '~/assets/images/sales/crewmates_hero.png';
@@ -20,7 +20,7 @@ import { cleanseTxHash, formatTimer, nativeBool, reactBool, roundToPlaces } from
 import NavIcon from '~/components/NavIcon';
 import theme from '~/theme';
 import Button from '~/components/ButtonAlt';
-import useWalletBalances from '~/hooks/useWalletBalances';
+import useWalletBalances, { GAS_BUFFER_VALUE_USDC } from '~/hooks/useWalletBalances';
 import useCrewManager from '~/hooks/actionManagers/useCrewManager';
 import usePriceConstants from '~/hooks/usePriceConstants';
 import { TOKEN, TOKEN_FORMAT, TOKEN_SCALE } from '~/lib/priceUtils';
@@ -31,8 +31,9 @@ import FundingFlow from './FundingFlow';
 import api from '~/lib/api';
 import useSession from '~/hooks/useSession';
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
-
-const avnuOptions = { baseUrl: process.env.REACT_APP_AVNU_API_URL };
+import useSwapHelper from '~/hooks/useSwapHelper';
+import { useEthBalance } from '~/hooks/useWalletTokenBalance';
+import useCrewContext from '~/hooks/useCrewContext';
 
 const Flourish = styled.div`
   background: url(${p => p.src});
@@ -331,11 +332,15 @@ const AsteroidSKU = () => {
   );
 };
 
-const CrewmateSKU = ({ onUpdatePurchase }) => {
+const CrewmateSKU = ({ onUpdatePurchase, onPurchasing }) => {
   const { purchaseCredits, getPendingCreditPurchase } = useCrewManager();
   const { data: priceConstants } = usePriceConstants();
   const priceHelper = usePriceHelper();
   const [quantity, setQuantity] = useState(1);
+
+  useEffect(() => {
+    onPurchasing(getPendingCreditPurchase())
+  }, [getPendingCreditPurchase, onPurchasing]);
 
   useEffect(() => {
     const totalPrice = priceHelper.from(
@@ -410,18 +415,22 @@ const StarterPackSKU = () => {
     const basicPrice = priceHelper.from(basicPackPriceUSD * TOKEN_SCALE[TOKEN.USDC], TOKEN.USDC);
     const basicCrewmates = 1;
     const basicCrewmatesValue = priceHelper.from(basicCrewmates * adalianPrice.usdcValue, TOKEN.USDC);
-    const basicSwayValue = priceHelper.from(basicPrice.usdcValue - basicCrewmatesValue.usdcValue, TOKEN.USDC);
+    const basicEthValue = priceHelper.from(GAS_BUFFER_VALUE_USDC, TOKEN.USDC);
+    const basicSwayValue = priceHelper.from(basicPrice.usdcValue - basicCrewmatesValue.usdcValue - basicEthValue.usdcValue, TOKEN.USDC);
 
     const advPrice = priceHelper.from(advPackPriceUSD * TOKEN_SCALE[TOKEN.USDC], TOKEN.USDC);
     const advCrewmates = 5;
-    const advCrewmatesValue = priceHelper.from(advCrewmates * adalianPrice.usdcValue, TOKEN.USDC)
-    const advSwayValue = priceHelper.from(advPrice.usdcValue - advCrewmatesValue.usdcValue, TOKEN.USDC);
+    const advCrewmatesValue = priceHelper.from(advCrewmates * adalianPrice.usdcValue, TOKEN.USDC);
+    const advEthValue = basicEthValue;
+    const advSwayValue = priceHelper.from(advPrice.usdcValue - advCrewmatesValue.usdcValue - advEthValue.usdcValue, TOKEN.USDC);
 
     return {
       basic: {
         price: basicPrice,
         crewmates: basicCrewmates,
         crewmatesValue: basicCrewmatesValue,
+        ethFormatted: basicEthValue.to(TOKEN.ETH, TOKEN_FORMAT.VERBOSE),
+        ethValue: basicEthValue,
         swayFormatted: basicSwayValue.to(TOKEN.SWAY, TOKEN_FORMAT.VERBOSE),
         swayValue: basicSwayValue
       },
@@ -429,6 +438,8 @@ const StarterPackSKU = () => {
         price: basicPrice,
         crewmates: advCrewmates,
         crewmatesValue: advCrewmatesValue,
+        ethFormatted: advEthValue.to(TOKEN.ETH, TOKEN_FORMAT.VERBOSE),
+        ethValue: advEthValue,
         swayFormatted: advSwayValue.to(TOKEN.SWAY, TOKEN_FORMAT.VERBOSE),
         swayValue: advSwayValue
       }
@@ -446,7 +457,7 @@ const StarterPackSKU = () => {
         </p>
       </Description>
 
-      <div style={{ display: 'flex', flex: `0 0 ${2 * purchaseFormWidth + purchaseFormMargin}px`, height: 317, marginTop: -125 }}>
+      <div style={{ display: 'flex', flex: `0 0 ${2 * purchaseFormWidth + purchaseFormMargin}px`, height: 352, marginTop: -160 }}>
         <PurchaseForm style={{ marginRight: purchaseFormMargin, height: '100%' }}>
           <h3>Basic Starter Pack</h3>
           <PackWrapper>
@@ -468,6 +479,17 @@ const StarterPackSKU = () => {
                 <span>
                   <UserPrice
                     price={packs.basic.swayValue.usdcValue}
+                    priceToken={TOKEN.USDC}
+                    format={TOKEN_FORMAT.SHORT} />
+                  {' '}Value
+                </span>
+              </div>
+              <div>
+                <span><NavIcon color={theme.colors.main} /></span>
+                <label>{packs.basic.ethFormatted}</label>
+                <span>
+                  <UserPrice
+                    price={packs.basic.ethValue.usdcValue}
                     priceToken={TOKEN.USDC}
                     format={TOKEN_FORMAT.SHORT} />
                   {' '}Value
@@ -517,6 +539,17 @@ const StarterPackSKU = () => {
                   {' '}Value
                 </span>
               </div>
+              <div>
+                <span><NavIcon color={theme.colors.main} /></span>
+                <label>{packs.adv.ethFormatted}</label>
+                <span>
+                  <UserPrice
+                    price={packs.adv.ethValue.usdcValue}
+                    priceToken={TOKEN.USDC}
+                    format={TOKEN_FORMAT.SHORT} />
+                  {' '}Value
+                </span>
+              </div>
             </PackContents>
             <PackChecks>
               <div>
@@ -540,9 +573,10 @@ const StarterPackSKU = () => {
 };
 
 // TODO: wrap in launch feature flag
-const SwaySKU = ({ onUpdatePurchase }) => {
+const SwaySKU = ({ onUpdatePurchase, onPurchasing }) => {
   const { executeCalls } = useContext(ChainTransactionContext);
   const priceHelper = usePriceHelper();
+  const { buildMultiswapFromSellAmount } = useSwapHelper();
   const queryClient = useQueryClient();
   const { accountAddress, starknet } = useSession();
   const { data: wallet } = useWalletBalances();
@@ -588,48 +622,12 @@ const SwaySKU = ({ onUpdatePurchase }) => {
   }, []);
 
   useEffect(() => {
+    const unscaledUSDC = (usdc || 0) * TOKEN_SCALE[TOKEN.USDC];
     onUpdatePurchase({
-      disabled: isProcessing,
-      loading: isProcessing,
-      totalPrice: priceHelper.from((usdc || 0) * TOKEN_SCALE[TOKEN.USDC], TOKEN.USDC),
+      totalPrice: priceHelper.from(unscaledUSDC, TOKEN.USDC),
       onPurchase: async () => {
-        const swappableTokens = Object.keys(wallet?.tokenBalance);
-        swappableTokens.sort((a) => a === preferredUiCurrency ? -1 : 1);
-        
-        const calls = [];
-        const initialTargetUSDC = (usdc || 0) * TOKEN_SCALE[TOKEN.USDC];
-        let remainingTargetUSDC = initialTargetUSDC;
-        for (let i = 0; i < swappableTokens.length; i++) {
-          const token = swappableTokens[i];
-          const sellAmount = Math.min(
-            priceHelper.from(remainingTargetUSDC, TOKEN.USDC).to(token),
-            parseInt(wallet.tokenBalance[token])
-          );
-          // (if remainingTarget < 0.1% of original, assume rounding error and no need to add additional swaps)
-          if (sellAmount > 0 && remainingTargetUSDC > initialTargetUSDC * 0.001) {
-            remainingTargetUSDC -= priceHelper.from(sellAmount, token).to(TOKEN.USDC);
-            
-            const quotes = await api.getSwapQuote({
-              sellToken: token,
-              buyToken: TOKEN.SWAY,
-              amount: sellAmount,
-              account: accountAddress
-            });
-            if (quotes?.[0]) {
-              const swapTx = await fetchBuildExecuteTransaction(
-                quotes?.[0].quoteId,
-                accountAddress,
-                undefined,
-                true,
-                avnuOptions
-              );
-              calls.push(...swapTx.calls);
-            }
-          }
-        }
-
-        // if more than X% slippage, don't transact
-        if (remainingTargetUSDC > initialTargetUSDC * 0.1) {
+        const multiswapCalls = await buildMultiswapFromSellAmount(wallet, unscaledUSDC, TOKEN.SWAY);
+        if (!multiswapCalls) {
           createAlert({
             type: 'GenericAlert',
             data: { content: 'Insufficient swap liquidity! Try again later.' },
@@ -640,7 +638,7 @@ const SwaySKU = ({ onUpdatePurchase }) => {
         // else, run the transactions(s)
         } else {
           try {
-            const tx = await executeCalls(calls);
+            const tx = await executeCalls(multiswapCalls);
             setIsProcessing(true);
 
             await starknet.account.waitForTransaction(cleanseTxHash(tx.transaction_hash), { retryInterval: 5e3 });
@@ -668,7 +666,11 @@ const SwaySKU = ({ onUpdatePurchase }) => {
         }
       }
     })
-  }, [accountAddress, executeCalls, isProcessing, onUpdatePurchase, preferredUiCurrency, priceHelper, queryClient, starknet?.account, usdc, wallet]);
+  }, [accountAddress, executeCalls, onUpdatePurchase, preferredUiCurrency, priceHelper, queryClient, starknet?.account, usdc, wallet]);
+
+  useEffect(() => {
+    onPurchasing(isProcessing);
+  }, [isProcessing, onPurchasing])
 
   return (
     <Wrapper>
@@ -808,13 +810,19 @@ const SwayFaucetButton = () => {
 }
 
 const SKU = ({ asset, onBack }) => {
+  const { execute } = useContext(ChainTransactionContext);
+  const { pendingTransactions } = useCrewContext();
+  const { data: ethBalance } = useEthBalance();
+  const { data: priceConstants } = usePriceConstants();
   const priceHelper = usePriceHelper();
+  const { buildMultiswapFromSellAmount } = useSwapHelper();
   const { data: wallet } = useWalletBalances();
 
   const preferredUiCurrency = useStore(s => s.getPreferredUiCurrency());
   const filters = useStore(s => s.assetSearch['asteroidsMapped'].filters);
   const updateFilters = useStore(s => s.dispatchFiltersUpdated('asteroidsMapped'));
   const zoomStatus = useStore(s => s.asteroids.zoomStatus);
+  const createAlert = useStore(s => s.dispatchAlertLogged);
   const dispatchHudMenuOpened = useStore(s => s.dispatchHudMenuOpened);
   const dispatchLauncherPage = useStore(s => s.dispatchLauncherPage);
   const dispatchZoomScene = useStore(s => s.dispatchZoomScene);
@@ -822,6 +830,11 @@ const SKU = ({ asset, onBack }) => {
 
   const [purchase, setPurchase] = useState();
   const [fundingPurchase, setFundingPurchase] = useState();
+  const [isPurchasing, setIsPurchasing] = useState();
+
+  const isPurchasingStarterPack = useMemo(() => {
+    return isPurchasing || (pendingTransactions || []).find(tx => tx.key === 'PurchaseStarterPack');
+  }, [pendingTransactions]);
 
   const filterUnownedAsteroidsAndClose = useCallback(() => {
     updateFilters(Object.assign({}, filters, { ownedBy: 'unowned' }));
@@ -835,15 +848,70 @@ const SKU = ({ asset, onBack }) => {
     dispatchLauncherPage();
   }, [filters, updateFilters, zoomStatus, dispatchHudMenuOpened, dispatchLauncherPage, dispatchZoomScene, updateZoomStatus]);
 
-  const handlePurchase = useCallback(() => {
-    const totalPriceUSD = purchase?.totalPrice?.to(TOKEN.USDC);
+  const handlePurchase = useCallback((overridePurchase) => {
+    const purch = (overridePurchase || purchase);
+    const totalPriceUSD = purch?.totalPrice?.to(TOKEN.USDC);
     const totalWalletUSD = wallet.combinedBalance?.to(TOKEN.USDC);
     if (totalWalletUSD > totalPriceUSD) {
-      purchase.onPurchase();
+      purch.onPurchase();
     } else {
-      setFundingPurchase(purchase);
+      setFundingPurchase(purch);
     }
   }, [purchase, wallet]);
+
+  const onPurchaseStarterPack = useCallback((which) => {
+    const totalPrice = priceHelper.from((which === 'basic' ? basicPackPriceUSD : advPackPriceUSD) * TOKEN_SCALE[TOKEN.USDC], TOKEN.USDC);
+    const crewmateTally = which === 'basic' ? 1 : 5;
+    const crewmate_usd = priceConstants ? priceHelper.from(BigInt(crewmateTally) * priceConstants?.ADALIAN_PURCHASE_PRICE, priceConstants?.ADALIAN_PURCHASE_TOKEN).to(TOKEN.USDC) : 0;
+    const purchaseEth_usd = GAS_BUFFER_VALUE_USDC;
+    const purchaseSway_usd = totalPrice?.usdcValue - crewmate_usd - purchaseEth_usd;
+    const packPurchase = {
+      totalPrice,
+      onPurchase: async () => {
+        setIsPurchasing(true);
+
+        let ethSwapCalls = await buildMultiswapFromSellAmount(purchaseEth_usd, TOKEN.ETH);
+        // this means has no usdc (likely) OR illiquid swap (unlikely)... we'll assume the former.
+        // can still allow the transaction to go through as long as has enough ETH to cover the
+        // cost (and subsequent swaps will not leave without any gas buffer)
+        if (ethSwapCalls === false) {
+          if (priceHelper.from(ethBalance, TOKEN.ETH).to(TOKEN.USDC) >= totalPrice.usdcValue) {
+            ethSwapCalls = [];
+          } else {
+            createAlert({
+              type: 'GenericAlert',
+              data: { content: 'Insufficient ETH or USDC/ETH swap liquidity!' },
+              level: 'warning',
+              duration: 5000
+            });
+            setIsPurchasing(false);
+            return;
+          }
+        }
+        const swaySwapCalls = await buildMultiswapFromSellAmount(purchaseSway_usd, TOKEN.SWAY);
+        if (swaySwapCalls === false) {
+          createAlert({
+            type: 'GenericAlert',
+            data: { content: 'Insufficient SWAY swap liquidity!' },
+            level: 'warning',
+            duration: 5000
+          });
+          setIsPurchasing(false);
+          return;
+        }
+
+        await execute('PurchaseStarterPack', {
+          collection: Crewmate.COLLECTION_IDS.ADALIAN,
+          crewmateTally,
+          swapCalls: [ ...ethSwapCalls, ...swaySwapCalls ]
+        });
+
+        setIsPurchasing(false);
+      }
+    };
+    setPurchase(packPurchase);
+    handlePurchase(packPurchase);
+  }, [advPackPriceUSD, basicPackPriceUSD, buildMultiswapFromSellAmount, handlePurchase, priceConstants, priceHelper]);
 
   const { content, ...props } = useMemo(() => {
     if (asset === 'asteroids') {
@@ -867,9 +935,10 @@ const SKU = ({ asset, onBack }) => {
       return {
         coverImage: CrewmatesHeroImage,
         title: 'Buy Crewmates',
-        content: <CrewmateSKU onUpdatePurchase={setPurchase} />,
+        content: <CrewmateSKU onUpdatePurchase={setPurchase} onPurchasing={setIsPurchasing} />,
         flourish: <AdalianFlourish filter="saturate(125%)" style={{ marginLeft: 35 }} />,
         flourishWidth: 145,
+        isPurchasing,
       };
     }
     if (asset === 'packs') {
@@ -878,7 +947,7 @@ const SKU = ({ asset, onBack }) => {
         title: <>Buy Starter<br/>Packs</>,
         styleOverrides: {
           ...defaultStyleOverrides,
-          aboveFold: { height: 125, marginTop: -125 },
+          aboveFold: { height: 160, marginTop: -160 },
           belowFold: { padding: '10px 0 20px 0' },
           body: { overflow: 'visible', paddingLeft: '35px' },
           rule: { width: 308 }
@@ -899,13 +968,19 @@ const SKU = ({ asset, onBack }) => {
             </PurchaseButtonInner>
           ),
           props: {
+            loading: isPurchasingStarterPack,
+            disabled: isPurchasingStarterPack,
             isTransaction: true,
+            onClick: () => onPurchaseStarterPack('advanced'),
             style: { margin: `0 ${purchasePacksPadding}px` },
             width: purchaseFormWidth - 2 * purchasePacksPadding
           },
           preLabel: (
             <Button
+              disabled={nativeBool(isPurchasingStarterPack)}
+              loading={reactBool(isPurchasingStarterPack)}
               isTransaction
+              onClick={() => onPurchaseStarterPack('basic')}
               style={{ marginRight: purchaseFormMargin + purchasePacksPadding }}
               width={purchaseFormWidth - 2 * purchasePacksPadding}>
               <PurchaseButtonInner>
@@ -926,7 +1001,7 @@ const SKU = ({ asset, onBack }) => {
     const params = {
       coverImage: SwayHeroImage,
       title: 'Buy Sway',
-      content: <SwaySKU onUpdatePurchase={setPurchase} />,
+      content: <SwaySKU onUpdatePurchase={setPurchase} onPurchasing={setIsPurchasing} />,
       flourish: <Flourish src={SwayImage} />,
       flourishWidth: 145,
     };
@@ -944,14 +1019,14 @@ const SKU = ({ asset, onBack }) => {
         props: {
           onClick: handlePurchase,
           isTransaction: true,
-          disabled: purchase?.disabled,
-          loading: purchase?.loading,
+          disabled: isPurchasing,
+          loading: isPurchasing,
         },
         preLabel: <SwayFaucetButton />
       };
     }
     return params;
-  }, [asset, filterUnownedAsteroidsAndClose]);
+  }, [asset, filterUnownedAsteroidsAndClose, isPurchasing]);
 
   return (
     <>
@@ -974,14 +1049,15 @@ const SKU = ({ asset, onBack }) => {
           ),
           onClick: handlePurchase,
           props: {
-            disabled: purchase?.disabled || !(purchase?.totalPrice?.usdcValue > 0),
-            loading: purchase?.loading,
+            disabled: isPurchasing || !(purchase?.totalPrice?.usdcValue > 0),
+            loading: isPurchasing,
             isTransaction: true
           }
         }}
         {...props}>
         {content}
       </HeroLayout>
+
       {fundingPurchase && (
         <FundingFlow
           totalPrice={fundingPurchase.totalPrice}

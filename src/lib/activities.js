@@ -597,8 +597,7 @@ const activities = {
             updatedValues: { owner: returnValues.caller }
           }
         },
-        [ 'walletBalance', 'eth' ],
-        [ 'walletBalance', 'usdc' ],
+        [ 'walletBalance' ],  // eth, usdc, sway (in case purchased directly or through starter pack)
       ]
     },
     getLogContent: ({ event: { returnValues } }) => ({

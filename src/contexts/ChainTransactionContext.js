@@ -498,6 +498,13 @@ const customConfigs = {
     equalityTest: ['tokenAddress', 'tokenId'],
     noSystemCalls: true,
     isVirtual: true,
+  },
+  PurchaseStarterPack: {
+    repeatableSystemCall: 'PurchaseAdalian',
+    getRepeatTally: (vars) => Math.max(1, Math.floor(vars.crewmateTally)),
+    getNonsystemCalls: ({ swapCalls }) => swapCalls,
+    equalityTest: true,
+    isVirtual: true
   }
 };
 

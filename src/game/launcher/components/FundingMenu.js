@@ -233,7 +233,7 @@ const FundingMenu = () => {
         </div>
       </div>
       <label data-tooltip-id="launcherTooltip" data-tooltip-html={tooltipContent} data-tooltip-place="top">
-        {wallet.combinedBalance?.to(preferredUiCurrency, true)}
+        {wallet?.combinedBalance?.to(preferredUiCurrency, true)}
       </label>
         <EthFaucetButton />
         <AddFundsButton onClick={() => setIsFunding(true)}>
