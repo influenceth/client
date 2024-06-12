@@ -22,15 +22,18 @@ const Wrapper = styled.div`
   max-height: 100%;
   overflow: auto;
   & > h2 {
+    color: white;
+    filter: drop-shadow(0px 0px 4px rgba(0, 0, 0, 0.5));
     font-size: 35px;
     font-weight: normal;
     margin-top: 0;
-    margin-bottom: 15px;
+    margin-bottom: 25px;
   }
 `;
 const StatusRow = styled.div`
   align-items: center;
   background: rgba(0, 0, 0, 0.7);
+  border-top: 1px solid ${p => p.theme.colors.mainBorder};
   clip-path: polygon(
     0 0,
     100% 0,
@@ -55,9 +58,7 @@ const CrewmatesWrapper = styled.div`
   & > *:not(:first-child) {
     margin-left: 8px;
   }
-  margin-bottom: 15px;
-  padding: 12px 12px 20px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 20px 12px 20px;
 `;
 
 const Play = () => {
@@ -83,7 +84,10 @@ const Play = () => {
       </StatusRow>
       <CaptainWrapper>
         {/* TODO: would be nice to shrink this portrait to accomadate view height without scrolling */}
-        <CrewCaptainCardFramed borderColor={theme.colors.darkMain} crewId={crew.id} width={captainWidth} />
+        <CrewCaptainCardFramed
+          borderColor={theme.colors.darkMain}
+          crewId={crew.id}
+          width={captainWidth} />
       </CaptainWrapper>
       <CrewmatesWrapper>
         {[1,2,3,4].map((i) => {
