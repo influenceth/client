@@ -31,7 +31,6 @@ const Wrapper = styled.div`
   }
 `;
 const StatusRow = styled.div`
-  border-top: 1px solid ${p => p.theme.colors.mainBorder};
   align-items: center;
   background: rgba(0, 0, 0, 0.7);
   border-top: 1px solid ${p => p.theme.colors.mainBorder};
