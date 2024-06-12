@@ -11,7 +11,7 @@ import SearchFilterTray from '~/components/SearchFilterTray';
 import InProgressIcon from '~/components/InProgressIcon';
 import {
   AgreementIcon,
-  AsteroidSearchIcon,
+  AsteroidIcon,
   BuildingIcon,
   ColumnsIcon,
   CrewIcon,
@@ -156,7 +156,7 @@ const Pages = styled.div`
 const assetTypes = {
   asteroids: {
     keyField: 'id',
-    icon: <AsteroidSearchIcon />,
+    icon: <AsteroidIcon />,
     title: 'Asteroids',
     useColumns: listConfigs.asteroids,
   },

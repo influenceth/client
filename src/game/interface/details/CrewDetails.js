@@ -158,6 +158,7 @@ const NameWrapper = styled.div`
     color: white;
     flex: 1;
     font-size: 30px;
+    color: white;
     height: 48px;
   }
 `;
@@ -170,6 +171,8 @@ const NameAndStatus = styled.div`
     color: white;
     filter: drop-shadow(0px 0px 4px rgba(0, 0, 0, 0.5));
     flex: 1;
+    color: white;
+    filter: drop-shadow(0px 0px 4px rgba(0, 0, 0, 0.5));
     font-size: 30px;
     font-weight: normal;
     margin: 0;
