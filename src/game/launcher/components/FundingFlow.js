@@ -1,0 +1,531 @@
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import styled, { css } from 'styled-components';
+import { createPortal } from 'react-dom';
+import { PropagateLoader as Loader } from 'react-spinners';
+
+import Button from '~/components/ButtonAlt';
+import { ChevronRightIcon, CloseIcon, WalletIcon, WarningOutlineIcon } from '~/components/Icons';
+import Details from '~/components/DetailsV2';
+import useSession from '~/hooks/useSession';
+import BrightButton from '~/components/BrightButton';
+import MouseoverInfoPane from '~/components/MouseoverInfoPane';
+import useWalletBalances from '~/hooks/useWalletBalances';
+import UserPrice from '~/components/UserPrice';
+import { TOKEN, TOKEN_FORMAT, TOKEN_FORMATTER } from '~/lib/priceUtils';
+import usePriceHelper from '~/hooks/usePriceHelper';
+import useStore from '~/hooks/useStore';
+import EthFaucetButton from './EthFaucetButton';
+
+const layerSwapChains = {
+  '0x534e5f4d41494e': { ethereum: 'ETHEREUM_MAINNET', starknet: 'STARKNET_MAINNET' },
+  'SN_MAIN': { ethereum: 'ETHEREUM_MAINNET', starknet: 'STARKNET_MAINNET' },
+  '0x534e5f5345504f4c4941': { ethereum: 'ETHEREUM_SEPOLIA', starknet: 'STARKNET_SEPOLIA' },
+  'SN_SEPOLIA': { ethereum: 'ETHEREUM_SEPOLIA', starknet: 'STARKNET_SEPOLIA' }
+};
+
+const FundingBody = styled.div`
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  margin: 0 30px;
+  padding: 5px 0;
+  width: 450px;
+  h3 {
+    align-items: center;
+    color: ${p => p.theme.colors.warning};
+    display: flex;
+    font-size: 16px;
+    font-weight: normal;
+    & > svg {
+      font-size: 30px;
+      margin-right: 16px;
+    }
+  }
+`;
+
+const FundingButtons = styled.div`
+  padding: 0px 0 20px;
+  width: 100%;
+  & button {
+    margin-bottom: 10px;
+    padding: 15px 10px;
+    text-transform: none;
+    width: 100%;
+    & > div {
+      align-items: center;
+      display: flex;
+      justify-content: center;
+      & > span {
+        flex: 1;
+        text-align: left;
+      }
+    }
+  }
+  & h4 {
+    align-items: flex-end;
+    font-weight: normal;
+    margin: 0 0 10px;
+    text-transform: uppercase;
+
+    display: flex;
+    flex-direction: row;
+    & > span {
+      flex: 1;
+    }
+    & > label {
+      opacity: 0.5;
+      font-size: 13px;
+      text-transform: none;
+      &:hover {
+        opacity: 0.8;
+      }
+    }
+  }
+`;
+
+const Disclaimer = styled.div`
+  color: ${p => p.theme.colors.main};
+  font-size: 12px;
+  padding: 10px 10px 20px;
+  pointer-events: ${p => p.visible ? 'all' : 'none'};
+  & a {
+    color: white;
+    text-decoration: none;
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+`;
+
+const Receipt = styled.div`
+  margin-bottom: 30px;
+  width: 100%;
+  & > div {
+    align-items: center;
+    display: flex;
+    flex-direction: row;
+    height: 30px;
+    & > label {
+      opacity: 0.5;
+      flex: 1;
+    }
+    &:last-child {
+      border-top: 1px solid #333;
+      color: ${p => p.theme.colors.warning};
+      margin-top: 4px;
+      height: 38px;
+      & > span {
+        // color: ${p => p.theme.colors.warning};
+        font-weight: bold;
+      }
+    }
+  }
+`;
+
+const ButtonRow = styled.div`
+  display: flex;
+  flex-direction: row;
+  & > button {
+    margin-right: 10px;
+    &:last-child {
+      margin-right: 0;
+    }
+  }
+`;
+
+const Collapsible = styled.div`
+  height: 26px;
+  overflow: visible hidden;
+  transition: height 150ms ease;
+
+  & > h4 {
+    border-bottom: 1px solid #333;
+    padding-bottom: 6px;
+
+    cursor: ${p => p.theme.cursors.active};
+    opacity: 0.5;
+    transition: opacity 150ms ease;
+    & > svg {
+      transition: transform 150ms ease;
+    }
+  }
+  & > ${ButtonRow} {
+    padding: 0 3px;
+  }
+
+  &:hover {
+    height: 92px;
+    & > h4 {
+      border-bottom-color: transparent;
+      opacity: 1;
+      & > svg {
+        transform: rotate(90deg);
+      }
+    }
+  }
+`;
+
+const GiantIcon = styled.div`
+  align-items: center;
+  background: rgba(${p => p.theme.colors.mainRGB}, 0.2);
+  border-radius: 60px;
+  color: ${p => p.theme.colors.main};
+  display: flex;
+  font-size: 65px;
+  height: 115px;
+  justify-content: center;
+  margin: 40px 0 10px;
+  width: 115px;
+`;
+const WaitingWrapper = styled.div`
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  padding-top: 10px;
+  width: 360px;
+
+  & > div {
+    align-items: center;
+    display: flex;
+    flex-direction: column;
+    text-align: center;
+    & > h4 {
+      margin: 20px 0 0;
+    }
+    & > small {
+      opacity: 0.5;
+    }
+    & > button {
+      margin-top: 20px;
+    }
+  }
+
+  & > footer {
+    align-items: center;
+    border-top: 1px solid #333;
+    display: flex;
+    flex-direction: row;
+    flex: 0 0 60px;
+    justify-content: center;
+    margin-top: 40px;
+    width: 100%;
+    & > div {
+      align-items: center;
+      background: #333;
+      border-radius: 6px;
+      display: flex;
+      height: 36px;
+      justify-content: center;
+      width: 225px;
+      & > * {
+        margin-top: -10px;
+        margin-left: -10px;
+        opacity: 0.25;
+      }
+    }
+  }
+`;
+
+export const FundingFlow = ({ totalPrice, onClose, onFunded }) => {
+  const createAlert = useStore(s => s.dispatchAlertLogged);
+
+  const { accountAddress, starknet, walletId } = useSession();
+  const priceHelper = usePriceHelper();
+  const { data: wallet, refetch: refetchBalances } = useWalletBalances();
+  const preferredUiCurrency = useStore(s => s.getPreferredUiCurrency());
+
+  const [hoveredRampButton, setHoveredRampButton] = useState(false);
+  const [waiting, setWaiting] = useState();
+
+  const startingBalance = useRef();
+
+  const [debug, setDebug] = useState(0);
+
+  // TODO: technically could wait to start polling until page is focused again
+  useEffect(() => {
+    // if (waiting && !debug) {
+    //   setTimeout(() => {
+    //     console.log('hack', startingBalance.current, wallet.tokenBalance); // tokenBalance
+    //     startingBalance.current[TOKEN.ETH] -= BigInt(1e14);
+    //     setDebug(1);
+    //   }, 5000);
+    // }
+    if (waiting && !!wallet) {
+      if (!startingBalance.current) startingBalance.current = { ...wallet.tokenBalance };
+      const i = setInterval(() => {
+        refetchBalances();
+        // if (debug === 1) setDebug(2); // TODO: deprecate
+      }, 10e3);
+      return () => {
+        if (i) clearInterval(i);
+      };
+    }
+  }, [waiting, !!wallet, debug]);
+
+  useEffect(() => {
+    // if there is an actual increase in currency of a token (i.e. not just an
+    // increase in value b/c we don't want a trigger on exchange rate changes)
+    if (waiting && startingBalance.current) {
+      const increaseToken = Object.keys(startingBalance.current).find((token) => {
+        return (wallet.tokenBalance[token] > startingBalance.current[token])
+      });
+      if (increaseToken) {
+        const increaseAmount = wallet.tokenBalance[increaseToken] - startingBalance.current[increaseToken];
+
+        // alert
+        createAlert({
+          type: 'GenericAlert',
+          data: { content: <>{TOKEN_FORMATTER[increaseToken](BigInt(increaseAmount), TOKEN_FORMAT.VERBOSE)} of funds received.</> },
+          duration: 5e3
+        });
+
+        // reset state
+        setWaiting(false);
+        startingBalance.current = null;
+
+        // callbacks
+        // if there are now sufficient funds (or there was no target price), call onFunded && onClose
+        // else (there is an unmet totalPrice), keep flow open (but will be back at beginning)
+        if (!totalPrice || wallet.combinedBalance.usdcValue > totalPrice.usdcValue) {
+          // console.log('FUNDING FLOW', { wallet, combinedBalance: wallet?.combinedBalance })
+          if (onFunded) onFunded();
+          if (onClose) onClose();
+        }
+      }
+    }
+  }, [debug, waiting, wallet?.tokenBalance])
+
+  const [walletBalance, fundsNeeded] = useMemo(
+    () => {
+      const balance = wallet.combinedBalance;
+      let needed;
+      if (totalPrice) {
+        needed = totalPrice.clone();
+        needed.usdcValue -= balance.usdcValue;
+      }
+      return [balance, needed];
+    },
+    [priceHelper, totalPrice, wallet]
+  );
+
+  const suggestedAmounts = useMemo(() => {
+    if (!fundsNeeded) return [10e6, 25e6, 50e6];
+
+    const needed = Math.ceil(fundsNeeded.to(TOKEN.USDC));
+    if (needed < 20e6) return [needed, 25e6, 50e6];
+    if (needed < 40e6) return [needed, 50e6, 100e6];
+    if (needed < 80e6) return [needed, 100e6, 250e6];
+    if (needed < 200e6) return [needed, 250e6, 500e6];
+    return [needed]
+  }, [fundsNeeded]);
+
+  const to = useRef();
+  const onRampHover = useCallback((which) => (e) => {
+    if (to.current) clearTimeout(to.current);
+    if (which) {
+      setHoveredRampButton(e.target);
+    } else {  // close on delay so have time to click the link
+      to.current = setTimeout(() => {
+        setHoveredRampButton();
+      }, 1500);
+    }
+  }, []);
+
+  const onClickCC = useCallback((amount) => () => {
+    const url = `https://app.${process.env.NODE_ENV === 'production' ? '' : 'demo.'}ramp.network?${
+      new URLSearchParams({
+        hostApiKey: process.env.REACT_APP_RAMP_API_KEY,
+        hostAppName: 'Influence',
+        hostLogoUrl: window.location.origin + '/maskable-logo-192x192.png',
+        userAddress: accountAddress,
+        swapAsset: 'STARKNET_ETH',  // TODO: STARKNET_USDC?
+        fiatCurrency: 'USD',
+        fiatValue: Math.ceil(amount / 1e6)
+      }).toString()
+    }`;
+
+    window.open(url, '_blank');
+    setWaiting(true);
+  }, [accountAddress]);
+
+  const onClickLayerswap = useCallback(() => {
+    let amount;
+    if (fundsNeeded) {
+      const swapAmount = fundsNeeded.clone();
+      swapAmount.usdcValue *= 1.1;
+      amount = Math.ceil(swapAmount.to(TOKEN.USDC));
+    }
+
+    const url = `https://layerswap.io/app/?${
+      new URLSearchParams({
+        amount,
+        // from: layerSwapChains[starknet?.chainId]?.ethereum,
+        to: layerSwapChains[starknet?.chainId]?.starknet,
+        toAsset: 'USDC',
+        destAddress: accountAddress,
+        lockTo: true,
+        lockToAsset: true,
+        lockAddress: true,
+        actionButtonText: 'Fund Account'
+      }).toString()
+    }`;
+
+    window.open(url, '_blank');
+    setWaiting(true);
+  }, [accountAddress, fundsNeeded]);
+
+  const onClickStarkgate = useCallback(() => {
+    const isSepolia = ['0x534e5f5345504f4c4941','SN_SEPOLIA'].includes(starknet?.chainId);
+    const url = `https://${isSepolia ? 'sepolia.' : ''}starkgate.starknet.io/`;
+
+    window.open(url, '_blank');
+    setWaiting(true);
+  }, []);
+
+  const onFaucetError = useCallback(() => {
+    createAlert({
+      type: 'GenericAlert',
+      data: { content: 'Faucet request failed, please try again later.' },
+      level: 'warning',
+      duration: 5000
+    });
+    onClose();
+  }, [onClose]);
+
+  return createPortal(
+    (
+      <Details
+        title={fundsNeeded ? 'Insufficient Funds' : 'Add Funds'}
+        onClose={onClose}
+        modalMode
+        style={{ zIndex: 9000 }}>
+        {!waiting && (
+          <FundingBody>
+            {fundsNeeded && (
+              <Receipt>
+                <div>
+                  <label>Available Balance {/* TODO: based on settings + gas buffer (hide for Web2 / or use tooltip for both) */}(USDC + ETH)</label>
+                  <span>{walletBalance.to(preferredUiCurrency, true)}</span>
+                </div>
+                <div>
+                  <label>Purchase Total</label>
+                  <span>{totalPrice.to(preferredUiCurrency, true)}</span>
+                </div>
+                <div>
+                  <label>
+                    Funding Required
+                  </label>
+                  <span>{fundsNeeded.to(preferredUiCurrency, true)}</span>
+                </div>
+              </Receipt>
+            )}
+
+            {walletId === 'argentWebWallet' && (
+              <FundingButtons>
+
+                {process.env.REACT_APP_CHAIN_ID === '0x534e5f5345504f4c4941' && (
+                  <>
+                    <h4>
+                      <span>Request Free ETH</span>
+                    </h4>
+                    <ButtonRow style={{ marginBottom: 10 }}>
+                      <EthFaucetButton
+                        onError={onFaucetError}
+                        onProcessing={(started) => setWaiting(!!started)} />
+                    </ButtonRow>
+                  </>
+                )}
+
+                <h4>
+                  <span>Recharge Wallet</span>
+                  <label onMouseEnter={onRampHover(true)} onMouseLeave={onRampHover(false)}>Disclaimer</label>
+                  <MouseoverInfoPane
+                    referenceEl={hoveredRampButton}
+                    css={css`margin-top:10px;`}
+                    placement="bottom"
+                    visible={!!hoveredRampButton}
+                    zIndex={9001}>
+                    <Disclaimer visible={!!hoveredRampButton}>
+                      RAMP DISCLAIMER: Don't invest unless you're prepared to lose all the money you
+                      invest. This is a high-risk investment and you should not expect to be protected
+                      if something goes wrong.{' '}
+                      <a href="https://ramp.network/risk-warning" target="_blank" rel="noopener noreferrer">Take 2 minutes to learn more.</a>
+                    </Disclaimer>
+                  </MouseoverInfoPane>
+                </h4>
+                <ButtonRow>
+                  {suggestedAmounts.map((usdc, i) => (
+                    <BrightButton key={usdc} onClick={onClickCC(usdc)}>
+                      + <UserPrice price={usdc} priceToken={TOKEN.USDC} format={(fundsNeeded && i === 0) ? true : TOKEN_FORMAT.SHORT} />
+                    </BrightButton>
+                  ))}
+                </ButtonRow>
+
+                {/* TODO: start off collapsed */}
+                <Collapsible style={{ marginTop: 10 }}>
+                  <h4><span>Advanced Options</span><ChevronRightIcon /></h4>
+                  <ButtonRow>
+                    <BrightButton subtle onClick={onClickStarkgate}>
+                      <span>Bridge from L1</span>
+                      <ChevronRightIcon />
+                    </BrightButton>
+                    <BrightButton subtle onClick={onClickLayerswap}>
+                      <span>Swap on L2</span>
+                      <ChevronRightIcon />
+                    </BrightButton>
+                  </ButtonRow>
+                </Collapsible>
+              </FundingButtons>
+            )}
+
+            {walletId !== 'argentWebWallet' && (
+              <FundingButtons>
+                {process.env.REACT_APP_CHAIN_ID === '0x534e5f5345504f4c4941' && (
+                  <EthFaucetButton
+                    onError={onFaucetError}
+                    onProcessing={(started) => setWaiting(!!started)} />
+                )}
+
+                <BrightButton onClick={onClickStarkgate}>
+                  <span>Bridge Funds from L1</span>
+                  <ChevronRightIcon />
+                </BrightButton>
+
+                <ButtonRow>
+                  <BrightButton subtle onClick={onClickLayerswap}>
+                    <span>Swap L2 Funds</span> <ChevronRightIcon />
+                  </BrightButton>
+                  <BrightButton subtle onClick={onClickCC(suggestedAmounts[0])}>
+                    <span>Purchase L2 Funds</span> <ChevronRightIcon />
+                  </BrightButton>
+                </ButtonRow>
+              </FundingButtons>
+            )}
+          </FundingBody>
+        )}
+        {waiting && (
+          <WaitingWrapper>
+            <div>
+              <GiantIcon>
+                <WalletIcon />
+              </GiantIcon>
+              <h4>Adding funds to your wallet...</h4>
+              <small>(this may take several moments)</small>
+              <Button size="small" onClick={() => setWaiting(false)}>
+                <CloseIcon /> <span>Cancel</span>
+              </Button>
+            </div>
+            <footer>
+              <div>
+                <Loader color="white" size="12px" />
+              </div>
+            </footer>
+          </WaitingWrapper>
+        )}
+      </Details>
+    ),
+    document.body
+  );
+};
+
+export default FundingFlow;

@@ -13,7 +13,6 @@ import { formatFixed, formatTimer, locationsArrToObj, monthsToSeconds, secondsTo
 import useBlockTime from '~/hooks/useBlockTime';
 import actionButtons from '../../hud/actionButtons';
 import useActionButtons from '~/hooks/useActionButtons';
-import { getAgreementPath } from '~/hooks/actionManagers/useAgreementManager';
 import EntityLink from '~/components/EntityLink';
 import AddressLink from '~/components/AddressLink';
 
@@ -231,7 +230,7 @@ const useColumns = () => {
                     {...actionProps}
                     entity={row}
                     permission={row._agreement.permission}
-                    agreementPath={getAgreementPath(row, row._agreement.permission, row._agreement.permitted)} />
+                    agreementPath={row._agreement._path} />
                 </div>
               )
             } else if (row._agreement.permitted?.id === crew?.id || (crew?.Crew?.delegatedTo && row._agreement.permitted === crew.Crew.delegatedTo)) {

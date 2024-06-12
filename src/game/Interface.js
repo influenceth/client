@@ -82,12 +82,24 @@ const Interface = () => {
   const launcherPage = useStore(s => s.launcherPage);
   const interfaceHidden = useStore(s => s.graphics.hideInterface);
   const showDevTools = useStore(s => s.graphics.showDevTools);
+  const dispatchLauncherPage = useStore(s => s.dispatchLauncherPage);
   const dispatchRecenterCamera = useStore(s => s.dispatchRecenterCamera);
   const dispatchReorientCamera = useStore(s => s.dispatchReorientCamera);
   const dispatchToggleInterface = useStore(s => s.dispatchToggleInterface);
   const dispatchToggleDevTools = useStore(s => s.dispatchToggleDevTools);
 
   const handleInterfaceShortcut = useCallback((e) => {
+    // ctrl+-
+    if (e.ctrlKey && e.which === 189) dispatchLauncherPage(launcherPage ? undefined : 'play');
+    // ctrl+1
+    if (e.ctrlKey && e.which === 49) dispatchLauncherPage('settings');
+    // ctrl+2
+    if (e.ctrlKey && e.which === 50) dispatchLauncherPage('help');
+    // ctrl+3
+    if (e.ctrlKey && e.which === 51) dispatchLauncherPage('store');
+    // ctrl+4
+    if (e.ctrlKey && e.which === 52) dispatchLauncherPage('rewards');
+
     // ctrl+f9
     if (e.ctrlKey && e.which === 120) dispatchToggleInterface();
     // ctrl+f10
@@ -96,7 +108,7 @@ const Interface = () => {
     if (e.ctrlKey && e.which === 190) dispatchRecenterCamera(true);
     // ctrl+backslash
     if (e.ctrlKey && e.which === 220) dispatchReorientCamera(true);
-  }, [dispatchToggleInterface, dispatchToggleDevTools, dispatchRecenterCamera, dispatchReorientCamera]);
+  }, [dispatchToggleInterface, dispatchToggleDevTools, dispatchRecenterCamera, dispatchReorientCamera, launcherPage]);
 
   useEffect(() => {
     document.addEventListener('keyup', handleInterfaceShortcut);

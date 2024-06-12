@@ -6,6 +6,7 @@ import isEqual from 'lodash/isEqual';
 import { Building, Lot } from '@influenceth/sdk';
 
 import constants from '~/lib/constants';
+import { TOKEN } from '~/lib/priceUtils';
 
 export const STORE_NAME = 'influence';
 
@@ -101,6 +102,10 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
 
     draggables: {},
 
+    gameplay: {
+      autoswap: true,
+    },
+
     graphics: {
       autodetect: true,
       fov: 75,
@@ -112,6 +117,11 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
       textureQuality: undefined,
     },
 
+    sounds: {
+      music: process.env.NODE_ENV === 'development' ? 0 : 100,
+      effects: process.env.NODE_ENV === 'development' ? 0 : 100,
+    },
+
     failedTransactions: [],
     pendingTransactions: [],
 
@@ -120,14 +130,11 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
       progress: 0
     },
 
-    sounds: {
-      music: process.env.NODE_ENV === 'development' ? 0 : 100,
-      effects: process.env.NODE_ENV === 'development' ? 0 : 100,
-    },
-
     effects: {},
 
     referrer: null,
+
+    preferredUiCurrency: null,
 
     //
     // DISPATCHERS
@@ -175,8 +182,8 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
     })),
 
     dispatchLauncherPage: (page) => set(produce(state => {
-      if (page === 'crews' || page === 'settings' || page === 'store') state.launcherPage = page;
-      else if (page) state.launcherPage = 'account';
+      if (['play', 'store', 'help', 'rewards', 'settings'].includes(page)) state.launcherPage = page;
+      else if (page) state.launcherPage = 'play';
       else state.launcherPage = null;
     })),
 
@@ -642,9 +649,23 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
     dispatchUnhideAllActionItems: () => set(produce(state => {
       state.hiddenActionItems = [];
     })),
+    dispatchPreferredUiCurrency: (token) => set(produce(state => {
+      state.preferredUiCurrency = token;
+    })),
+
+    dispatchAutoswapEnabled: (which) => set(produce(state => {
+      state.gameplay.autoswap = !!which;
+    })),
 
     //
     // SPECIAL GETTERS
+
+    getPreferredUiCurrency: () => {
+      const s = get();
+      if ([TOKEN.ETH, TOKEN.USDC].includes(s.preferredUiCurrency)) return s.preferredUiCurrency;
+      else if (s.currentSession?.walletId && s.currentSession.walletId !== 'argentWebWallet') return TOKEN.ETH;
+      return TOKEN.USDC;
+    },
 
     getShadowQuality: () => {
       // NOTE: 0 is no shadows, 1 is single-light shadows, 2 is CSMs
@@ -676,7 +697,7 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
 
 }), {
   name: STORE_NAME,
-  version: 4,
+  version: 5,
   migrate: (persistedState, oldVersion) => {
     const migrations = [
       (state, version) => {
@@ -698,6 +719,11 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
       (state, version) => {
         if (version >= 4) return;
         state.assetSearch = { ...assetSearchDefaults };
+        return state;
+      },
+      (state, version) => {
+        if (version >= 5) return;
+        state.gameplay = { autoswap: true };
         return state;
       },
     ];

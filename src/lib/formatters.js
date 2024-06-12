@@ -1,6 +1,7 @@
 import { AdalianOrbit, Asteroid, Building, Lot, Ship } from '@influenceth/sdk';
 import { formatEther } from 'ethers';
 import { constants } from '@influenceth/astro';
+import Price from './priceUtils';
 
 const formatters = {
 
@@ -37,16 +38,6 @@ const formatters = {
     return a.Name?.name || (a.Celestial && Asteroid.Entity.getBaseName(a)) || `#${a.id.toLocaleString()}`;
   },
 
-  asteroidPrice: (r, priceConstants) => {
-    if (!priceConstants?.ASTEROID_BASE_PRICE_ETH || !priceConstants?.ASTEROID_LOT_PRICE_ETH) return '?';
-    const base = Number(formatEther(String(priceConstants.ASTEROID_BASE_PRICE_ETH)));
-    const lot = Number(formatEther(String(priceConstants.ASTEROID_LOT_PRICE_ETH)));
-
-    const lotCount = Asteroid.getSurfaceArea(0, r);
-    const price = base + lot * lotCount;
-    return price.toLocaleString([], { maximumFractionDigits: 3 });
-  },
-
   buildingName: (b, fallbackText) => {
     if (!b) return fallbackText || 'Building';
     return b.Name?.name || `${Building.TYPES[b.Building?.buildingType]?.name || 'Building'} #${b.id.toLocaleString()}`;
@@ -56,14 +47,6 @@ const formatters = {
     if (!c) return fallbackText || 'Crew';
     return c.Name?.name || `Crew #${c.id.toLocaleString()}`;
   },
-
-  crewmatePrice: (priceConstants, minimumFractionDigits = 0) => {
-    if (!priceConstants?.ADALIAN_PRICE_ETH) return '?';
-    const price = Number(formatEther(String(priceConstants.ADALIAN_PRICE_ETH)));
-    return price.toLocaleString([], { minimumFractionDigits });
-  },
-
-  ethPrice: (price, minimumFractionDigits = 0) => price ? Number(formatEther(price)).toLocaleString([], { minimumFractionDigits }) : '',
 
   crewmateName: (c, fallbackText) => {
     if (!c) return fallbackText || 'Crewmate';

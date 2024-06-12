@@ -2,7 +2,6 @@ import { useCallback, useContext } from 'react';
 import { Crewmate, Entity } from '@influenceth/sdk';
 
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
-import useCrewContext from '~/hooks/useCrewContext';
 
 const useCrewManager = () => {
   const { execute, getPendingTx } = useContext(ChainTransactionContext);

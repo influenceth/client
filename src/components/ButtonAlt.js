@@ -216,9 +216,11 @@ const StandardButton = (props) => {
         <InnerContainer flip={restProps.flip} sizeParams={sizeParams}>
           {loading && (
             <BarLoader
-              color={props.color
-                ? getContrastText(props.color)
-                : (props.isTransaction ? theme.colors.txButton : theme.colors.main)}
+              color={props.contrastColor || (
+                props.color
+                  ? getContrastText(props.color)
+                  : (props.isTransaction ? theme.colors.txButton : theme.colors.main)
+              )}
               css={loadingCss}
               height={1} />
           )}

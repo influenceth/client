@@ -32,7 +32,9 @@ const Svg = styled.svg`
   width: 100%;
 `;
 
-const InnerDiamond = styled.rect``;
+const InnerDiamond = styled.rect`
+  transition: fill 150ms ease;
+`;
 
 const selectionKeyframes = keyframes`
   0% {
@@ -64,8 +66,8 @@ const SelectionDiamond = styled.rect`
   }};
   stroke-width: ${p => (p.animate ? 1.75 : 1) * p.strokeWidth};
   transform-origin: center;
+  transition: stroke 150ms ease;
 
-  ${p => p.background ? `background: ${p.background};` : ''}
   ${p => p.border ? `border: 1px solid ${p.border};` : ''}
 `;
 
@@ -104,14 +106,6 @@ const NavIcon = ({ thicker, size, ...props }) => {
     <Wrapper size={standardSize} {...props}>
       <InnerWrapper {...props}>
         <Svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" viewBox="0 0 100 100">
-          <InnerDiamond
-            fill={props.color || 'currentColor'}
-            height={innerDiamondDimension}
-            width={innerDiamondDimension}
-            x={50 - innerDiamondDimension / 2}
-            y={50 - innerDiamondDimension / 2}
-            rx={rounding}
-            />
           <SelectionDiamond
             {...props}
             height={outerDiamondDimension}
@@ -119,8 +113,14 @@ const NavIcon = ({ thicker, size, ...props }) => {
             x={50 - outerDiamondDimension / 2}
             y={50 - outerDiamondDimension / 2}
             rx={rounding}
-            strokeWidth={outerDiamondStroke}
-            />
+            strokeWidth={outerDiamondStroke} />
+          <InnerDiamond
+            fill={props.color || 'currentColor'}
+            height={innerDiamondDimension}
+            width={innerDiamondDimension}
+            x={50 - innerDiamondDimension / 2}
+            y={50 - innerDiamondDimension / 2}
+            rx={rounding} />
           {props.selected && props.animate && (
             <HighlightDiamond
               {...props}

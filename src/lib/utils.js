@@ -20,9 +20,13 @@ export const formatTimer = (secondsRemaining, maxPrecision = null) => {
   return parts.join(' ');
 };
 
-export const formatFixed = (value, maximumFractionDigits = 0) => {
+export const roundToPlaces = (value, maximumFractionDigits = 0) => {
   const div = 10 ** maximumFractionDigits;
-  return (Math.round((value || 0) * div) / div).toLocaleString();
+  return (Math.round((value || 0) * div) / div);
+}
+
+export const formatFixed = (value, maximumFractionDigits = 0) => {
+  return roundToPlaces(value, maximumFractionDigits).toLocaleString(undefined, { maximumFractionDigits });
 };
 
 export const formatPrecision = (value, maximumPrecision = 0) => {
@@ -59,6 +63,10 @@ export const formatPrice = (inputSway, { minPrecision = 3, fixedPrecision = 4, f
     }
   }
   return `${sign}${(workingUnits || 0).toLocaleString(undefined, { minimumFractionDigits: minPrecision, maximumFractionDigits: fixedPlaces })}${unitLabel}`;
+};
+
+export const formatUSD = (usd) => {
+  return `$${(usd || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 };
 
 export const keyify = (str) => (str || '').replace(/[^a-zA-Z0-9_]/g, '');
@@ -230,6 +238,10 @@ export const safeEntityId = (variablyHydratedEntity) => {
   return undefined;
 };
 
+export const getAgreementPath = (target, permission, permitted) => {
+  return `${target ? Entity.packEntity(target) : ''}.${permission || ''}.${permitted?.id ? Entity.packEntity(permitted) : (permitted || '')}`;
+};
+
 export const entityToAgreements = (entity) => {
   const acc = [];
   ['PrepaidAgreements', 'ContractAgreements', 'WhitelistAgreements', 'WhitelistAccountAgreements'].forEach((agreementType) => {
@@ -239,6 +251,7 @@ export const entityToAgreements = (entity) => {
 
         key: `${entity.uuid}_${agreementType}_${j}`,
         _agreement: {
+          _path: getAgreementPath(entity, agreement.permission, agreement.permitted),
           _type: agreementType === 'PrepaidAgreements'
             ? Permission.POLICY_IDS.PREPAID
             : (agreementType === 'ContractAgreements' ? Permission.POLICY_IDS.CONTRACT : 5),

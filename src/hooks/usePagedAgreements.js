@@ -46,7 +46,7 @@ const usePagedAgreements = (params) => {
   }, [params.permission]);
 
   // get data for crewAgreements or entityAgreements, depending on if uuid is specified or not
-  const { data: crewAgreements, isLoading: crewAgreementsLoading, dataUpdatedAt } = useCrewAgreements(undefined, !params.uuid);
+  const { data: crewAgreements, isLoading: crewAgreementsLoading, dataUpdatedAt } = useCrewAgreements(!params.uuid);
   const { data: entity, isLoading: entityLoading } = useEntity(params.uuid ? Entity.unpackEntity(params.uuid) : null);
   const { data: asteroid } = useAsteroid(entity?.label === Entity.IDS.LOT ? Lot.toPosition(entity.id)?.asteroidId : null);
 

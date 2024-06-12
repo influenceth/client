@@ -1,0 +1,43 @@
+import { useQuery } from 'react-query';
+
+import api from '~/lib/api';
+import { TOKEN, TOKEN_SCALE } from '~/lib/priceUtils';
+
+const useSwapQuote = (sellToken, buyToken, amount, accountAddress = false) => {
+  return useQuery(
+    [ 'swapQuote', sellToken, buyToken, amount, accountAddress ],
+    async () => {
+      const quotes = await api.getSwapQuote({
+        sellToken,
+        buyToken,
+        amount,
+        account: accountAddress || undefined
+      });
+      return quotes?.[0] ? (parseInt(quotes[0].buyAmount) / parseInt(quotes[0].sellAmount)) : 0;
+    },
+    {
+      enabled: !!(sellToken && buyToken),
+      refetchInterval: 60e3,
+    }
+  );
+};
+
+export const useSwayPerUsdc = (accountAddress, amount) => {
+  return useSwapQuote(
+    TOKEN.USDC,
+    TOKEN.SWAY,
+    amount || (2500 * TOKEN_SCALE[TOKEN.SWAY]), // approx $1 worth
+    accountAddress
+  )
+};
+
+export const useUsdcPerEth = (accountAddress, amount) => {
+  return useSwapQuote(
+    TOKEN.ETH,
+    TOKEN.USDC,
+    amount || (0.00025 * TOKEN_SCALE[TOKEN.ETH]), // approx $1 worth
+    accountAddress
+  )
+};
+
+export default useSwapQuote;

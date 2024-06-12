@@ -1,3 +1,4 @@
+import { Tooltip } from 'react-tooltip';
 import styled from 'styled-components';
 
 import Button, { bgOpacity, bgOpacityHover } from '~/components/ButtonAlt';
@@ -42,12 +43,18 @@ const SwitcherButtonInner = styled.div`
   }
 `;
 
-const Switcher = ({ buttons, buttonWidth, onChange, size, value }) => (
+const Switcher = ({ buttons, buttonWidth, onChange, size, tooltipContainer = 'global', value }) => (
   <Wrapper>
-    {buttons.map(({ icon, label, value: buttonValue }, i) => {
+    {buttons.map(({ icon, label, tooltip, value: buttonValue }, i) => {
       const styles = {};
       if (i !== buttons.length - 1) styles.borderRight = 0;
       if (i !== 0) styles.borderLeft = 0;
+      const tooltipProps = tooltip && buttonValue !== value
+        ? {
+          'data-tooltip-id': tooltipContainer,
+          'data-tooltip-content': tooltip
+        }
+        : {};
       return (
         <SwitcherButton
           key={buttonValue}
@@ -56,6 +63,7 @@ const Switcher = ({ buttons, buttonWidth, onChange, size, value }) => (
           onClick={() => onChange(buttonValue)}
           size={size || undefined}
           style={{ ...styles }}
+          {...tooltipProps}
           width={buttonWidth}>
           <SwitcherButtonInner>
             {icon || null} {label}

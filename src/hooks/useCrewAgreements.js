@@ -1,18 +1,23 @@
-import { useQuery } from 'react-query';
+import { useMemo } from 'react';
 
 import useCrewContext from '~/hooks/useCrewContext';
-import api from '~/lib/api';
+import useWalletAgreements from '~/hooks/useWalletAgreements';
 
-const useCrewAgreements = (otherCrew = null, enabled = true) => {
+const useCrewAgreements = (enabled = true) => {
   const { crew } = useCrewContext();
+  const { data, isLoading } = useWalletAgreements();
 
-  const crewId = otherCrew?.id || crew?.id;
-  const crewDelegatedTo = otherCrew?.Crew?.delegatedTo || crew?.Crew?.delegatedTo;
-  return useQuery(
-    [ 'agreements', crewId, crewDelegatedTo ],
-    () => enabled ? api.getCrewAgreements(crewId, crewDelegatedTo) : undefined,
-    { enabled: !!crewId && enabled }
-  );
+  return useMemo(() => {
+    return {
+      data: crew?.id && enabled && data
+        ? data?.filter((a) => (
+          a.Control?.controller?.id === crew?.id
+          || a._agreement?.permitted?.id === crew?.id
+        ))
+        : undefined,
+      isLoading
+    }
+  }, [crew?.id, data, isLoading, enabled])
 };
 
 export default useCrewAgreements;

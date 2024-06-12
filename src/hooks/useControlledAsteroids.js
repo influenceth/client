@@ -1,20 +1,20 @@
 import { useMemo } from 'react';
-import { useQuery } from 'react-query';
-import { Entity } from '@influenceth/sdk';
 
-import api from '~/lib/api';
 import useCrewContext from '~/hooks/useCrewContext';
-import { entitiesCacheKey } from '~/lib/cacheKey';
+import useWalletAsteroids from '~/hooks/useWalletAsteroids';
 
-const useControlledAsteroids = (otherCrew = null) => {
+const useControlledAsteroids = () => {
   const { crew } = useCrewContext();
+  const { data, isLoading } = useWalletAsteroids();
 
-  const { id: controllerId, uuid } = useMemo(() => otherCrew || crew || {}, [otherCrew, crew]);
-  return useQuery(
-    entitiesCacheKey(Entity.IDS.ASTEROID, { controllerId }),
-    () => api.getEntities({ match: { 'Control.controller.uuid': uuid }, label: Entity.IDS.ASTEROID }),
-    { enabled: !!controllerId }
-  );
+  return useMemo(() => {
+    return {
+      data: crew?.id && data
+        ? (data || []).filter((a) => a.Control?.controller?.id === crew?.id)
+        : undefined,
+      isLoading
+    }
+  }, [crew?.id, data, isLoading])
 };
 
 export default useControlledAsteroids;

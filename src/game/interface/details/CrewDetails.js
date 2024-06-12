@@ -80,8 +80,8 @@ const CoverImage = styled.div`
     background-size: cover;
     content: '';
     display: block;
-    height: 100%;
-    mask-image: linear-gradient(to bottom, transparent 0%, rgba(0, 0, 0, 0.6) 10%, rgba(0, 0, 0, 0.6) 75%, transparent 100%);
+    height: 65%;
+    mask-image: linear-gradient(to bottom, transparent 0%, rgba(0, 0, 0, 0.4) 15%, rgba(0, 0, 0, 0.4) 75%, transparent 100%);
     transition:
       background-position 750ms ease-out,
       opacity 750ms ease-out;
@@ -155,8 +155,10 @@ const NameWrapper = styled.div`
     margin-right: 15px;
   }
   & > input {
+    color: white;
     flex: 1;
     font-size: 30px;
+    color: white;
     height: 48px;
   }
 `;
@@ -166,7 +168,11 @@ const NameAndStatus = styled.div`
   flex: 1;
 
   & > h4 {
+    color: white;
+    filter: drop-shadow(0px 0px 4px rgba(0, 0, 0, 0.5));
     flex: 1;
+    color: white;
+    filter: drop-shadow(0px 0px 4px rgba(0, 0, 0, 0.5));
     font-size: 30px;
     font-weight: normal;
     margin: 0;

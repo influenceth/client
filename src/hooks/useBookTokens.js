@@ -1,8 +1,9 @@
 import { useMemo } from 'react';
 
 import useCrewContext from '~/hooks/useCrewContext';
-import useSwayBalance from '~/hooks/useSwayBalance';
+import { useSwayBalance } from '~/hooks/useWalletTokenBalance';
 import formatters from '~/lib/formatters';
+import { TOKEN, TOKEN_SCALE } from '~/lib/priceUtils';
 
 const useBookTokens = (bookId) => {
   const { captain, isLoading: crewIsLoading } = useCrewContext();
@@ -10,7 +11,8 @@ const useBookTokens = (bookId) => {
 
   const swayAmount = useMemo(() => {
     if (swayIsLoading) return null;
-    return parseInt(Math.min(10000, Math.floor(Number(dispatcherBalance) / 1000)));
+    const scaledSwayBalance = dispatcherBalance / BigInt(TOKEN_SCALE[TOKEN.SWAY]);
+    return parseInt(Math.min(10000, Math.floor(Number(scaledSwayBalance) / 1000)));
   }, [dispatcherBalance, swayIsLoading]);
 
   const bookTokens = useMemo(() => {

@@ -32,6 +32,7 @@ import {
 } from '~/components/Icons';
 import { renderDummyAsteroid } from '~/game/scene/asteroid/helpers/utils';
 import AsteroidGraphic from './components/AsteroidGraphic';
+import { AsteroidUserPrice } from '~/components/UserPrice';
 import useNameAvailability from '~/hooks/useNameAvailability';
 import { nativeBool, reactBool } from '~/lib/utils';
 import usePriceConstants from '~/hooks/usePriceConstants';
@@ -452,7 +453,7 @@ const AsteroidInformation = ({ abundances, asteroid, isManager, isOwner }) => {
                   isTransaction
                   loading={reactBool(buying)}
                   onClick={attemptBuyAsteroid}>
-                  Purchase -&nbsp;<Ether>{formatters.asteroidPrice(asteroid.Celestial.radius, priceConstants)}</Ether>
+                  Purchase -&nbsp;<AsteroidUserPrice lots={Asteroid.getSurfaceArea(undefined, asteroid.Celestial.radius)} />
                 </Button>
               )}
               {asteroid.Nft?.owner && (

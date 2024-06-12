@@ -1,7 +1,6 @@
 import styled, { keyframes } from 'styled-components';
 import LoadingIcon from 'react-spinners/PuffLoader';
 
-
 const fadeOut = keyframes`
   0% { opacity: 0.8; }
   50% { opacity: 0.8; }
@@ -20,7 +19,10 @@ const Backdrop = styled.div`
 `;
 
 const Button = styled.button`
-  background: linear-gradient(to right, #2b6caa, #35a4ca);
+  background: ${p => p.success
+    ? `linear-gradient(to right, #2baa54, #35ca6e)`
+    : `linear-gradient(to right, #2b6caa, #35a4ca)`
+  };
   border: 0;
   border-radius: 6px;
   color: white;
@@ -40,6 +42,17 @@ const Button = styled.button`
     outline-width: 4px;
     z-index: 1001;
   `}
+  ${p => p.subtle && `
+    background: rgba(${p.theme.colors.darkMainRGB}, 0.5);
+    outline: 1px solid ${p.theme.colors.brightMain};
+    color: ${p.theme.colors.brightMain};
+    opacity: 0.5;
+    &:hover {
+      color: white;
+      opacity: 1;
+      outline-color: white;
+    }
+  `};
 
   & > div:last-child {
     flex: 1;

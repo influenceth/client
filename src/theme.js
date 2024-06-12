@@ -58,6 +58,7 @@ const theme = {
     darkMain,
     darkMainRGB: hexToRGB(darkMain),
     mainBorder: 'rgba(255, 255, 255, 0.25)',
+    badge: '#287d97',
     mobileBackground: '#181818',
     disabledBackground: '#666666',
     inputBackground: '#0d2933',
@@ -71,6 +72,7 @@ const theme = {
     disabledText: 'rgba(255,255,255,0.4)',
     borderBottom: '#555555',
     borderBottomAlt: 'rgba(85, 85, 85, 0.5)',
+    inFlight: '#fab040',
     sell: '#57d5ff',
     buy: '#88e675',
     sequence: '#2f85dc',
@@ -134,7 +136,8 @@ const theme = {
     mobile: 1023,
     xl: 1599
   },
-  clipCorner
+  clipCorner,
+  hexToRGB
 };
 
 export default theme;

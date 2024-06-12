@@ -130,7 +130,7 @@ export function SessionProvider({ children }) {
         nodeUrl = Math.random() > 0.5 ? process.env.REACT_APP_STARKNET_PROVIDER : process.env.REACT_APP_STARKNET_PROVIDER_BACKUP;
       }
 
-      const customProvider = new RpcProvider({ nodeUrl });
+      const customProvider = nodeUrl ? new RpcProvider({ nodeUrl }) : undefined;
 
       if (!!process.env.REACT_APP_ARGENT_WEB_WALLET_URL) {
         connectors.push(new WebWalletConnector({

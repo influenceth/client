@@ -19,7 +19,7 @@ import CrewClassIcon from '~/components/CrewClassIcon';
 import CrewTraitIcon from '~/components/CrewTraitIcon';
 import Details from '~/components/DetailsModal';
 import Ether from '~/components/Ether';
-import { CheckIcon, CloseIcon, LinkIcon } from '~/components/Icons';
+import { CheckIcon, CloseIcon, LinkIcon, WalletIcon } from '~/components/Icons';
 import IconButton from '~/components/IconButton';
 import MouseoverInfoPane from '~/components/MouseoverInfoPane';
 import TextInput from '~/components/TextInput';
@@ -29,7 +29,7 @@ import ChainTransactionContext from '~/contexts/ChainTransactionContext';
 import useBookSession, { bookIds, getBookCompletionImage } from '~/hooks/useBookSession';
 import useCrewManager from '~/hooks/actionManagers/useCrewManager';
 import useCrewContext from '~/hooks/useCrewContext';
-import useEthBalance from '~/hooks/useEthBalance';
+import { useEthBalance } from '~/hooks/useWalletTokenBalance';
 import useFaucetInfo from '~/hooks/useFaucetInfo';
 import useNameAvailability from '~/hooks/useNameAvailability';
 import usePriceConstants from '~/hooks/usePriceConstants';
@@ -38,6 +38,11 @@ import formatters from '~/lib/formatters';
 import { reactBool } from '~/lib/utils';
 import theme from '~/theme';
 import api from '~/lib/api';
+import usePriceHelper from '~/hooks/usePriceHelper';
+import useWalletBalances from '~/hooks/useWalletBalances';
+import { TOKEN } from '~/lib/priceUtils';
+import UserPrice, { CrewmateUserPrice } from '~/components/UserPrice';
+import FundingFlow from '~/game/launcher/components/FundingFlow';
 
 const CollectionImages = {
   1: Collection1,
@@ -816,10 +821,13 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
   const { crew, crewmateMap, adalianRecruits, arvadianRecruits } = useCrewContext();
   const { promptingTransaction } = useContext(ChainTransactionContext);
   const { data: priceConstants } = usePriceConstants();
+  const priceHelper = usePriceHelper();
+  const { data: wallet } = useWalletBalances();
   const { data: weiBalance, refetch: refetchEth } = useEthBalance();
 
   const [confirming, setConfirming] = useState();
   const [confirmingUnlock, setConfirmingUnlock] = useState();
+  const [isFunding, setIsFunding] = useState();
   const [hovered, setHovered] = useState();
 
   const [appearanceOptions, setAppearanceOptions] = useState([]);
@@ -838,8 +846,6 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
 
   const [finalizing, setFinalizing] = useState();
   const [name, setName] = useState('');
-
-  const { data: faucetInfo } = useFaucetInfo();
 
   const mappedCrewmate = useMemo(() => crewmateMap?.[crewmateId] || null, [crewmateMap, crewmateId]);
 
@@ -1164,57 +1170,24 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
     return true;
   }, [name, selectedClass, selectedTraits?.length, traitTally]);
 
-  // faucet stuff vvv
-  const [requestedEth, setRequestedEth] = useState();
-  const [requestingEth, setRequestingEth] = useState();
-  const createAlert = useStore(s => s.dispatchAlertLogged);
-  const { starknet } = useSession();
-
-  const getEthFromFaucet = useCallback(async () => {
-    setRequestingEth(true);
-
-    try {
-      const txHash = await api.requestTokens('ETH');
-      await starknet.account.waitForTransaction(txHash);
-      setRequestingEth(false);
-      refetchEth();
-      setRequestedEth(true);
-
-      createAlert({
-        type: 'WalletAlert',
-        data: { content: 'Added 0.015 ETH to your account.' },
-        duration: 5000
-      });
-    } catch (e) {
-      console.error(e);
-      setRequestingEth(false);
-      createAlert({
-        type: 'GenericAlert',
-        data: { content: 'Faucet request failed, please try again later.' },
-        level: 'warning',
-        duration: 5000
-      });
-    }
-  }, [starknet]);
-
-  const ethClaimEnabled = useMemo(() => {
-    if (!faucetInfo) return false;
-    if (requestedEth) return false;
-    const lastClaimed = faucetInfo.ETH.lastClaimed || 0;
-    return Date.now() > (Date.parse(lastClaimed) + 23.5 * 3600 * 1000);
-  }, [faucetInfo, requestedEth]);
-  // ^^^
-
   const confirmationProps = useMemo(() => {
-    if (process.env.REACT_APP_CHAIN_ID === '0x534e5f5345504f4c4941') {
-      if (ethClaimEnabled && (BigInt(priceConstants.ADALIAN_PRICE_ETH) > (weiBalance || 0n))) {
-        return {
-          onConfirm: getEthFromFaucet,
-          loading: !!requestingEth,
-          confirmText: <Ether>Request ETH</Ether>
-        }
+    const price = priceHelper.from(priceConstants.ADALIAN_PURCHASE_PRICE, priceConstants.ADALIAN_PURCHASE_TOKEN);
+    if (price.usdcValue > wallet.combinedBalance?.to(TOKEN.USDC)) {
+      // if (process.env.REACT_APP_CHAIN_ID === '0x534e5f5345504f4c4941' && ethClaimEnabled) {
+        // TODO: in sepolia, would be nice to remind there is a faucet *before* having to click through
+      // }
+      return {
+        onConfirm: () => {
+          setIsFunding({
+            totalPrice: price,
+            onClose: () => setIsFunding(),
+            onFunded: () => finalize(),
+          });
+        },
+        confirmText: <><WalletIcon /> <span>Fund Wallet</span></>
       }
     }
+
     return {
       onConfirm: finalize,
       confirmText: (
@@ -1222,14 +1195,13 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
           {crewmate.id ? 'Confirm' : 'Purchase Crewmate'}
           {!crewmate.id && priceConstants && (
             <span style={{ color: 'white', flex: 1, fontSize: '90%', textAlign: 'right', marginLeft: 15 }}>
-              {/* TODO: should this update price before "approve"? what about asteroids? */}
-              <Ether>{formatters.crewmatePrice(priceConstants)}</Ether>
+              <CrewmateUserPrice />
             </span>
           )}
         </>
       )
     };
-  }, [crewmate, getEthFromFaucet, priceConstants, ethClaimEnabled, requestingEth, weiBalance]);
+  }, [crewmate, finalize, priceConstants, weiBalance]);
 
   if (!crewmate) return null;
   return (
@@ -1570,7 +1542,10 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
           body={(
             <PromptBody highlight>
               The Crewmate you are about to recruit will be minted as a new digital asset
-              {crewmate.id ? '.' : <>, which currently costs <b><Ether>{formatters.crewmatePrice(priceConstants)}</Ether></b> and helps to fund game development.</>}
+              {crewmate.id
+                ? '.'
+                : <>, which currently costs <b><CrewmateUserPrice /></b> and helps to fund game development.</>
+              }
               <br/><br/>
               {crewmate.id ? 'You' : 'Once minted, you'}{' '}will be the sole owner of the Crewmate; nobody can
               delete them or take them from you. They will be yours to keep or trade forever. All of their
@@ -1582,6 +1557,7 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
           isTransaction
         />
       )}
+      {isFunding && <FundingFlow {...isFunding} />}
     </>
   );
 };

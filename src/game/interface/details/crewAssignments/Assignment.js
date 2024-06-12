@@ -6,6 +6,7 @@ import adalianImage from '~/assets/images/crew_collections/4.png'
 import useCrewContext from '~/hooks/useCrewContext';
 import useBookSession, { bookIds } from '~/hooks/useBookSession';
 import useStore from '~/hooks/useStore';
+import AdalianFlourish from '~/components/AdalianFlourish';
 import ConfirmationDialog from '~/components/ConfirmationDialog';
 import CrewmateCard from '~/components/CrewmateCard';
 import NavIcon from '~/components/NavIcon';
@@ -13,6 +14,7 @@ import CrewSilhouetteCard from '~/components/CrewSilhouetteCard';
 import ChoicesDialog from '~/components/ChoicesDialog';
 import { CrewCaptainCardFramed } from '~/components/CrewmateCardFramed';
 import { nativeBool } from '~/lib/utils';
+
 
 const RecruitingDiv = styled.div`
   border: 1px solid rgba(${p => p.theme.colors.mainRGB}, 0.3);
@@ -64,24 +66,6 @@ const PromptDetails = styled.div`
   padding: 1em 2em;
   @media (max-width: ${p => p.theme.breakpoints.mobile}px) {
     padding: 1em;
-  }
-`;
-
-
-const AdalianFlourish = styled.div`
-  display: block;
-  height: 100%;
-  width: 100%;
-  &:before {
-    content: "";
-    background-image: url(${adalianImage});
-    background-position: top center;
-    background-repeat: no-repeat;
-    background-size: 200%;
-    display: block;
-    filter: contrast(0%) sepia(100%) hue-rotate(150deg) saturate(150%);
-    height: 100%;
-    opacity: 0.65;
   }
 `;
 

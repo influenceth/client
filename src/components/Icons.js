@@ -1,6 +1,6 @@
 import { AiFillEdit, AiFillEye, AiFillStar, AiOutlineNumber } from 'react-icons/ai';
 import { BsFillPersonFill, BsCheckCircle, BsSliders, BsStopwatch, BsThreeDots } from 'react-icons/bs';
-import { FaBan, FaCaretDown, FaCaretUp, FaCogs, FaCopy, FaEthereum, FaList, FaMapMarkedAlt } from 'react-icons/fa';
+import { FaBan, FaCaretDown, FaCaretUp, FaCogs, FaCopy, FaDollarSign, FaEthereum, FaList, FaMapMarkedAlt } from 'react-icons/fa';
 import { FiCheckSquare, FiDownload, FiExternalLink, FiLogIn, FiMenu, FiSearch, FiSquare } from 'react-icons/fi';
 import { HiClock, HiCog, HiChevronDoubleLeft, HiChevronDoubleRight } from 'react-icons/hi';
 import {
@@ -37,9 +37,12 @@ import { VscDebugDisconnect } from 'react-icons/vsc';
 import AdalianSVG from '~/assets/icons/AdalianIcon.svg';
 import AddRationsSVG from '~/assets/icons/AddRationsIcon.svg';
 import AgreementSVG from '~/assets/icons/AgreementIcon.svg';
+import ArgentXSVG from '~/assets/icons/ArgentXIcon.svg';
 import ArvadSVG from '~/assets/icons/ArvadIcon.svg';
 import AssignmentsSVG from '~/assets/icons/AssignmentsIcon.svg';
 import AsteroidSearchSVG from '~/assets/icons/AsteroidSearchIcon.svg';
+import AsteroidSVG from '~/assets/icons/AsteroidIcon.svg';
+import BraavosSVG from '~/assets/icons/BraavosIcon.svg';
 import BugSVG from '~/assets/icons/BugIcon.svg';
 import BuildingSVG from '~/assets/icons/BuildingIcon.svg';
 import CantSVG from '~/assets/icons/CantIcon.svg';
@@ -56,6 +59,7 @@ import CompositionSVG from '~/assets/icons/CompositionIcon.svg';
 import CoreSampleSVG from '~/assets/icons/CoreSampleIcon.svg';
 import CrewSVG from '~/assets/icons/CrewIcon.svg';
 import CrewInventorySVG from '~/assets/icons/CrewInventoryIcon.svg';
+import CrewmateCreditSVG from '~/assets/icons/CrewmateCreditIcon.svg';
 import CrewmateSVG from '~/assets/icons/CrewmateIcon.svg';
 import CrewStorySVG from '~/assets/icons/CrewStoryIcon.svg';
 import DeltaVSVG from '~/assets/icons/DeltaVIcon.svg';
@@ -207,9 +211,12 @@ export const RotatedShipMarkerIcon = () => <ShipMarkerSVG style={{ transform: 'r
 export const AdalianIcon = () => <AdalianSVG className="icon" />;
 export const AddRationsIcon = () => <AddRationsSVG className="icon" />;
 export const AgreementIcon = () => <AgreementSVG className="icon" />;
+export const ArgentXIcon = () => <ArgentXSVG className="icon" />;
 export const ArvadIcon = () => <ArvadSVG className="icon" style={{ width: '1.94em' }} />;
 export const AssignmentsIcon = () => <AssignmentsSVG className="icon" />;
+export const AsteroidIcon = () => <AsteroidSVG className="icon" />;
 export const AsteroidSearchIcon = () => <AsteroidSearchSVG className="icon" />;
+export const BraavosIcon = () => <BraavosSVG className="icon" />;
 export const BugIcon = () => <BugSVG className="icon" />;
 export const BuildingIcon = () => <BuildingSVG className="icon" />;
 export const CantIcon = () => <CantSVG className="icon" />;
@@ -228,6 +235,7 @@ export const CompositionIcon = () => <CompositionSVG className="icon" />;
 export const CoreSampleIcon = () => <CoreSampleSVG className="icon" />;
 export const CrewIcon = () => <CrewSVG className="icon" />;
 export const CrewInventoryIcon = () => <CrewInventorySVG className="icon" />;
+export const CrewmateCreditIcon = () => <CrewmateCreditSVG className="icon" />;
 export const CrewmateIcon = () => <CrewmateSVG className="icon" />;
 export const CrewStoryIcon = () => <CrewStorySVG className="icon" />;
 export const DeltaVIcon = () => <DeltaVSVG className="icon" />;
@@ -417,5 +425,7 @@ export {
   FiCheckSquare as CheckedIcon,
   FiSquare as UncheckedIcon,
   FiSearch as MagnifyingIcon,
-  BsFillPersonFill as UserIcon
+  BsFillPersonFill as UserIcon,
+  FaDollarSign as UsdcIcon,
+  FaEthereum as EthIcon
 };

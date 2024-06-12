@@ -12,7 +12,7 @@ const Food = styled.div`
   color: ${p => p.isRationing ? p.theme.colors.red : p.theme.colors.green};
   display: flex;
   span {
-    font-size: 15px;
+    font-size: ${p => p.fontSize || '15px'};
     margin: 0 6px;
   }
   ${p => p.onClick && `
@@ -26,7 +26,7 @@ const Food = styled.div`
   `}
 `;
 
-const LiveFoodStatus = ({ crew, onClick, ...props }) => {
+const LiveFoodStatus = ({ crew, fontSize, onClick, ...props }) => {
   const blockTime = useBlockTime();
   const { data: TIME_ACCELERATION } = useConstants('TIME_ACCELERATION');
 
@@ -42,7 +42,7 @@ const LiveFoodStatus = ({ crew, onClick, ...props }) => {
 
   if (!(blockTime > 0)) return null;
   return (
-    <Food isRationing={isRationing} onClick={onClick} {...props}>
+    <Food fontSize={fontSize} isRationing={isRationing} onClick={onClick} {...props}>
       {isRationing && <WarningOutlineIcon />}
       <span>{percentage}%</span>
       <FoodIcon />

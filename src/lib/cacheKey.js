@@ -6,18 +6,18 @@ non-entity based
 - [ 'activities', entityLabel, entityId, 'earliest' ],
 - [ 'activities', entityLabel, entityId, 'unresolved' ],
 - [ 'activities', entityLabel, entityId ],
-- [ 'agreements', crewId, crewDelegatedTo ],
+- [ 'agreements', accountAddress ],
 - [ 'asteroidPackedLotData', asteroidId ]
 - [ 'constants', constantOrConstants ],
 - [ 'lotEntitiesPrepopulation', lotId ],
-- [ 'ethBalance', accountAddress ],
 - [ 'exchangeOrderSummary', asteroidId, product ],
 - [ 'faucetInfo', account ],
 - [ 'inventoryOrders', inventory, inventorySlot ],
 - [ 'productOrderSummary', entityLabel, entityId ],
-- [ 'referrals', 'count', token ],
+- [ 'referrals', token ],
 - [ 'search', assetType, query ],
-- [ 'swayBalance', accountAddress ],
+- [ 'walletBalance', 'eth', accountAddress ],
+- [ 'walletBalance', 'sway', accountAddress ],
 - [ 'user', token ],
 - [ 'watchlist', token ],
 
@@ -71,16 +71,14 @@ are only introduced in the context of these guidelines :)
 */
 
 const validFilterKeys = {
-  // ['entities', Entity.IDS.ASTEROID, { controllerId }]
-  // ['entities', Entity.IDS.ASTEROID, { owner }]
+  // ['entities', Entity.IDS.ASTEROID, { controllerId, owner }]
   [Entity.IDS.ASTEROID]: ['controllerId', 'owner'],
 
-  // ['entities', Entity.IDS.BUILDING, { controllerId, status }]
-  // ['entities', Entity.IDS.BUILDING, { asteroidId, hasPermission, permissionCrewId, permissionAccount, hasComponent }]
+  // ['entities', Entity.IDS.BUILDING, { asteroidId, hasComponent, hasPermission, permissionCrewId, permissionAccount }]
   // ['entities', Entity.IDS.BUILDING, { asteroidId, hasComponent, status }]
-  // ['entities', Entity.IDS.BUILDING, { asteroidId, controllerId }]
   // ['entities', Entity.IDS.BUILDING, { lotId }]
-  [Entity.IDS.BUILDING]: ['asteroidId', 'controllerId', 'hasComponent', 'hasPermission', 'permissionCrewId', 'permissionAccount', 'lotId', 'status'],
+  // ['entities', Entity.IDS.BUILDING, { controllerId }]
+  [Entity.IDS.BUILDING]: ['asteroidId', 'controllerId', 'hasComponent', 'hasPermission', 'lotId', 'permissionCrewId', 'permissionAccount', 'status'],
 
   // ['entities', Entity.IDS.CREW, { owner }]
   // ['entities', Entity.IDS.CREW, { stationUuid }]
@@ -97,11 +95,11 @@ const validFilterKeys = {
   // ['entities', Entity.IDS.DEPOSIT, { lotId }]
   [Entity.IDS.DEPOSIT]: ['asteroidId', 'controllerId', 'isDepleted', 'lotId', 'resourceId'],
 
-  // ['entities', Entity.IDS.SHIP, { asteroidId, hasPermission, permissionCrewId, permissionAccount, hasComponent, isOnSurface, status }]
+  // ['entities', Entity.IDS.SHIP, { asteroidId, hasComponent, hasPermission, permissionCrewId, permissionAccount, isOnSurface, status }]
   // ['entities', Entity.IDS.SHIP, { asteroidId, status }]
-  // ['entities', Entity.IDS.SHIP, { controllerId }]
+  // ['entities', Entity.IDS.SHIP, { controllerId, owner }]
   // ['entities', Entity.IDS.SHIP, { lotId }]
-  [Entity.IDS.SHIP]: ['asteroidId', 'controllerId', 'hasComponent', 'hasPermission', 'permissionCrewId', 'permissionAccount', 'isOnSurface', 'lotId', 'status']
+  [Entity.IDS.SHIP]: ['asteroidId', 'controllerId', 'hasComponent', 'hasPermission', 'isOnSurface', 'lotId', 'owner', 'permissionCrewId', 'permissionAccount', 'status']
 }
 
 export const entitiesCacheKey = (label, filters) => {

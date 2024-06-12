@@ -8,9 +8,9 @@ import useCrewAgreements from '~/hooks/useCrewAgreements';
 import useCrewContext from '~/hooks/useCrewContext';
 import useGetActivityConfig from '~/hooks/useGetActivityConfig';
 import useStore from '~/hooks/useStore';
+import useWalletBuildings from '~/hooks/useWalletBuildings';
 import api from '~/lib/api';
 import { hydrateActivities } from '~/lib/activities';
-import { entitiesCacheKey } from '~/lib/cacheKey';
 
 const ActionItemContext = React.createContext();
 
@@ -50,11 +50,15 @@ export function ActionItemProvider({ children }) {
     { enabled: !!crewId }
   );
 
-  const { data: plannedBuildings, isLoading: plannedBuildingsLoading, dataUpdatedAt: plansUpdatedAt } = useQuery(
-    entitiesCacheKey(Entity.IDS.BUILDING, { controllerId: crewId, status: Building.CONSTRUCTION_STATUSES.PLANNED }),
-    () => api.getCrewPlannedBuildings(crewId),
-    { enabled: !!crewId }
-  );
+  const { data: walletBuildings, isLoading: plannedBuildingsLoading, dataUpdatedAt: plansUpdatedAt } = useWalletBuildings();
+  const plannedBuildings = useMemo(() => {
+    return walletBuildings && crewId
+      ? (walletBuildings || []).filter((a) => (
+        a.Control?.controller?.id === crewId
+        && a.Building?.status === Building.CONSTRUCTION_STATUSES.PLANNED
+      ))
+      : undefined;
+  }, [crewId, walletBuildings]);
 
   const failedTransactions = useStore(s => s.failedTransactions);
   const hiddenActionItems = useStore(s => s.hiddenActionItems);
