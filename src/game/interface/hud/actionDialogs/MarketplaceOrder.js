@@ -609,7 +609,7 @@ const MarketplaceOrder = ({
   const insufficientAssets = useMemo(() => {
     if (isCancellation) return false;
     if (mode === 'buy') {
-      return total > swayBalance / TOKEN_SCALE[TOKEN.SWAY]; // TODO: should this parseInt? 
+      return total > BigInt(swayBalance) / BigInt(TOKEN_SCALE[TOKEN.SWAY]);
     } else {
       return quantityToUnits(quantity) > amountInInventory;
     }
