@@ -11,6 +11,7 @@ import HudMenu from './hud/HudMenu';
 import SceneBanner from './hud/SceneBanner';
 import WelcomeTourItems from './hud/WelcomeTourItems';
 import useStore from '~/hooks/useStore';
+import useSession from '~/hooks/useSession';
 
 const bottomMargin = 60;
 
@@ -74,24 +75,22 @@ export const Rule = styled.div`
 `;
 
 const HUD = () => {
+  const { authenticated, authenticating } = useSession();
   const { captain, loading } = useCrewContext();
   const dismissWelcomeTour = useStore(s => s.gameplay?.dismissWelcomeTour);
   return (
     <>
       <LeftWrapper>
-        {captain && (
-          <>
-            <AvatarMenu />
-            <ActionItems />
-          </>
-        )}
-        {!captain && !loading && (
-          <>
-            <LoginMenu />
-            {!dismissWelcomeTour && <WelcomeTourItems />}
-          </>
-        )}
-        {!captain && <div style={{ flex: 1 }} />}
+        {!authenticating && !loading
+          ? (
+            <>
+              {captain ? <AvatarMenu /> : <LoginMenu />}
+              {authenticated ? <ActionItems /> : (dismissWelcomeTour ? <div style={{ flex: 1 }} /> : <WelcomeTourItems />)}
+            </>
+          )
+          : (
+            <div style={{ flex: 1 }} />
+          )}
         <InfoPane />
       </LeftWrapper>
 

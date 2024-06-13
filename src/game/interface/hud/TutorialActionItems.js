@@ -136,7 +136,7 @@ const TutorialActionItems = () => {
             isCurrent={selectedStep?.key === step.key}
             onClick={() => goToStep(step)}>
             <Icon><span><TutorialIcon /></span></Icon>
-            <Status>Step {step.key}</Status>
+            <Status>Todo{/* Step {step.key}*/}</Status>
             <Label>{step.title}</Label>
           </ActionItemRow>
         ))}
@@ -149,7 +149,7 @@ const TutorialActionItems = () => {
         onClose={() => setSelectedStep()}
         rightButton={selectedStep?.rightButton}
         step={selectedStep}
-        messageHeight={215} />
+        messageHeight={225} />
     </>
   );
 }

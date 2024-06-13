@@ -40,6 +40,7 @@ const assetSearchDefaults = {
 const useStore = create(subscribeWithSelector(persist((set, get) => ({
     actionDialog: {},
     launcherPage: null,
+    launcherSubpage: null,
     openHudMenu: null,
     welcomeTourStep: -1,
 
@@ -184,10 +185,19 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
       state.actionDialog = { type, params };
     })),
 
-    dispatchLauncherPage: (page) => set(produce(state => {
-      if (['play', 'store', 'help', 'rewards', 'settings'].includes(page)) state.launcherPage = page;
-      else if (page) state.launcherPage = 'play';
-      else state.launcherPage = null;
+    dispatchLauncherPage: (page, subpage) => set(produce(state => {
+      if (['play', 'store', 'help', 'rewards', 'settings'].includes(page)) {
+        state.launcherPage = page;
+        state.launcherSubpage = subpage;
+      }
+      else if (page) {
+        state.launcherPage = 'play';
+        state.launcherSubpage = null;
+      }
+      else {
+        state.launcherPage = null;
+        state.launcherSubpage = null;
+      }
     })),
 
     dispatchAlertNotified: (alert) => set(produce(state => {

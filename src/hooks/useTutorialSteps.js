@@ -64,10 +64,16 @@ const useTutorialSteps = () => {
   const loading = agreementsLoading || buildingsLoading || depositsLoading;
 
   const crewTutorial = useStore(s => s.crewTutorials?.[crew?.id]);
+  const uncrewTutorial = useStore(s => s.crewTutorials?.[undefined]); // have to do this to preserve pre-crew actions
   const dispatchDismissCrewTutorial = useStore(s => s.dispatchDismissCrewTutorial);
   const dispatchDismissCrewTutorialStep = useStore(s => s.dispatchDismissCrewTutorialStep);
 
-  const dismissedTutorialSteps = useMemo(() => crewTutorial?.dismissedSteps || [], [crewTutorial?.dismissedSteps]);
+  const dismissedTutorialSteps = useMemo(() => {
+    const dismissed = new Set();
+    (crewTutorial?.dismissedSteps || []).forEach((s) => dismissed.add(s));
+    (uncrewTutorial?.dismissedSteps || []).forEach((s) => dismissed.add(s));
+    return Array.from(dismissed);
+  }, [crewTutorial?.dismissedSteps, uncrewTutorial?.dismissedSteps]);
 
   const tutorialSteps = useMemo(() => {
     if (loading) return [];
@@ -337,10 +343,12 @@ const useTutorialSteps = () => {
   }, [crew?.id, dismissedTutorialSteps, tutorialSteps]);
 
   useEffect(() => {
-    if (Object.keys(tutorialSteps).length === dismissedTutorialSteps?.length) {
-      dispatchDismissCrewTutorial(crew?.id, true);
+    if (!loading) {
+      if (Object.keys(tutorialSteps).length === dismissedTutorialSteps?.length) {
+        dispatchDismissCrewTutorial(crew?.id, true);
+      }
     }
-  }, [crew?.id, dispatchDismissCrewTutorial, dismissedTutorialSteps])
+  }, [crew?.id, dispatchDismissCrewTutorial, dismissedTutorialSteps, loading])
 
   return useMemo(() => {
     return tutorialSteps.filter((s) => {

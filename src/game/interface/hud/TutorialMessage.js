@@ -9,7 +9,7 @@ import theme from '~/theme';
 
 const messageClipCorner = 20;
 const messageOffset = 75;
-const messageHeight = 195;
+const messageHeight = 235;
 const messageWidth = 700;
 const crewmateOverflowMult = 0.3;
 const borderColor = `rgba(${theme.colors.mainRGB}, 0.33)`;
@@ -99,6 +99,11 @@ const TutorialContent = styled.div`
       color: ${p => p.theme.colors.main};
       flex: 1;
       font-size: 85%;
+
+      & > b {
+        color: white;
+        font-weight: normal;
+      }
     }
   }
 `;

@@ -10,6 +10,7 @@ import UserPrice from '~/components/UserPrice';
 import useAsteroidSale from '~/hooks/useAsteroidSale';
 import usePriceConstants from '~/hooks/usePriceConstants';
 import useBlockTime from '~/hooks/useBlockTime';
+import useStore from '~/hooks/useStore';
 import { TOKEN, TOKEN_FORMAT, TOKEN_SCALE } from '~/lib/priceUtils';
 import { formatTimer } from '~/lib/utils';
 import FundingMenu from './components/FundingMenu';
@@ -225,7 +226,13 @@ const SkuSelector = ({ onSelect }) => {
 };
 
 const Store = () => {
-  const [selection, setSelection] = useState();
+  const initialSubpage = useStore(s => s.launcherSubpage);
+  const initialSelection = useMemo(() => {
+    const linkedSelectionIndex = Object.keys(storeAssets).indexOf(initialSubpage);
+    return linkedSelectionIndex >= 0 ? linkedSelectionIndex : undefined;
+  }, [initialSubpage]);
+
+  const [selection, setSelection] = useState(initialSelection);
   const isSelected = selection !== undefined;
 
   const panes = useMemo(() => {

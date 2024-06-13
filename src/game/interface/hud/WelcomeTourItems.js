@@ -63,7 +63,7 @@ const TutorialFilter = styled(Filter)`
     margin-right: 10px;
   }
   &:after {
-    content: "Game Tour";
+    content: "Welcome Tour";
     color: ${COLOR};
   }
 `;
@@ -191,8 +191,8 @@ const useWelcomeTour = () => {
       content: (
         <>
           Influence is a massively multiplayer simulation set in the asteroid belt surrounding the star <b>Adalia</b>.
-          <br></br><br></br>
-          Click NEXT to continue the Game Tour, or visit our
+          <br /><br />
+          Click NEXT to continue the Welcome Tour, or visit our
           {' '}<a href="https://wiki.influenceth.io/en/docs/user-guides" target="_blank" rel="noopener noreferrer">Wiki</a>
           {' '}or <a href="https://discord.com/invite/influenceth" target="_blank" rel="noopener noreferrer">Discord</a> for help getting started!
         </>
@@ -350,10 +350,17 @@ const useWelcomeTour = () => {
     },
     {
       title: 'Habitation & Life Support',
-      content: `Finally, Habitats provide life support and a base of operations from which the Crews
-        stationed there venture out to perform jobs. They also serve as social centers and recruitment
-        hubs for new Adalians coming of age in the belt. You may immediately begin your recruitment
-        here; take your first steps as a member of Adalian society!`,
+      content: (
+        <>
+          Finally, Habitats are the beating heart of life in Adalia. These giant rotating structures
+          serve as vibrant social hubs for the Crews stationed there, as well as recruitment centers
+          for new Adalians.
+          <br /><br />
+          You are now ready to begin your journey as a productive member of Adalian society! The
+          recommended <b>Starter Packs</b> contain everything needed to form your first crew and start
+          your own mining operation on Adalia Prime. Join up today!
+        </>
+      ),
       crewmateId: 6980,
       initialize: () => {
         if (currentZoomScene) dispatchZoomScene();
@@ -416,15 +423,20 @@ const WelcomeTourItems = () => {
   const history = useHistory();
   const { updateStep, currentStep, currentStepIndex, hideMessage, isTransitioning, setHideMessage, steps } = useWelcomeTour();
 
+  const dispatchLauncherPage = useStore(s => s.dispatchLauncherPage);
+
   const handlePrevious = useCallback(() => {
     updateStep(Math.max(0, currentStepIndex - 1));
   }, [currentStepIndex, updateStep]);
 
   const handleNext = useCallback(() => {
     if (currentStepIndex >= steps.length - 1) {
-      if (authenticated) history.push('/crew')
-      // TODO: see WelcomeFlow -- if want to start prompting for crewmate credit pack, do not want to do this redirect
-      else login().then((success) => { if (success) { history.push('/crew'); } });
+      if (authenticated) {
+        dispatchLauncherPage('store', 'packs')
+      } else {
+        // TODO: see WelcomeFlow -- if want to start prompting for crewmate credit pack, do not want to do this redirect
+        login().then(() => dispatchLauncherPage('store', 'packs'));
+      }
     } else {
       updateStep(currentStepIndex + 1);
     }
@@ -449,7 +461,7 @@ const WelcomeTourItems = () => {
             <TitleWrapper>
               <IconWrapper><AlertIcon /></IconWrapper>
               <Filters>
-                <TutorialFilter tally={steps.length} />
+                <TutorialFilter />
               </Filters>
             </TitleWrapper>
           )}>
@@ -461,7 +473,7 @@ const WelcomeTourItems = () => {
                   isPast={currentStepIndex > i}
                   onClick={() => updateStep(i)}>
                   <Icon><span><TutorialIcon /></span></Icon>
-                  <Status>{i + 1}</Status>
+                  <Status>Part {i + 1}</Status>
                   <Label>{title}</Label>
                 </ActionItemRow>
               ))}
@@ -482,7 +494,7 @@ const WelcomeTourItems = () => {
               color: theme.colors.success,
               disabled: authenticating,
               onClick: handleNext,
-              children: "Start Your Crew"
+              children: "See Starter Packs"
             }
             : null
           )
