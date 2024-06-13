@@ -527,7 +527,7 @@ const PolicyPanel = ({ editable = false, entity, permission }) => {
                     <label>Price per Day</label>
                     {permission === Permission.IDS.USE_LOT && entity?.label === Entity.IDS.ASTEROID && entity?.id === 1
                       ? <span><SwayIcon /> Variable by Lot</span>
-                      : <span><SwayIcon /> {formatFixed(originalPolicyDetails?.rate * 24 || 0)}</span>
+                      : <span><SwayIcon /> {formatFixed(originalPolicyDetails?.rate || 0)}</span>
                     }
                   </DataRow>
                   <DataRow><label>Minimum Period</label><span>{formatFixed(originalPolicyDetails?.initialTerm, 3)} day</span></DataRow>
