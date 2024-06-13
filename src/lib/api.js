@@ -215,6 +215,29 @@ const api = {
     return formatESEntityData(response.data);
   },
 
+  getCrewSamples: async (crewId) => {
+    const queryBuilder = esb.boolQuery();
+
+    // controlled by crew
+    queryBuilder.filter(esb.termQuery('Control.controller.id', crewId));
+
+    // not depleted !(used AND remainingYield === 0)
+    queryBuilder.filter(
+      esb.boolQuery().mustNot([
+        esb.termQuery('Deposit.status', Deposit.STATUSES.USED),
+        esb.termQuery('Deposit.remainingYield', 0),
+      ])
+    );
+
+    const q = esb.requestBodySearch();
+    q.query(queryBuilder);
+    q.size(10000);
+    const query = q.toJSON();
+
+    const response = await instance.post(`/_search/deposit`, query);
+    return formatESEntityData(response.data);
+  },
+
   getCrewSamplesOnAsteroid: async (asteroidId, crewId, resourceId) => {
     const queryBuilder = esb.boolQuery();
 

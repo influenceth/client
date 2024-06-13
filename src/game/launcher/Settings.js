@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
 import screenfull from 'screenfull';
 import { FiCheckSquare as CheckedIcon, FiSquare as UncheckedIcon } from 'react-icons/fi';
@@ -13,6 +13,8 @@ import NumberInput from '~/components/NumberInput';
 import Range from '~/components/Range';
 import constants from '~/lib/constants';
 import LauncherDialog from './components/LauncherDialog';
+import useCrewContext from '~/hooks/useCrewContext';
+import useSession from '~/hooks/useSession';
 
 const { ENABLE_SHADOWS, MIN_FOV, MAX_FOV } = constants;
 
@@ -80,6 +82,37 @@ const AutodetectButton = styled(Button)`
   border: 0;
   & > svg: {
     display: none;
+  }
+`;
+
+const CheckboxRow = styled.div`
+  align-items: center;
+  display: flex;
+  flex-direction: row;
+  font-size: 14px;
+  margin-bottom: 20px;
+  & > label {
+    color: #A0A0A0;
+    flex: 0 0 200px;
+  }
+  & > div {
+    align-items: center;
+    cursor: ${p => p.theme.cursors.active};
+    display: flex;
+    flex-direction: row;
+    flex: 1;
+    padding: 8px 0;
+    & > svg {
+      color: ${p => p.theme.colors.main};
+      flex: 0 0 48px;
+      font-size: 20px;
+    }
+    & > span {
+      color: #656565;
+    }
+    &:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
   }
 `;
 
@@ -306,23 +339,76 @@ const SoundPane = () => {
 }
 
 const GameplayPane = () => {
+  const { authenticated } = useSession();
+  const { crew } = useCrewContext();
+
+  const crewTutorials = useStore(s => s.crewTutorials);
   const gameplay = useStore(s => s.gameplay);
   const toggleAutoswap = useStore(s => s.dispatchAutoswapEnabled);
+  const dispatchDismissCrewTutorial = useStore(s => s.dispatchDismissCrewTutorial);
+  const dispatchTutorialDisabled = useStore(s => s.dispatchTutorialDisabled);
+  const dispatchWelcomeTourDisabled = useStore(s => s.dispatchWelcomeTourDisabled);
   
+  const tutorialIsDisabled = useMemo(() => {
+    if (gameplay.dismissTutorial) {
+      return true;
+    } else if (crewTutorials?.[crew?.id]?.dismissed) {
+      return true;
+    }
+    return false;
+  }, [crew, crewTutorials, gameplay.dismissTutorial]);
+
+  const toggleTutorialDisabled = useCallback((which) => {
+    // disable setting only (i.e. not crew-specific)
+    if (which) {
+      dispatchTutorialDisabled(true);
+
+    // else, to ensure visible, crewTutorial and setting both must be enabled
+    } else {
+      if (crewTutorials?.[crew?.id]?.dismissed) {
+        dispatchDismissCrewTutorial(crew?.id, false);
+      }
+      dispatchTutorialDisabled(false);
+    }
+  }, [crew, crewTutorials, gameplay.dismissTutorial]);
+
   return (
     <StyledSettings>
       <Section>
         <h3>Gameplay</h3>
         <div>
-          <StyledDataReadout label="Automatically swap ETH ⇌ USDC as needed" wide>
-            <IconButton
-              data-tooltip-content="Toggle Autoswap"
-              data-tooltip-id="globalTooltip"
-              onClick={() => toggleAutoswap(!gameplay.autoswap)}
-              borderless>
+          <CheckboxRow>
+            <label>Autoswap ETH ⇌ USDC:</label>
+            <div onClick={() => toggleAutoswap(!gameplay.autoswap)}>
               {gameplay.autoswap ? <CheckedIcon /> : <UncheckedIcon />}
-            </IconButton>
-          </StyledDataReadout>
+              <span>
+                Automatically swap ETH ⇌ USDC as needed for purchases. Swap requests
+                for the appropriate amount will be included with the purchase request.
+              </span>
+            </div>
+          </CheckboxRow>
+
+          <CheckboxRow>
+            <label>Show Welcome Tour:</label>
+            <div onClick={() => dispatchWelcomeTourDisabled(!gameplay.dismissWelcomeTour)}>
+              {!gameplay.dismissWelcomeTour ? <CheckedIcon /> : <UncheckedIcon />}
+              <span>
+                Shows the Welcome Tour when navigating the client while logged out.
+              </span>
+            </div>
+          </CheckboxRow>
+
+          {authenticated && (
+            <CheckboxRow>
+              <label>Show Tutorial:</label>
+              <div onClick={() => toggleTutorialDisabled(!tutorialIsDisabled)}>
+                {!tutorialIsDisabled ? <CheckedIcon /> : <UncheckedIcon />}
+                <span>
+                  Shows all completeable steps in the tutorial (if any).
+                </span>
+              </div>
+            </CheckboxRow>
+          )}
         </div>
       </Section>
     </StyledSettings>

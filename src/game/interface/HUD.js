@@ -3,13 +3,14 @@ import styled from 'styled-components';
 import useCrewContext from '~/hooks/useCrewContext';
 import ActionDialog from './hud/ActionDialog';
 import ActionItems from './hud/ActionItems';
-import TutorialItems from './hud/TutorialItems';
 import AvatarMenu from './hud/AvatarMenu';
 import LoginMenu from './hud/LoginMenu';
 import InfoPane from './hud/InfoPane';
 import SystemControls from './hud/SystemControls';
 import HudMenu from './hud/HudMenu';
 import SceneBanner from './hud/SceneBanner';
+import WelcomeTourItems from './hud/WelcomeTourItems';
+import useStore from '~/hooks/useStore';
 
 const bottomMargin = 60;
 
@@ -74,6 +75,7 @@ export const Rule = styled.div`
 
 const HUD = () => {
   const { captain, loading } = useCrewContext();
+  const dismissWelcomeTour = useStore(s => s.gameplay?.dismissWelcomeTour);
   return (
     <>
       <LeftWrapper>
@@ -86,7 +88,7 @@ const HUD = () => {
         {!captain && !loading && (
           <>
             <LoginMenu />
-            <TutorialItems />
+            {!dismissWelcomeTour && <WelcomeTourItems />}
           </>
         )}
         {!captain && <div style={{ flex: 1 }} />}

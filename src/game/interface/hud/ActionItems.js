@@ -2,7 +2,7 @@ import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import styled from 'styled-components';
 
-import { BellIcon, CheckCircleIcon, EyeIcon, LoggedEventsIcon } from '~/components/Icons';
+import { BellIcon, CheckCircleIcon, CloseIcon, EyeIcon, LoggedEventsIcon, TutorialIcon } from '~/components/Icons';
 import CollapsibleSection from '~/components/CollapsibleSection';
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
 import useActionItems from '~/hooks/useActionItems';
@@ -12,6 +12,9 @@ import useSession from '~/hooks/useSession';
 import useStore from '~/hooks/useStore';
 import { hexToRGB } from '~/theme';
 import ActionItem, { ITEM_WIDTH, TRANSITION_TIME } from './ActionItem';
+import TutorialActionItems from './TutorialActionItems';
+import IconButton from '~/components/IconButton';
+import ConfirmationDialog from '~/components/ConfirmationDialog';
 
 export const SECTION_WIDTH = ITEM_WIDTH + 30;
 
@@ -153,6 +156,52 @@ const InProgressFilter = styled(PillFilter)`
   `}
 `;
 
+const TutorialTab = styled(PillFilter)`
+  background: rgba(${p => p.theme.colors.brightMainRGB}, 0.4);
+  border-color: ${p => p.theme.colors.brightMain};
+  color: white;
+  height: 30px;
+  line-height: 20px;
+  position: relative;
+  text-align: center;
+  text-transform: none;
+  width: 170px;
+  &:before {
+    content: "";
+    border: 2px solid rgba(0, 0, 0, 0.7);
+    border-radius: 16px;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+  }
+  &:after {
+    background: ${p => p.theme.colors.brightMain};
+  }
+`;
+const Skipper = styled.div`
+  align-items: center;
+  color: ${p => p.theme.colors.main};
+  cursor: ${p => p.theme.cursors.active};
+  display: flex;
+  flex-direction: row;
+  font-size: 90%;
+  pointer-events: all;
+  & > button {
+    margin-left: 4px;
+    margin-right: 0;
+  }
+
+  &:hover {
+    color: white;
+    & > button {
+      background: rgba(${p => p.theme.colors.mainRGB}, 0.2);
+      color: white;
+    }
+  }
+`;
+
 const OuterWrapper = styled.div`
   flex: 1;
   height: 0;
@@ -161,7 +210,7 @@ const OuterWrapper = styled.div`
   width: ${SECTION_WIDTH}px;
 `;
 
-const ActionItemContainer = styled.div`
+export const ActionItemContainer = styled.div`
   max-height: 275px;
   overflow-y: auto;
   overflow-x: hidden;
@@ -214,6 +263,13 @@ const UnhideAll = styled(AllAction)`
   }
 `;
 
+const ConfirmBody = styled.div`
+  color: ${p => p.theme.colors.main};
+  font-size: 110%;
+  line-height: 1.6em;
+  padding: 30px;
+`;
+
 const ActionItems = () => {
   const { authenticated } = useSession();
   const { allVisibleItems: allItems } = useActionItems();
@@ -221,9 +277,14 @@ const ActionItems = () => {
   const { execute, getStatus } = useContext(ChainTransactionContext);
   const getActivityConfig = useGetActivityConfig();
 
+  const crewTutorial = useStore(s => s.crewTutorials?.[crew?.id]);
+  const dismissAllTutorials = useStore(s => s.gameplay?.dismissTutorial);
   const dispatchUnhideAllActionItems = useStore(s => s.dispatchUnhideAllActionItems);
+  const dispatchDismissCrewTutorial = useStore(s => s.dispatchDismissCrewTutorial);
 
+  const [confirmingTutorialDismissal, setConfirmingTutorialDismissal] = useState();
   const [displayItems, setDisplayItems] = useState();
+
   useEffect(() => {
     if (displayItems) {
       // TODO: maybe this should show new ones while transitioning out old ones?
@@ -328,48 +389,88 @@ const ActionItems = () => {
       categorized[i.category].items.push(i);
     })
     return Object.values(categorized);
-  }, [filteredDisplayItems])
+  }, [filteredDisplayItems]);
 
-  if (!captain) return null;
+  const onConfirmTutorialDismissal = useCallback(() => {
+    dispatchDismissCrewTutorial(crew?.id, true);
+    setConfirmingTutorialDismissal();
+  }, [crew?.id]);
+
   return (
-    <OuterWrapper>
-      {authenticated && (
-        <CollapsibleSection
-          borderless
-          collapsibleProps={{ style: { width: SECTION_WIDTH - 32 } }}
-          openOnChange={lastClick}
-          title={(
-            <TitleWrapper>
-              <Filters>
-                <AllFilter onClick={onClickFilter('all')} selected={selectedFilter === 'all'}><BellIcon /> <b>{(tallies.all || 0).toLocaleString()}</b></AllFilter>
-                <ReadyFilter onClick={onClickFilter('ready')} selected={selectedFilter === 'ready'}><b>{(tallies.ready || 0).toLocaleString()}</b> Ready</ReadyFilter>
-                <InProgressFilter onClick={onClickFilter('progress')} selected={selectedFilter === 'progress'}><b>{(tallies.progress || 0).toLocaleString()}</b> In Progress</InProgressFilter>
-                {tallies.hidden > 0 && <HiddenFilter onClick={onClickFilter('hidden')} selected={selectedFilter === 'hidden'}><EyeIcon /> <b>{(tallies.hidden || 0).toLocaleString()}</b></HiddenFilter>}
-                <div style={{ flex: 1 }} />
-                <Link to="/listview/eventlog" onClick={(e) => e.stopPropagation()}><LoggedEventsIcon /></Link>
-              </Filters>
-            </TitleWrapper>
-          )}>
-          {['all', 'ready'].includes(selectedFilter) && autoFinishCalls?.length > 1 && !isFinishingAll && <FinishAll onClick={onFinishAll}><CheckCircleIcon /> Finish All Ready Items</FinishAll>}
-          {selectedFilter === 'hidden' && <UnhideAll onClick={onUnhideAll}><EyeIcon /> Unhide All</UnhideAll>}
-          <ActionItemWrapper>
-            <ActionItemContainer>
-              {filteredDisplayCategories.map(({ category, items }) => (
-                <ActionItemCategory key={category}>
-                  {items.map((item) => (
-                    <ActionItem
-                      key={item.uniqueKey}
-                      data={item}
-                      getActivityConfig={getActivityConfig}
-                    />
-                  ))}
-                </ActionItemCategory>
-              ))}
-            </ActionItemContainer>
-          </ActionItemWrapper>
-        </CollapsibleSection>
+    <>
+      <OuterWrapper>
+        {authenticated && (
+          <CollapsibleSection
+            borderless
+            collapsibleProps={{ style: { width: SECTION_WIDTH - 32 } }}
+            openOnChange={lastClick}
+            title={(
+              <TitleWrapper>
+                <Filters>
+                  <AllFilter onClick={onClickFilter('all')} selected={selectedFilter === 'all'}><BellIcon /> <b>{(tallies.all || 0).toLocaleString()}</b></AllFilter>
+                  <ReadyFilter onClick={onClickFilter('ready')} selected={selectedFilter === 'ready'}><b>{(tallies.ready || 0).toLocaleString()}</b> Ready</ReadyFilter>
+                  <InProgressFilter onClick={onClickFilter('progress')} selected={selectedFilter === 'progress'}><b>{(tallies.progress || 0).toLocaleString()}</b> In Progress</InProgressFilter>
+                  {tallies.hidden > 0 && <HiddenFilter onClick={onClickFilter('hidden')} selected={selectedFilter === 'hidden'}><EyeIcon /> <b>{(tallies.hidden || 0).toLocaleString()}</b></HiddenFilter>}
+                  <div style={{ flex: 1 }} />
+                  <Link to="/listview/eventlog" onClick={(e) => e.stopPropagation()}><LoggedEventsIcon /></Link>
+                </Filters>
+              </TitleWrapper>
+            )}>
+            {['all', 'ready'].includes(selectedFilter) && autoFinishCalls?.length > 1 && !isFinishingAll && <FinishAll onClick={onFinishAll}><CheckCircleIcon /> Finish All Ready Items</FinishAll>}
+            {selectedFilter === 'hidden' && <UnhideAll onClick={onUnhideAll}><EyeIcon /> Unhide All</UnhideAll>}
+            <ActionItemWrapper>
+              <ActionItemContainer>
+                {filteredDisplayCategories.map(({ category, items }) => (
+                  <ActionItemCategory key={category}>
+                    {items.map((item) => (
+                      <ActionItem
+                        key={item.uniqueKey}
+                        data={item}
+                        getActivityConfig={getActivityConfig}
+                      />
+                    ))}
+                  </ActionItemCategory>
+                ))}
+              </ActionItemContainer>
+            </ActionItemWrapper>
+            
+            {!dismissAllTutorials && !crewTutorial?.dismissed && (
+              <>
+                <TitleWrapper style={{ marginTop: 10 }}>
+                  <Filters>
+                    <TutorialTab selected>Tutorial</TutorialTab>
+                    <div style={{ flex: 1 }} />
+                    <Skipper onClick={() => setConfirmingTutorialDismissal(true)}>
+                      Skip Tutorial
+                      <IconButton scale={0.8}><CloseIcon /></IconButton>
+                    </Skipper>
+                  </Filters>
+                </TitleWrapper>
+                <ActionItemWrapper>
+                  <TutorialActionItems />
+                </ActionItemWrapper>
+              </>
+            )}
+          </CollapsibleSection>
+        )}
+
+      </OuterWrapper>
+
+      {confirmingTutorialDismissal && (
+        <ConfirmationDialog
+          title="Skip Tutorial"
+          body={
+            <ConfirmBody>
+              Are you sure? You may restore the tutorial from the Game Settings menu at any point if you need help.
+            </ConfirmBody>
+          }
+          onConfirm={onConfirmTutorialDismissal}
+          onReject={() => setConfirmingTutorialDismissal()}
+          confirmText="Yes"
+          rejectText="Cancel"
+        />
       )}
-    </OuterWrapper>
+    </>
   );
 };
 

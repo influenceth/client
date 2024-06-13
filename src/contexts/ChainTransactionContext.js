@@ -276,7 +276,7 @@ const customConfigs = {
   InitializeArvadian: { equalityTest: true },
   RecruitAdalian: {
     getPrice: async ({ crewmate }) => {
-      if (crewmate?.id > 0) return 0n; // if recruiting existing crewmate, no cost
+      if (crewmate?.id > 0) return [0n, TOKEN.ETH]; // if recruiting existing crewmate, no cost
       const { ADALIAN_PURCHASE_PRICE, ADALIAN_PURCHASE_TOKEN } = await api.getConstants(['ADALIAN_PURCHASE_PRICE', 'ADALIAN_PURCHASE_TOKEN']);
       return [BigInt(ADALIAN_PURCHASE_PRICE), Address.toStandard(ADALIAN_PURCHASE_TOKEN)];
     },
@@ -729,7 +729,7 @@ export function ChainTransactionProvider({ children }) {
               }
 
               if (customConfigs[runSystem]?.getPrice) {
-                const [tokenAmount, token] = await customConfigs[runSystem].getPrice(processedVars);
+                const [tokenAmount, token] = (await customConfigs[runSystem].getPrice(processedVars)) || [];
                 if (![TOKEN.ETH, TOKEN.USDC].includes(token)) throw new Error('Invalid pricing token (only ETH or USDC supported).');
                 if (totalPriceToken && totalPriceToken !== token) throw new Error('Mixed currency transactions are not supported.');
                 totalPrice += tokenAmount;
@@ -981,7 +981,8 @@ export function ChainTransactionProvider({ children }) {
     } catch (e) {
       return true;
     }
-  }, []);
+    return false;
+  }, [starknet]);
 
   const executeCalls = useCallback(async (calls) => {
     if (!starknet?.account) {
@@ -1096,7 +1097,7 @@ export function ChainTransactionProvider({ children }) {
     }
 
     setPromptingTransaction(false);
-  }, [blockTime, contracts]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [blockTime, contracts, starknet]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const getPendingTx = useCallback((key, vars) => {
     if (contracts && contracts[key]) {

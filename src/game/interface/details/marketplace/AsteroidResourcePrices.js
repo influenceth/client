@@ -437,7 +437,7 @@ const AsteroidResourcePrices = ({ asteroid, mode, resource }) => {
             columns={columns}
             data={sortedMarketplaces || []}
             getRowProps={getRowProps}
-            keyField="i"
+            keyField="lotId"
             onClickColumn={handleSort}
             sortDirection={sortDirection}
             sortField={sortField}

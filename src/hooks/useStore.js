@@ -41,7 +41,7 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
     actionDialog: {},
     launcherPage: null,
     openHudMenu: null,
-    tutorialStep: -1,
+    welcomeTourStep: -1,
 
     // scene: {
     //   belt: {
@@ -84,6 +84,7 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
 
     selectedCrewId: null,
     crewAssignments: {},
+    crewTutorials: {},
 
     cameraNeedsRecenter: false,
     cameraNeedsReorientation: false,
@@ -104,6 +105,8 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
 
     gameplay: {
       autoswap: true,
+      dismissTutorial: false,
+      dismissWelcomeTour: false,
     },
 
     graphics: {
@@ -431,7 +434,7 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
     // Unsets the current session but keeps it in the sessions list
     dispatchSessionSuspended: () => set(produce(state => {
       state.currentSession = {};
-      state.tutorialStep = -1;
+      state.welcomeTourStep = -1;
     })),
 
     // Resumes a session that was suspended
@@ -443,11 +446,11 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
     dispatchSessionEnded: () => set(produce(state => {
       delete state.sessions[state.currentSession?.accountAddress];
       state.currentSession = {};
-      state.tutorialStep = -1;
+      state.welcomeTourStep = -1;
     })),
 
-    dispatchTutorialStep: (step) => set(produce(state => {
-      state.tutorialStep = step;
+    dispatchWelcomeTourStep: (step) => set(produce(state => {
+      state.welcomeTourStep = step;
     })),
 
     dispatchCrewSelected: (crewId) => set(produce(state => {
@@ -563,56 +566,7 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
     })),
 
     dispatchClearChatHistory: () => set(produce(state => {
-      state.chatHistory = [
-        // {
-        //   asteroidId: 1,
-        //   crewId: 1,
-        //   content: 'Here is a message.'
-        // },
-        // {
-        //   asteroidId: 1,
-        //   crewId: 2,
-        //   content: 'Here is a message.'
-        // },
-        // {
-        //   asteroidId: 1,
-        //   crewId: 3,
-        //   content: 'Here is a message. And here is something else I feel like I need to say. Take it or leave it. Also, I\'m having a pretty good time here, so that\'s cool.'
-        // },
-        // {
-        //   asteroidId: 1,
-        //   crewId: 4,
-        //   content: 'Here is a message.'
-        // },
-        // {
-        //   asteroidId: 1,
-        //   crewId: 5,
-        //   content: 'Here is a message.'
-        // },
-        // {
-        //   asteroidId: 1,
-        //   crewId: 6,
-        //   content: 'Here is a message.'
-        // },
-        // {
-        //   asteroidId: 1,
-        //   crewId: 6,
-        //   content: 'Here is a message.'
-        // },
-        // {
-        //   isConnectionBreak: true
-        // },
-        // {
-        //   asteroidId: 1,
-        //   crewId: 6,
-        //   content: 'Here is a message.'
-        // },
-        // {
-        //   asteroidId: 1,
-        //   crewId: 6,
-        //   content: 'Here is a message.'
-        // },
-      ];
+      state.chatHistory = [];
     })),
 
     dispatchChatMessage: (body) => set(produce(state => {
@@ -657,6 +611,34 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
       state.gameplay.autoswap = !!which;
     })),
 
+    dispatchTutorialDisabled: (which) => set(produce(state => {
+      state.gameplay.dismissTutorial = !!which;
+    })),
+
+    dispatchWelcomeTourDisabled: (which) => set(produce(state => {
+      state.gameplay.dismissWelcomeTour = !!which;
+      state.welcomeTourStep = -1;
+    })),
+
+    dispatchDismissCrewTutorial: (crewId, which) => set(produce(state => {
+      // (resets dismissedSteps either way)
+      state.crewTutorials[crewId] = {
+        dismissed: which,
+        dismissedSteps: []
+      };
+    })),
+    dispatchDismissCrewTutorialStep: (crewId, step) => set(produce(state => {
+      if (!state.crewTutorials[crewId]) {
+        state.crewTutorials[crewId] = {
+          dismissed: false,
+          dismissedSteps: []
+        };
+      }
+      if (!state.crewTutorials[crewId].dismissedSteps.includes(step)) {
+        state.crewTutorials[crewId].dismissedSteps.push(step);
+      }
+    })),
+
     //
     // SPECIAL GETTERS
 
@@ -697,7 +679,7 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
 
 }), {
   name: STORE_NAME,
-  version: 5,
+  version: 6,
   migrate: (persistedState, oldVersion) => {
     const migrations = [
       (state, version) => {
@@ -724,6 +706,11 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
       (state, version) => {
         if (version >= 5) return;
         state.gameplay = { autoswap: true };
+        return state;
+      },
+      (state, version) => {
+        if (version >= 6) return;
+        state.crewTutorials = {};
         return state;
       },
     ];

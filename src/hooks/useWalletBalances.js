@@ -35,7 +35,7 @@ const useWalletBalances = (overrideAccount) => {
     };
 
     // if autoswap, return allTokens... else, return just the specified purchase token
-    if (autoswap) return autoswap ? allTokens : { [baseToken]: allTokens[baseToken] };
+    return autoswap ? allTokens : { [baseToken]: allTokens[baseToken] };
   }, [autoswap, baseToken, ethBalance, gasReserveBalance, usdcBalance]);
 
   const isLoading = isLoading1 || isLoading2;
