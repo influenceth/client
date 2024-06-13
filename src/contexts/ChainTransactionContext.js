@@ -530,7 +530,8 @@ export function ChainTransactionProvider({ children }) {
     logout,
     provider,
     starknetSession,
-    walletAccount
+    walletAccount,
+    walletId
   } = useSession();
   const activities = useActivitiesContext();
   const { crew, pendingTransactions } = useCrewContext();
