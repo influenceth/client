@@ -31,6 +31,7 @@ const PartialUnderlay = styled.div`
 const ResourceRequirement = ({ isGathering, item, noStyles, ...props }) => {
   // badge amounts
   // (if gathering, show numerator and denominator)
+  console.log('isGa', isGathering)
   if (isGathering) {
     const { numerator, denominator, deficit } = formatResourceAmountRatio(item.numerator, item.denominator, props.resource.i);
     props.badge = numerator;

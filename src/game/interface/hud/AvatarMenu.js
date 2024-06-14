@@ -21,7 +21,7 @@ const menuWidth = SECTION_WIDTH;
 const Wrapper = styled.div`
   pointer-events: none;
   width: ${menuWidth}px;
-  padding 6px 0 6px;
+  padding 6px 0;
 `;
 
 const CrewWrapper = styled.div`
