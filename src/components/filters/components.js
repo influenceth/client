@@ -186,7 +186,7 @@ export const SearchMenu = ({
           )}
         </div>
       )}
-      collapsed={initiallyCollapsed}
+      collapsed={false}
       {...props}>
       {children}
     </HudMenuCollapsibleSection>

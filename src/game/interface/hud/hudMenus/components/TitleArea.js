@@ -9,6 +9,7 @@ const Wrapper = styled.div`
   background: url(${p => p.background ? hudHeaders[p.background] : ''}) no-repeat center center;
   background-size: cover;
   border-bottom: 1px solid ${majorBorderColor};
+  margin-bottom: 6px;
   height: 150px;
   position: relative;
 `;
