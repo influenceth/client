@@ -952,15 +952,23 @@ const AsteroidComponent = () => {
 
       // update light position (since asteroid has moved around star)
       if (zoomStatus !== 'out') {
-        if (light.current) {
+
+        if (light.current) {  
+          const sunMax = 0.5
+          const sunMin = 0.3
+          const sunFalloff = Math.min(config.radius / 6, 500);
+          const sunIntensity = Math.min(sunMax, Math.max(sunMax - Math.sqrt(sunFalloff / cameraAltitude), sunMin));
+          light.current.intensity = STAR_INTENSITY_ADJ * sunIntensity;
           light.current.position.copy(
             new Vector3(...position.current).normalize().negate().multiplyScalar(config.radius * DIRECTIONAL_LIGHT_DISTANCE)
           );
         }
 
         if (darkLight.current) {
-          const falloff = Math.min(config.radius / 4, 1500);
-          const intensity = Math.max(0.25, Math.min(Math.sqrt(falloff / cameraAltitude), 0.5));
+          const darkSunMax = 0.5
+          const darkSunMin = 0.25
+          const falloff = Math.min(config.radius / 4, 2000);
+          const intensity = Math.max(darkSunMin, Math.min(Math.sqrt(falloff / cameraAltitude), darkSunMax));
           darkLight.current.intensity = DARKLIGHT_INTENSITY * intensity;
           darkLight.current.position.copy(
             new Vector3(...position.current).normalize().multiplyScalar(config.radius * DIRECTIONAL_LIGHT_DISTANCE)

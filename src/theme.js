@@ -34,7 +34,7 @@ export const clipCorner = (size) => `
 const main = '#36a7cd';
 const brightMain = '#57d5ff';
 const darkMain = '#1c5063';
-const success = '#00ffe7';
+const success = '#00fff0';
 
 const green = '#88e675';
 const darkGreen = '#59b366';
@@ -42,7 +42,7 @@ const gray = '#bbbbbb';
 const teal = '#69ebf4';
 const blue = '#4f90ff';
 const lightPurple = '#636ee1';
-const purple = '#884fff';
+const purple = '#8181ff';
 const lightOrange = '#faaf42';
 const orange = '#ff984f';
 const yellow = '#ffd94f';

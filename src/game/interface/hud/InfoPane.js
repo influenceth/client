@@ -53,7 +53,7 @@ const CaptainCardContainer = styled.div`
 
 const TitleRow = styled.div`
   display: flex;
-  filter: drop-shadow(0px 0px 2px rgb(0 0 0));
+  filter: drop-shadow(0px 0px 2px rgba(0, 0, 0, 0.5));
   flex-direction: row;
   ${p => p.hasLink && `
     cursor: ${p.theme.cursors.active};
@@ -83,8 +83,8 @@ const Title = styled.div`
 `;
 
 const Subtitle = styled.div`
-  color: #999;
-  filter: drop-shadow(0px 0px 2px rgb(0 0 0));
+  color: rgba(255, 255, 255, 0.5);
+  filter: drop-shadow(0px 0px 2px rgba(0, 0, 0, 0.5));
   font-size: 15px;
   margin-bottom: 12px;
 

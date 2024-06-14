@@ -44,10 +44,9 @@ const SwayBalance = styled.div`
   border-right: 1px solid rgba(255, 255, 255, 0.15);
   color: white;
   display: flex;
-  filter: drop-shadow(0px 0px 2px rgb(0 0 0));
-  font-size: 20px;
-  padding-right: 16px;
-  margin-right: 16px;
+  filter: drop-shadow(0px 0px 2px rgba(0, 0, 0, 0.5));
+  font-size: 24px;
+  margin-left: 25px;
 
   & > svg {
     font-size: 24px;
