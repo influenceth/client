@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
 import styled from 'styled-components';
+
 import ClipCorner from '~/components/ClipCorner';
 import NavIcon from '~/components/NavIcon';
+import { LinkIcon } from '~/components/Icons';
 import { reactBool } from '~/lib/utils';
 import theme from '~/theme';
 
@@ -42,12 +44,14 @@ const PaneWrapper = styled.div`
   overflow: hidden auto;
   width: 1075px;
 `;
+
 const TabWrapper = styled.div`
   display: flex;
   flex-direction: column;
   flex: 0 0 300px;
   padding: 15px 0;
 `;
+
 const Tab = styled.div`
   align-items: center;
   background: black;
@@ -85,6 +89,10 @@ const Tab = styled.div`
         opacity: 0.9;
       }
   `};
+
+  & > label {
+    margin-right: 5px;
+  }
 `;
 
 const BottomLeft = styled.div``;
@@ -119,6 +127,7 @@ const LauncherDialog = ({ panes = [], preselect, singlePane, bottomLeftMenu }) =
                   onClick={() => handleClick(pane)}>
                   <span><NavIcon color={theme.colors.main} /></span>
                   <label>{pane.label}</label>
+                  {pane.link && <LinkIcon />}
                 </Tab>
               ))}
               {bottomLeftMenu && (
