@@ -1018,10 +1018,10 @@ export const formatActionItem = (item, actionItem) => {
 
 export const itemColors = {
   pending: hexToRGB(theme.colors.purple),
-  failed: '241, 131, 97',//hexToRGB(theme.colors.error),
+  failed: '241, 131, 97',
   randomEvent: '232, 211, 117',
   ready: hexToRGB('#00fff0'),
-  unready: hexToRGB(theme.colors.brightMain),
+  unready: theme.colors.brightMainRGB,
   unstarted: hexToRGB(theme.colors.sequence),
   plan: '248, 133, 44',
   agreement: '248, 133, 44',
@@ -1033,7 +1033,7 @@ export const backgroundColors = {
   failed: hexToRGB('#7a211c'),
   randomEvent: hexToRGB('#8c8148'),
   ready: hexToRGB('#006962'),
-  unready: hexToRGB(theme.colors.darkMain),
+  unready: theme.colors.darkMainRGB,
   unstarted: hexToRGB('#1e558c'),
   plan: hexToRGB('#80592c'),
   agreement: hexToRGB('#853217'),

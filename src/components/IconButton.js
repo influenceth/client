@@ -3,8 +3,6 @@ import styled from 'styled-components';
 import useStore from '~/hooks/useStore';
 import { hexToRGB } from '~/theme';
 
-// background-color: rgba(${p => p.backgroundColor || hexToRGB(p.theme.colors.darkMain)}, 0.5);
-
 const StyledIconButton = styled.button`
   align-items: center;
   border: ${p => p.borderless ? '0px' : '1px'} solid ${p => p.theme.colors[p.themeColor || 'main']};

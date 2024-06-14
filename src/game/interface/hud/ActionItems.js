@@ -32,6 +32,10 @@ const ActionItemWrapper = styled.div`
   transition: width 0.15s ease;
   user-select: none;
   width: ${ITEM_WIDTH}px;
+
+  &:first-child {
+    margin-top: 8px;
+  }
 `;
 
 const filterRowPadding = 9;
@@ -43,7 +47,7 @@ const Filters = styled.div`
   display: flex;
   flex-direction: row;
   overflow: hidden;
-  padding: ${filterRowPadding}px 0px 8px 0px;
+  padding: ${filterRowPadding}px 0px;
   width: 100%;
 
   & > a {
@@ -105,12 +109,7 @@ const IconFilter = styled(Filter)`
   flex-direction: row;
   opacity: ${p => p.selected ? 1 : 0.8};
   transition: opacity 150ms ease;
-  ${p => p.selected ? `border: 1.5px solid ${p => p.selected ? 'currentColor' : 'transparent'};` : `
-
-    &:hover { 
-      opacity: 0.9; 
-    }`
-  }
+  ${p => p.selected ? `` : `&:hover { opacity: 0.9; }`}
   & > b {
     margin: 0 0 0 6px;
   }
@@ -123,16 +122,11 @@ const IconFilter = styled(Filter)`
 const AllFilter = styled(IconFilter)`
   padding-left: 5px;
   padding-right: 2px;
-  color: rgba(255, 255, 255, 0.5);
-  &:hover {
-    color: rgba(255, 255, 255, 1.0);
-  }
-  ${p => p.selected && `
-    color: rgb(255, 255, 255, 1.0);
+  color: white;
+  ${p => !p.selected && `
+    opacity: 0.5;
+    &:hover { opacity: 1; }
   `}
-  &:after {
-    // left: ${selectionIndicatorWidth / 2}px;
-  }
 `;
 
 const HiddenFilter = styled(IconFilter)`
@@ -148,31 +142,19 @@ const PillFilter = styled(Filter)`
 `;
 
 const ReadyFilter = styled(PillFilter)`
-  background: rgba(${p => hexToRGB(p.theme.colors.success)}, 0.25);
+  background: rgba(${p => hexToRGB(p.theme.colors.success)},  ${p => p.selected ? 0.5 : 0.25});
   color: ${p => p.theme.colors.success};
   &:hover {
-    background: rgba(${p => hexToRGB(p.theme.colors.success)}, 0.5);
+    background: rgba(${p => hexToRGB(p.theme.colors.success)}, ${p => p.selected ? 0.75 : 0.5});
   }
-  ${p => p.selected && `
-    background: rgba(${p => hexToRGB(p.theme.colors.success)}, 0.5);
-    &:hover {
-      background: rgba(${p => hexToRGB(p.theme.colors.success)}, 0.75);
-    }
-  `}
 `;
 
 const InProgressFilter = styled(PillFilter)`
-  background: rgba(${p => hexToRGB(p.theme.colors.main)}, 0.25);
+  background: rgba(${p => p.theme.colors.mainRGB},  ${p => p.selected ? 0.5 : 0.25});
   color: ${p => p.theme.colors.brightMain};
   &:hover {
-    background: rgba(${p => p.theme.colors.mainRGB}, 0.5);
+    background: rgba(${p => p.theme.colors.mainRGB}, ${p => p.selected ? 0.75 : 0.5});
   }
-  ${p => !p.selected && `
-    background: rgba(${p => p.theme.colors.mainRGB}, 0.5);
-    &:hover {
-      background: rgba(${p => p.theme.colors.mainRGB}, 0.75);
-    }
-  `}
 `;
 
 const TutorialTab = styled(PillFilter)`
@@ -230,7 +212,7 @@ const OuterWrapper = styled.div`
 `;
 
 export const ActionItemContainer = styled.div`
-  height: 35vh;
+  max-height: 100%;
   overflow-y: auto;
   overflow-x: hidden;
   pointer-events: auto;
@@ -238,7 +220,6 @@ export const ActionItemContainer = styled.div`
 `;
 
 const ActionItemCategory = styled.div`
-  margin-top: 8px;
   &:not(:first-child) {
     margin-top: 10px;
   }
@@ -259,8 +240,8 @@ const AllAction = styled.div`
   cursor: ${p => p.theme.cursors.active};
   display: flex;
   font-size: 14px;
-  height: 34px;
-  margin-bottom: -8px;
+  flex: 0 0 34px;
+  margin-top: 4px;
   pointer-events: all;
 `;
 
@@ -424,7 +405,14 @@ const ActionItems = () => {
         {authenticated && (
           <CollapsibleSection
             borderless
-            collapsibleProps={{ style: { width: SECTION_WIDTH - 32 } }}
+            collapsibleProps={{
+              style: {
+                display: 'flex',
+                flexDirection: 'column',
+                paddingBottom: 40,
+                width: SECTION_WIDTH - 32
+              }
+            }}
             openOnChange={lastClick}
             title={(
               <TitleWrapper>
@@ -438,8 +426,12 @@ const ActionItems = () => {
                 </Filters>
               </TitleWrapper>
             )}>
-            {['all', 'ready'].includes(selectedFilter) && autoFinishCalls?.length > 1 && !isFinishingAll && <FinishAll onClick={onFinishAll}><FinishAllIcon /> Finish All Ready Items</FinishAll>}
-            {selectedFilter === 'hidden' && <UnhideAll onClick={onUnhideAll}><EyeIcon /> Unhide All</UnhideAll>}
+            {['all', 'ready'].includes(selectedFilter) && autoFinishCalls?.length > 1 && !isFinishingAll && (
+              <FinishAll onClick={onFinishAll}><FinishAllIcon /> Finish All Ready Items</FinishAll>
+            )}
+            {selectedFilter === 'hidden' && (
+              <UnhideAll onClick={onUnhideAll}><EyeIcon /> Unhide All</UnhideAll>
+            )}
             <ActionItemWrapper>
               <ActionItemContainer>
                 {filteredDisplayCategories.map(({ category, items }) => (
