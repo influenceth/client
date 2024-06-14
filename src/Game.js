@@ -24,8 +24,6 @@ import useServiceWorker from '~/hooks/useServiceWorker';
 import useStore from '~/hooks/useStore';
 import constants from '~/lib/constants';
 import theme from '~/theme';
-import WelcomeFlow from './WelcomeFlow';
-
 
 const { GRAPHICS_DEFAULTS } = constants;
 
@@ -183,7 +181,6 @@ const Game = () => {
                                 <ThemeProvider theme={theme}>
                                   <ScreensizeProvider>
                                     <Interface />
-                                    <WelcomeFlow />
                                   </ScreensizeProvider>
                                 </ThemeProvider>
                             </ActionItemProvider>

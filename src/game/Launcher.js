@@ -20,6 +20,8 @@ import Help from './launcher/Help';
 import Rewards from './launcher/Rewards';
 import { Tooltip } from 'react-tooltip';
 
+const DISABLE_LAUNCHER_TRAILER = true && process.env.NODE_ENV === 'development';
+
 export const menuPadding = 25;
 const headerHeight = 68;
 const footerHeight = 80;
@@ -299,10 +301,12 @@ const Launcher = (props) => {
   const { data: priceConstants, isLoading: priceConstantsLoading } = usePriceConstants();
 
   const launcherPage = useStore(s => s.launcherPage);
-  const dispatchLauncherPage = useStore(s => s.dispatchLauncherPage);
-  const dispatchToggleInterface = useStore(s => s.dispatchToggleInterface);
   const interfaceHidden = useStore(s => s.graphics.hideInterface);
   const hasSeenIntroVideo = useStore(s => s.hasSeenIntroVideo);
+  const dispatchCutscene = useStore(s => s.dispatchCutscene);
+  const dispatchLauncherPage = useStore(s => s.dispatchLauncherPage);
+  const dispatchSeenIntroVideo = useStore(s => s.dispatchSeenIntroVideo);
+  const dispatchToggleInterface = useStore(s => s.dispatchToggleInterface);
 
   useEffect(() => {
     if (!interfaceHidden) {
@@ -336,6 +340,13 @@ const Launcher = (props) => {
 
   const onClickPlay = useCallback(() => {
     dispatchLauncherPage();
+    if (!hasSeenIntroVideo && !DISABLE_LAUNCHER_TRAILER) {
+      dispatchSeenIntroVideo(true);
+      dispatchCutscene(
+        `${process.env.REACT_APP_CLOUDFRONT_OTHER_URL}/videos/intro.m3u8`,
+        true
+      );
+    }
   }, [hasSeenIntroVideo]);
 
   const openHelpChannel = useCallback(() => {
