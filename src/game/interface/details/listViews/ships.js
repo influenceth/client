@@ -57,12 +57,6 @@ const useColumns = () => {
         unhideable: true
       },
       {
-        key: 'variant',
-        label: 'Variant',
-        sortField: 'Ship.variant',
-        selector: row => Ship.getVariant(row.Ship?.variant)?.name || '',
-      },
-      {
         key: 'status',
         label: 'Status',
         sortField: 'Location.location.label',
@@ -89,6 +83,14 @@ const useColumns = () => {
               </>
             );
           }
+          if (row?.Ship?.transitDestination) {
+            return (
+              <>
+                <LocationLink lotId={row.Ship.transitDestination?.id} />
+                <EntityName {...row.Ship.transitDestination} />
+              </>
+            )
+          }
           return null;
         },
       },
@@ -105,7 +107,7 @@ const useColumns = () => {
               </>
             );
           }
-          return null;
+          else return 'N / A'
         },
       },
       {
@@ -123,6 +125,12 @@ const useColumns = () => {
           }
           return null;
         }
+      },
+      {
+        key: 'variant',
+        label: 'Variant',
+        sortField: 'Ship.variant',
+        selector: row => Ship.getVariant(row.Ship?.variant)?.name || '',
       },
       {
         key: 'price',
