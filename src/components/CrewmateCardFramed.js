@@ -194,7 +194,7 @@ const CrewmateCardFramed = ({
   crewmate,
   ...props
 }) => {
-  const finalBorderColor = warnIfNotOwnedBy && !Address.areEqual(crewmate?.Nft?.owner, warnIfNotOwnedBy)
+  const finalBorderColor = crewmate && warnIfNotOwnedBy && !Address.areEqual(crewmate?.Nft?.owner, warnIfNotOwnedBy)
     ? warningBorderColor
     : (borderColor || defaultBorderColor);
   return (

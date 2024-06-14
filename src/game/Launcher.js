@@ -1,6 +1,7 @@
 import { useCallback, useEffect } from 'react';
 import styled from 'styled-components';
 import { PuffLoader as Loader } from 'react-spinners';
+import { Tooltip } from 'react-tooltip';
 
 import useSession from '~/hooks/useSession';
 import useStore from '~/hooks/useStore';
@@ -10,6 +11,7 @@ import {
 } from '~/components/Icons';
 import InfluenceLogo from '~/components/InfluenceLogo';
 import NavIcon from '~/components/NavIcon';
+import { headerHeight, menuPadding } from '~/game/uiConstants';
 import usePriceConstants from '~/hooks/usePriceConstants';
 import Play from './launcher/Play';
 import Settings from './launcher/Settings';
@@ -18,12 +20,9 @@ import HudMenu from './interface/hud/HudMenu';
 import SystemControls from './interface/hud/SystemControls';
 import Help from './launcher/Help';
 import Rewards from './launcher/Rewards';
-import { Tooltip } from 'react-tooltip';
 
 const DISABLE_LAUNCHER_TRAILER = true && process.env.NODE_ENV === 'development';
 
-export const menuPadding = 25;
-const headerHeight = 68;
 const footerHeight = 80;
 export const navMenuWidth = 250;
 

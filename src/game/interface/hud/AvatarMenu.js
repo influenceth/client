@@ -6,7 +6,7 @@ import CollapsibleSection from '~/components/CollapsibleSection';
 import CrewmateCardFramed from '~/components/CrewmateCardFramed';
 import CrewLocationCompactLabel from '~/components/CrewLocationCompactLabel';
 import LiveFoodStatus from '~/components/LiveFoodStatus';
-import { WarningOutlineIcon } from '~/components/Icons';
+import { PlusIcon } from '~/components/Icons';
 import useSession from '~/hooks/useSession';
 import useCrewContext from '~/hooks/useCrewContext';
 import formatters from '~/lib/formatters';
@@ -14,6 +14,7 @@ import theme from '~/theme';
 import useStore from '~/hooks/useStore';
 import LiveReadyStatus from '~/components/LiveReadyStatus';
 import { SECTION_WIDTH } from './ActionItems';
+import Button from '~/components/ButtonAlt';
 
 const menuWidth = SECTION_WIDTH;
 
@@ -28,7 +29,7 @@ const CrewWrapper = styled.div`
   flex-direction: row;
 `;
 
-const CrewInfoContainer = styled.div`
+export const CrewInfoContainer = styled.div`
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -42,7 +43,7 @@ const actionProgressBarAnimation = keyframes`
   0% { background-position: ${widthOverSine}px 0; }
 `;
 const actionProgressPadding = 4;
-const TitleBar = styled.div`
+export const TitleBar = styled.div`
   align-items: center;
   background: ${p => p.showBusy ? `rgba(${p.theme.colors.darkMainRGB}, 0.7)` : `rgba(0, 0, 0, 0.7)`};
   color: white;
@@ -135,6 +136,19 @@ const TitleWrapper = styled.div`
   }
 `;
 
+const Instruction = styled.div`
+  color: #a0a0a0;
+  font-size: 14px;
+  padding-left: 10px;
+`;
+
+const ButtonWrapper = styled.div`
+  padding: 2px 0 0 15px;
+  & > button {
+    width: 225px;
+  }
+`;
+
 const AvatarMenu = () => {
   const { authenticated } = useSession();
   const { captain, crew, loading: crewIsLoading } = useCrewContext();
@@ -149,8 +163,8 @@ const AvatarMenu = () => {
       return {
         alwaysOn: ['icon'],
         disableHover: true,
-        icon: <WarningOutlineIcon />,
-        iconSize: 40,
+        icon: <PlusIcon />,
+        iconSize: 60,
         rgb: theme.colors.mainRGB,
       };
     }
@@ -168,12 +182,19 @@ const AvatarMenu = () => {
         containerHeight={140}
         title={(
           <TitleWrapper>
-            <div style={{ fontSize: '18px' }}>{formatters.crewName(crew)}</div>
+            {crew
+              ? (
+                <>
+                  <div style={{ fontSize: '18px' }}>{formatters.crewName(crew)}</div>
 
-            <CrewLocationCompactLabel
-              crew={crew}
-              flip
-              zoomedToAsteroid={zoomStatus === 'in' && asteroidId} />
+                  <CrewLocationCompactLabel
+                    crew={crew}
+                    flip
+                    zoomedToAsteroid={zoomStatus === 'in' && asteroidId} />
+                </>
+              )
+              : `No Active Crews`
+            }
           </TitleWrapper>
         )}>
         <CrewWrapper>
@@ -182,33 +203,52 @@ const AvatarMenu = () => {
             crewmate={captain}
             isCaptain
             onClick={onClick}
+            noAnimation
             silhouetteOverlay={silhouetteOverlay}
             warnIfNotOwnedBy={crew?.Nft?.owner}
             width={98} />
 
           <CrewInfoContainer>
-            <TitleBar showBusy={!crew._ready}>
-              <LiveReadyStatus crew={crew} flip style={{ fontSize: '15px' }} />
-
-              <LiveFoodStatus crew={crew} onClick={() => { onSetAction('FEED_CREW'); }} />
+            <TitleBar showBusy={crew && !crew._ready}>
+              {crew?._crewmates?.length > 0
+                ? (
+                  <>
+                    <LiveReadyStatus crew={crew} flip style={{ fontSize: '15px' }} />
+                    <LiveFoodStatus crew={crew} onClick={() => { onSetAction('FEED_CREW'); }} />
+                  </>
+                )
+                : (
+                  <Instruction>Recruit a captain to begin</Instruction>
+                )
+              }
             </TitleBar>
 
-            <Crewmates>
-              {(crew?._crewmates || []).map((crewmate, i) => {
-                if (i === 0) return null;
-                return (
-                  <CrewmateCardFramed
-                    key={crewmate.id}
-                    borderColor={`rgba(${theme.colors.mainRGB}, 0.4)`}
-                    crewmate={crewmate}
-                    onClick={onClick}
-                    silhouetteOverlay={silhouetteOverlay}
-                    warnIfNotOwnedBy={crew?.Nft?.owner}
-                    width={69}
-                    noArrow />
-                );
-              })}
-            </Crewmates>
+            {crew?._crewmates?.length > 0
+              ? (
+                <Crewmates>
+                  {(crew?._crewmates || []).map((crewmate, i) => {
+                    if (i === 0) return null;
+                    return (
+                      <CrewmateCardFramed
+                        key={crewmate.id}
+                        borderColor={`rgba(${theme.colors.mainRGB}, 0.4)`}
+                        crewmate={crewmate}
+                        onClick={onClick}
+                        warnIfNotOwnedBy={crew?.Nft?.owner}
+                        width={69}
+                        noArrow />
+                    );
+                  })}
+                </Crewmates>
+              )
+              : (
+                <ButtonWrapper>
+                  <Button onClick={onClick}>
+                    Start Recruitment
+                  </Button>
+                </ButtonWrapper>
+              )
+            }
           </CrewInfoContainer>
         </CrewWrapper>
       </CollapsibleSection>

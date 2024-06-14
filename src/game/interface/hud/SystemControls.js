@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
+import { FaCaretRight } from 'react-icons/fa';
 
 import {
   CrewmateCreditIcon,
   MenuIcon,
-  SwayIcon,
   WarningIcon
 } from '~/components/Icons';
 import useSession from '~/hooks/useSession';
@@ -13,9 +13,8 @@ import useStore from '~/hooks/useStore';
 import { useSwayBalance } from '~/hooks/useWalletTokenBalance';
 import useAccountFormatted from '~/hooks/useAccountFormatted';
 import IconButton from '~/components/IconButton';
-import { FaCaretRight } from 'react-icons/fa';
-import { menuPadding } from '~/game/Launcher';
 import { TOKEN, TOKEN_FORMATTER } from '~/lib/priceUtils';
+import { menuPadding } from '~/game/uiConstants';
 
 const StyledSystemControls = styled.div`
   align-items: center;
