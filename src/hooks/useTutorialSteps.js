@@ -2,11 +2,11 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { FaYoutube as YoutubeIcon } from 'react-icons/fa';
 import { Building, Permission, Inventory, Product } from '@influenceth/sdk';
 
+import useCrewAgreements from '~/hooks/useCrewAgreements';
+import useCrewBuildings from '~/hooks/useCrewBuildings';
 import useCrewContext from '~/hooks/useCrewContext';
 import useCrewSamples from '~/hooks/useCrewSamples';
 import useStore from '~/hooks/useStore';
-import useWalletAgreements from '~/hooks/useWalletAgreements';
-import useWalletBuildings from '~/hooks/useWalletBuildings';
 import { getBuildingRequirements } from '~/game/interface/hud/actionDialogs/components';
 import styled from 'styled-components';
 
@@ -58,8 +58,8 @@ const TutorialVideoLink = () => {
 const useTutorialSteps = () => {
   const { crew } = useCrewContext();
 
-  const { data: walletAgreementsWithDupes, isLoading: agreementsLoading } = useWalletAgreements();
-  const { data: walletBuildings, isLoading: buildingsLoading } = useWalletBuildings();
+  const { data: crewAgreements, isLoading: agreementsLoading } = useCrewAgreements(true, false, true);
+  const { data: crewBuildings, isLoading: buildingsLoading } = useCrewBuildings();
   const { data: crewDeposits, isLoading: depositsLoading } = useCrewSamples();
   const loading = agreementsLoading || buildingsLoading || depositsLoading;
 
@@ -78,23 +78,20 @@ const useTutorialSteps = () => {
   const tutorialSteps = useMemo(() => {
     if (loading) return [];
 
-    const lotLease = walletAgreementsWithDupes?.find((a) => a.permission === Permission.IDS.LOT_USE);
+    const lotLease = crewAgreements?.find((a) => a.permission === Permission.IDS.LOT_USE);
 
-    const controlledWarehouse = walletBuildings?.find((b) => (
-      b.Control?.controller?.id === crew?.id
-      && b.Building?.buildingType === Building.IDS.WAREHOUSE
+    const controlledWarehouse = crewBuildings?.find((b) => (
+      b.Building?.buildingType === Building.IDS.WAREHOUSE
       && b.Building?.status !== Building.CONSTRUCTION_STATUSES.UNPLANNED
     ));
 
-    const controlledWarehouseSite = walletBuildings?.find((b) => (
-      b.Control?.controller?.id === crew?.id
-      && b.Building?.buildingType === Building.IDS.WAREHOUSE
+    const controlledWarehouseSite = crewBuildings?.find((b) => (
+      b.Building?.buildingType === Building.IDS.WAREHOUSE
       && [Building.CONSTRUCTION_STATUSES.PLANNED, Building.CONSTRUCTION_STATUSES.UNDER_CONSTRUCTION].includes(b.Building?.status)
     ));
 
-    const buildableWarehouse = walletBuildings?.find((b) => (
-      b.Control?.controller?.id === crew?.id
-      && b.Building?.buildingType === Building.IDS.WAREHOUSE
+    const buildableWarehouse = crewBuildings?.find((b) => (
+      b.Building?.buildingType === Building.IDS.WAREHOUSE
       && (
         b.Building?.status === Building.CONSTRUCTION_STATUSES.UNDER_CONSTRUCTION
         || (
@@ -104,39 +101,32 @@ const useTutorialSteps = () => {
       ) 
     ));
 
-    const controlledOperationalWarehouse = walletBuildings?.find((b) => (
-      b.Control?.controller?.id === crew?.id
-      && b.Building?.buildingType === Building.IDS.WAREHOUSE
+    const controlledOperationalWarehouse = crewBuildings?.find((b) => (
+      b.Building?.buildingType === Building.IDS.WAREHOUSE
       && b.Building?.status === Building.CONSTRUCTION_STATUSES.OPERATIONAL
     ));
 
-    const controlledExtractor = walletBuildings?.find((b) => (
-      b.Control?.controller?.id === crew?.id
-      && b.Building?.buildingType === Building.IDS.EXTRACTOR
+    const controlledExtractor = crewBuildings?.find((b) => (
+      b.Building?.buildingType === Building.IDS.EXTRACTOR
       && b.Building?.status !== Building.CONSTRUCTION_STATUSES.UNPLANNED
     ));
 
-    const controlledOperationalExtractor = walletBuildings?.find((b) => (
-      b.Control?.controller?.id === crew?.id
-      && b.Building?.buildingType === Building.IDS.EXTRACTOR
+    const controlledOperationalExtractor = crewBuildings?.find((b) => (
+      b.Building?.buildingType === Building.IDS.EXTRACTOR
       && b.Building?.status === Building.CONSTRUCTION_STATUSES.OPERATIONAL
     ));
 
-    const controlledNonWarehouse = walletBuildings?.find((b) => (
-      b.Control?.controller?.id === crew?.id
-      && b.Building?.buildingType !== Building.IDS.WAREHOUSE
+    const controlledNonWarehouse = crewBuildings?.find((b) => (
+      b.Building?.buildingType !== Building.IDS.WAREHOUSE
       && [Building.CONSTRUCTION_STATUSES.UNDER_CONSTRUCTION, Building.CONSTRUCTION_STATUSES.OPERATIONAL].includes(b.Building?.status)
     ));
 
-    const ownedCoreDrill = walletBuildings?.find((b) => {
-      if (b.Control?.controller?.id === crew?.id) {
-        return !!(b.Inventories || []).find((i) => (
-            i.status === Inventory.STATUSES.AVAILABLE
-            && (i.contents || []).find((c) => c.product === Product.IDS.CORE_DRILL && c.amount > 0)
-          )
-        );
-      }
-      return false;
+    const ownedCoreDrill = crewBuildings?.find((b) => {
+      return !!(b.Inventories || []).find((i) => (
+          i.status === Inventory.STATUSES.AVAILABLE
+          && (i.contents || []).find((c) => c.product === Product.IDS.CORE_DRILL && c.amount > 0)
+        )
+      );
     });
 
     return [
@@ -330,7 +320,7 @@ const useTutorialSteps = () => {
         initialize: () => {}
       }
     ];
-  }, [crew, crewDeposits, loading, walletAgreementsWithDupes, walletBuildings]);
+  }, [crew, crewDeposits, loading, crewAgreements, crewBuildings]);
 
   useEffect(() => {
     tutorialSteps.forEach((s) => {

@@ -1,14 +1,13 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from 'react-query';
-import { Building, Entity } from '@influenceth/sdk';
-import cloneDeep from 'lodash/cloneDeep';
+import { Building } from '@influenceth/sdk';
 
 import useSession from '~/hooks/useSession';
 import useCrewAgreements from '~/hooks/useCrewAgreements';
 import useCrewContext from '~/hooks/useCrewContext';
 import useGetActivityConfig from '~/hooks/useGetActivityConfig';
 import useStore from '~/hooks/useStore';
-import useWalletBuildings from '~/hooks/useWalletBuildings';
+import useCrewBuildings from '~/hooks/useCrewBuildings';
 import api from '~/lib/api';
 import { hydrateActivities } from '~/lib/activities';
 
@@ -50,15 +49,12 @@ export function ActionItemProvider({ children }) {
     { enabled: !!crewId }
   );
 
-  const { data: walletBuildings, isLoading: plannedBuildingsLoading, dataUpdatedAt: plansUpdatedAt } = useWalletBuildings();
+  const { data: crewBuildings, isLoading: plannedBuildingsLoading, dataUpdatedAt: plansUpdatedAt } = useCrewBuildings();
   const plannedBuildings = useMemo(() => {
-    return walletBuildings && crewId
-      ? (walletBuildings || []).filter((a) => (
-        a.Control?.controller?.id === crewId
-        && a.Building?.status === Building.CONSTRUCTION_STATUSES.PLANNED
-      ))
+    return crewBuildings
+      ? (crewBuildings || []).filter((a) => a.Building?.status === Building.CONSTRUCTION_STATUSES.PLANNED)
       : undefined;
-  }, [crewId, walletBuildings]);
+  }, [crewBuildings, plansUpdatedAt]);
 
   const failedTransactions = useStore(s => s.failedTransactions);
   const hiddenActionItems = useStore(s => s.hiddenActionItems);
