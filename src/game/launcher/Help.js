@@ -114,13 +114,13 @@ const LoadingWrapper = styled.div`
 const ErrorWrapper = styled(LoadingWrapper)``;
 
 const YoutubeFeed = ({ playlistId, title }) => {
-  const [comingSoon, setComingSoon] = useState();
   const [error, setError] = useState();
   const [loading, setLoading] = useState();
   const [videos, setVideos] = useState();
 
   useEffect(() => {
     setVideos();
+
     if (playlistId) {
       setLoading(true);
       try {
@@ -134,8 +134,6 @@ const YoutubeFeed = ({ playlistId, title }) => {
         setError(true);
         setLoading(false);
       }
-    } else {
-      setComingSoon(true);
     }
   }, [playlistId]);
 
@@ -155,10 +153,10 @@ const YoutubeFeed = ({ playlistId, title }) => {
     <Wrapper>
       <PlaylistTitle>{title}</PlaylistTitle>
       <PlaylistWrapperOuter>
-        {comingSoon && <ErrorWrapper>Coming soon.</ErrorWrapper>}
-        {!comingSoon && error && <ErrorWrapper>Something went wrong. Please try again.</ErrorWrapper>}
-        {!comingSoon && !error && loading && <LoadingWrapper><Loader color="white" size="60px" /></LoadingWrapper>}
-        {!comingSoon && !error && !loading && (
+        {!playlistId && <ErrorWrapper>Coming soon.</ErrorWrapper>}
+        {playlistId && error && <ErrorWrapper>Something went wrong. Please try again.</ErrorWrapper>}
+        {playlistId && !error && loading && <LoadingWrapper><Loader color="white" size="60px" /></LoadingWrapper>}
+        {playlistId && !error && !loading && (
           <PlaylistWrapper>
             {(videos || []).map((v) => (
               <VideoWrapper key={v.id} onClick={() => onClickVideo(v)}>

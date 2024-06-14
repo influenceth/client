@@ -317,7 +317,7 @@ const Launcher = (props) => {
 
   useEffect(() => {
     // limit selection if logged out
-    if (!authenticated && !['play', 'help', 'settings'].includes(launcherPage)) {
+    if (!authenticated && !['play', 'help', 'settings', 'store'].includes(launcherPage)) {
       dispatchLauncherPage('play');
     }
     // disallow store if no sale available
@@ -358,13 +358,11 @@ const Launcher = (props) => {
             selected={launcherPage === 'play'}>
             <StyledNavIcon /> Play
           </NavItem>
-          {authenticated && !!priceConstants?.ADALIAN_PURCHASE_PRICE && (
-            <NavItem
-              onClick={() => dispatchLauncherPage('store')}
-              selected={launcherPage === 'store'}>
-              <StyledNavIcon /> Store
-            </NavItem>
-          )}
+          <NavItem
+            onClick={() => dispatchLauncherPage('store')}
+            selected={launcherPage === 'store'}>
+            <StyledNavIcon /> Store
+          </NavItem>
           <NavItem
             onClick={() => dispatchLauncherPage('help')}
             selected={launcherPage === 'help'}>

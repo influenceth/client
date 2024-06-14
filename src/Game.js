@@ -75,7 +75,7 @@ const LauncherRedirect = () => {
     if (deeplink || !DISABLE_LAUNCHER_LANDING) {
       const destinationPage = (deeplink && parts[1]) ? parts[1] : true;
       if (launcherPage !== destinationPage) {
-        dispatchLauncherPage(destinationPage);
+        dispatchLauncherPage(destinationPage, parts[2]);
       }
       if (deeplink) {
         history.replace('/');

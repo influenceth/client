@@ -10,11 +10,13 @@ import UserPrice from '~/components/UserPrice';
 import useAsteroidSale from '~/hooks/useAsteroidSale';
 import usePriceConstants from '~/hooks/usePriceConstants';
 import useBlockTime from '~/hooks/useBlockTime';
+import useStore from '~/hooks/useStore';
 import { TOKEN, TOKEN_FORMAT, TOKEN_SCALE } from '~/lib/priceUtils';
 import { formatTimer } from '~/lib/utils';
 import FundingMenu from './components/FundingMenu';
 import LauncherDialog from './components/LauncherDialog';
 import SKU from './components/SKU';
+import PageLoader from '~/components/PageLoader';
 
 const storeAssets = {
   crewmates: 'Crewmates',
@@ -154,21 +156,16 @@ const SkuSelector = ({ onSelect }) => {
   const paneMeta = useMemo(() => {
     const asteroidExtra = {};
 
-    const asteroidSaleEnd = ((asteroidSale?.period || 0) + 1) * 1e6;
-    const remainingTime = asteroidSaleEnd - blockTime;
-    if (remainingTime > 0) {
-      const remaining = asteroidSale ? (Number(asteroidSale.limit) - Number(asteroidSale.volume)) : 0;
-      const trendingToSellOut = asteroidSale && ((remaining / remainingTime) <= (asteroidSale.limit / 1e6));
+    const remaining = asteroidSale ? (Number(asteroidSale.limit) - Number(asteroidSale.volume)) : 0;
+    if (remaining > 0) {
       asteroidExtra.leftNote = <><b>{remaining.toLocaleString()}</b> Remaining</>;
-      if (trendingToSellOut) {
-        asteroidExtra.rightNote = (
-          <>
-            <b>{formatTimer(remainingTime, 2)}</b> {remaining > 0 ? `Left in` : `Until Next`} Sales Period
-          </>
-        );
-      }
     } else {
-      asteroidExtra.rightNote = `Sale Inactive`;
+      const now = blockTime || Math.floor(Date.now() / 1e3);
+      asteroidExtra.rightNote = (
+        <>
+          <b>{formatTimer(Math.ceil(now / 1e6) * 1e6 - now, 2)}</b> Until Next Sales Period
+        </>
+      );
     }
 
     return {
@@ -225,7 +222,16 @@ const SkuSelector = ({ onSelect }) => {
 };
 
 const Store = () => {
-  const [selection, setSelection] = useState();
+  const { data: priceConstants, isLoading } = usePriceConstants();
+
+  const initialSubpage = useStore(s => s.launcherSubpage);
+
+  const initialSelection = useMemo(() => {
+    const linkedSelectionIndex = Object.keys(storeAssets).indexOf(initialSubpage);
+    return linkedSelectionIndex >= 0 ? linkedSelectionIndex : undefined;
+  }, [initialSubpage]);
+
+  const [selection, setSelection] = useState(initialSelection);
   const isSelected = selection !== undefined;
 
   const panes = useMemo(() => {
@@ -235,6 +241,7 @@ const Store = () => {
     }))
   }, []);
 
+  if (!priceConstants?.ADALIAN_PURCHASE_PRICE) return isLoading ? <PageLoader /> : null;
   return (
     <LauncherDialog
       bottomLeftMenu={<FundingMenu />}

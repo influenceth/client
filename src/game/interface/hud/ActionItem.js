@@ -14,7 +14,7 @@ import { formatActionItem, itemColors, statuses } from '~/lib/actionItem';
 import formatters from '~/lib/formatters';
 import IconButton from '~/components/IconButton';
 
-const ICON_WIDTH = 34;
+export const ICON_WIDTH = 34;
 export const ITEM_WIDTH = 425;
 export const TRANSITION_TIME = 400;
 

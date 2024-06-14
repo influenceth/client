@@ -4,22 +4,18 @@ import { useHistory } from 'react-router-dom';
 import { TbBellRingingFilled as AlertIcon } from 'react-icons/tb';
 import { Building } from '@influenceth/sdk';
 
-import Button from '~/components/ButtonAlt';
-import ClipCorner from '~/components/ClipCorner';
 import CollapsibleSection from '~/components/CollapsibleSection';
-import IconButton from '~/components/IconButton';
-import { CloseIcon, TutorialIcon } from '~/components/Icons';
+import { TutorialIcon } from '~/components/Icons';
 import { ZOOM_IN_ANIMATION_TIME, ZOOM_OUT_ANIMATION_TIME, ZOOM_TO_PLOT_ANIMATION_MAX_TIME, ZOOM_TO_PLOT_ANIMATION_MIN_TIME } from '~/game/scene/Asteroid';
 import useSession from '~/hooks/useSession';
 import useCrewContext from '~/hooks/useCrewContext';
 import useStore from '~/hooks/useStore';
-import { reactBool } from '~/lib/utils';
 import theme from '~/theme';
+import { ICON_WIDTH, TRANSITION_TIME } from './ActionItem';
+import TutorialMessage from './TutorialMessage';
 
-const ICON_WIDTH = 34;
 const ITEM_WIDTH = 410;
 const SECTION_WIDTH = 450;
-const TRANSITION_TIME = 400;
 const DELAY_MESSAGE = 1000;
 
 const COLOR = '51, 170, 255';
@@ -67,7 +63,7 @@ const TutorialFilter = styled(Filter)`
     margin-right: 10px;
   }
   &:after {
-    content: "Game Tour";
+    content: "Welcome Tour";
     color: ${COLOR};
   }
 `;
@@ -167,118 +163,17 @@ const ActionItemRow = styled.div`
   }
 `;
 
-const messageClipCorner = 20;
-const messageOffset = 75;
-const messageHeight = 195;
-const messageWidth = 700;
-const crewmateOverflow = 59;
-const crewmateWidth = 180;
-const borderColor = `rgba(${theme.colors.mainRGB}, 0.33)`;
-const TutorialMessage = styled.div`
-  display: flex;
-  flex-direction: row;
-  position: fixed;
-  bottom: ${messageOffset}px;
-  height: ${messageHeight}px;
-  left: calc(50% - ${messageWidth/2}px);
-  pointer-events: all;
-  transition: transform 250ms ease;
-  transform: translateY(${p => p.in ? 0 : (messageHeight + messageOffset + crewmateOverflow)}px);
-  width: ${messageWidth}px;
-  z-index: 1000000;
-  &:before {
-    content: "";
-    ${p => p.theme.clipCorner(messageClipCorner)};
-    background: rgba(13, 33, 41, 0.8);
-    border: 1px solid ${borderColor};
-    position: absolute;
-    left: 0;
-    right: 0;
-    top: 0;
-    bottom: 0;
-    z-index: -1;
-  }
-`;
-
-const TutorialContent = styled.div`
-  display: flex;
-  flex-direction: column;
-  padding: 0 15px;
-  & > h3 {
-    align-items: center;
-    display: flex;
-    font-size: 18px;
-    font-weight: normal;
-    text-transform: uppercase;
-    margin: 0;
-    padding: 8px 0;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.15);
-    & > span {
-      flex: 1;
-    }
-    & > button {
-      margin-right: 0;
-    }
-  }
-  & > div {
-    display: flex;
-    flex: 1;
-    flex-direction: column;
-    padding: 12px 0;
-    & > div:first-child {
-      color: ${p => p.theme.colors.main};
-      flex: 1;
-      font-size: 85%;
-    }
-  }
-`;
-
-const CrewmateWrapper = styled.div`
-  margin: 1px;
-  background: linear-gradient(
-    to top,
-    rgba(${p => p.theme.colors.mainRGB}, 0.5) 0%,
-    rgba(0, 0, 0, 0.5) 70%
-  );
-  flex: 0 0 ${crewmateWidth}px;
-`;
-
-const CrewmateOverflow = styled.div`
-  height: ${messageHeight + crewmateOverflow}px;
-  overflow: hidden;
-  position: relative;
-  top: -${crewmateOverflow}px;
-`;
-
-const CrewmateImage = styled.div`
-  background-image: ${p => p.crewmateId ? `url("${process.env.REACT_APP_IMAGES_URL}/v1/crew/${p.crewmateId}/image.svg?bustOnly=true")` : 'none'};
-  background-position: top center;
-  background-repeat: no-repeat;
-  background-size: cover;
-  padding-top: 140%;
-  width: 100%;
-`;
-
-const Buttons = styled.div`
-  display: flex;
-  flex-direction: row;
-  justify-content: flex-end;
-  & > * {
-    margin-left: 6px;
-  }
-`;
-
-const useTutorial = () => {
+const useWelcomeTour = () => {
   const resetAsteroidFilters = useStore(s => s.dispatchFiltersReset('asteroidsMapped'));
   const dispatchHudMenuOpened = useStore(s => s.dispatchHudMenuOpened);
   const dispatchOriginSelected = useStore(s => s.dispatchOriginSelected);
   const dispatchDestinationSelected = useStore(s => s.dispatchDestinationSelected);
   const dispatchLotSelected = useStore(s => s.dispatchLotSelected);
   const dispatchReorientCamera = useStore(s => s.dispatchReorientCamera);
-  const dispatchTutorialStep = useStore(s => s.dispatchTutorialStep);
+  const dispatchWelcomeTourStep = useStore(s => s.dispatchWelcomeTourStep);
   const dispatchZoomScene = useStore(s => s.dispatchZoomScene);
   const updateZoomStatus = useStore(s => s.dispatchZoomStatusChanged);
-  const tutorialStep = useStore(s => s.tutorialStep);
+  const welcomeTourStep = useStore(s => s.welcomeTourStep);
   const openHudMenu = useStore(s => s.openHudMenu);
   const destination = useStore(s => s.asteroids.destination);
   const lot = useStore(s => s.asteroids.lot);
@@ -296,8 +191,8 @@ const useTutorial = () => {
       content: (
         <>
           Influence is a massively multiplayer simulation set in the asteroid belt surrounding the star <b>Adalia</b>.
-          <br></br><br></br>
-          Click NEXT to continue the Game Tour, or visit our
+          <br /><br />
+          Click NEXT to continue the Welcome Tour, or visit our
           {' '}<a href="https://wiki.influenceth.io/en/docs/user-guides" target="_blank" rel="noopener noreferrer">Wiki</a>
           {' '}or <a href="https://discord.com/invite/influenceth" target="_blank" rel="noopener noreferrer">Discord</a> for help getting started!
         </>
@@ -455,10 +350,17 @@ const useTutorial = () => {
     },
     {
       title: 'Habitation & Life Support',
-      content: `Finally, Habitats provide life support and a base of operations from which the Crews
-        stationed there venture out to perform jobs. They also serve as social centers and recruitment
-        hubs for new Adalians coming of age in the belt. You may immediately begin your recruitment
-        here; take your first steps as a member of Adalian society!`,
+      content: (
+        <>
+          Finally, Habitats are the beating heart of life in Adalia. These giant rotating structures
+          serve as vibrant social hubs for the Crews stationed there, as well as recruitment centers
+          for new Adalians.
+          <br /><br />
+          You are now ready to begin your journey as a productive member of Adalian society! The
+          recommended <b>Starter Packs</b> contain everything needed to form your first crew and start
+          your own mining operation on Adalia Prime. Join up today!
+        </>
+      ),
       crewmateId: 6980,
       initialize: () => {
         if (currentZoomScene) dispatchZoomScene();
@@ -480,46 +382,48 @@ const useTutorial = () => {
     }
   ]), [currentZoomScene, destination, lot, openHudMenu, resetAsteroidFilters, zoomStatus]);
 
-  const previousStep = useRef(tutorialStep || -1);
+  const previousStep = useRef(welcomeTourStep || -1);
   const updateStep = useCallback((newStep) => {
     if (transitioning) return;
     setTransitioning(true);
 
-    dispatchTutorialStep(newStep);
+    dispatchWelcomeTourStep(newStep);
     const { initialize } = tutorialParts[newStep];
 
     initialize();
     setHideMessage(false);
-  }, [dispatchTutorialStep, transitioning, tutorialParts]);
+  }, [dispatchWelcomeTourStep, transitioning, tutorialParts]);
 
   useEffect(() => {
-    if (!(tutorialStep >= 0)) dispatchTutorialStep(0);
+    if (!(welcomeTourStep >= 0)) dispatchWelcomeTourStep(0);
   }, []);
 
   useEffect(() => {
-    if (!transitioning) previousStep.current = tutorialStep;
-  }, [tutorialStep, transitioning]);
+    if (!transitioning) previousStep.current = welcomeTourStep;
+  }, [welcomeTourStep, transitioning]);
 
   const currentStep = useMemo(() => {
-    return tutorialParts[transitioning ? previousStep.current : tutorialStep];
-  }, [tutorialStep, transitioning, tutorialParts]);
+    return tutorialParts[transitioning ? previousStep.current : welcomeTourStep];
+  }, [welcomeTourStep, transitioning, tutorialParts]);
 
   return useMemo(() => ({
     updateStep,
     currentStep,
-    currentStepIndex: tutorialStep,
+    currentStepIndex: welcomeTourStep,
     hideMessage: hideMessage,
     isTransitioning: transitioning,
     setHideMessage,
     steps: tutorialParts
-  }), [hideMessage, transitioning, tutorialParts, tutorialStep, updateStep]);
+  }), [hideMessage, transitioning, tutorialParts, welcomeTourStep, updateStep]);
 }
 
-const TutorialItems = () => {
+const WelcomeTourItems = () => {
   const { authenticating, authenticated, login } = useSession();
   const { crews, loading } = useCrewContext();
   const history = useHistory();
-  const { updateStep, currentStep, currentStepIndex, hideMessage, isTransitioning, setHideMessage, steps } = useTutorial();
+  const { updateStep, currentStep, currentStepIndex, hideMessage, isTransitioning, setHideMessage, steps } = useWelcomeTour();
+
+  const dispatchLauncherPage = useStore(s => s.dispatchLauncherPage);
 
   const handlePrevious = useCallback(() => {
     updateStep(Math.max(0, currentStepIndex - 1));
@@ -527,9 +431,9 @@ const TutorialItems = () => {
 
   const handleNext = useCallback(() => {
     if (currentStepIndex >= steps.length - 1) {
-      if (authenticated) history.push('/crew')
-      // TODO: see WelcomeFlow -- if want to start prompting for crewmate credit pack, do not want to do this redirect
-      else login().then((success) => { if (success) { history.push('/crew'); } });
+      // TODO: prompt to login first?
+      // login().then(() => dispatchLauncherPage('store', 'packs'));
+      dispatchLauncherPage('store', 'packs');
     } else {
       updateStep(currentStepIndex + 1);
     }
@@ -554,7 +458,7 @@ const TutorialItems = () => {
             <TitleWrapper>
               <IconWrapper><AlertIcon /></IconWrapper>
               <Filters>
-                <TutorialFilter tally={steps.length} />
+                <TutorialFilter />
               </Filters>
             </TitleWrapper>
           )}>
@@ -562,12 +466,11 @@ const TutorialItems = () => {
             <ActionItemContainer>
               {steps.map(({ title }, i) => (
                 <ActionItemRow key={i}
-                  color="4, 112, 165"
                   isCurrent={currentStepIndex === i}
                   isPast={currentStepIndex > i}
                   onClick={() => updateStep(i)}>
                   <Icon><span><TutorialIcon /></span></Icon>
-                  <Status>{i + 1}</Status>
+                  <Status>Part {i + 1}</Status>
                   <Label>{title}</Label>
                 </ActionItemRow>
               ))}
@@ -576,46 +479,27 @@ const TutorialItems = () => {
         </CollapsibleSection>
       </OuterWrapper>
 
-      <TutorialMessage in={reactBool(currentStep && !isTransitioning && !hideMessage)}>
-        {currentStep && (
-          <>
-            <CrewmateWrapper>
-              <CrewmateOverflow>
-                <CrewmateImage crewmateId={currentStep?.crewmateId} />
-              </CrewmateOverflow>
-            </CrewmateWrapper>
-
-            <TutorialContent>
-              <h3>
-                <span>{currentStep?.title}</span>
-                <IconButton onClick={() => setHideMessage(true)} scale={0.75}><CloseIcon /></IconButton>
-              </h3>
-              <div>
-                <div>{currentStep?.content}</div>
-                <Buttons>
-                  {currentStepIndex > 0 && (
-                    <Button flip size="small" onClick={handlePrevious}>Previous</Button>
-                  )}
-                  {currentStepIndex < steps.length - 1 && (
-                    <Button size="small" onClick={handleNext}>Next Section</Button>
-                  )}
-                  {currentStepIndex === steps.length - 1 && (
-                    <Button
-                      color={theme.colors.success}
-                      disabled={authenticating}
-                      onClick={handleNext}
-                      size="small">Start Your Crew</Button>
-                  )}
-                </Buttons>
-              </div>
-            </TutorialContent>
-          </>
-        )}
-
-        <ClipCorner dimension={messageClipCorner} color={borderColor} offset={-1} />
-      </TutorialMessage>
+      <TutorialMessage
+        crewmateId={currentStep?.crewmateId}
+        isIn={currentStep && !isTransitioning && !hideMessage}
+        leftButton={currentStepIndex > 0 ? { onClick: handlePrevious, children: "Previous" } : null}
+        onClose={() => setHideMessage(true)}
+        rightButton={currentStepIndex < steps.length - 1
+          ? { onClick: handleNext, children: "Next Section" }
+          : (currentStepIndex === steps.length - 1
+            ? {
+              color: theme.colors.success,
+              disabled: authenticating,
+              onClick: handleNext,
+              children: "See Starter Packs"
+            }
+            : null
+          )
+        }
+        step={currentStep}
+      />
     </>
   );
 };
 
-export default TutorialItems;
+export default WelcomeTourItems;

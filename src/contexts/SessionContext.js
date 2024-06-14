@@ -490,7 +490,7 @@ export function SessionProvider({ children }) {
     <SessionContext.Provider value={{
       login: async () => await connect(),
       logout,
-      authenticating: status === STATUSES.AUTHENTICATING,
+      authenticating: [STATUSES.AUTHENTICATING, STATUSES.CONNECTING].includes(status),
       authenticated,
       isDeployed: authenticated ? currentSession?.isDeployed : null,
       token: authenticated ? currentSession?.token : null,

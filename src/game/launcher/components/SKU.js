@@ -258,16 +258,14 @@ const AsteroidSKU = () => {
   const { data: asteroidSale } = useAsteroidSale();
   const blockTime = useBlockTime();
 
-  const [remaining, remainingTime, trendingToSellOut] = useMemo(() => {
+  const [remaining, remainingTime] = useMemo(() => {
     if (!asteroidSale) return [0, 0, false];
 
-    const asteroidSaleEnd = ((asteroidSale.period || 0) + 1) * 1e6;
     const remaining = asteroidSale ? (Number(asteroidSale.limit) - Number(asteroidSale.volume)) : 0;
-    const remainingTime = asteroidSaleEnd - blockTime;
+    const now = blockTime || Math.floor(Date.now() / 1e3);
     return [
-      remainingTime > 0 ? remaining : 0,
-      remainingTime,
-      (remaining / remainingTime) <= (asteroidSale.limit / 1e6)
+      remaining,
+      Math.ceil(now / 1e6) * 1e6 - now
     ];
   }, [asteroidSale, blockTime]);
 
@@ -286,31 +284,25 @@ const AsteroidSKU = () => {
           considered before buying.
         </p>
       </Description>
-      <PurchaseForm isOrange={remaining === 0 || remainingTime <= 0}>
+      <PurchaseForm isOrange={remaining === 0}>
         <h3>
           <span>
-            {remainingTime > 0 && remaining > 0 && `Sale Active`}
-            {remainingTime > 0 && remaining === 0 && `Next Sale`}
-            {remainingTime <= 0 && `Sale Inactive`}
+            {remaining > 0 && `Sale Active`}
+            {remaining <= 0 && `Next Sale`}
           </span>
           <span>
-            {remainingTime > 0 && (trendingToSellOut || remaining <= 0)
-              ? (
-                <>
-                  {remaining > 0 ? 'Ends in' : 'Starts in'}
-                  <b>{formatTimer(remainingTime, 2)}</b>
-                </>
-              )
+            {remaining <= 0
+              ? <>Starts in <b>{formatTimer(remainingTime, 2)}</b></>
               : null
             }
           </span>
         </h3>
         <div>
-          <AsteroidBanner inactive={remaining === 0 || remainingTime <= 0}>
+          <AsteroidBanner inactive={remaining === 0}>
             <div>
               <PurchaseAsteroidIcon />
             </div>
-            {(remaining > 0 && remainingTime > 0)
+            {remaining > 0
               ? (
                 <div>
                   <label>{asteroidSale ? remaining.toLocaleString() : '...'} Asteroid{remaining === 1 ? '' : 's'}</label>
@@ -749,7 +741,7 @@ const defaultStyleOverrides = {
 const SwayFaucetButton = () => {
   const queryClient = useQueryClient();
   const { data: faucetInfo, isLoading: faucetInfoLoading } = useFaucetInfo();
-  const { starknet } = useSession();
+  const { accountAddress, login, starknet } = useSession();
 
   const createAlert = useStore(s => s.dispatchAlertLogged);
 
@@ -762,6 +754,8 @@ const SwayFaucetButton = () => {
   }, [faucetInfo]);
 
   const requestSway = useCallback(async () => {
+    if (!accountAddress) return login();
+
     setRequestingSway(true);
 
     try {
@@ -788,7 +782,7 @@ const SwayFaucetButton = () => {
     queryClient.invalidateQueries({ queryKey: 'faucetInfo', refetchType: 'none' });
     queryClient.refetchQueries({ queryKey: 'faucetInfo', type: 'active' });
     queryClient.invalidateQueries({ queryKey: ['walletBalance', 'sway'] });
-  }, []);
+  }, [accountAddress, login, starknet]);
 
   return (
     <PurchaseButton
@@ -796,7 +790,7 @@ const SwayFaucetButton = () => {
       contrastColor={theme.colors.disabledBackground}
       background={`rgba(${theme.colors.successRGB}, 0.1)`}
       onClick={requestSway}
-      disabled={nativeBool(!swayEnabled || requestingSway || faucetInfoLoading)}
+      disabled={nativeBool((accountAddress && !swayEnabled) || requestingSway || faucetInfoLoading)}
       loading={reactBool(requestingSway || faucetInfoLoading)}
       style={{ marginRight: 10 }}>
       <PurchaseButtonInner>
@@ -810,6 +804,7 @@ const SwayFaucetButton = () => {
 }
 
 const SKU = ({ asset, onBack }) => {
+  const { accountAddress, login } = useSession();
   const { execute } = useContext(ChainTransactionContext);
   const { pendingTransactions } = useCrewContext();
   const { data: ethBalance } = useEthBalance();
@@ -849,6 +844,8 @@ const SKU = ({ asset, onBack }) => {
   }, [filters, updateFilters, zoomStatus, dispatchHudMenuOpened, dispatchLauncherPage, dispatchZoomScene, updateZoomStatus]);
 
   const handlePurchase = useCallback((overridePurchase) => {
+    if (!accountAddress) return login();
+    
     const purch = (overridePurchase || purchase);
     const totalPriceUSD = purch?.totalPrice?.to(TOKEN.USDC);
     const totalWalletUSD = wallet.combinedBalance?.to(TOKEN.USDC);
@@ -857,7 +854,7 @@ const SKU = ({ asset, onBack }) => {
     } else {
       setFundingPurchase(purch);
     }
-  }, [purchase, wallet]);
+  }, [accountAddress, login, purchase, wallet]);
 
   const onPurchaseStarterPack = useCallback((which) => {
     const totalPrice = priceHelper.from((which === 'basic' ? basicPackPriceUSD : advPackPriceUSD) * TOKEN_SCALE[TOKEN.USDC], TOKEN.USDC);
