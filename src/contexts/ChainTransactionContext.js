@@ -563,42 +563,14 @@ export function ChainTransactionProvider({ children }) {
     [blockNumber, crew?.Crew?.actionType, crew?.Crew?.actionRound, crew?._actionTypeTriggered]
   );
 
-  const simulateAndExecuteCalls = useCallback(async (calls) => {
+  const executeWithAccount = useCallback(async (calls) => {
     // Check if we can utilize a signed session to execute calls
     const canUseSession = !!starknetSession?.account && !!starknetSession?.sessionSignature && !calls.some((c) => {
       return c.contractAddress !== process.env.REACT_APP_STARKNET_DISPATCHER || c.entrypoint !== 'run_system';
     });
 
     const account = canUseSession ? starknetSession : starknet.account;
-    
-    // Simulate the tx and check for revert reasons, if found show alert
-    // Combining `simAccount` and `skipValidate = true` allows sim signing for any wallet
-    const simAccount = new Account(account.provider, account.address, '0x1234');
-    const simulation = isDeployed ? await simAccount.simulateTransaction(
-      [{ type: 'INVOKE_FUNCTION', payload: calls }],
-      { skipValidate: true }
-    ) : [];
-
-    if (simulation[0]?.transaction_trace?.execute_invocation?.revert_reason) {
-      const reason = simulation[0].transaction_trace.execute_invocation.revert_reason;
-      const match = reason.match(/Failure reason: 0x([a-fA-F0-9]+) \('([^']+)'\)/);
-
-      // If there is a match, we can show the friendly error message
-      // TODO: map "E" codes to more user-friendly messages
-      if (match) {
-        createAlert({
-          type: 'GenericAlert',
-          data: { content: match[2] },
-          level: 'warning',
-        });
-      } else {
-        // If no match, show the raw error message
-        throw new Error(reason);
-      }
-    } else {
-      // Execute the transaction if no simulation issues
-      return account.execute(calls);
-    }
+    return account.execute(calls);
   }, [createAlert, isDeployed, starknetSession, starknet?.account]);
 
   const contracts = useMemo(() => {
@@ -822,7 +794,7 @@ export function ChainTransactionProvider({ children }) {
                       takerAddress: starknet.account.address,
                     }, { baseUrl: process.env.REACT_APP_AVNU_API_URL });
                     if (!quotes?.[0]) throw new Error('Insufficient swap liquidity');
-                    
+
                     // set quote
                     quote = quotes[0];
 
@@ -853,7 +825,7 @@ export function ChainTransactionProvider({ children }) {
             }
 
             console.log('execute', calls);
-            return simulateAndExecuteCalls(calls);
+            return executeWithAccount(calls);
           },
 
           onConfirmed: (event, vars) => {
@@ -872,7 +844,7 @@ export function ChainTransactionProvider({ children }) {
       }, {});
     }
     return null;
-  }, [createAlert, prependEventAutoresolve, accountAddress, simulateAndExecuteCalls, starknetSession, usdcPerEth]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [createAlert, prependEventAutoresolve, accountAddress, executeWithAccount, starknetSession, usdcPerEth]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const getTxEvent = useCallback((txHash) => {
     const txHashBInt = BigInt(txHash);
@@ -1004,14 +976,11 @@ export function ChainTransactionProvider({ children }) {
 
   const isAccountLocked = useCallback(async () => {
     // Check that the account isn't locked, and prompt to unlock if it is
-    if (!await starknet.isPreauthorized()) {
-      try {
-        await starknet.enable();
-      } catch (e) {
-        return true;
-      }
+    try {
+      await starknet.enable();
+    } catch (e) {
+      return true;
     }
-    return false;
   }, []);
 
   const executeCalls = useCallback(async (calls) => {
@@ -1037,14 +1006,14 @@ export function ChainTransactionProvider({ children }) {
     // execute
     setPromptingTransaction(true);
     try {
-      const tx = await simulateAndExecuteCalls(calls);
+      const tx = await executeWithAccount(calls);
       setPromptingTransaction(false);
       return tx;
     } catch (e) {
       setPromptingTransaction(false);
       throw e;  // rethrow
     }
-  }, [createAlert, isAccountLocked, simulateAndExecuteCalls])
+  }, [createAlert, isAccountLocked, executeWithAccount])
 
   const execute = useCallback(async (key, vars, meta = {}) => {
     if (!starknet?.account || !contracts || !contracts[key]) {
