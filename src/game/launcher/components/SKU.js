@@ -258,16 +258,14 @@ const AsteroidSKU = () => {
   const { data: asteroidSale } = useAsteroidSale();
   const blockTime = useBlockTime();
 
-  const [remaining, remainingTime, trendingToSellOut] = useMemo(() => {
+  const [remaining, remainingTime] = useMemo(() => {
     if (!asteroidSale) return [0, 0, false];
 
-    const asteroidSaleEnd = ((asteroidSale.period || 0) + 1) * 1e6;
     const remaining = asteroidSale ? (Number(asteroidSale.limit) - Number(asteroidSale.volume)) : 0;
-    const remainingTime = asteroidSaleEnd - blockTime;
+    const now = blockTime || Math.floor(Date.now() / 1e3);
     return [
-      remainingTime > 0 ? remaining : 0,
-      remainingTime,
-      (remaining / remainingTime) <= (asteroidSale.limit / 1e6)
+      remaining,
+      Math.ceil(now / 1e6) * 1e6 - now
     ];
   }, [asteroidSale, blockTime]);
 
@@ -286,31 +284,25 @@ const AsteroidSKU = () => {
           considered before buying.
         </p>
       </Description>
-      <PurchaseForm isOrange={remaining === 0 || remainingTime <= 0}>
+      <PurchaseForm isOrange={remaining === 0}>
         <h3>
           <span>
-            {remainingTime > 0 && remaining > 0 && `Sale Active`}
-            {remainingTime > 0 && remaining === 0 && `Next Sale`}
-            {remainingTime <= 0 && `Sale Inactive`}
+            {remaining > 0 && `Sale Active`}
+            {remaining <= 0 && `Next Sale`}
           </span>
           <span>
-            {remainingTime > 0 && (trendingToSellOut || remaining <= 0)
-              ? (
-                <>
-                  {remaining > 0 ? 'Ends in' : 'Starts in'}
-                  <b>{formatTimer(remainingTime, 2)}</b>
-                </>
-              )
+            {remaining <= 0
+              ? <>Starts in <b>{formatTimer(remainingTime, 2)}</b></>
               : null
             }
           </span>
         </h3>
         <div>
-          <AsteroidBanner inactive={remaining === 0 || remainingTime <= 0}>
+          <AsteroidBanner inactive={remaining === 0}>
             <div>
               <PurchaseAsteroidIcon />
             </div>
-            {(remaining > 0 && remainingTime > 0)
+            {remaining > 0
               ? (
                 <div>
                   <label>{asteroidSale ? remaining.toLocaleString() : '...'} Asteroid{remaining === 1 ? '' : 's'}</label>

@@ -156,21 +156,16 @@ const SkuSelector = ({ onSelect }) => {
   const paneMeta = useMemo(() => {
     const asteroidExtra = {};
 
-    const asteroidSaleEnd = ((asteroidSale?.period || 0) + 1) * 1e6;
-    const remainingTime = asteroidSaleEnd - blockTime;
-    if (remainingTime > 0) {
-      const remaining = asteroidSale ? (Number(asteroidSale.limit) - Number(asteroidSale.volume)) : 0;
-      const trendingToSellOut = asteroidSale && ((remaining / remainingTime) <= (asteroidSale.limit / 1e6));
+    const remaining = asteroidSale ? (Number(asteroidSale.limit) - Number(asteroidSale.volume)) : 0;
+    if (remaining > 0) {
       asteroidExtra.leftNote = <><b>{remaining.toLocaleString()}</b> Remaining</>;
-      if (trendingToSellOut) {
-        asteroidExtra.rightNote = (
-          <>
-            <b>{formatTimer(remainingTime, 2)}</b> {remaining > 0 ? `Left in` : `Until Next`} Sales Period
-          </>
-        );
-      }
     } else {
-      asteroidExtra.rightNote = `Sale Inactive`;
+      const now = blockTime || Math.floor(Date.now() / 1e3);
+      asteroidExtra.rightNote = (
+        <>
+          <b>{formatTimer(Math.ceil(now / 1e6) * 1e6 - now, 2)}</b> Until Next Sales Period
+        </>
+      );
     }
 
     return {
