@@ -224,6 +224,7 @@ const PolicyPanel = ({ editable = false, entity, permission }) => {
 
   const handleChange = useCallback((key) => (e) => {
     let newVal = e.currentTarget.value;
+    if (key === 'rate') newVal /= 24;
     setDetails((v) => ({ ...v, [key]: newVal }));
   }, []);
 
@@ -448,8 +449,8 @@ const PolicyPanel = ({ editable = false, entity, permission }) => {
                         onChange={handleChange('rate')}
                         step={1}
                         type="number"
-                        value={`${details.rate}`} />
-                      <span>SWAY per day</span>
+                        value={`${details.rate * 24}`} />
+                      <span>SWAY per day (IRL)</span>
                     </div>
                   </PrepaidInputBlock>
                   <PrepaidInputBlock>
@@ -463,7 +464,7 @@ const PolicyPanel = ({ editable = false, entity, permission }) => {
                         step={1}
                         type="number"
                         value={`${details.initialTerm}`} />
-                      <span>days</span>
+                      <span>days (IRL)</span>
                     </div>
                   </PrepaidInputBlock>
                   <PrepaidInputBlock>
@@ -477,7 +478,7 @@ const PolicyPanel = ({ editable = false, entity, permission }) => {
                         step={1}
                         type="number"
                         value={`${details.noticePeriod}`} />
-                      <span>days</span>
+                      <span>days (IRL)</span>
                     </div>
                   </PrepaidInputBlock>
                 </>
@@ -524,14 +525,14 @@ const PolicyPanel = ({ editable = false, entity, permission }) => {
               {policyType === Permission.POLICY_IDS.PREPAID && (
                 <>
                   <DataRow>
-                    <label>Price per Day</label>
+                    <label>Price per Day (IRL)</label>
                     {permission === Permission.IDS.USE_LOT && entity?.label === Entity.IDS.ASTEROID && entity?.id === 1
                       ? <span><SwayIcon /> Variable by Lot</span>
                       : <span><SwayIcon /> {formatFixed(originalPolicyDetails?.rate * 24 || 0)}</span>
                     }
                   </DataRow>
-                  <DataRow><label>Minimum Period</label><span>{formatFixed(originalPolicyDetails?.initialTerm, 3)} day</span></DataRow>
-                  <DataRow><label>Notice Period</label><span>{formatFixed(originalPolicyDetails?.noticePeriod, 3)} day</span></DataRow>
+                  <DataRow><label>Minimum Period</label><span>{formatFixed(originalPolicyDetails?.initialTerm, 3)} day (IRL)</span></DataRow>
+                  <DataRow><label>Notice Period</label><span>{formatFixed(originalPolicyDetails?.noticePeriod, 3)} day (IRL)</span></DataRow>
                 </>
               )}
               {([Permission.POLICY_IDS.CONTRACT, Permission.POLICY_IDS.PREPAID].includes(policyType)) && (
