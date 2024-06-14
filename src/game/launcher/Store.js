@@ -16,6 +16,7 @@ import { formatTimer } from '~/lib/utils';
 import FundingMenu from './components/FundingMenu';
 import LauncherDialog from './components/LauncherDialog';
 import SKU from './components/SKU';
+import PageLoader from '~/components/PageLoader';
 
 const storeAssets = {
   crewmates: 'Crewmates',
@@ -226,7 +227,10 @@ const SkuSelector = ({ onSelect }) => {
 };
 
 const Store = () => {
+  const { data: priceConstants, isLoading } = usePriceConstants();
+
   const initialSubpage = useStore(s => s.launcherSubpage);
+
   const initialSelection = useMemo(() => {
     const linkedSelectionIndex = Object.keys(storeAssets).indexOf(initialSubpage);
     return linkedSelectionIndex >= 0 ? linkedSelectionIndex : undefined;
@@ -242,6 +246,7 @@ const Store = () => {
     }))
   }, []);
 
+  if (!priceConstants?.ADALIAN_PURCHASE_PRICE) return isLoading ? <PageLoader /> : null;
   return (
     <LauncherDialog
       bottomLeftMenu={<FundingMenu />}

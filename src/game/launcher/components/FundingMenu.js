@@ -123,6 +123,7 @@ const AddFundsButton = styled(Button)`
 `;
 
 const FundingMenu = () => {
+  const { accountAddress, login } = useSession();
   const priceHelper = usePriceHelper();
   const { data: wallet } = useWalletBalances();
 
@@ -130,6 +131,11 @@ const FundingMenu = () => {
   const dispatchPreferredUiCurrency = useStore(s => s.dispatchPreferredUiCurrency);
 
   const [isFunding, setIsFunding] = useState();
+
+  const handleFunding = useCallback(() => {
+    if (!accountAddress) return login();
+    setIsFunding(true);
+  }, [accountAddress, login]);
 
   const tooltipContent = useMemo(() => ReactDOMServer.renderToStaticMarkup(
     <Subtotals>
@@ -153,28 +159,33 @@ const FundingMenu = () => {
 
   return (
     <FundWrapper>
-      <div>
-        <h3>Available Wallet Balance:</h3>
-        <div>
-          <Switcher
-            buttons={[
-              { icon: <UsdcIcon />, value: TOKEN.USDC, tooltip: 'Display Prices in USD' },
-              { icon: <EthIcon />, value: TOKEN.ETH, tooltip: 'Display Prices in ETH' }
-            ]}
-            onChange={dispatchPreferredUiCurrency}
-            size="icon"
-            tooltipContainer="launcherTooltip"
-            value={preferredUiCurrency}
-          />
-        </div>
-      </div>
-      <label data-tooltip-id="launcherTooltip" data-tooltip-html={tooltipContent} data-tooltip-place="top">
-        {wallet?.combinedBalance?.to(preferredUiCurrency, true)}
-      </label>
-        <AddFundsButton onClick={() => setIsFunding(true)}>
-          <span>Add Funds</span>
-          <ChevronRightIcon />
-        </AddFundsButton>
+      {accountAddress && (
+        <>
+          <div>
+            <h3>Available Wallet Balance:</h3>
+            <div>
+              <Switcher
+                buttons={[
+                  { icon: <UsdcIcon />, value: TOKEN.USDC, tooltip: 'Display Prices in USD' },
+                  { icon: <EthIcon />, value: TOKEN.ETH, tooltip: 'Display Prices in ETH' }
+                ]}
+                onChange={dispatchPreferredUiCurrency}
+                size="icon"
+                tooltipContainer="launcherTooltip"
+                value={preferredUiCurrency}
+              />
+            </div>
+          </div>
+      
+          <label data-tooltip-id="launcherTooltip" data-tooltip-html={tooltipContent} data-tooltip-place="top">
+            {wallet?.combinedBalance?.to(preferredUiCurrency, true)}
+          </label>
+        </>
+      )}
+      <AddFundsButton onClick={handleFunding}>
+        <span>Add Funds</span>
+        <ChevronRightIcon />
+      </AddFundsButton>
       {isFunding && <FundingFlow onClose={() => setIsFunding()} />}
 
       {/* 

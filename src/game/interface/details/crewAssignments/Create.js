@@ -29,8 +29,6 @@ import ChainTransactionContext from '~/contexts/ChainTransactionContext';
 import useBookSession, { bookIds, getBookCompletionImage } from '~/hooks/useBookSession';
 import useCrewManager from '~/hooks/actionManagers/useCrewManager';
 import useCrewContext from '~/hooks/useCrewContext';
-import { useEthBalance } from '~/hooks/useWalletTokenBalance';
-import useFaucetInfo from '~/hooks/useFaucetInfo';
 import useNameAvailability from '~/hooks/useNameAvailability';
 import usePriceConstants from '~/hooks/usePriceConstants';
 import useStore from '~/hooks/useStore';
@@ -823,7 +821,6 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
   const { data: priceConstants } = usePriceConstants();
   const priceHelper = usePriceHelper();
   const { data: wallet } = useWalletBalances();
-  const { data: weiBalance, refetch: refetchEth } = useEthBalance();
 
   const [confirming, setConfirming] = useState();
   const [confirmingUnlock, setConfirmingUnlock] = useState();
@@ -1202,7 +1199,7 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
         </>
       )
     };
-  }, [crewmate, finalize, priceConstants, weiBalance]);
+  }, [crewmate, finalize, priceConstants, wallet]);
 
   if (!crewmate) return null;
   return (

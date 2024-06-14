@@ -9,12 +9,12 @@ import usePriceConstants from './usePriceConstants';
 export const GAS_BUFFER_VALUE_USDC = 2 * TOKEN_SCALE[TOKEN.USDC];
 
 const useWalletBalances = (overrideAccount) => {
-  const autoswap = useStore(s => s.gameplay.autoswap);
   const { data: priceConstants } = usePriceConstants();
-
-  const priceHelper = usePriceHelper();
   const { data: ethBalance, isLoading: isLoading1, refetch: refetch1 } = useEthBalance(overrideAccount);
   const { data: usdcBalance, isLoading: isLoading2, refetch: refetch2 } = useUSDCBalance(overrideAccount);
+  const priceHelper = usePriceHelper();
+
+  const autoswap = useStore(s => s.gameplay.autoswap);
 
   // for sanity, just assuming this is the same as ASTEROID_PURCHASE_TOKEN *and*
   // is represented in allTokens list...

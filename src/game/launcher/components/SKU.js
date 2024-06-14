@@ -749,7 +749,7 @@ const defaultStyleOverrides = {
 const SwayFaucetButton = () => {
   const queryClient = useQueryClient();
   const { data: faucetInfo, isLoading: faucetInfoLoading } = useFaucetInfo();
-  const { starknet } = useSession();
+  const { accountAddress, login, starknet } = useSession();
 
   const createAlert = useStore(s => s.dispatchAlertLogged);
 
@@ -762,6 +762,8 @@ const SwayFaucetButton = () => {
   }, [faucetInfo]);
 
   const requestSway = useCallback(async () => {
+    if (!accountAddress) return login();
+
     setRequestingSway(true);
 
     try {
@@ -788,7 +790,7 @@ const SwayFaucetButton = () => {
     queryClient.invalidateQueries({ queryKey: 'faucetInfo', refetchType: 'none' });
     queryClient.refetchQueries({ queryKey: 'faucetInfo', type: 'active' });
     queryClient.invalidateQueries({ queryKey: ['walletBalance', 'sway'] });
-  }, []);
+  }, [accountAddress, login, starknet]);
 
   return (
     <PurchaseButton
@@ -796,7 +798,7 @@ const SwayFaucetButton = () => {
       contrastColor={theme.colors.disabledBackground}
       background={`rgba(${theme.colors.successRGB}, 0.1)`}
       onClick={requestSway}
-      disabled={nativeBool(!swayEnabled || requestingSway || faucetInfoLoading)}
+      disabled={nativeBool((accountAddress && !swayEnabled) || requestingSway || faucetInfoLoading)}
       loading={reactBool(requestingSway || faucetInfoLoading)}
       style={{ marginRight: 10 }}>
       <PurchaseButtonInner>
@@ -810,6 +812,7 @@ const SwayFaucetButton = () => {
 }
 
 const SKU = ({ asset, onBack }) => {
+  const { accountAddress, login } = useSession();
   const { execute } = useContext(ChainTransactionContext);
   const { pendingTransactions } = useCrewContext();
   const { data: ethBalance } = useEthBalance();
@@ -849,6 +852,8 @@ const SKU = ({ asset, onBack }) => {
   }, [filters, updateFilters, zoomStatus, dispatchHudMenuOpened, dispatchLauncherPage, dispatchZoomScene, updateZoomStatus]);
 
   const handlePurchase = useCallback((overridePurchase) => {
+    if (!accountAddress) return login();
+    
     const purch = (overridePurchase || purchase);
     const totalPriceUSD = purch?.totalPrice?.to(TOKEN.USDC);
     const totalWalletUSD = wallet.combinedBalance?.to(TOKEN.USDC);
@@ -857,7 +862,7 @@ const SKU = ({ asset, onBack }) => {
     } else {
       setFundingPurchase(purch);
     }
-  }, [purchase, wallet]);
+  }, [accountAddress, login, purchase, wallet]);
 
   const onPurchaseStarterPack = useCallback((which) => {
     const totalPrice = priceHelper.from((which === 'basic' ? basicPackPriceUSD : advPackPriceUSD) * TOKEN_SCALE[TOKEN.USDC], TOKEN.USDC);

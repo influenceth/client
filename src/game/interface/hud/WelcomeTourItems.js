@@ -431,12 +431,9 @@ const WelcomeTourItems = () => {
 
   const handleNext = useCallback(() => {
     if (currentStepIndex >= steps.length - 1) {
-      if (authenticated) {
-        dispatchLauncherPage('store', 'packs')
-      } else {
-        // TODO: see WelcomeFlow -- if want to start prompting for crewmate credit pack, do not want to do this redirect
-        login().then(() => dispatchLauncherPage('store', 'packs'));
-      }
+      // TODO: prompt to login first?
+      // login().then(() => dispatchLauncherPage('store', 'packs'));
+      dispatchLauncherPage('store', 'packs');
     } else {
       updateStep(currentStepIndex + 1);
     }
