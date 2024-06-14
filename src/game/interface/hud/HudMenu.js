@@ -12,6 +12,7 @@ import {
   CloseIcon,
   CompositionIcon,
   DetailIcon,
+  DockedShipsIcon,
   FavoriteIcon,
   InfoIcon,
   InventoryIcon,
@@ -23,6 +24,7 @@ import {
   MarketplaceBuildingIcon,
   MyAssetsIcon,
   OrderIcon,
+  OrbitingShipsIcon,
   PassengersIcon,
   ResourceIcon,
   ShipIcon,
@@ -409,7 +411,7 @@ const HudMenu = () => {
         {
           key: 'DOCKED_SHIPS',
           label: 'Docked Ships',
-          icon: <ShipIcon />,
+          icon: <DockedShipsIcon />,
           Component: hudMenus.DockDetails,
           noDetail: true,
           isVisible: focus === 'lot'
@@ -419,7 +421,7 @@ const HudMenu = () => {
         {
           key: 'ORBITING_SHIPS',
           label: 'Orbiting Ships',
-          icon: <ShipIcon />,
+          icon: <OrbitingShipsIcon />,
           Component: hudMenus.OrbitDetails,
           noDetail: true,
           isVisible: focus === 'asteroid' && scope === 'asteroid'
@@ -555,7 +557,7 @@ const HudMenu = () => {
             //   });
             // }
           },
-          isVisible: (focus === 'asteroid' || scope === 'asteroid') && marketplaces?.length > 0
+          isVisible: (focus === 'asteroid' || focus === 'lot' || focus === 'ship' || scope === 'asteroid') && marketplaces?.length > 0
         },
         {
           key: 'ASTEROID_ADVANCED_SEARCH',
@@ -564,7 +566,7 @@ const HudMenu = () => {
           onOpen: () => {
             history.push(`/listview`);  // TODO: should probably also go to /listview/lots
           },
-          isVisible: ['asteroid', 'lot'].includes(scope)
+          isVisible: ['asteroid', 'lot', 'ship'].includes(scope)
         },
 
         {
