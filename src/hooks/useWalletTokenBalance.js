@@ -1,7 +1,7 @@
 import { useQuery } from 'react-query';
 import { uint256 } from 'starknet';
 
-import useSession from './useSession';
+import useSession from '~/hooks/useSession';
 import { TOKEN } from '~/lib/priceUtils';
 
 const useWalletTokenBalance = (tokenLabel, tokenAddress, overrideAccount) => {
@@ -11,13 +11,16 @@ const useWalletTokenBalance = (tokenLabel, tokenAddress, overrideAccount) => {
   return useQuery(
     [ 'walletBalance', tokenLabel, accountAddress ],
     async () => {
+      if (!accountAddress) return 0n; // shouldn't happen (but seemingly does)
+
       try {
         const balance = await starknet.provider.callContract({
           contractAddress: tokenAddress,
           entrypoint: 'balanceOf',
           calldata: [accountAddress]
         });
-        return uint256.uint256ToBN({ low: balance?.[0] || 0, high: balance?.[1] || 0 });
+        const standardized = Array.isArray(balance) ? balance : balance?.result;
+        return uint256.uint256ToBN({ low: standardized?.[0] || 0, high: standardized?.[1] || 0 });
       } catch (e) {
         console.error(e);
       }

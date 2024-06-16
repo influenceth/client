@@ -1003,6 +1003,10 @@ export function ChainTransactionProvider({ children }) {
 
       return;
     }
+    if (!(calls?.length > 0)) {
+      console.error('no calls included in executeCalls input');
+      return;
+    }
 
     // execute
     setPromptingTransaction(true);

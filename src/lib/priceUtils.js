@@ -41,9 +41,12 @@ export const TOKEN_FORMATTER = {
   [TOKEN.USDC]: (rawValue, format) => {
     const value = parseInt(rawValue);
     switch (format) {
-      case TOKEN_FORMAT.SHORT: return <>${(value / TOKEN_SCALE[TOKEN.USDC]).toLocaleString(undefined, { maximumFractionDigits: 0 })}</>
-      case TOKEN_FORMAT.FULL: return <>${(value / TOKEN_SCALE[TOKEN.USDC]).toLocaleString()}</>
-      case TOKEN_FORMAT.VERBOSE: return <>{(value / TOKEN_SCALE[TOKEN.USDC]).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USDC</>
+      case TOKEN_FORMAT.SHORT:
+        return value >= TOKEN_SCALE[TOKEN.USDC]
+          ? <>${(value / TOKEN_SCALE[TOKEN.USDC]).toLocaleString(undefined, { maximumFractionDigits: 0 })}</>
+          : <>${(value / TOKEN_SCALE[TOKEN.USDC]).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</>;
+      case TOKEN_FORMAT.FULL: return <>${(value / TOKEN_SCALE[TOKEN.USDC]).toLocaleString()}</>;
+      case TOKEN_FORMAT.VERBOSE: return <>{(value / TOKEN_SCALE[TOKEN.USDC]).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USDC</>;
       default: return <>${(value / TOKEN_SCALE[TOKEN.USDC]).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</>;
     }
   }

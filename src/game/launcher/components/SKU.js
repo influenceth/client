@@ -418,8 +418,8 @@ const SwaySKU = ({ onUpdatePurchase, onPurchasing }) => {
     onUpdatePurchase({
       totalPrice: priceHelper.from(unscaledUSDC, TOKEN.USDC),
       onPurchase: async () => {
-        const multiswapCalls = await buildMultiswapFromSellAmount(wallet, unscaledUSDC, TOKEN.SWAY);
-        if (!multiswapCalls) {
+        const multiswapCalls = await buildMultiswapFromSellAmount(unscaledUSDC, TOKEN.SWAY);
+        if (!(multiswapCalls?.length > 0)) {
           createAlert({
             type: 'GenericAlert',
             data: { content: 'Insufficient swap liquidity! Try again later.' },
@@ -767,7 +767,7 @@ const SKU = ({ asset, onBack }) => {
           </PurchaseButtonInner>
         ),
         props: {
-          onClick: handlePurchase,
+          onClick: () => handlePurchase(),
           isTransaction: true,
           disabled: isPurchasing,
           loading: isPurchasing,
@@ -797,7 +797,7 @@ const SKU = ({ asset, onBack }) => {
               </span>
             </PurchaseButtonInner>
           ),
-          onClick: handlePurchase,
+          onClick: () => handlePurchase(),
           props: {
             disabled: isPurchasing || !(purchase?.totalPrice?.usdcValue > 0),
             loading: isPurchasing,
