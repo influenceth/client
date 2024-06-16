@@ -1,7 +1,6 @@
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useQueryClient } from 'react-query';
 import styled from 'styled-components';
-import { Crewmate } from '@influenceth/sdk';
 
 import AsteroidsHeroImage from '~/assets/images/sales/asteroids_hero.png';
 import CrewmatesHeroImage from '~/assets/images/sales/crewmates_hero.png';
@@ -11,29 +10,28 @@ import StarterPackHeroImage from '~/assets/images/sales/starter_packs_hero.jpg';
 import AdalianFlourish from '~/components/AdalianFlourish';
 import HeroLayout from '~/components/HeroLayout';
 import UncontrolledTextInput from '~/components/TextInputUncontrolled';
-import { CheckIcon, EthIcon, PlusIcon, PurchaseAsteroidIcon, SwayIcon } from '~/components/Icons';
+import { EthIcon, PurchaseAsteroidIcon, SwayIcon } from '~/components/Icons';
 import useStore from '~/hooks/useStore';
 import useAsteroidSale from '~/hooks/useAsteroidSale';
 import useBlockTime from '~/hooks/useBlockTime';
 import useFaucetInfo from '~/hooks/useFaucetInfo';
 import { cleanseTxHash, formatTimer, nativeBool, reactBool, roundToPlaces } from '~/lib/utils';
-import NavIcon from '~/components/NavIcon';
 import theme from '~/theme';
 import Button from '~/components/ButtonAlt';
-import useWalletBalances, { GAS_BUFFER_VALUE_USDC } from '~/hooks/useWalletBalances';
+import useWalletBalances from '~/hooks/useWalletBalances';
 import useCrewManager from '~/hooks/actionManagers/useCrewManager';
 import usePriceConstants from '~/hooks/usePriceConstants';
 import { TOKEN, TOKEN_FORMAT, TOKEN_SCALE } from '~/lib/priceUtils';
 import usePriceHelper from '~/hooks/usePriceHelper';
 import UserPrice from '~/components/UserPrice';
-import { advPackPriceUSD, basicPackPriceUSD } from '../Store';
-import FundingFlow from './FundingFlow';
 import api from '~/lib/api';
 import useSession from '~/hooks/useSession';
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
 import useSwapHelper from '~/hooks/useSwapHelper';
-import { useEthBalance } from '~/hooks/useWalletTokenBalance';
 import useCrewContext from '~/hooks/useCrewContext';
+import { advPackPriceUSD, basicPackPriceUSD } from '../Store';
+import FundingFlow from './FundingFlow';
+import { AdvancedStarterPack, BasicStarterPack, useStarterPacks } from './StarterPack';
 
 const Flourish = styled.div`
   background: url(${p => p.src});
@@ -65,9 +63,25 @@ const Description = styled.div`
 `;
 
 const purchasePacksPadding = 15;
-const purchaseFormMargin = 15;
+export const purchaseFormMargin = 15;
 const purchaseFormWidth = 290;
-const PurchaseForm = styled.div`
+export const PurchaseForm = styled.div`
+  ${p => p.asButton && `
+    outline: 1px solid #333;
+    border-radius: 6px;
+    cursor: ${p.theme.cursors.active};
+    opacity: 1;
+    transition: opacity 150ms ease, outline 150ms linear;
+    &:hover {
+      opacity: 1;
+      outline-color: ${p.isOrange
+      ? p.theme.colors.inFlight
+      : (p.isPurple ? p.theme.colors.txButton : p.theme.colors.main)};;
+      outline-width: 4px;
+    }
+  `}
+
+  align-self: stretch;
   background: linear-gradient(
     to bottom,
     ${p => p.isOrange
@@ -76,9 +90,9 @@ const PurchaseForm = styled.div`
     },
     transparent
   );
-
+  display: flex;
+  flex-direction: column;
   flex: 0 0 ${purchaseFormWidth}px;
-  align-self: stretch;
   padding: 5px;
   & > h3 {
     align-items: center;
@@ -168,70 +182,6 @@ const AsteroidBanner = styled.div`
       color: ${p => p.inactive ? p.theme.colors.inFlight : p.theme.colors.main};
       display: block;
       font-size: 85%;
-    }
-  }
-`;
-
-const PackWrapper = styled.div`
-  padding: 10px 8px;
-`;
-
-const PackContents = styled.div`
-  &:before {
-    content: "Contains:";
-    color: ${p => p.theme.colors.main};
-    display: block;
-    font-size: 15px;
-    font-weight: bold;
-    margin-bottom: 15px;
-  }
-
-  & > div {
-    align-items: center;
-    display: flex;
-    margin-bottom: 10px;
-
-    & > label {
-      flex: 1;
-      font-size: 18px;
-      font-weight: bold;
-      white-space: nowrap;
-    }
-    & > span {
-      opacity: 0.6;
-      white-space: nowrap;
-
-      &:first-child {
-        font-size: 12px;
-        margin-right: 6px;
-        opacity: 1;
-      }
-    }
-  }
-
-  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-  padding-bottom: 5px;
-`;
-const PackChecks = styled.div`
-  padding-top: 15px;
-  & > div {
-    display: flex;
-    flex-direction: row;
-    margin-bottom: 8px;
-    & > span {
-      color: ${p => p.theme.colors.main};
-      flex: 0 0 32px;
-      font-size: 12px;
-      padding-top: 3px;
-    }
-    & > label {
-      color: ${p => p.theme.colors.main};
-      font-size: 13px;
-      line-height: 18px;
-      & > b {
-        color: white;
-        font-weight: normal;
-      }
     }
   }
 `;
@@ -395,49 +345,6 @@ const CrewmateSKU = ({ onUpdatePurchase, onPurchasing }) => {
 
 // TODO: wrap in launch feature flag
 const StarterPackSKU = () => {
-  const { data: priceConstants } = usePriceConstants();
-  const priceHelper = usePriceHelper();
-
-  const adalianPrice = useMemo(() => {
-    if (!priceConstants) return priceHelper.from(0);
-    return priceHelper.from(priceConstants?.ADALIAN_PURCHASE_PRICE, priceConstants?.ADALIAN_PURCHASE_TOKEN);
-  }, [priceConstants]);
-
-  const packs = useMemo(() => {
-    const basicPrice = priceHelper.from(basicPackPriceUSD * TOKEN_SCALE[TOKEN.USDC], TOKEN.USDC);
-    const basicCrewmates = 1;
-    const basicCrewmatesValue = priceHelper.from(basicCrewmates * adalianPrice.usdcValue, TOKEN.USDC);
-    const basicEthValue = priceHelper.from(GAS_BUFFER_VALUE_USDC, TOKEN.USDC);
-    const basicSwayValue = priceHelper.from(basicPrice.usdcValue - basicCrewmatesValue.usdcValue - basicEthValue.usdcValue, TOKEN.USDC);
-
-    const advPrice = priceHelper.from(advPackPriceUSD * TOKEN_SCALE[TOKEN.USDC], TOKEN.USDC);
-    const advCrewmates = 5;
-    const advCrewmatesValue = priceHelper.from(advCrewmates * adalianPrice.usdcValue, TOKEN.USDC);
-    const advEthValue = basicEthValue;
-    const advSwayValue = priceHelper.from(advPrice.usdcValue - advCrewmatesValue.usdcValue - advEthValue.usdcValue, TOKEN.USDC);
-
-    return {
-      basic: {
-        price: basicPrice,
-        crewmates: basicCrewmates,
-        crewmatesValue: basicCrewmatesValue,
-        ethFormatted: basicEthValue.to(TOKEN.ETH, TOKEN_FORMAT.VERBOSE),
-        ethValue: basicEthValue,
-        swayFormatted: basicSwayValue.to(TOKEN.SWAY, TOKEN_FORMAT.VERBOSE),
-        swayValue: basicSwayValue
-      },
-      adv: {
-        price: basicPrice,
-        crewmates: advCrewmates,
-        crewmatesValue: advCrewmatesValue,
-        ethFormatted: advEthValue.to(TOKEN.ETH, TOKEN_FORMAT.VERBOSE),
-        ethValue: advEthValue,
-        swayFormatted: advSwayValue.to(TOKEN.SWAY, TOKEN_FORMAT.VERBOSE),
-        swayValue: advSwayValue
-      }
-    }
-  }, [adalianPrice, priceHelper]);
-
   return (
     <Wrapper>
       <Description>
@@ -450,115 +357,8 @@ const StarterPackSKU = () => {
       </Description>
 
       <div style={{ display: 'flex', flex: `0 0 ${2 * purchaseFormWidth + purchaseFormMargin}px`, height: 352, marginTop: -160 }}>
-        <PurchaseForm style={{ marginRight: purchaseFormMargin, height: '100%' }}>
-          <h3>Basic Starter Pack</h3>
-          <PackWrapper>
-            <PackContents>
-              <div>
-                <span><NavIcon color={theme.colors.main} /></span>
-                <label>{packs.basic.crewmates} Crewmate{packs.basic.crewmates === 1 ? '' : 's'}</label>
-                <span>
-                  <UserPrice
-                    price={packs.basic.crewmatesValue.usdcValue}
-                    priceToken={TOKEN.USDC}
-                    format={TOKEN_FORMAT.SHORT} />
-                  {' '}Value
-                </span>
-              </div>
-              <div>
-                <span><NavIcon color={theme.colors.main} /></span>
-                <label>{packs.basic.swayFormatted}</label>
-                <span>
-                  <UserPrice
-                    price={packs.basic.swayValue.usdcValue}
-                    priceToken={TOKEN.USDC}
-                    format={TOKEN_FORMAT.SHORT} />
-                  {' '}Value
-                </span>
-              </div>
-              <div>
-                <span><NavIcon color={theme.colors.main} /></span>
-                <label>{packs.basic.ethFormatted}</label>
-                <span>
-                  <UserPrice
-                    price={packs.basic.ethValue.usdcValue}
-                    priceToken={TOKEN.USDC}
-                    format={TOKEN_FORMAT.SHORT} />
-                  {' '}Value
-                </span>
-              </div>
-            </PackContents>
-            <PackChecks>
-              <div>
-                <span><CheckIcon /></span>
-                <label>Basic Extraction starter kit</label>
-              </div>
-              <div>
-                <span><CheckIcon /></span>
-                <label>{packs.basic.crewmates}x Crewmate{packs.basic.crewmates === 1 ? '' : 's'} to perform game tasks (Recommended <b>Miner</b> class)</label>
-              </div>
-              <div>
-                <span><CheckIcon /></span>
-                <label>SWAY to construct <b>1x Warehouse</b> and <b>1x Extractor</b> buildings</label>
-              </div>
-            </PackChecks>
-          </PackWrapper>
-        </PurchaseForm>
-
-        <PurchaseForm isPurple>
-          <h3>Advanced Starter Pack</h3>
-          <PackWrapper>
-            <PackContents>
-              <div>
-                <span><NavIcon color={theme.colors.main} /></span>
-                <label>{packs.adv.crewmates} Crewmate{packs.adv.crewmates === 1 ? '' : 's'}</label>
-                <span>
-                  <UserPrice
-                    price={packs.adv.crewmatesValue.usdcValue}
-                    priceToken={TOKEN.USDC}
-                    format={TOKEN_FORMAT.SHORT} />
-                  {' '}Value
-                </span>
-              </div>
-              <div>
-                <span><NavIcon color={theme.colors.main} /></span>
-                <label>{packs.adv.swayFormatted}</label>
-                <span>
-                  <UserPrice
-                    price={packs.adv.swayValue.usdcValue}
-                    priceToken={TOKEN.USDC}
-                    format={TOKEN_FORMAT.SHORT} />
-                  {' '}Value
-                </span>
-              </div>
-              <div>
-                <span><NavIcon color={theme.colors.main} /></span>
-                <label>{packs.adv.ethFormatted}</label>
-                <span>
-                  <UserPrice
-                    price={packs.adv.ethValue.usdcValue}
-                    priceToken={TOKEN.USDC}
-                    format={TOKEN_FORMAT.SHORT} />
-                  {' '}Value
-                </span>
-              </div>
-            </PackContents>
-            <PackChecks>
-              <div>
-                <span><CheckIcon /></span>
-                <label>Advanced starter kit for extraction, refining, and production processes</label>
-              </div>
-              <div>
-                <span><CheckIcon /></span>
-                <label>{packs.adv.crewmates}x Crewmate{packs.adv.crewmates === 1 ? '' : 's'} to form a full crew and perform game tasks efficiently</label>
-              </div>
-              <div>
-                <span><CheckIcon /></span>
-                <label>SWAY to construct <b>1x Warehouse</b> and <b>1x Extractor</b> and <b>1x Refinery</b> buildings</label>
-              </div>
-            </PackChecks>
-          </PackWrapper>
-        </PurchaseForm>
+        <BasicStarterPack noButton style={{ marginRight: purchaseFormMargin }} />
+        <AdvancedStarterPack noButton />
       </div>
     </Wrapper>
   );
@@ -805,19 +605,15 @@ const SwayFaucetButton = () => {
 
 const SKU = ({ asset, onBack }) => {
   const { accountAddress, login } = useSession();
-  const { execute } = useContext(ChainTransactionContext);
   const { pendingTransactions } = useCrewContext();
-  const { data: ethBalance } = useEthBalance();
-  const { data: priceConstants } = usePriceConstants();
   const priceHelper = usePriceHelper();
-  const { buildMultiswapFromSellAmount } = useSwapHelper();
+  const packs = useStarterPacks();
   const { data: wallet } = useWalletBalances();
 
   const preferredUiCurrency = useStore(s => s.getPreferredUiCurrency());
   const filters = useStore(s => s.assetSearch['asteroidsMapped'].filters);
   const updateFilters = useStore(s => s.dispatchFiltersUpdated('asteroidsMapped'));
   const zoomStatus = useStore(s => s.asteroids.zoomStatus);
-  const createAlert = useStore(s => s.dispatchAlertLogged);
   const dispatchHudMenuOpened = useStore(s => s.dispatchHudMenuOpened);
   const dispatchLauncherPage = useStore(s => s.dispatchLauncherPage);
   const dispatchZoomScene = useStore(s => s.dispatchZoomScene);
@@ -857,58 +653,15 @@ const SKU = ({ asset, onBack }) => {
   }, [accountAddress, login, purchase, wallet]);
 
   const onPurchaseStarterPack = useCallback((which) => {
-    const totalPrice = priceHelper.from((which === 'basic' ? basicPackPriceUSD : advPackPriceUSD) * TOKEN_SCALE[TOKEN.USDC], TOKEN.USDC);
-    const crewmateTally = which === 'basic' ? 1 : 5;
-    const crewmate_usd = priceConstants ? priceHelper.from(BigInt(crewmateTally) * priceConstants?.ADALIAN_PURCHASE_PRICE, priceConstants?.ADALIAN_PURCHASE_TOKEN).to(TOKEN.USDC) : 0;
-    const purchaseEth_usd = GAS_BUFFER_VALUE_USDC;
-    const purchaseSway_usd = totalPrice?.usdcValue - crewmate_usd - purchaseEth_usd;
+    const pack = packs[which];
+    const onIsPurchasing = (which) => setIsPurchasing(which);
     const packPurchase = {
-      totalPrice,
-      onPurchase: async () => {
-        setIsPurchasing(true);
-
-        let ethSwapCalls = await buildMultiswapFromSellAmount(purchaseEth_usd, TOKEN.ETH);
-        // this means has no usdc (likely) OR illiquid swap (unlikely)... we'll assume the former.
-        // can still allow the transaction to go through as long as has enough ETH to cover the
-        // cost (and subsequent swaps will not leave without any gas buffer)
-        if (ethSwapCalls === false) {
-          if (priceHelper.from(ethBalance, TOKEN.ETH).to(TOKEN.USDC) >= totalPrice.usdcValue) {
-            ethSwapCalls = [];
-          } else {
-            createAlert({
-              type: 'GenericAlert',
-              data: { content: 'Insufficient ETH or USDC/ETH swap liquidity!' },
-              level: 'warning',
-              duration: 5000
-            });
-            setIsPurchasing(false);
-            return;
-          }
-        }
-        const swaySwapCalls = await buildMultiswapFromSellAmount(purchaseSway_usd, TOKEN.SWAY);
-        if (swaySwapCalls === false) {
-          createAlert({
-            type: 'GenericAlert',
-            data: { content: 'Insufficient SWAY swap liquidity!' },
-            level: 'warning',
-            duration: 5000
-          });
-          setIsPurchasing(false);
-          return;
-        }
-
-        await execute('PurchaseStarterPack', {
-          collection: Crewmate.COLLECTION_IDS.ADALIAN,
-          crewmateTally,
-          swapCalls: [ ...ethSwapCalls, ...swaySwapCalls ]
-        });
-
-        setIsPurchasing(false);
-      }
+      totalPrice: pack.price,
+      onPurchase: () => pack.onPurchase(onIsPurchasing)
     };
     setPurchase(packPurchase);
     handlePurchase(packPurchase);
-  }, [advPackPriceUSD, basicPackPriceUSD, buildMultiswapFromSellAmount, handlePurchase, priceConstants, priceHelper]);
+  }, [handlePurchase, packs]);
 
   const { content, ...props } = useMemo(() => {
     if (asset === 'asteroids') {

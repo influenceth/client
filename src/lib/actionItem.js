@@ -43,6 +43,7 @@ import {
   WarningIcon,
   EditIcon,
   CheckCircleIcon,
+  StarIcon,
 } from '~/components/Icons';
 import formatters from '~/lib/formatters';
 import { getProcessorProps, locationsArrToObj, ucfirst } from '~/lib/utils';
@@ -989,6 +990,12 @@ const formatAsTx = (item) => {
     case 'FinishAllReady': {
       formatted.icon = <CheckCircleIcon />;
       formatted.label = `Finish Multiple Actions`;
+      break;
+    }
+
+    case 'PurchaseStarterPack': {
+      formatted.icon = <StarIcon />;
+      formatted.label = `Purchase Starter Pack`;
       break;
     }
 
