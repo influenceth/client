@@ -959,7 +959,7 @@ const ActionProgressWrapper = styled.div`
   border: 1px solid ${borderColor};
   padding: 8px;
 `;
-const ActionProgressContainer = styled.div`
+export const ActionProgressContainer = styled.div`
   height: 34px;
   width: 100%;
   position: relative;
