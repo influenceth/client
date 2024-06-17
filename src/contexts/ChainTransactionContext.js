@@ -439,7 +439,7 @@ export function ChainTransactionProvider({ children }) {
 
   const executeWithAccount = useCallback(async (calls) => {
     // Check if we can utilize a signed session to execute calls
-    const canUseSession = !!starknetSession?.account && !!starknetSession?.sessionSignature && !calls.some((c) => {
+    const canUseSession = !!starknetSession && !calls.some((c) => {
       return c.contractAddress !== process.env.REACT_APP_STARKNET_DISPATCHER || c.entrypoint !== 'run_system';
     });
 
