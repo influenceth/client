@@ -1,7 +1,7 @@
 import { createContext, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Address, Asteroid, Entity, Order, System } from '@influenceth/sdk';
 import { isEqual, get } from 'lodash';
-import { Account, hash, shortString, uint256 } from 'starknet';
+import { hash, shortString, uint256 } from 'starknet';
 import { fetchBuildExecuteTransaction, fetchQuotes } from '@avnu/avnu-sdk';
 
 import useActivitiesContext from '~/hooks/useActivitiesContext';
@@ -14,135 +14,8 @@ import api from '~/lib/api';
 import { cleanseTxHash } from '~/lib/utils';
 import { TOKEN } from '~/lib/priceUtils';
 
-// import { CallData, shortString, uint256, ec } from 'starknet';
-// const Systems = System.Systems;
-
-// // TODO: move this back to sdk once finished debugging
-// const formatCalldataValue = (type, value) => {
-//   if (type === 'ContractAddress') {
-//     return value;
-//   } else if (type === 'Entity') {
-//     return [value.label, value.id];
-//   } else if (type === 'Number') {
-//     return Number(value);
-//   } else if (type === 'String') {
-//     return value;
-//   } else if (type === 'Boolean') {
-//     return value;
-//   } else if (type === 'BigNumber') {
-//     return BigInt(value);
-//   } else if (type === 'Ether') {
-//     return uint256.bnToUint256(value);
-//   } else if (type === 'InventoryItem') {
-//     return [value.product, value.amount];
-//   } else if (type === 'Withdrawal') {
-//     return { recipient: value.recipient, amount: uint256.bnToUint256(BigInt(value.amount)) };
-//   } else if (type === 'Boolean') {
-//     return !!value;
-//   } else if (type === 'Fixed64') {
-//     const neg = value < 0;
-//     const val = BigInt(Math.floor(Math.abs(value) * 2 ** 32));
-//     return [val, neg ? 1 : 0];
-//   } else if (type === 'Fixed128') {
-//     const neg = value < 0;
-//     const val = BigInt(Math.floor(Math.abs(value) * 2 ** 64)); // TODO: this will cause precision loss, use bignumber
-//     return [val, neg ? 1 : 0];
-//   } else if (type === 'EscrowHook') {
-//     console.log('EscrowHook', value);
-//     if (!value) return { contract: 0, entry_point_selector: '0', calldata: [] };
-//     return { contract: value.contractAddress, entry_point_selector: value.entrypoint, calldata: value.calldata };
-//   } else { // "Raw"
-//     return value;
-//   }
-// };
-// // this is specific to the system's calldata format (i.e. not the full calldata of execute())
-// const formatSystemCalldata = (name, vars, limitToVars = false) => {
-//   console.log('formatSystemCalldata', { name, vars, limitToVars });
-//   const system = Systems[name];
-//   if (!system) throw new Error(`Unknown system: ${name}`);
-
-//   const inputs = limitToVars
-//     ? system.inputs.filter(({ name }) => limitToVars.includes(name))
-//     : system.inputs;
-//   const x = inputs.reduce((acc, { name, type, isArray }) => {
-//     if (isArray) acc.push(vars[name]?.length || 0);
-//     (isArray ? vars[name] : [vars[name]]).forEach((v) => {
-//       const formattedVar = formatCalldataValue(type, v);
-//       try {
-//         (Array.isArray(formattedVar) ? formattedVar : [formattedVar]).forEach((val) => {
-//           acc.push(val);
-//         });
-//       } catch (e) {
-//         console.error(`${name} could not be formatted`, vars[name], e);
-//       }
-//     }, []);
-//     return acc;
-//   }, []);
-
-//   console.log('formatSystemCalldata (out)', x);
-
-//   return x;
-// };
-
-// const getRunSystemCall = (name, input, dispatcherAddress, limitToVars = false) => {
-//   console.log('getRunSystemCall', { name, input, dispatcherAddress, limitToVars });
-//   return {
-//     contractAddress: dispatcherAddress,
-//     entrypoint: 'run_system',
-//     calldata: CallData.compile({
-//       name,
-//       calldata: formatSystemCalldata(name, input, limitToVars)
-//     })
-//   };
-// };
-
-// const getEscrowDepositCall = (amount, depositHook, withdrawHook, escrowAddress, swayAddress) => {
-//   return {
-//     contractAddress: escrowAddress,
-//     entrypoint: 'deposit',
-//     calldata: CallData.compile([
-//       formatCalldataValue('ContractAddress', swayAddress),
-//       formatCalldataValue('Ether', amount), // using Ether b/c should match u256
-//       formatCalldataValue('EscrowHook', withdrawHook),
-//       formatCalldataValue('EscrowHook', depositHook),
-//     ])
-//   };
-// };
-// const getEscrowWithdrawCall = (withdrawals, depositCaller, withdrawHook, withdrawData, escrowAddress, swayAddress) => {
-//   return {
-//     contractAddress: escrowAddress,
-//     entrypoint: 'withdraw',
-//     calldata: CallData.compile([
-//       formatCalldataValue('ContractAddress', depositCaller),
-//       formatCalldataValue('ContractAddress', swayAddress),
-//       formatCalldataValue('EscrowHook', withdrawHook),
-//       // withdrawal data (not part of initial hook)
-//       withdrawData.length,
-//       ...withdrawData,
-//       // span of withdrawal structs
-//       `${withdrawals.length}`,
-//       ...withdrawals.map((w) => formatCalldataValue('Withdrawal', w)),
-//     ])
-//   };
-// };
-
-// const getTransferWithConfirmationCall = (recipient, amount, memo, consumerAddress, swayAddress) => ({
-//   contractAddress: swayAddress,
-//   entrypoint: 'transfer_with_confirmation',
-//   calldata: CallData.compile([
-//     formatCalldataValue('recipient', recipient),
-//     formatCalldataValue('amount', amount),
-//     formatCalldataValue('memo', Array.isArray(memo) ? ec.starkCurve.poseidonHashMany(memo.map((v) => BigInt(v))) : memo),
-//     formatCalldataValue('consumer', consumerAddress)
-//   ])
-// });
-
-///////////
-
 const RETRY_INTERVAL = 5e3; // 5 seconds
 const ChainTransactionContext = createContext();
-
-const getNow = () => Math.floor(Date.now() / 1000);
 
 // TODO: equalityTest default of 'i' doesn't make sense anymore
 
@@ -570,9 +443,10 @@ export function ChainTransactionProvider({ children }) {
       return c.contractAddress !== process.env.REACT_APP_STARKNET_DISPATCHER || c.entrypoint !== 'run_system';
     });
 
-    const account = canUseSession ? starknetSession : starknet.account;
+    // Use session wallet if possible, otherwise regular wallet, but "old" account if wallet RPC won't work
+    const account = canUseSession ? starknetSession : (walletAccount.walletProvider?.account || walletAccount);
     return account.execute(calls);
-  }, [createAlert, starknetSession, starknet?.account]);
+  }, [createAlert, starknetSession, walletAccount]);
 
   const contracts = useMemo(() => {
     if (!!walletAccount) {
@@ -792,7 +666,7 @@ export function ChainTransactionProvider({ children }) {
                       sellTokenAddress: fromAddress,
                       buyTokenAddress: toAddress,
                       sellAmount: BigInt(Math.ceil(targetSwapAmount / actualConv)),
-                      takerAddress: starknet.account.address,
+                      takerAddress: accountAddress,
                     }, { baseUrl: process.env.REACT_APP_AVNU_API_URL });
                     if (!quotes?.[0]) throw new Error('Insufficient swap liquidity');
 
@@ -813,7 +687,7 @@ export function ChainTransactionProvider({ children }) {
                   // prepend swap calls
                   const swapTx = await fetchBuildExecuteTransaction(
                     quote.quoteId,
-                    starknet.account.address,
+                    accountAddress,
                     slippage,
                     true,
                     { baseUrl: process.env.REACT_APP_AVNU_API_URL }
@@ -978,15 +852,16 @@ export function ChainTransactionProvider({ children }) {
   const isAccountLocked = useCallback(async () => {
     // Check that the account isn't locked, and prompt to unlock if it is
     try {
-      await starknet.enable();
+      if (walletAccount?.walletProvider?.enable) await walletAccount?.walletProvider?.enable();
     } catch (e) {
       return true;
     }
+
     return false;
-  }, [starknet]);
+  }, [walletAccount]);
 
   const executeCalls = useCallback(async (calls) => {
-    if (!starknet?.account) {
+    if (!walletAccount) {
       createAlert({
         type: 'GenericAlert',
         data: { content: 'Account is disconnected.' },
@@ -995,6 +870,7 @@ export function ChainTransactionProvider({ children }) {
 
       return;
     }
+
     if (await isAccountLocked()) {
       createAlert({
         type: 'GenericAlert',
@@ -1011,6 +887,7 @@ export function ChainTransactionProvider({ children }) {
 
     // execute
     setPromptingTransaction(true);
+
     try {
       const tx = await executeWithAccount(calls);
       setPromptingTransaction(false);
@@ -1019,7 +896,7 @@ export function ChainTransactionProvider({ children }) {
       setPromptingTransaction(false);
       throw e;  // rethrow
     }
-  }, [createAlert, isAccountLocked, executeWithAccount])
+  }, [createAlert, executeWithAccount, isAccountLocked, walletAccount])
 
   const execute = useCallback(async (key, vars, meta = {}) => {
     if (!walletAccount || !contracts || !contracts[key]) {
@@ -1040,12 +917,12 @@ export function ChainTransactionProvider({ children }) {
       return;
     }
 
-    const { execute, onTransactionError } = contracts[key];
+    const { execute: contractExecute, onTransactionError } = contracts[key];
     setPromptingTransaction(true);
 
     try {
       // execute
-      const tx = await execute(vars);
+      const tx = await contractExecute(vars);
       dispatchPendingTransaction({
         key,
         vars,
@@ -1102,7 +979,7 @@ export function ChainTransactionProvider({ children }) {
     }
 
     setPromptingTransaction(false);
-  }, [blockTime, contracts, starknet]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [blockTime, contracts, walletAccount]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const getPendingTx = useCallback((key, vars) => {
     if (contracts && contracts[key]) {

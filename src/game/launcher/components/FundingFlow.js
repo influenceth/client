@@ -229,7 +229,7 @@ const WaitingWrapper = styled.div`
 export const FundingFlow = ({ totalPrice, onClose, onFunded }) => {
   const createAlert = useStore(s => s.dispatchAlertLogged);
 
-  const { accountAddress, starknet, walletId } = useSession();
+  const { accountAddress, chainId, walletId } = useSession();
   const priceHelper = usePriceHelper();
   const { data: wallet, refetch: refetchBalances } = useWalletBalances();
   const preferredUiCurrency = useStore(s => s.getPreferredUiCurrency());
@@ -359,8 +359,8 @@ export const FundingFlow = ({ totalPrice, onClose, onFunded }) => {
     const url = `https://layerswap.io/app/?${
       new URLSearchParams({
         amount,
-        // from: layerSwapChains[starknet?.chainId]?.ethereum,
-        to: layerSwapChains[starknet?.chainId]?.starknet,
+        // from: layerSwapChains[chainId]?.ethereum,
+        to: layerSwapChains[chainId]?.starknet,
         toAsset: 'USDC',
         destAddress: accountAddress,
         lockTo: true,
@@ -375,7 +375,7 @@ export const FundingFlow = ({ totalPrice, onClose, onFunded }) => {
   }, [accountAddress, fundsNeeded]);
 
   const onClickStarkgate = useCallback(() => {
-    const isSepolia = ['0x534e5f5345504f4c4941','SN_SEPOLIA'].includes(starknet?.chainId);
+    const isSepolia = ['0x534e5f5345504f4c4941' , 'SN_SEPOLIA'].includes(chainId);
     const url = `https://${isSepolia ? 'sepolia.' : ''}starkgate.starknet.io/`;
 
     window.open(url, '_blank');

@@ -40,7 +40,7 @@ class Price {
 const usePriceHelper = () => {
   const { data: swayPerUsdc } = useSwayPerUsdc();
   const { data: usdcPerEth } = useUsdcPerEth();
-  
+
   const from = useCallback((value, originToken) => {
     return Price.from(
       value,

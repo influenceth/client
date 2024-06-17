@@ -370,7 +370,7 @@ const SwaySKU = ({ onUpdatePurchase, onPurchasing }) => {
   const priceHelper = usePriceHelper();
   const { buildMultiswapFromSellAmount } = useSwapHelper();
   const queryClient = useQueryClient();
-  const { accountAddress, starknet } = useSession();
+  const { accountAddress, provider } = useSession();
   const { data: wallet } = useWalletBalances();
 
   const createAlert = useStore(s => s.dispatchAlertLogged);
@@ -391,7 +391,7 @@ const SwaySKU = ({ onUpdatePurchase, onPurchasing }) => {
 
   const handleSwayChange = useCallback((newValue) => {
     setSway(newValue);
-    
+
     const value = priceHelper.from(newValue * TOKEN_SCALE[TOKEN.SWAY], TOKEN.SWAY);
     setETH(roundToPlaces(value.to(TOKEN.ETH) / TOKEN_SCALE[TOKEN.ETH], 6));
     setUSDC(roundToPlaces(value.to(TOKEN.USDC) / TOKEN_SCALE[TOKEN.USDC], 2));
@@ -399,7 +399,7 @@ const SwaySKU = ({ onUpdatePurchase, onPurchasing }) => {
 
   const handleUsdcChange = useCallback((newValue) => {
     setUSDC(newValue);
-    
+
     const value = priceHelper.from(newValue * TOKEN_SCALE[TOKEN.USDC], TOKEN.USDC);
     setETH(roundToPlaces(value.to(TOKEN.ETH) / TOKEN_SCALE[TOKEN.ETH], 6));
     setSway(roundToPlaces(value.to(TOKEN.SWAY) / TOKEN_SCALE[TOKEN.SWAY], 0));
@@ -433,7 +433,7 @@ const SwaySKU = ({ onUpdatePurchase, onPurchasing }) => {
             const tx = await executeCalls(multiswapCalls);
             setIsProcessing(true);
 
-            await starknet.account.waitForTransaction(cleanseTxHash(tx.transaction_hash), { retryInterval: 5e3 });
+            await provider.waitForTransaction(cleanseTxHash(tx.transaction_hash), { retryInterval: 5e3 });
 
             // refetch all wallet balances
             queryClient.invalidateQueries({ queryKey: ['walletBalance'], refetchType: 'active' });
@@ -458,7 +458,16 @@ const SwaySKU = ({ onUpdatePurchase, onPurchasing }) => {
         }
       }
     })
-  }, [accountAddress, executeCalls, onUpdatePurchase, preferredUiCurrency, priceHelper, queryClient, starknet?.account, usdc, wallet]);
+  }, [
+    accountAddress,
+    executeCalls,
+    onUpdatePurchase,
+    preferredUiCurrency,
+    priceHelper,
+    queryClient,
+    usdc,
+    wallet
+  ]);
 
   useEffect(() => {
     onPurchasing(isProcessing);
@@ -541,7 +550,7 @@ const defaultStyleOverrides = {
 const SwayFaucetButton = () => {
   const queryClient = useQueryClient();
   const { data: faucetInfo, isLoading: faucetInfoLoading } = useFaucetInfo();
-  const { accountAddress, login, starknet } = useSession();
+  const { accountAddress, login, provider } = useSession();
 
   const createAlert = useStore(s => s.dispatchAlertLogged);
 
@@ -560,7 +569,7 @@ const SwayFaucetButton = () => {
 
     try {
       const txHash = await api.requestTokens('SWAY');
-      await starknet.account.waitForTransaction(txHash);
+      await provider.waitForTransaction(txHash);
 
       createAlert({
         type: 'WalletAlert',
@@ -582,7 +591,7 @@ const SwayFaucetButton = () => {
     queryClient.invalidateQueries({ queryKey: 'faucetInfo', refetchType: 'none' });
     queryClient.refetchQueries({ queryKey: 'faucetInfo', type: 'active' });
     queryClient.invalidateQueries({ queryKey: ['walletBalance', 'sway'] });
-  }, [accountAddress, login, starknet]);
+  }, [accountAddress, login, provider]);
 
   return (
     <PurchaseButton
@@ -641,7 +650,7 @@ const SKU = ({ asset, onBack }) => {
 
   const handlePurchase = useCallback((overridePurchase) => {
     if (!accountAddress) return login();
-    
+
     const purch = (overridePurchase || purchase);
     const totalPriceUSD = purch?.totalPrice?.to(TOKEN.USDC);
     const totalWalletUSD = wallet.combinedBalance?.to(TOKEN.USDC);

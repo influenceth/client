@@ -59,7 +59,6 @@ export function SessionProvider({ children }) {
 
   const [connecting, setConnecting] = useState(false);
   const [status, setStatus] = useState(STATUSES.DISCONNECTED);
-  const [starknet, setStarknet] = useState(false);
   const [starknetSession, setStarknetSession] = useState();
 
   const [connectedAccount, setConnectedAccount] = useState();
@@ -134,7 +133,6 @@ export function SessionProvider({ children }) {
           return;
         }
 
-        setStarknet(wallet);
         localStorage.setItem('starknetLastConnectedWallet', wallet.id);
         setStatus(STATUSES.CONNECTED);
       } else {
@@ -215,34 +213,21 @@ export function SessionProvider({ children }) {
     return stopListening;
   }, [currentSession, sessions, status, walletAccount ]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Authenticate with a signed message against the API
-  const authenticate = useCallback(async () => {
-    // If somehow we've lost wallet connection, disconnect
-    if (!connectedAccount || !walletAccount) {
-      disconnect();
-      return false;
-    }
-
-    // Check for pre-existing session and use it if it's still valid
-    const existingSession = Object.assign({}, sessions[connectedAccount]);
-
-    if (existingSession && !isExpired(existingSession.token) && existingSession.isDeployed) {
-      existingSession.startTime = Date.now();
-      dispatchSessionStarted(existingSession);
-      setStatus(STATUSES.AUTHENTICATED);
-      return true;
-    }
-
-    // Check if the account contract has been deployed yet
-    let isDeployed = false;
-
+  // Checks the account contract do determine if it's deployed on-chain yet
+  const checkDeployed = useCallback(async () => {
     try {
       await provider.getClassAt(connectedAccount); // if this throws, the contract is not deployed
-      isDeployed = true;
+      return true;
     } catch (e) {
       if (!e.message.includes('Contract not found')) console.error(e);
+      return false;
     }
+  }, [connectedAccount, provider]);
 
+  // Authenticate with a signed message against the API and create a new session
+  const authenticate = useCallback(async () => {
+    // Check if the account contract has been deployed yet
+    let isDeployed = await checkDeployed();
     const newSession = { isDeployed };
 
     // Start authenticating by requesting a login message from API
@@ -251,11 +236,7 @@ export function SessionProvider({ children }) {
     let newToken = null;
 
     try {
-      if (!isDeployed) {
-        // If the wallet is not yet deployed, create an insecure session
-        newToken = await api.verifyLogin(connectedAccount, { signature: 'insecure' });
-        Object.assign(newSession, { walletId: connectedWalletId, accountAddress: connectedAccount, token: newToken });
-      } else if (connectedWalletId === 'argentWebWallet') {
+      if (connectedWalletId === 'argentWebWallet') {
         // Connect via Argent Web Wallet and automatically create a session
         const privateKey = '0x' + Buffer.from(utils.randomPrivateKey()).toString('hex');
         const dappKey = {
@@ -292,13 +273,17 @@ export function SessionProvider({ children }) {
             sessionSignature
           });
         }
-      } else {
+      } else if (isDeployed) {
         // Connect via a traditional browser extension wallet\
         const signature = await walletAccount.signMessage(loginMessage);
         if (signature?.code === 'CANCELED') throw new Error('User abort');
         newToken = await api.verifyLogin(connectedAccount, { signature: signature.join(',') });
         const walletId = walletAccount?.walletProvider?.id;
         Object.assign(newSession, { walletId, accountAddress: connectedAccount, token: newToken });
+      } else {
+        // If the wallet is not yet deployed, create an insecure session
+        newToken = await api.verifyLogin(connectedAccount, { signature: 'insecure' });
+        Object.assign(newSession, { walletId: connectedWalletId, accountAddress: connectedAccount, token: newToken });
       }
 
       dispatchSessionStarted(newSession);
@@ -320,37 +305,54 @@ export function SessionProvider({ children }) {
     return false;
   }, [
     connectedAccount,
-    connectedChainId,
     connectedWalletId,
     createAlert,
     dispatchSessionStarted,
-    sessions,
     walletAccount,
     disconnect,
     logout
   ]);
 
+  // Resumes a current session or starts a new one
+  const resumeOrAuthenticate = useCallback(async () => {
+    // If somehow we've lost wallet connection, disconnect
+    if (!connectedAccount || !walletAccount) {
+      disconnect();
+      return false;
+    }
+
+    // Check for pre-existing session and use it if it's still valid
+    const existingSession = Object.assign({}, sessions[connectedAccount]);
+
+    if (existingSession && !isExpired(existingSession.token) && existingSession.isDeployed) {
+      existingSession.startTime = Date.now();
+      dispatchSessionStarted(existingSession);
+      setStatus(STATUSES.AUTHENTICATED);
+      return true;
+    }
+
+    await authenticate();
+  }, [authenticate, connectedAccount, walletAccount, sessions, disconnect, dispatchSessionStarted]);
+
+  const createSessionAccount = useCallback(async () => {
+    const offchainSessionAccount = await buildSessionAccount({
+      accountSessionSignature: currentSession.sessionSignature,
+      sessionRequest: currentSession.sessionRequest,
+      provider,
+      chainId: '0x534e5f5345504f4c4941', // TODO: move to env
+      address: currentSession.accountAddress,
+      dappKey: currentSession.sessionDappKey,
+      argentSessionServiceBaseUrl: 'https://api.hydrogen.argent47.net/v1' // TODO: move to env
+    });
+
+    setStarknetSession(offchainSessionAccount);
+  }, [currentSession, provider]);
+
   // Start a session with the Argent Web Wallet
   useEffect(() => {
-    const createSessionAccount = async () => {
-      console.log('creating argent session account');
-      console.log('currentSession', currentSession);
-      console.log('provider', provider);
-      const offchainSessionAccount = await buildSessionAccount({
-        accountSessionSignature: currentSession.sessionSignature,
-        sessionRequest: currentSession.sessionRequest,
-        provider,
-        chainId: '0x534e5f5345504f4c4941', // TODO: move to env
-        address: currentSession.accountAddress,
-        dappKey: currentSession.sessionDappKey,
-        argentSessionServiceBaseUrl: 'https://api.hydrogen.argent47.net/v1' // TODO: move to env
-      });
-
-      setStarknetSession(offchainSessionAccount);
-    };
-
+    if (!currentSession?.isDeployed) return;
     if (authenticated && currentSession.walletId === 'argentWebWallet') createSessionAccount();
-  }, [authenticated, currentSession, connectedChainId]);
+  }, [authenticated, currentSession]);
 
   // End session and disconnect wallet if session expires
   useEffect(() => {
@@ -359,7 +361,7 @@ export function SessionProvider({ children }) {
 
   // Connect / auth flow manager
   useEffect(() => {
-    console.log(Object.keys(STATUSES).find(key => STATUSES[key] === status));
+    // console.log(Object.keys(STATUSES).find(key => STATUSES[key] === status));
     if (status === STATUSES.DISCONNECTED) {
       if (currentSession?.walletId) {
         connect(true).finally(() => setReadyForChildren(true));
@@ -369,7 +371,7 @@ export function SessionProvider({ children }) {
 
       setStarknetSession(null); // clear session key if it exists
     } else if (status === STATUSES.CONNECTED) {
-      authenticate();
+      resumeOrAuthenticate();
       setReadyForChildren(true);
     }
   }, [currentSession, status]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -487,16 +489,16 @@ export function SessionProvider({ children }) {
       login: async () => await connect(),
       logout,
       accountAddress: authenticated ? currentSession?.accountAddress : null,
-      authenticating: [STATUSES.AUTHENTICATING, STATUSES.CONNECTING].includes(status),
       authenticated,
+      authenticating: [STATUSES.AUTHENTICATING, STATUSES.CONNECTING].includes(status),
       chainId: authenticated ? connectedChainId : null,
       isDeployed: authenticated ? currentSession?.isDeployed : null,
       provider,
-      token: authenticated ? currentSession?.token : null,
-      walletId: authenticated ? currentSession?.walletId : null,
-      status,
       starknetSession,
+      status,
+      token: authenticated ? currentSession?.token : null,
       walletAccount,
+      walletId: authenticated ? currentSession?.walletId : null,
 
       // NOTE:
       // - blockNumber is updated from websocket change or initial pull of activities from server

@@ -13,7 +13,7 @@ import { PuffLoader } from 'react-spinners';
 const EthFaucetButton = ({ onError, onProcessing, onSuccess }) => {
   const queryClient = useQueryClient();
   const { data: faucetInfo, isLoading: faucetInfoLoading } = useFaucetInfo();
-  const { starknet } = useSession();
+  const { provider } = useSession();
 
   const [requestingEth, setRequestingEth] = useState();
 
@@ -28,7 +28,7 @@ const EthFaucetButton = ({ onError, onProcessing, onSuccess }) => {
 
     try {
       const txHash = await api.requestTokens('ETH');
-      await starknet.account.waitForTransaction(txHash);
+      await provider.waitForTransaction(txHash);
 
       setRequestingEth(false);
 
@@ -42,7 +42,7 @@ const EthFaucetButton = ({ onError, onProcessing, onSuccess }) => {
     queryClient.invalidateQueries({ queryKey: 'faucetInfo', refetchType: 'none' });
     queryClient.refetchQueries({ queryKey: 'faucetInfo', type: 'active' });
     queryClient.invalidateQueries({ queryKey: ['walletBalance', 'eth'] });
-  }, []);
+  }, [provider]);
 
   useEffect(() => {
     if (onProcessing) onProcessing(requestingEth);

@@ -5,7 +5,7 @@ import useSession from '~/hooks/useSession';
 import { TOKEN } from '~/lib/priceUtils';
 
 const useWalletTokenBalance = (tokenLabel, tokenAddress, overrideAccount) => {
-  const { accountAddress: defaultAccount, starknet } = useSession();
+  const { accountAddress: defaultAccount, provider } = useSession();
 
   const accountAddress = overrideAccount || defaultAccount;
   return useQuery(
@@ -13,7 +13,7 @@ const useWalletTokenBalance = (tokenLabel, tokenAddress, overrideAccount) => {
     async () => {
       if (!accountAddress) return undefined; // shouldn't happen (but seemingly does)
       try {
-        const balance = await starknet.provider.callContract({
+        const balance = await provider.callContract({
           contractAddress: tokenAddress,
           entrypoint: 'balanceOf',
           calldata: [accountAddress]
