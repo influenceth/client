@@ -12,7 +12,7 @@ import {
   CloseIcon,
   ForwardIcon,
   PopoutIcon,
-  WarningOutlineIcon,
+  WarningIcon,
 } from '~/components/Icons';
 import AsteroidRendering from '~/components/AsteroidRendering';
 import useActionButtons from '~/hooks/useActionButtons';
@@ -27,9 +27,12 @@ import { getBuildingIcon, getLotShipIcon } from '~/lib/assetUtils';
 import formatters from '~/lib/formatters';
 import useSale from '~/hooks/useSale';
 import useShip from '~/hooks/useShip';
+import useReadyAtWatcher from '~/hooks/useReadyAtWatcher';
 import LiveTimer from '~/components/LiveTimer';
 import LotLoadingProgress from './LotLoadingProgress';
-
+import theme, { hexToRGB } from '~/theme';
+import EntityName from '~/components/EntityName';
+import { ActionProgressContainer } from './actionDialogs/components';
 
 const opacityAnimation = keyframes`
   0% { opacity: 1; }
@@ -86,8 +89,7 @@ const Subtitle = styled.div`
   color: #999;
   filter: drop-shadow(0px 0px 2px rgb(0 0 0));
   font-size: 15px;
-  margin-bottom: 12px;
-
+  margin: 4px 0 12px;
   & b {
     color: white;
   }
@@ -124,7 +126,7 @@ const thumbCornerSize = 10;
 const ThumbPreview = styled.div`
   background: #000;
   border: 1px solid rgba(255,255,255,0.25);
-  ${p => p.theme.clipCorner(thumbCornerSize)};
+  ${p => p.theme.clipCornerLeft(thumbCornerSize)};
   color: #999;
   font-size: 14px;
   height: 145px;
@@ -167,39 +169,37 @@ const ThumbBackground = styled.div`
 `;
 
 const ThumbBanner = styled.div`
+  padding: 8px;
   align-items: center;
-  background: rgba(0, 0, 0, 0.6);
+  background: ${p => p.background ? `rgba(${hexToRGB(p.theme.colors[p.background])}, 0.75)` : `rgba(0, 0, 0, 0.5)`};
   color: ${p => p.color ? p.theme.colors[p.color] : 'white'};
   display: flex;
+  font-size: 14px;
   font-weight: bold;
-  height: 36px;
+  height: 30px;
   justify-content: center;
   left: 5%;
   position: absolute;
   text-transform: uppercase;
+  padding: 4px;
   top: calc(50% - 15px);
   width: 90%;
   z-index: 1;
-  & > svg {
-    font-size: 18px;
-    margin-right: 6px;
+  & span {
+    display: flex;
+    white-space: nowrap;
+    padding: 0 8px;
+    align-items: center;
+    & > svg {
+      font-size: 20px;
+      margin-right: 4px;
+    }
   }
 `;
 
-const RarityEarmark = styled.div`
-  background: ${p => p.theme.colors.rarity[p.rarity]};
-  position: absolute;
-  top: 8px;
-  left: 8px;
-  height: 15px;
-  width: 15px;
-  z-index: 1;
-  clip-path: polygon(
-    0% 0%,
-    100% 0%,
-    0% 100%
-  );
-`;
+const BackgroundLines = styled(ActionProgressContainer)`
+  height: 100%;
+`
 
 const Pane = styled.div`
   cursor: ${p => p.theme.cursors.active};
@@ -268,6 +268,37 @@ const CaptainCard = ({ crewId }) => {
   );
 }
 
+const getShipSubtitle = (ship, shipReady, { asteroid, lot }) => {
+  if (ship.Ship?.transitDeparture > 0) {
+    return (
+      <>
+        <b style={{ color: theme.colors.inFlight }}>In Flight to</b>{' '}
+        <span style={{ color: 'white' }}><EntityName {...ship.Ship.transitDestination} /></span>
+      </>
+    );
+  }
+
+  if (lot) {
+    const lotName = lot?.building ? formatters.buildingName(lot?.building) : formatters.lotName(lot);
+    const landedOrDocked = shipReady ? ` (${lot?.building ? 'Docked' : 'Landed'})` : '';
+    return (
+      <>
+        {formatters.asteroidName(asteroid)} &gt;{' '}
+        {shipReady ? '' : <b style={{ color: theme.colors.inFlight }}>Landing At{' '}</b>}
+        <b>{lotName}{landedOrDocked}</b>
+      </>
+    );
+  }
+
+  return (
+    <>
+      {formatters.asteroidName(asteroid)} &gt;{' '}
+      <b style={{ color: theme.colors[shipReady ? 'brightMain' : 'inFlight'] }}>{shipReady ? 'In Orbit' : 'Launching to Orbit'}</b>
+    </>
+  );
+}
+
+
 const InfoPane = () => {
   const history = useHistory();
 
@@ -291,6 +322,8 @@ const InfoPane = () => {
   const { data: lot, isLoading: lotIsLoading } = useLot(lotId);
   const { data: ship, isLoading: shipIsLoading } = useShip(zoomScene?.type === 'SHIP' ? zoomScene.shipId : undefined);
   const saleIsActive = useSale(Entity.IDS.ASTEROID);
+  const shipReady = useReadyAtWatcher(ship?.Ship?.transitArrival || ship?.Ship?.readyAt);
+  const surfaceShipReady = useReadyAtWatcher(lot?.surfaceShip?.readyAt);
 
   const [hover, setHover] = useState();
   const [currentSound, setCurrentSound] = useState();
@@ -363,9 +396,18 @@ const InfoPane = () => {
       if (ship) {
         pane.title = formatters.shipName(ship);
         if (ship.Ship?.transitDeparture > 0) {
-          pane.subtitle = 'In Flight';
+          pane.subtitle = (
+            <>
+              <b style={{ color: theme.colors.inFlight }}>In Flight to</b>{' '}
+              <span style={{ color: 'white' }}>{<EntityName {...ship.Ship.transitDestination} />}</span>
+            </>
+          );
         } else {
-          pane.subtitle = <>{formatters.asteroidName(asteroid)} &gt; <b>{lotId ? formatters.lotName(lotId) : 'In Orbit'}</b></>;
+          pane.subtitle = (
+            <>
+              {formatters.asteroidName(asteroid)} &gt; <b style={{color: theme.colors.brightMain}}>In Orbit</b>
+            </>
+          );
         }
         pane.captainCard = ship.Control?.controller?.id;
       }
@@ -377,34 +419,37 @@ const InfoPane = () => {
       pane.captainCard = asteroid.Control?.controller?.id;
 
       let thumbBanner = '';
-      let thumbBannerColor = 'main';
+      let thumbBannerColor = '';
+      let thumbBannerBackgroundColor = '';
       if (asteroid.Celestial.scanStatus < Asteroid.SCAN_STATUSES.SURFACE_SCANNED) {
         if (asteroid.Celestial.scanStatus === Asteroid.SCAN_STATUSES.SURFACE_SCANNING) {
           thumbBanner = 'Scanning Surface...';
-          thumbBannerColor = 'main';
+          thumbBannerColor = 'brightMain';
+          thumbBannerBackgroundColor = 'backgroundMain';
         } else if (asteroid.Nft?.owner) {
-          thumbBanner = <><WarningOutlineIcon /> Ready to Scan</>;
+          thumbBanner = <>Ready to Scan</>;
           thumbBannerColor = 'success';
+          thumbBannerBackgroundColor = 'backgroundGreen';
         } else if (saleIsActive) {
-          thumbBanner = 'Available to Purchase';
-          thumbBannerColor = 'main';
+          thumbBanner = <>Available</>;
+          thumbBannerColor = 'brightMain';
+          thumbBannerBackgroundColor = 'backgroundMain';
         } else {
-          thumbBanner = <><WarningOutlineIcon /> Unscanned</>;
-          thumbBannerColor = 'error';
+          thumbBanner = <><WarningIcon />Unscanned</>;
+          thumbBannerColor = 'red';
+          thumbBannerBackgroundColor = 'backgroundRed';
         }
       }
 
-      const rarity = Asteroid.Entity.getRarity(asteroid);
       pane.thumbVisible = true;
       pane.thumbnail = (
         <ThumbBackground>
-          {thumbBanner && <ThumbBanner color={thumbBannerColor}>{thumbBanner}</ThumbBanner>}
-          {asteroid.Celestial.scanStatus >= Asteroid.SCAN_STATUSES.SURFACE_SCANNED && (
-            <RarityEarmark
-              data-tooltip-id="infoPaneTooltip"
-              data-tooltip-content={rarity}
-              data-tooltip-place="right"
-              rarity={rarity} />
+          {thumbBanner && (
+            <ThumbBanner color={thumbBannerColor} background={thumbBannerBackgroundColor}>
+              <BackgroundLines animating color={theme.colors[thumbBannerColor]} />
+              <span>{thumbBanner}</span>
+              <BackgroundLines animating color={theme.colors[thumbBannerColor]} />
+            </ThumbBanner>
           )}
           <AsteroidRendering
             asteroid={asteroid}
@@ -419,16 +464,13 @@ const InfoPane = () => {
 
       if (zoomScene?.type === 'SHIP' && ship) {
         pane.title = formatters.shipName(ship);
-        if (ship.Ship?.transitDeparture > 0) {
-          pane.subtitle = 'In Flight';
-        } else {
-          pane.subtitle = <>{formatters.asteroidName(asteroid)} &gt; <b>{lotId ? formatters.lotName(lotId) : 'In Orbit'}</b></>;
-        }
+        pane.subtitle = getShipSubtitle(ship, shipReady, { asteroid, lot });
         pane.captainCard = ship.Control?.controller?.id;
+        
       } else if (lotId && lot && lot.surfaceShip) {
         const thumbUrl = getLotShipIcon(lot.surfaceShip.Ship?.shipType || 0, 'w400');
         pane.title = formatters.shipName(lot.surfaceShip);
-        pane.subtitle = <>{formatters.asteroidName(asteroid)} &gt; <b>{formatters.lotName(lotId)}</b></>;
+        pane.subtitle = getShipSubtitle(lot.surfaceShip, surfaceShipReady, { asteroid, lot });
         pane.captainCard = lot.surfaceShip.Control?.controller?.id;
         pane.hoverSubtitle = 'Zoom to Lot';
         pane.thumbVisible = true;
@@ -447,18 +489,36 @@ const InfoPane = () => {
         pane.subtitle = <>{formatters.asteroidName(asteroid)} &gt; <b>{formatters.lotName(lotId)}</b></>;
         pane.captainCard = lot.building?.Control?.controller?.id || explicitLotControllerId;
         pane.hoverSubtitle = 'Zoom to Lot';
+        
+        let thumbBanner = '';
+        let thumbBannerColor = '';
+        let thumbBannerBackgroundColor = '';
+        if (isIncompleteBuilding) {
+          if (lot?.building?.Building?.status === Building.CONSTRUCTION_STATUSES.UNDER_CONSTRUCTION) {
+            thumbBanner = <>Constructing</>;
+            thumbBannerColor = 'brightMain';
+            thumbBannerBackgroundColor = 'backgroundMain';
+          }
+          else if (isAtRisk) {
+            thumbBanner = <><WarningIcon />Expired</>;
+            thumbBannerColor = 'red';
+            thumbBannerBackgroundColor = 'backgroundRed';
+          }
+          else {
+            thumbBanner = <><LiveTimer target={lot?.building?.Building?.plannedAt + Building.GRACE_PERIOD} /></>;
+            thumbBannerColor = 'lightPurple';
+            thumbBannerBackgroundColor = 'backgroundPurple';
+          }
+        }
         pane.thumbVisible = true;
         pane.thumbnail = (
           <ThumbBackground image={thumbUrl}>
-            {isIncompleteBuilding && (
-              <>
-                {lot?.building?.Building?.status === Building.CONSTRUCTION_STATUSES.UNDER_CONSTRUCTION
-                ? <ThumbBanner color="main">Under Construction</ThumbBanner>
-                : (isAtRisk
-                  ? <ThumbBanner color="error">Expired</ThumbBanner>
-                  : <ThumbBanner color="warning"><LiveTimer target={lot?.building?.Building?.plannedAt + Building.GRACE_PERIOD} /></ThumbBanner>
-                )}
-              </>
+            {thumbBanner && (
+              <ThumbBanner color={thumbBannerColor} background={thumbBannerBackgroundColor}>
+                <BackgroundLines animating color={theme.colors[thumbBannerColor]} />
+                <span>{thumbBanner}</span>
+                <BackgroundLines animating color={theme.colors[thumbBannerColor]} />
+              </ThumbBanner>
             )}
           </ThumbBackground>
         );
@@ -527,7 +587,7 @@ const InfoPane = () => {
                 <CloseIcon />
               </CloseButton>
               {thumbnail}
-              <ClipCorner dimension={thumbCornerSize} color={hover ? 'white' : 'rgba(255,255,255,0.25)'} />
+              <ClipCorner flip dimension={thumbCornerSize} color={hover ? 'white' : 'rgba(255,255,255,0.25)'} />
             </ThumbPreview>
           </ThumbWrapper>
         )}

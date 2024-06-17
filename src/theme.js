@@ -31,6 +31,16 @@ export const clipCorner = (size) => `
   );
 `;
 
+export const clipCornerLeft = (size) => `
+  clip-path: polygon(
+    0 0,
+    100% 0,
+    100% 100%,
+    calc(${size}px) 100%,
+    0 calc(100% - ${size}px)
+  );
+`;
+
 const main = '#36a7cd';
 const brightMain = '#57d5ff';
 const darkMain = '#1c5063';
@@ -41,7 +51,7 @@ const darkGreen = '#59b366';
 const gray = '#bbbbbb';
 const teal = '#69ebf4';
 const blue = '#4f90ff';
-const lightPurple = '#636ee1';
+const lightPurple = '#8181ff';
 const purple = '#884fff';
 const lightOrange = '#faaf42';
 const orange = '#ff984f';
@@ -57,32 +67,61 @@ const theme = {
     brightMainRGB: hexToRGB(brightMain),
     darkMain,
     darkMainRGB: hexToRGB(darkMain),
-    mainBorder: 'rgba(255, 255, 255, 0.25)',
+    backgroundMain: '#0e2933',
+
     badge: '#287d97',
     mobileBackground: '#181818',
     disabledBackground: '#666666',
     inputBackground: '#0d2933',
-    contentBorder: '#666666',
     contentBackdrop: 'rgba(0, 0, 0, 0.5)',
     contentHighlight: 'rgba(40, 40, 40, 0.5)',
     contentDark: 'rgb(40, 40, 40)',
     hudMenuBackground: 'rgba(15, 15, 15, 0.85)',
+
+    mainBorder: 'rgba(255, 255, 255, 0.25)',
+    contentBorder: '#666666',
+    borderBottom: '#555555',
+    borderBottomAlt: 'rgba(85, 85, 85, 0.5)',
+
     mainText: '#cccccc',
     secondaryText: '#a0a0a0',
     disabledText: 'rgba(255,255,255,0.4)',
-    borderBottom: '#555555',
-    borderBottomAlt: 'rgba(85, 85, 85, 0.5)',
-    inFlight: '#fab040',
+
+    success,
+    successRGB: hexToRGB(success),
+    inFlight: lightOrange,
     sell: '#57d5ff',
     buy: '#88e675',
     sequence: '#2f85dc',
     sequenceLight: '#98c4ec',
-    success,
-    successRGB: hexToRGB(success),
+    sequenceDark: '#1e558c',
+    
     warning: orange,
     error: red,
-    expired: '#f6574d',
-    teal, blue, lightPurple, purple, lightOrange, orange, yellow, red, darkRed, green, darkGreen,
+    expired: red,
+
+    teal, 
+    blue, 
+
+    yellow, 
+    backgroundYellow: '#80592c',
+
+    purple,
+    lightPurple,  
+    backgroundPurple: '#10103d',
+
+    red, 
+    darkRed, 
+    backgroundRed: '#471411',
+
+    orange, 
+    lightOrange, 
+    backgroundOrange: '#853217',
+
+    green, 
+    darkGreen,
+    backgroundGreen: '#002624',
+
     bonus: {
       level0: '#999999',
       level1: 'rgb(105, 235, 244)',
@@ -137,6 +176,7 @@ const theme = {
     xl: 1599
   },
   clipCorner,
+  clipCornerLeft,
   hexToRGB
 };
 

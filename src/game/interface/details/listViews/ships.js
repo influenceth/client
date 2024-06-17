@@ -57,12 +57,6 @@ const useColumns = () => {
         unhideable: true
       },
       {
-        key: 'variant',
-        label: 'Variant',
-        sortField: 'Ship.variant',
-        selector: row => Ship.getVariant(row.Ship?.variant)?.name || '',
-      },
-      {
         key: 'status',
         label: 'Status',
         sortField: 'Location.location.label',
@@ -84,10 +78,18 @@ const useColumns = () => {
           if (loc.asteroidId) {
             return (
               <>
-                <LocationLink lotId={loc.asteroidId} />
+                <LocationLink asteroidId={loc.asteroidId} />
                 <span>{row.meta.asteroid.name || formatters.asteroidName({ id: loc.asteroidId })}</span>
               </>
             );
+          }
+          if (row?.Ship?.transitDestination) {
+            return (
+              <>
+                <LocationLink asteroidId={row.Ship.transitDestination?.id} />
+                <EntityName {...row.Ship.transitDestination} />
+              </>
+            )
           }
           return null;
         },
@@ -105,7 +107,7 @@ const useColumns = () => {
               </>
             );
           }
-          return null;
+          else return 'N / A'
         },
       },
       {
@@ -123,6 +125,12 @@ const useColumns = () => {
           }
           return null;
         }
+      },
+      {
+        key: 'variant',
+        label: 'Variant',
+        sortField: 'Ship.variant',
+        selector: row => Ship.getVariant(row.Ship?.variant)?.name || '',
       },
       {
         key: 'price',
