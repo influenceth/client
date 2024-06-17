@@ -860,6 +860,7 @@ export function ChainTransactionProvider({ children }) {
     return false;
   }, [walletAccount]);
 
+  // Allows for multiple explicit / manual calls to be executed in a single transaction
   const executeCalls = useCallback(async (calls) => {
     if (!walletAccount) {
       createAlert({
@@ -898,7 +899,8 @@ export function ChainTransactionProvider({ children }) {
     }
   }, [createAlert, executeWithAccount, isAccountLocked, walletAccount])
 
-  const execute = useCallback(async (key, vars, meta = {}) => {
+  // Primary execute method for system calls (requires name of system, etc.)
+  const executeSystem = useCallback(async (key, vars, meta = {}) => {
     if (!walletAccount || !contracts || !contracts[key]) {
       createAlert({
         type: 'GenericAlert',
@@ -1005,7 +1007,7 @@ export function ChainTransactionProvider({ children }) {
 
   return (
     <ChainTransactionContext.Provider value={{
-      execute,
+      execute: executeSystem,
       executeCalls,
       getStatus,
       getPendingTx,

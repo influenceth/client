@@ -2,7 +2,7 @@ import { createContext, useCallback, useEffect, useRef, useMemo, useState } from
 import { useQueryClient } from 'react-query';
 import { isExpired } from 'react-jwt';
 
-import { RpcProvider, WalletAccount } from 'starknet';
+import { RpcProvider, WalletAccount, shortString } from 'starknet';
 import { connect as starknetConnect, disconnect as starknetDisconnect } from 'starknetkit';
 import { ArgentMobileConnector } from 'starknetkit/argentMobile';
 import { InjectedConnector } from 'starknetkit/injected';
@@ -112,7 +112,7 @@ export function SessionProvider({ children }) {
       setConnecting(true);
       const { connectorData, wallet } = await starknetConnect(connectionOptions);
 
-      if (wallet && connectorData) {
+      if (wallet && connectorData?.account) {
         const chainId = resolveChainId(connectorData.chainId);
         setConnectedAccount(Address.toStandard(connectorData.account));
         setConnectedChainId(chainId);
@@ -254,16 +254,15 @@ export function SessionProvider({ children }) {
         const metaData = { projectID: 'influence', txFees: [ gasFees ] };
         const sessionParams = { allowedMethods, expiry, metaData, publicDappKey: dappKey.publicKey };
 
+        const hexChainId = shortString.encodeShortString(resolveChainId(process.env.REACT_APP_CHAIN_ID));
         const sessionSignature = await openSession({
-          chainId: '0x534e5f5345504f4c4941', wallet: walletAccount?.walletProvider, sessionParams
+          chainId: hexChainId, wallet: walletAccount?.walletProvider, sessionParams
         });
 
         if (sessionSignature) {
           const sessionRequest = createSessionRequest(allowedMethods, expiry, metaData, dappKey.publicKey);
-          const message = getSessionTypedData(sessionRequest, '0x534e5f5345504f4c4941');
-          console.log(message);
+          const message = getSessionTypedData(sessionRequest, hexChainId);
           newToken = await api.verifyLogin(connectedAccount, { message, signature: sessionSignature.join(',') });
-          console.log(newToken);
           Object.assign(newSession, {
             walletId: connectedWalletId,
             accountAddress: connectedAccount,
@@ -339,10 +338,10 @@ export function SessionProvider({ children }) {
       accountSessionSignature: currentSession.sessionSignature,
       sessionRequest: currentSession.sessionRequest,
       provider,
-      chainId: '0x534e5f5345504f4c4941', // TODO: move to env
+      chainId: shortString.encodeShortString(resolveChainId(process.env.REACT_APP_CHAIN_ID)),
       address: currentSession.accountAddress,
       dappKey: currentSession.sessionDappKey,
-      argentSessionServiceBaseUrl: 'https://api.hydrogen.argent47.net/v1' // TODO: move to env
+      argentSessionServiceBaseUrl: process.env.REACT_APP_ARGENT_API
     });
 
     setStarknetSession(offchainSessionAccount);
