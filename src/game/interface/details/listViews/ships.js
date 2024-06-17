@@ -78,7 +78,7 @@ const useColumns = () => {
           if (loc.asteroidId) {
             return (
               <>
-                <LocationLink lotId={loc.asteroidId} />
+                <LocationLink asteroidId={loc.asteroidId} />
                 <span>{row.meta.asteroid.name || formatters.asteroidName({ id: loc.asteroidId })}</span>
               </>
             );
@@ -86,7 +86,7 @@ const useColumns = () => {
           if (row?.Ship?.transitDestination) {
             return (
               <>
-                <LocationLink lotId={row.Ship.transitDestination?.id} />
+                <LocationLink asteroidId={row.Ship.transitDestination?.id} />
                 <EntityName {...row.Ship.transitDestination} />
               </>
             )

@@ -182,14 +182,13 @@ const ThumbBanner = styled.div`
   position: absolute;
   text-transform: uppercase;
   padding: 4px;
-  top: 40%;
+  top: calc(50% - 15px);
   width: 90%;
   z-index: 1;
-  vertical-align: text-bottom;
   & span {
     display: flex;
     white-space: nowrap;
-    padding: 0 8px 0 8px;
+    padding: 0 8px;
     align-items: center;
     & > svg {
       font-size: 20px;
@@ -269,6 +268,37 @@ const CaptainCard = ({ crewId }) => {
   );
 }
 
+const getShipSubtitle = (ship, shipReady, { asteroid, lot }) => {
+  if (ship.Ship?.transitDeparture > 0) {
+    return (
+      <>
+        <b style={{ color: theme.colors.inFlight }}>In Flight to</b>{' '}
+        <span style={{ color: 'white' }}><EntityName {...ship.Ship.transitDestination} /></span>
+      </>
+    );
+  }
+
+  if (lot) {
+    const lotName = lot?.building ? formatters.buildingName(lot?.building) : formatters.lotName(lot);
+    const landedOrDocked = shipReady ? ` (${lot?.building ? 'Docked' : 'Landed'})` : '';
+    return (
+      <>
+        {formatters.asteroidName(asteroid)} &gt;{' '}
+        {shipReady ? '' : <b style={{ color: theme.colors.inFlight }}>Landing At{' '}</b>}
+        <b>{lotName}{landedOrDocked}</b>
+      </>
+    );
+  }
+
+  return (
+    <>
+      {formatters.asteroidName(asteroid)} &gt;{' '}
+      <b style={{ color: theme.colors[shipReady ? 'brightMain' : 'inFlight'] }}>{shipReady ? 'In Orbit' : 'Launching to Orbit'}</b>
+    </>
+  );
+}
+
+
 const InfoPane = () => {
   const history = useHistory();
 
@@ -293,6 +323,7 @@ const InfoPane = () => {
   const { data: ship, isLoading: shipIsLoading } = useShip(zoomScene?.type === 'SHIP' ? zoomScene.shipId : undefined);
   const saleIsActive = useSale(Entity.IDS.ASTEROID);
   const shipReady = useReadyAtWatcher(ship?.Ship?.transitArrival || ship?.Ship?.readyAt);
+  const surfaceShipReady = useReadyAtWatcher(lot?.surfaceShip?.readyAt);
 
   const [hover, setHover] = useState();
   const [currentSound, setCurrentSound] = useState();
@@ -365,9 +396,18 @@ const InfoPane = () => {
       if (ship) {
         pane.title = formatters.shipName(ship);
         if (ship.Ship?.transitDeparture > 0) {
-          pane.subtitle = <><b style={{color: theme.colors.lightOrange}}>{'In Flight to '}</b><span style={{color: 'white'}}>{<EntityName {...ship.Ship.transitDestination} />}</span></>;
+          pane.subtitle = (
+            <>
+              <b style={{ color: theme.colors.inFlight }}>In Flight to</b>{' '}
+              <span style={{ color: 'white' }}>{<EntityName {...ship.Ship.transitDestination} />}</span>
+            </>
+          );
         } else {
-          pane.subtitle = <>{formatters.asteroidName(asteroid)} &gt; <b style={{color: theme.colors.brightMain}}>{'In Orbit'}</b></>;
+          pane.subtitle = (
+            <>
+              {formatters.asteroidName(asteroid)} &gt; <b style={{color: theme.colors.brightMain}}>In Orbit</b>
+            </>
+          );
         }
         pane.captainCard = ship.Control?.controller?.id;
       }
@@ -404,11 +444,13 @@ const InfoPane = () => {
       pane.thumbVisible = true;
       pane.thumbnail = (
         <ThumbBackground>
-          {thumbBanner && <ThumbBanner color={thumbBannerColor} background={thumbBannerBackgroundColor}>
-            <BackgroundLines animating color={theme.colors[thumbBannerColor]} />
-            <span>{thumbBanner}</span>
-            <BackgroundLines animating color={theme.colors[thumbBannerColor]} />
-            </ThumbBanner>}
+          {thumbBanner && (
+            <ThumbBanner color={thumbBannerColor} background={thumbBannerBackgroundColor}>
+              <BackgroundLines animating color={theme.colors[thumbBannerColor]} />
+              <span>{thumbBanner}</span>
+              <BackgroundLines animating color={theme.colors[thumbBannerColor]} />
+            </ThumbBanner>
+          )}
           <AsteroidRendering
             asteroid={asteroid}
             style={asteroid.Celestial.scanStatus === Asteroid.SCAN_STATUSES.UNSCANNED ? { filter: 'grayscale(1)' } : {}}
@@ -422,26 +464,13 @@ const InfoPane = () => {
 
       if (zoomScene?.type === 'SHIP' && ship) {
         pane.title = formatters.shipName(ship);
-        if (ship.Ship?.transitDeparture > 0) {
-          pane.subtitle = <><b style={{color: theme.colors.lightOrange}}>{'In Flight to '}</b> <span style={{color: 'white'}}>{<EntityName {...ship.Ship.transitDestination} />}</span></>;
-        } 
-        else if (lotId && lot && !shipReady) {
-          pane.subtitle = <>{formatters.asteroidName(asteroid)} &gt; <b style={{color: theme.colors.lightOrange}}>{'Landing at'}</b> <span style={{color: 'white'}}>{formatters.buildingName(lot.building)}</span></>;
-        }
-        else if (formatters.asteroidName(ship.Location?.name) === 'Asteroid' && !shipReady) {
-          pane.subtitle = <>{formatters.asteroidName(asteroid)}  &gt; <b style={{color: theme.colors.lightOrange}}>{'Launching to Orbit'}</b></>;
-        }
-        else if (lotId && lot && shipReady) {
-          pane.subtitle = <>{formatters.asteroidName(asteroid)} &gt; <b>{formatters.buildingName(lot.building)} (Docked)</b></>;
-        }
-        else {
-          pane.subtitle = <>{formatters.asteroidName(asteroid)} &gt; <b style={{color: theme.colors.brightMain}}>{'In Orbit'}</b></>;
-        }
+        pane.subtitle = getShipSubtitle(ship, shipReady, { asteroid, lot });
         pane.captainCard = ship.Control?.controller?.id;
+        
       } else if (lotId && lot && lot.surfaceShip) {
         const thumbUrl = getLotShipIcon(lot.surfaceShip.Ship?.shipType || 0, 'w400');
         pane.title = formatters.shipName(lot.surfaceShip);
-        pane.subtitle = <>{formatters.asteroidName(asteroid)} &gt; <b>{formatters.lotName(lotId)} (Landed)</b></>;
+        pane.subtitle = getShipSubtitle(lot.surfaceShip, surfaceShipReady, { asteroid, lot });
         pane.captainCard = lot.surfaceShip.Control?.controller?.id;
         pane.hoverSubtitle = 'Zoom to Lot';
         pane.thumbVisible = true;
@@ -484,11 +513,13 @@ const InfoPane = () => {
         pane.thumbVisible = true;
         pane.thumbnail = (
           <ThumbBackground image={thumbUrl}>
-            {thumbBanner && <ThumbBanner color={thumbBannerColor} background={thumbBannerBackgroundColor}>
-              <BackgroundLines animating color={theme.colors[thumbBannerColor]} />
-              <span>{thumbBanner}</span>
-              <BackgroundLines animating color={theme.colors[thumbBannerColor]} />
-              </ThumbBanner>}
+            {thumbBanner && (
+              <ThumbBanner color={thumbBannerColor} background={thumbBannerBackgroundColor}>
+                <BackgroundLines animating color={theme.colors[thumbBannerColor]} />
+                <span>{thumbBanner}</span>
+                <BackgroundLines animating color={theme.colors[thumbBannerColor]} />
+              </ThumbBanner>
+            )}
           </ThumbBackground>
         );
       } else if (lotId) {

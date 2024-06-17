@@ -557,16 +557,16 @@ const HudMenu = () => {
             //   });
             // }
           },
-          isVisible: (focus === 'asteroid' || focus === 'lot' || focus === 'ship' || scope === 'asteroid') && marketplaces?.length > 0
+          isVisible: marketplaces?.length > 0
         },
         {
           key: 'ASTEROID_ADVANCED_SEARCH',
           label: 'Advanced Search',
           icon: <SearchIcon />,
           onOpen: () => {
-            history.push(`/listview`);  // TODO: should probably also go to /listview/lots
+            history.push(`/listview/buildings`);
           },
-          isVisible: ['asteroid', 'lot', 'ship'].includes(scope)
+          isVisible: scope !== 'belt' && !!asteroidId
         },
 
         {
@@ -576,7 +576,7 @@ const HudMenu = () => {
           onOpen: () => {
             history.push(`/listview/asteroids`);
           },
-          isVisible: scope === 'belt'
+          isVisible: scope === 'belt' || !asteroidId
         }
       );
 

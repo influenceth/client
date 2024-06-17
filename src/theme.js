@@ -89,7 +89,7 @@ const theme = {
 
     success,
     successRGB: hexToRGB(success),
-    inFlight: '#fab040',
+    inFlight: lightOrange,
     sell: '#57d5ff',
     buy: '#88e675',
     sequence: '#2f85dc',
