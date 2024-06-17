@@ -1,6 +1,7 @@
 import { useCallback, useEffect } from 'react';
 import styled from 'styled-components';
 import { PuffLoader as Loader } from 'react-spinners';
+import { Tooltip } from 'react-tooltip';
 
 import useSession from '~/hooks/useSession';
 import useStore from '~/hooks/useStore';
@@ -10,6 +11,7 @@ import {
 } from '~/components/Icons';
 import InfluenceLogo from '~/components/InfluenceLogo';
 import NavIcon from '~/components/NavIcon';
+import { headerHeight, menuPadding } from '~/game/uiConstants';
 import usePriceConstants from '~/hooks/usePriceConstants';
 import Play from './launcher/Play';
 import Settings from './launcher/Settings';
@@ -18,10 +20,9 @@ import HudMenu from './interface/hud/HudMenu';
 import SystemControls from './interface/hud/SystemControls';
 import Help from './launcher/Help';
 import Rewards from './launcher/Rewards';
-import { Tooltip } from 'react-tooltip';
 
-export const menuPadding = 25;
-const headerHeight = 68;
+const DISABLE_LAUNCHER_TRAILER = true && process.env.NODE_ENV === 'development';
+
 const footerHeight = 80;
 export const navMenuWidth = 250;
 
@@ -299,10 +300,12 @@ const Launcher = (props) => {
   const { data: priceConstants, isLoading: priceConstantsLoading } = usePriceConstants();
 
   const launcherPage = useStore(s => s.launcherPage);
-  const dispatchLauncherPage = useStore(s => s.dispatchLauncherPage);
-  const dispatchToggleInterface = useStore(s => s.dispatchToggleInterface);
   const interfaceHidden = useStore(s => s.graphics.hideInterface);
   const hasSeenIntroVideo = useStore(s => s.hasSeenIntroVideo);
+  const dispatchCutscene = useStore(s => s.dispatchCutscene);
+  const dispatchLauncherPage = useStore(s => s.dispatchLauncherPage);
+  const dispatchSeenIntroVideo = useStore(s => s.dispatchSeenIntroVideo);
+  const dispatchToggleInterface = useStore(s => s.dispatchToggleInterface);
 
   useEffect(() => {
     if (!interfaceHidden) {
@@ -336,6 +339,13 @@ const Launcher = (props) => {
 
   const onClickPlay = useCallback(() => {
     dispatchLauncherPage();
+    if (!hasSeenIntroVideo && !DISABLE_LAUNCHER_TRAILER) {
+      dispatchSeenIntroVideo(true);
+      dispatchCutscene(
+        `${process.env.REACT_APP_CLOUDFRONT_OTHER_URL}/videos/intro.m3u8`,
+        true
+      );
+    }
   }, [hasSeenIntroVideo]);
 
   const openHelpChannel = useCallback(() => {

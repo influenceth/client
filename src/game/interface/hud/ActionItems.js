@@ -2,7 +2,7 @@ import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import styled from 'styled-components';
 
-import { BellIcon, CheckCircleIcon, CloseIcon, EyeIcon, LoggedEventsIcon, TutorialIcon } from '~/components/Icons';
+import { BellIcon, CloseIcon, EyeIcon, FinishAllIcon, LoggedEventsIcon, TutorialIcon } from '~/components/Icons';
 import CollapsibleSection from '~/components/CollapsibleSection';
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
 import useActionItems from '~/hooks/useActionItems';
@@ -32,6 +32,10 @@ const ActionItemWrapper = styled.div`
   transition: width 0.15s ease;
   user-select: none;
   width: ${ITEM_WIDTH}px;
+
+  &:first-child {
+    margin-top: 8px;
+  }
 `;
 
 const filterRowPadding = 9;
@@ -39,16 +43,16 @@ const selectionIndicatorHeight = 3;
 const selectionIndicatorWidth = 30;
 const Filters = styled.div`
   align-items: center;
-  border-bottom: 1px solid #444;
+  border-bottom: 1px solid rgba(255, 255, 255, .25);
   display: flex;
   flex-direction: row;
   overflow: hidden;
-  padding: ${filterRowPadding}px 0;
+  padding: ${filterRowPadding}px 0px;
   width: 100%;
 
   & > a {
     display: block;
-    filter: drop-shadow(0px 0px 2px rgb(0 0 0));
+    filter: drop-shadow(0px 0px 3px rgba(0, 0, 0, 0.3));
     font-size: 24px;
     height: 26px;
     line-height: 24px;
@@ -65,11 +69,11 @@ const Filter = styled.div`
   margin-right: 8px;
   padding: 4px 15px;
   position: relative;
-  text-shadow: 0 0 2px #000;
+  text-shadow: 0 0 3px rgba(0, 0, 0, 0.3);
   text-transform: uppercase;
 
   & > svg {
-    filter: drop-shadow(0px 0px 2px rgb(0 0 0));
+    filter: drop-shadow(0px 0px 3px rgba(0, 0, 0, 0.3));
     font-size: 22px;
   }
 
@@ -118,10 +122,11 @@ const IconFilter = styled(Filter)`
 const AllFilter = styled(IconFilter)`
   padding-left: 5px;
   padding-right: 2px;
-
-  &:after {
-    // left: ${selectionIndicatorWidth / 2}px;
-  }
+  color: white;
+  ${p => !p.selected && `
+    opacity: 0.5;
+    &:hover { opacity: 1; }
+  `}
 `;
 
 const HiddenFilter = styled(IconFilter)`
@@ -132,28 +137,24 @@ const HiddenFilter = styled(IconFilter)`
 
 const PillFilter = styled(Filter)`
   border-radius: 20px;
-  border: 1px solid ${p => p.selected ? 'currentColor' : 'transparent'};
+  border: 1.5px solid ${p => p.selected ? 'currentColor' : 'transparent'};
   transition: border-color 150ms ease;
 `;
 
 const ReadyFilter = styled(PillFilter)`
-  background: rgba(${p => hexToRGB(p.theme.colors.success)}, 0.2);
+  background: rgba(${p => hexToRGB(p.theme.colors.success)},  ${p => p.selected ? 0.5 : 0.25});
   color: ${p => p.theme.colors.success};
-  ${p => p.selected && `
-    &:hover {
-      border-color: rgba(${hexToRGB(p.theme.colors.success)}, 0.3);
-    }
-  `}
+  &:hover {
+    background: rgba(${p => hexToRGB(p.theme.colors.success)}, ${p => p.selected ? 0.75 : 0.5});
+  }
 `;
 
 const InProgressFilter = styled(PillFilter)`
-  background: rgba(${p => p.theme.colors.mainRGB}, 0.4);
+  background: rgba(${p => p.theme.colors.mainRGB},  ${p => p.selected ? 0.5 : 0.25});
   color: ${p => p.theme.colors.brightMain};
-  ${p => !p.selected && `
-    &:hover {
-      border-color: rgba(${hexToRGB(p.theme.colors.brightMain)}, 0.3);
-    }
-  `}
+  &:hover {
+    background: rgba(${p => p.theme.colors.mainRGB}, ${p => p.selected ? 0.75 : 0.5});
+  }
 `;
 
 const TutorialTab = styled(PillFilter)`
@@ -211,7 +212,7 @@ const OuterWrapper = styled.div`
 `;
 
 export const ActionItemContainer = styled.div`
-  max-height: 275px;
+  max-height: 100%;
   overflow-y: auto;
   overflow-x: hidden;
   pointer-events: auto;
@@ -219,13 +220,12 @@ export const ActionItemContainer = styled.div`
 `;
 
 const ActionItemCategory = styled.div`
-  margin-top: 8px;
   &:not(:first-child) {
     margin-top: 10px;
   }
   &:not(:last-child) {
     &:after {
-      border-bottom: 1px solid #444;
+      border-bottom: 1px solid rgba(255, 255, 255, .25);
       content: "";
       display: block;
       padding-bottom: 10px;
@@ -240,19 +240,22 @@ const AllAction = styled.div`
   cursor: ${p => p.theme.cursors.active};
   display: flex;
   font-size: 14px;
-  height: 34px;
-  margin-bottom: -8px;
+  flex: 0 0 34px;
+  margin-top: 4px;
   pointer-events: all;
-  &:hover {
-    text-decoration: underline;
-  }
 `;
 
 const FinishAll = styled(AllAction)`
   color: ${p => p.theme.colors.success};
+  filter: drop-shadow(0px 0px 2px rgba(0, 0, 0, 0.3));
   & > svg {
-    margin-left: 9px;
+    margin-left: 4px;
     margin-right: 9px;
+    font-size: 150%;
+  }
+  &:hover {
+    color: white;
+    text-decoration: underline;
   }
 `;
 
@@ -402,7 +405,14 @@ const ActionItems = () => {
         {authenticated && (
           <CollapsibleSection
             borderless
-            collapsibleProps={{ style: { width: SECTION_WIDTH - 32 } }}
+            collapsibleProps={{
+              style: {
+                display: 'flex',
+                flexDirection: 'column',
+                paddingBottom: 40,
+                width: SECTION_WIDTH - 32
+              }
+            }}
             openOnChange={lastClick}
             title={(
               <TitleWrapper>
@@ -416,8 +426,12 @@ const ActionItems = () => {
                 </Filters>
               </TitleWrapper>
             )}>
-            {['all', 'ready'].includes(selectedFilter) && autoFinishCalls?.length > 1 && !isFinishingAll && <FinishAll onClick={onFinishAll}><CheckCircleIcon /> Finish All Ready Items</FinishAll>}
-            {selectedFilter === 'hidden' && <UnhideAll onClick={onUnhideAll}><EyeIcon /> Unhide All</UnhideAll>}
+            {['all', 'ready'].includes(selectedFilter) && autoFinishCalls?.length > 1 && !isFinishingAll && (
+              <FinishAll onClick={onFinishAll}><FinishAllIcon /> Finish All Ready Items</FinishAll>
+            )}
+            {selectedFilter === 'hidden' && (
+              <UnhideAll onClick={onUnhideAll}><EyeIcon /> Unhide All</UnhideAll>
+            )}
             <ActionItemWrapper>
               <ActionItemContainer>
                 {filteredDisplayCategories.map(({ category, items }) => (

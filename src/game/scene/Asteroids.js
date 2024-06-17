@@ -13,8 +13,8 @@ import useCrewContext from '~/hooks/useCrewContext';
 import useAsteroid from '~/hooks/useAsteroid';
 import useAssetSearch from '~/hooks/useAssetSearch';
 import useCoarseTime from '~/hooks/useCoarseTime';
-import useControlledAsteroids from '~/hooks/useControlledAsteroids';
-import useControlledShips from '~/hooks/useControlledShips';
+import useCrewAsteroids from '~/hooks/useCrewAsteroids';
+import useCrewShips from '~/hooks/useCrewShips';
 import useStore from '~/hooks/useStore';
 import useTravelSolutionIsValid from '~/hooks/useTravelSolutionIsValid';
 import useWatchlist from '~/hooks/useWatchlist';
@@ -95,8 +95,8 @@ const Asteroids = () => {
   const { data: origin } = useAsteroid(originId);
   const { data: destination } = useAsteroid(destinationId);
   const coarseTime = useCoarseTime();
-  const { data: controlledAsteroids } = useControlledAsteroids();
-  const { data: controlledShips } = useControlledShips();
+  const { data: controlledAsteroids } = useCrewAsteroids();
+  const { data: controlledShips } = useCrewShips();
   const { watchlist: { data: watchlist }} = useWatchlist();
   const travelSolutionValid = useTravelSolutionIsValid();
 

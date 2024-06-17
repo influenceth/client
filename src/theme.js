@@ -44,7 +44,7 @@ export const clipCornerLeft = (size) => `
 const main = '#36a7cd';
 const brightMain = '#57d5ff';
 const darkMain = '#1c5063';
-const success = '#00ffe7';
+const success = '#00fff0';
 
 const green = '#88e675';
 const darkGreen = '#59b366';

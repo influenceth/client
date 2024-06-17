@@ -11,6 +11,7 @@ import TimeIcon from '~/components/TimeIcon';
 import useConstants from '~/hooks/useConstants';
 import useCoarseTime from '~/hooks/useCoarseTime';
 import { displayTimeFractionDigits } from '~/lib/utils';
+import theme, { hexToRGB } from '~/theme';
 
 
 const StyledTime = styled.div`
@@ -26,7 +27,7 @@ const Controls = styled.div`
   display: flex;
   flex-direction: row;
   overflow: hidden;
-  transition: max-width 0.6s ease;
+  transition: max-width 0.3s ease;
   white-space: nowrap;
   max-width: ${p => p.open ? 300 : 0}px;
 `;
@@ -78,9 +79,14 @@ const SpeedMult = styled.div`
 `;
 
 const TimeButton = styled(IconButton)`
+  background-color: rgba(${hexToRGB(theme.colors.darkMain)}, 0.25);
   margin-right: 5px;
   &:last-child {
     margin-right: 0;
+  }
+
+  &:hover {
+    background-color: rgba(${hexToRGB(theme.colors.main)}, 0.5);
   }
 `;
 

@@ -13,7 +13,7 @@ import useAsteroid from '~/hooks/useAsteroid';
 import useCoarseTime from '~/hooks/useCoarseTime';
 import useConstants from '~/hooks/useConstants';
 import useCrewContext from '~/hooks/useCrewContext';
-import useControlledShips from '~/hooks/useControlledShips';
+import useCrewShips from '~/hooks/useCrewShips';
 import useStore from '~/hooks/useStore';
 import formatters from '~/lib/formatters';
 import { sampleAsteroidOrbit } from '~/lib/geometryUtils';
@@ -221,7 +221,7 @@ const RoutePlanner = () => {
 
   const { data: origin } = useAsteroid(originId);
   const { data: destination } = useAsteroid(destinationId);
-  const { data: myShips, isLoading: myShipsLoading } = useControlledShips();
+  const { data: myShips, isLoading: myShipsLoading } = useCrewShips();
   const { data: TIME_ACCELERATION } = useConstants('TIME_ACCELERATION');
 
   const [baseTime, setBaseTime] = useState();

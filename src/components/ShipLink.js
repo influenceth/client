@@ -2,7 +2,7 @@ import { useCallback, useMemo } from 'react';
 import { Entity } from '@influenceth/sdk';
 
 import { ZOOM_OUT_ANIMATION_TIME } from '~/game/scene/Asteroid';
-import useControlledShips from '~/hooks/useControlledShips';
+import useCrewShips from '~/hooks/useCrewShips';
 import useCrew from '~/hooks/useCrew';
 import useShip from '~/hooks/useShip';
 import useStore from '~/hooks/useStore';
@@ -70,7 +70,7 @@ export const useShipLink = ({ crewId, shipId, zoomToShip }) => {
 export const ShipLink = ({ shipId, zoomToShip }) => {
   const onClick = useShipLink({ shipId, zoomToShip });
 
-  const { data: controlled, isLoading: controlledAreLoading } = useControlledShips();
+  const { data: controlled, isLoading: controlledAreLoading } = useCrewShips();
   const shipName = useMemo(() => {
     if (controlled) {
       const match = controlled.find(a => a.id === Number(shipId));

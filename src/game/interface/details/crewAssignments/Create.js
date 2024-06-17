@@ -18,13 +18,11 @@ import CrewmateCard from '~/components/CrewmateCard';
 import CrewClassIcon from '~/components/CrewClassIcon';
 import CrewTraitIcon from '~/components/CrewTraitIcon';
 import Details from '~/components/DetailsModal';
-import Ether from '~/components/Ether';
 import { CheckIcon, CloseIcon, LinkIcon, WalletIcon } from '~/components/Icons';
 import IconButton from '~/components/IconButton';
 import MouseoverInfoPane from '~/components/MouseoverInfoPane';
 import TextInput from '~/components/TextInput';
 import TriangleTip from '~/components/TriangleTip';
-import useSession from '~/hooks/useSession';
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
 import useBookSession, { bookIds, getBookCompletionImage } from '~/hooks/useBookSession';
 import useCrewManager from '~/hooks/actionManagers/useCrewManager';
@@ -35,12 +33,13 @@ import useStore from '~/hooks/useStore';
 import formatters from '~/lib/formatters';
 import { reactBool } from '~/lib/utils';
 import theme from '~/theme';
-import api from '~/lib/api';
 import usePriceHelper from '~/hooks/usePriceHelper';
 import useWalletBalances from '~/hooks/useWalletBalances';
 import { TOKEN } from '~/lib/priceUtils';
-import UserPrice, { CrewmateUserPrice } from '~/components/UserPrice';
+import { CrewmateUserPrice } from '~/components/UserPrice';
 import FundingFlow from '~/game/launcher/components/FundingFlow';
+import { AdvancedStarterPack, BasicStarterPack } from '~/game/launcher/components/StarterPack';
+import { useSwayBalance } from '~/hooks/useWalletTokenBalance';
 
 const CollectionImages = {
   1: Collection1,
@@ -579,6 +578,26 @@ const PromptBody = styled.div`
     text-align: right;
   }
 `;
+const Selector = styled.div`
+  margin-bottom: 10px;
+  text-align: center;
+  & > div {
+    align-items: center;
+    color: white;
+    display: inline-flex;
+    flex-direction: row;
+    font-weight: bold;
+    margin: 0 auto;
+    text-transform: uppercase;
+    &:before, &:after {
+      content: "";
+      height: 0px;
+      border-bottom: 1px solid #333;
+      margin: 0 10px;
+      width: 100px;
+    }
+  }
+`;
 
 const Rule = styled.div`
   height: 0;
@@ -816,16 +835,19 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
 
   const isNameValid = useNameAvailability({ id: crewmateId, label: Entity.IDS.CREWMATE });
   const { purchaseAndOrInitializeCrewmate } = useCrewManager();
-  const { crew, crewmateMap, adalianRecruits, arvadianRecruits } = useCrewContext();
+  const { crew, crewmateMap, adalianRecruits, arvadianRecruits, pendingTransactions } = useCrewContext();
   const { promptingTransaction } = useContext(ChainTransactionContext);
   const { data: priceConstants } = usePriceConstants();
   const priceHelper = usePriceHelper();
+  const { data: swayBalance } = useSwayBalance();
   const { data: wallet } = useWalletBalances();
 
   const [confirming, setConfirming] = useState();
   const [confirmingUnlock, setConfirmingUnlock] = useState();
   const [isFunding, setIsFunding] = useState();
   const [hovered, setHovered] = useState();
+  const [isPurchasingPack, setIsPurchasingPack] = useState();
+  const [packPromptDismissed, setPackPromptDismissed] = useState();
 
   const [appearanceOptions, setAppearanceOptions] = useState([]);
   const [appearanceSelection, setAppearanceSelection] = useState();
@@ -896,7 +918,7 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
     };
 
     if (c.id === 0 && adalianRecruits?.length > 0) {
-      console.warn('OVERRIDING ID -- should not need to do this');
+      console.warn('OVERRIDING ID -- should only happen if starter pack was purchased in creation flow');
       c.id = adalianRecruits?.[0]?.id || 0;
     }
 
@@ -954,6 +976,7 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
 
     return c;
   }, [
+    adalianRecruits?.length,
     appearanceOptions,
     appearanceSelection,
     crewId,
@@ -973,6 +996,22 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
     if (crewmate?.Crewmate?.coll) return 8;
     return 0;
   }, [crewmate?.Crewmate?.coll]);
+
+  useEffect(() => {
+    if (isPurchasingPack) setPackPromptDismissed(true);
+  }, [isPurchasingPack]);
+
+  const isPackPurchaseIsProcessing = useMemo(() => {
+    return !!(pendingTransactions || []).find(tx => tx.key === 'PurchaseStarterPack');
+  }, [pendingTransactions]);
+
+  const shouldPromptForPack = useMemo(() => {
+    // always show prompt while processing (so can see "loading")
+    if (isPurchasingPack || isPackPurchaseIsProcessing) return true;
+    
+    // else, show prompt when no sway and not using a credit (if not already dismissed)
+    return !(swayBalance > 0 || !!crewmate?.id) && !packPromptDismissed;
+  }, [!!crewmate?.id, isPurchasingPack, packPromptDismissed, pendingTransactions, swayBalance]);
 
   // init appearance options as desired
   useEffect(() => {
@@ -1169,6 +1208,13 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
   }, [name, selectedClass, selectedTraits?.length, traitTally]);
 
   const confirmationProps = useMemo(() => {
+    if (crewmate?.id) {
+      return {
+        onConfirm: finalize,
+        confirmText: "Confirm"
+      }
+    }
+    
     const price = priceHelper.from(priceConstants.ADALIAN_PURCHASE_PRICE, priceConstants.ADALIAN_PURCHASE_TOKEN);
     if (price.usdcValue > wallet.combinedBalance?.to(TOKEN.USDC)) {
       // if (process.env.REACT_APP_CHAIN_ID === '0x534e5f5345504f4c4941' && ethClaimEnabled) {
@@ -1190,8 +1236,8 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
       onConfirm: finalize,
       confirmText: (
         <>
-          {crewmate.id ? 'Confirm' : 'Purchase Crewmate'}
-          {!crewmate.id && priceConstants && (
+          Purchase Crewmate
+          {priceConstants && (
             <span style={{ color: 'white', flex: 1, fontSize: '90%', textAlign: 'right', marginLeft: 15 }}>
               <CrewmateUserPrice />
             </span>
@@ -1534,7 +1580,31 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
           onReject={() => setConfirmingUnlock(false)}
         />
       )}
-      {confirming && (
+      {confirming && shouldPromptForPack && (
+        <ConfirmationDialog
+          title="Confirm Character Minting"
+          body={(
+            <PromptBody highlight style={{ padding: 0 }}>
+              <p style={{ fontWeight: 'bold' }}>
+                Starter Packs are specifically designed to be the most efficient way to get
+                your crew started off on the right foot in Adalia.
+              </p>
+              <Selector><div>Select</div></Selector>
+              <div style={{ color: 'white', display: 'flex', flexDirection: 'row', marginBottom: 20 }}>
+                <BasicStarterPack asButton onIsPurchasing={setIsPurchasingPack} style={{ marginRight: 15 }} />
+                <AdvancedStarterPack asButton onIsPurchasing={setIsPurchasingPack} />
+              </div>
+            </PromptBody>
+          )}
+          loading={isPurchasingPack || isPackPurchaseIsProcessing}
+          onConfirm={() => {
+            setPackPromptDismissed(true);
+          }}
+          confirmText="Proceed with crewmate only"
+          onReject={() => setConfirming(false)}
+        />
+      )}
+      {confirming && !shouldPromptForPack && (
         <ConfirmationDialog
           title={`Confirm Character ${crewmate.id ? 'Details' : 'Minting'}`}
           body={(

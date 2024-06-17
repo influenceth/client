@@ -218,7 +218,9 @@ export function CrewProvider({ children }) {
 
   // return all pending transactions that are specific to this crew AND those that are not specific to any crew
   const pendingTransactions = useMemo(() => {
-    if (!selectedCrew?.id) return [];
+    if (!selectedCrew?.id) {
+      return (allPendingTransactions || []).filter((tx) => !tx.vars?.caller_crew?.id);
+    }
     return (allPendingTransactions || []).filter((tx) => !tx.vars?.caller_crew?.id || (tx.vars.caller_crew.id === selectedCrew.id));
   }, [allPendingTransactions, selectedCrew?.id])
 

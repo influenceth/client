@@ -61,7 +61,7 @@ const Confirmation = styled.div`
   }
 `;
 
-const ConfirmationDialog = ({ loading, onConfirm, onReject, isTransaction, ...props }) => (
+const ConfirmationDialog = ({ loading, onConfirm, onReject, isTransaction, title, ...props }) => (
   <Dialog>
     <Confirmation {...props}>
       <ConfirmationTitle>
@@ -70,7 +70,7 @@ const ConfirmationDialog = ({ loading, onConfirm, onReject, isTransaction, ...pr
           selectedColor="white"
           size={22}
           style={{ marginRight: 12 }} />
-        <h4>{props.title || 'Are you sure?'}</h4>
+        <h4>{title || 'Are you sure?'}</h4>
       </ConfirmationTitle>
       <ConfirmationBody>
         {loading ? <Loader /> : props.body}

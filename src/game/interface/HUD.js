@@ -4,7 +4,6 @@ import useCrewContext from '~/hooks/useCrewContext';
 import ActionDialog from './hud/ActionDialog';
 import ActionItems from './hud/ActionItems';
 import AvatarMenu from './hud/AvatarMenu';
-import LoginMenu from './hud/LoginMenu';
 import InfoPane from './hud/InfoPane';
 import SystemControls from './hud/SystemControls';
 import HudMenu from './hud/HudMenu';
@@ -12,6 +11,8 @@ import SceneBanner from './hud/SceneBanner';
 import WelcomeTourItems from './hud/WelcomeTourItems';
 import useStore from '~/hooks/useStore';
 import useSession from '~/hooks/useSession';
+import InfluenceLogo from '~/components/InfluenceLogo';
+import { headerHeight } from '~/game/uiConstants';
 
 const bottomMargin = 60;
 
@@ -23,6 +24,17 @@ const Wrapper = styled.div`
   position: absolute;
   bottom: ${bottomMargin}px;
   z-index: 2;
+`;
+
+const LogoWrapper = styled.div`
+  cursor: ${p => p.theme.cursors.active};
+  height: ${headerHeight}px;
+  margin: 25px;
+  padding: 8px;
+  pointer-events: all;
+  & > svg {
+    height: 100%;
+  }
 `;
 
 const LeftWrapper = styled(Wrapper)`
@@ -76,15 +88,18 @@ export const Rule = styled.div`
 
 const HUD = () => {
   const { authenticated, authenticating } = useSession();
-  const { captain, loading } = useCrewContext();
+  const { loading } = useCrewContext();
+
   const dismissWelcomeTour = useStore(s => s.gameplay?.dismissWelcomeTour);
+  const dispatchLauncherPage = useStore(s => s.dispatchLauncherPage);
+
   return (
     <>
       <LeftWrapper>
         {!authenticating && !loading
           ? (
             <>
-              {captain ? <AvatarMenu /> : <LoginMenu />}
+              {authenticated ? <AvatarMenu /> : <LogoWrapper onClick={() => dispatchLauncherPage(true)}><InfluenceLogo /></LogoWrapper>}
               {authenticated ? <ActionItems /> : (dismissWelcomeTour ? <div style={{ flex: 1 }} /> : <WelcomeTourItems />)}
             </>
           )

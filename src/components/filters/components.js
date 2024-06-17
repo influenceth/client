@@ -138,8 +138,6 @@ export const SearchMenu = ({
     return !isAssetSearchFilterMatchingDefault(assetType, fieldName);
   }, [assetType, fieldName, filters[fieldName]]);
 
-  const [initiallyCollapsed] = useState(!filterIsOn);
-
   const toggleHighlight = useCallback((e) => {
     e.stopPropagation();
     if (fieldHighlight) {
@@ -186,7 +184,6 @@ export const SearchMenu = ({
           )}
         </div>
       )}
-      collapsed={false}
       {...props}>
       {children}
     </HudMenuCollapsibleSection>

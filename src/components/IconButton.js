@@ -15,7 +15,7 @@ const StyledIconButton = styled.button`
   justify-content: center;
   height: 2em;
   width: 2em;
-  transition: all 300ms ease;
+  transition: all 100ms ease;
   ${p => p.scale && `transform: scale(${p.scale});`}
   position: relative;
   margin-right: ${p => p.marginless ? 0 : '10px'};
@@ -32,6 +32,7 @@ const StyledIconButton = styled.button`
       rgba(${p => hexToRGB(p.theme.colors[p.themeColor || 'main'])}, 0.25)
     );
     color: white;
+    border-color: ${p => p.theme.colors.brightMain};
   }
 
   &:active {

@@ -3,18 +3,18 @@ import { useMemo } from 'react';
 import useCrewContext from '~/hooks/useCrewContext';
 import useWalletAsteroids from '~/hooks/useWalletAsteroids';
 
-const useControlledAsteroids = () => {
+const useCrewAsteroids = () => {
   const { crew } = useCrewContext();
   const { data, isLoading } = useWalletAsteroids();
 
   return useMemo(() => {
     return {
-      data: crew?.id && data
-        ? (data || []).filter((a) => a.Control?.controller?.id === crew?.id)
+      data: crew?.id && !isLoading && Array.isArray(data)
+        ? data.filter((a) => (a.Control?.controller?.id === crew?.id))
         : undefined,
       isLoading
     }
   }, [crew?.id, data, isLoading])
 };
 
-export default useControlledAsteroids;
+export default useCrewAsteroids;

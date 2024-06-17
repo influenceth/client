@@ -52,24 +52,23 @@ const ItemsList = styled.div`
   }
 `;
 
-const ConstructionMaterialsGrid = ({ buildingType, planningLot }) => {
-  const buildingRequirements = useMemo(() => getBuildingRequirements({ Building: { buildingType } }), [buildingType]);
-  const { currentDeliveryActions } = useDeliveryManager({ destination: planningLot?.building });
+const ConstructionMaterialsGrid = ({ building }) => {
+  const { currentDeliveryActions } = useDeliveryManager({ destination: building });
 
   const items = useMemo(() => {
-    const requirements = buildingRequirements
+    const requirements = getBuildingRequirements(building, currentDeliveryActions);
     return requirements.map((item) => ({
       i: Number(item.i), 
-      numerator: item.inInventory + item.inTransit,
+      numerator: building.Building.status === Building.CONSTRUCTION_STATUSES.UNDER_CONSTRUCTION ? item.totalRequired : item.inInventory + item.inTransit,
       denominator: item.totalRequired,
-      customIcon: item.inTransit > 0
+      customIcon: building.Building.status === Building.CONSTRUCTION_STATUSES.PLANNED && item.inTransit > 0
         ? {
           animated: true,
           icon: <SurfaceTransferIcon />
         }
         : undefined
     }));
-  }, [planningLot, currentDeliveryActions]);
+  }, [currentDeliveryActions, building]);
 
   return (
     <>
@@ -79,10 +78,10 @@ const ConstructionMaterialsGrid = ({ buildingType, planningLot }) => {
           {items.map((item) => (
             <ResourceRequirement
               key={item.i}
-              noStyles={!planningLot}
+              isGathering={building.Building.status === Building.CONSTRUCTION_STATUSES.PLANNED}
               item={item}
               resource={Product.TYPES[item.i]}
-              size="85px"
+              size="75px"
               tooltipContainer="hudMenuTooltip" />
           ))}
         </ItemsList>
@@ -129,7 +128,9 @@ const LotInfo = () => {
 
         {lot?.building && (
           <>
-            <HudMenuCollapsibleSection titleText="Description" collapsed={!!description}>
+            <HudMenuCollapsibleSection
+              titleText={`${description ? 'Type ' : ''}Description`}
+              collapsed={!!description}>
               <Description>
                 {lot.building.Building?.status === Building.CONSTRUCTION_STATUSES.OPERATIONAL
                   ? Building.TYPES[lot.building.Building.buildingType].description
@@ -142,20 +143,17 @@ const LotInfo = () => {
               </Description>
             </HudMenuCollapsibleSection>
 
-            <HudMenuCollapsibleSection
-              titleText="Construction"
-              collapsed={lot.building.Building.status === Building.CONSTRUCTION_STATUSES.OPERATIONAL}
-              borderless>
-              <ConstructionMaterialsGrid
-                buildingType={lot.building.Building.buildingType}
-                planningLot={lot.building.Building.status === Building.CONSTRUCTION_STATUSES.PLANNED ? lot : null} />
-            </HudMenuCollapsibleSection>
+            {[Building.CONSTRUCTION_STATUSES.PLANNED, Building.CONSTRUCTION_STATUSES.UNDER_CONSTRUCTION].includes(lot.building.Building.status) && (
+              <HudMenuCollapsibleSection titleText="Construction">
+                <ConstructionMaterialsGrid building={lot.building} />
+              </HudMenuCollapsibleSection>
+            )}
 
             <HudMenuCollapsibleSection titleText={`${siteOrBuilding} Permissions`} collapsed>
               <div style={{ marginBottom: 10 }}>
                 <CrewIndicator crew={controller} label={`${siteOrBuilding} Controller`} />
               </div>
-              <PolicyPanels entity={lot?.building} />
+              <PolicyPanels entity={lot.building} />
             </HudMenuCollapsibleSection>
           </>
         )}

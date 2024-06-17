@@ -308,7 +308,7 @@ const InputLabel = styled.div`
   display: flex;
   flex-direction: row;
   font-size: 14px;
-  padding: 6px 0 6px;
+  padding: 6px 0;
   & > label {
     color: ${theme.colors.secondaryText};
     flex: 1;

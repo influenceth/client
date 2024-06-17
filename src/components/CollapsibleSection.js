@@ -58,6 +58,7 @@ const expandedAnim = keyframes`
 `;
 
 const Collapsible = styled.div`
+  border-bottom: 1px solid transparent;
   margin-left: ${toggleWidth}px;
   margin-bottom: ${marginBottom}px;
   overflow: hidden;
