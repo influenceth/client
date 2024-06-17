@@ -1,7 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
 import ReactDOMServer from 'react-dom/server';
 import styled from 'styled-components';
-import { useQueryClient } from 'react-query';
 
 import Button from '~/components/ButtonAlt';
 import { ChevronRightIcon, EthIcon, UsdcIcon } from '~/components/Icons';
@@ -10,14 +9,9 @@ import { TOKEN, TOKEN_FORMAT, TOKEN_SCALE } from '~/lib/priceUtils';
 import useSession from '~/hooks/useSession';
 import useStore from '~/hooks/useStore';
 import useWalletBalances from '~/hooks/useWalletBalances';
-import { nativeBool, reactBool } from '~/lib/utils';
 import usePriceHelper from '~/hooks/usePriceHelper';
-import UserPrice from '~/components/UserPrice';
 import theme from '~/theme';
-import api from '~/lib/api';
-import useFaucetInfo from '~/hooks/useFaucetInfo';
 import FundingFlow from './FundingFlow';
-import { PurchaseButton, PurchaseButtonInner } from './SKU';
 
 const FundWrapper = styled.div`
   padding: 0 20px 5px;
@@ -176,7 +170,7 @@ const FundingMenu = () => {
               />
             </div>
           </div>
-      
+
           <label data-tooltip-id="launcherTooltip" data-tooltip-html={tooltipContent} data-tooltip-place="top">
             {wallet?.combinedBalance?.to(preferredUiCurrency, true)}
           </label>
@@ -188,7 +182,7 @@ const FundingMenu = () => {
       </AddFundsButton>
       {isFunding && <FundingFlow onClose={() => setIsFunding()} />}
 
-      {/* 
+      {/*
       <CollapsibleBlock
         containerHeight={250}
         initiallyClosed

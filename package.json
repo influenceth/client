@@ -6,10 +6,10 @@
     "node": "20.x"
   },
   "dependencies": {
-    "@argent/x-sessions": "^6.6.2",
+    "@argent/x-sessions": "^6.7.3",
     "@avnu/avnu-sdk": "^2.0.0",
     "@influenceth/astro": "^0.2.5",
-    "@influenceth/sdk": "^2.1.0-beta.106",
+    "@influenceth/sdk": "^2.1.0-beta.113",
     "@popperjs/core": "^2.11.6",
     "@react-hook/throttle": "^2.2.0",
     "@react-three/drei": "^9.105.1",
@@ -63,8 +63,8 @@
     "react-virtualized": "^9.22.5",
     "screenfull": "^5.1.0",
     "socket.io-client": "^4.7.5",
-    "starknet": "^6.7.0",
-    "starknetkit": "^1.1.8",
+    "starknet": "6.9",
+    "starknetkit": "^2.2.9",
     "styled-components": "^5.3.0",
     "three": "^0.164.1",
     "victory": "^36.6.8",

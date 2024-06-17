@@ -358,10 +358,10 @@ const RoutePlanner = () => {
   }, [shipConfig]);
 
   const exhaustBonus = useMemo(() => getCrewAbilityBonuses(Crewmate.ABILITY_IDS.PROPELLANT_EXHAUST_VELOCITY, crew), [crew]);
-
   const shipParams = useMemo(() => {
     if (!ship) return 0;
-    const exhaustVelocity = (Ship.TYPES[ship.Ship.shipType]?.exhaustVelocity * exhaustBonus?.totalBonus) || 0;
+    const variantMod = 1 + Ship.Entity.getVariant(ship).exhaustVelocityModifier;
+    const exhaustVelocity = (Ship.TYPES[ship.Ship.shipType]?.exhaustVelocity * exhaustBonus?.totalBonus) * variantMod || 0;
     const hullMass = Ship.TYPES[ship.Ship.shipType]?.hullMass || 0;
     const wetMass = hullMass + cargoMass + propellantMass;
     const maxDeltaV = Ship.propellantToDeltaV(ship.Ship.shipType, wetMass, propellantMass, exhaustBonus?.totalBonus);
