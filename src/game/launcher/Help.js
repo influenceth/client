@@ -183,11 +183,11 @@ const panes = [
   },
   {
     label: 'Community Content',
-    pane: <YoutubeFeed title="Unofficial Tutorial Videos" />
+    pane: <YoutubeFeed title="Unofficial Tutorial Videos" playlistId="PLEu_4bnIEcK69LKrz3v64PLzXxbpdSI8e" />
   },
   {
     label: 'Non-English Content',
-    pane: <YoutubeFeed title="Unofficial Tutorial Videos (Non-English)" />
+    pane: <YoutubeFeed title="Unofficial Tutorial Videos (Non-English)" playlistId="PLEu_4bnIEcK7JDPyrAfPNBZnQacYtWAbG" />
   },
   {
     label: 'Game Wiki',

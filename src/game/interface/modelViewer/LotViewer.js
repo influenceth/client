@@ -42,7 +42,7 @@ const LotViewer = () => {
     }
 
     return getBuildingModel(0);
-  }, [lot?.building?.Building, zoomScene?.overrides?.buildingType]);
+  }, [lot?.building?.Building, lot?.surfaceShip, zoomScene?.overrides?.buildingType]);
 
   if (zoomScene?.type !== 'LOT' || isLoading) return null;
   return (
