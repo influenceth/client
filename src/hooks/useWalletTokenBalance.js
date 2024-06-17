@@ -11,8 +11,7 @@ const useWalletTokenBalance = (tokenLabel, tokenAddress, overrideAccount) => {
   return useQuery(
     [ 'walletBalance', tokenLabel, accountAddress ],
     async () => {
-      if (!accountAddress) return 0n; // shouldn't happen (but seemingly does)
-
+      if (!accountAddress) return undefined; // shouldn't happen (but seemingly does)
       try {
         const balance = await starknet.provider.callContract({
           contractAddress: tokenAddress,
@@ -20,7 +19,7 @@ const useWalletTokenBalance = (tokenLabel, tokenAddress, overrideAccount) => {
           calldata: [accountAddress]
         });
         const standardized = Array.isArray(balance) ? balance : balance?.result;
-        return uint256.uint256ToBN({ low: standardized?.[0] || 0, high: standardized?.[1] || 0 });
+        return standardized ? uint256.uint256ToBN({ low: standardized[0], high: standardized[1] }) : 0n;
       } catch (e) {
         console.error(e);
       }

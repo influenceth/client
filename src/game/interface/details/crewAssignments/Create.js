@@ -831,12 +831,11 @@ const TraitSelector = ({ crewmate, currentTraits, onUpdateTraits, onClose, trait
 const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, crewmateId, locationId, pendingCrewmate }) => {
   const history = useHistory();
 
-  const pendingTransactions = useStore(s => s.pendingTransactions);
   const dispatchCrewAssignmentRestart = useStore((s) => s.dispatchCrewAssignmentRestart);
 
   const isNameValid = useNameAvailability({ id: crewmateId, label: Entity.IDS.CREWMATE });
   const { purchaseAndOrInitializeCrewmate } = useCrewManager();
-  const { crew, crewmateMap, adalianRecruits, arvadianRecruits } = useCrewContext();
+  const { crew, crewmateMap, adalianRecruits, arvadianRecruits, pendingTransactions } = useCrewContext();
   const { promptingTransaction } = useContext(ChainTransactionContext);
   const { data: priceConstants } = usePriceConstants();
   const priceHelper = usePriceHelper();
