@@ -2,14 +2,8 @@ import { useEffect, useMemo, useRef } from 'react';
 import styled from 'styled-components';
 import { Entity, Ship } from '@influenceth/sdk';
 
-import {
-  PurchaseEntityIcon,
-  SwayIcon,
-  UnplanBuildingIcon,
-  WarningOutlineIcon
-} from '~/components/Icons';
+import { PurchaseEntityIcon, SwayIcon } from '~/components/Icons';
 import useCrewContext from '~/hooks/useCrewContext';
-import useConstructionManager from '~/hooks/actionManagers/useConstructionManager';
 
 import {
   ActionDialogFooter,
@@ -20,7 +14,7 @@ import {
   FlexSectionSpacer,
   ShipInputBlock,
 } from './components';
-import { ActionDialogInner, useAsteroidAndLot } from '../ActionDialog';
+import { ActionDialogInner } from '../ActionDialog';
 import actionStages from '~/lib/actionStages';
 import { locationsArrToObj, reactBool } from '~/lib/utils';
 import useNftSaleManager from '~/hooks/actionManagers/useNftSaleManager';
@@ -45,7 +39,7 @@ const Alert = styled.div`
     color: rgba(255, 255, 255, 0.7);
     display: flex;
     padding: 10px;
-    
+
     & label {
       color: ${p => p.theme.colors[p.scheme ? (p.scheme === 'success' ? 'green' : 'red') : 'main']};
       display: block;
@@ -120,13 +114,9 @@ const PurchaseEntity = ({ asteroid, lot, entity, actionManager, stage, ...props 
     }
   }, [stage]);
 
-  const price = useMemo(() => {
-    return entity?.Nft?.price / 1e6;
-  }, [entity]);
-
   const insufficientSway = useMemo(() => {
-    return price > swayBalance / TOKEN_SCALE[TOKEN.SWAY];
-  }, [swayBalance, price]);
+    return entity?.Nft?.price > swayBalance;
+  }, [entity, swayBalance]);
 
   return (
     <>
@@ -151,7 +141,7 @@ const PurchaseEntity = ({ asteroid, lot, entity, actionManager, stage, ...props 
 
           <FlexSectionInputBlock bodyStyle={{ background: 'transparent' }}>
             <CrewIndicator crew={controller} />
-            
+
           </FlexSectionInputBlock>
         </FlexSection>
 

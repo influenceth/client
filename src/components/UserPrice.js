@@ -7,7 +7,7 @@ import useStore from '~/hooks/useStore';
 const UserPrice = ({ price, priceToken, format }) => {
   const priceHelper = usePriceHelper();
   const preferredUiCurrency = useStore(s => s.getPreferredUiCurrency());
-  
+
   if (!priceToken) return <>-</>;
   return (
     <>
@@ -27,7 +27,8 @@ export const AsteroidUserPrice = ({ lots = 0n, format = true }) => {
   const { data: priceConstants } = usePriceConstants();
 
   const price = useMemo(() => {
-    return priceConstants.ASTEROID_PURCHASE_BASE_PRICE + BigInt(lots) * priceConstants.ASTEROID_PURCHASE_LOT_PRICE;
+    const roundedLots = BigInt(Math.round(Number(lots)));
+    return priceConstants.ASTEROID_PURCHASE_BASE_PRICE + roundedLots * priceConstants.ASTEROID_PURCHASE_LOT_PRICE;
   }, [lots, priceConstants]);
 
   return (
