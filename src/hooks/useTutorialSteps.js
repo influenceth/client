@@ -45,7 +45,7 @@ const VideoLink = styled.div`
 
 const TutorialVideoLink = () => {
   const onClick = useCallback(() => {
-    window.open('https://www.youtube.com/watch?v=dQw4w9WgXcQ', '_blank');
+    window.open('https://www.youtube.com/watch?v=ikBoPdK1UYw', '_blank');
   }, []);
   return (
     <VideoLink onClick={onClick}>
@@ -98,7 +98,7 @@ const useTutorialSteps = () => {
           b.Building?.status === Building.CONSTRUCTION_STATUSES.PLANNED
           && !getBuildingRequirements(b, []).find((req) => req.inNeed > 0)
         )
-      ) 
+      )
     ));
 
     const controlledOperationalWarehouse = crewBuildings?.find((b) => (
@@ -157,7 +157,7 @@ const useTutorialSteps = () => {
           <>
             First, select a public Habitat on Adalia Prime. Here is where you will find crewmates ready to
             join you on your Adalian adventure. Recruit one, get to know them, and help prepare them for
-            adulthood in Adalia. 
+            adulthood in Adalia.
             <br/><br/>
             Tip: While all classes have their own skills and knowledge, the education that Miners and Engineers
             receive is especially useful when first starting out in Adalia.
@@ -176,7 +176,7 @@ const useTutorialSteps = () => {
             You have one crewmate recruited, but cooperation is key to surviving in the belt. The Prime Council
             believes all Adalians benefit when we work together! Recruit a second crewmate.
             <br/><br/>
-            Tip: Miners and Engineers make a great duo when you aren't quite ready for a full five-person crew. 
+            Tip: Miners and Engineers make a great duo when you aren't quite ready for a full five-person crew.
             <TutorialVideoLink />
           </>
         ),
@@ -224,7 +224,7 @@ const useTutorialSteps = () => {
         content: (
           <>
             Before they can begin assembling the building, your crew will need to gather all of the required
-            building materials. 
+            building materials.
             <br/><br/>
             Tip: Do you have any shrewd Merchants on your crew to assist you in your first foray into the
             Marketplaces of Adalia?
@@ -275,7 +275,7 @@ const useTutorialSteps = () => {
             <TutorialVideoLink />
           </>
         ),
-        // Extractor site present and No core drills in warehouse   
+        // Extractor site present and No core drills in warehouse
         precondition: controlledExtractor,
         postcondition: ownedCoreDrill,
         initialize: () => {}
@@ -286,12 +286,12 @@ const useTutorialSteps = () => {
         content: (
           <>
             You're almost ready to see the fruits of your hard labor! The Prime Council is so proud of how far
-            you've come. 
+            you've come.
             <br/><br/>
             Now, all you need to do is run a core drill to retrieve a core sample at your Extractor site. Then
             you'll be ready to set your Extractor to mine, watch your resources pile up in your Warehouse, and
             see how you can expand your influence across Adalia!
-            <TutorialVideoLink />     
+            <TutorialVideoLink />
           </>
         ),
         // Core drill in warehouse + no owned deposits
