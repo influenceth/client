@@ -116,7 +116,7 @@ const TutorialActionItems = () => {
     if (!selectedStep) {
       nextStep = tutorialSteps[0];
     }
-    
+
     // ...and selectedStep is no longer available
     else if (!tutorialSteps.find((t) => t.key === selectedStep.key)) {
       // unselect current step, find next step (or any step if out of order)
@@ -136,7 +136,7 @@ const TutorialActionItems = () => {
             isCurrent={selectedStep?.key === step.key}
             onClick={() => goToStep(step)}>
             <Icon><span><TutorialIcon /></span></Icon>
-            <Status>Todo{/* Step {step.key}*/}</Status>
+            <Status>Mission{/* Step {step.key}*/}</Status>
             <Label>{step.title}</Label>
           </ActionItemRow>
         ))}

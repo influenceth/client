@@ -418,7 +418,7 @@ const Launcher = (props) => {
               <StyledNavIcon /> Desktop App
             </NavItem>
           )}
-          
+
         </Nav>
       </TopLeftMenu>
 
@@ -426,7 +426,7 @@ const Launcher = (props) => {
 
       <ContentWrapper id="contentwrapper">
         <Tooltip id="launcherTooltip" place="left" delayHide={150} />
-        
+
         <MainContent>
           {launcherPage === 'play' && <Play />}
           {launcherPage === 'store' && <Store />}
