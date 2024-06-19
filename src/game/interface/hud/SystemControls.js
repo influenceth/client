@@ -142,9 +142,10 @@ const CopyLink = styled.div`
   color: ${p => p.theme.colors.main};
   cursor: ${p => p.theme.cursors.active};
   opacity: 0.5;
+  padding: 10px 28px 10px 0;
   position: absolute;
-  right: 28px;
-  top: 10px;
+  right: 0;
+  top: 0;
   transition: opacity 100ms ease;
   &:hover {
     opacity: 1;
@@ -220,9 +221,9 @@ const SystemControls = () => {
             <NoHoverContent>{formattedAccount}</NoHoverContent>
             <HoverContent>Log Out</HoverContent>
           </LoggedInButton>
-          {walletId === 'argentWebWallet' && (
+          {!!showAuthedButton && (
             <CopyLink
-              data-tooltip-content="Copy Wallet Address"
+              data-tooltip-content="Copy Address"
               data-tooltip-id="launcherTooltip"
               data-tooltip-place="bottom"
               onClick={onCopyWalletAddress}>
