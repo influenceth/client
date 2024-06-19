@@ -25,8 +25,8 @@ const storeAssets = {
   packs: 'Starter Packs'
 };
 
-export const basicPackPriceUSD = 29;
-export const advPackPriceUSD = 60;
+export const basicPackPriceUSD = 30;
+export const advPackPriceUSD = 85;
 
 const skuButtonCornerSize = 20;
 const skuButtonMargin = 20;

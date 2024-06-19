@@ -213,7 +213,6 @@ const AccountButton = styled.div`
   }
 `;
 
-
 const PlayButton = styled.div`
   align-items: center;
   background: black;

@@ -186,7 +186,7 @@ export const useStarterPacks = () => {
   }, [adalianPrice, buildMultiswapFromSellAmount, ethBalance, execute, priceHelper]);
 };
 
-// TODO: consider moving isFunding to higher level context with single reference 
+// TODO: consider moving isFunding to higher level context with single reference
 const StarterPackWrapper = ({ children, pack, ...props }) => {
   const { data: wallet } = useWalletBalances();
   const [isFunding, setIsFunding] = useState();
@@ -268,7 +268,7 @@ export const BasicStarterPack = (props) => {
         <PackChecks>
           <div>
             <span><CheckIcon /></span>
-            <label>Basic Extraction starter kit</label>
+            <label>Basic starter kit for extraction and simple refining</label>
           </div>
           <div>
             <span><CheckIcon /></span>
@@ -276,7 +276,7 @@ export const BasicStarterPack = (props) => {
           </div>
           <div>
             <span><CheckIcon /></span>
-            <label>SWAY to construct <b>1x Warehouse</b> and <b>1x Extractor</b> buildings</label>
+            <label>SWAY to construct <b>1x Warehouse</b>, <b>1x Extractor</b>, and <b>1x Refinery</b> buildings</label>
           </div>
         </PackChecks>
       </PackWrapper>
@@ -329,15 +329,15 @@ export const AdvancedStarterPack = (props) => {
         <PackChecks>
           <div>
             <span><CheckIcon /></span>
-            <label>Advanced starter kit for extraction, refining, and production processes</label>
+            <label>Advanced starter kit for access to expanded production chains</label>
           </div>
           <div>
             <span><CheckIcon /></span>
-            <label>{pack.crewmates}x Crewmate{pack.crewmates === 1 ? '' : 's'} to form a full crew and perform game tasks efficiently</label>
+            <label>{pack.crewmates}x Crewmate{pack.crewmates === 1 ? '' : 's'} to form a full crew and play at max efficiency</label>
           </div>
           <div>
             <span><CheckIcon /></span>
-            <label>SWAY to construct <b>1x Warehouse</b> and <b>1x Extractor</b> and <b>1x Refinery</b> buildings</label>
+            <label>SWAY to construct all basic pack buildings plus <b>1x Bioreactor</b> and <b>1x Factory</b></label>
           </div>
         </PackChecks>
       </PackWrapper>

@@ -26,7 +26,7 @@ export const useSwayPerUsdc = (accountAddress, amount) => {
   return useSwapQuote(
     TOKEN.USDC,
     TOKEN.SWAY,
-    amount || (2500 * TOKEN_SCALE[TOKEN.SWAY]), // approx $1 worth
+    amount || (10000 * TOKEN_SCALE[TOKEN.SWAY]), // approx $1 worth
     accountAddress
   )
 };
@@ -35,7 +35,7 @@ export const useUsdcPerEth = (accountAddress, amount) => {
   return useSwapQuote(
     TOKEN.ETH,
     TOKEN.USDC,
-    amount || (0.00025 * TOKEN_SCALE[TOKEN.ETH]), // approx $1 worth
+    amount || (0.0001 * TOKEN_SCALE[TOKEN.ETH]), // approx $1 worth
     accountAddress
   )
 };
