@@ -765,7 +765,7 @@ const SKU = ({ asset, onBack }) => {
       flourishWidth: 145,
     };
     // conditionally include faucet
-    if (process.env.NODE_ENV !== '0x534e5f4d41494e') {
+    if (process.env.REACT_APP_CHAIN_ID === '0x534e5f5345504f4c4941') {
       params.rightButton = {
         label: (
           <PurchaseButtonInner>
