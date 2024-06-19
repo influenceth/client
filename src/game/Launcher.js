@@ -296,7 +296,7 @@ const Footer = styled.div`
 const StyledNavIcon = () => <Icon><NavIcon selected selectedColor="#777" /></Icon>;
 
 const Launcher = (props) => {
-  const { authenticating, authenticated, login } = useSession();
+  const { authenticating, authenticated, login, walletId } = useSession();
   const { data: priceConstants, isLoading: priceConstantsLoading } = usePriceConstants();
 
   const launcherPage = useStore(s => s.launcherPage);
@@ -356,6 +356,10 @@ const Launcher = (props) => {
     window.open(process.env.REACT_APP_BRIDGE_URL, '_blank');
   }, []);
 
+  const openWebWalletDashboard = useCallback(() => {
+    window.open(`${process.env.REACT_APP_ARGENT_WEB_WALLET_URL}`, '_blank');
+  }, []);
+
   return (
     <StyledLauncher {...props}>
       {launcherPage === 'play' && <HudMenu />}
@@ -394,6 +398,12 @@ const Launcher = (props) => {
           {process.env.REACT_APP_BRIDGE_URL && (
             <NavItem onClick={openAssetsPortal} isExternal>
               <StyledNavIcon /> Assets Portal
+            </NavItem>
+          )}
+
+          {walletId === 'argentWebWallet' && (
+            <NavItem onClick={openWebWalletDashboard} isExternal>
+              <StyledNavIcon /> Wallet Dashboard
             </NavItem>
           )}
 

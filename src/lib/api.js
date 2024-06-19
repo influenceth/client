@@ -732,7 +732,19 @@ const api = {
   },
 
   getCrewmates: async (ids) => {
-    return ids?.length > 0 ? getEntities({ ids, label: Entity.IDS.CREWMATE }) : [];
+    if (ids?.length > 0) {
+      const q = esb.boolQuery();
+      q.filter(esb.termsQuery('id', ids));
+  
+      const crewmateQ = esb.requestBodySearch();
+      crewmateQ.query(q);
+      crewmateQ.from(0);
+      crewmateQ.size(10000);
+      const response = await instance.post(`/_search/crewmate`, crewmateQ.toJSON());
+
+      return formatESEntityData(response.data);
+    }
+    return [];
   },
 
   getAccountCrewmates: async (account) => {

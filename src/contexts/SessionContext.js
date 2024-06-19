@@ -225,18 +225,17 @@ export function SessionProvider({ children }) {
   }, [connectedAccount, provider]);
 
   // Authenticate with a signed message against the API and create a new session
-  const authenticate = useCallback(async () => {
+  const authenticate = useCallback(async (isSessionUpgradeAttempt = false) => {
+    const newSession = {};
+
     // Check if the account contract has been deployed yet
-    let isDeployed = await checkDeployed();
-    const newSession = { isDeployed };
+    newSession.isDeployed = await checkDeployed();
 
     // Start authenticating by requesting a login message from API
-    setStatus(STATUSES.AUTHENTICATING);
+    if (!isSessionUpgradeAttempt) setStatus(STATUSES.AUTHENTICATING);
     const loginMessage = await api.requestLogin(connectedAccount);
-    let newToken = null;
-
     try {
-      if (connectedWalletId === 'argentWebWallet') {
+      if (newSession.isDeployed && connectedWalletId === 'argentWebWallet') {
         // Connect via Argent Web Wallet and automatically create a session
         const privateKey = '0x' + Buffer.from(utils.randomPrivateKey()).toString('hex');
         const dappKey = {
@@ -262,7 +261,7 @@ export function SessionProvider({ children }) {
         if (sessionSignature) {
           const sessionRequest = createSessionRequest(allowedMethods, expiry, metaData, dappKey.publicKey);
           const message = getSessionTypedData(sessionRequest, hexChainId);
-          newToken = await api.verifyLogin(connectedAccount, { message, signature: sessionSignature.join(',') });
+          const newToken = await api.verifyLogin(connectedAccount, { message, signature: sessionSignature.join(',') });
           Object.assign(newSession, {
             walletId: connectedWalletId,
             accountAddress: connectedAccount,
@@ -272,35 +271,39 @@ export function SessionProvider({ children }) {
             sessionSignature
           });
         }
-      } else if (isDeployed) {
-        // Connect via a traditional browser extension wallet\
+      } else if (newSession.isDeployed) {
+        // Connect via a traditional browser extension wallet
         const signature = await walletAccount.signMessage(loginMessage);
         if (signature?.code === 'CANCELED') throw new Error('User abort');
-        newToken = await api.verifyLogin(connectedAccount, { signature: signature.join(',') });
+        const newToken = await api.verifyLogin(connectedAccount, { signature: signature.join(',') });
         const walletId = walletAccount?.walletProvider?.id;
         Object.assign(newSession, { walletId, accountAddress: connectedAccount, token: newToken });
       } else {
         // If the wallet is not yet deployed, create an insecure session
-        newToken = await api.verifyLogin(connectedAccount, { signature: 'insecure' });
+        const newToken = await api.verifyLogin(connectedAccount, { signature: 'insecure' });
         Object.assign(newSession, { walletId: connectedWalletId, accountAddress: connectedAccount, token: newToken });
       }
-
       dispatchSessionStarted(newSession);
       setStatus(STATUSES.AUTHENTICATED);
       return true;
+
     } catch (e) {
-      logout();
-      if (['User abort', 'User rejected'].includes(e.message)) return;
-      console.error(e);
-      createAlert({
-        type: 'GenericAlert',
-        level: 'warning',
-        data: { content: 'Signature verification failed.' },
-        duration: 10000
-      });
+      if (!isSessionUpgradeAttempt) {
+        logout();
+        if (['User abort', 'User rejected'].includes(e.message)) return;
+        console.error(e);
+        createAlert({
+          type: 'GenericAlert',
+          level: 'warning',
+          data: { content: 'Signature verification failed.' },
+          duration: 10000
+        });
+      }
     }
 
-    disconnect();
+    if (!isSessionUpgradeAttempt) {
+      disconnect();
+    }
     return false;
   }, [
     connectedAccount,
@@ -311,6 +314,25 @@ export function SessionProvider({ children }) {
     disconnect,
     logout
   ]);
+
+  const upgradeInsecureSession = useCallback(() => {
+    if (currentSession && !currentSession.isDeployed) {
+      // TODO: check connectedWalletId === 'argentWebWallet'?
+      return authenticate(true);
+    }
+  }, [authenticate, currentSession]);
+
+  // useEffect(() => {
+  //   const onKeydown = (e) => {
+  //     if (e.shiftKey && e.which === 32) {
+  //       upgradeInsecureSession();
+  //     }
+  //   };
+  //   document.addEventListener('keydown', onKeydown);
+  //   return () => {
+  //     document.removeEventListener('keydown', onKeydown);
+  //   }
+  // }, [upgradeInsecureSession]);
 
   // Resumes a current session or starts a new one
   const resumeOrAuthenticate = useCallback(async () => {
@@ -370,8 +392,9 @@ export function SessionProvider({ children }) {
 
       setStarknetSession(null); // clear session key if it exists
     } else if (status === STATUSES.CONNECTED) {
-      resumeOrAuthenticate();
-      setReadyForChildren(true);
+      resumeOrAuthenticate().finally(() => {
+        setReadyForChildren(true);
+      });
     }
   }, [currentSession, status]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -496,6 +519,7 @@ export function SessionProvider({ children }) {
       starknetSession,
       status,
       token: authenticated ? currentSession?.token : null,
+      upgradeInsecureSession,
       walletAccount,
       walletId: authenticated ? currentSession?.walletId : null,
 

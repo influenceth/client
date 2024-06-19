@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import { FaCaretRight } from 'react-icons/fa';
 
 import {
+  CopyIcon,
   CrewmateCreditIcon,
   MenuIcon,
   WarningIcon
@@ -137,13 +138,29 @@ const GreenDot = styled.div`
   }
 `;
 
+const CopyLink = styled.div`
+  color: ${p => p.theme.colors.main};
+  cursor: ${p => p.theme.cursors.active};
+  opacity: 0.5;
+  padding: 10px 28px 10px 0;
+  position: absolute;
+  right: 0;
+  top: 0;
+  transition: opacity 100ms ease;
+  &:hover {
+    opacity: 1;
+    filter: drop-shadow(0 0 4px ${p => p.theme.colors.brightMain});
+  }
+`;
+
 const SystemControls = () => {
-  const { accountAddress, authenticated, logout } = useSession();
+  const { accountAddress, authenticated, logout, walletId } = useSession();
   const { adalianRecruits, arvadianRecruits } = useCrewContext();
 
   const { data: swayBalance } = useSwayBalance();
 
   const launcherPage = useStore(s => s.launcherPage);
+  const createAlert = useStore(s => s.dispatchAlertLogged);
   const dispatchLauncherPage = useStore(s => s.dispatchLauncherPage);
 
   const [showAuthedButton, setShowAuthedButton] = useState(!(authenticated && launcherPage));
@@ -160,6 +177,19 @@ const SystemControls = () => {
   useEffect(() => {
     setTimeout(() => { setShowAuthedButton(authenticated && launcherPage); }, 0);
   }, [authenticated, !launcherPage]);
+
+  const onCopyWalletAddress = useCallback(() => {
+    try {
+      navigator.clipboard.writeText(`${accountAddress}`);
+      createAlert({
+        type: 'ClipboardAlert',
+        data: { content: 'Wallet address copied to clipboard.' },
+        duration: 3000
+      });
+    } catch (e) {
+      console.warn(e);
+    }
+  }, []);
 
   return (
     <StyledSystemControls id="topMenu">
@@ -185,11 +215,22 @@ const SystemControls = () => {
       )}
 
       {authenticated && (
-        <LoggedInButton onClick={logout} isVisible={!!showAuthedButton}>
-          <GreenDot />
-          <NoHoverContent>{formattedAccount}</NoHoverContent>
-          <HoverContent>Log Out</HoverContent>
-        </LoggedInButton>
+        <div style={{ position: 'relative' }}>
+          <LoggedInButton onClick={logout} isVisible={!!showAuthedButton}>
+            <GreenDot />
+            <NoHoverContent>{formattedAccount}</NoHoverContent>
+            <HoverContent>Log Out</HoverContent>
+          </LoggedInButton>
+          {!!showAuthedButton && (
+            <CopyLink
+              data-tooltip-content="Copy Address"
+              data-tooltip-id="launcherTooltip"
+              data-tooltip-place="bottom"
+              onClick={onCopyWalletAddress}>
+              <CopyIcon />
+            </CopyLink>
+          )}
+        </div>
       )}
 
       <IconButton onClick={onToggleLauncher} style={{ fontSize: 17 }}>
