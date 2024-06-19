@@ -400,11 +400,12 @@ export function ChainTransactionProvider({ children }) {
     authenticated,
     blockNumber,
     blockTime,
+    isDeployed,
     logout,
     provider,
     starknetSession,
-    walletAccount,
-    walletId
+    upgradeInsecureSession,
+    walletAccount
   } = useSession();
   const activities = useActivitiesContext();
   const { crew, pendingTransactions } = useCrewContext();
@@ -781,6 +782,11 @@ export function ChainTransactionProvider({ children }) {
           //  event and send back to frontend... so we are using it just to listen for errors
           //  (activities from backend will demonstrate success)
           provider.waitForTransaction(txHash, { retryInterval: RETRY_INTERVAL })
+            .then((receipt) => {
+              // if a tx just went through and account is not known to be deployed,
+              // now is a good time to check again if it is deployed
+              if (receipt && !isDeployed) upgradeInsecureSession();
+            })
             // .then((receipt) => {
             //   if (receipt) {
             //     console.log('transaction settled');
@@ -891,13 +897,24 @@ export function ChainTransactionProvider({ children }) {
 
     try {
       const tx = await executeWithAccount(calls);
+
+      // if a tx just went through and account is not known to be deployed,
+      // now is a good time to check again if it is deployed
+      if (!isDeployed) {
+        const txHash = cleanseTxHash(tx.transaction_hash);
+        if (txHash) {
+          provider.waitForTransaction(txHash, { retryInterval: RETRY_INTERVAL })
+            .then((receipt) => { if (receipt) upgradeInsecureSession(); })
+        }
+      }
+        
       setPromptingTransaction(false);
       return tx;
     } catch (e) {
       setPromptingTransaction(false);
       throw e;  // rethrow
     }
-  }, [createAlert, executeWithAccount, isAccountLocked, walletAccount])
+  }, [createAlert, executeWithAccount, isAccountLocked, isDeployed, upgradeInsecureSession, walletAccount])
 
   // Primary execute method for system calls (requires name of system, etc.)
   const executeSystem = useCallback(async (key, vars, meta = {}) => {
