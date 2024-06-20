@@ -364,7 +364,6 @@ const StarterPackSKU = () => {
   );
 };
 
-// TODO: wrap in launch feature flag
 const SwaySKU = ({ onUpdatePurchase, onPurchasing }) => {
   const { executeCalls } = useContext(ChainTransactionContext);
   const priceHelper = usePriceHelper();
@@ -614,7 +613,7 @@ const SwayFaucetButton = () => {
 
 const SKU = ({ asset, onBack }) => {
   const { accountAddress, login } = useSession();
-  const { pendingTransactions } = useCrewContext();
+  const { crew, pendingTransactions } = useCrewContext();
   const priceHelper = usePriceHelper();
   const packs = useStarterPacks();
   const { data: wallet } = useWalletBalances();
@@ -728,7 +727,7 @@ const SKU = ({ asset, onBack }) => {
           ),
           props: {
             loading: isPurchasingStarterPack,
-            disabled: isPurchasingStarterPack,
+            disabled: isPurchasingStarterPack || !crew?._launched,
             isTransaction: true,
             onClick: () => onPurchaseStarterPack('advanced'),
             style: { margin: `0 ${purchasePacksPadding}px` },
@@ -736,7 +735,7 @@ const SKU = ({ asset, onBack }) => {
           },
           preLabel: (
             <Button
-              disabled={nativeBool(isPurchasingStarterPack)}
+              disabled={nativeBool(isPurchasingStarterPack || !crew?._launched)}
               loading={reactBool(isPurchasingStarterPack)}
               isTransaction
               onClick={() => onPurchaseStarterPack('basic')}
@@ -764,28 +763,26 @@ const SKU = ({ asset, onBack }) => {
       flourish: <Flourish src={SwayImage} />,
       flourishWidth: 145,
     };
-    // conditionally include faucet
-    if (process.env.REACT_APP_CHAIN_ID === '0x534e5f5345504f4c4941') {
-      params.rightButton = {
-        label: (
-          <PurchaseButtonInner>
-            <label>Purchase</label>
-            <span>
-              {purchase?.totalPrice.to(preferredUiCurrency, TOKEN_FORMAT.SHORT)}
-            </span>
-          </PurchaseButtonInner>
-        ),
-        props: {
-          onClick: () => handlePurchase(),
-          isTransaction: true,
-          disabled: isPurchasing,
-          loading: isPurchasing,
-        },
-        preLabel: <SwayFaucetButton />
-      };
-    }
+    params.rightButton = {
+      label: (
+        <PurchaseButtonInner>
+          <label>Purchase</label>
+          <span>
+            {purchase?.totalPrice.to(preferredUiCurrency, TOKEN_FORMAT.SHORT)}
+          </span>
+        </PurchaseButtonInner>
+      ),
+      props: {
+        onClick: () => handlePurchase(),
+        isTransaction: true,
+        disabled: isPurchasing || !(purchase?.totalPrice?.usdcValue > 0) || !crew?._launched,
+        loading: isPurchasing,
+      },
+      // conditionally include faucet
+      preLabel: process.env.REACT_APP_CHAIN_ID === '0x534e5f5345504f4c4941' && <SwayFaucetButton />
+    };
     return params;
-  }, [asset, filterUnownedAsteroidsAndClose, isPurchasing]);
+  }, [asset, crew?._launched, filterUnownedAsteroidsAndClose, isPurchasing]);
 
   return (
     <>

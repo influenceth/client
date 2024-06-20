@@ -120,7 +120,7 @@ const Interface = () => {
   // TODO: _launcher vvv
   const { create, destroy } = useControlledAlert();
   useEffect(() => {
-    if (`${process.env.REACT_APP_CHAIN_ID}` === `0x534e5f5345504f4c4941`) {
+    if (openAccessJSTime) {
       if (Date.now() < openAccessJSTime) {
         const alertId = create({
           icon: <span style={{ color: theme.colors.success }}><PurchaseAsteroidIcon /></span>,
@@ -128,7 +128,7 @@ const Interface = () => {
             <div style={{ color: theme.colors.success }}>
               {Date.now() < earlyAccessJSTime
                 ? `Early Access launches ${moment(earlyAccessJSTime).format('MMM Do YYYY, h:mm a')}`
-                : `Open Access launches ${moment(openAccessJSTime).format('MMM Do YYYY, ha')}`
+                : `Launch is coming! ${moment(openAccessJSTime).format('MMM Do YYYY, h:mma')}`
               }
             </div>
           ),
