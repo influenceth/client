@@ -397,6 +397,7 @@ const getSystemCallAndProcessedVars = (runSystem, rawVars, encodeEntrypoint = fa
 export function ChainTransactionProvider({ children }) {
   const {
     accountAddress,
+    allowedMethods,
     authenticated,
     blockNumber,
     blockTime,
@@ -441,13 +442,17 @@ export function ChainTransactionProvider({ children }) {
   const executeWithAccount = useCallback(async (calls) => {
     // Check if we can utilize a signed session to execute calls
     const canUseSession = !!starknetSession && !calls.some((c) => {
-      return c.contractAddress !== process.env.REACT_APP_STARKNET_DISPATCHER || c.entrypoint !== 'run_system';
+      const found = allowedMethods.find((m) => {
+        return m['Contract Address'] === c.contractAddress && m.selector === c.entrypoint;
+      });
+
+      return !found;
     });
 
     // Use session wallet if possible, otherwise regular wallet, but "old" account if wallet RPC won't work
     const account = canUseSession ? starknetSession : (walletAccount.walletProvider?.account || walletAccount);
     return account.execute(calls);
-  }, [createAlert, starknetSession, walletAccount]);
+  }, [allowedMethods, createAlert, starknetSession, walletAccount]);
 
   const contracts = useMemo(() => {
     if (!!walletAccount) {
@@ -907,7 +912,7 @@ export function ChainTransactionProvider({ children }) {
             .then((receipt) => { if (receipt) upgradeInsecureSession(); })
         }
       }
-        
+
       setPromptingTransaction(false);
       return tx;
     } catch (e) {

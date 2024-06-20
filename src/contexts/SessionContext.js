@@ -42,6 +42,26 @@ const STATUSES = {
   AUTHENTICATED: 4
 };
 
+// Methods allowed for Starknet sessions
+const allowedMethods = [
+  {
+    'Contract Address': process.env.REACT_APP_STARKNET_DISPATCHER,
+    selector: 'run_system'
+  },
+  {
+    'Contract Address': process.env.REACT_APP_STARKNET_SWAY_TOKEN,
+    selector: 'transfer_with_confirmation'
+  },
+  {
+    'Contract Address': process.env.REACT_APP_STARKNET_ESCROW,
+    selector: 'withdraw'
+  },
+  {
+    'Contract Address': process.env.REACT_APP_STARKNET_ESCROW,
+    selector: 'deposit'
+  }
+];
+
 const SessionContext = createContext();
 
 export function SessionProvider({ children }) {
@@ -248,7 +268,6 @@ export function SessionProvider({ children }) {
           maxAmount: resolveChainId(process.env.REACT_APP_CHAIN_ID) === 'SN_MAIN' ? '10000000000000000' : '100000000000000000'
         };
 
-        const allowedMethods = [{ 'Contract Address': process.env.REACT_APP_STARKNET_DISPATCHER, selector: 'run_system' }];
         const expiry = Math.floor(Date.now() / 1000) + 86400 * 7;
         const metaData = { projectID: 'influence', txFees: [ gasFees ] };
         const sessionParams = { allowedMethods, expiry, metaData, publicDappKey: dappKey.publicKey };
@@ -511,6 +530,7 @@ export function SessionProvider({ children }) {
       login: async () => await connect(),
       logout,
       accountAddress: authenticated ? currentSession?.accountAddress : null,
+      allowedMethods,
       authenticated,
       authenticating: [STATUSES.AUTHENTICATING, STATUSES.CONNECTING].includes(status),
       chainId: authenticated ? connectedChainId : null,
