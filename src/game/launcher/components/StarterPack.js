@@ -1,6 +1,5 @@
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
-import { cloneDeep } from 'lodash';
 import { Crewmate } from '@influenceth/sdk';
 
 import { CheckIcon } from '~/components/Icons';
@@ -152,10 +151,8 @@ export const useStarterPacks = () => {
   const createAlert = useStore(s => s.dispatchAlertLogged);
 
   return useMemo(() => {
-    const packs = cloneDeep(starterPacks);
-
     const onPurchase = (which) => async (onIsPurchasing) => {
-      const pack = packs[which];
+      const pack = starterPacks[which];
       const totalPrice = pack.price;
       const crewmateTally = pack.crewmates;
       const purchaseEth_usd = pack.ethValue.to(TOKEN.USDC);
@@ -203,12 +200,14 @@ export const useStarterPacks = () => {
     };
 
     // attach onPurchase to each
-    Object.keys(packs).forEach((w) => {
-      packs[w].onPurchase = onPurchase(w);
-    });
-
-    return packs;
-  }, [buildMultiswapFromSellAmount, ethBalance, execute, priceHelper]);
+    return Object.keys(starterPacks).reduce((acc, k) => {
+      acc[k] = {
+        ...starterPacks[k],
+        onPurchase: onPurchase(k)
+      };
+      return acc;
+    }, {});
+  }, [buildMultiswapFromSellAmount, ethBalance, execute, priceHelper, starterPacks]);
 };
 
 // TODO: consider moving isFunding to higher level context with single reference

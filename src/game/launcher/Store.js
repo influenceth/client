@@ -173,11 +173,6 @@ const SkuSelector = ({ onSelect }) => {
         </>
       );
     }
-    console.log([
-      packs.basic.price,
-      packs.basic.price.to(TOKEN.USDC),
-      packs.basic.price.to(TOKEN.USDC, TOKEN_FORMAT.SHORT)
-    ]);
     return {
       'asteroids': {
         imagery: AsteroidsImage,
