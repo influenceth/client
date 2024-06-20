@@ -3,8 +3,8 @@ import { useCallback, useMemo } from 'react';
 import { useSwayPerUsdc, useUsdcPerEth } from '~/hooks/useSwapQuote';
 import { TOKEN, TOKEN_FORMATTER, TOKEN_SCALE } from '~/lib/priceUtils';
 
-const defaultSwayPerUsdc = 2500 * parseFloat(TOKEN_SCALE[TOKEN.SWAY] / TOKEN_SCALE[TOKEN.USDC]);
-const defaultUsdcPerEth = 3800 * parseFloat(TOKEN_SCALE[TOKEN.USDC] / TOKEN_SCALE[TOKEN.ETH]);
+const defaultSwayPerUsdc = 1000 * parseFloat(TOKEN_SCALE[TOKEN.SWAY] / TOKEN_SCALE[TOKEN.USDC]);
+const defaultUsdcPerEth = 3500 * parseFloat(TOKEN_SCALE[TOKEN.USDC] / TOKEN_SCALE[TOKEN.ETH]);
 
 class Price {
   constructor (usdcValue, convs) {
