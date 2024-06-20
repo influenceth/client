@@ -275,7 +275,6 @@ export const cleanseTxHash = function (txHash) {
   return `0x${BigInt(txHash).toString(16).padStart(64, '0')}`;
 };
 
-export const earlyAccessJSTime = `${process.env.REACT_APP_CHAIN_ID}` === `0x534e5f4d41494e` ? 0 : 0;
 export const openAccessJSTime = `${process.env.REACT_APP_CHAIN_ID}` === `0x534e5f4d41494e` ? 1719495000e3 : 0;
 export const displayTimeFractionDigits = 2;
 export const maxAnnotationLength = 750;
