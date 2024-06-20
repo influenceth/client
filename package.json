@@ -16,7 +16,6 @@
     "@react-three/fiber": "^8.16.3",
     "@react-three/postprocessing": "^2.16.2",
     "animate.css": "^4.1.1",
-    "axios": "^0.21.1",
     "basic-auth": "^2.0.1",
     "compression": "^1.7.4",
     "connect-history-api-fallback": "^1.6.0",
@@ -79,6 +78,7 @@
     "test": "react-app-rewired test",
     "eject": "react-scripts eject",
     "heroku-prebuild": "node ./prebuild.js",
+    "heroku-cleanup": "node ./cleanup.js",
     "postinstall": "patch-package"
   },
   "eslintConfig": {
@@ -107,8 +107,10 @@
     "@testing-library/jest-dom": "^5.14.1",
     "@testing-library/react": "^12.0.0",
     "@testing-library/user-event": "^13.2.0",
+    "axios": "^1.7.2",
     "babel-plugin-root-import": "^6.6.0",
     "customize-cra": "^1.0.0",
+    "dotenv": "^16.4.5",
     "glslify-loader": "^2.0.0",
     "patch-package": "^6.4.7",
     "raw-loader": "^4.0.2",
