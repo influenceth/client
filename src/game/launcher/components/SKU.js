@@ -29,7 +29,6 @@ import useSession from '~/hooks/useSession';
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
 import useSwapHelper from '~/hooks/useSwapHelper';
 import useCrewContext from '~/hooks/useCrewContext';
-import { advPackPriceUSD, basicPackPriceUSD } from '../Store';
 import FundingFlow from './FundingFlow';
 import { AdvancedStarterPack, BasicStarterPack, useStarterPacks } from './StarterPack';
 
@@ -356,7 +355,7 @@ const StarterPackSKU = () => {
         </p>
       </Description>
 
-      <div style={{ display: 'flex', flex: `0 0 ${2 * purchaseFormWidth + purchaseFormMargin}px`, height: 352, marginTop: -160 }}>
+      <div style={{ display: 'flex', flex: `0 0 ${2 * purchaseFormWidth + purchaseFormMargin}px`, height: 352, marginTop: -175 }}>
         <BasicStarterPack noButton style={{ marginRight: purchaseFormMargin }} />
         <AdvancedStarterPack noButton />
       </div>
@@ -705,7 +704,7 @@ const SKU = ({ asset, onBack }) => {
         title: <>Buy Starter<br/>Packs</>,
         styleOverrides: {
           ...defaultStyleOverrides,
-          aboveFold: { height: 160, marginTop: -160 },
+          aboveFold: { height: 160, marginTop: -175 },
           belowFold: { padding: '10px 0 20px 0' },
           body: { overflow: 'visible', paddingLeft: '35px' },
           rule: { width: 308 }
@@ -717,11 +716,7 @@ const SKU = ({ asset, onBack }) => {
             <PurchaseButtonInner>
               <label>Purchase Pack</label>
               <span>
-                <UserPrice
-                  price={advPackPriceUSD * TOKEN_SCALE[TOKEN.USDC]}
-                  priceToken={TOKEN.USDC}
-                  format={TOKEN_FORMAT.SHORT}
-                />
+                {packs.advanced.price.to(TOKEN.USDC, TOKEN_FORMAT.SHORT)}
               </span>
             </PurchaseButtonInner>
           ),
@@ -744,11 +739,7 @@ const SKU = ({ asset, onBack }) => {
               <PurchaseButtonInner>
                 <label>Purchase Pack</label>
                 <span>
-                  <UserPrice
-                    price={basicPackPriceUSD * TOKEN_SCALE[TOKEN.USDC]}
-                    priceToken={TOKEN.USDC}
-                    format={TOKEN_FORMAT.SHORT}
-                  />
+                  {packs.basic.price.to(TOKEN.USDC, TOKEN_FORMAT.SHORT)}
                 </span>
               </PurchaseButtonInner>
             </Button>

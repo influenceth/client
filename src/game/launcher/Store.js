@@ -17,6 +17,7 @@ import FundingMenu from './components/FundingMenu';
 import LauncherDialog from './components/LauncherDialog';
 import SKU from './components/SKU';
 import PageLoader from '~/components/PageLoader';
+import { useStarterPackPricing } from './components/StarterPack';
 
 const storeAssets = {
   crewmates: 'Crewmates',
@@ -26,7 +27,11 @@ const storeAssets = {
 };
 
 export const basicPackPriceUSD = 30;
+export const basicPackSwayMin = 180000;
+export const basicPackCrewmates = 2;
 export const advPackPriceUSD = 85;
+export const advPackSwayMin = 580000;
+export const advPackCrewmates = 2;
 
 const skuButtonCornerSize = 20;
 const skuButtonMargin = 20;
@@ -151,6 +156,7 @@ const SkuSelector = ({ onSelect }) => {
   const blockTime = useBlockTime();
   const { data: asteroidSale } = useAsteroidSale();
   const { data: priceConstants } = usePriceConstants();
+  const packs = useStarterPackPricing();
   // console.log('priceConstants', priceConstants);
 
   const paneMeta = useMemo(() => {
@@ -167,7 +173,11 @@ const SkuSelector = ({ onSelect }) => {
         </>
       );
     }
-
+    console.log([
+      packs.basic.price,
+      packs.basic.price.to(TOKEN.USDC),
+      packs.basic.price.to(TOKEN.USDC, TOKEN_FORMAT.SHORT)
+    ]);
     return {
       'asteroids': {
         imagery: AsteroidsImage,
@@ -187,22 +197,14 @@ const SkuSelector = ({ onSelect }) => {
       },
       'packs': {
         imagery: StarterPackImage,
-        leftNote: (
-          <>
-            From{' '}
-            <UserPrice
-              price={basicPackPriceUSD * TOKEN_SCALE[TOKEN.USDC]}
-              priceToken={TOKEN.USDC}
-              format={TOKEN_FORMAT.SHORT} />
-          </>
-        )
+        leftNote: <>From {packs.basic.price.to(TOKEN.USDC, TOKEN_FORMAT.SHORT)}</>
       },
       'sway': {
         imagery: SwayImage,
         leftNote: 'Buy on Exchange',
       }
     };
-  }, [asteroidSale, blockTime, priceConstants])
+  }, [asteroidSale, blockTime, packs, priceConstants])
 
   return (
     <SKUButtons>
