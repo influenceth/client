@@ -39,8 +39,15 @@ const FundWrapper = styled.div`
     }
   }
   & > label {
+    align-items: center;
+    display: flex;
     font-size: 32px;
-    line-height: 32px;
+    line-height: 38px;
+    height: 38px;
+
+    & > svg {
+      height: 24px;
+    }
   }
   & > button {
     margin-top: 20px;

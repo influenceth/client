@@ -11,7 +11,7 @@ import useAsteroidSale from '~/hooks/useAsteroidSale';
 import usePriceConstants from '~/hooks/usePriceConstants';
 import useBlockTime from '~/hooks/useBlockTime';
 import useStore from '~/hooks/useStore';
-import { TOKEN, TOKEN_FORMAT, TOKEN_SCALE } from '~/lib/priceUtils';
+import { TOKEN, TOKEN_FORMAT } from '~/lib/priceUtils';
 import { formatTimer } from '~/lib/utils';
 import FundingMenu from './components/FundingMenu';
 import LauncherDialog from './components/LauncherDialog';
@@ -27,11 +27,11 @@ const storeAssets = {
 };
 
 export const basicPackPriceUSD = 30;
-export const basicPackSwayMin = 180000;
+export const basicPackSwayMin = 170000;
 export const basicPackCrewmates = 2;
 export const advPackPriceUSD = 85;
-export const advPackSwayMin = 580000;
-export const advPackCrewmates = 2;
+export const advPackSwayMin = 570000;
+export const advPackCrewmates = 5;
 
 const skuButtonCornerSize = 20;
 const skuButtonMargin = 20;
@@ -157,7 +157,6 @@ const SkuSelector = ({ onSelect }) => {
   const { data: asteroidSale } = useAsteroidSale();
   const { data: priceConstants } = usePriceConstants();
   const packs = useStarterPackPricing();
-  // console.log('priceConstants', priceConstants);
 
   const paneMeta = useMemo(() => {
     const asteroidExtra = {};
@@ -173,11 +172,7 @@ const SkuSelector = ({ onSelect }) => {
         </>
       );
     }
-    console.log([
-      packs.basic.price,
-      packs.basic.price.to(TOKEN.USDC),
-      packs.basic.price.to(TOKEN.USDC, TOKEN_FORMAT.SHORT)
-    ]);
+
     return {
       'asteroids': {
         imagery: AsteroidsImage,
