@@ -15,6 +15,8 @@ import ActionItem, { ITEM_WIDTH, TRANSITION_TIME } from './ActionItem';
 import TutorialActionItems from './TutorialActionItems';
 import IconButton from '~/components/IconButton';
 import ConfirmationDialog from '~/components/ConfirmationDialog';
+import useBlockTime from '~/hooks/useBlockTime';
+import { openAccessJSTime } from '~/lib/utils';
 
 export const SECTION_WIDTH = ITEM_WIDTH + 30;
 
@@ -276,7 +278,8 @@ const ConfirmBody = styled.div`
 const ActionItems = () => {
   const { authenticated } = useSession();
   const { allVisibleItems: allItems } = useActionItems();
-  const { captain, crew } = useCrewContext();
+  const blockTime = useBlockTime();
+  const { crew } = useCrewContext();
   const { execute, getStatus } = useContext(ChainTransactionContext);
   const getActivityConfig = useGetActivityConfig();
 
@@ -399,6 +402,10 @@ const ActionItems = () => {
     setConfirmingTutorialDismissal();
   }, [crew?.id]);
 
+  const tutorialLaunched = useMemo(() => {
+    return crew?._launched || (blockTime > openAccessJSTime / 1e3);
+  }, [blockTime, crew?._launched]);
+
   return (
     <>
       <OuterWrapper>
@@ -448,7 +455,7 @@ const ActionItems = () => {
               </ActionItemContainer>
             </ActionItemWrapper>
             
-            {!dismissAllTutorials && !crewTutorial?.dismissed && (
+            {tutorialLaunched && !dismissAllTutorials && !crewTutorial?.dismissed && (
               <>
                 <TitleWrapper style={{ marginTop: 10 }}>
                   <Filters>

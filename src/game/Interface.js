@@ -7,7 +7,7 @@ import moment from 'moment';
 import { PurchaseAsteroidIcon } from '~/components/Icons';
 import useScreenSize from '~/hooks/useScreenSize';
 import useStore from '~/hooks/useStore';
-import { earlyAccessJSTime, openAccessJSTime } from '~/lib/utils';
+import { openAccessJSTime } from '~/lib/utils';
 import Alerts, { useControlledAlert } from './interface/Alerts';
 import Draggables from './interface/Draggables';
 import HUD from './interface/HUD';
@@ -120,16 +120,13 @@ const Interface = () => {
   // TODO: _launcher vvv
   const { create, destroy } = useControlledAlert();
   useEffect(() => {
-    if (`${process.env.REACT_APP_CHAIN_ID}` === `0x534e5f5345504f4c4941`) {
+    if (openAccessJSTime) {
       if (Date.now() < openAccessJSTime) {
         const alertId = create({
           icon: <span style={{ color: theme.colors.success }}><PurchaseAsteroidIcon /></span>,
           content: (
             <div style={{ color: theme.colors.success }}>
-              {Date.now() < earlyAccessJSTime
-                ? `Early Access launches ${moment(earlyAccessJSTime).format('MMM Do YYYY, h:mm a')}`
-                : `Open Access launches ${moment(openAccessJSTime).format('MMM Do YYYY, ha')}`
-              }
+                {`Launch is coming! ${moment(openAccessJSTime).format('MMM Do YYYY, h:mma')}`}
             </div>
           ),
           level: 'success'

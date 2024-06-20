@@ -1,4 +1,4 @@
-import { Address, Building, Delivery, Entity, Lot, Order, Permission, Process, Product, RandomEvent, Ship } from '@influenceth/sdk';
+import { Address, Building, Delivery, Entity, Lot, Permission, Process, Product, RandomEvent, Ship } from '@influenceth/sdk';
 import { AiFillEdit as NameIcon } from 'react-icons/ai';
 import { BiTransfer as TransferIcon } from 'react-icons/bi';
 

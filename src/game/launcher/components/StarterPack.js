@@ -11,7 +11,7 @@ import usePriceConstants from '~/hooks/usePriceConstants';
 import { TOKEN, TOKEN_FORMAT, TOKEN_SCALE } from '~/lib/priceUtils';
 import usePriceHelper from '~/hooks/usePriceHelper';
 import UserPrice from '~/components/UserPrice';
-import { advPackPriceUSD, basicPackPriceUSD } from '../Store';
+import { advPackCrewmates, advPackPriceUSD, advPackSwayMin, basicPackCrewmates, basicPackPriceUSD, basicPackSwayMin } from '../Store';
 import FundingFlow from './FundingFlow';
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
 import useSwapHelper from '~/hooks/useSwapHelper';
@@ -82,14 +82,9 @@ const PackChecks = styled.div`
   }
 `;
 
-export const useStarterPacks = () => {
-  const { execute } = useContext(ChainTransactionContext);
-  const { data: ethBalance } = useEthBalance();
+export const useStarterPackPricing = () => {
   const { data: priceConstants } = usePriceConstants();
   const priceHelper = usePriceHelper();
-  const { buildMultiswapFromSellAmount } = useSwapHelper();
-
-  const createAlert = useStore(s => s.dispatchAlertLogged);
 
   const adalianPrice = useMemo(() => {
     if (!priceConstants) return priceHelper.from(0);
@@ -97,40 +92,67 @@ export const useStarterPacks = () => {
   }, [priceConstants]);
 
   return useMemo(() => {
-    const basicPrice = priceHelper.from(basicPackPriceUSD * TOKEN_SCALE[TOKEN.USDC], TOKEN.USDC);
-    const basicCrewmates = 2;
-    const basicCrewmatesValue = priceHelper.from(basicCrewmates * adalianPrice.usdcValue, TOKEN.USDC);
+    const basicMinPrice = priceHelper.from(basicPackPriceUSD * TOKEN_SCALE[TOKEN.USDC], TOKEN.USDC);
+    const basicMinSwayValue = priceHelper.from(basicPackSwayMin * TOKEN_SCALE[TOKEN.SWAY], TOKEN.SWAY);
+    const basicCrewmatesValue = priceHelper.from(basicPackCrewmates * adalianPrice.usdcValue, TOKEN.USDC);
     const basicEthValue = priceHelper.from(GAS_BUFFER_VALUE_USDC, TOKEN.USDC);
-    const basicSwayValue = priceHelper.from(basicPrice.usdcValue - basicCrewmatesValue.usdcValue - basicEthValue.usdcValue, TOKEN.USDC);
+    const basicSwayValue = priceHelper.from(
+      Math.max(
+        basicMinSwayValue.usdcValue,
+        basicMinPrice.usdcValue - basicCrewmatesValue.usdcValue - basicEthValue.usdcValue
+      ),
+      TOKEN.USDC
+    );
+    const basicPrice = priceHelper.from(basicCrewmatesValue.usdcValue + basicEthValue.usdcValue + basicSwayValue.usdcValue, TOKEN.USDC);
 
-    const advPrice = priceHelper.from(advPackPriceUSD * TOKEN_SCALE[TOKEN.USDC], TOKEN.USDC);
-    const advCrewmates = 5;
-    const advCrewmatesValue = priceHelper.from(advCrewmates * adalianPrice.usdcValue, TOKEN.USDC);
+    const advMinPrice = priceHelper.from(advPackPriceUSD * TOKEN_SCALE[TOKEN.USDC], TOKEN.USDC);
+    const advMinSwayValue = priceHelper.from(advPackSwayMin * TOKEN_SCALE[TOKEN.SWAY], TOKEN.SWAY);
+    const advCrewmatesValue = priceHelper.from(advPackCrewmates * adalianPrice.usdcValue, TOKEN.USDC);
     const advEthValue = basicEthValue;
-    const advSwayValue = priceHelper.from(advPrice.usdcValue - advCrewmatesValue.usdcValue - advEthValue.usdcValue, TOKEN.USDC);
+    const advSwayValue = priceHelper.from(
+      Math.max(
+        advMinSwayValue.usdcValue,
+        advMinPrice.usdcValue - advCrewmatesValue.usdcValue - advEthValue.usdcValue
+      ),
+      TOKEN.USDC
+    );
+    const advPrice = priceHelper.from(advCrewmatesValue.usdcValue + advEthValue.usdcValue + advSwayValue.usdcValue, TOKEN.USDC);
 
-    const packs = {};
-    packs.basic = {
-      price: basicPrice,
-      crewmates: basicCrewmates,
-      crewmatesValue: basicCrewmatesValue,
-      ethFormatted: basicEthValue.to(TOKEN.ETH, TOKEN_FORMAT.VERBOSE),
-      ethValue: basicEthValue,
-      swayFormatted: basicSwayValue.to(TOKEN.SWAY, TOKEN_FORMAT.VERBOSE),
-      swayValue: basicSwayValue
+    return {
+      basic: {
+        price: basicPrice,
+        crewmates: basicPackCrewmates,
+        crewmatesValue: basicCrewmatesValue,
+        ethFormatted: basicEthValue.to(TOKEN.ETH, TOKEN_FORMAT.VERBOSE),
+        ethValue: basicEthValue,
+        swayFormatted: basicSwayValue.to(TOKEN.SWAY, TOKEN_FORMAT.VERBOSE),
+        swayValue: basicSwayValue
+      },
+      advanced: {
+        price: advPrice,
+        crewmates: advPackCrewmates,
+        crewmatesValue: advCrewmatesValue,
+        ethFormatted: advEthValue.to(TOKEN.ETH, TOKEN_FORMAT.VERBOSE),
+        ethValue: advEthValue,
+        swayFormatted: advSwayValue.to(TOKEN.SWAY, TOKEN_FORMAT.VERBOSE),
+        swayValue: advSwayValue
+      }
     };
-    packs.advanced = {
-      price: basicPrice,
-      crewmates: advCrewmates,
-      crewmatesValue: advCrewmatesValue,
-      ethFormatted: advEthValue.to(TOKEN.ETH, TOKEN_FORMAT.VERBOSE),
-      ethValue: advEthValue,
-      swayFormatted: advSwayValue.to(TOKEN.SWAY, TOKEN_FORMAT.VERBOSE),
-      swayValue: advSwayValue
-    };
+  }, [adalianPrice, priceConstants, priceHelper]);
+};
 
+export const useStarterPacks = () => {
+  const { execute } = useContext(ChainTransactionContext);
+  const { data: ethBalance } = useEthBalance();
+  const priceHelper = usePriceHelper();
+  const { buildMultiswapFromSellAmount } = useSwapHelper();
+  const starterPacks = useStarterPackPricing();
+
+  const createAlert = useStore(s => s.dispatchAlertLogged);
+
+  return useMemo(() => {
     const onPurchase = (which) => async (onIsPurchasing) => {
-      const pack = packs[which];
+      const pack = starterPacks[which];
       const totalPrice = pack.price;
       const crewmateTally = pack.crewmates;
       const purchaseEth_usd = pack.ethValue.to(TOKEN.USDC);
@@ -178,12 +200,14 @@ export const useStarterPacks = () => {
     };
 
     // attach onPurchase to each
-    Object.keys(packs).forEach((w) => {
-      packs[w].onPurchase = onPurchase(w);
-    });
-
-    return packs;
-  }, [adalianPrice, buildMultiswapFromSellAmount, ethBalance, execute, priceHelper]);
+    return Object.keys(starterPacks).reduce((acc, k) => {
+      acc[k] = {
+        ...starterPacks[k],
+        onPurchase: onPurchase(k)
+      };
+      return acc;
+    }, {});
+  }, [buildMultiswapFromSellAmount, ethBalance, execute, priceHelper, starterPacks]);
 };
 
 // TODO: consider moving isFunding to higher level context with single reference

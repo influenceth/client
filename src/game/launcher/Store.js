@@ -11,12 +11,13 @@ import useAsteroidSale from '~/hooks/useAsteroidSale';
 import usePriceConstants from '~/hooks/usePriceConstants';
 import useBlockTime from '~/hooks/useBlockTime';
 import useStore from '~/hooks/useStore';
-import { TOKEN, TOKEN_FORMAT, TOKEN_SCALE } from '~/lib/priceUtils';
+import { TOKEN, TOKEN_FORMAT } from '~/lib/priceUtils';
 import { formatTimer } from '~/lib/utils';
 import FundingMenu from './components/FundingMenu';
 import LauncherDialog from './components/LauncherDialog';
 import SKU from './components/SKU';
 import PageLoader from '~/components/PageLoader';
+import { useStarterPackPricing } from './components/StarterPack';
 
 const storeAssets = {
   crewmates: 'Crewmates',
@@ -26,7 +27,11 @@ const storeAssets = {
 };
 
 export const basicPackPriceUSD = 30;
+export const basicPackSwayMin = 170000;
+export const basicPackCrewmates = 2;
 export const advPackPriceUSD = 85;
+export const advPackSwayMin = 570000;
+export const advPackCrewmates = 5;
 
 const skuButtonCornerSize = 20;
 const skuButtonMargin = 20;
@@ -151,7 +156,7 @@ const SkuSelector = ({ onSelect }) => {
   const blockTime = useBlockTime();
   const { data: asteroidSale } = useAsteroidSale();
   const { data: priceConstants } = usePriceConstants();
-  // console.log('priceConstants', priceConstants);
+  const packs = useStarterPackPricing();
 
   const paneMeta = useMemo(() => {
     const asteroidExtra = {};
@@ -167,7 +172,6 @@ const SkuSelector = ({ onSelect }) => {
         </>
       );
     }
-
     return {
       'asteroids': {
         imagery: AsteroidsImage,
@@ -187,22 +191,14 @@ const SkuSelector = ({ onSelect }) => {
       },
       'packs': {
         imagery: StarterPackImage,
-        leftNote: (
-          <>
-            From{' '}
-            <UserPrice
-              price={basicPackPriceUSD * TOKEN_SCALE[TOKEN.USDC]}
-              priceToken={TOKEN.USDC}
-              format={TOKEN_FORMAT.SHORT} />
-          </>
-        )
+        leftNote: <>From {packs.basic.price.to(TOKEN.USDC, TOKEN_FORMAT.SHORT)}</>
       },
       'sway': {
         imagery: SwayImage,
         leftNote: 'Buy on Exchange',
       }
     };
-  }, [asteroidSale, blockTime, priceConstants])
+  }, [asteroidSale, blockTime, packs, priceConstants])
 
   return (
     <SKUButtons>

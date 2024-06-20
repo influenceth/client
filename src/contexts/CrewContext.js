@@ -7,7 +7,7 @@ import useSession from '~/hooks/useSession';
 import useConstants from '~/hooks/useConstants';
 import useEntity from '~/hooks/useEntity';
 import useStore from '~/hooks/useStore';
-import { earlyAccessJSTime, getBlockTime, getCrewAbilityBonuses, locationsArrToObj, openAccessJSTime } from '~/lib/utils';
+import { getCrewAbilityBonuses, locationsArrToObj, openAccessJSTime } from '~/lib/utils';
 import { entitiesCacheKey } from '~/lib/cacheKey';
 
 const CrewContext = createContext();
@@ -113,17 +113,9 @@ export function CrewProvider({ children }) {
         c._readyToSequence = blockTime + CREW_SCHEDULE_BUFFER >= c.Crew.readyAt;
       }
 
-      // TODO: vvv remove this whole block (and _launched references) after
-      // only relevant on Sepolia
-      if (`${process.env.REACT_APP_CHAIN_ID}` === `0x534e5f5345504f4c4941`) {
-        // crew is early access eligible if...
-        const earlyAccessEligible = !!c._crewmates.find((c) =>
-          // ... has at least one arvadian crewmate
-          [Crewmate.COLLECTION_IDS.ARVAD_CITIZEN, Crewmate.COLLECTION_IDS.ARVAD_SPECIALIST, Crewmate.COLLECTION_IDS.ARVAD_LEADERSHIP].includes(c.Crewmate.coll)
-          // ... or has at least one "First Generation" adalian crewmate
-          || c.Crewmate.title === 67
-        );
-        c._launched = blockTime > (earlyAccessEligible ? earlyAccessJSTime : openAccessJSTime) / 1e3;
+      // mainnet
+      if (openAccessJSTime) {
+        c._launched = blockTime > (openAccessJSTime / 1e3);
 
         // overwrite food so 100% until launch
         if (c.Crew) {
@@ -135,9 +127,7 @@ export function CrewProvider({ children }) {
         }
       } else {
         c._launched = true;
-        c._launched = blockTime > earlyAccessJSTime / 1e3;
       }
-      // ^^^
 
       return c;
     })

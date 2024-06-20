@@ -27,9 +27,6 @@ const getSlug = (assetName) => {
 
 const getIconUrl = ({ type, assetName, iconVersion, append, w, h, f } = {}) => {
   const environment = process.env.REACT_APP_DEPLOYMENT || 'production';
-  let slug = `influence/${environment}/images/icons/${type}/${getSlug(assetName)}${append || ''}`;
-  if (iconVersion) slug += `.v${iconVersion}`;
-  slug += '.png';
 
   return getCloudfrontUrl(
     `influence/${environment}/images/icons/${type}/${getSlug(assetName)}${append || ''}.v${iconVersion || '1'}.png`,

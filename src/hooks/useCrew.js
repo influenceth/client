@@ -13,11 +13,14 @@ const useCrew = (id) => {
   const blockTime = useBlockTime();
   const response = useEntity({ label: Entity.IDS.CREW, id });
   return useMemo(() => {
-    if (`${process.env.REACT_APP_CHAIN_ID}` === `0x534e5f5345504f4c4941`) {
+    if (openAccessJSTime) {
+      const cmpTime = blockTime || (Date.now() / 1e3);
       if (response?.data?.Crew) {
         response.data.Crew.lastFed = Math.max(
-          Math.min(blockTime || (Date.now() / 1e3), openAccessJSTime / 1e3), response.data.Crew.lastFed
+          Math.min(cmpTime, openAccessJSTime / 1e3),
+          response.data.Crew.lastFed
         );
+        response.data._launched = cmpTime > openAccessJSTime / 1e3;
       }
     }
     if (response?.data) {

@@ -29,7 +29,6 @@ import useSession from '~/hooks/useSession';
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
 import useSwapHelper from '~/hooks/useSwapHelper';
 import useCrewContext from '~/hooks/useCrewContext';
-import { advPackPriceUSD, basicPackPriceUSD } from '../Store';
 import FundingFlow from './FundingFlow';
 import { AdvancedStarterPack, BasicStarterPack, useStarterPacks } from './StarterPack';
 
@@ -356,7 +355,7 @@ const StarterPackSKU = () => {
         </p>
       </Description>
 
-      <div style={{ display: 'flex', flex: `0 0 ${2 * purchaseFormWidth + purchaseFormMargin}px`, height: 352, marginTop: -160 }}>
+      <div style={{ display: 'flex', flex: `0 0 ${2 * purchaseFormWidth + purchaseFormMargin}px`, height: 352, marginTop: -175 }}>
         <BasicStarterPack noButton style={{ marginRight: purchaseFormMargin }} />
         <AdvancedStarterPack noButton />
       </div>
@@ -364,7 +363,6 @@ const StarterPackSKU = () => {
   );
 };
 
-// TODO: wrap in launch feature flag
 const SwaySKU = ({ onUpdatePurchase, onPurchasing }) => {
   const { executeCalls } = useContext(ChainTransactionContext);
   const priceHelper = usePriceHelper();
@@ -614,7 +612,7 @@ const SwayFaucetButton = () => {
 
 const SKU = ({ asset, onBack }) => {
   const { accountAddress, login } = useSession();
-  const { pendingTransactions } = useCrewContext();
+  const { crew, pendingTransactions } = useCrewContext();
   const priceHelper = usePriceHelper();
   const packs = useStarterPacks();
   const { data: wallet } = useWalletBalances();
@@ -706,7 +704,7 @@ const SKU = ({ asset, onBack }) => {
         title: <>Buy Starter<br/>Packs</>,
         styleOverrides: {
           ...defaultStyleOverrides,
-          aboveFold: { height: 160, marginTop: -160 },
+          aboveFold: { height: 160, marginTop: -175 },
           belowFold: { padding: '10px 0 20px 0' },
           body: { overflow: 'visible', paddingLeft: '35px' },
           rule: { width: 308 }
@@ -718,17 +716,13 @@ const SKU = ({ asset, onBack }) => {
             <PurchaseButtonInner>
               <label>Purchase Pack</label>
               <span>
-                <UserPrice
-                  price={advPackPriceUSD * TOKEN_SCALE[TOKEN.USDC]}
-                  priceToken={TOKEN.USDC}
-                  format={TOKEN_FORMAT.SHORT}
-                />
+                {packs.advanced.price.to(TOKEN.USDC, TOKEN_FORMAT.SHORT)}
               </span>
             </PurchaseButtonInner>
           ),
           props: {
             loading: isPurchasingStarterPack,
-            disabled: isPurchasingStarterPack,
+            disabled: isPurchasingStarterPack || !crew?._launched,
             isTransaction: true,
             onClick: () => onPurchaseStarterPack('advanced'),
             style: { margin: `0 ${purchasePacksPadding}px` },
@@ -736,7 +730,7 @@ const SKU = ({ asset, onBack }) => {
           },
           preLabel: (
             <Button
-              disabled={nativeBool(isPurchasingStarterPack)}
+              disabled={nativeBool(isPurchasingStarterPack || !crew?._launched)}
               loading={reactBool(isPurchasingStarterPack)}
               isTransaction
               onClick={() => onPurchaseStarterPack('basic')}
@@ -745,11 +739,7 @@ const SKU = ({ asset, onBack }) => {
               <PurchaseButtonInner>
                 <label>Purchase Pack</label>
                 <span>
-                  <UserPrice
-                    price={basicPackPriceUSD * TOKEN_SCALE[TOKEN.USDC]}
-                    priceToken={TOKEN.USDC}
-                    format={TOKEN_FORMAT.SHORT}
-                  />
+                  {packs.basic.price.to(TOKEN.USDC, TOKEN_FORMAT.SHORT)}
                 </span>
               </PurchaseButtonInner>
             </Button>
@@ -764,28 +754,26 @@ const SKU = ({ asset, onBack }) => {
       flourish: <Flourish src={SwayImage} />,
       flourishWidth: 145,
     };
-    // conditionally include faucet
-    if (process.env.REACT_APP_CHAIN_ID === '0x534e5f5345504f4c4941') {
-      params.rightButton = {
-        label: (
-          <PurchaseButtonInner>
-            <label>Purchase</label>
-            <span>
-              {purchase?.totalPrice.to(preferredUiCurrency, TOKEN_FORMAT.SHORT)}
-            </span>
-          </PurchaseButtonInner>
-        ),
-        props: {
-          onClick: () => handlePurchase(),
-          isTransaction: true,
-          disabled: isPurchasing,
-          loading: isPurchasing,
-        },
-        preLabel: <SwayFaucetButton />
-      };
-    }
+    params.rightButton = {
+      label: (
+        <PurchaseButtonInner>
+          <label>Purchase</label>
+          <span>
+            {purchase?.totalPrice.to(preferredUiCurrency, TOKEN_FORMAT.SHORT)}
+          </span>
+        </PurchaseButtonInner>
+      ),
+      props: {
+        onClick: () => handlePurchase(),
+        isTransaction: true,
+        disabled: isPurchasing || !(purchase?.totalPrice?.usdcValue > 0) || !crew?._launched,
+        loading: isPurchasing,
+      },
+      // conditionally include faucet
+      preLabel: process.env.REACT_APP_CHAIN_ID === '0x534e5f5345504f4c4941' && <SwayFaucetButton />
+    };
     return params;
-  }, [asset, filterUnownedAsteroidsAndClose, isPurchasing]);
+  }, [asset, crew?._launched, filterUnownedAsteroidsAndClose, isPurchasing]);
 
   return (
     <>
