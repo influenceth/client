@@ -40,8 +40,9 @@ const RecruitCrewmate = () => {
 
   useEffect(() => {
     if (!authenticated) history.push('/');
-    // TODO: 1 should probably be in env (or a list of allowable starting habitats)
-    if (!locationId) history.push(`/recruit/${crewId}/1`);
+    // Select a random habitat out of the first 100
+    const habitat = process.env.REACT_APP_DEPLOYMENT === 'production' ? Math.ceil(Math.random() * 100) : 1;
+    if (!locationId) history.push(`/recruit/${crewId}/${habitat}`);
   }, [authenticated, crewId, locationId]);
 
   // NOTE: as it is now, the useEffect line above checking !locationId will ensure this

@@ -131,6 +131,14 @@ export function SessionProvider({ children }) {
       setError();
       setConnecting(true);
       const { connectorData, wallet } = await starknetConnect(connectionOptions);
+      await new Promise(resolve => setTimeout(resolve, 100)); // deal with timeout delay from Argent
+
+      try {
+        const deployData = await wallet.request({ type: "wallet_deploymentData" });
+        console.log(deployData);
+      } catch (e) {
+        // Do nothing, already deployed
+      }
 
       if (wallet && connectorData?.account) {
         const chainId = resolveChainId(connectorData.chainId);
