@@ -43,10 +43,10 @@ const VideoLink = styled.div`
   }
 `;
 
-const TutorialVideoLink = () => {
+const TutorialVideoLink = ({ link }) => {
   const onClick = useCallback(() => {
-    window.open('https://www.youtube.com/watch?v=ikBoPdK1UYw', '_blank');
-  }, []);
+    window.open(link, '_blank');
+  }, [link]);
   return (
     <VideoLink onClick={onClick}>
       <YoutubeIcon /> <span>Learn More: Watch the Video</span>
@@ -161,7 +161,7 @@ const useTutorialSteps = () => {
             <br/><br/>
             Tip: While all classes have their own skills and knowledge, the education that Miners and Engineers
             receive is especially useful when first starting out in Adalia.
-            <TutorialVideoLink />
+            <TutorialVideoLink link="https://youtu.be/pzvFzEwHlP8?si=BKZMAbkMMSMYFe7a&t=114" />
           </>
         ),
         precondition: true,
@@ -177,7 +177,7 @@ const useTutorialSteps = () => {
             believes all Adalians benefit when we work together! Recruit a second crewmate.
             <br/><br/>
             Tip: Miners and Engineers make a great duo when you aren't quite ready for a full five-person crew.
-            <TutorialVideoLink />
+            <TutorialVideoLink link="https://youtu.be/pzvFzEwHlP8?si=BKZMAbkMMSMYFe7a&t=114" />
           </>
         ),
         // crew present, only one crewmate
@@ -195,7 +195,7 @@ const useTutorialSteps = () => {
             <br/><br/>
             Tip: You'll have to determine how best to balance the cost versus the commute time for your
             crewmates to get to work.
-            <TutorialVideoLink />
+            <TutorialVideoLink link="https://youtu.be/pzvFzEwHlP8?si=BKZMAbkMMSMYFe7a&t=465" />
           </>
         ),
         // crew present, no lots leased
@@ -210,7 +210,7 @@ const useTutorialSteps = () => {
           <>
             Before you begin mining, you'll need a place to store whatever riches you find beneath the surface.
             And before you begin building, you'll need to plan your first Warehouse on your leased lot.
-            <TutorialVideoLink />
+            <TutorialVideoLink link="https://youtu.be/pzvFzEwHlP8?si=BKZMAbkMMSMYFe7a&t=496" />
           </>
         ),
         // Leased lots present AND no warehouse building (or site)
@@ -228,7 +228,7 @@ const useTutorialSteps = () => {
             <br/><br/>
             Tip: Do you have any shrewd Merchants on your crew to assist you in your first foray into the
             Marketplaces of Adalia?
-            <TutorialVideoLink />
+            <TutorialVideoLink link="https://youtu.be/pzvFzEwHlP8?si=BKZMAbkMMSMYFe7a&t=522" />
           </>
         ),
         // Unready warehouse site + No completed or completable controlled warehouses
@@ -242,7 +242,7 @@ const useTutorialSteps = () => {
         content: (
           <>
             Now, it is time for your crew to use those muscles and construct your first Warehouse.
-            <TutorialVideoLink />
+            <TutorialVideoLink link="https://youtu.be/pzvFzEwHlP8?si=BKZMAbkMMSMYFe7a&t=600" />
           </>
         ),
         // no completed controlled warehouse AND ready-to-build warehouse site present
@@ -257,7 +257,7 @@ const useTutorialSteps = () => {
           <>
             Now that you have a place to store whatever you will mine, it is time to build your first Extractor.
             Get some more land, plan your extractor site, go shopping, and get building!
-            <TutorialVideoLink />
+            <TutorialVideoLink link="https://youtu.be/pzvFzEwHlP8?si=BKZMAbkMMSMYFe7a&t=600" />
           </>
         ),
         // Controlled warehouse and no other buildings
@@ -272,7 +272,7 @@ const useTutorialSteps = () => {
           <>
             We're all new to Adalia and no one knows exactly what lies beneath the surface of any asteroid at any
             specific spot. That's why you need to buy some core drills - they can reveal what is there for extracting.
-            <TutorialVideoLink />
+            <TutorialVideoLink link="https://youtu.be/pzvFzEwHlP8?si=BKZMAbkMMSMYFe7a&t=620" />
           </>
         ),
         // Extractor site present and No core drills in warehouse
@@ -291,7 +291,6 @@ const useTutorialSteps = () => {
             Now, all you need to do is run a core drill to retrieve a core sample at your Extractor site. Then
             you'll be ready to set your Extractor to mine, watch your resources pile up in your Warehouse, and
             see how you can expand your influence across Adalia!
-            <TutorialVideoLink />
           </>
         ),
         // Core drill in warehouse + no owned deposits
