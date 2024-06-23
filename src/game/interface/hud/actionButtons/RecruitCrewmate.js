@@ -12,7 +12,7 @@ const isVisible = ({ account, building }) => {
   return account && building?.Building?.buildingType === Building.IDS.HABITAT;
 };
 
-const RecruitCrewmate = ({ asteroid, crew, lot, _disabled }) => {  
+const RecruitCrewmate = ({ asteroid, crew, lot, _disabled }) => {
   const { getPendingCrewmate } = useCrewManager();
   const history = useHistory();
 
@@ -69,7 +69,13 @@ const RecruitCrewmate = ({ asteroid, crew, lot, _disabled }) => {
       if (policy.policyType === Permission.POLICY_IDS.PUBLIC) return '';
     }
     // else, check for crew permission
-    return getCrewDisabledReason({ asteroid, crew, permission: Permission.IDS.RECRUIT_CREWMATE, permissionTarget: lot?.building });
+    return getCrewDisabledReason({
+      asteroid,
+      crew,
+      permission: Permission.IDS.RECRUIT_CREWMATE,
+      permissionTarget: lot?.building,
+      requireLaunched: false
+    });
   }, [asteroid, crew, lot?.building, pendingCrewmate, recruitToCrew]);
 
   // TODO: attention always?

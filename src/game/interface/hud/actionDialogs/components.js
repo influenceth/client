@@ -4117,6 +4117,7 @@ export const ActionDialogFooter = ({
   finalizeLabel,
   goLabel,
   isSequenceable = false,
+  requireLaunched = true,
   onClose,
   onFinalize,
   onGo,
@@ -4136,6 +4137,8 @@ export const ActionDialogFooter = ({
     setNotificationsEnabled((x) => !x);
   }, []);
 
+  const allowedOrLaunched = useMemo(() => requireLaunched ? crew?._launched : true, [crew, requireLaunched]);
+
   const isReady = isSequenceable ? crew?._readyToSequence : crew?._ready;
   return (
     <Footer wide={wide}>
@@ -4154,9 +4157,9 @@ export const ActionDialogFooter = ({
               <Button
                 loading={reactBool(buttonsLoading)}
                 onClick={onClose}>Cancel</Button>
-              {waitForCrewReady && !crew?._launched && <CrewNotLaunchedButton />}
-              {waitForCrewReady && crew?._launched && !isReady && <CrewBusyButton isSequenceable={isSequenceable} />}
-              {(!waitForCrewReady || (isReady && crew?._launched)) && (
+              {waitForCrewReady && !allowedOrLaunched && <CrewNotLaunchedButton />}
+              {waitForCrewReady && allowedOrLaunched && !isReady && <CrewBusyButton isSequenceable={isSequenceable} />}
+              {(!waitForCrewReady || (isReady && allowedOrLaunched)) && (
                 <Button
                   disabled={nativeBool(disabled)}
                   isTransaction

@@ -265,6 +265,7 @@ const StationCrew = ({ asteroid, destination: rawDestination, lot, origin: rawOr
         goLabel="Station"
         onGo={onStation}
         stage={stage}
+        requireLaunched={false}
         waitForCrewReady
         {...props} />
     </>

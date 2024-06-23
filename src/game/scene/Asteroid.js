@@ -952,7 +952,7 @@ const AsteroidComponent = () => {
 
       // update light position (since asteroid has moved around star)
       if (zoomStatus !== 'out') {
-        if (light.current) {  
+        if (light.current) {
           const sunMax = 0.5
           const sunMin = 0.3
           const sunFalloff = Math.min(config.radius / 6, 500);
