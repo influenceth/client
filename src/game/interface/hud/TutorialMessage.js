@@ -5,7 +5,7 @@ import ClipCorner from '~/components/ClipCorner';
 import IconButton from '~/components/IconButton';
 import { CloseIcon } from '~/components/Icons';
 import { reactBool } from '~/lib/utils';
-import theme, { hexToRGB } from '~/theme';
+import theme from '~/theme';
 
 const messageClipCorner = 20;
 const messageOffset = 75;
