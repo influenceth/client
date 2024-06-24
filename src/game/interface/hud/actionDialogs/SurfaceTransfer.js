@@ -657,7 +657,6 @@ const Wrapper = (props) => {
       return d.status === 'PACKAGING' || d.status === 'DEPARTING';
     });
   }, [deliveryManager.currentVersion, deliveryId, txHash]);
-  console.log({ currentDeliveryAction })
 
   const { data: originEntity, isLoading: originLoading } = useEntity(currentDeliveryAction?.action?.origin || props.origin);
   const { data: destEntity, isLoading: destLoading } = useEntity(currentDeliveryAction?.action?.dest || props.destination);
