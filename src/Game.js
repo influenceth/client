@@ -4,6 +4,7 @@ import { ThemeProvider, createGlobalStyle } from 'styled-components';
 import { BrowserRouter as Router, Switch, Route, useHistory } from 'react-router-dom';
 import { useDetectGPU } from '@react-three/drei';
 
+import FullpageInterstitial from '~/components/FullpageInterstitial';
 import { ActionItemProvider } from '~/contexts/ActionItemContext';
 import { ActivitiesProvider } from '~/contexts/ActivitiesContext';
 import { SessionProvider } from '~/contexts/SessionContext';
@@ -99,7 +100,7 @@ const LauncherRedirect = () => {
 
 const Game = () => {
   const gpuInfo = useDetectGPU();
-  const { updateNeeded, onUpdateVersion } = useServiceWorker();
+  const { isInstalling, isReinstalling, updateNeeded, onUpdateVersion } = useServiceWorker();
 
   const createAlert = useStore(s => s.dispatchAlertLogged);
   const dispatchGpuInfo = useStore(s => s.dispatchGpuInfo);
@@ -149,59 +150,61 @@ const Game = () => {
     <>
       <GlobalStyle />
 
-      {/* global contexts (i.e. needed by interface and scene) */}
-      <SessionProvider>
-        <CrewProvider>
-          <WebsocketProvider>
-            <ChatListener />
-            <Router>
-              <Referral />
-              <Switch>
+      {isInstalling && <FullpageInterstitial message="Loading game content, please wait..." />}
+      {!isInstalling && (
+        <SessionProvider>{/* global contexts (i.e. needed by interface and scene) */}
+          <CrewProvider>
+            <WebsocketProvider>
+              <ChatListener />
+              <Router>
+                <Referral />
+                <Switch>
 
-                {/* for socialmedia links that need to pull opengraph tags (will redirect to discord or main app) */}
-                <Route path="/play">
-                  <LandingPage />
-                </Route>
+                  {/* for socialmedia links that need to pull opengraph tags (will redirect to discord or main app) */}
+                  <Route path="/play">
+                    <LandingPage />
+                  </Route>
 
-                {/* for everything else */}
-                <Route>
+                  {/* for everything else */}
+                  <Route>
 
-                  {/* redirect user to launcher (when appropriate) */}
-                  <LauncherRedirect />
+                    {/* redirect user to launcher (when appropriate) */}
+                    <LauncherRedirect />
 
-                  {/* main app wrapper */}
-                  <StyledMain>
-                    <DevToolProvider>
+                    {/* main app wrapper */}
+                    <StyledMain>
+                      <DevToolProvider>
 
-                      {/* all ui-specific context providers wrapping interface and new-user flow */}
-                      <ActivitiesProvider>
-                        <ChainTransactionProvider>
-                          <SyncedTimeProvider>
-                            <ActionItemProvider>
-                                <ThemeProvider theme={theme}>
-                                  <ScreensizeProvider>
-                                    <Interface />
-                                  </ScreensizeProvider>
-                                </ThemeProvider>
-                            </ActionItemProvider>
-                          </SyncedTimeProvider>
-                        </ChainTransactionProvider>
-                      </ActivitiesProvider>
+                        {/* all ui-specific context providers wrapping interface and new-user flow */}
+                        <ActivitiesProvider>
+                          <ChainTransactionProvider>
+                            <SyncedTimeProvider>
+                              <ActionItemProvider>
+                                  <ThemeProvider theme={theme}>
+                                    <ScreensizeProvider>
+                                      <Interface />
+                                    </ScreensizeProvider>
+                                  </ThemeProvider>
+                              </ActionItemProvider>
+                            </SyncedTimeProvider>
+                          </ChainTransactionProvider>
+                        </ActivitiesProvider>
 
-                      {/* 3d scene */}
-                      {showScene && <Scene />}
+                        {/* 3d scene */}
+                        {showScene && <Scene />}
 
-                      {/* audio */}
-                      <Audio />
+                        {/* audio */}
+                        <Audio />
 
-                    </DevToolProvider>
-                  </StyledMain>
-                </Route>
-              </Switch>
-            </Router>
-          </WebsocketProvider>
-        </CrewProvider>
-      </SessionProvider>
+                      </DevToolProvider>
+                    </StyledMain>
+                  </Route>
+                </Switch>
+              </Router>
+            </WebsocketProvider>
+          </CrewProvider>
+        </SessionProvider>
+      )}
     </>
   );
 };
