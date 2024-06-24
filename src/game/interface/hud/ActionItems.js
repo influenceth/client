@@ -2,21 +2,22 @@ import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import styled from 'styled-components';
 
-import { BellIcon, CloseIcon, EyeIcon, FinishAllIcon, LoggedEventsIcon, TutorialIcon } from '~/components/Icons';
+import { BellIcon, CloseIcon, EyeIcon, FinishAllIcon, LoggedEventsIcon } from '~/components/Icons';
 import CollapsibleSection from '~/components/CollapsibleSection';
+import IconButton from '~/components/IconButton';
+import ConfirmationDialog from '~/components/ConfirmationDialog';
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
 import useActionItems from '~/hooks/useActionItems';
+import useBlockTime from '~/hooks/useBlockTime';
 import useCrewContext from '~/hooks/useCrewContext';
 import useGetActivityConfig from '~/hooks/useGetActivityConfig';
 import useSession from '~/hooks/useSession';
 import useStore from '~/hooks/useStore';
+import useTutorialSteps from '~/hooks/useTutorialSteps';
+import { openAccessJSTime } from '~/lib/utils';
 import { hexToRGB } from '~/theme';
 import ActionItem, { ITEM_WIDTH, TRANSITION_TIME } from './ActionItem';
 import TutorialActionItems from './TutorialActionItems';
-import IconButton from '~/components/IconButton';
-import ConfirmationDialog from '~/components/ConfirmationDialog';
-import useBlockTime from '~/hooks/useBlockTime';
-import { openAccessJSTime } from '~/lib/utils';
 
 export const SECTION_WIDTH = ITEM_WIDTH + 30;
 
@@ -206,6 +207,8 @@ const Skipper = styled.div`
 `;
 
 const OuterWrapper = styled.div`
+  display: flex;
+  flex-direction: column;
   flex: 1;
   height: 0;
   pointer-events: none;
@@ -282,6 +285,7 @@ const ActionItems = () => {
   const { crew } = useCrewContext();
   const { execute, getStatus } = useContext(ChainTransactionContext);
   const getActivityConfig = useGetActivityConfig();
+  const tutorialSteps = useTutorialSteps();
 
   const crewTutorial = useStore(s => s.crewTutorials?.[crew?.id]);
   const dismissAllTutorials = useStore(s => s.gameplay?.dismissTutorial);
@@ -406,6 +410,8 @@ const ActionItems = () => {
     return crew?._launched || (blockTime > openAccessJSTime / 1e3);
   }, [blockTime, crew?._launched]);
 
+  const showTutorial = tutorialLaunched && !dismissAllTutorials && !crewTutorial?.dismissed;
+
   return (
     <>
       <OuterWrapper>
@@ -416,7 +422,7 @@ const ActionItems = () => {
               style: {
                 display: 'flex',
                 flexDirection: 'column',
-                paddingBottom: 40,
+                marginBottom: showTutorial ? 20 : 40,
                 width: SECTION_WIDTH - 32
               }
             }}
@@ -454,24 +460,37 @@ const ActionItems = () => {
                 ))}
               </ActionItemContainer>
             </ActionItemWrapper>
+          </CollapsibleSection>
+        )}
             
-            {tutorialLaunched && !dismissAllTutorials && !crewTutorial?.dismissed && (
-              <>
-                <TitleWrapper style={{ marginTop: 10 }}>
-                  <Filters>
-                    <TutorialTab selected>Tutorial</TutorialTab>
-                    <div style={{ flex: 1 }} />
-                    <Skipper onClick={() => setConfirmingTutorialDismissal(true)}>
-                      Skip Tutorial
-                      <IconButton scale={0.8}><CloseIcon /></IconButton>
-                    </Skipper>
-                  </Filters>
-                </TitleWrapper>
-                <ActionItemWrapper>
-                  <TutorialActionItems />
-                </ActionItemWrapper>
-              </>
-            )}
+        {showTutorial && (
+          <CollapsibleSection
+            borderless
+            collapsibleProps={{
+              style: {
+                display: 'flex',
+                flexDirection: 'column',
+                flexShrink: 0,
+                marginBottom: 40,
+                width: SECTION_WIDTH - 32
+              }
+            }}
+            openOnChange={tutorialSteps}
+            title={(
+              <TitleWrapper style={{ marginTop: 10 }}>
+                <Filters>
+                  <TutorialTab selected>Tutorial</TutorialTab>
+                  <div style={{ flex: 1 }} />
+                  <Skipper onClick={() => setConfirmingTutorialDismissal(true)}>
+                    Skip Tutorial
+                    <IconButton scale={0.8}><CloseIcon /></IconButton>
+                  </Skipper>
+                </Filters>
+              </TitleWrapper>
+            )}>
+            <ActionItemWrapper>
+              <TutorialActionItems tutorialSteps={tutorialSteps} />
+            </ActionItemWrapper>
           </CollapsibleSection>
         )}
 
