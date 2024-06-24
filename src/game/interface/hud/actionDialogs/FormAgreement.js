@@ -206,8 +206,8 @@ const FormAgreement = ({
         {
           label: 'Notice Period',
           value: isExtension
-            ? `${currentAgreement?.noticePeriod || 0} day${currentAgreement?.noticePeriod === 1 ? '' : 's'}`
-            : `${currentPolicy?.policyDetails?.noticePeriod || 0} day${currentPolicy?.policyDetails?.noticePeriod === 1 ? '' : 's'}`,
+            ? `${formatFixed(currentAgreement?.noticePeriod || 0, 1)} day${currentAgreement?.noticePeriod === 1 ? '' : 's'}`
+            : `${formatFixed(currentPolicy?.policyDetails?.noticePeriod || 0, 1)} day${currentPolicy?.policyDetails?.noticePeriod === 1 ? '' : 's'}`,
           direction: 0,
         },
       ];
