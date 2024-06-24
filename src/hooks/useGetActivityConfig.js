@@ -36,6 +36,7 @@ const getActivityConfig = (queryClient, defaultViewingAs) => (activity, override
   // TODO: support L1? __t is in event record, but is not included in activity record...
   //  `${process.env.REACT_APP_ETHEREUM_EXPLORER_URL}/tx/${activity.event?.transactionHash}`
 
+  const busyItem = config?.getBusyItem ? config.getBusyItem(activity, prepopped) : null;
   const requiresCrewTime = !!config?.requiresCrewTime;
 
   const triggerAlert = !!config?.triggerAlert;
@@ -53,6 +54,7 @@ const getActivityConfig = (queryClient, defaultViewingAs) => (activity, override
     logContent,
     isActionItemHidden,
     onBeforeReceived,
+    busyItem,
     requiresCrewTime,
     triggerAlert
   };

@@ -1,6 +1,6 @@
 import { createContext, useCallback, useEffect, useRef, useState } from 'react';
 import { useQueryClient } from 'react-query';
-import uniq from 'lodash.uniqby';
+import { isEqual, uniq } from 'lodash';
 import { Entity } from '@influenceth/sdk';
 
 import useSession from '~/hooks/useSession';
@@ -116,6 +116,8 @@ export function ActivitiesProvider({ children }) {
       let shouldRefreshReadyAt = false;
 
       if (!skipInvalidations) {
+        const allInvalidations = [];
+
         for (let activity of transformedActivities) {
           const activityConfig = getActivityConfig(activity);
           if (!activityConfig) continue;
@@ -127,17 +129,26 @@ export function ActivitiesProvider({ children }) {
           shouldRefreshReadyAt = shouldRefreshReadyAt || !!activityConfig?.requiresCrewTime;
 
           // console.log('invalidations', activityConfig?.invalidations);
-          const allInvalidations = [
+
+          const activityInvalidations = [];
+
+          // any activityConfig with a busyItem should invalidate the current crew's
+          // [ 'activities', entity?.label, entity?.id, 'busy' ]
+          // it may be redundant, but
+          if (activityConfig.busyItem && crew) {
+            activityInvalidations.push([ 'activities', crew?.label, crew?.id, 'busy' ]);
+          }
+
+          // walk through all invalidation configs to build out specific queries to invalidate
+          [
             ...(activityConfig?.invalidations || []),
             ...(extraInvalidations || [])
-          ]
-          allInvalidations.forEach((invalidationConfig) => {
-            const invalidations = [];
+          ].forEach((invalidationConfig) => {
 
             // this is a raw queryKey
             // (i.e. `[ 'ethBalance', walletAddress ]`)
             if (Array.isArray(invalidationConfig)) {
-              invalidations.push(invalidationConfig)
+              activityInvalidations.push(invalidationConfig)
 
             // else, this is an entity object
             // NOTE: read more about newGroupEval and invalidation configs in lib/cacheKey.js
@@ -147,8 +158,8 @@ export function ActivitiesProvider({ children }) {
               if (debugInvalidation && newGroupEval?.updatedValues) console.log(`${label}.${id} updates include`, newGroupEval);
 
               // invalidate `entity` entry
-              invalidations.push(['entity', label, id]);
-              invalidations.push(['activities', label, id]);
+              activityInvalidations.push(['entity', label, id]);
+              activityInvalidations.push(['activities', label, id]);
 
               // walk through `entities` entries of label type
               // refetch group keys no longer part of, and refetch group keys it just became part of
@@ -163,7 +174,7 @@ export function ActivitiesProvider({ children }) {
                 // TODO (enhancement): update-in-place
                 if (!!(data || []).find((d) => ((d.id === id) && (d.label === label)))) {
                   if (debugInvalidation) console.log(`${label}.${id} is already in collection`, queryKey);
-                  invalidations.push(queryKey);
+                  activityInvalidations.push(queryKey);
 
                 // else, check if it is technically possible (to the best of our knowledge)
                 // that the updated entity now *could be* part of a new entity group based
@@ -199,7 +210,7 @@ export function ActivitiesProvider({ children }) {
                   // if didn't skip... invalidate as a precaution
                   if (!skip) {
                     if (debugInvalidation) console.log(`${label}.${id} might be joining collection`, JSON.stringify(queryKey));
-                    invalidations.push(queryKey);
+                    activityInvalidations.push(queryKey);
                   }
                   // else if (debugInvalidation) console.log(`${label}.${id} will NOT be joining collection`, JSON.stringify(queryKey));
                 }
@@ -224,15 +235,12 @@ export function ActivitiesProvider({ children }) {
                 searchAssets = ['ships'];
 
               searchAssets.forEach((assetType) => {
-                invalidations.push(['search', assetType])
+                activityInvalidations.push(['search', assetType])
               });
             }
 
-            if (debugInvalidation) console.log('invalidate', invalidationConfig, invalidations);
-            invalidations.forEach((queryKey) => {
-              console.log('invalidate', queryKey);
-              queryClient.invalidateQueries({ queryKey, refetchType: 'active' });
-            });
+            if (debugInvalidation) console.log('activity invalidate', invalidationConfig, activityInvalidations);
+            allInvalidations.push(...activityInvalidations);
           });
 
           if (activityConfig?.triggerAlert) {
@@ -243,6 +251,25 @@ export function ActivitiesProvider({ children }) {
             })
           };
         }
+
+        const finalInvalidations = [];
+        allInvalidations
+          .sort((a, b) => a.length < b.length ? -1 : 1)
+          .forEach((specific) => {
+            // skip if finalInvalidations already contains a broader item where all the
+            // keys of the broad item match the initial keys of this specific item (i.e.
+            // if can find an item in broad where none of the elements do not match specific)
+            const isRedundant = finalInvalidations.find((broad) => {
+              return !broad.find((broadEl, i) => !isEqual(broadEl, specific[i]));
+            });
+            if (!isRedundant) finalInvalidations.push(specific);
+          });
+        if (debugInvalidation) console.log('deduped final invalidate', finalInvalidations);
+        
+        finalInvalidations.forEach((queryKey) => {
+          if (process.env.NODE_ENV !== 'production') console.log('invalidate', queryKey);
+          queryClient.invalidateQueries({ queryKey, refetchType: 'active' });
+        });
       }
 
       setActivities((prevActivities) => uniq([
@@ -255,7 +282,7 @@ export function ActivitiesProvider({ children }) {
       }
 
     }, 2500);
-  }, [getActivityConfig, pendingTransactions, refreshReadyAt]);
+  }, [crew, getActivityConfig, pendingTransactions, refreshReadyAt]);
 
   // try to process WS activities grouped by block
   const processPendingWSBatch = useCallback(async () => {

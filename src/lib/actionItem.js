@@ -66,7 +66,10 @@ const formatAsItem = (activity, actionItem = {}) => {
     onClick: null,
 
     // overwrite with formatted actionItem keys
-    ...actionItem
+    ...actionItem,
+
+    // overwrite with preformatted item (i.e. for busyItem case)
+    ...(activity._preformatted || {})
   };
 
   if (formatted?.asteroidId) formatted.asteroidId = Number(formatted.asteroidId);

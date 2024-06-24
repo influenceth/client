@@ -36,7 +36,8 @@ import {
   MarketBuyIcon,
   BecomeAdminIcon,
   EjectMyCrewIcon,
-  SwayIcon
+  SwayIcon,
+  LandShipIcon
 } from '~/components/Icons';
 import LotLink from '~/components/LotLink';
 
@@ -318,6 +319,10 @@ const activities = {
       exchange: returnValues.exchange,
     }),
 
+    getBusyItem: ({ event: { returnValues } }) => ({
+      icon: <PlanBuildingIcon />,
+      label: `Place Buy Order`,
+    }),
     requiresCrewTime: true
   },
   BuyOrderFilled: {
@@ -402,6 +407,10 @@ const activities = {
           <LotLink lotId={returnValues.lot.id} />
         </>
       ),
+    }),
+    getBusyItem: ({ event: { returnValues } }, { building = {} }) => ({
+      icon: <PlanBuildingIcon />,
+      label: `Plan ${Building.TYPES[building?.Building?.buildingType]?.name || 'Building'} Site`,
     }),
     requiresCrewTime: true
   },
@@ -564,6 +573,10 @@ const activities = {
     }),
     getPrepopEntities: ({ event: { returnValues } }) => ({
       building: returnValues.building,
+    }),
+    getBusyItem: ({ event: { returnValues } }, { building = {} }) => ({
+      icon: <ConstructIcon />,
+      label: `Deconstruct ${Building.TYPES[building?.Building?.buildingType]?.name || 'Building'}`,
     }),
     requiresCrewTime: true
   },
@@ -846,6 +859,10 @@ const activities = {
       };
     },
 
+    getBusyItem: ({ event: { returnValues } }) => ({
+      icon: <EjectMyCrewIcon />,
+      label: `Eject Crew`,
+    }),
     requiresCrewTime: true
   },
 
@@ -875,6 +892,10 @@ const activities = {
       };
     },
 
+    getBusyItem: ({ event: { returnValues } }) => ({
+      icon: <StationCrewIcon />,
+      label: `Restation Crew`,
+    }),
     requiresCrewTime: true
   },
 
@@ -1136,6 +1157,10 @@ const activities = {
         ),
       };
     },
+    getBusyItem: ({ event: { returnValues } }) => ({
+      icon: <FoodIcon />,
+      label: `Resupply Food`,
+    }),
     requiresCrewTime: true,
     triggerAlert: true
   },
@@ -1618,6 +1643,10 @@ const activities = {
       exchange: returnValues.exchange,
     }),
 
+    getBusyItem: ({ event: { returnValues } }) => ({
+      icon: <LimitSellIcon />,
+      label: `Place Sell Order`,
+    }),
     requiresCrewTime: true
   },
 
@@ -1846,12 +1875,16 @@ const activities = {
       dock: returnValues.dock
     }),
     getLogContent: ({ event: { returnValues } }) => ({
-      icon: <ScanAsteroidIcon />,
+      icon: <LandShipIcon />,
       content: (
         <>
           <EntityLink {...returnValues.ship} /> docked at <EntityLink {...returnValues.dock} />
         </>
       )
+    }),
+    getBusyItem: ({ event: { returnValues } }) => ({
+      icon: <LandShipIcon />,
+      label: `Land Ship`,
     }),
     requiresCrewTime: true, // only true currently if !powered
     triggerAlert: true
@@ -1898,6 +1931,10 @@ const activities = {
         )
       };
     },
+    getBusyItem: ({ event: { returnValues } }) => ({
+      icon: <LaunchShipIcon />,
+      label: `Launch Ship`,
+    }),
     requiresCrewTime: true, // only true currently if !powered
     triggerAlert: true
   },
