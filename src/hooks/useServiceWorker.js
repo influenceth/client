@@ -49,6 +49,7 @@ const useServiceWorker = () => {
         } else {
           registration.addEventListener('updatefound', () => {
             console.log('pmk serviceWorker updatefound', navigator.serviceWorker?.status, navigator.serviceWorker, registration);
+            window.alert('check log');
             awaitInstallingWorker();
           });
         }
