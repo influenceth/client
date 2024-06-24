@@ -99,7 +99,7 @@ const isInFinishAllTx = (tx, txCheck) => tx.key === 'FinishAllReady' && (tx.vars
 // to represent the logged-in crew, and there isn't much overhead to invalidate
 // these queries on all logged-in crews
 
-const getPolicyAndAgreementConfig = (couldAddToCollection = false, invalidateAgreements = false) => {
+const getPolicyAndAgreementConfig = (couldAddToCollection = false, invalidateAgreements = false, invalidateSway = false) => {
   return {
     getInvalidations: ({ event: { returnValues } }, { entity = {} }) => {
       const entityId = returnValues.entity ? returnValues.entity : returnValues.target;
@@ -142,6 +142,11 @@ const getPolicyAndAgreementConfig = (couldAddToCollection = false, invalidateAgr
         // just invalidate that whole thing... this may be overkill in the future
         invs.push(['agreements']);
       }
+
+      if (invalidateSway) {
+        invs.push(['walletBalance', 'sway' ]);
+      }
+
       return invs;
     },
     getPrepopEntities: ({ event: { returnValues } }) => ({
@@ -2224,10 +2229,10 @@ const activities = {
   PrepaidMerklePolicyRemoved: getPolicyAndAgreementConfig(),
 
   ContractAgreementAccepted: getPolicyAndAgreementConfig(true, true),
-  PrepaidMerkleAgreementAccepted: getPolicyAndAgreementConfig(true, true),
-  PrepaidAgreementAccepted: getPolicyAndAgreementConfig(true, true),
-  PrepaidAgreementExtended: getPolicyAndAgreementConfig(false, true),
-  PrepaidAgreementCancelled: getPolicyAndAgreementConfig(false, true),
+  PrepaidMerkleAgreementAccepted: getPolicyAndAgreementConfig(true, true, true),
+  PrepaidAgreementAccepted: getPolicyAndAgreementConfig(true, true, true),
+  PrepaidAgreementExtended: getPolicyAndAgreementConfig(false, true, true),
+  PrepaidAgreementCancelled: getPolicyAndAgreementConfig(false, true, true),
 };
 
 /**
