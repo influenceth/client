@@ -42,7 +42,7 @@ const useServiceWorker = () => {
 
         // already installing (i.e. ready once installed)
         } else if (registration.installing) {
-          console.log('pmk INSTALLING');
+          console.log('pmk2 INSTALLING');
           setIsInstalling(true);
           awaitInstallingWorker();
 
