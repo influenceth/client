@@ -4,23 +4,22 @@ import styled from 'styled-components';
 import { Permission, Station } from '@influenceth/sdk';
 import { List } from 'react-virtualized';
 
-import useCrewContext from '~/hooks/useCrewContext';
-import useStore from '~/hooks/useStore';
-import useHydratedCrew from '~/hooks/useHydratedCrew';
-import useStationedCrews from '~/hooks/useStationedCrews';
-import useShip from '~/hooks/useShip';
-import useActionButtons from '~/hooks/useActionButtons';
-import actionButtons from '~/game/interface/hud/actionButtons';
-import { CrewInputBlock, MiniBarChart } from '../actionDialogs/components';
-import { HudMenuCollapsibleSection, Scrollable, Tray } from './components/components';
 import Button from '~/components/ButtonAlt';
-import { MagnifyingIcon } from '~/components/Icons';
-import useLot from '~/hooks/useLot';
-import theme from '~/theme';
 import Dropdown from '~/components/Dropdown';
+import { MagnifyingIcon } from '~/components/Icons';
 import UncontrolledTextInput from '~/components/TextInputUncontrolled';
-import formatters from '~/lib/formatters';
+import actionButtons from '~/game/interface/hud/actionButtons';
+import useActionButtons from '~/hooks/useActionButtons';
+import useCrewContext from '~/hooks/useCrewContext';
+import useLot from '~/hooks/useLot';
 import useScreenSize from '~/hooks/useScreenSize';
+import useShip from '~/hooks/useShip';
+import useStationedCrews from '~/hooks/useStationedCrews';
+import useStore from '~/hooks/useStore';
+import formatters from '~/lib/formatters';
+import theme from '~/theme';
+import { CrewInputBlock, MiniBarChart } from '../actionDialogs/components';
+import { HudMenuCollapsibleSection, Tray } from './components/components';
 
 const defaultBlockStyle = {
   height: 152, // (causes margin bottom of 8px)

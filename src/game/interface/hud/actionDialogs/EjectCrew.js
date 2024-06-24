@@ -276,7 +276,7 @@ const Wrapper = (props) => {
 
   // NOTE: use props.origin for guests
   const originEntity = useMemo(() => props.origin || crew?.Location?.location, [crew?.Location?.location, props.origin]);
-  const { data: allStationedCrews } = useStationedCrews(originEntity, true);  // TODO: rather than get hydrated crewmates here, create crewcard that accepts just crewmate id
+  const { data: allStationedCrews } = useStationedCrews(originEntity);
   const { data: origin, isLoading: entityIsLoading } = useEntity(originEntity);
   const originLocation = useMemo(() => locationsArrToObj(origin?.Location?.locations || []), [origin]);
 
