@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 const useServiceWorker = () => {
   const [isInstalling, setIsInstalling] = useState(true);
-  const [updateNeeded, setUpdateNeeded] = useState(false);
+  const [updateNeeded, setUpdateNeeded] = useState(true);
   const refreshing = useRef(false);
 
   useEffect(() => {
@@ -50,6 +50,10 @@ const useServiceWorker = () => {
         // nothing happening yet
         } else {
           console.log('pmk NOTHING');
+          if (registration.active) {
+            console.log('pmk ACTIVE');
+            setIsInstalling(false);
+          }
           registration.addEventListener('updatefound', () => {
             console.log('pmk UPDATING');
             awaitInstallingWorker();
