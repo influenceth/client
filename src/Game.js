@@ -178,8 +178,8 @@ const Game = () => {
     <>
       <GlobalStyle />
 
-      {!isInstalling && <FullpageInterstitial message={`${loadingMessage}...`} />}
-      {isInstalling && (
+      {isInstalling && <FullpageInterstitial message={`${loadingMessage}...`} />}
+      {!isInstalling && (
         <SessionProvider>{/* global contexts (i.e. needed by interface and scene) */}
           <CrewProvider>
             <WebsocketProvider>
