@@ -6,6 +6,7 @@ const useServiceWorker = () => {
 
   useEffect(() => {
     if ('serviceWorker' in navigator) {
+      console.log('pmk serviceWorker', navigator.serviceWorker?.status, navigator.serviceWorker);
 
       // if there is a controller change (i.e. if new serviceworker becomes active),
       // reload the page so that newly cached assets are actually the ones in use
@@ -17,6 +18,7 @@ const useServiceWorker = () => {
 
       // evaluate serviceworker state, prompt user to reload if a new version is ready
       navigator.serviceWorker.getRegistration().then((registration) => {
+        console.log('pmk registration', registration);
         if (!registration) return;
 
         // if there is an installing worker, wait until it is installed, then prompt user to update
