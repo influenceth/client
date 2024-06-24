@@ -5,7 +5,7 @@ import ClipCorner from '~/components/ClipCorner';
 import IconButton from '~/components/IconButton';
 import { CloseIcon } from '~/components/Icons';
 import { reactBool } from '~/lib/utils';
-import theme from '~/theme';
+import theme, { hexToRGB } from '~/theme';
 
 const messageClipCorner = 20;
 const messageOffset = 75;
@@ -51,7 +51,7 @@ const TutorialMessageWrapper = styled.div`
   &:before {
     content: "";
     ${p => p.theme.clipCorner(messageClipCorner)};
-    background: rgba(13, 33, 41, 0.8);
+    background: rgb(${hexToRGB('#000a0f')});
     border: 1px solid ${borderColor};
     position: absolute;
     left: 0;
@@ -96,10 +96,10 @@ const TutorialContent = styled.div`
     flex-direction: column;
     padding: 12px 0;
     & > div:first-child {
-      color: ${p => p.theme.colors.main};
+      color: ${p => p.theme.colors.secondaryText};
       flex: 1;
-      font-size: 85%;
-
+      font-size: 90%;
+      line-height: 120%;
       & > b {
         color: white;
         font-weight: normal;
