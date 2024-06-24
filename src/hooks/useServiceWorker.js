@@ -11,6 +11,7 @@ const useServiceWorker = () => {
       // if there is a controller change (i.e. if new serviceworker becomes active),
       // reload the page so that newly cached assets are actually the ones in use
       navigator.serviceWorker.addEventListener('controllerchange', () => {
+        console.log('pmk serviceWorker controllerchange', navigator.serviceWorker?.status, navigator.serviceWorker);
         if (refreshing.current) return;
         refreshing.current = true;
         window.location.reload();
@@ -26,6 +27,7 @@ const useServiceWorker = () => {
           if (registration.installing) {
             const installingWorker = registration.installing;
             installingWorker.addEventListener('statechange', () => {
+              console.log('pmk serviceWorker statechange', navigator.serviceWorker?.status, navigator.serviceWorker, registration);
                 if (installingWorker.state === 'installed') {
                   if (navigator.serviceWorker.controller) {
                     setUpdateNeeded(true);
@@ -46,6 +48,7 @@ const useServiceWorker = () => {
         // nothing happening yet
         } else {
           registration.addEventListener('updatefound', () => {
+            console.log('pmk serviceWorker updatefound', navigator.serviceWorker?.status, navigator.serviceWorker, registration);
             awaitInstallingWorker();
           });
         }
