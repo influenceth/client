@@ -51,7 +51,7 @@ const TutorialMessageWrapper = styled.div`
   &:before {
     content: "";
     ${p => p.theme.clipCorner(messageClipCorner)};
-    background: rgb(${hexToRGB('#000a0f')});
+    background: #000a0f;
     border: 1px solid ${borderColor};
     position: absolute;
     left: 0;
