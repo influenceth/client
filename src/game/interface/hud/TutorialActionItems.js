@@ -3,7 +3,6 @@ import styled, { css, keyframes } from 'styled-components';
 
 import { TutorialIcon } from '~/components/Icons';
 import { ICON_WIDTH, TRANSITION_TIME } from './ActionItem';
-import useTutorialSteps from '~/hooks/useTutorialSteps';
 import { ActionItemContainer } from './ActionItems';
 import TutorialMessage from './TutorialMessage';
 
@@ -94,8 +93,7 @@ const ActionItemRow = styled.div`
   }
 `;
 
-const TutorialActionItems = () => {
-  const tutorialSteps = useTutorialSteps();
+const TutorialActionItems = ({ tutorialSteps }) => {
   const [selectedStep, setSelectedStep] = useState();
 
   const goToStep = useCallback((nextStep) => {
