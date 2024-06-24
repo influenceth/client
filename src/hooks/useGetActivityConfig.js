@@ -23,6 +23,10 @@ const getActivityConfig = (queryClient, defaultViewingAs) => (activity, override
 
   const viewingAs = overrideViewingAs || defaultViewingAs || {};
 
+  // TODO: it would be more elegant to create a virtual action item from the busyItem here (as relevant)
+  //  than to do the _preformatted thing, but we can circle back to that
+  const busyItem = config?.getBusyItem ? config.getBusyItem(activity, prepopped) : null;
+
   const actionItem = config?.getActionItem ? config.getActionItem(activity.event, viewingAs, prepopped) : null;
 
   const getActionItemFinishCall = config?.getActionItemFinishCall ? config.getActionItemFinishCall(activity, prepopped) : null;
@@ -35,8 +39,7 @@ const getActivityConfig = (queryClient, defaultViewingAs) => (activity, override
   if (logContent && activity.event.transactionHash) logContent.txLink = `${process.env.REACT_APP_STARKNET_EXPLORER_URL}/tx/${activity.event.transactionHash}`;
   // TODO: support L1? __t is in event record, but is not included in activity record...
   //  `${process.env.REACT_APP_ETHEREUM_EXPLORER_URL}/tx/${activity.event?.transactionHash}`
-
-  const busyItem = config?.getBusyItem ? config.getBusyItem(activity, prepopped) : null;
+  
   const requiresCrewTime = !!config?.requiresCrewTime;
 
   const triggerAlert = !!config?.triggerAlert;

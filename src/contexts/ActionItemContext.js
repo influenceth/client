@@ -99,7 +99,7 @@ export function ActionItemProvider({ children }) {
       }
     }
     return null;
-  }, [busyActivity, crew?._ready]);
+  }, [busyActivity, crew]);
 
   useEffect(() => {
     if (!blockTime) return;
