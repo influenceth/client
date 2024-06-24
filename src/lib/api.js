@@ -21,20 +21,6 @@ useStore.subscribe(
   ([newToken]) => instance.defaults.headers = { Authorization: `Bearer ${newToken}` }
 );
 
-// const arrayComponents = {
-//   ContractAgreement: 'ContractAgreements',
-//   ContractPolicy: 'ContractPolicies',
-//   DryDock: 'DryDocks',
-//   Extractor: 'Extractors',
-//   Inventory: 'Inventories',
-//   PrepaidAgreement: 'PrepaidAgreements',
-//   PrepaidPolicy: 'PrepaidPolicies',
-//   Processor: 'Processors',
-//   PublicPolicy: 'PublicPolicies',
-//   WhitelistAgreement: 'WhitelistAgreements',
-//   WhitelistAccountAgreement: 'WhitelistAccountAgreements',
-// };
-
 const formatESEntityData = (responseData) => {
   return responseData?.hits?.hits?.map((h) => h._source) || [];
 }
@@ -314,7 +300,7 @@ const api = {
     buildingQ.size(10000);
 
     const response = await instance.post(`/_search/building`, buildingQ.toJSON());
-    
+
     return formatESEntityData(response.data);
   },
 
@@ -355,7 +341,7 @@ const api = {
     shipQ.size(10000);
 
     const response = await instance.post(`/_search/ship`, shipQ.toJSON());
-    
+
     return formatESEntityData(response.data);
   },
 
@@ -735,7 +721,7 @@ const api = {
     if (ids?.length > 0) {
       const q = esb.boolQuery();
       q.filter(esb.termsQuery('id', ids));
-  
+
       const crewmateQ = esb.requestBodySearch();
       crewmateQ.query(q);
       crewmateQ.from(0);
@@ -776,57 +762,6 @@ const api = {
     const options = { baseUrl: process.env.REACT_APP_AVNU_API_URL };
     return executeSwap(account, quote, {}, options);
   },
-
-  // getBook: async (id) => {
-  //   return null;  // TODO: restore this when story is ready again
-  //   const response = await instance.get(`/${apiVersion}/books/${id}`);
-  //   return response.data;
-  // },
-
-  // getStory: async (id, sessionId) => {
-  //   return null;  // TODO: restore this when story is ready again
-  //   const response = await instance.get(`/${apiVersion}/stories/${id}`, { params: { session: sessionId }});
-  //   return response.data;
-  // },
-
-  // createStorySession: async (crewmate, story) => {
-  //   return null;  // TODO: restore this when story is ready again
-  //   const response = await instance.post(`/${apiVersion}/stories/sessions`, { crewmate, story });
-  //   return response.data;
-  // },
-
-  // getStorySession: async (id) => {
-  //   return null;  // TODO: restore this when story is ready again
-  //   const response = await instance.get(`/${apiVersion}/stories/sessions/${id}`);
-  //   return response.data;
-  // },
-
-  // getStoryPath: async (storyId, pathId, sessionId) => {
-  //   return null;  // TODO: restore this when story is ready again
-  //   const response = await instance.get(
-  //     `/${apiVersion}/stories/${storyId}/paths/${pathId}`,
-  //     { params: { session: sessionId } }
-  //   );
-  //   return response.data;
-  // },
-
-  // patchStorySessionPath: async (sessionId, pathId) => {
-  //   return null;  // TODO: restore this when story is ready again
-  //   const response = await instance.patch(`/${apiVersion}/stories/sessions/${sessionId}/paths/${pathId}`);
-  //   return response.data;
-  // },
-
-  // deleteStorySessionPath: async (sessionId, pathId) => {
-  //   return null;  // TODO: restore this when story is ready again
-  //   const response = await instance.delete(`/${apiVersion}/stories/sessions/${sessionId}/paths/${pathId}`);
-  //   return response.data;
-  // },
-
-  // getAdalianRecruitmentStory: async (id, sessionId) => {
-  //   return null;  // TODO: restore this when story is ready again
-  //   const response = await instance.get(`/${apiVersion}/stories/adalian-recruitment`);
-  //   return response.data;
-  // },
 
   searchAssets: async (asset, query) => {
     const assetIndex = asset.replace(/s$/, '').toLowerCase();
@@ -873,7 +808,12 @@ const api = {
   saveAnnotation: async (params) => {
     const response = await instance.post(`/${apiVersion}/annotations`, params);
     return response.data;
-  }
+  },
+
+  deployAccount: async (deployData) => {
+    const response = await instance.post(`/${apiVersion}/argent/account/deploy`, deployData);
+    return response.data;
+  },
 };
 
 export default api;

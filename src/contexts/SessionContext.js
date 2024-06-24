@@ -131,14 +131,6 @@ export function SessionProvider({ children }) {
       setError();
       setConnecting(true);
       const { connectorData, wallet } = await starknetConnect(connectionOptions);
-      await new Promise(resolve => setTimeout(resolve, 100)); // deal with timeout delay from Argent
-
-      try {
-        const deployData = await wallet.request({ type: "wallet_deploymentData" });
-        console.log(deployData);
-      } catch (e) {
-        // Do nothing, already deployed
-      }
 
       if (wallet && connectorData?.account) {
         const chainId = resolveChainId(connectorData.chainId);
@@ -342,24 +334,41 @@ export function SessionProvider({ children }) {
     logout
   ]);
 
+  // Upgrade an insecure session to a secure one once deployed
   const upgradeInsecureSession = useCallback(() => {
-    if (currentSession && !currentSession.isDeployed) {
-      // TODO: check connectedWalletId === 'argentWebWallet'?
-      return authenticate(true);
-    }
+    if (currentSession && !currentSession.isDeployed) return authenticate(true);
   }, [authenticate, currentSession]);
 
-  // useEffect(() => {
-  //   const onKeydown = (e) => {
-  //     if (e.shiftKey && e.which === 32) {
-  //       upgradeInsecureSession();
-  //     }
-  //   };
-  //   document.addEventListener('keydown', onKeydown);
-  //   return () => {
-  //     document.removeEventListener('keydown', onKeydown);
-  //   }
-  // }, [upgradeInsecureSession]);
+  // Deploy account contract if it doesn't exist
+  useEffect(() => {
+    const deployAccount = async () => {
+      await new Promise(resolve => setTimeout(resolve, 100)); // deal with timeout delay from Argent
+      let deployData = null;
+
+      try {
+        const deployData = await walletAccount.walletProvider.request({ type: 'wallet_deploymentData' });
+      } catch (e) {
+        // If deploy data isn't available, it's already deployed, return
+        return;
+      }
+
+      try {
+        const { transactionHash } = await api.deployAccount(deployData);
+        if (transactionHash) await provider.waitForTransaction(transactionHash);
+        upgradeInsecureSession();
+      } catch (e) {
+        console.error(e);
+      }
+    };
+
+    if (
+      status === STATUSES.AUTHENTICATED &&
+      !currentSession.isDeployed &&
+      currentSession.walletId === 'argentWebWallet'
+    ) {
+      deployAccount();
+    }
+  }, [currentSession, provider, status, upgradeInsecureSession, walletAccount]);
 
   // Resumes a current session or starts a new one
   const resumeOrAuthenticate = useCallback(async () => {
