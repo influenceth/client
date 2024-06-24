@@ -132,9 +132,7 @@ const useDeliveryManager = ({ destination, destinationSlot, origin, originSlot, 
             current._cachedData = actionItem.data;
             current.caller = actionItem.event.returnValues.caller;
             current.callerCrew = actionItem.event.returnValues.callerCrew;
-            current.price = actionItem.event.returnValues.price;
             current.startTime = actionItem.event.timestamp;
-            current.isProposal = true;
             // TODO: need to handle canceling (if sender or if sender has since been banned)
             //  OR handle rejecting/accepting
             current._isAccessible = (
@@ -150,6 +148,8 @@ const useDeliveryManager = ({ destination, destinationSlot, origin, originSlot, 
         current.origin = delivery.Delivery.origin;
         current.originSlot = delivery.Delivery.originSlot;
         current.contents = delivery.Delivery.contents;
+        current.price = delivery.PrivateSale?.amount;
+        current.isProposal = current.price > 0;
         current.finishTime = current.isProposal ? current.startTime : delivery.Delivery.finishTime;
         current.status = delivery.Delivery.status;
 

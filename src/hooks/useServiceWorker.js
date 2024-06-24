@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 const useServiceWorker = () => {
+  // no service worker in dev mode, so don't default to "installing" in that case
+  const [isInstalling, setIsInstalling] = useState(process.env.NODE_ENV !== 'development');
   const [updateNeeded, setUpdateNeeded] = useState(false);
   const refreshing = useRef(false);
 
@@ -24,11 +26,13 @@ const useServiceWorker = () => {
           if (registration.installing) {
             const installingWorker = registration.installing;
             installingWorker.addEventListener('statechange', () => {
-                if (installingWorker.state === 'installed') {
-                  if (navigator.serviceWorker.controller) {
-                    setUpdateNeeded(true);
-                  }
+              if (installingWorker.state === 'installed') {
+                if (navigator.serviceWorker.controller) {
+                  setUpdateNeeded(true);
                 }
+              } else if (installingWorker.state === 'activated') {
+                setIsInstalling(false);
+              }
             });
           }
         };
@@ -39,10 +43,17 @@ const useServiceWorker = () => {
 
         // already installing (i.e. ready once installed)
         } else if (registration.installing) {
+          setIsInstalling(true);
           awaitInstallingWorker();
 
-        // nothing happening yet
+        // nothing happening yet (either first load OR refresh without a service worker update ready)
         } else {
+
+          // if already has an active service worker, can install in the background when a new one comes in,
+          // so no need to show interstitial
+          if (registration.active) setIsInstalling(false);
+
+          // listen for updates
           registration.addEventListener('updatefound', () => {
             awaitInstallingWorker();
           });
@@ -54,6 +65,7 @@ const useServiceWorker = () => {
   }, []);
 
   return {
+    isInstalling,
     updateNeeded,
     onUpdateVersion: useCallback(() => {
       if ('serviceWorker' in navigator) {

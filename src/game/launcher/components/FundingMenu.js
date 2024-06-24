@@ -3,7 +3,7 @@ import ReactDOMServer from 'react-dom/server';
 import styled from 'styled-components';
 
 import Button from '~/components/ButtonAlt';
-import { ChevronRightIcon, EthIcon, UsdcIcon } from '~/components/Icons';
+import { ChevronRightIcon, EthIcon, RefreshIcon, UsdcIcon } from '~/components/Icons';
 import Switcher from '~/components/SwitcherButton';
 import { TOKEN, TOKEN_FORMAT, TOKEN_SCALE } from '~/lib/priceUtils';
 import useSession from '~/hooks/useSession';
@@ -12,6 +12,7 @@ import useWalletBalances from '~/hooks/useWalletBalances';
 import usePriceHelper from '~/hooks/usePriceHelper';
 import theme from '~/theme';
 import FundingFlow from './FundingFlow';
+import IconButton from '~/components/IconButton';
 
 const FundWrapper = styled.div`
   padding: 0 20px 5px;
@@ -38,15 +39,30 @@ const FundWrapper = styled.div`
       }
     }
   }
-  & > label {
+  & > p {
     align-items: center;
     display: flex;
     font-size: 32px;
     line-height: 38px;
     height: 38px;
+    margin: 0;
 
     & > svg {
       height: 24px;
+    }
+
+    & > span {
+      flex: 1;
+    }
+
+    & > button {
+      margin-left: 4px;
+      margin-right: 0;
+      opacity: 0.3;
+      transition: opacity 150ms ease;
+    }
+    &:hover > button {
+      opacity: 1;
     }
   }
   & > button {
@@ -126,7 +142,7 @@ const AddFundsButton = styled(Button)`
 const FundingMenu = () => {
   const { accountAddress, login } = useSession();
   const priceHelper = usePriceHelper();
-  const { data: wallet } = useWalletBalances();
+  const { data: wallet, isLoading, refetch } = useWalletBalances();
 
   const preferredUiCurrency = useStore(s => s.getPreferredUiCurrency());
   const dispatchPreferredUiCurrency = useStore(s => s.dispatchPreferredUiCurrency);
@@ -137,6 +153,10 @@ const FundingMenu = () => {
     if (!accountAddress) return login();
     setIsFunding(true);
   }, [accountAddress, login]);
+
+  const reloadBalance = useCallback(() => {
+    refetch();
+  }, [refetch]);
 
   const tooltipContent = useMemo(() => ReactDOMServer.renderToStaticMarkup(
     <Subtotals>
@@ -178,9 +198,14 @@ const FundingMenu = () => {
             </div>
           </div>
 
-          <label data-tooltip-id="launcherTooltip" data-tooltip-html={tooltipContent} data-tooltip-place="top">
-            {wallet?.combinedBalance?.to(preferredUiCurrency, true)}
-          </label>
+          <p data-tooltip-id="launcherTooltip" data-tooltip-html={tooltipContent} data-tooltip-place="top">
+            <span>{wallet?.combinedBalance?.to(preferredUiCurrency, true)}</span>
+            {!isLoading && (
+              <IconButton borderless onClick={reloadBalance}>
+                <RefreshIcon />
+              </IconButton>
+            )}
+          </p>
         </>
       )}
       <AddFundsButton onClick={handleFunding}>

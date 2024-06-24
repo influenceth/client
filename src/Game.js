@@ -4,6 +4,7 @@ import { ThemeProvider, createGlobalStyle } from 'styled-components';
 import { BrowserRouter as Router, Switch, Route, useHistory } from 'react-router-dom';
 import { useDetectGPU } from '@react-three/drei';
 
+import FullpageInterstitial from '~/components/FullpageInterstitial';
 import { ActionItemProvider } from '~/contexts/ActionItemContext';
 import { ActivitiesProvider } from '~/contexts/ActivitiesContext';
 import { SessionProvider } from '~/contexts/SessionContext';
@@ -99,13 +100,14 @@ const LauncherRedirect = () => {
 
 const Game = () => {
   const gpuInfo = useDetectGPU();
-  const { updateNeeded, onUpdateVersion } = useServiceWorker();
+  const { isInstalling, updateNeeded, onUpdateVersion } = useServiceWorker();
 
   const createAlert = useStore(s => s.dispatchAlertLogged);
   const dispatchGpuInfo = useStore(s => s.dispatchGpuInfo);
   const setAutodetect = useStore(s => s.dispatchGraphicsAutodetectSet);
   const graphics = useStore(s => s.graphics);
   const [ showScene, setShowScene ] = useState(false);
+  const [ loadingMessage, setLoadingMessage ] = useState('Initializing');
 
   const autodetectNeedsInit = graphics?.autodetect === undefined;
   useEffect(() => {
@@ -145,63 +147,92 @@ const Game = () => {
     }
   }, [createAlert, updateNeeded, onUpdateVersion]);
 
+  useEffect(() => {
+    const messages = [
+      'Correcting for gravitational anomalies',
+      'Merging divergent lightshard states',
+      'Scanning for trajectory intersections',
+      'Provisioning arbitrage limiters',
+      'Recategorizing resident behavioral profiles',
+      'Awaiting launch permits',
+      'Brushing the dust off',
+      'Re-establishing optical communications',
+      'Re-routing around reactor breach zone',
+      'Optimizing growth conditions',
+      'Creating micrometeorite ablation profile',
+      'Defrosting feline embryos',
+      'Submitting revised flight plan for review',
+      'Adjusting uranium/neon vortex ratios',
+      'Completing centrifuge lining replacement',
+      'Clearing shotcrete nozzle blockage'
+    ];
+
+    const intervalID = setInterval(() =>  {
+        setLoadingMessage(messages[Math.floor(Math.random() * messages.length)]);
+    }, 3500);
+
+    return () => clearInterval(intervalID);
+}, []);
+
   return (
     <>
       <GlobalStyle />
 
-      {/* global contexts (i.e. needed by interface and scene) */}
-      <SessionProvider>
-        <CrewProvider>
-          <WebsocketProvider>
-            <ChatListener />
-            <Router>
-              <Referral />
-              <Switch>
+      {isInstalling && <FullpageInterstitial message={`${loadingMessage}...`} />}
+      {!isInstalling && (
+        <SessionProvider>{/* global contexts (i.e. needed by interface and scene) */}
+          <CrewProvider>
+            <WebsocketProvider>
+              <ChatListener />
+              <Router>
+                <Referral />
+                <Switch>
 
-                {/* for socialmedia links that need to pull opengraph tags (will redirect to discord or main app) */}
-                <Route path="/play">
-                  <LandingPage />
-                </Route>
+                  {/* for socialmedia links that need to pull opengraph tags (will redirect to discord or main app) */}
+                  <Route path="/play">
+                    <LandingPage />
+                  </Route>
 
-                {/* for everything else */}
-                <Route>
+                  {/* for everything else */}
+                  <Route>
 
-                  {/* redirect user to launcher (when appropriate) */}
-                  <LauncherRedirect />
+                    {/* redirect user to launcher (when appropriate) */}
+                    <LauncherRedirect />
 
-                  {/* main app wrapper */}
-                  <StyledMain>
-                    <DevToolProvider>
+                    {/* main app wrapper */}
+                    <StyledMain>
+                      <DevToolProvider>
 
-                      {/* all ui-specific context providers wrapping interface and new-user flow */}
-                      <ActivitiesProvider>
-                        <ChainTransactionProvider>
-                          <SyncedTimeProvider>
-                            <ActionItemProvider>
-                                <ThemeProvider theme={theme}>
-                                  <ScreensizeProvider>
-                                    <Interface />
-                                  </ScreensizeProvider>
-                                </ThemeProvider>
-                            </ActionItemProvider>
-                          </SyncedTimeProvider>
-                        </ChainTransactionProvider>
-                      </ActivitiesProvider>
+                        {/* all ui-specific context providers wrapping interface and new-user flow */}
+                        <ActivitiesProvider>
+                          <ChainTransactionProvider>
+                            <SyncedTimeProvider>
+                              <ActionItemProvider>
+                                  <ThemeProvider theme={theme}>
+                                    <ScreensizeProvider>
+                                      <Interface />
+                                    </ScreensizeProvider>
+                                  </ThemeProvider>
+                              </ActionItemProvider>
+                            </SyncedTimeProvider>
+                          </ChainTransactionProvider>
+                        </ActivitiesProvider>
 
-                      {/* 3d scene */}
-                      {showScene && <Scene />}
+                        {/* 3d scene */}
+                        {showScene && <Scene />}
 
-                      {/* audio */}
-                      <Audio />
+                        {/* audio */}
+                        <Audio />
 
-                    </DevToolProvider>
-                  </StyledMain>
-                </Route>
-              </Switch>
-            </Router>
-          </WebsocketProvider>
-        </CrewProvider>
-      </SessionProvider>
+                      </DevToolProvider>
+                    </StyledMain>
+                  </Route>
+                </Switch>
+              </Router>
+            </WebsocketProvider>
+          </CrewProvider>
+        </SessionProvider>
+      )}
     </>
   );
 };
