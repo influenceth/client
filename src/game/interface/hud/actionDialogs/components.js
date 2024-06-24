@@ -3673,17 +3673,26 @@ export const CrewInputBlock = ({ cardWidth, crew, hideCrewmates, highlightCrewma
         )}
         {!hideCrewmates && (
           <CrewmateCards>
-            {Array.from({ length: 5 }).map((_, i) =>
-              crew?._crewmates[i]
+            {Array.from({ length: 5 }).map((_, i) => {
+              let crewmate;
+              if (crew?._crewmates) {
+                crewmate = crew?._crewmates[i]
+              } else if (crew?.Crew?.roster[i]) {
+                crewmate = {
+                  id: crew?.Crew?.roster[i],
+                  label: Entity.IDS.CREWMATE
+                };
+              }
+              return crewmate
                 ? (
                   <CrewmateCardFramed
                     key={i}
                     borderColor={`rgba(${theme.colors.mainRGB}, 0.7)`}
-                    crewmate={crew._crewmates[i]}
+                    crewmate={crewmate}
                     isCaptain={i === 0}
                     lessPadding
                     noArrow={i > 0}
-                    style={highlightCrewmates && !highlightCrewmates.includes(crew._crewmates[i].id) ? { opacity: 0.5 } : {}}
+                    style={highlightCrewmates && !highlightCrewmates.includes(crewmate.id) ? { opacity: 0.5 } : {}}
                     width={cardWidth || 60} />
                 )
                 : (
@@ -3691,8 +3700,8 @@ export const CrewInputBlock = ({ cardWidth, crew, hideCrewmates, highlightCrewma
                     key={i}
                     style={highlightCrewmates ? { opacity: 0.5 } : {}}
                     width={cardWidth || 60} />
-                )
-            )}
+                );
+          })}
           </CrewmateCards>
         )}
       </div>
