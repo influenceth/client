@@ -6,6 +6,7 @@ import { TbBellRingingFilled as AlertIcon } from 'react-icons/tb';
 import { BarLoader } from 'react-spinners';
 import { Asteroid, Building, Crewmate, Dock, Entity, Inventory, Lot, Order, Permission, Process, Product, Ship, Station, Time } from '@influenceth/sdk';
 import numeral from 'numeral';
+import { List } from 'react-virtualized';
 
 import AsteroidRendering from '~/components/AsteroidRendering';
 import Button from '~/components/ButtonAlt';
@@ -75,6 +76,7 @@ import EntityName from '~/components/EntityName';
 import DataTableComponent from '~/components/DataTable';
 import UncontrolledTextInput from '~/components/TextInputUncontrolled';
 import Autocomplete, { StaticAutocomplete } from '~/components/Autocomplete';
+import useScreenSize from '~/hooks/useScreenSize';
 
 const SECTION_WIDTH = 780;
 
@@ -1338,7 +1340,13 @@ export const SelectionDialog = ({ children, isCompletable, open, onClose, onComp
   );
 };
 
+const ListWrapper = styled.div`
+  min-height: 250px;
+  overflow: hidden auto;
+`;
+
 export const CrewSelectionDialog = ({ crews, disabler, onClose, onSelected, open, title }) => {
+  const { height: screenHeight } = useScreenSize();
   const [selection, setSelection] = useState();
 
   const onComplete = useCallback(() => {
@@ -1346,9 +1354,67 @@ export const CrewSelectionDialog = ({ crews, disabler, onClose, onSelected, open
     onClose();
   }, [onClose, onSelected, selection]);
 
-  const nonEmptyCrews = useMemo(() => crews.filter((c) => c.Crew.roster.length > 0), [crews]);
-  const emptyCrews = useMemo(() => crews.filter((c) => c.Crew.roster.length === 0), [crews]);
-  const hydratedLocation = useHydratedLocation(nonEmptyCrews[0]?._location);
+  const [firstNonEmptyCrew, firstEmptyCrew] = useMemo(
+    () => [
+      crews.find((c) => c.Crew.roster.length > 0),
+      crews.find((c) => c.Crew.roster.length === 0),
+    ],
+    [crews]
+  );
+  const firstNonEmptyCrewLocation = useMemo(() => {
+    return firstNonEmptyCrew
+      ? locationsArrToObj(firstNonEmptyCrew.Location?.locations || [])
+      : null;
+  }, [firstNonEmptyCrew])
+  const hydratedLocation = useHydratedLocation(firstNonEmptyCrewLocation);
+
+  const listWrapper = useRef();
+  const [listHeight, setListHeight] = useState();
+  useEffect(() => {
+    setListHeight(listWrapper.current?.clientHeight || 500);
+  }, [crews?.length, screenHeight]);
+
+  const getCrewRowHeight = useCallback(({ index }) => {
+    if (!crews?.[index]) return 0;
+    const crew = crews[index];
+    const isFirstNonEmpty = crew.id === firstNonEmptyCrew?.id;
+    const isFirstEmpty = crew.id === firstEmptyCrew?.id;
+    return 152 + ((isFirstNonEmpty || isFirstEmpty) ? 26 : 0);
+  }, [crews, firstNonEmptyCrew?.id, firstEmptyCrew?.id]);
+
+  const renderCrewRow = useCallback(({ key, index, style }) => {
+    if (!crews?.[index]) return null;
+    const crew = crews[index];
+    const disabled = disabler ? disabler(crew) : false;
+    const isFirstNonEmpty = crew.id === firstNonEmptyCrew?.id;
+    const isFirstEmpty = crew.id === firstEmptyCrew?.id;
+    return (
+      <div key={key} style={style}>
+        <CrewInputBlock
+          cardWidth={64}
+          crew={crew}
+          disabled={reactBool(disabled)}
+          hideCrewmates={reactBool(!(crew.Crew.roster?.length > 0))}
+          inlineDetails
+          isSelected={crew.id === selection?.id}
+          onClick={() => setSelection(crew)}
+          title={
+            isFirstNonEmpty
+              ? <CrewLocationLabel hydratedLocation={hydratedLocation} />
+              : (
+                isFirstEmpty
+                  ? <div style={{ marginTop: 8, textTransform: 'none' }}>Empty Crews</div>
+                  : ''
+              )
+          }
+          data-tooltip-content={disabled || null}
+          data-tooltip-id="selectionDialogTooltip"
+          style={{ marginBottom: 8, opacity: disabled ? 0.5 : 1, width: '100%' }} />
+      </div>
+    );
+  }, [crews, disabler, firstNonEmptyCrew?.id, firstEmptyCrew?.id, hydratedLocation]);
+
+
 
   return (
     <SelectionDialog
@@ -1357,45 +1423,15 @@ export const CrewSelectionDialog = ({ crews, disabler, onClose, onSelected, open
       onComplete={onComplete}
       open={open}
       title={title || 'Crew Selection'}>
-      <div style={{ minHeight: 300 }}>
-        {nonEmptyCrews.map((crew, i) => {
-          const disabled = disabler ? disabler(crew) : false;
-          return (
-            <CrewInputBlock
-              key={crew.id}
-              cardWidth={64}
-              crew={crew}
-              disabled={reactBool(disabled)}
-              inlineDetails
-              isSelected={crew.id === selection?.id}
-              onClick={() => setSelection(crew)}
-              title={
-                i === 0
-                  ? <CrewLocationLabel hydratedLocation={hydratedLocation} />
-                  : ''
-              }
-              data-tooltip-content={disabled || null}
-              data-tooltip-id="selectionDialogTooltip"
-              style={{ marginBottom: 8, opacity: disabled ? 0.5 : 1, width: '100%' }} />
-          );
-        })}
-        {emptyCrews.map((crew, i) => {
-          const disabled = disabler ? disabler(crew) : false;
-          return (
-            <CrewInputBlock
-              key={crew.id}
-              cardWidth={64}
-              crew={crew}
-              disabled={reactBool(disabled)}
-              hideCrewmates
-              inlineDetails
-              isSelected={crew.id === selection?.id}
-              onClick={() => setSelection(crew)}
-              title={i === 0 ? <div style={{ marginTop: 8, textTransform: 'none' }}>Empty Crews</div> : ''}
-              style={{ marginBottom: 8, opacity: disabled ? 0.5 : 1, width: '100%' }} />
-          );
-        })}
-      </div>
+      <ListWrapper ref={listWrapper}>
+        <List
+          width={372}
+          height={listHeight}
+          rowCount={crews?.length || 0}
+          rowHeight={getCrewRowHeight}
+          rowRenderer={renderCrewRow}
+        />
+      </ListWrapper>
     </SelectionDialog>
   );
 };
