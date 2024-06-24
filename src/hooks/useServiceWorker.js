@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 const useServiceWorker = () => {
-  const [isInstalling, setIsInstalling] = useState(true);
+  // no service worker in dev mode, so don't default to "installing" in that case
+  const [isInstalling, setIsInstalling] = useState(process.env.NODE_ENV !== 'development');
   const [updateNeeded, setUpdateNeeded] = useState(false);
   const refreshing = useRef(false);
 
@@ -42,21 +43,18 @@ const useServiceWorker = () => {
 
         // already installing (i.e. ready once installed)
         } else if (registration.installing) {
-          console.log('pmk2 INSTALLING');
           setIsInstalling(true);
           awaitInstallingWorker();
 
         // nothing happening yet (either first load OR refresh without a service worker update ready)
         } else {
-          if (registration.active) {
-            console.log('pmk ACTIVE');
-            setIsInstalling(false);
-          } else {
-            console.log('pmk NOTHING YET');
-          }
 
+          // if already has an active service worker, can install in the background when a new one comes in,
+          // so no need to show interstitial
+          if (registration.active) setIsInstalling(false);
+
+          // listen for updates
           registration.addEventListener('updatefound', () => {
-            console.log('pmk UPDATING');
             awaitInstallingWorker();
           });
         }
