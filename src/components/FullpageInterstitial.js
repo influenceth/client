@@ -31,7 +31,7 @@ const LogoWrapper = styled.div`
 const Message = styled.div`
   animation: ${opacityKeyframes} 1250ms ease-in-out infinite;
   font-weight: bold;
-  margin: 20px 0 30px;
+  margin: 25px 0 30px;
 `;
 
 const FullpageInterstitial = ({ message, onSkip, skipContent }) => {

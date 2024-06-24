@@ -107,6 +107,7 @@ const Game = () => {
   const setAutodetect = useStore(s => s.dispatchGraphicsAutodetectSet);
   const graphics = useStore(s => s.graphics);
   const [ showScene, setShowScene ] = useState(false);
+  const [ loadingMessage, setLoadingMessage ] = useState('Initializing');
 
   const autodetectNeedsInit = graphics?.autodetect === undefined;
   useEffect(() => {
@@ -146,12 +147,39 @@ const Game = () => {
     }
   }, [createAlert, updateNeeded, onUpdateVersion]);
 
+  useEffect(() => {
+    const messages = [
+      'Correcting for gravitational anomalies',
+      'Merging divergent lightshard states',
+      'Scanning for trajectory intersections',
+      'Provisioning arbitrage limiters',
+      'Recategorizing resident behavioral profiles',
+      'Awaiting launch permits',
+      'Brushing the dust off',
+      'Re-establishing optical communications',
+      'Re-routing around reactor breach zone',
+      'Optimizing growth conditions',
+      'Creating micrometeorite ablation profile',
+      'Defrosting feline embryos',
+      'Submitting revised flight plan for review',
+      'Adjusting uranium/neon vortex ratios',
+      'Completing centrifuge lining replacement',
+      'Clearing shotcrete nozzle blockage'
+    ];
+
+    const intervalID = setInterval(() =>  {
+        setLoadingMessage(messages[Math.floor(Math.random() * messages.length)]);
+    }, 3500);
+
+    return () => clearInterval(intervalID);
+}, []);
+
   return (
     <>
       <GlobalStyle />
 
-      {isInstalling && <FullpageInterstitial message="Loading game content, please wait..." />}
-      {!isInstalling && (
+      {!isInstalling && <FullpageInterstitial message={`${loadingMessage}...`} />}
+      {isInstalling && (
         <SessionProvider>{/* global contexts (i.e. needed by interface and scene) */}
           <CrewProvider>
             <WebsocketProvider>
