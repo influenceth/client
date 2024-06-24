@@ -100,7 +100,7 @@ const LauncherRedirect = () => {
 
 const Game = () => {
   const gpuInfo = useDetectGPU();
-  const { isInstalling, isReinstalling, updateNeeded, onUpdateVersion } = useServiceWorker();
+  const { isInstalling, updateNeeded, onUpdateVersion } = useServiceWorker();
 
   const createAlert = useStore(s => s.dispatchAlertLogged);
   const dispatchGpuInfo = useStore(s => s.dispatchGpuInfo);
