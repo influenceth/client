@@ -10,6 +10,8 @@ import useStore from '~/hooks/useStore';
 import useCrewBuildings from '~/hooks/useCrewBuildings';
 import api from '~/lib/api';
 import { hydrateActivities } from '~/lib/activities';
+import useBusyActivity from '~/hooks/useBusyActivity';
+import useHydratedLocation from '~/hooks/useHydratedLocation';
 
 const ActionItemContext = React.createContext();
 
@@ -24,6 +26,7 @@ const sequenceableSystems = [
 export function ActionItemProvider({ children }) {
   const { authenticated, blockTime } = useSession();
   const { crew, pendingTransactions } = useCrewContext();
+  const { data: busyActivity } = useBusyActivity(crew);
   const { data: crewAgreements, isLoading: agreementsLoading } = useCrewAgreements();
   const getActivityConfig = useGetActivityConfig();
   const queryClient = useQueryClient();
@@ -74,6 +77,30 @@ export function ActionItemProvider({ children }) {
     return [];
   }, [crew?._actionTypeTriggered, pendingTransactions]);
 
+  const busyItem = useMemo(() => {
+    if (crew && !crew?._ready && busyActivity) {
+      const item = getActivityConfig(busyActivity)?.busyItem;
+      if (item) {
+        const transformed = {
+          ...busyActivity,
+          _preformatted: {
+            icon: item.icon,
+            label: item.label,
+            asteroidId: crew?._location?.asteroidId,
+            lotId: crew?._location?.lotId,
+            shipId: crew?._location?.shipId,
+          }
+        };
+        transformed._startTime = item.event?.timestamp;
+        if (transformed.event?.returnValues) {
+          transformed.event.returnValues.finishTime = crew?.Crew.readyAt;
+        }
+        return transformed;
+      }
+    }
+    return null;
+  }, [busyActivity, crew]);
+
   useEffect(() => {
     if (!blockTime) return;
 
@@ -84,7 +111,7 @@ export function ActionItemProvider({ children }) {
     );
 
     setUnreadyItems(
-      (actionItems || [])
+      [...(actionItems || []), ...(busyItem ? [busyItem] : [])]
         .filter((a) => a.event.returnValues?.finishTime > blockTime && (!a._startTime || a._startTime <= blockTime))
         .sort((a, b) => a.event.returnValues?.finishTime - b.event.returnValues?.finishTime)
     );
@@ -121,7 +148,7 @@ export function ActionItemProvider({ children }) {
         }))
         .sort((a, b) => a._agreement.endTime - b._agreement.endTime)
     );
-  }, [actionItems, crew, crewAgreements, plannedBuildings, blockTime, itemsUpdatedAt, plansUpdatedAt]);
+  }, [actionItems, busyItem, crew, crewAgreements, plannedBuildings, blockTime, itemsUpdatedAt, plansUpdatedAt]);
 
   const allVisibleItems = useMemo(() => {
     if (!authenticated) return [];
