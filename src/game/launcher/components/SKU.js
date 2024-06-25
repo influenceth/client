@@ -29,6 +29,7 @@ import useSession from '~/hooks/useSession';
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
 import useSwapHelper from '~/hooks/useSwapHelper';
 import useCrewContext from '~/hooks/useCrewContext';
+import useIsLaunched from '~/hooks/useIsLaunched';
 import FundingFlow from './FundingFlow';
 import { AdvancedStarterPack, BasicStarterPack, useStarterPacks } from './StarterPack';
 
@@ -613,6 +614,7 @@ const SwayFaucetButton = () => {
 const SKU = ({ asset, onBack }) => {
   const { accountAddress, login } = useSession();
   const { crew, pendingTransactions } = useCrewContext();
+  const isLaunched = useIsLaunched(crew);
   const priceHelper = usePriceHelper();
   const packs = useStarterPacks();
   const { data: wallet } = useWalletBalances();
@@ -722,7 +724,7 @@ const SKU = ({ asset, onBack }) => {
           ),
           props: {
             loading: isPurchasingStarterPack,
-            disabled: isPurchasingStarterPack || !crew?._launched,
+            disabled: isPurchasingStarterPack || !isLaunched,
             isTransaction: true,
             onClick: () => onPurchaseStarterPack('advanced'),
             style: { margin: `0 ${purchasePacksPadding}px` },
@@ -730,7 +732,7 @@ const SKU = ({ asset, onBack }) => {
           },
           preLabel: (
             <Button
-              disabled={nativeBool(isPurchasingStarterPack || !crew?._launched)}
+              disabled={nativeBool(isPurchasingStarterPack || !isLaunched)}
               loading={reactBool(isPurchasingStarterPack)}
               isTransaction
               onClick={() => onPurchaseStarterPack('basic')}
@@ -766,14 +768,14 @@ const SKU = ({ asset, onBack }) => {
       props: {
         onClick: () => handlePurchase(),
         isTransaction: true,
-        disabled: isPurchasing || !(purchase?.totalPrice?.usdcValue > 0) || !crew?._launched,
+        disabled: isPurchasing || !(purchase?.totalPrice?.usdcValue > 0) || !isLaunched,
         loading: isPurchasing,
       },
       // conditionally include faucet
       preLabel: process.env.REACT_APP_CHAIN_ID === '0x534e5f5345504f4c4941' && <SwayFaucetButton />
     };
     return params;
-  }, [asset, crew?._launched, filterUnownedAsteroidsAndClose, isPurchasing]);
+  }, [asset, isLaunched, filterUnownedAsteroidsAndClose, isPurchasing]);
 
   return (
     <>

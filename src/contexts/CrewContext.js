@@ -115,12 +115,13 @@ export function CrewProvider({ children }) {
 
       // mainnet
       if (openAccessJSTime) {
-        c._launched = blockTime > (openAccessJSTime / 1e3);
+        const cmpTime = blockTime || (Date.now() / 1e3);
+        c._launched = cmpTime > (openAccessJSTime / 1e3);
 
         // overwrite food so 100% until launch
         if (c.Crew) {
           try { // sometimes this is reported as a read-only property?
-            c.Crew.lastFed = Math.max(Math.min(blockTime, openAccessJSTime / 1e3), c.Crew.lastFed);
+            c.Crew.lastFed = Math.max(Math.min(cmpTime, openAccessJSTime / 1e3), c.Crew.lastFed);
           } catch (e) {
             console.warn('lastFed overwrite failed. refresh the page.', e);
           }
