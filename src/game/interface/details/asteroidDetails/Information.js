@@ -6,7 +6,6 @@ import useSession from '~/hooks/useSession';
 import useWebWorker from '~/hooks/useWebWorker';
 import useBuyAsteroid from '~/hooks/actionManagers/useBuyAsteroid';
 import useChangeName from '~/hooks/actionManagers/useChangeName';
-import useCreateReferral from '~/hooks/useCreateReferral';
 import constants from '~/lib/constants';
 import formatters from '~/lib/formatters';
 import exportGLTF from '~/lib/graphics/exportGLTF';
@@ -267,7 +266,6 @@ const SmHidden = styled.span`
 
 const AsteroidInformation = ({ abundances, asteroid, isManager, isOwner }) => {
   const { authenticated } = useSession();
-  const createReferral = useCreateReferral(Number(asteroid.id));
   const isNameValid = useNameAvailability({ label: Entity.IDS.ASTEROID });
   const { buyAsteroid, checkForLimit, buying } = useBuyAsteroid(Number(asteroid.id));
   const { controlAsteroid, takingControl } = useControlAsteroid(Number(asteroid.id));
@@ -308,12 +306,10 @@ const AsteroidInformation = ({ abundances, asteroid, isManager, isOwner }) => {
 
   const attemptBuyAsteroid = useCallback(async () => {
     const limited = await checkForLimit();
-
-    if (!limited) {
-      buyAsteroid();
-      createReferral.mutate();
-    }
-  }, [checkForLimit, buyAsteroid, createReferral]);
+    if (limited) return;
+    
+    buyAsteroid();
+  }, [checkForLimit, buyAsteroid]);
 
   return (
     <Wrapper>
