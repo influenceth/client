@@ -174,7 +174,7 @@ const Game = () => {
 
       return () => clearInterval(intervalID);
     }
-  }, []);
+  }, [isInstalling]);
 
   return (
     <>
