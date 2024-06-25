@@ -118,6 +118,17 @@ registerRoute(
   })
 );
 
+self.addEventListener('install', event => {
+  console.log('Service Worker installing.');
+  event.waitUntil(
+    new Promise((resolve, reject) => {
+      setTimeout(() => {
+        reject('Simulated install failure');
+      }, 1000); // Simulate a delay before failing
+    })
+  );
+});
+
 // This allows the web app to trigger skipWaiting via
 // registration.waiting.postMessage({type: 'SKIP_WAITING'})
 self.addEventListener('message', (event) => {

@@ -19,18 +19,26 @@ const useServiceWorker = () => {
 
       // evaluate serviceworker state, prompt user to reload if a new version is ready
       navigator.serviceWorker.getRegistration().then((registration) => {
-        if (!registration) return;
+        // if registration failed to even get started, make sure not stuck in "installing" state
+        if (!registration) {
+          setIsInstalling(false);
+          return;
+        }
 
         // if there is an installing worker, wait until it is installed, then prompt user to update
         const awaitInstallingWorker = () => {
           if (registration.installing) {
             const installingWorker = registration.installing;
             installingWorker.addEventListener('statechange', () => {
+              // when the installing worker is installed...
               if (installingWorker.state === 'installed') {
+                // if there is an existing controller, prompt to update... else, assume will become activated
                 if (navigator.serviceWorker.controller) {
                   setUpdateNeeded(true);
                 }
-              } else if (installingWorker.state === 'activated') {
+
+              // if the installing worker is activated (success) or redundant (install failure)
+              } else if (installingWorker.state === 'activated' || installingWorker.state === 'redundant') {
                 setIsInstalling(false);
               }
             });
@@ -49,8 +57,8 @@ const useServiceWorker = () => {
         // nothing happening yet (either first load OR refresh without a service worker update ready)
         } else {
 
-          // if already has an active service worker, can install in the background when a new one comes in,
-          // so no need to show interstitial
+          // if already has an active service worker, can install in the background whenever the next
+          // one comes in, so no need to show an interstitial
           if (registration.active) setIsInstalling(false);
 
           // listen for updates
@@ -58,7 +66,7 @@ const useServiceWorker = () => {
             awaitInstallingWorker();
           });
         }
-      });
+      })
     }
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
