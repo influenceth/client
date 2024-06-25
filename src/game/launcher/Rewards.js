@@ -190,7 +190,7 @@ const columns = [
     key: 'createdAt',
     sortField: 'createdAt',
     label: 'Timestamp',
-    selector: row => (new moment(new Date(1000 * (row.createdAt || 0)))).fromNow(),
+    selector: row => (new moment(Date.parse(row.createdAt) || 0)).fromNow(),
   },
   {
     key: 'buyer',
