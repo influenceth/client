@@ -380,8 +380,8 @@ const ActionItems = () => {
   const filteredDisplayItems = useMemo(() => {
     let filter;
     if (selectedFilter === 'all') filter = (i) => !i.hidden;
-    if (selectedFilter === 'ready') filter = (i) => !i.hidden && ['pending', 'failed', 'randomEvent', 'ready'].includes(i.type);
-    if (selectedFilter === 'progress') filter = (i) => !i.hidden && ['unready', 'unstarted'].includes(i.type);
+    if (selectedFilter === 'ready') filter = (i) => !i.hidden && ['failed', 'randomEvent', 'ready'].includes(i.type);
+    if (selectedFilter === 'progress') filter = (i) => !i.hidden && ['pending', 'unready', 'unstarted'].includes(i.type);
     if (selectedFilter === 'hidden') filter = (i) => i.hidden;
 
     return (displayItems || []).filter(filter);

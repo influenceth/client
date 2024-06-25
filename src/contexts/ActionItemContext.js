@@ -110,11 +110,10 @@ export function ActionItemProvider({ children }) {
         .sort((a, b) => a.event.returnValues?.finishTime - b.event.returnValues?.finishTime)
     );
 
-    setUnreadyItems(
-      [...(actionItems || []), ...(busyItem ? [busyItem] : [])]
-        .filter((a) => a.event.returnValues?.finishTime > blockTime && (!a._startTime || a._startTime <= blockTime))
-        .sort((a, b) => a.event.returnValues?.finishTime - b.event.returnValues?.finishTime)
-    );
+    const unreadyFinishableItems = (actionItems || [])
+      .filter((a) => a.event.returnValues?.finishTime > blockTime && (!a._startTime || a._startTime <= blockTime))
+      .sort((a, b) => a.event.returnValues?.finishTime - b.event.returnValues?.finishTime);
+    setUnreadyItems(unreadyFinishableItems?.length > 0 ? unreadyFinishableItems : (busyItem ? [busyItem] : []));
 
     setUnstartedItems(
       (actionItems || [])

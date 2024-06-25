@@ -9,7 +9,7 @@
     "@argent/x-sessions": "^6.7.3",
     "@avnu/avnu-sdk": "^2.0.0",
     "@influenceth/astro": "^0.2.5",
-    "@influenceth/sdk": "^2.1.0-beta.118",
+    "@influenceth/sdk": "^2.1.1",
     "@popperjs/core": "^2.11.6",
     "@react-hook/throttle": "^2.2.0",
     "@react-three/drei": "^9.105.1",

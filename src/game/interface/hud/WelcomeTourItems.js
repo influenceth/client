@@ -356,8 +356,7 @@ const useWelcomeTour = () => {
           serve as vibrant social hubs for the Crews stationed there, as well as recruitment centers
           for new Adalians.
           <br /><br />
-          You are now ready to begin your journey as a productive member of Adalian society! The
-          recommended <b>Starter Packs</b> contain everything needed to form your first crew and start
+          You are now ready to begin your Adalian journey! <b>Starter Packs</b> contain everything needed to form your first crew and start
           your own mining operation on Adalia Prime. Join up today!
         </>
       ),
