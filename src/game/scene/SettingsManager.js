@@ -9,7 +9,7 @@ import visualConfigs from '~/lib/visuals';
 import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader';
 
 const SettingsManager = () => {
-  const { gl, scene, camera, renderer } = useThree();
+  const { gl, scene, camera } = useThree();
   const fov = useStore(s => s.graphics.fov);
   const pixelRatio = useStore(s => s.graphics.pixelRatio);
   const skyboxVisible = useStore(s => s.graphics.skybox);
