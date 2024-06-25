@@ -465,7 +465,7 @@ const ManageCrew = ({ altCrews, crew, isForeignCrew, manager, stage, ...props })
         document.body
       )}
 
-      {stage === actionStages.NOT_STARTED && altCrews.length > 0 && (
+      {stage === actionStages.NOT_STARTED && (
         <CrewSelectionDialog
           crews={altCrews}
           onClose={() => setCrewSelectorOpen(false)}
