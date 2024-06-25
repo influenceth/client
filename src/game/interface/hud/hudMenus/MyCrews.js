@@ -59,6 +59,10 @@ const UncontrolledCrewBlock = ({ crewId, crewmateIds }) => {
   );
 };
 
+const crewRowHeight = 141;
+const locationTitleHeight = 36;
+const locationExtraMargin = 5;
+
 const MyCrews = () => {
   const { crew, crews, crewmateMap, selectCrew } = useCrewContext();
   
@@ -89,11 +93,21 @@ const MyCrews = () => {
       }, {});
   }, [crewmateMap]);
 
+  const asteroidContainerHeights = useMemo(() => {
+    return Object.keys(nonEmptyCrewsByLocation || {}).reduce((acc, asteroidId) => {
+      const asteroidCrewTally = nonEmptyCrewsByLocation[asteroidId].tally;
+      const asteroidLocationTally = Object.keys(nonEmptyCrewsByLocation[asteroidId].locations).length;
+      acc[asteroidId] = asteroidCrewTally * crewRowHeight + asteroidLocationTally * (locationTitleHeight + locationExtraMargin);
+      return acc;
+    }, {});
+  }, [nonEmptyCrewsByLocation])
+
   return (
     <Scrollable>
       {Object.keys(nonEmptyCrewsByLocation || {}).map((asteroidId) => (
         <HudMenuCollapsibleSection
           key={asteroidId}
+          containerHeight={asteroidContainerHeights[asteroidId]}
           titleText={asteroidId === '_' ? 'In Flight' : <EntityName label={Entity.IDS.ASTEROID} id={asteroidId} />}
           titleLabel={`${nonEmptyCrewsByLocation[asteroidId].tally} Crew${nonEmptyCrewsByLocation[asteroidId].tally === 1 ? '' : 's'}`}>
           {Object.keys(nonEmptyCrewsByLocation[asteroidId].locations).map((locationKey) => {
@@ -102,7 +116,7 @@ const MyCrews = () => {
             return (
               <HudMenuCollapsibleSection
                 key={locationKey}
-                containerHeight={152 * locationCrews.length}
+                containerHeight={crewRowHeight * locationCrews.length}
                 titleProps={{ style: { textTransform: 'none' } }}
                 titleText={asteroidId === '_' && !location?.shipId ? 'Escape Module' : <EntityName {...locationCrews[0]?.Location?.location} />}>
                 <SectionBody>

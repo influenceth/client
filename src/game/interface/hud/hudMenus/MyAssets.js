@@ -79,6 +79,8 @@ const CrewSelectionToggle = styled(Toggle)`
 const Contents = styled.div`
   flex: 1;
   overflow: hidden auto;
+  margin-right: -24px;
+  padding-right: 24px;
 `;
 
 const EmptyMessage = styled.div`

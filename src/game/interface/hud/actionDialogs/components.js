@@ -3677,6 +3677,18 @@ export const SwayInputBlock = ({ title, ...props }) => (
   </FlexSectionInputBlock>
 );
 
+const InlineCrewDetails = styled.div`
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  & > div:first-child {
+    overflow: hidden;
+    padding-left: 4px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+`;
 export const CrewInputBlock = ({ cardWidth, crew, hideCrewmates, highlightCrewmates, inlineDetails, title, ...props }) => {
   return (
     <FlexSectionInputBlock
@@ -3697,15 +3709,10 @@ export const CrewInputBlock = ({ cardWidth, crew, hideCrewmates, highlightCrewma
       {...props}>
       <div>
         {crew && inlineDetails && (
-          <div style={{ display: 'flex', alignItems: 'center', marginBottom: 8 }}>
-            <div>
-              <span style={{ marginLeft: 4 }}>
-                {formatters.crewName(crew)}
-              </span>
-            </div>
-            <div style={{ flex: 1 }} />
+          <InlineCrewDetails>
+            <div>{formatters.crewName(crew)}</div>
             <LiveReadyStatus crew={crew} style={{ fontSize: '14px' }} />
-          </div>
+          </InlineCrewDetails>
         )}
         {!hideCrewmates && (
           <CrewmateCards>

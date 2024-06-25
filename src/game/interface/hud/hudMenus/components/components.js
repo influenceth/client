@@ -15,8 +15,8 @@ export const Scrollable = styled.div`
   height: ${p => p.hasTray ? `calc(100% - ${trayHeight}px)` : '100%'};
   overflow-x: hidden;
   overflow-y: auto;
-  padding-right: 15px;
-  margin-right: -12px;
+  padding-right: 24px;
+  margin-right: -24px;
 `;
 
 export const Tray = styled.div`
@@ -74,8 +74,8 @@ export const HudMenuCollapsibleSection = ({ children, collapsed, titleText, titl
       borderColor: majorBorderColor,
       width: 'calc(100% - 20px)', // -32px for left margin, +12 px for neg right margin
       style: {
-        paddingRight: 8,
-        overflowX: 'visible',
+        paddingRight: 12,
+        overflowX: 'hidden',
         overflowY: 'auto'
       }
     }}
