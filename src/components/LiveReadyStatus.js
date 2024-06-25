@@ -163,7 +163,7 @@ const LiveReadyStatus = ({ crew, ...props }) => {
   if (!(crew.hasOwnProperty('_launched') ? crew?._launched : isLaunched)) {
     return (
       <StatusContainer {...props}>
-        <label>Not Yet Launched</label> 
+        <label>Unlaunched</label> 
         <IconWrapper><TimerIcon /></IconWrapper>
       </StatusContainer>
     );
