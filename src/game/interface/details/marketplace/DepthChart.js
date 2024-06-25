@@ -24,7 +24,7 @@ import useOrderList from '~/hooks/useOrderList';
 import useScreenSize from '~/hooks/useScreenSize';
 import useStore from '~/hooks/useStore';
 import formatters from '~/lib/formatters';
-import { formatFixed, formatPrice, getCrewAbilityBonuses, nativeBool } from '~/lib/utils';
+import { formatFixed, formatPrice, fromLocal, getCrewAbilityBonuses, nativeBool } from '~/lib/utils';
 import theme, { hexToRGB } from '~/theme';
 import { formatResourceAmount } from '../../hud/actionDialogs/components';
 
@@ -547,11 +547,8 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
   }, [baseMarketplaceFee, feeReductionBonus, feeEnforcementBonus]);
 
   const [quantity, setQuantity] = useState();
-  const [limitPrice, setLimitPrice] = useState();
+  const [limitPrice, setLimitPrice] = useState(0);
 
-  useEffect(() => {
-    setLimitPrice(0);
-  }, [mode, type]);
 
   const createOrder = useCallback(() => {
     onSetAction('MARKETPLACE_ORDER', {
@@ -576,7 +573,9 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
 
   const handleChangeLimitPrice = useCallback((price, blur = false) => {
     if (blur) {
-      if ((mode === 'buy' && price >= ask) || (mode === 'sell' && price <= bid)) {
+      // convert local formatted price to standard value
+      const _price = fromLocal(price);
+      if ((mode === 'buy' && _price >= ask) || (mode === 'sell' && _price <= bid)) {
         setType('market');
         return;
       }
@@ -602,7 +601,7 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
   }, [buyOrders, mode, quantity, sellOrders]);
 
   const totalLimitPrice = useMemo(() => {
-    return (limitPrice || 0) * quantity;
+    return (fromLocal(limitPrice) || 0) * quantity;
   }, [limitPrice, quantity]);
 
   const fee = useMemo(() => {
@@ -670,6 +669,8 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
     const { asteroidId, lotIndex } = Lot.toPosition(lot?.id) || {};
     history.push(`/marketplace/${asteroidId}/${lotIndex}`);
   }, [lot]);
+
+  console.log('avgMarketPrice: ', avgMarketPrice);
 
   return (
     <Wrapper>
@@ -871,7 +872,8 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
                         onChange={(e) => handleChangeLimitPrice(e.currentTarget.value)}
                         onBlur={(e) => handleChangeLimitPrice(e.currentTarget.value, true)}
                         placeholder="Specify Price"
-                        value={limitPrice || ''} />
+                        type="string"
+                        value={limitPrice} />
                     </TextInputWrapper>
                   </FormSection>
                 )}

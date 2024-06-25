@@ -1,8 +1,14 @@
 import esb from 'elastic-builder';
 import { Crew, Entity, Lot, Permission, Processor, Time } from '@influenceth/sdk';
 import trim from 'lodash/trim';
+import numeral from 'numeral';
+import * as locales from 'numeral/locales';
 
 import { BioreactorBuildingIcon, ManufactureIcon, RefineIcon } from '~/components/Icons';
+
+const getLocale = () => {
+  return ((navigator && navigator.language) || 'en').split('-')[0];
+};
 
 const timerIncrements = { d: 86400, h: 3600, m: 60, s: 1 };
 export const formatTimer = (secondsRemaining, maxPrecision = null) => {
@@ -29,6 +35,18 @@ export const formatFixed = (value, maximumFractionDigits = 0) => {
   return roundToPlaces(value, maximumFractionDigits).toLocaleString(undefined, { maximumFractionDigits });
 };
 
+// Get the numeric value from the specified locallized value
+export const fromLocal = (value) => {
+  numeral.locale(getLocale());
+  return numeral(value).value();
+}
+
+export const toLocale = (value, minimumFractionDigits = 0) => {
+  if (!value) return 0;
+  const _value = (typeof value === 'string') ? fromLocal(value) : value;
+  return _value.toLocaleString(getLocale(), { minimumFractionDigits });
+};
+
 export const formatPrecision = (value, maximumPrecision = 0) => {
   const allowedDecimals = Math.max(0, maximumPrecision - Math.ceil(Math.log10(Math.abs(value))));
   if (isNaN(allowedDecimals)) { console.log('is nan', value, maximumPrecision); }
@@ -51,7 +69,7 @@ export const formatPrice = (inputSway, { minPrecision = 3, fixedPrecision = 4, f
     scale = 1;
     unitLabel = '';
   } else {
-    return Number(sway || 0).toLocaleString(undefined, { minimumFractionDigits: minPrecision, maximumFractionDigits: fixedPrecision });
+    return Number(sway || 0).toLocaleString(getLocale(), { minimumFractionDigits: minPrecision, maximumFractionDigits: fixedPrecision });
   }
 
   const workingUnits = (sway / scale);

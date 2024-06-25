@@ -17,7 +17,7 @@ import useOrderList from '~/hooks/useOrderList';
 import { useSwayBalance } from '~/hooks/useWalletTokenBalance';
 import formatters from '~/lib/formatters';
 import actionStages from '~/lib/actionStages';
-import { reactBool, formatFixed, formatTimer, getCrewAbilityBonuses, locationsArrToObj, formatPrice } from '~/lib/utils';
+import { reactBool, formatFixed, toLocale, fromLocal, formatTimer, getCrewAbilityBonuses, locationsArrToObj, formatPrice } from '~/lib/utils';
 import theme, { hexToRGB } from '~/theme';
 import { ActionDialogInner, useAsteroidAndLot } from '../ActionDialog';
 import {
@@ -199,6 +199,7 @@ const MarketplaceOrder = ({
   preselect,
   ...props
 }) => {
+  console.log('MarketplaceOrder, preselect: ', preselect);
   const resource = Product.TYPES[resourceId] || {};
   const resourceByMass = !resource?.isAtomic;
   const { data: exchangeController } = useHydratedCrew(exchange.Control?.controller?.id);
@@ -337,7 +338,7 @@ const MarketplaceOrder = ({
   }, [buyOrders, exchange, feeEnforcementBonus, feeReductionBonus, mode, quantity, sellOrders, type]);
 
   const totalLimitPrice = useMemo(() => {
-    return (limitPrice || 0) * quantity;
+    return (fromLocal(limitPrice) || 0) * quantity;
   }, [limitPrice, quantity]);
 
   // maker = limit order
@@ -364,7 +365,7 @@ const MarketplaceOrder = ({
         ? undefined
         : {
           label: type === 'limit' ? 'Maker Fee' : 'Taker Fee',
-          value: <><SwayIcon /> {feeTotal.toLocaleString()} ({formatFixed(100 * feeRate, 1)}%)</>,
+          value: <><SwayIcon /> {feeTotal.toLocaleString()} ({toLocale(100 * feeRate, 1)}%)</>,
           direction: feeRate === baseFeeRate ? 0 : (feeRate > baseFeeRate ? -1 : 1),
           isTimeStat: true, // (to reverse direction of good/bad)
           tooltip: feeRate !== baseFeeRate && (
@@ -447,7 +448,7 @@ const MarketplaceOrder = ({
         cancelBuyOrder({
           amount: quantityToUnits(quantity),
           buyer: { id: crew?.id, label: crew?.label },
-          price: limitPrice,
+          price: fromLocal(limitPrice),
           product: resourceId,
           destination: { id: storage?.id, label: storage?.label },
           destinationSlot: storageInventory?.slot,
@@ -459,7 +460,7 @@ const MarketplaceOrder = ({
           amount: quantityToUnits(quantity),
           seller: { id: crew?.id, label: crew?.label },
           product: resourceId,
-          price: limitPrice,
+          price: fromLocal(limitPrice),
           origin: { id: storage?.id, label: storage?.label },
           originSlot: storageInventory?.slot,
         })
@@ -486,7 +487,7 @@ const MarketplaceOrder = ({
       const vars = {
         product: resourceId,
         amount: quantityToUnits(quantity),
-        price: limitPrice
+        price: fromLocal(limitPrice)
       };
       if (mode === 'buy') {
         createBuyOrder({
@@ -525,15 +526,11 @@ const MarketplaceOrder = ({
     setQuantity(input);
   }, [mode, totalForSale, totalForBuy, type]);
 
-  const handleChangeLimitPrice = useCallback((e) => {
-    setLimitPrice(Number(e.currentTarget.value));
-  }, []);
-
   const matchBestLimitOrder = useCallback((e) => {
     if (mode === 'buy') {
-      setLimitPrice(buyOrders[0]?.price || sellOrders[sellOrders.length - 1].price);
+      setLimitPrice(toLocale(buyOrders[0]?.price || sellOrders[sellOrders.length - 1].price));
     } else {
-      setLimitPrice(sellOrders[sellOrders.length - 1].price);
+      setLimitPrice(toLocale(sellOrders[sellOrders.length - 1].price));
     }
   }, [mode, buyOrders, sellOrders]);
 
@@ -678,7 +675,7 @@ const MarketplaceOrder = ({
               <InputLabel>
                 <label>{type === 'market' ? '' : 'Max'} Quantity</label>
                 {type === 'market' && (
-                  <span>Max <b>{((mode === 'buy' ? totalForSale : totalForBuy) || 0).toLocaleString()}{resourceByMass ? ' kg' : ''}</b></span>
+                  <span>Max <b>{(toLocale(mode === 'buy' ? totalForSale : totalForBuy) || 0)}{resourceByMass ? ' kg' : ''}</b></span>
                 )}
                 {type === 'limit' && mode === 'sell' && (
                   <span>In Inventory <b>{formatResourceAmount(amountInInventory || 0, resourceId)}</b></span>
@@ -706,9 +703,10 @@ const MarketplaceOrder = ({
                   disabled={isCancellation || type === 'market' || stage !== actionStages.NOT_STARTED}
                   style={type === 'market' ? { backgroundColor: `rgba(${hexToRGB(theme.colors.disabledBackground)}, 0.2)` } : {}}
                   min={0}
-                  onChange={handleChangeLimitPrice}
-                  type="number"
-                  value={type === 'market' ? avgMarketPrice : limitPrice} />
+                  onChange={(e) => setLimitPrice(e.currentTarget.value)}
+                  onBlur={(e) => setLimitPrice(e.currentTarget.value, true)}
+                  type="string"
+                  value={type === 'market' ? toLocale(avgMarketPrice, 4) : limitPrice} />
               </TextInputWrapper>
             </FormSection>
 
@@ -807,7 +805,7 @@ const MarketplaceOrder = ({
                   </b>
                   {!(type === 'limit' && mode === 'sell' && isCancellation) && (
                     <span style={{ display: 'inline-flex', fontSize: '36px', lineHeight: '36px' }}>
-                      <SwayIcon /><TotalSway>{type === 'market' && (mode === 'buy' ? '-' : '+')}{formatFixed(total || 0)}</TotalSway>
+                      <SwayIcon /><TotalSway>{type === 'market' && (mode === 'buy' ? '-' : '+')}{toLocale(total || 0)}</TotalSway>
                     </span>
                   )}
                 </div>
