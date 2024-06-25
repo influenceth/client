@@ -1364,7 +1364,7 @@ export const CrewSelectionDialog = ({ crews, disabler, onClose, onSelected, open
   const firstNonEmptyCrewLocation = useMemo(() => {
     return firstNonEmptyCrew
       ? locationsArrToObj(firstNonEmptyCrew.Location?.locations || [])
-      : null;
+      : undefined;
   }, [firstNonEmptyCrew])
   const hydratedLocation = useHydratedLocation(firstNonEmptyCrewLocation);
 
