@@ -357,7 +357,7 @@ const MyAssets = () => {
           titleText={<>Asteroids{asteroidsLoading && <LoadingMessage />}</>}
           titleLabel={`${asteroidTally} Asset${asteroidTally === 1 ? '' : 's'}`}
           collapsed={!asteroidTally}
-          containerHeight={81 * asteroidTally + containerHeightBuffer}>
+          containerHeight={85 * asteroidTally + containerHeightBuffer}>
           {!asteroidsLoading && asteroidTally === 0 && <EmptyMessage />}
           <SectionBody>
             <AsteroidBlocks
@@ -379,7 +379,7 @@ const MyAssets = () => {
               selectedCrew={crew}
               ship={ship} />
           )}
-          itemHeight={81}
+          itemHeight={85}
           singleGroupMode={!allAsteroidsMode} />
 
         <GroupedAssets
@@ -394,7 +394,7 @@ const MyAssets = () => {
               selectedCrew={crew}
               building={building} />
           )}
-          itemHeight={52}
+          itemHeight={55}
           singleGroupMode={!allAsteroidsMode} />
 
         <GroupedAssets
@@ -409,7 +409,7 @@ const MyAssets = () => {
               onSelectCrew={onClickCrewAsset}
               selectedCrew={crew} />
           )}
-          itemHeight={52}
+          itemHeight={55}
           singleGroupMode={!allAsteroidsMode} />
       </Contents>
     </Wrapper>

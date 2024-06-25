@@ -72,11 +72,11 @@ export const HudMenuCollapsibleSection = ({ children, collapsed, titleText, titl
     titleAction={titleAction}
     collapsibleProps={{
       borderColor: majorBorderColor,
-      width: 'calc(100% - 22px)', // -32px for left margin, +8 px for neg right margin
+      width: 'calc(100% - 20px)', // -32px for left margin, +12 px for neg right margin
       style: {
         paddingRight: 8,
         overflowX: 'visible',
-        overflowY: 'scroll'
+        overflowY: 'auto'
       }
     }}
     initiallyClosed={!!collapsed}
