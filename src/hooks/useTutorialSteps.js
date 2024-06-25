@@ -155,12 +155,9 @@ const useTutorialSteps = () => {
         title: 'Recruit your crew!',
         content: (
           <>
-            First, select a public Habitat on Adalia Prime. Here is where you will find crewmates ready to
-            join you on your Adalian adventure. Recruit one, get to know them, and help prepare them for
-            adulthood in Adalia.
+            First, find a public Habitat on Adalia Prime and click the blinking green Recruit Crewmate button. Guide your crewmate through their backstory and help prepare them for adulthood in Adalia.
             <br/><br/>
-            Tip: While all classes have their own skills and knowledge, the education that Miners and Engineers
-            receive is especially useful when first starting out in Adalia.
+            Tip: While all classes have specialized traits, Miners and Engineers are particularly useful on crews starting their first mining operation.
             <TutorialVideoLink link="https://youtu.be/pzvFzEwHlP8?si=BKZMAbkMMSMYFe7a&t=114" />
           </>
         ),
