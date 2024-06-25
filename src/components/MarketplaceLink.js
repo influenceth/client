@@ -31,9 +31,9 @@ const MarketplaceLink = ({ assetType, chain, children, id }) => {
       url = `${process.env.REACT_APP_STARKNET_NFT_MARKET_URL}/`;
       // single asset
       if (assetType === 'asteroid' && id) {
-        url += `item/${process.env.REACT_APP_STARKNET_ASTEROID_TOKEN}/${id}`;
+        url += `asset/${process.env.REACT_APP_STARKNET_ASTEROID_TOKEN}/${id}`;
       } else if(assetType === 'crewmate' && id) {
-        url += `item/${process.env.REACT_APP_STARKNET_CREWMATE_TOKEN}/${id}`;
+        url += `asset/${process.env.REACT_APP_STARKNET_CREWMATE_TOKEN}/${id}`;
       // collection
       } else if (assetType === 'asteroid') {
         url += `collection/${process.env.REACT_APP_STARKNET_ASTEROID_TOKEN}`;
