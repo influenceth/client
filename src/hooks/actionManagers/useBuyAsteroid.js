@@ -1,4 +1,5 @@
 import { useCallback, useContext, useMemo } from 'react';
+import { Entity } from '@influenceth/sdk';
 
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
 import useAsteroid from '~/hooks/useAsteroid';
@@ -11,14 +12,21 @@ const useBuyAsteroid = (id) => {
   const blockTime = useBlockTime();
   const { execute, getStatus } = useContext(ChainTransactionContext);
   const { data: asteroid } = useAsteroid(id);
-  const { crew: caller_crew } = useCrewContext();
+  const { crew } = useCrewContext();
   const createAlert = useStore(s => s.dispatchAlertLogged);
 
   const system = asteroid?.AsteroidProof?.used ? 'PurchaseAsteroid' : 'InitializeAndPurchaseAsteroid';
 
   const buyAsteroid = useCallback(
-    () => execute(system, { asteroid, caller_crew }),
-    [execute, system, asteroid, caller_crew]
+    // caller_crew is optional here b/c may not exist yet
+    () => execute(
+      system,
+      {
+        asteroid,
+        caller_crew: crew || { id: 0, label: Entity.IDS.CREW }
+      }
+    ),
+    [execute, system, asteroid, crew]
   );
 
   const checkForLimit = useCallback(async () => {
@@ -55,8 +63,8 @@ const useBuyAsteroid = (id) => {
   }, []);
 
   const status = useMemo(
-    () => getStatus(system, { asteroid, caller_crew }),
-    [getStatus, system, asteroid, caller_crew]
+    () => getStatus(system, { asteroid }),
+    [getStatus, system, asteroid]
   );
 
   return {
