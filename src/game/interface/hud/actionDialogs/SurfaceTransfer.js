@@ -35,15 +35,16 @@ import {
   InventoryInputBlock
 } from './components';
 import { ActionDialogInner, useAsteroidAndLot } from '../ActionDialog';
-import actionStage from '~/lib/actionStages';
 import useCrew from '~/hooks/useCrew';
-import theme from '~/theme';
 import CrewIndicator from '~/components/CrewIndicator';
 import useEntity from '~/hooks/useEntity';
-import formatters from '~/lib/formatters';
 import useActionCrew from '~/hooks/useActionCrew';
 import { TransferP2PIcon } from '~/components/Icons';
 import useHydratedCrew from '~/hooks/useHydratedCrew';
+import actionStage from '~/lib/actionStages';
+import formatters from '~/lib/formatters';
+import { TOKEN, TOKEN_SCALE } from '~/lib/priceUtils';
+import theme from '~/theme';
 
 const P2PSection = styled.div`
   align-self: flex-start;
@@ -88,7 +89,7 @@ const SurfaceTransfer = ({
   const [tab, setTab] = useState(0);
   const [transferSelectorOpen, setTransferSelectorOpen] = useState();
   const [selectedItems, setSelectedItems] = useState(props.preselect?.selectedItems || {});
-  const [sway, setSway] = useState((currentDelivery?.price || 0) / 1e6);
+  const [sway, setSway] = useState(0);
 
   const [destinationSelectorOpen, setDestinationSelectorOpen] = useState(false);
   const [originSelectorOpen, setOriginSelectorOpen] = useState(false);
@@ -120,6 +121,7 @@ const SurfaceTransfer = ({
           || availInvs[0]?.slot
       });
     }
+    setSway((currentDelivery?.price || 0) / TOKEN_SCALE[TOKEN.SWAY]);
   }, [currentDelivery, fixedDestination, fixedOrigin]);
 
   const { data: origin } = useEntity(originSelection ? { id: originSelection.id, label: originSelection.label } : undefined);

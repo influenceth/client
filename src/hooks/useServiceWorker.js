@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 const useServiceWorker = () => {
+  // no service worker in dev mode, so don't default to "installing" in that case
+  const [isInstalling, setIsInstalling] = useState(process.env.NODE_ENV !== 'development');
   const [updateNeeded, setUpdateNeeded] = useState(false);
   const refreshing = useRef(false);
 
@@ -17,18 +19,28 @@ const useServiceWorker = () => {
 
       // evaluate serviceworker state, prompt user to reload if a new version is ready
       navigator.serviceWorker.getRegistration().then((registration) => {
-        if (!registration) return;
+        // if registration failed to even get started, make sure not stuck in "installing" state
+        if (!registration) {
+          setIsInstalling(false);
+          return;
+        }
 
         // if there is an installing worker, wait until it is installed, then prompt user to update
         const awaitInstallingWorker = () => {
           if (registration.installing) {
             const installingWorker = registration.installing;
             installingWorker.addEventListener('statechange', () => {
-                if (installingWorker.state === 'installed') {
-                  if (navigator.serviceWorker.controller) {
-                    setUpdateNeeded(true);
-                  }
+              // when the installing worker is installed...
+              if (installingWorker.state === 'installed') {
+                // if there is an existing controller, prompt to update... else, assume will become activated
+                if (navigator.serviceWorker.controller) {
+                  setUpdateNeeded(true);
                 }
+
+              // if the installing worker is activated (success) or redundant (install failure)
+              } else if (installingWorker.state === 'activated' || installingWorker.state === 'redundant') {
+                setIsInstalling(false);
+              }
             });
           }
         };
@@ -39,21 +51,29 @@ const useServiceWorker = () => {
 
         // already installing (i.e. ready once installed)
         } else if (registration.installing) {
+          setIsInstalling(true);
           awaitInstallingWorker();
 
-        // nothing happening yet
+        // nothing happening yet (either first load OR refresh without a service worker update ready)
         } else {
+
+          // if already has an active service worker, can install in the background whenever the next
+          // one comes in, so no need to show an interstitial
+          if (registration.active) setIsInstalling(false);
+
+          // listen for updates
           registration.addEventListener('updatefound', () => {
             awaitInstallingWorker();
           });
         }
-      });
+      })
     }
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return {
+    isInstalling,
     updateNeeded,
     onUpdateVersion: useCallback(() => {
       if ('serviceWorker' in navigator) {

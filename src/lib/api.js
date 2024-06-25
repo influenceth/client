@@ -426,12 +426,6 @@ const api = {
     return response.data;
   },
 
-  createReferral: async (referral) => {
-    if (!referral?.referrer) return null;
-    const response = await instance.post(`/${apiVersion}/user/referrals`, referral);
-    return response.status;
-  },
-
   getAsteroids: async (ids) => {
     return ids?.length > 0 ? getEntities({ ids, label: Entity.IDS.ASTEROID }) : [];
   },

@@ -69,6 +69,7 @@ export function SessionProvider({ children }) {
   const createAlert = useStore(s => s.dispatchAlertLogged);
 
   const currentSession = useStore(s => s.currentSession);
+  const referredBy = useStore(s => s.referrer);
   const sessions = useStore(s => s.sessions);
   const dispatchSessionStarted = useStore(s => s.dispatchSessionStarted);
   const dispatchSessionSuspended = useStore(s => s.dispatchSessionSuspended);
@@ -288,7 +289,7 @@ export function SessionProvider({ children }) {
         if (sessionSignature) {
           const sessionRequest = createSessionRequest(allowedMethods, expiry, metaData, dappKey.publicKey);
           const message = getSessionTypedData(sessionRequest, hexChainId);
-          const newToken = await api.verifyLogin(connectedAccount, { message, signature: sessionSignature.join(',') });
+          const newToken = await api.verifyLogin(connectedAccount, { message, signature: sessionSignature.join(','), referredBy });
           Object.assign(newSession, {
             walletId: connectedWalletId,
             accountAddress: connectedAccount,
@@ -302,12 +303,12 @@ export function SessionProvider({ children }) {
         // Connect via a traditional browser extension wallet
         const signature = await walletAccount.signMessage(loginMessage);
         if (signature?.code === 'CANCELED') throw new Error('User abort');
-        const newToken = await api.verifyLogin(connectedAccount, { signature: signature.join(',') });
+        const newToken = await api.verifyLogin(connectedAccount, { signature: signature.join(','), referredBy });
         const walletId = walletAccount?.walletProvider?.id;
         Object.assign(newSession, { walletId, accountAddress: connectedAccount, token: newToken });
       } else {
         // If the wallet is not yet deployed, create an insecure session
-        const newToken = await api.verifyLogin(connectedAccount, { signature: 'insecure' });
+        const newToken = await api.verifyLogin(connectedAccount, { signature: 'insecure', referredBy });
         Object.assign(newSession, { walletId: connectedWalletId, accountAddress: connectedAccount, token: newToken });
       }
       dispatchSessionStarted(newSession);
@@ -337,6 +338,7 @@ export function SessionProvider({ children }) {
     connectedWalletId,
     createAlert,
     dispatchSessionStarted,
+    referredBy,
     walletAccount,
     disconnect,
     logout

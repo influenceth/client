@@ -35,7 +35,14 @@ const StationCrew = ({ asteroid, crew, lot, ship, onSetAction, _disabled }) => {
       if (stationConfig.cap && (stationEntity.Station.population + crew._crewmates.length) > stationConfig.cap) {
         return 'station is too full';
       }
-      return getCrewDisabledReason({ asteroid, crew, permission: Permission.IDS.STATION_CREW, permissionTarget: stationEntity, requireSurface: false });
+      return getCrewDisabledReason({
+        asteroid,
+        crew,
+        permission: Permission.IDS.STATION_CREW,
+        permissionTarget: stationEntity,
+        requireSurface: false,
+        requireLaunched: false
+      });
     }
     return '';
   }, [_disabled, asteroid, crew, crewIsController, currentStationing, stationEntity]);

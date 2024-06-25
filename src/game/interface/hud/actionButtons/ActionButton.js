@@ -303,9 +303,10 @@ export const getCrewDisabledReason = ({
   permissionTarget,
   requireAsteroid = true,
   requireSurface = true,
-  requireReady = true
+  requireReady = true,
+  requireLaunched = true
 }) => {
-  if (!crew?._launched) return 'not yet launched';
+  if (!crew?._launched && requireLaunched) return 'not yet launched';
   if (permission && permissionTarget) {
     if (!crew || !Permission.isPermitted(crew, permission, permissionTarget)) return 'access restricted';
   }

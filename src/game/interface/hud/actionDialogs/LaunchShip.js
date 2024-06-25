@@ -288,7 +288,7 @@ const Wrapper = (props) => {
   const dockingManager = useShipDockingManager(props.shipId);
   const { actionStage, currentUndockingAction } = dockingManager;
 
-  const { data: shipCrews, isLoading: shipCrewsLoading } = useStationedCrews(ship, true);
+  const { data: shipCrews, isLoading: shipCrewsLoading } = useStationedCrews(ship);
 
   const { data: asteroid, isLoading: asteroidIsLoading } = useAsteroid(currentUndockingAction?.meta?.asteroidId || ship?._location?.asteroidId);
   const { data: originLot, isLoading: originLotIsLoading } = useLot(currentUndockingAction?.meta?.lotId || ship?._location?.lotId);

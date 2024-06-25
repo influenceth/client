@@ -60,7 +60,7 @@ const useWalletBalances = (overrideAccount) => {
       },
       isLoading
     };
-  }, [gasReserveBalance, isLoading, priceHelper, swappableTokenBalances]);
+  }, [gasReserveBalance, isLoading, priceHelper, refetch1, refetch2, swappableTokenBalances]);
 }
 
 export default useWalletBalances;

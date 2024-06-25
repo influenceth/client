@@ -36,7 +36,8 @@ import {
   MarketBuyIcon,
   BecomeAdminIcon,
   EjectMyCrewIcon,
-  SwayIcon
+  SwayIcon,
+  LandShipIcon
 } from '~/components/Icons';
 import LotLink from '~/components/LotLink';
 
@@ -99,7 +100,7 @@ const isInFinishAllTx = (tx, txCheck) => tx.key === 'FinishAllReady' && (tx.vars
 // to represent the logged-in crew, and there isn't much overhead to invalidate
 // these queries on all logged-in crews
 
-const getPolicyAndAgreementConfig = (couldAddToCollection = false, invalidateAgreements = false) => {
+const getPolicyAndAgreementConfig = (couldAddToCollection = false, invalidateAgreements = false, invalidateSway = false) => {
   return {
     getInvalidations: ({ event: { returnValues } }, { entity = {} }) => {
       const entityId = returnValues.entity ? returnValues.entity : returnValues.target;
@@ -142,6 +143,11 @@ const getPolicyAndAgreementConfig = (couldAddToCollection = false, invalidateAgr
         // just invalidate that whole thing... this may be overkill in the future
         invs.push(['agreements']);
       }
+
+      if (invalidateSway) {
+        invs.push(['walletBalance', 'sway' ]);
+      }
+
       return invs;
     },
     getPrepopEntities: ({ event: { returnValues } }) => ({
@@ -313,6 +319,10 @@ const activities = {
       exchange: returnValues.exchange,
     }),
 
+    getBusyItem: ({ event: { returnValues } }) => ({
+      icon: <PlanBuildingIcon />,
+      label: `Place Buy Order`,
+    }),
     requiresCrewTime: true
   },
   BuyOrderFilled: {
@@ -397,6 +407,10 @@ const activities = {
           <LotLink lotId={returnValues.lot.id} />
         </>
       ),
+    }),
+    getBusyItem: ({ event: { returnValues } }, { building = {} }) => ({
+      icon: <PlanBuildingIcon />,
+      label: `Plan ${Building.TYPES[building?.Building?.buildingType]?.name || 'Building'} Site`,
     }),
     requiresCrewTime: true
   },
@@ -559,6 +573,10 @@ const activities = {
     }),
     getPrepopEntities: ({ event: { returnValues } }) => ({
       building: returnValues.building,
+    }),
+    getBusyItem: ({ event: { returnValues } }, { building = {} }) => ({
+      icon: <ConstructIcon />,
+      label: `Deconstruct ${Building.TYPES[building?.Building?.buildingType]?.name || 'Building'}`,
     }),
     requiresCrewTime: true
   },
@@ -841,6 +859,10 @@ const activities = {
       };
     },
 
+    getBusyItem: ({ event: { returnValues } }) => ({
+      icon: <EjectMyCrewIcon />,
+      label: `Eject Crew`,
+    }),
     requiresCrewTime: true
   },
 
@@ -870,6 +892,10 @@ const activities = {
       };
     },
 
+    getBusyItem: ({ event: { returnValues } }) => ({
+      icon: <StationCrewIcon />,
+      label: `Restation Crew`,
+    }),
     requiresCrewTime: true
   },
 
@@ -1131,6 +1157,10 @@ const activities = {
         ),
       };
     },
+    getBusyItem: ({ event: { returnValues } }) => ({
+      icon: <FoodIcon />,
+      label: `Resupply Food`,
+    }),
     requiresCrewTime: true,
     triggerAlert: true
   },
@@ -1613,6 +1643,10 @@ const activities = {
       exchange: returnValues.exchange,
     }),
 
+    getBusyItem: ({ event: { returnValues } }) => ({
+      icon: <LimitSellIcon />,
+      label: `Place Sell Order`,
+    }),
     requiresCrewTime: true
   },
 
@@ -1841,12 +1875,16 @@ const activities = {
       dock: returnValues.dock
     }),
     getLogContent: ({ event: { returnValues } }) => ({
-      icon: <ScanAsteroidIcon />,
+      icon: <LandShipIcon />,
       content: (
         <>
           <EntityLink {...returnValues.ship} /> docked at <EntityLink {...returnValues.dock} />
         </>
       )
+    }),
+    getBusyItem: ({ event: { returnValues } }) => ({
+      icon: <LandShipIcon />,
+      label: `Land Ship`,
     }),
     requiresCrewTime: true, // only true currently if !powered
     triggerAlert: true
@@ -1893,6 +1931,10 @@ const activities = {
         )
       };
     },
+    getBusyItem: ({ event: { returnValues } }) => ({
+      icon: <LaunchShipIcon />,
+      label: `Launch Ship`,
+    }),
     requiresCrewTime: true, // only true currently if !powered
     triggerAlert: true
   },
@@ -2224,10 +2266,10 @@ const activities = {
   PrepaidMerklePolicyRemoved: getPolicyAndAgreementConfig(),
 
   ContractAgreementAccepted: getPolicyAndAgreementConfig(true, true),
-  PrepaidMerkleAgreementAccepted: getPolicyAndAgreementConfig(true, true),
-  PrepaidAgreementAccepted: getPolicyAndAgreementConfig(true, true),
-  PrepaidAgreementExtended: getPolicyAndAgreementConfig(false, true),
-  PrepaidAgreementCancelled: getPolicyAndAgreementConfig(false, true),
+  PrepaidMerkleAgreementAccepted: getPolicyAndAgreementConfig(true, true, true),
+  PrepaidAgreementAccepted: getPolicyAndAgreementConfig(true, true, true),
+  PrepaidAgreementExtended: getPolicyAndAgreementConfig(false, true, true),
+  PrepaidAgreementCancelled: getPolicyAndAgreementConfig(false, true, true),
 };
 
 /**
