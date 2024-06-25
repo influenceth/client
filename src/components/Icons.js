@@ -26,6 +26,7 @@ import {
   RiPagesFill,
   RiLayoutGridFill,
   RiTableFill,
+  RiTwitterXFill,
   RiRepeatFill,
   RiRouteFill,
   RiSortDesc
@@ -433,5 +434,6 @@ export {
   FiSearch as MagnifyingIcon,
   BsFillPersonFill as UserIcon,
   FaDollarSign as UsdcIcon,
-  FaEthereum as EthIcon
+  FaEthereum as EthIcon,
+  RiTwitterXFill as TwitterXIcon
 };

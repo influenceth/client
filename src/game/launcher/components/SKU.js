@@ -15,7 +15,7 @@ import useStore from '~/hooks/useStore';
 import useAsteroidSale from '~/hooks/useAsteroidSale';
 import useBlockTime from '~/hooks/useBlockTime';
 import useFaucetInfo from '~/hooks/useFaucetInfo';
-import { cleanseTxHash, formatTimer, nativeBool, reactBool, roundToPlaces } from '~/lib/utils';
+import { cleanseTxHash, formatTimer, nativeBool, openAccessJSTime, reactBool, roundToPlaces } from '~/lib/utils';
 import theme from '~/theme';
 import Button from '~/components/ButtonAlt';
 import useWalletBalances from '~/hooks/useWalletBalances';
@@ -612,6 +612,7 @@ const SwayFaucetButton = () => {
 
 const SKU = ({ asset, onBack }) => {
   const { accountAddress, login } = useSession();
+  const blockTime = useBlockTime();
   const { crew, pendingTransactions } = useCrewContext();
   const priceHelper = usePriceHelper();
   const packs = useStarterPacks();
@@ -671,6 +672,10 @@ const SKU = ({ asset, onBack }) => {
   }, [handlePurchase, packs]);
 
   const { content, ...props } = useMemo(() => {
+    const launched = crew
+      ? crew._launched
+      : (blockTime > (openAccessJSTime / 1e3));
+
     if (asset === 'asteroids') {
       return {
         coverImage: AsteroidsHeroImage,
@@ -722,7 +727,7 @@ const SKU = ({ asset, onBack }) => {
           ),
           props: {
             loading: isPurchasingStarterPack,
-            disabled: isPurchasingStarterPack || !crew?._launched,
+            disabled: isPurchasingStarterPack || !launched,
             isTransaction: true,
             onClick: () => onPurchaseStarterPack('advanced'),
             style: { margin: `0 ${purchasePacksPadding}px` },
@@ -730,7 +735,7 @@ const SKU = ({ asset, onBack }) => {
           },
           preLabel: (
             <Button
-              disabled={nativeBool(isPurchasingStarterPack || !crew?._launched)}
+              disabled={nativeBool(isPurchasingStarterPack || !launched)}
               loading={reactBool(isPurchasingStarterPack)}
               isTransaction
               onClick={() => onPurchaseStarterPack('basic')}
@@ -766,14 +771,14 @@ const SKU = ({ asset, onBack }) => {
       props: {
         onClick: () => handlePurchase(),
         isTransaction: true,
-        disabled: isPurchasing || !(purchase?.totalPrice?.usdcValue > 0) || !crew?._launched,
+        disabled: isPurchasing || !(purchase?.totalPrice?.usdcValue > 0) || !launched,
         loading: isPurchasing,
       },
       // conditionally include faucet
       preLabel: process.env.REACT_APP_CHAIN_ID === '0x534e5f5345504f4c4941' && <SwayFaucetButton />
     };
     return params;
-  }, [asset, crew?._launched, filterUnownedAsteroidsAndClose, isPurchasing]);
+  }, [asset, blockTime, crew?._launched, filterUnownedAsteroidsAndClose, isPurchasing]);
 
   return (
     <>

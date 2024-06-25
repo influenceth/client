@@ -318,12 +318,13 @@ const Launcher = (props) => {
   }, [interfaceHidden]);
 
   useEffect(() => {
+    // NOTE: (currently not disallowing any for logged out users)
     // limit selection if logged out
-    if (!authenticated && !['play', 'help', 'settings', 'store'].includes(launcherPage)) {
-      dispatchLauncherPage('play');
-    }
+    // if (!authenticated && !['play', 'help', 'rewards', 'settings', 'store'].includes(launcherPage)) {
+    //   dispatchLauncherPage('play');
+    // }
     // disallow store if no sale available
-    else if (!priceConstantsLoading && !priceConstants?.ADALIAN_PURCHASE_PRICE && launcherPage === 'store') {
+    if (!priceConstantsLoading && !priceConstants?.ADALIAN_PURCHASE_PRICE && launcherPage === 'store') {
       dispatchLauncherPage('play');
     }
   }, [launcherPage, authenticated, priceConstants, priceConstantsLoading]);
