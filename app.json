@@ -112,6 +112,15 @@
     },
     "REACT_APP_GOOGLE_API_KEY": {
       "required": true
+    },
+    "REACT_APP_SOCIAL_QUESTS_URL": {
+      "required": false
+    },
+    "REACT_APP_COLONIZATION_MISSIONS_URL": {
+      "required": false
+    },
+    "REACT_APP_COMMUNITY_MISSIONS_URL": {
+      "required": false
     }
   }
 }

@@ -1,14 +1,14 @@
 import styled from 'styled-components';
 
-import adalianImage from '~/assets/images/crew_collections/4.png'
+import arvadianImage from '~/assets/images/crew_collections/2.png'
 
-export const AdalianFlourish = styled.div`
+export const ArvadianFlourish = styled.div`
   display: block;
   height: 100%;
   width: 100%;
   &:before {
     content: "";
-    background-image: url(${adalianImage});
+    background-image: url(${arvadianImage});
     background-position: center center;
     background-repeat: no-repeat;
     background-size: auto 80%;
@@ -19,4 +19,4 @@ export const AdalianFlourish = styled.div`
   }
 `;
 
-export default AdalianFlourish;
+export default ArvadianFlourish;

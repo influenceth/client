@@ -126,7 +126,7 @@ const YoutubeFeed = ({ playlistId, title }) => {
       try {
         fetch(`https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId=${playlistId}&maxResults=50&key=${process.env.REACT_APP_GOOGLE_API_KEY}`).then(async (response) => {
           const data = await response.json();
-          setVideos(data.items);
+          setVideos(data.items.filter((v) => !!v.snippet?.videoOwnerChannelId)); // (this filters out private videos)
           setLoading(false);
         });
       } catch (e) {
