@@ -78,6 +78,7 @@
     "build-server": "webpack --config server.webpack.config.js",
     "test": "react-app-rewired test",
     "eject": "react-scripts eject",
+    "heroku-postbuild": "node --max-old-space-size=4096 node_modules/.bin/react-app-rewired build && npm run build-server",
     "heroku-prebuild": "node ./prebuild.js",
     "heroku-cleanup": "./cache_bust.sh",
     "postinstall": "patch-package"
