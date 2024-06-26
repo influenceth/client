@@ -113,7 +113,7 @@ const StationManifest = () => {
   ), [crews]);
 
   const listWrapper = useRef();
-  const [listHeight, setListHeight] = useState();
+  const [listHeight, setListHeight] = useState(0);
   useEffect(() => {
     setListHeight(listWrapper.current?.clientHeight || 500);
   }, [screenHeight]);

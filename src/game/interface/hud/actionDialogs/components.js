@@ -1369,7 +1369,7 @@ export const CrewSelectionDialog = ({ crews, disabler, onClose, onSelected, open
   const hydratedLocation = useHydratedLocation(firstNonEmptyCrewLocation);
 
   const listWrapper = useRef();
-  const [listHeight, setListHeight] = useState();
+  const [listHeight, setListHeight] = useState(0);
   useEffect(() => {
     setListHeight(listWrapper.current?.clientHeight || 500);
   }, [crews?.length, screenHeight]);
@@ -1413,8 +1413,6 @@ export const CrewSelectionDialog = ({ crews, disabler, onClose, onSelected, open
       </div>
     );
   }, [crews, disabler, firstNonEmptyCrew?.id, firstEmptyCrew?.id, hydratedLocation]);
-
-
 
   return (
     <SelectionDialog

@@ -116,7 +116,7 @@ const LiveReadyStatus = ({ crew, ...props }) => {
   const scheduleEnd = useMemo(() => blockTime + CREW_SCHEDULE_BUFFER, [blockTime, CREW_SCHEDULE_BUFFER]);
 
   if (!crew || !blockTime) return null;
-  if (crew?._actionTypeTriggered?.pendingEvent) {
+  if (crew._actionTypeTriggered?.pendingEvent) {
     return (
       <StatusContainer {...props}>
         <label style={{ color: '#e6d375' }}>Event</label> 
