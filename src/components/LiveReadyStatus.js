@@ -2,10 +2,11 @@ import { useEffect, useMemo, useState } from 'react';
 import styled, { keyframes } from 'styled-components';
 
 import { CrewBusyIcon, CrewIdleIcon, RandomEventIcon } from '~/components/AnimatedIcons';
+import { ScheduleFullIcon, ShipIcon, TimerIcon } from '~/components/Icons';
+import LiveTimer from '~/components/LiveTimer';
 import useBlockTime from '~/hooks/useBlockTime';
 import useConstants from '~/hooks/useConstants';
-import LiveTimer from './LiveTimer';
-import { ScheduleFullIcon, ShipIcon, TimerIcon } from './Icons';
+import useCrewContext from '~/hooks/useCrewContext';
 import theme from '~/theme';
 
 
@@ -91,6 +92,7 @@ const BusyStatusContainer = styled(StatusContainer)`
 const LiveReadyStatus = ({ crew, ...props }) => {
   const { data: CREW_SCHEDULE_BUFFER } = useConstants('CREW_SCHEDULE_BUFFER');
   const blockTime = useBlockTime();
+  const { isLaunched } = useCrewContext();
 
   const [crewIsBusy, setCrewIsBusy] = useState(false);
   const [waitingOnBlock, setWaitingOnBlock] = useState(false);
@@ -114,7 +116,7 @@ const LiveReadyStatus = ({ crew, ...props }) => {
   const scheduleEnd = useMemo(() => blockTime + CREW_SCHEDULE_BUFFER, [blockTime, CREW_SCHEDULE_BUFFER]);
 
   if (!crew || !blockTime) return null;
-  if (crew?._actionTypeTriggered?.pendingEvent) {
+  if (crew._actionTypeTriggered?.pendingEvent) {
     return (
       <StatusContainer {...props}>
         <label style={{ color: '#e6d375' }}>Event</label> 
@@ -158,11 +160,11 @@ const LiveReadyStatus = ({ crew, ...props }) => {
       </BusyStatusContainer>
     );
   }
-  if (crew.hasOwnProperty('_launched') && !crew?._launched) {
+  if (!isLaunched) {
     return (
       <StatusContainer {...props}>
-        <label>Not Yet Launched</label> 
-        <IconWrapper><TimerIcon /></IconWrapper>
+        <label style={{ opacity: 0.3 }}>Unlaunched</label> 
+        <IconWrapper style={{ opacity: 0.5 }}><TimerIcon /></IconWrapper>
       </StatusContainer>
     );
   }

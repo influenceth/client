@@ -4,6 +4,7 @@ import { Entity } from '@influenceth/sdk';
 
 import api from '~/lib/api';
 import { entitiesCacheKey } from '~/lib/cacheKey';
+import { locationsArrToObj } from '~/lib/utils';
 
 const useStationedCrews = (entityId) => {
   const entityUuid = useMemo(() => entityId ? Entity.packEntity(entityId) : undefined, [entityId]);
@@ -17,7 +18,14 @@ const useStationedCrews = (entityId) => {
     if (crewsLoading) {
       return { data: undefined, isLoading: true };
     }
-    return { data: stationedCrews, isLoading: false }
+
+    return { 
+      data: (stationedCrews || []).map((c) => ({
+        ...c,
+        _location: locationsArrToObj(c?.Location?.locations || [])
+      })),
+      isLoading: false
+    }
   }, [crewsLoading, stationedCrews, crewsUpdatedAt]);
 };
 

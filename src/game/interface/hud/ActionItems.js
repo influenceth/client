@@ -8,16 +8,15 @@ import IconButton from '~/components/IconButton';
 import ConfirmationDialog from '~/components/ConfirmationDialog';
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
 import useActionItems from '~/hooks/useActionItems';
-import useBlockTime from '~/hooks/useBlockTime';
 import useCrewContext from '~/hooks/useCrewContext';
 import useGetActivityConfig from '~/hooks/useGetActivityConfig';
 import useSession from '~/hooks/useSession';
 import useStore from '~/hooks/useStore';
 import useTutorialSteps from '~/hooks/useTutorialSteps';
-import { openAccessJSTime } from '~/lib/utils';
 import { hexToRGB } from '~/theme';
 import ActionItem, { ITEM_WIDTH, TRANSITION_TIME } from './ActionItem';
 import TutorialActionItems from './TutorialActionItems';
+
 
 export const SECTION_WIDTH = ITEM_WIDTH + 30;
 
@@ -281,8 +280,7 @@ const ConfirmBody = styled.div`
 const ActionItems = () => {
   const { authenticated } = useSession();
   const { allVisibleItems: allItems } = useActionItems();
-  const blockTime = useBlockTime();
-  const { crew } = useCrewContext();
+  const { crew, isLaunched } = useCrewContext();
   const { execute, getStatus } = useContext(ChainTransactionContext);
   const getActivityConfig = useGetActivityConfig();
   const tutorialSteps = useTutorialSteps();
@@ -406,12 +404,7 @@ const ActionItems = () => {
     setConfirmingTutorialDismissal();
   }, [crew?.id]);
 
-  const tutorialLaunched = useMemo(() => {
-    return crew?._launched || (blockTime > openAccessJSTime / 1e3);
-  }, [blockTime, crew?._launched]);
-
-  const showTutorial = tutorialLaunched && !dismissAllTutorials && !crewTutorial?.dismissed;
-
+  const showTutorial = isLaunched && !dismissAllTutorials && !crewTutorial?.dismissed;
   return (
     <>
       <OuterWrapper>

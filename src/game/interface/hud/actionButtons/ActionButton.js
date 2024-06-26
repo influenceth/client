@@ -6,6 +6,7 @@ import ClipCorner from '~/components/ClipCorner';
 import useSyncedTime from '~/hooks/useSyncedTime';
 import { formatTimer, nativeBool, reactBool } from "~/lib/utils";
 import { hexToRGB } from '~/theme';
+import useCrewContext from '~/hooks/useCrewContext';
 
 const dimension = 60;
 const padding = 4;
@@ -259,10 +260,32 @@ const StackTally = ({ tally }) => {
 };
 
 // (children used for mouseinfopane)
-const ActionButtonComponent = ({ children, label, labelAddendum, flags = {}, icon, onClick, sequenceMode, ...props }) => {
+const ActionButtonComponent = ({
+  children,
+  label,
+  labelAddendum: rawLabelAddendum,
+  flags: rawFlags,
+  icon,
+  enablePrelaunch,
+  onClick,
+  sequenceMode,
+  ...props
+}) => {
+  const { isLaunched } = useCrewContext();
+
+  const [flags, labelAddendum] = useMemo(() => {
+    const f = rawFlags || {};
+    let l = rawLabelAddendum;
+    if (!enablePrelaunch && !isLaunched) {
+      f.disabled = true;
+      l = 'not yet launched';
+    }
+    return [f, l];
+  }, [enablePrelaunch, isLaunched, rawFlags, rawLabelAddendum]);
+
   const _onClick = useCallback(() => {
     if (!flags?.disabled && onClick) onClick();
-  }, [flags, onClick]);
+  }, [flags?.disabled, onClick]);
 
   const safeFlags = useMemo(() => {
     return Object.keys(flags).reduce((acc, k) => {
@@ -303,10 +326,8 @@ export const getCrewDisabledReason = ({
   permissionTarget,
   requireAsteroid = true,
   requireSurface = true,
-  requireReady = true,
-  requireLaunched = true
+  requireReady = true
 }) => {
-  if (!crew?._launched && requireLaunched) return 'not yet launched';
   if (permission && permissionTarget) {
     if (!crew || !Permission.isPermitted(crew, permission, permissionTarget)) return 'access restricted';
   }

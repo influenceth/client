@@ -213,11 +213,12 @@ export const useStarterPacks = () => {
 // TODO: consider moving isFunding to higher level context with single reference
 const StarterPackWrapper = ({ children, pack, ...props }) => {
   const { data: wallet } = useWalletBalances();
+
   const [isFunding, setIsFunding] = useState();
   const [isFunded, setIsFunded] = useState();
   const onClick = useCallback(() => {
     if (props.asButton) {
-      if (pack.price.usdcValue > wallet.combinedBalance?.to(TOKEN.USDC)) {
+      if (pack.price.usdcValue > wallet?.combinedBalance?.to(TOKEN.USDC)) {
         setIsFunding({
           totalPrice: pack.price,
           onClose: () => setIsFunding(),
@@ -227,7 +228,7 @@ const StarterPackWrapper = ({ children, pack, ...props }) => {
         setIsFunded(true);
       }
     }
-  }, [props.asButton, pack.price, wallet.combinedBalance]);
+  }, [props.asButton, pack.price, wallet?.combinedBalance]);
 
   // pull pack.onPurchase out of onClick (so can be re-memoized after wallet balance updates before called)
   useEffect(() => {

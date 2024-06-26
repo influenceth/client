@@ -151,10 +151,14 @@ export function SessionProvider({ children }) {
 
         // Default to provider chainId if not set (starknetkit doesn't set for braavos)
         if (!isAllowedChain(chainId)) {
-          await wallet.request({
-            type: 'wallet_switchStarknetChain',
-            params: { chainId: process.env.REACT_APP_CHAIN_ID }
-          });
+          try {
+            await wallet.request({
+              type: 'wallet_switchStarknetChain',
+              params: { chainId: process.env.REACT_APP_CHAIN_ID }
+            });
+          } catch (e) { // (standardize error message here since different between wallets)
+            throw new Error('Incorrect chain');
+          }
 
           localStorage.setItem('starknetLastConnectedWallet', wallet.id);
           await connect(true);
@@ -168,11 +172,11 @@ export function SessionProvider({ children }) {
         console.error('No connected wallet or missing address');
       }
     } catch(e) {
-      if (e.message === 'Not implemented') {
+      if (e.message === 'Incorrect chain') {
         setError(`Incorrect chain, please switch to ${resolveChainId(process.env.REACT_APP_CHAIN_ID)}`);
       }
 
-      if (e.message !== 'User rejected request') {
+      else if (e.message !== 'User rejected request') {
         setError(e);
       }
     }
