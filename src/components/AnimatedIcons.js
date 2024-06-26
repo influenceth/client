@@ -9,7 +9,13 @@ import Ready from '~/assets/icons/animated/Ready.json';
 
 const LottieIcon = ({ animation, isPaused = false, size = '1em' }) => {
   const lottieRef = useRef();
-  const style = useMemo(() => ({ width: size, height: size }), [size]);
+  const style = useMemo(() => ({
+    alignItems: 'center',
+    display: 'flex',
+    height: size,
+    justifyContent: 'center',
+    width: size,
+  }), [size]);
 
   useEffect(() => {
     if (isPaused) lottieRef.current.pause();

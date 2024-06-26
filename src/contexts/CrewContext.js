@@ -141,6 +141,7 @@ export function CrewProvider({ children }) {
   const { data: selectedCrewLocation } = useEntity(selectedCrew ? { ...selectedCrew.Location.location } : undefined);
 
   const [actionTypeTriggered, setActionTypeTriggered] = useState(false);
+  useEffect(() => setActionTypeTriggered(false), [selectedCrew?.id]); // recheck random event status on crew change
   useEffect(() => {
     if (!actionTypeTriggered) {
       // TODO: actionRound tmp fix
