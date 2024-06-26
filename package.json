@@ -75,7 +75,7 @@
     "analyze": "source-map-explorer 'build/static/js/*.js'",
     "start": "react-app-rewired start",
     "build": "react-app-rewired build && npm run build-server",
-    "build-server": "webpack --config server.webpack.config.js",
+    "build-server": "node --max-old-space-size=8192 node_modules/.bin/webpack --config server.webpack.config.js",
     "test": "react-app-rewired test",
     "eject": "react-scripts eject",
     "heroku-postbuild": "node --max-old-space-size=8192 node_modules/.bin/react-app-rewired build && npm run build-server",
