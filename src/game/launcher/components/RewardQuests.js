@@ -2,11 +2,11 @@ import { useState } from 'react';
 import styled from 'styled-components';
 import Loader from 'react-spinners/PuffLoader';
 
-import AsteroidsHeroImage from '~/assets/images/sales/asteroids_hero.png';
 import CrewmatesHeroImage from '~/assets/images/sales/crewmates_hero.png';
 import ClipCorner from '~/components/ClipCorner';
 import NavIcon from '~/components/NavIcon';
-import { CrewIcon, DiscordIcon, TwitterXIcon } from '~/components/Icons';
+import { DiscordIcon, TwitterXIcon } from '~/components/Icons';
+import useCrewContext from '~/hooks/useCrewContext';
 
 const StyledNavIcon = styled(NavIcon).attrs((p) => ({
   color: p.theme.colors.darkMain,
@@ -197,17 +197,17 @@ const Quest = ({ quest }) => {
 
 
 const RewardQuests = () => {
-  const [comingSoon, setComingSoon] = useState();
+  const { isLaunched } = useCrewContext();
   const [error, setError] = useState();
   const [loading, setLoading] = useState();
   return (
     <Wrapper>
       <RewardsTitle>Powered By <b>Starknet Quest</b></RewardsTitle>
       <RewardsWrapperOuter>
-        {comingSoon && <ErrorWrapper>Coming soon.</ErrorWrapper>}
-        {!comingSoon && error && <ErrorWrapper>Something went wrong. Please try again.</ErrorWrapper>}
-        {!comingSoon && !error && loading && <LoadingWrapper><Loader color="white" size="60px" /></LoadingWrapper>}
-        {!comingSoon && !error && !loading && (
+        {!isLaunched && <ErrorWrapper>Coming soon.</ErrorWrapper>}
+        {isLaunched && error && <ErrorWrapper>Something went wrong. Please try again.</ErrorWrapper>}
+        {isLaunched && !error && loading && <LoadingWrapper><Loader color="white" size="60px" /></LoadingWrapper>}
+        {isLaunched && !error && !loading && (
           <>
             <label>
               Individual quests. View quest status on <a href={process.env.REACT_APP_SOCIAL_QUESTS_URL} target="_blank">Starknet Quest</a>.

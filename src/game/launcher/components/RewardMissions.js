@@ -3,13 +3,12 @@ import styled from 'styled-components';
 import Loader from 'react-spinners/PuffLoader';
 
 import AsteroidsHeroImage from '~/assets/images/sales/asteroids_hero.png';
-import CrewmatesHeroImage from '~/assets/images/sales/crewmates_hero.png';
-import ColonizationImage from '~/assets/images/hud_headers/SurfaceShip.png';
 import AsteroidSurfaceImage from '~/assets/images/hud_headers/Asteroid.png';
 import ClipCorner from '~/components/ClipCorner';
 import NavIcon from '~/components/NavIcon';
 import AdalianFlourish from '~/components/AdalianFlourish';
 import ArvadianFlourish from '~/components/ArvadianFlourish';
+import useCrewContext from '~/hooks/useCrewContext';
 
 const missions = {
   community: [
@@ -348,7 +347,7 @@ const Mission = ({ mission, mode }) => {
   );
 };
 const RewardMissions = ({ mode }) => {
-  console.log({ mode });
+  const { isLaunched } = useCrewContext();
   const [comingSoon, setComingSoon] = useState();
   const [error, setError] = useState();
   const [loading, setLoading] = useState();
@@ -356,10 +355,10 @@ const RewardMissions = ({ mode }) => {
     <Wrapper>
       <RewardsTitle>Powered By <b>Wendash</b></RewardsTitle>
       <RewardsWrapperOuter>
-        {comingSoon && <ErrorWrapper>Coming soon.</ErrorWrapper>}
-        {!comingSoon && error && <ErrorWrapper>Something went wrong. Please try again.</ErrorWrapper>}
-        {!comingSoon && !error && loading && <LoadingWrapper><Loader color="white" size="60px" /></LoadingWrapper>}
-        {!comingSoon && !error && !loading && (
+        {!isLaunched && <ErrorWrapper>Coming soon.</ErrorWrapper>}
+        {isLaunched && error && <ErrorWrapper>Something went wrong. Please try again.</ErrorWrapper>}
+        {isLaunched && !error && loading && <LoadingWrapper><Loader color="white" size="60px" /></LoadingWrapper>}
+        {isLaunched && !error && !loading && (
           <>
             {mode === 'colonization' && (
               <label>
