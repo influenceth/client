@@ -18,7 +18,7 @@ const LotViewer = () => {
   // Play chatter after a delay, clear timeout if scene changes
   useEffect(() => {
     if (zoomScene?.type === 'LOT' && lot?.building?.Building?.buildingType > 0) {
-      const id = setTimeout(() => playSound(`buildingChatter.${lot?.building?.Building?.buildingType}`), 10000);
+      const id = setTimeout(() => playSound(`buildingChatter.${lot?.building?.Building?.buildingType}`), 5000);
       setPendingSound(id);
       return () => {
         clearTimeout(id);
