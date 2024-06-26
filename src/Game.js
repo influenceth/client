@@ -24,6 +24,7 @@ import useSession from '~/hooks/useSession';
 import useServiceWorker from '~/hooks/useServiceWorker';
 import useStore from '~/hooks/useStore';
 import constants from '~/lib/constants';
+import ScreensizeWarning from '~/ScreensizeWarning';
 import theme from '~/theme';
 
 const { GRAPHICS_DEFAULTS } = constants;
@@ -212,6 +213,7 @@ const Game = () => {
                               <ActionItemProvider>
                                   <ThemeProvider theme={theme}>
                                     <ScreensizeProvider>
+                                      <ScreensizeWarning />
                                       <Interface />
                                     </ScreensizeProvider>
                                   </ThemeProvider>

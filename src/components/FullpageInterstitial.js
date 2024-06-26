@@ -34,9 +34,9 @@ const Message = styled.div`
   margin: 25px 0 30px;
 `;
 
-const FullpageInterstitial = ({ message, onSkip, skipContent }) => {
+const FullpageInterstitial = ({ message, onSkip, skipContent, ...props }) => {
   return (
-    <Wrapper>
+    <Wrapper {...props}>
       <LogoWrapper><InfluenceIcon /></LogoWrapper>
       <Message>{message}</Message>
       {onSkip && <Button onClick={onSkip} size="small">{skipContent || 'Skip'}</Button>}
