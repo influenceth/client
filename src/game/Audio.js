@@ -199,7 +199,7 @@ const Audio = () => {
 
   useEffect(() => {
     const onClick = () => {
-      setTimeout(() => setSoundEnabled(true), 5000);
+      setSoundEnabled(true);
       document.body.removeEventListener('click', onClick);
     };
 
@@ -223,16 +223,18 @@ const Audio = () => {
       to = setTimeout(() => setLastTrack(index), Math.random() * 60000);
     } else {
       setCurrentTrack(track);
-      track.load();
-      track.play();
-      track.fade(0, track.baseVolume * musicVolume / 100, 5000);
-
-      track.once('end', () => {
-        track.stop();
-        track.unload();
-        setCurrentTrack(null);
-        to = setTimeout(() => setLastTrack(index), Math.random() * 2500);
-      });
+      to = setTimeout(() => {
+        track.load();
+        track.play();
+        track.fade(0, track.baseVolume * musicVolume / 100, 5000);
+  
+        track.once('end', () => {
+          track.stop();
+          track.unload();
+          setCurrentTrack(null);
+          to = setTimeout(() => setLastTrack(index), Math.random() * 2500);
+        });
+      }, 5000);
     }
 
     return () => {
@@ -243,6 +245,8 @@ const Audio = () => {
 
   // Adjust volume of music tracks
   useEffect(() => {
+    if (!soundEnabled) return;
+
     let to;
     if (currentTrack) {
       const targetVolume = currentTrack.baseVolume * musicVolume / 100;
@@ -265,9 +269,11 @@ const Audio = () => {
     return () => {
       if (to) clearTimeout(to);
     }
-  }, [ musicVolume, currentTrack, cutscenePlaying ]);
+  }, [ musicVolume, currentTrack, cutscenePlaying, soundEnabled ]);
 
   useEffect(() => {
+    if (!soundEnabled) return;
+
     Object.entries(currentEffects).forEach(([ sound, settings ]) => {
       if (settings.status === 'play') {
         playEffect(sound, settings);
@@ -279,7 +285,7 @@ const Audio = () => {
         effectEnded(sound);
       }
     });
-  }, [currentEffects, effectStarted, effectEnded, playEffect, stopEffect]);
+  }, [currentEffects, effectStarted, effectEnded, playEffect, soundEnabled, stopEffect]);
 
   return null;
 };
