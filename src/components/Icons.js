@@ -177,9 +177,11 @@ import TravelingToSVG from '~/assets/icons/action_buttons/TravelingTo.svg';
 import UnplanBuildingSVG from '~/assets/icons/action_buttons/UnplanBuilding.svg';
 
 import BioreactorBuildingSVG from '~/assets/icons/buildings/Bioreactor.svg';
+import ConstructionSiteSVG from '~/assets/icons/buildings/ConstructionSite.svg';
 import ExtractorBuildingSVG from '~/assets/icons/buildings/Extractor.svg';
 import FactoryBuildingSVG from '~/assets/icons/buildings/Factory.svg';
 import HabitatBuildingSVG from '~/assets/icons/buildings/Habitat.svg';
+import LandedShipSVG from '~/assets/icons/buildings/LandedShip.svg';
 import MarketplaceBuildingSVG from '~/assets/icons/buildings/Marketplace.svg';
 import RefineryBuildingSVG from '~/assets/icons/buildings/Refinery.svg';
 import ShipyardBuildingSVG from '~/assets/icons/buildings/Shipyard.svg';
@@ -358,9 +360,11 @@ export const UnplanBuildingIcon = () => <UnplanBuildingSVG className="icon" />;
 
 // building icons
 export const BioreactorBuildingIcon = () => <BioreactorBuildingSVG className="icon" />;
+export const ConstructionSiteBuildingIcon = () => <ConstructionSiteSVG className="icon" />;
 export const ExtractorBuildingIcon = () => <ExtractorBuildingSVG className="icon" />;
 export const FactoryBuildingIcon = () => <FactoryBuildingSVG className="icon" />;
 export const HabitatBuildingIcon = () => <HabitatBuildingSVG className="icon" />;
+export const LandedShipBuildingIcon = () => <LandedShipSVG className="icon" />;
 export const MarketplaceBuildingIcon = () => <MarketplaceBuildingSVG className="icon" />;
 export const RefineryBuildingIcon = () => <RefineryBuildingSVG className="icon" />;
 export const ShipyardBuildingIcon = () => <ShipyardBuildingSVG className="icon" />;
