@@ -401,6 +401,7 @@ export function ChainTransactionProvider({ children }) {
     authenticated,
     blockNumber,
     blockTime,
+    fixBraavos,
     isDeployed,
     logout,
     provider,
@@ -451,8 +452,10 @@ export function ChainTransactionProvider({ children }) {
 
     // Use session wallet if possible, otherwise regular wallet, but "old" account if wallet RPC won't work
     const account = canUseSession ? starknetSession : (walletAccount.walletProvider?.account || walletAccount);
-    return account.execute(calls);
-  }, [allowedMethods, createAlert, starknetSession, walletAccount]);
+    const response = await account.execute(calls);
+    fixBraavos();
+    return response;
+  }, [allowedMethods, createAlert, fixBraavos, starknetSession, walletAccount]);
 
   const contracts = useMemo(() => {
     if (!!walletAccount) {
