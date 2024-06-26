@@ -193,9 +193,9 @@ const SystemControls = () => {
 
   return (
     <StyledSystemControls id="topMenu">
-      <MobileWarning>
+      <MobileWarning style={{ marginRight: 10 }}>
         <WarningIcon />
-        <span>Mobile is not well supported, please use desktop.</span>
+        <span style={{ marginLeft: 5 }}>Device size is not well supported.</span>
       </MobileWarning>
 
       {totalRecruitCredits
