@@ -58,10 +58,11 @@ const CrewLocationCompactLabel = ({ alignLeft, crew, noClick, zoomedToAsteroid, 
   }, [asteroid, crew, ship]);
 
   const specificLabel = useMemo(() => {
+    if (!crew) return '';
     if (ship) return formatters.shipName(ship);
     if (building) return formatters.buildingName(building);
     return 'Escape Module';
-  }, [ship, building]);
+  }, [!crew, ship, building]);
 
   const status = useMemo(() => {
     if (ship && building) return 'Docked';

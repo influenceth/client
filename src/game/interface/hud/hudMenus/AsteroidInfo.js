@@ -190,7 +190,6 @@ const AsteroidInfo = ({ onClose }) => {
           <PolicyPanels entity={asteroid} />
         </HudMenuCollapsibleSection>
 
-        
       </Scrollable>
       
       {zoomStatus === 'out' && (

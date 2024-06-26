@@ -40,8 +40,7 @@ const StationCrew = ({ asteroid, crew, lot, ship, onSetAction, _disabled }) => {
         crew,
         permission: Permission.IDS.STATION_CREW,
         permissionTarget: stationEntity,
-        requireSurface: false,
-        requireLaunched: false
+        requireSurface: false
       });
     }
     return '';
@@ -71,6 +70,7 @@ const StationCrew = ({ asteroid, crew, lot, ship, onSetAction, _disabled }) => {
     <ActionButton
       {...buttonParams}
       labelAddendum={disabledReason}
+      enablePrelaunch
       flags={{
         disabled: disabledReason,
         loading: !!currentStationing

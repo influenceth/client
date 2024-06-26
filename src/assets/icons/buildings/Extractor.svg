@@ -1,4 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" viewBox="0 0 32 32">
-  <polygon points="16 28.7 10.54 23.24 10.54 9.99 4.1 9.99 4.1 7.99 12.54 7.99 12.54 22.41 16 25.87 19.46 22.41 19.46 7.99 27.9 7.99 27.9 9.99 21.46 9.99 21.46 23.24 16 28.7"/>
-  <rect x="15" y="4.89" width="2" height="14.78"/>
+  <rect x="12" y="4" width="8" height="2"/>
+  <polygon points="24.28 27 19.77 9 12.08 9 7.7 27 5 27 5 29 12 29 12 27 9.76 27 13.66 11 18.21 11 22.22 27 20 27 20 29 27 29 27 27 24.28 27"/>
+  <rect x="13.91" y="26" width="4.17" height="2" transform="translate(-14.41 19.22) rotate(-45)"/>
+  <rect x="13.91" y="20.98" width="4.17" height="2" transform="translate(-10.85 17.75) rotate(-45)"/>
+  <rect x="13.91" y="16.03" width="4.17" height="2" transform="translate(-7.35 16.3) rotate(-45)"/>
 </svg>

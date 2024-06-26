@@ -12,7 +12,8 @@ const useBookTokens = (bookId) => {
   const swayAmount = useMemo(() => {
     if (swayIsLoading) return null;
     const scaledSwayBalance = (dispatcherBalance || 0n) / BigInt(TOKEN_SCALE[TOKEN.SWAY]);
-    return parseInt(Math.min(10000, Math.floor(Number(scaledSwayBalance) / 1000)));
+    const SWAY_AMOUNT = 30000; // TODO: find better way to get the sway amount (it will change every so often)
+    return parseInt(Math.min(SWAY_AMOUNT, Math.floor(Number(scaledSwayBalance) / 1000)));
   }, [dispatcherBalance, swayIsLoading]);
 
   const bookTokens = useMemo(() => {

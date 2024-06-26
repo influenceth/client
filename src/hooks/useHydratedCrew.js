@@ -20,7 +20,7 @@ const useHydratedCrew = (id) => {
     if (crew && !crewLoading && !crewmatesLoading && !constantsLoading) {
       data = cloneDeep(crew);
       data._crewmates = (crewmates || []).map((c) => cloneDeep(c));
-      data._location = locationsArrToObj(crew.Location?.locations);
+      data._location = locationsArrToObj(crew.Location?.locations || []);
       data._ready = blockTime >= data.Crew?.readyAt;
       data._readyToSequence = blockTime + CREW_SCHEDULE_BUFFER >= data.Crew.readyAt;
 

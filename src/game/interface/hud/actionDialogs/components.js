@@ -594,6 +594,10 @@ const SliderInfoRow = styled.div`
 const ProductWrapper = styled.div`
   display: flex;
   flex-direction: row;
+  ${p => p.horizontalScroll && `
+    overflow-x: auto;
+    padding-bottom: 16px;
+  `}
 `;
 const ProductGridWrapper = styled.div`
   column-gap: 5px;
@@ -1369,7 +1373,7 @@ export const CrewSelectionDialog = ({ crews, disabler, onClose, onSelected, open
   const hydratedLocation = useHydratedLocation(firstNonEmptyCrewLocation);
 
   const listWrapper = useRef();
-  const [listHeight, setListHeight] = useState();
+  const [listHeight, setListHeight] = useState(0);
   useEffect(() => {
     setListHeight(listWrapper.current?.clientHeight || 500);
   }, [crews?.length, screenHeight]);
@@ -1413,8 +1417,6 @@ export const CrewSelectionDialog = ({ crews, disabler, onClose, onSelected, open
       </div>
     );
   }, [crews, disabler, firstNonEmptyCrew?.id, firstEmptyCrew?.id, hydratedLocation]);
-
-
 
   return (
     <SelectionDialog
@@ -3410,7 +3412,7 @@ export const ProcessInputOutputSection = ({ title, products, input, output, prim
 
   return (
     <FlexSectionBlock title={title} {...props} bodyStyle={{ padding: 0 }}>
-      <ProductWrapper>
+      <ProductWrapper horizontalScroll={products?.length > 7}>
         {products.map(({ i: resourceId, recipe, amount }) => {
           const thumbProps = {};
           if (output) {
@@ -3677,6 +3679,18 @@ export const SwayInputBlock = ({ title, ...props }) => (
   </FlexSectionInputBlock>
 );
 
+const InlineCrewDetails = styled.div`
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  & > div:first-child {
+    overflow: hidden;
+    padding-left: 4px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+`;
 export const CrewInputBlock = ({ cardWidth, crew, hideCrewmates, highlightCrewmates, inlineDetails, title, ...props }) => {
   return (
     <FlexSectionInputBlock
@@ -3697,15 +3711,10 @@ export const CrewInputBlock = ({ cardWidth, crew, hideCrewmates, highlightCrewma
       {...props}>
       <div>
         {crew && inlineDetails && (
-          <div style={{ display: 'flex', alignItems: 'center', marginBottom: 8 }}>
-            <div>
-              <span style={{ marginLeft: 4 }}>
-                {formatters.crewName(crew)}
-              </span>
-            </div>
-            <div style={{ flex: 1 }} />
+          <InlineCrewDetails>
+            <div>{formatters.crewName(crew)}</div>
             <LiveReadyStatus crew={crew} style={{ fontSize: '14px' }} />
-          </div>
+          </InlineCrewDetails>
         )}
         {!hideCrewmates && (
           <CrewmateCards>
@@ -4170,7 +4179,7 @@ export const ActionDialogFooter = ({
   waitForCrewReady,
   wide
 }) => {
-  const { crew } = useCrewContext();
+  const { crew, isLaunched } = useCrewContext();
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
 
   // TODO: connect notifications to top-level state
@@ -4182,7 +4191,7 @@ export const ActionDialogFooter = ({
     setNotificationsEnabled((x) => !x);
   }, []);
 
-  const allowedOrLaunched = useMemo(() => requireLaunched ? crew?._launched : true, [crew, requireLaunched]);
+  const allowedOrLaunched = useMemo(() => requireLaunched ? isLaunched : true, [isLaunched, requireLaunched]);
 
   const isReady = isSequenceable ? crew?._readyToSequence : crew?._ready;
   return (

@@ -18,7 +18,7 @@ const isVisible = ({ asteroid, crew }) => {
 const ScanAsteroid = ({ asteroid, _disabled }) => {
   const history = useHistory();
   const { scanStatus, scanType } = useScanManager(asteroid);
-  const { crew } = useCrewContext();
+  const { crew, isLaunched } = useCrewContext();
 
   const { disabledReason, label, flags, handleClick } = useMemo(() => {
     let flags = {
@@ -30,7 +30,7 @@ const ScanAsteroid = ({ asteroid, _disabled }) => {
     let disabledReason = _disabled ? 'loading...' : null;
 
     // resource scan requires crew to be on asteroid
-    if (!crew?._launched) {
+    if (!isLaunched) {
       flags.disabled = true;
       disabledReason = 'not yet launched';
     }
@@ -88,7 +88,7 @@ const ScanAsteroid = ({ asteroid, _disabled }) => {
           }
         };
     }
-  }, [asteroid?.id, crew?._launched, crew?._ready, scanStatus, _disabled]);
+  }, [asteroid?.id, crew?._ready, isLaunched, scanStatus, _disabled]);
 
   // TODO: icon should probably be distinct for each scan type
   return (

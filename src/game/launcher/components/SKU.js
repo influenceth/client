@@ -612,8 +612,7 @@ const SwayFaucetButton = () => {
 
 const SKU = ({ asset, onBack }) => {
   const { accountAddress, login } = useSession();
-  const blockTime = useBlockTime();
-  const { crew, pendingTransactions } = useCrewContext();
+  const { pendingTransactions, isLaunched } = useCrewContext();
   const priceHelper = usePriceHelper();
   const packs = useStarterPacks();
   const { data: wallet } = useWalletBalances();
@@ -672,10 +671,6 @@ const SKU = ({ asset, onBack }) => {
   }, [handlePurchase, packs]);
 
   const { content, ...props } = useMemo(() => {
-    const launched = crew
-      ? crew._launched
-      : (blockTime > (openAccessJSTime / 1e3));
-
     if (asset === 'asteroids') {
       return {
         coverImage: AsteroidsHeroImage,
@@ -727,7 +722,7 @@ const SKU = ({ asset, onBack }) => {
           ),
           props: {
             loading: isPurchasingStarterPack,
-            disabled: isPurchasingStarterPack || !launched,
+            disabled: isPurchasingStarterPack || !isLaunched,
             isTransaction: true,
             onClick: () => onPurchaseStarterPack('advanced'),
             style: { margin: `0 ${purchasePacksPadding}px` },
@@ -735,7 +730,7 @@ const SKU = ({ asset, onBack }) => {
           },
           preLabel: (
             <Button
-              disabled={nativeBool(isPurchasingStarterPack || !launched)}
+              disabled={nativeBool(isPurchasingStarterPack || !isLaunched)}
               loading={reactBool(isPurchasingStarterPack)}
               isTransaction
               onClick={() => onPurchaseStarterPack('basic')}
@@ -771,14 +766,14 @@ const SKU = ({ asset, onBack }) => {
       props: {
         onClick: () => handlePurchase(),
         isTransaction: true,
-        disabled: isPurchasing || !(purchase?.totalPrice?.usdcValue > 0) || !launched,
+        disabled: isPurchasing || !(purchase?.totalPrice?.usdcValue > 0) || !isLaunched,
         loading: isPurchasing,
       },
       // conditionally include faucet
       preLabel: process.env.REACT_APP_CHAIN_ID === '0x534e5f5345504f4c4941' && <SwayFaucetButton />
     };
     return params;
-  }, [asset, blockTime, crew?._launched, filterUnownedAsteroidsAndClose, isPurchasing]);
+  }, [asset, isLaunched, filterUnownedAsteroidsAndClose, isPurchasing]);
 
   return (
     <>

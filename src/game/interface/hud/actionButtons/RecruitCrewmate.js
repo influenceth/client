@@ -73,8 +73,7 @@ const RecruitCrewmate = ({ asteroid, crew, lot, _disabled }) => {
       asteroid,
       crew,
       permission: Permission.IDS.RECRUIT_CREWMATE,
-      permissionTarget: lot?.building,
-      requireLaunched: false
+      permissionTarget: lot?.building
     });
   }, [asteroid, crew, lot?.building, pendingCrewmate, recruitToCrew]);
 
@@ -83,6 +82,7 @@ const RecruitCrewmate = ({ asteroid, crew, lot, _disabled }) => {
     <ActionButton
       label={`Recruit Crewmate${tooltipExtra}`}
       labelAddendum={disabledReason}
+      enablePrelaunch
       flags={{
         disabled: disabledReason,
         attention: reactBool(!pendingCrewmate && !(crew?.Crew?.roster?.length > 0)),

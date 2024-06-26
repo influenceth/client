@@ -1,5 +1,4 @@
 import { useCallback, useMemo } from 'react';
-import { Inventory, Ship } from '@influenceth/sdk';
 
 import { EmergencyModeEnterIcon, EmergencyModeExitIcon } from '~/components/Icons';
 import useShip from '~/hooks/useShip';
@@ -7,7 +6,9 @@ import useShipEmergencyManager from '~/hooks/actionManagers/useShipEmergencyMana
 import ActionButton, { getCrewDisabledReason } from './ActionButton';
 import useReadyAtWatcher from '~/hooks/useReadyAtWatcher';
 
-const isVisible = ({ crew, ship }) => {
+const isVisible = ({ crew, crewedShip, ship }) => {
+  if (!crew || !crewedShip || !ship) return false; // not on a ship
+  if (crewedShip.Control?.controller?.id !== crew.id) return false; // not piloting a ship
   if (crew && ship && crew._location.shipId === ship.id) {
     // if already in emode, show so can toggle off
     if (ship.Ship.emergencyAt > 0) return true;

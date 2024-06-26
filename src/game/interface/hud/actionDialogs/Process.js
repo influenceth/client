@@ -410,7 +410,7 @@ const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...pro
             title={`${gerund} Location`}
             lot={lot}
             disabled={stage !== actionStages.NOT_STARTED}
-            style={{ width: '33.3%' }}
+            style={{ flex: '0 0 30%' }}
           />
 
           <FlexSectionSpacer />
@@ -421,7 +421,7 @@ const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...pro
               <span style={{ fontSize: '85%' }}>Setup Time: {formatTimer(setupTime)}</span>
             )}
             bodyStyle={{ padding: 0 }}
-            style={{ alignSelf: 'flex-start', width: '66.7%' }}>
+            style={{ alignSelf: 'flex-start', flex: 1 }}>
 
             <FlexSectionInputBody
               isSelected={stage === actionStages.NOT_STARTED}
@@ -468,7 +468,7 @@ const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...pro
             isSourcing={true}
             isSelected={process && stage === actionStages.NOT_STARTED}
             onClick={() => { setOriginSelectorOpen(true) }}
-            style={{ marginBottom: 20, width: '33.3%' }}
+            style={{ flex: '0 0 30%', marginBottom: 20 }}
             sublabel={
               originLot
                 ? <><LocationIcon /> {formatters.lotName(originLotIndex)}</>
@@ -495,7 +495,7 @@ const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...pro
             }
             source={originInventory}
             stage={stage}
-            style={{ alignSelf: 'flex-start', width: '66.7%' }} />
+            style={{ alignSelf: 'flex-start', flex: 1 }} />
 
         </FlexSection>
 
@@ -513,7 +513,7 @@ const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...pro
             }}
             isSelected={process && stage === actionStages.NOT_STARTED}
             onClick={() => { setDestinationSelectorOpen(true) }}
-            style={{ marginBottom: 20, width: '33.3%' }}
+            style={{ flex: '0 0 30%', marginBottom: 20 }}
             sublabel={
               destinationLot
                 ? <><LocationIcon /> {formatters.lotName(destinationLotIndex)}</>
@@ -543,7 +543,7 @@ const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...pro
             primaryOutput={primaryOutput}
             stage={stage}
             setPrimaryOutput={stage === actionStages.NOT_STARTED ? setPrimaryOutput : null}
-            style={{ alignSelf: 'flex-start', width: '66.7%' }} />
+            style={{ alignSelf: 'flex-start', flex: 1 }} />
 
         </FlexSection>
 

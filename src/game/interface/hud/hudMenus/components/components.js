@@ -4,6 +4,7 @@ import CollapsibleSection from '~/components/CollapsibleSection';
 
 export const trayHeight = 80;
 export const majorBorderColor = 'rgba(255, 255, 255, 0.2)';
+export const scrollbarPadding = 16;
 
 export const opacityAnimation = keyframes`
   0% { opacity: 1; }
@@ -15,8 +16,8 @@ export const Scrollable = styled.div`
   height: ${p => p.hasTray ? `calc(100% - ${trayHeight}px)` : '100%'};
   overflow-x: hidden;
   overflow-y: auto;
-  padding-right: 15px;
-  margin-right: -12px;
+  padding-right: ${scrollbarPadding}px;
+  margin-right: -${scrollbarPadding}px;
 `;
 
 export const Tray = styled.div`
@@ -46,14 +47,19 @@ export const TrayLabel = styled.div`
 `;
 
 export const SectionTitle = styled.div`
+  align-items: center;
+  display: flex;
+  flex-direction: row;
   font-size: 16px;
   text-transform: uppercase;
   width: 100%;
+  & > span {
+    flex: 1;
+  }
   ${p => p.label && `
     &:after {
       content: "${p.label}";
       color: #777;
-      float: right;
       font-size: 14px;
       text-transform: none;
     }
@@ -68,15 +74,13 @@ export const Rule = styled.div`
 
 export const HudMenuCollapsibleSection = ({ children, collapsed, titleText, titleLabel, titleAction, titleProps, ...props }) => (
   <CollapsibleSection
-    title={<SectionTitle label={titleLabel} {...titleProps}>{titleText}</SectionTitle>}
+    title={<SectionTitle label={titleLabel} {...titleProps}><span>{titleText}</span></SectionTitle>}
     titleAction={titleAction}
     collapsibleProps={{
       borderColor: majorBorderColor,
-      width: 'calc(100% - 22px)', // -32px for left margin, +8 px for neg right margin
       style: {
-        paddingRight: 8,
-        overflowX: 'visible',
-        overflowY: 'scroll'
+        overflowX: 'hidden',
+        overflowY: 'auto'
       }
     }}
     initiallyClosed={!!collapsed}

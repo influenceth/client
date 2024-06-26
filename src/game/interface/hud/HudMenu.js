@@ -115,7 +115,7 @@ const Button = styled.div`
   position: relative;
   transition: background 250ms ease, border-color 250ms ease, color 250ms ease, opacity 250ms ease;
   width: ${buttonsWidth}px;
-  
+
   ${p => p.iconColor
     ? `
       color: ${p.theme.colors.main};
@@ -372,12 +372,12 @@ const HudMenu = () => {
           label: 'Asteroid Info',
           icon: <InfoIcon />,
           Component: hudMenus.AsteroidInfo,
-          // detailType: 'detail',
-          // onDetailClick: () => {
-          //   if (asteroidId) {
-          //     history.push(`/asteroids/${asteroidId}`);
-          //   }
-          // }
+          detailType: 'detail',
+          onDetailClick: () => {
+            if (asteroidId) {
+              history.push(`/asteroids/${asteroidId}`);
+            }
+          },
           isVisible: focus === 'asteroid'
         },
         {
@@ -658,7 +658,7 @@ const HudMenu = () => {
   return (
     <Wrapper>
       <Tooltip id="hudMenuTooltip" />
-      
+
       {/* NOTE: the hudMenu id is in use by third-party extensions */}
       <Buttons id="hudMenu" open={open}>
         {visibleMenuButtons.length > 0 && (
