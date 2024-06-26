@@ -298,7 +298,14 @@ export function SessionProvider({ children }) {
         }
       } else if (newSession.isDeployed) {
         // Connect via a traditional browser extension wallet
-        const signature = await walletAccount.signMessage(loginMessage);
+        let signature;
+
+        try {
+          signature = await walletAccount.signMessage(loginMessage);
+        } catch (e) {
+          signature = await walletAccount.walletProvider?.account.signMessage(loginMessage);
+        }
+
         if (signature?.code === 'CANCELED') throw new Error('User abort');
         const newToken = await api.verifyLogin(connectedAccount, { signature: signature.join(','), referredBy });
         const walletId = walletAccount?.walletProvider?.id;
