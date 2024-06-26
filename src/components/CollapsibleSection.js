@@ -4,7 +4,7 @@ import styled, { css, keyframes } from 'styled-components';
 import { CollapsedIcon } from '~/components/Icons';
 
 const toggleWidth = 32;
-const titleHeight = 36;
+const collapsedHeightDefault = 36;
 const marginBottom = 4;
 
 const Uncollapsible = styled.div`
@@ -38,7 +38,7 @@ const Title = styled.div`
   color: white;
   display: flex;
   flex: 1;
-  height: ${titleHeight}px;
+  height: ${p => p.collapsedHeight || collapsedHeightDefault}px;
   transition: border-color 250ms ease;
   & > svg {
     font-size: 28px;
@@ -72,8 +72,8 @@ const Collapsible = styled.div`
   ${p => !p.collapsed && css`
     animation: ${expandedAnim} 500ms;
     ${p.containerHeight
-      ? `max-height: ${p.containerHeight + titleHeight + marginBottom}px;`
-      : `max-height: calc(100% - ${titleHeight + marginBottom}px)`
+      ? `max-height: ${p.containerHeight + collapsedHeightDefault + marginBottom}px;`
+      : `max-height: calc(100% - ${collapsedHeightDefault + marginBottom}px)`
     };
     ${p.minHeight ? `min-height: ${p.minHeight}px;` : ''}
   `};
@@ -89,6 +89,7 @@ const CollapsibleSection = ({
   openOnChange,
   title,
   containerHeight,
+  collapsedHeight,
   titleAction,
   ...props
 }) => {
@@ -117,7 +118,7 @@ const CollapsibleSection = ({
         <Toggle collapsed={collapsed}>
           <CollapsedIcon />
         </Toggle>
-        <Title>
+        <Title collapsedHeight={collapsedHeight}>
           {title}
         </Title>
         {titleAction && <TitleAction>{titleAction(!collapsed)}</TitleAction>}

@@ -37,7 +37,7 @@ const ActionItemWrapper = styled.div`
   width: ${ITEM_WIDTH}px;
 
   &:first-child {
-    margin-top: 8px;
+    margin-top: 14px;
   }
 `;
 
@@ -477,7 +477,7 @@ const ActionItems = () => {
             }}
             openOnChange={tutorialSteps}
             title={(
-              <TitleWrapper style={{ marginTop: 10 }}>
+              <TitleWrapper>
                 <Filters>
                   <TutorialTab selected>Tutorial</TutorialTab>
                   <div style={{ flex: 1 }} />

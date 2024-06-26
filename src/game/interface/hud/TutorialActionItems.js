@@ -128,7 +128,7 @@ const TutorialActionItems = ({ tutorialSteps }) => {
 
   return (
     <>
-      <ActionItemContainer style={{ marginTop: 8 }}>
+      <ActionItemContainer>
         {tutorialSteps.map((step) => (
           <ActionItemRow key={step.key}
             isCurrent={selectedStep?.key === step.key}
