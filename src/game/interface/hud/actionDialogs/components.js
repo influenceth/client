@@ -594,6 +594,10 @@ const SliderInfoRow = styled.div`
 const ProductWrapper = styled.div`
   display: flex;
   flex-direction: row;
+  ${p => p.horizontalScroll && `
+    overflow-x: auto;
+    padding-bottom: 16px;
+  `}
 `;
 const ProductGridWrapper = styled.div`
   column-gap: 5px;
@@ -3408,7 +3412,7 @@ export const ProcessInputOutputSection = ({ title, products, input, output, prim
 
   return (
     <FlexSectionBlock title={title} {...props} bodyStyle={{ padding: 0 }}>
-      <ProductWrapper>
+      <ProductWrapper horizontalScroll={products?.length > 7}>
         {products.map(({ i: resourceId, recipe, amount }) => {
           const thumbProps = {};
           if (output) {
