@@ -47,14 +47,19 @@ export const TrayLabel = styled.div`
 `;
 
 export const SectionTitle = styled.div`
+  align-items: center;
+  display: flex;
+  flex-direction: row;
   font-size: 16px;
   text-transform: uppercase;
   width: 100%;
+  & > span {
+    flex: 1;
+  }
   ${p => p.label && `
     &:after {
       content: "${p.label}";
       color: #777;
-      float: right;
       font-size: 14px;
       text-transform: none;
     }
@@ -69,7 +74,7 @@ export const Rule = styled.div`
 
 export const HudMenuCollapsibleSection = ({ children, collapsed, titleText, titleLabel, titleAction, titleProps, ...props }) => (
   <CollapsibleSection
-    title={<SectionTitle label={titleLabel} {...titleProps}>{titleText}</SectionTitle>}
+    title={<SectionTitle label={titleLabel} {...titleProps}><span>{titleText}</span></SectionTitle>}
     titleAction={titleAction}
     collapsibleProps={{
       borderColor: majorBorderColor,
