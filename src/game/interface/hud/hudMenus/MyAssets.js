@@ -9,8 +9,7 @@ import useWalletAgreements from '~/hooks/useWalletAgreements';
 import useWalletAsteroids from '~/hooks/useWalletAsteroids';
 import useWalletBuildings from '~/hooks/useWalletBuildings';
 import useWalletShips from '~/hooks/useWalletShips';
-import { HudMenuCollapsibleSection, majorBorderColor } from './components/components';
-
+import { HudMenuCollapsibleSection, Scrollable, majorBorderColor, scrollbarPadding } from './components/components';
 import { AgreementBlock, AsteroidBlock, BuildingBlock, ShipBlock } from './components/AssetBlocks';
 import { CheckedIcon, RadioCheckedIcon, RadioUncheckedIcon, UncheckedIcon } from '~/components/Icons';
 import useSession from '~/hooks/useSession';
@@ -18,21 +17,18 @@ import formatters from '~/lib/formatters';
 import { locationsArrToObj } from '~/lib/utils';
 import EntityName from '~/components/EntityName';
 
-
 const Wrapper = styled.div`
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
   height: 100%;
-  overflow: hidden;
-`;
-
-const SectionBody = styled.div`
-  margin-right: 4px;
+  overflow: visible hidden;
+  width: calc(100% + ${scrollbarPadding}px);
 `;
 
 const Controls = styled.div`
   border-bottom: 1px solid ${majorBorderColor};
+  margin-right: ${scrollbarPadding}px;
 `;
 
 const Toggles = styled.div`
@@ -78,9 +74,9 @@ const CrewSelectionToggle = styled(Toggle)`
 
 const Contents = styled.div`
   flex: 1;
-  overflow: hidden auto;
-  margin-right: -24px;
-  padding-right: 24px;
+  overflow: visible hidden;
+  padding-right: ${scrollbarPadding}px;
+  width: 100%;
 `;
 
 const EmptyMessage = styled.div`
@@ -157,20 +153,18 @@ const GroupedAssets = ({ assetTally, groupedAssets, isLoading, itemHeight, itemG
       collapsed={!assetTally}
       containerHeight={itemHeight * assetTally + groupTitleHeight * groupTally + containerHeightBuffer}>
       {!isLoading && assetTally === 0 && <EmptyMessage />}
-      <SectionBody>
-        {singleGroupMode
-          ? Object.values(groupedAssets)[0]?.map(itemGetter)
-          : Object.keys(groupedAssets).map((asteroidId) => (
-            <HudMenuCollapsibleSection
-              key={asteroidId}
-              containerHeight={itemHeight * groupedAssets[asteroidId].length + containerHeightBuffer}
-              titleProps={{ style: { textTransform: 'none' } }}
-              titleText={asteroidId === '_' ? 'In Flight' : <EntityName label={Entity.IDS.ASTEROID} id={asteroidId} />}>
-              {groupedAssets[asteroidId].map(itemGetter)}
-            </HudMenuCollapsibleSection>
-          ))
-        }
-      </SectionBody>
+      {singleGroupMode
+        ? Object.values(groupedAssets)[0]?.map(itemGetter)
+        : Object.keys(groupedAssets).map((asteroidId) => (
+          <HudMenuCollapsibleSection
+            key={asteroidId}
+            containerHeight={itemHeight * groupedAssets[asteroidId].length + containerHeightBuffer}
+            titleProps={{ style: { textTransform: 'none' } }}
+            titleText={asteroidId === '_' ? 'In Flight' : <EntityName label={Entity.IDS.ASTEROID} id={asteroidId} />}>
+            {groupedAssets[asteroidId].map(itemGetter)}
+          </HudMenuCollapsibleSection>
+        ))
+      }
     </HudMenuCollapsibleSection>
   );
 }
@@ -355,64 +349,64 @@ const MyAssets = () => {
       </Controls>
 
       <Contents>
-        <HudMenuCollapsibleSection
-          titleText={<>Asteroids{asteroidsLoading && <LoadingMessage />}</>}
-          titleLabel={`${asteroidTally} Asset${asteroidTally === 1 ? '' : 's'}`}
-          collapsed={!asteroidTally}
-          containerHeight={85 * asteroidTally + containerHeightBuffer}>
-          {!asteroidsLoading && asteroidTally === 0 && <EmptyMessage />}
-          <SectionBody>
+        <Scrollable>
+          <HudMenuCollapsibleSection
+            titleText={<>Asteroids{asteroidsLoading && <LoadingMessage />}</>}
+            titleLabel={`${asteroidTally} Asset${asteroidTally === 1 ? '' : 's'}`}
+            collapsed={!asteroidTally}
+            containerHeight={85 * asteroidTally + containerHeightBuffer}>
+            {!asteroidsLoading && asteroidTally === 0 && <EmptyMessage />}
             <AsteroidBlocks
               asteroids={asteroids}
               onSelectCrew={onClickCrewAsset}
               selectedCrew={crew} />
-          </SectionBody>
-        </HudMenuCollapsibleSection>
+          </HudMenuCollapsibleSection>
 
-        <GroupedAssets
-          title="Ships"
-          groupedAssets={ships}
-          assetTally={shipTally}
-          isLoading={shipsLoading}
-          itemGetter={(ship) => (
-            <ShipBlock
-              key={ship.id}
-              onSelectCrew={onClickCrewAsset}
-              selectedCrew={crew}
-              ship={ship} />
-          )}
-          itemHeight={85}
-          singleGroupMode={!allAsteroidsMode} />
+          <GroupedAssets
+            title="Ships"
+            groupedAssets={ships}
+            assetTally={shipTally}
+            isLoading={shipsLoading}
+            itemGetter={(ship) => (
+              <ShipBlock
+                key={ship.id}
+                onSelectCrew={onClickCrewAsset}
+                selectedCrew={crew}
+                ship={ship} />
+            )}
+            itemHeight={85}
+            singleGroupMode={!allAsteroidsMode} />
 
-        <GroupedAssets
-          title="Buildings"
-          groupedAssets={buildings}
-          assetTally={buildingTally}
-          isLoading={buildingsLoading}
-          itemGetter={(building) => (
-            <BuildingBlock
-              key={building.id}
-              onSelectCrew={onClickCrewAsset}
-              selectedCrew={crew}
-              building={building} />
-          )}
-          itemHeight={55}
-          singleGroupMode={!allAsteroidsMode} />
+          <GroupedAssets
+            title="Buildings"
+            groupedAssets={buildings}
+            assetTally={buildingTally}
+            isLoading={buildingsLoading}
+            itemGetter={(building) => (
+              <BuildingBlock
+                key={building.id}
+                onSelectCrew={onClickCrewAsset}
+                selectedCrew={crew}
+                building={building} />
+            )}
+            itemHeight={55}
+            singleGroupMode={!allAsteroidsMode} />
 
-        <GroupedAssets
-          title="Agreements"
-          groupedAssets={agreements}
-          assetTally={agreementTally}
-          isLoading={agreementsLoading}
-          itemGetter={(agreement) => (
-            <AgreementBlock
-              key={agreement._agreement._path}
-              agreement={agreement}
-              onSelectCrew={onClickCrewAsset}
-              selectedCrew={crew} />
-          )}
-          itemHeight={55}
-          singleGroupMode={!allAsteroidsMode} />
+          <GroupedAssets
+            title="Agreements"
+            groupedAssets={agreements}
+            assetTally={agreementTally}
+            isLoading={agreementsLoading}
+            itemGetter={(agreement) => (
+              <AgreementBlock
+                key={agreement._agreement._path}
+                agreement={agreement}
+                onSelectCrew={onClickCrewAsset}
+                selectedCrew={crew} />
+            )}
+            itemHeight={55}
+            singleGroupMode={!allAsteroidsMode} />
+          </Scrollable>
       </Contents>
     </Wrapper>
   );

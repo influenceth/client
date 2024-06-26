@@ -4,6 +4,7 @@ import CollapsibleSection from '~/components/CollapsibleSection';
 
 export const trayHeight = 80;
 export const majorBorderColor = 'rgba(255, 255, 255, 0.2)';
+export const scrollbarPadding = 16;
 
 export const opacityAnimation = keyframes`
   0% { opacity: 1; }
@@ -15,8 +16,8 @@ export const Scrollable = styled.div`
   height: ${p => p.hasTray ? `calc(100% - ${trayHeight}px)` : '100%'};
   overflow-x: hidden;
   overflow-y: auto;
-  padding-right: 24px;
-  margin-right: -24px;
+  padding-right: ${scrollbarPadding}px;
+  margin-right: -${scrollbarPadding}px;
 `;
 
 export const Tray = styled.div`
@@ -72,9 +73,7 @@ export const HudMenuCollapsibleSection = ({ children, collapsed, titleText, titl
     titleAction={titleAction}
     collapsibleProps={{
       borderColor: majorBorderColor,
-      width: 'calc(100% - 20px)', // -32px for left margin, +12 px for neg right margin
       style: {
-        paddingRight: 12,
         overflowX: 'hidden',
         overflowY: 'auto'
       }

@@ -81,7 +81,6 @@ const AdminAsteroid = ({}) => {
             <CrewIndicator crew={controller} label="Administrator" />
           </AdminActions>
 
-
           <ButtonArea>
             <MarketplaceLink
               chain={asteroid?.Nft?.chain}

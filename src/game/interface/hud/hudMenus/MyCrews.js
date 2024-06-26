@@ -16,8 +16,6 @@ import EntityName from '~/components/EntityName';
 
 const defaultBlockStyle = { marginBottom: 8, width: '100%' };
 
-const SectionBody = styled.div``;
-
 const opacityAnimation = keyframes`
   0% { opacity: 1; }
   50% { opacity: 0.3; }
@@ -119,19 +117,17 @@ const MyCrews = () => {
                 containerHeight={crewRowHeight * locationCrews.length}
                 titleProps={{ style: { textTransform: 'none' } }}
                 titleText={asteroidId === '_' && !location?.shipId ? 'Escape Module' : <EntityName {...locationCrews[0]?.Location?.location} />}>
-                <SectionBody>
-                  {(locationCrews || []).map((c) => (
-                    <CrewInputBlock
-                      key={c.id}
-                      cardWidth={64}
-                      crew={c}
-                      inlineDetails
-                      isSelected={c.id === crew?.id}
-                      onClick={() => selectCrew(c.id)}
-                      subtle
-                      style={defaultBlockStyle} />
-                  ))}
-                </SectionBody>
+                {(locationCrews || []).map((c) => (
+                  <CrewInputBlock
+                    key={c.id}
+                    cardWidth={64}
+                    crew={c}
+                    inlineDetails
+                    isSelected={c.id === crew?.id}
+                    onClick={() => selectCrew(c.id)}
+                    subtle
+                    style={defaultBlockStyle} />
+                ))}
               </HudMenuCollapsibleSection>
             );
           })}
@@ -143,11 +139,9 @@ const MyCrews = () => {
           titleText={<AttnTitle><WarningIcon /> <span>Recoverable Crewmates</span></AttnTitle>}
           titleLabel={`${Object.keys(uncontrolledCrewIds)?.length} Crew${Object.keys(uncontrolledCrewIds)?.length === 1 ? '' : 's'}`}
           collapsed>
-          <SectionBody>
-            {Object.keys(uncontrolledCrewIds || {}).map((crewId) => (
-              <UncontrolledCrewBlock key={crewId} crewId={crewId} crewmateIds={uncontrolledCrewIds[crewId]} />
-            ))}
-          </SectionBody>
+          {Object.keys(uncontrolledCrewIds || {}).map((crewId) => (
+            <UncontrolledCrewBlock key={crewId} crewId={crewId} crewmateIds={uncontrolledCrewIds[crewId]} />
+          ))}
         </HudMenuCollapsibleSection>
       )}
       
@@ -156,23 +150,21 @@ const MyCrews = () => {
           titleText="Empty Crews"
           titleLabel={`${emptyCrews?.length} Crew${emptyCrews?.length === 1 ? '' : 's'}`}
           collapsed>
-          <SectionBody>
-            {emptyCrews.map((emptyCrew) => {
-              return (
-                <CrewInputBlock
-                  key={emptyCrew.id}
-                  cardWidth={64}
-                  crew={emptyCrew}
-                  hideCrewmates
-                  inlineDetails
-                  select
-                  isSelected={emptyCrew.id === crew?.id}
-                  onClick={() => selectCrew(emptyCrew.id)}
-                  subtle
-                  style={defaultBlockStyle} />
-              );
-            })}
-          </SectionBody>
+          {emptyCrews.map((emptyCrew) => {
+            return (
+              <CrewInputBlock
+                key={emptyCrew.id}
+                cardWidth={64}
+                crew={emptyCrew}
+                hideCrewmates
+                inlineDetails
+                select
+                isSelected={emptyCrew.id === crew?.id}
+                onClick={() => selectCrew(emptyCrew.id)}
+                subtle
+                style={defaultBlockStyle} />
+            );
+          })}
         </HudMenuCollapsibleSection>
       )}
     </Scrollable>
