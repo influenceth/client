@@ -154,7 +154,7 @@ const CopyLink = styled.div`
 `;
 
 const SystemControls = () => {
-  const { accountAddress, authenticated, logout, walletId } = useSession();
+  const { accountAddress, authenticated, logout } = useSession();
   const { adalianRecruits, arvadianRecruits } = useCrewContext();
 
   const { data: swayBalance } = useSwayBalance();
@@ -189,7 +189,7 @@ const SystemControls = () => {
     } catch (e) {
       console.warn(e);
     }
-  }, []);
+  }, [accountAddress]);
 
   return (
     <StyledSystemControls id="topMenu">
