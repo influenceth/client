@@ -6,7 +6,7 @@ import { ScheduleFullIcon, ShipIcon, TimerIcon } from '~/components/Icons';
 import LiveTimer from '~/components/LiveTimer';
 import useBlockTime from '~/hooks/useBlockTime';
 import useConstants from '~/hooks/useConstants';
-import useIsLaunched from '~/hooks/useIsLaunched';
+import useCrewContext from '~/hooks/useCrewContext';
 import theme from '~/theme';
 
 
@@ -92,7 +92,7 @@ const BusyStatusContainer = styled(StatusContainer)`
 const LiveReadyStatus = ({ crew, ...props }) => {
   const { data: CREW_SCHEDULE_BUFFER } = useConstants('CREW_SCHEDULE_BUFFER');
   const blockTime = useBlockTime();
-  const isLaunched = useIsLaunched();
+  const { isLaunched } = useCrewContext();
 
   const [crewIsBusy, setCrewIsBusy] = useState(false);
   const [waitingOnBlock, setWaitingOnBlock] = useState(false);
@@ -160,7 +160,7 @@ const LiveReadyStatus = ({ crew, ...props }) => {
       </BusyStatusContainer>
     );
   }
-  if (!(crew.hasOwnProperty('_launched') ? crew?._launched : isLaunched)) {
+  if (!isLaunched) {
     return (
       <StatusContainer {...props}>
         <label style={{ opacity: 0.3 }}>Unlaunched</label> 

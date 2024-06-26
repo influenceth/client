@@ -10,7 +10,6 @@ import ChainTransactionContext from '~/contexts/ChainTransactionContext';
 import useActionItems from '~/hooks/useActionItems';
 import useCrewContext from '~/hooks/useCrewContext';
 import useGetActivityConfig from '~/hooks/useGetActivityConfig';
-import useIsLaunched from '~/hooks/useIsLaunched';
 import useSession from '~/hooks/useSession';
 import useStore from '~/hooks/useStore';
 import useTutorialSteps from '~/hooks/useTutorialSteps';
@@ -281,9 +280,8 @@ const ConfirmBody = styled.div`
 const ActionItems = () => {
   const { authenticated } = useSession();
   const { allVisibleItems: allItems } = useActionItems();
-  const { crew } = useCrewContext();
+  const { crew, isLaunched } = useCrewContext();
   const { execute, getStatus } = useContext(ChainTransactionContext);
-  const isLaunched = useIsLaunched(crew);
   const getActivityConfig = useGetActivityConfig();
   const tutorialSteps = useTutorialSteps();
 
@@ -407,7 +405,6 @@ const ActionItems = () => {
   }, [crew?.id]);
 
   const showTutorial = isLaunched && !dismissAllTutorials && !crewTutorial?.dismissed;
-
   return (
     <>
       <OuterWrapper>

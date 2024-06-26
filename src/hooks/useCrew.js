@@ -9,18 +9,15 @@ import { locationsArrToObj, openAccessJSTime } from '~/lib/utils';
 const useCrew = (id) => {
   // return useEntity({ label: Entity.IDS.CREW, id });
 
-  // TODO: (_launched) switch back to above and delete below
   const blockTime = useBlockTime();
   const response = useEntity({ label: Entity.IDS.CREW, id });
   return useMemo(() => {
     if (response?.data) {
-      // _launched + lastFed to launch
+      // lastFed to launch
       if (openAccessJSTime) {
-        const cmpTime = blockTime || (Date.now() / 1e3);
-        response.data._launched = cmpTime > openAccessJSTime / 1e3;
         if (response.data?.Crew) {
           response.data.Crew.lastFed = Math.max(
-            Math.min(cmpTime, openAccessJSTime / 1e3),
+            Math.min(blockTime, openAccessJSTime / 1e3),
             response.data.Crew.lastFed
           );
         }

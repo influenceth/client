@@ -29,7 +29,6 @@ import useSession from '~/hooks/useSession';
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
 import useSwapHelper from '~/hooks/useSwapHelper';
 import useCrewContext from '~/hooks/useCrewContext';
-import useIsLaunched from '~/hooks/useIsLaunched';
 import FundingFlow from './FundingFlow';
 import { AdvancedStarterPack, BasicStarterPack, useStarterPacks } from './StarterPack';
 
@@ -613,8 +612,7 @@ const SwayFaucetButton = () => {
 
 const SKU = ({ asset, onBack }) => {
   const { accountAddress, login } = useSession();
-  const { crew, pendingTransactions } = useCrewContext();
-  const isLaunched = useIsLaunched(crew);
+  const { pendingTransactions, isLaunched } = useCrewContext();
   const priceHelper = usePriceHelper();
   const packs = useStarterPacks();
   const { data: wallet } = useWalletBalances();

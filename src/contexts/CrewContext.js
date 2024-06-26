@@ -1,6 +1,6 @@
 import { createContext, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery, useQueryClient } from 'react-query';
-import { Crewmate, Entity, Permission, RandomEvent, System } from '@influenceth/sdk';
+import { Crewmate, Entity, Permission, System } from '@influenceth/sdk';
 
 import api from '~/lib/api';
 import useSession from '~/hooks/useSession';
@@ -111,28 +111,20 @@ export function CrewProvider({ children }) {
       if (c.Crew) {
         c._ready = blockTime >= c.Crew.readyAt;
         c._readyToSequence = blockTime + CREW_SCHEDULE_BUFFER >= c.Crew.readyAt;
-      }
 
-      // mainnet
-      if (openAccessJSTime) {
-        const cmpTime = blockTime || (Date.now() / 1e3);
-        c._launched = cmpTime > (openAccessJSTime / 1e3);
-
-        // overwrite food so 100% until launch
-        if (c.Crew) {
+        // if there is a launchtime set, overwrite food so 100% until launch
+        if (openAccessJSTime) {
           try { // sometimes this is reported as a read-only property?
-            c.Crew.lastFed = Math.max(Math.min(cmpTime, openAccessJSTime / 1e3), c.Crew.lastFed);
+            c.Crew.lastFed = Math.max(Math.min(blockTime, openAccessJSTime / 1e3), c.Crew.lastFed);
           } catch (e) {
             console.warn('lastFed overwrite failed. refresh the page.', e);
           }
         }
-      } else {
-        c._launched = true;
       }
 
       return c;
     })
-  }, [blockTime, rawCrews, rawCrewsUpdatedAt, crewmateMap, crewsAndCrewmatesReady, CREW_SCHEDULE_BUFFER]);
+  }, [blockTime, crewmateMap, crewsAndCrewmatesReady, CREW_SCHEDULE_BUFFER, rawCrews, rawCrewsUpdatedAt]);
 
   const selectedCrew = useMemo(() => {
     if (crews && crews.length > 0) {
@@ -204,7 +196,7 @@ export function CrewProvider({ children }) {
       _timeAcceleration: parseInt(TIME_ACCELERATION) // (attach to crew for easy use in bonus calcs)
     }
   // (launched and ready are required for some reason to get final to update)
-  }, [actionTypeTriggered, selectedCrew, selectedCrew?._launched, selectedCrew?._ready, selectedCrewLocation, CREW_SCHEDULE_BUFFER, TIME_ACCELERATION]);
+  }, [actionTypeTriggered, selectedCrew, selectedCrew?._ready, selectedCrewLocation, CREW_SCHEDULE_BUFFER, TIME_ACCELERATION]);
 
   // return all pending transactions that are specific to this crew AND those that are not specific to any crew
   const pendingTransactions = useMemo(() => {
@@ -301,6 +293,21 @@ export function CrewProvider({ children }) {
     }
   }, [!!finalSelectedCrew, onBlur, onFocus]);
 
+  // handle game launch (on a timeout rather than blocktime)
+  const [gameIsLaunched, setGameIsLaunched] = useState(openAccessJSTime < Date.now());
+  useEffect(() => {
+    const msUntilLaunch = openAccessJSTime - Date.now();
+    if (msUntilLaunch > 0) {
+      setGameIsLaunched(false);
+      const to = setTimeout(() => {
+        setGameIsLaunched(true);
+      }, msUntilLaunch);
+      return () => clearTimeout(to);
+    } else {
+      setGameIsLaunched(true);
+    }
+  }, []);
+
   return (
     <CrewContext.Provider value={{
       adalianRecruits,
@@ -313,7 +320,8 @@ export function CrewProvider({ children }) {
       loading: !crewsAndCrewmatesReady,
       pendingTransactions,
       refreshReadyAt,
-      selectCrew: dispatchCrewSelected  // TODO: this might be redundant
+      selectCrew: dispatchCrewSelected,  // TODO: this might be redundant
+      isLaunched: gameIsLaunched
     }}>
       {children}
     </CrewContext.Provider>

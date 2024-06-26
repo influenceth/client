@@ -4175,7 +4175,7 @@ export const ActionDialogFooter = ({
   waitForCrewReady,
   wide
 }) => {
-  const { crew } = useCrewContext();
+  const { crew, isLaunched } = useCrewContext();
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
 
   // TODO: connect notifications to top-level state
@@ -4187,7 +4187,7 @@ export const ActionDialogFooter = ({
     setNotificationsEnabled((x) => !x);
   }, []);
 
-  const allowedOrLaunched = useMemo(() => requireLaunched ? crew?._launched : true, [crew, requireLaunched]);
+  const allowedOrLaunched = useMemo(() => requireLaunched ? isLaunched : true, [isLaunched, requireLaunched]);
 
   const isReady = isSequenceable ? crew?._readyToSequence : crew?._ready;
   return (

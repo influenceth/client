@@ -17,7 +17,7 @@ const isVisible = ({ constructionStatus, building, crew, ship }) => {
 };
 
 const Deconstruct = ({ asteroid, crew, lot, onSetAction, _disabled }) => {
-  const { constructionStatus, requireReadyCrew } = useConstructionManager(lot?.id);
+  const { constructionStatus } = useConstructionManager(lot?.id);
 
   const handleClick = useCallback(() => {
     onSetAction('DECONSTRUCT');

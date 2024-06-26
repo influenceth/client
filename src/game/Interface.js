@@ -4,7 +4,7 @@ import { Tooltip } from 'react-tooltip';
 import { Switch, Route, Redirect } from 'react-router-dom';
 import moment from 'moment';
 
-import { PurchaseAsteroidIcon } from '~/components/Icons';
+import { InfluenceIcon, PurchaseAsteroidIcon } from '~/components/Icons';
 import useScreenSize from '~/hooks/useScreenSize';
 import useStore from '~/hooks/useStore';
 import { openAccessJSTime } from '~/lib/utils';
@@ -33,6 +33,7 @@ import Cutscene from './Cutscene';
 import Launcher from './Launcher';
 import QueryLoader from './QueryLoader';
 import theme from '~/theme';
+import useCrewContext from '~/hooks/useCrewContext';
 
 const StyledInterface = styled.div`
   align-items: stretch;
@@ -77,6 +78,7 @@ const MainContainer = styled.div`
 const DISABLE_INTRO_ANIMATION = true && process.env.NODE_ENV === 'development';
 
 const Interface = () => {
+  const { isLaunched } = useCrewContext();
   const { isMobile } = useScreenSize();
   const cutscene = useStore(s => s.cutscene);
   const launcherPage = useStore(s => s.launcherPage);
@@ -120,23 +122,27 @@ const Interface = () => {
   // TODO: _launcher vvv
   const { create, destroy } = useControlledAlert();
   useEffect(() => {
-    if (openAccessJSTime) {
-      if (Date.now() < openAccessJSTime) {
-        const alertId = create({
-          icon: <span style={{ color: theme.colors.success }}><PurchaseAsteroidIcon /></span>,
-          content: (
-            <div style={{ color: theme.colors.success }}>
-                {`Launch is coming! ${moment(openAccessJSTime).format('MMM Do YYYY, h:mma')}`}
-            </div>
-          ),
-          level: 'success'
+    if (!isLaunched) {
+      const alertId = create({
+        icon: <span style={{ color: theme.colors.success }}><PurchaseAsteroidIcon /></span>,
+        content: (
+          <div style={{ color: theme.colors.success }}>
+              {`Launch is coming! ${moment(openAccessJSTime).format('MMM Do YYYY, h:mma')}`}
+          </div>
+        ),
+        level: 'success'
+      });
+      return () => {
+        destroy(alertId);
+
+        create({
+          icon: <InfluenceIcon />,
+          content: <>Welcome to Adalia. You will forever have been the first among us. Enjoy.</>,
+          duration: 10000,
         });
-        return () => {
-          destroy(alertId);
-        }
       }
     }
-  }, []);
+  }, [isLaunched]);
   // ^^^^
 
   return (
