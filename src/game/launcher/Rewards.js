@@ -5,11 +5,11 @@ import RewardQuests from './components/RewardQuests';
 import RewardReferrals from './components/RewardReferrals';
 
 const panes = [
-  process.env.REACT_APP_COLONIZATION_MISSIONS_URL && {
+  {
     label: 'Colonization Missions',
     pane: <RewardMissions mode="colonization" />
   },
-  process.env.REACT_APP_COMMUNITY_MISSIONS_URL && {
+  false && process.env.REACT_APP_COMMUNITY_MISSIONS_URL && {
     label: 'Community Missions',
     pane: <RewardMissions mode="community" />
   },

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import styled from 'styled-components';
 import Loader from 'react-spinners/PuffLoader';
 
@@ -9,6 +9,7 @@ import NavIcon from '~/components/NavIcon';
 import AdalianFlourish from '~/components/AdalianFlourish';
 import ArvadianFlourish from '~/components/ArvadianFlourish';
 import useCrewContext from '~/hooks/useCrewContext';
+import useStore from '~/hooks/useStore';
 
 const missions = {
   community: [
@@ -324,15 +325,28 @@ const MissionWrapper = styled.div`
   }
 `;
 const Mission = ({ mission, mode }) => {
+  const createAlert = useStore(s => s.dispatchAlertLogged);
+  const onClick = useCallback(() => {
+    const targetUrl = mode === 'community' ? process.env.REACT_APP_COMMUNITY_MISSIONS_URL : process.env.REACT_APP_COLONIZATION_MISSIONS_URL;
+    if (targetUrl) {
+      window.open(targetUrl);
+    }
+    else {
+      createAlert({
+        type: 'GenericAlert',
+        data: { content: 'Coming soon!' },
+        duration: 1e3
+      });
+    }
+  }, [createAlert, mode]);
   const { id, title, ...kvps } = mission;
-  const targetUrl = mode === 'community' ? process.env.REACT_APP_COMMUNITY_MISSIONS_URL : process.env.REACT_APP_COLONIZATION_MISSIONS_URL;
   return (
-    <RewardBox onClick={() => window.open(targetUrl)}>
+    <RewardBox onClick={onClick}>
       <MissionWrapper mode={mode}>
         <div>{mode === 'community' ? <ArvadianFlourish /> : <AdalianFlourish />}</div>
         <h3>{mission.title}</h3>
         <div>
-          {Object.keys(kvps).map((k, i) => (
+          {Object.keys(mission).map((k, i) => ['id', 'title'].includes(k) ? null : (
             <>
               {i > 0 && <hr/>}
               <div>
@@ -362,8 +376,11 @@ const RewardMissions = ({ mode }) => {
           <>
             {mode === 'colonization' && (
               <label>
-                Individual milestones with SWAY rewards.
-                View your completion status on <a href={process.env.REACT_APP_COLONIZATION_MISSIONS_URL} target="_blank" rel="noopener noreferrer">Wendash</a>.
+                Individual milestones with SWAY rewards.{' '}
+                {process.env.REACT_APP_COLONIZATION_MISSIONS_URL
+                  ? <>View your completion status on <a href={process.env.REACT_APP_COLONIZATION_MISSIONS_URL} target="_blank" rel="noopener noreferrer">Wendash</a>.</>
+                  : <>Coming Soon</>
+                }
               </label>
             )}
             {mode === 'community' && (
