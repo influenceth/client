@@ -149,7 +149,7 @@ const useDeliveryManager = ({ destination, destinationSlot, origin, originSlot, 
         current.originSlot = delivery.Delivery.originSlot;
         current.contents = delivery.Delivery.contents;
         current.price = delivery.PrivateSale?.amount;
-        current.isProposal = current.price > 0;
+        current.isProposal = !!delivery.PrivateSale;//current.price > 0;
         current.finishTime = current.isProposal ? current.startTime : delivery.Delivery.finishTime;
         current.status = delivery.Delivery.status;
 
