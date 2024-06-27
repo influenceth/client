@@ -1027,26 +1027,26 @@ export const formatActionItem = (item, actionItem) => {
 }
 
 export const itemColors = {
-  pending: hexToRGB(theme.colors.purple),
+  pending: hexToRGB(theme.colors.lightPurple),
   failed: '241, 131, 97',
   randomEvent: '232, 211, 117',
   ready: hexToRGB('#00fff0'),
   unready: theme.colors.brightMainRGB,
   unstarted: hexToRGB(theme.colors.sequence),
-  plan: '248, 133, 44',
-  agreement: '248, 133, 44',
+  plan: hexToRGB(theme.colors.lightOrange),
+  agreement: hexToRGB(theme.colors.orange),
   _expired: hexToRGB(theme.colors.red)
 };
 
 export const backgroundColors = {
-  pending: hexToRGB('#424278'),
+  pending: hexToRGB(theme.colors.backgroundPurple),
   failed: hexToRGB('#7a211c'),
   randomEvent: hexToRGB('#8c8148'),
   ready: hexToRGB('#006962'),
   unready: theme.colors.darkMainRGB,
   unstarted: hexToRGB('#1e558c'),
-  plan: hexToRGB('#80592c'),
-  agreement: hexToRGB('#853217'),
+  plan: hexToRGB(theme.colors.backgroundOrange),
+  agreement: hexToRGB(theme.colors.darkOrange),
   _expired: hexToRGB('#7a211c')
 };
 

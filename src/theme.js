@@ -104,7 +104,7 @@ const theme = {
     blue, 
 
     yellow, 
-    backgroundYellow: '#80592c',
+    backgroundYellow: '#80612c',
 
     purple,
     lightPurple,  
@@ -112,11 +112,12 @@ const theme = {
 
     red, 
     darkRed, 
-    backgroundRed: '#471411',
+    backgroundRed: '#853430',
 
     orange, 
+    darkOrange: '#733813',
     lightOrange, 
-    backgroundOrange: '#853217',
+    backgroundOrange: '#593f24',
 
     green, 
     darkGreen,

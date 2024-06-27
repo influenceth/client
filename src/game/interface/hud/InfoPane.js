@@ -506,8 +506,8 @@ const InfoPane = () => {
           }
           else {
             thumbBanner = <><LiveTimer target={lot?.building?.Building?.plannedAt + Building.GRACE_PERIOD} /></>;
-            thumbBannerColor = 'lightPurple';
-            thumbBannerBackgroundColor = 'backgroundPurple';
+            thumbBannerColor = 'lightOrange';
+            thumbBannerBackgroundColor = 'backgroundOrange';
           }
         }
         pane.thumbVisible = true;

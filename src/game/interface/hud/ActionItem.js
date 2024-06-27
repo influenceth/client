@@ -325,7 +325,7 @@ const ActionItem = ({ data, getActivityConfig }) => {
             item.finishTime
               ? (
                 <LiveTimer target={item.finishTime} maxPrecision={2}>
-                  {(formattedTime, isTimer) => isTimer ? <><b style={{ marginRight: 4 }}>Timer</b> {formattedTime}</> : <b>{formattedTime}</b>}
+                  {(formattedTime, isTimer) => isTimer ? <><b style={{ marginRight: 4 }}>Expiring In</b> {formattedTime}</> : <b>{formattedTime}</b>}
                 </LiveTimer>
               )
               : <b>Materials at Risk</b>
@@ -334,7 +334,7 @@ const ActionItem = ({ data, getActivityConfig }) => {
             item.finishTime
               ? (
                 <LiveTimer target={item.finishTime} maxPrecision={1}>
-                  {(formattedTime, isTimer) => isTimer ? <><b style={{ marginRight: 4 }}>Expiring in</b>{formattedTime}</> : <b>{formattedTime}</b>}
+                  {(formattedTime, isTimer) => isTimer ? <><b style={{ marginRight: 4 }}>Remaining</b>{formattedTime}</> : <b>{formattedTime}</b>}
                 </LiveTimer>
               )
               : <b>Expired</b>
