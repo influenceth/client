@@ -30,7 +30,7 @@ const customConfigs = {
   AcceptDelivery: {
     equalityTest: ['delivery.id'],
     getTransferConfig: ({ caller, delivery, price }) => ({
-      amount: BigInt(price),
+      amount: BigInt(price || 0),
       recipient: caller,
       memo: Entity.packEntity(delivery)
     })

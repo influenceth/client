@@ -121,6 +121,7 @@ const useDeliveryManager = ({ destination, destinationSlot, origin, originSlot, 
           current._originLot = actionItem.data.origin?.Location.locations.find((l) => l.label === Entity.IDS.LOT);
           current.caller = actionItem.event.returnValues.caller;
           current.callerCrew = actionItem.event.returnValues.callerCrew;
+          current.isSent = true;
           current.startTime = actionItem.event.timestamp;
           current._isAccessible = destination && (
             (actionItem.event.returnValues.callerCrew.id === crew?.id)
@@ -149,7 +150,7 @@ const useDeliveryManager = ({ destination, destinationSlot, origin, originSlot, 
         current.originSlot = delivery.Delivery.originSlot;
         current.contents = delivery.Delivery.contents;
         current.price = delivery.PrivateSale?.amount;
-        current.isProposal = !!delivery.PrivateSale;//current.price > 0;
+        current.isProposal = delivery.PrivateSale && !current.isSent;
         current.finishTime = current.isProposal ? current.startTime : delivery.Delivery.finishTime;
         current.status = delivery.Delivery.status;
 
@@ -166,7 +167,7 @@ const useDeliveryManager = ({ destination, destinationSlot, origin, originSlot, 
           } else if (getStatus('ReceiveDelivery', { ...payload, delivery: { id: delivery.id, label: Entity.IDS.DELIVERY } }) === 'pending') {
             status = 'FINISHING';
             stage = actionStages.COMPLETING;
-          } else if (current.isProposal) {
+          } else if (current.isProposal && !current.isSent) {
             status = 'PACKAGED';
             stage = actionStages.READY_TO_COMPLETE;
           } else if (delivery.Delivery.finishTime && delivery.Delivery.finishTime <= blockTime) {
@@ -199,7 +200,7 @@ const useDeliveryManager = ({ destination, destinationSlot, origin, originSlot, 
       };
     });
     return [allDeliveries, Date.now()];
-  }, [blockTime, crew?.id, crewCan, deliveries, pendingDeliveries, getStatus, payload]);
+  }, [actionItems, blockTime, crew?.id, crewCan, deliveries, pendingDeliveries, getStatus, payload]);
 
   const acceptDelivery = useCallback((selectedDeliveryId, meta) => {
     const delivery = currentDeliveries.find((d) => d.action.deliveryId === (selectedDeliveryId || deliveryId));
