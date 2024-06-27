@@ -85,6 +85,7 @@ export function SessionProvider({ children }) {
   const [connectedAccount, setConnectedAccount] = useState();
   const [connectedChainId, setConnectedChainId] = useState();
   const [connectedWalletId, setConnectedWalletId] = useState();
+  const [snjsOverride, setSnjsOverride] = useState(); // stupid thing to accomodate braavos bug
   const [walletAccount, setWalletAccount] = useState();
 
   const [blockNumber, setBlockNumber] = useState(0);
@@ -141,6 +142,8 @@ export function SessionProvider({ children }) {
         setConnectedWalletId(wallet.id);
         const newAccount = new WalletAccount(provider, wallet, '1');
         setWalletAccount(newAccount);
+        console.log('wallet.id', wallet.id);
+        setSnjsOverride(wallet.id === 'braavos' ? newAccount?.walletProvider?.__private_1_snjsVersion : undefined);
 
         // Default to provider chainId if not set (starknetkit doesn't set for braavos)
         if (!isAllowedChain(chainId)) {
@@ -190,6 +193,20 @@ export function SessionProvider({ children }) {
     if (window.starknet) starknetDisconnect({ clearLastWallet: true });
   }, [ dispatchSessionEnded ]);
 
+  const fixBraavos = useCallback(() => {
+    try {
+      if (snjsOverride && walletAccount?.walletProvider) {
+        console.log('BRAAVOS SNJS HACK', `${snjsOverride} (original)`, `${walletAccount.walletProvider.__private_1_snjsVersion} (current)`);
+        if (walletAccount.walletProvider.__private_1_snjsVersion !== snjsOverride) {
+          console.log(`attempting to reset to ${snjsOverride}...`);
+          walletAccount.walletProvider.__private_1_snjsVersion = snjsOverride;
+        }
+      }
+    } catch (e) {
+      console.warn(e);
+    }
+  }, [snjsOverride, walletAccount?.walletProvider?.__private_1_snjsVersion]);
+
   // While connecting or connected, listen for network changes from extension
   useEffect(() => {
     const onAccountsChanged = (e) => {
@@ -237,7 +254,7 @@ export function SessionProvider({ children }) {
 
     if (walletAccount) startListening();
     return stopListening;
-  }, [currentSession, sessions, status, walletAccount ]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [ currentSession, sessions, status, walletAccount ]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Checks the account contract do determine if it's deployed on-chain yet
   const checkDeployed = useCallback(async () => {
@@ -338,6 +355,7 @@ export function SessionProvider({ children }) {
     }
     return false;
   }, [
+    checkDeployed,
     connectedAccount,
     connectedWalletId,
     createAlert,
@@ -548,6 +566,7 @@ export function SessionProvider({ children }) {
       authenticated,
       authenticating: [STATUSES.AUTHENTICATING, STATUSES.CONNECTING].includes(status),
       chainId: authenticated ? connectedChainId : null,
+      fixBraavos,
       isDeployed: authenticated ? currentSession?.isDeployed : null,
       provider,
       starknetSession,
