@@ -143,7 +143,6 @@ export function SessionProvider({ children }) {
         setConnectedWalletId(wallet.id);
         const newAccount = new WalletAccount(provider, wallet, '1');
         setWalletAccount(newAccount);
-        console.log('wallet.id', wallet.id);
         setSnjsOverride(wallet.id === 'braavos' ? newAccount?.walletProvider?.__private_1_snjsVersion : undefined);
 
         // Default to provider chainId if not set (starknetkit doesn't set for braavos)
