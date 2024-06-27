@@ -297,6 +297,7 @@ export const FundingFlow = ({ totalPrice, onClose, onFunded }) => {
 
   const [walletBalance, fundsNeeded] = useMemo(
     () => {
+      if (!wallet) return [];
       const balance = wallet.combinedBalance;
       let needed;
       if (totalPrice) {

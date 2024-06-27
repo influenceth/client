@@ -273,6 +273,12 @@ const AsteroidSKU = () => {
   );
 };
 
+const maxCrewmatesAtOnce = 25;
+const cleanseCrewmates = (x) => {
+  if (x === '') return '';
+  return Math.abs(Math.min(parseInt(x) || 0, maxCrewmatesAtOnce));
+};
+
 const CrewmateSKU = ({ onUpdatePurchase, onPurchasing }) => {
   const { purchaseCredits, getPendingCreditPurchase } = useCrewManager();
   const { data: priceConstants } = usePriceConstants();
@@ -284,13 +290,14 @@ const CrewmateSKU = ({ onUpdatePurchase, onPurchasing }) => {
   }, [getPendingCreditPurchase, onPurchasing]);
 
   useEffect(() => {
+    const cleanQuantity = cleanseCrewmates(quantity) || 1;
     const totalPrice = priceHelper.from(
-      BigInt(quantity) * priceConstants?.ADALIAN_PURCHASE_PRICE,
+      BigInt(cleanQuantity) * priceConstants?.ADALIAN_PURCHASE_PRICE,
       priceConstants?.ADALIAN_PURCHASE_TOKEN
     );
     onUpdatePurchase({
       totalPrice,
-      onPurchase: () => purchaseCredits(quantity)
+      onPurchase: () => purchaseCredits(cleanQuantity)
     })
   }, [onUpdatePurchase, priceHelper, quantity]);
 
@@ -326,13 +333,13 @@ const CrewmateSKU = ({ onUpdatePurchase, onPurchasing }) => {
             <label>Quantity</label>
             <span>
               <UncontrolledTextInput
-                max={99}
-                min={1}
-                onChange={(e) => setQuantity(e.currentTarget.value)}
+                max={maxCrewmatesAtOnce}
+                min={0}
+                onChange={(e) => setQuantity(cleanseCrewmates(e.currentTarget.value))}
                 step={1}
                 style={{ height: 28 }}
                 type="number"
-                value={quantity || ''}
+                value={quantity}
               />
             </span>
           </div>

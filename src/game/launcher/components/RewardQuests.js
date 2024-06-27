@@ -2,7 +2,10 @@ import { useState } from 'react';
 import styled from 'styled-components';
 import Loader from 'react-spinners/PuffLoader';
 
-import CrewmatesHeroImage from '~/assets/images/sales/crewmates_hero.png';
+import Image1 from '~/assets/images/hud_headers/Asteroid.png';
+import Image2 from '~/assets/images/hud_headers/SurfaceShip.png';
+import Image3 from '~/assets/images/hud_headers/Building_9.png';
+import Image4 from '~/assets/images/hud_headers/BuildingSite_4.png';
 import ClipCorner from '~/components/ClipCorner';
 import NavIcon from '~/components/NavIcon';
 import { DiscordIcon, TwitterXIcon } from '~/components/Icons';
@@ -150,7 +153,7 @@ const QuestWrapper = styled.div`
     background-size: cover;
     content: '';
     display: block;
-    height: 75%;
+    height: 50%;
     left: 0;
     mask-image: linear-gradient(to bottom, black 0%, black 40%, transparent 100%);
     position: absolute;
@@ -164,29 +167,33 @@ const quests = [
   {
     id: 1,
     title: 'Retweet the Influence Launch thread',
-    icon: <TwitterXIcon />
+    icon: <TwitterXIcon />,
+    bg: Image1
   },
   {
     id: 2,
     title: 'Follow Influence on X',
-    icon: <TwitterXIcon />
+    icon: <TwitterXIcon />,
+    bg: Image2
   },
   {
     id: 3,
     title: 'Join Influence on Discord',
-    icon: <DiscordIcon />
+    icon: <DiscordIcon />,
+    bg: Image3
   },
   {
     id: 4,
     title: 'Retweet the Quest thread',
-    icon: <TwitterXIcon />
+    icon: <TwitterXIcon />,
+    bg: Image4
   },
 ];
 
 const Quest = ({ quest }) => {
   return (
     <RewardBox onClick={() => window.open(process.env.REACT_APP_SOCIAL_QUESTS_URL)}>
-      <QuestWrapper bg={CrewmatesHeroImage}>
+      <QuestWrapper bg={quest.bg}>
         <div></div>
         <div>{quest.icon}</div>
         <div>{quest.title}</div>
