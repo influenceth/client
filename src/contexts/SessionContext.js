@@ -133,7 +133,8 @@ export function SessionProvider({ children }) {
       setError();
       setConnecting(true);
       const { connectorData, wallet } = await starknetConnect(connectionOptions);
-      await new Promise(resolve => setTimeout(resolve, 100)); // deal with timeout delay from Argent
+      console.log('waiting 200ms...');
+      await new Promise(resolve => setTimeout(resolve, 200)); // deal with timeout delay from Argent
 
       if (wallet && connectorData?.account) {
         const chainId = resolveChainId(connectorData.chainId);
@@ -296,6 +297,8 @@ export function SessionProvider({ children }) {
         const sessionParams = { allowedMethods, expiry, metaData, publicDappKey: dappKey.publicKey };
 
         const hexChainId = shortString.encodeShortString(resolveChainId(process.env.REACT_APP_CHAIN_ID));
+        console.log('waiting 2 seconds...');
+        await new Promise(resolve => setTimeout(resolve, 2000)); // deal with timeout delay from Argent
         const sessionSignature = await openSession({
           chainId: hexChainId, wallet: walletAccount?.walletProvider, sessionParams
         });
@@ -373,18 +376,6 @@ export function SessionProvider({ children }) {
     }
   }, [authenticate, currentSession]);
 
-  // useEffect(() => {
-  //   const onKeydown = (e) => {
-  //     if (e.shiftKey && e.which === 32) {
-  //       upgradeInsecureSession();
-  //     }
-  //   };
-  //   document.addEventListener('keydown', onKeydown);
-  //   return () => {
-  //     document.removeEventListener('keydown', onKeydown);
-  //   }
-  // }, [upgradeInsecureSession]);
-
   // Resumes a current session or starts a new one
   const resumeOrAuthenticate = useCallback(async () => {
     // If somehow we've lost wallet connection, disconnect
@@ -433,7 +424,7 @@ export function SessionProvider({ children }) {
 
   // Connect / auth flow manager
   useEffect(() => {
-    // console.log(Object.keys(STATUSES).find(key => STATUSES[key] === status));
+    console.log(Object.keys(STATUSES).find(key => STATUSES[key] === status));
     if (status === STATUSES.DISCONNECTED) {
       if (currentSession?.walletId) {
         connect(true).finally(() => setReadyForChildren(true));
