@@ -167,7 +167,7 @@ const useDeliveryManager = ({ destination, destinationSlot, origin, originSlot, 
           } else if (getStatus('ReceiveDelivery', { ...payload, delivery: { id: delivery.id, label: Entity.IDS.DELIVERY } }) === 'pending') {
             status = 'FINISHING';
             stage = actionStages.COMPLETING;
-          } else if (current.isProposal && !current.isSent) {
+          } else if (current.isProposal) {
             status = 'PACKAGED';
             stage = actionStages.READY_TO_COMPLETE;
           } else if (delivery.Delivery.finishTime && delivery.Delivery.finishTime <= blockTime) {
