@@ -349,15 +349,15 @@ const Launcher = (props) => {
   }, [hasSeenIntroVideo]);
 
   const openHelpChannel = useCallback(() => {
-    window.open(process.env.REACT_APP_HELP_URL, '_blank');
+    window.open(process.env.REACT_APP_HELP_URL, '_blank', 'noopener');
   }, []);
 
   const openAssetsPortal = useCallback(() => {
-    window.open(process.env.REACT_APP_BRIDGE_URL, '_blank');
+    window.open(process.env.REACT_APP_BRIDGE_URL, '_blank', 'noopener');
   }, []);
 
   const openWebWalletDashboard = useCallback(() => {
-    window.open(`${process.env.REACT_APP_ARGENT_WEB_WALLET_URL}`, '_blank');
+    window.open(`${process.env.REACT_APP_ARGENT_WEB_WALLET_URL}`, '_blank', 'noopener');
   }, []);
 
   return (
