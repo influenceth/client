@@ -210,7 +210,7 @@ const DockDetails = ({ onClose }) => {
                   </label>
                 </ThumbnailWithData>
                 <div style={{ width: 54 }}>
-                  <CrewCaptainCardFramed crewId={ship.Control.controller.id} noAnimation width={54} />
+                  <CrewCaptainCardFramed crewId={ship.Control?.controller?.id} noAnimation width={54} />
                 </div>
               </div>
               <ClipCorner dimension={assetBlockCornerSize} />

@@ -708,7 +708,11 @@ const MarketplaceOrder = ({
                   min={0}
                   onChange={handleChangeLimitPrice}
                   type="number"
-                  value={type === 'market' ? avgMarketPrice : limitPrice} />
+                  value={(
+                    type === 'market'
+                    ? (avgMarketPrice || 0).toLocaleString(undefined, { maximumFractionDigits: Math.log10(TOKEN_SCALE[TOKEN.SWAY]) })
+                    : limitPrice
+                  )} />
               </TextInputWrapper>
             </FormSection>
 
