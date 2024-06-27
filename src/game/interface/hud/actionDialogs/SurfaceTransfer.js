@@ -487,12 +487,24 @@ const SurfaceTransfer = ({
                           </WarningAlert>
 
                           {(stage === actionStage.NOT_STARTED || ['PACKAGING','PACKAGED','CANCELING'].includes(currentDeliveryAction?.status)) && (
-                            <SwayInputBlockInner
-                              disabled={nativeBool(stage !== actionStage.NOT_STARTED)}
-                              inputLabel="REQUESTED SWAY"
-                              instruction="OPTIONAL: You may request a SWAY payment from the controlling crew in exchange for goods delivered."
-                              onChange={onSwayChange}
-                              value={sway} />
+                            <>
+                              {stage === actionStage.NOT_STARTED
+                                ? (
+                                  <SwayInputBlockInner
+                                    inputLabel="REQUESTED SWAY"
+                                    instruction="OPTIONAL: You may request a SWAY payment from the controlling crew in exchange for goods delivered."
+                                    onChange={onSwayChange}
+                                    value={sway} />
+                                )
+                                : (
+                                  <SwayInputBlockInner
+                                    disabled
+                                    inputLabel="REQUESTED SWAY"
+                                    instruction="You requested the following payment from the controlling crew in exchange for goods delivered:"
+                                    onChange={onSwayChange}
+                                    value={sway || '0'} />
+                                )}
+                            </>
                           )}
                         </>
                       )
