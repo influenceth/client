@@ -2,23 +2,32 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
 import { Asteroid, Entity, Name } from '@influenceth/sdk';
 
-import useSession from '~/hooks/useSession';
-import useWebWorker from '~/hooks/useWebWorker';
 import useBuyAsteroid from '~/hooks/actionManagers/useBuyAsteroid';
 import useChangeName from '~/hooks/actionManagers/useChangeName';
+import useControlAsteroid from '~/hooks/actionManagers/useControlAsteroid';
+import useNameAvailability from '~/hooks/useNameAvailability';
+import usePriceConstants from '~/hooks/usePriceConstants';
+import useSession from '~/hooks/useSession';
+import useWalletBalances from '~/hooks/useWalletBalances';
+import useWebWorker from '~/hooks/useWebWorker';
+
 import constants from '~/lib/constants';
-import formatters from '~/lib/formatters';
 import exportGLTF from '~/lib/graphics/exportGLTF';
+import formatters from '~/lib/formatters';
+import { asteroidPrice } from '~/lib/priceUtils';
+import { nativeBool, reactBool } from '~/lib/utils';
+import { renderDummyAsteroid } from '~/game/scene/asteroid/helpers/utils';
 
 import AddressLink from '~/components/AddressLink';
+import AsteroidGraphic from './components/AsteroidGraphic';
 import Button from '~/components/ButtonAlt';
 import DataReadout from '~/components/DataReadout';
-import Ether from '~/components/Ether';
 import IconButton from '~/components/IconButton';
 import MarketplaceLink from '~/components/MarketplaceLink';
 import StaticForm from '~/components/StaticForm';
 import Text from '~/components/Text';
 import TextInput from '~/components/TextInput';
+import { AsteroidUserPrice } from '~/components/UserPrice';
 import {
   CheckCircleIcon,
   EccentricityIcon,
@@ -29,13 +38,7 @@ import {
   SemiMajorAxisIcon,
   SurfaceAreaIcon
 } from '~/components/Icons';
-import { renderDummyAsteroid } from '~/game/scene/asteroid/helpers/utils';
-import AsteroidGraphic from './components/AsteroidGraphic';
-import { AsteroidUserPrice } from '~/components/UserPrice';
-import useNameAvailability from '~/hooks/useNameAvailability';
-import { nativeBool, reactBool } from '~/lib/utils';
-import usePriceConstants from '~/hooks/usePriceConstants';
-import useControlAsteroid from '~/hooks/actionManagers/useControlAsteroid';
+
 import EntityActivityLog from '../EntityActivityLog';
 
 const paneStackBreakpoint = 720;
@@ -271,6 +274,7 @@ const AsteroidInformation = ({ abundances, asteroid, isManager, isOwner }) => {
   const { controlAsteroid, takingControl } = useControlAsteroid(Number(asteroid.id));
   const { changeName, changingName } = useChangeName({ id: Number(asteroid.id), label: Entity.IDS.ASTEROID });
   const { data: priceConstants } = usePriceConstants();
+  const { data: walletBalances } = useWalletBalances();
   const webWorkerPool = useWebWorker();
 
   const [exportingModel, setExportingModel] = useState(false);
@@ -304,12 +308,20 @@ const AsteroidInformation = ({ abundances, asteroid, isManager, isOwner }) => {
     }
   }, [changeName, isNameValid, newName, asteroid?.id]);
 
+  const sufficientFunds = useMemo(() => {
+    if (!asteroid || !priceConstants || !walletBalances) return false;
+    const lots = Asteroid.getSurfaceArea(undefined, asteroid.Celestial.radius);
+    const price = asteroidPrice(lots, priceConstants);
+    const balance = BigInt(walletBalances?.combinedBalance?.to(priceConstants.ASTEROID_PURCHASE_TOKEN));
+    return price <= balance;
+  }, [asteroid, priceConstants, walletBalances]);
+
   const attemptBuyAsteroid = useCallback(async () => {
     const limited = await checkForLimit();
     if (limited) return;
-    
+
     buyAsteroid();
-  }, [checkForLimit, buyAsteroid]);
+  }, [buyAsteroid, checkForLimit]);
 
   return (
     <Wrapper>
@@ -443,9 +455,9 @@ const AsteroidInformation = ({ abundances, asteroid, isManager, isOwner }) => {
 
               {priceConstants && !asteroid.Nft?.owner && (
                 <Button
-                  data-tooltip-content="Purchase development rights"
+                  data-tooltip-content={sufficientFunds ? "Purchase development rights" : "Additional funds required from Store"}
                   data-tooltip-id="globalTooltip"
-                  disabled={nativeBool(!authenticated || buying)}
+                  disabled={nativeBool(!authenticated || buying || !sufficientFunds)}
                   isTransaction
                   loading={reactBool(buying)}
                   onClick={attemptBuyAsteroid}>
