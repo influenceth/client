@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useLocation, useHistory } from 'react-router-dom';
 import styled from 'styled-components';
 import { MdFullscreen as FullscreenIcon, MdFullscreenExit as ExitFullscreenIcon } from 'react-icons/md';
+import { ResetCameraIcon } from '~/components/Icons';
 import screenfull from 'screenfull';
 
 import { BackIcon } from '~/components/Icons';
@@ -9,6 +10,7 @@ import PrereleaseLogoSVG from '~/assets/images/logo-prerelease.svg';
 import useStore from '~/hooks/useStore';
 import useScreenSize from '~/hooks/useScreenSize';
 import HudIconButton from '~/components/HudIconButton';
+import IconButton from '~/components/IconButton';
 import TimeControls from './mainMenu/TimeControls';
 
 const StyledMainMenu = styled.div`
@@ -91,6 +93,12 @@ const TimeSection = styled.div`
   bottom: ${barHeight - dipAmount}px;
 `;
 
+const MiscControlsSection = styled.div`
+  position: absolute;
+  right: 0;
+  bottom: 60px;
+`;
+
 // const MenuWrapper = styled.div`
 //   display: flex;
 //   flex-direction: row;
@@ -126,6 +134,8 @@ const MainMenu = () => {
   // const { data: crewAssignmentData } = useCrewAssignments();
 
   const [ fullscreen, setFullscreen ] = useState(screenfull.isEnabled && screenfull.isFullscreen);
+
+  const dispatchReorientCamera = useStore(s => s.dispatchReorientCamera);
 
   // TODO: genesis book deprecation vvv
   // const { crew, crewmateMap } = useCrewContext();
@@ -280,6 +290,17 @@ const MainMenu = () => {
             <TimeControls />
           </TimeSection>
         )}
+
+        <MiscControlsSection>
+          <IconButton
+            borderless
+            data-tooltip-place="left"
+            data-tooltip-content="Realign camera"
+            onClick={dispatchReorientCamera}
+            style={{ fontSize: '20px'}}>
+            <ResetCameraIcon />
+          </IconButton>
+        </MiscControlsSection>
 
         <RightHudButtonArea>
           {screenfull.isEnabled && !fullscreen && !isMobile && (
