@@ -5,7 +5,7 @@ import { Building, Permission } from '@influenceth/sdk';
 import { RecruitCrewmateIcon } from '~/components/Icons';  // TODO: sergey's
 import useCrewManager from '~/hooks/actionManagers/useCrewManager';
 import useStore from '~/hooks/useStore';
-import { nativeBool, reactBool } from '~/lib/utils';
+import { reactBool } from '~/lib/utils';
 import ActionButton, { getCrewDisabledReason } from './ActionButton';
 
 const isVisible = ({ account, building }) => {
@@ -24,7 +24,7 @@ const RecruitCrewmate = ({ asteroid, crew, lot, _disabled }) => {
     let warning = '';
 
     // if active crew is stationed here...
-    if (crew?._location?.buildingId === lot?.building?.id) {
+    if (crew?._location?.buildingId === lot?.building?.id && crew?._ready) {
       // ... and if crew has space, add to crew
       if (crew.Crew?.roster?.length < 5) {
         ontoCrew = crew.id;
@@ -73,7 +73,8 @@ const RecruitCrewmate = ({ asteroid, crew, lot, _disabled }) => {
       asteroid,
       crew,
       permission: Permission.IDS.RECRUIT_CREWMATE,
-      permissionTarget: lot?.building
+      permissionTarget: lot?.building,
+      requireReady: false
     });
   }, [asteroid, crew, lot?.building, pendingCrewmate, recruitToCrew]);
 

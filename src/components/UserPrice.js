@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 
+import { asteroidPrice } from '~/lib/priceUtils';
 import usePriceConstants from '~/hooks/usePriceConstants';
 import usePriceHelper from '~/hooks/usePriceHelper';
 import useStore from '~/hooks/useStore';
@@ -27,8 +28,7 @@ export const AsteroidUserPrice = ({ lots = 0n, format = true }) => {
   const { data: priceConstants } = usePriceConstants();
 
   const price = useMemo(() => {
-    const roundedLots = BigInt(Math.round(Number(lots)));
-    return priceConstants.ASTEROID_PURCHASE_BASE_PRICE + roundedLots * priceConstants.ASTEROID_PURCHASE_LOT_PRICE;
+    return asteroidPrice(lots, priceConstants);
   }, [lots, priceConstants]);
 
   return (

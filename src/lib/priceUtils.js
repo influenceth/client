@@ -51,3 +51,8 @@ export const TOKEN_FORMATTER = {
     }
   }
 };
+
+export const asteroidPrice = (lots, priceConstants) => {
+  const roundedLots = BigInt(Math.round(Number(lots)));
+  return priceConstants.ASTEROID_PURCHASE_BASE_PRICE + roundedLots * priceConstants.ASTEROID_PURCHASE_LOT_PRICE;
+};

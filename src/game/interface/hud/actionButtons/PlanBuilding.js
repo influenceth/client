@@ -26,14 +26,10 @@ const PlanBuilding = ({ asteroid, crew, lot, onSetAction, _disabled }) => {
   }, [onSetAction]);
 
   const disabledReason = useMemo(() => {
-    const isControlled = Permission.isPermitted(crew, Permission.IDS.USE_LOT, lot);
-
-    // if controlled by *someone*, i am only permitted if it is controlled by me (else, i am permitted to squat)
-    const isPermitted = (lot?.PrepaidAgreements?.length > 0 || lot?.ContractAgreements?.length > 0 ) ? isControlled : true;
+    const isControlledByMe = Permission.isPermitted(crew, Permission.IDS.USE_LOT, lot);
 
     if (_disabled) return 'loading...';
-    if (!isPermitted) return 'lot reserved';
-    if (constructionStatus === 'READY_TO_PLAN') return getCrewDisabledReason({ asteroid, crew, requireReady: !isControlled });
+    if (constructionStatus === 'READY_TO_PLAN') return getCrewDisabledReason({ asteroid, crew, requireReady: !isControlledByMe });
   }, [_disabled, asteroid, constructionStatus, crew, lot]);
 
   return (
