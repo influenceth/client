@@ -29,16 +29,20 @@ const CrewOwnershipFilter = ({ assetType, filters, onChange }) => {
   useEffect(() => {
     const newTypes = { ...initialValues };
     if (filters[fieldName]) {
-      const standardAddress = Address.toStandard(filters[fieldName]) || '';
-      if (standardAddress) {
-        if (Address.areEqual(filters[fieldName], accountAddress)) {
-          newTypes.ownedByMe = true;
+      try {
+        const standardAddress = Address.toStandard(filters[fieldName]) || '';
+        if (standardAddress) {
+          if (Address.areEqual(filters[fieldName], accountAddress)) {
+            newTypes.ownedByMe = true;
+          } else {
+            newTypes.ownedBy = standardAddress;
+            setOwnedByAddress(standardAddress);
+          }
         } else {
-          newTypes.ownedBy = standardAddress;
-          setOwnedByAddress(standardAddress);
+          newTypes[filters[fieldName]] = true;
         }
-      } else {
-        newTypes[filters[fieldName]] = true;
+      } catch (e) {
+        setOwnedByAddress('');
       }
     }
     setTypes(newTypes);

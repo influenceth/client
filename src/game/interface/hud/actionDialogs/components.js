@@ -2109,7 +2109,7 @@ export const InventorySelectionDialog = ({
   const [filterValue, setFilterValue] = useState('');
   const [selection, setSelection] = useState(initialSelection);
   const [showPermittedInventories, setShowPermittedInventories] = useState(true);
-  const [showPublicInventories, setShowPublicInventories] = useState(true);
+  const [showPublicInventories, setShowPublicInventories] = useState(false);
   const [sort, setSort] = useState(['distance', 'asc']);
 
   const otherLocation = useMemo(() => {

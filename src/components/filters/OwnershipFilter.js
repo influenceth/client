@@ -45,22 +45,23 @@ const OwnershipFilter = ({ assetType, filters, onChange }) => {
 
   useEffect(() => {
     const newTypes = { ...initialValues };
-    let standardAddress;
-
     if (['unowned', 'owned'].includes(filters[fieldName])) {
       newTypes[filters[fieldName]] = true;
     } else if (filters[fieldName]) {
       try {
-        standardAddress = Address.toStandard(filters[fieldName]);
-
-        if (Address.areEqual(filters[fieldName], accountAddress)) {
-          newTypes.ownedByMe = true;
+        const standardAddress = Address.toStandard(filters[fieldName]) || '';
+        if (standardAddress) {
+          if (Address.areEqual(filters[fieldName], accountAddress)) {
+            newTypes.ownedByMe = true;
+          } else {
+            newTypes.ownedBy = standardAddress;
+            setOwnedByAddress(standardAddress);
+          }
         } else {
-          newTypes.ownedBy = standardAddress;
-          setOwnedByAddress(standardAddress);
+          newTypes[filters[fieldName]] = true;
         }
       } catch (e) {
-        setOwnedByAddress('0x0');
+        setOwnedByAddress('');
       }
     }
 
