@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
-import { Inventory, Permission } from '@influenceth/sdk';
+import { Inventory, Order, Permission } from '@influenceth/sdk';
 
 import { TransferFromIcon } from '~/components/Icons';
 import useDeliveryManager from '~/hooks/actionManagers/useDeliveryManager';
@@ -41,28 +41,30 @@ const SurfaceTransferOutgoing = ({ asteroid, crew, lot, ship, onSetAction, dialo
           }
         });
         (inventoryOrders || []).forEach((order) => {
-          actionStack.push({
-            label: `Limit Sell`,
-            preloadEntity: order?.entity,
-            onClick: (entity) => {
-              const exchangeLoc = locationsArrToObj(entity?.Location?.locations || []);
-              onSetAction('MARKETPLACE_ORDER',  {
-                exchange: entity,
-                asteroidId: exchangeLoc?.asteroidId,
-                lotId: exchangeLoc?.lotId,
-                mode: 'sell',
-                type: 'limit',
-                resourceId: order.product,
-                isCancellation: true,
-                preselect: {
-                  limitPrice: order.price,
-                  quantity: order.amount,
-                  storage: order.storage,
-                  storageSlot: order.storageSlot
-                }
-              })
-            }
-          });
+          if (order.orderType === Order.IDS.LIMIT_SELL) {
+            actionStack.push({
+              label: `Limit Sell`,
+              preloadEntity: order?.entity,
+              onClick: (entity) => {
+                const exchangeLoc = locationsArrToObj(entity?.Location?.locations || []);
+                onSetAction('MARKETPLACE_ORDER',  {
+                  exchange: entity,
+                  asteroidId: exchangeLoc?.asteroidId,
+                  lotId: exchangeLoc?.lotId,
+                  mode: 'sell',
+                  type: 'limit',
+                  resourceId: order.product,
+                  isCancellation: true,
+                  preselect: {
+                    limitPrice: order.price,
+                    quantity: order.amount,
+                    storage: order.storage,
+                    storageSlot: order.storageSlot
+                  }
+                })
+              }
+            });
+          }
         });
         // (none of these apply currently)
         // (originActionItems || []).forEach((a) => {
