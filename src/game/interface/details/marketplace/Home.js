@@ -487,7 +487,7 @@ const MarketplaceHome = ({ asteroid, listings, mode, setMode, orderTally, onSele
             })}
         </Listings>
       </Body>
-      
+
       <Footer>
         <StyledPagination
           currentPage={currentPage}
