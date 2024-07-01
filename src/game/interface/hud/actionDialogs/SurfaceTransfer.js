@@ -649,7 +649,7 @@ const SurfaceTransfer = ({
 
 const Wrapper = (props) => {
   const { deliveryId, destination, destinationSlot, origin, originSlot, txHash } = props;
-  const { asteroid, lot, isLoading } = useAsteroidAndLot(props);
+  const { asteroid, isLoading } = useAsteroidAndLot(props);
 
   // entrypoints w/ props:
   //  - deliveryId (from actionitem)

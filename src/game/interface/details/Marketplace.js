@@ -4,7 +4,6 @@ import { useHistory, useLocation, useParams } from 'react-router-dom';
 import { Entity, Lot, Product } from '@influenceth/sdk';
 
 import OnClickLink from '~/components/OnClickLink';
-import Pagination from '~/components/Pagination';
 import Details from '~/components/DetailsModal';
 import { OrderIcon } from '~/components/Icons';
 import useAsteroid from '~/hooks/useAsteroid';
@@ -142,7 +141,13 @@ const Marketplace = () => {
   const [listings, orderTally] = useMemo(() => {
     let buyOrderTally = 0;
     let sellOrderTally = 0;
-    const allProducts = new Set([...products.map(Number), ...Object.keys(orderSummary || {}).map(Number)]);
+    // show all products that are allowedProducts or have active orders available
+    const allProducts = new Set([
+      ...products.map(Number),
+      ...Object.keys(orderSummary || {})
+        .filter((i) => orderSummary[i].buy?.orders || orderSummary[i].sell?.orders)
+        .map(Number)
+    ]);
     const productListings = ([...allProducts]).map((i) => {
       const summary = orderSummary?.[i] || {};
       buyOrderTally += summary.buy?.orders || 0;
@@ -162,20 +167,6 @@ const Marketplace = () => {
 
     return [productListings, buyOrderTally + sellOrderTally];
   }, [orderSummary, products]);
-
-  const [ filteredCount, filteredListings ] = useMemo(() => {
-    const filtered = listings
-      .filter(({ product }) => {
-        return nameFilter.length === 0 ||
-          Product.TYPES[product].name.toLowerCase().includes((nameFilter || '').toLowerCase());
-      })
-      .sort((a, b) => {
-        if (sort === 'liquidity') return a.forBuy + a.forSale < b.forBuy + b.forSale ? 1 : -1;
-        if (sort === 'alphabetical') return Product.TYPES[a.product].name > Product.TYPES[b.product].name ? 1 : -1;
-      });
-
-    return [filtered.length, filtered.slice((currentPage - 1) * pageSize, (currentPage - 1) * pageSize + pageSize)];
-  }, [listings, nameFilter, currentPage, sort]);
 
   const marketplace = useMemo(() => {
     if (lot?.building?.Exchange) return lot.building;
@@ -197,10 +188,6 @@ const Marketplace = () => {
       history.push(`/marketplace/${asteroidId}/${lotIndex}`);
     }
   }, [backOverride, product]);
-
-  const goToListings = useCallback(() => {
-    history.push(`/marketplace/${asteroidId}/${lotIndex}`);
-  }, []);
 
   const goToMyOrders = useCallback(() => {
     history.push(`/marketplace/${asteroidId}/${lotIndex}/orders`);

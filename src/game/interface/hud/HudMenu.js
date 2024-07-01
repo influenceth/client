@@ -40,8 +40,6 @@ import useLot from '~/hooks/useLot';
 import useSession from '~/hooks/useSession';
 import useShip from '~/hooks/useShip';
 import useStore from '~/hooks/useStore';
-import { reactBool } from '~/lib/utils';
-import theme from '~/theme';
 import hudMenus from './hudMenus';
 
 const cornerWidth = 8;
