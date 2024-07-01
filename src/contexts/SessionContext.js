@@ -13,7 +13,7 @@ import { Address } from '@influenceth/sdk';
 
 import Reconnecting from '~/components/Reconnecting';
 import api from '~/lib/api';
-import { getBlockTime } from '~/lib/utils';
+import { fireTrackingEvent, getBlockTime } from '~/lib/utils';
 import useStore from '~/hooks/useStore';
 
 const resolveChainId = (chainId) => {
@@ -337,7 +337,6 @@ export function SessionProvider({ children }) {
       dispatchSessionStarted(newSession);
       setStatus(STATUSES.AUTHENTICATED);
       return true;
-
     } catch (e) {
       if (!isSessionUpgradeAttempt) {
         logout();
@@ -436,6 +435,8 @@ export function SessionProvider({ children }) {
       resumeOrAuthenticate().finally(() => {
         setReadyForChildren(true);
       });
+    } else if (status === STATUSES.AUTHENTICATED) {
+      fireTrackingEvent('login');
     }
   }, [currentSession, status]); // eslint-disable-line react-hooks/exhaustive-deps
 

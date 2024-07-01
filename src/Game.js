@@ -4,6 +4,8 @@ import { ThemeProvider, createGlobalStyle } from 'styled-components';
 import { BrowserRouter as Router, Switch, Route, useHistory } from 'react-router-dom';
 import { useDetectGPU } from '@react-three/drei';
 
+import { initializeTagManager } from './gtm';
+
 import FullpageInterstitial from '~/components/FullpageInterstitial';
 import { ActionItemProvider } from '~/contexts/ActionItemContext';
 import { ActivitiesProvider } from '~/contexts/ActivitiesContext';
@@ -109,6 +111,11 @@ const Game = () => {
   const graphics = useStore(s => s.graphics);
   const [ showScene, setShowScene ] = useState(false);
   const [ loadingMessage, setLoadingMessage ] = useState('Initializing');
+
+  // Initialize tag manager
+  useEffect(() => {
+    initializeTagManager();
+  }, []);
 
   const autodetectNeedsInit = graphics?.autodetect === undefined;
   useEffect(() => {

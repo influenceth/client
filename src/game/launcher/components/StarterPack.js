@@ -17,6 +17,7 @@ import ChainTransactionContext from '~/contexts/ChainTransactionContext';
 import useSwapHelper from '~/hooks/useSwapHelper';
 import { useEthBalance } from '~/hooks/useWalletTokenBalance';
 import { PurchaseForm } from './SKU';
+import { fireTrackingEvent } from '~/lib/utils';
 
 const PackWrapper = styled.div`
   padding: 10px 8px;
@@ -189,6 +190,8 @@ export const useStarterPacks = () => {
         if (onIsPurchasing) onIsPurchasing(false);
         return;
       }
+
+      fireTrackingEvent(`purchase_${which}_starter_pack`, { category: 'purchase' });
 
       await execute('PurchaseStarterPack', {
         collection: Crewmate.COLLECTION_IDS.ADALIAN,
