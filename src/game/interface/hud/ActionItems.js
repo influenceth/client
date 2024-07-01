@@ -428,7 +428,7 @@ const ActionItems = () => {
                   <InProgressFilter onClick={onClickFilter('progress')} selected={selectedFilter === 'progress'}><b>{(tallies.progress || 0).toLocaleString()}</b> In Progress</InProgressFilter>
                   {tallies.hidden > 0 && <HiddenFilter onClick={onClickFilter('hidden')} selected={selectedFilter === 'hidden'}><EyeIcon /> <b>{(tallies.hidden || 0).toLocaleString()}</b></HiddenFilter>}
                   <div style={{ flex: 1 }} />
-                  <Link to="/listview/eventlog" onClick={(e) => e.stopPropagation()}><LoggedEventsIcon /></Link>
+                  <Link to="/listview/eventlog" onClick={(e) => e.stopPropagation()} style={{ paddingRight: 0 }}><LoggedEventsIcon /></Link>
                 </Filters>
               </TitleWrapper>
             )}>

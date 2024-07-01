@@ -15,13 +15,12 @@ import { useSwayBalance } from '~/hooks/useWalletTokenBalance';
 import useAccountFormatted from '~/hooks/useAccountFormatted';
 import IconButton from '~/components/IconButton';
 import { TOKEN, TOKEN_FORMATTER } from '~/lib/priceUtils';
-import { menuPadding } from '~/game/uiConstants';
 
 const StyledSystemControls = styled.div`
   align-items: center;
   display: flex;
   flex-direction: row;
-  padding: 16px 6px 0 0;
+  padding: 12px 6px 0 0;
   pointer-events: all;
   position: absolute;
   right: 0;
