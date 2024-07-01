@@ -143,11 +143,9 @@ const LotInfo = () => {
               </Description>
             </HudMenuCollapsibleSection>
 
-            {[Building.CONSTRUCTION_STATUSES.PLANNED, Building.CONSTRUCTION_STATUSES.UNDER_CONSTRUCTION].includes(lot.building.Building.status) && (
-              <HudMenuCollapsibleSection titleText="Construction">
-                <ConstructionMaterialsGrid building={lot.building} />
-              </HudMenuCollapsibleSection>
-            )}
+            <HudMenuCollapsibleSection titleText="Construction" collapsed>
+              <ConstructionMaterialsGrid building={lot.building} />
+            </HudMenuCollapsibleSection>
 
             <HudMenuCollapsibleSection titleText={`${siteOrBuilding} Permissions`} collapsed>
               <div style={{ marginBottom: 10 }}>
