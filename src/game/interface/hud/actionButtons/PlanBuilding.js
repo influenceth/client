@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from 'react';
-import { Lot, Permission } from '@influenceth/sdk';
+import { Permission } from '@influenceth/sdk';
 
 import { PlanBuildingIcon } from '~/components/Icons';
 import useConstructionManager from '~/hooks/actionManagers/useConstructionManager';
