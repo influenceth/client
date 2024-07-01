@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Asteroid, Crewmate, Entity, Inventory, Lot, Permission, Product, Time } from '@influenceth/sdk';
 import styled from 'styled-components';
 
-import { ForwardIcon, InventoryIcon, LocationIcon, RouteIcon, SurfaceTransferIcon, WarningOutlineIcon } from '~/components/Icons';
+import { CheckIcon, CloseIcon, ForwardIcon, InventoryIcon, LocationIcon, RouteIcon, SurfaceTransferIcon, WarningOutlineIcon } from '~/components/Icons';
 import useCrewContext from '~/hooks/useCrewContext';
 import useDeliveryManager from '~/hooks/actionManagers/useDeliveryManager';
 import useLot from '~/hooks/useLot';
@@ -365,8 +365,11 @@ const SurfaceTransfer = ({
     if (currentDeliveryAction?.status === 'PACKAGED') {
       if (currentCrewHasDestinationPerms) {
         return {
-          finalizeLabel: 'Accept Proposal',
-          onFinalize: onAcceptDelivery,
+          finalizeLabel: [
+            <><CloseIcon style={{ marginRight: 4 }} /> <span>Reject</span></>,
+            <><CheckIcon style={{ marginRight: 4 }} /> <span>Accept</span></>
+          ],
+          onFinalize: [onCancelDelivery, onAcceptDelivery],
         };
       } else {
         return {

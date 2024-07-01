@@ -2487,7 +2487,7 @@ export const getBuildingRequirements = (building, deliveryActions = []) => {
     const totalRequired = Building.CONSTRUCTION_TYPES[buildingType].requirements[productId];
     const inInventory = (inventory?.contents || []).find((c) => Number(c.product) === Number(productId))?.amount || 0;
     const inTransit = deliveryActions
-      .filter((d) => d.status !== 'FINISHED')
+      .filter((d) => !['FINISHED','CANCELING','PACKAGED'].includes(d.status))
       .reduce((acc, d) => acc + ((d.action.contents.find((c) => Number(c.product) === Number(productId))?.amount) || 0), 0);
     return {
       i: productId,
@@ -4193,6 +4193,16 @@ export const ActionDialogFooter = ({
 
   const allowedOrLaunched = useMemo(() => requireLaunched ? isLaunched : true, [isLaunched, requireLaunched]);
 
+  const finalizeActions = useMemo(() => {
+    if (Array.isArray(onFinalize)) {
+      return onFinalize.map((onAction, i) => ({
+        finalizeLabel: finalizeLabel?.[i],
+        onFinalize: onAction
+      }));
+    }
+    return [{ finalizeLabel, onFinalize }];
+  }, [finalizeLabel, onFinalize]);
+
   const isReady = isSequenceable ? crew?._readyToSequence : crew?._ready;
   return (
     <Footer wide={wide}>
@@ -4226,14 +4236,19 @@ export const ActionDialogFooter = ({
             stage === actionStage.READY_TO_COMPLETE
               ? (
                 <>
-                  <Button
-                    loading={reactBool(buttonsLoading)}
-                    onClick={onClose}>Close</Button>
-                  <Button
-                    disabled={nativeBool(disabled)}
-                    isTransaction
-                    loading={reactBool(buttonsLoading)}
-                    onClick={onFinalize}>{finalizeLabel || 'Accept'}</Button>
+                  {finalizeActions?.length === 1 && (
+                    <Button
+                      loading={reactBool(buttonsLoading)}
+                      onClick={onClose}>Close</Button>
+                  )}
+                  {finalizeActions.map((a, i) => (
+                    <Button
+                      key={i}
+                      disabled={nativeBool(disabled)}
+                      isTransaction
+                      loading={reactBool(buttonsLoading)}
+                      onClick={a.onFinalize}>{a.finalizeLabel || 'Accept'}</Button>
+                  ))}
                 </>
               )
               : (
