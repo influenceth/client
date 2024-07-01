@@ -592,7 +592,7 @@ const api = {
 
     // only return aggregations
     const aggregation = esb
-      .termsAggregation('exchanges', 'entity.id').size(250)
+      .termsAggregation('exchanges', 'entity.id').size(1000) // what is an appropriate size limit here?
       .aggs([
         // buy summary
         esb
@@ -631,26 +631,13 @@ const api = {
     q.size(0);
     const response = await instance.post(`/_search/order`, q.toJSON());
 
-    const buckets = response.data.aggregations.exchanges.buckets.reduce((acc, b) => ({
+    return response.data.aggregations.exchanges.buckets.reduce((acc, b) => ({
       ...acc,
       [b.key]: {
         buy: { orders: b.buy.doc_count, amount: b.buy.amount.value, price: b.buy.price.value / 1e6 },
         sell: { orders: b.sell.doc_count, amount: b.sell.amount.value, price: b.sell.price.value / 1e6 },
       }
     }), {});
-
-    const exchangeIds = Object.keys(buckets);
-
-    // TODO: get all exchanges where operational and in allowed products
-
-    // TODO: this is outside of cache invalidation scope... may want to re-work
-    const exchanges = exchangeIds.length > 0 ? await getEntities({ ids: exchangeIds, label: Entity.IDS.BUILDING, components: ['Building', 'Exchange', 'Location', 'Name'] }) : [];
-    return exchanges.reduce((acc, marketplace) => {
-      if (marketplace.Building.status !== Building.CONSTRUCTION_STATUSES.UNPLANNED) {
-        acc.push({ ...buckets[marketplace.id], marketplace });
-      }
-      return acc;
-    }, []);
   },
 
   getOrderSummaryByProduct: async (entity) => {
