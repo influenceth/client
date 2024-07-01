@@ -299,7 +299,6 @@ const TransferToSite = ({ asteroid, lot: destinationLot, deliveryManager, stage,
         goLabel="Transfer"
         onGo={onStartDelivery}
         stage={stage}
-        waitForCrewReady
         {...props} />
 
       {stage === actionStage.NOT_STARTED && (
