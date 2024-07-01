@@ -57,10 +57,18 @@ const useCrewManager = () => {
     [execute]
   );
 
-  const getPendingCrewmate = useCallback(
-    () => getPendingTx('InitializeArvadian', {}) || getPendingTx('RecruitAdalian', {}),
-    [getPendingTx]
-  );
+  const getPendingCrewmate = useCallback(() => {
+    const recruiting = getPendingTx('RecruitAdalian', {});
+
+    if (recruiting && window.dataLayer) {
+      window.dataLayer.push({ event: 'event', eventProps: {
+        action: 'purchase_crewmate',
+        category: 'purchase'
+      }});
+    }
+
+    return recruiting || getPendingTx('RecruitAdalian', {});
+  }, [getPendingTx]);
 
   return {
     changeActiveCrew,

@@ -337,7 +337,6 @@ export function SessionProvider({ children }) {
       dispatchSessionStarted(newSession);
       setStatus(STATUSES.AUTHENTICATED);
       return true;
-
     } catch (e) {
       if (!isSessionUpgradeAttempt) {
         logout();
@@ -436,6 +435,8 @@ export function SessionProvider({ children }) {
       resumeOrAuthenticate().finally(() => {
         setReadyForChildren(true);
       });
+    } else if (status === STATUSES.AUTHENTICATED) {
+      if (window.dataLayer) window.dataLayer.push({ event: 'event', eventProps: { action: 'login' }});
     }
   }, [currentSession, status]); // eslint-disable-line react-hooks/exhaustive-deps
 

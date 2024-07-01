@@ -338,6 +338,8 @@ const Launcher = (props) => {
   }, []);
 
   const onClickPlay = useCallback(() => {
+    if (window.dataLayer) window.dataLayer.push({ event: 'event', eventProps: { action: 'play' }});
+
     dispatchLauncherPage();
     if (!hasSeenIntroVideo && !DISABLE_LAUNCHER_TRAILER) {
       dispatchSeenIntroVideo(true);

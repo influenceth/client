@@ -152,6 +152,11 @@ export const useStarterPacks = () => {
 
   return useMemo(() => {
     const onPurchase = (which) => async (onIsPurchasing) => {
+      if (window.dataLayer) window.dataLayer.push({ event: 'event', eventProps: {
+        action: crewmateTally == 5 ? 'purchase_advanced_starter_pack' : 'purchase_basic_starter_pack',
+        category: 'purchase'
+      }});
+
       const pack = starterPacks[which];
       const totalPrice = pack.price;
       const crewmateTally = pack.crewmates;
