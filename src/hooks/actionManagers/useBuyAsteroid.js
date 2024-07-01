@@ -31,7 +31,7 @@ const useBuyAsteroid = (id) => {
         caller_crew: crew || { id: 0, label: Entity.IDS.CREW }
       }
     );
-  }, [execute, system, asteroid, caller_crew]);
+  }, [execute, system, asteroid]);
 
   const checkForLimit = useCallback(async () => {
     const saleData = (await api.getAsteroidSale()) || {}; // jit check
