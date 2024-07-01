@@ -20,6 +20,7 @@ import HudMenu from './interface/hud/HudMenu';
 import SystemControls from './interface/hud/SystemControls';
 import Help from './launcher/Help';
 import Rewards from './launcher/Rewards';
+import { fireTrackingEvent } from '~/lib/utils';
 
 const DISABLE_LAUNCHER_TRAILER = true && process.env.NODE_ENV === 'development';
 
@@ -338,8 +339,7 @@ const Launcher = (props) => {
   }, []);
 
   const onClickPlay = useCallback(() => {
-    if (window.dataLayer) window.dataLayer.push({ event: 'event', eventProps: { action: 'play' }});
-
+    fireTrackingEvent('play');
     dispatchLauncherPage();
     if (!hasSeenIntroVideo && !DISABLE_LAUNCHER_TRAILER) {
       dispatchSeenIntroVideo(true);

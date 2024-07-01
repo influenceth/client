@@ -7,6 +7,7 @@ import useBlockTime from '~/hooks/useBlockTime';
 import useCrewContext from '~/hooks/useCrewContext';
 import useStore from '~/hooks/useStore';
 import api from '~/lib/api';
+import { fireTrackingEvent } from '~/lib/utils';
 
 const useBuyAsteroid = (id) => {
   const blockTime = useBlockTime();
@@ -18,10 +19,7 @@ const useBuyAsteroid = (id) => {
   const system = asteroid?.AsteroidProof?.used ? 'PurchaseAsteroid' : 'InitializeAndPurchaseAsteroid';
 
   const buyAsteroid = useCallback(() => {
-    if (window.dataLayer) window.dataLayer.push({ event: 'event', eventProps: {
-      action: 'purchase_asteroid',
-      category: 'purchase'
-    }});
+    fireTrackingEvent('purchase_asteroid', { category: 'purchase' });
 
     // caller_crew is optional here b/c may not exist yet
     return execute(
@@ -31,7 +29,7 @@ const useBuyAsteroid = (id) => {
         caller_crew: crew || { id: 0, label: Entity.IDS.CREW }
       }
     );
-  }, [execute, system, asteroid]);
+  }, [execute, system, asteroid, crew]);
 
   const checkForLimit = useCallback(async () => {
     const saleData = (await api.getAsteroidSale()) || {}; // jit check

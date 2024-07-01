@@ -2,6 +2,7 @@ import { useCallback, useContext } from 'react';
 import { Crewmate, Entity } from '@influenceth/sdk';
 
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
+import { fireTrackingEvent } from '~/lib/utils';
 
 const useCrewManager = () => {
   const { execute, getPendingTx } = useContext(ChainTransactionContext);
@@ -16,6 +17,7 @@ const useCrewManager = () => {
   );
 
   const purchaseCredits = useCallback((tally) => {
+    for (let i = 0; i < tally; i++) fireTrackingEvent('purchase_crewmate_bulk', { category: 'purchase' });
     execute('BulkPurchaseAdalians', { collection: Crewmate.COLLECTION_IDS.ADALIAN, tally });
   }, [execute]);
 
@@ -36,6 +38,7 @@ const useCrewManager = () => {
         });
 
       } else {
+        if (!(crewmate?.id > 0)) fireTrackingEvent('purchase_crewmate', { category: 'purchase' });
         const appearance = Crewmate.unpackAppearance(crewmate.Crewmate.appearance);
         execute('RecruitAdalian', {
           crewmate: { id: crewmate.id, label: Entity.IDS.CREWMATE },
@@ -57,18 +60,10 @@ const useCrewManager = () => {
     [execute]
   );
 
-  const getPendingCrewmate = useCallback(() => {
-    const recruiting = getPendingTx('RecruitAdalian', {});
-
-    if (recruiting && window.dataLayer) {
-      window.dataLayer.push({ event: 'event', eventProps: {
-        action: 'purchase_crewmate',
-        category: 'purchase'
-      }});
-    }
-
-    return recruiting || getPendingTx('RecruitAdalian', {});
-  }, [getPendingTx]);
+  const getPendingCrewmate = useCallback(
+    () => getPendingTx('InitializeArvadian', {}) || getPendingTx('RecruitAdalian', {}),
+    [getPendingTx]
+  );
 
   return {
     changeActiveCrew,
