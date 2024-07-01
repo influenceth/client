@@ -21,7 +21,7 @@ const StyledSystemControls = styled.div`
   align-items: center;
   display: flex;
   flex-direction: row;
-  padding: ${menuPadding}px 6px 0 0;
+  padding: 16px 6px 0 0;
   pointer-events: all;
   position: absolute;
   right: 0;
