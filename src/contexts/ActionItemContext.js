@@ -77,7 +77,15 @@ export function ActionItemProvider({ children }) {
     return [];
   }, [crew?._actionTypeTriggered, pendingTransactions]);
 
-  const busyItem = useMemo(() => {
+  useEffect(() => {
+    if (!blockTime) return;
+
+    const sequencedItems = (actionItems || [])
+      .filter((a) => a._startTime && a._startTime > blockTime)
+      .sort((a, b) => a._startTime - b._startTime);
+
+    // calculate busyItem
+    let busyItem = null;
     if (crew && !crew?._ready && busyActivity) {
       const item = getActivityConfig(busyActivity)?.busyItem;
       if (item) {
@@ -93,16 +101,14 @@ export function ActionItemProvider({ children }) {
         };
         transformed._startTime = item.event?.timestamp;
         if (transformed.event?.returnValues) {
-          transformed.event.returnValues.finishTime = crew?.Crew.readyAt;
+          // best guess at finishTime for current action
+          transformed.event.returnValues.finishTime = sequencedItems[0]
+            ? sequencedItems[0]._startTime
+            : crew?.Crew.readyAt;
         }
-        return transformed;
+        busyItem = transformed;
       }
     }
-    return null;
-  }, [busyActivity, crew]);
-
-  useEffect(() => {
-    if (!blockTime) return;
 
     setReadyItems(
       (actionItems || [])
@@ -115,11 +121,7 @@ export function ActionItemProvider({ children }) {
       .sort((a, b) => a.event.returnValues?.finishTime - b.event.returnValues?.finishTime);
     setUnreadyItems(unreadyFinishableItems?.length > 0 ? unreadyFinishableItems : (busyItem ? [busyItem] : []));
 
-    setUnstartedItems(
-      (actionItems || [])
-        .filter((a) => a._startTime && a._startTime > blockTime)
-        .sort((a, b) => a._startTime - b._startTime)
-    );
+    setUnstartedItems(sequencedItems);
 
     setPlannedItems(
       (plannedBuildings || [])
@@ -147,7 +149,7 @@ export function ActionItemProvider({ children }) {
         }))
         .sort((a, b) => a._agreement.endTime - b._agreement.endTime)
     );
-  }, [actionItems, busyItem, crew, crewAgreements, plannedBuildings, blockTime, itemsUpdatedAt, plansUpdatedAt]);
+  }, [actionItems, busyActivity, crew, crewAgreements, plannedBuildings, blockTime, itemsUpdatedAt, plansUpdatedAt]);
 
   const allVisibleItems = useMemo(() => {
     if (!authenticated) return [];

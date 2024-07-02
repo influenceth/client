@@ -23,7 +23,7 @@ const useLot = (lotId) => {
   const lotEntity = useMemo(() => lotId ? Entity.formatEntity({ id: lotId, label: Entity.IDS.LOT }) : null, [lotId]);
   // console.log('lotId',{ lotId, lotEntity});
 
-  const { data: lot, isLoading: lotIsLoading } = useEntity(lotId ? { id: lotId, label: Entity.IDS.LOT } : undefined);
+  const { data: lot, isLoading: lotIsLoading, dataUpdatedAt: lUpdatedAt } = useEntity(lotId ? { id: lotId, label: Entity.IDS.LOT } : undefined);
 
   // prepop all the entities on the lot in the cache (so can do in a single query)
   const { data: lotDataPrepopped, isLoading: lotDataIsLoading } = useQuery(
@@ -65,7 +65,7 @@ const useLot = (lotId) => {
   const { data: ships, isLoading: shipsLoading , dataUpdatedAt: sUpdatedAt} = useLotEntities(lotId, Entity.IDS.SHIP, !!lotDataPrepopped);
 
   const isLoading = lotEntity?.uuid && (lotIsLoading || lotDataIsLoading || asteroidLoading || buildingsLoading || depositsLoading || shipsLoading);
-  const objArrDataUpdatedAt = Math.max(bUpdatedAt, dUpdatedAt, sUpdatedAt);
+  const objArrDataUpdatedAt = Math.max(bUpdatedAt, dUpdatedAt, lUpdatedAt, sUpdatedAt);
   const data = useMemo(() => {
     if (isLoading || !lotEntity?.uuid) return undefined;
 
