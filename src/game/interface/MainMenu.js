@@ -87,17 +87,20 @@ const RightHudButtonArea = styled(HudButtonArea)`
   right: 4px;
 `;
 
-const TimeSection = styled.div`
+const IconsTray = styled.div`
+  border-right: 1px solid ${p => p.theme.colors.mainBorder};
+`;
+
+const SceneControlsSection = styled.div`
+  display: flex;
+  flex-direction: row;
+  align-items: center;
   position: absolute;
   right: ${cornerButtonWidth + transitionWidth}px;
   bottom: ${barHeight - dipAmount}px;
+  padding-bottom: 12px
 `;
 
-const MiscControlsSection = styled.div`
-  position: absolute;
-  right: 0;
-  bottom: 60px;
-`;
 
 // const MenuWrapper = styled.div`
 //   display: flex;
@@ -286,21 +289,22 @@ const MainMenu = () => {
         </MenuWrapper> */}
 
         {!isMobile && (
-          <TimeSection id="timeMenu">
+          <>
+          <SceneControlsSection id="timeMenu">
+            <IconsTray>
+              <IconButton
+                borderless
+                data-tooltip-place="top"
+                dataTip="Reorient Camera"
+                onClick={dispatchReorientCamera}
+                style={{ fontSize: '18px'}}>
+                <ResetCameraIcon />
+              </IconButton>
+            </IconsTray>
             <TimeControls />
-          </TimeSection>
+          </SceneControlsSection>
+          </>
         )}
-
-        <MiscControlsSection>
-          <IconButton
-            borderless
-            data-tooltip-place="left"
-            data-tooltip-content="Realign camera"
-            onClick={dispatchReorientCamera}
-            style={{ fontSize: '20px'}}>
-            <ResetCameraIcon />
-          </IconButton>
-        </MiscControlsSection>
 
         <RightHudButtonArea>
           {screenfull.isEnabled && !fullscreen && !isMobile && (

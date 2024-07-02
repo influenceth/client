@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import styled from 'styled-components';
 import { displayTimeFractionDigits } from '~/lib/utils';
 
-const diamondDimension = 35;
+const diamondDimension = 30;
 const halfDimension = diamondDimension / 2;
 const radius = 50 - halfDimension;
 
@@ -17,20 +17,20 @@ const Wrapper = styled.div`
 `;
 
 const Svg = styled.svg`
-  height: 100%;
-  width: 100%;
+  height: 90%;
+  width: 90%;
 `;
 
 const HandDiamond = styled.path`
   fill: white;
   stroke: black;
-  stroke-width: 2px;
+  stroke-width: 3px;
 `;
 
 const OuterCircle = styled.circle`
   fill: none;
   stroke: ${p => p.theme.colors.main};
-  stroke-width: ${radius * 0.05}px;
+  stroke-width: ${radius * 0.12}px;
 `;
 
 // TODO: this could presumably be improved using a radial gradient

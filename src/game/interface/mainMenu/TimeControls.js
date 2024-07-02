@@ -19,7 +19,6 @@ const StyledTime = styled.div`
   display: flex;
   flex-direction: row;
   justify-content: flex-end;
-  padding: 0 8px 6px 0;
 `;
 
 const Controls = styled.div`
@@ -45,8 +44,8 @@ const DaysSince = styled(TimeComponent)`
 `;
 
 const Dot = styled.div`
-  height: 10px;
-  width: 10px;
+  height: 8px;
+  width: 8px;
   border-radius: 10px;
   background: #333;
 `;
@@ -55,11 +54,12 @@ const SpeedDots = styled.div`
   flex-direction: row;
   justify-content: space-between;
   width: 60px;
+  margin-left: 12px;
 
   ${p => p.speedSetting > 0
     ? `
-      ${Dot}:nth-child(n+1):nth-child(-n+${p.speedSetting}) {
-        background: white;
+      ${Dot}:nth-child(n):nth-child(n+${5 - p.speedSetting + 1}) {
+        background: ${p.theme.colors.success};
       }
     `
     : `
@@ -72,8 +72,8 @@ const SpeedDots = styled.div`
 `;
 
 const SpeedMult = styled.div`
-  color: ${p => p.dir < 0 ? p.theme.colors.error : p.theme.colors.main};
-  min-width: 50px;
+  color: ${p => p.dir < 0 ? p.theme.colors.error : (p.dir > 0 ? p.theme.colors.success : p.theme.colors.main)};
+  min-width: 30px;
   padding: 0 8px;
   text-align: center;
 `;
@@ -151,7 +151,7 @@ const TimeController = ({ open }) => {
         <Dot />
       </SpeedDots>
 
-      <SpeedMult dir={speedSetting < 0 ? -1 : 1}>
+      <SpeedMult dir={speedSetting}>
         {displaySpeed}x
       </SpeedMult>
 
@@ -216,10 +216,10 @@ const TimeControls = () => {
       <TimeIcon
         motionBlur={Math.abs(timeOverride?.speed || 0) > 10000}
         size="30px"
-        style={{ marginLeft: 12 }}
+        style={{ marginLeft: 12, marginBottom: 2 }}
         time={displayTime}
         onClick={toggleOpen} />
-      <DaysSince displayTime={displayTime} onClick={toggleOpen} />
+      <DaysSince displayTime={displayTime} onClick={toggleOpen} dataTip="Toggle Time Simulation" data-tooltip-place="top" />
     </StyledTime>
   );
 };
