@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import styled from 'styled-components';
+import cloneDeep from 'lodash/cloneDeep';
 import { Crewmate, Product, Ship, Time } from '@influenceth/sdk';
 
 import {
@@ -240,7 +241,14 @@ const SetCourse = ({ origin, destination, manager, ship, stage, travelSolution, 
 
   const deltaVLoaded = useMemo(() => {
     if (!ship || !propellantMassLoaded) return 0;
-    return Ship.Entity.propellantToDeltaV(ship, propellantMassLoaded, exhaustBonus?.totalBonus);
+
+    const cloneShip = cloneDeep(ship);
+    try {
+      cloneShip.Inventories.find((inventory) => inventory.slot === shipConfig.propellantSlot).mass = propellantMassLoaded;
+      return Ship.Entity.propellantToDeltaV(cloneShip, propellantMassLoaded, exhaustBonus?.totalBonus);
+    } catch {
+      return 0;
+    }
   }, [propellantMassLoaded, exhaustBonus, ship]);
 
   const [crewTimeRequirement, taskTimeRequirement] = useMemo(() => {

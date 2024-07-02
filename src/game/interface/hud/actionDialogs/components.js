@@ -3601,7 +3601,7 @@ export const PropellantSection = ({ title, narrow, deltaVLoaded, deltaVRequired,
           color="#cccccc"
           value={Math.min(1, deltaVUse)} />
         : <BarChart
-          color={theme.colors[(deltaVMode ? deltaVUse : propellantUse) > 1 ? 'error' : 'orange']}
+          color={theme.colors[propellantUse > 1 ? 'error' : 'orange']}
           bgColor={theme.colors.main}
           value={Math.min(1, propellantUse)} />
       }
