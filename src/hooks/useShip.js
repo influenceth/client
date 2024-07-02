@@ -14,7 +14,7 @@ const useShip = (id) => {
     let ship = null;
     if (data && !responseProps.isLoading) {
       ship = cloneDeep(data);
-      ship._location = locationsArrToObj(ship.Location?.locations);
+      ship._location = locationsArrToObj(ship.Location?.locations || []);
     }
     return { data: ship, ...responseProps };
   }, [data, responseProps]);

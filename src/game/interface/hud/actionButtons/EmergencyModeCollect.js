@@ -60,6 +60,7 @@ const EmergencyModeCollect = ({ crew, onSetAction, _disabled }) => {
   const disabledReason = useMemo(() => {
     if (_disabled) return 'loading...';
     if (!ship) return 'ship is not crewed';
+    if (ship.Ship?.transitDestination) return 'ship is in flight';
     if (hasCollectedMax) return 'max reached';
     return getCrewDisabledReason({ crew });
   }, [_disabled, crew, hasCollectedMax, ship]);

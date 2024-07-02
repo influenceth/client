@@ -491,19 +491,25 @@ const SetCourse = ({ origin, destination, manager, ship, stage, travelSolution, 
 const Wrapper = ({ ...props }) => {
   const { crew } = useCrewContext();
 
-  const shipId = crew?.Ship?.emergencyAt > 0 ? crew : crew?._location?.shipId;
-  const manager = useShipTravelManager(shipId);
+  const { data: maybeShip, isLoading: shipIsLoading } = useShip(crew?._location?.shipId);
+  const ship = useMemo(() => {
+    return (!maybeShip && crew?.Ship?.emergencyAt > 0) ? crew : maybeShip;
+  }, [crew]);
+
+  const manager = useShipTravelManager(ship.id);
   const { actionStage, currentTravelAction, currentTravelSolution, isLoading: solutionIsLoading } = manager;
 
   const defaultOrigin = useStore(s => s.asteroids.origin);
   const defaultDestination = useStore(s => s.asteroids.destination);
   const proposedTravelSolution = useStore(s => s.asteroids.travelSolution);
 
-  const travelSolution = useMemo(() => currentTravelAction ? currentTravelSolution : proposedTravelSolution, [currentTravelAction, proposedTravelSolution]);
+  const travelSolution = useMemo(
+    () => currentTravelAction ? currentTravelSolution : proposedTravelSolution,
+    [currentTravelAction, proposedTravelSolution]
+  );
 
   const { data: origin, isLoading: originIsLoading } = useAsteroid(currentTravelAction?.originId || defaultOrigin);
   const { data: destination, isLoading: destinationIsLoading } = useAsteroid(currentTravelAction?.destinationId || defaultDestination);
-  const { data: ship, isLoading: shipIsLoading } = useShip(shipId);
 
   // close dialog if cannot load both asteroids or if no travel solution
   useEffect(() => {
