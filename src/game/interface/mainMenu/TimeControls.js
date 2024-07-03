@@ -56,24 +56,15 @@ const SpeedDots = styled.div`
   width: 60px;
   margin-left: 12px;
 
-  ${p => p.speedSetting > 0
-    ? `
-      ${Dot}:nth-child(n):nth-child(n+${5 - p.speedSetting + 1}) {
-        background: ${p.theme.colors.success};
-      }
-    `
-    : `
-      ${Dot}:nth-child(n+${5 + p.speedSetting + 1}):nth-child(-n+5) {
-        background: ${p.theme.colors.error};
-        opacity: 0.6;
-      }
-    `
+  ${Dot}:nth-child(n+${p => 5 - Math.abs(p.speedSetting) + 1}):nth-child(-n+5) {
+    background: ${p => p.speedSetting > 0 ? p.theme.colors.success : p.theme.colors.error};
+    opacity: 0.6;
   }
 `;
 
 const SpeedMult = styled.div`
   color: ${p => p.dir < 0 ? p.theme.colors.error : (p.dir > 0 ? p.theme.colors.success : p.theme.colors.main)};
-  min-width: 30px;
+  min-width: 50px;
   padding: 0 8px;
   text-align: center;
 `;
@@ -219,7 +210,13 @@ const TimeControls = () => {
         style={{ marginLeft: 12, marginBottom: 2 }}
         time={displayTime}
         onClick={toggleOpen} />
-      <DaysSince displayTime={displayTime} onClick={toggleOpen} dataTip="Toggle Time Simulation" data-tooltip-place="top" />
+      <DaysSince
+        data-tooltip-content="Toggle Time Simulation"
+        data-tooltip-delay-hide={10}
+        data-tooltip-place="top"
+        data-tooltip-id="globalTooltip"
+        displayTime={displayTime}
+        onClick={toggleOpen} />
     </StyledTime>
   );
 };

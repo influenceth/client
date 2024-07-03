@@ -130,6 +130,7 @@ const MainMenu = () => {
 
   // const createAlert = useStore(s => s.dispatchAlertLogged);
   const dispatchLotSelected = useStore(s => s.dispatchLotSelected);
+  const dispatchReorientCamera = useStore(s => s.dispatchReorientCamera);
   const dispatchZoomScene = useStore(s => s.dispatchZoomScene);
   const updateZoomStatus = useStore(s => s.dispatchZoomStatusChanged);
 
@@ -137,8 +138,6 @@ const MainMenu = () => {
   // const { data: crewAssignmentData } = useCrewAssignments();
 
   const [ fullscreen, setFullscreen ] = useState(screenfull.isEnabled && screenfull.isFullscreen);
-
-  const dispatchReorientCamera = useStore(s => s.dispatchReorientCamera);
 
   // TODO: genesis book deprecation vvv
   // const { crew, crewmateMap } = useCrewContext();
@@ -289,21 +288,20 @@ const MainMenu = () => {
         </MenuWrapper> */}
 
         {!isMobile && (
-          <>
           <SceneControlsSection id="timeMenu">
             <IconsTray>
               <IconButton
                 borderless
-                data-tooltip-place="top"
+                dataPlace="top"
                 dataTip="Reorient Camera"
                 onClick={dispatchReorientCamera}
                 style={{ fontSize: '18px'}}>
                 <ResetCameraIcon />
               </IconButton>
             </IconsTray>
+            
             <TimeControls />
           </SceneControlsSection>
-          </>
         )}
 
         <RightHudButtonArea>
