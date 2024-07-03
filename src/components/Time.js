@@ -14,16 +14,23 @@ const StyledTime = styled.div`
     color: white;
     font-size: 60%;
     letter-spacing: 1px;
-    margin-left: 4px;
+    margin-left: 6px;
     opacity: 0.6;
   }
 `;
 
 const Time = (props) => {
-  const { displayTime, ...restProps } = props;
+  const { dataPlace, dataTip, dataFor = 'globalTooltip', delayHide = 10, displayTime, ...restProps } = props;
 
   return (
-    <StyledTime {...restProps}>{displayTime}</StyledTime>
+    <StyledTime 
+    data-tooltip-content={dataTip}
+    data-tooltip-place={dataPlace || "right"}
+    data-tooltip-id={dataFor} 
+    key={dataTip}
+    data-tooltip-delay-hide={delayHide}  
+    {...restProps}>
+    {displayTime}</StyledTime>
   );
 };
 

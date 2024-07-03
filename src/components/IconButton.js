@@ -70,7 +70,7 @@ const CancelIndicator = styled.svg`
 `;
 
 const IconButton = (props) => {
-  const { active, dataTip, dataFor = 'globalTooltip', delayHide = 10, onClick, setRef, ...restProps} = props;
+  const { active, dataPlace = 'right', dataTip, dataFor = 'globalTooltip', delayHide = 10, onClick, setRef, ...restProps} = props;
   const playSound = useStore(s => s.dispatchEffectStartRequested);
 
   const _onClick = (e) => {
@@ -81,7 +81,14 @@ const IconButton = (props) => {
   if (setRef) restProps.ref = setRef;
   return (
     // Adding 'key' forces data-tooltip-content to actually update on the tooltip
-    <StyledIconButton {...restProps} onClick={_onClick} data-tooltip-content={dataTip} data-tooltip-id={dataFor} key={dataTip} data-tooltip-delay-hide={delayHide}>
+    <StyledIconButton 
+      key={dataTip}
+      onClick={_onClick}
+      data-tooltip-content={dataTip}
+      data-tooltip-place={dataPlace}
+      data-tooltip-id={dataFor}
+      data-tooltip-delay-hide={delayHide}
+      {...restProps}>
       {props.children}
       {active && (
         <CancelIndicator viewBox="0 0 30 30" xmlns="http://www.w3.org/2000/svg">
