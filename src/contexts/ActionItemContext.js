@@ -155,18 +155,30 @@ export function ActionItemProvider({ children }) {
     if (!authenticated) return [];
 
     // return the readyItems whose "finishing transaction" is not already pending
-    const visibleReadyItems = readyItems.filter((item) => {
+    const visibleReadyItems = (readyItems || []).filter((item) => {
       if (pendingTransactions) {
         return !getActivityConfig(item)?.isActionItemHidden(pendingTransactions);
       }
       return true;
     });
 
-    const visiblePlannedItems = plannedItems.filter((item) => {
+    const visiblePlannedItems = (plannedItems || []).filter((item) => {
       if (pendingTransactions) {
         return !pendingTransactions.find((tx) => (
           ['ConstructionStart', 'ConstructionAbandon'].includes(tx.key)
           && tx.vars.building.id === item.id
+        ));
+      }
+      return true;
+    });
+
+    const visibleAgreementItems = (agreementItems || []).filter((item) => {
+      if (pendingTransactions) {
+        return !pendingTransactions.find((tx) => (
+          ['AcceptPrepaidAgreement', 'ExtendPrepaidAgreement'].includes(tx.key)
+          && tx.vars.target.id === item.id
+          && tx.vars.target.label === item.label
+          && tx.vars.permission === item._agreement?.permission
         ));
       }
       return true;
@@ -178,7 +190,7 @@ export function ActionItemProvider({ children }) {
       ...(randomEventItems || []).map((item) => ({ ...item, type: 'randomEvent', category: 'ready' })),
       ...(visibleReadyItems || []).map((item) => ({ ...item, type: 'ready', category: 'ready' })),
       ...(visiblePlannedItems || []).map((item) => ({ ...item, type: 'plan', category: 'warning' })),
-      ...(agreementItems || []).map((item) => ({ ...item, type: 'agreement', category: 'warning' })),
+      ...(visibleAgreementItems || []).map((item) => ({ ...item, type: 'agreement', category: 'warning' })),
       ...(unreadyItems || []).map((item) => ({ ...item, type: 'unready', category: 'unready' })),
       ...(unstartedItems || []).map((item) => ({ ...item, type: 'unstarted', category: 'unstarted' }))
     ].map((x) => {  // make sure everything has a unique key (only `plan` should fall through to the label_id option)
