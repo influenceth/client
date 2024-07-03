@@ -200,7 +200,7 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
       ),
       crew?._timeAcceleration
     );
-  }, [amount, crew?._timeAcceleration, extractionBonus, selectedCoreSample]);
+  }, [amount, crew?._timeAcceleration, extractionBonus, resource, selectedCoreSample]);
 
   const { totalTime: crewTravelTime, tripDetails } = useMemo(() => {
     if (!asteroid?.id || !crew?._location?.lotId || !lot?.id) return {};

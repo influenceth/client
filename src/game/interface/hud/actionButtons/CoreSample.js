@@ -4,6 +4,7 @@ import { Asteroid, Building, Deposit, Lot, Product } from '@influenceth/sdk';
 import { NewCoreSampleIcon, ImproveCoreSampleIcon } from '~/components/Icons';
 import useCoreSampleManager from '~/hooks/actionManagers/useCoreSampleManager';
 import useStore from '~/hooks/useStore';
+import actionStage from '~/lib/actionStages';
 import { formatFixed } from '~/lib/utils';
 import ActionButton, { getCrewDisabledReason } from './ActionButton';
 import ActionButtonStack from './ActionButtonStack';
@@ -25,7 +26,7 @@ const isVisible = ({ asteroid, crew, lot, openHudMenu }) => {
       // (operational or planned extractor)
       lot?.building?.Building?.buildingType === Building.IDS.EXTRACTOR
       || openHudMenu === 'RESOURCES'
-    ); 
+    );
 };
 
 const NewCoreSample = ({ asteroid, crew, lot, onSetAction, overrideResourceId, improveSample, _disabled }) => {
@@ -38,7 +39,7 @@ const NewCoreSample = ({ asteroid, crew, lot, onSetAction, overrideResourceId, i
     return (currentSamplingActions || [])
       .map((sampling) => ({
         label: `${labelDict[sampling.status]} (${Product.TYPES[sampling?.action?.resourceId]?.name})`,
-        finishTime: sampling.action?.finishTime,
+        finishTime: [actionStage.IN_PROGRESS, actionStage.READY_TO_COMPLETE].includes(sampling.stage) ? sampling.action?.finishTime : null,
         onClick: () => onSetAction(
           sampling.action?.isNew ? 'NEW_CORE_SAMPLE' : 'IMPROVE_CORE_SAMPLE',
           { sampleId: sampling.action?.sampleId }

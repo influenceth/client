@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import styled from 'styled-components';
+import cloneDeep from 'lodash/cloneDeep';
 import { Crewmate, Product, Ship, Time } from '@influenceth/sdk';
 
 import {
@@ -240,7 +241,14 @@ const SetCourse = ({ origin, destination, manager, ship, stage, travelSolution, 
 
   const deltaVLoaded = useMemo(() => {
     if (!ship || !propellantMassLoaded) return 0;
-    return Ship.Entity.propellantToDeltaV(ship, propellantMassLoaded, exhaustBonus?.totalBonus);
+
+    const cloneShip = cloneDeep(ship);
+    try {
+      cloneShip.Inventories.find((inventory) => inventory.slot === shipConfig.propellantSlot).mass = propellantMassLoaded;
+      return Ship.Entity.propellantToDeltaV(cloneShip, propellantMassLoaded, exhaustBonus?.totalBonus);
+    } catch {
+      return 0;
+    }
   }, [propellantMassLoaded, exhaustBonus, ship]);
 
   const [crewTimeRequirement, taskTimeRequirement] = useMemo(() => {
@@ -491,19 +499,25 @@ const SetCourse = ({ origin, destination, manager, ship, stage, travelSolution, 
 const Wrapper = ({ ...props }) => {
   const { crew } = useCrewContext();
 
-  const shipId = crew?.Ship?.emergencyAt > 0 ? crew : crew?._location?.shipId;
-  const manager = useShipTravelManager(shipId);
+  const { data: maybeShip, isLoading: shipIsLoading } = useShip(crew?._location?.shipId);
+  const ship = useMemo(() => {
+    return (!maybeShip && crew?.Ship?.emergencyAt > 0) ? crew : maybeShip;
+  }, [crew]);
+
+  const manager = useShipTravelManager(ship.id);
   const { actionStage, currentTravelAction, currentTravelSolution, isLoading: solutionIsLoading } = manager;
 
   const defaultOrigin = useStore(s => s.asteroids.origin);
   const defaultDestination = useStore(s => s.asteroids.destination);
   const proposedTravelSolution = useStore(s => s.asteroids.travelSolution);
 
-  const travelSolution = useMemo(() => currentTravelAction ? currentTravelSolution : proposedTravelSolution, [currentTravelAction, proposedTravelSolution]);
+  const travelSolution = useMemo(
+    () => currentTravelAction ? currentTravelSolution : proposedTravelSolution,
+    [currentTravelAction, proposedTravelSolution]
+  );
 
   const { data: origin, isLoading: originIsLoading } = useAsteroid(currentTravelAction?.originId || defaultOrigin);
   const { data: destination, isLoading: destinationIsLoading } = useAsteroid(currentTravelAction?.destinationId || defaultDestination);
-  const { data: ship, isLoading: shipIsLoading } = useShip(shipId);
 
   // close dialog if cannot load both asteroids or if no travel solution
   useEffect(() => {

@@ -359,8 +359,8 @@ const ActionItems = () => {
       (acc, cur) => {
         if (!cur.hidden) {
           acc.all++;
-          if (['pending', 'failed', 'randomEvent', 'ready'].includes(cur.type)) acc.ready++;
-          if (cur.type === 'unready' || cur.type === 'unstarted') acc.progress++;
+          if (['failed', 'randomEvent', 'ready'].includes(cur.type)) acc.ready++;
+          if (['pending', 'unready', 'unstarted'].includes(cur.type)) acc.progress++;
         } else {
           acc.hidden++;
         }

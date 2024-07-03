@@ -53,7 +53,7 @@ const Note = styled.div`
   padding: 15px 10px 10px;
 `;
 
-const EmergencyModeCollect = ({ asteroid, lot, manager, ship: maybeShip, stage, ...props }) => {
+const EmergencyModeCollect = ({ asteroid, lot, manager, ship, stage, ...props }) => {
   const syncedTime = useSyncedTime();
 
   const { collectEmergencyPropellant, actionStage } = manager;
@@ -63,10 +63,6 @@ const EmergencyModeCollect = ({ asteroid, lot, manager, ship: maybeShip, stage, 
   const resourceId = Product.IDS.HYDROGEN_PROPELLANT;
 
   const [collectableAmount, setCollectableAmount] = useState(0);
-
-  const ship = useMemo(() => {
-    return (!maybeShip && crew?.Ship?.emergencyAt > 0) ? crew : maybeShip;
-  }, [crew]);
 
   const {
     propellantInventory,
@@ -254,15 +250,19 @@ const Wrapper = (props) => {
   const { data: asteroid, isLoading: asteroidIsLoading } = useAsteroid(crew?._location?.asteroidId);
   const { data: lot, isLoading: lotIsLoading } = useAsteroid(crew?._location?.lotId);
 
-  const shipId = crew?.Ship?.emergencyAt > 0 ? crew : crew?._location?.shipId;
-  const { data: ship, isLoading: shipIsLoading } = useShip(shipId);
+  const { data: maybeShip, isLoading: shipIsLoading } = useShip(crew?._location?.shipId);
+  const ship = useMemo(() => {
+    return (!maybeShip && crew?.Ship?.emergencyAt > 0) ? crew : maybeShip;
+  }, [crew]);
 
   const manager = useShipEmergencyManager();
   const { actionStage } = manager;
 
   const isLoading = asteroidIsLoading || lotIsLoading || shipIsLoading;
   useEffect(() => {
-    if ((!asteroid || !ship) && !isLoading && props.onClose) props.onClose();
+    if ((!asteroid || !ship) && !isLoading && props.onClose) {
+      props.onClose();
+    }
   }, [asteroid, ship, isLoading]);
 
   return (
