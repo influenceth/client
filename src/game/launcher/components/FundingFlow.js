@@ -15,6 +15,7 @@ import { TOKEN, TOKEN_FORMAT, TOKEN_FORMATTER } from '~/lib/priceUtils';
 import usePriceHelper from '~/hooks/usePriceHelper';
 import useStore from '~/hooks/useStore';
 import EthFaucetButton from './EthFaucetButton';
+import { fireTrackingEvent } from '~/lib/utils';
 
 const layerSwapChains = {
   '0x534e5f4d41494e': { ethereum: 'ETHEREUM_MAINNET', starknet: 'STARKNET_MAINNET' },
@@ -345,6 +346,7 @@ export const FundingFlow = ({ totalPrice, onClose, onFunded }) => {
       }).toString()
     }`;
 
+    fireTrackingEvent('ramp');
     window.open(url, '_blank');
     setWaiting(true);
   }, [accountAddress]);

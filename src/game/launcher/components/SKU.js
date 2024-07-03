@@ -15,7 +15,7 @@ import useStore from '~/hooks/useStore';
 import useAsteroidSale from '~/hooks/useAsteroidSale';
 import useBlockTime from '~/hooks/useBlockTime';
 import useFaucetInfo from '~/hooks/useFaucetInfo';
-import { cleanseTxHash, formatTimer, nativeBool, openAccessJSTime, reactBool, roundToPlaces } from '~/lib/utils';
+import { cleanseTxHash, fireTrackingEvent, formatTimer, nativeBool, openAccessJSTime, reactBool, roundToPlaces } from '~/lib/utils';
 import theme from '~/theme';
 import Button from '~/components/ButtonAlt';
 import useWalletBalances from '~/hooks/useWalletBalances';
@@ -435,6 +435,7 @@ const SwaySKU = ({ onUpdatePurchase, onPurchasing }) => {
         // else, run the transactions(s)
         } else {
           try {
+            fireTrackingEvent('purchase_sway', { category: 'purchase' });
             const tx = await executeCalls(multiswapCalls);
             setIsProcessing(true);
 

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useLocation, useHistory } from 'react-router-dom';
 import styled from 'styled-components';
 import { MdFullscreen as FullscreenIcon, MdFullscreenExit as ExitFullscreenIcon } from 'react-icons/md';
+import { ResetCameraIcon } from '~/components/Icons';
 import screenfull from 'screenfull';
 
 import { BackIcon } from '~/components/Icons';
@@ -9,6 +10,7 @@ import PrereleaseLogoSVG from '~/assets/images/logo-prerelease.svg';
 import useStore from '~/hooks/useStore';
 import useScreenSize from '~/hooks/useScreenSize';
 import HudIconButton from '~/components/HudIconButton';
+import IconButton from '~/components/IconButton';
 import TimeControls from './mainMenu/TimeControls';
 
 const StyledMainMenu = styled.div`
@@ -85,11 +87,20 @@ const RightHudButtonArea = styled(HudButtonArea)`
   right: 4px;
 `;
 
-const TimeSection = styled.div`
+const IconsTray = styled.div`
+  border-right: 1px solid ${p => p.theme.colors.mainBorder};
+`;
+
+const SceneControlsSection = styled.div`
+  display: flex;
+  flex-direction: row;
+  align-items: center;
   position: absolute;
   right: ${cornerButtonWidth + transitionWidth}px;
   bottom: ${barHeight - dipAmount}px;
+  padding-bottom: 12px
 `;
+
 
 // const MenuWrapper = styled.div`
 //   display: flex;
@@ -119,6 +130,7 @@ const MainMenu = () => {
 
   // const createAlert = useStore(s => s.dispatchAlertLogged);
   const dispatchLotSelected = useStore(s => s.dispatchLotSelected);
+  const dispatchReorientCamera = useStore(s => s.dispatchReorientCamera);
   const dispatchZoomScene = useStore(s => s.dispatchZoomScene);
   const updateZoomStatus = useStore(s => s.dispatchZoomStatusChanged);
 
@@ -276,9 +288,20 @@ const MainMenu = () => {
         </MenuWrapper> */}
 
         {!isMobile && (
-          <TimeSection id="timeMenu">
+          <SceneControlsSection id="timeMenu">
+            <IconsTray>
+              <IconButton
+                borderless
+                dataPlace="top"
+                dataTip="Reorient Camera"
+                onClick={dispatchReorientCamera}
+                style={{ fontSize: '18px'}}>
+                <ResetCameraIcon />
+              </IconButton>
+            </IconsTray>
+            
             <TimeControls />
-          </TimeSection>
+          </SceneControlsSection>
         )}
 
         <RightHudButtonArea>

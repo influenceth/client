@@ -50,6 +50,7 @@ const SKUFooter = styled.div`
   width: 100%;
   position: absolute;
 `;
+
 const SKULeftNote = styled.div`
   align-items: center;
   background: rgba(0, 0, 0, 0.3);
@@ -70,6 +71,7 @@ const SKULeftNote = styled.div`
     margin-right: 4px;
   }
 `;
+
 const SKURightNote = styled.div`
   align-items: center;
   bottom: -1px;
@@ -86,6 +88,7 @@ const SKURightNote = styled.div`
     margin-right: 4px;
   }
 `;
+
 const SKUButton = styled.div`
   cursor: ${p => p.theme.cursors.active};
   display: flex;
@@ -136,6 +139,7 @@ const SKUButton = styled.div`
     }
   }
 `;
+
 const SKUImagery = styled.div`
   align-items: center;
   background: url(${p => p.src});
