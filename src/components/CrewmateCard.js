@@ -152,7 +152,7 @@ const AbstractCard = ({ imageUrl, onClick, overlay, ...props }) => {
   useEffect(() => {
     if (imageFailed) setImageLoaded(true);
   }, [imageFailed]);
-  
+
   // TODO: make this a hook?
   // onLoad is not reliable if, ex. the image is already cached, so we use `complete`
   const watchImageLoad = useCallback((input) => {
@@ -229,8 +229,12 @@ const CrewmateCard = ({ crewmate = {}, useExplicitAppearance, ...props }) => {
 
   let imageUrl = useMemo(() => {
     let url = silhouette;
+    let options = '';
+    if (props.height) options += `&height=${props.height}`;
+    if (props.width) options += `&width=${props.width}`;
+
     if (!useExplicitAppearance && crewmate?.id) {
-      url = `${process.env.REACT_APP_IMAGES_URL}/v1/crew/${crewmate.id}/image.svg?bustOnly=true`;
+      url = `${process.env.REACT_APP_IMAGES_URL}/v2/crewmates/${crewmate.id}/image.png?bustOnly=true${options}`;
     } else if (BigInt(crewmate.Crewmate?.appearance || 0) > 0n) {
       url = `${process.env.REACT_APP_IMAGES_URL}/v1/crew/provided/image.svg?bustOnly=true&options=${JSON.stringify(
         pick(crewmate.Crewmate, ['coll', 'class', 'title', 'appearance'])
@@ -252,8 +256,12 @@ const CrewmateCard = ({ crewmate = {}, useExplicitAppearance, ...props }) => {
 };
 
 export const CrewCaptainCard = ({ crewId, ...props }) => {
+  let options = '';
+  if (props.height) options += `&height=${props.height}`;
+  if (props.width) options += `&width=${props.width}`;
+
   let imageUrl = useMemo(() => crewId
-    ? `${process.env.REACT_APP_IMAGES_URL}/v2/crews/${crewId}/captain/image.svg?bustOnly=true`
+    ? `${process.env.REACT_APP_IMAGES_URL}/v2/crews/${crewId}/captain/image.png?bustOnly=true${options}`
     : silhouette,
     [crewId]
   );

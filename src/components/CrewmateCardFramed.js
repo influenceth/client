@@ -194,6 +194,8 @@ const CrewmateCardFramed = ({
   crewmate,
   ...props
 }) => {
+  if (props.width) CrewmateCardProps.width = props.width;
+  if (props.height) CrewmateCardProps.height = props.height;
   const finalBorderColor = crewmate && warnIfNotOwnedBy && !Address.areEqual(crewmate?.Nft?.owner, warnIfNotOwnedBy)
     ? warningBorderColor
     : (borderColor || defaultBorderColor);
@@ -217,19 +219,24 @@ export const CrewCaptainCardFramed = ({
   CrewmateCardProps = {},
   crewId,
   ...props
-}) => (
-  <CrewmateCardAbstract
-    CardProps={CrewmateCardProps}
-    isCaptain
-    isEmpty={!crewId}
-    {...props}>
-    <CrewCaptainCard
-      crewId={crewId}
-      hideHeader
-      hideFooter
-      hideMask
-      {...CrewmateCardProps} />
-  </CrewmateCardAbstract>
-);
+}) => {
+  if (props.width) CrewmateCardProps.width = props.width;
+  if (props.height) CrewmateCardProps.height = props.height;
+
+  return (
+    <CrewmateCardAbstract
+      CardProps={CrewmateCardProps}
+      isCaptain
+      isEmpty={!crewId}
+      {...props}>
+      <CrewCaptainCard
+        crewId={crewId}
+        hideHeader
+        hideFooter
+        hideMask
+        {...CrewmateCardProps} />
+    </CrewmateCardAbstract>
+  );
+};
 
 export default CrewmateCardFramed;
