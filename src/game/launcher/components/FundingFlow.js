@@ -376,6 +376,7 @@ export const FundingFlow = ({ totalPrice, onClose, onFunded }) => {
     }, 100);
   }, [accountAddress]);
 
+  const [layerswapUrl, setLayerswapUrl] = useState();
   const onClickLayerswap = useCallback(() => {
     let amount;
     if (fundsNeeded) {
@@ -384,22 +385,21 @@ export const FundingFlow = ({ totalPrice, onClose, onFunded }) => {
       amount = Math.ceil(swapAmount.to(TOKEN.USDC));
     }
 
-    const url = `https://layerswap.io/app/?${
-      new URLSearchParams({
-        amount,
-        // from: layerSwapChains[chainId]?.ethereum,
-        to: layerSwapChains[chainId]?.starknet,
-        toAsset: 'USDC',
-        destAddress: accountAddress,
-        lockTo: true,
-        lockToAsset: true,
-        lockAddress: true,
-        actionButtonText: 'Fund Account'
-      }).toString()
-    }`;
-
-    window.open(url, '_blank');
-    setWaiting(true);
+    setLayerswapUrl(
+      `https://layerswap.io/app/?${
+        new URLSearchParams({
+          clientId: process.env.REACT_APP_LAYERSWAP_CLIENT_ID,
+          amount,
+          to: layerSwapChains[chainId]?.starknet,
+          toAsset: 'USDC',
+          destAddress: accountAddress,
+          lockTo: true,
+          lockToAsset: true,
+          lockAddress: true,
+          actionButtonText: 'Fund Account'
+        }).toString()
+      }`
+    );
   }, [accountAddress, fundsNeeded]);
 
   const onClickStarkgate = useCallback(() => {
@@ -427,7 +427,7 @@ export const FundingFlow = ({ totalPrice, onClose, onFunded }) => {
         onClose={onClose}
         modalMode
         style={{ zIndex: 9000 }}>
-        {!waiting && !ramping && (
+        {!waiting && !ramping && !layerswapUrl && (
           <FundingBody>
             {fundsNeeded && (
               <Receipt>
@@ -541,13 +541,23 @@ export const FundingFlow = ({ totalPrice, onClose, onFunded }) => {
             </div>
           </>
         )}
+        {layerswapUrl && (
+          <>
+            <iframe src={layerswapUrl} style={{ border: 0, width: '450px', height: '600px' }} />
+            <div style={{ display: 'flex', flexDirection: 'row', padding: '10px 0' }}>
+              <Button onClick={() => setLayerswapUrl()}>Cancel</Button>
+              <div style={{ flex: 1 }} />
+              <Button onClick={() => { setLayerswapUrl(); setWaiting(true); }}>Finished</Button>
+            </div>
+          </>
+        )}
         {waiting && (
           <WaitingWrapper>
             <div>
               <GiantIcon>
                 <WalletIcon />
               </GiantIcon>
-              <h4>Adding funds to your wallet...</h4>
+              <h4>Waiting for funds to be received...</h4>
               <small>(this may take several moments)</small>
               <Button size="small" onClick={() => setWaiting(false)}>
                 <CloseIcon /> <span>Cancel</span>
