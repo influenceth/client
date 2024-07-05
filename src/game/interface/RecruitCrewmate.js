@@ -51,7 +51,7 @@ const RecruitCrewmate = () => {
     return <SelectHabitatDialog onAccept={onSelectAssignedHabitat} onReject={onRejectAssignedHabitat} />;
   }
   if (crewmateId === undefined) {
-    return <SelectUninitializedCrewmateDialog onSelect={onSelectCrewmate} />;
+    return <SelectUninitializedCrewmateDialog arvadiansDisallowed={Number(locationId) > 100} onSelect={onSelectCrewmate} />;
   }
   if (page === 'create') {
     return (

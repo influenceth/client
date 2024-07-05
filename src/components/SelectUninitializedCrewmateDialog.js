@@ -87,7 +87,7 @@ const RecruitTally = styled.div`
   }
 `;
 
-const SelectUninitializedCrewmateDialog = ({ onSelect }) => {
+const SelectUninitializedCrewmateDialog = ({ arvadiansDisallowed, onSelect }) => {
   const { adalianRecruits, arvadianRecruits, crew, loading } = useCrewContext();
 
   const [selected, setSelected] = useState();
@@ -102,11 +102,11 @@ const SelectUninitializedCrewmateDialog = ({ onSelect }) => {
 
   useEffect(() => {
     if (!loading) {
-      if (!arvadianRecruits?.length) {
+      if (arvadiansDisallowed || !arvadianRecruits?.length) {
         onSelect(adalianRecruits?.[0]?.id || 0);
       }
     }
-  }, [adalianRecruits, arvadianRecruits?.length, loading])
+  }, [adalianRecruits, arvadiansDisallowed, arvadianRecruits?.length, loading])
 
   return (
     <Details

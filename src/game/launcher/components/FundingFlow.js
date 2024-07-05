@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import styled, { css } from 'styled-components';
 import { createPortal } from 'react-dom';
 import { PropagateLoader as Loader } from 'react-spinners';
+import { RampInstantSDK } from '@ramp-network/ramp-instant-sdk';
 
 import Button from '~/components/ButtonAlt';
 import { ChevronRightIcon, CloseIcon, WalletIcon, WarningOutlineIcon } from '~/components/Icons';
@@ -227,6 +228,19 @@ const WaitingWrapper = styled.div`
   }
 `;
 
+const RampWrapper = styled.div`
+  background: linear-gradient(225deg, black, rgba(${p => p.theme.colors.mainRGB}, 0.3));
+  ${p => !p.display && `
+    height: 0;
+    overflow: hidden;
+    width: 0;
+  `}
+  & > div {
+    height: 600px;
+    width: 900px;
+  }
+`;
+
 export const FundingFlow = ({ totalPrice, onClose, onFunded }) => {
   const createAlert = useStore(s => s.dispatchAlertLogged);
 
@@ -236,6 +250,7 @@ export const FundingFlow = ({ totalPrice, onClose, onFunded }) => {
   const preferredUiCurrency = useStore(s => s.getPreferredUiCurrency());
 
   const [hoveredRampButton, setHoveredRampButton] = useState(false);
+  const [ramping, setRamping] = useState();
   const [waiting, setWaiting] = useState();
 
   const startingBalance = useRef();
@@ -334,23 +349,34 @@ export const FundingFlow = ({ totalPrice, onClose, onFunded }) => {
   }, []);
 
   const onClickCC = useCallback((amount) => () => {
-    const url = `https://app.${process.env.NODE_ENV === 'production' ? '' : 'demo.'}ramp.network?${
-      new URLSearchParams({
-        hostApiKey: process.env.REACT_APP_RAMP_API_KEY,
+    fireTrackingEvent('ramp');
+    setRamping(true);
+
+    setTimeout(() => {
+      const embeddedRamp = new RampInstantSDK({
         hostAppName: 'Influence',
         hostLogoUrl: window.location.origin + '/maskable-logo-192x192.png',
+        hostApiKey: process.env.REACT_APP_RAMP_API_KEY,
         userAddress: accountAddress,
         swapAsset: 'STARKNET_ETH',  // TODO: STARKNET_USDC?
         fiatCurrency: 'USD',
-        fiatValue: Math.ceil(amount / 1e6)
-      }).toString()
-    }`;
+        fiatValue: Math.ceil(amount / 1e6),
+        url: process.env.NODE_ENV === 'production' ? undefined : 'https://app.demo.ramp.network',
 
-    fireTrackingEvent('ramp');
-    window.open(url, '_blank');
-    setWaiting(true);
+        variant: 'embedded-desktop',
+        containerNode: document.getElementById('ramp-container')
+      })
+      embeddedRamp.show();
+      embeddedRamp.on('PURCHASE_CREATED', () => {
+        setTimeout(() => {
+          setRamping(false);
+          setWaiting(true);
+        }, 5000);
+      });
+    }, 100);
   }, [accountAddress]);
 
+  const [layerswapUrl, setLayerswapUrl] = useState();
   const onClickLayerswap = useCallback(() => {
     let amount;
     if (fundsNeeded) {
@@ -359,22 +385,21 @@ export const FundingFlow = ({ totalPrice, onClose, onFunded }) => {
       amount = Math.ceil(swapAmount.to(TOKEN.USDC));
     }
 
-    const url = `https://layerswap.io/app/?${
-      new URLSearchParams({
-        amount,
-        // from: layerSwapChains[chainId]?.ethereum,
-        to: layerSwapChains[chainId]?.starknet,
-        toAsset: 'USDC',
-        destAddress: accountAddress,
-        lockTo: true,
-        lockToAsset: true,
-        lockAddress: true,
-        actionButtonText: 'Fund Account'
-      }).toString()
-    }`;
-
-    window.open(url, '_blank');
-    setWaiting(true);
+    setLayerswapUrl(
+      `https://layerswap.io/app/?${
+        new URLSearchParams({
+          clientId: process.env.REACT_APP_LAYERSWAP_CLIENT_ID,
+          amount,
+          to: layerSwapChains[chainId]?.starknet,
+          toAsset: 'USDC',
+          destAddress: accountAddress,
+          lockTo: true,
+          lockToAsset: true,
+          lockAddress: true,
+          actionButtonText: 'Fund Account'
+        }).toString()
+      }`
+    );
   }, [accountAddress, fundsNeeded]);
 
   const onClickStarkgate = useCallback(() => {
@@ -402,7 +427,7 @@ export const FundingFlow = ({ totalPrice, onClose, onFunded }) => {
         onClose={onClose}
         modalMode
         style={{ zIndex: 9000 }}>
-        {!waiting && (
+        {!waiting && !ramping && !layerswapUrl && (
           <FundingBody>
             {fundsNeeded && (
               <Receipt>
@@ -506,13 +531,33 @@ export const FundingFlow = ({ totalPrice, onClose, onFunded }) => {
             )}
           </FundingBody>
         )}
+        {ramping && (
+          <>
+            <RampWrapper display>
+              <div id="ramp-container" />
+            </RampWrapper>
+            <div style={{ padding: '8px 0' }}>
+              <Button onClick={() => setRamping()}>Back</Button>
+            </div>
+          </>
+        )}
+        {layerswapUrl && (
+          <>
+            <iframe src={layerswapUrl} style={{ border: 0, width: '450px', height: '600px' }} />
+            <div style={{ display: 'flex', flexDirection: 'row', padding: '10px 0' }}>
+              <Button onClick={() => setLayerswapUrl()}>Cancel</Button>
+              <div style={{ flex: 1 }} />
+              <Button onClick={() => { setLayerswapUrl(); setWaiting(true); }}>Finished</Button>
+            </div>
+          </>
+        )}
         {waiting && (
           <WaitingWrapper>
             <div>
               <GiantIcon>
                 <WalletIcon />
               </GiantIcon>
-              <h4>Adding funds to your wallet...</h4>
+              <h4>Waiting for funds to be received...</h4>
               <small>(this may take several moments)</small>
               <Button size="small" onClick={() => setWaiting(false)}>
                 <CloseIcon /> <span>Cancel</span>

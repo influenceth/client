@@ -95,6 +95,9 @@
     "REACT_APP_HELP_URL": {
       "required": false
     },
+    "REACT_APP_LAYERSWAP_CLIENT_ID": {
+      "required": false
+    },
     "REACT_APP_RAMP_API_KEY": {
       "required": false
     },

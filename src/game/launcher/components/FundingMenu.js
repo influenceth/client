@@ -213,49 +213,6 @@ const FundingMenu = () => {
         <ChevronRightIcon />
       </AddFundsButton>
       {isFunding && <FundingFlow onClose={() => setIsFunding()} />}
-
-      {/*
-      <CollapsibleBlock
-        containerHeight={250}
-        initiallyClosed
-        outerStyle={{ marginTop: 20 }}
-        title={<span style={{ textTransform: 'uppercase' }}>Add Funds</span>}>
-        <FundingOption>
-          <div>
-            <label>Add funds with a credit card. Powered by <b>Ramp</b>.</label>
-            <RampImage />
-          </div>
-          <Button
-            onClick={selectRamp}
-            onMouseEnter={onRampHover(true)}
-            onMouseLeave={onRampHover(false)}>
-            Use Credit Card
-          </Button>
-          <MouseoverInfoPane
-            referenceEl={hoveredRampButton}
-            css={css`margin-top:10px;`}
-            placement="bottom"
-            visible={!!hoveredRampButton}
-            zIndex={9001}>
-            <Disclaimer visible={!!hoveredRampButton}>
-              RAMP DISCLAIMER: Don't invest unless you're prepared to lose all the money you
-              invest. This is a high-risk investment and you should not expect to be protected
-              if something goes wrong.{' '}
-              <a href="https://ramp.network/risk-warning" target="_blank" rel="noopener noreferrer">Take 2 minutes to learn more.</a>
-            </Disclaimer>
-          </MouseoverInfoPane>
-        </FundingOption>
-        <FundingOption>
-          <div>
-            <label>Transfer from another account or exchange. Powered by <b>LayerSwap</b>.</label>
-            <LayerswapImage />
-          </div>
-          <Button onClick={selectLayerswap}>
-            Transfer via LayerSwap
-          </Button>
-        </FundingOption>
-      </CollapsibleBlock>
-      */}
     </FundWrapper>
   );
 };
