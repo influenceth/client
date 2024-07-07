@@ -11,6 +11,7 @@
     "@influenceth/astro": "^0.2.5",
     "@influenceth/sdk": "^2.1.2",
     "@popperjs/core": "^2.11.6",
+    "@ramp-network/ramp-instant-sdk": "^4.0.5",
     "@react-hook/throttle": "^2.2.0",
     "@react-three/drei": "^9.105.1",
     "@react-three/fiber": "^8.16.3",
