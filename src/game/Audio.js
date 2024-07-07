@@ -132,7 +132,7 @@ const getSound = (name, { index, excludeIndex } = {}) => {
   if (index) return { sound: sound[index], index };
 
   let indexes = Object.keys(sound);
-  if (excludeIndex) indexes = indexes.splice(excludeIndex, 1);
+  if (excludeIndex) indexes.splice(excludeIndex, 1);
 
   index = indexes[Math.floor(Math.random() * indexes.length)];
   return { sound: sound[index], index };
@@ -148,11 +148,27 @@ const Audio = () => {
   const effectEnded = useStore(s => s.dispatchEffectStopped);
 
   const [ soundEnabled, setSoundEnabled ] = useState(null);
-  const [ lastTrack, setLastTrack ] = useState(null);
   const [ currentTrack, setCurrentTrack ] = useState(null);
 
   const cutsceneWasPlaying = useRef();
 
+  // sound enabler (don't enable any sounds until use has interacted with page b/c audiocontext will fail)
+  useEffect(() => {
+    const onClick = () => {
+      setSoundEnabled(true);
+      document.body.removeEventListener('click', onClick);
+    };
+
+    document.body.addEventListener('click', onClick);
+
+    return () => {
+      Howler.unload();
+      document.body.removeEventListener('click', onClick);
+    };
+  }, []);
+
+  //
+  // SOUND EFFECTS
   const stopEffect = useCallback((toStop, { fadeOut }) => {
     if (!toStop) return;
 
@@ -198,80 +214,6 @@ const Audio = () => {
   }, [effectsVolume, effectEnded, stopEffect, soundEnabled]);
 
   useEffect(() => {
-    const onClick = () => {
-      setSoundEnabled(true);
-      document.body.removeEventListener('click', onClick);
-    };
-
-    document.body.addEventListener('click', onClick);
-
-    return () => {
-      Howler.unload();
-      document.body.removeEventListener('click', onClick);
-    };
-  }, []);
-
-  // Play random ambient music
-  useEffect(() => {
-    if (!soundEnabled) return;
-
-    const excludeIndex = lastTrack || null;
-    const { sound: track, index } = getSound('ambient', { excludeIndex });
-
-    let to;
-    if (musicVolume === 0 || !track) {
-      to = setTimeout(() => setLastTrack(index), Math.random() * 60000);
-    } else {
-      setCurrentTrack(track);
-      to = setTimeout(() => {
-        track.load();
-        track.play();
-        track.fade(0, track.baseVolume * musicVolume / 100, 5000);
-  
-        track.once('end', () => {
-          track.stop();
-          track.unload();
-          setCurrentTrack(null);
-          to = setTimeout(() => setLastTrack(index), Math.random() * 2500);
-        });
-      }, 5000);
-    }
-
-    return () => {
-      if (to) clearTimeout(to);
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ lastTrack, soundEnabled ]);
-
-  // Adjust volume of music tracks
-  useEffect(() => {
-    if (!soundEnabled) return;
-
-    let to;
-    if (currentTrack) {
-      const targetVolume = currentTrack.baseVolume * musicVolume / 100;
-      if (cutscenePlaying) {
-        currentTrack.volume(0);
-        cutsceneWasPlaying.current = true;
-      }
-      else if (cutsceneWasPlaying.current) {
-        currentTrack.volume(0);
-        to = setTimeout(() => {
-          currentTrack.fade(0, targetVolume, 5000);
-        }, 10000);
-        cutsceneWasPlaying.current = false;
-      }
-      else {
-        currentTrack.volume(targetVolume);
-      }
-    }
-
-    return () => {
-      if (to) clearTimeout(to);
-    }
-  }, [ musicVolume, currentTrack, cutscenePlaying, soundEnabled ]);
-
-  useEffect(() => {
     if (!soundEnabled) return;
 
     Object.entries(currentEffects).forEach(([ sound, settings ]) => {
@@ -286,6 +228,79 @@ const Audio = () => {
       }
     });
   }, [currentEffects, effectStarted, effectEnded, playEffect, soundEnabled, stopEffect]);
+
+
+  //
+  // AMBIENT MUSIC EFFECTS
+  const ambientVolume = useRef(0);
+
+  useEffect(() => {
+    ambientVolume.current = musicVolume;
+    if (currentTrack?.playing()) {
+      currentTrack.volume(currentTrack.baseVolume * musicVolume / 100);
+    }
+  }, [musicVolume]);
+
+  const fadeInAmbientTrack = useCallback(() => {
+    if (!currentTrack) return;
+
+    currentTrack.fade(0, currentTrack.baseVolume * ambientVolume.current / 100, 10000);
+    currentTrack.play();
+  }, [currentTrack]);
+
+  // select current ambient track (whenever there is none)
+  const lastTrack = useRef();
+  const disableMusic = musicVolume === 0;
+  useEffect(() => {
+    if (!soundEnabled) return;
+    if (!!currentTrack) return;
+    if (disableMusic) return;
+
+    const excludeIndex = parseInt(lastTrack.current);
+    const { sound: track, index } = getSound('ambient', { excludeIndex: isNaN(excludeIndex) ? null : excludeIndex });
+    track.load();
+    track.once('end', () => {
+      track.stop();
+      track.unload();
+      setTimeout(() => {
+        setCurrentTrack(null);
+      }, Math.random() * 2500)
+    });
+
+    setCurrentTrack(track);
+    lastTrack.current = index;
+  }, [currentTrack, disableMusic, soundEnabled]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // manage volume of current ambient track
+  useEffect(() => {
+    if (!soundEnabled) return;
+    if (!currentTrack) return;
+
+    // if music disabled, pause the track... (if re-enabled, will fade back in)
+    let to;
+    if (disableMusic) {
+      currentTrack.pause();
+    }
+
+    // pause track if cutscene playing
+    else if (cutscenePlaying) {
+      currentTrack.pause();
+      cutsceneWasPlaying.current = true;
+    }
+
+    // fade track back in after cutscene played
+    else if (cutsceneWasPlaying.current) {
+      to = setTimeout(fadeInAmbientTrack, 10000);
+      cutsceneWasPlaying.current = false;
+    }
+
+    // else (normal situation), fade in track
+    else {
+      to = setTimeout(fadeInAmbientTrack, 5000);
+    }
+
+    return () => clearTimeout(to);
+  }, [currentTrack, cutscenePlaying, disableMusic, soundEnabled]);
 
   return null;
 };
