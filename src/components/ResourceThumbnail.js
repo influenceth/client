@@ -215,6 +215,20 @@ const ThumbnailCorner = styled.div`
   width: 40px;
 `;
 
+const UpperRightBadge = styled.div`
+  background: ${p => p.theme.colors.lightOrange};
+  border-radius: 3px;
+  color: black;
+  filter: saturate(110%);
+  font-size: 12px;
+  height: 15px;
+  padding: 0 4px;
+  position: absolute;
+  right: 4px;
+  top: 4px;
+  vertical-align: middle;
+`;
+
 const Menu = ({ children }) => {
   const [open, setOpen] = useState();
   const onClick = useCallback((e) => {
@@ -255,9 +269,9 @@ const Menu = ({ children }) => {
   tooltipContainer = 'globalTooltip',
   tooltipOverride,
   underlay,
+  upperRightBadge,
   ...props
 }) => {
-  // const tip = (deficit) ? `${resource.name} (<span>${deficit}<span>)` : resource.name;
   const tooltipProps = tooltipContainer ? {
     'data-tooltip-place': 'top',
     'data-tooltip-content': tooltipOverride || resource.name,
@@ -281,6 +295,7 @@ const Menu = ({ children }) => {
       {progress !== undefined && <ResourceProgress progress={progress} />}
       {overlayStripes !== undefined && <AnimatedStripes />}
       {overlayIcon && <ThumbnailCorner color={badgeColor}>{overlayIcon}</ThumbnailCorner>}
+      {upperRightBadge && <UpperRightBadge>{upperRightBadge}</UpperRightBadge>}
       {menu && <Menu>{menu}</Menu>}
     </ResourceThumbnailWrapper>
   );
