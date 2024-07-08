@@ -87,6 +87,7 @@ class ErrorBoundary extends Component {
     delete redactedStore.state.currentSession.sessionDappKey;
     Object.keys(redactedStore.state.sessions).forEach((key) => {
       delete redactedStore.state.sessions[key].token;
+      delete redactedStore.state.sessions[key].sessionDappKey;
     });
 
     // TODO (maybe):
