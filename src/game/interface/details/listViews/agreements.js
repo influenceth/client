@@ -90,10 +90,10 @@ const useColumns = () => {
       {
         key: 'expandedIcon',
         align: 'right',
-        selector: (row, isExpanded) => {
+        selector: (row, { expanded }) => {
           if (row._agreement._type === Permission.POLICY_IDS.PREPAID) {
             if (crew?.id === row._agreement?.permitted?.id || row.Control?.controller?.id === crew?.id) {
-              return <ExpandableIcon isexpanded={isExpanded} />;
+              return <ExpandableIcon isexpanded={expanded} />;
             }
           }
           return null;

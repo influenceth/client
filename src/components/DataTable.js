@@ -18,6 +18,7 @@ const DataTable = styled.table.attrs({
   cellPadding: 0
 })`
   border-collapse: collapse;
+  height: 100%;
   width: calc(100% - 18px);
   td, th {
     background: black;
@@ -185,13 +186,13 @@ const ExpandableDataTableRow = ({ columns, getRowProps, row, sortDirection, sort
         {columns.filter((c) => !c.skip).map((c) => (
           <DataTableCell
             key={c.key}
-            align={c.align}
+            align={c.alignBody || c.align}
             isIconColumn={!c.label}
             noMinWidth={c.noMinWidth}
             sorted={sortField && sortField === c.sortField ? sortDirection : ''}
             style={c.bodyStyle || {}}>
             <CellInner wrap={reactBool(!!c.wrap)}>
-              {c.selector(row, !!expanded)}
+              {c.selector(row, { expanded, ...rowProps })}
             </CellInner>
           </DataTableCell>
         ))}
@@ -223,7 +224,7 @@ const DataTableComponent = ({
         {columns.filter((c) => !c.skip).map((c) => (
           <DataTableHeadCell
             key={c.key}
-            align={c.align}
+            align={c.alignHeader || c.align}
             isIconColumn={!c.label}
             noMinWidth={c.noMinWidth}
             onClick={onClickColumn ? onClickColumn(c.sortField, c.sortOptions) : undefined}

@@ -6,7 +6,8 @@ import {
   ConstructIcon, WarningOutlineIcon,
   TransferToSiteIcon,
   WarningIcon,
-  CheckSmallIcon
+  CheckSmallIcon,
+  MarketBuyIcon
 } from '~/components/Icons';
 import theme, { hexToRGB } from '~/theme';
 import useConstructionManager from '~/hooks/actionManagers/useConstructionManager';
@@ -35,25 +36,42 @@ import actionStage from '~/lib/actionStages';
 import ActionButtonComponent from '../actionButtons/ActionButton';
 import useDeliveryManager from '~/hooks/actionManagers/useDeliveryManager';
 import useActionCrew from '~/hooks/useActionCrew';
+import Button from '~/components/ButtonAlt';
+import AssetBlock from '~/components/AssetBlock';
 
 const MouseoverWarning = styled.span`
   & b { color: ${theme.colors.error}; }
 `;
 
-const TransferToSite = styled.div`
+const SourceWrapper = styled(AssetBlock)`
   align-items: center;
+  align-self: stretch;
   display: flex;
-  flex-direction: row;
-  font-size: 14px;
-  height: 100%;
-  padding-left: 10px;
-  & > label {
-    color: ${p => p.theme.colors.lightOrange};
-    padding-left: 4px;
-    & > span {
-      color: white;
-      font-weight: bold;
+  flex-direction: column;
+  justify-content: space-evenly;
+  padding: 0 15px;
+  width: 50%;
+  & > button {
+    width: 100%;
+  }
+  & > button > div {
+    & > svg {
+      font-size: 32px;
     }
+    & > span {
+      flex: 1;
+    }
+  }
+`;
+
+const ReqTitle = styled.div`
+  display: flex;
+  width: 100%;
+  & > span:first-child {
+    flex: 1;
+  }
+  & > span:nth-child(2) {
+    color: ${p => p.theme.colors.lightOrange};
   }
 `;
 
@@ -158,6 +176,10 @@ const Construct = ({ asteroid, lot, constructionManager, stage, ...props }) => {
     props.onSetAction('TRANSFER_TO_SITE', {});
   }, []);
 
+  const purchaseOnMarket = useCallback(() => {
+    props.onSetAction('SHOPPING_LIST', {});
+  }, []);
+
   const [buildingRequirements, requirementsMet, waitingOnTransfer] = useMemo(() => {
     const reqs = getBuildingRequirements(lot?.building, constructionStatus === 'PLANNED' ? currentDeliveryActions : []);
     const met = !reqs.find((req) => req.inNeed > 0);
@@ -198,23 +220,24 @@ const Construct = ({ asteroid, lot, constructionManager, stage, ...props }) => {
             <>
               <FlexSectionSpacer />
 
-              <FlexSectionInputBlock
-                isSelected
-                onClick={transferToSite}>
-                <TransferToSite>
-                  <ActionButtonComponent icon={<TransferToSiteIcon />} style={{ pointerEvents: 'none' }} />
-                  <label>
-                      <span>Send Materials to Site</span><br/>This site is missing construction materials.
-                  </label>
-                </TransferToSite>
-              </FlexSectionInputBlock>
+              {/* TODO: disable both buttons if needs are met by incoming deliveries */}
+              <SourceWrapper isSelected style={{ border: 0 }}>
+                <Button onClick={transferToSite}>
+                  <TransferToSiteIcon /> <span>Transfer from Inventories</span>
+                </Button>
+
+                {/* TODO: disable if no marketplaces exist */}
+                <Button onClick={purchaseOnMarket}>
+                  <MarketBuyIcon /> <span>Source from Market</span>
+                </Button>
+              </SourceWrapper>
             </>
           )}
         </FlexSection>
 
         {stage === actionStage.NOT_STARTED && (
           <BuildingRequirementsSection
-            label="Materials On Site"
+            label={<ReqTitle><span>Materials On Site</span><span>This site is missing construction materials</span></ReqTitle>}
             mode="gathering"
             requirementsMet={requirementsMet && !waitingOnTransfer}
             requirements={buildingRequirements} />

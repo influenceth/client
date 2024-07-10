@@ -9,7 +9,7 @@ import { entitiesCacheKey } from '~/lib/cacheKey';
 const useAsteroidBuildings = (asteroidId, reqComponent = 'Building', reqOneOfPermissions = null) => {
   const { crewCan } = useCrewContext();
 
-  const { data: allData, ...queryProps } = useQuery(
+  const { data: allData, dataUpdatedAt, isLoading, refetch } = useQuery(
     entitiesCacheKey(Entity.IDS.BUILDING, { asteroidId, hasComponent: reqComponent, status: Building.CONSTRUCTION_STATUSES.OPERATIONAL }),
     () => api.getBuildingsWithComponent(asteroidId, reqComponent),
     { enabled: !!asteroidId && !!reqComponent }
@@ -21,10 +21,13 @@ const useAsteroidBuildings = (asteroidId, reqComponent = 'Building', reqOneOfPer
   );
 
   return useMemo(() => ({
-    data: (allData || [])
-      .filter((entity) => perms.length === 0 || perms.find((p) => crewCan(p, entity))),
-    ...queryProps,
-  }), [allData, crewCan, queryProps, perms])
+    data: perms.length === 0
+      ? allData
+      : (allData || []).filter((entity) => !!perms.find((p) => crewCan(p, entity))),
+    isLoading,
+    refetch,
+    dataUpdatedAt: Date.now() // to capture changes to crewCan
+  }), [crewCan, dataUpdatedAt, isLoading, perms, refetch]);
 };
 
 export default useAsteroidBuildings;

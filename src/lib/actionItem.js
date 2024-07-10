@@ -301,26 +301,31 @@ const formatAsTx = (item) => {
       break;
     }
     case 'BulkFillSellOrder': {
-      const { asteroidId } = Lot.toPosition(item.meta?.lotId) || {};
+      const lotId = item.meta?.destinationLotId || item.meta?.exchangeLotId;
+      const isShoppingListMode = item.meta?.destinationLotId;
+      
+      const { asteroidId } = Lot.toPosition(lotId) || {};
       formatted.icon = <MarketBuyIcon />;
-      formatted.label = 'Market Buy';
+      formatted.label = isShoppingListMode ? 'Source Materials' : 'Market Buy';
       formatted.asteroidId = asteroidId;
-      formatted.lotId = item.meta?.lotId;
+      formatted.lotId = lotId;
       formatted.locationDetail = Product.TYPES[item.vars[0].product]?.name;
-      formatted.onClick = ({ openDialog }) => {
-        openDialog('MARKETPLACE_ORDER', {
-          asteroidId,
-          lotId: item.meta?.lotId,
-          mode: 'buy',
-          type: 'market',
-          resourceId: item.vars[0].product,
-          preselect: {
-            quantity: item.vars.reduce((acc, o) => acc + o.amount, 0),
-            storage: item.vars[0].destination,
-            storageSlot: item.vars[0].destination_slot
-          }
-        });
-      };
+      formatted.onClick = isShoppingListMode
+        ? undefined
+        : ({ openDialog }) => {
+          openDialog('MARKETPLACE_ORDER', {
+            asteroidId,
+            lotId: item.meta?.lotId,
+            mode: 'buy',
+            type: 'market',
+            resourceId: item.vars[0].product,
+            preselect: {
+              quantity: item.vars.reduce((acc, o) => acc + o.amount, 0),
+              storage: item.vars[0].destination,
+              storageSlot: item.vars[0].destination_slot
+            }
+          });
+        };
       break;
     }
     case 'EscrowDepositAndCreateBuyOrder': {
