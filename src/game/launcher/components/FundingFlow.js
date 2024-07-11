@@ -349,7 +349,7 @@ export const FundingFlow = ({ totalPrice, onClose, onFunded }) => {
   }, []);
 
   const onClickCC = useCallback((amount) => () => {
-    fireTrackingEvent('ramp');
+    fireTrackingEvent('funding_start');
     setRamping(true);
 
     setTimeout(() => {

@@ -15,7 +15,7 @@ import constants from '~/lib/constants';
 import exportGLTF from '~/lib/graphics/exportGLTF';
 import formatters from '~/lib/formatters';
 import { asteroidPrice } from '~/lib/priceUtils';
-import { nativeBool, reactBool } from '~/lib/utils';
+import { fireTrackingEvent, nativeBool, reactBool } from '~/lib/utils';
 import { renderDummyAsteroid } from '~/game/scene/asteroid/helpers/utils';
 
 import AddressLink from '~/components/AddressLink';
@@ -308,19 +308,24 @@ const AsteroidInformation = ({ abundances, asteroid, isManager, isOwner }) => {
     }
   }, [changeName, isNameValid, newName, asteroid?.id]);
 
-  const sufficientFunds = useMemo(() => {
-    if (!asteroid || !priceConstants || !walletBalances) return false;
+  const price = useMemo(() => {
+    if (!asteroid || !priceConstants) return 0;
     const lots = Asteroid.getSurfaceArea(undefined, asteroid.Celestial.radius);
-    const price = asteroidPrice(lots, priceConstants);
+    return asteroidPrice(lots, priceConstants);
+  }, [asteroid, priceConstants]);
+
+  const sufficientFunds = useMemo(() => {
+    if (!price || !priceConstants || !walletBalances) return false;
     const balance = BigInt(walletBalances?.combinedBalance?.to(priceConstants.ASTEROID_PURCHASE_TOKEN));
     return price <= balance;
-  }, [asteroid, priceConstants, walletBalances]);
+  }, [price, priceConstants, walletBalances]);
 
   const attemptBuyAsteroid = useCallback(async () => {
     const limited = await checkForLimit();
     if (limited) return;
 
     buyAsteroid();
+    fireTrackingEvent('purchase_asteroid', { category: 'purchase', amount: Number(price) / 1e6 });
   }, [buyAsteroid, checkForLimit]);
 
   return (

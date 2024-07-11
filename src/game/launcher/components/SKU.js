@@ -435,7 +435,7 @@ const SwaySKU = ({ onUpdatePurchase, onPurchasing }) => {
         // else, run the transactions(s)
         } else {
           try {
-            fireTrackingEvent('purchase_sway', { category: 'purchase' });
+            fireTrackingEvent('purchase_sway', { category: 'purchase', amount: unscaledUSDC });
             const tx = await executeCalls(multiswapCalls);
             setIsProcessing(true);
 

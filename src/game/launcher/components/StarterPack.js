@@ -191,7 +191,7 @@ export const useStarterPacks = () => {
         return;
       }
 
-      fireTrackingEvent(`purchase_${which}_starter_pack`, { category: 'purchase' });
+      fireTrackingEvent(`purchase_${which}_starter_pack`, { category: 'purchase', amount: Number(crewmateTally) * 5 });
 
       await execute('PurchaseStarterPack', {
         collection: Crewmate.COLLECTION_IDS.ADALIAN,
