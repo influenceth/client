@@ -98,6 +98,7 @@ const theme = {
     
     warning: orange,
     error: red,
+    errorRGB: hexToRGB(red),
     expired: red,
 
     teal, 

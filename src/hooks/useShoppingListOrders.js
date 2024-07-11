@@ -8,10 +8,9 @@ const useShoppingListOrders = (asteroidId, productIds) => {
   return useQuery(
     [ 'shoppingOrderList', asteroidId, productIds ],
     async () => {
+      const empties = productIds.reduce((a, p) => ({ ...a, [p]: {} }), {});
       const orders = await api.getSellOrdersByProduct(asteroidId, productIds);
       return orders.reduce((acc, o) => {
-        if (!acc[o.product]) acc[o.product] = {};
-
         const loc = locationsArrToObj(o.locations || []);
         if (!acc[o.product][loc.buildingId]) {
           acc[o.product][loc.buildingId] = {
@@ -25,7 +24,7 @@ const useShoppingListOrders = (asteroidId, productIds) => {
         acc[o.product][loc.buildingId].orders.push(o);
 
         return acc;
-      }, {});
+      }, empties);
     },
     { enabled: !!asteroidId && !!productIds?.length }
   );

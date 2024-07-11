@@ -60,13 +60,13 @@ const DataTableRow = styled.tr`
       p.isSelected
         ? `
           td {
-            background: rgba(${p.theme.colors.mainRGB}, 0.3);
+            background: rgba(${p.selectedColorRGB || p.theme.colors.mainRGB}, 0.3);
           }
         `
         : `
           &:hover {
             td {
-              background: rgba(${p.theme.colors.mainRGB}, 0.1);
+              background: rgba(${p.selectedColorRGB || p.theme.colors.mainRGB}, 0.1);
             }
           }
         `
@@ -187,7 +187,7 @@ const ExpandableDataTableRow = ({ columns, getRowProps, row, sortDirection, sort
           <DataTableCell
             key={c.key}
             align={c.alignBody || c.align}
-            isIconColumn={!c.label}
+            isIconColumn={c.isIconColumn || !c.label}
             noMinWidth={c.noMinWidth}
             sorted={sortField && sortField === c.sortField ? sortDirection : ''}
             style={c.bodyStyle || {}}>
@@ -225,7 +225,7 @@ const DataTableComponent = ({
           <DataTableHeadCell
             key={c.key}
             align={c.alignHeader || c.align}
-            isIconColumn={!c.label}
+            isIconColumn={c.isIconColumn || !c.label}
             noMinWidth={c.noMinWidth}
             onClick={onClickColumn ? onClickColumn(c.sortField, c.sortOptions) : undefined}
             sortable={!!c.sortField}

@@ -222,6 +222,7 @@ const UpperRightBadge = styled.div`
   filter: saturate(110%);
   font-size: 12px;
   height: 15px;
+  max-width: calc(100% - 8px);
   padding: 0 4px;
   position: absolute;
   right: 4px;

@@ -1,11 +1,12 @@
-import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import styled from 'styled-components';
 import { Asteroid, Building, Crew, Crewmate, Entity, Inventory, Lot, Permission, Product, Time } from '@influenceth/sdk';
 
 import {
   CheckedIcon,
-  KeysIcon,
+  ChevronRightIcon,
   MarketBuyIcon,
+  MarketplaceBuildingIcon,
   SwayIcon,
   UncheckedIcon,
   WarningIcon
@@ -18,17 +19,16 @@ import { ActionDialogInner, useAsteroidAndLot } from '../ActionDialog';
 import {
   ActionDialogFooter,
   ActionDialogHeader,
-
   FlexSection,
   ActionDialogBody,
   BuildingInputBlock,
   FlexSectionSpacer,
   getBuildingRequirements,
-  formatResourceAmount
+  FlexSectionBlock,
+  MarketplaceAlert
 } from './components';
 import actionStage from '~/lib/actionStages';
 import useDeliveryManager from '~/hooks/actionManagers/useDeliveryManager';
-import ResourceThumbnail from '~/components/ResourceThumbnail';
 import formatters from '~/lib/formatters';
 import DataTableComponent from '~/components/DataTable';
 import useShoppingListOrders from '~/hooks/useShoppingListOrders';
@@ -37,35 +37,62 @@ import { TOKEN, TOKEN_SCALE } from '~/lib/priceUtils';
 import api from '~/lib/api';
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
 import useLot from '~/hooks/useLot';
+import { useSwayBalance } from '~/hooks/useWalletTokenBalance';
+import useStore from '~/hooks/useStore';
+import ResourceRequirement from '~/components/ResourceRequirement';
+import useInterval from '~/hooks/useInterval';
+import PageLoader from '~/components/PageLoader';
 
 const ProductList = styled.div`
+  padding: 1px 0;
   width: 100%;
+`;
+const Basics = styled.div`
+  flex: 1;
+  margin-left: 15px;
+  & > h4 {
+    color: white;
+    flex: 1;
+    font-weight: normal;
+    margin: 0;
+  }
+  & > div {
+    overflow: hidden;
+    max-height: ${p => p.hasSelected ? '2em' : 0};
+    transition: max-height 350ms ease;
+  }
+`;
+const Detail = styled.div`
+  text-align: right;
+  text-transform: uppercase;
+  width: 90px;
 `;
 const ProductHeader = styled.div`
   align-items: center;
   color: #999;
   display: flex;
   flex-direction: row;
-  & > h4 {
-    flex: 1;
-    margin: 0;
-    padding-left: 12px;
-  }
-  & > * {
-    padding-right: 12px;
-  }
+  padding: 10px;
 `;
 const ProductItem = styled.div`
-  padding: 10px;
+  max-height: ${p => p.selected ? '350px' : '90px'};
+  overflow: hidden;
+  transition: max-height 350ms ease;
+
   &:not(:last-child) {
-    border-bottom: 1px solid #333;
+    border-bottom: 1px solid #222;
   }
-  ${p => p.selected && `
-    background: rgba(${p.theme.colors.mainRGB}, 0.2);
-    ${ProductHeader} {
-      color: white;
-    }
-  `}
+  ${p => p.selected
+    ? `
+      background: rgba(${p.theme.colors.mainRGB}, 0.2);
+      outline: 1px solid rgba(${p.theme.colors.mainRGB}, 0.5);
+    `
+    : `
+      &:hover {
+        background: rgba(${p.theme.colors.mainRGB}, 0.15);
+      }
+    `
+  }
 `;
 
 const Empty = styled.span`
@@ -79,14 +106,26 @@ const IconWrapper = styled.div`
   margin-right: 4px;
 `;
 
+const TABLE_TOP_MARGIN = 0;
+const TABLE_BOTTOM_MARGIN = 10;
+const TABLE_MAX_HEIGHT = 256;
 const DataTableWrapper = styled.div`
-  border-radius: 3px;
-  margin-top: 6px;
-  max-height: 256px;
-  outline: 1px solid ${p => p.theme.colors.darkMain};
+  background: black;
+  margin: ${TABLE_TOP_MARGIN}px 10px ${TABLE_BOTTOM_MARGIN}px;
+  max-height: ${TABLE_MAX_HEIGHT}px;
   overflow: auto;
   & > table {
     width: 100%;
+  }
+`;
+const EmptyMessage = styled(DataTableWrapper)`
+  color: #AAA;
+  padding: 10px;
+  text-align: center;
+  & > b {
+    color: white;
+    font-weight: normal;
+    white-space: nowrap;
   }
 `;
 
@@ -113,22 +152,55 @@ const PriceField = styled.div`
   }
 `;
 
+const Insufficient = styled.div`
+  font-size: 75%;
+  cursor: ${p => p.theme.cursors.active};
+  color: ${p => p.theme.colors.brightMain};
+  opacity: ${p => p.visible ? 1 : 0};
+  padding-right: 5px;
+  text-transform: uppercase;
+  transition: opacity 150ms ease;
+  &:hover {
+    opacity: 0.8;
+  }
+`;
+
+const ExpandableIcon = styled(ChevronRightIcon)`
+  color: white;
+  font-size: 150%;
+  margin-left: 8px;
+  transform: rotate(0);
+  transition: transform 250ms ease;
+  ${p => p.isExpanded && `transform: rotate(90deg);`}
+`;
+
+const LiquidityWarning = () => (
+  <span style={{ color: theme.colors.warning, display: 'inline-block', marginLeft: 5, marginTop: -2 }}
+    data-tooltip-content='Limited Supply'
+    data-tooltip-id='actionDialogTooltip'
+    data-tooltip-place='top'>
+    <WarningIcon />
+  </span>
+);
+
 const columns = [
   {
     key: 'selector',
+    label: <MarketplaceBuildingIcon />,
     selector: (row, { isSelected }) => (
-      isSelected ? <CheckedIcon style={{ color: theme.colors.brightMain }} /> : <UncheckedIcon />
+      <span style={{ fontSize: '120%', lineHeight: '0' }}>
+        {isSelected ? <CheckedIcon style={{ color: theme.colors.brightMain }} /> : <UncheckedIcon />}
+      </span>
     ),
     align: 'center',
+    isIconColumn: true,
     noMinWidth: true,
   },
   {
     key: 'marketplaceName',
     label: 'Marketplace',
     selector: (row, { tableState }) => (
-      <>
-        <span>{formatters.buildingName(row.marketplace || {})}</span>
-      </>
+      <span>{formatters.buildingName(row.marketplace || {})}</span>
     ),
     noMinWidth: true,
   },
@@ -151,6 +223,7 @@ const columns = [
           <div>{formatPrice(row._dynamicUnitPrice, { minPrecision: 4 })}</div>
         </div>
         <small>({row._dynamicSupply.toLocaleString()}{tableState.resource.isAtomic ? '' : ' kg'})</small>
+        {row._isLimited && <LiquidityWarning />}
       </PriceField>
     ),
     noMinWidth: true,
@@ -173,29 +246,26 @@ const ProductMarketSummary = ({
     onClick: () => {
       onSelected(row.buildingId);
     },
+    selectedColorRGB: `128, 128, 128`,
     isSelected: selected.includes(row.buildingId),
     tableState: { resource: Product.TYPES[productId] }
   }), [onSelected, productId, selected]);
-
-  // TODO: empty message
 
   // NOTE: this augments resourceMarketplaces, but updates less often
   const dynamicMarketplaces = useMemo(() => {
     return Object.values(resourceMarketplaces).map((m) => {
       const row = { ...m };
-      row._isLimited = row.supply < targetAmount;
-      row._dynamicSupply = Math.min(
-        row.supply,
-        selectionSummary.amounts[m.buildingId] || selectionSummary.needed || targetAmount
-      );
-
+      const remainingToSource = selectionSummary.needed || targetAmount;
+      row._dynamicSupply = Math.min(row.supply, selectionSummary.amounts[m.buildingId] || remainingToSource);
+      row._isLimited = row.supply < remainingToSource;
+      
       let marketFills = ordersToFills(
         'buy',
         row.orders,
         row._dynamicSupply,
         row.marketplace?.Exchange?.takerFee || 0,
         crewBonuses?.feeReduction?.totalBonus || 1,
-        row.enforcementFee || 1,
+        row.feeEnforcement || 1,
       );
 
       let total = marketFills.reduce((acc, cur) => acc + cur.fillPaymentTotal, 0) / TOKEN_SCALE[TOKEN.SWAY];
@@ -244,24 +314,25 @@ const ProductMarketSummary = ({
   );
 };
 
-
-// TODO: ...
-// destination may be input or selected
-// if input, is locked
-
-// if destination is site, recipe is hidden; else, can select recipe and multiple
-
 const useShoppingListData = (asteroidId, lotId, productIds) => {
-  const { data: exchanges, dataUpdatedAt: exchangesUpdatedAt } = useAsteroidBuildings(asteroidId, 'Exchange', Permission.IDS.BUY);
+  const {
+    data: exchanges,
+    isLoading: exchangesLoading,
+    dataUpdatedAt: exchangesUpdatedAt,
+    refetch: refetchExchanges
+  } = useAsteroidBuildings(asteroidId, 'Exchange', Permission.IDS.BUY);
 
-  // TODO: how much effort would it be to include enforcementFee in elasticsearch on exchanges
-  const [enforcementFees, setEnforcementFees] = useState();
+  const lastValue = useRef();
+
+  // TODO: how much effort would it be to include feeEnforcement in elasticsearch on exchanges
+  const [feeEnforcements, setFeeEnforcements] = useState();
   const [feesLoading, setFeesLoading] = useState(true);
-  useEffect(() => {
+  const loadFees = useCallback(async () => {
     const ids = (exchanges || []).map((e) => e.Control?.controller?.id);
     if (ids?.length > 0) {
       setFeesLoading(true);
-      api.getCrewmatesOfCrews(ids).then((crewmates) => {
+      try {
+        const crewmates = await api.getCrewmatesOfCrews(ids);
         const crews = crewmates.reduce((acc, c) => {
           const crewId = c.Control?.controller?.id;
           if (crewId) {
@@ -276,58 +347,85 @@ const useShoppingListData = (asteroidId, lotId, productIds) => {
           
           // NOTE: this only works because we know MARKETPLACE_FEE_ENFORCEMENT is `notFurtherModified`
           // (if that changes, would need to pull more data from Crew as well)
-          const crewEnforcementFee = Crew.getAbilityBonus(Crewmate.ABILITY_IDS.MARKETPLACE_FEE_ENFORCEMENT, crews[crewId]);
+          const crewFeeEnforcement = Crew.getAbilityBonus(Crewmate.ABILITY_IDS.MARKETPLACE_FEE_ENFORCEMENT, crews[crewId]);
           exchanges.filter((e) => e.Control?.controller?.id === Number(crewId)).forEach((e) => {
-            fees[e.id] = crewEnforcementFee.totalBonus;
+            fees[e.id] = crewFeeEnforcement.totalBonus;
           });
         });
-        setEnforcementFees(fees);
-      })
-      .finally(() => {
-        setFeesLoading(false);
-      });
+        setFeeEnforcements(fees);
+      } catch (e) {
+        console.warn(e);
+      }
+      setFeesLoading(false);
     }
   }, [exchangesUpdatedAt]);
+  useEffect(() => {
+    loadFees();
+  }, [loadFees]);
   
-  // TODO: refetch every 30s while "not_started"
-  const { data: orders, refetch } = useShoppingListOrders(asteroidId, productIds);
+  const { data: orders, isLoading: ordersLoading, refetch: refetchOrders } = useShoppingListOrders(asteroidId, productIds);
 
+  const isLoading = exchangesLoading || feesLoading || ordersLoading;
   return useMemo(() => {
-    if (!enforcementFees || !exchanges || !orders) return {};
+    const refetch = () => {
+      refetchExchanges();
+      refetchOrders();
+    };
 
-    const final = {};
-    Object.keys(orders).forEach((productId) => {
-      final[productId] = [];
-      Object.keys(orders[productId]).forEach((buildingId) => {
-        const o = orders[productId][buildingId];
-        const marketplace = exchanges.find((e) => e.id === Number(buildingId));
-        
-        if (marketplace) {
-          o.marketplace = marketplace;
-          o.distance = Asteroid.getLotDistance(asteroidId, Lot.toIndex(o.lotId), Lot.toIndex(lotId));
-          o.enforcementFee = enforcementFees[buildingId] || 1;
-          final[productId].push(o);
-        }
+    if (isLoading) {
+      return {
+        data: lastValue.current,
+        isLoading: true,
+        dataUpdatedAt: Date.now(),
+        refetch
+      };
+    }
+
+    const finalData = {};
+    if (feeEnforcements && exchanges && orders) {
+      Object.keys(orders).forEach((productId) => {
+        finalData[productId] = [];
+        Object.keys(orders[productId]).forEach((buildingId) => {
+          const o = orders[productId][buildingId];
+          const marketplace = exchanges.find((e) => e.id === Number(buildingId));
+          
+          if (marketplace) {
+            o.marketplace = marketplace;
+            o.distance = Asteroid.getLotDistance(asteroidId, Lot.toIndex(o.lotId), Lot.toIndex(lotId));
+            o.feeEnforcement = feeEnforcements[buildingId] || 1;
+            finalData[productId].push(o);
+          }
+        });
       });
-    });
+      lastValue.current = finalData;
+    }
     
     return {
-      data: final,
+      data: finalData,
+      dataUpdatedAt: Date.now(),
       isLoading: false,
-      lastUpdatedAt: Date.now(),
-      refetch: () => {}
+      refetch
     };
-  }, [asteroidId, enforcementFees, exchangesUpdatedAt, lotId, orders]);
+  }, [asteroidId, lotId, isLoading, feeEnforcements, exchangesUpdatedAt, orders]);
 };
 
 const ShoppingList = ({ asteroid, destination, destinationSlot, stage, ...props }) => {
   const { execute } = useContext(ChainTransactionContext);
   const { crew, pendingTransactions } = useCrewContext();
+  const { data: swayBalance } = useSwayBalance();
+
+  const dispatchLauncherPage = useStore(s => s.dispatchLauncherPage);
 
   const [openProductId, setOpenProductId] = useState();
   const [selected, setSelected] = useState({});
 
   const { data: exchanges, dataUpdatedAt: exchangesUpdatedAt } = useAsteroidBuildings(asteroid?.id, 'Exchange', Permission.IDS.BUY);
+  const exchangesById = useMemo(() => {
+    return (exchanges || []).reduce((acc, cur) => {
+      acc[cur.id] = cur;
+      return acc;
+    }, {});
+  }, [exchangesUpdatedAt])
   const { data: destinationLot } = useLot(locationsArrToObj(destination?.Location?.locations || []).lotId);
 
   // TODO: these are only relevant for site
@@ -349,8 +447,13 @@ const ShoppingList = ({ asteroid, destination, destinationSlot, stage, ...props 
   }, [buildingRequirements]);
 
   const {
-    data: resourceMarketplaces
+    data: resourceMarketplaces,
+    dataUpdatedAt: resourceMarketplacesUpdatedAt,
+    isLoading: resourceMarketplacesLoading,
+    refetch: refetchResourceMarketplaces
   } = useShoppingListData(asteroid?.id, destinationLot?.id, productIds);
+
+  useInterval(() => { refetchResourceMarketplaces(); }, 60e3); // keep things loosely fresh
 
   // crew bonuses related to market buys and transport
   const crewBonuses = useMemo(() => {
@@ -367,13 +470,6 @@ const ShoppingList = ({ asteroid, destination, destinationSlot, stage, ...props 
       feeReduction: abilities[Crewmate.ABILITY_IDS.MARKETPLACE_FEE_REDUCTION],
     }
   }, [crew]);
-
-  // product focus toggling
-  useEffect(() => {
-    if (!!shoppingList) {
-      setOpenProductId(shoppingList[0]?.product?.i);
-    }
-  }, [!!shoppingList]);
 
   const selectionSummary = useMemo(() => {
     return productIds.reduce((acc, productId) => {
@@ -406,7 +502,7 @@ const ShoppingList = ({ asteroid, destination, destinationSlot, stage, ...props 
             needed,
             row.marketplace?.Exchange?.takerFee || 0,
             crewBonuses?.feeReduction?.totalBonus || 1,
-            row.enforcementFee || 1,
+            row.feeEnforcement || 1,
           );
   
           fills.forEach((fill) => {
@@ -430,17 +526,21 @@ const ShoppingList = ({ asteroid, destination, destinationSlot, stage, ...props 
     }, {});
   }, [asteroid?.id, crew?._timeAcceleration, crewBonuses, destinationLot?.id, selected, shoppingList]);
 
-  const { taskTimeRequirement, totalPrice, allFills } = useMemo(() => {
+  const { taskTimeRequirement, totalPrice, exchangeTally, allFills } = useMemo(() => {
     return Object.values(selectionSummary).reduce((acc, s) => ({
       taskTimeRequirement: Math.max(acc.taskTimeRequirement, s.maxTravelTime),
       totalPrice: acc.totalPrice + (s.totalPrice || 0),
-      allFills: [...acc.allFills, ...s.fills]
+      exchangeTally: acc.exchangeTally + Object.keys(s.amounts)?.length,
+      allFills: [...acc.allFills, ...s.fills],
     }), {
       taskTimeRequirement: 0,
       totalPrice: 0,
+      exchangeTally: 0,
       allFills: []
     });
   }, [selectionSummary]);
+
+  const insufficientSway = useMemo(() => totalPrice * TOKEN_SCALE[TOKEN.SWAY] > swayBalance, [totalPrice, swayBalance]);
 
   const handleSelected = useCallback((productId) => (buildingId) => {
     setSelected((old) => {
@@ -463,17 +563,35 @@ const ShoppingList = ({ asteroid, destination, destinationSlot, stage, ...props 
     });
   }, [selectionSummary]);
 
+  useEffect(() => {
+    Object.keys(selected || {}).forEach((productId) => {
+      selected[productId].forEach((buildingId) => {
+        // deselect building if no longer available due to change in market conditions
+        if (!resourceMarketplaces?.[productId]?.find((m) => buildingId === m.marketplace.id)) {
+          setSelected((old) => {
+            const s = { ...old };
+            if (!s[productId]) s[productId] = [];
+            s[productId] = s[productId].filter((b) => b !== buildingId);
+            return s;
+          })
+        }
+      });
+    });
+  }, [resourceMarketplacesUpdatedAt, selected])
+
   const [purchasing, setPurchasing] = useState();
   const handlePurchase = useCallback(async () => {
+    // TODO: do syncronous refetch and return if significant change (i.e. > 2% change in price or anything that was satisfied is now unsatisfied)
     setPurchasing(true);
     try {
-    
       // load all sellerCrews and exchangeControllerCrews
       // TODO: technically, can skip loading exchangeControllerCrews if fees 0?
+      // TODO: in an upcoming update, crew.delegatedBy may be returned on the exchanges...
+      //  should update to skip redundantly fetching of the controller crew here
       const allCrewIds = allFills.reduce((acc, fill) => {
         if (fill.crew?.id) acc.add(fill.crew?.id);
 
-        const exchangeControllerId = exchanges?.find((e) => e.id === fill.entity.id)?.Control?.controller?.id;
+        const exchangeControllerId = exchangesById[fill.entity.id]?.Control?.controller?.id;
         if (exchangeControllerId) acc.add(exchangeControllerId);
         return acc;
       }, new Set());
@@ -484,7 +602,7 @@ const ShoppingList = ({ asteroid, destination, destinationSlot, stage, ...props 
       await execute(
         'BulkFillSellOrder',
         allFills.map((fill) => { 
-          const exchangeControllerId = exchanges?.find((e) => e.id === fill.entity.id)?.Control?.controller?.id;
+          const exchangeControllerId = exchangesById[fill.entity.id]?.Control?.controller?.id;
           return {
             seller_account: crews.find((c) => c.id === fill.crew?.id)?.Crew?.delegatedTo,
             exchange_owner_account: crews.find((c) => c.id === exchangeControllerId)?.Crew?.delegatedTo,
@@ -521,6 +639,14 @@ const ShoppingList = ({ asteroid, destination, destinationSlot, stage, ...props 
 
   }, [allFills, crew?.id, destination, destinationLot?.id, destinationSlot, exchangesUpdatedAt, execute]);
 
+  const handleProductClick = useCallback((productId) => () => {
+    setOpenProductId((p) => p === productId ? null : productId);
+  }, []);
+
+  const goToSwayStore = useCallback(() => {
+    dispatchLauncherPage('store', 'sway');
+  }, []);
+
   const shoppingListPurchaseTally = useMemo(() => {
     return (pendingTransactions || []).filter((tx) => tx.key === 'BulkFillSellOrder' && tx.meta?.destinationLotId === destinationLot?.id);
   }, [destinationLot?.id, pendingTransactions])
@@ -547,7 +673,8 @@ const ShoppingList = ({ asteroid, destination, destinationSlot, stage, ...props 
         onClose={props.onClose}
         stage={stage} />
 
-      <ActionDialogBody>
+      <ActionDialogBody style={{ display: 'flex', flexDirection: 'column' }}>
+        {/* TODO: (future) if destination is site, recipe is hidden; else, can select recipe and multiple... */}
         {destination?.Building?.status !== Building.CONSTRUCTION_STATUSES.PLANNED && (
           <FlexSection>
             <BuildingInputBlock
@@ -557,44 +684,121 @@ const ShoppingList = ({ asteroid, destination, destinationSlot, stage, ...props 
 
             <FlexSectionSpacer />
 
+            {/* TODO: will need to add insufficient inventory error upon selections here */}
             <div>Todo: Select a recipe and a multiple</div>
           </FlexSection>
         )}
 
-        <FlexSection>
-          <ProductList>
-          {shoppingList.map(({ product, amount }, i) => (
-            <ProductItem
-              onClick={() => setOpenProductId(product.i)}
-              selected={openProductId === product.i}>
-              <ProductHeader>
-                <ResourceThumbnail resource={product} size="48px" />
-                <h4>{product.name}</h4>
-                <div>{formatResourceAmount(selectionSummary[product.i]?.totalFilled || 0, product.i)} filled of {formatResourceAmount(amount, product.i)}</div>
-                <div>@ <SwayIcon /> <span>{formatPrice(selectionSummary[product.i]?.totalPrice / selectionSummary[product.i]?.totalFilled)}</span></div>
-              </ProductHeader>
-              {/* TODO: show amount sourced when in selected row of total supply */}
-              {openProductId === product.i && (
-                <ProductMarketSummary
-                  asteroidId={asteroid?.id}
-                  crewBonuses={crewBonuses}
-                  lotId={destinationLot?.id}
-                  productId={product.i}
-                  selected={selected[product.i]}
-                  selectionSummary={selectionSummary[product.i]}
-                  onSelected={handleSelected(product.i)}
-                  resourceMarketplaces={resourceMarketplaces?.[product.i]}
-                  targetAmount={amount} />
-              )}
-            </ProductItem>
-          ))}
-          </ProductList>
-          
+        <FlexSection style={{ flex: '1 1 calc(100% - 105px)', overflow: 'auto' }}>
+          {resourceMarketplacesLoading && !resourceMarketplaces && <PageLoader />}
+          {resourceMarketplaces && (
+            <ProductList>
+              {shoppingList.map(({ product, amount }) => {
+                const hasSelected = selectionSummary[product.i]?.totalFilled > 0;
+                const selectedMarkets = Object.keys(selectionSummary[product.i]?.amounts || {});
+                return (
+                  <ProductItem
+                    key={product.id}
+                    selected={openProductId === product.i}>
+                    <ProductHeader onClick={handleProductClick(product.i)}>
+                      <ResourceRequirement
+                        item={{ numerator: selectionSummary[product.i]?.totalFilled, denominator: amount }}
+                        resource={product}
+                        size="70px"
+                        tooltipContainer="actionDialogTooltip" />
+
+                      <Basics hasSelected={hasSelected}>
+                        <h4>{product.name}</h4>
+                        <div>
+                          {selectedMarkets.length === 1 && `From ${formatters.buildingName(exchangesById[selectedMarkets[0]])}`}
+                          {selectedMarkets.length > 1 && `From ${selectedMarkets.length} Marketplaces`}
+                        </div>
+                      </Basics>
+                      {hasSelected
+                        ? (
+                          <>
+                            <Detail>
+                              {selectionSummary[product.i]?.maxTravelTime > 0
+                                ? formatTimer(selectionSummary[product.i]?.maxTravelTime, 2)
+                                : <span style={{ opacity: 0.5 }}>Instant</span>
+                              }
+                            </Detail>
+                            <Detail style={{ color: 'white' }}>
+                              <SwayIcon /> {Math.round(selectionSummary[product.i]?.totalPrice || 0).toLocaleString()}
+                            </Detail>
+                          </>
+                        )
+                        : (
+                          <Detail style={{ width: 'auto', ...(resourceMarketplaces?.[product.i]?.length ? {} : { color: theme.colors.error }) }}>
+                            {resourceMarketplaces?.[product.i]?.length || 0} Marketplace{resourceMarketplaces?.[product.i]?.length === 1 ? '' : 's'}
+                          </Detail>
+                        )
+                      }
+                      <ExpandableIcon isExpanded={openProductId === product.i} />
+                      {/* 
+                      <div>{formatResourceAmount(selectionSummary[product.i]?.totalFilled || 0, product.i)} filled of {formatResourceAmount(amount, product.i)}</div>
+                      <div>@ <SwayIcon /> <span>{formatPrice(selectionSummary[product.i]?.totalPrice / selectionSummary[product.i]?.totalFilled)}</span></div>
+                      */}
+                    </ProductHeader>
+                    
+                    {openProductId === product.i
+                      ? (
+                        resourceMarketplaces?.[product.i]?.length
+                          ? (
+                            <ProductMarketSummary
+                              asteroidId={asteroid?.id}
+                              crewBonuses={crewBonuses}
+                              lotId={destinationLot?.id}
+                              productId={product.i}
+                              selected={selected[product.i]}
+                              selectionSummary={selectionSummary[product.i]}
+                              onSelected={handleSelected(product.i)}
+                              resourceMarketplaces={resourceMarketplaces?.[product.i]}
+                              targetAmount={amount} />
+                          )
+                          : (
+                            <EmptyMessage>
+                              There are currently no accessible marketplaces on <b>{asteroid?.Name?.name}</b> with <b>{product.name}</b> available for purchase.
+                            </EmptyMessage>
+                          )
+                      )
+                      : /* TODO: use some constants so this is more upkeepable */ (
+                        <div style={{ height: TABLE_TOP_MARGIN + TABLE_BOTTOM_MARGIN + Math.min(TABLE_MAX_HEIGHT, 40 * (1 + (resourceMarketplaces?.[product.i]?.length || 0))) }} /> 
+                      )
+                    }
+                  </ProductItem>
+                );
+              })}
+            </ProductList>
+          )}
+        </FlexSection>
+
+        <FlexSection style={{ flex: '0 0 105px' }}>
+          <FlexSectionBlock
+            title="Orders Total"
+            titleDetails={<Insufficient onClick={goToSwayStore} visible={insufficientSway}><b>+</b> Get More Sway</Insufficient>}
+            bodyStyle={{ height: 'auto', padding: 0 }}
+            style={{ width: '100%', marginTop: 10 }}>
+            <MarketplaceAlert scheme={totalPrice === 0 ? 'empty' : (insufficientSway ? 'error' : 'success')}>
+              <div>
+                <div>
+                  <label>Market Buy</label>
+                  <div style={{ fontSize: '100%' }}><b>{exchangeTally || 0} Order{exchangeTally === 1 ? '' : 's'}</b></div>
+                </div>
+                <div>
+                  <label>Total</label>
+                  <span>
+                    <SwayIcon /> {totalPrice > 0.5 ? '-' : ''}{formatFixed(totalPrice || 0)}
+                  </span>
+                </div>
+              </div>
+            </MarketplaceAlert>
+          </FlexSectionBlock>
         </FlexSection>
       </ActionDialogBody>
 
       <ActionDialogFooter
-        disabled={!(allFills?.length > 0)}
+        disabled={!(allFills?.length > 0) || insufficientSway}
         goLabel="Purchase"
         onGo={handlePurchase}
         stage={stage}

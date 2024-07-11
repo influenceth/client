@@ -12,6 +12,7 @@ import {
   FlexSection,
   FlexSectionInputBlock,
   FlexSectionSpacer,
+  MarketplaceAlert,
   ShipInputBlock,
 } from './components';
 import { ActionDialogInner } from '../ActionDialog';
@@ -21,75 +22,9 @@ import useNftSaleManager from '~/hooks/actionManagers/useNftSaleManager';
 import CrewIndicator from '~/components/CrewIndicator';
 import useEntity from '~/hooks/useEntity';
 import useCrew from '~/hooks/useCrew';
-import { hexToRGB } from '~/theme';
 import formatters from '~/lib/formatters';
 import { useSwayBalance } from '~/hooks/useWalletTokenBalance';
 import useAsteroid from '~/hooks/useAsteroid';
-import { TOKEN, TOKEN_SCALE } from '~/lib/priceUtils';
-
-const Alert = styled.div`
-  ${p => p.theme.clipCorner(10)};
-  background: rgba(${p => hexToRGB(p.theme.colors[p.scheme ? (p.scheme === 'success' ? 'green' : 'red') : 'main'])}, 0.2);
-  padding: 4px;
-  width: 100%;
-  & > div {
-    ${p => p.theme.clipCorner(8)};
-
-    background: rgba(${p => hexToRGB(p.theme.colors[p.scheme ? (p.scheme === 'success' ? 'green' : 'red') : 'main'])}, 0.2);
-    color: rgba(255, 255, 255, 0.7);
-    display: flex;
-    padding: 10px;
-
-    & label {
-      color: ${p => p.theme.colors[p.scheme ? (p.scheme === 'success' ? 'green' : 'red') : 'main']};
-      display: block;
-      font-size: 15px;
-      text-transform: uppercase;
-    }
-    & b {
-      color: white;
-      font-weight: normal;
-    }
-
-    & > div:first-child {
-      flex: 1;
-      & > div {
-        font-size: 20px;
-        & > span {
-          margin-left: 6px;
-          font-size: 14px;
-        }
-      }
-    }
-
-    & > div:last-child {
-      align-items: center;
-      display: flex;
-      color: white;
-      & > label {
-        margin-top: 12px;
-        margin-right: 2px;
-      }
-      & > span {
-        font-size: 32px;
-      }
-    }
-
-    &:not(:first-child) {
-      align-items: flex-end;
-      justify-content: space-between;
-      padding: 8px 10px 0;
-      & > svg {
-        font-size: 24px;
-        margin-right: 6px;
-      }
-
-      ${p => p.scheme && `
-        color: ${p.scheme === 'success' ? p.theme.colors.green : p.theme.colors.red};
-      `}
-    }
-  }
-`;
 
 const Note = styled.div`
   color: ${p => p.theme.colors.main};
@@ -146,7 +81,7 @@ const PurchaseEntity = ({ asteroid, lot, entity, actionManager, stage, ...props 
         </FlexSection>
 
         <FlexSection>
-          <Alert scheme={insufficientSway ? 'error' : 'success'}>
+          <MarketplaceAlert scheme={insufficientSway ? 'error' : 'success'}>
             <div>
               <div>
                 <label>Buy Ship</label>
@@ -163,7 +98,7 @@ const PurchaseEntity = ({ asteroid, lot, entity, actionManager, stage, ...props 
                 </span>
               </div>
             </div>
-          </Alert>
+          </MarketplaceAlert>
         </FlexSection>
 
         <Note>Note: Control of the ship's manifest and inventories will transfer with any sale.</Note>
