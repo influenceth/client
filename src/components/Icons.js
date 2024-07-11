@@ -162,6 +162,7 @@ import PlanBuildingSVG from '~/assets/icons/action_buttons/PlanBuilding.svg';
 import PurchaseEntitySVG from '~/assets/icons/action_buttons/PurchaseEntity.svg';
 import PurchaseAsteroidSVG from '~/assets/icons/action_buttons/PurchaseAsteroid.svg';
 import ScanAsteroidSVG from '~/assets/icons/action_buttons/ScanAsteroid.svg';
+import OrbitalScanSVG from '~/assets/icons/action_buttons/OrbitalScan.svg';
 import SetAdminSVG from '~/assets/icons/action_buttons/SetAdmin.svg';
 import SetCourseSVG from '~/assets/icons/action_buttons/SetCourse.svg';
 import SimulateRouteSVG from '~/assets/icons/action_buttons/SimulateRoute.svg';
@@ -349,6 +350,7 @@ export const PurchaseAsteroidIcon = () => <PurchaseAsteroidSVG className="icon" 
 export const PurchaseEntityIcon = () => <PurchaseEntitySVG className="icon" />;
 export const SetAdminIcon = () => <SetAdminSVG className="icon" />;
 export const ScanAsteroidIcon = () => <ScanAsteroidSVG className="icon" />;
+export const OrbitalScanIcon = () => <OrbitalScanSVG className="icon" />;
 export const SetCourseIcon = () => <SetCourseSVG className="icon" />;
 export const SimulateRouteIcon = () => <SimulateRouteSVG className="icon" />;
 export const StationCrewIcon = () => <StationCrewSVG className="icon" />;

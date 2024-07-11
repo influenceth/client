@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from 'react';
 
-import { KeysIcon } from '~/components/Icons';
+import { TakeControlIcon } from '~/components/Icons';
 import ActionButton, { getCrewDisabledReason } from './ActionButton';
 import useRepoManager from '~/hooks/actionManagers/useRepoManager';
 import theme from '~/theme';
@@ -41,14 +41,14 @@ const RepoBuilding = ({ asteroid, crew, lot, onSetAction, _disabled }) => {
     if (crew?.id === lot?.Control?.controller?.id && crew?.id !== lot?.building?.Control?.controller?.id) {
       return {
         label: 'Repossess Lot',
-        icon: <KeysIcon />
+        icon: <TakeControlIcon />
       }
     }
 
     // if i am NOT the controller and the building is expired...
     return {
       label: 'Claim Expired Construction Site',
-      icon: <KeysIcon />
+      icon: <TakeControlIcon />
     }
   }, [crew, lot]);
 
@@ -56,6 +56,7 @@ const RepoBuilding = ({ asteroid, crew, lot, onSetAction, _disabled }) => {
     <ActionButton
       {...buttonParams}
       overrideColor={theme.colors.error}
+      overrideBgColor={theme.colors.backgroundRed}
       labelAddendum={disabledReason}
       flags={{
         disabled: disabledReason,

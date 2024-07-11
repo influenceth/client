@@ -12,6 +12,7 @@ import {
   PlanBuildingIcon,
   PurchaseAsteroidIcon,
   ScanAsteroidIcon,
+  OrbitalScanIcon,
   SurfaceTransferIcon,
   ShipIcon,
   BuildingIcon,
@@ -498,7 +499,7 @@ const formatAsTx = (item) => {
     }
 
     case 'ScanResourcesStart': {
-      formatted.icon = <ScanAsteroidIcon />;
+      formatted.icon = <OrbitalScanIcon />;
       formatted.label = 'Orbital Scan';
       formatted.asteroidId = item.vars.asteroid?.id;
       formatted.onClick = ({ history }) => {
@@ -507,7 +508,7 @@ const formatAsTx = (item) => {
       break;
     }
     case 'ScanResourcesFinish': {
-      formatted.icon = <ScanAsteroidIcon />;
+      formatted.icon = <OrbitalScanIcon />;
       formatted.label = 'Retrieve Orbital Scan Results';
       formatted.asteroidId = item.vars.asteroid.id;
       formatted.onClick = ({ history }) => {
