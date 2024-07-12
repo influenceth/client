@@ -35,8 +35,8 @@ import {
   MyAssetIcon,
   CaptainIcon,
   EmergencyModeEnterIcon,
-  CheckIcon,
-  ProcessIcon,
+  TargetIcon,
+  ProductionIcon,
   ShipIcon,
   WarningIcon,
   CoreSampleIcon,
@@ -625,16 +625,18 @@ const ProductSelector = styled.div`
     }
   `}
   & > label {
-    color: ${p => p.primary ? p.theme.colors.main : 'inherit'};
+    color: ${p => p.primary ? p.theme.colors.brightMain : 'inherit'};
     display: block;
-    font-size: 15px;
-    font-weight: bold;
-    padding-top: 3px;
-    text-align: center;
+    font-size: 14px;
+    padding-top: 4px;
+    text-align: left;
     text-transform: uppercase;
-    & > svg {
-      font-size: 65%;
-      height: 15px;
+    & div {
+      display: flex;
+      align-items: center;
+      & > svg {
+        margin: 0 4px 0 4px;
+      }
     }
   }
 `;
@@ -1960,7 +1962,7 @@ export const ProcessSelectionDialog = ({ initialSelection, onClose, forceProcess
                   key={i}
                   onClick={() => setSelection(i)}
                   selectedRow={i === selection}>
-                  <td><div style={{ display: 'flex', alignItems: 'center' }}><ProcessIcon style={{ marginRight: 6 }} /> {name}</div></td>
+                  <td><div style={{ display: 'flex', alignItems: 'center' }}><div style={{ fontSize: 24, marginRight: 6 }}><ProductionIcon /></div> {name}</div></td>
                   <td>
                     <InputOutputTableCell>
                       <label>{Object.keys(inputs).length}</label>
@@ -3451,7 +3453,7 @@ export const ProcessInputOutputSection = ({ title, products, input, output, prim
                   {primaryOutput === resourceId
                     ? (
                       <>
-                        <CheckIcon /> Primary
+                        <div><TargetIcon /> Primary</div>
                         <ClipCorner dimension={10} color={theme.colors.main} />
                       </>
                     )
@@ -3505,7 +3507,7 @@ export const ProcessInputSquareSection = ({ title, products, input, output, prim
                 tooltipContainer="actionDialogTooltip"
                 {...thumbProps}
               />
-              {output && <label>{primaryOutput === resourceId ? <><CheckIcon /> Primary</> : `-50%`}</label>}
+              {output && <label>{primaryOutput === resourceId ? <><TargetIcon /> Primary22</> : `-50%`}</label>}
             </ProductSelector>
           );
         })}

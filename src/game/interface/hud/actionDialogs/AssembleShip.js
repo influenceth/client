@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import styled from 'styled-components';
 import { Asteroid, Building, Crewmate, Entity, Lot, Permission, Product, Ship, Time } from '@influenceth/sdk';
 
-import { CaretIcon, CloseIcon, ForwardIcon, ConstructShipIcon, ProcessIcon, InventoryIcon, LocationIcon } from '~/components/Icons';
+import { CaretIcon, CloseIcon, ForwardIcon, AssembleShipIcon, ProductionIcon, InventoryIcon, LocationIcon } from '~/components/Icons';
 import useCrewContext from '~/hooks/useCrewContext';
 import { reactBool, formatTimer, locationsArrToObj, getCrewAbilityBonuses, formatFixed } from '~/lib/utils';
 
@@ -62,7 +62,7 @@ const IconWrapper = styled.div`
   background: rgba(${p => p.theme.colors.mainRGB}, 0.3);
   ${p => p.theme.clipCorner(sectionBodyCornerSize * 0.6)};
   display: flex;
-  font-size: 30px;
+  font-size: 40px;
   height: 50px;
   justify-content: center;
   width: 50px;
@@ -276,7 +276,7 @@ const AssembleShip = ({ asteroid, lot, dryDockManager, stage, ...props }) => {
     <>
       <ActionDialogHeader
         action={{
-          icon: <ConstructShipIcon />,
+          icon: <AssembleShipIcon />,
           label: 'Assemble Ship',
         }}
         actionCrew={crew}
@@ -313,7 +313,7 @@ const AssembleShip = ({ asteroid, lot, dryDockManager, stage, ...props }) => {
               style={{ padding: 4 }}>
               <SelectorInner>
                 <IconWrapper>
-                  <ProcessIcon />
+                  <ProductionIcon />
                 </IconWrapper>
                 <label>{process?.name || `Select a Process...`}</label>
                 {stage === actionStages.NOT_STARTED && (

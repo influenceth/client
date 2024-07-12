@@ -8,9 +8,9 @@ import {
   CloseIcon,
   ForwardIcon,
   RefineIcon,
-  ProcessIcon,
-  BioreactorBuildingIcon,
-  ShipyardBuildingIcon,
+  ProductionIcon,
+  GrowIcon,
+  AssembleIcon,
   InventoryIcon,
   LocationIcon,
   ManufactureIcon
@@ -57,13 +57,12 @@ const SECTION_WIDTH = 1150;
 
 const SelectorInner = styled.div`
   align-items: center;
-  color: ${p => p.theme.colors.main};
+  color: white;
   display: flex;
   flex-direction: row;
   font-size: 18px;
   & label {
     flex: 1;
-    font-weight: bold;
     padding-left: 10px;
   }
 `;
@@ -72,7 +71,7 @@ const IconWrapper = styled.div`
   background: rgba(${p => p.theme.colors.mainRGB}, 0.3);
   ${p => p.theme.clipCorner(sectionBodyCornerSize * 0.6)};
   display: flex;
-  font-size: 30px;
+  font-size: 40px;
   height: 50px;
   justify-content: center;
   width: 50px;
@@ -373,7 +372,7 @@ const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...pro
     if (processor.processorType === Processor.IDS.BIOREACTOR) {
       return [
         {
-          icon: <BioreactorBuildingIcon />,
+          icon: <GrowIcon />,
           label: 'Manufacture Organics',
         },
         'Manufacturing'
@@ -382,7 +381,7 @@ const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...pro
     if (processor.processorType === Processor.IDS.SHIPYARD) {
       return [
         {
-          icon: <ShipyardBuildingIcon />,
+          icon: <AssembleIcon />,
           label: 'Manufacture Ship Parts',
         },
         'Manufacturing'
@@ -429,7 +428,7 @@ const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...pro
               style={{ padding: 4 }}>
               <SelectorInner>
                 <IconWrapper>
-                  <ProcessIcon />
+                  <ProductionIcon />
                 </IconWrapper>
                 <label>{process?.name || `Select a Process...`}</label>
                 {stage === actionStages.NOT_STARTED && (

@@ -1,7 +1,7 @@
 import { useCallback, useMemo } from 'react';
 import { DryDock, Permission } from '@influenceth/sdk';
 
-import { ShipIcon } from '~/components/Icons';
+import { AssembleShipIcon } from '~/components/Icons';
 import useDryDockManager from '~/hooks/actionManagers/useDryDockManager';
 import ActionButton, { getCrewDisabledReason } from './ActionButton';
 
@@ -44,7 +44,7 @@ const AssembleShip = ({ asteroid, crew, lot, onSetAction, _disabled }) => {
         finishTime,
         loading: assemblyStatus === 'ASSEMBLING' || assemblyStatus === 'FINISHING'
       }}
-      icon={<ShipIcon />}
+      icon={<AssembleShipIcon />}
       onClick={handleClick}
       sequenceMode={!crew?._ready && assemblyStatus === 'READY'} />
   );

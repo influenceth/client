@@ -137,7 +137,7 @@ const SurfaceTransferIncoming = ({ asteroid, crew, lot, ship, onSetAction, dialo
         />
       )}
       <ActionButton
-        label="Send To"
+        label={isP2P ? "Send Here (P2P)" : "Send Here"}
         labelAddendum={disabledReason}
         flags={{
           disabled: _disabled || disabledReason || isLoading,

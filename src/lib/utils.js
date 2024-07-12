@@ -2,7 +2,7 @@ import esb from 'elastic-builder';
 import { Crew, Entity, Lot, Permission, Processor, Time } from '@influenceth/sdk';
 import trim from 'lodash/trim';
 
-import { BioreactorBuildingIcon, ManufactureIcon, RefineIcon } from '~/components/Icons';
+import { ManufactureIcon, GrowIcon, AssembleIcon, RefineIcon } from '~/components/Icons';
 
 const timerIncrements = { d: 86400, h: 3600, m: 60, s: 1 };
 export const formatTimer = (secondsRemaining, maxPrecision = null) => {
@@ -199,8 +199,8 @@ export const getProcessorProps = (processorType) => {
   switch (processorType) {
     case Processor.IDS.REFINERY: return { label: 'Refine Material', typeLabel: 'Refinery', icon: <RefineIcon /> };
     case Processor.IDS.FACTORY: return { label: 'Manufacture Goods', typeLabel: 'Factory', icon: <ManufactureIcon /> };
-    case Processor.IDS.BIOREACTOR: return { label: 'Manufacture Organic Goods', typeLabel: 'Bioreactor', icon: <BioreactorBuildingIcon /> };
-    case Processor.IDS.SHIPYARD: return { label: 'Manufacture Ship Parts', typeLabel: 'Shipyard', icon: <ManufactureIcon /> };
+    case Processor.IDS.BIOREACTOR: return { label: 'Manufacture Organics', typeLabel: 'Bioreactor', icon: <GrowIcon /> };
+    case Processor.IDS.SHIPYARD: return { label: 'Manufacture Ship Parts', typeLabel: 'Shipyard', icon: <AssembleIcon /> };
     default: return {};
   }
 }
