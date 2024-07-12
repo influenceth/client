@@ -47,7 +47,7 @@ const SECTION_WIDTH = 1046;
 
 const SelectorInner = styled.div`
   align-items: center;
-  color: ${p => p.theme.colors.main};
+  color: white;
   display: flex;
   flex-direction: row;
   font-size: 18px;
