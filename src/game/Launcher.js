@@ -296,7 +296,7 @@ const Footer = styled.div`
 const StyledNavIcon = () => <Icon><NavIcon selected selectedColor="#777" /></Icon>;
 
 const Launcher = (props) => {
-  const { authenticating, authenticated, login, walletId } = useSession();
+  const { accountAddress, authenticating, authenticated, login, walletId } = useSession();
   const { data: priceConstants, isLoading: priceConstantsLoading } = usePriceConstants();
 
   const launcherPage = useStore(s => s.launcherPage);
@@ -339,7 +339,7 @@ const Launcher = (props) => {
   }, []);
 
   const onClickPlay = useCallback(() => {
-    fireTrackingEvent('play');
+    fireTrackingEvent('play', { externalId: accountAddress });
     dispatchLauncherPage();
     if (!hasSeenIntroVideo && !DISABLE_LAUNCHER_TRAILER) {
       dispatchSeenIntroVideo(true);
@@ -348,7 +348,7 @@ const Launcher = (props) => {
         true
       );
     }
-  }, [hasSeenIntroVideo]);
+  }, [accountAddress, hasSeenIntroVideo]);
 
   const openHelpChannel = useCallback(() => {
     window.open(process.env.REACT_APP_HELP_URL, '_blank', 'noopener');

@@ -268,7 +268,7 @@ const SmHidden = styled.span`
 `;
 
 const AsteroidInformation = ({ abundances, asteroid, isManager, isOwner }) => {
-  const { authenticated } = useSession();
+  const { accountAddress, authenticated } = useSession();
   const isNameValid = useNameAvailability({ label: Entity.IDS.ASTEROID });
   const { buyAsteroid, checkForLimit, buying } = useBuyAsteroid(Number(asteroid.id));
   const { controlAsteroid, takingControl } = useControlAsteroid(Number(asteroid.id));
@@ -325,8 +325,10 @@ const AsteroidInformation = ({ abundances, asteroid, isManager, isOwner }) => {
     if (limited) return;
 
     buyAsteroid();
-    fireTrackingEvent('purchase_asteroid', { category: 'purchase', amount: Number(price) / 1e6 });
-  }, [buyAsteroid, checkForLimit]);
+    fireTrackingEvent('purchase_asteroid', {
+      externalId: accountAddress, category: 'purchase', amount: Number(price) / 1e6
+    });
+  }, [accountAddress, buyAsteroid, checkForLimit]);
 
   return (
     <Wrapper>

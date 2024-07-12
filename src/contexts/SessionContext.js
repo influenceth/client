@@ -436,7 +436,7 @@ export function SessionProvider({ children }) {
         setReadyForChildren(true);
       });
     } else if (status === STATUSES.AUTHENTICATED) {
-      fireTrackingEvent('login');
+      fireTrackingEvent('login', { externalId: currentSession?.accountAddress });
     }
   }, [currentSession, status]); // eslint-disable-line react-hooks/exhaustive-deps
 

@@ -15,6 +15,7 @@ import { advPackCrewmates, advPackPriceUSD, advPackSwayMin, basicPackCrewmates, 
 import FundingFlow from './FundingFlow';
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
 import useSwapHelper from '~/hooks/useSwapHelper';
+import useSession from '~/hooks/useSession';
 import { useEthBalance } from '~/hooks/useWalletTokenBalance';
 import { PurchaseForm } from './SKU';
 import { fireTrackingEvent } from '~/lib/utils';
@@ -148,6 +149,7 @@ export const useStarterPacks = () => {
   const priceHelper = usePriceHelper();
   const { buildMultiswapFromSellAmount } = useSwapHelper();
   const starterPacks = useStarterPackPricing();
+  const { accountAddress } = useSession();
 
   const createAlert = useStore(s => s.dispatchAlertLogged);
 
@@ -191,7 +193,9 @@ export const useStarterPacks = () => {
         return;
       }
 
-      fireTrackingEvent(`purchase_${which}_starter_pack`, { category: 'purchase', amount: Number(crewmateTally) * 5 });
+      fireTrackingEvent(`purchase_${which}_starter_pack`, {
+        externalId: accountAddress, category: 'purchase', amount: Number(crewmateTally) * 5
+      });
 
       await execute('PurchaseStarterPack', {
         collection: Crewmate.COLLECTION_IDS.ADALIAN,
@@ -210,7 +214,7 @@ export const useStarterPacks = () => {
       };
       return acc;
     }, {});
-  }, [buildMultiswapFromSellAmount, ethBalance, execute, priceHelper, starterPacks]);
+  }, [accountAddress, buildMultiswapFromSellAmount, ethBalance, execute, priceHelper, starterPacks]);
 };
 
 // TODO: consider moving isFunding to higher level context with single reference
