@@ -496,7 +496,7 @@ const SetCourse = ({ origin, destination, manager, ship, stage, travelSolution, 
   );
 };
 
-const Wrapper = ({ ...props }) => {
+const Wrapper = (props) => {
   const { crew } = useCrewContext();
 
   const { data: maybeShip, isLoading: shipIsLoading } = useShip(crew?._location?.shipId);
@@ -504,7 +504,7 @@ const Wrapper = ({ ...props }) => {
     return (!maybeShip && crew?.Ship?.emergencyAt > 0) ? crew : maybeShip;
   }, [crew]);
 
-  const manager = useShipTravelManager(ship.id);
+  const manager = useShipTravelManager(ship);
   const { actionStage, currentTravelAction, currentTravelSolution, isLoading: solutionIsLoading } = manager;
 
   const defaultOrigin = useStore(s => s.asteroids.origin);

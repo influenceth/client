@@ -130,6 +130,8 @@ const useActionButtons = () => {
   const { data: zoomedToShip, isLoading: zoomedShipIsLoading } = useShip(zoomScene?.type === 'SHIP' ? zoomScene.shipId : undefined);
 
   // actionable ship
+  // NOTE: this does not handle escape pod... these are only for real ships, and that is
+  //  expected for the action buttons in their current state
   const targetShip = useMemo(() => {
     let ship = null;
 
