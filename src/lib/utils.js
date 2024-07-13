@@ -276,9 +276,9 @@ export const cleanseTxHash = function (txHash) {
   return `0x${BigInt(txHash).toString(16).padStart(64, '0')}`;
 };
 
-export const fireTrackingEvent = function (action, actionProps = {}, event = 'event') {
+export const fireTrackingEvent = function (event, eventProps = {}) {
   try {
-    const eventObj = { event, eventProps: { action, ...actionProps }};
+    const eventObj = { event: event, ...eventProps };
     if (window.dataLayer) {
       window.dataLayer.push(eventObj);
     } else {
