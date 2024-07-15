@@ -6,6 +6,7 @@ import usePriceConstants from '~/hooks/usePriceConstants';
 import useStore from '~/hooks/useStore';
 import constants from '~/lib/constants';
 import AsteroidNameFilter from './filters/AsteroidNameFilter';
+import BuildingNameFilter from './filters/BuildingNameFilter';
 import OwnershipFilter from './filters/OwnershipFilter';
 import CrewOwnershipFilter from './filters/CrewOwnershipFilter';
 import LotIdFilter from './filters/LotIdFilter';
@@ -387,6 +388,8 @@ const SearchFilters = ({ assetType, highlighting, isListView = false }) => {
     return (
       <>
         <LotIdFilter {...filterProps} />
+
+        <BuildingNameFilter {...filterProps} />
 
         <CheckboxFilter
           {...filterProps}

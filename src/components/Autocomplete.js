@@ -233,6 +233,7 @@ const Autocomplete = ({
   assetType,
   dropdownProps = {},
   excludeFunc,
+  meta,
   onSelect,
   selected,
   width,
@@ -246,7 +247,7 @@ const Autocomplete = ({
     searchTerm,
     setSearchTerm,
     valueKey
-  } = useAutocomplete(assetType);
+  } = useAutocomplete(assetType, meta);
 
   return (
     <AutocompleteComponent
