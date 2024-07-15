@@ -138,12 +138,6 @@ const surfaceAreaConfig = {
   rangeLimits: { min: 13, max: 1768485 }
 };
 
-const radiusConfig = {
-  fieldNames: { min: 'radiusMin', max: 'radiusMax' },
-  labels: { min: 'Min (km)', max: 'Max (km)' },
-  rangeLimits: { min: constants.MIN_ASTEROID_RADIUS / 1000, max: constants.MAX_ASTEROID_RADIUS / 1000 }
-};
-
 const axisConfig = {
   fieldNames: { min: 'axisMin', max: 'axisMax' },
   // fieldNote: formatters.period,
