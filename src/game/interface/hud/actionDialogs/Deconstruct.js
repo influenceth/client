@@ -6,13 +6,14 @@ import {
 } from '~/components/Icons';
 import useCrewContext from '~/hooks/useCrewContext';
 import useConstructionManager from '~/hooks/actionManagers/useConstructionManager';
-import { reactBool, formatTimer, getCrewAbilityBonuses } from '~/lib/utils';
+import { reactBool, formatTimer, formatFixed, getCrewAbilityBonuses } from '~/lib/utils';
 
 import {
   DeconstructionMaterialsSection,
   ActionDialogFooter,
   ActionDialogHeader,
   ActionDialogStats,
+  BonusTooltip,
   getBonusDirection,
   TravelBonusTooltip,
   ActionDialogBody,
@@ -31,6 +32,14 @@ const Deconstruct = ({ asteroid, lot, constructionManager, stage, ...props }) =>
 
   const crewTravelBonus = useMemo(() => getCrewAbilityBonuses(Crewmate.ABILITY_IDS.HOPPER_TRANSPORT_TIME, crew), [crew]);
   const crewDistBonus = useMemo(() => getCrewAbilityBonuses(Crewmate.ABILITY_IDS.FREE_TRANSPORT_DISTANCE, crew), [crew]);
+  const crewDescontructBonus = useMemo(() => getCrewAbilityBonuses(Crewmate.ABILITY_IDS.DECONSTRUCTION_YIELD, crew), [crew]);
+
+  const [deconstructionPenalty, deconstructionDirection] = useMemo(() => {
+    return [
+      (100 * Building.DECONSTRUCTION_PENALTY / (crewDescontructBonus.totalBonus || 1 )),
+      -1
+    ]
+  }, [crewDescontructBonus]);
 
   const { totalTime: crewTravelTime, tripDetails } = useMemo(() => {
     if (!asteroid?.id || !crew?._location?.lotId || !lot?.id) return {};
@@ -61,9 +70,13 @@ const Deconstruct = ({ asteroid, lot, constructionManager, stage, ...props }) =>
     },
     {
       label: 'Deconstruction Penalty',
-      value: `${Math.round(100 * Building.DECONSTRUCTION_PENALTY)}%`,
-      direction: -1
-      // TODO: add a tooltip here showing reduction by each item
+      value: `${formatFixed(deconstructionPenalty, 2)}%`,
+      direction: deconstructionDirection,
+      tooltip: (
+        <BonusTooltip
+          bonus={crewDescontructBonus}
+          crewRequired="start" />
+      )
     },
   ], [tripDetails]);
 
