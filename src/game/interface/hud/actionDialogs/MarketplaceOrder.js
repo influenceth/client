@@ -293,10 +293,33 @@ const MarketplaceOrder = ({
   }, [asteroid?.id, distBonus, exchange?.id, storageLot?.id, hopperTransportBonus, crew?._timeAcceleration]);
 
   const [crewTimeRequirement, taskTimeRequirement] = useMemo(() => {
-    return [
-      (isCancellation || type === 'market') ? 0 : (Math.max(crewTravelTime / 2, transportTime) + crewTravelTime / 2),
-      0
-    ];
+    let crewTime = 0;
+    let taskTime = 0;
+
+    // CANCEL BUY: no crew or good movement required (goods will stay in origin inv)
+    // CANCEL SELL: no crew movement required, but need listed goods returned to my inv
+    if (isCancellation) {
+      if (mode === 'sell') {
+        taskTime = transportTime;
+      }
+
+    // LIMIT BUY: crew is traveling to marketplace to setup the order... no goods transported
+    // LIMIT SELL: crew AND goods are traveling to marketplace to setup the order
+    } else if (type === 'limit') {
+      const crewToMarketplaceTime = crewTravelTime / 2;
+      const goodsToMarketplaceTime = mode === 'buy' ? 0 : transportTime;
+      const orderReadyTime = Math.max(crewToMarketplaceTime, goodsToMarketplaceTime);
+      crewTime = orderReadyTime + crewToMarketplaceTime;
+      taskTime = orderReadyTime;
+
+    // MARKET BUY: no crew travel; delivery started from marketplace to my storage
+    // MARKET SELL: no crew travel; delivery started from my storage through exchange to filled orders' storages
+    //  (however, these are not deliveries I need to worry about as seller, so my taskTime functionally 0)
+    } else if (type === 'market' && mode === 'buy') {
+      taskTime = transportTime;
+    }
+
+    return [crewTime, taskTime];
   }, [transportTime, crewTravelTime, type]);
 
   const [totalMarketPrice, avgMarketPrice, averagedOrderTally, marketFills] = useMemo(() => {
