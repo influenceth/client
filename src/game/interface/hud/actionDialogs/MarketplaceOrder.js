@@ -17,7 +17,7 @@ import useOrderList from '~/hooks/useOrderList';
 import { useSwayBalance } from '~/hooks/useWalletTokenBalance';
 import formatters from '~/lib/formatters';
 import actionStages from '~/lib/actionStages';
-import { reactBool, formatFixed, formatTimer, getCrewAbilityBonuses, locationsArrToObj, formatPrice } from '~/lib/utils';
+import { reactBool, formatFixed, formatTimer, getCrewAbilityBonuses, locationsArrToObj, formatPrice, ordersToFills } from '~/lib/utils';
 import theme, { hexToRGB } from '~/theme';
 import { ActionDialogInner, useAsteroidAndLot } from '../ActionDialog';
 import {
@@ -299,39 +299,22 @@ const MarketplaceOrder = ({
     ];
   }, [transportTime, crewTravelTime, type]);
 
-  // TODO: probably make this a shared util (w/ depth chart)
   const [totalMarketPrice, avgMarketPrice, averagedOrderTally, marketFills] = useMemo(() => {
+    const orders = [].concat(mode === 'buy' ? sellOrders : buyOrders);
+    const marketFills = ordersToFills(
+      mode,
+      orders,
+      quantity,
+      exchange.Exchange.takerFee,
+      feeReductionBonus?.totalBonus,
+      feeEnforcementBonus?.totalBonus
+    );
+
     let total = 0;
     let totalOrders = 0;
-    let needed = quantity;
-    let marketFills = [];
-    const paymentFunc = mode === 'buy' ? Order.getFillSellOrderPayments : Order.getFillBuyOrderWithdrawals;
-    const priceSortMult = mode === 'buy' ? 1 : -1;
-    const orders = []
-      .concat(mode === 'buy' ? sellOrders : buyOrders)
-      .sort((a, b) => a.price === b.price ? a.validTime - b.validTime : (priceSortMult * (a.price - b.price)));
-    orders.every((order) => {
-      const { amount, price } = order;
-      const levelAmount = Math.min(needed, amount);
-      const levelValue = Math.round(1e6 * levelAmount * price) / 1e6;
-      total += levelValue;
-      needed -= levelAmount;
-      if (levelAmount > 0) {
-        marketFills.push({
-          ...order,
-          fillAmount: levelAmount,
-          paymentsE6: paymentFunc(
-            levelValue * 1e6,
-            order.makerFee,
-            exchange.Exchange.takerFee,
-            feeReductionBonus?.totalBonus,
-            feeEnforcementBonus?.totalBonus
-          )
-        });
-        totalOrders++;
-        return true;
-      }
-      return false;
+    marketFills.forEach((fill) => {
+      total += fill.fillValue;
+      totalOrders++;
     });
     return [total, total / quantity, totalOrders, marketFills];
   }, [buyOrders, exchange, feeEnforcementBonus, feeReductionBonus, mode, quantity, sellOrders, type]);
@@ -470,15 +453,13 @@ const MarketplaceOrder = ({
         fillSellOrders({
           destination: { id: storage?.id, label: storage?.label },
           destinationSlot: storageInventory?.slot,
-          fillOrders: marketFills || [],
-          product: resourceId
+          fillOrders: marketFills || []
         })
       } else {
         fillBuyOrders({
           origin: { id: storage?.id, label: storage?.label },
           originSlot: storageInventory?.slot,
-          fillOrders: marketFills || [],
-          product: resourceId
+          fillOrders: marketFills || []
         })
       }
     }

@@ -84,7 +84,7 @@ const useMarketplaceManager = (buildingId) => {
   );
 
   const fillBuyOrders = useCallback(
-    ({ isCancellation, product, origin, originSlot, fillOrders }) => {
+    ({ isCancellation, origin, originSlot, fillOrders }) => {
       if (!fillOrders?.length) return;
 
       return execute(
@@ -95,13 +95,13 @@ const useMarketplaceManager = (buildingId) => {
           exchange_owner_account: exchangeController?.Crew?.delegatedTo,
           makerFee: order.makerFee / Order.FEE_SCALE,
           payments: {
-            toExchange: order.paymentsE6.toExchange,
-            toPlayer: order.paymentsE6.toPlayer
+            toExchange: order.paymentsUnscaled.toExchange,
+            toPlayer: order.paymentsUnscaled.toPlayer
           },
 
           origin: { id: origin?.id, label: origin?.label },
           origin_slot: originSlot,
-          product,
+          product: order.product,
           amount: order.fillAmount,
           buyer_crew: { id: order.crew?.id, label: order.crew?.label },
           price: Math.round(order.price * 1e6),
@@ -120,7 +120,7 @@ const useMarketplaceManager = (buildingId) => {
   );
 
   const fillSellOrders = useCallback(
-    async ({ destination, destinationSlot, product, fillOrders }) => {
+    async ({ destination, destinationSlot, fillOrders }) => {
       if (!fillOrders?.length) return;
       const sellerCrewIds = fillOrders.map((order) => order.crew?.id);
       const sellerCrews = await api.getEntities({ ids: sellerCrewIds, label: Entity.IDS.CREW, component: 'Crew' })
@@ -131,8 +131,8 @@ const useMarketplaceManager = (buildingId) => {
           exchange_owner_account: exchangeController?.Crew?.delegatedTo,
           takerFee: exchange?.Exchange?.takerFee,
           payments: {
-            toExchange: order.paymentsE6.toExchange,
-            toPlayer: order.paymentsE6.toPlayer
+            toExchange: order.paymentsUnscaled.toExchange,
+            toPlayer: order.paymentsUnscaled.toPlayer
           },
 
           seller_crew: { id: order.crew?.id, label: order.crew?.label },
@@ -141,13 +141,13 @@ const useMarketplaceManager = (buildingId) => {
           storage: { id: order.storage?.id, label: order.storage?.label },
           storage_slot: order.storageSlot,
 
-          product,
+          product: order.product,
           destination: { id: destination?.id, label: destination?.label },
           destination_slot: destinationSlot,
           ...payload
         })),
         {
-          lotId: exchange?.Location?.location?.id,
+          exchangeLotId: exchange?.Location?.location?.id,
         },
       );
     },
@@ -158,14 +158,13 @@ const useMarketplaceManager = (buildingId) => {
     ({ amount, buyer, price, product, destination, destinationSlot, initialCaller, makerFee }) => {
       fillBuyOrders({
         isCancellation: true,
-        product,
         origin: destination,
         originSlot: destinationSlot,
         fillOrders: [
           {
             initialCaller,
             makerFee,
-            paymentsE6: {
+            paymentsUnscaled: {
               toExchange: 0,
               toPlayer: Order.getBuyOrderDeposit(amount * Math.floor(price * 1e6), makerFee)
             },
@@ -173,7 +172,8 @@ const useMarketplaceManager = (buildingId) => {
             crew: buyer,
             price: price,
             storage: destination,
-            storageSlot: destinationSlot
+            storageSlot: destinationSlot,
+            product,
           }
         ]
       });

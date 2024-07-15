@@ -1610,6 +1610,7 @@ const activities = {
         { ...returnValues.storage },
         [ 'walletBalance', 'sway' ],
         [ 'orderList', returnValues.exchange.id, returnValues.product ],
+        [ 'shoppingOrderList', asteroidId ],  // TODO: should filter by productId (3rd part of cacheKey)
         [ 'crewOpenOrders', returnValues.sellerCrew.id ],
         [ 'exchangeOrderSummary', asteroidId, returnValues.product ],
         [ 'inventoryOrders', returnValues.storage?.label, returnValues.storage?.id ],
@@ -1630,6 +1631,7 @@ const activities = {
         { ...returnValues.storage },
         [ 'walletBalance', 'sway' ],
         [ 'orderList', returnValues.exchange.id, returnValues.product ],
+        [ 'shoppingOrderList', asteroidId ],  // TODO: should filter by productId (3rd part of cacheKey)
         [ 'crewOpenOrders', returnValues.callerCrew.id ],
         [ 'exchangeOrderSummary', asteroidId, returnValues.product ],
         [ 'inventoryOrders', returnValues.storage?.label, returnValues.storage?.id ],
@@ -1677,6 +1679,7 @@ const activities = {
           { ...returnValues.storage },
           [ 'walletBalance', 'sway' ],
           [ 'orderList', returnValues.exchange.id, returnValues.product ],
+          [ 'shoppingOrderList', asteroidId ],  // TODO: should filter by productId (3rd part of cacheKey)
           [ 'crewOpenOrders', returnValues.sellerCrew.id ],
           [ 'exchangeOrderSummary', asteroidId, returnValues.product ],
           [ 'inventoryOrders', returnValues.storage?.label, returnValues.storage?.id ],

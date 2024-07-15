@@ -1320,6 +1320,79 @@ const ControlWarning = styled.div`
   }
 `;
 
+const getMarketplaceAlertColor = (p) => {
+  if (p.scheme === 'success') return p.theme.colors.green;
+  if (p.scheme === 'error') return p.theme.colors.red;
+  if (p.scheme === 'empty') return '#999999';
+  return p.theme.colors.main;
+}
+export const MarketplaceAlert = styled.div`
+  ${p => p.theme.clipCorner(10)};
+  background: rgba(${p => hexToRGB(getMarketplaceAlertColor(p))}, 0.2);
+  padding: 4px;
+  transition: background 150ms ease;
+  width: 100%;
+  & > div {
+    ${p => p.theme.clipCorner(8)};
+
+    background: rgba(${p => hexToRGB(getMarketplaceAlertColor(p))}, 0.2);
+    color: rgba(255, 255, 255, 0.7);
+    display: flex;
+    padding: 15px 12px;
+    transition: background 150ms ease, color 150ms ease;
+
+    & label {
+      color: ${p => getMarketplaceAlertColor(p)};
+      display: block;
+      font-size: 15px;
+      text-transform: uppercase;
+      transition: color 150ms ease;
+    }
+    & b {
+      color: white;
+      font-weight: normal;
+    }
+
+    & > div:first-child {
+      flex: 1;
+      & > div {
+        font-size: 20px;
+        & > span {
+          margin-left: 6px;
+          font-size: 14px;
+        }
+      }
+    }
+
+    & > div:last-child {
+      align-items: center;
+      display: flex;
+      color: white;
+      & > label {
+        margin-top: 12px;
+        margin-right: 2px;
+      }
+      & > span {
+        font-size: 32px;
+      }
+    }
+
+    &:not(:first-child) {
+      align-items: flex-end;
+      justify-content: space-between;
+      padding: 8px 10px 0;
+      & > svg {
+        font-size: 24px;
+        margin-right: 6px;
+      }
+
+      ${p => p.scheme && `
+        color: ${getMarketplaceAlertColor(p)};
+      `}
+    }
+  }
+`;
+
 export const SelectionDialog = ({ children, isCompletable, open, onClose, onComplete, style = {}, title }) => {
   if (!open) return null;
   return createPortal(

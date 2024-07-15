@@ -5,6 +5,7 @@ import { executeSwap, fetchQuotes } from "@avnu/avnu-sdk";
 
 import useStore from '~/hooks/useStore';
 import { entityToAgreements, esbLocationQuery, esbPermissionQuery, safeEntityId } from './utils';
+import { TOKEN, TOKEN_SCALE } from './priceUtils';
 
 // set default app version
 const apiVersion = 'v2';
@@ -521,7 +522,7 @@ const api = {
 
     const orders = response?.data?.hits?.hits?.map((h) => ({
       ...h._source,
-      price: h._source.price / 1e6,
+      price: h._source.price / TOKEN_SCALE[TOKEN.SWAY],
     })) || [];
 
     return orders;
@@ -550,7 +551,7 @@ const api = {
 
     return response?.data?.hits?.hits?.map((h) => ({
       ...h._source,
-      price: h._source.price / 1e6,
+      price: h._source.price / TOKEN_SCALE[TOKEN.SWAY],
     })) || [];
   },
 
@@ -572,7 +573,42 @@ const api = {
 
     return response?.data?.hits?.hits?.map((h) => ({
       ...h._source,
-      price: h._source.price / 1e6,
+      price: h._source.price / TOKEN_SCALE[TOKEN.SWAY],
+    })) || [];
+  },
+
+  getSellOrdersByProduct: async (asteroidId, product) => {
+    const queryBuilder = esb.boolQuery();
+
+    // asteroid
+    queryBuilder.filter(
+      esbLocationQuery(
+        { asteroidId: asteroidId },
+        'locations'
+      )
+    );
+
+    // products
+    if (Array.isArray(product)) {
+      queryBuilder.filter(esb.termsQuery('product', product));
+    } else {
+      queryBuilder.filter(esb.termQuery('product', product));
+    }
+    
+    // open sell order
+    queryBuilder.filter(esb.termQuery('orderType', Order.IDS.LIMIT_SELL));
+    queryBuilder.filter(esb.termQuery('status', Order.STATUSES.OPEN));
+    queryBuilder.filter(esb.rangeQuery('validTime').lte(Math.floor(Date.now() / 1000)));
+    
+    const q = esb.requestBodySearch();
+    q.query(queryBuilder);
+    q.from(0);
+    q.size(10000);
+    const response = await instance.post(`/_search/order`, q.toJSON());
+
+    return response?.data?.hits?.hits?.map((h) => ({
+      ...h._source,
+      price: h._source.price / TOKEN_SCALE[TOKEN.SWAY],
     })) || [];
   },
 
@@ -634,8 +670,8 @@ const api = {
     return response.data.aggregations.exchanges.buckets.reduce((acc, b) => ({
       ...acc,
       [b.key]: {
-        buy: { orders: b.buy.doc_count, amount: b.buy.amount.value, price: b.buy.price.value / 1e6 },
-        sell: { orders: b.sell.doc_count, amount: b.sell.amount.value, price: b.sell.price.value / 1e6 },
+        buy: { orders: b.buy.doc_count, amount: b.buy.amount.value, price: b.buy.price.value / TOKEN_SCALE[TOKEN.SWAY], },
+        sell: { orders: b.sell.doc_count, amount: b.sell.amount.value, price: b.sell.price.value / TOKEN_SCALE[TOKEN.SWAY], },
       }
     }), {});
   },
@@ -695,8 +731,8 @@ const api = {
     return response.data.aggregations.products.buckets.reduce((acc, b) => ({
       ...acc,
       [b.key]: {
-        buy: { orders: b.buy.doc_count, amount: b.buy.amount.value, price: b.buy.price.value / 1e6 },
-        sell: { orders: b.sell.doc_count, amount: b.sell.amount.value, price: b.sell.price.value / 1e6 },
+        buy: { orders: b.buy.doc_count, amount: b.buy.amount.value, price: b.buy.price.value / TOKEN_SCALE[TOKEN.SWAY], },
+        sell: { orders: b.sell.doc_count, amount: b.sell.amount.value, price: b.sell.price.value / TOKEN_SCALE[TOKEN.SWAY], },
       }
     }), {});
   },
@@ -716,6 +752,22 @@ const api = {
     if (ids?.length > 0) {
       const q = esb.boolQuery();
       q.filter(esb.termsQuery('id', ids));
+  
+      const crewmateQ = esb.requestBodySearch();
+      crewmateQ.query(q);
+      crewmateQ.from(0);
+      crewmateQ.size(10000);
+      const response = await instance.post(`/_search/crewmate`, crewmateQ.toJSON());
+
+      return formatESEntityData(response.data);
+    }
+    return [];
+  },
+  
+  getCrewmatesOfCrews: async (crewIds) => {
+    if (crewIds?.length > 0) {
+      const q = esb.boolQuery();
+      q.filter(esb.termsQuery('Control.controller.id', crewIds));
   
       const crewmateQ = esb.requestBodySearch();
       crewmateQ.query(q);

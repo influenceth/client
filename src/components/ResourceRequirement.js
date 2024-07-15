@@ -35,7 +35,7 @@ const ResourceRequirement = ({ isGathering, item, noStyles, ...props }) => {
     const { numerator, denominator, deficit } = formatResourceAmountRatio(item.numerator, item.denominator, props.resource.i);
     props.badge = numerator;
     props.badgeDenominator = denominator;
-    props.tooltipOverride = (deficit) ? `${props.resource?.name} (${deficit})` : props.resource?.name;
+    props.tooltipOverride = (deficit) ? `${props.resource?.name} (${deficit} needed)` : props.resource?.name;
   // (else, show denominator if set (showing requirements) or numerator if not (showing something else))
   } else {
     props.badge = formatResourceAmount(item.denominator || item.numerator, props.resource.i);
@@ -50,6 +50,7 @@ const ResourceRequirement = ({ isGathering, item, noStyles, ...props }) => {
       props.outlineColor = `rgba(${incompleteRGB}, 0.75)`;
       if (item.numerator > 0) { // (needs partially met)
         props.underlay = <PartialUnderlay />;
+        props.upperRightBadge = `-${(item.denominator - item.numerator).toLocaleString()}${props.resource.isAtomic ? '' : ' kg'}`;
       }
 
     // (needs met)
