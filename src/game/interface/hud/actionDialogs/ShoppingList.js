@@ -258,7 +258,7 @@ const ProductMarketSummary = ({
       const remainingToSource = selectionSummary.needed || targetAmount;
       row._dynamicSupply = Math.min(row.supply, selectionSummary.amounts[m.buildingId] || remainingToSource);
       row._isLimited = row.supply < remainingToSource;
-      
+
       let marketFills = ordersToFills(
         'buy',
         row.orders,
@@ -344,7 +344,7 @@ const useShoppingListData = (asteroidId, lotId, productIds) => {
 
         const fees = {};
         Object.keys(crews).forEach((crewId) => {
-          
+
           // NOTE: this only works because we know MARKETPLACE_FEE_ENFORCEMENT is `notFurtherModified`
           // (if that changes, would need to pull more data from Crew as well)
           const crewFeeEnforcement = Crew.getAbilityBonus(Crewmate.ABILITY_IDS.MARKETPLACE_FEE_ENFORCEMENT, crews[crewId]);
@@ -362,7 +362,7 @@ const useShoppingListData = (asteroidId, lotId, productIds) => {
   useEffect(() => {
     loadFees();
   }, [loadFees]);
-  
+
   const { data: orders, isLoading: ordersLoading, refetch: refetchOrders } = useShoppingListOrders(asteroidId, productIds);
 
   const isLoading = exchangesLoading || feesLoading || ordersLoading;
@@ -388,7 +388,7 @@ const useShoppingListData = (asteroidId, lotId, productIds) => {
         Object.keys(orders[productId]).forEach((buildingId) => {
           const o = orders[productId][buildingId];
           const marketplace = exchanges.find((e) => e.id === Number(buildingId));
-          
+
           if (marketplace) {
             o.marketplace = marketplace;
             o.distance = Asteroid.getLotDistance(asteroidId, Lot.toIndex(o.lotId), Lot.toIndex(lotId));
@@ -399,7 +399,7 @@ const useShoppingListData = (asteroidId, lotId, productIds) => {
       });
       lastValue.current = finalData;
     }
-    
+
     return {
       data: finalData,
       dataUpdatedAt: Date.now(),
@@ -495,7 +495,7 @@ const ShoppingList = ({ asteroid, destination, destinationSlot, stage, ...props 
               crew?._timeAcceleration
             )
           );
-  
+
           const fills = ordersToFills(
             'buy',
             row.orders,
@@ -504,13 +504,13 @@ const ShoppingList = ({ asteroid, destination, destinationSlot, stage, ...props 
             crewBonuses?.feeReduction?.totalBonus || 1,
             row.feeEnforcement || 1,
           );
-  
+
           fills.forEach((fill) => {
             selectedAmounts[row.buildingId] += fill.fillAmount;
             needed -= fill.fillAmount;
             totalPrice += fill.fillPaymentTotal;
           });
-  
+
           allFills.push(...fills);
         });
 
@@ -601,7 +601,7 @@ const ShoppingList = ({ asteroid, destination, destinationSlot, stage, ...props 
       // TODO: could move this all into useMarketplaceManager but would have to rework it the manager some
       await execute(
         'BulkFillSellOrder',
-        allFills.map((fill) => { 
+        allFills.map((fill) => {
           const exchangeControllerId = exchangesById[fill.entity.id]?.Control?.controller?.id;
           return {
             seller_account: crews.find((c) => c.id === fill.crew?.id)?.Crew?.delegatedTo,
@@ -630,7 +630,7 @@ const ShoppingList = ({ asteroid, destination, destinationSlot, stage, ...props 
 
     } catch (e) {
       console.error(e);
-      
+
     } finally {
       setTimeout(() => {
         setPurchasing(false);
@@ -735,12 +735,12 @@ const ShoppingList = ({ asteroid, destination, destinationSlot, stage, ...props 
                         )
                       }
                       <ExpandableIcon isExpanded={openProductId === product.i} />
-                      {/* 
+                      {/*
                       <div>{formatResourceAmount(selectionSummary[product.i]?.totalFilled || 0, product.i)} filled of {formatResourceAmount(amount, product.i)}</div>
                       <div>@ <SwayIcon /> <span>{formatPrice(selectionSummary[product.i]?.totalPrice / selectionSummary[product.i]?.totalFilled)}</span></div>
                       */}
                     </ProductHeader>
-                    
+
                     {openProductId === product.i
                       ? (
                         resourceMarketplaces?.[product.i]?.length
@@ -763,7 +763,7 @@ const ShoppingList = ({ asteroid, destination, destinationSlot, stage, ...props 
                           )
                       )
                       : /* TODO: use some constants so this is more upkeepable */ (
-                        <div style={{ height: TABLE_TOP_MARGIN + TABLE_BOTTOM_MARGIN + Math.min(TABLE_MAX_HEIGHT, 40 * (1 + (resourceMarketplaces?.[product.i]?.length || 0))) }} /> 
+                        <div style={{ height: TABLE_TOP_MARGIN + TABLE_BOTTOM_MARGIN + Math.min(TABLE_MAX_HEIGHT, 40 * (1 + (resourceMarketplaces?.[product.i]?.length || 0))) }} />
                       )
                     }
                   </ProductItem>
@@ -802,7 +802,6 @@ const ShoppingList = ({ asteroid, destination, destinationSlot, stage, ...props 
         goLabel="Purchase"
         onGo={handlePurchase}
         stage={stage}
-        waitForCrewReady
         {...props} />
     </>
   );
