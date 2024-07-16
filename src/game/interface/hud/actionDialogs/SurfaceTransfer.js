@@ -618,7 +618,7 @@ const SurfaceTransfer = ({
           />
 
           <InventorySelectionDialog
-            asteroidId={asteroid.id}
+            asteroidId={asteroid?.id}
             isSourcing
             itemIds={destinationProductIds}
             limitToControlled={isP2P}
@@ -632,7 +632,7 @@ const SurfaceTransfer = ({
           />
 
           <InventorySelectionDialog
-            asteroidId={asteroid.id}
+            asteroidId={asteroid?.id}
             itemIds={originProductIds}
             otherEntity={origin}
             otherInvSlot={originInventory?.slot}

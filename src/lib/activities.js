@@ -37,7 +37,8 @@ import {
   BecomeAdminIcon,
   EjectMyCrewIcon,
   SwayIcon,
-  LandShipIcon
+  LandShipIcon,
+  DeconstructIcon
 } from '~/components/Icons';
 import LotLink from '~/components/LotLink';
 
@@ -320,7 +321,7 @@ const activities = {
     }),
 
     getBusyItem: ({ event: { returnValues } }) => ({
-      icon: <PlanBuildingIcon />,
+      icon: <LimitBuyIcon />,
       label: `Place Buy Order`,
     }),
     requiresCrewTime: true
@@ -563,7 +564,7 @@ const activities = {
       ];
     },
     getLogContent: ({ event: { returnValues } }, viewingAs, { building = {} }) => ({
-      icon: <ConstructIcon />,
+      icon: <DeconstructIcon />,
       content: (
         <>
           <span>{Building.TYPES[building?.Building?.buildingType]?.name || 'Building'} deconstructed on </span>
@@ -575,7 +576,7 @@ const activities = {
       building: returnValues.building,
     }),
     getBusyItem: ({ event: { returnValues } }, { building = {} }) => ({
-      icon: <ConstructIcon />,
+      icon: <DeconstructIcon />,
       label: `Deconstruct ${Building.TYPES[building?.Building?.buildingType]?.name || 'Building'}`,
     }),
     requiresCrewTime: true

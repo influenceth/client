@@ -11,7 +11,6 @@ import useCrewBuildings from '~/hooks/useCrewBuildings';
 import api from '~/lib/api';
 import { hydrateActivities } from '~/lib/activities';
 import useBusyActivity from '~/hooks/useBusyActivity';
-import useHydratedLocation from '~/hooks/useHydratedLocation';
 
 const ActionItemContext = React.createContext();
 
@@ -116,6 +115,7 @@ export function ActionItemProvider({ children }) {
         .sort((a, b) => a.event.returnValues?.finishTime - b.event.returnValues?.finishTime)
     );
 
+    // item has a finishTime that has not passed AND has no startTime or a startTime that has passed
     const unreadyFinishableItems = (actionItems || [])
       .filter((a) => a.event.returnValues?.finishTime > blockTime && (!a._startTime || a._startTime <= blockTime))
       .sort((a, b) => a.event.returnValues?.finishTime - b.event.returnValues?.finishTime);

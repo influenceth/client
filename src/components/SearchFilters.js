@@ -6,6 +6,7 @@ import usePriceConstants from '~/hooks/usePriceConstants';
 import useStore from '~/hooks/useStore';
 import constants from '~/lib/constants';
 import AsteroidNameFilter from './filters/AsteroidNameFilter';
+import BuildingNameFilter from './filters/BuildingNameFilter';
 import OwnershipFilter from './filters/OwnershipFilter';
 import CrewOwnershipFilter from './filters/CrewOwnershipFilter';
 import LotIdFilter from './filters/LotIdFilter';
@@ -135,12 +136,6 @@ const surfaceAreaConfig = {
   fieldNames: { min: 'surfaceAreaMin', max: 'surfaceAreaMax' },
   labels: { min: 'Min (km²)', max: 'Max (km²)' },
   rangeLimits: { min: 13, max: 1768485 }
-};
-
-const radiusConfig = {
-  fieldNames: { min: 'radiusMin', max: 'radiusMax' },
-  labels: { min: 'Min (km)', max: 'Max (km)' },
-  rangeLimits: { min: constants.MIN_ASTEROID_RADIUS / 1000, max: constants.MAX_ASTEROID_RADIUS / 1000 }
 };
 
 const axisConfig = {
@@ -311,6 +306,12 @@ const SearchFilters = ({ assetType, highlighting, isListView = false }) => {
           placeholder="Filter by Asteroid Id..."
           title="Asteroid" />
 
+        <TextFilter
+          {...filterProps}
+          fieldName="name"
+          placeholder="Filter by Name..."
+          title="Building Name" />
+
         <CheckboxFilter
           {...filterProps}
           fieldName="type"
@@ -387,6 +388,8 @@ const SearchFilters = ({ assetType, highlighting, isListView = false }) => {
     return (
       <>
         <LotIdFilter {...filterProps} />
+
+        <BuildingNameFilter {...filterProps} />
 
         <CheckboxFilter
           {...filterProps}

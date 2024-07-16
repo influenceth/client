@@ -18,7 +18,6 @@ const DataTable = styled.table.attrs({
   cellPadding: 0
 })`
   border-collapse: collapse;
-  height: 100%;
   width: calc(100% - 18px);
   td, th {
     background: black;

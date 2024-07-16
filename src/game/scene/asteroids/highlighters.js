@@ -29,10 +29,10 @@ const getter = (a, config) => {
 
 const surfaceAreaHighlighter = (a, config) => {
   const toRadiusConfig = Object.assign({}, config, {
+    field: 'radius',
     min: Math.sqrt(config.min / (4 * Math.PI)),
     max: Math.sqrt(config.max / (4 * Math.PI))
   });
-
   return radiusHighlighter(a, toRadiusConfig);
 };
 

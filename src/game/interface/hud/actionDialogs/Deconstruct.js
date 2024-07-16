@@ -20,7 +20,8 @@ import {
   ProgressBarSection,
   FlexSection,
   getBuildingRequirements,
-  LotInputBlock
+  LotInputBlock,
+  MaterialBonusTooltip
 } from './components';
 import { ActionDialogInner, useAsteroidAndLot } from '../ActionDialog';
 import actionStage from '~/lib/actionStages';
@@ -32,14 +33,8 @@ const Deconstruct = ({ asteroid, lot, constructionManager, stage, ...props }) =>
 
   const crewTravelBonus = useMemo(() => getCrewAbilityBonuses(Crewmate.ABILITY_IDS.HOPPER_TRANSPORT_TIME, crew), [crew]);
   const crewDistBonus = useMemo(() => getCrewAbilityBonuses(Crewmate.ABILITY_IDS.FREE_TRANSPORT_DISTANCE, crew), [crew]);
-  const crewDescontructBonus = useMemo(() => getCrewAbilityBonuses(Crewmate.ABILITY_IDS.DECONSTRUCTION_YIELD, crew), [crew]);
-
-  const [deconstructionPenalty, deconstructionDirection] = useMemo(() => {
-    return [
-      (100 * Building.DECONSTRUCTION_PENALTY / (crewDescontructBonus.totalBonus || 1 )),
-      -1
-    ]
-  }, [crewDescontructBonus]);
+  const crewDeconstructBonus = useMemo(() => getCrewAbilityBonuses(Crewmate.ABILITY_IDS.DECONSTRUCTION_YIELD, crew), [crew]);
+  const deconstructionPenalty = useMemo(() => Building.DECONSTRUCTION_PENALTY / (crewDeconstructBonus?.totalBonus || 1), [crewDeconstructBonus]);
 
   const { totalTime: crewTravelTime, tripDetails } = useMemo(() => {
     if (!asteroid?.id || !crew?._location?.lotId || !lot?.id) return {};
@@ -70,21 +65,23 @@ const Deconstruct = ({ asteroid, lot, constructionManager, stage, ...props }) =>
     },
     {
       label: 'Deconstruction Penalty',
-      value: `${formatFixed(deconstructionPenalty, 2)}%`,
-      direction: deconstructionDirection,
-      tooltip: (
-        <BonusTooltip
-          bonus={crewDescontructBonus}
-          crewRequired="start" />
+      value: `${formatFixed(100 * deconstructionPenalty, 2)}%`,
+      direction: getBonusDirection(crewDeconstructBonus),
+      isTimeStat: true,
+      tooltip: crewDeconstructBonus.totalBonus !== 1 && (
+        <MaterialBonusTooltip
+          bonus={crewDeconstructBonus}
+          title="Deconstruction Efficiency"
+          titleValue={`${formatFixed(100 * crewDeconstructBonus.totalBonus, 1)}%`} />
       )
     },
-  ], [tripDetails]);
+  ], [crewDeconstructBonus, deconstructionPenalty, tripDetails]);
 
   const itemsReturned = useMemo(() => {
     if (!lot?.building) return [];
     return getBuildingRequirements(lot?.building).map((item) => ({
       ...item,
-      totalRequired: Math.floor((1 - Building.DECONSTRUCTION_PENALTY || 0) * item.totalRequired)
+      totalRequired: Math.floor((1 - deconstructionPenalty) * item.totalRequired)
     }));
   }, [lot?.building]);
 
