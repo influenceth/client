@@ -130,16 +130,14 @@ export function ActivitiesProvider({ children }) {
           const extraInvalidations = await activityConfig.onBeforeReceived(pendingTransaction);
 
           if (debugInvalidation) console.log('extraInvalidations', extraInvalidations);
-          shouldRefreshReadyAt = shouldRefreshReadyAt || !!activityConfig?.requiresCrewTime;
+          shouldRefreshReadyAt = shouldRefreshReadyAt || !!activityConfig.requiresCrewTime;
 
           // console.log('invalidations', activityConfig?.invalidations);
 
           const activityInvalidations = [];
 
-          // any activityConfig with a busyItem should invalidate the current crew's
-          // [ 'activities', entity?.label, entity?.id, 'busy' ]
-          // it may be redundant, but
-          if (activityConfig.busyItem && crew) {
+          // any activityConfig that requiresCrewTime should invalidate the current crew's busyItems
+          if (activityConfig.requiresCrewTime) {
             activityInvalidations.push([ 'activities', crew?.label, crew?.id, 'busy' ]);
           }
 
