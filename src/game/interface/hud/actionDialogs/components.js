@@ -1397,7 +1397,7 @@ export const SelectionDialog = ({ children, isCompletable, open, onClose, onComp
   if (!open) return null;
   return createPortal(
     <Dialog opaque dialogCss={dialogCss} dialogStyle={style}>
-      <Tooltip id="selectionDialogTooltip" />
+      <Tooltip id="selectionDialogTooltip" style={{ maxWidth: 500 }} />
       <SelectionTitle>
         <div>{title}</div>
         <IconButton backgroundColor={`rgba(0, 0, 0, 0.15)`} marginless onClick={onClose}>
@@ -2161,6 +2161,33 @@ const ItemFilterLabel = styled.div`
   }
 `;
 
+const StyledFilterWrapper = styled.div`
+  display: flex;
+  opacity: 0.5;
+  & > * {
+    pointer-events: none;
+    &:not(:first-child) {
+      margin-left: 15px;
+    }
+  }
+`;
+const FilterWrapper = ({ children, isLimited }) => {
+  if (isLimited) {
+    return (
+      <StyledFilterWrapper
+        data-tooltip-content={
+          `To transfer into an inventory that your crew does not already have access to, `
+          + `your crew can only transfer from an inventory it explicitly controls.`
+        }
+        data-tooltip-id="selectionDialogTooltip"
+        data-tooltip-place="left">
+        {children}
+      </StyledFilterWrapper>
+    );
+  }
+  return <>{children}</>;
+}
+
 export const InventorySelectionDialog = ({
   asteroidId,
   excludeSites,
@@ -2474,15 +2501,17 @@ export const InventorySelectionDialog = ({
 
         <div style={{ flex: 1 }} />
 
-        <FilterRowLabel isOn={showPermittedInventories} onClick={() => setShowPermittedInventories((p) => !p)}>
-          {showPermittedInventories ? <CheckedIcon /> : <UncheckedIcon />}
-          <span>Permitted Inventories</span>
-        </FilterRowLabel>
+        <FilterWrapper isLimited={limitToControlled}>
+          <FilterRowLabel isOn={!limitToControlled && showPermittedInventories} onClick={() => setShowPermittedInventories((p) => !p)}>
+            {!limitToControlled && showPermittedInventories ? <CheckedIcon /> : <UncheckedIcon />}
+            <span>Permitted Inventories</span>
+          </FilterRowLabel>
 
-        <FilterRowLabel isOn={showPublicInventories} onClick={() => setShowPublicInventories((p) => !p)}>
-          {showPublicInventories ? <CheckedIcon /> : <UncheckedIcon />}
-          <span>Public Inventories</span>
-        </FilterRowLabel>
+          <FilterRowLabel isOn={!limitToControlled && showPublicInventories} onClick={() => setShowPublicInventories((p) => !p)}>
+            {!limitToControlled && showPublicInventories ? <CheckedIcon /> : <UncheckedIcon />}
+            <span>Public Inventories</span>
+          </FilterRowLabel>
+        </FilterWrapper>
       </FilterRow>
 
       {isSourcing && filterItemIds && (
