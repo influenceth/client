@@ -306,6 +306,12 @@ const SearchFilters = ({ assetType, highlighting, isListView = false }) => {
           placeholder="Filter by Asteroid Id..."
           title="Asteroid" />
 
+        <TextFilter
+          {...filterProps}
+          fieldName="name"
+          placeholder="Filter by Name..."
+          title="Building Name" />
+
         <CheckboxFilter
           {...filterProps}
           fieldName="type"
