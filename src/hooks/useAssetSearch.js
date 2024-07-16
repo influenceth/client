@@ -238,8 +238,6 @@ const useAssetSearch = (assetType, { from = 0, size = 2000 } = {}) => {
     return null;
   }, [esAssetType, from, size, sort, throttledFilters]);
 
-  console.log('esAssetType', esAssetType, query)
-
   return useQuery(
     [ 'search', esAssetType, query ],
     () => esAssetType ? api.searchAssets(esAssetType, query) : [],
