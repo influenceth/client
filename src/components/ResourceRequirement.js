@@ -71,11 +71,11 @@ const ResourceRequirement = ({ isGathering, item, noStyles, ...props }) => {
       }
     }
 
-    if (item.customIcon) { // TODO: use for inTransit
+    if (item.customIcon) {
       props.backgroundColor = `rgba(${theme.colors.mainRGB}, 0.15)`;
       props.badgeColor = theme.colors.main;
       props.outlineColor = `rgba(${theme.colors.mainRGB}, 0.5)`;
-      props.overlayStripes = true;
+      props.overlayStripes = item.stripeAnimation;
       props.overlayIcon = item.customIcon.animated
         ? <Animation>{item.customIcon.icon}</Animation>
         : <div>{item.customIcon.icon}</div>;

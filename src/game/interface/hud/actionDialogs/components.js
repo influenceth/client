@@ -3109,7 +3109,8 @@ export const BuildingRequirementsSection = ({ mode, label, requirements, require
       customIcon: item.inTransit > 0
         ? {
           animated: true,
-          icon: <TransferToSiteIcon />
+          icon: <TransferToSiteIcon />,
+          stripeAnimation: true
         }
         : undefined
     }));
@@ -3136,7 +3137,8 @@ export const TransferBuildingRequirementsSection = ({ label, onClick, requiremen
     customIcon: item.inTransit > 0
       ? {
         animated: true,
-        icon: <TransferToSiteIcon />
+        icon: <TransferToSiteIcon />,
+        stripeAnimation: true
       }
       : undefined
   })), [requirements, selectedItems]);
@@ -4503,7 +4505,7 @@ const extractBonuses = (bonusObj, isTimeStat) => {
     .sort((a, b) => b.bonus - a.bonus);
 };
 
-export const BonusTooltip = ({ bonus = {}, crewRequired, details, title, titleValue, isTimeStat }) => {
+export const BonusTooltip = ({ bonus = {}, details, title, titleValue, isTimeStat }) => {
   const timeMult = isTimeStat ? -1 : 1;
   const titleDirection = getBonusDirection({ totalBonus: bonus.totalBonus });
   const bonuses = useMemo(() => extractBonuses(bonus, isTimeStat), [bonus, isTimeStat]);
@@ -4520,7 +4522,7 @@ export const BonusTooltip = ({ bonus = {}, crewRequired, details, title, titleVa
             {bonuses.map(({ text, bonus, multiplier, direction }) => {
               let bonusLabel;
               if (multiplier) {
-                bonusLabel = `x${isTimeStat ? (Math.round(1000 / multiplier) / 1000) : multiplier}`;
+                bonusLabel = `x${typeof multiplier === 'number' ? formatFixed(multiplier, 3) : multiplier}`;
               } else {
                 bonusLabel = `${timeMult > 0 ? '+' : '-'}${formatFixed(100 * bonus, 1)}%`;
               }
