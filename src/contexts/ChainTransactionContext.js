@@ -886,23 +886,25 @@ export function ChainTransactionProvider({ children }) {
       return;
     }
 
+    if (!(calls?.length > 0)) {
+      console.error('no calls included in executeCalls input');
+      return;
+    }
+
+    // start prompting state before isAccountLocked since *might* take some time
+    // and want to disable isTransaction buttons immediately
+    setPromptingTransaction(true);
     if (await isAccountLocked()) {
       createAlert({
         type: 'GenericAlert',
         data: { content: 'Account is unavailable.' },
         level: 'warning',
       });
-
-      return;
-    }
-    if (!(calls?.length > 0)) {
-      console.error('no calls included in executeCalls input');
+      setPromptingTransaction(false);
       return;
     }
 
     // execute
-    setPromptingTransaction(true);
-
     try {
       const tx = await executeWithAccount(calls);
 
@@ -935,20 +937,22 @@ export function ChainTransactionProvider({ children }) {
       return;
     }
 
+    // start prompting state before isAccountLocked since *might* take some time
+    // and want to disable isTransaction buttons immediately
+    setPromptingTransaction(true);
     if (await isAccountLocked()) {
       createAlert({
         type: 'GenericAlert',
         data: { content: 'Account is unavailable.' },
         level: 'warning',
       });
+      setPromptingTransaction(false);
       return;
     }
 
+    // execute
     const { execute: contractExecute, onTransactionError } = contracts[key];
-    setPromptingTransaction(true);
-
     try {
-      // execute
       const tx = await contractExecute(vars);
       dispatchPendingTransaction({
         key,
