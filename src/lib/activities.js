@@ -1057,8 +1057,6 @@ const activities = {
     //     ),
     //   };
     // },
-
-    requiresCrewTime: true  // TODO: is this right?
   },
 
   EmergencyActivated: {

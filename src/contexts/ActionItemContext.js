@@ -1,16 +1,18 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from 'react-query';
 import { Building } from '@influenceth/sdk';
+import cloneDeep from 'lodash/cloneDeep';
 
+import { CrewBusyIcon } from '~/components/AnimatedIcons';
 import useSession from '~/hooks/useSession';
 import useCrewAgreements from '~/hooks/useCrewAgreements';
 import useCrewContext from '~/hooks/useCrewContext';
 import useGetActivityConfig from '~/hooks/useGetActivityConfig';
 import useStore from '~/hooks/useStore';
 import useCrewBuildings from '~/hooks/useCrewBuildings';
-import api from '~/lib/api';
-import { hydrateActivities } from '~/lib/activities';
 import useBusyActivity from '~/hooks/useBusyActivity';
+import { hydrateActivities } from '~/lib/activities';
+import api from '~/lib/api';
 
 const ActionItemContext = React.createContext();
 
@@ -86,26 +88,44 @@ export function ActionItemProvider({ children }) {
     // calculate busyItem
     let busyItem = null;
     if (crew && !crew?._ready && busyActivity) {
-      const item = getActivityConfig(busyActivity)?.busyItem;
-      if (item) {
-        const transformed = {
-          ...busyActivity,
+      const tmpBusyActivity = cloneDeep(busyActivity); // make writeable
+
+      // virtual busy item
+      const virtualItem = getActivityConfig(tmpBusyActivity)?.busyItem;
+      if (virtualItem) {
+        busyItem = {
+          ...tmpBusyActivity,
           _preformatted: {
-            icon: item.icon,
-            label: item.label,
+            icon: virtualItem.icon,
+            label: virtualItem.label,
             asteroidId: crew?._location?.asteroidId,
             lotId: crew?._location?.lotId,
             shipId: crew?._location?.shipId,
           }
         };
-        transformed._startTime = item.event?.timestamp;
-        if (transformed.event?.returnValues) {
-          // best guess at finishTime for current action
-          transformed.event.returnValues.finishTime = sequencedItems[0]
-            ? sequencedItems[0]._startTime
-            : crew?.Crew.readyAt;
-        }
-        busyItem = transformed;
+
+      // crew time > task time busy item
+      } else if (getActivityConfig(tmpBusyActivity)?.actionItem) {
+        busyItem = {
+          ...tmpBusyActivity,
+          _preformatted: {
+            icon: <CrewBusyIcon />,
+            label: 'Return to Station',
+            asteroidId: crew?._location?.asteroidId,
+            lotId: crew?._location?.lotId,
+            shipId: crew?._location?.shipId,
+          }
+        };
+        try { busyItem.event.name = `_${busyItem.event.name}`; } catch {}
+      }
+      console.log('BUSY', busyItem)
+
+      // best guess at startTime and finishTime for current action
+      if (busyItem?.event?.returnValues) {
+        busyItem._startTime = busyItem.event.timestamp;
+        busyItem.event.returnValues.finishTime = sequencedItems[0]
+          ? sequencedItems[0]._startTime
+          : crew?.Crew.readyAt;
       }
     }
 
@@ -149,7 +169,7 @@ export function ActionItemProvider({ children }) {
         }))
         .sort((a, b) => a._agreement.endTime - b._agreement.endTime)
     );
-  }, [actionItems, busyActivity, crew, crewAgreements, plannedBuildings, blockTime, itemsUpdatedAt, plansUpdatedAt]);
+  }, [actionItems, busyActivity, crew, crew?._ready, crewAgreements, plannedBuildings, blockTime, itemsUpdatedAt, plansUpdatedAt]);
 
   const allVisibleItems = useMemo(() => {
     if (!authenticated) return [];
