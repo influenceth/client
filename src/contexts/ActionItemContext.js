@@ -118,7 +118,6 @@ export function ActionItemProvider({ children }) {
         };
         try { busyItem.event.name = `_${busyItem.event.name}`; } catch {}
       }
-      console.log('BUSY', busyItem)
 
       // best guess at startTime and finishTime for current action
       if (busyItem?.event?.returnValues) {

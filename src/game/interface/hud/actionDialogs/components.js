@@ -2899,7 +2899,13 @@ export const ActionDialogHeader = ({ action, actionCrew, crewAvailableTime, dela
           <LabelContainer>
             <h1>{action.label}</h1>
             <div>
-              <h2>{action.status || theming[stage]?.label}</h2>
+              <h2>
+                {action.status || (
+                  stage === actionStage.IN_PROGRESS && delayUntil
+                    ? 'Scheduled'
+                    : theming[stage]?.label
+                )}
+              </h2>
               {delayUntil !== undefined && (
                 <LiveTimer target={delayUntil} maxPrecision={2}>
                   {(formattedTime, isTimer) => {
