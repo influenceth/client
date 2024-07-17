@@ -30,7 +30,7 @@ const SurfaceTransferOutgoing = ({ asteroid, crew, lot, ship, onSetAction, dialo
   const currentDeliveryStack = useMemo(
     () => {
       const actionStack = [];
-      if (Permission.isPermitted(crew, Permission.IDS.REMOVE_PRODUCTS, origin)) {
+      if (crew && origin && Permission.isPermitted(crew, Permission.IDS.REMOVE_PRODUCTS, origin)) {
         (originDeliveryActions || []).forEach((delivery) => {
           if (['PACKAGING', 'PACKAGED'].includes(delivery.status)) {
             actionStack.push({
