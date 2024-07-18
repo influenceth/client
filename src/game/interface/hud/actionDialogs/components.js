@@ -625,18 +625,15 @@ const ProductSelector = styled.div`
     }
   `}
   & > label {
+    align-items: center;
     color: ${p => p.primary ? p.theme.colors.brightMain : 'inherit'};
-    display: block;
+    display: flex;
     font-size: 14px;
     padding-top: 4px;
-    text-align: left;
+    justify-content: flex-start;
     text-transform: uppercase;
-    & div {
-      display: flex;
-      align-items: center;
-      & > svg {
-        margin: 0 4px 0 4px;
-      }
+    & > svg:first-child {
+      margin: 0 4px;
     }
   }
 `;
@@ -3557,7 +3554,7 @@ export const ProcessInputOutputSection = ({ title, products, input, output, prim
                   {primaryOutput === resourceId
                     ? (
                       <>
-                        <div><TargetIcon /> Primary</div>
+                        <TargetIcon /><span>Primary</span>
                         <ClipCorner dimension={10} color={theme.colors.main} />
                       </>
                     )
@@ -3611,7 +3608,7 @@ export const ProcessInputSquareSection = ({ title, products, input, output, prim
                 tooltipContainer="actionDialogTooltip"
                 {...thumbProps}
               />
-              {output && <label>{primaryOutput === resourceId ? <><TargetIcon /> Primary22</> : `-50%`}</label>}
+              {output && <label>{primaryOutput === resourceId ? <><TargetIcon /><span>Primary</span></> : `-50%`}</label>}
             </ProductSelector>
           );
         })}

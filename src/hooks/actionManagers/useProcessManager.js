@@ -73,7 +73,7 @@ const useProcessManager = (lotId, slot) => {
         stage = actionStages.READY_TO_COMPLETE;
       } else {
         status = 'PROCESSING';
-        stage = actionStages.IN_PROGRESS;
+        stage = current.startTime > blockTime ? actionStages.SCHEDULED : actionStages.IN_PROGRESS;
       }
     } else {
       const startTx = getPendingTx('ProcessProductsStart', payload);

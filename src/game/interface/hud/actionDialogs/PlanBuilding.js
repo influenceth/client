@@ -38,7 +38,7 @@ const MouseoverWarning = styled.span`
 
 const PlanBuilding = ({ asteroid, lot, constructionManager, stage, ...props }) => {
   const { currentConstructionAction, planConstruction } = constructionManager;
-  const { crew } = useCrewContext();
+  const { crew, crewCan } = useCrewContext();
 
   const [buildingType, setBuildingType] = useState();
 
@@ -52,7 +52,7 @@ const PlanBuilding = ({ asteroid, lot, constructionManager, stage, ...props }) =
     return getCrewAbilityBonuses(Crewmate.ABILITY_IDS.FREE_TRANSPORT_DISTANCE, crew) || {};
   }, [crew]);
 
-  const lotIsControlled = useMemo(() => Permission.isPermitted(crew, Permission.IDS.USE_LOT, lot), [crew, lot]);
+  const lotIsControlled = useMemo(() => crewCan(Permission.IDS.USE_LOT, lot), [crewCan, lot]);
 
   const { totalTime: crewTravelTime, tripDetails } = useMemo(() => {
     if (!asteroid?.id || !crew?._location?.lotId || !lot?.id) return {};

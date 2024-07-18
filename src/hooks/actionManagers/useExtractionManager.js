@@ -76,7 +76,7 @@ const useExtractionManager = (lotId, slot = 1) => {
         stage = actionStages.READY_TO_COMPLETE;
       } else {
         status = 'EXTRACTING';
-        stage = actionStages.IN_PROGRESS;
+        stage = current.startTime > blockTime ? actionStages.SCHEDULED : actionStages.IN_PROGRESS;
       }
     } else {
       const startTx = getPendingTx('PurchaseDepositAndExtractResource', payload) || getPendingTx('ExtractResourceStart', payload);

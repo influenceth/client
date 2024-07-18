@@ -67,7 +67,7 @@ const useDryDockManager = (lotId, slot = 1) => {
         stage = actionStages.READY_TO_COMPLETE;
       } else {
         status = 'ASSEMBLING';
-        stage = actionStages.IN_PROGRESS;
+        stage = current.startTime > blockTime ? actionStages.SCHEDULED : actionStages.IN_PROGRESS;
       }
     } else {
       const startTx = getPendingTx('AssembleShipStart', payload);

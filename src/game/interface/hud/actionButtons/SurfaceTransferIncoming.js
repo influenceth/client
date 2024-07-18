@@ -26,7 +26,7 @@ const SurfaceTransferIncoming = ({ asteroid, crew, lot, ship, onSetAction, dialo
 
   const currentDeliveryStack = useMemo(() => {
     const actionStack = [];
-    if (Permission.isPermitted(crew, Permission.IDS.ADD_PRODUCTS, destination)) {
+    if (crew && destination && Permission.isPermitted(crew, Permission.IDS.ADD_PRODUCTS, destination)) {
       (destDeliveryActions || []).forEach((delivery) => {
         if (['PACKAGED','IN_TRANSIT','READY_TO_FINISH'].includes(delivery.status)) {
           actionStack.push({
@@ -123,7 +123,7 @@ const SurfaceTransferIncoming = ({ asteroid, crew, lot, ship, onSetAction, dialo
     return getCrewDisabledReason({ asteroid, crew, requireReady: false });
   }, [destination, crew]);
   
-  const isP2P = useMemo(() => !Permission.isPermitted(crew, Permission.IDS.ADD_PRODUCTS, destination), [crew, destination]);
+  const isP2P = useMemo(() => crew && destination && !Permission.isPermitted(crew, Permission.IDS.ADD_PRODUCTS, destination), [crew, destination]);
 
   return (
     <>

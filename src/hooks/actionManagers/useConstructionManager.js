@@ -111,7 +111,7 @@ const useConstructionManager = (lotId) => {
           stages.construct = actionStage.READY_TO_COMPLETE;
         } else {
           status = 'UNDER_CONSTRUCTION';
-          stages.construct = actionStage.IN_PROGRESS;
+          stages.construct = current.startTime > blockTime ? actionStage.SCHEDULED : actionStage.IN_PROGRESS;
         }
 
       } else if (lot.building.Building.status === Building.CONSTRUCTION_STATUSES.OPERATIONAL) {

@@ -80,7 +80,7 @@ const useCoreSampleManager = (lotId) => {
             }
           } else {
             status = 'SAMPLING';
-            stage = actionStages.IN_PROGRESS;
+            stage = current.startTime > blockTime ? actionStages.SCHEDULED : actionStages.IN_PROGRESS;
           }
         }
 

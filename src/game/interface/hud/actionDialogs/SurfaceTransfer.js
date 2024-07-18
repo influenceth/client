@@ -252,7 +252,7 @@ const SurfaceTransfer = ({
 
   const senderHasDestPerm = useMemo(() => {
     if (!destination) return true;
-    if (currentDelivery) return currentDeliveryCallerCrew ? Permission.isPermitted(currentDeliveryCallerCrew, Permission.IDS.ADD_PRODUCTS, destination) : true;
+    if (currentDelivery) return (currentDeliveryCallerCrew && destination) ? Permission.isPermitted(currentDeliveryCallerCrew, Permission.IDS.ADD_PRODUCTS, destination) : true;
     return crewCan(Permission.IDS.ADD_PRODUCTS, destination);
   }, [crew, currentDelivery, currentDeliveryCallerCrew, destination]);
 
