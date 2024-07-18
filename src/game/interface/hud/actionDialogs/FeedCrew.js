@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Asteroid, Crew, Crewmate, Lot, Permission, Product, Time } from '@influenceth/sdk';
 import styled from 'styled-components';
 
-import { FoodIcon, ForwardIcon, InventoryIcon, LocationIcon, RouteIcon } from '~/components/Icons';
+import { AddRationsIcon, ForwardIcon, InventoryIcon, LocationIcon, RouteIcon } from '~/components/Icons';
 import useCrewContext from '~/hooks/useCrewContext';
 import useLot from '~/hooks/useLot';
 import { reactBool, formatTimer, locationsArrToObj, getCrewAbilityBonuses, formatFixed } from '~/lib/utils';
@@ -229,7 +229,7 @@ const FeedCrew = ({
     <>
       <ActionDialogHeader
         action={{
-          icon: <FoodIcon />,
+          icon: <AddRationsIcon />,
           label: 'Resupply Food',
           status: stage === actionStages.NOT_STARTED ? 'Send Items' : undefined,
         }}
@@ -315,7 +315,7 @@ const FeedCrew = ({
                 </PseudoStatRow>
 
                 <WarningAlert severity="warning" style={{ marginBottom: 20 }}>
-                  <div style={{ alignSelf: 'flex-start' }}><FoodIcon /></div>
+                  <div style={{ alignSelf: 'flex-start' }}><AddRationsIcon /></div>
                   <div>
                     A crew must start <i>Rationing</i> when 50% of their food is depleted.
                     <br/><br/>

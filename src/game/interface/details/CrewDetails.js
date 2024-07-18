@@ -454,7 +454,7 @@ const CrewDetails = ({ crewId, crew, isMyCrew, isDelegatedCrew, isOwnedCrew, sel
 
                 {isMyCrew && (
                   <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 15 }}>
-                    <Button onClick={() => onSetAction('FEED_CREW')} style={{ width: 225 }}>Add Rations</Button>
+                    <Button onClick={() => onSetAction('FEED_CREW')} style={{ width: 225 }}>Resupply Food</Button>
                   </div>
                 )}
               </CrewInfoContainer>

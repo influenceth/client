@@ -3,7 +3,8 @@ import styled from 'styled-components';
 import { Building } from '@influenceth/sdk';
 
 import {
-  KeysIcon,
+  PermissionIcon,
+  TakeControlIcon,
   WarningIcon
 } from '~/components/Icons';
 import useCrewContext from '~/hooks/useCrewContext';
@@ -76,7 +77,7 @@ const RepoBuilding = ({ asteroid, lot, actionManager, stage, ...props }) => {
     <>
       <ActionDialogHeader
         action={{
-          icon: <KeysIcon />,
+          icon: <TakeControlIcon />,
           label: takeoverType === 'squatted'
             ? `Repossess ${buildingOrSite}`
             : 'Claim Construction Site',
@@ -107,7 +108,7 @@ const RepoBuilding = ({ asteroid, lot, actionManager, stage, ...props }) => {
 
           <FlexSectionInputBlock title="Details">
             <DescTitle>
-              <KeysIcon />
+              <PermissionIcon />
               <span>Take Control of {buildingOrSite === 'Construction Site' ? 'Site' : buildingOrSite}</span>
             </DescTitle>
             <Desc>

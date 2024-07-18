@@ -44,6 +44,7 @@ const EjectShip = ({ asteroid, crew, lot, ship, onSetAction, _disabled }) => {
     <ActionButton
       label="Force Launch Ship"
       overrideColor={theme.colors.error}
+      overrideBgColor={theme.colors.backgroundRed}
       labelAddendum={disabledReason}
       flags={{
         disabled: disabledReason,
