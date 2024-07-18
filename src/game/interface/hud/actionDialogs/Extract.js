@@ -127,18 +127,18 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
     const abilities = getCrewAbilityBonuses(bonusIds, crew);
 
     // apply asteroid bonus to extraction time
-    const asteroidBonus = Asteroid.Entity.getBonusByResource(asteroid, selectedCoreSample?.resourceId);
+    const asteroidBonus = Asteroid.Entity.getBonusByResource(asteroid, selectedCoreSample?.Deposit?.resource);
     if (asteroidBonus.totalBonus !== 1) {
       abilities[Crewmate.ABILITY_IDS.EXTRACTION_TIME].totalBonus *= asteroidBonus.totalBonus;
       abilities[Crewmate.ABILITY_IDS.EXTRACTION_TIME].others = [{
-        text: `${Product.TYPES[selectedCoreSample?.resourceId].category} Yield Bonus`,
+        text: `${Product.TYPES[selectedCoreSample?.Deposit?.resource].category} Yield Bonus`,
         bonus: asteroidBonus.totalBonus - 1,
         direction: 1
       }];
     }
 
     return bonusIds.map((id) => abilities[id] || {});
-  }, [crew, selectedCoreSample?.resourceId]);
+  }, [crew, selectedCoreSample?.Deposit?.resource]);
 
   const usableSamples = useMemo(() => {
     return (lot?.deposits || []).filter((d) => (

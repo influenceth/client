@@ -1322,11 +1322,84 @@ const ControlWarning = styled.div`
   }
 `;
 
+const getMarketplaceAlertColor = (p) => {
+  if (p.scheme === 'success') return p.theme.colors.green;
+  if (p.scheme === 'error') return p.theme.colors.red;
+  if (p.scheme === 'empty') return '#999999';
+  return p.theme.colors.main;
+}
+export const MarketplaceAlert = styled.div`
+  ${p => p.theme.clipCorner(10)};
+  background: rgba(${p => hexToRGB(getMarketplaceAlertColor(p))}, 0.2);
+  padding: 4px;
+  transition: background 150ms ease;
+  width: 100%;
+  & > div {
+    ${p => p.theme.clipCorner(8)};
+
+    background: rgba(${p => hexToRGB(getMarketplaceAlertColor(p))}, 0.2);
+    color: rgba(255, 255, 255, 0.7);
+    display: flex;
+    padding: 15px 12px;
+    transition: background 150ms ease, color 150ms ease;
+
+    & label {
+      color: ${p => getMarketplaceAlertColor(p)};
+      display: block;
+      font-size: 15px;
+      text-transform: uppercase;
+      transition: color 150ms ease;
+    }
+    & b {
+      color: white;
+      font-weight: normal;
+    }
+
+    & > div:first-child {
+      flex: 1;
+      & > div {
+        font-size: 20px;
+        & > span {
+          margin-left: 6px;
+          font-size: 14px;
+        }
+      }
+    }
+
+    & > div:last-child {
+      align-items: center;
+      display: flex;
+      color: white;
+      & > label {
+        margin-top: 12px;
+        margin-right: 2px;
+      }
+      & > span {
+        font-size: 32px;
+      }
+    }
+
+    &:not(:first-child) {
+      align-items: flex-end;
+      justify-content: space-between;
+      padding: 8px 10px 0;
+      & > svg {
+        font-size: 24px;
+        margin-right: 6px;
+      }
+
+      ${p => p.scheme && `
+        color: ${getMarketplaceAlertColor(p)};
+      `}
+    }
+  }
+`;
+
 export const SelectionDialog = ({ children, isCompletable, open, onClose, onComplete, style = {}, title }) => {
   if (!open) return null;
   return createPortal(
     <Dialog opaque dialogCss={dialogCss} dialogStyle={style}>
-      <Tooltip id="selectionDialogTooltip" />
+      <Tooltip id="selectionDialogTooltip" style={{ maxWidth: 500 }} />
       <SelectionTitle>
         <div>{title}</div>
         <IconButton backgroundColor={`rgba(0, 0, 0, 0.15)`} marginless onClick={onClose}>
@@ -2090,6 +2163,33 @@ const ItemFilterLabel = styled.div`
   }
 `;
 
+const StyledFilterWrapper = styled.div`
+  display: flex;
+  opacity: 0.5;
+  & > * {
+    pointer-events: none;
+    &:not(:first-child) {
+      margin-left: 15px;
+    }
+  }
+`;
+const FilterWrapper = ({ children, isLimited }) => {
+  if (isLimited) {
+    return (
+      <StyledFilterWrapper
+        data-tooltip-content={
+          `To transfer into an inventory that your crew does not already have access to, `
+          + `your crew can only transfer from an inventory it explicitly controls.`
+        }
+        data-tooltip-id="selectionDialogTooltip"
+        data-tooltip-place="left">
+        {children}
+      </StyledFilterWrapper>
+    );
+  }
+  return <>{children}</>;
+}
+
 export const InventorySelectionDialog = ({
   asteroidId,
   excludeSites,
@@ -2403,15 +2503,17 @@ export const InventorySelectionDialog = ({
 
         <div style={{ flex: 1 }} />
 
-        <FilterRowLabel isOn={showPermittedInventories} onClick={() => setShowPermittedInventories((p) => !p)}>
-          {showPermittedInventories ? <CheckedIcon /> : <UncheckedIcon />}
-          <span>Permitted Inventories</span>
-        </FilterRowLabel>
+        <FilterWrapper isLimited={limitToControlled}>
+          <FilterRowLabel isOn={!limitToControlled && showPermittedInventories} onClick={() => setShowPermittedInventories((p) => !p)}>
+            {!limitToControlled && showPermittedInventories ? <CheckedIcon /> : <UncheckedIcon />}
+            <span>Permitted Inventories</span>
+          </FilterRowLabel>
 
-        <FilterRowLabel isOn={showPublicInventories} onClick={() => setShowPublicInventories((p) => !p)}>
-          {showPublicInventories ? <CheckedIcon /> : <UncheckedIcon />}
-          <span>Public Inventories</span>
-        </FilterRowLabel>
+          <FilterRowLabel isOn={!limitToControlled && showPublicInventories} onClick={() => setShowPublicInventories((p) => !p)}>
+            {!limitToControlled && showPublicInventories ? <CheckedIcon /> : <UncheckedIcon />}
+            <span>Public Inventories</span>
+          </FilterRowLabel>
+        </FilterWrapper>
       </FilterRow>
 
       {isSourcing && filterItemIds && (
@@ -3009,7 +3111,8 @@ export const BuildingRequirementsSection = ({ mode, label, requirements, require
       customIcon: item.inTransit > 0
         ? {
           animated: true,
-          icon: <TransferToSiteIcon />
+          icon: <TransferToSiteIcon />,
+          stripeAnimation: true
         }
         : undefined
     }));
@@ -3036,7 +3139,8 @@ export const TransferBuildingRequirementsSection = ({ label, onClick, requiremen
     customIcon: item.inTransit > 0
       ? {
         animated: true,
-        icon: <TransferToSiteIcon />
+        icon: <TransferToSiteIcon />,
+        stripeAnimation: true
       }
       : undefined
   })), [requirements, selectedItems]);
@@ -4403,7 +4507,7 @@ const extractBonuses = (bonusObj, isTimeStat) => {
     .sort((a, b) => b.bonus - a.bonus);
 };
 
-export const BonusTooltip = ({ bonus = {}, crewRequired, details, title, titleValue, isTimeStat }) => {
+export const BonusTooltip = ({ bonus = {}, details, title, titleValue, isTimeStat }) => {
   const timeMult = isTimeStat ? -1 : 1;
   const titleDirection = getBonusDirection({ totalBonus: bonus.totalBonus });
   const bonuses = useMemo(() => extractBonuses(bonus, isTimeStat), [bonus, isTimeStat]);
@@ -4420,7 +4524,7 @@ export const BonusTooltip = ({ bonus = {}, crewRequired, details, title, titleVa
             {bonuses.map(({ text, bonus, multiplier, direction }) => {
               let bonusLabel;
               if (multiplier) {
-                bonusLabel = `x${isTimeStat ? (Math.round(1000 / multiplier) / 1000) : multiplier}`;
+                bonusLabel = `x${typeof multiplier === 'number' ? formatFixed(multiplier, 3) : multiplier}`;
               } else {
                 bonusLabel = `${timeMult > 0 ? '+' : '-'}${formatFixed(100 * bonus, 1)}%`;
               }

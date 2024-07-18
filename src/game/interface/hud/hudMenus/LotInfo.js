@@ -53,32 +53,22 @@ const ItemsList = styled.div`
 `;
 
 const ConstructionMaterialsGrid = ({ building }) => {
-  const { currentDeliveryActions } = useDeliveryManager({ destination: building });
-
   const items = useMemo(() => {
-    const requirements = getBuildingRequirements(building, currentDeliveryActions);
-    return requirements.map((item) => ({
+    return getBuildingRequirements(building).map((item) => ({
       i: Number(item.i), 
-      numerator: building.Building.status === Building.CONSTRUCTION_STATUSES.UNDER_CONSTRUCTION ? item.totalRequired : item.inInventory + item.inTransit,
-      denominator: item.totalRequired,
-      customIcon: building.Building.status === Building.CONSTRUCTION_STATUSES.PLANNED && item.inTransit > 0
-        ? {
-          animated: true,
-          icon: <SurfaceTransferIcon />
-        }
-        : undefined
+      numerator: item.totalRequired,
     }));
-  }, [currentDeliveryActions, building]);
+  }, [building]);
 
   return (
     <>
       <Requirements>
-        <label>Required Materials</label>
+        <label>Building Materials</label>
         <ItemsList>
           {items.map((item) => (
             <ResourceRequirement
               key={item.i}
-              isGathering={building.Building.status === Building.CONSTRUCTION_STATUSES.PLANNED}
+              noStyles
               item={item}
               resource={Product.TYPES[item.i]}
               size="75px"

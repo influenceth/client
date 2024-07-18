@@ -65,16 +65,18 @@ const SurfaceTransferIncoming = ({ asteroid, crew, lot, ship, onSetAction, dialo
       });
       (destActionItems || []).forEach((a) => {
         if (a.event.name === 'MaterialProcessingStarted') {
-          const processLabel = getProcessorProps(Process.TYPES[a.event?.returnValues?.process]?.processorType)?.typeLabel || 'Process';
-          actionStack.push({
-            label: `Incoming ${processLabel} Output`, // TODO: per processor type?
-            finishTime: a.event?.returnValues?.finishTime,
-            preloadEntity: a.event?.returnValues?.processor,
-            onClick: (entity) => {
-              const lotId = locationsArrToObj(entity?.Location?.locations || [])?.lotId;
-              onSetAction('PROCESS', { lotId, processorSlot: a.event?.returnValues?.processorSlot });
-            }
-          });
+          if (a.event?.returnValues?.destination?.label === destination?.label && a.event?.returnValues?.destination?.id === destination?.id) {
+            const processLabel = getProcessorProps(Process.TYPES[a.event?.returnValues?.process]?.processorType)?.typeLabel || 'Process';
+            actionStack.push({
+              label: `Incoming ${processLabel} Output`, // TODO: per processor type?
+              finishTime: a.event?.returnValues?.finishTime,
+              preloadEntity: a.event?.returnValues?.processor,
+              onClick: (entity) => {
+                const lotId = locationsArrToObj(entity?.Location?.locations || [])?.lotId;
+                onSetAction('PROCESS', { lotId, processorSlot: a.event?.returnValues?.processorSlot });
+              }
+            });
+          }
         }
         if (a.event.name === 'ResourceExtractionStarted') {
           actionStack.push({

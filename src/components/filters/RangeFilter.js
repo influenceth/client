@@ -6,7 +6,9 @@ import ColorPicker from '~/components/ColorPicker';
 import { InputBlock, SearchMenu } from './components';
 import UncontrolledTextInput, { safeValue } from '~/components/TextInputUncontrolled';
 
-const FieldNote = styled.span``;
+const FieldNote = styled.span`
+  white-space: nowrap;
+`;
 
 const RangeFilter = ({
   assetType,

@@ -1,8 +1,9 @@
 import esb from 'elastic-builder';
-import { Crew, Entity, Lot, Permission, Processor, Time } from '@influenceth/sdk';
+import { Crew, Entity, Lot, Order, Permission, Processor, Time } from '@influenceth/sdk';
 import trim from 'lodash/trim';
 
 import { ManufactureIcon, GrowIcon, AssembleIcon, RefineIcon } from '~/components/Icons';
+import { TOKEN, TOKEN_SCALE } from './priceUtils';
 
 const timerIncrements = { d: 86400, h: 3600, m: 60, s: 1 };
 export const formatTimer = (secondsRemaining, maxPrecision = null) => {
@@ -25,8 +26,8 @@ export const roundToPlaces = (value, maximumFractionDigits = 0) => {
   return (Math.round((value || 0) * div) / div);
 }
 
-export const formatFixed = (value, maximumFractionDigits = 0) => {
-  return roundToPlaces(value, maximumFractionDigits).toLocaleString(undefined, { maximumFractionDigits });
+export const formatFixed = (value, maximumFractionDigits = 0, minimumFractionDigits = 0) => {
+  return roundToPlaces(value, maximumFractionDigits).toLocaleString(undefined, { maximumFractionDigits, minimumFractionDigits });
 };
 
 export const formatPrecision = (value, maximumPrecision = 0) => {
@@ -275,9 +276,9 @@ export const cleanseTxHash = function (txHash) {
   return `0x${BigInt(txHash).toString(16).padStart(64, '0')}`;
 };
 
-export const fireTrackingEvent = function (action, actionProps = {}, event = 'event') {
+export const fireTrackingEvent = function (event, eventProps = {}) {
   try {
-    const eventObj = { event, eventProps: { action, ...actionProps }};
+    const eventObj = { event: event, ...eventProps };
     if (window.dataLayer) {
       window.dataLayer.push(eventObj);
     } else {
@@ -286,6 +287,43 @@ export const fireTrackingEvent = function (action, actionProps = {}, event = 'ev
   } catch (e) {
     console.warn(e);
   }
+};
+
+// TODO: this should probably be in the sdk
+export const ordersToFills = (mode, orders, amountToFill, takerFee, feeReductionBonus = 1, feeEnforcementBonus = 1) => {
+  const paymentFunc = mode === 'buy' ? Order.getFillSellOrderPayments : Order.getFillBuyOrderWithdrawals;
+  const priceSortMult = mode === 'buy' ? 1 : -1;
+
+  const marketFills = [];
+  let needed = amountToFill; 
+  orders
+    .sort((a, b) => a.price === b.price ? a.validTime - b.validTime : (priceSortMult * (a.price - b.price)))
+    .every((order) => {
+      const { amount, price } = order;
+      const levelAmount = Math.min(needed, amount);
+      const levelValue = Math.round(1e6 * levelAmount * price) / 1e6;
+      needed -= levelAmount;
+      if (levelAmount > 0) {
+        const paymentsUnscaled = paymentFunc(
+          levelValue * TOKEN_SCALE[TOKEN.SWAY],
+          order.makerFee,
+          takerFee,
+          feeReductionBonus,
+          feeEnforcementBonus
+        );
+        marketFills.push({
+          ...order,
+          takerFee,
+          fillAmount: levelAmount,
+          fillValue: levelValue,
+          fillPaymentTotal: Math.round((paymentsUnscaled.toExchange || 0) + (paymentsUnscaled.toPlayer || 0)),
+          paymentsUnscaled: paymentsUnscaled
+        });
+        return true;
+      }
+      return false;
+    });
+  return marketFills;
 };
 
 export const openAccessJSTime = `${process.env.REACT_APP_CHAIN_ID}` === `0x534e5f4d41494e` ? 1719495000e3 : 0;

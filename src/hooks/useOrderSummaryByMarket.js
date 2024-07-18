@@ -5,7 +5,7 @@ import useAsteroidBuildings from '~/hooks/useAsteroidBuildings';
 import api from '~/lib/api';
 
 const useOrderSummaryByExchange = (asteroidId, product) => {
-  const { data: exchanges, isLoading: isLoadingBuildings } = useAsteroidBuildings(asteroidId, 'Exchange')
+  const { data: exchanges, isLoading: isLoadingBuildings } = useAsteroidBuildings(asteroidId, 'Exchange');
 
   const { data: orderSummaries, isLoading: isLoadingOrders } = useQuery(
     [ 'exchangeOrderSummary', asteroidId, product ],

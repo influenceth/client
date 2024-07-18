@@ -6,20 +6,22 @@ import {
 } from '~/components/Icons';
 import useCrewContext from '~/hooks/useCrewContext';
 import useConstructionManager from '~/hooks/actionManagers/useConstructionManager';
-import { reactBool, formatTimer, getCrewAbilityBonuses } from '~/lib/utils';
+import { reactBool, formatTimer, formatFixed, getCrewAbilityBonuses } from '~/lib/utils';
 
 import {
   DeconstructionMaterialsSection,
   ActionDialogFooter,
   ActionDialogHeader,
   ActionDialogStats,
+  BonusTooltip,
   getBonusDirection,
   TravelBonusTooltip,
   ActionDialogBody,
   ProgressBarSection,
   FlexSection,
   getBuildingRequirements,
-  LotInputBlock
+  LotInputBlock,
+  MaterialBonusTooltip
 } from './components';
 import { ActionDialogInner, useAsteroidAndLot } from '../ActionDialog';
 import actionStage from '~/lib/actionStages';
@@ -31,6 +33,8 @@ const Deconstruct = ({ asteroid, lot, constructionManager, stage, ...props }) =>
 
   const crewTravelBonus = useMemo(() => getCrewAbilityBonuses(Crewmate.ABILITY_IDS.HOPPER_TRANSPORT_TIME, crew), [crew]);
   const crewDistBonus = useMemo(() => getCrewAbilityBonuses(Crewmate.ABILITY_IDS.FREE_TRANSPORT_DISTANCE, crew), [crew]);
+  const crewDeconstructBonus = useMemo(() => getCrewAbilityBonuses(Crewmate.ABILITY_IDS.DECONSTRUCTION_YIELD, crew), [crew]);
+  const deconstructionPenalty = useMemo(() => Building.DECONSTRUCTION_PENALTY / (crewDeconstructBonus?.totalBonus || 1), [crewDeconstructBonus]);
 
   const { totalTime: crewTravelTime, tripDetails } = useMemo(() => {
     if (!asteroid?.id || !crew?._location?.lotId || !lot?.id) return {};
@@ -61,17 +65,23 @@ const Deconstruct = ({ asteroid, lot, constructionManager, stage, ...props }) =>
     },
     {
       label: 'Deconstruction Penalty',
-      value: `${Math.round(100 * Building.DECONSTRUCTION_PENALTY)}%`,
-      direction: -1
-      // TODO: add a tooltip here showing reduction by each item
+      value: `${formatFixed(100 * deconstructionPenalty, 2)}%`,
+      direction: getBonusDirection(crewDeconstructBonus),
+      isTimeStat: true,
+      tooltip: crewDeconstructBonus.totalBonus !== 1 && (
+        <MaterialBonusTooltip
+          bonus={crewDeconstructBonus}
+          title="Deconstruction Efficiency"
+          titleValue={`${formatFixed(100 * crewDeconstructBonus.totalBonus, 1)}%`} />
+      )
     },
-  ], [tripDetails]);
+  ], [crewDeconstructBonus, deconstructionPenalty, tripDetails]);
 
   const itemsReturned = useMemo(() => {
     if (!lot?.building) return [];
     return getBuildingRequirements(lot?.building).map((item) => ({
       ...item,
-      totalRequired: Math.floor((1 - Building.DECONSTRUCTION_PENALTY || 0) * item.totalRequired)
+      totalRequired: Math.floor((1 - deconstructionPenalty) * item.totalRequired)
     }));
   }, [lot?.building]);
 

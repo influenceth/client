@@ -2,9 +2,11 @@ import { useCallback, useContext } from 'react';
 import { Crewmate, Entity } from '@influenceth/sdk';
 
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
+import useSession from '~/hooks/useSession';
 import { fireTrackingEvent } from '~/lib/utils';
 
 const useCrewManager = () => {
+  const { accountAddress } = useSession();
   const { execute, getPendingTx } = useContext(ChainTransactionContext);
 
   const changeActiveCrew = useCallback(
@@ -17,9 +19,12 @@ const useCrewManager = () => {
   );
 
   const purchaseCredits = useCallback((tally) => {
-    for (let i = 0; i < tally; i++) fireTrackingEvent('purchase_crewmate_bulk', { category: 'purchase' });
+    for (let i = 0; i < tally; i++) fireTrackingEvent('purchase_crewmate', {
+      externalId: accountAddress, category: 'purchase', amount: 5
+    });
+
     execute('BulkPurchaseAdalians', { collection: Crewmate.COLLECTION_IDS.ADALIAN, tally });
-  }, [execute]);
+  }, [accountAddress, execute]);
 
   const getPendingCreditPurchase = useCallback(() => {
     return getPendingTx('BulkPurchaseAdalians', {});
@@ -38,7 +43,10 @@ const useCrewManager = () => {
         });
 
       } else {
-        if (!(crewmate?.id > 0)) fireTrackingEvent('purchase_crewmate', { category: 'purchase' });
+        if (!(crewmate?.id > 0)) fireTrackingEvent('purchase_crewmate', {
+          externalId: accountAddress, category: 'purchase', amount: 5
+        });
+
         const appearance = Crewmate.unpackAppearance(crewmate.Crewmate.appearance);
         execute('RecruitAdalian', {
           crewmate: { id: crewmate.id, label: Entity.IDS.CREWMATE },
@@ -57,7 +65,7 @@ const useCrewManager = () => {
         });
       }
     },
-    [execute]
+    [accountAddress, execute]
   );
 
   const getPendingCrewmate = useCallback(

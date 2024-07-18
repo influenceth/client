@@ -37,6 +37,7 @@ import Process from './actionDialogs/Process';
 import PurchaseEntity from './actionDialogs/PurchaseEntity';
 import RepoBuilding from './actionDialogs/RepoBuilding';
 import SetCourse from './actionDialogs/SetCourse';
+import ShoppingList from './actionDialogs/ShoppingList';
 import StationCrew from './actionDialogs/StationCrew';
 import SurfaceTransfer from './actionDialogs/SurfaceTransfer';
 import TransferToSite from './actionDialogs/TransferToSite';
@@ -255,6 +256,7 @@ const ActionDialog = ({ type, params }) => {
         {type === 'PURCHASE_ENTITY' && <PurchaseEntity {...allProps} />}
         {type === 'REPO_BUILDING' && <RepoBuilding {...allProps} />}
         {type === 'SET_COURSE' && <SetCourse {...allProps} />}
+        {type === 'SHOPPING_LIST' && <ShoppingList {...allProps} />}
         {type === 'STATION_CREW' && <StationCrew {...allProps} />}
         {type === 'STATION_CREW_AS_GUESTS' && <StationCrew {...allProps} guests />}
         {type === 'SURFACE_TRANSFER' && <SurfaceTransfer {...allProps} />}

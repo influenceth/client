@@ -17,7 +17,7 @@ import useOrderList from '~/hooks/useOrderList';
 import { useSwayBalance } from '~/hooks/useWalletTokenBalance';
 import formatters from '~/lib/formatters';
 import actionStages from '~/lib/actionStages';
-import { reactBool, formatFixed, formatTimer, getCrewAbilityBonuses, locationsArrToObj, formatPrice } from '~/lib/utils';
+import { reactBool, formatFixed, formatTimer, getCrewAbilityBonuses, locationsArrToObj, formatPrice, ordersToFills } from '~/lib/utils';
 import theme, { hexToRGB } from '~/theme';
 import { ActionDialogInner, useAsteroidAndLot } from '../ActionDialog';
 import {
@@ -293,45 +293,51 @@ const MarketplaceOrder = ({
   }, [asteroid?.id, distBonus, exchange?.id, storageLot?.id, hopperTransportBonus, crew?._timeAcceleration]);
 
   const [crewTimeRequirement, taskTimeRequirement] = useMemo(() => {
-    return [
-      (isCancellation || type === 'market') ? 0 : (Math.max(crewTravelTime / 2, transportTime) + crewTravelTime / 2),
-      0
-    ];
+    let crewTime = 0;
+    let taskTime = 0;
+
+    // CANCEL BUY: no crew or good movement required (goods will stay in origin inv)
+    // CANCEL SELL: no crew movement required, but need listed goods returned to my inv
+    if (isCancellation) {
+      if (mode === 'sell') {
+        taskTime = transportTime;
+      }
+
+    // LIMIT BUY: crew is traveling to marketplace to setup the order... no goods transported
+    // LIMIT SELL: crew AND goods are traveling to marketplace to setup the order
+    } else if (type === 'limit') {
+      const crewToMarketplaceTime = crewTravelTime / 2;
+      const goodsToMarketplaceTime = mode === 'buy' ? 0 : transportTime;
+      const orderReadyTime = Math.max(crewToMarketplaceTime, goodsToMarketplaceTime);
+      crewTime = orderReadyTime + crewToMarketplaceTime;
+      taskTime = orderReadyTime;
+
+    // MARKET BUY: no crew travel; delivery started from marketplace to my storage
+    // MARKET SELL: no crew travel; delivery started from my storage through exchange to filled orders' storages
+    //  (however, these are not deliveries I need to worry about as seller, so my taskTime functionally 0)
+    } else if (type === 'market' && mode === 'buy') {
+      taskTime = transportTime;
+    }
+
+    return [crewTime, taskTime];
   }, [transportTime, crewTravelTime, type]);
 
-  // TODO: probably make this a shared util (w/ depth chart)
   const [totalMarketPrice, avgMarketPrice, averagedOrderTally, marketFills] = useMemo(() => {
+    const orders = [].concat(mode === 'buy' ? sellOrders : buyOrders);
+    const marketFills = ordersToFills(
+      mode,
+      orders,
+      quantity,
+      exchange.Exchange.takerFee,
+      feeReductionBonus?.totalBonus,
+      feeEnforcementBonus?.totalBonus
+    );
+
     let total = 0;
     let totalOrders = 0;
-    let needed = quantity;
-    let marketFills = [];
-    const paymentFunc = mode === 'buy' ? Order.getFillSellOrderPayments : Order.getFillBuyOrderWithdrawals;
-    const priceSortMult = mode === 'buy' ? 1 : -1;
-    const orders = []
-      .concat(mode === 'buy' ? sellOrders : buyOrders)
-      .sort((a, b) => a.price === b.price ? a.validTime - b.validTime : (priceSortMult * (a.price - b.price)));
-    orders.every((order) => {
-      const { amount, price } = order;
-      const levelAmount = Math.min(needed, amount);
-      const levelValue = Math.round(1e6 * levelAmount * price) / 1e6;
-      total += levelValue;
-      needed -= levelAmount;
-      if (levelAmount > 0) {
-        marketFills.push({
-          ...order,
-          fillAmount: levelAmount,
-          paymentsE6: paymentFunc(
-            levelValue * 1e6,
-            order.makerFee,
-            exchange.Exchange.takerFee,
-            feeReductionBonus?.totalBonus,
-            feeEnforcementBonus?.totalBonus
-          )
-        });
-        totalOrders++;
-        return true;
-      }
-      return false;
+    marketFills.forEach((fill) => {
+      total += fill.fillValue;
+      totalOrders++;
     });
     return [total, total / quantity, totalOrders, marketFills];
   }, [buyOrders, exchange, feeEnforcementBonus, feeReductionBonus, mode, quantity, sellOrders, type]);
@@ -470,15 +476,13 @@ const MarketplaceOrder = ({
         fillSellOrders({
           destination: { id: storage?.id, label: storage?.label },
           destinationSlot: storageInventory?.slot,
-          fillOrders: marketFills || [],
-          product: resourceId
+          fillOrders: marketFills || []
         })
       } else {
         fillBuyOrders({
           origin: { id: storage?.id, label: storage?.label },
           originSlot: storageInventory?.slot,
-          fillOrders: marketFills || [],
-          product: resourceId
+          fillOrders: marketFills || []
         })
       }
     }

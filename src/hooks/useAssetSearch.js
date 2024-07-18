@@ -93,6 +93,10 @@ filtersToQuery.buildings = (filters) => {
     queryBuilder.filter(esbLocationQuery({ asteroidId: filters.asteroid }));
   }
 
+  if (filters.name) {
+    queryBuilder.filter(esb.termQuery('Name.name', filters.name));
+  }
+
   if (filters.type) {
     queryBuilder.filter(esb.termsQuery('Building.buildingType', filters.type.map((t) => parseInt(t))));
   }
@@ -100,11 +104,6 @@ filtersToQuery.buildings = (filters) => {
   if (filters.controller) {
     queryBuilder.filter(esb.termQuery('Control.controller.id', filters.controller));
   }
-
-  // TODO: ecs refactor
-  // if (filters.occupier) {
-  //   queryBuilder.filter(esb.termQuery('occupier.id', filters.occupier));
-  // }
 
   if (filters.construction) {
     queryBuilder.filter(esb.termsQuery('Building.status', filters.construction.map((t) => parseInt(t))));
