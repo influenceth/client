@@ -119,6 +119,14 @@ export const theming = {
     highlight: txHex,
     label: 'Pending',
   },
+  [actionStage.SCHEDULED]: {
+    background: '#0c1218',
+    borderColor: '#023467',
+    // cushion: `rgba(${theme.colors.mainRGB}, 0.5)`,
+    headerBackground: `rgba(${hexToRGB(theme.colors.sequenceDark)}, 0.3)`,
+    highlight: theme.colors.sequence,
+    label: 'Scheduled',
+  },
   [actionStage.IN_PROGRESS]: {
     background: '#0d1417',
     borderColor: '#183947',
