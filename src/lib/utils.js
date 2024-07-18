@@ -167,6 +167,7 @@ export const esbPermissionQuery = (crewId, crewDelegatedTo, permissionId) => {
         esb.boolQuery().must([
           esb.termQuery('PrepaidAgreements.permission', permissionId),
           esb.termQuery('PrepaidAgreements.permitted.id', crewId),
+          esb.rangeQuery('PrepaidAgreements.endTime').gt(Math.floor(Date.now() / 1000))
         ])
       ),
     esb.nestedQuery()

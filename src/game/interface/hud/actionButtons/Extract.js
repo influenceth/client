@@ -19,7 +19,7 @@ const isVisible = ({ building, crew }) => {
 };
 
 // TODO: for multiple extractors, need one of these (and an extraction manager) per extractor
-const Extract = ({ onSetAction, asteroid, crew, lot, preselect, _disabled }) => {
+const Extract = ({ onSetAction, asteroid, blockTime, crew, lot, preselect, _disabled }) => {
   const { crewCan } = useCrewContext();
   const { currentExtraction, extractionStatus } = useExtractionManager(lot?.id);
   const handleClick = useCallback(() => {
@@ -49,13 +49,13 @@ const Extract = ({ onSetAction, asteroid, crew, lot, preselect, _disabled }) => 
   let disabledReason = useMemo(() => {
     if (_disabled) return 'loading...';
     if (extractionStatus === 'READY') {
-      const crewDisabledReason = getCrewDisabledReason({ asteroid, crew, isSequenceable: true, permission: Permission.IDS.EXTRACT_RESOURCES, permissionTarget: lot?.building });
+      const crewDisabledReason = getCrewDisabledReason({ asteroid, blockTime, crew, isSequenceable: true, permission: Permission.IDS.EXTRACT_RESOURCES, permissionTarget: lot?.building });
       if (crewDisabledReason) return crewDisabledReason;
       if (myUsableSamples?.length === 0) return 'requires core sample';
     } else if (!currentExtraction?._isAccessible) {
       return 'in use';
     }
-  }, [_disabled, crew, currentExtraction, extractionStatus, lot?.building, myUsableSamples?.length]);
+  }, [_disabled, blockTime, crew, currentExtraction, extractionStatus, lot?.building, myUsableSamples?.length]);
   
   const loading = ['EXTRACTING', 'FINISHING'].includes(extractionStatus);
   return (

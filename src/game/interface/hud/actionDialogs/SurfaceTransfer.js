@@ -45,6 +45,7 @@ import actionStage from '~/lib/actionStages';
 import formatters from '~/lib/formatters';
 import { TOKEN, TOKEN_SCALE } from '~/lib/priceUtils';
 import theme from '~/theme';
+import useBlockTime from '~/hooks/useBlockTime';
 
 const P2PSection = styled.div`
   align-self: flex-start;
@@ -75,6 +76,7 @@ const SurfaceTransfer = ({
   const crew = useActionCrew(currentDelivery);
   const { data: currentDeliveryCallerCrew } = useHydratedCrew(currentDelivery?.callerCrew?.id);
   const { crewCan } = useCrewContext();
+  const blockTime = useBlockTime();
 
   const crewTravelBonus = useMemo(() => {
     if (!crew) return {};
@@ -252,9 +254,14 @@ const SurfaceTransfer = ({
 
   const senderHasDestPerm = useMemo(() => {
     if (!destination) return true;
-    if (currentDelivery) return (currentDeliveryCallerCrew && destination) ? Permission.isPermitted(currentDeliveryCallerCrew, Permission.IDS.ADD_PRODUCTS, destination) : true;
+    if (currentDelivery) {
+      if (currentDeliveryCallerCrew && destination) {
+        return Permission.isPermitted(currentDeliveryCallerCrew, Permission.IDS.ADD_PRODUCTS, destination, blockTime);
+      }
+      return true;
+    }
     return crewCan(Permission.IDS.ADD_PRODUCTS, destination);
-  }, [crew, currentDelivery, currentDeliveryCallerCrew, destination]);
+  }, [blockTime, crew, currentDelivery, currentDeliveryCallerCrew, destination]);
 
   const isP2P = useMemo(() => currentDelivery?.isProposal || !senderHasDestPerm, [currentDelivery?.isProposal, senderHasDestPerm]);
 

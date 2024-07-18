@@ -16,7 +16,7 @@ const isVisible = ({ building, crew }) => {
   return crew && building && building.DryDocks?.length > 0;
 };
 
-const AssembleShip = ({ asteroid, crew, lot, onSetAction, _disabled }) => {
+const AssembleShip = ({ asteroid, blockTime, crew, lot, onSetAction, _disabled }) => {
   const { assemblyStatus, currentAssembly } = useDryDockManager(lot?.id);
   const handleClick = useCallback(() => {
     onSetAction('ASSEMBLE_SHIP');
@@ -26,12 +26,12 @@ const AssembleShip = ({ asteroid, crew, lot, onSetAction, _disabled }) => {
     if (_disabled) return 'loading...';
     if (assemblyStatus === 'READY') {
       return getCrewDisabledReason({
-        asteroid, crew, isSequenceable: true, permission: Permission.IDS.ASSEMBLE_SHIP, permissionTarget: lot?.building
+        asteroid, blockTime, crew, isSequenceable: true, permission: Permission.IDS.ASSEMBLE_SHIP, permissionTarget: lot?.building
       });
     } else if (!currentAssembly?._isAccessible) {
       return 'in use';
     }
-  }, [_disabled, assemblyStatus, asteroid, crew, currentAssembly, lot?.building]);
+  }, [_disabled, assemblyStatus, asteroid, blockTime, crew, currentAssembly, lot?.building]);
   const finishTime = lot?.building?.DryDocks.find((dryDock) => dryDock.status === DryDock.STATUSES.RUNNING)?.finishTime;
 
   return (

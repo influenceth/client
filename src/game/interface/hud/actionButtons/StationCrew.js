@@ -19,7 +19,7 @@ const isVisible = ({ crew, building, ship }) => {
   );
 };
 
-const StationCrew = ({ asteroid, crew, lot, ship, onSetAction, _disabled }) => {
+const StationCrew = ({ asteroid, blockTime, crew, lot, ship, onSetAction, _disabled }) => {
   const stationEntity = useMemo(() => ship || (lot?.building?.Station ? lot.building : null), [ship, lot?.building]);
   const { currentStationing } = useStationCrewManager(stationEntity);
 
@@ -37,6 +37,7 @@ const StationCrew = ({ asteroid, crew, lot, ship, onSetAction, _disabled }) => {
       }
       return getCrewDisabledReason({
         asteroid,
+        blockTime,
         crew,
         permission: Permission.IDS.STATION_CREW,
         permissionTarget: stationEntity,
@@ -44,7 +45,7 @@ const StationCrew = ({ asteroid, crew, lot, ship, onSetAction, _disabled }) => {
       });
     }
     return '';
-  }, [_disabled, asteroid, crew, crewIsController, currentStationing, stationEntity]);
+  }, [_disabled, asteroid, blockTime, crew, crewIsController, currentStationing, stationEntity]);
 
   const buttonParams = useMemo(() => {
     if (ship) {
