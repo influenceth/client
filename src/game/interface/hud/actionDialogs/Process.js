@@ -364,7 +364,7 @@ const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...pro
       return [
         {
           icon: <ManufactureIcon />,
-          label: 'Manufacture Products',
+          label: 'Manufacture Goods',
         },
         'Manufacturing'
       ];

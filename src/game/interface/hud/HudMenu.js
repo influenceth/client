@@ -29,7 +29,6 @@ import {
   ResourceIcon,
   ShipIcon,
   SimulateRouteIcon,
-  StationCrewIcon,
   CrewIcon,
   MyAssetIcon,
 } from '~/components/Icons';
@@ -427,7 +426,7 @@ const HudMenu = () => {
         {
           key: 'STATIONED_CREW',
           label: 'Station Manifest',
-          icon: <StationCrewIcon />,
+          icon: <PassengersIcon />,
           Component: hudMenus.StationManifest,
           isVisible: focus === 'lot' && lot?.building?.Station
         },
