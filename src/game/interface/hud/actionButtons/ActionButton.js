@@ -123,7 +123,7 @@ const ActionButton = styled.div`
 
   & > div {
     align-items: center;
-    background-color: rgba(${p => p.overrideBgColor ? hexToRGB(p.overrideBgColor) : (p.overrideBgColor ? hexToRGB(p.overrideBgColor) : hexToRGB(p.theme.colors.darkMain))}, 0.5);
+    background-color: rgba(${p => p.overrideBgColor ? hexToRGB(p.overrideBgColor) : (p.overrideColor ? hexToRGB(p.overrideColor) : hexToRGB(p.theme.colors.darkMain))}, 0.5);
     ${p => p.theme.clipCorner(cornerSize - 4)};
     display: flex;
     font-size: 55px;

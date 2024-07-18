@@ -21,7 +21,7 @@ const useLot = (lotId) => {
   const queryClient = useQueryClient();
 
   const lotEntity = useMemo(() => lotId ? Entity.formatEntity({ id: lotId, label: Entity.IDS.LOT }) : null, [lotId]);
-  // console.log('lotId',{ lotId, lotEntity});
+  // console.log('lotId', { lotId, lotEntity });
 
   const { data: lot, isLoading: lotIsLoading, dataUpdatedAt: lUpdatedAt } = useEntity(lotId ? { id: lotId, label: Entity.IDS.LOT } : undefined);
 
