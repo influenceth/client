@@ -6,8 +6,8 @@ import useConstructionManager from '~/hooks/actionManagers/useConstructionManage
 import ActionButton, { getCrewDisabledReason } from './ActionButton';
 
 const labelDict = {
-  READY_TO_PLAN: 'Plan Building Site',
-  PLANNING: 'Planning Site...'
+  READY_TO_PLAN: 'Create Building Site',
+  PLANNING: 'Creating Site...'
 };
 
 const isVisible = ({ constructionStatus, crew, lot, ship }) => {

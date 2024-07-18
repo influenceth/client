@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { useHistory } from 'react-router';
 import { Asteroid } from '@influenceth/sdk';
 
-import { ScanAsteroidIcon } from '~/components/Icons';
+import { ScanAsteroidIcon, OrbitalScanIcon } from '~/components/Icons';
 import useAsteroid from '~/hooks/useAsteroid';
 import useScanManager from '~/hooks/actionManagers/useScanManager';
 
@@ -90,13 +90,12 @@ const ScanAsteroid = ({ asteroid, _disabled }) => {
     }
   }, [asteroid?.id, crew?._ready, isLaunched, scanStatus, _disabled]);
 
-  // TODO: icon should probably be distinct for each scan type
   return (
     <ActionButton
       label={`${label}`}
       labelAddendum={disabledReason}
       flags={flags}
-      icon={<ScanAsteroidIcon />}
+      icon={scanType === 'SURFACE' ? <ScanAsteroidIcon /> : <OrbitalScanIcon />}
       onClick={handleClick} />
   );
 };

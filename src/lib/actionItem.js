@@ -12,6 +12,7 @@ import {
   PlanBuildingIcon,
   PurchaseAsteroidIcon,
   ScanAsteroidIcon,
+  OrbitalScanIcon,
   SurfaceTransferIcon,
   ShipIcon,
   BuildingIcon,
@@ -19,7 +20,7 @@ import {
   NewCoreSampleIcon,
   UnplanBuildingIcon,
   ConstructIcon,
-  ProcessIcon,
+  ProductionIcon,
   FoodIcon,
   StationCrewIcon,
   LaunchShipIcon,
@@ -503,7 +504,7 @@ const formatAsTx = (item) => {
     }
 
     case 'ScanResourcesStart': {
-      formatted.icon = <ScanAsteroidIcon />;
+      formatted.icon = <OrbitalScanIcon />;
       formatted.label = 'Orbital Scan';
       formatted.asteroidId = item.vars.asteroid?.id;
       formatted.onClick = ({ history }) => {
@@ -512,7 +513,7 @@ const formatAsTx = (item) => {
       break;
     }
     case 'ScanResourcesFinish': {
-      formatted.icon = <ScanAsteroidIcon />;
+      formatted.icon = <OrbitalScanIcon />;
       formatted.label = 'Retrieve Orbital Scan Results';
       formatted.asteroidId = item.vars.asteroid.id;
       formatted.onClick = ({ history }) => {
@@ -694,7 +695,7 @@ const formatAsTx = (item) => {
     case 'ProcessProductsStart': {
       const process = Process.TYPES[item.vars?.process];
       const processorProps = getProcessorProps(process?.processorType);
-      formatted.icon = processorProps?.icon || <ProcessIcon />;
+      formatted.icon = processorProps?.icon || <ProductionIcon />;
       formatted.label = processorProps?.label || 'Start Process';
       formatted.asteroidId = Lot.toPosition(item.meta?.lotId)?.asteroidId;
       formatted.lotId = item.meta?.lotId;
@@ -708,7 +709,7 @@ const formatAsTx = (item) => {
     case 'ProcessProductsFinish': {
       const process = Process.TYPES[item.meta?.process];
       const processorProps = getProcessorProps(process?.processorType);
-      formatted.icon = processorProps?.icon || <ProcessIcon />;
+      formatted.icon = processorProps?.icon || <ProductionIcon />;
       formatted.label = processorProps?.label || 'Finish Process';
       formatted.asteroidId = Lot.toPosition(item.meta?.lotId)?.asteroidId;
       formatted.lotId = item.meta?.lotId;

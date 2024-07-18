@@ -21,7 +21,7 @@ import {
   LaunchShipIcon,
   NewCoreSampleIcon,
   PlanBuildingIcon,
-  ProcessIcon,
+  ProductionIcon,
   PromoteIcon,
   PurchaseAsteroidIcon,
   ScanAsteroidIcon,
@@ -1211,7 +1211,7 @@ const activities = {
       const process = Process.TYPES[returnValues.process];
       const processorProps = getProcessorProps(process?.processorType);
       return {
-        icon: processorProps?.icon || <ProcessIcon />,
+        icon: processorProps?.icon || <ProductionIcon />,
         label: processorProps?.label || 'Running Process',
         asteroidId: _location.asteroidId,
         lotId: _location.lotId,
@@ -1254,7 +1254,7 @@ const activities = {
     //   const process = Process.TYPES[returnValues.process];
     //   const processorProps = getProcessorProps(process?.processorType);
     //   return {
-    //     icon: processorProps?.icon || <ProcessIcon />,
+    //     icon: processorProps?.icon || <ProductionIcon />,
     //     content: (
     //       <>
     //         <span>{process?.name || processorProps?.label || 'Process'} started at </span>
@@ -1286,7 +1286,7 @@ const activities = {
       const process = Process.TYPES[returnValues.process];
       const processorProps = getProcessorProps(process?.processorType);
       return {
-        icon: processorProps?.icon || <ProcessIcon />,
+        icon: processorProps?.icon || <ProductionIcon />,
         content: (
           <>
             <span>{process?.name || processorProps?.label || 'Process'} completed at </span>

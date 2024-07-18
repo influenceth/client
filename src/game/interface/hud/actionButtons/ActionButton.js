@@ -123,7 +123,7 @@ const ActionButton = styled.div`
 
   & > div {
     align-items: center;
-    background-color: rgba(${p => p.overrideColor ? hexToRGB(p.overrideColor) : hexToRGB(p.theme.colors.darkMain)}, 0.5);
+    background-color: rgba(${p => p.overrideBgColor ? hexToRGB(p.overrideBgColor) : (p.overrideBgColor ? hexToRGB(p.overrideBgColor) : hexToRGB(p.theme.colors.darkMain))}, 0.5);
     ${p => p.theme.clipCorner(cornerSize - 4)};
     display: flex;
     font-size: 55px;
@@ -306,7 +306,7 @@ const ActionButtonComponent = ({
       {...safeFlags}
       {...props}>
       {flags.loading && <LoadingAnimation />}
-      <ActionButton {...safeFlags} overrideColor={props.overrideColor}>
+      <ActionButton {...safeFlags} overrideColor={props.overrideColor} overrideBgColor={props.overrideBgColor}>
         <ClipCorner dimension={cornerSize} />
         {sequenceMode && !safeFlags.disabled && !flags.loading && <CornerBadge>+</CornerBadge>}
         <div style={{ opacity: flags.tally > 1 ? 0.33 : 1 }}>{icon}</div>

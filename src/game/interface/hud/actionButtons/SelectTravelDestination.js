@@ -57,7 +57,7 @@ const SelectTravelDestination = ({ crew }) => {
   return (
     <ActionButton
       flags={{ active: !!canSelect }}
-      label={canSelect ? `Cancel ${planningOrSimulation}` : `${planOrSimulate} Flight Plans`}
+      label={canSelect ? `Cancel ${planningOrSimulation}` : `${planOrSimulate} Flight Plan`}
       icon={<SimulateRouteIcon />}
       onClick={handleClick} />
   );
