@@ -56,7 +56,6 @@ const SurfaceAreaFilter = (filterProps) => {
   const { data: priceConstants } = usePriceConstants();
 
   const onClick = useCallback(({ min, max }) => () => {
-    console.log('filterProps', filterProps);
     const { fieldNames, onChange, searchFormatter } = filterProps;
     onChange({
       [fieldNames.min]: searchFormatter ? searchFormatter(min) : min,
