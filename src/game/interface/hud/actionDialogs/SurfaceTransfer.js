@@ -384,6 +384,8 @@ const SurfaceTransfer = ({
     };
   }, [currentDeliveryAction?.status, crew, currentCrewHasDestinationPerms, onAcceptDelivery, onCancelDelivery, onFinishDelivery]);
 
+  const suppressDelta = ![actionStage.NOT_STARTED, actionStage.STARTING].includes(currentDeliveryAction?.stage);
+
   return (
     <>
       <ActionDialogHeader
@@ -449,8 +451,9 @@ const SurfaceTransfer = ({
                 ? <><LocationIcon /> {formatters.lotName(destinationSelection?.lotIndex)}</>
                 : 'Inventory'
             }
-            transferMass={totalMass}
-            transferVolume={totalVolume} />
+            transferMass={(suppressDelta) ? 0 : totalMass}
+            transferVolume={(suppressDelta) ? 0 : totalVolume}
+          />
         </FlexSection>
 
         {tab === 0 && (
@@ -558,8 +561,8 @@ const SurfaceTransfer = ({
                 <InventoryChangeCharts
                   inventory={originInventory}
                   inventoryBonuses={crew?._inventoryBonuses}
-                  deltaMass={-totalMass}
-                  deltaVolume={-totalVolume}
+                  deltaMass={(suppressDelta) ? 0 : -totalMass}
+                  deltaVolume={(suppressDelta) ? 0 : -totalVolume}
                 />
               </div>
               <FlexSectionSpacer />
@@ -567,8 +570,8 @@ const SurfaceTransfer = ({
                 <InventoryChangeCharts
                   inventory={destinationInventory}
                   inventoryBonuses={crew?._inventoryBonuses}
-                  deltaMass={totalMass}
-                  deltaVolume={totalVolume}
+                  deltaMass={(suppressDelta) ? 0 : totalMass}
+                  deltaVolume={(suppressDelta) ? 0 : totalVolume}
                 />
               </div>
             </FlexSection>
