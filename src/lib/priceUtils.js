@@ -56,3 +56,8 @@ export const asteroidPrice = (lots, priceConstants) => {
   const roundedLots = BigInt(Math.round(Number(lots)));
   return priceConstants.ASTEROID_PURCHASE_BASE_PRICE + roundedLots * priceConstants.ASTEROID_PURCHASE_LOT_PRICE;
 };
+
+export const asteroidPriceToLots = (ethPrice, priceConstants) => {
+  // TODO: use toBigInt
+  return parseInt((BigInt(Number(ethPrice) || 0) - priceConstants.ASTEROID_PURCHASE_BASE_PRICE) / priceConstants.ASTEROID_PURCHASE_LOT_PRICE);
+};

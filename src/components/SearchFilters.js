@@ -5,6 +5,7 @@ import { AsteroidUserPrice } from '~/components/UserPrice';
 import usePriceConstants from '~/hooks/usePriceConstants';
 import useStore from '~/hooks/useStore';
 import constants from '~/lib/constants';
+import { TOKEN_FORMAT } from '~/lib/priceUtils';
 import AsteroidNameFilter from './filters/AsteroidNameFilter';
 import BuildingNameFilter from './filters/BuildingNameFilter';
 import OwnershipFilter from './filters/OwnershipFilter';
@@ -174,7 +175,7 @@ const SearchFilters = ({ assetType, highlighting, isListView = false }) => {
   const { data: priceConstants } = usePriceConstants();
 
   const surfaceAreaFieldNote = useCallback((value) => {
-    return priceConstants && <AsteroidUserPrice lots={value} />;
+    return priceConstants && <AsteroidUserPrice lots={value} format={TOKEN_FORMAT.SHORT} />;
   }, [priceConstants]);
 
   const onFiltersChange = useCallback((update) => {
