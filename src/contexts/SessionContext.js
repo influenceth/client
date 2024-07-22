@@ -132,8 +132,9 @@ export function SessionProvider({ children }) {
 
       setError();
       setConnecting(true);
+      console.log('connectionOptions', connectionOptions);
       const { connectorData, wallet } = await starknetConnect(connectionOptions);
-      console.log('waiting 200ms...');
+      console.log('waiting 200ms...', connectorData, wallet);
       await new Promise(resolve => setTimeout(resolve, 200)); // deal with timeout delay from Argent
 
       if (wallet && connectorData?.account) {
