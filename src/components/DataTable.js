@@ -43,30 +43,25 @@ const DataTableRow = styled.tr`
   ${p => p.onClick && `cursor: ${p.theme.cursors.active};`}
   ${p => p.status
     ? `
-      td {
+      {
         background: rgba(${itemColors[p.status]}, 0.12);
-        i {
-          color: rgb(${itemColors[p.status]});
-        }
+        i { color: rgb(${itemColors[p.status]}); }
       }
       &:hover {
-        td {
-          background: rgba(${itemColors[p.status]}, 0.16);
-        }
+        background: rgba(${itemColors[p.status]}, 0.16);
       }
     `
     : (
       p.isSelected
         ? `
-          td {
-            background: rgba(${p.selectedColorRGB || p.theme.colors.mainRGB}, 0.3);
+          background: rgba(${p.selectedColorRGB || p.theme.colors.mainRGB}, 0.5);
+          &:hover {
+            background: rgba(${p.selectedColorRGB || p.theme.colors.mainRGB}, 0.2);
           }
         `
         : `
           &:hover {
-            td {
-              background: rgba(${p.selectedColorRGB || p.theme.colors.mainRGB}, 0.1);
-            }
+            background: rgba(${p.selectedColorRGB || p.theme.colors.mainRGB}, 0.2);
           }
         `
     )
