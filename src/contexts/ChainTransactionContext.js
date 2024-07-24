@@ -1,8 +1,9 @@
 import { createContext, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Address, Asteroid, Entity, Order, System } from '@influenceth/sdk';
 import { isEqual, get } from 'lodash';
-import { hash, shortString, uint256 } from 'starknet';
+import { Account, hash, num, shortString, uint256 } from 'starknet';
 import { fetchBuildExecuteTransaction, fetchQuotes } from '@avnu/avnu-sdk';
+import * as gasless from '@avnu/gasless-sdk';
 
 import useActivitiesContext from '~/hooks/useActivitiesContext';
 import useSession from '~/hooks/useSession';
@@ -401,7 +402,8 @@ export function ChainTransactionProvider({ children }) {
     authenticated,
     blockNumber,
     blockTime,
-    fixBraavos,
+    chainId,
+    getOutsideExecutionData,
     isDeployed,
     logout,
     provider,
@@ -420,6 +422,7 @@ export function ChainTransactionProvider({ children }) {
   walletRef.current = walletSource;
 
   const createAlert = useStore(s => s.dispatchAlertLogged);
+  const gameplay = useStore(s => s.gameplay);
   const dispatchFailedTransaction = useStore(s => s.dispatchFailedTransaction);
   const dispatchPendingTransaction = useStore(s => s.dispatchPendingTransaction);
   // const dispatchPendingTransactionUpdate = useStore(s => s.dispatchPendingTransactionUpdate);
@@ -441,8 +444,13 @@ export function ChainTransactionProvider({ children }) {
   );
 
   const executeWithAccount = useCallback(async (calls) => {
+    // Format calls for proper stringification
+    const formattedCalls = calls.map((call) => {
+      return { ...call, calldata: call.calldata.map(a => num.toHex(a)) };
+    });
+
     // Check if we can utilize a signed session to execute calls
-    const canUseSession = !!starknetSession && !calls.some((c) => {
+    const canUseSessionKey = !!gameplay.useSessions && !!starknetSession && !calls.some((c) => {
       const found = allowedMethods.find((m) => {
         return m['Contract Address'] === c.contractAddress && m.selector === c.entrypoint;
       });
@@ -450,12 +458,69 @@ export function ChainTransactionProvider({ children }) {
       return !found;
     });
 
-    // Use session wallet if possible, otherwise regular wallet, but "old" account if wallet RPC won't work
-    const account = canUseSession ? starknetSession : (walletAccount.walletProvider?.account || walletAccount);
-    const response = await account.execute(calls);
-    fixBraavos();
-    return response;
-  }, [allowedMethods, createAlert, fixBraavos, starknetSession, walletAccount]);
+    // Use session wallet if possible, otherwise regular wallet
+    const account = canUseSessionKey ? starknetSession : walletAccount;
+
+
+    // Check and store the gasless compatibility status
+    if (
+      isDeployed
+      && gameplay.feeToken !== 'ETH'
+      && (await gasless.fetchAccountCompatibility(
+        accountAddress, { baseUrl: process.env.REACT_APP_AVNU_API_URL }
+      )).isCompatible
+    ) {
+      // Use gasless via relayer for non-ETH / STRK transactions
+      const simulation = await walletAccount.simulateTransaction(
+        [{ type: 'INVOKE_FUNCTION', payload: calls }],
+        { skipValidate: true }
+      );
+
+      const tokens = await gasless.fetchGasTokenPrices({ baseUrl: process.env.REACT_APP_AVNU_API_URL });
+      const gasToken = tokens.find((t) => Address.areEqual(t.tokenAddress, TOKEN.SWAY));
+
+      // Double the fee estimation and check for sufficient funds to ensure transaction success
+      const maxFee = gasless.getGasFeesInGasToken(simulation[0].suggestedMaxFee, gasToken) * 2n;
+
+      // Check if wallet has sufficient funds for gas fees
+      if (walletRef.current?.tokenBalance) {
+        const match = Object.entries(walletRef.current.tokenBalance).find((e) => {
+          return Address.areEqual(e[0], gasToken.tokenAddress);
+        });
+
+        // Skip this check in testnet since the allowed gas tokens are inconsistent
+        if (process.env.REACT_APP_DEPLOYMENT === 'production' && (!match || match[1] < maxFee)) {
+          createAlert({
+            type: 'GenericAlert',
+            data: { content: 'Insufficient wallet balance, please recharge in the store.' },
+            level: 'warning',
+          });
+
+          throw new Error('Insufficient wallet balance');
+        }
+      }
+
+      const { typedData, signature } = await getOutsideExecutionData(formattedCalls, gasToken.tokenAddress, maxFee);
+      return await gasless.fetchExecuteTransaction(
+        accountAddress,
+        JSON.stringify(typedData),
+        signature,
+        { baseUrl: process.env.REACT_APP_AVNU_API_URL }
+      );
+    }
+
+    return await account.execute(formattedCalls);
+  }, [
+    accountAddress,
+    allowedMethods,
+    createAlert,
+    chainId,
+    gameplay.feeToken,
+    getOutsideExecutionData,
+    isDeployed,
+    starknetSession,
+    walletAccount
+  ]);
 
   const contracts = useMemo(() => {
     if (!!walletAccount) {
@@ -527,7 +592,6 @@ export function ChainTransactionProvider({ children }) {
             for (let { runSystem, rawVars, escrowConfig } of systemCalls) {
               console.log('systemCall', runSystem, rawVars, escrowConfig);
               let processedVars;
-              console.log({ runSystem, rawVars, escrowConfig });
 
               // escrow-wrapped systems
               if (escrowConfig) {
@@ -728,7 +792,15 @@ export function ChainTransactionProvider({ children }) {
       }, {});
     }
     return null;
-  }, [createAlert, prependEventAutoresolve, accountAddress, executeWithAccount, starknetSession, usdcPerEth]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [
+    accountAddress,
+    createAlert,
+    executeWithAccount,
+    gameplay.feesInSway,
+    prependEventAutoresolve,
+    starknetSession,
+    usdcPerEth
+  ]);
 
   const getTxEvent = useCallback((txHash) => {
     const txHashBInt = BigInt(txHash);
@@ -866,12 +938,15 @@ export function ChainTransactionProvider({ children }) {
   const isAccountLocked = useCallback(async () => {
     // Check that the account isn't locked, and prompt to unlock if it is
     try {
-      if (walletAccount?.walletProvider?.enable) await walletAccount?.walletProvider?.enable();
+      await walletAccount.walletProvider.request({
+        type: 'wallet_requestAccounts',
+        params: { silent_mode: false }
+      });
+
+      return false;
     } catch (e) {
       return true;
     }
-
-    return false;
   }, [walletAccount]);
 
   // Allows for multiple explicit / manual calls to be executed in a single transaction
@@ -911,7 +986,8 @@ export function ChainTransactionProvider({ children }) {
       // if a tx just went through and account is not known to be deployed,
       // now is a good time to check again if it is deployed
       if (!isDeployed) {
-        const txHash = cleanseTxHash(tx.transaction_hash);
+        const txHash = cleanseTxHash(tx);
+
         if (txHash) {
           provider.waitForTransaction(txHash, { retryInterval: RETRY_INTERVAL })
             .then((receipt) => { if (receipt) upgradeInsecureSession(); })
@@ -959,7 +1035,7 @@ export function ChainTransactionProvider({ children }) {
         vars,
         meta,
         timestamp: blockTime ? (blockTime * 1000) : null,
-        txHash: cleanseTxHash(tx.transaction_hash),
+        txHash: cleanseTxHash(tx),
         waitingOn: 'TRANSACTION'
       });
     } catch (e) {
