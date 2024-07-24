@@ -11,7 +11,7 @@ import useStore from '~/hooks/useStore';
 import { useUsdcPerEth } from '~/hooks/useSwapQuote';
 import useWalletBalances from '~/hooks/useWalletBalances';
 import api from '~/lib/api';
-import { cleanseTxHash } from '~/lib/utils';
+import { cleanseTxHash, safeBigInt } from '~/lib/utils';
 import { TOKEN } from '~/lib/priceUtils';
 
 const RETRY_INTERVAL = 5e3; // 5 seconds
@@ -30,7 +30,7 @@ const customConfigs = {
   AcceptDelivery: {
     equalityTest: ['delivery.id'],
     getTransferConfig: ({ caller, delivery, price }) => ({
-      amount: BigInt(price || 0),
+      amount: safeBigInt(price || 0),
       recipient: caller,
       memo: Entity.packEntity(delivery)
     })
@@ -38,7 +38,7 @@ const customConfigs = {
   AcceptPrepaidAgreement: {
     equalityTest: ['target.id', 'target.label', 'permission'],
     getTransferConfig: ({ recipient, permission, permitted, target, termPrice }) => ({
-      amount: BigInt(termPrice),
+      amount: safeBigInt(termPrice),
       recipient,
       memo: [
         Entity.packEntity(target),
@@ -53,7 +53,7 @@ const customConfigs = {
   CancelPrepaidAgreement: {
     equalityTest: ['target.id', 'target.label', 'permission'],
     getTransferConfig: ({ agreementPath, refundAmount, recipient }) => ({
-      amount: BigInt(refundAmount),
+      amount: safeBigInt(refundAmount),
       recipient,
       memo: (agreementPath || '').split('.')
     })
@@ -61,7 +61,7 @@ const customConfigs = {
   ExtendPrepaidAgreement: {
     equalityTest: ['target.id', 'target.label', 'permission'],
     getTransferConfig: ({ recipient, permission, permitted, target, termPrice }) => ({
-      amount: BigInt(termPrice),
+      amount: safeBigInt(termPrice),
       recipient,
       memo: [
         Entity.packEntity(target),
@@ -101,11 +101,11 @@ const customConfigs = {
   InitializeAsteroid: {
     preprocess: ({ asteroid }) => ({
       asteroid,
-      celestial_type: BigInt(asteroid.Celestial.celestialType),
-      mass: BigInt(Math.round(Asteroid.Entity.getMass(asteroid))) * 2n ** 64n,
-      radius: BigInt(Math.round(asteroid.Celestial.radius * 1000)) * 2n ** 32n / 1000n,
-      a: BigInt(Math.round(asteroid.Orbit.a * 10000)) * 2n ** 64n / 10000n,
-      ecc: BigInt(Math.round(asteroid.Orbit.ecc * 1000)) * 2n ** 64n / 1000n,
+      celestial_type: safeBigInt(asteroid.Celestial.celestialType),
+      mass: safeBigInt(Asteroid.Entity.getMass(asteroid)) * 2n ** 64n,
+      radius: safeBigInt(asteroid.Celestial.radius * 1000) * 2n ** 32n / 1000n,
+      a: safeBigInt(asteroid.Orbit.a * 10000) * 2n ** 64n / 10000n,
+      ecc: safeBigInt(asteroid.Orbit.ecc * 1000) * 2n ** 64n / 1000n,
       inc: BigInt(asteroid.Orbit.inc * 2 ** 64),
       raan: BigInt(asteroid.Orbit.raan * 2 ** 64),
       argp: BigInt(asteroid.Orbit.argp * 2 ** 64),
@@ -246,7 +246,7 @@ const customConfigs = {
   },
   EscrowWithdrawalAndFillBuyOrders: {
     getEscrowAmount: ({ price, amount, makerFee }) => {
-      return BigInt(Math.round(price * amount * (1 + makerFee)) || 0);
+      return safeBigInt(price * amount * (1 + makerFee));
     },
     escrowConfig: {
       entrypoint: 'withdraw',
@@ -280,12 +280,12 @@ const customConfigs = {
       ];
       return [
         {
-          amount: BigInt(Math.round(vars.payments.toPlayer)),
+          amount: safeBigInt(vars.payments.toPlayer),
           recipient: vars.seller_account,
           memo
         },
         {
-          amount: BigInt(Math.round(vars.payments.toExchange)),
+          amount: safeBigInt(vars.payments.toExchange),
           recipient: vars.exchange_owner_account,
           memo
         }
@@ -640,10 +640,10 @@ export function ChainTransactionProvider({ children }) {
               const totalWalletValueInToken = wallet.combinedBalance?.to(totalPriceToken);
 
               // if don't have enough USDC + ETH to cover it, throw funds error
-              if (totalPrice > BigInt(totalWalletValueInToken)) {
+              if (totalPrice > safeBigInt(totalWalletValueInToken)) {
                 console.log('EXECUTE', wallet, wallet.combinedBalance, wallet.combinedBalance, wallet.combinedBalance?.to(totalPriceToken));
                 const fundsError = new Error('Insufficient wallet balance.');
-                fundsError.additionalFundsRequired = parseInt(totalPrice - BigInt(totalWalletValueInToken));
+                fundsError.additionalFundsRequired = parseInt(totalPrice - safeBigInt(totalWalletValueInToken));
                 fundsError.additionalFundsToken = totalPriceToken;
                 throw fundsError;
 
@@ -674,7 +674,7 @@ export function ChainTransactionProvider({ children }) {
                     const quotes = await fetchQuotes({
                       sellTokenAddress: fromAddress,
                       buyTokenAddress: toAddress,
-                      sellAmount: BigInt(Math.ceil(targetSwapAmount / actualConv)),
+                      sellAmount: safeBigInt(Math.ceil(targetSwapAmount / actualConv)),
                       takerAddress: accountAddress,
                     }, { baseUrl: process.env.REACT_APP_AVNU_API_URL });
                     if (!quotes?.[0]) throw new Error('Insufficient swap liquidity');
@@ -731,8 +731,8 @@ export function ChainTransactionProvider({ children }) {
   }, [createAlert, prependEventAutoresolve, accountAddress, executeWithAccount, starknetSession, usdcPerEth]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const getTxEvent = useCallback((txHash) => {
-    const txHashBInt = BigInt(txHash);
-    return (activities || []).find((a) => a.event?.transactionHash && BigInt(a.event?.transactionHash) === txHashBInt)?.event;
+    const txHashBInt = safeBigInt(txHash);
+    return (activities || []).find((a) => a.event?.transactionHash && safeBigInt(a.event?.transactionHash) === txHashBInt)?.event;
   }, [activities?.length]);
 
   const transactionWaiters = useRef([]);

@@ -16,7 +16,7 @@ import useStore from '~/hooks/useStore';
 import useAsteroidSale from '~/hooks/useAsteroidSale';
 import useBlockTime from '~/hooks/useBlockTime';
 import useFaucetInfo from '~/hooks/useFaucetInfo';
-import { cleanseTxHash, fireTrackingEvent, nativeBool, reactBool, roundToPlaces } from '~/lib/utils';
+import { cleanseTxHash, fireTrackingEvent, nativeBool, reactBool, roundToPlaces, safeBigInt } from '~/lib/utils';
 import theme from '~/theme';
 import Button from '~/components/ButtonAlt';
 import useWalletBalances from '~/hooks/useWalletBalances';
@@ -351,7 +351,7 @@ const CrewmateSKU = ({ onUpdatePurchase, onPurchasing }) => {
   useEffect(() => {
     const cleanQuantity = cleanseCrewmates(quantity) || 1;
     const totalPrice = priceHelper.from(
-      BigInt(cleanQuantity) * priceConstants?.ADALIAN_PURCHASE_PRICE,
+      safeBigInt(cleanQuantity) * priceConstants?.ADALIAN_PURCHASE_PRICE,
       priceConstants?.ADALIAN_PURCHASE_TOKEN
     );
     onUpdatePurchase({

@@ -4,6 +4,7 @@ import { asteroidPrice } from '~/lib/priceUtils';
 import usePriceConstants from '~/hooks/usePriceConstants';
 import usePriceHelper from '~/hooks/usePriceHelper';
 import useStore from '~/hooks/useStore';
+import { safeBigInt } from '~/lib/utils';
 
 const UserPrice = ({ price, priceToken, format }) => {
   const priceHelper = usePriceHelper();
@@ -15,7 +16,7 @@ const UserPrice = ({ price, priceToken, format }) => {
       {
         priceHelper
           .from(
-            !price ? 0n : (typeof price === 'bigint' ? price : BigInt(Math.round(price))),
+            !price ? 0n : (typeof price === 'bigint' ? price : safeBigInt(price)),
             priceToken
           )
           .to(preferredUiCurrency, format || true)

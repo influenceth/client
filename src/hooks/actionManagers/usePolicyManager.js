@@ -3,7 +3,7 @@ import { Address, Entity, Permission } from '@influenceth/sdk';
 
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
 import useCrewContext from '~/hooks/useCrewContext';
-import { daysToSeconds, monthsToSeconds, secondsToDays, secondsToMonths } from '~/lib/utils';
+import { daysToSeconds, monthsToSeconds, safeBigInt, secondsToDays, secondsToMonths } from '~/lib/utils';
 
 const usePolicyManager = (target, permission) => {
   const { crew } = useCrewContext();
@@ -28,7 +28,7 @@ const usePolicyManager = (target, permission) => {
     if (pol?.policyDetails && pol.policyType === Permission.POLICY_IDS.CONTRACT) pol.policyDetails.contract = pol.policyDetails.address;
     if (pol?.policyDetails && pol.policyType === Permission.POLICY_IDS.PREPAID) {
       // stored in microsway per hour, UI in sway/mo
-      pol.policyDetails.rate = Number(BigInt(pol.policyDetails.rate)) / 1e6;
+      pol.policyDetails.rate = Number(safeBigInt(pol.policyDetails.rate)) / 1e6;
       // stored in seconds, UI in months
       pol.policyDetails.initialTerm = secondsToDays(pol.policyDetails.initialTerm);
       // stored in seconds, UI in months

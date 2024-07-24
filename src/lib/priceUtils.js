@@ -1,6 +1,7 @@
 import { Address } from '@influenceth/sdk';
 
 import { EthIcon, SwayIcon } from '~/components/Icons';
+import { safeBigInt } from './utils';
 
 export const TOKEN = {
   ETH: Address.toStandard(process.env.REACT_APP_ERC20_TOKEN_ADDRESS),
@@ -53,7 +54,7 @@ export const TOKEN_FORMATTER = {
 };
 
 export const asteroidPrice = (lots, priceConstants) => {
-  const roundedLots = BigInt(Math.round(Number(lots)));
+  const roundedLots = safeBigInt(Number(lots));
   return priceConstants.ASTEROID_PURCHASE_BASE_PRICE + roundedLots * priceConstants.ASTEROID_PURCHASE_LOT_PRICE;
 };
 
