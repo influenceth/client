@@ -1,8 +1,6 @@
 import { useCallback, useEffect, useMemo } from 'react';
 import { Asteroid, Building, Crewmate, Permission, Product } from '@influenceth/sdk';
 
-import { AsteroidUserPrice } from '~/components/UserPrice';
-import usePriceConstants from '~/hooks/usePriceConstants';
 import useStore from '~/hooks/useStore';
 import constants from '~/lib/constants';
 import AsteroidNameFilter from './filters/AsteroidNameFilter';
@@ -15,6 +13,7 @@ import LotLeaseFilter from './filters/LotLeaseFilter';
 import BooleanFilter from './filters/BooleanFilter';
 import CheckboxFilter from './filters/CheckboxFilter';
 import RangeFilter from './filters/RangeFilter';
+import SurfaceAreaFilter from './filters/SurfaceAreaFilter';
 import TextFilter from './filters/TextFilter';
 
 // spectral type filter configs
@@ -171,11 +170,6 @@ const SearchFilters = ({ assetType, highlighting, isListView = false }) => {
   const zoomStatus = useStore(s => s.asteroids.zoomStatus);
   const filters = useStore(s => s.assetSearch[assetType].filters);
   const updateFilters = useStore(s => s.dispatchFiltersUpdated(assetType));
-  const { data: priceConstants } = usePriceConstants();
-
-  const surfaceAreaFieldNote = useCallback((value) => {
-    return priceConstants && <AsteroidUserPrice lots={value} />;
-  }, [priceConstants]);
 
   const onFiltersChange = useCallback((update) => {
     const newFilters = {...(filters || {})};
@@ -239,20 +233,7 @@ const SearchFilters = ({ assetType, highlighting, isListView = false }) => {
       <>
         <OwnershipFilter {...filterProps} />
 
-        <RangeFilter
-          {...filterProps}
-          {...surfaceAreaConfig}
-          fieldNote={surfaceAreaFieldNote}
-          highlightFieldName="surfaceArea"
-          inputWidth={240}
-          title="Surface Area" />
-
-        {/* <RangeFilter
-          {...filterProps}
-          {...radiusConfig}
-          fieldNote={radiusFieldNote}
-          highlightFieldName="radius"
-          title="Radius" /> */}
+        <SurfaceAreaFilter {...filterProps} {...surfaceAreaConfig} />
 
         <CheckboxFilter
           {...filterProps}

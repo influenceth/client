@@ -10,6 +10,7 @@ import {
   FavoriteIcon,
   InclinationIcon,
   MyAssetIcon,
+  OrbitalScanIcon,
   RadiusIcon,
   ResourceIcon,
   ScanAsteroidIcon,
@@ -141,13 +142,14 @@ const useColumns = () => {
       },
       {
         key: 'spectralType',
-        icon: <ScanAsteroidIcon />,
+        icon: <OrbitalScanIcon />,
         label: 'Spectral Type',
         sortField: 'Celestial.celestialType',
         selector: row => `${Asteroid.Entity.getSpectralType(row)}-type`
       },
       {
         key: 'scanStatus',
+        icon: <ScanAsteroidIcon />,
         label: 'Scanning Status',
         sortField: 'Celestial.scanStatus',
         selector: row => {
