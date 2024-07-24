@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import { Tooltip } from 'react-tooltip';
 import styled from 'styled-components';
@@ -40,6 +40,8 @@ import useSession from '~/hooks/useSession';
 import useShip from '~/hooks/useShip';
 import useStore from '~/hooks/useStore';
 import hudMenus from './hudMenus';
+import CoachMarks, { COACHMARK_IDS } from '~/Coachmarks';
+import Coachmarks from '~/Coachmarks';
 
 const cornerWidth = 8;
 const bumpHeightHalf = 100;
@@ -238,6 +240,26 @@ const PanelContent = styled.div`
   flex-direction: column;
   height: 0;
 `;
+
+const MenuButton = ({ badge, coachmarkId, menuKey, label, useAltColor, icon, onOpen, hideInsteadOfClose, handleButtonClick, openHudMenu }) => {
+  const [refEl, setRefEl] = useState();
+  return (
+    <>
+      <Button
+        ref={setRefEl}
+        iconColor={useAltColor}
+        badge={badge}
+        onClick={() => handleButtonClick(menuKey, onOpen, hideInsteadOfClose)}
+        selected={menuKey === openHudMenu}
+        data-tooltip-id="hudMenuTooltip"
+        data-tooltip-place="left"
+        data-tooltip-content={label}>
+        {icon}
+      </Button>
+      {coachmarkId && <Coachmarks label={coachmarkId} refEl={refEl} />}
+    </>
+  );
+};
 
 const HudMenu = () => {
   const history = useHistory();
@@ -449,6 +471,7 @@ const HudMenu = () => {
           key: 'RESOURCES',
           label: 'Resources',
           icon: <ResourceIcon />,
+          coachmarkId: COACHMARK_IDS.hudMenuResources,
           Component: hudMenus.Resources,
           noDetail: true,
           isVisible: scope === 'asteroid' || scope === 'lot'
@@ -660,35 +683,25 @@ const HudMenu = () => {
       <Buttons id="hudMenu" open={open}>
         {visibleMenuButtons.length > 0 && (
           <ButtonSection>
-            {visibleMenuButtons.map(({ key, badge, label, useAltColor, icon, onOpen, hideInsteadOfClose }) => (
-              <Button
+            {visibleMenuButtons.map(({ key, ...buttonConfig }) => (
+              <MenuButton
                 key={key}
-                iconColor={useAltColor}
-                badge={badge}
-                onClick={() => handleButtonClick(key, onOpen, hideInsteadOfClose)}
-                selected={key === openHudMenu}
-                data-tooltip-id="hudMenuTooltip"
-                data-tooltip-place="left"
-                data-tooltip-content={label}>
-                {icon}
-              </Button>
+                menuKey={key}
+                handleButtonClick={handleButtonClick}
+                openHudMenu={openHudMenu}
+                {...buttonConfig} />
             ))}
           </ButtonSection>
         )}
         {visibleUniversalButtons.length > 0 && (
           <ButtonSection showSeparator={visibleMenuButtons.length > 0}>
-            {visibleUniversalButtons.map(({ key, badge, label, useAltColor, icon, onOpen, hideInsteadOfClose }) => (
-              <Button
+            {visibleUniversalButtons.map(({ key, ...buttonConfig }) => (
+              <MenuButton
                 key={key}
-                iconColor={useAltColor}
-                badge={badge}
-                onClick={() => handleButtonClick(key, onOpen, hideInsteadOfClose)}
-                selected={key === openHudMenu}
-                data-tooltip-id="hudMenuTooltip"
-                data-tooltip-place="left"
-                data-tooltip-content={label}>
-                {icon}
-              </Button>
+                menuKey={key}
+                handleButtonClick={handleButtonClick}
+                openHudMenu={openHudMenu}
+                {...buttonConfig} />
             ))}
           </ButtonSection>
         )}

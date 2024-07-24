@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo } from 'react';
+import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
 import { Asteroid } from '@influenceth/sdk';
 
@@ -10,6 +10,8 @@ import useStore from '~/hooks/useStore';
 import { keyify } from '~/lib/utils';
 import { hexToRGB } from '~/theme';
 import { majorBorderColor, HudMenuCollapsibleSection, Scrollable } from './components';
+import Coachmarks, { COACHMARK_IDS } from '~/Coachmarks';
+import { WELCOME_CONFIG } from '../../WelcomeTour';
 
 const ResourceWrapper = styled.div`
   flex: 1;
@@ -92,6 +94,26 @@ const ResourceGroup = styled.div`
   }
 `;
 
+const CoachmarkableResource = ({ resource, isSelected, onClick }) => {
+  const [refEl, setRefEl] = useState();
+  return (
+    <>
+      <Resource
+        ref={setRefEl}
+        category={resource.categoryKey}
+        onClick={onClick(resource.i)}
+        selected={isSelected}>
+        {isSelected ? <PlusIcon /> : <Circle />}
+        <label>{resource.name}</label>
+        <span>{(resource.abundance * 100).toFixed(1)}%</span>
+      </Resource>
+      {Number(resource.i) === WELCOME_CONFIG.resourceId && (
+        <Coachmarks label={COACHMARK_IDS.hudMenuTargetResource} refEl={refEl} />
+      )}
+    </>
+  );
+}
+
 const AsteroidResources = ({ onClose }) => {
   const asteroidId = useStore(s => s.asteroids.origin);
   const { data: asteroid } = useAsteroid(asteroidId);
@@ -135,19 +157,13 @@ const AsteroidResources = ({ onClose }) => {
                   <span>{(groupAbundance * 100).toFixed(1)}%</span>
                 </Title>
                 <ResourceList>
-                  {resources.map(({ i, categoryKey, name, abundance }) => {
-                    const selected = resourceMap.active && resourceMap.selected === Number(i);
-                    return (
-                      <Resource key={name}
-                        category={categoryKey}
-                        onClick={onClick(i)}
-                        selected={selected}>
-                        {selected ? <PlusIcon /> : <Circle />}
-                        <label>{name}</label>
-                        <span>{(abundance * 100).toFixed(1)}%</span>
-                      </Resource>
-                    );
-                  })}
+                  {resources.map((resource) => (
+                    <CoachmarkableResource
+                      key={resource.name}
+                      isSelected={resourceMap.active && resourceMap.selected === Number(resource.i)}
+                      onClick={onClick}
+                      resource={resource} />
+                  ))}
                 </ResourceList>
               </ResourceGroup>
             ))}

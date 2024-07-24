@@ -1,10 +1,11 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import { FormLotAgreementIcon } from '~/components/Icons';
 import useAgreementManager from '~/hooks/actionManagers/useAgreementManager';
 import useStore from '~/hooks/useStore';
 import ActionButton from './ActionButton';
 import { Permission } from '@influenceth/sdk';
+import Coachmarks, { COACHMARK_IDS } from '~/Coachmarks';
 
 // TODO: arguably, it would be more consistent to show this button in a disabled state, at least in some conditions
 const isVisible = ({ lot, crew }) => {
@@ -16,7 +17,7 @@ const isVisible = ({ lot, crew }) => {
   return false;
 };
 
-const FormLotLeaseAgreement = ({ lot, permission, _disabled }) => {
+const FormLotLeaseAgreement = ({ lot, permission, welcomeTour, _disabled }) => {
   const { pendingChange } = useAgreementManager(lot, permission);
   
   const onSetAction = useStore(s => s.dispatchActionDialog);
@@ -28,19 +29,29 @@ const FormLotLeaseAgreement = ({ lot, permission, _disabled }) => {
   const disabledReason = useMemo(() => {
     if (_disabled) return 'loading...';
     if (pendingChange) return 'updating...';
+    if (welcomeTour) {
+      if (lot?.building || lot?.surfaceShip) return 'occupied by another crew';
+      if (welcomeTour.leasedLots?.length >= 5) return 'max simulation lots already leased';
+    }
     return '';
   }, [_disabled, pendingChange]);
 
+  const [refEl, setRefEl] = useState();
   return (
-    <ActionButton
-      label="Form Lot Agreement"
-      labelAddendum={disabledReason}
-      flags={{
-        disabled: _disabled || disabledReason,
-        loading: pendingChange
-      }}
-      icon={<FormLotAgreementIcon />}
-      onClick={handleClick} />
+    <>
+      <ActionButton
+        ref={setRefEl}
+        label="Form Lot Agreement"
+        labelAddendum={disabledReason}
+        flags={{
+          attention: welcomeTour && !(_disabled || disabledReason),
+          disabled: _disabled || disabledReason,
+          loading: pendingChange
+        }}
+        icon={<FormLotAgreementIcon />}
+        onClick={handleClick} />
+      <Coachmarks label={COACHMARK_IDS.actionButtonLease} refEl={refEl} />
+    </>
   );
 };
 

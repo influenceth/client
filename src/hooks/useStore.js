@@ -42,7 +42,17 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
     launcherPage: null,
     launcherSubpage: null,
     openHudMenu: null,
-    welcomeTourStep: -1,
+
+    // TODO: use a context to rewrite query contents and state with useEffect
+    //  store persistable state here
+    // TODO: add store state migrations
+    welcomeTourStep: -1, // TODO: deprecate this
+    welcomeTour: {
+      step: 0,
+      crewmate: null,
+      leasedLots: { 123: 'extractor', ...{} },
+    },
+    coachmarks: [],
 
     // scene: {
     //   belt: {
@@ -63,7 +73,6 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
       destination: null,
       hovered: null,
       lot: null,
-      lotDestination: null,
       resourceMap: {
         active: false,
         selected: null
@@ -319,7 +328,6 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
       }
 
       state.asteroids.lot = null;
-      state.asteroids.lotDestination = null;
       state.asteroids.travelSolution = null;
       state.asteroids.zoomScene = null;
     })),
@@ -364,7 +372,6 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
 
     dispatchZoomStatusChanged: (status, maintainLot) => set(produce(state => {
       state.asteroids.zoomStatus = status;
-      state.asteroids.lotDestination = null;
       if (!maintainLot) {
         state.asteroids.lot = null;
         state.asteroids.zoomScene = null;
@@ -460,7 +467,17 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
     })),
 
     dispatchWelcomeTourStep: (step) => set(produce(state => {
-      state.welcomeTourStep = step;
+      if (!state.welcomeTour) state.welcomeTour = {};
+      state.welcomeTour.step = step;
+    })),
+
+    dispatchWelcomeTourCrewmate: (crewmate) => set(produce(state => {
+      state.welcomeTour.crewmate = crewmate;
+    })),
+
+    dispatchCoachmarks: (coachmarkIds) => set(produce(state => {
+      console.log('dispatchCoachmarks', coachmarkIds);
+      state.coachmarks = coachmarkIds || [];
     })),
 
     dispatchCrewSelected: (crewId) => set(produce(state => {
@@ -652,6 +669,15 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
     //
     // SPECIAL GETTERS
 
+    getWelcomeTour: () => {
+      const s = get();
+      // TODO: more "is in welcome tour" checks here
+      if (!s.currentSession?.accountAddress) {
+        return s.welcomeTour;
+      }
+      return null;
+    },
+
     getPreferredUiCurrency: () => {
       const s = get();
       if ([TOKEN.ETH, TOKEN.USDC].includes(s.preferredUiCurrency)) return s.preferredUiCurrency;
@@ -737,13 +763,13 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
     'actionDialog',
     'asteroids.hovered',
     'asteroids.lot',
-    'asteroids.lotDestination',
     'asteroids.travelMode',
     'asteroids.travelSolution',
     'asteroids.zoomScene',
     'canvasStack',
     'cameraNeedsRecenter',
     'cameraNeedsReorientation',
+    'coachmarks',
     'cutscene',
     'draggables',
     'lotLoader',

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import styled, { css, keyframes } from 'styled-components';
 import { Asteroid, Building, Entity } from '@influenceth/sdk';
@@ -33,6 +33,7 @@ import LotLoadingProgress from './LotLoadingProgress';
 import theme, { hexToRGB } from '~/theme';
 import EntityName from '~/components/EntityName';
 import { ActionProgressContainer } from './actionDialogs/components';
+import Coachmarks, { COACHMARK_IDS } from '~/Coachmarks';
 
 const opacityAnimation = keyframes`
   0% { opacity: 1; }
@@ -299,7 +300,7 @@ const getShipSubtitle = (ship, shipReady, { asteroid, lot }) => {
 }
 
 
-const InfoPane = () => {
+const InfoPane = ({ setRef }) => {
   const history = useHistory();
 
   const asteroidId = useStore(s => s.asteroids.origin);
@@ -327,6 +328,7 @@ const InfoPane = () => {
 
   const [hover, setHover] = useState();
   const [currentSound, setCurrentSound] = useState();
+  const [refEl, setRefEl] = useState();
 
   const onMouseEvent = (e) => setHover(e.type === 'mouseenter');
 
@@ -560,49 +562,53 @@ const InfoPane = () => {
 
   if (lotIsLoading || asteroidIsLoading || shipIsLoading) return null;
   return (
-    <Pane visible={asteroidId && ['out','in'].includes(zoomStatus)}>
-      <Tooltip id="infoPaneTooltip" />
-      <OuterTitleRow style={captainCard && !thumbnail ? { marginBottom: 8 } : {}}>
-        {captainCard && <CaptainCardContainer><CaptainCard crewId={captainCard} /></CaptainCardContainer>}
-        <div style={captainCard && !thumbnail ? { marginTop: -8 } : {}}>
-          {title && (
-            <TitleRow hasLink={!!titleLink} onClick={onClickTitle}>
-              <Title hasThumb={!!thumbnail}>{title}</Title>
-              {titleLink && <PopoutIcon />}
-            </TitleRow>
+    <>
+      <Pane visible={asteroidId && ['out','in'].includes(zoomStatus)}>
+        <Tooltip id="infoPaneTooltip" />
+        <OuterTitleRow style={captainCard && !thumbnail ? { marginBottom: 8 } : {}}>
+          {captainCard && <CaptainCardContainer><CaptainCard crewId={captainCard} /></CaptainCardContainer>}
+          <div style={captainCard && !thumbnail ? { marginTop: -8 } : {}}>
+            {title && (
+              <TitleRow hasLink={!!titleLink} onClick={onClickTitle}>
+                <Title hasThumb={!!thumbnail}>{title}</Title>
+                {titleLink && <PopoutIcon />}
+              </TitleRow>
+            )}
+            {subtitle && <Subtitle>{hover && hoverSubtitle ? <b>{hoverSubtitle}</b> : subtitle}</Subtitle>}
+          </div>
+        </OuterTitleRow>
+        <ContentRow>
+          {thumbnail && (
+            <ThumbWrapper
+              ref={setRefEl}
+              onClick={onClickPane}
+              onMouseEnter={onMouseEvent}
+              onMouseLeave={onMouseEvent}
+              hasCaptainCard={!!captainCard}>
+              {hover ? <DetailsIcon /> : <ForwardIcon />}
+              <ThumbPreview visible={thumbVisible}>
+                <CloseButton onClick={onClosePane} borderless>
+                  <CloseIcon />
+                </CloseButton>
+                {thumbnail}
+                <ClipCorner flip dimension={thumbCornerSize} color={hover ? 'white' : 'rgba(255,255,255,0.25)'} />
+              </ThumbPreview>
+            </ThumbWrapper>
           )}
-          {subtitle && <Subtitle>{hover && hoverSubtitle ? <b>{hoverSubtitle}</b> : subtitle}</Subtitle>}
-        </div>
-      </OuterTitleRow>
-      <ContentRow>
-        {thumbnail && (
-          <ThumbWrapper
-            onClick={onClickPane}
-            onMouseEnter={onMouseEvent}
-            onMouseLeave={onMouseEvent}
-            hasCaptainCard={!!captainCard}>
-            {hover ? <DetailsIcon /> : <ForwardIcon />}
-            <ThumbPreview visible={thumbVisible}>
-              <CloseButton onClick={onClosePane} borderless>
-                <CloseIcon />
-              </CloseButton>
-              {thumbnail}
-              <ClipCorner flip dimension={thumbCornerSize} color={hover ? 'white' : 'rgba(255,255,255,0.25)'} />
-            </ThumbPreview>
-          </ThumbWrapper>
-        )}
-        {actions?.length > 0 && (
-          <ActionButtonContainer>
-            {inTravelMode && zoomStatus === 'out' && <ActionForm><RouteSelection /></ActionForm>}
-            <ActionButtons>
-              {actions.map((ActionButton, i) => (
-                <ActionButton key={i} {...actionProps} />
-              ))}
-            </ActionButtons>
-          </ActionButtonContainer>
-        )}
-      </ContentRow>
-    </Pane>
+          {actions?.length > 0 && (
+            <ActionButtonContainer>
+              {inTravelMode && zoomStatus === 'out' && <ActionForm><RouteSelection /></ActionForm>}
+              <ActionButtons>
+                {actions.map((ActionButton, i) => (
+                  <ActionButton key={i} {...actionProps} />
+                ))}
+              </ActionButtons>
+            </ActionButtonContainer>
+          )}
+        </ContentRow>
+      </Pane>
+      <Coachmarks label={COACHMARK_IDS.hudInfoPane} refEl={refEl} />
+    </>
   );
 };
 

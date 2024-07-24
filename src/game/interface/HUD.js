@@ -8,11 +8,12 @@ import InfoPane from './hud/InfoPane';
 import SystemControls from './hud/SystemControls';
 import HudMenu from './hud/HudMenu';
 import SceneBanner from './hud/SceneBanner';
-import WelcomeTourItems from './hud/WelcomeTourItems';
+import WelcomeTour from './hud/WelcomeTour';
 import useStore from '~/hooks/useStore';
 import useSession from '~/hooks/useSession';
 import InfluenceLogo from '~/components/InfluenceLogo';
 import { headerHeight } from '~/game/uiConstants';
+import Coachmarks, { COACHMARK_IDS } from '~/Coachmarks';
 
 const bottomMargin = 60;
 
@@ -90,22 +91,26 @@ const HUD = () => {
   const { authenticated, authenticating } = useSession();
   const { loading } = useCrewContext();
 
-  const dismissWelcomeTour = useStore(s => s.gameplay?.dismissWelcomeTour);
-  const dispatchLauncherPage = useStore(s => s.dispatchLauncherPage);
-
+  // const dismissWelcomeTour = useStore(s => s.gameplay?.dismissWelcomeTour);
+  // const dispatchLauncherPage = useStore(s => s.dispatchLauncherPage);
   return (
     <>
       <LeftWrapper>
         {!authenticating && !loading
           ? (
             <>
-              {authenticated ? <AvatarMenu /> : <LogoWrapper onClick={() => dispatchLauncherPage(true)}><InfluenceLogo /></LogoWrapper>}
-              {authenticated ? <ActionItems /> : (dismissWelcomeTour ? <div style={{ flex: 1 }} /> : <WelcomeTourItems />)}
+              <AvatarMenu />
+              {/*TODO: used to use this if !authenticated, do we want to use when tutorial finished?
+                       (or if have previously loggedin? offer a link to login? or tutorial dismissed?)
+                <LogoWrapper onClick={() => dispatchLauncherPage(true)}><InfluenceLogo /></LogoWrapper>
+              */}
+              <ActionItems />
             </>
           )
           : (
             <div style={{ flex: 1 }} />
           )}
+
         <InfoPane />
       </LeftWrapper>
 
@@ -116,6 +121,8 @@ const HUD = () => {
       <SystemControls />
 
       <ActionDialog />
+
+      {!authenticated && <WelcomeTour />}
     </>
   );
 }

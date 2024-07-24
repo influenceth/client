@@ -425,6 +425,7 @@ export function ChainTransactionProvider({ children }) {
   // const dispatchPendingTransactionUpdate = useStore(s => s.dispatchPendingTransactionUpdate);
   const dispatchPendingTransactionComplete = useStore(s => s.dispatchPendingTransactionComplete);
   const dispatchClearTransactionHistory = useStore(s => s.dispatchClearTransactionHistory);
+  const welcomeTour = useStore(s => s.getWelcomeTour());
 
   const [promptingTransaction, setPromptingTransaction] = useState(false);
 
@@ -928,6 +929,38 @@ export function ChainTransactionProvider({ children }) {
 
   // Primary execute method for system calls (requires name of system, etc.)
   const executeSystem = useCallback(async (key, vars, meta = {}) => {
+    if (welcomeTour) {
+      const uuid = `0x${String(performance.now()).replace('.', '')}`;
+      console.log({
+        key,
+        vars,
+        meta,
+        timestamp: blockTime ? (blockTime * 1000) : null,
+        txHash: uuid,
+        waitingOn: 'TRANSACTION'
+      });
+      dispatchPendingTransaction({
+        key,
+        vars,
+        meta,
+        timestamp: blockTime ? (blockTime * 1000) : null,
+        txHash: uuid,
+        waitingOn: 'TRANSACTION'
+      });
+      setTimeout(() => {
+        dispatchPendingTransactionComplete(uuid);
+
+        // TODO: if finishTime, decrement finishTime until finished (show in "fast forwarding" state)
+        
+        // TODO: create expected activity out of this tx... will need a config somewhere
+        //       (simulate)
+
+        // TODO: overwrite data from useQuery as needed
+
+      }, 3000);
+      return;
+    }
+
     if (!walletAccount || !contracts || !contracts[key]) {
       createAlert({
         type: 'GenericAlert',
@@ -1010,7 +1043,7 @@ export function ChainTransactionProvider({ children }) {
     }
 
     setPromptingTransaction(false);
-  }, [blockTime, contracts, walletAccount]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [blockTime, contracts, walletAccount, welcomeTour]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const getPendingTx = useCallback((key, vars) => {
     if (contracts && contracts[key]) {

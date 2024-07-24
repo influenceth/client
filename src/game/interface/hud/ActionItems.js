@@ -287,6 +287,7 @@ const ActionItems = () => {
 
   const crewTutorial = useStore(s => s.crewTutorials?.[crew?.id]);
   const dismissAllTutorials = useStore(s => s.gameplay?.dismissTutorial);
+  const welcomeTour = useStore(s => s.getWelcomeTour());
   const dispatchUnhideAllActionItems = useStore(s => s.dispatchUnhideAllActionItems);
   const dispatchDismissCrewTutorial = useStore(s => s.dispatchDismissCrewTutorial);
 
@@ -404,11 +405,11 @@ const ActionItems = () => {
     setConfirmingTutorialDismissal();
   }, [crew?.id]);
 
-  const showTutorial = isLaunched && !dismissAllTutorials && !crewTutorial?.dismissed;
+  const showTutorial = isLaunched && !welcomeTour && !dismissAllTutorials && !crewTutorial?.dismissed;
   return (
     <>
       <OuterWrapper>
-        {authenticated && (
+        {(authenticated || welcomeTour) && (
           <CollapsibleSection
             borderless
             collapsibleProps={{

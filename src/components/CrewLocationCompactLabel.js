@@ -80,6 +80,7 @@ const CrewLocationCompactLabel = ({ alignLeft, crew, noClick, zoomedToAsteroid, 
     <Wrapper
       onClick={noClick ? undefined : handleClick}
       defaultToSpecific={zoomedToAsteroid === asteroid?.id}
+      ref={props.setRef}
       status={status}
       {...props}>
       {(ship || !building) ? <ShipIcon /> : <LocationIcon />}

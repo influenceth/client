@@ -1,8 +1,9 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 
 import { EjectMyCrewIcon } from '~/components/Icons';
 import ActionButton, { getCrewDisabledReason } from './ActionButton';
 import useEjectCrewManager from '~/hooks/actionManagers/useEjectCrewManager';
+import Coachmarks from '~/Coachmarks';
 
 const isVisible = ({ crew, building, ship }) => {
   if (crew) {
@@ -36,16 +37,21 @@ const EjectCrew = ({ crew, ship, onSetAction, _disabled }) => {
     return getCrewDisabledReason({ crew });
   }, [_disabled, crew]);
 
+  const [refEl, setRefEl] = useState();
   return (
-    <ActionButton
-      label="Eject My Crew"
-      labelAddendum={disabledReason}
-      flags={{
-        disabled: disabledReason,
-        loading: !!currentEjection,
-      }}
-      icon={<EjectMyCrewIcon />}
-      onClick={handleClick} />
+    <>
+      <ActionButton
+        ref={setRefEl}
+        label="Eject My Crew"
+        labelAddendum={disabledReason}
+        flags={{
+          disabled: disabledReason,
+          loading: !!currentEjection,
+        }}
+        icon={<EjectMyCrewIcon />}
+        onClick={handleClick} />
+      {false && <Coachmarks refEl={refEl} />}
+    </>
   );
 };
 

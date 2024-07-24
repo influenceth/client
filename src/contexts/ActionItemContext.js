@@ -4,6 +4,7 @@ import { Building } from '@influenceth/sdk';
 import cloneDeep from 'lodash/cloneDeep';
 
 import { CrewBusyIcon } from '~/components/AnimatedIcons';
+import { WELCOME_CONFIG } from '~/game/interface/hud/WelcomeTour';
 import useSession from '~/hooks/useSession';
 import useCrewAgreements from '~/hooks/useCrewAgreements';
 import useCrewContext from '~/hooks/useCrewContext';
@@ -50,7 +51,7 @@ export function ActionItemProvider({ children }) {
       await hydrateActivities(activities, queryClient);
       return activities;
     },
-    { enabled: !!crewId }
+    { enabled: !!crewId && crewId !== WELCOME_CONFIG.crewId }
   );
 
   const { data: crewBuildings, isLoading: plannedBuildingsLoading, dataUpdatedAt: plansUpdatedAt } = useCrewBuildings();
@@ -60,6 +61,7 @@ export function ActionItemProvider({ children }) {
       : undefined;
   }, [crewBuildings, plansUpdatedAt]);
 
+  const welcomeTour = useStore((s) => s.getWelcomeTour());
   const failedTransactions = useStore(s => s.failedTransactions);
   const hiddenActionItems = useStore(s => s.hiddenActionItems);
   const dispatchToggleHideActionItem = useStore(s => s.dispatchToggleHideActionItem);
@@ -171,7 +173,7 @@ export function ActionItemProvider({ children }) {
   }, [actionItems, busyActivity, crew, crew?._ready, crewAgreements, plannedBuildings, blockTime, itemsUpdatedAt, plansUpdatedAt]);
 
   const allVisibleItems = useMemo(() => {
-    if (!authenticated) return [];
+    if (!(authenticated || welcomeTour)) return [];
 
     // return the readyItems whose "finishing transaction" is not already pending
     const visibleReadyItems = (readyItems || []).filter((item) => {
@@ -220,6 +222,7 @@ export function ActionItemProvider({ children }) {
 
   }, [
     authenticated,
+    welcomeTour,
     failedTransactions,
     getActivityConfig,
     hiddenActionItems,

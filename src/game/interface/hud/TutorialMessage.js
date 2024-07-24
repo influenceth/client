@@ -72,6 +72,7 @@ const TutorialMessageWrapper = styled.div`
 
 const TutorialContent = styled.div`
   display: flex;
+  flex: 1;
   flex-direction: column;
   padding: 0 15px;
   & > h3 {

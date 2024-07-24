@@ -1,6 +1,6 @@
 import { createContext, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery, useQueryClient } from 'react-query';
-import { Crewmate, Entity, Permission, System } from '@influenceth/sdk';
+import { Crewmate, Entity, Inventory, Permission, Ship, System } from '@influenceth/sdk';
 
 import api from '~/lib/api';
 import useSession from '~/hooks/useSession';
@@ -9,6 +9,17 @@ import useEntity from '~/hooks/useEntity';
 import useStore from '~/hooks/useStore';
 import { getCrewAbilityBonuses, locationsArrToObj, openAccessJSTime } from '~/lib/utils';
 import { entitiesCacheKey } from '~/lib/cacheKey';
+import { WELCOME_CONFIG } from '~/game/interface/hud/WelcomeTour';
+
+const entityProps = ({ id, label }) => ({ id, label, uuid: Entity.packEntity({ id, label }) });
+const welcomeNftConfig = {
+  owners: {
+    ethereum: null,
+    starknet: WELCOME_CONFIG.accountAddress,
+  },
+  owner: WELCOME_CONFIG.accountAddress,
+  chain: "STARKNET"
+};
 
 const CrewContext = createContext();
 
@@ -17,7 +28,8 @@ export function CrewProvider({ children }) {
 
   const queryClient = useQueryClient();
   const allPendingTransactions = useStore(s => s.pendingTransactions);
-  const selectedCrewId = useStore(s => s.selectedCrewId);
+  const welcomeTour = useStore(s => s.getWelcomeTour());
+  const selectedCrewId = useStore(s => welcomeTour ? WELCOME_CONFIG.crewId : s.selectedCrewId);
   const dispatchCrewSelected = useStore(s => s.dispatchCrewSelected);
 
   const { data: constants, isLoading: constantsLoading } = useConstants(['CREW_SCHEDULE_BUFFER','TIME_ACCELERATION']);
@@ -31,11 +43,63 @@ export function CrewProvider({ children }) {
     [accountAddress]
   );
 
-  const { data: rawCrews, isLoading: crewsLoading, dataUpdatedAt: rawCrewsUpdatedAt } = useQuery(
+  const welcomeTourCrew = useMemo(() => {
+    if (!welcomeTour) return null;
+
+    const wcrewLocations = [
+      entityProps({ id: 1, label: Entity.IDS.BUILDING }),
+      entityProps({ id: 6881662889623553, label: Entity.IDS.LOT }),
+      entityProps({ id: 1, label: Entity.IDS.ASTEROID })
+    ];
+
+    const roster = [
+      welcomeTour.crewmate ? WELCOME_CONFIG.crewmateId : undefined,
+      WELCOME_CONFIG.crewmates.engineer,
+      WELCOME_CONFIG.crewmates.miner,
+      WELCOME_CONFIG.crewmates.merchant,
+      WELCOME_CONFIG.crewmates.pilot,
+    ].filter((c) => !!c);
+
+    return {
+      ...entityProps({ id: WELCOME_CONFIG.crewId, label: Entity.IDS.CREW }),
+      _isWelcomeTour: true,
+      Crew: {
+        actionRound: 0,
+        actionStrategy: 0,
+        actionType: 0,
+        actionWeight: 0,
+        delegatedTo: WELCOME_CONFIG.accountAddress,
+        lastFed: blockTime,
+        readyAt: 0,
+        roster
+      },
+      Location: {
+        location: wcrewLocations[0],
+        locations: wcrewLocations
+      },
+      Inventories: [],
+      Name: {
+        name: "ADALIAN INTERNSHIP"
+      },
+      Nft: welcomeNftConfig,
+      Ship: {
+        emergencyAt: 0,
+        readyAt: 0,
+        shipType: Ship.IDS.ESCAPE_MODULE,
+        status: Ship.IDS.DISABLED,
+        transitArrival: 0,
+        transitDeparture: 0,
+        variant: Ship.VARIANTS.STANDARD
+      }
+    };
+  }, [blockTime, welcomeTour, welcomeTour]);
+
+  const { data: realRawCrews, isLoading: crewsLoading, dataUpdatedAt: rawCrewsUpdatedAt } = useQuery(
     ownedCrewsQueryKey,
     () => api.getOwnedCrews(accountAddress),
     { enabled: !!token }
   );
+  const rawCrews = useMemo(() => welcomeTourCrew ? [welcomeTourCrew] : realRawCrews, [welcomeTourCrew, rawCrewsUpdatedAt]);
 
   const combinedCrewRoster = useMemo(
     () => (rawCrews || []).reduce((acc, c) => [...acc, ...c.Crew.roster], []),
@@ -75,10 +139,25 @@ export function CrewProvider({ children }) {
       (myOwnedCrewmates || []).forEach((crewmate) => {
         if (!map[crewmate.id]) map[crewmate.id] = crewmate;
       });
+      if (welcomeTour && welcomeTour.crewmate) {
+        map[WELCOME_CONFIG.crewmateId] = {
+          ...entityProps({ id: WELCOME_CONFIG.crewmateId, label: Entity.IDS.CREWMATE }),
+          Control: {
+            controller: entityProps({ id: WELCOME_CONFIG.crewId, label: Entity.IDS.CREW }),
+          },
+          Crewmate: {
+            appearance: welcomeTour.crewmate.appearance,
+            coll: Crewmate.COLLECTION_IDS.ADALIAN,
+          },
+          Name: { name: welcomeTour.crewmate.name },
+          Nft: welcomeNftConfig,
+          // TODO: any other crewmate search should return this as well
+        };
+      }
       return map;
     }
     return null;
-  }, [myCrewCrewmates, myOwnedCrewmates, crewsLoading, crewmatesLoading, myOwnedCrewmatesLoading]);
+  }, [myCrewCrewmates, myOwnedCrewmates, crewsLoading, crewmatesLoading, myOwnedCrewmatesLoading, welcomeTour]);
 
   // NOTE: this covers all queries' loading states because crewmateMap is
   // null while any of those are true
@@ -238,7 +317,10 @@ export function CrewProvider({ children }) {
     }
   }, [authenticated, crewsAndCrewmatesReady, selectedCrew]);
 
-  const captain = useMemo(() => selectedCrew?._crewmates?.[0] || null, [crewmateMap, selectedCrew]);
+  const captain = useMemo(() => {
+    if (welcomeTour && !welcomeTour.crewmate) return null;
+    return selectedCrew?._crewmates?.[0] || null;
+  }, [crewmateMap, selectedCrew, welcomeTour]);
 
   const crewCan = useCallback(
     (permission, hydratedTarget) => (finalSelectedCrew && hydratedTarget)

@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import styled, { css, keyframes } from 'styled-components';
 
@@ -15,6 +15,8 @@ import useStore from '~/hooks/useStore';
 import LiveReadyStatus from '~/components/LiveReadyStatus';
 import { SECTION_WIDTH } from './ActionItems';
 import Button from '~/components/ButtonAlt';
+import Coachmarks, { COACHMARK_IDS } from '~/Coachmarks';
+import { WELCOME_CONFIG } from './WelcomeTour';
 
 const menuWidth = SECTION_WIDTH;
 
@@ -157,6 +159,7 @@ const AvatarMenu = () => {
   const onSetAction = useStore(s => s.dispatchActionDialog);
   const asteroidId = useStore(s => s.asteroids.origin);
   const zoomStatus = useStore(s => s.asteroids.zoomStatus);
+  const welcomeTour = useStore(s => s.getWelcomeTour());
 
   const silhouetteOverlay = useMemo(() => {
     if (!captain) {
@@ -172,7 +175,22 @@ const AvatarMenu = () => {
     return null;
   }, [captain]);
 
-  const onClick = useCallback(() => history.push('/crew'), []);
+  const onClick = useCallback((crewmateId) => () => {
+    if (welcomeTour) {
+      if (!crewmateId || (crewmateId === WELCOME_CONFIG.crewmateId)) {
+        // TODO: should/could link back to welcometour crewmate
+        if (!welcomeTour.crewmate) {
+          history.push(`/recruit/0/1/0/create`); 
+        }
+        return;
+      }
+      return history.push(`/crewmate/${crewmateId}`);
+    }
+    return history.push('/crew');
+  }, [welcomeTour]);
+
+  const [captainRefEl, setCaptainRefEl] = useState();
+  const [locationRefEl, setLocationRefEl] = useState();
 
   if (crewIsLoading) return null;
   return (
@@ -191,7 +209,9 @@ const AvatarMenu = () => {
                   <CrewLocationCompactLabel
                     crew={crew}
                     flip
+                    setRef={setLocationRefEl}
                     zoomedToAsteroid={zoomStatus === 'in' && asteroidId} />
+                  <Coachmarks label={COACHMARK_IDS.hudCrewLocation} refEl={locationRefEl} />
                 </>
               )
               : `No Active Crews`
@@ -203,11 +223,14 @@ const AvatarMenu = () => {
             borderColor={`rgba(${theme.colors.mainRGB}, 0.4)`}
             crewmate={captain}
             isCaptain
-            onClick={onClick}
+            onClick={onClick(captain?.id)}
             noAnimation
+            setRef={setCaptainRefEl}
             silhouetteOverlay={silhouetteOverlay}
-            warnIfNotOwnedBy={crew?.Nft?.owner}
+            CrewmateCardProps={welcomeTour ? { useExplicitAppearance: true } : {}}
+            warnIfNotOwnedBy={welcomeTour ? undefined : crew?.Nft?.owner}
             width={98} />
+          <Coachmarks label={COACHMARK_IDS.hudRecruitCaptain} refEl={captainRefEl} />
 
           <CrewInfoContainer>
             <TitleBar showBusy={crew && !crew._ready}>
@@ -228,14 +251,14 @@ const AvatarMenu = () => {
               ? (
                 <Crewmates>
                   {(crew?._crewmates || []).map((crewmate, i) => {
-                    if (i === 0) return null;
+                    if ((!welcomeTour || !!welcomeTour.crewmate) && i === 0) return null;
                     return (
                       <CrewmateCardFramed
                         key={crewmate.id}
                         borderColor={`rgba(${theme.colors.mainRGB}, 0.4)`}
                         crewmate={crewmate}
-                        onClick={onClick}
-                        warnIfNotOwnedBy={crew?.Nft?.owner}
+                        onClick={onClick(crewmate?.id)}
+                        warnIfNotOwnedBy={welcomeTour ? undefined : crew?.Nft?.owner}
                         width={69}
                         noArrow />
                     );

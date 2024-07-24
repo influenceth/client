@@ -150,6 +150,7 @@ const CrewmateCardAbstract = ({
   isCaptain,
   isEmpty,
   onClick,
+  setRef,
   silhouetteOverlay,
   tooltip,
   tooltipPlace = 'right',
@@ -164,6 +165,7 @@ const CrewmateCardAbstract = ({
       data-tooltip-place={tooltipPlace}
       clickable={!!onClick}
       onClick={onClick || noop}
+      ref={setRef}
       width={cardWidth}
       {...props}>
       <Avatar isEmpty={isEmpty} borderColor={borderColor || defaultBorderColor} {...props}>

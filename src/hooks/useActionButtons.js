@@ -111,6 +111,7 @@ const useActionButtons = () => {
   const zoomScene = useStore(s => s.asteroids.zoomScene);
   const openHudMenu = useStore(s => s.openHudMenu);
   const setAction = useStore(s => s.dispatchActionDialog);
+  const welcomeTour = useStore(s => s.getWelcomeTour());
 
   // account
   const { accountAddress } = useSession();
@@ -174,12 +175,13 @@ const useActionButtons = () => {
         lot: zoomStatus === 'in' && lot,
         openHudMenu,
         ship: targetShip?.Ship.status === Ship.STATUSES.AVAILABLE && targetShip,
+        welcomeTour,
         zoomStatus,
         zoomScene
       }))
       .sort((a, b) => (buttonOrder[a] || 100) - (buttonOrder[b] || 100))
       .map((k) => actionButtons[k].Component || actionButtons[k]);
-  }, [targetShip, asteroid, constructionStatus, crew, crewedShip, lot, openHudMenu, resourceMap?.active, !!resourceMap?.selected, zoomScene, zoomStatus]);
+  }, [targetShip, asteroid, constructionStatus, crew, crewedShip, lot, openHudMenu, resourceMap?.active, !!resourceMap?.selected, welcomeTour, zoomScene, zoomStatus]);
 
   // TODO: within each action button, should memoize whatever is passed to flags
   // (because always a new object, will always re-render the underlying button)
@@ -192,6 +194,7 @@ const useActionButtons = () => {
       lot,
       ship: targetShip,
       onSetAction: setAction,
+      welcomeTour,
       _disabled: asteroidIsLoading || lotIsLoading
     }
   }

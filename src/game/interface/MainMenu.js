@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useHistory } from 'react-router-dom';
 import styled from 'styled-components';
 import { MdFullscreen as FullscreenIcon, MdFullscreenExit as ExitFullscreenIcon } from 'react-icons/md';
@@ -12,6 +12,7 @@ import useScreenSize from '~/hooks/useScreenSize';
 import HudIconButton from '~/components/HudIconButton';
 import IconButton from '~/components/IconButton';
 import TimeControls from './mainMenu/TimeControls';
+import Coachmarks, { COACHMARK_IDS } from '~/Coachmarks';
 
 const StyledMainMenu = styled.div`
   pointer-events: none;
@@ -139,6 +140,8 @@ const MainMenu = () => {
 
   const [ fullscreen, setFullscreen ] = useState(screenfull.isEnabled && screenfull.isFullscreen);
 
+  const [backButtonRefEl, setBackButtonRefEl] = useState();
+
   // TODO: genesis book deprecation vvv
   // const { crew, crewmateMap } = useCrewContext();
   // const hasGenesisCrewmate = useMemo(() => {
@@ -206,11 +209,15 @@ const MainMenu = () => {
       <Actionable>
         <LeftHudButtonArea>
           {onClickBack && (
-            <HudIconButton
-              dataTip={backLabel}
-              onClick={onClickBack}>
-              <BackIcon />
-            </HudIconButton>
+            <>
+              <HudIconButton
+                setRef={setBackButtonRefEl}
+                dataTip={backLabel}
+                onClick={onClickBack}>
+                <BackIcon />
+              </HudIconButton>
+              <Coachmarks label={COACHMARK_IDS.backToBelt} refEl={backButtonRefEl} />
+            </>
           )}
           {!onClickBack && process.env.REACT_APP_CHAIN_ID !== '0x534e5f5345504f4c4941' && (
             <img
