@@ -15,7 +15,7 @@ import constants from '~/lib/constants';
 import exportGLTF from '~/lib/graphics/exportGLTF';
 import formatters from '~/lib/formatters';
 import { asteroidPrice } from '~/lib/priceUtils';
-import { fireTrackingEvent, nativeBool, reactBool } from '~/lib/utils';
+import { fireTrackingEvent, nativeBool, reactBool, safeBigInt } from '~/lib/utils';
 import { renderDummyAsteroid } from '~/game/scene/asteroid/helpers/utils';
 
 import AddressLink from '~/components/AddressLink';
@@ -316,7 +316,7 @@ const AsteroidInformation = ({ abundances, asteroid, isManager, isOwner }) => {
 
   const sufficientFunds = useMemo(() => {
     if (!price || !priceConstants || !walletBalances) return false;
-    const balance = BigInt(walletBalances?.combinedBalance?.to(priceConstants.ASTEROID_PURCHASE_TOKEN));
+    const balance = safeBigInt(walletBalances?.combinedBalance?.to(priceConstants.ASTEROID_PURCHASE_TOKEN));
     return price <= balance;
   }, [price, priceConstants, walletBalances]);
 

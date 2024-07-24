@@ -1,5 +1,6 @@
 import { AdalianOrbit, Asteroid, Building, Lot, Ship } from '@influenceth/sdk';
 import { constants } from '@influenceth/astro';
+import { safeBigInt } from './utils';
 
 const formatters = {
 
@@ -68,7 +69,7 @@ const formatters = {
   lotName: (lotOrIndex) => {
     let lotIndex = lotOrIndex?.id || lotOrIndex;
     if (!lotIndex) return 'Lot';
-    if (BigInt(lotIndex) >= 2n ** 32n) lotIndex = Lot.toIndex(lotIndex);
+    if (safeBigInt(lotIndex) >= 2n ** 32n) lotIndex = Lot.toIndex(lotIndex);
     return `Lot #${lotIndex.toLocaleString()}`;
   },
 

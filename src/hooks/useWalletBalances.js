@@ -5,6 +5,7 @@ import useStore from '~/hooks/useStore';
 import { useEthBalance, useUSDCBalance } from '~/hooks/useWalletTokenBalance';
 import { TOKEN, TOKEN_SCALE } from '~/lib/priceUtils';
 import usePriceConstants from './usePriceConstants';
+import { safeBigInt } from '~/lib/utils';
 
 // try to keep a reserve for gas equiv to $2 USD
 export const GAS_BUFFER_VALUE_USDC = 2 * TOKEN_SCALE[TOKEN.USDC];
@@ -31,7 +32,7 @@ const useWalletBalances = (overrideAccount) => {
 
   const swappableTokenBalances = useMemo(() => {
     const allTokens = {
-      [TOKEN.ETH]: ethBalance ? (ethBalance - BigInt(Math.floor(gasReserveBalance.to(TOKEN.ETH)))) : 0n,
+      [TOKEN.ETH]: ethBalance ? (ethBalance - safeBigInt(Math.floor(gasReserveBalance.to(TOKEN.ETH)))) : 0n,
       [TOKEN.USDC]: usdcBalance || 0n,
     };
 

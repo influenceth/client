@@ -10,18 +10,19 @@ import StarterPackHeroImage from '~/assets/images/sales/starter_packs_hero.jpg';
 import AdalianFlourish from '~/components/AdalianFlourish';
 import HeroLayout from '~/components/HeroLayout';
 import UncontrolledTextInput from '~/components/TextInputUncontrolled';
-import { EthIcon, PurchaseAsteroidIcon, SwayIcon } from '~/components/Icons';
+import { CheckIcon, EthIcon, SwayIcon } from '~/components/Icons';
+import LiveTimer from '~/components/LiveTimer';
 import useStore from '~/hooks/useStore';
 import useAsteroidSale from '~/hooks/useAsteroidSale';
 import useBlockTime from '~/hooks/useBlockTime';
 import useFaucetInfo from '~/hooks/useFaucetInfo';
-import { cleanseTxHash, fireTrackingEvent, formatTimer, nativeBool, reactBool, roundToPlaces } from '~/lib/utils';
+import { cleanseTxHash, fireTrackingEvent, nativeBool, reactBool, roundToPlaces, safeBigInt } from '~/lib/utils';
 import theme from '~/theme';
 import Button from '~/components/ButtonAlt';
 import useWalletBalances from '~/hooks/useWalletBalances';
 import useCrewManager from '~/hooks/actionManagers/useCrewManager';
 import usePriceConstants from '~/hooks/usePriceConstants';
-import { TOKEN, TOKEN_FORMAT, TOKEN_SCALE } from '~/lib/priceUtils';
+import { TOKEN, TOKEN_FORMAT, TOKEN_SCALE, asteroidPriceToLots } from '~/lib/priceUtils';
 import usePriceHelper from '~/hooks/usePriceHelper';
 import UserPrice from '~/components/UserPrice';
 import api from '~/lib/api';
@@ -161,27 +162,55 @@ const SwayExchangeRows = styled(PurchaseFormRows)`
     }
   }
 `;
-const AsteroidBanner = styled.div`
+const AsteroidSizeWrapper = styled.div`
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  width: 100%;
+  & > div {
+    flex: 0 0 32%;
+    padding-bottom: 20px;
+    & > div {
+      padding: 10px;
+    }
+  }
+`;
+const AsteroidAd = styled.div`
+  align-items: flex-start;
+  display: flex;
+  flex-direction: row;
+  padding: 0 0 15px;
+  & > svg {
+    margin-left: 2px;
+    margin-top: 2px;
+  }
+  & > span {
+    flex: 0 0 calc(100% - 18px);
+    font-size: 14px;
+    opacity: 0.7;
+    padding-left: 12px;
+  }
+`;
+const AsteroidButtonInner = styled.div`
   align-items: center;
   display: flex;
   flex-direction: row;
-  margin-top: 6px;
-  padding: 0 10px;
-  & > div:first-child {
-    color: ${p => p.inactive ? p.theme.colors.inFlight : 'white'};
-    font-size: 60px;
-    line-height: 0;
+  justify-content: space-between;
+  width: 100%;
+  & > span:last-child {
+    color: white;
+    font-size: 14px;
   }
-  & > div:last-child {
-    label {
-      font-size: 17px;
-      font-weight: bold;
-    }
-    span {
-      color: ${p => p.inactive ? p.theme.colors.inFlight : p.theme.colors.main};
-      display: block;
-      font-size: 85%;
-    }
+`;
+const AsteroidsRemaining = styled.div`
+  color: white;
+  font-size: 18px;
+  font-weight: bold;
+  line-height: 20px;
+  text-align: right;
+  & > span {
+    font-size: 15px;
+    opacity: 0.5;
   }
 `;
 
@@ -203,73 +232,103 @@ export const PurchaseButton = styled(Button)`
   `}
 `;
 
-const AsteroidSKU = () => {
-  const { data: asteroidSale } = useAsteroidSale();
-  const blockTime = useBlockTime();
+const FilterAsteroidButton = ({ price, sizeFilter }) => {
+  const filters = useStore(s => s.assetSearch['asteroidsMapped'].filters);
+  const updateFilters = useStore(s => s.dispatchFiltersUpdated('asteroidsMapped'));
+  const zoomStatus = useStore(s => s.asteroids.zoomStatus);
+  const dispatchHudMenuOpened = useStore(s => s.dispatchHudMenuOpened);
+  const dispatchLauncherPage = useStore(s => s.dispatchLauncherPage);
+  const dispatchZoomScene = useStore(s => s.dispatchZoomScene);
+  const updateZoomStatus = useStore(s => s.dispatchZoomStatusChanged);
 
-  const [remaining, remainingTime] = useMemo(() => {
-    if (!asteroidSale) return [0, 0, false];
-
-    const remaining = asteroidSale ? (Number(asteroidSale.limit) - Number(asteroidSale.volume)) : 0;
-    const now = blockTime || Math.floor(Date.now() / 1e3);
-    return [
-      remaining,
-      Math.ceil(now / 1e6) * 1e6 - now
-    ];
-  }, [asteroidSale, blockTime]);
+  const filterUnownedAsteroidsAndClose = useCallback(() => {
+    updateFilters(Object.assign({}, filters, { ownedBy: 'unowned', ...sizeFilter }));
+    dispatchZoomScene();
+    let hudTimeout = 0;
+    if (zoomStatus !== 'out') {
+      updateZoomStatus('zooming-out');
+      hudTimeout = 2100;
+    }
+    setTimeout(() => dispatchHudMenuOpened('BELT_MAP_SEARCH'), hudTimeout);
+    dispatchLauncherPage();
+  }, [filters, sizeFilter, updateFilters, zoomStatus, dispatchHudMenuOpened, dispatchLauncherPage, dispatchZoomScene, updateZoomStatus]);
 
   return (
-    <Wrapper>
+    <Button onClick={filterUnownedAsteroidsAndClose} style={{ width: '100%' }}>
+      <AsteroidButtonInner>
+        <span>Search Available</span>
+        <span>{price}</span>
+      </AsteroidButtonInner>
+    </Button>
+  );
+}
+
+const smallMaxPrice = 100 * TOKEN_SCALE[TOKEN.USDC];
+const mediumMaxPrice = 1000 * TOKEN_SCALE[TOKEN.USDC];
+const largeMaxPrice = 10000 * TOKEN_SCALE[TOKEN.USDC];
+const AsteroidSKU = () => {
+  const { data: priceConstants } = usePriceConstants();
+  const priceHelper = usePriceHelper();
+  const [smallMaxLots, mediumMaxLots, largeMaxLots] = useMemo(() => {
+    return [
+      asteroidPriceToLots(priceHelper.from(smallMaxPrice, TOKEN.USDC).to(TOKEN.ETH), priceConstants),
+      asteroidPriceToLots(priceHelper.from(mediumMaxPrice, TOKEN.USDC).to(TOKEN.ETH), priceConstants),
+      asteroidPriceToLots(priceHelper.from(largeMaxPrice, TOKEN.USDC).to(TOKEN.ETH), priceConstants),
+    ];
+  }, [priceHelper, priceConstants]);
+
+  return (
+    <div>
       <Description>
-        <p>
-          Asteroids are the core productive land in Influence. Asteroid owners
-          hold the rights to mining and constructing on their asteroid, or may
-          share or contract those rights to others. Every asteroid also comes
-          with one free Adalian crewmate!
-        </p>
-        <p>
-          Note: Each asteroid has unique celestrial attributes, orbital
-          mechanics, and resource abundances that should be carefully
-          considered before buying.
+        <p style={{ borderBottom: '1px solid #333', fontWeight: 'bold', padding: '5px 0 18px' }}>
+          Asteroids are the core productive land in Influence. There are 250,000 in total, and more
+          will never be added. Owners hold the rights to all mining and land-use on their asteroid,
+          and may share or contract those rights to others. Each asteroid has unique orbital
+          attributes, resource composition, and comes with a free Adalian crewmate!
         </p>
       </Description>
-      <PurchaseForm isOrange={remaining === 0}>
-        <h3>
-          <span>
-            {remaining > 0 && `Sale Active`}
-            {remaining <= 0 && `Next Sale`}
-          </span>
-          <span>
-            {remaining <= 0
-              ? <>Starts in <b>{formatTimer(remainingTime, 2)}</b></>
-              : null
-            }
-          </span>
-        </h3>
-        <div>
-          <AsteroidBanner inactive={remaining === 0}>
-            <div>
-              <PurchaseAsteroidIcon />
-            </div>
-            {remaining > 0
-              ? (
-                <div>
-                  <label>{asteroidSale ? remaining.toLocaleString() : '...'} Asteroid{remaining === 1 ? '' : 's'}</label>
-                  <span>Remaining in sale period</span>
-                </div>
-              )
-              : (
-                <div>
-                  <span>All asteroids in this sale period have been purchased.</span>
-                </div>
-              )}
-          </AsteroidBanner>
-        </div>
-        <footer style={{ fontSize: '85%', marginTop: 10, padding: '0 10px', textAlign: 'left' }}>
-          Available asteroids can be purchased directly in the belt view
-        </footer>
-      </PurchaseForm>
-    </Wrapper>
+      <AsteroidSizeWrapper>
+        <PurchaseForm>
+          <h3>Small Asteroids</h3>
+          <div>
+            <AsteroidAd>
+              <CheckIcon />
+              <span>Perfect for solo players. Own and colonize your own outpost in Adalia.</span>
+            </AsteroidAd>
+            {/* TODO: preferred currency */}
+            <FilterAsteroidButton
+              price={<>{'<'} <UserPrice price={smallMaxPrice} priceToken={TOKEN.USDC} format={TOKEN_FORMAT.SHORT} /></>}
+              sizeFilter={{ surfaceAreaMin: 0, surfaceAreaMax: smallMaxLots }} />
+          </div>
+        </PurchaseForm>
+
+        <PurchaseForm isPurple>
+          <h3>Medium Asteroids</h3>
+          <div>
+            <AsteroidAd>
+              <CheckIcon />
+              <span>Ideal for small and medium groups. Build out the ultimate space base!</span>
+            </AsteroidAd>
+            <FilterAsteroidButton
+              price={<>{'<'} <UserPrice price={mediumMaxPrice} priceToken={TOKEN.USDC} format={TOKEN_FORMAT.SHORT} /></>}
+              sizeFilter={{ surfaceAreaMin: smallMaxLots, surfaceAreaMax: mediumMaxLots }} />
+          </div>
+        </PurchaseForm>
+
+        <PurchaseForm isOrange>
+          <h3>Large Asteroids</h3>
+          <div>
+            <AsteroidAd>
+              <CheckIcon />
+              <span>Now you're serious. Get an alliance together and take on the belt!</span>
+            </AsteroidAd>
+            <FilterAsteroidButton
+              price={<>{'<'} <UserPrice price={largeMaxPrice} priceToken={TOKEN.USDC} format={TOKEN_FORMAT.SHORT} /></>}
+              sizeFilter={{ surfaceAreaMin: mediumMaxLots, surfaceAreaMax: largeMaxLots }} />
+          </div>
+        </PurchaseForm>
+      </AsteroidSizeWrapper>
+    </div>
   );
 };
 
@@ -292,7 +351,7 @@ const CrewmateSKU = ({ onUpdatePurchase, onPurchasing }) => {
   useEffect(() => {
     const cleanQuantity = cleanseCrewmates(quantity) || 1;
     const totalPrice = priceHelper.from(
-      BigInt(cleanQuantity) * priceConstants?.ADALIAN_PURCHASE_PRICE,
+      safeBigInt(cleanQuantity) * priceConstants?.ADALIAN_PURCHASE_PRICE,
       priceConstants?.ADALIAN_PURCHASE_TOKEN
     );
     onUpdatePurchase({
@@ -622,6 +681,8 @@ const SwayFaucetButton = () => {
 }
 
 const SKU = ({ asset, onBack }) => {
+  const { data: asteroidSale } = useAsteroidSale();
+  const blockTime = useBlockTime();
   const { accountAddress, login } = useSession();
   const { pendingTransactions, isLaunched } = useCrewContext();
   const priceHelper = usePriceHelper();
@@ -629,13 +690,6 @@ const SKU = ({ asset, onBack }) => {
   const { data: wallet } = useWalletBalances();
 
   const preferredUiCurrency = useStore(s => s.getPreferredUiCurrency());
-  const filters = useStore(s => s.assetSearch['asteroidsMapped'].filters);
-  const updateFilters = useStore(s => s.dispatchFiltersUpdated('asteroidsMapped'));
-  const zoomStatus = useStore(s => s.asteroids.zoomStatus);
-  const dispatchHudMenuOpened = useStore(s => s.dispatchHudMenuOpened);
-  const dispatchLauncherPage = useStore(s => s.dispatchLauncherPage);
-  const dispatchZoomScene = useStore(s => s.dispatchZoomScene);
-  const updateZoomStatus = useStore(s => s.dispatchZoomStatusChanged);
 
   const [purchase, setPurchase] = useState();
   const [fundingPurchase, setFundingPurchase] = useState();
@@ -644,18 +698,6 @@ const SKU = ({ asset, onBack }) => {
   const isPurchasingStarterPack = useMemo(() => {
     return isPurchasing || (pendingTransactions || []).find(tx => tx.key === 'PurchaseStarterPack');
   }, [pendingTransactions]);
-
-  const filterUnownedAsteroidsAndClose = useCallback(() => {
-    updateFilters(Object.assign({}, filters, { ownedBy: 'unowned' }));
-    dispatchZoomScene();
-    let hudTimeout = 0;
-    if (zoomStatus !== 'out') {
-      updateZoomStatus('zooming-out');
-      hudTimeout = 2100;
-    }
-    setTimeout(() => dispatchHudMenuOpened('BELT_MAP_SEARCH'), hudTimeout);
-    dispatchLauncherPage();
-  }, [filters, updateFilters, zoomStatus, dispatchHudMenuOpened, dispatchLauncherPage, dispatchZoomScene, updateZoomStatus]);
 
   const handlePurchase = useCallback((overridePurchase) => {
     if (!accountAddress) return login();
@@ -681,6 +723,17 @@ const SKU = ({ asset, onBack }) => {
     handlePurchase(packPurchase);
   }, [handlePurchase, packs]);
 
+  const [asteroidsRemaining, nextAsteroidSale] = useMemo(() => {
+    if (!asteroidSale) return [0, 0, false];
+
+    const remaining = asteroidSale ? (Number(asteroidSale.limit) - Number(asteroidSale.volume)) : 0;
+    const now = blockTime || Math.floor(Date.now() / 1e3);
+    return [
+      remaining,
+      Math.ceil(now / 1e6) * 1e6
+    ];
+  }, [asteroidSale, blockTime]);
+
   const { content, ...props } = useMemo(() => {
     if (asset === 'asteroids') {
       return {
@@ -688,14 +741,26 @@ const SKU = ({ asset, onBack }) => {
         title: 'Buy Asteroids',
         styleOverrides: {
           ...defaultStyleOverrides,
-          belowFold: { padding: '10px 0 20px 0' },
+          belowFold: { minHeight: 275, padding: '10px 0 20px 0' },
           body: { paddingLeft: '35px' }
         },
         content: <AsteroidSKU />,
         flourishWidth: 1,
         rightButton: {
-          label: 'Browse Available Asteroids',
-          onClick: filterUnownedAsteroidsAndClose,
+          preLabel: 
+            asteroidsRemaining > 0
+            ? (
+              <AsteroidsRemaining>
+                <div>{asteroidsRemaining.toLocaleString()} Asteroids</div>
+                <span>Remaining this sales period</span>
+              </AsteroidsRemaining>
+            )
+            : (
+              <AsteroidsRemaining>
+                <div>Next Sale</div>
+                <span>Starts in <b><LiveTimer target={nextAsteroidSale} /></b></span>
+              </AsteroidsRemaining>
+            )
         }
       };
     }
@@ -716,7 +781,7 @@ const SKU = ({ asset, onBack }) => {
         styleOverrides: {
           ...defaultStyleOverrides,
           aboveFold: { height: 160, marginTop: -175 },
-          belowFold: { padding: '10px 0 20px 0' },
+          belowFold: { padding: '10px 0 20px 0', marginTop: -175 },
           body: { overflow: 'visible', paddingLeft: '35px' },
           rule: { width: 308 }
         },
@@ -784,7 +849,7 @@ const SKU = ({ asset, onBack }) => {
       preLabel: process.env.REACT_APP_CHAIN_ID === '0x534e5f5345504f4c4941' && <SwayFaucetButton />
     };
     return params;
-  }, [asset, isLaunched, filterUnownedAsteroidsAndClose, isPurchasing]);
+  }, [asset, isLaunched, isPurchasing]);
 
   return (
     <>

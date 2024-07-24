@@ -12,6 +12,7 @@ const FieldNote = styled.span`
 
 const RangeFilter = ({
   assetType,
+  children = null,
   fieldNames,
   fieldNote,
   filters,
@@ -97,6 +98,8 @@ const RangeFilter = ({
       highlightFieldName={highlightFieldName}
       title={title}
       highlightColorRange={highlightColorRange}>
+
+      {children}
 
       <InputBlock>
         <label>{labels.min}</label>

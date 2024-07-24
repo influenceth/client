@@ -4,7 +4,7 @@ import esb from 'elastic-builder';
 import { executeSwap, fetchQuotes } from "@avnu/avnu-sdk";
 
 import useStore from '~/hooks/useStore';
-import { entityToAgreements, esbLocationQuery, esbPermissionQuery, safeEntityId } from './utils';
+import { entityToAgreements, esbLocationQuery, esbPermissionQuery, safeBigInt, safeEntityId } from './utils';
 import { TOKEN, TOKEN_SCALE } from './priceUtils';
 
 // set default app version
@@ -800,7 +800,7 @@ const api = {
     return fetchQuotes({
       sellTokenAddress: sellToken,
       buyTokenAddress: buyToken,
-      sellAmount: BigInt(amount),
+      sellAmount: safeBigInt(amount),
       takerAddress: account
     }, options);
   },
