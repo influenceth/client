@@ -213,9 +213,11 @@ const HeroLayout = ({
           {rightButton && (
             <div style={{ alignItems: 'center', display: 'flex' }}>
               {rightButton.preLabel || ''}
-              <Button onClick={rightButton.onClick} {...(rightButton.props || {})}>
-                {rightButton.label}
-              </Button>
+              {rightButton.onClick && rightButton.label && (
+                <Button onClick={rightButton.onClick} {...(rightButton.props || {})}>
+                  {rightButton.label}
+                </Button>
+              )}
             </div>
           )}
         </div>
