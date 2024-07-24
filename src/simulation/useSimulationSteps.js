@@ -1,40 +1,18 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import styled, { css, keyframes } from 'styled-components';
-import { useHistory } from 'react-router-dom';
-import { FaYoutube as YoutubeIcon } from 'react-icons/fa';
-import { TbBellRingingFilled as AlertIcon } from 'react-icons/tb';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Building, Permission, Inventory, Product } from '@influenceth/sdk';
 
-import CollapsibleSection from '~/components/CollapsibleSection';
-import { TutorialIcon } from '~/components/Icons';
 import { ZOOM_IN_ANIMATION_TIME, ZOOM_OUT_ANIMATION_TIME, ZOOM_TO_PLOT_ANIMATION_MAX_TIME, ZOOM_TO_PLOT_ANIMATION_MIN_TIME } from '~/game/scene/Asteroid';
-import { getBuildingRequirements } from '~/game/interface/hud/actionDialogs/components';
 import useCrewAgreements from '~/hooks/useCrewAgreements';
 import useCrewBuildings from '~/hooks/useCrewBuildings';
 import useCrewContext from '~/hooks/useCrewContext';
 import useCrewSamples from '~/hooks/useCrewSamples';
-import useSession from '~/hooks/useSession';
 import useStore from '~/hooks/useStore';
-import theme from '~/theme';
-import TutorialMessage from './TutorialMessage';
 import { COACHMARK_IDS } from '~/Coachmarks';
 import useLot from '~/hooks/useLot';
+import SIMULATION_CONFIG from '~/simulation/simulationConfig';
+import useSimulationState from '~/hooks/useSimulationState';
 
 const DELAY_MESSAGE = 1000;
-
-export const WELCOME_CONFIG = {
-  accountAddress: '0x1234567890',
-  crewId: Number.MAX_SAFE_INTEGER,
-  crewmateId: Number.MAX_SAFE_INTEGER,
-  resourceId: Product.IDS.BITUMEN,
-  crewmates: {
-    engineer: 7422,
-    miner: 7535,
-    merchant: 7538,
-    pilot: 7539,
-    scientist: 6891
-  }
-}
 
 const STEPS = {
   INTRO: 1,
@@ -45,14 +23,7 @@ const STEPS = {
   // FINAL: 11
 };
 
-/*
-TODO:
-"return to where I should be"
-*/
-
-
-
-const useWelcomeTour = () => {
+const useSimulationSteps = () => {
   const { crew } = useCrewContext();
 
   const { data: crewAgreements, isLoading: agreementsLoading } = useCrewAgreements(true, false, true);
@@ -88,7 +59,7 @@ const useWelcomeTour = () => {
   const dispatchReorientCamera = useStore(s => s.dispatchReorientCamera);
   const dispatchResourceMapSelect = useStore(s => s.dispatchResourceMapSelect);
   const dispatchResourceMapToggle = useStore(s => s.dispatchResourceMapToggle);
-  const dispatchWelcomeTourStep = useStore((s) => s.dispatchWelcomeTourStep);
+  const dispatchSimulationStep = useStore((s) => s.dispatchSimulationStep);
   const dispatchZoomScene = useStore(s => s.dispatchZoomScene);
   const updateZoomStatus = useStore(s => s.dispatchZoomStatusChanged);
 
@@ -104,7 +75,7 @@ const useWelcomeTour = () => {
 
   const resetAsteroidFilters = () => dispatchFiltersReset('asteroids');
 
-  const welcomeTour = useStore(s => s.welcomeTour);
+  const simulation = useSimulationState();
   
   const { data: lot } = useLot(selectedLotId);
   const lotIsLeasable = useMemo(() => {
@@ -120,10 +91,10 @@ const useWelcomeTour = () => {
 
   
   const advance = useCallback(() => {
-    dispatchWelcomeTourStep(welcomeTour.step + 1);
-  }, [welcomeTour.step]);
+    dispatchSimulationStep((simulation.step || 0) + 1);
+  }, [simulation?.step]);
 
-  const welcomeTourSteps = useMemo(() => {
+  const simulationSteps = useMemo(() => {
     if (isLoading) return [];
 
     // const lotLease = crewAgreements?.find((a) => a.permission === Permission.IDS.LOT_USE);
@@ -204,7 +175,7 @@ const useWelcomeTour = () => {
             {' '}or <a href="https://discord.com/invite/influenceth" target="_blank" rel="noopener noreferrer">Discord</a> for help getting started!
           </>
         ),
-        crewmateId: WELCOME_CONFIG.crewmates.pilot,
+        crewmateId: SIMULATION_CONFIG.crewmates.pilot,
         initialize: () => {
           if (currentZoomScene) dispatchZoomScene();
           if (destination) dispatchDestinationSelected();
@@ -237,7 +208,7 @@ const useWelcomeTour = () => {
             develop their own tracts of land in the belt.
           `
           : `Ehem, we'll have to zoom out a bit first...`,
-        crewmateId: WELCOME_CONFIG.crewmates.pilot,
+        crewmateId: SIMULATION_CONFIG.crewmates.pilot,
         coachmarks: {
           [COACHMARK_IDS.backToBelt]: zoomStatus === 'in'
         },
@@ -251,7 +222,7 @@ const useWelcomeTour = () => {
         content: `Adalia Prime is the single largest asteroid in the belt and the oldest hub of commerce and
           human activity. Every Adalian owes their life to The Arvad, the wayward colony ship that was moored
           and dismantled here to form the first permanent settlements.`,
-        crewmateId: WELCOME_CONFIG.crewmates.scientist,
+        crewmateId: SIMULATION_CONFIG.crewmates.scientist,
         // TODO: consider if at this stage, we should just initialize for them?
         initialize: () => {
           dispatchOriginSelected(1);
@@ -271,19 +242,19 @@ const useWelcomeTour = () => {
           you have one last general education requirement to complete. Your final requirement is a 
           practical internship as a new recruit, where you will learn about life in Adalia by joining 
           an experienced crew made up of volunteers who are ready to teach you.`,
-        crewmateId: WELCOME_CONFIG.crewmates.scientist,
+        crewmateId: SIMULATION_CONFIG.crewmates.scientist,
         coachmarks: {
           [COACHMARK_IDS.hudRecruitCaptain]: true // TODO: if dialog not open
         },
-        shouldAdvance: () => welcomeTour.crewmate?.name && welcomeTour.crewmate?.appearance
+        shouldAdvance: () => simulation.crewmate?.name && simulation.crewmate?.appearance
       },
       { // TODO: could combine with above somewhat...
-        title: `Welcome, ${welcomeTour.crewmate?.name}!`,
+        title: `Welcome, ${simulation.crewmate?.name}!`,
         content: `Your friends are going to be so envious - you must be one of the luckiest 
           new recruits in Adalia. The rest of the crew for your internship is composed of some 
           of the most famous Adalians - they were all Department Heads aboard the great 
           generational ship, the Arvad, before humanity arrived here.`,
-        crewmateId: WELCOME_CONFIG.crewmates.scientist,
+        crewmateId: SIMULATION_CONFIG.crewmates.scientist,
         coachmarks: {},
         rightButton: {
           children: 'Next',
@@ -293,7 +264,7 @@ const useWelcomeTour = () => {
       {
         title: 'Lease Some Lots', // TODO: ...
         content: `Pick out a good spot to lease some lots. Click the lot.`,
-        crewmateId: WELCOME_CONFIG.crewmates.engineer,
+        crewmateId: SIMULATION_CONFIG.crewmates.engineer,
         initialize: () => {
           // deselect lot
           // zoom to altitude
@@ -303,19 +274,19 @@ const useWelcomeTour = () => {
           // TODO: navigate to AP
 
           [COACHMARK_IDS.hudMenuResources]: !lot && openHudMenu !== 'RESOURCES',
-          [COACHMARK_IDS.hudMenuTargetResource]: !lot && openHudMenu === 'RESOURCES' && selectedResourceId !== WELCOME_CONFIG.resourceId,
+          [COACHMARK_IDS.hudMenuTargetResource]: !lot && openHudMenu === 'RESOURCES' && selectedResourceId !== SIMULATION_CONFIG.resourceId,
           [COACHMARK_IDS.actionButtonLease]: lotIsLeasable && !actionDialog?.type, // TODO: unoccupied
 
           // TODO: make action buttons abstracted by using name?
           // TODO: "help me pick" option
         },
-        shouldAdvance: () => welcomeTour.leasedLots?.length > 0,
+        shouldAdvance: () => simulation.leasedLots?.length > 0,
         // TODO: auto-lease 4 more nearby
       },
       {
         title: '', // TODO: ...
         content: `Construct your extractor.`,
-        crewmateId: WELCOME_CONFIG.crewmates.engineer,
+        crewmateId: SIMULATION_CONFIG.crewmates.engineer,
         coachmarks: [
           // TODO: click a lot with an agreement on it (via hud)
           // TODO: "plan" action button --> extractor
@@ -331,7 +302,7 @@ const useWelcomeTour = () => {
       {
         title: '', // TODO: ...
         content: `You'll need somewhere to store your mining output. Construct a warehouse nearby.`,
-        crewmateId: WELCOME_CONFIG.crewmates.engineer,
+        crewmateId: SIMULATION_CONFIG.crewmates.engineer,
         coachmarks: [
           // TODO: click a lot with an agreement on it (via hud)
           // TODO: "plan" action button --> warehouse
@@ -347,7 +318,7 @@ const useWelcomeTour = () => {
       {
         title: '', // TODO: ...
         content: `Let's find a deposit to mine by core sampling on the lot with our extractor.`,
-        crewmateId: WELCOME_CONFIG.crewmates.miner,
+        crewmateId: SIMULATION_CONFIG.crewmates.miner,
         coachmarks: [
           // TODO: purchase core samplers from the market to the warehouse
           // (fast forward)
@@ -360,7 +331,7 @@ const useWelcomeTour = () => {
       {
         title: '', // TODO: ...
         content: `Let's mine it.`,
-        crewmateId: WELCOME_CONFIG.crewmates.miner,
+        crewmateId: SIMULATION_CONFIG.crewmates.miner,
         coachmarks: [
           // TODO: extract action button
           // (fast forward)
@@ -370,7 +341,7 @@ const useWelcomeTour = () => {
       {
         title: '', // TODO: ...
         content: `Let's refine it. We'll need a refinery first.`,
-        crewmateId: WELCOME_CONFIG.crewmates.engineer,
+        crewmateId: SIMULATION_CONFIG.crewmates.engineer,
         coachmarks: [
           // TODO: click a lot with an agreement on it (via hud)
           // TODO: "plan" action button --> refinery
@@ -388,7 +359,7 @@ const useWelcomeTour = () => {
       {
         title: '', // TODO: ...
         content: `Let's make some money and sell our refined good.`,
-        crewmateId: WELCOME_CONFIG.crewmates.merchant,
+        crewmateId: SIMULATION_CONFIG.crewmates.merchant,
         coachmarks: [
           // "asteroid markets"
           // "select good"
@@ -400,7 +371,7 @@ const useWelcomeTour = () => {
       {
         title: '', // TODO: ...
         content: `Let's think about getting off this rock. Start by building a shipyard.`,
-        crewmateId: WELCOME_CONFIG.crewmates.pilot,
+        crewmateId: SIMULATION_CONFIG.crewmates.pilot,
         coachmarks: [
           // TODO: click a lot with an agreement on it (via hud)
           // TODO: "plan" action button --> shipyard
@@ -416,7 +387,7 @@ const useWelcomeTour = () => {
       {
         title: '', // TODO: ...
         content: `Assemble a ship`,
-        crewmateId: WELCOME_CONFIG.crewmates.engineer,
+        crewmateId: SIMULATION_CONFIG.crewmates.engineer,
         coachmarks: [
           // TODO: get to shipyard lot (via hud)
           // "build ship"
@@ -428,7 +399,7 @@ const useWelcomeTour = () => {
       {
         title: '', // TODO: ...
         content: `Stock your ship`,
-        crewmateId: WELCOME_CONFIG.crewmates.merchant,
+        crewmateId: SIMULATION_CONFIG.crewmates.merchant,
         coachmarks: [
           // order food
           // order propellant
@@ -438,7 +409,7 @@ const useWelcomeTour = () => {
       {
         title: '', // TODO: ...
         content: `Get to orbit`,
-        crewmateId: WELCOME_CONFIG.crewmates.pilot,
+        crewmateId: SIMULATION_CONFIG.crewmates.pilot,
         coachmarks: [
           // station crew on ship
           // (fast forward)
@@ -449,7 +420,7 @@ const useWelcomeTour = () => {
       {
         title: '', // TODO: ...
         content: `Blast off`,
-        crewmateId: WELCOME_CONFIG.crewmates.pilot,
+        crewmateId: SIMULATION_CONFIG.crewmates.pilot,
         coachmarks: [
           // plan travel
           // prepop target
@@ -485,16 +456,16 @@ const useWelcomeTour = () => {
   // cleanse step
   useEffect(() => {
     if (!isLoading) {
-      if (welcomeTour.step < 0 || welcomeTour.step > welcomeTourSteps.length - 1) {
-        dispatchWelcomeTourStep(0);
+      if (simulation.step < 0 || simulation.step > simulation.length - 1) {
+        dispatchSimulationStep(0);
       }
     }
-  }, [isLoading, welcomeTour?.step, welcomeTourSteps]);
+  }, [isLoading, simulation?.step, simulationSteps]);
 
   const currentStep = useMemo(() => {
     // TODO: use named index instead of numbers
-    return welcomeTourSteps[welcomeTour.step];
-  }, [welcomeTourSteps, welcomeTour.step]);
+    return simulationSteps[simulation.step];
+  }, [simulationSteps, simulation.step]);
 
   // autoadvance as prescribed
   useEffect(() => {
@@ -507,7 +478,7 @@ const useWelcomeTour = () => {
     if (currentStep?.initialize) {
       currentStep?.initialize();
     }
-  }, [welcomeTour.step]);
+  }, [simulation.step]);
 
   const coachmarks = useMemo(() => {
     console.log('Object.keys(currentStep?.coachmarks || {})', Object.keys(currentStep?.coachmarks || {}));
@@ -522,7 +493,7 @@ const useWelcomeTour = () => {
   }, [coachmarks]);
 
 
-  // useEffect(() => dispatchWelcomeTourStep(0), []);
+  // useEffect(() => dispatchSimulationStep(0), []);
 
   // TODO: memoize
   return {
@@ -530,46 +501,6 @@ const useWelcomeTour = () => {
     isLoading,
     isTransitioning
   }
-}
-
-const WelcomeTour = () => {
-  const { authenticating, authenticated, login } = useSession();
-  const { crews, loading } = useCrewContext();
-  const history = useHistory();
-
-  const dispatchLauncherPage = useStore(s => s.dispatchLauncherPage);
-  
-  const [isHidden, setIsHidden] = useState(false);
-
-  const { currentStep, isLoading, isTransitioning } = useWelcomeTour();
-  useEffect(() => {
-    setIsHidden(false);
-
-    // TODO: initialize
-  }, [currentStep])
-
-  // TODO: coachmarks
-
-  if (!currentStep) return null;
-  return (
-    <>
-      <TutorialMessage
-        crewmateId={currentStep?.crewmateId}
-        isIn={currentStep && !isHidden && !isTransitioning}
-        onClose={() => setIsHidden(true)}
-        rightButton={currentStep.rightButton
-          ? {
-            // TODO: defaults to overwrite
-            // color: theme.colors.main,
-            // disabled: false,
-            ...currentStep.rightButton
-          }
-          : null
-        }
-        step={currentStep}
-      />
-    </>
-  );
 };
 
-export default WelcomeTour;
+export default useSimulationSteps;

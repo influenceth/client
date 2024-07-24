@@ -322,7 +322,7 @@ const ActionButtonComponent = forwardRef(({
 export const getCrewDisabledReason = ({
   asteroid,
   crew,
-  isAllowedInWelcomeTour = false,
+  isAllowedInSimulation = false,  // TODO: use config to get by step (can attach step to crew as well... or even allowed buttons directly on crew, etc)
   isSequenceable = false,
   permission,
   permissionTarget,
@@ -330,7 +330,7 @@ export const getCrewDisabledReason = ({
   requireSurface = true,
   requireReady = true
 }) => {
-  if (crew?._isWelcomeTour && !isAllowedInWelcomeTour) return 'access restricted';
+  if (crew?._isSimulation && !isAllowedInSimulation) return 'access restricted';
   if (permission && permissionTarget) {
     if (!crew || !Permission.isPermitted(crew, permission, permissionTarget)) return 'access restricted';
   }

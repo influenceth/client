@@ -75,7 +75,6 @@ export function SessionProvider({ children }) {
   const dispatchSessionSuspended = useStore(s => s.dispatchSessionSuspended);
   const dispatchSessionResumed = useStore(s => s.dispatchSessionResumed);
   const dispatchSessionEnded = useStore(s => s.dispatchSessionEnded);
-  const welcomeTour = useStore(s => s.getWelcomeTour());
 
   const [readyForChildren, setReadyForChildren] = useState(false);
 
@@ -549,8 +548,6 @@ export function SessionProvider({ children }) {
     });
   }, [blockTime]);
 
-  const overrideBlockTime = useMemo(() => welcomeTour ? Math.floor(Date.now() / 100e3) * 100 : null, [welcomeTour]);
-
   return (
     <SessionContext.Provider value={{
       login: async () => await connect(),
@@ -576,7 +573,7 @@ export function SessionProvider({ children }) {
       // - blockNumber is last committed block, blockTime is the *pending* block time
       setBlockNumber,
       blockNumber,
-      blockTime: overrideBlockTime || blockTime
+      blockTime
     }}>
       {readyForChildren
         ? children

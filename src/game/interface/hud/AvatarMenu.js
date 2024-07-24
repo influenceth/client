@@ -16,7 +16,8 @@ import LiveReadyStatus from '~/components/LiveReadyStatus';
 import { SECTION_WIDTH } from './ActionItems';
 import Button from '~/components/ButtonAlt';
 import Coachmarks, { COACHMARK_IDS } from '~/Coachmarks';
-import { WELCOME_CONFIG } from './WelcomeTour';
+import SIMULATION_CONFIG from '~/simulation/simulationConfig';
+import useSimulationState from '~/hooks/useSimulationState';
 
 const menuWidth = SECTION_WIDTH;
 
@@ -155,11 +156,11 @@ const AvatarMenu = () => {
   const { authenticated } = useSession();
   const { captain, crew, loading: crewIsLoading } = useCrewContext();
   const history = useHistory();
+  const simulation = useSimulationState();
 
   const onSetAction = useStore(s => s.dispatchActionDialog);
   const asteroidId = useStore(s => s.asteroids.origin);
   const zoomStatus = useStore(s => s.asteroids.zoomStatus);
-  const welcomeTour = useStore(s => s.getWelcomeTour());
 
   const silhouetteOverlay = useMemo(() => {
     if (!captain) {
@@ -176,10 +177,10 @@ const AvatarMenu = () => {
   }, [captain]);
 
   const onClick = useCallback((crewmateId) => () => {
-    if (welcomeTour) {
-      if (!crewmateId || (crewmateId === WELCOME_CONFIG.crewmateId)) {
-        // TODO: should/could link back to welcometour crewmate
-        if (!welcomeTour.crewmate) {
+    if (simulation) {
+      if (!crewmateId || (crewmateId === SIMULATION_CONFIG.crewmateId)) {
+        // TODO: should/could link back to simulation crewmate
+        if (!simulation.crewmate) {
           history.push(`/recruit/0/1/0/create`); 
         }
         return;
@@ -187,7 +188,7 @@ const AvatarMenu = () => {
       return history.push(`/crewmate/${crewmateId}`);
     }
     return history.push('/crew');
-  }, [welcomeTour]);
+  }, [simulation]);
 
   const [captainRefEl, setCaptainRefEl] = useState();
   const [locationRefEl, setLocationRefEl] = useState();
@@ -227,8 +228,8 @@ const AvatarMenu = () => {
             noAnimation
             setRef={setCaptainRefEl}
             silhouetteOverlay={silhouetteOverlay}
-            CrewmateCardProps={welcomeTour ? { useExplicitAppearance: true } : {}}
-            warnIfNotOwnedBy={welcomeTour ? undefined : crew?.Nft?.owner}
+            CrewmateCardProps={simulation ? { useExplicitAppearance: true } : {}}
+            warnIfNotOwnedBy={simulation ? undefined : crew?.Nft?.owner}
             width={98} />
           <Coachmarks label={COACHMARK_IDS.hudRecruitCaptain} refEl={captainRefEl} />
 
@@ -251,14 +252,14 @@ const AvatarMenu = () => {
               ? (
                 <Crewmates>
                   {(crew?._crewmates || []).map((crewmate, i) => {
-                    if ((!welcomeTour || !!welcomeTour.crewmate) && i === 0) return null;
+                    if ((!simulation || !!simulation.crewmate) && i === 0) return null;
                     return (
                       <CrewmateCardFramed
                         key={crewmate.id}
                         borderColor={`rgba(${theme.colors.mainRGB}, 0.4)`}
                         crewmate={crewmate}
                         onClick={onClick(crewmate?.id)}
-                        warnIfNotOwnedBy={welcomeTour ? undefined : crew?.Nft?.owner}
+                        warnIfNotOwnedBy={simulation ? undefined : crew?.Nft?.owner}
                         width={69}
                         noArrow />
                     );

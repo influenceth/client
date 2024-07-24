@@ -11,7 +11,7 @@ import { keyify } from '~/lib/utils';
 import { hexToRGB } from '~/theme';
 import { majorBorderColor, HudMenuCollapsibleSection, Scrollable } from './components';
 import Coachmarks, { COACHMARK_IDS } from '~/Coachmarks';
-import { WELCOME_CONFIG } from '../../WelcomeTour';
+import SIMULATION_CONFIG from '~/simulation/simulationConfig';
 
 const ResourceWrapper = styled.div`
   flex: 1;
@@ -107,7 +107,7 @@ const CoachmarkableResource = ({ resource, isSelected, onClick }) => {
         <label>{resource.name}</label>
         <span>{(resource.abundance * 100).toFixed(1)}%</span>
       </Resource>
-      {Number(resource.i) === WELCOME_CONFIG.resourceId && (
+      {Number(resource.i) === SIMULATION_CONFIG.resourceId && (
         <Coachmarks label={COACHMARK_IDS.hudMenuTargetResource} refEl={refEl} />
       )}
     </>

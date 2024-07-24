@@ -16,6 +16,7 @@ import useTutorialSteps from '~/hooks/useTutorialSteps';
 import { hexToRGB } from '~/theme';
 import ActionItem, { ITEM_WIDTH, TRANSITION_TIME } from './ActionItem';
 import TutorialActionItems from './TutorialActionItems';
+import useSimulationEnabled from '~/hooks/useSimulationEnabled';
 
 
 export const SECTION_WIDTH = ITEM_WIDTH + 30;
@@ -283,11 +284,11 @@ const ActionItems = () => {
   const { crew, isLaunched } = useCrewContext();
   const { execute, getStatus } = useContext(ChainTransactionContext);
   const getActivityConfig = useGetActivityConfig();
+  const simulationEnabled = useSimulationEnabled();
   const tutorialSteps = useTutorialSteps();
 
   const crewTutorial = useStore(s => s.crewTutorials?.[crew?.id]);
   const dismissAllTutorials = useStore(s => s.gameplay?.dismissTutorial);
-  const welcomeTour = useStore(s => s.getWelcomeTour());
   const dispatchUnhideAllActionItems = useStore(s => s.dispatchUnhideAllActionItems);
   const dispatchDismissCrewTutorial = useStore(s => s.dispatchDismissCrewTutorial);
 
@@ -405,18 +406,18 @@ const ActionItems = () => {
     setConfirmingTutorialDismissal();
   }, [crew?.id]);
 
-  const showTutorial = isLaunched && !welcomeTour && !dismissAllTutorials && !crewTutorial?.dismissed;
+  const showLoggedInTutorial = authenticated && isLaunched && !simulationEnabled && !dismissAllTutorials && !crewTutorial?.dismissed;
   return (
     <>
       <OuterWrapper>
-        {(authenticated || welcomeTour) && (
+        {authenticated && (
           <CollapsibleSection
             borderless
             collapsibleProps={{
               style: {
                 display: 'flex',
                 flexDirection: 'column',
-                marginBottom: showTutorial ? 20 : 40,
+                marginBottom: showLoggedInTutorial ? 20 : 40,
                 width: SECTION_WIDTH - 32
               }
             }}
@@ -457,7 +458,7 @@ const ActionItems = () => {
           </CollapsibleSection>
         )}
             
-        {showTutorial && (
+        {showLoggedInTutorial && (
           <CollapsibleSection
             borderless
             collapsibleProps={{

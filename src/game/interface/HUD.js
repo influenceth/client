@@ -8,12 +8,12 @@ import InfoPane from './hud/InfoPane';
 import SystemControls from './hud/SystemControls';
 import HudMenu from './hud/HudMenu';
 import SceneBanner from './hud/SceneBanner';
-import WelcomeTour from './hud/WelcomeTour';
+import WelcomeSimulation from './hud/WelcomeSimulation';
 import useStore from '~/hooks/useStore';
 import useSession from '~/hooks/useSession';
 import InfluenceLogo from '~/components/InfluenceLogo';
 import { headerHeight } from '~/game/uiConstants';
-import Coachmarks, { COACHMARK_IDS } from '~/Coachmarks';
+import useSimulationEnabled from '~/hooks/useSimulationEnabled';
 
 const bottomMargin = 60;
 
@@ -90,22 +90,27 @@ export const Rule = styled.div`
 const HUD = () => {
   const { authenticated, authenticating } = useSession();
   const { loading } = useCrewContext();
+  const simulationEnabled = useSimulationEnabled();
 
-  // const dismissWelcomeTour = useStore(s => s.gameplay?.dismissWelcomeTour);
-  // const dispatchLauncherPage = useStore(s => s.dispatchLauncherPage);
+  const dispatchLauncherPage = useStore(s => s.dispatchLauncherPage);
   return (
     <>
       <LeftWrapper>
         {!authenticating && !loading
           ? (
-            <>
-              <AvatarMenu />
-              {/*TODO: used to use this if !authenticated, do we want to use when tutorial finished?
-                       (or if have previously loggedin? offer a link to login? or tutorial dismissed?)
-                <LogoWrapper onClick={() => dispatchLauncherPage(true)}><InfluenceLogo /></LogoWrapper>
-              */}
-              <ActionItems />
-            </>
+            authenticated
+              ? (
+                <>
+                  <AvatarMenu />
+                  <ActionItems />
+                </>
+              )
+              : (
+                <>
+                  <LogoWrapper onClick={() => dispatchLauncherPage(true)}><InfluenceLogo /></LogoWrapper>
+                  <div style={{ flex: 1 }} />
+                </>
+              )
           )
           : (
             <div style={{ flex: 1 }} />
@@ -122,7 +127,7 @@ const HUD = () => {
 
       <ActionDialog />
 
-      {!authenticated && <WelcomeTour />}
+      {simulationEnabled && <WelcomeSimulation />}
     </>
   );
 }

@@ -93,8 +93,9 @@ const CoachmarkAnimation = ({ refEl }) => {
 
 const Coachmarks = ({ label, refEl }) => {
   const coachmarks = useStore(s => s.coachmarks);
+  const launcherPage = useStore(s => s.launcherPage);
 
-  const isOn = useMemo(() => label && coachmarks.includes(label), [coachmarks, label]);
+  const isOn = useMemo(() => label && !launcherPage && coachmarks.includes(label), [coachmarks, label]);
 
   return isOn && refEl ? <CoachmarkAnimation refEl={refEl} /> : null;
 }

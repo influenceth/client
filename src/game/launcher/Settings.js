@@ -347,7 +347,6 @@ const GameplayPane = () => {
   const toggleAutoswap = useStore(s => s.dispatchAutoswapEnabled);
   const dispatchDismissCrewTutorial = useStore(s => s.dispatchDismissCrewTutorial);
   const dispatchTutorialDisabled = useStore(s => s.dispatchTutorialDisabled);
-  const dispatchWelcomeTourDisabled = useStore(s => s.dispatchWelcomeTourDisabled);
   
   const tutorialIsDisabled = useMemo(() => {
     if (gameplay.dismissTutorial) {
@@ -388,7 +387,7 @@ const GameplayPane = () => {
             </div>
           </CheckboxRow>
 
-          <CheckboxRow>
+          {/* <CheckboxRow>
             <label>Show Welcome Tour:</label>
             <div onClick={() => dispatchWelcomeTourDisabled(!gameplay.dismissWelcomeTour)}>
               {!gameplay.dismissWelcomeTour ? <CheckedIcon /> : <UncheckedIcon />}
@@ -396,7 +395,7 @@ const GameplayPane = () => {
                 Shows the Welcome Tour when navigating the client while logged out.
               </span>
             </div>
-          </CheckboxRow>
+          </CheckboxRow> */}
 
           {authenticated && (
             <CheckboxRow>

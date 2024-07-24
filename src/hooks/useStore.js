@@ -46,8 +46,8 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
     // TODO: use a context to rewrite query contents and state with useEffect
     //  store persistable state here
     // TODO: add store state migrations
-    welcomeTourStep: -1, // TODO: deprecate this
-    welcomeTour: {
+    simulationEnabled: false,
+    simulation: {
       step: 0,
       crewmate: null,
       leasedLots: { 123: 'extractor', ...{} },
@@ -116,7 +116,6 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
     gameplay: {
       autoswap: true,
       dismissTutorial: false,
-      dismissWelcomeTour: false,
     },
 
     graphics: {
@@ -451,7 +450,6 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
     // Unsets the current session but keeps it in the sessions list
     dispatchSessionSuspended: () => set(produce(state => {
       state.currentSession = {};
-      state.welcomeTourStep = -1;
     })),
 
     // Resumes a session that was suspended
@@ -463,16 +461,19 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
     dispatchSessionEnded: () => set(produce(state => {
       delete state.sessions[state.currentSession?.accountAddress];
       state.currentSession = {};
-      state.welcomeTourStep = -1;
     })),
 
-    dispatchWelcomeTourStep: (step) => set(produce(state => {
-      if (!state.welcomeTour) state.welcomeTour = {};
-      state.welcomeTour.step = step;
+    dispatchSimulationEnabled: (which) => set(produce(state => {
+      state.simulationEnabled = which;
     })),
 
-    dispatchWelcomeTourCrewmate: (crewmate) => set(produce(state => {
-      state.welcomeTour.crewmate = crewmate;
+    dispatchSimulationStep: (step) => set(produce(state => {
+      if (!state.simulation) state.simulation = {};
+      state.simulation.step = step;
+    })),
+
+    dispatchSimulationCrewmate: (crewmate) => set(produce(state => {
+      state.simulation.crewmate = crewmate;
     })),
 
     dispatchCoachmarks: (coachmarkIds) => set(produce(state => {
@@ -642,11 +643,6 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
       state.gameplay.dismissTutorial = !!which;
     })),
 
-    dispatchWelcomeTourDisabled: (which) => set(produce(state => {
-      state.gameplay.dismissWelcomeTour = !!which;
-      state.welcomeTourStep = -1;
-    })),
-
     dispatchDismissCrewTutorial: (crewId, which) => set(produce(state => {
       // (resets dismissedSteps either way)
       state.crewTutorials[crewId] = {
@@ -668,15 +664,6 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
 
     //
     // SPECIAL GETTERS
-
-    getWelcomeTour: () => {
-      const s = get();
-      // TODO: more "is in welcome tour" checks here
-      if (!s.currentSession?.accountAddress) {
-        return s.welcomeTour;
-      }
-      return null;
-    },
 
     getPreferredUiCurrency: () => {
       const s = get();

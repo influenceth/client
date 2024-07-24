@@ -6,7 +6,6 @@ import SelectUninitializedCrewmateDialog from '~/components/SelectUninitializedC
 import CrewAssignmentCreate from '~/game/interface/details/crewAssignments/Create';
 import CrewAssignment from '~/game/interface/details/crewAssignments/Assignment';
 import useSession from '~/hooks/useSession';
-import useStore from '~/hooks/useStore';
 
 // /recruit/:crewId -- select location IF crew is 0
 // /recruit/:crewId/:locationId -- select crewmate credit
@@ -16,7 +15,6 @@ const RecruitCrewmate = () => {
   const { authenticated } = useSession();
   const history = useHistory();
   const { locationId, crewId, crewmateId, page } = useParams();
-  const welcomeTour = useStore(s => s.getWelcomeTour());
 
   // TODO: validate...
   // - crewId is 0 or is owned by account
@@ -41,11 +39,11 @@ const RecruitCrewmate = () => {
   }, [crewId, locationId, crewmateId]);
 
   useEffect(() => {
-    if (!authenticated && !welcomeTour) history.push('/');
+    if (!authenticated) history.push('/');
     // Select a random habitat out of the first 100
     const habitat = process.env.REACT_APP_DEPLOYMENT === 'production' ? Math.ceil(Math.random() * 100) : 1;
     if (!locationId) history.push(`/recruit/${crewId}/${habitat}`);
-  }, [authenticated, crewId, locationId, welcomeTour]);
+  }, [authenticated, crewId, locationId]);
 
   // NOTE: as it is now, the useEffect line above checking !locationId will ensure this
   //  dialog is never rendered... remove this file if we truly want this deprecated

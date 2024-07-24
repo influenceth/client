@@ -296,13 +296,15 @@ const Footer = styled.div`
 const StyledNavIcon = () => <Icon><NavIcon selected selectedColor="#777" /></Icon>;
 
 const Launcher = (props) => {
-  const { accountAddress, authenticating, authenticated, login, walletId } = useSession();
+  const { accountAddress, authenticating, authenticated, login, walletId } = useSession(false);
   const { data: priceConstants, isLoading: priceConstantsLoading } = usePriceConstants();
 
   const launcherPage = useStore(s => s.launcherPage);
+  const simulationEnabled = useStore(s => s.simulationEnabled);
   const interfaceHidden = useStore(s => s.graphics.hideInterface);
   const hasSeenIntroVideo = useStore(s => s.hasSeenIntroVideo);
   const dispatchCutscene = useStore(s => s.dispatchCutscene);
+  const dispatchSimulationEnabled = useStore(s => s.dispatchSimulationEnabled);
   const dispatchLauncherPage = useStore(s => s.dispatchLauncherPage);
   const dispatchSeenIntroVideo = useStore(s => s.dispatchSeenIntroVideo);
   const dispatchToggleInterface = useStore(s => s.dispatchToggleInterface);
@@ -348,7 +350,16 @@ const Launcher = (props) => {
         true
       );
     }
-  }, [accountAddress, hasSeenIntroVideo]);
+  }, [accountAddress, , hasSeenIntroVideo]);
+
+  const onToggleSimulation = useCallback(() => {
+    if (simulationEnabled) {
+      dispatchSimulationEnabled(false);
+    } else if (!authenticated) { // is this necessary?
+      dispatchSimulationEnabled(true);
+    }
+    onClickPlay();
+  }, [authenticated, onClickPlay, simulationEnabled]);
 
   const openHelpChannel = useCallback(() => {
     window.open(process.env.REACT_APP_HELP_URL, '_blank', 'noopener');
@@ -456,6 +467,10 @@ const Launcher = (props) => {
 
             <PlayButton disabled={authenticating} onClick={onClickPlay}>
               {authenticated ? 'Play' : 'Explore World'}
+            </PlayButton>
+
+            <PlayButton disabled={authenticating} onClick={onToggleSimulation}>
+              {simulationEnabled ? 'Exit ' : ''}Training Simulation
             </PlayButton>
           </>
         )}

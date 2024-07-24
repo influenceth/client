@@ -11,6 +11,7 @@ import useStore from '~/hooks/useStore';
 import { locationsArrToObj } from '~/lib/utils';
 import actionButtons from '../game/interface/hud/actionButtons';
 import useSession from './useSession';
+import useSimulationState from './useSimulationState';
 
 // if selected asteroid (any zoom)
 //  - purchase asteroid
@@ -111,7 +112,7 @@ const useActionButtons = () => {
   const zoomScene = useStore(s => s.asteroids.zoomScene);
   const openHudMenu = useStore(s => s.openHudMenu);
   const setAction = useStore(s => s.dispatchActionDialog);
-  const welcomeTour = useStore(s => s.getWelcomeTour());
+  const simulation = useSimulationState();
 
   // account
   const { accountAddress } = useSession();
@@ -175,13 +176,13 @@ const useActionButtons = () => {
         lot: zoomStatus === 'in' && lot,
         openHudMenu,
         ship: targetShip?.Ship.status === Ship.STATUSES.AVAILABLE && targetShip,
-        welcomeTour,
+        simulation,
         zoomStatus,
         zoomScene
       }))
       .sort((a, b) => (buttonOrder[a] || 100) - (buttonOrder[b] || 100))
       .map((k) => actionButtons[k].Component || actionButtons[k]);
-  }, [targetShip, asteroid, constructionStatus, crew, crewedShip, lot, openHudMenu, resourceMap?.active, !!resourceMap?.selected, welcomeTour, zoomScene, zoomStatus]);
+  }, [targetShip, asteroid, constructionStatus, crew, crewedShip, lot, openHudMenu, resourceMap?.active, !!resourceMap?.selected, simulation, zoomScene, zoomStatus]);
 
   // TODO: within each action button, should memoize whatever is passed to flags
   // (because always a new object, will always re-render the underlying button)
@@ -194,7 +195,7 @@ const useActionButtons = () => {
       lot,
       ship: targetShip,
       onSetAction: setAction,
-      welcomeTour,
+      simulation,
       _disabled: asteroidIsLoading || lotIsLoading
     }
   }

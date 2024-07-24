@@ -17,7 +17,7 @@ const isVisible = ({ lot, crew }) => {
   return false;
 };
 
-const FormLotLeaseAgreement = ({ lot, permission, welcomeTour, _disabled }) => {
+const FormLotLeaseAgreement = ({ lot, permission, simulation, _disabled }) => {
   const { pendingChange } = useAgreementManager(lot, permission);
   
   const onSetAction = useStore(s => s.dispatchActionDialog);
@@ -29,9 +29,9 @@ const FormLotLeaseAgreement = ({ lot, permission, welcomeTour, _disabled }) => {
   const disabledReason = useMemo(() => {
     if (_disabled) return 'loading...';
     if (pendingChange) return 'updating...';
-    if (welcomeTour) {
+    if (simulation) {
       if (lot?.building || lot?.surfaceShip) return 'occupied by another crew';
-      if (welcomeTour.leasedLots?.length >= 5) return 'max simulation lots already leased';
+      if (simulation.leasedLots?.length >= 5) return 'max simulation lots already leased';
     }
     return '';
   }, [_disabled, pendingChange]);
@@ -44,7 +44,7 @@ const FormLotLeaseAgreement = ({ lot, permission, welcomeTour, _disabled }) => {
         label="Form Lot Agreement"
         labelAddendum={disabledReason}
         flags={{
-          attention: welcomeTour && !(_disabled || disabledReason),
+          attention: simulation && !(_disabled || disabledReason),
           disabled: _disabled || disabledReason,
           loading: pendingChange
         }}

@@ -13,6 +13,7 @@ import useWalletBalances from '~/hooks/useWalletBalances';
 import api from '~/lib/api';
 import { cleanseTxHash } from '~/lib/utils';
 import { TOKEN } from '~/lib/priceUtils';
+import useSimulationEnabled from '~/hooks/useSimulationEnabled';
 
 const RETRY_INTERVAL = 5e3; // 5 seconds
 const ChainTransactionContext = createContext();
@@ -413,6 +414,7 @@ export function ChainTransactionProvider({ children }) {
   const { crew, pendingTransactions } = useCrewContext();
   const { data: walletSource } = useWalletBalances();
   const { data: usdcPerEth } = useUsdcPerEth();
+  const simulationEnabled = useSimulationEnabled();
 
   // using a ref since execute is often called from a callback from funding (and
   // it may not reliably get re-memoized with updated wallet values within callback)
@@ -425,7 +427,6 @@ export function ChainTransactionProvider({ children }) {
   // const dispatchPendingTransactionUpdate = useStore(s => s.dispatchPendingTransactionUpdate);
   const dispatchPendingTransactionComplete = useStore(s => s.dispatchPendingTransactionComplete);
   const dispatchClearTransactionHistory = useStore(s => s.dispatchClearTransactionHistory);
-  const welcomeTour = useStore(s => s.getWelcomeTour());
 
   const [promptingTransaction, setPromptingTransaction] = useState(false);
 
@@ -929,7 +930,7 @@ export function ChainTransactionProvider({ children }) {
 
   // Primary execute method for system calls (requires name of system, etc.)
   const executeSystem = useCallback(async (key, vars, meta = {}) => {
-    if (welcomeTour) {
+    if (simulationEnabled) {
       const uuid = `0x${String(performance.now()).replace('.', '')}`;
       console.log({
         key,
@@ -1043,7 +1044,7 @@ export function ChainTransactionProvider({ children }) {
     }
 
     setPromptingTransaction(false);
-  }, [blockTime, contracts, walletAccount, welcomeTour]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [blockTime, contracts, walletAccount, simulationEnabled]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const getPendingTx = useCallback((key, vars) => {
     if (contracts && contracts[key]) {

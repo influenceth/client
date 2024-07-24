@@ -40,6 +40,7 @@ import { CrewmateUserPrice } from '~/components/UserPrice';
 import FundingFlow from '~/game/launcher/components/FundingFlow';
 import { AdvancedStarterPack, BasicStarterPack } from '~/game/launcher/components/StarterPack';
 import { useSwayBalance } from '~/hooks/useWalletTokenBalance';
+import useSimulationEnabled from '~/hooks/useSimulationEnabled';
 
 const CollectionImages = {
   1: Collection1,
@@ -831,8 +832,8 @@ const TraitSelector = ({ crewmate, currentTraits, onUpdateTraits, onClose, trait
 const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, crewmateId, locationId, pendingCrewmate }) => {
   const history = useHistory();
 
-  const welcomeTour = useStore((s) => s.getWelcomeTour());
-  const dispatchWelcomeTourCrewmate = useStore((s) => s.dispatchWelcomeTourCrewmate);
+  const simulationEnabled = useSimulationEnabled();
+  const dispatchSimulationCrewmate = useStore((s) => s.dispatchSimulationCrewmate);
   const dispatchCrewAssignmentRestart = useStore((s) => s.dispatchCrewAssignmentRestart);
 
   const isNameValid = useNameAvailability({ id: crewmateId, label: Entity.IDS.CREWMATE });
@@ -1104,8 +1105,8 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
   }, [crewmate?.Crewmate?.class, selectedTraits, traitTally]);
 
   const confirmFinalize = useCallback(async () => {
-    if (welcomeTour) {
-      dispatchWelcomeTourCrewmate({ name, appearance: crewmate?.Crewmate?.appearance });
+    if (simulationEnabled) {
+      dispatchSimulationCrewmate({ name, appearance: crewmate?.Crewmate?.appearance });
       history.push(onCloseDestination);
       return;
     }
@@ -1115,7 +1116,7 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
     if (!crewmate?._canRename || await isNameValid(name || crewmate?.Name?.name, crewmate?.id)) {
       setConfirming(true);
     }
-  }, [isNameValid, name, crewmate?.Name?.name, crewmate?.id, crewmate?._canRename, welcomeTour]);
+  }, [isNameValid, name, crewmate?.Name?.name, crewmate?.id, crewmate?._canRename, simulationEnabled]);
 
   const finalize = useCallback(() => {
     setConfirming(false);
@@ -1210,11 +1211,11 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
 
   const readyForSubmission = useMemo(() => {
     if (!name) return false;
-    if (welcomeTour) return true;
+    if (simulationEnabled) return true;
     if (!selectedClass) return false;
     if (selectedTraits?.length < traitTally) return false;
     return true;
-  }, [name, selectedClass, selectedTraits?.length, traitTally, welcomeTour]);
+  }, [name, selectedClass, selectedTraits?.length, traitTally, simulationEnabled]);
 
   const confirmationProps = useMemo(() => {
     if (crewmate?.id) {
@@ -1334,7 +1335,7 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
                         </RerollContainer>
                       )}
 
-                      {!welcomeTour && (
+                      {!simulationEnabled && (
                         <RerollContainer>
                           {traitsLocked
                             ? (
@@ -1366,7 +1367,7 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
                 )}
               </CenterColumn>
 
-              {!welcomeTour && (
+              {!simulationEnabled && (
                 <Traits>
                   <TraitRow big>
                     <Trait side="left">
