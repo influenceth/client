@@ -663,7 +663,7 @@ const ShoppingList = ({ asteroid, destination, destinationSlot, stage, ...props 
       <ActionDialogHeader
         action={{
           icon: <MarketBuyIcon />,
-          label: 'Shopping List',
+          label: 'Source Materials',
           status: stage === actionStage.NOT_STARTED ? 'Source Remaining Materials' : undefined,
         }}
         actionCrew={crew}

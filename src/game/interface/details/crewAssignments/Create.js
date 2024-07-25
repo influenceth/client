@@ -31,7 +31,7 @@ import useNameAvailability from '~/hooks/useNameAvailability';
 import usePriceConstants from '~/hooks/usePriceConstants';
 import useStore from '~/hooks/useStore';
 import formatters from '~/lib/formatters';
-import { reactBool } from '~/lib/utils';
+import { reactBool, safeBigInt } from '~/lib/utils';
 import theme from '~/theme';
 import usePriceHelper from '~/hooks/usePriceHelper';
 import useWalletBalances from '~/hooks/useWalletBalances';
@@ -956,7 +956,7 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
     }
 
     // get appearance
-    if (BigInt(c.Crewmate.appearance || 0) === 0n) {
+    if (safeBigInt(c.Crewmate.appearance) === 0n) {
       if (appearanceOptions.length) {
         const { clothesOffset, ...appearance } = appearanceOptions[appearanceSelection];
         c.Crewmate.appearance = Crewmate.packAppearance({
@@ -1015,7 +1015,7 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
 
   // init appearance options as desired
   useEffect(() => {
-    if (crewmate && BigInt(crewmate.Crewmate?.appearance || 0) === 0n && appearanceOptions?.length === 0) {
+    if (crewmate && safeBigInt(crewmate.Crewmate?.appearance) === 0n && appearanceOptions?.length === 0) {
       setAppearanceOptions([getRandomAdalianAppearance()]);
       setAppearanceSelection(0);
     }

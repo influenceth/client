@@ -347,6 +347,12 @@ export const ordersToFills = (mode, orders, amountToFill, takerFee, feeReduction
   return marketFills;
 };
 
+export const safeBigInt = (unsafe) => {
+  if (typeof unsafe === 'BigInt') return unsafe;
+  if (unsafe === null || isNaN(Number(unsafe))) console.error(`safeBigInt error: "${unsafe}" is not a number`);
+  return BigInt(Math.round(Number(unsafe || 0)));
+}
+
 export const openAccessJSTime = `${process.env.REACT_APP_CHAIN_ID}` === `0x534e5f4d41494e` ? 1719495000e3 : 0;
 export const displayTimeFractionDigits = 2;
 export const maxAnnotationLength = 750;
