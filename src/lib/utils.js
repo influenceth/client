@@ -1,5 +1,6 @@
 import esb from 'elastic-builder';
 import { Crew, Entity, Lot, Order, Permission, Processor, Time } from '@influenceth/sdk';
+import { shortString } from 'starknet';
 import trim from 'lodash/trim';
 
 import { ManufactureIcon, GrowIcon, AssembleIcon, RefineIcon } from '~/components/Icons';
@@ -272,9 +273,29 @@ export const entityToAgreements = (entity) => {
   return acc;
 };
 
-export const cleanseTxHash = function (txHash) {
-  if (!txHash) return null;
-  return `0x${safeBigInt(txHash).toString(16).padStart(64, '0')}`;
+// Return the resolved chain ID in a specified format (hex or string)
+export const resolveChainId = (chainId, format = 'string') => {
+  let resolvedId = 'SN_DEV';
+  if (['0x534e5f4d41494e', 'SN_MAIN'].includes(chainId)) resolvedId = 'SN_MAIN';
+  if (['0x534e5f474f45524c49', 'SN_GOERLI'].includes(chainId)) resolvedId = 'SN_GOERLI';
+  if (['0x534e5f5345504f4c4941', 'SN_SEPOLIA', 'sepolia-alpha'].includes(chainId)) resolvedId = 'SN_SEPOLIA';
+
+  return format === 'string' ? resolvedId : shortString.encodeShortString(resolvedId);
+};
+
+// Check if two arbitrary (perhaps mixed type) chain IDs are equal
+export const areChainsEqual = (chainIdA, chainIdB) => {
+  return resolveChainId(chainIdA) === resolveChainId(chainIdB);
+}
+
+export const cleanseTxHash = function (txOrTxHash) {
+  if (!txOrTxHash) return null;
+
+  let unformatted = txOrTxHash;
+  if (txOrTxHash.transaction_hash) unformatted = txOrTxHash.transaction_hash;
+  if (txOrTxHash.transactionHash) unformatted = txOrTxHash.transactionHash;
+
+  return `0x${BigInt(unformatted).toString(16).padStart(64, '0')}`;
 };
 
 export const fireTrackingEvent = function (event, eventProps = {}) {
@@ -296,7 +317,7 @@ export const ordersToFills = (mode, orders, amountToFill, takerFee, feeReduction
   const priceSortMult = mode === 'buy' ? 1 : -1;
 
   const marketFills = [];
-  let needed = amountToFill; 
+  let needed = amountToFill;
   orders
     .sort((a, b) => a.price === b.price ? a.validTime - b.validTime : (priceSortMult * (a.price - b.price)))
     .every((order) => {

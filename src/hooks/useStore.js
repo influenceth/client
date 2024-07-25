@@ -109,6 +109,8 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
       autoswap: true,
       dismissTutorial: false,
       dismissWelcomeTour: false,
+      feeToken: 'ETH',
+      useSessions: null
     },
 
     graphics: {
@@ -598,7 +600,7 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
       if (!state.chatHistory) state.chatHistory = [];
       if (state.chatHistory.length > 0 && !state.chatHistory[state.chatHistory.length - 1].isConnectionBreak) {
         state.chatHistory.push({ isConnectionBreak: true });
-      }  
+      }
     })),
 
     dispatchToggleHideActionItem: (key) => set(produce(state => {
@@ -629,6 +631,14 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
     dispatchWelcomeTourDisabled: (which) => set(produce(state => {
       state.gameplay.dismissWelcomeTour = !!which;
       state.welcomeTourStep = -1;
+    })),
+
+    dispatchUseSessionsSet: (which) => set(produce(state => {
+      state.gameplay.useSessions = which;
+    })),
+
+    dispatchFeeTokenSet: (which) => set(produce(state => {
+      state.gameplay.feeToken = which;
     })),
 
     dispatchDismissCrewTutorial: (crewId, which) => set(produce(state => {

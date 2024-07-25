@@ -16,7 +16,7 @@ import { TOKEN, TOKEN_FORMAT, TOKEN_FORMATTER } from '~/lib/priceUtils';
 import usePriceHelper from '~/hooks/usePriceHelper';
 import useStore from '~/hooks/useStore';
 import EthFaucetButton from './EthFaucetButton';
-import { fireTrackingEvent, safeBigInt } from '~/lib/utils';
+import { areChainsEqual, fireTrackingEvent, safeBigInt } from '~/lib/utils';
 
 const layerSwapChains = {
   '0x534e5f4d41494e': { ethereum: 'ETHEREUM_MAINNET', starknet: 'STARKNET_MAINNET' },
@@ -403,8 +403,7 @@ export const FundingFlow = ({ totalPrice, onClose, onFunded }) => {
   }, [accountAddress, fundsNeeded]);
 
   const onClickStarkgate = useCallback(() => {
-    const isSepolia = ['0x534e5f5345504f4c4941' , 'SN_SEPOLIA'].includes(chainId);
-    const url = `https://${isSepolia ? 'sepolia.' : ''}starkgate.starknet.io/`;
+    const url = `https://${areChainsEqual('SN_SEPOLIA', chainId) ? 'sepolia.' : ''}starkgate.starknet.io/`;
 
     window.open(url, '_blank');
     setWaiting(true);
