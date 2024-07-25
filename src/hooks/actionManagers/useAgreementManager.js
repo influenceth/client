@@ -6,6 +6,7 @@ import ChainTransactionContext from '~/contexts/ChainTransactionContext';
 import usePolicyManager from '~/hooks/actionManagers/usePolicyManager';
 import useCrewContext from '~/hooks/useCrewContext';
 import { daysToSeconds, getAgreementPath, secondsToDays } from '~/lib/utils';
+import { TOKEN, TOKEN_SCALE } from '~/lib/priceUtils';
 
 const useAgreementManager = (target, permission, agreementPath) => {
   const { crew } = useCrewContext();
@@ -24,8 +25,8 @@ const useAgreementManager = (target, permission, agreementPath) => {
     if (agreement) {
       const agg = cloneDeep(agreement);
       if (agg?.rate) {
-        agg.rate_swayPerSec = agg.rate / 1e6 / 3600; // (need this precision to avoid rounding issues)
-        agg.rate = agg.rate / 1e6 * 24;  // stored in microsway per hour, UI in sway/day
+        agg.rate_swayPerSec = agg.rate / TOKEN_SCALE[TOKEN.SWAY] / 3600; // (need this precision to avoid rounding issues)
+        agg.rate = agg.rate / TOKEN_SCALE[TOKEN.SWAY] * 24;  // stored in microsway per hour, UI in sway/day
       }
       if (agg?.initialTerm) agg.initialTerm = secondsToDays(agg.initialTerm); // stored in seconds, UI in days
       if (agg?.noticePeriod) agg.noticePeriod = secondsToDays(agg.noticePeriod); // stored in seconds, UI in days

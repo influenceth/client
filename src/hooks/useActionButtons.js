@@ -112,6 +112,7 @@ const useActionButtons = () => {
   const zoomScene = useStore(s => s.asteroids.zoomScene);
   const openHudMenu = useStore(s => s.openHudMenu);
   const setAction = useStore(s => s.dispatchActionDialog);
+  const simulationActions = useStore(s => s.simulationActions);
   const simulation = useSimulationState();
 
   // account
@@ -196,6 +197,7 @@ const useActionButtons = () => {
       ship: targetShip,
       onSetAction: setAction,
       simulation,
+      simulationActions,
       _disabled: asteroidIsLoading || lotIsLoading
     }
   }

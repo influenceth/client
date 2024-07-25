@@ -1,4 +1,5 @@
 import { Entity, Product } from '@influenceth/sdk';
+import { TOKEN, TOKEN_SCALE } from '~/lib/priceUtils';
 
 const simulationConfig = {
   accountAddress: '0x1234567890',
@@ -13,7 +14,7 @@ const simulationConfig = {
     pilot: 7539,
     scientist: 6891
   },
-  
+  startingSway: 100e6 * TOKEN_SCALE[TOKEN.SWAY]
 };
 
 export default simulationConfig;

@@ -49,9 +49,12 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
     simulationEnabled: false,
     simulation: {
       step: 0,
-      crewmate: null,
-      leasedLots: { 123: 'extractor', ...{} },
+      crewmate: null, // id, name, appearance
+      lots: null,     // { id: buildingEntity(sparse), ... }
+      sway: null,
+      activities: [],
     },
+    simulationActions: [],
     coachmarks: [],
 
     // scene: {
@@ -468,17 +471,30 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
     })),
 
     dispatchSimulationStep: (step) => set(produce(state => {
-      if (!state.simulation) state.simulation = {};
+      if (!state.simulation || step === undefined) state.simulation = {};
       state.simulation.step = step;
     })),
 
-    dispatchSimulationCrewmate: (crewmate) => set(produce(state => {
-      state.simulation.crewmate = crewmate;
+    dispatchSimulationState: (key, update, mode = 'replace') => set(produce(state => {
+      if (mode === 'append') {
+        if (!state.simulation[key]) state.simulation[key] = [];
+        state.simulation[key].push(update);
+      } else if (mode === 'assign') {
+        if (!state.simulation[key]) state.simulation[key] = {};
+        Object.keys(update).forEach((k) => state.simulation[key][k] = update[k]);
+      } else {
+        state.simulation[key] = update;
+      }
     })),
 
-    dispatchCoachmarks: (coachmarkIds) => set(produce(state => {
-      console.log('dispatchCoachmarks', coachmarkIds);
-      state.coachmarks = coachmarkIds || [];
+    dispatchSimulationActions: (actions) => set(produce(state => {
+      console.log('dispatchSimulationActions', actions);
+      state.simulationActions = actions || [];
+    })),
+
+    dispatchCoachmarks: (coachmarkObj) => set(produce(state => {
+      console.log('dispatchCoachmarks', coachmarkObj);
+      state.coachmarks = coachmarkObj || {};
     })),
 
     dispatchCrewSelected: (crewId) => set(produce(state => {
@@ -760,6 +776,7 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
     'cutscene',
     'draggables',
     'lotLoader',
+    'simulationActions',
     'timeOverride' // should this be in ClockContext?
   ]
 })));

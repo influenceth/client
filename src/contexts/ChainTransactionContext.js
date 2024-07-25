@@ -932,14 +932,6 @@ export function ChainTransactionProvider({ children }) {
   const executeSystem = useCallback(async (key, vars, meta = {}) => {
     if (simulationEnabled) {
       const uuid = `0x${String(performance.now()).replace('.', '')}`;
-      console.log({
-        key,
-        vars,
-        meta,
-        timestamp: blockTime ? (blockTime * 1000) : null,
-        txHash: uuid,
-        waitingOn: 'TRANSACTION'
-      });
       dispatchPendingTransaction({
         key,
         vars,
@@ -948,17 +940,6 @@ export function ChainTransactionProvider({ children }) {
         txHash: uuid,
         waitingOn: 'TRANSACTION'
       });
-      setTimeout(() => {
-        dispatchPendingTransactionComplete(uuid);
-
-        // TODO: if finishTime, decrement finishTime until finished (show in "fast forwarding" state)
-        
-        // TODO: create expected activity out of this tx... will need a config somewhere
-        //       (simulate)
-
-        // TODO: overwrite data from useQuery as needed
-
-      }, 3000);
       return;
     }
 
@@ -1047,6 +1028,11 @@ export function ChainTransactionProvider({ children }) {
   }, [blockTime, contracts, walletAccount, simulationEnabled]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const getPendingTx = useCallback((key, vars) => {
+    // simulation will only ever have one concurrent?
+    if (simulationEnabled) {
+      return pendingTransactions.find((tx) => tx.key === key);
+    }
+
     if (contracts && contracts[key]) {
       return pendingTransactions.find((tx) => {
         if (tx.key === key) {

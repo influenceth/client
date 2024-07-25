@@ -263,7 +263,7 @@ export const entityToAgreements = (entity) => {
       // for the sake of agreements, the lot controller is *always* the asteroid controller
       // because that is who is the administrator of lot agreements
       // NOTE: this is different from elsewhere in the client, where the controller is
-      //       whoever has LOT_USE (fallback to asteroid controller)
+      //       whoever has USE_LOT (fallback to asteroid controller)
       formatted.Control = entity.label === Entity.IDS.LOT ? entity.meta?.asteroid?.Control : entity.Control;
       acc.push(formatted);
     })

@@ -1,9 +1,7 @@
-import { useContext } from 'react';
-
-import SessionContext from '~/contexts/SessionContext';
+import useSession from '~/hooks/useSession';
 
 const useBlockTime = () => {
-  const { blockTime } = useContext(SessionContext);
+  const { blockTime } = useSession();
   return blockTime;
 };
 

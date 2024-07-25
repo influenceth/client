@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Building, Permission, Inventory, Product } from '@influenceth/sdk';
+import { useHistory } from 'react-router-dom';
 
 import { ZOOM_IN_ANIMATION_TIME, ZOOM_OUT_ANIMATION_TIME, ZOOM_TO_PLOT_ANIMATION_MAX_TIME, ZOOM_TO_PLOT_ANIMATION_MIN_TIME } from '~/game/scene/Asteroid';
 import useCrewAgreements from '~/hooks/useCrewAgreements';
@@ -34,6 +35,8 @@ const useSimulationSteps = () => {
   const [transitioning, setTransitioning] = useState();
   const isTransitioning = !!transitioning;
 
+  const history = useHistory();
+
   // const crewTutorial = useStore(s => s.crewTutorials?.[crew?.id]);
   // const uncrewTutorial = useStore(s => s.crewTutorials?.[undefined]); // have to do this to preserve pre-crew actions
   // const dispatchDismissCrewTutorial = useStore(s => s.dispatchDismissCrewTutorial);
@@ -59,6 +62,7 @@ const useSimulationSteps = () => {
   const dispatchReorientCamera = useStore(s => s.dispatchReorientCamera);
   const dispatchResourceMapSelect = useStore(s => s.dispatchResourceMapSelect);
   const dispatchResourceMapToggle = useStore(s => s.dispatchResourceMapToggle);
+  const dispatchSimulationActions = useStore((s) => s.dispatchSimulationActions);
   const dispatchSimulationStep = useStore((s) => s.dispatchSimulationStep);
   const dispatchZoomScene = useStore(s => s.dispatchZoomScene);
   const updateZoomStatus = useStore(s => s.dispatchZoomStatusChanged);
@@ -78,16 +82,22 @@ const useSimulationSteps = () => {
   const simulation = useSimulationState();
   
   const { data: lot } = useLot(selectedLotId);
-  const lotIsLeasable = useMemo(() => {
-    if (lot && Permission.getPolicyDetails(lot, crew)[Permission.IDS.USE_LOT]?.crewStatus === 'available') {
-      console.log('in1', lot);
-      if (!lot?.building && !lot?.surfaceShip) {
-        console.log('in2');
-        return true;
-      }
+  const [lotIsLeasable, lotIsMine] = useMemo(() => {
+    let leasable = false;
+    let leased = false;
+    if (lot) {
+      const crewStatus = Permission.getPolicyDetails(lot, crew)[Permission.IDS.USE_LOT]?.crewStatus;
+      leasable = (crewStatus === 'available' && !lot?.building && !lot?.surfaceShip)
+      leased = (crewStatus === 'controller');
     }
-    return false;
+    return [leasable, leased];
   }, [crew, lot]);
+  const lotBuildingStatus = Building.CONSTRUCTION_STATUSES.PLANNED;
+  const unusedLotId = useMemo(() => {
+    return (crewAgreements || []).find((a) => {
+      return !(crewBuildings || []).find((b) => b.Location.location.id === a.id)
+    })?.id;
+  }, [crewAgreements, crewBuildings]);
 
   
   const advance = useCallback(() => {
@@ -97,7 +107,7 @@ const useSimulationSteps = () => {
   const simulationSteps = useMemo(() => {
     if (isLoading) return [];
 
-    // const lotLease = crewAgreements?.find((a) => a.permission === Permission.IDS.LOT_USE);
+    // const lotLease = crewAgreements?.find((a) => a.permission === Permission.IDS.USE_LOT);
 
     // const controlledWarehouse = crewBuildings?.find((b) => (
     //   b.Building?.buildingType === Building.IDS.WAREHOUSE
@@ -168,11 +178,12 @@ const useSimulationSteps = () => {
         title: 'Welcome to Influence',
         content: (
           <>
-            Influence is a massively multiplayer simulation set in the asteroid belt surrounding the star <b>Adalia</b>.
+            Welcome, Adalian! The Prime Council knows that you are eager to get out there and get started, 
+            but first we need to ensure that you are equipped with the knowledge you need to survive here.
             <br /><br />
-            Click NEXT to continue the Welcome Tour, or visit our
-            {' '}<a href="https://wiki.influenceth.io/en/docs/user-guides" target="_blank" rel="noopener noreferrer">Wiki</a>
-            {' '}or <a href="https://discord.com/invite/influenceth" target="_blank" rel="noopener noreferrer">Discord</a> for help getting started!
+            Remember: the <a href="https://wiki.influenceth.io/en/docs/user-guides" target="_blank" rel="noopener noreferrer">Wiki</a>
+            {' '}and  <a href="https://discord.com/invite/influenceth" target="_blank" rel="noopener noreferrer">Discord</a>
+            {' '}are resources that are always available to you when seeking help from your fellow Adalians.
           </>
         ),
         crewmateId: SIMULATION_CONFIG.crewmates.pilot,
@@ -202,10 +213,10 @@ const useSimulationSteps = () => {
         title: 'The Asteroid Belt',
         content: zoomStatus === 'out'
           ? `
-            Located partly inside the star's habitable "Goldilocks Zone," the Adalian asteroid belt is
-            comprised of 250,000 asteroids with unique orbits & resource compositions. Aspiring colonists may
-            purchase development rights to entire asteroids, or join with larger organizations attempting to
-            develop their own tracts of land in the belt.
+            Located partly inside our star's habitable "Goldilocks Zone," the Adalian asteroid belt is
+            comprised of 250,000 asteroids with unique orbital paths & resource compositions. Adalians
+            may purchase development rights to entire asteroids, or join with larger organizations
+            attempting to develop their own colonies in the belt.
           `
           : `Ehem, we'll have to zoom out a bit first...`,
         crewmateId: SIMULATION_CONFIG.crewmates.pilot,
@@ -219,11 +230,16 @@ const useSimulationSteps = () => {
       },
       {
         title: 'Adalia Prime - The First Colony',
-        content: `Adalia Prime is the single largest asteroid in the belt and the oldest hub of commerce and
-          human activity. Every Adalian owes their life to The Arvad, the wayward colony ship that was moored
-          and dismantled here to form the first permanent settlements.`,
+        content: zoomStatus === 'out'
+          ? `I've focused your nav panel on Adalia Prime. Click the HUD to zoom in for a closer look.`
+          : `
+            Adalia Prime is the single largest asteroid in the belt and the oldest hub of commerce and human
+            activity. While we all owe our lives to the Arvad, the wayward colony ship that was moored and
+            dismantled to form the first permanent settlements, Adalia Prime was our first real home here
+            in the asteroid belt. Here, at any public Habitats, you can find fellow new recruits when you
+            are ready to form your first crew.
+          `,
         crewmateId: SIMULATION_CONFIG.crewmates.scientist,
-        // TODO: consider if at this stage, we should just initialize for them?
         initialize: () => {
           dispatchOriginSelected(1);
         },
@@ -231,47 +247,55 @@ const useSimulationSteps = () => {
           [COACHMARK_IDS.hudCrewLocation]: origin !== 1,
           [COACHMARK_IDS.hudInfoPane]: zoomStatus === 'out' && origin === 1
         },
-        rightButton: {
+        rightButton: zoomStatus !== 'out' && {
           children: 'Next',
           onClick: () => advance(),
         },
       },
       {
         title: 'Create Your Recruit',
-        content: `Before you choose which Class to join, and begin your formal post-secondary education, 
-          you have one last general education requirement to complete. Your final requirement is a 
-          practical internship as a new recruit, where you will learn about life in Adalia by joining 
-          an experienced crew made up of volunteers who are ready to teach you.`,
+        content: `Before you choose which class to join and begin your specialized education, you have one 
+          last general education requirement to complete. Your final requirement takes the form of a 
+          practical internship as a new recruit, where you will learn about life in Adalia by joining an 
+          experienced crew made up of volunteers who are ready to teach you.`,
         crewmateId: SIMULATION_CONFIG.crewmates.scientist,
         coachmarks: {
-          [COACHMARK_IDS.hudRecruitCaptain]: true // TODO: if dialog not open
+          [COACHMARK_IDS.hudRecruitCaptain]: (history.location.pathname === '/') // not in creation flow
         },
         shouldAdvance: () => simulation.crewmate?.name && simulation.crewmate?.appearance
       },
-      { // TODO: could combine with above somewhat...
+      {
+        // TODO: navigate to fake /crew page? could probably do now that faking state
         title: `Welcome, ${simulation.crewmate?.name}!`,
-        content: `Your friends are going to be so envious - you must be one of the luckiest 
-          new recruits in Adalia. The rest of the crew for your internship is composed of some 
-          of the most famous Adalians - they were all Department Heads aboard the great 
-          generational ship, the Arvad, before humanity arrived here.`,
+        content: `Your friends are going to be so envious - you must be one of the luckiest new recruits
+          in Adalia. The rest of the crew for your internship is composed of some of the most famous
+          Adalians - they were all Department Heads and members of the Prime Council aboard the Arvad,
+          the great generational ship that arrived here from Earth.`,
         crewmateId: SIMULATION_CONFIG.crewmates.scientist,
-        coachmarks: {},
+        coachmarks: {}, // TODO: brief flash on crewmate added to AvatarMenu?
+        initialize: () => {
+          // TODO: zoom to where crew is
+        },
         rightButton: {
           children: 'Next',
           onClick: () => advance(),
         },
       },
       {
-        title: 'Lease Some Lots', // TODO: ...
-        content: `Pick out a good spot to lease some lots. Click the lot.`,
+        title: 'Lease Some Lots',
+        content: `Since the Prime Council still controls Adalia Prime, you'll have to lease some lots of
+          land from them. The first task that you are assigned is to find an unoccupied lot to lease. It's
+          also your first lesson in how the economics of Adalia operate. Mason Quince, a leading member
+          of a prominent Merchant's Guild, gives you some advice: "Leasing lots is all about balance. The
+          further out from the city centers that you go, the cheaper the lots, but the higher the commute
+          time for your crew and goods to get to market. Find the right balance and I'm sure you'll find
+          a sweet spot to set up a beginning mining operation."`,
         crewmateId: SIMULATION_CONFIG.crewmates.engineer,
         initialize: () => {
-          // deselect lot
-          // zoom to altitude
-          console.log({ lot });
+          // TODO: deselect lot -> zoom to altitude
         },
         coachmarks: {
-          // TODO: navigate to AP
+          // TODO: (navigate to AP package)
 
           [COACHMARK_IDS.hudMenuResources]: !lot && openHudMenu !== 'RESOURCES',
           [COACHMARK_IDS.hudMenuTargetResource]: !lot && openHudMenu === 'RESOURCES' && selectedResourceId !== SIMULATION_CONFIG.resourceId,
@@ -280,15 +304,26 @@ const useSimulationSteps = () => {
           // TODO: make action buttons abstracted by using name?
           // TODO: "help me pick" option
         },
-        shouldAdvance: () => simulation.leasedLots?.length > 0,
-        // TODO: auto-lease 4 more nearby
+        enabledActions: [
+          lotIsLeasable && 'FormLotLeaseAgreement'
+        ],
+        shouldAdvance: () => !!simulation.lots
       },
       {
-        title: '', // TODO: ...
-        content: `Construct your extractor.`,
+        title: 'Construct your extractor.',
+        content: `Do it.`,
         crewmateId: SIMULATION_CONFIG.crewmates.engineer,
-        coachmarks: [
-          // TODO: click a lot with an agreement on it (via hud)
+        initialize: () => {
+          console.log({ lot, lotIsMine, openHudMenu })
+        },
+        coachmarks: {
+          [COACHMARK_IDS.hudMenuMyAssets]: !(lot && lotIsMine) && openHudMenu !== 'MY_ASSETS',
+          [COACHMARK_IDS.hudMenuMyAssetsAgreement]: !(lot && lotIsMine) && openHudMenu === 'MY_ASSETS' && unusedLotId,
+          [COACHMARK_IDS.actionButtonPlan]: !actionDialog?.type && lotIsMine && !lotBuildingStatus,
+          [COACHMARK_IDS.actionButtonConstruct]: !actionDialog?.type && lotIsMine && [Building.CONSTRUCTION_STATUSES.PLANNED, Building.CONSTRUCTION_STATUSES.UNDER_CONSTRUCTION].includes(lotBuildingStatus)
+          
+          
+          
           // TODO: "plan" action button --> extractor
           // (fast forward)
           // TODO: "construct" action button
@@ -296,6 +331,11 @@ const useSimulationSteps = () => {
           // (fast forward)
           // TODO: "construct" action button
           // (fast forward)
+        },
+        enabledActions: [
+          lotIsMine && 'PlanBuilding',
+          lotIsMine && [Building.CONSTRUCTION_STATUSES.PLANNED, Building.CONSTRUCTION_STATUSES.UNDER_CONSTRUCTION].includes(lotBuildingStatus) && 'Construct',
+          // TODO: deliveries?
         ],
         shouldAdvance: () => extractors?.length > 0,
       },
@@ -445,8 +485,10 @@ const useSimulationSteps = () => {
     isLoading,
     crewAgreements,
     crewBuildings,
+    history,
     lot,
     lotIsLeasable,
+    lotIsMine,
     openHudMenu,
     origin,
     selectedResourceId,
@@ -456,7 +498,7 @@ const useSimulationSteps = () => {
   // cleanse step
   useEffect(() => {
     if (!isLoading) {
-      if (simulation.step < 0 || simulation.step > simulation.length - 1) {
+      if (simulation.step === undefined || simulation.step < 0 || simulation.step > simulation.length - 1) {
         dispatchSimulationStep(0);
       }
     }
@@ -480,17 +522,23 @@ const useSimulationSteps = () => {
     }
   }, [simulation.step]);
 
-  const coachmarks = useMemo(() => {
-    console.log('Object.keys(currentStep?.coachmarks || {})', Object.keys(currentStep?.coachmarks || {}));
-    return Object.keys(currentStep?.coachmarks || {}).filter((id) => {
-      return !!currentStep?.coachmarks[id]
+  const enabledActions = useMemo(() => {
+    return Object.keys(currentStep?.enabledActions || {}).filter((id) => {
+      return !!currentStep?.enabledActions[id]
     });
+  }, [currentStep?.enabledActions]);
+
+  // TODO: 
+
+  useEffect(() => {
+    console.log({ coachmarks: currentStep?.coachmarks });
+    dispatchCoachmarks(currentStep?.coachmarks);
   }, [currentStep?.coachmarks]);
 
   useEffect(() => {
-    console.log({ coachmarks });
-    dispatchCoachmarks(coachmarks);
-  }, [coachmarks]);
+    console.log({ enabledActions });
+    dispatchSimulationActions(enabledActions);
+  }, [enabledActions]);
 
 
   // useEffect(() => dispatchSimulationStep(0), []);

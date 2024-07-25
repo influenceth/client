@@ -41,6 +41,7 @@ import FundingFlow from '~/game/launcher/components/FundingFlow';
 import { AdvancedStarterPack, BasicStarterPack } from '~/game/launcher/components/StarterPack';
 import { useSwayBalance } from '~/hooks/useWalletTokenBalance';
 import useSimulationEnabled from '~/hooks/useSimulationEnabled';
+import SIMULATION_CONFIG from '~/simulation/simulationConfig';
 
 const CollectionImages = {
   1: Collection1,
@@ -833,7 +834,7 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
   const history = useHistory();
 
   const simulationEnabled = useSimulationEnabled();
-  const dispatchSimulationCrewmate = useStore((s) => s.dispatchSimulationCrewmate);
+  const dispatchSimulationState = useStore((s) => s.dispatchSimulationState);
   const dispatchCrewAssignmentRestart = useStore((s) => s.dispatchCrewAssignmentRestart);
 
   const isNameValid = useNameAvailability({ id: crewmateId, label: Entity.IDS.CREWMATE });
@@ -1106,8 +1107,8 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
 
   const confirmFinalize = useCallback(async () => {
     if (simulationEnabled) {
-      dispatchSimulationCrewmate({ name, appearance: crewmate?.Crewmate?.appearance });
-      history.push(onCloseDestination);
+      dispatchSimulationState('crewmate', { id: SIMULATION_CONFIG.crewmateId, name, appearance: crewmate?.Crewmate?.appearance });
+      history.push('/');
       return;
     }
 

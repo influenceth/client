@@ -10,7 +10,7 @@ import Coachmarks, { COACHMARK_IDS } from '~/Coachmarks';
 // TODO: arguably, it would be more consistent to show this button in a disabled state, at least in some conditions
 const isVisible = ({ lot, crew }) => {
   // visible when lot selected and lot is available to crew (and uncontrolled or not controlled by occupant)
-  if (lot && Permission.getPolicyDetails(lot, crew?.id)[Permission.IDS.USE_LOT]?.crewStatus === 'available') {
+  if (lot && Permission.getPolicyDetails(lot, crew)[Permission.IDS.USE_LOT]?.crewStatus === 'available') {
     if (!lot.Control?.controller?.id) return true;
     if ((lot.building || lot.surfaceShip)?.Control?.controller?.id !== lot.Control.controller.id) return true;
   }
@@ -31,7 +31,7 @@ const FormLotLeaseAgreement = ({ lot, permission, simulation, _disabled }) => {
     if (pendingChange) return 'updating...';
     if (simulation) {
       if (lot?.building || lot?.surfaceShip) return 'occupied by another crew';
-      if (simulation.leasedLots?.length >= 5) return 'max simulation lots already leased';
+      if (Object.values(simulation.lots || {}).length >= 5) return 'leasing simulation complete';
     }
     return '';
   }, [_disabled, pendingChange]);
@@ -44,7 +44,7 @@ const FormLotLeaseAgreement = ({ lot, permission, simulation, _disabled }) => {
         label="Form Lot Agreement"
         labelAddendum={disabledReason}
         flags={{
-          attention: simulation && !(_disabled || disabledReason),
+          attention: simulation && !disabledReason,
           disabled: _disabled || disabledReason,
           loading: pendingChange
         }}

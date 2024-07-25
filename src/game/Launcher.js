@@ -305,6 +305,7 @@ const Launcher = (props) => {
   const hasSeenIntroVideo = useStore(s => s.hasSeenIntroVideo);
   const dispatchCutscene = useStore(s => s.dispatchCutscene);
   const dispatchSimulationEnabled = useStore(s => s.dispatchSimulationEnabled);
+  const dispatchSimulationStep = useStore(s => s.dispatchSimulationStep);
   const dispatchLauncherPage = useStore(s => s.dispatchLauncherPage);
   const dispatchSeenIntroVideo = useStore(s => s.dispatchSeenIntroVideo);
   const dispatchToggleInterface = useStore(s => s.dispatchToggleInterface);
@@ -355,6 +356,7 @@ const Launcher = (props) => {
   const onToggleSimulation = useCallback(() => {
     if (simulationEnabled) {
       dispatchSimulationEnabled(false);
+      dispatchSimulationStep();  // TODO: remove this probably
     } else if (!authenticated) { // is this necessary?
       dispatchSimulationEnabled(true);
     }
@@ -470,7 +472,7 @@ const Launcher = (props) => {
             </PlayButton>
 
             <PlayButton disabled={authenticating} onClick={onToggleSimulation}>
-              {simulationEnabled ? 'Exit ' : ''}Training Simulation
+              {simulationEnabled ? 'Exit' : 'Enter'}{' '}Training Simulation
             </PlayButton>
           </>
         )}

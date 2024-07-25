@@ -13,7 +13,7 @@ import useSimulationState from '~/hooks/useSimulationState';
 import SIMULATION_CONFIG from '~/simulation/simulationConfig';
 
 const entityProps = ({ id, label }) => ({ id, label, uuid: Entity.packEntity({ id, label }) });
-const welcomeNftConfig = {
+const simulationNftConfig = {
   owners: {
     ethereum: null,
     starknet: SIMULATION_CONFIG.accountAddress,
@@ -55,6 +55,7 @@ export function CrewProvider({ children }) {
       entityProps({ id: 1, label: Entity.IDS.ASTEROID })
     ];
 
+    console.log('simulationState', simulationState);
     const roster = [
       simulationState.crewmate?.id || undefined,
       SIMULATION_CONFIG.crewmates.engineer,
@@ -84,7 +85,7 @@ export function CrewProvider({ children }) {
       Name: {
         name: SIMULATION_CONFIG.crewName,
       },
-      Nft: welcomeNftConfig,
+      Nft: simulationNftConfig,
       Ship: {
         emergencyAt: 0,
         readyAt: 0,
@@ -153,7 +154,7 @@ export function CrewProvider({ children }) {
             coll: Crewmate.COLLECTION_IDS.ADALIAN,
           },
           Name: { name: simulationState.crewmate.name },
-          Nft: welcomeNftConfig,
+          Nft: simulationNftConfig,
           // TODO: any other crewmate search should return this as well
         };
       }

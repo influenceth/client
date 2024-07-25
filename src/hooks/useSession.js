@@ -1,17 +1,17 @@
 import { useContext, useMemo } from 'react';
 
 import SessionContext from '~/contexts/SessionContext';
-import useStore from '~/hooks/useStore';
 import SIMULATION_CONFIG from '~/simulation/simulationConfig';
+import useSimulationState from './useSimulationState';
 
 
 const useSession = (includeSimulationOverrides = true) => {
-  const simulationState = useStore(s => s.simulationEnabled ? s.simulation : null);
   const context = useContext(SessionContext);
+  const simulation = useSimulationState();
 
-  const overrideBlockTime = useMemo(() => simulationState ? Math.floor(Date.now() / 100e3) * 100 : null, [simulationState]);
+  const overrideBlockTime = useMemo(() => simulation ? Math.floor(Date.now() / 100e3) * 100 : null, [simulation]);
   return useMemo(() => {
-    if (includeSimulationOverrides && simulationState) {
+    if (includeSimulationOverrides && simulation) {
       return {
         ...context,
         accountAddress: SIMULATION_CONFIG.accountAddress,
@@ -27,7 +27,7 @@ const useSession = (includeSimulationOverrides = true) => {
       };
     }
     return context;
-  }, [context, includeSimulationOverrides, overrideBlockTime, simulationState]);
+  }, [context, includeSimulationOverrides, overrideBlockTime, simulation]);
 };
 
 export default useSession;

@@ -580,13 +580,12 @@ const InfoPane = ({ setRef }) => {
         <ContentRow>
           {thumbnail && (
             <ThumbWrapper
-              ref={setRefEl}
               onClick={onClickPane}
               onMouseEnter={onMouseEvent}
               onMouseLeave={onMouseEvent}
               hasCaptainCard={!!captainCard}>
               {hover ? <DetailsIcon /> : <ForwardIcon />}
-              <ThumbPreview visible={thumbVisible}>
+              <ThumbPreview ref={setRefEl} visible={thumbVisible}>
                 <CloseButton onClick={onClosePane} borderless>
                   <CloseIcon />
                 </CloseButton>

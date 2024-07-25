@@ -7,6 +7,8 @@ import useStore from '~/hooks/useStore';
 import useSimulationSteps from '~/simulation/useSimulationSteps';
 import theme from '~/theme';
 import TutorialMessage from './TutorialMessage';
+import MockDataManager from '~/simulation/MockDataManager';
+import MockTransactionManager from '~/simulation/MockTransactionManager';
 
 const DELAY_MESSAGE = 1000;
 
@@ -23,6 +25,9 @@ const WelcomeSimulation = () => {
   if (!currentStep) return null;
   return (
     <>
+      <MockDataManager />
+      <MockTransactionManager />
+      
       <TutorialMessage
         crewmateId={currentStep?.crewmateId}
         isIn={currentStep && !isHidden && !isTransitioning}

@@ -16,6 +16,7 @@ import useSession from '~/hooks/useSession';
 import formatters from '~/lib/formatters';
 import { locationsArrToObj } from '~/lib/utils';
 import EntityName from '~/components/EntityName';
+import Coachmarks, { COACHMARK_IDS } from '~/Coachmarks';
 
 const Wrapper = styled.div`
   display: flex;
@@ -178,6 +179,7 @@ const MyAssets = () => {
   const { data: walletShips, isLoading: shipsLoading } = useWalletShips();
 
   const origin = useStore((s) => s.asteroids.origin);
+  const coachmarks = useStore(s => s.coachmarks);
   const launcherPage = useStore((s) => s.launcherPage);
   const dispatchLauncherPage = useStore((s) => s.dispatchLauncherPage);
 
@@ -310,6 +312,8 @@ const MyAssets = () => {
     return [groups, ungrouped.length];
   }, [walletShips, allAsteroidsMode, allCrewsMode]);
 
+  const [agreementRefEl, setAgreementRefEl] = useState();
+
   return (
     <Wrapper>
       <Controls>
@@ -398,11 +402,15 @@ const MyAssets = () => {
             assetTally={agreementTally}
             isLoading={agreementsLoading}
             itemGetter={(agreement) => (
-              <AgreementBlock
-                key={agreement._agreement._path}
-                agreement={agreement}
-                onSelectCrew={onClickCrewAsset}
-                selectedCrew={crew} />
+              <>
+                <AgreementBlock
+                  key={agreement._agreement._path}
+                  agreement={agreement}
+                  onSelectCrew={onClickCrewAsset}
+                  selectedCrew={crew}
+                  setRef={coachmarks[COACHMARK_IDS.hudMenuMyAssetsAgreement] === agreement.id ? setAgreementRefEl : undefined} />
+                <Coachmarks label={COACHMARK_IDS.hudMenuMyAssetsAgreement} refEl={agreementRefEl} />
+              </>
             )}
             itemHeight={55}
             singleGroupMode={!allAsteroidsMode} />

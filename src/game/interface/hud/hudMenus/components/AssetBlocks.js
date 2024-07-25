@@ -196,7 +196,7 @@ const getBuildingIcon = (buildingType) => {
     default: return <ConstructIcon />;
   }
 }
-export const AgreementBlock = ({ agreement, onSelectCrew, selectedCrew }) => {
+export const AgreementBlock = ({ agreement, onSelectCrew, selectedCrew, setRef }) => {
   const blockTime = useBlockTime();
 
   const location = useMemo(() => locationsArrToObj(agreement.Location?.locations || [agreement.Location?.locations]), []);
@@ -265,7 +265,7 @@ export const AgreementBlock = ({ agreement, onSelectCrew, selectedCrew }) => {
   }, [onLink, onSelectCrew, agreement]);
 
   return (
-    <SelectableRow onClick={onClick}>
+    <SelectableRow ref={setRef} onClick={onClick}>
       <IconThumbnail>
         {selectedCrew?.id && agreement.Control?.controller?.id === selectedCrew?.id && <MyAssetWrapper><MyAssetIcon /></MyAssetWrapper>}
         {icon}

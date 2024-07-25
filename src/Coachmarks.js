@@ -41,10 +41,14 @@ const FullscreenAttention = styled.div`
 `;
 
 export const COACHMARK_IDS = {
+  actionButtonConstruct: 'actionButtonConstruct',
   actionButtonLease: 'actionButtonLease',
+  actionButtonPlan: 'actionButtonPlan',
   backToBelt: 'backToBelt',
   hudCrewLocation: 'hudCrewLocation',
   hudInfoPane: 'hudInfoPane',
+  hudMenuMyAssets: 'hudMenuMyAssets',
+  hudMenuMyAssetsAgreement: 'hudMenuMyAssetsAgreement',
   hudMenuResources: 'hudMenuResources',
   hudMenuTargetResource: 'hudMenuTargetResource',
   hudRecruitCaptain: 'hudRecruitCaptain',
@@ -91,11 +95,15 @@ const CoachmarkAnimation = ({ refEl }) => {
   );
 };
 
-const Coachmarks = ({ label, refEl }) => {
+const Coachmarks = ({ discriminator, label, refEl }) => {
   const coachmarks = useStore(s => s.coachmarks);
   const launcherPage = useStore(s => s.launcherPage);
 
-  const isOn = useMemo(() => label && !launcherPage && coachmarks.includes(label), [coachmarks, label]);
+  const isOn = useMemo(() => {
+    if (label && !launcherPage) {
+      return discriminator ? (coachmarks[label] == discriminator) : !!coachmarks[label];
+    }
+  }, [coachmarks, discriminator, label]);
 
   return isOn && refEl ? <CoachmarkAnimation refEl={refEl} /> : null;
 }

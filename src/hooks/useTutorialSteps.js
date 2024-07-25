@@ -78,7 +78,7 @@ const useTutorialSteps = () => {
   const tutorialSteps = useMemo(() => {
     if (loading) return [];
 
-    const lotLease = crewAgreements?.find((a) => a.permission === Permission.IDS.LOT_USE);
+    const lotLease = crewAgreements?.find((a) => a.permission === Permission.IDS.USE_LOT);
 
     const controlledWarehouse = crewBuildings?.find((b) => (
       b.Building?.buildingType === Building.IDS.WAREHOUSE

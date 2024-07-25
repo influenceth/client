@@ -330,7 +330,7 @@ export const getCrewDisabledReason = ({
   requireSurface = true,
   requireReady = true
 }) => {
-  if (crew?._isSimulation && !isAllowedInSimulation) return 'access restricted';
+  if (crew?._isSimulation && !isAllowedInSimulation) return 'simulation restricted';
   if (permission && permissionTarget) {
     if (!crew || !Permission.isPermitted(crew, permission, permissionTarget)) return 'access restricted';
   }

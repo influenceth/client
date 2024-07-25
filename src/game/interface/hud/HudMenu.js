@@ -630,6 +630,7 @@ const HudMenu = () => {
         label: 'My Assets',
         icon: <MyAssetsIcon />,
         Component: hudMenus.MyAssets,
+        coachmarkId: COACHMARK_IDS.hudMenuMyAssets,
         useAltColor: true,
         noDetail: true,
         isUniversal: true,

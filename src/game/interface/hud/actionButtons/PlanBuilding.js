@@ -1,9 +1,10 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { Permission } from '@influenceth/sdk';
 
 import { PlanBuildingIcon } from '~/components/Icons';
 import useConstructionManager from '~/hooks/actionManagers/useConstructionManager';
 import ActionButton, { getCrewDisabledReason } from './ActionButton';
+import Coachmarks, { COACHMARK_IDS } from '~/Coachmarks';
 
 const labelDict = {
   READY_TO_PLAN: 'Create Building Site',
@@ -19,7 +20,7 @@ const isVisible = ({ constructionStatus, crew, lot, ship }) => {
   );
 };
 
-const PlanBuilding = ({ asteroid, crew, lot, onSetAction, _disabled }) => {
+const PlanBuilding = ({ asteroid, crew, lot, onSetAction, simulation, _disabled }) => {
   const { constructionStatus } = useConstructionManager(lot?.id);
   const handleClick = useCallback(() => {
     onSetAction('PLAN_BUILDING');
@@ -29,19 +30,33 @@ const PlanBuilding = ({ asteroid, crew, lot, onSetAction, _disabled }) => {
     const isControlledByMe = crew && lot && Permission.isPermitted(crew, Permission.IDS.USE_LOT, lot);
 
     if (_disabled) return 'loading...';
-    if (constructionStatus === 'READY_TO_PLAN') return getCrewDisabledReason({ asteroid, crew, requireReady: !isControlledByMe });
+    if (constructionStatus === 'READY_TO_PLAN') {
+      return getCrewDisabledReason({
+        asteroid,
+        crew,
+        isAllowedInSimulation: true,  // TODO: simulation step dependent (step config should note enabled action buttons)
+                                      // TODO: also, only allowed if leased in simulation
+        requireReady: !isControlledByMe
+      });
+    }
   }, [_disabled, asteroid, constructionStatus, crew, lot]);
-
+  
+  const [refEl, setRefEl] = useState();
   return (
-    <ActionButton
-      label={labelDict[constructionStatus] || undefined}
-      labelAddendum={disabledReason}
-      flags={{
-        disabled: disabledReason,
-        loading: constructionStatus === 'PLANNING'
-      }}
-      icon={<PlanBuildingIcon />}
-      onClick={handleClick} />
+    <>
+      <ActionButton
+        ref={setRefEl}
+        label={labelDict[constructionStatus] || undefined}
+        labelAddendum={disabledReason}
+        flags={{
+          attention: simulation && !disabledReason,
+          disabled: disabledReason,
+          loading: constructionStatus === 'PLANNING'
+        }}
+        icon={<PlanBuildingIcon />}
+        onClick={handleClick} />
+      <Coachmarks label={COACHMARK_IDS.actionButtonPlan} refEl={refEl} />
+    </>
   );
 };
 
