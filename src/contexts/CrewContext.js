@@ -242,9 +242,9 @@ export function CrewProvider({ children }) {
 
   const crewCan = useCallback(
     (permission, hydratedTarget) => (finalSelectedCrew && hydratedTarget)
-      ? Permission.isPermitted(finalSelectedCrew, permission, hydratedTarget)
+      ? Permission.isPermitted(finalSelectedCrew, permission, hydratedTarget, blockTime)
       : false,
-    [finalSelectedCrew]
+    [blockTime, finalSelectedCrew]
   );
 
   const lastBlockNumber = useRef(blockNumber);

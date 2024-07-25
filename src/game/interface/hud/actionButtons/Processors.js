@@ -9,7 +9,7 @@ const isVisible = ({ building, crew }) => {
   return crew && building && building.Processors?.length > 0;
 };
 
-const Button = ({ asteroid, crew, lot, processor, onSetAction, _disabled }) => {
+const Button = ({ asteroid, blockTime, crew, lot, processor, onSetAction, _disabled }) => {
   const { currentProcess, processStatus } = useProcessManager(lot?.id, processor.slot);
   const handleClick = useCallback(() => {
     onSetAction('PROCESS', { processorSlot: processor.slot });
@@ -20,11 +20,11 @@ const Button = ({ asteroid, crew, lot, processor, onSetAction, _disabled }) => {
   const disabledReason = useMemo(() => {
     if (_disabled) return 'loading...';
     if (processStatus === 'READY') {
-      return getCrewDisabledReason({ asteroid, crew, isSequenceable: true, permission: Permission.IDS.RUN_PROCESS, permissionTarget: lot?.building });
+      return getCrewDisabledReason({ asteroid, blockTime, crew, isSequenceable: true, permission: Permission.IDS.RUN_PROCESS, permissionTarget: lot?.building });
     } else if (!currentProcess?._isAccessible) {
       return 'in use';
     }
-  }, [asteroid, crew, currentProcess, processStatus]);
+  }, [asteroid, blockTime, crew, currentProcess, processStatus]);
 
   const loading = ['PROCESSING', 'FINISHING'].includes(processStatus);
   return (

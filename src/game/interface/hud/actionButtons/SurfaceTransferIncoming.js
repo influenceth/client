@@ -14,7 +14,7 @@ const isVisible = ({ crew, lot, ship }) => {
   return crew && ((entity?.Inventories || []).find((i) => i.status === Inventory.STATUSES.AVAILABLE));
 };
 
-const SurfaceTransferIncoming = ({ asteroid, crew, lot, ship, onSetAction, dialogProps = {}, _disabled }) => {
+const SurfaceTransferIncoming = ({ asteroid, blockTime, crew, lot, ship, onSetAction, dialogProps = {}, _disabled }) => {
   const destination = useMemo(() => ship || lot?.surfaceShip || lot?.building, [ship, lot]);
   const { data: inventoryOrders } = useOrdersByInventory(destination);
   const { currentDeliveryActions: destDeliveryActions, isLoading } = useDeliveryManager({ destination });
@@ -26,7 +26,7 @@ const SurfaceTransferIncoming = ({ asteroid, crew, lot, ship, onSetAction, dialo
 
   const currentDeliveryStack = useMemo(() => {
     const actionStack = [];
-    if (crew && destination && Permission.isPermitted(crew, Permission.IDS.ADD_PRODUCTS, destination)) {
+    if (crew && destination && Permission.isPermitted(crew, Permission.IDS.ADD_PRODUCTS, destination, blockTime)) {
       (destDeliveryActions || []).forEach((delivery) => {
         if (['PACKAGED','IN_TRANSIT','READY_TO_FINISH'].includes(delivery.status)) {
           actionStack.push({
@@ -99,7 +99,7 @@ const SurfaceTransferIncoming = ({ asteroid, crew, lot, ship, onSetAction, dialo
       if (b.finishTime) return 1;
       return 0;
     });
-  }, [crew, destination, destDeliveryActions, destActionItems, inventoryOrders, onSetAction]);
+  }, [blockTime, crew, destination, destDeliveryActions, destActionItems, inventoryOrders, onSetAction]);
 
   const handleClick = useCallback(() => {
     onSetAction('SURFACE_TRANSFER', { deliveryId: 0, destination, ...dialogProps });
@@ -123,7 +123,10 @@ const SurfaceTransferIncoming = ({ asteroid, crew, lot, ship, onSetAction, dialo
     return getCrewDisabledReason({ asteroid, crew, requireReady: false });
   }, [destination, crew]);
   
-  const isP2P = useMemo(() => crew && destination && !Permission.isPermitted(crew, Permission.IDS.ADD_PRODUCTS, destination), [crew, destination]);
+  const isP2P = useMemo(
+    () => crew && destination && !Permission.isPermitted(crew, Permission.IDS.ADD_PRODUCTS, destination, blockTime),
+    [blockTime, crew, destination]
+  );
 
   return (
     <>

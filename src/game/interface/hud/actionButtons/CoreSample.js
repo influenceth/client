@@ -67,7 +67,7 @@ const NewCoreSample = ({ asteroid, crew, lot, onSetAction, overrideResourceId, i
     if (improveSample && improveSample?.Deposit?.status === Deposit.STATUSES.USED) return 'already used';
     if (improveSample && improveSample?.Deposit?.status !== Deposit.STATUSES.SAMPLED) return 'not yet analyzed';
     if (currentSamplingActions.find((c) => c.stage === 'STARTING')) return 'pending';
-    return getCrewDisabledReason({ asteroid, isSequenceable: true, crew });
+    return getCrewDisabledReason({ asteroid, crew, isSequenceable: true });
   }, [_disabled, asteroid, crew, currentSamplingActions, improveSample]);
 
   let label = labelDict.READY;

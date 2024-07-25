@@ -15,7 +15,7 @@ const isVisible = ({ crew, lot, ship }) => {
   return crew && ((entity?.Inventories || []).find((i) => i.status === Inventory.STATUSES.AVAILABLE));
 };
 
-const SurfaceTransferOutgoing = ({ asteroid, crew, lot, ship, onSetAction, dialogProps = {}, _disabled }) => {
+const SurfaceTransferOutgoing = ({ asteroid, blockTime, crew, lot, ship, onSetAction, dialogProps = {}, _disabled }) => {
   const origin = useMemo(() => ship || lot?.surfaceShip || lot?.building, [ship, lot]);
   const { data: inventoryOrders } = useOrdersByInventory(origin);
   const { currentDeliveryActions: originDeliveryActions, isLoading } = useDeliveryManager({ origin });
@@ -30,7 +30,7 @@ const SurfaceTransferOutgoing = ({ asteroid, crew, lot, ship, onSetAction, dialo
   const currentDeliveryStack = useMemo(
     () => {
       const actionStack = [];
-      if (crew && origin && Permission.isPermitted(crew, Permission.IDS.REMOVE_PRODUCTS, origin)) {
+      if (crew && origin && Permission.isPermitted(crew, Permission.IDS.REMOVE_PRODUCTS, origin, blockTime)) {
         (originDeliveryActions || []).forEach((delivery) => {
           if (['PACKAGING', 'PACKAGED'].includes(delivery.status)) {
             actionStack.push({
@@ -73,7 +73,7 @@ const SurfaceTransferOutgoing = ({ asteroid, crew, lot, ship, onSetAction, dialo
       }
       return actionStack;
     },
-    [crew, origin, originDeliveryActions, originActionItems, inventoryOrders, onSetAction]
+    [blockTime, crew, origin, originDeliveryActions, originActionItems, inventoryOrders, onSetAction]
   );
 
   const handleClick = useCallback(() => {
@@ -88,9 +88,9 @@ const SurfaceTransferOutgoing = ({ asteroid, crew, lot, ship, onSetAction, dialo
     if (!hasMass) return 'inventory empty';
 
     return getCrewDisabledReason({
-      asteroid, crew, permission: Permission.IDS.REMOVE_PRODUCTS, permissionTarget: origin, requireReady: false
+      asteroid, blockTime, crew, permission: Permission.IDS.REMOVE_PRODUCTS, permissionTarget: origin, requireReady: false
     });
-  }, [origin, crew]);
+  }, [origin, blockTime, crew]);
 
   return (
     <>

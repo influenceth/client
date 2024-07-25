@@ -320,6 +320,7 @@ const ActionButtonComponent = ({
 
 export const getCrewDisabledReason = ({
   asteroid,
+  blockTime,
   crew,
   isSequenceable = false,
   permission,
@@ -329,7 +330,7 @@ export const getCrewDisabledReason = ({
   requireReady = true
 }) => {
   if (permission && permissionTarget) {
-    if (!crew || !Permission.isPermitted(crew, permission, permissionTarget)) return 'access restricted';
+    if (!crew || !Permission.isPermitted(crew, permission, permissionTarget, blockTime)) return 'access restricted';
   }
   if (asteroid && requireAsteroid) {
     if (crew?._location?.asteroidId !== asteroid?.id) {

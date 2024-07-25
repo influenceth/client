@@ -93,13 +93,13 @@ const EjectCrew = ({ asteroid, origin, originLot, stationedCrews, manager, stage
 
   const crewHasPermission = useCallback((c) => {
     if (c && origin) {
-      const perm = Permission.getPolicyDetails(origin, c)[Permission.IDS.STATION_CREW];
+      const perm = Permission.getPolicyDetails(origin, c, blockTime)[Permission.IDS.STATION_CREW];
       if (perm && (perm.crewStatus === 'controller' || perm.crewStatus === 'granted')) {
         return 'Crew currently has permission to be here.';
       }
     }
     return false;
-  }, [origin]);
+  }, [blockTime, origin]);
 
   const targetCrewHasPermission = useMemo(() => crewHasPermission(targetCrew), [origin, targetCrew]);
 
