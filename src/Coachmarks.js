@@ -44,6 +44,8 @@ export const COACHMARK_IDS = {
   actionButtonConstruct: 'actionButtonConstruct',
   actionButtonLease: 'actionButtonLease',
   actionButtonPlan: 'actionButtonPlan',
+  actionDialogConstructSource: 'actionDialogConstructSource',
+  actionDialogPlanType: 'actionDialogPlanType',
   backToBelt: 'backToBelt',
   hudCrewLocation: 'hudCrewLocation',
   hudInfoPane: 'hudInfoPane',
@@ -95,17 +97,17 @@ const CoachmarkAnimation = ({ refEl }) => {
   );
 };
 
-const Coachmarks = ({ discriminator, label, refEl }) => {
+const Coachmarks = ({ forceOn, label, refEl }) => {
   const coachmarks = useStore(s => s.coachmarks);
   const launcherPage = useStore(s => s.launcherPage);
 
   const isOn = useMemo(() => {
-    if (label && !launcherPage) {
-      return discriminator ? (coachmarks[label] == discriminator) : !!coachmarks[label];
-    }
-  }, [coachmarks, discriminator, label]);
+    if (!refEl) return false;
+    if (forceOn) return true;
+    return label && !launcherPage && !!coachmarks[label];
+  }, [coachmarks, forceOn, label, launcherPage, !refEl]);
 
-  return isOn && refEl ? <CoachmarkAnimation refEl={refEl} /> : null;
+  return isOn ? <CoachmarkAnimation refEl={refEl} /> : null;
 }
 
 export default Coachmarks;

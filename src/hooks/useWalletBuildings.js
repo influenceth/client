@@ -8,7 +8,7 @@ import { useQuery } from 'react-query';
 import { useMemo } from 'react';
 import { entitiesCacheKey } from '~/lib/cacheKey';
 
-const statuses = [
+export const statuses = [
   Building.CONSTRUCTION_STATUSES.PLANNED,
   Building.CONSTRUCTION_STATUSES.UNDER_CONSTRUCTION,
   Building.CONSTRUCTION_STATUSES.OPERATIONAL,

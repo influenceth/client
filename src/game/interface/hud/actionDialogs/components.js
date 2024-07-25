@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import styled, { css, keyframes } from 'styled-components';
 import { createPortal } from 'react-dom';
 import { Tooltip } from 'react-tooltip';
@@ -77,6 +77,9 @@ import DataTableComponent from '~/components/DataTable';
 import UncontrolledTextInput from '~/components/TextInputUncontrolled';
 import Autocomplete, { StaticAutocomplete } from '~/components/Autocomplete';
 import useScreenSize from '~/hooks/useScreenSize';
+import useStore from '~/hooks/useStore';
+import Coachmarks, { COACHMARK_IDS } from '~/Coachmarks';
+import useSimulationEnabled from '~/hooks/useSimulationEnabled';
 
 const SECTION_WIDTH = 780;
 
@@ -1512,32 +1515,48 @@ export const CrewSelectionDialog = ({ crews, disabler, onClose, onSelected, open
 
 export const SitePlanSelectionDialog = ({ initialSelection, onClose, onSelected, open }) => {
   const [selection, setSelection] = useState(initialSelection);
+  const simulationEnabled = useSimulationEnabled();
+  const coachmarks = useStore((s) => s.coachmarks);
+  const simulationActions = useStore((s) => s.simulationActions);
 
   const onComplete = useCallback(() => {
     onSelected(selection);
     onClose();
   }, [onClose, onSelected, selection]);
 
+  const [refEl, setRefEl] = useState();
+  const isCompletable = useMemo(() => {
+    if (simulationEnabled) {
+      return simulationActions.includes(`SelectSitePlan:${selection}`);
+    }
+    return selection > 0;
+  }, [selection, simulationActions, simulationEnabled]);
   return (
     <SelectionDialog
-      isCompletable={selection > 0}
+      isCompletable={isCompletable}
       onClose={onClose}
       onComplete={onComplete}
       open={open}
       title="Select Site Type">
       <SelectionGrid>
-        {Object.keys(Building.TYPES).filter((c) => c > 0).map((buildingType) => (
-          <FlexSectionInputBlock
-            key={buildingType}
-            fullWidth
-            image={<BuildingImage buildingType={buildingType} unfinished />}
-            isSelected={buildingType === selection}
-            label={Building.TYPES[buildingType].name}
-            sublabel="Site"
-            onClick={() => setSelection(buildingType)}
-            style={{ width: '100%' }}
-          />
-        ))}
+        {Object.keys(Building.TYPES).filter((c) => c > 0).map((buildingType) => {
+          const coachmarked = coachmarks[COACHMARK_IDS.actionDialogPlanType] === Number(buildingType);
+          return (
+            <Fragment key={buildingType}>
+              <FlexSectionInputBlock
+                fullWidth
+                image={<BuildingImage buildingType={buildingType} unfinished />}
+                isSelected={buildingType === selection}
+                label={Building.TYPES[buildingType].name}
+                sublabel="Site"
+                onClick={() => setSelection(buildingType)}
+                setRef={coachmarked ? setRefEl : undefined}
+                style={{ width: '100%' }}
+              />
+              {coachmarked && <Coachmarks forceOn refEl={refEl} />}
+            </Fragment>
+          );
+        })}
       </SelectionGrid>
     </SelectionDialog>
   );
@@ -2878,6 +2897,7 @@ const TimePill = ({ children, type }) => {
 };
 
 export const ActionDialogHeader = ({ action, actionCrew, crewAvailableTime, delayUntil, location, onClose, overrideColor, stage, taskCompleteTime, wide }) => {
+  const simulationEnabled = useSimulationEnabled();
   return (
     <>
       <ActionDialogActionBar
@@ -2891,6 +2911,7 @@ export const ActionDialogHeader = ({ action, actionCrew, crewAvailableTime, dela
           <CrewmateCardFramed
             crewmate={actionCrew?._crewmates?.[0]}
             isCaptain
+            CrewmateCardProps={simulationEnabled ? { useExplicitAppearance: true } : {}}
             width={75} />
         )}
         <IconAndLabel>
@@ -2924,8 +2945,9 @@ export const ActionDialogHeader = ({ action, actionCrew, crewAvailableTime, dela
   );
 };
 
-export const FlexSectionInputBlock = ({ bodyStyle, children, disabled, image, innerBodyStyle, isSelected, label, onClick, style = {}, sublabel, title, titleDetails, tooltip, ...props }) => {
+export const FlexSectionInputBlock = ({ bodyStyle, children, disabled, image, innerBodyStyle, isSelected, label, onClick, setRef, style = {}, sublabel, title, titleDetails, tooltip, ...props }) => {
   const refEl = useRef();
+
   const [hovered, setHovered] = useState();
   return (
     <>
@@ -2936,7 +2958,7 @@ export const FlexSectionInputBlock = ({ bodyStyle, children, disabled, image, in
           </MouseoverContent>
         </MouseoverInfoPane>
       )}
-      <FlexSectionInputContainer style={style}>
+      <FlexSectionInputContainer ref={setRef} style={style}>
         {title && <SectionTitle>{title}{titleDetails && <><b style={{ flex: 1 }} /><SectionTitleRight>{titleDetails}</SectionTitleRight></>}</SectionTitle>}
 
         <FlexSectionInputBody

@@ -1,12 +1,15 @@
-import { Entity, Product } from '@influenceth/sdk';
+import { Building, Entity, Product } from '@influenceth/sdk';
 import { TOKEN, TOKEN_SCALE } from '~/lib/priceUtils';
+
+const SAFE_ID_START = 4 * 28561869; // 4x * total lots in belt
 
 const simulationConfig = {
   accountAddress: '0x1234567890',
-  crewId: Number.MAX_SAFE_INTEGER,
+  crewId: SAFE_ID_START,
   crewName: 'ADALIAN INTERNSHIP',
-  crewmateId: Number.MAX_SAFE_INTEGER,
+  crewmateId: SAFE_ID_START,
   resourceId: Product.IDS.BITUMEN,
+  buildingIds: Object.values(Building.IDS).reduce((acc, v) => ({ ...acc, [v]: SAFE_ID_START + v }), {}),
   crewmates: {
     engineer: 7422,
     miner: 7535,

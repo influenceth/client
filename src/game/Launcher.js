@@ -21,6 +21,7 @@ import SystemControls from './interface/hud/SystemControls';
 import Help from './launcher/Help';
 import Rewards from './launcher/Rewards';
 import { fireTrackingEvent } from '~/lib/utils';
+import theme from '~/theme';
 
 const DISABLE_LAUNCHER_TRAILER = true && process.env.NODE_ENV === 'development';
 
@@ -217,7 +218,7 @@ const AccountButton = styled.div`
 const PlayButton = styled.div`
   align-items: center;
   background: black;
-  border: 1px solid rgba(${p => p.theme.colors.mainRGB}, 1);
+  border: 1px solid rgba(${p => p.rgb || p.theme.colors.mainRGB}, 1);
   border-radius: 50px;
   color: white;
   cursor: ${p => p.theme.cursors.active};
@@ -234,7 +235,7 @@ const PlayButton = styled.div`
   z-index: 1;
   &:before {
     content: "";
-    background: rgba(${p => p.theme.colors.mainRGB}, 0.3);
+    background: rgba(${p => p.rgb || p.theme.colors.mainRGB}, 0.3);
     border-radius: 50px;
     position: absolute;
     top: 4px; bottom: 4px; left: 4px; right: 4px;
@@ -243,9 +244,9 @@ const PlayButton = styled.div`
   }
 
   &:hover {
-    border-color: rgba(${p => p.theme.colors.mainRGB}, 1);
+    border-color: rgba(${p => p.rgb || p.theme.colors.mainRGB}, 1);
     &:before {
-      background: rgba(${p => p.theme.colors.mainRGB}, 0.5);
+      background: rgba(${p => p.rgb || p.theme.colors.mainRGB}, 0.5);
     }
   }
 `;
@@ -467,13 +468,19 @@ const Launcher = (props) => {
               </AccountButton>
             )}
 
-            <PlayButton disabled={authenticating} onClick={onClickPlay}>
-              {authenticated ? 'Play' : 'Explore World'}
-            </PlayButton>
+            {authenticated
+              ? (
+                <PlayButton disabled={authenticating} onClick={onClickPlay}>
+                  Play
+                </PlayButton>
+              )
+              : (
+                <PlayButton rgb={theme.colors[simulationEnabled ? 'errorRGB' : 'successRGB']} disabled={authenticating} onClick={onToggleSimulation}>
+                  {simulationEnabled ? 'Exit ' : ''} Training Mode
+                </PlayButton>
+              )
+            }
 
-            <PlayButton disabled={authenticating} onClick={onToggleSimulation}>
-              {simulationEnabled ? 'Exit' : 'Enter'}{' '}Training Simulation
-            </PlayButton>
           </>
         )}
 

@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useQuery, useQueryClient,  } from 'react-query';
 import { Entity, Lot, Permission, Ship } from '@influenceth/sdk';
 
@@ -20,10 +20,12 @@ const useLotEntities = (lotId, entityLabel, isPreloaded) => {
 const useLot = (lotId) => {
   const queryClient = useQueryClient();
 
+  // console.log('lotId', typeof lotId, lotId, lotId ? Entity.formatEntity({ id: lotId, label: Entity.IDS.LOT }) : null)
   const lotEntity = useMemo(() => lotId ? Entity.formatEntity({ id: lotId, label: Entity.IDS.LOT }) : null, [lotId]);
   // console.log('lotId', { lotId, lotEntity });
 
   const { data: lot, isLoading: lotIsLoading, dataUpdatedAt: lUpdatedAt } = useEntity(lotId ? { id: lotId, label: Entity.IDS.LOT } : undefined);
+  // console.log({ lot: lot.PrepaidAgreements?.length })
 
   // prepop all the entities on the lot in the cache (so can do in a single query)
   const { data: lotDataPrepopped, isLoading: lotDataIsLoading } = useQuery(
@@ -62,7 +64,7 @@ const useLot = (lotId) => {
   // below queries only get refreshed invididually when invalidated
   const { data: buildings, isLoading: buildingsLoading, dataUpdatedAt: bUpdatedAt } = useLotEntities(lotId, Entity.IDS.BUILDING, !!lotDataPrepopped);
   const { data: deposits, isLoading: depositsLoading, dataUpdatedAt: dUpdatedAt } = useLotEntities(lotId, Entity.IDS.DEPOSIT, !!lotDataPrepopped);
-  const { data: ships, isLoading: shipsLoading , dataUpdatedAt: sUpdatedAt} = useLotEntities(lotId, Entity.IDS.SHIP, !!lotDataPrepopped);
+  const { data: ships, isLoading: shipsLoading, dataUpdatedAt: sUpdatedAt} = useLotEntities(lotId, Entity.IDS.SHIP, !!lotDataPrepopped);
 
   const isLoading = lotEntity?.uuid && (lotIsLoading || lotDataIsLoading || asteroidLoading || buildingsLoading || depositsLoading || shipsLoading);
   const objArrDataUpdatedAt = Math.max(bUpdatedAt, dUpdatedAt, lUpdatedAt, sUpdatedAt);

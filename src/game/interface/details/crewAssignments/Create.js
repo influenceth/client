@@ -1125,8 +1125,8 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
   }, [crewmate, purchaseAndOrInitializeCrewmate]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleBack = useCallback(() => {
-    history.push(backLocation);
-  }, [backLocation]);
+    history.push(simulationEnabled ? '/' : backLocation);
+  }, [backLocation, simulationEnabled]);
 
   // // show "complete" page (instead of "create") for non-recruitment assignments
   // useEffect(() => {

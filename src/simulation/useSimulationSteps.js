@@ -25,7 +25,7 @@ const STEPS = {
 };
 
 const useSimulationSteps = () => {
-  const { crew } = useCrewContext();
+  const { crew, pendingTransactions } = useCrewContext();
 
   const { data: crewAgreements, isLoading: agreementsLoading } = useCrewAgreements(true, false, true);
   const { data: crewBuildings, isLoading: buildingsLoading } = useCrewBuildings();
@@ -92,7 +92,7 @@ const useSimulationSteps = () => {
     }
     return [leasable, leased];
   }, [crew, lot]);
-  const lotBuildingStatus = Building.CONSTRUCTION_STATUSES.PLANNED;
+
   const unusedLotId = useMemo(() => {
     return (crewAgreements || []).find((a) => {
       return !(crewBuildings || []).find((b) => b.Location.location.id === a.id)
@@ -304,24 +304,23 @@ const useSimulationSteps = () => {
           // TODO: make action buttons abstracted by using name?
           // TODO: "help me pick" option
         },
-        enabledActions: [
-          lotIsLeasable && 'FormLotLeaseAgreement'
-        ],
+        enabledActions: {
+          FormLotLeaseAgreement: !!lotIsLeasable
+        },
         shouldAdvance: () => !!simulation.lots
       },
       {
         title: 'Construct your extractor.',
         content: `Do it.`,
         crewmateId: SIMULATION_CONFIG.crewmates.engineer,
-        initialize: () => {
-          console.log({ lot, lotIsMine, openHudMenu })
-        },
         coachmarks: {
           [COACHMARK_IDS.hudMenuMyAssets]: !(lot && lotIsMine) && openHudMenu !== 'MY_ASSETS',
           [COACHMARK_IDS.hudMenuMyAssetsAgreement]: !(lot && lotIsMine) && openHudMenu === 'MY_ASSETS' && unusedLotId,
-          [COACHMARK_IDS.actionButtonPlan]: !actionDialog?.type && lotIsMine && !lotBuildingStatus,
-          [COACHMARK_IDS.actionButtonConstruct]: !actionDialog?.type && lotIsMine && [Building.CONSTRUCTION_STATUSES.PLANNED, Building.CONSTRUCTION_STATUSES.UNDER_CONSTRUCTION].includes(lotBuildingStatus)
-          
+          [COACHMARK_IDS.actionButtonPlan]: lotIsMine && !actionDialog?.type && !lot?.building,
+          [COACHMARK_IDS.actionButtonConstruct]: !actionDialog?.type && lotIsMine && lot?.building,
+
+          [COACHMARK_IDS.actionDialogPlanType]: Building.IDS.EXTRACTOR,
+          [COACHMARK_IDS.actionDialogConstructSource]: true,
           
           
           // TODO: "plan" action button --> extractor
@@ -332,12 +331,16 @@ const useSimulationSteps = () => {
           // TODO: "construct" action button
           // (fast forward)
         },
-        enabledActions: [
-          lotIsMine && 'PlanBuilding',
-          lotIsMine && [Building.CONSTRUCTION_STATUSES.PLANNED, Building.CONSTRUCTION_STATUSES.UNDER_CONSTRUCTION].includes(lotBuildingStatus) && 'Construct',
+        enabledActions: {
+          PlanBuilding: !!lotIsMine,
+          [`SelectSitePlan:${Building.IDS.EXTRACTOR}`]: true,
+          Construct: lotIsMine && !!lot?.building,
           // TODO: deliveries?
-        ],
-        shouldAdvance: () => extractors?.length > 0,
+        },
+        shouldAdvance: () => {
+          console.log({ lot, lotIsMine, openHudMenu })
+          return extractors?.length > 0;
+        },
       },
       {
         title: '', // TODO: ...
@@ -485,7 +488,7 @@ const useSimulationSteps = () => {
     isLoading,
     crewAgreements,
     crewBuildings,
-    history,
+    history.location.pathname,
     lot,
     lotIsLeasable,
     lotIsMine,
@@ -532,8 +535,8 @@ const useSimulationSteps = () => {
 
   useEffect(() => {
     console.log({ coachmarks: currentStep?.coachmarks });
-    dispatchCoachmarks(currentStep?.coachmarks);
-  }, [currentStep?.coachmarks]);
+    dispatchCoachmarks(pendingTransactions.length > 0 ? {} : currentStep?.coachmarks);
+  }, [currentStep?.coachmarks, pendingTransactions]);
 
   useEffect(() => {
     console.log({ enabledActions });

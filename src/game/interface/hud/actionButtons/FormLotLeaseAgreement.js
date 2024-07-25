@@ -9,6 +9,7 @@ import Coachmarks, { COACHMARK_IDS } from '~/Coachmarks';
 
 // TODO: arguably, it would be more consistent to show this button in a disabled state, at least in some conditions
 const isVisible = ({ lot, crew }) => {
+  console.log('lot', lot);
   // visible when lot selected and lot is available to crew (and uncontrolled or not controlled by occupant)
   if (lot && Permission.getPolicyDetails(lot, crew)[Permission.IDS.USE_LOT]?.crewStatus === 'available') {
     if (!lot.Control?.controller?.id) return true;
@@ -17,7 +18,7 @@ const isVisible = ({ lot, crew }) => {
   return false;
 };
 
-const FormLotLeaseAgreement = ({ lot, permission, simulation, _disabled }) => {
+const FormLotLeaseAgreement = ({ lot, permission, simulation, simulationActions, _disabled }) => {
   const { pendingChange } = useAgreementManager(lot, permission);
   
   const onSetAction = useStore(s => s.dispatchActionDialog);
@@ -31,10 +32,10 @@ const FormLotLeaseAgreement = ({ lot, permission, simulation, _disabled }) => {
     if (pendingChange) return 'updating...';
     if (simulation) {
       if (lot?.building || lot?.surfaceShip) return 'occupied by another crew';
-      if (Object.values(simulation.lots || {}).length >= 5) return 'leasing simulation complete';
+      if (!simulationActions.includes('FormLotLeaseAgreement')) return 'simulation restricted';
     }
     return '';
-  }, [_disabled, pendingChange]);
+  }, [_disabled, pendingChange, simulation, simulationActions]);
 
   const [refEl, setRefEl] = useState();
   return (

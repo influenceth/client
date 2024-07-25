@@ -401,17 +401,21 @@ const MyAssets = () => {
             groupedAssets={agreements}
             assetTally={agreementTally}
             isLoading={agreementsLoading}
-            itemGetter={(agreement) => (
-              <>
-                <AgreementBlock
-                  key={agreement._agreement._path}
-                  agreement={agreement}
-                  onSelectCrew={onClickCrewAsset}
-                  selectedCrew={crew}
-                  setRef={coachmarks[COACHMARK_IDS.hudMenuMyAssetsAgreement] === agreement.id ? setAgreementRefEl : undefined} />
-                <Coachmarks label={COACHMARK_IDS.hudMenuMyAssetsAgreement} refEl={agreementRefEl} />
-              </>
-            )}
+            itemGetter={(agreement) => {
+              const coachmarked = coachmarks[COACHMARK_IDS.hudMenuMyAssetsAgreement] === agreement.id;
+              return (
+                <>
+                  <AgreementBlock
+                    key={agreement._agreement._path}
+                    agreement={agreement}
+                    onSelectCrew={onClickCrewAsset}
+                    selectedCrew={crew}
+                    setRef={coachmarked ? setAgreementRefEl : undefined}
+                  />
+                  {coachmarked && <Coachmarks forceOn refEl={agreementRefEl} />}
+                </>
+              );
+            }}
             itemHeight={55}
             singleGroupMode={!allAsteroidsMode} />
           </Scrollable>

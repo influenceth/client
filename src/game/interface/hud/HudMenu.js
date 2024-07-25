@@ -42,6 +42,7 @@ import useStore from '~/hooks/useStore';
 import hudMenus from './hudMenus';
 import CoachMarks, { COACHMARK_IDS } from '~/Coachmarks';
 import Coachmarks from '~/Coachmarks';
+import useSimulationEnabled from '~/hooks/useSimulationEnabled';
 
 const cornerWidth = 8;
 const bumpHeightHalf = 100;
@@ -265,6 +266,7 @@ const HudMenu = () => {
   const history = useHistory();
   const { authenticated } = useSession();
   const { crew } = useCrewContext();
+  const simulationEnabled = useSimulationEnabled();
 
   // const createAlert = useStore(s => s.dispatchAlertLogged);
   const asteroidId = useStore(s => s.asteroids.origin);
@@ -613,31 +615,33 @@ const HudMenu = () => {
       }
     }
 
-    menuButtons.push(
-      {
-        key: 'MY_CREWS',
-        label: 'My Crews',
-        icon: <CrewIcon />,
-        Component: hudMenus.MyCrews,
-        useAltColor: true,
-        noDetail: true,
-        isUniversal: true,
-        isVisible: true,
-        requireLogin: true,
-      },
-      {
-        key: 'MY_ASSETS',
-        label: 'My Assets',
-        icon: <MyAssetsIcon />,
-        Component: hudMenus.MyAssets,
-        coachmarkId: COACHMARK_IDS.hudMenuMyAssets,
-        useAltColor: true,
-        noDetail: true,
-        isUniversal: true,
-        isVisible: true,
-        requireLogin: true,
-      }
-    );
+    if (!simulationEnabled || !launcherPage) {
+      menuButtons.push(
+        {
+          key: 'MY_CREWS',
+          label: 'My Crews',
+          icon: <CrewIcon />,
+          Component: hudMenus.MyCrews,
+          useAltColor: true,
+          noDetail: true,
+          isUniversal: true,
+          isVisible: true,
+          requireLogin: true,
+        },
+        {
+          key: 'MY_ASSETS',
+          label: 'My Assets',
+          icon: <MyAssetsIcon />,
+          Component: hudMenus.MyAssets,
+          coachmarkId: COACHMARK_IDS.hudMenuMyAssets,
+          useAltColor: true,
+          noDetail: true,
+          isUniversal: true,
+          isVisible: true,
+          requireLogin: true,
+        }
+      );
+    }
 
     return [menuButtons, pageButtons];
   }, [

@@ -1,24 +1,28 @@
 import { useCallback, useEffect, useRef } from 'react';
-import { Asteroid, Lot } from '@influenceth/sdk';
-import { camelCase } from 'lodash';
+import { Asteroid, Building, Entity, Lot } from '@influenceth/sdk';
+import { camelCase, cloneDeep } from 'lodash';
 
 import useCrewContext from '~/hooks/useCrewContext';
 import useGetActivityConfig from '~/hooks/useGetActivityConfig';
 import useStore from '~/hooks/useStore';
 import SIMULATION_CONFIG from './simulationConfig';
+import useSimulationState from '~/hooks/useSimulationState';
 
 const getUuid = () => String(performance.now()).replace('.', '');
 const transformReturnValues = (obj) => {
   return Object.keys(obj).reduce((acc, k) => ({ ...acc, [camelCase(k)]: obj[k] }), {});
 }
+const nowSec = () => Math.floor(Date.now() / 1e3);
 
 const MockTransactionManager = () => {
+  const { pendingTransactions } = useCrewContext();
+  const simulation = useSimulationState();
   const getActivityConfig = useGetActivityConfig();
+
   const dispatchPendingTransactionComplete = useStore((s) => s.dispatchPendingTransactionComplete);
   const dispatchSimulationState = useStore((s) => s.dispatchSimulationState);
   const createAlert = useStore(s => s.dispatchAlertLogged);
 
-  const { pendingTransactions } = useCrewContext();
 
   const simulateResultingEvent = useCallback((tx) => {
     let events = [];
@@ -52,6 +56,49 @@ const MockTransactionManager = () => {
             ...tx.vars,
             initial_term: 30,
             notice_period: 30, // may not be accurate, but not important
+            caller: SIMULATION_CONFIG.accountAddress
+          })
+        });
+
+        break;
+
+      case 'ConstructionPlan':
+        const buildingId = SIMULATION_CONFIG.buildingIds[tx.vars.building_type];
+        const lotUpdate = cloneDeep(simulation.lots);
+        lotUpdate[tx.vars.lot.id].buildingId = buildingId;
+        lotUpdate[tx.vars.lot.id].buildingStatus = Building.CONSTRUCTION_STATUSES.PLANNED;
+        lotUpdate[tx.vars.lot.id].buildingType = tx.vars.building_type;
+        dispatchSimulationState('lots', lotUpdate);
+
+        // mimic event
+        events.push({
+          event: 'ConstructionPlanned',
+          name: 'ConstructionPlanned',
+          logIndex: 1,
+          transactionIndex: 1,
+          transactionHash: tx.txHash,
+          timestamp: nowSec(),
+          returnValues: transformReturnValues({
+            ...tx.vars,
+            asteroid: { id: Lot.toPosition(tx.vars.lot.id)?.asteroidId, label: Entity.IDS.ASTEROID },
+            building: { id: buildingId, label: Entity.IDS.BUILDING },
+            grace_period_end: nowSec() + 86400,
+            caller: SIMULATION_CONFIG.accountAddress
+          })
+        });
+
+        console.log({
+          event: 'ConstructionPlanned',
+          name: 'ConstructionPlanned',
+          logIndex: 1,
+          transactionIndex: 1,
+          transactionHash: tx.txHash,
+          timestamp: nowSec(),
+          returnValues: transformReturnValues({
+            ...tx.vars,
+            asteroid: {},
+            building: {},
+            grace_period_end: nowSec() + 86400,
             caller: SIMULATION_CONFIG.accountAddress
           })
         });
@@ -91,7 +138,7 @@ const MockTransactionManager = () => {
 
     // tx complete
     dispatchPendingTransactionComplete(tx.txHash);
-  }, []);
+  }, [simulation]);
 
   const processed = useRef([]);
   useEffect(() => {

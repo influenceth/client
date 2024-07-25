@@ -20,7 +20,7 @@ const isVisible = ({ constructionStatus, crew, lot, ship }) => {
   );
 };
 
-const PlanBuilding = ({ asteroid, crew, lot, onSetAction, simulation, _disabled }) => {
+const PlanBuilding = ({ asteroid, crew, lot, onSetAction, simulation, simulationActions, _disabled }) => {
   const { constructionStatus } = useConstructionManager(lot?.id);
   const handleClick = useCallback(() => {
     onSetAction('PLAN_BUILDING');
@@ -34,12 +34,11 @@ const PlanBuilding = ({ asteroid, crew, lot, onSetAction, simulation, _disabled 
       return getCrewDisabledReason({
         asteroid,
         crew,
-        isAllowedInSimulation: true,  // TODO: simulation step dependent (step config should note enabled action buttons)
-                                      // TODO: also, only allowed if leased in simulation
+        isAllowedInSimulation: simulationActions.includes('PlanBuilding'),
         requireReady: !isControlledByMe
       });
     }
-  }, [_disabled, asteroid, constructionStatus, crew, lot]);
+  }, [_disabled, asteroid, constructionStatus, crew, lot, simulationActions]);
   
   const [refEl, setRefEl] = useState();
   return (

@@ -1,17 +1,34 @@
 import { useQuery, useQueryClient } from 'react-query';
-import { Entity, Lot, Permission } from '@influenceth/sdk';
+import { Building, Entity, Extractor, Inventory, Lot, Permission } from '@influenceth/sdk';
 
 import useSimulationState from '~/hooks/useSimulationState';
 import SIMULATION_CONFIG from './simulationConfig';
 import { useCallback, useEffect, useMemo } from 'react';
 import { entitiesCacheKey } from '~/lib/cacheKey';
 import { entityToAgreements } from '~/lib/utils';
+import { statuses as walletBuildingStatuses } from '~/hooks/useWalletBuildings';
+
+const getBuildingInventories = (buildingType, buildingStatus) => {
+  const { siteSlot, siteType } = Building.TYPES[buildingType];
+
+  const inv = [];
+  inv.push({
+    slot: siteSlot,
+    inventoryType: siteType,
+    mass: 0,
+    reservedMass: 0,
+    reservedVolume: 0,
+    volume: 0,
+    status: Inventory.STATUSES.AVAILABLE
+  });
+
+  return inv;
+};
 
 
 // TODO: IMPORTANT: refetch all on simulationEnabled change (in either direction)
 
-const extendedEntity = ({ id, label }) => ({ id, label, uuid: Entity.packEntity({ id, label }) });
-const nowSec = Math.floor(Date.now()) / 1e3;
+const nowSec = () => Math.floor(Date.now() / 1e3);
 
 const MockDataItem = ({ overwrite }) => {
   const queryClient = useQueryClient();
@@ -21,7 +38,7 @@ const MockDataItem = ({ overwrite }) => {
     queryClient.setQueryData(
       queryKey,
       transformer(queryClient.getQueryData(queryKey)),
-      { updatedAt: dataUpdatedAt }
+      { updatedAt: dataUpdatedAt || Date.now() }
     );
     // TODO: make sure this doesn't trigger a 2nd dataUpdatedAt
   }, [overwrite, dataUpdatedAt]);
@@ -33,6 +50,8 @@ const MockDataManager = () => {
   const simulation = useSimulationState();
 
   const overwrites = useMemo(() => {
+    const myCrewEntity = Entity.formatEntity({ id: SIMULATION_CONFIG.crewId, label: Entity.IDS.CREW });
+
     const configs = [];
 
     // sway balance
@@ -64,77 +83,134 @@ const MockDataManager = () => {
       // TODO: build out lots by id for quick access from transformers
       // (i.e. can use entityToAgreements for agreements, etc)
 
-      const simulatedLots = Object.keys(simulation.lots).map((lotId) => {
-        const entity = extendedEntity({ id: lotId, label: Entity.IDS.LOT });
-        const location = extendedEntity({ id: Lot.toPosition(lotId)?.asteroidId, label: Entity.IDS.ASTEROID });
-        return {
-          ...entity,
-          Location: { location, locations: [location] },
+      const simulatedAgreements = [];
+      const simulatedBuildings = [];
+      const simulatedLots = [];
+
+      Object.keys(simulation.lots).map((stringLotId) => {
+        const lotId = Number(stringLotId);
+        const { buildingId, buildingStatus, buildingType, leaseRate, leaseTerm } = simulation.lots[lotId];
+
+        const lotEntity = Entity.formatEntity({ id: lotId, label: Entity.IDS.LOT });
+        const asteroidEntity = Entity.formatEntity({ id: Lot.toPosition(lotId)?.asteroidId, label: Entity.IDS.ASTEROID });
+        
+        const lot = {
+          ...lotEntity,
+          Location: { location: asteroidEntity, locations: [asteroidEntity] },
           PrepaidAgreements: [{
             permission: Permission.IDS.USE_LOT,
-            permitted: extendedEntity({ id: SIMULATION_CONFIG.crewId, label: Entity.IDS.CREW }),
-            endTime: nowSec + parseInt(simulation.lots[lotId]?.leaseTerm),
+            permitted: myCrewEntity,
+            endTime: nowSec() + parseInt(leaseTerm),
             initialTerm: 30 * 86400,
             noticePeriod: 30 * 86400,
             noticeTime: 0,
-            rate: simulation.lots[lotId]?.leaseRate,
-            startTime: nowSec
+            rate: leaseRate,
+            startTime: nowSec()
           }]
         };
-      })
+        simulatedLots.push(lot);
+        simulatedAgreements.push(...entityToAgreements(lot));
 
-
-      // wallet agreements
-      configs.push({
-        queryKey: [ 'agreements', SIMULATION_CONFIG.accountAddress ],
-        transformer: (data) => {
-          return (simulatedLots || []).reduce((acc, lot) => { acc.push(...entityToAgreements(lot)); return acc; }, []);
-        }
-      });
-
-      // wallet assets
-      // configs.push({
-      //   queryKey: entitiesCacheKey(Entity.IDS.ASTEROID, { owner: accountAddress, controllerId: controllerIds }),
-      //   transformer: (data) => data,
-      // });
-      // configs.push({
-      //   queryKey: entitiesCacheKey(Entity.IDS.BUILDING, { controllerId: controllerIds, status: statuses }),
-      //   transformer: (data) => data,
-      // });
-      // configs.push({
-      //   queryKey: entitiesCacheKey(Entity.IDS.SHIP, { owner: accountAddress, controllerId: controllerIds }),
-      //   transformer: (data) => data,
-      // });
-
-      // lot + lot entities
-      simulatedLots.forEach((lot) => {
+        // lot entity
         configs.push({
-          queryKey: [ 'entity', Entity.IDS.LOT, lot.id ],
+          queryKey: [ 'entity', Entity.IDS.LOT, lotId ],
           transformer: (data) => {
             return data ? { ...data, ...lot } : { ...lot }
           }
         });
 
-        // const { buildingType } = simulation.lots[lotId] || {};
-        // configs.push({
-        //   queryKey: entitiesCacheKey(Entity.IDS.BUILDING, { lotId }),
-        //   transformer: (data) => data
-        // });
+        // if building id
+        let building;
+        if (buildingId) {
+          building = {
+            ...Entity.formatEntity({ id: buildingId, label: Entity.IDS.BUILDING }),
+            Building: {
+              buildingType,
+              status: buildingStatus,
+              plannedAt: nowSec(),
+              finishTime: nowSec() // TODO: ?
+            },
+            Control: { controller: myCrewEntity },
+            Location: {
+              location: lotEntity,
+              locations: [lotEntity, asteroidEntity]
+            },
+            Inventories: [], // TODO: per-building+status inventories
+            // TODO: per-building components
+          };
+          building.Inventories = getBuildingInventories(buildingType, buildingStatus);
+          switch(buildingType) {
+            case Building.IDS.EXTRACTOR:
+              building.Extractors = [{
+                // TODO: ...
+                // destination: {},
+                // destinationSlot,
+                // finishTime: nowSec() + 123456,
+                // yield: 234567,
+                slot: 1,
+                status: Extractor.STATUSES.IDLE,
+              }];
+              break;
+          }
+
+          simulatedBuildings.push(building);
+
+          // building entity
+          configs.push({
+            queryKey: [ 'entity', Entity.IDS.BUILDING, buildingId ],
+            transformer: (data) => building // not merging because choosing ids to avoid collisions
+          });
+        }
+
+        // lot entities...
+
         // configs.push({
         //   queryKey: entitiesCacheKey(Entity.IDS.DEPOSIT, { lotId }),
         //   transformer: (data) => data
         // });
+        configs.push({
+          queryKey: entitiesCacheKey(Entity.IDS.BUILDING, { lotId }),
+          transformer: (data) => building ? [building] : []
+        });
         // configs.push({
         //   queryKey: entitiesCacheKey(Entity.IDS.SHIP, { lotId }),
         //   transformer: (data) => data
         // });
-      })
+      });
+
+      // wallet agreements
+      configs.push({
+        queryKey: [ 'agreements', SIMULATION_CONFIG.accountAddress ],
+        transformer: (data) => simulatedAgreements
+      });
+
+      // wallet assets
+      const controllerIds = [SIMULATION_CONFIG.crewId];
+      // configs.push({
+      //   queryKey: entitiesCacheKey(Entity.IDS.ASTEROID, { owner: accountAddress, controllerId: controllerIds }),
+      //   transformer: (data) => data,
+      // });
+      configs.push({
+        queryKey: entitiesCacheKey(Entity.IDS.BUILDING, { controllerId: controllerIds, status: walletBuildingStatuses }),
+        transformer: (data) => simulatedBuildings,
+      });
+      // configs.push({
+      //   queryKey: entitiesCacheKey(Entity.IDS.SHIP, { owner: accountAddress, controllerId: controllerIds }),
+      //   transformer: (data) => data,
+      // });
     }
 
     return configs.map((c) => ({ ...c, key: JSON.stringify(c.queryKey) }));
   }, [simulation]);
 
   console.log('configs', overwrites);
+
+  // entity
+  // entities collections (where relevant to tutorial and data)
+  // special ones
+
+
+
 
 
   // entity, entities

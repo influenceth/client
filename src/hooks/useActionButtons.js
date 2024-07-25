@@ -164,6 +164,7 @@ const useActionButtons = () => {
 
   // TODO: should this be useMemo?
   const actions = useMemo(() => {
+    console.log({ lot })
     if (asteroidIsLoading || lotIsLoading || crewedShipIsLoading || zoomedShipIsLoading) return [];
     return Object.keys(actionButtons)
       .filter((k) => !actionButtons[k].isVisible || actionButtons[k].isVisible({

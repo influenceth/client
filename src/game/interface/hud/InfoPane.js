@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import styled, { css, keyframes } from 'styled-components';
-import { Asteroid, Building, Entity } from '@influenceth/sdk';
+import { Asteroid, Building, Crewmate, Entity } from '@influenceth/sdk';
 import { FaSearchPlus as DetailsIcon } from 'react-icons/fa';
 import { Tooltip } from 'react-tooltip';
 
 import ClipCorner from '~/components/ClipCorner';
-import { CrewCaptainCardFramed } from '~/components/CrewmateCardFramed';
+import CrewmateCardFramed, { CrewCaptainCardFramed } from '~/components/CrewmateCardFramed';
 import IconButton from '~/components/IconButton';
 import {
   CloseIcon,
@@ -34,6 +34,9 @@ import theme, { hexToRGB } from '~/theme';
 import EntityName from '~/components/EntityName';
 import { ActionProgressContainer } from './actionDialogs/components';
 import Coachmarks, { COACHMARK_IDS } from '~/Coachmarks';
+import useSimulationEnabled from '~/hooks/useSimulationEnabled';
+import SIMULATION_CONFIG from '~/simulation/simulationConfig';
+import useSimulationState from '~/hooks/useSimulationState';
 
 const opacityAnimation = keyframes`
   0% { opacity: 1; }
@@ -252,13 +255,31 @@ const ActionButtons = styled.div`
 const CaptainCard = ({ crewId }) => {
   const history = useHistory();
   const { data: crew } = useCrew(crewId);
+  const simulation = useSimulationState();
 
   // onclick should open up crew profile
   const onClick = useCallback(() => {
     if (!crewId) return;
     history.push(`/crew/${crewId}`);
-  }, [crewId]);
+  }, [crewId, !simulation]);
 
+  if (simulation && SIMULATION_CONFIG.crewId === crewId) {
+    return (
+      <CrewmateCardFramed
+        crewmate={{
+          id: simulation.crewmate.id,
+          Crewmate: {
+            appearance: simulation.crewmate.appearance,
+            coll: Crewmate.COLLECTION_IDS.ADALIAN
+          }
+        }}
+        CrewmateCardProps={{ useExplicitAppearance: true }}
+        isCaptain
+        tooltip={simulation.crewmate.name}
+        tooltipPlace="top"
+        width={50} />
+    );
+  }
   return (
     <CrewCaptainCardFramed
       crewId={crew?.id}
