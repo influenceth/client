@@ -461,7 +461,6 @@ export function ChainTransactionProvider({ children }) {
     // Use session wallet if possible, otherwise regular wallet
     const account = canUseSessionKey ? starknetSession : walletAccount;
 
-
     // Check and store the gasless compatibility status
     if (
       isDeployed
@@ -678,8 +677,15 @@ export function ChainTransactionProvider({ children }) {
 
               if (customConfigs[runSystem]?.getPrice) {
                 const [tokenAmount, token] = (await customConfigs[runSystem].getPrice(processedVars)) || [];
-                if (![TOKEN.ETH, TOKEN.USDC].includes(token)) throw new Error('Invalid pricing token (only ETH or USDC supported).');
-                if (totalPriceToken && totalPriceToken !== token) throw new Error('Mixed currency transactions are not supported.');
+
+                if (![TOKEN.ETH, TOKEN.USDC].includes(token)) {
+                  throw new Error('Invalid pricing token (only ETH or USDC supported)');
+                }
+
+                if (totalPriceToken && totalPriceToken !== token) {
+                  throw new Error('Mixed currency transactions are not supported');
+                }
+
                 totalPrice += tokenAmount;
                 totalPriceToken = token;
               }
@@ -706,7 +712,7 @@ export function ChainTransactionProvider({ children }) {
               // if don't have enough USDC + ETH to cover it, throw funds error
               if (totalPrice > BigInt(totalWalletValueInToken)) {
                 console.log('EXECUTE', wallet, wallet.combinedBalance, wallet.combinedBalance, wallet.combinedBalance?.to(totalPriceToken));
-                const fundsError = new Error('Insufficient wallet balance.');
+                const fundsError = new Error('Insufficient wallet balance');
                 fundsError.additionalFundsRequired = parseInt(totalPrice - BigInt(totalWalletValueInToken));
                 fundsError.additionalFundsToken = totalPriceToken;
                 throw fundsError;
@@ -751,9 +757,10 @@ export function ChainTransactionProvider({ children }) {
                     const newConv = parseInt(quote.buyAmount) / parseInt(quote.sellAmount);
                     if (newConv === actualConv) {
                       if (quote.buyAmount < targetSwapAmount) {
-                        throw new Error('Swap pricing issue encountered.');
+                        throw new Error('Swap pricing issue encountered');
                       }
                     }
+
                     actualConv = newConv;
                   }
 
