@@ -464,7 +464,7 @@ export function ChainTransactionProvider({ children }) {
     // Check and store the gasless compatibility status
     if (
       isDeployed
-      && gameplay.feeToken !== 'ETH'
+      && gameplay.feeToken === 'SWAY'
       && (await gasless.fetchAccountCompatibility(
         accountAddress, { baseUrl: process.env.REACT_APP_AVNU_API_URL }
       )).isCompatible

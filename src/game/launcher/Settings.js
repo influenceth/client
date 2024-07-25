@@ -452,7 +452,7 @@ const GameplayPane = () => {
           <StyledDataReadout label="Default Fee Currency">
             <ControlGroup>
               <Button
-                active={gameplay.feeToken === 'ETH'}
+                active={gameplay.feeToken !== 'SWAY'}
                 onClick={() => dispatchFeeTokenSet('ETH')}>
                 ETH / STRK
               </Button>
@@ -463,7 +463,7 @@ const GameplayPane = () => {
               </Button>
             </ControlGroup>
           </StyledDataReadout>
-          {gameplay.feeToken === 'ETH' && (
+          {gameplay.feeToken !== 'SWAY' && (
             <HelperText>ETH / STRK defaults are used for all transaction fees</HelperText>
           )}
           {gameplay.feeToken === 'SWAY' && (
