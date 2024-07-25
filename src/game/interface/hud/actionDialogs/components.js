@@ -3901,6 +3901,7 @@ export const InventoryInputBlock = ({
   fallbackSublabel = 'Inventory',
   imageProps = {},
   inventoryBonuses,
+  stage,
   sublabel,
   ...props
 }) => {
@@ -3919,17 +3920,21 @@ export const InventoryInputBlock = ({
   }, [inventory, inventoryBonuses]);
 
   const destinationOverloaded = useMemo(() => {
+    const changeAlreadyApplied = (stage && ![actionStage.NOT_STARTED, actionStage.STARTING].includes(stage));
+
     if (inventory && !isSourcing) {
       const capacity = getCapacityStats(inventory, inventoryBonuses);
-      if (!capacity.mass.isSoftMax && (capacity.mass.used + capacity.mass.reserved + transferMass > capacity.mass.max)) {
+      const postMass = capacity.mass.used + capacity.mass.reserved + (changeAlreadyApplied ? 0 : transferMass);
+      const postVolume = capacity.volume.used + capacity.volume.reserved + (changeAlreadyApplied ? 0 : transferVolume);
+      if (!capacity.mass.isSoftMax && (postMass > capacity.mass.max)) {
         return true;
       }
-      if (!capacity.volume.isSoftMax && (capacity.volume.used + capacity.volume.reserved + transferVolume > capacity.volume.max)) {
+      if (!capacity.volume.isSoftMax && (postVolume > capacity.volume.max)) {
         return true;
       }
     }
     return false;
-  }, [transferMass, transferVolume, inventory, inventoryBonuses]);
+  }, [transferMass, transferVolume, inventory, inventoryBonuses, stage]);
 
   const params = useMemo(() => {
     const fullImageProps = {
@@ -4137,12 +4142,25 @@ export const ShipTab = ({ pilotCrew, inventoryBonuses, ship, stage, deltas = {},
   );
 };
 
-export const InventoryChangeCharts = ({ inventory, inventoryBonuses, deltaMass, deltaVolume }) => {
+export const InventoryChangeCharts = ({ inventory, inventoryBonuses, deltaMass, deltaVolume, stage = null }) => {
   if (!inventory) return null;
 
   const capacity = getCapacityStats(inventory, inventoryBonuses);
-  const postDeltaMass = capacity.mass.used + capacity.mass.reserved + deltaMass;
-  const postDeltaVolume = capacity.volume.used + capacity.volume.reserved + deltaVolume;
+
+  // determine if current capacity is pre or post change (based on stage)
+  let preDeltaMass, preDeltaVolume, postDeltaMass, postDeltaVolume;
+  if (!stage || [actionStage.NOT_STARTED, actionStage.STARTING].includes(stage)) {
+    preDeltaMass = capacity.mass.used + capacity.mass.reserved;
+    preDeltaVolume = capacity.volume.used + capacity.volume.reserved;
+    postDeltaMass = capacity.mass.used + capacity.mass.reserved + deltaMass;
+    postDeltaVolume = capacity.volume.used + capacity.volume.reserved + deltaVolume;
+  } else {
+    preDeltaMass = capacity.mass.used + capacity.mass.reserved - deltaMass;
+    preDeltaVolume = capacity.volume.used + capacity.volume.reserved - deltaVolume;
+    postDeltaMass = capacity.mass.used + capacity.mass.reserved;
+    postDeltaVolume = capacity.volume.used + capacity.volume.reserved;
+  }
+
   const overMassCapacity = postDeltaMass > capacity.mass.max;
   const overVolumeCapacity = postDeltaVolume > capacity.volume.max;
   const massColor = overMassCapacity ? theme.colors.error : theme.colors.main;

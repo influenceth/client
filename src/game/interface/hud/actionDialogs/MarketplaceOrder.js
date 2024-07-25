@@ -775,12 +775,16 @@ const MarketplaceOrder = ({
             inventoryBonuses={crew?._inventoryBonuses}
             imageProps={{ iconOverride: <InventoryIcon /> }}
             isSelected={!isCancellation && stage === actionStages.NOT_STARTED}
+            isSourcing={mode === 'sell'}
             onClick={() => setStorageSelectorOpen(true)}
+            stage={stage}
             sublabel={
               storageLot
               ? <><LocationIcon /> {formatters.lotName(storageLot?.id)}</>
               : 'Inventory'
-            } />
+            }
+            transferMass={quantity * Product.TYPES[resourceId].massPerUnit}
+            transferVolume={quantity * Product.TYPES[resourceId].volumePerUnit} />
         </FlexSection>
 
         <FlexSection>

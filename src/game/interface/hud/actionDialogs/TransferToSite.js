@@ -244,8 +244,12 @@ const TransferToSite = ({ asteroid, lot: destinationLot, deliveryManager, stage,
             inventorySlot={origin?.slot}
             inventoryBonuses={crew?._inventoryBonuses}
             isSelected={stage === actionStage.NOT_STARTED}
+            isSourcing
             onClick={() => { setOriginSelectorOpen(true) }}
             disabled={stage !== actionStage.NOT_STARTED}
+            stage={stage}
+            transferMass={-totalMass}
+            transferVolume={-totalVolume}
           />
 
           <FlexSectionSpacer>

@@ -417,6 +417,7 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
             isSelected={stage === actionStage.NOT_STARTED}
             onClick={() => { setDestinationSelectorOpen(true) }}
             disabled={stage !== actionStage.NOT_STARTED}
+            stage={stage}
             sublabel={
               destinationLot
               ? <><LocationIcon /> {formatters.lotName(destinationSelection?.lotIndex)}</>

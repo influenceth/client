@@ -350,15 +350,17 @@ const AssembleShip = ({ asteroid, lot, dryDockManager, stage, ...props }) => {
                 iconOverride: <InventoryIcon />,
               }}
               isSelected={shipType && stage === actionStages.NOT_STARTED}
+              isSourcing
               onClick={() => { setOriginSelectorOpen(true) }}
+              stage={stage}
               style={{ marginBottom: 20, width: '100%' }}
               sublabel={
                 originLot
                 ? <><LocationIcon /> {formatters.lotName(originLotIndex)}</>
                 : 'Inventory'
               }
-              transferMass={0/* TODO */}
-              transferVolume={0/* TODO */} />
+              transferMass={-inputMass}
+              transferVolume={-inputVolume} />
 
             {['READY_TO_COMPLETE', 'COMPLETING', 'COMPLETED'].includes(stage) && (
               <LotInputBlock
