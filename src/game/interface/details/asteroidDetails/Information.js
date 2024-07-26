@@ -325,8 +325,14 @@ const AsteroidInformation = ({ abundances, asteroid, isManager, isOwner }) => {
     if (limited) return;
 
     buyAsteroid();
-    fireTrackingEvent('purchase_asteroid', {
-      externalId: accountAddress, category: 'purchase', amount: Number(price) / 1e6
+    fireTrackingEvent('purchase', {
+      category: 'purchase',
+      currency: 'USD',
+      externalId: accountAddress,
+      value: Number(price) / 1e6,
+      items: [{
+        item_name: 'asteroid'
+      }]
     });
   }, [accountAddress, buyAsteroid, checkForLimit]);
 

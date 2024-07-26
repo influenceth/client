@@ -19,8 +19,14 @@ const useCrewManager = () => {
   );
 
   const purchaseCredits = useCallback((tally) => {
-    for (let i = 0; i < tally; i++) fireTrackingEvent('purchase_crewmate', {
-      externalId: accountAddress, category: 'purchase', amount: 5
+    for (let i = 0; i < tally; i++) fireTrackingEvent('purchase', {
+      category: 'purchase',
+      currency: 'USD',
+      externalId: accountAddress,
+      value: 5,
+      items: [{
+        item_name: 'crewmate'
+      }]
     });
 
     execute('BulkPurchaseAdalians', { collection: Crewmate.COLLECTION_IDS.ADALIAN, tally });
@@ -43,8 +49,14 @@ const useCrewManager = () => {
         });
 
       } else {
-        if (!(crewmate?.id > 0)) fireTrackingEvent('purchase_crewmate', {
-          externalId: accountAddress, category: 'purchase', amount: 5
+        if (!(crewmate?.id > 0)) fireTrackingEvent('purchase', {
+          category: 'purchase',
+          currency: 'USD',
+          externalId: accountAddress,
+          value: 5,
+          items: [{
+            item_name: 'crewmate'
+          }]
         });
 
         const appearance = Crewmate.unpackAppearance(crewmate.Crewmate.appearance);
