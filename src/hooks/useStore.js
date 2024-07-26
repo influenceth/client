@@ -3,7 +3,7 @@ import { persist, subscribeWithSelector } from 'zustand/middleware';
 import produce from 'immer';
 import cloneDeep from 'lodash/cloneDeep';
 import isEqual from 'lodash/isEqual';
-import { Building, Lot } from '@influenceth/sdk';
+import { Building, Entity, Lot } from '@influenceth/sdk';
 
 import constants from '~/lib/constants';
 import { TOKEN } from '~/lib/priceUtils';
@@ -489,8 +489,13 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
       }
     })),
 
-    dispatchSimulationAddToInventory: (lotId, slot, product, amount) => set(produce(state => {
-      if (state.simulation?.lots?.[lotId]) {
+    dispatchSimulationAddToInventory: (destination, slot, product, amount) => set(produce(state => {
+      const lotId = Object.keys(state.simulation?.lots || {}).find((lotId) => {
+        const lot = state.simulation.lots[lotId];
+        return (lot?.buildingId === destination.id && destination.label === Entity.IDS.BUILDING);
+      });
+
+      if (lotId) {
         if (!state.simulation.lots[lotId].inventoryContents) state.simulation.lots[lotId].inventoryContents = {};
         if (!state.simulation.lots[lotId].inventoryContents[slot]) state.simulation.lots[lotId].inventoryContents[slot] = {};
         if (!state.simulation.lots[lotId].inventoryContents[slot][product]) state.simulation.lots[lotId].inventoryContents[slot][product] = 0;

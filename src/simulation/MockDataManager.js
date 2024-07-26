@@ -1,12 +1,14 @@
-import { useQuery, useQueryClient } from 'react-query';
+import { QueryObserver, useQuery, useQueryClient } from 'react-query';
 import { Building, Entity, Extractor, Inventory, Lot, Permission, Product } from '@influenceth/sdk';
 
 import useSimulationState from '~/hooks/useSimulationState';
 import SIMULATION_CONFIG from './simulationConfig';
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { entitiesCacheKey } from '~/lib/cacheKey';
 import { entityToAgreements } from '~/lib/utils';
 import { statuses as walletBuildingStatuses } from '~/hooks/useWalletBuildings';
+
+const nowSec = () => Math.floor(Date.now() / 1e3);
 
 const contentsObjToArray = (contentsObj) => {
   return Object.keys(contentsObj || {}).map((product) => ({ product, amount: contentsObj[product] }));
@@ -53,18 +55,22 @@ const getBuildingInventories = (buildingType, buildingStatus, contentsBySlot = {
 
 // TODO: IMPORTANT: refetch all on simulationEnabled change (in either direction)
 
-const nowSec = () => Math.floor(Date.now() / 1e3);
 
 const MockDataItem = ({ overwrite }) => {
   const queryClient = useQueryClient();
-  const { dataUpdatedAt } = useQuery(overwrite.queryKey);
+
+  // (this will listen to updates on that queryKey and assumes they will come from elsewhere in the application)
+  const { dataUpdatedAt } = useQuery(overwrite.queryKey, () => {}, { enabled: false, staleTime: Infinity });
   useEffect(() => {
     const { queryKey, transformer } = overwrite;
-    queryClient.setQueryData(
-      queryKey,
-      transformer(queryClient.getQueryData(queryKey)),
-      { updatedAt: dataUpdatedAt || Date.now() }
-    );
+    const transformedData = transformer(queryClient.getQueryData(queryKey));
+    if (transformedData !== undefined) {
+      queryClient.setQueryData(
+        queryKey,
+        transformedData,
+        { updatedAt: dataUpdatedAt || Date.now() }
+      );
+    }
     // TODO: make sure this doesn't trigger a 2nd dataUpdatedAt
   }, [overwrite, dataUpdatedAt]);
 
@@ -92,7 +98,9 @@ const MockDataManager = () => {
       configs.push({
         queryKey: [ 'asteroidPackedLotData', 1 ], // TODO: get asteroidId from SIMULATION_CONFIG
         transformer: (data) => {
+          console.log('data0', data)
           if (data) {
+            console.log('data1', data)
             Object.keys(simulation.lots).forEach((lotId) => {
               const lotIndex = Lot.toIndex(lotId);
               data[lotIndex] = ((simulation.lots[lotId]?.buildingType || 0) << 4) // capable type
@@ -100,8 +108,8 @@ const MockDataManager = () => {
                 + (0 << 1) // crew present
                 + (0);     // samples for sale
             });
+            return data;
           }
-          return data;
         }
       });
 
@@ -223,6 +231,22 @@ const MockDataManager = () => {
       //   queryKey: entitiesCacheKey(Entity.IDS.SHIP, { owner: accountAddress, controllerId: controllerIds }),
       //   transformer: (data) => data,
       // });
+
+
+      // crew accessible inventories
+      // TODO: disable UI for changing perms
+      const invKeyObj = { asteroidId: 1, hasComponent: 'Inventories', permissionCrewId: SIMULATION_CONFIG.crewId, permissionAccount: SIMULATION_CONFIG.accountAddress }
+      configs.push(
+        {
+          queryKey: entitiesCacheKey(Entity.IDS.BUILDING, { ...invKeyObj, hasPermission: Permission.IDS.ADD_PRODUCTS }),
+          transformer: (data) => simulatedBuildings.filter((b) => !!b.Inventories.find((i) => i.status === Inventory.STATUSES.AVAILABLE))
+        },
+        {
+          queryKey: entitiesCacheKey(Entity.IDS.BUILDING, { ...invKeyObj, hasPermission: Permission.IDS.REMOVE_PRODUCTS }),
+          transformer: (data) => simulatedBuildings.filter((b) => !!b.Inventories.find((i) => i.status === Inventory.STATUSES.AVAILABLE))
+        },
+      );
+      console.log({ simulatedBuildings })
     }
 
     return configs.map((c) => ({ ...c, key: JSON.stringify(c.queryKey) }));
@@ -245,8 +269,6 @@ const MockDataManager = () => {
   // lot:
   // Entity.IDS.BUILDING, Entity.IDS.DEPOSIT, Entity.IDS.SHIP
   // entitiesCacheKey(entityLabel, { lotId }),
-
-
 
   
   // TODO: ...

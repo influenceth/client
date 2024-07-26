@@ -125,7 +125,7 @@ const MockTransactionManager = () => {
       case 'FillSellOrder': {
         // TODO: ...
         // dispatchSimulationState('deliveries', lotUpdate);
-        dispatchSimulationAddToInventory(tx.meta.destinationLotId, tx.vars.destination_slot, tx.vars.product, tx.vars.amount);
+        dispatchSimulationAddToInventory(tx.vars.destination, tx.vars.destination_slot, tx.vars.product, tx.vars.amount);
         dispatchSimulationState('sway', -(tx.vars.payments.toExchange + tx.vars.payments.toPlayer), 'increment');
 
         // mimic event
