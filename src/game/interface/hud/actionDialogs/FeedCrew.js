@@ -265,13 +265,14 @@ const FeedCrew = ({
             isSelected={stage === actionStages.NOT_STARTED}
             isSourcing
             onClick={() => { setOriginSelectorOpen(true) }}
+            stage={stage}
             sublabel={
               originLot
               ? <><LocationIcon /> {formatters.lotName(originSelection?.lotIndex)}</>
               : 'Inventory'
             }
-            transferMass={totalMass}
-            transferVolume={totalVolume} />
+            transferMass={-totalMass}
+            transferVolume={-totalVolume} />
 
           <FlexSectionSpacer>
             <ForwardIcon />
@@ -347,6 +348,7 @@ const FeedCrew = ({
                   inventoryBonuses={crew?._inventoryBonuses}
                   deltaMass={-totalMass}
                   deltaVolume={-totalVolume}
+                  stage={stage}
                 />
               </div>
               <FlexSectionSpacer />

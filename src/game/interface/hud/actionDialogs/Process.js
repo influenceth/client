@@ -464,9 +464,10 @@ const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...pro
             imageProps={{
               iconOverride: <InventoryIcon />,
             }}
-            isSourcing={true}
+            isSourcing
             isSelected={process && stage === actionStages.NOT_STARTED}
             onClick={() => { setOriginSelectorOpen(true) }}
+            stage={stage}
             style={{ flex: '0 0 30%', marginBottom: 20 }}
             sublabel={
               originLot
@@ -512,6 +513,7 @@ const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...pro
             }}
             isSelected={process && stage === actionStages.NOT_STARTED}
             onClick={() => { setDestinationSelectorOpen(true) }}
+            stage={stage}
             style={{ flex: '0 0 30%', marginBottom: 20 }}
             sublabel={
               destinationLot
