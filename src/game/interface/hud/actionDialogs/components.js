@@ -78,8 +78,9 @@ import UncontrolledTextInput from '~/components/TextInputUncontrolled';
 import Autocomplete, { StaticAutocomplete } from '~/components/Autocomplete';
 import useScreenSize from '~/hooks/useScreenSize';
 import useStore from '~/hooks/useStore';
-import Coachmarks, { COACHMARK_IDS } from '~/Coachmarks';
+import { COACHMARK_IDS } from '~/contexts/CoachmarkContext';
 import useSimulationEnabled from '~/hooks/useSimulationEnabled';
+import useCoachmarkRefSetter from '~/hooks/useCoachmarkRefSetter';
 
 const SECTION_WIDTH = 780;
 
@@ -1514,17 +1515,19 @@ export const CrewSelectionDialog = ({ crews, disabler, onClose, onSelected, open
 };
 
 export const SitePlanSelectionDialog = ({ initialSelection, onClose, onSelected, open }) => {
-  const [selection, setSelection] = useState(initialSelection);
+  const setCoachmarkRef = useCoachmarkRefSetter();
   const simulationEnabled = useSimulationEnabled();
   const coachmarks = useStore((s) => s.coachmarks);
   const simulationActions = useStore((s) => s.simulationActions);
+
+  const [selection, setSelection] = useState(initialSelection);
 
   const onComplete = useCallback(() => {
     onSelected(selection);
     onClose();
   }, [onClose, onSelected, selection]);
 
-  const [refEl, setRefEl] = useState();
+
   const isCompletable = useMemo(() => {
     if (simulationEnabled) {
       return simulationActions.includes(`SelectSitePlan:${selection}`);
@@ -1550,10 +1553,9 @@ export const SitePlanSelectionDialog = ({ initialSelection, onClose, onSelected,
                 label={Building.TYPES[buildingType].name}
                 sublabel="Site"
                 onClick={() => setSelection(buildingType)}
-                setRef={coachmarked ? setRefEl : undefined}
+                setRef={coachmarked ? setCoachmarkRef(COACHMARK_IDS.actionDialogPlanType) : undefined}
                 style={{ width: '100%' }}
               />
-              {coachmarked && <Coachmarks forceOn refEl={refEl} />}
             </Fragment>
           );
         })}

@@ -12,7 +12,8 @@ import useScreenSize from '~/hooks/useScreenSize';
 import HudIconButton from '~/components/HudIconButton';
 import IconButton from '~/components/IconButton';
 import TimeControls from './mainMenu/TimeControls';
-import Coachmarks, { COACHMARK_IDS } from '~/Coachmarks';
+import { COACHMARK_IDS } from '~/contexts/CoachmarkContext';
+import useCoachmarkRefSetter from '~/hooks/useCoachmarkRefSetter';
 
 const StyledMainMenu = styled.div`
   pointer-events: none;
@@ -124,6 +125,7 @@ const MainMenu = () => {
   const { isMobile } = useScreenSize();
   const location = useLocation();
   const history = useHistory();
+  const setCoachmarkRef = useCoachmarkRefSetter();
 
   const lotId = useStore(s => s.asteroids.lot);
   const zoomScene = useStore(s => s.asteroids.zoomScene);
@@ -209,15 +211,12 @@ const MainMenu = () => {
       <Actionable>
         <LeftHudButtonArea>
           {onClickBack && (
-            <>
-              <HudIconButton
-                setRef={setBackButtonRefEl}
-                dataTip={backLabel}
-                onClick={onClickBack}>
-                <BackIcon />
-              </HudIconButton>
-              <Coachmarks label={COACHMARK_IDS.backToBelt} refEl={backButtonRefEl} />
-            </>
+            <HudIconButton
+              setRef={setCoachmarkRef(COACHMARK_IDS.backToBelt)}
+              dataTip={backLabel}
+              onClick={onClickBack}>
+              <BackIcon />
+            </HudIconButton>
           )}
           {!onClickBack && process.env.REACT_APP_CHAIN_ID !== '0x534e5f5345504f4c4941' && (
             <img

@@ -40,9 +40,9 @@ import useSession from '~/hooks/useSession';
 import useShip from '~/hooks/useShip';
 import useStore from '~/hooks/useStore';
 import hudMenus from './hudMenus';
-import CoachMarks, { COACHMARK_IDS } from '~/Coachmarks';
-import Coachmarks from '~/Coachmarks';
+import { COACHMARK_IDS } from '~/contexts/CoachmarkContext';
 import useSimulationEnabled from '~/hooks/useSimulationEnabled';
+import useCoachmarkRefSetter from '~/hooks/useCoachmarkRefSetter';
 
 const cornerWidth = 8;
 const bumpHeightHalf = 100;
@@ -243,22 +243,19 @@ const PanelContent = styled.div`
 `;
 
 const MenuButton = ({ badge, coachmarkId, menuKey, label, useAltColor, icon, onOpen, hideInsteadOfClose, handleButtonClick, openHudMenu }) => {
-  const [refEl, setRefEl] = useState();
+  const setCoachmarkRef = useCoachmarkRefSetter();
   return (
-    <>
-      <Button
-        ref={setRefEl}
-        iconColor={useAltColor}
-        badge={badge}
-        onClick={() => handleButtonClick(menuKey, onOpen, hideInsteadOfClose)}
-        selected={menuKey === openHudMenu}
-        data-tooltip-id="hudMenuTooltip"
-        data-tooltip-place="left"
-        data-tooltip-content={label}>
-        {icon}
-      </Button>
-      {coachmarkId && <Coachmarks label={coachmarkId} refEl={refEl} />}
-    </>
+    <Button
+      ref={coachmarkId ? setCoachmarkRef(coachmarkId) : undefined}
+      iconColor={useAltColor}
+      badge={badge}
+      onClick={() => handleButtonClick(menuKey, onOpen, hideInsteadOfClose)}
+      selected={menuKey === openHudMenu}
+      data-tooltip-id="hudMenuTooltip"
+      data-tooltip-place="left"
+      data-tooltip-content={label}>
+      {icon}
+    </Button>
   );
 };
 

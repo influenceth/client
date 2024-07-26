@@ -10,8 +10,9 @@ import useStore from '~/hooks/useStore';
 import { keyify } from '~/lib/utils';
 import { hexToRGB } from '~/theme';
 import { majorBorderColor, HudMenuCollapsibleSection, Scrollable } from './components';
-import Coachmarks, { COACHMARK_IDS } from '~/Coachmarks';
+import { COACHMARK_IDS } from '~/contexts/CoachmarkContext';
 import SIMULATION_CONFIG from '~/simulation/simulationConfig';
+import useCoachmarkRefSetter from '~/hooks/useCoachmarkRefSetter';
 
 const ResourceWrapper = styled.div`
   flex: 1;
@@ -94,27 +95,9 @@ const ResourceGroup = styled.div`
   }
 `;
 
-const CoachmarkableResource = ({ resource, isSelected, onClick }) => {
-  const [refEl, setRefEl] = useState();
-  return (
-    <>
-      <Resource
-        ref={setRefEl}
-        category={resource.categoryKey}
-        onClick={onClick(resource.i)}
-        selected={isSelected}>
-        {isSelected ? <PlusIcon /> : <Circle />}
-        <label>{resource.name}</label>
-        <span>{(resource.abundance * 100).toFixed(1)}%</span>
-      </Resource>
-      {Number(resource.i) === SIMULATION_CONFIG.resourceId && (
-        <Coachmarks label={COACHMARK_IDS.hudMenuTargetResource} refEl={refEl} />
-      )}
-    </>
-  );
-}
-
 const AsteroidResources = ({ onClose }) => {
+  const setCoachmarkRef = useCoachmarkRefSetter();
+
   const asteroidId = useStore(s => s.asteroids.origin);
   const { data: asteroid } = useAsteroid(asteroidId);
   const groupAbundances = useAsteroidAbundances(asteroid);
@@ -157,13 +140,22 @@ const AsteroidResources = ({ onClose }) => {
                   <span>{(groupAbundance * 100).toFixed(1)}%</span>
                 </Title>
                 <ResourceList>
-                  {resources.map((resource) => (
-                    <CoachmarkableResource
-                      key={resource.name}
-                      isSelected={resourceMap.active && resourceMap.selected === Number(resource.i)}
-                      onClick={onClick}
-                      resource={resource} />
-                  ))}
+                  {resources.map((resource) => {
+                    const coachmarked = Number(resource.i) === SIMULATION_CONFIG.resourceId;
+                    const isSelected = resourceMap.active && resourceMap.selected === Number(resource.i);
+                    return (
+                      <Resource
+                        key={resource.i}
+                        ref={coachmarked ? setCoachmarkRef(COACHMARK_IDS.hudMenuTargetResource) : undefined}
+                        category={resource.categoryKey}
+                        onClick={onClick(resource.i)}
+                        selected={isSelected}>
+                        {isSelected ? <PlusIcon /> : <Circle />}
+                        <label>{resource.name}</label>
+                        <span>{(resource.abundance * 100).toFixed(1)}%</span>
+                      </Resource>
+                    );
+                  })}
                 </ResourceList>
               </ResourceGroup>
             ))}

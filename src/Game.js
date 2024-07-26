@@ -9,11 +9,12 @@ import { initializeTagManager } from './gtm';
 import FullpageInterstitial from '~/components/FullpageInterstitial';
 import { ActionItemProvider } from '~/contexts/ActionItemContext';
 import { ActivitiesProvider } from '~/contexts/ActivitiesContext';
-import { SessionProvider } from '~/contexts/SessionContext';
+import { CoachmarkProvider } from '~/contexts/CoachmarkContext';
 import { CrewProvider } from './contexts/CrewContext';
 import { ChainTransactionProvider } from '~/contexts/ChainTransactionContext';
 import { DevToolProvider } from '~/contexts/DevToolContext';
 import { ScreensizeProvider } from '~/contexts/ScreensizeContext';
+import { SessionProvider } from '~/contexts/SessionContext';
 import { SyncedTimeProvider } from '~/contexts/SyncedTimeContext';
 import { WebsocketProvider } from '~/contexts/WebsocketContext';
 import Audio from '~/game/Audio';
@@ -220,8 +221,10 @@ const Game = () => {
                               <ActionItemProvider>
                                   <ThemeProvider theme={theme}>
                                     <ScreensizeProvider>
-                                      <ScreensizeWarning />
-                                      <Interface />
+                                      <CoachmarkProvider>
+                                        <ScreensizeWarning />
+                                        <Interface />
+                                      </CoachmarkProvider>
                                     </ScreensizeProvider>
                                   </ThemeProvider>
                               </ActionItemProvider>

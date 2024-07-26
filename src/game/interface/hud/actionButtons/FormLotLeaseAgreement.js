@@ -5,7 +5,8 @@ import useAgreementManager from '~/hooks/actionManagers/useAgreementManager';
 import useStore from '~/hooks/useStore';
 import ActionButton from './ActionButton';
 import { Permission } from '@influenceth/sdk';
-import Coachmarks, { COACHMARK_IDS } from '~/Coachmarks';
+import { COACHMARK_IDS } from '~/contexts/CoachmarkContext';
+import useCoachmarkRefSetter from '~/hooks/useCoachmarkRefSetter';
 
 // TODO: arguably, it would be more consistent to show this button in a disabled state, at least in some conditions
 const isVisible = ({ lot, crew }) => {
@@ -20,6 +21,7 @@ const isVisible = ({ lot, crew }) => {
 
 const FormLotLeaseAgreement = ({ lot, permission, simulation, simulationActions, _disabled }) => {
   const { pendingChange } = useAgreementManager(lot, permission);
+  const setCoachmarkRef = useCoachmarkRefSetter();
   
   const onSetAction = useStore(s => s.dispatchActionDialog);
 
@@ -37,22 +39,18 @@ const FormLotLeaseAgreement = ({ lot, permission, simulation, simulationActions,
     return '';
   }, [_disabled, pendingChange, simulation, simulationActions]);
 
-  const [refEl, setRefEl] = useState();
   return (
-    <>
-      <ActionButton
-        ref={setRefEl}
-        label="Form Lot Agreement"
-        labelAddendum={disabledReason}
-        flags={{
-          attention: simulation && !disabledReason,
-          disabled: _disabled || disabledReason,
-          loading: pendingChange
-        }}
-        icon={<FormLotAgreementIcon />}
-        onClick={handleClick} />
-      <Coachmarks label={COACHMARK_IDS.actionButtonLease} refEl={refEl} />
-    </>
+    <ActionButton
+      ref={setCoachmarkRef(COACHMARK_IDS.actionButtonLease)}
+      label="Form Lot Agreement"
+      labelAddendum={disabledReason}
+      flags={{
+        attention: simulation && !disabledReason,
+        disabled: _disabled || disabledReason,
+        loading: pendingChange
+      }}
+      icon={<FormLotAgreementIcon />}
+      onClick={handleClick} />
   );
 };
 

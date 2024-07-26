@@ -4,7 +4,8 @@ import { Permission } from '@influenceth/sdk';
 import { PlanBuildingIcon } from '~/components/Icons';
 import useConstructionManager from '~/hooks/actionManagers/useConstructionManager';
 import ActionButton, { getCrewDisabledReason } from './ActionButton';
-import Coachmarks, { COACHMARK_IDS } from '~/Coachmarks';
+import { COACHMARK_IDS } from '~/contexts/CoachmarkContext';
+import useCoachmarkRefSetter from '~/hooks/useCoachmarkRefSetter';
 
 const labelDict = {
   READY_TO_PLAN: 'Create Building Site',
@@ -22,6 +23,7 @@ const isVisible = ({ constructionStatus, crew, lot, ship }) => {
 
 const PlanBuilding = ({ asteroid, crew, lot, onSetAction, simulation, simulationActions, _disabled }) => {
   const { constructionStatus } = useConstructionManager(lot?.id);
+  const setCoachmarkRef = useCoachmarkRefSetter();
   const handleClick = useCallback(() => {
     onSetAction('PLAN_BUILDING');
   }, [onSetAction]);
@@ -39,23 +41,19 @@ const PlanBuilding = ({ asteroid, crew, lot, onSetAction, simulation, simulation
       });
     }
   }, [_disabled, asteroid, constructionStatus, crew, lot, simulationActions]);
-  
-  const [refEl, setRefEl] = useState();
+
   return (
-    <>
-      <ActionButton
-        ref={setRefEl}
-        label={labelDict[constructionStatus] || undefined}
-        labelAddendum={disabledReason}
-        flags={{
-          attention: simulation && !disabledReason,
-          disabled: disabledReason,
-          loading: constructionStatus === 'PLANNING'
-        }}
-        icon={<PlanBuildingIcon />}
-        onClick={handleClick} />
-      <Coachmarks label={COACHMARK_IDS.actionButtonPlan} refEl={refEl} />
-    </>
+    <ActionButton
+      ref={setCoachmarkRef(COACHMARK_IDS.actionButtonPlan)}
+      label={labelDict[constructionStatus] || undefined}
+      labelAddendum={disabledReason}
+      flags={{
+        attention: simulation && !disabledReason,
+        disabled: disabledReason,
+        loading: constructionStatus === 'PLANNING'
+      }}
+      icon={<PlanBuildingIcon />}
+      onClick={handleClick} />
   );
 };
 

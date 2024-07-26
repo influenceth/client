@@ -3,7 +3,8 @@ import { useCallback, useMemo, useState } from 'react';
 import { ConstructIcon } from '~/components/Icons';
 import useConstructionManager from '~/hooks/actionManagers/useConstructionManager';
 import ActionButton, { getCrewDisabledReason } from './ActionButton';
-import Coachmarks, { COACHMARK_IDS } from '~/Coachmarks';
+import { COACHMARK_IDS } from '~/contexts/CoachmarkContext';
+import useCoachmarkRefSetter from '~/hooks/useCoachmarkRefSetter';
 
 const labelDict = {
   PLANNED: 'Start Construction',
@@ -20,6 +21,7 @@ const isVisible = ({ constructionStatus, crew, lot }) => {
 
 const Construct = ({ asteroid, crew, lot, onSetAction, simulation, simulationActions, _disabled }) => {
   const { constructionStatus } = useConstructionManager(lot?.id);
+  const setCoachmarkRef = useCoachmarkRefSetter();
   const handleClick = useCallback(() => {
     onSetAction('CONSTRUCT');
   }, [onSetAction]);
@@ -39,11 +41,10 @@ const Construct = ({ asteroid, crew, lot, onSetAction, simulation, simulationAct
 
   const attention = !disabledReason && (simulation || constructionStatus === 'READY_TO_FINISH');
   const loading = constructionStatus === 'UNDER_CONSTRUCTION' || constructionStatus === 'FINISHING';
-  const [refEl, setRefEl] = useState();
   return (
     <>
       <ActionButton
-        ref={setRefEl}
+        ref={setCoachmarkRef(COACHMARK_IDS.actionButtonConstruct)}
         label={labelDict[constructionStatus]}
         labelAddendum={disabledReason}
         flags={{
@@ -55,7 +56,6 @@ const Construct = ({ asteroid, crew, lot, onSetAction, simulation, simulationAct
         icon={<ConstructIcon />}
         onClick={handleClick}
         sequenceMode={!crew?._ready && constructionStatus === 'PLANNED'} />
-      <Coachmarks label={COACHMARK_IDS.actionButtonConstruct} refEl={refEl} />
     </>
   );
 };

@@ -15,9 +15,10 @@ import useStore from '~/hooks/useStore';
 import LiveReadyStatus from '~/components/LiveReadyStatus';
 import { SECTION_WIDTH } from './ActionItems';
 import Button from '~/components/ButtonAlt';
-import Coachmarks, { COACHMARK_IDS } from '~/Coachmarks';
+import { COACHMARK_IDS } from '~/contexts/CoachmarkContext';
 import SIMULATION_CONFIG from '~/simulation/simulationConfig';
 import useSimulationState from '~/hooks/useSimulationState';
+import useCoachmarkRefSetter from '~/hooks/useCoachmarkRefSetter';
 
 const menuWidth = SECTION_WIDTH;
 
@@ -156,6 +157,7 @@ const AvatarMenu = () => {
   const { authenticated } = useSession();
   const { captain, crew, loading: crewIsLoading } = useCrewContext();
   const history = useHistory();
+  const setCoachmarkRef = useCoachmarkRefSetter();
   const simulation = useSimulationState();
 
   const onSetAction = useStore(s => s.dispatchActionDialog);
@@ -190,9 +192,6 @@ const AvatarMenu = () => {
     return history.push('/crew');
   }, [simulation]);
 
-  const [captainRefEl, setCaptainRefEl] = useState();
-  const [locationRefEl, setLocationRefEl] = useState();
-
   if (crewIsLoading) return null;
   return (
     <Wrapper>
@@ -210,9 +209,8 @@ const AvatarMenu = () => {
                   <CrewLocationCompactLabel
                     crew={crew}
                     flip
-                    setRef={setLocationRefEl}
+                    setRef={setCoachmarkRef(COACHMARK_IDS.hudCrewLocation)}
                     zoomedToAsteroid={zoomStatus === 'in' && asteroidId} />
-                  <Coachmarks label={COACHMARK_IDS.hudCrewLocation} refEl={locationRefEl} />
                 </>
               )
               : `No Active Crews`
@@ -226,12 +224,11 @@ const AvatarMenu = () => {
             isCaptain
             onClick={onClick(captain?.id)}
             noAnimation
-            setRef={setCaptainRefEl}
+            setRef={setCoachmarkRef(COACHMARK_IDS.hudRecruitCaptain)}
             silhouetteOverlay={silhouetteOverlay}
             CrewmateCardProps={simulation ? { useExplicitAppearance: true } : {}}
             warnIfNotOwnedBy={simulation ? undefined : crew?.Nft?.owner}
             width={98} />
-          <Coachmarks label={COACHMARK_IDS.hudRecruitCaptain} refEl={captainRefEl} />
 
           <CrewInfoContainer>
             <TitleBar showBusy={crew && !crew._ready}>

@@ -33,10 +33,11 @@ import LotLoadingProgress from './LotLoadingProgress';
 import theme, { hexToRGB } from '~/theme';
 import EntityName from '~/components/EntityName';
 import { ActionProgressContainer } from './actionDialogs/components';
-import Coachmarks, { COACHMARK_IDS } from '~/Coachmarks';
+import { COACHMARK_IDS } from '~/contexts/CoachmarkContext';
 import useSimulationEnabled from '~/hooks/useSimulationEnabled';
 import SIMULATION_CONFIG from '~/simulation/simulationConfig';
 import useSimulationState from '~/hooks/useSimulationState';
+import useCoachmarkRefSetter from '~/hooks/useCoachmarkRefSetter';
 
 const opacityAnimation = keyframes`
   0% { opacity: 1; }
@@ -321,8 +322,9 @@ const getShipSubtitle = (ship, shipReady, { asteroid, lot }) => {
 }
 
 
-const InfoPane = ({ setRef }) => {
+const InfoPane = () => {
   const history = useHistory();
+  const setCoachmarkRef = useCoachmarkRefSetter();
 
   const asteroidId = useStore(s => s.asteroids.origin);
   const lotId = useStore(s => s.asteroids.lot);
@@ -583,52 +585,51 @@ const InfoPane = ({ setRef }) => {
 
   if (lotIsLoading || asteroidIsLoading || shipIsLoading) return null;
   return (
-    <>
-      <Pane visible={asteroidId && ['out','in'].includes(zoomStatus)}>
-        <Tooltip id="infoPaneTooltip" />
-        <OuterTitleRow style={captainCard && !thumbnail ? { marginBottom: 8 } : {}}>
-          {captainCard && <CaptainCardContainer><CaptainCard crewId={captainCard} /></CaptainCardContainer>}
-          <div style={captainCard && !thumbnail ? { marginTop: -8 } : {}}>
-            {title && (
-              <TitleRow hasLink={!!titleLink} onClick={onClickTitle}>
-                <Title hasThumb={!!thumbnail}>{title}</Title>
-                {titleLink && <PopoutIcon />}
-              </TitleRow>
-            )}
-            {subtitle && <Subtitle>{hover && hoverSubtitle ? <b>{hoverSubtitle}</b> : subtitle}</Subtitle>}
-          </div>
-        </OuterTitleRow>
-        <ContentRow>
-          {thumbnail && (
-            <ThumbWrapper
-              onClick={onClickPane}
-              onMouseEnter={onMouseEvent}
-              onMouseLeave={onMouseEvent}
-              hasCaptainCard={!!captainCard}>
-              {hover ? <DetailsIcon /> : <ForwardIcon />}
-              <ThumbPreview ref={setRefEl} visible={thumbVisible}>
-                <CloseButton onClick={onClosePane} borderless>
-                  <CloseIcon />
-                </CloseButton>
-                {thumbnail}
-                <ClipCorner flip dimension={thumbCornerSize} color={hover ? 'white' : 'rgba(255,255,255,0.25)'} />
-              </ThumbPreview>
-            </ThumbWrapper>
+    <Pane visible={asteroidId && ['out','in'].includes(zoomStatus)}>
+      <Tooltip id="infoPaneTooltip" />
+      <OuterTitleRow style={captainCard && !thumbnail ? { marginBottom: 8 } : {}}>
+        {captainCard && <CaptainCardContainer><CaptainCard crewId={captainCard} /></CaptainCardContainer>}
+        <div style={captainCard && !thumbnail ? { marginTop: -8 } : {}}>
+          {title && (
+            <TitleRow hasLink={!!titleLink} onClick={onClickTitle}>
+              <Title hasThumb={!!thumbnail}>{title}</Title>
+              {titleLink && <PopoutIcon />}
+            </TitleRow>
           )}
-          {actions?.length > 0 && (
-            <ActionButtonContainer>
-              {inTravelMode && zoomStatus === 'out' && <ActionForm><RouteSelection /></ActionForm>}
-              <ActionButtons>
-                {actions.map((ActionButton, i) => (
-                  <ActionButton key={i} {...actionProps} />
-                ))}
-              </ActionButtons>
-            </ActionButtonContainer>
-          )}
-        </ContentRow>
-      </Pane>
-      <Coachmarks label={COACHMARK_IDS.hudInfoPane} refEl={refEl} />
-    </>
+          {subtitle && <Subtitle>{hover && hoverSubtitle ? <b>{hoverSubtitle}</b> : subtitle}</Subtitle>}
+        </div>
+      </OuterTitleRow>
+      <ContentRow>
+        {thumbnail && (
+          <ThumbWrapper
+            onClick={onClickPane}
+            onMouseEnter={onMouseEvent}
+            onMouseLeave={onMouseEvent}
+            hasCaptainCard={!!captainCard}>
+            {hover ? <DetailsIcon /> : <ForwardIcon />}
+            <ThumbPreview
+              ref={setCoachmarkRef(COACHMARK_IDS.hudInfoPane)}
+              visible={thumbVisible}>
+              <CloseButton onClick={onClosePane} borderless>
+                <CloseIcon />
+              </CloseButton>
+              {thumbnail}
+              <ClipCorner flip dimension={thumbCornerSize} color={hover ? 'white' : 'rgba(255,255,255,0.25)'} />
+            </ThumbPreview>
+          </ThumbWrapper>
+        )}
+        {actions?.length > 0 && (
+          <ActionButtonContainer>
+            {inTravelMode && zoomStatus === 'out' && <ActionForm><RouteSelection /></ActionForm>}
+            <ActionButtons>
+              {actions.map((ActionButton, i) => (
+                <ActionButton key={i} {...actionProps} />
+              ))}
+            </ActionButtons>
+          </ActionButtonContainer>
+        )}
+      </ContentRow>
+    </Pane>
   );
 };
 

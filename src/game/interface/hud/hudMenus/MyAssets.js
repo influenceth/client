@@ -16,7 +16,8 @@ import useSession from '~/hooks/useSession';
 import formatters from '~/lib/formatters';
 import { locationsArrToObj } from '~/lib/utils';
 import EntityName from '~/components/EntityName';
-import Coachmarks, { COACHMARK_IDS } from '~/Coachmarks';
+import { COACHMARK_IDS } from '~/contexts/CoachmarkContext';
+import useCoachmarkRefSetter from '~/hooks/useCoachmarkRefSetter';
 
 const Wrapper = styled.div`
   display: flex;
@@ -171,6 +172,7 @@ const GroupedAssets = ({ assetTally, groupedAssets, isLoading, itemHeight, itemG
 }
 
 const MyAssets = () => {
+  const setCoachmarkRef = useCoachmarkRefSetter();
   const { accountAddress } = useSession();
   const { crew, crews, selectCrew } = useCrewContext();
   const { data: walletAgreementsWithDupes, isLoading: agreementsLoading } = useWalletAgreements();
@@ -312,8 +314,6 @@ const MyAssets = () => {
     return [groups, ungrouped.length];
   }, [walletShips, allAsteroidsMode, allCrewsMode]);
 
-  const [agreementRefEl, setAgreementRefEl] = useState();
-
   return (
     <Wrapper>
       <Controls>
@@ -404,16 +404,13 @@ const MyAssets = () => {
             itemGetter={(agreement) => {
               const coachmarked = coachmarks[COACHMARK_IDS.hudMenuMyAssetsAgreement] === agreement.id;
               return (
-                <>
-                  <AgreementBlock
-                    key={agreement._agreement._path}
-                    agreement={agreement}
-                    onSelectCrew={onClickCrewAsset}
-                    selectedCrew={crew}
-                    setRef={coachmarked ? setAgreementRefEl : undefined}
-                  />
-                  {coachmarked && <Coachmarks forceOn refEl={agreementRefEl} />}
-                </>
+                <AgreementBlock
+                  key={agreement._agreement._path}
+                  agreement={agreement}
+                  onSelectCrew={onClickCrewAsset}
+                  selectedCrew={crew}
+                  setRef={coachmarked ? setCoachmarkRef(COACHMARK_IDS.hudMenuMyAssetsAgreement) : undefined}
+                />
               );
             }}
             itemHeight={55}

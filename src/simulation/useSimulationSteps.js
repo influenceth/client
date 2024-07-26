@@ -7,11 +7,11 @@ import useCrewAgreements from '~/hooks/useCrewAgreements';
 import useCrewBuildings from '~/hooks/useCrewBuildings';
 import useCrewContext from '~/hooks/useCrewContext';
 import useCrewSamples from '~/hooks/useCrewSamples';
-import useStore from '~/hooks/useStore';
-import { COACHMARK_IDS } from '~/Coachmarks';
 import useLot from '~/hooks/useLot';
-import SIMULATION_CONFIG from '~/simulation/simulationConfig';
 import useSimulationState from '~/hooks/useSimulationState';
+import useStore from '~/hooks/useStore';
+import SIMULATION_CONFIG from '~/simulation/simulationConfig';
+import { COACHMARK_IDS } from '~/contexts/CoachmarkContext';
 
 const DELAY_MESSAGE = 1000;
 
