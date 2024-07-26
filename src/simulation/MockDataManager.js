@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from 'react-query';
-import { Building, Entity, Extractor, Inventory, Lot, Permission } from '@influenceth/sdk';
+import { Building, Entity, Extractor, Inventory, Lot, Permission, Product } from '@influenceth/sdk';
 
 import useSimulationState from '~/hooks/useSimulationState';
 import SIMULATION_CONFIG from './simulationConfig';
@@ -8,7 +8,11 @@ import { entitiesCacheKey } from '~/lib/cacheKey';
 import { entityToAgreements } from '~/lib/utils';
 import { statuses as walletBuildingStatuses } from '~/hooks/useWalletBuildings';
 
-const getBuildingInventories = (buildingType, buildingStatus) => {
+const contentsObjToArray = (contentsObj) => {
+  return Object.keys(contentsObj || {}).map((product) => ({ product, amount: contentsObj[product] }));
+}
+
+const getBuildingInventories = (buildingType, buildingStatus, contentsBySlot = {}) => {
   const { siteSlot, siteType } = Building.TYPES[buildingType];
 
   const inv = [];
@@ -19,10 +23,31 @@ const getBuildingInventories = (buildingType, buildingStatus) => {
     reservedMass: 0,
     reservedVolume: 0,
     volume: 0,
-    status: Inventory.STATUSES.AVAILABLE
+    contents: contentsObjToArray(contentsBySlot?.[siteSlot]),
+    status: buildingStatus === Building.CONSTRUCTION_STATUSES.PLANNED ? Inventory.STATUSES.AVAILABLE : Inventory.STATUSES.UNAVAILABLE
   });
+  if (buildingType === Building.IDS.WAREHOUSE) {
+    inv.push({
+      slot: 2,
+      inventoryType: Inventory.IDS.WAREHOUSE_PRIMARY,
+      mass: 0,
+      reservedMass: 0,
+      reservedVolume: 0,
+      volume: 0,
+      contents: contentsObjToArray(contentsBySlot?.[2]),
+      status: buildingStatus === Building.CONSTRUCTION_STATUSES.OPERATIONAL ? Inventory.STATUSES.AVAILABLE :  Inventory.STATUSES.UNAVAILABLE
+    });
+  }
 
-  return inv;
+  // TODO: it feels inelegant how we are doing this... 
+  return inv.map((i) => {
+    const [mass, volume] = (i.contents || []).reduce((acc, { product, amount }) => {
+      acc[0] += amount * Product.TYPES[product].massPerUnit;
+      acc[1] += amount * Product.TYPES[product].massPerUnit;
+      return acc;
+    }, [0, 0]);
+    return { ...i, mass, volume }
+  });
 };
 
 
@@ -89,7 +114,7 @@ const MockDataManager = () => {
 
       Object.keys(simulation.lots).map((stringLotId) => {
         const lotId = Number(stringLotId);
-        const { buildingId, buildingStatus, buildingType, leaseRate, leaseTerm } = simulation.lots[lotId];
+        const { buildingId, buildingStatus, buildingType, leaseRate, leaseTerm, inventoryContents } = simulation.lots[lotId];
 
         const lotEntity = Entity.formatEntity({ id: lotId, label: Entity.IDS.LOT });
         const asteroidEntity = Entity.formatEntity({ id: Lot.toPosition(lotId)?.asteroidId, label: Entity.IDS.ASTEROID });
@@ -135,10 +160,10 @@ const MockDataManager = () => {
               location: lotEntity,
               locations: [lotEntity, asteroidEntity]
             },
-            Inventories: [], // TODO: per-building+status inventories
-            // TODO: per-building components
+            Inventories: getBuildingInventories(buildingType, buildingStatus, inventoryContents)
           };
-          building.Inventories = getBuildingInventories(buildingType, buildingStatus);
+
+          // per-building components
           switch(buildingType) {
             case Building.IDS.EXTRACTOR:
               building.Extractors = [{

@@ -20,14 +20,14 @@ const MockTransactionManager = () => {
   const getActivityConfig = useGetActivityConfig();
 
   const dispatchPendingTransactionComplete = useStore((s) => s.dispatchPendingTransactionComplete);
+  const dispatchSimulationAddToInventory = useStore((s) => s.dispatchSimulationAddToInventory);
   const dispatchSimulationState = useStore((s) => s.dispatchSimulationState);
   const createAlert = useStore(s => s.dispatchAlertLogged);
-
 
   const simulateResultingEvent = useCallback((tx) => {
     let events = [];
     switch(tx.key) {
-      case 'AcceptPrepaidAgreement':
+      case 'AcceptPrepaidAgreement': {
         // update simulation state
         const { asteroidId, lotIndex } = Lot.toPosition(tx.vars.target.id);
         const closest = Asteroid.getClosestLots({
@@ -59,15 +59,15 @@ const MockTransactionManager = () => {
             caller: SIMULATION_CONFIG.accountAddress
           })
         });
-
         break;
+      }
 
-      case 'ConstructionPlan':
+      case 'ConstructionPlan': {
         const buildingId = SIMULATION_CONFIG.buildingIds[tx.vars.building_type];
         const lotUpdate = cloneDeep(simulation.lots);
         lotUpdate[tx.vars.lot.id].buildingId = buildingId;
         lotUpdate[tx.vars.lot.id].buildingStatus = Building.CONSTRUCTION_STATUSES.PLANNED;
-        lotUpdate[tx.vars.lot.id].buildingType = tx.vars.building_type;
+        lotUpdate[tx.vars.lot.id].buildingType = Number(tx.vars.building_type);
         dispatchSimulationState('lots', lotUpdate);
 
         // mimic event
@@ -86,24 +86,63 @@ const MockTransactionManager = () => {
             caller: SIMULATION_CONFIG.accountAddress
           })
         });
+        break;
+      }
 
-        console.log({
-          event: 'ConstructionPlanned',
-          name: 'ConstructionPlanned',
+      case 'ConstructionStart': {
+        const lotUpdate = cloneDeep(simulation.lots);
+        lotUpdate[tx.meta.lotId].buildingStatus = Building.CONSTRUCTION_STATUSES.OPERATIONAL; // TODO: under construction
+        dispatchSimulationState('lots', lotUpdate);
+
+        // mimic event
+        events.push({
+          event: 'ConstructionStarted',
+          name: 'ConstructionStarted',
           logIndex: 1,
           transactionIndex: 1,
           transactionHash: tx.txHash,
           timestamp: nowSec(),
           returnValues: transformReturnValues({
             ...tx.vars,
-            asteroid: {},
-            building: {},
-            grace_period_end: nowSec() + 86400,
+            finish_time: nowSec() + 86400,
             caller: SIMULATION_CONFIG.accountAddress
           })
         });
-
         break;
+      }
+
+      case 'BulkFillSellOrder': {
+        tx.vars.forEach((vars) => {
+          simulateResultingEvent({
+            key: 'FillSellOrder',
+            vars,
+            meta: tx.meta
+          })
+        });
+        break;
+      }
+
+      case 'FillSellOrder': {
+        // TODO: ...
+        // dispatchSimulationState('deliveries', lotUpdate);
+        dispatchSimulationAddToInventory(tx.meta.destinationLotId, tx.vars.destination_slot, tx.vars.product, tx.vars.amount);
+        dispatchSimulationState('sway', -(tx.vars.payments.toExchange + tx.vars.payments.toPlayer), 'increment');
+
+        // mimic event
+        events.push({
+          event: 'SellOrderFilled',
+          name: 'SellOrderFilled',
+          logIndex: 1,
+          transactionIndex: 1,
+          transactionHash: tx.txHash,
+          timestamp: nowSec(),
+          returnValues: transformReturnValues({
+            ...tx.vars,
+            caller: SIMULATION_CONFIG.accountAddress
+          })
+        });
+        break;
+      }
     }
 
     // no need to invalidate data b/c no real updates made
