@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import styled from 'styled-components';
 
-import theme from '~/theme';
+import theme, { hexToRGB } from '~/theme';
 import ResourceThumbnail from '~/components/ResourceThumbnail';
 import { formatResourceAmount } from '~/game/interface/hud/actionDialogs/components';
 
@@ -72,9 +72,9 @@ const ResourceSelection = ({ item, onSelectItem }) => {
   const props = useMemo(() => {
     const config = {};
     if (item.selected > 0) {
-      config.badgeColor = theme.colors.main;
-      config.backgroundColor = `rgba(${theme.colors.mainRGB}, 0.1)`;
-      config.outlineColor = `rgba(${theme.colors.mainRGB}, 0.4)`;
+      config.badgeColor = theme.colors.success;
+      config.backgroundColor = `rgba(${hexToRGB(theme.colors.backgroundSuccess)}, 0.5)`;
+      config.outlineColor = `rgba(${theme.colors.successRGB}, 1)`;
 
       if (item.selected < item.available) {
         config.badge = formatResourceAmount(item.selected, item.resource.i);
