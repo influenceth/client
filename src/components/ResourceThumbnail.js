@@ -61,7 +61,7 @@ export const ResourceThumbnailWrapper = styled.div`
     ${p.onClick && `cursor: ${p.theme.cursors.active};`}
     &:hover {
       ${p.onClick && `
-        background: rgba(${p.theme.colors.mainRGB}, 0.3);
+        background: rgba(${p.theme.colors.mainRGB}, 0.4);
       `}
       ${MenuWrapper} {
         opacity: 1;
@@ -161,6 +161,7 @@ const ResourceBadge = styled.div`
   bottom: 5px;
   color: white;
   font-size: 80%;
+  font-weight: 500;
   text-shadow: 1px 1px 0px black;
   left: 5px;
   line-height: 1em;

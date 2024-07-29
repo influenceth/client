@@ -72,9 +72,9 @@ const ResourceSelection = ({ item, onSelectItem }) => {
   const props = useMemo(() => {
     const config = {};
     if (item.selected > 0) {
-      config.badgeColor = theme.colors.success;
-      config.backgroundColor = `rgba(${hexToRGB(theme.colors.backgroundSuccess)}, 0.5)`;
-      config.outlineColor = `rgba(${theme.colors.successRGB}, 1)`;
+      config.badgeColor = theme.colors.brightMain;
+      config.backgroundColor = `rgba(${hexToRGB(theme.colors.darkMain)}, 0.5)`;
+      config.outlineColor = theme.colors.brightMain;
 
       if (item.selected < item.available) {
         config.badge = formatResourceAmount(item.selected, item.resource.i);
