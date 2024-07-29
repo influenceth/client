@@ -100,6 +100,7 @@ const theme = {
     error: red,
     errorRGB: hexToRGB(red),
     expired: red,
+    reserved: '#287d99',
 
     teal, 
     blue, 

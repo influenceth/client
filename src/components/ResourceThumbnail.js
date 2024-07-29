@@ -98,7 +98,7 @@ export const ResourceImage = styled.div`
 `;
 
 export const ResourceProgress = styled.div`
-  background: #333;
+  background: rgba(60,60,60,0.5);
   border-radius: 2px;
   position: absolute;
   bottom: 5px;
@@ -117,7 +117,7 @@ export const ResourceProgress = styled.div`
   }
   &:after {
     content: "";
-    background: ${p => p.theme.colors.main};
+    background: ${p => p.theme.colors.brightMain};
     border-radius: 2px;
     position: absolute;
     ${p => p.horizontal
@@ -136,7 +136,7 @@ export const ResourceProgress = styled.div`
   ${p => p.secondaryProgress && `
     &:before {
       content: "";
-      background: white;
+      background: ${p.theme.colors.reserved};
       border-radius: 2px;
       position: absolute;
       ${p.horizontal
