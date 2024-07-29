@@ -19,6 +19,10 @@ import { getBuildingIcon } from '~/lib/assetUtils';
 import formatters from '~/lib/formatters';
 import theme from '~/theme';
 import { IconLink, LocationLink } from '../listViews/components';
+import useCoachmarkRefSetter from '~/hooks/useCoachmarkRefSetter';
+import useStore from '~/hooks/useStore';
+import { COACHMARK_IDS } from '~/contexts/CoachmarkContext';
+import useSimulationEnabled from '~/hooks/useSimulationEnabled';
 
 
 const Header = styled.div`
@@ -159,13 +163,18 @@ const AsteroidResourcePrices = ({ asteroid, mode, resource }) => {
   ]);
   const [sortField, sortDirection] = sort;
 
+  const setCoachmarkRef = useCoachmarkRefSetter();
+  const coachmarkHelperProduct = useStore(s => s.coachmarks?.[COACHMARK_IDS.asteroidMarketsHelper]);
+  const simulationEnabled = useSimulationEnabled();
+  const simulationActions = useStore((s) => s.simulationActions);
+
   const { data: selectedLot } = useLot(selected);
   const { data: marketplaceOwner } = useCrew(selectedLot?.building?.Control?.controller?.id);
 
   const { data: orderSummary } = useOrderSummaryByExchange(asteroid.id, resource.i);
   const resourceMarketplaces = useMemo(() => {
     if (!orderSummary) return [];
-    return orderSummary.map((o) => ({
+    const transformedOrders = orderSummary.map((o) => ({
       marketplaceName: formatters.buildingName(o.marketplace),
       lotId: o.marketplace?.Location?.location?.id,
       supply: o.sell.amount,
@@ -176,8 +185,16 @@ const AsteroidResourcePrices = ({ asteroid, mode, resource }) => {
       centerPrice: (o.sell.price && o.buy.price) ? (o.sell.price + o.buy.price) / 2 : (o.sell.price || o.buy.price || 0),
       makerFee: o.marketplace?.Exchange?.makerFee,
       takerFee: o.marketplace?.Exchange?.takerFee,
-    }))
-  }, [asteroid.id, crew, orderSummary]);
+    }));
+    if (simulationEnabled && resource.i === coachmarkHelperProduct) {
+      if (simulationActions.includes('MarketBuy') && !simulationActions.includes('MarketSell')) {
+        return transformedOrders.filter((o) => o.supply > 0);
+      } else if (simulationActions.includes('MarketSell') && !simulationActions.includes('MarketBuy')) {
+        return transformedOrders.filter((o) => o.demand > 0);
+      }
+    }
+    return transformedOrders;
+  }, [asteroid.id, coachmarkHelperProduct, crew, orderSummary, simulationEnabled, simulationActions]);
 
   const selectedSupply = useMemo(() => {
     return resourceMarketplaces.find((m) => m.lotId === selected)?.supply || 0;
@@ -445,7 +462,10 @@ const AsteroidResourcePrices = ({ asteroid, mode, resource }) => {
         </TableContainer>
       </Body>
 
-      <PseudoFooterButton disabled={nativeBool(!selected)} onClick={onViewMarketplace}>
+      <PseudoFooterButton
+        setRef={selected && coachmarkHelperProduct === resource?.i ? setCoachmarkRef(COACHMARK_IDS.asteroidMarketsHelper) : undefined}
+        disabled={nativeBool(!selected)}
+        onClick={onViewMarketplace}>
         Transact
       </PseudoFooterButton>
     </>

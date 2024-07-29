@@ -264,7 +264,7 @@ const CaptainCard = ({ crewId }) => {
     history.push(`/crew/${crewId}`);
   }, [crewId, !simulation]);
 
-  if (simulation && SIMULATION_CONFIG.crewId === crewId) {
+  if (simulation?.crewmate && SIMULATION_CONFIG.crewId === crewId) {
     return (
       <CrewmateCardFramed
         crewmate={{

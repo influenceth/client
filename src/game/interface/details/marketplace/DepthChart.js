@@ -27,6 +27,9 @@ import formatters from '~/lib/formatters';
 import { formatFixed, formatPrice, getCrewAbilityBonuses, nativeBool } from '~/lib/utils';
 import theme, { hexToRGB } from '~/theme';
 import { formatResourceAmount } from '../../hud/actionDialogs/components';
+import useCoachmarkRefSetter from '~/hooks/useCoachmarkRefSetter';
+import { COACHMARK_IDS } from '~/contexts/CoachmarkContext';
+import useSimulationEnabled from '~/hooks/useSimulationEnabled';
 
 const Wrapper = styled.div`
   display: flex;
@@ -368,7 +371,14 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
 
   const { width, height } = useScreenSize();
   const { crew, crewCan } = useCrewContext();
+  const simulationEnabled = useSimulationEnabled();
 
+  const setCoachmarkRef = useCoachmarkRefSetter();
+  const setCoachmarkHelperRef = useMemo(() => setCoachmarkRef(COACHMARK_IDS.asteroidMarketsHelper), [setCoachmarkRef]);
+  
+  const actionDialog = useStore(s => s.actionDialog);
+  const coachmarkHelperProduct = useStore(s => s.coachmarks?.[COACHMARK_IDS.asteroidMarketsHelper]);
+  const simulationActions = useStore((s) => s.simulationActions);
   const onSetAction = useStore(s => s.dispatchActionDialog);
 
   const { data: orders } = useOrderList(marketplace?.id, resource?.i);
@@ -639,6 +649,18 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
     return crewCan(perm, marketplace);
   }, [crewCan, mode, type]);
 
+  const [coachToBuy, coachToSell, coachToLimit, coachToMarket, coachToQuantity, coachToButton] = useMemo(() => {
+    const disable = (coachmarkHelperProduct !== resource.i) || !!actionDialog?.type;
+    return [
+      !disable && mode === 'sell' && !(simulationActions.includes('MarketSell') || simulationActions.includes('LimitSell')),
+      !disable && mode === 'buy' && !(simulationActions.includes('MarketBuy') || simulationActions.includes('LimitBuy')),
+      !disable && type === 'market' && !(simulationActions.includes('MarketBuy') || simulationActions.includes('MarketSell')),
+      !disable && type === 'limit' && !(simulationActions.includes('LimitBuy') || simulationActions.includes('LimitSell')),
+      !disable && !(quantity > 0),
+      !disable && total > 0
+    ];  
+  }, [actionDialog?.type, coachmarkHelperProduct, mode, quantity, resource.i, simulationActions, total, type]);
+
   const actionButtonDetails = useMemo(() => {
     const a = { label: '', icon: null };
 
@@ -650,12 +672,18 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
       a.icon = mode === 'buy' ? <MarketBuyIcon /> : <MarketSellIcon />;
     }
 
-    if (!loading) {
+    if (loading) {
+      a._disabled = true;
+    } else {
       let disabledReason;
       if (!sameAsteroid) disabledReason = 'different asteroid';
       else if (!crew?._location?.lotId) disabledReason = 'in orbit';
       else if (!hasPermission) disabledReason = 'restricted';
       else if (!crew?._ready && type === 'limit') disabledReason = 'crew busy';
+      else if (!(total > 0)) disabledReason = 'form incomplete';
+      else if (simulationEnabled && !simulationActions.find((a) => a.toLowerCase() === `${type}${mode}`)) {
+        disabledReason = 'simulation restricted';
+      }
       
       if (disabledReason) {
         a.labelAddendum = disabledReason;
@@ -663,6 +691,9 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
       }
     }
 
+    if (simulationEnabled && !a._disabled) {
+      a.attention = true;
+    }
     return a;
   }, [crew, loading, hasPermission, mode, sameAsteroid, total, type]);
 
@@ -671,6 +702,7 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
     history.push(`/marketplace/${asteroidId}/${lotIndex}`);
   }, [lot]);
 
+  const actionButtonDisabled = loading || !hasPermission || !(total > 0) || actionButtonDetails?._disabled;
   return (
     <Wrapper>
       <Main>
@@ -800,8 +832,8 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
                 <FormSection>
                   <Switcher
                     buttons={[
-                      { label: 'Buy', value: 'buy' },
-                      { label: 'Sell', value: 'sell' }
+                      { label: 'Buy', value: 'buy', setRef: coachToBuy ? setCoachmarkHelperRef : null },
+                      { label: 'Sell', value: 'sell', setRef: coachToSell ? setCoachmarkHelperRef : null }
                     ]}
                     buttonWidth="50%"
                     onChange={setMode}
@@ -813,11 +845,17 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
                   <InputLabel>
                     <label>Order Type</label>
                   </InputLabel>
-                  <RadioRow onClick={() => setType('market')} selected={nativeBool(type === 'market')}>
+                  <RadioRow
+                    ref={coachToMarket ? setCoachmarkHelperRef : null}
+                    onClick={() => setType('market')}
+                    selected={nativeBool(type === 'market')}>
                     {type === 'market' ? <RadioCheckedIcon /> : <RadioUncheckedIcon />}
                     <span>Market Order</span>
                   </RadioRow>
-                  <RadioRow onClick={() => setType('limit')} selected={nativeBool(type === 'limit')}>
+                  <RadioRow
+                    ref={coachToLimit ? setCoachmarkHelperRef : null}
+                    onClick={() => setType('limit')}
+                    selected={nativeBool(type === 'limit')}>
                     {type === 'limit' ? <RadioCheckedIcon /> : <RadioUncheckedIcon />}
                     <span>Limit Order</span>
                   </RadioRow>
@@ -832,6 +870,7 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
                   </InputLabel>
                   <TextInputWrapper rightLabel={resource.isAtomic ? '' : ' kg'}>
                     <UncontrolledTextInput
+                      ref={coachToQuantity ? setCoachmarkHelperRef : null}
                       monospace
                       size="large"
                       disabled={nativeBool(type === 'market' && ((mode === 'buy' && !totalSelling) || (mode === 'sell' && !totalBuying)))}
@@ -925,8 +964,10 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
                 {crew && (
                   <ActionButton
                     {...actionButtonDetails}
+                    ref={coachToButton ? setCoachmarkHelperRef : null}
                     flags={{
-                      disabled: loading || !hasPermission || !(total > 0) || actionButtonDetails?._disabled,
+                      attention: actionButtonDetails.attention,
+                      disabled: actionButtonDisabled,
                       loading
                     }}
                     onClick={createOrder} />

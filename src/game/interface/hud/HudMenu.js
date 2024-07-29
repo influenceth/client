@@ -264,6 +264,7 @@ const HudMenu = () => {
   const { authenticated } = useSession();
   const { crew } = useCrewContext();
   const simulationEnabled = useSimulationEnabled();
+  const setCoachmarkRef = useCoachmarkRefSetter();
 
   // const createAlert = useStore(s => s.dispatchAlertLogged);
   const asteroidId = useStore(s => s.asteroids.origin);
@@ -563,6 +564,7 @@ const HudMenu = () => {
         {
           key: 'ASTEROID_MARKETS',
           label: 'Asteroid Markets',
+          coachmarkId: COACHMARK_IDS.hudMenuMarketplaces,
           icon: <MarketsIcon />,
           onOpen: () => {
             // if (hasSomeMarketplacePermission) {
@@ -661,11 +663,12 @@ const HudMenu = () => {
     return menuButtons.find((b) => b.key === openHudMenu) || {};
   }, [menuButtons, openHudMenu]);
 
+  console.log(pageButtons);
   const [visibleMenuButtons, visibleUniversalButtons, visiblePageButtons] = useMemo(() => ([
     menuButtons.filter((b) => b.isVisible && !b.isUniversal && (!b.requireLogin || authenticated)),
     menuButtons.filter((b) => b.isVisible && b.isUniversal && (!b.requireLogin || authenticated)),
     pageButtons.filter((b) => b.isVisible && (!b.requireLogin || authenticated)),
-  ]), [authenticated, menuButtons]);
+  ]), [authenticated, menuButtons, pageButtons]);
 
   // if open hud menu is no longer visible (or if get logged out and "requireLogin" menu), close
   useEffect(() => {
@@ -709,9 +712,10 @@ const HudMenu = () => {
         )}
         {visiblePageButtons.length > 0 && (
           <ButtonSection showSeparator={(visibleMenuButtons.length || visibleUniversalButtons.length) > 0}>
-            {visiblePageButtons.map(({ key, label, useAltColor, icon, onOpen, hideInsteadOfClose }) => (
+            {visiblePageButtons.map(({ key, coachmarkId, label, useAltColor, icon, onOpen, hideInsteadOfClose }) => { console.log({ key, coachmarkId }); return (
               <PageButton
                 key={key}
+                ref={coachmarkId ? setCoachmarkRef(coachmarkId) : undefined}
                 iconColor={useAltColor}
                 onClick={() => handleButtonClick(key, onOpen, hideInsteadOfClose)}
                 selected={key === openHudMenu}
@@ -720,7 +724,7 @@ const HudMenu = () => {
                 data-tooltip-content={label}>
                 {icon}
               </PageButton>
-            ))}
+            ); })}
           </ButtonSection>
         )}
       </Buttons>

@@ -1527,7 +1527,6 @@ export const SitePlanSelectionDialog = ({ initialSelection, onClose, onSelected,
     onClose();
   }, [onClose, onSelected, selection]);
 
-
   const isCompletable = useMemo(() => {
     if (simulationEnabled) {
       return simulationActions.includes(`SelectSitePlan:${selection}`);
@@ -1565,6 +1564,11 @@ export const SitePlanSelectionDialog = ({ initialSelection, onClose, onSelected,
 };
 
 export const ResourceSelectionDialog = ({ abundances, lotId, initialSelection, onClose, onSelected, open }) => {
+  const setCoachmarkRef = useCoachmarkRefSetter();
+  const simulationEnabled = useSimulationEnabled();
+  const coachmarks = useStore((s) => s.coachmarks);
+  const simulationActions = useStore((s) => s.simulationActions);
+  
   const [selection, setSelection] = useState(initialSelection);
 
   const onComplete = useCallback(() => {
@@ -1572,11 +1576,17 @@ export const ResourceSelectionDialog = ({ abundances, lotId, initialSelection, o
     onClose();
   }, [onClose, onSelected, selection]);
 
-  const nonzeroAbundances = useMemo(() => Object.values(abundances).filter((x) => x > 0).length, [abundances]);
+  const isCompletable = useMemo(() => {
+    if (simulationEnabled) {
+      return simulationActions.includes(`SelectTargetResource:${selection}`);
+    }
+    return selection > 0;
+  }, [selection, simulationActions, simulationEnabled]);
 
+  const nonzeroAbundances = useMemo(() => Object.values(abundances).filter((x) => x > 0).length, [abundances]);
   return (
     <SelectionDialog
-      isCompletable={selection > 0}
+      isCompletable={isCompletable}
       onClose={onClose}
       onComplete={onComplete}
       open={open}
@@ -1593,16 +1603,20 @@ export const ResourceSelectionDialog = ({ abundances, lotId, initialSelection, o
           <tbody>
             {Object.keys(abundances)
               .sort((a, b) => abundances[b] - abundances[a])
-              .map((resourceId) => (
-                <SelectionTableRow
-                  key={`${resourceId}`}
-                  disabledRow={abundances[resourceId] === 0}
-                  onClick={() => setSelection(Number(resourceId))}
-                  selectedRow={selection === Number(resourceId)}>
-                  <td><ResourceColorIcon category={Product.TYPES[resourceId].category} /> {Product.TYPES[resourceId].name}</td>
-                  <td>{(100 * abundances[resourceId]).toFixed(1)}%</td>
-                </SelectionTableRow>
-              ))
+              .map((resourceId) => {
+                const coachmarked = coachmarks[COACHMARK_IDS.actionDialogTargetResource] === Number(resourceId);
+                return (
+                  <SelectionTableRow
+                    key={`${resourceId}`}
+                    disabledRow={abundances[resourceId] === 0}
+                    onClick={() => setSelection(Number(resourceId))}
+                    ref={coachmarked ? setCoachmarkRef(COACHMARK_IDS.actionDialogTargetResource) : null}
+                    selectedRow={selection === Number(resourceId)}>
+                    <td><ResourceColorIcon category={Product.TYPES[resourceId].category} /> {Product.TYPES[resourceId].name}</td>
+                    <td>{(100 * abundances[resourceId]).toFixed(1)}%</td>
+                  </SelectionTableRow>
+                );
+              })
             }
           </tbody>
         </table>
@@ -2017,19 +2031,36 @@ export const ProcessSelectionDialog = ({ initialSelection, onClose, forceProcess
   const [error, setError] = useState();
   const [selection, setSelection] = useState(initialSelection);
 
+  const simulationEnabled = useSimulationEnabled();
+  const setCoachmarkRef = useCoachmarkRefSetter();
+  const coachmarks = useStore((s) => s.coachmarks);
+  const simulationActions = useStore((s) => s.simulationActions);
+
   const processes = useMemo(() => {
     const unSorted = forceProcesses || Object.values(Process.TYPES).filter((p) => p.processorType === processorType);
-    return unSorted.sort((a, b) => a.name > b.name ? 1 : -1);
-  }, [forceProcesses, processorType])
+    return unSorted
+      .sort((a, b) => {
+        if (a.i === coachmarks[COACHMARK_IDS.actionDialogTargetProcess]) return -1;
+        if (b.i === coachmarks[COACHMARK_IDS.actionDialogTargetProcess]) return 1;
+        return a.name > b.name ? 1 : -1;
+      })
+  }, [coachmarks, forceProcesses, processorType])
 
   const onComplete = useCallback(() => {
     onSelected(selection);
     onClose();
   }, [onClose, onSelected, selection]);
 
+  const isCompletable = useMemo(() => {
+    if (simulationEnabled) {
+      return simulationActions.includes(`SelectProcess:${selection}`);
+    }
+    return selection > 0;
+  }, [selection, simulationActions, simulationEnabled]);
+
   return (
     <SelectionDialog
-      isCompletable={selection > 0}
+      isCompletable={isCompletable}
       onClose={onClose}
       onComplete={onComplete}
       open={open}
@@ -2048,10 +2079,12 @@ export const ProcessSelectionDialog = ({ initialSelection, onClose, forceProcess
           </thead>
           <tbody>
             {processes.map(({ i, name, inputs, outputs }) => {
+              const coachmarked = coachmarks[COACHMARK_IDS.actionDialogTargetProcess] === i;
               return (
                 <SelectionTableRow
                   key={i}
                   onClick={() => setSelection(i)}
+                  ref={coachmarked ? setCoachmarkRef(COACHMARK_IDS.actionDialogTargetProcess) : undefined}
                   selectedRow={i === selection}>
                   <td><div style={{ display: 'flex', alignItems: 'center' }}><div style={{ fontSize: 24, marginRight: 6 }}><ProductionIcon /></div> {name}</div></td>
                   <td>
@@ -2619,6 +2652,10 @@ export const getBuildingRequirements = (building, deliveryActions = []) => {
       inNeed: Math.max(0, totalRequired - inInventory - inTransit)
     };
   })
+};
+
+export const getBuildingRequirementsMet = (building, deliveryActions = []) => {
+  return getBuildingRequirements(building, deliveryActions).reduce((acc, { inNeed }) => acc && (inNeed === 0), true);
 };
 
 

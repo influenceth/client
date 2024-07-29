@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Building, Permission, Inventory, Product } from '@influenceth/sdk';
+import { Building, Inventory, Permission, Process, Processor, Product } from '@influenceth/sdk';
 import { useHistory } from 'react-router-dom';
 
 import { ZOOM_IN_ANIMATION_TIME, ZOOM_OUT_ANIMATION_TIME, ZOOM_TO_PLOT_ANIMATION_MAX_TIME, ZOOM_TO_PLOT_ANIMATION_MIN_TIME } from '~/game/scene/Asteroid';
@@ -12,8 +12,14 @@ import useSimulationState from '~/hooks/useSimulationState';
 import useStore from '~/hooks/useStore';
 import SIMULATION_CONFIG from '~/simulation/simulationConfig';
 import { COACHMARK_IDS } from '~/contexts/CoachmarkContext';
+import { getBuildingRequirementsMet } from '~/game/interface/hud/actionDialogs/components';
+import { getMockBuildingInventories } from './MockDataManager';
+import simulationConfig from '~/simulation/simulationConfig';
 
 const DELAY_MESSAGE = 1000;
+
+  // TODO: "get me where i'm supposed to be" option
+  // TODO: "help me pick" option
 
 const STEPS = {
   INTRO: 1,
@@ -26,16 +32,21 @@ const STEPS = {
 
 const useSimulationSteps = () => {
   const { crew, pendingTransactions } = useCrewContext();
+  const history = useHistory();
 
   const { data: crewAgreements, isLoading: agreementsLoading } = useCrewAgreements(true, false, true);
   const { data: crewBuildings, isLoading: buildingsLoading } = useCrewBuildings();
   const { data: crewDeposits, isLoading: depositsLoading } = useCrewSamples();
   const isLoading = agreementsLoading || buildingsLoading || depositsLoading;
 
+  const [locationPath, setLocationPath] = useState();
   const [transitioning, setTransitioning] = useState();
   const isTransitioning = !!transitioning;
 
-  const history = useHistory();
+  useEffect(() => {
+    // (returns unlisten, so can just return directly to useEffect)
+    return history.listen((location) => setLocationPath(location.pathname));
+  }, [history]);
 
   // const crewTutorial = useStore(s => s.crewTutorials?.[crew?.id]);
   // const uncrewTutorial = useStore(s => s.crewTutorials?.[undefined]); // have to do this to preserve pre-crew actions
@@ -76,29 +87,11 @@ const useSimulationSteps = () => {
   const zoomStatus = useStore(s => s.asteroids.zoomStatus);
   const actionDialog = useStore(s => s.actionDialog);
 
-
   const resetAsteroidFilters = () => dispatchFiltersReset('asteroids');
 
   const simulation = useSimulationState();
   
-  const { data: lot } = useLot(selectedLotId);
-  const [lotIsLeasable, lotIsMine] = useMemo(() => {
-    let leasable = false;
-    let leased = false;
-    if (lot) {
-      const crewStatus = Permission.getPolicyDetails(lot, crew)[Permission.IDS.USE_LOT]?.crewStatus;
-      leasable = (crewStatus === 'available' && !lot?.building && !lot?.surfaceShip)
-      leased = (crewStatus === 'controller');
-    }
-    return [leasable, leased];
-  }, [crew, lot]);
-
-  const unusedLotId = useMemo(() => {
-    return (crewAgreements || []).find((a) => {
-      return !(crewBuildings || []).find((b) => b.Location.location.id === a.id)
-    })?.id;
-  }, [crewAgreements, crewBuildings]);
-
+  const { data: selectedLot } = useLot(selectedLotId);
   
   const advance = useCallback(() => {
     dispatchSimulationStep((simulation.step || 0) + 1);
@@ -106,6 +99,42 @@ const useSimulationSteps = () => {
 
   const simulationSteps = useMemo(() => {
     if (isLoading) return [];
+
+    // selectLot
+    let selectedLotIsLeasable = false;
+    let selectedLotIsMine = false;
+    if (selectedLot) {
+      const crewStatus = Permission.getPolicyDetails(selectedLot, crew)[Permission.IDS.USE_LOT]?.crewStatus;
+      selectedLotIsLeasable = (crewStatus === 'available' && !selectedLot?.building && !selectedLot?.surfaceShip)
+      selectedLotIsMine = (crewStatus === 'controller');
+    }
+    const selectedBuildingType = selectedLot?.building?.Building?.buildingType;
+
+    // next available unused lot
+    const nextUnusedLotId = (crewAgreements || []).find((a) => {
+      return !(crewBuildings || []).find((b) => b.Location.location.id === a.id)
+    })?.id;
+
+    const extractorLot = Object.values(simulation.lots).find((l) => l.buildingType === Building.IDS.EXTRACTOR);
+    const warehouseLot = Object.values(simulation.lots).find((l) => l.buildingType === Building.IDS.WAREHOUSE);
+    const refineryLot = Object.values(simulation.lots).find((l) => l.buildingType === Building.IDS.REFINERY);
+    const shipyardLot = Object.values(simulation.lots).find((l) => l.buildingType === Building.IDS.SHIPYARD);
+    // const shipLot = Object.values(simulation.lots).find((l) => l.buildingType === buildingType); // TODO: ...
+  
+    // my inventory contents flags
+    const crewHasCoreDrill = !!(crewBuildings || []).find((b) => {
+      return !!(b.Inventories || []).find((i) => (
+        i.status === Inventory.STATUSES.AVAILABLE
+        && (i.contents || []).find((c) => c.product === Product.IDS.CORE_DRILL && c.amount > 0)
+      ));
+    });
+    const crewHasAcetylene = !!(crewBuildings || []).find((b) => {
+      return !!(b.Inventories || []).find((i) => (
+        i.status === Inventory.STATUSES.AVAILABLE
+        && (i.contents || []).find((c) => c.product === Product.IDS.ACETYLENE && c.amount > 0)
+      ));
+    });
+
 
     // const lotLease = crewAgreements?.find((a) => a.permission === Permission.IDS.USE_LOT);
 
@@ -164,6 +193,52 @@ const useSimulationSteps = () => {
     const warehouses = [];
     const shipyards = [];
 
+
+
+    // "plan" action button --> extractor
+    // (fast forward)
+    // "construct" action button
+    // "source from markets" button
+    // (fast forward)
+    // "construct" action button
+    // (fast forward)
+    const getConstructBuildingCoachmarks = (buildingType) => {
+      const plannedLot = Object.values(simulation.lots).find((l) => l.buildingType === buildingType);
+
+      const x = {};
+
+      // need to plan... select a leased, empty lot
+      if (!plannedLot) {
+        const onLeasedEmptyLot = selectedLotIsMine && !selectedLot?.building;
+        x[COACHMARK_IDS.hudMenuMyAssets] = !onLeasedEmptyLot && !actionDialog?.type && openHudMenu !== 'MY_ASSETS';
+        x[COACHMARK_IDS.hudMenuMyAssetsAgreement] = !onLeasedEmptyLot && !actionDialog?.type && openHudMenu === 'MY_ASSETS' ? nextUnusedLotId : false;
+        x[COACHMARK_IDS.actionDialogPlanType] = buildingType;
+
+      // need to construct
+      } else {
+        const pseudoBuilding = {
+          id: plannedLot.buildingId,
+          label: Building.IDS.LABEL,
+          Building: {
+            buildingType: plannedLot.buildingType,
+          },
+          Inventories: getMockBuildingInventories(plannedLot.buildingType, plannedLot.buildingStatus, plannedLot.inventoryContents)
+        };
+
+        // navigate to planned lot
+        const onPlannedLot = selectedLot?.building?.id === plannedLot?.buildingId;
+        x[COACHMARK_IDS.hudMenuMyAssets] = !onPlannedLot && !actionDialog?.type && openHudMenu !== 'MY_ASSETS';
+        x[COACHMARK_IDS.hudMenuMyAssetsBuilding] = !onPlannedLot && !actionDialog?.type && openHudMenu === 'MY_ASSETS' ? plannedLot.buildingId : false;
+        
+        // open construct dialog
+        x[COACHMARK_IDS.actionButtonConstruct] = onPlannedLot && !['CONSTRUCT', 'SHOPPING_LIST'].includes(actionDialog?.type);
+        if (!getBuildingRequirementsMet(pseudoBuilding)) {
+          x[COACHMARK_IDS.actionDialogConstructSource] = onPlannedLot && actionDialog?.type === 'CONSTRUCT';
+        }
+      }
+
+      return x;
+    }
 
     
     // TODO: consider coachmark-back-to-AP function and atAP helper var
@@ -260,7 +335,7 @@ const useSimulationSteps = () => {
           experienced crew made up of volunteers who are ready to teach you.`,
         crewmateId: SIMULATION_CONFIG.crewmates.scientist,
         coachmarks: {
-          [COACHMARK_IDS.hudRecruitCaptain]: (history.location.pathname === '/') // not in creation flow
+          [COACHMARK_IDS.hudRecruitCaptain]: (locationPath === '/') // not in creation flow
         },
         shouldAdvance: () => simulation.crewmate?.name && simulation.crewmate?.appearance
       },
@@ -297,43 +372,30 @@ const useSimulationSteps = () => {
           // TODO: deselect lot -> zoom to altitude
         },
         coachmarks: {
-          // TODO: (navigate to AP package)
+          // TODO: get back on track (navigate to AP)
 
-          [COACHMARK_IDS.hudMenuResources]: !lot && openHudMenu !== 'RESOURCES',
-          [COACHMARK_IDS.hudMenuTargetResource]: !lot && openHudMenu === 'RESOURCES' && selectedResourceId !== SIMULATION_CONFIG.resourceId,
-          [COACHMARK_IDS.actionButtonLease]: lotIsLeasable && !actionDialog?.type, // TODO: unoccupied
-
-          // TODO: make action buttons abstracted by using name?
-          // TODO: "help me pick" option
+          // open resource map
+          [COACHMARK_IDS.hudMenuResources]: !selectedLot && openHudMenu !== 'RESOURCES',
+          [COACHMARK_IDS.hudMenuTargetResource]: !selectedLot && openHudMenu === 'RESOURCES' && selectedResourceId !== SIMULATION_CONFIG.resourceId,
+          
+          // prompt to lease
+          [COACHMARK_IDS.actionButtonLease]: selectedLotIsLeasable && !actionDialog?.type,
         },
         enabledActions: {
-          FormLotLeaseAgreement: !!lotIsLeasable
+          FormLotLeaseAgreement: !!selectedLotIsLeasable
         },
         shouldAdvance: () => !!simulation.lots
+        // TODO: not updating selected lot here until click away and back
       },
       {
         title: 'Construct your extractor.',
         content: `Do it.`,
         crewmateId: SIMULATION_CONFIG.crewmates.engineer,
-        coachmarks: {
-          // "plan" action button --> extractor
-          // (fast forward)
-          // "construct" action button
-          // "source from markets" button
-          // (fast forward)
-          // "construct" action button
-          // (fast forward)
-          [COACHMARK_IDS.hudMenuMyAssets]: !actionDialog?.type && !(lot && lotIsMine) && openHudMenu !== 'MY_ASSETS',
-          [COACHMARK_IDS.hudMenuMyAssetsAgreement]: !actionDialog?.type && !(lot && lotIsMine) && openHudMenu === 'MY_ASSETS' && unusedLotId,
-          [COACHMARK_IDS.actionButtonPlan]: !actionDialog?.type && lotIsMine && !lot?.building,
-          [COACHMARK_IDS.actionButtonConstruct]: !actionDialog?.type && lotIsMine && lot?.building,
-          [COACHMARK_IDS.actionDialogPlanType]: Building.IDS.EXTRACTOR,
-          [COACHMARK_IDS.actionDialogConstructSource]: true, // TODO: ?
-        },
+        coachmarks: () => getConstructBuildingCoachmarks(Building.IDS.EXTRACTOR),
         enabledActions: {
-          PlanBuilding: !!lotIsMine,
+          PlanBuilding: !!selectedLotIsMine,
           [`SelectSitePlan:${Building.IDS.EXTRACTOR}`]: true,
-          Construct: lotIsMine && !!lot?.building,
+          Construct: selectedLotIsMine && !!selectedLot?.building,
           // TODO: deliveries?
         },
         shouldAdvance: () => {
@@ -344,18 +406,11 @@ const useSimulationSteps = () => {
         title: 'Construct your warehouse.', // TODO: ...
         content: `You'll need somewhere to store your mining output. Construct a warehouse nearby.`,
         crewmateId: SIMULATION_CONFIG.crewmates.engineer,
-        coachmarks: {
-          [COACHMARK_IDS.hudMenuMyAssets]: !actionDialog?.type && !(lot && lotIsMine && !lot.building) && openHudMenu !== 'MY_ASSETS',
-          [COACHMARK_IDS.hudMenuMyAssetsAgreement]: !actionDialog?.type && !(lot && lotIsMine) && openHudMenu === 'MY_ASSETS' && unusedLotId,
-          [COACHMARK_IDS.actionButtonPlan]: !actionDialog?.type && lotIsMine && !lot?.building,
-          [COACHMARK_IDS.actionButtonConstruct]: !actionDialog?.type && lotIsMine && lot?.building,
-          [COACHMARK_IDS.actionDialogPlanType]: Building.IDS.WAREHOUSE,
-          [COACHMARK_IDS.actionDialogConstructSource]: true,
-        },
+        coachmarks: () => getConstructBuildingCoachmarks(Building.IDS.WAREHOUSE),
         enabledActions: {
-          PlanBuilding: !!lotIsMine,
+          PlanBuilding: !!selectedLotIsMine,
           [`SelectSitePlan:${Building.IDS.WAREHOUSE}`]: true,
-          Construct: lotIsMine && !!lot?.building,
+          Construct: selectedLotIsMine && !!selectedLot?.building,
           // TODO: deliveries?
         },
         shouldAdvance: () => {
@@ -367,65 +422,84 @@ const useSimulationSteps = () => {
         content: `Let's find a deposit to mine by core sampling on the lot with our extractor.`,
         crewmateId: SIMULATION_CONFIG.crewmates.miner,
         coachmarks: {
-          // TODO: purchase core samplers from the market to the warehouse
+          // purchase core samplers from the market to the warehouse
           // (fast forward)
-          // TODO: "core sample" action button
+          // "core sample" action button
           // (fast forward)
-          // TODO: "finish"
+          // "finish"
 
-          [COACHMARK_IDS.hudMenuMarketplaces]: (history.location.pathname === '/'),
-          [COACHMARK_IDS.asteroidMarketsHelper]: Product.IDS.CORE_DRILL, // TODO: highlight search if not on page
-          // TODO: if not on core drill page, depthChartBack
-          // TODO: buy, market order, quantity (max quantity 100), button
-          [COACHMARK_IDS.depthChartHelper]: true,
+          [COACHMARK_IDS.hudMenuMarketplaces]: !crewHasCoreDrill && (locationPath === '/'),
+          [COACHMARK_IDS.asteroidMarketsHelper]: !crewHasCoreDrill && Product.IDS.CORE_DRILL, // TODO: max 100
 
+          [COACHMARK_IDS.detailsClose]: crewHasCoreDrill && (locationPath !== '/'),
+          [COACHMARK_IDS.hudMenuMyAssets]: crewHasCoreDrill && !actionDialog?.type && selectedLot?.building?.id !== extractorLot?.buildingId && openHudMenu !== 'MY_ASSETS',
+          [COACHMARK_IDS.hudMenuMyAssetsBuilding]: crewHasCoreDrill && selectedLot?.building?.id !== extractorLot?.buildingId ? extractorLot?.buildingId : null,
+          [COACHMARK_IDS.actionButtonCoreSample]: crewHasCoreDrill && !actionDialog?.type && selectedLot?.building?.id === extractorLot?.buildingId,
+          [COACHMARK_IDS.actionDialogTargetResource]: simulationConfig.resourceId
         },
-        shouldAdvance: () => deposits?.length > 0,
+        enabledActions: {
+          MarketBuy: !crewHasCoreDrill,
+          CoreSample: crewHasCoreDrill && selectedLot?.building?.id !== extractorLot?.buildingId,
+          [`SelectTargetResource:${simulationConfig.resourceId}`]: true,
+        },
+        shouldAdvance: () => {
+          return !!(extractorLot?.depositYield > 0);
+        }
       },
       {
-        title: '', // TODO: ...
+        title: `Let's mine it.`,
         content: `Let's mine it.`,
         crewmateId: SIMULATION_CONFIG.crewmates.miner,
-        coachmarks: [
-          // TODO: extract action button
-          // (fast forward)
-        ],
-        shouldAdvance: () => deposits?.length > 0,
+        coachmarks: {
+          [COACHMARK_IDS.actionButtonExtract]: !actionDialog?.type && selectedLot?.building?.id === extractorLot?.buildingId,
+        },
+        enabledActions: {
+          Extract: selectedLot?.building?.id === extractorLot?.buildingId,
+        },
+        shouldAdvance: () => {
+          return !!(extractorLot?.depositYield > extractorLot?.depositYieldRemaining);
+        },
       },
       {
-        title: '', // TODO: ...
+        title: `Let's refine it.`,
         content: `Let's refine it. We'll need a refinery first.`,
         crewmateId: SIMULATION_CONFIG.crewmates.engineer,
-        coachmarks: [
-          // TODO: click a lot with an agreement on it (via hud)
-          // TODO: "plan" action button --> refinery
-          // (fast forward)
-          // TODO: "construct" action button
-          // TODO: "source from markets" button
-          // (fast forward)
-          // TODO: "construct" action button
-          // (fast forward)
-          // TODO: "refine" action button
-          // (fast forward)
-        ],
-        shouldAdvance: () => refinedMaterials > 0,
+        coachmarks: () => ({
+          ...getConstructBuildingCoachmarks(Building.IDS.REFINERY),
+
+          [COACHMARK_IDS.hudMenuMyAssets]: refineryLot && !actionDialog?.type && selectedLot?.building?.id !== refineryLot?.buildingId && openHudMenu !== 'MY_ASSETS',
+          [COACHMARK_IDS.hudMenuMyAssetsBuilding]: refineryLot && selectedLot?.building?.id !== refineryLot?.buildingId ? refineryLot?.buildingId : null,
+          [COACHMARK_IDS.actionButtonProcess]: !actionDialog?.type && selectedLot?.building?.id === refineryLot?.buildingId,
+
+          [COACHMARK_IDS.actionDialogTargetProcess]: actionDialog?.type === 'PROCESS' ? simulationConfig.processId : null,
+        }),
+        enabledActions: {
+          PlanBuilding: !!selectedLotIsMine && !refineryLot,
+          [`SelectSitePlan:${Building.IDS.REFINERY}`]: true,
+          Construct: selectedLotIsMine && !!selectedLot?.building,
+          [`Process:${Processor.IDS.REFINERY}`]: selectedLotIsMine && selectedLot?.building?.id === refineryLot?.buildingId,
+          [`SelectProcess:${Process.IDS.HUELS_PROCESS}`]: true
+        },
+        shouldAdvance: () => !!crewHasAcetylene
       },
       {
-        title: '', // TODO: ...
+        title: `Let's make some money!`,
         content: `Let's make some money and sell our refined good.`,
         crewmateId: SIMULATION_CONFIG.crewmates.merchant,
-        coachmarks: [
-          // "asteroid markets"
-          // "select good"
-          // "find market with demand"
-          // "market sell"
-        ],
+        coachmarks: {
+          [COACHMARK_IDS.hudMenuMarketplaces]: (locationPath === '/'),
+          [COACHMARK_IDS.asteroidMarketsHelper]: Product.IDS.ACETYLENE,
+        },
+        enabledActions: {
+          MarketSell: true
+        },
         shouldAdvance: () => refinedMaterials === 0, // TODO: material gone
       },
       {
         title: '', // TODO: ...
         content: `Let's think about getting off this rock. Start by building a shipyard.`,
         crewmateId: SIMULATION_CONFIG.crewmates.pilot,
+        coachmarks: getConstructBuildingCoachmarks(Building.IDS.SHIPYARD),
         coachmarks: [
           // TODO: click a lot with an agreement on it (via hud)
           // TODO: "plan" action button --> shipyard
@@ -436,7 +510,13 @@ const useSimulationSteps = () => {
           // TODO: "construct" action button
           // (fast forward)
         ],
-        shouldAdvance: () => shipyards?.length > 0,
+        enabledActions: {
+          PlanBuilding: !!selectedLotIsMine,
+          [`SelectSitePlan:${Building.IDS.SHIPYARD}`]: true,
+          Construct: selectedLotIsMine && !!selectedLot?.building,
+          // TODO: deliveries?
+        },
+        shouldAdvance: () => shipyards?.length > 0
       },
       {
         title: '', // TODO: ...
@@ -499,10 +579,8 @@ const useSimulationSteps = () => {
     isLoading,
     crewAgreements,
     crewBuildings,
-    history.location.pathname,
-    lot,
-    lotIsLeasable,
-    lotIsMine,
+    locationPath,
+    selectedLot,
     openHudMenu,
     origin,
     selectedResourceId,
@@ -545,8 +623,15 @@ const useSimulationSteps = () => {
   // TODO: 
 
   useEffect(() => {
-    console.log({ coachmarks: currentStep?.coachmarks });
-    dispatchCoachmarks(pendingTransactions.length > 0 ? {} : currentStep?.coachmarks);
+    let currentCoachmarks = {};
+    if (currentStep && pendingTransactions.length === 0) {
+      if (typeof currentStep.coachmarks === 'function') {
+        currentCoachmarks = currentStep.coachmarks() || {};
+      } else {
+        currentCoachmarks = currentStep.coachmarks || {};
+      }
+    }
+    dispatchCoachmarks(currentCoachmarks);
   }, [currentStep?.coachmarks, pendingTransactions]);
 
   useEffect(() => {

@@ -318,7 +318,7 @@ export const AsteroidBlock = ({ asteroid, onClick, onRenderReady, selectedCrew, 
   );
 };
 
-export const BuildingBlock = ({ building, onSelectCrew, selectedCrew }) => {
+export const BuildingBlock = ({ building, onSelectCrew, selectedCrew, setRef }) => {
   const syncedTime = useSyncedTime();
   const buildingLoc = locationsArrToObj(building?.Location?.locations);
   const onClickBuilding = useLotLink(buildingLoc);
@@ -408,7 +408,7 @@ export const BuildingBlock = ({ building, onSelectCrew, selectedCrew }) => {
   }, [onClickBuilding, onSelectCrew, building?.Control?.controller?.id]);
 
   return (
-    <SelectableRow onClick={onClick}>
+    <SelectableRow ref={setRef} onClick={onClick}>
       <IconThumbnail>
         {selectedCrew?.id && building.Control?.controller?.id === selectedCrew?.id && <MyAssetWrapper><MyAssetIcon /></MyAssetWrapper>}
         {getBuildingIcon(building?.Building?.buildingType)}

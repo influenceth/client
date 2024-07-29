@@ -52,7 +52,7 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
       crewmate: null, // id, name, appearance
       lots: null,     // { id: buildingEntity(sparse), ... }
       sway: null,
-      activities: [],
+      actionItems: [],
     },
     simulationActions: [],
     coachmarks: [],
@@ -489,6 +489,12 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
       }
     })),
 
+    dispatchSimulationLotState: (lotId, update) => set(produce(state => {
+        if (!state.simulation.lots) state.simulation.lots = {};
+        if (!state.simulation.lots[lotId]) state.simulation.lots[lotId] = {};
+        Object.keys(update).forEach((k) => state.simulation.lots[lotId][k] = update[k]);
+    })),
+
     dispatchSimulationAddToInventory: (destination, slot, product, amount) => set(produce(state => {
       const lotId = Object.keys(state.simulation?.lots || {}).find((lotId) => {
         const lot = state.simulation.lots[lotId];
@@ -501,6 +507,18 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
         if (!state.simulation.lots[lotId].inventoryContents[slot][product]) state.simulation.lots[lotId].inventoryContents[slot][product] = 0;
         state.simulation.lots[lotId].inventoryContents[slot][product] += amount;
       }
+    })),
+
+    dispatchSimulationActionItems: (newActivities) => set(produce(state => {
+      console.log('dispatchSimulationActionItems', newActivities);
+      if (!state.simulation.actionItems) state.simulation.actionItems = [];
+      state.simulation.actionItems.push(...newActivities);
+    })),
+
+    dispatchSimulationActionItemResolutions: (eventNames) => set(produce(state => {
+      console.log('dispatchSimulationActionItemResolutions', eventNames);
+      if (!state.simulation.actionItems) state.simulation.actionItems = [];
+      state.simulation.actionItems = state.simulation.actionItems.filter((a) => !eventNames.includes(a.event.name));
     })),
 
     dispatchSimulationActions: (actions) => set(produce(state => {

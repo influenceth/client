@@ -21,6 +21,9 @@ import formatters from '~/lib/formatters';
 import useCrewOrders from '~/hooks/useCrewOrders';
 import useOrderSummaryByProduct from '~/hooks/useOrderSummaryByProduct';
 import api from '~/lib/api';
+import useCoachmarkRefSetter from '~/hooks/useCoachmarkRefSetter';
+import { COACHMARK_IDS } from '~/contexts/CoachmarkContext';
+import useStore from '~/hooks/useStore';
 
 const ActionImage = styled.div`
   background: black url("${p => p.src}") center center no-repeat;
@@ -101,6 +104,10 @@ const Marketplace = () => {
   const { asteroidId, lotIndex, discriminator } = useParams();
   const product = discriminator === 'orders' ? null : discriminator;
   const lotId = useMemo(() => Lot.toId(Number(asteroidId), lotIndex === 'all' ? null : Number(lotIndex)), [asteroidId, lotIndex]);
+  
+  const setCoachmarkRef = useCoachmarkRefSetter();
+  const coachmarkHelperProduct = useStore(s => s.coachmarks?.[COACHMARK_IDS.asteroidMarketsHelper]);
+  console.log({ coachmarkHelperProduct, product });
 
   const [mode, setMode] = useState('buy');
   const [nameFilter, setNameFilter] = useState('');
@@ -249,7 +256,14 @@ const Marketplace = () => {
         </Wrapper>
           <Footer>
               <FooterLeft>
-                {discriminator && <Button flip onClick={goBack}>Back</Button>}
+                {discriminator && (
+                  <Button
+                    setRef={Number(product) !== coachmarkHelperProduct ? setCoachmarkRef(COACHMARK_IDS.asteroidMarketsHelper) : undefined}
+                    flip
+                    onClick={goBack}>
+                    Back
+                  </Button>
+                )}
               </FooterLeft>
               <OrderTally>
               {myLocalOrders.length > 0 && (

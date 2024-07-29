@@ -8,18 +8,29 @@ import useStore from '~/hooks/useStore';
 
 export const COACHMARK_IDS = {
   actionButtonConstruct: 'actionButtonConstruct',
+  actionButtonCoreSample: 'actionButtonCoreSample',
+  actionButtonExtract: 'actionButtonExtract',
   actionButtonLease: 'actionButtonLease',
   actionButtonPlan: 'actionButtonPlan',
+  actionButtonProcess: 'actionButtonProcess',
   actionDialogConstructSource: 'actionDialogConstructSource',
   actionDialogPlanType: 'actionDialogPlanType',
+  actionDialogTargetProcess: 'actionDialogTargetProcess',
   backToBelt: 'backToBelt',
+  detailsClose: 'detailsClose',
   hudCrewLocation: 'hudCrewLocation',
   hudInfoPane: 'hudInfoPane',
+  hudMenuMarketplaces: 'hudMenuMarketplaces',
   hudMenuMyAssets: 'hudMenuMyAssets',
   hudMenuMyAssetsAgreement: 'hudMenuMyAssetsAgreement',
+  hudMenuMyAssetsBuilding: 'hudMenuMyAssetsBuilding',
   hudMenuResources: 'hudMenuResources',
   hudMenuTargetResource: 'hudMenuTargetResource',
   hudRecruitCaptain: 'hudRecruitCaptain',
+
+  asteroidMarketsHelper: 'asteroidMarketsHelper',
+  depthChartHelper: 'depthChartHelper',
+  
 };
 
 const CoachmarkContext = React.createContext();
@@ -31,8 +42,10 @@ const CoachmarkComponent = ({ refEl }) => {
   // give the ref element time to "animate in" in case
   // that is something it does
   useEffect(() => {
+    console.log({ refEl })
     const to = setTimeout(() => {
-      setRect(refEl.getBoundingClientRect());
+      const boundingRect = refEl && refEl.getBoundingClientRect();
+      setRect(boundingRect);
     }, 500);
     return () => {
       clearTimeout(to);
@@ -42,7 +55,8 @@ const CoachmarkComponent = ({ refEl }) => {
 
   // watch for position changes
   useInterval(() => {
-    setRect(refEl.getBoundingClientRect());
+    const boundingRect = refEl && refEl.getBoundingClientRect();
+    setRect(boundingRect);
   }, delay);
 
   // update the position as needed if rect or screen changes

@@ -1,5 +1,5 @@
 import { QueryObserver, useQuery, useQueryClient } from 'react-query';
-import { Building, Entity, Extractor, Inventory, Lot, Permission, Product } from '@influenceth/sdk';
+import { Building, Deposit, Entity, Extractor, Inventory, Lot, Permission, Processor, Product } from '@influenceth/sdk';
 
 import useSimulationState from '~/hooks/useSimulationState';
 import SIMULATION_CONFIG from './simulationConfig';
@@ -7,14 +7,15 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { entitiesCacheKey } from '~/lib/cacheKey';
 import { entityToAgreements } from '~/lib/utils';
 import { statuses as walletBuildingStatuses } from '~/hooks/useWalletBuildings';
+import simulationConfig from './simulationConfig';
 
 const nowSec = () => Math.floor(Date.now() / 1e3);
 
 const contentsObjToArray = (contentsObj) => {
-  return Object.keys(contentsObj || {}).map((product) => ({ product, amount: contentsObj[product] }));
+  return Object.keys(contentsObj || {}).map((product) => ({ product: Number(product), amount: contentsObj[product] }));
 }
 
-const getBuildingInventories = (buildingType, buildingStatus, contentsBySlot = {}) => {
+export const getMockBuildingInventories = (buildingType, buildingStatus, contentsBySlot = {}) => {
   const { siteSlot, siteType } = Building.TYPES[buildingType];
 
   const inv = [];
@@ -98,9 +99,7 @@ const MockDataManager = () => {
       configs.push({
         queryKey: [ 'asteroidPackedLotData', 1 ], // TODO: get asteroidId from SIMULATION_CONFIG
         transformer: (data) => {
-          console.log('data0', data)
           if (data) {
-            console.log('data1', data)
             Object.keys(simulation.lots).forEach((lotId) => {
               const lotIndex = Lot.toIndex(lotId);
               data[lotIndex] = ((simulation.lots[lotId]?.buildingType || 0) << 4) // capable type
@@ -122,7 +121,17 @@ const MockDataManager = () => {
 
       Object.keys(simulation.lots).map((stringLotId) => {
         const lotId = Number(stringLotId);
-        const { buildingId, buildingStatus, buildingType, leaseRate, leaseTerm, inventoryContents } = simulation.lots[lotId];
+        const {
+          buildingId,
+          buildingStatus,
+          buildingType,
+          depositId,
+          depositYield,
+          depositYieldRemaining,
+          leaseRate,
+          leaseTerm,
+          inventoryContents
+        } = simulation.lots[lotId];
 
         const lotEntity = Entity.formatEntity({ id: lotId, label: Entity.IDS.LOT });
         const asteroidEntity = Entity.formatEntity({ id: Lot.toPosition(lotId)?.asteroidId, label: Entity.IDS.ASTEROID });
@@ -168,7 +177,7 @@ const MockDataManager = () => {
               location: lotEntity,
               locations: [lotEntity, asteroidEntity]
             },
-            Inventories: getBuildingInventories(buildingType, buildingStatus, inventoryContents)
+            Inventories: getMockBuildingInventories(buildingType, buildingStatus, inventoryContents)
           };
 
           // per-building components
@@ -184,6 +193,20 @@ const MockDataManager = () => {
                 status: Extractor.STATUSES.IDLE,
               }];
               break;
+            case Building.IDS.REFINERY:
+              building.Processors = [{
+                // TODO: ...
+                // destinationSlot,
+                // finishTime: nowSec() + 123456,
+                // outputProduct: 0,
+                // recipes: 0,
+                // runningProcess: 0,
+                // secondaryEff: 0,
+                processorType: Processor.IDS.REFINERY,
+                slot: 1,
+                status: Extractor.STATUSES.IDLE,
+              }];
+              break;
           }
 
           simulatedBuildings.push(building);
@@ -195,12 +218,36 @@ const MockDataManager = () => {
           });
         }
 
-        // lot entities...
+        let deposit;
+        if (depositId) {
+          deposit = {
+            ...Entity.formatEntity({ id: depositId, label: Entity.IDS.DEPOSIT }),
+            Deposit: {
+              resource: simulationConfig.resourceId,
+              initialYield: depositYield,
+              remainingYield: depositYieldRemaining,
+              finishTime: nowSec() - 100,
+              status: (
+                depositYield
+                ? (
+                  depositYieldRemaining === depositYield ? Deposit.STATUSES.SAMPLED : Deposit.STATUSES.USED
+                )
+                : Deposit.STATUSES.SAMPLING
+              )
+            },
+            Control: { controller: myCrewEntity },
+            Location: {
+              location: lotEntity,
+              locations: [lotEntity, asteroidEntity]
+            },
+          };
+        }
 
-        // configs.push({
-        //   queryKey: entitiesCacheKey(Entity.IDS.DEPOSIT, { lotId }),
-        //   transformer: (data) => data
-        // });
+        // lot entities...
+        configs.push({
+          queryKey: entitiesCacheKey(Entity.IDS.DEPOSIT, { lotId }),
+          transformer: (data) => deposit ? [deposit] : [],
+        });
         configs.push({
           queryKey: entitiesCacheKey(Entity.IDS.BUILDING, { lotId }),
           transformer: (data) => building ? [building] : []
@@ -249,6 +296,17 @@ const MockDataManager = () => {
       console.log({ simulatedBuildings })
     }
 
+    // unresolved activities
+    // TODO: this one might be more important for lots...
+    // configs.push({
+    //   queryKey: [ 'activities', Entity.IDS.CREW, SIMULATION_CONFIG.crewId, 'unresolved' ],
+    //   transformer: (data) => (simulation.actionItems || [])
+    // });
+    configs.push({
+      queryKey: [ 'actionItems', SIMULATION_CONFIG.crewId ],
+      transformer: (data) => (simulation.actionItems || [])
+    })
+
     return configs.map((c) => ({ ...c, key: JSON.stringify(c.queryKey) }));
   }, [simulation]);
 
@@ -295,9 +353,6 @@ const MockDataManager = () => {
 
   // stationed crews
   // entitiesCacheKey(Entity.IDS.CREW, { stationUuid: entityUuid }),
-  
-  // unresolved activities
-  // [ 'activities', entity?.label, entity?.id, 'unresolved' ],
 
   // asset search
   // [ 'search', esAssetType, query ],

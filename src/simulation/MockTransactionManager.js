@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef } from 'react';
-import { Asteroid, Building, Entity, Lot } from '@influenceth/sdk';
+import { Asteroid, Building, Entity, Lot, Process, Product } from '@influenceth/sdk';
 import { camelCase, cloneDeep } from 'lodash';
 
 import useCrewContext from '~/hooks/useCrewContext';
@@ -7,6 +7,7 @@ import useGetActivityConfig from '~/hooks/useGetActivityConfig';
 import useStore from '~/hooks/useStore';
 import SIMULATION_CONFIG from './simulationConfig';
 import useSimulationState from '~/hooks/useSimulationState';
+import simulationConfig from './simulationConfig';
 
 const getUuid = () => String(performance.now()).replace('.', '');
 const transformReturnValues = (obj) => {
@@ -15,16 +16,37 @@ const transformReturnValues = (obj) => {
 const nowSec = () => Math.floor(Date.now() / 1e3);
 
 const MockTransactionManager = () => {
-  const { pendingTransactions } = useCrewContext();
+  const { crew, pendingTransactions } = useCrewContext();
   const simulation = useSimulationState();
   const getActivityConfig = useGetActivityConfig();
 
   const dispatchPendingTransactionComplete = useStore((s) => s.dispatchPendingTransactionComplete);
+  const dispatchSimulationActionItems = useStore((s) => s.dispatchSimulationActionItems);
+  const dispatchSimulationActionItemResolutions = useStore((s) => s.dispatchSimulationActionItemResolutions);
+
   const dispatchSimulationAddToInventory = useStore((s) => s.dispatchSimulationAddToInventory);
+  const dispatchSimulationLotState = useStore((s) => s.dispatchSimulationLotState);
   const dispatchSimulationState = useStore((s) => s.dispatchSimulationState);
+
   const createAlert = useStore(s => s.dispatchAlertLogged);
 
+  const getMockActionItem = useCallback((event) => {
+    return {
+      _id: getUuid(),
+      data: {
+        crew: { id: crew.id, label: crew.label, uuid: crew.uuid, Crew: crew.Crew, Location: crew.Location },
+        crewmates: crew._crewmates.map((c) => ({ id: c.id, label: c.label, uuid: c.uuid, Crewmate: c.Crewmate })),
+        station: crew._station
+      },
+      event,
+      unresolvedFor: [{ id: crew.id, label: crew.label, uuid: crew.uuid }],
+      createdAt: new Date().toISOString()
+    };
+  }, [crew]);
+
   const simulateResultingEvent = useCallback((tx) => {
+    let activities = [];
+    let activityResolutions = [];
     let events = [];
     switch(tx.key) {
       case 'AcceptPrepaidAgreement': {
@@ -64,11 +86,14 @@ const MockTransactionManager = () => {
 
       case 'ConstructionPlan': {
         const buildingId = SIMULATION_CONFIG.buildingIds[tx.vars.building_type];
-        const lotUpdate = cloneDeep(simulation.lots);
-        lotUpdate[tx.vars.lot.id].buildingId = buildingId;
-        lotUpdate[tx.vars.lot.id].buildingStatus = Building.CONSTRUCTION_STATUSES.PLANNED;
-        lotUpdate[tx.vars.lot.id].buildingType = Number(tx.vars.building_type);
-        dispatchSimulationState('lots', lotUpdate);
+        dispatchSimulationLotState(
+          tx.vars.lot.id,
+          {
+            buildingId,
+            buildingStatus: Building.CONSTRUCTION_STATUSES.PLANNED,
+            buildingType: Number(tx.vars.building_type)
+          }
+        );
 
         // mimic event
         events.push({
@@ -90,12 +115,10 @@ const MockTransactionManager = () => {
       }
 
       case 'ConstructionStart': {
-        const lotUpdate = cloneDeep(simulation.lots);
-        lotUpdate[tx.meta.lotId].buildingStatus = Building.CONSTRUCTION_STATUSES.OPERATIONAL; // TODO: under construction
-        dispatchSimulationState('lots', lotUpdate);
+        dispatchSimulationLotState(tx.meta.lotId, { buildingStatus: Building.CONSTRUCTION_STATUSES.OPERATIONAL }); // TODO: under construction
 
         // mimic event
-        events.push({
+        const event = {
           event: 'ConstructionStarted',
           name: 'ConstructionStarted',
           logIndex: 1,
@@ -107,7 +130,10 @@ const MockTransactionManager = () => {
             finish_time: nowSec() + 86400,
             caller: SIMULATION_CONFIG.accountAddress
           })
-        });
+        };
+        events.push(event);
+
+        // TODO: action item?
         break;
       }
 
@@ -138,6 +164,114 @@ const MockTransactionManager = () => {
           timestamp: nowSec(),
           returnValues: transformReturnValues({
             ...tx.vars,
+            caller: SIMULATION_CONFIG.accountAddress
+          })
+        });
+        break;
+      }
+
+      case 'SampleDepositStart': {
+        // create deposit
+        dispatchSimulationLotState(tx.vars.lot.id, { depositId: simulationConfig.depositId });
+
+        // remove core drill
+        dispatchSimulationAddToInventory(tx.vars.origin, tx.vars.origin_slot, Product.IDS.CORE_DRILL, -1);
+
+        // mimic event
+        const event = {
+          event: 'SamplingDepositStartedV1',
+          name: 'SamplingDepositStarted',
+          logIndex: 1,
+          transactionIndex: 1,
+          transactionHash: tx.txHash,
+          timestamp: nowSec(),
+          returnValues: transformReturnValues({
+            ...tx.vars,
+            deposit: { id: simulationConfig.depositId, label: Entity.IDS.DEPOSIT },
+            finish_time: nowSec() - 100,
+            caller: SIMULATION_CONFIG.accountAddress
+          })
+        };
+        events.push(event);
+        activities.push(getMockActionItem(event));
+        break;
+      }
+
+      case 'SampleDepositFinish': {
+        const initialYield = 4621789; // TODO: real number for lots abundance? inflated number?
+
+        // add yield to deposit
+        const depositLotId = Object.keys(simulation.lots).find((k) => !!simulation.lots[k].depositId);
+        dispatchSimulationLotState(depositLotId, { depositYield: initialYield, depositYieldRemaining: initialYield });
+
+        // mimic event
+        events.push({
+          event: 'SampleDepositFinished',
+          name: 'SampleDepositFinished',
+          logIndex: 1,
+          transactionIndex: 1,
+          transactionHash: tx.txHash,
+          timestamp: nowSec(),
+          returnValues: transformReturnValues({
+            ...tx.vars,
+            initial_yield: initialYield,
+            caller: SIMULATION_CONFIG.accountAddress
+          })
+        });
+        activityResolutions.push('SamplingDepositStarted')
+        break;
+      }
+
+      case 'ExtractResourceStart': {
+        // subtract yield from deposit, add to warehouse
+        dispatchSimulationLotState(tx.meta.lotId, { depositYieldRemaining: simulation.lots[tx.meta.lotId].depositYield - tx.vars.yield });
+        dispatchSimulationAddToInventory(tx.vars.destination, tx.vars.destination_slot, tx.meta.resourceId, tx.vars.yield);
+
+        // mimic event
+        events.push({
+          event: 'ExtractResourceStarted',
+          name: 'ExtractResourceStarted',
+          logIndex: 1,
+          transactionIndex: 1,
+          transactionHash: tx.txHash,
+          timestamp: nowSec(),
+          returnValues: transformReturnValues({
+            ...tx.vars,
+            resource: tx.meta.resourceId,
+            finish_time: nowSec(),
+            caller: SIMULATION_CONFIG.accountAddress
+          })
+        });
+        break;
+      }
+
+      case 'ProcessProductsStart': {
+        const process = Process.TYPES[tx.vars.process];
+
+        // subtract inputs from warehouse
+        Object.keys(process.inputs).forEach((resource) => {
+          dispatchSimulationAddToInventory(tx.vars.origin, tx.vars.origin_slot, resource, -process.inputs[resource] * tx.vars.recipes);
+        });
+        
+        // add outputs to warehouse
+        // TODO (maybe): account for target_output
+        Object.keys(process.outputs).forEach((resource) => {
+          dispatchSimulationAddToInventory(tx.vars.destination, tx.vars.destination_slot, resource, process.outputs[resource] * tx.vars.recipes);
+        });
+
+        // mimic event
+        events.push({
+          event: 'MaterialProcessingStarted',
+          name: 'MaterialProcessingStarted',
+          logIndex: 1,
+          transactionIndex: 1,
+          transactionHash: tx.txHash,
+          timestamp: nowSec(),
+          returnValues: transformReturnValues({
+            ...tx.vars,
+            // inputs,
+            // outputs,
+            finish_time: nowSec(),
             caller: SIMULATION_CONFIG.accountAddress
           })
         });
@@ -174,6 +308,10 @@ const MockTransactionManager = () => {
 
       // TODO: refreshReadyAt?
     });
+
+    // push/pop these from state... mockDataManager can handle
+    if (activities?.length) dispatchSimulationActionItems(activities);
+    if (activityResolutions?.length) dispatchSimulationActionItemResolutions(activityResolutions);
 
     // tx complete
     dispatchPendingTransactionComplete(tx.txHash);

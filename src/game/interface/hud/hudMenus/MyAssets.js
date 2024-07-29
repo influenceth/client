@@ -386,13 +386,18 @@ const MyAssets = () => {
             groupedAssets={buildings}
             assetTally={buildingTally}
             isLoading={buildingsLoading}
-            itemGetter={(building) => (
-              <BuildingBlock
-                key={building.id}
-                onSelectCrew={onClickCrewAsset}
-                selectedCrew={crew}
-                building={building} />
-            )}
+            itemGetter={(building) => {
+              const coachmarked = coachmarks[COACHMARK_IDS.hudMenuMyAssetsBuilding] === building.id;
+              return (
+                <BuildingBlock
+                  key={building.id}
+                  onSelectCrew={onClickCrewAsset}
+                  selectedCrew={crew}
+                  building={building}
+                  setRef={coachmarked ? setCoachmarkRef(COACHMARK_IDS.hudMenuMyAssetsBuilding) : undefined}
+                />
+              );
+            }}
             itemHeight={55}
             singleGroupMode={!allAsteroidsMode} />
 
