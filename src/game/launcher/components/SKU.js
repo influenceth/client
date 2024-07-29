@@ -796,11 +796,11 @@ const SKU = ({ asset, onBack }) => {
               </span>
             </PurchaseButtonInner>
           ),
+          onClick: () => onPurchaseStarterPack('advanced'),
           props: {
             loading: isPurchasingStarterPack,
             disabled: isPurchasingStarterPack || !isLaunched,
             isTransaction: true,
-            onClick: () => onPurchaseStarterPack('advanced'),
             style: { margin: `0 ${purchasePacksPadding}px` },
             width: purchaseFormWidth - 2 * purchasePacksPadding
           },
@@ -839,8 +839,8 @@ const SKU = ({ asset, onBack }) => {
           </span>
         </PurchaseButtonInner>
       ),
+      onClick: () => handlePurchase(),
       props: {
-        onClick: () => handlePurchase(),
         isTransaction: true,
         disabled: isPurchasing || !(purchase?.totalPrice?.usdcValue > 0) || !isLaunched,
         loading: isPurchasing,
