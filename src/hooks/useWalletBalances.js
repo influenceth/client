@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 
 import usePriceHelper from '~/hooks/usePriceHelper';
 import useStore from '~/hooks/useStore';
-import { useEthBalance, useUSDCBalance } from '~/hooks/useWalletTokenBalance';
+import { useEthBalance, useSwayBalance, useUSDCBalance } from '~/hooks/useWalletTokenBalance';
 import { TOKEN, TOKEN_SCALE } from '~/lib/priceUtils';
 import usePriceConstants from './usePriceConstants';
 import { safeBigInt } from '~/lib/utils';
@@ -14,6 +14,7 @@ const useWalletBalances = (overrideAccount) => {
   const { data: priceConstants } = usePriceConstants();
   const { data: ethBalance, isLoading: isLoading1, refetch: refetch1 } = useEthBalance(overrideAccount);
   const { data: usdcBalance, isLoading: isLoading2, refetch: refetch2 } = useUSDCBalance(overrideAccount);
+  const { data: swayBalance, isLoading: isLoading3, refetch: refetch3 } = useSwayBalance(overrideAccount);
   const priceHelper = usePriceHelper();
 
   const autoswap = useStore(s => s.gameplay.autoswap);
@@ -34,13 +35,14 @@ const useWalletBalances = (overrideAccount) => {
     const allTokens = {
       [TOKEN.ETH]: ethBalance ? (ethBalance - safeBigInt(Math.floor(gasReserveBalance.to(TOKEN.ETH)))) : 0n,
       [TOKEN.USDC]: usdcBalance || 0n,
+      [TOKEN.SWAY]: swayBalance || 0n
     };
 
     // if autoswap, return allTokens... else, return just the specified purchase token
     return autoswap ? allTokens : { [baseToken]: allTokens[baseToken] };
-  }, [autoswap, baseToken, ethBalance, gasReserveBalance, usdcBalance]);
+  }, [autoswap, baseToken, ethBalance, gasReserveBalance, swayBalance, usdcBalance]);
 
-  const isLoading = isLoading1 || isLoading2;
+  const isLoading = isLoading1 || isLoading2 || isLoading3;
   return useMemo(() => {
     if (isLoading) return { data: null, refetch: () => {}, isLoading: true };
 
@@ -58,10 +60,11 @@ const useWalletBalances = (overrideAccount) => {
       refetch: () => {
         refetch1();
         refetch2();
+        refetch3();
       },
       isLoading
     };
-  }, [gasReserveBalance, isLoading, priceHelper, refetch1, refetch2, swappableTokenBalances]);
+  }, [gasReserveBalance, isLoading, priceHelper, refetch1, refetch2, refetch3, swappableTokenBalances]);
 }
 
 export default useWalletBalances;
