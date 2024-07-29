@@ -226,9 +226,11 @@ export function SessionProvider({ children }) {
   }, [ currentSession, sessions, status, walletAccount ]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Determines whether the wallet should use sessions based on user settings and wallet id
-  const shouldUseSessions = useCallback(async () => {
-    if (gameplay.useSessions !== false && connectedWalletId === 'argentWebWallet') return true;
-    if (gameplay.useSessions === true && connectedWalletId === 'argentX') {
+  const shouldUseSessionKeys = useCallback(async (skipSettingsCheck = false) => {
+    const setting = skipSettingsCheck ? true : gameplay.useSessions;
+
+    if (setting !== false && connectedWalletId === 'argentWebWallet') return true;
+    if (setting === true && connectedWalletId === 'argentX') {
       try {
         const res = await provider.callContract({ contractAddress: connectedAccount, entrypoint: 'getVersion' });
         return Number(shortString.decodeShortString(res[0]).replaceAll('.', '')) >= 40;
@@ -253,15 +255,15 @@ export function SessionProvider({ children }) {
   }, [connectedAccount, provider]);
 
   // Authenticate with a signed message against the API and create a new session
-  const authenticate = useCallback(async (isSessionUpgradeAttempt = false) => {
+  const authenticate = useCallback(async ({ isUpgradeInsecure = false, isUpgradeSessionKey = false } = {}) => {
     const newSession = {};
 
     // Check if the account contract has been deployed yet and should use sessions
     newSession.isDeployed = await checkDeployed();
-    const useSessionKeys = await shouldUseSessions();
+    const useSessionKeys = isUpgradeSessionKey || await shouldUseSessionKeys(isUpgradeSessionKey);
 
     // Start authenticating by requesting a login message from API
-    if (!isSessionUpgradeAttempt) setStatus(STATUSES.AUTHENTICATING);
+    if (!isUpgradeInsecure) setStatus(STATUSES.AUTHENTICATING);
     const loginMessage = await api.requestLogin(connectedAccount);
 
     try {
@@ -328,7 +330,7 @@ export function SessionProvider({ children }) {
       setStatus(STATUSES.AUTHENTICATED);
       return true;
     } catch (e) {
-      if (!isSessionUpgradeAttempt) {
+      if (!isUpgradeInsecure) {
         logout();
         if (['User abort', 'User rejected'].includes(e.message)) return;
         console.error(e);
@@ -341,9 +343,7 @@ export function SessionProvider({ children }) {
       }
     }
 
-    if (!isSessionUpgradeAttempt) {
-      disconnect();
-    }
+    if (!isUpgradeInsecure) disconnect();
     return false;
   }, [
     checkDeployed,
@@ -359,7 +359,7 @@ export function SessionProvider({ children }) {
   ]);
 
   const upgradeInsecureSession = useCallback(() => {
-    if (currentSession && !currentSession.isDeployed) return authenticate(true);
+    if (currentSession && !currentSession.isDeployed) return authenticate({ isUpgradeInsecure: true });
   }, [authenticate, currentSession]);
 
   // Resumes a current session or starts a new one
@@ -382,6 +382,13 @@ export function SessionProvider({ children }) {
 
     await authenticate();
   }, [authenticate, connectedAccount, walletAccount, sessions, disconnect, dispatchSessionStarted]);
+
+  // Upgrades a current session to use a session key
+  const upgradeToSessionKey = useCallback(async () => {
+    if (currentSession?.isDeployed && !currentSession?.sessionRequest) {
+      return authenticate({ isUpgradeSessionKey: true });
+    }
+  }, [authenticate, currentSession, gameplay.useSessions]);
 
   const createSessionAccount = useCallback(async () => {
     const offchainSessionAccount = await buildSessionAccount({
@@ -587,10 +594,12 @@ export function SessionProvider({ children }) {
       getOutsideExecutionData,
       isDeployed: authenticated ? currentSession?.isDeployed : null,
       provider,
+      shouldUseSessionKeys,
       starknetSession,
       status,
       token: authenticated ? currentSession?.token : null,
       upgradeInsecureSession,
+      upgradeToSessionKey,
       walletAccount,
       walletId: authenticated ? currentSession?.walletId : null,
 

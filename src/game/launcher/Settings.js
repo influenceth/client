@@ -347,7 +347,7 @@ const SoundPane = () => {
 }
 
 const GameplayPane = () => {
-  const { authenticated } = useSession();
+  const { authenticated, shouldUseSessionKeys, starknetSession, upgradeToSessionKey, walletId } = useSession();
   const { crew } = useCrewContext();
 
   const crewTutorials = useStore(s => s.crewTutorials);
@@ -381,6 +381,11 @@ const GameplayPane = () => {
       dispatchTutorialDisabled(false);
     }
   }, [crew, crewTutorials, gameplay.dismissTutorial]);
+
+  const toggleSessionKeys = useCallback(async (which) => {
+    dispatchUseSessionsSet(which);
+    if (which !== false && !starknetSession && await shouldUseSessionKeys(true)) upgradeToSessionKey();
+  }, [starknetSession, upgradeToSessionKey]);
 
   return (
     <StyledSettings>
@@ -424,17 +429,17 @@ const GameplayPane = () => {
             <ControlGroup>
               <Button
                 active={gameplay.useSessions === null || gameplay.useSessions === undefined}
-                onClick={() => dispatchUseSessionsSet(null)}>
+                onClick={() => toggleSessionKeys(null)}>
                 Default
               </Button>
               <Button
                 active={gameplay.useSessions === true}
-                onClick={() => dispatchUseSessionsSet(true)}>
+                onClick={() => toggleSessionKeys(true)}>
                 If Supported
               </Button>
               <Button
                 active={gameplay.useSessions === false}
-                onClick={() => dispatchUseSessionsSet(false)}>
+                onClick={() => toggleSessionKeys(false)}>
                 Never
               </Button>
             </ControlGroup>
