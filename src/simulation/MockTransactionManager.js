@@ -30,6 +30,8 @@ const MockTransactionManager = () => {
 
   const createAlert = useStore(s => s.dispatchAlertLogged);
 
+  // TODO: support renaming buildings and ships
+
   const getMockActionItem = useCallback((event) => {
     return {
       _id: getUuid(),

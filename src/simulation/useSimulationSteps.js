@@ -497,30 +497,21 @@ const useSimulationSteps = () => {
         shouldAdvance: () => crewOrders?.length > 0
       },
       {
-        title: '', // TODO: ...
-        content: `Let's think about getting off this rock. Start by building a shipyard.`,
+        title: 'Get off this rock.',
+        content: `Start by building a shipyard.`,
         crewmateId: SIMULATION_CONFIG.crewmates.pilot,
         coachmarks: getConstructBuildingCoachmarks(Building.IDS.SHIPYARD),
-        coachmarks: [
-          // TODO: click a lot with an agreement on it (via hud)
-          // TODO: "plan" action button --> shipyard
-          // (fast forward)
-          // TODO: "construct" action button
-          // TODO: "source from markets" button
-          // (fast forward)
-          // TODO: "construct" action button
-          // (fast forward)
-        ],
         enabledActions: {
-          PlanBuilding: !!selectedLotIsMine,
+          PlanBuilding: !!selectedLotIsMine && !shipyardLot,
           [`SelectSitePlan:${Building.IDS.SHIPYARD}`]: true,
           Construct: selectedLotIsMine && !!selectedLot?.building,
-          // TODO: deliveries?
         },
-        shouldAdvance: () => shipyards?.length > 0
+        shouldAdvance: () => {
+          return !!Object.values(simulation.lots).find((l) => l.buildingType === Building.IDS.SHIPYARD && l.buildingStatus === Building.CONSTRUCTION_STATUSES.OPERATIONAL);
+        }
       },
       {
-        title: '', // TODO: ...
+        title: 'Get off this rock.',
         content: `Assemble a ship`,
         crewmateId: SIMULATION_CONFIG.crewmates.engineer,
         coachmarks: [

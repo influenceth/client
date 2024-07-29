@@ -1,5 +1,5 @@
 import { QueryObserver, useQuery, useQueryClient } from 'react-query';
-import { Building, Deposit, Entity, Extractor, Inventory, Lot, Order, Permission, Processor, Product } from '@influenceth/sdk';
+import { Building, Deposit, DryDock, Entity, Extractor, Inventory, Lot, Order, Permission, Processor, Product } from '@influenceth/sdk';
 
 import useSimulationState from '~/hooks/useSimulationState';
 import SIMULATION_CONFIG from './simulationConfig';
@@ -204,8 +204,30 @@ const MockDataManager = () => {
                 // secondaryEff: 0,
                 processorType: Processor.IDS.REFINERY,
                 slot: 1,
-                status: Extractor.STATUSES.IDLE,
+                status: Processor.STATUSES.IDLE,
               }];
+              break;
+            case Building.IDS.SHIPYARD:
+              building.Processors = [{
+                // TODO: ...
+                // destinationSlot,
+                // finishTime: nowSec() + 123456,
+                // outputProduct: 0,
+                // recipes: 0,
+                // runningProcess: 0,
+                // secondaryEff: 0,
+                processorType: Processor.IDS.SHIPYARD,
+                slot: 1,
+                status: Processor.STATUSES.IDLE,
+              }];
+              building.DryDocks = [{
+                dryDockType: DryDock.IDS.BASIC,
+                slot: 1,
+                status: DryDock.STATUSES.IDLE,
+                // finishTime: nowSec(),
+                // outputShip
+              }];
+              console.log({ building })
               break;
           }
 
