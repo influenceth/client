@@ -781,7 +781,7 @@ const SKU = ({ asset, onBack }) => {
         styleOverrides: {
           ...defaultStyleOverrides,
           aboveFold: { height: 160, marginTop: -175 },
-          belowFold: { padding: '10px 0 20px 0', marginTop: -175 },
+          belowFold: { padding: '10px 0 20px 0' },
           body: { overflow: 'visible', paddingLeft: '35px' },
           rule: { width: 308 }
         },
@@ -796,11 +796,11 @@ const SKU = ({ asset, onBack }) => {
               </span>
             </PurchaseButtonInner>
           ),
+          onClick: () => onPurchaseStarterPack('advanced'),
           props: {
             loading: isPurchasingStarterPack,
             disabled: isPurchasingStarterPack || !isLaunched,
             isTransaction: true,
-            onClick: () => onPurchaseStarterPack('advanced'),
             style: { margin: `0 ${purchasePacksPadding}px` },
             width: purchaseFormWidth - 2 * purchasePacksPadding
           },
@@ -839,8 +839,8 @@ const SKU = ({ asset, onBack }) => {
           </span>
         </PurchaseButtonInner>
       ),
+      onClick: () => handlePurchase(),
       props: {
-        onClick: () => handlePurchase(),
         isTransaction: true,
         disabled: isPurchasing || !(purchase?.totalPrice?.usdcValue > 0) || !isLaunched,
         loading: isPurchasing,
