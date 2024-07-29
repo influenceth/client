@@ -484,34 +484,34 @@ const LotInventory = () => {
               <StorageLabel utilization={pctOrReservedVolume}>
                 <label>Volume</label>
                 <span>
-                  {pctOrReservedVolume > 0 && pctOrReservedVolume < 0.01 ? '> ' : ''}{formatFixed(100 * pctOrReservedVolume, 1)}%
+                {pctOrReservedVolume > 0 && pctOrReservedVolume < 0.01 ? '> ' : ''}{formatFixed(100 * pctOrReservedVolume, 1)}% ({formatVolume(usedOrReservedVolume)})
                 </span>
               </StorageLabel>
               <ProgressBar horizontal progress={pctVolume} secondaryProgress={pctOrReservedVolume} utilization={pctOrReservedVolume}/>
               <StorageLabelBottom>
-                <div><span>Used:</span> {formatVolume(usedVolume)}</div>
-                <div><span>Total:</span> {formatVolume(usedOrReservedVolume)}</div>
+                <div><span>Stored:</span> {formatVolume(usedVolume)}</div>
+                <div><span>Available:</span> {formatVolume(maxVolume - usedOrReservedVolume)}</div>
               </StorageLabelBottom>
               <ReservedLabelBottom>
                 <div><span>Reserved:</span> {formatVolume(reservedV)}</div>
-                <div><span>Max:</span> {formatVolume(maxVolume)}</div>
+                <div><span>Capacity:</span> {formatVolume(maxVolume)}</div>
               </ReservedLabelBottom>
             </div>
             <div>
               <StorageLabel utilization={pctOrReservedMass}>
                 <label>Mass</label>
                 <span>
-                  {pctOrReservedMass > 0 && pctOrReservedMass < 0.01 ? '> ' : ''}{formatFixed(100 * pctOrReservedMass, 1)}%
+                  {pctOrReservedMass > 0 && pctOrReservedMass < 0.01 ? '> ' : ''}{formatFixed(100 * pctOrReservedMass, 1)}% ({formatMass(usedOrReservedMass)})
                 </span>
               </StorageLabel>
               <ProgressBar horizontal progress={pctMass} secondaryProgress={pctOrReservedMass} utilization={pctOrReservedMass}/>
               <StorageLabelBottom>
-                <div><span>Used:</span> {formatMass(usedMass)}</div>
-                <div><span>Total:</span> {formatMass(usedOrReservedMass)}</div>
+                <div><span>Stored:</span> {formatMass(usedMass)}</div>
+                <div><span>Available:</span> {formatMass(maxMass - usedOrReservedMass)}</div>
               </StorageLabelBottom>
               <ReservedLabelBottom>
                 <div><span>Reserved:</span> {formatMass(reservedM)}</div>
-                <div><span>Max:</span> {formatMass(maxMass)}</div>
+                <div><span>Capacity:</span> {formatMass(maxMass)}</div>
               </ReservedLabelBottom>
             </div>
           </Charts>
