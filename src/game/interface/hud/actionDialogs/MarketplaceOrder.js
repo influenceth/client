@@ -685,7 +685,7 @@ const MarketplaceOrder = ({
                   <span>Max <b>{((mode === 'buy' ? totalForSale : totalForBuy) || 0).toLocaleString()}{resourceByMass ? ' kg' : ''}</b></span>
                 )}
                 {type === 'limit' && mode === 'sell' && (
-                  <span>In Inventory <b>{formatResourceAmount(amountInInventory || 0, resourceId)}</b></span>
+                  <span>In Inventory <b>{formatResourceAmount(Math.floor(amountInInventory) || 0, resourceId)}</b></span>
                 )}
               </InputLabel>
               <TextInputWrapper rightLabel={resourceByMass ? ' kg' : ''}>

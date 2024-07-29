@@ -187,9 +187,9 @@ const AsteroidResourcePrices = ({ asteroid, mode, resource }) => {
       takerFee: o.marketplace?.Exchange?.takerFee,
     }));
     if (simulationEnabled && resource.i === coachmarkHelperProduct) {
-      if (simulationActions.includes('MarketBuy') && !simulationActions.includes('MarketSell')) {
+      if (simulationActions.includes('MarketBuy') && !simulationActions.includes('LimitSell')) {
         return transformedOrders.filter((o) => o.supply > 0);
-      } else if (simulationActions.includes('MarketSell') && !simulationActions.includes('MarketBuy')) {
+      } else if (simulationActions.includes('MarketSell') && !simulationActions.includes('LimitBuy')) {
         return transformedOrders.filter((o) => o.demand > 0);
       }
     }

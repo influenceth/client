@@ -649,15 +649,31 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
     return crewCan(perm, marketplace);
   }, [crewCan, mode, type]);
 
-  const [coachToBuy, coachToSell, coachToLimit, coachToMarket, coachToQuantity, coachToButton] = useMemo(() => {
-    const disable = (coachmarkHelperProduct !== resource.i) || !!actionDialog?.type;
+  const [coachToBuy, coachToSell, coachToLimit, coachToMarket, coachToQuantity, coachToUnitPrice, coachToButton] = useMemo(() => {
+    let disable = (coachmarkHelperProduct !== resource.i) || !!actionDialog?.type;
+    
+    const toBuy = !disable && mode === 'sell' && !(simulationActions.includes('MarketSell') || simulationActions.includes('LimitSell'));
+    const toSell = !disable && mode === 'buy' && !(simulationActions.includes('MarketBuy') || simulationActions.includes('LimitBuy'));
+    disable = disable || toBuy || toSell;
+
+    const toLimit = !disable && type === 'market' && !(simulationActions.includes('MarketBuy') || simulationActions.includes('MarketSell'));
+    const toMarket = !disable && type === 'limit' && !(simulationActions.includes('LimitBuy') || simulationActions.includes('LimitSell'));
+    disable = disable || toLimit || toMarket;
+
+    const toQuantity = !disable && !(quantity > 0);
+    disable = disable || toQuantity;
+    const toUnitPrice = !disable && !toQuantity && !(quantity > 0);
+    disable = disable || toUnitPrice;
+    const toButton = !disable && total > 0;
+
     return [
-      !disable && mode === 'sell' && !(simulationActions.includes('MarketSell') || simulationActions.includes('LimitSell')),
-      !disable && mode === 'buy' && !(simulationActions.includes('MarketBuy') || simulationActions.includes('LimitBuy')),
-      !disable && type === 'market' && !(simulationActions.includes('MarketBuy') || simulationActions.includes('MarketSell')),
-      !disable && type === 'limit' && !(simulationActions.includes('LimitBuy') || simulationActions.includes('LimitSell')),
-      !disable && !(quantity > 0),
-      !disable && total > 0
+      toBuy,
+      toSell,
+      toLimit,
+      toMarket,
+      toQuantity,
+      toUnitPrice,
+      toButton
     ];  
   }, [actionDialog?.type, coachmarkHelperProduct, mode, quantity, resource.i, simulationActions, total, type]);
 
@@ -905,6 +921,7 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
                     </InputLabel>
                     <TextInputWrapper rightLabel={`SWAY${resource.isAtomic ? '' : ' / kg'}`}>
                       <UncontrolledTextInput
+                        ref={coachToUnitPrice ? setCoachmarkHelperRef : null}
                         monospace
                         size="large"
                         onChange={(e) => handleChangeLimitPrice(e.currentTarget.value)}

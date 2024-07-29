@@ -1,5 +1,5 @@
 import { QueryObserver, useQuery, useQueryClient } from 'react-query';
-import { Building, Deposit, Entity, Extractor, Inventory, Lot, Permission, Processor, Product } from '@influenceth/sdk';
+import { Building, Deposit, Entity, Extractor, Inventory, Lot, Order, Permission, Processor, Product } from '@influenceth/sdk';
 
 import useSimulationState from '~/hooks/useSimulationState';
 import SIMULATION_CONFIG from './simulationConfig';
@@ -307,6 +307,28 @@ const MockDataManager = () => {
       transformer: (data) => (simulation.actionItems || [])
     })
 
+    // open orders
+    configs.push({
+      queryKey: [ 'crewOpenOrders', SIMULATION_CONFIG.crewId ],
+      transformer: (data) => {
+        console.log('orders', data)
+        if (!simulation.order) return data;
+
+        const { exchange, caller, callerCrew, storage, ...order } = simulation.order;
+        order.entity = Entity.formatEntity(exchange);
+        order.crew = Entity.formatEntity(callerCrew);
+        order.orderType = Order.IDS.LIMIT_SELL;
+        order.storage = Entity.formatEntity(storage);
+        order.status = Order.STATUSES.OPEN;
+        order.initialCaller = caller;
+        order.locations = [
+          /* TODO: ? is more detail needed? */
+          Entity.formatEntity({ id: 1, label: Entity.IDS.ASTEROID })
+        ];
+        return [order];
+      }
+    });
+
     return configs.map((c) => ({ ...c, key: JSON.stringify(c.queryKey) }));
   }, [simulation]);
 
@@ -365,10 +387,6 @@ const MockDataManager = () => {
 
   // entity activities
   // [ 'activities', entity?.label, entity?.id ],
-
-  // crew accessible inventories
-  // entitiesCacheKey(Entity.IDS.BUILDING, { asteroidId, hasComponent: 'Inventories', hasPermission: Permission.IDS.ADD_PRODUCTS, permissionCrewId, permissionAccount }),
-  // entitiesCacheKey(Entity.IDS.BUILDING, { asteroidId, hasComponent: 'Inventories', hasPermission: Permission.IDS.REMOVE_PRODUCTS, permissionCrewId, permissionAccount }),
 
   return overwrites.map((o) => <MockDataItem key={o.key} overwrite={o} />);
 };

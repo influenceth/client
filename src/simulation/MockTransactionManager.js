@@ -170,6 +170,32 @@ const MockTransactionManager = () => {
         break;
       }
 
+      case 'CreateSellOrder': {
+        // remove product from warehouse
+        dispatchSimulationAddToInventory(tx.vars.storage, tx.vars.storage_slot, tx.vars.product, -tx.vars.amount);
+
+        // create order
+        const returnValues = transformReturnValues({
+          ...tx.vars,
+          valid_time: nowSec() - 100,
+          maker_fee: 0, // TODO: ...
+          caller: SIMULATION_CONFIG.accountAddress
+        });
+        dispatchSimulationState('order', returnValues);
+        
+        // mimic event
+        events.push({
+          event: 'SellOrderCreated',
+          name: 'SellOrderCreated',
+          logIndex: 1,
+          transactionIndex: 1,
+          transactionHash: tx.txHash,
+          timestamp: nowSec(),
+          returnValues
+        });
+        break;
+      }
+
       case 'SampleDepositStart': {
         // create deposit
         dispatchSimulationLotState(tx.vars.lot.id, { depositId: simulationConfig.depositId });

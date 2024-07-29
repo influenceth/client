@@ -15,6 +15,7 @@ import { COACHMARK_IDS } from '~/contexts/CoachmarkContext';
 import { getBuildingRequirementsMet } from '~/game/interface/hud/actionDialogs/components';
 import { getMockBuildingInventories } from './MockDataManager';
 import simulationConfig from '~/simulation/simulationConfig';
+import useCrewOrders from '~/hooks/useCrewOrders';
 
 const DELAY_MESSAGE = 1000;
 
@@ -37,7 +38,8 @@ const useSimulationSteps = () => {
   const { data: crewAgreements, isLoading: agreementsLoading } = useCrewAgreements(true, false, true);
   const { data: crewBuildings, isLoading: buildingsLoading } = useCrewBuildings();
   const { data: crewDeposits, isLoading: depositsLoading } = useCrewSamples();
-  const isLoading = agreementsLoading || buildingsLoading || depositsLoading;
+  const { data: crewOrders, isLoading: ordersLoading } = useCrewOrders(crew?.id);
+  const isLoading = agreementsLoading || buildingsLoading || depositsLoading || ordersLoading;
 
   const [locationPath, setLocationPath] = useState();
   const [transitioning, setTransitioning] = useState();
@@ -134,7 +136,6 @@ const useSimulationSteps = () => {
         && (i.contents || []).find((c) => c.product === Product.IDS.ACETYLENE && c.amount > 0)
       ));
     });
-
 
     // const lotLease = crewAgreements?.find((a) => a.permission === Permission.IDS.USE_LOT);
 
@@ -486,14 +487,14 @@ const useSimulationSteps = () => {
         title: `Let's make some money!`,
         content: `Let's make some money and sell our refined good.`,
         crewmateId: SIMULATION_CONFIG.crewmates.merchant,
-        coachmarks: {
-          [COACHMARK_IDS.hudMenuMarketplaces]: (locationPath === '/'),
+        coachmarks: () => ({
+          [COACHMARK_IDS.hudMenuMarketplaces]: (!locationPath || locationPath === '/'),
           [COACHMARK_IDS.asteroidMarketsHelper]: Product.IDS.ACETYLENE,
-        },
+        }),
         enabledActions: {
-          MarketSell: true
+          LimitSell: true
         },
-        shouldAdvance: () => refinedMaterials === 0, // TODO: material gone
+        shouldAdvance: () => crewOrders?.length > 0
       },
       {
         title: '', // TODO: ...
