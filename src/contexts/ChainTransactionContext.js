@@ -1,7 +1,7 @@
 import { createContext, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Address, Asteroid, Entity, Order, System } from '@influenceth/sdk';
 import { isEqual, get } from 'lodash';
-import { Account, hash, num, shortString, uint256 } from 'starknet';
+import { hash, num, shortString, uint256 } from 'starknet';
 import { fetchBuildExecuteTransaction, fetchQuotes } from '@avnu/avnu-sdk';
 import * as gasless from '@avnu/gasless-sdk';
 
@@ -425,11 +425,24 @@ export function ChainTransactionProvider({ children }) {
   const gameplay = useStore(s => s.gameplay);
   const dispatchFailedTransaction = useStore(s => s.dispatchFailedTransaction);
   const dispatchPendingTransaction = useStore(s => s.dispatchPendingTransaction);
-  // const dispatchPendingTransactionUpdate = useStore(s => s.dispatchPendingTransactionUpdate);
   const dispatchPendingTransactionComplete = useStore(s => s.dispatchPendingTransactionComplete);
   const dispatchClearTransactionHistory = useStore(s => s.dispatchClearTransactionHistory);
 
   const [promptingTransaction, setPromptingTransaction] = useState(false);
+  const [nonce, setNonce] = useState();
+
+  // Sets the nonce initially to allow for some local management
+  useEffect(() => {
+    const retrieveNonce = async () => {
+      const currentNonce = await walletAccount.getNonce();
+      setNonce(BigInt(currentNonce));
+    };
+
+    if (!nonce && accountAddress) retrieveNonce();
+  }, [accountAddress, nonce, gameplay.useSessions, starknetSession, walletAccount]);
+
+  // Temporary logging for nonces
+  useEffect(() => console.log('NONCE', nonce || null), [nonce]);
 
   // autoresolve when actionType is set but actionType was not actually triggered by actionRound
   const prependEventAutoresolve = useMemo(
@@ -460,6 +473,7 @@ export function ChainTransactionProvider({ children }) {
 
     // Use session wallet if possible, otherwise regular wallet
     const account = canUseSessionKey ? starknetSession : walletAccount;
+    const txOptions = {};
 
     // Check and store the gasless compatibility status
     if (
@@ -506,9 +520,13 @@ export function ChainTransactionProvider({ children }) {
         signature,
         { baseUrl: process.env.REACT_APP_AVNU_API_URL }
       );
+    } else if (canUseSessionKey && nonce) {
+      // Manage nonces locally when using sessions but not using relayer
+      txOptions.nonce = nonce;
     }
 
-    return await account.execute(formattedCalls);
+    setNonce(n => n + 1n);
+    return await account.execute(formattedCalls, txOptions);
   }, [
     accountAddress,
     allowedMethods,
@@ -517,6 +535,7 @@ export function ChainTransactionProvider({ children }) {
     gameplay.feeToken,
     getOutsideExecutionData,
     isDeployed,
+    nonce,
     starknetSession,
     walletAccount
   ]);
@@ -784,13 +803,12 @@ export function ChainTransactionProvider({ children }) {
           },
 
           onConfirmed: (event, vars) => {
-            if (config.getConfirmedAlert) {
-              createAlert(config.getConfirmedAlert(vars));
-            }
+            if (config.getConfirmedAlert) createAlert(config.getConfirmedAlert(vars));
             config.onConfirmed && config.onConfirmed(event, vars);
           },
 
           onTransactionError: (err, vars) => {
+            setNonce(null);
             console.error(err, vars);
           },
         };
