@@ -781,7 +781,7 @@ const SKU = ({ asset, onBack }) => {
         styleOverrides: {
           ...defaultStyleOverrides,
           aboveFold: { height: 160, marginTop: -175 },
-          belowFold: { padding: '10px 0 20px 0', marginTop: -175 },
+          belowFold: { padding: '10px 0 20px 0' },
           body: { overflow: 'visible', paddingLeft: '35px' },
           rule: { width: 308 }
         },
