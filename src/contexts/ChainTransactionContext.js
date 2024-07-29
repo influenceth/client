@@ -434,12 +434,12 @@ export function ChainTransactionProvider({ children }) {
   // Sets the nonce initially to allow for some local management
   useEffect(() => {
     const retrieveNonce = async () => {
-      const currentNonce = await walletAccount.getNonce();
+      const currentNonce = await provider.getNonceForAddress(accountAddress);
       setNonce(BigInt(currentNonce));
     };
 
-    if (!nonce && accountAddress) retrieveNonce();
-  }, [accountAddress, nonce, gameplay.useSessions, starknetSession, walletAccount]);
+    if (!nonce && accountAddress && Number(accountAddress) !== 0) retrieveNonce();
+  }, [accountAddress, nonce, gameplay.useSessions, starknetSession, provider]);
 
   // Temporary logging for nonces
   useEffect(() => console.log('NONCE', nonce || null), [nonce]);
@@ -525,7 +525,7 @@ export function ChainTransactionProvider({ children }) {
       txOptions.nonce = nonce;
     }
 
-    setNonce(n => n + 1n);
+    if (nonce) setNonce(n => n + 1n);
     return await account.execute(formattedCalls, txOptions);
   }, [
     accountAddress,
