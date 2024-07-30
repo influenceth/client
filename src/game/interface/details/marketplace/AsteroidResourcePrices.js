@@ -95,9 +95,6 @@ const TableContainer = styled.div`
   thead th {
     background: rgba(0, 0, 0, 0.75);
   }
-  tbody td {
-    background: transparent;
-  }
 `;
 
 const IconWrapper = styled.div`
@@ -258,18 +255,6 @@ const AsteroidResourcePrices = ({ asteroid, mode, resource }) => {
 
   const columns = useMemo(() => {
     const c = [
-      // (this feels redundant)
-      // {
-      //   key: 'resourceName',
-      //   label: 'Product',
-      //   sortField: 'resourceName',
-      //   selector: row => (
-      //     <>
-      //       <IconWrapper><ProductIcon /></IconWrapper>
-      //       {resource.name}
-      //     </>
-      //   ),
-      // },
       {
         key: 'marketplaceName',
         label: 'Marketplace',
@@ -296,14 +281,14 @@ const AsteroidResourcePrices = ({ asteroid, mode, resource }) => {
         sortField: 'supply',
         selector: row => (
           <>
-            <IconLink 
+            <IconLink
               style={{ marginRight: 6 }}
               onClick={() => history.push(`/marketplace/${asteroid.id}/${Lot.toIndex(row.lotId)}/${resource.i}?back=all&mode=buy`)}
               tooltip="View Orderbook"
               data-tooltip-id="detailsTooltip">
               <MarketplaceBuildingIcon />
             </IconLink>
-            {row.supply === 0 
+            {row.supply === 0
               ? <Empty>—</Empty>
               : formatResourceAmount(row.supply, resource.i)
             }
@@ -316,7 +301,7 @@ const AsteroidResourcePrices = ({ asteroid, mode, resource }) => {
         sortField: 'sellPrice',
         selector: row => (
           <>
-            {row.sellPrice === 0 
+            {row.sellPrice === 0
               ? <Empty>—</Empty>
               : (<><IconWrapper><SwayIcon /></IconWrapper> {formatPrice(row.sellPrice)}</>)
             }
@@ -329,14 +314,14 @@ const AsteroidResourcePrices = ({ asteroid, mode, resource }) => {
         sortField: 'demand',
         selector: row => (
           <>
-            <IconLink 
+            <IconLink
               style={{ marginRight: 6 }}
               onClick={() => history.push(`/marketplace/${asteroid.id}/${Lot.toIndex(row.lotId)}/${resource.i}?back=all&mode=sell`)}
               tooltip="View Orderbook"
               data-tooltip-id="detailsTooltip">
               <MarketplaceBuildingIcon />
             </IconLink>
-            {row.demand === 0 
+            {row.demand === 0
               ? <Empty>—</Empty>
               : formatResourceAmount(row.demand, resource.i)
             }
@@ -349,7 +334,7 @@ const AsteroidResourcePrices = ({ asteroid, mode, resource }) => {
         sortField: 'buyPrice',
         selector: row => (
           <>
-          {row.buyPrice === 0 
+          {row.buyPrice === 0
             ? <Empty>—</Empty>
             : <><IconWrapper><SwayIcon /></IconWrapper> {formatPrice(row.buyPrice)}</>
           }

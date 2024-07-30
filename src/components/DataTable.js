@@ -2,7 +2,7 @@ import styled from 'styled-components';
 import { TriangleDownIcon, TriangleUpIcon } from './Icons';
 
 import { itemColors } from '~/lib/actionItem';
-import { Fragment, useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { reactBool } from '~/lib/utils';
 
 const minColumnWidth = 190;
@@ -43,30 +43,36 @@ const DataTableRow = styled.tr`
   ${p => p.onClick && `cursor: ${p.theme.cursors.active};`}
   ${p => p.status
     ? `
-      {
+      td {
         background: rgba(${itemColors[p.status]}, 0.12);
-        i { color: rgb(${itemColors[p.status]}); }
+        i {
+          color: rgb(${itemColors[p.status]});
+        }
       }
       &:hover {
-        background: rgba(${itemColors[p.status]}, 0.16);
+        td {
+          background: rgba(${itemColors[p.status]}, 0.16);
+        }
       }
     `
     : (
       p.isSelected
         ? `
-          background: rgba(${p.selectedColorRGB || p.theme.colors.mainRGB}, 0.5);
-          &:hover {
-            background: rgba(${p.selectedColorRGB || p.theme.colors.mainRGB}, 0.2);
+          td {
+            background: rgba(${p.selectedColorRGB || p.theme.colors.mainRGB}, 0.3);
           }
         `
         : `
           &:hover {
-            background: rgba(${p.selectedColorRGB || p.theme.colors.mainRGB}, 0.2);
+            td {
+              background: rgba(${p.selectedColorRGB || p.theme.colors.mainRGB}, 0.1);
+            }
           }
         `
     )
   }
 `;
+
 const SortIcon = styled.span`
   font-size: 14px;
   position: absolute;
