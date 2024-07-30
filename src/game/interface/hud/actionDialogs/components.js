@@ -542,7 +542,8 @@ const InventoryUtilization = styled(ResourceProgress)`
 `;
 const InventoryLabel = styled.div`
   color: ${p => p.overloaded ? p.theme.colors.error : 'white'};
-  font-size: 12px;
+  font-weight: bold;
+  font-size: 13px;
   position: absolute;
   left: 8px;
   bottom: 14px;
