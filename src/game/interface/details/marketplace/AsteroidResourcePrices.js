@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import styled from 'styled-components';
-import { Asteroid, Lot } from '@influenceth/sdk';
+import { Asteroid, Entity, Lot, Permission } from '@influenceth/sdk';
 
 import Button from '~/components/ButtonAlt';
 import ClipCorner from '~/components/ClipCorner';
@@ -13,12 +13,13 @@ import { formatResourceAmount } from '~/game/interface/hud/actionDialogs/compone
 import useCrew from '~/hooks/useCrew';
 import useCrewContext from '~/hooks/useCrewContext';
 import useOrderSummaryByExchange from '~/hooks/useOrderSummaryByMarket';
+import useEntities from '~/hooks/useEntities';
 import useLot from '~/hooks/useLot';
 import { formatFixed, formatPrice, nativeBool } from '~/lib/utils';
 import { getBuildingIcon } from '~/lib/assetUtils';
 import formatters from '~/lib/formatters';
 import theme from '~/theme';
-import { IconLink, LocationLink } from '../listViews/components';
+import { IconLink, LocationLink, MarketplacePermissionsIcon } from '../listViews/components';
 
 
 const Header = styled.div`
@@ -148,10 +149,18 @@ const Empty = styled.span`
   text-transform: uppercase;
 `;
 
+const MareketplaceName = styled.span`
+  color: ${p => {
+    if (p.acesss === 'full') return p.theme.colors.white;
+    if (p.access === 'limited') return p.theme.colors.yellow;
+    if (p.access === 'none') return p.theme.colors.red;
+  }};
+`;
+
 const AsteroidResourcePrices = ({ asteroid, mode, resource }) => {
   const history = useHistory();
 
-  const { crew } = useCrewContext();
+  const { crew, crewCan } = useCrewContext();
   const [selected, setSelected] = useState();
   const [sort, setSort] = useState([
     `${mode === 'sell' ? 'buy' : 'sell'}Price`,
@@ -163,21 +172,62 @@ const AsteroidResourcePrices = ({ asteroid, mode, resource }) => {
   const { data: marketplaceOwner } = useCrew(selectedLot?.building?.Control?.controller?.id);
 
   const { data: orderSummary } = useOrderSummaryByExchange(asteroid.id, resource.i);
+
+  const marketPlaceIds = useMemo(() => Array.from(new Set((orderSummary || []).map((o) => o.marketplace.id))), [orderSummary]);
+  const { data: resourceMarketplaceEntities } = useEntities({ ids: marketPlaceIds, label: Entity.IDS.BUILDING });
+
+  const isPermitted = function ({ exchange, mode, type, isCancellation }) {
+    let perm = 0;
+    if (isCancellation) return true;
+    if (type === 'limit' && mode === 'buy') perm = Permission.IDS.LIMIT_BUY;
+    if (type === 'limit' && mode === 'sell') perm = Permission.IDS.LIMIT_SELL;
+    if (type === 'market' && mode === 'buy') perm = Permission.IDS.BUY;
+    if (type === 'market' && mode === 'sell') perm = Permission.IDS.SELL;
+    return crewCan(perm, exchange);
+  };
+
   const resourceMarketplaces = useMemo(() => {
     if (!orderSummary) return [];
-    return orderSummary.map((o) => ({
-      marketplaceName: formatters.buildingName(o.marketplace),
-      lotId: o.marketplace?.Location?.location?.id,
-      supply: o.sell.amount,
-      demand: o.buy.amount,
-      distance: crew?._location?.asteroidId === asteroid.id ? Asteroid.getLotDistance(asteroid.id, crew?._location?.lotIndex, Lot.toIndex(o.marketplace?.Location?.location?.id)) : 0,
-      buyPrice: o.buy.price,
-      sellPrice: o.sell.price,
-      centerPrice: (o.sell.price && o.buy.price) ? (o.sell.price + o.buy.price) / 2 : (o.sell.price || o.buy.price || 0),
-      makerFee: o.marketplace?.Exchange?.makerFee,
-      takerFee: o.marketplace?.Exchange?.takerFee,
-    }))
-  }, [asteroid.id, crew, orderSummary]);
+    return orderSummary.map((o) => {
+      const exchange = resourceMarketplaceEntities?.find((mp) => mp.id === o.marketplace.id);
+      const permissions = {
+        'Limit Buy': (exchange) ? isPermitted({ exchange, type: 'limit', mode: 'buy' }) : null,
+        'Limit Sell': (exchange) ? isPermitted({ exchange, type: 'limit', mode: 'sell' }) : null,
+        'Market Buy': (exchange) ? isPermitted({ exchange, type: 'market', mode: 'buy' }) : null,
+        'Marknet Sell': (exchange) ? isPermitted({ exchange, type: 'market', mode: 'sell' }) : null,
+        map(fn) {
+          return Object.keys(this).map((k) => {
+            if (typeof this[k] !== 'function') return fn(k, this[k]);
+          });
+        },
+        values() {
+          return Object.keys(this).reduce((acc, k) => {
+            if (typeof this[k] !== 'function') acc.push(this[k]);
+            return acc;
+          }, []);
+        },
+        accessLevel() {
+          if (this.values().every((v) => v === true)) return 'full';
+          if (this.values().some((v) => v === true))  return 'limited';
+          return 'none';
+        }
+      };
+
+      return {
+        permissions,
+        marketplaceName: formatters.buildingName(o.marketplace),
+        lotId: o.marketplace?.Location?.location?.id,
+        supply: o.sell.amount,
+        demand: o.buy.amount,
+        distance: crew?._location?.asteroidId === asteroid.id ? Asteroid.getLotDistance(asteroid.id, crew?._location?.lotIndex, Lot.toIndex(o.marketplace?.Location?.location?.id)) : 0,
+        buyPrice: o.buy.price,
+        sellPrice: o.sell.price,
+        centerPrice: (o.sell.price && o.buy.price) ? (o.sell.price + o.buy.price) / 2 : (o.sell.price || o.buy.price || 0),
+        makerFee: o.marketplace?.Exchange?.makerFee,
+        takerFee: o.marketplace?.Exchange?.takerFee,
+      };
+    })
+  }, [asteroid.id, crew, orderSummary, resourceMarketplaceEntities]);
 
   const selectedSupply = useMemo(() => {
     return resourceMarketplaces.find((m) => m.lotId === selected)?.supply || 0;
@@ -231,7 +281,12 @@ const AsteroidResourcePrices = ({ asteroid, mode, resource }) => {
               asteroidId={asteroid.id}
               lotId={row.lotId}
               data-tooltip-id="detailsTooltip" />
-            <span>{row.marketplaceName}</span>
+            <MareketplaceName access={row.permissions.accessLevel()}>{row.marketplaceName}</MareketplaceName>
+            <MarketplacePermissionsIcon
+              style={{ marginLeft: 6 }}
+              permissions={row.permissions}
+              data-tooltip-id={"detailsTooltip"}
+            />
           </>
         ),
       },
@@ -341,6 +396,11 @@ const AsteroidResourcePrices = ({ asteroid, mode, resource }) => {
       //     </>
       //   )
       // },
+      {
+        key: 'permissions',
+        label: 'permissions',
+        skip: true
+      },
     ];
     if (crew?._location?.asteroidId === asteroid.id) {
       c.splice(1, 0, ({
