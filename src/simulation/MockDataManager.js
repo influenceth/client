@@ -1,5 +1,5 @@
 import { QueryObserver, useQuery, useQueryClient } from 'react-query';
-import { Building, Deposit, DryDock, Entity, Extractor, Inventory, Lot, Order, Permission, Processor, Product } from '@influenceth/sdk';
+import { Building, Deposit, DryDock, Entity, Extractor, Inventory, Lot, Order, Permission, Processor, Product, Ship } from '@influenceth/sdk';
 
 import useSimulationState from '~/hooks/useSimulationState';
 import SIMULATION_CONFIG from './simulationConfig';
@@ -53,6 +53,45 @@ export const getMockBuildingInventories = (buildingType, buildingStatus, content
   });
 };
 
+const getMockShipInventories = (shipType, contentsBySlot) => {
+  const { cargoSlot, cargoInventoryType, propellantSlot, propellantInventoryType } = Ship.TYPES[shipType];
+  const inv = [];
+  if (cargoSlot && cargoInventoryType) {
+    inv.push({
+      slot: cargoSlot,
+      inventoryType: cargoInventoryType,
+      mass: 0,
+      reservedMass: 0,
+      reservedVolume: 0,
+      volume: 0,
+      contents: contentsObjToArray(contentsBySlot?.[cargoSlot]),
+      status: Inventory.STATUSES.AVAILABLE
+    });
+  }
+  if (propellantSlot && propellantInventoryType) {
+    inv.push({
+      slot: propellantSlot,
+      inventoryType: propellantInventoryType,
+      mass: 0,
+      reservedMass: 0,
+      reservedVolume: 0,
+      volume: 0,
+      contents: contentsObjToArray(contentsBySlot?.[propellantSlot]),
+      status: Inventory.STATUSES.AVAILABLE
+    });
+  }
+
+  // TODO: it feels inelegant how we are doing this... 
+  return inv.map((i) => {
+    const [mass, volume] = (i.contents || []).reduce((acc, { product, amount }) => {
+      acc[0] += amount * Product.TYPES[product].massPerUnit;
+      acc[1] += amount * Product.TYPES[product].massPerUnit;
+      return acc;
+    }, [0, 0]);
+    return { ...i, mass, volume }
+  });
+}
+
 
 // TODO: IMPORTANT: refetch all on simulationEnabled change (in either direction)
 
@@ -102,7 +141,8 @@ const MockDataManager = () => {
           if (data) {
             Object.keys(simulation.lots).forEach((lotId) => {
               const lotIndex = Lot.toIndex(lotId);
-              data[lotIndex] = ((simulation.lots[lotId]?.buildingType || 0) << 4) // capable type
+              const buildingType = simulation.lots[lotId]?.shipId ? 15 : simulation.lots[lotId]?.buildingType;
+              data[lotIndex] = ((buildingType || 0) << 4) // capable type
                 + (2 << 2) // leased
                 + (0 << 1) // crew present
                 + (0);     // samples for sale
@@ -118,6 +158,7 @@ const MockDataManager = () => {
       const simulatedAgreements = [];
       const simulatedBuildings = [];
       const simulatedLots = [];
+      const simulatedShips = [];
 
       Object.keys(simulation.lots).map((stringLotId) => {
         const lotId = Number(stringLotId);
@@ -130,7 +171,8 @@ const MockDataManager = () => {
           depositYieldRemaining,
           leaseRate,
           leaseTerm,
-          inventoryContents
+          inventoryContents,
+          shipId
         } = simulation.lots[lotId];
 
         const lotEntity = Entity.formatEntity({ id: lotId, label: Entity.IDS.LOT });
@@ -263,6 +305,54 @@ const MockDataManager = () => {
               locations: [lotEntity, asteroidEntity]
             },
           };
+
+          configs.push({
+            queryKey: [ 'entity', Entity.IDS.DEPOSIT, depositId ],
+            transformer: (data) => deposit
+          });
+        }
+
+        let ship;
+        if (shipId) {
+          console.log('shipId', shipId, inventoryContents);
+          ship = {
+            ...Entity.formatEntity({ id: shipId, label: Entity.IDS.SHIP }),
+            Control: { controller: myCrewEntity },
+            Inventories: getMockShipInventories(Ship.IDS.LIGHT_TRANSPORT, inventoryContents),
+            Location: {
+              location: lotEntity,
+              locations: [lotEntity, asteroidEntity]
+            },
+            // Name: { name: '' },
+            Nft: { // TODO: use standard
+              owners: {
+                ethereum: null,
+                starknet: SIMULATION_CONFIG.accountAddress,
+              },
+              owner: SIMULATION_CONFIG.accountAddress,
+              chain: "STARKNET"
+            },
+            Ship: {
+              emergencyAt: 0,
+              readyAt: nowSec() - 100,
+              shipType: Ship.IDS.LIGHT_TRANSPORT,
+              status: Ship.STATUSES.AVAILABLE,
+              transitArrival: 0,
+              transitDeparture: 0,
+              variant: Ship.VARIANTS.STANDARD
+            },
+            Station: {
+              population: 0,
+              stationType: Ship.TYPES[Ship.IDS.LIGHT_TRANSPORT].stationType
+            },
+          };
+
+          simulatedShips.push(ship);
+
+          configs.push({
+            queryKey: [ 'entity', Entity.IDS.SHIP, shipId ],
+            transformer: (data) => ship
+          });
         }
 
         // lot entities...
@@ -274,10 +364,10 @@ const MockDataManager = () => {
           queryKey: entitiesCacheKey(Entity.IDS.BUILDING, { lotId }),
           transformer: (data) => building ? [building] : []
         });
-        // configs.push({
-        //   queryKey: entitiesCacheKey(Entity.IDS.SHIP, { lotId }),
-        //   transformer: (data) => data
-        // });
+        configs.push({
+          queryKey: entitiesCacheKey(Entity.IDS.SHIP, { lotId }),
+          transformer: (data) => ship ? [ship] : []
+        });
       });
 
       // wallet agreements
@@ -296,10 +386,10 @@ const MockDataManager = () => {
         queryKey: entitiesCacheKey(Entity.IDS.BUILDING, { controllerId: controllerIds, status: walletBuildingStatuses }),
         transformer: (data) => simulatedBuildings,
       });
-      // configs.push({
-      //   queryKey: entitiesCacheKey(Entity.IDS.SHIP, { owner: accountAddress, controllerId: controllerIds }),
-      //   transformer: (data) => data,
-      // });
+      configs.push({
+        queryKey: entitiesCacheKey(Entity.IDS.SHIP, { owner: SIMULATION_CONFIG.accountAddress, controllerId: controllerIds }),
+        transformer: (data) => simulatedShips,
+      });
 
 
       // crew accessible inventories
@@ -308,14 +398,13 @@ const MockDataManager = () => {
       configs.push(
         {
           queryKey: entitiesCacheKey(Entity.IDS.BUILDING, { ...invKeyObj, hasPermission: Permission.IDS.ADD_PRODUCTS }),
-          transformer: (data) => simulatedBuildings.filter((b) => !!b.Inventories.find((i) => i.status === Inventory.STATUSES.AVAILABLE))
+          transformer: (data) => [...simulatedBuildings, ...simulatedShips].filter((b) => !!b.Inventories.find((i) => i.status === Inventory.STATUSES.AVAILABLE))
         },
         {
           queryKey: entitiesCacheKey(Entity.IDS.BUILDING, { ...invKeyObj, hasPermission: Permission.IDS.REMOVE_PRODUCTS }),
-          transformer: (data) => simulatedBuildings.filter((b) => !!b.Inventories.find((i) => i.status === Inventory.STATUSES.AVAILABLE))
+          transformer: (data) => [...simulatedBuildings, ...simulatedShips].filter((b) => !!b.Inventories.find((i) => i.status === Inventory.STATUSES.AVAILABLE))
         },
       );
-      console.log({ simulatedBuildings })
     }
 
     // unresolved activities
@@ -356,21 +445,10 @@ const MockDataManager = () => {
 
   console.log('configs', overwrites);
 
-  // entity
-  // entities collections (where relevant to tutorial and data)
-  // special ones
-
-
-
-
 
   // entity, entities
   // [ 'entity', label, id ],
   // entitiesCacheKey(label, ids?.join(',')),
-
-  // lot:
-  // Entity.IDS.BUILDING, Entity.IDS.DEPOSIT, Entity.IDS.SHIP
-  // entitiesCacheKey(entityLabel, { lotId }),
 
   
   // TODO: ...

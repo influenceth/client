@@ -164,7 +164,6 @@ const useActionButtons = () => {
 
   // TODO: should this be useMemo?
   const actions = useMemo(() => {
-    console.log({ lot })
     if (asteroidIsLoading || lotIsLoading || crewedShipIsLoading || zoomedShipIsLoading) return [];
     return Object.keys(actionButtons)
       .filter((k) => !actionButtons[k].isVisible || actionButtons[k].isVisible({
@@ -177,7 +176,7 @@ const useActionButtons = () => {
         isAtRisk,
         lot: zoomStatus === 'in' && lot,
         openHudMenu,
-        ship: targetShip?.Ship.status === Ship.STATUSES.AVAILABLE && targetShip,
+        ship: targetShip?.Ship?.status === Ship.STATUSES.AVAILABLE && targetShip,
         simulation,
         zoomStatus,
         zoomScene

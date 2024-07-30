@@ -2080,6 +2080,7 @@ export const ProcessSelectionDialog = ({ initialSelection, onClose, forceProcess
           <tbody>
             {processes.map(({ i, name, inputs, outputs }) => {
               const coachmarked = coachmarks[COACHMARK_IDS.actionDialogTargetProcess] === i;
+              console.log('coachmarked', coachmarked, coachmarks[COACHMARK_IDS.actionDialogTargetProcess], i);
               return (
                 <SelectionTableRow
                   key={i}

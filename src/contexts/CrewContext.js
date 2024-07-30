@@ -49,7 +49,7 @@ export function CrewProvider({ children }) {
     if (!simulationState) return null;
 
     // TODO: put in SIMULATION_CONFIG?
-    const wcrewLocations = [
+    const wcrewLocations = simulationState.crewLocation || [
       entityProps({ id: 1, label: Entity.IDS.BUILDING }),
       entityProps({ id: 6881662889623553, label: Entity.IDS.LOT }),
       entityProps({ id: 1, label: Entity.IDS.ASTEROID })

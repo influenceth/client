@@ -4,6 +4,8 @@ import { Permission, Station } from '@influenceth/sdk';
 import { StationCrewIcon, StationPassengersIcon } from '~/components/Icons';
 import ActionButton, { getCrewDisabledReason } from './ActionButton';
 import useStationCrewManager from '~/hooks/actionManagers/useStationCrewManager';
+import useCoachmarkRefSetter from '~/hooks/useCoachmarkRefSetter';
+import { COACHMARK_IDS } from '~/contexts/CoachmarkContext';
 
 const isVisible = ({ crew, building, ship }) => {
   return crew && (
@@ -19,9 +21,10 @@ const isVisible = ({ crew, building, ship }) => {
   );
 };
 
-const StationCrew = ({ asteroid, crew, lot, ship, onSetAction, _disabled }) => {
+const StationCrew = ({ asteroid, crew, lot, ship, onSetAction, simulation, simulationActions, _disabled }) => {
   const stationEntity = useMemo(() => ship || (lot?.building?.Station ? lot.building : null), [ship, lot?.building]);
   const { currentStationing } = useStationCrewManager(stationEntity);
+  const setCoachmarkRef = useCoachmarkRefSetter();
 
   const crewIsController = stationEntity?.Control?.controller?.id === crew?.id;
   const handleClick = useCallback(() => {
@@ -31,20 +34,21 @@ const StationCrew = ({ asteroid, crew, lot, ship, onSetAction, _disabled }) => {
   const disabledReason = useMemo(() => {
     if (_disabled || !stationEntity) return 'loading...';
     if (!currentStationing) {
-      const stationConfig = Station.TYPES[stationEntity.Station.stationType];
-      if (stationConfig.cap && (stationEntity.Station.population + crew._crewmates.length) > stationConfig.cap) {
+      const stationConfig = Station.TYPES[stationEntity.Station?.stationType];
+      if (stationConfig.cap && (stationEntity.Station?.population + crew._crewmates.length) > stationConfig.cap) {
         return 'station is too full';
       }
       return getCrewDisabledReason({
         asteroid,
         crew,
+        isAllowedInSimulation: simulationActions.includes('StationCrew'),
         permission: Permission.IDS.STATION_CREW,
         permissionTarget: stationEntity,
         requireSurface: false
       });
     }
     return '';
-  }, [_disabled, asteroid, crew, crewIsController, currentStationing, stationEntity]);
+  }, [_disabled, asteroid, crew, crewIsController, currentStationing, simulationActions, stationEntity]);
 
   const buttonParams = useMemo(() => {
     if (ship) {
@@ -68,10 +72,12 @@ const StationCrew = ({ asteroid, crew, lot, ship, onSetAction, _disabled }) => {
 
   return (
     <ActionButton
+      ref={setCoachmarkRef(COACHMARK_IDS.actionButtonStationCrew)}
       {...buttonParams}
       labelAddendum={disabledReason}
       enablePrelaunch
       flags={{
+        attention: !disabledReason && simulation,
         disabled: disabledReason,
         loading: !!currentStationing
       }}

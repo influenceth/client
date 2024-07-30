@@ -9,6 +9,8 @@ import useReadyAtWatcher from '~/hooks/useReadyAtWatcher';
 import useDeliveryManager from '~/hooks/actionManagers/useDeliveryManager';
 import useShipDockingManager from '~/hooks/actionManagers/useShipDockingManager';
 import ActionButton, { getCrewDisabledReason } from './ActionButton';
+import useCoachmarkRefSetter from '~/hooks/useCoachmarkRefSetter';
+import { COACHMARK_IDS } from '~/contexts/CoachmarkContext';
 
 const isVisible = ({ crew, ship }) => {
   return crew && ship
@@ -16,9 +18,10 @@ const isVisible = ({ crew, ship }) => {
     && ship._location.lotId  // on surface
 };
 
-const LaunchShip = ({ asteroid, lot, onSetAction, _disabled, ...props }) => {
+const LaunchShip = ({ asteroid, lot, onSetAction, _disabled, simulation, simulationActions, ...props }) => {
   const blockTime = useBlockTime();
   const { crew } = useCrewContext();
+  const setCoachmarkRef = useCoachmarkRefSetter();
 
   const crewedShip = useMemo(() => lot?.ships?.find((s) => s.id === crew?._location?.shipId), [crew?._location?.shipId]);
   const ship = useMemo(() => props.ship || crewedShip, [crewedShip, props.ship]);
@@ -48,14 +51,16 @@ const LaunchShip = ({ asteroid, lot, onSetAction, _disabled, ...props }) => {
       return 'guest crews busy';
     }
 
-    return getCrewDisabledReason({ asteroid, crew });
-  }, [_disabled, blockTime, crew, crewedShip, currentDeliveries, ship, shipCrews, shipReady]);
+    return getCrewDisabledReason({ asteroid, crew, isAllowedInSimulation: simulationActions.includes('LaunchShip') });
+  }, [_disabled, blockTime, crew, crewedShip, currentDeliveries, ship, shipCrews, shipReady, simulationActions]);
 
   return (
     <ActionButton
+      ref={setCoachmarkRef(COACHMARK_IDS.actionButtonLaunchShip)}
       label="Launch Ship"
       labelAddendum={disabledReason}
       flags={{
+        attention: simulation && !disabledReason,
         disabled: disabledReason,
         loading: !!currentUndockingAction,
       }}

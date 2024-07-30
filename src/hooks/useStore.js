@@ -490,15 +490,16 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
     })),
 
     dispatchSimulationLotState: (lotId, update) => set(produce(state => {
-        if (!state.simulation.lots) state.simulation.lots = {};
-        if (!state.simulation.lots[lotId]) state.simulation.lots[lotId] = {};
-        Object.keys(update).forEach((k) => state.simulation.lots[lotId][k] = update[k]);
+      if (!state.simulation.lots) state.simulation.lots = {};
+      if (!state.simulation.lots[lotId]) state.simulation.lots[lotId] = {};
+      Object.keys(update).forEach((k) => state.simulation.lots[lotId][k] = update[k]);
     })),
 
     dispatchSimulationAddToInventory: (destination, slot, product, amount) => set(produce(state => {
       const lotId = Object.keys(state.simulation?.lots || {}).find((lotId) => {
         const lot = state.simulation.lots[lotId];
-        return (lot?.buildingId === destination.id && destination.label === Entity.IDS.BUILDING);
+        return (lot?.shipId === destination.id && destination.label === Entity.IDS.SHIP)
+          || (lot?.buildingId === destination.id && destination.label === Entity.IDS.BUILDING);
       });
 
       if (lotId) {

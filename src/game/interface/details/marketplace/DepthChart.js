@@ -711,7 +711,7 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
       a.attention = true;
     }
     return a;
-  }, [crew, loading, hasPermission, mode, sameAsteroid, total, type]);
+  }, [crew, loading, hasPermission, mode, sameAsteroid, simulationActions, simulationEnabled, total, type]);
 
   const goToListings = useCallback(() => {
     const { asteroidId, lotIndex } = Lot.toPosition(lot?.id) || {};

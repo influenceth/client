@@ -430,7 +430,7 @@ export const BuildingBlock = ({ building, onSelectCrew, selectedCrew, setRef }) 
   );
 };
 
-export const ShipBlock = ({ ship, onSelectCrew, selectedCrew }) => {
+export const ShipBlock = ({ ship, onSelectCrew, selectedCrew, setRef }) => {
   const onClickShip = useShipLink({ shipId: ship.id, zoomToShip: true });
   const location = useMemo(() => locationsArrToObj(ship.Location?.locations || []));
   
@@ -448,14 +448,14 @@ export const ShipBlock = ({ ship, onSelectCrew, selectedCrew }) => {
   }, [onClickShip, onSelectCrew, ship?.Control?.controller?.id]);
 
   return (
-    <SelectableRow onClick={onClick}>
+    <SelectableRow ref={setRef} onClick={onClick}>
       <Thumbnail>
         {selectedCrew?.id && ship.Control?.controller?.id === selectedCrew?.id && <MyAssetWrapper><MyAssetIcon /></MyAssetWrapper>}
         <ResourceImage src={getShipIcon(ship.Ship.shipType, 'w150')} contain />
         <ClipCorner dimension={10} color={majorBorderColor} />
       </Thumbnail>
       <Info>
-        <label>{formatters.shipName(ship)}</label>
+        <label style={{ maxWidth: 192 }}>{formatters.shipName(ship)}</label>
         <div>
           <EntityName {...(ship.Ship?.transitDestination || ship.Location?.location)} />
         </div>

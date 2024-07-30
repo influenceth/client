@@ -144,7 +144,7 @@ const StationCrew = ({ asteroid, destination: rawDestination, lot, origin: rawOr
     return { icon, label, status };
   }, [crewIsOwner, destination, stage]);
 
-  const stationConfig = destination ? Station.TYPES[destination.Station.stationType] : null;
+  const stationConfig = destination ? Station.TYPES[destination.Station?.stationType] : null;
 
   return (
     <>

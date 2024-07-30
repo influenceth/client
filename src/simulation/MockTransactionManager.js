@@ -305,6 +305,88 @@ const MockTransactionManager = () => {
         });
         break;
       }
+
+      case 'AssembleShipStart': {
+        const process = Process.TYPES[Process.IDS.LIGHT_TRANSPORT_INTEGRATION];
+
+        // subtract inputs from warehouse
+        Object.keys(process.inputs).forEach((resource) => {
+          dispatchSimulationAddToInventory(tx.vars.origin, tx.vars.origin_slot, resource, -process.inputs[resource]);
+        });
+
+        // put ship on empty lot
+        const emptyLotId = Object.keys(simulation.lots).find((lotId) => !simulation.lots[lotId].buildingId);
+        dispatchSimulationLotState(emptyLotId, { shipId: simulationConfig.shipId });
+
+        // mimic event
+        events.push({
+          event: 'ShipAssemblyStartedV1',
+          name: 'ShipAssemblyStarted',
+          logIndex: 1,
+          transactionIndex: 1,
+          transactionHash: tx.txHash,
+          timestamp: nowSec(),
+          returnValues: transformReturnValues({
+            ...tx.vars,
+            ship: { id: simulationConfig.shipId, label: Entity.IDS.SHIP },
+            finish_time: nowSec() - 100,
+            caller: SIMULATION_CONFIG.accountAddress
+          })
+        });
+        break;
+      }
+
+      case 'StationCrew': {
+        dispatchSimulationState('crewLocation', [
+          Entity.formatEntity(tx.vars.destination),
+          Entity.formatEntity({ id: tx.meta.destLotId, label: Entity.IDS.LOT }),
+          Entity.formatEntity({ id: 1, label: Entity.IDS.ASTEROID }),
+        ]);
+
+        // mimic event
+        events.push({
+          event: 'CrewStationedV1',
+          name: 'CrewStationed',
+          logIndex: 1,
+          transactionIndex: 1,
+          transactionHash: tx.txHash,
+          timestamp: nowSec(),
+          returnValues: transformReturnValues({
+            ...tx.vars,
+            origin_station: { id: 1, label: Entity.IDS.BUILDING },
+            // finish_time: nowSec() - 100,
+            destination_station: tx.vars.destination,
+            caller: SIMULATION_CONFIG.accountAddress
+          })
+        });
+        break;
+      }
+
+      case 'UndockShip': {
+        const dockLotId = Object.keys(simulation.lots).find((lotId) => !!simulation.lots[lotId].shipId);
+        dispatchSimulationState('crewLocation', [
+          Entity.formatEntity(tx.vars.ship),
+          Entity.formatEntity({ id: 1, label: Entity.IDS.ASTEROID }),
+        ]);
+        // TODO: also update ship location... 
+        // dispatchSimulationLotState(emptyLotId, { shipId: simulationConfig.shipId });
+
+        // mimic event
+        events.push({
+          event: 'ShipUndocked',
+          name: 'ShipUndocked',
+          logIndex: 1,
+          transactionIndex: 1,
+          transactionHash: tx.txHash,
+          timestamp: nowSec(),
+          returnValues: transformReturnValues({
+            ...tx.vars,
+            dock: { id: dockLotId, label: Entity.IDS.LOT },
+            caller: SIMULATION_CONFIG.accountAddress
+          })
+        });
+        break;
+      }
     }
 
     // no need to invalidate data b/c no real updates made

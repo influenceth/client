@@ -371,13 +371,18 @@ const MyAssets = () => {
             groupedAssets={ships}
             assetTally={shipTally}
             isLoading={shipsLoading}
-            itemGetter={(ship) => (
-              <ShipBlock
-                key={ship.id}
-                onSelectCrew={onClickCrewAsset}
-                selectedCrew={crew}
-                ship={ship} />
-            )}
+            itemGetter={(ship) => {
+              const coachmarked = coachmarks[COACHMARK_IDS.hudMenuMyAssetsShip] === ship.id;
+              console.log('coachmarked', coachmarked, coachmarks[COACHMARK_IDS.hudMenuMyAssetsShip], ship.id);
+              return (
+                <ShipBlock
+                  key={ship.id}
+                  onSelectCrew={onClickCrewAsset}
+                  selectedCrew={crew}
+                  ship={ship}
+                  setRef={coachmarked ? setCoachmarkRef(COACHMARK_IDS.hudMenuMyAssetsShip) : undefined} />
+              );
+            }}
             itemHeight={85}
             singleGroupMode={!allAsteroidsMode} />
 

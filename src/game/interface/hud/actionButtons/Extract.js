@@ -53,7 +53,6 @@ const Extract = ({ onSetAction, asteroid, crew, lot, preselect, simulation, simu
   let disabledReason = useMemo(() => {
     if (_disabled) return 'loading...';
     if (extractionStatus === 'READY') {
-      console.log('simulationActions', simulationActions)
       const crewDisabledReason = getCrewDisabledReason({
         asteroid, crew,
         isSequenceable: true,

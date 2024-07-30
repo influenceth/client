@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Building, Inventory, Permission, Process, Processor, Product } from '@influenceth/sdk';
+import { Building, Inventory, Permission, Process, Processor, Product, Ship } from '@influenceth/sdk';
 import { useHistory } from 'react-router-dom';
 
 import { ZOOM_IN_ANIMATION_TIME, ZOOM_OUT_ANIMATION_TIME, ZOOM_TO_PLOT_ANIMATION_MAX_TIME, ZOOM_TO_PLOT_ANIMATION_MIN_TIME } from '~/game/scene/Asteroid';
@@ -12,10 +12,11 @@ import useSimulationState from '~/hooks/useSimulationState';
 import useStore from '~/hooks/useStore';
 import SIMULATION_CONFIG from '~/simulation/simulationConfig';
 import { COACHMARK_IDS } from '~/contexts/CoachmarkContext';
-import { getBuildingRequirementsMet } from '~/game/interface/hud/actionDialogs/components';
+import { formatResourceMass, getBuildingRequirementsMet } from '~/game/interface/hud/actionDialogs/components';
 import { getMockBuildingInventories } from './MockDataManager';
 import simulationConfig from '~/simulation/simulationConfig';
 import useCrewOrders from '~/hooks/useCrewOrders';
+import useCrewShips from '~/hooks/useCrewShips';
 
 const DELAY_MESSAGE = 1000;
 
@@ -38,8 +39,9 @@ const useSimulationSteps = () => {
   const { data: crewAgreements, isLoading: agreementsLoading } = useCrewAgreements(true, false, true);
   const { data: crewBuildings, isLoading: buildingsLoading } = useCrewBuildings();
   const { data: crewDeposits, isLoading: depositsLoading } = useCrewSamples();
+  const { data: crewShips, isLoading: shipsLoading } = useCrewShips();
   const { data: crewOrders, isLoading: ordersLoading } = useCrewOrders(crew?.id);
-  const isLoading = agreementsLoading || buildingsLoading || depositsLoading || ordersLoading;
+  const isLoading = agreementsLoading || buildingsLoading || depositsLoading || shipsLoading || ordersLoading;
 
   const [locationPath, setLocationPath] = useState();
   const [transitioning, setTransitioning] = useState();
@@ -76,6 +78,7 @@ const useSimulationSteps = () => {
   const dispatchResourceMapSelect = useStore(s => s.dispatchResourceMapSelect);
   const dispatchResourceMapToggle = useStore(s => s.dispatchResourceMapToggle);
   const dispatchSimulationActions = useStore((s) => s.dispatchSimulationActions);
+  const dispatchSimulationLotState = useStore((s) => s.dispatchSimulationLotState);
   const dispatchSimulationStep = useStore((s) => s.dispatchSimulationStep);
   const dispatchZoomScene = useStore(s => s.dispatchZoomScene);
   const updateZoomStatus = useStore(s => s.dispatchZoomStatusChanged);
@@ -121,8 +124,10 @@ const useSimulationSteps = () => {
     const warehouseLot = Object.values(simulation.lots).find((l) => l.buildingType === Building.IDS.WAREHOUSE);
     const refineryLot = Object.values(simulation.lots).find((l) => l.buildingType === Building.IDS.REFINERY);
     const shipyardLot = Object.values(simulation.lots).find((l) => l.buildingType === Building.IDS.SHIPYARD);
-    // const shipLot = Object.values(simulation.lots).find((l) => l.buildingType === buildingType); // TODO: ...
+    const shipLot = Object.values(simulation.lots).find((l) => !!l.shipId);
   
+    const crewIsOnShip = !!crew?._location?.shipId;
+
     // my inventory contents flags
     const crewHasCoreDrill = !!(crewBuildings || []).find((b) => {
       return !!(b.Inventories || []).find((i) => (
@@ -134,6 +139,18 @@ const useSimulationSteps = () => {
       return !!(b.Inventories || []).find((i) => (
         i.status === Inventory.STATUSES.AVAILABLE
         && (i.contents || []).find((c) => c.product === Product.IDS.ACETYLENE && c.amount > 0)
+      ));
+    });
+    const crewHasFood = !!(crewShips || []).find((b) => {
+      return !!(b.Inventories || []).find((i) => (
+        i.status === Inventory.STATUSES.AVAILABLE
+        && (i.contents || []).find((c) => c.product === Product.IDS.FOOD && c.amount > 0)
+      ));
+    });
+    const crewHasPropellant = !!(crewShips || []).find((b) => {
+      return !!(b.Inventories || []).find((i) => (
+        i.status === Inventory.STATUSES.AVAILABLE
+        && (i.contents || []).find((c) => c.product === Product.IDS.HYDROGEN_PROPELLANT && c.amount >= 3000e3)
       ));
     });
 
@@ -245,6 +262,7 @@ const useSimulationSteps = () => {
     // TODO: consider coachmark-back-to-AP function and atAP helper var
 
 
+    console.log({ selectedLotIsMine, selectedLot })
 
 
     // TODO: do we want these in each step? ideally would use coach marks for nav... but maybe to prep state?
@@ -512,40 +530,97 @@ const useSimulationSteps = () => {
       },
       {
         title: 'Get off this rock.',
-        content: `Assemble a ship`,
+        content: `Assemble a ship. I stocked your warehouse with everything you'll need.`,
         crewmateId: SIMULATION_CONFIG.crewmates.engineer,
-        coachmarks: [
-          // TODO: get to shipyard lot (via hud)
-          // "build ship"
-          // "light transport",
-          // (fast forward)
-          // deliver to last leased lot
-        ],
+        initialize: () => {
+          // TODO: should we send these as a packaged p2p transfer?
+          const warehouseLotId = Object.keys(simulation.lots).find((lotId) => simulation.lots[lotId].buildingType === Building.IDS.WAREHOUSE);
+          dispatchSimulationLotState(warehouseLotId, {
+            inventoryContents: {
+              ...warehouseLot.inventoryContents,
+              [2]: {
+                ...warehouseLot.inventoryContents[2],
+                ...Process.TYPES[Process.IDS.LIGHT_TRANSPORT_INTEGRATION].inputs
+              }
+            }
+          });
+          // TODO: open warehouse inventory to show?
+        },
+        coachmarks: ({
+          // get to the shipyard lot
+          [COACHMARK_IDS.hudMenuMyAssets]: shipyardLot && !actionDialog?.type && selectedLot?.building?.id !== shipyardLot?.buildingId && openHudMenu !== 'MY_ASSETS',
+          [COACHMARK_IDS.hudMenuMyAssetsBuilding]: shipyardLot && selectedLot?.building?.id !== shipyardLot?.buildingId ? shipyardLot?.buildingId : null,
+
+          // open dialog and select LT
+          [COACHMARK_IDS.actionButtonAssembleShip]: !actionDialog?.type && selectedLot?.building?.id === shipyardLot?.buildingId,
+          [COACHMARK_IDS.actionDialogTargetProcess]: actionDialog?.type === 'ASSEMBLE_SHIP' ? Ship.IDS.LIGHT_TRANSPORT : null,
+        }),
+        enabledActions: {
+          AssembleShip: selectedLotIsMine && selectedLot?.building?.id === shipyardLot?.buildingId,
+          [`SelectProcess:${Ship.IDS.LIGHT_TRANSPORT}`]: true
+        },
+        shouldAdvance: () => {
+          return !!Object.values(simulation.lots).find((l) => l.shipId);
+        }
       },
       {
-        title: '', // TODO: ...
-        content: `Stock your ship`,
+        title: 'Stock your ship',
+        content: `Your ship has been delivered to your final leased lot. Let's get you stocked for some inter-asteroid travel. First, 5,000 kg of Food.`,
         crewmateId: SIMULATION_CONFIG.crewmates.merchant,
-        coachmarks: [
-          // order food
-          // order propellant
-          // (fast forward)
-        ],
+        initialize: () => {
+          // TODO: select ship lot
+        },
+        coachmarks: {
+          [COACHMARK_IDS.hudMenuMarketplaces]: (!locationPath || locationPath === '/'),
+          [COACHMARK_IDS.asteroidMarketsHelper]: Product.IDS.FOOD
+          // TODO: select/force target of ship's cargo hold
+        },
+        enabledActions: {
+          MarketBuy: true
+        },
+        shouldAdvance: () => !!crewHasFood
       },
       {
-        title: '', // TODO: ...
+        title: 'Gas Up',
+        content: `Now, let's fill that tank with ${formatResourceMass(Inventory.TYPES[Ship.TYPES[Ship.IDS.LIGHT_TRANSPORT].propellantInventoryType]?.massConstraint / 1e3, Product.IDS.HYDROGEN_PROPELLANT)} of hydrogen propellant.`,
+        crewmateId: SIMULATION_CONFIG.crewmates.merchant,
+        coachmarks: {
+          [COACHMARK_IDS.hudMenuMarketplaces]: (!locationPath || locationPath === '/'),
+          [COACHMARK_IDS.asteroidMarketsHelper]: Product.IDS.HYDROGEN_PROPELLANT,
+          // TODO: select/force target of ship's propellant hold
+        },
+        enabledActions: {
+          MarketBuy: true
+        },
+        shouldAdvance: () => !!crewHasPropellant
+      },
+      {
+        title: 'Get to ze choppa',
         content: `Get to orbit`,
         crewmateId: SIMULATION_CONFIG.crewmates.pilot,
-        coachmarks: [
+        coachmarks: {
+          // select ship lot
+          [COACHMARK_IDS.hudMenuMyAssets]: !actionDialog?.type && !(selectedLotIsMine && selectedLot?.surfaceShip) && openHudMenu !== 'MY_ASSETS',
+          [COACHMARK_IDS.hudMenuMyAssetsShip]: !actionDialog?.type && !(selectedLotIsMine && selectedLot?.surfaceShip) ? shipLot?.shipId : null,
+
           // station crew on ship
           // (fast forward)
           // launch to orbit
           // (fast forward)
-        ],
+          [COACHMARK_IDS.actionButtonStationCrew]: !actionDialog?.type && !crewIsOnShip && selectedLotIsMine && selectedLot?.surfaceShip,
+          [COACHMARK_IDS.actionButtonLaunchShip]: !actionDialog?.type && crewIsOnShip && selectedLotIsMine && selectedLot?.surfaceShip,
+          // TODO: propulsive launch
+          // TODO: (flight crew empty on Ship Tab)
+        },
+        enabledActions: {
+          LaunchShip: crewIsOnShip,
+          StationCrew: !crewIsOnShip,
+        },
+        shouldAdvance: () => !crew._location?.lotId
       },
       {
-        title: '', // TODO: ...
-        content: `Blast off`,
+        title: 'Blast off',
+        content: `Set course for ${SIMULATION_CONFIG.destinationAsteroidId/* TODO */}`,
         crewmateId: SIMULATION_CONFIG.crewmates.pilot,
         coachmarks: [
           // plan travel
@@ -555,22 +630,27 @@ const useSimulationSteps = () => {
         ],
       },
       {
-        title: '', // TODO: ...
-        content: `Time to go it alone`,
+        title: 'Yay!',
+        content: `Thanks for your help ${simulation.crewmate?.name}, but this simulation is over.
+          You'll come to back in your habitat, ready to finish your education.`,
         crewmateId: 6891,
         rightButton: {
           children: 'Next',
-          onClick: () => {},
+          onClick: () => {
+            // TODO: exit simulation
+            // TODO: enter crew creation
+          },
         },
       },
     ];
   }, [
     actionDialog,
     crew,
-    crewDeposits,
-    isLoading,
     crewAgreements,
     crewBuildings,
+    crewDeposits,
+    crewShips,
+    isLoading,
     locationPath,
     selectedLot,
     openHudMenu,

@@ -7,12 +7,15 @@ import useInterval from '~/hooks/useInterval';
 import useStore from '~/hooks/useStore';
 
 export const COACHMARK_IDS = {
+  actionButtonAssembleShip: 'actionButtonAssembleShip',
   actionButtonConstruct: 'actionButtonConstruct',
   actionButtonCoreSample: 'actionButtonCoreSample',
   actionButtonExtract: 'actionButtonExtract',
+  actionButtonLaunchShip: 'actionButtonLaunchShip',
   actionButtonLease: 'actionButtonLease',
   actionButtonPlan: 'actionButtonPlan',
   actionButtonProcess: 'actionButtonProcess',
+  actionButtonStationCrew: 'actionButtonStationCrew',
   actionDialogConstructSource: 'actionDialogConstructSource',
   actionDialogPlanType: 'actionDialogPlanType',
   actionDialogTargetProcess: 'actionDialogTargetProcess',
@@ -24,6 +27,7 @@ export const COACHMARK_IDS = {
   hudMenuMyAssets: 'hudMenuMyAssets',
   hudMenuMyAssetsAgreement: 'hudMenuMyAssetsAgreement',
   hudMenuMyAssetsBuilding: 'hudMenuMyAssetsBuilding',
+  hudMenuMyAssetsShip: 'hudMenuMyAssetsShip',
   hudMenuResources: 'hudMenuResources',
   hudMenuTargetResource: 'hudMenuTargetResource',
   hudRecruitCaptain: 'hudRecruitCaptain',
