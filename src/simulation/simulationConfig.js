@@ -11,6 +11,7 @@ const simulationConfig = {
   depositId: SAFE_ID_START,
   processId: Process.IDS.HUELS_PROCESS,
   resourceId: Product.IDS.METHANE,
+  destinationAsteroidId: 31,
   shipId: SAFE_ID_START,
   buildingIds: Object.values(Building.IDS).reduce((acc, v) => ({ ...acc, [v]: SAFE_ID_START + v }), {}),
   crewmates: {

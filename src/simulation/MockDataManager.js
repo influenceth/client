@@ -7,7 +7,6 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { entitiesCacheKey } from '~/lib/cacheKey';
 import { entityToAgreements } from '~/lib/utils';
 import { statuses as walletBuildingStatuses } from '~/hooks/useWalletBuildings';
-import simulationConfig from './simulationConfig';
 
 const nowSec = () => Math.floor(Date.now() / 1e3);
 
@@ -172,7 +171,9 @@ const MockDataManager = () => {
           leaseRate,
           leaseTerm,
           inventoryContents,
-          shipId
+          shipId,
+          shipIsInFlight,
+          shipIsUndocked,
         } = simulation.lots[lotId];
 
         const lotEntity = Entity.formatEntity({ id: lotId, label: Entity.IDS.LOT });
@@ -287,7 +288,7 @@ const MockDataManager = () => {
           deposit = {
             ...Entity.formatEntity({ id: depositId, label: Entity.IDS.DEPOSIT }),
             Deposit: {
-              resource: simulationConfig.resourceId,
+              resource: SIMULATION_CONFIG.resourceId,
               initialYield: depositYield,
               remainingYield: depositYieldRemaining,
               finishTime: nowSec() - 100,
@@ -319,10 +320,24 @@ const MockDataManager = () => {
             ...Entity.formatEntity({ id: shipId, label: Entity.IDS.SHIP }),
             Control: { controller: myCrewEntity },
             Inventories: getMockShipInventories(Ship.IDS.LIGHT_TRANSPORT, inventoryContents),
-            Location: {
-              location: lotEntity,
-              locations: [lotEntity, asteroidEntity]
-            },
+            Location: (
+              shipIsInFlight
+              ? {
+                location: { id: 1, label: Entity.IDS.SPACE },
+                locations: [{ id: 1, label: Entity.IDS.SPACE }],
+              }
+              : (
+                shipIsUndocked
+                ? {
+                  location: asteroidEntity,
+                  locations: [asteroidEntity]
+                }
+                : {
+                  location: lotEntity,
+                  locations: [lotEntity, asteroidEntity]
+                }
+              )
+            ),
             // Name: { name: '' },
             Nft: { // TODO: use standard
               owners: {
@@ -337,12 +352,14 @@ const MockDataManager = () => {
               readyAt: nowSec() - 100,
               shipType: Ship.IDS.LIGHT_TRANSPORT,
               status: Ship.STATUSES.AVAILABLE,
-              transitArrival: 0,
-              transitDeparture: 0,
+              transitArrival: shipIsInFlight ? nowSec() + 86400 : 0,
+              transitDeparture: shipIsInFlight ? nowSec() - 100 : 0,
+              transitOrigin: shipIsInFlight ? { id: 1, label: Entity.IDS.ASTEROID } : undefined,
+              transitDestination: shipIsInFlight ? { id: SIMULATION_CONFIG.destinationAsteroidId, label: Entity.IDS.ASTEROID } : undefined,
               variant: Ship.VARIANTS.STANDARD
             },
             Station: {
-              population: 0,
+              population: simulation.crewLocation?.[0]?.label === Entity.IDS.SHIP ? 5 : 0,
               stationType: Ship.TYPES[Ship.IDS.LIGHT_TRANSPORT].stationType
             },
           };
@@ -366,7 +383,7 @@ const MockDataManager = () => {
         });
         configs.push({
           queryKey: entitiesCacheKey(Entity.IDS.SHIP, { lotId }),
-          transformer: (data) => ship ? [ship] : []
+          transformer: (data) => ship && !ship.shipIsUndocked ? [ship] : []
         });
       });
 

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Building, Inventory, Permission, Process, Processor, Product, Ship } from '@influenceth/sdk';
+import { Building, Entity, Inventory, Permission, Process, Processor, Product, Ship } from '@influenceth/sdk';
 import { useHistory } from 'react-router-dom';
 
 import { ZOOM_IN_ANIMATION_TIME, ZOOM_OUT_ANIMATION_TIME, ZOOM_TO_PLOT_ANIMATION_MAX_TIME, ZOOM_TO_PLOT_ANIMATION_MIN_TIME } from '~/game/scene/Asteroid';
@@ -17,6 +17,8 @@ import { getMockBuildingInventories } from './MockDataManager';
 import simulationConfig from '~/simulation/simulationConfig';
 import useCrewOrders from '~/hooks/useCrewOrders';
 import useCrewShips from '~/hooks/useCrewShips';
+import EntityName from '~/components/EntityName';
+import useTravelSolutionIsValid from '~/hooks/useTravelSolutionIsValid';
 
 const DELAY_MESSAGE = 1000;
 
@@ -91,6 +93,9 @@ const useSimulationSteps = () => {
   const currentZoomScene = useStore(s => s.asteroids.zoomScene);
   const zoomStatus = useStore(s => s.asteroids.zoomStatus);
   const actionDialog = useStore(s => s.actionDialog);
+  const inTravelMode = useStore(s => s.asteroids.travelMode);
+  const travelSolution = useStore(s => s.asteroids.travelSolution);
+  const travelSolutionIsValid = useTravelSolutionIsValid();
 
   const resetAsteroidFilters = () => dispatchFiltersReset('asteroids');
 
@@ -620,14 +625,28 @@ const useSimulationSteps = () => {
       },
       {
         title: 'Blast off',
-        content: `Set course for ${SIMULATION_CONFIG.destinationAsteroidId/* TODO */}`,
+        content: <>Set course for <EntityName label={Entity.IDS.ASTEROID} id={SIMULATION_CONFIG.destinationAsteroidId} /></>,
         crewmateId: SIMULATION_CONFIG.crewmates.pilot,
-        coachmarks: [
+        initialize: () => {
+          dispatchDestinationSelected(SIMULATION_CONFIG.destinationAsteroidId);
+        },
+        coachmarks: {
+          // select ship
+          // TODO: don't need these if no lot selected
+          // TODO: should use 
+          [COACHMARK_IDS.hudCrewLocation]: !inTravelMode && !actionDialog?.type && currentZoomScene?.shipId !== shipLot?.shipId,
+
           // plan travel
-          // prepop target
-          // porkchop plot
-          // set course
-        ],
+          [COACHMARK_IDS.actionButtonSelectDestination]: !inTravelMode && !actionDialog?.type,
+          [COACHMARK_IDS.destinationAsteroid]: inTravelMode && destination !== SIMULATION_CONFIG.destinationAsteroidId,
+          [COACHMARK_IDS.porkchop]: inTravelMode && !travelSolutionIsValid,
+          [COACHMARK_IDS.actionButtonSetCourse]: !actionDialog?.type && inTravelMode && travelSolutionIsValid,
+        },
+        enabledActions: {
+          PlanFlight: true,
+          SetCourse: travelSolutionIsValid
+        },
+        shouldAdvance: () => !crew._location?.asteroidId
       },
       {
         title: 'Yay!',
@@ -650,12 +669,15 @@ const useSimulationSteps = () => {
     crewBuildings,
     crewDeposits,
     crewShips,
+    inTravelMode,
     isLoading,
     locationPath,
     selectedLot,
     openHudMenu,
     origin,
     selectedResourceId,
+    travelSolution,
+    travelSolutionIsValid,
     zoomStatus
   ]);
 

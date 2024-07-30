@@ -15,12 +15,16 @@ export const COACHMARK_IDS = {
   actionButtonLease: 'actionButtonLease',
   actionButtonPlan: 'actionButtonPlan',
   actionButtonProcess: 'actionButtonProcess',
+  actionButtonSelectDestination: 'actionButtonSelectDestination',
+  actionButtonSetCourse: 'actionButtonSetCourse',
   actionButtonStationCrew: 'actionButtonStationCrew',
   actionDialogConstructSource: 'actionDialogConstructSource',
   actionDialogPlanType: 'actionDialogPlanType',
   actionDialogTargetProcess: 'actionDialogTargetProcess',
+  asteroidMarketsHelper: 'asteroidMarketsHelper',
   backToBelt: 'backToBelt',
   detailsClose: 'detailsClose',
+  destinationAsteroid: 'destinationAsteroid',
   hudCrewLocation: 'hudCrewLocation',
   hudInfoPane: 'hudInfoPane',
   hudMenuMarketplaces: 'hudMenuMarketplaces',
@@ -31,10 +35,7 @@ export const COACHMARK_IDS = {
   hudMenuResources: 'hudMenuResources',
   hudMenuTargetResource: 'hudMenuTargetResource',
   hudRecruitCaptain: 'hudRecruitCaptain',
-
-  asteroidMarketsHelper: 'asteroidMarketsHelper',
-  depthChartHelper: 'depthChartHelper',
-  
+  porkchop: 'porkchop',
 };
 
 const CoachmarkContext = React.createContext();

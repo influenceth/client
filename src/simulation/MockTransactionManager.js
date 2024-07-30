@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef } from 'react';
-import { Asteroid, Building, Entity, Lot, Process, Product } from '@influenceth/sdk';
+import { Asteroid, Building, Entity, Lot, Process, Product, Ship } from '@influenceth/sdk';
 import { camelCase, cloneDeep } from 'lodash';
 
 import useCrewContext from '~/hooks/useCrewContext';
@@ -32,6 +32,7 @@ const MockTransactionManager = () => {
 
   // TODO: support renaming buildings and ships
 
+  // TODO: reconcile this with activities
   const getMockActionItem = useCallback((event) => {
     return {
       _id: getUuid(),
@@ -363,13 +364,12 @@ const MockTransactionManager = () => {
       }
 
       case 'UndockShip': {
-        const dockLotId = Object.keys(simulation.lots).find((lotId) => !!simulation.lots[lotId].shipId);
+        const shipLotId = Object.keys(simulation.lots).find((lotId) => !!simulation.lots[lotId].shipId);
         dispatchSimulationState('crewLocation', [
           Entity.formatEntity(tx.vars.ship),
           Entity.formatEntity({ id: 1, label: Entity.IDS.ASTEROID }),
         ]);
-        // TODO: also update ship location... 
-        // dispatchSimulationLotState(emptyLotId, { shipId: simulationConfig.shipId });
+        dispatchSimulationLotState(shipLotId, { shipId: simulationConfig.shipId, shipIsUndocked: true });
 
         // mimic event
         events.push({
@@ -381,7 +381,47 @@ const MockTransactionManager = () => {
           timestamp: nowSec(),
           returnValues: transformReturnValues({
             ...tx.vars,
-            dock: { id: dockLotId, label: Entity.IDS.LOT },
+            dock: { id: shipLotId, label: Entity.IDS.LOT },
+            caller: SIMULATION_CONFIG.accountAddress
+          })
+        });
+        break;
+      }
+
+      case 'InitializeAndStartTransit':
+      case 'TransitBetweenStart': {
+
+        // decrement propellant
+        dispatchSimulationAddToInventory(
+          { id: SIMULATION_CONFIG.shipId, label: Entity.IDS.SHIP },
+          Ship.TYPES[Ship.IDS.LIGHT_TRANSPORT].propellantSlot,
+          Product.IDS.HYDROGEN_PROPELLANT,
+          -tx.meta.usedPropellantMass
+        );
+        
+        // mark ship as inflight to destination (destination, arrival_time)
+        const shipLotId = Object.keys(simulation.lots).find((lotId) => !!simulation.lots[lotId].shipId);
+        dispatchSimulationLotState(shipLotId, { shipId: simulationConfig.shipId, shipIsUndocked: true, shipIsInFlight: true });
+
+        dispatchSimulationState('crewLocation', [
+          Entity.formatEntity(tx.vars.ship),
+          Entity.formatEntity({ id: 1, label: Entity.IDS.SPACE }),
+        ]);
+
+        // mimic event
+        events.push({
+          event: 'TransitStarted',
+          name: 'TransitStarted',
+          logIndex: 1,
+          transactionIndex: 1,
+          transactionHash: tx.txHash,
+          timestamp: nowSec(),
+          returnValues: transformReturnValues({
+            ...tx.vars,
+            ship: { id: SIMULATION_CONFIG.shipId, label: Entity.IDS.SHIP },
+            departure: tx.vars.departure_time,
+            arrival: tx.vars.arrival_time,
+            finish_time: nowSec() + 86400,
             caller: SIMULATION_CONFIG.accountAddress
           })
         });
@@ -403,7 +443,7 @@ const MockTransactionManager = () => {
         updatedAt: new Date().toISOString(),
       };
 
-      dispatchSimulationState('activities', mockActivity, 'append');
+      // dispatchSimulationState('activities', mockActivity, 'append');
 
       const config = getActivityConfig(mockActivity);
       // TODO: hydrate activity?

@@ -183,6 +183,7 @@ const useShipTravelManager = (shipId) => {
       arrivalTime,
       originPosition,
       destinationPosition,
+      usedPropellantMass,
     } = proposedTravelSolution;
 
     // TODO: make sure travelSolution origin is where ship is? or just let the
@@ -211,7 +212,8 @@ const useShipTravelManager = (shipId) => {
       },
       {
         destination,
-        shipId
+        shipId,
+        usedPropellantMass: usedPropellantMass / 1e3
       }
     );
     execute(
@@ -233,7 +235,8 @@ const useShipTravelManager = (shipId) => {
       },
       {
         destination,
-        shipId
+        shipId,
+        usedPropellantMass: usedPropellantMass / 1e3
       }
     );
   }, [caller_crew, destination, proposedTravelSolution, shipId]);

@@ -11,6 +11,8 @@ import useAsteroid from '~/hooks/useAsteroid';
 import useStore from '~/hooks/useStore';
 import Autocomplete from '~/components/Autocomplete';
 import formatters from '~/lib/formatters';
+import useCoachmarkRefSetter from '~/hooks/useCoachmarkRefSetter';
+import { COACHMARK_IDS } from '~/contexts/CoachmarkContext';
 
 const Wrapper = styled.div`
   position: relative;
@@ -55,6 +57,7 @@ const RouteSelection = () => {
   const dispatchHudMenuOpened = useStore(s => s.dispatchHudMenuOpened);
   const { data: origin } = useAsteroid(originId);
   const { data: destination } = useAsteroid(destinationId);
+  const setCoachmarkRef = useCoachmarkRefSetter();
 
   const handleSwap = useCallback(() => {
     if (originId && destinationId) dispatchSwapOriginDestination();
@@ -92,6 +95,7 @@ const RouteSelection = () => {
             placeholder="Destination Asteroid..."
             onSelect={handleSelect}
             selected={destination}
+            setRef={setCoachmarkRef(COACHMARK_IDS.destinationAsteroid)}
             width={180} />
           <IconButton
             data-tooltip-content="Close Route Selection"

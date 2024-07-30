@@ -14,6 +14,8 @@ import Reticule from './porkchop/Reticule';
 import { WarningOutlineIcon } from './Icons';
 import { reactBool } from '~/lib/utils';
 import useTravelSolutionIsValid, { maxFoodUtilizationAdays } from '~/hooks/useTravelSolutionIsValid';
+import useCoachmarkRefSetter from '~/hooks/useCoachmarkRefSetter';
+import { COACHMARK_IDS } from '~/contexts/CoachmarkContext';
 
 const PorkchopWrapper = styled.div`
   overflow: visible;
@@ -137,6 +139,7 @@ const Porkchop = ({
   const travelSolution = useStore(s => s.asteroids.travelSolution);
   const dispatchTravelSolution = useStore(s => s.dispatchTravelSolution);
   const travelSolutionIsValid = useTravelSolutionIsValid();
+  const setCoachmarkRef = useCoachmarkRefSetter();
 
   const [canvasRefIsSet, setCanvasRefIsSet] = useState();
   const [loading, setLoading] = useState(true);
@@ -358,6 +361,7 @@ const Porkchop = ({
         onClick={handleClick}
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseMove}
+        ref={setCoachmarkRef(COACHMARK_IDS.porkchop)}
         style={{ height: `${size}px`, width: `${size}px` }}>
         <canvas ref={setCanvasRef}
           height={maxTof - minTof}
