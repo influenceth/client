@@ -445,10 +445,10 @@ const GameplayPane = () => {
             </ControlGroup>
           </StyledDataReadout>
           {(gameplay.useSessions === null || gameplay.useSessions === undefined) && (
-            <HelperText>Use sessions with Argent web wallet only</HelperText>
+            <HelperText>Use sessions with Argent Web Wallet only</HelperText>
           )}
           {gameplay.useSessions === true && (
-            <HelperText>Use sessions for ArgentX and Argent web wallet</HelperText>
+            <HelperText>Use sessions with ArgentX Smart Accounts and Argent Web Wallets</HelperText>
           )}
           {gameplay.useSessions === false && (
             <HelperText>Never use sessions</HelperText>
@@ -472,7 +472,7 @@ const GameplayPane = () => {
             <HelperText>ETH / STRK defaults are used for all transaction fees</HelperText>
           )}
           {gameplay.feeToken === 'SWAY' && (
-            <HelperText>SWAY is used for all transaction fees via paymaster</HelperText>
+            <HelperText>SWAY is used for all transaction fees</HelperText>
           )}
         </div>
       </Section>

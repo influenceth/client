@@ -2,7 +2,7 @@ import { createContext, useCallback, useEffect, useRef, useMemo, useState } from
 import { useQueryClient } from 'react-query';
 import { isExpired } from 'react-jwt';
 
-import { RpcProvider, WalletAccount, shortString } from 'starknet';
+import { num, RpcProvider, WalletAccount, shortString } from 'starknet';
 import { connect as starknetConnect, disconnect as starknetDisconnect } from 'starknetkit';
 import { ArgentMobileConnector } from 'starknetkit/argentMobile';
 import { InjectedConnector } from 'starknetkit/injected';
@@ -233,7 +233,16 @@ export function SessionProvider({ children }) {
     if (setting === true && connectedWalletId === 'argentX') {
       try {
         const res = await provider.callContract({ contractAddress: connectedAccount, entrypoint: 'getVersion' });
-        return Number(shortString.decodeShortString(res[0]).replaceAll('.', '')) >= 40;
+        const correctVersion = Number(shortString.decodeShortString(res[0]).replaceAll('.', '')) >= 40;
+        if (!correctVersion) return false;
+      } catch (e) {
+        console.error(e);
+        return false;
+      }
+
+      try {
+        const res = await provider.callContract({ contractAddress: connectedAccount, entrypoint: 'get_guardian' });
+        return num.toBigInt(res[0]) !== 0n;
       } catch (e) {
         console.error(e);
         return false;
