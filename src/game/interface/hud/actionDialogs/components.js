@@ -2080,7 +2080,6 @@ export const ProcessSelectionDialog = ({ initialSelection, onClose, forceProcess
           <tbody>
             {processes.map(({ i, name, inputs, outputs }) => {
               const coachmarked = coachmarks[COACHMARK_IDS.actionDialogTargetProcess] === i;
-              console.log('coachmarked', coachmarked, coachmarks[COACHMARK_IDS.actionDialogTargetProcess], i);
               return (
                 <SelectionTableRow
                   key={i}
@@ -2258,6 +2257,11 @@ export const InventorySelectionDialog = ({
   requirePresenceOfItemIds
 }) => {
   const { crew } = useCrewContext();
+  
+  const simulationEnabled = useSimulationEnabled();
+  const setCoachmarkRef = useCoachmarkRefSetter();
+  const coachmarks = useStore(s => s.coachmarks);
+  const simulationActions = useStore((s) => s.simulationActions);
 
   const [filterItemIds, setFilterItemIds] = useState();
   const [filterValue, setFilterValue] = useState('');
@@ -2339,6 +2343,7 @@ export const InventorySelectionDialog = ({
         display.push({
           key: JSON.stringify({ id: entity.id, label: entity.label, lotId: entityLotId, asteroidId, lotIndex: entityLotIndex, slot: inv.slot }),
 
+          entity,
           disabled: (requirePresenceOfItemIds && !itemTally) || (isSourcing && inv.mass === 0),
           distance: Asteroid.getLotDistance(asteroidId, entityLotIndex, otherLocation.lotIndex), // distance to source + distance to destination
           isControlled: entity.Control.controller.id === crew?.id,
@@ -2455,11 +2460,15 @@ export const InventorySelectionDialog = ({
     setSort([updatedSortField, updatedSortDirection]);
   }, [sort]);
 
-  const getRowProps = useCallback((row) => ({
-    disable: row.disabled,
-    onClick: () => setSelection(row.key),
-    isSelected: (selection === row.key),
-  }), [selection]);
+  const getRowProps = useCallback((row) => {
+    const coachmarked = coachmarks[COACHMARK_IDS.actionDialogTargetInventory] === `${row.entity.label}.${row.entity.id}.${row.slot}`;
+    return {
+      setRef: coachmarked ? setCoachmarkRef(COACHMARK_IDS.actionDialogTargetInventory) : null,
+      disable: row.disabled,
+      onClick: () => setSelection(row.key),
+      isSelected: (selection === row.key),
+    };
+  }, [selection, coachmarks, setCoachmarkRef]);
 
   const handleFilterChange = useCallback((e) => {
     setFilterValue(e.target.value);
@@ -2514,9 +2523,17 @@ export const InventorySelectionDialog = ({
       .sort((a, b) => (sort[1] === 'desc' ? -1 : 1) * (a[sort[0]] < b[sort[0]] ? -1 : 1));
   }, [filterItemIds, filterValue, inventories, isSourcing, showPermittedInventories, showPublicInventories, sort]);
 
+  const isCompletable = useMemo(() => {
+    if (selection && simulationEnabled) {
+      const selObj = inventories.find((i) => i.key === selection);
+      return simulationActions.includes(`SelectInventory:${selObj?.entity?.label}.${selObj?.entity?.id}.${selObj?.slot}`);
+    }
+    return !!selection;
+  }, [selection, simulationEnabled, simulationActions])
+
   return (
     <SelectionDialog
-      isCompletable={!!selection}
+      isCompletable={isCompletable}
       onClose={onClose}
       onComplete={onComplete}
       open={open}
@@ -2555,17 +2572,19 @@ export const InventorySelectionDialog = ({
 
         <div style={{ flex: 1 }} />
 
-        <FilterWrapper isLimited={limitToControlled}>
-          <FilterRowLabel isOn={!limitToControlled && showPermittedInventories} onClick={() => setShowPermittedInventories((p) => !p)}>
-            {!limitToControlled && showPermittedInventories ? <CheckedIcon /> : <UncheckedIcon />}
-            <span>Permitted Inventories</span>
-          </FilterRowLabel>
+        {!simulationEnabled && (
+          <FilterWrapper isLimited={limitToControlled}>
+            <FilterRowLabel isOn={!limitToControlled && showPermittedInventories} onClick={() => setShowPermittedInventories((p) => !p)}>
+              {!limitToControlled && showPermittedInventories ? <CheckedIcon /> : <UncheckedIcon />}
+              <span>Permitted Inventories</span>
+            </FilterRowLabel>
 
-          <FilterRowLabel isOn={!limitToControlled && showPublicInventories} onClick={() => setShowPublicInventories((p) => !p)}>
-            {!limitToControlled && showPublicInventories ? <CheckedIcon /> : <UncheckedIcon />}
-            <span>Public Inventories</span>
-          </FilterRowLabel>
-        </FilterWrapper>
+            <FilterRowLabel isOn={!limitToControlled && showPublicInventories} onClick={() => setShowPublicInventories((p) => !p)}>
+              {!limitToControlled && showPublicInventories ? <CheckedIcon /> : <UncheckedIcon />}
+              <span>Public Inventories</span>
+            </FilterRowLabel>
+          </FilterWrapper>
+        )}
       </FilterRow>
 
       {isSourcing && filterItemIds && (
@@ -3680,11 +3699,14 @@ export const ProcessInputSquareSection = ({ title, products, input, output, prim
 };
 
 export const PropulsionTypeSection = ({ disabled, objectLabel, propulsiveTime, tugTime, powered, onSetPowered, warning }) => {
+  const coachmarks = useStore(s => s.coachmarks);
+  const setCoachmarkRef = useCoachmarkRefSetter();
   return (
     <FlexSectionBlock title={`${objectLabel} Type`} bodyStyle={{ padding: 0 }}>
       <>
         {(onSetPowered || powered) && (
           <PropulsionTypeOption
+            ref={!powered && coachmarks[COACHMARK_IDS.actionDialogTargetLaunchType] === 'propulsive' ? setCoachmarkRef(COACHMARK_IDS.actionDialogTargetLaunchType) : null}
             disabled={disabled}
             onClick={!disabled && onSetPowered ? () => onSetPowered(true) : undefined}
             selected={powered}>
@@ -3697,6 +3719,7 @@ export const PropulsionTypeSection = ({ disabled, objectLabel, propulsiveTime, t
         )}
         {(onSetPowered || !powered) && (
           <PropulsionTypeOption
+            ref={powered && coachmarks[COACHMARK_IDS.actionDialogTargetLaunchType] === 'tug' ? setCoachmarkRef(COACHMARK_IDS.actionDialogTargetLaunchType) : null}
             disabled={disabled}
             onClick={!disabled && onSetPowered ? () => onSetPowered(false) : undefined}
             selected={!powered}>

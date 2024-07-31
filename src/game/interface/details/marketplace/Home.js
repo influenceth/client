@@ -401,7 +401,7 @@ const MarketplaceHome = ({ asteroid, listings, mode, setMode, orderTally, onSele
                   <TickerItem key={listing.product} onClick={() => onSelectListing(listing)}>
                     <span>{resource.name}</span>
                     <SwayIcon />
-                    <span>{formatPrice(price)}</span>
+                    <span>{formatPrice(price, { fixedPrecision: 4 })}</span>
                     {change && <ChangeBubble isUp={change > 0}>{change > 0 ? '+' : ''}{formatPrecision(100 * change, 3)}%</ChangeBubble>}
                   </TickerItem>
                 );
@@ -486,7 +486,7 @@ const MarketplaceHome = ({ asteroid, listings, mode, setMode, orderTally, onSele
                     ? (
                       <ListingPrice>
                         <SwayIcon />
-                        <Price unit={resource.isAtomic ? 'unit' : 'kg'}>{formatPrice(price)}</Price>
+                        <Price unit={resource.isAtomic ? 'unit' : 'kg'}>{formatPrice(price, { fixedPrecision: 4 })}</Price>
                         <PriceArrow mode={mode}><ChevronRightIcon /></PriceArrow>
                       </ListingPrice>
                     )

@@ -280,7 +280,7 @@ const AsteroidResourcePrices = ({ asteroid, mode, resource }) => {
           <>
             {row.sellPrice === 0 
               ? <Empty>—</Empty>
-              : (<><IconWrapper><SwayIcon /></IconWrapper> {formatPrice(row.sellPrice)}</>)
+              : (<><IconWrapper><SwayIcon /></IconWrapper> {formatPrice(row.sellPrice, { fixedPrecision: 4 })}</>)
             }
           </>
         )
@@ -313,7 +313,7 @@ const AsteroidResourcePrices = ({ asteroid, mode, resource }) => {
           <>
           {row.buyPrice === 0 
             ? <Empty>—</Empty>
-            : <><IconWrapper><SwayIcon /></IconWrapper> {formatPrice(row.buyPrice)}</>
+            : <><IconWrapper><SwayIcon /></IconWrapper> {formatPrice(row.buyPrice, { fixedPrecision: 4 })}</>
           }
           </>
         )
@@ -354,7 +354,7 @@ const AsteroidResourcePrices = ({ asteroid, mode, resource }) => {
       //   selector: row => (
       //     <>
       //       <IconWrapper><SwayIcon /></IconWrapper>
-      //       {formatPrice(row.centerPrice)}
+      //       {formatPrice(row.centerPrice, { fixedPrecision: 4 })}
       //     </>
       //   )
       // },
@@ -426,7 +426,7 @@ const AsteroidResourcePrices = ({ asteroid, mode, resource }) => {
               </div>
             </MarketSummary>
             <MarketPrice>
-              <label>Median Price:</label> <SwayIcon />{formatPrice(medianPrice)}<label>/{resource.isAtomic ? 'unit' : 'kg'}</label>
+              <label>Median Price:</label> <SwayIcon />{formatPrice(medianPrice, { fixedPrecision: 4 })}<label>/{resource.isAtomic ? 'unit' : 'kg'}</label>
             </MarketPrice>
           </div>
         </div>

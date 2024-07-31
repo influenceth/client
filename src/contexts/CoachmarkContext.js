@@ -20,7 +20,9 @@ export const COACHMARK_IDS = {
   actionButtonStationCrew: 'actionButtonStationCrew',
   actionDialogConstructSource: 'actionDialogConstructSource',
   actionDialogPlanType: 'actionDialogPlanType',
+  actionDialogTargetInventory: 'actionDialogTargetInventory',
   actionDialogTargetProcess: 'actionDialogTargetProcess',
+  actionDialogTargetLaunchType: 'actionDialogTargetLaunchType',
   asteroidMarketsHelper: 'asteroidMarketsHelper',
   backToBelt: 'backToBelt',
   detailsClose: 'detailsClose',
@@ -97,7 +99,6 @@ export function CoachmarkProvider({ children }) {
   }, [coachmarks, refEls]);
 
   const register = useCallback((label) => (r) => {
-    // because of how this setter 
     setRefEls((prev) => {
       let updated = { ...prev };
       if (r) updated[label] = r;

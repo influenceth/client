@@ -127,7 +127,7 @@ const MockDataManager = () => {
     // sway balance
     configs.push({
       queryKey: [ 'walletBalance', 'sway', SIMULATION_CONFIG.accountAddress ],
-      transformer: () => simulation.sway || SIMULATION_CONFIG.startingSway
+      transformer: () => simulation.sway || 0
     });
 
     // lot-related

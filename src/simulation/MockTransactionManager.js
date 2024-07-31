@@ -67,7 +67,7 @@ const MockTransactionManager = () => {
           lotsLeased[Lot.toId(asteroidId, lotIndex)] = { ...lotDetails };
         });
         dispatchSimulationState('lots', lotsLeased);
-        dispatchSimulationState('sway', SIMULATION_CONFIG.startingSway - tx.vars.termPrice);
+        dispatchSimulationState('sway', SIMULATION_CONFIG.startingSway - 5 * tx.vars.termPrice);
 
         // mimic event
         events.push({

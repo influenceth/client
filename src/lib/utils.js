@@ -36,7 +36,7 @@ export const formatPrecision = (value, maximumPrecision = 0) => {
   return formatFixed(value, allowedDecimals);
 };
 
-export const formatPrice = (inputSway, { minPrecision = 3, fixedPrecision = 4, forcedAbbrev } = {}) => {
+export const formatPrice = (inputSway, { minPrecision = 3, fixedPrecision, forcedAbbrev } = {}) => {
   let sign = inputSway < 0 ? '-' : '';
 
   const sway = Math.abs(inputSway);
@@ -52,7 +52,7 @@ export const formatPrice = (inputSway, { minPrecision = 3, fixedPrecision = 4, f
     scale = 1;
     unitLabel = '';
   } else {
-    return Number(sway || 0).toLocaleString(undefined, { minimumFractionDigits: minPrecision, maximumFractionDigits: fixedPrecision });
+    return Number(sway || 0).toLocaleString(undefined, { minimumFractionDigits: minPrecision, maximumFractionDigits: Math.max(minPrecision, fixedPrecision || 0) });
   }
 
   const workingUnits = (sway / scale);
@@ -63,7 +63,7 @@ export const formatPrice = (inputSway, { minPrecision = 3, fixedPrecision = 4, f
       fixedPlaces++;
     }
   }
-  return `${sign}${(workingUnits || 0).toLocaleString(undefined, { minimumFractionDigits: minPrecision, maximumFractionDigits: fixedPlaces })}${unitLabel}`;
+  return `${sign}${(workingUnits || 0).toLocaleString(undefined, { minimumFractionDigits: minPrecision, maximumFractionDigits: Math.max(fixedPlaces, minPrecision) })}${unitLabel}`;
 };
 
 export const formatUSD = (usd) => {

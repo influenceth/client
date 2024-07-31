@@ -91,6 +91,7 @@ const NewCoreSample = ({ asteroid, crew, lot, onSetAction, overrideResourceId, i
     <>
       {currentSamplingStack.length > 0 && (
         <ActionButtonStack
+          setRef={setCoachmarkRef(COACHMARK_IDS.actionButtonCoreSample)}
           stack={currentSamplingStack}
           stackLabel={
             currentSamplingStack.length > 1
@@ -101,17 +102,19 @@ const NewCoreSample = ({ asteroid, crew, lot, onSetAction, overrideResourceId, i
         />
       )}
 
-      <ActionButton
-        ref={setCoachmarkRef(COACHMARK_IDS.actionButtonCoreSample)}
-        label={label}
-        labelAddendum={disabledReason}
-        flags={{
-          attention: simulation && !disabledReason,
-          disabled: disabledReason
-        }}
-        icon={improveSample ? <ImproveCoreSampleIcon /> : <NewCoreSampleIcon />}
-        onClick={handleClick}
-        sequenceMode={!crew?._ready || currentSamplingStack.length > 0} />
+      {(!simulation || currentSamplingStack.length === 0) && (
+        <ActionButton
+          ref={setCoachmarkRef(COACHMARK_IDS.actionButtonCoreSample)}
+          label={label}
+          labelAddendum={disabledReason}
+          flags={{
+            attention: simulation && !disabledReason,
+            disabled: disabledReason
+          }}
+          icon={improveSample ? <ImproveCoreSampleIcon /> : <NewCoreSampleIcon />}
+          onClick={handleClick}
+          sequenceMode={!crew?._ready || currentSamplingStack.length > 0} />
+      )}
     </>
   );
 };

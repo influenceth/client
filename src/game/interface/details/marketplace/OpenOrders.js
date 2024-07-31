@@ -203,7 +203,7 @@ const MarketplaceOpenOrders = ({ asteroid, orders, marketplace = null, marketpla
         selector: row => (
           <>
             <IconWrapper><SwayIcon /></IconWrapper>
-            {formatPrice(row.total)}
+            {formatPrice(row.total, { fixedPrecision: 4 })}
           </>
         )
       },

@@ -37,6 +37,7 @@ import { getBonusDirection } from './components';
 import { TimeBonusTooltip } from './components';
 import useStationedCrews from '~/hooks/useStationedCrews';
 import useBlockTime from '~/hooks/useBlockTime';
+import useSimulationEnabled from '~/hooks/useSimulationEnabled';
 
 
 const propellantProduct = Product.TYPES[Product.IDS.HYDROGEN_PROPELLANT];
@@ -167,6 +168,16 @@ const LaunchShip = ({ asteroid, originLot, manager, ship, shipCrews, stage, ...p
     lastStatus.current = stage;
   }, [stage]);
 
+  const simulationEnabled = useSimulationEnabled();
+  const simulationActions = useStore((s) => s.simulationActions);
+  const simLaunchTypeAllowed = useMemo(() => {
+    if (simulationEnabled) {
+      if (powered) return simulationActions.includes('SelectLaunchType:propulsive');
+      return simulationActions.includes('SelectLaunchType:tug');
+    }
+    return true;
+  }, [powered, simulationActions, simulationEnabled]);
+
   return (
     <>
       <ActionDialogHeader
@@ -273,7 +284,7 @@ const LaunchShip = ({ asteroid, originLot, manager, ship, shipCrews, stage, ...p
       </ActionDialogBody>
 
       <ActionDialogFooter
-        disabled={isDeliveryPending || isGuestCrewBusy || (powered && propellantRequirement > propellantLoaded)}
+        disabled={isDeliveryPending || isGuestCrewBusy || (powered && (propellantRequirement > propellantLoaded)) || !simLaunchTypeAllowed}
         goLabel="Launch"
         onGo={onLaunch}
         stage={stage}

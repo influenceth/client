@@ -104,6 +104,7 @@ const AsteroidResources = ({ onClose }) => {
   const dispatchResourceMapSelect = useStore(s => s.dispatchResourceMapSelect);
   const dispatchResourceMapToggle = useStore(s => s.dispatchResourceMapToggle);
   const resourceMap = useStore(s => s.asteroids.resourceMap);
+  const coachmarks = useStore(s => s.coachmarks);
 
   const onClick = useCallback((i) => () => {
     if (resourceMap.active && resourceMap.selected === Number(i)) {
@@ -141,7 +142,7 @@ const AsteroidResources = ({ onClose }) => {
                 </Title>
                 <ResourceList>
                   {resources.map((resource) => {
-                    const coachmarked = Number(resource.i) === SIMULATION_CONFIG.resourceId;
+                    const coachmarked = Number(resource.i) === coachmarks[COACHMARK_IDS.hudMenuTargetResource];
                     const isSelected = resourceMap.active && resourceMap.selected === Number(resource.i);
                     return (
                       <Resource

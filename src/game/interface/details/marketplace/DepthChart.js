@@ -154,7 +154,7 @@ const ChartArea = styled.div`
     right: 0;
   }
   &:after {
-    content: "${p => p.spread > 0 ? `${formatPrice(p.spread)} SWAY` : ''}";
+    content: "${p => p.spread > 0 ? `${formatPrice(p.spread, { fixedPrecision: 4 })} SWAY` : ''}";
     padding: 0 0 4px 8px;
     position: absolute;
     top: calc(50% + 3px);
@@ -799,7 +799,7 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
 
             <CenterPrice>
               <SwayIcon />
-              <Price unit={resource.isAtomic ? 'unit' : 'kg'}>{formatPrice(centerPrice)}</Price>
+              <Price unit={resource.isAtomic ? 'unit' : 'kg'}>{formatPrice(centerPrice, { fixedPrecision: 4 })}</Price>
             </CenterPrice>
 
             <BuyTable>
@@ -910,7 +910,7 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
                         monospace
                         size="large"
                         disabled
-                        value={formatPrice(avgMarketPrice ? (avgMarketPrice || 0) : ((centerPrice || 0) + (spread || 0) / 2))} />
+                        value={formatPrice(avgMarketPrice ? (avgMarketPrice || 0) : ((centerPrice || 0) + (spread || 0) / 2), { fixedPrecision: 4 })} />
                     </TextInputWrapper>
                   </FormSection>
                 )}

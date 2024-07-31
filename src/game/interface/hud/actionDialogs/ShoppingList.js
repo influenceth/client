@@ -220,7 +220,7 @@ const columns = [
       <PriceField>
         <div>
           <IconWrapper><SwayIcon /></IconWrapper>
-          <div>{formatPrice(row._dynamicUnitPrice, { minPrecision: 4 })}</div>
+          <div>{formatPrice(row._dynamicUnitPrice, { fixedPrecision: 4, minPrecision: 4 })}</div>
         </div>
         <small>({row._dynamicSupply.toLocaleString()}{tableState.resource.isAtomic ? '' : ' kg'})</small>
         {row._isLimited && <LiquidityWarning />}
@@ -737,7 +737,7 @@ const ShoppingList = ({ asteroid, destination, destinationSlot, stage, ...props 
                       <ExpandableIcon isExpanded={openProductId === product.i} />
                       {/*
                       <div>{formatResourceAmount(selectionSummary[product.i]?.totalFilled || 0, product.i)} filled of {formatResourceAmount(amount, product.i)}</div>
-                      <div>@ <SwayIcon /> <span>{formatPrice(selectionSummary[product.i]?.totalPrice / selectionSummary[product.i]?.totalFilled)}</span></div>
+                      <div>@ <SwayIcon /> <span>{formatPrice(selectionSummary[product.i]?.totalPrice / selectionSummary[product.i]?.totalFilled, { fixedPrecision: 4 })}</span></div>
                       */}
                     </ProductHeader>
 

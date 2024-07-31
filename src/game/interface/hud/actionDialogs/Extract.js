@@ -437,7 +437,7 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
                 </InputLabel>
                 <TextInputWrapper>
                   <div style={{ background: '#09191f', color: 'white', fontSize: '26px', padding: '4px 2px', width: '100%' }}>
-                    <SwayIcon />{formatPrice(selectedCoreSample.PrivateSale?.amount / 1e6)}
+                    <SwayIcon />{formatPrice(selectedCoreSample.PrivateSale?.amount / 1e6, { fixedPrecision: 4 })}
                   </div>
                 </TextInputWrapper>
                 <Warning>

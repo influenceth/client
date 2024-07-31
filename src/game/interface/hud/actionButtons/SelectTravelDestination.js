@@ -62,6 +62,7 @@ const SelectTravelDestination = ({ crew, simulation, simulationActions }) => {
       ref={setCoachmarkRef(COACHMARK_IDS.actionButtonSelectDestination)}
       flags={{ active: !!canSelect, disabled: simulation && !simulationActions.includes('PlanFlight') }}
       label={canSelect ? `Cancel ${planningOrSimulation}` : `${planOrSimulate} Flight Plan`}
+      labelAddendum={simulation && !simulationActions.includes('PlanFlight') ? 'simulation restricted' : ''}
       icon={<SimulateRouteIcon />}
       onClick={handleClick} />
   );
