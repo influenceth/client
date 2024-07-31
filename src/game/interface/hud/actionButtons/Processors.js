@@ -11,7 +11,7 @@ const isVisible = ({ building, crew }) => {
   return crew && building && building.Processors?.length > 0;
 };
 
-const Button = ({ asteroid, crew, lot, processor, onSetAction, simulation, simulationActions, _disabled }) => {
+const Button = ({ asteroid, blockTime, crew, lot, processor, onSetAction, simulation, simulationActions, _disabled }) => {
   const { currentProcess, processStatus } = useProcessManager(lot?.id, processor.slot);
   const setCoachmarkRef = useCoachmarkRefSetter();
 
@@ -25,7 +25,9 @@ const Button = ({ asteroid, crew, lot, processor, onSetAction, simulation, simul
     if (_disabled) return 'loading...';
     if (processStatus === 'READY') {
       return getCrewDisabledReason({
-        asteroid, crew,
+        asteroid,
+        blockTime,
+        crew,
         isSequenceable: true,
         isAllowedInSimulation: simulationActions.includes(`Process:${processor?.processorType}`),
         permission: Permission.IDS.RUN_PROCESS,
@@ -34,7 +36,7 @@ const Button = ({ asteroid, crew, lot, processor, onSetAction, simulation, simul
     } else if (!currentProcess?._isAccessible) {
       return 'in use';
     }
-  }, [asteroid, crew, currentProcess, processor?.processorType, processStatus, simulationActions]);
+  }, [asteroid, blockTime, crew, currentProcess, processor?.processorType, processStatus, simulationActions]);
 
   const loading = ['PROCESSING', 'FINISHING'].includes(processStatus);
   return (

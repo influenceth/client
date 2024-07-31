@@ -9,10 +9,9 @@ import { COACHMARK_IDS } from '~/contexts/CoachmarkContext';
 import useCoachmarkRefSetter from '~/hooks/useCoachmarkRefSetter';
 
 // TODO: arguably, it would be more consistent to show this button in a disabled state, at least in some conditions
-const isVisible = ({ lot, crew }) => {
-  console.log('lot', lot);
+const isVisible = ({ lot, blockTime, crew }) => {
   // visible when lot selected and lot is available to crew (and uncontrolled or not controlled by occupant)
-  if (lot && Permission.getPolicyDetails(lot, crew)[Permission.IDS.USE_LOT]?.crewStatus === 'available') {
+  if (lot && Permission.getPolicyDetails(lot, crew, blockTime)[Permission.IDS.USE_LOT]?.crewStatus === 'available') {
     if (!lot.Control?.controller?.id) return true;
     if ((lot.building || lot.surfaceShip)?.Control?.controller?.id !== lot.Control.controller.id) return true;
   }

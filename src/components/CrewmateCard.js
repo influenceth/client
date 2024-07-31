@@ -10,6 +10,7 @@ import CrewClassIcon from '~/components/CrewClassIcon';
 import CrewCollectionEmblem from '~/components/CrewCollectionEmblem';
 import DataReadout from '~/components/DataReadout';
 import formatters from '~/lib/formatters';
+import { safeBigInt } from '~/lib/utils';
 
 const CardLayer = styled.div`
   position: absolute;
@@ -235,7 +236,7 @@ const CrewmateCard = ({ crewmate = {}, useExplicitAppearance, ...props }) => {
 
     if (!useExplicitAppearance && crewmate?.id) {
       url = `${process.env.REACT_APP_IMAGES_URL}/v2/crewmates/${crewmate.id}/image.png?bustOnly=true${options}`;
-    } else if (BigInt(crewmate.Crewmate?.appearance || 0) > 0n) {
+    } else if (safeBigInt(crewmate.Crewmate?.appearance || 0) > 0n) {
       url = `${process.env.REACT_APP_IMAGES_URL}/v1/crew/provided/image.svg?bustOnly=true&options=${JSON.stringify(
         pick(crewmate.Crewmate, ['coll', 'class', 'title', 'appearance'])
       )}`;

@@ -45,6 +45,7 @@ import actionStage from '~/lib/actionStages';
 import formatters from '~/lib/formatters';
 import { TOKEN, TOKEN_SCALE } from '~/lib/priceUtils';
 import theme from '~/theme';
+import useBlockTime from '~/hooks/useBlockTime';
 
 const P2PSection = styled.div`
   align-self: flex-start;
@@ -75,6 +76,7 @@ const SurfaceTransfer = ({
   const crew = useActionCrew(currentDelivery);
   const { data: currentDeliveryCallerCrew } = useHydratedCrew(currentDelivery?.callerCrew?.id);
   const { crewCan } = useCrewContext();
+  const blockTime = useBlockTime();
 
   const crewTravelBonus = useMemo(() => {
     if (!crew) return {};
@@ -252,9 +254,14 @@ const SurfaceTransfer = ({
 
   const senderHasDestPerm = useMemo(() => {
     if (!destination) return true;
-    if (currentDelivery) return (currentDeliveryCallerCrew && destination) ? Permission.isPermitted(currentDeliveryCallerCrew, Permission.IDS.ADD_PRODUCTS, destination) : true;
+    if (currentDelivery) {
+      if (currentDeliveryCallerCrew && destination) {
+        return Permission.isPermitted(currentDeliveryCallerCrew, Permission.IDS.ADD_PRODUCTS, destination, blockTime);
+      }
+      return true;
+    }
     return crewCan(Permission.IDS.ADD_PRODUCTS, destination);
-  }, [crew, currentDelivery, currentDeliveryCallerCrew, destination]);
+  }, [blockTime, crew, currentDelivery, currentDeliveryCallerCrew, destination]);
 
   const isP2P = useMemo(() => currentDelivery?.isProposal || !senderHasDestPerm, [currentDelivery?.isProposal, senderHasDestPerm]);
 
@@ -290,13 +297,15 @@ const SurfaceTransfer = ({
   ]), [totalMass, totalVolume, transportDistance, transportTime]);
 
   const willBeOverCapacity = useMemo(() => {
+    if (![actionStage.NOT_STARTED, actionStage.STARTING].includes(stage)) return false;
+
     const destInventoryConfig = Inventory.getType(destinationInventory?.inventoryType, crew?._inventoryBonuses) || {};
     if (destinationInventory) {
       destInventoryConfig.massConstraint -= ((destinationInventory.mass || 0) + (destinationInventory.reservedMass || 0));
       destInventoryConfig.volumeConstraint -= ((destinationInventory.volume || 0) + (destinationInventory.reservedVolume || 0));
     }
     return (totalMass > destInventoryConfig.massConstraint) || (totalVolume > destInventoryConfig.volumeConstraint);
-  }, [crew?._inventoryBonuses, destinationInventory, totalMass, totalVolume]);
+  }, [crew?._inventoryBonuses, destinationInventory, stage, totalMass, totalVolume]);
 
   const onStartDelivery = useCallback(() => {
     if (willBeOverCapacity) {
@@ -419,8 +428,10 @@ const SurfaceTransfer = ({
             inventoryBonuses={crew?._inventoryBonuses}
             imageProps={{ iconOverride: <InventoryIcon /> }}
             isSelected={stage === actionStage.NOT_STARTED && !(fixedOrigin && originInventoryTally === 1)}
+            isSourcing
             lotIdOverride={originLot?.id}
             onClick={() => { setOriginSelectorOpen(true) }}
+            stage={stage}
             sublabel={
               originLot
                 ? <><LocationIcon /> {formatters.lotName(originSelection?.lotIndex)}</>
@@ -444,13 +455,13 @@ const SurfaceTransfer = ({
             isSelected={stage === actionStage.NOT_STARTED && !(fixedDestination && destinationInventoryTally === 1)}
             lotIdOverride={destinationLot?.id}
             onClick={() => { setDestinationSelectorOpen(true) }}
+            stage={stage}
             sublabel={
               destinationLot
                 ? <><LocationIcon /> {formatters.lotName(destinationSelection?.lotIndex)}</>
                 : 'Inventory'
             }
-            transferMass={totalMass}
-            transferVolume={totalVolume} />
+          />
         </FlexSection>
 
         {tab === 0 && (
@@ -560,6 +571,7 @@ const SurfaceTransfer = ({
                   inventoryBonuses={crew?._inventoryBonuses}
                   deltaMass={-totalMass}
                   deltaVolume={-totalVolume}
+                  stage={stage}
                 />
               </div>
               <FlexSectionSpacer />
@@ -569,6 +581,7 @@ const SurfaceTransfer = ({
                   inventoryBonuses={crew?._inventoryBonuses}
                   deltaMass={totalMass}
                   deltaVolume={totalVolume}
+                  stage={stage}
                 />
               </div>
             </FlexSection>

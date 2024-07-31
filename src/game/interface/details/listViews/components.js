@@ -1,7 +1,8 @@
 import { useHistory } from 'react-router-dom';
 import styled from 'styled-components';
+import { Tooltip } from 'react-tooltip';
 
-import { LocationIcon } from '~/components/Icons';
+import { LocationIcon, PermissionIcon } from '~/components/Icons';
 import { useLotLink } from '~/components/LotLink';
 import { useShipLink } from '~/components/ShipLink';
 
@@ -19,6 +20,27 @@ const StyledIconLink = styled.span`
     opacity: 0.5;
   }
 `;
+
+export const MarketplacePermissionsIcon = ({ permissions = {}, ...props }) => {
+  return (
+    <span
+    data-tooltip-place={"top-start"}
+    data-tooltip-html={`
+    <div style="width: 200px">
+      <div style="margin-bottom: 6px;">My Crew's Permissions</div>
+      ${permissions.map((key, value) => {
+        return `<div style="display: flex">
+          <div style="flex-grow: 1">${key}:</div>
+          <div style="color: ${(value) ? 'green' : 'red'}">${value ? 'Permitted' : 'Restricted'}</div>
+        </div>`
+      }).join('\n')}
+    </div>
+    `}
+    {...props}>
+      <PermissionIcon />
+    </span>
+  );
+};
 
 export const IconLink = ({ children, onClick, tooltip, ...props }) => {
   const history = useHistory();

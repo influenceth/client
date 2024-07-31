@@ -21,7 +21,7 @@ const isVisible = ({ building, crew }) => {
 };
 
 // TODO: for multiple extractors, need one of these (and an extraction manager) per extractor
-const Extract = ({ onSetAction, asteroid, crew, lot, preselect, simulation, simulationActions, _disabled }) => {
+const Extract = ({ onSetAction, asteroid, blockTime, crew, lot, preselect, simulation, simulationActions, _disabled }) => {
   const { crewCan } = useCrewContext();
   const { currentExtraction, extractionStatus } = useExtractionManager(lot?.id);
   const setCoachmarkRef = useCoachmarkRefSetter();
@@ -54,11 +54,12 @@ const Extract = ({ onSetAction, asteroid, crew, lot, preselect, simulation, simu
     if (_disabled) return 'loading...';
     if (extractionStatus === 'READY') {
       const crewDisabledReason = getCrewDisabledReason({
-        asteroid, crew,
+        asteroid,
+        blockTime,
+        crew,
         isSequenceable: true,
         isAllowedInSimulation: simulationActions.includes('Extract'),
-        permission:
-        Permission.IDS.EXTRACT_RESOURCES,
+        permission: Permission.IDS.EXTRACT_RESOURCES,
         permissionTarget: lot?.building
       });
       if (crewDisabledReason) return crewDisabledReason;
@@ -66,7 +67,7 @@ const Extract = ({ onSetAction, asteroid, crew, lot, preselect, simulation, simu
     } else if (!currentExtraction?._isAccessible) {
       return 'in use';
     }
-  }, [_disabled, crew, currentExtraction, extractionStatus, lot?.building, simulationActions, myUsableSamples?.length]);
+  }, [_disabled, blockTime, crew, currentExtraction, extractionStatus, lot?.building, simulationActions, myUsableSamples?.length]);
   
   const loading = ['EXTRACTING', 'FINISHING'].includes(extractionStatus);
   return (

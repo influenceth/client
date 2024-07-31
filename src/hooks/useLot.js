@@ -2,9 +2,11 @@ import { useEffect, useMemo } from 'react';
 import { useQuery, useQueryClient,  } from 'react-query';
 import { Entity, Lot, Permission, Ship } from '@influenceth/sdk';
 
+import useBlockTime from '~/hooks/useBlockTime';
+import useEntity from '~/hooks/useEntity';
 import api from '~/lib/api';
-import useEntity from './useEntity';
 import { entitiesCacheKey } from '~/lib/cacheKey';
+
 
 const useLotEntities = (lotId, entityLabel, isPreloaded) => {
   return useQuery(
@@ -18,6 +20,7 @@ const useLotEntities = (lotId, entityLabel, isPreloaded) => {
 };
 
 const useLot = (lotId) => {
+  const blockTime = useBlockTime();
   const queryClient = useQueryClient();
 
   // console.log('lotId', typeof lotId, lotId, lotId ? Entity.formatEntity({ id: lotId, label: Entity.IDS.LOT }) : null)
@@ -73,7 +76,8 @@ const useLot = (lotId) => {
 
     const { asteroidId, lotIndex } = Lot.toPosition(lotId) || {};
     // TODO: do we need Whitelist*Agreements here?
-    const agreement = (lot?.PrepaidAgreements || lot?.ContractAgreements || []).find((a) => a.permission === Permission.IDS.USE_LOT);
+    const prepaidAgreements = (lot?.PrepaidAgreements || []).filter((a) => a?.endTime > blockTime);
+    const agreement = ((prepaidAgreements.length > 0 ? prepaidAgreements : lot?.ContractAgreements) || []).find((a) => a.permission === Permission.IDS.USE_LOT);
     const building = (buildings || []).find((e) => e.Building.status > 0);
     const depositsToShow = (deposits || []).filter((e) => e.Deposit.status > 0);// && !(e.Deposit.status === Deposit.STATUSES.USED && e.Deposit.remainingYield === 0));
     const shipsToShow = (ships || []).filter((s) => [Ship.STATUSES.UNDER_CONSTRUCTION, Ship.STATUSES.AVAILABLE].includes(s.Ship.status));
@@ -118,7 +122,7 @@ const useLot = (lotId) => {
       // 'ContractAgreement', 'PrepaidAgreement' should be on lot record
       // unclear what happens to 'WhitelistAgreement' or PublicPolicies
     };
-  }, [lotEntity?.uuid, isLoading, asteroid, buildings, deposits, ships, objArrDataUpdatedAt]);
+  }, [lotEntity?.uuid, isLoading, asteroid, blockTime, buildings, deposits, ships, objArrDataUpdatedAt]);
 
   return useMemo(() => ({ data, isLoading }), [data, isLoading]);
 };

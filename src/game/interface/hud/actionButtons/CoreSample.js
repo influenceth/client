@@ -72,9 +72,9 @@ const NewCoreSample = ({ asteroid, crew, lot, onSetAction, overrideResourceId, i
     if (currentSamplingActions.find((c) => c.stage === 'STARTING')) return 'pending';
     return getCrewDisabledReason({
       asteroid,
+      crew,
       isSequenceable: true,
-      isAllowedInSimulation: simulationActions.includes('CoreSample'),
-      crew
+      isAllowedInSimulation: simulationActions.includes('CoreSample')
     });
   }, [_disabled, asteroid, crew, currentSamplingActions, improveSample, simulationActions]);
 

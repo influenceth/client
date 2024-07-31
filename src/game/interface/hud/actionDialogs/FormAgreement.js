@@ -7,7 +7,7 @@ import numeral from 'numeral';
 import { CheckIcon, CloseIcon, ExtendAgreementIcon, FormAgreementIcon, FormLotAgreementIcon, GiveNoticeIcon, LinkIcon, CancelAgreementIcon, LotControlIcon, PermissionIcon, RefreshIcon, SwayIcon } from '~/components/Icons';
 import useCrewContext from '~/hooks/useCrewContext';
 import useStore from '~/hooks/useStore';
-import { daysToSeconds, reactBool, locationsArrToObj, formatFixed, monthsToSeconds, secondsToMonths, nativeBool, secondsToDays } from '~/lib/utils';
+import { daysToSeconds, reactBool, locationsArrToObj, formatFixed, monthsToSeconds, secondsToMonths, nativeBool, secondsToDays, safeBigInt } from '~/lib/utils';
 import {
   ActionDialogFooter,
   ActionDialogHeader,
@@ -220,7 +220,7 @@ const FormAgreement = ({
   }, [initialPeriod, currentPolicy]);
 
   const insufficientAssets = useMemo(
-    () => BigInt(Math.ceil(isTermination ? refundableAmount : totalLeaseCost)) > swayBalance,
+    () => safeBigInt(Math.ceil(isTermination ? refundableAmount : totalLeaseCost)) > swayBalance,
     [swayBalance, refundableAmount, totalLeaseCost, isTermination]
   );
 

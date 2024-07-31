@@ -3,15 +3,17 @@ import { Ship } from '@influenceth/sdk';
 import cloneDeep from 'lodash/cloneDeep';
 
 import useAsteroid from '~/hooks/useAsteroid';
+import useBlockTime from '~/hooks/useBlockTime';
 import useConstructionManager from '~/hooks/actionManagers/useConstructionManager';
 import useCrewContext from '~/hooks/useCrewContext';
 import useLot from '~/hooks/useLot';
+import useSession from '~/hooks/useSession';
 import useShip from '~/hooks/useShip';
+import useSimulationState from '~/hooks/useSimulationState';
 import useStore from '~/hooks/useStore';
 import { locationsArrToObj } from '~/lib/utils';
 import actionButtons from '../game/interface/hud/actionButtons';
-import useSession from './useSession';
-import useSimulationState from './useSimulationState';
+
 
 // if selected asteroid (any zoom)
 //  - purchase asteroid
@@ -105,6 +107,7 @@ const buttonOrder = [
 ].reduce((acc, k, i) => ({ ...acc, [k]: i + 1 }), {});
 
 const useActionButtons = () => {
+  const blockTime = useBlockTime();
   const asteroidId = useStore(s => s.asteroids.origin);
   const lotId = useStore(s => s.asteroids.lot);
   const resourceMap = useStore(s => s.asteroids.resourceMap);
@@ -169,6 +172,7 @@ const useActionButtons = () => {
       .filter((k) => !actionButtons[k].isVisible || actionButtons[k].isVisible({
         account: accountAddress,
         asteroid,
+        blockTime,
         crew,
         crewedShip,
         building: zoomStatus === 'in' && constructionStatus === 'OPERATIONAL' && lot?.building,
@@ -183,7 +187,7 @@ const useActionButtons = () => {
       }))
       .sort((a, b) => (buttonOrder[a] || 100) - (buttonOrder[b] || 100))
       .map((k) => actionButtons[k].Component || actionButtons[k]);
-  }, [targetShip, asteroid, constructionStatus, crew, crewedShip, lot, openHudMenu, resourceMap?.active, !!resourceMap?.selected, simulation, zoomScene, zoomStatus]);
+  }, [asteroid, blockTime, constructionStatus, crew, crewedShip, lot, openHudMenu, resourceMap?.active, !!resourceMap?.selected, targetShip, simulation, zoomScene, zoomStatus]);
 
   // TODO: within each action button, should memoize whatever is passed to flags
   // (because always a new object, will always re-render the underlying button)
@@ -192,6 +196,7 @@ const useActionButtons = () => {
     props: {
       accountAddress,
       asteroid,
+      blockTime,
       crew,
       lot,
       ship: targetShip,

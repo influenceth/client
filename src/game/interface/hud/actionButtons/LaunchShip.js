@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Entity } from '@influenceth/sdk';
 
 import { LaunchShipIcon } from '~/components/Icons';
-import useBlockTime from '~/hooks/useBlockTime';
 import useCrewContext from '~/hooks/useCrewContext';
 import useStationedCrews from '~/hooks/useStationedCrews';
 import useReadyAtWatcher from '~/hooks/useReadyAtWatcher';
@@ -18,8 +17,7 @@ const isVisible = ({ crew, ship }) => {
     && ship._location.lotId  // on surface
 };
 
-const LaunchShip = ({ asteroid, lot, onSetAction, _disabled, simulation, simulationActions, ...props }) => {
-  const blockTime = useBlockTime();
+const LaunchShip = ({ asteroid, blockTime, lot, onSetAction, _disabled, simulation, simulationActions, ...props }) => {
   const { crew } = useCrewContext();
   const setCoachmarkRef = useCoachmarkRefSetter();
 

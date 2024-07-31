@@ -1,8 +1,9 @@
 import { createContext, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Address, Asteroid, Entity, Order, System } from '@influenceth/sdk';
 import { isEqual, get } from 'lodash';
-import { hash, shortString, uint256 } from 'starknet';
+import { hash, num, shortString, uint256 } from 'starknet';
 import { fetchBuildExecuteTransaction, fetchQuotes } from '@avnu/avnu-sdk';
+import * as gasless from '@avnu/gasless-sdk';
 
 import useActivitiesContext from '~/hooks/useActivitiesContext';
 import useSession from '~/hooks/useSession';
@@ -11,7 +12,7 @@ import useStore from '~/hooks/useStore';
 import { useUsdcPerEth } from '~/hooks/useSwapQuote';
 import useWalletBalances from '~/hooks/useWalletBalances';
 import api from '~/lib/api';
-import { cleanseTxHash } from '~/lib/utils';
+import { cleanseTxHash, safeBigInt } from '~/lib/utils';
 import { TOKEN } from '~/lib/priceUtils';
 import useSimulationEnabled from '~/hooks/useSimulationEnabled';
 
@@ -31,7 +32,7 @@ const customConfigs = {
   AcceptDelivery: {
     equalityTest: ['delivery.id'],
     getTransferConfig: ({ caller, delivery, price }) => ({
-      amount: BigInt(price || 0),
+      amount: safeBigInt(price || 0),
       recipient: caller,
       memo: Entity.packEntity(delivery)
     })
@@ -39,7 +40,7 @@ const customConfigs = {
   AcceptPrepaidAgreement: {
     equalityTest: ['target.id', 'target.label', 'permission'],
     getTransferConfig: ({ recipient, permission, permitted, target, termPrice }) => ({
-      amount: BigInt(termPrice),
+      amount: safeBigInt(termPrice),
       recipient,
       memo: [
         Entity.packEntity(target),
@@ -54,7 +55,7 @@ const customConfigs = {
   CancelPrepaidAgreement: {
     equalityTest: ['target.id', 'target.label', 'permission'],
     getTransferConfig: ({ agreementPath, refundAmount, recipient }) => ({
-      amount: BigInt(refundAmount),
+      amount: safeBigInt(refundAmount),
       recipient,
       memo: (agreementPath || '').split('.')
     })
@@ -62,7 +63,7 @@ const customConfigs = {
   ExtendPrepaidAgreement: {
     equalityTest: ['target.id', 'target.label', 'permission'],
     getTransferConfig: ({ recipient, permission, permitted, target, termPrice }) => ({
-      amount: BigInt(termPrice),
+      amount: safeBigInt(termPrice),
       recipient,
       memo: [
         Entity.packEntity(target),
@@ -102,11 +103,11 @@ const customConfigs = {
   InitializeAsteroid: {
     preprocess: ({ asteroid }) => ({
       asteroid,
-      celestial_type: BigInt(asteroid.Celestial.celestialType),
-      mass: BigInt(Math.round(Asteroid.Entity.getMass(asteroid))) * 2n ** 64n,
-      radius: BigInt(Math.round(asteroid.Celestial.radius * 1000)) * 2n ** 32n / 1000n,
-      a: BigInt(Math.round(asteroid.Orbit.a * 10000)) * 2n ** 64n / 10000n,
-      ecc: BigInt(Math.round(asteroid.Orbit.ecc * 1000)) * 2n ** 64n / 1000n,
+      celestial_type: safeBigInt(asteroid.Celestial.celestialType),
+      mass: safeBigInt(Asteroid.Entity.getMass(asteroid)) * 2n ** 64n,
+      radius: safeBigInt(asteroid.Celestial.radius * 1000) * 2n ** 32n / 1000n,
+      a: safeBigInt(asteroid.Orbit.a * 10000) * 2n ** 64n / 10000n,
+      ecc: safeBigInt(asteroid.Orbit.ecc * 1000) * 2n ** 64n / 1000n,
       inc: BigInt(asteroid.Orbit.inc * 2 ** 64),
       raan: BigInt(asteroid.Orbit.raan * 2 ** 64),
       argp: BigInt(asteroid.Orbit.argp * 2 ** 64),
@@ -247,7 +248,7 @@ const customConfigs = {
   },
   EscrowWithdrawalAndFillBuyOrders: {
     getEscrowAmount: ({ price, amount, makerFee }) => {
-      return BigInt(Math.round(price * amount * (1 + makerFee)) || 0);
+      return safeBigInt(price * amount * (1 + makerFee));
     },
     escrowConfig: {
       entrypoint: 'withdraw',
@@ -281,12 +282,12 @@ const customConfigs = {
       ];
       return [
         {
-          amount: BigInt(Math.round(vars.payments.toPlayer)),
+          amount: safeBigInt(vars.payments.toPlayer),
           recipient: vars.seller_account,
           memo
         },
         {
-          amount: BigInt(Math.round(vars.payments.toExchange)),
+          amount: safeBigInt(vars.payments.toExchange),
           recipient: vars.exchange_owner_account,
           memo
         }
@@ -402,7 +403,8 @@ export function ChainTransactionProvider({ children }) {
     authenticated,
     blockNumber,
     blockTime,
-    fixBraavos,
+    chainId,
+    getOutsideExecutionData,
     isDeployed,
     logout,
     provider,
@@ -422,13 +424,27 @@ export function ChainTransactionProvider({ children }) {
   walletRef.current = walletSource;
 
   const createAlert = useStore(s => s.dispatchAlertLogged);
+  const gameplay = useStore(s => s.gameplay);
   const dispatchFailedTransaction = useStore(s => s.dispatchFailedTransaction);
   const dispatchPendingTransaction = useStore(s => s.dispatchPendingTransaction);
-  // const dispatchPendingTransactionUpdate = useStore(s => s.dispatchPendingTransactionUpdate);
   const dispatchPendingTransactionComplete = useStore(s => s.dispatchPendingTransactionComplete);
   const dispatchClearTransactionHistory = useStore(s => s.dispatchClearTransactionHistory);
 
   const [promptingTransaction, setPromptingTransaction] = useState(false);
+  const [nonce, setNonce] = useState();
+
+  // Sets the nonce initially to allow for some local management
+  useEffect(() => {
+    const retrieveNonce = async () => {
+      const currentNonce = await provider.getNonceForAddress(accountAddress);
+      setNonce(BigInt(currentNonce));
+    };
+
+    if (!nonce && accountAddress && Number(accountAddress) !== 0) retrieveNonce();
+  }, [accountAddress, nonce, gameplay.useSessions, starknetSession, provider]);
+
+  // Temporary logging for nonces
+  useEffect(() => console.log('NONCE', nonce || null), [nonce]);
 
   // autoresolve when actionType is set but actionType was not actually triggered by actionRound
   const prependEventAutoresolve = useMemo(
@@ -443,8 +459,13 @@ export function ChainTransactionProvider({ children }) {
   );
 
   const executeWithAccount = useCallback(async (calls) => {
+    // Format calls for proper stringification
+    const formattedCalls = calls.map((call) => {
+      return { ...call, calldata: call.calldata.map(a => num.toHex(a)) };
+    });
+
     // Check if we can utilize a signed session to execute calls
-    const canUseSession = !!starknetSession && !calls.some((c) => {
+    const canUseSessionKey = !!gameplay.useSessions && !!starknetSession && !calls.some((c) => {
       const found = allowedMethods.find((m) => {
         return m['Contract Address'] === c.contractAddress && m.selector === c.entrypoint;
       });
@@ -452,12 +473,74 @@ export function ChainTransactionProvider({ children }) {
       return !found;
     });
 
-    // Use session wallet if possible, otherwise regular wallet, but "old" account if wallet RPC won't work
-    const account = canUseSession ? starknetSession : (walletAccount.walletProvider?.account || walletAccount);
-    const response = await account.execute(calls);
-    fixBraavos();
-    return response;
-  }, [allowedMethods, createAlert, fixBraavos, starknetSession, walletAccount]);
+    // Use session wallet if possible, otherwise regular wallet
+    const account = canUseSessionKey ? starknetSession : walletAccount;
+    const txOptions = {};
+
+    // Check and store the gasless compatibility status
+    if (
+      isDeployed
+      && gameplay.feeToken === 'SWAY'
+      && (await gasless.fetchAccountCompatibility(
+        accountAddress, { baseUrl: process.env.REACT_APP_AVNU_API_URL }
+      )).isCompatible
+    ) {
+      // Use gasless via relayer for non-ETH / STRK transactions
+      const simulation = await walletAccount.simulateTransaction(
+        [{ type: 'INVOKE_FUNCTION', payload: calls }],
+        { skipValidate: true }
+      );
+
+      const tokens = await gasless.fetchGasTokenPrices({ baseUrl: process.env.REACT_APP_AVNU_API_URL });
+      const gasToken = tokens.find((t) => Address.areEqual(t.tokenAddress, TOKEN.SWAY));
+
+      // Double the fee estimation and check for sufficient funds to ensure transaction success
+      const maxFee = gasless.getGasFeesInGasToken(simulation[0].suggestedMaxFee, gasToken) * 2n;
+
+      // Check if wallet has sufficient funds for gas fees
+      if (walletRef.current?.tokenBalance) {
+        const match = Object.entries(walletRef.current.tokenBalance).find((e) => {
+          return Address.areEqual(e[0], gasToken.tokenAddress);
+        });
+
+        // Skip this check in testnet since the allowed gas tokens are inconsistent
+        if (process.env.REACT_APP_DEPLOYMENT === 'production' && (!match || match[1] < maxFee)) {
+          createAlert({
+            type: 'GenericAlert',
+            data: { content: 'Insufficient wallet balance, please recharge in the store.' },
+            level: 'warning',
+          });
+
+          throw new Error('Insufficient wallet balance');
+        }
+      }
+
+      const { typedData, signature } = await getOutsideExecutionData(formattedCalls, gasToken.tokenAddress, maxFee);
+      return await gasless.fetchExecuteTransaction(
+        accountAddress,
+        JSON.stringify(typedData),
+        signature,
+        { baseUrl: process.env.REACT_APP_AVNU_API_URL }
+      );
+    } else if (canUseSessionKey && nonce) {
+      // Manage nonces locally when using sessions but not using relayer
+      txOptions.nonce = nonce;
+    }
+
+    if (nonce) setNonce(n => n + 1n);
+    return await account.execute(formattedCalls, txOptions);
+  }, [
+    accountAddress,
+    allowedMethods,
+    createAlert,
+    chainId,
+    gameplay.feeToken,
+    getOutsideExecutionData,
+    isDeployed,
+    nonce,
+    starknetSession,
+    walletAccount
+  ]);
 
   const contracts = useMemo(() => {
     if (!!walletAccount) {
@@ -529,7 +612,6 @@ export function ChainTransactionProvider({ children }) {
             for (let { runSystem, rawVars, escrowConfig } of systemCalls) {
               console.log('systemCall', runSystem, rawVars, escrowConfig);
               let processedVars;
-              console.log({ runSystem, rawVars, escrowConfig });
 
               // escrow-wrapped systems
               if (escrowConfig) {
@@ -616,8 +698,15 @@ export function ChainTransactionProvider({ children }) {
 
               if (customConfigs[runSystem]?.getPrice) {
                 const [tokenAmount, token] = (await customConfigs[runSystem].getPrice(processedVars)) || [];
-                if (![TOKEN.ETH, TOKEN.USDC].includes(token)) throw new Error('Invalid pricing token (only ETH or USDC supported).');
-                if (totalPriceToken && totalPriceToken !== token) throw new Error('Mixed currency transactions are not supported.');
+
+                if (![TOKEN.ETH, TOKEN.USDC].includes(token)) {
+                  throw new Error('Invalid pricing token (only ETH or USDC supported)');
+                }
+
+                if (totalPriceToken && totalPriceToken !== token) {
+                  throw new Error('Mixed currency transactions are not supported');
+                }
+
                 totalPrice += tokenAmount;
                 totalPriceToken = token;
               }
@@ -642,9 +731,9 @@ export function ChainTransactionProvider({ children }) {
               const totalWalletValueInToken = wallet.combinedBalance?.to(totalPriceToken);
 
               // if don't have enough USDC + ETH to cover it, throw funds error
-              if (totalPrice > BigInt(totalWalletValueInToken)) {
+              if (totalPrice > safeBigInt(totalWalletValueInToken)) {
                 console.log('EXECUTE', wallet, wallet.combinedBalance, wallet.combinedBalance, wallet.combinedBalance?.to(totalPriceToken));
-                const fundsError = new Error('Insufficient wallet balance.');
+                const fundsError = new Error('Insufficient wallet balance');
                 fundsError.additionalFundsRequired = parseInt(totalPrice - BigInt(totalWalletValueInToken));
                 fundsError.additionalFundsToken = totalPriceToken;
                 throw fundsError;
@@ -676,7 +765,7 @@ export function ChainTransactionProvider({ children }) {
                     const quotes = await fetchQuotes({
                       sellTokenAddress: fromAddress,
                       buyTokenAddress: toAddress,
-                      sellAmount: BigInt(Math.ceil(targetSwapAmount / actualConv)),
+                      sellAmount: safeBigInt(Math.ceil(targetSwapAmount / actualConv)),
                       takerAddress: accountAddress,
                     }, { baseUrl: process.env.REACT_APP_AVNU_API_URL });
                     if (!quotes?.[0]) throw new Error('Insufficient swap liquidity');
@@ -689,9 +778,10 @@ export function ChainTransactionProvider({ children }) {
                     const newConv = parseInt(quote.buyAmount) / parseInt(quote.sellAmount);
                     if (newConv === actualConv) {
                       if (quote.buyAmount < targetSwapAmount) {
-                        throw new Error('Swap pricing issue encountered.');
+                        throw new Error('Swap pricing issue encountered');
                       }
                     }
+
                     actualConv = newConv;
                   }
 
@@ -715,13 +805,12 @@ export function ChainTransactionProvider({ children }) {
           },
 
           onConfirmed: (event, vars) => {
-            if (config.getConfirmedAlert) {
-              createAlert(config.getConfirmedAlert(vars));
-            }
+            if (config.getConfirmedAlert) createAlert(config.getConfirmedAlert(vars));
             config.onConfirmed && config.onConfirmed(event, vars);
           },
 
           onTransactionError: (err, vars) => {
+            setNonce(null);
             console.error(err, vars);
           },
         };
@@ -730,11 +819,19 @@ export function ChainTransactionProvider({ children }) {
       }, {});
     }
     return null;
-  }, [createAlert, prependEventAutoresolve, accountAddress, executeWithAccount, starknetSession, usdcPerEth]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [
+    accountAddress,
+    createAlert,
+    executeWithAccount,
+    gameplay.feesInSway,
+    prependEventAutoresolve,
+    starknetSession,
+    usdcPerEth
+  ]);
 
   const getTxEvent = useCallback((txHash) => {
-    const txHashBInt = BigInt(txHash);
-    return (activities || []).find((a) => a.event?.transactionHash && BigInt(a.event?.transactionHash) === txHashBInt)?.event;
+    const txHashBInt = safeBigInt(txHash);
+    return (activities || []).find((a) => a.event?.transactionHash && safeBigInt(a.event?.transactionHash) === txHashBInt)?.event;
   }, [activities?.length]);
 
   const transactionWaiters = useRef([]);
@@ -868,12 +965,15 @@ export function ChainTransactionProvider({ children }) {
   const isAccountLocked = useCallback(async () => {
     // Check that the account isn't locked, and prompt to unlock if it is
     try {
-      if (walletAccount?.walletProvider?.enable) await walletAccount?.walletProvider?.enable();
+      await walletAccount.walletProvider.request({
+        type: 'wallet_requestAccounts',
+        params: { silent_mode: false }
+      });
+
+      return false;
     } catch (e) {
       return true;
     }
-
-    return false;
   }, [walletAccount]);
 
   // Allows for multiple explicit / manual calls to be executed in a single transaction
@@ -913,7 +1013,8 @@ export function ChainTransactionProvider({ children }) {
       // if a tx just went through and account is not known to be deployed,
       // now is a good time to check again if it is deployed
       if (!isDeployed) {
-        const txHash = cleanseTxHash(tx.transaction_hash);
+        const txHash = cleanseTxHash(tx);
+
         if (txHash) {
           provider.waitForTransaction(txHash, { retryInterval: RETRY_INTERVAL })
             .then((receipt) => { if (receipt) upgradeInsecureSession(); })
@@ -974,7 +1075,7 @@ export function ChainTransactionProvider({ children }) {
         vars,
         meta,
         timestamp: blockTime ? (blockTime * 1000) : null,
-        txHash: cleanseTxHash(tx.transaction_hash),
+        txHash: cleanseTxHash(tx),
         waitingOn: 'TRANSACTION'
       });
     } catch (e) {

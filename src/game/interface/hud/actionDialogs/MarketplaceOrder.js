@@ -17,7 +17,7 @@ import useOrderList from '~/hooks/useOrderList';
 import { useSwayBalance } from '~/hooks/useWalletTokenBalance';
 import formatters from '~/lib/formatters';
 import actionStages from '~/lib/actionStages';
-import { reactBool, formatFixed, formatTimer, getCrewAbilityBonuses, locationsArrToObj, formatPrice, ordersToFills } from '~/lib/utils';
+import { reactBool, formatFixed, formatTimer, getCrewAbilityBonuses, locationsArrToObj, formatPrice, ordersToFills, safeBigInt } from '~/lib/utils';
 import theme, { hexToRGB } from '~/theme';
 import { ActionDialogInner, useAsteroidAndLot } from '../ActionDialog';
 import {
@@ -613,7 +613,7 @@ const MarketplaceOrder = ({
   const insufficientAssets = useMemo(() => {
     if (isCancellation) return false;
     if (mode === 'buy') {
-      return total > BigInt(swayBalance) / BigInt(TOKEN_SCALE[TOKEN.SWAY]);
+      return total > safeBigInt(swayBalance) / safeBigInt(TOKEN_SCALE[TOKEN.SWAY]);
     } else {
       return quantityToUnits(quantity) > amountInInventory;
     }
@@ -775,12 +775,16 @@ const MarketplaceOrder = ({
             inventoryBonuses={crew?._inventoryBonuses}
             imageProps={{ iconOverride: <InventoryIcon /> }}
             isSelected={!isCancellation && stage === actionStages.NOT_STARTED}
+            isSourcing={mode === 'sell'}
             onClick={() => setStorageSelectorOpen(true)}
+            stage={stage}
             sublabel={
               storageLot
               ? <><LocationIcon /> {formatters.lotName(storageLot?.id)}</>
               : 'Inventory'
-            } />
+            }
+            transferMass={quantity * Product.TYPES[resourceId].massPerUnit}
+            transferVolume={quantity * Product.TYPES[resourceId].volumePerUnit} />
         </FlexSection>
 
         <FlexSection>

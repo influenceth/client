@@ -23,7 +23,7 @@ const isVisible = ({ crew, building, ship }) => {
 
 // NOTE: this is "eject guest(s)"
 // (can eject guests from ship or building i control)
-const EjectGuestCrew = ({ asteroid, crew, lot, ship, onSetAction, dialogProps = {}, _disabled }) => {
+const EjectGuestCrew = ({ asteroid, blockTime, crew, lot, ship, onSetAction, dialogProps = {}, _disabled }) => {
   const [station, entityId] = useMemo(() => {
     const station = ship || lot?.building;
     const entityId = { id: station.id, label: station.label };
@@ -53,11 +53,11 @@ const EjectGuestCrew = ({ asteroid, crew, lot, ship, onSetAction, dialogProps = 
     if (station) {
       if (dialogProps?.guestId) {
         const targetCrew = allGuestCrews.find((c) => c.id === dialogProps?.guestId);
-        const perm = Permission.getPolicyDetails(station, targetCrew)[Permission.IDS.STATION_CREW];
+        const perm = Permission.getPolicyDetails(station, targetCrew, blockTime)[Permission.IDS.STATION_CREW];
         if ((perm && (perm.crewStatus === 'controller' || perm.crewStatus === 'granted'))) return 'guest has permission';
       } else {
         const atLeastOneCrewIsEjectable = allGuestCrews.find((c) => {
-          const perm = Permission.getPolicyDetails(station, c)[Permission.IDS.STATION_CREW];
+          const perm = Permission.getPolicyDetails(station, c, blockTime)[Permission.IDS.STATION_CREW];
           return !(perm && (perm.crewStatus === 'controller' || perm.crewStatus === 'granted'));
         });
         if (!atLeastOneCrewIsEjectable) return 'all guests have permission';
@@ -66,7 +66,7 @@ const EjectGuestCrew = ({ asteroid, crew, lot, ship, onSetAction, dialogProps = 
 
     // TODO: does controller need to be on asteroid? on entity?
     return getCrewDisabledReason({ crew });
-  }, [_disabled, allGuestCrews, asteroid, crew, station]);
+  }, [_disabled, allGuestCrews, asteroid, blockTime, crew, station]);
 
   return (
     <ActionButton

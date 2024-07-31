@@ -193,8 +193,14 @@ export const useStarterPacks = () => {
         return;
       }
 
-      fireTrackingEvent(`purchase_${which}_starter_pack`, {
-        externalId: accountAddress, category: 'purchase', amount: Number(crewmateTally) * 5
+      fireTrackingEvent('purchase', {
+        category: 'purchase',
+        currency: 'USD',
+        externalId: accountAddress,
+        value: Number(crewmateTally) * 5,
+        items: [{
+          item_name: `starter_pack_${which}`
+        }]
       });
 
       await execute('PurchaseStarterPack', {

@@ -3,9 +3,11 @@ import { Address, Entity, Permission } from '@influenceth/sdk';
 
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
 import useCrewContext from '~/hooks/useCrewContext';
-import { daysToSeconds, monthsToSeconds, secondsToDays, secondsToMonths } from '~/lib/utils';
+import { daysToSeconds, safeBigInt, secondsToDays } from '~/lib/utils';
+import useBlockTime from '../useBlockTime';
 
 const usePolicyManager = (target, permission) => {
+  const blockTime = useBlockTime();
   const { crew } = useCrewContext();
   const { execute, getStatus } = useContext(ChainTransactionContext);
 
@@ -23,12 +25,12 @@ const usePolicyManager = (target, permission) => {
 
   const currentPolicy = useMemo(() => {
     if (!target) return undefined;
-    const pol = Permission.getPolicyDetails(target, crew)[permission];
+    const pol = Permission.getPolicyDetails(target, crew, blockTime)[permission];
 
     if (pol?.policyDetails && pol.policyType === Permission.POLICY_IDS.CONTRACT) pol.policyDetails.contract = pol.policyDetails.address;
     if (pol?.policyDetails && pol.policyType === Permission.POLICY_IDS.PREPAID) {
       // stored in microsway per hour, UI in sway/mo
-      pol.policyDetails.rate = Number(BigInt(pol.policyDetails.rate)) / 1e6;
+      pol.policyDetails.rate = Number(safeBigInt(pol.policyDetails.rate)) / 1e6;
       // stored in seconds, UI in months
       pol.policyDetails.initialTerm = secondsToDays(pol.policyDetails.initialTerm);
       // stored in seconds, UI in months
@@ -36,7 +38,7 @@ const usePolicyManager = (target, permission) => {
     };
 
     return pol;
-  }, [crew, target, permission]);
+  }, [blockTime, crew, target, permission]);
 
   const updateAllowlists = useCallback((newAllowlist, newAccountAllowlist) => {
     execute(

@@ -12,7 +12,7 @@ const isVisible = ({ account, building }) => {
   return account && building?.Building?.buildingType === Building.IDS.HABITAT;
 };
 
-const RecruitCrewmate = ({ asteroid, crew, lot, simulation, _disabled }) => {
+const RecruitCrewmate = ({ asteroid, blockTime, crew, lot, simulation, _disabled }) => {
   const { getPendingCrewmate } = useCrewManager();
   const history = useHistory();
 
@@ -73,12 +73,13 @@ const RecruitCrewmate = ({ asteroid, crew, lot, simulation, _disabled }) => {
     // else, check for crew permission
     return getCrewDisabledReason({
       asteroid,
+      blockTime,
       crew,
       permission: Permission.IDS.RECRUIT_CREWMATE,
       permissionTarget: lot?.building,
       requireReady: false
     });
-  }, [asteroid, crew, lot?.building, pendingCrewmate, recruitToCrew]);
+  }, [asteroid, blockTime, crew, lot?.building, pendingCrewmate, recruitToCrew]);
 
   // TODO: attention always?
   return (

@@ -21,7 +21,7 @@ const isVisible = ({ constructionStatus, crew, lot, ship }) => {
   );
 };
 
-const PlanBuilding = ({ asteroid, crew, lot, onSetAction, simulation, simulationActions, _disabled }) => {
+const PlanBuilding = ({ asteroid, blockTime, crew, lot, onSetAction, simulation, simulationActions, _disabled }) => {
   const { constructionStatus } = useConstructionManager(lot?.id);
   const setCoachmarkRef = useCoachmarkRefSetter();
   const handleClick = useCallback(() => {
@@ -29,7 +29,7 @@ const PlanBuilding = ({ asteroid, crew, lot, onSetAction, simulation, simulation
   }, [onSetAction]);
 
   const disabledReason = useMemo(() => {
-    const isControlledByMe = crew && lot && Permission.isPermitted(crew, Permission.IDS.USE_LOT, lot);
+    const isControlledByMe = crew && lot && Permission.isPermitted(crew, Permission.IDS.USE_LOT, lot, blockTime);
 
     if (_disabled) return 'loading...';
     if (constructionStatus === 'READY_TO_PLAN') {
@@ -40,7 +40,7 @@ const PlanBuilding = ({ asteroid, crew, lot, onSetAction, simulation, simulation
         requireReady: !isControlledByMe
       });
     }
-  }, [_disabled, asteroid, constructionStatus, crew, lot, simulationActions]);
+  }, [_disabled, asteroid, blockTime, constructionStatus, crew, lot, simulationActions]);
 
   return (
     <ActionButton

@@ -61,13 +61,20 @@ const ControlGroup = styled.div`
   }
 `;
 
+const HelperText = styled.span`
+  color: #656565;
+  display: block;
+  font-size: 14px;
+  margin: 0 0 20px 200px;
+`;
+
 const StyledDataReadout = styled(DataReadout)`
-  padding: 7px 0 7px 15px;
+  padding: 7px 0;
 
   & label {
     ${p => p.wide
       ? 'width: auto; white-space: nowrap;'
-      : 'width: 175px;'
+      : 'width: 200px;'
     }
   }
 
@@ -104,8 +111,9 @@ const CheckboxRow = styled.div`
     padding: 8px 0;
     & > svg {
       color: ${p => p.theme.colors.main};
-      flex: 0 0 48px;
+      flex: 0 0 20px;
       font-size: 20px;
+      margin-right: 12px;
     }
     & > span {
       color: #656565;
@@ -339,7 +347,7 @@ const SoundPane = () => {
 }
 
 const GameplayPane = () => {
-  const { authenticated } = useSession();
+  const { authenticated, shouldUseSessionKeys, starknetSession, upgradeToSessionKey, walletId } = useSession();
   const { crew } = useCrewContext();
 
   const crewTutorials = useStore(s => s.crewTutorials);
@@ -347,7 +355,9 @@ const GameplayPane = () => {
   const toggleAutoswap = useStore(s => s.dispatchAutoswapEnabled);
   const dispatchDismissCrewTutorial = useStore(s => s.dispatchDismissCrewTutorial);
   const dispatchTutorialDisabled = useStore(s => s.dispatchTutorialDisabled);
-  
+  const dispatchUseSessionsSet = useStore(s => s.dispatchUseSessionsSet);
+  const dispatchFeeTokenSet = useStore(s => s.dispatchFeeTokenSet);
+
   const tutorialIsDisabled = useMemo(() => {
     if (gameplay.dismissTutorial) {
       return true;
@@ -370,6 +380,11 @@ const GameplayPane = () => {
       dispatchTutorialDisabled(false);
     }
   }, [crew, crewTutorials, gameplay.dismissTutorial]);
+
+  const toggleSessionKeys = useCallback(async (which) => {
+    dispatchUseSessionsSet(which);
+    if (which !== false && !starknetSession && await shouldUseSessionKeys(true)) upgradeToSessionKey();
+  }, [starknetSession, upgradeToSessionKey]);
 
   return (
     <StyledSettings>
@@ -407,6 +422,56 @@ const GameplayPane = () => {
                 </span>
               </div>
             </CheckboxRow>
+          )}
+
+          <StyledDataReadout label="Use Wallet Sessions">
+            <ControlGroup>
+              <Button
+                active={gameplay.useSessions === null || gameplay.useSessions === undefined}
+                onClick={() => toggleSessionKeys(null)}>
+                Default
+              </Button>
+              <Button
+                active={gameplay.useSessions === true}
+                onClick={() => toggleSessionKeys(true)}>
+                If Supported
+              </Button>
+              <Button
+                active={gameplay.useSessions === false}
+                onClick={() => toggleSessionKeys(false)}>
+                Never
+              </Button>
+            </ControlGroup>
+          </StyledDataReadout>
+          {(gameplay.useSessions === null || gameplay.useSessions === undefined) && (
+            <HelperText>Use sessions with Argent Web Wallet only</HelperText>
+          )}
+          {gameplay.useSessions === true && (
+            <HelperText>Use sessions with ArgentX Smart Accounts and Argent Web Wallets</HelperText>
+          )}
+          {gameplay.useSessions === false && (
+            <HelperText>Never use sessions</HelperText>
+          )}
+
+          <StyledDataReadout label="Default Fee Currency">
+            <ControlGroup>
+              <Button
+                active={gameplay.feeToken !== 'SWAY'}
+                onClick={() => dispatchFeeTokenSet('ETH')}>
+                ETH / STRK
+              </Button>
+              <Button
+                active={gameplay.feeToken === 'SWAY'}
+                onClick={() => dispatchFeeTokenSet('SWAY')}>
+                SWAY
+              </Button>
+            </ControlGroup>
+          </StyledDataReadout>
+          {gameplay.feeToken !== 'SWAY' && (
+            <HelperText>ETH / STRK defaults are used for all transaction fees</HelperText>
+          )}
+          {gameplay.feeToken === 'SWAY' && (
+            <HelperText>SWAY is used for all transaction fees</HelperText>
           )}
         </div>
       </Section>

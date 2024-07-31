@@ -21,7 +21,7 @@ const isVisible = ({ crew, building, ship }) => {
   );
 };
 
-const StationCrew = ({ asteroid, crew, lot, ship, onSetAction, simulation, simulationActions, _disabled }) => {
+const StationCrew = ({ asteroid, blockTime, crew, lot, ship, onSetAction, simulation, simulationActions, _disabled }) => {
   const stationEntity = useMemo(() => ship || (lot?.building?.Station ? lot.building : null), [ship, lot?.building]);
   const { currentStationing } = useStationCrewManager(stationEntity);
   const setCoachmarkRef = useCoachmarkRefSetter();
@@ -40,6 +40,7 @@ const StationCrew = ({ asteroid, crew, lot, ship, onSetAction, simulation, simul
       }
       return getCrewDisabledReason({
         asteroid,
+        blockTime,
         crew,
         isAllowedInSimulation: simulationActions.includes('StationCrew'),
         permission: Permission.IDS.STATION_CREW,
@@ -48,7 +49,7 @@ const StationCrew = ({ asteroid, crew, lot, ship, onSetAction, simulation, simul
       });
     }
     return '';
-  }, [_disabled, asteroid, crew, crewIsController, currentStationing, simulationActions, stationEntity]);
+  }, [_disabled, asteroid, blockTime, crew, crewIsController, currentStationing, simulationActions, stationEntity]);
 
   const buttonParams = useMemo(() => {
     if (ship) {

@@ -2,7 +2,7 @@ import styled from 'styled-components';
 import { TriangleDownIcon, TriangleUpIcon } from './Icons';
 
 import { itemColors } from '~/lib/actionItem';
-import { Fragment, useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { reactBool } from '~/lib/utils';
 
 const minColumnWidth = 190;
@@ -72,6 +72,7 @@ const DataTableRow = styled.tr`
     )
   }
 `;
+
 const SortIcon = styled.span`
   font-size: 14px;
   position: absolute;

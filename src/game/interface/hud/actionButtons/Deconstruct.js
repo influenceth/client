@@ -47,7 +47,7 @@ const Deconstruct = ({ asteroid, crew, lot, onSetAction, _disabled }) => {
     }
 
     return null;
-  }, [asteroid, lot?.building, crew]);
+  }, [asteroid, crew, lot?.building]);
 
   return (
     <ActionButton

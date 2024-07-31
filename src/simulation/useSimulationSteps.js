@@ -442,7 +442,7 @@ const useSimulationSteps = () => {
         coachmarks: {
           [COACHMARK_IDS.hudCrewLocation]: zoomStatus !== 'in' || origin !== 1,
           [COACHMARK_IDS.hudMenuResources]: openHudMenu !== 'RESOURCES',
-          [COACHMARK_IDS.hudMenuTargetResource]: openHudMenu === 'RESOURCES' && selectedResourceId !== Product.IDS.BITUMEN ? Product.IDS.BITUMEN : null,
+          [COACHMARK_IDS.hudMenuTargetResource]: openHudMenu === 'RESOURCES' && !selectedResourceId ? Product.IDS.BITUMEN : null,
           // TODO: rightButton coachmark
         },
         rightButton: selectedResourceId && {
@@ -709,7 +709,7 @@ const useSimulationSteps = () => {
         content: `
           Create a Limit Sell order for your ${formatResourceMass(crewAcetyleneAmount, Product.IDS.ACETYLENE)}
           stock of ${Product.TYPES[Product.IDS.ACETYLENE].name}. Try to choose a marketplace where you 
-          can create an offer at the high price while staying competitive with the other offers.
+          can create an offer at a high price while staying competitive with the other offers.
         `,
         crewmateId: SIMULATION_CONFIG.crewmates.merchant,
         coachmarks: () => ({
@@ -723,7 +723,7 @@ const useSimulationSteps = () => {
         shouldAdvance: () => crewOrders?.length > 0
       },
       {
-        title: 'Shipping & Receiving',
+        title: 'Shipshape',
         content: (
           <>
             "You and I are getting to know each other pretty well. I don't say this to all the new 
@@ -851,7 +851,7 @@ const useSimulationSteps = () => {
           of hydrogen propellant to the propellant inventory of your ship by following the training
           guides once more.
         `,
-        crewmateId: SIMULATION_CONFIG.crewmates.merchant,
+        crewmateId: SIMULATION_CONFIG.crewmates.pilot,
         coachmarks: {
           [COACHMARK_IDS.hudMenuMarketplaces]: (!locationPath || locationPath === '/'),
           [COACHMARK_IDS.asteroidMarketsHelper]: Product.IDS.HYDROGEN_PROPELLANT,

@@ -7,6 +7,7 @@ import { Building, Entity, Lot } from '@influenceth/sdk';
 
 import constants from '~/lib/constants';
 import { TOKEN } from '~/lib/priceUtils';
+import { safeBigInt } from '~/lib/utils';
 
 export const STORE_NAME = 'influence';
 
@@ -119,6 +120,8 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
     gameplay: {
       autoswap: true,
       dismissTutorial: false,
+      feeToken: 'ETH',
+      useSessions: null
     },
 
     graphics: {
@@ -596,8 +599,8 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
 
     dispatchFailedTransactionDismissed: (txHashOrTimestamp) => set(produce(state => {
       if (!state.failedTransactions) state.failedTransactions = [];
-      const bTxHashOrTimestamp = txHashOrTimestamp ? BigInt(txHashOrTimestamp) : null;
-      state.failedTransactions = state.failedTransactions.filter((tx) => BigInt(tx.txHash || 0) !== bTxHashOrTimestamp && tx.timestamp !== txHashOrTimestamp);
+      const bTxHashOrTimestamp = txHashOrTimestamp ? safeBigInt(txHashOrTimestamp) : null;
+      state.failedTransactions = state.failedTransactions.filter((tx) => safeBigInt(tx.txHash || 0) !== bTxHashOrTimestamp && tx.timestamp !== txHashOrTimestamp);
     })),
 
     dispatchPendingTransaction: ({ key, vars = {}, meta = {}, timestamp, txHash }) => set(produce(state => {
@@ -666,7 +669,7 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
       if (!state.chatHistory) state.chatHistory = [];
       if (state.chatHistory.length > 0 && !state.chatHistory[state.chatHistory.length - 1].isConnectionBreak) {
         state.chatHistory.push({ isConnectionBreak: true });
-      }  
+      }
     })),
 
     dispatchToggleHideActionItem: (key) => set(produce(state => {
@@ -692,6 +695,14 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
 
     dispatchTutorialDisabled: (which) => set(produce(state => {
       state.gameplay.dismissTutorial = !!which;
+    })),
+
+    dispatchUseSessionsSet: (which) => set(produce(state => {
+      state.gameplay.useSessions = which;
+    })),
+
+    dispatchFeeTokenSet: (which) => set(produce(state => {
+      state.gameplay.feeToken = which;
     })),
 
     dispatchDismissCrewTutorial: (crewId, which) => set(produce(state => {

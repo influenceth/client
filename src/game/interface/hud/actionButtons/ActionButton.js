@@ -321,6 +321,7 @@ const ActionButtonComponent = forwardRef(({
 
 export const getCrewDisabledReason = ({
   asteroid,
+  blockTime,
   crew,
   isAllowedInSimulation = false,  // TODO: use config to get by step (can attach step to crew as well... or even allowed buttons directly on crew, etc)
   isSequenceable = false,
@@ -332,7 +333,7 @@ export const getCrewDisabledReason = ({
 }) => {
   if (crew?._isSimulation && !isAllowedInSimulation) return 'simulation restricted';
   if (permission && permissionTarget) {
-    if (!crew || !Permission.isPermitted(crew, permission, permissionTarget)) return 'access restricted';
+    if (!crew || !Permission.isPermitted(crew, permission, permissionTarget, blockTime)) return 'access restricted';
   }
   if (asteroid && requireAsteroid) {
     if (crew?._location?.asteroidId !== asteroid?.id) {
