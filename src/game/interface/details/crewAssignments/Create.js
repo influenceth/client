@@ -1018,12 +1018,31 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
   }, [!!crewmate?.id, isPurchasingPack, packPromptDismissed, pendingTransactions, swayBalance]);
 
   // init appearance options as desired
+  const originalSimulationState = useStore(s => s.simulation);
+  const [namePrepopped, setNamePrepopped] = useState();
   useEffect(() => {
     if (crewmate && BigInt(crewmate.Crewmate?.appearance || 0) === 0n && appearanceOptions?.length === 0) {
-      setAppearanceOptions([getRandomAdalianAppearance()]);
+      if (originalSimulationState?.crewmate?.appearance) {
+        const { clothes, ...unpacked } = Crewmate.unpackAppearance(originalSimulationState?.crewmate?.appearance);
+        unpacked.clothesOffset = 31 + Math.ceil(Math.random() * 2);
+        setAppearanceOptions([unpacked]);
+      } else {
+        setAppearanceOptions([getRandomAdalianAppearance()]);
+      }
       setAppearanceSelection(0);
     }
-  }, [!!crewmate, appearanceOptions?.length]);
+  }, [!!crewmate, appearanceOptions?.length, originalSimulationState]);
+
+  useEffect(() => {
+    if (crewmate && !crewmate.Name?.name) {
+      if (originalSimulationState?.crewmate?.name) {
+        setName(originalSimulationState.crewmate.name);
+        setNamePrepopped(true);
+        // console.log('nameInput.current', nameInput.current);
+        // nameInput.current.value = `${originalSimulationState.crewmate.name}`;
+      }
+    }
+  }, [!!crewmate, originalSimulationState]);
 
   // handle finalizing
   useEffect(() => {
@@ -1296,6 +1315,7 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
                             maxlength={Name.TYPES[Entity.IDS.CREWMATE].max}
                             pattern={Name.getTypeRegex(Entity.IDS.CREWMATE)}
                             onChange={handleNameChange}
+                            resetOnChange={namePrepopped}
                             placeholder="Crewmate Name" />
 
                           {checkingName && <NameLoading>Checking availability...</NameLoading>}

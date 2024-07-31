@@ -3494,6 +3494,8 @@ export const RecipeSlider = ({ amount, disabled, increment = 0.001, processingTi
   const [focusOn, setFocusOn] = useState();
   const [mouseIn, setMouseIn] = useState(false);
 
+  const setCoachmarkRef = useCoachmarkRefSetter();
+
   const [min, max] = useMemo(() => {
     return [
       Math.ceil(rawMin / increment) * increment,
@@ -3580,6 +3582,7 @@ export const RecipeSlider = ({ amount, disabled, increment = 0.001, processingTi
                 <Button
                   disabled={amount === max}
                   onClick={() => onSetAmount(max)}
+                  setRef={amount === max ? undefined : setCoachmarkRef(COACHMARK_IDS.actionDialogMaxRecipes)}
                   size="small"
                   style={{ marginLeft: 10, padding: 0, minWidth: 75 }}>Max</Button>
               </>
@@ -3880,6 +3883,7 @@ const InlineCrewDetails = styled.div`
   }
 `;
 export const CrewInputBlock = ({ cardWidth, crew, hideCrewmates, highlightCrewmates, inlineDetails, title, ...props }) => {
+  const simulationEnabled = useSimulationEnabled();
   return (
     <FlexSectionInputBlock
       title={title}
@@ -3926,7 +3930,8 @@ export const CrewInputBlock = ({ cardWidth, crew, hideCrewmates, highlightCrewma
                     lessPadding
                     noArrow={i > 0}
                     style={highlightCrewmates && !highlightCrewmates.includes(crewmate.id) ? { opacity: 0.5 } : {}}
-                    width={cardWidth || 60} />
+                    width={cardWidth || 60}
+                    CrewmateCardProps={i === 0 && simulationEnabled ? { useExplicitAppearance: true } : undefined} />
                 )
                 : (
                   <CrewmateCardPlaceholder

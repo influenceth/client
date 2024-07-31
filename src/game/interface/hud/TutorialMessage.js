@@ -28,7 +28,16 @@ const CrewmateOverflow = styled.div`
 `;
 
 const CrewmateImage = styled.div`
-  background-image: ${p => p.crewmateId ? `url("${process.env.REACT_APP_IMAGES_URL}/v1/crew/${p.crewmateId}/image.svg?bustOnly=true")` : 'none'};
+  background-image: 
+  ${p => p.crewmateImageOptionString
+    ? `url("${process.env.REACT_APP_IMAGES_URL}/v1/crew/provided/image.svg?bustOnly=true&options=${escape(p.crewmateImageOptionString)}")`
+    : (
+      p.crewmateId
+      ? `url("${process.env.REACT_APP_IMAGES_URL}/v1/crew/${p.crewmateId}/image.svg?bustOnly=true")`
+      : 'none'
+    )
+  };
+
   background-position: top center;
   background-repeat: no-repeat;
   background-size: cover;
@@ -118,14 +127,15 @@ const Buttons = styled.div`
   }
 `;
 
-const TutorialMessage = ({ crewmateId, isIn, leftButton, onClose, rightButton, step, ...props }) => {
+const TutorialMessage = ({ crewmateImageOptionString, crewmateId, isIn, leftButton, onClose, rightButton, step, ...props }) => {
+  console.log({ crewmateId,crewmateImageOptionString });
   return (
     <TutorialMessageWrapper isIn={reactBool(isIn)} {...props}>
       {step && (
         <>
           <CrewmateWrapper>
             <CrewmateOverflow>
-              <CrewmateImage crewmateId={crewmateId} />
+              <CrewmateImage crewmateId={crewmateId} crewmateImageOptionString={crewmateImageOptionString} />
             </CrewmateOverflow>
           </CrewmateWrapper>
 

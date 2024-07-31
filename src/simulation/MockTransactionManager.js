@@ -404,7 +404,7 @@ const MockTransactionManager = () => {
         dispatchSimulationLotState(shipLotId, { shipId: simulationConfig.shipId, shipIsUndocked: true, shipIsInFlight: true });
 
         dispatchSimulationState('crewLocation', [
-          Entity.formatEntity(tx.vars.ship),
+          Entity.formatEntity({ id: SIMULATION_CONFIG.shipId, label: Entity.IDS.SHIP }),
           Entity.formatEntity({ id: 1, label: Entity.IDS.SPACE }),
         ]);
 

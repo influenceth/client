@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Building, Entity, Inventory, Permission, Process, Processor, Product, Ship } from '@influenceth/sdk';
+import { Building, Crewmate, Entity, Inventory, Permission, Process, Processor, Product, Ship } from '@influenceth/sdk';
 import { useHistory } from 'react-router-dom';
 
 import { ZOOM_IN_ANIMATION_TIME, ZOOM_OUT_ANIMATION_TIME, ZOOM_TO_PLOT_ANIMATION_MAX_TIME, ZOOM_TO_PLOT_ANIMATION_MIN_TIME } from '~/game/scene/Asteroid';
@@ -72,6 +72,8 @@ const useSimulationSteps = () => {
 
   // TODO: determine step based on state so user can't 
   // 
+  const dispatchSimulationEnabled = useStore(s => s.dispatchSimulationEnabled);
+  const dispatchLauncherPage = useStore(s => s.dispatchLauncherPage);
   const dispatchCoachmarks = useStore(s => s.dispatchCoachmarks);
   const dispatchFiltersReset = useStore(s => s.dispatchFiltersReset);
   const dispatchDestinationSelected = useStore(s => s.dispatchDestinationSelected);
@@ -455,7 +457,6 @@ const useSimulationSteps = () => {
           also your first lesson in how the economics of Adalia operate.`,
         crewmateId: SIMULATION_CONFIG.crewmates.engineer,
         rightButton: { children: 'Next', onClick: () => advance(), },
-        // TODO: coachmarks back to AP, zoomed in
       },
       {
         title: 'Lease Some Lots',
@@ -465,7 +466,6 @@ const useSimulationSteps = () => {
           the right balance and I'm sure you'll find a sweet spot to set up a beginning mining operation."`,
         crewmateId: SIMULATION_CONFIG.crewmates.merchant,
         rightButton: { children: 'Next', onClick: () => advance(), },
-        // TODO: coachmarks back to AP, zoomed in
       },
       {
         title: 'Lease Some Lots',
@@ -680,7 +680,7 @@ const useSimulationSteps = () => {
           [COACHMARK_IDS.hudMenuMyAssetsBuilding]: refineryLot && selectedLot?.building?.id !== refineryLot?.buildingId ? refineryLot?.buildingId : null,
           [COACHMARK_IDS.actionButtonProcess]: !actionDialog?.type && selectedLot?.building?.id === refineryLot?.buildingId,
           [COACHMARK_IDS.actionDialogTargetProcess]: actionDialog?.type === 'PROCESS' ? simulationConfig.processId : null,
-          // TODO: max button?
+          [COACHMARK_IDS.actionDialogMaxRecipes]: true
         }),
         enabledActions: {
           [`Process:${Processor.IDS.REFINERY}`]: selectedLotIsMine && selectedLot?.building?.id === refineryLot?.buildingId,
@@ -691,12 +691,16 @@ const useSimulationSteps = () => {
       },
       {
         title: `Step 3: Profit`,
-        content: `
-          "All right! Time to see what you’re really made of, kid." Mason has a glint in his eye as he 
-          takes you into the Marketplace. "In here, you make no friends and you take no prisoners. One 
-          minute you're up half a million in soybeans and the next, boom, your kids never leave their 
-          test-tubes and they've repossessed your Heavy Transport."
-        `,
+        content: (
+          <>
+            "All right! Time to see what you're really made of, kid." Mason has a glint in his eye as he 
+            takes you into the Marketplace.
+            <br/><br/>
+            "In here, you make no friends and you take no prisoners. One 
+            minute you're up half a million in soybeans and the next, boom, your kids never leave their 
+            test-tubes and they've repossessed your Heavy Transport."
+          </>
+        ),
         crewmateId: SIMULATION_CONFIG.crewmates.merchant,
         rightButton: { children: 'Next', onClick: () => advance(), },
       },
@@ -731,6 +735,7 @@ const useSimulationSteps = () => {
           </>
         ),
         crewmateId: SIMULATION_CONFIG.crewmates.engineer,
+        initialize: () => { history.push('/'); },
         coachmarks: getConstructBuildingCoachmarks(Building.IDS.SHIPYARD),
         enabledActions: {
           PlanBuilding: !!selectedLotIsMine && !shipyardLot,
@@ -870,6 +875,7 @@ const useSimulationSteps = () => {
           </>
         ),
         crewmateId: SIMULATION_CONFIG.crewmates.pilot,
+        initialize: () => { history.push('/'); },
         coachmarks: {
           // select ship lot
           [COACHMARK_IDS.hudMenuMyAssets]: !actionDialog?.type && !(selectedLotIsMine && selectedLot?.surfaceShip) && openHudMenu !== 'MY_ASSETS',
@@ -932,32 +938,49 @@ const useSimulationSteps = () => {
         title: 'Beyond',
         content: (
           <>
-            "Freedom. That's one of the reasons that I love flying so much, it gives you freedom." Natus 
-            has reviewed your performance, determined that your internship has been successful, and now 
-            your last general education requirement is complete. She suggested sharing a last meal with 
-            you before you depart her ship, and now she's been telling you a bit about her own asteroid; 
-            the quiet, the solitude, the freedom that comes with owning your own piece of the belt.
-          <br/><br/>
+            "Freedom. That's one of the reasons that I love flying so much, it gives you freedom."
+            <br/><br/>
+            Natus has reviewed your performance, determined that your internship has been successful,
+            and now your last general education requirement is complete.
+          </>
+        ),
+        crewmateId: SIMULATION_CONFIG.crewmates.pilot,
+        rightButton: { children: 'Next', onClick: () => advance(), },
+      },
+      {
+        title: 'Beyond',
+        content: (
+          <>
+            She suggested sharing a last meal with you before you depart her ship, and now she's been 
+            telling you a bit about her own asteroid; the quiet, the solitude, the freedom that comes 
+            with owning your own piece of the belt.
+            <br/><br/>
             "Remember: the future is yours, Adalian, we're all excited to see what you do with it."
           </>
         ),
         crewmateId: SIMULATION_CONFIG.crewmates.pilot,
         rightButton: { children: 'Next', onClick: () => advance(), },
       },
-
       {
         title: 'Training Simulation Complete',
-        content: `
-          You did it, congratulations! You are now officially ready to choose your career 
-          class and start your first crew. Good luck ${simulation.crewmate?.name}, we're all
-          pulling for you.
-        `,
-        crewmateId: SIMULATION_CONFIG.crewmateId,
+        content: (
+          <>
+            You did it, congratulations! You are now officially ready to choose your career 
+            class and start your own crew.
+            <br/><br/>
+            Good luck {simulation.crewmate?.name}, we're all pulling for you.
+          </>
+        ),
+        crewmateImageOptionString: JSON.stringify({ coll: Crewmate.COLLECTION_IDS.ADALIAN, appearance: simulation.crewmate?.appearance }),
         rightButton: {
-          children: 'Next',
+          children: 'Begin Your Journey',
           onClick: () => {
-            // TODO: exit simulation
-            // TODO: enter crew creation
+            // enter crew creation + exit simulation
+            dispatchSimulationEnabled(false);
+            setTimeout(() => {
+              dispatchLauncherPage();
+              history.push('/recruit/0');
+            }, 100);
           },
         },
       },

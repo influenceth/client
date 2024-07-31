@@ -30,6 +30,7 @@ const WelcomeSimulation = () => {
       
       <TutorialMessage
         crewmateId={currentStep?.crewmateId}
+        crewmateImageOptionString={currentStep?.crewmateImageOptionString}
         isIn={currentStep && !isHidden && !isTransitioning}
         onClose={() => setIsHidden(true)}
         rightButton={currentStep.rightButton

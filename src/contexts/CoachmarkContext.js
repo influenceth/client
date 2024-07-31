@@ -19,6 +19,7 @@ export const COACHMARK_IDS = {
   actionButtonSetCourse: 'actionButtonSetCourse',
   actionButtonStationCrew: 'actionButtonStationCrew',
   actionDialogConstructSource: 'actionDialogConstructSource',
+  actionDialogMaxRecipes: 'actionDialogMaxRecipes',
   actionDialogPlanType: 'actionDialogPlanType',
   actionDialogTargetInventory: 'actionDialogTargetInventory',
   actionDialogTargetProcess: 'actionDialogTargetProcess',
