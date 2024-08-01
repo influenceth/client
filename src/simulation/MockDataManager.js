@@ -97,28 +97,37 @@ const getMockShipInventories = (shipType, contentsBySlot) => {
 
 const MockDataItem = ({ overwrite }) => {
   const queryClient = useQueryClient();
+  const [overwriteAt, setOverwriteAt] = useState(-1);
   const [overwrittenAt, setOverwrittenAt] = useState(-1);
 
   // (this will listen to updates on that queryKey and assumes they will come from elsewhere in the application)
   const { dataUpdatedAt } = useQuery(overwrite.queryKey, () => {}, { enabled: false, staleTime: Infinity });
-  useEffect(() => {
-    // avoid dataUpdatedAt dependency loop
-    if (dataUpdatedAt === overwrittenAt) return;
 
-    // transform and overwrite data
+  // if new overwrite, always overwrite
+  useEffect(() => {
+    setOverwriteAt((dataUpdatedAt || 0) + 1);
+  }, [overwrite]);
+
+  // if new dataUpdatedAt, always overwrite UNLESS caused by the most recent overwrite
+  useEffect(() => {
+    if (dataUpdatedAt !== overwrittenAt) {
+      setOverwriteAt((dataUpdatedAt || 0) + 1);
+    }
+  }, [dataUpdatedAt]);
+
+  // transform and overwrite data
+  useEffect(() => {
     const { queryKey, transformer } = overwrite;
     const transformedData = transformer(queryClient.getQueryData(queryKey));
     if (transformedData !== undefined) {
-      const newDataUpdatedAt = (dataUpdatedAt || 0) + 1;
-      setOverwrittenAt(newDataUpdatedAt);
-
+      setOverwrittenAt(overwriteAt);
       queryClient.setQueryData(
         queryKey,
         transformedData,
-        { updatedAt: newDataUpdatedAt }
+        { updatedAt: overwriteAt }
       );
     }
-  }, [overwrite, dataUpdatedAt]);
+  }, [overwriteAt]);
 
   return null;
 };
