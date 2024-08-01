@@ -16,6 +16,7 @@ const WelcomeSimulation = () => {
   const [isHidden, setIsHidden] = useState(false);
 
   const { currentStep, isLoading, isTransitioning } = useSimulationSteps();
+  
   useEffect(() => {
     setIsHidden(false);
 

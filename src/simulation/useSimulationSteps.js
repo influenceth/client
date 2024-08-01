@@ -114,7 +114,6 @@ const useSimulationSteps = () => {
   }, [simulation?.step]);
 
   const simulationSteps = useMemo(() => {
-    if (isLoading) return [];
 
     // selectLot
     let selectedLotIsLeasable = false;
@@ -623,7 +622,7 @@ const useSimulationSteps = () => {
         }
       },
       {
-        title: `And now, we dig`,
+        title: `What's Mine is Mine`,
         content: `
           "Now, we dig. It isn't so unlike farming potatoes, we're just using this giant shovel to 
           pull up what we found with our core sample. Both types of work require getting your hands 

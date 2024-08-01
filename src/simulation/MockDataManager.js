@@ -97,20 +97,27 @@ const getMockShipInventories = (shipType, contentsBySlot) => {
 
 const MockDataItem = ({ overwrite }) => {
   const queryClient = useQueryClient();
+  const [overwrittenAt, setOverwrittenAt] = useState(-1);
 
   // (this will listen to updates on that queryKey and assumes they will come from elsewhere in the application)
   const { dataUpdatedAt } = useQuery(overwrite.queryKey, () => {}, { enabled: false, staleTime: Infinity });
   useEffect(() => {
+    // avoid dataUpdatedAt dependency loop
+    if (dataUpdatedAt === overwrittenAt) return;
+
+    // transform and overwrite data
     const { queryKey, transformer } = overwrite;
     const transformedData = transformer(queryClient.getQueryData(queryKey));
     if (transformedData !== undefined) {
+      const newDataUpdatedAt = (dataUpdatedAt || 0) + 1;
+      setOverwrittenAt(newDataUpdatedAt);
+
       queryClient.setQueryData(
         queryKey,
         transformedData,
-        { updatedAt: dataUpdatedAt || Date.now() }
+        { updatedAt: newDataUpdatedAt }
       );
     }
-    // TODO: make sure this doesn't trigger a 2nd dataUpdatedAt
   }, [overwrite, dataUpdatedAt]);
 
   return null;
