@@ -440,8 +440,8 @@ export function ChainTransactionProvider({ children }) {
       setNonce(BigInt(currentNonce));
     };
 
-    if (!nonce && accountAddress && Number(accountAddress) !== 0) retrieveNonce();
-  }, [accountAddress, nonce, gameplay.useSessions, starknetSession, provider]);
+    if (!nonce && !simulationEnabled && accountAddress && Number(accountAddress) !== 0) retrieveNonce();
+  }, [accountAddress, nonce, gameplay.useSessions, simulationEnabled, starknetSession, provider]);
 
   // Temporary logging for nonces
   useEffect(() => console.log('NONCE', nonce || null), [nonce]);
