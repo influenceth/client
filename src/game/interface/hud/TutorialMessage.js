@@ -49,12 +49,12 @@ const TutorialMessageWrapper = styled.div`
   display: flex;
   flex-direction: row;
   position: fixed;
-  bottom: ${messageOffset}px;
+  bottom: ${p => p.messageOffset || messageOffset}px;
   height: ${p => p.messageHeight || messageHeight}px;
   left: calc(50% - ${messageWidth/2}px);
   pointer-events: all;
   transition: transform 250ms ease;
-  transform: translateY(${p => p.isIn ? 0 : ((p.messageHeight || messageHeight) * (1 + crewmateOverflowMult) + messageOffset)}px);
+  transform: translateY(${p => p.isIn ? 0 : ((p.messageHeight || messageHeight) * (1 + crewmateOverflowMult) + (p.messageOffset || messageOffset))}px);
   width: ${messageWidth}px;
   z-index: 1000000;
   &:before {
@@ -127,8 +127,7 @@ const Buttons = styled.div`
   }
 `;
 
-const TutorialMessage = ({ crewmateImageOptionString, crewmateId, isIn, leftButton, onClose, rightButton, step, ...props }) => {
-  console.log({ crewmateId,crewmateImageOptionString });
+const TutorialMessage = ({ closeIconOverride, crewmateImageOptionString, crewmateId, isIn, leftButton, onClose, rightButton, setButtonRef, step, ...props }) => {
   return (
     <TutorialMessageWrapper isIn={reactBool(isIn)} {...props}>
       {step && (
@@ -142,7 +141,7 @@ const TutorialMessage = ({ crewmateImageOptionString, crewmateId, isIn, leftButt
           <TutorialContent>
             <h3>
               <span>{step?.title}</span>
-              <IconButton onClick={onClose} scale={0.75}><CloseIcon /></IconButton>
+              <IconButton onClick={onClose} scale={0.75}>{closeIconOverride || <CloseIcon />}</IconButton>
             </h3>
             <div>
               <div>{step?.content}</div>
@@ -151,7 +150,7 @@ const TutorialMessage = ({ crewmateImageOptionString, crewmateId, isIn, leftButt
                   <Button flip size="small" {...leftButton} />
                 )}
                 {rightButton && (
-                  <Button size="small" {...rightButton} />
+                  <Button setRef={setButtonRef} size="small" {...rightButton} />
                 )}
               </Buttons>
             </div>

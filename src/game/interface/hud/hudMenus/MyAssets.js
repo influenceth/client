@@ -153,7 +153,8 @@ const GroupedAssets = ({ assetTally, groupedAssets, isLoading, itemHeight, itemG
       titleText={<>{title}{isLoading && <LoadingMessage />}</>}
       titleLabel={`${assetTally} Asset${assetTally === 1 ? '' : 's'}`}
       collapsed={!assetTally}
-      containerHeight={itemHeight * assetTally + groupTitleHeight * groupTally + containerHeightBuffer}>
+      containerHeight={itemHeight * assetTally + groupTitleHeight * groupTally + containerHeightBuffer}
+      openOnChange={!!assetTally}>
       {!isLoading && assetTally === 0 && <EmptyMessage />}
       {singleGroupMode
         ? Object.values(groupedAssets)[0]?.map(itemGetter)

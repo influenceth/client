@@ -39,6 +39,7 @@ export const COACHMARK_IDS = {
   hudMenuTargetResource: 'hudMenuTargetResource',
   hudRecruitCaptain: 'hudRecruitCaptain',
   porkchop: 'porkchop',
+  simulationRightButton: 'simulationRightButton'
 };
 
 const CoachmarkContext = React.createContext();
@@ -94,9 +95,8 @@ export function CoachmarkProvider({ children }) {
 
   const [refEls, setRefEls] = useState({});
 
-  const refEl = useMemo(() => {
-    const refElKey = Object.keys(coachmarks).find((k) => !!coachmarks[k] && !!refEls[k]);
-    return refElKey ? refEls[refElKey] : null;
+  const activeCoachmarkKey = useMemo(() => {
+    return Object.keys(coachmarks).find((k) => !!coachmarks[k] && !!refEls[k]);
   }, [coachmarks, refEls]);
 
   const register = useCallback((label) => (r) => {
@@ -108,12 +108,17 @@ export function CoachmarkProvider({ children }) {
     });
   }, []);
 
+
+  const contextValue = useMemo(() => ({
+    activeCoachmarkKey,
+    register
+  }), [activeCoachmarkKey, register]);
   return (
     <>
-      <CoachmarkContext.Provider value={register}>
+      <CoachmarkContext.Provider value={contextValue}>
         {children}
       </CoachmarkContext.Provider>
-      {refEl && <CoachmarkComponent refEl={refEl} />}
+      {activeCoachmarkKey && <CoachmarkComponent refEl={refEls[activeCoachmarkKey]} />}
     </>
   );
 }

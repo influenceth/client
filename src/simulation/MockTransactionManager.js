@@ -465,7 +465,7 @@ const MockTransactionManager = () => {
 
     // tx complete
     dispatchPendingTransactionComplete(tx.txHash);
-  }, [simulation]);
+  }, [simulation, getMockActionItem]);
 
   const processed = useRef([]);
   useEffect(() => {

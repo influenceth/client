@@ -28,50 +28,11 @@ const DELAY_MESSAGE = 1000;
   // TODO: "get me where i'm supposed to be" option
   // TODO: "help me pick" option
 
-const STEPS = {
-  INTRO: 1,
-  BELT: 2,
-  AP: 3,
-  RECRUIT: 4,
-  LEASE: 5,
-  // FINAL: 11
-};
-
 const useSimulationSteps = () => {
   const { crew, pendingTransactions } = useCrewContext();
+  const simulation = useSimulationState();
   const history = useHistory();
 
-  const { data: crewAgreements, isLoading: agreementsLoading } = useCrewAgreements(true, false, true);
-  const { data: crewBuildings, isLoading: buildingsLoading } = useCrewBuildings();
-  const { data: crewDeposits, isLoading: depositsLoading } = useCrewSamples();
-  const { data: crewShips, isLoading: shipsLoading } = useCrewShips();
-  const { data: crewOrders, isLoading: ordersLoading } = useCrewOrders(crew?.id);
-  const isLoading = agreementsLoading || buildingsLoading || depositsLoading || shipsLoading || ordersLoading;
-
-  const [locationPath, setLocationPath] = useState();
-  const [transitioning, setTransitioning] = useState();
-  const isTransitioning = !!transitioning;
-
-  useEffect(() => {
-    // (returns unlisten, so can just return directly to useEffect)
-    return history.listen((location) => setLocationPath(location.pathname));
-  }, [history]);
-
-  // const crewTutorial = useStore(s => s.crewTutorials?.[crew?.id]);
-  // const uncrewTutorial = useStore(s => s.crewTutorials?.[undefined]); // have to do this to preserve pre-crew actions
-  // const dispatchDismissCrewTutorial = useStore(s => s.dispatchDismissCrewTutorial);
-  // const dispatchDismissCrewTutorialStep = useStore(s => s.dispatchDismissCrewTutorialStep);
-
-  // const dismissedTutorialSteps = useMemo(() => {
-  //   const dismissed = new Set();
-  //   (crewTutorial?.dismissedSteps || []).forEach((s) => dismissed.add(s));
-  //   (uncrewTutorial?.dismissedSteps || []).forEach((s) => dismissed.add(s));
-  //   return Array.from(dismissed);
-  // }, [crewTutorial?.dismissedSteps, uncrewTutorial?.dismissedSteps]);
-
-
-  // TODO: determine step based on state so user can't 
-  // 
   const dispatchSimulationEnabled = useStore(s => s.dispatchSimulationEnabled);
   const dispatchLauncherPage = useStore(s => s.dispatchLauncherPage);
   const dispatchCoachmarks = useStore(s => s.dispatchCoachmarks);
@@ -103,11 +64,26 @@ const useSimulationSteps = () => {
   const travelSolution = useStore(s => s.asteroids.travelSolution);
   const travelSolutionIsValid = useTravelSolutionIsValid();
 
-  const resetAsteroidFilters = () => dispatchFiltersReset('asteroids');
+  const { data: crewAgreements, isLoading: agreementsLoading } = useCrewAgreements(true, false, true);
+  const { data: crewBuildings, isLoading: buildingsLoading } = useCrewBuildings();
+  const { data: crewDeposits, isLoading: depositsLoading } = useCrewSamples();
+  const { data: crewShips, isLoading: shipsLoading } = useCrewShips();
+  const { data: crewOrders, isLoading: ordersLoading } = useCrewOrders(crew?.id);
+  const { data: selectedLot, isLoading: lotLoading } = useLot(selectedLotId);
+  const isLoading = agreementsLoading || buildingsLoading || depositsLoading || shipsLoading || ordersLoading || lotLoading;
 
-  const simulation = useSimulationState();
+
   
-  const { data: selectedLot } = useLot(selectedLotId);
+  const [locationPath, setLocationPath] = useState();
+  const [transitioning, setTransitioning] = useState();
+  const isTransitioning = !!transitioning;
+
+  useEffect(() => {
+    // (returns unlisten, so can just return directly to useEffect)
+    return history.listen((location) => setLocationPath(location.pathname));
+  }, [history]);
+
+  const resetAsteroidFilters = () => dispatchFiltersReset('asteroids');
   
   const advance = useCallback(() => {
     dispatchSimulationStep((simulation.step || 0) + 1);
@@ -167,65 +143,6 @@ const useSimulationSteps = () => {
         && (i.contents || []).find((c) => c.product === Product.IDS.HYDROGEN_PROPELLANT && c.amount >= 3000e3)
       ));
     });
-
-    // const lotLease = crewAgreements?.find((a) => a.permission === Permission.IDS.USE_LOT);
-
-    // const controlledWarehouse = crewBuildings?.find((b) => (
-    //   b.Building?.buildingType === Building.IDS.WAREHOUSE
-    //   && b.Building?.status !== Building.CONSTRUCTION_STATUSES.UNPLANNED
-    // ));
-
-    // const controlledWarehouseSite = crewBuildings?.find((b) => (
-    //   b.Building?.buildingType === Building.IDS.WAREHOUSE
-    //   && [Building.CONSTRUCTION_STATUSES.PLANNED, Building.CONSTRUCTION_STATUSES.UNDER_CONSTRUCTION].includes(b.Building?.status)
-    // ));
-
-    // const buildableWarehouse = crewBuildings?.find((b) => (
-    //   b.Building?.buildingType === Building.IDS.WAREHOUSE
-    //   && (
-    //     b.Building?.status === Building.CONSTRUCTION_STATUSES.UNDER_CONSTRUCTION
-    //     || (
-    //       b.Building?.status === Building.CONSTRUCTION_STATUSES.PLANNED
-    //       && !getBuildingRequirements(b, []).find((req) => req.inNeed > 0)
-    //     )
-    //   )
-    // ));
-
-    // const controlledOperationalWarehouse = crewBuildings?.find((b) => (
-    //   b.Building?.buildingType === Building.IDS.WAREHOUSE
-    //   && b.Building?.status === Building.CONSTRUCTION_STATUSES.OPERATIONAL
-    // ));
-
-    // const controlledExtractor = crewBuildings?.find((b) => (
-    //   b.Building?.buildingType === Building.IDS.EXTRACTOR
-    //   && b.Building?.status !== Building.CONSTRUCTION_STATUSES.UNPLANNED
-    // ));
-
-    // const controlledOperationalExtractor = crewBuildings?.find((b) => (
-    //   b.Building?.buildingType === Building.IDS.EXTRACTOR
-    //   && b.Building?.status === Building.CONSTRUCTION_STATUSES.OPERATIONAL
-    // ));
-
-    // const controlledNonWarehouse = crewBuildings?.find((b) => (
-    //   b.Building?.buildingType !== Building.IDS.WAREHOUSE
-    //   && [Building.CONSTRUCTION_STATUSES.UNDER_CONSTRUCTION, Building.CONSTRUCTION_STATUSES.OPERATIONAL].includes(b.Building?.status)
-    // ));
-
-    // const ownedCoreDrill = crewBuildings?.find((b) => {
-    //   return !!(b.Inventories || []).find((i) => (
-    //       i.status === Inventory.STATUSES.AVAILABLE
-    //       && (i.contents || []).find((c) => c.product === Product.IDS.CORE_DRILL && c.amount > 0)
-    //     )
-    //   );
-    // });
-
-    const extractors = [];
-    const deposits = [];
-    const refinedMaterials = false;
-    const warehouses = [];
-    const shipyards = [];
-
-
 
     // "plan" action button --> extractor
     // (fast forward)
@@ -382,8 +299,8 @@ const useSimulationSteps = () => {
           goTo({ zoomStatus: 'out' })
         },
         coachmarks: {
-          [COACHMARK_IDS.backToBelt]: zoomStatus === 'in'
-          // TODO: rightButton?
+          [COACHMARK_IDS.backToBelt]: zoomStatus === 'in',
+          [COACHMARK_IDS.simulationRightButton]: selectedResourceId
         },
         rightButton: {
           children: 'Next',
@@ -392,19 +309,7 @@ const useSimulationSteps = () => {
       },
       {
         title: 'Adalia Prime - The First Colony',
-        content: (zoomStatus === 'out' && origin === 1)
-          ? `I've focused your nav panel on Adalia Prime. Click the HUD to zoom in for a closer look.`
-          : (
-            <>
-              Adalia Prime is the single largest asteroid in the belt and the oldest hub of commerce and human
-              activity. While we all owe our lives to the Arvad, the wayward colony ship that was moored and
-              dismantled to form the first permanent settlements, Adalia Prime was our first real home here
-              in the asteroid belt. Here, at any public Habitats, you can find fellow new recruits when you
-              are ready to form your first crew.
-            <br/><br/>
-              Click on the HUD crew location to zoom to your current station.
-            </>
-          ),
+        content: `I've focused your nav panel on Adalia Prime. Click the HUD to zoom in for a closer look.`,
         crewmateId: SIMULATION_CONFIG.crewmates.scientist,
         targetLocation: () => ({ zoomStatus: 'in', origin: 1 }),
         initialize: () => {
@@ -413,7 +318,29 @@ const useSimulationSteps = () => {
         coachmarks: { // if AP selected, InfoPane; else, "crew location"
           [COACHMARK_IDS.hudCrewLocation]: origin !== 1 || zoomStatus === 'in',
           [COACHMARK_IDS.hudInfoPane]: zoomStatus === 'out' && origin === 1
-          // TODO: rightButton coachmark
+        },
+        shouldAdvance: () => zoomStatus === 'in' && origin === 1
+      },
+      {
+        title: 'Adalia Prime - The First Colony',
+        content: (
+          <>
+            Adalia Prime is the single largest asteroid in the belt and the oldest hub of commerce and human
+            activity. While we all owe our lives to the Arvad, the wayward colony ship that was moored and
+            dismantled to form the first permanent settlements, Adalia Prime was our first real home here
+            in the asteroid belt. Here, at any public Habitats, you can find fellow new recruits when you
+            are ready to form your first crew.
+          <br/><br/>
+            Click on the HUD crew location to zoom to your current station.
+          </>
+        ),
+        crewmateId: SIMULATION_CONFIG.crewmates.scientist,
+        targetLocation: () => ({ zoomStatus: 'in', origin: 1 }),
+        initialize: () => {
+          goTo({ zoomStatus: 'in', origin: 1 })
+        },
+        coachmarks: {
+          [COACHMARK_IDS.hudCrewLocation]: true
         },
         shouldAdvance: () => selectedLotId === crew?._location?.lotId
       },
@@ -442,7 +369,7 @@ const useSimulationSteps = () => {
           [COACHMARK_IDS.hudCrewLocation]: zoomStatus !== 'in' || origin !== 1,
           [COACHMARK_IDS.hudMenuResources]: openHudMenu !== 'RESOURCES',
           [COACHMARK_IDS.hudMenuTargetResource]: openHudMenu === 'RESOURCES' && !selectedResourceId ? Product.IDS.BITUMEN : null,
-          // TODO: rightButton coachmark
+          [COACHMARK_IDS.simulationRightButton]: selectedResourceId
         },
         rightButton: selectedResourceId && {
           children: 'Next',
@@ -529,17 +456,26 @@ const useSimulationSteps = () => {
       },
       {
         title: 'Building the Basics',
-        content: !Object.values(simulation.lots || {}).find((l) => l.buildingType === Building.IDS.EXTRACTOR)
-          ? `Let's start with an Extractor. Select one of your already-leased lots, and add the appropriate "Site Plan."`
-          : `
-            Great job! Now, by following the training guides in the HUD, you can source materials for your
-            planned Extractor on the open markets of Adalia Prime, and start construction.
-          `,
+        content: `Let's start with an Extractor. Select one of your already-leased lots, and add the appropriate "Site Plan."`,
         crewmateId: SIMULATION_CONFIG.crewmates.engineer,
         coachmarks: () => getConstructBuildingCoachmarks(Building.IDS.EXTRACTOR),
         enabledActions: {
           PlanBuilding: !!selectedLotIsMine,
           [`SelectSitePlan:${Building.IDS.EXTRACTOR}`]: true,
+        },
+        shouldAdvance: () => {
+          return !!Object.values(simulation.lots).find((l) => l.buildingType === Building.IDS.EXTRACTOR);
+        },
+      },
+      {
+        title: 'Building the Basics',
+        content: `
+          Great job! Now, by following the training guides in the HUD, you can source materials for your
+          planned Extractor on the open markets of Adalia Prime, and start construction.
+        `,
+        crewmateId: SIMULATION_CONFIG.crewmates.engineer,
+        coachmarks: () => getConstructBuildingCoachmarks(Building.IDS.EXTRACTOR),
+        enabledActions: {
           Construct: selectedLotIsMine && !!selectedLot?.building,
           // TODO: deliveries?
         },
@@ -549,15 +485,16 @@ const useSimulationSteps = () => {
       },
       {
         title: 'Building the Basics',
-        content: `Great work! Now, you'll obviously need somewhere to store your mining output, so let's construct a
-          warehouse nearby. Follow the training guides again to build your first warehouse.`,
+        content: `
+          Great work! Now, you'll obviously need somewhere to store your mining output, so let's construct 
+          a warehouse nearby. Follow the training guides again to build your first warehouse.
+        `,
         crewmateId: SIMULATION_CONFIG.crewmates.engineer,
         coachmarks: () => getConstructBuildingCoachmarks(Building.IDS.WAREHOUSE),
         enabledActions: {
           PlanBuilding: !!selectedLotIsMine,
           [`SelectSitePlan:${Building.IDS.WAREHOUSE}`]: true,
           Construct: selectedLotIsMine && !!selectedLot?.building,
-          // TODO: deliveries?
         },
         shouldAdvance: () => {
           return !!Object.values(simulation.lots).find((l) => l.buildingType === Building.IDS.WAREHOUSE && l.buildingStatus === Building.CONSTRUCTION_STATUSES.OPERATIONAL);
@@ -574,51 +511,63 @@ const useSimulationSteps = () => {
             surface, if you know where to find them."
           </>
         ),
+        coachmarks: {
+          [COACHMARK_IDS.simulationRightButton]: true
+        },
         crewmateId: SIMULATION_CONFIG.crewmates.miner,
         rightButton: { children: 'Next', onClick: () => advance(), },
       },
       {
         title: `What's Mine is Mine`,
-        content: !crewHasCoreDrill
-          ? (
-            <>
-              Let's purchase a few core drills from the markets. We'll have them delivered to your new
-              warehouse, and then we can start searching for {Product.TYPES[SIMULATION_CONFIG.resourceId].name}-rich
-              deposits on the lot with your new extractor.
-            </>
-          )
-          : (
-            <>
-              Great work! Now, click on the lot with your extractor on it, and let's kick off a new core 
-              sample with one of your new core drills. Once we have analyzed the core, we'll be able to
-              extract {Product.TYPES[SIMULATION_CONFIG.resourceId].name} from that deposit. 
-            </>
-          ),
+        content: (
+          <>
+            Let's purchase a few core drills from the markets. We'll have them delivered to your new
+            warehouse, and then we can start searching for {Product.TYPES[SIMULATION_CONFIG.resourceId].name}-rich
+            deposits on the lot with your new extractor.
+          </>
+        ),
         crewmateId: SIMULATION_CONFIG.crewmates.miner,
         coachmarks: {
           // purchase core samplers from the market to the warehouse
           // (fast forward)
+          [COACHMARK_IDS.hudMenuMarketplaces]: (!locationPath || locationPath === '/'),
+          [COACHMARK_IDS.asteroidMarketsHelper]: Product.IDS.CORE_DRILL, // TODO: max 100
+        },
+        enabledActions: {
+          MarketBuy: true,
+          [`SelectInventory:${Entity.IDS.BUILDING}.${warehouseLot?.buildingId}.2`]: true,
+        },
+        shouldAdvance: () => {
+          return !!crewHasCoreDrill;
+        }
+      },
+      {
+        title: `What's Mine is Mine`,
+        content: (
+          <>
+            Great work! Now, click on the lot with your extractor on it, and let's kick off a new core 
+            sample with one of your new core drills. Once we have analyzed the core, we'll be able to
+            extract {Product.TYPES[SIMULATION_CONFIG.resourceId].name} from that deposit. 
+          </>
+        ),
+        crewmateId: SIMULATION_CONFIG.crewmates.miner,
+        coachmarks: {
           // "core sample" action button
           // (fast forward)
           // "finish"
-
-          [COACHMARK_IDS.hudMenuMarketplaces]: !crewHasCoreDrill && (!locationPath || locationPath === '/'),
-          [COACHMARK_IDS.asteroidMarketsHelper]: !crewHasCoreDrill && Product.IDS.CORE_DRILL, // TODO: max 100
-
-          [COACHMARK_IDS.detailsClose]: crewHasCoreDrill && (locationPath !== '/'),
-          [COACHMARK_IDS.hudMenuMyAssets]: crewHasCoreDrill && !actionDialog?.type && selectedLot?.building?.id !== extractorLot?.buildingId && openHudMenu !== 'MY_ASSETS',
-          [COACHMARK_IDS.hudMenuMyAssetsBuilding]: crewHasCoreDrill && selectedLot?.building?.id !== extractorLot?.buildingId ? extractorLot?.buildingId : null,
-          [COACHMARK_IDS.actionButtonCoreSample]: crewHasCoreDrill && !actionDialog?.type && selectedLot?.building?.id === extractorLot?.buildingId,
+          [COACHMARK_IDS.detailsClose]: (locationPath !== '/'),
+          [COACHMARK_IDS.hudMenuMyAssets]: !actionDialog?.type && selectedLot?.building?.id !== extractorLot?.buildingId && openHudMenu !== 'MY_ASSETS',
+          [COACHMARK_IDS.hudMenuMyAssetsBuilding]: selectedLot?.building?.id !== extractorLot?.buildingId ? extractorLot?.buildingId : null,
+          [COACHMARK_IDS.actionButtonCoreSample]: !actionDialog?.type && selectedLot?.building?.id === extractorLot?.buildingId,
           [COACHMARK_IDS.actionDialogTargetResource]: simulationConfig.resourceId
         },
         enabledActions: {
-          MarketBuy: !crewHasCoreDrill,
           [`SelectInventory:${Entity.IDS.BUILDING}.${warehouseLot?.buildingId}.2`]: true,
-          CoreSample: crewHasCoreDrill && selectedLot?.building?.id === extractorLot?.buildingId,
+          CoreSample: selectedLot?.building?.id === extractorLot?.buildingId,
           [`SelectTargetResource:${simulationConfig.resourceId}`]: true
         },
         shouldAdvance: () => {
-          return !!(extractorLot?.depositYield > 0);
+          return !!(extractorLot?.depositYield > 0) && !actionDialog?.type;
         }
       },
       {
@@ -1014,7 +963,7 @@ const useSimulationSteps = () => {
 
   const currentStep = useMemo(() => {
     // TODO: use named index instead of numbers
-    return simulationSteps[simulation.step];
+    return isLoading ? {} : simulationSteps[simulation.step];
   }, [simulationSteps, simulation.step]);
 
   // autoadvance as prescribed
@@ -1036,8 +985,6 @@ const useSimulationSteps = () => {
     });
   }, [currentStep?.enabledActions]);
 
-  // TODO: 
-
   useEffect(() => {
     let currentCoachmarks = {};
     if (currentStep && pendingTransactions.length === 0) {
@@ -1055,11 +1002,9 @@ const useSimulationSteps = () => {
     dispatchSimulationActions(enabledActions);
   }, [enabledActions]);
 
-
-  // useEffect(() => dispatchSimulationStep(0), []);
-
   // TODO: memoize
   return {
+    currentStepIndex: simulation?.step,
     currentStep,
     isLoading,
     isTransitioning
