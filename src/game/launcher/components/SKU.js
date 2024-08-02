@@ -747,7 +747,7 @@ const SKU = ({ asset, onBack }) => {
         content: <AsteroidSKU />,
         flourishWidth: 1,
         rightButton: {
-          preLabel: 
+          preLabel:
             asteroidsRemaining > 0
             ? (
               <AsteroidsRemaining>
@@ -849,7 +849,7 @@ const SKU = ({ asset, onBack }) => {
       preLabel: process.env.REACT_APP_CHAIN_ID === '0x534e5f5345504f4c4941' && <SwayFaucetButton />
     };
     return params;
-  }, [asset, isLaunched, isPurchasing]);
+  }, [asset, isLaunched, isPurchasing, purchase?.totalPrice]);
 
   return (
     <>
