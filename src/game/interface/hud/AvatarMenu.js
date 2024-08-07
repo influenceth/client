@@ -162,6 +162,7 @@ const AvatarMenu = () => {
 
   const onSetAction = useStore(s => s.dispatchActionDialog);
   const asteroidId = useStore(s => s.asteroids.origin);
+  const simulationActions = useStore(s => s.simulationActions);
   const zoomStatus = useStore(s => s.asteroids.zoomStatus);
 
   const silhouetteOverlay = useMemo(() => {
@@ -182,7 +183,7 @@ const AvatarMenu = () => {
     if (simulation) {
       if (!crewmateId || (crewmateId === SIMULATION_CONFIG.crewmateId)) {
         // TODO: should/could link back to simulation crewmate
-        if (!simulation.crewmate) {
+        if (!simulation.crewmate && simulationActions.includes('RecruitCrewmate')) {
           history.push(`/recruit/0/1/0/create`); 
         }
         return;
@@ -190,7 +191,7 @@ const AvatarMenu = () => {
       return history.push(`/crewmate/${crewmateId}`);
     }
     return history.push('/crew');
-  }, [simulation]);
+  }, [simulation, simulationActions]);
 
   if (crewIsLoading) return null;
   return (

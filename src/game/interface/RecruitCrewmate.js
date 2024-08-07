@@ -39,7 +39,7 @@ const RecruitCrewmate = () => {
   }, [crewId, locationId, crewmateId]);
 
   useEffect(() => {
-    // if (!authenticated) history.push('/'); // TODO: commented this out for playable tutorial flow... is it needed?
+    if (!authenticated) history.push('/');
     // Select a random habitat out of the first 100
     const habitat = process.env.REACT_APP_DEPLOYMENT === 'production' ? Math.ceil(Math.random() * 100) : 1;
     if (!locationId) history.push(`/recruit/${crewId}/${habitat}`);

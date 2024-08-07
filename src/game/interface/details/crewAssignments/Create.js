@@ -1136,7 +1136,7 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
     if (!crewmate?._canRename || await isNameValid(name || crewmate?.Name?.name, crewmate?.id)) {
       setConfirming(true);
     }
-  }, [isNameValid, name, crewmate?.Name?.name, crewmate?.id, crewmate?._canRename, simulationEnabled]);
+  }, [isNameValid, name, crewmate?.id, crewmate?._canRename, crewmate?.Crewmate?.appearance, crewmate?.Name?.name, simulationEnabled]);
 
   const finalize = useCallback(() => {
     setConfirming(false);

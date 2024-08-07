@@ -22,19 +22,19 @@ import useTravelSolutionIsValid from '~/hooks/useTravelSolutionIsValid';
 import { SwayIcon } from '~/components/Icons';
 import { formatPrice } from '~/lib/utils';
 import { TOKEN, TOKEN_SCALE } from '~/lib/priceUtils';
+import useSession from '~/hooks/useSession';
 
 const DELAY_MESSAGE = 1000;
 
-  // TODO: "get me where i'm supposed to be" option
-  // TODO: "help me pick" option
-
 const useSimulationSteps = () => {
+  const { login } = useSession();
   const { crew, pendingTransactions } = useCrewContext();
   const simulation = useSimulationState();
   const history = useHistory();
 
   const dispatchSimulationEnabled = useStore(s => s.dispatchSimulationEnabled);
   const dispatchLauncherPage = useStore(s => s.dispatchLauncherPage);
+  const dispatchCinematicInitialPosition = useStore(s => s.dispatchCinematicInitialPosition);
   const dispatchCoachmarks = useStore(s => s.dispatchCoachmarks);
   const dispatchFiltersReset = useStore(s => s.dispatchFiltersReset);
   const dispatchDestinationSelected = useStore(s => s.dispatchDestinationSelected);
@@ -96,10 +96,14 @@ const useSimulationSteps = () => {
     let selectedLotIsMine = false;
     if (selectedLot) {
       const crewStatus = Permission.getPolicyDetails(selectedLot, crew)[Permission.IDS.USE_LOT]?.crewStatus;
-      selectedLotIsLeasable = (crewStatus === 'available' && !selectedLot?.building && !selectedLot?.surfaceShip)
+      selectedLotIsLeasable = (
+        crewStatus === 'available'
+        && selectedLot?.Location?.location?.id === SIMULATION_CONFIG.asteroidId
+        && !selectedLot?.building
+        && !selectedLot?.surfaceShip
+      );
       selectedLotIsMine = (crewStatus === 'controller');
     }
-    const selectedBuildingType = selectedLot?.building?.Building?.buildingType;
 
     // next available unused lot
     const nextUnusedLotId = (crewAgreements || []).find((a) => {
@@ -190,21 +194,33 @@ const useSimulationSteps = () => {
       return x;
     }
 
-    
-    // TODO: consider coachmark-back-to-AP function and atAP helper var
-
-
-    console.log({ selectedLotIsMine, selectedLot });
-
-    const goTo = ({ origin, zoomStatus }) => {
+    const goTo = ({ cinematic, origin, zoomStatus: newZoomStatus }) => {
+      if (cinematic) dispatchCinematicInitialPosition(true);
       if (currentZoomScene) dispatchZoomScene();
       if (destination) dispatchDestinationSelected();
       if (openHudMenu) dispatchHudMenuOpened();
       resetAsteroidFilters();
 
-      // TODO: fill this in a lot
+      if (newZoomStatus === 'in') {
+        setTransitioning(true);
+        if (origin) dispatchOriginSelected(origin);
 
-      if (zoomStatus === 'out') {
+        setTimeout(() => {
+          const delay = zoomStatus === 'in' ? 0 : ZOOM_IN_ANIMATION_TIME;
+          if (!['in', 'zooming-in'].includes(zoomStatus)) updateZoomStatus('zooming-in');
+
+          setTimeout(() => {
+            dispatchReorientCamera();
+            setTimeout(() => {
+              setTransitioning(false);
+              if (cinematic) dispatchCinematicInitialPosition(false);
+            }, DELAY_MESSAGE);
+          }, delay);
+        }, 0);
+      }
+      if (newZoomStatus === 'out') {
+        setTransitioning(true);
+        
         setTimeout(() => {
           const delay = zoomStatus === 'out' ? 0 : ZOOM_OUT_ANIMATION_TIME;
           if (!['out', 'zooming-out'].includes(zoomStatus)) updateZoomStatus('zooming-out');
@@ -212,15 +228,15 @@ const useSimulationSteps = () => {
           setTimeout(() => {
             dispatchReorientCamera();
             if (origin) dispatchOriginSelected(origin);
-            setTimeout(() => { setTransitioning(false); }, DELAY_MESSAGE);
+            setTimeout(() => {
+              setTransitioning(false);
+              if (cinematic) dispatchCinematicInitialPosition(false);
+            }, DELAY_MESSAGE);
           }, delay);
         }, 0);
       }
     };
 
-
-    // TODO: do we want these in each step? ideally would use coach marks for nav... but maybe to prep state?
-    //  initialize: () => {},
     return [
       {
         title: 'Welcome to Influence',
@@ -235,9 +251,9 @@ const useSimulationSteps = () => {
           </>
         ),
         crewmateId: SIMULATION_CONFIG.crewmates.pilot,
-        targetLocation: () => ({ zoomStatus: 'in', origin: 1089 }),
+        targetLocation: () => ({ zoomStatus: 'in', origin: 1 }),
         initialize: () => {
-          goTo({ zoomStatus: 'in', origin: 1089 })
+          goTo({ cinematic: true, zoomStatus: 'in', origin: 1 })
         },
         coachmarks: {
           // TODO: rightButton?
@@ -264,7 +280,9 @@ const useSimulationSteps = () => {
         coachmarks: {
           [COACHMARK_IDS.hudRecruitCaptain]: (!locationPath || locationPath === '/') // not in creation flow
         },
-        // TODO: implement enabledActions here so cannot click early
+        enabledActions: {
+          RecruitCrewmate: true
+        },
         shouldAdvance: () => simulation.crewmate?.name && simulation.crewmate?.appearance
       },
       {
@@ -465,6 +483,29 @@ const useSimulationSteps = () => {
         },
         shouldAdvance: () => {
           return !!Object.values(simulation.lots).find((l) => l.buildingType === Building.IDS.EXTRACTOR);
+        },
+      },
+      {
+        title: 'Building the Basics',
+        content: (
+          <>
+            Quick aside -- Rome wasn't built in a day. To map out your Extractor Site Plan, your crew 
+            had to hitch a ride on a robotic transport known as a hopper, travel from their habitat building
+            out to the intended construction site, and back.
+            <br/><br/>
+            The Influence Game Clock runs at {crew?._timeAcceleration}x Earth time, but since there is so much
+            to cover in your training simulation, we'll just let you...
+          </>
+        ),
+        crewmateId: SIMULATION_CONFIG.crewmates.engineer,
+        rightButton: {
+          children: 'Fast Forward',
+          onClick: () => {
+            dispatchSimulationState('canFastForward', true);
+          }
+        },
+        shouldAdvance: () => {
+          return !!simulation.canFastForward
         },
       },
       {
@@ -923,12 +964,16 @@ const useSimulationSteps = () => {
         rightButton: {
           children: 'Begin Your Journey',
           onClick: () => {
+            // webWallet does not work from localhost...
+            login(process.env.NODE_ENV === 'development' ? undefined : { webWallet: true });
+            // TODO: add on-logged-in url
+
             // enter crew creation + exit simulation
-            dispatchSimulationEnabled(false);
-            setTimeout(() => {
-              dispatchLauncherPage();
-              history.push('/recruit/0');
-            }, 100);
+            // dispatchSimulationEnabled(false);
+            // setTimeout(() => {
+            //   dispatchLauncherPage();
+            //   history.push('/recruit/0');
+            // }, 100);
           },
         },
       },
@@ -943,6 +988,7 @@ const useSimulationSteps = () => {
     inTravelMode,
     isLoading,
     locationPath,
+    login,
     selectedLot,
     openHudMenu,
     origin,
@@ -1002,13 +1048,12 @@ const useSimulationSteps = () => {
     dispatchSimulationActions(enabledActions);
   }, [enabledActions]);
 
-  // TODO: memoize
-  return {
+  return useMemo(() => ({
     currentStepIndex: simulation?.step,
     currentStep,
     isLoading,
     isTransitioning
-  }
+  }), [currentStep, isLoading, isTransitioning, simulation?.step])
 };
 
 export default useSimulationSteps;

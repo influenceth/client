@@ -115,6 +115,15 @@ const TutorialContent = styled.div`
         font-weight: normal;
       }
     }
+    & a {
+      color: #CCC;
+      text-decoration: none;
+      transition: color 100ms ease;
+      &:hover {
+        color: #DDD;
+        text-decoration: underline;
+      }
+    }
   }
 `;
 

@@ -7,7 +7,6 @@ import useGetActivityConfig from '~/hooks/useGetActivityConfig';
 import useStore from '~/hooks/useStore';
 import SIMULATION_CONFIG from './simulationConfig';
 import useSimulationState from '~/hooks/useSimulationState';
-import simulationConfig from './simulationConfig';
 
 const getUuid = () => String(performance.now()).replace('.', '');
 const transformReturnValues = (obj) => {
@@ -30,9 +29,6 @@ const MockTransactionManager = () => {
 
   const createAlert = useStore(s => s.dispatchAlertLogged);
 
-  // TODO: support renaming buildings and ships
-
-  // TODO: reconcile this with activities
   const getMockActionItem = useCallback((event) => {
     return {
       _id: getUuid(),
@@ -201,7 +197,7 @@ const MockTransactionManager = () => {
 
       case 'SampleDepositStart': {
         // create deposit
-        dispatchSimulationLotState(tx.vars.lot.id, { depositId: simulationConfig.depositId });
+        dispatchSimulationLotState(tx.vars.lot.id, { depositId: SIMULATION_CONFIG.depositId });
 
         // remove core drill
         dispatchSimulationAddToInventory(tx.vars.origin, tx.vars.origin_slot, Product.IDS.CORE_DRILL, -1);
@@ -216,7 +212,7 @@ const MockTransactionManager = () => {
           timestamp: nowSec(),
           returnValues: transformReturnValues({
             ...tx.vars,
-            deposit: { id: simulationConfig.depositId, label: Entity.IDS.DEPOSIT },
+            deposit: { id: SIMULATION_CONFIG.depositId, label: Entity.IDS.DEPOSIT },
             finish_time: nowSec() - 100,
             caller: SIMULATION_CONFIG.accountAddress
           })
@@ -317,7 +313,7 @@ const MockTransactionManager = () => {
 
         // put ship on empty lot
         const emptyLotId = Object.keys(simulation.lots).find((lotId) => !simulation.lots[lotId].buildingId);
-        dispatchSimulationLotState(emptyLotId, { shipId: simulationConfig.shipId });
+        dispatchSimulationLotState(emptyLotId, { shipId: SIMULATION_CONFIG.shipId });
 
         // mimic event
         events.push({
@@ -329,7 +325,7 @@ const MockTransactionManager = () => {
           timestamp: nowSec(),
           returnValues: transformReturnValues({
             ...tx.vars,
-            ship: { id: simulationConfig.shipId, label: Entity.IDS.SHIP },
+            ship: { id: SIMULATION_CONFIG.shipId, label: Entity.IDS.SHIP },
             finish_time: nowSec() - 100,
             caller: SIMULATION_CONFIG.accountAddress
           })
@@ -369,7 +365,7 @@ const MockTransactionManager = () => {
           Entity.formatEntity(tx.vars.ship),
           Entity.formatEntity({ id: 1, label: Entity.IDS.ASTEROID }),
         ]);
-        dispatchSimulationLotState(shipLotId, { shipId: simulationConfig.shipId, shipIsUndocked: true });
+        dispatchSimulationLotState(shipLotId, { shipId: SIMULATION_CONFIG.shipId, shipIsUndocked: true });
 
         // mimic event
         events.push({
@@ -401,7 +397,7 @@ const MockTransactionManager = () => {
         
         // mark ship as inflight to destination (destination, arrival_time)
         const shipLotId = Object.keys(simulation.lots).find((lotId) => !!simulation.lots[lotId].shipId);
-        dispatchSimulationLotState(shipLotId, { shipId: simulationConfig.shipId, shipIsUndocked: true, shipIsInFlight: true });
+        dispatchSimulationLotState(shipLotId, { shipId: SIMULATION_CONFIG.shipId, shipIsUndocked: true, shipIsInFlight: true });
 
         dispatchSimulationState('crewLocation', [
           Entity.formatEntity({ id: SIMULATION_CONFIG.shipId, label: Entity.IDS.SHIP }),
@@ -422,6 +418,34 @@ const MockTransactionManager = () => {
             departure: tx.vars.departure_time,
             arrival: tx.vars.arrival_time,
             finish_time: nowSec() + 86400,
+            caller: SIMULATION_CONFIG.accountAddress
+          })
+        });
+        break;
+      }
+
+      case 'ChangeName': {
+        // ship or building
+        let lotId;
+        if (tx.vars.entity.label === Entity.IDS.SHIP) {
+          lotId = Object.keys(simulation.lots).find((i) => simulation.lots[i].shipId === tx.vars.entity.id);
+        } else if (tx.vars.entity.label === Entity.IDS.BUILDING) {
+          lotId = Object.keys(simulation.lots).find((i) => simulation.lots[i].buildingId === tx.vars.entity.id);
+        } else {
+          break;
+        }
+        dispatchSimulationLotState(lotId, { entityName: tx.vars.name });
+
+        // mimic event
+        events.push({
+          event: 'NameChanged',
+          name: 'NameChanged',
+          logIndex: 1,
+          transactionIndex: 1,
+          transactionHash: tx.txHash,
+          timestamp: nowSec(),
+          returnValues: transformReturnValues({
+            ...tx.vars,
             caller: SIMULATION_CONFIG.accountAddress
           })
         });
@@ -475,8 +499,6 @@ const MockTransactionManager = () => {
         
         setTimeout(() => {
           simulateResultingEvent(tx);
-          
-          // TODO: if finishTime, decrement finishTime until finished (show in "fast forwarding" state)
         }, 3000);
       }
     });

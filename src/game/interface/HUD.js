@@ -1,3 +1,5 @@
+import { useEffect } from 'react';
+import { useHistory } from 'react-router-dom';
 import styled from 'styled-components';
 
 import useCrewContext from '~/hooks/useCrewContext';
@@ -88,9 +90,20 @@ export const Rule = styled.div`
 `;
 
 const HUD = () => {
-  const { authenticated, authenticating } = useSession();
+  const { accountAddress, authenticated, authenticating } = useSession();
   const { loading } = useCrewContext();
+  const history = useHistory();
   const simulationEnabled = useSimulationEnabled();
+  
+  useEffect(() => {
+    if (simulationEnabled) {
+      return () => {
+        if (accountAddress) {
+          history.push('/recruit/0');
+        }
+      }
+    }
+  }, [simulationEnabled]);
 
   const dispatchLauncherPage = useStore(s => s.dispatchLauncherPage);
   return (

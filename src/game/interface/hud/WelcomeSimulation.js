@@ -1,4 +1,4 @@
-import { useContext, useEffect, useRef, useState } from 'react';
+import { useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import styled from 'styled-components';
 import Loader from 'react-spinners/PuffLoader';
@@ -12,10 +12,11 @@ import TutorialMessage from './TutorialMessage';
 import MockDataManager from '~/simulation/MockDataManager';
 import MockTransactionManager from '~/simulation/MockTransactionManager';
 import theme from '~/theme';
-import { ChevronDoubleDownIcon } from '~/components/Icons';
+import { ChevronDoubleDownIcon, FastForwardIcon } from '~/components/Icons';
 import { createPortal } from 'react-dom';
 import { COACHMARK_IDS } from '~/contexts/CoachmarkContext';
 import useCoachmarkRefSetter from '~/hooks/useCoachmarkRefSetter';
+import useSimulationState from '~/hooks/useSimulationState';
 
 const BUBBLE_WIDTH = 60;
 
@@ -75,6 +76,42 @@ const CrewmateImage = styled.div`
   z-index: 2;
 `;
 
+const FastForwardOverlay = styled.div`
+  align-items: center;
+  background: rgba(0, 0, 0, 0.5);
+  bottom: 0;
+  color: rgba(255, 255, 255, 0.);
+  display: flex;
+  font-size: 200px;
+  left: 0;
+  justify-content: center;
+  position: fixed;
+  right: 0;
+  top: 0;
+  z-index: 10000;
+`;
+
+const FastForwarder = () => {
+  const { canFastForward, crewReadyAt, taskReadyAt } = useSimulationState();
+
+  const waitTime = useMemo(() => (crewReadyAt || 0) + (taskReadyAt || 0), [crewReadyAt, taskReadyAt])
+
+  useEffect(() => {
+    if (canFastForward) {
+      // 3s, useFrame/setInterval, animate to zero, then set sim state to 0
+    }
+  }, [canFastForward, waitTime])
+
+  // TODO: pointer events
+  return null;
+  if (false && !(waitTime > 0)) return null;
+  return (
+    <FastForwardOverlay>
+      <FastForwardIcon />
+    </FastForwardOverlay>
+  );
+};
+
 const WelcomeSimulation = () => {
   const setCoachmarkRef = useCoachmarkRefSetter();
   const [isHidden, setIsHidden] = useState(false);
@@ -87,6 +124,7 @@ const WelcomeSimulation = () => {
   // watching for user action
   const history = useHistory();
   const actionDialog = useStore(s => s.actionDialog);
+  const launcherPage = useStore(s => s.launcherPage);
   const openHudMenu = useStore(s => s.openHudMenu);
   const [locationPath, setLocationPath] = useState();
   useEffect(() => {
@@ -119,8 +157,10 @@ const WelcomeSimulation = () => {
         <MockDataManager />
         <MockTransactionManager />
 
+        <FastForwarder />
+
         <Bubble
-          isIn={currentStep && !isTransitioning && isHidden}
+          isIn={currentStep && !isTransitioning && !launcherPage && isHidden}
           onClick={() => setIsHidden(false)}
           ref={(currentStep && !isTransitioning && isHidden) ? setCoachmarkRef(COACHMARK_IDS.simulationRightButton) : undefined}>
           <CrewmateImage 
@@ -136,18 +176,14 @@ const WelcomeSimulation = () => {
           closeIconOverride={<ChevronDoubleDownIcon />}
           crewmateId={currentStep?.crewmateId}
           crewmateImageOptionString={currentStep?.crewmateImageOptionString}
-          isIn={currentStep && !isTransitioning && !isHidden}
+          isIn={currentStep && !isTransitioning && !launcherPage && !isHidden}
           messageOffset={15}
           onClose={() => setIsHidden(true)}
-          rightButton={currentStep.rightButton
-            ? {
-              // TODO: defaults to overwrite
-              // color: theme.colors.main,
-              // disabled: false,
-              ...currentStep.rightButton
-            }
+          rightButton={(
+            currentStep.rightButton
+            ? { ...currentStep.rightButton }
             : null
-          }
+          )}
           setButtonRef={(currentStep && !isTransitioning && !isHidden) ? setCoachmarkRef(COACHMARK_IDS.simulationRightButton) : undefined}
           step={currentStep}
         />

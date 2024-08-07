@@ -219,14 +219,14 @@ const Game = () => {
                           <ChainTransactionProvider>
                             <SyncedTimeProvider>
                               <ActionItemProvider>
-                                  <ThemeProvider theme={theme}>
-                                    <ScreensizeProvider>
-                                      <CoachmarkProvider>
-                                        <ScreensizeWarning />
-                                        <Interface />
-                                      </CoachmarkProvider>
-                                    </ScreensizeProvider>
-                                  </ThemeProvider>
+                                <ThemeProvider theme={theme}>
+                                  <ScreensizeProvider>
+                                    <CoachmarkProvider>
+                                      <ScreensizeWarning />
+                                      <Interface />
+                                    </CoachmarkProvider>
+                                  </ScreensizeProvider>
+                                </ThemeProvider>
                               </ActionItemProvider>
                             </SyncedTimeProvider>
                           </ChainTransactionProvider>

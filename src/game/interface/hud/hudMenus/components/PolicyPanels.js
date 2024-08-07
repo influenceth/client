@@ -25,6 +25,7 @@ import { formatFixed, nativeBool, reactBool } from '~/lib/utils';
 import theme from '~/theme';
 import actionButtons from '../../actionButtons';
 import useBlockTime from '~/hooks/useBlockTime';
+import useSimulationEnabled from '~/hooks/useSimulationEnabled';
 
 const borderColor = `rgba(255, 255, 255, 0.15)`;
 const DataBlock = styled.div``;
@@ -189,6 +190,7 @@ const getStatusColor = (status) => {
 const PolicyPanel = ({ editable = false, entity, permission }) => {
   const { accountAddress } = useSession();
   const { crew } = useCrewContext();
+  const simulationEnabled = useSimulationEnabled();
   const { currentPolicy, updateAllowlists, updatePolicy, allowlistChangePending, policyChangePending } = usePolicyManager(entity, permission);
   const {
     policyType: originalPolicyType,
@@ -564,7 +566,10 @@ const PolicyPanel = ({ editable = false, entity, permission }) => {
 
           {editable && (
             <EditBlock>
-              <Button size="small" onClick={() => toggleEditing('policy')}>Edit Permission Policy</Button>
+              <Button
+                disabled={reactBool(simulationEnabled)}
+                size="small"
+                onClick={() => toggleEditing('policy')}>Edit Permission Policy</Button>
             </EditBlock>
           )}
 
@@ -584,7 +589,10 @@ const PolicyPanel = ({ editable = false, entity, permission }) => {
                     </DataRow>
                   </DataBlock>
                   <EditBlock>
-                    <Button size="small" onClick={() => toggleEditing('allowlist')}>Edit Allowlist</Button>
+                    <Button
+                      disabled={reactBool(simulationEnabled)}
+                      size="small" 
+                      nClick={() => toggleEditing('allowlist')}>Edit Allowlist</Button>
                   </EditBlock>
                 </Section>
               )}

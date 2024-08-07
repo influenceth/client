@@ -45,7 +45,7 @@ export const getMockBuildingInventories = (buildingType, buildingStatus, content
   return inv.map((i) => {
     const [mass, volume] = (i.contents || []).reduce((acc, { product, amount }) => {
       acc[0] += amount * Product.TYPES[product].massPerUnit;
-      acc[1] += amount * Product.TYPES[product].massPerUnit;
+      acc[1] += amount * Product.TYPES[product].volumePerUnit;
       return acc;
     }, [0, 0]);
     return { ...i, mass, volume }
@@ -84,16 +84,12 @@ const getMockShipInventories = (shipType, contentsBySlot) => {
   return inv.map((i) => {
     const [mass, volume] = (i.contents || []).reduce((acc, { product, amount }) => {
       acc[0] += amount * Product.TYPES[product].massPerUnit;
-      acc[1] += amount * Product.TYPES[product].massPerUnit;
+      acc[1] += amount * Product.TYPES[product].volumePerUnit;
       return acc;
     }, [0, 0]);
     return { ...i, mass, volume }
   });
 }
-
-
-// TODO: IMPORTANT: refetch all on simulationEnabled change (in either direction)
-
 
 const MockDataItem = ({ overwrite }) => {
   const queryClient = useQueryClient();
@@ -133,6 +129,7 @@ const MockDataItem = ({ overwrite }) => {
 };
 
 const MockDataManager = () => {
+  const queryClient = useQueryClient();
   const simulation = useSimulationState();
 
   const overwrites = useMemo(() => {
@@ -151,12 +148,21 @@ const MockDataManager = () => {
       
       // packed lot data
       configs.push({
-        queryKey: [ 'asteroidPackedLotData', 1 ], // TODO: get asteroidId from SIMULATION_CONFIG
+        queryKey: [ 'asteroidPackedLotData', SIMULATION_CONFIG.asteroidId ],
         transformer: (data) => {
           if (data) {
             Object.keys(simulation.lots).forEach((lotId) => {
               const lotIndex = Lot.toIndex(lotId);
-              const buildingType = simulation.lots[lotId]?.shipId ? 15 : simulation.lots[lotId]?.buildingType;
+              let buildingType = 0;
+              if (simulation.lots[lotId]?.shipId) {
+                buildingType = 15; // ship
+              } else if (simulation.lots[lotId]?.buildingType) {
+                if (simulation.lots[lotId]?.buildingStatus !== Building.CONSTRUCTION_STATUSES.OPERATIONAL) {
+                  buildingType = 14; // construction site
+                } else {
+                  buildingType = simulation.lots[lotId]?.buildingType;
+                }
+              }
               data[lotIndex] = ((buildingType || 0) << 4) // capable type
                 + (2 << 2) // leased
                 + (0 << 1) // crew present
@@ -167,7 +173,7 @@ const MockDataManager = () => {
         }
       });
 
-      // TODO: build out lots by id for quick access from transformers
+      // TODO: build out lots by id for quick access from transformers?
       // (i.e. can use entityToAgreements for agreements, etc)
 
       const simulatedAgreements = [];
@@ -184,6 +190,7 @@ const MockDataManager = () => {
           depositId,
           depositYield,
           depositYieldRemaining,
+          entityName,
           leaseRate,
           leaseTerm,
           inventoryContents,
@@ -229,14 +236,15 @@ const MockDataManager = () => {
               buildingType,
               status: buildingStatus,
               plannedAt: nowSec(),
-              finishTime: nowSec() // TODO: ?
+              finishTime: nowSec()
             },
             Control: { controller: myCrewEntity },
+            Inventories: getMockBuildingInventories(buildingType, buildingStatus, inventoryContents),
             Location: {
               location: lotEntity,
               locations: [lotEntity, asteroidEntity]
             },
-            Inventories: getMockBuildingInventories(buildingType, buildingStatus, inventoryContents)
+            Name: { name: entityName || '' }
           };
 
           // per-building components
@@ -331,7 +339,6 @@ const MockDataManager = () => {
 
         let ship;
         if (shipId) {
-          console.log('shipId', shipId, inventoryContents);
           ship = {
             ...Entity.formatEntity({ id: shipId, label: Entity.IDS.SHIP }),
             Control: { controller: myCrewEntity },
@@ -354,8 +361,8 @@ const MockDataManager = () => {
                 }
               )
             ),
-            // Name: { name: '' },
-            Nft: { // TODO: use standard
+            Name: { name: entityName || '' },
+            Nft: { // TODO: use standard 
               owners: {
                 ethereum: null,
                 starknet: SIMULATION_CONFIG.accountAddress,
@@ -424,10 +431,13 @@ const MockDataManager = () => {
         transformer: (data) => simulatedShips,
       });
 
-
       // crew accessible inventories
-      // TODO: disable UI for changing perms
-      const invKeyObj = { asteroidId: 1, hasComponent: 'Inventories', permissionCrewId: SIMULATION_CONFIG.crewId, permissionAccount: SIMULATION_CONFIG.accountAddress }
+      const invKeyObj = {
+        asteroidId: SIMULATION_CONFIG.asteroidId,
+        hasComponent: 'Inventories',
+        permissionCrewId: SIMULATION_CONFIG.crewId,
+        permissionAccount: SIMULATION_CONFIG.accountAddress
+      };
       configs.push(
         {
           queryKey: entitiesCacheKey(Entity.IDS.BUILDING, { ...invKeyObj, hasPermission: Permission.IDS.ADD_PRODUCTS }),
@@ -441,7 +451,6 @@ const MockDataManager = () => {
     }
 
     // unresolved activities
-    // TODO: this one might be more important for lots...
     // configs.push({
     //   queryKey: [ 'activities', Entity.IDS.CREW, SIMULATION_CONFIG.crewId, 'unresolved' ],
     //   transformer: (data) => (simulation.actionItems || [])
@@ -467,7 +476,7 @@ const MockDataManager = () => {
         order.initialCaller = caller;
         order.locations = [
           /* TODO: ? is more detail needed? */
-          Entity.formatEntity({ id: 1, label: Entity.IDS.ASTEROID })
+          Entity.formatEntity({ id: SIMULATION_CONFIG.asteroidId, label: Entity.IDS.ASTEROID })
         ];
         return [order];
       }
@@ -475,6 +484,17 @@ const MockDataManager = () => {
 
     return configs.map((c) => ({ ...c, key: JSON.stringify(c.queryKey) }));
   }, [simulation]);
+
+  // on unmount, refetch all overwrites
+  useEffect(() => {
+    return () => {
+      console.log('unmounting MockDataManager');
+      overwrites.forEach(({ queryKey }) => {
+        console.log('invalidating', queryKey);
+        queryClient.invalidateQueries({ queryKey, refetchType: 'active' });
+      });
+    };
+  }, []);
 
   console.log('configs', overwrites);
 

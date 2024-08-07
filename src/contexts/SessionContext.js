@@ -94,7 +94,7 @@ export function SessionProvider({ children }) {
   }, []);
 
   // Login entry point, starts by connecting to wallet provider
-  const connect = useCallback(async (auto = false) => {
+  const connect = useCallback(async (auto = false, enabledConnectors = { webWallet: true, argentX: true, braavos: true, argentMobile: true }) => {
     if (currentSession?.walletId) {
       localStorage.setItem('starknetLastConnectedWallet', currentSession.walletId);
       auto = true;
@@ -103,13 +103,13 @@ export function SessionProvider({ children }) {
     try {
       const connectors = [];
 
-      if (!!process.env.REACT_APP_ARGENT_WEB_WALLET_URL) {
+      if (enabledConnectors.webWallet && !!process.env.REACT_APP_ARGENT_WEB_WALLET_URL) {
         connectors.push(new WebWalletConnector({ url: process.env.REACT_APP_ARGENT_WEB_WALLET_URL, provider }));
       }
 
-      connectors.push(new InjectedConnector({ options: { id: 'argentX', provider }}));
-      connectors.push(new InjectedConnector({ options: { id: 'braavos', provider }}));
-      connectors.push(new ArgentMobileConnector());
+      if (enabledConnectors.argentX) connectors.push(new InjectedConnector({ options: { id: 'argentX', provider }}));
+      if (enabledConnectors.braavos) connectors.push(new InjectedConnector({ options: { id: 'braavos', provider }}));
+      if (enabledConnectors.argentMobile) connectors.push(new ArgentMobileConnector());
 
       const connectionOptions = {
         dappName: 'Influence',
@@ -593,7 +593,7 @@ export function SessionProvider({ children }) {
 
   return (
     <SessionContext.Provider value={{
-      login: async () => await connect(),
+      login: async (enabledConnectors) => await connect(undefined, enabledConnectors),
       logout,
       accountAddress: authenticated ? currentSession?.accountAddress : null,
       allowedMethods,

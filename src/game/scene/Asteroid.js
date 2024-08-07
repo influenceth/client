@@ -140,6 +140,7 @@ const EMISSIVE_INTENSITY = {
 
 const AsteroidComponent = () => {
   const { controls } = useThree();
+  const cinematicInitialPosition = useStore(s => s.asteroids.cinematicInitialPosition);
   const origin = useStore(s => s.asteroids.origin);
   const { textureSize } = useStore(s => s.getTerrainQuality());
   const { shadowSize, shadowMode } = useStore(s => s.getShadowQuality());
@@ -237,14 +238,24 @@ const AsteroidComponent = () => {
     let fromPosition = prevAsteroidPosition || zoomedFrom?.position || controls.object.position;
     // if fromPosition comes from saved state (i.e. on refresh), will be object but not vector3
     if (!fromPosition.isVector3) fromPosition = new Vector3(fromPosition.x, fromPosition.y, fromPosition.z);
-    const objectPosition = pointCircleClosest(
-      fromPosition,
-      new Vector3(...position.current),
-      rotationAxis.current,
-      INITIAL_ZOOM,
-      true
-    );
+
+    let objectPosition;
+    if (cinematicInitialPosition) {
+      console.log('cinematicInitialPosition', position.current);
+      objectPosition = new Vector3(...position.current)
+        .setLength(2.5 * config.radius)
+        .applyAxisAngle(rotationAxis.current, -Math.PI / 4.5);
+    } else {
+      objectPosition = pointCircleClosest(
+        fromPosition,
+        new Vector3(...position.current),
+        rotationAxis.current,
+        INITIAL_ZOOM,
+        true
+      );
+    }
     objectPosition.add(rotationAxis.current.clone().multiplyScalar(0.07 * INITIAL_ZOOM));
+    
     // (legacy) zoom in directly from zoomed-out camera
     // const objectPosition = controls.object.position.clone().normalize().multiplyScalar(initialZoom);
 
@@ -259,7 +270,7 @@ const AsteroidComponent = () => {
       objectUp,
       targetScenePosition
     };
-  }, [!controls, config?.radius, prevAsteroidPosition, zoomedFrom?.position]);
+  }, [cinematicInitialPosition, !controls, config?.radius, prevAsteroidPosition, zoomedFrom?.position]);
 
   const ringsPresent = useMemo(() => !!config?.ringsPresent, [config?.ringsPresent]);
   const surfaceDistance = useMemo(

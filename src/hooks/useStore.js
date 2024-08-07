@@ -86,6 +86,7 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
       zoomedFrom: null,
       zoomScene: null,
       zoomStatus: 'out', // out -> zooming-in -> in -> zooming-out -> out
+      cinematicInitialPosition: false
     },
 
     assetSearch: {
@@ -381,6 +382,10 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
         state.asteroids.lot = null;
         state.asteroids.zoomScene = null;
       }
+    })),
+
+    dispatchCinematicInitialPosition: (which) => set(produce(state => {
+      state.asteroids.cinematicInitialPosition = which;
     })),
 
     dispatchAsteroidZoomedFrom: (from) => set(produce(state => {
@@ -815,6 +820,7 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
     'asteroids.travelMode',
     'asteroids.travelSolution',
     'asteroids.zoomScene',
+    'asteroids.cinematicInitialPosition',
     'canvasStack',
     'cameraNeedsRecenter',
     'cameraNeedsReorientation',

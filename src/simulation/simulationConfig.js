@@ -1,10 +1,11 @@
-import { Building, Entity, Process, Product } from '@influenceth/sdk';
+import { Building, Process, Product } from '@influenceth/sdk';
 import { TOKEN, TOKEN_SCALE } from '~/lib/priceUtils';
 
 const SAFE_ID_START = 4 * 28561869; // 4x * total lots in belt
 
 const simulationConfig = {
   accountAddress: '0x1234567890',
+  asteroidId: 1,
   crewId: SAFE_ID_START,
   crewName: 'ADALIAN INTERNSHIP',
   crewmateId: SAFE_ID_START,

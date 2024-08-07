@@ -9,6 +9,7 @@ import useAnnotationManager, { isValidAnnotation } from '~/hooks/actionManagers/
 import useDescriptionAnnotation from '~/hooks/useDescriptionAnnotation';
 import useAnnotationContent from '~/hooks/useAnnotationContent';
 import useEarliestActivity from '~/hooks/useEarliestActivity';
+import useSimulationEnabled from '~/hooks/useSimulationEnabled';
 
 const RemainingChars = styled.div`
   color: ${p => p.remaining < 0
@@ -23,6 +24,7 @@ const EntityDescriptionForm = ({ buttonSize = 'small', buttonText = 'Update', en
   const { saveAnnotation, savingAnnotation, txPending } = useAnnotationManager(earliest, entity);
   const { data: annotation, isLoading: annotationLoading } = useDescriptionAnnotation(entity);
   const { data: originalDesc, isLoading: contentLoading } = useAnnotationContent(annotation);
+  const simulationEnabled = useSimulationEnabled();
   const isLoading = annotationLoading || contentLoading;
 
   const [desc, setDesc] = useState();
@@ -58,7 +60,7 @@ const EntityDescriptionForm = ({ buttonSize = 'small', buttonText = 'Update', en
       <label>{label}</label>
       <div>
         <UncontrolledTextArea
-          disabled={nativeBool(!entity || savingAnnotation)}
+          disabled={nativeBool(!entity || savingAnnotation || simulationEnabled)}
           onChange={handleDescChange}
           placeholder="Type a custom description..."
           style={{ minHeight: minTextareaHeight }}
@@ -73,7 +75,7 @@ const EntityDescriptionForm = ({ buttonSize = 'small', buttonText = 'Update', en
           onClick={handleCancel}
           style={{ marginRight: 6 }}>Cancel</Button>
         <Button
-          disabled={nativeBool(isLoading || !entity || savingAnnotation || !desc || remaining < 0 || (desc === originalDesc))}
+          disabled={nativeBool(isLoading || !entity || savingAnnotation || !desc || remaining < 0 || (desc === originalDesc) || simulationEnabled)}
           loading={savingAnnotation}
           size={buttonSize}
           isTransaction
