@@ -478,7 +478,7 @@ const formatAsTx = (item) => {
     case 'PurchaseDepositAndImprove':
     case 'SampleDepositImprove': {
       formatted.icon = <ImproveCoreSampleIcon />;
-      formatted.label = `${Product.TYPES[item.meta?.resource]?.name || 'Core'} Resample`;
+      formatted.label = `${Product.TYPES[item.meta?.resource]?.name || 'Core'} Improvement`;
       formatted.asteroidId = Lot.toPosition(item.meta?.lotId)?.asteroidId;
       formatted.lotId = item.meta?.lotId;
       // formatted.resourceId = item.meta.resource; // not necessarily forcing open resourcemap
