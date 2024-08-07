@@ -720,6 +720,7 @@ const IngredientsList = styled(FlexSectionInputBody)`
 const DialogIngredientsList = styled(IngredientsList)`
   background: transparent;
   grid-template-columns: repeat(6, 95px);
+  padding-bottom: 32px;
 `;
 
 const IngredientSummary = styled.div`
@@ -736,7 +737,8 @@ const IngredientSummary = styled.div`
       ${p => p.theming === 'error' && `rgba(${hexToRGB(p.theme.colors.error)}, 1)`}
       ${p => p.theming === 'warning' && `rgba(${hexToRGB(p.theme.colors.lightOrange)}, 1)`}
       ${p => p.theming === 'success' && `rgba(${p.theme.colors.successRGB},1)`}
-      ${p => (!p.theming || p.theming === 'default') && `rgba(${p.theme.colors.mainRGB}, 1)`}
+      ${p => p.theming === 'none' && `rgba(${hexToRGB(p.theme.colors.secondaryText)}, 1)`}
+      ${p => (!p.theming || p.theming === 'default') && `white`}
     ;
     padding: 5px 0;
   }
@@ -1856,8 +1858,8 @@ export const TransferSelectionDialog = ({
             : (
               <EmptyResourceImage
                 key={i}
-                backgroundColor="#111"
-                outlineColor="#111"
+                backgroundColor="#080808"
+                outlineColor="#080808"
                 noIcon />
             )
         ))}
@@ -1874,14 +1876,17 @@ export const TransferSelectionDialog = ({
             </IngredientSummary>
           )
           : (
-            <IngredientSummary>
-              <span>
-                {tally > 0
-                  ? `${tally} Items: ${formatMass(totalMass)} | ${formatVolume(totalVolume)}`
-                  : `None Selected`
-                }
-              </span>
-            </IngredientSummary>
+            tally > 0
+            ? (
+              <IngredientSummary>
+              <span>{tally} Items: {formatMass(totalMass)} | {formatVolume(totalVolume)}</span>
+              </IngredientSummary>
+            )
+            : (
+              <IngredientSummary theming="none">
+              <span>None Selected</span>
+              </IngredientSummary>
+            )
           )
         }
       </DialogIngredientsList>
@@ -3080,7 +3085,7 @@ export const ResourceGridSectionInner = ({
               </ThumbnailWithData>
             </div>
             {!hideTotals && (
-              <IngredientSummary>
+              <IngredientSummary theming="none">
                 <span>None Selected</span>
               </IngredientSummary>
             )}
