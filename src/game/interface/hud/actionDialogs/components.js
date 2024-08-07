@@ -4,7 +4,22 @@ import { createPortal } from 'react-dom';
 import { Tooltip } from 'react-tooltip';
 import { TbBellRingingFilled as AlertIcon } from 'react-icons/tb';
 import { BarLoader } from 'react-spinners';
-import { Asteroid, Building, Crewmate, Dock, Entity, Inventory, Lot, Order, Permission, Process, Product, Ship, Station, Time } from '@influenceth/sdk';
+import {
+  Asteroid,
+  Building,
+  Crewmate,
+  Dock,
+  Entity,
+  Inventory,
+  Lot,
+  Order,
+  Permission,
+  Process,
+  Product,
+  Ship,
+  Station,
+  Time
+} from '@influenceth/sdk';
 import numeral from 'numeral';
 import { List } from 'react-virtualized';
 
@@ -37,7 +52,6 @@ import {
   EmergencyModeEnterIcon,
   TargetIcon,
   ProductionIcon,
-  ShipIcon,
   WarningIcon,
   CoreSampleIcon,
   ResourceIcon,
@@ -74,7 +88,6 @@ import LiveReadyStatus from '~/components/LiveReadyStatus';
 import useConstructionManager from '~/hooks/actionManagers/useConstructionManager';
 import EntityName from '~/components/EntityName';
 import DataTableComponent from '~/components/DataTable';
-import UncontrolledTextInput from '~/components/TextInputUncontrolled';
 import Autocomplete, { StaticAutocomplete } from '~/components/Autocomplete';
 import useScreenSize from '~/hooks/useScreenSize';
 
@@ -1999,8 +2012,9 @@ export const LandingSelectionDialog = ({ asteroid, deliveryMode, initialSelectio
 };
 
 export const ProcessSelectionDialog = ({ initialSelection, onClose, forceProcesses, processorType, onSelected, open }) => {
-  const [error, setError] = useState();
   const [selection, setSelection] = useState(initialSelection);
+  const [processFilter, setProcessFilter] = useState();
+  const [outputFilter, setOutputFilter] = useState();
 
   const processes = useMemo(() => {
     const unSorted = forceProcesses || Object.values(Process.TYPES).filter((p) => p.processorType === processorType);
@@ -2012,6 +2026,24 @@ export const ProcessSelectionDialog = ({ initialSelection, onClose, forceProcess
     onClose();
   }, [onClose, onSelected, selection]);
 
+  const applyProcessFilter = useCallback((process) => {
+    if (!processFilter && !outputFilter) return true;
+
+    if (processFilter) {
+      if (!process.name.toLowerCase().includes(processFilter.toLowerCase())) return false;
+    }
+
+    if (outputFilter) {
+      const includesFilter = Object.keys(process.outputs).some((output) => {
+        return Product.TYPES[output]?.name.toLowerCase().includes(outputFilter.toLowerCase());
+      });
+
+      if (!includesFilter) return false;
+    }
+
+    return true;
+  }, [processFilter, outputFilter]);
+
   return (
     <SelectionDialog
       isCompletable={selection > 0}
@@ -2019,9 +2051,22 @@ export const ProcessSelectionDialog = ({ initialSelection, onClose, forceProcess
       onComplete={onComplete}
       open={open}
       title={`Select Process`}
-      style={{ maxWidth: '90vw' }}>
+      style={{ width: '1250px', maxWidth: '90vw', minHeight: '80%' }}>
       {/* TODO: isLoading */}
       {/* TODO: replace with DataTable? */}
+
+      <TextInput
+        onChange={(e) => setProcessFilter(e.target.value)}
+        placeholder="Filter by Process..."
+        value={processFilter || ''}
+        width={185}
+        style={{ marginBottom: '10px', marginRight: '10px' }} />
+      <TextInput
+        onChange={(e) => setOutputFilter(e.target.value)}
+        placeholder="Filter by Output..."
+        value={outputFilter || ''}
+        width={185}
+        style={{ marginBottom: '10px' }} />
       <SelectionTableWrapper>
         <table>
           <thead>
@@ -2032,7 +2077,7 @@ export const ProcessSelectionDialog = ({ initialSelection, onClose, forceProcess
             </tr>
           </thead>
           <tbody>
-            {processes.map(({ i, name, inputs, outputs }) => {
+            {processes.filter(applyProcessFilter).map(({ i, name, inputs, outputs }) => {
               return (
                 <SelectionTableRow
                   key={i}
@@ -2478,7 +2523,7 @@ export const InventorySelectionDialog = ({
       {/* TODO: isLoading */}
       <FilterRow>
         <div>
-          <UncontrolledTextInput
+          <TextInput
             onChange={handleFilterChange}
             placeholder="Filter by Name..."
             value={filterValue || ''}
