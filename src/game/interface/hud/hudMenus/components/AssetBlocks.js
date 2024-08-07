@@ -20,6 +20,9 @@ import {
   SpaceportBuildingIcon,
   WarehouseBuildingIcon
 } from '~/components/Icons';
+import useExtractionManager from '~/hooks/actionManagers/useExtractionManager';
+import useProcessManager from '~/hooks/actionManagers/useProcessManager';
+import useConstructionManager from '~/hooks/actionManagers/useConstructionManager';
 import { ResourceImage } from '~/components/ResourceThumbnail';
 import { useShipLink } from '~/components/ShipLink';
 import { getShipIcon } from '~/lib/assetUtils';
@@ -322,7 +325,10 @@ export const BuildingBlock = ({ building, onSelectCrew, selectedCrew }) => {
   const syncedTime = useSyncedTime();
   const buildingLoc = locationsArrToObj(building?.Location?.locations);
   const onClickBuilding = useLotLink(buildingLoc);
-
+  const { currentExtraction } = useExtractionManager(buildingLoc?.lotId);
+  const { currentProcess } = useProcessManager(buildingLoc?.lotId, building.Processors[0]?.slot);
+  const { currentConstructionAction } = useConstructionManager(buildingLoc?.lotId);
+  
   const [progress, progressColor] = useMemo(() => {
     if (building?.Building?.status === Building.CONSTRUCTION_STATUSES.OPERATIONAL) {
       if (building?.Building?.buildingType === Building.IDS.WAREHOUSE) {
@@ -353,15 +359,15 @@ export const BuildingBlock = ({ building, onSelectCrew, selectedCrew }) => {
         return [usage, usage < 0.75 ? 'main' : (usage < 0.9 ? 'warning' : 'error')];
       }
 
-      else if (building?.Building?.buildingType === Building.IDS.EXTRACTOR) {
+      else if (building?.Building?.buildingType === Building.IDS.EXTRACTOR && currentExtraction) {
         return [
-          Math.min(1, (syncedTime - building?.Extractors?.[0]?.event?.timestamp) / (building?.Extractors?.[0]?.finishTime - building?.Extractors?.[0]?.event?.timestamp)),
+          Math.min(1, (syncedTime - currentExtraction.startTime) / (currentExtraction.finishTime - currentExtraction.startTime)),
           'main'
         ];
       }
-      else if (building?.Processors?.length) {
+      else if (currentProcess) {
         return [
-          Math.min(1, (syncedTime - building?.Processors?.[0]?.event?.timestamp) / (building?.Processors?.[0]?.finishTime - building?.Processors?.[0]?.event?.timestamp)),
+          Math.min(1, (syncedTime - currentProcess?.startTime) / (currentProcess?.finishTime - currentProcess?.startTime)),
           'main'
         ];
       }
@@ -374,9 +380,9 @@ export const BuildingBlock = ({ building, onSelectCrew, selectedCrew }) => {
       ];
     }
 
-    if (building?.Building?.status === Building.CONSTRUCTION_STATUSES.UNDER_CONSTRUCTION) {
+    if (building?.Building?.status === Building.CONSTRUCTION_STATUSES.UNDER_CONSTRUCTION && currentConstructionAction) {
       return [
-        Math.min(1, (syncedTime - building?.Building?.event?.timestamp) / (building?.Building?.finishTime - building?.Building?.event?.timestamp)),
+        Math.min(1, (syncedTime - currentConstructionAction.startTime) / (currentConstructionAction.finishTime - currentConstructionAction.startTime)),
         'main'
       ];
     }
@@ -405,7 +411,7 @@ export const BuildingBlock = ({ building, onSelectCrew, selectedCrew }) => {
   const onClick = useCallback(() => {
     onClickBuilding();
     onSelectCrew(building.Control?.controller?.id);
-  }, [onClickBuilding, onSelectCrew, building?.Control?.controller?.id]);
+  }, [onClickBuilding, onSelectCrew, building?.Control?.controller?.id, buildingLoc?.lotId]);
 
   return (
     <SelectableRow onClick={onClick}>
