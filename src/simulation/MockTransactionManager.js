@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef } from 'react';
-import { Asteroid, Building, Entity, Lot, Process, Product, Ship } from '@influenceth/sdk';
+import { Asteroid, Building, Entity, Lot, Process, Product, Ship, Time } from '@influenceth/sdk';
 import { camelCase, cloneDeep } from 'lodash';
 
 import useCrewContext from '~/hooks/useCrewContext';
@@ -116,7 +116,10 @@ const MockTransactionManager = () => {
           })
         });
 
-        crewBusyTime = 2 * Asteroid.getLotTravelTime(asteroidId, crew._location.lotIndex, destLotIndex);
+        crewBusyTime = Time.toRealDuration(
+          2 * Asteroid.getLotTravelTime(asteroidId, crew._location.lotIndex, destLotIndex),
+          crew?._timeAcceleration
+        );
         break;
       }
 
@@ -234,12 +237,14 @@ const MockTransactionManager = () => {
           returnValues: transformReturnValues({
             ...tx.vars,
             deposit: { id: SIMULATION_CONFIG.depositId, label: Entity.IDS.DEPOSIT },
-            finish_time: nowSec() + taskBusyTime,
+            finish_time: nowSec() - 100,// + taskBusyTime,
             caller: SIMULATION_CONFIG.accountAddress
           })
         };
         events.push(event);
 
+        // TODO: for events like these, would be better to set finish_time to actual finish_time,
+        //  then have fast-forwarding cleanup set any "unready" to "ready"
         createActionItem = true;
         break;
       }
@@ -371,7 +376,7 @@ const MockTransactionManager = () => {
           Entity.formatEntity({ id: 1, label: Entity.IDS.ASTEROID }),
         ]);
 
-        crewBusyTime = 0; // TODO: travel time
+        crewBusyTime = 3600; // TODO: travel time
 
         // mimic event
         events.push({

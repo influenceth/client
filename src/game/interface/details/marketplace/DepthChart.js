@@ -662,7 +662,7 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
 
     const toQuantity = !disable && !(quantity > 0);
     disable = disable || toQuantity;
-    const toUnitPrice = !disable && !toQuantity && !(quantity > 0);
+    const toUnitPrice = !disable && !toQuantity && !(limitPrice > 0);
     disable = disable || toUnitPrice;
     const toButton = !disable && total > 0;
 
@@ -675,15 +675,15 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
       toUnitPrice,
       toButton
     ];  
-  }, [actionDialog?.type, coachmarkHelperProduct, mode, quantity, resource.i, simulationActions, total, type]);
+  }, [actionDialog?.type, coachmarkHelperProduct, limitPrice, mode, quantity, resource.i, simulationActions, total, type]);
 
   const handleQuantityFocus = useCallback((e) => {
     if (coachToQuantity && !quantity) {
       let q = '';
-      if (coachmarkHelperProduct === Product.IDS.ACETYLENE) q = 5;
+      if (coachmarkHelperProduct === Product.IDS.ACETYLENE) q = 3746000;
       if (coachmarkHelperProduct === Product.IDS.CORE_DRILL) q = 5;
-      if (coachmarkHelperProduct === Product.IDS.FOOD) q = 5000e3;
-      if (coachmarkHelperProduct === Product.IDS.HYDROGEN_PROPELLANT) q = 4000000e3;
+      if (coachmarkHelperProduct === Product.IDS.FOOD) q = 5000;
+      if (coachmarkHelperProduct === Product.IDS.HYDROGEN_PROPELLANT) q = 4000e3;
       setQuantity(q);
     }
   }, [coachToQuantity, quantity]);

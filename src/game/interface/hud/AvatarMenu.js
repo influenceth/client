@@ -197,6 +197,9 @@ const AvatarMenu = () => {
   const asteroidId = useStore(s => s.asteroids.origin);
   const simulationActions = useStore(s => s.simulationActions);
   const zoomStatus = useStore(s => s.asteroids.zoomStatus);
+  
+  const [ffTarget, setFFTarget] = useState();
+  const ffTime = useRef();
 
   const silhouetteOverlay = useMemo(() => {
     if (!captain) {
@@ -226,10 +229,8 @@ const AvatarMenu = () => {
     return history.push('/crew');
   }, [simulation, simulationActions]);
 
-  const { canFastForward, crewReadyAt, taskReadyAt } = useSimulationState();
-  const [ffTarget, setFFTarget] = useState();
-  const ffTime = useRef();
   useEffect(() => {
+    const { canFastForward, crewReadyAt, taskReadyAt } = simulation || {};
     if (canFastForward) {
       const updateRate = 1e3 / 30;
       const animationTime = 2e3;
@@ -248,7 +249,7 @@ const AvatarMenu = () => {
       }, updateRate);
       return () => clearInterval(i);
     }
-  }, [canFastForward, crewReadyAt, taskReadyAt]);
+  }, [simulation]);
 
   if (crewIsLoading) return null;
   return (

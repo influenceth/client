@@ -755,7 +755,7 @@ const useSimulationSteps = () => {
         crewmateId: SIMULATION_CONFIG.crewmates.merchant,
         coachmarks: () => ({
           [COACHMARK_IDS.hudMenuMarketplaces]: (!locationPath || locationPath === '/'),
-          [COACHMARK_IDS.asteroidMarketsHelper]: Product.IDS.ACETYLENE,
+          [COACHMARK_IDS.asteroidMarketsHelper]: Product.IDS.ACETYLENE
         }),
         enabledActions: {
           LimitSell: true,
@@ -956,6 +956,7 @@ const useSimulationSteps = () => {
         crewmateId: SIMULATION_CONFIG.crewmates.pilot,
         initialize: () => {
           dispatchDestinationSelected(SIMULATION_CONFIG.destinationAsteroidId);
+          dispatchSimulationState('canFastForward', false);
         },
         coachmarks: {
           // select ship

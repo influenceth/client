@@ -38,23 +38,29 @@ const assetSearchDefaults = {
   lotsMapped: { filters: { type: [...buildingIds] }, sort: ['id', 'asc'], highlight: null },
 };
 
+const simulationStateDefault = {
+  step: 0,
+  crewmate: null, // id, name, appearance
+  lots: null,     // { id: buildingEntity(sparse), ... }
+  sway: null,
+  actionItems: [],
+}
+
 const useStore = create(subscribeWithSelector(persist((set, get) => ({
     actionDialog: {},
     launcherPage: null,
     launcherSubpage: null,
     openHudMenu: null,
 
-    // TODO: use a context to rewrite query contents and state with useEffect
-    //  store persistable state here
-    // TODO: add store state migrations
+    // TODO: more encapsulated structure, but might cause unnecessary re-renders more often
+    // simulation: {
+    //   enabled,
+    //   enabledActions: [],
+    //   coachmark: [],
+    //   state: { ...simulationStateDefault }
+    // },
     simulationEnabled: false,
-    simulation: {
-      step: 0,
-      crewmate: null, // id, name, appearance
-      lots: null,     // { id: buildingEntity(sparse), ... }
-      sway: null,
-      actionItems: [],
-    },
+    simulation: { ...simulationStateDefault },
     simulationActions: [],
     coachmarks: [],
 
@@ -457,6 +463,7 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
     dispatchSessionStarted: (session) => set(produce(state => {
       state.currentSession = session;
       state.sessions[session.accountAddress] = session;
+      state.simulationEnabled = false;
     })),
 
     // Unsets the current session but keeps it in the sessions list
@@ -467,6 +474,7 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
     // Resumes a session that was suspended
     dispatchSessionResumed: (session) => set(produce(state => {
       state.currentSession = session;
+      state.simulationEnabled = false;
     })),
 
     // Ends a session and removes it from the sessions list

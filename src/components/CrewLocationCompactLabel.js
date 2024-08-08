@@ -52,8 +52,8 @@ const CrewLocationCompactLabel = ({ alignLeft, crew, noClick, zoomedToAsteroid, 
 
   const genericLabel = useMemo(() => {
     if (asteroid) return formatters.asteroidName(asteroid);
-    if (ship) return <EntityName {...ship.Ship.transitDestination} />;
-    if (crew?.Ship?.transitDestination) return <EntityName {...crew.Ship.transitDestination} />;
+    if (ship) return <EntityName {...ship.Ship?.transitDestination || {}} />;
+    if (crew?.Ship?.transitDestination) return <EntityName {...crew.Ship?.transitDestination || {}} />;
     return '';
   }, [asteroid, crew, ship]);
 
