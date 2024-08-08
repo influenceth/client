@@ -107,12 +107,8 @@ const Marketplace = () => {
   
   const setCoachmarkRef = useCoachmarkRefSetter();
   const coachmarkHelperProduct = useStore(s => s.coachmarks?.[COACHMARK_IDS.asteroidMarketsHelper]);
-  console.log({ coachmarkHelperProduct, product });
 
   const [mode, setMode] = useState('buy');
-  const [nameFilter, setNameFilter] = useState('');
-  const [currentPage, setCurrentPage] = useState(1);
-  const [sort, setSort] = useState('liquidity');
 
   const { search } = useLocation();
   const backOverride = useMemo(() => {

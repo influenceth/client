@@ -146,16 +146,18 @@ const AsteroidComponent = () => {
   const { shadowSize, shadowMode } = useStore(s => s.getShadowQuality());
   const zoomStatus = useStore(s => s.asteroids.zoomStatus);
   const zoomedFrom = useStore(s => s.asteroids.zoomedFrom);
+  const cameraNeedsHighAltitude = useStore(s => s.cameraNeedsHighAltitude);
   const cameraNeedsRecenter = useStore(s => s.cameraNeedsRecenter);
   const cameraNeedsReorientation = useStore(s => s.cameraNeedsReorientation);
+  const resourceMap = useStore(s => s.asteroids.resourceMap);
+  const lotId = useStore(s => s.asteroids.lot);
   const dispatchLotsLoading = useStore(s => s.dispatchLotsLoading);
   const dispatchRecenterCamera = useStore(s => s.dispatchRecenterCamera);
   const dispatchReorientCamera = useStore(s => s.dispatchReorientCamera);
+  const dispatchGoToHighAltitude = useStore(s => s.dispatchGoToHighAltitude);
   const updateZoomStatus = useStore(s => s.dispatchZoomStatusChanged);
   const setZoomedFrom = useStore(s => s.dispatchAsteroidZoomedFrom);
   const dispatchLotSelected = useStore(s => s.dispatchLotSelected);
-  const resourceMap = useStore(s => s.asteroids.resourceMap);
-  const lotId = useStore(s => s.asteroids.lot);
 
   const { assetType, overrides } = useContext(DevToolContext);
 
@@ -772,6 +774,26 @@ const AsteroidComponent = () => {
     }
   }, [cameraNeedsRecenter]);
 
+  useEffect(() => {
+    if (cameraNeedsHighAltitude && config?.radius && zoomStatus === 'in' && !automatingCamera.current) {
+      const newPosition = new Vector3(...controls.object.position);
+      newPosition.setLength(config.radius * 1.5);
+
+      automatingCamera.current = true;
+      gsap.timeline({
+        defaults: {
+          duration: 0.75,
+          ease: 'power1.out' // power>1.out seems to have bounce artifact for short trips
+        },
+        onComplete: () => {
+          automatingCamera.current = false;
+          dispatchGoToHighAltitude(false);
+        }
+      })
+      .to(controls.object.position, { ...newPosition });
+    }
+  }, [cameraNeedsHighAltitude]);
+
   const [debugTrajectory, setDebugTrajectory] = useState([]);
 
   const automatingCamera = useRef();
@@ -923,7 +945,7 @@ const AsteroidComponent = () => {
         gsap.timeline({
           defaults: {
             duration: animationTime / 1e3,
-            ease:'power1.out' // power>1.out seems to have bounce artifact for short trips
+            ease: 'power1.out' // power>1.out seems to have bounce artifact for short trips
           },
           onComplete: onZoomComplete
         })

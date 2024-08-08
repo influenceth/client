@@ -52,7 +52,7 @@ const StatusContainer = styled.div`
   }
 `;
 
-const TimerWrapper = styled.span.attrs((p) => {
+export const TimerWrapper = styled.span.attrs((p) => {
   let width = 0;
   if (p.len === 7) width = 66;
   if (p.len === 6) width = 61;

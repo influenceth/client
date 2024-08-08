@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useHistory, useLocation } from 'react-router-dom';
 import styled from 'styled-components';
-import { Crewmate, Entity, Lot, Order, Permission } from '@influenceth/sdk';
+import { Crewmate, Entity, Lot, Order, Permission, Product } from '@influenceth/sdk';
 
 import {
   LimitBuyIcon,
@@ -677,6 +677,29 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
     ];  
   }, [actionDialog?.type, coachmarkHelperProduct, mode, quantity, resource.i, simulationActions, total, type]);
 
+  const handleQuantityFocus = useCallback((e) => {
+    if (coachToQuantity && !quantity) {
+      let q = '';
+      if (coachmarkHelperProduct === Product.IDS.ACETYLENE) q = 5;
+      if (coachmarkHelperProduct === Product.IDS.CORE_DRILL) q = 5;
+      if (coachmarkHelperProduct === Product.IDS.FOOD) q = 5000e3;
+      if (coachmarkHelperProduct === Product.IDS.HYDROGEN_PROPELLANT) q = 4000000e3;
+      setQuantity(q);
+    }
+  }, [coachToQuantity, quantity]);
+
+  const handleLimitPriceFocus = useCallback((e) => {
+    if (coachToUnitPrice && !limitPrice) {
+      let p = 1;
+      if (sellBuckets?.length) {
+        p = 0.99 * sellBuckets[sellBuckets.length - 1].price;
+      } else if (buyBuckets?.length) {
+        p = 1.01 * buyBuckets[0].price;
+      }
+      setLimitPrice(Math.round(1e6 * p) / 1e6);
+    }
+  }, [coachToUnitPrice, limitPrice]);
+
   const actionButtonDetails = useMemo(() => {
     const a = { label: '', icon: null };
 
@@ -893,6 +916,7 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
                       min={0}
                       max={type === 'market' ? (mode === 'buy' ? totalSelling : totalBuying) : undefined}
                       onChange={handleChangeQuantity}
+                      onFocus={handleQuantityFocus}
                       placeholder="Specify Quantity"
                       step={1}
                       type="number"
@@ -926,6 +950,7 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
                         size="large"
                         onChange={(e) => handleChangeLimitPrice(e.currentTarget.value)}
                         onBlur={(e) => handleChangeLimitPrice(e.currentTarget.value, true)}
+                        onFocus={handleLimitPriceFocus}
                         placeholder="Specify Price"
                         value={limitPrice || ''} />
                     </TextInputWrapper>

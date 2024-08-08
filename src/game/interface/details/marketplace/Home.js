@@ -347,6 +347,12 @@ const MarketplaceHome = ({ asteroid, listings, mode, setMode, orderTally, onSele
     return !!filteredListings.find((l) => l.product === coachmarkHelperProduct);
   }, [coachmarkHelperProduct, filteredListings]);
 
+  const handleNameFilterFocus = useCallback((e) => {
+    if (coachmarkHelperProduct && !coachmarkHelperProductIsOnPage && !nameFilter) {
+      setNameFilter(`${(Product.TYPES[coachmarkHelperProduct].name || '').toLowerCase()}`);
+    }
+  }, [coachmarkHelperProduct, coachmarkHelperProductIsOnPage, nameFilter]);
+
   // TODO: loading might be better
   if (!asteroid) return null;
   return (
@@ -416,6 +422,8 @@ const MarketplaceHome = ({ asteroid, listings, mode, setMode, orderTally, onSele
           ref={coachmarkHelperProductIsOnPage ? undefined : setCoachmarkHelperRef}
           initialValue={nameFilter}
           onChange={setNameFilter}
+          onFocus={handleNameFilterFocus}
+          resetOnChange={nameFilter}
           placeholder="Search by Name"
           style={{ borderWidth: '1px', height: '34px', width: '240px' }} />
         <Dropdown

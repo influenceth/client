@@ -43,6 +43,7 @@ const useSimulationSteps = () => {
   const dispatchLotSelected = useStore(s => s.dispatchLotSelected);
   const dispatchRecenterCamera = useStore(s => s.dispatchRecenterCamera);
   const dispatchReorientCamera = useStore(s => s.dispatchReorientCamera);
+  const dispatchGoToHighAltitude = useStore(s => s.dispatchGoToHighAltitude);
   const dispatchResourceMapSelect = useStore(s => s.dispatchResourceMapSelect);
   const dispatchResourceMapToggle = useStore(s => s.dispatchResourceMapToggle);
   const dispatchSimulationActions = useStore((s) => s.dispatchSimulationActions);
@@ -72,8 +73,6 @@ const useSimulationSteps = () => {
   const { data: selectedLot, isLoading: lotLoading } = useLot(selectedLotId);
   const isLoading = agreementsLoading || buildingsLoading || depositsLoading || shipsLoading || ordersLoading || lotLoading;
 
-
-  
   const [locationPath, setLocationPath] = useState();
   const [transitioning, setTransitioning] = useState();
   const isTransitioning = !!transitioning;
@@ -86,7 +85,15 @@ const useSimulationSteps = () => {
   const resetAsteroidFilters = () => dispatchFiltersReset('asteroids');
   
   const advance = useCallback(() => {
-    dispatchSimulationStep((simulation.step || 0) + 1);
+    const nextStep = (simulation.step || 0) + 1;
+    
+    setTransitioning(true);
+    setTimeout(() => {
+      dispatchSimulationStep(nextStep);
+      setTimeout(() => {
+        setTransitioning(false);
+      }, 500);
+    }, 0);
   }, [simulation?.step]);
 
   const simulationSteps = useMemo(() => {
@@ -194,46 +201,83 @@ const useSimulationSteps = () => {
       return x;
     }
 
-    const goTo = ({ cinematic, origin, zoomStatus: newZoomStatus }) => {
-      if (cinematic) dispatchCinematicInitialPosition(true);
-      if (currentZoomScene) dispatchZoomScene();
-      if (destination) dispatchDestinationSelected();
-      if (openHudMenu) dispatchHudMenuOpened();
+    // {
+    //   cinematic,
+    //   lot,
+    //   destination,
+    //   openHudMenu,
+    //   origin,
+    //   resourceId,
+    //   zoomStatus: newZoomStatus
+    // }
+    const goTo = (update) => {
+      const needsToZoomIn = update.zoomStatus === 'in'
+        && update.origin === origin
+        && !(zoomStatus === 'in' || zoomStatus === 'zooming-in');
+      const needsToTransfer = update.zoomStatus === 'in'
+        && update.origin !== origin
+        && (zoomStatus === 'in' || zoomStatus === 'zooming-in');
+      const needsToZoomOut = update.zoomStatus === 'out'
+        && !(zoomStatus === 'out' || zoomStatus === 'zooming-out');
+
+      setTransitioning(true);
+
+      // cleanup (as needed)
       resetAsteroidFilters();
+      dispatchOriginSelected(update.origin);
+      dispatchDestinationSelected(update.destination);
+      if (update.openHudMenu) dispatchHudMenuOpened();
+      if (currentZoomScene && !update.currentZoomScene) dispatchZoomScene();
+      if (selectedResourceId && !update.resourceId) dispatchResourceMapToggle();
 
-      if (newZoomStatus === 'in') {
-        setTransitioning(true);
-        if (origin) dispatchOriginSelected(origin);
+      const onFinish = () => {
+        // TODO? 
+        // if (needsToZoomIn || needsToTransfer || needsToZoomOut) dispatchReorientCamera();
+
+        let extraDelay = 0;
+        if (update.openHudMenu) dispatchHudMenuOpened(update.openHudMenu);
+        if (update.resourceId) dispatchResourceMapSelect(update.resourceId);
+        if (Object.keys(update).includes('lot')) {
+          dispatchLotSelected(update.lot);
+          extraDelay += 1e3; // (this is a variable length transition, so maybe don't add anything?)
+        }
+        if (update.highAltitude) {
+          dispatchGoToHighAltitude(true);
+        }
 
         setTimeout(() => {
-          const delay = zoomStatus === 'in' ? 0 : ZOOM_IN_ANIMATION_TIME;
-          if (!['in', 'zooming-in'].includes(zoomStatus)) updateZoomStatus('zooming-in');
+          setTransitioning(false);
+          if (update.cinematic) dispatchCinematicInitialPosition(false);
+        }, DELAY_MESSAGE + extraDelay);
+      };
 
-          setTimeout(() => {
-            dispatchReorientCamera();
-            setTimeout(() => {
-              setTransitioning(false);
-              if (cinematic) dispatchCinematicInitialPosition(false);
-            }, DELAY_MESSAGE);
-          }, delay);
-        }, 0);
-      }
-      if (newZoomStatus === 'out') {
-        setTransitioning(true);
-        
+      if (needsToZoomIn) {
+        dispatchCinematicInitialPosition(!!update.cinematic);
         setTimeout(() => {
-          const delay = zoomStatus === 'out' ? 0 : ZOOM_OUT_ANIMATION_TIME;
-          if (!['out', 'zooming-out'].includes(zoomStatus)) updateZoomStatus('zooming-out');
-
+          updateZoomStatus('zooming-in');
           setTimeout(() => {
-            dispatchReorientCamera();
-            if (origin) dispatchOriginSelected(origin);
-            setTimeout(() => {
-              setTransitioning(false);
-              if (cinematic) dispatchCinematicInitialPosition(false);
-            }, DELAY_MESSAGE);
-          }, delay);
+            onFinish();
+          }, ZOOM_IN_ANIMATION_TIME);
         }, 0);
+
+      } else if (needsToTransfer) {
+        setTimeout(() => {
+          updateZoomStatus('zooming-in');
+          setTimeout(() => {
+            onFinish();
+          }, ZOOM_IN_ANIMATION_TIME);
+        }, 0);
+
+      } else if (needsToZoomOut) {
+        setTimeout(() => {
+          updateZoomStatus('zooming-out');
+          setTimeout(() => {
+            onFinish();
+          }, ZOOM_OUT_ANIMATION_TIME);
+        }, 0);
+
+      } else {
+        onFinish();
       }
     };
 
@@ -348,8 +392,12 @@ const useSimulationSteps = () => {
             dismantled to form the first permanent settlements, Adalia Prime was our first real home here
             in the asteroid belt. Here, at any public Habitats, you can find fellow new recruits when you
             are ready to form your first crew.
-          <br/><br/>
-            Click on the HUD crew location to zoom to your current station.
+          {selectedLotId !== crew?._location?.lotId && (
+            <>
+              <br/><br/>
+              Click on the HUD crew location to zoom to your current station.
+            </>
+          )}
           </>
         ),
         crewmateId: SIMULATION_CONFIG.crewmates.scientist,
@@ -358,9 +406,13 @@ const useSimulationSteps = () => {
           goTo({ zoomStatus: 'in', origin: 1 })
         },
         coachmarks: {
-          [COACHMARK_IDS.hudCrewLocation]: true
+          [COACHMARK_IDS.hudCrewLocation]: selectedLotId !== crew?._location?.lotId,
+          [COACHMARK_IDS.simulationRightButton]: selectedLotId === crew?._location?.lotId,
         },
-        shouldAdvance: () => selectedLotId === crew?._location?.lotId
+        rightButton: selectedLotId === crew?._location?.lotId && {
+          children: 'Next',
+          onClick: () => advance(),
+        },
       },
       {
         title: 'Resource Mapping',
@@ -379,9 +431,9 @@ const useSimulationSteps = () => {
           </>
         ),
         crewmateId: SIMULATION_CONFIG.crewmates.scientist,
-        targetLocation: () => ({ zoomStatus: 'in', origin: 1, openHudMenu: 'RESOURCES', resourceId: Product.IDS.BITUMEN, lot: null }),
+        targetLocation: () => ({ zoomStatus: 'in', origin: 1, openHudMenu: 'RESOURCES', resourceId: Product.IDS.BITUMEN, lot: null, highAltitude: true }),
         initialize: () => {
-          goTo({ lot: null })
+          goTo({ zoomStatus: 'in', origin: 1, lot: null, highAltitude: true })
         },
         coachmarks: {
           [COACHMARK_IDS.hudCrewLocation]: zoomStatus !== 'in' || origin !== 1,
@@ -998,7 +1050,7 @@ const useSimulationSteps = () => {
     zoomStatus
   ]);
 
-  // cleanse step
+  // cleanse selected step index
   useEffect(() => {
     if (!isLoading) {
       if (simulation.step === undefined || simulation.step < 0) {// || simulation.step > simulation.length - 1) {
@@ -1007,30 +1059,27 @@ const useSimulationSteps = () => {
     }
   }, [isLoading, simulation?.step, simulationSteps]);
 
+  // load step object from step index
   const currentStep = useMemo(() => {
     // TODO: use named index instead of numbers
     return isLoading ? {} : simulationSteps[simulation.step];
   }, [simulationSteps, simulation.step]);
 
-  // autoadvance as prescribed
+  // autoadvance if ready to autoadvance
   useEffect(() => {
     if (currentStep?.shouldAdvance && currentStep.shouldAdvance()) {
       advance();
     }
   }, [advance, currentStep]);
 
+  // if new step, run initialize()
   useEffect(() => {
     if (currentStep?.initialize) {
-      currentStep?.initialize();
+      currentStep.initialize();
     }
   }, [simulation.step]);
 
-  const enabledActions = useMemo(() => {
-    return Object.keys(currentStep?.enabledActions || {}).filter((id) => {
-      return !!currentStep?.enabledActions[id]
-    });
-  }, [currentStep?.enabledActions]);
-
+  // dispatch coachmark config
   useEffect(() => {
     let currentCoachmarks = {};
     if (currentStep && pendingTransactions.length === 0) {
@@ -1043,9 +1092,18 @@ const useSimulationSteps = () => {
     dispatchCoachmarks(currentCoachmarks);
   }, [currentStep?.coachmarks, pendingTransactions]);
 
+  // derive and dispatch enabled-action config
+  const enabledActions = useMemo(() => {
+    return Object.keys(currentStep?.enabledActions || {}).filter((id) => {
+      return !!currentStep?.enabledActions[id]
+    });
+  }, [currentStep?.enabledActions]);
+
   useEffect(() => {
-    console.log({ enabledActions });
     dispatchSimulationActions(enabledActions);
+    return () => {
+      dispatchSimulationActions([]);
+    }
   }, [enabledActions]);
 
   return useMemo(() => ({

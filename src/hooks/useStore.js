@@ -101,6 +101,7 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
     crewAssignments: {},
     crewTutorials: {},
 
+    cameraNeedsHighAltitude: false,
     cameraNeedsRecenter: false,
     cameraNeedsReorientation: false,
 
@@ -584,6 +585,10 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
 
     dispatchReorientCamera: (needsReorienting) => set(produce(state => {
       state.cameraNeedsReorientation = !!needsReorienting;
+    })),
+
+    dispatchGoToHighAltitude: (needsHighAltitude) => set(produce(state => {
+      state.cameraNeedsHighAltitude = !!needsHighAltitude;
     })),
 
     dispatchFailedTransaction: ({ key, vars = {}, meta = {}, txHash, err }) => set(produce(state => {

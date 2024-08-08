@@ -24,13 +24,14 @@ const Time = (props) => {
 
   return (
     <StyledTime 
-    data-tooltip-content={dataTip}
-    data-tooltip-place={dataPlace || "right"}
-    data-tooltip-id={dataFor} 
-    key={dataTip}
-    data-tooltip-delay-hide={delayHide}  
-    {...restProps}>
-    {displayTime}</StyledTime>
+      data-tooltip-content={dataTip}
+      data-tooltip-place={dataPlace || "right"}
+      data-tooltip-id={dataFor} 
+      key={dataTip}
+      data-tooltip-delay-hide={delayHide}  
+      {...restProps}>
+      {displayTime}
+    </StyledTime>
   );
 };
 
