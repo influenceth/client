@@ -85,6 +85,7 @@ const WelcomeSimulation = () => {
   // watching for user action
   const history = useHistory();
   const actionDialog = useStore(s => s.actionDialog);
+  const cutscenePlaying = !!useStore(s => s.cutscene);
   const launcherPage = useStore(s => s.launcherPage);
   const openHudMenu = useStore(s => s.openHudMenu);
   const [locationPath, setLocationPath] = useState();
@@ -119,7 +120,7 @@ const WelcomeSimulation = () => {
         <MockTransactionManager />
 
         <Bubble
-          isIn={currentStep && !isTransitioning && !launcherPage && isHidden}
+          isIn={currentStep && !isTransitioning && !launcherPage && !cutscenePlaying && isHidden}
           onClick={() => setIsHidden(false)}
           ref={(currentStep && !isTransitioning && isHidden) ? setCoachmarkRef(COACHMARK_IDS.simulationRightButton) : undefined}>
           <CrewmateImage 
@@ -135,7 +136,7 @@ const WelcomeSimulation = () => {
           closeIconOverride={<ChevronDoubleDownIcon />}
           crewmateId={currentStep?.crewmateId}
           crewmateImageOptionString={currentStep?.crewmateImageOptionString}
-          isIn={currentStep && !isTransitioning && !launcherPage && !isHidden}
+          isIn={currentStep && !isTransitioning && !launcherPage && !cutscenePlaying && !isHidden}
           messageOffset={15}
           onClose={() => setIsHidden(true)}
           rightButton={(

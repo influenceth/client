@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Building, Crewmate, Entity, Inventory, Permission, Process, Processor, Product, Ship } from '@influenceth/sdk';
 import { useHistory } from 'react-router-dom';
+import { BiTransfer as TransferIcon } from 'react-icons/bi';
 
 import { ZOOM_IN_ANIMATION_TIME, ZOOM_OUT_ANIMATION_TIME, ZOOM_TO_PLOT_ANIMATION_MAX_TIME, ZOOM_TO_PLOT_ANIMATION_MIN_TIME } from '~/game/scene/Asteroid';
 import useCrewAgreements from '~/hooks/useCrewAgreements';
@@ -32,6 +33,7 @@ const useSimulationSteps = () => {
   const simulation = useSimulationState();
   const history = useHistory();
 
+  const createAlert = useStore(s => s.dispatchAlertLogged);
   const dispatchSimulationEnabled = useStore(s => s.dispatchSimulationEnabled);
   const dispatchLauncherPage = useStore(s => s.dispatchLauncherPage);
   const dispatchCinematicInitialPosition = useStore(s => s.dispatchCinematicInitialPosition);
@@ -480,7 +482,21 @@ const useSimulationSteps = () => {
         crewmateId: SIMULATION_CONFIG.crewmates.merchant,
         initialize: () => {
           dispatchSimulationState('sway', SIMULATION_CONFIG.startingSway);
-          // TODO: deselect lot -> zoom to altitude
+          if (simulation.sway < SIMULATION_CONFIG.startingSway) {
+            createAlert({
+              type: 'ActivityLog',
+              data: {
+                icon: <TransferIcon />,
+                content: (
+                  <>
+                    {(SIMULATION_CONFIG.startingSway / TOKEN_SCALE[TOKEN.SWAY]).toLocaleString()}{' '}
+                    SWAY transferred from Mason Quince to Training Simulator
+                  </>
+                )
+              },
+              duration: 6000
+            })
+          }
         },
         coachmarks: {
           // TODO: coachmarks back to AP, zoomed in

@@ -29,20 +29,6 @@ const MockTransactionManager = () => {
 
   const createAlert = useStore(s => s.dispatchAlertLogged);
 
-  const getMockActionItem = useCallback((event) => {
-    return {
-      _id: getUuid(),
-      data: {
-        crew: { id: crew.id, label: crew.label, uuid: crew.uuid, Crew: crew.Crew, Location: crew.Location },
-        crewmates: crew._crewmates.map((c) => ({ id: c.id, label: c.label, uuid: c.uuid, Crewmate: c.Crewmate })),
-        station: crew._station
-      },
-      event,
-      unresolvedFor: [{ id: crew.id, label: crew.label, uuid: crew.uuid }],
-      createdAt: new Date().toISOString()
-    };
-  }, [crew]);
-
   const simulateResultingEvent = useCallback((tx) => {
     // let activities = [];
     let activityResolutions = [];
@@ -542,7 +528,7 @@ const MockTransactionManager = () => {
 
     // tx complete
     dispatchPendingTransactionComplete(tx.txHash);
-  }, [simulation, getMockActionItem]);
+  }, [simulation, crew]);
 
   const processed = useRef([]);
   useEffect(() => {
@@ -550,9 +536,10 @@ const MockTransactionManager = () => {
       if (!processed.current.includes(tx.txHash)) {
         processed.current.push(tx.txHash);
         
+        // TODO: since fast forwarding in place, should we just skip processing state?
         setTimeout(() => {
           simulateResultingEvent(tx);
-        }, 1000);
+        }, 2000);
       }
     });
   }, [pendingTransactions]);

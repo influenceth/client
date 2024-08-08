@@ -41,8 +41,12 @@ const Cutscene = () => {
   const { source, allowSkip } = useStore(s => s.cutscene || {});
   const dispatchCutscene = useStore(s => s.dispatchCutscene);
 
-  const [hiding, setHiding] = useState(false);
+  const [hiding, setHiding] = useState(true);
   const [highlightButtons, setHighlightButtons] = useState(true);
+
+  useEffect(() => {
+    setHiding(false);
+  }, []);
 
   const onComplete = useCallback(() => {
     setHiding(true);
