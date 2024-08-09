@@ -12,6 +12,7 @@ import { LocationLink } from '../listViews/components';
 import formatters from '~/lib/formatters';
 import IconButton from '~/components/IconButton';
 import useStore from '~/hooks/useStore';
+import useSimulationEnabled from '~/hooks/useSimulationEnabled';
 
 const Subheader = styled.div``;
 const Header = styled.div`
@@ -92,6 +93,7 @@ const MarketplaceOpenOrders = ({ asteroid, orders, marketplace = null, marketpla
   const [sort, setSort] = useState(['createdAt', 'asc']);
   const [sortField, sortDirection] = sort;
   const onSetAction = useStore(s => s.dispatchActionDialog);
+  const simulationEnabled = useSimulationEnabled();
 
   const onCancelOrder = useCallback((order) => {
     onSetAction('MARKETPLACE_ORDER', {
@@ -223,6 +225,7 @@ const MarketplaceOpenOrders = ({ asteroid, orders, marketplace = null, marketpla
         key: 'cancel',
         label: '',
         selector: row => {
+          if (simulationEnabled) return <div />;
           if (row.validTime > (Date.now() / 1000)) return <div />;
           return (
             <IconButton

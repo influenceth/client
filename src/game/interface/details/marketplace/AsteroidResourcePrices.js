@@ -180,17 +180,18 @@ const AsteroidResourcePrices = ({ asteroid, mode, resource }) => {
   const { data: orderSummary } = useOrderSummaryByExchange(asteroid.id, resource.i);
 
   const marketPlaceIds = useMemo(() => Array.from(new Set((orderSummary || []).map((o) => o.marketplace.id))), [orderSummary]);
-  const { data: resourceMarketplaceEntities } = useEntities({ ids: marketPlaceIds, label: Entity.IDS.BUILDING });
+  const { data: resourceMarketplaceEntities, isLoading: marketplacesLoading } = useEntities({ ids: marketPlaceIds, label: Entity.IDS.BUILDING });
 
-  const isPermitted = function ({ exchange, mode, type, isCancellation }) {
-    let perm = 0;
+  const isPermitted = useCallback(({ exchange, mode, type, isCancellation }) => {
     if (isCancellation) return true;
+
+    let perm = 0;
     if (type === 'limit' && mode === 'buy') perm = Permission.IDS.LIMIT_BUY;
     if (type === 'limit' && mode === 'sell') perm = Permission.IDS.LIMIT_SELL;
     if (type === 'market' && mode === 'buy') perm = Permission.IDS.BUY;
     if (type === 'market' && mode === 'sell') perm = Permission.IDS.SELL;
     return crewCan(perm, exchange);
-  };
+  }, [crewCan]);
 
   const resourceMarketplaces = useMemo(() => {
     if (!orderSummary) return [];
@@ -284,12 +285,14 @@ const AsteroidResourcePrices = ({ asteroid, mode, resource }) => {
               asteroidId={asteroid.id}
               lotId={row.lotId}
               data-tooltip-id="detailsTooltip" />
-            <MareketplaceName access={row.permissions.accessLevel()}>{row.marketplaceName}</MareketplaceName>
-            <MarketplacePermissionsIcon
-              style={{ marginLeft: 6 }}
-              permissions={row.permissions}
-              data-tooltip-id={"detailsTooltip"}
-            />
+            <MareketplaceName access={marketplacesLoading ? 'full' : row.permissions.accessLevel()}>{row.marketplaceName}</MareketplaceName>
+            {!marketplacesLoading && (
+              <MarketplacePermissionsIcon
+                style={{ marginLeft: 6 }}
+                permissions={row.permissions}
+                data-tooltip-id={"detailsTooltip"}
+              />
+            )}
           </>
         ),
       },
@@ -414,7 +417,7 @@ const AsteroidResourcePrices = ({ asteroid, mode, resource }) => {
       }))
     }
     return c;
-  }, [asteroid, crew, resource]);
+  }, [asteroid, crew, marketplacesLoading, resource]);
 
   const getRowProps = useCallback((row) => {
     return {

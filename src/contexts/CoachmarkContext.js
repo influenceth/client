@@ -5,6 +5,7 @@ import FullscreenAttention, { delay } from '~/components/FullscreenAttention';
 import useScreenSize from '~/hooks/useScreenSize';
 import useInterval from '~/hooks/useInterval';
 import useStore from '~/hooks/useStore';
+import useSimulationState from '~/hooks/useSimulationState';
 
 export const COACHMARK_IDS = {
   actionButtonAssembleShip: 'actionButtonAssembleShip',
@@ -93,7 +94,9 @@ const CoachmarkComponent = ({ refEl }) => {
 export function CoachmarkProvider({ children }) {
   const coachmarks = useStore(s => s.coachmarks);
   const launcherPage = useStore(s => s.launcherPage);
+  const simulation = useSimulationState();
 
+  const [disabled, setDisabled] = useState(true);
   const [refEls, setRefEls] = useState({});
 
   const activeCoachmarkKey = useMemo(() => {
@@ -109,6 +112,14 @@ export function CoachmarkProvider({ children }) {
     });
   }, []);
 
+  // delay coachmark display on new tutorial step (to encourage reading)
+  useEffect(() => {
+    setDisabled(true);
+    const to = setTimeout(() => {
+      setDisabled(false);
+    }, 3000);
+    return () => clearTimeout(to);
+  }, [simulation.step])
 
   const contextValue = useMemo(() => ({
     activeCoachmarkKey,
@@ -119,7 +130,7 @@ export function CoachmarkProvider({ children }) {
       <CoachmarkContext.Provider value={contextValue}>
         {children}
       </CoachmarkContext.Provider>
-      {activeCoachmarkKey && !launcherPage && <CoachmarkComponent refEl={refEls[activeCoachmarkKey]} />}
+      {activeCoachmarkKey && !launcherPage && !disabled && <CoachmarkComponent refEl={refEls[activeCoachmarkKey]} />}
     </>
   );
 }
