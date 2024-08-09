@@ -15,7 +15,6 @@ import SIMULATION_CONFIG from '~/simulation/simulationConfig';
 import { COACHMARK_IDS } from '~/contexts/CoachmarkContext';
 import { formatResourceMass, getBuildingRequirementsMet } from '~/game/interface/hud/actionDialogs/components';
 import { getMockBuildingInventories } from './MockDataManager';
-import simulationConfig from '~/simulation/simulationConfig';
 import useCrewOrders from '~/hooks/useCrewOrders';
 import useCrewShips from '~/hooks/useCrewShips';
 import EntityName from '~/components/EntityName';
@@ -96,7 +95,7 @@ const useSimulationSteps = () => {
         setTransitioning(false);
       }, 500);
     }, 0);
-  }, [simulation?.step]);
+  }, [dispatchSimulationStep, simulation?.step]);
 
   const simulationSteps = useMemo(() => {
 
@@ -667,12 +666,12 @@ const useSimulationSteps = () => {
           [COACHMARK_IDS.hudMenuMyAssets]: !actionDialog?.type && selectedLot?.building?.id !== extractorLot?.buildingId && openHudMenu !== 'MY_ASSETS',
           [COACHMARK_IDS.hudMenuMyAssetsBuilding]: selectedLot?.building?.id !== extractorLot?.buildingId ? extractorLot?.buildingId : null,
           [COACHMARK_IDS.actionButtonCoreSample]: !actionDialog?.type && selectedLot?.building?.id === extractorLot?.buildingId,
-          [COACHMARK_IDS.actionDialogTargetResource]: simulationConfig.resourceId
+          [COACHMARK_IDS.actionDialogTargetResource]: SIMULATION_CONFIG.resourceId
         },
         enabledActions: {
           [`SelectInventory:${Entity.IDS.BUILDING}.${warehouseLot?.buildingId}.2`]: true,
           CoreSample: selectedLot?.building?.id === extractorLot?.buildingId,
-          [`SelectTargetResource:${simulationConfig.resourceId}`]: true
+          [`SelectTargetResource:${SIMULATION_CONFIG.resourceId}`]: true
         },
         shouldAdvance: () => {
           return !!(extractorLot?.depositYield > 0) && !actionDialog?.type;
@@ -735,7 +734,7 @@ const useSimulationSteps = () => {
           [COACHMARK_IDS.hudMenuMyAssets]: refineryLot && !actionDialog?.type && selectedLot?.building?.id !== refineryLot?.buildingId && openHudMenu !== 'MY_ASSETS',
           [COACHMARK_IDS.hudMenuMyAssetsBuilding]: refineryLot && selectedLot?.building?.id !== refineryLot?.buildingId ? refineryLot?.buildingId : null,
           [COACHMARK_IDS.actionButtonProcess]: !actionDialog?.type && selectedLot?.building?.id === refineryLot?.buildingId,
-          [COACHMARK_IDS.actionDialogTargetProcess]: actionDialog?.type === 'PROCESS' ? simulationConfig.processId : null,
+          [COACHMARK_IDS.actionDialogTargetProcess]: actionDialog?.type === 'PROCESS' ? SIMULATION_CONFIG.processId : null,
           [COACHMARK_IDS.actionDialogMaxRecipes]: true
         }),
         enabledActions: {
@@ -1081,10 +1080,14 @@ const useSimulationSteps = () => {
     return isLoading ? {} : simulationSteps[simulation.step];
   }, [simulationSteps, simulation.step]);
 
-  // autoadvance if ready to autoadvance
+  // autoadvance if ready to autoadvance (wait for fastforwarding as necessary)
   useEffect(() => {
     if (currentStep?.shouldAdvance && currentStep.shouldAdvance()) {
-      advance();
+      if (simulation?.crewReadyAt || simulation?.taskReadyAt) {
+        setTimeout(advance, SIMULATION_CONFIG.fastForwardAnimationDuration);  
+      } else {
+        advance();
+      }
     }
   }, [advance, currentStep]);
 

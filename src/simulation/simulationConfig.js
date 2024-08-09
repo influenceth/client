@@ -22,7 +22,9 @@ const simulationConfig = {
     pilot: 7539,
     scientist: 6891
   },
-  startingSway: 25e6 * TOKEN_SCALE[TOKEN.SWAY]
+  startingSway: 25e6 * TOKEN_SCALE[TOKEN.SWAY],
+
+  fastForwardAnimationDuration: 2e3,
 };
 
 export default simulationConfig;

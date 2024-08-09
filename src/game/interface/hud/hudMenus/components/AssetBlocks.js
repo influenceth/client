@@ -326,7 +326,7 @@ export const BuildingBlock = ({ building, onSelectCrew, selectedCrew, setRef }) 
   const buildingLoc = locationsArrToObj(building?.Location?.locations);
   const onClickBuilding = useLotLink(buildingLoc);
   const { currentExtraction } = useExtractionManager(buildingLoc?.lotId);
-  const { currentProcess } = useProcessManager(buildingLoc?.lotId, building.Processors[0]?.slot);
+  const { currentProcess } = useProcessManager(buildingLoc?.lotId, building.Processors?.[0]?.slot);
   const { currentConstructionAction } = useConstructionManager(buildingLoc?.lotId);
   
   const [progress, progressColor] = useMemo(() => {

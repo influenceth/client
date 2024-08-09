@@ -199,7 +199,6 @@ const AvatarMenu = () => {
   const zoomStatus = useStore(s => s.asteroids.zoomStatus);
   
   const [ffTarget, setFFTarget] = useState();
-  const ffTime = useRef();
 
   const silhouetteOverlay = useMemo(() => {
     if (!captain) {
@@ -231,25 +230,29 @@ const AvatarMenu = () => {
 
   useEffect(() => {
     const { canFastForward, crewReadyAt, taskReadyAt } = simulation || {};
-    if (canFastForward) {
-      const updateRate = 1e3 / 30;
-      const animationTime = 2e3;
-      const totalTime = ((crewReadyAt || 0) + (taskReadyAt || 0)) - Math.floor(Date.now() / 1e3);
-      ffTime.current = totalTime
-      const i = setInterval(() => {
-        ffTime.current -= totalTime * (updateRate / animationTime);
-        if (ffTime.current > 0) {
-          setFFTarget(Math.floor(Date.now() / 1e3) + ffTime.current);
-        } else {
-          clearInterval(i);
-          setFFTarget();
-          dispatchSimulationState('crewReadyAt', 0);
-          dispatchSimulationState('taskReadyAt', 0);
-        }
-      }, updateRate);
-      return () => clearInterval(i);
+    if (!ffTarget) {
+      if (canFastForward && (crewReadyAt || taskReadyAt)) {
+        // init timer
+        const startTimer = Date.now();
+        const totalTime = ((crewReadyAt || 0) + (taskReadyAt || 0)) - Math.floor(Date.now() / 1e3);
+        setFFTarget(Math.floor(Date.now() / 1e3) + totalTime);
+
+        // run timer
+        const i = setInterval(() => {
+          const remaining = totalTime * (1 - (Date.now() - startTimer) / SIMULATION_CONFIG.fastForwardAnimationDuration);
+          if (remaining > 0) {
+            setFFTarget(Math.floor(Date.now() / 1e3) + remaining);
+          } else {
+            setFFTarget();
+            dispatchSimulationState('crewReadyAt', 0);
+            dispatchSimulationState('taskReadyAt', 0);
+            clearInterval(i);
+          }
+        }, 1e3 / 30); // 30 fps
+        return () => clearInterval(i);
+      }
     }
-  }, [simulation]);
+  }, [simulation?.canFastForward, simulation?.crewReadyAt, simulation?.taskReadyAt]);
 
   if (crewIsLoading) return null;
   return (
