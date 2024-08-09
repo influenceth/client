@@ -312,7 +312,7 @@ export const fireTrackingEvent = function (event, eventProps = {}) {
 };
 
 // TODO: this should probably be in the sdk
-export const ordersToFills = (mode, orders, amountToFill, takerFee, feeReductionBonus = 1, feeEnforcementBonus = 1) => {
+export const ordersToFills = (mode, orders, amountToFill, takerFee, feeReductionBonus = 1, feeEnforcementBonus = 1, isDestructive = false) => {
   const paymentFunc = mode === 'buy' ? Order.getFillSellOrderPayments : Order.getFillBuyOrderWithdrawals;
   const priceSortMult = mode === 'buy' ? 1 : -1;
 
@@ -321,11 +321,14 @@ export const ordersToFills = (mode, orders, amountToFill, takerFee, feeReduction
   orders
     .sort((a, b) => a.price === b.price ? a.validTime - b.validTime : (priceSortMult * (a.price - b.price)))
     .every((order) => {
+      // if order depleted, skip over but keep going
+      if (order.amount === 0) return true;
+      
       const { amount, price } = order;
       const levelAmount = Math.min(needed, amount);
       const levelValue = Math.round(1e6 * levelAmount * price) / 1e6;
       needed -= levelAmount;
-      if (levelAmount > 0) {
+      if (levelAmount > 0) { // TODO: should this be >= ?
         const paymentsUnscaled = paymentFunc(
           levelValue * TOKEN_SCALE[TOKEN.SWAY],
           order.makerFee,
@@ -341,6 +344,9 @@ export const ordersToFills = (mode, orders, amountToFill, takerFee, feeReduction
           fillPaymentTotal: Math.round((paymentsUnscaled.toExchange || 0) + (paymentsUnscaled.toPlayer || 0)),
           paymentsUnscaled: paymentsUnscaled
         });
+        if (isDestructive) {
+          order.amount -= levelAmount;
+        }
         return true;
       }
       return false;

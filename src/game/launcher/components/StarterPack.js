@@ -1,6 +1,7 @@
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
-import { Crewmate } from '@influenceth/sdk';
+import { Building, Crewmate, Process } from '@influenceth/sdk';
+import cloneDeep from 'lodash/cloneDeep';
 
 import { CheckIcon } from '~/components/Icons';
 import useStore from '~/hooks/useStore';
@@ -11,14 +12,15 @@ import usePriceConstants from '~/hooks/usePriceConstants';
 import { TOKEN, TOKEN_FORMAT, TOKEN_SCALE } from '~/lib/priceUtils';
 import usePriceHelper from '~/hooks/usePriceHelper';
 import UserPrice from '~/components/UserPrice';
-import { advPackCrewmates, advPackPriceUSD, advPackSwayMin, basicPackCrewmates, basicPackPriceUSD, basicPackSwayMin } from '../Store';
+import { advPackCrewmates, advPackPriceUSD, basicPackCrewmates, basicPackPriceUSD } from '../Store';
 import FundingFlow from './FundingFlow';
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
 import useSwapHelper from '~/hooks/useSwapHelper';
 import useSession from '~/hooks/useSession';
 import { useEthBalance } from '~/hooks/useWalletTokenBalance';
 import { PurchaseForm } from './SKU';
-import { fireTrackingEvent } from '~/lib/utils';
+import { fireTrackingEvent, ordersToFills } from '~/lib/utils';
+import useShoppingListData from '~/hooks/useShoppingListData';
 
 const PackWrapper = styled.div`
   padding: 10px 8px;
@@ -84,6 +86,25 @@ const PackChecks = styled.div`
   }
 `;
 
+const MARKET_BUFFER = 0.1;
+
+const buildingIdsToShoppingList = (buildingIds) => {
+  return buildingIds.reduce((acc, b) => {
+    const inputs = Process.TYPES[Building.TYPES[b].processType].inputs;
+    Object.keys(inputs).forEach((product) => {
+      if (!acc[product]) acc[product] = 0;
+      acc[product] += inputs[product];
+    });
+    return acc;
+  }, {});
+};
+
+const basicBuildings = [Building.IDS.WAREHOUSE, Building.IDS.EXTRACTOR, Building.IDS.REFINERY];
+const advBuildings = [...basicBuildings, Building.IDS.BIOREACTOR, Building.IDS.FACTORY];
+const basicBuildingShoppingList = buildingIdsToShoppingList(basicBuildings);
+const advBuildingShoppingList = buildingIdsToShoppingList(advBuildings);
+const uniqueProductIds = Array.from(new Set([...Object.keys(basicBuildingShoppingList), ...Object.keys(advBuildingShoppingList)]));
+
 export const useStarterPackPricing = () => {
   const { data: priceConstants } = usePriceConstants();
   const priceHelper = usePriceHelper();
@@ -92,6 +113,96 @@ export const useStarterPackPricing = () => {
     if (!priceConstants) return priceHelper.from(0);
     return priceHelper.from(priceConstants?.ADALIAN_PURCHASE_PRICE, priceConstants?.ADALIAN_PURCHASE_TOKEN);
   }, [priceConstants]);
+
+  const {
+    data: resourceMarketplaces,
+    dataUpdatedAt: resourceMarketplacesUpdatedAt,
+  } = useShoppingListData(1, 0, uniqueProductIds);
+
+  // TODO: could just add adv building difference to basic to avoid repeating all those calcs for shared buildings
+  const getMarketCostForBuildingList = useCallback((buildingIds) => {
+    if (!resourceMarketplaces) return 0;
+
+    // get instance of resourceMarketplaces that we can be destructive with
+    const dynamicMarketplaces = cloneDeep(resourceMarketplaces);
+    console.log({ resourceMarketplaces, dynamicMarketplaces })
+
+    // split building list into granular orders
+    const allOrders = buildingIds.reduce((acc, b) => {
+      const inputs = Process.TYPES[Building.TYPES[b].processType].inputs;
+      Object.keys(inputs).forEach((productId) => {
+        acc.push({ productId, amount: inputs[productId] });
+      });
+      return acc;
+    }, []);
+
+    // sort by size desc
+    allOrders.sort((a, b) => b.amount - a.amount);
+    
+    // walk through orders... for each, get best remaining price, then continue
+    allOrders.forEach((order) => {
+      let totalFilled = 0;
+      let totalPaid = 0;
+      if (dynamicMarketplaces[order.productId]) {
+
+        // for each marketplace, set _dynamicUnitPrice for min(target, avail)
+        dynamicMarketplaces[order.productId].forEach((row) => {
+          let marketFills = ordersToFills(
+            'buy',
+            row.orders,
+            Math.min(row.supply, order.amount),
+            row.marketplace?.Exchange?.takerFee || 0,
+            1,
+            row.feeEnforcement || 1
+          );
+          const marketplaceCost = marketFills.reduce((acc, cur) => acc + cur.fillPaymentTotal, 0);
+          const marketplaceFilled = marketFills.reduce((acc, cur) => acc + cur.fillAmount, 0);
+          row._dynamicUnitPrice = marketplaceCost / marketplaceFilled;
+        });
+
+        // sort by _dynamicUnitPrice (asc)
+        dynamicMarketplaces[order.productId].sort((a, b) => a._dynamicUnitPrice - b._dynamicUnitPrice);
+
+        // process orders destructively until target met
+        dynamicMarketplaces[order.productId].every((row) => {
+          let marketFills = ordersToFills(
+            'buy',
+            row.orders,
+            Math.min(row.supply, order.amount - totalFilled),
+            row.marketplace?.Exchange?.takerFee || 0,
+            1,
+            row.feeEnforcement || 1,
+            true
+          );
+          const marketplaceCost = marketFills.reduce((acc, cur) => acc + cur.fillPaymentTotal, 0);
+          const marketplaceFilled = marketFills.reduce((acc, cur) => acc + cur.fillAmount, 0);
+
+          row.supply -= marketplaceFilled;
+          totalPaid += marketplaceCost;
+          totalFilled += marketplaceFilled;
+          return (totalFilled < order.amount);
+        });
+
+      }
+
+      order.cost = totalPaid / TOKEN_SCALE[TOKEN.SWAY];
+      if (totalFilled < order.amount) {
+        console.warn(`Unable to fill productId ${order.productId}! ${totalFilled} < ${order.amount}`);
+      }
+    });
+
+    return allOrders.reduce((acc, o) => acc + o.cost, 0);
+  }, [resourceMarketplacesUpdatedAt]);
+
+  const basicPackSwayMin = useMemo(() => {
+    const marketCost = getMarketCostForBuildingList(basicBuildings);
+    return (1 + MARKET_BUFFER) * marketCost;
+  }, [getMarketCostForBuildingList]);
+
+  const advPackSwayMin = useMemo(() => {
+    const marketCost = getMarketCostForBuildingList(advBuildings);
+    return (1 + MARKET_BUFFER) * marketCost;
+  }, [getMarketCostForBuildingList]);
 
   return useMemo(() => {
     const basicMinPrice = priceHelper.from(basicPackPriceUSD * TOKEN_SCALE[TOKEN.USDC], TOKEN.USDC);
@@ -140,7 +251,7 @@ export const useStarterPackPricing = () => {
         swayValue: advSwayValue
       }
     };
-  }, [adalianPrice, priceConstants, priceHelper]);
+  }, [adalianPrice, advPackSwayMin, basicPackSwayMin, priceConstants, priceHelper]);
 };
 
 export const useStarterPacks = () => {
