@@ -92,6 +92,7 @@ const CoachmarkComponent = ({ refEl }) => {
 
 export function CoachmarkProvider({ children }) {
   const coachmarks = useStore(s => s.coachmarks);
+  const launcherPage = useStore(s => s.launcherPage);
 
   const [refEls, setRefEls] = useState({});
 
@@ -118,7 +119,7 @@ export function CoachmarkProvider({ children }) {
       <CoachmarkContext.Provider value={contextValue}>
         {children}
       </CoachmarkContext.Provider>
-      {activeCoachmarkKey && <CoachmarkComponent refEl={refEls[activeCoachmarkKey]} />}
+      {activeCoachmarkKey && !launcherPage && <CoachmarkComponent refEl={refEls[activeCoachmarkKey]} />}
     </>
   );
 }
