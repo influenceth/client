@@ -27,7 +27,7 @@ import useSession from '~/hooks/useSession';
 const DELAY_MESSAGE = 1000;
 
 const useSimulationSteps = () => {
-  const { login } = useSession();
+  const { connecting, login } = useSession();
   const { crew, pendingTransactions } = useCrewContext();
   const simulation = useSimulationState();
   const history = useHistory();
@@ -1030,6 +1030,7 @@ const useSimulationSteps = () => {
         crewmateImageOptionString: JSON.stringify({ coll: Crewmate.COLLECTION_IDS.ADALIAN, appearance: simulation.crewmate?.appearance }),
         rightButton: {
           children: 'Begin Your Journey',
+          disabled: connecting,
           onClick: () => {
             // webWallet does not work from localhost...
             login(process.env.NODE_ENV === 'development' ? undefined : { webWallet: true });
@@ -1047,6 +1048,7 @@ const useSimulationSteps = () => {
     ];
   }, [
     actionDialog,
+    connecting,
     crew,
     crewAgreements,
     crewBuildings,

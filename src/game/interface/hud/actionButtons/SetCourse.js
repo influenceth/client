@@ -53,6 +53,7 @@ const SetCourse = ({ asteroid, crew, ship, onSetAction, simulation, simulationAc
         isAllowedInSimulation: simulationActions.includes('SetCourse')
       });
     }
+    if (simulation && !simulationActions.includes('SetCourse')) return 'simulation restricted';
     return '';
   }, [_disabled, asteroid, crew, ship, simulationActions, travelSolution, travelSolutionIsValid]);
 

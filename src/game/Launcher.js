@@ -23,7 +23,7 @@ import Rewards from './launcher/Rewards';
 import { fireTrackingEvent, reactBool } from '~/lib/utils';
 import theme from '~/theme';
 
-const DISABLE_LAUNCHER_TRAILER = true && process.env.NODE_ENV === 'development';
+const DISABLE_LAUNCHER_TRAILER = false && process.env.NODE_ENV === 'development';
 
 const footerHeight = 80;
 export const navMenuWidth = 250;

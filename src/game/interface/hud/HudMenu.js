@@ -663,7 +663,6 @@ const HudMenu = () => {
     return menuButtons.find((b) => b.key === openHudMenu) || {};
   }, [menuButtons, openHudMenu]);
 
-  console.log(pageButtons);
   const [visibleMenuButtons, visibleUniversalButtons, visiblePageButtons] = useMemo(() => ([
     menuButtons.filter((b) => b.isVisible && !b.isUniversal && (!b.requireLogin || authenticated)),
     menuButtons.filter((b) => b.isVisible && b.isUniversal && (!b.requireLogin || authenticated)),
@@ -712,7 +711,7 @@ const HudMenu = () => {
         )}
         {visiblePageButtons.length > 0 && (
           <ButtonSection showSeparator={(visibleMenuButtons.length || visibleUniversalButtons.length) > 0}>
-            {visiblePageButtons.map(({ key, coachmarkId, label, useAltColor, icon, onOpen, hideInsteadOfClose }) => { console.log({ key, coachmarkId }); return (
+            {visiblePageButtons.map(({ key, coachmarkId, label, useAltColor, icon, onOpen, hideInsteadOfClose }) => (
               <PageButton
                 key={key}
                 ref={coachmarkId ? setCoachmarkRef(coachmarkId) : undefined}
@@ -724,7 +723,7 @@ const HudMenu = () => {
                 data-tooltip-content={label}>
                 {icon}
               </PageButton>
-            ); })}
+            ))}
           </ButtonSection>
         )}
       </Buttons>

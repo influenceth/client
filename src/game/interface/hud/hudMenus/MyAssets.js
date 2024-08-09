@@ -374,7 +374,6 @@ const MyAssets = () => {
             isLoading={shipsLoading}
             itemGetter={(ship) => {
               const coachmarked = coachmarks[COACHMARK_IDS.hudMenuMyAssetsShip] === ship.id;
-              console.log('coachmarked', coachmarked, coachmarks[COACHMARK_IDS.hudMenuMyAssetsShip], ship.id);
               return (
                 <ShipBlock
                   key={ship.id}

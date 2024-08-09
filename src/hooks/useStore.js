@@ -8,6 +8,7 @@ import { Building, Entity, Lot } from '@influenceth/sdk';
 import constants from '~/lib/constants';
 import { TOKEN } from '~/lib/priceUtils';
 import { safeBigInt } from '~/lib/utils';
+import SIMULATION_CONFIG from '~/simulation/simulationConfig';
 
 export const STORE_NAME = 'influence';
 
@@ -528,29 +529,33 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
     })),
 
     dispatchSimulationActionItems: (newActivities) => set(produce(state => {
-      console.log('dispatchSimulationActionItems', newActivities);
+      // console.log('dispatchSimulationActionItems', newActivities);
       if (!state.simulation.actionItems) state.simulation.actionItems = [];
       state.simulation.actionItems.push(...newActivities);
     })),
 
     dispatchSimulationActionItemResolutions: (eventNames) => set(produce(state => {
-      console.log('dispatchSimulationActionItemResolutions', eventNames);
+      // console.log('dispatchSimulationActionItemResolutions', eventNames);
       if (!state.simulation.actionItems) state.simulation.actionItems = [];
       state.simulation.actionItems = state.simulation.actionItems.filter((a) => !eventNames.includes(a.event.name));
     })),
 
     dispatchSimulationActions: (actions) => set(produce(state => {
-      console.log('dispatchSimulationActions', actions);
+      // console.log('dispatchSimulationActions', actions);
       state.simulationActions = actions || [];
     })),
 
     dispatchCoachmarks: (coachmarkObj) => set(produce(state => {
-      console.log('dispatchCoachmarks', coachmarkObj);
+      // console.log('dispatchCoachmarks', coachmarkObj);
       state.coachmarks = coachmarkObj || {};
     })),
 
     dispatchCrewSelected: (crewId) => set(produce(state => {
       state.selectedCrewId = crewId;
+      if (crewId && crewId !== SIMULATION_CONFIG.crewId) {
+        state.simulationEnabled = false;
+        state.simulation = { ...simulationStateDefault };
+      }
     })),
 
     dispatchCutscene: (source, allowSkip) => set(produce(state => {

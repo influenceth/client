@@ -53,7 +53,6 @@ export function ActionItemProvider({ children }) {
     },
     { enabled: !!crewId && crewId !== SIMULATION_CONFIG.crewId }
   );
-  console.log('actionItems', actionItems);
 
   const { data: crewBuildings, isLoading: plannedBuildingsLoading, dataUpdatedAt: plansUpdatedAt } = useCrewBuildings();
   const plannedBuildings = useMemo(() => {

@@ -591,6 +591,7 @@ export function SessionProvider({ children }) {
     });
   }, [blockTime]);
 
+  // TODO: memoize value
   return (
     <SessionContext.Provider value={{
       login: async (enabledConnectors) => await connect(undefined, enabledConnectors),
@@ -600,6 +601,7 @@ export function SessionProvider({ children }) {
       authenticated,
       authenticating: [STATUSES.AUTHENTICATING, STATUSES.CONNECTING].includes(status),
       chainId: authenticated ? connectedChainId : null,
+      connecting,
       getOutsideExecutionData,
       isDeployed: authenticated ? currentSession?.isDeployed : null,
       provider,

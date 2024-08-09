@@ -243,7 +243,6 @@ const AsteroidComponent = () => {
 
     let objectPosition;
     if (cinematicInitialPosition) {
-      console.log('cinematicInitialPosition', position.current);
       objectPosition = new Vector3(...position.current)
         .setLength(2.5 * config.radius)
         .applyAxisAngle(rotationAxis.current, -Math.PI / 4.5);

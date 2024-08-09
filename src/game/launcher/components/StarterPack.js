@@ -125,7 +125,6 @@ export const useStarterPackPricing = () => {
 
     // get instance of resourceMarketplaces that we can be destructive with
     const dynamicMarketplaces = cloneDeep(resourceMarketplaces);
-    console.log({ resourceMarketplaces, dynamicMarketplaces })
 
     // split building list into granular orders
     const allOrders = buildingIds.reduce((acc, b) => {

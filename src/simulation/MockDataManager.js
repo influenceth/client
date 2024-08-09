@@ -294,7 +294,6 @@ const MockDataManager = () => {
                 // finishTime: nowSec(),
                 // outputShip
               }];
-              console.log({ building })
               break;
           }
 
@@ -464,7 +463,6 @@ const MockDataManager = () => {
     configs.push({
       queryKey: [ 'crewOpenOrders', SIMULATION_CONFIG.crewId ],
       transformer: (data) => {
-        console.log('orders', data)
         if (!simulation.order) return data;
 
         const { exchange, caller, callerCrew, storage, ...order } = simulation.order;
@@ -488,15 +486,13 @@ const MockDataManager = () => {
   // on unmount, refetch all overwrites
   useEffect(() => {
     return () => {
-      console.log('unmounting MockDataManager');
       overwrites.forEach(({ queryKey }) => {
-        console.log('invalidating', queryKey);
         queryClient.invalidateQueries({ queryKey, refetchType: 'active' });
       });
     };
   }, []);
 
-  console.log('configs', overwrites);
+  // console.log('configs', overwrites);
 
 
   // entity, entities

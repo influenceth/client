@@ -1,19 +1,19 @@
 import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useHistory } from 'react-router-dom';
 import styled from 'styled-components';
 import Loader from 'react-spinners/PuffLoader';
 
+import { ChevronDoubleDownIcon } from '~/components/Icons';
+import { COACHMARK_IDS } from '~/contexts/CoachmarkContext';
+import useCoachmarkRefSetter from '~/hooks/useCoachmarkRefSetter';
+import useSession from '~/hooks/useSession';
 import useStore from '~/hooks/useStore';
 import useSimulationSteps from '~/simulation/useSimulationSteps';
-
-import TutorialMessage from './TutorialMessage';
 import MockDataManager from '~/simulation/MockDataManager';
 import MockTransactionManager from '~/simulation/MockTransactionManager';
 import theme from '~/theme';
-import { ChevronDoubleDownIcon } from '~/components/Icons';
-import { createPortal } from 'react-dom';
-import { COACHMARK_IDS } from '~/contexts/CoachmarkContext';
-import useCoachmarkRefSetter from '~/hooks/useCoachmarkRefSetter';
+import TutorialMessage from './TutorialMessage';
 
 const BUBBLE_WIDTH = 60;
 
@@ -74,6 +74,7 @@ const CrewmateImage = styled.div`
 `;
 
 const WelcomeSimulation = () => {
+  const { connecting } = useSession();
   const setCoachmarkRef = useCoachmarkRefSetter();
   const [isHidden, setIsHidden] = useState(false);
   const [canAutohide, setCanAutohide] = useState(false);
@@ -100,7 +101,7 @@ const WelcomeSimulation = () => {
     } else if (canAutohide) {
       setIsHidden(true);
     }
-  }, [actionDialog?.type, locationPath, openHudMenu]);
+  }, [actionDialog?.type, connecting, locationPath, openHudMenu]);
 
   // we want to unhide the message on step change
   // then we want to hide it on first coachmark change for step (i.e. user has read and is now doing)

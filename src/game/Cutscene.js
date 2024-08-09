@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import ReactPlayer from 'react-player/lazy';
 import styled from 'styled-components';
+import BrightButton from '~/components/BrightButton';
 
 import Button from '~/components/Button';
 import useStore from '~/hooks/useStore';
@@ -90,7 +91,7 @@ const Cutscene = () => {
         }} />
       {allowSkip && (
         <ButtonHolder highlight={highlightButtons}>
-          <Button onClick={onSkip}>Skip Intro</Button>
+          <BrightButton onClick={onSkip}>Skip Intro</BrightButton>
         </ButtonHolder>
       )}
     </Container>

@@ -586,7 +586,6 @@ const Wrapper = ({ entity: entityId, permission, isExtension, agreementPath, ...
   const entityIsLoading = assetIsLoading || lotIsLoading;
 
   const agreementManager = useAgreementManager(entity, permission, agreementPath);
-  console.log({ agreementManager })
   const stage = agreementManager.pendingChange ? actionStages.STARTING : actionStages.NOT_STARTED;
 
   // handle auto-closing on any status change

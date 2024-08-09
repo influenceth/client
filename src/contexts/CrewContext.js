@@ -55,7 +55,6 @@ export function CrewProvider({ children }) {
       entityProps({ id: 1, label: Entity.IDS.ASTEROID })
     ];
 
-    console.log('simulationState', simulationState);
     const roster = [
       simulationState.crewmate?.id || undefined,
       SIMULATION_CONFIG.crewmates.engineer,

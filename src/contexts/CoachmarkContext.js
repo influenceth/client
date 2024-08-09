@@ -52,7 +52,6 @@ const CoachmarkComponent = ({ refEl }) => {
   // give the ref element time to "animate in" in case
   // that is something it does
   useEffect(() => {
-    console.log({ refEl })
     const to = setTimeout(() => {
       const boundingRect = refEl && refEl.getBoundingClientRect();
       setRect(boundingRect);
@@ -119,7 +118,7 @@ export function CoachmarkProvider({ children }) {
       setDisabled(false);
     }, 3000);
     return () => clearTimeout(to);
-  }, [simulation.step])
+  }, [simulation?.step])
 
   const contextValue = useMemo(() => ({
     activeCoachmarkKey,

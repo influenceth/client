@@ -1246,7 +1246,7 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
     }
     
     const price = priceHelper.from(priceConstants.ADALIAN_PURCHASE_PRICE, priceConstants.ADALIAN_PURCHASE_TOKEN);
-    if (price.usdcValue > wallet.combinedBalance?.to(TOKEN.USDC)) {
+    if (price.usdcValue > wallet?.combinedBalance?.to(TOKEN.USDC)) {
       // if (process.env.REACT_APP_CHAIN_ID === '0x534e5f5345504f4c4941' && ethClaimEnabled) {
         // TODO: in sepolia, would be nice to remind there is a faucet *before* having to click through
       // }

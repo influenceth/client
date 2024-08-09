@@ -352,7 +352,7 @@ const AvatarMenu = () => {
               )
               : (
                 <ButtonWrapper>
-                  <Button onClick={onClick}>
+                  <Button onClick={onClick()}>
                     Start Recruitment
                   </Button>
                 </ButtonWrapper>
