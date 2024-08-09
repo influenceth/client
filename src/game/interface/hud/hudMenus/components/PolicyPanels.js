@@ -592,7 +592,7 @@ const PolicyPanel = ({ editable = false, entity, permission }) => {
                     <Button
                       disabled={reactBool(simulationEnabled)}
                       size="small" 
-                      nClick={() => toggleEditing('allowlist')}>Edit Allowlist</Button>
+                      onClick={() => toggleEditing('allowlist')}>Edit Allowlist</Button>
                   </EditBlock>
                 </Section>
               )}
