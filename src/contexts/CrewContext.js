@@ -74,7 +74,7 @@ export function CrewProvider({ children }) {
         actionWeight: 0,
         delegatedTo: SIMULATION_CONFIG.accountAddress,
         lastFed: blockTime,
-        readyAt: simulationState.crewReadyAt || 0,
+        readyAt: simulationState.canFastForward ? 0 : (simulationState.crewReadyAt || 0),
         roster
       },
       Location: {
