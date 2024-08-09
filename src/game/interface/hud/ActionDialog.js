@@ -221,9 +221,7 @@ const ActionDialog = ({ type, params }) => {
 
   useEffect(() => {
     const onKeyUp = (e) => {
-      if (e.key === 'Escape' || (!e.shiftKey && e.which === 32)) {
-        setAction();
-      }
+      if (e.key === 'Escape') setAction();
     };
     document.addEventListener('keyup', onKeyUp);
     return () => {

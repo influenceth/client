@@ -4,7 +4,22 @@ import { createPortal } from 'react-dom';
 import { Tooltip } from 'react-tooltip';
 import { TbBellRingingFilled as AlertIcon } from 'react-icons/tb';
 import { BarLoader } from 'react-spinners';
-import { Asteroid, Building, Crewmate, Dock, Entity, Inventory, Lot, Order, Permission, Process, Product, Ship, Station, Time } from '@influenceth/sdk';
+import {
+  Asteroid,
+  Building,
+  Crewmate,
+  Dock,
+  Entity,
+  Inventory,
+  Lot,
+  Order,
+  Permission,
+  Process,
+  Product,
+  Ship,
+  Station,
+  Time
+} from '@influenceth/sdk';
 import numeral from 'numeral';
 import { List } from 'react-virtualized';
 
@@ -37,7 +52,6 @@ import {
   EmergencyModeEnterIcon,
   TargetIcon,
   ProductionIcon,
-  ShipIcon,
   WarningIcon,
   CoreSampleIcon,
   ResourceIcon,
@@ -74,7 +88,6 @@ import LiveReadyStatus from '~/components/LiveReadyStatus';
 import useConstructionManager from '~/hooks/actionManagers/useConstructionManager';
 import EntityName from '~/components/EntityName';
 import DataTableComponent from '~/components/DataTable';
-import UncontrolledTextInput from '~/components/TextInputUncontrolled';
 import Autocomplete, { StaticAutocomplete } from '~/components/Autocomplete';
 import useScreenSize from '~/hooks/useScreenSize';
 import useStore from '~/hooks/useStore';
@@ -724,6 +737,7 @@ const IngredientsList = styled(FlexSectionInputBody)`
 const DialogIngredientsList = styled(IngredientsList)`
   background: transparent;
   grid-template-columns: repeat(6, 95px);
+  padding-bottom: 32px;
 `;
 
 const IngredientSummary = styled.div`
@@ -740,7 +754,8 @@ const IngredientSummary = styled.div`
       ${p => p.theming === 'error' && `rgba(${hexToRGB(p.theme.colors.error)}, 1)`}
       ${p => p.theming === 'warning' && `rgba(${hexToRGB(p.theme.colors.lightOrange)}, 1)`}
       ${p => p.theming === 'success' && `rgba(${p.theme.colors.successRGB},1)`}
-      ${p => (!p.theming || p.theming === 'default') && `rgba(${p.theme.colors.mainRGB}, 1)`}
+      ${p => p.theming === 'none' && `rgba(${hexToRGB(p.theme.colors.secondaryText)}, 1)`}
+      ${p => (!p.theming || p.theming === 'default') && `white`}
     ;
     padding: 5px 0;
   }
@@ -1891,8 +1906,8 @@ export const TransferSelectionDialog = ({
             : (
               <EmptyResourceImage
                 key={i}
-                backgroundColor="#111"
-                outlineColor="#111"
+                backgroundColor="#080808"
+                outlineColor="#080808"
                 noIcon />
             )
         ))}
@@ -1909,14 +1924,17 @@ export const TransferSelectionDialog = ({
             </IngredientSummary>
           )
           : (
-            <IngredientSummary>
-              <span>
-                {tally > 0
-                  ? `${tally} Items: ${formatMass(totalMass)} | ${formatVolume(totalVolume)}`
-                  : `None Selected`
-                }
-              </span>
-            </IngredientSummary>
+            tally > 0
+            ? (
+              <IngredientSummary>
+              <span>{tally} Items: {formatMass(totalMass)} | {formatVolume(totalVolume)}</span>
+              </IngredientSummary>
+            )
+            : (
+              <IngredientSummary theming="none">
+              <span>None Selected</span>
+              </IngredientSummary>
+            )
           )
         }
       </DialogIngredientsList>
@@ -2029,8 +2047,9 @@ export const LandingSelectionDialog = ({ asteroid, deliveryMode, initialSelectio
 };
 
 export const ProcessSelectionDialog = ({ initialSelection, onClose, forceProcesses, processorType, onSelected, open }) => {
-  const [error, setError] = useState();
   const [selection, setSelection] = useState(initialSelection);
+  const [processFilter, setProcessFilter] = useState();
+  const [outputFilter, setOutputFilter] = useState();
 
   const simulationEnabled = useSimulationEnabled();
   const setCoachmarkRef = useCoachmarkRefSetter();
@@ -2052,6 +2071,24 @@ export const ProcessSelectionDialog = ({ initialSelection, onClose, forceProcess
     onClose();
   }, [onClose, onSelected, selection]);
 
+  const applyProcessFilter = useCallback((process) => {
+    if (!processFilter && !outputFilter) return true;
+
+    if (processFilter) {
+      if (!process.name.toLowerCase().includes(processFilter.toLowerCase())) return false;
+    }
+
+    if (outputFilter) {
+      const includesFilter = Object.keys(process.outputs).some((output) => {
+        return Product.TYPES[output]?.name.toLowerCase().includes(outputFilter.toLowerCase());
+      });
+
+      if (!includesFilter) return false;
+    }
+
+    return true;
+  }, [processFilter, outputFilter]);
+
   const isCompletable = useMemo(() => {
     if (simulationEnabled) {
       return simulationActions.includes(`SelectProcess:${selection}`);
@@ -2066,9 +2103,22 @@ export const ProcessSelectionDialog = ({ initialSelection, onClose, forceProcess
       onComplete={onComplete}
       open={open}
       title={`Select Process`}
-      style={{ maxWidth: '90vw' }}>
+      style={{ width: '1250px', maxWidth: '90vw', minHeight: '80%' }}>
       {/* TODO: isLoading */}
       {/* TODO: replace with DataTable? */}
+
+      <TextInput
+        onChange={(e) => setProcessFilter(e.target.value)}
+        placeholder="Filter by Process..."
+        value={processFilter || ''}
+        width={185}
+        style={{ marginBottom: '10px', marginRight: '10px' }} />
+      <TextInput
+        onChange={(e) => setOutputFilter(e.target.value)}
+        placeholder="Filter by Output..."
+        value={outputFilter || ''}
+        width={185}
+        style={{ marginBottom: '10px' }} />
       <SelectionTableWrapper>
         <table>
           <thead>
@@ -2079,7 +2129,7 @@ export const ProcessSelectionDialog = ({ initialSelection, onClose, forceProcess
             </tr>
           </thead>
           <tbody>
-            {processes.map(({ i, name, inputs, outputs }) => {
+            {processes.filter(applyProcessFilter).map(({ i, name, inputs, outputs }) => {
               const coachmarked = coachmarks[COACHMARK_IDS.actionDialogTargetProcess] === i;
               return (
                 <SelectionTableRow
@@ -2545,7 +2595,7 @@ export const InventorySelectionDialog = ({
       {/* TODO: isLoading */}
       <FilterRow>
         <div>
-          <UncontrolledTextInput
+          <TextInput
             onChange={handleFilterChange}
             placeholder="Filter by Name..."
             value={filterValue || ''}
@@ -3161,7 +3211,7 @@ export const ResourceGridSectionInner = ({
               </ThumbnailWithData>
             </div>
             {!hideTotals && (
-              <IngredientSummary>
+              <IngredientSummary theming="none">
                 <span>None Selected</span>
               </IngredientSummary>
             )}

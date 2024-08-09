@@ -38,6 +38,7 @@ import { TimeBonusTooltip } from './components';
 import useStationedCrews from '~/hooks/useStationedCrews';
 import useBlockTime from '~/hooks/useBlockTime';
 import useSimulationEnabled from '~/hooks/useSimulationEnabled';
+import useHydratedCrew from '~/hooks/useHydratedCrew';
 
 
 const propellantProduct = Product.TYPES[Product.IDS.HYDROGEN_PROPELLANT];
@@ -51,7 +52,8 @@ const LaunchShip = ({ asteroid, originLot, manager, ship, shipCrews, stage, ...p
 
   const isForceLaunch = crew?.id !== ship?.Control?.controller?.id;
   // TODO: in event of self-piloted launch, need to update with cached crew values on flightCrew (just like in other action dialogs while waiting on an action)
-  const flightCrew = useMemo(() => shipCrews.find((c) => c.id === ship.Control?.controller?.id), [shipCrews, ship]);
+  const _flightCrew = useMemo(() => shipCrews.find((c) => c.id === ship.Control?.controller?.id), [shipCrews, ship]);
+  const { data: flightCrew, ...other } = useHydratedCrew(_flightCrew?.id);
 
   // TODO: should this default to hopper-assisted if no propellant?
   const [powered, setPowered] = useState(isForceLaunch ? false : true);
