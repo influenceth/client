@@ -214,7 +214,6 @@ const useSimulationSteps = () => {
     // }
     const goTo = (update) => {
       const needsToZoomIn = update.zoomStatus === 'in'
-        && update.origin === origin
         && !(zoomStatus === 'in' || zoomStatus === 'zooming-in');
       const needsToTransfer = update.zoomStatus === 'in'
         && update.origin !== origin
