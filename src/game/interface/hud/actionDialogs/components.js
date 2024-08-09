@@ -3631,7 +3631,7 @@ export const ProcessInputSquareSection = ({ title, products, input, output, prim
           if (output) {
             thumbProps.backgroundColor = `rgba(${hexToRGB(theme.colors.green)}, 0.15)`;
             thumbProps.badgeColor = theme.colors.green;
-          } else if ((sourceContents[resourceId] || 0) >= amount || !['NOT_STARTED'].includes(stage)) {
+          } else if ((sourceContents[resourceId] || 0) >= amount || stage !== 'NOT_STARTED') {
             thumbProps.backgroundColor = `rgba(${theme.colors.mainRGB}, 0.15)`;
             thumbProps.badgeColor = theme.colors.main;
             thumbProps.progress = 1;
