@@ -75,7 +75,7 @@ const MainContainer = styled.div`
   }
 `;
 
-const DISABLE_INTRO_ANIMATION = false && process.env.NODE_ENV === 'development';
+const DISABLE_INTRO_ANIMATION = true && process.env.NODE_ENV === 'development';
 
 const Interface = () => {
   const { isLaunched } = useCrewContext();

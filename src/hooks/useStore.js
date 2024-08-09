@@ -60,6 +60,7 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
     //   coachmark: [],
     //   state: { ...simulationStateDefault }
     // },
+    isNew: true,
     simulationEnabled: false,
     simulation: { ...simulationStateDefault },
     simulationActions: [],
@@ -165,6 +166,10 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
 
     //
     // DISPATCHERS
+
+    dispatchIsNotNew: () => set(produce(state => {
+      state.isNew = false;
+    })),
 
     dispatchGpuInfo: (gpuInfo) => set(produce(state => {
       // this sets defaults if they are not already

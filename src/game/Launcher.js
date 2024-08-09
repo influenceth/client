@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import styled, { css, keyframes } from 'styled-components';
 import { PuffLoader as Loader } from 'react-spinners';
 import { Tooltip } from 'react-tooltip';
@@ -23,7 +23,7 @@ import Rewards from './launcher/Rewards';
 import { fireTrackingEvent, reactBool } from '~/lib/utils';
 import theme from '~/theme';
 
-const DISABLE_LAUNCHER_TRAILER = false && process.env.NODE_ENV === 'development';
+const DISABLE_LAUNCHER_TRAILER = true && process.env.NODE_ENV === 'development';
 
 const footerHeight = 80;
 export const navMenuWidth = 250;
@@ -197,6 +197,15 @@ const AccountButton = styled.div`
   }
   transition: background 250ms ease, border-color 250ms ease, color 250ms ease;
 
+  ${p => p.isNew
+    ? `
+      position: fixed;
+      right: 12px;
+      top: 12px;
+    `
+    : ``
+  }
+
   &:hover {
     background: rgba(${p => p.theme.colors.mainRGB}, 0.4);
     border-color: rgba(${p => p.theme.colors.mainRGB}, 0.8);
@@ -232,7 +241,7 @@ const PlayButton = styled.div`
   display: flex;
   font-size: 26px;
   justify-content: center;
-  margin: 20px 0 20px;
+  margin: 20px 0 ${p => p.isNew ? 40 : 20}px;
   opacity: 1;
   outline: 0 solid rgba(${p => p.rgb || p.theme.colors.mainRGB}, 0.4);
   padding: 0.5em;
@@ -310,6 +319,7 @@ const Launcher = (props) => {
 
   const launcherPage = useStore(s => s.launcherPage);
   const simulationEnabled = useStore(s => s.simulationEnabled);
+  const wasNew = useStore(s => s.isNew);
   const interfaceHidden = useStore(s => s.graphics.hideInterface);
   const hasSeenIntroVideo = useStore(s => s.hasSeenIntroVideo);
   const dispatchCutscene = useStore(s => s.dispatchCutscene);
@@ -318,6 +328,9 @@ const Launcher = (props) => {
   const dispatchLauncherPage = useStore(s => s.dispatchLauncherPage);
   const dispatchSeenIntroVideo = useStore(s => s.dispatchSeenIntroVideo);
   const dispatchToggleInterface = useStore(s => s.dispatchToggleInterface);
+  const dispatchIsNotNew = useStore(s => s.dispatchIsNotNew);
+
+  const [isNew, setIsNew] = useState();
 
   useEffect(() => {
     if (!interfaceHidden) {
@@ -329,6 +342,19 @@ const Launcher = (props) => {
       }
     }
   }, [interfaceHidden]);
+
+  useEffect(() => {
+    if (wasNew) {
+      setIsNew(true);
+      dispatchIsNotNew();
+    }
+  }, [wasNew]);
+
+  useEffect(() => {
+    if (authenticated) {
+      setIsNew(false);
+    }
+  }, [authenticated])
 
   useEffect(() => {
     // NOTE: (currently not disallowing any for logged out users)
@@ -390,63 +416,65 @@ const Launcher = (props) => {
 
       <TopLeftMenu>
         <LogoWrapper><InfluenceLogo /></LogoWrapper>
-        <Nav>
-          <NavItem
-            onClick={() => dispatchLauncherPage('play')}
-            selected={launcherPage === 'play'}>
-            <StyledNavIcon /> Play
-          </NavItem>
-          <NavItem
-            onClick={() => dispatchLauncherPage('store')}
-            selected={launcherPage === 'store'}>
-            <StyledNavIcon /> Store
-          </NavItem>
-          <NavItem
-            onClick={() => dispatchLauncherPage('help')}
-            selected={launcherPage === 'help'}>
-            <StyledNavIcon /> Help
-          </NavItem>
-          <NavItem
-            onClick={() => dispatchLauncherPage('rewards')}
-            selected={launcherPage === 'rewards'}>
-            <StyledNavIcon /> Rewards
-          </NavItem>
-          <NavItem
-            onClick={() => dispatchLauncherPage('settings')}
-            selected={launcherPage === 'settings'}>
-            <StyledNavIcon /> Settings
-          </NavItem>
-
-          <NavItem isRule />
-
-          {process.env.REACT_APP_BRIDGE_URL && (
-            <NavItem onClick={openAssetsPortal} isExternal>
-              <StyledNavIcon /> Assets Portal
+        {!isNew && (
+          <Nav>
+            <NavItem
+              onClick={() => dispatchLauncherPage('play')}
+              selected={launcherPage === 'play'}>
+              <StyledNavIcon /> Play
             </NavItem>
-          )}
-
-          {walletId === 'argentWebWallet' && (
-            <NavItem onClick={openWebWalletDashboard} isExternal>
-              <StyledNavIcon /> Wallet Dashboard
+            <NavItem
+              onClick={() => dispatchLauncherPage('store')}
+              selected={launcherPage === 'store'}>
+              <StyledNavIcon /> Store
             </NavItem>
-          )}
-
-          {process.env.REACT_APP_HELP_URL && (
-            <NavItem onClick={openHelpChannel} isExternal>
-              <StyledNavIcon /> Bug Report
+            <NavItem
+              onClick={() => dispatchLauncherPage('help')}
+              selected={launcherPage === 'help'}>
+              <StyledNavIcon /> Help
             </NavItem>
-          )}
-
-          {!!window.installPrompt && (
-            <NavItem onClick={onInstallApp} isExternal>
-              <StyledNavIcon /> Desktop App
+            <NavItem
+              onClick={() => dispatchLauncherPage('rewards')}
+              selected={launcherPage === 'rewards'}>
+              <StyledNavIcon /> Rewards
             </NavItem>
-          )}
+            <NavItem
+              onClick={() => dispatchLauncherPage('settings')}
+              selected={launcherPage === 'settings'}>
+              <StyledNavIcon /> Settings
+            </NavItem>
 
-        </Nav>
+            <NavItem isRule />
+
+            {process.env.REACT_APP_BRIDGE_URL && (
+              <NavItem onClick={openAssetsPortal} isExternal>
+                <StyledNavIcon /> Assets Portal
+              </NavItem>
+            )}
+
+            {walletId === 'argentWebWallet' && (
+              <NavItem onClick={openWebWalletDashboard} isExternal>
+                <StyledNavIcon /> Wallet Dashboard
+              </NavItem>
+            )}
+
+            {process.env.REACT_APP_HELP_URL && (
+              <NavItem onClick={openHelpChannel} isExternal>
+                <StyledNavIcon /> Bug Report
+              </NavItem>
+            )}
+
+            {!!window.installPrompt && (
+              <NavItem onClick={onInstallApp} isExternal>
+                <StyledNavIcon /> Desktop App
+              </NavItem>
+            )}
+
+          </Nav>
+        )}
       </TopLeftMenu>
 
-      <SystemControls />
+      {!isNew && <SystemControls />}
 
       <ContentWrapper id="contentwrapper">
         <Tooltip id="launcherTooltip" place="left" delayHide={150} />
@@ -462,16 +490,16 @@ const Launcher = (props) => {
         {launcherPage === 'play' && (
           <>
             {authenticating && (
-              <AccountButton onClick={login}>
+              <AccountButton isNew={isNew} onClick={login}>
                 <LeftIcon connecting><Loader color="currentColor" size="0.9em" /></LeftIcon>
                 <label>Logging In</label>
                 <RightIcon><ChevronDoubleRightIcon /></RightIcon>
               </AccountButton>
             )}
             {!authenticated && !authenticating && (
-              <AccountButton onClick={login}>
+              <AccountButton isNew={isNew} onClick={login}>
                 <LeftIcon connected={authenticated}><UserIcon /></LeftIcon>
-                <label>Log-In</label>
+                <label>{isNew ? 'Existing Account' : 'Log-In'}</label>
                 <RightIcon><ChevronDoubleRightIcon /></RightIcon>
               </AccountButton>
             )}
@@ -489,13 +517,13 @@ const Launcher = (props) => {
                 <PlayButton
                   animate={reactBool(!simulationEnabled)}
                   disabled={authenticating}
+                  isNew={isNew}
                   onClick={onToggleSimulation}
                   rgb={theme.colors[simulationEnabled ? 'errorRGB' : 'successRGB']}>
                   {simulationEnabled ? 'Exit ' : 'Enter'} Training
                 </PlayButton>
               )
             }
-
           </>
         )}
 
