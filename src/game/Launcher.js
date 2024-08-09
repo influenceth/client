@@ -1,5 +1,5 @@
 import { useCallback, useEffect } from 'react';
-import styled from 'styled-components';
+import styled, { css, keyframes } from 'styled-components';
 import { PuffLoader as Loader } from 'react-spinners';
 import { Tooltip } from 'react-tooltip';
 
@@ -20,7 +20,7 @@ import HudMenu from './interface/hud/HudMenu';
 import SystemControls from './interface/hud/SystemControls';
 import Help from './launcher/Help';
 import Rewards from './launcher/Rewards';
-import { fireTrackingEvent } from '~/lib/utils';
+import { fireTrackingEvent, reactBool } from '~/lib/utils';
 import theme from '~/theme';
 
 const DISABLE_LAUNCHER_TRAILER = true && process.env.NODE_ENV === 'development';
@@ -215,8 +215,15 @@ const AccountButton = styled.div`
   }
 `;
 
+const outlineAnimation = keyframes`
+  0% { outline-width: 0; }
+  50% { outline-width: 6px; }
+  100% { outline-width: 0; }
+`;
+
 const PlayButton = styled.div`
   align-items: center;
+  ${p => p.animate ? css`animation: ${outlineAnimation} 1500ms ease-out infinite;` : ''}
   background: black;
   border: 1px solid rgba(${p => p.rgb || p.theme.colors.mainRGB}, 1);
   border-radius: 50px;
@@ -227,6 +234,7 @@ const PlayButton = styled.div`
   justify-content: center;
   margin: 20px 0 20px;
   opacity: 1;
+  outline: 0 solid rgba(${p => p.rgb || p.theme.colors.mainRGB}, 0.4);
   padding: 0.5em;
   position: relative;
   text-transform: uppercase;
@@ -470,13 +478,20 @@ const Launcher = (props) => {
 
             {authenticated
               ? (
-                <PlayButton disabled={authenticating} onClick={onClickPlay}>
+                <PlayButton
+                  animate
+                  disabled={authenticating}
+                  onClick={onClickPlay}>
                   Play
                 </PlayButton>
               )
               : (
-                <PlayButton rgb={theme.colors[simulationEnabled ? 'errorRGB' : 'successRGB']} disabled={authenticating} onClick={onToggleSimulation}>
-                  {simulationEnabled ? 'Exit ' : ''} Training Mode
+                <PlayButton
+                  animate={reactBool(!simulationEnabled)}
+                  disabled={authenticating}
+                  onClick={onToggleSimulation}
+                  rgb={theme.colors[simulationEnabled ? 'errorRGB' : 'successRGB']}>
+                  {simulationEnabled ? 'Exit ' : 'Enter'} Training
                 </PlayButton>
               )
             }
