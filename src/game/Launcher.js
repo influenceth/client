@@ -311,6 +311,16 @@ const Footer = styled.div`
   }
 `;
 
+const ExitSimulationLink = styled.div`
+  color: #AAA;
+  cursor: ${p => p.theme.cursors.active};
+  margin-top: -7px;
+  transition: color 100ms ease;
+  &:hover {
+    color: ${p => p.theme.colors.error};
+  }
+`;
+
 const StyledNavIcon = () => <Icon><NavIcon selected selectedColor="#777" /></Icon>;
 
 const Launcher = (props) => {
@@ -388,15 +398,17 @@ const Launcher = (props) => {
     }
   }, [accountAddress, , hasSeenIntroVideo]);
 
-  const onToggleSimulation = useCallback(() => {
-    if (simulationEnabled) {
-      dispatchSimulationEnabled(false);
-      dispatchSimulationStep();  // TODO: remove this probably
-    } else if (!authenticated) { // is this necessary?
+  const onEnterSimulation = useCallback(() => {
+    if (!authenticated && !simulationEnabled) { // is authenticated check necessary?
       dispatchSimulationEnabled(true);
     }
     onClickPlay();
   }, [authenticated, onClickPlay, simulationEnabled]);
+
+  const onExitSimulation = useCallback(() => {
+    dispatchSimulationEnabled(false);
+    dispatchSimulationStep();  // TODO: remove this? (i.e. to not reset on exit)
+  }, []);
 
   const openHelpChannel = useCallback(() => {
     window.open(process.env.REACT_APP_HELP_URL, '_blank', 'noopener');
@@ -514,14 +526,19 @@ const Launcher = (props) => {
                 </PlayButton>
               )
               : (
-                <PlayButton
-                  animate={reactBool(!simulationEnabled)}
-                  disabled={authenticating}
-                  isNew={isNew}
-                  onClick={onToggleSimulation}
-                  rgb={theme.colors[simulationEnabled ? 'errorRGB' : 'successRGB']}>
-                  {simulationEnabled ? 'Exit ' : 'Enter'} Training
-                </PlayButton>
+                <>
+                  <PlayButton
+                    animate
+                    disabled={authenticating}
+                    isNew={isNew}
+                    onClick={onEnterSimulation}
+                    rgb={theme.colors.successRGB}>
+                    {simulationEnabled ? 'Continue' : 'Enter Training'}
+                  </PlayButton>
+                  {simulationEnabled && (
+                    <ExitSimulationLink onClick={onExitSimulation}>Exit Training</ExitSimulationLink>
+                  )}
+                </>
               )
             }
           </>
