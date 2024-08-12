@@ -89,7 +89,7 @@ const useSimulationSteps = () => {
   
   const advance = useCallback(() => {
     // track that step was completed
-    fireTrackingEvent('tutorial', { step: simulation.step });
+    fireTrackingEvent('simulation', { step: simulation.step });
 
     // transition to next step
     const nextStep = (simulation.step || 0) + 1;
@@ -1040,7 +1040,7 @@ const useSimulationSteps = () => {
           children: 'Begin Your Journey',
           disabled: connecting,
           onClick: () => {
-            fireTrackingEvent('tutorial', { step: 'login' });
+            fireTrackingEvent('simulation', { step: 'login' });
             
             // webWallet does not work from localhost...
             login(process.env.NODE_ENV === 'development' ? undefined : { webWallet: true });
