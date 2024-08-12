@@ -26,7 +26,7 @@ const MarketplaceLink = ({ assetType, chain, children, id }) => {
         url += `${id}`;
       }
 
-    // Starknet > Unframed
+    // Starknet > Pyramid
     } else if (chain === 'STARKNET') {
       url = `${process.env.REACT_APP_STARKNET_NFT_MARKET_URL}/`;
       // single asset
@@ -41,7 +41,7 @@ const MarketplaceLink = ({ assetType, chain, children, id }) => {
         url += `collection/${process.env.REACT_APP_STARKNET_CREWMATE_TOKEN}`;
       // account
       } else if (assetType === 'account') {
-        url += `profile/${id}`;
+        url += `user/${id}`;
       }
     }
 

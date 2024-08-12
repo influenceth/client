@@ -393,6 +393,7 @@ const AssembleShip = ({ asteroid, lot, dryDockManager, stage, ...props }) => {
                   : []
               }
               source={originInventory}
+              stage={stage}
               style={{ width: '100%' }} />
           </div>
 

@@ -3705,7 +3705,7 @@ export const ProcessInputOutputSection = ({ title, products, input, output, prim
   );
 };
 
-export const ProcessInputSquareSection = ({ title, products, input, output, primaryOutput, setPrimaryOutput, source, ...props }) => {
+export const ProcessInputSquareSection = ({ title, products, input, output, primaryOutput, setPrimaryOutput, source, stage, ...props }) => {
   const sourceContents = useMemo(() => (source?.contents || []).reduce((acc, cur) => ({ ...acc, [cur.product]: cur.amount }), {}), [source]);
   return (
     <FlexSectionBlock title={title} {...props} bodyStyle={{ padding: 0 }}>
@@ -3715,7 +3715,7 @@ export const ProcessInputSquareSection = ({ title, products, input, output, prim
           if (output) {
             thumbProps.backgroundColor = `rgba(${hexToRGB(theme.colors.green)}, 0.15)`;
             thumbProps.badgeColor = theme.colors.green;
-          } else if ((sourceContents[resourceId] || 0) >= amount) {
+          } else if ((sourceContents[resourceId] || 0) >= amount || stage !== 'NOT_STARTED') {
             thumbProps.backgroundColor = `rgba(${theme.colors.mainRGB}, 0.15)`;
             thumbProps.badgeColor = theme.colors.main;
             thumbProps.progress = 1;

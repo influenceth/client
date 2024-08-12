@@ -410,7 +410,8 @@ export function ChainTransactionProvider({ children }) {
     provider,
     starknetSession,
     upgradeInsecureSession,
-    walletAccount
+    walletAccount,
+    walletId
   } = useSession();
   const activities = useActivitiesContext();
   const { crew, pendingTransactions } = useCrewContext();
@@ -473,18 +474,21 @@ export function ChainTransactionProvider({ children }) {
       return !found;
     });
 
+    const canUseFeeAbstraction = (
+      (gameplay.feeToken === 'SWAY' && isDeployed)
+      || (!gameplay.feeToken && walletId === 'argentWebWallet' && isDeployed)
+    );
+
     // Use session wallet if possible, otherwise regular wallet
     const account = canUseSessionKey ? starknetSession : walletAccount;
     const txOptions = {};
 
     // Check and store the gasless compatibility status
-    if (
-      isDeployed
-      && gameplay.feeToken === 'SWAY'
-      && (await gasless.fetchAccountCompatibility(
-        accountAddress, { baseUrl: process.env.REACT_APP_AVNU_API_URL }
-      )).isCompatible
-    ) {
+    const compatibility = await gasless.fetchAccountCompatibility(
+      accountAddress, { baseUrl: process.env.REACT_APP_AVNU_API_URL }
+    );
+
+    if (canUseFeeAbstraction && compatibility.isCompatible) {
       // Use gasless via relayer for non-ETH / STRK transactions
       const simulation = await walletAccount.simulateTransaction(
         [{ type: 'INVOKE_FUNCTION', payload: calls }],
@@ -494,8 +498,9 @@ export function ChainTransactionProvider({ children }) {
       const tokens = await gasless.fetchGasTokenPrices({ baseUrl: process.env.REACT_APP_AVNU_API_URL });
       const gasToken = tokens.find((t) => Address.areEqual(t.tokenAddress, TOKEN.SWAY));
 
-      // Double the fee estimation and check for sufficient funds to ensure transaction success
-      const maxFee = gasless.getGasFeesInGasToken(simulation[0].suggestedMaxFee, gasToken) * 2n;
+      // Triple the fee estimation and check for sufficient funds to ensure transaction success
+      // TODO: figure out why some txs require this
+      const maxFee = gasless.getGasFeesInGasToken(simulation[0].suggestedMaxFee, gasToken) * 3n;
 
       // Check if wallet has sufficient funds for gas fees
       if (walletRef.current?.tokenBalance) {

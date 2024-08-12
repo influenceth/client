@@ -456,7 +456,12 @@ const GameplayPane = () => {
           <StyledDataReadout label="Default Fee Currency">
             <ControlGroup>
               <Button
-                active={gameplay.feeToken !== 'SWAY'}
+                active={gameplay.feeToken === null || gameplay.feeToken === undefined}
+                onClick={() => dispatchFeeTokenSet(null)}>
+                Default
+              </Button>
+              <Button
+                active={gameplay.feeToken === 'ETH'}
                 onClick={() => dispatchFeeTokenSet('ETH')}>
                 ETH / STRK
               </Button>
@@ -467,7 +472,10 @@ const GameplayPane = () => {
               </Button>
             </ControlGroup>
           </StyledDataReadout>
-          {gameplay.feeToken !== 'SWAY' && (
+          {(gameplay.feeToken === null || gameplay.feeToken === undefined) && (
+            <HelperText>SWAY is used by default for Argent Web Wallet accounts only</HelperText>
+          )}
+          {gameplay.feeToken === 'ETH' && (
             <HelperText>ETH / STRK defaults are used for all transaction fees</HelperText>
           )}
           {gameplay.feeToken === 'SWAY' && (

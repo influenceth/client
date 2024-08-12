@@ -130,7 +130,7 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
     gameplay: {
       autoswap: true,
       dismissTutorial: false,
-      feeToken: 'ETH',
+      feeToken: null,
       useSessions: null
     },
 
