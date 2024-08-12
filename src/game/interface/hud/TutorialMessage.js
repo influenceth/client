@@ -9,8 +9,8 @@ import theme from '~/theme';
 
 const messageClipCorner = 20;
 const messageOffset = 75;
-const messageHeight = 235;
-const messageWidth = 700;
+const messageHeight = 240;
+const messageWidth = 725;
 const crewmateOverflowMult = 0.3;
 const borderColor = `rgba(${theme.colors.mainRGB}, 0.33)`;
 const CrewmateWrapper = styled.div`
