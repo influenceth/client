@@ -150,7 +150,7 @@ const Empty = styled.span`
   text-transform: uppercase;
 `;
 
-const MareketplaceName = styled.span`
+const MarketplaceName = styled.span`
   color: ${p => {
     if (p.acesss === 'full') return p.theme.colors.white;
     if (p.access === 'limited') return p.theme.colors.yellow;
@@ -285,7 +285,7 @@ const AsteroidResourcePrices = ({ asteroid, mode, resource }) => {
               asteroidId={asteroid.id}
               lotId={row.lotId}
               data-tooltip-id="detailsTooltip" />
-            <MareketplaceName access={marketplacesLoading ? 'full' : row.permissions.accessLevel()}>{row.marketplaceName}</MareketplaceName>
+            <MarketplaceName access={marketplacesLoading ? 'full' : row.permissions.accessLevel()}>{row.marketplaceName}</MarketplaceName>
             {!marketplacesLoading && (
               <MarketplacePermissionsIcon
                 style={{ marginLeft: 6 }}
