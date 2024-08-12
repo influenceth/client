@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import { Tooltip } from 'react-tooltip';
 import styled from 'styled-components';
@@ -40,6 +40,9 @@ import useSession from '~/hooks/useSession';
 import useShip from '~/hooks/useShip';
 import useStore from '~/hooks/useStore';
 import hudMenus from './hudMenus';
+import { COACHMARK_IDS } from '~/contexts/CoachmarkContext';
+import useSimulationEnabled from '~/hooks/useSimulationEnabled';
+import useCoachmarkRefSetter from '~/hooks/useCoachmarkRefSetter';
 
 const cornerWidth = 8;
 const bumpHeightHalf = 100;
@@ -239,10 +242,29 @@ const PanelContent = styled.div`
   height: 0;
 `;
 
+const MenuButton = ({ badge, coachmarkId, menuKey, label, useAltColor, icon, onOpen, hideInsteadOfClose, handleButtonClick, openHudMenu }) => {
+  const setCoachmarkRef = useCoachmarkRefSetter();
+  return (
+    <Button
+      ref={coachmarkId ? setCoachmarkRef(coachmarkId) : undefined}
+      iconColor={useAltColor}
+      badge={badge}
+      onClick={() => handleButtonClick(menuKey, onOpen, hideInsteadOfClose)}
+      selected={menuKey === openHudMenu}
+      data-tooltip-id="hudMenuTooltip"
+      data-tooltip-place="left"
+      data-tooltip-content={label}>
+      {icon}
+    </Button>
+  );
+};
+
 const HudMenu = () => {
   const history = useHistory();
   const { authenticated } = useSession();
   const { crew } = useCrewContext();
+  const simulationEnabled = useSimulationEnabled();
+  const setCoachmarkRef = useCoachmarkRefSetter();
 
   // const createAlert = useStore(s => s.dispatchAlertLogged);
   const asteroidId = useStore(s => s.asteroids.origin);
@@ -284,6 +306,7 @@ const HudMenu = () => {
     // else, already open, but clicking different button --> close, then open new
     } else if (open) {
       setOpen(false);
+      dispatchHudMenuOpened();
       setTimeout(() => {
         if (onOpen) onOpen();
         else dispatchHudMenuOpened(selected);
@@ -449,6 +472,7 @@ const HudMenu = () => {
           key: 'RESOURCES',
           label: 'Resources',
           icon: <ResourceIcon />,
+          coachmarkId: COACHMARK_IDS.hudMenuResources,
           Component: hudMenus.Resources,
           noDetail: true,
           isVisible: scope === 'asteroid' || scope === 'lot'
@@ -541,6 +565,7 @@ const HudMenu = () => {
         {
           key: 'ASTEROID_MARKETS',
           label: 'Asteroid Markets',
+          coachmarkId: COACHMARK_IDS.hudMenuMarketplaces,
           icon: <MarketsIcon />,
           onOpen: () => {
             // if (hasSomeMarketplacePermission) {
@@ -590,30 +615,33 @@ const HudMenu = () => {
       }
     }
 
-    menuButtons.push(
-      {
-        key: 'MY_CREWS',
-        label: 'My Crews',
-        icon: <CrewIcon />,
-        Component: hudMenus.MyCrews,
-        useAltColor: true,
-        noDetail: true,
-        isUniversal: true,
-        isVisible: true,
-        requireLogin: true,
-      },
-      {
-        key: 'MY_ASSETS',
-        label: 'My Assets',
-        icon: <MyAssetsIcon />,
-        Component: hudMenus.MyAssets,
-        useAltColor: true,
-        noDetail: true,
-        isUniversal: true,
-        isVisible: true,
-        requireLogin: true,
-      }
-    );
+    if (!simulationEnabled || !launcherPage) {
+      menuButtons.push(
+        {
+          key: 'MY_CREWS',
+          label: 'My Crews',
+          icon: <CrewIcon />,
+          Component: hudMenus.MyCrews,
+          useAltColor: true,
+          noDetail: true,
+          isUniversal: true,
+          isVisible: true,
+          requireLogin: true,
+        },
+        {
+          key: 'MY_ASSETS',
+          label: 'My Assets',
+          icon: <MyAssetsIcon />,
+          Component: hudMenus.MyAssets,
+          coachmarkId: COACHMARK_IDS.hudMenuMyAssets,
+          useAltColor: true,
+          noDetail: true,
+          isUniversal: true,
+          isVisible: true,
+          requireLogin: true,
+        }
+      );
+    }
 
     return [menuButtons, pageButtons];
   }, [
@@ -640,7 +668,7 @@ const HudMenu = () => {
     menuButtons.filter((b) => b.isVisible && !b.isUniversal && (!b.requireLogin || authenticated)),
     menuButtons.filter((b) => b.isVisible && b.isUniversal && (!b.requireLogin || authenticated)),
     pageButtons.filter((b) => b.isVisible && (!b.requireLogin || authenticated)),
-  ]), [authenticated, menuButtons]);
+  ]), [authenticated, menuButtons, pageButtons]);
 
   // if open hud menu is no longer visible (or if get logged out and "requireLogin" menu), close
   useEffect(() => {
@@ -660,43 +688,34 @@ const HudMenu = () => {
       <Buttons id="hudMenu" open={open}>
         {visibleMenuButtons.length > 0 && (
           <ButtonSection>
-            {visibleMenuButtons.map(({ key, badge, label, useAltColor, icon, onOpen, hideInsteadOfClose }) => (
-              <Button
+            {visibleMenuButtons.map(({ key, ...buttonConfig }) => (
+              <MenuButton
                 key={key}
-                iconColor={useAltColor}
-                badge={badge}
-                onClick={() => handleButtonClick(key, onOpen, hideInsteadOfClose)}
-                selected={key === openHudMenu}
-                data-tooltip-id="hudMenuTooltip"
-                data-tooltip-place="left"
-                data-tooltip-content={label}>
-                {icon}
-              </Button>
+                menuKey={key}
+                handleButtonClick={handleButtonClick}
+                openHudMenu={openHudMenu}
+                {...buttonConfig} />
             ))}
           </ButtonSection>
         )}
         {visibleUniversalButtons.length > 0 && (
           <ButtonSection showSeparator={visibleMenuButtons.length > 0}>
-            {visibleUniversalButtons.map(({ key, badge, label, useAltColor, icon, onOpen, hideInsteadOfClose }) => (
-              <Button
+            {visibleUniversalButtons.map(({ key, ...buttonConfig }) => (
+              <MenuButton
                 key={key}
-                iconColor={useAltColor}
-                badge={badge}
-                onClick={() => handleButtonClick(key, onOpen, hideInsteadOfClose)}
-                selected={key === openHudMenu}
-                data-tooltip-id="hudMenuTooltip"
-                data-tooltip-place="left"
-                data-tooltip-content={label}>
-                {icon}
-              </Button>
+                menuKey={key}
+                handleButtonClick={handleButtonClick}
+                openHudMenu={openHudMenu}
+                {...buttonConfig} />
             ))}
           </ButtonSection>
         )}
         {visiblePageButtons.length > 0 && (
           <ButtonSection showSeparator={(visibleMenuButtons.length || visibleUniversalButtons.length) > 0}>
-            {visiblePageButtons.map(({ key, label, useAltColor, icon, onOpen, hideInsteadOfClose }) => (
+            {visiblePageButtons.map(({ key, coachmarkId, label, useAltColor, icon, onOpen, hideInsteadOfClose }) => (
               <PageButton
                 key={key}
+                ref={coachmarkId ? setCoachmarkRef(coachmarkId) : undefined}
                 iconColor={useAltColor}
                 onClick={() => handleButtonClick(key, onOpen, hideInsteadOfClose)}
                 selected={key === openHudMenu}

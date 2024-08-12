@@ -60,6 +60,7 @@ const AutocompleteComponent = ({
   isLoading,
   searchTerm,
   selected,
+  setRef,
   setSearchTerm,
   valueKey,
   width,
@@ -144,7 +145,7 @@ const AutocompleteComponent = ({
   }, [focused, hovered]);
 
   return (
-    <Wrapper onKeyDown={handleKeyDown}>
+    <Wrapper ref={setRef} onKeyDown={handleKeyDown}>
       <span ref={setReferenceEl}>
         <TextInput
           ref={textInputEl}

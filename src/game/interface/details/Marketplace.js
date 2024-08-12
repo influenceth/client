@@ -21,6 +21,9 @@ import formatters from '~/lib/formatters';
 import useCrewOrders from '~/hooks/useCrewOrders';
 import useOrderSummaryByProduct from '~/hooks/useOrderSummaryByProduct';
 import api from '~/lib/api';
+import useCoachmarkRefSetter from '~/hooks/useCoachmarkRefSetter';
+import { COACHMARK_IDS } from '~/contexts/CoachmarkContext';
+import useStore from '~/hooks/useStore';
 
 const ActionImage = styled.div`
   background: black url("${p => p.src}") center center no-repeat;
@@ -101,11 +104,11 @@ const Marketplace = () => {
   const { asteroidId, lotIndex, discriminator } = useParams();
   const product = discriminator === 'orders' ? null : discriminator;
   const lotId = useMemo(() => Lot.toId(Number(asteroidId), lotIndex === 'all' ? null : Number(lotIndex)), [asteroidId, lotIndex]);
+  
+  const setCoachmarkRef = useCoachmarkRefSetter();
+  const coachmarkHelperProduct = useStore(s => s.coachmarks?.[COACHMARK_IDS.asteroidMarketsHelper]);
 
   const [mode, setMode] = useState('buy');
-  const [nameFilter, setNameFilter] = useState('');
-  const [currentPage, setCurrentPage] = useState(1);
-  const [sort, setSort] = useState('liquidity');
 
   const { search } = useLocation();
   const backOverride = useMemo(() => {
@@ -249,7 +252,14 @@ const Marketplace = () => {
         </Wrapper>
           <Footer>
               <FooterLeft>
-                {discriminator && <Button flip onClick={goBack}>Back</Button>}
+                {discriminator && (
+                  <Button
+                    setRef={Number(product) !== coachmarkHelperProduct ? setCoachmarkRef(COACHMARK_IDS.asteroidMarketsHelper) : undefined}
+                    flip
+                    onClick={goBack}>
+                    Back
+                  </Button>
+                )}
               </FooterLeft>
               <OrderTally>
               {myLocalOrders.length > 0 && (

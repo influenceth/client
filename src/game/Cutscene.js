@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import ReactPlayer from 'react-player/lazy';
 import styled from 'styled-components';
+import BrightButton from '~/components/BrightButton';
 
 import Button from '~/components/Button';
 import useStore from '~/hooks/useStore';
 import { reactBool } from '~/lib/utils';
 
-const hideTime = 1000;
+export const cutsceneHideTime = 1000;
 
 const ButtonHolder = styled.div`
   bottom: 0;
@@ -32,7 +33,7 @@ const Container = styled.div`
   opacity: ${p => p.hiding ? 0 : 1};
   position: fixed;
   top: 0;
-  transition: opacity ${hideTime}ms ease;
+  transition: opacity ${cutsceneHideTime}ms ease;
   width: 100%;
   z-index: 99999;
 `;
@@ -41,14 +42,18 @@ const Cutscene = () => {
   const { source, allowSkip } = useStore(s => s.cutscene || {});
   const dispatchCutscene = useStore(s => s.dispatchCutscene);
 
-  const [hiding, setHiding] = useState(false);
+  const [hiding, setHiding] = useState(true);
   const [highlightButtons, setHighlightButtons] = useState(true);
+
+  useEffect(() => {
+    setHiding(false);
+  }, []);
 
   const onComplete = useCallback(() => {
     setHiding(true);
     setTimeout(() => {
       dispatchCutscene();
-    }, hideTime)
+    }, cutsceneHideTime);
   }, [dispatchCutscene]);
 
   const onError = useCallback((err) => {
@@ -86,7 +91,7 @@ const Cutscene = () => {
         }} />
       {allowSkip && (
         <ButtonHolder highlight={highlightButtons}>
-          <Button onClick={onSkip}>Skip Intro</Button>
+          <BrightButton onClick={onSkip}>Skip Intro</BrightButton>
         </ButtonHolder>
       )}
     </Container>

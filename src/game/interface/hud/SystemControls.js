@@ -153,7 +153,7 @@ const CopyLink = styled.div`
 `;
 
 const SystemControls = () => {
-  const { accountAddress, authenticated, logout } = useSession();
+  const { accountAddress, authenticated, logout } = useSession(false);
   const { adalianRecruits, arvadianRecruits } = useCrewContext();
 
   const { data: swayBalance } = useSwayBalance();

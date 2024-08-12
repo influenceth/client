@@ -18,6 +18,9 @@ import { AsteroidImage, formatResourceAmount } from '~/game/interface/hud/action
 import { formatPrecision, formatPrice } from '~/lib/utils';
 import theme, { hexToRGB } from '~/theme';
 import formatters from '~/lib/formatters';
+import useCoachmarkRefSetter from '~/hooks/useCoachmarkRefSetter';
+import { COACHMARK_IDS } from '~/contexts/CoachmarkContext';
+import useStore from '~/hooks/useStore';
 
 const Subheader = styled.div``;
 const Header = styled.div`
@@ -289,6 +292,10 @@ const MarketplaceHome = ({ asteroid, listings, mode, setMode, orderTally, onSele
   const [currentPage, setCurrentPage] = useState(1);
   const [sort, setSort] = useState('liquidity');
 
+  const setCoachmarkRef = useCoachmarkRefSetter();
+  const coachmarkHelperProduct = useStore(s => s.coachmarks?.[COACHMARK_IDS.asteroidMarketsHelper]);
+  const setCoachmarkHelperRef = useMemo(() => setCoachmarkRef(COACHMARK_IDS.asteroidMarketsHelper), [setCoachmarkRef]);
+
   const options = [
     { value: 'liquidity', label: 'Liquidity' },
     { value: 'alphabetical', label: 'Alphabetical'}
@@ -336,6 +343,16 @@ const MarketplaceHome = ({ asteroid, listings, mode, setMode, orderTally, onSele
     }
   }, [!!tickerListings?.length]);
 
+  const coachmarkHelperProductIsOnPage = useMemo(() => {
+    return !!filteredListings.find((l) => l.product === coachmarkHelperProduct);
+  }, [coachmarkHelperProduct, filteredListings]);
+
+  const handleNameFilterFocus = useCallback((e) => {
+    if (coachmarkHelperProduct && !coachmarkHelperProductIsOnPage && !nameFilter) {
+      setNameFilter(`${(Product.TYPES[coachmarkHelperProduct].name || '').toLowerCase()}`);
+    }
+  }, [coachmarkHelperProduct, coachmarkHelperProductIsOnPage, nameFilter]);
+
   // TODO: loading might be better
   if (!asteroid) return null;
   return (
@@ -349,7 +366,7 @@ const MarketplaceHome = ({ asteroid, listings, mode, setMode, orderTally, onSele
                 <Subheader>
                   <span>Marketplace</span>
                   <span><b>{listings.length || 0}</b> Listed Product{listings.length === 1 ? '' : 's'}</span>
-                  <span><b>{orderTally}</b> Active Order{orderTally === 1 ? '' : 's'}</span>
+                  <span><b>{(orderTally || 0).toLocaleString()}</b> Active Order{orderTally === 1 ? '' : 's'}</span>
                 </Subheader>
               </div>
               {marketplaceOwner && <CrewIndicator crew={marketplaceOwner} flip label="Managed by" />}
@@ -363,7 +380,7 @@ const MarketplaceHome = ({ asteroid, listings, mode, setMode, orderTally, onSele
                 <Subheader>
                   <span><b>{marketplaceTally}</b> Marketplace{marketplaceTally === 1 ? '' : 's'}</span>
                   <span><b>{listings.length || 0}</b> Product{listings.length === 1 ? '' : 's'} Listed</span>
-                  <span><b>{orderTally}</b> Active Order{orderTally === 1 ? '' : 's'}</span>
+                  <span><b>{(orderTally || 0).toLocaleString()}</b> Active Order{orderTally === 1 ? '' : 's'}</span>
                 </Subheader>
               </div>
             </div>
@@ -390,7 +407,7 @@ const MarketplaceHome = ({ asteroid, listings, mode, setMode, orderTally, onSele
                   <TickerItem key={listing.product} onClick={() => onSelectListing(listing)}>
                     <span>{resource.name}</span>
                     <SwayIcon />
-                    <span>{formatPrice(price)}</span>
+                    <span>{formatPrice(price, { fixedPrecision: 4 })}</span>
                     {change && <ChangeBubble isUp={change > 0}>{change > 0 ? '+' : ''}{formatPrecision(100 * change, 3)}%</ChangeBubble>}
                   </TickerItem>
                 );
@@ -402,8 +419,11 @@ const MarketplaceHome = ({ asteroid, listings, mode, setMode, orderTally, onSele
 
       <BodyNav style={tickerListings?.length > 0 ? { borderTop: '1px solid #333' } : {}}>
         <TextInput
+          ref={coachmarkHelperProductIsOnPage ? undefined : setCoachmarkHelperRef}
           initialValue={nameFilter}
           onChange={setNameFilter}
+          onFocus={handleNameFilterFocus}
+          resetOnChange={nameFilter}
           placeholder="Search by Name"
           style={{ borderWidth: '1px', height: '34px', width: '240px' }} />
         <Dropdown
@@ -454,7 +474,10 @@ const MarketplaceHome = ({ asteroid, listings, mode, setMode, orderTally, onSele
               const price = mode === 'buy' ? listing.salePrice : listing.buyPrice;
               const change = mode === 'buy' ? listing.saleChange : listing.buyChange; // TODO: ...
               return (
-                <Listing key={listing.product} onClick={() => onSelectListing(listing)}>
+                <Listing
+                  key={listing.product}
+                  ref={coachmarkHelperProduct === listing.product ? setCoachmarkHelperRef : undefined}
+                  onClick={() => onSelectListing(listing)}>
                   {!!marketplace && change && <ChangeBubble isUp={change > 0}>{change > 0 ? '+' : ''}{formatPrecision(100 * change, 3)}%</ChangeBubble>}
                   <ResourceThumbnail
                     backgroundColor={thumbBG}
@@ -471,7 +494,7 @@ const MarketplaceHome = ({ asteroid, listings, mode, setMode, orderTally, onSele
                     ? (
                       <ListingPrice>
                         <SwayIcon />
-                        <Price unit={resource.isAtomic ? 'unit' : 'kg'}>{formatPrice(price)}</Price>
+                        <Price unit={resource.isAtomic ? 'unit' : 'kg'}>{formatPrice(price, { fixedPrecision: 4 })}</Price>
                         <PriceArrow mode={mode}><ChevronRightIcon /></PriceArrow>
                       </ListingPrice>
                     )

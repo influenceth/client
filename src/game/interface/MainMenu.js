@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useHistory } from 'react-router-dom';
 import styled from 'styled-components';
 import { MdFullscreen as FullscreenIcon, MdFullscreenExit as ExitFullscreenIcon } from 'react-icons/md';
@@ -12,6 +12,8 @@ import useScreenSize from '~/hooks/useScreenSize';
 import HudIconButton from '~/components/HudIconButton';
 import IconButton from '~/components/IconButton';
 import TimeControls from './mainMenu/TimeControls';
+import { COACHMARK_IDS } from '~/contexts/CoachmarkContext';
+import useCoachmarkRefSetter from '~/hooks/useCoachmarkRefSetter';
 
 const StyledMainMenu = styled.div`
   pointer-events: none;
@@ -123,6 +125,7 @@ const MainMenu = () => {
   const { isMobile } = useScreenSize();
   const location = useLocation();
   const history = useHistory();
+  const setCoachmarkRef = useCoachmarkRefSetter();
 
   const lotId = useStore(s => s.asteroids.lot);
   const zoomScene = useStore(s => s.asteroids.zoomScene);
@@ -138,6 +141,8 @@ const MainMenu = () => {
   // const { data: crewAssignmentData } = useCrewAssignments();
 
   const [ fullscreen, setFullscreen ] = useState(screenfull.isEnabled && screenfull.isFullscreen);
+
+  const [backButtonRefEl, setBackButtonRefEl] = useState();
 
   // TODO: genesis book deprecation vvv
   // const { crew, crewmateMap } = useCrewContext();
@@ -207,6 +212,7 @@ const MainMenu = () => {
         <LeftHudButtonArea>
           {onClickBack && (
             <HudIconButton
+              setRef={setCoachmarkRef(COACHMARK_IDS.backToBelt)}
               dataTip={backLabel}
               onClick={onClickBack}>
               <BackIcon />

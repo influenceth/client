@@ -6,9 +6,14 @@ import useEntity from '~/hooks/useEntity';
 import { locationsArrToObj } from '~/lib/utils';
 
 const useShip = (id) => {
-  const entity = id 
-    ? (id?.label && id?.id ? id : { label: Entity.IDS.SHIP, id })
-    : undefined;
+  const entity = useMemo(() => {
+    if (id) {
+      if (id.label && id.id) return id;
+      return { label: Entity.IDS.SHIP, id };
+    }
+    return undefined;
+  }, [id]);
+
   const { data, ...responseProps } = useEntity(entity);
   return useMemo(() => {
     let ship = null;

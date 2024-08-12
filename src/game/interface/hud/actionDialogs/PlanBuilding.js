@@ -30,6 +30,8 @@ import {
   LotControlWarning
 } from './components';
 import actionStage from '~/lib/actionStages';
+import useSimulationState from '~/hooks/useSimulationState';
+import useSimulationEnabled from '~/hooks/useSimulationEnabled';
 
 const MouseoverWarning = styled.span`
   & b { color: ${theme.colors.error}; }
@@ -204,6 +206,9 @@ const Wrapper = (props) => {
   const constructionManager = useConstructionManager(lot?.id);
   const { stageByActivity } = constructionManager;
 
+  const simulationEnabled = useSimulationEnabled();
+  const { canFastForward } = useSimulationState();
+
   useEffect(() => {
     if (!asteroid || !lot) {
       if (!isLoading) {
@@ -215,7 +220,11 @@ const Wrapper = (props) => {
   // stay in this window until PLANNED, then swap to CONSTRUCT
   useEffect(() => {
     if (!['READY_TO_PLAN', 'PLANNING'].includes(constructionManager.constructionStatus)) {
-      props.onSetAction('CONSTRUCT');
+      if (simulationEnabled && !canFastForward) {
+        if (props.onClose) props.onClose();
+      } else {
+        props.onSetAction('CONSTRUCT');
+      }
     }
   }, [constructionManager.constructionStatus]);
 

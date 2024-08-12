@@ -22,7 +22,7 @@ const useHydratedCrew = (id) => {
       data._crewmates = (crewmates || []).map((c) => cloneDeep(c));
       data._location = locationsArrToObj(crew.Location?.locations || []);
       data._ready = blockTime >= data.Crew?.readyAt;
-      data._readyToSequence = blockTime + CREW_SCHEDULE_BUFFER >= data.Crew.readyAt;
+      data._readyToSequence = blockTime + CREW_SCHEDULE_BUFFER >= data.Crew?.readyAt;
 
       const foodBonuses = getCrewAbilityBonuses([Crewmate.ABILITY_IDS.FOOD_CONSUMPTION_TIME, Crewmate.ABILITY_IDS.FOOD_RATIONING_PENALTY], data);
       data._foodBonuses = {

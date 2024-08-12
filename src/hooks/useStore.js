@@ -3,11 +3,12 @@ import { persist, subscribeWithSelector } from 'zustand/middleware';
 import produce from 'immer';
 import cloneDeep from 'lodash/cloneDeep';
 import isEqual from 'lodash/isEqual';
-import { Building, Lot } from '@influenceth/sdk';
+import { Building, Entity, Lot } from '@influenceth/sdk';
 
 import constants from '~/lib/constants';
 import { TOKEN } from '~/lib/priceUtils';
 import { safeBigInt } from '~/lib/utils';
+import SIMULATION_CONFIG from '~/simulation/simulationConfig';
 
 export const STORE_NAME = 'influence';
 
@@ -38,12 +39,32 @@ const assetSearchDefaults = {
   lotsMapped: { filters: { type: [...buildingIds] }, sort: ['id', 'asc'], highlight: null },
 };
 
+const simulationStateDefault = {
+  step: 0,
+  crewmate: null, // id, name, appearance
+  lots: null,     // { id: buildingEntity(sparse), ... }
+  sway: null,
+  actionItems: [],
+}
+
 const useStore = create(subscribeWithSelector(persist((set, get) => ({
     actionDialog: {},
     launcherPage: null,
     launcherSubpage: null,
     openHudMenu: null,
-    welcomeTourStep: -1,
+
+    // TODO: more encapsulated structure, but might cause unnecessary re-renders more often
+    // simulation: {
+    //   enabled,
+    //   enabledActions: [],
+    //   coachmark: [],
+    //   state: { ...simulationStateDefault }
+    // },
+    isNew: true,
+    simulationEnabled: false,
+    simulation: { ...simulationStateDefault },
+    simulationActions: [],
+    coachmarks: [],
 
     // scene: {
     //   belt: {
@@ -64,7 +85,6 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
       destination: null,
       hovered: null,
       lot: null,
-      lotDestination: null,
       resourceMap: {
         active: false,
         selected: null
@@ -74,6 +94,7 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
       zoomedFrom: null,
       zoomScene: null,
       zoomStatus: 'out', // out -> zooming-in -> in -> zooming-out -> out
+      cinematicInitialPosition: false
     },
 
     assetSearch: {
@@ -88,6 +109,7 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
     crewAssignments: {},
     crewTutorials: {},
 
+    cameraNeedsHighAltitude: false,
     cameraNeedsRecenter: false,
     cameraNeedsReorientation: false,
 
@@ -108,7 +130,6 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
     gameplay: {
       autoswap: true,
       dismissTutorial: false,
-      dismissWelcomeTour: false,
       feeToken: null,
       useSessions: null
     },
@@ -145,6 +166,10 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
 
     //
     // DISPATCHERS
+
+    dispatchIsNotNew: () => set(produce(state => {
+      state.isNew = false;
+    })),
 
     dispatchGpuInfo: (gpuInfo) => set(produce(state => {
       // this sets defaults if they are not already
@@ -322,7 +347,6 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
       }
 
       state.asteroids.lot = null;
-      state.asteroids.lotDestination = null;
       state.asteroids.travelSolution = null;
       state.asteroids.zoomScene = null;
     })),
@@ -367,11 +391,14 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
 
     dispatchZoomStatusChanged: (status, maintainLot) => set(produce(state => {
       state.asteroids.zoomStatus = status;
-      state.asteroids.lotDestination = null;
       if (!maintainLot) {
         state.asteroids.lot = null;
         state.asteroids.zoomScene = null;
       }
+    })),
+
+    dispatchCinematicInitialPosition: (which) => set(produce(state => {
+      state.asteroids.cinematicInitialPosition = which;
     })),
 
     dispatchAsteroidZoomedFrom: (from) => set(produce(state => {
@@ -442,32 +469,98 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
     dispatchSessionStarted: (session) => set(produce(state => {
       state.currentSession = session;
       state.sessions[session.accountAddress] = session;
+      state.simulationEnabled = false;
     })),
 
     // Unsets the current session but keeps it in the sessions list
     dispatchSessionSuspended: () => set(produce(state => {
       state.currentSession = {};
-      state.welcomeTourStep = -1;
     })),
 
     // Resumes a session that was suspended
     dispatchSessionResumed: (session) => set(produce(state => {
       state.currentSession = session;
+      state.simulationEnabled = false;
     })),
 
     // Ends a session and removes it from the sessions list
     dispatchSessionEnded: () => set(produce(state => {
       delete state.sessions[state.currentSession?.accountAddress];
       state.currentSession = {};
-      state.welcomeTourStep = -1;
     })),
 
-    dispatchWelcomeTourStep: (step) => set(produce(state => {
-      state.welcomeTourStep = step;
+    dispatchSimulationEnabled: (which) => set(produce(state => {
+      state.simulationEnabled = which;
+    })),
+
+    dispatchSimulationStep: (step) => set(produce(state => {
+      if (!state.simulation || step === undefined) state.simulation = {};
+      state.simulation.step = step;
+    })),
+
+    dispatchSimulationState: (key, update, mode = 'replace') => set(produce(state => {
+      if (mode === 'append') {
+        if (!state.simulation[key]) state.simulation[key] = [];
+        state.simulation[key].push(update);
+      } else if (mode === 'assign') {
+        if (!state.simulation[key]) state.simulation[key] = {};
+        Object.keys(update).forEach((k) => state.simulation[key][k] = update[k]);
+      } else if (mode === 'increment') {
+        state.simulation[key] += update;
+      } else {
+        state.simulation[key] = update;
+      }
+    })),
+
+    dispatchSimulationLotState: (lotId, update) => set(produce(state => {
+      if (!state.simulation.lots) state.simulation.lots = {};
+      if (!state.simulation.lots[lotId]) state.simulation.lots[lotId] = {};
+      Object.keys(update).forEach((k) => state.simulation.lots[lotId][k] = update[k]);
+    })),
+
+    dispatchSimulationAddToInventory: (destination, slot, product, amount) => set(produce(state => {
+      const lotId = Object.keys(state.simulation?.lots || {}).find((lotId) => {
+        const lot = state.simulation.lots[lotId];
+        return (lot?.shipId === destination.id && destination.label === Entity.IDS.SHIP)
+          || (lot?.buildingId === destination.id && destination.label === Entity.IDS.BUILDING);
+      });
+
+      if (lotId) {
+        if (!state.simulation.lots[lotId].inventoryContents) state.simulation.lots[lotId].inventoryContents = {};
+        if (!state.simulation.lots[lotId].inventoryContents[slot]) state.simulation.lots[lotId].inventoryContents[slot] = {};
+        if (!state.simulation.lots[lotId].inventoryContents[slot][product]) state.simulation.lots[lotId].inventoryContents[slot][product] = 0;
+        state.simulation.lots[lotId].inventoryContents[slot][product] += amount;
+      }
+    })),
+
+    dispatchSimulationActionItems: (newActivities) => set(produce(state => {
+      // console.log('dispatchSimulationActionItems', newActivities);
+      if (!state.simulation.actionItems) state.simulation.actionItems = [];
+      state.simulation.actionItems.push(...newActivities);
+    })),
+
+    dispatchSimulationActionItemResolutions: (eventNames) => set(produce(state => {
+      // console.log('dispatchSimulationActionItemResolutions', eventNames);
+      if (!state.simulation.actionItems) state.simulation.actionItems = [];
+      state.simulation.actionItems = state.simulation.actionItems.filter((a) => !eventNames.includes(a.event.name));
+    })),
+
+    dispatchSimulationActions: (actions) => set(produce(state => {
+      // console.log('dispatchSimulationActions', actions);
+      state.simulationActions = actions || [];
+    })),
+
+    dispatchCoachmarks: (coachmarkObj) => set(produce(state => {
+      // console.log('dispatchCoachmarks', coachmarkObj);
+      state.coachmarks = coachmarkObj || {};
     })),
 
     dispatchCrewSelected: (crewId) => set(produce(state => {
       state.selectedCrewId = crewId;
+      if (crewId && crewId !== SIMULATION_CONFIG.crewId) {
+        state.simulationEnabled = false;
+        state.simulation = { ...simulationStateDefault };
+      }
     })),
 
     dispatchCutscene: (source, allowSkip) => set(produce(state => {
@@ -510,6 +603,10 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
 
     dispatchReorientCamera: (needsReorienting) => set(produce(state => {
       state.cameraNeedsReorientation = !!needsReorienting;
+    })),
+
+    dispatchGoToHighAltitude: (needsHighAltitude) => set(produce(state => {
+      state.cameraNeedsHighAltitude = !!needsHighAltitude;
     })),
 
     dispatchFailedTransaction: ({ key, vars = {}, meta = {}, txHash, err }) => set(produce(state => {
@@ -628,11 +725,6 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
       state.gameplay.dismissTutorial = !!which;
     })),
 
-    dispatchWelcomeTourDisabled: (which) => set(produce(state => {
-      state.gameplay.dismissWelcomeTour = !!which;
-      state.welcomeTourStep = -1;
-    })),
-
     dispatchUseSessionsSet: (which) => set(produce(state => {
       state.gameplay.useSessions = which;
     })),
@@ -748,16 +840,18 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
     'actionDialog',
     'asteroids.hovered',
     'asteroids.lot',
-    'asteroids.lotDestination',
     'asteroids.travelMode',
     'asteroids.travelSolution',
     'asteroids.zoomScene',
+    'asteroids.cinematicInitialPosition',
     'canvasStack',
     'cameraNeedsRecenter',
     'cameraNeedsReorientation',
+    'coachmarks',
     'cutscene',
     'draggables',
     'lotLoader',
+    'simulationActions',
     'timeOverride' // should this be in ClockContext?
   ]
 })));

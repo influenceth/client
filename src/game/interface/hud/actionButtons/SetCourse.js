@@ -7,6 +7,8 @@ import ActionButton, { getCrewDisabledReason } from './ActionButton';
 import useShipTravelManager from '~/hooks/actionManagers/useShipTravelManager';
 import useTravelSolutionIsValid from '~/hooks/useTravelSolutionIsValid';
 import useAsteroid from '~/hooks/useAsteroid';
+import { COACHMARK_IDS } from '~/contexts/CoachmarkContext';
+import useCoachmarkRefSetter from '~/hooks/useCoachmarkRefSetter';
 
 const isVisible = ({ openHudMenu, /*asteroid, crew, ship, zoomStatus*/ }) => {
   return openHudMenu === 'BELT_PLAN_FLIGHT';
@@ -19,12 +21,13 @@ const isVisible = ({ openHudMenu, /*asteroid, crew, ship, zoomStatus*/ }) => {
   // );
 };
 
-const SetCourse = ({ asteroid, crew, ship, onSetAction, _disabled }) => {
+const SetCourse = ({ asteroid, crew, ship, onSetAction, simulation, simulationActions, _disabled }) => {
   const inEscapeModule = !crew?._location?.shipId && crew?.Ship?.emergencyAt > 0;
   const { currentTravelAction, travelStatus } = useShipTravelManager(inEscapeModule ? crew : crew?._location?.shipId);
   const travelSolutionIsValid = useTravelSolutionIsValid();
   const travelSolution = useStore(s => s.asteroids.travelSolution);
   const { data: destination } = useAsteroid(travelSolution?.destinationId);
+  const setCoachmarkRef = useCoachmarkRefSetter();
 
   const handleClick = useCallback(() => {
     onSetAction('SET_COURSE');
@@ -45,13 +48,18 @@ const SetCourse = ({ asteroid, crew, ship, onSetAction, _disabled }) => {
       if ((inEscapeModule ? crew?.Ship?.transitDeparture : ship?.Ship?.transitDeparture) > 0) return 'ship is in flight';
       if (ship?._location?.lotId) return 'ship is docked';
       if (!validDestination) return 'destination not scanned';
-      return getCrewDisabledReason({ crew });
+      return getCrewDisabledReason({
+        crew,
+        isAllowedInSimulation: simulationActions.includes('SetCourse')
+      });
     }
+    if (simulation && !simulationActions.includes('SetCourse')) return 'simulation restricted';
     return '';
-  }, [_disabled, asteroid, crew, ship, travelSolution, travelSolutionIsValid]);
+  }, [_disabled, asteroid, crew, ship, simulationActions, travelSolution, travelSolutionIsValid]);
 
   return (
     <ActionButton
+      ref={setCoachmarkRef(COACHMARK_IDS.actionButtonSetCourse)}
       label="Set Course"
       labelAddendum={disabledReason}
       flags={{

@@ -3,7 +3,7 @@ import styled from 'styled-components';
 import { Building, Crewmate, Lot, Time } from '@influenceth/sdk';
 
 import {
-  ConstructIcon, WarningOutlineIcon,
+  ConstructIcon,
   TransferToSiteIcon,
   WarningIcon,
   CheckSmallIcon,
@@ -12,7 +12,6 @@ import {
 import theme, { hexToRGB } from '~/theme';
 import useConstructionManager from '~/hooks/actionManagers/useConstructionManager';
 import { reactBool, formatTimer, getCrewAbilityBonuses } from '~/lib/utils';
-
 import {
   BuildingRequirementsSection,
   ActionDialogFooter,
@@ -23,7 +22,6 @@ import {
   TimeBonusTooltip,
   ActionDialogBody,
   FlexSection,
-  FlexSectionInputBlock,
   FlexSectionSpacer,
   ProgressBarSection,
   getBuildingRequirements,
@@ -31,13 +29,14 @@ import {
   getTripDetails,
   LotControlWarning
 } from './components';
-import { ActionDialogInner, useAsteroidAndLot } from '../ActionDialog';
 import actionStage from '~/lib/actionStages';
-import ActionButtonComponent from '../actionButtons/ActionButton';
 import useDeliveryManager from '~/hooks/actionManagers/useDeliveryManager';
 import useActionCrew from '~/hooks/useActionCrew';
 import Button from '~/components/ButtonAlt';
 import AssetBlock from '~/components/AssetBlock';
+import useCoachmarkRefSetter from '~/hooks/useCoachmarkRefSetter';
+import { COACHMARK_IDS } from '~/contexts/CoachmarkContext';
+import { ActionDialogInner, useAsteroidAndLot } from '../ActionDialog';
 
 const MouseoverWarning = styled.span`
   & b { color: ${theme.colors.error}; }
@@ -76,6 +75,7 @@ const ReqTitle = styled.div`
 `;
 
 const Construct = ({ asteroid, lot, constructionManager, stage, ...props }) => {
+  const setCoachmarkRef = useCoachmarkRefSetter();
   const { currentConstructionAction, constructionStatus, startConstruction, finishConstruction, isAtRisk } = constructionManager;
   const { currentDeliveryActions } = useDeliveryManager({ destination: lot?.building });
 
@@ -227,7 +227,7 @@ const Construct = ({ asteroid, lot, constructionManager, stage, ...props }) => {
                 </Button>
 
                 {/* TODO: disable if no marketplaces exist */}
-                <Button onClick={purchaseOnMarket}>
+                <Button setRef={setCoachmarkRef(COACHMARK_IDS.actionDialogConstructSource)} onClick={purchaseOnMarket}>
                   <MarketBuyIcon /> <span>Source from Market</span>
                 </Button>
               </SourceWrapper>

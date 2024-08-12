@@ -68,7 +68,7 @@ const NewCoreSample = ({ asteroid, lot, coreSampleManager, currentSamplingAction
       }
     }
     if (originEntity) {
-      const { lotIndex } = locationsArrToObj(originEntity.Location.locations || []);
+      const { lotIndex } = locationsArrToObj(originEntity.Location?.locations || []);
       setDrillSource({
         lotIndex,
         slot: currentSamplingAction?.originSlot || null

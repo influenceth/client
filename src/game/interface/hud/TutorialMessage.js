@@ -28,7 +28,16 @@ const CrewmateOverflow = styled.div`
 `;
 
 const CrewmateImage = styled.div`
-  background-image: ${p => p.crewmateId ? `url("${process.env.REACT_APP_IMAGES_URL}/v1/crew/${p.crewmateId}/image.svg?bustOnly=true")` : 'none'};
+  background-image: 
+  ${p => p.crewmateImageOptionString
+    ? `url("${process.env.REACT_APP_IMAGES_URL}/v1/crew/provided/image.svg?bustOnly=true&options=${escape(p.crewmateImageOptionString)}")`
+    : (
+      p.crewmateId
+      ? `url("${process.env.REACT_APP_IMAGES_URL}/v1/crew/${p.crewmateId}/image.svg?bustOnly=true")`
+      : 'none'
+    )
+  };
+
   background-position: top center;
   background-repeat: no-repeat;
   background-size: cover;
@@ -40,12 +49,12 @@ const TutorialMessageWrapper = styled.div`
   display: flex;
   flex-direction: row;
   position: fixed;
-  bottom: ${messageOffset}px;
+  bottom: ${p => p.messageOffset || messageOffset}px;
   height: ${p => p.messageHeight || messageHeight}px;
   left: calc(50% - ${messageWidth/2}px);
   pointer-events: all;
   transition: transform 250ms ease;
-  transform: translateY(${p => p.isIn ? 0 : ((p.messageHeight || messageHeight) * (1 + crewmateOverflowMult) + messageOffset)}px);
+  transform: translateY(${p => p.isIn ? 0 : ((p.messageHeight || messageHeight) * (1 + crewmateOverflowMult) + (p.messageOffset || messageOffset))}px);
   width: ${messageWidth}px;
   z-index: 1000000;
   &:before {
@@ -72,6 +81,7 @@ const TutorialMessageWrapper = styled.div`
 
 const TutorialContent = styled.div`
   display: flex;
+  flex: 1;
   flex-direction: column;
   padding: 0 15px;
   & > h3 {
@@ -105,6 +115,15 @@ const TutorialContent = styled.div`
         font-weight: normal;
       }
     }
+    & a {
+      color: #CCC;
+      text-decoration: none;
+      transition: color 100ms ease;
+      &:hover {
+        color: #DDD;
+        text-decoration: underline;
+      }
+    }
   }
 `;
 
@@ -117,21 +136,21 @@ const Buttons = styled.div`
   }
 `;
 
-const TutorialMessage = ({ crewmateId, isIn, leftButton, onClose, rightButton, step, ...props }) => {
+const TutorialMessage = ({ closeIconOverride, crewmateImageOptionString, crewmateId, isIn, leftButton, onClose, rightButton, setButtonRef, step, ...props }) => {
   return (
     <TutorialMessageWrapper isIn={reactBool(isIn)} {...props}>
       {step && (
         <>
           <CrewmateWrapper>
             <CrewmateOverflow>
-              <CrewmateImage crewmateId={crewmateId} />
+              <CrewmateImage crewmateId={crewmateId} crewmateImageOptionString={crewmateImageOptionString} />
             </CrewmateOverflow>
           </CrewmateWrapper>
 
           <TutorialContent>
             <h3>
               <span>{step?.title}</span>
-              <IconButton onClick={onClose} scale={0.75}><CloseIcon /></IconButton>
+              <IconButton onClick={onClose} scale={0.75}>{closeIconOverride || <CloseIcon />}</IconButton>
             </h3>
             <div>
               <div>{step?.content}</div>
@@ -140,7 +159,7 @@ const TutorialMessage = ({ crewmateId, isIn, leftButton, onClose, rightButton, s
                   <Button flip size="small" {...leftButton} />
                 )}
                 {rightButton && (
-                  <Button size="small" {...rightButton} />
+                  <Button setRef={setButtonRef} size="small" {...rightButton} />
                 )}
               </Buttons>
             </div>

@@ -7,6 +7,8 @@ import { CloseIcon } from '~/components/Icons';
 import ClipCorner from './ClipCorner';
 import theme from '~/theme';
 import { useEffect, useState } from 'react';
+import useCoachmarkRefSetter from '~/hooks/useCoachmarkRefSetter';
+import { COACHMARK_IDS } from '~/contexts/CoachmarkContext';
 
 const defaultMaxWidth = '1400px';
 const cornerWidth = 35;
@@ -136,6 +138,7 @@ const CloseButton = styled(IconButton)`
 const Details = (props) => {
   const { title, contentProps = {}, contentInnerProps = {}, edgeToEdge, headerProps, onClose, onCloseDestination, outerNode, width, ...restProps } = props;
   const history = useHistory();
+  const setCoachmarkRef = useCoachmarkRefSetter();
 
   // bc can go from details to details page, explicitly reset tooltip so doesn't linger after transition
   const [showTooltip, setShowTooltip] = useState();
@@ -151,6 +154,7 @@ const Details = (props) => {
         {outerNode || null}
         {title && <Header {...headerProps}><span>{title}</span></Header>}
         <CloseButton
+          setRef={setCoachmarkRef(COACHMARK_IDS.detailsClose)}
           onClick={onClose || (() => history.push(onCloseDestination || '/'))}
           hasBackground={edgeToEdge}>
           <CloseIcon />

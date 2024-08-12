@@ -203,7 +203,6 @@ const useMappedAsteroidLots = (i) => {
       asteroidId = _location.asteroidId;
       lotIndex = _location.lotIndex;
       buildingType = building?.Building?.buildingType; // TODO: should we cast this?
-      // console.log('PMK ConstructionFinished', { asteroidId, lotIndex, buildingType });
 
     // building -> construction site (buildingType -> 14)
     } else if (eventType === 'ConstructionDeconstructed') {

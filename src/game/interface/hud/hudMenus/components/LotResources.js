@@ -252,7 +252,7 @@ const SaleDetails = ({ isMine, sample }) => {
         ? (
           <Details>
             <SaleInfo notForSale={!(originalPrice > 0)}>
-              <label>{originalPrice > 0 ? <><SwayIcon /> <span>{formatPrice(originalPrice)}</span></> : 'Not for Sale'}</label>
+              <label>{originalPrice > 0 ? <><SwayIcon /> <span>{formatPrice(originalPrice, { fixedPrecision: 4 })}</span></> : 'Not for Sale'}</label>
               {isMine && (
                 <Button size="small" onClick={() => setEditing((e) => !e)}>
                   {originalPrice > 0 ? 'Edit Sale' : 'List for Sale'}

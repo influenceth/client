@@ -14,6 +14,7 @@ import useWalletBalances from '~/hooks/useWalletBalances';
 import api from '~/lib/api';
 import { cleanseTxHash, safeBigInt } from '~/lib/utils';
 import { TOKEN } from '~/lib/priceUtils';
+import useSimulationEnabled from '~/hooks/useSimulationEnabled';
 
 const RETRY_INTERVAL = 5e3; // 5 seconds
 const ChainTransactionContext = createContext();
@@ -416,6 +417,7 @@ export function ChainTransactionProvider({ children }) {
   const { crew, pendingTransactions } = useCrewContext();
   const { data: walletSource } = useWalletBalances();
   const { data: usdcPerEth } = useUsdcPerEth();
+  const simulationEnabled = useSimulationEnabled();
 
   // using a ref since execute is often called from a callback from funding (and
   // it may not reliably get re-memoized with updated wallet values within callback)
@@ -439,8 +441,8 @@ export function ChainTransactionProvider({ children }) {
       setNonce(BigInt(currentNonce));
     };
 
-    if (!nonce && accountAddress && Number(accountAddress) !== 0) retrieveNonce();
-  }, [accountAddress, nonce, gameplay.useSessions, starknetSession, provider]);
+    if (isDeployed && !nonce && !simulationEnabled && accountAddress && Number(accountAddress) !== 0) retrieveNonce();
+  }, [accountAddress, gameplay.useSessions, isDeployed, nonce, provider, simulationEnabled, starknetSession]);
 
   // Temporary logging for nonces
   useEffect(() => console.log('NONCE', nonce || null), [nonce]);
@@ -1034,6 +1036,19 @@ export function ChainTransactionProvider({ children }) {
 
   // Primary execute method for system calls (requires name of system, etc.)
   const executeSystem = useCallback(async (key, vars, meta = {}) => {
+    if (simulationEnabled) {
+      const uuid = `0x${String(performance.now()).replace('.', '')}`;
+      dispatchPendingTransaction({
+        key,
+        vars,
+        meta,
+        timestamp: blockTime ? (blockTime * 1000) : null,
+        txHash: uuid,
+        waitingOn: 'TRANSACTION'
+      });
+      return;
+    }
+
     if (!walletAccount || !contracts || !contracts[key]) {
       createAlert({
         type: 'GenericAlert',
@@ -1116,9 +1131,14 @@ export function ChainTransactionProvider({ children }) {
     }
 
     setPromptingTransaction(false);
-  }, [blockTime, contracts, walletAccount]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [blockTime, contracts, walletAccount, simulationEnabled]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const getPendingTx = useCallback((key, vars) => {
+    // simulation will only ever have one concurrent?
+    if (simulationEnabled) {
+      return pendingTransactions.find((tx) => tx.key === key);
+    }
+
     if (contracts && contracts[key]) {
       return pendingTransactions.find((tx) => {
         if (tx.key === key) {

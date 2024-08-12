@@ -8,6 +8,8 @@ import actionStage from '~/lib/actionStages';
 import { formatFixed } from '~/lib/utils';
 import ActionButton, { getCrewDisabledReason } from './ActionButton';
 import ActionButtonStack from './ActionButtonStack';
+import useCoachmarkRefSetter from '~/hooks/useCoachmarkRefSetter';
+import { COACHMARK_IDS } from '~/contexts/CoachmarkContext';
 
 const labelDict = {
   READY: 'Start Core Sample',
@@ -29,9 +31,10 @@ const isVisible = ({ asteroid, crew, lot, openHudMenu }) => {
     );
 };
 
-const NewCoreSample = ({ asteroid, crew, lot, onSetAction, overrideResourceId, improveSample, _disabled }) => {
+const NewCoreSample = ({ asteroid, crew, lot, onSetAction, overrideResourceId, improveSample, simulation, simulationActions, _disabled }) => {
   const defaultResourceId = useStore(s => s.asteroids.resourceMap?.active && s.asteroids.resourceMap?.selected);
   const { currentSamplingActions } = useCoreSampleManager(lot?.id);
+  const setCoachmarkRef = useCoachmarkRefSetter();
 
   const resourceId = overrideResourceId || defaultResourceId;
 
@@ -67,8 +70,13 @@ const NewCoreSample = ({ asteroid, crew, lot, onSetAction, overrideResourceId, i
     if (improveSample && improveSample?.Deposit?.status === Deposit.STATUSES.USED) return 'already used';
     if (improveSample && improveSample?.Deposit?.status !== Deposit.STATUSES.SAMPLED) return 'not yet analyzed';
     if (currentSamplingActions.find((c) => c.stage === 'STARTING')) return 'pending';
-    return getCrewDisabledReason({ asteroid, crew, isSequenceable: true });
-  }, [_disabled, asteroid, crew, currentSamplingActions, improveSample]);
+    return getCrewDisabledReason({
+      asteroid,
+      crew,
+      isSequenceable: true,
+      isAllowedInSimulation: simulationActions.includes('CoreSample')
+    });
+  }, [_disabled, asteroid, crew, currentSamplingActions, improveSample, simulationActions]);
 
   let label = labelDict.READY;
   if (!crew?._ready) label = `Schedule Next: ${label}`;
@@ -83,6 +91,7 @@ const NewCoreSample = ({ asteroid, crew, lot, onSetAction, overrideResourceId, i
     <>
       {currentSamplingStack.length > 0 && (
         <ActionButtonStack
+          setRef={setCoachmarkRef(COACHMARK_IDS.actionButtonCoreSample)}
           stack={currentSamplingStack}
           stackLabel={
             currentSamplingStack.length > 1
@@ -93,13 +102,19 @@ const NewCoreSample = ({ asteroid, crew, lot, onSetAction, overrideResourceId, i
         />
       )}
 
-      <ActionButton
-        label={label}
-        labelAddendum={disabledReason}
-        flags={{ disabled: _disabled || disabledReason }}
-        icon={improveSample ? <ImproveCoreSampleIcon /> : <NewCoreSampleIcon />}
-        onClick={handleClick}
-        sequenceMode={!crew?._ready || currentSamplingStack.length > 0} />
+      {(!simulation || currentSamplingStack.length === 0) && (
+        <ActionButton
+          ref={setCoachmarkRef(COACHMARK_IDS.actionButtonCoreSample)}
+          label={label}
+          labelAddendum={disabledReason}
+          flags={{
+            attention: simulation && !disabledReason,
+            disabled: disabledReason
+          }}
+          icon={improveSample ? <ImproveCoreSampleIcon /> : <NewCoreSampleIcon />}
+          onClick={handleClick}
+          sequenceMode={!crew?._ready || currentSamplingStack.length > 0} />
+      )}
     </>
   );
 };

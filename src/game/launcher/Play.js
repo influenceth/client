@@ -11,6 +11,7 @@ import theme from '~/theme';
 import LiveFoodStatus from '~/components/LiveFoodStatus';
 import CrewLocationCompactLabel from '~/components/CrewLocationCompactLabel';
 import useStore from '~/hooks/useStore';
+import useSimulationEnabled from '~/hooks/useSimulationEnabled';
 
 const captainWidth = 232;
 const crewmateWidth = 72;
@@ -63,6 +64,7 @@ const CrewmatesWrapper = styled.div`
 
 const Play = () => {
   const { crew, crews } = useCrewContext();
+  const simulation = useSimulationEnabled();
   const dispatchHudMenuOpened = useStore(s => s.dispatchHudMenuOpened);
 
   useEffect(() => {
@@ -74,7 +76,7 @@ const Play = () => {
     }
   }, [!!crews?.length]);
   
-  if (!crew) return null;
+  if (simulation || !crew) return null;
   return (
     <Wrapper>
       <h2>{formatters.crewName(crew)}</h2>

@@ -1,3 +1,5 @@
+import { useEffect } from 'react';
+import { useHistory } from 'react-router-dom';
 import styled from 'styled-components';
 
 import useCrewContext from '~/hooks/useCrewContext';
@@ -8,11 +10,12 @@ import InfoPane from './hud/InfoPane';
 import SystemControls from './hud/SystemControls';
 import HudMenu from './hud/HudMenu';
 import SceneBanner from './hud/SceneBanner';
-import WelcomeTourItems from './hud/WelcomeTourItems';
+import WelcomeSimulation from './hud/WelcomeSimulation';
 import useStore from '~/hooks/useStore';
 import useSession from '~/hooks/useSession';
 import InfluenceLogo from '~/components/InfluenceLogo';
 import { headerHeight } from '~/game/uiConstants';
+import useSimulationEnabled from '~/hooks/useSimulationEnabled';
 
 const bottomMargin = 60;
 
@@ -87,25 +90,45 @@ export const Rule = styled.div`
 `;
 
 const HUD = () => {
-  const { authenticated, authenticating } = useSession();
+  const { accountAddress, authenticated, authenticating } = useSession();
   const { loading } = useCrewContext();
+  const history = useHistory();
+  const simulationEnabled = useSimulationEnabled();
+  
+  useEffect(() => {
+    if (simulationEnabled) {
+      return () => {
+        if (accountAddress) {
+          history.push('/recruit/0');
+        }
+      }
+    }
+  }, [simulationEnabled]);
 
-  const dismissWelcomeTour = useStore(s => s.gameplay?.dismissWelcomeTour);
   const dispatchLauncherPage = useStore(s => s.dispatchLauncherPage);
-
   return (
     <>
       <LeftWrapper>
         {!authenticating && !loading
           ? (
-            <>
-              {authenticated ? <AvatarMenu /> : <LogoWrapper onClick={() => dispatchLauncherPage(true)}><InfluenceLogo /></LogoWrapper>}
-              {authenticated ? <ActionItems /> : (dismissWelcomeTour ? <div style={{ flex: 1 }} /> : <WelcomeTourItems />)}
-            </>
+            authenticated
+              ? (
+                <>
+                  <AvatarMenu />
+                  <ActionItems />
+                </>
+              )
+              : (
+                <>
+                  <LogoWrapper onClick={() => dispatchLauncherPage(true)}><InfluenceLogo /></LogoWrapper>
+                  <div style={{ flex: 1 }} />
+                </>
+              )
           )
           : (
             <div style={{ flex: 1 }} />
           )}
+
         <InfoPane />
       </LeftWrapper>
 
@@ -116,6 +139,8 @@ const HUD = () => {
       <SystemControls />
 
       <ActionDialog />
+
+      {simulationEnabled && <WelcomeSimulation />}
     </>
   );
 }

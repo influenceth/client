@@ -5,11 +5,13 @@ import { FormAgreementIcon, FormLotAgreementIcon } from '~/components/Icons';
 import useAgreementManager from '~/hooks/actionManagers/useAgreementManager';
 import useStore from '~/hooks/useStore';
 import ActionButton from './ActionButton';
+import useSimulationEnabled from '~/hooks/useSimulationEnabled';
 
 const isVisible = () => false;
 
 const FormAgreement = ({ entity, permission, _disabled }) => {
   const { pendingChange } = useAgreementManager(entity, permission);
+  const simulationEnabled = useSimulationEnabled();
   
   const onSetAction = useStore(s => s.dispatchActionDialog);
 
@@ -20,8 +22,9 @@ const FormAgreement = ({ entity, permission, _disabled }) => {
   const disabledReason = useMemo(() => {
     // if (_disabled) return 'loading...';
     if (pendingChange) return 'updating...';
+    if (simulationEnabled) return 'simulation restricted';
     return '';
-  }, [_disabled, pendingChange]);
+  }, [_disabled, pendingChange, simulationEnabled]);
 
   return (
     <ActionButton

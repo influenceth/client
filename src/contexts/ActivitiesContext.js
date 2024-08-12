@@ -10,6 +10,7 @@ import useStore from '~/hooks/useStore';
 import useWebsocket from '~/hooks/useWebsocket';
 import { hydrateActivities } from '~/lib/activities';
 import api from '~/lib/api';
+import useSimulationState from '~/hooks/useSimulationState';
 
 // TODO (enhancement): rather than invalidating, make optimistic updates to cache value directly
 // (i.e. update asteroid name wherever asteroid referenced rather than invalidating large query results)
@@ -43,6 +44,7 @@ const isMismatch = (updateValue, queryCacheValue) => {
 export function ActivitiesProvider({ children }) {
   const { token, setBlockNumber } = useSession();
   const { crew, pendingTransactions, refreshReadyAt } = useCrewContext();
+  const simulation = useSimulationState();
   const getActivityConfig = useGetActivityConfig();
   const queryClient = useQueryClient();
   const {
@@ -59,6 +61,12 @@ export function ActivitiesProvider({ children }) {
 
   const pendingBatchActivities = useRef([]);
   const pendingTimeout = useRef();
+
+  useEffect(() => {
+    if (simulation) {
+      setActivities(simulation?.activities || []);
+    }
+  }, [simulation?.activities])
 
   // useEffect(() => {
   //   const onKeydown = (e) => {
@@ -248,8 +256,11 @@ export function ActivitiesProvider({ children }) {
           if (activityConfig?.triggerAlert) {
             createAlert({
               type: 'ActivityLog',
-              data: activityConfig?.logContent,
-              duration: 10000
+              data: {
+                ...activityConfig?.logContent,
+                stackId: activity.event?.name,
+              },
+              duration: 10000,
             })
           };
         }

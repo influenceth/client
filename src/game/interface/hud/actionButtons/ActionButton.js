@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { forwardRef, useCallback, useMemo } from 'react';
 import styled, { css, keyframes } from 'styled-components';
 import { Permission } from '@influenceth/sdk';
 
@@ -260,7 +260,7 @@ const StackTally = ({ tally }) => {
 };
 
 // (children used for mouseinfopane)
-const ActionButtonComponent = ({
+const ActionButtonComponent = forwardRef(({
   children,
   label,
   labelAddendum: rawLabelAddendum,
@@ -270,7 +270,7 @@ const ActionButtonComponent = ({
   onClick,
   sequenceMode,
   ...props
-}) => {
+}, ref) => {
   const { isLaunched } = useCrewContext();
 
   const [flags, labelAddendum] = useMemo(() => {
@@ -297,6 +297,7 @@ const ActionButtonComponent = ({
 
   return (
     <ActionButtonWrapper
+      ref={ref}
       data-arrow-color="transparent"
       data-tooltip-id="globalTooltip"
       data-tooltip-place="top"
@@ -316,12 +317,13 @@ const ActionButtonComponent = ({
       {children}
     </ActionButtonWrapper>
   );
-}
+});
 
 export const getCrewDisabledReason = ({
   asteroid,
   blockTime,
   crew,
+  isAllowedInSimulation = false,  // TODO: use config to get by step (can attach step to crew as well... or even allowed buttons directly on crew, etc)
   isSequenceable = false,
   permission,
   permissionTarget,
@@ -329,6 +331,7 @@ export const getCrewDisabledReason = ({
   requireSurface = true,
   requireReady = true
 }) => {
+  if (crew?._isSimulation && !isAllowedInSimulation) return 'simulation restricted';
   if (permission && permissionTarget) {
     if (!crew || !Permission.isPermitted(crew, permission, permissionTarget, blockTime)) return 'access restricted';
   }

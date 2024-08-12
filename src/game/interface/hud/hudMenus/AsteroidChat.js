@@ -229,7 +229,7 @@ const AsteroidChat = () => {
       <InputBlock>
         <div>
           <UncontrolledTextArea
-            disabled={nativeBool(!asteroidId || !crew || submitting)}
+            disabled={nativeBool(!asteroidId || !crew || crew._isSimulation || submitting)}
             onChange={handleNewChatChange}
             onKeyDown={handleKeyDown}
             placeholder="Add message..."
@@ -240,7 +240,7 @@ const AsteroidChat = () => {
         <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6 }}>
           <RemainingChars remaining={remaining}>{remaining.toLocaleString()} Remaining</RemainingChars>
           <Button
-            disabled={nativeBool(!newChat || remaining < 0 || !asteroidId || !crew || submitting)}
+            disabled={nativeBool(!newChat || remaining < 0 || !asteroidId || !crew || crew._isSimulation || submitting)}
             loading={!!submitting}
             size="small"
             onClick={submitNewChat}>

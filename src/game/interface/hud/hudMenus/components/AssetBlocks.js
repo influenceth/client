@@ -199,7 +199,7 @@ const getBuildingIcon = (buildingType) => {
     default: return <ConstructIcon />;
   }
 }
-export const AgreementBlock = ({ agreement, onSelectCrew, selectedCrew }) => {
+export const AgreementBlock = ({ agreement, onSelectCrew, selectedCrew, setRef }) => {
   const blockTime = useBlockTime();
 
   const location = useMemo(() => locationsArrToObj(agreement.Location?.locations || [agreement.Location?.locations]), []);
@@ -268,7 +268,7 @@ export const AgreementBlock = ({ agreement, onSelectCrew, selectedCrew }) => {
   }, [onLink, onSelectCrew, agreement]);
 
   return (
-    <SelectableRow onClick={onClick}>
+    <SelectableRow ref={setRef} onClick={onClick}>
       <IconThumbnail>
         {selectedCrew?.id && agreement.Control?.controller?.id === selectedCrew?.id && <MyAssetWrapper><MyAssetIcon /></MyAssetWrapper>}
         {icon}
@@ -321,12 +321,12 @@ export const AsteroidBlock = ({ asteroid, onClick, onRenderReady, selectedCrew, 
   );
 };
 
-export const BuildingBlock = ({ building, onSelectCrew, selectedCrew }) => {
+export const BuildingBlock = ({ building, onSelectCrew, selectedCrew, setRef }) => {
   const syncedTime = useSyncedTime();
   const buildingLoc = locationsArrToObj(building?.Location?.locations);
   const onClickBuilding = useLotLink(buildingLoc);
   const { currentExtraction } = useExtractionManager(buildingLoc?.lotId);
-  const { currentProcess } = useProcessManager(buildingLoc?.lotId, building.Processors[0]?.slot);
+  const { currentProcess } = useProcessManager(buildingLoc?.lotId, building.Processors?.[0]?.slot);
   const { currentConstructionAction } = useConstructionManager(buildingLoc?.lotId);
   
   const [progress, progressColor] = useMemo(() => {
@@ -414,7 +414,7 @@ export const BuildingBlock = ({ building, onSelectCrew, selectedCrew }) => {
   }, [onClickBuilding, onSelectCrew, building?.Control?.controller?.id, buildingLoc?.lotId]);
 
   return (
-    <SelectableRow onClick={onClick}>
+    <SelectableRow ref={setRef} onClick={onClick}>
       <IconThumbnail>
         {selectedCrew?.id && building.Control?.controller?.id === selectedCrew?.id && <MyAssetWrapper><MyAssetIcon /></MyAssetWrapper>}
         {getBuildingIcon(building?.Building?.buildingType)}
@@ -436,7 +436,7 @@ export const BuildingBlock = ({ building, onSelectCrew, selectedCrew }) => {
   );
 };
 
-export const ShipBlock = ({ ship, onSelectCrew, selectedCrew }) => {
+export const ShipBlock = ({ ship, onSelectCrew, selectedCrew, setRef }) => {
   const onClickShip = useShipLink({ shipId: ship.id, zoomToShip: true });
   const location = useMemo(() => locationsArrToObj(ship.Location?.locations || []));
   
@@ -454,14 +454,14 @@ export const ShipBlock = ({ ship, onSelectCrew, selectedCrew }) => {
   }, [onClickShip, onSelectCrew, ship?.Control?.controller?.id]);
 
   return (
-    <SelectableRow onClick={onClick}>
+    <SelectableRow ref={setRef} onClick={onClick}>
       <Thumbnail>
         {selectedCrew?.id && ship.Control?.controller?.id === selectedCrew?.id && <MyAssetWrapper><MyAssetIcon /></MyAssetWrapper>}
         <ResourceImage src={getShipIcon(ship.Ship.shipType, 'w150')} contain />
         <ClipCorner dimension={10} color={majorBorderColor} />
       </Thumbnail>
       <Info>
-        <label>{formatters.shipName(ship)}</label>
+        <label style={{ maxWidth: 192 }}>{formatters.shipName(ship)}</label>
         <div>
           <EntityName {...(ship.Ship?.transitDestination || ship.Location?.location)} />
         </div>

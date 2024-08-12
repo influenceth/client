@@ -1,6 +1,6 @@
 import { createContext, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery, useQueryClient } from 'react-query';
-import { Crewmate, Entity, Permission, System } from '@influenceth/sdk';
+import { Crewmate, Entity, Inventory, Permission, Ship, System } from '@influenceth/sdk';
 
 import api from '~/lib/api';
 import useSession from '~/hooks/useSession';
@@ -9,14 +9,28 @@ import useEntity from '~/hooks/useEntity';
 import useStore from '~/hooks/useStore';
 import { getCrewAbilityBonuses, locationsArrToObj, openAccessJSTime } from '~/lib/utils';
 import { entitiesCacheKey } from '~/lib/cacheKey';
+import useSimulationState from '~/hooks/useSimulationState';
+import SIMULATION_CONFIG from '~/simulation/simulationConfig';
+
+const entityProps = ({ id, label }) => ({ id, label, uuid: Entity.packEntity({ id, label }) });
+const simulationNftConfig = {
+  owners: {
+    ethereum: null,
+    starknet: SIMULATION_CONFIG.accountAddress,
+  },
+  owner: SIMULATION_CONFIG.accountAddress,
+  chain: "STARKNET"
+};
 
 const CrewContext = createContext();
 
 export function CrewProvider({ children }) {
   const { accountAddress, authenticated, blockNumber, blockTime, provider, token } = useSession();
+  const simulationState = useSimulationState();
 
   const queryClient = useQueryClient();
   const allPendingTransactions = useStore(s => s.pendingTransactions);
+  
   const selectedCrewId = useStore(s => s.selectedCrewId);
   const dispatchCrewSelected = useStore(s => s.dispatchCrewSelected);
 
@@ -31,11 +45,64 @@ export function CrewProvider({ children }) {
     [accountAddress]
   );
 
-  const { data: rawCrews, isLoading: crewsLoading, dataUpdatedAt: rawCrewsUpdatedAt } = useQuery(
+  const simulationCrew = useMemo(() => {
+    if (!simulationState) return null;
+
+    // TODO: put in SIMULATION_CONFIG?
+    const wcrewLocations = simulationState.crewLocation || [
+      entityProps({ id: 1, label: Entity.IDS.BUILDING }),
+      entityProps({ id: 6881662889623553, label: Entity.IDS.LOT }),
+      entityProps({ id: 1, label: Entity.IDS.ASTEROID })
+    ];
+
+    const roster = [
+      simulationState.crewmate?.id || undefined,
+      SIMULATION_CONFIG.crewmates.engineer,
+      SIMULATION_CONFIG.crewmates.miner,
+      SIMULATION_CONFIG.crewmates.merchant,
+      SIMULATION_CONFIG.crewmates.pilot,
+    ].filter((c) => !!c);
+
+    return {
+      ...entityProps({ id: SIMULATION_CONFIG.crewId, label: Entity.IDS.CREW }),
+      _isSimulation: true,
+      Crew: {
+        actionRound: 0,
+        actionStrategy: 0,
+        actionType: 0,
+        actionWeight: 0,
+        delegatedTo: SIMULATION_CONFIG.accountAddress,
+        lastFed: blockTime,
+        readyAt: simulationState.canFastForward ? 0 : (simulationState.crewReadyAt || 0),
+        roster
+      },
+      Location: {
+        location: wcrewLocations[0],
+        locations: wcrewLocations
+      },
+      Inventories: [],
+      Name: {
+        name: SIMULATION_CONFIG.crewName,
+      },
+      Nft: simulationNftConfig,
+      Ship: {
+        emergencyAt: 0,
+        readyAt: 0,
+        shipType: Ship.IDS.ESCAPE_MODULE,
+        status: Ship.IDS.DISABLED,
+        transitArrival: 0,
+        transitDeparture: 0,
+        variant: Ship.VARIANTS.STANDARD
+      }
+    };
+  }, [blockTime, simulationState]);
+
+  const { data: realRawCrews, isLoading: crewsLoading, dataUpdatedAt: rawCrewsUpdatedAt } = useQuery(
     ownedCrewsQueryKey,
     () => api.getOwnedCrews(accountAddress),
     { enabled: !!token }
   );
+  const rawCrews = useMemo(() => simulationCrew ? [simulationCrew] : realRawCrews, [simulationCrew, rawCrewsUpdatedAt]);
 
   const combinedCrewRoster = useMemo(
     () => (rawCrews || []).reduce((acc, c) => [...acc, ...c.Crew.roster], []),
@@ -75,10 +142,25 @@ export function CrewProvider({ children }) {
       (myOwnedCrewmates || []).forEach((crewmate) => {
         if (!map[crewmate.id]) map[crewmate.id] = crewmate;
       });
+      if (simulationState?.crewmate) {
+        map[SIMULATION_CONFIG.crewmateId] = {
+          ...entityProps({ id: SIMULATION_CONFIG.crewmateId, label: Entity.IDS.CREWMATE }),
+          Control: {
+            controller: entityProps({ id: SIMULATION_CONFIG.crewId, label: Entity.IDS.CREW }),
+          },
+          Crewmate: {
+            appearance: simulationState.crewmate.appearance,
+            coll: Crewmate.COLLECTION_IDS.ADALIAN,
+          },
+          Name: { name: simulationState.crewmate.name },
+          Nft: simulationNftConfig,
+          // TODO: any other crewmate search should return this as well
+        };
+      }
       return map;
     }
     return null;
-  }, [myCrewCrewmates, myOwnedCrewmates, crewsLoading, crewmatesLoading, myOwnedCrewmatesLoading]);
+  }, [myCrewCrewmates, myOwnedCrewmates, crewsLoading, crewmatesLoading, myOwnedCrewmatesLoading, simulationState]);
 
   // NOTE: this covers all queries' loading states because crewmateMap is
   // null while any of those are true
@@ -238,7 +320,10 @@ export function CrewProvider({ children }) {
     }
   }, [authenticated, crewsAndCrewmatesReady, selectedCrew]);
 
-  const captain = useMemo(() => selectedCrew?._crewmates?.[0] || null, [crewmateMap, selectedCrew]);
+  const captain = useMemo(() => {
+    if (simulationState && !simulationState.crewmate) return null;
+    return selectedCrew?._crewmates?.[0] || null;
+  }, [crewmateMap, selectedCrew, simulationState]);
 
   const crewCan = useCallback(
     (permission, hydratedTarget) => (finalSelectedCrew && hydratedTarget)

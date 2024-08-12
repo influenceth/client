@@ -1,12 +1,12 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import styled, { css, keyframes } from 'styled-components';
-import { Asteroid, Building, Entity } from '@influenceth/sdk';
+import { Asteroid, Building, Crewmate, Entity } from '@influenceth/sdk';
 import { FaSearchPlus as DetailsIcon } from 'react-icons/fa';
 import { Tooltip } from 'react-tooltip';
 
 import ClipCorner from '~/components/ClipCorner';
-import { CrewCaptainCardFramed } from '~/components/CrewmateCardFramed';
+import CrewmateCardFramed, { CrewCaptainCardFramed } from '~/components/CrewmateCardFramed';
 import IconButton from '~/components/IconButton';
 import {
   CloseIcon,
@@ -33,6 +33,11 @@ import LotLoadingProgress from './LotLoadingProgress';
 import theme, { hexToRGB } from '~/theme';
 import EntityName from '~/components/EntityName';
 import { ActionProgressContainer } from './actionDialogs/components';
+import { COACHMARK_IDS } from '~/contexts/CoachmarkContext';
+import useSimulationEnabled from '~/hooks/useSimulationEnabled';
+import SIMULATION_CONFIG from '~/simulation/simulationConfig';
+import useSimulationState from '~/hooks/useSimulationState';
+import useCoachmarkRefSetter from '~/hooks/useCoachmarkRefSetter';
 
 const opacityAnimation = keyframes`
   0% { opacity: 1; }
@@ -251,13 +256,31 @@ const ActionButtons = styled.div`
 const CaptainCard = ({ crewId }) => {
   const history = useHistory();
   const { data: crew } = useCrew(crewId);
+  const simulation = useSimulationState();
 
   // onclick should open up crew profile
   const onClick = useCallback(() => {
     if (!crewId) return;
     history.push(`/crew/${crewId}`);
-  }, [crewId]);
+  }, [crewId, !simulation]);
 
+  if (simulation?.crewmate && SIMULATION_CONFIG.crewId === crewId) {
+    return (
+      <CrewmateCardFramed
+        crewmate={{
+          id: simulation.crewmate.id,
+          Crewmate: {
+            appearance: simulation.crewmate.appearance,
+            coll: Crewmate.COLLECTION_IDS.ADALIAN
+          }
+        }}
+        CrewmateCardProps={{ useExplicitAppearance: true }}
+        isCaptain
+        tooltip={simulation.crewmate.name}
+        tooltipPlace="top"
+        width={50} />
+    );
+  }
   return (
     <CrewCaptainCardFramed
       crewId={crew?.id}
@@ -301,6 +324,7 @@ const getShipSubtitle = (ship, shipReady, { asteroid, lot }) => {
 
 const InfoPane = () => {
   const history = useHistory();
+  const setCoachmarkRef = useCoachmarkRefSetter();
 
   const asteroidId = useStore(s => s.asteroids.origin);
   const lotId = useStore(s => s.asteroids.lot);
@@ -327,6 +351,7 @@ const InfoPane = () => {
 
   const [hover, setHover] = useState();
   const [currentSound, setCurrentSound] = useState();
+  const [refEl, setRefEl] = useState();
 
   const onMouseEvent = (e) => setHover(e.type === 'mouseenter');
 
@@ -375,7 +400,7 @@ const InfoPane = () => {
       playSound(soundName, { loop: false, duration: 4000, fadeOut: 1000 });
       setCurrentSound(soundName);
     }
-  }, [lot, setCurrentSound, stopSound, playSound, currentSound]);
+  }, [lot?.building?.id, stopSound, playSound, currentSound]);
 
   useEffect(() => {
     setHover(false);
@@ -582,7 +607,9 @@ const InfoPane = () => {
             onMouseLeave={onMouseEvent}
             hasCaptainCard={!!captainCard}>
             {hover ? <DetailsIcon /> : <ForwardIcon />}
-            <ThumbPreview visible={thumbVisible}>
+            <ThumbPreview
+              ref={setCoachmarkRef(COACHMARK_IDS.hudInfoPane)}
+              visible={thumbVisible}>
               <CloseButton onClick={onClosePane} borderless>
                 <CloseIcon />
               </CloseButton>

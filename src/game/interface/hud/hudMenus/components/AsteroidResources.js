@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo } from 'react';
+import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
 import { Asteroid } from '@influenceth/sdk';
 
@@ -10,6 +10,9 @@ import useStore from '~/hooks/useStore';
 import { keyify } from '~/lib/utils';
 import { hexToRGB } from '~/theme';
 import { majorBorderColor, HudMenuCollapsibleSection, Scrollable } from './components';
+import { COACHMARK_IDS } from '~/contexts/CoachmarkContext';
+import SIMULATION_CONFIG from '~/simulation/simulationConfig';
+import useCoachmarkRefSetter from '~/hooks/useCoachmarkRefSetter';
 
 const ResourceWrapper = styled.div`
   flex: 1;
@@ -93,12 +96,15 @@ const ResourceGroup = styled.div`
 `;
 
 const AsteroidResources = ({ onClose }) => {
+  const setCoachmarkRef = useCoachmarkRefSetter();
+
   const asteroidId = useStore(s => s.asteroids.origin);
   const { data: asteroid } = useAsteroid(asteroidId);
   const groupAbundances = useAsteroidAbundances(asteroid);
   const dispatchResourceMapSelect = useStore(s => s.dispatchResourceMapSelect);
   const dispatchResourceMapToggle = useStore(s => s.dispatchResourceMapToggle);
   const resourceMap = useStore(s => s.asteroids.resourceMap);
+  const coachmarks = useStore(s => s.coachmarks);
 
   const onClick = useCallback((i) => () => {
     if (resourceMap.active && resourceMap.selected === Number(i)) {
@@ -135,16 +141,19 @@ const AsteroidResources = ({ onClose }) => {
                   <span>{(groupAbundance * 100).toFixed(1)}%</span>
                 </Title>
                 <ResourceList>
-                  {resources.map(({ i, categoryKey, name, abundance }) => {
-                    const selected = resourceMap.active && resourceMap.selected === Number(i);
+                  {resources.map((resource) => {
+                    const coachmarked = Number(resource.i) === coachmarks[COACHMARK_IDS.hudMenuTargetResource];
+                    const isSelected = resourceMap.active && resourceMap.selected === Number(resource.i);
                     return (
-                      <Resource key={name}
-                        category={categoryKey}
-                        onClick={onClick(i)}
-                        selected={selected}>
-                        {selected ? <PlusIcon /> : <Circle />}
-                        <label>{name}</label>
-                        <span>{(abundance * 100).toFixed(1)}%</span>
+                      <Resource
+                        key={resource.i}
+                        ref={coachmarked ? setCoachmarkRef(COACHMARK_IDS.hudMenuTargetResource) : undefined}
+                        category={resource.categoryKey}
+                        onClick={onClick(resource.i)}
+                        selected={isSelected}>
+                        {isSelected ? <PlusIcon /> : <Circle />}
+                        <label>{resource.name}</label>
+                        <span>{(resource.abundance * 100).toFixed(1)}%</span>
                       </Resource>
                     );
                   })}

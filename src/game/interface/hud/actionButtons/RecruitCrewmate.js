@@ -12,7 +12,7 @@ const isVisible = ({ account, building }) => {
   return account && building?.Building?.buildingType === Building.IDS.HABITAT;
 };
 
-const RecruitCrewmate = ({ asteroid, blockTime, crew, lot, _disabled }) => {
+const RecruitCrewmate = ({ asteroid, blockTime, crew, lot, simulation, _disabled }) => {
   const { getPendingCrewmate } = useCrewManager();
   const history = useHistory();
 
@@ -63,6 +63,8 @@ const RecruitCrewmate = ({ asteroid, blockTime, crew, lot, _disabled }) => {
   const disabledReason = useMemo(() => {
     if (_disabled) return 'loading...';
     if (pendingCrewmate) return 'recruiting...';
+    if (simulation) return 'simulation restricted';
+
     // if recruiting to new crew, there is no crew to check permissions on, so just check if public
     if (recruitToCrew === 0) {
       const policy = Permission.getPolicyDetails(lot?.building)[Permission.IDS.RECRUIT_CREWMATE];

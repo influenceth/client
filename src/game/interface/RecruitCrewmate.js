@@ -12,7 +12,7 @@ import useSession from '~/hooks/useSession';
 // /recruit/:crewId/:locationId/:crewmateId -- crewmate assignment
 // /recruit/:crewId/:locationId/:crewmateId/create -- crewmate creation
 const RecruitCrewmate = () => {
-  const { accountAddress, authenticated } = useSession();
+  const { authenticated } = useSession();
   const history = useHistory();
   const { locationId, crewId, crewmateId, page } = useParams();
 

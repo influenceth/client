@@ -11,6 +11,9 @@ import useAsteroid from '~/hooks/useAsteroid';
 import useStore from '~/hooks/useStore';
 import Autocomplete from '~/components/Autocomplete';
 import formatters from '~/lib/formatters';
+import useCoachmarkRefSetter from '~/hooks/useCoachmarkRefSetter';
+import { COACHMARK_IDS } from '~/contexts/CoachmarkContext';
+import SIMULATION_CONFIG from '~/simulation/simulationConfig';
 
 const Wrapper = styled.div`
   position: relative;
@@ -53,8 +56,10 @@ const RouteSelection = () => {
   const dispatchDestinationSelected = useStore(s => s.dispatchDestinationSelected);
   const dispatchSwapOriginDestination = useStore(s => s.dispatchSwapOriginDestination);
   const dispatchHudMenuOpened = useStore(s => s.dispatchHudMenuOpened);
+  const simulationActions = useStore((s) => s.simulationActions);
   const { data: origin } = useAsteroid(originId);
   const { data: destination } = useAsteroid(destinationId);
+  const setCoachmarkRef = useCoachmarkRefSetter();
 
   const handleSwap = useCallback(() => {
     if (originId && destinationId) dispatchSwapOriginDestination();
@@ -64,6 +69,12 @@ const RouteSelection = () => {
     dispatchDestinationSelected();
     dispatchHudMenuOpened();
   }, [dispatchDestinationSelected, dispatchHudMenuOpened]);
+
+  const handleFocus = useCallback(() => {
+    if (simulationActions.includes('PlanFlight')) {
+      dispatchDestinationSelected(SIMULATION_CONFIG.destinationAsteroidId);
+    }
+  }, [simulationActions]);
 
   const handleSelect = useCallback((dest) => {
     if (Number(dest?.id) !== Number(originId)) dispatchDestinationSelected(dest?.id)
@@ -90,8 +101,10 @@ const RouteSelection = () => {
             assetType="asteroids"
             dropdownProps={{ style: { maxHeight: 115 }}}
             placeholder="Destination Asteroid..."
+            onFocus={handleFocus}
             onSelect={handleSelect}
             selected={destination}
+            setRef={setCoachmarkRef(COACHMARK_IDS.destinationAsteroid)}
             width={180} />
           <IconButton
             data-tooltip-content="Close Route Selection"

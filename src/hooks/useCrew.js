@@ -24,7 +24,7 @@ const useCrew = (id) => {
       }
     
       // _location
-      response.data._location = locationsArrToObj(response.data.Location.locations || []);
+      response.data._location = locationsArrToObj(response.data?.Location?.locations || []);
     }
     return response;
   }, [blockTime, response]);

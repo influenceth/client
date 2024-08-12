@@ -180,6 +180,7 @@ const ExpandableDataTableRow = ({ columns, getRowProps, row, sortDirection, sort
     <>
       <DataTableRow
         {...rowProps}
+        ref={rowProps.setRef}
         clickable={rowProps?.onClick || !!expandableContent}
         isSelected={reactBool(rowProps?.isSelected || expanded)}
         onClick={expandableContent ? onClickExpandable : rowProps?.onClick}>

@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import styled, { css, keyframes } from 'styled-components';
 import { createPortal } from 'react-dom';
 import { Tooltip } from 'react-tooltip';
@@ -90,6 +90,10 @@ import EntityName from '~/components/EntityName';
 import DataTableComponent from '~/components/DataTable';
 import Autocomplete, { StaticAutocomplete } from '~/components/Autocomplete';
 import useScreenSize from '~/hooks/useScreenSize';
+import useStore from '~/hooks/useStore';
+import { COACHMARK_IDS } from '~/contexts/CoachmarkContext';
+import useSimulationEnabled from '~/hooks/useSimulationEnabled';
+import useCoachmarkRefSetter from '~/hooks/useCoachmarkRefSetter';
 
 const SECTION_WIDTH = 780;
 
@@ -1527,6 +1531,11 @@ export const CrewSelectionDialog = ({ crews, disabler, onClose, onSelected, open
 };
 
 export const SitePlanSelectionDialog = ({ initialSelection, onClose, onSelected, open }) => {
+  const setCoachmarkRef = useCoachmarkRefSetter();
+  const simulationEnabled = useSimulationEnabled();
+  const coachmarks = useStore((s) => s.coachmarks);
+  const simulationActions = useStore((s) => s.simulationActions);
+
   const [selection, setSelection] = useState(initialSelection);
 
   const onComplete = useCallback(() => {
@@ -1534,32 +1543,48 @@ export const SitePlanSelectionDialog = ({ initialSelection, onClose, onSelected,
     onClose();
   }, [onClose, onSelected, selection]);
 
+  const isCompletable = useMemo(() => {
+    if (simulationEnabled) {
+      return simulationActions.includes(`SelectSitePlan:${selection}`);
+    }
+    return selection > 0;
+  }, [selection, simulationActions, simulationEnabled]);
   return (
     <SelectionDialog
-      isCompletable={selection > 0}
+      isCompletable={isCompletable}
       onClose={onClose}
       onComplete={onComplete}
       open={open}
       title="Select Site Type">
       <SelectionGrid>
-        {Object.keys(Building.TYPES).filter((c) => c > 0).map((buildingType) => (
-          <FlexSectionInputBlock
-            key={buildingType}
-            fullWidth
-            image={<BuildingImage buildingType={buildingType} unfinished />}
-            isSelected={buildingType === selection}
-            label={Building.TYPES[buildingType].name}
-            sublabel="Site"
-            onClick={() => setSelection(buildingType)}
-            style={{ width: '100%' }}
-          />
-        ))}
+        {Object.keys(Building.TYPES).filter((c) => c > 0).map((buildingType) => {
+          const coachmarked = coachmarks[COACHMARK_IDS.actionDialogPlanType] === Number(buildingType);
+          return (
+            <Fragment key={buildingType}>
+              <FlexSectionInputBlock
+                fullWidth
+                image={<BuildingImage buildingType={buildingType} unfinished />}
+                isSelected={buildingType === selection}
+                label={Building.TYPES[buildingType].name}
+                sublabel="Site"
+                onClick={() => setSelection(buildingType)}
+                setRef={coachmarked ? setCoachmarkRef(COACHMARK_IDS.actionDialogPlanType) : undefined}
+                style={{ width: '100%' }}
+              />
+            </Fragment>
+          );
+        })}
       </SelectionGrid>
     </SelectionDialog>
   );
 };
 
 export const ResourceSelectionDialog = ({ abundances, lotId, initialSelection, onClose, onSelected, open }) => {
+  const setCoachmarkRef = useCoachmarkRefSetter();
+  const simulationEnabled = useSimulationEnabled();
+  const coachmarks = useStore((s) => s.coachmarks);
+  const simulationActions = useStore((s) => s.simulationActions);
+  
   const [selection, setSelection] = useState(initialSelection);
 
   const onComplete = useCallback(() => {
@@ -1567,11 +1592,17 @@ export const ResourceSelectionDialog = ({ abundances, lotId, initialSelection, o
     onClose();
   }, [onClose, onSelected, selection]);
 
-  const nonzeroAbundances = useMemo(() => Object.values(abundances).filter((x) => x > 0).length, [abundances]);
+  const isCompletable = useMemo(() => {
+    if (simulationEnabled) {
+      return simulationActions.includes(`SelectTargetResource:${selection}`);
+    }
+    return selection > 0;
+  }, [selection, simulationActions, simulationEnabled]);
 
+  const nonzeroAbundances = useMemo(() => Object.values(abundances).filter((x) => x > 0).length, [abundances]);
   return (
     <SelectionDialog
-      isCompletable={selection > 0}
+      isCompletable={isCompletable}
       onClose={onClose}
       onComplete={onComplete}
       open={open}
@@ -1588,16 +1619,20 @@ export const ResourceSelectionDialog = ({ abundances, lotId, initialSelection, o
           <tbody>
             {Object.keys(abundances)
               .sort((a, b) => abundances[b] - abundances[a])
-              .map((resourceId) => (
-                <SelectionTableRow
-                  key={`${resourceId}`}
-                  disabledRow={abundances[resourceId] === 0}
-                  onClick={() => setSelection(Number(resourceId))}
-                  selectedRow={selection === Number(resourceId)}>
-                  <td><ResourceColorIcon category={Product.TYPES[resourceId].category} /> {Product.TYPES[resourceId].name}</td>
-                  <td>{(100 * abundances[resourceId]).toFixed(1)}%</td>
-                </SelectionTableRow>
-              ))
+              .map((resourceId) => {
+                const coachmarked = coachmarks[COACHMARK_IDS.actionDialogTargetResource] === Number(resourceId);
+                return (
+                  <SelectionTableRow
+                    key={`${resourceId}`}
+                    disabledRow={abundances[resourceId] === 0}
+                    onClick={() => setSelection(Number(resourceId))}
+                    ref={coachmarked ? setCoachmarkRef(COACHMARK_IDS.actionDialogTargetResource) : null}
+                    selectedRow={selection === Number(resourceId)}>
+                    <td><ResourceColorIcon category={Product.TYPES[resourceId].category} /> {Product.TYPES[resourceId].name}</td>
+                    <td>{(100 * abundances[resourceId]).toFixed(1)}%</td>
+                  </SelectionTableRow>
+                );
+              })
             }
           </tbody>
         </table>
@@ -2016,10 +2051,20 @@ export const ProcessSelectionDialog = ({ initialSelection, onClose, forceProcess
   const [processFilter, setProcessFilter] = useState();
   const [outputFilter, setOutputFilter] = useState();
 
+  const simulationEnabled = useSimulationEnabled();
+  const setCoachmarkRef = useCoachmarkRefSetter();
+  const coachmarks = useStore((s) => s.coachmarks);
+  const simulationActions = useStore((s) => s.simulationActions);
+
   const processes = useMemo(() => {
     const unSorted = forceProcesses || Object.values(Process.TYPES).filter((p) => p.processorType === processorType);
-    return unSorted.sort((a, b) => a.name > b.name ? 1 : -1);
-  }, [forceProcesses, processorType])
+    return unSorted
+      .sort((a, b) => {
+        if (a.i === coachmarks[COACHMARK_IDS.actionDialogTargetProcess]) return -1;
+        if (b.i === coachmarks[COACHMARK_IDS.actionDialogTargetProcess]) return 1;
+        return a.name > b.name ? 1 : -1;
+      })
+  }, [coachmarks, forceProcesses, processorType])
 
   const onComplete = useCallback(() => {
     onSelected(selection);
@@ -2044,9 +2089,16 @@ export const ProcessSelectionDialog = ({ initialSelection, onClose, forceProcess
     return true;
   }, [processFilter, outputFilter]);
 
+  const isCompletable = useMemo(() => {
+    if (simulationEnabled) {
+      return simulationActions.includes(`SelectProcess:${selection}`);
+    }
+    return selection > 0;
+  }, [selection, simulationActions, simulationEnabled]);
+
   return (
     <SelectionDialog
-      isCompletable={selection > 0}
+      isCompletable={isCompletable}
       onClose={onClose}
       onComplete={onComplete}
       open={open}
@@ -2078,10 +2130,12 @@ export const ProcessSelectionDialog = ({ initialSelection, onClose, forceProcess
           </thead>
           <tbody>
             {processes.filter(applyProcessFilter).map(({ i, name, inputs, outputs }) => {
+              const coachmarked = coachmarks[COACHMARK_IDS.actionDialogTargetProcess] === i;
               return (
                 <SelectionTableRow
                   key={i}
                   onClick={() => setSelection(i)}
+                  ref={coachmarked ? setCoachmarkRef(COACHMARK_IDS.actionDialogTargetProcess) : undefined}
                   selectedRow={i === selection}>
                   <td><div style={{ display: 'flex', alignItems: 'center' }}><div style={{ fontSize: 24, marginRight: 6 }}><ProductionIcon /></div> {name}</div></td>
                   <td>
@@ -2254,6 +2308,11 @@ export const InventorySelectionDialog = ({
   requirePresenceOfItemIds
 }) => {
   const { crew } = useCrewContext();
+  
+  const simulationEnabled = useSimulationEnabled();
+  const setCoachmarkRef = useCoachmarkRefSetter();
+  const coachmarks = useStore(s => s.coachmarks);
+  const simulationActions = useStore((s) => s.simulationActions);
 
   const [filterItemIds, setFilterItemIds] = useState();
   const [filterValue, setFilterValue] = useState('');
@@ -2335,6 +2394,7 @@ export const InventorySelectionDialog = ({
         display.push({
           key: JSON.stringify({ id: entity.id, label: entity.label, lotId: entityLotId, asteroidId, lotIndex: entityLotIndex, slot: inv.slot }),
 
+          entity,
           disabled: (requirePresenceOfItemIds && !itemTally) || (isSourcing && inv.mass === 0),
           distance: Asteroid.getLotDistance(asteroidId, entityLotIndex, otherLocation.lotIndex), // distance to source + distance to destination
           isControlled: entity.Control.controller.id === crew?.id,
@@ -2451,11 +2511,15 @@ export const InventorySelectionDialog = ({
     setSort([updatedSortField, updatedSortDirection]);
   }, [sort]);
 
-  const getRowProps = useCallback((row) => ({
-    disable: row.disabled,
-    onClick: () => setSelection(row.key),
-    isSelected: (selection === row.key),
-  }), [selection]);
+  const getRowProps = useCallback((row) => {
+    const coachmarked = coachmarks[COACHMARK_IDS.actionDialogTargetInventory] === `${row.entity.label}.${row.entity.id}.${row.slot}`;
+    return {
+      setRef: coachmarked ? setCoachmarkRef(COACHMARK_IDS.actionDialogTargetInventory) : null,
+      disable: row.disabled,
+      onClick: () => setSelection(row.key),
+      isSelected: (selection === row.key),
+    };
+  }, [selection, coachmarks, setCoachmarkRef]);
 
   const handleFilterChange = useCallback((e) => {
     setFilterValue(e.target.value);
@@ -2510,9 +2574,17 @@ export const InventorySelectionDialog = ({
       .sort((a, b) => (sort[1] === 'desc' ? -1 : 1) * (a[sort[0]] < b[sort[0]] ? -1 : 1));
   }, [filterItemIds, filterValue, inventories, isSourcing, showPermittedInventories, showPublicInventories, sort]);
 
+  const isCompletable = useMemo(() => {
+    if (selection && simulationEnabled) {
+      const selObj = inventories.find((i) => i.key === selection);
+      return simulationActions.includes(`SelectInventory:${selObj?.entity?.label}.${selObj?.entity?.id}.${selObj?.slot}`);
+    }
+    return !!selection;
+  }, [selection, simulationEnabled, simulationActions])
+
   return (
     <SelectionDialog
-      isCompletable={!!selection}
+      isCompletable={isCompletable}
       onClose={onClose}
       onComplete={onComplete}
       open={open}
@@ -2551,17 +2623,19 @@ export const InventorySelectionDialog = ({
 
         <div style={{ flex: 1 }} />
 
-        <FilterWrapper isLimited={limitToControlled}>
-          <FilterRowLabel isOn={!limitToControlled && showPermittedInventories} onClick={() => setShowPermittedInventories((p) => !p)}>
-            {!limitToControlled && showPermittedInventories ? <CheckedIcon /> : <UncheckedIcon />}
-            <span>Permitted Inventories</span>
-          </FilterRowLabel>
+        {!simulationEnabled && (
+          <FilterWrapper isLimited={limitToControlled}>
+            <FilterRowLabel isOn={!limitToControlled && showPermittedInventories} onClick={() => setShowPermittedInventories((p) => !p)}>
+              {!limitToControlled && showPermittedInventories ? <CheckedIcon /> : <UncheckedIcon />}
+              <span>Permitted Inventories</span>
+            </FilterRowLabel>
 
-          <FilterRowLabel isOn={!limitToControlled && showPublicInventories} onClick={() => setShowPublicInventories((p) => !p)}>
-            {!limitToControlled && showPublicInventories ? <CheckedIcon /> : <UncheckedIcon />}
-            <span>Public Inventories</span>
-          </FilterRowLabel>
-        </FilterWrapper>
+            <FilterRowLabel isOn={!limitToControlled && showPublicInventories} onClick={() => setShowPublicInventories((p) => !p)}>
+              {!limitToControlled && showPublicInventories ? <CheckedIcon /> : <UncheckedIcon />}
+              <span>Public Inventories</span>
+            </FilterRowLabel>
+          </FilterWrapper>
+        )}
       </FilterRow>
 
       {isSourcing && filterItemIds && (
@@ -2649,6 +2723,10 @@ export const getBuildingRequirements = (building, deliveryActions = []) => {
       inNeed: Math.max(0, totalRequired - inInventory - inTransit)
     };
   })
+};
+
+export const getBuildingRequirementsMet = (building, deliveryActions = []) => {
+  return getBuildingRequirements(building, deliveryActions).reduce((acc, { inNeed }) => acc && (inNeed === 0), true);
 };
 
 
@@ -2929,6 +3007,7 @@ const TimePill = ({ children, type }) => {
 };
 
 export const ActionDialogHeader = ({ action, actionCrew, crewAvailableTime, delayUntil, location, onClose, overrideColor, stage, taskCompleteTime, wide }) => {
+  const simulationEnabled = useSimulationEnabled();
   return (
     <>
       <ActionDialogActionBar
@@ -2942,6 +3021,7 @@ export const ActionDialogHeader = ({ action, actionCrew, crewAvailableTime, dela
           <CrewmateCardFramed
             crewmate={actionCrew?._crewmates?.[0]}
             isCaptain
+            CrewmateCardProps={simulationEnabled ? { useExplicitAppearance: true } : {}}
             width={75} />
         )}
         <IconAndLabel>
@@ -2975,8 +3055,9 @@ export const ActionDialogHeader = ({ action, actionCrew, crewAvailableTime, dela
   );
 };
 
-export const FlexSectionInputBlock = ({ bodyStyle, children, disabled, image, innerBodyStyle, isSelected, label, onClick, style = {}, sublabel, title, titleDetails, tooltip, ...props }) => {
+export const FlexSectionInputBlock = ({ bodyStyle, children, disabled, image, innerBodyStyle, isSelected, label, onClick, setRef, style = {}, sublabel, title, titleDetails, tooltip, ...props }) => {
   const refEl = useRef();
+
   const [hovered, setHovered] = useState();
   return (
     <>
@@ -2987,7 +3068,7 @@ export const FlexSectionInputBlock = ({ bodyStyle, children, disabled, image, in
           </MouseoverContent>
         </MouseoverInfoPane>
       )}
-      <FlexSectionInputContainer style={style}>
+      <FlexSectionInputContainer ref={setRef} style={style}>
         {title && <SectionTitle>{title}{titleDetails && <><b style={{ flex: 1 }} /><SectionTitleRight>{titleDetails}</SectionTitleRight></>}</SectionTitle>}
 
         <FlexSectionInputBody
@@ -3464,6 +3545,8 @@ export const RecipeSlider = ({ amount, disabled, increment = 0.001, processingTi
   const [focusOn, setFocusOn] = useState();
   const [mouseIn, setMouseIn] = useState(false);
 
+  const setCoachmarkRef = useCoachmarkRefSetter();
+
   const [min, max] = useMemo(() => {
     return [
       Math.ceil(rawMin / increment) * increment,
@@ -3550,6 +3633,7 @@ export const RecipeSlider = ({ amount, disabled, increment = 0.001, processingTi
                 <Button
                   disabled={amount === max}
                   onClick={() => onSetAmount(max)}
+                  setRef={amount === max ? undefined : setCoachmarkRef(COACHMARK_IDS.actionDialogMaxRecipes)}
                   size="small"
                   style={{ marginLeft: 10, padding: 0, minWidth: 75 }}>Max</Button>
               </>
@@ -3669,11 +3753,14 @@ export const ProcessInputSquareSection = ({ title, products, input, output, prim
 };
 
 export const PropulsionTypeSection = ({ disabled, objectLabel, propulsiveTime, tugTime, powered, onSetPowered, warning }) => {
+  const coachmarks = useStore(s => s.coachmarks);
+  const setCoachmarkRef = useCoachmarkRefSetter();
   return (
     <FlexSectionBlock title={`${objectLabel} Type`} bodyStyle={{ padding: 0 }}>
       <>
         {(onSetPowered || powered) && (
           <PropulsionTypeOption
+            ref={!powered && coachmarks[COACHMARK_IDS.actionDialogTargetLaunchType] === 'propulsive' ? setCoachmarkRef(COACHMARK_IDS.actionDialogTargetLaunchType) : null}
             disabled={disabled}
             onClick={!disabled && onSetPowered ? () => onSetPowered(true) : undefined}
             selected={powered}>
@@ -3686,6 +3773,7 @@ export const PropulsionTypeSection = ({ disabled, objectLabel, propulsiveTime, t
         )}
         {(onSetPowered || !powered) && (
           <PropulsionTypeOption
+            ref={powered && coachmarks[COACHMARK_IDS.actionDialogTargetLaunchType] === 'tug' ? setCoachmarkRef(COACHMARK_IDS.actionDialogTargetLaunchType) : null}
             disabled={disabled}
             onClick={!disabled && onSetPowered ? () => onSetPowered(false) : undefined}
             selected={!powered}>
@@ -3846,6 +3934,7 @@ const InlineCrewDetails = styled.div`
   }
 `;
 export const CrewInputBlock = ({ cardWidth, crew, hideCrewmates, highlightCrewmates, inlineDetails, title, ...props }) => {
+  const simulationEnabled = useSimulationEnabled();
   return (
     <FlexSectionInputBlock
       title={title}
@@ -3892,7 +3981,8 @@ export const CrewInputBlock = ({ cardWidth, crew, hideCrewmates, highlightCrewma
                     lessPadding
                     noArrow={i > 0}
                     style={highlightCrewmates && !highlightCrewmates.includes(crewmate.id) ? { opacity: 0.5 } : {}}
-                    width={cardWidth || 60} />
+                    width={cardWidth || 60}
+                    CrewmateCardProps={i === 0 && simulationEnabled ? { useExplicitAppearance: true } : undefined} />
                 )
                 : (
                   <CrewmateCardPlaceholder

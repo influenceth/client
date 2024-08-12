@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import styled, { css, keyframes } from 'styled-components';
 
@@ -6,15 +6,20 @@ import CollapsibleSection from '~/components/CollapsibleSection';
 import CrewmateCardFramed from '~/components/CrewmateCardFramed';
 import CrewLocationCompactLabel from '~/components/CrewLocationCompactLabel';
 import LiveFoodStatus from '~/components/LiveFoodStatus';
-import { PlusIcon } from '~/components/Icons';
+import { FastForwardIcon, PlusIcon } from '~/components/Icons';
 import useSession from '~/hooks/useSession';
 import useCrewContext from '~/hooks/useCrewContext';
 import formatters from '~/lib/formatters';
-import theme from '~/theme';
+import theme, { hexToRGB } from '~/theme';
 import useStore from '~/hooks/useStore';
-import LiveReadyStatus from '~/components/LiveReadyStatus';
+import LiveReadyStatus, { TimerWrapper } from '~/components/LiveReadyStatus';
 import { SECTION_WIDTH } from './ActionItems';
 import Button from '~/components/ButtonAlt';
+import { COACHMARK_IDS } from '~/contexts/CoachmarkContext';
+import SIMULATION_CONFIG from '~/simulation/simulationConfig';
+import useSimulationState from '~/hooks/useSimulationState';
+import useCoachmarkRefSetter from '~/hooks/useCoachmarkRefSetter';
+import LiveTimer from '~/components/LiveTimer';
 
 const menuWidth = SECTION_WIDTH;
 
@@ -45,7 +50,7 @@ const actionProgressBarAnimation = keyframes`
 const actionProgressPadding = 4;
 export const TitleBar = styled.div`
   align-items: center;
-  background: ${p => p.showBusy ? `rgba(${p.theme.colors.darkMainRGB}, 0.7)` : `rgba(0, 0, 0, 0.7)`};
+  background: ${p => `rgba(${p.rgb || '0,0,0'}, 0.7)`};
   color: white;
   display: flex;
   flex-direction: row;
@@ -73,14 +78,14 @@ export const TitleBar = styled.div`
     font-size: 18px;
   }
 
-  ${p => p.showBusy && css`
+  ${p => p.animate && css`
     &:before {
       content: "";
       animation: ${actionProgressBarAnimation} 2.5s linear infinite reverse;
       background: repeating-linear-gradient(
         ${gradientAngle}deg,
-        ${p.theme.colors.brightMain} 0,
-        ${p.theme.colors.brightMain} 12px,
+        rgba(255, 255, 255, 0.6) 0,
+        rgba(255, 255, 255, 0.6) 12px,
         transparent 12px,
         transparent ${gradientWidth}px
       );
@@ -100,6 +105,37 @@ export const TitleBar = styled.div`
       right: ${actionProgressPadding}px;
     }
   `}
+`;
+
+const opacityAnimation = keyframes`
+  0% { opacity: 1; }
+  50% { opacity: 0.25; }
+  100% { opacity: 1; }
+`;
+const FastForwarder = styled.div`
+  align-items: center;
+  color: white;
+  display: flex;
+  flex-direction: row;
+  line-height: 0;
+  & > label {
+    color: white;
+    font-size: 15px;
+    font-weight: bold;
+    padding-left: 4px;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+  & > span {
+    align-items: center;
+    animation: ${opacityAnimation} 500ms linear infinite;
+    display: flex;
+    justify-content: center;
+    font-size: 24px;
+    margin-left: 4px;
+    height: 24px;
+    width: 24px;
+  }
 `;
 
 const Crewmates = styled.div`
@@ -153,10 +189,16 @@ const AvatarMenu = () => {
   const { authenticated } = useSession();
   const { captain, crew, loading: crewIsLoading } = useCrewContext();
   const history = useHistory();
+  const setCoachmarkRef = useCoachmarkRefSetter();
+  const simulation = useSimulationState();
 
   const onSetAction = useStore(s => s.dispatchActionDialog);
+  const dispatchSimulationState = useStore(s => s.dispatchSimulationState);
   const asteroidId = useStore(s => s.asteroids.origin);
+  const simulationActions = useStore(s => s.simulationActions);
   const zoomStatus = useStore(s => s.asteroids.zoomStatus);
+  
+  const [ffTarget, setFFTarget] = useState();
 
   const silhouetteOverlay = useMemo(() => {
     if (!captain) {
@@ -172,7 +214,45 @@ const AvatarMenu = () => {
     return null;
   }, [captain]);
 
-  const onClick = useCallback(() => history.push('/crew'), []);
+  const onClick = useCallback((crewmateId) => () => {
+    if (simulation) {
+      if (!crewmateId || (crewmateId === SIMULATION_CONFIG.crewmateId)) {
+        // TODO: should/could link back to simulation crewmate
+        if (!simulation.crewmate && simulationActions.includes('RecruitCrewmate')) {
+          history.push(`/recruit/0/1/0/create`); 
+        }
+        return;
+      }
+      return history.push(`/crewmate/${crewmateId}`);
+    }
+    return history.push('/crew');
+  }, [simulation, simulationActions]);
+
+  useEffect(() => {
+    const { canFastForward, crewReadyAt, taskReadyAt } = simulation || {};
+    if (!ffTarget) {
+      if (canFastForward && (crewReadyAt || taskReadyAt)) {
+        // init timer
+        const startTimer = Date.now();
+        const totalTime = ((crewReadyAt || 0) + (taskReadyAt || 0)) - Math.floor(Date.now() / 1e3);
+        setFFTarget(Math.floor(Date.now() / 1e3) + totalTime);
+
+        // run timer
+        const i = setInterval(() => {
+          const remaining = totalTime * (1 - (Date.now() - startTimer) / SIMULATION_CONFIG.fastForwardAnimationDuration);
+          if (remaining > 0) {
+            setFFTarget(Math.floor(Date.now() / 1e3) + remaining);
+          } else {
+            setFFTarget();
+            dispatchSimulationState('crewReadyAt', 0);
+            dispatchSimulationState('taskReadyAt', 0);
+            clearInterval(i);
+          }
+        }, 1e3 / 30); // 30 fps
+        return () => clearInterval(i);
+      }
+    }
+  }, [simulation?.canFastForward, simulation?.crewReadyAt, simulation?.taskReadyAt]);
 
   if (crewIsLoading) return null;
   return (
@@ -191,6 +271,7 @@ const AvatarMenu = () => {
                   <CrewLocationCompactLabel
                     crew={crew}
                     flip
+                    setRef={setCoachmarkRef(COACHMARK_IDS.hudCrewLocation)}
                     zoomedToAsteroid={zoomStatus === 'in' && asteroidId} />
                 </>
               )
@@ -203,39 +284,66 @@ const AvatarMenu = () => {
             borderColor={`rgba(${theme.colors.mainRGB}, 0.4)`}
             crewmate={captain}
             isCaptain
-            onClick={onClick}
+            onClick={onClick(captain?.id)}
             noAnimation
+            setRef={setCoachmarkRef(COACHMARK_IDS.hudRecruitCaptain)}
             silhouetteOverlay={silhouetteOverlay}
-            warnIfNotOwnedBy={crew?.Nft?.owner}
+            CrewmateCardProps={simulation ? { useExplicitAppearance: true } : {}}
+            warnIfNotOwnedBy={simulation ? undefined : crew?.Nft?.owner}
             width={98} />
 
           <CrewInfoContainer>
-            <TitleBar showBusy={crew && !crew._ready}>
-              {crew?._crewmates?.length > 0
+            <TitleBar
+              animate={ffTarget || (crew && !crew._ready)}
+              rgb={(
+                ffTarget
+                  ? hexToRGB(theme.colors.darkGreen)
+                  : (
+                    crew && !crew._ready
+                      ? theme.colors.darkMainRGB
+                      : undefined
+                  )
+              )}>
+              {ffTarget
                 ? (
                   <>
-                    <LiveReadyStatus crew={crew} flip style={{ fontSize: '15px' }} />
-                    <LiveFoodStatus crew={crew} onClick={() => { onSetAction('FEED_CREW'); }} />
+                    <FastForwarder><span><FastForwardIcon /></span><label>Fast Forward</label></FastForwarder>
+                    <LiveTimer target={ffTarget} maxPrecision={2}>
+                      {(formattedTime) => (
+                        <TimerWrapper len={formattedTime.length} style={{ fontSize: 14, paddingRight: 6 }}>
+                          {formattedTime}
+                        </TimerWrapper>
+                      )}
+                    </LiveTimer>
                   </>
                 )
                 : (
-                  <Instruction>Recruit a captain to begin</Instruction>
-                )
-              }
+                  crew?._crewmates?.length > 0
+                    ? (
+                      <>
+                        <LiveReadyStatus crew={crew} flip style={{ fontSize: '15px' }} />
+                        <LiveFoodStatus crew={crew} onClick={() => { onSetAction('FEED_CREW'); }} />
+                      </>
+                    )
+                    : (
+                      <Instruction>Recruit a captain to begin</Instruction>
+                    )
+                  )
+                }
             </TitleBar>
 
             {crew?._crewmates?.length > 0
               ? (
                 <Crewmates>
                   {(crew?._crewmates || []).map((crewmate, i) => {
-                    if (i === 0) return null;
+                    if ((!simulation || !!simulation.crewmate) && i === 0) return null;
                     return (
                       <CrewmateCardFramed
                         key={crewmate.id}
                         borderColor={`rgba(${theme.colors.mainRGB}, 0.4)`}
                         crewmate={crewmate}
-                        onClick={onClick}
-                        warnIfNotOwnedBy={crew?.Nft?.owner}
+                        onClick={onClick(crewmate?.id)}
+                        warnIfNotOwnedBy={simulation ? undefined : crew?.Nft?.owner}
                         width={69}
                         noArrow />
                     );
@@ -244,7 +352,7 @@ const AvatarMenu = () => {
               )
               : (
                 <ButtonWrapper>
-                  <Button onClick={onClick}>
+                  <Button onClick={onClick()}>
                     Start Recruitment
                   </Button>
                 </ButtonWrapper>

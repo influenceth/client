@@ -24,19 +24,18 @@ const StyledIconLink = styled.span`
 export const MarketplacePermissionsIcon = ({ permissions = {}, ...props }) => {
   return (
     <span
-    data-tooltip-place={"top-start"}
-    data-tooltip-html={`
-    <div style="width: 200px">
-      <div style="margin-bottom: 6px;">My Crew's Permissions</div>
-      ${permissions.map((key, value) => {
-        return `<div style="display: flex">
-          <div style="flex-grow: 1">${key}:</div>
-          <div style="color: ${(value) ? 'green' : 'red'}">${value ? 'Permitted' : 'Restricted'}</div>
-        </div>`
-      }).join('\n')}
-    </div>
-    `}
-    {...props}>
+      data-tooltip-place="top-start"
+      data-tooltip-html={`
+        <div style="width: 200px">
+          ${permissions.map((key, value) => `
+            <div style="display: flex">
+              <div style="flex-grow: 1">${key}:</div>
+              <div style="color: ${(value) ? 'green' : 'red'}">${value ? 'Permitted' : 'Restricted'}</div>
+            </div>
+          `).join('\n')}
+        </div>
+      `}
+      {...props}>
       <PermissionIcon />
     </span>
   );

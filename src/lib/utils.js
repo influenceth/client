@@ -37,7 +37,7 @@ export const formatPrecision = (value, maximumPrecision = 0) => {
   return formatFixed(value, allowedDecimals);
 };
 
-export const formatPrice = (inputSway, { minPrecision = 3, fixedPrecision = 4, forcedAbbrev } = {}) => {
+export const formatPrice = (inputSway, { minPrecision = 3, fixedPrecision, forcedAbbrev } = {}) => {
   let sign = inputSway < 0 ? '-' : '';
 
   const sway = Math.abs(inputSway);
@@ -53,7 +53,7 @@ export const formatPrice = (inputSway, { minPrecision = 3, fixedPrecision = 4, f
     scale = 1;
     unitLabel = '';
   } else {
-    return Number(sway || 0).toLocaleString(undefined, { minimumFractionDigits: minPrecision, maximumFractionDigits: fixedPrecision });
+    return Number(sway || 0).toLocaleString(undefined, { minimumFractionDigits: minPrecision, maximumFractionDigits: Math.max(minPrecision, fixedPrecision || 0) });
   }
 
   const workingUnits = (sway / scale);
@@ -64,7 +64,7 @@ export const formatPrice = (inputSway, { minPrecision = 3, fixedPrecision = 4, f
       fixedPlaces++;
     }
   }
-  return `${sign}${(workingUnits || 0).toLocaleString(undefined, { minimumFractionDigits: minPrecision, maximumFractionDigits: fixedPlaces })}${unitLabel}`;
+  return `${sign}${(workingUnits || 0).toLocaleString(undefined, { minimumFractionDigits: minPrecision, maximumFractionDigits: Math.max(fixedPlaces, minPrecision) })}${unitLabel}`;
 };
 
 export const formatUSD = (usd) => {
@@ -265,7 +265,7 @@ export const entityToAgreements = (entity) => {
       // for the sake of agreements, the lot controller is *always* the asteroid controller
       // because that is who is the administrator of lot agreements
       // NOTE: this is different from elsewhere in the client, where the controller is
-      //       whoever has LOT_USE (fallback to asteroid controller)
+      //       whoever has USE_LOT (fallback to asteroid controller)
       formatted.Control = entity.label === Entity.IDS.LOT ? entity.meta?.asteroid?.Control : entity.Control;
       acc.push(formatted);
     })
@@ -312,7 +312,7 @@ export const fireTrackingEvent = function (event, eventProps = {}) {
 };
 
 // TODO: this should probably be in the sdk
-export const ordersToFills = (mode, orders, amountToFill, takerFee, feeReductionBonus = 1, feeEnforcementBonus = 1) => {
+export const ordersToFills = (mode, orders, amountToFill, takerFee, feeReductionBonus = 1, feeEnforcementBonus = 1, isDestructive = false) => {
   const paymentFunc = mode === 'buy' ? Order.getFillSellOrderPayments : Order.getFillBuyOrderWithdrawals;
   const priceSortMult = mode === 'buy' ? 1 : -1;
 
@@ -321,11 +321,14 @@ export const ordersToFills = (mode, orders, amountToFill, takerFee, feeReduction
   orders
     .sort((a, b) => a.price === b.price ? a.validTime - b.validTime : (priceSortMult * (a.price - b.price)))
     .every((order) => {
+      // if order depleted, skip over but keep going
+      if (order.amount === 0) return true;
+      
       const { amount, price } = order;
       const levelAmount = Math.min(needed, amount);
       const levelValue = Math.round(1e6 * levelAmount * price) / 1e6;
       needed -= levelAmount;
-      if (levelAmount > 0) {
+      if (levelAmount > 0) { // TODO: should this be >= ?
         const paymentsUnscaled = paymentFunc(
           levelValue * TOKEN_SCALE[TOKEN.SWAY],
           order.makerFee,
@@ -341,6 +344,9 @@ export const ordersToFills = (mode, orders, amountToFill, takerFee, feeReduction
           fillPaymentTotal: Math.round((paymentsUnscaled.toExchange || 0) + (paymentsUnscaled.toPlayer || 0)),
           paymentsUnscaled: paymentsUnscaled
         });
+        if (isDestructive) {
+          order.amount -= levelAmount;
+        }
         return true;
       }
       return false;

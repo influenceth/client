@@ -45,7 +45,7 @@ const SwitcherButtonInner = styled.div`
 
 const Switcher = ({ buttons, buttonWidth, onChange, size, tooltipContainer = 'global', value }) => (
   <Wrapper>
-    {buttons.map(({ icon, label, tooltip, value: buttonValue }, i) => {
+    {buttons.map(({ icon, label, setRef, tooltip, value: buttonValue }, i) => {
       const styles = {};
       if (i !== buttons.length - 1) styles.borderRight = 0;
       if (i !== 0) styles.borderLeft = 0;
@@ -61,6 +61,7 @@ const Switcher = ({ buttons, buttonWidth, onChange, size, tooltipContainer = 'gl
           flip={reactBool(i === 0)}
           isSelected={buttonValue === value}
           onClick={() => onChange(buttonValue)}
+          setRef={setRef}
           size={size || undefined}
           style={{ ...styles }}
           {...tooltipProps}

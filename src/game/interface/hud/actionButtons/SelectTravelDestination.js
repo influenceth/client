@@ -4,6 +4,8 @@ import { SimulateRouteIcon } from '~/components/Icons';
 import useStore from '~/hooks/useStore';
 import ActionButton from './ActionButton';
 import useShipTravelManager from '~/hooks/actionManagers/useShipTravelManager';
+import useCoachmarkRefSetter from '~/hooks/useCoachmarkRefSetter';
+import { COACHMARK_IDS } from '~/contexts/CoachmarkContext';
 
 const isVisible = ({ asteroid, crew, ship, zoomStatus }) => {
   if (!ship && crew?.Ship?.emergencyAt > 0) return true; // crew is in escape module
@@ -17,7 +19,7 @@ const isVisible = ({ asteroid, crew, ship, zoomStatus }) => {
   );
 };
 
-const SelectTravelDestination = ({ crew }) => {
+const SelectTravelDestination = ({ crew, simulation, simulationActions }) => {
   const inEscapeModule = !crew?._location?.shipId && crew?.Ship?.emergencyAt > 0;
   const { travelStatus, inOrbit } = useShipTravelManager(inEscapeModule ? crew : crew?._location?.shipId);
   const origin = useStore(s => s.asteroids.origin);
@@ -28,6 +30,7 @@ const SelectTravelDestination = ({ crew }) => {
   const dispatchTravelMode = useStore(s => s.dispatchTravelMode);
   const dispatchZoomStatusChanged = useStore(s => s.dispatchZoomStatusChanged);
   const zoomStatus = useStore(s => s.asteroids.zoomStatus);
+  const setCoachmarkRef = useCoachmarkRefSetter();
 
   const canSelect = inTravelMode && zoomStatus === 'out';
   const handleClick = useCallback(() => {
@@ -56,8 +59,10 @@ const SelectTravelDestination = ({ crew }) => {
   //  ship is selected and uncrewed or something?
   return (
     <ActionButton
-      flags={{ active: !!canSelect }}
+      ref={setCoachmarkRef(COACHMARK_IDS.actionButtonSelectDestination)}
+      flags={{ active: !!canSelect, disabled: simulation && !simulationActions.includes('PlanFlight') }}
       label={canSelect ? `Cancel ${planningOrSimulation}` : `${planOrSimulate} Flight Plan`}
+      labelAddendum={simulation && !simulationActions.includes('PlanFlight') ? 'simulation restricted' : ''}
       icon={<SimulateRouteIcon />}
       onClick={handleClick} />
   );

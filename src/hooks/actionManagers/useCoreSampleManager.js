@@ -60,7 +60,7 @@ const useCoreSampleManager = (lotId) => {
             current.origin = actionItem.event.returnValues.origin;
             current.originSlot = actionItem.event.returnValues.originSlot;
             current.startTime = actionItem._startTime || actionItem.event.timestamp;
-          }
+          };
           current.finishTime = activeSample.Deposit.finishTime;
           current.isNew = !activeSample.Deposit.initialYield;
           current.owner = activeSample.Control.controller.id;

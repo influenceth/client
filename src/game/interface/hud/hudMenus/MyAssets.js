@@ -16,6 +16,8 @@ import useSession from '~/hooks/useSession';
 import formatters from '~/lib/formatters';
 import { locationsArrToObj } from '~/lib/utils';
 import EntityName from '~/components/EntityName';
+import { COACHMARK_IDS } from '~/contexts/CoachmarkContext';
+import useCoachmarkRefSetter from '~/hooks/useCoachmarkRefSetter';
 
 const Wrapper = styled.div`
   display: flex;
@@ -151,7 +153,8 @@ const GroupedAssets = ({ assetTally, groupedAssets, isLoading, itemHeight, itemG
       titleText={<>{title}{isLoading && <LoadingMessage />}</>}
       titleLabel={`${assetTally} Asset${assetTally === 1 ? '' : 's'}`}
       collapsed={!assetTally}
-      containerHeight={itemHeight * assetTally + groupTitleHeight * groupTally + containerHeightBuffer}>
+      containerHeight={itemHeight * assetTally + groupTitleHeight * groupTally + containerHeightBuffer}
+      openOnChange={!!assetTally}>
       {!isLoading && assetTally === 0 && <EmptyMessage />}
       {singleGroupMode
         ? Object.values(groupedAssets)[0]?.map(itemGetter)
@@ -170,6 +173,7 @@ const GroupedAssets = ({ assetTally, groupedAssets, isLoading, itemHeight, itemG
 }
 
 const MyAssets = () => {
+  const setCoachmarkRef = useCoachmarkRefSetter();
   const { accountAddress } = useSession();
   const { crew, crews, selectCrew } = useCrewContext();
   const { data: walletAgreementsWithDupes, isLoading: agreementsLoading } = useWalletAgreements();
@@ -178,6 +182,7 @@ const MyAssets = () => {
   const { data: walletShips, isLoading: shipsLoading } = useWalletShips();
 
   const origin = useStore((s) => s.asteroids.origin);
+  const coachmarks = useStore(s => s.coachmarks);
   const launcherPage = useStore((s) => s.launcherPage);
   const dispatchLauncherPage = useStore((s) => s.dispatchLauncherPage);
 
@@ -367,13 +372,17 @@ const MyAssets = () => {
             groupedAssets={ships}
             assetTally={shipTally}
             isLoading={shipsLoading}
-            itemGetter={(ship) => (
-              <ShipBlock
-                key={ship.id}
-                onSelectCrew={onClickCrewAsset}
-                selectedCrew={crew}
-                ship={ship} />
-            )}
+            itemGetter={(ship) => {
+              const coachmarked = coachmarks[COACHMARK_IDS.hudMenuMyAssetsShip] === ship.id;
+              return (
+                <ShipBlock
+                  key={ship.id}
+                  onSelectCrew={onClickCrewAsset}
+                  selectedCrew={crew}
+                  ship={ship}
+                  setRef={coachmarked ? setCoachmarkRef(COACHMARK_IDS.hudMenuMyAssetsShip) : undefined} />
+              );
+            }}
             itemHeight={85}
             singleGroupMode={!allAsteroidsMode} />
 
@@ -382,13 +391,18 @@ const MyAssets = () => {
             groupedAssets={buildings}
             assetTally={buildingTally}
             isLoading={buildingsLoading}
-            itemGetter={(building) => (
-              <BuildingBlock
-                key={building.id}
-                onSelectCrew={onClickCrewAsset}
-                selectedCrew={crew}
-                building={building} />
-            )}
+            itemGetter={(building) => {
+              const coachmarked = coachmarks[COACHMARK_IDS.hudMenuMyAssetsBuilding] === building.id;
+              return (
+                <BuildingBlock
+                  key={building.id}
+                  onSelectCrew={onClickCrewAsset}
+                  selectedCrew={crew}
+                  building={building}
+                  setRef={coachmarked ? setCoachmarkRef(COACHMARK_IDS.hudMenuMyAssetsBuilding) : undefined}
+                />
+              );
+            }}
             itemHeight={55}
             singleGroupMode={!allAsteroidsMode} />
 
@@ -397,13 +411,18 @@ const MyAssets = () => {
             groupedAssets={agreements}
             assetTally={agreementTally}
             isLoading={agreementsLoading}
-            itemGetter={(agreement) => (
-              <AgreementBlock
-                key={agreement._agreement._path}
-                agreement={agreement}
-                onSelectCrew={onClickCrewAsset}
-                selectedCrew={crew} />
-            )}
+            itemGetter={(agreement) => {
+              const coachmarked = coachmarks[COACHMARK_IDS.hudMenuMyAssetsAgreement] === agreement.id;
+              return (
+                <AgreementBlock
+                  key={agreement._agreement._path}
+                  agreement={agreement}
+                  onSelectCrew={onClickCrewAsset}
+                  selectedCrew={crew}
+                  setRef={coachmarked ? setCoachmarkRef(COACHMARK_IDS.hudMenuMyAssetsAgreement) : undefined}
+                />
+              );
+            }}
             itemHeight={55}
             singleGroupMode={!allAsteroidsMode} />
           </Scrollable>

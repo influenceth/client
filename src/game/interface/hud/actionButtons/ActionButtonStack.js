@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import styled, { css } from 'styled-components';
 
 import MouseoverInfoPane from '~/components/MouseoverInfoPane';
@@ -96,6 +96,7 @@ const StackItemButton = ({ label, finishTime, preloadEntity, onClick, ...props }
   return (
     <ActionButton
       {...props}
+      ref={props.setRef}
       label={label}
       onClick={handleClick}
       flags={{
@@ -130,7 +131,6 @@ const ActionButtonStack = ({ stack, stackLabel, ...props }) => {
         {...props} />
     );
   }
-
   return (
     <span
       ref={setRefEl}
@@ -138,6 +138,7 @@ const ActionButtonStack = ({ stack, stackLabel, ...props }) => {
       onMouseLeave={() => setStackHovered()}>
       <ActionButton
         label=""
+        ref={props.setRef}
         {...props}
         flags={{
           attention: stackAttention,

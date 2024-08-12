@@ -13,6 +13,7 @@ import useCrewBuildings from '~/hooks/useCrewBuildings';
 import useBusyActivity from '~/hooks/useBusyActivity';
 import { hydrateActivities } from '~/lib/activities';
 import api from '~/lib/api';
+import SIMULATION_CONFIG from '~/simulation/simulationConfig';
 
 const ActionItemContext = React.createContext();
 
@@ -50,7 +51,7 @@ export function ActionItemProvider({ children }) {
       await hydrateActivities(activities, queryClient);
       return activities;
     },
-    { enabled: !!crewId }
+    { enabled: !!crewId && crewId !== SIMULATION_CONFIG.crewId }
   );
 
   const { data: crewBuildings, isLoading: plannedBuildingsLoading, dataUpdatedAt: plansUpdatedAt } = useCrewBuildings();

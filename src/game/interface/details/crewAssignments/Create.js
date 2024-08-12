@@ -40,6 +40,8 @@ import { CrewmateUserPrice } from '~/components/UserPrice';
 import FundingFlow from '~/game/launcher/components/FundingFlow';
 import { AdvancedStarterPack, BasicStarterPack } from '~/game/launcher/components/StarterPack';
 import { useSwayBalance } from '~/hooks/useWalletTokenBalance';
+import useSimulationEnabled from '~/hooks/useSimulationEnabled';
+import SIMULATION_CONFIG from '~/simulation/simulationConfig';
 
 const CollectionImages = {
   1: Collection1,
@@ -831,6 +833,8 @@ const TraitSelector = ({ crewmate, currentTraits, onUpdateTraits, onClose, trait
 const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, crewmateId, locationId, pendingCrewmate }) => {
   const history = useHistory();
 
+  const simulationEnabled = useSimulationEnabled();
+  const dispatchSimulationState = useStore((s) => s.dispatchSimulationState);
   const dispatchCrewAssignmentRestart = useStore((s) => s.dispatchCrewAssignmentRestart);
 
   const isNameValid = useNameAvailability({ id: crewmateId, label: Entity.IDS.CREWMATE });
@@ -1014,12 +1018,31 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
   }, [!!crewmate?.id, isPurchasingPack, packPromptDismissed, pendingTransactions, swayBalance]);
 
   // init appearance options as desired
+  const originalSimulationState = useStore(s => s.simulation);
+  const [namePrepopped, setNamePrepopped] = useState();
   useEffect(() => {
     if (crewmate && safeBigInt(crewmate.Crewmate?.appearance) === 0n && appearanceOptions?.length === 0) {
-      setAppearanceOptions([getRandomAdalianAppearance()]);
+      if (originalSimulationState?.crewmate?.appearance) {
+        const { clothes, ...unpacked } = Crewmate.unpackAppearance(originalSimulationState?.crewmate?.appearance);
+        unpacked.clothesOffset = 31 + Math.ceil(Math.random() * 2);
+        setAppearanceOptions([unpacked]);
+      } else {
+        setAppearanceOptions([getRandomAdalianAppearance()]);
+      }
       setAppearanceSelection(0);
     }
-  }, [!!crewmate, appearanceOptions?.length]);
+  }, [!!crewmate, appearanceOptions?.length, originalSimulationState]);
+
+  useEffect(() => {
+    if (crewmate && !crewmate.Name?.name) {
+      if (originalSimulationState?.crewmate?.name) {
+        setName(originalSimulationState.crewmate.name);
+        setNamePrepopped(true);
+        // console.log('nameInput.current', nameInput.current);
+        // nameInput.current.value = `${originalSimulationState.crewmate.name}`;
+      }
+    }
+  }, [!!crewmate, originalSimulationState]);
 
   // handle finalizing
   useEffect(() => {
@@ -1102,12 +1125,18 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
   }, [crewmate?.Crewmate?.class, selectedTraits, traitTally]);
 
   const confirmFinalize = useCallback(async () => {
+    if (simulationEnabled) {
+      dispatchSimulationState('crewmate', { id: SIMULATION_CONFIG.crewmateId, name, appearance: crewmate?.Crewmate?.appearance });
+      history.push('/');
+      return;
+    }
+
     // don't check name validity if could not rename (i.e. some names are to be grandfathered
     //  in from L1 since user cannot change them at this point anyway)
     if (!crewmate?._canRename || await isNameValid(name || crewmate?.Name?.name, crewmate?.id)) {
       setConfirming(true);
     }
-  }, [isNameValid, name, crewmate?.Name?.name, crewmate?.id, crewmate?._canRename]);
+  }, [isNameValid, name, crewmate?.id, crewmate?._canRename, crewmate?.Crewmate?.appearance, crewmate?.Name?.name, simulationEnabled]);
 
   const finalize = useCallback(() => {
     setConfirming(false);
@@ -1115,8 +1144,8 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
   }, [crewmate, purchaseAndOrInitializeCrewmate]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleBack = useCallback(() => {
-    history.push(backLocation);
-  }, [backLocation]);
+    history.push(simulationEnabled ? '/' : backLocation);
+  }, [backLocation, simulationEnabled]);
 
   // // show "complete" page (instead of "create") for non-recruitment assignments
   // useEffect(() => {
@@ -1202,10 +1231,11 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
 
   const readyForSubmission = useMemo(() => {
     if (!name) return false;
+    if (simulationEnabled) return true;
     if (!selectedClass) return false;
     if (selectedTraits?.length < traitTally) return false;
     return true;
-  }, [name, selectedClass, selectedTraits?.length, traitTally]);
+  }, [name, selectedClass, selectedTraits?.length, traitTally, simulationEnabled]);
 
   const confirmationProps = useMemo(() => {
     if (crewmate?.id) {
@@ -1216,7 +1246,7 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
     }
     
     const price = priceHelper.from(priceConstants.ADALIAN_PURCHASE_PRICE, priceConstants.ADALIAN_PURCHASE_TOKEN);
-    if (price.usdcValue > wallet.combinedBalance?.to(TOKEN.USDC)) {
+    if (price.usdcValue > wallet?.combinedBalance?.to(TOKEN.USDC)) {
       // if (process.env.REACT_APP_CHAIN_ID === '0x534e5f5345504f4c4941' && ethClaimEnabled) {
         // TODO: in sepolia, would be nice to remind there is a faucet *before* having to click through
       // }
@@ -1285,6 +1315,7 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
                             maxlength={Name.TYPES[Entity.IDS.CREWMATE].max}
                             pattern={Name.getTypeRegex(Entity.IDS.CREWMATE)}
                             onChange={handleNameChange}
+                            resetOnChange={namePrepopped}
                             placeholder="Crewmate Name" />
 
                           {checkingName && <NameLoading>Checking availability...</NameLoading>}
@@ -1325,181 +1356,185 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
                         </RerollContainer>
                       )}
 
-                      <RerollContainer>
-                        {traitsLocked
-                          ? (
-                            <RandomizeButton
-                              disabled={promptingTransaction || finalizing}
-                              lessTransparent
-                              onClick={() => setConfirmingUnlock(true)}
-                              style={{ width: 275 }}>
-                              Unlock Traits
-                            </RandomizeButton>
-                          )
-                          : (
-                            <>
+                      {!simulationEnabled && (
+                        <RerollContainer>
+                          {traitsLocked
+                            ? (
                               <RandomizeButton
                                 disabled={promptingTransaction || finalizing}
                                 lessTransparent
-                                onClick={rerollTraits}
+                                onClick={() => setConfirmingUnlock(true)}
                                 style={{ width: 275 }}>
-                                Randomize Traits
+                                Unlock Traits
                               </RandomizeButton>
-                            </>
-                          )
-                        }
-                      </RerollContainer>
+                            )
+                            : (
+                              <>
+                                <RandomizeButton
+                                  disabled={promptingTransaction || finalizing}
+                                  lessTransparent
+                                  onClick={rerollTraits}
+                                  style={{ width: 275 }}>
+                                  Randomize Traits
+                                </RandomizeButton>
+                              </>
+                            )
+                          }
+                        </RerollContainer>
+                      )}
 
                     </NameSection>
                   </>
                 )}
               </CenterColumn>
 
-              <Traits>
-                <TraitRow big>
-                  <Trait side="left">
-                    <div>
-                      <CollectionImage coll={crewmate.Crewmate.coll} />
-                    </div>
-                    <article>
-                      <h4>Collection</h4>
-                      <div>{Crewmate.getCollection(crewmate.Crewmate.coll)?.name}</div>
-                      <div style={{color: theme.colors.secondaryText}}>{Crewmate.getTitle(crewmate.Crewmate.title)?.name}</div>
-                    </article>
-                    <TipHolder>
-                      <TriangleTip strokeWidth="1" rotate="90" />
-                      <TipIcon side="left">
-                        <UnclickableIcon><LockedIcon /></UnclickableIcon>
-                      </TipIcon>
-                    </TipHolder>
-                  </Trait>
+              {!simulationEnabled && (
+                <Traits>
+                  <TraitRow big>
+                    <Trait side="left">
+                      <div>
+                        <CollectionImage coll={crewmate.Crewmate.coll} />
+                      </div>
+                      <article>
+                        <h4>Collection</h4>
+                        <div>{Crewmate.getCollection(crewmate.Crewmate.coll)?.name}</div>
+                        <div style={{color: theme.colors.secondaryText}}>{Crewmate.getTitle(crewmate.Crewmate.title)?.name}</div>
+                      </article>
+                      <TipHolder>
+                        <TriangleTip strokeWidth="1" rotate="90" />
+                        <TipIcon side="left">
+                          <UnclickableIcon><LockedIcon /></UnclickableIcon>
+                        </TipIcon>
+                      </TipHolder>
+                    </Trait>
 
-                  <TraitSpacer />
+                    <TraitSpacer />
 
-                  <PopperWrapper>
-                    {(refEl, setRefEl) => (
-                      <>
-                        <Trait
-                          ref={animationComplete ? setRefEl : noop}
-                          onClick={(disableChanges || !crewmate._canReclass) ? noop : () => setToggling('class')}
-                          onMouseEnter={animationComplete ? () => setHovered('class') : noop}
-                          onMouseLeave={() => setHovered()}
-                          side="right"
-                          isClickable={!disableChanges && crewmate._canReclass}
-                          isToggling={toggling === 'class'}
-                          isEmpty={!crewmate.Crewmate.class}>
-                          <div>
-                            <CrewClassIcon crewClass={crewmate.Crewmate.class} />
-                          </div>
-                          <article>
-                            <h4>{crewmate.Crewmate.class ? 'Class' : 'Select Class'}</h4>
-                            <div>{classObjects[crewmate.Crewmate.class]?.name}</div>
-                          </article>
-                          <TipHolder>
-                            <TriangleTip strokeWidth="1" rotate="-90" />
-                            <TipIcon side="right">
-                              <ClickableIcon><RightArrowIcon /></ClickableIcon>
-                              <UnclickableIcon><LockedIcon /></UnclickableIcon>
-                            </TipIcon>
-                          </TipHolder>
-                        </Trait>
+                    <PopperWrapper>
+                      {(refEl, setRefEl) => (
+                        <>
+                          <Trait
+                            ref={animationComplete ? setRefEl : noop}
+                            onClick={(disableChanges || !crewmate._canReclass) ? noop : () => setToggling('class')}
+                            onMouseEnter={animationComplete ? () => setHovered('class') : noop}
+                            onMouseLeave={() => setHovered()}
+                            side="right"
+                            isClickable={!disableChanges && crewmate._canReclass}
+                            isToggling={toggling === 'class'}
+                            isEmpty={!crewmate.Crewmate.class}>
+                            <div>
+                              <CrewClassIcon crewClass={crewmate.Crewmate.class} />
+                            </div>
+                            <article>
+                              <h4>{crewmate.Crewmate.class ? 'Class' : 'Select Class'}</h4>
+                              <div>{classObjects[crewmate.Crewmate.class]?.name}</div>
+                            </article>
+                            <TipHolder>
+                              <TriangleTip strokeWidth="1" rotate="-90" />
+                              <TipIcon side="right">
+                                <ClickableIcon><RightArrowIcon /></ClickableIcon>
+                                <UnclickableIcon><LockedIcon /></UnclickableIcon>
+                              </TipIcon>
+                            </TipHolder>
+                          </Trait>
 
-                        <MouseoverInfoPane referenceEl={refEl} {...mouseoverPaneProps(hovered === 'class' && crewmate.Crewmate.class && !toggling)}>
-                          <MouseoverInfoContent
-                            title={classObjects[crewmate.Crewmate.class]?.name}
-                            description={(
-                              <>
-                                {classObjects[crewmate.Crewmate.class]?.description}
-
-                                <MouseoverSubtitle>{classObjects[crewmate.Crewmate.class]?.name} Bonuses</MouseoverSubtitle>
-                                {classObjects[crewmate.Crewmate.class]?.abilities}
-                              </>
-                            )}
-                          />
-                        </MouseoverInfoPane>
-
-                        <MouseoverInfoPane
-                          referenceEl={refEl}
-                          {...mouseoverPaneProps(toggling === 'class', true)}>
-                          <ClassSelector
-                            onClose={setToggling}
-                            classObjects={classObjects}
-                            crewmate={crewmate}
-                            onUpdateClass={onUpdateClass} />
-                        </MouseoverInfoPane>
-                      </>
-                    )}
-                  </PopperWrapper>
-                </TraitRow>
-
-                {Array.from(Array(Math.ceil(traitTally / 2))).map((_, i) => {
-                  return (
-                    <TraitRow key={i}>
-                      {Array.from(Array(2)).map((_, j) => {
-                        const traitIndex = 2 * i + j;
-                        const hoverKey = traitIndex;
-                        const trait = traitObjects[traitIndex];
-                        const side = j === 0 ? 'left' : 'right';
-                        return (
-                          <Fragment key={j}>
-                            <PopperWrapper>
-                              {(refEl, setRefEl) => (
+                          <MouseoverInfoPane referenceEl={refEl} {...mouseoverPaneProps(hovered === 'class' && crewmate.Crewmate.class && !toggling)}>
+                            <MouseoverInfoContent
+                              title={classObjects[crewmate.Crewmate.class]?.name}
+                              description={(
                                 <>
-                                  <Trait
-                                    ref={animationComplete ? setRefEl : noop}
-                                    onClick={(disableChanges || !crewmate.Crewmate.class || traitIndex > selectedTraits?.length) ? noop : () => setToggling(hoverKey)}
-                                    onMouseEnter={animationComplete ? () => setHovered(hoverKey) : noop}
-                                    onMouseLeave={() => setHovered()}
-                                    side={side}
-                                    type={trait?.type}
-                                    isClickable={!disableChanges && crewmate.Crewmate.class && traitIndex <= selectedTraits?.length}
-                                    isEmpty={!trait}
-                                    isToggling={toggling === hoverKey}
-                                    isAtRisk={toggling === 'class' || toggling < traitIndex}>
-                                    <div>
-                                      <CrewTraitIcon trait={trait?.id} type={trait?.type} hideFallback opaque />
-                                    </div>
-                                    <article>
-                                      <h4>{trait?.name}</h4>
-                                      {!trait?.name && crewmate.Crewmate.class && traitIndex === selectedTraits?.length && <h4>Select Trait</h4>}
-                                      <div>{trait?.type && (trait?.type === 'impactful' ? 'Impactful' : 'Cosmetic')}</div>
-                                    </article>
-                                    <TipHolder>
-                                      <TriangleTip strokeWidth="1" rotate={side === 'left' ? 90 : -90} />
-                                      <TipIcon side={side}>
-                                        <ClickableIcon>{side === 'left' ? <LeftArrowIcon /> : <RightArrowIcon />}</ClickableIcon>
-                                        <UnclickableIcon><LockedIcon /></UnclickableIcon>
-                                        <AtRiskIcon><CloseIcon /></AtRiskIcon>
-                                      </TipIcon>
-                                    </TipHolder>
-                                  </Trait>
+                                  {classObjects[crewmate.Crewmate.class]?.description}
 
-                                  <MouseoverInfoPane referenceEl={refEl} {...mouseoverPaneProps(hovered === hoverKey && trait && !toggling)}>
-                                    <MouseoverInfoContent title={trait?.name} description={formatters.crewmateTraitDescription(trait?.description)} />
-                                  </MouseoverInfoPane>
-
-                                  <MouseoverInfoPane
-                                    referenceEl={refEl}
-                                    {...mouseoverPaneProps(toggling === hoverKey, true)}>
-                                    <TraitSelector
-                                      onClose={setToggling}
-                                      crewmate={crewmate}
-                                      currentTraits={traitObjects}
-                                      traitIndex={traitIndex}
-                                      onUpdateTraits={onUpdateTraits} />
-                                  </MouseoverInfoPane>
+                                  <MouseoverSubtitle>{classObjects[crewmate.Crewmate.class]?.name} Bonuses</MouseoverSubtitle>
+                                  {classObjects[crewmate.Crewmate.class]?.abilities}
                                 </>
                               )}
-                            </PopperWrapper>
-                            {side === 'left' && <TraitSpacer />}
-                          </Fragment>
-                        );
-                      })}
+                            />
+                          </MouseoverInfoPane>
 
-                    </TraitRow>
-                  );
-                })}
-              </Traits>
+                          <MouseoverInfoPane
+                            referenceEl={refEl}
+                            {...mouseoverPaneProps(toggling === 'class', true)}>
+                            <ClassSelector
+                              onClose={setToggling}
+                              classObjects={classObjects}
+                              crewmate={crewmate}
+                              onUpdateClass={onUpdateClass} />
+                          </MouseoverInfoPane>
+                        </>
+                      )}
+                    </PopperWrapper>
+                  </TraitRow>
+
+                  {Array.from(Array(Math.ceil(traitTally / 2))).map((_, i) => {
+                    return (
+                      <TraitRow key={i}>
+                        {Array.from(Array(2)).map((_, j) => {
+                          const traitIndex = 2 * i + j;
+                          const hoverKey = traitIndex;
+                          const trait = traitObjects[traitIndex];
+                          const side = j === 0 ? 'left' : 'right';
+                          return (
+                            <Fragment key={j}>
+                              <PopperWrapper>
+                                {(refEl, setRefEl) => (
+                                  <>
+                                    <Trait
+                                      ref={animationComplete ? setRefEl : noop}
+                                      onClick={(disableChanges || !crewmate.Crewmate.class || traitIndex > selectedTraits?.length) ? noop : () => setToggling(hoverKey)}
+                                      onMouseEnter={animationComplete ? () => setHovered(hoverKey) : noop}
+                                      onMouseLeave={() => setHovered()}
+                                      side={side}
+                                      type={trait?.type}
+                                      isClickable={!disableChanges && crewmate.Crewmate.class && traitIndex <= selectedTraits?.length}
+                                      isEmpty={!trait}
+                                      isToggling={toggling === hoverKey}
+                                      isAtRisk={toggling === 'class' || toggling < traitIndex}>
+                                      <div>
+                                        <CrewTraitIcon trait={trait?.id} type={trait?.type} hideFallback opaque />
+                                      </div>
+                                      <article>
+                                        <h4>{trait?.name}</h4>
+                                        {!trait?.name && crewmate.Crewmate.class && traitIndex === selectedTraits?.length && <h4>Select Trait</h4>}
+                                        <div>{trait?.type && (trait?.type === 'impactful' ? 'Impactful' : 'Cosmetic')}</div>
+                                      </article>
+                                      <TipHolder>
+                                        <TriangleTip strokeWidth="1" rotate={side === 'left' ? 90 : -90} />
+                                        <TipIcon side={side}>
+                                          <ClickableIcon>{side === 'left' ? <LeftArrowIcon /> : <RightArrowIcon />}</ClickableIcon>
+                                          <UnclickableIcon><LockedIcon /></UnclickableIcon>
+                                          <AtRiskIcon><CloseIcon /></AtRiskIcon>
+                                        </TipIcon>
+                                      </TipHolder>
+                                    </Trait>
+
+                                    <MouseoverInfoPane referenceEl={refEl} {...mouseoverPaneProps(hovered === hoverKey && trait && !toggling)}>
+                                      <MouseoverInfoContent title={trait?.name} description={formatters.crewmateTraitDescription(trait?.description)} />
+                                    </MouseoverInfoPane>
+
+                                    <MouseoverInfoPane
+                                      referenceEl={refEl}
+                                      {...mouseoverPaneProps(toggling === hoverKey, true)}>
+                                      <TraitSelector
+                                        onClose={setToggling}
+                                        crewmate={crewmate}
+                                        currentTraits={traitObjects}
+                                        traitIndex={traitIndex}
+                                        onUpdateTraits={onUpdateTraits} />
+                                    </MouseoverInfoPane>
+                                  </>
+                                )}
+                              </PopperWrapper>
+                              {side === 'left' && <TraitSpacer />}
+                            </Fragment>
+                          );
+                        })}
+
+                      </TraitRow>
+                    );
+                  })}
+                </Traits>
+              )}
             </>
           )}
 

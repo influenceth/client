@@ -27,10 +27,8 @@ const storeAssets = {
 };
 
 export const basicPackPriceUSD = 29;
-export const basicPackSwayMin = 170000;
 export const basicPackCrewmates = 2;
 export const advPackPriceUSD = 89;
-export const advPackSwayMin = 570000;
 export const advPackCrewmates = 5;
 
 const skuButtonCornerSize = 20;

@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import styled from 'styled-components';
 import { ReactNotifications, Store as notify } from 'react-notifications-component';
 import 'react-notifications-component/dist/theme.css';
@@ -113,6 +113,13 @@ const Description = styled.div`
   }
 `;
 
+const StackNote = styled.div`
+  font-size: 85%;
+  margin-top: 6;
+  opacity: 0.6;
+  text-align: right;
+`;
+
 const TransactionLink = styled.a`
   flex: 0 0 28px;
   font-size: 116%;
@@ -168,25 +175,58 @@ export const useControlledAlert = () => {
 
   return { create, destroy };
 }
+
 const Alerts = () => {
   const alerts = useStore(s => s.logs.alerts);
   const notifyAlert = useStore(s => s.dispatchAlertNotified);
   const playSound = useStore(s => s.dispatchEffectStartRequested);
 
+  const stacks = useRef({});
+
+  const collapseStack = useCallback((stackId) => {
+    if (!stacks.current[stackId]) stacks.current[stackId] = {};
+    
+    if (stacks.current[stackId].messageId && stacks.current[stackId].endTime > Date.now()) {
+      const messageId = stacks.current[stackId].messageId;
+      setTimeout(() => { try { console.log('removal', notify.removeNotification(messageId)); } catch (e) {/* no op */} }, 50);
+      stacks.current[stackId].tally++;
+    } else {
+      stacks.current[stackId].tally = 0;
+    }
+  }, []);
+
+  const updateStack = useCallback((stackId, newMessageId, duration) => {
+    stacks.current[stackId] = {
+      messageId: newMessageId,
+      endTime: Date.now() + duration,
+      tally: stacks.current[stackId]?.tally || 0
+    };
+  }, []);
+
   useEffect(() => {
     if (alerts?.length === 0) return;
     alerts.filter(a => !a.notified).forEach(a => {
-      const { type, data, level } = a;
+      console.log('pmk', stacks.current.testactivity?.messageId, stacks.current.testactivity?.tally)
+
+      const { type, data, level, duration } = a;
       const alertContent = getAlertContent({ type, data });
+      const stackId = data?.stackId;
       if (alertContent) {
+        if (stackId && duration) collapseStack(stackId);
+
         const { icon, content, txLink } = alertContent;
-        send(
+        const messageId = send(
           <AlertWrapper level={level}>
             <Icon>
               {icon}
             </Icon>
             <Description>
               {content}
+              {stacks.current?.[stackId]?.tally > 0 && (
+                <StackNote>
+                  + {stacks.current?.[stackId]?.tally} similar notifications...
+                </StackNote>
+              )}
             </Description>
             {txLink && (
               <TransactionLink href={txLink} rel="noreferrer" target="_blank">
@@ -196,6 +236,10 @@ const Alerts = () => {
           </AlertWrapper>,
           getOptions(a)
         );
+
+        if (stackId && duration) updateStack(stackId, messageId, duration);
+
+        // TODO: only play once per stack
         if (level === 'warning') {
           playSound('failure');
         } else {
