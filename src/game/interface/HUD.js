@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import styled from 'styled-components';
 
@@ -89,21 +89,34 @@ export const Rule = styled.div`
   width: 100%;
 `;
 
+const SimulationRedirector = ({ simulationEnabled }) => {
+  const history = useHistory();
+  const { accountAddress } = useSession(false);
+  const simulationActions = useStore((s) => s.simulationActions);
+
+  const [readyToRedirect, setReadyToRedirect] = useState();
+
+  // redirect to /recruit when unmounted (if on last step)
+  useEffect(() => {
+    if (simulationEnabled && simulationActions.includes('RedirectToRecruitOnLogin')) {
+      setReadyToRedirect(true);
+    }
+  }, [simulationEnabled, simulationActions]);
+
+  useEffect(() => {
+    if (readyToRedirect && !!accountAddress) {
+      history.push('/recruit/0');
+      setReadyToRedirect(false);
+    }
+  }, [accountAddress])
+
+  return null;
+};
+
 const HUD = () => {
   const { accountAddress, authenticated, authenticating } = useSession();
   const { loading } = useCrewContext();
-  const history = useHistory();
   const simulationEnabled = useSimulationEnabled();
-  
-  useEffect(() => {
-    if (simulationEnabled) {
-      return () => {
-        if (accountAddress) {
-          history.push('/recruit/0');
-        }
-      }
-    }
-  }, [simulationEnabled]);
 
   const dispatchLauncherPage = useStore(s => s.dispatchLauncherPage);
   return (
@@ -141,6 +154,8 @@ const HUD = () => {
       <ActionDialog />
 
       {simulationEnabled && <WelcomeSimulation />}
+      <SimulationRedirector simulationEnabled={simulationEnabled} />
+
     </>
   );
 }

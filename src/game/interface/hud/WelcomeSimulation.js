@@ -74,7 +74,7 @@ const CrewmateImage = styled.div`
 `;
 
 const WelcomeSimulation = () => {
-  const { connecting } = useSession();
+  const { connecting } = useSession(false);
   const setCoachmarkRef = useCoachmarkRefSetter();
   const [isHidden, setIsHidden] = useState(false);
   const [canAutohide, setCanAutohide] = useState(false);

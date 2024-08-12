@@ -1036,6 +1036,9 @@ const useSimulationSteps = () => {
           </>
         ),
         crewmateImageOptionString: JSON.stringify({ coll: Crewmate.COLLECTION_IDS.ADALIAN, appearance: simulation.crewmate?.appearance }),
+        enabledActions: {
+          RedirectToRecruitOnLogin: true
+        },
         rightButton: {
           children: 'Begin Your Journey',
           disabled: connecting,
@@ -1053,7 +1056,7 @@ const useSimulationSteps = () => {
             //   history.push('/recruit/0');
             // }, 100);
           },
-        },
+        }
       },
     ];
   }, [
@@ -1122,6 +1125,9 @@ const useSimulationSteps = () => {
       }
     }
     dispatchCoachmarks(currentCoachmarks);
+    return () => {
+      dispatchCoachmarks({});
+    }
   }, [currentStep?.coachmarks, pendingTransactions]);
 
   // derive and dispatch enabled-action config
