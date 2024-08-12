@@ -256,8 +256,11 @@ export function ActivitiesProvider({ children }) {
           if (activityConfig?.triggerAlert) {
             createAlert({
               type: 'ActivityLog',
-              data: activityConfig?.logContent,
-              duration: 10000
+              data: {
+                ...activityConfig?.logContent,
+                stackId: activity.event?.name,
+              },
+              duration: 10000,
             })
           };
         }

@@ -400,7 +400,7 @@ const InfoPane = () => {
       playSound(soundName, { loop: false, duration: 4000, fadeOut: 1000 });
       setCurrentSound(soundName);
     }
-  }, [lot, setCurrentSound, stopSound, playSound, currentSound]);
+  }, [lot?.building?.id, stopSound, playSound, currentSound]);
 
   useEffect(() => {
     setHover(false);

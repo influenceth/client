@@ -1,9 +1,9 @@
-import { QueryObserver, useQuery, useQueryClient } from 'react-query';
+import { useQuery, useQueryClient } from 'react-query';
 import { Building, Deposit, DryDock, Entity, Extractor, Inventory, Lot, Order, Permission, Processor, Product, Ship } from '@influenceth/sdk';
 
 import useSimulationState from '~/hooks/useSimulationState';
 import SIMULATION_CONFIG from './simulationConfig';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { entitiesCacheKey } from '~/lib/cacheKey';
 import { entityToAgreements } from '~/lib/utils';
 import { statuses as walletBuildingStatuses } from '~/hooks/useWalletBuildings';

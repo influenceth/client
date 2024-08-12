@@ -306,6 +306,7 @@ const HudMenu = () => {
     // else, already open, but clicking different button --> close, then open new
     } else if (open) {
       setOpen(false);
+      dispatchHudMenuOpened();
       setTimeout(() => {
         if (onOpen) onOpen();
         else dispatchHudMenuOpened(selected);

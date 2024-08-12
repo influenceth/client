@@ -506,8 +506,11 @@ const MockTransactionManager = () => {
       if (config?.triggerAlert && config?.logContent) {
         createAlert({
           type: 'ActivityLog',
-          data: config.logContent,
-          duration: 10000
+          data: {
+            ...config.logContent,
+            stackId: mockActivity.event?.name
+          },
+          duration: 10000,
         })
       }
       

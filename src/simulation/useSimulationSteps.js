@@ -20,9 +20,10 @@ import useCrewShips from '~/hooks/useCrewShips';
 import EntityName from '~/components/EntityName';
 import useTravelSolutionIsValid from '~/hooks/useTravelSolutionIsValid';
 import { SwayIcon } from '~/components/Icons';
-import { formatPrice } from '~/lib/utils';
+import { fireTrackingEvent, formatPrice } from '~/lib/utils';
 import { TOKEN, TOKEN_SCALE } from '~/lib/priceUtils';
 import useSession from '~/hooks/useSession';
+import { cutsceneHideTime } from '~/game/Cutscene';
 
 const DELAY_MESSAGE = 1000;
 
@@ -54,6 +55,7 @@ const useSimulationSteps = () => {
   const dispatchZoomScene = useStore(s => s.dispatchZoomScene);
   const updateZoomStatus = useStore(s => s.dispatchZoomStatusChanged);
 
+  const cutscene = useStore(s => s.cutscene);
   const openHudMenu = useStore(s => s.openHudMenu);
   const origin = useStore(s => s.asteroids.origin);
   const destination = useStore(s => s.asteroids.destination);
@@ -64,7 +66,6 @@ const useSimulationSteps = () => {
   const actionDialog = useStore(s => s.actionDialog);
   const inTravelMode = useStore(s => s.asteroids.travelMode);
   const travelSolution = useStore(s => s.asteroids.travelSolution);
-  const travelSolutionIsValid = useTravelSolutionIsValid();
 
   const { data: crewAgreements, isLoading: agreementsLoading } = useCrewAgreements(true, false, true);
   const { data: crewBuildings, isLoading: buildingsLoading } = useCrewBuildings();
@@ -73,6 +74,7 @@ const useSimulationSteps = () => {
   const { data: crewOrders, isLoading: ordersLoading } = useCrewOrders(crew?.id);
   const { data: selectedLot, isLoading: lotLoading } = useLot(selectedLotId);
   const isLoading = agreementsLoading || buildingsLoading || depositsLoading || shipsLoading || ordersLoading || lotLoading;
+  const travelSolutionIsValid = useTravelSolutionIsValid();
 
   const [locationPath, setLocationPath] = useState();
   const [transitioning, setTransitioning] = useState();
@@ -86,6 +88,10 @@ const useSimulationSteps = () => {
   const resetAsteroidFilters = () => dispatchFiltersReset('asteroids');
   
   const advance = useCallback(() => {
+    // track that step was completed
+    fireTrackingEvent('tutorial', { step: simulation.step });
+
+    // transition to next step
     const nextStep = (simulation.step || 0) + 1;
     
     setTransitioning(true);
@@ -297,7 +303,9 @@ const useSimulationSteps = () => {
         crewmateId: SIMULATION_CONFIG.crewmates.pilot,
         targetLocation: () => ({ zoomStatus: 'in', origin: 1 }),
         initialize: () => {
-          goTo({ cinematic: true, zoomStatus: 'in', origin: 1 })
+          setTimeout(() => {  // delay zoom until after fade out (if there is a cutscene)
+            goTo({ cinematic: true, zoomStatus: 'in', origin: 1 })
+          }, cutscene ? cutsceneHideTime : 0);
         },
         coachmarks: {
           // TODO: rightButton?
@@ -407,7 +415,7 @@ const useSimulationSteps = () => {
         },
         coachmarks: {
           [COACHMARK_IDS.hudCrewLocation]: selectedLotId !== crew?._location?.lotId,
-          [COACHMARK_IDS.simulationRightButton]: selectedLotId === crew?._location?.lotId,
+          // [COACHMARK_IDS.simulationRightButton]: selectedLotId === crew?._location?.lotId,
         },
         rightButton: selectedLotId === crew?._location?.lotId && {
           children: 'Next',
@@ -1032,6 +1040,8 @@ const useSimulationSteps = () => {
           children: 'Begin Your Journey',
           disabled: connecting,
           onClick: () => {
+            fireTrackingEvent('tutorial', { step: 'login' });
+            
             // webWallet does not work from localhost...
             login(process.env.NODE_ENV === 'development' ? undefined : { webWallet: true });
             // TODO: add on-logged-in url
@@ -1054,6 +1064,7 @@ const useSimulationSteps = () => {
     crewBuildings,
     crewDeposits,
     crewShips,
+    cutscene,
     inTravelMode,
     isLoading,
     locationPath,
