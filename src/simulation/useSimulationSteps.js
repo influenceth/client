@@ -295,12 +295,12 @@ const useSimulationSteps = () => {
             Welcome, Adalian! The Prime Council knows that you are eager to get out there and get started, 
             but first we need to ensure that you are equipped with the knowledge you need to survive here.
             <br /><br />
-            Remember: the <a href="https://wiki.influenceth.io/en/docs/user-guides" target="_blank" rel="noopener noreferrer">Wiki</a>
-            {' '}and  <a href="https://discord.com/invite/influenceth" target="_blank" rel="noopener noreferrer">Discord</a>
-            {' '}are resources that are always available to you when seeking help from your fellow Adalians.
+            I'm Dr. Yuri Prokhorov, and I was the last Provost of the Arvad, the great generational ship 
+            that arrived here from Earth. Education has been my life's work, and I'm continuing that work 
+            by assisting you as you enter adulthood in Adalia.
           </>
         ),
-        crewmateId: SIMULATION_CONFIG.crewmates.pilot,
+        crewmateId: SIMULATION_CONFIG.crewmates.scientist,
         targetLocation: () => ({ zoomStatus: 'in', origin: 1 }),
         initialize: () => {
           setTimeout(() => {  // delay zoom until after fade out (if there is a cutscene)
@@ -320,9 +320,10 @@ const useSimulationSteps = () => {
         content: (
           <>
             Before you choose which class to join and begin your specialized education, you have one 
-            last general education requirement to complete. Your final requirement takes the form of a 
-            practical internship as a new recruit, where you will learn about life in Adalia by joining an 
-            experienced crew made up of volunteers who are ready to teach you.
+            last general education requirement to complete. Your final requirement is a training simulation 
+            which takes the form of a practical internship as a new recruit. You'll be learning about life 
+            in Adalia by joining an experienced crew made up of volunteers who are ready to teach you. I'll 
+            be helping to get you started with your training and finding a crew for you to join.
             <br/><br/>
             Click on the empty crew slot in your HUD to get started.
           </>
@@ -340,14 +341,16 @@ const useSimulationSteps = () => {
       {
         // TODO: navigate to fake /crew page? could probably do now that faking state
         title: `Welcome, ${simulation.crewmate?.name}!`,
-        content: `Your friends are going to be so envious - you must be one of the luckiest new recruits
-          in Adalia! The rest of the crew for your internship is composed of some of the most famous
-          Adalians - they were all Department Heads and members of the Prime Council aboard the Arvad,
-          the great generational ship that arrived here from Earth.`,
+        content: `
+          Your friends are going to be so envious - you must be one of the luckiest new recruits in Adalia. 
+          The rest of the crew for your training is composed of some of the most illustrious Adalians - 
+          they were all Department Heads and members of the Prime Council aboard the Arvad, before it was 
+          dismantled for parts to build our first settlements here.
+        `,
         crewmateId: SIMULATION_CONFIG.crewmates.scientist,
         coachmarks: {
           // TODO: brief flash on crewmate added to AvatarMenu?
-          // TODO: rightButton?
+          // [COACHMARK_IDS.simulationRightButton]: true
         }, 
         initialize: () => {/* TODO: open crew details? */},
         rightButton: {
@@ -356,14 +359,14 @@ const useSimulationSteps = () => {
         },
       },
       {
-        title: 'Welcome to Adalia',
+        title: 'This is Adalia',
         content: `
-          Located partly inside our star's habitable "Goldilocks Zone," the Adalian asteroid belt is
-          comprised of 250,000 asteroids with unique orbital paths & resource compositions. Adalians
-          may purchase development rights to entire asteroids, or join with larger organizations
-          attempting to develop their own colonies in the belt.
+          Located partially inside our star's habitable "Goldilocks Zone," the Adalian asteroid belt is 
+          comprised of 250,000 asteroids with unique orbital paths & resource compositions. While it isn't 
+          the habitable planet that our ancestors who set out from Earth hoped to find, these asteroids 
+          have become our homes, and our only means of survival.
         `,
-        crewmateId: SIMULATION_CONFIG.crewmates.pilot,
+        crewmateId: SIMULATION_CONFIG.crewmates.scientist,
         targetLocation: () => ({ zoomStatus: 'out' }),
         initialize: () => {
           goTo({ zoomStatus: 'out' })
@@ -379,7 +382,7 @@ const useSimulationSteps = () => {
       },
       {
         title: 'Adalia Prime - The First Colony',
-        content: `I've focused your nav panel on Adalia Prime. Click the HUD to zoom in for a closer look.`,
+        content: `I've focused your navigation panel on Adalia Prime. Click the HUD to zoom in for a closer look.`,
         crewmateId: SIMULATION_CONFIG.crewmates.scientist,
         targetLocation: () => ({ zoomStatus: 'in', origin: 1 }),
         initialize: () => {
@@ -395,17 +398,15 @@ const useSimulationSteps = () => {
         title: 'Adalia Prime - The First Colony',
         content: (
           <>
-            Adalia Prime is the single largest asteroid in the belt and the oldest hub of commerce and human
-            activity. While we all owe our lives to the Arvad, the wayward colony ship that was moored and
-            dismantled to form the first permanent settlements, Adalia Prime was our first real home here
-            in the asteroid belt. Here, at any public Habitats, you can find fellow new recruits when you
-            are ready to form your first crew.
-          {selectedLotId !== crew?._location?.lotId && (
-            <>
-              <br/><br/>
-              Click on the HUD crew location to zoom to your current station.
-            </>
-          )}
+            Adalia Prime is the single largest asteroid in the belt and the oldest hub of commerce and human activity. 
+            Here was our first real home in the asteroid belt, and this is where, at any public Habitat, you can find 
+            fellow new recruits when you are ready to form your first crew.
+            {selectedLotId !== crew?._location?.lotId && (
+              <>
+                <br/><br/>
+                Click on the HUD crew location to zoom to your current station.
+              </>
+            )}
           </>
         ),
         crewmateId: SIMULATION_CONFIG.crewmates.scientist,
@@ -426,10 +427,10 @@ const useSimulationSteps = () => {
         title: 'Resource Mapping',
         content: (
           <>
-            Every asteroid has a set of resources available for us to mine, refine, and use in 
-            manufacturing. Resource maps show you where the highest concentrations are located on a 
-            particular asteroid. No single asteroid has everything we need to survive, but, when we combine 
-            resources from all of the spectral types, we have everything we need to sustain our colony.
+            Every asteroid has a set of resources available for you to mine, refine, and use in manufacturing. Resource 
+            maps show you where the highest concentrations are located on a particular asteroid. No single asteroid has 
+            everything we need to survive, but, when we combine resources from all of the spectral types, we have 
+            everything we need to sustain our colony.
             {!selectedResourceId && (
               <>
                 <br /><br />
@@ -456,18 +457,24 @@ const useSimulationSteps = () => {
       },
       {
         title: 'Lease Some Lots',
-        content: `Since the Prime Council still controls Adalia Prime, you'll have to lease some lots of
-          land from them. The first task that you are assigned is to find an unoccupied lot to lease. It's
-          also your first lesson in how the economics of Adalia operate.`,
-        crewmateId: SIMULATION_CONFIG.crewmates.engineer,
+        content: `
+          Now that you understand Adalia, you're ready to join your crew and get some practical experience. Since 
+          the Prime Council still controls Adalia Prime, you'll have to lease some lots of land from them. The 
+          first task that you are assigned in your internship is to find an unoccupied lot to lease. It's also your 
+          first lesson in how the economics of Adalia operate. I'll hand you over to Mason Quince to get started.
+        `,
+        crewmateId: SIMULATION_CONFIG.crewmates.scientist,
         rightButton: { children: 'Next', onClick: () => advance(), },
       },
       {
         title: 'Lease Some Lots',
-        content: `Mason Quince, a leading member of a prominent Merchant's Guild, gives you some advice:
-          "Leasing lots is all about balance. The further out from the city centers that you go, the 
-          cheaper the lots, but the higher the commute time for your crew and goods to get to market. Find 
-          the right balance and I'm sure you'll find a sweet spot to set up a beginning mining operation."`,
+        content: `
+          Hey there, I'm Mason, and I'm one of the founding members of the Merchant's of Venus Guild, and I'm here 
+          to dispense some of my infinite wisdom to you. Leasing lots is all about balance. The further out from 
+          the city centers that you go, the cheaper the lots, but the higher the commute time for your crew and 
+          goods to get to market. Find the right balance and I'm sure you'll find a sweet spot to set up a 
+          beginning mining operation.
+        `,
         crewmateId: SIMULATION_CONFIG.crewmates.merchant,
         rightButton: { children: 'Next', onClick: () => advance(), },
       },
@@ -475,14 +482,15 @@ const useSimulationSteps = () => {
         title: 'Lease Some Lots',
         content: (
           <>
-            I've sent you <SwayIcon />{formatPrice(SIMULATION_CONFIG.startingSway / TOKEN_SCALE[TOKEN.SWAY], { minPrecision: 0 })} SWAY, the currency of
-            Adalia, to get you started. Try not to spend it all in one place! Or do, it's up to you, this
-            is only a simulation.
+            I've sent you <SwayIcon />{formatPrice(SIMULATION_CONFIG.startingSway / TOKEN_SCALE[TOKEN.SWAY], { minPrecision: 0 })}{' '}
+            SWAY, the currency of Adalia, to get you started. Try not to spend it all in one place! Or do, it's up to you, this is 
+            only a simulation.
             <br/><br/>
-            Choose a spot on Adalia Prime that is unoccupied and has an abundance of{' '}
-            {Product.TYPES[SIMULATION_CONFIG.resourceId].name}, keeping in mind my advice about balance.
+              Choose a spot on Adalia Prime that is unoccupied and has an abundance of 
+              {' '}{Product.TYPES[SIMULATION_CONFIG.resourceId].name}, keeping in mind my advice about balance.
             <br/><br/>
-            Click the pip at the center of any lot to reveal lot-specific actions in the HUD.
+            Zoom in until you see the hexes show up and click the spot at the center of any lot to reveal lot-specific actions in 
+            the HUD.
           </>
         ),
         crewmateId: SIMULATION_CONFIG.crewmates.merchant,
@@ -523,10 +531,9 @@ const useSimulationSteps = () => {
         title: 'Lease Some Lots',
         content: (
           <>
-            "Excellent choice!" Mason gives you a stout pat on the back. "I can see you're going to
-            be a quick study."
-          <br/><br/>
-            "To save you some time, I went ahead and leased the neighboring lots for you as well."
+            Excellent choice! I can see you're going to be a quick study.
+            <br/><br/>
+            To save you some time, I went ahead and leased the neighboring lots for you as well.
           </>
         ),
         initialize: () => {}, // TODO: open "my assets" so can see the agreements
@@ -537,10 +544,10 @@ const useSimulationSteps = () => {
         title: 'Building the Basics',
         content: (
           <>
-            After leasing a few lots, the former Chief Technology Officer of the Arvad, Petros Vallois, is there to guide
-            you in your next steps. "Humans are innate tool users, we are all builders, and we can all learn to make 
-            something useful. No matter what class you end up joining, every Adalian is more than capable of building an 
-            extractor and a warehouse. Let's get you started."
+            Hi, I'm Petros Vallois, I was the last Chief Technology Officer of the Arvad, and I'm here to guide you in 
+            your next steps. Keep in mind, humans are innate tool users, we are all builders, and we can all learn to 
+            make something useful. No matter what class you end up joining, every Adalian is more than capable of 
+            building an extractor and a warehouse. Let's get you started.
           </>
         ),
         crewmateId: SIMULATION_CONFIG.crewmates.engineer,
@@ -548,7 +555,7 @@ const useSimulationSteps = () => {
       },
       {
         title: 'Building the Basics',
-        content: `Let's start with an Extractor. Select one of your already-leased lots, and add the appropriate "Site Plan."`,
+        content: `We'll start with an Extractor. Select one of your already-leased lots, and add the appropriate "Site Plan."`,
         crewmateId: SIMULATION_CONFIG.crewmates.engineer,
         coachmarks: () => getConstructBuildingCoachmarks(Building.IDS.EXTRACTOR),
         enabledActions: {
@@ -564,11 +571,11 @@ const useSimulationSteps = () => {
         content: (
           <>
             Quick aside -- Rome wasn't built in a day. To map out your Extractor Site Plan, your crew 
-            had to hitch a ride on a robotic transport known as a hopper, travel from their habitat building
+            had to hitch a ride on a robotic transport known as a hopper, travel from their habitat building 
             out to the intended construction site, and back.
             <br/><br/>
-            The Influence Game Clock runs at {crew?._timeAcceleration}x Earth time, but since there is so much
-            to cover in your training simulation, we'll just let you...
+            Typically this is a fairly lengthy process, but since there is so much to cover in your training 
+            simulation, we'll just let you...
           </>
         ),
         crewmateId: SIMULATION_CONFIG.crewmates.engineer,
@@ -585,8 +592,8 @@ const useSimulationSteps = () => {
       {
         title: 'Building the Basics',
         content: `
-          Great job! Now, by following the training guides in the HUD, you can source materials for your
-          planned Extractor on the open markets of Adalia Prime, and start construction.
+          Great job! Now, by following the training guides in the HUD, you can source materials 
+          for your planned Extractor on the open markets of Adalia Prime, and start construction.
         `,
         crewmateId: SIMULATION_CONFIG.crewmates.engineer,
         coachmarks: () => getConstructBuildingCoachmarks(Building.IDS.EXTRACTOR),
@@ -601,8 +608,9 @@ const useSimulationSteps = () => {
       {
         title: 'Building the Basics',
         content: `
-          Great work! Now, you'll obviously need somewhere to store your mining output, so let's construct 
-          a warehouse nearby. Follow the training guides again to build your first warehouse.
+          Nice work! Next, you'll need somewhere to store your mining output, so let's construct a 
+          Warehouse nearby. Follow the training guides again to build your first Warehouse, and then 
+          talk to Julia to start learning how to mine.
         `,
         crewmateId: SIMULATION_CONFIG.crewmates.engineer,
         coachmarks: () => getConstructBuildingCoachmarks(Building.IDS.WAREHOUSE),
@@ -619,15 +627,16 @@ const useSimulationSteps = () => {
         title: `What's Mine is Mine`,
         content: (
           <>
-            "Despite what we hoped for, this place won't allow us to sow crops and farm the surface 
-            directly. So, we have to dig to get what we need to survive." The Arvad's former Chief 
-            Cook, Julia Oliveira, takes over the next part of your education. "Luckily, the essentials 
-            needed for food, for life support, for everything we need to survive are here, beneath the 
-            surface, if you know where to find them."
+            We've all had to adjust to life outside of the Arvad. I'm Julia Oliveira and I'll always 
+            remember my time as the Chief Cook fondly, but now, I'm a Miner. I believe Miners are the 
+            backbone of Adalia, without us, no one could survive here. Despite what we hoped for, this 
+            place won't allow us to sow crops and farm the surface directly. So, we have to dig to get 
+            what we need. Luckily, the essentials needed for food, for life support, for survival are 
+            here, beneath the surface, if you know where to find them.
           </>
         ),
         coachmarks: {
-          [COACHMARK_IDS.simulationRightButton]: true
+          // [COACHMARK_IDS.simulationRightButton]: true
         },
         crewmateId: SIMULATION_CONFIG.crewmates.miner,
         rightButton: { children: 'Next', onClick: () => advance(), },
@@ -638,7 +647,7 @@ const useSimulationSteps = () => {
           <>
             Let's purchase a few core drills from the markets. We'll have them delivered to your new
             warehouse, and then we can start searching for {Product.TYPES[SIMULATION_CONFIG.resourceId].name}-rich
-            deposits on the lot with your new extractor.
+            deposits on the lot with your new Extractor.
           </>
         ),
         crewmateId: SIMULATION_CONFIG.crewmates.miner,
@@ -688,9 +697,9 @@ const useSimulationSteps = () => {
       {
         title: `What's Mine is Mine`,
         content: `
-          "Now, we dig. It isn't so unlike farming potatoes, we're just using this giant shovel to 
-          pull up what we found with our core sample. Both types of work require getting your hands 
-          dirty." Julia gives you a rare smile, and you get to work together. 
+          And now, we dig. It isn't so unlike farming potatoes, we're just using this giant shovel to pull up 
+          what we found with our core sample. Both types of work require getting your hands dirty. When we're 
+          done, you can go back to Petros.
         `,
         crewmateId: SIMULATION_CONFIG.crewmates.miner,
         coachmarks: {
@@ -708,9 +717,8 @@ const useSimulationSteps = () => {
         title: `Refining your Skills`,
         content: (
           <>
-            After the extraction is completed, you're reassigned to Petros again. "Enough playing in 
-            the dirt, time to get back to building again. This time we're building a Refinery, where 
-            we'll turn all those rocks into something useful."
+            Alright, your first extraction is complete! Enough playing in the dirt, time to get back to building again. 
+            This time we're building a Refinery, where we'll turn all those rocks into something useful.
             <br/><br/>
             Follow the HUD training guides to construct your first refinery.
           </>
@@ -729,13 +737,10 @@ const useSimulationSteps = () => {
       {
         title: `Refining your Skills`,
         content: `
-          "Refineries are where engineers and scientists should be working together." Petros hands
-          you some personal protective equipment, and continues talking to you while putting his 
-          own set on. "Now, I know you've probably grown up hearing about the rivalry between 
-          these two classes, but from my point of view, we would all benefit from a bit more 
-          cooperation." His voice is slightly muffled by his PPE now, and you have to strain to 
-          hear him, but you're pretty sure that he is saying something about following the 
-          processes and maybe something else about your safety?
+          Refineries are where Engineers and Scientists should be working together. Now, I know you've probably grown 
+          up hearing about the rivalry between these two classes, but from my point of view, we would all benefit from 
+          a bit more cooperation. Here's some personal protective equipment, don't ever go on the Refinery floor 
+          without it! And make sure to follow the processes, they are there for your safety!
         `,
         crewmateId: SIMULATION_CONFIG.crewmates.engineer,
         coachmarks: () => ({
@@ -756,12 +761,10 @@ const useSimulationSteps = () => {
         title: `Step 3: Profit`,
         content: (
           <>
-            "All right! Time to see what you're really made of, kid." Mason has a glint in his eye as he 
-            takes you into the Marketplace.
-            <br/><br/>
-            "In here, you make no friends and you take no prisoners. One 
-            minute you're up half a million in soybeans and the next, boom, your kids never leave their 
-            test-tubes and they've repossessed your Heavy Transport."
+            Well, you survived your first trip to a Refinery floor! All right! Time to see what you're 
+            really made of, kid. Let's go to a Marketplace, in here, you make no friends and you take no 
+            prisoners. One minute you're up half a million in soybeans and the next, boom, your kids 
+            never leave their test-tubes and they've repossessed your Heavy Transport.
           </>
         ),
         crewmateId: SIMULATION_CONFIG.crewmates.merchant,
@@ -789,12 +792,11 @@ const useSimulationSteps = () => {
         title: 'Shipshape',
         content: (
           <>
-            "You and I are getting to know each other pretty well. I don't say this to all the new 
-            recruits I meet, but I think you might actually be able to hack it as an Engineer. At 
-            least you don't seem to be afraid of hard work." Petros nods his approval, as you get 
-            started building a shipyard.
+            Not bad for your first sale! Now, back to building. You and I are getting to know each 
+            other pretty well. I don't say this to all the new recruits I meet, but I think you might 
+            actually be able to hack it as an Engineer. At least you don't seem to be afraid of hard work.
             <br/><br/>
-            Follow the HUD training guides to construct a shipyard.
+            Follow the HUD training guides to construct a Shipyard.
           </>
         ),
         crewmateId: SIMULATION_CONFIG.crewmates.engineer,
@@ -813,12 +815,11 @@ const useSimulationSteps = () => {
         title: 'Some Assembly Required',
         content: (
           <>
-            "Ah, and now we have arrived at it. The penultimate tool that humanity has created, so far: 
-            a spaceship. A vehicle capable of breaking free from the gravitational pull of a large body, 
+            Ah, and now we have arrived at it. The penultimate tool that humanity has created, so far: a 
+            spaceship. A vehicle capable of breaking free from the gravitational pull of a large body, 
             capable of carrying a human life thousands of kilometers in the soundless vacuum of space, 
-            and even capable of landing safely and being reused, again and again. A creation so 
-            amazingly complex that, as far as we've seen, we're the only species in the known universe 
-            to create it."
+            and even capable of landing safely and being reused, again and again. A creation so amazingly 
+            complex that, as far as we've seen, we're the only species in the known universe to create it.
           </>
         ),
         crewmateId: SIMULATION_CONFIG.crewmates.engineer,
@@ -831,7 +832,7 @@ const useSimulationSteps = () => {
             I stocked your warehouse with everything you'll need to build a Light Transport -- your
             first ship.
             <br/><br/>
-            Select your shipyard and follow the HUD training guides to start the assembly process.
+            Select your Shipyard and follow the HUD training guides to start the assembly process.
           </>
         ),
         crewmateId: SIMULATION_CONFIG.crewmates.engineer,
@@ -869,13 +870,16 @@ const useSimulationSteps = () => {
       },
       {
         title: 'Fuel Up',
-        content: `
-          "They always save the best for last!" The former High Commander of the Arvad, Lucinda Natus,
-          is more relaxed and far less serious than you expected. "I don't care what ship it is, where 
-          I'm going to, what I'm leaving behind, or how many times I've done it - there is nothing that 
-          can compare to flying. Leaving behind the solid ground and going to space, it's awe-inspiring 
-          every single time."
-        `,
+        content: (
+          <>
+            They always save the best for last! I'm Lucinda Natus, and yes, I was the last High Commander 
+            of the Arvad, but I'm also a Pilot.
+            <br/><br/>
+            I don't care what ship it is, where I'm going to, what I'm leaving behind, or how many times 
+            I've done it - there is nothing that can compare to flying. Leaving behind the solid ground 
+            and going to space, it's awe-inspiring every single time.
+          </>
+        ),
         crewmateId: SIMULATION_CONFIG.crewmates.pilot,
         rightButton: { children: 'Next', onClick: () => advance(), },
       },
@@ -909,7 +913,7 @@ const useSimulationSteps = () => {
       {
         title: 'Fuel Up',
         content: `
-          Next, let's take advantage of the allowance Quince sent you and fill up the tank. Add
+          Next, let's take advantage of the allowance Mason sent you and fill up the tank. Add
           ${formatResourceMass(Inventory.TYPES[Ship.TYPES[Ship.IDS.LIGHT_TRANSPORT].propellantInventoryType]?.massConstraint / 1e3, Product.IDS.HYDROGEN_PROPELLANT)}
           of hydrogen propellant to the propellant inventory of your ship by following the training
           guides once more.
@@ -931,9 +935,9 @@ const useSimulationSteps = () => {
         content: (
           <>
             Are we forgetting something? Oh right, our crew. We're still sitting nice and warm
-            in the habitat building we started in.
+            in the Habitat building we started in.
             <br/><br/>
-            Select the ship, restation our team as the piloting crew, and let's launch the ship
+            Select the ship, re-station our team as the piloting crew, and let's launch the ship
             into Adalia Prime's orbit.
           </>
         ),
@@ -966,13 +970,13 @@ const useSimulationSteps = () => {
         content: (
           <>
             Set the asteroid known as "<EntityName label={Entity.IDS.ASTEROID} id={SIMULATION_CONFIG.destinationAsteroidId} />" 
-            as our destination in your HUD. The nav system will build a Ballistic Transfer Graph
-            that describes the propellant requirements per the time of departure, length of your journey,
-            and relative orbits of the origin and destination. Lighter areas require less fuel while 
-            darker require more.
+            as our destination in your HUD. The nav system will build a Ballistic Transfer Graph 
+            that describes the propellant requirements per the time of departure, length of our journey, 
+            and relative orbits of the origin and destination. Lighter areas require less propellant 
+            while darker areas require more.
             <br/><br/>
-            Pick your preferred travel solution and let's blast off this rock. Don't forget to leave
-            some fuel for the return trip! Who knows where the nearest gas station might be?
+            Pick your preferred travel solution and let's blast off this rock. Don't forget to leave 
+            some propellant for the return trip! Who knows when you'll be able to top up those tanks again?
           </>
         ),
         crewmateId: SIMULATION_CONFIG.crewmates.pilot,
@@ -1002,9 +1006,9 @@ const useSimulationSteps = () => {
         title: 'Beyond',
         content: (
           <>
-            "Freedom. That's one of the reasons that I love flying so much, it gives you freedom."
+            Freedom. That's one of the reasons that I love flying so much, it gives you freedom.
             <br/><br/>
-            Natus has reviewed your performance, determined that your internship has been successful,
+            I've reviewed your performance, determined that your internship has been successful, 
             and now your last general education requirement is complete.
           </>
         ),
@@ -1015,11 +1019,11 @@ const useSimulationSteps = () => {
         title: 'Beyond',
         content: (
           <>
-            She suggested sharing a last meal with you before you depart her ship, and now she's been 
-            telling you a bit about her own asteroid; the quiet, the solitude, the freedom that comes 
-            with owning your own piece of the belt.
+            You've done well, make sure to come visit me on my asteroid sometime! I gotta tell you, 
+            the quiet, the solitude, the freedom that comes with owning your own piece of the belt 
+            is wonderful.
             <br/><br/>
-            "Remember: the future is yours, Adalian, we're all excited to see what you do with it."
+            Remember: the future is yours, Adalian, we're all excited to see what you do with it.
           </>
         ),
         crewmateId: SIMULATION_CONFIG.crewmates.pilot,
@@ -1031,6 +1035,10 @@ const useSimulationSteps = () => {
           <>
             You did it, congratulations! You are now officially ready to choose your career 
             class and start your own crew.
+            <br /><br />
+            Remember: the <a href="https://wiki.influenceth.io/en/docs/user-guides" target="_blank" rel="noopener noreferrer">Wiki</a>
+            {' '}and  <a href="https://discord.com/invite/influenceth" target="_blank" rel="noopener noreferrer">Discord</a>
+            {' '}are resources that are always available to you when seeking help from your fellow Adalians.
             <br/><br/>
             Good luck {simulation.crewmate?.name}, we're all pulling for you.
           </>

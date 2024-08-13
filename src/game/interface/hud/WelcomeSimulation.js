@@ -27,7 +27,7 @@ const Bubble = styled.div`
   opacity: ${p => p.isIn ? 1 : 0};
   outline: 1px solid ${p => p.theme.colors.main};
   padding: 2px;
-  pointer-events: all;
+  pointer-events: ${p => p.isIn ? 'all' : 'none'};
   position: fixed;
   transition: background 100ms ease, opacity 250ms ease ${p => p.isIn ? '200ms' : '0'}, outline 100ms ease;
   width: ${BUBBLE_WIDTH}px;
