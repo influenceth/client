@@ -215,6 +215,9 @@ const MyAssets = () => {
 
     const ungrouped = deduped
       .filter((a) => {
+        // filter any expired agreements that are over 1 week expired
+        if (a._agreement._type === Permission.POLICY_IDS.PREPAID && a._agreement._expiredDays > 7) return false;
+
         const asteroidId = (a.Location?.locations || []).find((l) => l.label === Entity.IDS.ASTEROID)?.id
           || a.Ship?.transitDestination?.id;
         if (allAsteroidsMode || asteroidId === origin) {
@@ -241,6 +244,8 @@ const MyAssets = () => {
     const groups = groupAssets(ungrouped);
     return [groups, ungrouped.length];
   }, [walletAgreementsWithDupes, allAsteroidsMode, allCrewsMode]);
+
+  // console.log('debug: MyAssets, agreements: ', agreements);
 
   const [asteroids, asteroidTally] = useMemo(() => {
     const a = (walletAsteroids || [])
