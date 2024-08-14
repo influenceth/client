@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useHistory, useLocation } from 'react-router-dom';
 import styled from 'styled-components';
-import { Crewmate, Entity, Lot, Order, Permission, Product } from '@influenceth/sdk';
+import { Building, Crewmate, Entity, Lot, Order, Permission, Product } from '@influenceth/sdk';
 
 import {
   LimitBuyIcon,
@@ -30,6 +30,7 @@ import { formatResourceAmount } from '../../hud/actionDialogs/components';
 import useCoachmarkRefSetter from '~/hooks/useCoachmarkRefSetter';
 import { COACHMARK_IDS } from '~/contexts/CoachmarkContext';
 import useSimulationEnabled from '~/hooks/useSimulationEnabled';
+import useSimulationState from '~/hooks/useSimulationState';
 
 const Wrapper = styled.div`
   display: flex;
@@ -677,16 +678,20 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
     ];  
   }, [actionDialog?.type, coachmarkHelperProduct, limitPrice, mode, quantity, resource.i, simulationActions, total, type]);
 
+  const simulation = useSimulationState();
   const handleQuantityFocus = useCallback((e) => {
     if (coachToQuantity && !quantity) {
       let q = '';
-      if (coachmarkHelperProduct === Product.IDS.ACETYLENE) q = 3746000;
+      if (coachmarkHelperProduct === Product.IDS.ACETYLENE) {
+        const warehouseInventory = Object.values(simulation?.lots || {}).find((l) => l.buildingType === Building.IDS.WAREHOUSE)?.inventoryContents?.[2];
+        q = Math.floor(warehouseInventory?.[Product.IDS.ACETYLENE] || 3746000);
+      }
       if (coachmarkHelperProduct === Product.IDS.CORE_DRILL) q = 5;
       if (coachmarkHelperProduct === Product.IDS.FOOD) q = 5000;
       if (coachmarkHelperProduct === Product.IDS.HYDROGEN_PROPELLANT) q = 4000e3;
       setQuantity(q);
     }
-  }, [coachToQuantity, quantity]);
+  }, [coachToQuantity, quantity, simulation]);
 
   const handleLimitPriceFocus = useCallback((e) => {
     if (coachToUnitPrice && !limitPrice) {
