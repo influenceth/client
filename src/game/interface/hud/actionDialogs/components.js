@@ -4195,19 +4195,20 @@ export const ShipTab = ({ pilotCrew, inventoryBonuses, ship, stage, deltas = {},
   }, [ship?.shipType, ship?.Inventories, inventoryBonuses]);
 
   const charts = useMemo(() => {
+    const changeAlreadyApplied = (stage && ![actionStage.NOT_STARTED, actionStage.STARTING].includes(stage));
     const result = {
       propellantMass: {
         color: '#8cc63f',
         label: 'Propellant Mass',
-        valueLabel: `${formatFixed((inventory.propellantMass + (deltas.propellantMass || 0)) / 1e6)} / ${formatFixed(inventory.maxPropellantMass / 1e6)}t`,
-        value: (inventory.propellantMass + (deltas.propellantMass || 0)) / inventory.maxPropellantMass,
+        valueLabel: `${formatFixed((inventory.propellantMass + (changeAlreadyApplied ? 0 : (deltas.propellantMass || 0))) / 1e6)} / ${formatFixed(inventory.maxPropellantMass / 1e6)}t`,
+        value: (inventory.propellantMass + (changeAlreadyApplied ? 0 : (deltas.propellantMass || 0))) / inventory.maxPropellantMass,
         deltaValue: (deltas.propellantMass || 0) / inventory.maxPropellantMass,
       },
       propellantVolume: {
         color: '#557826',
         label: 'Propellant Volume',
-        valueLabel: `${formatFixed((inventory.propellantVolume + (deltas.propellantVolume || 0)) / 1e6)} / ${formatFixed(inventory.maxPropellantVolume / 1e6)}m³`,
-        value: (inventory.propellantVolume + (deltas.propellantVolume || 0)) / inventory.maxPropellantVolume,
+        valueLabel: `${formatFixed((inventory.propellantVolume + (changeAlreadyApplied ? 0 : (deltas.propellantVolume || 0))) / 1e6)} / ${formatFixed(inventory.maxPropellantVolume / 1e6)}m³`,
+        value: (inventory.propellantVolume + (changeAlreadyApplied ? 0 : (deltas.propellantVolume || 0))) / inventory.maxPropellantVolume,
         deltaValue: (deltas.propellantVolume || 0) / inventory.maxPropellantVolume,
       },
       cargoMass: {
@@ -4236,7 +4237,7 @@ export const ShipTab = ({ pilotCrew, inventoryBonuses, ship, stage, deltas = {},
       };
     }
     return result;
-  }, [deltas, inventory, ship, statWarnings]);
+  }, [deltas, inventory, ship, stage, statWarnings]);
 
   return (
     <>
