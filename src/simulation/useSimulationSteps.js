@@ -152,13 +152,13 @@ const useSimulationSteps = () => {
     const crewHasFood = !!(crewShips || []).find((b) => {
       return !!(b.Inventories || []).find((i) => (
         i.status === Inventory.STATUSES.AVAILABLE
-        && (i.contents || []).find((c) => c.product === Product.IDS.FOOD && c.amount > 0)
+        && (i.contents || []).find((c) => c.product === Product.IDS.FOOD && c.amount >= 0.75 * SIMULATION_CONFIG.marketplaceAmounts[Product.IDS.FOOD])
       ));
     });
     const crewHasPropellant = !!(crewShips || []).find((b) => {
       return !!(b.Inventories || []).find((i) => (
         i.status === Inventory.STATUSES.AVAILABLE
-        && (i.contents || []).find((c) => c.product === Product.IDS.HYDROGEN_PROPELLANT && c.amount >= 3000e3)
+        && (i.contents || []).find((c) => c.product === Product.IDS.HYDROGEN_PROPELLANT && c.amount >= 0.75 * SIMULATION_CONFIG.marketplaceAmounts[Product.IDS.HYDROGEN_PROPELLANT])
       ));
     });
 
@@ -890,7 +890,8 @@ const useSimulationSteps = () => {
             Your ship has been delivered to your remaining leased lot. Before we go, let's get this bird 
             ready to fly and your crew stocked for some inter-asteroid travel.
             <br/><br/>
-            First, follow the training guides to stock the cargo hold of your ship with 5,000 kg food.
+            First, follow the training guides to stock the cargo hold of your ship with
+            {' '}{SIMULATION_CONFIG.marketplaceAmounts[Product.IDS.FOOD].toLocaleString()} kg food.
           </>
         ),
         crewmateId: SIMULATION_CONFIG.crewmates.pilot,
@@ -914,7 +915,7 @@ const useSimulationSteps = () => {
         title: 'Fuel Up',
         content: `
           Next, let's take advantage of the allowance Mason sent you and fill up the tank. Add
-          ${formatResourceMass(Inventory.TYPES[Ship.TYPES[Ship.IDS.LIGHT_TRANSPORT].propellantInventoryType]?.massConstraint / 1e3, Product.IDS.HYDROGEN_PROPELLANT)}
+          ${formatResourceMass(SIMULATION_CONFIG.marketplaceAmounts[Product.IDS.HYDROGEN_PROPELLANT], Product.IDS.HYDROGEN_PROPELLANT)}
           of hydrogen propellant to the propellant inventory of your ship by following the training
           guides once more.
         `,

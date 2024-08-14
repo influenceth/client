@@ -1,4 +1,4 @@
-import { Building, Process, Product } from '@influenceth/sdk';
+import { Building, Process, Product, Inventory, Ship } from '@influenceth/sdk';
 import { TOKEN, TOKEN_SCALE } from '~/lib/priceUtils';
 
 const SAFE_ID_START = 4 * 28561869; // 4x * total lots in belt
@@ -23,6 +23,12 @@ const simulationConfig = {
     scientist: 6891
   },
   startingSway: 25e6 * TOKEN_SCALE[TOKEN.SWAY],
+  marketplaceAmounts: {
+    [Product.IDS.ACETYLENE]: true, // "true" implies whatever is in warehouse
+    [Product.IDS.CORE_DRILL]: 5,
+    [Product.IDS.FOOD]: 5000,
+    [Product.IDS.HYDROGEN_PROPELLANT]: Inventory.TYPES[Ship.TYPES[Ship.IDS.LIGHT_TRANSPORT].propellantInventoryType]?.massConstraint / 1e3,
+  },
 
   fastForwardAnimationDuration: 2e3,
 };
