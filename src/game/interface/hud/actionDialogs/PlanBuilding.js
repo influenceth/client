@@ -207,7 +207,7 @@ const Wrapper = (props) => {
   const { stageByActivity } = constructionManager;
 
   const simulationEnabled = useSimulationEnabled();
-  const { canFastForward } = useSimulationState();
+  const simulation = useSimulationState();
 
   useEffect(() => {
     if (!asteroid || !lot) {
@@ -220,7 +220,7 @@ const Wrapper = (props) => {
   // stay in this window until PLANNED, then swap to CONSTRUCT
   useEffect(() => {
     if (!['READY_TO_PLAN', 'PLANNING'].includes(constructionManager.constructionStatus)) {
-      if (simulationEnabled && !canFastForward) {
+      if (simulationEnabled && !simulation?.canFastForward) {
         if (props.onClose) props.onClose();
       } else {
         props.onSetAction('CONSTRUCT');
