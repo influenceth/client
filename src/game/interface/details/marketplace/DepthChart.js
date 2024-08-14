@@ -31,6 +31,7 @@ import useCoachmarkRefSetter from '~/hooks/useCoachmarkRefSetter';
 import { COACHMARK_IDS } from '~/contexts/CoachmarkContext';
 import useSimulationEnabled from '~/hooks/useSimulationEnabled';
 import useSimulationState from '~/hooks/useSimulationState';
+import SIMULATION_CONFIG from '~/simulation/simulationConfig';
 
 const Wrapper = styled.div`
   display: flex;
@@ -682,13 +683,12 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
   const handleQuantityFocus = useCallback((e) => {
     if (coachToQuantity && !quantity) {
       let q = '';
-      if (coachmarkHelperProduct === Product.IDS.ACETYLENE) {
+      if (SIMULATION_CONFIG.marketplaceAmounts[coachmarkHelperProduct] === true) {
         const warehouseInventory = Object.values(simulation?.lots || {}).find((l) => l.buildingType === Building.IDS.WAREHOUSE)?.inventoryContents?.[2];
-        q = Math.floor(warehouseInventory?.[Product.IDS.ACETYLENE] || 3746000);
+        q = Math.floor(warehouseInventory?.[coachmarkHelperProduct] || 1);
+      } else if (SIMULATION_CONFIG.marketplaceAmounts[coachmarkHelperProduct]) {
+        q = SIMULATION_CONFIG.marketplaceAmounts[coachmarkHelperProduct];
       }
-      if (coachmarkHelperProduct === Product.IDS.CORE_DRILL) q = 5;
-      if (coachmarkHelperProduct === Product.IDS.FOOD) q = 5000;
-      if (coachmarkHelperProduct === Product.IDS.HYDROGEN_PROPELLANT) q = 4000e3;
       setQuantity(q);
     }
   }, [coachToQuantity, quantity, simulation]);

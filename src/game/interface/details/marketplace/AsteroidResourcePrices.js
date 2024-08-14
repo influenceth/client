@@ -24,6 +24,7 @@ import useStore from '~/hooks/useStore';
 import { COACHMARK_IDS } from '~/contexts/CoachmarkContext';
 import useSimulationEnabled from '~/hooks/useSimulationEnabled';
 import { IconLink, LocationLink, MarketplacePermissionsIcon } from '../listViews/components';
+import SIMULATION_CONFIG from '~/simulation/simulationConfig';
 
 
 const Header = styled.div`
@@ -237,9 +238,9 @@ const AsteroidResourcePrices = ({ asteroid, mode, resource }) => {
 
     if (simulationEnabled && resource.i === coachmarkHelperProduct) {
       if (simulationActions.includes('MarketBuy') && !simulationActions.includes('LimitSell')) {
-        return transformedOrders.filter((o) => o.supply > 0);
+        return transformedOrders.filter((o) => o.supply > parseInt(SIMULATION_CONFIG.marketplaceAmounts[coachmarkHelperProduct]) || 0);
       } else if (simulationActions.includes('MarketSell') && !simulationActions.includes('LimitBuy')) {
-        return transformedOrders.filter((o) => o.demand > 0);
+        return transformedOrders.filter((o) => o.demand > parseInt(SIMULATION_CONFIG.marketplaceAmounts[coachmarkHelperProduct]) || 0);
       }
     }
     return transformedOrders;
