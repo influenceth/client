@@ -7,7 +7,7 @@ const simulationConfig = {
   accountAddress: '0x1234567890',
   asteroidId: 1,
   crewId: SAFE_ID_START,
-  crewName: 'ADALIAN INTERNSHIP',
+  crewName: 'TRAINING SIMULATOR',
   crewmateId: SAFE_ID_START,
   depositId: SAFE_ID_START,
   processId: Process.IDS.HUELS_PROCESS,

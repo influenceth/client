@@ -104,6 +104,7 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
 
     currentSession: {},
     sessions: {},
+    lastConnectedWalletId: null,
 
     selectedCrewId: null,
     crewAssignments: {},
@@ -468,6 +469,7 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
     // Starts a session and sets it as the current session
     dispatchSessionStarted: (session) => set(produce(state => {
       state.currentSession = session;
+      state.lastConnectedWalletId = session.walletId;
       state.sessions[session.accountAddress] = session;
       state.simulationEnabled = false;
     })),
@@ -480,6 +482,7 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
     // Resumes a session that was suspended
     dispatchSessionResumed: (session) => set(produce(state => {
       state.currentSession = session;
+      state.lastConnectedWalletId = session.walletId;
       state.simulationEnabled = false;
     })),
 

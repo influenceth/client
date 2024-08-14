@@ -469,7 +469,7 @@ const useSimulationSteps = () => {
       {
         title: 'Lease Some Lots',
         content: `
-          Hey there, I'm Mason, and I'm one of the founding members of the Merchant's of Venus Guild, and I'm here 
+          Hey there, I'm Mason, and I'm one of the founding members of the Merchants of Venus Guild, and I'm here 
           to dispense some of my infinite wisdom to you. Leasing lots is all about balance. The further out from 
           the city centers that you go, the cheaper the lots, but the higher the commute time for your crew and 
           goods to get to market. Find the right balance and I'm sure you'll find a sweet spot to set up a 
@@ -1056,13 +1056,6 @@ const useSimulationSteps = () => {
             // webWallet does not work from localhost...
             login(process.env.NODE_ENV === 'development' ? undefined : { webWallet: true });
             // TODO: add on-logged-in url
-
-            // enter crew creation + exit simulation
-            // dispatchSimulationEnabled(false);
-            // setTimeout(() => {
-            //   dispatchLauncherPage();
-            //   history.push('/recruit/0');
-            // }, 100);
           },
         }
       },

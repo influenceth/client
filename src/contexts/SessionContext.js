@@ -1,7 +1,6 @@
 import { createContext, useCallback, useEffect, useRef, useMemo, useState } from 'react';
 import { useQueryClient } from 'react-query';
 import { isExpired } from 'react-jwt';
-
 import { num, RpcProvider, WalletAccount, shortString } from 'starknet';
 import { connect as starknetConnect, disconnect as starknetDisconnect } from 'starknetkit';
 import { ArgentMobileConnector } from 'starknetkit/argentMobile';
@@ -19,6 +18,7 @@ import * as gasless from '@avnu/gasless-sdk';
 import { getStarkKey, utils } from 'micro-starknet';
 import { Address } from '@influenceth/sdk';
 
+import LoginPrompt from '~/components/LoginPrompt';
 import Reconnecting from '~/components/Reconnecting';
 import api from '~/lib/api';
 import { areChainsEqual, fireTrackingEvent, getBlockTime, resolveChainId } from '~/lib/utils';
@@ -591,10 +591,25 @@ export function SessionProvider({ children }) {
     });
   }, [blockTime]);
 
+  const [promptLogin, setPromptLogin] = useState();
+  const login = useCallback(async () => {
+    if ([STATUSES.AUTHENTICATING, STATUSES.AUTHENTICATED].includes(status)) return;
+    setPromptLogin(true);
+  }, [authenticated, connect]);
+
+  const handleLoginPrompt = useCallback((choice) => {
+    setPromptLogin(false);
+    if (choice === false) {
+      connect(); // show all wallets
+    } else if (choice) {
+      connect(undefined, { [choice]: true });
+    } 
+  }, [connect]);
+
   // TODO: memoize value
   return (
     <SessionContext.Provider value={{
-      login: async (enabledConnectors) => await connect(undefined, enabledConnectors),
+      login,
       logout,
       accountAddress: authenticated ? currentSession?.accountAddress : null,
       allowedMethods,
@@ -630,6 +645,7 @@ export function SessionProvider({ children }) {
             : null
         )
       }
+      {promptLogin && <LoginPrompt onClick={handleLoginPrompt} />}
     </SessionContext.Provider>
   );
 };
