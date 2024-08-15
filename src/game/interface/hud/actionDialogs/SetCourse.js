@@ -343,6 +343,12 @@ const SetCourse = ({ origin, destination, manager, ship, stage, travelSolution, 
     }
   }, [delay]);
 
+  const deltas = (stage && ![actionStages.NOT_STARTED, actionStages.STARTING].includes(stage)) ? { } : 
+    {
+      propellantMass: -travelSolution.usedPropellantMass,
+      propellantVolume: -travelSolution.usedPropellantMass / propellantProduct.massPerUnit * propellantProduct.volumePerUnit,
+    };
+
   return (
     <>
       <ActionDialogHeader
@@ -468,10 +474,7 @@ const SetCourse = ({ origin, destination, manager, ship, stage, travelSolution, 
           <ShipTab
             pilotCrew={crew}
             inventoryBonuses={crew?._inventoryBonuses}
-            deltas={{
-              propellantMass: -travelSolution.usedPropellantMass,
-              propellantVolume: -travelSolution.usedPropellantMass / propellantProduct.massPerUnit * propellantProduct.volumePerUnit,
-            }}
+            deltas={deltas}
             ship={ship}
             stage={stage} />
         )}
