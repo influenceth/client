@@ -5,7 +5,7 @@ import api from '~/lib/api';
 const useEntity = (props) => {
   const { label, id } = props || {};
   return useQuery(
-    [ 'entity', label, id ],
+    [ 'entity', label, Number(id) ],
     () => api.getEntityById({ label, id }),
     { enabled: !!(label && id) }
   );

@@ -10,7 +10,7 @@ const useAsteroidBuildings = (asteroidId, reqComponent = 'Building', reqOneOfPer
   const { crew, crewCan } = useCrewContext();
 
   const { data: allData, dataUpdatedAt, isLoading, refetch } = useQuery(
-    entitiesCacheKey(Entity.IDS.BUILDING, { asteroidId, hasComponent: reqComponent, status: Building.CONSTRUCTION_STATUSES.OPERATIONAL }),
+    entitiesCacheKey(Entity.IDS.BUILDING, { asteroidId: Number(asteroidId), hasComponent: reqComponent, status: Building.CONSTRUCTION_STATUSES.OPERATIONAL }),
     () => api.getBuildingsWithComponent(asteroidId, reqComponent),
     { enabled: !!asteroidId && !!reqComponent }
   );

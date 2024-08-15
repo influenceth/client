@@ -6,7 +6,7 @@ import api from '~/lib/api';
 const useActivities = (entity) => {
   const queryClient = useQueryClient();
   return useQuery(
-    [ 'activities', entity?.label, entity?.id ],
+    [ 'activities', entity?.label, Number(entity?.id) ],
     async () => {
       const activities = await api.getEntityActivities(entity, { withAnnotations: true });
       await hydrateActivities(activities, queryClient);

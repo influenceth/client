@@ -4,7 +4,7 @@ import api from '~/lib/api';
 
 const useAsteroidLotData = (asteroidId) => {
   return useQuery(
-    [ 'asteroidPackedLotData', asteroidId ],
+    [ 'asteroidPackedLotData', Number(asteroidId) ],
     () => api.getAsteroidLotData(asteroidId),
     { enabled: !!asteroidId }
   );

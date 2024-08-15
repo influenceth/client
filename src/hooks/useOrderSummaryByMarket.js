@@ -8,7 +8,7 @@ const useOrderSummaryByExchange = (asteroidId, product) => {
   const { data: exchanges, isLoading: isLoadingBuildings } = useAsteroidBuildings(asteroidId, 'Exchange');
 
   const { data: orderSummaries, isLoading: isLoadingOrders } = useQuery(
-    [ 'exchangeOrderSummary', asteroidId, product ],
+    [ 'exchangeOrderSummary', Number(asteroidId), Number(product) ],
     () => api.getOrderSummaryByExchange(asteroidId, product),
     { enabled: !!asteroidId && !!product }
   );

@@ -229,7 +229,7 @@ export const getBlockTime = async (provider, blockNumber = 'pending') => {
 export const safeEntityId = (variablyHydratedEntity) => {
   if (variablyHydratedEntity) {
     const e = {
-      id: variablyHydratedEntity?.id,
+      id: Number(variablyHydratedEntity?.id),
       label: variablyHydratedEntity?.label,
       uuid: variablyHydratedEntity?.uuid
     };

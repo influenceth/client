@@ -168,8 +168,8 @@ export function ActivitiesProvider({ children }) {
               if (debugInvalidation && newGroupEval?.updatedValues) console.log(`${label}.${id} updates include`, newGroupEval);
 
               // invalidate `entity` entry
-              activityInvalidations.push(['entity', label, id]);
-              activityInvalidations.push(['activities', label, id]);
+              activityInvalidations.push(['entity', label, Number(id)]);
+              activityInvalidations.push(['activities', label, Number(id)]);
 
               // walk through `entities` entries of label type
               // refetch group keys no longer part of, and refetch group keys it just became part of
@@ -182,7 +182,7 @@ export function ActivitiesProvider({ children }) {
 
                 // if updated entity is already in entity group, invalidate (to update/delete)
                 // TODO (enhancement): update-in-place
-                if (!!(data || []).find((d) => ((d.id === id) && (d.label === label)))) {
+                if (!!(data || []).find((d) => ((d.id === Number(id)) && (d.label === label)))) {
                   if (debugInvalidation) console.log(`${label}.${id} is already in collection`, queryKey);
                   activityInvalidations.push(queryKey);
 

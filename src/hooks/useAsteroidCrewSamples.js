@@ -10,7 +10,7 @@ const useAsteroidCrewSamples = (asteroidId, resourceId) => {
 
   const controllerId = crew?.id;
   return useQuery(
-    entitiesCacheKey(Entity.IDS.DEPOSIT, { asteroidId, resourceId, controllerId, isDepleted: false }),
+    entitiesCacheKey(Entity.IDS.DEPOSIT, { asteroidId: Number(asteroidId), resourceId: Number(resourceId), controllerId, isDepleted: false }),
     () => api.getCrewSamplesOnAsteroid(asteroidId, controllerId, resourceId),
     { enabled: !!(asteroidId && controllerId && resourceId) }
   );

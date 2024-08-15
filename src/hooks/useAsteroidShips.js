@@ -6,7 +6,7 @@ import { entitiesCacheKey } from '~/lib/cacheKey';
 
 const useAsteroidShips = (asteroidId) => {
   return useQuery(
-    entitiesCacheKey(Entity.IDS.SHIP, { asteroidId, status: Ship.STATUSES.AVAILABLE }),
+    entitiesCacheKey(Entity.IDS.SHIP, { asteroidId: Number(asteroidId), status: Ship.STATUSES.AVAILABLE }),
     () => api.getAsteroidShips(asteroidId),
     { enabled: !!asteroidId }
   );
