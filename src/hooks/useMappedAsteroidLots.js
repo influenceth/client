@@ -3,10 +3,10 @@ import { useQueryClient } from 'react-query';
 import { Entity, Lot } from '@influenceth/sdk';
 
 import { options as lotLeaseOptions } from '~/components/filters/LotLeaseFilter';
-import useAsteroidCrewSamples from '~/hooks/useAsteroidCrewSamples';
 import useAsteroidCrewBuildings from '~/hooks/useAsteroidCrewBuildings';
-import useCrewShips from './useCrewShips';
+import useCrewShips from '~/hooks/useCrewShips';
 import useAsteroidLotData from '~/hooks/useAsteroidLotData';
+import useWalletLeasedLots from '~/hooks/useWalletLeasedLots';
 import useStore from '~/hooks/useStore';
 import { getAndCacheEntity } from '~/lib/activities';
 import { locationsArrToObj } from '~/lib/utils';
@@ -28,22 +28,12 @@ const useMappedAsteroidLots = (i) => {
   // get all packed lot data from server
   const { data: lotData, isLoading: lotDataLoading, dataUpdatedAt: lotDataUpdatedAt } = useAsteroidLotData(i);
 
-  // get all sampled lots (for this resource) from the server
-  const { data: sampledLots, isLoading: sampledLotsLoading, dataUpdatedAt: dataUpdatedAt1 } = useAsteroidCrewSamples(i, mapResourceId);
-  const [lotSampledMap, fillTally] = useMemo(() => {
-    return [
-      sampledLots
-        ? sampledLots.reduce((acc, d) => {
-            const _locations = locationsArrToObj(d?.Location?.locations || []);
-            return {
-              ...acc,
-              [_locations.lotIndex]: true
-            };
-          }, {})
-        : {},
-      sampledLots?.length || 0
-    ];
-  }, [sampledLots, dataUpdatedAt1]);
+  // get all leased lots from the server
+  const { data: leasedLots, isLoading: leasedLotsLoading, dataUpdatedAt: dataUpdatedAt1 } = useWalletLeasedLots(i);
+  const [lotLeasedMap, leasedTally] = useMemo(() => ([
+    (leasedLots || []).reduce((acc, d) => ({ ...acc, [Lot.toIndex(d.id)]: true }), {}),
+    leasedLots?.length || 0
+  ]), [leasedLots, dataUpdatedAt1]);
 
   // get all occupied-by-me buildings from the server
   const { data: crewLots, isLoading: crewLotsLoading, dataUpdatedAt: dataUpdatedAt2 } = useAsteroidCrewBuildings(i);
@@ -152,7 +142,7 @@ const useMappedAsteroidLots = (i) => {
           resultTally++;
         }
 
-        // determine if this lot should be outlined
+        // determine if this lot should have an icon
         if (unpacked.type > 0) {
           lotUse[i] = unpacked.type;
           lotUseTallies[unpacked.type] = (lotUseTallies[unpacked.type] || 0) + 1;
@@ -253,19 +243,19 @@ const useMappedAsteroidLots = (i) => {
     }
   }, []);
 
-  const isLoading = lotDataLoading || sampledLotsLoading || crewLotsLoading;
+  const isLoading = lotDataLoading || leasedLotsLoading || crewLotsLoading;
 
   return useMemo(() => {
     return {
       data: {
         lotUseTallies,
-        fillTally,
+        leasedTally,
         resultTally,
         colorMap: highlightColorMap,
         lotResultMap,
         lotUseMap,
         lotColorMap,
-        lotSampledMap,
+        lotLeasedMap,
         lastLotUpdate: Date.now()
       },
       isLoading,
@@ -274,13 +264,13 @@ const useMappedAsteroidLots = (i) => {
     };
   }, [
     lotUseTallies,
-    fillTally,
+    leasedTally,
     resultTally,
     highlightColorMap,
     lotResultMap,
     lotUseMap,
     lotColorMap,
-    lotSampledMap,
+    lotLeasedMap,
     isLoading,
     processEvent,
     refetch
