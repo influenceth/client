@@ -526,14 +526,12 @@ const Wrapper = (props) => {
   useEffect(() => {
     if (!origin || !destination || !ship) {
       if (!originIsLoading && !destinationIsLoading && !shipIsLoading) {
-        console.log('close1');
         if (props.onClose) props.onClose();
       }
     }
 
     if (!travelSolution) {
       if (!solutionIsLoading) {
-        console.log('close1', travelSolution, currentTravelAction, currentTravelSolution, solutionIsLoading);
         if (props.onClose) props.onClose();
       }
     }
