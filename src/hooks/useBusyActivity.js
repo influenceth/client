@@ -15,7 +15,7 @@ const useBusyActivity = (entity) => {
   const [hydratedBusyItem, setHydratedBusyItem] = useState();
 
   const { data: recentItems, dataUpdatedAt, isLoading, refetch } = useQuery(
-    [ 'activities', entity?.label, entity?.id, 'busy' ],
+    [ 'activities', entity?.label, Number(entity?.id), 'busy' ],
     () => {
       const busyEvents = Object.keys(activities).filter((i) => !!activities[i].getBusyItem || !!activities[i].requiresCrewTime);
       return api.getEntityActivities(entity, { events: busyEvents, pageSize: 24 });

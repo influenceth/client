@@ -1584,7 +1584,7 @@ export const ResourceSelectionDialog = ({ abundances, lotId, initialSelection, o
   const simulationEnabled = useSimulationEnabled();
   const coachmarks = useStore((s) => s.coachmarks);
   const simulationActions = useStore((s) => s.simulationActions);
-  
+
   const [selection, setSelection] = useState(initialSelection);
 
   const onComplete = useCallback(() => {
@@ -1798,8 +1798,12 @@ export const TransferSelectionDialog = ({
       }, {});
   }, [pendingTargetDeliveries]);
 
+  const prevInitialSelection = useRef();
   useEffect(() => {
-    setSelection({ ...initialSelection });
+    if (!prevInitialSelection.current || JSON.stringify(prevInitialSelection.current) !== JSON.stringify(initialSelection)) {
+      setSelection({ ...initialSelection });
+      prevInitialSelection.current = initialSelection;
+    }
   }, [initialSelection]);
 
   const onComplete = useCallback(() => {
@@ -2168,25 +2172,12 @@ export const ProcessSelectionDialog = ({ initialSelection, onClose, forceProcess
 
 // TODO: should this be in sdk?
 const getInventorySublabel = (inventoryType) => {
-  switch (inventoryType) {
-    case Inventory.IDS.WAREHOUSE_SITE:
-    case Inventory.IDS.EXTRACTOR_SITE:
-    case Inventory.IDS.REFINERY_SITE:
-    case Inventory.IDS.BIOREACTOR_SITE:
-    case Inventory.IDS.FACTORY_SITE:
-    case Inventory.IDS.SHIPYARD_SITE:
-    case Inventory.IDS.SPACEPORT_SITE:
-    case Inventory.IDS.MARKETPLACE_SITE:
-    case Inventory.IDS.HABITAT_SITE:
+  switch (Inventory.TYPES[inventoryType]?.category) {
+    case Inventory.CATEGORIES.SITE:
       return 'Site';
-
-    case Inventory.IDS.PROPELLANT_TINY:
-    case Inventory.IDS.PROPELLANT_SMALL:
-    case Inventory.IDS.PROPELLANT_MEDIUM:
-    case Inventory.IDS.PROPELLANT_LARGE:
+    case Inventory.CATEGORIES.PROPELLANT:
       return 'Propellant';
-
-    default:  // others are considered "primary" for their entity
+    default:
       return '';
   }
 }
@@ -2308,7 +2299,7 @@ export const InventorySelectionDialog = ({
   requirePresenceOfItemIds
 }) => {
   const { crew } = useCrewContext();
-  
+
   const simulationEnabled = useSimulationEnabled();
   const setCoachmarkRef = useCoachmarkRefSetter();
   const coachmarks = useStore(s => s.coachmarks);
@@ -4236,7 +4227,7 @@ export const ShipTab = ({ pilotCrew, inventoryBonuses, ship, stage, deltas = {},
       };
     }
     return result;
-  }, [deltas, inventory, ship, statWarnings]);
+  }, [deltas, inventory, ship, stage, statWarnings]);
 
   return (
     <>

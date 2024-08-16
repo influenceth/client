@@ -4,7 +4,7 @@ import api from '~/lib/api';
 
 const useOrderSummaryByProduct = (entity) => {
   return useQuery(
-    [ 'productOrderSummary', entity.label, entity.id ],
+    [ 'productOrderSummary', entity.label, Number(entity.id) ],
     () => api.getOrderSummaryByProduct(entity),
     { enabled: !!entity }
   );

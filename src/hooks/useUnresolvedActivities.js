@@ -6,7 +6,7 @@ import api from '~/lib/api';
 // anyway to do that since most entities don't call useActivities currently
 const useUnresolvedActivities = (entity) => {
   return useQuery(
-    [ 'activities', entity?.label, entity?.id, 'unresolved' ],
+    [ 'activities', entity?.label, Number(entity?.id), 'unresolved' ],
     () => api.getEntityActivities(entity, { unresolved: true }),
     { enabled: !!entity }
   );

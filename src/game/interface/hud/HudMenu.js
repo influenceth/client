@@ -1,8 +1,8 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import { Tooltip } from 'react-tooltip';
 import styled from 'styled-components';
-import { Building, Inventory, Lot, Permission } from '@influenceth/sdk';
+import { Building, Inventory, Lot } from '@influenceth/sdk';
 import { BiWrench as WrenchIcon } from 'react-icons/bi';
 
 import IconButton from '~/components/IconButton';
@@ -23,14 +23,11 @@ import {
   MarketsIcon,
   MarketplaceBuildingIcon,
   MyAssetsIcon,
-  OrderIcon,
   OrbitingShipsIcon,
   PassengersIcon,
   ResourceIcon,
-  ShipIcon,
   SimulateRouteIcon,
-  CrewIcon,
-  MyAssetIcon,
+  CrewIcon
 } from '~/components/Icons';
 import useAsteroid from '~/hooks/useAsteroid';
 import useAsteroidBuildings from '~/hooks/useAsteroidBuildings';

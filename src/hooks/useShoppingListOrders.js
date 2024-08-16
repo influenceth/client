@@ -6,7 +6,7 @@ import { locationsArrToObj } from '~/lib/utils';
 const useShoppingListOrders = (asteroidId, productIds) => {
   // TODO: ideally could somehow partion this by productId in cache keys
   return useQuery(
-    [ 'shoppingOrderList', asteroidId, productIds ],
+    [ 'shoppingOrderList', Number(asteroidId), productIds ],
     async () => {
       const empties = productIds.reduce((a, p) => ({ ...a, [p]: {} }), {});
       const orders = await api.getSellOrdersByProduct(asteroidId, productIds);

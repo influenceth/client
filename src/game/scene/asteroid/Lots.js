@@ -42,6 +42,7 @@ import vert from './shaders/delivery.vert';
 const { MAX_LOTS_RENDERED } = constants;
 
 const WHITE_COLOR = new Color().setHex(0xffffff);
+const LEASE_COLOR = new Color().setHex(0xbbf8af); // brightened "green"
 const GRAY_COLOR = new Color().setHex(0xcccccc);
 
 const colorCache = {};
@@ -61,8 +62,8 @@ const MOUSEABLE_WIDTH = 800;
 const MAX_MESH_INSTANCES = MAX_LOTS_RENDERED;
 const PIP_VISIBILITY_ALTITUDE = 25000;
 const MOUSE_VISIBILITY_ALTITUDE = PIP_VISIBILITY_ALTITUDE;
-const FILL_VISIBILITY_ALTITUDE = PIP_VISIBILITY_ALTITUDE * 0.75;
-const MAX_FILL_INSTANCES = getMaxInstancesForAltitude(FILL_VISIBILITY_ALTITUDE);
+const LEASE_VISIBILITY_ALTITUDE = PIP_VISIBILITY_ALTITUDE;
+const MAX_LEASE_INSTANCES = getMaxInstancesForAltitude(LEASE_VISIBILITY_ALTITUDE);
 
 const MOUSE_THROTTLE_DISTANCE = 50 ** 2;
 const MOUSE_THROTTLE_TIME = 1000 / 30; // ms
@@ -106,15 +107,15 @@ const Lots = ({ attachTo: overrideAttachTo, asteroidId, axis, cameraAltitude, ca
   const lotMeshes = useRef({});
 
   const textures = useTexture({
-    [Building.IDS.WAREHOUSE]: `${process.env.PUBLIC_URL}/textures/buildings/Warehouse.png`,
-    [Building.IDS.EXTRACTOR]: `${process.env.PUBLIC_URL}/textures/buildings/Extractor.png`,
-    [Building.IDS.REFINERY]: `${process.env.PUBLIC_URL}/textures/buildings/Refinery.png`,
-    [Building.IDS.BIOREACTOR]: `${process.env.PUBLIC_URL}/textures/buildings/Bioreactor.png`,
-    [Building.IDS.FACTORY]: `${process.env.PUBLIC_URL}/textures/buildings/Factory.png`,
-    [Building.IDS.SHIPYARD]: `${process.env.PUBLIC_URL}/textures/buildings/Shipyard.png`,
-    [Building.IDS.SPACEPORT]: `${process.env.PUBLIC_URL}/textures/buildings/Spaceport.png`,
-    [Building.IDS.MARKETPLACE]: `${process.env.PUBLIC_URL}/textures/buildings/Marketplace.png`,
-    [Building.IDS.HABITAT]: `${process.env.PUBLIC_URL}/textures/buildings/Habitat.png`,
+    [Building.CATEGORIES.STORAGE]: `${process.env.PUBLIC_URL}/textures/buildings/Storage.png`,
+    [Building.CATEGORIES.EXTRACTION]: `${process.env.PUBLIC_URL}/textures/buildings/Extraction.png`,
+    [Building.CATEGORIES.REFINING]: `${process.env.PUBLIC_URL}/textures/buildings/Refining.png`,
+    [Building.CATEGORIES.AGRICULTURE]: `${process.env.PUBLIC_URL}/textures/buildings/Agriculture.png`,
+    [Building.CATEGORIES.MANUFACTURING]: `${process.env.PUBLIC_URL}/textures/buildings/Manufacturing.png`,
+    [Building.CATEGORIES.SHIPBUILDING]: `${process.env.PUBLIC_URL}/textures/buildings/Shipbuilding.png`,
+    [Building.CATEGORIES.TRANSPORT]: `${process.env.PUBLIC_URL}/textures/buildings/Transport.png`,
+    [Building.CATEGORIES.TRADE]: `${process.env.PUBLIC_URL}/textures/buildings/Trade.png`,
+    [Building.CATEGORIES.HOUSING]: `${process.env.PUBLIC_URL}/textures/buildings/Housing.png`,
     14: `${process.env.PUBLIC_URL}/textures/buildings/Construction.png`,
     15: `${process.env.PUBLIC_URL}/textures/buildings/Ship.png`
   });
@@ -123,7 +124,7 @@ const Lots = ({ attachTo: overrideAttachTo, asteroidId, axis, cameraAltitude, ca
     return Object.keys(textures) > 0;
   }, [textures]);
 
-  const lotSamplesMesh = useRef();
+  const lotLeasesMesh = useRef();
   const lastMouseIntersect = useRef(new Vector3());
   const highlighted = useRef();
   const lotLoaderInterval = useRef();
@@ -157,14 +158,14 @@ const Lots = ({ attachTo: overrideAttachTo, asteroidId, axis, cameraAltitude, ca
   const {
     data: {
       lotUseTallies,
-      fillTally,
+      leasedTally,
       resultTally,
       lastLotUpdate,
       colorMap,
       lotResultMap,
       lotUseMap,
       lotColorMap,
-      lotSampledMap,
+      lotLeasedMap
     },
     isLoading,
     processEvent,
@@ -178,7 +179,7 @@ const Lots = ({ attachTo: overrideAttachTo, asteroidId, axis, cameraAltitude, ca
   const lotTally = useMemo(() => Asteroid.getSurfaceArea(asteroidId), [asteroidId]);
   const regionTally = useMemo(() => lotTally <= MAX_LOTS_RENDERED ? 1 : Asteroid.getLotRegionTally(lotTally), [lotTally]);
   const visibleLotTally = useMemo(() => Math.min(MAX_MESH_INSTANCES, lotTally), [lotTally]);
-  const visibleFillTally = useMemo(() => Math.min(MAX_FILL_INSTANCES, fillTally), [fillTally]);
+  const visibleLeasedTally = useMemo(() => Math.min(MAX_LEASE_INSTANCES, leasedTally), [leasedTally]);
   const visibleResultTally = useMemo(() => Math.min(MAX_MESH_INSTANCES, resultTally), [resultTally]);
 
   // if just navigated to asteroid and lots already loaded, refetch
@@ -342,7 +343,7 @@ const Lots = ({ attachTo: overrideAttachTo, asteroidId, axis, cameraAltitude, ca
 
         // since will not be listening to asteroid room when zoomed away, remove ['asteroidPackedLotData', asteroidId]
         // and all [ 'entity', Entity.IDS.LOT, * ] that are on the asteroid but not occupied by me
-        queryClient.removeQueries({ queryKey: [ 'asteroidPackedLotData', asteroidId ] });
+        queryClient.removeQueries({ queryKey: [ 'asteroidPackedLotData', Number(asteroidId) ] });
         queryClient.getQueriesData([ 'entity', Entity.IDS.LOT ]).forEach(([ queryKey, data ]) => {
           const lotAsteroidId = Lot.toPosition(lotId)?.asteroidId;
           if (asteroidId === lotAsteroidId) {
@@ -450,30 +451,31 @@ const Lots = ({ attachTo: overrideAttachTo, asteroidId, axis, cameraAltitude, ca
     };
   }, [attachTo, visibleResultTally, texturesLoaded, lotUseTallies]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Create mesh for core samples
+  // Create mesh for my leases
   useEffect(() => {
-    if (!visibleFillTally) return;
+    if (!visibleLeasedTally) return;
 
-    const fillGeometry = new CircleGeometry(PLOT_WIDTH * 1.5, 6);
-    const fillMaterial = new MeshBasicMaterial({
-      color: GRAY_COLOR,
+    const leasedLotGeometry = new CircleGeometry(PLOT_WIDTH * 2.6, 32);
+    const leasedLotMaterial = new MeshBasicMaterial({
+      color: LEASE_COLOR,
       depthTest: false,
       depthWrite: false,
-      opacity: 0.5,
+      opacity: 0.02,
       side: FrontSide,
-      transparent: true
-    });
+      transparent: true,
+  });
 
-    lotSamplesMesh.current = new InstancedMesh(fillGeometry, fillMaterial, visibleFillTally);
-    lotSamplesMesh.current.renderOrder = 998;
-    attachTo.add(lotSamplesMesh.current);
+    lotLeasesMesh.current = new InstancedMesh(leasedLotGeometry, leasedLotMaterial, visibleLeasedTally);
+    lotLeasesMesh.current.renderOrder = 998;
+    lotLeasesMesh.current.layers.enable(BLOOM_LAYER);
+    attachTo.add(lotLeasesMesh.current);
 
     return () => {
-      if (lotSamplesMesh.current) {
-        attachTo.remove(lotSamplesMesh.current);
+      if (lotLeasesMesh.current) {
+        attachTo.remove(lotLeasesMesh.current);
       }
     };
-  }, [attachTo, visibleFillTally, PLOT_WIDTH]);
+  }, [attachTo, visibleLeasedTally, PLOT_WIDTH]);
 
   // instantiate mouse mesh
   useEffect(() => {
@@ -546,12 +548,12 @@ const Lots = ({ attachTo: overrideAttachTo, asteroidId, axis, cameraAltitude, ca
       let lotUsesRendered = {};
       let updateLotUseMatrix = {};
       let updateResultColor = {};
-      let updateSamplesMatrix = false;
+      let updateLeasesMatrix = false;
       let updateMouseableMatrix = false;
 
       let pipsRendered = 0;
       let resultsRendered = 0;
-      let samplesRendered = 0;
+      let leasesRendered = 0;
       let totalRendered = 0;
 
       let breakLoop = false;
@@ -570,13 +572,13 @@ const Lots = ({ attachTo: overrideAttachTo, asteroidId, axis, cameraAltitude, ca
         lotSource[lotRegion].every((lotIndex) => {
           const hasPip = (pipsRendered + resultsRendered) < visibleLotTally;
           const hasResult = lotResultMap[lotIndex] && (resultsRendered < visibleResultTally); // has result
-          const hasSample = !!lotSampledMap[lotIndex]; // has fill
+          const hasLease = !!lotLeasedMap[lotIndex]; // has fill
           const hasMouseable = lotTally > visibleLotTally || !lotsInitialized;
 
           const lotUse = lotUseMap[lotIndex] || 0;
           const lotUseRendered = lotUsesRendered[lotUse] || 0;
 
-          if (hasPip || hasResult || hasSample || hasMouseable) {
+          if (hasPip || hasResult || hasLease || hasMouseable) {
             // MATRIX
             // > if has a result, always need to rebuild entire matrix for this lot (to update scale with altitude)
             // > otherwise, only need to (re)build matrix on (re)initialization or if lot visibility is dynamic
@@ -629,17 +631,17 @@ const Lots = ({ attachTo: overrideAttachTo, asteroidId, axis, cameraAltitude, ca
               updateResultColor[lotUse] = true;
             }
 
-            // FILL
-            // > only need to update fill if it has a sample and is in visible fill area
-            if (hasSample) {
-              lotSamplesMesh.current.setMatrixAt(samplesRendered, dummy.matrix);
-              updateSamplesMatrix = true;
+            // fill
+            // > only need to update fill if it has a lease and is in visible fill area
+            if (hasLease) {
+              lotLeasesMesh.current.setMatrixAt(leasesRendered, dummy.matrix);
+              updateLeasesMatrix = true;
             }
           }
 
           if (hasResult) resultsRendered++;
           if (!hasResult && hasPip) pipsRendered++;
-          if (hasSample) samplesRendered++;
+          if (hasLease) leasesRendered++;
           totalRendered++;
 
           // break loop if all visible results are rendered AND *something* is rendered on closest visibleLots
@@ -659,11 +661,11 @@ const Lots = ({ attachTo: overrideAttachTo, asteroidId, axis, cameraAltitude, ca
         mouseableMesh.current.computeBoundingSphere();
       }
 
-      if (lotSamplesMesh.current && updateSamplesMatrix) {
-        lotSamplesMesh.current.instanceMatrix.needsUpdate = true;
-        lotSamplesMesh.current.computeBoundingSphere();
+      if (lotLeasesMesh.current && updateLeasesMatrix) {
+        lotLeasesMesh.current.instanceMatrix.needsUpdate = true;
+        lotLeasesMesh.current.computeBoundingSphere();
       }
-      if (lotSamplesMesh.current) lotSamplesMesh.current.count = visibleFillTally;
+      if (lotLeasesMesh.current) lotLeasesMesh.current.count = visibleLeasedTally;
 
       for (const use in lotMeshes.current) {
         lotMeshes.current[use].count = lotUsesRendered[use] || 0;

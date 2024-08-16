@@ -101,13 +101,13 @@ const MockDataItem = ({ overwrite }) => {
 
   // if new overwrite, always overwrite
   useEffect(() => {
-    setOverwriteAt((dataUpdatedAt || 0) + 1);
+    setOverwriteAt((dataUpdatedAt || 0) + 0.5);
   }, [overwrite]);
 
   // if new dataUpdatedAt, always overwrite UNLESS caused by the most recent overwrite
   useEffect(() => {
     if (dataUpdatedAt !== overwrittenAt) {
-      setOverwriteAt((dataUpdatedAt || 0) + 1);
+      setOverwriteAt((dataUpdatedAt || 0) + 0.5);
     }
   }, [dataUpdatedAt]);
 
@@ -154,7 +154,7 @@ const MockDataManager = () => {
             Object.keys(simulation.lots).forEach((lotId) => {
               const lotIndex = Lot.toIndex(lotId);
               let buildingType = 0;
-              if (simulation.lots[lotId]?.shipId) {
+              if (simulation.lots[lotId]?.shipId && !simulation.lots[lotId]?.shipIsUndocked) {
                 buildingType = 15; // ship
               } else if (simulation.lots[lotId]?.buildingType) {
                 if (simulation.lots[lotId]?.buildingStatus !== Building.CONSTRUCTION_STATUSES.OPERATIONAL) {
@@ -301,7 +301,7 @@ const MockDataManager = () => {
 
           // building entity
           configs.push({
-            queryKey: [ 'entity', Entity.IDS.BUILDING, buildingId ],
+            queryKey: [ 'entity', Entity.IDS.BUILDING, Number(buildingId) ],
             transformer: (data) => building // not merging because choosing ids to avoid collisions
           });
         }
@@ -331,7 +331,7 @@ const MockDataManager = () => {
           };
 
           configs.push({
-            queryKey: [ 'entity', Entity.IDS.DEPOSIT, depositId ],
+            queryKey: [ 'entity', Entity.IDS.DEPOSIT, Number(depositId) ],
             transformer: (data) => deposit
           });
         }
@@ -389,7 +389,7 @@ const MockDataManager = () => {
           simulatedShips.push(ship);
 
           configs.push({
-            queryKey: [ 'entity', Entity.IDS.SHIP, shipId ],
+            queryKey: [ 'entity', Entity.IDS.SHIP, Number(shipId) ],
             transformer: (data) => ship
           });
         }

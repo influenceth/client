@@ -2277,7 +2277,7 @@ const activities = {
 /**
  * Hydration and Prepopulation
  */
-export const getHydrationQueryKey = ({ label, id }) => ['entity', label, id];
+export const getHydrationQueryKey = ({ label, id }) => ['entity', label, Number(id)];
 
 export const getAndCacheEntity = async ({ label, id }, queryClient) => {
   const queryKey = getHydrationQueryKey({ id, label });

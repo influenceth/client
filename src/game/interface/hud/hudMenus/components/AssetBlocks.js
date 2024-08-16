@@ -186,16 +186,16 @@ const Bar = styled.div.attrs((p) => {
 `;
 
 const getBuildingIcon = (buildingType) => {
-  switch(buildingType) {
-    case Building.IDS.BIOREACTOR: return <BioreactorBuildingIcon />;
-    case Building.IDS.EXTRACTOR: return <ExtractorBuildingIcon />;
-    case Building.IDS.FACTORY: return <FactoryBuildingIcon />;
-    case Building.IDS.HABITAT: return <HabitatBuildingIcon />;
-    case Building.IDS.MARKETPLACE: return <MarketplaceBuildingIcon />;
-    case Building.IDS.REFINERY: return <RefineryBuildingIcon />;
-    case Building.IDS.SHIPYARD: return <ShipyardBuildingIcon />;
-    case Building.IDS.SPACEPORT: return <SpaceportBuildingIcon />;
-    case Building.IDS.WAREHOUSE: return <WarehouseBuildingIcon />;
+  switch(Building.TYPES[buildingType].category) {
+    case Building.CATEGORIES.AGRICULTURE: return <BioreactorBuildingIcon />;
+    case Building.CATEGORIES.EXTRACTION: return <ExtractorBuildingIcon />;
+    case Building.CATEGORIES.MANUFACTURING: return <FactoryBuildingIcon />;
+    case Building.CATEGORIES.HOUSING: return <HabitatBuildingIcon />;
+    case Building.CATEGORIES.TRADE: return <MarketplaceBuildingIcon />;
+    case Building.CATEGORIES.REFINING: return <RefineryBuildingIcon />;
+    case Building.CATEGORIES.SHIPBUILDING: return <ShipyardBuildingIcon />;
+    case Building.CATEGORIES.TRANSPORT: return <SpaceportBuildingIcon />;
+    case Building.CATEGORIES.STORAGE: return <WarehouseBuildingIcon />;
     default: return <ConstructIcon />;
   }
 }
@@ -289,7 +289,7 @@ export const AgreementBlock = ({ agreement, onSelectCrew, selectedCrew, setRef }
     </SelectableRow>
   );
 };
- 
+
 export const AsteroidBlock = ({ asteroid, onClick, onRenderReady, selectedCrew, showRender }) => {
   const rarity = useMemo(() => {
     if ([Asteroid.SCAN_STATUSES.SURFACE_SCANNED, Asteroid.SCAN_STATUSES.RESOURCE_SCANNED].includes(asteroid.Celestial.scanStatus)) {
@@ -328,10 +328,10 @@ export const BuildingBlock = ({ building, onSelectCrew, selectedCrew, setRef }) 
   const { currentExtraction } = useExtractionManager(buildingLoc?.lotId);
   const { currentProcess } = useProcessManager(buildingLoc?.lotId, building.Processors?.[0]?.slot);
   const { currentConstructionAction } = useConstructionManager(buildingLoc?.lotId);
-  
+
   const [progress, progressColor] = useMemo(() => {
     if (building?.Building?.status === Building.CONSTRUCTION_STATUSES.OPERATIONAL) {
-      if (building?.Building?.buildingType === Building.IDS.WAREHOUSE) {
+      if (building?.Building?.buildingCategory === Building.CATEGORIES.STORAGE) {
         const inventory = (building.Inventories || []).find((i) => i.status === Inventory.STATUSES.AVAILABLE);
         const filledCapacity = Inventory.getFilledCapacity(inventory?.inventoryType, selectedCrew?._inventoryBonuses);
         const usage = inventory
@@ -397,12 +397,18 @@ export const BuildingBlock = ({ building, onSelectCrew, selectedCrew, setRef }) 
       } else if (building?.Processors?.length && building?.Processors?.[0]?.status > 0) {
         return 'Processing';
 
-      } else if ([Building.IDS.WAREHOUSE, Building.IDS.SPACEPORT, Building.IDS.HABITAT].includes(building?.Building?.buildingType)) {
+      } else if (
+        building?.Building?.buildingType === Building.CATEGORIES.STORAGE
+        || [Building.IDS.SPACEPORT, Building.IDS.HABITAT].includes(building?.Building?.buildingType)
+      ) {
         return `${formatFixed(100 * progress, 1)}% Full`
       }
       return 'Idle';
     }
-    if (building?.Building?.status === Building.CONSTRUCTION_STATUSES.PLANNED && building?.Building?.plannedAt + Building.GRACE_PERIOD < syncedTime) {
+    if (
+      building?.Building?.status === Building.CONSTRUCTION_STATUSES.PLANNED
+      && building?.Building?.plannedAt + Building.GRACE_PERIOD < syncedTime
+    ) {
       return 'At Risk';
     }
     return `${Building.CONSTRUCTION_STATUS_LABELS[building?.Building?.status || 0]}`;
@@ -439,7 +445,7 @@ export const BuildingBlock = ({ building, onSelectCrew, selectedCrew, setRef }) 
 export const ShipBlock = ({ ship, onSelectCrew, selectedCrew, setRef }) => {
   const onClickShip = useShipLink({ shipId: ship.id, zoomToShip: true });
   const location = useMemo(() => locationsArrToObj(ship.Location?.locations || []));
-  
+
   const status = useMemo(() => {
     if (location?.buildingId) return 'Docked';
     if (location?.lotIndex) return 'Landed';

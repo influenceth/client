@@ -11,7 +11,7 @@ const isVisible = ({ account, ship, crew }) => {
     && crew?.id && ship.Control?.controller?.id !== crew?.id;
 };
 
-const ControlShip = ({ ship, onSetAction, _disabled }) => {
+const ControlShip = ({ crew, ship, onSetAction, _disabled, ...props }) => {
   const { takingControl } = useControlShip(ship?.id);
 
   const handleClick = useCallback(() => {
@@ -21,8 +21,9 @@ const ControlShip = ({ ship, onSetAction, _disabled }) => {
   const disabledReason = useMemo(() => {
     if (_disabled) return 'loading...';
     if (takingControl) return 'updating...';
+    if (!crew?._ready) return 'crew is busy';
     return '';
-  }, [_disabled, takingControl]);
+  }, [crew, _disabled, takingControl]);
 
   // only flash green if no controller... button is always present if you own and
   // do not currently have control (hopefully that is less distracting when admin'ed

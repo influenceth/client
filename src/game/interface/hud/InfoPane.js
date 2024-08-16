@@ -253,6 +253,13 @@ const ActionButtons = styled.div`
   width: 100%;
 `;
 
+const AssetType = styled.div`
+  bottom: 5px;
+  color: #bbb;
+  position: absolute;
+  right: 8px;
+`;
+
 const CaptainCard = ({ crewId }) => {
   const history = useHistory();
   const { data: crew } = useCrew(crewId);
@@ -321,7 +328,6 @@ const getShipSubtitle = (ship, shipReady, { asteroid, lot }) => {
   );
 }
 
-
 const InfoPane = () => {
   const history = useHistory();
   const setCoachmarkRef = useCoachmarkRefSetter();
@@ -351,7 +357,6 @@ const InfoPane = () => {
 
   const [hover, setHover] = useState();
   const [currentSound, setCurrentSound] = useState();
-  const [refEl, setRefEl] = useState();
 
   const onMouseEvent = (e) => setHover(e.type === 'mouseenter');
 
@@ -491,7 +496,7 @@ const InfoPane = () => {
         pane.title = formatters.shipName(ship);
         pane.subtitle = getShipSubtitle(ship, shipReady, { asteroid, lot });
         pane.captainCard = ship.Control?.controller?.id;
-        
+
       } else if (lotId && lot && lot.surfaceShip) {
         const thumbUrl = getLotShipIcon(lot.surfaceShip.Ship?.shipType || 0, 'w400');
         pane.title = formatters.shipName(lot.surfaceShip);
@@ -514,7 +519,9 @@ const InfoPane = () => {
         pane.subtitle = <>{formatters.asteroidName(asteroid)} &gt; <b>{formatters.lotName(lotId)}</b></>;
         pane.captainCard = lot.building?.Control?.controller?.id || explicitLotControllerId;
         pane.hoverSubtitle = 'Zoom to Lot';
-        
+
+        const assetType = lot?.building ? Building.TYPES[lot.building?.Building?.buildingType]?.name : undefined;
+
         let thumbBanner = '';
         let thumbBannerColor = '';
         let thumbBannerBackgroundColor = '';
@@ -538,6 +545,9 @@ const InfoPane = () => {
         pane.thumbVisible = true;
         pane.thumbnail = (
           <ThumbBackground image={thumbUrl}>
+            {assetType && (
+              <AssetType>{assetType}</AssetType>
+            )}
             {thumbBanner && (
               <ThumbBanner color={thumbBannerColor} background={thumbBannerBackgroundColor}>
                 <BackgroundLines animating color={theme.colors[thumbBannerColor]} />
