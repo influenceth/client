@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import styled from 'styled-components';
 
 import Button from '~/components/ButtonAlt';
@@ -97,6 +97,13 @@ const ChoicesDialog = ({
     return null;
   }, [choices, choicelessButton, choicelessInFooter, props.rightButton]);
 
+  const contentWrapper = useRef();
+  useEffect(() => {
+    if (contentWrapper.current) {
+      contentWrapper.current.scrollTop = 0;
+    }
+  }, [content]);
+
   return (
     <Details
       edgeToEdge
@@ -112,7 +119,7 @@ const ChoicesDialog = ({
           <>
             {contentOverride}
             {!contentOverride && (
-              <ContentWrapper>
+              <ContentWrapper ref={contentWrapper}>
                 {content && !isHTML && <PageContent>{content}</PageContent>}
                 {content && isHTML && <PageContent dangerouslySetInnerHTML={{ __html: content }} />}
                 {prompt && <PagePrompt>{prompt}</PagePrompt>}
