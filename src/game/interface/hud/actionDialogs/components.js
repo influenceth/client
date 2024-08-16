@@ -1584,7 +1584,7 @@ export const ResourceSelectionDialog = ({ abundances, lotId, initialSelection, o
   const simulationEnabled = useSimulationEnabled();
   const coachmarks = useStore((s) => s.coachmarks);
   const simulationActions = useStore((s) => s.simulationActions);
-  
+
   const [selection, setSelection] = useState(initialSelection);
 
   const onComplete = useCallback(() => {
@@ -2178,6 +2178,7 @@ const getInventorySublabel = (inventoryType) => {
     case Inventory.IDS.SPACEPORT_SITE:
     case Inventory.IDS.MARKETPLACE_SITE:
     case Inventory.IDS.HABITAT_SITE:
+    case Inventory.IDS.TANK_FARM_SITE:
       return 'Site';
 
     case Inventory.IDS.PROPELLANT_TINY:
@@ -2308,7 +2309,7 @@ export const InventorySelectionDialog = ({
   requirePresenceOfItemIds
 }) => {
   const { crew } = useCrewContext();
-  
+
   const simulationEnabled = useSimulationEnabled();
   const setCoachmarkRef = useCoachmarkRefSetter();
   const coachmarks = useStore(s => s.coachmarks);
