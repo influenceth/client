@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Building, Crewmate, Entity, Inventory, Permission, Process, Processor, Product, Ship } from '@influenceth/sdk';
 import { useHistory } from 'react-router-dom';
 import { BiTransfer as TransferIcon } from 'react-icons/bi';
@@ -1086,17 +1086,19 @@ const useSimulationSteps = () => {
   // cleanse selected step index
   useEffect(() => {
     if (!isLoading) {
-      if (simulation.step === undefined || simulation.step < 0) {// || simulation.step > simulation.length - 1) {
+      if (simulation.step === undefined || simulation.step < 0) {// || simulation.step > simulationSteps.length - 1) {
         dispatchSimulationStep(0);
       }
     }
   }, [isLoading, simulation?.step, simulationSteps]);
 
   // load step object from step index
+  const previousStep = useRef({});
   const currentStep = useMemo(() => {
     // TODO: use named index instead of numbers
-    return isLoading ? {} : simulationSteps[simulation.step];
+    return isLoading ? previousStep.current : simulationSteps[simulation.step];
   }, [simulationSteps, simulation.step]);
+  previousStep.current = currentStep;
 
   // autoadvance if ready to autoadvance (wait for fastforwarding as necessary)
   useEffect(() => {
