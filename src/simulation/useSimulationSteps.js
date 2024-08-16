@@ -1069,6 +1069,7 @@ const useSimulationSteps = () => {
     crewBuildings,
     crewDeposits,
     crewShips,
+    currentZoomScene,
     cutscene,
     inTravelMode,
     isLoading,

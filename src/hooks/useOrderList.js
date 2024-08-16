@@ -4,7 +4,7 @@ import api from '~/lib/api';
 
 const useOrderList = (exchangeId, productId) => {
   return useQuery(
-    [ 'orderList', exchangeId, productId ],
+    [ 'orderList', Number(exchangeId), Number(productId) ],
     () => api.getOrderList(exchangeId, productId),
     { enabled: !!exchangeId && !!productId }
   );

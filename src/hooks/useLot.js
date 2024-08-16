@@ -19,7 +19,8 @@ const useLotEntities = (lotId, entityLabel, isPreloaded) => {
   )
 };
 
-const useLot = (lotId) => {
+const useLot = (rawLotId) => {
+  const lotId = Number(rawLotId);
   const blockTime = useBlockTime();
   const queryClient = useQueryClient();
 
@@ -61,7 +62,7 @@ const useLot = (lotId) => {
   );
 
   // (presuming this is already loaded so doesn't cause any overhead)
-  const { data: asteroid, isLoading: asteroidLoading } = useEntity(lotId ? { label: Entity.IDS.ASTEROID, id: Lot.toPosition(lotId)?.asteroidId } : undefined);
+  const { data: asteroid, isLoading: asteroidLoading } = useEntity(lotId ? { label: Entity.IDS.ASTEROID, id: Number(Lot.toPosition(lotId)?.asteroidId) } : undefined);
 
   // we try to prepop all the below in a single call above so the
   // below queries only get refreshed invididually when invalidated
