@@ -22,7 +22,7 @@ const simulationConfig = {
     pilot: 7539,
     scientist: 6891
   },
-  startingSway: 25e6 * TOKEN_SCALE[TOKEN.SWAY],
+  startingSway: 50e6 * TOKEN_SCALE[TOKEN.SWAY],
   marketplaceAmounts: {
     [Product.IDS.ACETYLENE]: true, // "true" implies whatever is in warehouse
     [Product.IDS.CORE_DRILL]: 5,

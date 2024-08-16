@@ -256,8 +256,10 @@ const ActionButtons = styled.div`
 const AssetType = styled.div`
   bottom: 5px;
   color: #bbb;
+  font-size: 90%;
   position: absolute;
-  right: 8px;
+  right: 9px;
+  text-transform: uppercase;
 `;
 
 const CaptainCard = ({ crewId }) => {
