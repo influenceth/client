@@ -1101,16 +1101,19 @@ const useSimulationSteps = () => {
   }, [simulationSteps, simulation.step]);
   previousStep.current = currentStep;
 
+  const isFastForwarding = useMemo(
+    () => simulation?.canFastForward && (simulation?.crewReadyAt || simulation?.taskReadyAt) > 0,
+    [simulation?.canFastForward, simulation?.crewReadyAt, simulation?.taskReadyAt]
+  );
+
   // autoadvance if ready to autoadvance (wait for fastforwarding as necessary)
   useEffect(() => {
     if (currentStep?.shouldAdvance && currentStep.shouldAdvance()) {
-      if (simulation?.crewReadyAt || simulation?.taskReadyAt) {
-        setTimeout(advance, SIMULATION_CONFIG.fastForwardAnimationDuration);  
-      } else {
+      if (!isFastForwarding || !simulation?.canFastForward) {
         advance();
       }
     }
-  }, [advance, currentStep]);
+  }, [advance, currentStep, simulation?.canFastForward, isFastForwarding]);
 
   // if new step, run initialize()
   useEffect(() => {
@@ -1122,25 +1125,28 @@ const useSimulationSteps = () => {
   // dispatch coachmark config
   useEffect(() => {
     let currentCoachmarks = {};
-    if (currentStep && pendingTransactions.length === 0) {
-      if (typeof currentStep.coachmarks === 'function') {
-        currentCoachmarks = currentStep.coachmarks() || {};
-      } else {
-        currentCoachmarks = currentStep.coachmarks || {};
+    if (!isFastForwarding) {
+      if (currentStep && pendingTransactions.length === 0) {
+        if (typeof currentStep.coachmarks === 'function') {
+          currentCoachmarks = currentStep.coachmarks() || {};
+        } else {
+          currentCoachmarks = currentStep.coachmarks || {};
+        }
       }
     }
     dispatchCoachmarks(currentCoachmarks);
     return () => {
       dispatchCoachmarks({});
     }
-  }, [currentStep?.coachmarks, pendingTransactions]);
+  }, [currentStep?.coachmarks, isFastForwarding, pendingTransactions]);
 
   // derive and dispatch enabled-action config
   const enabledActions = useMemo(() => {
+    if (isFastForwarding) return [];
     return Object.keys(currentStep?.enabledActions || {}).filter((id) => {
       return !!currentStep?.enabledActions[id]
     });
-  }, [currentStep?.enabledActions]);
+  }, [currentStep?.enabledActions, isFastForwarding]);
 
   useEffect(() => {
     dispatchSimulationActions(enabledActions);
