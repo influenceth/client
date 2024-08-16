@@ -704,6 +704,7 @@ const useSimulationSteps = () => {
         crewmateId: SIMULATION_CONFIG.crewmates.miner,
         coachmarks: {
           [COACHMARK_IDS.actionButtonExtract]: !actionDialog?.type && selectedLot?.building?.id === extractorLot?.buildingId,
+          [COACHMARK_IDS.actionDialogMaxRecipes]: true
         },
         enabledActions: {
           Extract: selectedLot?.building?.id === extractorLot?.buildingId,

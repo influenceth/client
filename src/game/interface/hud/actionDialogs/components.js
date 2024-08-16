@@ -3467,6 +3467,8 @@ export const ProgressBarSection = ({
 };
 
 export const ResourceAmountSlider = ({ amount, extractionTime, min, max, resource, setAmount }) => {
+  const setCoachmarkRef = useCoachmarkRefSetter();
+
   const [grams, tonnageValue] = useMemo(() => {
     const grams = amount * resource?.massPerUnit || 0;
     const tonnage = grams / 1e6;
@@ -3519,6 +3521,7 @@ export const ResourceAmountSlider = ({ amount, extractionTime, min, max, resourc
         <Button
           disabled={amount === max}
           onClick={() => setAmount(max)}
+          setRef={amount === max ? undefined : setCoachmarkRef(COACHMARK_IDS.actionDialogMaxRecipes)}
           size="small"
           style={{ padding: 0, minWidth: 75 }}>Max</Button>
       </SliderInfoRow>
