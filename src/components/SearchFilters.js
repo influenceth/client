@@ -71,17 +71,17 @@ const buildingTypeOptions = Object.keys(Building.TYPES)
     { key, label: Building.TYPES[key].name, initialValue: true }
   ]), []);
 
-  const buildingTypeColors = {
+  const buildingCategoryColors = {
     0: '#666666', // empty lot
-    1: '#ff8c00', // WAREHOUSE
-    2: '#d9352b', // EXTRACTOR
-    3: '#cc3777', // REFINERY
-    4: '#0a9900', // BIOREACTOR
-    5: '#b3855c', // FACTORY
-    6: '#4848b3', // SHIPYARD
-    7: '#19d9ff', // SPACEPORT
-    8: '#57ff65', // MARKETPLACE
-    9: '#ffff00', // HABITAT
+    1: '#ff8c00', // STORAGE
+    2: '#d9352b', // EXTRACTION
+    3: '#cc3777', // REFINING
+    4: '#0a9900', // AGRICULTURE
+    5: '#b3855c', // MANUFACTURING
+    6: '#4848b3', // SHIPBUILDING
+    7: '#19d9ff', // TRANSPORT
+    8: '#57ff65', // TRADE
+    9: '#ffff00', // HOUSING
     // (extras)
     14: '#777777',  // construction site
     15: '#ffffff',  // landed light transport
@@ -374,7 +374,7 @@ const SearchFilters = ({ assetType, highlighting, isListView = false }) => {
 
         <CheckboxFilter
           {...filterProps}
-          defaultColorMap={buildingTypeColors}
+          defaultColorMap={buildingCategoryColors}
           fieldName="type"
           highlightFieldName="type"
           options={lotSearchBuildingTypeOptions}
