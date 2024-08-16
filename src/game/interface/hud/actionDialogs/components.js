@@ -4236,7 +4236,7 @@ export const ShipTab = ({ pilotCrew, inventoryBonuses, ship, stage, deltas = {},
       };
     }
     return result;
-  }, [deltas, inventory, ship, statWarnings]);
+  }, [deltas, inventory, ship, stage, statWarnings]);
 
   return (
     <>

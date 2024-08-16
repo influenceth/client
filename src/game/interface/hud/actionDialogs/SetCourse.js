@@ -343,6 +343,12 @@ const SetCourse = ({ origin, destination, manager, ship, stage, travelSolution, 
     }
   }, [delay]);
 
+  const deltas = (stage && ![actionStages.NOT_STARTED, actionStages.STARTING].includes(stage)) ? { } : 
+    {
+      propellantMass: -travelSolution.usedPropellantMass,
+      propellantVolume: -travelSolution.usedPropellantMass / propellantProduct.massPerUnit * propellantProduct.volumePerUnit,
+    };
+
   return (
     <>
       <ActionDialogHeader
@@ -468,10 +474,7 @@ const SetCourse = ({ origin, destination, manager, ship, stage, travelSolution, 
           <ShipTab
             pilotCrew={crew}
             inventoryBonuses={crew?._inventoryBonuses}
-            deltas={{
-              propellantMass: -travelSolution.usedPropellantMass,
-              propellantVolume: -travelSolution.usedPropellantMass / propellantProduct.massPerUnit * propellantProduct.volumePerUnit,
-            }}
+            deltas={deltas}
             ship={ship}
             stage={stage} />
         )}
@@ -501,7 +504,7 @@ const Wrapper = (props) => {
 
   const { data: maybeShip, isLoading: shipIsLoading } = useShip(crew?._location?.shipId);
   const ship = useMemo(() => {
-    return (!maybeShip && crew?.Ship?.emergencyAt > 0) ? crew : maybeShip;
+    return (!shipIsLoading && !maybeShip && crew?.Ship?.emergencyAt > 0) ? crew : maybeShip;
   }, [crew]);
 
   const manager = useShipTravelManager(ship);
@@ -512,8 +515,8 @@ const Wrapper = (props) => {
   const proposedTravelSolution = useStore(s => s.asteroids.travelSolution);
 
   const travelSolution = useMemo(
-    () => currentTravelAction ? currentTravelSolution : proposedTravelSolution,
-    [currentTravelAction, proposedTravelSolution]
+    () => (solutionIsLoading || currentTravelAction) ? currentTravelSolution : proposedTravelSolution,
+    [currentTravelAction, proposedTravelSolution, solutionIsLoading]
   );
 
   const { data: origin, isLoading: originIsLoading } = useAsteroid(currentTravelAction?.originId || defaultOrigin);

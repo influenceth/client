@@ -1,6 +1,6 @@
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { lambert } from '@influenceth/astro';
-import { GM_ADALIA, AdalianOrbit, Entity, Ship, Time } from '@influenceth/sdk';
+import { GM_ADALIA, AdalianOrbit, Crewmate, Entity, Ship, Time } from '@influenceth/sdk';
 import { Vector3 } from 'three';
 
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
@@ -11,7 +11,7 @@ import useConstants from '~/hooks/useConstants';
 import useShip from '~/hooks/useShip';
 import useStore from '~/hooks/useStore';
 import actionStages from '~/lib/actionStages';
-import { arrToXYZ } from '~/lib/utils';
+import { arrToXYZ, getCrewAbilityBonuses } from '~/lib/utils';
 
 const toV3 = ({ x, y, z }) => new Vector3(x, y, z);
 
@@ -19,7 +19,7 @@ const useShipTravelManager = (shipId) => {
   const { actionItems, readyItems } = useActionItems();
   const blockTime = useBlockTime();
   const { execute, getPendingTx, getStatus } = useContext(ChainTransactionContext);
-  const { data: ship } = useShip(shipId);
+  const { data: ship, dataUpdatedAt: shipUpdatedAt } = useShip(shipId);
 
   const { data: TIME_ACCELERATION } = useConstants('TIME_ACCELERATION');
   const proposedTravelSolution = useStore(s => s.asteroids.travelSolution);
@@ -134,6 +134,20 @@ const useShipTravelManager = (shipId) => {
       oVel.toArray(),
       dVel.toArray(),
     ).then((solution) => {
+      
+      // if this gets more complicated, use useActionCrew as a reference for
+      // what should be included in this pseudo-crew object
+      const exhaustBonus = getCrewAbilityBonuses(
+        Crewmate.ABILITY_IDS.PROPELLANT_EXHAUST_VELOCITY,
+        {
+          ...currentTravelAction._cachedData?.crew || {},  // includes id, label, uuid, Crew, Location (if v2)
+          _crewmates: currentTravelAction._cachedData?.crewmates || [],  // each includes id, label, uuid, Crewmate
+          _station: { ...currentTravelAction._cachedData?.station || {} },
+        }
+      );
+      const variantMod = 1 + (ship ? Ship.Entity.getVariant(ship)?.exhaustVelocityModifier : 0);
+      const exhaustVelocity = shipConfig?.exhaustVelocity * (exhaustBonus?.totalBonus || 1) * variantMod;
+
       // treat leftover propellant as dry mass so can use simpler equation
       // TODO: this will be incorrect if propellant not yet deducted from the inventory
 
@@ -145,7 +159,7 @@ const useShipTravelManager = (shipId) => {
       // deltav = v_e * ln(preMass / postMass)
       // preMass = postMass * e^(deltav / v_e)
       const postMass = shipConfig?.hullMass + cargoInv?.mass + propellantInv?.mass;
-      const preMass = Math.round(postMass * Math.exp(solution.deltaV / shipConfig?.exhaustVelocity));
+      const preMass = Math.round(postMass * Math.exp(solution.deltaV / exhaustVelocity));
       const usedPropellantMass = preMass - postMass;
       const prePropellantMass = preMass - (shipConfig?.hullMass + cargoInv?.mass);
       setCurrentTravelSolution({
@@ -169,7 +183,8 @@ const useShipTravelManager = (shipId) => {
     currentTravelAction?.arrivalTime,
     origin,
     destination,
-    propellantInv?.mass
+    propellantInv?.mass,
+    shipUpdatedAt
   ]);
 
   const depart = useCallback(() => {
