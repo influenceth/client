@@ -332,7 +332,20 @@ const LotInventory = () => {
     [inventories, inventorySlot]
   );
 
-  const { usedMass, reservedM, usedOrReservedMass, maxMass, pctMass, pctOrReservedMass, usedVolume, reservedV, usedOrReservedVolume, maxVolume, pctVolume, pctOrReservedVolume } = useMemo(() => {
+  const {
+    usedMass,
+    reservedM,
+    usedOrReservedMass,
+    maxMass,
+    pctMass,
+    pctOrReservedMass,
+    usedVolume,
+    reservedV,
+    usedOrReservedVolume,
+    maxVolume,
+    pctVolume,
+    pctOrReservedVolume
+  } = useMemo(() => {
     if (!inventory) {
       return {
         usedMass: 0,

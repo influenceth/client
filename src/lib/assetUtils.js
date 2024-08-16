@@ -25,11 +25,11 @@ const getSlug = (assetName) => {
   return (assetName || '').replace(/[^a-z]/ig, '');
 }
 
-const getIconUrl = ({ type, assetName, iconVersion, append, w, h, f } = {}) => {
+const getIconUrl = ({ type, assetName, append, w, h, f } = {}) => {
   const environment = process.env.REACT_APP_DEPLOYMENT || 'production';
 
   return getCloudfrontUrl(
-    `influence/${environment}/images/icons/${type}/${getSlug(assetName)}${append || ''}.v${iconVersion || '1'}.png`,
+    `influence/${environment}/images/icons/${type}/${getSlug(assetName)}${append || ''}.png`,
     { w, h, f }
   );
 }
