@@ -1798,8 +1798,12 @@ export const TransferSelectionDialog = ({
       }, {});
   }, [pendingTargetDeliveries]);
 
+  const prevInitialSelection = useRef();
   useEffect(() => {
-    setSelection({ ...initialSelection });
+    if (!prevInitialSelection.current || JSON.stringify(prevInitialSelection.current) !== JSON.stringify(initialSelection)) {
+      setSelection({ ...initialSelection });
+      prevInitialSelection.current = initialSelection;
+    }
   }, [initialSelection]);
 
   const onComplete = useCallback(() => {
