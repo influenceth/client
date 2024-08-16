@@ -255,6 +255,7 @@ const ActionButtons = styled.div`
 
 const AssetType = styled.div`
   bottom: 5px;
+  color: #bbb;
   position: absolute;
   right: 8px;
 `;
