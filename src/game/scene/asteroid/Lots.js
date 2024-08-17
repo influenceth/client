@@ -575,7 +575,8 @@ const Lots = ({ attachTo: overrideAttachTo, asteroidId, axis, cameraAltitude, ca
           const hasLease = !!lotLeasedMap[lotIndex]; // has fill
           const hasMouseable = lotTally > visibleLotTally || !lotsInitialized;
 
-          const lotUse = lotUseMap[lotIndex] || 0;
+          let lotUse = lotUseMap[lotIndex] || 0;
+          if (lotUse === 10) lotUse = 1;
           const lotUseRendered = lotUsesRendered[lotUse] || 0;
 
           if (hasPip || hasResult || hasLease || hasMouseable) {
