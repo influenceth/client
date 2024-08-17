@@ -89,7 +89,7 @@ const buildingTypeOptions = Object.keys(Building.TYPES)
 
 const lotSearchBuildingCategoryOptions = Object.values(Building.CATEGORIES).reduce((acc, key) => ([
   ...acc,
-  { key, label: Building.CATEGORY_TYPES[key].name, initialValue: true }
+  { key, label: Building.CATEGORIES[key].name, initialValue: true }
 ]), []);
 lotSearchBuildingCategoryOptions.splice(0, 0, { key: 0, label: 'Empty Lot', initialValue: true });
 lotSearchBuildingCategoryOptions.splice(1, 0, { key: 14, label: 'Construction Site', initialValue: true });
