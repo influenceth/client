@@ -206,8 +206,6 @@ const Alerts = () => {
   useEffect(() => {
     if (alerts?.length === 0) return;
     alerts.filter(a => !a.notified).forEach(a => {
-      console.log('pmk', stacks.current.testactivity?.messageId, stacks.current.testactivity?.tally)
-
       const { type, data, level, duration } = a;
       const alertContent = getAlertContent({ type, data });
       const stackId = data?.stackId;

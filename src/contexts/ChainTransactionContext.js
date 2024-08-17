@@ -533,6 +533,16 @@ export function ChainTransactionProvider({ children }) {
     }
 
     if (nonce) setNonce(n => n + 1n);
+
+    // hacky fix for argentMobile
+    if (account?.walletProvider?.id === 'argentMobile') {
+      try {
+        return await account.walletProvider.account.execute(formattedCalls, txOptions);
+      } catch (e) {
+        console.log('argentMobile hacky fix is broken... falling through...', e);
+      }
+    }
+
     return await account.execute(formattedCalls, txOptions);
   }, [
     accountAddress,
