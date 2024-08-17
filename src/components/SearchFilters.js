@@ -383,8 +383,8 @@ const SearchFilters = ({ assetType, highlighting, isListView = false }) => {
         <CheckboxFilter
           {...filterProps}
           defaultColorMap={buildingCategoryColors}
-          fieldName="type"
-          highlightFieldName="type"
+          fieldName="category"
+          highlightFieldName="category"
           options={lotSearchBuildingCategoryOptions}
           title="Building Categories" />
 

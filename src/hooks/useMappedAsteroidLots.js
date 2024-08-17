@@ -91,14 +91,14 @@ const useMappedAsteroidLots = (i) => {
   const isFilterMatch = useCallback((unpacked) => {
     const filters = mappedLotSearch?.filters || {};
     if (searchIsOn) {
-      if (filters.type && !filters.type.includes(unpacked.type.toString())) return false;
+      if (filters.category && !filters.category.includes(unpacked.category.toString())) return false;
       if (filters.leasability && filters.leasability !== unpacked.leasability) return false;
       if (filters.occupiedBy && filters.occupiedBy !== unpacked.occupiedBy) return false;
       if (filters.hasCrew && !unpacked.crewPresent) return false;
       if (filters.hasCoresForSale && !unpacked.coresPresent) return false;
       return true;
     } else {
-      return unpacked.type > 0;
+      return unpacked.category > 0;
     }
   }, [mappedLotSearch?.filters, searchIsOn]);
 
@@ -116,18 +116,18 @@ const useMappedAsteroidLots = (i) => {
 
     if (lotData && myOccupationMap && myShipMap) {
       // packed data has the following masks:
-      //  11110000 capable type
+      //  11110000 building category
       //  00001100 lease status (0 unleasable, 1 leasable, 2 leased)
       //  00000010 has crew present
       //  00000001 has samples for sale present
       for (let i = 1; i < lotData.length; i++) {
 
         // unpack this lot data
-        unpacked.type = lotData[i] >> 4;
+        unpacked.category = lotData[i] >> 4;
         unpacked.leasability = lotLeaseOptionKeys[(12 & lotData[i]) >> 2];
         unpacked.crewPresent = (2 & lotData[i]) >> 1;
         unpacked.coresPresent = (1 & lotData[i]);
-        unpacked.occupiedBy = unpacked.type === 0
+        unpacked.occupiedBy = unpacked.category === 0
           ? 'unoccupied'
           : (
             (myOccupationMap[i] || myShipMap[i])
@@ -143,9 +143,9 @@ const useMappedAsteroidLots = (i) => {
         }
 
         // determine if this lot should have an icon
-        if (unpacked.type > 0) {
-          lotUse[i] = unpacked.type;
-          lotUseTallies[unpacked.type] = (lotUseTallies[unpacked.type] || 0) + 1;
+        if (unpacked.category > 0) {
+          lotUse[i] = unpacked.category;
+          lotUseTallies[unpacked.category] = (lotUseTallies[unpacked.category] || 0) + 1;
           lotUseTallies.total = (lotUseTallies.total || 0) + 1;
         }
 

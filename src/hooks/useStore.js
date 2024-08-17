@@ -20,7 +20,7 @@ const {
   MAX_FOV
 } = constants;
 
-const buildingIds = Object.values(Building.IDS).filter((k) => k > 0).map((k) => k.toString());
+const buildingCategories = Object.values(Building.CATEGORIES).filter((k) => k > 0).map((k) => k.toString());
 
 const assetSearchDefaults = {
   actionitems: { filters: {}, sort: ['time', 'asc'] },
@@ -36,7 +36,7 @@ const assetSearchDefaults = {
   orders: { filters: {}, sort: ['id', 'asc'] },
   leases: { filters: {}, sort: ['lot.id', 'asc'] },
   lots: { filters: {}, sort: ['id', 'asc'] },
-  lotsMapped: { filters: { type: [...buildingIds] }, sort: ['id', 'asc'], highlight: null },
+  lotsMapped: { filters: { category: [...buildingCategories] }, sort: ['id', 'asc'], highlight: null },
 };
 
 const simulationStateDefault = {
