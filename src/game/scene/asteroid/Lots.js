@@ -68,6 +68,20 @@ const MAX_LEASE_INSTANCES = getMaxInstancesForAltitude(LEASE_VISIBILITY_ALTITUDE
 const MOUSE_THROTTLE_DISTANCE = 50 ** 2;
 const MOUSE_THROTTLE_TIME = 1000 / 30; // ms
 
+const lotUseTextures = {
+  [Building.CATEGORIES.STORAGE]: `${process.env.PUBLIC_URL}/textures/buildings/Storage.png`,
+  [Building.CATEGORIES.EXTRACTION]: `${process.env.PUBLIC_URL}/textures/buildings/Extraction.png`,
+  [Building.CATEGORIES.REFINING]: `${process.env.PUBLIC_URL}/textures/buildings/Refining.png`,
+  [Building.CATEGORIES.AGRICULTURE]: `${process.env.PUBLIC_URL}/textures/buildings/Agriculture.png`,
+  [Building.CATEGORIES.MANUFACTURING]: `${process.env.PUBLIC_URL}/textures/buildings/Manufacturing.png`,
+  [Building.CATEGORIES.SHIPBUILDING]: `${process.env.PUBLIC_URL}/textures/buildings/Shipbuilding.png`,
+  [Building.CATEGORIES.TRANSPORT]: `${process.env.PUBLIC_URL}/textures/buildings/Transport.png`,
+  [Building.CATEGORIES.TRADE]: `${process.env.PUBLIC_URL}/textures/buildings/Trade.png`,
+  [Building.CATEGORIES.HOUSING]: `${process.env.PUBLIC_URL}/textures/buildings/Housing.png`,
+  14: `${process.env.PUBLIC_URL}/textures/buildings/Construction.png`,
+  15: `${process.env.PUBLIC_URL}/textures/buildings/Ship.png`
+};
+
 const Lots = ({ attachTo: overrideAttachTo, asteroidId, axis, cameraAltitude, cameraNormalized, config, getLockToSurface, getRotation }) => {
   const { token } = useSession();
   const { crew } = useCrewContext();
@@ -106,19 +120,7 @@ const Lots = ({ attachTo: overrideAttachTo, asteroidId, axis, cameraAltitude, ca
   const mouseableMesh = useRef();
   const lotMeshes = useRef({});
 
-  const textures = useTexture({
-    [Building.CATEGORIES.STORAGE]: `${process.env.PUBLIC_URL}/textures/buildings/Storage.png`,
-    [Building.CATEGORIES.EXTRACTION]: `${process.env.PUBLIC_URL}/textures/buildings/Extraction.png`,
-    [Building.CATEGORIES.REFINING]: `${process.env.PUBLIC_URL}/textures/buildings/Refining.png`,
-    [Building.CATEGORIES.AGRICULTURE]: `${process.env.PUBLIC_URL}/textures/buildings/Agriculture.png`,
-    [Building.CATEGORIES.MANUFACTURING]: `${process.env.PUBLIC_URL}/textures/buildings/Manufacturing.png`,
-    [Building.CATEGORIES.SHIPBUILDING]: `${process.env.PUBLIC_URL}/textures/buildings/Shipbuilding.png`,
-    [Building.CATEGORIES.TRANSPORT]: `${process.env.PUBLIC_URL}/textures/buildings/Transport.png`,
-    [Building.CATEGORIES.TRADE]: `${process.env.PUBLIC_URL}/textures/buildings/Trade.png`,
-    [Building.CATEGORIES.HOUSING]: `${process.env.PUBLIC_URL}/textures/buildings/Housing.png`,
-    14: `${process.env.PUBLIC_URL}/textures/buildings/Construction.png`,
-    15: `${process.env.PUBLIC_URL}/textures/buildings/Ship.png`
-  });
+  const textures = useTexture(lotUseTextures);
 
   const texturesLoaded = useMemo(() => {
     return Object.keys(textures) > 0;
@@ -427,7 +429,7 @@ const Lots = ({ attachTo: overrideAttachTo, asteroidId, axis, cameraAltitude, ca
     meshes[0].setColorAt(0, GRAY_COLOR);
 
     const plane = new PlaneGeometry(BUILDING_RADIUS * 5, BUILDING_RADIUS * 5);
-    const uses = [1, 2, 3, 4, 5, 6, 7, 8, 9, 14, 15];
+    const uses = Object.keys(lotUseTextures);
 
     for (const use of uses) {
       const material = new MeshBasicMaterial({ map: textures[use], ...materialOpts });
@@ -575,10 +577,7 @@ const Lots = ({ attachTo: overrideAttachTo, asteroidId, axis, cameraAltitude, ca
           const hasLease = !!lotLeasedMap[lotIndex]; // has fill
           const hasMouseable = lotTally > visibleLotTally || !lotsInitialized;
 
-          // const lotUse = lotUseMap[lotIndex] || 0;
-          // TODO: remove the two lines below in favor of the one above
-          let lotUse = lotUseMap[lotIndex] || 0;
-          if (lotUse === 10) lotUse = 1;
+          const lotUse = lotUseMap[lotIndex] || 0;
           const lotUseRendered = lotUsesRendered[lotUse] || 0;
 
           if (hasPip || hasResult || hasLease || hasMouseable) {

@@ -87,6 +87,14 @@ const buildingTypeOptions = Object.keys(Building.TYPES)
     15: '#ffffff',  // landed light transport
   };
 
+const lotSearchBuildingCategoryOptions = Object.values(Building.CATEGORIES).reduce((acc, key) => ([
+  ...acc,
+  { key, label: Building.CATEGORY_TYPES[key].name, initialValue: true }
+]), []);
+lotSearchBuildingCategoryOptions.splice(0, 0, { key: 0, label: 'Empty Lot', initialValue: true });
+lotSearchBuildingCategoryOptions.splice(1, 0, { key: 14, label: 'Construction Site', initialValue: true });
+lotSearchBuildingCategoryOptions.push({ key: 15, label: 'Light Transport (landed)', initialValue: true });
+
 const lotSearchBuildingTypeOptions = Object.keys(Building.TYPES).reduce((acc, key) => ([
   ...acc,
   { key, label: Building.TYPES[key].name, initialValue: true }
@@ -375,10 +383,10 @@ const SearchFilters = ({ assetType, highlighting, isListView = false }) => {
         <CheckboxFilter
           {...filterProps}
           defaultColorMap={buildingCategoryColors}
-          fieldName="type"
-          highlightFieldName="type"
-          options={lotSearchBuildingTypeOptions}
-          title="Buildings" />
+          fieldName="category"
+          highlightFieldName="category"
+          options={lotSearchBuildingCategoryOptions}
+          title="Building Categories" />
 
         <LotOccupiedFilter {...filterProps} />
 
