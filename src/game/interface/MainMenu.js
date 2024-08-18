@@ -103,25 +103,7 @@ const SceneControlsSection = styled.div`
   padding-bottom: 12px
 `;
 
-
-// const MenuWrapper = styled.div`
-//   display: flex;
-//   flex-direction: row;
-
-//   align-items: flex-end;
-//   justify-content: space-around;
-
-//   position: absolute;
-//   left: 50%;
-//   bottom: ${barHeight - 1.5 * dipAmount}px;
-//   margin-left: -${centerAreaHalfWidth}px;
-//   width: ${centerAreaWidth}px;
-
-//   z-index: 4;
-// `;
-
 const MainMenu = () => {
-  // const playSound = useStore(s => s.dispatchSoundRequested);
   const { isMobile } = useScreenSize();
   const location = useLocation();
   const history = useHistory();
@@ -305,7 +287,7 @@ const MainMenu = () => {
                 <ResetCameraIcon />
               </IconButton>
             </IconsTray>
-            
+
             <TimeControls />
           </SceneControlsSection>
         )}

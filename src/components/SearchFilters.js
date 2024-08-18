@@ -71,7 +71,7 @@ const buildingTypeOptions = Object.keys(Building.TYPES)
     { key, label: Building.TYPES[key].name, initialValue: true }
   ]), []);
 
-  const buildingCategoryColors = {
+const buildingCategoryColors = {
     0: '#666666', // empty lot
     1: '#ff8c00', // STORAGE
     2: '#d9352b', // EXTRACTION
@@ -87,9 +87,9 @@ const buildingTypeOptions = Object.keys(Building.TYPES)
     15: '#ffffff',  // landed light transport
   };
 
-const lotSearchBuildingCategoryOptions = Object.values(Building.CATEGORIES).reduce((acc, key) => ([
+const lotSearchBuildingCategoryOptions = Object.entries(Building.CATEGORIES).reduce((acc, [name, id]) => ([
   ...acc,
-  { key, label: Building.CATEGORIES[key], initialValue: true }
+  { key: id, label: `${name.charAt(0)}${name.slice(1).toLowerCase()}`, initialValue: true }
 ]), []);
 lotSearchBuildingCategoryOptions.splice(0, 0, { key: 0, label: 'Empty Lot', initialValue: true });
 lotSearchBuildingCategoryOptions.splice(1, 0, { key: 14, label: 'Construction Site', initialValue: true });
