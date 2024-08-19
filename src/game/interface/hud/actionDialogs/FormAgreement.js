@@ -264,7 +264,7 @@ const FormAgreement = ({
     const parsed = numeral(e.currentTarget.value);
     if (!parsed) return setInitialPeriod(e.currentTarget.value);
     setInitialPeriod(parsed.value());
-  });
+  }, []);
 
   const handlePeriodBlur = useCallback((e) => {
     if (e.currentTarget.value === '') return setInitialPeriod('');
