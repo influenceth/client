@@ -515,12 +515,13 @@ const SwaySKU = ({ onUpdatePurchase, onPurchasing }) => {
 
           } catch (e) {
             console.error(e);
-            createAlert({
-              type: 'GenericAlert',
-              data: { content: `SWAY swap failed: "${e?.message || e || 'Unknown error.'}"` },
-              level: 'warning',
-              duration: 5000
-            });
+            // (now should be handled in ChainTransactionContext)
+            // createAlert({
+            //   type: 'GenericAlert',
+            //   data: { content: `SWAY swap failed: "${e?.message || e || 'Unknown error.'}"` },
+            //   level: 'warning',
+            //   duration: 5000
+            // });
           }
           setIsProcessing(false);
         }

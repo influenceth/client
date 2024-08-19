@@ -459,6 +459,13 @@ export function ChainTransactionProvider({ children }) {
     [blockNumber, crew?.Crew?.actionType, crew?.Crew?.actionRound, crew?._actionTypeTriggered]
   );
 
+  const isGaslessCompatible = useCallback(async () => {
+    const compatibility = await gasless.fetchAccountCompatibility(
+      accountAddress, { baseUrl: process.env.REACT_APP_AVNU_API_URL }
+    );
+    return compatibility?.isCompatible
+  }, [accountAddress]);
+
   const executeWithAccount = useCallback(async (calls) => {
     // Format calls for proper stringification
     const formattedCalls = calls.map((call) => {
@@ -467,28 +474,22 @@ export function ChainTransactionProvider({ children }) {
 
     // Check if we can utilize a signed session to execute calls
     const canUseSessionKey = !!gameplay.useSessions && !!starknetSession && !calls.some((c) => {
-      const found = allowedMethods.find((m) => {
+      return !allowedMethods.find((m) => {
         return m['Contract Address'] === c.contractAddress && m.selector === c.entrypoint;
       });
-
-      return !found;
     });
-
-    const canUseFeeAbstraction = (
-      (gameplay.feeToken === 'SWAY' && isDeployed)
-      || (!gameplay.feeToken && walletId === 'argentWebWallet' && isDeployed)
-    );
 
     // Use session wallet if possible, otherwise regular wallet
     const account = canUseSessionKey ? starknetSession : walletAccount;
     const txOptions = {};
 
-    // Check and store the gasless compatibility status
-    const compatibility = await gasless.fetchAccountCompatibility(
-      accountAddress, { baseUrl: process.env.REACT_APP_AVNU_API_URL }
+    // check if we should use fee abstraction (is set to use sway or is set to default + using webwallet)
+    const canUseFeeAbstraction = isDeployed && (
+      gameplay.feeToken === 'SWAY' || (!gameplay.feeToken && walletId === 'argentWebWallet')
     );
 
-    if (canUseFeeAbstraction && compatibility.isCompatible) {
+    // Check and store the gasless compatibility status
+    if (canUseFeeAbstraction && await isGaslessCompatible()) {
       // Use gasless via relayer for non-ETH / STRK transactions
       const simulation = await walletAccount.simulateTransaction(
         [{ type: 'INVOKE_FUNCTION', payload: calls }],
@@ -552,6 +553,7 @@ export function ChainTransactionProvider({ children }) {
     gameplay.feeToken,
     getOutsideExecutionData,
     isDeployed,
+    isGaslessCompatible,
     nonce,
     starknetSession,
     walletAccount
@@ -781,7 +783,7 @@ export function ChainTransactionProvider({ children }) {
                       sellTokenAddress: fromAddress,
                       buyTokenAddress: toAddress,
                       sellAmount: safeBigInt(Math.ceil(targetSwapAmount / actualConv)),
-                      takerAddress: accountAddress,
+                      takerAddress: accountAddress,//isDeployed ? accountAddress : undefined,
                     }, { baseUrl: process.env.REACT_APP_AVNU_API_URL });
                     if (!quotes?.[0]) throw new Error('Insufficient swap liquidity');
 
@@ -839,6 +841,7 @@ export function ChainTransactionProvider({ children }) {
     createAlert,
     executeWithAccount,
     gameplay.feesInSway,
+    isDeployed,
     prependEventAutoresolve,
     starknetSession,
     usdcPerEth
@@ -990,6 +993,67 @@ export function ChainTransactionProvider({ children }) {
       return true;
     }
   }, [walletAccount]);
+  
+
+  const handleExecutionExeption = useCallback((e, executeCalls, txDetails = {}) => {
+    if ((e.message || '').toLowerCase() === 'account not deployed') {
+      createAlert({
+        type: 'DeployAccount',
+        level: 'warning',
+        duration: 0,
+        hideCloseIcon: true,
+        onRemoval: () => {
+          // TODO: would be nice if could use this format instead, but it's not clear how that works
+          // walletAccount.deployAccount({ contractAddress: accountAddress });
+          executeCalls([
+            System.getFormattedCall(
+              process.env.REACT_APP_ERC20_TOKEN_ADDRESS,
+              'transfer',
+              [
+                { value: accountAddress, type: 'ContractAddress' },
+                { value: 0n, type: 'u256' }
+              ]
+            )
+          ]);
+        }
+      });
+    }
+
+    // "User abort" is argent, 'Execute failed' is braavos
+    // TODO: in Braavos, is "Execute failed" a generic error? in that case, we should still show
+    // (and it will just be annoying that it shows a failure on declines)
+    // console.log('failed', e);
+    if (!['User abort', 'Execute failed', 'Timeout'].includes(e?.message) && txDetails) {
+      dispatchFailedTransaction({
+        ...txDetails,
+        txHash: null,
+        err: e?.message || e
+      });
+    }
+
+    // "Timeout" is in argent (at least) for when tx is auto-rejected b/c previous tx is still pending
+    // TODO: should hopefully be able to remove Timeout because would make sessions feel pretty useless
+    if (e?.message === 'Timeout') {
+      createAlert({
+        type: 'GenericAlert',
+        data: { content: 'Previous tx is not yet accepted on l2. Wait for the extension notification and try again.' },
+        level: 'warning',
+        duration: 5000
+      });
+    }
+
+    // Session expired for Argent web wallet sessions, user should be logged out
+    if (e?.message && e?.message.includes('session expired')) {
+      createAlert({
+        type: 'GenericAlert',
+        data: { content: 'Session expired. Please log in again.' },
+        level: 'warning',
+        duration: 5000
+      });
+
+      logout();
+    }
+  }, [accountAddress, createAlert, dispatchFailedTransaction, logout]);
 
   // Allows for multiple explicit / manual calls to be executed in a single transaction
   const executeCalls = useCallback(async (calls) => {
@@ -1040,9 +1104,10 @@ export function ChainTransactionProvider({ children }) {
       return tx;
     } catch (e) {
       setPromptingTransaction(false);
+      handleExecutionExeption(e, executeCalls);
       throw e;  // rethrow
     }
-  }, [createAlert, executeWithAccount, isAccountLocked, isDeployed, upgradeInsecureSession, walletAccount])
+  }, [createAlert, executeWithAccount, handleExecutionExeption, isAccountLocked, isDeployed, upgradeInsecureSession, walletAccount])
 
   // Primary execute method for system calls (requires name of system, etc.)
   const executeSystem = useCallback(async (key, vars, meta = {}) => {
@@ -1099,49 +1164,12 @@ export function ChainTransactionProvider({ children }) {
         setPromptingTransaction(false);
         return e.additionalUSDCRequired;
       }
-
-      // "User abort" is argent, 'Execute failed' is braavos
-      // TODO: in Braavos, is "Execute failed" a generic error? in that case, we should still show
-      // (and it will just be annoying that it shows a failure on declines)
-      // console.log('failed', e);
-      if (!['User abort', 'Execute failed', 'Timeout'].includes(e?.message)) {
-        dispatchFailedTransaction({
-          key,
-          vars,
-          meta,
-          txHash: null,
-          err: e?.message || e
-        });
-      }
-
-      // "Timeout" is in argent (at least) for when tx is auto-rejected b/c previous tx is still pending
-      // TODO: should hopefully be able to remove Timeout because would make sessions feel pretty useless
-      if (e?.message === 'Timeout') {
-        createAlert({
-          type: 'GenericAlert',
-          data: { content: 'Previous tx is not yet accepted on l2. Wait for the extension notification and try again.' },
-          level: 'warning',
-          duration: 5000
-        });
-      }
-
-      // Session expired for Argent web wallet sessions, user should be logged out
-      if (e?.message && e?.message.includes('session expired')) {
-        createAlert({
-          type: 'GenericAlert',
-          data: { content: 'Session expired. Please log in again.' },
-          level: 'warning',
-          duration: 5000
-        });
-
-        logout();
-      }
-
+      handleExecutionExeption(e, executeCalls, { key, vars, meta });
       onTransactionError(e, vars);
     }
 
     setPromptingTransaction(false);
-  }, [blockTime, contracts, walletAccount, simulationEnabled]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [blockTime, contracts, handleExecutionExeption, walletAccount, simulationEnabled]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const getPendingTx = useCallback((key, vars) => {
     // simulation will only ever have one concurrent?
