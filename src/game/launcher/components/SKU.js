@@ -188,7 +188,7 @@ const AsteroidAd = styled.div`
     flex: 0 0 calc(100% - 18px);
     font-size: 14px;
     opacity: 0.7;
-    padding-left: 12px;
+    padding-left: 10px;
   }
 `;
 const AsteroidButtonInner = styled.div`
@@ -280,7 +280,7 @@ const AsteroidSKU = () => {
   return (
     <div>
       <Description>
-        <p style={{ borderBottom: '1px solid #333', fontWeight: 'bold', padding: '5px 0 18px' }}>
+        <p style={{ borderBottom: '1px solid #333', padding: '5px 0 18px' }}>
           Asteroids are the core productive land in Influence. There are 250,000 in total, and more
           will never be added. Owners hold the rights to all mining and land-use on their asteroid,
           and may share or contract those rights to others. Each asteroid has unique orbital
@@ -792,7 +792,7 @@ const SKU = ({ asset, onBack }) => {
             <PurchaseButtonInner>
               <label>Purchase Pack</label>
               <span>
-                {packs.advanced.price.to(TOKEN.USDC, TOKEN_FORMAT.SHORT)}
+                {packs.advanced.price.to(preferredUiCurrency, TOKEN_FORMAT.SHORT)}
               </span>
             </PurchaseButtonInner>
           ),
@@ -815,7 +815,7 @@ const SKU = ({ asset, onBack }) => {
               <PurchaseButtonInner>
                 <label>Purchase Pack</label>
                 <span>
-                  {packs.basic.price.to(TOKEN.USDC, TOKEN_FORMAT.SHORT)}
+                  {packs.basic.price.to(preferredUiCurrency, TOKEN_FORMAT.SHORT)}
                 </span>
               </PurchaseButtonInner>
             </Button>
@@ -849,7 +849,7 @@ const SKU = ({ asset, onBack }) => {
       preLabel: process.env.REACT_APP_CHAIN_ID === '0x534e5f5345504f4c4941' && <SwayFaucetButton />
     };
     return params;
-  }, [asset, isLaunched, isPurchasing, purchase?.totalPrice]);
+  }, [asset, isLaunched, isPurchasing, preferredUiCurrency, purchase?.totalPrice]);
 
   return (
     <>
