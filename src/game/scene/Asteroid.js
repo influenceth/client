@@ -646,7 +646,7 @@ const AsteroidComponent = () => {
       }
 
       // adjust rotation speed
-      setCameraAltitude(cameraPosition.length() - closestChunk.sphereCenterHeight);
+      setCameraAltitude(Math.round(cameraPosition.length() - closestChunk.sphereCenterHeight));
     }, 0);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [surfaceDistance, config?.radius, controls?.minDistance]);
