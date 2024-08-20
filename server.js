@@ -7,6 +7,7 @@ const enforce = require('express-sslify');
 const compression = require('compression');
 const historyApiFallback = require('connect-history-api-fallback');
 const isBot = require('isbot-fast');
+// const { IpFilter } = require('express-ipfilter');
 
 const basicAuth = require('./auth');
 const getOpengraphTags = require('./opengraph')
@@ -14,6 +15,7 @@ const getOpengraphTags = require('./opengraph')
 const readFileAsync = promisify(fs.readFile);
 
 const app = express();
+// app.use(IpFilter(['192.168.1.0/24'], { mode: 'allow' }));
 
 if (process.env.AUTH_PASSWORD) app.use(basicAuth);
 app.use(compression());
