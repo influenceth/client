@@ -7,7 +7,7 @@ import { CheckIcon } from '~/components/Icons';
 import useStore from '~/hooks/useStore';
 import NavIcon from '~/components/NavIcon';
 import theme from '~/theme';
-import useWalletBalances, { GAS_BUFFER_VALUE_USDC } from '~/hooks/useWalletBalances';
+import useWalletPurchasableBalances, { GAS_BUFFER_VALUE_USDC } from '~/hooks/useWalletPurchasableBalances';
 import usePriceConstants from '~/hooks/usePriceConstants';
 import { TOKEN, TOKEN_FORMAT, TOKEN_SCALE } from '~/lib/priceUtils';
 import usePriceHelper from '~/hooks/usePriceHelper';
@@ -335,7 +335,7 @@ export const useStarterPacks = () => {
 
 // TODO: consider moving isFunding to higher level context with single reference
 const StarterPackWrapper = ({ children, pack, ...props }) => {
-  const { data: wallet } = useWalletBalances();
+  const { data: wallet } = useWalletPurchasableBalances();
 
   const [isFunding, setIsFunding] = useState();
   const [isFunded, setIsFunded] = useState();

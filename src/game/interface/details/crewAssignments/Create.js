@@ -34,7 +34,7 @@ import formatters from '~/lib/formatters';
 import { reactBool, safeBigInt } from '~/lib/utils';
 import theme from '~/theme';
 import usePriceHelper from '~/hooks/usePriceHelper';
-import useWalletBalances from '~/hooks/useWalletBalances';
+import useWalletPurchasableBalances from '~/hooks/useWalletPurchasableBalances';
 import { TOKEN } from '~/lib/priceUtils';
 import { CrewmateUserPrice } from '~/components/UserPrice';
 import FundingFlow from '~/game/launcher/components/FundingFlow';
@@ -844,7 +844,7 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
   const { data: priceConstants } = usePriceConstants();
   const priceHelper = usePriceHelper();
   const { data: swayBalance } = useSwayBalance();
-  const { data: wallet } = useWalletBalances();
+  const { data: wallet } = useWalletPurchasableBalances();
 
   const [confirming, setConfirming] = useState();
   const [confirmingUnlock, setConfirmingUnlock] = useState();

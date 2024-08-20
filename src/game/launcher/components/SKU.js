@@ -19,7 +19,7 @@ import useFaucetInfo from '~/hooks/useFaucetInfo';
 import { cleanseTxHash, fireTrackingEvent, nativeBool, reactBool, roundToPlaces, safeBigInt } from '~/lib/utils';
 import theme from '~/theme';
 import Button from '~/components/ButtonAlt';
-import useWalletBalances from '~/hooks/useWalletBalances';
+import useWalletPurchasableBalances from '~/hooks/useWalletPurchasableBalances';
 import useCrewManager from '~/hooks/actionManagers/useCrewManager';
 import usePriceConstants from '~/hooks/usePriceConstants';
 import { TOKEN, TOKEN_FORMAT, TOKEN_SCALE, asteroidPriceToLots } from '~/lib/priceUtils';
@@ -435,7 +435,7 @@ const SwaySKU = ({ onUpdatePurchase, onPurchasing }) => {
   const { buildMultiswapFromSellAmount } = useSwapHelper();
   const queryClient = useQueryClient();
   const { accountAddress, provider } = useSession();
-  const { data: wallet } = useWalletBalances();
+  const { data: wallet } = useWalletPurchasableBalances();
 
   const createAlert = useStore(s => s.dispatchAlertLogged);
   const preferredUiCurrency = useStore(s => s.getPreferredUiCurrency());
@@ -688,7 +688,7 @@ const SKU = ({ asset, onBack }) => {
   const { pendingTransactions, isLaunched } = useCrewContext();
   const priceHelper = usePriceHelper();
   const packs = useStarterPacks();
-  const { data: wallet } = useWalletBalances();
+  const { data: wallet } = useWalletPurchasableBalances();
 
   const preferredUiCurrency = useStore(s => s.getPreferredUiCurrency());
 

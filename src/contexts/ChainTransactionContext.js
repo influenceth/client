@@ -6,15 +6,16 @@ import { fetchBuildExecuteTransaction, fetchQuotes } from '@avnu/avnu-sdk';
 import * as gasless from '@avnu/gasless-sdk';
 
 import useActivitiesContext from '~/hooks/useActivitiesContext';
-import useSession from '~/hooks/useSession';
 import useCrewContext from '~/hooks/useCrewContext';
+import useSession from '~/hooks/useSession';
+import useSimulationEnabled from '~/hooks/useSimulationEnabled';
 import useStore from '~/hooks/useStore';
 import { useUsdcPerEth } from '~/hooks/useSwapQuote';
-import useWalletBalances from '~/hooks/useWalletBalances';
+import useWalletPurchasableBalances from '~/hooks/useWalletPurchasableBalances';
+import { useSwayBalance } from '~/hooks/useWalletTokenBalance';
 import api from '~/lib/api';
 import { cleanseTxHash, safeBigInt } from '~/lib/utils';
 import { TOKEN } from '~/lib/priceUtils';
-import useSimulationEnabled from '~/hooks/useSimulationEnabled';
 
 const RETRY_INTERVAL = 5e3; // 5 seconds
 const ChainTransactionContext = createContext();
@@ -407,15 +408,16 @@ export function ChainTransactionProvider({ children }) {
     getOutsideExecutionData,
     isDeployed,
     logout,
+    payGasWithSwayIfPossible,
     provider,
     starknetSession,
     upgradeInsecureSession,
-    walletAccount,
-    walletId
+    walletAccount
   } = useSession();
   const activities = useActivitiesContext();
   const { crew, pendingTransactions } = useCrewContext();
-  const { data: walletSource } = useWalletBalances();
+  const { data: walletSource } = useWalletPurchasableBalances();
+  const { data: swayBalance } = useSwayBalance();
   const { data: usdcPerEth } = useUsdcPerEth();
   const simulationEnabled = useSimulationEnabled();
 
@@ -459,13 +461,6 @@ export function ChainTransactionProvider({ children }) {
     [blockNumber, crew?.Crew?.actionType, crew?.Crew?.actionRound, crew?._actionTypeTriggered]
   );
 
-  const isGaslessCompatible = useCallback(async () => {
-    const compatibility = await gasless.fetchAccountCompatibility(
-      accountAddress, { baseUrl: process.env.REACT_APP_AVNU_API_URL }
-    );
-    return compatibility?.isCompatible
-  }, [accountAddress]);
-
   const executeWithAccount = useCallback(async (calls) => {
     // Format calls for proper stringification
     const formattedCalls = calls.map((call) => {
@@ -483,13 +478,9 @@ export function ChainTransactionProvider({ children }) {
     const account = canUseSessionKey ? starknetSession : walletAccount;
     const txOptions = {};
 
-    // check if we should use fee abstraction (is set to use sway or is set to default + using webwallet)
-    const canUseFeeAbstraction = isDeployed && (
-      gameplay.feeToken === 'SWAY' || (!gameplay.feeToken && walletId === 'argentWebWallet')
-    );
-
     // Check and store the gasless compatibility status
-    if (canUseFeeAbstraction && await isGaslessCompatible()) {
+    if (payGasWithSwayIfPossible && swayBalance > 0n) {
+
       // Use gasless via relayer for non-ETH / STRK transactions
       const simulation = await walletAccount.simulateTransaction(
         [{ type: 'INVOKE_FUNCTION', payload: calls }],
@@ -498,36 +489,24 @@ export function ChainTransactionProvider({ children }) {
 
       const tokens = await gasless.fetchGasTokenPrices({ baseUrl: process.env.REACT_APP_AVNU_API_URL });
       const gasToken = tokens.find((t) => Address.areEqual(t.tokenAddress, TOKEN.SWAY));
+      const gasTokenBalance = swayBalance;
 
       // Triple the fee estimation and check for sufficient funds to ensure transaction success
       // TODO: figure out why some txs require this
       const maxFee = gasless.getGasFeesInGasToken(simulation[0].suggestedMaxFee, gasToken) * 3n;
 
       // Check if wallet has sufficient funds for gas fees
-      if (walletRef.current?.tokenBalance) {
-        const match = Object.entries(walletRef.current.tokenBalance).find((e) => {
-          return Address.areEqual(e[0], gasToken.tokenAddress);
-        });
-
-        // Skip this check in testnet since the allowed gas tokens are inconsistent
-        if (process.env.REACT_APP_DEPLOYMENT === 'production' && (!match || match[1] < maxFee)) {
-          createAlert({
-            type: 'GenericAlert',
-            data: { content: 'Insufficient wallet balance, please recharge in the store.' },
-            level: 'warning',
-          });
-
-          throw new Error('Insufficient wallet balance');
-        }
+      // (skip this check in testnet since the allowed gas tokens are inconsistent)
+      // if (process.env.REACT_APP_DEPLOYMENT !== 'production' || gasTokenBalance >= maxFee) {
+      if (gasTokenBalance >= maxFee) {
+        const { typedData, signature } = await getOutsideExecutionData(formattedCalls, gasToken.tokenAddress, maxFee);
+        return await gasless.fetchExecuteTransaction(
+          accountAddress,
+          JSON.stringify(typedData),
+          signature,
+          { baseUrl: process.env.REACT_APP_AVNU_API_URL }
+        );
       }
-
-      const { typedData, signature } = await getOutsideExecutionData(formattedCalls, gasToken.tokenAddress, maxFee);
-      return await gasless.fetchExecuteTransaction(
-        accountAddress,
-        JSON.stringify(typedData),
-        signature,
-        { baseUrl: process.env.REACT_APP_AVNU_API_URL }
-      );
     } else if (canUseSessionKey && nonce) {
       // Manage nonces locally when using sessions but not using relayer
       txOptions.nonce = nonce;
@@ -550,12 +529,11 @@ export function ChainTransactionProvider({ children }) {
     allowedMethods,
     createAlert,
     chainId,
-    gameplay.feeToken,
     getOutsideExecutionData,
-    isDeployed,
-    isGaslessCompatible,
+    payGasWithSwayIfPossible,
     nonce,
     starknetSession,
+    swayBalance,
     walletAccount
   ]);
 

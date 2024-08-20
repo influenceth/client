@@ -10,7 +10,7 @@ import Details from '~/components/DetailsV2';
 import useSession from '~/hooks/useSession';
 import BrightButton from '~/components/BrightButton';
 import MouseoverInfoPane from '~/components/MouseoverInfoPane';
-import useWalletBalances from '~/hooks/useWalletBalances';
+import useWalletPurchasableBalances from '~/hooks/useWalletPurchasableBalances';
 import UserPrice from '~/components/UserPrice';
 import { TOKEN, TOKEN_FORMAT, TOKEN_FORMATTER } from '~/lib/priceUtils';
 import usePriceHelper from '~/hooks/usePriceHelper';
@@ -246,7 +246,7 @@ export const FundingFlow = ({ totalPrice, onClose, onFunded }) => {
 
   const { accountAddress, chainId, walletId } = useSession();
   const priceHelper = usePriceHelper();
-  const { data: wallet, refetch: refetchBalances } = useWalletBalances();
+  const { data: wallet, refetch: refetchBalances } = useWalletPurchasableBalances();
   const preferredUiCurrency = useStore(s => s.getPreferredUiCurrency());
 
   const [hoveredRampButton, setHoveredRampButton] = useState(false);

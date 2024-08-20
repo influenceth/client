@@ -8,7 +8,7 @@ import useControlAsteroid from '~/hooks/actionManagers/useControlAsteroid';
 import useNameAvailability from '~/hooks/useNameAvailability';
 import usePriceConstants from '~/hooks/usePriceConstants';
 import useSession from '~/hooks/useSession';
-import useWalletBalances from '~/hooks/useWalletBalances';
+import useWalletPurchasableBalances from '~/hooks/useWalletPurchasableBalances';
 import useWebWorker from '~/hooks/useWebWorker';
 
 import constants from '~/lib/constants';
@@ -274,7 +274,7 @@ const AsteroidInformation = ({ abundances, asteroid, isManager, isOwner }) => {
   const { controlAsteroid, takingControl } = useControlAsteroid(Number(asteroid.id));
   const { changeName, changingName } = useChangeName({ id: Number(asteroid.id), label: Entity.IDS.ASTEROID });
   const { data: priceConstants } = usePriceConstants();
-  const { data: walletBalances } = useWalletBalances();
+  const { data: walletBalances } = useWalletPurchasableBalances();
   const webWorkerPool = useWebWorker();
 
   const [exportingModel, setExportingModel] = useState(false);

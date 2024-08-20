@@ -453,7 +453,7 @@ const GameplayPane = () => {
             <HelperText>Never use sessions</HelperText>
           )}
 
-          <StyledDataReadout label="Default Fee Currency">
+          <StyledDataReadout label="Use SWAY for Gas Fees">
             <ControlGroup>
               <Button
                 active={gameplay.feeToken === null || gameplay.feeToken === undefined}
@@ -461,25 +461,25 @@ const GameplayPane = () => {
                 Default
               </Button>
               <Button
-                active={gameplay.feeToken === 'ETH'}
-                onClick={() => dispatchFeeTokenSet('ETH')}>
-                ETH / STRK
-              </Button>
-              <Button
                 active={gameplay.feeToken === 'SWAY'}
                 onClick={() => dispatchFeeTokenSet('SWAY')}>
-                SWAY
+                If Supported
+              </Button>
+              <Button
+                active={gameplay.feeToken === 'ETH'}
+                onClick={() => dispatchFeeTokenSet('ETH')}>
+                Never
               </Button>
             </ControlGroup>
           </StyledDataReadout>
           {(gameplay.feeToken === null || gameplay.feeToken === undefined) && (
-            <HelperText>SWAY is used by default for Argent Web Wallet accounts only</HelperText>
-          )}
-          {gameplay.feeToken === 'ETH' && (
-            <HelperText>ETH / STRK defaults are used for all transaction fees</HelperText>
+            <HelperText>For Argent Web Wallet accounts only, SWAY is used when possible for transaction fees</HelperText>
           )}
           {gameplay.feeToken === 'SWAY' && (
-            <HelperText>SWAY is used for all transaction fees</HelperText>
+            <HelperText>SWAY is used when possible for transaction fees</HelperText>
+          )}
+          {gameplay.feeToken === 'ETH' && (
+            <HelperText>ETH / STRK defaults are used for transaction fees</HelperText>
           )}
         </div>
       </Section>

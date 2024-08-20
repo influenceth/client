@@ -8,7 +8,7 @@ import Switcher from '~/components/SwitcherButton';
 import { TOKEN, TOKEN_FORMAT, TOKEN_SCALE } from '~/lib/priceUtils';
 import useSession from '~/hooks/useSession';
 import useStore from '~/hooks/useStore';
-import useWalletBalances from '~/hooks/useWalletBalances';
+import useWalletPurchasableBalances from '~/hooks/useWalletPurchasableBalances';
 import usePriceHelper from '~/hooks/usePriceHelper';
 import theme from '~/theme';
 import FundingFlow from './FundingFlow';
@@ -142,7 +142,7 @@ const AddFundsButton = styled(Button)`
 const FundingMenu = () => {
   const { accountAddress, login } = useSession();
   const priceHelper = usePriceHelper();
-  const { data: wallet, isLoading, refetch } = useWalletBalances();
+  const { data: wallet, isLoading, refetch } = useWalletPurchasableBalances();
 
   const preferredUiCurrency = useStore(s => s.getPreferredUiCurrency());
   const dispatchPreferredUiCurrency = useStore(s => s.dispatchPreferredUiCurrency);

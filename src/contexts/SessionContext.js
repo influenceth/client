@@ -461,6 +461,32 @@ export function SessionProvider({ children }) {
     }
   }, [error, createAlert, logout]);
 
+  const [isFeeAbstractionCompatible, setIsFeeAbstractionCompatible] = useState();
+  useEffect(() => {
+    if (currentSession?.isDeployed) {
+      gasless.fetchAccountCompatibility(
+        currentSession.accountAddress,
+        { baseUrl: process.env.REACT_APP_AVNU_API_URL }
+      )
+      .then((response) => {
+        setIsFeeAbstractionCompatible(!!response?.isCompatible)
+      })
+    } else {
+      setIsFeeAbstractionCompatible(false);
+    }
+  }, [currentSession.accountAddress, currentSession?.isDeployed]);
+
+  const payGasWithSwayIfPossible = useMemo(() => {
+    // check if we should use fee abstraction (is set to use sway or is set to default + using webwallet)
+    if (gameplay.feeToken === 'SWAY' || (!gameplay.feeToken && currentSession?.walletId === 'argentWebWallet')) {
+      return isFeeAbstractionCompatible;
+    }
+  }, [
+    currentSession?.walletId,
+    gameplay.feeToken,
+    isFeeAbstractionCompatible
+  ]);
+
   // Retrieves an outside execution call and signs it
   const getOutsideExecutionData = useCallback(async (calldata, gasTokenAddress, maxGasTokenAmount) => {
     let typedData = await gasless.fetchBuildTypedData(
@@ -619,6 +645,7 @@ export function SessionProvider({ children }) {
       connecting,
       getOutsideExecutionData,
       isDeployed: authenticated ? currentSession?.isDeployed : null,
+      payGasWithSwayIfPossible: authenticated ? payGasWithSwayIfPossible : null,
       provider,
       shouldUseSessionKeys,
       starknetSession,
