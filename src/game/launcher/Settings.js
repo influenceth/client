@@ -473,7 +473,10 @@ const GameplayPane = () => {
             </ControlGroup>
           </StyledDataReadout>
           {(gameplay.feeToken === null || gameplay.feeToken === undefined) && (
-            <HelperText>For Argent Web Wallet accounts only, SWAY is used when possible for transaction fees</HelperText>
+            <HelperText>
+              For Argent Web Wallet accounts, SWAY is used when possible for transaction fees.
+              For all other wallets, ETH / STRK defaults are used for transaction fees.
+            </HelperText>
           )}
           {gameplay.feeToken === 'SWAY' && (
             <HelperText>SWAY is used when possible for transaction fees</HelperText>

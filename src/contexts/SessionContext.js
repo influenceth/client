@@ -428,7 +428,7 @@ export function SessionProvider({ children }) {
 
   // Connect / auth flow manager
   useEffect(() => {
-    console.log(Object.keys(STATUSES).find(key => STATUSES[key] === status));
+    // console.log(Object.keys(STATUSES).find(key => STATUSES[key] === status));
     if (status === STATUSES.DISCONNECTED) {
       if (currentSession?.walletId) {
         connect(true).finally(() => setReadyForChildren(true));
@@ -479,8 +479,9 @@ export function SessionProvider({ children }) {
   const payGasWithSwayIfPossible = useMemo(() => {
     // check if we should use fee abstraction (is set to use sway or is set to default + using webwallet)
     if (gameplay.feeToken === 'SWAY' || (!gameplay.feeToken && currentSession?.walletId === 'argentWebWallet')) {
-      return isFeeAbstractionCompatible;
+      return !!isFeeAbstractionCompatible;
     }
+    return false;
   }, [
     currentSession?.walletId,
     gameplay.feeToken,

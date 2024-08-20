@@ -4,7 +4,7 @@ import usePriceConstants from '~/hooks/usePriceConstants';
 import usePriceHelper from '~/hooks/usePriceHelper';
 import useSession from '~/hooks/useSession';
 import useStore from '~/hooks/useStore';
-import { useEthBalance, useUSDCBalance } from '~/hooks/useWalletTokenBalance';
+import { useEthBalance, useSwayBalance, useUSDCBalance } from '~/hooks/useWalletTokenBalance';
 import { TOKEN, TOKEN_SCALE } from '~/lib/priceUtils';
 import { safeBigInt } from '~/lib/utils';
 
@@ -16,6 +16,7 @@ const useWalletPurchasableBalances = (overrideAccount) => {
   const { data: priceConstants } = usePriceConstants();
   const { data: ethBalance, isLoading: isLoading1, refetch: refetch1 } = useEthBalance(overrideAccount);
   const { data: usdcBalance, isLoading: isLoading2, refetch: refetch2 } = useUSDCBalance(overrideAccount);
+  const { data: swayBalance, isLoading: isLoading3, refetch: refetch3 } = useSwayBalance(overrideAccount);
   const priceHelper = usePriceHelper();
 
   const autoswap = useStore(s => s.gameplay.autoswap);
@@ -24,25 +25,35 @@ const useWalletPurchasableBalances = (overrideAccount) => {
   // is represented in allTokens list...
   const baseToken = priceConstants?.ADALIAN_PURCHASE_TOKEN;
 
-  const gasReserveBalance = useMemo(() => {
-    if ((autoswap || baseToken === TOKEN.ETH) && ethBalance) {
+  // reserve eth for gas if not planning to use sway
+  // or have <10% of target reserve amount available in sway
+  const maintainEthGasReserve = useMemo(() => {
+    const targetSwayReserve = priceHelper.from(GAS_BUFFER_VALUE_USDC * 0.1, TOKEN.USDC).to(TOKEN.SWAY);
+    // reserve needed if setting is to pay w/ sway AND have sway
+    return !(payGasWithSwayIfPossible && swayBalance > targetSwayReserve)
+  }, [payGasWithSwayIfPossible, priceHelper, swayBalance]);
+
+  const ethGasReserveBalance = useMemo(() => {
+    if (maintainEthGasReserve && ethBalance) {
       const ethValueInUSDC = Math.floor(priceHelper.from(ethBalance, TOKEN.ETH)?.usdcValue);
       return priceHelper.from(Math.min(ethValueInUSDC, GAS_BUFFER_VALUE_USDC), TOKEN.USDC);
     }
     return priceHelper.from(0n);
-  }, [autoswap, baseToken, ethBalance, priceHelper]);
+  }, [maintainEthGasReserve, ethBalance, priceHelper]);
 
+  // NOTE: do not add SWAY here unless want SWAY to be auto-swappable for
+  //  purchases (i.e. crewmates, starter packs, etc)
   const swappableTokenBalances = useMemo(() => {
     const allTokens = {
-      [TOKEN.ETH]: ethBalance ? (ethBalance - safeBigInt(Math.floor(gasReserveBalance.to(TOKEN.ETH)))) : 0n,
+      [TOKEN.ETH]: ethBalance ? (ethBalance - safeBigInt(Math.floor(ethGasReserveBalance.to(TOKEN.ETH)))) : 0n,
       [TOKEN.USDC]: usdcBalance || 0n
     };
 
     // if autoswap, return allTokens... else, return just the specified purchase token
     return autoswap ? allTokens : { [baseToken]: allTokens[baseToken] };
-  }, [autoswap, baseToken, ethBalance, gasReserveBalance, usdcBalance]);
+  }, [autoswap, baseToken, ethBalance, ethGasReserveBalance, usdcBalance]);
 
-  const isLoading = isLoading1 || isLoading2;
+  const isLoading = isLoading1 || isLoading2 || isLoading3;
   return useMemo(() => {
     if (isLoading) return { data: null, refetch: () => {}, isLoading: true };
 
@@ -50,20 +61,27 @@ const useWalletPurchasableBalances = (overrideAccount) => {
     Object.keys(swappableTokenBalances).forEach((tokenAddress) => {
       combinedBalance.usdcValue += priceHelper.from(swappableTokenBalances[tokenAddress], tokenAddress)?.usdcValue;
     });
-
+    console.log('pmk', {
+      combinedBalance,
+      shouldMaintainEthGasReserve: maintainEthGasReserve,
+      ethGasReserveBalance,
+      tokenBalances: swappableTokenBalances
+    });
     return {
       data: {
         combinedBalance,
-        gasReserveBalance,
-        tokenBalance: swappableTokenBalances
+        shouldMaintainEthGasReserve: maintainEthGasReserve,
+        ethGasReserveBalance,
+        tokenBalances: swappableTokenBalances
       },
       refetch: () => {
         refetch1();
         refetch2();
+        refetch3();
       },
       isLoading
     };
-  }, [gasReserveBalance, isLoading, priceHelper, refetch1, refetch2, swappableTokenBalances]);
+  }, [ethGasReserveBalance, isLoading, maintainEthGasReserve, priceHelper, refetch1, refetch2, swappableTokenBalances]);
 }
 
 export default useWalletPurchasableBalances;

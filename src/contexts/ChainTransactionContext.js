@@ -736,7 +736,7 @@ export function ChainTransactionProvider({ children }) {
               // else (have enough USDC + ETH) if don't have enough in totalPriceToken
               // to cover tx, prepend swap calls to cover it as well
               } else {
-                let balanceInTargetToken = wallet.tokenBalance[totalPriceToken];
+                let balanceInTargetToken = wallet.tokenBalances[totalPriceToken];
                 if (totalPrice > balanceInTargetToken) {
                   if (!usdcPerEth) throw new Error('Conversion rate not loaded');
 

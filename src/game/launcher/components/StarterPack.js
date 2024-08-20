@@ -108,6 +108,7 @@ const uniqueProductIds = Array.from(new Set([...Object.keys(basicBuildingShoppin
 export const useStarterPackPricing = () => {
   const { data: priceConstants } = usePriceConstants();
   const priceHelper = usePriceHelper();
+  const { data: wallet } = useWalletPurchasableBalances();
 
   const adalianPrice = useMemo(() => {
     if (!priceConstants) return priceHelper.from(0);
@@ -207,7 +208,7 @@ export const useStarterPackPricing = () => {
     const basicMinPrice = priceHelper.from(basicPackPriceUSD * TOKEN_SCALE[TOKEN.USDC], TOKEN.USDC);
     const basicMinSwayValue = priceHelper.from(basicPackSwayMin * TOKEN_SCALE[TOKEN.SWAY], TOKEN.SWAY);
     const basicCrewmatesValue = priceHelper.from(basicPackCrewmates * adalianPrice.usdcValue, TOKEN.USDC);
-    const basicEthValue = priceHelper.from(GAS_BUFFER_VALUE_USDC, TOKEN.USDC);
+    const basicEthValue = priceHelper.from(wallet?.shouldMaintainEthGasReserve ? GAS_BUFFER_VALUE_USDC : 0, TOKEN.USDC);
     const basicSwayValue = priceHelper.from(
       Math.max(
         basicMinSwayValue.usdcValue,

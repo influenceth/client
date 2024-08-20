@@ -160,8 +160,8 @@ const FundingMenu = () => {
 
   const tooltipContent = useMemo(() => ReactDOMServer.renderToStaticMarkup(
     <Subtotals>
-      {Object.keys(wallet?.tokenBalance || {}).map((tokenAddress) => {
-        const balance = priceHelper.from(wallet.tokenBalance[tokenAddress], tokenAddress);
+      {Object.keys(wallet?.tokenBalances || {}).map((tokenAddress) => {
+        const balance = priceHelper.from(wallet.tokenBalances[tokenAddress], tokenAddress);
         return (
           <div key={tokenAddress}>
             <label>{balance?.to(tokenAddress, TOKEN_FORMAT.VERBOSE)}</label>
@@ -169,21 +169,21 @@ const FundingMenu = () => {
           </div>
         );
       })}
-      {wallet?.gasReserveBalance && (
+      {wallet?.shouldMaintainEthGasReserve && (
         <div>
-          <label>{wallet.gasReserveBalance.to(TOKEN.ETH, TOKEN_FORMAT.VERBOSE)}</label>
+          <label>{wallet.ethGasReserveBalance.to(TOKEN.ETH, TOKEN_FORMAT.VERBOSE)}</label>
           <span style={{ color: theme.colors.orange, fontSize: '85%', opacity: 1 }}>Gas Reserve (ETH)</span>
         </div>
       )}
     </Subtotals>
-  ), [preferredUiCurrency, wallet]);
+  ), [preferredUiCurrency, wallet, wallet?.shouldMaintainEthGasReserve]);
 
   return (
     <FundWrapper>
       {accountAddress && (
         <>
           <div>
-            <h3>Available Wallet Balance:</h3>
+            <h3>Available Wallet Balance ({wallet?.shouldMaintainEthGasReserve ? '*' : 'poop'}):</h3>
             <div>
               <Switcher
                 buttons={[

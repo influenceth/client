@@ -261,13 +261,13 @@ export const FundingFlow = ({ totalPrice, onClose, onFunded }) => {
   useEffect(() => {
     // if (waiting && !debug) {
     //   setTimeout(() => {
-    //     console.log('hack', startingBalance.current, wallet.tokenBalance); // tokenBalance
+    //     console.log('hack', startingBalance.current, wallet.tokenBalances); // tokenBalances
     //     startingBalance.current[TOKEN.ETH] -= safeBigInt(1e14);
     //     setDebug(1);
     //   }, 5000);
     // }
     if (waiting && !!wallet) {
-      if (!startingBalance.current) startingBalance.current = { ...wallet.tokenBalance };
+      if (!startingBalance.current) startingBalance.current = { ...wallet.tokenBalances };
       const i = setInterval(() => {
         refetchBalances();
         // if (debug === 1) setDebug(2); // TODO: deprecate
@@ -283,10 +283,10 @@ export const FundingFlow = ({ totalPrice, onClose, onFunded }) => {
     // increase in value b/c we don't want a trigger on exchange rate changes)
     if (waiting && startingBalance.current) {
       const increaseToken = Object.keys(startingBalance.current).find((token) => {
-        return (wallet.tokenBalance[token] > startingBalance.current[token])
+        return (wallet.tokenBalances[token] > startingBalance.current[token])
       });
       if (increaseToken) {
-        const increaseAmount = wallet.tokenBalance[increaseToken] - startingBalance.current[increaseToken];
+        const increaseAmount = wallet.tokenBalances[increaseToken] - startingBalance.current[increaseToken];
 
         // alert
         createAlert({
@@ -309,7 +309,7 @@ export const FundingFlow = ({ totalPrice, onClose, onFunded }) => {
         }
       }
     }
-  }, [debug, waiting, wallet?.tokenBalance])
+  }, [debug, waiting, wallet?.tokenBalances])
 
   const [walletBalance, fundsNeeded] = useMemo(
     () => {
