@@ -61,12 +61,6 @@ const useWalletPurchasableBalances = (overrideAccount) => {
     Object.keys(swappableTokenBalances).forEach((tokenAddress) => {
       combinedBalance.usdcValue += priceHelper.from(swappableTokenBalances[tokenAddress], tokenAddress)?.usdcValue;
     });
-    console.log('pmk', {
-      combinedBalance,
-      shouldMaintainEthGasReserve: maintainEthGasReserve,
-      ethGasReserveBalance,
-      tokenBalances: swappableTokenBalances
-    });
     return {
       data: {
         combinedBalance,

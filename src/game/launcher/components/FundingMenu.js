@@ -183,7 +183,7 @@ const FundingMenu = () => {
       {accountAddress && (
         <>
           <div>
-            <h3>Available Wallet Balance ({wallet?.shouldMaintainEthGasReserve ? '*' : 'poop'}):</h3>
+            <h3>Available Wallet Balance:</h3>
             <div>
               <Switcher
                 buttons={[

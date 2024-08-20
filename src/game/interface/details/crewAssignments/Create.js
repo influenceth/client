@@ -1014,7 +1014,7 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
     if (isPurchasingPack || isPackPurchaseIsProcessing) return true;
     
     // else, show prompt when no sway and not using a credit (if not already dismissed)
-    return !(swayBalance > 0 || !!crewmate?.id) && !packPromptDismissed;
+    return !(swayBalance > 0n || !!crewmate?.id) && !packPromptDismissed;
   }, [!!crewmate?.id, isPurchasingPack, packPromptDismissed, pendingTransactions, swayBalance]);
 
   // init appearance options as desired
