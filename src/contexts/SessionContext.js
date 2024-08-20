@@ -226,29 +226,29 @@ export function SessionProvider({ children }) {
   }, [ currentSession, sessions, status, walletAccount ]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Determines whether the wallet should use sessions based on user settings and wallet id
+  // useSessions: (null = default, true, false)
   const shouldUseSessionKeys = useCallback(async (skipSettingsCheck = false) => {
-    const setting = skipSettingsCheck ? true : gameplay.useSessions;
+    const setting = skipSettingsCheck || gameplay.useSessions;
 
-    if (setting !== false && connectedWalletId === 'argentWebWallet') return true;
-    if (setting === true && connectedWalletId === 'argentX') {
+    // explicitly disabled
+    if (setting === false) return false;
+    
+    // default == true if web wallet
+    if (connectedWalletId === 'argentWebWallet') return true;
+
+    // explicitly enabled
+    if (connectedWalletId === 'argentX' && !!setting) {
       try {
-        const res = await provider.callContract({ contractAddress: connectedAccount, entrypoint: 'getVersion' });
-        const correctVersion = Number(shortString.decodeShortString(res[0]).replaceAll('.', '')) >= 40;
-        if (!correctVersion) return false;
+        const versionRes = await provider.callContract({ contractAddress: connectedAccount, entrypoint: 'getVersion' });
+        const correctVersion = Number(shortString.decodeShortString(versionRes[0]).replaceAll('.', '')) >= 40;
+        if (correctVersion) {
+          const guardianRes = await provider.callContract({ contractAddress: connectedAccount, entrypoint: 'get_guardian' });
+          return num.toBigInt(guardianRes[0]) !== 0n;
+        }
       } catch (e) {
         console.error(e);
-        return false;
-      }
-
-      try {
-        const res = await provider.callContract({ contractAddress: connectedAccount, entrypoint: 'get_guardian' });
-        return num.toBigInt(res[0]) !== 0n;
-      } catch (e) {
-        console.error(e);
-        return false;
       }
     }
-
     return false;
   }, [connectedAccount, gameplay.useSessions, provider]);
 
