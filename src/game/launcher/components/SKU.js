@@ -850,7 +850,7 @@ const SKU = ({ asset, onBack }) => {
       preLabel: process.env.REACT_APP_CHAIN_ID === '0x534e5f5345504f4c4941' && <SwayFaucetButton />
     };
     return params;
-  }, [asset, isLaunched, isPurchasing, preferredUiCurrency, purchase?.totalPrice]);
+  }, [asset, isLaunched, isPurchasing, packs, preferredUiCurrency, purchase?.totalPrice]);
 
   return (
     <>
