@@ -2,7 +2,7 @@ import { useCallback, useMemo } from 'react';
 import { fetchBuildExecuteTransaction } from '@avnu/avnu-sdk';
 
 import useStore from '~/hooks/useStore';
-import useWalletBalances from '~/hooks/useWalletBalances';
+import useWalletPurchasableBalances from '~/hooks/useWalletPurchasableBalances';
 import { TOKEN } from '~/lib/priceUtils';
 import usePriceHelper from '~/hooks/usePriceHelper';
 import api from '~/lib/api';
@@ -12,13 +12,13 @@ const avnuOptions = { baseUrl: process.env.REACT_APP_AVNU_API_URL };
 
 const useSwapHelper = () => {
   const { accountAddress } = useSession();
-  const { data: wallet } = useWalletBalances();
+  const { data: wallet } = useWalletPurchasableBalances();
   
   const priceHelper = usePriceHelper();
   const preferredUiCurrency = useStore(s => s.getPreferredUiCurrency());
 
   const buildMultiswapFromSellAmount = useCallback(async (sellAmountUSDC, targetToken, allowableSlippage = 0.1) => {
-    const swappableTokens = Object.keys(wallet?.tokenBalance).filter((t) => t !== targetToken);
+    const swappableTokens = Object.keys(wallet?.tokenBalances).filter((t) => t !== targetToken);
     swappableTokens.sort((a) => a === preferredUiCurrency ? -1 : 1);
     
     const calls = [];
@@ -28,7 +28,7 @@ const useSwapHelper = () => {
       const token = swappableTokens[i];
       const sellAmount = Math.min(
         priceHelper.from(remainingTargetUSDC, TOKEN.USDC).to(token),
-        parseInt(wallet.tokenBalance[token])
+        parseInt(wallet.tokenBalances[token])
       );
       // (if remainingTarget < 0.1% of original, assume rounding error and no need to add additional swaps)
       if (sellAmount > 0 && remainingTargetUSDC > initialTargetUSDC * 0.001) {

@@ -10,6 +10,11 @@ const entries = {
     content: <span>{e.content}</span>
   }),
 
+  DeployAccount: (e) => ({
+    icon: <WalletIcon />,
+    content: <span>You must deploy your account first. Click here to prompt a deployment transaction.</span>
+  }),
+
   // TODO: this may be out of use...
   GenericLoadingError: (e) => ({
     content: (

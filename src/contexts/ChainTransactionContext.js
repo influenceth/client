@@ -6,15 +6,16 @@ import { fetchBuildExecuteTransaction, fetchQuotes } from '@avnu/avnu-sdk';
 import * as gasless from '@avnu/gasless-sdk';
 
 import useActivitiesContext from '~/hooks/useActivitiesContext';
-import useSession from '~/hooks/useSession';
 import useCrewContext from '~/hooks/useCrewContext';
+import useSession from '~/hooks/useSession';
+import useSimulationEnabled from '~/hooks/useSimulationEnabled';
 import useStore from '~/hooks/useStore';
 import { useUsdcPerEth } from '~/hooks/useSwapQuote';
-import useWalletBalances from '~/hooks/useWalletBalances';
+import useWalletPurchasableBalances from '~/hooks/useWalletPurchasableBalances';
+import { useSwayBalance } from '~/hooks/useWalletTokenBalance';
 import api from '~/lib/api';
 import { cleanseTxHash, safeBigInt } from '~/lib/utils';
 import { TOKEN } from '~/lib/priceUtils';
-import useSimulationEnabled from '~/hooks/useSimulationEnabled';
 
 const RETRY_INTERVAL = 5e3; // 5 seconds
 const ChainTransactionContext = createContext();
@@ -407,15 +408,16 @@ export function ChainTransactionProvider({ children }) {
     getOutsideExecutionData,
     isDeployed,
     logout,
+    payGasWithSwayIfPossible,
     provider,
     starknetSession,
     upgradeInsecureSession,
-    walletAccount,
-    walletId
+    walletAccount
   } = useSession();
   const activities = useActivitiesContext();
   const { crew, pendingTransactions } = useCrewContext();
-  const { data: walletSource } = useWalletBalances();
+  const { data: walletSource } = useWalletPurchasableBalances();
+  const { data: swayBalance } = useSwayBalance();
   const { data: usdcPerEth } = useUsdcPerEth();
   const simulationEnabled = useSimulationEnabled();
 
@@ -467,68 +469,63 @@ export function ChainTransactionProvider({ children }) {
 
     // Check if we can utilize a signed session to execute calls
     const canUseSessionKey = !!gameplay.useSessions && !!starknetSession && !calls.some((c) => {
-      const found = allowedMethods.find((m) => {
+      return !allowedMethods.find((m) => {
         return m['Contract Address'] === c.contractAddress && m.selector === c.entrypoint;
       });
-
-      return !found;
     });
-
-    const canUseFeeAbstraction = (
-      (gameplay.feeToken === 'SWAY' && isDeployed)
-      || (!gameplay.feeToken && walletId === 'argentWebWallet' && isDeployed)
-    );
 
     // Use session wallet if possible, otherwise regular wallet
     const account = canUseSessionKey ? starknetSession : walletAccount;
     const txOptions = {};
 
     // Check and store the gasless compatibility status
-    const compatibility = await gasless.fetchAccountCompatibility(
-      accountAddress, { baseUrl: process.env.REACT_APP_AVNU_API_URL }
-    );
+    if (payGasWithSwayIfPossible && swayBalance > 0n) {
+      let canPayGasWithSway = false;
+      let gasToken;
+      let maxFee;
+      try {
 
-    if (canUseFeeAbstraction && compatibility.isCompatible) {
-      // Use gasless via relayer for non-ETH / STRK transactions
-      const simulation = await walletAccount.simulateTransaction(
-        [{ type: 'INVOKE_FUNCTION', payload: calls }],
-        { skipValidate: true }
-      );
+        // Use gasless via relayer for non-ETH / STRK transactions
+        const simulation = await account.simulateTransaction(
+          [{ type: 'INVOKE_FUNCTION', payload: calls }],
+          { skipValidate: true }
+        );
+        console.log('simulation', simulation);
 
-      const tokens = await gasless.fetchGasTokenPrices({ baseUrl: process.env.REACT_APP_AVNU_API_URL });
-      const gasToken = tokens.find((t) => Address.areEqual(t.tokenAddress, TOKEN.SWAY));
+        const tokens = await gasless.fetchGasTokenPrices({ baseUrl: process.env.REACT_APP_AVNU_API_URL });
+        console.log('fetchGasTokenPrices', tokens);
+        gasToken = tokens.find((t) => Address.areEqual(t.tokenAddress, TOKEN.SWAY));
+        console.log('gasToken', gasToken);
+        console.log('swayBalance', swayBalance);
 
-      // Triple the fee estimation and check for sufficient funds to ensure transaction success
-      // TODO: figure out why some txs require this
-      const maxFee = gasless.getGasFeesInGasToken(simulation[0].suggestedMaxFee, gasToken) * 3n;
+        // Triple the fee estimation and check for sufficient funds to ensure transaction success
+        // TODO: figure out why some txs require this
+        
+        maxFee = gasless.getGasFeesInGasToken(simulation[0].suggestedMaxFee, gasToken) * 3n;
+        console.log('maxFee', maxFee);
 
-      // Check if wallet has sufficient funds for gas fees
-      if (walletRef.current?.tokenBalance) {
-        const match = Object.entries(walletRef.current.tokenBalance).find((e) => {
-          return Address.areEqual(e[0], gasToken.tokenAddress);
-        });
-
-        // Skip this check in testnet since the allowed gas tokens are inconsistent
-        if (process.env.REACT_APP_DEPLOYMENT === 'production' && (!match || match[1] < maxFee)) {
-          createAlert({
-            type: 'GenericAlert',
-            data: { content: 'Insufficient wallet balance, please recharge in the store.' },
-            level: 'warning',
-          });
-
-          throw new Error('Insufficient wallet balance');
-        }
+        canPayGasWithSway = (swayBalance >= maxFee);
+      } catch (e) {
+        console.warn('Could not pay gas with sway! Trying with et/strk...', e);
       }
 
-      const { typedData, signature } = await getOutsideExecutionData(formattedCalls, gasToken.tokenAddress, maxFee);
-      return await gasless.fetchExecuteTransaction(
-        accountAddress,
-        JSON.stringify(typedData),
-        signature,
-        { baseUrl: process.env.REACT_APP_AVNU_API_URL }
-      );
-    } else if (canUseSessionKey && nonce) {
-      // Manage nonces locally when using sessions but not using relayer
+      // Check if wallet has sufficient funds for gas fees
+      // (skip this check in testnet since the allowed gas tokens are inconsistent)
+      // if (process.env.REACT_APP_DEPLOYMENT !== 'production' || gasTokenBalance >= maxFee) {
+      if (canPayGasWithSway) {
+        const { typedData, signature } = await getOutsideExecutionData(formattedCalls, gasToken.tokenAddress, maxFee);
+        return await gasless.fetchExecuteTransaction(
+          accountAddress,
+          JSON.stringify(typedData),
+          signature,
+          { baseUrl: process.env.REACT_APP_AVNU_API_URL }
+        );
+      }
+    }
+        
+    // Manage nonces locally when using sessions but not using relayer
+    // (relayer should have already returned if going to be used)
+    if (canUseSessionKey && nonce) {
       txOptions.nonce = nonce;
     }
 
@@ -549,11 +546,11 @@ export function ChainTransactionProvider({ children }) {
     allowedMethods,
     createAlert,
     chainId,
-    gameplay.feeToken,
     getOutsideExecutionData,
-    isDeployed,
+    payGasWithSwayIfPossible,
     nonce,
     starknetSession,
+    swayBalance,
     walletAccount
   ]);
 
@@ -756,32 +753,43 @@ export function ChainTransactionProvider({ children }) {
               // else (have enough USDC + ETH) if don't have enough in totalPriceToken
               // to cover tx, prepend swap calls to cover it as well
               } else {
-                let balanceInTargetToken = wallet.tokenBalance[totalPriceToken];
+                let balanceInTargetToken = wallet.tokenBalances[totalPriceToken];
                 if (totalPrice > balanceInTargetToken) {
                   if (!usdcPerEth) throw new Error('Conversion rate not loaded');
 
                   const isEthToUsdc = totalPriceToken === process.env.REACT_APP_USDC_TOKEN_ADDRESS;
                   const fromAddress = isEthToUsdc ? process.env.REACT_APP_ERC20_TOKEN_ADDRESS : process.env.REACT_APP_USDC_TOKEN_ADDRESS;
                   const toAddress = isEthToUsdc ? process.env.REACT_APP_USDC_TOKEN_ADDRESS : process.env.REACT_APP_ERC20_TOKEN_ADDRESS;
-                  const amount = totalPrice - balanceInTargetToken;
+                  const amountNeededInPriceToken = totalPrice - balanceInTargetToken;
+                  const targetBuyAmount = Math.ceil((1 / (1 - slippage)) * parseInt(amountNeededInPriceToken));
 
                   // buy enough excess to cover slippage
                   const slippage = 0.01;
-                  const targetSwapAmount = (1 / (1 - slippage)) * parseInt(amount);
+                  
+                  ////////
+                  // const quotes = await fetchQuotes({
+                  //   sellTokenAddress: fromAddress,
+                  //   buyTokenAddress: toAddress,
+                  //   buyAmount: safeBigInt(targetBuyAmount),
+                  //   takerAddress: accountAddress,//isDeployed ? accountAddress : undefined,
+                  // }, { baseUrl: process.env.REACT_APP_AVNU_API_URL });
+                  // if (!quotes?.[0]) throw new Error('Insufficient swap liquidity');
+                  // const quote = quotes[0];
+                  ////////
 
                   // usdcPerEth is estimated from a small amount (presumably the best price) so
                   // sellAmount may be too low to end up with the required buyAmount...
-
+                  
                   // iterate based on the response until we have sufficient buyAmount to cover the purchase
                   // TODO: would be nice for AVNU to have buyAmount as an option here instead (to avoid loop)
                   let quote;
                   let actualConv = isEthToUsdc ? usdcPerEth : (1 / usdcPerEth);
-                  while (parseInt(quote?.buyAmount || 0) < targetSwapAmount) {
+                  while (parseInt(quote?.buyAmount || 0) < targetBuyAmount) {
                     const quotes = await fetchQuotes({
                       sellTokenAddress: fromAddress,
                       buyTokenAddress: toAddress,
-                      sellAmount: safeBigInt(Math.ceil(targetSwapAmount / actualConv)),
-                      takerAddress: accountAddress,
+                      sellAmount: safeBigInt(Math.ceil(targetBuyAmount / actualConv)),
+                      takerAddress: accountAddress,//isDeployed ? accountAddress : undefined,
                     }, { baseUrl: process.env.REACT_APP_AVNU_API_URL });
                     if (!quotes?.[0]) throw new Error('Insufficient swap liquidity');
 
@@ -792,7 +800,7 @@ export function ChainTransactionProvider({ children }) {
                     // (if conversion rate unchanged but have not reached target, break loop so not stuck)
                     const newConv = parseInt(quote.buyAmount) / parseInt(quote.sellAmount);
                     if (newConv === actualConv) {
-                      if (quote.buyAmount < targetSwapAmount) {
+                      if (quote.buyAmount < targetBuyAmount) {
                         throw new Error('Swap pricing issue encountered');
                       }
                     }
@@ -839,6 +847,7 @@ export function ChainTransactionProvider({ children }) {
     createAlert,
     executeWithAccount,
     gameplay.feesInSway,
+    isDeployed,
     prependEventAutoresolve,
     starknetSession,
     usdcPerEth
@@ -990,6 +999,67 @@ export function ChainTransactionProvider({ children }) {
       return true;
     }
   }, [walletAccount]);
+  
+
+  const handleExecutionExeption = useCallback((e, executeCalls, txDetails = {}) => {
+    if ((e.message || '').toLowerCase() === 'account not deployed') {
+      createAlert({
+        type: 'DeployAccount',
+        level: 'warning',
+        duration: 0,
+        hideCloseIcon: true,
+        onRemoval: () => {
+          // TODO: would be nice if could use this format instead, but it's not clear how that works
+          // walletAccount.deployAccount({ contractAddress: accountAddress });
+          executeCalls([
+            System.getFormattedCall(
+              process.env.REACT_APP_ERC20_TOKEN_ADDRESS,
+              'transfer',
+              [
+                { value: accountAddress, type: 'ContractAddress' },
+                { value: 0n, type: 'u256' }
+              ]
+            )
+          ]);
+        }
+      });
+    }
+
+    // "User abort" is argent, 'Execute failed' is braavos
+    // TODO: in Braavos, is "Execute failed" a generic error? in that case, we should still show
+    // (and it will just be annoying that it shows a failure on declines)
+    // console.log('failed', e);
+    if (!['User abort', 'Execute failed', 'Timeout'].includes(e?.message) && txDetails) {
+      dispatchFailedTransaction({
+        ...txDetails,
+        txHash: null,
+        err: e?.message || e
+      });
+    }
+
+    // "Timeout" is in argent (at least) for when tx is auto-rejected b/c previous tx is still pending
+    // TODO: should hopefully be able to remove Timeout because would make sessions feel pretty useless
+    if (e?.message === 'Timeout') {
+      createAlert({
+        type: 'GenericAlert',
+        data: { content: 'Previous tx is not yet accepted on l2. Wait for the extension notification and try again.' },
+        level: 'warning',
+        duration: 5000
+      });
+    }
+
+    // Session expired for Argent web wallet sessions, user should be logged out
+    if (e?.message && e?.message.includes('session expired')) {
+      createAlert({
+        type: 'GenericAlert',
+        data: { content: 'Session expired. Please log in again.' },
+        level: 'warning',
+        duration: 5000
+      });
+
+      logout();
+    }
+  }, [accountAddress, createAlert, dispatchFailedTransaction, logout]);
 
   // Allows for multiple explicit / manual calls to be executed in a single transaction
   const executeCalls = useCallback(async (calls) => {
@@ -1040,9 +1110,10 @@ export function ChainTransactionProvider({ children }) {
       return tx;
     } catch (e) {
       setPromptingTransaction(false);
+      handleExecutionExeption(e, executeCalls);
       throw e;  // rethrow
     }
-  }, [createAlert, executeWithAccount, isAccountLocked, isDeployed, upgradeInsecureSession, walletAccount])
+  }, [createAlert, executeWithAccount, handleExecutionExeption, isAccountLocked, isDeployed, upgradeInsecureSession, walletAccount])
 
   // Primary execute method for system calls (requires name of system, etc.)
   const executeSystem = useCallback(async (key, vars, meta = {}) => {
@@ -1099,49 +1170,12 @@ export function ChainTransactionProvider({ children }) {
         setPromptingTransaction(false);
         return e.additionalUSDCRequired;
       }
-
-      // "User abort" is argent, 'Execute failed' is braavos
-      // TODO: in Braavos, is "Execute failed" a generic error? in that case, we should still show
-      // (and it will just be annoying that it shows a failure on declines)
-      // console.log('failed', e);
-      if (!['User abort', 'Execute failed', 'Timeout'].includes(e?.message)) {
-        dispatchFailedTransaction({
-          key,
-          vars,
-          meta,
-          txHash: null,
-          err: e?.message || e
-        });
-      }
-
-      // "Timeout" is in argent (at least) for when tx is auto-rejected b/c previous tx is still pending
-      // TODO: should hopefully be able to remove Timeout because would make sessions feel pretty useless
-      if (e?.message === 'Timeout') {
-        createAlert({
-          type: 'GenericAlert',
-          data: { content: 'Previous tx is not yet accepted on l2. Wait for the extension notification and try again.' },
-          level: 'warning',
-          duration: 5000
-        });
-      }
-
-      // Session expired for Argent web wallet sessions, user should be logged out
-      if (e?.message && e?.message.includes('session expired')) {
-        createAlert({
-          type: 'GenericAlert',
-          data: { content: 'Session expired. Please log in again.' },
-          level: 'warning',
-          duration: 5000
-        });
-
-        logout();
-      }
-
+      handleExecutionExeption(e, executeCalls, { key, vars, meta });
       onTransactionError(e, vars);
     }
 
     setPromptingTransaction(false);
-  }, [blockTime, contracts, walletAccount, simulationEnabled]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [blockTime, contracts, handleExecutionExeption, walletAccount, simulationEnabled]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const getPendingTx = useCallback((key, vars) => {
     // simulation will only ever have one concurrent?

@@ -8,7 +8,7 @@ import Switcher from '~/components/SwitcherButton';
 import { TOKEN, TOKEN_FORMAT, TOKEN_SCALE } from '~/lib/priceUtils';
 import useSession from '~/hooks/useSession';
 import useStore from '~/hooks/useStore';
-import useWalletBalances from '~/hooks/useWalletBalances';
+import useWalletPurchasableBalances from '~/hooks/useWalletPurchasableBalances';
 import usePriceHelper from '~/hooks/usePriceHelper';
 import theme from '~/theme';
 import FundingFlow from './FundingFlow';
@@ -142,7 +142,7 @@ const AddFundsButton = styled(Button)`
 const FundingMenu = () => {
   const { accountAddress, login } = useSession();
   const priceHelper = usePriceHelper();
-  const { data: wallet, isLoading, refetch } = useWalletBalances();
+  const { data: wallet, isLoading, refetch } = useWalletPurchasableBalances();
 
   const preferredUiCurrency = useStore(s => s.getPreferredUiCurrency());
   const dispatchPreferredUiCurrency = useStore(s => s.dispatchPreferredUiCurrency);
@@ -160,8 +160,8 @@ const FundingMenu = () => {
 
   const tooltipContent = useMemo(() => ReactDOMServer.renderToStaticMarkup(
     <Subtotals>
-      {Object.keys(wallet?.tokenBalance || {}).map((tokenAddress) => {
-        const balance = priceHelper.from(wallet.tokenBalance[tokenAddress], tokenAddress);
+      {Object.keys(wallet?.tokenBalances || {}).map((tokenAddress) => {
+        const balance = priceHelper.from(wallet.tokenBalances[tokenAddress], tokenAddress);
         return (
           <div key={tokenAddress}>
             <label>{balance?.to(tokenAddress, TOKEN_FORMAT.VERBOSE)}</label>
@@ -169,14 +169,14 @@ const FundingMenu = () => {
           </div>
         );
       })}
-      {wallet?.gasReserveBalance && (
+      {wallet?.shouldMaintainEthGasReserve && (
         <div>
-          <label>{wallet.gasReserveBalance.to(TOKEN.ETH, TOKEN_FORMAT.VERBOSE)}</label>
+          <label>{wallet.ethGasReserveBalance.to(TOKEN.ETH, TOKEN_FORMAT.VERBOSE)}</label>
           <span style={{ color: theme.colors.orange, fontSize: '85%', opacity: 1 }}>Gas Reserve (ETH)</span>
         </div>
       )}
     </Subtotals>
-  ), [preferredUiCurrency, wallet]);
+  ), [preferredUiCurrency, wallet, wallet?.shouldMaintainEthGasReserve]);
 
   return (
     <FundWrapper>
