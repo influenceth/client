@@ -833,6 +833,33 @@ const activities = {
   },
 
   CrewEjected: {
+    // This is for crew ejection from a ship in transit
+    getActionItem: (_, viewingAs, { ejectedCrew = {}}) => {
+      return {
+        icon: <SetCourseIcon />,
+        label: `In Flight`,
+        asteroidId: ejectedCrew.Ship?.transitDestination?.id,
+        locationDetail: getEntityName(ejectedCrew.Ship?.transitOrigin),
+        onClick: ({ openDialog }) => {
+          openDialog('SET_COURSE');
+        }
+      };
+    },
+
+    getIsActionItemHidden: ({ returnValues }) => (pendingTransactions) => {
+      const txCheck = (tx) => tx.key === 'TransitBetweenFinish';
+      return pendingTransactions.find((tx) => txCheck(tx) || isInFinishAllTx(tx, txCheck));
+    },
+
+    getActionItemFinishCall: (actionItem) => (caller_crew) => ({
+      key: 'TransitBetweenFinish',
+      vars: { caller_crew }
+    }),
+
+    getPrepopEntities: ({ event: { returnValues } }) => ({
+      ejectedCrew: returnValues.ejectedCrew
+    }),
+
     getInvalidations: ({ event: { returnValues } }) => ([
       {
         ...returnValues.ejectedCrew,
