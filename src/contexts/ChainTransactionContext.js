@@ -480,30 +480,39 @@ export function ChainTransactionProvider({ children }) {
 
     // Check and store the gasless compatibility status
     if (payGasWithSwayIfPossible && swayBalance > 0n) {
+      let canPayGasWithSway = false;
+      let gasToken;
+      let maxFee;
+      try {
 
-      // Use gasless via relayer for non-ETH / STRK transactions
-      const simulation = await account.simulateTransaction(
-        [{ type: 'INVOKE_FUNCTION', payload: calls }],
-        { skipValidate: true }
-      );
-      console.log('simulation', simulation);
+        // Use gasless via relayer for non-ETH / STRK transactions
+        const simulation = await account.simulateTransaction(
+          [{ type: 'INVOKE_FUNCTION', payload: calls }],
+          { skipValidate: true }
+        );
+        console.log('simulation', simulation);
 
-      const tokens = await gasless.fetchGasTokenPrices({ baseUrl: process.env.REACT_APP_AVNU_API_URL });
-      console.log('fetchGasTokenPrices', tokens);
-      const gasToken = tokens.find((t) => Address.areEqual(t.tokenAddress, TOKEN.SWAY));
-      console.log('gasToken', gasToken);
-      const gasTokenBalance = swayBalance;
-      console.log('gasTokenBalance', gasTokenBalance);
+        const tokens = await gasless.fetchGasTokenPrices({ baseUrl: process.env.REACT_APP_AVNU_API_URL });
+        console.log('fetchGasTokenPrices', tokens);
+        gasToken = tokens.find((t) => Address.areEqual(t.tokenAddress, TOKEN.SWAY));
+        console.log('gasToken', gasToken);
+        console.log('swayBalance', swayBalance);
 
-      // Triple the fee estimation and check for sufficient funds to ensure transaction success
-      // TODO: figure out why some txs require this
-      
-      const maxFee = gasless.getGasFeesInGasToken(simulation[0].suggestedMaxFee, gasToken) * 3n;
+        // Triple the fee estimation and check for sufficient funds to ensure transaction success
+        // TODO: figure out why some txs require this
+        
+        maxFee = gasless.getGasFeesInGasToken(simulation[0].suggestedMaxFee, gasToken) * 3n;
+        console.log('maxFee', maxFee);
+
+        canPayGasWithSway = (swayBalance >= maxFee);
+      } catch (e) {
+        console.warn('Could not pay gas with sway! Trying with et/strk...', e);
+      }
 
       // Check if wallet has sufficient funds for gas fees
       // (skip this check in testnet since the allowed gas tokens are inconsistent)
       // if (process.env.REACT_APP_DEPLOYMENT !== 'production' || gasTokenBalance >= maxFee) {
-      if (gasTokenBalance >= maxFee) {
+      if (canPayGasWithSway) {
         const { typedData, signature } = await getOutsideExecutionData(formattedCalls, gasToken.tokenAddress, maxFee);
         return await gasless.fetchExecuteTransaction(
           accountAddress,
@@ -512,8 +521,11 @@ export function ChainTransactionProvider({ children }) {
           { baseUrl: process.env.REACT_APP_AVNU_API_URL }
         );
       }
-    } else if (canUseSessionKey && nonce) {
-      // Manage nonces locally when using sessions but not using relayer
+    }
+        
+    // Manage nonces locally when using sessions but not using relayer
+    // (relayer should have already returned if going to be used)
+    if (canUseSessionKey && nonce) {
       txOptions.nonce = nonce;
     }
 
@@ -749,20 +761,20 @@ export function ChainTransactionProvider({ children }) {
                   const fromAddress = isEthToUsdc ? process.env.REACT_APP_ERC20_TOKEN_ADDRESS : process.env.REACT_APP_USDC_TOKEN_ADDRESS;
                   const toAddress = isEthToUsdc ? process.env.REACT_APP_USDC_TOKEN_ADDRESS : process.env.REACT_APP_ERC20_TOKEN_ADDRESS;
                   const amountNeededInPriceToken = totalPrice - balanceInTargetToken;
-                  const targetBuyAmount = (1 / (1 - slippage)) * parseInt(amountNeededInPriceToken);
+                  const targetBuyAmount = Math.ceil((1 / (1 - slippage)) * parseInt(amountNeededInPriceToken));
 
                   // buy enough excess to cover slippage
                   const slippage = 0.01;
                   
                   ////////
-                  // const quotes = await fetchQuotes({
-                  //   sellTokenAddress: fromAddress,
-                  //   buyTokenAddress: toAddress,
-                  //   buyAmount: safeBigInt(Math.ceil((1 / (1 - slippage)) * parseInt(amountNeededInPriceToken))),
-                  //   takerAddress: accountAddress,//isDeployed ? accountAddress : undefined,
-                  // }, { baseUrl: process.env.REACT_APP_AVNU_API_URL });
-                  // if (!quotes?.[0]) throw new Error('Insufficient swap liquidity');
-                  // const quote = quotes[0];
+                  const quotes = await fetchQuotes({
+                    sellTokenAddress: fromAddress,
+                    buyTokenAddress: toAddress,
+                    buyAmount: safeBigInt(targetBuyAmount),
+                    takerAddress: accountAddress,//isDeployed ? accountAddress : undefined,
+                  }, { baseUrl: process.env.REACT_APP_AVNU_API_URL });
+                  if (!quotes?.[0]) throw new Error('Insufficient swap liquidity');
+                  const quote = quotes[0];
                   ////////
 
                   // usdcPerEth is estimated from a small amount (presumably the best price) so
@@ -770,31 +782,31 @@ export function ChainTransactionProvider({ children }) {
                   
                   // iterate based on the response until we have sufficient buyAmount to cover the purchase
                   // TODO: would be nice for AVNU to have buyAmount as an option here instead (to avoid loop)
-                  let quote;
-                  let actualConv = isEthToUsdc ? usdcPerEth : (1 / usdcPerEth);
-                  while (parseInt(quote?.buyAmount || 0) < targetBuyAmount) {
-                    const quotes = await fetchQuotes({
-                      sellTokenAddress: fromAddress,
-                      buyTokenAddress: toAddress,
-                      sellAmount: safeBigInt(Math.ceil(targetBuyAmount / actualConv)),
-                      takerAddress: accountAddress,//isDeployed ? accountAddress : undefined,
-                    }, { baseUrl: process.env.REACT_APP_AVNU_API_URL });
-                    if (!quotes?.[0]) throw new Error('Insufficient swap liquidity');
+                  // let quote;
+                  // let actualConv = isEthToUsdc ? usdcPerEth : (1 / usdcPerEth);
+                  // while (parseInt(quote?.buyAmount || 0) < targetBuyAmount) {
+                  //   const quotes = await fetchQuotes({
+                  //     sellTokenAddress: fromAddress,
+                  //     buyTokenAddress: toAddress,
+                  //     sellAmount: safeBigInt(Math.ceil(targetBuyAmount / actualConv)),
+                  //     takerAddress: accountAddress,//isDeployed ? accountAddress : undefined,
+                  //   }, { baseUrl: process.env.REACT_APP_AVNU_API_URL });
+                  //   if (!quotes?.[0]) throw new Error('Insufficient swap liquidity');
 
-                    // set quote
-                    quote = quotes[0];
+                  //   // set quote
+                  //   quote = quotes[0];
 
-                    // improve conversion rate from the purchase size quote (in case need to iterate)
-                    // (if conversion rate unchanged but have not reached target, break loop so not stuck)
-                    const newConv = parseInt(quote.buyAmount) / parseInt(quote.sellAmount);
-                    if (newConv === actualConv) {
-                      if (quote.buyAmount < targetBuyAmount) {
-                        throw new Error('Swap pricing issue encountered');
-                      }
-                    }
+                  //   // improve conversion rate from the purchase size quote (in case need to iterate)
+                  //   // (if conversion rate unchanged but have not reached target, break loop so not stuck)
+                  //   const newConv = parseInt(quote.buyAmount) / parseInt(quote.sellAmount);
+                  //   if (newConv === actualConv) {
+                  //     if (quote.buyAmount < targetBuyAmount) {
+                  //       throw new Error('Swap pricing issue encountered');
+                  //     }
+                  //   }
 
-                    actualConv = newConv;
-                  }
+                  //   actualConv = newConv;
+                  // }
 
                   // prepend swap calls
                   const swapTx = await fetchBuildExecuteTransaction(
