@@ -7,15 +7,39 @@ const enforce = require('express-sslify');
 const compression = require('compression');
 const historyApiFallback = require('connect-history-api-fallback');
 const isBot = require('isbot-fast');
-// const { IpFilter } = require('express-ipfilter');
+const blockNetworks = require('./block_networks.json');
+const { IpFilter } = require('express-ipfilter');
 
 const basicAuth = require('./auth');
 const getOpengraphTags = require('./opengraph')
 
 const readFileAsync = promisify(fs.readFile);
 
+const ipFilter = (req, res, next) => {
+  // custom next function to handle errors
+  const _next = (error) => {
+    if (!error) return next();
+
+    res.status(error.status);
+    return next(error.message);
+  }
+
+  const detectIp = function (req) {
+    let { connection: { remoteAddress } } = req;
+    let ip = remoteAddress;
+    
+    // fix for IPv6 Dotted-quad notation
+    if (remoteAddress.includes(':') && remoteAddress.includes('.')) ip = remoteAddress.split(':').pop();
+  
+    return ip;
+  };
+
+  return IpFilter(blockNetworks, { logLevel: 'deny', mode: 'deny', detectIp })(req, res, _next);
+};
+
 const app = express();
-// app.use(IpFilter(['192.168.1.0/24'], { mode: 'allow' }));
+
+app.use(ipFilter);
 
 if (process.env.AUTH_PASSWORD) app.use(basicAuth);
 app.use(compression());
