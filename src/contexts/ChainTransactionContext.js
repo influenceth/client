@@ -749,15 +749,15 @@ export function ChainTransactionProvider({ children }) {
                   const slippage = 0.01;
                   
                   ////////
-                  const buyAmount = (1 + slippage) * amount;
+                  // const buyAmount = (1 + slippage) * amount;
                   
-                  const quotes = await fetchQuotes({
-                    sellTokenAddress: fromAddress,
-                    buyTokenAddress: toAddress,
-                    sellAmount: safeBigInt(Math.ceil(targetSwapAmount / actualConv)),
-                    takerAddress: accountAddress,//isDeployed ? accountAddress : undefined,
-                  }, { baseUrl: process.env.REACT_APP_AVNU_API_URL });
-                  if (!quotes?.[0]) throw new Error('Insufficient swap liquidity');
+                  // const quotes = await fetchQuotes({
+                  //   sellTokenAddress: fromAddress,
+                  //   buyTokenAddress: toAddress,
+                  //   sellAmount: safeBigInt(Math.ceil(targetSwapAmount / actualConv)),
+                  //   takerAddress: accountAddress,//isDeployed ? accountAddress : undefined,
+                  // }, { baseUrl: process.env.REACT_APP_AVNU_API_URL });
+                  // if (!quotes?.[0]) throw new Error('Insufficient swap liquidity');
                   ////////
 
                   const targetSwapAmount = (1 / (1 - slippage)) * parseInt(amount);
