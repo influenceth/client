@@ -106,7 +106,7 @@ export function SessionProvider({ children }) {
         options: {
           url: typeof window !== 'undefined' ? window.location.href : '',
           dappName: 'Influence',
-          chainId: process.env.REACT_APP_CHAIN_ID,
+          chainId: resolveChainId(process.env.REACT_APP_CHAIN_ID),
           provider
         }
       });
@@ -124,8 +124,7 @@ export function SessionProvider({ children }) {
         if (enabledConnectors.braavos) connectors.push(new InjectedConnector({ options: { id: 'braavos', provider }}));
         if (enabledConnectors.argentMobile) connectors.push(argentMobileConnector);  
       }
-
-      
+  
       const connectionOptions = {
         dappName: 'Influence',
         modalMode: auto ? 'neverAsk' : 'alwaysAsk',
