@@ -277,9 +277,9 @@ export const entityToAgreements = (entity) => {
 // Return the resolved chain ID in a specified format (hex or string)
 export const resolveChainId = (chainId, format = 'string') => {
   let resolvedId = 'SN_DEV';
-  if (['0x534e5f4d41494e', 'SN_MAIN'].includes(chainId)) resolvedId = 'SN_MAIN';
-  if (['0x534e5f474f45524c49', 'SN_GOERLI'].includes(chainId)) resolvedId = 'SN_GOERLI';
-  if (['0x534e5f5345504f4c4941', 'SN_SEPOLIA', 'sepolia-alpha'].includes(chainId)) resolvedId = 'SN_SEPOLIA';
+  if ([23448594291968334n, '0x534e5f4d41494e', 'SN_MAIN'].includes(chainId)) resolvedId = 'SN_MAIN';
+  if ([1536727068981429685321n, '0x534e5f474f45524c49', 'SN_GOERLI'].includes(chainId)) resolvedId = 'SN_GOERLI';
+  if ([393402133025997798000961n, '0x534e5f5345504f4c4941', 'SN_SEPOLIA', 'sepolia-alpha'].includes(chainId)) resolvedId = 'SN_SEPOLIA';
 
   return format === 'string' ? resolvedId : shortString.encodeShortString(resolvedId);
 };

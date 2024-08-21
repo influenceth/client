@@ -3,7 +3,7 @@ import { useQueryClient } from 'react-query';
 import { isExpired } from 'react-jwt';
 import { num, RpcProvider, WalletAccount, shortString } from 'starknet';
 import { connect as starknetConnect, disconnect as starknetDisconnect } from 'starknetkit';
-import { ArgentMobileConnector } from 'starknetkit/argentMobile';
+import { ArgentMobileConnector, isInArgentMobileAppBrowser } from 'starknetkit/argentMobile';
 import { InjectedConnector } from 'starknetkit/injected';
 import { WebWalletConnector } from 'starknetkit/webwallet';
 import {
@@ -101,16 +101,31 @@ export function SessionProvider({ children }) {
     }
 
     try {
-      const connectors = [];
+      // init argentMobileConnector since a little different
+      const argentMobileConnector = ArgentMobileConnector.init({
+        options: {
+          url: typeof window !== 'undefined' ? window.location.href : '',
+          dappName: 'Influence',
+          chainId: process.env.REACT_APP_CHAIN_ID,
+          provider
+        }
+      });
 
-      if (enabledConnectors.webWallet && !!process.env.REACT_APP_ARGENT_WEB_WALLET_URL) {
-        connectors.push(new WebWalletConnector({ url: process.env.REACT_APP_ARGENT_WEB_WALLET_URL, provider }));
+      // pick which and config connectors to include
+      const connectors = [];
+      if (isInArgentMobileAppBrowser()) {
+        connectors.push(argentMobileConnector);
+      } else {
+        if (enabledConnectors.webWallet && !!process.env.REACT_APP_ARGENT_WEB_WALLET_URL) {
+          connectors.push(new WebWalletConnector({ url: process.env.REACT_APP_ARGENT_WEB_WALLET_URL, provider }));
+        }
+  
+        if (enabledConnectors.argentX) connectors.push(new InjectedConnector({ options: { id: 'argentX', provider }}));
+        if (enabledConnectors.braavos) connectors.push(new InjectedConnector({ options: { id: 'braavos', provider }}));
+        if (enabledConnectors.argentMobile) connectors.push(argentMobileConnector);  
       }
 
-      if (enabledConnectors.argentX) connectors.push(new InjectedConnector({ options: { id: 'argentX', provider }}));
-      if (enabledConnectors.braavos) connectors.push(new InjectedConnector({ options: { id: 'braavos', provider }}));
-      if (enabledConnectors.argentMobile) connectors.push(new ArgentMobileConnector());
-
+      
       const connectionOptions = {
         dappName: 'Influence',
         modalMode: auto ? 'neverAsk' : 'alwaysAsk',
@@ -158,6 +173,7 @@ export function SessionProvider({ children }) {
       }
     } catch(e) {
       if (e.message === 'Incorrect chain') {
+        console.log('');
         setError(`Incorrect chain, please switch to ${resolveChainId(process.env.REACT_APP_CHAIN_ID)}`);
       }
 
