@@ -16,13 +16,11 @@ import { TOKEN, TOKEN_FORMAT, TOKEN_FORMATTER } from '~/lib/priceUtils';
 import usePriceHelper from '~/hooks/usePriceHelper';
 import useStore from '~/hooks/useStore';
 import EthFaucetButton from './EthFaucetButton';
-import { areChainsEqual, fireTrackingEvent, safeBigInt } from '~/lib/utils';
+import { areChainsEqual, fireTrackingEvent, resolveChainId, safeBigInt } from '~/lib/utils';
 
 const layerSwapChains = {
-  '0x534e5f4d41494e': { ethereum: 'ETHEREUM_MAINNET', starknet: 'STARKNET_MAINNET' },
-  'SN_MAIN': { ethereum: 'ETHEREUM_MAINNET', starknet: 'STARKNET_MAINNET' },
-  '0x534e5f5345504f4c4941': { ethereum: 'ETHEREUM_SEPOLIA', starknet: 'STARKNET_SEPOLIA' },
-  'SN_SEPOLIA': { ethereum: 'ETHEREUM_SEPOLIA', starknet: 'STARKNET_SEPOLIA' }
+  SN_MAIN: { ethereum: 'ETHEREUM_MAINNET', starknet: 'STARKNET_MAINNET' },
+  SN_SEPOLIA: { ethereum: 'ETHEREUM_SEPOLIA', starknet: 'STARKNET_SEPOLIA' }
 };
 
 const FundingBody = styled.div`
@@ -390,7 +388,7 @@ export const FundingFlow = ({ totalPrice, onClose, onFunded }) => {
         new URLSearchParams({
           clientId: process.env.REACT_APP_LAYERSWAP_CLIENT_ID,
           amount,
-          to: layerSwapChains[chainId]?.starknet,
+          to: layerSwapChains[resolveChainId(chainId)]?.starknet,
           toAsset: 'USDC',
           destAddress: accountAddress,
           lockTo: true,
