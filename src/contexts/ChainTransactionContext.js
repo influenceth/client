@@ -486,6 +486,7 @@ export function ChainTransactionProvider({ children }) {
         [{ type: 'INVOKE_FUNCTION', payload: calls }],
         { skipValidate: true }
       );
+      console.log('simulation', simulation);
 
       const tokens = await gasless.fetchGasTokenPrices({ baseUrl: process.env.REACT_APP_AVNU_API_URL });
       console.log('fetchGasTokenPrices', tokens);
