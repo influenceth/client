@@ -750,67 +750,36 @@ export function ChainTransactionProvider({ children }) {
                 fundsError.additionalFundsToken = totalPriceToken;
                 throw fundsError;
 
-              // else (have enough USDC + ETH) if don't have enough in totalPriceToken
+              // else (do have enough USDC + ETH), but don't specifically have enough in totalPriceToken
               // to cover tx, prepend swap calls to cover it as well
               } else {
                 let balanceInTargetToken = wallet.tokenBalances[totalPriceToken];
                 if (totalPrice > balanceInTargetToken) {
-                  if (!usdcPerEth) throw new Error('Conversion rate not loaded');
-
-                  const isEthToUsdc = totalPriceToken === process.env.REACT_APP_USDC_TOKEN_ADDRESS;
-                  const fromAddress = isEthToUsdc ? process.env.REACT_APP_ERC20_TOKEN_ADDRESS : process.env.REACT_APP_USDC_TOKEN_ADDRESS;
-                  const toAddress = isEthToUsdc ? process.env.REACT_APP_USDC_TOKEN_ADDRESS : process.env.REACT_APP_ERC20_TOKEN_ADDRESS;
-                  const amountNeededInPriceToken = totalPrice - balanceInTargetToken;
-                  const targetBuyAmount = Math.ceil((1 / (1 - slippage)) * parseInt(amountNeededInPriceToken));
-
-                  // buy enough excess to cover slippage
+                  // buy enough excess to cover slippage (1%)
                   const slippage = 0.01;
-                  
-                  ////////
-                  // const quotes = await fetchQuotes({
-                  //   sellTokenAddress: fromAddress,
-                  //   buyTokenAddress: toAddress,
-                  //   buyAmount: safeBigInt(targetBuyAmount),
-                  //   takerAddress: accountAddress,//isDeployed ? accountAddress : undefined,
-                  // }, { baseUrl: process.env.REACT_APP_AVNU_API_URL });
-                  // if (!quotes?.[0]) throw new Error('Insufficient swap liquidity');
-                  // const quote = quotes[0];
-                  ////////
-
-                  // usdcPerEth is estimated from a small amount (presumably the best price) so
-                  // sellAmount may be too low to end up with the required buyAmount...
-                  
-                  // iterate based on the response until we have sufficient buyAmount to cover the purchase
-                  // TODO: would be nice for AVNU to have buyAmount as an option here instead (to avoid loop)
-                  let quote;
-                  let actualConv = isEthToUsdc ? usdcPerEth : (1 / usdcPerEth);
-                  while (parseInt(quote?.buyAmount || 0) < targetBuyAmount) {
-                    const quotes = await fetchQuotes({
-                      sellTokenAddress: fromAddress,
-                      buyTokenAddress: toAddress,
-                      sellAmount: safeBigInt(Math.ceil(targetBuyAmount / actualConv)),
-                      takerAddress: accountAddress,//isDeployed ? accountAddress : undefined,
-                    }, { baseUrl: process.env.REACT_APP_AVNU_API_URL });
-                    if (!quotes?.[0]) throw new Error('Insufficient swap liquidity');
-
-                    // set quote
-                    quote = quotes[0];
-
-                    // improve conversion rate from the purchase size quote (in case need to iterate)
-                    // (if conversion rate unchanged but have not reached target, break loop so not stuck)
-                    const newConv = parseInt(quote.buyAmount) / parseInt(quote.sellAmount);
-                    if (newConv === actualConv) {
-                      if (quote.buyAmount < targetBuyAmount) {
-                        throw new Error('Swap pricing issue encountered');
-                      }
-                    }
-
-                    actualConv = newConv;
-                  }
+                  const slippageMult = (1 / (1 - slippage));
+                  console.log({ totalPrice, balanceInTargetToken });
+                  console.log({
+                    sellTokenAddress: totalPriceToken === process.env.REACT_APP_USDC_TOKEN_ADDRESS
+                      ? process.env.REACT_APP_ERC20_TOKEN_ADDRESS
+                      : process.env.REACT_APP_USDC_TOKEN_ADDRESS,
+                    buyTokenAddress: totalPriceToken,
+                    buyAmount: safeBigInt(Math.ceil(slippageMult * parseInt(totalPrice - balanceInTargetToken))),
+                    takerAddress: accountAddress,
+                  });
+                  const quotes = await fetchQuotes({
+                    sellTokenAddress: totalPriceToken === process.env.REACT_APP_USDC_TOKEN_ADDRESS
+                      ? process.env.REACT_APP_ERC20_TOKEN_ADDRESS
+                      : process.env.REACT_APP_USDC_TOKEN_ADDRESS,
+                    buyTokenAddress: totalPriceToken,
+                    buyAmount: safeBigInt(Math.ceil(slippageMult * parseInt(totalPrice - balanceInTargetToken))),
+                    takerAddress: accountAddress,
+                  }, { baseUrl: process.env.REACT_APP_AVNU_API_URL });
+                  if (!quotes?.[0]) throw new Error('Insufficient swap liquidity');
 
                   // prepend swap calls
                   const swapTx = await fetchBuildExecuteTransaction(
-                    quote.quoteId,
+                    quotes[0].quoteId,
                     accountAddress,
                     slippage,
                     true,

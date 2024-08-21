@@ -237,11 +237,11 @@ const Construct = ({ asteroid, lot, constructionManager, stage, ...props }) => {
 
         {stage === actionStage.NOT_STARTED &&  (
           <BuildingRequirementsSection
-          label={(
-            <ReqTitle>
-              <span>Materials On Site</span>
-              {!(requirementsMet && !waitingOnTransfer) && <span>This site is missing construction materials</span>}
-            </ReqTitle>
+            label={(
+              <ReqTitle>
+                <span>Materials On Site</span>
+                {!(requirementsMet && !waitingOnTransfer) && <span>This site is missing construction materials</span>}
+              </ReqTitle>
             )}
             mode="gathering"
             requirementsMet={requirementsMet && !waitingOnTransfer}
