@@ -1,5 +1,6 @@
 import React from 'react';
 import styled, { keyframes } from 'styled-components';
+
 import { CheckSmallIcon } from '~/components/Icons';
 import ResourceThumbnail from '~/components/ResourceThumbnail';
 import { formatResourceAmount, formatResourceAmountRatio } from '~/game/interface/hud/actionDialogs/components';
@@ -75,7 +76,6 @@ const ResourceRequirement = ({ isGathering, item, noStyles, ...props }) => {
       props.backgroundColor = `rgba(${theme.colors.mainRGB}, 0.15)`;
       props.badgeColor = theme.colors.main;
       props.outlineColor = `rgba(${theme.colors.mainRGB}, 0.5)`;
-      props.overlayStripes = item.stripeAnimation;
       props.overlayIcon = item.customIcon.animated
         ? <Animation>{item.customIcon.icon}</Animation>
         : <div>{item.customIcon.icon}</div>;
@@ -84,6 +84,10 @@ const ResourceRequirement = ({ isGathering, item, noStyles, ...props }) => {
     if (item.requirementMet) {
       props.requirementMet = true;
       props.backgroundColor = props.outlineColor = 'rgba(50, 50, 50, 0.3)';
+    }
+
+    if (item.stripeAnimation) {
+      props.overlayStripes = true;
     }
   }
 

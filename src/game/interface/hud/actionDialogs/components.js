@@ -3232,9 +3232,9 @@ export const BuildingRequirementsSection = ({ mode, label, requirements, require
         ? {
           animated: true,
           icon: <TransferToSiteIcon />,
-          stripeAnimation: true
         }
-        : undefined
+        : undefined,
+      stripeAnimation: item.inTransit > 0
     }));
   }, [requirements]);
 
@@ -3260,9 +3260,9 @@ export const TransferBuildingRequirementsSection = ({ label, onClick, requiremen
       ? {
         animated: true,
         icon: <TransferToSiteIcon />,
-        stripeAnimation: true
       }
-      : undefined
+      : undefined,
+    stripeAnimation: item.inTransit > 0
   })), [requirements, selectedItems]);
 
   return (
