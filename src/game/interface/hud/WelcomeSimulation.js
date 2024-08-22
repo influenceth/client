@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useHistory } from 'react-router-dom';
 import styled from 'styled-components';
@@ -13,7 +13,8 @@ import useSimulationSteps from '~/simulation/useSimulationSteps';
 import MockDataManager from '~/simulation/MockDataManager';
 import MockTransactionManager from '~/simulation/MockTransactionManager';
 import theme from '~/theme';
-import TutorialMessage from './TutorialMessage';
+import TutorialMessage, { messageWidth } from './TutorialMessage';
+import { fireTrackingEvent } from '~/lib/utils';
 
 const BUBBLE_WIDTH = 60;
 
@@ -73,13 +74,31 @@ const CrewmateImage = styled.div`
   z-index: 2;
 `;
 
+const SkipSimulation = styled.div`
+  bottom: 0;
+  color: white;
+  cursor: ${p => p.theme.cursors.active};
+  font-size: 13px;
+  height: 36px;
+  left: calc(50% + ${messageWidth/2}px);
+  line-height: 36px;
+  opacity: ${p => p.isIn ? 0.8 : 0};
+  pointer-events: ${p => p.isIn ? 'all' : 'none'};
+  position: fixed;
+  transition: opacity 150ms ease;
+  z-index: 1000000;
+  &:hover {
+    opacity: 1;
+  }
+`;
+
 const WelcomeSimulation = () => {
-  const { connecting } = useSession(false);
+  const { connecting, login } = useSession(false);
   const setCoachmarkRef = useCoachmarkRefSetter();
   const [isHidden, setIsHidden] = useState(false);
   const [canAutohide, setCanAutohide] = useState(false);
 
-  const { currentStep, currentStepIndex, isTransitioning } = useSimulationSteps();
+  const { currentStep, currentStepIndex, isLastStep, isTransitioning } = useSimulationSteps();
 
   const initialLoad = useRef(true);
 
@@ -112,6 +131,13 @@ const WelcomeSimulation = () => {
       setCanAutohide(true);
     }, 1000);
   }, [currentStepIndex]);
+
+  const handleSkip = useCallback(() => {
+    fireTrackingEvent('simulation', { step: 'skip-to-login' });
+            
+    // webWallet does not work from localhost...
+    login(process.env.NODE_ENV === 'development' ? undefined : { webWallet: true });
+  }, []);
 
   if (!currentStep) return null;
   return createPortal(
@@ -148,6 +174,12 @@ const WelcomeSimulation = () => {
           setButtonRef={(currentStep && !isTransitioning && !isHidden) ? setCoachmarkRef(COACHMARK_IDS.simulationRightButton) : undefined}
           step={currentStep}
         />
+
+        <SkipSimulation
+          onClick={handleSkip}
+          isIn={currentStep && !isTransitioning && !launcherPage && !cutscenePlaying && !isHidden && !isLastStep && !connecting}>
+          Skip to Account Creation
+        </SkipSimulation>
       </>
     ),
     document.body
