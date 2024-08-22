@@ -755,8 +755,8 @@ export function ChainTransactionProvider({ children }) {
               } else {
                 let balanceInTargetToken = wallet.tokenBalances[totalPriceToken];
                 if (totalPrice > balanceInTargetToken) {
-                  // buy enough excess to cover slippage (1%)
-                  const slippage = 0.01;
+                  // buy enough excess to cover slippage (2.5%)
+                  const slippage = 0.025;
                   const slippageMult = (1 / (1 - slippage));
                   console.log({ totalPrice, balanceInTargetToken });
                   console.log({
@@ -998,7 +998,7 @@ export function ChainTransactionProvider({ children }) {
     // TODO: in Braavos, is "Execute failed" a generic error? in that case, we should still show
     // (and it will just be annoying that it shows a failure on declines)
     // console.log('failed', e);
-    if (!['User abort', 'Execute failed', 'Timeout'].includes(e?.message) && txDetails) {
+    if (!['User abort', 'User rejected', 'Execute failed', 'Timeout'].includes(e?.message) && txDetails) {
       dispatchFailedTransaction({
         ...txDetails,
         txHash: null,
