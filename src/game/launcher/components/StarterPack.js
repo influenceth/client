@@ -373,6 +373,7 @@ const StarterPackWrapper = ({ children, pack, ...props }) => {
 }
 
 export const BasicStarterPack = (props) => {
+  const { data: wallet } = useWalletPurchasableBalances();
   const packs = useStarterPacks();
   const pack = packs.basic;
   return (
@@ -402,17 +403,19 @@ export const BasicStarterPack = (props) => {
               {' '}Value
             </span>
           </div>
-          <div>
-            <span><NavIcon color={theme.colors.main} /></span>
-            <label>{pack.ethFormatted}</label>
-            <span>
-              <UserPrice
-                price={pack.ethValue.usdcValue}
-                priceToken={TOKEN.USDC}
-                format={TOKEN_FORMAT.SHORT} />
-              {' '}Value
-            </span>
-          </div>
+          {wallet?.shouldMaintainEthGasReserve && (
+            <div>
+              <span><NavIcon color={theme.colors.main} /></span>
+              <label>{pack.ethFormatted}</label>
+              <span>
+                <UserPrice
+                  price={pack.ethValue.usdcValue}
+                  priceToken={TOKEN.USDC}
+                  format={TOKEN_FORMAT.SHORT} />
+                {' '}Value
+              </span>
+            </div>
+          )}
         </PackContents>
         <PackChecks>
           <div>
@@ -434,6 +437,7 @@ export const BasicStarterPack = (props) => {
 };
 
 export const AdvancedStarterPack = (props) => {
+  const { data: wallet } = useWalletPurchasableBalances();
   const packs = useStarterPacks();
   const pack = packs.advanced;
   return (
@@ -463,17 +467,19 @@ export const AdvancedStarterPack = (props) => {
               {' '}Value
             </span>
           </div>
-          <div>
-            <span><NavIcon color={theme.colors.main} /></span>
-            <label>{pack.ethFormatted}</label>
-            <span>
-              <UserPrice
-                price={pack.ethValue.usdcValue}
-                priceToken={TOKEN.USDC}
-                format={TOKEN_FORMAT.SHORT} />
-              {' '}Value
-            </span>
-          </div>
+          {wallet?.shouldMaintainEthGasReserve && (
+            <div>
+              <span><NavIcon color={theme.colors.main} /></span>
+              <label>{pack.ethFormatted}</label>
+              <span>
+                <UserPrice
+                  price={pack.ethValue.usdcValue}
+                  priceToken={TOKEN.USDC}
+                  format={TOKEN_FORMAT.SHORT} />
+                {' '}Value
+              </span>
+            </div>
+          )}
         </PackContents>
         <PackChecks>
           <div>
