@@ -506,14 +506,14 @@ export function ChainTransactionProvider({ children }) {
 
         canPayGasWithSway = (swayBalance >= maxFee);
       } catch (e) {
-        console.warn('Could not pay gas with sway! Trying with et/strk...', e);
+        console.warn('Could not pay gas with sway! Trying with eth/strk...', e);
       }
 
       // Check if wallet has sufficient funds for gas fees
       // (skip this check in testnet since the allowed gas tokens are inconsistent)
       // if (process.env.REACT_APP_DEPLOYMENT !== 'production' || gasTokenBalance >= maxFee) {
       if (canPayGasWithSway) {
-        const { typedData, signature } = await getOutsideExecutionData(formattedCalls, gasToken.tokenAddress, maxFee);
+        const { typedData, signature } = await getOutsideExecutionData(formattedCalls, gasToken.tokenAddress, maxFee, canUseSessionKey);
         return await gasless.fetchExecuteTransaction(
           accountAddress,
           JSON.stringify(typedData),
