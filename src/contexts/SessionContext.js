@@ -504,7 +504,7 @@ export function SessionProvider({ children }) {
   ]);
 
   // Retrieves an outside execution call and signs it
-  const getOutsideExecutionData = useCallback(async (calldata, gasTokenAddress, maxGasTokenAmount) => {
+  const getOutsideExecutionData = useCallback(async (calldata, gasTokenAddress, maxGasTokenAmount, canUseSessionKey) => {
     let typedData = await gasless.fetchBuildTypedData(
       currentSession.accountAddress,
       calldata,
@@ -515,7 +515,7 @@ export function SessionProvider({ children }) {
 
     let signature;
 
-    if (gameplay.useSessions && currentSession.sessionRequest) {
+    if (canUseSessionKey && gameplay.useSessions && currentSession.sessionRequest) {
       const dappKey = currentSession.sessionDappKey;
       const sessionSignature = currentSession.sessionSignature;
       const beService = new ArgentSessionService(dappKey.publicKey, sessionSignature, process.env.REACT_APP_ARGENT_API);
