@@ -221,7 +221,7 @@ const StationCrew = ({ asteroid, destination: rawDestination, lot, origin: rawOr
 
           <div style={{ alignSelf: 'flex-start', paddingTop: 4, width: '50%', overflow: 'hidden' }}>
             {!crewIsOwner && <CrewIndicator crew={destinationOwner} />}
-            {destination && (
+            {destination?.Station && (
               <MiniBarChart
                 color="#92278f"
                 label="Crewmate Count"
@@ -260,7 +260,7 @@ const StationCrew = ({ asteroid, destination: rawDestination, lot, origin: rawOr
           !destination ||
           !stationConfig ||
           !crewCan(Permission.IDS.STATION_CREW, destination) ||
-          (stationConfig.cap && destination.Station.population + crew?.Crew?.roster?.length > stationConfig.cap)
+          (stationConfig.cap && destination.Station?.population + crew?.Crew?.roster?.length > stationConfig.cap)
         }
         goLabel="Station"
         onGo={onStation}

@@ -17,7 +17,7 @@ const useShoppingListData = (asteroidId, lotId, productIds) => {
 
   // TODO: how much effort would it be to include feeEnforcement in elasticsearch on exchanges
   const [feeEnforcements, setFeeEnforcements] = useState();
-  const [feesLoading, setFeesLoading] = useState();
+  const [feesLoading, setFeesLoading] = useState(true);
   const loadFees = useCallback(async () => {
     const ids = (exchanges || []).map((e) => e.Control?.controller?.id);
     if (ids?.length > 0) {
@@ -47,8 +47,8 @@ const useShoppingListData = (asteroidId, lotId, productIds) => {
       } catch (e) {
         console.warn(e);
       }
-      setFeesLoading(false);
     }
+    setFeesLoading(false);
   }, [exchangesUpdatedAt]);
   useEffect(() => {
     loadFees();
