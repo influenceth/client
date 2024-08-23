@@ -4,6 +4,7 @@ import { isEqual, get } from 'lodash';
 import { hash, num, shortString, uint256 } from 'starknet';
 import { fetchBuildExecuteTransaction, fetchQuotes } from '@avnu/avnu-sdk';
 import * as gasless from '@avnu/gasless-sdk';
+import { ArgentSessionService, SessionDappService } from '@argent/x-sessions';
 
 import useActivitiesContext from '~/hooks/useActivitiesContext';
 import useCrewContext from '~/hooks/useCrewContext';
@@ -16,6 +17,7 @@ import { useSwayBalance } from '~/hooks/useWalletTokenBalance';
 import api from '~/lib/api';
 import { cleanseTxHash, safeBigInt } from '~/lib/utils';
 import { TOKEN } from '~/lib/priceUtils';
+
 
 const RETRY_INTERVAL = 5e3; // 5 seconds
 const ChainTransactionContext = createContext();
@@ -405,12 +407,12 @@ export function ChainTransactionProvider({ children }) {
     blockNumber,
     blockTime,
     chainId,
-    getOutsideExecutionData,
     isDeployed,
     logout,
     payGasWithSwayIfPossible,
     provider,
     starknetSession,
+    starknetSessionData,
     upgradeInsecureSession,
     walletAccount
   } = useSession();
@@ -461,6 +463,45 @@ export function ChainTransactionProvider({ children }) {
     [blockNumber, crew?.Crew?.actionType, crew?.Crew?.actionRound, crew?._actionTypeTriggered]
   );
 
+  // Retrieves an outside execution call and signs it
+  const getOutsideExecutionData = useCallback(async (calldata, gasTokenAddress, maxGasTokenAmount, useSessionKeyIfPossible) => {
+    const typedData = await gasless.fetchBuildTypedData(
+      accountAddress,
+      calldata,
+      gasTokenAddress,
+      maxGasTokenAmount,
+      { baseUrl: process.env.REACT_APP_AVNU_API_URL }
+    );
+
+    let signature;
+
+    if (useSessionKeyIfPossible && starknetSessionData) {
+      const { accountSessionSignature, dappKey, sessionRequest } = starknetSessionData;
+      const beService = new ArgentSessionService(dappKey.publicKey, accountSessionSignature, process.env.REACT_APP_ARGENT_API);
+      const sessionDappService = new SessionDappService(
+        beService,
+        shortString.encodeShortString(chainId),
+        dappKey
+      );
+      const { Calldata: feeCalldata } = typedData.message.Calls[0];
+
+      // Add the fee call to the calldata
+      calldata.unshift({ contractAddress: gasTokenAddress, entrypoint: 'transfer', calldata: feeCalldata });
+      signature = await sessionDappService.getSessionSignatureForOutsideExecutionTypedData(
+        accountSessionSignature,
+        sessionRequest,
+        calldata,
+        accountAddress,
+        typedData,
+        false
+      );
+    } else {
+      signature = await walletAccount.signMessage(typedData);
+    }
+
+    return { typedData, signature };
+  }, [accountAddress, chainId, starknetSessionData, walletAccount]);
+
   const executeWithAccount = useCallback(async (calls) => {
     // Format calls for proper stringification
     const formattedCalls = calls.map((call) => {
@@ -490,19 +531,14 @@ export function ChainTransactionProvider({ children }) {
           [{ type: 'INVOKE_FUNCTION', payload: calls }],
           { skipValidate: true }
         );
-        console.log('simulation', simulation);
 
         const tokens = await gasless.fetchGasTokenPrices({ baseUrl: process.env.REACT_APP_AVNU_API_URL });
-        console.log('fetchGasTokenPrices', tokens);
         gasToken = tokens.find((t) => Address.areEqual(t.tokenAddress, TOKEN.SWAY));
-        console.log('gasToken', gasToken);
-        console.log('swayBalance', swayBalance);
 
         // Triple the fee estimation and check for sufficient funds to ensure transaction success
         // TODO: figure out why some txs require this
         
         maxFee = gasless.getGasFeesInGasToken(simulation[0].suggestedMaxFee, gasToken) * 3n;
-        console.log('maxFee', maxFee);
 
         canPayGasWithSway = (swayBalance >= maxFee);
       } catch (e) {
