@@ -946,7 +946,7 @@ const formatAsTx = (item) => {
     case 'RepossessBuilding': {
       const { asteroidId } = Lot.toPosition(item.meta?.lotId) || {};
       formatted.icon = <KeysIcon />;
-      formatted.label = `Repossess Lot`;
+      formatted.label = `Repossess Building`;
       formatted.asteroidId = asteroidId;
       formatted.lotId = item.meta?.lotId;
       formatted.onClick = ({ openDialog }) => {
