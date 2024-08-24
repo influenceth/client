@@ -147,8 +147,7 @@ const PseudoFooterButton = styled(Button)`
 `;
 
 const Empty = styled.span`
-  opacity: 0.33;
-  text-transform: uppercase;
+  opacity: 0.5;
 `;
 
 const MarketplaceName = styled.span`
@@ -270,7 +269,16 @@ const AsteroidResourcePrices = ({ asteroid, mode, resource }) => {
 
   const sortedMarketplaces = useMemo(() => {
     return (resourceMarketplaces || [])
-      .sort((a, b) => (sortDirection === 'asc' ? 1 : -1) * (a[sortField] < b[sortField] ? 1 : -1));
+      //.sort((a, b) => (sortDirection === 'asc' ? 1 : -1) * (a[sortField] < b[sortField] ? 1 : -1));
+      .sort(function(a,b) {
+        var sortToBottom = [ 0 ], indexA, indexB;
+        indexA = sortToBottom.indexOf(a[sortField]);
+        indexB = sortToBottom.indexOf(b[sortField]);
+        if (indexA === -1 && indexB === -1) {
+          return (sortDirection === 'asc' ? 1 : -1) * (a[sortField] > b[sortField] ? -1 : 1); // normal sorting
+        }
+        return indexA - indexB; // sort to the bottom
+      });
   }, [resourceMarketplaces, sortField, sortDirection]);
 
   const columns = useMemo(() => {
@@ -286,14 +294,14 @@ const AsteroidResourcePrices = ({ asteroid, mode, resource }) => {
               asteroidId={asteroid.id}
               lotId={row.lotId}
               data-tooltip-id="detailsTooltip" />
-            <MarketplaceName access={marketplacesLoading ? 'full' : row.permissions.accessLevel()}>{row.marketplaceName}</MarketplaceName>
-            {!marketplacesLoading && (
+            <MarketplaceName access={marketplacesLoading ? 'full' : row.permissions.accessLevel()}>{row.marketplaceName}
+            {!marketplacesLoading && row.permissions.accessLevel() === 'full' || (
               <MarketplacePermissionsIcon
-                style={{ marginLeft: 6 }}
+                style={{ marginLeft: 6, fontSize:'140%'}}
                 permissions={row.permissions}
                 data-tooltip-id={"detailsTooltip"}
               />
-            )}
+            )}</MarketplaceName>
           </>
         ),
       },
@@ -303,6 +311,7 @@ const AsteroidResourcePrices = ({ asteroid, mode, resource }) => {
         sortField: 'supply',
         selector: row => (
           <>
+            {row.supply === 0 ||
             <IconLink
               style={{ marginRight: 6 }}
               onClick={() => history.push(`/marketplace/${asteroid.id}/${Lot.toIndex(row.lotId)}/${resource.i}?back=all&mode=buy`)}
@@ -310,8 +319,9 @@ const AsteroidResourcePrices = ({ asteroid, mode, resource }) => {
               data-tooltip-id="detailsTooltip">
               <MarketplaceBuildingIcon />
             </IconLink>
+            }
             {row.supply === 0
-              ? <Empty>—</Empty>
+              ? <Empty>None</Empty>
               : formatResourceAmount(row.supply, resource.i)
             }
           </>
@@ -336,6 +346,7 @@ const AsteroidResourcePrices = ({ asteroid, mode, resource }) => {
         sortField: 'demand',
         selector: row => (
           <>
+            {row.demand === 0 ||
             <IconLink
               style={{ marginRight: 6 }}
               onClick={() => history.push(`/marketplace/${asteroid.id}/${Lot.toIndex(row.lotId)}/${resource.i}?back=all&mode=sell`)}
@@ -343,8 +354,9 @@ const AsteroidResourcePrices = ({ asteroid, mode, resource }) => {
               data-tooltip-id="detailsTooltip">
               <MarketplaceBuildingIcon />
             </IconLink>
+            }
             {row.demand === 0
-              ? <Empty>—</Empty>
+              ? <Empty>None</Empty>
               : formatResourceAmount(row.demand, resource.i)
             }
           </>
@@ -369,13 +381,27 @@ const AsteroidResourcePrices = ({ asteroid, mode, resource }) => {
         key: 'makerFee',
         label: 'Maker Fee',
         sortField: 'makerFee',
-        selector: row => `${(row.makerFee / 100).toFixed(2)}%`,
+        selector: row => (
+          <>
+            {row.makerFee === 0
+              ? <Empty>None</Empty>
+              : `${(row.makerFee / 100).toFixed(2)}%`
+            }
+          </>
+        )
       },
       {
         key: 'takerFee',
         label: 'Taker Fee',
         sortField: 'takerFee',
-        selector: row => `${(row.takerFee / 100).toFixed(2)}%`,
+        selector: row => (
+          <>
+            {row.takerFee === 0
+              ? <Empty>None</Empty>
+              : `${(row.takerFee / 100).toFixed(2)}%`
+            }
+          </>
+        )
       },
       // {
       //   key: 'lotId',
