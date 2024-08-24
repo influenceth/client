@@ -269,7 +269,6 @@ const AsteroidResourcePrices = ({ asteroid, mode, resource }) => {
 
   const sortedMarketplaces = useMemo(() => {
     return (resourceMarketplaces || [])
-      //.sort((a, b) => (sortDirection === 'asc' ? 1 : -1) * (a[sortField] < b[sortField] ? 1 : -1));
       .sort(function(a,b) {
         var sortToBottom = [ 0 ], indexA, indexB;
         indexA = sortToBottom.indexOf(a[sortField]);
