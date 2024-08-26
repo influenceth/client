@@ -383,31 +383,38 @@ const AsteroidResourcePrices = ({ asteroid, mode, resource }) => {
           </>
         )
       },
-      // TODO: add distanceAway, calculate from crew's current position (if logged in and on asteroid surface)
-      // TODO: maker fee / taker fee? which one is relevant here?
       {
         key: 'makerFee',
-        label: 'Maker Fee',
+        label: 'Owner Fees',
         sortField: 'makerFee',
         selector: row => (
           <>
-            {row.makerFee === 0
+            <span
+              permissions={row.permissions}
+              data-tooltip-id={"detailsTooltip"}
+              data-tooltip-place="top"
+              data-tooltip-html={`
+                <div style="width: 200px">
+                    <div style="display: flex; height: 20px">
+                      <div style="flex-grow: 1">Maker Fee:</div>
+                      <div>${(row.makerFee / 100)}%</div>
+                    </div>
+                    <div style="display: flex">
+                      <div style="flex-grow: 1">Taker Fee:</div>
+                      <div>${(row.takerFee / 100)}%</div>
+                    </div>
+                </div>
+              `}>
+            {row.makerFee === row.takerFee && row.makerFee === 0
               ? <Empty>None</Empty>
-              : `${(row.makerFee / 100).toFixed(2)}%`
+              : row.makerFee != row.takerFee 
+                ? <>{row.takerFee === 0 
+                  ? <>{(row.makerFee / 100)}% / 0%</>
+                  : <>None / {(row.takerFee / 100)}%</>
+                }</>
+                : <>{(row.makerFee / 100)}%</>
             }
-          </>
-        )
-      },
-      {
-        key: 'takerFee',
-        label: 'Taker Fee',
-        sortField: 'takerFee',
-        selector: row => (
-          <>
-            {row.takerFee === 0
-              ? <Empty>None</Empty>
-              : `${(row.takerFee / 100).toFixed(2)}%`
-            }
+            </span>
           </>
         )
       },
