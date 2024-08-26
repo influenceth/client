@@ -110,14 +110,12 @@ const IconWrapper = styled.div`
 
 const SelectedMarketplace = styled.div`
 & label {
+    text-align: right;
     color: white;
     display: block;
     font-size: 24px;
     margin-bottom: 12px;
   }  
-& > div:first-child {
-    text-align: right;
-  }
   & > div:last-child {
     align-items: center;
     display: flex;
@@ -519,16 +517,14 @@ const AsteroidResourcePrices = ({ asteroid, mode, resource }) => {
 
         {selectedLot && (
           <SelectedMarketplace>
-          <div>
+          <label>{formatters.buildingName(selectedLot.building)}</label>
             <div>
-              <label>{formatters.buildingName(selectedLot.building)}</label>
               {marketplaceOwner && <CrewIndicator crew={marketplaceOwner} flip label="Managed by" />}
+              <MarketplaceImage>
+                <img src={getBuildingIcon(8, 'w400')} />
+                <ClipCorner dimension={10} color="#333" />
+              </MarketplaceImage>
             </div>
-            <MarketplaceImage>
-              <img src={getBuildingIcon(8, 'w400')} />
-              <ClipCorner dimension={10} color="#333" />
-            </MarketplaceImage>
-          </div>
           </SelectedMarketplace>
         )}
       </Header>
