@@ -202,7 +202,7 @@ const AsteroidResourcePrices = ({ asteroid, mode, resource }) => {
         'Limit Buy': (exchange) ? isPermitted({ exchange, type: 'limit', mode: 'buy' }) : null,
         'Limit Sell': (exchange) ? isPermitted({ exchange, type: 'limit', mode: 'sell' }) : null,
         'Market Buy': (exchange) ? isPermitted({ exchange, type: 'market', mode: 'buy' }) : null,
-        'Marknet Sell': (exchange) ? isPermitted({ exchange, type: 'market', mode: 'sell' }) : null,
+        'Market Sell': (exchange) ? isPermitted({ exchange, type: 'market', mode: 'sell' }) : null,
         map(fn) {
           return Object.keys(this).map((k) => {
             if (typeof this[k] !== 'function') return fn(k, this[k]);
