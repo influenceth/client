@@ -256,7 +256,7 @@ const AsteroidComponent = () => {
       );
     }
     objectPosition.add(rotationAxis.current.clone().multiplyScalar(0.07 * INITIAL_ZOOM));
-    
+
     // (legacy) zoom in directly from zoomed-out camera
     // const objectPosition = controls.object.position.clone().normalize().multiplyScalar(initialZoom);
 
