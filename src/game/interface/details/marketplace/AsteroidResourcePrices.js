@@ -25,6 +25,7 @@ import { COACHMARK_IDS } from '~/contexts/CoachmarkContext';
 import useSimulationEnabled from '~/hooks/useSimulationEnabled';
 import { IconLink, LocationLink, MarketplacePermissionsIcon } from '../listViews/components';
 import SIMULATION_CONFIG from '~/simulation/simulationConfig';
+import OnClickLink from '~/components/OnClickLink';
 
 
 const Header = styled.div`
@@ -150,6 +151,14 @@ const Empty = styled.span`
   opacity: 0.5;
 `;
 
+const Demand = styled.span`
+  color: ${theme.colors.main};
+`;
+
+const Supply = styled.span`
+  color: ${theme.colors.green};
+`;
+
 const MarketplaceName = styled.span`
   color: ${p => {
     if (p.acesss === 'full') return p.theme.colors.white;
@@ -201,7 +210,7 @@ const AsteroidResourcePrices = ({ asteroid, mode, resource }) => {
         'Limit Buy': (exchange) ? isPermitted({ exchange, type: 'limit', mode: 'buy' }) : null,
         'Limit Sell': (exchange) ? isPermitted({ exchange, type: 'limit', mode: 'sell' }) : null,
         'Market Buy': (exchange) ? isPermitted({ exchange, type: 'market', mode: 'buy' }) : null,
-        'Marknet Sell': (exchange) ? isPermitted({ exchange, type: 'market', mode: 'sell' }) : null,
+        'Market Sell': (exchange) ? isPermitted({ exchange, type: 'market', mode: 'sell' }) : null,
         map(fn) {
           return Object.keys(this).map((k) => {
             if (typeof this[k] !== 'function') return fn(k, this[k]);
@@ -321,7 +330,7 @@ const AsteroidResourcePrices = ({ asteroid, mode, resource }) => {
             }
             {row.supply === 0
               ? <Empty>None</Empty>
-              : formatResourceAmount(row.supply, resource.i)
+              : <Supply>{formatResourceAmount(row.supply, resource.i)}</Supply>
             }
           </>
         )
@@ -334,7 +343,7 @@ const AsteroidResourcePrices = ({ asteroid, mode, resource }) => {
           <>
             {row.sellPrice === 0
               ? <Empty>—</Empty>
-              : (<><IconWrapper><SwayIcon /></IconWrapper> {formatPrice(row.sellPrice, { fixedPrecision: 4 })}</>)
+              : <><IconWrapper><SwayIcon /></IconWrapper> {formatPrice(row.sellPrice, { fixedPrecision: 4 })}</>
             }
           </>
         )
@@ -356,7 +365,7 @@ const AsteroidResourcePrices = ({ asteroid, mode, resource }) => {
             }
             {row.demand === 0
               ? <Empty>None</Empty>
-              : formatResourceAmount(row.demand, resource.i)
+              : <Demand>{formatResourceAmount(row.demand, resource.i)}</Demand>
             }
           </>
         )
