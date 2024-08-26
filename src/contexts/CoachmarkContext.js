@@ -6,6 +6,7 @@ import useScreenSize from '~/hooks/useScreenSize';
 import useInterval from '~/hooks/useInterval';
 import useStore from '~/hooks/useStore';
 import useSimulationState from '~/hooks/useSimulationState';
+import useSession from '~/hooks/useSession';
 
 export const COACHMARK_IDS = {
   actionButtonAssembleShip: 'actionButtonAssembleShip',
@@ -91,6 +92,7 @@ const CoachmarkComponent = ({ refEl }) => {
 }
 
 export function CoachmarkProvider({ children }) {
+  const { connecting } = useSession();
   const coachmarks = useStore(s => s.coachmarks);
   const launcherPage = useStore(s => s.launcherPage);
   const simulation = useSimulationState();
@@ -129,7 +131,7 @@ export function CoachmarkProvider({ children }) {
       <CoachmarkContext.Provider value={contextValue}>
         {children}
       </CoachmarkContext.Provider>
-      {activeCoachmarkKey && !launcherPage && !disabled && <CoachmarkComponent refEl={refEls[activeCoachmarkKey]} />}
+      {activeCoachmarkKey && !launcherPage && !connecting && !disabled && <CoachmarkComponent refEl={refEls[activeCoachmarkKey]} />}
     </>
   );
 }

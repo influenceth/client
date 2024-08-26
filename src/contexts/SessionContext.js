@@ -658,7 +658,7 @@ export function SessionProvider({ children }) {
       authenticated,
       authenticating: [STATUSES.AUTHENTICATING, STATUSES.CONNECTING].includes(status),
       chainId: authenticated ? connectedChainId : null,
-      connecting,
+      connecting: connecting || !!promptLogin,
       getOutsideExecutionData,
       isDeployed: authenticated ? currentSession?.isDeployed : null,
       payGasWithSwayIfPossible: authenticated ? payGasWithSwayIfPossible : null,
