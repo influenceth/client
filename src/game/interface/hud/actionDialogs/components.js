@@ -3536,6 +3536,7 @@ export const ResourceAmountSlider = ({ amount, extractionTime, min, max, resourc
 };
 
 export const RecipeSlider = ({ amount, disabled, increment = 0.001, processingTime, min: rawMin, max: rawMax, overrideSliderLabel, setAmount }) => {
+  console.log('debug, RecipeSlider');
   const [focusOn, setFocusOn] = useState();
   const [mouseIn, setMouseIn] = useState(false);
 
@@ -3603,7 +3604,7 @@ export const RecipeSlider = ({ amount, disabled, increment = 0.001, processingTi
                 <SliderTextInput
                   type="number"
                   disabled={disabled}
-                  step={0.001}
+                  step={increment}
                   value={amount}
                   onChange={onChangeInput}
                   onBlur={onFocusEvent}
@@ -3611,7 +3612,7 @@ export const RecipeSlider = ({ amount, disabled, increment = 0.001, processingTi
                   style={{ marginTop: -2 }} />
               )
                 : (
-                  <b>{amount.toLocaleString(undefined, { minimumFractionDigits: increment % 1 === 0 ? 0 : 3 })}</b>
+                  <b>{amount.toLocaleString()}</b>
                 )
               }
               {' '}
