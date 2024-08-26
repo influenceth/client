@@ -6,12 +6,13 @@ uniform mat4 uTransform;
 uniform float uAbundance;
 uniform int uOctaves;
 uniform float uPolyParams[8];
+uniform float uPolyLimit;
 uniform float uPers;
 uniform float uPointScale;
 uniform vec3 uPointShift;
 
 #pragma glslify: getUnitSphereCoords = require('./partials/getUnitSphereCoords', uChunkOffset=uChunkOffset, uChunkSize=uChunkSize, uResolution=uResolution, uTransform=uTransform)
-#pragma glslify: getAbundance = require('./partials/getAbundance', uAbundance=uAbundance, uOctaves=uOctaves, uPolyParams=uPolyParams, uPers=uPers, uPointScale=uPointScale, uPointShift=uPointShift)
+#pragma glslify: getAbundance = require('./partials/getAbundance', uAbundance=uAbundance, uOctaves=uOctaves, uPolyParams=uPolyParams, uPolyLimit=uPolyLimit, uPers=uPers, uPointScale=uPointScale, uPointShift=uPointShift)
 
 void main() {
   vec2 flipY = vec2(gl_FragCoord.x, uResolution - gl_FragCoord.y);

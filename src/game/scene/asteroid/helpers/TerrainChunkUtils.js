@@ -235,6 +235,7 @@ export function generateEmissiveMap(chunkParams, emissiveParams, returnType = 'b
       uAbundance: { type: 'f', value: emissiveParams.abundance },
       uOctaves: { type: 'i', value: emissiveParams.octaves },
       uPolyParams: { type: 'fv1', value: emissiveParams.polyParams },
+      uPolyLimit: { type: 'f', value: emissiveParams.polyLimit },
       uPers: { type: 'f', value: emissiveParams.persistence },
       uPointScale: { type: 'f', value: emissiveParams.pointScale },
       uPointShift: { type: 'v3', value: emissiveParams.pointShift }
