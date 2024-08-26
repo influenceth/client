@@ -3536,7 +3536,6 @@ export const ResourceAmountSlider = ({ amount, extractionTime, min, max, resourc
 };
 
 export const RecipeSlider = ({ amount, disabled, increment = 0.001, processingTime, min: rawMin, max: rawMax, overrideSliderLabel, setAmount }) => {
-  console.log('debug, RecipeSlider');
   const [focusOn, setFocusOn] = useState();
   const [mouseIn, setMouseIn] = useState(false);
 
