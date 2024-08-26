@@ -25,7 +25,6 @@ import { COACHMARK_IDS } from '~/contexts/CoachmarkContext';
 import useSimulationEnabled from '~/hooks/useSimulationEnabled';
 import { IconLink, LocationLink, MarketplacePermissionsIcon } from '../listViews/components';
 import SIMULATION_CONFIG from '~/simulation/simulationConfig';
-import OnClickLink from '~/components/OnClickLink';
 
 
 const Header = styled.div`
@@ -110,23 +109,19 @@ const IconWrapper = styled.div`
 `;
 
 const SelectedMarketplace = styled.div`
-  & > div:first-child {
-    align-items: center;
-    display: flex;
+& label {
+    color: white;
+    display: block;
+    font-size: 24px;
     margin-bottom: 12px;
+  }  
+& > div:first-child {
+    text-align: right;
   }
   & > div:last-child {
-    text-align: right;
-    & label {
-      color: white;
-      display: block;
-      font-size: 20px;
-      margin-bottom: 4px;
-    }
-    & span {
-      color: ${p => p.theme.colors.green};
-      font-size: 18px;
-    }
+    align-items: center;
+    display: flex;
+    margin-bottom: 4px;
   }
 `;
 const MarketplaceImage = styled.div`
@@ -524,17 +519,16 @@ const AsteroidResourcePrices = ({ asteroid, mode, resource }) => {
 
         {selectedLot && (
           <SelectedMarketplace>
-            <div>
-              {marketplaceOwner && <CrewIndicator crew={marketplaceOwner} flip label="Managed by" />}
-              <MarketplaceImage>
-                <img src={getBuildingIcon(8, 'w400')} />
-                <ClipCorner dimension={10} color="#333" />
-              </MarketplaceImage>
-            </div>
+          <div>
             <div>
               <label>{formatters.buildingName(selectedLot.building)}</label>
-              <span>{formatResourceAmount(selectedSupply, resource.i)} available</span>
+              {marketplaceOwner && <CrewIndicator crew={marketplaceOwner} flip label="Managed by" />}
             </div>
+            <MarketplaceImage>
+              <img src={getBuildingIcon(8, 'w400')} />
+              <ClipCorner dimension={10} color="#333" />
+            </MarketplaceImage>
+          </div>
           </SelectedMarketplace>
         )}
       </Header>
