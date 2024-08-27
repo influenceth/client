@@ -58,7 +58,9 @@ import {
   CheckedIcon,
   UncheckedIcon,
   ScheduleFullIcon,
-  CheckSmallIcon
+  CheckSmallIcon,
+  MarketBuyIcon,
+  InventoryIcon
 } from '~/components/Icons';
 import LiveTimer from '~/components/LiveTimer';
 import MouseoverInfoPane from '~/components/MouseoverInfoPane';
@@ -75,7 +77,7 @@ import useSyncedTime from '~/hooks/useSyncedTime';
 import useCrewContext from '~/hooks/useCrewContext';
 import useHydratedLocation from '~/hooks/useHydratedLocation';
 import useShip from '~/hooks/useShip';
-import { reactBool, formatFixed, formatTimer, nativeBool, locationsArrToObj, keyify, formatPrice } from '~/lib/utils';
+import { reactBool, formatFixed, formatTimer, nativeBool, locationsArrToObj, keyify, formatPrice, getCrewAbilityBonuses, ordersToFills } from '~/lib/utils';
 import actionStage from '~/lib/actionStages';
 import constants from '~/lib/constants';
 import { getBuildingIcon, getLotShipIcon, getShipIcon } from '~/lib/assetUtils';
@@ -94,6 +96,14 @@ import useStore from '~/hooks/useStore';
 import { COACHMARK_IDS } from '~/contexts/CoachmarkContext';
 import useSimulationEnabled from '~/hooks/useSimulationEnabled';
 import useCoachmarkRefSetter from '~/hooks/useCoachmarkRefSetter';
+import useShoppingListData from '~/hooks/useShoppingListData';
+import useInterval from '~/hooks/useInterval';
+import { TOKEN, TOKEN_SCALE } from '~/lib/priceUtils';
+import { useSwayBalance } from '~/hooks/useWalletTokenBalance';
+import PageLoader from '~/components/PageLoader';
+import Monospace from '~/components/Monospace';
+import { OrderAlert, TotalSway } from './MarketplaceOrder';
+import { ProductMarketSummary } from './ShoppingList';
 
 const SECTION_WIDTH = 780;
 
@@ -948,6 +958,28 @@ const InvSelectionTableWrapper = styled.div`
     width: 100%;
     th {
       color: white;
+    }
+  }
+`;
+
+export const MultiSourceWrapper = styled(AssetBlock).attrs({ isSelected: true })`
+  align-items: center;
+  align-self: stretch;
+  border: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-evenly;
+  padding: 0 15px;
+  width: 50%;
+  & > button {
+    width: 100%;
+  }
+  & > button > div {
+    & > svg {
+      font-size: 32px;
+    }
+    & > span {
+      flex: 1;
     }
   }
 `;
@@ -2667,6 +2699,545 @@ export const InventorySelectionDialog = ({
   );
 };
 
+export const ShoppingListPriceField = styled.div`
+  align-items: center;
+  display: flex;
+  & > div {
+    align-items: center;
+    display: flex;
+    margin-right: 10px;
+    min-width: 100px;
+    & > div:last-child {
+      flex: 1;
+      font-family: 'Jetbrains Mono', sans-serif;
+      text-align: right;
+    }
+  }
+  & > small {
+    opacity: 0.5;
+  }
+`;
+
+const ShoppingListIconWrapper = styled.div`
+  color: white;
+  font-size: 22px;
+  margin-right: 4px;
+`;
+
+const ShoppingListDataTableWrapper = styled.div`
+  background: black;
+  margin: 0px 10px 10px;
+  max-height: 300px;
+  overflow: auto;
+  & > table {
+    width: 100%;
+  }
+`;
+
+export const LiquidityWarning = () => (
+  <span style={{ color: theme.colors.warning, display: 'inline-block', marginLeft: 5, marginTop: -2 }}
+    data-tooltip-content='Limited Supply'
+    data-tooltip-id='actionDialogTooltip'
+    data-tooltip-place='top'>
+    <WarningIcon />
+  </span>
+);
+
+const OrderSelectionTable = ({ orders, productId, onSelected, selected }) => {
+  const [sort, setSort] = useState(['_adjUnitPrice', 'desc']);
+  const [sortField, sortDirection] = sort;
+
+  const getRowProps = useCallback((row) => ({
+    onClick: () => {
+      onSelected(row);
+    },
+    selectedColorRGB: `128, 128, 128`,
+    isSelected: selected?._orderPath === row._orderPath,
+    tableState: { resource: Product.TYPES[productId] }
+  }), [onSelected, productId, selected]);
+
+  const handleSort = useCallback((field) => () => {
+    if (!field) return;
+
+    let updatedSortField = sortField;
+    let updatedSortDirection = sortDirection;
+    if (field === sortField) {
+      updatedSortDirection = sortDirection === 'desc' ? 'asc' : 'desc';
+    } else {
+      updatedSortField = field;
+      updatedSortDirection = 'desc';
+    }
+
+    setSort([
+      updatedSortField,
+      updatedSortDirection
+    ]);
+  }, [sortDirection, sortField]);
+
+  const sortedOrders = useMemo(() => {
+    return (orders || [])
+      .sort((a, b) => (sortDirection === 'asc' ? 1 : -1) * (a[sortField] < b[sortField] ? 1 : -1));
+  }, [orders, sortField, sortDirection]);
+
+  const columns = useMemo(() => ([
+    {
+      key: 'selector',
+      label: <MarketBuyIcon />,
+      selector: (row, { isSelected }) => (
+        <span style={{ fontSize: '120%', lineHeight: '0' }}>
+          {isSelected ? <CheckedIcon style={{ color: theme.colors.brightMain }} /> : <UncheckedIcon />}
+        </span>
+      ),
+      align: 'center',
+      isIconColumn: true,
+      noMinWidth: true,
+    },
+    {
+      key: 'marketplaceName',
+      label: 'Marketplace',
+      selector: (row, { tableState }) => (
+        <span><EntityName {...row.entity} /></span>
+      ),
+      noMinWidth: true,
+    },
+    {
+      key: 'distance',
+      label: 'Distance',
+      sortField: '_exchangeDistance',
+      alignBody: 'right',
+      selector: row => <Monospace>{formatFixed(row._exchangeDistance, 1, 1)} km</Monospace>,
+      noMinWidth: true,
+    },
+    {
+      key: 'amount',
+      label: 'Amount',
+      sortField: 'fillAmount',
+      alignBody: 'right',
+      selector: (row, { tableState }) => (
+        <>
+          <Monospace>{row.fillAmount.toLocaleString()}{tableState.resource.isAtomic ? '' : ' kg'}</Monospace>
+          {row._isPartial && <LiquidityWarning />}
+        </>
+      ),
+      noMinWidth: true,
+    },
+    {
+      key: 'price',
+      label: <><span>Unit Price</span> <small style={{ marginLeft: 4 }}>(incl. fees)</small></>,
+      sortField: '_adjUnitPrice',
+      alignBody: 'right',
+      selector: (row, { tableState }) => (
+        <ShoppingListPriceField>
+          <div>
+            <ShoppingListIconWrapper><SwayIcon /></ShoppingListIconWrapper>
+            <div>{(row._adjUnitPrice / TOKEN_SCALE[TOKEN.SWAY]).toLocaleString(undefined, { maximumFractionDigits: 4, minimumFractionDigits: 4 })}</div>
+          </div>
+        </ShoppingListPriceField>
+      ),
+      noMinWidth: true,
+    }
+  ]), []);
+
+  return (
+    <ShoppingListDataTableWrapper>
+      <DataTableComponent
+        columns={columns}
+        data={sortedOrders || []}
+        getRowProps={getRowProps}
+        keyField="orderPath"
+        onClickColumn={handleSort}
+        sortDirection={sortDirection}
+        sortField={sortField}
+      />
+    </ShoppingListDataTableWrapper>
+  );
+};
+
+export const OrderSelectionDialog = ({
+  asteroidId,
+  otherEntity,
+  maxAmount,
+  onClose,
+  onCompleted,
+  open,
+  productId
+}) => {
+  const { crew } = useCrewContext();
+  const { data: swayBalance } = useSwayBalance();
+
+  const [selected, setSelected] = useState();
+  const [targetAmount, setTargetAmount] = useState(maxAmount || 0);
+
+  const destinationLocation = useMemo(() => {
+    if (!otherEntity) return {};
+    return locationsArrToObj(otherEntity.Location?.locations || []);
+  }, [otherEntity]);
+  const destLotId = destinationLocation?.lotId;
+
+  const crewBonuses = useMemo(() => {
+    if (!crew) return {};
+
+    const abilities = getCrewAbilityBonuses([
+      Crewmate.ABILITY_IDS.HOPPER_TRANSPORT_TIME,
+      Crewmate.ABILITY_IDS.FREE_TRANSPORT_DISTANCE,
+      Crewmate.ABILITY_IDS.MARKETPLACE_FEE_REDUCTION,
+    ], crew);
+    return {
+      hopperTransport: abilities[Crewmate.ABILITY_IDS.HOPPER_TRANSPORT_TIME],
+      freeTransport: abilities[Crewmate.ABILITY_IDS.FREE_TRANSPORT_DISTANCE],
+      feeReduction: abilities[Crewmate.ABILITY_IDS.MARKETPLACE_FEE_REDUCTION],
+    }
+  }, [crew]);
+
+  const {
+    data: resourceMarketplaces,
+    dataUpdatedAt: resourceMarketplacesUpdatedAt,
+    isLoading: resourceMarketplacesLoading,
+    refetch: refetchResourceMarketplaces
+  } = useShoppingListData(asteroidId, destLotId, [productId]);
+  const exchanges = useMemo(() => resourceMarketplaces?.[productId] || [], [resourceMarketplacesUpdatedAt]);
+
+  useInterval(() => { refetchResourceMarketplaces(); }, 60e3); // keep things loosely fresh
+
+  const orders = useMemo(() => {
+    return exchanges.reduce((aggOrders, row) => {
+      const exchangeDistance = Asteroid.getLotDistance(asteroidId, Lot.toIndex(row.lotId), Lot.toIndex(destLotId));
+      const exchangeTravelTime = Time.toRealDuration(
+        Asteroid.getLotTravelTime(
+          asteroidId, Lot.toIndex(row.lotId), Lot.toIndex(destLotId), crewBonuses?.hopperTransport.totalBonus, crewBonuses?.freeTransport.totalBonus
+        ),
+        crew?._timeAcceleration
+      );
+
+      let largestExchangeFill = -1;
+      row.orders
+        .map((order) => {
+          const fills = ordersToFills(
+            'buy',
+            [order],
+            targetAmount,
+            row.marketplace?.Exchange?.takerFee || 0,
+            crewBonuses?.feeReduction?.totalBonus || 1,
+            row.feeEnforcement || 1,
+          );
+
+          const fill = fills[0];
+          fill.price = fill.price * TOKEN_SCALE[TOKEN.SWAY];
+          return {
+            _orderPath: `${fill.crew.uuid}.${fill.entity.uuid}.${fill.orderType}.${fill.product}.${fill.price}.${fill.storage.uuid}.${fill.storageSlot}`,
+            _adjUnitPrice: fill.fillPaymentTotal / fill.fillAmount,
+            _exchangeDistance: exchangeDistance,
+            _exchangeTravelTime: exchangeTravelTime,
+            _isPartial: fill.fillAmount < targetAmount,
+            ...fill,
+          };
+        })
+
+        .sort((a, b) => a._adjUnitPrice - b._adjUnitPrice)
+
+        // only include orders that are larger or cheaper than what is in list
+        // (since ordered from cheapest to most expensive, just include any that are larger than largest)
+        .reduce((acc2, cur) => {
+          if (cur.fillAmount > largestExchangeFill) {
+            largestExchangeFill = cur.fillAmount;
+            acc2.push(cur);
+          }
+          return acc2;
+        }, [])
+
+        .forEach((order) => {
+          aggOrders.push(order);
+        });
+        
+      return aggOrders;
+    }, []);
+  }, [asteroidId, crew?._timeAcceleration, crewBonuses, destLotId, exchanges, targetAmount]);
+
+  useEffect(() => {
+    setSelected();
+  }, [targetAmount]);
+
+  const insufficientSway = useMemo(() => selected?.fillPaymentTotal > swayBalance, [selected, swayBalance]);
+
+  const isCompletable = useMemo(() => selected && !insufficientSway, [insufficientSway, selected]);
+
+  const onSelected = useCallback((order) => {
+    setSelected((old) => old?._orderPath === order._orderPath ? undefined : order);
+  }, []);
+
+  const onComplete = useCallback(() => {
+    if (isCompletable) {
+      onCompleted(selected);
+      onClose();
+    }
+  }, [isCompletable, onClose, onCompleted, selected]);
+
+  return (
+    <SelectionDialog
+      isCompletable={isCompletable}
+      onClose={onClose}
+      onComplete={onComplete}
+      open={open}
+      style={{ width: 820, maxWidth: 820 }}
+      title="Available Sell Orders">
+      {!resourceMarketplaces && (
+        <div style={{ height: 250 }}><PageLoader /></div>
+      )}
+      {resourceMarketplaces && (
+        <>
+          {orders?.length > 0
+            ? (
+              <>
+                <div style={{ padding: '0 5px 12px' }}>
+                  <div style={{ fontSize: '90%', opacity: 0.5, marginBottom: 4, marginLeft: 4, textTransform: 'uppercase' }}>Target Purchase Amount</div>
+                  <div style={{ background: '#181818', padding: '10px 15px' }}>
+                    <ResourceAmountSlider
+                      amount={targetAmount || 0}
+                      min={1}
+                      max={maxAmount}
+                      resource={Product.TYPES[productId]}
+                      setAmount={setTargetAmount} />
+                  </div>
+                </div>
+
+                <OrderSelectionTable
+                  onSelected={onSelected}
+                  orders={orders}
+                  productId={productId}
+                  selected={selected}
+                />
+
+                <hr style={{ borderColor, borderStyle: 'solid', borderWidth: '1px 0 0' }} />
+
+                <OrderAlert mode="buy" insufficientAssets={reactBool(insufficientSway)}>
+                  <div>
+                    <div style={{ flex: 1 }}>
+                      <div><b>Market Buy</b></div>
+                      <div>
+                        {formatResourceMass(selected?.fillAmount || 0, productId)}
+                        {' '}{Product.TYPES[productId].name}
+                      </div>
+                    </div>
+                    <div style={{ alignItems: 'flex-end', display: 'flex' }}>
+                      <b>Total</b>
+                      <span style={{ display: 'inline-flex', fontSize: '36px', lineHeight: '36px' }}>
+                        <SwayIcon /><TotalSway>-{formatFixed(selected?.fillPaymentTotal / TOKEN_SCALE[TOKEN.SWAY] || 0)}</TotalSway>
+                      </span>
+                    </div>
+                  </div>
+                </OrderAlert>
+              </>
+            )
+            : (
+              <EmptyMessage>There are no {Product.TYPES[productId].name} sell orders available to you on this asteroid.</EmptyMessage>
+            )
+          }
+        </>
+      )}
+    </SelectionDialog>
+  );
+}
+
+export const ExchangeSelectionDialog = ({
+  asteroidId,
+  otherEntity,
+  isSourcing,
+  initialSelection,
+  maxAmount,
+  onClose,
+  onCompleted,
+  open,
+  productId,
+  singleSelectionMode
+}) => {
+  const { crew } = useCrewContext();
+  const { data: swayBalance } = useSwayBalance();
+
+  const [selected, setSelected] = useState([]);
+  const [targetAmount, setTargetAmount] = useState(maxAmount || 0);
+
+  const destinationLocation = useMemo(() => {
+    if (!otherEntity) return {};
+    return locationsArrToObj(otherEntity.Location?.locations || []);
+  }, [otherEntity]);
+  const destLotId = destinationLocation?.lotId;
+
+  const {
+    data: resourceMarketplaces,
+    dataUpdatedAt: resourceMarketplacesUpdatedAt,
+    isLoading: resourceMarketplacesLoading,
+    refetch: refetchResourceMarketplaces
+  } = useShoppingListData(asteroidId, destLotId, [productId]);
+  const exchanges = useMemo(() => resourceMarketplaces?.[productId] || [], [resourceMarketplacesUpdatedAt]);
+
+  useInterval(() => { refetchResourceMarketplaces(); }, 60e3); // keep things loosely fresh
+
+  const crewBonuses = useMemo(() => {
+    if (!crew) return {};
+
+    const abilities = getCrewAbilityBonuses([
+      Crewmate.ABILITY_IDS.HOPPER_TRANSPORT_TIME,
+      Crewmate.ABILITY_IDS.FREE_TRANSPORT_DISTANCE,
+      Crewmate.ABILITY_IDS.MARKETPLACE_FEE_REDUCTION,
+    ], crew);
+    return {
+      hopperTransport: abilities[Crewmate.ABILITY_IDS.HOPPER_TRANSPORT_TIME],
+      freeTransport: abilities[Crewmate.ABILITY_IDS.FREE_TRANSPORT_DISTANCE],
+      feeReduction: abilities[Crewmate.ABILITY_IDS.MARKETPLACE_FEE_REDUCTION],
+    }
+  }, [crew]);
+
+  const selectionSummary = useMemo(() => {
+    let needed = targetAmount;
+    let totalPrice = 0;
+    let maxTravelTime = 0;
+    const allFills = [];
+    const selectedAmounts = {};
+
+    selected
+      .map((buildingId) => resourceMarketplaces[productId].find((m) => m.buildingId === buildingId))
+      .sort((a, b) => a.supply - b.supply)
+      .forEach((row) => {
+        selectedAmounts[row.buildingId] = 0;
+        maxTravelTime = Math.max(
+          maxTravelTime,
+          Time.toRealDuration(
+            Asteroid.getLotTravelTime(
+              asteroidId, Lot.toIndex(row.lotId), Lot.toIndex(destLotId), crewBonuses?.hopperTransport.totalBonus, crewBonuses?.freeTransport.totalBonus
+            ),
+            crew?._timeAcceleration
+          )
+        );
+
+        const fills = ordersToFills(
+          'buy',
+          row.orders,
+          needed,
+          row.marketplace?.Exchange?.takerFee || 0,
+          crewBonuses?.feeReduction?.totalBonus || 1,
+          row.feeEnforcement || 1,
+        );
+
+        fills.forEach((fill) => {
+          selectedAmounts[row.buildingId] += fill.fillAmount;
+          needed -= fill.fillAmount;
+          totalPrice += fill.fillPaymentTotal;
+        });
+
+        allFills.push(...fills);
+      });
+
+    return {
+      needed,
+      maxTravelTime,
+      totalPrice: totalPrice / TOKEN_SCALE[TOKEN.SWAY],
+      totalFilled: targetAmount - needed,
+      fills: allFills,
+      amounts: selectedAmounts
+    };
+  }, [selected, targetAmount]);
+
+  const insufficientSway = useMemo(() => selectionSummary.totalPrice * TOKEN_SCALE[TOKEN.SWAY] > swayBalance, [selectionSummary, swayBalance]);
+
+  const isCompletable = useMemo(() => selectionSummary.totalFilled > 0 && !insufficientSway, [insufficientSway, selectionSummary]);
+
+  const onSelected = useCallback((buildingId) => {
+    if (singleSelectionMode) {
+      setSelected((old) => old.includes(buildingId) ? [] : [buildingId]);
+    } else {
+      setSelected((old) => {
+        // if already toggled, untoggle
+        if (old.includes(buildingId)) {
+          return old.filter((b) => b !== buildingId);
+
+        // if already filled, clear all --> select this one
+        } else if (selectionSummary.needed === 0) {
+          return [buildingId];
+
+        // else, add this one
+        } else {
+          return [...old, buildingId];
+        }
+      });
+    }
+  }, [selectionSummary, singleSelectionMode]);
+
+  const onComplete = useCallback(() => {
+    if (isCompletable) {
+      onCompleted(selectionSummary);
+      onClose();
+    }
+  }, [isCompletable, onClose, onCompleted, selectionSummary]);
+
+  return (
+    <SelectionDialog
+      isCompletable={isCompletable}
+      onClose={onClose}
+      onComplete={onComplete}
+      open={open}
+      style={{ width: 820, maxWidth: 820 }}
+      title="Available Marketplaces">
+      {resourceMarketplacesLoading && (
+        <div style={{ height: 250 }}><PageLoader /></div>
+      )}
+      {!resourceMarketplacesLoading && (
+        <>
+          {exchanges?.length > 0
+            ? (
+              <>
+                <div style={{ padding: '0 5px 12px' }}>
+                  <div style={{ fontSize: '90%', opacity: 0.5, marginBottom: 4, marginLeft: 4, textTransform: 'uppercase' }}>Purchase Amount</div>
+                  <div style={{ background: '#181818', padding: '10px 15px' }}>
+                    <ResourceAmountSlider
+                      amount={targetAmount || 0}
+                      min={1}
+                      max={maxAmount}
+                      resource={Product.TYPES[productId]}
+                      setAmount={setTargetAmount} />
+                  </div>
+                </div>
+
+                <ProductMarketSummary
+                  crewBonuses={crewBonuses}
+                  productId={productId}
+                  resourceMarketplaces={exchanges}
+                  selected={selected}
+                  selectionSummary={selectionSummary}
+                  onSelected={onSelected}
+                  targetAmount={targetAmount}
+                />
+
+                <hr style={{ borderColor, borderStyle: 'solid', borderWidth: '1px 0 0' }} />
+
+                <OrderAlert mode="buy" insufficientAssets={reactBool(insufficientSway)}>
+                  <div>
+                    <div style={{ flex: 1 }}>
+                      <div><b>Market Buy</b></div>
+                      <div>
+                        {formatResourceMass(selectionSummary?.totalFilled || 0, productId)}
+                        {' '}{Product.TYPES[productId].name}
+                      </div>
+                    </div>
+                    <div style={{ alignItems: 'flex-end', display: 'flex' }}>
+                      <b>Total</b>
+                      <span style={{ display: 'inline-flex', fontSize: '36px', lineHeight: '36px' }}>
+                        <SwayIcon /><TotalSway>-{formatFixed(selectionSummary?.totalPrice || 0)}</TotalSway>
+                      </span>
+                    </div>
+                  </div>
+                </OrderAlert>
+              </>
+            )
+            : (
+              <EmptyMessage>There are no {Product.TYPES[productId].name}-stocked marketplaces available to you on this asteroid.</EmptyMessage>
+            )
+          }
+        </>
+      )}
+    </SelectionDialog>
+  );
+}
+
 //
 //  FORMATTERS
 //
@@ -3517,7 +4088,7 @@ export const ResourceAmountSlider = ({ amount, extractionTime, min, max, resourc
           {' '}
           tonnes
         </SliderLabel>
-        <SliderInfo>{formatTimer(extractionTime, 3)}</SliderInfo>
+        {extractionTime !== undefined && <SliderInfo>{formatTimer(extractionTime, 3)}</SliderInfo>}
         <Button
           disabled={amount === max}
           onClick={() => setAmount(max)}
@@ -4025,6 +4596,64 @@ const Overloaded = styled.div`
   text-transform: uppercase;
 `;
 
+export const MultiSourceInputBlock = ({
+  crew,
+  onClear,
+  onClickInventory,
+  onClickExchange,
+  exchangeSelection,
+  inventorySelection,
+  origin,
+  originLot,
+  ...props
+}) => {
+  const offerExchanges = !!crew?._location?.lotId;
+  if (offerExchanges && !exchangeSelection && !inventorySelection) {
+    return (
+      <FlexSectionInputBlock bodyStyle={{ height: 104, padding: 0 }} {...props}>
+        <MultiSourceWrapper style={{ height: 104, width: '100%' }}>
+          <Button onClick={onClickInventory}>
+            <TransferToSiteIcon /> <span>Transfer from Inventory</span>
+          </Button>
+
+          {/* TODO: disable if no marketplaces exist */}
+          <Button onClick={onClickExchange}>
+            <MarketBuyIcon /> <span>Source from Market</span>
+          </Button>
+        </MultiSourceWrapper>
+      </FlexSectionInputBlock>
+    );
+
+  } else if (exchangeSelection) {
+    return (
+      <LotInputBlock
+        {...props}
+        onClick={onClear}
+        lot={originLot}
+      />
+    );
+  }
+
+  // if off-surface, just present inventory...
+  console.log({ props })
+  return (
+    <InventoryInputBlock
+      {...props}
+      sublabel={
+        originLot
+        ? <><LocationIcon /> {formatters.lotName(inventorySelection?.lotIndex)}</>
+        : 'Inventory'
+      }
+      entity={origin}
+      imageProps={{ iconOverride: <InventoryIcon /> }}
+      inventoryBonuses={crew?._inventoryBonuses}
+      inventorySlot={inventorySelection?.slot}
+      isSourcing
+      onClick={offerExchanges ? onClear : onClickInventory}
+    />
+  );
+};
+
 export const InventoryInputBlock = ({
   entity,
   isSourcing,
@@ -4041,7 +4670,7 @@ export const InventoryInputBlock = ({
   ...props
 }) => {
   const inventory = useMemo(() => {
-    if (entity && inventorySlot) {
+    if (entity?.Inventories && inventorySlot) {
       return entity.Inventories.find((i) => i.slot === inventorySlot);
     }
     return null;
@@ -4521,7 +5150,7 @@ export const ActionDialogFooter = ({
 export const ActionDialogTabs = ({ tabs, selected, onSelect }) => (
   <Section>
     <Tabs>
-      {tabs.map((tab, i) => (
+      {tabs.filter((t) => !!t).map((tab, i) => (
         <Tab key={i} onClick={() => onSelect(i)} isSelected={reactBool(i === selected)}>
           {tab.icon && <TabIcon style={tab.iconStyle || {}}>{tab.icon}</TabIcon>}
           <div>{tab.label}</div>

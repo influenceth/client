@@ -69,8 +69,8 @@ const InputLabel = styled.div`
   }
 `;
 
-const TotalSway = styled.span``;
-const OrderAlert = styled.div`
+export const TotalSway = styled.span``;
+export const OrderAlert = styled.div`
   ${p => {
     if (p.isCancellation || p.insufficientAssets || p.insufficientInventory) {
       return `

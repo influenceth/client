@@ -12,17 +12,41 @@ const useFeedCrewManager = (entity) => {
   const caller_crew = useMemo(() => ({ id: crew?.id, label: Entity.IDS.CREW }), [crew?.id]);
 
   const feedCrew = useCallback(
-    ({ origin, originSlot, amount }) => execute('ResupplyFood', {
-      origin,
-      origin_slot: originSlot,
-      food: amount,
-      caller_crew
-    }),
+    ({ origin, originSlot, amount, _orderPath, ...fillProps }) => {
+      if (_orderPath) {
+        execute('ResupplyFoodFromExchange', {
+          seller_account: fillProps.sellerAccount,
+          exchange_owner_account: fillProps.exchangeOwnerAccount,
+          seller_crew: fillProps.crew,
+          exchange: fillProps.entity,
+          amount: fillProps.fillAmount,
+          payments: fillProps.paymentsUnscaled,
+          price: fillProps.price,
+          product: fillProps.product,
+          storage: fillProps.storage,
+          storage_slot: fillProps.storageSlot,  
+          caller_crew
+        });
+      } else {
+        execute('ResupplyFood', {
+          origin,
+          origin_slot: originSlot,
+          food: amount,
+          caller_crew
+        });
+      }
+    },
     [execute, caller_crew]
   );
 
   const currentFeeding = useMemo(
-    () => getPendingTx ? getPendingTx('ResupplyFood', { caller_crew }) : null,
+    () => {
+      if (getPendingTx) {
+        return getPendingTx('ResupplyFood', { caller_crew })
+          || getPendingTx('ResupplyFoodFromExchange', { caller_crew })
+      }
+      return null;
+    },
     [caller_crew, getPendingTx]
   );
 

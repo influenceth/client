@@ -450,7 +450,8 @@ const formatAsTx = (item) => {
       break;
     }
 
-    case 'ResupplyFood': {
+    case 'ResupplyFood':
+    case 'ResupplyFoodFromExchange': {
       formatted.icon = <FoodIcon />;
       formatted.label = `Resupply Food`;
       formatted.onClick = ({ openDialog }) => {

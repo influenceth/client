@@ -295,6 +295,33 @@ const customConfigs = {
       ];
     }
   },
+  ResupplyFoodFromExchange: {
+    getTransferConfig: (vars) => {
+      // memo === order path
+      const memo = [
+        Entity.packEntity(vars.seller_crew),
+        Entity.packEntity(vars.exchange),
+        Order.IDS.LIMIT_SELL,
+        vars.product,
+        vars.price,
+        Entity.packEntity(vars.storage),
+        vars.storage_slot
+      ];
+      return [
+        {
+          amount: safeBigInt(vars.payments.toPlayer),
+          recipient: vars.seller_account,
+          memo
+        },
+        {
+          amount: safeBigInt(vars.payments.toExchange),
+          recipient: vars.exchange_owner_account,
+          memo
+        }
+      ];
+    },
+    equalityTest: ['caller_crew.id']
+  },
   UpdatePolicy: {
     multisystemCalls: ({ add, remove }) => [remove, add].filter((c) => !!c),
     equalityTest: ['target.label', 'target.id', 'permission'],
