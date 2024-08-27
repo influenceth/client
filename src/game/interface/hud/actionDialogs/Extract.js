@@ -527,6 +527,7 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
             excludeSites
             otherEntity={lot?.building}
             itemIds={[selectedCoreSample?.Deposit?.resource]}
+            itemIdsRequireAllAllowed
             onClose={() => setDestinationSelectorOpen(false)}
             onSelected={setDestinationSelection}
             open={destinationSelectorOpen}

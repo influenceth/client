@@ -2290,6 +2290,7 @@ export const InventorySelectionDialog = ({
   otherInvSlot,
   isSourcing,
   itemIds,
+  itemIdsRequireAllAllowed,
   initialSelection,
   limitToControlled,
   limitToPrimary,
@@ -2354,11 +2355,11 @@ export const InventorySelectionDialog = ({
         // skip if site and excludeSites is set
         if (excludeSites && Inventory.TYPES[inv.inventoryType].category === Inventory.CATEGORIES.SITE) return;
 
-        // skip if is source and cannot contain ANY of the itemIds, or is destination and cannot contain ALL of the itemIds
+        // skip if itemIds are specified and cannot contain ANY (or if itemIdsRequireAllAllowed is specified and cannot contain ALL)
         if (itemIds && Inventory.TYPES[inv.inventoryType].productConstraints) {
           const allowedMaterials = Object.keys(Inventory.TYPES[inv.inventoryType].productConstraints).map((i) => Number(i));
-          if (isSourcing && !itemIds.find((i) => allowedMaterials.includes(Number(i)))) return;
-          if (!isSourcing && itemIds.find((i) => !allowedMaterials.includes(Number(i)))) return;
+          if (itemIdsRequireAllAllowed && itemIds.find((i) => !allowedMaterials.includes(Number(i)))) return;
+          else if (!itemIds.find((i) => allowedMaterials.includes(Number(i)))) return;
         }
 
         const entityLotId = entity.Location.locations.find((l) => l.label === Entity.IDS.LOT)?.id;
