@@ -101,6 +101,7 @@ const customConfigs = {
   SampleDepositStart: { equalityTest: ['lot.id', 'caller_crew.id'] },
 
   ExchangeCrew: { equalityTest: true },
+  DumpDelivery: { equalityTest: ['origin.id', 'origin.label'] },
   InitializeAsteroid: {
     preprocess: ({ asteroid }) => ({
       asteroid,

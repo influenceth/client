@@ -1086,6 +1086,13 @@ const activities = {
     // },
   },
 
+  DeliveryDumped: {
+    getInvalidations: ({ event: { returnValues, version } }) => ([
+      { ...returnValues.origin },
+      ['actionItems'],
+    ]),
+  },
+
   EmergencyActivated: {
     getInvalidations: ({ event: { returnValues } }) => ([
       { ...returnValues.ship }

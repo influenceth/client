@@ -4,6 +4,7 @@ import ConstructionPlan from './ConstructionPlan.png';
 import CoreSample from './CoreSample.png';
 import CrewManagement from './CrewManagement.png';
 import Extraction from './Extraction.png';
+import Jettison from './Jettison.png';
 import Management from './Management.png';
 import Marketplace from './Marketplace.png';
 import OwnedCrew from './OwnedCrew.png';
@@ -22,6 +23,7 @@ export default {
   CoreSample,
   CrewManagement,
   Extraction,
+  Jettison,
   Management,
   Marketplace,
   OwnedCrew,

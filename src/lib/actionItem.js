@@ -45,6 +45,7 @@ import {
   EditIcon,
   CheckCircleIcon,
   StarIcon,
+  JettisonCargoIcon,
 } from '~/components/Icons';
 import formatters from '~/lib/formatters';
 import { getProcessorProps, locationsArrToObj, ucfirst } from '~/lib/utils';
@@ -611,6 +612,16 @@ const formatAsTx = (item) => {
       formatted.lotId = item.meta?.lotId;  // after start, link to destination
       formatted.onClick = ({ openDialog }) => {
         openDialog('SURFACE_TRANSFER', { deliveryId: item.vars.delivery.id });
+      };
+      break;
+    }
+    case 'DumpDelivery': {
+      formatted.icon = <JettisonCargoIcon />;
+      formatted.label = 'Jettison Cargo';
+      formatted.asteroidId = item.meta?.asteroidId;
+      formatted.lotId = item.meta?.lotId;
+      formatted.onClick = ({ openDialog }) => {
+        openDialog('JETTISON_CARGO', { origin: item.vars.origin });
       };
       break;
     }

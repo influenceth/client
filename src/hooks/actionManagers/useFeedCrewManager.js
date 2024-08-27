@@ -5,7 +5,7 @@ import ChainTransactionContext from '~/contexts/ChainTransactionContext';
 import useCrewContext from '~/hooks/useCrewContext';
 import actionStages from '~/lib/actionStages';
 
-const useFeedCrewManager = (entity) => {
+const useFeedCrewManager = () => {
   const { crew, isLoading } = useCrewContext();
   const { execute, getPendingTx } = useContext(ChainTransactionContext);
 
