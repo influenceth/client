@@ -474,12 +474,14 @@ const AsteroidResourcePrices = ({ asteroid, mode, resource }) => {
         d += m.demand;
       });
 
-      if (resourceMarketplaces.length % 2 === 1) {
-        m = resourceMarketplaces[(resourceMarketplaces.length / 2) - 0.5].centerPrice;
+      const nonzeroCenterMarkets = resourceMarketplaces.filter((n) => n.centerPrice != 0);
+      nonzeroCenterMarkets.sort((a, b) => a.centerPrice - b.centerPrice);
+      if (nonzeroCenterMarkets.length % 2 === 1) {
+        m = nonzeroCenterMarkets[(nonzeroCenterMarkets.length / 2) - 0.5].centerPrice;
       } else {
         m = (
-          resourceMarketplaces[(resourceMarketplaces.length / 2) - 1].centerPrice
-          + resourceMarketplaces[(resourceMarketplaces.length / 2)].centerPrice
+          nonzeroCenterMarkets[(nonzeroCenterMarkets.length / 2) - 1].centerPrice
+          + nonzeroCenterMarkets[(nonzeroCenterMarkets.length / 2)].centerPrice
         ) / 2;
       }
     }
@@ -509,7 +511,7 @@ const AsteroidResourcePrices = ({ asteroid, mode, resource }) => {
               </div>
             </MarketSummary>
             <MarketPrice>
-              <label>Median Price:</label> <SwayIcon />{formatPrice(medianPrice, { fixedPrecision: 4 })}<label>/{resource.isAtomic ? 'unit' : 'kg'}</label>
+              <label>Median Center Price:</label> <SwayIcon />{formatPrice(medianPrice, { fixedPrecision: 4 })}<label>/{resource.isAtomic ? 'unit' : 'kg'}</label>
             </MarketPrice>
           </div>
         </div>
