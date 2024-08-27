@@ -544,7 +544,7 @@ const LotInventory = () => {
             {splittingResourceId && (
               <StackSplitterPopper referenceEl={resourceItemRefs.current[splittingResourceId]}>
                 <StackSplitter onMouseLeave={onMouseLeave}>
-                  <label>Selected Amount ({Product.TYPES[splittingResourceId].isAtomic ? '' : 'kg'})</label>
+                  <label>Selected Amount ({Product.TYPES[splittingResourceId].isAtomic ? 'units' : 'kg'})</label>
                   <QuantaInput
                     type="number"
                     max={inventory?.contentsObj[splittingResourceId]}
@@ -605,6 +605,15 @@ const LotInventory = () => {
             {/* TODO: is SurfaceTransferIncoming still supported? */}
             {isIncomingDelivery && (
               <actionButtons.SurfaceTransferIncoming.Component {...actionProps} />
+            )}
+
+            {Object.keys(selectedItems).length > 0 && (
+              <actionButtons.JettisonCargo.Component
+                {...actionProps}
+                labelAddendum={canRemoveProducts ? '' : 'access restricted'}
+                flags={{ disabled: !canRemoveProducts }}
+                dialogProps={{ origin: entity, originSlot: inventorySlot, preselect: { selectedItems } }}
+              />
             )}
           </Tray>
           )}

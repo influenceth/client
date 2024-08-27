@@ -6,18 +6,19 @@ import useJettisonCargoManager from '~/hooks/actionManagers/useJettisonCargoMana
 import theme from '~/theme';
 import ActionButton, { getCrewDisabledReason } from './ActionButton';
 
-const isVisible = ({ crew, lot, ship }) => {
+const isVisible = ({ crew, lot, ship }) => false;
+/* IF WANT TO EXPOSE IN MAIN TRAY: {
   const entity = ship || lot?.surfaceShip || lot?.building;
   return crew && ((entity?.Inventories || []).find((i) => i.status === Inventory.STATUSES.AVAILABLE));
-};
+};*/
 
 const JettisonCargo = ({ asteroid, blockTime, crew, lot, ship, onSetAction, dialogProps = {}, _disabled }) => {
   const origin = useMemo(() => ship || lot?.surfaceShip || lot?.building, [ship, lot]);
   const { currentJettison } = useJettisonCargoManager(origin);
 
   const handleClick = useCallback(() => {
-    onSetAction('JETTISON_CARGO', { origin });
-  }, [origin]);
+    onSetAction('JETTISON_CARGO', { origin, ...dialogProps });
+  }, [dialogProps, origin]);
 
   const disabledReason = useMemo(() => {
     if (_disabled) return 'loading...';
