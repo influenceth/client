@@ -99,7 +99,7 @@ const SliderInput = ({ disabled, min = 0, max = 1, increment = 1, value, onChang
     sliderRef.current.addEventListener('mouseleave', mouseHandler);
     sliderRef.current.addEventListener('mousemove', mouseHandler);
     sliderRef.current.addEventListener('mouseup', mouseHandler);
-    window.addEventListener('keydown', keyHandler);
+    // window.addEventListener('keydown', keyHandler); // no longer neeeded
     return () => {
       if (sliderRef.current) {
         sliderRef.current.removeEventListener('mousedown', mouseHandler);

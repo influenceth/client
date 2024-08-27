@@ -3573,8 +3573,8 @@ export const RecipeSlider = ({ amount, disabled, increment = 0.001, processingTi
 
     // round to nearest increment
     cleansed = numeral(Math.floor(cleansed.value() / increment) * increment);
-
-    setAmount(cleansed.value());
+  
+    setAmount(Number(cleansed.format(`${increment}`)));
   }, [increment, min, max]);
 
   const onChangeInput = useCallback((e) => {
