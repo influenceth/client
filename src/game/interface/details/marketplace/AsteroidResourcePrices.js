@@ -165,10 +165,7 @@ const AsteroidResourcePrices = ({ asteroid, mode, resource }) => {
 
   const { crew, crewCan } = useCrewContext();
   const [selected, setSelected] = useState();
-  const [sort, setSort] = useState([
-    `${mode === 'sell' ? 'buy' : 'sell'}Price`,
-    mode === 'sell' ? 'asc' : 'desc'
-  ]);
+  const [sort, setSort] = useState([`distance`,'dec']);
   const [sortField, sortDirection] = sort;
 
   const setCoachmarkRef = useCoachmarkRefSetter();
