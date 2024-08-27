@@ -617,6 +617,7 @@ const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...pro
             asteroidId={asteroid?.id}
             otherEntity={lot?.building}
             itemIds={outputArr.map(o => o.id)}
+            itemIdsRequireAllAllowed
             onClose={() => setDestinationSelectorOpen(false)}
             onSelected={setSelectedDestination}
             open={destinationSelectorOpen}

@@ -887,6 +887,7 @@ const MarketplaceOrder = ({
           open={storageSelectorOpen}
           isSourcing={reactBool(mode === 'sell')}
           itemIds={[resourceId]}
+          itemIdsRequireAllAllowed={reactBool(mode !== 'sell')}
           requirePresenceOfItemIds={reactBool(mode === 'sell')}
         />
       )}
