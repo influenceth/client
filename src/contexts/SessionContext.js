@@ -71,6 +71,7 @@ export function SessionProvider({ children }) {
 
   const [connecting, setConnecting] = useState(false);
   const [status, setStatus] = useState(STATUSES.DISCONNECTED);
+  const [starknetSessionData, setStarknetSessionData] = useState();
   const [starknetSession, setStarknetSession] = useState();
 
   const [connectedAccount, setConnectedAccount] = useState();
@@ -415,16 +416,20 @@ export function SessionProvider({ children }) {
   }, [authenticate, currentSession, gameplay.useSessions]);
 
   const createSessionAccount = useCallback(async () => {
-    const offchainSessionAccount = await buildSessionAccount({
+    const currentSessionData = {
       accountSessionSignature: currentSession.sessionSignature,
+      dappKey: currentSession.sessionDappKey,
       sessionRequest: currentSession.sessionRequest,
+    };
+    setStarknetSessionData(currentSessionData);
+
+    const offchainSessionAccount = await buildSessionAccount({
+      ...currentSessionData,
       provider,
       chainId: resolveChainId(process.env.REACT_APP_CHAIN_ID, 'hex'),
       address: currentSession.accountAddress,
-      dappKey: currentSession.sessionDappKey,
       argentSessionServiceBaseUrl: process.env.REACT_APP_ARGENT_API
     });
-
     setStarknetSession(offchainSessionAccount);
   }, [currentSession, provider]);
 
@@ -452,6 +457,7 @@ export function SessionProvider({ children }) {
       }
 
       setStarknetSession(null); // clear session key if it exists
+      setStarknetSessionData(null); // clear session key if it exists
     } else if (status === STATUSES.CONNECTED) {
       resumeOrAuthenticate().finally(() => {
         setReadyForChildren(true);
@@ -502,43 +508,6 @@ export function SessionProvider({ children }) {
     gameplay.feeToken,
     isFeeAbstractionCompatible
   ]);
-
-  // Retrieves an outside execution call and signs it
-  const getOutsideExecutionData = useCallback(async (calldata, gasTokenAddress, maxGasTokenAmount, canUseSessionKey) => {
-    let typedData = await gasless.fetchBuildTypedData(
-      currentSession.accountAddress,
-      calldata,
-      gasTokenAddress,
-      maxGasTokenAmount,
-      { baseUrl: process.env.REACT_APP_AVNU_API_URL }
-    );
-
-    let signature;
-
-    if (canUseSessionKey && gameplay.useSessions && currentSession.sessionRequest) {
-      const dappKey = currentSession.sessionDappKey;
-      const sessionSignature = currentSession.sessionSignature;
-      const beService = new ArgentSessionService(dappKey.publicKey, sessionSignature, process.env.REACT_APP_ARGENT_API);
-      const chainId = shortString.encodeShortString(connectedChainId);
-      const sessionDappService = new SessionDappService(beService, chainId, dappKey);
-      const { Calldata: feeCalldata } = typedData.message.Calls[0];
-
-      // Add the fee call to the calldata
-      calldata.unshift({ contractAddress: gasTokenAddress, entrypoint: 'transfer', calldata: feeCalldata });
-      signature = await sessionDappService.getSessionSignatureForOutsideExecutionTypedData(
-        currentSession.sessionSignature,
-        currentSession.sessionRequest,
-        calldata,
-        currentSession.accountAddress,
-        typedData,
-        false
-      );
-    } else {
-      signature = await walletAccount.signMessage(typedData);
-    }
-
-    return { typedData, signature };
-  }, [currentSession, gameplay.useSessions, connectedChainId, connectedWalletId, walletAccount]);
 
   // Block management -------------------------------------------------------------------------------------------------
 
@@ -659,12 +628,12 @@ export function SessionProvider({ children }) {
       authenticating: [STATUSES.AUTHENTICATING, STATUSES.CONNECTING].includes(status),
       chainId: authenticated ? connectedChainId : null,
       connecting: connecting || !!promptLogin,
-      getOutsideExecutionData,
       isDeployed: authenticated ? currentSession?.isDeployed : null,
       payGasWithSwayIfPossible: authenticated ? payGasWithSwayIfPossible : null,
       provider,
       shouldUseSessionKeys,
       starknetSession,
+      starknetSessionData,
       status,
       token: authenticated ? currentSession?.token : null,
       upgradeInsecureSession,

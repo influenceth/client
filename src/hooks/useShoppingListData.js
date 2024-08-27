@@ -19,6 +19,8 @@ const useShoppingListData = (asteroidId, lotId, productIds) => {
   const [feeEnforcements, setFeeEnforcements] = useState();
   const [feesLoading, setFeesLoading] = useState(true);
   const loadFees = useCallback(async () => {
+    if (exchangesLoading) return;
+
     const ids = (exchanges || []).map((e) => e.Control?.controller?.id);
     if (ids?.length > 0) {
       setFeesLoading(true);
@@ -49,7 +51,7 @@ const useShoppingListData = (asteroidId, lotId, productIds) => {
       }
     }
     setFeesLoading(false);
-  }, [exchangesUpdatedAt]);
+  }, [exchangesLoading, exchangesUpdatedAt]);
   useEffect(() => {
     loadFees();
   }, [loadFees]);
