@@ -378,7 +378,7 @@ const AsteroidResourcePrices = ({ asteroid, mode, resource }) => {
       },
       {
         key: 'makerFee',
-        label: 'Owner Fees',
+        label: 'Fees',
         sortField: 'makerFee',
         selector: row => (
           <>
@@ -388,12 +388,14 @@ const AsteroidResourcePrices = ({ asteroid, mode, resource }) => {
               data-tooltip-place="top"
               data-tooltip-html={`
                 <div style="width: 200px">
-                    <div style="display: flex; height: 20px">
-                      <div style="flex-grow: 1">Maker Fee:</div>
+                    <div style= "display: flex; height: 20px; margin-bottom: 2px; border-bottom:1px solid rgba(255, 255, 255, 0.25)">Maker Fees</div>
+                    <div style="display: flex; margin-top: 4px">
+                      <div style="color: #a0a0a0; flex-grow: 1">Limit Orders</div>
                       <div>${(row.makerFee / 100)}%</div>
                     </div>
-                    <div style="display: flex">
-                      <div style="flex-grow: 1">Taker Fee:</div>
+                    <div style= "display: flex; height: 20px; margin-top: 8px; margin-bottom: 2px; border-bottom:1px solid rgba(255, 255, 255, 0.25)">Taker Fees</div>
+                    <div style="display: flex; margin-top: 4px">
+                      <div style="color: #a0a0a0; flex-grow: 1">Market Orders</div>
                       <div>${(row.takerFee / 100)}%</div>
                     </div>
                 </div>
