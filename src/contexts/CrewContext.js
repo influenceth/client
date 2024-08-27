@@ -25,7 +25,7 @@ const simulationNftConfig = {
 const CrewContext = createContext();
 
 export function CrewProvider({ children }) {
-  const { accountAddress, authenticated, blockNumber, blockTime, provider, token } = useSession();
+  const { accountAddress, authenticated, blockTime, provider, token, isBlockMissing } = useSession();
   const simulationState = useSimulationState();
 
   const queryClient = useQueryClient();
@@ -265,7 +265,7 @@ export function CrewProvider({ children }) {
         });
       }
     }
-  }, [actionTypeTriggered, selectedCrew?.Crew?.actionType, selectedCrew?.Crew?.actionRound, blockNumber, provider]);
+  }, [actionTypeTriggered, selectedCrew?.Crew?.actionType, selectedCrew?.Crew?.actionRound, provider]);
 
   // add final data to selected crew
   const finalSelectedCrew = useMemo(() => {
@@ -332,16 +332,6 @@ export function CrewProvider({ children }) {
     [blockTime, finalSelectedCrew]
   );
 
-  const lastBlockNumber = useRef(blockNumber);
-  const blockHasBeenMissed = useRef();
-  useEffect(() => {
-    if (lastBlockNumber.current > 0 && blockNumber > (lastBlockNumber.current + 1)) {
-      blockHasBeenMissed.current = true;
-      console.warn(`block(s) missed between ${lastBlockNumber.current} and ${blockNumber}`);
-    }
-    lastBlockNumber.current = blockNumber;
-  }, [blockNumber]);
-
   const isBlurred = useRef(false);
   const onBlur = useCallback(() => {
     isBlurred.current = true;
@@ -362,11 +352,11 @@ export function CrewProvider({ children }) {
       isBlurred.current = false;
 
       // reload if explicitly missed a block and window has returned to focus
-      if (blockHasBeenMissed.current) {
+      if (isBlockMissing) {
         window.location.reload();
       }
     }
-  }, [blockTime]);
+  }, [isBlockMissing]);
 
   useEffect(() => {
     if (!!finalSelectedCrew) {

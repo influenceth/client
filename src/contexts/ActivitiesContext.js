@@ -42,7 +42,7 @@ const isMismatch = (updateValue, queryCacheValue) => {
 }
 
 export function ActivitiesProvider({ children }) {
-  const { token, setBlockNumber } = useSession();
+  const { token, blockNumber, setBlockNumber, setIsBlockMissing } = useSession();
   const { crew, pendingTransactions, refreshReadyAt } = useCrewContext();
   const simulation = useSimulationState();
   const getActivityConfig = useGetActivityConfig();
@@ -339,6 +339,13 @@ export function ActivitiesProvider({ children }) {
     const { type, body } = message;
     if (ignoreEventTypes.includes(type)) return;
     if (type === 'CURRENT_STARKNET_BLOCK_NUMBER') {
+      // our pre-update block number should be at least as high as the newly reported
+      // previously-processed-block from the server (otherwise, we missed one)
+      if (blockNumber > 0 && body.previous > 0 && body.previous > blockNumber) {
+        setIsBlockMissing(true);
+      }
+
+      // update the local block
       if (body.blockNumber > 0) setBlockNumber(body.blockNumber);
     } else {
 
@@ -350,7 +357,7 @@ export function ActivitiesProvider({ children }) {
       if (pendingTimeout.current) clearTimeout(pendingTimeout.current);
       pendingTimeout.current = setTimeout(processPendingWSBatch, 1000);
     }
-  }, [processPendingWSBatch]);
+  }, [blockNumber, processPendingWSBatch]);
 
   const isFirstLoad = useRef(true); // (i.e. this is not a crew switch)
   useEffect(() => {
