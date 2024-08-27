@@ -25,7 +25,9 @@ import {
   FlexSectionSpacer,
   getBuildingRequirements,
   FlexSectionBlock,
-  MarketplaceAlert
+  MarketplaceAlert,
+  ShoppingListPriceField,
+  LiquidityWarning
 } from './components';
 import actionStage from '~/lib/actionStages';
 import useDeliveryManager from '~/hooks/actionManagers/useDeliveryManager';
@@ -42,6 +44,7 @@ import useStore from '~/hooks/useStore';
 import ResourceRequirement from '~/components/ResourceRequirement';
 import useInterval from '~/hooks/useInterval';
 import PageLoader from '~/components/PageLoader';
+import Monospace from '~/components/Monospace';
 
 const ProductList = styled.div`
   padding: 1px 0;
@@ -95,11 +98,6 @@ const ProductItem = styled.div`
   }
 `;
 
-const Empty = styled.span`
-  opacity: 0.33;
-  text-transform: uppercase;
-`;
-
 const IconWrapper = styled.div`
   color: white;
   font-size: 22px;
@@ -129,29 +127,6 @@ const EmptyMessage = styled(DataTableWrapper)`
   }
 `;
 
-const Monospace = styled.div`
-  font-family: 'Jetbrains Mono', sans-serif;
-`;
-
-const PriceField = styled.div`
-  align-items: center;
-  display: flex;
-  & > div {
-    align-items: center;
-    display: flex;
-    margin-right: 10px;
-    min-width: 100px;
-    & > div:last-child {
-      flex: 1;
-      font-family: 'Jetbrains Mono', sans-serif;
-      text-align: right;
-    }
-  }
-  & > small {
-    opacity: 0.5;
-  }
-`;
-
 const Insufficient = styled.div`
   font-size: 75%;
   cursor: ${p => p.theme.cursors.active};
@@ -173,15 +148,6 @@ const ExpandableIcon = styled(ChevronRightIcon)`
   transition: transform 250ms ease;
   ${p => p.isExpanded && `transform: rotate(90deg);`}
 `;
-
-const LiquidityWarning = () => (
-  <span style={{ color: theme.colors.warning, display: 'inline-block', marginLeft: 5, marginTop: -2 }}
-    data-tooltip-content='Limited Supply'
-    data-tooltip-id='actionDialogTooltip'
-    data-tooltip-place='top'>
-    <WarningIcon />
-  </span>
-);
 
 const columns = [
   {
@@ -217,26 +183,26 @@ const columns = [
     label: 'Price (incl. fees)',
     sortField: '_dynamicUnitPrice',
     selector: (row, { tableState }) => (
-      <PriceField>
+      <ShoppingListPriceField>
         <div>
           <IconWrapper><SwayIcon /></IconWrapper>
           <div>{formatPrice(row._dynamicUnitPrice, { fixedPrecision: 4, minPrecision: 4 })}</div>
         </div>
         <small>({row._dynamicSupply.toLocaleString()}{tableState.resource.isAtomic ? '' : ' kg'})</small>
         {row._isLimited && <LiquidityWarning />}
-      </PriceField>
+      </ShoppingListPriceField>
     ),
     noMinWidth: true,
   }
 ];
 
-const ProductMarketSummary = ({
+export const ProductMarketSummary = ({
   crewBonuses,
+  onSelected,
   productId,
   resourceMarketplaces = [],
   selected = [],
   selectionSummary,
-  onSelected,
   targetAmount
 }) => {
   const [sort, setSort] = useState(['_dynamicUnitPrice', 'desc']);
@@ -628,7 +594,7 @@ const ShoppingList = ({ asteroid, destination, destinationSlot, stage, ...props 
                                 : <span style={{ opacity: 0.5 }}>Instant</span>
                               }
                             </Detail>
-                            <Detail style={{ color: 'white' }}>
+                            <Detail style={{ color: 'white', whiteSpace: 'nowrap' }}>
                               <SwayIcon /> {Math.round(selectionSummary[product.i]?.totalPrice || 0).toLocaleString()}
                             </Detail>
                           </>
