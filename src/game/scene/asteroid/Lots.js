@@ -603,7 +603,7 @@ const Lots = ({ attachTo: overrideAttachTo, asteroidId, axis, cameraAltitude, ca
             dummy.updateMatrix();
 
             // everything else is only in visible-lot area
-            if (lotUse !== 0 && (totalRendered < visibleLotTally || hasResult)) {
+            if (lotUse !== 0 && lotMeshes.current[lotUse] && (totalRendered < visibleLotTally || hasResult)) {
               lotMeshes.current[lotUse].setMatrixAt(lotUseRendered, dummy.matrix);
               lotUsesRendered[lotUse] = (lotUsesRendered[lotUse] || 0) + 1;
               updateLotUseMatrix[lotUse] = true;
