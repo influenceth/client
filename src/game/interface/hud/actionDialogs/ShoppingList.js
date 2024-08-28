@@ -1,6 +1,6 @@
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import styled from 'styled-components';
-import { Asteroid, Building, Crew, Crewmate, Entity, Inventory, Lot, Permission, Product, Time } from '@influenceth/sdk';
+import { Asteroid, Building, Crew, Crewmate, Entity, Inventory, Lot, Permission, Process, Product, Time } from '@influenceth/sdk';
 
 import {
   CheckedIcon,
@@ -21,13 +21,15 @@ import {
   ActionDialogHeader,
   FlexSection,
   ActionDialogBody,
-  BuildingInputBlock,
-  FlexSectionSpacer,
-  getBuildingRequirements,
   FlexSectionBlock,
   MarketplaceAlert,
   ShoppingListPriceField,
-  LiquidityWarning
+  LiquidityWarning,
+  getRecipeRequirements,
+  ProcessSelectionBlock,
+  ProcessSelectionDialog,
+  SectionTitle,
+  Section
 } from './components';
 import actionStage from '~/lib/actionStages';
 import useDeliveryManager from '~/hooks/actionManagers/useDeliveryManager';
@@ -45,6 +47,8 @@ import ResourceRequirement from '~/components/ResourceRequirement';
 import useInterval from '~/hooks/useInterval';
 import PageLoader from '~/components/PageLoader';
 import Monospace from '~/components/Monospace';
+import UncontrolledTextInput from '~/components/TextInputUncontrolled';
+import { CheckboxButton } from '~/components/filters/components';
 
 const ProductList = styled.div`
   padding: 1px 0;
@@ -147,6 +151,24 @@ const ExpandableIcon = styled(ChevronRightIcon)`
   transform: rotate(0);
   transition: transform 250ms ease;
   ${p => p.isExpanded && `transform: rotate(90deg);`}
+`;
+
+const CheckboxLabel = styled.label`
+  align-items: center;
+  color: ${p => p.selected ? 'white' : '#AAA'};
+  cursor: ${p => p.theme.cursors.active};
+  display: inline-flex;
+  opacity: 0.8;
+  transition: opacity 150ms ease;
+  &:hover {
+    opacity: 1;
+  }
+
+  & > *:first-child {
+    color: ${p => p.selected ? p.theme.colors.brightMain : 'inherit'};
+    margin-right: 4px;
+    transition: color 150ms ease;
+  }
 `;
 
 const columns = [
@@ -298,24 +320,33 @@ const ShoppingList = ({ asteroid, destination, destinationSlot, stage, ...props 
     }, {});
   }, [exchangesUpdatedAt])
   const { data: destinationLot } = useLot(locationsArrToObj(destination?.Location?.locations || []).lotId);
+  const destinationInventory = useMemo(() => destination?.Inventories.find((i) => i.slot === destinationSlot), [destination, destinationSlot]);
 
-  // TODO: these are only relevant for site
-  const { currentDeliveryActions } = useDeliveryManager({ destination });
-  const buildingRequirements = useMemo(
-    () => getBuildingRequirements(destination, currentDeliveryActions),
-    [destination, currentDeliveryActions]
-  );
+  const { currentDeliveryActions } = useDeliveryManager({ destination, destinationSlot });
+
+  const isInSiteMode = destination?.Building?.status === Building.CONSTRUCTION_STATUSES.PLANNED;
+
+  const [processId, setProcessId] = useState();
+  const [processSelectorOpen, setProcessSelectorOpen] = useState(false);
+  const recipe = useMemo(() => Process.TYPES[processId], [processId]);
+  const [recipeTally, setRecipeTally] = useState(1);
+  const [isAdditive, setIsAdditive] = useState(false);
+
+  const totalTargets = useMemo(() => {
+    if (!recipe) return [];
+    return getRecipeRequirements(recipe.inputs, destinationInventory, recipeTally, currentDeliveryActions);
+  }, [currentDeliveryActions, destinationInventory, recipe, recipeTally]);
 
   // derive shopping list from selected site
   const [shoppingList, productIds] = useMemo(() => {
-    const list = buildingRequirements
-      .filter((req) => req.inNeed > 0)
+    const list = totalTargets
+      .filter((req) => (isAdditive ? req.inNeed : req.totalRequired) > 0)
       .map((req) => ({
         product: Product.TYPES[req.i],
-        amount: req.inNeed
+        amount: isAdditive ? req.inNeed : req.totalRequired
       }));
     return [list, list.map((p) => p.product.i)];
-  }, [buildingRequirements]);
+  }, [isAdditive, totalTargets]);
 
   const {
     data: resourceMarketplaces,
@@ -529,13 +560,36 @@ const ShoppingList = ({ asteroid, destination, destinationSlot, stage, ...props 
     }
   }, [shoppingListPurchaseTally]);
 
+
+
+
+
+
+
+
+
+
+  // TODO: "empty" view
+  // TODO: dynamic forcing of construction materials + hide/show recipe selection
+  // TODO: warn if not enough space in inventory (but allow to proceed until selected too many)
+  // TODO: warn if nothing shows up because everything satisfied by inventory
+
+
+
+
+
+
+
+
+
+  
   return (
     <>
       <ActionDialogHeader
         action={{
           icon: <MarketBuyIcon />,
-          label: 'Source Materials',
-          status: stage === actionStage.NOT_STARTED ? 'Source Remaining Materials' : undefined,
+          label: isInSiteMode ? 'Source Materials' : 'Market Buy Multiple',
+          status: isInSiteMode && stage === actionStage.NOT_STARTED ? 'Source Remaining Materials' : undefined,
         }}
         actionCrew={crew}
         location={{ asteroid, lot: destinationLot }}
@@ -545,22 +599,43 @@ const ShoppingList = ({ asteroid, destination, destinationSlot, stage, ...props 
         stage={stage} />
 
       <ActionDialogBody style={{ display: 'flex', flexDirection: 'column' }}>
-        {/* TODO: (future) if destination is site, recipe is hidden; else, can select recipe and multiple... */}
-        {destination?.Building?.status !== Building.CONSTRUCTION_STATUSES.PLANNED && (
+
+        {!isInSiteMode && (
           <FlexSection>
-            <BuildingInputBlock
-              title="Destination"
-              building={destination}
-            />
-
-            <FlexSectionSpacer />
-
-            {/* TODO: will need to add insufficient inventory error upon selections here */}
-            <div>Todo: Select a recipe and a multiple</div>
+            <FlexSectionBlock title="Recipe" bodyStyle={{ alignItems: 'center', display: 'flex', flexDirection: 'row', height: 'auto',  }} style={{ width: '100%' }}>
+              <div style={{ alignItems: 'center', display: 'flex' }}>
+                <UncontrolledTextInput
+                  disabled={stage !== actionStage.NOT_STARTED}
+                  onChange={(e) => setRecipeTally(e.currentTarget.value)}
+                  step={0.1}
+                  max={1e6}
+                  min={1}
+                  type="number"
+                  style={{ textAlign: 'right', height: 40, width: 80 }}
+                  value={recipeTally} />
+              </div>
+              <div style={{ textAlign: 'center', width: 24 }}>x</div>
+              <div>
+                <ProcessSelectionBlock
+                  height={40}
+                  width={350}
+                  onClick={stage === actionStage.NOT_STARTED ? () => setProcessSelectorOpen(true) : undefined}
+                  selectedProcess={recipe} />
+              </div>
+              <div style={{ flex: 1, textAlign: 'right' }}>
+                <CheckboxLabel onClick={() => setIsAdditive((a) => !a)} selected={isAdditive}>
+                  {isAdditive ? <CheckedIcon /> : <UncheckedIcon />} <span>Include Existing Contents</span>
+                </CheckboxLabel>
+              </div>
+            </FlexSectionBlock>
           </FlexSection>
         )}
 
-        <FlexSection style={{ flex: '1 1 calc(100% - 105px)', overflow: 'auto' }}>
+        <Section>
+          {!isInSiteMode && <SectionTitle>Shopping List</SectionTitle>}
+        </Section>
+        
+        <FlexSection style={{ flex: '1 1 calc(100% - 105px)', flexDirection: 'column', marginTop: 0, overflow: 'auto' }}>
           {resourceMarketplacesLoading && !resourceMarketplaces && <PageLoader />}
           {resourceMarketplaces && (
             <ProductList>
@@ -674,6 +749,17 @@ const ShoppingList = ({ asteroid, destination, destinationSlot, stage, ...props 
         onGo={handlePurchase}
         stage={stage}
         {...props} />
+
+      {stage === actionStage.NOT_STARTED && (
+        <>
+          <ProcessSelectionDialog
+            initialSelection={processId}
+            onClose={() => setProcessSelectorOpen(false)}
+            onSelected={setProcessId}
+            open={processSelectorOpen}
+          />
+        </>
+      )}
     </>
   );
 };
@@ -683,20 +769,16 @@ const Wrapper = (props) => {
   const actionManager = { actionStage: actionStage.NOT_STARTED };
 
   const [destination, destinationSlot] = useMemo(() => {
-    return [
-      lot?.building,
-      lot?.building?.Inventories.find((i) => i.status === Inventory.STATUSES.AVAILABLE)?.slot
-    ];
-  }, [lot?.building]);
+    const destination = props.destination || lot?.building;
+    const destinationSlot = props.destinationSlot || destination?.Inventories.find((i) => i.status === Inventory.STATUSES.AVAILABLE)?.slot;
+    return [destination, destinationSlot];
+  }, [lot?.building, props.destination, props.destinationSlot]);
 
   useEffect(() => {
     if (!asteroid || !lot || !destination || !destinationSlot) {
       if (!isLoading) {
         if (props.onClose) props.onClose();
       }
-    }
-    if (destination && destination?.Building?.status !== Building.CONSTRUCTION_STATUSES.PLANNED) {
-      if (props.onClose) props.onClose();
     }
   }, [asteroid, lot, destination, destinationSlot, isLoading]);
 

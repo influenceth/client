@@ -30,43 +30,19 @@ import {
   InventoryInputBlock,
   ShipImage,
   ProgressBarSection,
-  LandingSelectionDialog
+  LandingSelectionDialog,
+  ProcessSelectionBlock
 } from './components';
 import useLot from '~/hooks/useLot';
 import { ActionDialogInner, useAsteroidAndLot } from '../ActionDialog';
 import actionStages from '~/lib/actionStages';
 import theme, { hexToRGB } from '~/theme';
-import ClipCorner from '~/components/ClipCorner';
-import IconButton from '~/components/IconButton';
 import useDryDockManager from '~/hooks/actionManagers/useDryDockManager';
 import useEntity from '~/hooks/useEntity';
 import formatters from '~/lib/formatters';
 import useActionCrew from '~/hooks/useActionCrew';
 
 const SECTION_WIDTH = 1046;
-
-const SelectorInner = styled.div`
-  align-items: center;
-  color: white;
-  display: flex;
-  flex-direction: row;
-  font-size: 18px;
-  & label {
-    flex: 1;
-    font-weight: bold;
-    padding-left: 10px;
-  }
-`;
-const IconWrapper = styled.div`
-  align-items: center;
-  background: rgba(${p => p.theme.colors.mainRGB}, 0.3);
-  ${p => p.theme.clipCorner(sectionBodyCornerSize * 0.6)};
-  display: flex;
-  font-size: 40px;
-  height: 50px;
-  justify-content: center;
-  width: 50px;
-`;
 
 const shipContructionProcesses = [Ship.IDS.SHUTTLE, Ship.IDS.LIGHT_TRANSPORT, Ship.IDS.HEAVY_TRANSPORT].map((i) => ({
   i,
@@ -307,23 +283,10 @@ const AssembleShip = ({ asteroid, lot, dryDockManager, stage, ...props }) => {
             bodyStyle={{ padding: 0 }}
             style={{ alignSelf: 'flex-start', width: '592px' }}>
 
-            <FlexSectionInputBody
-              isSelected={stage === actionStages.NOT_STARTED}
+            <ProcessSelectionBlock
               onClick={stage === actionStages.NOT_STARTED ? () => setProcessSelectorOpen(true) : undefined}
-              style={{ padding: 4 }}>
-              <SelectorInner>
-                <IconWrapper>
-                  <ProductionIcon />
-                </IconWrapper>
-                <label>{process?.name || `Select a Process...`}</label>
-                {stage === actionStages.NOT_STARTED && (
-                  <>
-                    {process ? <IconButton borderless><CloseIcon /></IconButton> : <CaretIcon />}
-                  </>
-                )}
-              </SelectorInner>
-              <ClipCorner dimension={sectionBodyCornerSize} />
-            </FlexSectionInputBody>
+              selectedProcess={process}
+            />
 
             <RecipeSlider
               amount={1}
