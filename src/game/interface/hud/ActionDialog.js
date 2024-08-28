@@ -28,6 +28,7 @@ import FormAgreement from './actionDialogs/FormAgreement';
 import NewCoreSample from './actionDialogs/NewCoreSample';
 import Deconstruct from './actionDialogs/Deconstruct';
 import ImproveCoreSample from './actionDialogs/ImproveCoreSample';
+import JettisonCargo from './actionDialogs/JettisonCargo';
 import LandShip from './actionDialogs/LandShip';
 import LaunchShip from './actionDialogs/LaunchShip';
 import ManageCrew from './actionDialogs/ManageCrew';
@@ -251,6 +252,7 @@ const ActionDialog = ({ type, params }) => {
         {type === 'FEED_CREW' && <FeedCrew {...allProps} />}
         {type === 'FORM_AGREEMENT' && <FormAgreement {...allProps} />}
         {type === 'EXTEND_AGREEMENT' && <FormAgreement {...allProps} isExtension />}
+        {type === 'JETTISON_CARGO' && <JettisonCargo {...allProps} />}
         {type === 'LAND_SHIP' && <LandShip {...allProps} />}
         {type === 'LAUNCH_SHIP' && <LaunchShip {...allProps} />}
         {type === 'IMPROVE_CORE_SAMPLE' && <ImproveCoreSample {...allProps} />}

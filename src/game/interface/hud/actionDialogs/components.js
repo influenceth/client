@@ -3387,16 +3387,16 @@ export const BuildingImage = ({ buildingType, error, iconOverlay, iconOverlayCol
   );
 };
 
-export const EmptyBuildingImage = ({ iconOverride }) => (
-  <BuildingThumbnailWrapper>
-    <EmptyThumbnail>{iconOverride || <LocationIcon />}</EmptyThumbnail>
+export const EmptyBuildingImage = ({ iconOverride, iconStyle, ...props }) => (
+  <BuildingThumbnailWrapper {...props}>
+    <EmptyThumbnail style={iconStyle}>{iconOverride || <LocationIcon />}</EmptyThumbnail>
     <ClipCorner dimension={10} />
   </BuildingThumbnailWrapper>
 );
 
-export const EmptyResourceImage = ({ iconOverride, noIcon, ...props }) => (
+export const EmptyResourceImage = ({ iconOverride, iconStyle, noIcon, ...props }) => (
   <ResourceThumbnailWrapper {...props}>
-    <EmptyThumbnail>{noIcon ? null : (iconOverride || <PlusIcon />)}</EmptyThumbnail>
+    <EmptyThumbnail style={iconStyle}>{noIcon ? null : (iconOverride || <PlusIcon />)}</EmptyThumbnail>
     <ClipCorner dimension={10} />
   </ResourceThumbnailWrapper>
 );
@@ -3786,7 +3786,7 @@ export const ResourceGridSectionInner = ({
 };
 
 const ResourceGridSection = ({ label, sectionProps = {}, ...props }) => (
-  <Section style={{ marginBottom: 25 }}>
+  <Section style={{ marginBottom: props.marginBottom === undefined ? 25 : props.marginBottom }}>
     <SectionTitle>{label}</SectionTitle>
     <SectionBody {...sectionProps}>
       <ResourceGridSectionInner {...props} />
