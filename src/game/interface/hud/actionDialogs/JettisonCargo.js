@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Asteroid, Crewmate, Entity, Inventory, Lot, Permission, Product, Time } from '@influenceth/sdk';
 import styled from 'styled-components';
 
-import { CheckIcon, CloseIcon, ForwardIcon, HeliocentricIcon, InventoryIcon, JettisonCargoIcon, LocationIcon, RouteIcon, SurfaceTransferIcon, WarningOutlineIcon } from '~/components/Icons';
+import { CheckIcon, CloseIcon, ForwardIcon, HeliocentricIcon, InventoryIcon, JettisonCargoIcon, LocationIcon, RouteIcon, SurfaceTransferIcon, WarningIcon, WarningOutlineIcon } from '~/components/Icons';
 import useCrewContext from '~/hooks/useCrewContext';
 import useDeliveryManager from '~/hooks/actionManagers/useDeliveryManager';
 import useLot from '~/hooks/useLot';
@@ -197,8 +197,18 @@ const JettisonCargo = ({
             <ItemSelectionSection
               label="Items"
               items={selectedItems}
+              marginBottom={15}
               onClick={stage === actionStage.NOT_STARTED ? (() => setTransferSelectorOpen(true)) : undefined}
               stage={stage} />
+
+            <FlexSection style={{ color: theme.colors.error, justifyContent: 'center', marginBottom: 15, marginTop: 0, width: '100%' }}>
+              <div style={{ alignItems: 'center', display: 'flex' }}>
+                <span style={{ fontSize: '24px', textAlign: 'center', width: 50 }}><WarningIcon /></span>
+                <span style={{ flex: '1 0 calc(100% - 50px)', fontSize: '90%' }}>
+                  WARNING: Jettisoned items are permanently deleted and cannot be recovered.
+                </span>
+              </div>
+            </FlexSection>
           </>
         )}
 

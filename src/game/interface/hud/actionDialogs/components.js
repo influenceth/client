@@ -3786,7 +3786,7 @@ export const ResourceGridSectionInner = ({
 };
 
 const ResourceGridSection = ({ label, sectionProps = {}, ...props }) => (
-  <Section style={{ marginBottom: 25 }}>
+  <Section style={{ marginBottom: props.marginBottom === undefined ? 25 : props.marginBottom }}>
     <SectionTitle>{label}</SectionTitle>
     <SectionBody {...sectionProps}>
       <ResourceGridSectionInner {...props} />
