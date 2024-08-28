@@ -80,6 +80,7 @@ export function SessionProvider({ children }) {
 
   const [blockNumber, setBlockNumber] = useState(0);
   const [blockTime, setBlockTime] = useState(0);
+  const [isBlockMissing, setIsBlockMissing] = useState(false);
   const [error, setError] = useState();
 
   const authenticated = useMemo(() => status === STATUSES.AUTHENTICATED, [status]);
@@ -676,6 +677,8 @@ export function SessionProvider({ children }) {
       // - blockNumber is updated from websocket change or initial pull of activities from server
       // - blockTime is updated from blockNumber change
       // - blockNumber is last committed block, blockTime is the *pending* block time
+      setIsBlockMissing,
+      isBlockMissing,
       setBlockNumber,
       blockNumber,
       blockTime
