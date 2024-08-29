@@ -601,12 +601,14 @@ const LotInventory = () => {
             <Tray>
               {trayLabel && <TrayLabel content={trayLabel} />}
 
+              {/* hide for now (for screen real estate)
               <actionButtons.SurfaceTransferIncoming.Component
                 {...actionProps}
                 labelAddendum={canAddProducts ? '' : 'access restricted'}
                 flags={{ disabled: !canAddProducts }}
                 dialogProps={{ destination: entity, destinationSlot: inventorySlot }}
               />
+              */}
 
               <actionButtons.SurfaceTransferOutgoing.Component
                 {...actionProps}

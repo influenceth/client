@@ -30,7 +30,7 @@ const MultiSell = ({ asteroid, blockTime, crew, lot, ship, onSetAction, dialogPr
 
   return (
     <ActionButton
-      label="Market Sell Multiple"
+      label="Market Sell Selected"
       labelAddendum={disabledReason}
       flags={{
         disabled: _disabled || disabledReason,

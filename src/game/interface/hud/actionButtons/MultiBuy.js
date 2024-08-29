@@ -27,7 +27,7 @@ const MultiBuy = ({ asteroid, blockTime, crew, lot, ship, onSetAction, dialogPro
 
   return (
     <ActionButton
-      label="Market Buy Multiple"
+      label="Market Buy Here"
       labelAddendum={disabledReason}
       flags={{
         disabled: _disabled || disabledReason,

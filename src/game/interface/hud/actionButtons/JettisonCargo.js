@@ -35,7 +35,7 @@ const JettisonCargo = ({ asteroid, blockTime, crew, lot, ship, onSetAction, dial
 
   return (
     <ActionButton
-      label="Delete Items"
+      label="Jettison Selected"
       labelAddendum={disabledReason}
       flags={{
         disabled: _disabled || disabledReason,
