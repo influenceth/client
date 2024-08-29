@@ -154,9 +154,9 @@ const Supply = styled.span`
 
 const MarketplaceName = styled.span`
   color: ${p => {
-    if (p.acesss === 'full') return p.theme.colors.white;
-    if (p.access === 'limited') return p.theme.colors.yellow;
-    if (p.access === 'none') return p.theme.colors.red;
+    if (p.crew && p.acesss === 'full') return p.theme.colors.white;
+    if (p.crew && p.access === 'limited') return p.theme.colors.yellow;
+    if (p.crew && p.access === 'none') return p.theme.colors.red;
   }};
 `;
 
@@ -165,7 +165,7 @@ const AsteroidResourcePrices = ({ asteroid, mode, resource }) => {
 
   const { crew, crewCan } = useCrewContext();
   const [selected, setSelected] = useState();
-  const [sort, setSort] = useState(['distance', 'asc']);
+  const [sort, setSort] = useState([(!crew ? 'sellPrice' : 'distance'), 'asc']);
   const [sortField, sortDirection] = sort;
 
   const setCoachmarkRef = useCoachmarkRefSetter();
@@ -308,7 +308,7 @@ const AsteroidResourcePrices = ({ asteroid, mode, resource }) => {
               lotId={row.lotId}
               data-tooltip-id="detailsTooltip" />
             <MarketplaceName access={marketplacesLoading ? 'full' : row.permissions.accessLevel()}>{row.marketplaceName}
-            {!marketplacesLoading && row.permissions.accessLevel() === 'full' || (
+            {!marketplacesLoading && (!crew || row.permissions.accessLevel() === 'full') || (
               <MarketplacePermissionsIcon
                 style={{ marginLeft: 6, fontSize:'140%'}}
                 permissions={row.permissions}
