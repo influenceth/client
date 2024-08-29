@@ -5,11 +5,13 @@ import { Asteroid, Building, Crew, Crewmate, Entity, Inventory, Lot, Permission,
 import {
   CheckedIcon,
   ChevronRightIcon,
+  InventoryIcon,
   MarketBuyIcon,
   MarketplaceBuildingIcon,
   SwayIcon,
   UncheckedIcon,
-  WarningIcon
+  WarningIcon,
+  WarningOutlineIcon
 } from '~/components/Icons';
 import useCrewContext from '~/hooks/useCrewContext';
 import theme, { hexToRGB } from '~/theme';
@@ -29,7 +31,9 @@ import {
   ProcessSelectionBlock,
   ProcessSelectionDialog,
   SectionTitle,
-  Section
+  Section,
+  EmptyResourceImage,
+  SectionTitleRight
 } from './components';
 import actionStage from '~/lib/actionStages';
 import useDeliveryManager from '~/hooks/actionManagers/useDeliveryManager';
@@ -142,6 +146,13 @@ const Insufficient = styled.div`
   &:hover {
     opacity: 0.8;
   }
+`;
+
+const PromptToSelectRecipe = styled.div`
+  align-items: center;
+  display: flex;
+  flex-direction: row;
+  padding: 0 8px;
 `;
 
 const ExpandableIcon = styled(ChevronRightIcon)`
@@ -324,13 +335,26 @@ const ShoppingList = ({ asteroid, destination, destinationSlot, stage, ...props 
 
   const { currentDeliveryActions } = useDeliveryManager({ destination, destinationSlot });
 
-  const isInSiteMode = destination?.Building?.status === Building.CONSTRUCTION_STATUSES.PLANNED;
-
   const [processId, setProcessId] = useState();
   const [processSelectorOpen, setProcessSelectorOpen] = useState(false);
   const recipe = useMemo(() => Process.TYPES[processId], [processId]);
   const [recipeTally, setRecipeTally] = useState(1);
   const [isAdditive, setIsAdditive] = useState(false);
+
+  const isInSiteMode = destination?.Building?.status === Building.CONSTRUCTION_STATUSES.PLANNED;
+  useEffect(() => {
+    if (isInSiteMode && destination?.Building?.buildingType) {
+      const constructionProcessId = Object.values(Process.IDS).find((id) => Process.TYPES[id].name === `${Building.TYPES[destination.Building.buildingType].name} Construction`);
+      if (constructionProcessId) {
+        setProcessId(constructionProcessId);
+        setIsAdditive(true);
+      }
+      else if (destination) {
+        console.warn('No construction process found for building type', destination.Building.buildingType);
+        if (props.onClose) props.onClose();
+      }
+    }
+  }, [isInSiteMode, destination?.Building, props.onClose])
 
   const totalTargets = useMemo(() => {
     if (!recipe) return [];
@@ -428,21 +452,74 @@ const ShoppingList = ({ asteroid, destination, destinationSlot, stage, ...props 
     }, {});
   }, [asteroid?.id, crew?._timeAcceleration, crewBonuses, destinationLot?.id, selected, shoppingList]);
 
-  const { taskTimeRequirement, totalPrice, exchangeTally, allFills } = useMemo(() => {
-    return Object.values(selectionSummary).reduce((acc, s) => ({
-      taskTimeRequirement: Math.max(acc.taskTimeRequirement, s.maxTravelTime),
-      totalPrice: acc.totalPrice + (s.totalPrice || 0),
-      exchangeTally: acc.exchangeTally + Object.keys(s.amounts)?.length,
-      allFills: [...acc.allFills, ...s.fills],
-    }), {
-      taskTimeRequirement: 0,
+  const { totalPrice, totalMass, totalVolume, taskTimeRequirement, exchangeTally, allFills } = useMemo(() => {
+    return Object.keys(selectionSummary).reduce((acc, k) => {
+      const s = selectionSummary[k];
+      return {
+        totalPrice: acc.totalPrice + (s.totalPrice || 0),
+        totalMass: acc.totalMass + (s.totalFilled || 0) * Product.TYPES[k].massPerUnit,
+        totalVolume: acc.totalVolume + (s.totalFilled || 0) * Product.TYPES[k].volumePerUnit,
+        taskTimeRequirement: Math.max(acc.taskTimeRequirement, s.maxTravelTime),
+        exchangeTally: acc.exchangeTally + Object.keys(s.amounts)?.length,
+        allFills: [...acc.allFills, ...s.fills],
+      };
+    }, {
       totalPrice: 0,
+      totalMass: 0,
+      totalVolume: 0,
+      taskTimeRequirement: 0,
       exchangeTally: 0,
       allFills: []
     });
   }, [selectionSummary]);
 
   const insufficientSway = useMemo(() => totalPrice * TOKEN_SCALE[TOKEN.SWAY] > swayBalance, [totalPrice, swayBalance]);
+
+  const invConfig = useMemo(() => {
+    if (destinationInventory) {
+      return Inventory.getType(destinationInventory.inventoryType, crew?._inventoryBonuses);
+    }
+    return null;
+  }, [destinationInventory, crew?._inventoryBonuses]);
+
+  const [targetMass, targetVolume] = useMemo(() => {
+    return shoppingList.reduce((acc, { product, amount }) => {
+      acc[0] += amount * product.massPerUnit;
+      acc[1] += amount * product.volumePerUnit;
+      return acc;
+    }, [0, 0]);
+  }, [shoppingList]);
+
+  const insufficientCapacity = useMemo(() => {
+    const massConstraint = invConfig?.massConstraint - (destinationInventory?.mass + destinationInventory?.reservedMass);
+    const volumeConstraint = invConfig?.volumeConstraint - (destinationInventory?.volume + destinationInventory?.reservedVolume);
+
+    if (totalMass > massConstraint || totalVolume > volumeConstraint) return 'error';
+    if (targetMass > massConstraint || targetVolume > volumeConstraint) return 'warning';
+    return null;
+  }, [
+    destinationInventory,
+    invConfig,
+    targetMass,
+    targetVolume,
+    totalMass,
+    totalVolume
+  ]);
+
+  const inventoryConstrained = useMemo(() => {
+    if (invConfig.productConstraints) {
+      const allowed = Object.keys(invConfig.productConstraints);
+      if (Object.keys(selectionSummary).find((k) => selectionSummary[k].totalFilled > 0 && !allowed.includes(k))) return 'error';
+      if (shoppingList.find(({ product }) => !allowed.includes(String(product.i)))) return 'warning';
+    }
+    return null;
+  }, [
+    invConfig,
+    targetMass,
+    targetVolume,
+    totalMass,
+    totalVolume
+  ]);
 
   const handleSelected = useCallback((productId) => (buildingId) => {
     setSelected((old) => {
@@ -551,7 +628,7 @@ const ShoppingList = ({ asteroid, destination, destinationSlot, stage, ...props 
 
   const shoppingListPurchaseTally = useMemo(() => {
     return (pendingTransactions || []).filter((tx) => tx.key === 'BulkFillSellOrder' && tx.meta?.destinationLotId === destinationLot?.id);
-  }, [destinationLot?.id, pendingTransactions])
+  }, [destinationLot?.id, pendingTransactions]);
 
   // if shoppingListPurchaseTally on this lot changes while in `purchasing` mode, close dialog
   useEffect(() => {
@@ -560,29 +637,6 @@ const ShoppingList = ({ asteroid, destination, destinationSlot, stage, ...props 
     }
   }, [shoppingListPurchaseTally]);
 
-
-
-
-
-
-
-
-
-
-  // TODO: "empty" view
-  // TODO: dynamic forcing of construction materials + hide/show recipe selection
-  // TODO: warn if not enough space in inventory (but allow to proceed until selected too many)
-  // TODO: warn if nothing shows up because everything satisfied by inventory
-
-
-
-
-
-
-
-
-
-  
   return (
     <>
       <ActionDialogHeader
@@ -632,19 +686,60 @@ const ShoppingList = ({ asteroid, destination, destinationSlot, stage, ...props 
         )}
 
         <Section>
-          {!isInSiteMode && <SectionTitle>Shopping List</SectionTitle>}
+          {!isInSiteMode && (
+            <SectionTitle>
+              Shopping List
+              {insufficientCapacity && (
+                <>
+                  <b style={{ flex: 1 }} />
+                  <SectionTitleRight style={{ color: theme.colors[insufficientCapacity], fontSize: 16, maxWidth: 256 }}>
+                    {insufficientCapacity === 'warning' && <><WarningOutlineIcon /> Inventory Capacity Warning</>}
+                    {insufficientCapacity === 'error' && <><WarningIcon /> Inventory Capacity Exceeded</>}
+                  </SectionTitleRight>
+                </>
+              )}
+              {!insufficientCapacity && inventoryConstrained && (
+                <>
+                  <b style={{ flex: 1 }} />
+                  <SectionTitleRight style={{ color: theme.colors[inventoryConstrained], fontSize: 16, maxWidth: 256 }}>
+                    {inventoryConstrained === 'warning' && <><WarningOutlineIcon /> Product Constraint Warning</>}
+                    {inventoryConstrained === 'error' && <><WarningIcon /> Product Constraint Error</>}
+                  </SectionTitleRight>
+                </>
+              )}
+            </SectionTitle>
+          )}
         </Section>
         
         <FlexSection style={{ flex: '1 1 calc(100% - 105px)', flexDirection: 'column', marginTop: 0, overflow: 'auto' }}>
           {resourceMarketplacesLoading && !resourceMarketplaces && <PageLoader />}
           {resourceMarketplaces && (
             <ProductList>
+              {!processId && (
+                <PromptToSelectRecipe>
+                  <EmptyResourceImage iconOverride={<InventoryIcon />} size="80px" />
+                  <div style={{ flex: 1, paddingLeft: 10 }}>
+                    Select a recipe above to generate a shopping list.
+                  </div>
+                  <div style={{ fontSize: 28, lineHeight: 0 }}>
+                    <ChevronRightIcon />
+                  </div>
+                </PromptToSelectRecipe>
+              )}
+              {processId && isAdditive && shoppingList.length === 0 && (
+                <PromptToSelectRecipe>
+                  <EmptyResourceImage iconOverride={<CheckedIcon />} iconStyle={{ color: theme.colors.success }} size="80px" />
+                  <div style={{ color: theme.colors.success, flex: 1, paddingLeft: 10 }}>
+                    The existing contents of this inventory already satisfy this recipe configuration.
+                  </div>
+                </PromptToSelectRecipe>
+              )}
               {shoppingList.map(({ product, amount }) => {
                 const hasSelected = selectionSummary[product.i]?.totalFilled > 0;
                 const selectedMarkets = Object.keys(selectionSummary[product.i]?.amounts || {});
                 return (
                   <ProductItem
-                    key={product.id}
+                    key={product.i}
                     selected={openProductId === product.i}>
                     <ProductHeader onClick={handleProductClick(product.i)}>
                       <ResourceRequirement
@@ -744,7 +839,7 @@ const ShoppingList = ({ asteroid, destination, destinationSlot, stage, ...props 
       </ActionDialogBody>
 
       <ActionDialogFooter
-        disabled={!(allFills?.length > 0) || insufficientSway}
+        disabled={!(allFills?.length > 0) || insufficientSway || insufficientCapacity === 'error' || inventoryConstrained === 'error'}
         goLabel="Purchase"
         onGo={handlePurchase}
         stage={stage}

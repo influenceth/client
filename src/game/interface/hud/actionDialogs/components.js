@@ -241,7 +241,7 @@ export const SectionTitle = styled.div`
     }
   `}
 `;
-const SectionTitleRight = styled.div`
+export const SectionTitleRight = styled.div`
   color: white;
   font-size: 19px;
   overflow: hidden;
