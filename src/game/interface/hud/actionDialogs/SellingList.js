@@ -8,6 +8,7 @@ import {
   InventoryIcon,
   MarketBuyIcon,
   MarketplaceBuildingIcon,
+  MarketSellIcon,
   SwayIcon,
   UncheckedIcon,
   WarningIcon,
@@ -221,7 +222,7 @@ const columns = [
           <IconWrapper><SwayIcon /></IconWrapper>
           <div>{formatPrice(row._dynamicUnitPrice, { fixedPrecision: 4, minPrecision: 4 })}</div>
         </div>
-        <small>({row._dynamicSupply.toLocaleString()}{tableState.resource.isAtomic ? '' : ' kg'})</small>
+        <small>({row._dynamicDemand.toLocaleString()}{tableState.resource.isAtomic ? '' : ' kg'})</small>
         {row._isLimited && <LiquidityWarning />}
       </ShoppingListPriceField>
     ),
@@ -255,21 +256,21 @@ export const ProductMarketSummary = ({
     return Object.values(resourceMarketplaces).map((m) => {
       const row = { ...m };
       const remainingToSource = selectionSummary.needed || targetAmount;
-      row._dynamicSupply = Math.min(row.supply, selectionSummary.amounts[m.buildingId] || remainingToSource);
-      row._isLimited = row.supply < remainingToSource;
+      row._dynamicDemand = Math.min(row.demand, selectionSummary.amounts[m.buildingId] || remainingToSource);
+      row._isLimited = row.demand < remainingToSource;
 
       let marketFills = ordersToFills(
-        'buy',
+        'sell',
         row.orders,
-        row._dynamicSupply,
+        row._dynamicDemand,
         row.marketplace?.Exchange?.takerFee || 0,
         crewBonuses?.feeReduction?.totalBonus || 1,
         row.feeEnforcement || 1,
       );
 
-      let total = marketFills.reduce((acc, cur) => acc + cur.fillPaymentTotal, 0) / TOKEN_SCALE[TOKEN.SWAY];
+      let total = marketFills.reduce((acc, cur) => acc + cur.paymentsUnscaled.toPlayer, 0) / TOKEN_SCALE[TOKEN.SWAY];
       row._dynamicTotalPrice = total;
-      row._dynamicUnitPrice = total / row._dynamicSupply;
+      row._dynamicUnitPrice = total / row._dynamicDemand;
       row._fills = marketFills;
       return row;
     });
@@ -313,72 +314,37 @@ export const ProductMarketSummary = ({
   );
 };
 
-const ShoppingList = ({ asteroid, destination, destinationSlot, stage, ...props }) => {
+const SellingList = ({ asteroid, origin, originSlot, initialSelection, preselect, stage, ...props }) => {
   const { execute } = useContext(ChainTransactionContext);
   const { crew, pendingTransactions } = useCrewContext();
-  const { data: swayBalance } = useSwayBalance();
-
-  const dispatchLauncherPage = useStore(s => s.dispatchLauncherPage);
 
   const [openProductId, setOpenProductId] = useState();
-  const [selected, setSelected] = useState({});
+  const [selected, setSelected] = useState(initialSelection || {});
 
-  const { data: exchanges, dataUpdatedAt: exchangesUpdatedAt } = useAsteroidBuildings(asteroid?.id, 'Exchange', Permission.IDS.BUY);
+  const { data: exchanges, dataUpdatedAt: exchangesUpdatedAt } = useAsteroidBuildings(asteroid?.id, 'Exchange', Permission.IDS.SELL);
   const exchangesById = useMemo(() => {
     return (exchanges || []).reduce((acc, cur) => {
       acc[cur.id] = cur;
       return acc;
     }, {});
   }, [exchangesUpdatedAt])
-  const { data: destinationLot } = useLot(locationsArrToObj(destination?.Location?.locations || []).lotId);
-  const destinationInventory = useMemo(() => destination?.Inventories.find((i) => i.slot === destinationSlot), [destination, destinationSlot]);
+  const { data: originLot } = useLot(locationsArrToObj(origin?.Location?.locations || []).lotId);
+  const originInventory = useMemo(() => origin?.Inventories.find((i) => i.slot === originSlot), [origin, originSlot]);
 
-  const { currentDeliveryActions } = useDeliveryManager({ destination, destinationSlot });
+  const [targets, setTargets] = useState(Object.keys(preselect?.selectedItems || {}).map((k) => ({ productId: k, amount: preselect.selectedItems[k] })));
 
-  const [processId, setProcessId] = useState();
-  const [processSelectorOpen, setProcessSelectorOpen] = useState(false);
-  const recipe = useMemo(() => Process.TYPES[processId], [processId]);
-  const [recipeTally, setRecipeTally] = useState(1);
-  const [isAdditive, setIsAdditive] = useState(false);
-
-  const isInSiteMode = destination?.Building?.status === Building.CONSTRUCTION_STATUSES.PLANNED;
-  useEffect(() => {
-    if (isInSiteMode && destination?.Building?.buildingType) {
-      const constructionProcessId = Object.values(Process.IDS).find((id) => Process.TYPES[id].name === `${Building.TYPES[destination.Building.buildingType].name} Construction`);
-      if (constructionProcessId) {
-        setProcessId(constructionProcessId);
-        setIsAdditive(true);
-      }
-      else if (destination) {
-        console.warn('No construction process found for building type', destination.Building.buildingType);
-        if (props.onClose) props.onClose();
-      }
-    }
-  }, [isInSiteMode, destination?.Building, props.onClose])
-
-  // derive targets from selected recipe
-  const totalTargets = useMemo(() => {
-    if (!recipe) return [];
-    return getRecipeRequirements(recipe.inputs, destinationInventory, recipeTally, currentDeliveryActions);
-  }, [currentDeliveryActions, destinationInventory, recipe, recipeTally]);
-
-  // convert targets into shopping list
-  const [shoppingList, productIds] = useMemo(() => {
-    const list = totalTargets
-      .filter((req) => (isAdditive ? req.inNeed : req.totalRequired) > 0)
-      .map((req) => ({
-        product: Product.TYPES[req.i],
-        amount: isAdditive ? req.inNeed : req.totalRequired
-      }));
+  // derive shopping list from selected site
+  const [sellingList, productIds] = useMemo(() => {
+    const list = targets.map(({ productId, amount }) => ({ product: Product.TYPES[productId], amount }));
     return [list, list.map((p) => p.product.i)];
-  }, [isAdditive, totalTargets]);
+  }, [targets]);
 
   const {
     data: resourceMarketplaces,
     dataUpdatedAt: resourceMarketplacesUpdatedAt,
     isLoading: resourceMarketplacesLoading,
     refetch: refetchResourceMarketplaces
-  } = useShoppingListData(asteroid?.id, destinationLot?.id, productIds);
+  } = useShoppingListData(asteroid?.id, originLot?.id, productIds, 'sell');
 
   useInterval(() => { refetchResourceMarketplaces(); }, 60e3); // keep things loosely fresh
 
@@ -400,7 +366,7 @@ const ShoppingList = ({ asteroid, destination, destinationSlot, stage, ...props 
 
   const selectionSummary = useMemo(() => {
     return productIds.reduce((acc, productId) => {
-      const targetAmount = shoppingList.find((l) => l.product.i === productId)?.amount || 0;
+      const targetAmount = sellingList.find((l) => l.product.i === productId)?.amount || 0;
 
       let needed = targetAmount;
       let totalPrice = 0;
@@ -410,21 +376,21 @@ const ShoppingList = ({ asteroid, destination, destinationSlot, stage, ...props 
       (selected[productId] || [])
         // TODO: should we index resourceMarketplaces by buildingId to simplify this?
         .map((buildingId) => resourceMarketplaces[productId].find((m) => m.buildingId === buildingId))
-        .sort((a, b) => a.supply - b.supply)
+        .sort((a, b) => a.demand - b.demand)
         .forEach((row) => {
           selectedAmounts[row.buildingId] = 0;
           maxTravelTime = Math.max(
             maxTravelTime,
             Time.toRealDuration(
               Asteroid.getLotTravelTime(
-                asteroid?.id, Lot.toIndex(row.lotId), Lot.toIndex(destinationLot?.id), crewBonuses?.hopperTransport.totalBonus, crewBonuses?.freeTransport.totalBonus
+                asteroid?.id, Lot.toIndex(originLot?.id), Lot.toIndex(row.lotId), crewBonuses?.hopperTransport.totalBonus, crewBonuses?.freeTransport.totalBonus
               ),
               crew?._timeAcceleration
             )
           );
 
           const fills = ordersToFills(
-            'buy',
+            'sell',
             row.orders,
             needed,
             row.marketplace?.Exchange?.takerFee || 0,
@@ -435,7 +401,7 @@ const ShoppingList = ({ asteroid, destination, destinationSlot, stage, ...props 
           fills.forEach((fill) => {
             selectedAmounts[row.buildingId] += fill.fillAmount;
             needed -= fill.fillAmount;
-            totalPrice += fill.fillPaymentTotal;
+            totalPrice += fill.paymentsUnscaled.toPlayer;
           });
 
           allFills.push(...fills);
@@ -451,7 +417,7 @@ const ShoppingList = ({ asteroid, destination, destinationSlot, stage, ...props 
       };
       return acc;
     }, {});
-  }, [asteroid?.id, crew?._timeAcceleration, crewBonuses, destinationLot?.id, selected, shoppingList]);
+  }, [asteroid?.id, crew?._timeAcceleration, crewBonuses, originLot?.id, selected, sellingList]);
 
   const { totalPrice, totalMass, totalVolume, taskTimeRequirement, exchangeTally, allFills } = useMemo(() => {
     return Object.keys(selectionSummary).reduce((acc, k) => {
@@ -460,7 +426,7 @@ const ShoppingList = ({ asteroid, destination, destinationSlot, stage, ...props 
         totalPrice: acc.totalPrice + (s.totalPrice || 0),
         totalMass: acc.totalMass + (s.totalFilled || 0) * Product.TYPES[k].massPerUnit,
         totalVolume: acc.totalVolume + (s.totalFilled || 0) * Product.TYPES[k].volumePerUnit,
-        taskTimeRequirement: Math.max(acc.taskTimeRequirement, s.maxTravelTime),
+        taskTimeRequirement: 0, // there is transport time, but my crew doesn't have to wait on it... Math.max(acc.taskTimeRequirement, s.maxTravelTime),
         exchangeTally: acc.exchangeTally + Object.keys(s.amounts)?.length,
         allFills: [...acc.allFills, ...s.fills],
       };
@@ -473,54 +439,6 @@ const ShoppingList = ({ asteroid, destination, destinationSlot, stage, ...props 
       allFills: []
     });
   }, [selectionSummary]);
-
-  const insufficientSway = useMemo(() => totalPrice * TOKEN_SCALE[TOKEN.SWAY] > swayBalance, [totalPrice, swayBalance]);
-
-  const invConfig = useMemo(() => {
-    if (destinationInventory) {
-      return Inventory.getType(destinationInventory.inventoryType, crew?._inventoryBonuses);
-    }
-    return null;
-  }, [destinationInventory, crew?._inventoryBonuses]);
-
-  const [targetMass, targetVolume] = useMemo(() => {
-    return shoppingList.reduce((acc, { product, amount }) => {
-      acc[0] += amount * product.massPerUnit;
-      acc[1] += amount * product.volumePerUnit;
-      return acc;
-    }, [0, 0]);
-  }, [shoppingList]);
-
-  const insufficientCapacity = useMemo(() => {
-    const massConstraint = invConfig?.massConstraint - (destinationInventory?.mass + destinationInventory?.reservedMass);
-    const volumeConstraint = invConfig?.volumeConstraint - (destinationInventory?.volume + destinationInventory?.reservedVolume);
-
-    if (totalMass > massConstraint || totalVolume > volumeConstraint) return 'error';
-    if (targetMass > massConstraint || targetVolume > volumeConstraint) return 'warning';
-    return null;
-  }, [
-    destinationInventory,
-    invConfig,
-    targetMass,
-    targetVolume,
-    totalMass,
-    totalVolume
-  ]);
-
-  const inventoryConstrained = useMemo(() => {
-    if (invConfig.productConstraints) {
-      const allowed = Object.keys(invConfig.productConstraints);
-      if (Object.keys(selectionSummary).find((k) => selectionSummary[k].totalFilled > 0 && !allowed.includes(k))) return 'error';
-      if (shoppingList.find(({ product }) => !allowed.includes(String(product.i)))) return 'warning';
-    }
-    return null;
-  }, [
-    invConfig,
-    targetMass,
-    targetVolume,
-    totalMass,
-    totalVolume
-  ]);
 
   const handleSelected = useCallback((productId) => (buildingId) => {
     setSelected((old) => {
@@ -559,12 +477,12 @@ const ShoppingList = ({ asteroid, destination, destinationSlot, stage, ...props 
     });
   }, [resourceMarketplacesUpdatedAt, selected])
 
-  const [purchasing, setPurchasing] = useState();
-  const handlePurchase = useCallback(async () => {
+  const [selling, setSelling] = useState();
+  const handleSell = useCallback(async () => {
     // TODO: do syncronous refetch and return if significant change (i.e. > 2% change in price or anything that was satisfied is now unsatisfied)
-    setPurchasing(true);
+    setSelling(true);
     try {
-      // load all sellerCrews and exchangeControllerCrews
+      // load all buyerCrews and exchangeControllerCrews
       // TODO: technically, can skip loading exchangeControllerCrews if fees 0?
       // TODO: in an upcoming update, crew.delegatedBy may be returned on the exchanges...
       //  should update to skip redundantly fetching of the controller crew here
@@ -578,33 +496,43 @@ const ShoppingList = ({ asteroid, destination, destinationSlot, stage, ...props 
 
       const crews = await api.getEntities({ ids: Array.from(allCrewIds), label: Entity.IDS.CREW, component: 'Crew' });
 
-      // TODO: could move this all into useMarketplaceManager but would have to rework it the manager some
       await execute(
-        'BulkFillSellOrder',
+        'EscrowWithdrawalAndFillBuyOrders',
         allFills.map((fill) => {
           const exchangeControllerId = exchangesById[fill.entity.id]?.Control?.controller?.id;
           return {
-            seller_account: crews.find((c) => c.id === fill.crew?.id)?.Crew?.delegatedTo,
+            depositCaller: fill.initialCaller,
+            seller_account: crew?.Crew?.delegatedTo,
             exchange_owner_account: crews.find((c) => c.id === exchangeControllerId)?.Crew?.delegatedTo,
-            takerFee: fill.takerFee,
+            makerFee: fill.makerFee,// ? / Order.FEE_SCALE,
             payments: fill.paymentsUnscaled,
-
-            seller_crew: { id: fill.crew?.id, label: fill.crew?.label },
+            origin: { id: origin?.id, label: origin?.label },
+            origin_slot: originSlot,
+            product: fill.product,
             amount: fill.fillAmount,
-            price: fill.price * TOKEN_SCALE[TOKEN.SWAY],
+            buyer_crew: { id: fill.crew?.id, label: fill.crew?.label },
+            price: Math.round(fill.price * TOKEN_SCALE[TOKEN.SWAY]),
             storage: { id: fill.storage?.id, label: fill.storage?.label },
             storage_slot: fill.storageSlot,
-
-            product: fill.product,
-            destination: { id: destination?.id, label: destination?.label },
-            destination_slot: destinationSlot,
-
             exchange: { id: fill.entity.id, label: fill.entity.label },
             caller_crew: { id: crew?.id, label: crew?.label }
           };
         }),
         {
-          destinationLotId: destinationLot?.id,
+          originLotId: originLot?.id,
+        },
+      );
+
+      await execute(
+        'BulkFillBuyOrder',
+        allFills.map((fill) => {
+          const exchangeControllerId = exchangesById[fill.entity.id]?.Control?.controller?.id;
+          return {
+            
+          };
+        }),
+        {
+          originLotId: originLot?.id,
         },
       );
 
@@ -613,41 +541,36 @@ const ShoppingList = ({ asteroid, destination, destinationSlot, stage, ...props 
 
     } finally {
       setTimeout(() => {
-        setPurchasing(false);
+        setSelling(false);
       }, 1000);
     }
 
-  }, [allFills, crew?.id, destination, destinationLot?.id, destinationSlot, exchangesUpdatedAt, execute]);
+  }, [allFills, crew?.id, origin, originLot?.id, originSlot, exchangesUpdatedAt, execute]);
 
   const handleProductClick = useCallback((productId) => () => {
     setOpenProductId((p) => p === productId ? null : productId);
   }, []);
 
-  const goToSwayStore = useCallback(() => {
-    dispatchLauncherPage('store', 'sway');
-  }, []);
+  const sellingListSaleTally = useMemo(() => {
+    return (pendingTransactions || []).filter((tx) => tx.key === 'BulkFillBuyOrder' && tx.meta?.originLotId === originLot?.id);
+  }, [originLot?.id, pendingTransactions]);
 
-  const shoppingListPurchaseTally = useMemo(() => {
-    return (pendingTransactions || []).filter((tx) => tx.key === 'BulkFillSellOrder' && tx.meta?.destinationLotId === destinationLot?.id);
-  }, [destinationLot?.id, pendingTransactions]);
-
-  // if shoppingListPurchaseTally on this lot changes while in `purchasing` mode, close dialog
+  // if sellingListSaleTally on this lot changes while in `purchasing` mode, close dialog
   useEffect(() => {
-    if (purchasing && props.onClose) {
+    if (selling && props.onClose) {
       props.onClose();
     }
-  }, [shoppingListPurchaseTally]);
+  }, [sellingListSaleTally]);
 
   return (
     <>
       <ActionDialogHeader
         action={{
-          icon: <MarketBuyIcon />,
-          label: isInSiteMode ? 'Source Materials' : 'Market Buy Multiple',
-          status: isInSiteMode && stage === actionStage.NOT_STARTED ? 'Source Remaining Materials' : undefined,
+          icon: <MarketSellIcon />,
+          label: 'Market Sell Multiple',
         }}
         actionCrew={crew}
-        location={{ asteroid, lot: destinationLot }}
+        location={{ asteroid, lot: originLot }}
         crewAvailableTime={0}
         taskCompleteTime={taskTimeRequirement}
         onClose={props.onClose}
@@ -655,87 +578,14 @@ const ShoppingList = ({ asteroid, destination, destinationSlot, stage, ...props 
 
       <ActionDialogBody style={{ display: 'flex', flexDirection: 'column' }}>
 
-        {!isInSiteMode && (
-          <FlexSection>
-            <FlexSectionBlock title="Recipe" bodyStyle={{ alignItems: 'center', display: 'flex', flexDirection: 'row', height: 'auto',  }} style={{ width: '100%' }}>
-              <div style={{ alignItems: 'center', display: 'flex' }}>
-                <UncontrolledTextInput
-                  disabled={stage !== actionStage.NOT_STARTED}
-                  onChange={(e) => setRecipeTally(e.currentTarget.value)}
-                  step={0.1}
-                  max={1e6}
-                  min={1}
-                  type="number"
-                  style={{ textAlign: 'right', height: 40, width: 80 }}
-                  value={recipeTally} />
-              </div>
-              <div style={{ textAlign: 'center', width: 24 }}>x</div>
-              <div>
-                <ProcessSelectionBlock
-                  height={40}
-                  width={350}
-                  onClick={stage === actionStage.NOT_STARTED ? () => setProcessSelectorOpen(true) : undefined}
-                  selectedProcess={recipe} />
-              </div>
-              <div style={{ flex: 1, textAlign: 'right' }}>
-                <CheckboxLabel onClick={() => setIsAdditive((a) => !a)} selected={isAdditive}>
-                  {isAdditive ? <CheckedIcon /> : <UncheckedIcon />} <span>Include Existing Contents</span>
-                </CheckboxLabel>
-              </div>
-            </FlexSectionBlock>
-          </FlexSection>
-        )}
-
-        <Section>
-          {!isInSiteMode && (
-            <SectionTitle>
-              Shopping List
-              {insufficientCapacity && (
-                <>
-                  <b style={{ flex: 1 }} />
-                  <SectionTitleRight style={{ color: theme.colors[insufficientCapacity], fontSize: 16, maxWidth: 256 }}>
-                    {insufficientCapacity === 'warning' && <><WarningOutlineIcon /> Inventory Capacity Warning</>}
-                    {insufficientCapacity === 'error' && <><WarningIcon /> Inventory Capacity Exceeded</>}
-                  </SectionTitleRight>
-                </>
-              )}
-              {!insufficientCapacity && inventoryConstrained && (
-                <>
-                  <b style={{ flex: 1 }} />
-                  <SectionTitleRight style={{ color: theme.colors[inventoryConstrained], fontSize: 16, maxWidth: 256 }}>
-                    {inventoryConstrained === 'warning' && <><WarningOutlineIcon /> Product Constraint Warning</>}
-                    {inventoryConstrained === 'error' && <><WarningIcon /> Product Constraint Error</>}
-                  </SectionTitleRight>
-                </>
-              )}
-            </SectionTitle>
-          )}
-        </Section>
+        <Section><SectionTitle>Sell Items</SectionTitle></Section>
         
         <FlexSection style={{ flex: '1 1 calc(100% - 105px)', flexDirection: 'column', marginTop: 0, overflow: 'auto' }}>
           {resourceMarketplacesLoading && !resourceMarketplaces && <PageLoader />}
           {resourceMarketplaces && (
             <ProductList>
-              {!processId && (
-                <PromptToSelectRecipe>
-                  <EmptyResourceImage iconOverride={<InventoryIcon />} size="80px" />
-                  <div style={{ flex: 1, paddingLeft: 10 }}>
-                    Select a recipe above to generate a shopping list.
-                  </div>
-                  <div style={{ fontSize: 28, lineHeight: 0 }}>
-                    <ChevronRightIcon />
-                  </div>
-                </PromptToSelectRecipe>
-              )}
-              {processId && isAdditive && shoppingList.length === 0 && (
-                <PromptToSelectRecipe>
-                  <EmptyResourceImage iconOverride={<CheckedIcon />} iconStyle={{ color: theme.colors.success }} size="80px" />
-                  <div style={{ color: theme.colors.success, flex: 1, paddingLeft: 10 }}>
-                    The existing contents of this inventory already satisfy this recipe configuration.
-                  </div>
-                </PromptToSelectRecipe>
-              )}
-              {shoppingList.map(({ product, amount }) => {
+              {/* TODO: add to list */}
+              {sellingList.map(({ product, amount }) => {
                 const hasSelected = selectionSummary[product.i]?.totalFilled > 0;
                 const selectedMarkets = Object.keys(selectionSummary[product.i]?.amounts || {});
                 return (
@@ -752,8 +602,8 @@ const ShoppingList = ({ asteroid, destination, destinationSlot, stage, ...props 
                       <Basics hasSelected={hasSelected}>
                         <h4>{product.name}</h4>
                         <div>
-                          {selectedMarkets.length === 1 && `From ${formatters.buildingName(exchangesById[selectedMarkets[0]])}`}
-                          {selectedMarkets.length > 1 && `From ${selectedMarkets.length} Marketplaces`}
+                          {selectedMarkets.length === 1 && `To ${formatters.buildingName(exchangesById[selectedMarkets[0]])}`}
+                          {selectedMarkets.length > 1 && `To ${selectedMarkets.length} Marketplaces`}
                         </div>
                       </Basics>
                       {hasSelected
@@ -790,7 +640,7 @@ const ShoppingList = ({ asteroid, destination, destinationSlot, stage, ...props 
                             <ProductMarketSummary
                               asteroidId={asteroid?.id}
                               crewBonuses={crewBonuses}
-                              lotId={destinationLot?.id}
+                              lotId={originLot?.id}
                               productId={product.i}
                               selected={selected[product.i]}
                               selectionSummary={selectionSummary[product.i]}
@@ -800,7 +650,7 @@ const ShoppingList = ({ asteroid, destination, destinationSlot, stage, ...props 
                           )
                           : (
                             <EmptyMessage>
-                              There are currently no accessible marketplaces on <b>{asteroid?.Name?.name}</b> with <b>{product.name}</b> available for purchase.
+                              There are currently no accessible marketplaces on <b>{asteroid?.Name?.name}</b> with available demand for <b>{product.name}</b>.
                             </EmptyMessage>
                           )
                       )
@@ -818,19 +668,18 @@ const ShoppingList = ({ asteroid, destination, destinationSlot, stage, ...props 
         <FlexSection style={{ flex: '0 0 105px' }}>
           <FlexSectionBlock
             title="Orders Total"
-            titleDetails={<Insufficient onClick={goToSwayStore} visible={insufficientSway}><b>+</b> Get More Sway</Insufficient>}
             bodyStyle={{ height: 'auto', padding: 0 }}
             style={{ width: '100%', marginTop: 10 }}>
-            <MarketplaceAlert scheme={totalPrice === 0 ? 'empty' : (insufficientSway ? 'error' : 'success')}>
+            <MarketplaceAlert scheme={totalPrice === 0 ? 'empty' : 'success'}>
               <div>
                 <div>
-                  <label>Market Buy</label>
+                  <label>Market Sell</label>
                   <div style={{ fontSize: '100%' }}><b>{exchangeTally || 0} Order{exchangeTally === 1 ? '' : 's'}</b></div>
                 </div>
                 <div>
                   <label>Total</label>
                   <span>
-                    <SwayIcon /> {totalPrice > 0.5 ? '-' : ''}{formatFixed(totalPrice || 0)}
+                    <SwayIcon /> {totalPrice > 0.5 ? '+' : ''}{formatFixed(totalPrice || 0)}
                   </span>
                 </div>
               </div>
@@ -840,20 +689,15 @@ const ShoppingList = ({ asteroid, destination, destinationSlot, stage, ...props 
       </ActionDialogBody>
 
       <ActionDialogFooter
-        disabled={!(allFills?.length > 0) || insufficientSway || insufficientCapacity === 'error' || inventoryConstrained === 'error'}
-        goLabel="Purchase"
-        onGo={handlePurchase}
+        disabled={!(allFills?.length > 0)}
+        goLabel="Sell Items"
+        onGo={handleSell}
         stage={stage}
         {...props} />
 
       {stage === actionStage.NOT_STARTED && (
         <>
-          <ProcessSelectionDialog
-            initialSelection={processId}
-            onClose={() => setProcessSelectorOpen(false)}
-            onSelected={setProcessId}
-            open={processSelectorOpen}
-          />
+          {/* TODO: inventory selection */}
         </>
       )}
     </>
@@ -864,29 +708,29 @@ const Wrapper = (props) => {
   const { asteroid, lot, isLoading } = useAsteroidAndLot(props);
   const actionManager = { actionStage: actionStage.NOT_STARTED };
 
-  const [destination, destinationSlot] = useMemo(() => {
-    const destination = props.destination || lot?.building;
-    const destinationSlot = props.destinationSlot || destination?.Inventories.find((i) => i.status === Inventory.STATUSES.AVAILABLE)?.slot;
-    return [destination, destinationSlot];
-  }, [lot?.building, props.destination, props.destinationSlot]);
+  const [origin, originSlot] = useMemo(() => {
+    const origin = props.origin || lot?.building;
+    const originSlot = props.originSlot || origin?.Inventories.find((i) => i.status === Inventory.STATUSES.AVAILABLE)?.slot;
+    return [origin, originSlot];
+  }, [lot?.building, props.origin, props.originSlot]);
 
   useEffect(() => {
-    if (!asteroid || !lot || !destination || !destinationSlot) {
+    if (!asteroid || !lot || !origin || !originSlot) {
       if (!isLoading) {
         if (props.onClose) props.onClose();
       }
     }
-  }, [asteroid, lot, destination, destinationSlot, isLoading]);
+  }, [asteroid, lot, origin, originSlot, isLoading]);
 
   return (
     <ActionDialogInner
       actionImage="Marketplace"
       isLoading={reactBool(isLoading)}
       stage={actionManager.actionStage}>
-      <ShoppingList
+      <SellingList
         asteroid={asteroid}
-        destination={destination}
-        destinationSlot={destinationSlot}
+        origin={origin}
+        originSlot={originSlot}
         actionManager={actionManager}
         stage={actionManager.actionStage}
         {...props} />

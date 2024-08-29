@@ -577,7 +577,7 @@ const api = {
     })) || [];
   },
 
-  getSellOrdersByProduct: async (asteroidId, product) => {
+  getOrdersByProduct: async (asteroidId, product, orderType) => {
     const queryBuilder = esb.boolQuery();
 
     // asteroid
@@ -596,7 +596,7 @@ const api = {
     }
     
     // open sell order
-    queryBuilder.filter(esb.termQuery('orderType', Order.IDS.LIMIT_SELL));
+    queryBuilder.filter(esb.termQuery('orderType', orderType));
     queryBuilder.filter(esb.termQuery('status', Order.STATUSES.OPEN));
     queryBuilder.filter(esb.rangeQuery('validTime').lte(Math.floor(Date.now() / 1000)));
     

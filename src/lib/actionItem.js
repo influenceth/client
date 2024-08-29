@@ -359,7 +359,7 @@ const formatAsTx = (item) => {
       formatted.icon = <MarketSellIcon />;
       formatted.label = item.meta?.isCancellation ? 'Cancel Buy Order' : 'Market Sell';
       formatted.asteroidId = asteroidId;
-      formatted.lotId = item.meta?.lotId;
+      formatted.lotId = item.meta?.lotId || item.meta.originLotId;
       formatted.locationDetail = Product.TYPES[item.vars[0].product]?.name;
       formatted.onClick = ({ openDialog }) => {
         if (item.meta?.isCancellation) {
@@ -378,7 +378,7 @@ const formatAsTx = (item) => {
               storageSlot: item.vars[0].origin_slot
             }
           });
-        } else {
+        } else if (item.meta?.lotId) {
           openDialog('MARKETPLACE_ORDER', {
             asteroidId,
             lotId: item.meta?.lotId,
@@ -391,6 +391,9 @@ const formatAsTx = (item) => {
               storageSlot: item.vars[0].originSlot
             }
           });
+        } else {
+          // just passed originLotId, which indicates it was a multisell and panned to the origin
+          // (instead of the exchange, as it would do for a typical sell)
         }
       };
       break;

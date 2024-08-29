@@ -6,7 +6,7 @@ import { Tooltip } from 'react-tooltip';
 import { Delivery, Inventory, Permission, Product } from '@influenceth/sdk';
 
 import Dropdown from '~/components/Dropdown';
-import { DotsIcon } from '~/components/Icons';
+import { CheckedIcon, DotsIcon, UncheckedIcon } from '~/components/Icons';
 import ResourceThumbnail, { ResourceProgress } from '~/components/ResourceThumbnail';
 import useActionButtons from '~/hooks/useActionButtons';
 import useLot from '~/hooks/useLot';
@@ -245,6 +245,22 @@ const QuantaInput = styled.input`
   width: 100%;
 `;
 
+const ToggleAll = styled.div`
+  align-items: center;
+  cursor: ${p => p.theme.cursors.active};
+  display: flex;
+  font-size: 15px;
+  opacity: 0.7;
+  & > svg {
+    color: ${p => p.theme.colors.main};
+    margin-right: 5px;
+  }
+
+  &:hover {
+    opacity: 1;
+  }
+`;
+
 const StackSplitterPopper = ({ children, referenceEl }) => {
   const [popperEl, setPopperEl] = useState();
   const { styles, attributes } = usePopper(referenceEl, popperEl, {
@@ -466,6 +482,20 @@ const LotInventory = () => {
     }
   }, []);
 
+  const isAllSelected = useMemo(() => {
+    return Object.keys(selectedItems).length === sortedResources.length;
+  }, [selectedItems, sortedResources]);
+
+  const toggleAll = useCallback(() => {
+    setSelectedItems((s) => {
+      if (isAllSelected) return {};
+      return sortedResources.reduce((acc, resourceId) => {
+        acc[resourceId] = inventory.contentsObj[resourceId];
+        return acc;
+      }, {});
+    });
+  }, [isAllSelected, sortedResources]);
+
   const trayLabel = useMemo(() => {
     const selectedTally = Object.keys(selectedItems).length;
     if (selectedTally > 0) {
@@ -547,7 +577,14 @@ const LotInventory = () => {
               style={{ flex: 1, width: 170 }}
             />
 
-            {/* TODO: mass / volume view toggle */}
+            {sortedResources.length > 0 && (
+              <ToggleAll onClick={toggleAll}>
+                {isAllSelected
+                  ? <><UncheckedIcon /> Deselect All</>
+                  : <><CheckedIcon /> Select All</>
+                }
+              </ToggleAll>
+            )}
           </Controls>
           <InventoryItems onScroll={onInventoryScroll}>
             {splittingResourceId && (
@@ -623,13 +660,11 @@ const LotInventory = () => {
                 dialogProps={{ destination: entity, destinationSlot: inventorySlot }}
               />
           
-              {/* hide for now
               <actionButtons.MultiSell.Component
                 {...actionProps}
                 _disabledReason={removalDisabledReason}
                 dialogProps={{ origin: entity, originSlot: inventorySlot, preselect: { selectedItems } }}
               />
-              */}
 
               <actionButtons.JettisonCargo.Component
                 {...actionProps}

@@ -342,7 +342,7 @@ export const ordersToFills = (mode, orders, amountToFill, takerFee, feeReduction
           takerFee,
           fillAmount: levelAmount,
           fillValue: levelValue,
-          fillPaymentTotal: Math.round((paymentsUnscaled.toExchange || 0) + (paymentsUnscaled.toPlayer || 0)),
+          fillPaymentTotal: Math.round((paymentsUnscaled.toPlayer || 0) + (paymentsUnscaled.toExchange || 0)),
           paymentsUnscaled: paymentsUnscaled
         });
         if (isDestructive) {

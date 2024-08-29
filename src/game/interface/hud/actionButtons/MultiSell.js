@@ -12,7 +12,7 @@ const MultiSell = ({ asteroid, blockTime, crew, lot, ship, onSetAction, dialogPr
   const { pendingAction } = useMarketplaceManager(origin);
 
   const handleClick = useCallback(() => {
-    onSetAction('SHOPPING_LIST', { origin, ...dialogProps }); // originSlot (if not set, use primary)
+    onSetAction('SELLING_LIST', { origin, ...dialogProps }); // originSlot (if not set, use primary)
   }, [dialogProps, origin]);
 
   const disabledReason = useMemo(() => {
