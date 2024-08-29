@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQueryClient } from 'react-query';
-import { Entity, Lot } from '@influenceth/sdk';
+import { Building, Entity, Lot } from '@influenceth/sdk';
 
 import { options as lotLeaseOptions } from '~/components/filters/LotLeaseFilter';
 import useAsteroidCrewBuildings from '~/hooks/useAsteroidCrewBuildings';
@@ -192,7 +192,7 @@ const useMappedAsteroidLots = (i) => {
       const _location = locationsArrToObj(building?.Location?.locations || []);
       asteroidId = _location.asteroidId;
       lotIndex = _location.lotIndex;
-      buildingType = building?.Building?.buildingType; // TODO: should we cast this?
+      buildingType = Building.TYPES[building?.Building?.buildingType]?.category;; // TODO: should we cast this?
 
     // building -> construction site (buildingType -> 14)
     } else if (eventType === 'ConstructionDeconstructed') {
