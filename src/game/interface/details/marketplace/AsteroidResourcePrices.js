@@ -115,7 +115,7 @@ const SelectedMarketplace = styled.div`
     display: block;
     font-size: 24px;
     margin-bottom: 12px;
-  }  
+  }
   & > div:last-child {
     align-items: center;
     display: flex;
@@ -165,7 +165,7 @@ const AsteroidResourcePrices = ({ asteroid, mode, resource }) => {
 
   const { crew, crewCan } = useCrewContext();
   const [selected, setSelected] = useState();
-  const [sort, setSort] = useState([`distance`,'dec']);
+  const [sort, setSort] = useState(['distance', 'asc']);
   const [sortField, sortDirection] = sort;
 
   const setCoachmarkRef = useCoachmarkRefSetter();
@@ -267,16 +267,31 @@ const AsteroidResourcePrices = ({ asteroid, mode, resource }) => {
   }, [sortDirection, sortField]);
 
   const sortedMarketplaces = useMemo(() => {
-    return (resourceMarketplaces || [])
-      .sort(function(a,b) {
-        var sortToBottom = [ 0 ], indexA, indexB;
-        indexA = sortToBottom.indexOf(a[sortField]);
-        indexB = sortToBottom.indexOf(b[sortField]);
-        if (indexA === -1 && indexB === -1) {
-          return (sortDirection === 'asc' ? 1 : -1) * (a[sortField] > b[sortField] ? -1 : 1); // normal sorting
-        }
-        return indexA - indexB; // sort to the bottom
-      });
+    const fieldSortOrder = (a, b) => {
+      if (a[sortField] < b[sortField]) {
+        return sortDirection === 'asc' ? -1 : 1;
+      } else if (a[sortField] > b[sortField]) {
+        return sortDirection === 'asc' ? 1 : -1;
+      } else {
+        return 0;
+      }
+    };
+
+    return (resourceMarketplaces || []).sort((a,b) => {
+      // Check if both supply and demand are zero
+      const aIsZeroGroup = !a.supply && !a.demand;
+      const bIsZeroGroup = !b.supply && !b.demand;
+
+      // Prioritize non-zero groups
+      if (!aIsZeroGroup && bIsZeroGroup) {
+          return -1;
+      } else if (aIsZeroGroup && !bIsZeroGroup) {
+          return 1;
+      }
+
+      // If both items are in the same group, sort based on the sortField and sortDirection
+      return fieldSortOrder(a, b);
+    });
   }, [resourceMarketplaces, sortField, sortDirection]);
 
   const columns = useMemo(() => {
@@ -399,8 +414,8 @@ const AsteroidResourcePrices = ({ asteroid, mode, resource }) => {
               `}>
             {row.makerFee === row.takerFee && row.makerFee === 0
               ? <Empty>None</Empty>
-              : row.makerFee != row.takerFee 
-                ? <>{row.takerFee === 0 
+              : row.makerFee != row.takerFee
+                ? <>{row.takerFee === 0
                   ? <>{(row.makerFee / 100)}% / 0%</>
                   : <>None / {(row.takerFee / 100)}%</>
                 }</>
@@ -410,32 +425,6 @@ const AsteroidResourcePrices = ({ asteroid, mode, resource }) => {
           </>
         )
       },
-      // {
-      //   key: 'lotId',
-      //   label: 'Lot ID',
-      //   sortField: 'lotId',
-      //   selector: row => (
-      //     <>
-      //       <LocationLink
-      //         asteroidId={asteroid.id}
-      //         lotId={row.lotId}
-      //         zoomToLot
-      //         data-tooltip-id="detailsTooltip" />
-      //       <span>{formatters.lotName(row.lotId)}</span>
-      //     </>
-      //   )
-      // },
-      // {
-      //   key: 'centerPrice',
-      //   label: 'Center Price',
-      //   sortField: 'centerPrice',
-      //   selector: row => (
-      //     <>
-      //       <IconWrapper><SwayIcon /></IconWrapper>
-      //       {formatPrice(row.centerPrice, { fixedPrecision: 4 })}
-      //     </>
-      //   )
-      // },
       {
         key: 'permissions',
         label: 'permissions',
