@@ -621,11 +621,13 @@ const LotInventory = () => {
                 dialogProps={{ destination: entity, destinationSlot: inventorySlot }}
               />
           
+              {/* hide for now
               <actionButtons.MultiSell.Component
                 {...actionProps}
                 _disabledReason={removalDisabledReason}
                 dialogProps={{ origin: entity, originSlot: inventorySlot, preselect: { selectedItems } }}
               />
+              */}
 
               <actionButtons.JettisonCargo.Component
                 {...actionProps}
