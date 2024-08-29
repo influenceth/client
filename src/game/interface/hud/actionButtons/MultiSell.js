@@ -1,29 +1,24 @@
 import { useCallback, useMemo } from 'react';
 import { Inventory, Permission } from '@influenceth/sdk';
 
-import { JettisonCargoIcon } from '~/components/Icons';
-import useJettisonCargoManager from '~/hooks/actionManagers/useJettisonCargoManager';
-import theme from '~/theme';
+import { MultiSellIcon } from '~/components/Icons';
+import useMarketplaceManager from '~/hooks/actionManagers/useMarketplaceManager';
 import ActionButton, { getCrewDisabledReason } from './ActionButton';
 
 const isVisible = ({ crew, lot, ship }) => false;
-/* IF WANT TO EXPOSE IN MAIN TRAY: {
-  const entity = ship || lot?.surfaceShip || lot?.building;
-  return crew && ((entity?.Inventories || []).find((i) => i.status === Inventory.STATUSES.AVAILABLE));
-};*/
 
-const JettisonCargo = ({ asteroid, blockTime, crew, lot, ship, onSetAction, dialogProps = {}, _disabled, _disabledReason }) => {
+const MultiSell = ({ asteroid, blockTime, crew, lot, ship, onSetAction, dialogProps = {}, _disabled, _disabledReason }) => {
   const origin = useMemo(() => ship || lot?.surfaceShip || lot?.building, [ship, lot]);
-  const { currentJettison } = useJettisonCargoManager(origin);
+  const { pendingAction } = useMarketplaceManager(origin);
 
   const handleClick = useCallback(() => {
-    onSetAction('JETTISON_CARGO', { origin, ...dialogProps });
+    onSetAction('SHOPPING_LIST', { origin, ...dialogProps }); // originSlot (if not set, use primary)
   }, [dialogProps, origin]);
 
   const disabledReason = useMemo(() => {
     if (_disabledReason) return _disabledReason;
     if (_disabled) return 'loading...';
-    if (currentJettison) return 'jettisoning...';
+    if (pendingAction) return 'transacting...';
     
     const hasMass = (origin.Inventories || []).find((i) => i.status === Inventory.STATUSES.AVAILABLE && i.mass > 0);
     if (!hasMass) return 'inventory empty';
@@ -31,20 +26,19 @@ const JettisonCargo = ({ asteroid, blockTime, crew, lot, ship, onSetAction, dial
     return getCrewDisabledReason({
       asteroid, blockTime, crew, permission: Permission.IDS.REMOVE_PRODUCTS, permissionTarget: origin, requireReady: false
     });
-  }, [asteroid, blockTime, crew, _disabled, _disabledReason, currentJettison]);
+  }, [asteroid, blockTime, crew, _disabled, _disabledReason, pendingAction]);
 
   return (
     <ActionButton
-      label="Jettison Selected"
+      label="Market Sell Selected"
       labelAddendum={disabledReason}
       flags={{
         disabled: _disabled || disabledReason,
-        loading: currentJettison
+        loading: pendingAction
       }}
-      icon={<JettisonCargoIcon />}
-      onClick={handleClick}
-      overrideColor={theme.colors.red} />
+      icon={<MultiSellIcon />}
+      onClick={handleClick} />
   );
 };
 
-export default { Component: JettisonCargo, isVisible };
+export default { Component: MultiSell, isVisible };

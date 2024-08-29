@@ -4,11 +4,8 @@ import { Asteroid, Crewmate, Lot, Permission, Process, Processor, Product, Time 
 
 import {
   BackIcon,
-  CaretIcon,
-  CloseIcon,
   ForwardIcon,
   RefineIcon,
-  ProductionIcon,
   GrowIcon,
   AssembleIcon,
   InventoryIcon,
@@ -26,8 +23,6 @@ import {
   FlexSection,
   FlexSectionSpacer,
   FlexSectionBlock,
-  FlexSectionInputBody,
-  sectionBodyCornerSize,
   RecipeSlider,
   TransferDistanceDetails,
   formatMass,
@@ -41,41 +36,18 @@ import {
   InventoryInputBlock,
   ProcessInputOutputSection,
   formatVolume,
-  ProgressBarSection
+  ProgressBarSection,
+  ProcessSelectionBlock
 } from './components';
 import useLot from '~/hooks/useLot';
 import { ActionDialogInner, useAsteroidAndLot } from '../ActionDialog';
 import actionStages from '~/lib/actionStages';
-import ClipCorner from '~/components/ClipCorner';
-import IconButton from '~/components/IconButton';
 import useProcessManager from '~/hooks/actionManagers/useProcessManager';
 import useEntity from '~/hooks/useEntity';
 import formatters from '~/lib/formatters';
 import useActionCrew from '~/hooks/useActionCrew';
 
 const SECTION_WIDTH = 1150;
-
-const SelectorInner = styled.div`
-  align-items: center;
-  color: white;
-  display: flex;
-  flex-direction: row;
-  font-size: 18px;
-  & label {
-    flex: 1;
-    padding-left: 10px;
-  }
-`;
-const IconWrapper = styled.div`
-  align-items: center;
-  background: rgba(${p => p.theme.colors.mainRGB}, 0.3);
-  ${p => p.theme.clipCorner(sectionBodyCornerSize * 0.6)};
-  display: flex;
-  font-size: 40px;
-  height: 50px;
-  justify-content: center;
-  width: 50px;
-`;
 
 const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...props }) => {
   const { currentProcess, processStatus, startProcess, finishProcess } = processManager;
@@ -422,23 +394,10 @@ const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...pro
             bodyStyle={{ padding: 0 }}
             style={{ alignSelf: 'flex-start', flex: 1 }}>
 
-            <FlexSectionInputBody
-              isSelected={stage === actionStages.NOT_STARTED}
+            <ProcessSelectionBlock
               onClick={stage === actionStages.NOT_STARTED ? () => setProcessSelectorOpen(true) : undefined}
-              style={{ padding: 4 }}>
-              <SelectorInner>
-                <IconWrapper>
-                  <ProductionIcon />
-                </IconWrapper>
-                <label>{process?.name || `Select a Process...`}</label>
-                {stage === actionStages.NOT_STARTED && (
-                  <>
-                    {process ? <IconButton borderless><CloseIcon /></IconButton> : <CaretIcon />}
-                  </>
-                )}
-              </SelectorInner>
-              <ClipCorner dimension={sectionBodyCornerSize} />
-            </FlexSectionInputBody>
+              selectedProcess={process}
+            />
 
             <RecipeSlider
               disabled={!process || stage !== actionStages.NOT_STARTED}

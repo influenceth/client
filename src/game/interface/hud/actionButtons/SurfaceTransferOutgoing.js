@@ -15,7 +15,7 @@ const isVisible = ({ crew, lot, ship }) => {
   return crew && ((entity?.Inventories || []).find((i) => i.status === Inventory.STATUSES.AVAILABLE));
 };
 
-const SurfaceTransferOutgoing = ({ asteroid, blockTime, crew, lot, ship, onSetAction, dialogProps = {}, _disabled }) => {
+const SurfaceTransferOutgoing = ({ asteroid, blockTime, crew, lot, ship, onSetAction, dialogProps = {}, _disabled, _disabledReason }) => {
   const origin = useMemo(() => ship || lot?.surfaceShip || lot?.building, [ship, lot]);
   const { data: inventoryOrders } = useOrdersByInventory(origin);
   const { currentDeliveryActions: originDeliveryActions, isLoading } = useDeliveryManager({ origin });
@@ -81,6 +81,8 @@ const SurfaceTransferOutgoing = ({ asteroid, blockTime, crew, lot, ship, onSetAc
   }, [onSetAction, origin, dialogProps]);
 
   const disabledReason = useMemo(() => {
+    if (_disabledReason) return _disabledReason;
+    if (_disabled) return 'loading...';
     if (!origin) return '';
     const _location = locationsArrToObj(origin.Location?.locations || []);
     if (!_location?.lotId) return 'not on surface';
@@ -90,7 +92,7 @@ const SurfaceTransferOutgoing = ({ asteroid, blockTime, crew, lot, ship, onSetAc
     return getCrewDisabledReason({
       asteroid, blockTime, crew, permission: Permission.IDS.REMOVE_PRODUCTS, permissionTarget: origin, requireReady: false
     });
-  }, [origin, blockTime, crew]);
+  }, [_disabled, _disabledReason, origin, blockTime, crew]);
 
   return (
     <>

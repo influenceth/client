@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import styled, { css } from 'styled-components';
 import { usePopper } from 'react-popper';
-import { Tooltip } from 'react-tooltip';
 import { Delivery, Inventory, Permission, Product } from '@influenceth/sdk';
 
 import Dropdown from '~/components/Dropdown';
@@ -304,8 +303,11 @@ const LotInventory = () => {
 
   const resourceItemRefs = useRef([]);
 
-  const canRemoveProducts = useMemo(
-    () => crewCan(Permission.IDS.REMOVE_PRODUCTS, entity),
+  const [canAddProducts, canRemoveProducts] = useMemo(
+    () => ([
+      crewCan(Permission.IDS.ADD_PRODUCTS, entity),
+      crewCan(Permission.IDS.REMOVE_PRODUCTS, entity),
+    ]),
     [crewCan, entity]
   );
 
@@ -476,6 +478,12 @@ const LotInventory = () => {
     return null;
   }, [selectedItems]);
 
+  const removalDisabledReason = useMemo(() => {
+    if (!canRemoveProducts) return 'access restricted';
+    if (Object.keys(selectedItems).length === 0) return 'nothing selected';
+    return '';
+  }, [canRemoveProducts, selectedItems]);
+
   if (!inventory === 0) return null;
   return (
     <>
@@ -588,34 +596,46 @@ const LotInventory = () => {
               </ThumbnailWrapper>
             ))}
           </InventoryItems>
-          {(isIncomingDelivery || Object.keys(selectedItems).length > 0) && (
-          <Tray>
-            {trayLabel && <TrayLabel content={trayLabel} />}
+          {(canAddProducts || canRemoveProducts) && (
+            <Tray>
+              {trayLabel && <TrayLabel content={trayLabel} />}
 
-            {Object.keys(selectedItems).length > 0 && (
+              {/* hide for now (for screen real estate)
+              <actionButtons.SurfaceTransferIncoming.Component
+                {...actionProps}
+                labelAddendum={canAddProducts ? '' : 'access restricted'}
+                flags={{ disabled: !canAddProducts }}
+                dialogProps={{ destination: entity, destinationSlot: inventorySlot }}
+              />
+              */}
+
               <actionButtons.SurfaceTransferOutgoing.Component
                 {...actionProps}
-                labelAddendum={canRemoveProducts ? '' : 'access restricted'}
-                flags={{ disabled: !canRemoveProducts }}
+                _disabledReason={removalDisabledReason}
                 dialogProps={{ origin: entity, originSlot: inventorySlot, preselect: { selectedItems } }}
               />
-            )}
 
-            {/* TODO: may only care about incoming transfer if have permission here */}
-            {/* TODO: is SurfaceTransferIncoming still supported? */}
-            {isIncomingDelivery && (
-              <actionButtons.SurfaceTransferIncoming.Component {...actionProps} />
-            )}
+              <actionButtons.MultiBuy.Component
+                {...actionProps}
+                labelAddendum={canAddProducts ? '' : 'access restricted'}
+                flags={{ disabled: !canAddProducts }}
+                dialogProps={{ destination: entity, destinationSlot: inventorySlot }}
+              />
 
-            {Object.keys(selectedItems).length > 0 && (
+              {/* hide for now
+              <actionButtons.MultiSell.Component
+                {...actionProps}
+                _disabledReason={removalDisabledReason}
+                dialogProps={{ origin: entity, originSlot: inventorySlot, preselect: { selectedItems } }}
+              />
+              */}
+
               <actionButtons.JettisonCargo.Component
                 {...actionProps}
-                labelAddendum={canRemoveProducts ? '' : 'access restricted'}
-                flags={{ disabled: !canRemoveProducts }}
+                _disabledReason={removalDisabledReason}
                 dialogProps={{ origin: entity, originSlot: inventorySlot, preselect: { selectedItems } }}
               />
-            )}
-          </Tray>
+            </Tray>
           )}
         </InnerWrapper>
       </Wrapper>

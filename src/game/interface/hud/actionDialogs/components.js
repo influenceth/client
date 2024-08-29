@@ -60,7 +60,11 @@ import {
   ScheduleFullIcon,
   CheckSmallIcon,
   MarketBuyIcon,
-  InventoryIcon
+  InventoryIcon,
+  CaretIcon,
+  ShipIcon,
+  BuildingIcon,
+  ConstructIcon
 } from '~/components/Icons';
 import LiveTimer from '~/components/LiveTimer';
 import MouseoverInfoPane from '~/components/MouseoverInfoPane';
@@ -237,7 +241,7 @@ export const SectionTitle = styled.div`
     }
   `}
 `;
-const SectionTitleRight = styled.div`
+export const SectionTitleRight = styled.div`
   color: white;
   font-size: 19px;
   overflow: hidden;
@@ -838,13 +842,19 @@ const EmptyMessage = styled.div`
 const InputOutputTableCell = styled.div`
   align-items: center;
   display: flex;
-  & > * {
-    margin-left: 2px;
-  }
   & > label {
+    flex: 0 0 24px;
     opacity: 0.5;
     margin-left: 0;
     padding-right: 8px;
+  }
+  & > div {
+    display: flex;
+    flex: 1;
+    flex-wrap: wrap;
+    & > * {
+      margin: 1px;
+    }
   }
 `;
 
@@ -2082,6 +2092,55 @@ export const LandingSelectionDialog = ({ asteroid, deliveryMode, initialSelectio
   );
 };
 
+
+
+const ProcessSelectorIconWrapper = styled.div`
+  align-items: center;
+  background: rgba(${p => p.theme.colors.mainRGB}, 0.3);
+  ${p => p.theme.clipCorner(sectionBodyCornerSize * 0.6)};
+  display: flex;
+  font-size: 40px;
+  height: 50px;
+  justify-content: center;
+  width: 50px;
+`;
+const ProcessSelectorInner = styled.div`
+  align-items: center;
+  color: white;
+  display: flex;
+  flex-direction: row;
+  font-size: ${p => p.height ? Math.max(14, 0.36 * (p.height - 8)) : 18}px;
+  & label {
+    flex: 1;
+    padding-left: 10px;
+  }
+  & > ${ProcessSelectorIconWrapper} {
+    font-size: ${p => (p.height - 8) * 0.8}px;
+    height: ${p => p.height - 8}px;
+    width: ${p => p.height - 8}px;
+  }
+`;
+
+export const ProcessSelectionBlock = ({ height, onClick, selectedProcess, width }) => (
+  <FlexSectionInputBody
+    isSelected={!!onClick}
+    onClick={onClick}
+    style={{ padding: 4, width }}>
+    <ProcessSelectorInner height={height}>
+      <ProcessSelectorIconWrapper>
+        <ProductionIcon />
+      </ProcessSelectorIconWrapper>
+      <label>{selectedProcess?.name || `Select a Process...`}</label>
+      {onClick && (
+        <IconButton borderless style={{ marginRight: 0 }}>
+          {selectedProcess ? <CloseIcon /> : <CaretIcon />}
+        </IconButton>
+      )}
+    </ProcessSelectorInner>
+    <ClipCorner dimension={sectionBodyCornerSize} />
+  </FlexSectionInputBody>
+);
+
 export const ProcessSelectionDialog = ({ initialSelection, onClose, forceProcesses, processorType, onSelected, open }) => {
   const [selection, setSelection] = useState(initialSelection);
   const [processFilter, setProcessFilter] = useState();
@@ -2093,12 +2152,23 @@ export const ProcessSelectionDialog = ({ initialSelection, onClose, forceProcess
   const simulationActions = useStore((s) => s.simulationActions);
 
   const processes = useMemo(() => {
-    const unSorted = forceProcesses || Object.values(Process.TYPES).filter((p) => p.processorType === processorType);
+    const unSorted = forceProcesses || Object.values(Process.TYPES).filter((p) => processorType ? p.processorType === processorType : true);
     return unSorted
       .sort((a, b) => {
         if (a.i === coachmarks[COACHMARK_IDS.actionDialogTargetProcess]) return -1;
         if (b.i === coachmarks[COACHMARK_IDS.actionDialogTargetProcess]) return 1;
         return a.name > b.name ? 1 : -1;
+      })
+      .map((p) => {
+        if (Object.keys(p.outputs || {}).length === 0) {
+          if (p.name.includes(' Construction')) {
+            return { ...p, buildingOutput: Object.values(Building.TYPES).find((t) => t.name === p.name.replace(' Construction', '')) };
+          }
+          if (p.name.includes(' Integration')) {
+            return { ...p, shipOutput: Object.values(Ship.TYPES).find((t) => t.name === p.name.replace(' Integration', '')) };
+          }
+        }
+        return p;
       })
   }, [coachmarks, forceProcesses, processorType])
 
@@ -2115,7 +2185,7 @@ export const ProcessSelectionDialog = ({ initialSelection, onClose, forceProcess
     }
 
     if (outputFilter) {
-      const includesFilter = Object.keys(process.outputs).some((output) => {
+      const includesFilter = Object.keys(process.outputs || {}).some((output) => {
         return Product.TYPES[output]?.name.toLowerCase().includes(outputFilter.toLowerCase());
       });
 
@@ -2159,13 +2229,14 @@ export const ProcessSelectionDialog = ({ initialSelection, onClose, forceProcess
         <table>
           <thead>
             <tr>
-              <td>Process Name</td>
-              <td style={{ textAlign: 'left' }}>Inputs</td>
-              {processes[0]?.outputs && <td style={{ textAlign: 'left' }}>Outputs</td>}
+              <td></td>
+              <td style={{ textAlign: 'left' }}>Process Name</td>
+              <td style={{ textAlign: 'left', paddingLeft: 32 }}>Inputs</td>
+              {processes[0]?.outputs && <td style={{ textAlign: 'left', paddingLeft: 24 }}>Outputs</td>}
             </tr>
           </thead>
           <tbody>
-            {processes.filter(applyProcessFilter).map(({ i, name, inputs, outputs }) => {
+            {processes.filter(applyProcessFilter).map(({ i, name, inputs, outputs, buildingOutput, shipOutput }) => {
               const coachmarked = coachmarks[COACHMARK_IDS.actionDialogTargetProcess] === i;
               return (
                 <SelectionTableRow
@@ -2173,22 +2244,63 @@ export const ProcessSelectionDialog = ({ initialSelection, onClose, forceProcess
                   onClick={() => setSelection(i)}
                   ref={coachmarked ? setCoachmarkRef(COACHMARK_IDS.actionDialogTargetProcess) : undefined}
                   selectedRow={i === selection}>
-                  <td><div style={{ display: 'flex', alignItems: 'center' }}><div style={{ fontSize: 24, marginRight: 6 }}><ProductionIcon /></div> {name}</div></td>
+                  <td style={{ fontSize: 24 }}>
+                    {!(buildingOutput || shipOutput) && <ProductionIcon />}
+                    {buildingOutput && <ConstructIcon />}
+                    {shipOutput && <ShipIcon />}
+                  </td>
+                  <td style={{ textAlign: 'left', width: 400, whiteSpace: 'wrap' }}>
+                    {name}
+                  </td>
                   <td>
                     <InputOutputTableCell>
                       <label>{Object.keys(inputs).length}</label>
-                      {Object.keys(inputs).map((resourceId) => (
-                        <ResourceThumbnail key={resourceId} resource={Product.TYPES[resourceId]} size="45px" tooltipContainer="selectionDialogTooltip" />
-                      ))}
+                      <div>
+                        {Object.keys(inputs).map((resourceId, i) => (
+                          <>
+                            {i === 9 && <br />}
+                            <ResourceThumbnail key={resourceId} resource={Product.TYPES[resourceId]} size="45px" tooltipContainer="selectionDialogTooltip" />
+                          </>
+                        ))}
+                      </div>
                     </InputOutputTableCell>
                   </td>
                   {outputs && (
                     <td>
                       <InputOutputTableCell>
-                        <label>{Object.keys(outputs).length}</label>
-                        {Object.keys(outputs).map((resourceId) => (
-                          <ResourceThumbnail key={resourceId} resource={Product.TYPES[resourceId]} size="45px" tooltipContainer="selectionDialogTooltip" />
-                        ))}
+                        {!(buildingOutput || shipOutput) && (
+                          <>
+                            <label>{Object.keys(outputs).length}</label>
+                            <div>
+                              {Object.keys(outputs).map((resourceId) => (
+                                <ResourceThumbnail key={resourceId} resource={Product.TYPES[resourceId]} size="45px" tooltipContainer="selectionDialogTooltip" />
+                              ))}
+                            </div>
+                          </>
+                        )}
+                        {buildingOutput && (
+                          <>
+                            <label>1</label>
+                            <div>
+                              <BuildingImage
+                                buildingType={buildingOutput.i}
+                                inventory={false}
+                                style={{ height: 45, width: 73 }}
+                                tooltipContainer="selectionDialogTooltip" />
+                            </div>
+                          </>
+                        )}
+                        {shipOutput && (
+                          <>
+                            <label>1</label>
+                            <div>
+                              <ShipImage
+                                shipType={shipOutput.i}
+                                style={{ height: 45, width: 73 }}
+                                tooltipContainer="selectionDialogTooltip" />
+                            </div>
+                          </>
+                        )}
                       </InputOutputTableCell>
                     </td>
                   )}
@@ -3269,11 +3381,9 @@ export const getCapacityUsage = (inventories, type, inventoryBonuses) => {
   return getCapacityStats((inventories || []).find((i) => i.inventoryType === type), inventoryBonuses);
 }
 
-export const getBuildingRequirements = (building, deliveryActions = []) => {
-  const buildingType = building?.Building?.buildingType;
-  const inventory = (building?.Inventories || []).find((i) => i.status === Inventory.STATUSES.AVAILABLE); // TODO: should this be slot?
-  return Object.keys(Building.CONSTRUCTION_TYPES[buildingType]?.requirements || {}).map((productId) => {
-    const totalRequired = Building.CONSTRUCTION_TYPES[buildingType].requirements[productId];
+export const getRecipeRequirements = (inputsObj, inventory = null, recipeTally = 1, deliveryActions = []) => {
+  return Object.keys(inputsObj).map((productId) => {
+    const totalRequired = inputsObj[productId] * recipeTally;
     const inInventory = (inventory?.contents || []).find((c) => Number(c.product) === Number(productId))?.amount || 0;
     const inTransit = deliveryActions
       .filter((d) => !['FINISHED','CANCELING','PACKAGED'].includes(d.status))
@@ -3286,6 +3396,15 @@ export const getBuildingRequirements = (building, deliveryActions = []) => {
       inNeed: Math.max(0, totalRequired - inInventory - inTransit)
     };
   })
+}
+
+export const getBuildingRequirements = (building, deliveryActions = []) => {
+  return getRecipeRequirements(
+    Building.CONSTRUCTION_TYPES[building?.Building?.buildingType]?.requirements || {},
+    (building?.Inventories || []).find((i) => i.status === Inventory.STATUSES.AVAILABLE), // TODO: should this be slot?
+    1,
+    deliveryActions
+  );
 };
 
 export const getBuildingRequirementsMet = (building, deliveryActions = []) => {
@@ -3360,14 +3479,14 @@ export const LotShipImage = ({ shipType, iconBadge, iconBadgeColor, iconOverlay,
   );
 };
 
-export const BuildingImage = ({ buildingType, error, iconOverlay, iconOverlayColor, iconBorderColor, inventory, inventoryBonuses, inventories, showInventoryStatusForType, unfinished }) => {
+export const BuildingImage = ({ buildingType, error, iconOverlay, iconOverlayColor, iconBorderColor, inventory, inventoryBonuses, inventories, showInventoryStatusForType, style, unfinished }) => {
   const buildingAsset = Building.TYPES[buildingType];
   if (!buildingAsset) return null;
 
   const capacity = inventory ? getCapacityStats(inventory, inventoryBonuses) : getCapacityUsage(inventories, showInventoryStatusForType, inventoryBonuses);
   const closerLimit = (capacity.volume.used + capacity.volume.reserved) / capacity.volume.max > (capacity.mass.used + capacity.mass.reserved) / capacity.mass.max ? 'volume' : 'mass';
   return (
-    <BuildingThumbnailWrapper outlineColor={iconBorderColor}>
+    <BuildingThumbnailWrapper outlineColor={iconBorderColor} style={style}>
       <ResourceImage src={getBuildingIcon(buildingAsset.i, 'w150', unfinished)} />
       {inventory !== false && capacity && (
         <>
