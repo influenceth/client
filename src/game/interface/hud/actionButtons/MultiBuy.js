@@ -1,15 +1,15 @@
 import { useCallback, useMemo } from 'react';
-import { Inventory, Permission } from '@influenceth/sdk';
+import { Permission } from '@influenceth/sdk';
 
 import { MultiBuyIcon } from '~/components/Icons';
 import useMarketplaceManager from '~/hooks/actionManagers/useMarketplaceManager';
 import ActionButton, { getCrewDisabledReason } from './ActionButton';
 
-const isVisible = ({ crew, lot, ship }) => false;
+const isVisible = () => false;
 
 const MultiBuy = ({ asteroid, blockTime, crew, lot, ship, onSetAction, dialogProps = {}, _disabled, _disabledReason }) => {
   const destination = useMemo(() => ship || lot?.surfaceShip || lot?.building, [ship, lot]);
-  const { pendingAction } = useMarketplaceManager(destination);
+  const { pendingAction } = useMarketplaceManager(destination.id);
 
   const handleClick = useCallback(() => {
     onSetAction('SHOPPING_LIST', { destination, ...dialogProps }); // TODO: destinationSlot (if not set, use primary)

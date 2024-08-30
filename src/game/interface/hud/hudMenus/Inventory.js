@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import styled, { css } from 'styled-components';
 import { usePopper } from 'react-popper';
-import { Tooltip } from 'react-tooltip';
 import { Delivery, Inventory, Permission, Product } from '@influenceth/sdk';
 
 import Dropdown from '~/components/Dropdown';
