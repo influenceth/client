@@ -172,7 +172,16 @@ class TerrainChunk {
 
   dispose() {
     this.detachFromGroup();
+    
     this._geometry.dispose();
+
+    if (this._plane.customDepthMaterial) this._plane.customDepthMaterial.dispose();
+
+    // textures do not automatically get disposed by material.dispose
+    if (this._material.displacementMap) this._material.displacementMap.dispose();
+    if (this._material.emissiveMap) this._material.emissiveMap.dispose();
+    if (this._material.map) this._material.map.dispose();
+    if (this._material.normalMap) this._material.normalMap.dispose();
     this._material.dispose();
   }
 

@@ -365,7 +365,8 @@ export const FundingFlow = ({ totalPrice, onClose, onFunded }) => {
         containerNode: document.getElementById('ramp-container')
       })
       embeddedRamp.show();
-      embeddedRamp.on('PURCHASE_CREATED', () => {
+      embeddedRamp.on('PURCHASE_CREATED', (e) => {
+        console.log('PURCHASE_CREATED', e);
         setTimeout(() => {
           setRamping(false);
           setWaiting(true);

@@ -34,6 +34,8 @@ const constants = {
 
   // (performance)
   ENABLE_TERRAIN_CHUNK_RESOURCE_POOL: true,
+  TERRAIN_CHUNK_POOL_SIZE_MIN: 10,
+  TERRAIN_CHUNK_POOL_SIZE_LOOKBACK: 100, // on AP, usually about 25 queued changes at once (so this should catch a few cycles)
   UPDATE_QUADTREE_EVERY: 0.33, // (multiplied by CHUNK_SPLIT_DISTANCE)
 
   TELEMETRY_SCALE: 1.15,
