@@ -646,17 +646,17 @@ const LotInventory = () => {
               />
               */}
 
-              <actionButtons.SurfaceTransferOutgoing.Component
-                {...actionProps}
-                _disabledReason={removalDisabledReason}
-                dialogProps={{ origin: entity, originSlot: inventorySlot, preselect: { selectedItems } }}
-              />
-
               <actionButtons.MultiBuy.Component
                 {...actionProps}
                 labelAddendum={canAddProducts ? '' : 'access restricted'}
                 flags={{ disabled: !canAddProducts }}
                 dialogProps={{ destination: entity, destinationSlot: inventorySlot }}
+              />
+
+              <actionButtons.SurfaceTransferOutgoing.Component
+                {...actionProps}
+                _disabledReason={removalDisabledReason}
+                dialogProps={{ origin: entity, originSlot: inventorySlot, preselect: { selectedItems } }}
               />
           
               <actionButtons.MultiSell.Component
