@@ -46,12 +46,23 @@ const ResourceRequirement = ({ isGathering, item, noStyles, ...props }) => {
   if (!noStyles) {
     // (needs not yet met)
     if (item.denominator && item.numerator < item.denominator) {
-      props.backgroundColor = `rgba(${incompleteRGB}, 0.25)`;
-      props.badgeColor = theme.colors.lightOrange;
-      props.outlineColor = `rgba(${incompleteRGB}, 0.75)`;
-      if (item.numerator > 0) { // (needs partially met)
-        props.underlay = <PartialUnderlay />;
-        props.upperRightBadge = `-${(item.denominator - item.numerator).toLocaleString()}${props.resource.isAtomic ? '' : ' kg'}`;
+      if (props.isOutgoing) { // less scary looking
+        props.backgroundColor = `rgba(${item.numerator > 0 ? theme.colors.mainRGB : '50, 50, 50'}, 0.25)`;
+        props.badgeColor = item.numerator > 0 ? '#fff' : '#ccc';
+        props.outlineColor = `rgba(${item.numerator > 0 ? theme.colors.mainRGB : '50, 50, 50'}, 0.75)`;
+        if (item.numerator > 0) { // (needs partially met)
+          props.underlay = <PartialUnderlay />;
+          props.upperRightBadge = `+${(item.denominator - item.numerator).toLocaleString()}${props.resource.isAtomic ? '' : ' kg'}`;
+          props.upperRightBadgeColor = theme.colors.main;
+        }
+      } else {
+        props.backgroundColor = `rgba(${incompleteRGB}, 0.25)`;
+        props.badgeColor = theme.colors.lightOrange;
+        props.outlineColor = `rgba(${incompleteRGB}, 0.75)`;
+        if (item.numerator > 0) { // (needs partially met)
+          props.underlay = <PartialUnderlay />;
+          props.upperRightBadge = `-${(item.denominator - item.numerator).toLocaleString()}${props.resource.isAtomic ? '' : ' kg'}`;
+        }
       }
 
     // (needs met)

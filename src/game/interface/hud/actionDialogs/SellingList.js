@@ -239,7 +239,7 @@ export const ProductMarketSummary = ({
   selectionSummary,
   targetAmount
 }) => {
-  const [sort, setSort] = useState(['_dynamicUnitPrice', 'desc']);
+  const [sort, setSort] = useState(['_dynamicUnitPrice', 'asc']);
   const [sortField, sortDirection] = sort;
 
   const getRowProps = useCallback((row) => ({
@@ -594,6 +594,7 @@ const SellingList = ({ asteroid, origin, originSlot, initialSelection, preselect
                     selected={openProductId === product.i}>
                     <ProductHeader onClick={handleProductClick(product.i)}>
                       <ResourceRequirement
+                        isOutgoing
                         item={{ numerator: selectionSummary[product.i]?.totalFilled, denominator: amount }}
                         resource={product}
                         size="70px"
@@ -650,7 +651,8 @@ const SellingList = ({ asteroid, origin, originSlot, initialSelection, preselect
                           )
                           : (
                             <EmptyMessage>
-                              There are currently no accessible marketplaces on <b>{asteroid?.Name?.name}</b> with available demand for <b>{product.name}</b>.
+                              There are currently no accessible marketplaces on <b>{asteroid?.Name?.name}</b><br/>
+                              with available demand for <b>{product.name}</b>.
                             </EmptyMessage>
                           )
                       )
