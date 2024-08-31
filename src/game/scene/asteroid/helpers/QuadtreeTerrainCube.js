@@ -278,14 +278,14 @@ class QuadtreeTerrainCube {
 
     // kick-off chunks to recycle
     const removeChunks = (removeByKey || []).map((k) => this.chunks[k]);
-    this.builder.queueForRecycling(removeChunks);
+    this.builder.queueForRecycling(removeChunks.map((n) => n.chunk));
 
     // remove references to recycled chunks
     // TODO: make sure this doesn't delete the removeChunks records
     removeChunks.forEach((c) => {
       delete this.chunks[c.renderSig];
     });
-    // console.log('now chunks', Object.keys(this.chunks));
+    // console.log('now chunks', Object.keys(this.chunks).length);
 
     // recalculate smallest active chunk
     this.smallestActiveChunkSize = Object.values(this.chunks).reduce((acc, node) => {
