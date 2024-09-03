@@ -5,13 +5,13 @@ import useAsteroidBuildings from '~/hooks/useAsteroidBuildings';
 import useShoppingListOrders from '~/hooks/useShoppingListOrders';
 import api from '~/lib/api';
 
-const useShoppingListData = (asteroidId, lotId, productIds) => {
+const useShoppingListData = (asteroidId, lotId, productIds, mode = 'buy') => {
   const {
     data: exchanges,
     isLoading: exchangesLoading,
     dataUpdatedAt: exchangesUpdatedAt,
     refetch: refetchExchanges
-  } = useAsteroidBuildings(asteroidId, 'Exchange', Permission.IDS.BUY);
+  } = useAsteroidBuildings(asteroidId, 'Exchange', mode === 'buy' ? Permission.IDS.BUY : Permission.IDS.SELL);
 
   const lastValue = useRef();
 
@@ -54,7 +54,7 @@ const useShoppingListData = (asteroidId, lotId, productIds) => {
     loadFees();
   }, [loadFees]);
 
-  const { data: orders, isLoading: ordersLoading, refetch: refetchOrders } = useShoppingListOrders(asteroidId, productIds);
+  const { data: orders, isLoading: ordersLoading, refetch: refetchOrders } = useShoppingListOrders(asteroidId, productIds, mode);
 
   const isLoading = exchangesLoading || feesLoading || ordersLoading;
   return useMemo(() => {

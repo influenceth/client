@@ -110,10 +110,10 @@ const customConfigs = {
       radius: safeBigInt(asteroid.Celestial.radius * 1000) * 2n ** 32n / 1000n,
       a: safeBigInt(asteroid.Orbit.a * 10000) * 2n ** 64n / 10000n,
       ecc: safeBigInt(asteroid.Orbit.ecc * 1000) * 2n ** 64n / 1000n,
-      inc: BigInt(asteroid.Orbit.inc * 2 ** 64),
-      raan: BigInt(asteroid.Orbit.raan * 2 ** 64),
-      argp: BigInt(asteroid.Orbit.argp * 2 ** 64),
-      m: BigInt(asteroid.Orbit.m * 2 ** 64),
+      inc: safeBigInt(asteroid.Orbit.inc * 2 ** 64),
+      raan: safeBigInt(asteroid.Orbit.raan * 2 ** 64),
+      argp: safeBigInt(asteroid.Orbit.argp * 2 ** 64),
+      m: safeBigInt(asteroid.Orbit.m * 2 ** 64),
       purchase_order: asteroid.Celestial.purchaseOrder,
       scan_status: asteroid.Celestial.scanStatus,
       bonuses: asteroid.Celestial.bonuses,
@@ -125,7 +125,7 @@ const customConfigs = {
   PurchaseAdalian: {
     getPrice: async () => {
       const { ADALIAN_PURCHASE_PRICE, ADALIAN_PURCHASE_TOKEN } = await api.getConstants(['ADALIAN_PURCHASE_PRICE', 'ADALIAN_PURCHASE_TOKEN']);
-      return [BigInt(ADALIAN_PURCHASE_PRICE), Address.toStandard(ADALIAN_PURCHASE_TOKEN)];
+      return [safeBigInt(ADALIAN_PURCHASE_PRICE), Address.toStandard(ADALIAN_PURCHASE_TOKEN)];
     },
     equalityTest: true
   },
@@ -136,15 +136,15 @@ const customConfigs = {
         'ASTEROID_PURCHASE_LOT_PRICE',
         'ASTEROID_PURCHASE_TOKEN'
       ]);
-      const base = BigInt(ASTEROID_PURCHASE_BASE_PRICE);
-      const lot = BigInt(ASTEROID_PURCHASE_LOT_PRICE);
-      return [base + lot * BigInt(Asteroid.Entity.getSurfaceArea(asteroid)), Address.toStandard(ASTEROID_PURCHASE_TOKEN)];
+      const base = safeBigInt(ASTEROID_PURCHASE_BASE_PRICE);
+      const lot = safeBigInt(ASTEROID_PURCHASE_LOT_PRICE);
+      return [base + lot * safeBigInt(Asteroid.Entity.getSurfaceArea(asteroid)), Address.toStandard(ASTEROID_PURCHASE_TOKEN)];
     },
     equalityTest: ['asteroid.id']
   },
   PurchaseDeposit: {
     getTransferConfig: ({ recipient, deposit, price }) => ({
-      amount: BigInt(price),
+      amount: safeBigInt(price),
       recipient,
       memo: Entity.packEntity(deposit)
     }),
@@ -155,7 +155,7 @@ const customConfigs = {
     getPrice: async ({ crewmate }) => {
       if (crewmate?.id > 0) return [0n, TOKEN.ETH]; // if recruiting existing crewmate, no cost
       const { ADALIAN_PURCHASE_PRICE, ADALIAN_PURCHASE_TOKEN } = await api.getConstants(['ADALIAN_PURCHASE_PRICE', 'ADALIAN_PURCHASE_TOKEN']);
-      return [BigInt(ADALIAN_PURCHASE_PRICE), Address.toStandard(ADALIAN_PURCHASE_TOKEN)];
+      return [safeBigInt(ADALIAN_PURCHASE_PRICE), Address.toStandard(ADALIAN_PURCHASE_TOKEN)];
     },
     equalityTest: true
   },
@@ -234,7 +234,7 @@ const customConfigs = {
   },
   EscrowDepositAndCreateBuyOrder: {
     getEscrowAmount: ({ price, amount, feeTotal }) => {
-      return BigInt((price * amount + feeTotal) || 0);
+      return safeBigInt((price * amount + feeTotal) || 0);
     },
     escrowConfig: {
       entrypoint: 'deposit',
@@ -261,8 +261,8 @@ const customConfigs = {
       withdrawDataKeys: ['amount', 'origin', 'origin_slot', 'caller_crew'],
       getWithdrawals: ({ exchange_owner_account, seller_account, payments }) => {
         return [
-          { recipient: seller_account, amount: BigInt(payments.toPlayer) },
-          { recipient: exchange_owner_account, amount: BigInt(payments.toExchange) },
+          { recipient: seller_account, amount: safeBigInt(payments.toPlayer) },
+          { recipient: exchange_owner_account, amount: safeBigInt(payments.toExchange) },
         ];
       }
     },
@@ -468,7 +468,7 @@ export function ChainTransactionProvider({ children }) {
   useEffect(() => {
     const retrieveNonce = async () => {
       const currentNonce = await provider.getNonceForAddress(accountAddress);
-      setNonce(BigInt(currentNonce));
+      setNonce(safeBigInt(currentNonce));
     };
 
     if (isDeployed && !nonce && !simulationEnabled && accountAddress && Number(accountAddress) !== 0) retrieveNonce();
@@ -774,7 +774,7 @@ export function ChainTransactionProvider({ children }) {
               if (totalPrice > safeBigInt(totalWalletValueInToken)) {
                 console.log('EXECUTE', wallet, wallet.combinedBalance, wallet.combinedBalance, wallet.combinedBalance?.to(totalPriceToken));
                 const fundsError = new Error('Insufficient wallet balance');
-                fundsError.additionalFundsRequired = parseInt(totalPrice - BigInt(totalWalletValueInToken));
+                fundsError.additionalFundsRequired = parseInt(totalPrice - safeBigInt(totalWalletValueInToken));
                 fundsError.additionalFundsToken = totalPriceToken;
                 throw fundsError;
 

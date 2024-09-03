@@ -4,15 +4,19 @@ import { Inventory, Permission } from '@influenceth/sdk';
 import { MultiSellIcon } from '~/components/Icons';
 import useMarketplaceManager from '~/hooks/actionManagers/useMarketplaceManager';
 import ActionButton, { getCrewDisabledReason } from './ActionButton';
+import useCrewContext from '~/hooks/useCrewContext';
 
 const isVisible = ({ crew, lot, ship }) => false;
 
 const MultiSell = ({ asteroid, blockTime, crew, lot, ship, onSetAction, dialogProps = {}, _disabled, _disabledReason }) => {
+  const { pendingTransactions } = useCrewContext();
   const origin = useMemo(() => ship || lot?.surfaceShip || lot?.building, [ship, lot]);
-  const { pendingAction } = useMarketplaceManager(origin);
+  const pendingAction = useMemo(() => {
+    return !!(pendingTransactions || []).find((tx) => tx.key === 'EscrowWithdrawalAndFillBuyOrders' && tx.meta?.originLotId === lot?.id);
+  }, [lot?.id, pendingTransactions]);
 
   const handleClick = useCallback(() => {
-    onSetAction('SHOPPING_LIST', { origin, ...dialogProps }); // originSlot (if not set, use primary)
+    onSetAction('SELLING_LIST', { origin, ...dialogProps }); // originSlot (if not set, use primary)
   }, [dialogProps, origin]);
 
   const disabledReason = useMemo(() => {

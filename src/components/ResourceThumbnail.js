@@ -218,7 +218,7 @@ const ThumbnailCorner = styled.div`
 `;
 
 const UpperRightBadge = styled.div`
-  background: ${p => p.theme.colors.lightOrange};
+  background: ${p => p.color || p.theme.colors.lightOrange};
   border-radius: 3px;
   color: black;
   filter: saturate(110%);
@@ -273,6 +273,7 @@ const Menu = ({ children }) => {
   tooltipOverride,
   underlay,
   upperRightBadge,
+  upperRightBadgeColor,
   ...props
 }) => {
   const tooltipProps = tooltipContainer ? {
@@ -298,7 +299,7 @@ const Menu = ({ children }) => {
       {progress !== undefined && <ResourceProgress progress={progress} />}
       {overlayStripes !== undefined && <AnimatedStripes />}
       {overlayIcon && <ThumbnailCorner color={badgeColor}>{overlayIcon}</ThumbnailCorner>}
-      {upperRightBadge && <UpperRightBadge>{upperRightBadge}</UpperRightBadge>}
+      {upperRightBadge && <UpperRightBadge color={upperRightBadgeColor}>{upperRightBadge}</UpperRightBadge>}
       {menu && <Menu>{menu}</Menu>}
     </ResourceThumbnailWrapper>
   );
