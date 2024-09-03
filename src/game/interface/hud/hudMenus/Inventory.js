@@ -496,6 +496,9 @@ const LotInventory = () => {
   }, [isAllSelected, sortedResources]);
 
   // if inventory contents change, deselect all
+  // TODO: maybe should deselect all whenever sendfrom, sellfrom, or jettison dialogs opened
+  // TODO: probably should optimistically update item amounts from pending txs
+  //       of sendfrom, sellfrom, or jettison...
   useEffect(() => {
     setSelectedItems({});
   }, [inventory?.contentsObj])
