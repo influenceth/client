@@ -523,19 +523,6 @@ const SellingList = ({ asteroid, origin, originSlot, initialSelection, preselect
         },
       );
 
-      await execute(
-        'BulkFillBuyOrder',
-        allFills.map((fill) => {
-          const exchangeControllerId = exchangesById[fill.entity.id]?.Control?.controller?.id;
-          return {
-            
-          };
-        }),
-        {
-          originLotId: originLot?.id,
-        },
-      );
-
     } catch (e) {
       console.error(e);
 
@@ -552,10 +539,10 @@ const SellingList = ({ asteroid, origin, originSlot, initialSelection, preselect
   }, []);
 
   const sellingListSaleTally = useMemo(() => {
-    return (pendingTransactions || []).filter((tx) => tx.key === 'BulkFillBuyOrder' && tx.meta?.originLotId === originLot?.id);
+    return (pendingTransactions || []).filter((tx) => tx.key === 'EscrowWithdrawalAndFillBuyOrders' && tx.meta?.originLotId === originLot?.id);
   }, [originLot?.id, pendingTransactions]);
 
-  // if sellingListSaleTally on this lot changes while in `purchasing` mode, close dialog
+  // if sellingListSaleTally on this lot changes while in `selling` mode, close dialog
   useEffect(() => {
     if (selling && props.onClose) {
       props.onClose();

@@ -336,7 +336,7 @@ const LotInventory = () => {
 
   useEffect(() => {
     setSelectedItems({}); // clear selected items when switching inventories
-  }, [inventorySlot])
+  }, [entity?.uuid, inventorySlot])
 
   const { data: incomingDeliveries } = useDeliveries(
     entity && inventorySlot
@@ -494,6 +494,11 @@ const LotInventory = () => {
       }, {});
     });
   }, [isAllSelected, sortedResources]);
+
+  // if inventory contents change, deselect all
+  useEffect(() => {
+    setSelectedItems({});
+  }, [inventory?.contentsObj])
 
   const trayLabel = useMemo(() => {
     const selectedTally = Object.keys(selectedItems).length;
