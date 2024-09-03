@@ -5,7 +5,7 @@ import { PropagateLoader as Loader } from 'react-spinners';
 import { RampInstantSDK } from '@ramp-network/ramp-instant-sdk';
 
 import Button from '~/components/ButtonAlt';
-import { ChevronRightIcon, CloseIcon, WalletIcon, WarningOutlineIcon } from '~/components/Icons';
+import { ChevronRightIcon, CloseIcon, LinkIcon, WalletIcon } from '~/components/Icons';
 import Details from '~/components/DetailsV2';
 import useSession from '~/hooks/useSession';
 import BrightButton from '~/components/BrightButton';
@@ -239,6 +239,65 @@ const RampWrapper = styled.div`
   }
 `;
 
+const RAMP_PREPEND = process.env.NODE_ENV === 'production' ? '' : 'demo.';
+const RAMP_PURCHASE_STATUS = {
+  INITIALIZED: {
+    statusText: 'The purchase has been initialized.',
+    isSuccess: false,
+    isError: true
+  },
+  PAYMENT_STARTED: {
+    statusText: 'Automated payment has been initiated.',
+    isSuccess: false,
+    isError: false
+  },
+  PAYMENT_IN_PROGRESS: {
+    statusText: 'Payment process has been completed.',
+    isSuccess: false,
+    isError: false
+  },
+  PAYMENT_FAILED: {
+    statusText: 'The payment was cancelled, rejected, or otherwise failed.',
+    isSuccess: false,
+    isError: true
+  },
+  PAYMENT_EXECUTED: {
+    statusText: 'Payment approved, waiting for funds to be received.',
+    isSuccess: false,
+    isError: false
+  },
+  FIAT_SENT: {
+    statusText: 'Outgoing bank transfer has been confirmed.',
+    isSuccess: false,
+    isError: false
+  },
+  FIAT_RECEIVED: {
+    statusText: 'Payment confirmed, final checks before crypto transfer.',
+    isSuccess: false,
+    isError: false
+  },
+  RELEASING: {
+    statusText: 'Funds received, initiating crypto transfer...',
+    isSuccess: false,
+    isError: false
+  },
+  RELEASED: {
+    statusText: 'Waiting for funds to be received by user\'s wallet...',
+    isSuccess: true,
+    isError: false
+  },
+  EXPIRED: {
+    statusText: 'Time to pay for the purchase was exceeded. Please try again, making sure to follow all prompts.',
+    isSuccess: false,
+    isError: true
+  },
+  CANCELLED: {
+    statusText: 'The purchase was been cancelled.',
+    isSuccess: false,
+    isError: true
+  }
+};
+
 export const FundingFlow = ({ totalPrice, onClose, onFunded }) => {
   const createAlert = useStore(s => s.dispatchAlertLogged);
 
@@ -346,9 +405,42 @@ export const FundingFlow = ({ totalPrice, onClose, onFunded }) => {
     }
   }, []);
 
+  const [rampPurchase, setRampPurchase] = useState();
+  const checkRampPurchase = useCallback(async () => {
+    try {
+      const response = await fetch(
+        `https://api.${RAMP_PREPEND}ramp.network/api/host-api/purchase/${rampPurchase.id}?secret=${rampPurchase.purchaseViewToken}`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          }
+        }
+      );
+      if (response.ok) {
+        const updatePurchaseObject = await response.json();
+        setRampPurchase(updatePurchaseObject);
+
+        // stop checking if terminal status
+        const status = RAMP_PURCHASE_STATUS[updatePurchaseObject.status];
+        if (status.isError || status.isSuccess) {
+          return;
+        }
+      } else {
+        console.error('Response not ok:', response);
+      }
+    } catch (error) {
+      console.error('Error fetching purchase info:', error);
+    }
+    setTimeout(() => {
+      checkRampPurchase();
+    }, 5000);
+  }, []);
+  
   const onClickCC = useCallback((amount) => () => {
     fireTrackingEvent('funding_start', { externalId: accountAddress });
     setRamping(true);
+    setRampPurchase();
 
     setTimeout(() => {
       const embeddedRamp = new RampInstantSDK({
@@ -356,24 +448,38 @@ export const FundingFlow = ({ totalPrice, onClose, onFunded }) => {
         hostLogoUrl: window.location.origin + '/maskable-logo-192x192.png',
         hostApiKey: process.env.REACT_APP_RAMP_API_KEY,
         userAddress: accountAddress,
-        swapAsset: 'STARKNET_ETH',  // TODO: STARKNET_USDC?
+        swapAsset: 'STARKNET_ETH',  // TODO: STARKNET_USDC once enabled
         fiatCurrency: 'USD',
         fiatValue: Math.ceil(amount / 1e6),
-        url: process.env.NODE_ENV === 'production' ? undefined : 'https://app.demo.ramp.network',
+        url: process.env.NODE_ENV === 'production' ? undefined : `https://app.${RAMP_PREPEND}ramp.network`,
 
         variant: 'embedded-desktop',
         containerNode: document.getElementById('ramp-container')
       })
-      embeddedRamp.show();
       embeddedRamp.on('PURCHASE_CREATED', (e) => {
         console.log('PURCHASE_CREATED', e);
+        try {
+          setRampPurchase(e.payload.purchase);
+        } catch (e) {
+          console.warn('purchase_created event missing payload!', e);
+        }
         setTimeout(() => {
           setRamping(false);
           setWaiting(true);
-        }, 5000);
+        }, 2000);
       });
+      embeddedRamp.show();
     }, 100);
   }, [accountAddress]);
+
+  const rampTxUrl = useMemo(() => {
+    if (!rampPurchase) return;
+    return `https://transactions.${RAMP_PREPEND}ramp.network/#/details/${rampPurchase.id}?secret=${rampPurchase.purchaseViewToken}`;
+  }, [rampPurchase]);
+
+  useEffect(() => {
+    if (rampTxUrl) window.open(rampTxUrl, '_blank');
+  }, [rampTxUrl]);
 
   const [layerswapUrl, setLayerswapUrl] = useState();
   const onClickLayerswap = useCallback(() => {
@@ -417,6 +523,28 @@ export const FundingFlow = ({ totalPrice, onClose, onFunded }) => {
     });
     onClose();
   }, [onClose]);
+
+  useEffect(() => {
+    if (RAMP_PURCHASE_STATUS[rampPurchase?.status]?.isError) {
+      // fire error
+      fireTrackingEvent('funding_error', { externalId: accountAddress, status: rampPurchase?.status });
+
+      // alert user
+      createAlert({
+        type: 'GenericAlert',
+        data: { content: <>RAMP PAYMENT ERROR: "{RAMP_PURCHASE_STATUS[rampPurchase?.status].statusText}"<br/><br/>Click for more information.</> },
+        level: 'warning',
+        onRemoval: function () {
+          if (rampTxUrl) window.open(rampTxUrl, '_blank');
+        }
+      });
+
+      // clear purchase
+      setRampPurchase();
+      onClose();
+    }
+  }, [rampPurchase?.status, rampTxUrl])
+  
 
   return createPortal(
     (
@@ -555,11 +683,25 @@ export const FundingFlow = ({ totalPrice, onClose, onFunded }) => {
               <GiantIcon>
                 <WalletIcon />
               </GiantIcon>
-              <h4>Waiting for funds to be received...</h4>
-              <small>(this may take several moments)</small>
-              <Button size="small" onClick={() => setWaiting(false)}>
-                <CloseIcon /> <span>Cancel</span>
-              </Button>
+              {rampPurchase && !RAMP_PURCHASE_STATUS[rampPurchase.status].isSuccess
+                ? (
+                  <>
+                    <h4>{RAMP_PURCHASE_STATUS[rampPurchase.status].statusText}</h4>
+                    {!RAMP_PURCHASE_STATUS[rampPurchase.status].isError && <small>(taking too long?)</small>}
+                    <Button size="small" onClick={() => window.open(rampTxUrl, '_blank')}>
+                      <LinkIcon /> <span>View Transaction</span>
+                    </Button>
+                  </>
+                )
+                : (
+                  <>
+                    <h4>Waiting for funds to be received...</h4>
+                    <small>(this may take several moments)</small>
+                    <Button size="small" onClick={() => setWaiting(false)}>
+                      <CloseIcon /> <span>Cancel</span>
+                    </Button>
+                  </>
+                )}
             </div>
             <footer>
               <div>
