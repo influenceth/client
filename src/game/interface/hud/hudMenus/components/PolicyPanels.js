@@ -10,7 +10,7 @@ import CollapsibleBlock from '~/components/CollapsibleBlock';
 import EntityLink from '~/components/EntityLink';
 import EntityName from '~/components/EntityName';
 import IconButton from '~/components/IconButton';
-import { CloseIcon, AgreementIcon, LotControlIcon, PermissionIcon, RadioCheckedIcon, RadioUncheckedIcon, SwayIcon, WarningIcon } from '~/components/Icons';
+import { CloseIcon, AgreementIcon, LotControlIcon, PermissionIcon, RadioCheckedIcon, RadioUncheckedIcon, SwayIcon, WarningIcon, CheckedIcon, UncheckedIcon } from '~/components/Icons';
 import LiveTimer from '~/components/LiveTimer';
 import UncontrolledTextArea from '~/components/TextAreaUncontrolled';
 import UncontrolledTextInput from '~/components/TextInputUncontrolled';
@@ -125,6 +125,29 @@ const PrepaidInputBlock = styled(InputBlock)`
   }
 `;
 
+const Toggle = styled.div``;
+const PayAsYouGoLabel = styled.div`
+  align-items: flex-end;
+  display: flex;
+  flex-direction: row;
+  ${Toggle} {
+    align-items: center;
+    color: #CCC;
+    cursor: ${p => p.theme.cursors.active};
+    display: flex;
+    opacity: 0.7;
+    & > svg {
+      color: ${p => p.on ? p.theme.colors.main : 'white'};
+    }
+    & > span {
+      margin-left: 4px;
+    }
+    &:hover {
+      opacity: 1;
+    }
+  }
+`;
+
 const Allowlist = styled.div`
   margin-top: 6px;
   max-height: 250px;
@@ -186,6 +209,12 @@ const getStatusColor = (status) => {
     default: return '#666666';
   }
 }
+
+const isProcessingPermission = (permission) => [
+  Permission.IDS.RUN_PROCESS,
+  Permission.IDS.EXTRACT_RESOURCES,
+  Permission.IDS.ASSEMBLE_SHIP
+].includes(permission);
 
 const PolicyPanel = ({ editable = false, entity, permission }) => {
   const { accountAddress } = useSession();
@@ -340,6 +369,30 @@ const PolicyPanel = ({ editable = false, entity, permission }) => {
     };
   }, [currentPolicy, editable, editing, jitStatus, policyType]);
 
+  const isProcessingPermission = useMemo(() => (
+    [
+      Permission.IDS.RUN_PROCESS,
+      Permission.IDS.EXTRACT_RESOURCES,
+      Permission.IDS.ASSEMBLE_SHIP
+    ].includes(permission)
+  ), [permission]);
+
+
+  const [isPayAsYouGo, setIsPayAsYouGo] = useState(isProcessingPermission && (
+    originalPolicyType !== Permission.POLICY_IDS.PREPAID || (
+      originalPolicyDetails?.initialTerm === 0 && originalPolicyDetails?.noticePeriod === 0
+    )
+  ));
+  const toggleIsPayAsYouGo = useCallback(() => {
+    setIsPayAsYouGo((v) => {
+      const newVal = !v;
+      if (newVal) {
+        setDetails((v) => ({ ...v, initialTerm: 0, noticePeriod: 0 }));
+      }
+      return newVal;
+    });
+  }, []);
+
   return (
     <CollapsibleBlock
       collapsibleProps={{
@@ -444,7 +497,18 @@ const PolicyPanel = ({ editable = false, entity, permission }) => {
               {policyType === Permission.POLICY_IDS.PREPAID && (
                 <>
                   <PrepaidInputBlock>
-                    <label>Price</label>
+                    <PayAsYouGoLabel on={isPayAsYouGo}>
+                      <div>Price</div>
+                      {isProcessingPermission && (
+                        <>
+                          <div style={{ flex: 1 }} />
+                          <Toggle onClick={toggleIsPayAsYouGo}>
+                            {isPayAsYouGo ? <CheckedIcon /> : <UncheckedIcon />}
+                            <span>Pay as You Go</span>
+                          </Toggle>
+                        </>
+                      )}
+                    </PayAsYouGoLabel>
                     <div>
                       <UncontrolledTextInput
                         disabled={nativeBool(saving)}
@@ -456,34 +520,39 @@ const PolicyPanel = ({ editable = false, entity, permission }) => {
                       <span>SWAY per day (IRL)</span>
                     </div>
                   </PrepaidInputBlock>
-                  <PrepaidInputBlock>
-                    <label>Minimum Period</label>
-                    <div>
-                      <UncontrolledTextInput
-                        disabled={nativeBool(saving)}
-                        max={12}
-                        min={0}
-                        onChange={handleChange('initialTerm')}
-                        step={1}
-                        type="number"
-                        value={`${details.initialTerm}`} />
-                      <span>days (IRL)</span>
-                    </div>
-                  </PrepaidInputBlock>
-                  <PrepaidInputBlock>
-                    <label>Notice Period</label>
-                    <div>
-                      <UncontrolledTextInput
-                        disabled={nativeBool(saving)}
-                        max={12}
-                        min={0}
-                        onChange={handleChange('noticePeriod')}
-                        step={1}
-                        type="number"
-                        value={`${details.noticePeriod}`} />
-                      <span>days (IRL)</span>
-                    </div>
-                  </PrepaidInputBlock>
+                  
+                  {!isPayAsYouGo && (
+                    <>
+                      <PrepaidInputBlock>
+                        <label>Minimum Period</label>
+                        <div>
+                          <UncontrolledTextInput
+                            disabled={nativeBool(saving)}
+                            max={12}
+                            min={0}
+                            onChange={handleChange('initialTerm')}
+                            step={1}
+                            type="number"
+                            value={`${details.initialTerm}`} />
+                          <span>days (IRL)</span>
+                        </div>
+                      </PrepaidInputBlock>
+                      <PrepaidInputBlock>
+                        <label>Notice Period</label>
+                        <div>
+                          <UncontrolledTextInput
+                            disabled={nativeBool(saving)}
+                            max={12}
+                            min={0}
+                            onChange={handleChange('noticePeriod')}
+                            step={1}
+                            type="number"
+                            value={`${details.noticePeriod}`} />
+                          <span>days (IRL)</span>
+                        </div>
+                      </PrepaidInputBlock>
+                    </>
+                  )}
                 </>
               )}
               {policyType === Permission.POLICY_IDS.CONTRACT && (
