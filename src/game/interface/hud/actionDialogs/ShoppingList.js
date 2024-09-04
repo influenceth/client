@@ -6,7 +6,7 @@ import {
   CheckedIcon,
   ChevronRightIcon,
   InventoryIcon,
-  MarketBuyIcon,
+  MultiBuyIcon,
   MarketplaceBuildingIcon,
   SwayIcon,
   UncheckedIcon,
@@ -642,7 +642,7 @@ const ShoppingList = ({ asteroid, destination, destinationSlot, stage, ...props 
     <>
       <ActionDialogHeader
         action={{
-          icon: <MarketBuyIcon />,
+          icon: <MultiBuyIcon />,
           label: isInSiteMode ? 'Source Materials' : 'Market Buy Multiple',
           status: isInSiteMode && stage === actionStage.NOT_STARTED ? 'Source Remaining Materials' : undefined,
         }}
