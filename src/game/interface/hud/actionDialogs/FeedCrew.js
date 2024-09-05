@@ -379,7 +379,7 @@ const FeedCrew = ({
           <>
             <FlexSection style={{ alignItems: 'flex-start' }}>
               <FlexSectionBlock
-                title={`Items to ${exchangeSelection ? 'Purchase' : 'Transfer'}`}
+                title={`${exchangeSelection ? 'Purchase' : 'Transfer'} Food`}
                 titleDetails={exchangeSelection && <><SwayIcon /> {((exchangeSelection.fillPaymentTotal || 0) / TOKEN_SCALE[TOKEN.SWAY]).toLocaleString(undefined, { maximumFractionDigits: 0 })}</>}
                 style={{ alignSelf: 'stretch', marginBottom: 56 }}
                 bodyStyle={{ padding: 0 }}>
