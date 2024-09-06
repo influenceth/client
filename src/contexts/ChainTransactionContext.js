@@ -232,9 +232,9 @@ const customConfigs = {
             target: vars.extractor,
             permission: Permission.IDS.EXTRACT_RESOURCES,
             permitted: vars.caller_crew,
-            termPrice: Math.ceil(lease.termPrice),
+            termPrice: lease.termPrice,
             recipient: lease.recipient,
-            term: Math.floor(lease.term),
+            term: lease.term,
           }
         },
         purchase && {
