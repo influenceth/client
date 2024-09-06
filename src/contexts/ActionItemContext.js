@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from 'react-query';
-import { Building } from '@influenceth/sdk';
+import { Building, Permission } from '@influenceth/sdk';
 import cloneDeep from 'lodash/cloneDeep';
 
 import { CrewBusyIcon } from '~/components/AnimatedIcons';
@@ -17,6 +17,7 @@ import SIMULATION_CONFIG from '~/simulation/simulationConfig';
 
 const ActionItemContext = React.createContext();
 
+// TODO: should this be in getActivityConfig?
 const sequenceableSystems = [
   'ConstructionStarted',
   'MaterialProcessingStarted',
@@ -24,6 +25,22 @@ const sequenceableSystems = [
   'SamplingDepositStarted',
   'ShipAssemblyStarted'
 ];
+
+// TODO: should this be in getActivityConfig?
+const leaseAndProcessEvents = {
+  MaterialProcessingStarted: {
+    entityKey: 'processor',
+    permission: Permission.IDS.RUN_PROCESS
+  },
+  ResourceExtractionStarted: {
+    entityKey: 'extractor',
+    permission: Permission.IDS.EXTRACT_RESOURCES
+  },
+  ShipAssemblyStarted: {
+    entityKey: 'dryDock',
+    permission: Permission.IDS.ASSEMBLE_SHIP
+  }
+};
 
 export function ActionItemProvider({ children }) {
   const { authenticated, blockTime } = useSession();
@@ -78,6 +95,37 @@ export function ActionItemProvider({ children }) {
     }
     return [];
   }, [crew?._actionTypeTriggered, pendingTransactions]);
+
+  const leaseAsYouGoAgreements = useMemo(() => {
+    return (actionItems || []).reduce((acc, { event }) => {
+      const config = leaseAndProcessEvents[event.name];
+      if (!config) return acc;
+
+      const agreements = crewAgreements.filter((a) => {
+        if (a.label === event.returnValues[config.entityKey].label && a.id === event.returnValues[config.entityKey].id) {
+          if (a._agreement?.permission === config.permission) {
+            // if agreement end and finishTime end are within buffer of each other, assume this is the agreement
+            if (Math.abs(a._agreement.endTime - event.returnValues.finishTime) < 300) {
+              return true;
+            }
+          }
+        }
+        return false;
+      });
+
+      return [...acc, ...agreements];
+    }, []);
+  }, [actionItems, crewAgreements]);
+
+  // hide (visible) agreements that are lease-as-you-go
+  // TODO: could also hide from "hidden" list, but would need different key in store
+  useEffect(() => {
+    (leaseAsYouGoAgreements || []).forEach((a) => {
+      if (!hiddenActionItems.includes(`agreement_${a.key}`)) {
+        dispatchToggleHideActionItem(`agreement_${a.key}`);
+      }
+    });
+  }, [hiddenActionItems, leaseAsYouGoAgreements]);
 
   useEffect(() => {
     if (!blockTime) return;
@@ -243,7 +291,7 @@ export function ActionItemProvider({ children }) {
         }
       })
     }
-  }, [actionItems, allVisibleItems, crewAgreements, hiddenActionItems, plannedBuildings, itemsUpdatedAt, plansUpdatedAt])
+  }, [actionItems, allVisibleItems, crewAgreements, hiddenActionItems, plannedBuildings, itemsUpdatedAt, plansUpdatedAt]);
 
   // TODO: clear timers in the serviceworker
   //  for not yet ready to finish, set new timers based on time remaining
