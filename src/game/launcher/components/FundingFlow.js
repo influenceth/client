@@ -244,7 +244,7 @@ const RAMP_PURCHASE_STATUS = {
   INITIALIZED: {
     statusText: 'The purchase has been initialized.',
     isSuccess: false,
-    isError: true
+    isError: false
   },
   PAYMENT_STARTED: {
     statusText: 'Automated payment has been initiated.',
@@ -406,10 +406,10 @@ export const FundingFlow = ({ totalPrice, onClose, onFunded }) => {
   }, []);
 
   const [rampPurchase, setRampPurchase] = useState();
-  const checkRampPurchase = useCallback(async () => {
+  const checkRampPurchase = useCallback(async (purchase) => {
     try {
       const response = await fetch(
-        `https://api.${RAMP_PREPEND}ramp.network/api/host-api/purchase/${rampPurchase.id}?secret=${rampPurchase.purchaseViewToken}`,
+        `https://api.${RAMP_PREPEND}ramp.network/api/host-api/purchase/${purchase.id}?secret=${purchase.purchaseViewToken}`,
         {
           method: 'GET',
           headers: {
@@ -432,10 +432,13 @@ export const FundingFlow = ({ totalPrice, onClose, onFunded }) => {
     } catch (error) {
       console.error('Error fetching purchase info:', error);
     }
-    setTimeout(() => {
-      checkRampPurchase();
-    }, 5000);
   }, []);
+  useEffect(() => {
+    if (rampPurchase) {
+      const i = setInterval(() => { checkRampPurchase(rampPurchase); }, 5000);
+      return () => clearInterval(i);
+    }
+  }, [checkRampPurchase, rampPurchase])
   
   const onClickCC = useCallback((amount) => () => {
     fireTrackingEvent('funding_start', { externalId: accountAddress });
