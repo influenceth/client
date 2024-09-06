@@ -81,6 +81,8 @@ export function ActionItemProvider({ children }) {
   const failedTransactions = useStore(s => s.failedTransactions);
   const hiddenActionItems = useStore(s => s.hiddenActionItems);
   const dispatchToggleHideActionItem = useStore(s => s.dispatchToggleHideActionItem);
+  const perProcessLeases = useStore(s => s.perProcessLeases);
+  const dispatchPerProcessLease = useStore(s => s.dispatchPerProcessLease);
   const [readyItems, setReadyItems] = useState([]);
   const [unreadyItems, setUnreadyItems] = useState([]);
   const [unstartedItems, setUnstartedItems] = useState([]);
@@ -96,36 +98,40 @@ export function ActionItemProvider({ children }) {
     return [];
   }, [crew?._actionTypeTriggered, pendingTransactions]);
 
-  const leaseAsYouGoAgreements = useMemo(() => {
-    return (actionItems || []).reduce((acc, { event }) => {
-      const config = leaseAndProcessEvents[event.name];
-      if (!config) return acc;
+  useEffect(() => {
+    (actionItems || [])
 
-      const agreements = crewAgreements.filter((a) => {
-        if (a.label === event.returnValues[config.entityKey].label && a.id === event.returnValues[config.entityKey].id) {
-          if (a._agreement?.permission === config.permission) {
-            // if agreement end and finishTime end are within buffer of each other, assume this is the agreement
-            if (Math.abs(a._agreement.endTime - event.returnValues.finishTime) < 300) {
-              return true;
+      // find all events that are lease-per-process events... return the agreements that match
+      .reduce((acc, { event }) => {
+        const config = leaseAndProcessEvents[event.name];
+        if (!config) return acc;
+
+        const agreements = crewAgreements.filter((a) => {
+          if (a.label === event.returnValues[config.entityKey].label && a.id === event.returnValues[config.entityKey].id) {
+            if (a._agreement?.permission === config.permission) {
+              // if agreement end and finishTime end are within buffer of each other, assume this is the agreement
+              if (Math.abs(a._agreement.endTime - event.returnValues.finishTime) < 300) {
+                return true;
+              }
             }
           }
+          return false;
+        });
+
+        return [...acc, ...agreements];
+      }, [])
+
+      // walk through the lease-per-process agreements and add the keys to the store
+      // (to exclude from the visible action items when expiring)
+      .forEach((a) => {
+        if (!(perProcessLeases || []).find((l) => l.key === a.key)) {
+          dispatchPerProcessLease({
+            key: a.key,
+            endTime: a._agreement.endTime
+          });
         }
-        return false;
       });
-
-      return [...acc, ...agreements];
-    }, []);
-  }, [actionItems, crewAgreements]);
-
-  // hide (visible) agreements that are lease-as-you-go
-  // TODO: could also hide from "hidden" list, but would need different key in store
-  useEffect(() => {
-    (leaseAsYouGoAgreements || []).forEach((a) => {
-      if (!hiddenActionItems.includes(`agreement_${a.key}`)) {
-        dispatchToggleHideActionItem(`agreement_${a.key}`);
-      }
-    });
-  }, [hiddenActionItems, leaseAsYouGoAgreements]);
+  }, [actionItems, crewAgreements, perProcessLeases]);
 
   useEffect(() => {
     if (!blockTime) return;
@@ -241,6 +247,11 @@ export function ActionItemProvider({ children }) {
     });
 
     const visibleAgreementItems = (agreementItems || []).filter((item) => {
+      // exclude per-process leases
+      if ((perProcessLeases || []).find((l) => l.key === item.key)) {
+        return false;
+      }
+      // exclude those being changed by pending transaction (pending tx will be visible)
       if (pendingTransactions) {
         return !pendingTransactions.find((tx) => (
           ['AcceptPrepaidAgreement', 'ExtendPrepaidAgreement'].includes(tx.key)
@@ -273,6 +284,7 @@ export function ActionItemProvider({ children }) {
     getActivityConfig,
     hiddenActionItems,
     pendingTransactions,
+    perProcessLeases,
     plannedItems,
     randomEventItems,
     readyItems,
