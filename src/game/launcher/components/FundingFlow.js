@@ -461,9 +461,6 @@ export const FundingFlow = ({ totalPrice, onClose, onFunded }) => {
         variant: 'embedded-desktop',
         containerNode: document.getElementById('ramp-container')
       })
-      embeddedRamp.on('*', (e) => {
-        console.log('RAMP EVENT', e);
-      });
       embeddedRamp.on('PURCHASE_CREATED', (e) => {
         console.log('PURCHASE_CREATED', e);
         try {
