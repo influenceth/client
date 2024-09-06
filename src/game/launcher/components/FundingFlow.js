@@ -453,8 +453,7 @@ export const FundingFlow = ({ totalPrice, onClose, onFunded }) => {
         hostLogoUrl: window.location.origin + '/maskable-logo-192x192.png',
         hostApiKey: process.env.REACT_APP_RAMP_API_KEY,
         userAddress: accountAddress,
-        // swapAsset: 'ETH_ETH',
-        // swapAsset: 'STARKNET_ETH',  // TODO: STARKNET_USDC once enabled
+        swapAsset: 'STARKNET_ETH',  // TODO: STARKNET_USDC once enabled
         fiatCurrency: 'USD',
         fiatValue: Math.ceil(amount / 1e6),
         url: process.env.NODE_ENV === 'production' ? undefined : `https://app.${RAMP_PREPEND}ramp.network`,
