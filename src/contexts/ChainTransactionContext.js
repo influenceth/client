@@ -255,11 +255,6 @@ const customConfigs = {
     equalityTest: ['extractor.id'],
     isVirtual: true
   },
-  PurchaseDepositAndExtractResource: {
-    multisystemCalls: ['PurchaseDeposit', 'ExtractResourceStart'],
-    equalityTest: ['extractor.id'],
-    isVirtual: true
-  },
   PurchaseDepositAndImprove: {
     multisystemCalls: ['PurchaseDeposit', 'SampleDepositImprove'],
     equalityTest: ['lot.id', 'caller_crew.id'],

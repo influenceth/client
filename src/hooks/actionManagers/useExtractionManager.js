@@ -79,7 +79,7 @@ const useExtractionManager = (lotId, slot = 1) => {
         stage = current.startTime > blockTime ? actionStages.SCHEDULED : actionStages.IN_PROGRESS;
       }
     } else {
-      const startTx = getPendingTx('PurchaseDepositAndExtractResource', payload) || getPendingTx('ExtractResourceStart', payload);
+      const startTx = getPendingTx('FlexibleExtractResourceStart', payload) || getPendingTx('ExtractResourceStart', payload);
       if (startTx) {
         current.depositId = startTx.vars.deposit.id;
         current.destination = startTx.vars.destination;

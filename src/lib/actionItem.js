@@ -682,9 +682,7 @@ const formatAsTx = (item) => {
       break;
     }
 
-    case 'LeaseAndPurchaseDepositAndExtractResource':
-    case 'LeaseAndExtractResource':
-    case 'PurchaseDepositAndExtractResource':
+    case 'FlexibleExtractResourceStart':
     case 'ExtractResourceStart': {
       formatted.icon = <ExtractionIcon />;
       formatted.label = `${Product.TYPES[item.meta?.resourceId]?.name || 'Resource'} Extraction`;

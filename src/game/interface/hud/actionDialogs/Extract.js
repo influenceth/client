@@ -120,14 +120,18 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
     const abilities = getCrewAbilityBonuses(bonusIds, crew);
 
     // apply asteroid bonus to extraction time
-    const asteroidBonus = Asteroid.Entity.getBonusByResource(asteroid, selectedCoreSample?.Deposit?.resource);
-    if (asteroidBonus.totalBonus !== 1) {
-      abilities[Crewmate.ABILITY_IDS.EXTRACTION_TIME].totalBonus *= asteroidBonus.totalBonus;
-      abilities[Crewmate.ABILITY_IDS.EXTRACTION_TIME].others = [{
-        text: `${Product.TYPES[selectedCoreSample?.Deposit?.resource].category} Yield Bonus`,
-        bonus: asteroidBonus.totalBonus - 1,
-        direction: 1
-      }];
+    try {
+      const asteroidBonus = Asteroid.Entity.getBonusByResource(asteroid, selectedCoreSample?.Deposit?.resource);
+      if (asteroidBonus.totalBonus !== 1) {
+        abilities[Crewmate.ABILITY_IDS.EXTRACTION_TIME].totalBonus *= asteroidBonus.totalBonus;
+        abilities[Crewmate.ABILITY_IDS.EXTRACTION_TIME].others = [{
+          text: `${Product.TYPES[selectedCoreSample?.Deposit?.resource].category} Yield Bonus`,
+          bonus: asteroidBonus.totalBonus - 1,
+          direction: 1
+        }];
+      }
+    } catch (e) {
+      console.warn(e);
     }
 
     return bonusIds.map((id) => abilities[id] || {});
@@ -293,10 +297,10 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
   const [leasePayment, desiredLeaseTerm, actualLeaseTerm] = useMemo(() => {
     if (!leaseAsYouGoDetails) return [0, 0, 0];
     const startTime = crew?.Crew?.readyAt > blockTime ? crew?.Crew?.readyAt : blockTime;
-    const desiredLeaseTerm = (startTime + taskTimeRequirement) - blockTime;
+    const desiredLeaseTerm = Math.ceil((startTime + taskTimeRequirement) - blockTime);
     const actualLeaseTerm = Math.max(desiredLeaseTerm, leaseAsYouGoDetails.initialTerm);
     return [
-      leaseAsYouGoDetails.rate * (actualLeaseTerm / 3600),
+      Math.ceil(leaseAsYouGoDetails.rate * (actualLeaseTerm / 3600)),
       desiredLeaseTerm,
       actualLeaseTerm
     ];
@@ -517,7 +521,7 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
               }}
               tooltip={(
                 <LeaseTooltip
-                  desiredLeaseTerm={desiredLeaseTerm}
+                  desiredTerm={desiredLeaseTerm}
                   permId={Permission.IDS.EXTRACT_RESOURCES}
                   {...leaseAsYouGoDetails}
                 />
