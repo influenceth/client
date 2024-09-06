@@ -334,7 +334,7 @@ const ActionButtonComponent = forwardRef(({
   children,
   label,
   labelAddendum: rawLabelAddendum,
-  leaseAsYouGoDetails,
+  prepaidLeaseConfig,
   flags: rawFlags,
   icon,
   enablePrelaunch,
@@ -385,14 +385,14 @@ const ActionButtonComponent = forwardRef(({
           {labelAddendum && <TooltipSublabel>{labelAddendum}</TooltipSublabel>}
           {!safeFlags.disabled && !safeFlags.loading && (
             <>
-              {leaseAsYouGoDetails && (
+              {prepaidLeaseConfig && (
                 <>
                   <TooltipLease>
-                    <SwayIcon /> {Math.round(leaseAsYouGoDetails.rate * 24 / TOKEN_SCALE[TOKEN.SWAY])} / DAY
+                    <SwayIcon /> {Math.round(prepaidLeaseConfig.rate * 24 / TOKEN_SCALE[TOKEN.SWAY])} / DAY
                   </TooltipLease>
-                  {leaseAsYouGoDetails.initialTerm > 0 && (
+                  {prepaidLeaseConfig.initialTerm > 0 && (
                     <TooltipLeaseMin>
-                      {formatFixed(leaseAsYouGoDetails.initialTerm / 86400, 1)} DAY
+                      {formatFixed(prepaidLeaseConfig.initialTerm / 86400, 1)} DAY
                     </TooltipLeaseMin>
                   )}
                 </>
@@ -406,7 +406,7 @@ const ActionButtonComponent = forwardRef(({
       console.warn(e);
     }
     return null;
-  }, [label, labelAddendum, leaseAsYouGoDetails, isHovering, safeFlags, sequenceDelay]);
+  }, [label, labelAddendum, prepaidLeaseConfig, isHovering, safeFlags, sequenceDelay]);
 
   return (
     <ActionButtonWrapper
@@ -426,7 +426,7 @@ const ActionButtonComponent = forwardRef(({
       {safeFlags.badge ? <BubbleBadge {...badgeProps}>{safeFlags.badge}</BubbleBadge> : null}
       <ActionButton {...safeFlags} overrideColor={props.overrideColor} overrideBgColor={props.overrideBgColor}>
         <ClipCorner dimension={cornerSize} />
-        {leaseAsYouGoDetails && !safeFlags.disabled && !flags.loading && <CornerBadge><AgreementIcon /></CornerBadge>}
+        {prepaidLeaseConfig && !safeFlags.disabled && !flags.loading && <CornerBadge><AgreementIcon /></CornerBadge>}
         <div style={{ opacity: flags.tally > 1 ? 0.33 : 1 }}>{icon}</div>
         {flags.tally > 1 && <StackTally tally={flags.tally} />}
         {!(flags.tally > 1) && flags.loading && <CompletionTime><SimpleTimer finishTime={flags.finishTime} /></CompletionTime>}
@@ -446,7 +446,7 @@ export const getCrewDisabledReason = ({
   asteroid,
   blockTime,
   crew,
-  leaseAsYouGoDetails,
+  prepaidLeaseConfig,
   isAllowedInSimulation = false,  // TODO: use config to get by step (can attach step to crew as well... or even allowed buttons directly on crew, etc)
   isSequenceable = false,
   permission,
@@ -458,7 +458,7 @@ export const getCrewDisabledReason = ({
   if (crew?._isSimulation && !isAllowedInSimulation) return 'simulation restricted';
   if (permission && permissionTarget) {
     if (!crew) return 'access restricted';
-    if (!Permission.isPermitted(crew, permission, permissionTarget, blockTime) && !leaseAsYouGoDetails) return 'access restricted';
+    if (!Permission.isPermitted(crew, permission, permissionTarget, blockTime) && !prepaidLeaseConfig) return 'access restricted';
   }
   if (asteroid && requireAsteroid) {
     if (crew?._location?.asteroidId !== asteroid?.id) {

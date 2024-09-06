@@ -263,7 +263,8 @@ const PolicyPanel = ({ editable = false, entity, permission }) => {
 
   const isIncomplete = useMemo(() => {
     if (policyType === Permission.POLICY_IDS.PREPAID) {
-      if (!(details.rate >= 0 && details.initialTerm >= 0 && details.noticePeriod >= 0)) return true;
+      if (!details.rate || details.rate < 0) return true;
+      if (details.initialTerm < 0 || details.noticePeriod < 0) return true;
       return parseFloat(details.initialTerm) + parseFloat(details.noticePeriod) > Permission.MAX_POLICY_DURATION;
     }
     if (policyType === Permission.POLICY_IDS.CONTRACT) {
@@ -482,7 +483,7 @@ const PolicyPanel = ({ editable = false, entity, permission }) => {
               {policyType === Permission.POLICY_IDS.PREPAID && (
                 <>
                   <PrepaidInputBlock>
-                    <PayAsYouGoLabel on={isPayAsYouGo}>
+                    <PayAsYouGoLabel on={reactBool(isPayAsYouGo)}>
                       <div>Price</div>
                       {isProcessingPermission(permission) && (
                         <>

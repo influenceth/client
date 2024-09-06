@@ -18,7 +18,7 @@ import useStore from '~/hooks/useStore';
 import actionStage from '~/lib/actionStages';
 import formatters from '~/lib/formatters';
 import { TOKEN, TOKEN_SCALE } from '~/lib/priceUtils';
-import { reactBool, formatTimer, locationsArrToObj, getCrewAbilityBonuses, formatFixed, keyify, getProcessorLeaseRequirements } from '~/lib/utils';
+import { reactBool, formatTimer, locationsArrToObj, getCrewAbilityBonuses, formatFixed, keyify, getProcessorLeaseConfig, getProcessorLeaseSelections } from '~/lib/utils';
 import theme from '~/theme';
 import { ActionDialogInner, theming, useAsteroidAndLot } from '../ActionDialog';
 import {
@@ -290,21 +290,18 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
     },
   ]), [amount, crewTravelBonus, crewTravelTime, extractionBonus, extractionTime, resource, transportDistance, transportTime]);
 
-  const leaseAsYouGoDetails = useMemo(() => {
-    return getProcessorLeaseRequirements(lot?.building, Permission.IDS.EXTRACT_RESOURCES, crew, blockTime);
+  const prepaidLeaseConfig = useMemo(() => {
+    return getProcessorLeaseConfig(lot?.building, Permission.IDS.EXTRACT_RESOURCES, crew, blockTime);
   }, [blockTime, crew, lot?.building]);
 
-  const [leasePayment, desiredLeaseTerm, actualLeaseTerm] = useMemo(() => {
-    if (!leaseAsYouGoDetails) return [0, 0, 0];
-    const startTime = crew?.Crew?.readyAt > blockTime ? crew?.Crew?.readyAt : blockTime;
-    const desiredLeaseTerm = Math.ceil((startTime + taskTimeRequirement) - blockTime);
-    const actualLeaseTerm = Math.max(desiredLeaseTerm, leaseAsYouGoDetails.initialTerm);
-    return [
-      Math.ceil(leaseAsYouGoDetails.rate * (actualLeaseTerm / 3600)),
-      desiredLeaseTerm,
-      actualLeaseTerm
-    ];
-  }, [blockTime, crew?.Crew?.readyAt, leaseAsYouGoDetails, taskTimeRequirement]);
+  const { leasePayment, desiredLeaseTerm, actualLeaseTerm } = useMemo(() => {
+    return getProcessorLeaseSelections(
+      prepaidLeaseConfig,
+      taskTimeRequirement,
+      crew?.Crew?.readyAt,
+      blockTime
+    );
+  }, [blockTime, crew?.Crew?.readyAt, prepaidLeaseConfig, taskTimeRequirement]);
 
   const onStartExtraction = useCallback(() => {
     if (!(amount && selectedCoreSample && destination && destinationInventory)) return;
@@ -344,7 +341,19 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
         termPrice: leasePayment,
       }
     );
-  }, [actualLeaseTerm, amount, crew?._inventoryBonuses, depositOwner, selectedCoreSample, destination, destinationInventory, isPurchase, resource]);
+  }, [
+    actualLeaseTerm,
+    amount,
+    buildingOwner,
+    crew?._inventoryBonuses,
+    depositOwner,
+    leasePayment,
+    selectedCoreSample,
+    destination,
+    destinationInventory,
+    isPurchase,
+    resource
+  ]);
 
   // handle auto-closing
   const lastStatus = useRef();
@@ -502,7 +511,7 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
 
         </FlexSection>
 
-        {leaseAsYouGoDetails && stage === actionStage.NOT_STARTED && (
+        {prepaidLeaseConfig && stage === actionStage.NOT_STARTED && (
           <FlexSection>
 
             <BuildingInputBlock
@@ -523,7 +532,7 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
                 <LeaseTooltip
                   desiredTerm={desiredLeaseTerm}
                   permId={Permission.IDS.EXTRACT_RESOURCES}
-                  {...leaseAsYouGoDetails}
+                  {...prepaidLeaseConfig}
                 />
               )} />
 

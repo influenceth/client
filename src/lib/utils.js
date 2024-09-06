@@ -371,7 +371,7 @@ export const isProcessingPermission = (permission) => [
   Permission.IDS.ASSEMBLE_SHIP
 ].includes(permission);
 
-export const getProcessorLeaseRequirements = (permissionTarget, permission, crew, blockTime) => {
+export const getProcessorLeaseConfig = (permissionTarget, permission, crew, blockTime) => {
   if (isProcessingPermission(permission)) {
     if (crew && !Permission.isPermitted(crew, permission, permissionTarget, blockTime)) {
       const processingPolicy = Permission.getPolicyDetails(permissionTarget)?.[permission];
@@ -381,4 +381,17 @@ export const getProcessorLeaseRequirements = (permissionTarget, permission, crew
     }
   }
   return null;
+};
+
+export const getProcessorLeaseSelections = (leaseConfig, taskDuration, crewReadyAt, blockTime) => {
+  let leasePayment = 0;
+  let desiredLeaseTerm = 0;
+  let actualLeaseTerm = 0;
+  if (leaseConfig) {
+    const startTime = Math.max(crewReadyAt, blockTime);
+    desiredLeaseTerm = Math.ceil((startTime + taskDuration) - blockTime);
+    actualLeaseTerm = Math.max(desiredLeaseTerm, leaseConfig.initialTerm);
+    leasePayment = Math.ceil(leaseConfig.rate * (actualLeaseTerm / 3600));
+  }
+  return { leasePayment, desiredLeaseTerm, actualLeaseTerm };
 };

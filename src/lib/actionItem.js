@@ -546,6 +546,7 @@ const formatAsTx = (item) => {
       break;
     }
 
+    case 'LeaseAndAssembleShipStart': 
     case 'AssembleShipStart': {
       formatted.icon = <ShipIcon />;
       formatted.label = `Assemble ${Ship.TYPES[item.vars.ship_type]?.name || 'Ship'}`;
@@ -707,6 +708,7 @@ const formatAsTx = (item) => {
       break;
     }
 
+    case 'LeaseAndProcessProductsStart':
     case 'ProcessProductsStart': {
       const process = Process.TYPES[item.vars?.process];
       const processorProps = getProcessorProps(process?.processorType);

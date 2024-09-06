@@ -38,9 +38,9 @@ const usePolicyManager = (target, permission) => {
       // stored in microsway per hour, UI in sway/mo
       pol.policyDetails.rate = Number(safeBigInt(pol.policyDetails.rate)) / 1e6;
       // stored in seconds, UI in months
-      pol.policyDetails.initialTerm = secondsToDays(pol.policyDetails.initialTerm);
+      pol.policyDetails.initialTerm = secondsToDays(pol.policyDetails.initialTerm || 0);
       // stored in seconds, UI in months
-      pol.policyDetails.noticePeriod = secondsToDays(pol.policyDetails.noticePeriod);
+      pol.policyDetails.noticePeriod = secondsToDays(pol.policyDetails.noticePeriod || 0);
     };
 
     return pol;

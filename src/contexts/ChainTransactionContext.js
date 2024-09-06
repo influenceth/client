@@ -222,6 +222,30 @@ const customConfigs = {
     equalityTest: ['asteroid.id'],
     isVirtual: true
   },
+  LeaseAndProcessProductsStart: {
+    multisystemCalls: ({ lease, ...vars }) => {
+      return [
+        lease && {
+          system: 'AcceptPrepaidAgreement',
+          vars: { 
+            caller_crew: vars.caller_crew,
+            target: vars.processor,
+            permission: Permission.IDS.RUN_PROCESS,
+            permitted: vars.caller_crew,
+            termPrice: lease.termPrice,
+            recipient: lease.recipient,
+            term: lease.term,
+          }
+        },
+        {
+          system: 'ProcessProductsStart',
+          vars
+        }
+      ].filter((c) => !!c);
+    },
+    equalityTest: ['processor.id', 'processor_slot'],
+    isVirtual: true
+  },
   FlexibleExtractResourceStart: {
     multisystemCalls: ({ lease, purchase, ...vars }) => {
       return [
