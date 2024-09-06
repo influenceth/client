@@ -32,7 +32,9 @@ import {
   ProgressBarSection,
   LandingSelectionDialog,
   ProcessSelectionBlock,
-  LeaseTooltip
+  LeaseTooltip,
+  LeaseDetailsLabel,
+  LeaseInfoIcon
 } from './components';
 import useLot from '~/hooks/useLot';
 import { ActionDialogInner, useAsteroidAndLot } from '../ActionDialog';
@@ -322,6 +324,7 @@ const AssembleShip = ({ asteroid, lot, dryDockManager, stage, ...props }) => {
           <LotInputBlock
             lot={lot}
             title="Assembly Location"
+            titleDetails={prepaidLeaseConfig && <LeaseDetailsLabel>Lease Required</LeaseDetailsLabel>}
             disabled={stage !== actionStages.NOT_STARTED}
             imageProps={prepaidLeaseConfig && {
               bottomBanner: leasePayment > 0 && (
@@ -340,6 +343,8 @@ const AssembleShip = ({ asteroid, lot, dryDockManager, stage, ...props }) => {
                 {...prepaidLeaseConfig}
               />
             )}
+            addChildren={prepaidLeaseConfig && <LeaseInfoIcon />}
+            bodyStyle={prepaidLeaseConfig && { background: `rgba(${theme.colors.successDarkRGB}, 0.2)` }}
             style={{ width: 350 }}
           />
 

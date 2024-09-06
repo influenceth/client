@@ -40,7 +40,9 @@ import {
   formatVolume,
   ProgressBarSection,
   ProcessSelectionBlock,
-  LeaseTooltip
+  LeaseTooltip,
+  LeaseDetailsLabel,
+  LeaseInfoIcon
 } from './components';
 import useLot from '~/hooks/useLot';
 import { ActionDialogInner, useAsteroidAndLot } from '../ActionDialog';
@@ -429,6 +431,7 @@ const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...pro
         <FlexSection style={{ marginBottom: 32, width: SECTION_WIDTH }}>
           <LotInputBlock
             title={`${gerund} Location`}
+            titleDetails={prepaidLeaseConfig && <LeaseDetailsLabel>Lease Required</LeaseDetailsLabel>}
             lot={lot}
             disabled={stage !== actionStages.NOT_STARTED}
             imageProps={prepaidLeaseConfig && {
@@ -448,6 +451,8 @@ const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...pro
                 {...prepaidLeaseConfig}
               />
             )}
+            addChildren={prepaidLeaseConfig && <LeaseInfoIcon />}
+            bodyStyle={prepaidLeaseConfig && { background: `rgba(${theme.colors.successDarkRGB}, 0.2)` }}
             style={{ flex: '0 0 30%' }}
           />
 

@@ -64,7 +64,8 @@ import {
   CaretIcon,
   ShipIcon,
   BuildingIcon,
-  ConstructIcon
+  ConstructIcon,
+  InfoIcon
 } from '~/components/Icons';
 import LiveTimer from '~/components/LiveTimer';
 import MouseoverInfoPane from '~/components/MouseoverInfoPane';
@@ -3756,6 +3757,17 @@ export const ActionDialogHeader = ({ action, actionCrew, crewAvailableTime, dela
   );
 };
 
+export const LeaseDetailsLabel = styled.div`
+  color: ${p => p.theme.colors.success};
+  font-size: 14px;
+`;
+
+export const LeaseInfoIcon = () => (
+  <div style={{ position: 'absolute', top: 5, right: 5, fontSize: 24, opacity: 0.5 }}>
+    <InfoIcon />
+  </div>
+);
+
 export const FlexSectionInputBlock = ({
   addChildren,
   bodyStyle,
@@ -5629,8 +5641,8 @@ export const LeaseTooltip = ({ desiredTerm, initialTerm, permId, rate }) => {
             <tr>
               <th>Minimum Time</th>
               <td style={desiredTerm < initialTerm ? { color: theme.colors.warning } : {}}>
-                {desiredTerm < initialTerm && <WarningIcon style={{ marginRight: 4 }} />}
-                {formatFixed(initialTerm / 3600, 3)} hr
+                {desiredTerm < initialTerm && <WarningIcon />}
+                <span style={{ marginLeft: 4 }}>{formatFixed(initialTerm / 3600, 3)} hr</span>
               </td>
             </tr>
             <tr>

@@ -4,7 +4,7 @@ import { Asteroid, Crewmate, Deposit, Extractor, Inventory, Lot, Permission, Pro
 import cloneDeep from 'lodash/cloneDeep';
 
 import { CrewCaptainCardFramed } from '~/components/CrewmateCardFramed';
-import { AgreementIcon, CoreSampleIcon, ExtractionIcon, InventoryIcon, LocationIcon, ResourceIcon, SwayIcon, SwayMonochromeIcon, WarningIcon } from '~/components/Icons';
+import { AgreementIcon, CoreSampleIcon, ExtractionIcon, InfoIcon, InventoryIcon, LocationIcon, ResourceIcon, SwayIcon, SwayMonochromeIcon, WarningIcon } from '~/components/Icons';
 import PurchaseButtonInner from '~/components/PurchaseButtonInner';
 import ResourceThumbnail from '~/components/ResourceThumbnail';
 import useActionCrew from '~/hooks/useActionCrew';
@@ -48,7 +48,9 @@ import {
   TransferDistanceDetails,
   getTripDetails,
   BuildingInputBlock,
-  LeaseTooltip
+  LeaseTooltip,
+  LeaseDetailsLabel,
+  LeaseInfoIcon
 } from './components';
 
 const SampleAmount = styled.span`
@@ -516,6 +518,7 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
 
             <BuildingInputBlock
               title="Extraction Location"
+              titleDetails={<LeaseDetailsLabel>Lease Required</LeaseDetailsLabel>}
               bodyStyle={{ background: `rgba(${theme.colors.successDarkRGB}, 0.2)` }}
               building={lot?.building}
               imageProps={{
@@ -534,7 +537,8 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
                   permId={Permission.IDS.EXTRACT_RESOURCES}
                   {...prepaidLeaseConfig}
                 />
-              )} />
+              )}
+              addChildren={<LeaseInfoIcon />} />
 
             <FlexSectionSpacer />
 
