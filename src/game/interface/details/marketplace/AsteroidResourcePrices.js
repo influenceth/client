@@ -165,7 +165,7 @@ const AsteroidResourcePrices = ({ asteroid, mode, resource }) => {
 
   const { crew, crewCan } = useCrewContext();
   const [selected, setSelected] = useState();
-  const [sort, setSort] = useState([(!crew ? 'sellPrice' : 'distance'), 'asc']);
+  const [sort, setSort] = useState(['sellPrice', 'asc']);
   const [sortField, sortDirection] = sort;
 
   const setCoachmarkRef = useCoachmarkRefSetter();
@@ -253,6 +253,7 @@ const AsteroidResourcePrices = ({ asteroid, mode, resource }) => {
 
     let updatedSortField = sortField;
     let updatedSortDirection = sortDirection;
+
     if (field === sortField) {
       updatedSortDirection = sortDirection === 'desc' ? 'asc' : 'desc';
     } else {
@@ -278,19 +279,18 @@ const AsteroidResourcePrices = ({ asteroid, mode, resource }) => {
     };
 
     return (resourceMarketplaces || []).sort((a,b) => {
-      // Check if both supply and demand are zero
-      const aIsZeroGroup = !a.supply && !a.demand;
-      const bIsZeroGroup = !b.supply && !b.demand;
-
-      // Prioritize non-zero groups
-      if (!aIsZeroGroup && bIsZeroGroup) {
-          return -1;
-      } else if (aIsZeroGroup && !bIsZeroGroup) {
-          return 1;
+      if (['supply', 'sellPrice'].includes(sortField)) {
+        if (a.supply > 0 && b.supply === 0) return -1;
+        if (b.supply > 0 && a.supply === 0) return 1;
+        return fieldSortOrder(a, b);
+      } else if (['demand', 'buyPrice'].includes(sortField)) {
+        if (a.demand > 0 && b.demand === 0) return -1;
+        if (b.demand > 0 && a.demand === 0) return 1;
+        return fieldSortOrder(a, b);
+      } else {
+        // Marketplace or Distance sort
+        return fieldSortOrder(a, b);
       }
-
-      // If both items are in the same group, sort based on the sortField and sortDirection
-      return fieldSortOrder(a, b);
     });
   }, [resourceMarketplaces, sortField, sortDirection]);
 
@@ -307,14 +307,18 @@ const AsteroidResourcePrices = ({ asteroid, mode, resource }) => {
               asteroidId={asteroid.id}
               lotId={row.lotId}
               data-tooltip-id="detailsTooltip" />
-            <MarketplaceName access={marketplacesLoading ? 'full' : row.permissions.accessLevel()}>{row.marketplaceName}
-            {!marketplacesLoading && (!crew || row.permissions.accessLevel() === 'full') || (
-              <MarketplacePermissionsIcon
-                style={{ marginLeft: 6, fontSize:'140%'}}
-                permissions={row.permissions}
-                data-tooltip-id={"detailsTooltip"}
-              />
-            )}</MarketplaceName>
+            <MarketplaceName
+              access={marketplacesLoading ? 'full' : row.permissions.accessLevel()}
+              crew>
+              {row.marketplaceName}
+              {!marketplacesLoading && (!crew || row.permissions.accessLevel() === 'full') || (
+                <MarketplacePermissionsIcon
+                  style={{ marginLeft: 6, fontSize:'140%'}}
+                  permissions={row.permissions}
+                  data-tooltip-id={"detailsTooltip"}
+                />
+              )}
+            </MarketplaceName>
           </>
         ),
       },
