@@ -6,6 +6,7 @@ import useDryDockManager from '~/hooks/actionManagers/useDryDockManager';
 import ActionButton, { getCrewDisabledReason } from './ActionButton';
 import useCoachmarkRefSetter from '~/hooks/useCoachmarkRefSetter';
 import { COACHMARK_IDS } from '~/contexts/CoachmarkContext';
+import { getProcessorLeaseRequirements } from '~/lib/utils';
 
 const labelDict = {
   READY: 'Assemble Ship',
@@ -20,10 +21,15 @@ const isVisible = ({ building, crew }) => {
 
 const AssembleShip = ({ asteroid, blockTime, crew, lot, onSetAction, simulation, simulationActions, _disabled }) => {
   const { assemblyStatus, currentAssembly } = useDryDockManager(lot?.id);
+  const setCoachmarkRef = useCoachmarkRefSetter();
+
   const handleClick = useCallback(() => {
     onSetAction('ASSEMBLE_SHIP');
   }, [onSetAction]);
-  const setCoachmarkRef = useCoachmarkRefSetter();
+
+  const leaseAsYouGoDetails = useMemo(() => {
+    return getProcessorLeaseRequirements(lot?.building, Permission.IDS.ASSEMBLE_SHIP, crew, blockTime);
+  }, [blockTime, crew, lot?.building])
 
   const disabledReason = useMemo(() => {
     if (_disabled) return 'loading...';
@@ -34,13 +40,14 @@ const AssembleShip = ({ asteroid, blockTime, crew, lot, onSetAction, simulation,
         crew,
         isSequenceable: true,
         isAllowedInSimulation: simulationActions.includes('AssembleShip'),
+        leaseAsYouGoDetails,
         permission: Permission.IDS.ASSEMBLE_SHIP,
         permissionTarget: lot?.building
       });
     } else if (!currentAssembly?._isAccessible) {
       return 'in use';
     }
-  }, [_disabled, assemblyStatus, asteroid, blockTime, crew, currentAssembly, lot?.building, simulationActions]);
+  }, [_disabled, assemblyStatus, asteroid, blockTime, crew, currentAssembly, leaseAsYouGoDetails, lot?.building, simulationActions]);
   
   const finishTime = lot?.building?.DryDocks.find((dryDock) => dryDock.status === DryDock.STATUSES.RUNNING)?.finishTime;
 
@@ -57,7 +64,7 @@ const AssembleShip = ({ asteroid, blockTime, crew, lot, onSetAction, simulation,
       }}
       icon={<AssembleShipIcon />}
       onClick={handleClick}
-      sequenceMode={!crew?._ready && assemblyStatus === 'READY'} />
+      sequenceDelay={!crew?._ready && assemblyStatus === 'READY' ? crew?.Crew?.readyAt : null} />
   );
 };
 

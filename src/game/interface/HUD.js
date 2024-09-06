@@ -42,7 +42,7 @@ const LogoWrapper = styled.div`
 
 const LeftWrapper = styled(Wrapper)`
   display: flex;
-  height: calc(100% - ${bottomMargin}px);
+  height: calc(100% - ${bottomMargin - 24}px);
   left: 0;
   top: 0;
 `;

@@ -21,7 +21,7 @@ import useHydratedCrew from '~/hooks/useHydratedCrew';
 import useLot from '~/hooks/useLot';
 import useSession from '~/hooks/useSession';
 import formatters from '~/lib/formatters';
-import { formatFixed, nativeBool, reactBool } from '~/lib/utils';
+import { formatFixed, isProcessingPermission, nativeBool, reactBool } from '~/lib/utils';
 import theme from '~/theme';
 import actionButtons from '../../actionButtons';
 import useBlockTime from '~/hooks/useBlockTime';
@@ -210,12 +210,6 @@ const getStatusColor = (status) => {
   }
 }
 
-const isProcessingPermission = (permission) => [
-  Permission.IDS.RUN_PROCESS,
-  Permission.IDS.EXTRACT_RESOURCES,
-  Permission.IDS.ASSEMBLE_SHIP
-].includes(permission);
-
 const PolicyPanel = ({ editable = false, entity, permission }) => {
   const { accountAddress } = useSession();
   const { crew } = useCrewContext();
@@ -369,16 +363,7 @@ const PolicyPanel = ({ editable = false, entity, permission }) => {
     };
   }, [currentPolicy, editable, editing, jitStatus, policyType]);
 
-  const isProcessingPermission = useMemo(() => (
-    [
-      Permission.IDS.RUN_PROCESS,
-      Permission.IDS.EXTRACT_RESOURCES,
-      Permission.IDS.ASSEMBLE_SHIP
-    ].includes(permission)
-  ), [permission]);
-
-
-  const [isPayAsYouGo, setIsPayAsYouGo] = useState(isProcessingPermission && (
+  const [isPayAsYouGo, setIsPayAsYouGo] = useState(isProcessingPermission(permission) && (
     originalPolicyType !== Permission.POLICY_IDS.PREPAID || (
       originalPolicyDetails?.initialTerm === 0 && originalPolicyDetails?.noticePeriod === 0
     )
@@ -499,7 +484,7 @@ const PolicyPanel = ({ editable = false, entity, permission }) => {
                   <PrepaidInputBlock>
                     <PayAsYouGoLabel on={isPayAsYouGo}>
                       <div>Price</div>
-                      {isProcessingPermission && (
+                      {isProcessingPermission(permission) && (
                         <>
                           <div style={{ flex: 1 }} />
                           <Toggle onClick={toggleIsPayAsYouGo}>
@@ -603,8 +588,16 @@ const PolicyPanel = ({ editable = false, entity, permission }) => {
                       : <span><SwayIcon /> {formatFixed(originalPolicyDetails?.rate * 24 || 0)}</span>
                     }
                   </DataRow>
-                  <DataRow><label>Minimum Period</label><span>{formatFixed(originalPolicyDetails?.initialTerm, 3)} day (IRL)</span></DataRow>
-                  <DataRow><label>Notice Period</label><span>{formatFixed(originalPolicyDetails?.noticePeriod, 3)} day (IRL)</span></DataRow>
+                  {isProcessingPermission(permission) && originalPolicyDetails?.initialTerm === 0 && originalPolicyDetails?.noticePeriod === 0
+                    ? (
+                      <DataRow><label>Pay As You Go</label><span>Enabled</span></DataRow>
+                    )
+                    : (
+                      <>
+                        <DataRow><label>Minimum Period</label><span>{formatFixed(originalPolicyDetails?.initialTerm, 3)} day (IRL)</span></DataRow>
+                        <DataRow><label>Notice Period</label><span>{formatFixed(originalPolicyDetails?.noticePeriod, 3)} day (IRL)</span></DataRow>
+                      </>
+                    )}
                 </>
               )}
               {([Permission.POLICY_IDS.CONTRACT, Permission.POLICY_IDS.PREPAID].includes(policyType)) && (

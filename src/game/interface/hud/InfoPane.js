@@ -210,6 +210,7 @@ const Pane = styled.div`
   cursor: ${p => p.theme.cursors.active};
   opacity: ${p => p.visible ? 1 : 0};
   overflow: hidden;
+  padding-bottom: 24px;
   padding-left: 50px;
   pointer-events: all;
   transition: opacity 750ms ease;

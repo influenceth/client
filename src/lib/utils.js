@@ -364,3 +364,21 @@ export const safeBigInt = (unsafe) => {
 export const openAccessJSTime = `${process.env.REACT_APP_CHAIN_ID}` === `0x534e5f4d41494e` ? 1719495000e3 : 0;
 export const displayTimeFractionDigits = 2;
 export const maxAnnotationLength = 750;
+
+export const isProcessingPermission = (permission) => [
+  Permission.IDS.RUN_PROCESS,
+  Permission.IDS.EXTRACT_RESOURCES,
+  Permission.IDS.ASSEMBLE_SHIP
+].includes(permission);
+
+export const getProcessorLeaseRequirements = (permissionTarget, permission, crew, blockTime) => {
+  if (isProcessingPermission(permission)) {
+    if (crew && !Permission.isPermitted(crew, permission, permissionTarget, blockTime)) {
+      const processingPolicy = Permission.getPolicyDetails(permissionTarget)?.[permission];
+      if (processingPolicy?.policyType === Permission.POLICY_IDS.PREPAID) {
+        return processingPolicy.policyDetails;
+      }
+    }
+  }
+  return null;
+};

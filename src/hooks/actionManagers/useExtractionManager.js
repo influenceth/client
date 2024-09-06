@@ -98,17 +98,20 @@ const useExtractionManager = (lotId, slot = 1) => {
     ];
   }, [actionItems, blockTime, crew?.id, crewCan, getPendingTx, getStatus, payload, slotExtractor?.status]);
 
-  const startExtraction = useCallback((amount, deposit, destination, destinationSlot, depositOwnerCrew) => {
+  const startExtraction = useCallback((amount, deposit, destination, destinationSlot, depositRecipient, lease) => {
     execute(
-      depositOwnerCrew ? 'PurchaseDepositAndExtractResource' : 'ExtractResourceStart',
+      'FlexibleExtractResourceStart',
       {
         ...payload,
         yield: amount,
         deposit: { id: deposit.id, label: deposit.label },
         destination: { id: destination.id, label: destination.label },
         destination_slot: destinationSlot,
-        recipient: depositOwnerCrew?.Crew?.delegatedTo,
-        price: deposit.PrivateSale?.amount || 0
+        purchase: depositRecipient && {
+          price: deposit.PrivateSale?.amount || 0,
+          recipient: depositRecipient
+        },
+        lease
       },
       {
         resourceId: deposit.Deposit.resource,

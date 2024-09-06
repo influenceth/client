@@ -682,6 +682,8 @@ const formatAsTx = (item) => {
       break;
     }
 
+    case 'LeaseAndPurchaseDepositAndExtractResource':
+    case 'LeaseAndExtractResource':
     case 'PurchaseDepositAndExtractResource':
     case 'ExtractResourceStart': {
       formatted.icon = <ExtractionIcon />;

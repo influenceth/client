@@ -1,16 +1,22 @@
-import { forwardRef, useCallback, useMemo } from 'react';
+import { forwardRef, useCallback, useMemo, useState } from 'react';
+import ReactDOMServer from 'react-dom/server';
 import styled, { css, keyframes } from 'styled-components';
 import { Permission } from '@influenceth/sdk';
 
 import ClipCorner from '~/components/ClipCorner';
 import useSyncedTime from '~/hooks/useSyncedTime';
-import { formatTimer, nativeBool, reactBool } from "~/lib/utils";
-import { hexToRGB } from '~/theme';
+import { formatFixed, formatTimer, isProcessingPermission, nativeBool, reactBool } from "~/lib/utils";
+import theme, { hexToRGB } from '~/theme';
 import useCrewContext from '~/hooks/useCrewContext';
+import { AgreementIcon, ScheduleFullIcon, SwayIcon } from '~/components/Icons';
+import { TOKEN, TOKEN_SCALE } from '~/lib/priceUtils';
 
 const dimension = 60;
 const padding = 4;
 const cornerSize = 10;
+
+const underneathAnimationTime = 150;
+const underneathAnimationDelay = 100;
 
 const borderAnimation = keyframes`
   0% { border-width: 1px; padding: ${padding}px; }
@@ -30,6 +36,48 @@ const rotationAnimation = keyframes`
   100% { transform: rotate(360deg); }
 `;
 
+const HoverContent = styled.div``;
+const Underneath = styled.div`
+  align-items: center;
+  background: transparent;
+  border-radius: 10px;
+  color: ${p => p.theme.colors.main};
+  display: flex;
+  height: 18px;
+  justify-content: center;
+  margin-top: 3px;
+  position: absolute;
+  transition-property: background, color;
+  transition-duration: ${underneathAnimationTime}ms;
+  transition-timing-function: ease;
+  transition-delay: ${underneathAnimationDelay}ms;
+  width: 100%;
+  ${HoverContent} {
+    font-size: 85%;
+    overflow: hidden;
+    max-width: 0;
+    text-transform: uppercase;
+    transition: max-width ${underneathAnimationTime}ms ease ${underneathAnimationDelay}ms;
+    white-space: nowrap;
+  }
+`;
+
+const BubbleBadge = styled.span`
+  background-color: ${p => p.overrideColor || p.theme.colors.main};
+  color: white;
+  border-radius: 2em;
+  font-size: 12px;
+  font-weight: bold;
+  line-height: 20px;
+  position: absolute;
+  text-align: center;
+  top: -8px;
+  right: -6px;
+  height: 20px;
+  ${p => p.isWide ? 'padding: 0 3px;' : 'width: 20px;'}
+  z-index: 1;
+`;
+
 const ActionButtonWrapper = styled.div`
   color: ${p => p.overrideColor || p.theme.colors.main};
   cursor: ${p => p.theme.cursors.active};
@@ -37,60 +85,47 @@ const ActionButtonWrapper = styled.div`
   margin-right: 8px;
   pointer-events: all;
   position: relative;
-
-  ${p => p?.badge
-    ? `
-      &:before {
-        background-color: ${p.overrideColor || p.theme.colors.main};
-        content: "${p.badge}";
-        color: white;
-        border-radius: 2em;
-        font-size: 12px;
-        font-weight: bold;
-        line-height: 20px;
-        position: absolute;
-        text-align: center;
-        top: -8px;
-        right: -6px;
-        height: 20px;
-        width: 20px;
-        z-index: 1;
-      }
-    `
-    : `
-      &:last-child {
-        margin-right: 0;
-      }
-    `
+  &:last-child {
+    margin-right: 0;
   }
 
   ${p => p.attention && !p.disabled && css`
     color: ${p.theme.colors.success};
-    &:before {
+    ${BubbleBadge} {
       background-color: ${p => p.theme.colors.success};
     }
   `}
 
   ${p => p.disabled && css`
     color: #aaa;
-    &:before {
+    ${BubbleBadge} {
       background-color: #777;
     }
   `}
+
+  &:hover {
+    ${Underneath} {
+      background: #1b69c5;
+      color: white;
+      ${HoverContent} {
+        max-width: 100%;
+      }
+    }
+  }
 `;
 
 const CornerBadge = styled.span`
-  background: #0f365c;
+  background: rgb(36, 178, 149);
   clip-path: polygon(0 0, 100% 0, 0 100%);
-  color: rgba(255, 255, 255, 0.6);
-  font-size: 24px;
-  height: 28px;
+  color: white;
+  font-size: 16px;
+  height: 32px;
   left: 0;
   line-height: 12px;
   padding: 2px 0 0 2px;
   position: absolute;
   top: 0;
-  width: 28px;
+  width: 32px;
   z-index: 1;
 `;
 
@@ -238,17 +273,51 @@ const LoadingAnimation = styled.div`
   }
 `;
 
+const TooltipContents = styled.div`
+  color: white;
+`;
+const TooltipLabel = styled.div`
+  font-weight: bold;
+  text-align: center;
+`;
+const TooltipSublabel = styled.div`
+  display: flex;
+  flex-direction: row;
+  color: #FFF;
+  &:before {
+    color: ${theme.colors.red};
+    content: "Disabled: ";
+    flex: 1;
+    margin-right: 10px;
+    text-transform: uppercase;
+  }
+`;
+const TooltipDelay = styled(TooltipSublabel)`
+  &:before {
+    color: ${theme.colors.main};
+    content: "Crew Delay: ";
+  }
+`;
+const TooltipLease = styled(TooltipSublabel)`
+  &:before {
+    color: ${theme.colors.success};
+    content: "Lease Rate: ";
+  }
+`;
+const TooltipLeaseMin = styled(TooltipSublabel)`
+  &:before {
+    color: ${theme.colors.green};
+    content: "Lease Min: ";
+  }
+`;
+
 // TODO: consider a booleanProp wrapper so could wrap boolean props in
 // {...booleanProps({ a, b, c })} where booleanProps(props) would either include
 // or not rather than true/false OR would pass 1/0 instead
 
-const LoadingTimer = ({ finishTime }) => {
+const SimpleTimer = ({ finishTime }) => {
   const syncedTime = useSyncedTime();
-  return (
-    <CompletionTime>
-      {finishTime > syncedTime ? formatTimer(finishTime - syncedTime, 1) : '...'}
-    </CompletionTime>
-  );
+  return <>{finishTime > syncedTime ? formatTimer(finishTime - syncedTime, 1) : '...'}</>
 };
 
 const StackTally = ({ tally }) => {
@@ -261,17 +330,21 @@ const StackTally = ({ tally }) => {
 
 // (children used for mouseinfopane)
 const ActionButtonComponent = forwardRef(({
+  badgeProps = {},
   children,
   label,
   labelAddendum: rawLabelAddendum,
+  leaseAsYouGoDetails,
   flags: rawFlags,
   icon,
   enablePrelaunch,
   onClick,
-  sequenceMode,
+  sequenceDelay,
   ...props
 }, ref) => {
   const { isLaunched } = useCrewContext();
+
+  const [isHovering, setIsHovering] = useState();
 
   const [flags, labelAddendum] = useMemo(() => {
     const f = rawFlags || {};
@@ -287,6 +360,15 @@ const ActionButtonComponent = forwardRef(({
     if (!flags?.disabled && onClick) onClick();
   }, [flags?.disabled, onClick]);
 
+  const handleHover = useCallback((e) => {
+    if (e.type === 'mouseenter') setIsHovering(true);
+    else if (e.type === 'mouseleave') {
+      setTimeout(() => {
+        setIsHovering(false);
+      }, underneathAnimationTime + underneathAnimationDelay);
+    }
+  }, []);
+
   const safeFlags = useMemo(() => {
     return Object.keys(flags).reduce((acc, k) => {
       if (k === 'badge') acc[k] = flags[k];
@@ -295,6 +377,37 @@ const ActionButtonComponent = forwardRef(({
     }, {})
   }, [flags]);
 
+  const tooltipContent = useMemo(() => {
+    try {
+      return ReactDOMServer.renderToStaticMarkup(
+        <TooltipContents>
+          <TooltipLabel>{label}</TooltipLabel>
+          {labelAddendum && <TooltipSublabel>{labelAddendum}</TooltipSublabel>}
+          {!safeFlags.disabled && !safeFlags.loading && (
+            <>
+              {leaseAsYouGoDetails && (
+                <>
+                  <TooltipLease>
+                    <SwayIcon /> {Math.round(leaseAsYouGoDetails.rate * 24 / TOKEN_SCALE[TOKEN.SWAY])} / DAY
+                  </TooltipLease>
+                  {leaseAsYouGoDetails.initialTerm > 0 && (
+                    <TooltipLeaseMin>
+                      {formatFixed(leaseAsYouGoDetails.initialTerm / 86400, 1)} DAY
+                    </TooltipLeaseMin>
+                  )}
+                </>
+              )}
+              {sequenceDelay && <TooltipDelay>{formatTimer(sequenceDelay - Math.round(Date.now()/1000), 2)}</TooltipDelay>}
+            </>
+          )}
+        </TooltipContents>
+      );
+    } catch (e) {
+      console.warn(e);
+    }
+    return null;
+  }, [label, labelAddendum, leaseAsYouGoDetails, isHovering, safeFlags, sequenceDelay]);
+
   return (
     <ActionButtonWrapper
       ref={ref}
@@ -302,18 +415,28 @@ const ActionButtonComponent = forwardRef(({
       data-tooltip-id="globalTooltip"
       data-tooltip-place="top"
       data-tooltip-delay-hide={100}
-      data-tooltip-content={`${label}${labelAddendum ? ` (${labelAddendum})` : ''}`}
+      data-tooltip-content={null/*`${label}${labelAddendum ? ` (${labelAddendum})` : ''}`*/}
+      data-tooltip-html={tooltipContent}
       onClick={_onClick}
+      onMouseEnter={handleHover}
+      onMouseLeave={handleHover}
       {...safeFlags}
       {...props}>
       {flags.loading && <LoadingAnimation />}
+      {safeFlags.badge ? <BubbleBadge {...badgeProps}>{safeFlags.badge}</BubbleBadge> : null}
       <ActionButton {...safeFlags} overrideColor={props.overrideColor} overrideBgColor={props.overrideBgColor}>
         <ClipCorner dimension={cornerSize} />
-        {sequenceMode && !safeFlags.disabled && !flags.loading && <CornerBadge>+</CornerBadge>}
+        {leaseAsYouGoDetails && !safeFlags.disabled && !flags.loading && <CornerBadge><AgreementIcon /></CornerBadge>}
         <div style={{ opacity: flags.tally > 1 ? 0.33 : 1 }}>{icon}</div>
         {flags.tally > 1 && <StackTally tally={flags.tally} />}
-        {!(flags.tally > 1) && flags.loading && <LoadingTimer finishTime={flags.finishTime} />}
+        {!(flags.tally > 1) && flags.loading && <CompletionTime><SimpleTimer finishTime={flags.finishTime} /></CompletionTime>}
       </ActionButton>
+      {sequenceDelay && !safeFlags.disabled && !flags.loading && (
+        <Underneath>
+          <ScheduleFullIcon />
+          <HoverContent>{isHovering && <>+<SimpleTimer finishTime={sequenceDelay} /></>}</HoverContent>
+        </Underneath>
+      )}
       {children}
     </ActionButtonWrapper>
   );
@@ -323,6 +446,7 @@ export const getCrewDisabledReason = ({
   asteroid,
   blockTime,
   crew,
+  leaseAsYouGoDetails,
   isAllowedInSimulation = false,  // TODO: use config to get by step (can attach step to crew as well... or even allowed buttons directly on crew, etc)
   isSequenceable = false,
   permission,
@@ -333,18 +457,19 @@ export const getCrewDisabledReason = ({
 }) => {
   if (crew?._isSimulation && !isAllowedInSimulation) return 'simulation restricted';
   if (permission && permissionTarget) {
-    if (!crew || !Permission.isPermitted(crew, permission, permissionTarget, blockTime)) return 'access restricted';
+    if (!crew) return 'access restricted';
+    if (!Permission.isPermitted(crew, permission, permissionTarget, blockTime) && !leaseAsYouGoDetails) return 'access restricted';
   }
   if (asteroid && requireAsteroid) {
     if (crew?._location?.asteroidId !== asteroid?.id) {
       return 'crew is away';
     } else if (requireSurface && !crew?._location?.lotId) {
-      return 'crew is in orbit';
+      return 'crew in orbit';
     }
   }
   if (!!crew._actionTypeTriggered) return 'crew event pending';
-  if (requireReady && isSequenceable && !crew?._readyToSequence) return 'crew is fully scheduled';
-  if (requireReady && !isSequenceable && !crew?._ready) return 'crew is busy';
+  if (requireReady && isSequenceable && !crew?._readyToSequence) return 'crew fully scheduled';
+  if (requireReady && !isSequenceable && !crew?._ready) return 'crew busy';
   return null;
 };
 

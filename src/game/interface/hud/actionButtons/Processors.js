@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo } from 'react';
 import { Permission, Processor } from '@influenceth/sdk';
 
-import { getProcessorProps } from '~/lib/utils';
+import { getProcessorLeaseRequirements, getProcessorProps } from '~/lib/utils';
 import ActionButton, { getCrewDisabledReason } from './ActionButton';
 import useProcessManager from '~/hooks/actionManagers/useProcessManager';
 import useCoachmarkRefSetter from '~/hooks/useCoachmarkRefSetter';
@@ -21,6 +21,10 @@ const Button = ({ asteroid, blockTime, crew, lot, processor, onSetAction, simula
 
   const buttonProps = useMemo(() => getProcessorProps(processor?.processorType), [processor?.processorType]);
 
+  const leaseAsYouGoDetails = useMemo(() => {
+    return getProcessorLeaseRequirements(lot?.building, Permission.IDS.RUN_PROCESS, crew, blockTime);
+  }, [blockTime, crew, lot?.building])
+
   const disabledReason = useMemo(() => {
     if (_disabled) return 'loading...';
     if (processStatus === 'READY') {
@@ -30,13 +34,14 @@ const Button = ({ asteroid, blockTime, crew, lot, processor, onSetAction, simula
         crew,
         isSequenceable: true,
         isAllowedInSimulation: simulationActions.includes(`Process:${processor?.processorType}`),
+        leaseAsYouGoDetails,
         permission: Permission.IDS.RUN_PROCESS,
         permissionTarget: lot?.building
       });
     } else if (!currentProcess?._isAccessible) {
       return 'in use';
     }
-  }, [asteroid, blockTime, crew, currentProcess, processor?.processorType, processStatus, simulationActions]);
+  }, [asteroid, blockTime, crew, currentProcess, leaseAsYouGoDetails, processor?.processorType, processStatus, simulationActions]);
 
   const loading = ['PROCESSING', 'FINISHING'].includes(processStatus);
   return (
@@ -52,7 +57,7 @@ const Button = ({ asteroid, blockTime, crew, lot, processor, onSetAction, simula
           finishTime: processor?.finishTime
         }}
         onClick={handleClick}
-        sequenceMode={!crew?._ready && processStatus === 'READY'} />
+        sequenceDelay={!crew?._ready && processStatus === 'READY' ? crew?.Crew?.readyAt : null} />
     </>
   );
 };
