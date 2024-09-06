@@ -466,23 +466,10 @@ export const FundingFlow = ({ totalPrice, onClose, onFunded }) => {
         } catch (e) {
           console.warn('purchase_created event missing payload!', e);
         }
-        setTimeout(() => {
-          setRamping(false);
-          setWaiting(true);
-        }, 2000);
       });
       embeddedRamp.show();
     }, 100);
   }, [accountAddress]);
-
-  const rampTxUrl = useMemo(() => {
-    if (!rampPurchase) return;
-    return `https://transactions.${RAMP_PREPEND}ramp.network/#/details/${rampPurchase.id}?secret=${rampPurchase.purchaseViewToken}`;
-  }, [rampPurchase]);
-
-  useEffect(() => {
-    if (rampTxUrl) window.open(rampTxUrl, '_blank');
-  }, [rampTxUrl]);
 
   const [layerswapUrl, setLayerswapUrl] = useState();
   const onClickLayerswap = useCallback(() => {
@@ -528,6 +515,7 @@ export const FundingFlow = ({ totalPrice, onClose, onFunded }) => {
   }, [onClose]);
 
   useEffect(() => {
+    // error: clear ramp purchase + close funding dialog
     if (RAMP_PURCHASE_STATUS[rampPurchase?.status]?.isError) {
       // fire error
       fireTrackingEvent('funding_error', { externalId: accountAddress, status: rampPurchase?.status });
@@ -537,16 +525,29 @@ export const FundingFlow = ({ totalPrice, onClose, onFunded }) => {
         type: 'GenericAlert',
         data: { content: <>RAMP PAYMENT ERROR: "{RAMP_PURCHASE_STATUS[rampPurchase?.status].statusText}"<br/><br/>Click for more information.</> },
         level: 'warning',
-        onRemoval: function () {
-          if (rampTxUrl) window.open(rampTxUrl, '_blank');
-        }
       });
 
       // clear purchase
       setRampPurchase();
       onClose();
+
+    // success: clear ramp purchase (don't close funding, let "waiting" handler do that)
+    } else if (RAMP_PURCHASE_STATUS[rampPurchase?.status]?.isSuccess) {
+      // fire success
+      fireTrackingEvent('funding_success', { externalId: accountAddress });
+
+      // clear purchase
+      setRampPurchase();
+      setRamping(); // (this should be redundant)
+      setWaiting(true);
+
+    // processing: switch from ramp widget to "waiting" once PAYMENT_EXECUTED
+    } else if (rampPurchase?.status === 'PAYMENT_EXECUTED') {
+      fireTrackingEvent('funding_payment_executed', { externalId: accountAddress });
+      setRamping();
+      setWaiting(true);
     }
-  }, [rampPurchase?.status, rampTxUrl])
+  }, [rampPurchase?.status])
   
 
   return createPortal(
@@ -686,25 +687,16 @@ export const FundingFlow = ({ totalPrice, onClose, onFunded }) => {
               <GiantIcon>
                 <WalletIcon />
               </GiantIcon>
-              {rampPurchase && !RAMP_PURCHASE_STATUS[rampPurchase.status].isSuccess
-                ? (
-                  <>
-                    <h4>{RAMP_PURCHASE_STATUS[rampPurchase.status].statusText}</h4>
-                    {!RAMP_PURCHASE_STATUS[rampPurchase.status].isError && <small>(taking too long?)</small>}
-                    <Button size="small" onClick={() => window.open(rampTxUrl, '_blank')}>
-                      <LinkIcon /> <span>View Transaction</span>
-                    </Button>
-                  </>
-                )
-                : (
-                  <>
-                    <h4>Waiting for funds to be received...</h4>
-                    <small>(this may take several moments)</small>
-                    <Button size="small" onClick={() => setWaiting(false)}>
-                      <CloseIcon /> <span>Cancel</span>
-                    </Button>
-                  </>
-                )}
+              <h4>
+                {rampPurchase && !RAMP_PURCHASE_STATUS[rampPurchase.status].isSuccess
+                  ? RAMP_PURCHASE_STATUS[rampPurchase.status].statusText
+                  : `Waiting for funds to be received...`
+                }
+              </h4>
+              <small>(this may take several moments)</small>
+              <Button size="small" onClick={() => setWaiting(false)}>
+                <CloseIcon /> <span>Cancel</span>
+              </Button>
             </div>
             <footer>
               <div>
