@@ -198,6 +198,32 @@ export const esbPermissionQuery = (crewId, crewDelegatedTo, permissionId) => {
   ])
 };
 
+export const esbAnyPermissionQuery = (crewId, crewDelegatedTo) => {
+  return esb.boolQuery().should([
+    esb.termQuery('Control.controller.id', crewId),
+    esb.nestedQuery()
+      .path('PublicPolicies')
+      .query(esb.termQuery('PublicPolicies.public', true)),
+    esb.nestedQuery()
+      .path('PrepaidAgreements')
+      .query(
+        esb.boolQuery().must([
+          esb.termQuery('PrepaidAgreements.permitted.id', crewId),
+          esb.rangeQuery('PrepaidAgreements.endTime').gt(Math.floor(Date.now() / 1000))
+        ])
+      ),
+    esb.nestedQuery()
+      .path('ContractAgreements')
+      .query(esb.termQuery('ContractAgreements.permitted.id', crewId)),
+    esb.nestedQuery()
+      .path('WhitelistAgreements')
+      .query(esb.termQuery('WhitelistAgreements.permitted.id', crewId)),
+    esb.nestedQuery()
+      .path('WhitelistAccountAgreements')
+      .query(esb.termQuery('WhitelistAccountAgreements.permitted', crewDelegatedTo))
+  ])
+};
+
 export const getProcessorProps = (processorType) => {
   switch (processorType) {
     case Processor.IDS.REFINERY: return { label: 'Refine Materials', typeLabel: 'Refinery', icon: <RefineIcon /> };

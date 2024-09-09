@@ -6,7 +6,7 @@ import esb from 'elastic-builder';
 import api from '~/lib/api';
 import useStore from '~/hooks/useStore';
 import constants from '~/lib/constants';
-import { esbLocationQuery } from '~/lib/utils';
+import { esbAnyPermissionQuery, esbLocationQuery } from '~/lib/utils';
 
 const filtersToQuery = {};
 
@@ -107,6 +107,27 @@ filtersToQuery.buildings = (filters) => {
 
   if (filters.construction) {
     queryBuilder.filter(esb.termsQuery('Building.status', filters.construction.map((t) => parseInt(t))));
+  } else {
+    queryBuilder.filter(esb.rangeQuery('Building.status').gt(0));
+  }
+
+  if (filters.access) {
+    if (Array.isArray(filters.access)) {
+      const [crewId, crewDelegatedTo] = filters.access;
+      queryBuilder.filter(esbAnyPermissionQuery(crewId, crewDelegatedTo));
+    } else if (filters.access === 'public') {
+      queryBuilder.filter(
+        esb.nestedQuery()
+          .path('PublicPolicies')
+          .query(esb.termQuery('PublicPolicies.public', true))
+      );
+    } else if (filters.access === 'leaseable') {
+      queryBuilder.filter(
+        esb.nestedQuery()
+          .path('PrepaidPolicies')
+          .query(esb.rangeQuery('PrepaidPolicies.rate').gt(0))
+      );
+    }
   }
 
   return queryBuilder;

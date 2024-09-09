@@ -1,14 +1,50 @@
 import { useMemo } from 'react';
-import { Building, Entity, Lot } from '@influenceth/sdk';
+import styled from 'styled-components';
+import { Asteroid, Building, Lot, Permission } from '@influenceth/sdk';
 
-import { MyAssetIcon } from '~/components/Icons';
-import useSession from '~/hooks/useSession';
+import EntityLink from '~/components/EntityLink';
+import { MyAssetIcon, SwayIcon } from '~/components/Icons';
+import useBlockTime from '~/hooks/useBlockTime';
 import useCrewContext from '~/hooks/useCrewContext';
-import { LocationLink } from './components';
+import useSession from '~/hooks/useSession';
 import formatters from '~/lib/formatters';
+import { formatFixed } from '~/lib/utils';
+import { LocationLink } from './components';
+import { TOKEN, TOKEN_SCALE } from '~/lib/priceUtils';
+
+const AccessSubrow = styled.tr`
+  & > th {
+    align-items: center;
+    color: ${p => {
+      if (p.value === 'controller') return p.theme.colors.brightMain;
+      else if (p.value === 'granted' || p.value === 'under contract') return p.theme.colors.success;
+      else if (p.value === 'restricted') return p.theme.colors.error;
+      return 'white';
+    }};
+    display: flex;
+    padding: 1px 0;
+    text-align: right;
+    vertical-align: middle;
+  }
+  & > td {
+    font-size: 85%;
+    padding-left: 4px;
+    vertical-align: middle;
+  }
+`;
+const AccessRowMin = styled.div`
+  background: ${p => p.theme.colors.backgroundMain};
+  border-radius: 6px;
+  color: #CCC;
+  display: inline-block !important;
+  font-size: 10px;
+  padding: 1px 5px !important;
+  width: auto !important;
+`;
 
 const useColumns = () => {
   const { accountAddress } = useSession();
+  const blockTime = useBlockTime();
   const { crew } = useCrewContext();
 
   return useMemo(() => {
@@ -77,16 +113,73 @@ const useColumns = () => {
           );
         },
       },
+      crew?._location && {
+        key: 'distance',
+        label: 'Distance',
+        noMinWidth: true,
+        selector: row => {
+          const { asteroidId, lotIndex } = Lot.toPosition(row.Location?.location);
+          if (!crew?._location?.lotId || asteroidId !== crew?._location?.asteroidId) {
+            return '';
+          }
+          return `${formatFixed(Asteroid.getLotDistance(asteroidId, lotIndex, crew._location.lotIndex) || 0)} km`;
+        },
+      },
+      crew && {
+        key: 'access',
+        label: 'Access',
+        noMinWidth: true,
+        selector: row => {
+          const policyDetails = Permission.getPolicyDetails(row, crew, blockTime);
+
+          let lines = {};
+          Object.keys(policyDetails).forEach((permId) => {
+            if (policyDetails[permId].crewStatus === 'available') {
+              lines[permId] = `${policyDetails[permId].policyDetails.rate}_${policyDetails[permId].policyDetails.initialTerm}`;
+            } else {
+              lines[permId] = policyDetails[permId].crewStatus;
+            }
+          });
+
+          const isSingleRow = (new Set(Object.values(lines))).size === 1;
+          return (
+            <table style={{ margin: '6px 0' }}>
+              <tbody>
+                {(isSingleRow ? [Object.keys(lines)[0]] : Object.keys(lines))
+                  .filter((p) => lines[p] !== 'restricted')
+                  .sort((a, b) => lines[a] < lines[b] ? 1 : -1)
+                  .map((permId) => {
+                    const [value, min] = lines[permId].split('_');
+                    const thValue = isNaN(parseInt(value))
+                      ? (value || '').toUpperCase()
+                      : (
+                        <>
+                          <span style={{ fontSize: '115%' }}><SwayIcon /></span>
+                          <span>
+                            {formatFixed(value / TOKEN_SCALE[TOKEN.SWAY])} / hr
+                          </span>
+                        </>
+                      );
+                    return (
+                      <AccessSubrow key={permId} value={lines[permId]}>
+                        <th>{thValue}</th>
+                        {!isSingleRow && <td>{Permission.TYPES[permId].name}</td>}
+                        {min > 0 && <td><AccessRowMin>&gt; {(min / 3600).toLocaleString()} hr</AccessRowMin></td>}
+                      </AccessSubrow>
+                    );
+                  })
+                }
+              </tbody>
+            </table>
+          );
+        },
+      },
       {
         key: 'crew',
-        label: 'Crew',
-        sortField: 'Control.controller.id',
+        label: 'Controller',
+        // sortField: 'Control.controller.id',
         selector: row => {
-          if (row.Control?.controller?.id) {
-            return row.Control?.controller?.id === crew?.id ? 'you' : row.Control?.controller?.id.toLocaleString();
-          }
-
-          return 'Uncontrolled';
+          return row.Control?.controller?.id ? <EntityLink {...row.Control.controller} /> : 'Uncontrolled';
         }
       },
       {
@@ -113,8 +206,8 @@ const useColumns = () => {
       },
     ];
 
-    return columns.filter((c) => accountAddress || !c.requireLogin);
-  }, [accountAddress, crew?.id]);
+    return columns.filter((c) => c && (accountAddress || !c.requireLogin));
+  }, [accountAddress, blockTime, crew]);
 };
 
 export default useColumns;
