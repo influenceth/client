@@ -526,7 +526,7 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
                   <>
                     <SwayIcon />
                     {formatFixed(leasePayment / 1e6, 1)}
-                  </> 
+                  </>
                 ),
                 iconBadge: <AgreementIcon />,
                 iconBadgeCorner: theme.colors.successDark

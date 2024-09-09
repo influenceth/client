@@ -55,7 +55,7 @@ export function ActionItemProvider({ children }) {
     [ 'actionItems', crewId ],
     async () => {
       const activities = await api.getCrewActionItems(crewId);
-      
+
       // add startTime to all for consistency
       activities.forEach((a) => {
         if (sequenceableSystems.includes(a.event.name)) {
@@ -106,7 +106,7 @@ export function ActionItemProvider({ children }) {
         const config = leaseAndProcessEvents[event.name];
         if (!config) return acc;
 
-        const agreements = crewAgreements.filter((a) => {
+        const agreements = (crewAgreements || []).filter((a) => {
           if (a.label === event.returnValues[config.entityKey].label && a.id === event.returnValues[config.entityKey].id) {
             if (a._agreement?.permission === config.permission) {
               // if agreement end and finishTime end are within buffer of each other, assume this is the agreement

@@ -278,7 +278,7 @@ export function ActivitiesProvider({ children }) {
             if (!isRedundant) finalInvalidations.push(specific);
           });
         if (debugInvalidation) console.log('deduped final invalidate', finalInvalidations);
-        
+
         finalInvalidations.forEach((queryKey) => {
           if (process.env.NODE_ENV !== 'production') console.log('invalidate', queryKey);
           queryClient.invalidateQueries({ queryKey, refetchType: 'active' });
@@ -342,8 +342,9 @@ export function ActivitiesProvider({ children }) {
       // our pre-update block number should be at least as high as the newly reported
       // previously-processed-block from the server (otherwise, we missed one)
       if (blockNumber > 0 && body.previous > 0 && body.previous > blockNumber) {
+        console.log(`Missed a block! (new: ${body.blockNumber}, server prev: ${body.previous}, local prev: ${blockNumber})`);
+
         if (process.env.NODE_ENV !== 'production') {
-          console.log(`Missed a block! (new: ${body.blockNumber}, server prev: ${body.previous}, local prev: ${blockNumber})`);
           window.alert('Missed a block!');
         }
         setIsBlockMissing(true);

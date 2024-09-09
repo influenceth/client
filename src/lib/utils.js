@@ -324,7 +324,7 @@ export const ordersToFills = (mode, orders, amountToFill, takerFee, feeReduction
     .every((order) => {
       // if order depleted, skip over but keep going
       if (order.amount === 0) return true;
-      
+
       const { amount, price } = order;
       const levelAmount = Math.min(needed, amount);
       const levelValue = Math.round(1e6 * levelAmount * price) / 1e6;
