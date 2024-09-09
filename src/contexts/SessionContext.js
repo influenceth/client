@@ -79,6 +79,7 @@ export function SessionProvider({ children }) {
   const [walletAccount, setWalletAccount] = useState();
 
   const [blockNumber, setBlockNumber] = useState(0);
+  const [provisionalBlockNumber, setProvisionalBlockNumber] = useState(0);
   const [blockTime, setBlockTime] = useState(0);
   const [isBlockMissing, setIsBlockMissing] = useState(false);
   const [error, setError] = useState();
@@ -570,14 +571,14 @@ export function SessionProvider({ children }) {
         // does not (currently) return a block number with pending block...
         if (block.block_number > 0) {
           lastBlockNumberTime.current = block.block_number;
-          setBlockNumber(block.block_number);
+          setProvisionalBlockNumber(block.block_number); // provisional b/c not necessarily synced with server
 
         // ... so we get the block number from the parent (which matches what ws reports)
         } else if (block.parent_hash) {
           const parent = await provider.getBlock(block.parent_hash);
           if (parent?.block_number > 0) {
             lastBlockNumberTime.current = parent.block_number;
-            setBlockNumber(parent.block_number);
+            setProvisionalBlockNumber(parent.block_number); // provisional b/c not necessarily synced with server
           } else {
             console.error('could not initialize block number!', block, parent);
           }
@@ -680,7 +681,8 @@ export function SessionProvider({ children }) {
       setIsBlockMissing,
       isBlockMissing,
       setBlockNumber,
-      blockNumber,
+      blockNumberIsProvisional: !blockNumber,
+      blockNumber: blockNumber || provisionalBlockNumber,
       blockTime
     }}>
       {readyForChildren
