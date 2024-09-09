@@ -1,5 +1,5 @@
 import { createContext, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Address, Asteroid, Entity, Order, System } from '@influenceth/sdk';
+import { Address, Asteroid, Entity, Order, Permission, System } from '@influenceth/sdk';
 import { isEqual, get } from 'lodash';
 import { hash, num, shortString, uint256 } from 'starknet';
 import { fetchBuildExecuteTransaction, fetchQuotes } from '@avnu/avnu-sdk';
@@ -222,8 +222,60 @@ const customConfigs = {
     equalityTest: ['asteroid.id'],
     isVirtual: true
   },
-  PurchaseDepositAndExtractResource: {
-    multisystemCalls: ['PurchaseDeposit', 'ExtractResourceStart'],
+  LeaseAndProcessProductsStart: {
+    multisystemCalls: ({ lease, ...vars }) => {
+      return [
+        lease && {
+          system: 'AcceptPrepaidAgreement',
+          vars: { 
+            caller_crew: vars.caller_crew,
+            target: vars.processor,
+            permission: Permission.IDS.RUN_PROCESS,
+            permitted: vars.caller_crew,
+            termPrice: lease.termPrice,
+            recipient: lease.recipient,
+            term: lease.term,
+          }
+        },
+        {
+          system: 'ProcessProductsStart',
+          vars
+        }
+      ].filter((c) => !!c);
+    },
+    equalityTest: ['processor.id', 'processor_slot'],
+    isVirtual: true
+  },
+  FlexibleExtractResourceStart: {
+    multisystemCalls: ({ lease, purchase, ...vars }) => {
+      return [
+        lease && {
+          system: 'AcceptPrepaidAgreement',
+          vars: { 
+            caller_crew: vars.caller_crew,
+            target: vars.extractor,
+            permission: Permission.IDS.EXTRACT_RESOURCES,
+            permitted: vars.caller_crew,
+            termPrice: lease.termPrice,
+            recipient: lease.recipient,
+            term: lease.term,
+          }
+        },
+        purchase && {
+          system: 'PurchaseDeposit',
+          vars: {
+            caller_crew: vars.caller_crew,
+            deposit: vars.deposit,
+            price: purchase.price,
+            recipient: purchase.recipient,
+          }
+        },
+        {
+          system: 'ExtractResourceStart',
+          vars
+        }
+      ].filter((c) => !!c);
+    },
     equalityTest: ['extractor.id'],
     isVirtual: true
   },
@@ -529,7 +581,8 @@ export function ChainTransactionProvider({ children }) {
         // Triple the fee estimation and check for sufficient funds to ensure transaction success
         // TODO: figure out why some txs require this
         
-        maxFee = gasless.getGasFeesInGasToken(simulation[0].suggestedMaxFee, gasToken) * 3n;
+        // (not sure why Math.abs is necessary, but it is on dev at least)
+        maxFee = Math.abs(gasless.getGasFeesInGasToken(simulation[0].suggestedMaxFee, gasToken)) * 3n;
         console.log('maxFee', maxFee);
 
         canPayGasWithSway = (swayBalance >= maxFee);

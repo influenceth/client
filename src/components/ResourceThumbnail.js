@@ -8,6 +8,8 @@ import ClipCorner from '~/components/ClipCorner';
 import { getProductIcon } from '~/lib/assetUtils';
 import { hexToRGB } from '~/theme';
 import { reactBool } from '~/lib/utils';
+import ThumbnailBottomBanner from './ThumbnailBottomBanner';
+import ThumbnailIconBadge from './ThumbnailIconBadge';
 
 const defaultSize = '92px';
 const defaultBorderColor = '#333';
@@ -176,33 +178,6 @@ const ResourceBadge = styled.div`
   }
 `;
 
-const ResourceIconBadge = styled.div`
-  font-size: 18px;
-  left: 0px;
-  position: absolute;
-  top: 0px;
-
-  ${p => p.iconBadgeCorner && `
-      & > svg {
-        color: white !important;
-        position: relative;
-        top: -2px;
-        z-index: 1;
-      }
-      &:before {
-        border: 15px solid ${p.iconBadgeCorner};
-        border-bottom-color: transparent;
-        border-right-color: transparent;
-        content: "";
-        height: 0px;
-        position: absolute;
-        width: 0px;
-        z-index: 0;
-      }
-    `
-  };
-`;
-
 const ThumbnailCorner = styled.div`
   background-color: ${p => `rgba(${hexToRGB(p.color)}, 1.0)`};
   clip-path: polygon(0 0, 100% 0, 0 100%);
@@ -232,6 +207,10 @@ const UpperRightBadge = styled.div`
   vertical-align: middle;
 `;
 
+const BottomBanner = styled(ThumbnailBottomBanner)`
+  background: rgba(${p => p.theme.colors.successDarkRGB}, 0.65);
+`;
+
 const Menu = ({ children }) => {
   const [open, setOpen] = useState();
   const onClick = useCallback((e) => {
@@ -254,11 +233,11 @@ const Menu = ({ children }) => {
 
 // TODO: this component is functionally overloaded... create more components so not trying to use in so many different ways
  const ResourceThumbnail = ({
-  resource,
   backgroundColor,
   badge,
   badgeColor,
   badgeDenominator,
+  bottomBanner,
   deficit,
   iconBadge,
   iconBadgeCorner,
@@ -268,6 +247,7 @@ const Menu = ({ children }) => {
   overlayIcon,
   overlayStripes,
   progress,
+  resource,
   size,
   tooltipContainer = 'globalTooltip',
   tooltipOverride,
@@ -295,12 +275,13 @@ const Menu = ({ children }) => {
       <ResourceImage contain={props.contain} src={getProductIcon(resource.i, parseInt(size) > 125 ? 'w400' : 'w125')} />
       <ClipCorner dimension={10} color={outlineColor || defaultBorderColor} />
       {badge !== undefined && <ResourceBadge badge={badge} badgeDenominator={badgeDenominator} />}
-      {iconBadge !== undefined && <ResourceIconBadge iconBadgeCorner={iconBadgeCorner}>{iconBadge}</ResourceIconBadge>}
+      {iconBadge !== undefined && <ThumbnailIconBadge iconBadgeCorner={iconBadgeCorner}>{iconBadge}</ThumbnailIconBadge>}
       {progress !== undefined && <ResourceProgress progress={progress} />}
       {overlayStripes !== undefined && <AnimatedStripes />}
       {overlayIcon && <ThumbnailCorner color={badgeColor}>{overlayIcon}</ThumbnailCorner>}
       {upperRightBadge && <UpperRightBadge color={upperRightBadgeColor}>{upperRightBadge}</UpperRightBadge>}
       {menu && <Menu>{menu}</Menu>}
+      {bottomBanner && <BottomBanner>{bottomBanner}</BottomBanner>}
     </ResourceThumbnailWrapper>
   );
 };

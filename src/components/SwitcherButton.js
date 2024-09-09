@@ -1,4 +1,3 @@
-import { Tooltip } from 'react-tooltip';
 import styled from 'styled-components';
 
 import Button, { bgOpacity, bgOpacityHover } from '~/components/ButtonAlt';

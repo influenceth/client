@@ -55,7 +55,7 @@ const Construct = ({ asteroid, crew, lot, onSetAction, simulation, simulationAct
         }}
         icon={<ConstructIcon />}
         onClick={handleClick}
-        sequenceMode={!crew?._ready && constructionStatus === 'PLANNED'} />
+        sequenceDelay={!crew?._ready && constructionStatus === 'PLANNED' ? crew?.Crew?.readyAt : null} />
     </>
   );
 };

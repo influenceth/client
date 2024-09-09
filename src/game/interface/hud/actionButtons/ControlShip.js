@@ -21,7 +21,7 @@ const ControlShip = ({ crew, ship, onSetAction, _disabled, ...props }) => {
   const disabledReason = useMemo(() => {
     if (_disabled) return 'loading...';
     if (takingControl) return 'updating...';
-    if (!crew?._ready) return 'crew is busy';
+    if (!crew?._ready) return 'crew busy';
     return '';
   }, [crew, _disabled, takingControl]);
 

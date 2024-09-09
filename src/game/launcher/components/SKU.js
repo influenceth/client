@@ -32,6 +32,7 @@ import useSwapHelper from '~/hooks/useSwapHelper';
 import useCrewContext from '~/hooks/useCrewContext';
 import FundingFlow from './FundingFlow';
 import { AdvancedStarterPack, BasicStarterPack, useStarterPacks } from './StarterPack';
+import PurchaseButtonInner from '~/components/PurchaseButtonInner';
 
 const Flourish = styled.div`
   background: url(${p => p.src});
@@ -212,24 +213,6 @@ const AsteroidsRemaining = styled.div`
     font-size: 15px;
     opacity: 0.5;
   }
-`;
-
-export const PurchaseButtonInner = styled.div`
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  width: 100%;
-  & > span {
-    color: white;
-  }
-`;
-
-export const PurchaseButton = styled(Button)`
-  ${p => p.disabled && `
-    ${PurchaseButtonInner} > span {
-      opacity: 0.5;
-    }
-  `}
 `;
 
 const FilterAsteroidButton = ({ price, sizeFilter }) => {
@@ -663,7 +646,7 @@ const SwayFaucetButton = () => {
   }, [accountAddress, login, provider]);
 
   return (
-    <PurchaseButton
+    <Button
       color={theme.colors.success}
       contrastColor={theme.colors.disabledBackground}
       background={`rgba(${theme.colors.successRGB}, 0.1)`}
@@ -677,7 +660,7 @@ const SwayFaucetButton = () => {
           +<SwayIcon />{Number(400000).toLocaleString()}
         </span>
       </PurchaseButtonInner>
-    </PurchaseButton>
+    </Button>
   );
 }
 

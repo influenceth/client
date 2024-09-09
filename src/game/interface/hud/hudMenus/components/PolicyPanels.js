@@ -10,7 +10,7 @@ import CollapsibleBlock from '~/components/CollapsibleBlock';
 import EntityLink from '~/components/EntityLink';
 import EntityName from '~/components/EntityName';
 import IconButton from '~/components/IconButton';
-import { CloseIcon, AgreementIcon, LotControlIcon, PermissionIcon, RadioCheckedIcon, RadioUncheckedIcon, SwayIcon, WarningIcon } from '~/components/Icons';
+import { CloseIcon, AgreementIcon, LotControlIcon, PermissionIcon, RadioCheckedIcon, RadioUncheckedIcon, SwayIcon, WarningIcon, CheckedIcon, UncheckedIcon } from '~/components/Icons';
 import LiveTimer from '~/components/LiveTimer';
 import UncontrolledTextArea from '~/components/TextAreaUncontrolled';
 import UncontrolledTextInput from '~/components/TextInputUncontrolled';
@@ -21,7 +21,7 @@ import useHydratedCrew from '~/hooks/useHydratedCrew';
 import useLot from '~/hooks/useLot';
 import useSession from '~/hooks/useSession';
 import formatters from '~/lib/formatters';
-import { formatFixed, nativeBool, reactBool } from '~/lib/utils';
+import { formatFixed, isProcessingPermission, nativeBool, reactBool } from '~/lib/utils';
 import theme from '~/theme';
 import actionButtons from '../../actionButtons';
 import useBlockTime from '~/hooks/useBlockTime';
@@ -121,6 +121,29 @@ const PrepaidInputBlock = styled(InputBlock)`
     }
     & > span {
       font-size: 90%;
+    }
+  }
+`;
+
+const Toggle = styled.div``;
+const PayAsYouGoLabel = styled.div`
+  align-items: flex-end;
+  display: flex;
+  flex-direction: row;
+  ${Toggle} {
+    align-items: center;
+    color: #CCC;
+    cursor: ${p => p.theme.cursors.active};
+    display: flex;
+    opacity: 0.7;
+    & > svg {
+      color: ${p => p.on ? p.theme.colors.main : 'white'};
+    }
+    & > span {
+      margin-left: 4px;
+    }
+    &:hover {
+      opacity: 1;
     }
   }
 `;
@@ -240,7 +263,8 @@ const PolicyPanel = ({ editable = false, entity, permission }) => {
 
   const isIncomplete = useMemo(() => {
     if (policyType === Permission.POLICY_IDS.PREPAID) {
-      if (!(details.rate >= 0 && details.initialTerm >= 0 && details.noticePeriod >= 0)) return true;
+      if (!details.rate || details.rate < 0) return true;
+      if (details.initialTerm < 0 || details.noticePeriod < 0) return true;
       return parseFloat(details.initialTerm) + parseFloat(details.noticePeriod) > Permission.MAX_POLICY_DURATION;
     }
     if (policyType === Permission.POLICY_IDS.CONTRACT) {
@@ -339,6 +363,21 @@ const PolicyPanel = ({ editable = false, entity, permission }) => {
       color: editable ? getPolicyColor(policyType) : getStatusColor(crewStatus),
     };
   }, [currentPolicy, editable, editing, jitStatus, policyType]);
+
+  const [isPayAsYouGo, setIsPayAsYouGo] = useState(isProcessingPermission(permission) && (
+    originalPolicyType !== Permission.POLICY_IDS.PREPAID || (
+      originalPolicyDetails?.initialTerm === 0 && originalPolicyDetails?.noticePeriod === 0
+    )
+  ));
+  const toggleIsPayAsYouGo = useCallback(() => {
+    setIsPayAsYouGo((v) => {
+      const newVal = !v;
+      if (newVal) {
+        setDetails((v) => ({ ...v, initialTerm: 0, noticePeriod: 0 }));
+      }
+      return newVal;
+    });
+  }, []);
 
   return (
     <CollapsibleBlock
@@ -444,7 +483,18 @@ const PolicyPanel = ({ editable = false, entity, permission }) => {
               {policyType === Permission.POLICY_IDS.PREPAID && (
                 <>
                   <PrepaidInputBlock>
-                    <label>Price</label>
+                    <PayAsYouGoLabel on={reactBool(isPayAsYouGo)}>
+                      <div>Price</div>
+                      {isProcessingPermission(permission) && (
+                        <>
+                          <div style={{ flex: 1 }} />
+                          <Toggle onClick={toggleIsPayAsYouGo}>
+                            {isPayAsYouGo ? <CheckedIcon /> : <UncheckedIcon />}
+                            <span>Pay as You Go</span>
+                          </Toggle>
+                        </>
+                      )}
+                    </PayAsYouGoLabel>
                     <div>
                       <UncontrolledTextInput
                         disabled={nativeBool(saving)}
@@ -456,34 +506,39 @@ const PolicyPanel = ({ editable = false, entity, permission }) => {
                       <span>SWAY per day (IRL)</span>
                     </div>
                   </PrepaidInputBlock>
-                  <PrepaidInputBlock>
-                    <label>Minimum Period</label>
-                    <div>
-                      <UncontrolledTextInput
-                        disabled={nativeBool(saving)}
-                        max={12}
-                        min={0}
-                        onChange={handleChange('initialTerm')}
-                        step={1}
-                        type="number"
-                        value={`${details.initialTerm}`} />
-                      <span>days (IRL)</span>
-                    </div>
-                  </PrepaidInputBlock>
-                  <PrepaidInputBlock>
-                    <label>Notice Period</label>
-                    <div>
-                      <UncontrolledTextInput
-                        disabled={nativeBool(saving)}
-                        max={12}
-                        min={0}
-                        onChange={handleChange('noticePeriod')}
-                        step={1}
-                        type="number"
-                        value={`${details.noticePeriod}`} />
-                      <span>days (IRL)</span>
-                    </div>
-                  </PrepaidInputBlock>
+                  
+                  {!isPayAsYouGo && (
+                    <>
+                      <PrepaidInputBlock>
+                        <label>Minimum Period</label>
+                        <div>
+                          <UncontrolledTextInput
+                            disabled={nativeBool(saving)}
+                            max={12}
+                            min={0}
+                            onChange={handleChange('initialTerm')}
+                            step={1}
+                            type="number"
+                            value={`${details.initialTerm}`} />
+                          <span>days (IRL)</span>
+                        </div>
+                      </PrepaidInputBlock>
+                      <PrepaidInputBlock>
+                        <label>Notice Period</label>
+                        <div>
+                          <UncontrolledTextInput
+                            disabled={nativeBool(saving)}
+                            max={12}
+                            min={0}
+                            onChange={handleChange('noticePeriod')}
+                            step={1}
+                            type="number"
+                            value={`${details.noticePeriod}`} />
+                          <span>days (IRL)</span>
+                        </div>
+                      </PrepaidInputBlock>
+                    </>
+                  )}
                 </>
               )}
               {policyType === Permission.POLICY_IDS.CONTRACT && (
@@ -534,8 +589,16 @@ const PolicyPanel = ({ editable = false, entity, permission }) => {
                       : <span><SwayIcon /> {formatFixed(originalPolicyDetails?.rate * 24 || 0)}</span>
                     }
                   </DataRow>
-                  <DataRow><label>Minimum Period</label><span>{formatFixed(originalPolicyDetails?.initialTerm, 3)} day (IRL)</span></DataRow>
-                  <DataRow><label>Notice Period</label><span>{formatFixed(originalPolicyDetails?.noticePeriod, 3)} day (IRL)</span></DataRow>
+                  {isProcessingPermission(permission) && originalPolicyDetails?.initialTerm === 0 && originalPolicyDetails?.noticePeriod === 0
+                    ? (
+                      <DataRow><label>Pay As You Go</label><span>Enabled</span></DataRow>
+                    )
+                    : (
+                      <>
+                        <DataRow><label>Minimum Period</label><span>{formatFixed(originalPolicyDetails?.initialTerm, 3)} day (IRL)</span></DataRow>
+                        <DataRow><label>Notice Period</label><span>{formatFixed(originalPolicyDetails?.noticePeriod, 3)} day (IRL)</span></DataRow>
+                      </>
+                    )}
                 </>
               )}
               {([Permission.POLICY_IDS.CONTRACT, Permission.POLICY_IDS.PREPAID].includes(policyType)) && (

@@ -64,7 +64,8 @@ import {
   CaretIcon,
   ShipIcon,
   BuildingIcon,
-  ConstructIcon
+  ConstructIcon,
+  InfoIcon
 } from '~/components/Icons';
 import LiveTimer from '~/components/LiveTimer';
 import MouseoverInfoPane from '~/components/MouseoverInfoPane';
@@ -108,6 +109,8 @@ import PageLoader from '~/components/PageLoader';
 import Monospace from '~/components/Monospace';
 import { OrderAlert, TotalSway } from './MarketplaceOrder';
 import { ProductMarketSummary } from './ShoppingList';
+import ThumbnailBottomBanner from '~/components/ThumbnailBottomBanner';
+import ThumbnailIconBadge from '~/components/ThumbnailIconBadge';
 
 const SECTION_WIDTH = 780;
 
@@ -3479,7 +3482,22 @@ export const LotShipImage = ({ shipType, iconBadge, iconBadgeColor, iconOverlay,
   );
 };
 
-export const BuildingImage = ({ buildingType, error, iconOverlay, iconOverlayColor, iconBorderColor, inventory, inventoryBonuses, inventories, showInventoryStatusForType, style, unfinished }) => {
+export const BuildingImage = ({
+  bottomBanner,
+  buildingType,
+  error,
+  iconBadge,
+  iconBadgeCorner,
+  iconOverlay,
+  iconOverlayColor,
+  iconBorderColor,
+  inventory,
+  inventoryBonuses,
+  inventories,
+  showInventoryStatusForType,
+  style,
+  unfinished
+}) => {
   const buildingAsset = Building.TYPES[buildingType];
   if (!buildingAsset) return null;
 
@@ -3488,7 +3506,7 @@ export const BuildingImage = ({ buildingType, error, iconOverlay, iconOverlayCol
   return (
     <BuildingThumbnailWrapper outlineColor={iconBorderColor} style={style}>
       <ResourceImage src={getBuildingIcon(buildingAsset.i, 'w150', unfinished)} />
-      {inventory !== false && capacity && (
+      {inventory !== false && (capacity?.mass?.max || capacity?.mass?.volume) && (
         <>
           <InventoryLabel overloaded={error}>
             {formatFixed(100 * (capacity[closerLimit].reserved + capacity[closerLimit].used) / capacity[closerLimit].max, 1)}% {/*closerLimit === 'volume' ? `m³` : `t`*/}
@@ -3500,7 +3518,9 @@ export const BuildingImage = ({ buildingType, error, iconOverlay, iconOverlayCol
             secondaryProgress={(capacity[closerLimit].reserved + capacity[closerLimit].used) / capacity[closerLimit].max} />
         </>
       )}
+      {iconBadge !== undefined && <ThumbnailIconBadge iconBadgeCorner={iconBadgeCorner}>{iconBadge}</ThumbnailIconBadge>}
       {iconOverlay && <ThumbnailOverlay color={iconOverlayColor}>{iconOverlay}</ThumbnailOverlay>}
+      {bottomBanner && <ThumbnailBottomBanner>{bottomBanner}</ThumbnailBottomBanner>}
       <ClipCorner dimension={10} color={iconBorderColor} />
     </BuildingThumbnailWrapper>
   );
@@ -3737,7 +3757,35 @@ export const ActionDialogHeader = ({ action, actionCrew, crewAvailableTime, dela
   );
 };
 
-export const FlexSectionInputBlock = ({ bodyStyle, children, disabled, image, innerBodyStyle, isSelected, label, onClick, setRef, style = {}, sublabel, title, titleDetails, tooltip, ...props }) => {
+export const LeaseDetailsLabel = styled.div`
+  color: ${p => p.theme.colors.success};
+  font-size: 14px;
+`;
+
+export const LeaseInfoIcon = () => (
+  <div style={{ position: 'absolute', top: 5, right: 5, fontSize: 24, opacity: 0.5 }}>
+    <InfoIcon />
+  </div>
+);
+
+export const FlexSectionInputBlock = ({
+  addChildren,
+  bodyStyle,
+  children,
+  disabled,
+  image,
+  innerBodyStyle,
+  isSelected,
+  label,
+  onClick,
+  setRef,
+  style = {},
+  sublabel,
+  title,
+  titleDetails,
+  tooltip,
+  ...props
+}) => {
   const refEl = useRef();
 
   const [hovered, setHovered] = useState();
@@ -3775,6 +3823,7 @@ export const FlexSectionInputBlock = ({ bodyStyle, children, disabled, image, in
               </label>
             </ThumbnailWithData>
           )}
+          {addChildren}
           <ClipCorner dimension={sectionBodyCornerSize} />
         </FlexSectionInputBody>
       </FlexSectionInputContainer>
@@ -5225,7 +5274,9 @@ export const ActionDialogFooter = ({
             <>
               <Button
                 loading={reactBool(buttonsLoading)}
-                onClick={onClose}>Cancel</Button>
+                onClick={onClose}>
+                Cancel
+              </Button>
               {waitForCrewReady && !allowedOrLaunched && <CrewNotLaunchedButton />}
               {waitForCrewReady && allowedOrLaunched && !isReady && <CrewBusyButton isSequenceable={isSequenceable} />}
               {(!waitForCrewReady || (isReady && allowedOrLaunched)) && (
@@ -5233,7 +5284,9 @@ export const ActionDialogFooter = ({
                   disabled={nativeBool(disabled)}
                   isTransaction
                   loading={reactBool(buttonsLoading)}
-                  onClick={onGo}>{goLabel}</Button>
+                  onClick={onGo}>
+                  {goLabel}
+                </Button>
               )}
             </>
           )
@@ -5565,6 +5618,48 @@ export const TravelBonusTooltip = ({ bonus, totalTime, tripDetails, ...props }) 
   />
 );
 
+export const LeaseTooltip = ({ desiredTerm, initialTerm, permId, rate }) => {
+  return (
+    <Bonuses>
+      <BonusesHeader>Lease Details</BonusesHeader>
+      <BonusesSection>
+        <table>
+          <tbody>
+            <tr>
+              <th>Permission</th>
+              <td>{Permission.TYPES[permId].name}</td>
+            </tr>
+            <tr>
+              <th>Policy Type</th>
+              <td>Prepaid Lease</td>
+            </tr>
+            <tr><td colspan="2" style={{ borderBottom: '1px solid #333', height: 0 }} /></tr>
+            <tr>
+              <th>Requested Time</th>
+              <td>{formatFixed(desiredTerm / 3600, 3)} hr</td>
+            </tr>
+            <tr>
+              <th>Minimum Time</th>
+              <td style={desiredTerm < initialTerm ? { color: theme.colors.warning } : {}}>
+                {desiredTerm < initialTerm && <WarningIcon />}
+                <span style={{ marginLeft: 4 }}>{formatFixed(initialTerm / 3600, 3)} hr</span>
+              </td>
+            </tr>
+            <tr>
+              <th>Lease Rate</th>
+              <td><SwayIcon /> {formatPrice(rate / TOKEN_SCALE[TOKEN.SWAY])} / hr</td>
+            </tr>
+            <tr><td colspan="2" style={{ borderBottom: '1px solid #333', height: 0 }} /></tr>
+            <tr>
+              <th>Total Lease Cost</th>
+              <td><SwayIcon /> {formatPrice((rate / TOKEN_SCALE[TOKEN.SWAY]) * Math.max(desiredTerm, initialTerm) / 3600)}</td>
+            </tr>
+          </tbody>
+        </table>
+      </BonusesSection>
+    </Bonuses>
+  );
+};
 
 //
 // utils

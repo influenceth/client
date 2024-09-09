@@ -45,6 +45,7 @@ const main = '#36a7cd';
 const brightMain = '#57d5ff';
 const darkMain = '#1c5063';
 const success = '#00fff0';
+const successDark = '#00a299';
 
 const green = '#88e675';
 const darkGreen = '#59b366';
@@ -89,6 +90,8 @@ const theme = {
 
     success,
     successRGB: hexToRGB(success),
+    successDark,
+    successDarkRGB: hexToRGB(successDark),
     backgroundSuccess: '#00403c',
 
     inFlight: lightOrange,
