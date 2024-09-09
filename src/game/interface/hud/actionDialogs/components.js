@@ -395,7 +395,6 @@ const TimePillComponent = styled.div`
   & > label {
     color: ${p => p.theme.colors[pillColors[p.type].color]};
     margin-right: 6px;
-    text-transform: uppercase;
   }
   & > svg {
     color: ${p => p.theme.colors[pillColors[p.type].color]};
@@ -3689,7 +3688,7 @@ const TimePill = ({ children, type }) => {
         <TimerInfoBody>
           {type === 'delay' && (
             <>
-              <b>Scheduled Wait:</b> Time until my crew initiates this action, if other actions have been scheduled ahead of it. The maximum waiting period is 24h.
+              <b>Crew Delay:</b> My crew is currently performing other scheduled actions equal to the delay period. The maximum total delay period a crew can accumulate is <b>24 hours</b>.
             </>
           )}
           {type === 'crew' && (
@@ -3737,11 +3736,11 @@ export const ActionDialogHeader = ({ action, actionCrew, crewAvailableTime, dela
                   {(formattedTime, isTimer) => {
                     const pills = [];
                     if (isTimer) {
-                      pills.push(<TimePill key="delay" type="delay"><ScheduleFullIcon /><label>Wait</label> {formattedTime}</TimePill>);
+                      pills.push(<TimePill key="delay" type="delay"><ScheduleFullIcon /><label>Crew Delay</label> {formattedTime}</TimePill>);
                     }
                     if (crewAvailableTime !== undefined) {
                       const delayDuration = isTimer ? (delayUntil - Math.floor(Date.now() / 1000)) : 0;
-                      pills.push(<TimePill key="crew" type="crew"><CrewBusyIcon isPaused /> {formatTimer(delayDuration + crewAvailableTime, 2)}</TimePill>)
+                      pills.push(<TimePill key="crew" type="crew"><CrewIcon isPaused /> {formatTimer(delayDuration + crewAvailableTime, 2)}</TimePill>)
                     }
                     return pills;
                   }}

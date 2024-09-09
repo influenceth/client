@@ -97,9 +97,9 @@ const theme = {
     inFlight: lightOrange,
     sell: '#57d5ff',
     buy: '#88e675',
-    sequence: '#2f85dc',
-    sequenceLight: '#98c4ec',
-    sequenceDark: '#1e558c',
+    sequence: '#0069c5',
+    sequenceLight: '#a3c9ea',
+    sequenceDark: '#002b52',
     
     warning: orange,
     error: red,
