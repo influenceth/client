@@ -277,7 +277,7 @@ const FormAgreement = ({
     const recipient = controller?.Crew?.delegatedTo;
     // TODO: should these conversions be in useAgreementManager?
     const term = daysToSeconds(initialPeriod);
-    const termPrice = Math.ceil(totalLeaseCost * TOKEN_SCALE[TOKEN.SWAY]);
+    const termPrice = Math.round(totalLeaseCost * TOKEN_SCALE[TOKEN.SWAY]);
     enterAgreement({ recipient, term, termPrice });
   }, [controller?.Crew?.delegatedTo, enterAgreement, initialPeriod, totalLeaseCost]);
 
