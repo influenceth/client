@@ -3709,8 +3709,6 @@ const TimePill = ({ children, type }) => {
 
 export const ActionDialogHeader = ({ action, actionCrew, crewAvailableTime, delayUntil, location, onClose, overrideColor, stage, taskCompleteTime, wide }) => {
   const simulationEnabled = useSimulationEnabled();
-  console.log("crewAvailableTime: " + crewAvailableTime);
-  console.log("taskCompleteTime: " + taskCompleteTime);
   return (
     <>
       <ActionDialogActionBar
