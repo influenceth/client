@@ -56,6 +56,7 @@ const SurfaceTransferOutgoing = ({ asteroid, blockTime, crew, lot, ship, onSetAc
                   resourceId: order.product,
                   isCancellation: true,
                   preselect: {
+                    crew: order.crew,
                     limitPrice: order.price,
                     quantity: order.amount,
                     storage: order.storage,
