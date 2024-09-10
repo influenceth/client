@@ -3736,21 +3736,24 @@ export const ActionDialogHeader = ({ action, actionCrew, crewAvailableTime, dela
               <LiveTimer target={delayUntil} maxPrecision={2}>
                 {(formattedTime, isTimer) => {
                   const pills = [];
+                  const delayDuration = isTimer ? (delayUntil - Math.floor(Date.now() / 1000)) : 0;
                   if (isTimer) {
                     pills.push(<TimePill key="delay" type="delay"><ScheduleFullIcon /><label>Delay</label> {formattedTime}</TimePill>);
                   }
                   if (!(crewAvailableTime !== crewAvailableTime) && crewAvailableTime !== undefined && crewAvailableTime !== 0) {
-                    const delayDuration = isTimer ? (delayUntil - Math.floor(Date.now() / 1000)) : 0;
                     pills.push(<TimePill key="crew" type="crew"><CrewIcon isPaused /><label>Crew</label> {formatTimer(delayDuration + crewAvailableTime, 2)}</TimePill>)
+                  }
+                  if (!(taskCompleteTime !== taskCompleteTime) && taskCompleteTime !== undefined) {
+                    pills.push(<TimePill key="total" type="total"><AlertIcon /><label>Finishes</label> {formatTimer(delayDuration + taskCompleteTime, 2)}</TimePill>)
                   }
                   return pills;
                 }}
               </LiveTimer>
             )}
-            {!(crewAvailableTime !== crewAvailableTime) && crewAvailableTime !== 0 && crewAvailableTime !== undefined && delayUntil === undefined && 
+            {delayUntil === undefined && !(crewAvailableTime !== crewAvailableTime) && crewAvailableTime !== 0 && crewAvailableTime !== undefined && 
               <TimePill type="crew"><CrewIcon isPaused /><label>Crew</label> {formatTimer(crewAvailableTime, 2)}</TimePill>
             }
-            {!(taskCompleteTime !== taskCompleteTime) && taskCompleteTime !== undefined && 
+            {delayUntil === undefined && !(taskCompleteTime !== taskCompleteTime) && taskCompleteTime !== undefined && 
               <TimePill type="total"><AlertIcon /><label>Finishes</label> {formatTimer(taskCompleteTime, 2)}</TimePill>
             }
           </div>
