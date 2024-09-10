@@ -4312,8 +4312,8 @@ export const RecipeSlider = ({ amount, disabled, increment = 0.001, processingTi
 
     // round to nearest increment
     cleansed = numeral(Math.floor(cleansed.value() / increment) * increment);
-
-    setAmount(cleansed.value());
+  
+    setAmount(Number(cleansed.format(`${increment}`)));
   }, [increment, min, max]);
 
   const onChangeInput = useCallback((e) => {
@@ -4342,7 +4342,7 @@ export const RecipeSlider = ({ amount, disabled, increment = 0.001, processingTi
                 <SliderTextInput
                   type="number"
                   disabled={disabled}
-                  step={0.001}
+                  step={increment}
                   value={amount}
                   onChange={onChangeInput}
                   onBlur={onFocusEvent}
@@ -4350,7 +4350,7 @@ export const RecipeSlider = ({ amount, disabled, increment = 0.001, processingTi
                   style={{ marginTop: -2 }} />
               )
                 : (
-                  <b>{amount.toLocaleString(undefined, { minimumFractionDigits: increment % 1 === 0 ? 0 : 3 })}</b>
+                  <b>{amount.toLocaleString()}</b>
                 )
               }
               {' '}
