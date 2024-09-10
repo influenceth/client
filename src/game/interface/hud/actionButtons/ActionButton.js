@@ -105,7 +105,7 @@ const ActionButtonWrapper = styled.div`
 
   &:hover {
     ${Underneath} {
-      background: #1b69c5;
+      background: ${theme.colors.sequence};
       color: white;
       ${HoverContent} {
         max-width: 100%;
@@ -284,17 +284,17 @@ const TooltipSublabel = styled.div`
   display: flex;
   flex-direction: row;
   color: #FFF;
+  margin-top: 4px;
   &:before {
     color: ${theme.colors.red};
     content: "Disabled: ";
     flex: 1;
-    margin-right: 10px;
-    text-transform: uppercase;
+    margin-right: 4px;
   }
 `;
 const TooltipDelay = styled(TooltipSublabel)`
   &:before {
-    color: ${theme.colors.main};
+    color: ${theme.colors.sequenceLight};
     content: "Crew Delay: ";
   }
 `;
@@ -388,7 +388,7 @@ const ActionButtonComponent = forwardRef(({
               {prepaidLeaseConfig && (
                 <>
                   <TooltipLease>
-                    <SwayIcon /> {Math.round(prepaidLeaseConfig.rate * 24 / TOKEN_SCALE[TOKEN.SWAY])} / DAY
+                    <SwayIcon /> {Math.round(prepaidLeaseConfig.rate * 24 / TOKEN_SCALE[TOKEN.SWAY])} / Day
                   </TooltipLease>
                   {prepaidLeaseConfig.initialTerm > 0 && (
                     <TooltipLeaseMin>
