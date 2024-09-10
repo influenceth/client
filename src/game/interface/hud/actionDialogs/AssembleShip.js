@@ -233,17 +233,18 @@ const AssembleShip = ({ asteroid, lot, dryDockManager, stage, ...props }) => {
   ]), [assemblyTime, assemblyTimeBonus, crewTravelTime, crewTravelBonus, tripDetails, inputTransportDistance, inputTransportTime]);
 
   const prepaidLeaseConfig = useMemo(() => {
-    return getProcessorLeaseConfig(lot?.building, Permission.IDS.ASSEMBLE_SHIP, crew, blockTime);
-  }, [blockTime, crew, lot?.building]);
+    return getProcessorLeaseConfig(lot?.building, Permission.IDS.ASSEMBLE_SHIP, crew, blockTime, taskTimeRequirement);
+  }, [blockTime, crew, lot?.building, taskTimeRequirement]);
 
   const { leasePayment, desiredLeaseTerm, actualLeaseTerm } = useMemo(() => {
     return getProcessorLeaseSelections(
       prepaidLeaseConfig,
       taskTimeRequirement,
-      crew?.Crew?.readyAt,
-      blockTime
+      crew,
+      blockTime,
+      taskTimeRequirement
     );
-  }, [blockTime, crew?.Crew?.readyAt, prepaidLeaseConfig, taskTimeRequirement]);
+  }, [blockTime, crew, prepaidLeaseConfig, taskTimeRequirement]);
 
   const onStart = useCallback(() => {
     if (leasePayment && !buildingOwner?.Crew?.delegatedTo) return;
@@ -324,7 +325,11 @@ const AssembleShip = ({ asteroid, lot, dryDockManager, stage, ...props }) => {
           <LotInputBlock
             lot={lot}
             title="Assembly Location"
-            titleDetails={prepaidLeaseConfig && <LeaseDetailsLabel>Lease Required</LeaseDetailsLabel>}
+            titleDetails={prepaidLeaseConfig && (
+              <LeaseDetailsLabel isStack={prepaidLeaseConfig._isPermittedNow}>
+                Lease Required
+              </LeaseDetailsLabel>
+            )}
             disabled={stage !== actionStages.NOT_STARTED}
             imageProps={prepaidLeaseConfig && {
               bottomBanner: leasePayment > 0 && (

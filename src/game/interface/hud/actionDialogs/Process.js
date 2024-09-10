@@ -298,8 +298,8 @@ const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...pro
     tripDetails
   ]);
   const prepaidLeaseConfig = useMemo(() => {
-    return getProcessorLeaseConfig(lot?.building, Permission.IDS.RUN_PROCESS, crew, blockTime);
-  }, [blockTime, crew, lot?.building]);
+    return getProcessorLeaseConfig(lot?.building, Permission.IDS.RUN_PROCESS, crew, blockTime, taskTimeRequirement);
+  }, [blockTime, crew, lot?.building, taskTimeRequirement]);
 
   const { leasePayment, desiredLeaseTerm, actualLeaseTerm } = useMemo(() => {
     return getProcessorLeaseSelections(
@@ -430,7 +430,11 @@ const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...pro
         <FlexSection style={{ marginBottom: 32, width: SECTION_WIDTH }}>
           <LotInputBlock
             title={`${gerund} Location`}
-            titleDetails={prepaidLeaseConfig && <LeaseDetailsLabel>Lease Required</LeaseDetailsLabel>}
+            titleDetails={prepaidLeaseConfig && (
+              <LeaseDetailsLabel isStack={prepaidLeaseConfig._isPermittedNow}>
+                Lease Required
+              </LeaseDetailsLabel>
+            )}
             lot={lot}
             disabled={stage !== actionStages.NOT_STARTED}
             imageProps={prepaidLeaseConfig && {

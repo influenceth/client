@@ -293,8 +293,9 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
   ]), [amount, crewTravelBonus, crewTravelTime, extractionBonus, extractionTime, resource, transportDistance, transportTime]);
 
   const prepaidLeaseConfig = useMemo(() => {
-    return getProcessorLeaseConfig(lot?.building, Permission.IDS.EXTRACT_RESOURCES, crew, blockTime);
-  }, [blockTime, crew, lot?.building]);
+    const endTime = blockTime + (taskTimeRequirement || 0);
+    return getProcessorLeaseConfig(lot?.building, Permission.IDS.EXTRACT_RESOURCES, crew, blockTime, taskTimeRequirement);
+  }, [blockTime, crew, lot?.building, taskTimeRequirement]);
 
   const { leasePayment, desiredLeaseTerm, actualLeaseTerm } = useMemo(() => {
     return getProcessorLeaseSelections(
@@ -304,6 +305,10 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
       blockTime
     );
   }, [blockTime, crew?.Crew?.readyAt, prepaidLeaseConfig, taskTimeRequirement]);
+
+  const isNewLease = useMemo(() => {
+
+  }, [leasePayment, ]);
 
   const onStartExtraction = useCallback(() => {
     if (!(amount && selectedCoreSample && destination && destinationInventory)) return;
@@ -518,7 +523,11 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
 
             <BuildingInputBlock
               title="Extraction Location"
-              titleDetails={<LeaseDetailsLabel>Lease Required</LeaseDetailsLabel>}
+              titleDetails={prepaidLeaseConfig && (
+                <LeaseDetailsLabel isStack={prepaidLeaseConfig._isPermittedNow}>
+                  Lease Required
+                </LeaseDetailsLabel>
+              )}
               bodyStyle={{ background: `rgba(${theme.colors.successDarkRGB}, 0.2)` }}
               building={lot?.building}
               imageProps={{
@@ -541,8 +550,6 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
               addChildren={<LeaseInfoIcon />} />
 
             <FlexSectionSpacer />
-
-            <FlexSectionInputBlock />
 
           </FlexSection>
         )}

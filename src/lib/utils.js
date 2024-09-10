@@ -397,12 +397,15 @@ export const isProcessingPermission = (permission) => [
   Permission.IDS.ASSEMBLE_SHIP
 ].includes(permission);
 
-export const getProcessorLeaseConfig = (permissionTarget, permission, crew, blockTime) => {
+export const getProcessorLeaseConfig = (permissionTarget, permission, crew, blockTime, taskDuration = 0) => {
   if (isProcessingPermission(permission)) {
-    if (crew && !Permission.isPermitted(crew, permission, permissionTarget, blockTime)) {
+    if (crew && !Permission.isPermitted(crew, permission, permissionTarget, blockTime + taskDuration)) {
       const processingPolicy = Permission.getPolicyDetails(permissionTarget)?.[permission];
       if (processingPolicy?.policyType === Permission.POLICY_IDS.PREPAID) {
-        return processingPolicy.policyDetails;
+        return {
+          _isPermittedNow: Permission.isPermitted(crew, permission, permissionTarget, blockTime),
+          ...processingPolicy.policyDetails
+        };
       }
     }
   }

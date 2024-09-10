@@ -392,7 +392,7 @@ const TimePillComponent = styled.div`
   margin-top: 4px;
   padding: 3px 12px;
   text-transform: none;
-  font-weight: 400;
+  font-weight: normal;
   & > label {
     color: ${p => p.theme.colors[pillColors[p.type].color]};
     margin-right: 6px;
@@ -3732,23 +3732,39 @@ export const ActionDialogHeader = ({ action, actionCrew, crewAvailableTime, dela
             <h2>{action.status || theming[stage]?.label}</h2>
           </LabelContainer>
           <div>
-          {delayUntil !== undefined && (
+          {delayUntil > 0 && (
             <LiveTimer target={delayUntil} maxPrecision={2}>
               {(formattedTime, isTimer) => {
                 const pills = [];
                 if (isTimer) {
-                  pills.push(<TimePill key="delay" type="delay"><ScheduleFullIcon /><label>Delay</label> {formattedTime}</TimePill>);
+                  pills.push(
+                    <TimePill key="delay" type="delay">
+                      <ScheduleFullIcon /><label>Delay</label> {formattedTime}
+                    </TimePill>
+                  );
                 }
-                if (crewAvailableTime !== undefined || crewAvailableTime !== 0) {
+                if (crewAvailableTime > 0) {
                   const delayDuration = isTimer ? (delayUntil - Math.floor(Date.now() / 1000)) : 0;
-                  pills.push(<TimePill key="crew" type="crew"><CrewIcon isPaused /><label>Crew</label> {formatTimer(delayDuration + crewAvailableTime, 2)}</TimePill>)
+                  pills.push(
+                    <TimePill key="crew" type="crew">
+                      <CrewIcon isPaused /><label>Crew</label> {formatTimer(delayDuration + crewAvailableTime, 2)}
+                    </TimePill>
+                  )
                 }
                 return pills;
               }}
             </LiveTimer>
           )}
-          {delayUntil === undefined && crewAvailableTime !== undefined && crewAvailableTime !== 0 && <TimePill type="crew"><CrewIcon isPaused /><label>Crew</label> {formatTimer(crewAvailableTime, 2)}</TimePill>}
-          {taskCompleteTime !== undefined && taskCompleteTime !== 0 && <TimePill type="total"><AlertIcon /><label>Ready</label> {formatTimer(taskCompleteTime, 2)}</TimePill>}
+          {!(delayUntil > 0) && crewAvailableTime > 0 && (
+            <TimePill type="crew">
+              <CrewIcon isPaused /><label>Crew ({crewAvailableTime})</label> {formatTimer(crewAvailableTime, 2)}
+            </TimePill>
+          )}
+          {taskCompleteTime > 0 && (
+            <TimePill type="total">
+              <AlertIcon /><label>Ready</label> {formatTimer(taskCompleteTime, 2)}
+            </TimePill>
+          )}
         </div>
         </IconAndLabel>
       </Header>
@@ -3757,8 +3773,16 @@ export const ActionDialogHeader = ({ action, actionCrew, crewAvailableTime, dela
 };
 
 export const LeaseDetailsLabel = styled.div`
-  color: ${p => p.theme.colors.success};
   font-size: 14px;
+  ${p => p.isStack
+    ? `
+      color: ${p.theme.colors.warning};
+      &:before { content: "New "; }
+    `
+    : `
+      color: ${p.theme.colors.success};
+    `
+  }
 `;
 
 export const LeaseInfoIcon = () => (
