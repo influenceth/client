@@ -90,6 +90,7 @@ const OrderType = styled.div`
 `;
 
 const MarketplaceOpenOrders = ({ asteroid, orders, marketplace = null, marketplaceOwner = null }) => {
+  console.log('debug: MarketplaceOpenOrders, orders: ', orders);
   const [sort, setSort] = useState(['createdAt', 'asc']);
   const [sortField, sortDirection] = sort;
   const onSetAction = useStore(s => s.dispatchActionDialog);
@@ -106,6 +107,7 @@ const MarketplaceOpenOrders = ({ asteroid, orders, marketplace = null, marketpla
       isCancellation: true,
       cancellationMakerFee: order.orderType === Order.IDS.LIMIT_BUY ? order.makerFee : undefined,
       preselect: {
+        crew: order.crew,
         limitPrice: order.price,
         quantity: order.amount,
         storage: order.storage,
