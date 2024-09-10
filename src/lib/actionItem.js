@@ -1055,7 +1055,7 @@ export const itemColors = {
   randomEvent: '232, 211, 117',
   ready: hexToRGB('#00fff0'),
   unready: theme.colors.brightMainRGB,
-  unstarted: hexToRGB(theme.colors.sequence),
+  unstarted: hexToRGB(theme.colors.sequenceLight),
   plan: hexToRGB(theme.colors.lightOrange),
   agreement: hexToRGB(theme.colors.orange),
   _expired: hexToRGB(theme.colors.red)
