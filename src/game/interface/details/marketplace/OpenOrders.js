@@ -90,7 +90,6 @@ const OrderType = styled.div`
 `;
 
 const MarketplaceOpenOrders = ({ asteroid, orders, marketplace = null, marketplaceOwner = null }) => {
-  console.log('debug: MarketplaceOpenOrders, orders: ', orders);
   const [sort, setSort] = useState(['createdAt', 'asc']);
   const [sortField, sortDirection] = sort;
   const onSetAction = useStore(s => s.dispatchActionDialog);
