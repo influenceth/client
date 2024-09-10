@@ -372,38 +372,40 @@ export const SublabelBanner = styled.div`
 const IconAndLabel = styled.div`
   display: flex;
   flex: 1;
+  align-items: center;
 `;
 const IconContainer = styled.div`
   font-size: 48px;
   padding: 0 10px;
 `;
 const pillColors = {
-  crew: { bg: 'main', color: 'brightMain' },
+  crew: { bg: 'backgroundGray', color: 'secondaryText' },
   delay: { bg: 'sequence', color: 'sequenceLight' },
-  total: { bg: 'success', color: 'success' },
+  total: { bg: 'successDark', color: 'success' },
 };
 const TimePillComponent = styled.div`
   align-items: center;
-  background: rgba(${p => hexToRGB(p.theme.colors[pillColors[p.type].bg])}, 0.4);
+  background: rgba(${p => hexToRGB(p.theme.colors[pillColors[p.type].bg])}, 0.5);
   border-radius: 20px;
   color: white;
   display: flex;
-  margin-left: 4px;
+  margin-top: 4px;
   padding: 3px 12px;
-  text-align: center;
   text-transform: none;
+  font-weight: 400;
   & > label {
     color: ${p => p.theme.colors[pillColors[p.type].color]};
     margin-right: 6px;
+    flex: 1;
   }
   & > svg {
     color: ${p => p.theme.colors[pillColors[p.type].color]};
-    opacity: 0.7;
     margin-right: 4px;
   }
 `;
 const LabelContainer = styled.div`
   flex: 1;
+  width: 75%;
   text-transform: uppercase;
   h1 {
     align-items: flex-end;
@@ -415,14 +417,12 @@ const LabelContainer = styled.div`
     line-height: 36px;
     margin: 0;
   }
+  & h2 {
+    font-size: 18px;
+    flex: 1;
+    margin: 6px 0 0;
+  }
   & > div {
-    align-items: center;
-    display: flex;
-    h2 {
-      font-size: 18px;
-      flex: 1;
-      margin: 6px 0 0;
-    }
     ${TimePillComponent} {
       margin-top: 3px;
     }
@@ -3688,17 +3688,17 @@ const TimePill = ({ children, type }) => {
         <TimerInfoBody>
           {type === 'delay' && (
             <>
-              <b>Crew Delay:</b> My crew is currently performing other scheduled actions equal to the delay period. The maximum total delay period a crew can accumulate is <b>24 hours</b>.
+              <b>Crew Delay: </b>This crew is performing other scheduled actions that must be finished first. Crews may schedule additional actions in sequence as long as the current delay period does not exceed <b>24 hours</b>.
             </>
           )}
           {type === 'crew' && (
             <>
-              <b>Crew Ready In:</b> Time until all my crew's current and scheduled actions are finished.
+              <b>Crew Ready In: </b>Time until all my crew's current and scheduled actions are finished.
             </>
           )}
           {type === 'total' && (
             <>
-              <b>Action Ready In:</b> Time until the action outcome is finalized (The crew performing the action will often be ready sooner.)
+              <b>Action Ready In: </b>Time until the action outcome is finalized (The crew performing the action will often be ready sooner.)
             </>
           )}
         </TimerInfoBody>
@@ -3729,27 +3729,27 @@ export const ActionDialogHeader = ({ action, actionCrew, crewAvailableTime, dela
           <IconContainer>{action.icon}</IconContainer>
           <LabelContainer>
             <h1>{action.label}</h1>
-            <div>
-              <h2>{action.status || theming[stage]?.label}</h2>
-              {delayUntil !== undefined && (
-                <LiveTimer target={delayUntil} maxPrecision={2}>
-                  {(formattedTime, isTimer) => {
-                    const pills = [];
-                    if (isTimer) {
-                      pills.push(<TimePill key="delay" type="delay"><ScheduleFullIcon /><label>Crew Delay</label> {formattedTime}</TimePill>);
-                    }
-                    if (crewAvailableTime !== undefined) {
-                      const delayDuration = isTimer ? (delayUntil - Math.floor(Date.now() / 1000)) : 0;
-                      pills.push(<TimePill key="crew" type="crew"><CrewIcon isPaused /> {formatTimer(delayDuration + crewAvailableTime, 2)}</TimePill>)
-                    }
-                    return pills;
-                  }}
-                </LiveTimer>
-              )}
-              {delayUntil === undefined && crewAvailableTime !== undefined && <TimePill type="crew"><CrewBusyIcon isPaused /> {formatTimer(crewAvailableTime, 2)}</TimePill>}
-              {taskCompleteTime !== undefined && <TimePill type="total"><AlertIcon /> {formatTimer(taskCompleteTime, 2)}</TimePill>}
-            </div>
+            <h2>{action.status || theming[stage]?.label}</h2>
           </LabelContainer>
+          <div>
+          {delayUntil !== undefined && (
+            <LiveTimer target={delayUntil} maxPrecision={2}>
+              {(formattedTime, isTimer) => {
+                const pills = [];
+                if (isTimer) {
+                  pills.push(<TimePill key="delay" type="delay"><ScheduleFullIcon /><label>Delay</label> {formattedTime}</TimePill>);
+                }
+                if (crewAvailableTime !== undefined || crewAvailableTime !== 0) {
+                  const delayDuration = isTimer ? (delayUntil - Math.floor(Date.now() / 1000)) : 0;
+                  pills.push(<TimePill key="crew" type="crew"><CrewIcon isPaused /><label>Crew</label> {formatTimer(delayDuration + crewAvailableTime, 2)}</TimePill>)
+                }
+                return pills;
+              }}
+            </LiveTimer>
+          )}
+          {delayUntil === undefined && crewAvailableTime !== undefined && crewAvailableTime !== 0 && <TimePill type="crew"><CrewIcon isPaused /><label>Crew</label> {formatTimer(crewAvailableTime, 2)}</TimePill>}
+          {taskCompleteTime !== undefined && taskCompleteTime !== 0 && <TimePill type="total"><AlertIcon /><label>Ready</label> {formatTimer(taskCompleteTime, 2)}</TimePill>}
+        </div>
         </IconAndLabel>
       </Header>
     </>

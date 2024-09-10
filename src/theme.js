@@ -71,6 +71,7 @@ const theme = {
     backgroundMain: '#0e2933',
 
     badge: '#287d97',
+    backgroundGray: '#505050',
     mobileBackground: '#181818',
     disabledBackground: '#666666',
     inputBackground: '#0d2933',
