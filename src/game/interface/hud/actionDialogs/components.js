@@ -3688,17 +3688,17 @@ const TimePill = ({ children, type }) => {
         <TimerInfoBody>
           {type === 'delay' && (
             <>
-              <b>Crew Delay: </b>This crew is performing other scheduled actions that must be finished first. Crews may schedule additional actions in sequence as long as the current delay period does not exceed <b>24 hours</b>.
+              <b><ScheduleFullIcon /> Crew Delay: </b>This crew has other scheduled tasks, and must wait before starting this one. The delay period equals the sum of the  all previously scheduled actions crew presence requirements. Crews may schedule additional actions as long as their total delay period does not exceed <b>24 hours</b>.
             </>
           )}
           {type === 'crew' && (
             <>
-              <b>Crew Ready In: </b>Time until all my crew's current and scheduled actions are finished.
+              <b><CrewIcon /> Crew Ready In: </b>Time until this crew becomes idle again, after performing all actions on their schedule including this one. Some actions cannot be scheduled and require a fully idle crew to start.
             </>
           )}
           {type === 'total' && (
             <>
-              <b>Action Ready In: </b>Time until the action outcome is finalized (The crew performing the action will often be ready sooner.)
+              <b><AlertIcon /> Action Finishes In: </b>Time until this action's outcome is ready to be finalized. Process actions require a crew to be present for <b>1/8th</b> of the process duration, so the acting crew will often return to station and become available before the action itself finishes.
             </>
           )}
         </TimerInfoBody>
@@ -3709,6 +3709,8 @@ const TimePill = ({ children, type }) => {
 
 export const ActionDialogHeader = ({ action, actionCrew, crewAvailableTime, delayUntil, location, onClose, overrideColor, stage, taskCompleteTime, wide }) => {
   const simulationEnabled = useSimulationEnabled();
+  console.log("crewAvailableTime: " + crewAvailableTime);
+  console.log("taskCompleteTime: " + taskCompleteTime);
   return (
     <>
       <ActionDialogActionBar
@@ -3732,24 +3734,28 @@ export const ActionDialogHeader = ({ action, actionCrew, crewAvailableTime, dela
             <h2>{action.status || theming[stage]?.label}</h2>
           </LabelContainer>
           <div>
-          {delayUntil !== undefined && (
-            <LiveTimer target={delayUntil} maxPrecision={2}>
-              {(formattedTime, isTimer) => {
-                const pills = [];
-                if (isTimer) {
-                  pills.push(<TimePill key="delay" type="delay"><ScheduleFullIcon /><label>Delay</label> {formattedTime}</TimePill>);
-                }
-                if (crewAvailableTime !== undefined || crewAvailableTime !== 0) {
-                  const delayDuration = isTimer ? (delayUntil - Math.floor(Date.now() / 1000)) : 0;
-                  pills.push(<TimePill key="crew" type="crew"><CrewIcon isPaused /><label>Crew</label> {formatTimer(delayDuration + crewAvailableTime, 2)}</TimePill>)
-                }
-                return pills;
-              }}
-            </LiveTimer>
-          )}
-          {delayUntil === undefined && crewAvailableTime !== undefined && crewAvailableTime !== 0 && <TimePill type="crew"><CrewIcon isPaused /><label>Crew</label> {formatTimer(crewAvailableTime, 2)}</TimePill>}
-          {taskCompleteTime !== undefined && taskCompleteTime !== 0 && <TimePill type="total"><AlertIcon /><label>Ready</label> {formatTimer(taskCompleteTime, 2)}</TimePill>}
-        </div>
+            {delayUntil !== undefined && (
+              <LiveTimer target={delayUntil} maxPrecision={2}>
+                {(formattedTime, isTimer) => {
+                  const pills = [];
+                  if (isTimer) {
+                    pills.push(<TimePill key="delay" type="delay"><ScheduleFullIcon /><label>Delay</label> {formattedTime}</TimePill>);
+                  }
+                  if (!(crewAvailableTime !== crewAvailableTime) && crewAvailableTime !== undefined && crewAvailableTime !== 0) {
+                    const delayDuration = isTimer ? (delayUntil - Math.floor(Date.now() / 1000)) : 0;
+                    pills.push(<TimePill key="crew" type="crew"><CrewIcon isPaused /><label>Crew</label> {formatTimer(delayDuration + crewAvailableTime, 2)}</TimePill>)
+                  }
+                  return pills;
+                }}
+              </LiveTimer>
+            )}
+            {!(crewAvailableTime !== crewAvailableTime) && crewAvailableTime !== 0 && crewAvailableTime !== undefined && delayUntil === undefined && 
+              <TimePill type="crew"><CrewIcon isPaused /><label>Crew</label> {formatTimer(crewAvailableTime, 2)}</TimePill>
+            }
+            {!(taskCompleteTime !== taskCompleteTime) && taskCompleteTime !== undefined && 
+              <TimePill type="total"><AlertIcon /><label>Finishes</label> {formatTimer(taskCompleteTime, 2)}</TimePill>
+            }
+          </div>
         </IconAndLabel>
       </Header>
     </>
