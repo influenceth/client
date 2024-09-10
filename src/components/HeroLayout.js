@@ -175,7 +175,7 @@ const HeroLayout = ({
   }, [coverImage]);
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', position: 'relative' }}>
       <InvisibleImage src={coverImage} onError={onImageLoaded} onLoad={onImageLoaded} />
       <CoverImage
         autoHeight={autoHeight}
