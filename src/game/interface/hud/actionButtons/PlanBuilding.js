@@ -13,6 +13,7 @@ const labelDict = {
 };
 
 const isVisible = ({ constructionStatus, crew, lot, ship }) => {
+  if (lot?.building?.Building?.status > 0) return false;
   return crew && lot && !ship && (
     constructionStatus === 'READY_TO_PLAN' || (
       lot?.building?.Control?.controller?.id === crew.id
