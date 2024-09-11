@@ -26,6 +26,8 @@ const storeAssets = {
   packs: 'Starter Packs'
 };
 
+export const introPackPriceUSD = 14;
+export const introPackCrewmates = 2;
 export const basicPackPriceUSD = 29;
 export const basicPackCrewmates = 2;
 export const advPackPriceUSD = 89;
@@ -193,7 +195,7 @@ const SkuSelector = ({ onSelect }) => {
       },
       'packs': {
         imagery: StarterPackImage,
-        leftNote: <>From {packs.basic.price.to(TOKEN.USDC, TOKEN_FORMAT.SHORT)}</>
+        leftNote: <>From {packs.intro.price.to(TOKEN.USDC, TOKEN_FORMAT.SHORT)}</>
       },
       'sway': {
         imagery: SwayImage,

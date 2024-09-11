@@ -3,7 +3,7 @@ import styled from 'styled-components';
 import { Building, Crewmate, Process } from '@influenceth/sdk';
 import cloneDeep from 'lodash/cloneDeep';
 
-import { CheckIcon } from '~/components/Icons';
+import { CheckIcon, MyAssetIcon } from '~/components/Icons';
 import useStore from '~/hooks/useStore';
 import NavIcon from '~/components/NavIcon';
 import theme from '~/theme';
@@ -11,35 +11,59 @@ import useWalletPurchasableBalances, { GAS_BUFFER_VALUE_USDC } from '~/hooks/use
 import usePriceConstants from '~/hooks/usePriceConstants';
 import { TOKEN, TOKEN_FORMAT, TOKEN_SCALE } from '~/lib/priceUtils';
 import usePriceHelper from '~/hooks/usePriceHelper';
+import Button from '~/components/ButtonAlt';
 import UserPrice from '~/components/UserPrice';
-import { advPackCrewmates, advPackPriceUSD, basicPackCrewmates, basicPackPriceUSD } from '../Store';
+import {
+  advPackCrewmates,
+  advPackPriceUSD,
+  basicPackCrewmates,
+  basicPackPriceUSD,
+  introPackCrewmates,
+  introPackPriceUSD
+} from '../Store';
 import FundingFlow from './FundingFlow';
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
 import useSwapHelper from '~/hooks/useSwapHelper';
 import useSession from '~/hooks/useSession';
 import { useEthBalance } from '~/hooks/useWalletTokenBalance';
 import { PurchaseForm } from './SKU';
-import { fireTrackingEvent, ordersToFills } from '~/lib/utils';
+import { fireTrackingEvent, nativeBool, ordersToFills, reactBool } from '~/lib/utils';
 import useShoppingListData from '~/hooks/useShoppingListData';
+import PurchaseButtonInner from '~/components/PurchaseButtonInner';
+import useCrewContext from '~/hooks/useCrewContext';
+
 
 const PackWrapper = styled.div`
-  padding: 10px 8px;
+  height: 325px;
+  overflow: hidden auto;
+  padding: 0px 8px 10px;
+`;
+
+const PackFlavor = styled.div`
+  align-items: center;
+  color: ${p => p.color || p.theme.colors.main};
+  display: flex;
+  ${p => p.smaller
+    ? `
+      font-size: 14px;
+    `
+    : `
+      font-size: 15px;
+      font-weight: bold;
+    `
+  }
+  height: 75px;
+  filter: brightness(135%);
+  padding: 0 10px;
+  text-align: center;
 `;
 
 const PackContents = styled.div`
-  &:before {
-    content: "Contains:";
-    color: ${p => p.theme.colors.main};
-    display: block;
-    font-size: 15px;
-    font-weight: bold;
-    margin-bottom: 15px;
-  }
-
   & > div {
     align-items: center;
     display: flex;
     margin-bottom: 10px;
+    &:last-child { margin-bottom: 0; }
 
     & > label {
       flex: 1;
@@ -59,8 +83,9 @@ const PackContents = styled.div`
     }
   }
 
-  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-  padding-bottom: 5px;
+  border: solid rgba(255, 255, 255, 0.2);
+  border-width: 1px 0;
+  padding: 10px 0 15px;
 `;
 const PackChecks = styled.div`
   padding-top: 15px;
@@ -81,9 +106,21 @@ const PackChecks = styled.div`
       & > b {
         color: white;
         font-weight: normal;
+        white-space: nowrap;
       }
     }
   }
+`;
+const Flair = styled.div`
+  background: ${p => p.color || p.theme.colors.main};
+  clip-path: polygon(0 0, 100% 0, 0 100%);
+  height: 44px;
+  left: 0;
+  padding: 2px 3px;
+  position: absolute;
+  text-align: left;
+  top: 0;
+  width: 44px;
 `;
 
 const MARKET_BUFFER = 0.1;
@@ -99,11 +136,19 @@ const buildingIdsToShoppingList = (buildingIds) => {
   }, {});
 };
 
+const introBuildings = [Building.IDS.WAREHOUSE];
 const basicBuildings = [Building.IDS.WAREHOUSE, Building.IDS.EXTRACTOR, Building.IDS.REFINERY];
 const advBuildings = [...basicBuildings, Building.IDS.BIOREACTOR, Building.IDS.FACTORY];
+const introBuildingShoppingList = buildingIdsToShoppingList(introBuildings);
 const basicBuildingShoppingList = buildingIdsToShoppingList(basicBuildings);
 const advBuildingShoppingList = buildingIdsToShoppingList(advBuildings);
-const uniqueProductIds = Array.from(new Set([...Object.keys(basicBuildingShoppingList), ...Object.keys(advBuildingShoppingList)]));
+const uniqueProductIds = Array.from(
+  new Set([
+    ...Object.keys(introBuildingShoppingList),
+    ...Object.keys(basicBuildingShoppingList),
+    ...Object.keys(advBuildingShoppingList)
+  ])
+);
 
 export const useStarterPackPricing = () => {
   const { data: priceConstants } = usePriceConstants();
@@ -194,6 +239,11 @@ export const useStarterPackPricing = () => {
     return allOrders.reduce((acc, o) => acc + o.cost, 0);
   }, [resourceMarketplacesUpdatedAt]);
 
+  const introPackSwayMin = useMemo(() => {
+    const marketCost = getMarketCostForBuildingList(introBuildings);
+    return (1 + MARKET_BUFFER) * marketCost;
+  }, [getMarketCostForBuildingList]);
+
   const basicPackSwayMin = useMemo(() => {
     const marketCost = getMarketCostForBuildingList(basicBuildings);
     return (1 + MARKET_BUFFER) * marketCost;
@@ -205,6 +255,19 @@ export const useStarterPackPricing = () => {
   }, [getMarketCostForBuildingList]);
 
   return useMemo(() => {
+    const introMinPrice = priceHelper.from(introPackPriceUSD * TOKEN_SCALE[TOKEN.USDC], TOKEN.USDC);
+    const introMinSwayValue = priceHelper.from(introPackSwayMin * TOKEN_SCALE[TOKEN.SWAY], TOKEN.SWAY);
+    const introCrewmatesValue = priceHelper.from(introPackCrewmates * adalianPrice.usdcValue, TOKEN.USDC);
+    const introEthValue = priceHelper.from(wallet?.shouldMaintainEthGasReserve ? GAS_BUFFER_VALUE_USDC : 0, TOKEN.USDC);
+    const introSwayValue = priceHelper.from(
+      Math.max(
+        introMinSwayValue.usdcValue,
+        introMinPrice.usdcValue - introCrewmatesValue.usdcValue - introEthValue.usdcValue
+      ),
+      TOKEN.USDC
+    );
+    const introPrice = priceHelper.from(introCrewmatesValue.usdcValue + introEthValue.usdcValue + introSwayValue.usdcValue, TOKEN.USDC);
+
     const basicMinPrice = priceHelper.from(basicPackPriceUSD * TOKEN_SCALE[TOKEN.USDC], TOKEN.USDC);
     const basicMinSwayValue = priceHelper.from(basicPackSwayMin * TOKEN_SCALE[TOKEN.SWAY], TOKEN.SWAY);
     const basicCrewmatesValue = priceHelper.from(basicPackCrewmates * adalianPrice.usdcValue, TOKEN.USDC);
@@ -232,7 +295,18 @@ export const useStarterPackPricing = () => {
     const advPrice = priceHelper.from(advCrewmatesValue.usdcValue + advEthValue.usdcValue + advSwayValue.usdcValue, TOKEN.USDC);
 
     return {
+      intro: {
+        name: 'Explorer',
+        price: introPrice,
+        crewmates: introPackCrewmates,
+        crewmatesValue: introCrewmatesValue,
+        ethFormatted: introEthValue.to(TOKEN.ETH, TOKEN_FORMAT.VERBOSE),
+        ethValue: introEthValue,
+        swayFormatted: introSwayValue.to(TOKEN.SWAY, TOKEN_FORMAT.VERBOSE),
+        swayValue: introSwayValue
+      },
       basic: {
+        name: 'Strategist',
         price: basicPrice,
         crewmates: basicPackCrewmates,
         crewmatesValue: basicCrewmatesValue,
@@ -242,6 +316,7 @@ export const useStarterPackPricing = () => {
         swayValue: basicSwayValue
       },
       advanced: {
+        name: 'Industrialist',
         price: advPrice,
         crewmates: advPackCrewmates,
         crewmatesValue: advCrewmatesValue,
@@ -251,7 +326,7 @@ export const useStarterPackPricing = () => {
         swayValue: advSwayValue
       }
     };
-  }, [adalianPrice, advPackSwayMin, basicPackSwayMin, priceConstants, priceHelper]);
+  }, [adalianPrice, advPackSwayMin, basicPackSwayMin, introPackSwayMin, priceConstants, priceHelper]);
 };
 
 export const useStarterPacks = () => {
@@ -334,6 +409,35 @@ export const useStarterPacks = () => {
   }, [accountAddress, buildMultiswapFromSellAmount, ethBalance, execute, priceHelper, starterPacks]);
 };
 
+const PurchasePackButton = ({ pack }) => {
+  const { pendingTransactions, isLaunched } = useCrewContext();
+
+  const [isPurchasing, setIsPurchasing] = useState();
+
+  const isPurchasingStarterPack = useMemo(() => {
+    return isPurchasing || (pendingTransactions || []).find(tx => tx.key === 'PurchaseStarterPack');
+  }, [pendingTransactions]);
+
+  const onPurchase = useCallback(() => {
+    pack.onPurchase((which) => setIsPurchasing(which));
+  }, [pack]);
+
+  return (
+    <Button
+      disabled={nativeBool(isPurchasingStarterPack || !isLaunched)}
+      isTransaction
+      loading={reactBool(isPurchasingStarterPack)}
+      onClick={() => onPurchase()}>
+      <PurchaseButtonInner>
+        <label>Purchase Pack</label>
+        <span>
+          <UserPrice price={pack.price.usdcValue} priceToken={TOKEN.USDC} format={TOKEN_FORMAT.SHORT} />
+        </span>
+      </PurchaseButtonInner>
+    </Button>
+  );
+}
+
 // TODO: consider moving isFunding to higher level context with single reference
 const StarterPackWrapper = ({ children, pack, ...props }) => {
   const { data: wallet } = useWalletPurchasableBalances();
@@ -370,7 +474,75 @@ const StarterPackWrapper = ({ children, pack, ...props }) => {
       {isFunding && <FundingFlow {...isFunding} />}
     </>
   );
-}
+};
+
+export const IntroStarterPack = (props) => {
+  const { data: wallet } = useWalletPurchasableBalances();
+  const packs = useStarterPacks();
+  const pack = packs.intro;
+  return (
+    <StarterPackWrapper color="green" pack={pack} {...props}>
+      <h2>
+        <Flair color={theme.colors.glowGreen}>
+          <MyAssetIcon />
+        </Flair>
+        {pack.name}
+      </h2>
+      <PackWrapper>
+        <PackFlavor color={theme.colors.glowGreen} smaller={props.asButton}>A pair of hands and a plan are all you need to get going in the Belt!</PackFlavor>
+        <PackContents>
+          <div>
+            <span><NavIcon color={theme.colors.glowGreen} /></span>
+            <label>{pack.crewmates} Crewmate{pack.crewmates === 1 ? '' : 's'}</label>
+            <span>
+              <UserPrice
+                price={pack.crewmatesValue.usdcValue}
+                priceToken={TOKEN.USDC}
+                format={TOKEN_FORMAT.SHORT} />
+              {' '}Value
+            </span>
+          </div>
+          <div>
+            <span><NavIcon color={theme.colors.glowGreen} /></span>
+            <label>{pack.swayFormatted}</label>
+            <span>
+              <UserPrice
+                price={pack.swayValue.usdcValue}
+                priceToken={TOKEN.USDC}
+                format={TOKEN_FORMAT.SHORT} />
+              {' '}Value
+            </span>
+          </div>
+          {wallet?.shouldMaintainEthGasReserve && (
+            <div>
+              <span><NavIcon color={theme.colors.glowGreen} /></span>
+              <label>{pack.ethFormatted}</label>
+              <span>
+                <UserPrice
+                  price={pack.ethValue.usdcValue}
+                  priceToken={TOKEN.USDC}
+                  format={TOKEN_FORMAT.SHORT} />
+                {' '}Value
+              </span>
+            </div>
+          )}
+        </PackContents>
+        <PackChecks>
+          <div>
+            <span><CheckIcon /></span>
+            <label><b>{pack.crewmates}x Crewmate{pack.crewmates === 1 ? '' : 's'}</b> to perform game tasks (Recommended <strong>Miner</strong> and <strong>Engineer</strong>)</label>
+          </div>
+          <div>
+            <span><CheckIcon /></span>
+            <label>SWAY to construct <b>1x Warehouse</b> (Production buildings may be leased from other players)</label>
+          </div>
+        </PackChecks>
+      </PackWrapper>
+
+      {!props.asButton && <PurchasePackButton pack={pack} />}
+    </StarterPackWrapper>
+  );
+};
 
 export const BasicStarterPack = (props) => {
   const { data: wallet } = useWalletPurchasableBalances();
@@ -378,8 +550,14 @@ export const BasicStarterPack = (props) => {
   const pack = packs.basic;
   return (
     <StarterPackWrapper pack={pack} {...props}>
-      <h3>Basic Starter Pack</h3>
+      <h2>
+        <Flair color={theme.colors.main}>
+          <MyAssetIcon />
+        </Flair>
+        {pack.name}
+      </h2>
       <PackWrapper>
+        <PackFlavor smaller={props.asButton}>A self-sufficient starter kit for your own mining and refining operation!</PackFlavor>
         <PackContents>
           <div>
             <span><NavIcon color={theme.colors.main} /></span>
@@ -420,11 +598,7 @@ export const BasicStarterPack = (props) => {
         <PackChecks>
           <div>
             <span><CheckIcon /></span>
-            <label>Basic starter kit for extraction and simple refining</label>
-          </div>
-          <div>
-            <span><CheckIcon /></span>
-            <label>{pack.crewmates}x Crewmate{pack.crewmates === 1 ? '' : 's'} to perform game tasks (Recommended <b>Miner</b> and <b>Engineer</b> classes)</label>
+            <label><b>{pack.crewmates}x Crewmate{pack.crewmates === 1 ? '' : 's'}</b> to perform game tasks (Recommended <strong>Miner</strong> and <strong>Engineer</strong>)</label>
           </div>
           <div>
             <span><CheckIcon /></span>
@@ -432,6 +606,8 @@ export const BasicStarterPack = (props) => {
           </div>
         </PackChecks>
       </PackWrapper>
+
+      {!props.asButton && <PurchasePackButton pack={pack} />}
     </StarterPackWrapper>
   );
 };
@@ -441,12 +617,18 @@ export const AdvancedStarterPack = (props) => {
   const packs = useStarterPacks();
   const pack = packs.advanced;
   return (
-    <StarterPackWrapper isPurple pack={pack} {...props}>
-      <h3>Advanced Starter Pack</h3>
+    <StarterPackWrapper color="purple" pack={pack} {...props}>
+      <h2>
+        <Flair color={theme.colors.txButton}>
+          <MyAssetIcon />
+        </Flair>
+        {pack.name}
+      </h2>
       <PackWrapper>
+        <PackFlavor color={theme.colors.lightPurple} smaller={props.asButton}>Ready to take on the Belt with a specialized crew and expanded production capabilities!</PackFlavor>
         <PackContents>
           <div>
-            <span><NavIcon color={theme.colors.main} /></span>
+            <span><NavIcon color={theme.colors.txButton} /></span>
             <label>{pack.crewmates} Crewmate{pack.crewmates === 1 ? '' : 's'}</label>
             <span>
               <UserPrice
@@ -457,7 +639,7 @@ export const AdvancedStarterPack = (props) => {
             </span>
           </div>
           <div>
-            <span><NavIcon color={theme.colors.main} /></span>
+            <span><NavIcon color={theme.colors.txButton} /></span>
             <label>{pack.swayFormatted}</label>
             <span>
               <UserPrice
@@ -469,7 +651,7 @@ export const AdvancedStarterPack = (props) => {
           </div>
           {wallet?.shouldMaintainEthGasReserve && (
             <div>
-              <span><NavIcon color={theme.colors.main} /></span>
+              <span><NavIcon color={theme.colors.txButton} /></span>
               <label>{pack.ethFormatted}</label>
               <span>
                 <UserPrice
@@ -484,18 +666,16 @@ export const AdvancedStarterPack = (props) => {
         <PackChecks>
           <div>
             <span><CheckIcon /></span>
-            <label>Advanced starter kit for access to expanded production chains</label>
+            <label><b>{pack.crewmates}x Crewmate{pack.crewmates === 1 ? '' : 's'}</b> to form a full crew and perform game tasks efficiently</label>
           </div>
           <div>
             <span><CheckIcon /></span>
-            <label>{pack.crewmates}x Crewmate{pack.crewmates === 1 ? '' : 's'} to form a full crew and play at max efficiency</label>
-          </div>
-          <div>
-            <span><CheckIcon /></span>
-            <label>SWAY to construct all basic pack buildings plus <b>1x Bioreactor</b> and <b>1x Factory</b></label>
+            <label>SWAY to construct all {packs.basic.name} pack buildings plus <b>1x Bioreactor</b> and <b>1x Factory</b></label>
           </div>
         </PackChecks>
       </PackWrapper>
+      
+      {!props.asButton && <PurchasePackButton pack={pack} />}
     </StarterPackWrapper>
   );
 };

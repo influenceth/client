@@ -38,7 +38,7 @@ import useWalletPurchasableBalances from '~/hooks/useWalletPurchasableBalances';
 import { TOKEN } from '~/lib/priceUtils';
 import { CrewmateUserPrice } from '~/components/UserPrice';
 import FundingFlow from '~/game/launcher/components/FundingFlow';
-import { AdvancedStarterPack, BasicStarterPack } from '~/game/launcher/components/StarterPack';
+import { AdvancedStarterPack, BasicStarterPack, IntroStarterPack } from '~/game/launcher/components/StarterPack';
 import { useSwayBalance } from '~/hooks/useWalletTokenBalance';
 import useSimulationEnabled from '~/hooks/useSimulationEnabled';
 import SIMULATION_CONFIG from '~/simulation/simulationConfig';
@@ -1620,12 +1620,12 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
           title="Confirm Character Minting"
           body={(
             <PromptBody highlight style={{ padding: 0 }}>
-              <p style={{ fontWeight: 'bold' }}>
-                Starter Packs are specifically designed to be the most efficient way to get
-                your crew started off on the right foot in Adalia.
+              <p style={{ fontSize: '18px', fontStyle: 'italic', fontWeight: 'bold', textAlign: 'center', opacity: 0.75 }}>
+                Starter Packs are specifically designed to be the most efficient way to get started in Adalia.
               </p>
               <Selector><div>Select</div></Selector>
               <div style={{ color: 'white', display: 'flex', flexDirection: 'row', marginBottom: 20 }}>
+                <IntroStarterPack asButton onIsPurchasing={setIsPurchasingPack} style={{ marginRight: 15 }} />
                 <BasicStarterPack asButton onIsPurchasing={setIsPurchasingPack} style={{ marginRight: 15 }} />
                 <AdvancedStarterPack asButton onIsPurchasing={setIsPurchasingPack} />
               </div>
@@ -1637,6 +1637,7 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
           }}
           confirmText="Proceed with crewmate only"
           onReject={() => setConfirming(false)}
+          style={{ width: 960 }}
         />
       )}
       {confirming && !shouldPromptForPack && (
