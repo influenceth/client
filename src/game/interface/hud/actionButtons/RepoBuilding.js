@@ -40,7 +40,7 @@ const RepoBuilding = ({ asteroid, crew, lot, onSetAction, _disabled }) => {
     // if i am the lot controller but not the building controller...
     if (crew?.id === lot?.Control?.controller?.id && crew?.id !== lot?.building?.Control?.controller?.id) {
       return {
-        label: 'Repossess Lot',
+        label: 'Repossess Building',
         icon: <TakeControlIcon />
       }
     }

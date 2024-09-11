@@ -44,7 +44,7 @@ float getAbundance(vec3 point) {
   float noise = normalizeNoise(recursiveSNoise(point, 0.5, uOctaves));
 
   // Get percentile of noise, scale and clamp to [0,1] and adjust by floor abundance
-  float percentile = noise = polyFit(noise);
+  float percentile = polyFit(clamp(noise, 0.0, uPolyLimit));
   float abundance = clamp((percentile + uAbundance - 1.0) / uAbundance, 0.0, 1.0);
   float floorAbundance = uAbundance / 2.0;
   abundance = abundance * (1.0 - floorAbundance) + floorAbundance;

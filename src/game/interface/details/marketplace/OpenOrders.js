@@ -106,6 +106,7 @@ const MarketplaceOpenOrders = ({ asteroid, orders, marketplace = null, marketpla
       isCancellation: true,
       cancellationMakerFee: order.orderType === Order.IDS.LIMIT_BUY ? order.makerFee : undefined,
       preselect: {
+        crew: order.crew,
         limitPrice: order.price,
         quantity: order.amount,
         storage: order.storage,
@@ -145,6 +146,21 @@ const MarketplaceOpenOrders = ({ asteroid, orders, marketplace = null, marketpla
       .sort((a, b) => (sortDirection === 'asc' ? 1 : -1) * (a[sortField] < b[sortField] ? 1 : -1));
   }, [orders, sortField, sortDirection]);
 
+  const CancelButton = ({ row }) => {
+    if (simulationEnabled) return <div />;
+    if (row.validTime > (Date.now() / 1000)) return <div />;
+    return (
+      <IconButton
+        borderless
+        dataTip="Cancel Order"
+        onClick={() => onCancelOrder(row)}
+        style={{ marginRight: 0 }}
+        themeColor="error">
+        <CloseIcon />
+      </IconButton>
+    );
+  }
+
   const columns = useMemo(() => {
     const c = [
       {
@@ -153,6 +169,7 @@ const MarketplaceOpenOrders = ({ asteroid, orders, marketplace = null, marketpla
         sortField: 'orderType',
         selector: row => (
           <>
+            <CancelButton row={row} />
             {row.orderType === Order.IDS.LIMIT_BUY && <OrderType type="LimitBuy">Limit Buy</OrderType>}
             {row.orderType === Order.IDS.LIMIT_SELL && <OrderType type="LimitSell">Limit Sell</OrderType>}
           </>
@@ -221,23 +238,23 @@ const MarketplaceOpenOrders = ({ asteroid, orders, marketplace = null, marketpla
       //     </>
       //   ),
       // },
-      {
-        key: 'cancel',
-        label: '',
-        selector: row => {
-          if (simulationEnabled) return <div />;
-          if (row.validTime > (Date.now() / 1000)) return <div />;
-          return (
-            <IconButton
-              borderless
-              dataTip="Cancel Order"
-              onClick={() => onCancelOrder(row)}
-              themeColor="error">
-              <CloseIcon />
-            </IconButton>
-          );
-        }
-      },
+      // {
+      //   key: 'cancel',
+      //   label: '',
+      //   selector: row => {
+      //     if (simulationEnabled) return <div />;
+      //     if (row.validTime > (Date.now() / 1000)) return <div />;
+      //     return (
+      //       <IconButton
+      //         borderless
+      //         dataTip="Cancel Order"
+      //         onClick={() => onCancelOrder(row)}
+      //         themeColor="error">
+      //         <CloseIcon />
+      //       </IconButton>
+      //     );
+      //   }
+      // },
     ];
     if (!marketplace) {
       c.unshift({

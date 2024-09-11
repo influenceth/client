@@ -1,20 +1,21 @@
 import { createContext, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Address, Asteroid, Entity, Order, System } from '@influenceth/sdk';
+import { Address, Asteroid, Entity, Order, Permission, System } from '@influenceth/sdk';
 import { isEqual, get } from 'lodash';
 import { hash, num, shortString, uint256 } from 'starknet';
 import { fetchBuildExecuteTransaction, fetchQuotes } from '@avnu/avnu-sdk';
 import * as gasless from '@avnu/gasless-sdk';
 
 import useActivitiesContext from '~/hooks/useActivitiesContext';
-import useSession from '~/hooks/useSession';
 import useCrewContext from '~/hooks/useCrewContext';
+import useSession from '~/hooks/useSession';
+import useSimulationEnabled from '~/hooks/useSimulationEnabled';
 import useStore from '~/hooks/useStore';
 import { useUsdcPerEth } from '~/hooks/useSwapQuote';
-import useWalletBalances from '~/hooks/useWalletBalances';
+import useWalletPurchasableBalances from '~/hooks/useWalletPurchasableBalances';
+import { useSwayBalance } from '~/hooks/useWalletTokenBalance';
 import api from '~/lib/api';
 import { cleanseTxHash, safeBigInt } from '~/lib/utils';
 import { TOKEN } from '~/lib/priceUtils';
-import useSimulationEnabled from '~/hooks/useSimulationEnabled';
 
 const RETRY_INTERVAL = 5e3; // 5 seconds
 const ChainTransactionContext = createContext();
@@ -100,6 +101,7 @@ const customConfigs = {
   SampleDepositStart: { equalityTest: ['lot.id', 'caller_crew.id'] },
 
   ExchangeCrew: { equalityTest: true },
+  DumpDelivery: { equalityTest: ['origin.id', 'origin.label'] },
   InitializeAsteroid: {
     preprocess: ({ asteroid }) => ({
       asteroid,
@@ -108,10 +110,10 @@ const customConfigs = {
       radius: safeBigInt(asteroid.Celestial.radius * 1000) * 2n ** 32n / 1000n,
       a: safeBigInt(asteroid.Orbit.a * 10000) * 2n ** 64n / 10000n,
       ecc: safeBigInt(asteroid.Orbit.ecc * 1000) * 2n ** 64n / 1000n,
-      inc: BigInt(asteroid.Orbit.inc * 2 ** 64),
-      raan: BigInt(asteroid.Orbit.raan * 2 ** 64),
-      argp: BigInt(asteroid.Orbit.argp * 2 ** 64),
-      m: BigInt(asteroid.Orbit.m * 2 ** 64),
+      inc: safeBigInt(asteroid.Orbit.inc * 2 ** 64),
+      raan: safeBigInt(asteroid.Orbit.raan * 2 ** 64),
+      argp: safeBigInt(asteroid.Orbit.argp * 2 ** 64),
+      m: safeBigInt(asteroid.Orbit.m * 2 ** 64),
       purchase_order: asteroid.Celestial.purchaseOrder,
       scan_status: asteroid.Celestial.scanStatus,
       bonuses: asteroid.Celestial.bonuses,
@@ -123,7 +125,7 @@ const customConfigs = {
   PurchaseAdalian: {
     getPrice: async () => {
       const { ADALIAN_PURCHASE_PRICE, ADALIAN_PURCHASE_TOKEN } = await api.getConstants(['ADALIAN_PURCHASE_PRICE', 'ADALIAN_PURCHASE_TOKEN']);
-      return [BigInt(ADALIAN_PURCHASE_PRICE), Address.toStandard(ADALIAN_PURCHASE_TOKEN)];
+      return [safeBigInt(ADALIAN_PURCHASE_PRICE), Address.toStandard(ADALIAN_PURCHASE_TOKEN)];
     },
     equalityTest: true
   },
@@ -134,15 +136,15 @@ const customConfigs = {
         'ASTEROID_PURCHASE_LOT_PRICE',
         'ASTEROID_PURCHASE_TOKEN'
       ]);
-      const base = BigInt(ASTEROID_PURCHASE_BASE_PRICE);
-      const lot = BigInt(ASTEROID_PURCHASE_LOT_PRICE);
-      return [base + lot * BigInt(Asteroid.Entity.getSurfaceArea(asteroid)), Address.toStandard(ASTEROID_PURCHASE_TOKEN)];
+      const base = safeBigInt(ASTEROID_PURCHASE_BASE_PRICE);
+      const lot = safeBigInt(ASTEROID_PURCHASE_LOT_PRICE);
+      return [base + lot * safeBigInt(Asteroid.Entity.getSurfaceArea(asteroid)), Address.toStandard(ASTEROID_PURCHASE_TOKEN)];
     },
     equalityTest: ['asteroid.id']
   },
   PurchaseDeposit: {
     getTransferConfig: ({ recipient, deposit, price }) => ({
-      amount: BigInt(price),
+      amount: safeBigInt(price),
       recipient,
       memo: Entity.packEntity(deposit)
     }),
@@ -153,7 +155,7 @@ const customConfigs = {
     getPrice: async ({ crewmate }) => {
       if (crewmate?.id > 0) return [0n, TOKEN.ETH]; // if recruiting existing crewmate, no cost
       const { ADALIAN_PURCHASE_PRICE, ADALIAN_PURCHASE_TOKEN } = await api.getConstants(['ADALIAN_PURCHASE_PRICE', 'ADALIAN_PURCHASE_TOKEN']);
-      return [BigInt(ADALIAN_PURCHASE_PRICE), Address.toStandard(ADALIAN_PURCHASE_TOKEN)];
+      return [safeBigInt(ADALIAN_PURCHASE_PRICE), Address.toStandard(ADALIAN_PURCHASE_TOKEN)];
     },
     equalityTest: true
   },
@@ -220,8 +222,60 @@ const customConfigs = {
     equalityTest: ['asteroid.id'],
     isVirtual: true
   },
-  PurchaseDepositAndExtractResource: {
-    multisystemCalls: ['PurchaseDeposit', 'ExtractResourceStart'],
+  LeaseAndProcessProductsStart: {
+    multisystemCalls: ({ lease, ...vars }) => {
+      return [
+        lease && {
+          system: 'AcceptPrepaidAgreement',
+          vars: { 
+            caller_crew: vars.caller_crew,
+            target: vars.processor,
+            permission: Permission.IDS.RUN_PROCESS,
+            permitted: vars.caller_crew,
+            termPrice: lease.termPrice,
+            recipient: lease.recipient,
+            term: lease.term,
+          }
+        },
+        {
+          system: 'ProcessProductsStart',
+          vars
+        }
+      ].filter((c) => !!c);
+    },
+    equalityTest: ['processor.id', 'processor_slot'],
+    isVirtual: true
+  },
+  FlexibleExtractResourceStart: {
+    multisystemCalls: ({ lease, purchase, ...vars }) => {
+      return [
+        lease && {
+          system: 'AcceptPrepaidAgreement',
+          vars: { 
+            caller_crew: vars.caller_crew,
+            target: vars.extractor,
+            permission: Permission.IDS.EXTRACT_RESOURCES,
+            permitted: vars.caller_crew,
+            termPrice: lease.termPrice,
+            recipient: lease.recipient,
+            term: lease.term,
+          }
+        },
+        purchase && {
+          system: 'PurchaseDeposit',
+          vars: {
+            caller_crew: vars.caller_crew,
+            deposit: vars.deposit,
+            price: purchase.price,
+            recipient: purchase.recipient,
+          }
+        },
+        {
+          system: 'ExtractResourceStart',
+          vars
+        }
+      ].filter((c) => !!c);
+    },
     equalityTest: ['extractor.id'],
     isVirtual: true
   },
@@ -232,7 +286,7 @@ const customConfigs = {
   },
   EscrowDepositAndCreateBuyOrder: {
     getEscrowAmount: ({ price, amount, feeTotal }) => {
-      return BigInt((price * amount + feeTotal) || 0);
+      return safeBigInt((price * amount + feeTotal) || 0);
     },
     escrowConfig: {
       entrypoint: 'deposit',
@@ -259,8 +313,8 @@ const customConfigs = {
       withdrawDataKeys: ['amount', 'origin', 'origin_slot', 'caller_crew'],
       getWithdrawals: ({ exchange_owner_account, seller_account, payments }) => {
         return [
-          { recipient: seller_account, amount: BigInt(payments.toPlayer) },
-          { recipient: exchange_owner_account, amount: BigInt(payments.toExchange) },
+          { recipient: seller_account, amount: safeBigInt(payments.toPlayer) },
+          { recipient: exchange_owner_account, amount: safeBigInt(payments.toExchange) },
         ];
       }
     },
@@ -293,6 +347,33 @@ const customConfigs = {
         }
       ];
     }
+  },
+  ResupplyFoodFromExchange: {
+    getTransferConfig: (vars) => {
+      // memo === order path
+      const memo = [
+        Entity.packEntity(vars.seller_crew),
+        Entity.packEntity(vars.exchange),
+        Order.IDS.LIMIT_SELL,
+        vars.product,
+        vars.price,
+        Entity.packEntity(vars.storage),
+        vars.storage_slot
+      ];
+      return [
+        {
+          amount: safeBigInt(vars.payments.toPlayer),
+          recipient: vars.seller_account,
+          memo
+        },
+        {
+          amount: safeBigInt(vars.payments.toExchange),
+          recipient: vars.exchange_owner_account,
+          memo
+        }
+      ];
+    },
+    equalityTest: ['caller_crew.id']
   },
   UpdatePolicy: {
     multisystemCalls: ({ add, remove }) => [remove, add].filter((c) => !!c),
@@ -407,15 +488,16 @@ export function ChainTransactionProvider({ children }) {
     getOutsideExecutionData,
     isDeployed,
     logout,
+    payGasWithSwayIfPossible,
     provider,
     starknetSession,
     upgradeInsecureSession,
-    walletAccount,
-    walletId
+    walletAccount
   } = useSession();
   const activities = useActivitiesContext();
   const { crew, pendingTransactions } = useCrewContext();
-  const { data: walletSource } = useWalletBalances();
+  const { data: walletSource } = useWalletPurchasableBalances();
+  const { data: swayBalance } = useSwayBalance();
   const { data: usdcPerEth } = useUsdcPerEth();
   const simulationEnabled = useSimulationEnabled();
 
@@ -438,7 +520,7 @@ export function ChainTransactionProvider({ children }) {
   useEffect(() => {
     const retrieveNonce = async () => {
       const currentNonce = await provider.getNonceForAddress(accountAddress);
-      setNonce(BigInt(currentNonce));
+      setNonce(safeBigInt(currentNonce));
     };
 
     if (isDeployed && !nonce && !simulationEnabled && accountAddress && Number(accountAddress) !== 0) retrieveNonce();
@@ -467,68 +549,64 @@ export function ChainTransactionProvider({ children }) {
 
     // Check if we can utilize a signed session to execute calls
     const canUseSessionKey = !!gameplay.useSessions && !!starknetSession && !calls.some((c) => {
-      const found = allowedMethods.find((m) => {
+      return !allowedMethods.find((m) => {
         return m['Contract Address'] === c.contractAddress && m.selector === c.entrypoint;
       });
-
-      return !found;
     });
-
-    const canUseFeeAbstraction = (
-      (gameplay.feeToken === 'SWAY' && isDeployed)
-      || (!gameplay.feeToken && walletId === 'argentWebWallet' && isDeployed)
-    );
 
     // Use session wallet if possible, otherwise regular wallet
     const account = canUseSessionKey ? starknetSession : walletAccount;
     const txOptions = {};
 
     // Check and store the gasless compatibility status
-    const compatibility = await gasless.fetchAccountCompatibility(
-      accountAddress, { baseUrl: process.env.REACT_APP_AVNU_API_URL }
-    );
+    if (payGasWithSwayIfPossible && swayBalance > 0n) {
+      let canPayGasWithSway = false;
+      let gasToken;
+      let maxFee;
+      try {
 
-    if (canUseFeeAbstraction && compatibility.isCompatible) {
-      // Use gasless via relayer for non-ETH / STRK transactions
-      const simulation = await walletAccount.simulateTransaction(
-        [{ type: 'INVOKE_FUNCTION', payload: calls }],
-        { skipValidate: true }
-      );
+        // Use gasless via relayer for non-ETH / STRK transactions
+        const simulation = await account.simulateTransaction(
+          [{ type: 'INVOKE_FUNCTION', payload: calls }],
+          { skipValidate: true }
+        );
+        console.log('simulation', simulation);
 
-      const tokens = await gasless.fetchGasTokenPrices({ baseUrl: process.env.REACT_APP_AVNU_API_URL });
-      const gasToken = tokens.find((t) => Address.areEqual(t.tokenAddress, TOKEN.SWAY));
+        const tokens = await gasless.fetchGasTokenPrices({ baseUrl: process.env.REACT_APP_AVNU_API_URL });
+        console.log('fetchGasTokenPrices', tokens);
+        gasToken = tokens.find((t) => Address.areEqual(t.tokenAddress, TOKEN.SWAY));
+        console.log('gasToken', gasToken);
+        console.log('swayBalance', swayBalance);
 
-      // Triple the fee estimation and check for sufficient funds to ensure transaction success
-      // TODO: figure out why some txs require this
-      const maxFee = gasless.getGasFeesInGasToken(simulation[0].suggestedMaxFee, gasToken) * 3n;
+        // Triple the fee estimation and check for sufficient funds to ensure transaction success
+        // TODO: figure out why some txs require this
+        
+        // (not sure why Math.abs is necessary, but it is on dev at least)
+        maxFee = Math.abs(gasless.getGasFeesInGasToken(simulation[0].suggestedMaxFee, gasToken)) * 3n;
+        console.log('maxFee', maxFee);
 
-      // Check if wallet has sufficient funds for gas fees
-      if (walletRef.current?.tokenBalance) {
-        const match = Object.entries(walletRef.current.tokenBalance).find((e) => {
-          return Address.areEqual(e[0], gasToken.tokenAddress);
-        });
-
-        // Skip this check in testnet since the allowed gas tokens are inconsistent
-        if (process.env.REACT_APP_DEPLOYMENT === 'production' && (!match || match[1] < maxFee)) {
-          createAlert({
-            type: 'GenericAlert',
-            data: { content: 'Insufficient wallet balance, please recharge in the store.' },
-            level: 'warning',
-          });
-
-          throw new Error('Insufficient wallet balance');
-        }
+        canPayGasWithSway = (swayBalance >= maxFee);
+      } catch (e) {
+        console.warn('Could not pay gas with sway! Trying with eth/strk...', e);
       }
 
-      const { typedData, signature } = await getOutsideExecutionData(formattedCalls, gasToken.tokenAddress, maxFee);
-      return await gasless.fetchExecuteTransaction(
-        accountAddress,
-        JSON.stringify(typedData),
-        signature,
-        { baseUrl: process.env.REACT_APP_AVNU_API_URL }
-      );
-    } else if (canUseSessionKey && nonce) {
-      // Manage nonces locally when using sessions but not using relayer
+      // Check if wallet has sufficient funds for gas fees
+      // (skip this check in testnet since the allowed gas tokens are inconsistent)
+      // if (process.env.REACT_APP_DEPLOYMENT !== 'production' || gasTokenBalance >= maxFee) {
+      if (canPayGasWithSway) {
+        const { typedData, signature } = await getOutsideExecutionData(formattedCalls, gasToken.tokenAddress, maxFee, canUseSessionKey);
+        return await gasless.fetchExecuteTransaction(
+          accountAddress,
+          JSON.stringify(typedData),
+          signature,
+          { baseUrl: process.env.REACT_APP_AVNU_API_URL }
+        );
+      }
+    }
+        
+    // Manage nonces locally when using sessions but not using relayer
+    // (relayer should have already returned if going to be used)
+    if (canUseSessionKey && nonce) {
       txOptions.nonce = nonce;
     }
 
@@ -549,11 +627,11 @@ export function ChainTransactionProvider({ children }) {
     allowedMethods,
     createAlert,
     chainId,
-    gameplay.feeToken,
     getOutsideExecutionData,
-    isDeployed,
+    payGasWithSwayIfPossible,
     nonce,
     starknetSession,
+    swayBalance,
     walletAccount
   ]);
 
@@ -749,60 +827,40 @@ export function ChainTransactionProvider({ children }) {
               if (totalPrice > safeBigInt(totalWalletValueInToken)) {
                 console.log('EXECUTE', wallet, wallet.combinedBalance, wallet.combinedBalance, wallet.combinedBalance?.to(totalPriceToken));
                 const fundsError = new Error('Insufficient wallet balance');
-                fundsError.additionalFundsRequired = parseInt(totalPrice - BigInt(totalWalletValueInToken));
+                fundsError.additionalFundsRequired = parseInt(totalPrice - safeBigInt(totalWalletValueInToken));
                 fundsError.additionalFundsToken = totalPriceToken;
                 throw fundsError;
 
-              // else (have enough USDC + ETH) if don't have enough in totalPriceToken
+              // else (do have enough USDC + ETH), but don't specifically have enough in totalPriceToken
               // to cover tx, prepend swap calls to cover it as well
               } else {
-                let balanceInTargetToken = wallet.tokenBalance[totalPriceToken];
+                let balanceInTargetToken = wallet.tokenBalances[totalPriceToken];
                 if (totalPrice > balanceInTargetToken) {
-                  if (!usdcPerEth) throw new Error('Conversion rate not loaded');
-
-                  const isEthToUsdc = totalPriceToken === process.env.REACT_APP_USDC_TOKEN_ADDRESS;
-                  const fromAddress = isEthToUsdc ? process.env.REACT_APP_ERC20_TOKEN_ADDRESS : process.env.REACT_APP_USDC_TOKEN_ADDRESS;
-                  const toAddress = isEthToUsdc ? process.env.REACT_APP_USDC_TOKEN_ADDRESS : process.env.REACT_APP_ERC20_TOKEN_ADDRESS;
-                  const amount = totalPrice - balanceInTargetToken;
-
-                  // buy enough excess to cover slippage
-                  const slippage = 0.01;
-                  const targetSwapAmount = (1 / (1 - slippage)) * parseInt(amount);
-
-                  // usdcPerEth is estimated from a small amount (presumably the best price) so
-                  // sellAmount may be too low to end up with the required buyAmount...
-
-                  // iterate based on the response until we have sufficient buyAmount to cover the purchase
-                  // TODO: would be nice for AVNU to have buyAmount as an option here instead (to avoid loop)
-                  let quote;
-                  let actualConv = isEthToUsdc ? usdcPerEth : (1 / usdcPerEth);
-                  while (parseInt(quote?.buyAmount || 0) < targetSwapAmount) {
-                    const quotes = await fetchQuotes({
-                      sellTokenAddress: fromAddress,
-                      buyTokenAddress: toAddress,
-                      sellAmount: safeBigInt(Math.ceil(targetSwapAmount / actualConv)),
-                      takerAddress: accountAddress,
-                    }, { baseUrl: process.env.REACT_APP_AVNU_API_URL });
-                    if (!quotes?.[0]) throw new Error('Insufficient swap liquidity');
-
-                    // set quote
-                    quote = quotes[0];
-
-                    // improve conversion rate from the purchase size quote (in case need to iterate)
-                    // (if conversion rate unchanged but have not reached target, break loop so not stuck)
-                    const newConv = parseInt(quote.buyAmount) / parseInt(quote.sellAmount);
-                    if (newConv === actualConv) {
-                      if (quote.buyAmount < targetSwapAmount) {
-                        throw new Error('Swap pricing issue encountered');
-                      }
-                    }
-
-                    actualConv = newConv;
-                  }
+                  // buy enough excess to cover slippage (2.5%)
+                  const slippage = 0.025;
+                  const slippageMult = (1 / (1 - slippage));
+                  console.log({ totalPrice, balanceInTargetToken });
+                  console.log({
+                    sellTokenAddress: totalPriceToken === process.env.REACT_APP_USDC_TOKEN_ADDRESS
+                      ? process.env.REACT_APP_ERC20_TOKEN_ADDRESS
+                      : process.env.REACT_APP_USDC_TOKEN_ADDRESS,
+                    buyTokenAddress: totalPriceToken,
+                    buyAmount: safeBigInt(Math.ceil(slippageMult * parseInt(totalPrice - balanceInTargetToken))),
+                    takerAddress: accountAddress,
+                  });
+                  const quotes = await fetchQuotes({
+                    sellTokenAddress: totalPriceToken === process.env.REACT_APP_USDC_TOKEN_ADDRESS
+                      ? process.env.REACT_APP_ERC20_TOKEN_ADDRESS
+                      : process.env.REACT_APP_USDC_TOKEN_ADDRESS,
+                    buyTokenAddress: totalPriceToken,
+                    buyAmount: safeBigInt(Math.ceil(slippageMult * parseInt(totalPrice - balanceInTargetToken))),
+                    takerAddress: accountAddress,
+                  }, { baseUrl: process.env.REACT_APP_AVNU_API_URL });
+                  if (!quotes?.[0]) throw new Error('Insufficient swap liquidity');
 
                   // prepend swap calls
                   const swapTx = await fetchBuildExecuteTransaction(
-                    quote.quoteId,
+                    quotes[0].quoteId,
                     accountAddress,
                     slippage,
                     true,
@@ -839,6 +897,7 @@ export function ChainTransactionProvider({ children }) {
     createAlert,
     executeWithAccount,
     gameplay.feesInSway,
+    isDeployed,
     prependEventAutoresolve,
     starknetSession,
     usdcPerEth
@@ -990,6 +1049,67 @@ export function ChainTransactionProvider({ children }) {
       return true;
     }
   }, [walletAccount]);
+  
+
+  const handleExecutionExeption = useCallback((e, executeCalls, txDetails = {}) => {
+    if ((e.message || '').toLowerCase() === 'account not deployed') {
+      createAlert({
+        type: 'DeployAccount',
+        level: 'warning',
+        duration: 0,
+        hideCloseIcon: true,
+        onRemoval: () => {
+          // TODO: would be nice if could use this format instead, but it's not clear how that works
+          // walletAccount.deployAccount({ contractAddress: accountAddress });
+          executeCalls([
+            System.getFormattedCall(
+              process.env.REACT_APP_ERC20_TOKEN_ADDRESS,
+              'transfer',
+              [
+                { value: accountAddress, type: 'ContractAddress' },
+                { value: 0n, type: 'u256' }
+              ]
+            )
+          ]);
+        }
+      });
+    }
+
+    // "User abort" is argent, 'Execute failed' is braavos
+    // TODO: in Braavos, is "Execute failed" a generic error? in that case, we should still show
+    // (and it will just be annoying that it shows a failure on declines)
+    // console.log('failed', e);
+    if (!['User abort', 'User rejected', 'Execute failed', 'Timeout'].includes(e?.message) && txDetails) {
+      dispatchFailedTransaction({
+        ...txDetails,
+        txHash: null,
+        err: e?.message || e
+      });
+    }
+
+    // "Timeout" is in argent (at least) for when tx is auto-rejected b/c previous tx is still pending
+    // TODO: should hopefully be able to remove Timeout because would make sessions feel pretty useless
+    if (e?.message === 'Timeout') {
+      createAlert({
+        type: 'GenericAlert',
+        data: { content: 'Previous tx is not yet accepted on l2. Wait for the extension notification and try again.' },
+        level: 'warning',
+        duration: 5000
+      });
+    }
+
+    // Session expired for Argent web wallet sessions, user should be logged out
+    if (e?.message && e?.message.includes('session expired')) {
+      createAlert({
+        type: 'GenericAlert',
+        data: { content: 'Session expired. Please log in again.' },
+        level: 'warning',
+        duration: 5000
+      });
+
+      logout();
+    }
+  }, [accountAddress, createAlert, dispatchFailedTransaction, logout]);
 
   // Allows for multiple explicit / manual calls to be executed in a single transaction
   const executeCalls = useCallback(async (calls) => {
@@ -1040,9 +1160,10 @@ export function ChainTransactionProvider({ children }) {
       return tx;
     } catch (e) {
       setPromptingTransaction(false);
+      handleExecutionExeption(e, executeCalls);
       throw e;  // rethrow
     }
-  }, [createAlert, executeWithAccount, isAccountLocked, isDeployed, upgradeInsecureSession, walletAccount])
+  }, [createAlert, executeWithAccount, handleExecutionExeption, isAccountLocked, isDeployed, upgradeInsecureSession, walletAccount])
 
   // Primary execute method for system calls (requires name of system, etc.)
   const executeSystem = useCallback(async (key, vars, meta = {}) => {
@@ -1099,49 +1220,12 @@ export function ChainTransactionProvider({ children }) {
         setPromptingTransaction(false);
         return e.additionalUSDCRequired;
       }
-
-      // "User abort" is argent, 'Execute failed' is braavos
-      // TODO: in Braavos, is "Execute failed" a generic error? in that case, we should still show
-      // (and it will just be annoying that it shows a failure on declines)
-      // console.log('failed', e);
-      if (!['User abort', 'Execute failed', 'Timeout'].includes(e?.message)) {
-        dispatchFailedTransaction({
-          key,
-          vars,
-          meta,
-          txHash: null,
-          err: e?.message || e
-        });
-      }
-
-      // "Timeout" is in argent (at least) for when tx is auto-rejected b/c previous tx is still pending
-      // TODO: should hopefully be able to remove Timeout because would make sessions feel pretty useless
-      if (e?.message === 'Timeout') {
-        createAlert({
-          type: 'GenericAlert',
-          data: { content: 'Previous tx is not yet accepted on l2. Wait for the extension notification and try again.' },
-          level: 'warning',
-          duration: 5000
-        });
-      }
-
-      // Session expired for Argent web wallet sessions, user should be logged out
-      if (e?.message && e?.message.includes('session expired')) {
-        createAlert({
-          type: 'GenericAlert',
-          data: { content: 'Session expired. Please log in again.' },
-          level: 'warning',
-          duration: 5000
-        });
-
-        logout();
-      }
-
+      handleExecutionExeption(e, executeCalls, { key, vars, meta });
       onTransactionError(e, vars);
     }
 
     setPromptingTransaction(false);
-  }, [blockTime, contracts, walletAccount, simulationEnabled]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [blockTime, contracts, handleExecutionExeption, walletAccount, simulationEnabled]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const getPendingTx = useCallback((key, vars) => {
     // simulation will only ever have one concurrent?

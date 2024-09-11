@@ -118,6 +118,7 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
 
     hasSeenIntroVideo: false,
     hiddenActionItems: [],
+    perProcessLeases: [],
     canvasStack: [],
 
     logs: {
@@ -716,6 +717,16 @@ const useStore = create(subscribeWithSelector(persist((set, get) => ({
     dispatchUnhideAllActionItems: () => set(produce(state => {
       state.hiddenActionItems = [];
     })),
+
+    dispatchPerProcessLease: ({ key, endTime }) => set(produce(state => {
+      // cleanout leases that ended more than 30 days ago (only show for 7 days)
+      const thirtyDaysAgo = Math.floor(Date.now() / 1000) - 30 * 86400;
+      state.perProcessLeases = (state.perProcessLeases || []).filter((l) => l.endTime < thirtyDaysAgo);
+
+      // add the new lease
+      state.perProcessLeases.push({ key, endTime });
+    })),
+
     dispatchPreferredUiCurrency: (token) => set(produce(state => {
       state.preferredUiCurrency = token;
     })),

@@ -28,6 +28,7 @@ import FormAgreement from './actionDialogs/FormAgreement';
 import NewCoreSample from './actionDialogs/NewCoreSample';
 import Deconstruct from './actionDialogs/Deconstruct';
 import ImproveCoreSample from './actionDialogs/ImproveCoreSample';
+import JettisonCargo from './actionDialogs/JettisonCargo';
 import LandShip from './actionDialogs/LandShip';
 import LaunchShip from './actionDialogs/LaunchShip';
 import ManageCrew from './actionDialogs/ManageCrew';
@@ -37,6 +38,7 @@ import Process from './actionDialogs/Process';
 import PurchaseEntity from './actionDialogs/PurchaseEntity';
 import RepoBuilding from './actionDialogs/RepoBuilding';
 import SetCourse from './actionDialogs/SetCourse';
+import SellingList from './actionDialogs/SellingList';
 import ShoppingList from './actionDialogs/ShoppingList';
 import StationCrew from './actionDialogs/StationCrew';
 import SurfaceTransfer from './actionDialogs/SurfaceTransfer';
@@ -251,6 +253,7 @@ const ActionDialog = ({ type, params }) => {
         {type === 'FEED_CREW' && <FeedCrew {...allProps} />}
         {type === 'FORM_AGREEMENT' && <FormAgreement {...allProps} />}
         {type === 'EXTEND_AGREEMENT' && <FormAgreement {...allProps} isExtension />}
+        {type === 'JETTISON_CARGO' && <JettisonCargo {...allProps} />}
         {type === 'LAND_SHIP' && <LandShip {...allProps} />}
         {type === 'LAUNCH_SHIP' && <LaunchShip {...allProps} />}
         {type === 'IMPROVE_CORE_SAMPLE' && <ImproveCoreSample {...allProps} />}
@@ -262,6 +265,7 @@ const ActionDialog = ({ type, params }) => {
         {type === 'PURCHASE_ENTITY' && <PurchaseEntity {...allProps} />}
         {type === 'REPO_BUILDING' && <RepoBuilding {...allProps} />}
         {type === 'SET_COURSE' && <SetCourse {...allProps} />}
+        {type === 'SELLING_LIST' && <SellingList {...allProps} />}
         {type === 'SHOPPING_LIST' && <ShoppingList {...allProps} />}
         {type === 'STATION_CREW' && <StationCrew {...allProps} />}
         {type === 'STATION_CREW_AS_GUESTS' && <StationCrew {...allProps} guests />}

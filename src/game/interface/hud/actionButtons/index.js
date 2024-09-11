@@ -16,8 +16,11 @@ import ExtendAgreement from './ExtendAgreement';
 import Extract from './Extract';
 import FormAgreement from './FormAgreement';
 import FormLotLeaseAgreement from './FormLotLeaseAgreement';
+import JettisonCargo from './JettisonCargo';
 import LandShip from './LandShip';
 import LaunchShip from './LaunchShip';
+import MultiBuy from './MultiBuy';
+import MultiSell from './MultiSell';
 import PlanBuilding from './PlanBuilding';
 import Processors from './Processors';
 import PurchaseAsteroid from './PurchaseAsteroid';
@@ -52,8 +55,11 @@ const ActionsButtons = {
   Extract,
   FormAgreement,
   FormLotLeaseAgreement,
+  JettisonCargo,
   LandShip,
   LaunchShip,
+  MultiBuy,
+  MultiSell,
   PlanBuilding,
   Processors,
   PurchaseAsteroid,

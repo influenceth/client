@@ -6,6 +6,7 @@ import useCrewContext from '~/hooks/useCrewContext';
 import useEntity from '../useEntity';
 import useHydratedCrew from '../useHydratedCrew';
 import api from '~/lib/api';
+import { TOKEN, TOKEN_SCALE } from '~/lib/priceUtils';
 
 // TODO: product could probably be incorporated into props + payload
 const useMarketplaceManager = (buildingId) => {
@@ -53,10 +54,10 @@ const useMarketplaceManager = (buildingId) => {
         buyer_crew: { id: crew?.id, label: crew?.label },
         product,
         amount,
-        price: Math.round(price * 1e6),
+        price: Math.round(price * TOKEN_SCALE[TOKEN.SWAY]),
         storage: { id: destination?.id, label: destination?.label },
         storage_slot: destinationSlot,
-        feeTotal: Math.round(feeTotal * 1e6),
+        feeTotal: Math.round(feeTotal * TOKEN_SCALE[TOKEN.SWAY]),
         ...payload
       },
       {
@@ -71,7 +72,7 @@ const useMarketplaceManager = (buildingId) => {
       {
         product,
         amount,
-        price: Math.round(price * 1e6),
+        price: Math.round(price * TOKEN_SCALE[TOKEN.SWAY]),
         storage: { id: origin?.id, label: origin?.label },
         storage_slot: originSlot,
         ...payload
@@ -104,7 +105,7 @@ const useMarketplaceManager = (buildingId) => {
           product: order.product,
           amount: order.fillAmount,
           buyer_crew: { id: order.crew?.id, label: order.crew?.label },
-          price: Math.round(order.price * 1e6),
+          price: Math.round(order.price * TOKEN_SCALE[TOKEN.SWAY]),
           storage: { id: order.storage?.id, label: order.storage?.label },
           storage_slot: order.storageSlot,
 
@@ -137,7 +138,7 @@ const useMarketplaceManager = (buildingId) => {
 
           seller_crew: { id: order.crew?.id, label: order.crew?.label },
           amount: order.fillAmount,
-          price: Math.round(order.price * 1e6),
+          price: Math.round(order.price * TOKEN_SCALE[TOKEN.SWAY]),
           storage: { id: order.storage?.id, label: order.storage?.label },
           storage_slot: order.storageSlot,
 
@@ -166,7 +167,7 @@ const useMarketplaceManager = (buildingId) => {
             makerFee,
             paymentsUnscaled: {
               toExchange: 0,
-              toPlayer: Order.getBuyOrderDeposit(amount * Math.floor(price * 1e6), makerFee)
+              toPlayer: Order.getBuyOrderDeposit(amount * Math.floor(price * TOKEN_SCALE[TOKEN.SWAY]), makerFee)
             },
             fillAmount: amount,
             crew: buyer,
@@ -186,7 +187,7 @@ const useMarketplaceManager = (buildingId) => {
       {
         seller_crew: { id: seller?.id, label: seller?.label },
         product,
-        price: Math.round(price * 1e6),
+        price: Math.round(price * TOKEN_SCALE[TOKEN.SWAY]),
         storage: { id: origin?.id, label: origin?.label },
         storage_slot: originSlot,
         ...payload

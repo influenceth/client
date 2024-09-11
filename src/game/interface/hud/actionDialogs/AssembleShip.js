@@ -2,9 +2,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import styled from 'styled-components';
 import { Asteroid, Building, Crewmate, Entity, Lot, Permission, Product, Ship, Time } from '@influenceth/sdk';
 
-import { CaretIcon, CloseIcon, ForwardIcon, AssembleShipIcon, ProductionIcon, InventoryIcon, LocationIcon } from '~/components/Icons';
+import { CaretIcon, CloseIcon, ForwardIcon, AssembleShipIcon, ProductionIcon, InventoryIcon, LocationIcon, SwayIcon, AgreementIcon } from '~/components/Icons';
 import useCrewContext from '~/hooks/useCrewContext';
-import { reactBool, formatTimer, locationsArrToObj, getCrewAbilityBonuses, formatFixed } from '~/lib/utils';
+import { reactBool, formatTimer, locationsArrToObj, getCrewAbilityBonuses, formatFixed, getProcessorLeaseSelections, getProcessorLeaseConfig } from '~/lib/utils';
 
 import {
   ActionDialogFooter,
@@ -30,43 +30,26 @@ import {
   InventoryInputBlock,
   ShipImage,
   ProgressBarSection,
-  LandingSelectionDialog
+  LandingSelectionDialog,
+  ProcessSelectionBlock,
+  LeaseTooltip,
+  LeaseDetailsLabel,
+  LeaseInfoIcon
 } from './components';
 import useLot from '~/hooks/useLot';
 import { ActionDialogInner, useAsteroidAndLot } from '../ActionDialog';
 import actionStages from '~/lib/actionStages';
 import theme, { hexToRGB } from '~/theme';
-import ClipCorner from '~/components/ClipCorner';
-import IconButton from '~/components/IconButton';
 import useDryDockManager from '~/hooks/actionManagers/useDryDockManager';
 import useEntity from '~/hooks/useEntity';
 import formatters from '~/lib/formatters';
 import useActionCrew from '~/hooks/useActionCrew';
+import useBlockTime from '~/hooks/useBlockTime';
+import useCrew from '~/hooks/useCrew';
+import PurchaseButtonInner from '~/components/PurchaseButtonInner';
+import { TOKEN, TOKEN_SCALE } from '~/lib/priceUtils';
 
 const SECTION_WIDTH = 1046;
-
-const SelectorInner = styled.div`
-  align-items: center;
-  color: white;
-  display: flex;
-  flex-direction: row;
-  font-size: 18px;
-  & label {
-    flex: 1;
-    font-weight: bold;
-    padding-left: 10px;
-  }
-`;
-const IconWrapper = styled.div`
-  align-items: center;
-  background: rgba(${p => p.theme.colors.mainRGB}, 0.3);
-  ${p => p.theme.clipCorner(sectionBodyCornerSize * 0.6)};
-  display: flex;
-  font-size: 40px;
-  height: 50px;
-  justify-content: center;
-  width: 50px;
-`;
 
 const shipContructionProcesses = [Ship.IDS.SHUTTLE, Ship.IDS.LIGHT_TRANSPORT, Ship.IDS.HEAVY_TRANSPORT].map((i) => ({
   i,
@@ -82,7 +65,10 @@ const AssembleShip = ({ asteroid, lot, dryDockManager, stage, ...props }) => {
   const { currentAssembly, assemblyStatus, startShipAssembly, finishShipAssembly } = dryDockManager;
 
   const crew = useActionCrew(currentAssembly);
+  const blockTime = useBlockTime();
   const { crewCan } = useCrewContext();
+
+  const { data: buildingOwner } = useCrew(lot?.building?.Control?.controller?.id);
 
   const [selectedOrigin, setSelectedOrigin] = useState(currentAssembly ? { ...currentAssembly?.origin, slot: currentAssembly?.originSlot } : undefined);
   const { data: origin } = useEntity(selectedOrigin);
@@ -246,9 +232,39 @@ const AssembleShip = ({ asteroid, lot, dryDockManager, stage, ...props }) => {
     },
   ]), [assemblyTime, assemblyTimeBonus, crewTravelTime, crewTravelBonus, tripDetails, inputTransportDistance, inputTransportTime]);
 
+  const prepaidLeaseConfig = useMemo(() => {
+    return getProcessorLeaseConfig(lot?.building, Permission.IDS.ASSEMBLE_SHIP, crew, blockTime);
+  }, [blockTime, crew, lot?.building]);
+
+  const { leasePayment, desiredLeaseTerm, actualLeaseTerm } = useMemo(() => {
+    return getProcessorLeaseSelections(
+      prepaidLeaseConfig,
+      taskTimeRequirement,
+      crew?.Crew?.readyAt,
+      blockTime
+    );
+  }, [blockTime, crew?.Crew?.readyAt, prepaidLeaseConfig, taskTimeRequirement]);
+
   const onStart = useCallback(() => {
-    startShipAssembly(shipType, origin, originSlot);
-  }, [shipType, origin, originSlot]);
+    if (leasePayment && !buildingOwner?.Crew?.delegatedTo) return;
+    startShipAssembly(
+      shipType,
+      origin,
+      originSlot,
+      leasePayment > 0 && {
+        recipient: buildingOwner.Crew.delegatedTo,
+        term: actualLeaseTerm,
+        termPrice: leasePayment,
+      }
+    );
+  }, [
+    actualLeaseTerm,
+    buildingOwner,
+    leasePayment,
+    shipType,
+    origin,
+    originSlot
+  ]);
 
   const onFinish = useCallback(() => {
     finishShipAssembly(destination);
@@ -272,6 +288,20 @@ const AssembleShip = ({ asteroid, lot, dryDockManager, stage, ...props }) => {
     return !inputArr.find((i) => (sourceContentObj[i] || 0) < process.inputs[i]);
   }, [inputArr, originInventory?.contents, process]);
 
+  const goLabel = useMemo(() => {
+    if (leasePayment) {
+      return (
+        <PurchaseButtonInner>
+          <label>Lease & Begin Assembly</label>
+          <span style={{ marginLeft: 10 }}>
+            <SwayIcon /> {Math.round(leasePayment / TOKEN_SCALE[TOKEN.SWAY]).toLocaleString()}
+          </span>
+        </PurchaseButtonInner>
+      );
+    }
+    return `Begin Assembly`;
+  }, [leasePayment]);
+
   return (
     <>
       <ActionDialogHeader
@@ -288,12 +318,33 @@ const AssembleShip = ({ asteroid, lot, dryDockManager, stage, ...props }) => {
         stage={stage}
         wide />
 
+      {/* TODO: conditional if lease */}
       <ActionDialogBody>
         <FlexSection style={{ marginBottom: 32, width: SECTION_WIDTH }}>
           <LotInputBlock
             lot={lot}
-            title="Construction Location"
+            title="Assembly Location"
+            titleDetails={prepaidLeaseConfig && <LeaseDetailsLabel>Lease Required</LeaseDetailsLabel>}
             disabled={stage !== actionStages.NOT_STARTED}
+            imageProps={prepaidLeaseConfig && {
+              bottomBanner: leasePayment > 0 && (
+                <>
+                  <SwayIcon />
+                  {formatFixed(leasePayment / 1e6, 1)}
+                </> 
+              ),
+              iconBadge: <AgreementIcon />,
+              iconBadgeCorner: theme.colors.successDark
+            }}
+            tooltip={prepaidLeaseConfig && (
+              <LeaseTooltip
+                desiredTerm={desiredLeaseTerm}
+                permId={Permission.IDS.ASSEMBLE_SHIP}
+                {...prepaidLeaseConfig}
+              />
+            )}
+            addChildren={prepaidLeaseConfig && <LeaseInfoIcon />}
+            bodyStyle={prepaidLeaseConfig && { background: `rgba(${theme.colors.successDarkRGB}, 0.2)` }}
             style={{ width: 350 }}
           />
 
@@ -307,23 +358,10 @@ const AssembleShip = ({ asteroid, lot, dryDockManager, stage, ...props }) => {
             bodyStyle={{ padding: 0 }}
             style={{ alignSelf: 'flex-start', width: '592px' }}>
 
-            <FlexSectionInputBody
-              isSelected={stage === actionStages.NOT_STARTED}
+            <ProcessSelectionBlock
               onClick={stage === actionStages.NOT_STARTED ? () => setProcessSelectorOpen(true) : undefined}
-              style={{ padding: 4 }}>
-              <SelectorInner>
-                <IconWrapper>
-                  <ProductionIcon />
-                </IconWrapper>
-                <label>{process?.name || `Select a Process...`}</label>
-                {stage === actionStages.NOT_STARTED && (
-                  <>
-                    {process ? <IconButton borderless><CloseIcon /></IconButton> : <CaretIcon />}
-                  </>
-                )}
-              </SelectorInner>
-              <ClipCorner dimension={sectionBodyCornerSize} />
-            </FlexSectionInputBody>
+              selectedProcess={process}
+            />
 
             <RecipeSlider
               amount={1}
@@ -442,13 +480,22 @@ const AssembleShip = ({ asteroid, lot, dryDockManager, stage, ...props }) => {
 
       <ActionDialogFooter
         disabled={!(
-          (stage === actionStages.NOT_STARTED && process && originInventory && isOriginSufficient && crewCan(Permission.IDS.ASSEMBLE_SHIP, lot.building))
-          || (stage === actionStages.READY_TO_COMPLETE && destination)
+          (
+            stage === actionStages.NOT_STARTED
+            && process
+            && originInventory
+            && isOriginSufficient
+            && (crewCan(Permission.IDS.ASSEMBLE_SHIP, lot.building) || leasePayment > 0)
+          )
+          || (
+            stage === actionStages.READY_TO_COMPLETE
+            && destination
+          )
         )}
         finalizeLabel="Deliver Ship"
         isSequenceable
         onFinalize={onFinish}
-        goLabel="Begin Assembly"
+        goLabel={goLabel}
         onGo={onStart}
         stage={stage}
         wide

@@ -5,24 +5,22 @@ import { PropagateLoader as Loader } from 'react-spinners';
 import { RampInstantSDK } from '@ramp-network/ramp-instant-sdk';
 
 import Button from '~/components/ButtonAlt';
-import { ChevronRightIcon, CloseIcon, WalletIcon, WarningOutlineIcon } from '~/components/Icons';
+import { ChevronRightIcon, CloseIcon, LinkIcon, WalletIcon } from '~/components/Icons';
 import Details from '~/components/DetailsV2';
 import useSession from '~/hooks/useSession';
 import BrightButton from '~/components/BrightButton';
 import MouseoverInfoPane from '~/components/MouseoverInfoPane';
-import useWalletBalances from '~/hooks/useWalletBalances';
+import useWalletPurchasableBalances from '~/hooks/useWalletPurchasableBalances';
 import UserPrice from '~/components/UserPrice';
 import { TOKEN, TOKEN_FORMAT, TOKEN_FORMATTER } from '~/lib/priceUtils';
 import usePriceHelper from '~/hooks/usePriceHelper';
 import useStore from '~/hooks/useStore';
 import EthFaucetButton from './EthFaucetButton';
-import { areChainsEqual, fireTrackingEvent, safeBigInt } from '~/lib/utils';
+import { areChainsEqual, fireTrackingEvent, resolveChainId, safeBigInt } from '~/lib/utils';
 
 const layerSwapChains = {
-  '0x534e5f4d41494e': { ethereum: 'ETHEREUM_MAINNET', starknet: 'STARKNET_MAINNET' },
-  'SN_MAIN': { ethereum: 'ETHEREUM_MAINNET', starknet: 'STARKNET_MAINNET' },
-  '0x534e5f5345504f4c4941': { ethereum: 'ETHEREUM_SEPOLIA', starknet: 'STARKNET_SEPOLIA' },
-  'SN_SEPOLIA': { ethereum: 'ETHEREUM_SEPOLIA', starknet: 'STARKNET_SEPOLIA' }
+  SN_MAIN: { ethereum: 'ETHEREUM_MAINNET', starknet: 'STARKNET_MAINNET' },
+  SN_SEPOLIA: { ethereum: 'ETHEREUM_SEPOLIA', starknet: 'STARKNET_SEPOLIA' }
 };
 
 const FundingBody = styled.div`
@@ -241,12 +239,71 @@ const RampWrapper = styled.div`
   }
 `;
 
+const RAMP_PREPEND = process.env.NODE_ENV === 'production' ? '' : 'demo.';
+const RAMP_PURCHASE_STATUS = {
+  INITIALIZED: {
+    statusText: 'The purchase has been initialized.',
+    isSuccess: false,
+    isError: false
+  },
+  PAYMENT_STARTED: {
+    statusText: 'Automated payment has been initiated.',
+    isSuccess: false,
+    isError: false
+  },
+  PAYMENT_IN_PROGRESS: {
+    statusText: 'Payment process has been completed.',
+    isSuccess: false,
+    isError: false
+  },
+  PAYMENT_FAILED: {
+    statusText: 'The payment was cancelled, rejected, or otherwise failed.',
+    isSuccess: false,
+    isError: true
+  },
+  PAYMENT_EXECUTED: {
+    statusText: 'Payment approved, waiting for funds to be received.',
+    isSuccess: false,
+    isError: false
+  },
+  FIAT_SENT: {
+    statusText: 'Outgoing bank transfer has been confirmed.',
+    isSuccess: false,
+    isError: false
+  },
+  FIAT_RECEIVED: {
+    statusText: 'Payment confirmed, final checks before crypto transfer.',
+    isSuccess: false,
+    isError: false
+  },
+  RELEASING: {
+    statusText: 'Funds received, initiating crypto transfer...',
+    isSuccess: false,
+    isError: false
+  },
+  RELEASED: {
+    statusText: 'Waiting for funds to be received by user\'s wallet...',
+    isSuccess: true,
+    isError: false
+  },
+  EXPIRED: {
+    statusText: 'Time to pay for the purchase was exceeded. Please try again, making sure to follow all prompts.',
+    isSuccess: false,
+    isError: true
+  },
+  CANCELLED: {
+    statusText: 'The purchase was been cancelled.',
+    isSuccess: false,
+    isError: true
+  }
+};
+
 export const FundingFlow = ({ totalPrice, onClose, onFunded }) => {
   const createAlert = useStore(s => s.dispatchAlertLogged);
 
   const { accountAddress, chainId, walletId } = useSession();
   const priceHelper = usePriceHelper();
-  const { data: wallet, refetch: refetchBalances } = useWalletBalances();
+  const { data: wallet, refetch: refetchBalances } = useWalletPurchasableBalances();
   const preferredUiCurrency = useStore(s => s.getPreferredUiCurrency());
 
   const [hoveredRampButton, setHoveredRampButton] = useState(false);
@@ -261,13 +318,13 @@ export const FundingFlow = ({ totalPrice, onClose, onFunded }) => {
   useEffect(() => {
     // if (waiting && !debug) {
     //   setTimeout(() => {
-    //     console.log('hack', startingBalance.current, wallet.tokenBalance); // tokenBalance
+    //     console.log('hack', startingBalance.current, wallet.tokenBalances); // tokenBalances
     //     startingBalance.current[TOKEN.ETH] -= safeBigInt(1e14);
     //     setDebug(1);
     //   }, 5000);
     // }
     if (waiting && !!wallet) {
-      if (!startingBalance.current) startingBalance.current = { ...wallet.tokenBalance };
+      if (!startingBalance.current) startingBalance.current = { ...wallet.tokenBalances };
       const i = setInterval(() => {
         refetchBalances();
         // if (debug === 1) setDebug(2); // TODO: deprecate
@@ -283,10 +340,10 @@ export const FundingFlow = ({ totalPrice, onClose, onFunded }) => {
     // increase in value b/c we don't want a trigger on exchange rate changes)
     if (waiting && startingBalance.current) {
       const increaseToken = Object.keys(startingBalance.current).find((token) => {
-        return (wallet.tokenBalance[token] > startingBalance.current[token])
+        return (wallet.tokenBalances[token] > startingBalance.current[token])
       });
       if (increaseToken) {
-        const increaseAmount = wallet.tokenBalance[increaseToken] - startingBalance.current[increaseToken];
+        const increaseAmount = wallet.tokenBalances[increaseToken] - startingBalance.current[increaseToken];
 
         // alert
         createAlert({
@@ -309,7 +366,7 @@ export const FundingFlow = ({ totalPrice, onClose, onFunded }) => {
         }
       }
     }
-  }, [debug, waiting, wallet?.tokenBalance])
+  }, [debug, waiting, wallet?.tokenBalances])
 
   const [walletBalance, fundsNeeded] = useMemo(
     () => {
@@ -348,9 +405,45 @@ export const FundingFlow = ({ totalPrice, onClose, onFunded }) => {
     }
   }, []);
 
+  const [rampPurchase, setRampPurchase] = useState();
+  const checkRampPurchase = useCallback(async (purchase) => {
+    try {
+      const response = await fetch(
+        `https://api.${RAMP_PREPEND}ramp.network/api/host-api/purchase/${purchase.id}?secret=${purchase.purchaseViewToken}`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          }
+        }
+      );
+      if (response.ok) {
+        const updatePurchaseObject = await response.json();
+        setRampPurchase(updatePurchaseObject);
+
+        // stop checking if terminal status
+        const status = RAMP_PURCHASE_STATUS[updatePurchaseObject.status];
+        if (status.isError || status.isSuccess) {
+          return;
+        }
+      } else {
+        console.error('Response not ok:', response);
+      }
+    } catch (error) {
+      console.error('Error fetching purchase info:', error);
+    }
+  }, []);
+  useEffect(() => {
+    if (rampPurchase) {
+      const i = setInterval(() => { checkRampPurchase(rampPurchase); }, 5000);
+      return () => clearInterval(i);
+    }
+  }, [checkRampPurchase, rampPurchase])
+  
   const onClickCC = useCallback((amount) => () => {
     fireTrackingEvent('funding_start', { externalId: accountAddress });
     setRamping(true);
+    setRampPurchase();
 
     setTimeout(() => {
       const embeddedRamp = new RampInstantSDK({
@@ -358,21 +451,23 @@ export const FundingFlow = ({ totalPrice, onClose, onFunded }) => {
         hostLogoUrl: window.location.origin + '/maskable-logo-192x192.png',
         hostApiKey: process.env.REACT_APP_RAMP_API_KEY,
         userAddress: accountAddress,
-        swapAsset: 'STARKNET_ETH',  // TODO: STARKNET_USDC?
+        swapAsset: 'STARKNET_ETH',  // TODO: STARKNET_USDC once enabled
         fiatCurrency: 'USD',
         fiatValue: Math.ceil(amount / 1e6),
-        url: process.env.NODE_ENV === 'production' ? undefined : 'https://app.demo.ramp.network',
+        url: process.env.NODE_ENV === 'production' ? undefined : `https://app.${RAMP_PREPEND}ramp.network`,
 
         variant: 'embedded-desktop',
         containerNode: document.getElementById('ramp-container')
       })
-      embeddedRamp.show();
-      embeddedRamp.on('PURCHASE_CREATED', () => {
-        setTimeout(() => {
-          setRamping(false);
-          setWaiting(true);
-        }, 5000);
+      embeddedRamp.on('PURCHASE_CREATED', (e) => {
+        console.log('PURCHASE_CREATED', e);
+        try {
+          setRampPurchase(e.payload.purchase);
+        } catch (e) {
+          console.warn('purchase_created event missing payload!', e);
+        }
       });
+      embeddedRamp.show();
     }, 100);
   }, [accountAddress]);
 
@@ -390,7 +485,7 @@ export const FundingFlow = ({ totalPrice, onClose, onFunded }) => {
         new URLSearchParams({
           clientId: process.env.REACT_APP_LAYERSWAP_CLIENT_ID,
           amount,
-          to: layerSwapChains[chainId]?.starknet,
+          to: layerSwapChains[resolveChainId(chainId)]?.starknet,
           toAsset: 'USDC',
           destAddress: accountAddress,
           lockTo: true,
@@ -418,6 +513,42 @@ export const FundingFlow = ({ totalPrice, onClose, onFunded }) => {
     });
     onClose();
   }, [onClose]);
+
+  useEffect(() => {
+    // error: clear ramp purchase + close funding dialog
+    if (RAMP_PURCHASE_STATUS[rampPurchase?.status]?.isError) {
+      // fire error
+      fireTrackingEvent('funding_error', { externalId: accountAddress, status: rampPurchase?.status });
+
+      // alert user
+      createAlert({
+        type: 'GenericAlert',
+        data: { content: <>RAMP PAYMENT ERROR: "{RAMP_PURCHASE_STATUS[rampPurchase?.status].statusText}"<br/><br/>Click for more information.</> },
+        level: 'warning',
+      });
+
+      // clear purchase
+      setRampPurchase();
+      onClose();
+
+    // success: clear ramp purchase (don't close funding, let "waiting" handler do that)
+    } else if (RAMP_PURCHASE_STATUS[rampPurchase?.status]?.isSuccess) {
+      // fire success
+      fireTrackingEvent('funding_success', { externalId: accountAddress });
+
+      // clear purchase
+      setRampPurchase();
+      setRamping(); // (this should be redundant)
+      setWaiting(true);
+
+    // processing: switch from ramp widget to "waiting" once PAYMENT_EXECUTED
+    } else if (rampPurchase?.status === 'PAYMENT_EXECUTED') {
+      fireTrackingEvent('funding_payment_executed', { externalId: accountAddress });
+      setRamping();
+      setWaiting(true);
+    }
+  }, [rampPurchase?.status])
+  
 
   return createPortal(
     (
@@ -556,7 +687,12 @@ export const FundingFlow = ({ totalPrice, onClose, onFunded }) => {
               <GiantIcon>
                 <WalletIcon />
               </GiantIcon>
-              <h4>Waiting for funds to be received...</h4>
+              <h4>
+                {rampPurchase && !RAMP_PURCHASE_STATUS[rampPurchase.status].isSuccess
+                  ? RAMP_PURCHASE_STATUS[rampPurchase.status].statusText
+                  : `Waiting for funds to be received...`
+                }
+              </h4>
               <small>(this may take several moments)</small>
               <Button size="small" onClick={() => setWaiting(false)}>
                 <CloseIcon /> <span>Cancel</span>

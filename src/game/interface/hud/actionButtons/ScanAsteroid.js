@@ -40,7 +40,7 @@ const ScanAsteroid = ({ asteroid, _disabled }) => {
     }
     else if (scanStatus === 'UNSCANNED' && !crew?._ready) {
       flags.disabled = true;
-      disabledReason = 'crew is busy';
+      disabledReason = 'crew busy';
     }
 
     switch (scanStatus) {

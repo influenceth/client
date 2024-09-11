@@ -19,7 +19,7 @@ import useFaucetInfo from '~/hooks/useFaucetInfo';
 import { cleanseTxHash, fireTrackingEvent, nativeBool, reactBool, roundToPlaces, safeBigInt } from '~/lib/utils';
 import theme from '~/theme';
 import Button from '~/components/ButtonAlt';
-import useWalletBalances from '~/hooks/useWalletBalances';
+import useWalletPurchasableBalances from '~/hooks/useWalletPurchasableBalances';
 import useCrewManager from '~/hooks/actionManagers/useCrewManager';
 import usePriceConstants from '~/hooks/usePriceConstants';
 import { TOKEN, TOKEN_FORMAT, TOKEN_SCALE, asteroidPriceToLots } from '~/lib/priceUtils';
@@ -31,7 +31,8 @@ import ChainTransactionContext from '~/contexts/ChainTransactionContext';
 import useSwapHelper from '~/hooks/useSwapHelper';
 import useCrewContext from '~/hooks/useCrewContext';
 import FundingFlow from './FundingFlow';
-import { AdvancedStarterPack, BasicStarterPack, useStarterPacks } from './StarterPack';
+import { AdvancedStarterPack, BasicStarterPack, IntroStarterPack, useStarterPacks } from './StarterPack';
+import PurchaseButtonInner from '~/components/PurchaseButtonInner';
 
 const Flourish = styled.div`
   background: url(${p => p.src});
@@ -40,6 +41,12 @@ const Flourish = styled.div`
   background-size: contain;
   height: 100%;
   width: 100%;
+`;
+
+const PrelabelNote = styled.div`
+  font-size: 14px;
+  opacity: 0.6;
+  padding-left: 25px;
 `;
 
 const Wrapper = styled.div`
@@ -62,9 +69,34 @@ const Description = styled.div`
   }
 `;
 
-const purchasePacksPadding = 15;
 export const purchaseFormMargin = 15;
 const purchaseFormWidth = 290;
+
+const StarterPacksOuter = styled.div`
+  display: flex;
+  flex-direction: row;
+  height: 375px;
+  margin-top: -210px;
+  width: 100%;
+  & > div {
+    flex: 1;
+  }
+`;
+
+const gradientOpacity = 0.9;
+const purchaseFormColors = {
+  green: theme.colors.glowGreen,
+  orange: theme.colors.lightOrange,
+  purple: theme.colors.txButton,
+  main: theme.colors.main,
+  gradient: {
+    green: `rgba(8, 94, 55, ${gradientOpacity})`,
+    orange: `rgba(63, 49, 27, ${gradientOpacity})`,
+    purple: `rgba(35, 34, 67, ${gradientOpacity})`,
+    main: `rgba(21, 51, 71, ${gradientOpacity})`,
+  }
+};
+
 export const PurchaseForm = styled.div`
   ${p => p.asButton && `
     outline: 1px solid #333;
@@ -74,9 +106,7 @@ export const PurchaseForm = styled.div`
     transition: opacity 150ms ease, outline 150ms linear;
     &:hover {
       opacity: 1;
-      outline-color: ${p.isOrange
-      ? p.theme.colors.inFlight
-      : (p.isPurple ? p.theme.colors.txButton : p.theme.colors.main)};;
+      outline-color: ${purchaseFormColors[p.color || 'main']};
       outline-width: 4px;
     }
   `}
@@ -84,24 +114,28 @@ export const PurchaseForm = styled.div`
   align-self: stretch;
   background: linear-gradient(
     to bottom,
-    ${p => p.isOrange
-        ? 'rgba(127, 98, 54, 0.7)'
-        : (p.isPurple ? 'rgba(70, 68, 134, 0.7)' : 'rgba(48, 88, 114, 0.7)')
-    },
+    ${p => purchaseFormColors.gradient[p.color || 'main']},
     transparent
   );
+  color: white;
   display: flex;
   flex-direction: column;
   flex: 0 0 ${purchaseFormWidth}px;
   padding: 5px;
+  position: relative;
+  & > h2 {
+    background: rgba(${p => p.theme.hexToRGB(purchaseFormColors[p.color || 'main'])}, 0.6);
+    font-size: 18px;
+    font-weight: normal;
+    margin: 0;
+    padding: 12px 10px;
+    position: relative;
+    text-align: center;
+    text-transform: uppercase;
+  }
   & > h3 {
     align-items: center;
-    background: rgba(
-      ${p => p.isOrange
-      ? p.theme.hexToRGB(p.theme.colors.inFlight)
-      : (p.isPurple ? p.theme.hexToRGB(p.theme.colors.txButton) : p.theme.colors.mainRGB)},
-      0.5
-    );
+    background: rgba(${p => p.theme.hexToRGB(purchaseFormColors[p.color || 'main'])}, 0.5);
     display: flex;
     font-size: 16px;
     justify-content: space-between;
@@ -188,7 +222,7 @@ const AsteroidAd = styled.div`
     flex: 0 0 calc(100% - 18px);
     font-size: 14px;
     opacity: 0.7;
-    padding-left: 12px;
+    padding-left: 10px;
   }
 `;
 const AsteroidButtonInner = styled.div`
@@ -212,24 +246,6 @@ const AsteroidsRemaining = styled.div`
     font-size: 15px;
     opacity: 0.5;
   }
-`;
-
-export const PurchaseButtonInner = styled.div`
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  width: 100%;
-  & > span {
-    color: white;
-  }
-`;
-
-export const PurchaseButton = styled(Button)`
-  ${p => p.disabled && `
-    ${PurchaseButtonInner} > span {
-      opacity: 0.5;
-    }
-  `}
 `;
 
 const FilterAsteroidButton = ({ price, sizeFilter }) => {
@@ -280,7 +296,7 @@ const AsteroidSKU = () => {
   return (
     <div>
       <Description>
-        <p style={{ borderBottom: '1px solid #333', fontWeight: 'bold', padding: '5px 0 18px' }}>
+        <p style={{ borderBottom: '1px solid #333', padding: '5px 0 18px' }}>
           Asteroids are the core productive land in Influence. There are 250,000 in total, and more
           will never be added. Owners hold the rights to all mining and land-use on their asteroid,
           and may share or contract those rights to others. Each asteroid has unique orbital
@@ -302,7 +318,7 @@ const AsteroidSKU = () => {
           </div>
         </PurchaseForm>
 
-        <PurchaseForm isPurple>
+        <PurchaseForm color="purple">
           <h3>Medium Asteroids</h3>
           <div>
             <AsteroidAd>
@@ -315,7 +331,7 @@ const AsteroidSKU = () => {
           </div>
         </PurchaseForm>
 
-        <PurchaseForm isOrange>
+        <PurchaseForm color="orange">
           <h3>Large Asteroids</h3>
           <div>
             <AsteroidAd>
@@ -412,19 +428,13 @@ const CrewmateSKU = ({ onUpdatePurchase, onPurchasing }) => {
 const StarterPackSKU = () => {
   return (
     <Wrapper>
-      <Description>
-        <p>
-          Starter Packs come with crewmates and SWAY.
-        </p>
-        <p>
-          Note: Some components of a starter pack are purchased on a decentralized exchange, so their quantities may vary somewhat depending on the price of those assets.
-        </p>
-      </Description>
-
-      <div style={{ display: 'flex', flex: `0 0 ${2 * purchaseFormWidth + purchaseFormMargin}px`, height: 352, marginTop: -175 }}>
-        <BasicStarterPack noButton style={{ marginRight: purchaseFormMargin }} />
-        <AdvancedStarterPack noButton />
-      </div>
+      <StarterPacksOuter>
+        <IntroStarterPack />
+        <span style={{ width: purchaseFormMargin }} />
+        <BasicStarterPack style={{ position: 'relative', top: -32 }} />
+        <span style={{ width: purchaseFormMargin }} />
+        <AdvancedStarterPack />
+      </StarterPacksOuter>
     </Wrapper>
   );
 };
@@ -435,7 +445,7 @@ const SwaySKU = ({ onUpdatePurchase, onPurchasing }) => {
   const { buildMultiswapFromSellAmount } = useSwapHelper();
   const queryClient = useQueryClient();
   const { accountAddress, provider } = useSession();
-  const { data: wallet } = useWalletBalances();
+  const { data: wallet } = useWalletPurchasableBalances();
 
   const createAlert = useStore(s => s.dispatchAlertLogged);
   const preferredUiCurrency = useStore(s => s.getPreferredUiCurrency());
@@ -515,12 +525,13 @@ const SwaySKU = ({ onUpdatePurchase, onPurchasing }) => {
 
           } catch (e) {
             console.error(e);
-            createAlert({
-              type: 'GenericAlert',
-              data: { content: `SWAY swap failed: "${e?.message || e || 'Unknown error.'}"` },
-              level: 'warning',
-              duration: 5000
-            });
+            // (now should be handled in ChainTransactionContext)
+            // createAlert({
+            //   type: 'GenericAlert',
+            //   data: { content: `SWAY swap failed: "${e?.message || e || 'Unknown error.'}"` },
+            //   level: 'warning',
+            //   duration: 5000
+            // });
           }
           setIsProcessing(false);
         }
@@ -662,7 +673,7 @@ const SwayFaucetButton = () => {
   }, [accountAddress, login, provider]);
 
   return (
-    <PurchaseButton
+    <Button
       color={theme.colors.success}
       contrastColor={theme.colors.disabledBackground}
       background={`rgba(${theme.colors.successRGB}, 0.1)`}
@@ -676,7 +687,7 @@ const SwayFaucetButton = () => {
           +<SwayIcon />{Number(400000).toLocaleString()}
         </span>
       </PurchaseButtonInner>
-    </PurchaseButton>
+    </Button>
   );
 }
 
@@ -687,17 +698,13 @@ const SKU = ({ asset, onBack }) => {
   const { pendingTransactions, isLaunched } = useCrewContext();
   const priceHelper = usePriceHelper();
   const packs = useStarterPacks();
-  const { data: wallet } = useWalletBalances();
+  const { data: wallet } = useWalletPurchasableBalances();
 
   const preferredUiCurrency = useStore(s => s.getPreferredUiCurrency());
 
   const [purchase, setPurchase] = useState();
   const [fundingPurchase, setFundingPurchase] = useState();
   const [isPurchasing, setIsPurchasing] = useState();
-
-  const isPurchasingStarterPack = useMemo(() => {
-    return isPurchasing || (pendingTransactions || []).find(tx => tx.key === 'PurchaseStarterPack');
-  }, [pendingTransactions]);
 
   const handlePurchase = useCallback((overridePurchase) => {
     if (!accountAddress) return login();
@@ -711,17 +718,6 @@ const SKU = ({ asset, onBack }) => {
       setFundingPurchase(purch);
     }
   }, [accountAddress, login, purchase, wallet]);
-
-  const onPurchaseStarterPack = useCallback((which) => {
-    const pack = packs[which];
-    const onIsPurchasing = (which) => setIsPurchasing(which);
-    const packPurchase = {
-      totalPrice: pack.price,
-      onPurchase: () => pack.onPurchase(onIsPurchasing)
-    };
-    setPurchase(packPurchase);
-    handlePurchase(packPurchase);
-  }, [handlePurchase, packs]);
 
   const [asteroidsRemaining, nextAsteroidSale] = useMemo(() => {
     if (!asteroidSale) return [0, 0, false];
@@ -777,48 +773,23 @@ const SKU = ({ asset, onBack }) => {
     if (asset === 'packs') {
       return {
         coverImage: StarterPackHeroImage,
-        title: <>Buy Starter<br/>Packs</>,
+        title: <>Buy Starter Packs</>,
         styleOverrides: {
           ...defaultStyleOverrides,
-          aboveFold: { height: 160, marginTop: -175 },
-          belowFold: { padding: '10px 0 20px 0' },
+          aboveFold: { position: 'absolute', top: 24, marginTop: 0, left: 0, right: 0 },
+          // belowFold: { padding: '10px 0 20px 0' },
           body: { overflow: 'visible', paddingLeft: '35px' },
-          rule: { width: 308 }
         },
         content: <StarterPackSKU />,
         flourishWidth: 1,
         rightButton: {
-          label: (
-            <PurchaseButtonInner>
-              <label>Purchase Pack</label>
-              <span>
-                {packs.advanced.price.to(TOKEN.USDC, TOKEN_FORMAT.SHORT)}
-              </span>
-            </PurchaseButtonInner>
-          ),
-          onClick: () => onPurchaseStarterPack('advanced'),
-          props: {
-            loading: isPurchasingStarterPack,
-            disabled: isPurchasingStarterPack || !isLaunched,
-            isTransaction: true,
-            style: { margin: `0 ${purchasePacksPadding}px` },
-            width: purchaseFormWidth - 2 * purchasePacksPadding
-          },
+          label: null,
           preLabel: (
-            <Button
-              disabled={nativeBool(isPurchasingStarterPack || !isLaunched)}
-              loading={reactBool(isPurchasingStarterPack)}
-              isTransaction
-              onClick={() => onPurchaseStarterPack('basic')}
-              style={{ marginRight: purchaseFormMargin + purchasePacksPadding }}
-              width={purchaseFormWidth - 2 * purchasePacksPadding}>
-              <PurchaseButtonInner>
-                <label>Purchase Pack</label>
-                <span>
-                  {packs.basic.price.to(TOKEN.USDC, TOKEN_FORMAT.SHORT)}
-                </span>
-              </PurchaseButtonInner>
-            </Button>
+            <PrelabelNote>
+              Note: Starter Packs come with crewmates and SWAY. Some components of a starter pack 
+              are purchased on a decentralized exchange, so their quantities may vary somewhat 
+              depending on the price of those assets.
+            </PrelabelNote>
           )
         }
       };
@@ -849,7 +820,7 @@ const SKU = ({ asset, onBack }) => {
       preLabel: process.env.REACT_APP_CHAIN_ID === '0x534e5f5345504f4c4941' && <SwayFaucetButton />
     };
     return params;
-  }, [asset, isLaunched, isPurchasing, purchase?.totalPrice]);
+  }, [asset, isLaunched, isPurchasing, packs, preferredUiCurrency, purchase?.totalPrice]);
 
   return (
     <>

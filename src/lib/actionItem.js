@@ -45,6 +45,7 @@ import {
   EditIcon,
   CheckCircleIcon,
   StarIcon,
+  JettisonCargoIcon,
 } from '~/components/Icons';
 import formatters from '~/lib/formatters';
 import { getProcessorProps, locationsArrToObj, ucfirst } from '~/lib/utils';
@@ -358,7 +359,7 @@ const formatAsTx = (item) => {
       formatted.icon = <MarketSellIcon />;
       formatted.label = item.meta?.isCancellation ? 'Cancel Buy Order' : 'Market Sell';
       formatted.asteroidId = asteroidId;
-      formatted.lotId = item.meta?.lotId;
+      formatted.lotId = item.meta?.lotId || item.meta.originLotId;
       formatted.locationDetail = Product.TYPES[item.vars[0].product]?.name;
       formatted.onClick = ({ openDialog }) => {
         if (item.meta?.isCancellation) {
@@ -377,7 +378,7 @@ const formatAsTx = (item) => {
               storageSlot: item.vars[0].origin_slot
             }
           });
-        } else {
+        } else if (item.meta?.lotId) {
           openDialog('MARKETPLACE_ORDER', {
             asteroidId,
             lotId: item.meta?.lotId,
@@ -390,6 +391,9 @@ const formatAsTx = (item) => {
               storageSlot: item.vars[0].originSlot
             }
           });
+        } else {
+          // just passed originLotId, which indicates it was a multisell and panned to the origin
+          // (instead of the exchange, as it would do for a typical sell)
         }
       };
       break;
@@ -450,7 +454,8 @@ const formatAsTx = (item) => {
       break;
     }
 
-    case 'ResupplyFood': {
+    case 'ResupplyFood':
+    case 'ResupplyFoodFromExchange': {
       formatted.icon = <FoodIcon />;
       formatted.label = `Resupply Food`;
       formatted.onClick = ({ openDialog }) => {
@@ -541,6 +546,7 @@ const formatAsTx = (item) => {
       break;
     }
 
+    case 'LeaseAndAssembleShipStart': 
     case 'AssembleShipStart': {
       formatted.icon = <ShipIcon />;
       formatted.label = `Assemble ${Ship.TYPES[item.vars.ship_type]?.name || 'Ship'}`;
@@ -613,6 +619,16 @@ const formatAsTx = (item) => {
       };
       break;
     }
+    case 'DumpDelivery': {
+      formatted.icon = <JettisonCargoIcon />;
+      formatted.label = 'Jettison Cargo';
+      formatted.asteroidId = item.meta?.asteroidId;
+      formatted.lotId = item.meta?.lotId;
+      formatted.onClick = ({ openDialog }) => {
+        openDialog('JETTISON_CARGO', { origin: item.vars.origin });
+      };
+      break;
+    }
 
     case 'ConstructionPlan': {
       formatted.icon = <PlanBuildingIcon />;
@@ -667,7 +683,7 @@ const formatAsTx = (item) => {
       break;
     }
 
-    case 'PurchaseDepositAndExtractResource':
+    case 'FlexibleExtractResourceStart':
     case 'ExtractResourceStart': {
       formatted.icon = <ExtractionIcon />;
       formatted.label = `${Product.TYPES[item.meta?.resourceId]?.name || 'Resource'} Extraction`;
@@ -692,6 +708,7 @@ const formatAsTx = (item) => {
       break;
     }
 
+    case 'LeaseAndProcessProductsStart':
     case 'ProcessProductsStart': {
       const process = Process.TYPES[item.vars?.process];
       const processorProps = getProcessorProps(process?.processorType);
@@ -946,7 +963,7 @@ const formatAsTx = (item) => {
     case 'RepossessBuilding': {
       const { asteroidId } = Lot.toPosition(item.meta?.lotId) || {};
       formatted.icon = <KeysIcon />;
-      formatted.label = `Repossess Lot`;
+      formatted.label = `Repossess Building`;
       formatted.asteroidId = asteroidId;
       formatted.lotId = item.meta?.lotId;
       formatted.onClick = ({ openDialog }) => {
@@ -1038,7 +1055,7 @@ export const itemColors = {
   randomEvent: '232, 211, 117',
   ready: hexToRGB('#00fff0'),
   unready: theme.colors.brightMainRGB,
-  unstarted: hexToRGB(theme.colors.sequence),
+  unstarted: hexToRGB(theme.colors.sequenceLight),
   plan: hexToRGB(theme.colors.lightOrange),
   agreement: hexToRGB(theme.colors.orange),
   _expired: hexToRGB(theme.colors.red)

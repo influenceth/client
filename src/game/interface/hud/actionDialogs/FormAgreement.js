@@ -4,10 +4,10 @@ import styled from 'styled-components';
 import Clipboard from 'react-clipboard.js';
 import numeral from 'numeral';
 
-import { CheckIcon, CloseIcon, ExtendAgreementIcon, FormAgreementIcon, FormLotAgreementIcon, GiveNoticeIcon, LinkIcon, CancelAgreementIcon, LotControlIcon, PermissionIcon, RefreshIcon, SwayIcon } from '~/components/Icons';
+import { CheckIcon, CloseIcon, ExtendAgreementIcon, FormAgreementIcon, FormLotAgreementIcon, GiveNoticeIcon, LinkIcon, CancelAgreementIcon, LotControlIcon, PermissionIcon, RefreshIcon, SwayIcon, WarningOutlineIcon, WarningIcon } from '~/components/Icons';
 import useCrewContext from '~/hooks/useCrewContext';
 import useStore from '~/hooks/useStore';
-import { daysToSeconds, reactBool, locationsArrToObj, formatFixed, monthsToSeconds, secondsToMonths, nativeBool, secondsToDays, safeBigInt } from '~/lib/utils';
+import { daysToSeconds, reactBool, locationsArrToObj, formatFixed, monthsToSeconds, secondsToMonths, nativeBool, secondsToDays, safeBigInt, formatTimer } from '~/lib/utils';
 import {
   ActionDialogFooter,
   ActionDialogHeader,
@@ -36,6 +36,7 @@ import Button from '~/components/ButtonAlt';
 import useBlockTime from '~/hooks/useBlockTime';
 import useLot from '~/hooks/useLot';
 import useAsteroid from '~/hooks/useAsteroid';
+import { TOKEN, TOKEN_SCALE } from '~/lib/priceUtils';
 
 const FormSection = styled.div`
   margin-top: 12px;
@@ -276,7 +277,7 @@ const FormAgreement = ({
     const recipient = controller?.Crew?.delegatedTo;
     // TODO: should these conversions be in useAgreementManager?
     const term = daysToSeconds(initialPeriod);
-    const termPrice = Math.ceil(totalLeaseCost * 1e6);
+    const termPrice = Math.ceil(totalLeaseCost * TOKEN_SCALE[TOKEN.SWAY]);
     enterAgreement({ recipient, term, termPrice });
   }, [controller?.Crew?.delegatedTo, enterAgreement, initialPeriod, totalLeaseCost]);
 
@@ -284,14 +285,14 @@ const FormAgreement = ({
     const recipient = controller?.Crew?.delegatedTo;
     // TODO: should these conversions be in useAgreementManager?
     const term = Math.round(daysToSeconds(initialPeriod));
-    const termPrice = Math.round(totalLeaseCost * 1e6);
+    const termPrice = Math.round(totalLeaseCost * TOKEN_SCALE[TOKEN.SWAY]);
     extendAgreement({ recipient, term, termPrice });
   }, [controller?.Crew?.delegatedTo, extendAgreement, initialPeriod, totalLeaseCost]);
 
   const onTerminateAgreement = useCallback(() => {
     cancelAgreement({
       recipient: permitted?.Crew?.delegatedTo,
-      refundAmount: Math.ceil(refundableAmount * 1e6)
+      refundAmount: Math.ceil(refundableAmount * TOKEN_SCALE[TOKEN.SWAY])
     })
   }, [cancelAgreement, permitted, refundableAmount]);
 
@@ -556,10 +557,22 @@ const FormAgreement = ({
                 )}
 
             </Alert>
-
           </FlexSectionInputBlock>
-
         </FlexSection>
+
+        {crew?.id === permitted?.id && currentAgreement?.rate > 0 && !isExtension && remainingPeriod > 0 && (
+          <FlexSection style={{ alignItems: 'center', color: theme.colors.error, justifyContent: 'center' }}>
+            <span style={{ fontSize: '28px', textAlign: 'center', width: 60 }}><WarningIcon /></span>
+            <span style={{ flex: '1 0 calc(100% - 60px)', fontSize: '90%' }}>
+              My crew has an existing pre-paid agreement here with <b>{formatTimer(remainingPeriod, 2).toUpperCase()}</b> remaining.
+              This new agreement will replace the previous and go into effect immediately without refund, credit, or delay.
+            {/* 
+              Crew has an existing agreement. Forming a new agreement will replace the existing one.
+              There will be no credit or refund for the {formatTimer(remainingPeriod, 2)} that
+              remains of your original pre-paid term.*/}
+            </span>
+          </FlexSection>
+        )}
 
         <ActionDialogStats
           stage={stage}

@@ -331,7 +331,7 @@ export const BuildingBlock = ({ building, onSelectCrew, selectedCrew, setRef }) 
 
   const [progress, progressColor] = useMemo(() => {
     if (building?.Building?.status === Building.CONSTRUCTION_STATUSES.OPERATIONAL) {
-      if (building?.Building?.buildingCategory === Building.CATEGORIES.STORAGE) {
+      if (Building.TYPES[building?.Building?.buildingType]?.category === Building.CATEGORIES.STORAGE) {
         const inventory = (building.Inventories || []).find((i) => i.status === Inventory.STATUSES.AVAILABLE);
         const filledCapacity = Inventory.getFilledCapacity(inventory?.inventoryType, selectedCrew?._inventoryBonuses);
         const usage = inventory

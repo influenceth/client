@@ -1,14 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTexture } from '@react-three/drei';
 import { AdditiveBlending, Color, DoubleSide, Vector2 } from 'three';
+import { useFrame } from '@react-three/fiber';
 
-import frag from './marker/marker.frag';
-import vert from './marker/marker.vert';
+import useTravelSolutionIsValid from '~/hooks/useTravelSolutionIsValid';
 import constants from '~/lib/constants';
 import theme from '~/theme';
+import frag from './marker/marker.frag';
+import vert from './marker/marker.vert';
 import orbitColors from './orbit/orbitColors';
-import { useFrame } from '@react-three/fiber';
-import useTravelSolutionIsValid from '~/hooks/useTravelSolutionIsValid';
 
 const markerMaxRadius = constants.AU / 50;
 const initialUniforms = {

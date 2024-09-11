@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQueryClient } from 'react-query';
-import { Entity, Lot } from '@influenceth/sdk';
+import { Building, Entity, Lot } from '@influenceth/sdk';
 
 import { options as lotLeaseOptions } from '~/components/filters/LotLeaseFilter';
 import useAsteroidCrewBuildings from '~/hooks/useAsteroidCrewBuildings';
@@ -175,7 +175,7 @@ const useMappedAsteroidLots = (i) => {
   const processEvent = useCallback(async (eventType, body) => {
     console.log('processEvent', eventType, body);
 
-    let asteroidId, lotIndex, buildingType;
+    let asteroidId, lotIndex, buildingCategory;
 
     // TODO: the above does not block prepopping of other activities, so any
     // getAndCacheEntity may result in double-fetches on invalidation via this event
@@ -184,23 +184,23 @@ const useMappedAsteroidLots = (i) => {
     if (eventType === 'ConstructionPlanned') {
       asteroidId = body.event.returnValues.asteroid.id;
       lotIndex = Lot.toIndex(body.event.returnValues.lot.id);
-      buildingType = 14;
+      buildingCategory = 14;
 
-    // construction site -> building (14 -> buildingType)
+    // construction site -> building (14 -> buildingCategory)
     } else if (eventType === 'ConstructionFinished') {
       const building = await getAndCacheEntity(body.event.returnValues.building, queryClient);
       const _location = locationsArrToObj(building?.Location?.locations || []);
       asteroidId = _location.asteroidId;
       lotIndex = _location.lotIndex;
-      buildingType = building?.Building?.buildingType; // TODO: should we cast this?
+      buildingCategory = Building.TYPES[building?.Building?.buildingType]?.category; // TODO: should we cast this?
 
-    // building -> construction site (buildingType -> 14)
+    // building -> construction site (buildingCategory -> 14)
     } else if (eventType === 'ConstructionDeconstructed') {
       const building = await getAndCacheEntity(body.event.returnValues.building, queryClient);
       const _location = locationsArrToObj(building?.Location?.locations || []);
       asteroidId = _location.asteroidId;
       lotIndex = _location.lotIndex;
-      buildingType = 14;
+      buildingCategory = 14;
 
     // construction site abandoned (14 -> 0)
     } else if (eventType === 'ConstructionAbandoned') {
@@ -208,7 +208,7 @@ const useMappedAsteroidLots = (i) => {
       const _location = locationsArrToObj(building?.Location?.locations || []);
       asteroidId = _location.asteroidId;
       lotIndex = _location.lotIndex;
-      buildingType = 0;
+      buildingCategory = 0;
 
     // ship moved to empty lot (0 -> 15)
     } else if (eventType === 'ShipDocked' || eventType === 'ShipAssemblyFinished') {
@@ -217,7 +217,7 @@ const useMappedAsteroidLots = (i) => {
         const position = Lot.toPosition(entityId);
         asteroidId = position.asteroidId;
         lotIndex = position.lotIndex;
-        buildingType = 15;
+        buildingCategory = 15;
       }
 
     // ship undocked from empty lot (15 -> 0)
@@ -226,18 +226,18 @@ const useMappedAsteroidLots = (i) => {
         const position = Lot.toPosition(body.event.returnValues.dock);
         asteroidId = position.asteroidId;
         lotIndex = position.lotIndex;
-        buildingType = 0;
+        buildingCategory = 0;
       }
     }
 
-    if (asteroidId && lotIndex && buildingType !== undefined) {
+    if (asteroidId && lotIndex && buildingCategory !== undefined) {
       // TODO: these events could/should technically go through the same invalidation process as primary events
       //  (it's just that these events won't match as much data b/c most may not be relevant to my crew)
       queryClient.setQueryData([ 'asteroidPackedLotData', Number(asteroidId) ], (currentLotsValue) => {
         const newLotsValue = currentLotsValue.slice();
         newLotsValue[lotIndex] =
           (newLotsValue[lotIndex] & 0b00001111)  // clear existing building
-          | buildingType << 4                    // set to new buildingType
+          | buildingCategory << 4                // set to new buildingCategory
         return newLotsValue;
       });
     }

@@ -3,11 +3,24 @@ import styled from 'styled-components';
 import { Asteroid, Crewmate, Deposit, Extractor, Inventory, Lot, Permission, Product, Time } from '@influenceth/sdk';
 import cloneDeep from 'lodash/cloneDeep';
 
-import { CoreSampleIcon, ExtractionIcon, InventoryIcon, LocationIcon, ResourceIcon, SwayIcon, WarningIcon } from '~/components/Icons';
+import { CrewCaptainCardFramed } from '~/components/CrewmateCardFramed';
+import { AgreementIcon, CoreSampleIcon, ExtractionIcon, InfoIcon, InventoryIcon, LocationIcon, ResourceIcon, SwayIcon, SwayMonochromeIcon, WarningIcon } from '~/components/Icons';
+import PurchaseButtonInner from '~/components/PurchaseButtonInner';
+import ResourceThumbnail from '~/components/ResourceThumbnail';
+import useActionCrew from '~/hooks/useActionCrew';
+import useBlockTime from '~/hooks/useBlockTime';
 import useCrewContext from '~/hooks/useCrewContext';
+import useEntity from '~/hooks/useEntity';
 import useExtractionManager from '~/hooks/actionManagers/useExtractionManager';
-import { reactBool, formatTimer, locationsArrToObj, getCrewAbilityBonuses, formatFixed, formatPrice, keyify } from '~/lib/utils';
-
+import useCrew from '~/hooks/useCrew';
+import useLot from '~/hooks/useLot';
+import useStore from '~/hooks/useStore';
+import actionStage from '~/lib/actionStages';
+import formatters from '~/lib/formatters';
+import { TOKEN, TOKEN_SCALE } from '~/lib/priceUtils';
+import { reactBool, formatTimer, locationsArrToObj, getCrewAbilityBonuses, formatFixed, keyify, getProcessorLeaseConfig, getProcessorLeaseSelections } from '~/lib/utils';
+import theme from '~/theme';
+import { ActionDialogInner, theming, useAsteroidAndLot } from '../ActionDialog';
 import {
   ResourceAmountSlider,
   ActionDialogFooter,
@@ -33,38 +46,12 @@ import {
   InventorySelectionDialog,
   InventoryInputBlock,
   TransferDistanceDetails,
-  getTripDetails
+  getTripDetails,
+  BuildingInputBlock,
+  LeaseTooltip,
+  LeaseDetailsLabel,
+  LeaseInfoIcon
 } from './components';
-import useLot from '~/hooks/useLot';
-import useStore from '~/hooks/useStore';
-import { ActionDialogInner, theming, useAsteroidAndLot } from '../ActionDialog';
-import ResourceThumbnail from '~/components/ResourceThumbnail';
-import actionStage from '~/lib/actionStages';
-import useEntity from '~/hooks/useEntity';
-import formatters from '~/lib/formatters';
-import useActionCrew from '~/hooks/useActionCrew';
-import { TextInputWrapper } from '~/components/TextInputUncontrolled';
-import CrewIndicator from '~/components/CrewIndicator';
-import useCrew from '~/hooks/useCrew';
-import theme from '~/theme';
-
-const InputLabel = styled.div`
-  align-items: center;
-  color: #888;
-  display: flex;
-  flex-direction: row;
-  font-size: 14px;
-  margin-bottom: 3px;
-  & > label {
-    flex: 1;
-  }
-  & > span {
-    b {
-      color: white;
-      font-weight: normal;
-    }
-  }
-`;
 
 const SampleAmount = styled.span`
   & > span {
@@ -81,7 +68,6 @@ const Warning = styled.div`
   display: flex;
   flex-direction: row;
   font-size: 13px;
-  margin-top: 8px;
   & > span:first-child {
     margin-right: 8px;
     width: 16px;
@@ -92,12 +78,21 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
   const createAlert = useStore(s => s.dispatchAlertLogged);
   const { currentExtraction, extractionStatus, startExtraction, finishExtraction } = extractionManager;
   const crew = useActionCrew(currentExtraction);
+  const blockTime = useBlockTime();
   const { crewCan } = useCrewContext();
 
   const [amount, setAmount] = useState(0);
   const [selectedCoreSample, setSelectedCoreSample] = useState();
   const [sampleSelectorOpen, setSampleSelectorOpen] = useState(false);
   const [destinationSelectorOpen, setDestinationSelectorOpen] = useState(false);
+
+  const { data: buildingOwner } = useCrew(lot?.building?.Control?.controller?.id);
+
+  const isPurchase = useMemo(
+    () => selectedCoreSample && selectedCoreSample?.Control?.controller?.id !== crew?.id,
+    [crew?.id, selectedCoreSample?.Control?.controller?.id]
+  );
+  const { data: depositOwner } = useCrew(isPurchase ? selectedCoreSample?.Control?.controller?.id : null);
 
   // get destinationLot and destinationInventory
   const [destinationSelection, setDestinationSelection] = useState();
@@ -127,14 +122,18 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
     const abilities = getCrewAbilityBonuses(bonusIds, crew);
 
     // apply asteroid bonus to extraction time
-    const asteroidBonus = Asteroid.Entity.getBonusByResource(asteroid, selectedCoreSample?.Deposit?.resource);
-    if (asteroidBonus.totalBonus !== 1) {
-      abilities[Crewmate.ABILITY_IDS.EXTRACTION_TIME].totalBonus *= asteroidBonus.totalBonus;
-      abilities[Crewmate.ABILITY_IDS.EXTRACTION_TIME].others = [{
-        text: `${Product.TYPES[selectedCoreSample?.Deposit?.resource].category} Yield Bonus`,
-        bonus: asteroidBonus.totalBonus - 1,
-        direction: 1
-      }];
+    try {
+      const asteroidBonus = Asteroid.Entity.getBonusByResource(asteroid, selectedCoreSample?.Deposit?.resource);
+      if (asteroidBonus.totalBonus !== 1) {
+        abilities[Crewmate.ABILITY_IDS.EXTRACTION_TIME].totalBonus *= asteroidBonus.totalBonus;
+        abilities[Crewmate.ABILITY_IDS.EXTRACTION_TIME].others = [{
+          text: `${Product.TYPES[selectedCoreSample?.Deposit?.resource].category} Yield Bonus`,
+          bonus: asteroidBonus.totalBonus - 1,
+          direction: 1
+        }];
+      }
+    } catch (e) {
+      console.warn(e);
     }
 
     return bonusIds.map((id) => abilities[id] || {});
@@ -293,16 +292,23 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
     },
   ]), [amount, crewTravelBonus, crewTravelTime, extractionBonus, extractionTime, resource, transportDistance, transportTime]);
 
-  const isPurchase = useMemo(
-    () => selectedCoreSample && selectedCoreSample?.Control?.controller?.id !== crew?.id,
-    [crew?.id, selectedCoreSample?.Control?.controller?.id]
-  );
+  const prepaidLeaseConfig = useMemo(() => {
+    return getProcessorLeaseConfig(lot?.building, Permission.IDS.EXTRACT_RESOURCES, crew, blockTime);
+  }, [blockTime, crew, lot?.building]);
 
-  const { data: depositOwner } = useCrew(isPurchase ? selectedCoreSample?.Control?.controller?.id : null);
+  const { leasePayment, desiredLeaseTerm, actualLeaseTerm } = useMemo(() => {
+    return getProcessorLeaseSelections(
+      prepaidLeaseConfig,
+      taskTimeRequirement,
+      crew?.Crew?.readyAt,
+      blockTime
+    );
+  }, [blockTime, crew?.Crew?.readyAt, prepaidLeaseConfig, taskTimeRequirement]);
 
   const onStartExtraction = useCallback(() => {
     if (!(amount && selectedCoreSample && destination && destinationInventory)) return;
     if (isPurchase && !depositOwner) return;
+    if (leasePayment && !buildingOwner?.Crew?.delegatedTo) return;
 
     const inventoryConfig = Inventory.getType(destinationInventory.inventoryType, crew?._inventoryBonuses) || {};
     if (destinationInventory) {
@@ -330,9 +336,26 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
       selectedCoreSample,
       destination,
       destinationInventory.slot,
-      depositOwner,
+      depositOwner?.Crew?.delegatedTo,
+      leasePayment > 0 && {
+        recipient: buildingOwner.Crew.delegatedTo,
+        term: actualLeaseTerm,
+        termPrice: leasePayment,
+      }
     );
-  }, [amount, crew?._inventoryBonuses, depositOwner, selectedCoreSample, destination, destinationInventory, isPurchase, resource]);
+  }, [
+    actualLeaseTerm,
+    amount,
+    buildingOwner,
+    crew?._inventoryBonuses,
+    depositOwner,
+    leasePayment,
+    selectedCoreSample,
+    destination,
+    destinationInventory,
+    isPurchase,
+    resource
+  ]);
 
   // handle auto-closing
   const lastStatus = useRef();
@@ -345,6 +368,67 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
     }
     lastStatus.current = extractionStatus;
   }, [extractionStatus]);
+
+  const [extraDepositProps, extraDepositThumbnailProps] = useMemo(() => {
+    if (isPurchase && stage === actionStage.NOT_STARTED) {
+      return [
+        {
+          addChildren: (
+            <div
+              data-tooltip-place="top"
+              data-tooltip-content={`Deposit Sold by ${depositOwner?.Name?.name || `Crew #${selectedCoreSample?.Control?.controller?.id}`}`}
+              data-tooltip-id="actionDialogTooltip"
+              style={{ position: 'absolute', top: 5, right: 5, zIndex: 1 }}>
+              <CrewCaptainCardFramed
+                borderColor={`rgba(${theme.colors.mainRGB}, 0.5)`}
+                crewId={selectedCoreSample?.Control?.controller?.id}
+                lessPadding
+                noAnimation
+                width={36} />
+            </div>
+          ),
+          tooltip: (
+            <Warning>
+              <span><WarningIcon /></span>
+              <span>
+                You are purchasing rights to an entire deposit and
+                may extract any portion of it now or in the future.
+              </span>
+            </Warning>
+          )
+        },
+        {
+          bottomBanner: <><SwayIcon /> {formatFixed(selectedCoreSample.PrivateSale?.amount / 1e6, 1)}</>,
+          iconBadge: <SwayMonochromeIcon />,
+          iconBadgeCorner: theme.colors.orange
+        }
+      ];
+    }
+    return [{}, {}];
+  }, [depositOwner, selectedCoreSample]);
+
+  const goLabel = useMemo(() => {
+    const paymentTotal = (selectedCoreSample?.PrivateSale?.amount || 0) + (leasePayment || 0);
+    if (paymentTotal) {
+      return (
+        <PurchaseButtonInner>
+          <label>
+            {isPurchase && leasePayment
+              ? `Purchase, Lease, & Extract`
+              : (isPurchase
+                ? `Purchase & Extract`
+                : `Lease & Extract`
+              )
+            }
+          </label>
+          <span style={{ marginLeft: 10 }}>
+            <SwayIcon /> {Math.round(paymentTotal / TOKEN_SCALE[TOKEN.SWAY]).toLocaleString()}
+          </span>
+        </PurchaseButtonInner>
+      );
+    }
+    return `Extract`;
+  }, [isPurchase, leasePayment])
 
   return (
     <>
@@ -373,7 +457,8 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
                     resource={resource}
                     tooltipContainer={null}
                     iconBadge={<CoreSampleIcon />}
-                    iconBadgeCorner={theme.colors.resources[keyify(resource.category)]} />
+                    iconBadgeCorner={theme.colors.resources[keyify(resource.category)]}
+                    {...extraDepositThumbnailProps} />
                 )
                 : <EmptyResourceImage iconOverride={<CoreSampleIcon />} />
             }
@@ -401,7 +486,7 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
                 )
                 : 'Deposit'
             }
-          />
+            {...extraDepositProps} />
 
           <FlexSectionSpacer />
 
@@ -428,35 +513,38 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
 
         </FlexSection>
 
-        {stage === actionStage.NOT_STARTED && isPurchase && (
-          <Section>
-            <SectionTitle>Purchase Deposit</SectionTitle>
-            <SectionBody style={{ alignItems: 'center', paddingTop: 5 }}>
-              <div style={{ flex: 1 }}>
-                <InputLabel>
-                  <label>Price</label>
-                </InputLabel>
-                <TextInputWrapper>
-                  <div style={{ background: '#09191f', color: 'white', fontSize: '26px', padding: '4px 2px', width: '100%' }}>
-                    <SwayIcon />{formatPrice(selectedCoreSample.PrivateSale?.amount / 1e6, { fixedPrecision: 4 })}
-                  </div>
-                </TextInputWrapper>
-                <Warning>
-                  <span><WarningIcon /></span>
-                  <span>
-                    You are purchasing rights to an entire deposit and
-                    may extract any portion of it now or in the future.
-                  </span>
-                </Warning>
-              </div>
+        {prepaidLeaseConfig && stage === actionStage.NOT_STARTED && (
+          <FlexSection>
 
-              <FlexSectionSpacer />
+            <BuildingInputBlock
+              title="Extraction Location"
+              titleDetails={<LeaseDetailsLabel>Lease Required</LeaseDetailsLabel>}
+              bodyStyle={{ background: `rgba(${theme.colors.successDarkRGB}, 0.2)` }}
+              building={lot?.building}
+              imageProps={{
+                bottomBanner: leasePayment > 0 && (
+                  <>
+                    <SwayIcon />
+                    {formatFixed(leasePayment / 1e6, 1)}
+                  </>
+                ),
+                iconBadge: <AgreementIcon />,
+                iconBadgeCorner: theme.colors.successDark
+              }}
+              tooltip={(
+                <LeaseTooltip
+                  desiredTerm={desiredLeaseTerm}
+                  permId={Permission.IDS.EXTRACT_RESOURCES}
+                  {...prepaidLeaseConfig}
+                />
+              )}
+              addChildren={<LeaseInfoIcon />} />
 
-              <div style={{ flex: 1, marginTop: 10 }}>
-                <CrewIndicator crew={selectedCoreSample.Control.controller} label="Deposit Sold by" />
-              </div>
-            </SectionBody>
-          </Section>
+            <FlexSectionSpacer />
+
+            <FlexSectionInputBlock />
+
+          </FlexSection>
         )}
 
         {stage === actionStage.NOT_STARTED && (
@@ -498,10 +586,10 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
             !destinationLot ||
             !selectedCoreSample ||
             amount === 0 ||
-            !crewCan(Permission.IDS.EXTRACT_RESOURCES, lot.building)
+            !(crewCan(Permission.IDS.EXTRACT_RESOURCES, lot.building) || leasePayment > 0)
           )
         }
-        goLabel={isPurchase ? 'Purchase & Extract' : 'Extract'}
+        goLabel={goLabel}
         onGo={onStartExtraction}
         finalizeLabel="Complete"
         isSequenceable
@@ -527,6 +615,7 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
             excludeSites
             otherEntity={lot?.building}
             itemIds={[selectedCoreSample?.Deposit?.resource]}
+            itemIdsRequireAllAllowed
             onClose={() => setDestinationSelectorOpen(false)}
             onSelected={setDestinationSelection}
             open={destinationSelectorOpen}

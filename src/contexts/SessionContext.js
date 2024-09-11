@@ -3,7 +3,7 @@ import { useQueryClient } from 'react-query';
 import { isExpired } from 'react-jwt';
 import { num, RpcProvider, WalletAccount, shortString } from 'starknet';
 import { connect as starknetConnect, disconnect as starknetDisconnect } from 'starknetkit';
-import { ArgentMobileConnector } from 'starknetkit/argentMobile';
+import { ArgentMobileConnector, isInArgentMobileAppBrowser } from 'starknetkit/argentMobile';
 import { InjectedConnector } from 'starknetkit/injected';
 import { WebWalletConnector } from 'starknetkit/webwallet';
 import {
@@ -79,7 +79,9 @@ export function SessionProvider({ children }) {
   const [walletAccount, setWalletAccount] = useState();
 
   const [blockNumber, setBlockNumber] = useState(0);
+  const [provisionalBlockNumber, setProvisionalBlockNumber] = useState(0);
   const [blockTime, setBlockTime] = useState(0);
+  const [isBlockMissing, setIsBlockMissing] = useState(false);
   const [error, setError] = useState();
 
   const authenticated = useMemo(() => status === STATUSES.AUTHENTICATED, [status]);
@@ -101,16 +103,30 @@ export function SessionProvider({ children }) {
     }
 
     try {
+      // init argentMobileConnector since a little different
+      const argentMobileConnector = ArgentMobileConnector.init({
+        options: {
+          url: typeof window !== 'undefined' ? window.location.href : '',
+          dappName: 'Influence',
+          chainId: resolveChainId(process.env.REACT_APP_CHAIN_ID),
+          provider
+        }
+      });
+
+      // pick which and config connectors to include
       const connectors = [];
-
-      if (enabledConnectors.webWallet && !!process.env.REACT_APP_ARGENT_WEB_WALLET_URL) {
-        connectors.push(new WebWalletConnector({ url: process.env.REACT_APP_ARGENT_WEB_WALLET_URL, provider }));
+      if (isInArgentMobileAppBrowser()) {
+        connectors.push(argentMobileConnector);
+      } else {
+        if (enabledConnectors.webWallet && !!process.env.REACT_APP_ARGENT_WEB_WALLET_URL) {
+          connectors.push(new WebWalletConnector({ url: process.env.REACT_APP_ARGENT_WEB_WALLET_URL, provider }));
+        }
+  
+        if (enabledConnectors.argentX) connectors.push(new InjectedConnector({ options: { id: 'argentX', provider }}));
+        if (enabledConnectors.braavos) connectors.push(new InjectedConnector({ options: { id: 'braavos', provider }}));
+        if (enabledConnectors.argentMobile) connectors.push(argentMobileConnector);  
       }
-
-      if (enabledConnectors.argentX) connectors.push(new InjectedConnector({ options: { id: 'argentX', provider }}));
-      if (enabledConnectors.braavos) connectors.push(new InjectedConnector({ options: { id: 'braavos', provider }}));
-      if (enabledConnectors.argentMobile) connectors.push(new ArgentMobileConnector());
-
+  
       const connectionOptions = {
         dappName: 'Influence',
         modalMode: auto ? 'neverAsk' : 'alwaysAsk',
@@ -158,6 +174,7 @@ export function SessionProvider({ children }) {
       }
     } catch(e) {
       if (e.message === 'Incorrect chain') {
+        console.log('');
         setError(`Incorrect chain, please switch to ${resolveChainId(process.env.REACT_APP_CHAIN_ID)}`);
       }
 
@@ -226,29 +243,29 @@ export function SessionProvider({ children }) {
   }, [ currentSession, sessions, status, walletAccount ]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Determines whether the wallet should use sessions based on user settings and wallet id
+  // useSessions: (null = default, true, false)
   const shouldUseSessionKeys = useCallback(async (skipSettingsCheck = false) => {
-    const setting = skipSettingsCheck ? true : gameplay.useSessions;
+    const setting = skipSettingsCheck || gameplay.useSessions;
 
-    if (setting !== false && connectedWalletId === 'argentWebWallet') return true;
-    if (setting === true && connectedWalletId === 'argentX') {
+    // explicitly disabled
+    if (setting === false) return false;
+    
+    // default == true if web wallet
+    if (connectedWalletId === 'argentWebWallet') return true;
+
+    // explicitly enabled
+    if (connectedWalletId === 'argentX' && !!setting) {
       try {
-        const res = await provider.callContract({ contractAddress: connectedAccount, entrypoint: 'getVersion' });
-        const correctVersion = Number(shortString.decodeShortString(res[0]).replaceAll('.', '')) >= 40;
-        if (!correctVersion) return false;
+        const versionRes = await provider.callContract({ contractAddress: connectedAccount, entrypoint: 'getVersion' });
+        const correctVersion = Number(shortString.decodeShortString(versionRes[0]).replaceAll('.', '')) >= 40;
+        if (correctVersion) {
+          const guardianRes = await provider.callContract({ contractAddress: connectedAccount, entrypoint: 'get_guardian' });
+          return num.toBigInt(guardianRes[0]) !== 0n;
+        }
       } catch (e) {
         console.error(e);
-        return false;
-      }
-
-      try {
-        const res = await provider.callContract({ contractAddress: connectedAccount, entrypoint: 'get_guardian' });
-        return num.toBigInt(res[0]) !== 0n;
-      } catch (e) {
-        console.error(e);
-        return false;
       }
     }
-
     return false;
   }, [connectedAccount, gameplay.useSessions, provider]);
 
@@ -428,7 +445,7 @@ export function SessionProvider({ children }) {
 
   // Connect / auth flow manager
   useEffect(() => {
-    console.log(Object.keys(STATUSES).find(key => STATUSES[key] === status));
+    // console.log(Object.keys(STATUSES).find(key => STATUSES[key] === status));
     if (status === STATUSES.DISCONNECTED) {
       if (currentSession?.walletId) {
         connect(true).finally(() => setReadyForChildren(true));
@@ -461,8 +478,35 @@ export function SessionProvider({ children }) {
     }
   }, [error, createAlert, logout]);
 
+  const [isFeeAbstractionCompatible, setIsFeeAbstractionCompatible] = useState();
+  useEffect(() => {
+    if (currentSession?.isDeployed) {
+      gasless.fetchAccountCompatibility(
+        currentSession.accountAddress,
+        { baseUrl: process.env.REACT_APP_AVNU_API_URL }
+      )
+      .then((response) => {
+        setIsFeeAbstractionCompatible(!!response?.isCompatible)
+      })
+    } else {
+      setIsFeeAbstractionCompatible(false);
+    }
+  }, [currentSession.accountAddress, currentSession?.isDeployed]);
+
+  const payGasWithSwayIfPossible = useMemo(() => {
+    // check if we should use fee abstraction (is set to use sway or is set to default + using webwallet)
+    if (gameplay.feeToken === 'SWAY' || (!gameplay.feeToken && currentSession?.walletId === 'argentWebWallet')) {
+      return !!isFeeAbstractionCompatible;
+    }
+    return false;
+  }, [
+    currentSession?.walletId,
+    gameplay.feeToken,
+    isFeeAbstractionCompatible
+  ]);
+
   // Retrieves an outside execution call and signs it
-  const getOutsideExecutionData = useCallback(async (calldata, gasTokenAddress, maxGasTokenAmount) => {
+  const getOutsideExecutionData = useCallback(async (calldata, gasTokenAddress, maxGasTokenAmount, canUseSessionKey) => {
     let typedData = await gasless.fetchBuildTypedData(
       currentSession.accountAddress,
       calldata,
@@ -473,7 +517,7 @@ export function SessionProvider({ children }) {
 
     let signature;
 
-    if (gameplay.useSessions && currentSession.sessionRequest) {
+    if (canUseSessionKey && gameplay.useSessions && currentSession.sessionRequest) {
       const dappKey = currentSession.sessionDappKey;
       const sessionSignature = currentSession.sessionSignature;
       const beService = new ArgentSessionService(dappKey.publicKey, sessionSignature, process.env.REACT_APP_ARGENT_API);
@@ -527,14 +571,14 @@ export function SessionProvider({ children }) {
         // does not (currently) return a block number with pending block...
         if (block.block_number > 0) {
           lastBlockNumberTime.current = block.block_number;
-          setBlockNumber(block.block_number);
+          setProvisionalBlockNumber(block.block_number); // provisional b/c not necessarily synced with server
 
         // ... so we get the block number from the parent (which matches what ws reports)
         } else if (block.parent_hash) {
           const parent = await provider.getBlock(block.parent_hash);
           if (parent?.block_number > 0) {
             lastBlockNumberTime.current = parent.block_number;
-            setBlockNumber(parent.block_number);
+            setProvisionalBlockNumber(parent.block_number); // provisional b/c not necessarily synced with server
           } else {
             console.error('could not initialize block number!', block, parent);
           }
@@ -616,9 +660,10 @@ export function SessionProvider({ children }) {
       authenticated,
       authenticating: [STATUSES.AUTHENTICATING, STATUSES.CONNECTING].includes(status),
       chainId: authenticated ? connectedChainId : null,
-      connecting,
+      connecting: connecting || !!promptLogin,
       getOutsideExecutionData,
       isDeployed: authenticated ? currentSession?.isDeployed : null,
+      payGasWithSwayIfPossible: authenticated ? payGasWithSwayIfPossible : null,
       provider,
       shouldUseSessionKeys,
       starknetSession,
@@ -633,8 +678,11 @@ export function SessionProvider({ children }) {
       // - blockNumber is updated from websocket change or initial pull of activities from server
       // - blockTime is updated from blockNumber change
       // - blockNumber is last committed block, blockTime is the *pending* block time
+      setIsBlockMissing,
+      isBlockMissing,
       setBlockNumber,
-      blockNumber,
+      blockNumberIsProvisional: !blockNumber,
+      blockNumber: blockNumber || provisionalBlockNumber,
       blockTime
     }}>
       {readyForChildren

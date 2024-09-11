@@ -3,7 +3,11 @@ import TerrainChunk from './TerrainChunk';
 import { initChunkTextures, rebuildChunkMaps } from './TerrainChunkUtils';
 import constants from '~/lib/constants';
 
-const { ENABLE_TERRAIN_CHUNK_RESOURCE_POOL } = constants;
+const {
+  ENABLE_TERRAIN_CHUNK_RESOURCE_POOL,
+  TERRAIN_CHUNK_POOL_SIZE_MIN,
+  TERRAIN_CHUNK_POOL_SIZE_LOOKBACK
+} = constants;
 
 // // TODO: remove
 // let taskTotal = 0;
@@ -34,6 +38,9 @@ class TerrainChunkManager {
     this.pool = [];
     this.emissivePool = [];
     this.reset();
+
+    this.recentAddAtOnceAmounts = [];
+    this.targetPoolSize = TERRAIN_CHUNK_POOL_SIZE_MIN;
 
     this.ready = false;
     initChunkTextures().then(() => { this.ready = true; });
@@ -70,9 +77,9 @@ class TerrainChunkManager {
   allocateChunk(params) {
     const poolToUse = !!params.emissiveParams?.color ? this.emissivePool : this.pool;
     let chunk = poolToUse.pop();
-    if (chunk) { // console.log('reuse');
+    if (chunk) { // console.log('reuse', this.pool.length);
       chunk.reconfigure(params);
-    } else {  // console.log('create');
+    } else { // console.log('create', this.pool.length);
       chunk = new TerrainChunk(
         params,
         this.config,
@@ -122,6 +129,13 @@ class TerrainChunkManager {
 
   waitForChunks(howMany) {
     this.waitingOn = howMany;
+
+    this.recentAddAtOnceAmounts.push(howMany);
+    if (this.recentAddAtOnceAmounts.length >= TERRAIN_CHUNK_POOL_SIZE_LOOKBACK) {
+      this.recentAddAtOnceAmounts = this.recentAddAtOnceAmounts.slice(this.recentAddAtOnceAmounts.length - TERRAIN_CHUNK_POOL_SIZE_LOOKBACK);
+      this.targetPoolSize = this.recentAddAtOnceAmounts.reduce((a, b) => Math.max(a, b), TERRAIN_CHUNK_POOL_SIZE_MIN);
+      // console.log(`targetPoolSize: ${this.targetPoolSize}`);
+    }
   }
 
   queueForRecycling(chunks) {
@@ -161,21 +175,23 @@ class TerrainChunkManager {
   update() {
     if (this.isBusy()) return;
     // console.log(`adding ${this._new.length} chunks, removing ${this._old.length} chunks`);
+    // console.log(`update: add ${this._new.length}, remove ${this._old.length}, pool ${this.pool.length}, emissivePool ${this.emissivePool.length}, waitingOn ${this.waitingOn}, queued ${this._queued.length}`);
 
     // recycle old chunks
-    let node;
-    while (node = this._old.pop()) { // eslint-disable-line
-      if (ENABLE_TERRAIN_CHUNK_RESOURCE_POOL && node.chunk.isReusable()) {
-        node.chunk.detachFromGroup();
-        const poolToUse = !!node.chunk._params.emissiveParams?.color ? this.emissivePool : this.pool;
-        poolToUse.push(node.chunk);
+    let chunk;
+    while (chunk = this._old.pop()) { // eslint-disable-line
+      const poolToUse = !!chunk._params.emissiveParams?.color ? this.emissivePool : this.pool;
+      if (ENABLE_TERRAIN_CHUNK_RESOURCE_POOL && chunk.isReusable() && poolToUse.length < this.targetPoolSize) {
+        // console.log('REUSE');
+        chunk.detachFromGroup();
+        poolToUse.push(chunk);
       } else {
-        node.chunk.dispose();
+        // console.log('TRASH');
+        chunk.dispose();
       }
     }
 
     // show new chunks
-    let chunk;
     while (chunk = this._new.pop()) { // eslint-disable-line
       chunk.show();
     }

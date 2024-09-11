@@ -69,8 +69,8 @@ const InputLabel = styled.div`
   }
 `;
 
-const TotalSway = styled.span``;
-const OrderAlert = styled.div`
+export const TotalSway = styled.span``;
+export const OrderAlert = styled.div`
   ${p => {
     if (p.isCancellation || p.insufficientAssets || p.insufficientInventory) {
       return `
@@ -224,6 +224,8 @@ const MarketplaceOrder = ({
     (orders || []).filter((o) => o.orderType === Order.IDS.LIMIT_BUY),
     (orders || []).filter((o) => o.orderType === Order.IDS.LIMIT_SELL),
   ]), [orders]);
+
+  const { data: orderCrew } = useHydratedCrew(preselect?.crew?.id);
 
   // TODO: ...
   const currentDestinationLot = {};
@@ -649,7 +651,7 @@ const MarketplaceOrder = ({
     <>
       <ActionDialogHeader
         action={dialogAction}
-        actionCrew={crew}
+        actionCrew={orderCrew}
         location={{ asteroid, lot }}
         crewAvailableTime={crewTimeRequirement}
         taskCompleteTime={taskTimeRequirement}
@@ -863,6 +865,7 @@ const MarketplaceOrder = ({
 
       <ActionDialogFooter
         disabled={
+          (isCancellation && orderCrew?.id !== crew?.id) ||
           !isCancellation && (
             !storageSelection || !quantity || !total
             || exceedsOtherSide || insufficientAssets || insufficientCapacity
@@ -887,6 +890,7 @@ const MarketplaceOrder = ({
           open={storageSelectorOpen}
           isSourcing={reactBool(mode === 'sell')}
           itemIds={[resourceId]}
+          itemIdsRequireAllAllowed={reactBool(mode !== 'sell')}
           requirePresenceOfItemIds={reactBool(mode === 'sell')}
         />
       )}

@@ -2,11 +2,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import styled, { css } from 'styled-components';
 import { usePopper } from 'react-popper';
-import { Tooltip } from 'react-tooltip';
 import { Delivery, Inventory, Permission, Product } from '@influenceth/sdk';
 
 import Dropdown from '~/components/Dropdown';
-import { DotsIcon } from '~/components/Icons';
+import { CheckedIcon, DotsIcon, UncheckedIcon } from '~/components/Icons';
 import ResourceThumbnail, { ResourceProgress } from '~/components/ResourceThumbnail';
 import useActionButtons from '~/hooks/useActionButtons';
 import useLot from '~/hooks/useLot';
@@ -245,6 +244,22 @@ const QuantaInput = styled.input`
   width: 100%;
 `;
 
+const ToggleAll = styled.div`
+  align-items: center;
+  cursor: ${p => p.theme.cursors.active};
+  display: flex;
+  font-size: 15px;
+  opacity: 0.7;
+  & > svg {
+    color: ${p => p.theme.colors.main};
+    margin-right: 5px;
+  }
+
+  &:hover {
+    opacity: 1;
+  }
+`;
+
 const StackSplitterPopper = ({ children, referenceEl }) => {
   const [popperEl, setPopperEl] = useState();
   const { styles, attributes } = usePopper(referenceEl, popperEl, {
@@ -304,8 +319,11 @@ const LotInventory = () => {
 
   const resourceItemRefs = useRef([]);
 
-  const canRemoveProducts = useMemo(
-    () => crewCan(Permission.IDS.REMOVE_PRODUCTS, entity),
+  const [canAddProducts, canRemoveProducts] = useMemo(
+    () => ([
+      crewCan(Permission.IDS.ADD_PRODUCTS, entity),
+      crewCan(Permission.IDS.REMOVE_PRODUCTS, entity),
+    ]),
     [crewCan, entity]
   );
 
@@ -318,7 +336,7 @@ const LotInventory = () => {
 
   useEffect(() => {
     setSelectedItems({}); // clear selected items when switching inventories
-  }, [inventorySlot])
+  }, [entity?.uuid, inventorySlot])
 
   const { data: incomingDeliveries } = useDeliveries(
     entity && inventorySlot
@@ -463,6 +481,28 @@ const LotInventory = () => {
     }
   }, []);
 
+  const isAllSelected = useMemo(() => {
+    return Object.keys(selectedItems).length === sortedResources.length;
+  }, [selectedItems, sortedResources]);
+
+  const toggleAll = useCallback(() => {
+    setSelectedItems((s) => {
+      if (isAllSelected) return {};
+      return sortedResources.reduce((acc, resourceId) => {
+        acc[resourceId] = inventory.contentsObj[resourceId];
+        return acc;
+      }, {});
+    });
+  }, [isAllSelected, sortedResources]);
+
+  // if inventory contents change, deselect all
+  // TODO: maybe should deselect all whenever sendfrom, sellfrom, or jettison dialogs opened
+  // TODO: probably should optimistically update item amounts from pending txs
+  //       of sendfrom, sellfrom, or jettison...
+  useEffect(() => {
+    setSelectedItems({});
+  }, [inventory?.contentsObj])
+
   const trayLabel = useMemo(() => {
     const selectedTally = Object.keys(selectedItems).length;
     if (selectedTally > 0) {
@@ -475,6 +515,12 @@ const LotInventory = () => {
     }
     return null;
   }, [selectedItems]);
+
+  const removalDisabledReason = useMemo(() => {
+    if (!canRemoveProducts) return 'access restricted';
+    if (Object.keys(selectedItems).length === 0) return 'nothing selected';
+    return '';
+  }, [canRemoveProducts, selectedItems]);
 
   if (!inventory === 0) return null;
   return (
@@ -538,13 +584,20 @@ const LotInventory = () => {
               style={{ flex: 1, width: 170 }}
             />
 
-            {/* TODO: mass / volume view toggle */}
+            {sortedResources.length > 0 && (
+              <ToggleAll onClick={toggleAll}>
+                {isAllSelected
+                  ? <><UncheckedIcon /> Deselect All</>
+                  : <><CheckedIcon /> Select All</>
+                }
+              </ToggleAll>
+            )}
           </Controls>
           <InventoryItems onScroll={onInventoryScroll}>
             {splittingResourceId && (
               <StackSplitterPopper referenceEl={resourceItemRefs.current[splittingResourceId]}>
                 <StackSplitter onMouseLeave={onMouseLeave}>
-                  <label>Selected Amount ({Product.TYPES[splittingResourceId].isAtomic ? '' : 'kg'})</label>
+                  <label>Selected Amount ({Product.TYPES[splittingResourceId].isAtomic ? 'units' : 'kg'})</label>
                   <QuantaInput
                     type="number"
                     max={inventory?.contentsObj[splittingResourceId]}
@@ -588,25 +641,44 @@ const LotInventory = () => {
               </ThumbnailWrapper>
             ))}
           </InventoryItems>
-          {(isIncomingDelivery || Object.keys(selectedItems).length > 0) && (
-          <Tray>
-            {trayLabel && <TrayLabel content={trayLabel} />}
+          {(canAddProducts || canRemoveProducts) && (
+            <Tray>
+              {trayLabel && <TrayLabel content={trayLabel} />}
 
-            {Object.keys(selectedItems).length > 0 && (
+              {/* hide for now (for screen real estate)
+              <actionButtons.SurfaceTransferIncoming.Component
+                {...actionProps}
+                labelAddendum={canAddProducts ? '' : 'access restricted'}
+                flags={{ disabled: !canAddProducts }}
+                dialogProps={{ destination: entity, destinationSlot: inventorySlot }}
+              />
+              */}
+
+              <actionButtons.MultiBuy.Component
+                {...actionProps}
+                labelAddendum={canAddProducts ? '' : 'access restricted'}
+                flags={{ disabled: !canAddProducts }}
+                dialogProps={{ destination: entity, destinationSlot: inventorySlot }}
+              />
+
               <actionButtons.SurfaceTransferOutgoing.Component
                 {...actionProps}
-                labelAddendum={canRemoveProducts ? '' : 'access restricted'}
-                flags={{ disabled: !canRemoveProducts }}
+                _disabledReason={removalDisabledReason}
                 dialogProps={{ origin: entity, originSlot: inventorySlot, preselect: { selectedItems } }}
               />
-            )}
+          
+              <actionButtons.MultiSell.Component
+                {...actionProps}
+                _disabledReason={removalDisabledReason}
+                dialogProps={{ origin: entity, originSlot: inventorySlot, preselect: { selectedItems } }}
+              />
 
-            {/* TODO: may only care about incoming transfer if have permission here */}
-            {/* TODO: is SurfaceTransferIncoming still supported? */}
-            {isIncomingDelivery && (
-              <actionButtons.SurfaceTransferIncoming.Component {...actionProps} />
-            )}
-          </Tray>
+              <actionButtons.JettisonCargo.Component
+                {...actionProps}
+                _disabledReason={removalDisabledReason}
+                dialogProps={{ origin: entity, originSlot: inventorySlot, preselect: { selectedItems } }}
+              />
+            </Tray>
           )}
         </InnerWrapper>
       </Wrapper>

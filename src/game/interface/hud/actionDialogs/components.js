@@ -58,7 +58,14 @@ import {
   CheckedIcon,
   UncheckedIcon,
   ScheduleFullIcon,
-  CheckSmallIcon
+  CheckSmallIcon,
+  MarketBuyIcon,
+  InventoryIcon,
+  CaretIcon,
+  ShipIcon,
+  BuildingIcon,
+  ConstructIcon,
+  InfoIcon
 } from '~/components/Icons';
 import LiveTimer from '~/components/LiveTimer';
 import MouseoverInfoPane from '~/components/MouseoverInfoPane';
@@ -75,7 +82,7 @@ import useSyncedTime from '~/hooks/useSyncedTime';
 import useCrewContext from '~/hooks/useCrewContext';
 import useHydratedLocation from '~/hooks/useHydratedLocation';
 import useShip from '~/hooks/useShip';
-import { reactBool, formatFixed, formatTimer, nativeBool, locationsArrToObj, keyify, formatPrice } from '~/lib/utils';
+import { reactBool, formatFixed, formatTimer, nativeBool, locationsArrToObj, keyify, formatPrice, getCrewAbilityBonuses, ordersToFills } from '~/lib/utils';
 import actionStage from '~/lib/actionStages';
 import constants from '~/lib/constants';
 import { getBuildingIcon, getLotShipIcon, getShipIcon } from '~/lib/assetUtils';
@@ -94,6 +101,16 @@ import useStore from '~/hooks/useStore';
 import { COACHMARK_IDS } from '~/contexts/CoachmarkContext';
 import useSimulationEnabled from '~/hooks/useSimulationEnabled';
 import useCoachmarkRefSetter from '~/hooks/useCoachmarkRefSetter';
+import useShoppingListData from '~/hooks/useShoppingListData';
+import useInterval from '~/hooks/useInterval';
+import { TOKEN, TOKEN_SCALE } from '~/lib/priceUtils';
+import { useSwayBalance } from '~/hooks/useWalletTokenBalance';
+import PageLoader from '~/components/PageLoader';
+import Monospace from '~/components/Monospace';
+import { OrderAlert, TotalSway } from './MarketplaceOrder';
+import { ProductMarketSummary } from './ShoppingList';
+import ThumbnailBottomBanner from '~/components/ThumbnailBottomBanner';
+import ThumbnailIconBadge from '~/components/ThumbnailIconBadge';
 
 const SECTION_WIDTH = 780;
 
@@ -227,7 +244,7 @@ export const SectionTitle = styled.div`
     }
   `}
 `;
-const SectionTitleRight = styled.div`
+export const SectionTitleRight = styled.div`
   color: white;
   font-size: 19px;
   overflow: hidden;
@@ -355,39 +372,40 @@ export const SublabelBanner = styled.div`
 const IconAndLabel = styled.div`
   display: flex;
   flex: 1;
+  align-items: center;
 `;
 const IconContainer = styled.div`
   font-size: 48px;
   padding: 0 10px;
 `;
 const pillColors = {
-  crew: { bg: 'main', color: 'brightMain' },
+  crew: { bg: 'backgroundGray', color: 'secondaryText' },
   delay: { bg: 'sequence', color: 'sequenceLight' },
-  total: { bg: 'success', color: 'success' },
+  total: { bg: 'successDark', color: 'success' },
 };
 const TimePillComponent = styled.div`
   align-items: center;
-  background: rgba(${p => hexToRGB(p.theme.colors[pillColors[p.type].bg])}, 0.4);
+  background: rgba(${p => hexToRGB(p.theme.colors[pillColors[p.type].bg])}, 0.5);
   border-radius: 20px;
   color: white;
   display: flex;
-  margin-left: 4px;
+  margin-top: 4px;
   padding: 3px 12px;
-  text-align: center;
   text-transform: none;
+  font-weight: 400;
   & > label {
     color: ${p => p.theme.colors[pillColors[p.type].color]};
     margin-right: 6px;
-    text-transform: uppercase;
+    flex: 1;
   }
   & > svg {
     color: ${p => p.theme.colors[pillColors[p.type].color]};
-    opacity: 0.7;
     margin-right: 4px;
   }
 `;
 const LabelContainer = styled.div`
   flex: 1;
+  width: 75%;
   text-transform: uppercase;
   h1 {
     align-items: flex-end;
@@ -399,14 +417,12 @@ const LabelContainer = styled.div`
     line-height: 36px;
     margin: 0;
   }
+  & h2 {
+    font-size: 18px;
+    flex: 1;
+    margin: 6px 0 0;
+  }
   & > div {
-    align-items: center;
-    display: flex;
-    h2 {
-      font-size: 18px;
-      flex: 1;
-      margin: 6px 0 0;
-    }
     ${TimePillComponent} {
       margin-top: 3px;
     }
@@ -828,13 +844,19 @@ const EmptyMessage = styled.div`
 const InputOutputTableCell = styled.div`
   align-items: center;
   display: flex;
-  & > * {
-    margin-left: 2px;
-  }
   & > label {
+    flex: 0 0 24px;
     opacity: 0.5;
     margin-left: 0;
     padding-right: 8px;
+  }
+  & > div {
+    display: flex;
+    flex: 1;
+    flex-wrap: wrap;
+    & > * {
+      margin: 1px;
+    }
   }
 `;
 
@@ -948,6 +970,28 @@ const InvSelectionTableWrapper = styled.div`
     width: 100%;
     th {
       color: white;
+    }
+  }
+`;
+
+export const MultiSourceWrapper = styled(AssetBlock).attrs({ isSelected: true })`
+  align-items: center;
+  align-self: stretch;
+  border: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-evenly;
+  padding: 0 15px;
+  width: 50%;
+  & > button {
+    width: 100%;
+  }
+  & > button > div {
+    & > svg {
+      font-size: 32px;
+    }
+    & > span {
+      flex: 1;
     }
   }
 `;
@@ -2050,6 +2094,55 @@ export const LandingSelectionDialog = ({ asteroid, deliveryMode, initialSelectio
   );
 };
 
+
+
+const ProcessSelectorIconWrapper = styled.div`
+  align-items: center;
+  background: rgba(${p => p.theme.colors.mainRGB}, 0.3);
+  ${p => p.theme.clipCorner(sectionBodyCornerSize * 0.6)};
+  display: flex;
+  font-size: 40px;
+  height: 50px;
+  justify-content: center;
+  width: 50px;
+`;
+const ProcessSelectorInner = styled.div`
+  align-items: center;
+  color: white;
+  display: flex;
+  flex-direction: row;
+  font-size: ${p => p.height ? Math.max(14, 0.36 * (p.height - 8)) : 18}px;
+  & label {
+    flex: 1;
+    padding-left: 10px;
+  }
+  & > ${ProcessSelectorIconWrapper} {
+    font-size: ${p => (p.height - 8) * 0.8}px;
+    height: ${p => p.height - 8}px;
+    width: ${p => p.height - 8}px;
+  }
+`;
+
+export const ProcessSelectionBlock = ({ height, onClick, selectedProcess, width }) => (
+  <FlexSectionInputBody
+    isSelected={!!onClick}
+    onClick={onClick}
+    style={{ padding: 4, width }}>
+    <ProcessSelectorInner height={height}>
+      <ProcessSelectorIconWrapper>
+        <ProductionIcon />
+      </ProcessSelectorIconWrapper>
+      <label>{selectedProcess?.name || `Select a Process...`}</label>
+      {onClick && (
+        <IconButton borderless style={{ marginRight: 0 }}>
+          {selectedProcess ? <CloseIcon /> : <CaretIcon />}
+        </IconButton>
+      )}
+    </ProcessSelectorInner>
+    <ClipCorner dimension={sectionBodyCornerSize} />
+  </FlexSectionInputBody>
+);
+
 export const ProcessSelectionDialog = ({ initialSelection, onClose, forceProcesses, processorType, onSelected, open }) => {
   const [selection, setSelection] = useState(initialSelection);
   const [processFilter, setProcessFilter] = useState();
@@ -2061,12 +2154,23 @@ export const ProcessSelectionDialog = ({ initialSelection, onClose, forceProcess
   const simulationActions = useStore((s) => s.simulationActions);
 
   const processes = useMemo(() => {
-    const unSorted = forceProcesses || Object.values(Process.TYPES).filter((p) => p.processorType === processorType);
+    const unSorted = forceProcesses || Object.values(Process.TYPES).filter((p) => processorType ? p.processorType === processorType : true);
     return unSorted
       .sort((a, b) => {
         if (a.i === coachmarks[COACHMARK_IDS.actionDialogTargetProcess]) return -1;
         if (b.i === coachmarks[COACHMARK_IDS.actionDialogTargetProcess]) return 1;
         return a.name > b.name ? 1 : -1;
+      })
+      .map((p) => {
+        if (Object.keys(p.outputs || {}).length === 0) {
+          if (p.name.includes(' Construction')) {
+            return { ...p, buildingOutput: Object.values(Building.TYPES).find((t) => t.name === p.name.replace(' Construction', '')) };
+          }
+          if (p.name.includes(' Integration')) {
+            return { ...p, shipOutput: Object.values(Ship.TYPES).find((t) => t.name === p.name.replace(' Integration', '')) };
+          }
+        }
+        return p;
       })
   }, [coachmarks, forceProcesses, processorType])
 
@@ -2083,7 +2187,7 @@ export const ProcessSelectionDialog = ({ initialSelection, onClose, forceProcess
     }
 
     if (outputFilter) {
-      const includesFilter = Object.keys(process.outputs).some((output) => {
+      const includesFilter = Object.keys(process.outputs || {}).some((output) => {
         return Product.TYPES[output]?.name.toLowerCase().includes(outputFilter.toLowerCase());
       });
 
@@ -2127,13 +2231,14 @@ export const ProcessSelectionDialog = ({ initialSelection, onClose, forceProcess
         <table>
           <thead>
             <tr>
-              <td>Process Name</td>
-              <td style={{ textAlign: 'left' }}>Inputs</td>
-              {processes[0]?.outputs && <td style={{ textAlign: 'left' }}>Outputs</td>}
+              <td></td>
+              <td style={{ textAlign: 'left' }}>Process Name</td>
+              <td style={{ textAlign: 'left', paddingLeft: 32 }}>Inputs</td>
+              {processes[0]?.outputs && <td style={{ textAlign: 'left', paddingLeft: 24 }}>Outputs</td>}
             </tr>
           </thead>
           <tbody>
-            {processes.filter(applyProcessFilter).map(({ i, name, inputs, outputs }) => {
+            {processes.filter(applyProcessFilter).map(({ i, name, inputs, outputs, buildingOutput, shipOutput }) => {
               const coachmarked = coachmarks[COACHMARK_IDS.actionDialogTargetProcess] === i;
               return (
                 <SelectionTableRow
@@ -2141,22 +2246,63 @@ export const ProcessSelectionDialog = ({ initialSelection, onClose, forceProcess
                   onClick={() => setSelection(i)}
                   ref={coachmarked ? setCoachmarkRef(COACHMARK_IDS.actionDialogTargetProcess) : undefined}
                   selectedRow={i === selection}>
-                  <td><div style={{ display: 'flex', alignItems: 'center' }}><div style={{ fontSize: 24, marginRight: 6 }}><ProductionIcon /></div> {name}</div></td>
+                  <td style={{ fontSize: 24 }}>
+                    {!(buildingOutput || shipOutput) && <ProductionIcon />}
+                    {buildingOutput && <ConstructIcon />}
+                    {shipOutput && <ShipIcon />}
+                  </td>
+                  <td style={{ textAlign: 'left', width: 400, whiteSpace: 'wrap' }}>
+                    {name}
+                  </td>
                   <td>
                     <InputOutputTableCell>
                       <label>{Object.keys(inputs).length}</label>
-                      {Object.keys(inputs).map((resourceId) => (
-                        <ResourceThumbnail key={resourceId} resource={Product.TYPES[resourceId]} size="45px" tooltipContainer="selectionDialogTooltip" />
-                      ))}
+                      <div>
+                        {Object.keys(inputs).map((resourceId, i) => (
+                          <>
+                            {i === 9 && <br />}
+                            <ResourceThumbnail key={resourceId} resource={Product.TYPES[resourceId]} size="45px" tooltipContainer="selectionDialogTooltip" />
+                          </>
+                        ))}
+                      </div>
                     </InputOutputTableCell>
                   </td>
                   {outputs && (
                     <td>
                       <InputOutputTableCell>
-                        <label>{Object.keys(outputs).length}</label>
-                        {Object.keys(outputs).map((resourceId) => (
-                          <ResourceThumbnail key={resourceId} resource={Product.TYPES[resourceId]} size="45px" tooltipContainer="selectionDialogTooltip" />
-                        ))}
+                        {!(buildingOutput || shipOutput) && (
+                          <>
+                            <label>{Object.keys(outputs).length}</label>
+                            <div>
+                              {Object.keys(outputs).map((resourceId) => (
+                                <ResourceThumbnail key={resourceId} resource={Product.TYPES[resourceId]} size="45px" tooltipContainer="selectionDialogTooltip" />
+                              ))}
+                            </div>
+                          </>
+                        )}
+                        {buildingOutput && (
+                          <>
+                            <label>1</label>
+                            <div>
+                              <BuildingImage
+                                buildingType={buildingOutput.i}
+                                inventory={false}
+                                style={{ height: 45, width: 73 }}
+                                tooltipContainer="selectionDialogTooltip" />
+                            </div>
+                          </>
+                        )}
+                        {shipOutput && (
+                          <>
+                            <label>1</label>
+                            <div>
+                              <ShipImage
+                                shipType={shipOutput.i}
+                                style={{ height: 45, width: 73 }}
+                                tooltipContainer="selectionDialogTooltip" />
+                            </div>
+                          </>
+                        )}
                       </InputOutputTableCell>
                     </td>
                   )}
@@ -2290,6 +2436,7 @@ export const InventorySelectionDialog = ({
   otherInvSlot,
   isSourcing,
   itemIds,
+  itemIdsRequireAllAllowed,
   initialSelection,
   limitToControlled,
   limitToPrimary,
@@ -2354,11 +2501,11 @@ export const InventorySelectionDialog = ({
         // skip if site and excludeSites is set
         if (excludeSites && Inventory.TYPES[inv.inventoryType].category === Inventory.CATEGORIES.SITE) return;
 
-        // skip if is source and cannot contain ANY of the itemIds, or is destination and cannot contain ALL of the itemIds
+        // skip if itemIds are specified and cannot contain ANY (or if itemIdsRequireAllAllowed is specified and cannot contain ALL)
         if (itemIds && Inventory.TYPES[inv.inventoryType].productConstraints) {
           const allowedMaterials = Object.keys(Inventory.TYPES[inv.inventoryType].productConstraints).map((i) => Number(i));
-          if (isSourcing && !itemIds.find((i) => allowedMaterials.includes(Number(i)))) return;
-          if (!isSourcing && itemIds.find((i) => !allowedMaterials.includes(Number(i)))) return;
+          if (itemIdsRequireAllAllowed && itemIds.find((i) => !allowedMaterials.includes(Number(i)))) return;
+          else if (!itemIds.find((i) => allowedMaterials.includes(Number(i)))) return;
         }
 
         const entityLotId = entity.Location.locations.find((l) => l.label === Entity.IDS.LOT)?.id;
@@ -2667,6 +2814,545 @@ export const InventorySelectionDialog = ({
   );
 };
 
+export const ShoppingListPriceField = styled.div`
+  align-items: center;
+  display: flex;
+  & > div {
+    align-items: center;
+    display: flex;
+    margin-right: 10px;
+    min-width: 100px;
+    & > div:last-child {
+      flex: 1;
+      font-family: 'Jetbrains Mono', sans-serif;
+      text-align: right;
+    }
+  }
+  & > small {
+    opacity: 0.5;
+  }
+`;
+
+const ShoppingListIconWrapper = styled.div`
+  color: white;
+  font-size: 22px;
+  margin-right: 4px;
+`;
+
+const ShoppingListDataTableWrapper = styled.div`
+  background: black;
+  margin: 0px 10px 10px;
+  max-height: 300px;
+  overflow: auto;
+  & > table {
+    width: 100%;
+  }
+`;
+
+export const LiquidityWarning = () => (
+  <span style={{ color: theme.colors.warning, display: 'inline-block', marginLeft: 5, marginTop: -2 }}
+    data-tooltip-content='Limited Supply'
+    data-tooltip-id='actionDialogTooltip'
+    data-tooltip-place='top'>
+    <WarningIcon />
+  </span>
+);
+
+const OrderSelectionTable = ({ orders, productId, onSelected, selected }) => {
+  const [sort, setSort] = useState(['_adjUnitPrice', 'desc']);
+  const [sortField, sortDirection] = sort;
+
+  const getRowProps = useCallback((row) => ({
+    onClick: () => {
+      onSelected(row);
+    },
+    selectedColorRGB: `128, 128, 128`,
+    isSelected: selected?._orderPath === row._orderPath,
+    tableState: { resource: Product.TYPES[productId] }
+  }), [onSelected, productId, selected]);
+
+  const handleSort = useCallback((field) => () => {
+    if (!field) return;
+
+    let updatedSortField = sortField;
+    let updatedSortDirection = sortDirection;
+    if (field === sortField) {
+      updatedSortDirection = sortDirection === 'desc' ? 'asc' : 'desc';
+    } else {
+      updatedSortField = field;
+      updatedSortDirection = 'desc';
+    }
+
+    setSort([
+      updatedSortField,
+      updatedSortDirection
+    ]);
+  }, [sortDirection, sortField]);
+
+  const sortedOrders = useMemo(() => {
+    return (orders || [])
+      .sort((a, b) => (sortDirection === 'asc' ? 1 : -1) * (a[sortField] < b[sortField] ? 1 : -1));
+  }, [orders, sortField, sortDirection]);
+
+  const columns = useMemo(() => ([
+    {
+      key: 'selector',
+      label: <MarketBuyIcon />,
+      selector: (row, { isSelected }) => (
+        <span style={{ fontSize: '120%', lineHeight: '0' }}>
+          {isSelected ? <CheckedIcon style={{ color: theme.colors.brightMain }} /> : <UncheckedIcon />}
+        </span>
+      ),
+      align: 'center',
+      isIconColumn: true,
+      noMinWidth: true,
+    },
+    {
+      key: 'marketplaceName',
+      label: 'Marketplace',
+      selector: (row, { tableState }) => (
+        <span><EntityName {...row.entity} /></span>
+      ),
+      noMinWidth: true,
+    },
+    {
+      key: 'distance',
+      label: 'Distance',
+      sortField: '_exchangeDistance',
+      alignBody: 'right',
+      selector: row => <Monospace>{formatFixed(row._exchangeDistance, 1, 1)} km</Monospace>,
+      noMinWidth: true,
+    },
+    {
+      key: 'amount',
+      label: 'Amount',
+      sortField: 'fillAmount',
+      alignBody: 'right',
+      selector: (row, { tableState }) => (
+        <>
+          <Monospace>{row.fillAmount.toLocaleString()}{tableState.resource.isAtomic ? '' : ' kg'}</Monospace>
+          {row._isPartial && <LiquidityWarning />}
+        </>
+      ),
+      noMinWidth: true,
+    },
+    {
+      key: 'price',
+      label: <><span>Unit Price</span> <small style={{ marginLeft: 4 }}>(incl. fees)</small></>,
+      sortField: '_adjUnitPrice',
+      alignBody: 'right',
+      selector: (row, { tableState }) => (
+        <ShoppingListPriceField>
+          <div>
+            <ShoppingListIconWrapper><SwayIcon /></ShoppingListIconWrapper>
+            <div>{(row._adjUnitPrice / TOKEN_SCALE[TOKEN.SWAY]).toLocaleString(undefined, { maximumFractionDigits: 4, minimumFractionDigits: 4 })}</div>
+          </div>
+        </ShoppingListPriceField>
+      ),
+      noMinWidth: true,
+    }
+  ]), []);
+
+  return (
+    <ShoppingListDataTableWrapper>
+      <DataTableComponent
+        columns={columns}
+        data={sortedOrders || []}
+        getRowProps={getRowProps}
+        keyField="orderPath"
+        onClickColumn={handleSort}
+        sortDirection={sortDirection}
+        sortField={sortField}
+      />
+    </ShoppingListDataTableWrapper>
+  );
+};
+
+export const OrderSelectionDialog = ({
+  asteroidId,
+  otherEntity,
+  maxAmount,
+  onClose,
+  onCompleted,
+  open,
+  productId
+}) => {
+  const { crew } = useCrewContext();
+  const { data: swayBalance } = useSwayBalance();
+
+  const [selected, setSelected] = useState();
+  const [targetAmount, setTargetAmount] = useState(maxAmount || 0);
+
+  const destinationLocation = useMemo(() => {
+    if (!otherEntity) return {};
+    return locationsArrToObj(otherEntity.Location?.locations || []);
+  }, [otherEntity]);
+  const destLotId = destinationLocation?.lotId;
+
+  const crewBonuses = useMemo(() => {
+    if (!crew) return {};
+
+    const abilities = getCrewAbilityBonuses([
+      Crewmate.ABILITY_IDS.HOPPER_TRANSPORT_TIME,
+      Crewmate.ABILITY_IDS.FREE_TRANSPORT_DISTANCE,
+      Crewmate.ABILITY_IDS.MARKETPLACE_FEE_REDUCTION,
+    ], crew);
+    return {
+      hopperTransport: abilities[Crewmate.ABILITY_IDS.HOPPER_TRANSPORT_TIME],
+      freeTransport: abilities[Crewmate.ABILITY_IDS.FREE_TRANSPORT_DISTANCE],
+      feeReduction: abilities[Crewmate.ABILITY_IDS.MARKETPLACE_FEE_REDUCTION],
+    }
+  }, [crew]);
+
+  const {
+    data: resourceMarketplaces,
+    dataUpdatedAt: resourceMarketplacesUpdatedAt,
+    isLoading: resourceMarketplacesLoading,
+    refetch: refetchResourceMarketplaces
+  } = useShoppingListData(asteroidId, destLotId, [productId]);
+  const exchanges = useMemo(() => resourceMarketplaces?.[productId] || [], [resourceMarketplacesUpdatedAt]);
+
+  useInterval(() => { refetchResourceMarketplaces(); }, 60e3); // keep things loosely fresh
+
+  const orders = useMemo(() => {
+    return exchanges.reduce((aggOrders, row) => {
+      const exchangeDistance = Asteroid.getLotDistance(asteroidId, Lot.toIndex(row.lotId), Lot.toIndex(destLotId));
+      const exchangeTravelTime = Time.toRealDuration(
+        Asteroid.getLotTravelTime(
+          asteroidId, Lot.toIndex(row.lotId), Lot.toIndex(destLotId), crewBonuses?.hopperTransport.totalBonus, crewBonuses?.freeTransport.totalBonus
+        ),
+        crew?._timeAcceleration
+      );
+
+      let largestExchangeFill = -1;
+      row.orders
+        .map((order) => {
+          const fills = ordersToFills(
+            'buy',
+            [order],
+            targetAmount,
+            row.marketplace?.Exchange?.takerFee || 0,
+            crewBonuses?.feeReduction?.totalBonus || 1,
+            row.feeEnforcement || 1,
+          );
+
+          const fill = fills[0];
+          fill.price = fill.price * TOKEN_SCALE[TOKEN.SWAY];
+          return {
+            _orderPath: `${fill.crew.uuid}.${fill.entity.uuid}.${fill.orderType}.${fill.product}.${fill.price}.${fill.storage.uuid}.${fill.storageSlot}`,
+            _adjUnitPrice: fill.fillPaymentTotal / fill.fillAmount,
+            _exchangeDistance: exchangeDistance,
+            _exchangeTravelTime: exchangeTravelTime,
+            _isPartial: fill.fillAmount < targetAmount,
+            ...fill,
+          };
+        })
+
+        .sort((a, b) => a._adjUnitPrice - b._adjUnitPrice)
+
+        // only include orders that are larger or cheaper than what is in list
+        // (since ordered from cheapest to most expensive, just include any that are larger than largest)
+        .reduce((acc2, cur) => {
+          if (cur.fillAmount > largestExchangeFill) {
+            largestExchangeFill = cur.fillAmount;
+            acc2.push(cur);
+          }
+          return acc2;
+        }, [])
+
+        .forEach((order) => {
+          aggOrders.push(order);
+        });
+        
+      return aggOrders;
+    }, []);
+  }, [asteroidId, crew?._timeAcceleration, crewBonuses, destLotId, exchanges, targetAmount]);
+
+  useEffect(() => {
+    setSelected();
+  }, [targetAmount]);
+
+  const insufficientSway = useMemo(() => selected?.fillPaymentTotal > swayBalance, [selected, swayBalance]);
+
+  const isCompletable = useMemo(() => selected && !insufficientSway, [insufficientSway, selected]);
+
+  const onSelected = useCallback((order) => {
+    setSelected((old) => old?._orderPath === order._orderPath ? undefined : order);
+  }, []);
+
+  const onComplete = useCallback(() => {
+    if (isCompletable) {
+      onCompleted(selected);
+      onClose();
+    }
+  }, [isCompletable, onClose, onCompleted, selected]);
+
+  return (
+    <SelectionDialog
+      isCompletable={isCompletable}
+      onClose={onClose}
+      onComplete={onComplete}
+      open={open}
+      style={{ width: 820, maxWidth: 820 }}
+      title="Available Sell Orders">
+      {!resourceMarketplaces && (
+        <div style={{ height: 250 }}><PageLoader /></div>
+      )}
+      {resourceMarketplaces && (
+        <>
+          {orders?.length > 0
+            ? (
+              <>
+                <div style={{ padding: '0 5px 12px' }}>
+                  <div style={{ fontSize: '90%', opacity: 0.5, marginBottom: 4, marginLeft: 4, textTransform: 'uppercase' }}>Target Purchase Amount</div>
+                  <div style={{ background: '#181818', padding: '10px 15px' }}>
+                    <ResourceAmountSlider
+                      amount={targetAmount || 0}
+                      min={1}
+                      max={maxAmount}
+                      resource={Product.TYPES[productId]}
+                      setAmount={setTargetAmount} />
+                  </div>
+                </div>
+
+                <OrderSelectionTable
+                  onSelected={onSelected}
+                  orders={orders}
+                  productId={productId}
+                  selected={selected}
+                />
+
+                <hr style={{ borderColor, borderStyle: 'solid', borderWidth: '1px 0 0' }} />
+
+                <OrderAlert mode="buy" insufficientAssets={reactBool(insufficientSway)}>
+                  <div>
+                    <div style={{ flex: 1 }}>
+                      <div><b>Market Buy</b></div>
+                      <div>
+                        {formatResourceMass(selected?.fillAmount || 0, productId)}
+                        {' '}{Product.TYPES[productId].name}
+                      </div>
+                    </div>
+                    <div style={{ alignItems: 'flex-end', display: 'flex' }}>
+                      <b>Total</b>
+                      <span style={{ display: 'inline-flex', fontSize: '36px', lineHeight: '36px' }}>
+                        <SwayIcon /><TotalSway>-{formatFixed(selected?.fillPaymentTotal / TOKEN_SCALE[TOKEN.SWAY] || 0)}</TotalSway>
+                      </span>
+                    </div>
+                  </div>
+                </OrderAlert>
+              </>
+            )
+            : (
+              <EmptyMessage>There are no {Product.TYPES[productId].name} sell orders available to you on this asteroid.</EmptyMessage>
+            )
+          }
+        </>
+      )}
+    </SelectionDialog>
+  );
+}
+
+export const ExchangeSelectionDialog = ({
+  asteroidId,
+  otherEntity,
+  isSourcing,
+  initialSelection,
+  maxAmount,
+  onClose,
+  onCompleted,
+  open,
+  productId,
+  singleSelectionMode
+}) => {
+  const { crew } = useCrewContext();
+  const { data: swayBalance } = useSwayBalance();
+
+  const [selected, setSelected] = useState([]);
+  const [targetAmount, setTargetAmount] = useState(maxAmount || 0);
+
+  const destinationLocation = useMemo(() => {
+    if (!otherEntity) return {};
+    return locationsArrToObj(otherEntity.Location?.locations || []);
+  }, [otherEntity]);
+  const destLotId = destinationLocation?.lotId;
+
+  const {
+    data: resourceMarketplaces,
+    dataUpdatedAt: resourceMarketplacesUpdatedAt,
+    isLoading: resourceMarketplacesLoading,
+    refetch: refetchResourceMarketplaces
+  } = useShoppingListData(asteroidId, destLotId, [productId]);
+  const exchanges = useMemo(() => resourceMarketplaces?.[productId] || [], [resourceMarketplacesUpdatedAt]);
+
+  useInterval(() => { refetchResourceMarketplaces(); }, 60e3); // keep things loosely fresh
+
+  const crewBonuses = useMemo(() => {
+    if (!crew) return {};
+
+    const abilities = getCrewAbilityBonuses([
+      Crewmate.ABILITY_IDS.HOPPER_TRANSPORT_TIME,
+      Crewmate.ABILITY_IDS.FREE_TRANSPORT_DISTANCE,
+      Crewmate.ABILITY_IDS.MARKETPLACE_FEE_REDUCTION,
+    ], crew);
+    return {
+      hopperTransport: abilities[Crewmate.ABILITY_IDS.HOPPER_TRANSPORT_TIME],
+      freeTransport: abilities[Crewmate.ABILITY_IDS.FREE_TRANSPORT_DISTANCE],
+      feeReduction: abilities[Crewmate.ABILITY_IDS.MARKETPLACE_FEE_REDUCTION],
+    }
+  }, [crew]);
+
+  const selectionSummary = useMemo(() => {
+    let needed = targetAmount;
+    let totalPrice = 0;
+    let maxTravelTime = 0;
+    const allFills = [];
+    const selectedAmounts = {};
+
+    selected
+      .map((buildingId) => resourceMarketplaces[productId].find((m) => m.buildingId === buildingId))
+      .sort((a, b) => a.supply - b.supply)
+      .forEach((row) => {
+        selectedAmounts[row.buildingId] = 0;
+        maxTravelTime = Math.max(
+          maxTravelTime,
+          Time.toRealDuration(
+            Asteroid.getLotTravelTime(
+              asteroidId, Lot.toIndex(row.lotId), Lot.toIndex(destLotId), crewBonuses?.hopperTransport.totalBonus, crewBonuses?.freeTransport.totalBonus
+            ),
+            crew?._timeAcceleration
+          )
+        );
+
+        const fills = ordersToFills(
+          'buy',
+          row.orders,
+          needed,
+          row.marketplace?.Exchange?.takerFee || 0,
+          crewBonuses?.feeReduction?.totalBonus || 1,
+          row.feeEnforcement || 1,
+        );
+
+        fills.forEach((fill) => {
+          selectedAmounts[row.buildingId] += fill.fillAmount;
+          needed -= fill.fillAmount;
+          totalPrice += fill.fillPaymentTotal;
+        });
+
+        allFills.push(...fills);
+      });
+
+    return {
+      needed,
+      maxTravelTime,
+      totalPrice: totalPrice / TOKEN_SCALE[TOKEN.SWAY],
+      totalFilled: targetAmount - needed,
+      fills: allFills,
+      amounts: selectedAmounts
+    };
+  }, [selected, targetAmount]);
+
+  const insufficientSway = useMemo(() => selectionSummary.totalPrice * TOKEN_SCALE[TOKEN.SWAY] > swayBalance, [selectionSummary, swayBalance]);
+
+  const isCompletable = useMemo(() => selectionSummary.totalFilled > 0 && !insufficientSway, [insufficientSway, selectionSummary]);
+
+  const onSelected = useCallback((buildingId) => {
+    if (singleSelectionMode) {
+      setSelected((old) => old.includes(buildingId) ? [] : [buildingId]);
+    } else {
+      setSelected((old) => {
+        // if already toggled, untoggle
+        if (old.includes(buildingId)) {
+          return old.filter((b) => b !== buildingId);
+
+        // if already filled, clear all --> select this one
+        } else if (selectionSummary.needed === 0) {
+          return [buildingId];
+
+        // else, add this one
+        } else {
+          return [...old, buildingId];
+        }
+      });
+    }
+  }, [selectionSummary, singleSelectionMode]);
+
+  const onComplete = useCallback(() => {
+    if (isCompletable) {
+      onCompleted(selectionSummary);
+      onClose();
+    }
+  }, [isCompletable, onClose, onCompleted, selectionSummary]);
+
+  return (
+    <SelectionDialog
+      isCompletable={isCompletable}
+      onClose={onClose}
+      onComplete={onComplete}
+      open={open}
+      style={{ width: 820, maxWidth: 820 }}
+      title="Available Marketplaces">
+      {resourceMarketplacesLoading && (
+        <div style={{ height: 250 }}><PageLoader /></div>
+      )}
+      {!resourceMarketplacesLoading && (
+        <>
+          {exchanges?.length > 0
+            ? (
+              <>
+                <div style={{ padding: '0 5px 12px' }}>
+                  <div style={{ fontSize: '90%', opacity: 0.5, marginBottom: 4, marginLeft: 4, textTransform: 'uppercase' }}>Purchase Amount</div>
+                  <div style={{ background: '#181818', padding: '10px 15px' }}>
+                    <ResourceAmountSlider
+                      amount={targetAmount || 0}
+                      min={1}
+                      max={maxAmount}
+                      resource={Product.TYPES[productId]}
+                      setAmount={setTargetAmount} />
+                  </div>
+                </div>
+
+                <ProductMarketSummary
+                  crewBonuses={crewBonuses}
+                  productId={productId}
+                  resourceMarketplaces={exchanges}
+                  selected={selected}
+                  selectionSummary={selectionSummary}
+                  onSelected={onSelected}
+                  targetAmount={targetAmount}
+                />
+
+                <hr style={{ borderColor, borderStyle: 'solid', borderWidth: '1px 0 0' }} />
+
+                <OrderAlert mode="buy" insufficientAssets={reactBool(insufficientSway)}>
+                  <div>
+                    <div style={{ flex: 1 }}>
+                      <div><b>Market Buy</b></div>
+                      <div>
+                        {formatResourceMass(selectionSummary?.totalFilled || 0, productId)}
+                        {' '}{Product.TYPES[productId].name}
+                      </div>
+                    </div>
+                    <div style={{ alignItems: 'flex-end', display: 'flex' }}>
+                      <b>Total</b>
+                      <span style={{ display: 'inline-flex', fontSize: '36px', lineHeight: '36px' }}>
+                        <SwayIcon /><TotalSway>-{formatFixed(selectionSummary?.totalPrice || 0)}</TotalSway>
+                      </span>
+                    </div>
+                  </div>
+                </OrderAlert>
+              </>
+            )
+            : (
+              <EmptyMessage>There are no {Product.TYPES[productId].name}-stocked marketplaces available to you on this asteroid.</EmptyMessage>
+            )
+          }
+        </>
+      )}
+    </SelectionDialog>
+  );
+}
+
 //
 //  FORMATTERS
 //
@@ -2697,11 +3383,9 @@ export const getCapacityUsage = (inventories, type, inventoryBonuses) => {
   return getCapacityStats((inventories || []).find((i) => i.inventoryType === type), inventoryBonuses);
 }
 
-export const getBuildingRequirements = (building, deliveryActions = []) => {
-  const buildingType = building?.Building?.buildingType;
-  const inventory = (building?.Inventories || []).find((i) => i.status === Inventory.STATUSES.AVAILABLE); // TODO: should this be slot?
-  return Object.keys(Building.CONSTRUCTION_TYPES[buildingType]?.requirements || {}).map((productId) => {
-    const totalRequired = Building.CONSTRUCTION_TYPES[buildingType].requirements[productId];
+export const getRecipeRequirements = (inputsObj, inventory = null, recipeTally = 1, deliveryActions = []) => {
+  return Object.keys(inputsObj).map((productId) => {
+    const totalRequired = inputsObj[productId] * recipeTally;
     const inInventory = (inventory?.contents || []).find((c) => Number(c.product) === Number(productId))?.amount || 0;
     const inTransit = deliveryActions
       .filter((d) => !['FINISHED','CANCELING','PACKAGED'].includes(d.status))
@@ -2714,6 +3398,15 @@ export const getBuildingRequirements = (building, deliveryActions = []) => {
       inNeed: Math.max(0, totalRequired - inInventory - inTransit)
     };
   })
+}
+
+export const getBuildingRequirements = (building, deliveryActions = []) => {
+  return getRecipeRequirements(
+    Building.CONSTRUCTION_TYPES[building?.Building?.buildingType]?.requirements || {},
+    (building?.Inventories || []).find((i) => i.status === Inventory.STATUSES.AVAILABLE), // TODO: should this be slot?
+    1,
+    deliveryActions
+  );
 };
 
 export const getBuildingRequirementsMet = (building, deliveryActions = []) => {
@@ -2788,16 +3481,31 @@ export const LotShipImage = ({ shipType, iconBadge, iconBadgeColor, iconOverlay,
   );
 };
 
-export const BuildingImage = ({ buildingType, error, iconOverlay, iconOverlayColor, iconBorderColor, inventory, inventoryBonuses, inventories, showInventoryStatusForType, unfinished }) => {
+export const BuildingImage = ({
+  bottomBanner,
+  buildingType,
+  error,
+  iconBadge,
+  iconBadgeCorner,
+  iconOverlay,
+  iconOverlayColor,
+  iconBorderColor,
+  inventory,
+  inventoryBonuses,
+  inventories,
+  showInventoryStatusForType,
+  style,
+  unfinished
+}) => {
   const buildingAsset = Building.TYPES[buildingType];
   if (!buildingAsset) return null;
 
   const capacity = inventory ? getCapacityStats(inventory, inventoryBonuses) : getCapacityUsage(inventories, showInventoryStatusForType, inventoryBonuses);
   const closerLimit = (capacity.volume.used + capacity.volume.reserved) / capacity.volume.max > (capacity.mass.used + capacity.mass.reserved) / capacity.mass.max ? 'volume' : 'mass';
   return (
-    <BuildingThumbnailWrapper outlineColor={iconBorderColor}>
+    <BuildingThumbnailWrapper outlineColor={iconBorderColor} style={style}>
       <ResourceImage src={getBuildingIcon(buildingAsset.i, 'w150', unfinished)} />
-      {inventory !== false && capacity && (
+      {inventory !== false && (capacity?.mass?.max || capacity?.mass?.volume) && (
         <>
           <InventoryLabel overloaded={error}>
             {formatFixed(100 * (capacity[closerLimit].reserved + capacity[closerLimit].used) / capacity[closerLimit].max, 1)}% {/*closerLimit === 'volume' ? `m³` : `t`*/}
@@ -2809,22 +3517,24 @@ export const BuildingImage = ({ buildingType, error, iconOverlay, iconOverlayCol
             secondaryProgress={(capacity[closerLimit].reserved + capacity[closerLimit].used) / capacity[closerLimit].max} />
         </>
       )}
+      {iconBadge !== undefined && <ThumbnailIconBadge iconBadgeCorner={iconBadgeCorner}>{iconBadge}</ThumbnailIconBadge>}
       {iconOverlay && <ThumbnailOverlay color={iconOverlayColor}>{iconOverlay}</ThumbnailOverlay>}
+      {bottomBanner && <ThumbnailBottomBanner>{bottomBanner}</ThumbnailBottomBanner>}
       <ClipCorner dimension={10} color={iconBorderColor} />
     </BuildingThumbnailWrapper>
   );
 };
 
-export const EmptyBuildingImage = ({ iconOverride }) => (
-  <BuildingThumbnailWrapper>
-    <EmptyThumbnail>{iconOverride || <LocationIcon />}</EmptyThumbnail>
+export const EmptyBuildingImage = ({ iconOverride, iconStyle, ...props }) => (
+  <BuildingThumbnailWrapper {...props}>
+    <EmptyThumbnail style={iconStyle}>{iconOverride || <LocationIcon />}</EmptyThumbnail>
     <ClipCorner dimension={10} />
   </BuildingThumbnailWrapper>
 );
 
-export const EmptyResourceImage = ({ iconOverride, noIcon, ...props }) => (
+export const EmptyResourceImage = ({ iconOverride, iconStyle, noIcon, ...props }) => (
   <ResourceThumbnailWrapper {...props}>
-    <EmptyThumbnail>{noIcon ? null : (iconOverride || <PlusIcon />)}</EmptyThumbnail>
+    <EmptyThumbnail style={iconStyle}>{noIcon ? null : (iconOverride || <PlusIcon />)}</EmptyThumbnail>
     <ClipCorner dimension={10} />
   </ResourceThumbnailWrapper>
 );
@@ -2978,17 +3688,17 @@ const TimePill = ({ children, type }) => {
         <TimerInfoBody>
           {type === 'delay' && (
             <>
-              <b>Scheduled Wait:</b> Time until my crew initiates this action, if other actions have been scheduled ahead of it. The maximum waiting period is 24h.
+              <b><ScheduleFullIcon /> Crew Delay: </b>This crew has other scheduled tasks, and must wait before starting this one. The delay period equals the sum of the  all previously scheduled actions crew presence requirements. Crews may schedule additional actions as long as their total delay period does not exceed <b>24 hours</b>.
             </>
           )}
           {type === 'crew' && (
             <>
-              <b>Crew Ready In:</b> Time until all my crew's current and scheduled actions are finished.
+              <b><CrewIcon /> Crew Ready In: </b>Time until this crew becomes idle again, after performing all actions on their schedule including this one. Some actions cannot be scheduled and require a fully idle crew to start.
             </>
           )}
           {type === 'total' && (
             <>
-              <b>Action Ready In:</b> Time until the action outcome is finalized (The crew performing the action will often be ready sooner.)
+              <b><AlertIcon /> Action Finishes In: </b>Time until this action's outcome is ready to be finalized. Process actions require a crew to be present for <b>1/8th</b> of the process duration, so the acting crew will often return to station and become available before the action itself finishes.
             </>
           )}
         </TimerInfoBody>
@@ -3019,34 +3729,69 @@ export const ActionDialogHeader = ({ action, actionCrew, crewAvailableTime, dela
           <IconContainer>{action.icon}</IconContainer>
           <LabelContainer>
             <h1>{action.label}</h1>
-            <div>
-              <h2>{action.status || theming[stage]?.label}</h2>
-              {delayUntil !== undefined && (
-                <LiveTimer target={delayUntil} maxPrecision={2}>
-                  {(formattedTime, isTimer) => {
-                    const pills = [];
-                    if (isTimer) {
-                      pills.push(<TimePill key="delay" type="delay"><ScheduleFullIcon /><label>Wait</label> {formattedTime}</TimePill>);
-                    }
-                    if (crewAvailableTime !== undefined) {
-                      const delayDuration = isTimer ? (delayUntil - Math.floor(Date.now() / 1000)) : 0;
-                      pills.push(<TimePill key="crew" type="crew"><CrewBusyIcon isPaused /> {formatTimer(delayDuration + crewAvailableTime, 2)}</TimePill>)
-                    }
-                    return pills;
-                  }}
-                </LiveTimer>
-              )}
-              {delayUntil === undefined && crewAvailableTime !== undefined && <TimePill type="crew"><CrewBusyIcon isPaused /> {formatTimer(crewAvailableTime, 2)}</TimePill>}
-              {taskCompleteTime !== undefined && <TimePill type="total"><AlertIcon /> {formatTimer(taskCompleteTime, 2)}</TimePill>}
-            </div>
+            <h2>{action.status || theming[stage]?.label}</h2>
           </LabelContainer>
+          <div>
+            {delayUntil !== undefined && (
+              <LiveTimer target={delayUntil} maxPrecision={2}>
+                {(formattedTime, isTimer) => {
+                  const pills = [];
+                  const delayDuration = isTimer ? (delayUntil - Math.floor(Date.now() / 1000)) : 0;
+                  if (isTimer) {
+                    pills.push(<TimePill key="delay" type="delay"><ScheduleFullIcon /><label>Delay</label> {formattedTime}</TimePill>);
+                  }
+                  if (!(crewAvailableTime !== crewAvailableTime) && crewAvailableTime !== undefined && crewAvailableTime !== 0) {
+                    pills.push(<TimePill key="crew" type="crew"><CrewIcon isPaused /><label>Crew</label> {formatTimer(delayDuration + crewAvailableTime, 2)}</TimePill>)
+                  }
+                  if (!(taskCompleteTime !== taskCompleteTime) && taskCompleteTime !== undefined) {
+                    pills.push(<TimePill key="total" type="total"><AlertIcon /><label>Finishes</label> {formatTimer(delayDuration + taskCompleteTime, 2)}</TimePill>)
+                  }
+                  return pills;
+                }}
+              </LiveTimer>
+            )}
+            {delayUntil === undefined && !(crewAvailableTime !== crewAvailableTime) && crewAvailableTime !== 0 && crewAvailableTime !== undefined && 
+              <TimePill type="crew"><CrewIcon isPaused /><label>Crew</label> {formatTimer(crewAvailableTime, 2)}</TimePill>
+            }
+            {delayUntil === undefined && !(taskCompleteTime !== taskCompleteTime) && taskCompleteTime !== undefined && 
+              <TimePill type="total"><AlertIcon /><label>Finishes</label> {formatTimer(taskCompleteTime, 2)}</TimePill>
+            }
+          </div>
         </IconAndLabel>
       </Header>
     </>
   );
 };
 
-export const FlexSectionInputBlock = ({ bodyStyle, children, disabled, image, innerBodyStyle, isSelected, label, onClick, setRef, style = {}, sublabel, title, titleDetails, tooltip, ...props }) => {
+export const LeaseDetailsLabel = styled.div`
+  color: ${p => p.theme.colors.success};
+  font-size: 14px;
+`;
+
+export const LeaseInfoIcon = () => (
+  <div style={{ position: 'absolute', top: 5, right: 5, fontSize: 24, opacity: 0.5 }}>
+    <InfoIcon />
+  </div>
+);
+
+export const FlexSectionInputBlock = ({
+  addChildren,
+  bodyStyle,
+  children,
+  disabled,
+  image,
+  innerBodyStyle,
+  isSelected,
+  label,
+  onClick,
+  setRef,
+  style = {},
+  sublabel,
+  title,
+  titleDetails,
+  tooltip,
+  ...props
+}) => {
   const refEl = useRef();
 
   const [hovered, setHovered] = useState();
@@ -3084,6 +3829,7 @@ export const FlexSectionInputBlock = ({ bodyStyle, children, disabled, image, in
               </label>
             </ThumbnailWithData>
           )}
+          {addChildren}
           <ClipCorner dimension={sectionBodyCornerSize} />
         </FlexSectionInputBody>
       </FlexSectionInputContainer>
@@ -3214,7 +3960,7 @@ export const ResourceGridSectionInner = ({
 };
 
 const ResourceGridSection = ({ label, sectionProps = {}, ...props }) => (
-  <Section style={{ marginBottom: 25 }}>
+  <Section style={{ marginBottom: props.marginBottom === undefined ? 25 : props.marginBottom }}>
     <SectionTitle>{label}</SectionTitle>
     <SectionBody {...sectionProps}>
       <ResourceGridSectionInner {...props} />
@@ -3232,9 +3978,9 @@ export const BuildingRequirementsSection = ({ mode, label, requirements, require
         ? {
           animated: true,
           icon: <TransferToSiteIcon />,
-          stripeAnimation: true
         }
-        : undefined
+        : undefined,
+      stripeAnimation: item.inTransit > 0
     }));
   }, [requirements]);
 
@@ -3260,9 +4006,9 @@ export const TransferBuildingRequirementsSection = ({ label, onClick, requiremen
       ? {
         animated: true,
         icon: <TransferToSiteIcon />,
-        stripeAnimation: true
       }
-      : undefined
+      : undefined,
+    stripeAnimation: item.inTransit > 0
   })), [requirements, selectedItems]);
 
   return (
@@ -3517,7 +4263,7 @@ export const ResourceAmountSlider = ({ amount, extractionTime, min, max, resourc
           {' '}
           tonnes
         </SliderLabel>
-        <SliderInfo>{formatTimer(extractionTime, 3)}</SliderInfo>
+        {extractionTime !== undefined && <SliderInfo>{formatTimer(extractionTime, 3)}</SliderInfo>}
         <Button
           disabled={amount === max}
           onClick={() => setAmount(max)}
@@ -3573,8 +4319,8 @@ export const RecipeSlider = ({ amount, disabled, increment = 0.001, processingTi
 
     // round to nearest increment
     cleansed = numeral(Math.floor(cleansed.value() / increment) * increment);
-
-    setAmount(cleansed.value());
+  
+    setAmount(Number(cleansed.format(`${increment}`)));
   }, [increment, min, max]);
 
   const onChangeInput = useCallback((e) => {
@@ -3603,7 +4349,7 @@ export const RecipeSlider = ({ amount, disabled, increment = 0.001, processingTi
                 <SliderTextInput
                   type="number"
                   disabled={disabled}
-                  step={0.001}
+                  step={increment}
                   value={amount}
                   onChange={onChangeInput}
                   onBlur={onFocusEvent}
@@ -3611,7 +4357,7 @@ export const RecipeSlider = ({ amount, disabled, increment = 0.001, processingTi
                   style={{ marginTop: -2 }} />
               )
                 : (
-                  <b>{amount.toLocaleString(undefined, { minimumFractionDigits: increment % 1 === 0 ? 0 : 3 })}</b>
+                  <b>{amount.toLocaleString()}</b>
                 )
               }
               {' '}
@@ -4025,6 +4771,64 @@ const Overloaded = styled.div`
   text-transform: uppercase;
 `;
 
+export const MultiSourceInputBlock = ({
+  crew,
+  onClear,
+  onClickInventory,
+  onClickExchange,
+  exchangeSelection,
+  inventorySelection,
+  origin,
+  originLot,
+  ...props
+}) => {
+  const offerExchanges = !!crew?._location?.lotId;
+  if (offerExchanges && !exchangeSelection && !inventorySelection) {
+    return (
+      <FlexSectionInputBlock bodyStyle={{ height: 104, padding: 0 }} {...props}>
+        <MultiSourceWrapper style={{ height: 104, width: '100%' }}>
+          <Button onClick={onClickInventory}>
+            <TransferToSiteIcon /> <span>Transfer from Inventory</span>
+          </Button>
+
+          {/* TODO: disable if no marketplaces exist */}
+          <Button onClick={onClickExchange}>
+            <MarketBuyIcon /> <span>Source from Market</span>
+          </Button>
+        </MultiSourceWrapper>
+      </FlexSectionInputBlock>
+    );
+
+  } else if (exchangeSelection) {
+    return (
+      <LotInputBlock
+        {...props}
+        onClick={onClear}
+        lot={originLot}
+      />
+    );
+  }
+
+  // if off-surface, just present inventory...
+  console.log({ props })
+  return (
+    <InventoryInputBlock
+      {...props}
+      sublabel={
+        originLot
+        ? <><LocationIcon /> {formatters.lotName(inventorySelection?.lotIndex)}</>
+        : 'Inventory'
+      }
+      entity={origin}
+      imageProps={{ iconOverride: <InventoryIcon /> }}
+      inventoryBonuses={crew?._inventoryBonuses}
+      inventorySlot={inventorySelection?.slot}
+      isSourcing
+      onClick={offerExchanges ? onClear : onClickInventory}
+    />
+  );
+};
+
 export const InventoryInputBlock = ({
   entity,
   isSourcing,
@@ -4041,7 +4845,7 @@ export const InventoryInputBlock = ({
   ...props
 }) => {
   const inventory = useMemo(() => {
-    if (entity && inventorySlot) {
+    if (entity?.Inventories && inventorySlot) {
       return entity.Inventories.find((i) => i.slot === inventorySlot);
     }
     return null;
@@ -4476,7 +5280,9 @@ export const ActionDialogFooter = ({
             <>
               <Button
                 loading={reactBool(buttonsLoading)}
-                onClick={onClose}>Cancel</Button>
+                onClick={onClose}>
+                Cancel
+              </Button>
               {waitForCrewReady && !allowedOrLaunched && <CrewNotLaunchedButton />}
               {waitForCrewReady && allowedOrLaunched && !isReady && <CrewBusyButton isSequenceable={isSequenceable} />}
               {(!waitForCrewReady || (isReady && allowedOrLaunched)) && (
@@ -4484,7 +5290,9 @@ export const ActionDialogFooter = ({
                   disabled={nativeBool(disabled)}
                   isTransaction
                   loading={reactBool(buttonsLoading)}
-                  onClick={onGo}>{goLabel}</Button>
+                  onClick={onGo}>
+                  {goLabel}
+                </Button>
               )}
             </>
           )
@@ -4521,7 +5329,7 @@ export const ActionDialogFooter = ({
 export const ActionDialogTabs = ({ tabs, selected, onSelect }) => (
   <Section>
     <Tabs>
-      {tabs.map((tab, i) => (
+      {tabs.filter((t) => !!t).map((tab, i) => (
         <Tab key={i} onClick={() => onSelect(i)} isSelected={reactBool(i === selected)}>
           {tab.icon && <TabIcon style={tab.iconStyle || {}}>{tab.icon}</TabIcon>}
           <div>{tab.label}</div>
@@ -4816,6 +5624,48 @@ export const TravelBonusTooltip = ({ bonus, totalTime, tripDetails, ...props }) 
   />
 );
 
+export const LeaseTooltip = ({ desiredTerm, initialTerm, permId, rate }) => {
+  return (
+    <Bonuses>
+      <BonusesHeader>Lease Details</BonusesHeader>
+      <BonusesSection>
+        <table>
+          <tbody>
+            <tr>
+              <th>Permission</th>
+              <td>{Permission.TYPES[permId].name}</td>
+            </tr>
+            <tr>
+              <th>Policy Type</th>
+              <td>Prepaid Lease</td>
+            </tr>
+            <tr><td colspan="2" style={{ borderBottom: '1px solid #333', height: 0 }} /></tr>
+            <tr>
+              <th>Requested Time</th>
+              <td>{formatFixed(desiredTerm / 3600, 3)} hr</td>
+            </tr>
+            <tr>
+              <th>Minimum Time</th>
+              <td style={desiredTerm < initialTerm ? { color: theme.colors.warning } : {}}>
+                {desiredTerm < initialTerm && <WarningIcon />}
+                <span style={{ marginLeft: 4 }}>{formatFixed(initialTerm / 3600, 3)} hr</span>
+              </td>
+            </tr>
+            <tr>
+              <th>Lease Rate</th>
+              <td><SwayIcon /> {formatPrice(rate / TOKEN_SCALE[TOKEN.SWAY])} / hr</td>
+            </tr>
+            <tr><td colspan="2" style={{ borderBottom: '1px solid #333', height: 0 }} /></tr>
+            <tr>
+              <th>Total Lease Cost</th>
+              <td><SwayIcon /> {formatPrice((rate / TOKEN_SCALE[TOKEN.SWAY]) * Math.max(desiredTerm, initialTerm) / 3600)}</td>
+            </tr>
+          </tbody>
+        </table>
+      </BonusesSection>
+    </Bonuses>
+  );
+};
 
 //
 // utils

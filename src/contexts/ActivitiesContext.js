@@ -42,7 +42,7 @@ const isMismatch = (updateValue, queryCacheValue) => {
 }
 
 export function ActivitiesProvider({ children }) {
-  const { token, setBlockNumber } = useSession();
+  const { token, blockNumber, blockNumberIsProvisional, setBlockNumber, setIsBlockMissing } = useSession();
   const { crew, pendingTransactions, refreshReadyAt } = useCrewContext();
   const simulation = useSimulationState();
   const getActivityConfig = useGetActivityConfig();
@@ -278,7 +278,7 @@ export function ActivitiesProvider({ children }) {
             if (!isRedundant) finalInvalidations.push(specific);
           });
         if (debugInvalidation) console.log('deduped final invalidate', finalInvalidations);
-        
+
         finalInvalidations.forEach((queryKey) => {
           if (process.env.NODE_ENV !== 'production') console.log('invalidate', queryKey);
           queryClient.invalidateQueries({ queryKey, refetchType: 'active' });
@@ -339,6 +339,21 @@ export function ActivitiesProvider({ children }) {
     const { type, body } = message;
     if (ignoreEventTypes.includes(type)) return;
     if (type === 'CURRENT_STARKNET_BLOCK_NUMBER') {
+      // our pre-update block number should be at least as high as the newly reported
+      // previously-processed-block from the server (otherwise, we missed one)
+      if (blockNumberIsProvisional) {
+        console.log(`Setting first non-provisional block number to ${body.blockNumber} (provisional was ${blockNumber})`);
+      }
+      else if (blockNumber > 0 && body.previous > 0 && body.previous > blockNumber) {
+        console.log(`Missed a block! (new: ${body.blockNumber}, server prev: ${body.previous}, local prev: ${blockNumber})`);
+
+        if (process.env.NODE_ENV !== 'production') {
+          window.alert('Missed a block!');
+        }
+        setIsBlockMissing(true);
+      }
+
+      // update the local block
       if (body.blockNumber > 0) setBlockNumber(body.blockNumber);
     } else {
 
@@ -350,7 +365,7 @@ export function ActivitiesProvider({ children }) {
       if (pendingTimeout.current) clearTimeout(pendingTimeout.current);
       pendingTimeout.current = setTimeout(processPendingWSBatch, 1000);
     }
-  }, [processPendingWSBatch]);
+  }, [blockNumber, blockNumberIsProvisional, processPendingWSBatch]);
 
   const isFirstLoad = useRef(true); // (i.e. this is not a crew switch)
   useEffect(() => {
@@ -369,7 +384,7 @@ export function ActivitiesProvider({ children }) {
       api.getTransactionActivities(pendingTxHashes).then(async (data) => {
         await hydrateActivities(data.activities, queryClient);
         handleActivities(data.activities, isFirstLoad.current);
-        if (data.blockNumber > 0) setBlockNumber(data.blockNumber);
+        if (data.blockNumber > 0) setBlockNumber(data.blockNumber); // TODO: is this still necessary?
       });
     } else {
       handleActivities([], isFirstLoad.current);

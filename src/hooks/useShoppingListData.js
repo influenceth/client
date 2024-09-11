@@ -5,19 +5,19 @@ import useAsteroidBuildings from '~/hooks/useAsteroidBuildings';
 import useShoppingListOrders from '~/hooks/useShoppingListOrders';
 import api from '~/lib/api';
 
-const useShoppingListData = (asteroidId, lotId, productIds) => {
+const useShoppingListData = (asteroidId, lotId, productIds, mode = 'buy') => {
   const {
     data: exchanges,
     isLoading: exchangesLoading,
     dataUpdatedAt: exchangesUpdatedAt,
     refetch: refetchExchanges
-  } = useAsteroidBuildings(asteroidId, 'Exchange', Permission.IDS.BUY);
+  } = useAsteroidBuildings(asteroidId, 'Exchange', mode === 'buy' ? Permission.IDS.BUY : Permission.IDS.SELL);
 
   const lastValue = useRef();
 
   // TODO: how much effort would it be to include feeEnforcement in elasticsearch on exchanges
   const [feeEnforcements, setFeeEnforcements] = useState();
-  const [feesLoading, setFeesLoading] = useState();
+  const [feesLoading, setFeesLoading] = useState(true);
   const loadFees = useCallback(async () => {
     const ids = (exchanges || []).map((e) => e.Control?.controller?.id);
     if (ids?.length > 0) {
@@ -47,14 +47,14 @@ const useShoppingListData = (asteroidId, lotId, productIds) => {
       } catch (e) {
         console.warn(e);
       }
-      setFeesLoading(false);
     }
+    setFeesLoading(false);
   }, [exchangesUpdatedAt]);
   useEffect(() => {
     loadFees();
   }, [loadFees]);
 
-  const { data: orders, isLoading: ordersLoading, refetch: refetchOrders } = useShoppingListOrders(asteroidId, productIds);
+  const { data: orders, isLoading: ordersLoading, refetch: refetchOrders } = useShoppingListOrders(asteroidId, productIds, mode);
 
   const isLoading = exchangesLoading || feesLoading || ordersLoading;
   return useMemo(() => {

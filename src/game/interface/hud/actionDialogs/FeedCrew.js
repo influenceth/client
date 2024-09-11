@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Asteroid, Crew, Crewmate, Lot, Permission, Product, Time } from '@influenceth/sdk';
 import styled from 'styled-components';
 
-import { AddRationsIcon, ForwardIcon, InventoryIcon, LocationIcon, RouteIcon } from '~/components/Icons';
+import { AddRationsIcon, ForwardIcon, InventoryIcon, RouteIcon, SwayIcon } from '~/components/Icons';
 import useCrewContext from '~/hooks/useCrewContext';
 import useLot from '~/hooks/useLot';
 import { reactBool, formatTimer, locationsArrToObj, getCrewAbilityBonuses, formatFixed } from '~/lib/utils';
@@ -26,19 +26,21 @@ import {
   FlexSectionBlock,
   WarningAlert,
   InventorySelectionDialog,
-  InventoryInputBlock,
   CrewInputBlock,
   MiniBarChart,
   formatResourceMass,
+  MultiSourceInputBlock,
+  OrderSelectionDialog,
 } from './components';
 import { ActionDialogInner } from '../ActionDialog';
 import actionStages from '~/lib/actionStages';
 import theme from '~/theme';
 import useEntity from '~/hooks/useEntity';
-import formatters from '~/lib/formatters';
 import useFeedCrewManager from '~/hooks/actionManagers/useFeedCrewManager';
 import useAsteroid from '~/hooks/useAsteroid';
 import useBlockTime from '~/hooks/useBlockTime';
+import { TOKEN, TOKEN_SCALE } from '~/lib/priceUtils';
+import useCrew from '~/hooks/useCrew';
 
 const PseudoStatRow = styled.div`
   align-items: center;
@@ -107,30 +109,52 @@ const FeedCrew = ({
     return getCrewAbilityBonuses(Crewmate.ABILITY_IDS.FREE_TRANSPORT_DISTANCE, crew) || {};
   }, [crew]);
 
-  const [originSelectorOpen, setOriginSelectorOpen] = useState(false);
   const [tab, setTab] = useState(0);
+  const [inventorySelectorOpen, setInventorySelectorOpen] = useState(false);
+  const [exchangeSelectorOpen, setExchangeSelectorOpen] = useState();
   const [transferSelectorOpen, setTransferSelectorOpen] = useState();
   const [selectedItems, setSelectedItems] = useState(props.preselect?.selectedItems || {});
 
   // get origin* data
-  const [originSelection, setOriginSelection] = useState(
-    (currentFeeding && currentFeeding.vars?.origin && {
+  const [inventorySelection, setInventorySelection] = useState(
+    (currentFeeding && currentFeeding.vars?.origin && currentFeeding.vars?.origin_slot && {
       id: currentFeeding.vars?.origin?.id,
       label: currentFeeding.vars?.origin?.label,
       slot: currentFeeding.vars?.origin_slot,
     }) || undefined
   );
-  const { data: origin } = useEntity(originSelection ? { id: originSelection.id, label: originSelection.label } : undefined);
+  const [exchangeSelection, setExchangeSelection] = useState(
+    (currentFeeding && currentFeeding.vars?.exchange && {
+      entity: {
+        id: currentFeeding.vars?.exchange?.id,
+        label: currentFeeding.vars?.exchange?.label,
+      },
+      fillAmount: currentFeeding.vars?.amount || 0,
+      fillPaymentTotal: (currentFeeding.vars?.payments?.toExchange || 0) + (currentFeeding.vars?.payments?.toPlayer || 0),
+    }) || undefined
+  );
+
+  const originId = useMemo(() => {
+    if (exchangeSelection) return exchangeSelection.entity;
+    if (inventorySelection) return { id: inventorySelection.id, label: inventorySelection.label };
+    return undefined;
+  }, [exchangeSelection, inventorySelection]);
+  const { data: origin } = useEntity(originId);
   const originLotId = useMemo(() => origin && locationsArrToObj(origin?.Location?.locations || []).lotId, [origin]);
   const { data: originLot } = useLot(originLotId);
-  const originInventory = useMemo(() => (origin?.Inventories || []).find((i) => i.slot === originSelection?.slot), [origin, originSelection]);
+  const originInventory = useMemo(() => (origin?.Inventories || []).find((i) => i.slot === inventorySelection?.slot), [origin, inventorySelection]);
 
-  // handle "currentFeeding" state
+  // handle "currentFeeding" state (or selectedItems for exchanges)
   useEffect(() => {
     if (currentFeeding) {
       setSelectedItems({ [Product.IDS.FOOD]: currentFeeding.vars?.food || 0 });
     }
   }, [currentFeeding]);
+
+  const handleExchangeSelection = useCallback((selection) => {
+    setExchangeSelection(selection);
+    setSelectedItems(selection ? { [Product.IDS.FOOD]: selection?.fillAmount || 0 } : {});
+  }, []);
 
   const [transportDistance, transportTime] = useMemo(() => {
     if (!asteroid?.id || !originLot?.id) return [0, 0];
@@ -192,13 +216,35 @@ const FeedCrew = ({
     },
   ]), [totalMass, totalVolume, transportDistance, transportTime]);
 
-  const onStartFeeding = useCallback(() => {
+  const onClear = useCallback(() => {
+    setExchangeSelection();
+    setInventorySelection();
+    setSelectedItems({});
+  }, []);
+
+  const { data: exchangeOwnerCrew } = useCrew(exchangeSelection ? origin?.Control?.controller?.id : undefined);
+  const { data: sellerCrew } = useCrew(exchangeSelection?.crew?.id);
+
+  const onStartFeedingFromExchange = useCallback(() => {
+    feedCrew({
+      ...exchangeSelection,
+      sellerAccount: sellerCrew?.Crew?.delegatedTo,
+      exchangeOwnerAccount: exchangeOwnerCrew?.Crew?.delegatedTo,
+    });
+  }, [exchangeSelection, exchangeOwnerCrew, sellerCrew]);
+  
+  const onStartFeedingFromInventory = useCallback(() => {
     feedCrew({
       origin,
       originSlot: originInventory?.slot,
       amount: Math.floor(selectedItems[Product.IDS.FOOD])
     });
-  }, [asteroid?.id, origin, originInventory, originLot, selectedItems]);
+  }, [origin, originInventory, selectedItems]);
+
+  const onStartFeeding = useCallback(() => {
+    if (exchangeSelection) onStartFeedingFromExchange();
+    else onStartFeedingFromInventory();
+  }, [exchangeSelection, onStartFeedingFromExchange, onStartFeedingFromInventory]);
 
   const foodStats = useMemo(() => {
     const maxFood = (crew?._crewmates?.length || 1) * Crew.CREWMATE_FOOD_PER_YEAR;
@@ -225,6 +271,14 @@ const FeedCrew = ({
     }
   }, [crew?._crewmates, crew?.Crew?.lastFed, crew?._timeAcceleration, blockTime, selectedItems]);
 
+  const disabled = useMemo(() => {
+    if (!origin) return true;
+    if (totalMass === 0) return true;
+    if (inventorySelection) return !crewCan(Permission.IDS.REMOVE_PRODUCTS, origin);
+    if (exchangeSelection) return !crewCan(Permission.IDS.BUY, origin);
+    return true;
+  }, [origin, totalMass, crewCan]);
+
   return (
     <>
       <ActionDialogHeader
@@ -248,29 +302,26 @@ const FeedCrew = ({
           selected={tab}
           tabs={[
             { icon: <RouteIcon />, label: 'Transfer' },
-            { icon: <InventoryIcon />, iconStyle: { fontSize: 22 }, label: 'Inventory' },
+            inventorySelection ? { icon: <InventoryIcon />, iconStyle: { fontSize: 22 }, label: 'Inventory' } : undefined,
           ]} />
 
         <FlexSection>
-          <InventoryInputBlock
-            title="Origin"
-            titleDetails={<TransferDistanceDetails distance={transportDistance} crewDistBonus={crewDistBonus} />}
+          <MultiSourceInputBlock
+            crew={crew}
             disabled={stage !== actionStages.NOT_STARTED}
-            entity={origin}
-            inventorySlot={originSelection?.slot}
-            inventoryBonuses={crew?._inventoryBonuses}
-            imageProps={{
-              iconOverride: <InventoryIcon />,
-            }}
             isSelected={stage === actionStages.NOT_STARTED}
-            isSourcing
-            onClick={() => { setOriginSelectorOpen(true) }}
+            exchangeSelection={exchangeSelection}
+            inventorySelection={inventorySelection}
+            onClear={onClear}
+            onClickExchange={() => { setExchangeSelectorOpen(true) }}
+            onClickInventory={() => { setInventorySelectorOpen(true) }}
+            origin={origin}
+            originLot={originLot}
             stage={stage}
-            sublabel={
-              originLot
-              ? <><LocationIcon /> {formatters.lotName(originSelection?.lotIndex)}</>
-              : 'Inventory'
-            }
+            title="Origin"
+            titleDetails={transportDistance !== undefined && (
+              <TransferDistanceDetails distance={transportDistance} crewDistBonus={crewDistBonus} />
+            )}
             transferMass={-totalMass}
             transferVolume={-totalVolume} />
 
@@ -280,20 +331,23 @@ const FeedCrew = ({
 
           <CrewInputBlock
             crew={crew}
-            title="To Crew"
-            />
+            title="To Crew" />
         </FlexSection>
 
         {tab === 0 && (
           <>
             <FlexSection style={{ alignItems: 'flex-start' }}>
-              <FlexSectionBlock title="Transferred Food" style={{ alignSelf: 'stretch', marginBottom: 56 }} bodyStyle={{ height: '100%', padding: 0 }}>
+              <FlexSectionBlock
+                title={`Items to ${exchangeSelection ? 'Purchase' : 'Transfer'}`}
+                titleDetails={exchangeSelection && <><SwayIcon /> {((exchangeSelection.fillPaymentTotal || 0) / TOKEN_SCALE[TOKEN.SWAY]).toLocaleString(undefined, { maximumFractionDigits: 0 })}</>}
+                style={{ alignSelf: 'stretch', marginBottom: 56 }}
+                bodyStyle={{ height: '100%', padding: 0 }}>
                 <ItemSelectionSection
                   columns={3}
                   label="Transfer Food"
                   items={selectedItems}
                   minCells={0}
-                  onClick={stage === actionStages.NOT_STARTED && origin ? (() => setTransferSelectorOpen(true)) : undefined}
+                  onClick={inventorySelection && stage === actionStages.NOT_STARTED && origin ? (() => setTransferSelectorOpen(true)) : undefined}
                   stage={stage}
                   style={{ height: '100%' }}
                   unwrapped />
@@ -367,7 +421,7 @@ const FeedCrew = ({
       </ActionDialogBody>
 
       <ActionDialogFooter
-        disabled={!origin || totalMass === 0 || !crewCan(Permission.IDS.REMOVE_PRODUCTS, origin)}
+        disabled={disabled}
         finalizeLabel="Complete"
         goLabel="Transfer"
         onGo={onStartFeeding}
@@ -392,14 +446,26 @@ const FeedCrew = ({
             }]}
           />
 
+          <OrderSelectionDialog
+            asteroidId={asteroid?.id}
+            isSourcing
+            maxAmount={Math.max(0, foodStats.maxFood - foodStats.currentFood)}
+            otherEntity={crew}
+            onClose={() => setExchangeSelectorOpen(false)}
+            onCompleted={handleExchangeSelection}
+            open={exchangeSelectorOpen}
+            productId={Product.IDS.FOOD}
+            singleSelectionMode
+          />
+
           <InventorySelectionDialog
             asteroidId={asteroid?.id}
             isSourcing
             itemIds={[Product.IDS.FOOD]}
             otherEntity={crew}
-            onClose={() => setOriginSelectorOpen(false)}
-            onSelected={setOriginSelection}
-            open={originSelectorOpen}
+            onClose={() => setInventorySelectorOpen(false)}
+            onSelected={setInventorySelection}
+            open={inventorySelectorOpen}
             requirePresenceOfItemIds
           />
         </>

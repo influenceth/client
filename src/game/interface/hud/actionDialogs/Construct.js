@@ -27,7 +27,8 @@ import {
   getBuildingRequirements,
   LotInputBlock,
   getTripDetails,
-  LotControlWarning
+  LotControlWarning,
+  MultiSourceWrapper
 } from './components';
 import actionStage from '~/lib/actionStages';
 import useDeliveryManager from '~/hooks/actionManagers/useDeliveryManager';
@@ -40,27 +41,6 @@ import { ActionDialogInner, useAsteroidAndLot } from '../ActionDialog';
 
 const MouseoverWarning = styled.span`
   & b { color: ${theme.colors.error}; }
-`;
-
-const SourceWrapper = styled(AssetBlock)`
-  align-items: center;
-  align-self: stretch;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-evenly;
-  padding: 0 15px;
-  width: 50%;
-  & > button {
-    width: 100%;
-  }
-  & > button > div {
-    & > svg {
-      font-size: 32px;
-    }
-    & > span {
-      flex: 1;
-    }
-  }
 `;
 
 const ReqTitle = styled.div`
@@ -210,7 +190,7 @@ const Construct = ({ asteroid, lot, constructionManager, stage, ...props }) => {
             imageProps={{
               iconOverlay: (requirementsMet  && !waitingOnTransfer) ? <CheckSmallIcon /> : <WarningIcon />,
               iconOverlayColor: (requirementsMet  && !waitingOnTransfer) ? theme.colors.green : theme.colors.lightOrange,
-              inventory:false,
+              inventory: false,
               iconBorderColor: (requirementsMet  && !waitingOnTransfer) ? `rgba(${hexToRGB(theme.colors.darkGreen)}, 0.5)` : `rgba(${hexToRGB(theme.colors.lightOrange)}, 0.5)`,
             }}
             bodyStyle={(requirementsMet  && !waitingOnTransfer) ? {} : { background: `rgba(${hexToRGB(theme.colors.lightOrange)}, 0.1)` }}
@@ -221,7 +201,7 @@ const Construct = ({ asteroid, lot, constructionManager, stage, ...props }) => {
               <FlexSectionSpacer />
 
               {/* TODO: disable both buttons if needs are met by incoming deliveries */}
-              <SourceWrapper isSelected style={{ border: 0 }}>
+              <MultiSourceWrapper>
                 <Button onClick={transferToSite}>
                   <TransferToSiteIcon /> <span>Transfer from Inventories</span>
                 </Button>
@@ -230,18 +210,18 @@ const Construct = ({ asteroid, lot, constructionManager, stage, ...props }) => {
                 <Button setRef={setCoachmarkRef(COACHMARK_IDS.actionDialogConstructSource)} onClick={purchaseOnMarket}>
                   <MarketBuyIcon /> <span>Source from Market</span>
                 </Button>
-              </SourceWrapper>
+              </MultiSourceWrapper>
             </>
           )}
         </FlexSection>
 
         {stage === actionStage.NOT_STARTED &&  (
           <BuildingRequirementsSection
-          label={(
-            <ReqTitle>
-              <span>Materials On Site</span>
-              {!(requirementsMet && !waitingOnTransfer) && <span>This site is missing construction materials</span>}
-            </ReqTitle>
+            label={(
+              <ReqTitle>
+                <span>Materials On Site</span>
+                {!(requirementsMet && !waitingOnTransfer) && <span>This site is missing construction materials</span>}
+              </ReqTitle>
             )}
             mode="gathering"
             requirementsMet={requirementsMet && !waitingOnTransfer}

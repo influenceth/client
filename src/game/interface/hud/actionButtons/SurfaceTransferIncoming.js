@@ -14,7 +14,7 @@ const isVisible = ({ crew, lot, ship }) => {
   return crew && ((entity?.Inventories || []).find((i) => i.status === Inventory.STATUSES.AVAILABLE));
 };
 
-const SurfaceTransferIncoming = ({ asteroid, blockTime, crew, lot, ship, onSetAction, dialogProps = {}, _disabled }) => {
+const SurfaceTransferIncoming = ({ asteroid, blockTime, crew, lot, ship, onSetAction, dialogProps = {}, _disabled, _disabledReason }) => {
   const destination = useMemo(() => ship || lot?.surfaceShip || lot?.building, [ship, lot]);
   const { data: inventoryOrders } = useOrdersByInventory(destination);
   const { currentDeliveryActions: destDeliveryActions, isLoading } = useDeliveryManager({ destination });
@@ -53,6 +53,7 @@ const SurfaceTransferIncoming = ({ asteroid, blockTime, crew, lot, ship, onSetAc
                 isCancellation: true,
                 cancellationMakerFee: order.makerFee,
                 preselect: {
+                  crew: order.crew,
                   limitPrice: order.price,
                   quantity: order.amount,
                   storage: order.storage,
@@ -106,6 +107,8 @@ const SurfaceTransferIncoming = ({ asteroid, blockTime, crew, lot, ship, onSetAc
   }, [onSetAction, destination, dialogProps]);
 
   const disabledReason = useMemo(() => {
+    if (_disabledReason) return _disabledReason;
+    if (_disabled) return 'loading...';
     if (!destination) return '';
     const _location = locationsArrToObj(destination.Location?.locations || []);
     if (!_location?.lotId) return 'not on surface';

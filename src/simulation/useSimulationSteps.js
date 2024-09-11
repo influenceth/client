@@ -1159,6 +1159,7 @@ const useSimulationSteps = () => {
   return useMemo(() => ({
     currentStepIndex: simulation?.step,
     currentStep,
+    isLastStep: simulation?.step === simulationSteps?.length - 1,
     isLoading,
     isTransitioning
   }), [currentStep, isLoading, isTransitioning, simulation?.step])
