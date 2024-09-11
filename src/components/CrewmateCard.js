@@ -30,7 +30,7 @@ const CardFooter = styled(CardLayer)`
   align-items: center;
   display: flex;
   flex-direction: row;
-  padding: 8px;
+  padding: 4px;
   text-align: left;
   top: auto;
   & > div:last-child {
@@ -46,19 +46,24 @@ const CardImage = styled(CardLayer)`
     width: 100%;
   }
 
-  ${p => p.applyMask ? `mask-image: linear-gradient(to bottom, black 75%, transparent 100%);` : ''}
+  ${p => p.applyMask ? `mask-image: linear-gradient(to bottom, black 75%, transparent 90%);` : ''}
 `;
 
 const Card = styled.div`
   background-color: rgba(20, 20, 20, 0.75);
-  ${p => !p.hasOverlay
+  ${p => (!p.showClassInHeader && p.crewmateClass)
     ? `background: linear-gradient(
         to bottom,
-        rgba(30, 30, 30, 0.15) 10%,
-        rgba(${p.classLabel ? `${p.theme.colors.classes.rgb[p.classLabel]}, 0.15` : `30, 30, 30, 0.85`}) 70%,
-        rgba(30, 30, 30, 0.15) 100%
+        rgba(30, 30, 30, 0) 10%,
+        rgba(${p.classLabel ? `${p.theme.colors.classes.rgb[p.classLabel]}, 0.3` : `30, 30, 30, 1`}) 60%,
+        rgba(${p.classLabel ? `${p.theme.colors.classes.rgb[p.classLabel]}, 0.7` : `30, 30, 30, 1`}) 100%
       );`
-    : ''
+    : `background: linear-gradient(
+        to bottom,
+        rgba(0, 0, 0, 0) 10%,
+        rgba(${p.classLabel ? `${p.theme.colors.classes.rgb[p.classLabel]}, 0.5` : `30, 30, 30, 1`}) 60%,
+        rgba(0, 0, 0, 1) 100%
+      );`
   }
   cursor: ${p => p.clickable && p.theme.cursors.active};
   font-size: ${p => p.fontSize || p.theme.fontSizes.detailText};
