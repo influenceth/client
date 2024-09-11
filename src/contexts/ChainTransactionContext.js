@@ -581,7 +581,8 @@ export function ChainTransactionProvider({ children }) {
         // Triple the fee estimation and check for sufficient funds to ensure transaction success
         // TODO: figure out why some txs require this
         
-        maxFee = gasless.getGasFeesInGasToken(simulation[0].suggestedMaxFee, gasToken) * 3n;
+        maxFee = gasless.getGasFeesInGasToken(simulation[0].suggestedMaxFee, gasToken)
+          * (process.env.REACT_APP_DEPLOYMENT === 'production' ? 3n : 6n);
         
         // (not sure why this would ever be negative, but it is on dev at least)
         if (maxFee < 0n) maxFee *= -1n;
