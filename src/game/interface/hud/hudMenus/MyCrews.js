@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import styled, { keyframes } from 'styled-components';
 import { useHistory } from 'react-router-dom';
 import { Entity } from '@influenceth/sdk';
@@ -103,17 +103,26 @@ const MyCrews = () => {
       acc[asteroidId] = asteroidCrewTally * crewRowHeight + asteroidLocationTally * (locationTitleHeight + locationExtraMargin);
       return acc;
     }, {});
-  }, [nonEmptyCrewsByLocation])
+  }, [nonEmptyCrewsByLocation]);
+
+  const filterRef = useRef();
+  useEffect(() => {
+    setTimeout(() => {
+      if (filterRef.current) filterRef.current.focus();
+    }, 500);  // give animation time to finish before putting focus on the input
+  }, []);
 
   return (
     <Scrollable>
-      <TextInput
-        autoFocus
-        onChange={(e) => setSearchFilter(e.target.value)}
-        placeholder="Filter by Crew..."
-        value={searchFilter || ''}
-        width={185}
-        style={{ marginTop: '10px' }} />
+      {crews.length > 3 && (
+        <div style={{ marginBottom: 5, padding: '10px 5px', borderBottom: '1px solid rgba(255, 255, 255, 0.2)', width: '100%' }}>
+          <TextInput
+            ref={filterRef}
+            onChange={(e) => setSearchFilter(e.target.value)}
+            placeholder="Filter by Crew Name..."
+            value={searchFilter || ''} />
+        </div>
+      )}
       {Object.keys(nonEmptyCrewsByLocation || {}).map((asteroidId) => (
         <HudMenuCollapsibleSection
           key={asteroidId}
