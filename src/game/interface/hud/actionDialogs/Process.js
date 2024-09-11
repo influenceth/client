@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from '~/lib/react-debug';
 import styled from 'styled-components';
 import { Asteroid, Crewmate, Lot, Permission, Process, Processor, Product, Time } from '@influenceth/sdk';
 
@@ -61,7 +61,7 @@ const SECTION_WIDTH = 1150;
 
 const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...props }) => {
   const { currentProcess, processStatus, startProcess, finishProcess } = processManager;
-  const processor = useMemo(
+  const processor = useMemo(import.meta.url, 
     () => (lot?.building?.Processors || []).find((e) => e.slot === processorSlot) || {},
     [lot?.building, processorSlot]
   );
@@ -73,17 +73,17 @@ const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...pro
 
   const [selectedOrigin, setSelectedOrigin] = useState(currentProcess ? { ...currentProcess?.origin, slot: currentProcess?.originSlot } : undefined);
   const { data: origin } = useEntity(selectedOrigin);
-  const originLotId = useMemo(() => origin && locationsArrToObj(origin?.Location?.locations || []).lotId, [origin]);
-  const originLotIndex = useMemo(() => Lot.toIndex(originLotId), [originLotId]);
+  const originLotId = useMemo(import.meta.url, () => origin && locationsArrToObj(origin?.Location?.locations || []).lotId, [origin]);
+  const originLotIndex = useMemo(import.meta.url, () => Lot.toIndex(originLotId), [originLotId]);
   const { data: originLot } = useLot(originLotId);
-  const originInventory = useMemo(() => (origin?.Inventories || []).find((i) => i.slot === selectedOrigin?.slot), [origin, selectedOrigin?.slot]);
+  const originInventory = useMemo(import.meta.url, () => (origin?.Inventories || []).find((i) => i.slot === selectedOrigin?.slot), [origin, selectedOrigin?.slot]);
 
   const [selectedDestination, setSelectedDestination] = useState(currentProcess ? { ...currentProcess?.destination, slot: currentProcess?.destinationSlot } : undefined);
   const { data: destination } = useEntity(selectedDestination);
-  const destinationLotId = useMemo(() => destination && locationsArrToObj(destination?.Location?.locations || []).lotId, [destination]);
-  const destinationLotIndex = useMemo(() => Lot.toIndex(destinationLotId), [destinationLotId]);
+  const destinationLotId = useMemo(import.meta.url, () => destination && locationsArrToObj(destination?.Location?.locations || []).lotId, [destination]);
+  const destinationLotIndex = useMemo(import.meta.url, () => Lot.toIndex(destinationLotId), [destinationLotId]);
   const { data: destinationLot } = useLot(destinationLotId);
-  const destinationInventory = useMemo(() => (destination?.Inventories || []).find((i) => i.slot === selectedDestination?.slot), [destination, selectedDestination?.slot]);
+  const destinationInventory = useMemo(import.meta.url, () => (destination?.Inventories || []).find((i) => i.slot === selectedDestination?.slot), [destination, selectedDestination?.slot]);
 
   const [amount, setAmount] = useState(currentProcess?.recipeTally || 1);
   const [processId, setProcessId] = useState(currentProcess?.processId);
@@ -94,7 +94,7 @@ const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...pro
 
   const process = Process.TYPES[processId];
 
-  const { recipeStepSize } = useMemo(() => {
+  const { recipeStepSize } = useMemo(import.meta.url, () => {
     if (process) {
       const placesAfterDecimal = Math.ceil(Math.log10(Math.max(...Object.values(process.outputs))));
       const recipeStepSize = 1 / Math.pow(10, placesAfterDecimal);
@@ -104,13 +104,13 @@ const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...pro
     return { placesAfterDecimal: 3, recipeStepSize: 0.001 };
   }, [process]);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (currentProcess && !selectedOrigin) {
       setSelectedOrigin({ ...currentProcess?.origin, slot: currentProcess?.originSlot })
     }
   }, [currentProcess]);
 
-  const maxAmount = useMemo(() => {
+  const maxAmount = useMemo(import.meta.url, () => {
     let maxPossible = 1;
 
     if (process) maxPossible = Math.floor((365 * 86400) / process.recipeTime);
@@ -125,7 +125,7 @@ const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...pro
   }, [process, originInventory]);
 
   // Ensure amount is within bounds when origin inventory or recipe changes
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     // For actions that are already in progress etc., just trust the recipeTally for amount.
     // The maxAmount (which depends on *current* origin inventory stock) is not relevant in that case.
     if (stage !== actionStages.NOT_STARTED) return;
@@ -133,14 +133,14 @@ const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...pro
     if (amount < recipeStepSize) setAmount(recipeStepSize);
   }, [recipeStepSize, maxAmount, stage]);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (!process) return;
     if (currentProcess) return;
     setPrimaryOutput(Number(Object.keys(process.outputs)[0]));
     setAmount(1);
   }, [currentProcess, process]);
 
-  const [crewTravelBonus, crewDistBonus, processingTimeBonus, secondaryOutputsBonus] = useMemo(() => {
+  const [crewTravelBonus, crewDistBonus, processingTimeBonus, secondaryOutputsBonus] = useMemo(import.meta.url, () => {
     const bonusIds = [Crewmate.ABILITY_IDS.HOPPER_TRANSPORT_TIME, Crewmate.ABILITY_IDS.FREE_TRANSPORT_DISTANCE];
     if (processor.processorType === Processor.IDS.BIOREACTOR) {
       bonusIds.push(Crewmate.ABILITY_IDS.REACTION_TIME);
@@ -154,7 +154,7 @@ const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...pro
     return bonusIds.map((id) => abilities[id] || {});
   }, [crew]);
 
-  const [setupTime, processingTime] = useMemo(() => {
+  const [setupTime, processingTime] = useMemo(import.meta.url, () => {
     if (!process) return [0, 0];
     return [
       Time.toRealDuration(Process.getSetupTime(processId, processingTimeBonus.totalBonus), crew?._timeAcceleration),
@@ -162,7 +162,7 @@ const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...pro
     ];
   }, [amount, crew?._timeAcceleration, process, processingTimeBonus]);
 
-  const { totalTime: crewTravelTime, tripDetails } = useMemo(() => {
+  const { totalTime: crewTravelTime, tripDetails } = useMemo(import.meta.url, () => {
     if (!asteroid?.id || !crew?._location?.lotId || !lot?.id) return {};
     const crewLotIndex = Lot.toIndex(crew?._location?.lotId);
     return getTripDetails(asteroid.id, crewTravelBonus, crewDistBonus, crewLotIndex, [
@@ -171,7 +171,7 @@ const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...pro
     ], crew?._timeAcceleration);
   }, [asteroid?.id, lot?.id, crew?._location?.lotId, crew?._timeAcceleration, crewTravelBonus, crewDistBonus]);
 
-  const [inputTransportDistance, inputTransportTime] = useMemo(() => {
+  const [inputTransportDistance, inputTransportTime] = useMemo(import.meta.url, () => {
     if (!originLot?.id) return [];
     return [
       Asteroid.getLotDistance(asteroid?.id, Lot.toIndex(originLot?.id), Lot.toIndex(lot?.id)) || 0,
@@ -188,7 +188,7 @@ const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...pro
     ];
   }, [asteroid?.id, lot?.id, crew?._timeAcceleration, originLot?.id, crewDistBonus, crewTravelBonus]);
 
-  const [outputTransportDistance, outputTransportTime] = useMemo(() => {
+  const [outputTransportDistance, outputTransportTime] = useMemo(import.meta.url, () => {
     if (!destinationLot?.id) return [];
     return [
       Asteroid.getLotDistance(asteroid?.id, Lot.toIndex(lot?.id), Lot.toIndex(destinationLot?.id)) || 0,
@@ -205,7 +205,7 @@ const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...pro
     ];
   }, [asteroid?.id, lot?.id, crew?._timeAcceleration, destinationLot?.id, crewDistBonus, crewTravelBonus]);
 
-  const [inputArr, inputMass, inputVolume, outputArr, outputMass, outputVolume] = useMemo(() => {
+  const [inputArr, inputMass, inputVolume, outputArr, outputMass, outputVolume] = useMemo(import.meta.url, () => {
     if (!process || !amount) return [[], 0, 0, [], 0, 0];
     const inputArr = Object.keys(process.inputs || {}).map(Number);
     const outputArr = Process.getOutputs(processId, amount, primaryOutput, secondaryOutputsBonus?.totalBonus);
@@ -220,7 +220,7 @@ const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...pro
     ];
   }, [process, amount, primaryOutput, secondaryOutputsBonus]);
 
-  const [crewTimeRequirement, taskTimeRequirement] = useMemo(() => {
+  const [crewTimeRequirement, taskTimeRequirement] = useMemo(import.meta.url, () => {
     const onewayCrewTravelTime = crewTravelTime / 2;
     return [
       Math.max(onewayCrewTravelTime, inputTransportTime) + (setupTime + processingTime) / 8 + onewayCrewTravelTime,
@@ -228,7 +228,7 @@ const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...pro
     ];
   }, [crewTravelTime, inputTransportTime, setupTime, processingTime, outputTransportTime]);
 
-  const stats = useMemo(() => ([
+  const stats = useMemo(import.meta.url, () => ([
     {
       label: 'Crew Travel Time',
       value: formatTimer(crewTravelTime),
@@ -297,11 +297,11 @@ const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...pro
     setupTime,
     tripDetails
   ]);
-  const prepaidLeaseConfig = useMemo(() => {
+  const prepaidLeaseConfig = useMemo(import.meta.url, () => {
     return getProcessorLeaseConfig(lot?.building, Permission.IDS.RUN_PROCESS, crew, blockTime);
   }, [blockTime, crew, lot?.building]);
 
-  const { leasePayment, desiredLeaseTerm, actualLeaseTerm } = useMemo(() => {
+  const { leasePayment, desiredLeaseTerm, actualLeaseTerm } = useMemo(import.meta.url, () => {
     return getProcessorLeaseSelections(
       prepaidLeaseConfig,
       taskTimeRequirement,
@@ -310,11 +310,11 @@ const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...pro
     );
   }, [blockTime, crew?.Crew?.readyAt, prepaidLeaseConfig, taskTimeRequirement]);
 
-  const onFinishProcess = useCallback(() => {
+  const onFinishProcess = useCallback(import.meta.url, () => {
     finishProcess();
   }, [finishProcess]);
 
-  const onStartProcess = useCallback(() => {
+  const onStartProcess = useCallback(import.meta.url, () => {
     if (leasePayment && !buildingOwner?.Crew?.delegatedTo) return;
     startProcess({
       processId,
@@ -343,7 +343,7 @@ const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...pro
 
   // handle auto-closing
   const lastStatus = useRef();
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     // (close on status change from)
     if (['READY', 'READY_TO_FINISH', 'FINISHING'].includes(lastStatus.current)) {
       if (processStatus !== lastStatus.current) {
@@ -353,13 +353,13 @@ const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...pro
     lastStatus.current = processStatus;
   }, [processStatus]);
 
-  const isOriginSufficient = useMemo(() => {
+  const isOriginSufficient = useMemo(import.meta.url, () => {
     if (!originInventory || !process) return false;
     const sourceContentObj = (originInventory?.contents || []).reduce((acc, cur) => ({ ...acc, [cur.product]: cur.amount }), {});
     return !inputArr.find((i) => (sourceContentObj[i] || 0) < process.inputs[i] * amount);
   }, [amount, inputArr, originInventory?.contents, process]);
 
-  const [headerAction, gerund] = useMemo(() => {
+  const [headerAction, gerund] = useMemo(import.meta.url, () => {
     if (processor.processorType === Processor.IDS.REFINERY) {
       return [
         {
@@ -399,7 +399,7 @@ const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...pro
     return [{}, ''];
   }, [processor.processorType]);
 
-  const goLabel = useMemo(() => {
+  const goLabel = useMemo(import.meta.url, () => {
     if (leasePayment) {
       return (
         <PurchaseButtonInner>
@@ -663,7 +663,7 @@ const Wrapper = (props) => {
   const processManager = useProcessManager(lot?.id, props.processorSlot);
   const { actionStage } = processManager;
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (props.onClose) {
       if (!asteroid || !lot) {
         if (!isLoading) {

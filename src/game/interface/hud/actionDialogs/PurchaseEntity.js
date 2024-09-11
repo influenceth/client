@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef } from '~/lib/react-debug';
 import styled from 'styled-components';
 import { Entity, Ship } from '@influenceth/sdk';
 
@@ -41,7 +41,7 @@ const PurchaseEntity = ({ asteroid, lot, entity, actionManager, stage, ...props 
 
   // handle auto-closing
   const lastStatus = useRef();
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (lastStatus.current && lastStatus.current !== stage) {
       props.onClose();
     } else if (!lastStatus.current) {
@@ -49,7 +49,7 @@ const PurchaseEntity = ({ asteroid, lot, entity, actionManager, stage, ...props 
     }
   }, [stage]);
 
-  const insufficientSway = useMemo(() => {
+  const insufficientSway = useMemo(import.meta.url, () => {
     return entity?.Nft?.price > swayBalance;
   }, [entity, swayBalance]);
 
@@ -116,14 +116,14 @@ const PurchaseEntity = ({ asteroid, lot, entity, actionManager, stage, ...props 
 
 const Wrapper = ({ entity: rawEntity, ...props }) => {
   const { data: entity, isLoading: entityIsLoading } = useEntity(rawEntity);
-  const loc = useMemo(() => locationsArrToObj(entity?.Location?.locations || []), [entity]);
+  const loc = useMemo(import.meta.url, () => locationsArrToObj(entity?.Location?.locations || []), [entity]);
   const { data: asteroid, isLoading: asteroidIsLoading } = useAsteroid(loc.asteroidId);
   const { data: lot, isLoading: lotIsLoading } = useEntity({ id: loc.lotId, label: Entity.IDS.LOT });
 
   const saleManager = useNftSaleManager(entity);
   const stage = saleManager.isPendingPurchase ? actionStages.STARTING : actionStages.NOT_STARTED
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (props.onClose) {
       if (!entity && !entityIsLoading) {
         props.onClose();

@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo } from '~/lib/react-debug';
 import { useQuery } from 'react-query';
 import { Building, Entity, Permission } from '@influenceth/sdk';
 
@@ -15,12 +15,12 @@ const useAsteroidBuildings = (asteroidId, reqComponent = 'Building', reqOneOfPer
     { enabled: !!asteroidId && !!reqComponent }
   );
 
-  const perms = useMemo(() =>
+  const perms = useMemo(import.meta.url, () =>
     Array.isArray(reqOneOfPermissions) ? reqOneOfPermissions : (reqOneOfPermissions ? [reqOneOfPermissions] : []),
     [reqOneOfPermissions]
   );
 
-  return useMemo(() => {
+  return useMemo(import.meta.url, () => {
     let data = allData;
 
     // if perms check, filter

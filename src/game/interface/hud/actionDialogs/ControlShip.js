@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef } from '~/lib/react-debug';
 import styled from 'styled-components';
 import { Entity } from '@influenceth/sdk';
 
@@ -52,7 +52,7 @@ const ControlShip = ({ asteroid, lot, ship, controlManager, stage, ...props }) =
 
   // handle auto-closing
   const lastStatus = useRef();
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (lastStatus.current && stage !== lastStatus.current) {
       props.onClose();
     }
@@ -101,11 +101,11 @@ const Wrapper = (props) => {
   const { data: ship, isLoading: shipIsLoading } = useShip(props.shipId);
   const controlManager = useControlShip(props.shipId);
 
-  const loc = useMemo(() => locationsArrToObj(ship?.Location?.locations || []), [ship]);
+  const loc = useMemo(import.meta.url, () => locationsArrToObj(ship?.Location?.locations || []), [ship]);
   const { data: asteroid, isLoading: asteroidIsLoading } = useAsteroid(loc.asteroidId);
   const { data: lot, isLoading: lotIsLoading } = useEntity({ id: loc.lotId, label: Entity.IDS.LOT });
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (props.onClose) {
       if (!ship && !shipIsLoading) {
         props.onClose();
@@ -117,7 +117,7 @@ const Wrapper = (props) => {
     }
   }, [asteroid, controlManager, asteroidIsLoading, shipIsLoading]);
 
-  const stage = useMemo(() => controlManager.takingControl ? actionStage.COMPLETING : actionStage.NOT_STARTED, [controlManager.takingControl]);
+  const stage = useMemo(import.meta.url, () => controlManager.takingControl ? actionStage.COMPLETING : actionStage.NOT_STARTED, [controlManager.takingControl]);
 
   return (
     <ActionDialogInner

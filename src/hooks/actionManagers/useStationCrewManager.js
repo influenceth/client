@@ -1,4 +1,4 @@
-import { useCallback, useContext, useMemo } from 'react';
+import { useCallback, useContext, useMemo } from '~/lib/react-debug';
 import { Entity } from '@influenceth/sdk';
 
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
@@ -12,18 +12,18 @@ const useStationCrewManager = (destination) => {
   const { execute, getPendingTx } = useContext(ChainTransactionContext);
 
   const { data: destEntity } = useEntity(destination);
-  const destLotId = useMemo(() => {
+  const destLotId = useMemo(import.meta.url, () => {
     return locationsArrToObj(destEntity?.Location?.locations || [])?.lotId;
   }, [destEntity?.Location?.locations]);
 
-  const caller_crew = useMemo(() => ({ id: crew?.id, label: Entity.IDS.CREW }), [crew?.id]);
+  const caller_crew = useMemo(import.meta.url, () => ({ id: crew?.id, label: Entity.IDS.CREW }), [crew?.id]);
 
-  const stationCrew = useCallback(
+  const stationCrew = useCallback(import.meta.url, 
     () => execute('StationCrew', { destination, caller_crew }, { destLotId }),
     [caller_crew, destination, destLotId, execute]
   );
 
-  const currentStationing = useMemo(
+  const currentStationing = useMemo(import.meta.url, 
     () => getPendingTx ? getPendingTx('StationCrew', { caller_crew }) : null,
     [caller_crew, getPendingTx]
   );

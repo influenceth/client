@@ -1,4 +1,4 @@
-import { useCallback, useContext, useMemo } from 'react';
+import { useCallback, useContext, useMemo } from '~/lib/react-debug';
 
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
 import useCrewContext from '~/hooks/useCrewContext';
@@ -7,16 +7,16 @@ const useDepositSaleManager = (deposit) => {
   const { crew } = useCrewContext();
   const { execute, getStatus } = useContext(ChainTransactionContext);
 
-  const payload = useMemo(() => ({
+  const payload = useMemo(import.meta.url, () => ({
     deposit: { id: deposit?.id, label: deposit?.label },
     caller_crew: { id: crew?.id, label: crew?.label },
   }), [crew, deposit]);
 
-  const meta = useMemo(() => ({
+  const meta = useMemo(import.meta.url, () => ({
     deposit
   }), [deposit]);
 
-  const purchaseListing = useCallback(() => {
+  const purchaseListing = useCallback(import.meta.url, () => {
     execute(
       'PurchaseDeposit',
       payload,
@@ -24,7 +24,7 @@ const useDepositSaleManager = (deposit) => {
     )
   }, [execute, meta, payload]);
 
-  const updateListing = useCallback(
+  const updateListing = useCallback(import.meta.url, 
     (price) => {
       if (price > 0) {
         execute(
@@ -43,8 +43,8 @@ const useDepositSaleManager = (deposit) => {
     [execute, meta, payload]
   );
 
-  const isPendingPurchase = useMemo(() => getStatus('PurchaseDeposit', payload) === 'pending', [getStatus, payload]);
-  const isPendingUpdate = useMemo(() => (
+  const isPendingPurchase = useMemo(import.meta.url, () => getStatus('PurchaseDeposit', payload) === 'pending', [getStatus, payload]);
+  const isPendingUpdate = useMemo(import.meta.url, () => (
     getStatus('ListDepositForSale', payload) === 'pending'
     || getStatus('UnlistDepositForSale', payload) === 'pending'
   ), [getStatus, payload]);

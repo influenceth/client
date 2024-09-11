@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback } from '~/lib/react-debug';
 import styled from 'styled-components';
 import { Asteroid } from '@influenceth/sdk';
 
@@ -75,7 +75,7 @@ const Favorites = ({ onClose }) => {
   const updateZoomStatus = useStore(s => s.dispatchZoomStatusChanged);
   const { watchlist: { data: watchlist } } = useWatchlist();
 
-  const onClick = useCallback((id) => () => {
+  const onClick = useCallback(import.meta.url, (id) => () => {
     if (asteroidId === id) {
       updateZoomStatus('zooming-in');
       onClose();

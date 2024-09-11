@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo } from '~/lib/react-debug';
 import { useThrottle } from '@react-hook/throttle';
 import { useQuery } from 'react-query';
 import esb from 'elastic-builder';
@@ -223,7 +223,7 @@ const useAssetSearch = (assetType, { from = 0, size = 2000 } = {}) => {
 
   const [throttledFilters, setThrottledFilters] = useThrottle(filters || {}, 2, true);
 
-  useEffect(() => setThrottledFilters(filters || {}), [filters, setThrottledFilters]);
+  useEffect(import.meta.url, () => setThrottledFilters(filters || {}), [filters, setThrottledFilters]);
 
   // asteroidsMapped use the exact same indices as asteroids (for now)
   // lotsMapped, actionitems, eventlog does not need to query ES
@@ -233,7 +233,7 @@ const useAssetSearch = (assetType, { from = 0, size = 2000 } = {}) => {
   if (esAssetType === 'actionitems') esAssetType = '';
   if (esAssetType === 'eventlog') esAssetType = '';
 
-  const query = useMemo(() => {
+  const query = useMemo(import.meta.url, () => {
     if (esAssetType) {
       try {
         const q = esb.requestBodySearch();

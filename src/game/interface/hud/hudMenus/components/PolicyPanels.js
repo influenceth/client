@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from '~/lib/react-debug';
 import styled from 'styled-components';
 import { Address, Building, Entity, Permission } from '@influenceth/sdk';
 
@@ -237,31 +237,31 @@ const PolicyPanel = ({ editable = false, entity, permission }) => {
   const saving = editing === 'allowlist' ? allowlistChangePending : policyChangePending;
 
   // reset if object is changed
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     setPolicyType(Number(originalPolicyType));
     setDetails(originalPolicyDetails);
   }, [editing, originalPolicyType, originalPolicyDetails]);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     setAllowlist(originalAllowlist || []);
     setAccountAllowlist(originalAccountAllowlist || []);
     setAllowlistDirty(false);
   }, [editing, originalAllowlist, originalAccountAllowlist]);
 
-  const handleChange = useCallback((key) => (e) => {
+  const handleChange = useCallback(import.meta.url, (key) => (e) => {
     let newVal = e.currentTarget.value;
     if (key === 'rate') newVal /= 24;
     setDetails((v) => ({ ...v, [key]: newVal }));
   }, []);
 
-  const isDirty = useMemo(() => {
+  const isDirty = useMemo(import.meta.url, () => {
     return policyType !== originalPolicyType
       || Object.keys(details).reduce((acc, k) => acc || details[k] !== originalPolicyDetails[k], false)
       || Object.keys(originalPolicyDetails).reduce((acc, k) => acc || details[k] !== originalPolicyDetails[k], false)
       || allowlistDirty;
   }, [allowlistDirty, policyType, originalPolicyType, originalPolicyDetails, details]);
 
-  const isIncomplete = useMemo(() => {
+  const isIncomplete = useMemo(import.meta.url, () => {
     if (policyType === Permission.POLICY_IDS.PREPAID) {
       if (!details.rate || details.rate < 0) return true;
       if (details.initialTerm < 0 || details.noticePeriod < 0) return true;
@@ -273,7 +273,7 @@ const PolicyPanel = ({ editable = false, entity, permission }) => {
     return false;
   }, [policyType, details]);
 
-  const allowlistAdd = useCallback((crew) => {
+  const allowlistAdd = useCallback(import.meta.url, (crew) => {
     if (!crew) return;
     if (typeof crew === 'object') {
       setAllowlist((a) => [...a, crew].sort((a, b) => formatters.crewName(a).localeCompare(formatters.crewName(b))));
@@ -285,7 +285,7 @@ const PolicyPanel = ({ editable = false, entity, permission }) => {
     setAllowlistDirty(true);
   }, []);
 
-  const allowlistRemove = useCallback((crew) => {
+  const allowlistRemove = useCallback(import.meta.url, (crew) => {
     if (typeof crew === 'object') {
       setAllowlist((a) => a.filter((c) => c.id !== crew.id));
     } else {
@@ -294,15 +294,15 @@ const PolicyPanel = ({ editable = false, entity, permission }) => {
     setAllowlistDirty(true);
   }, []);
 
-  const allowlistExclude = useCallback((c) => {
+  const allowlistExclude = useCallback(import.meta.url, (c) => {
     return allowlist.find((a) => a.id === c.id || crew?.id === c.id);
   }, [allowlist])
 
-  const cancelEdits = useCallback(() => {
+  const cancelEdits = useCallback(import.meta.url, () => {
     setEditing();
   }, []);
 
-  const saveEdits = useCallback(() => {
+  const saveEdits = useCallback(import.meta.url, () => {
     if (editing === 'allowlist') {
       updateAllowlists(allowlist, accountAllowlist);
     } else {
@@ -310,7 +310,7 @@ const PolicyPanel = ({ editable = false, entity, permission }) => {
     }
   }, [accountAllowlist, allowlist, editing, policyType, details]);
 
-  const toggleEditing = useCallback((which) => {
+  const toggleEditing = useCallback(import.meta.url, (which) => {
     setEditing(which);
   }, []);
 
@@ -318,7 +318,7 @@ const PolicyPanel = ({ editable = false, entity, permission }) => {
    * Viewing
    */
 
-  const onAllowlist = useMemo(
+  const onAllowlist = useMemo(import.meta.url, 
     () => (
       currentPolicy?.allowlist?.find((c) => c.id === crew?.id)
       || currentPolicy?.accountAllowlist?.find((c) => Address.areEqual(accountAddress, c))
@@ -326,7 +326,7 @@ const PolicyPanel = ({ editable = false, entity, permission }) => {
     [accountAddress, crew, currentPolicy]
   );
 
-  const jitStatus = useMemo(() => {
+  const jitStatus = useMemo(import.meta.url, () => {
     // if exclusive, everyone cares if under notice
     if (Permission.TYPES[permission].isExclusive) {
       if (currentPolicy?.agreements?.[0]?.noticeTime > 0) return 'under notice';
@@ -348,7 +348,7 @@ const PolicyPanel = ({ editable = false, entity, permission }) => {
     return null;
   }, [currentPolicy?.crewStatus, entity]);
 
-  const config = useMemo(() => {
+  const config = useMemo(import.meta.url, () => {
     if (editing === 'allowlist') {
       return {
         name: 'Allowlist',
@@ -369,7 +369,7 @@ const PolicyPanel = ({ editable = false, entity, permission }) => {
       originalPolicyDetails?.initialTerm === 0 && originalPolicyDetails?.noticePeriod === 0
     )
   ));
-  const toggleIsPayAsYouGo = useCallback(() => {
+  const toggleIsPayAsYouGo = useCallback(import.meta.url, () => {
     setIsPayAsYouGo((v) => {
       const newVal = !v;
       if (newVal) {
@@ -686,13 +686,13 @@ const PolicyPanels = ({ editable, entity }) => {
   const { isAtRisk } = useConstructionManager(lot?.id);
   const { data: entityController } = useHydratedCrew(entity?.Control?.controller?.id);
 
-  const permPolicies = useMemo(
+  const permPolicies = useMemo(import.meta.url, 
     () => entity ? Permission.getPolicyDetails(entity, crew, blockTime) : {},
     [accountAddress, blockTime, crew, entity]
   );
 
   // show lot warning if building controller does not have lot permission
-  const showLotWarning = useMemo(() => {
+  const showLotWarning = useMemo(import.meta.url, () => {
     if (!lot || !entityController) return false;
     const lotPerm = Permission.getPolicyDetails(lot, entityController, blockTime)[Permission.IDS.USE_LOT];
     return !(
@@ -702,9 +702,9 @@ const PolicyPanels = ({ editable, entity }) => {
     );
   }, [blockTime, entity, entityController, lot]);
 
-  const buildingOrSite = useMemo(() => lot?.building?.Building?.status < Building.CONSTRUCTION_STATUSES.OPERATIONAL ? 'Construction Site' : 'Building', [lot]);
+  const buildingOrSite = useMemo(import.meta.url, () => lot?.building?.Building?.status < Building.CONSTRUCTION_STATUSES.OPERATIONAL ? 'Construction Site' : 'Building', [lot]);
 
-  const showStagingWarning = useMemo(() => {
+  const showStagingWarning = useMemo(import.meta.url, () => {
     if (isAtRisk) {
       return 2;
     } else if (lot && lot.building && lot.building.Building?.status < Building.CONSTRUCTION_STATUSES.UNDER_CONSTRUCTION) {
@@ -714,7 +714,7 @@ const PolicyPanels = ({ editable, entity }) => {
   }, [lot]);
 
   // find out if any others have access to this asset via any perm
-  const othersHaveAgreementsOnThisAsset = useMemo(() => {
+  const othersHaveAgreementsOnThisAsset = useMemo(import.meta.url, () => {
     return !!Object.keys(permPolicies).find((permission) => {
       const { agreements, allowlist, accountAllowlist } = permPolicies[permission];
       if ((agreements || []).find((a) => a?.permitted?.id !== crew?.id)) return true;

@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState, useMemo, useRef } from 'react';
+import React, { useCallback, useEffect, useState, useMemo, useRef } from '~/lib/react-debug';
 import styled from 'styled-components';
 import { FaEllipsisH as MenuIcon } from 'react-icons/fa';
 import Lottie from 'lottie-react';
@@ -45,9 +45,9 @@ const MenuOpenWrapper = styled.div`
 
 const LottieOverlayTexture = ({ animation, isPaused = false, size = '100%' }) => {
   const lottieRef = useRef();
-  const style = useMemo(() => ({ opacity: 0.2, width: size, height: size }), [size]);
+  const style = useMemo(import.meta.url, () => ({ opacity: 0.2, width: size, height: size }), [size]);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (isPaused) lottieRef.current.pause();
     else lottieRef.current.play();
   }, [isPaused]);
@@ -213,7 +213,7 @@ const BottomBanner = styled(ThumbnailBottomBanner)`
 
 const Menu = ({ children }) => {
   const [open, setOpen] = useState();
-  const onClick = useCallback((e) => {
+  const onClick = useCallback(import.meta.url, (e) => {
     e.stopPropagation();
     setOpen(true);
   }, []);

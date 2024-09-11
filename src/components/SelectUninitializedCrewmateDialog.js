@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from '~/lib/react-debug';
 import styled from 'styled-components';
 
 import CrewmateCard from '~/components/CrewmateCard';
@@ -92,7 +92,7 @@ const SelectUninitializedCrewmateDialog = ({ arvadiansDisallowed, onSelect }) =>
 
   const [selected, setSelected] = useState();
 
-  const onCloseDestination = useMemo(() => {
+  const onCloseDestination = useMemo(import.meta.url, () => {
     if (crew?.Crew?.roster?.length > 0) {
       return '/crew';
     } else {
@@ -100,7 +100,7 @@ const SelectUninitializedCrewmateDialog = ({ arvadiansDisallowed, onSelect }) =>
     }
   }, [crew]);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (!loading) {
       if (arvadiansDisallowed || !arvadianRecruits?.length) {
         onSelect(adalianRecruits?.[0]?.id || 0);

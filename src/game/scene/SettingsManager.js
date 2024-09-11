@@ -1,4 +1,4 @@
-import { useContext, useEffect, useMemo, useState } from 'react';
+import { useContext, useEffect, useMemo, useState } from '~/lib/react-debug';
 import { useThree } from '@react-three/fiber';
 import { useCubeTexture } from '@react-three/drei';
 import { Color, EquirectangularReflectionMapping, TextureLoader } from 'three';
@@ -18,7 +18,7 @@ const SettingsManager = () => {
 
   const [overrideTexture, setOverrideTexture] = useState();
 
-  const [backgroundOverride, backgroundOverrideName, backgroundIntensity] = useMemo(() => {
+  const [backgroundOverride, backgroundOverrideName, backgroundIntensity] = useMemo(import.meta.url, () => {
     const defaults = visualConfigs.scene;
     const o = assetType === 'scene' ? overrides : {};
     return [
@@ -33,7 +33,7 @@ const SettingsManager = () => {
     'sky_pos_x.jpg', 'sky_neg_x.jpg', 'sky_pos_y.jpg', 'sky_neg_y.jpg', 'sky_pos_z.jpg', 'sky_neg_z.jpg'
   ], { path: `${process.env.PUBLIC_URL}/textures/skybox/`});
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (backgroundOverride && backgroundOverrideName) {
       const cleanupTextures = [];
       const resolve = function (texture) {
@@ -56,12 +56,12 @@ const SettingsManager = () => {
     }
   }, [backgroundOverride, backgroundOverrideName]);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     gl.setPixelRatio(pixelRatio || 1);
   }, [pixelRatio]);
 
   // toggle background on / off per settings
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (skyboxVisible && skybox) {
       scene.background = overrideTexture || skybox;
     } else if (!skyboxVisible) {
@@ -69,12 +69,12 @@ const SettingsManager = () => {
     }
   }, [ overrideTexture, skyboxVisible, skybox ]);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     scene.backgroundIntensity = backgroundIntensity;
   }, [backgroundIntensity]);
 
   // toggle fov as needed
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (fov && camera && camera.fov !== fov) {
       camera.fov = fov;
       camera.updateProjectionMatrix();

@@ -1,4 +1,4 @@
-import React, { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { Fragment, useCallback, useEffect, useMemo, useRef, useState } from '~/lib/react-debug';
 import styled, { css, keyframes } from 'styled-components';
 import { createPortal } from 'react-dom';
 import { Tooltip } from 'react-tooltip';
@@ -1489,19 +1489,19 @@ export const CrewSelectionDialog = ({ crews, disabler, onClose, onSelected, open
   const { height: screenHeight } = useScreenSize();
   const [selection, setSelection] = useState();
 
-  const onComplete = useCallback(() => {
+  const onComplete = useCallback(import.meta.url, () => {
     onSelected(selection?.id);
     onClose();
   }, [onClose, onSelected, selection]);
 
-  const [firstNonEmptyCrew, firstEmptyCrew] = useMemo(
+  const [firstNonEmptyCrew, firstEmptyCrew] = useMemo(import.meta.url, 
     () => [
       crews.find((c) => c.Crew.roster.length > 0),
       crews.find((c) => c.Crew.roster.length === 0),
     ],
     [crews]
   );
-  const firstNonEmptyCrewLocation = useMemo(() => {
+  const firstNonEmptyCrewLocation = useMemo(import.meta.url, () => {
     return firstNonEmptyCrew
       ? locationsArrToObj(firstNonEmptyCrew.Location?.locations || [])
       : undefined;
@@ -1510,11 +1510,11 @@ export const CrewSelectionDialog = ({ crews, disabler, onClose, onSelected, open
 
   const listWrapper = useRef();
   const [listHeight, setListHeight] = useState(0);
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     setListHeight(listWrapper.current?.clientHeight || 500);
   }, [crews?.length, screenHeight]);
 
-  const getCrewRowHeight = useCallback(({ index }) => {
+  const getCrewRowHeight = useCallback(import.meta.url, ({ index }) => {
     if (!crews?.[index]) return 0;
     const crew = crews[index];
     const isFirstNonEmpty = crew.id === firstNonEmptyCrew?.id;
@@ -1522,7 +1522,7 @@ export const CrewSelectionDialog = ({ crews, disabler, onClose, onSelected, open
     return 152 + ((isFirstNonEmpty || isFirstEmpty) ? 26 : 0);
   }, [crews, firstNonEmptyCrew?.id, firstEmptyCrew?.id]);
 
-  const renderCrewRow = useCallback(({ key, index, style }) => {
+  const renderCrewRow = useCallback(import.meta.url, ({ key, index, style }) => {
     if (!crews?.[index]) return null;
     const crew = crews[index];
     const disabled = disabler ? disabler(crew) : false;
@@ -1582,12 +1582,12 @@ export const SitePlanSelectionDialog = ({ initialSelection, onClose, onSelected,
 
   const [selection, setSelection] = useState(initialSelection);
 
-  const onComplete = useCallback(() => {
+  const onComplete = useCallback(import.meta.url, () => {
     onSelected(selection);
     onClose();
   }, [onClose, onSelected, selection]);
 
-  const isCompletable = useMemo(() => {
+  const isCompletable = useMemo(import.meta.url, () => {
     if (simulationEnabled) {
       return simulationActions.includes(`SelectSitePlan:${selection}`);
     }
@@ -1631,19 +1631,19 @@ export const ResourceSelectionDialog = ({ abundances, lotId, initialSelection, o
 
   const [selection, setSelection] = useState(initialSelection);
 
-  const onComplete = useCallback(() => {
+  const onComplete = useCallback(import.meta.url, () => {
     onSelected(selection);
     onClose();
   }, [onClose, onSelected, selection]);
 
-  const isCompletable = useMemo(() => {
+  const isCompletable = useMemo(import.meta.url, () => {
     if (simulationEnabled) {
       return simulationActions.includes(`SelectTargetResource:${selection}`);
     }
     return selection > 0;
   }, [selection, simulationActions, simulationEnabled]);
 
-  const nonzeroAbundances = useMemo(() => Object.values(abundances).filter((x) => x > 0).length, [abundances]);
+  const nonzeroAbundances = useMemo(import.meta.url, () => Object.values(abundances).filter((x) => x > 0).length, [abundances]);
   return (
     <SelectionDialog
       isCompletable={isCompletable}
@@ -1715,23 +1715,23 @@ export const CoreSampleSelectionDialog = ({ lotId, options, initialSelection, on
   const [showForSale, setShowForSale] = useState(true);
   const [showUsed, setShowUsed] = useState(true);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     setSelection(initialSelection);
   }, [initialSelection]);
 
-  const onComplete = useCallback(() => {
+  const onComplete = useCallback(import.meta.url, () => {
     onSelected(selection);
     onClose();
   }, [onClose, onSelected, selection]);
 
-  const [forSaleExist, usedExist] = useMemo(() => {
+  const [forSaleExist, usedExist] = useMemo(import.meta.url, () => {
     return [
       !!options.find((s) => s.PrivateSale?.amount > 0),
       !!options.find((s) => s.Deposit.remainingYield !== s.Deposit.initialYield),
     ];
   }, [options])
 
-  const samples = useMemo(() => {
+  const samples = useMemo(import.meta.url, () => {
     return options
       .filter((s) => (showForSale || !s.PrivateSale?.amount || crew?.id === s.Control?.controller?.id) && (showUsed || (s.Deposit.remainingYield === s.Deposit.initialYield)))
       .sort((a, b) => {
@@ -1829,7 +1829,7 @@ export const TransferSelectionDialog = ({
 }) => {
   const [selection, setSelection] = useState({});
 
-  const pendingContents = useMemo(() => {
+  const pendingContents = useMemo(import.meta.url, () => {
     if (!pendingTargetDeliveries) return {};
     return (pendingTargetDeliveries || [])
       .filter((d) => d.status !== 'FINISHED')
@@ -1843,19 +1843,19 @@ export const TransferSelectionDialog = ({
   }, [pendingTargetDeliveries]);
 
   const prevInitialSelection = useRef();
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (!prevInitialSelection.current || JSON.stringify(prevInitialSelection.current) !== JSON.stringify(initialSelection)) {
       setSelection({ ...initialSelection });
       prevInitialSelection.current = initialSelection;
     }
   }, [initialSelection]);
 
-  const onComplete = useCallback(() => {
+  const onComplete = useCallback(import.meta.url, () => {
     onSelected(selection);
     onClose();
   }, [onClose, onSelected, selection]);
 
-  const onSelectItem = useCallback((resourceId) => (selectedAmount) => {
+  const onSelectItem = useCallback(import.meta.url, (resourceId) => (selectedAmount) => {
     setSelection((currentlySelected) => {
       const updated = { ...currentlySelected };
       if (selectedAmount > 0) {
@@ -1867,13 +1867,13 @@ export const TransferSelectionDialog = ({
     });
   }, []);
 
-  const targetInvConfig = useMemo(
+  const targetInvConfig = useMemo(import.meta.url, 
     () => targetInventory ? Inventory.getType(targetInventory?.inventoryType, inventoryBonuses) : null,
     [targetInventory?.inventoryType, inventoryBonuses]
   );
 
-  const cells = useMemo(() => [...Array(6 * Math.max(2, Math.ceil(Object.keys(sourceContents).length / 6))).keys()], [sourceContents]);
-  const items = useMemo(() => {
+  const cells = useMemo(import.meta.url, () => [...Array(6 * Math.max(2, Math.ceil(Object.keys(sourceContents).length / 6))).keys()], [sourceContents]);
+  const items = useMemo(import.meta.url, () => {
     const productConstraints = targetInventoryConstraints || (targetInvConfig ? targetInvConfig?.productConstraints : null);
 
     return sourceContents.map(({ product, amount }) => {
@@ -1908,7 +1908,7 @@ export const TransferSelectionDialog = ({
     });
   }, [sourceContents, targetInventory, targetInventoryConstraints, targetInvConfig, selection]);
 
-  const { tally, totalMass, totalVolume } = useMemo(() => {
+  const { tally, totalMass, totalVolume } = useMemo(import.meta.url, () => {
     return items.reduce((acc, { selected, resource }) => {
       acc.tally += selected > 0 ? 1 : 0;
       acc.totalMass += (selected || 0) * resource.massPerUnit;
@@ -1919,7 +1919,7 @@ export const TransferSelectionDialog = ({
 
   // TODO: should title be inventory type name instead?
 
-  const [title, subtitle] = useMemo(() => {
+  const [title, subtitle] = useMemo(import.meta.url, () => {
     let title = '';
     if (sourceEntity?.Ship) {
       title = Ship.TYPES[sourceEntity.Ship.shipType || 0]?.name;
@@ -1929,7 +1929,7 @@ export const TransferSelectionDialog = ({
     return [title, formatters.lotName(locationsArrToObj(sourceEntity?.Location?.locations || []).lotId)];
   }, [sourceEntity]);
 
-  const overcapacity = useMemo(() => {
+  const overcapacity = useMemo(import.meta.url, () => {
     if (targetInvConfig?.massConstraint && totalMass > targetInvConfig.massConstraint) return 'mass';
     if (targetInvConfig?.volumeConstraint && totalVolume > targetInvConfig.volumeConstraint) return 'volume';
     return false;
@@ -1999,7 +1999,7 @@ export const LandingSelectionDialog = ({ asteroid, deliveryMode, initialSelectio
   const { data: unorderedSpaceports } = useAsteroidBuildings(asteroid?.id, 'Dock', Permission.IDS.DOCK_SHIP);
   const { crew } = useCrewContext();
 
-  const spaceports = useMemo(
+  const spaceports = useMemo(import.meta.url, 
     () => unorderedSpaceports
       .map((a) => {
         const { lotIndex } = locationsArrToObj(a?.Location?.locations);
@@ -2013,12 +2013,12 @@ export const LandingSelectionDialog = ({ asteroid, deliveryMode, initialSelectio
     [asteroid?.id, originLotIndex, unorderedSpaceports]
   );
 
-  const onComplete = useCallback(() => {
+  const onComplete = useCallback(import.meta.url, () => {
     onSelected(selection);
     onClose();
   }, [onClose, onSelected, selection]);
 
-  const handleKeyDown = useCallback((e) => {
+  const handleKeyDown = useCallback(import.meta.url, (e) => {
     if (e.key === 'Enter') {
       const lot = parseInt(e.target.value);
       if (lot && lotData[lot] !== undefined) {
@@ -2153,7 +2153,7 @@ export const ProcessSelectionDialog = ({ initialSelection, onClose, forceProcess
   const coachmarks = useStore((s) => s.coachmarks);
   const simulationActions = useStore((s) => s.simulationActions);
 
-  const processes = useMemo(() => {
+  const processes = useMemo(import.meta.url, () => {
     const unSorted = forceProcesses || Object.values(Process.TYPES).filter((p) => processorType ? p.processorType === processorType : true);
     return unSorted
       .sort((a, b) => {
@@ -2174,12 +2174,12 @@ export const ProcessSelectionDialog = ({ initialSelection, onClose, forceProcess
       })
   }, [coachmarks, forceProcesses, processorType])
 
-  const onComplete = useCallback(() => {
+  const onComplete = useCallback(import.meta.url, () => {
     onSelected(selection);
     onClose();
   }, [onClose, onSelected, selection]);
 
-  const applyProcessFilter = useCallback((process) => {
+  const applyProcessFilter = useCallback(import.meta.url, (process) => {
     if (!processFilter && !outputFilter) return true;
 
     if (processFilter) {
@@ -2197,7 +2197,7 @@ export const ProcessSelectionDialog = ({ initialSelection, onClose, forceProcess
     return true;
   }, [processFilter, outputFilter]);
 
-  const isCompletable = useMemo(() => {
+  const isCompletable = useMemo(import.meta.url, () => {
     if (simulationEnabled) {
       return simulationActions.includes(`SelectProcess:${selection}`);
     }
@@ -2459,7 +2459,7 @@ export const InventorySelectionDialog = ({
   const [showPublicInventories, setShowPublicInventories] = useState(false);
   const [sort, setSort] = useState(['distance', 'asc']);
 
-  const otherLocation = useMemo(() => {
+  const otherLocation = useMemo(import.meta.url, () => {
     if (!otherEntity) return {};
     return locationsArrToObj(otherEntity.Location?.locations || []);
   }, [otherEntity]);
@@ -2471,7 +2471,7 @@ export const InventorySelectionDialog = ({
   // ... but can access inventories on their crewed ship (assuming not sending things elsewhere)
   const { data: crewedShip } = useShip((otherLocation.lotIndex === 0 && crew?._location?.shipId === otherLocation.shipId) ? otherLocation.shipId : null);
 
-  const inventories = useMemo(() => {
+  const inventories = useMemo(import.meta.url, () => {
     const allInventoryEntities = [];
 
     if (limitToPrimary) {
@@ -2553,7 +2553,7 @@ export const InventorySelectionDialog = ({
     return display;
   }, [crewedShip, inventoryData, itemIds, otherLocation, sort]);
 
-  const onComplete = useCallback(() => {
+  const onComplete = useCallback(import.meta.url, () => {
     onSelected(selection ? JSON.parse(selection) : null);
     onClose();
   }, [onClose, onSelected, selection]);
@@ -2561,7 +2561,7 @@ export const InventorySelectionDialog = ({
   const specifiedItems = !!filterItemIds;
   const soloItem = itemIds?.length === 1 ? itemIds[0] : null;
 
-  const columns = useMemo(() => {
+  const columns = useMemo(import.meta.url, () => {
     const useItemAmount = Object.values(filterItemIds || {}).filter((x) => !!x).length === 1
       ? Object.keys(filterItemIds).find((k) => filterItemIds[k])
       : false;
@@ -2635,7 +2635,7 @@ export const InventorySelectionDialog = ({
     ].filter((x) => !!x);
   }, [filterItemIds, isSourcing, limitToPrimary, specifiedItems]);
 
-  const handleSort = useCallback((field) => () => {
+  const handleSort = useCallback(import.meta.url, (field) => () => {
     if (!field) return;
 
     let [updatedSortField, updatedSortDirection] = sort;
@@ -2649,7 +2649,7 @@ export const InventorySelectionDialog = ({
     setSort([updatedSortField, updatedSortDirection]);
   }, [sort]);
 
-  const getRowProps = useCallback((row) => {
+  const getRowProps = useCallback(import.meta.url, (row) => {
     const coachmarked = coachmarks[COACHMARK_IDS.actionDialogTargetInventory] === `${row.entity.label}.${row.entity.id}.${row.slot}`;
     return {
       setRef: coachmarked ? setCoachmarkRef(COACHMARK_IDS.actionDialogTargetInventory) : null,
@@ -2659,11 +2659,11 @@ export const InventorySelectionDialog = ({
     };
   }, [selection, coachmarks, setCoachmarkRef]);
 
-  const handleFilterChange = useCallback((e) => {
+  const handleFilterChange = useCallback(import.meta.url, (e) => {
     setFilterValue(e.target.value);
   }, []);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     setFilterItemIds(
       itemIds?.length
       ? itemIds
@@ -2673,11 +2673,11 @@ export const InventorySelectionDialog = ({
     );
   }, [itemIds]);
 
-  const toggleFilterItem = useCallback((itemId) => {
+  const toggleFilterItem = useCallback(import.meta.url, (itemId) => {
     setFilterItemIds((x) => ({ ...x, [itemId]: !x[itemId] }));
   }, []);
 
-  const filteredInventories = useMemo(() => {
+  const filteredInventories = useMemo(import.meta.url, () => {
     const filterProductIds = isSourcing ? Object.keys(filterItemIds || {}).filter((k) => filterItemIds[k]) : [];
     return inventories
       .map((inv) => {
@@ -2712,7 +2712,7 @@ export const InventorySelectionDialog = ({
       .sort((a, b) => (sort[1] === 'desc' ? -1 : 1) * (a[sort[0]] < b[sort[0]] ? -1 : 1));
   }, [filterItemIds, filterValue, inventories, isSourcing, showPermittedInventories, showPublicInventories, sort]);
 
-  const isCompletable = useMemo(() => {
+  const isCompletable = useMemo(import.meta.url, () => {
     if (selection && simulationEnabled) {
       const selObj = inventories.find((i) => i.key === selection);
       return simulationActions.includes(`SelectInventory:${selObj?.entity?.label}.${selObj?.entity?.id}.${selObj?.slot}`);
@@ -2862,7 +2862,7 @@ const OrderSelectionTable = ({ orders, productId, onSelected, selected }) => {
   const [sort, setSort] = useState(['_adjUnitPrice', 'desc']);
   const [sortField, sortDirection] = sort;
 
-  const getRowProps = useCallback((row) => ({
+  const getRowProps = useCallback(import.meta.url, (row) => ({
     onClick: () => {
       onSelected(row);
     },
@@ -2871,7 +2871,7 @@ const OrderSelectionTable = ({ orders, productId, onSelected, selected }) => {
     tableState: { resource: Product.TYPES[productId] }
   }), [onSelected, productId, selected]);
 
-  const handleSort = useCallback((field) => () => {
+  const handleSort = useCallback(import.meta.url, (field) => () => {
     if (!field) return;
 
     let updatedSortField = sortField;
@@ -2889,12 +2889,12 @@ const OrderSelectionTable = ({ orders, productId, onSelected, selected }) => {
     ]);
   }, [sortDirection, sortField]);
 
-  const sortedOrders = useMemo(() => {
+  const sortedOrders = useMemo(import.meta.url, () => {
     return (orders || [])
       .sort((a, b) => (sortDirection === 'asc' ? 1 : -1) * (a[sortField] < b[sortField] ? 1 : -1));
   }, [orders, sortField, sortDirection]);
 
-  const columns = useMemo(() => ([
+  const columns = useMemo(import.meta.url, () => ([
     {
       key: 'selector',
       label: <MarketBuyIcon />,
@@ -2983,13 +2983,13 @@ export const OrderSelectionDialog = ({
   const [selected, setSelected] = useState();
   const [targetAmount, setTargetAmount] = useState(maxAmount || 0);
 
-  const destinationLocation = useMemo(() => {
+  const destinationLocation = useMemo(import.meta.url, () => {
     if (!otherEntity) return {};
     return locationsArrToObj(otherEntity.Location?.locations || []);
   }, [otherEntity]);
   const destLotId = destinationLocation?.lotId;
 
-  const crewBonuses = useMemo(() => {
+  const crewBonuses = useMemo(import.meta.url, () => {
     if (!crew) return {};
 
     const abilities = getCrewAbilityBonuses([
@@ -3010,11 +3010,11 @@ export const OrderSelectionDialog = ({
     isLoading: resourceMarketplacesLoading,
     refetch: refetchResourceMarketplaces
   } = useShoppingListData(asteroidId, destLotId, [productId]);
-  const exchanges = useMemo(() => resourceMarketplaces?.[productId] || [], [resourceMarketplacesUpdatedAt]);
+  const exchanges = useMemo(import.meta.url, () => resourceMarketplaces?.[productId] || [], [resourceMarketplacesUpdatedAt]);
 
   useInterval(() => { refetchResourceMarketplaces(); }, 60e3); // keep things loosely fresh
 
-  const orders = useMemo(() => {
+  const orders = useMemo(import.meta.url, () => {
     return exchanges.reduce((aggOrders, row) => {
       const exchangeDistance = Asteroid.getLotDistance(asteroidId, Lot.toIndex(row.lotId), Lot.toIndex(destLotId));
       const exchangeTravelTime = Time.toRealDuration(
@@ -3068,19 +3068,19 @@ export const OrderSelectionDialog = ({
     }, []);
   }, [asteroidId, crew?._timeAcceleration, crewBonuses, destLotId, exchanges, targetAmount]);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     setSelected();
   }, [targetAmount]);
 
-  const insufficientSway = useMemo(() => selected?.fillPaymentTotal > swayBalance, [selected, swayBalance]);
+  const insufficientSway = useMemo(import.meta.url, () => selected?.fillPaymentTotal > swayBalance, [selected, swayBalance]);
 
-  const isCompletable = useMemo(() => selected && !insufficientSway, [insufficientSway, selected]);
+  const isCompletable = useMemo(import.meta.url, () => selected && !insufficientSway, [insufficientSway, selected]);
 
-  const onSelected = useCallback((order) => {
+  const onSelected = useCallback(import.meta.url, (order) => {
     setSelected((old) => old?._orderPath === order._orderPath ? undefined : order);
   }, []);
 
-  const onComplete = useCallback(() => {
+  const onComplete = useCallback(import.meta.url, () => {
     if (isCompletable) {
       onCompleted(selected);
       onClose();
@@ -3171,7 +3171,7 @@ export const ExchangeSelectionDialog = ({
   const [selected, setSelected] = useState([]);
   const [targetAmount, setTargetAmount] = useState(maxAmount || 0);
 
-  const destinationLocation = useMemo(() => {
+  const destinationLocation = useMemo(import.meta.url, () => {
     if (!otherEntity) return {};
     return locationsArrToObj(otherEntity.Location?.locations || []);
   }, [otherEntity]);
@@ -3183,11 +3183,11 @@ export const ExchangeSelectionDialog = ({
     isLoading: resourceMarketplacesLoading,
     refetch: refetchResourceMarketplaces
   } = useShoppingListData(asteroidId, destLotId, [productId]);
-  const exchanges = useMemo(() => resourceMarketplaces?.[productId] || [], [resourceMarketplacesUpdatedAt]);
+  const exchanges = useMemo(import.meta.url, () => resourceMarketplaces?.[productId] || [], [resourceMarketplacesUpdatedAt]);
 
   useInterval(() => { refetchResourceMarketplaces(); }, 60e3); // keep things loosely fresh
 
-  const crewBonuses = useMemo(() => {
+  const crewBonuses = useMemo(import.meta.url, () => {
     if (!crew) return {};
 
     const abilities = getCrewAbilityBonuses([
@@ -3202,7 +3202,7 @@ export const ExchangeSelectionDialog = ({
     }
   }, [crew]);
 
-  const selectionSummary = useMemo(() => {
+  const selectionSummary = useMemo(import.meta.url, () => {
     let needed = targetAmount;
     let totalPrice = 0;
     let maxTravelTime = 0;
@@ -3252,11 +3252,11 @@ export const ExchangeSelectionDialog = ({
     };
   }, [selected, targetAmount]);
 
-  const insufficientSway = useMemo(() => selectionSummary.totalPrice * TOKEN_SCALE[TOKEN.SWAY] > swayBalance, [selectionSummary, swayBalance]);
+  const insufficientSway = useMemo(import.meta.url, () => selectionSummary.totalPrice * TOKEN_SCALE[TOKEN.SWAY] > swayBalance, [selectionSummary, swayBalance]);
 
-  const isCompletable = useMemo(() => selectionSummary.totalFilled > 0 && !insufficientSway, [insufficientSway, selectionSummary]);
+  const isCompletable = useMemo(import.meta.url, () => selectionSummary.totalFilled > 0 && !insufficientSway, [insufficientSway, selectionSummary]);
 
-  const onSelected = useCallback((buildingId) => {
+  const onSelected = useCallback(import.meta.url, (buildingId) => {
     if (singleSelectionMode) {
       setSelected((old) => old.includes(buildingId) ? [] : [buildingId]);
     } else {
@@ -3277,7 +3277,7 @@ export const ExchangeSelectionDialog = ({
     }
   }, [selectionSummary, singleSelectionMode]);
 
-  const onComplete = useCallback(() => {
+  const onComplete = useCallback(import.meta.url, () => {
     if (isCompletable) {
       onCompleted(selectionSummary);
       onClose();
@@ -3560,13 +3560,13 @@ export const MiniBarChart = ({ color, deltaColor, deltaValue, label, valueLabel,
 export const SwayInput = ({ inputLabel = "SWAY", onChange, value: defaultValue, ...props }) => {
   const [value, setValue] = useState(0);
 
-  const internalOnChange = useCallback((e) => {
+  const internalOnChange = useCallback(import.meta.url, (e) => {
     let cleanValue = e.target?.value ? parseInt(e.target.value) : '';
     setValue(cleanValue);
     if (onChange) onChange(cleanValue);
   }, [onChange]);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     setValue(defaultValue || 0);
   }, [defaultValue]);
 
@@ -3852,7 +3852,7 @@ export const LotControlWarning = ({ lot }) => {
   const { crew } = useCrewContext();
   const { isAtRisk } = useConstructionManager(lot?.id);
 
-  const warning = useMemo(() => {
+  const warning = useMemo(import.meta.url, () => {
     if (!(crew && lot)) return null;
     if (isAtRisk) {
       return <>Construction Site is vulnerable to any crew.</>;
@@ -3887,7 +3887,7 @@ export const ResourceGridSectionInner = ({
   style,
   theming = 'default'
 }) => {
-  const { totalItems, totalMass, totalVolume } = useMemo(() => {
+  const { totalItems, totalMass, totalVolume } = useMemo(import.meta.url, () => {
     return items.reduce((acc, { i, numerator, denominator, selected }) => {
       if (!Product.TYPES[i]) {
         console.error(`Product #${i} invalid`)
@@ -3969,7 +3969,7 @@ const ResourceGridSection = ({ label, sectionProps = {}, ...props }) => (
 );
 
 export const BuildingRequirementsSection = ({ mode, label, requirements, requirementsMet }) => {
-  const items = useMemo(() => {
+  const items = useMemo(import.meta.url, () => {
     return requirements.map((item) => ({
       i: item.i,
       numerator: item.inInventory + item.inTransit,
@@ -3996,7 +3996,7 @@ export const BuildingRequirementsSection = ({ mode, label, requirements, require
 };
 
 export const TransferBuildingRequirementsSection = ({ label, onClick, requirements, selectedItems }) => {
-  const items = useMemo(() => requirements.map((item) => ({
+  const items = useMemo(import.meta.url, () => requirements.map((item) => ({
     i: item.i,
     numerator: item.inInventory + item.inTransit + (selectedItems[item.i] || 0),
     denominator: item.totalRequired,
@@ -4022,7 +4022,7 @@ export const TransferBuildingRequirementsSection = ({ label, onClick, requiremen
 };
 
 export const DeconstructionMaterialsSection = ({ label, itemsReturned }) => {
-  const items = useMemo(() => {
+  const items = useMemo(import.meta.url, () => {
     return itemsReturned.map((item) => ({
       i: item.i,
       customIcon: { icon: <PlusIcon /> },
@@ -4038,7 +4038,7 @@ export const DeconstructionMaterialsSection = ({ label, itemsReturned }) => {
 };
 
 export const ItemSelectionSection = ({ columns = 7, label, items, onClick, stage, unwrapped, ...props }) => {
-  const formattedItems = useMemo(() => {
+  const formattedItems = useMemo(import.meta.url, () => {
     return Object.keys(items || {}).map((resourceId) => ({
       i: resourceId,
       numerator: items[resourceId]
@@ -4110,7 +4110,7 @@ export const ProgressBarSection = ({
   const refEl = useRef();
   const [hovered, setHovered] = useState();
 
-  const { animating, barWidth, color, left, reverseAnimation, right, center } = useMemo(() => {
+  const { animating, barWidth, color, left, reverseAnimation, right, center } = useMemo(import.meta.url, () => {
     const r = {
       animating: false,
       reverseAnimation: false,
@@ -4175,7 +4175,7 @@ export const ProgressBarSection = ({
     return r;
   }, [finishTime, stage, startTime, syncedTime]);
 
-  const totalTimeNote = useMemo(() => {
+  const totalTimeNote = useMemo(import.meta.url, () => {
     if (!totalTime) return '';
     if ([actionStage.NOT_STARTED, actionStage.COMPLETING, actionStage.COMPLETED].includes(stage)) return '';
     return `TOTAL: ${formatTimer(totalTime, 2)}`;
@@ -4215,7 +4215,7 @@ export const ProgressBarSection = ({
 export const ResourceAmountSlider = ({ amount, extractionTime, min, max, resource, setAmount }) => {
   const setCoachmarkRef = useCoachmarkRefSetter();
 
-  const [grams, tonnageValue] = useMemo(() => {
+  const [grams, tonnageValue] = useMemo(import.meta.url, () => {
     const grams = amount * resource?.massPerUnit || 0;
     const tonnage = grams / 1e6;
     const tonnageValue = Math.round(1e3 * tonnage) / 1e3;
@@ -4225,7 +4225,7 @@ export const ResourceAmountSlider = ({ amount, extractionTime, min, max, resourc
   const [focusOn, setFocusOn] = useState();
   const [mouseIn, setMouseIn] = useState(false);
 
-  const onFocusEvent = useCallback((e) => {
+  const onFocusEvent = useCallback(import.meta.url, (e) => {
     if (e.type === 'focus') {
       setFocusOn(true);
       e.target.select();
@@ -4234,7 +4234,7 @@ export const ResourceAmountSlider = ({ amount, extractionTime, min, max, resourc
     }
   }, []);
 
-  const onMouseEvent = useCallback((e) => {
+  const onMouseEvent = useCallback(import.meta.url, (e) => {
     setMouseIn(e.type === 'mouseenter')
   }, []);
 
@@ -4287,14 +4287,14 @@ export const RecipeSlider = ({ amount, disabled, increment = 0.001, processingTi
 
   const setCoachmarkRef = useCoachmarkRefSetter();
 
-  const [min, max] = useMemo(() => {
+  const [min, max] = useMemo(import.meta.url, () => {
     return [
       Math.ceil(rawMin / increment) * increment,
       Math.floor(rawMax / increment) * increment
     ];
   }, [increment, rawMin, rawMax]);
 
-  const onFocusEvent = useCallback((e) => {
+  const onFocusEvent = useCallback(import.meta.url, (e) => {
     if (e.type === 'focus') {
       setFocusOn(true);
       e.target.select();
@@ -4303,11 +4303,11 @@ export const RecipeSlider = ({ amount, disabled, increment = 0.001, processingTi
     }
   }, []);
 
-  const onMouseEvent = useCallback((e) => {
+  const onMouseEvent = useCallback(import.meta.url, (e) => {
     setMouseIn(e.type === 'mouseenter')
   }, []);
 
-  const onSetAmount = useCallback((value) => {
+  const onSetAmount = useCallback(import.meta.url, (value) => {
     let cleansed = numeral(value);
     if (cleansed.value() === null) cleansed = numeral(min);
 
@@ -4323,11 +4323,11 @@ export const RecipeSlider = ({ amount, disabled, increment = 0.001, processingTi
     setAmount(Number(cleansed.format(`${increment}`)));
   }, [increment, min, max]);
 
-  const onChangeInput = useCallback((e) => {
+  const onChangeInput = useCallback(import.meta.url, (e) => {
     onSetAmount(e.currentTarget.value);
   }, [onSetAmount]);
 
-  const onRound = useCallback(() => {
+  const onRound = useCallback(import.meta.url, () => {
     onSetAmount(Math.round(amount));
   }, [amount, onSetAmount]);
 
@@ -4386,7 +4386,7 @@ export const RecipeSlider = ({ amount, disabled, increment = 0.001, processingTi
 };
 
 export const ProcessInputOutputSection = ({ title, products, input, output, primaryOutput, secondaryOutputsBonus, setPrimaryOutput, source, stage, ...props }) => {
-  const sourceContents = useMemo(() => (source?.contents || []).reduce((acc, cur) => ({ ...acc, [cur.product]: cur.amount }), {}), [source]);
+  const sourceContents = useMemo(import.meta.url, () => (source?.contents || []).reduce((acc, cur) => ({ ...acc, [cur.product]: cur.amount }), {}), [source]);
 
   return (
     <FlexSectionBlock title={title} {...props} bodyStyle={{ padding: 0 }}>
@@ -4446,7 +4446,7 @@ export const ProcessInputOutputSection = ({ title, products, input, output, prim
 };
 
 export const ProcessInputSquareSection = ({ title, products, input, output, primaryOutput, setPrimaryOutput, source, stage, ...props }) => {
-  const sourceContents = useMemo(() => (source?.contents || []).reduce((acc, cur) => ({ ...acc, [cur.product]: cur.amount }), {}), [source]);
+  const sourceContents = useMemo(import.meta.url, () => (source?.contents || []).reduce((acc, cur) => ({ ...acc, [cur.product]: cur.amount }), {}), [source]);
   return (
     <FlexSectionBlock title={title} {...props} bodyStyle={{ padding: 0 }}>
       <ProductGridWrapper>
@@ -4844,21 +4844,21 @@ export const InventoryInputBlock = ({
   sublabel,
   ...props
 }) => {
-  const inventory = useMemo(() => {
+  const inventory = useMemo(import.meta.url, () => {
     if (entity?.Inventories && inventorySlot) {
       return entity.Inventories.find((i) => i.slot === inventorySlot);
     }
     return null;
   }, [entity, inventorySlot]);
 
-  const invConfig = useMemo(() => {
+  const invConfig = useMemo(import.meta.url, () => {
     if (inventory) {
       return Inventory.getType(inventory.inventoryType, inventoryBonuses);
     }
     return null;
   }, [inventory, inventoryBonuses]);
 
-  const destinationOverloaded = useMemo(() => {
+  const destinationOverloaded = useMemo(import.meta.url, () => {
     const changeAlreadyApplied = (stage && ![actionStage.NOT_STARTED, actionStage.STARTING].includes(stage));
 
     if (inventory && !isSourcing) {
@@ -4875,7 +4875,7 @@ export const InventoryInputBlock = ({
     return false;
   }, [transferMass, transferVolume, inventory, inventoryBonuses, stage]);
 
-  const params = useMemo(() => {
+  const params = useMemo(import.meta.url, () => {
     const fullImageProps = {
       ...imageProps,
       error: destinationOverloaded,
@@ -4973,7 +4973,7 @@ export const ShipInputBlock = ({ ship, ...props }) => {
 export const ShipTab = ({ pilotCrew, inventoryBonuses, ship, stage, deltas = {}, statWarnings = {}, warnings = [] }) => {
 
   // TODO: if want to include "reserved", it would probably make sense to use getCapacityUsage helper instead
-  const inventory = useMemo(() => {
+  const inventory = useMemo(import.meta.url, () => {
     if (!ship?.Ship?.shipType || !ship?.Inventories) return {};
     const shipConfig = Ship.TYPES[ship.Ship.shipType] || {};
     const propellantInventory = ship.Inventories.find((i) => i.slot === shipConfig.propellantSlot);
@@ -4992,7 +4992,7 @@ export const ShipTab = ({ pilotCrew, inventoryBonuses, ship, stage, deltas = {},
     };
   }, [ship?.shipType, ship?.Inventories, inventoryBonuses]);
 
-  const charts = useMemo(() => {
+  const charts = useMemo(import.meta.url, () => {
     const result = {
       propellantMass: {
         color: '#8cc63f',
@@ -5179,12 +5179,12 @@ const ActionDialogStat = ({ stat: { isTimeStat, label, value, direction, tooltip
 export const ActionDialogStats = ({ stage, stats: rawStats, wide }) => {
   const [open, setOpen] = useState();
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     setOpen(stage === actionStage.NOT_STARTED);
   }, [stage]);
 
   // remove any conditionally omitted stats
-  const stats = useMemo(() => rawStats.filter((s) => !!s), [rawStats]);
+  const stats = useMemo(import.meta.url, () => rawStats.filter((s) => !!s), [rawStats]);
 
   if (!stats?.length) return null;
   return (
@@ -5247,13 +5247,13 @@ export const ActionDialogFooter = ({
   //  (we'll also need the ability to cancel those timers)
 
   // show unless already enabled
-  const enableNotifications = useCallback(async () => {
+  const enableNotifications = useCallback(import.meta.url, async () => {
     setNotificationsEnabled((x) => !x);
   }, []);
 
-  const allowedOrLaunched = useMemo(() => requireLaunched ? isLaunched : true, [isLaunched, requireLaunched]);
+  const allowedOrLaunched = useMemo(import.meta.url, () => requireLaunched ? isLaunched : true, [isLaunched, requireLaunched]);
 
-  const finalizeActions = useMemo(() => {
+  const finalizeActions = useMemo(import.meta.url, () => {
     if (Array.isArray(onFinalize)) {
       return onFinalize.map((onAction, i) => ({
         finalizeLabel: finalizeLabel?.[i],
@@ -5468,7 +5468,7 @@ const extractBonuses = (bonusObj, isTimeStat) => {
 export const BonusTooltip = ({ bonus = {}, details, title, titleValue, isTimeStat }) => {
   const timeMult = isTimeStat ? -1 : 1;
   const titleDirection = getBonusDirection({ totalBonus: bonus.totalBonus });
-  const bonuses = useMemo(() => extractBonuses(bonus, isTimeStat), [bonus, isTimeStat]);
+  const bonuses = useMemo(import.meta.url, () => extractBonuses(bonus, isTimeStat), [bonus, isTimeStat]);
   return (
     <Bonuses>
       {(bonus.totalBonus !== 1 || !details) && (
@@ -5532,7 +5532,7 @@ export const BonusTooltip = ({ bonus = {}, details, title, titleValue, isTimeSta
 export const FeeBonusTooltip = ({ baseFeeRate, bonusedFeeRate, feeEnforcementBonus, feeReductionBonus, ...props }) => {
   const flip = false;
   const timeMult = 1;
-  const reductionBonuses = useMemo(() => extractBonuses(feeReductionBonus, true), [feeReductionBonus]);
+  const reductionBonuses = useMemo(import.meta.url, () => extractBonuses(feeReductionBonus, true), [feeReductionBonus]);
   return (
     <Bonuses>
       {feeEnforcementBonus.totalBonus !== 1 && (

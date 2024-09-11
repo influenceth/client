@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo } from '~/lib/react-debug';
 import { useParams } from 'react-router-dom';
 import { Building, Product, Ship } from '@influenceth/sdk';
 
@@ -8,7 +8,7 @@ import ModelViewer from '../ModelViewer';
 const LinkedViewer = () => {
   const { assetType, assetName } = useParams();
 
-  const modelUrl = useMemo(() => {
+  const modelUrl = useMemo(import.meta.url, () => {
     if (assetType === 'building') {
       return getBuildingModel(Object.keys(Building.TYPES).find((i) => Building.TYPES[i].name === assetName));
     } else if (assetType === 'resource') {

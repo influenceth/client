@@ -1,37 +1,41 @@
-import * as React from 'react';
+import * as React from  'react';
 
 // TO USE THIS:
-// - search and replace all `useCallback(` with `useCallback(`
-// - search and replace all `useEffect(` with `useEffect(`
-// - search and replace all `useMemo(` with `useMemo(`
-// - search and replace all `from 'react'` with `from 'react'`
+// - search and replace all `useCallback (` with `useCallback (import.meta.url, ` [*** remove spaces ***]
+// - search and replace all `useEffect (` with `useEffect (import.meta.url, ` [*** remove spaces ***]
+// - search and replace all `useLayoutEffect (` with `useLayoutEffect (import.meta.url, ` [*** remove spaces ***]
+// - search and replace all `useMemo (` with `useMemo (import.meta.url, ` [*** remove spaces ***]
+// - search and replace all `from ' react'` with `from ' ~/lib/react-debug'`  [*** remove spaces ***]
 // - (fix this file if the React.use* were overwritten below or import above)
 
 // TO UN-USE THIS:
-// - search and replace all `` with ``
-// - search and replace all `from 'react'` with `from 'react'`
+// - search and replace all `( import.meta.url, ` with `(`  [*** remove space ***]
+// - search and replace all `from ' ~/lib/react-debug'` with `from ' react'` [*** remove spaces ***]
+
+
+const enableLogs = false;
 
 const cleanse = (filename) => {
   return filename.split('/src')[1];
 }
 
 const useCallbackDebug = (fileName, callback, dependencies) => {
-  return React.useMemo(() => {
-    console.log('useCallback', cleanse(fileName), dependencies.length);
+  return React.useMemo (() => {
+    if (enableLogs) console.log('useCallback', cleanse(fileName), dependencies.length);
     return callback;
   }, [...dependencies]);
 };
 
 const useEffectDebug = (fileName, callback, dependencies) => {
-  return React.useEffect(() => {
-    console.log('useEffect', cleanse(fileName), dependencies.length);
+  return React.useEffect (() => {
+    if (enableLogs) console.log('useEffect', cleanse(fileName), dependencies.length);
     return callback();
   }, [...dependencies]);
 };
 
 const useMemoDebug = (fileName, callback, dependencies) => {
-  return React.useMemo(() => {
-    console.log('useMemo', cleanse(fileName), dependencies.length);
+  return React.useMemo (() => {
+    if (enableLogs) console.log('useMemo', cleanse(fileName), dependencies.length);
     return callback();
   }, [...dependencies]);
 };

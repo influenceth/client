@@ -1,11 +1,11 @@
-import { useMemo } from 'react';
+import { useMemo } from '~/lib/react-debug';
 
 import useSyncedTime from '~/hooks/useSyncedTime';
 import { formatTimer } from '~/lib/utils';
 
 const LiveTimer = ({ children, prefix = '', target, maxPrecision, waitingForBlockText = 'Waiting for block...' }) => {
   const syncedTime = useSyncedTime();
-  const [formattedTime, isTimer] = useMemo(() => {
+  const [formattedTime, isTimer] = useMemo(import.meta.url, () => {
     const remaining = target === null ? NaN : target - syncedTime;
     if (isNaN(remaining)) {
       return ['Initializing...', false];

@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo } from '~/lib/react-debug';
 import { Inventory, Order, Permission, Process } from '@influenceth/sdk';
 
 import { TransferP2PIcon, TransferToIcon } from '~/components/Icons';
@@ -15,16 +15,16 @@ const isVisible = ({ crew, lot, ship }) => {
 };
 
 const SurfaceTransferIncoming = ({ asteroid, blockTime, crew, lot, ship, onSetAction, dialogProps = {}, _disabled, _disabledReason }) => {
-  const destination = useMemo(() => ship || lot?.surfaceShip || lot?.building, [ship, lot]);
+  const destination = useMemo(import.meta.url, () => ship || lot?.surfaceShip || lot?.building, [ship, lot]);
   const { data: inventoryOrders } = useOrdersByInventory(destination);
   const { currentDeliveryActions: destDeliveryActions, isLoading } = useDeliveryManager({ destination });
   const { data: destActionItems } = useUnresolvedActivities(destination);
 
-  const deliveryDeparting = useMemo(() => {
+  const deliveryDeparting = useMemo(import.meta.url, () => {
     return (destDeliveryActions || []).find((a) => a.status === 'DEPARTING');
   }, [destDeliveryActions]);
 
-  const currentDeliveryStack = useMemo(() => {
+  const currentDeliveryStack = useMemo(import.meta.url, () => {
     const actionStack = [];
     if (crew && destination && Permission.isPermitted(crew, Permission.IDS.ADD_PRODUCTS, destination, blockTime)) {
       (destDeliveryActions || []).forEach((delivery) => {
@@ -102,11 +102,11 @@ const SurfaceTransferIncoming = ({ asteroid, blockTime, crew, lot, ship, onSetAc
     });
   }, [blockTime, crew, destination, destDeliveryActions, destActionItems, inventoryOrders, onSetAction]);
 
-  const handleClick = useCallback(() => {
+  const handleClick = useCallback(import.meta.url, () => {
     onSetAction('SURFACE_TRANSFER', { deliveryId: 0, destination, ...dialogProps });
   }, [onSetAction, destination, dialogProps]);
 
-  const disabledReason = useMemo(() => {
+  const disabledReason = useMemo(import.meta.url, () => {
     if (_disabledReason) return _disabledReason;
     if (_disabled) return 'loading...';
     if (!destination) return '';
@@ -126,7 +126,7 @@ const SurfaceTransferIncoming = ({ asteroid, blockTime, crew, lot, ship, onSetAc
     return getCrewDisabledReason({ asteroid, crew, requireReady: false });
   }, [destination, crew]);
   
-  const isP2P = useMemo(
+  const isP2P = useMemo(import.meta.url, 
     () => crew && destination && !Permission.isPermitted(crew, Permission.IDS.ADD_PRODUCTS, destination, blockTime),
     [blockTime, crew, destination]
   );

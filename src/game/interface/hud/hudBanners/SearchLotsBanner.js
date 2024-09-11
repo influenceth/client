@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo } from '~/lib/react-debug';
 import styled from 'styled-components';
 import { Asteroid } from '@influenceth/sdk';
 
@@ -39,9 +39,9 @@ const SearchLotsBanner = ({ visible }) => {
   const { total, isLoading } = useStore(s => s.lotsMappedAssetSearchResults);
   const asteroidId = useStore(s => s.asteroids.origin);
 
-  const maxResults = useMemo(() => Asteroid.getSurfaceArea(asteroidId), [asteroidId]);
+  const maxResults = useMemo(import.meta.url, () => Asteroid.getSurfaceArea(asteroidId), [asteroidId]);
 
-  const activeFilters = useMemo(() => {
+  const activeFilters = useMemo(import.meta.url, () => {
     return Object.keys(filters || {})
       .reduce((acc, fieldName) => acc + (isAssetSearchFilterMatchingDefault(assetType, fieldName) ? 0 : 1), 0)
   }, [assetType, filters]);

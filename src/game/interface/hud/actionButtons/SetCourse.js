@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useEffect } from 'react';
+import { useCallback, useMemo, useEffect } from '~/lib/react-debug';
 import { Asteroid } from '@influenceth/sdk';
 
 import { SetCourseIcon } from '~/components/Icons';
@@ -29,15 +29,15 @@ const SetCourse = ({ asteroid, crew, ship, onSetAction, simulation, simulationAc
   const { data: destination } = useAsteroid(travelSolution?.destinationId);
   const setCoachmarkRef = useCoachmarkRefSetter();
 
-  const handleClick = useCallback(() => {
+  const handleClick = useCallback(import.meta.url, () => {
     onSetAction('SET_COURSE');
   }, [travelSolution]);
 
-  const validDestination = useMemo(() => {
+  const validDestination = useMemo(import.meta.url, () => {
     return destination?.Celestial?.scanStatus >= Asteroid.SCAN_STATUSES.SURFACE_SCANNED;
   }, [destination]);
 
-  const disabledReason = useMemo(() => {
+  const disabledReason = useMemo(import.meta.url, () => {
     if (_disabled) return 'loading...';
     if (!crew?._location?.shipId && !inEscapeModule) return 'crew is not on ship';
     if (travelStatus === 'READY') {

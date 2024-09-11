@@ -1,4 +1,4 @@
-import { useCallback, useContext, useMemo } from 'react';
+import { useCallback, useContext, useMemo } from '~/lib/react-debug';
 import { Entity, Order } from '@influenceth/sdk';
 
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
@@ -15,12 +15,12 @@ const useMarketplaceManager = (buildingId) => {
   const { data: exchange } = useEntity({ id: buildingId, label: Entity.IDS.BUILDING });
   const { data: exchangeController } = useHydratedCrew(exchange?.Control?.controller?.id);
 
-  const payload = useMemo(() => ({
+  const payload = useMemo(import.meta.url, () => ({
     exchange: { id: buildingId, label: Entity.IDS.BUILDING },
     caller_crew: { id: crew?.id, label: Entity.IDS.CREW }
   }), [crew?.id, buildingId]);
 
-  const getPendingOrder = useCallback((mode, type, details) => {
+  const getPendingOrder = useCallback(import.meta.url, (mode, type, details) => {
     const keys = [];
     let locTest = () => true;
     if (mode === 'buy' && type === 'limit') {
@@ -47,7 +47,7 @@ const useMarketplaceManager = (buildingId) => {
     ));
   }, [pendingTransactions]);
 
-  const createBuyOrder = useCallback(
+  const createBuyOrder = useCallback(import.meta.url, 
     ({ product, amount, price, destination, destinationSlot, feeTotal }) => execute(
       'EscrowDepositAndCreateBuyOrder',
       {
@@ -66,7 +66,7 @@ const useMarketplaceManager = (buildingId) => {
     ),
     [crew, payload]
   );
-  const createSellOrder = useCallback(
+  const createSellOrder = useCallback(import.meta.url, 
     ({ product, amount, price, origin, originSlot }) => execute(
       'CreateSellOrder',
       {
@@ -84,7 +84,7 @@ const useMarketplaceManager = (buildingId) => {
     [exchange, payload]
   );
 
-  const fillBuyOrders = useCallback(
+  const fillBuyOrders = useCallback(import.meta.url, 
     ({ isCancellation, origin, originSlot, fillOrders }) => {
       if (!fillOrders?.length) return;
 
@@ -120,7 +120,7 @@ const useMarketplaceManager = (buildingId) => {
     [exchangeController, payload]
   );
 
-  const fillSellOrders = useCallback(
+  const fillSellOrders = useCallback(import.meta.url, 
     async ({ destination, destinationSlot, fillOrders }) => {
       if (!fillOrders?.length) return;
       const sellerCrewIds = fillOrders.map((order) => order.crew?.id);
@@ -155,7 +155,7 @@ const useMarketplaceManager = (buildingId) => {
     [exchangeController, payload]
   );
 
-  const cancelBuyOrder = useCallback(
+  const cancelBuyOrder = useCallback(import.meta.url, 
     ({ amount, buyer, price, product, destination, destinationSlot, initialCaller, makerFee }) => {
       fillBuyOrders({
         isCancellation: true,
@@ -181,7 +181,7 @@ const useMarketplaceManager = (buildingId) => {
     },
     [fillBuyOrders]
   );
-  const cancelSellOrder = useCallback(
+  const cancelSellOrder = useCallback(import.meta.url, 
     ({ amount, seller, product, price, origin, originSlot }) => execute(
       'CancelSellOrder',
       {

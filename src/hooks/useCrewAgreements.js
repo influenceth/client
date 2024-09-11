@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo } from '~/lib/react-debug';
 
 import useCrewContext from '~/hooks/useCrewContext';
 import useWalletAgreements from '~/hooks/useWalletAgreements';
@@ -7,7 +7,7 @@ const useCrewAgreements = (enabled = true, includeWhereLessor = true, includeWhe
   const { crew } = useCrewContext();
   const { data, isLoading } = useWalletAgreements();
 
-  return useMemo(() => {
+  return useMemo(import.meta.url, () => {
     return {
       data: crew?.id && enabled && data
         ? data?.filter((a) => (

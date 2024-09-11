@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo } from '~/lib/react-debug';
 import { cloneDeep } from 'lodash';
 import { Entity } from '@influenceth/sdk';
 
@@ -6,7 +6,7 @@ import useEntity from '~/hooks/useEntity';
 import { locationsArrToObj } from '~/lib/utils';
 
 const useShip = (id) => {
-  const entity = useMemo(() => {
+  const entity = useMemo(import.meta.url, () => {
     if (id) {
       if (id.label && id.id) return { label: id.label, id: Number(id.id) };
       return { label: Entity.IDS.SHIP, id };
@@ -15,7 +15,7 @@ const useShip = (id) => {
   }, [id]);
 
   const { data, dataUpdatedAt, isLoading, refetch } = useEntity(entity);
-  return useMemo(() => {
+  return useMemo(import.meta.url, () => {
     let ship = null;
     if (data && !isLoading) {
       ship = cloneDeep(data);

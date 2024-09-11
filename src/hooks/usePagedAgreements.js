@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from '~/lib/react-debug';
 import get from 'lodash/get';
 import { Entity, Lot } from '@influenceth/sdk';
 
@@ -23,13 +23,13 @@ const usePagedAgreements = (params) => {
   const updateFilters = useStore(s => s.dispatchFiltersUpdated(assetType));
   const setSort = useStore(s => s.dispatchSortUpdated(assetType));
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     setPage(1);
   }, [filters, sort]);
 
   // override perm filter from url, but reset to pre-existing on unmount
   const previousPermFilter = useRef();
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (params.permission) {
       previousPermFilter.current = filters.permission;
 
@@ -52,7 +52,7 @@ const usePagedAgreements = (params) => {
 
   const isLoading = params.uuid ? entityLoading : crewAgreementsLoading;
 
-  const data = useMemo(() => {
+  const data = useMemo(import.meta.url, () => {
     if (isLoading) return undefined;
     if (!params.uuid && crewAgreements) return crewAgreements;
     if (params.uuid && entity) {
@@ -64,7 +64,7 @@ const usePagedAgreements = (params) => {
   }, [asteroid, crewAgreements, dataUpdatedAt, entity, isLoading, params.permission, params.uuid]);
 
   // TODO: should almost certainly move filter application into elasticsearch instead of loading all upfront
-  const filteredData = useMemo(() => {
+  const filteredData = useMemo(import.meta.url, () => {
     return (data || [])
       .filter((a) => {
         if (filters.permission) {
@@ -88,7 +88,7 @@ const usePagedAgreements = (params) => {
       .sort((a, b) => (sort[1] === 'asc' ? 1 : -1) * (get(a, sort[0]) < get(b, sort[0]) ? -1 : 1));
   }, [blockTime, crew, data, sort, filters]);
 
-  const dataPage = useMemo(() => filteredData.slice(pageSize * (page - 1), pageSize * page), [filteredData, page])
+  const dataPage = useMemo(import.meta.url, () => filteredData.slice(pageSize * (page - 1), pageSize * page), [filteredData, page])
 
   return {
     page,

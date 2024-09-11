@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo } from '~/lib/react-debug';
 import { DryDock, Permission } from '@influenceth/sdk';
 
 import { AssembleShipIcon } from '~/components/Icons';
@@ -23,15 +23,15 @@ const AssembleShip = ({ asteroid, blockTime, crew, lot, onSetAction, simulation,
   const { assemblyStatus, currentAssembly } = useDryDockManager(lot?.id);
   const setCoachmarkRef = useCoachmarkRefSetter();
 
-  const handleClick = useCallback(() => {
+  const handleClick = useCallback(import.meta.url, () => {
     onSetAction('ASSEMBLE_SHIP');
   }, [onSetAction]);
 
-  const prepaidLeaseConfig = useMemo(() => {
+  const prepaidLeaseConfig = useMemo(import.meta.url, () => {
     return getProcessorLeaseConfig(lot?.building, Permission.IDS.ASSEMBLE_SHIP, crew, blockTime);
   }, [blockTime, crew, lot?.building])
 
-  const disabledReason = useMemo(() => {
+  const disabledReason = useMemo(import.meta.url, () => {
     if (_disabled) return 'loading...';
     if (assemblyStatus === 'READY') {
       return getCrewDisabledReason({

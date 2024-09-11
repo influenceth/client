@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { uniqueId } from "lodash";
 
 const InfluenceLogo = () => {
-  const id = useMemo(() => uniqueId('InfluenceLogo-'), []);
+  const id = useMemo(import.meta.url, () => uniqueId('InfluenceLogo-'), []);
   return (
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1030.5893 188.43281">
       <defs>

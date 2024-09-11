@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from '~/lib/react-debug';
 import cloneDeep from 'lodash/cloneDeep';
 import { Asteroid, Building, Crewmate, Entity, Permission, Station, Time } from '@influenceth/sdk';
 
@@ -38,17 +38,17 @@ const StationCrew = ({ asteroid, destination: rawDestination, lot, origin: rawOr
   const { stationCrew } = stationCrewManager;
   const { crew, crewCan } = useCrewContext();
 
-  const crewTravelBonus = useMemo(() => {
+  const crewTravelBonus = useMemo(import.meta.url, () => {
     if (!crew) return {};
     return getCrewAbilityBonuses(Crewmate.ABILITY_IDS.HOPPER_TRANSPORT_TIME, crew) || {};
   }, [crew]);
 
-  const crewDistBonus = useMemo(() => {
+  const crewDistBonus = useMemo(import.meta.url, () => {
     if (!crew) return {};
     return getCrewAbilityBonuses(Crewmate.ABILITY_IDS.FREE_TRANSPORT_DISTANCE, crew) || {};
   }, [crew]);
 
-  const origin = useMemo(() => {
+  const origin = useMemo(import.meta.url, () => {
     if (!rawOrigin) return null;
     const newOrigin = cloneDeep(rawOrigin);
     newOrigin._location = locationsArrToObj(newOrigin?.Location?.locations || []);
@@ -57,7 +57,7 @@ const StationCrew = ({ asteroid, destination: rawDestination, lot, origin: rawOr
     return newOrigin;
   }, [rawOrigin]);
 
-  const destination = useMemo(() => {
+  const destination = useMemo(import.meta.url, () => {
     if (!rawDestination) return null;
     const newDestination = cloneDeep(rawDestination);
     newDestination._location = locationsArrToObj(newDestination?.Location?.locations || []);
@@ -72,7 +72,7 @@ const StationCrew = ({ asteroid, destination: rawDestination, lot, origin: rawOr
   const { data: destinationLot } = useLot(destination?._location?.lotId);
   const { data: originLot } = useLot(origin?._location?.lotId);
 
-  const [travelDistance, travelTime] = useMemo(() => {
+  const [travelDistance, travelTime] = useMemo(import.meta.url, () => {
     if (!origin._location || !destination._location) return [0, 0];
     return [
       Asteroid.getLotDistance(asteroid?.id, origin._location.lotIndex || 0, destination._location.lotIndex || 0),
@@ -89,11 +89,11 @@ const StationCrew = ({ asteroid, destination: rawDestination, lot, origin: rawOr
     ];
   }, [asteroid?.id, origin?.id, destination?.id, crewDistBonus, crewTravelBonus, crew?._timeAcceleration]);
 
-  const [crewTimeRequirement, taskTimeRequirement] = useMemo(() => {
+  const [crewTimeRequirement, taskTimeRequirement] = useMemo(import.meta.url, () => {
     return [ travelTime, 0 ];
   }, [travelTime]);
 
-  const stats = useMemo(() => ([
+  const stats = useMemo(import.meta.url, () => ([
     {
       label: 'Travel Time',
       value: formatTimer(travelTime),
@@ -114,20 +114,20 @@ const StationCrew = ({ asteroid, destination: rawDestination, lot, origin: rawOr
     },
   ]), [crewTravelBonus, travelTime]);
 
-  const onStation = useCallback(() => {
+  const onStation = useCallback(import.meta.url, () => {
     stationCrew();
   }, [stationCrew]);
 
   // handle auto-closing
   const lastStatus = useRef();
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (lastStatus.current && stage !== lastStatus.current) {
       props.onClose();
     }
     lastStatus.current = stage;
   }, [stage]);
 
-  const actionDetails = useMemo(() => {
+  const actionDetails = useMemo(import.meta.url, () => {
     const icon = destination?.label === Entity.IDS.SHIP && !crewIsOwner
       ? <StationPassengersIcon />
       : <StationCrewIcon />;
@@ -284,7 +284,7 @@ const Wrapper = (props) => {
   const { data: asteroid, isLoading: asteroidIsLoading } = useAsteroid(asteroidId);
   const { data: lot, isLoading: lotIsLoading } = useLot(lotId);
 
-  const destinationEntityId = useMemo(() => {
+  const destinationEntityId = useMemo(import.meta.url, () => {
     if (props.destinationEntityId) return props.destinationEntityId;
 
     if (zoomScene?.type === 'SHIP' && zoomScene.shipId) {
@@ -310,7 +310,7 @@ const Wrapper = (props) => {
 
   const isLoading = asteroidIsLoading || crewIsLoading || destIsLoading || lotIsLoading || originIsLoading;
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (!origin || !destination) {
       if (!isLoading) {
         if (props.onClose) props.onClose();

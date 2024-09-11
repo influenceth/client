@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useState } from '~/lib/react-debug';
 import styled from 'styled-components';
 import Loader from 'react-spinners/PuffLoader';
 
@@ -326,7 +326,7 @@ const MissionWrapper = styled.div`
 `;
 const Mission = ({ mission, mode }) => {
   const createAlert = useStore(s => s.dispatchAlertLogged);
-  const onClick = useCallback(() => {
+  const onClick = useCallback(import.meta.url, () => {
     const targetUrl = mode === 'community' ? process.env.REACT_APP_COMMUNITY_MISSIONS_URL : process.env.REACT_APP_COLONIZATION_MISSIONS_URL;
     if (targetUrl) {
       window.open(targetUrl);

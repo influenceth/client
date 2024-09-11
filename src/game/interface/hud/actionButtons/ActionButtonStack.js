@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from '~/lib/react-debug';
 import styled, { css } from 'styled-components';
 
 import MouseoverInfoPane from '~/components/MouseoverInfoPane';
@@ -69,7 +69,7 @@ const StackItem = ({ label, finishTime, preloadEntity, onClick }) => {
   const blockTime = useBlockTime();
   const { data: entity } = useEntity(preloadEntity);
 
-  const handleClick = useCallback(() => {
+  const handleClick = useCallback(import.meta.url, () => {
     onClick(entity);
   }, [entity, onClick]);
 
@@ -87,11 +87,11 @@ const StackItemButton = ({ label, finishTime, preloadEntity, onClick, ...props }
   const blockTime = useBlockTime();
   const { data: entity } = useEntity(preloadEntity);
 
-  const handleClick = useCallback(() => {
+  const handleClick = useCallback(import.meta.url, () => {
     onClick(entity);
   }, [entity, onClick]);
 
-  const attention = useMemo(() => finishTime && (finishTime <= blockTime), [blockTime, finishTime])
+  const attention = useMemo(import.meta.url, () => finishTime && (finishTime <= blockTime), [blockTime, finishTime])
 
   return (
     <ActionButton
@@ -114,11 +114,11 @@ const ActionButtonStack = ({ stack, stackLabel, ...props }) => {
   const [refEl, setRefEl] = useState();
   const [stackHovered, setStackHovered] = useState();
 
-  const stackAttention = useMemo(() => {
+  const stackAttention = useMemo(import.meta.url, () => {
     return stack.find((a) => a.finishTime && (a.finishTime <= blockTime));
   }, [blockTime, stack]);
 
-  const handleClick = useCallback((onClick) => (...args) => {
+  const handleClick = useCallback(import.meta.url, (onClick) => (...args) => {
     setStackHovered();
     if (onClick) onClick(...args);
   }, []);

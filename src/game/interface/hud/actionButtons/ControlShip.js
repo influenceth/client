@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo } from '~/lib/react-debug';
 import { Address } from '@influenceth/sdk';
 
 import { BecomeAdminIcon } from '~/components/Icons';
@@ -14,11 +14,11 @@ const isVisible = ({ account, ship, crew }) => {
 const ControlShip = ({ crew, ship, onSetAction, _disabled, ...props }) => {
   const { takingControl } = useControlShip(ship?.id);
 
-  const handleClick = useCallback(() => {
+  const handleClick = useCallback(import.meta.url, () => {
     onSetAction('CONTROL_SHIP', { shipId: ship?.id });
   }, [ship?.id]);
 
-  const disabledReason = useMemo(() => {
+  const disabledReason = useMemo(import.meta.url, () => {
     if (_disabled) return 'loading...';
     if (takingControl) return 'updating...';
     if (!crew?._ready) return 'crew busy';

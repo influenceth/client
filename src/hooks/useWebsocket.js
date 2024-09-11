@@ -1,4 +1,4 @@
-import { useContext } from 'react';
+import { useContext } from '~/lib/react-debug';
 
 import WebsocketContext from '~/contexts/WebsocketContext';
 

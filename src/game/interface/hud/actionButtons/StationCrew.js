@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo } from '~/lib/react-debug';
 import { Permission, Station } from '@influenceth/sdk';
 
 import { StationCrewIcon, StationPassengersIcon } from '~/components/Icons';
@@ -22,16 +22,16 @@ const isVisible = ({ crew, building, ship }) => {
 };
 
 const StationCrew = ({ asteroid, blockTime, crew, lot, ship, onSetAction, simulation, simulationActions, _disabled }) => {
-  const stationEntity = useMemo(() => ship || (lot?.building?.Station ? lot.building : null), [ship, lot?.building]);
+  const stationEntity = useMemo(import.meta.url, () => ship || (lot?.building?.Station ? lot.building : null), [ship, lot?.building]);
   const { currentStationing } = useStationCrewManager(stationEntity);
   const setCoachmarkRef = useCoachmarkRefSetter();
 
   const crewIsController = stationEntity?.Control?.controller?.id === crew?.id;
-  const handleClick = useCallback(() => {
+  const handleClick = useCallback(import.meta.url, () => {
     onSetAction(crewIsController ? 'STATION_CREW' : 'STATION_CREW_AS_GUESTS');
   }, [crewIsController, onSetAction]);
 
-  const disabledReason = useMemo(() => {
+  const disabledReason = useMemo(import.meta.url, () => {
     if (_disabled || !stationEntity) return 'loading...';
     if (!currentStationing) {
       const stationConfig = Station.TYPES[stationEntity.Station?.stationType];
@@ -51,7 +51,7 @@ const StationCrew = ({ asteroid, blockTime, crew, lot, ship, onSetAction, simula
     return '';
   }, [_disabled, asteroid, blockTime, crew, crewIsController, currentStationing, simulationActions, stationEntity]);
 
-  const buttonParams = useMemo(() => {
+  const buttonParams = useMemo(import.meta.url, () => {
     if (ship) {
       if (crewIsController) {
         return {

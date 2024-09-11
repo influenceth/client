@@ -1,4 +1,4 @@
-import { useCallback, useContext, useMemo } from 'react';
+import { useCallback, useContext, useMemo } from '~/lib/react-debug';
 import { Entity, Permission, Processor } from '@influenceth/sdk';
 
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
@@ -15,17 +15,17 @@ const useProcessManager = (lotId, slot) => {
   const { data: lot } = useLot(lotId);
   const { data: actionItems } = useUnresolvedActivities(lot?.building);
 
-  const payload = useMemo(() => ({
+  const payload = useMemo(import.meta.url, () => ({
     processor: { id: lot?.building?.id, label: Entity.IDS.BUILDING },
     processor_slot: slot,
     caller_crew: { id: crew?.id, label: Entity.IDS.CREW }
   }), [lot?.building, crew?.id, slot]);
 
-  const processor = useMemo(() => lot?.building?.Processors?.find((e) => e.slot === slot), [lot?.building, slot]);
+  const processor = useMemo(import.meta.url, () => lot?.building?.Processors?.find((e) => e.slot === slot), [lot?.building, slot]);
 
   // status flow
   // READY > PROCESSING > READY_TO_FINISH > FINISHING
-  const [currentProcess, processStatus, actionStage] = useMemo(() => {
+  const [currentProcess, processStatus, actionStage] = useMemo(import.meta.url, () => {
     let current = {
       _cachedData: null,
       _isAccessible: false,
@@ -98,7 +98,7 @@ const useProcessManager = (lotId, slot) => {
     ];
   }, [actionItems, blockTime, crew?.id, crewCan, getPendingTx, getStatus, payload, processor?.status]);
 
-  const startProcess = useCallback(({ processId, primaryOutputId, recipeTally, origin, originSlot, destination, destinationSlot, leaseDetails }) => {
+  const startProcess = useCallback(import.meta.url, ({ processId, primaryOutputId, recipeTally, origin, originSlot, destination, destinationSlot, leaseDetails }) => {
     execute(
       leaseDetails ? 'LeaseAndProcessProductsStart' : 'ProcessProductsStart',
       {
@@ -118,7 +118,7 @@ const useProcessManager = (lotId, slot) => {
     )
   }, [lotId, payload, processor?.processorType]);
 
-  const finishProcess = useCallback(() => {
+  const finishProcess = useCallback(import.meta.url, () => {
     execute('ProcessProductsFinish', payload, { lotId, process: processor?.runningProcess });
   }, [lotId, payload, processor?.runningProcess]);
 

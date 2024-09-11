@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback } from '~/lib/react-debug';
 import styled from 'styled-components';
 import Clipboard from 'react-clipboard.js';
 
@@ -14,7 +14,7 @@ const CopyReferralLink = ({ children, fallbackContent }) => {
   const createAlert = useStore(s => s.dispatchAlertLogged);
   const playSound = useStore(s => s.dispatchEffectStartRequested);
 
-  const handleClick = useCallback(() => {
+  const handleClick = useCallback(import.meta.url, () => {
     playSound('click');
     createAlert({
       type: 'ClipboardAlert',

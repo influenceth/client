@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from '~/lib/react-debug';
 import { Asteroid, Crew, Crewmate, Lot, Permission } from '@influenceth/sdk';
 
 import useAsteroidBuildings from '~/hooks/useAsteroidBuildings';
@@ -18,7 +18,7 @@ const useShoppingListData = (asteroidId, lotId, productIds, mode = 'buy') => {
   // TODO: how much effort would it be to include feeEnforcement in elasticsearch on exchanges
   const [feeEnforcements, setFeeEnforcements] = useState();
   const [feesLoading, setFeesLoading] = useState(true);
-  const loadFees = useCallback(async () => {
+  const loadFees = useCallback(import.meta.url, async () => {
     const ids = (exchanges || []).map((e) => e.Control?.controller?.id);
     if (ids?.length > 0) {
       setFeesLoading(true);
@@ -50,14 +50,14 @@ const useShoppingListData = (asteroidId, lotId, productIds, mode = 'buy') => {
     }
     setFeesLoading(false);
   }, [exchangesUpdatedAt]);
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     loadFees();
   }, [loadFees]);
 
   const { data: orders, isLoading: ordersLoading, refetch: refetchOrders } = useShoppingListOrders(asteroidId, productIds, mode);
 
   const isLoading = exchangesLoading || feesLoading || ordersLoading;
-  return useMemo(() => {
+  return useMemo(import.meta.url, () => {
     const refetch = () => {
       refetchExchanges();
       refetchOrders();

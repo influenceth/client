@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from '~/lib/react-debug';
 import { useHistory, useLocation } from 'react-router-dom';
 import styled from 'styled-components';
 import { Building, Crewmate, Entity, Lot, Order, Permission, Product } from '@influenceth/sdk';
@@ -366,7 +366,7 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
   const history = useHistory();
   const { search } = useLocation();
 
-  const urlMode = useMemo(() => {
+  const urlMode = useMemo(import.meta.url, () => {
     const q = new URLSearchParams(search);
     return q.get('mode');
   }, [search]);
@@ -376,7 +376,7 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
   const simulationEnabled = useSimulationEnabled();
 
   const setCoachmarkRef = useCoachmarkRefSetter();
-  const setCoachmarkHelperRef = useMemo(() => setCoachmarkRef(COACHMARK_IDS.asteroidMarketsHelper), [setCoachmarkRef]);
+  const setCoachmarkHelperRef = useMemo(import.meta.url, () => setCoachmarkRef(COACHMARK_IDS.asteroidMarketsHelper), [setCoachmarkRef]);
   
   const actionDialog = useStore(s => s.actionDialog);
   const coachmarkHelperProduct = useStore(s => s.coachmarks?.[COACHMARK_IDS.asteroidMarketsHelper]);
@@ -387,7 +387,7 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
 
   const { getPendingOrder } = useMarketplaceManager(marketplace?.id);
 
-  const [buyOrders, sellOrders, bid, ask] = useMemo(() => {
+  const [buyOrders, sellOrders, bid, ask] = useMemo(import.meta.url, () => {
     const buys = (orders || []).filter((o) => o.orderType === Order.IDS.LIMIT_BUY);
     const sells = (orders || []).filter((o) => o.orderType === Order.IDS.LIMIT_SELL);
     const highestBuy = Math.max(...buys.map(b => b.price));
@@ -395,7 +395,7 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
     return [buys, sells, highestBuy, lowestSell];
   }, [orders]);
 
-  const buyBuckets = useMemo(() => {
+  const buyBuckets = useMemo(import.meta.url, () => {
     const buckets = buyOrders.reduce((acc, { price, amount }) => ({
       ...acc,
       [price]: (acc[price] || 0) + amount
@@ -405,7 +405,7 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
       .sort((a, b) => a.price > b.price ? -1 : 1);
   }, [buyOrders]);
 
-  const sellBuckets = useMemo(() => {
+  const sellBuckets = useMemo(import.meta.url, () => {
     const buckets = sellOrders.reduce((acc, { price, amount }) => ({
       ...acc,
       [price]: (acc[price] || 0) + amount
@@ -421,14 +421,14 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
 
   // make sure render again once chartWrapperRef is ready
   const [refIsReady, setRefIsReady] = useState();
-  const checkRefIsReady = useCallback(() => {
+  const checkRefIsReady = useCallback(import.meta.url, () => {
     if (chartWrapperRef.current.clientWidth > 0) {
       setRefIsReady(true);
     } else if (!refIsReady) {
       setTimeout(checkRefIsReady, 50);
     }
   }, [refIsReady]);
-  useEffect(checkRefIsReady, []);
+  useEffect(import.meta.url, checkRefIsReady, []);
 
   const {
     xViewbox,
@@ -441,7 +441,7 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
     centerPrice,
     totalBuying,
     totalSelling
-  } = useMemo(() => {
+  } = useMemo(import.meta.url, () => {
     if (!chartWrapperRef.current) return {};
     if (!(buyBuckets?.length > 0 || sellBuckets?.length > 0)) return {};
 
@@ -529,7 +529,7 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
   }, [refIsReady, buyBuckets, sellBuckets, height, width]);
 
   // if nothing available for market order, default to limit
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (type === 'market' && mode === 'buy' && totalSelling === 0) setType('limit');
   }, [mode, totalBuying, totalSelling]);
 
@@ -538,22 +538,22 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
   let volumeBenchmark = Math.max(totalBuying, totalSelling);
 
   // TODO: re-release sdk and reference there
-  const feeReductionBonus = useMemo(() => {
+  const feeReductionBonus = useMemo(import.meta.url, () => {
     if (!crew) return {};
     return getCrewAbilityBonuses(Crewmate.ABILITY_IDS.MARKETPLACE_FEE_REDUCTION, crew);
   }, [crew]);
 
-  const feeEnforcementBonus = useMemo(() => {
+  const feeEnforcementBonus = useMemo(import.meta.url, () => {
     if (!marketplaceOwner) return {};
     return getCrewAbilityBonuses(Crewmate.ABILITY_IDS.MARKETPLACE_FEE_ENFORCEMENT, marketplaceOwner) || {};
   }, [marketplaceOwner]);
 
-  const baseMarketplaceFee = useMemo(
+  const baseMarketplaceFee = useMemo(import.meta.url, 
     () => marketplace?.Exchange?.[type === 'market' ? 'takerFee' : 'makerFee'],
     [marketplace, type]
   );
 
-  const marketplaceFee = useMemo(() => {
+  const marketplaceFee = useMemo(import.meta.url, () => {
     const adjusted = Order.adjustedFee(baseMarketplaceFee, feeReductionBonus.totalBonus, feeEnforcementBonus.totalBonus);
     return adjusted;
   }, [baseMarketplaceFee, feeReductionBonus, feeEnforcementBonus]);
@@ -561,11 +561,11 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
   const [quantity, setQuantity] = useState();
   const [limitPrice, setLimitPrice] = useState();
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     setLimitPrice(0);
   }, [mode, type]);
 
-  const createOrder = useCallback(() => {
+  const createOrder = useCallback(import.meta.url, () => {
     onSetAction('MARKETPLACE_ORDER', {
       asteroidId: lot?.asteroid,
       lotId: lot?.id,
@@ -576,7 +576,7 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
     });
   }, [limitPrice, lot, mode, quantity, resource, type]);
 
-  const handleChangeQuantity = useCallback((e) => {
+  const handleChangeQuantity = useCallback(import.meta.url, (e) => {
     let input = parseInt(e.currentTarget.value) || 0;
     if (input && type === 'market') {
       if (mode === 'buy') input = Math.max(0, Math.min(input, totalSelling));
@@ -586,7 +586,7 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
     setQuantity(input);
   }, [mode, type, totalBuying, totalSelling]);
 
-  const handleChangeLimitPrice = useCallback((price, blur = false) => {
+  const handleChangeLimitPrice = useCallback(import.meta.url, (price, blur = false) => {
     if (blur) {
       if ((mode === 'buy' && price >= ask) || (mode === 'sell' && price <= bid)) {
         setType('market');
@@ -598,7 +598,7 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
   }, [bid, ask, mode]);
 
   // TODO: is quantity right here for non-atomic?
-  const [totalMarketPrice, avgMarketPrice] = useMemo(() => {
+  const [totalMarketPrice, avgMarketPrice] = useMemo(import.meta.url, () => {
     let total = 0;
     let needed = quantity;
     const priceSortMult = mode === 'buy' ? 1 : -1;
@@ -613,26 +613,26 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
     return [total, total / quantity];
   }, [buyOrders, mode, quantity, sellOrders]);
 
-  const totalLimitPrice = useMemo(() => {
+  const totalLimitPrice = useMemo(import.meta.url, () => {
     return (limitPrice || 0) * quantity;
   }, [limitPrice, quantity]);
 
-  const fee = useMemo(() => {
+  const fee = useMemo(import.meta.url, () => {
     return (type === 'market' ? totalMarketPrice : totalLimitPrice)
       * marketplaceFee / Order.FEE_SCALE;
   }, [marketplaceFee, totalMarketPrice, totalLimitPrice, type]);
 
-  const total = useMemo(() => {
+  const total = useMemo(import.meta.url, () => {
     let sum = type === 'limit' ? totalLimitPrice : totalMarketPrice;
     return sum + (mode === 'buy' ? fee : -fee);
   }, [fee, mode, totalLimitPrice, totalMarketPrice, type]);
 
-  const loading = useMemo(
+  const loading = useMemo(import.meta.url, 
     () => getPendingOrder(mode, type, { product: resource.i, exchange: marketplace }),
     [mode, type, resource, marketplace, getPendingOrder]
   );
 
-  const sameAsteroid = useMemo(() => {
+  const sameAsteroid = useMemo(import.meta.url, () => {
     if (marketplace?.Location?.locations) {
       return !!marketplace?.Location?.locations.find((l) => {
         return l.id === crew?._location?.asteroidId && l.label === Entity.IDS.ASTEROID;
@@ -642,7 +642,7 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
     return false;
   }, [crew, marketplace]);
 
-  const hasPermission = useMemo(() => {
+  const hasPermission = useMemo(import.meta.url, () => {
     let perm = 0;
     if (type === 'limit' && mode === 'buy') perm = Permission.IDS.LIMIT_BUY;
     if (type === 'limit' && mode === 'sell') perm = Permission.IDS.LIMIT_SELL;
@@ -651,7 +651,7 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
     return crewCan(perm, marketplace);
   }, [crewCan, mode, type]);
 
-  const [coachToBuy, coachToSell, coachToLimit, coachToMarket, coachToQuantity, coachToUnitPrice, coachToButton] = useMemo(() => {
+  const [coachToBuy, coachToSell, coachToLimit, coachToMarket, coachToQuantity, coachToUnitPrice, coachToButton] = useMemo(import.meta.url, () => {
     let disable = (coachmarkHelperProduct !== resource.i) || !!actionDialog?.type;
     
     const toBuy = !disable && mode === 'sell' && !(simulationActions.includes('MarketSell') || simulationActions.includes('LimitSell'));
@@ -680,7 +680,7 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
   }, [actionDialog?.type, coachmarkHelperProduct, limitPrice, mode, quantity, resource.i, simulationActions, total, type]);
 
   const simulation = useSimulationState();
-  const handleQuantityFocus = useCallback((e) => {
+  const handleQuantityFocus = useCallback(import.meta.url, (e) => {
     if (coachToQuantity && !quantity) {
       let q = '';
       if (SIMULATION_CONFIG.marketplaceAmounts[coachmarkHelperProduct] === true) {
@@ -693,7 +693,7 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
     }
   }, [coachToQuantity, quantity, simulation]);
 
-  const handleLimitPriceFocus = useCallback((e) => {
+  const handleLimitPriceFocus = useCallback(import.meta.url, (e) => {
     if (coachToUnitPrice && !limitPrice) {
       let p = 1;
       if (sellBuckets?.length) {
@@ -705,7 +705,7 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
     }
   }, [coachToUnitPrice, limitPrice]);
 
-  const actionButtonDetails = useMemo(() => {
+  const actionButtonDetails = useMemo(import.meta.url, () => {
     const a = { label: '', icon: null };
 
     if (type === 'limit') {
@@ -741,7 +741,7 @@ const MarketplaceDepthChart = ({ lot, marketplace, marketplaceOwner, resource })
     return a;
   }, [crew, loading, hasPermission, mode, sameAsteroid, simulationActions, simulationEnabled, total, type]);
 
-  const goToListings = useCallback(() => {
+  const goToListings = useCallback(import.meta.url, () => {
     const { asteroidId, lotIndex } = Lot.toPosition(lot?.id) || {};
     history.push(`/marketplace/${asteroidId}/${lotIndex}`);
   }, [lot]);

@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect } from '~/lib/react-debug';
 
 import { SimulateRouteIcon } from '~/components/Icons';
 import useStore from '~/hooks/useStore';
@@ -33,7 +33,7 @@ const SelectTravelDestination = ({ crew, simulation, simulationActions }) => {
   const setCoachmarkRef = useCoachmarkRefSetter();
 
   const canSelect = inTravelMode && zoomStatus === 'out';
-  const handleClick = useCallback(() => {
+  const handleClick = useCallback(import.meta.url, () => {
     if (zoomStatus !== 'out') {
       dispatchZoomStatusChanged('zooming-out');
       dispatchTravelMode(true);
@@ -46,7 +46,7 @@ const SelectTravelDestination = ({ crew, simulation, simulationActions }) => {
     }
   }, [dispatchTravelMode, dispatchDestinationSelected, dispatchHudMenuOpened, inTravelMode, zoomStatus]);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (origin && destination && inTravelMode) {
       dispatchHudMenuOpened('BELT_PLAN_FLIGHT');
     }

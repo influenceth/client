@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from '~/lib/react-debug';
 import { Time } from '@influenceth/sdk';
 
 import useConstants from '~/hooks/useConstants';
@@ -24,7 +24,7 @@ const useCoarseTime = (denom = defaultDenom) => {
   const [syncing, setSyncing] = useState(true);
 
   // this only needs to run as often as 0.01 adays in real time (0.01 * 86400e3 == 864e3)
-  const tickLength = useMemo(
+  const tickLength = useMemo(import.meta.url, 
     () => {
       if (timeOverride?.speed === 0) return null; // (tells useInterval to not run if clock paused)
 
@@ -37,7 +37,7 @@ const useCoarseTime = (denom = defaultDenom) => {
   );
 
   // sync to nearest coarseness (so any consumers all match each other in display)
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     const currentTime = getTime();
     const currentCoarseTime = formatAsCoarseTime(currentTime, denom);
     setCoarseTime(currentCoarseTime);

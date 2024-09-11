@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from '~/lib/react-debug';
 import styled from 'styled-components';
 import { Crewmate, Inventory, Product, Ship, Time } from '@influenceth/sdk';
 
@@ -70,7 +70,7 @@ const EmergencyModeCollect = ({ asteroid, lot, manager, ship, stage, ...props })
     startingAmount,
     totalAmount,
     totalEmergencyFraction
-  } = useMemo(() => {
+  } = useMemo(import.meta.url, () => {
     const shipConfig = Ship.TYPES[ship.Ship.shipType];
     const propellantInventory = ship.Inventories.find((i) => i.slot === shipConfig.propellantSlot);
     const propellantInventoryConfig = Inventory.getType(propellantInventory.inventoryType, crew?._inventoryBonuses);
@@ -90,7 +90,7 @@ const EmergencyModeCollect = ({ asteroid, lot, manager, ship, stage, ...props })
     };
   }, [crew?._inventoryBonuses, resourceId, ship, collectableAmount]);
 
-  const recalculateCollectableAmount = useCallback(() => {
+  const recalculateCollectableAmount = useCallback(import.meta.url, () => {
     setCollectableAmount(
       Math.floor(
         Ship.Entity.getEmergencyPropellantAmount(ship, crew?._inventoryBonuses, crew?._timeAcceleration) - startingAmount
@@ -98,20 +98,20 @@ const EmergencyModeCollect = ({ asteroid, lot, manager, ship, stage, ...props })
     );
   }, [crew, ship, startingAmount]);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     recalculateCollectableAmount();
     const i = setInterval(recalculateCollectableAmount, 1000);
     return () => clearInterval(i);
   }, [recalculateCollectableAmount]);
 
-  const maxGenerationTime = useMemo(() => {
+  const maxGenerationTime = useMemo(import.meta.url, () => {
     return Time.toRealDuration(
       Ship.Entity.getTimeUntilEmergencyPropellantFull(ship, crew?._inventoryBonuses),
       crew?._timeAcceleration
     );
   }, [crew?._timeAcceleration, ship]);
 
-  const stats = useMemo(() => ([
+  const stats = useMemo(import.meta.url, () => ([
     {
       label: 'Generation Time',
       value: formatTimer(
@@ -142,13 +142,13 @@ const EmergencyModeCollect = ({ asteroid, lot, manager, ship, stage, ...props })
     },
   ]), [maxGenerationTime, ship, syncedTime]);
 
-  const onCollect = useCallback(() => {
+  const onCollect = useCallback(import.meta.url, () => {
     collectEmergencyPropellant();
   }, [collectEmergencyPropellant]);
 
   // handle auto-closing
   const lastStatus = useRef();
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     // (close on status change from)
     if (lastStatus.current && actionStage !== lastStatus.current) {
       props.onClose();
@@ -251,7 +251,7 @@ const Wrapper = (props) => {
   const { data: lot, isLoading: lotIsLoading } = useAsteroid(crew?._location?.lotId);
 
   const { data: maybeShip, isLoading: shipIsLoading } = useShip(crew?._location?.shipId);
-  const ship = useMemo(() => {
+  const ship = useMemo(import.meta.url, () => {
     return (!maybeShip && crew?.Ship?.emergencyAt > 0) ? crew : maybeShip;
   }, [crew]);
 
@@ -259,7 +259,7 @@ const Wrapper = (props) => {
   const { actionStage } = manager;
 
   const isLoading = asteroidIsLoading || lotIsLoading || shipIsLoading;
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if ((!asteroid || !ship) && !isLoading && props.onClose) {
       props.onClose();
     }

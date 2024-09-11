@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo } from '~/lib/react-debug';
 import styled from 'styled-components';
 import { Building, Lot } from '@influenceth/sdk';
 
@@ -21,7 +21,7 @@ const Abandoned = styled.div`
 
 const LotTitleArea = ({ lot }) => {
   const { isAtRisk } = useConstructionManager(lot?.id);
-  const [title, subtitle, background] = useMemo(() => {
+  const [title, subtitle, background] = useMemo(import.meta.url, () => {
     if (!lot) return [];
     if (lot.building) {
       if (lot.building.Building?.status < Building.CONSTRUCTION_STATUSES.OPERATIONAL) {

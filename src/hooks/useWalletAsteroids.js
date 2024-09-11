@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo } from '~/lib/react-debug';
 import { useQuery } from 'react-query';
 import esb from 'elastic-builder';
 import { Entity } from '@influenceth/sdk';
@@ -12,9 +12,9 @@ const useWalletAsteroids = () => {
   const { accountAddress } = useSession();
   const { crews, loading: crewsLoading } = useCrewContext();
 
-  const controllerIds = useMemo(() => (crews || []).map((c) => c.id), [crews]);
+  const controllerIds = useMemo(import.meta.url, () => (crews || []).map((c) => c.id), [crews]);
 
-  const query = useMemo(() => {
+  const query = useMemo(import.meta.url, () => {
     if (!accountAddress || crewsLoading) return null;
 
     try {

@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect } from '~/lib/react-debug';
 
 import useStore from '~/hooks/useStore';
 import LotResources from './components/LotResources';
@@ -9,7 +9,7 @@ const Resources = (props) => {
   const lotId = useStore(s => s.asteroids.lot);
   const dispatchResourceMapToggle = useStore(s => s.dispatchResourceMapToggle);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     return () => {
       dispatchResourceMapToggle(false);
     };

@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo } from '~/lib/react-debug';
 import styled from 'styled-components';
 import { Asteroid, Entity, Ship } from '@influenceth/sdk';
 
@@ -72,13 +72,13 @@ const AsteroidInfo = ({ onClose }) => {
   const { data: administrator } = useCrew(asteroid?.Control?.controller?.id);
   const { data: priceConstants } = usePriceConstants();
 
-  const shipsInOrbitTally = useMemo(() => {
+  const shipsInOrbitTally = useMemo(import.meta.url, () => {
     return (ships || []).filter((ship) => {
       return ship.Location.location.label === Entity.IDS.ASTEROID && ship.Ship.status === Ship.STATUSES.AVAILABLE;
     }).length;
   }, [ships]);
 
-  const structuresTally = useMemo(() => {
+  const structuresTally = useMemo(import.meta.url, () => {
     let structures = 0;
     if (lotData) {
       for (let i = 1; i < lotData.length; i++) {
@@ -88,7 +88,7 @@ const AsteroidInfo = ({ onClose }) => {
     return structures;
   }, [lotData]);
 
-  const zoomIn = useCallback(() => {
+  const zoomIn = useCallback(import.meta.url, () => {
     dispatchZoomStatus('zooming-in');
   }, []);
 

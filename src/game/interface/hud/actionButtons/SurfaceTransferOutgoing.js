@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from '~/lib/react-debug';
 import { Inventory, Order, Permission } from '@influenceth/sdk';
 
 import { TransferFromIcon } from '~/components/Icons';
@@ -16,18 +16,18 @@ const isVisible = ({ crew, lot, ship }) => {
 };
 
 const SurfaceTransferOutgoing = ({ asteroid, blockTime, crew, lot, ship, onSetAction, dialogProps = {}, _disabled, _disabledReason }) => {
-  const origin = useMemo(() => ship || lot?.surfaceShip || lot?.building, [ship, lot]);
+  const origin = useMemo(import.meta.url, () => ship || lot?.surfaceShip || lot?.building, [ship, lot]);
   const { data: inventoryOrders } = useOrdersByInventory(origin);
   const { currentDeliveryActions: originDeliveryActions, isLoading } = useDeliveryManager({ origin });
   const { data: originActionItems } = useUnresolvedActivities(origin);
   
-  const deliveryDeparting = useMemo(() => {
+  const deliveryDeparting = useMemo(import.meta.url, () => {
     return (originDeliveryActions || []).find((a) => a.status === 'DEPARTING');
   }, [originDeliveryActions]);
 
   // if outgoing package from origin, prompt anyone with remove_products perms on
   // origin to review/potentially cancel package
-  const currentDeliveryStack = useMemo(
+  const currentDeliveryStack = useMemo(import.meta.url, 
     () => {
       const actionStack = [];
       if (crew && origin && Permission.isPermitted(crew, Permission.IDS.REMOVE_PRODUCTS, origin, blockTime)) {
@@ -77,11 +77,11 @@ const SurfaceTransferOutgoing = ({ asteroid, blockTime, crew, lot, ship, onSetAc
     [blockTime, crew, origin, originDeliveryActions, originActionItems, inventoryOrders, onSetAction]
   );
 
-  const handleClick = useCallback(() => {
+  const handleClick = useCallback(import.meta.url, () => {
     onSetAction('SURFACE_TRANSFER', { deliveryId: 0, origin, ...dialogProps });
   }, [onSetAction, origin, dialogProps]);
 
-  const disabledReason = useMemo(() => {
+  const disabledReason = useMemo(import.meta.url, () => {
     if (_disabledReason) return _disabledReason;
     if (_disabled) return 'loading...';
     if (!origin) return '';

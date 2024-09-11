@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo } from '~/lib/react-debug';
 import { useQuery } from 'react-query';
 import { Entity, Permission, Ship } from '@influenceth/sdk';
 
@@ -25,7 +25,7 @@ const useAccessibleAsteroidInventories = (asteroidId, isSourcing) => {
     { enabled: !!(asteroidId && permission && permissionCrewId && permissionAccount) }
   );
 
-  return useMemo(() => ({
+  return useMemo(import.meta.url, () => ({
     data: buildingsLoading || shipsLoading
       ? undefined
       : [...(buildings || []), ...(ships || [])],

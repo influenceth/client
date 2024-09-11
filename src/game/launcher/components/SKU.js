@@ -1,4 +1,4 @@
-import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { useCallback, useContext, useEffect, useMemo, useState } from '~/lib/react-debug';
 import { useQueryClient } from 'react-query';
 import styled from 'styled-components';
 
@@ -257,7 +257,7 @@ const FilterAsteroidButton = ({ price, sizeFilter }) => {
   const dispatchZoomScene = useStore(s => s.dispatchZoomScene);
   const updateZoomStatus = useStore(s => s.dispatchZoomStatusChanged);
 
-  const filterUnownedAsteroidsAndClose = useCallback(() => {
+  const filterUnownedAsteroidsAndClose = useCallback(import.meta.url, () => {
     updateFilters(Object.assign({}, filters, { ownedBy: 'unowned', ...sizeFilter }));
     dispatchZoomScene();
     let hudTimeout = 0;
@@ -285,7 +285,7 @@ const largeMaxPrice = 10000 * TOKEN_SCALE[TOKEN.USDC];
 const AsteroidSKU = () => {
   const { data: priceConstants } = usePriceConstants();
   const priceHelper = usePriceHelper();
-  const [smallMaxLots, mediumMaxLots, largeMaxLots] = useMemo(() => {
+  const [smallMaxLots, mediumMaxLots, largeMaxLots] = useMemo(import.meta.url, () => {
     return [
       asteroidPriceToLots(priceHelper.from(smallMaxPrice, TOKEN.USDC).to(TOKEN.ETH), priceConstants),
       asteroidPriceToLots(priceHelper.from(mediumMaxPrice, TOKEN.USDC).to(TOKEN.ETH), priceConstants),
@@ -360,11 +360,11 @@ const CrewmateSKU = ({ onUpdatePurchase, onPurchasing }) => {
   const priceHelper = usePriceHelper();
   const [quantity, setQuantity] = useState(1);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     onPurchasing(getPendingCreditPurchase())
   }, [getPendingCreditPurchase, onPurchasing]);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     const cleanQuantity = cleanseCrewmates(quantity) || 1;
     const totalPrice = priceHelper.from(
       safeBigInt(cleanQuantity) * priceConstants?.ADALIAN_PURCHASE_PRICE,
@@ -455,7 +455,7 @@ const SwaySKU = ({ onUpdatePurchase, onPurchasing }) => {
   const [usdc, setUSDC] = useState();
   const [isProcessing, setIsProcessing] = useState();
 
-  const handleEthChange = useCallback((newValue) => {
+  const handleEthChange = useCallback(import.meta.url, (newValue) => {
     setETH(newValue);
 
     const value = priceHelper.from(newValue * TOKEN_SCALE[TOKEN.ETH], TOKEN.ETH);
@@ -463,7 +463,7 @@ const SwaySKU = ({ onUpdatePurchase, onPurchasing }) => {
     setSway(roundToPlaces(value.to(TOKEN.SWAY) / TOKEN_SCALE[TOKEN.SWAY], 0));
   }, [priceHelper]);
 
-  const handleSwayChange = useCallback((newValue) => {
+  const handleSwayChange = useCallback(import.meta.url, (newValue) => {
     setSway(newValue);
 
     const value = priceHelper.from(newValue * TOKEN_SCALE[TOKEN.SWAY], TOKEN.SWAY);
@@ -471,7 +471,7 @@ const SwaySKU = ({ onUpdatePurchase, onPurchasing }) => {
     setUSDC(roundToPlaces(value.to(TOKEN.USDC) / TOKEN_SCALE[TOKEN.USDC], 2));
   }, [priceHelper]);
 
-  const handleUsdcChange = useCallback((newValue) => {
+  const handleUsdcChange = useCallback(import.meta.url, (newValue) => {
     setUSDC(newValue);
 
     const value = priceHelper.from(newValue * TOKEN_SCALE[TOKEN.USDC], TOKEN.USDC);
@@ -479,7 +479,7 @@ const SwaySKU = ({ onUpdatePurchase, onPurchasing }) => {
     setSway(roundToPlaces(value.to(TOKEN.SWAY) / TOKEN_SCALE[TOKEN.SWAY], 0));
   }, [priceHelper]);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (preferredUiCurrency === TOKEN.ETH) {
       handleEthChange(0.001);
     } else {
@@ -487,7 +487,7 @@ const SwaySKU = ({ onUpdatePurchase, onPurchasing }) => {
     }
   }, []);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     const unscaledUSDC = (usdc || 0) * TOKEN_SCALE[TOKEN.USDC];
     onUpdatePurchase({
       totalPrice: priceHelper.from(unscaledUSDC, TOKEN.USDC),
@@ -548,7 +548,7 @@ const SwaySKU = ({ onUpdatePurchase, onPurchasing }) => {
     wallet
   ]);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     onPurchasing(isProcessing);
   }, [isProcessing, onPurchasing])
 
@@ -635,13 +635,13 @@ const SwayFaucetButton = () => {
 
   const [requestingSway, setRequestingSway] = useState();
 
-  const swayEnabled = useMemo(() => {
+  const swayEnabled = useMemo(import.meta.url, () => {
     if (!faucetInfo) return false;
     const lastClaimed = faucetInfo.SWAY.lastClaimed || 0;
     return Date.now() > (Date.parse(lastClaimed) + 23.5 * 3600e3);
   }, [faucetInfo]);
 
-  const requestSway = useCallback(async () => {
+  const requestSway = useCallback(import.meta.url, async () => {
     if (!accountAddress) return login();
 
     setRequestingSway(true);
@@ -706,7 +706,7 @@ const SKU = ({ asset, onBack }) => {
   const [fundingPurchase, setFundingPurchase] = useState();
   const [isPurchasing, setIsPurchasing] = useState();
 
-  const handlePurchase = useCallback((overridePurchase) => {
+  const handlePurchase = useCallback(import.meta.url, (overridePurchase) => {
     if (!accountAddress) return login();
 
     const purch = (overridePurchase || purchase);
@@ -719,7 +719,7 @@ const SKU = ({ asset, onBack }) => {
     }
   }, [accountAddress, login, purchase, wallet]);
 
-  const [asteroidsRemaining, nextAsteroidSale] = useMemo(() => {
+  const [asteroidsRemaining, nextAsteroidSale] = useMemo(import.meta.url, () => {
     if (!asteroidSale) return [0, 0, false];
 
     const remaining = asteroidSale ? (Number(asteroidSale.limit) - Number(asteroidSale.volume)) : 0;
@@ -730,7 +730,7 @@ const SKU = ({ asset, onBack }) => {
     ];
   }, [asteroidSale, blockTime]);
 
-  const { content, ...props } = useMemo(() => {
+  const { content, ...props } = useMemo(import.meta.url, () => {
     if (asset === 'asteroids') {
       return {
         coverImage: AsteroidsHeroImage,

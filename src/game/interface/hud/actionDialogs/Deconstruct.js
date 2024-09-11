@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo } from '~/lib/react-debug';
 import { Building, Crewmate, Inventory, Lot, Time } from '@influenceth/sdk';
 
 import {
@@ -31,12 +31,12 @@ const Deconstruct = ({ asteroid, lot, constructionManager, stage, ...props }) =>
   const { crew } = useCrewContext();
   const { deconstruct } = constructionManager;
 
-  const crewTravelBonus = useMemo(() => getCrewAbilityBonuses(Crewmate.ABILITY_IDS.HOPPER_TRANSPORT_TIME, crew), [crew]);
-  const crewDistBonus = useMemo(() => getCrewAbilityBonuses(Crewmate.ABILITY_IDS.FREE_TRANSPORT_DISTANCE, crew), [crew]);
-  const crewDeconstructBonus = useMemo(() => getCrewAbilityBonuses(Crewmate.ABILITY_IDS.DECONSTRUCTION_YIELD, crew), [crew]);
-  const deconstructionPenalty = useMemo(() => Building.DECONSTRUCTION_PENALTY / (crewDeconstructBonus?.totalBonus || 1), [crewDeconstructBonus]);
+  const crewTravelBonus = useMemo(import.meta.url, () => getCrewAbilityBonuses(Crewmate.ABILITY_IDS.HOPPER_TRANSPORT_TIME, crew), [crew]);
+  const crewDistBonus = useMemo(import.meta.url, () => getCrewAbilityBonuses(Crewmate.ABILITY_IDS.FREE_TRANSPORT_DISTANCE, crew), [crew]);
+  const crewDeconstructBonus = useMemo(import.meta.url, () => getCrewAbilityBonuses(Crewmate.ABILITY_IDS.DECONSTRUCTION_YIELD, crew), [crew]);
+  const deconstructionPenalty = useMemo(import.meta.url, () => Building.DECONSTRUCTION_PENALTY / (crewDeconstructBonus?.totalBonus || 1), [crewDeconstructBonus]);
 
-  const { totalTime: crewTravelTime, tripDetails } = useMemo(() => {
+  const { totalTime: crewTravelTime, tripDetails } = useMemo(import.meta.url, () => {
     if (!asteroid?.id || !crew?._location?.lotId || !lot?.id) return {};
     const crewLotIndex = Lot.toIndex(crew?._location?.lotId);
     return getTripDetails(asteroid.id, crewTravelBonus, crewDistBonus, crewLotIndex, [
@@ -45,11 +45,11 @@ const Deconstruct = ({ asteroid, lot, constructionManager, stage, ...props }) =>
     ], crew?._timeAcceleration);
   }, [asteroid?.id, lot?.id, crew?._location?.lotId, crew?._timeAcceleration, crewTravelBonus, crewDistBonus]);
 
-  const [crewTimeRequirement, taskTimeRequirement] = useMemo(() => {
+  const [crewTimeRequirement, taskTimeRequirement] = useMemo(import.meta.url, () => {
     return [crewTravelTime, 0];
   }, [crewTravelTime]);
 
-  const stats = useMemo(() => [
+  const stats = useMemo(import.meta.url, () => [
     {
       label: 'Crew Travel',
       value: formatTimer(crewTravelTime),
@@ -77,7 +77,7 @@ const Deconstruct = ({ asteroid, lot, constructionManager, stage, ...props }) =>
     },
   ], [crewDeconstructBonus, deconstructionPenalty, tripDetails]);
 
-  const itemsReturned = useMemo(() => {
+  const itemsReturned = useMemo(import.meta.url, () => {
     if (!lot?.building) return [];
     return getBuildingRequirements(lot?.building).map((item) => ({
       ...item,
@@ -143,7 +143,7 @@ const Wrapper = (props) => {
   const constructionManager = useConstructionManager(lot?.id);
   const { stageByActivity } = constructionManager;
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (!asteroid || !lot?.building) {
       if (!isLoading) {
         if (props.onClose) props.onClose();
@@ -152,7 +152,7 @@ const Wrapper = (props) => {
   }, [asteroid, lot, isLoading]);
 
   // stay in this window until PLANNED (and lot updated), then swap to UNPLAN / SURFACE_TRANSFER
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (!['OPERATIONAL', 'DECONSTRUCTING'].includes(constructionManager.constructionStatus)) {
       const siteInventory = (lot?.building?.Inventories || []).find((i) => Inventory.TYPES[i.inventoryType].category === Inventory.CATEGORIES.SITE);
       if (siteInventory?.status === Inventory.STATUSES.AVAILABLE) {

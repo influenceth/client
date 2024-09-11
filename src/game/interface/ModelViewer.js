@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from '~/lib/react-debug';
 import {
   ACESFilmicToneMapping, AgXToneMapping, AnimationMixer, Box3, CineonToneMapping, Color,
   DirectionalLight, EquirectangularReflectionMapping, LinearToneMapping, LoopRepeat,
@@ -107,12 +107,12 @@ const Model = ({ url, onLoaded, onProgress, onCameraUpdate, ...settings }) => {
   const { camera, clock, gl, scene } = useThree();
   const pixelRatio = useStore(s => s.graphics.pixelRatio);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     gl.setPixelRatio(pixelRatio || 1);
   }, [pixelRatio]);
 
   // if three is started with frameloop == 'never', clock is not set to autoStart, so we need to set it
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (clock && !clock.autoStart) clock.autoStart = true;
   }, []);
 
@@ -129,7 +129,7 @@ const Model = ({ url, onLoaded, onProgress, onCameraUpdate, ...settings }) => {
   const raycaster = useRef(new Raycaster());
 
   // init the camera (reset when url changes)
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     // TODO (enhancement): on mobile, aspect ratio is such that zoomed out to 1 may not have
     //  view of full width of 1.0 at 0,0,0... so on mobile, should probably set this to 1.5+
     const zoom = settings.initialZoom || 1;
@@ -143,7 +143,7 @@ const Model = ({ url, onLoaded, onProgress, onCameraUpdate, ...settings }) => {
   }, [settings.initialZoom, url]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // init orbitcontrols
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     controls.current = new OrbitControls(camera, gl.domElement);
     controls.current.target.set(0, 0, 0);
     controls.current.zoomSpeed = 0.33;
@@ -157,7 +157,7 @@ const Model = ({ url, onLoaded, onProgress, onCameraUpdate, ...settings }) => {
     };
   }, [camera, gl, settings.enablePostprocessing, url]);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (settings.enableZoomLimits && settings.simpleZoomConstraints) {
       controls.current.minDistance = settings.simpleZoomConstraints[0];
       controls.current.maxDistance = settings.simpleZoomConstraints[1];
@@ -168,7 +168,7 @@ const Model = ({ url, onLoaded, onProgress, onCameraUpdate, ...settings }) => {
   }, [settings.simpleZoomConstraints, settings.enableZoomLimits]);
 
   // // init axeshelper
-  // useEffect(() => {
+  // useEffect(import.meta.url, () => {
   //   const axesHelper = new THREE.AxesHelper(5);
   //   scene.add(axesHelper);
   //   return () => {
@@ -177,7 +177,7 @@ const Model = ({ url, onLoaded, onProgress, onCameraUpdate, ...settings }) => {
   // }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // load the model on url change
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (model.current) {
       console.log('previous model not unloaded', model.current);
       return;
@@ -402,7 +402,7 @@ const Model = ({ url, onLoaded, onProgress, onCameraUpdate, ...settings }) => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [onLoaded, url]); // (do not include settings here, update in their own hooks)
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     scene.environmentIntensity = settings.envmapStrength;
 
     if (!model.current) return;
@@ -415,7 +415,7 @@ const Model = ({ url, onLoaded, onProgress, onCameraUpdate, ...settings }) => {
     });
   }, [settings.envmapStrength]);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (!model.current) return;
     model.current.traverse(function (node) {
       if (node.isMesh) {
@@ -426,7 +426,7 @@ const Model = ({ url, onLoaded, onProgress, onCameraUpdate, ...settings }) => {
     });
   }, [settings.lightmapStrength]);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (!model.current) return;
     model.current.traverse(function (node) {
       if (node.isSpotLight) {
@@ -435,11 +435,11 @@ const Model = ({ url, onLoaded, onProgress, onCameraUpdate, ...settings }) => {
     });
   }, [settings.spotlightReduction]);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     scene.backgroundIntensity = settings.backgroundStrength;
   }, [settings.backgroundStrength]);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (!!controls?.current) {
       controls.current.autoRotate = !!settings.enableRevolution;
       controls.current.autoRotateSpeed = -0.15;
@@ -533,7 +533,7 @@ const Skybox = ({ background, envmap, onLoaded, backgroundOverrideName = '', env
     { path: `${process.env.PUBLIC_URL}/textures/skybox/`}
   );
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     let cleanupTextures = [];
 
     let waitingOn = 0;
@@ -587,7 +587,7 @@ const Skybox = ({ background, envmap, onLoaded, backgroundOverrideName = '', env
 const Lighting = ({ keylightIntensity = 1.0, rimlightIntensity = 0.25 }) => {
   const { gl, scene } = useThree();
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     let keyLight;
     if (keylightIntensity > 0) {
       keyLight = new DirectionalLight(0xFFFFFF);
@@ -725,7 +725,7 @@ const ModelViewer = ({ assetType, modelUrl, ...overrides }) => {
   const [loadingModel, setLoadingModel] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
 
-  const settings = useMemo(() => {
+  const settings = useMemo(import.meta.url, () => {
     const overridden = { ...visualConfigs.modelViewer[assetType] };
     Object.keys(overrides).forEach((k) => {
       if (overrides[k] !== null && overrides[k] !== undefined) {
@@ -735,29 +735,29 @@ const ModelViewer = ({ assetType, modelUrl, ...overrides }) => {
     return overridden;
   }, [assetType, overrides]);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     dispatchCanvasStacked(assetType);
     return () => dispatchCanvasUnstacked(assetType);
   }, []);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (modelUrl) setLoadingModel(true);
   }, [modelUrl]);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     setLoadingSkybox(true);
   }, [settings.background, settings.envmap]);
 
-  const onModelLoaded = useCallback(() => setLoadingModel(false), []);
-  const onSkyboxLoaded = useCallback(() => setLoadingSkybox(false), []);
+  const onModelLoaded = useCallback(import.meta.url, () => setLoadingModel(false), []);
+  const onSkyboxLoaded = useCallback(import.meta.url, () => setLoadingSkybox(false), []);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     setIsLoading(loadingModel || loadingSkybox);
   }, [ loadingModel, loadingSkybox ]);
 
   const [progress, setProgress] = useState(0);
 
-  const bloomParams = useMemo(() => ({
+  const bloomParams = useMemo(import.meta.url, () => ({
     radius: settings?.bloomRadius,
     strength: settings?.bloomStrength,
     threshold: settings?.bloomThreshold,

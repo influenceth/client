@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from '~/lib/react-debug';
 import { Howler, Howl } from 'howler';
 
 import useStore from '~/hooks/useStore';
@@ -153,7 +153,7 @@ const Audio = () => {
   const cutsceneWasPlaying = useRef();
 
   // sound enabler (don't enable any sounds until use has interacted with page b/c audiocontext will fail)
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     const onClick = () => {
       setSoundEnabled(true);
       document.body.removeEventListener('click', onClick);
@@ -169,7 +169,7 @@ const Audio = () => {
 
   //
   // SOUND EFFECTS
-  const stopEffect = useCallback((toStop, { fadeOut }) => {
+  const stopEffect = useCallback(import.meta.url, (toStop, { fadeOut }) => {
     if (!toStop) return;
 
     try {
@@ -189,7 +189,7 @@ const Audio = () => {
     }
   }, [effectsVolume, effectEnded]);
 
-  const playEffect = useCallback((toPlay, { loop, duration }) => {
+  const playEffect = useCallback(import.meta.url, (toPlay, { loop, duration }) => {
     if (!toPlay || !soundEnabled) return;
 
     try {
@@ -213,7 +213,7 @@ const Audio = () => {
     }
   }, [effectsVolume, effectEnded, stopEffect, soundEnabled]);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (!soundEnabled) return;
 
     Object.entries(currentEffects).forEach(([ sound, settings ]) => {
@@ -234,14 +234,14 @@ const Audio = () => {
   // AMBIENT MUSIC EFFECTS
   const ambientVolume = useRef(0);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     ambientVolume.current = musicVolume;
     if (currentTrack?.playing()) {
       currentTrack.volume(currentTrack.baseVolume * musicVolume / 100);
     }
   }, [musicVolume]);
 
-  const fadeInAmbientTrack = useCallback(() => {
+  const fadeInAmbientTrack = useCallback(import.meta.url, () => {
     if (!currentTrack) return;
 
     currentTrack.fade(0, currentTrack.baseVolume * ambientVolume.current / 100, 10000);
@@ -251,7 +251,7 @@ const Audio = () => {
   // select current ambient track (whenever there is none)
   const lastTrack = useRef();
   const disableMusic = musicVolume === 0;
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (!soundEnabled) return;
     if (!!currentTrack) return;
     if (disableMusic) return;
@@ -272,7 +272,7 @@ const Audio = () => {
   }, [currentTrack, disableMusic, soundEnabled]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // manage volume of current ambient track
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (!soundEnabled) return;
     if (!currentTrack) return;
 

@@ -1,4 +1,4 @@
-import { forwardRef, useEffect, useRef, useState } from 'react';
+import { forwardRef, useEffect, useRef, useState } from '~/lib/react-debug';
 import styled from 'styled-components';
 
 const StyledInput = styled.input`
@@ -44,7 +44,7 @@ const TextInput = forwardRef((props, forwardedRef) => {
     }
   };
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     _onChange({ target: { value: initialValue || '' } });
   }, [resetOnChange]);  // eslint-disable-line react-hooks/exhaustive-deps
 

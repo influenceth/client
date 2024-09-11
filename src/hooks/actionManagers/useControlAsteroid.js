@@ -1,4 +1,4 @@
-import { useCallback, useContext, useMemo } from 'react';
+import { useCallback, useContext, useMemo } from '~/lib/react-debug';
 
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
 import useAsteroid from '~/hooks/useAsteroid';
@@ -11,12 +11,12 @@ const useControlAsteroid = (id) => {
 
   const system = asteroid?.AsteroidProof?.used ? 'ManageAsteroid' : 'InitializeAndManageAsteroid';
 
-  const controlAsteroid = useCallback(
+  const controlAsteroid = useCallback(import.meta.url, 
     () => execute(system, { asteroid, caller_crew }),
     [execute, asteroid, caller_crew, system]
   );
 
-  const status = useMemo(
+  const status = useMemo(import.meta.url, 
     () => getStatus(system, { asteroid, caller_crew }),
     [getStatus, asteroid, caller_crew, system]
   );

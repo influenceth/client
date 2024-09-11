@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from '~/lib/react-debug';
 import { createPortal } from 'react-dom';
 import { usePopper } from 'react-popper';
 import { PuffLoader } from 'react-spinners';
@@ -74,7 +74,7 @@ const AutocompleteComponent = ({
   const [popperEl, setPopperEl] = useState();
   const [referenceEl, setReferenceEl] = useState();
 
-  const { userOnBlur, userOnFocus, safeInputProps } = useMemo(() => {
+  const { userOnBlur, userOnFocus, safeInputProps } = useMemo(import.meta.url, () => {
     const { onBlur: userOnBlur, onFocus: userOnFocus, ...safeInputProps } = inputProps;
     return { userOnBlur, userOnFocus, safeInputProps };
   }, [inputProps]);
@@ -91,19 +91,19 @@ const AutocompleteComponent = ({
     ],
   });
 
-  const options = useMemo(
+  const options = useMemo(import.meta.url, 
     () => rawOptions.filter((o) => !excludeFunc || !excludeFunc(o)),
     [excludeFunc, rawOptions]
   );
 
-  const handleSelection = useCallback((s) => {
+  const handleSelection = useCallback(import.meta.url, (s) => {
     onSelect(s);
     setFocused(false);
     setHovered(false);
     textInputEl.current.blur();
   }, [onSelect]);
 
-  const handleKeyDown = useCallback((e) => {
+  const handleKeyDown = useCallback(import.meta.url, (e) => {
     if (e.key === 'Escape') {
       textInputEl.current.blur();
     } else if (e.key === 'Enter') {
@@ -119,7 +119,7 @@ const AutocompleteComponent = ({
     }
   }, [allowCustomInput, handleSelection, highlighted, options]);
 
-  const handleOptionHover = useCallback((e) => {
+  const handleOptionHover = useCallback(import.meta.url, (e) => {
     if (e.type === 'mouseenter') {
       setHovered(true);
     } else {
@@ -127,17 +127,17 @@ const AutocompleteComponent = ({
     }
   }, []);
 
-  const handleBlur = useCallback((e) => {
+  const handleBlur = useCallback(import.meta.url, (e) => {
     setFocused(false);
     if (userOnBlur) userOnBlur(e);
   }, [userOnBlur]);
 
-  const handleFocus = useCallback((e) => {
+  const handleFocus = useCallback(import.meta.url, (e) => {
     setFocused(true);
     if (userOnFocus) userOnFocus(e);
   }, [userOnFocus]);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (!focused && !hovered) {
       setHighlighted(0);
       setSearchTerm('');
@@ -195,17 +195,17 @@ export const StaticAutocomplete = ({
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   
-  const formatFootnote = useCallback((o) => {
+  const formatFootnote = useCallback(import.meta.url, (o) => {
     if (typeof footnoteKey === 'string') return o[footnoteKey];
     if (typeof footnoteKey === 'function') return footnoteKey(o);
   }, [footnoteKey]);
 
-  const formatLabel = useCallback((o) => {
+  const formatLabel = useCallback(import.meta.url, (o) => {
     if (typeof labelKey === 'string') return o[labelKey];
     if (typeof labelKey === 'function') return labelKey(o);
   }, [labelKey]);
 
-  const filteredOptions = useMemo(() => {
+  const filteredOptions = useMemo(import.meta.url, () => {
     const lcSearchTerm = searchTerm.toLowerCase();
     return options.filter(o => {
       return `${formatLabel(o)} ${formatFootnote(o)}`.toLowerCase().includes(lcSearchTerm)

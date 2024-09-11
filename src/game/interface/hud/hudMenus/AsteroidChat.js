@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from '~/lib/react-debug';
 import styled from 'styled-components';
 import { Entity } from '@influenceth/sdk';
 import moment from 'moment';
@@ -105,7 +105,7 @@ const isValidChatMessage = (content) => {
 const maxChatInputHeight = 95;
 
 const ChatItem = ({ chat, showTimestamp }) => {
-  const ago = useMemo(() => {
+  const ago = useMemo(import.meta.url, () => {
     if (!chat.timestamp) return 'a long time ago';
     const m = moment(new Date(chat.timestamp));
     return m.fromNow();
@@ -139,12 +139,12 @@ const AsteroidChat = () => {
 
   const [newChat, setNewChat] = useState();
 
-  const scrollToBottom = useCallback(() => {
+  const scrollToBottom = useCallback(import.meta.url, () => {
     if (chatScrollRef.current) chatScrollRef.current.scrollTop = chatScrollRef.current.scrollHeight;
   }, []);
   
   const [submitting, setSubmitting] = useState();
-  const submitNewChat = useCallback(async () => {
+  const submitNewChat = useCallback(import.meta.url, async () => {
     if (asteroidId && crew?.id && isValidChatMessage(newChat)) {
       setSubmitting(true);
       const ack = await emitMessage('send-message', {
@@ -175,21 +175,21 @@ const AsteroidChat = () => {
     }
   }, [asteroidId, crew?.id, emitMessage, newChat, createAlert]);
 
-  const handleNewChatChange = useCallback(async (e) => {
+  const handleNewChatChange = useCallback(import.meta.url, async (e) => {
     setNewChat(e.currentTarget.value || '');
     resizeOnKeydown(maxChatInputHeight)(e);
     scrollToBottom();
   }, [scrollToBottom]);
 
-  const handleKeyDown = useCallback((e) => {
+  const handleKeyDown = useCallback(import.meta.url, (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       submitNewChat();
     }
   }, [submitNewChat]);
 
-  const remaining = useMemo(() => maxChatMessageLength - (newChat?.length || 0), [newChat?.length]);
+  const remaining = useMemo(import.meta.url, () => maxChatMessageLength - (newChat?.length || 0), [newChat?.length]);
 
-  const asteroidChats = useMemo(
+  const asteroidChats = useMemo(import.meta.url, 
     () => (chatHistory || [])
       // filter to asteroid (and connection breaks)
       .filter((c) => c.isConnectionBreak || c.asteroidId === asteroidId)
@@ -201,13 +201,13 @@ const AsteroidChat = () => {
   );
 
   const lastChat = asteroidChats?.[asteroidChats?.length - 1];
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (asteroidId && lastChat?.unread) {
       dispatchChatRoomView(asteroidId);
     }
   }, [asteroidId, lastChat?.timestamp]);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     scrollToBottom();
   }, [asteroidChats, scrollToBottom]);
 

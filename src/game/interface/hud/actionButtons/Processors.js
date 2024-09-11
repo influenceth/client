@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo } from '~/lib/react-debug';
 import { Permission, Processor } from '@influenceth/sdk';
 
 import { getProcessorLeaseConfig, getProcessorProps } from '~/lib/utils';
@@ -15,17 +15,17 @@ const Button = ({ asteroid, blockTime, crew, lot, processor, onSetAction, simula
   const { currentProcess, processStatus } = useProcessManager(lot?.id, processor.slot);
   const setCoachmarkRef = useCoachmarkRefSetter();
 
-  const handleClick = useCallback(() => {
+  const handleClick = useCallback(import.meta.url, () => {
     onSetAction('PROCESS', { processorSlot: processor.slot });
   }, [onSetAction, processor]);
 
-  const buttonProps = useMemo(() => getProcessorProps(processor?.processorType), [processor?.processorType]);
+  const buttonProps = useMemo(import.meta.url, () => getProcessorProps(processor?.processorType), [processor?.processorType]);
 
-  const prepaidLeaseConfig = useMemo(() => {
+  const prepaidLeaseConfig = useMemo(import.meta.url, () => {
     return getProcessorLeaseConfig(lot?.building, Permission.IDS.RUN_PROCESS, crew, blockTime);
   }, [blockTime, crew, lot?.building])
 
-  const disabledReason = useMemo(() => {
+  const disabledReason = useMemo(import.meta.url, () => {
     if (_disabled) return 'loading...';
     if (processStatus === 'READY') {
       return getCrewDisabledReason({

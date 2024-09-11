@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from '~/lib/react-debug';
 import styled, { css, keyframes } from 'styled-components';
 import { PuffLoader as Loader } from 'react-spinners';
 import { Tooltip } from 'react-tooltip';
@@ -342,7 +342,7 @@ const Launcher = (props) => {
 
   const [isNew, setIsNew] = useState();
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (!interfaceHidden) {
       dispatchToggleInterface(true);
     }
@@ -353,20 +353,20 @@ const Launcher = (props) => {
     }
   }, [interfaceHidden]);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (wasNew) {
       setIsNew(true);
       dispatchIsNotNew();
     }
   }, [wasNew]);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (authenticated) {
       setIsNew(false);
     }
   }, [authenticated])
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     // NOTE: (currently not disallowing any for logged out users)
     // limit selection if logged out
     // if (!authenticated && !['play', 'help', 'rewards', 'settings', 'store'].includes(launcherPage)) {
@@ -378,7 +378,7 @@ const Launcher = (props) => {
     }
   }, [launcherPage, authenticated, priceConstants, priceConstantsLoading]);
 
-  const onInstallApp = useCallback(async () => {
+  const onInstallApp = useCallback(import.meta.url, async () => {
     window.installPrompt.prompt();
     const { outcome } = await window.installPrompt.userChoice;
     if (outcome === 'accepted') {
@@ -386,7 +386,7 @@ const Launcher = (props) => {
     }
   }, []);
 
-  const onClickPlay = useCallback(() => {
+  const onClickPlay = useCallback(import.meta.url, () => {
     fireTrackingEvent('play', { externalId: accountAddress });
     dispatchLauncherPage();
     if (!hasSeenIntroVideo && !DISABLE_LAUNCHER_TRAILER) {
@@ -398,27 +398,27 @@ const Launcher = (props) => {
     }
   }, [accountAddress, , hasSeenIntroVideo]);
 
-  const onEnterSimulation = useCallback(() => {
+  const onEnterSimulation = useCallback(import.meta.url, () => {
     if (!authenticated && !simulationEnabled) { // is authenticated check necessary?
       dispatchSimulationEnabled(true);
     }
     onClickPlay();
   }, [authenticated, onClickPlay, simulationEnabled]);
 
-  const onExitSimulation = useCallback(() => {
+  const onExitSimulation = useCallback(import.meta.url, () => {
     dispatchSimulationEnabled(false);
     dispatchSimulationStep();  // TODO: remove this? (i.e. to not reset on exit)
   }, []);
 
-  const openHelpChannel = useCallback(() => {
+  const openHelpChannel = useCallback(import.meta.url, () => {
     window.open(process.env.REACT_APP_HELP_URL, '_blank', 'noopener');
   }, []);
 
-  const openAssetsPortal = useCallback(() => {
+  const openAssetsPortal = useCallback(import.meta.url, () => {
     window.open(process.env.REACT_APP_BRIDGE_URL, '_blank', 'noopener');
   }, []);
 
-  const openWebWalletDashboard = useCallback(() => {
+  const openWebWalletDashboard = useCallback(import.meta.url, () => {
     window.open(`${process.env.REACT_APP_ARGENT_WEB_WALLET_URL}`, '_blank', 'noopener');
   }, []);
 

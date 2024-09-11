@@ -1,4 +1,4 @@
-import { useCallback, useContext, useMemo, useState } from 'react';
+import { useCallback, useContext, useMemo, useState } from '~/lib/react-debug';
 import { Entity } from '@influenceth/sdk';
 
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
@@ -20,13 +20,13 @@ const useAnnotationManager = (activity, metaEntity) => {
 
   const [saving, setSaving] = useState();
 
-  const payload = useMemo(() => ({
+  const payload = useMemo(import.meta.url, () => ({
     transaction_hash: activity?.event?.transactionHash,
     log_index: activity?.event?.logIndex,
     caller_crew: { id: crewId, label: Entity.IDS.CREW }
   }), [activity]);
 
-  const saveAnnotation = useCallback(
+  const saveAnnotation = useCallback(import.meta.url, 
     async (content) => {
       setSaving(true);
 
@@ -50,7 +50,7 @@ const useAnnotationManager = (activity, metaEntity) => {
     [execute, metaEntity, payload]
   );
 
-  const status = useMemo(
+  const status = useMemo(import.meta.url, 
     () => getStatus('AnnotateEvent', { ...payload }),
     [getStatus, payload]
   );

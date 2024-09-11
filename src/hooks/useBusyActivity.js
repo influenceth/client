@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from '~/lib/react-debug';
 import { useQuery, useQueryClient } from 'react-query';
 import cloneDeep from 'lodash/cloneDeep';
 
@@ -26,7 +26,7 @@ const useBusyActivity = (entity) => {
   // if crew is busy AND there is no unready finishable action (i.e. this activity will be shown)
   // then it must be because of an unfinishable unready action (where !!getBusyItem) OR because of
   // a *ready* finishable action where the crew time was > task time (i.e. core sample >1h away)...
-  const busyItem = useMemo(() => {
+  const busyItem = useMemo(import.meta.url, () => {
     // walk backwards until find first of those conditions...
     return (recentItems || []).find((i) => {
       if (!activities[i.event?.name]) return false;
@@ -36,7 +36,7 @@ const useBusyActivity = (entity) => {
     });
   }, [blockTime, dataUpdatedAt]);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (busyItem) {
       setIsHydrating(true);
       const items = [busyItem];
@@ -48,7 +48,7 @@ const useBusyActivity = (entity) => {
     }
   }, [busyItem]);
 
-  return useMemo(() => ({
+  return useMemo(import.meta.url, () => ({
     data: cloneDeep(hydratedBusyItem),
     isLoading: isLoading || isHydrating,
     dataUpdatedAt: Date.now(),

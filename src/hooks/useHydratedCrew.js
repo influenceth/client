@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo } from '~/lib/react-debug';
 import { cloneDeep } from 'lodash';
 import { Crewmate } from '@influenceth/sdk';
 
@@ -14,7 +14,7 @@ const useHydratedCrew = (id) => {
   const { data: CREW_SCHEDULE_BUFFER, isLoading: constantsLoading } = useConstants('CREW_SCHEDULE_BUFFER');
   const blockTime = useBlockTime();
 
-  return useMemo(() => {
+  return useMemo(import.meta.url, () => {
     let data = null;
     let isLoading = true;
     if (crew && !crewLoading && !crewmatesLoading && !constantsLoading) {

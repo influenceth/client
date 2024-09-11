@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo } from '~/lib/react-debug';
 import styled from 'styled-components';
 import { Asteroid, Building, Lot, Permission } from '@influenceth/sdk';
 
@@ -47,7 +47,7 @@ const useColumns = () => {
   const blockTime = useBlockTime();
   const { crew } = useCrewContext();
 
-  return useMemo(() => {
+  return useMemo(import.meta.url, () => {
     const columns = [
       { // TODO: implement this per agreements/ownership
         key: 'my',

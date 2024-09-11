@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect } from '~/lib/react-debug';
 
 import useSession from '~/hooks/useSession'
 import { useControlledAlert } from '~/game/interface/Alerts';
@@ -67,7 +67,7 @@ const Play = () => {
   const simulation = useSimulationEnabled();
   const dispatchHudMenuOpened = useStore(s => s.dispatchHudMenuOpened);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (crews?.length) {
       dispatchHudMenuOpened('MY_CREWS');
     }

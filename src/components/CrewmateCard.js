@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from '~/lib/react-debug';
 import LoadingAnimation from 'react-spinners/PuffLoader';
 import styled, { css } from 'styled-components';
 import pick from 'lodash/pick';
@@ -144,19 +144,19 @@ const AbstractCard = ({ imageUrl, onClick, overlay, ...props }) => {
   // make sure onLoad and onError get called by making sure they are reset to false on imageUrl change
   const [ readyToLoadUrl, setReadyToLoadUrl ] = useState(imageUrl);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     setImageFailed(false);
     setImageLoaded(false);
     setReadyToLoadUrl(imageUrl);
   }, [imageUrl]);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (imageFailed) setImageLoaded(true);
   }, [imageFailed]);
 
   // TODO: make this a hook?
   // onLoad is not reliable if, ex. the image is already cached, so we use `complete`
-  const watchImageLoad = useCallback((input) => {
+  const watchImageLoad = useCallback(import.meta.url, (input) => {
     if (!input) { return; }
     const img = input;
     const updateFunc = () => setImageLoaded(true);
@@ -228,7 +228,7 @@ const CrewmateCard = ({ crewmate = {}, useExplicitAppearance, ...props }) => {
     ? (crewmate.Name?.name || '')
     : formatters.crewmateName(crewmate);
 
-  let imageUrl = useMemo(() => {
+  let imageUrl = useMemo(import.meta.url, () => {
     let url = silhouette;
     let options = '';
     if (props.height) options += `&height=${props.height}`;
@@ -261,7 +261,7 @@ export const CrewCaptainCard = ({ crewId, ...props }) => {
   if (props.height) options += `&height=${props.height}`;
   if (props.width) options += `&width=${props.width}`;
 
-  let imageUrl = useMemo(() => crewId
+  let imageUrl = useMemo(import.meta.url, () => crewId
     ? `${process.env.REACT_APP_IMAGES_URL}/v2/crews/${crewId}/captain/image.png?bustOnly=true${options}`
     : silhouette,
     [crewId]

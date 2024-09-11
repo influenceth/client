@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from '~/lib/react-debug';
 import styled from 'styled-components';
 
 import Button from '~/components/ButtonAlt';
@@ -28,32 +28,32 @@ const EntityDescriptionForm = ({ buttonSize = 'small', buttonText = 'Update', en
   const isLoading = annotationLoading || contentLoading;
 
   const [desc, setDesc] = useState();
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (!desc) setDesc(originalDesc)
   }, [originalDesc])
 
-  const handleDescChange = useCallback(async (e) => {
+  const handleDescChange = useCallback(import.meta.url, async (e) => {
     setDesc(e.currentTarget.value || '');
   }, []);
 
-  const saveDescChange = useCallback(async () => {
+  const saveDescChange = useCallback(import.meta.url, async () => {
     if (isValidAnnotation(desc)) {
       saveAnnotation(desc);
     }
   }, [entity?.id, desc]);
 
-  const handleCancel = useCallback(async () => {
+  const handleCancel = useCallback(import.meta.url, async () => {
     setDesc(originalDesc);
     if (onCancel) onCancel();
   }, [onCancel, originalDesc]);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (txPending && onSave) {
       onSave();
     }
   }, [txPending]);
 
-  const remaining = useMemo(() => maxAnnotationLength - (desc?.length || 0), [desc?.length]);
+  const remaining = useMemo(import.meta.url, () => maxAnnotationLength - (desc?.length || 0), [desc?.length]);
 
   return (
     <InputBlock>

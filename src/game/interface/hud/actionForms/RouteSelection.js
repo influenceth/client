@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback } from '~/lib/react-debug';
 import styled from 'styled-components';
 import { TiMediaRecord as OriginIcon } from 'react-icons/ti';
 import { TbSwitch2 as SwapIcon } from 'react-icons/tb';
@@ -61,22 +61,22 @@ const RouteSelection = () => {
   const { data: destination } = useAsteroid(destinationId);
   const setCoachmarkRef = useCoachmarkRefSetter();
 
-  const handleSwap = useCallback(() => {
+  const handleSwap = useCallback(import.meta.url, () => {
     if (originId && destinationId) dispatchSwapOriginDestination();
   }, [destinationId, dispatchSwapOriginDestination, originId]);
 
-  const handleClose = useCallback(() => {
+  const handleClose = useCallback(import.meta.url, () => {
     dispatchDestinationSelected();
     dispatchHudMenuOpened();
   }, [dispatchDestinationSelected, dispatchHudMenuOpened]);
 
-  const handleFocus = useCallback(() => {
+  const handleFocus = useCallback(import.meta.url, () => {
     if (simulationActions.includes('PlanFlight')) {
       dispatchDestinationSelected(SIMULATION_CONFIG.destinationAsteroidId);
     }
   }, [simulationActions]);
 
-  const handleSelect = useCallback((dest) => {
+  const handleSelect = useCallback(import.meta.url, (dest) => {
     if (Number(dest?.id) !== Number(originId)) dispatchDestinationSelected(dest?.id)
   }, [dispatchDestinationSelected, originId]);
 

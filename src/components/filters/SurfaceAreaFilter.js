@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo } from '~/lib/react-debug';
 import styled from 'styled-components';
 import { Asteroid, Building, Crewmate, Permission, Product } from '@influenceth/sdk';
 
@@ -55,7 +55,7 @@ const config = [
 const SurfaceAreaFilter = (filterProps) => {
   const { data: priceConstants } = usePriceConstants();
 
-  const onClick = useCallback(({ min, max }) => () => {
+  const onClick = useCallback(import.meta.url, ({ min, max }) => () => {
     const { fieldNames, onChange, searchFormatter } = filterProps;
     onChange({
       [fieldNames.min]: searchFormatter ? searchFormatter(min) : min,
@@ -63,11 +63,11 @@ const SurfaceAreaFilter = (filterProps) => {
     });
   }, [filterProps]);
 
-  const surfaceAreaFieldNote = useCallback((value) => {
+  const surfaceAreaFieldNote = useCallback(import.meta.url, (value) => {
     return priceConstants && <AsteroidUserPrice lots={value} format={TOKEN_FORMAT.SHORT} />;
   }, [priceConstants]);
 
-  const isActive = useCallback(({ min, max }) => {
+  const isActive = useCallback(import.meta.url, ({ min, max }) => {
     const { filters, fieldNames } = filterProps;
     return (filters[fieldNames.min] === min && filters[fieldNames.max] === max);
   }, [filterProps]);

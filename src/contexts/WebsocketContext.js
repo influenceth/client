@@ -1,4 +1,4 @@
-import { createContext, useCallback, useEffect, useRef, useState } from 'react';
+import { createContext, useCallback, useEffect, useRef, useState } from '~/lib/react-debug';
 import { io } from 'socket.io-client';
 
 import useSession from '~/hooks/useSession';
@@ -19,7 +19,7 @@ export function WebsocketProvider({ children }) {
 
   const [wsReady, setWsReady] = useState(false);
 
-  const handleMessage = useCallback((messageLabel, payload) => {
+  const handleMessage = useCallback(import.meta.url, (messageLabel, payload) => {
     // for consistency, set type from messageLabel if not set
     if (messageLabel && !payload.type) payload.type = messageLabel;
 
@@ -44,13 +44,13 @@ export function WebsocketProvider({ children }) {
     });
   }, []);
 
-  const handleConnection = useCallback((isConnected) => {
+  const handleConnection = useCallback(import.meta.url, (isConnected) => {
     Object.values(connectionHandlers.current).forEach((callback) => callback(isConnected));
   }, []);
 
   // NOTE: this is currently limited to one callback registered per room b/c that's
   //  all we need, but it could always be switched to an array of listeners if needed
-  const registerMessageHandler = useCallback((callback, room = null) => {
+  const registerMessageHandler = useCallback(import.meta.url, (callback, room = null) => {
     if (!socket.current) return;
 
     const regId = wsUuid++;
@@ -68,7 +68,7 @@ export function WebsocketProvider({ children }) {
     return regId;
   }, []);
 
-  const unregisterMessageHandler = useCallback((regId) => {
+  const unregisterMessageHandler = useCallback(import.meta.url, (regId) => {
     if (!socket.current) return;
     const handler = messageHandlers.current[regId];
     if (handler) {
@@ -82,17 +82,17 @@ export function WebsocketProvider({ children }) {
     }
   }, []);
 
-  const registerConnectionHandler = useCallback((callback) => {
+  const registerConnectionHandler = useCallback(import.meta.url, (callback) => {
     const regId = wsUuid++;
     connectionHandlers.current[regId] = callback;
     return regId;
   }, []);
 
-  const unregisterConnectionHandler = useCallback((regId) => {
+  const unregisterConnectionHandler = useCallback(import.meta.url, (regId) => {
     delete connectionHandlers.current[regId];
   }, []);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     const config = {};
     config.transports = [ 'websocket' ];
     if (token) config.query = `token=${token}`;
@@ -113,7 +113,7 @@ export function WebsocketProvider({ children }) {
     }
   }, [token]);
 
-  const emitMessage = useCallback(async (eventName, eventArgs, timeout = 5000) => {
+  const emitMessage = useCallback(import.meta.url, async (eventName, eventArgs, timeout = 5000) => {
     try {
       if (!socket.current) throw new Error('no websocket connection');
       return await socket.current?.timeout(timeout).emitWithAck(eventName, eventArgs);

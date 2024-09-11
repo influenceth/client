@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from '~/lib/react-debug';
 import styled from 'styled-components';
 import cloneDeep from 'lodash/cloneDeep';
 import { Crewmate, Product, Ship, Time } from '@influenceth/sdk';
@@ -212,11 +212,11 @@ const SetCourse = ({ origin, destination, manager, ship, stage, travelSolution, 
 
   const [tab, setTab] = useState(0);
 
-  const exhaustBonus = useMemo(() => {
+  const exhaustBonus = useMemo(import.meta.url, () => {
     return getCrewAbilityBonuses(Crewmate.ABILITY_IDS.PROPELLANT_EXHAUST_VELOCITY, crew);
   }, [crew]);
 
-  const [shipConfig, cargoInv, propellantInv] = useMemo(() => {
+  const [shipConfig, cargoInv, propellantInv] = useMemo(import.meta.url, () => {
     if (!ship) return [];
     const shipConfig = Ship.TYPES[ship.Ship.shipType];
     const cargoInv = ship.Inventories.find((inventory) => inventory.slot === shipConfig.cargoSlot) || { mass: 0 };
@@ -224,22 +224,22 @@ const SetCourse = ({ origin, destination, manager, ship, stage, travelSolution, 
     return [shipConfig, cargoInv, propellantInv];
   }, [ship]);
 
-  const delay = useMemo(() => {
+  const delay = useMemo(import.meta.url, () => {
     return Math.max(0, travelSolution.departureTime - coarseTime) * 86400;
   }, [coarseTime, travelSolution]);
 
-  const arrivingIn = useMemo(() => {
+  const arrivingIn = useMemo(import.meta.url, () => {
     return Math.max(0, travelSolution.arrivalTime - coarseTime);
   }, [coarseTime, travelSolution]);
 
-  const propellantMassLoaded = useMemo(() => {
+  const propellantMassLoaded = useMemo(import.meta.url, () => {
     if (!propellantInv) return 0;
     let totalMass = propellantInv.mass;
     if (currentTravelAction) totalMass += travelSolution.usedPropellantMass || 0;
     return totalMass;
   }, [currentTravelAction, propellantInv]);
 
-  const deltaVLoaded = useMemo(() => {
+  const deltaVLoaded = useMemo(import.meta.url, () => {
     if (!ship || !propellantMassLoaded) return 0;
 
     const cloneShip = cloneDeep(ship);
@@ -251,14 +251,14 @@ const SetCourse = ({ origin, destination, manager, ship, stage, travelSolution, 
     }
   }, [propellantMassLoaded, exhaustBonus, ship]);
 
-  const [crewTimeRequirement, taskTimeRequirement] = useMemo(() => {
+  const [crewTimeRequirement, taskTimeRequirement] = useMemo(import.meta.url, () => {
     const timeRequirement = currentTravelAction
       ? currentTravelAction.finishTime - currentTravelAction.startTime
       : Time.toRealDuration(arrivingIn * 86400, crew?._timeAcceleration);
     return [timeRequirement, timeRequirement];
   }, [currentTravelAction, arrivingIn, crew?._timeAcceleration]);
 
-  const stats = useMemo(() => ([
+  const stats = useMemo(import.meta.url, () => ([
     {
       label: 'Propellant Used',
       value: formatMass(travelSolution.usedPropellantMass),
@@ -310,17 +310,17 @@ const SetCourse = ({ origin, destination, manager, ship, stage, travelSolution, 
     },
   ]), [arrivingIn, cargoInv, travelSolution, exhaustBonus, propellantInv, shipConfig]);
 
-  const onDepart = useCallback(() => {
+  const onDepart = useCallback(import.meta.url, () => {
     depart();
   }, []);
 
-  const onArrive = useCallback(() => {
+  const onArrive = useCallback(import.meta.url, () => {
     arrive();
   }, []);
 
   // handle auto-closing
   const lastStatus = useRef();
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     // (close on status change)
     if (lastStatus.current && travelStatus !== lastStatus.current) {
       // (close travel details)
@@ -331,7 +331,7 @@ const SetCourse = ({ origin, destination, manager, ship, stage, travelSolution, 
     lastStatus.current = travelStatus;
   }, [travelStatus]);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (travelStatus === 'READY' && delay <= 0) {
       createAlert({
         type: 'GenericAlert',
@@ -503,7 +503,7 @@ const Wrapper = (props) => {
   const { crew } = useCrewContext();
 
   const { data: maybeShip, isLoading: shipIsLoading } = useShip(crew?._location?.shipId);
-  const ship = useMemo(() => {
+  const ship = useMemo(import.meta.url, () => {
     return (!shipIsLoading && !maybeShip && crew?.Ship?.emergencyAt > 0) ? crew : maybeShip;
   }, [crew]);
 
@@ -514,7 +514,7 @@ const Wrapper = (props) => {
   const defaultDestination = useStore(s => s.asteroids.destination);
   const proposedTravelSolution = useStore(s => s.asteroids.travelSolution);
 
-  const travelSolution = useMemo(
+  const travelSolution = useMemo(import.meta.url, 
     () => (solutionIsLoading || currentTravelAction) ? currentTravelSolution : proposedTravelSolution,
     [currentTravelAction, proposedTravelSolution, solutionIsLoading]
   );
@@ -523,7 +523,7 @@ const Wrapper = (props) => {
   const { data: destination, isLoading: destinationIsLoading } = useAsteroid(currentTravelAction?.destinationId || defaultDestination);
 
   // close dialog if cannot load both asteroids or if no travel solution
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (!origin || !destination || !ship) {
       if (!originIsLoading && !destinationIsLoading && !shipIsLoading) {
         if (props.onClose) props.onClose();

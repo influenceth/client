@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo } from '~/lib/react-debug';
 import { useQuery } from 'react-query';
 
 import useSession from '~/hooks/useSession';
@@ -9,7 +9,7 @@ const useWalletAgreements = () => {
   const { accountAddress } = useSession();
   const { crews, loading: crewsLoading } = useCrewContext();
 
-  const crewIds = useMemo(() => {
+  const crewIds = useMemo(import.meta.url, () => {
     if (crewsLoading) return null;
     return (crews || []).map((c) => c.id);
   }, [crews, crewsLoading]);

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from '~/lib/react-debug';
 import styled from 'styled-components';
 import { Exchange, Product } from '@influenceth/sdk';
 import { PuffLoader as Loader } from 'react-spinners';
@@ -91,7 +91,7 @@ const MarketplaceSettings = ({ marketplace }) => {
   const [ makerFee, setMakerFee ] = useState(exchange.makerFee / 100);
   const [ takerFee, setTakerFee ] = useState(exchange.takerFee / 100);
 
-  const handleChange = useCallback((setter, defaultValue) => (e) => {
+  const handleChange = useCallback(import.meta.url, (setter, defaultValue) => (e) => {
     setter(
       Math.max(
         e.currentTarget.min,
@@ -103,7 +103,7 @@ const MarketplaceSettings = ({ marketplace }) => {
     );
   }, []);
 
-  const handleRevert = useCallback(() => {
+  const handleRevert = useCallback(import.meta.url, () => {
     setProducts(exchange.allowedProducts || []);
     setMakerFee(exchange.makerFee / 100);
     setTakerFee(exchange.takerFee / 100);
@@ -112,22 +112,22 @@ const MarketplaceSettings = ({ marketplace }) => {
 
   // revert if exchange is updated (handleRevert will be changed)
   // (these are intended to maintain a "loading" state until the updated exchange has been fetched)
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (changingSettings) setLoading(true);
   }, [changingSettings]);
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     setLoading(false);
   }, [handleRevert]);
 
-  const handleBlur = useCallback((index) => (e) => {
+  const handleBlur = useCallback(import.meta.url, (index) => (e) => {
     setFocused();
   }, []);
 
-  const handleFocus = useCallback((index) => (e) => {
+  const handleFocus = useCallback(import.meta.url, (index) => (e) => {
     setFocused(index);
   }, []);
 
-  const saveChanges = useCallback(() => {
+  const saveChanges = useCallback(import.meta.url, () => {
     changeSettings({
       makerFee: makerFee * 100,
       takerFee: takerFee * 100,
@@ -136,7 +136,7 @@ const MarketplaceSettings = ({ marketplace }) => {
     setFocused();
   }, [makerFee, takerFee, products, changeSettings]);
 
-  const updateProductList = useCallback((index, value) => {
+  const updateProductList = useCallback(import.meta.url, (index, value) => {
     let s = new Set();
 
     // create a set of the remaining products + this one
@@ -149,7 +149,7 @@ const MarketplaceSettings = ({ marketplace }) => {
     setProducts(final);
   }, [products]);
 
-  const [productList, productListLength] = useMemo(() => {
+  const [productList, productListLength] = useMemo(import.meta.url, () => {
     const l = [];
     let len = 0;
     for (let i = 0; i < Exchange.TYPES[exchange.exchangeType].productCap; i++) {
@@ -159,7 +159,7 @@ const MarketplaceSettings = ({ marketplace }) => {
     return [l, len];
   }, [exchange.exchangeType, products]);
 
-  const isDirty = useMemo(() => (
+  const isDirty = useMemo(import.meta.url, () => (
     makerFee !== exchange.makerFee / 100
     || takerFee !== exchange.takerFee / 100
     || products.length !== exchange.allowedProducts.length

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from '~/lib/react-debug';
 import styled from 'styled-components';
 
 import NavIcon from './NavIcon';
@@ -64,14 +64,14 @@ const SliderInput = ({ disabled, min = 0, max = 1, increment = 1, value, onChang
   const updating = useRef(false);
   const expectedChange = useRef();
 
-  const handleChange = useCallback((newValue) => {
+  const handleChange = useCallback(import.meta.url, (newValue) => {
     if (disabled) return;
     const incrementedNewValue = (newValue === max || newValue === min) ? newValue : Math.round((1 / increment) * newValue) * increment;
     expectedChange.current = incrementedNewValue;
     if (onChange) onChange(incrementedNewValue);
   }, [disabled, increment, min, max, onChange]);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     const mouseHandler = (e) => {
       if (e.type === 'mousedown') {
         updating.current = true;
@@ -111,7 +111,7 @@ const SliderInput = ({ disabled, min = 0, max = 1, increment = 1, value, onChang
     }
   }, [increment, min, max, handleChange, value]);
 
-  const percentage = useMemo(() => Math.max(0, Math.min(100, (value - min) / (max - min))), [value, min, max]) || 0;
+  const percentage = useMemo(import.meta.url, () => Math.max(0, Math.min(100, (value - min) / (max - min))), [value, min, max]) || 0;
   return (
     <Wrapper>
       <Slider ref={sliderRef} animating={expectedChange.current !== value}>

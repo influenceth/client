@@ -1,4 +1,4 @@
-import { useCallback, useContext, useMemo } from 'react';
+import { useCallback, useContext, useMemo } from '~/lib/react-debug';
 import { Asteroid, Building, Entity, Lot } from '@influenceth/sdk';
 
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
@@ -16,16 +16,16 @@ const useConstructionManager = (lotId) => {
   const { crew } = useCrewContext();
   const { data: lot } = useLot(lotId);
 
-  const asteroidId = useMemo(() => Lot.toPosition(lotId)?.asteroidId, [lotId]);
+  const asteroidId = useMemo(import.meta.url, () => Lot.toPosition(lotId)?.asteroidId, [lotId]);
   const { data: asteroid } = useAsteroid(asteroidId);
   const buildingId = lot?.building?.id;
 
-  const planPayload = useMemo(() => ({
+  const planPayload = useMemo(import.meta.url, () => ({
     lot: { id: lotId, label: Entity.IDS.LOT },
     caller_crew: { id: crew?.id, label: Entity.IDS.CREW }
   }), [lotId, crew?.id]);
 
-  const payload = useMemo(() => ({
+  const payload = useMemo(import.meta.url, () => ({
     building: { id: buildingId, label: Entity.IDS.BUILDING },
     caller_crew: { id: crew?.id, label: Entity.IDS.CREW }
   }), [buildingId, crew?.id]);
@@ -33,7 +33,7 @@ const useConstructionManager = (lotId) => {
   // UNBUILDABLE (before asteroid is scanned)
   // READY_TO_PLAN > PLANNING  > PLANNED > UNDER_CONSTRUCTION > READY_TO_FINISH > FINISHING > OPERATIONAL
   //               < CANCELING <         <                  DECONSTRUCTING                  <
-  const [currentConstructionAction, constructionStatus, isAtRisk, stageByActivity] = useMemo(() => {
+  const [currentConstructionAction, constructionStatus, isAtRisk, stageByActivity] = useMemo(import.meta.url, () => {
     let current = {
       _cachedData: null,
       _isAccessible: true,
@@ -141,9 +141,9 @@ const useConstructionManager = (lotId) => {
     ];
   }, [actionItems, asteroid, readyItems, getPendingTx, getStatus, payload, planPayload, lot?.building]);
 
-  const txMeta = useMemo(() => ({ asteroidId, lotId }), [asteroidId, lotId]);
+  const txMeta = useMemo(import.meta.url, () => ({ asteroidId, lotId }), [asteroidId, lotId]);
 
-  const planConstruction = useCallback((buildingType) => {
+  const planConstruction = useCallback(import.meta.url, (buildingType) => {
     execute(
       'ConstructionPlan',
       {
@@ -153,7 +153,7 @@ const useConstructionManager = (lotId) => {
     )
   }, [planPayload]);
 
-  const unplanConstruction = useCallback(() => {
+  const unplanConstruction = useCallback(import.meta.url, () => {
     execute(
       'ConstructionAbandon',
       payload,
@@ -161,15 +161,15 @@ const useConstructionManager = (lotId) => {
     )
   }, [payload]);
 
-  const startConstruction = useCallback(() => {
+  const startConstruction = useCallback(import.meta.url, () => {
     execute('ConstructionStart', payload, txMeta)
   }, [payload]);
 
-  const finishConstruction = useCallback(() => {
+  const finishConstruction = useCallback(import.meta.url, () => {
     execute('ConstructionFinish', payload, txMeta)
   }, [payload]);
 
-  const deconstruct = useCallback(() => {
+  const deconstruct = useCallback(import.meta.url, () => {
     execute(
       'ConstructionDeconstruct',
       payload,

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from '~/lib/react-debug';
 import styled from 'styled-components';
 import { useHistory, useLocation, useParams } from 'react-router-dom';
 import { Entity, Lot, Product } from '@influenceth/sdk';
@@ -103,7 +103,7 @@ const Marketplace = () => {
   const history = useHistory();
   const { asteroidId, lotIndex, discriminator } = useParams();
   const product = discriminator === 'orders' ? null : discriminator;
-  const lotId = useMemo(() => Lot.toId(Number(asteroidId), lotIndex === 'all' ? null : Number(lotIndex)), [asteroidId, lotIndex]);
+  const lotId = useMemo(import.meta.url, () => Lot.toId(Number(asteroidId), lotIndex === 'all' ? null : Number(lotIndex)), [asteroidId, lotIndex]);
   
   const setCoachmarkRef = useCoachmarkRefSetter();
   const coachmarkHelperProduct = useStore(s => s.coachmarks?.[COACHMARK_IDS.asteroidMarketsHelper]);
@@ -111,7 +111,7 @@ const Marketplace = () => {
   const [mode, setMode] = useState('buy');
 
   const { search } = useLocation();
-  const backOverride = useMemo(() => {
+  const backOverride = useMemo(import.meta.url, () => {
     const q = new URLSearchParams(search);
     return q.get('back');
   }, [search]);
@@ -127,7 +127,7 @@ const Marketplace = () => {
   const [marketplaceTally, setMarketplaceTally] = useState(0);
   const [products, setProducts] = useState([]);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (!asteroidId) return;
     if (lotIndex === 'all') {
       // TODO: getAsteroidMarketplaceAggs
@@ -141,7 +141,7 @@ const Marketplace = () => {
     }
   }, [asteroidId, lot?.building, lotIndex]);
 
-  const [listings, orderTally] = useMemo(() => {
+  const [listings, orderTally] = useMemo(import.meta.url, () => {
     let buyOrderTally = 0;
     let sellOrderTally = 0;
     // show all products that are allowedProducts or have active orders available
@@ -171,20 +171,20 @@ const Marketplace = () => {
     return [productListings, buyOrderTally + sellOrderTally];
   }, [orderSummary, products]);
 
-  const marketplace = useMemo(() => {
+  const marketplace = useMemo(import.meta.url, () => {
     if (lot?.building?.Exchange) return lot.building;
     return null;
   }, [lot]);
 
   // TODO: if lot is loaded and this is not a marketplace, go back?
 
-  const myLocalOrders = useMemo(() => (myOpenOrders || []).filter((o) => {
+  const myLocalOrders = useMemo(import.meta.url, () => (myOpenOrders || []).filter((o) => {
     const orderAsteroidId = o.locations.find((l) => l.label === Entity.IDS.ASTEROID)?.id;
     const orderLotId = o.locations.find((l) => l.label === Entity.IDS.LOT)?.id;
     return orderAsteroidId === Number(asteroidId) && (lotIndex === 'all' || Number(lot?.id) === orderLotId);
   }), [asteroidId, lot?.id, lotIndex, myOpenOrders]);
 
-  const goBack = useCallback(() => {
+  const goBack = useCallback(import.meta.url, () => {
     if (backOverride === 'all') {
       history.push(`/marketplace/${asteroidId}/all/${product || ''}`);
     } else {
@@ -192,11 +192,11 @@ const Marketplace = () => {
     }
   }, [backOverride, product]);
 
-  const goToMyOrders = useCallback(() => {
+  const goToMyOrders = useCallback(import.meta.url, () => {
     history.push(`/marketplace/${asteroidId}/${lotIndex}/orders`);
   }, []);
 
-  const onSelectListing = useCallback((listing) => {
+  const onSelectListing = useCallback(import.meta.url, (listing) => {
     history.push(`/marketplace/${asteroidId}/${lotIndex}/${listing?.product || ''}`);
   }, []);
 

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from '~/lib/react-debug';
 import { useHistory } from 'react-router-dom';
 import styled from 'styled-components';
 
@@ -97,13 +97,13 @@ const SimulationRedirector = ({ simulationEnabled }) => {
   const [readyToRedirect, setReadyToRedirect] = useState();
 
   // redirect to /recruit when unmounted (if on last step)
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (simulationEnabled && simulationActions.includes('RedirectToRecruitOnLogin')) {
       setReadyToRedirect(true);
     }
   }, [simulationEnabled, simulationActions]);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (readyToRedirect && !!accountAddress) {
       history.push('/recruit/0');
       setReadyToRedirect(false);

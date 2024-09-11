@@ -1,4 +1,4 @@
-import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { useCallback, useContext, useEffect, useMemo, useState } from '~/lib/react-debug';
 import { Deposit, Entity } from '@influenceth/sdk';
 
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
@@ -16,14 +16,14 @@ const useCoreSampleManager = (lotId) => {
   const { data: lot } = useLot(lotId);
 
   // * only used by SampleDepositStart contract, but used for equality check on others
-  const payload = useMemo(() => ({
+  const payload = useMemo(import.meta.url, () => ({
     lot: { id: lotId, label: Entity.IDS.LOT },
     caller_crew: { id: crew?.id, label: Entity.IDS.CREW }
   }), [lotId]);
 
   const [completingSamples, setCompletingSamples] = useState([]);
 
-  const [currentSamplings, completedSamplings, currentSamplingsVersion] = useMemo(() => {
+  const [currentSamplings, completedSamplings, currentSamplingsVersion] = useMemo(import.meta.url, () => {
     const template = {
       _cachedData: null,
       finishTime: null,
@@ -157,7 +157,7 @@ const useCoreSampleManager = (lotId) => {
     ];
   }, [actionItems, blockTime, completingSamples, pendingTransactions, readyItems, getPendingTx, getStatus, payload, lot?.deposits]);
 
-  const startSampling = useCallback((resourceId, coreDrillSource) => {
+  const startSampling = useCallback(import.meta.url, (resourceId, coreDrillSource) => {
     // console.log('coreDrillSource', coreDrillSource); return;
     execute('SampleDepositStart', {
       resource: resourceId,
@@ -167,7 +167,7 @@ const useCoreSampleManager = (lotId) => {
     })
   }, [payload]);
 
-  const startImproving = useCallback((depositId, coreDrillSource, depositOwnerCrew) => {
+  const startImproving = useCallback(import.meta.url, (depositId, coreDrillSource, depositOwnerCrew) => {
     const sample = (lot?.deposits || []).find((c) => c.id === depositId);
     execute(
       depositOwnerCrew ? 'PurchaseDepositAndImprove' : 'SampleDepositImprove',
@@ -186,7 +186,7 @@ const useCoreSampleManager = (lotId) => {
     )
   }, [lotId, payload]);
 
-  const finishSampling = useCallback((sampleId) => {
+  const finishSampling = useCallback(import.meta.url, (sampleId) => {
     const selectedAction = currentSamplings.find((c) => c.action?.sampleId === sampleId);
     if (!selectedAction) return;
     execute(

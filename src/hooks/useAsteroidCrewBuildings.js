@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo } from '~/lib/react-debug';
 import { Entity } from '@influenceth/sdk';
 
 import useCrewBuildings from '~/hooks/useCrewBuildings';
@@ -6,7 +6,7 @@ import useCrewBuildings from '~/hooks/useCrewBuildings';
 const useAsteroidCrewBuildings = (asteroidId) => {
   const { data, isLoading } = useCrewBuildings();
 
-  return useMemo(() => {
+  return useMemo(import.meta.url, () => {
     return {
       data: asteroidId && !isLoading && data
         ? (data || []).filter((a) => (

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef } from '~/lib/react-debug';
 import {
   // AxesHelper,
   // BoxHelper,
@@ -208,16 +208,16 @@ const Telemetry = ({
   const helper = useRef();
   const shipTime = useRef();
 
-  const circleRadius = useMemo(() => TELEMETRY_SCALE * radius, [radius]);
-  const circleAttenuation = useMemo(() => Math.max(1.4, 0.75 * scaleHelper) * radius, [radius]);
-  const trajectoryAttenuation = useMemo(() => Math.max(10, 2 * scaleHelper) * radius, [radius]);
-  const shipAngularVelocity = useMemo(() => {
+  const circleRadius = useMemo(import.meta.url, () => TELEMETRY_SCALE * radius, [radius]);
+  const circleAttenuation = useMemo(import.meta.url, () => Math.max(1.4, 0.75 * scaleHelper) * radius, [radius]);
+  const trajectoryAttenuation = useMemo(import.meta.url, () => Math.max(10, 2 * scaleHelper) * radius, [radius]);
+  const shipAngularVelocity = useMemo(import.meta.url, () => {
     const shipHeight = TELEMETRY_SCALE * config.shipCircle.scale;
     const period = Math.sqrt(3 * Math.PI * shipHeight ** 3 / (densityByType[spectralType] * GRAV));
     return 2 * Math.PI / period;
   }, [spectralType]);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     const circleSegments = 360;
 
     const material = getLineMaterial(BLUE_GLSL, circleAttenuation, 0.7);
@@ -524,7 +524,7 @@ const Telemetry = ({
     if (trajectory.current) group.current.add(trajectory.current);
   }, [radius]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     // TODO: update the number of ships on the ship circle (or dash if empty)
   }, [shipTally]);
 

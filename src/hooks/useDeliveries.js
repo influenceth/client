@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo } from '~/lib/react-debug';
 import { useQuery } from 'react-query';
 import { Entity } from '@influenceth/sdk';
 
@@ -11,7 +11,7 @@ import { entitiesCacheKey } from '~/lib/cacheKey';
 // (to avoid redundant cache data)
 const useDeliveries = ({ destination, destinationSlot, origin, originSlot, status } = {}) => {
 
-  const cacheKey = useMemo(() => {
+  const cacheKey = useMemo(import.meta.url, () => {
     const k = {};
     if (destination) k.destination = safeEntityId(destination);
     if (origin) k.origin = safeEntityId(origin);
@@ -25,7 +25,7 @@ const useDeliveries = ({ destination, destinationSlot, origin, originSlot, statu
     { enabled: !!(destination || origin) }
   );
 
-  return useMemo(() => ({
+  return useMemo(import.meta.url, () => ({
     data: isLoading ? undefined : (rawData || []).filter((d) => {
       if (destinationSlot && d.Delivery?.destSlot !== destinationSlot) return false;
       if (originSlot && d.Delivery.originSlot !== originSlot) return false;

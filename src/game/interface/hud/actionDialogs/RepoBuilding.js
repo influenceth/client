@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo } from '~/lib/react-debug';
 import styled from 'styled-components';
 import { Building } from '@influenceth/sdk';
 
@@ -63,9 +63,9 @@ const RepoBuilding = ({ asteroid, lot, actionManager, stage, ...props }) => {
   const { crew } = useCrewContext();
   const { data: delinquentController } = useCrew(lot?.building?.Control?.controller?.id);
 
-  const [crewTimeRequirement, taskTimeRequirement] = useMemo(() => ([0, 0]), []);
+  const [crewTimeRequirement, taskTimeRequirement] = useMemo(import.meta.url, () => ([0, 0]), []);
 
-  const stats = useMemo(() => ([]), []);
+  const stats = useMemo(import.meta.url, () => ([]), []);
 
   // TODO: if repo construction site, go to "construct" dialog after
 
@@ -175,7 +175,7 @@ const Wrapper = (props) => {
   const repoManager = useRepoManager(lot?.id);
   const { actionStage } = repoManager;
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (!asteroid || !lot) {
       if (!isLoading) {
         if (props.onClose) props.onClose();

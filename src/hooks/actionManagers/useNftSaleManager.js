@@ -1,4 +1,4 @@
-import { useCallback, useContext, useMemo } from 'react';
+import { useCallback, useContext, useMemo } from '~/lib/react-debug';
 import { Entity } from '@influenceth/sdk';
 
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
@@ -13,12 +13,12 @@ const useNftSaleManager = (entity) => {
   const { crew } = useCrewContext();
   const { execute, getStatus } = useContext(ChainTransactionContext);
 
-  const payload = useMemo(() => ({
+  const payload = useMemo(import.meta.url, () => ({
     tokenAddress: tokens[entity?.label],
     tokenId: entity?.id
   }), [entity]);
 
-  const purchaseListing = useCallback(() => {
+  const purchaseListing = useCallback(import.meta.url, () => {
     execute(
       'FillNftSellOrder',
       {
@@ -31,7 +31,7 @@ const useNftSaleManager = (entity) => {
     )
   }, [crew, execute, payload]);
 
-  const updateListing = useCallback(
+  const updateListing = useCallback(import.meta.url, 
     (price) => {
       execute(
         'SetNftSellOrder',
@@ -44,8 +44,8 @@ const useNftSaleManager = (entity) => {
     [execute, payload, entity]
   );
 
-  const isPendingPurchase = useMemo(() => getStatus('FillNftSellOrder', payload) === 'pending', [getStatus, payload]);
-  const isPendingUpdate = useMemo(() => getStatus('SetNftSellOrder', payload) === 'pending', [getStatus, payload]);
+  const isPendingPurchase = useMemo(import.meta.url, () => getStatus('FillNftSellOrder', payload) === 'pending', [getStatus, payload]);
+  const isPendingUpdate = useMemo(import.meta.url, () => getStatus('SetNftSellOrder', payload) === 'pending', [getStatus, payload]);
 
   return {
     isPendingPurchase,

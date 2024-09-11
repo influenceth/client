@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef } from 'react';
+import { useCallback, useMemo, useRef } from '~/lib/react-debug';
 import { Asteroid, Lot } from '@influenceth/sdk';
 
 import IconButton from '~/components/IconButton';
@@ -14,9 +14,9 @@ const LotIdFilter = ({ assetType, filters }) => {
   const asteroidId = useStore((s) => s.asteroids.origin);
   const dispatchLotSelected = useStore((s) => s.dispatchLotSelected);
   const lotIndex = useRef();
-  const maxLots = useMemo(() => Asteroid.getSurfaceArea(asteroidId), [asteroidId]);
+  const maxLots = useMemo(import.meta.url, () => Asteroid.getSurfaceArea(asteroidId), [asteroidId]);
 
-  const handleById = useCallback(() => {
+  const handleById = useCallback(import.meta.url, () => {
     if (lotIndex.current.value) {
       let targetIndex = parseInt(lotIndex.current.value);
 
@@ -34,7 +34,7 @@ const LotIdFilter = ({ assetType, filters }) => {
     }
   }, [asteroidId, dispatchLotSelected, maxLots]);
 
-  const handleKeydown = useCallback((e) => {
+  const handleKeydown = useCallback(import.meta.url, (e) => {
     if (['Enter', 'Tab'].includes(e.key)) {
       handleById();
     }

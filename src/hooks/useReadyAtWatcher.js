@@ -1,9 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from '~/lib/react-debug';
 
 const useReadyAtWatcher = (readyAt) => {
   const [ready, setReady] = useState(true);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     let to;
     if (readyAt > 0) {
       const now = Date.now();

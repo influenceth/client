@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from '~/lib/react-debug';
 import {
   BackSide,
   CircleGeometry,
@@ -43,7 +43,7 @@ const AsteroidComposition = ({ abundances, asteroid, focus, noColor, noGradient,
 
   const focusKey = keyify(focus);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (asteroid && abundances) {
       hovered.current = null;
       obscurerTheta.current = 0;
@@ -140,12 +140,12 @@ const AsteroidComposition = ({ abundances, asteroid, focus, noColor, noGradient,
     }
   }, [!!asteroid, abundances]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     hovered.current = hover;
     onAnimationChange(true);
   }, [hover]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     const target = resources.current.find((c) => c.categoryKey === focusKey);
     if (target) {
       targetRotation.current = -1 * target.start;
@@ -212,7 +212,7 @@ const AsteroidComposition = ({ abundances, asteroid, focus, noColor, noGradient,
   }, [focusKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // this triggers the intro effect (i.e. removing the obscurer layer)
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (ready) {
       onAnimationChange(true);
     }
@@ -302,11 +302,11 @@ const AsteroidCompositionInCanvas = ({ animationDelay, ready, ...props }) => {
   const [delayedReady, setDelayedReady] = useState();
   const [frameloop, setFrameloop] = useState();
 
-  const onAnimationChange = useCallback((which) => {
+  const onAnimationChange = useCallback(import.meta.url, (which) => {
     setFrameloop(which ? 'always' : 'never');
   }, []);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (ready) {
       setTimeout(() => {
         setDelayedReady(true);

@@ -1,4 +1,4 @@
-import { forwardRef, useRef, useLayoutEffect, useEffect, useState } from 'react';
+import { forwardRef, useRef, useLayoutEffect, useEffect, useState } from '~/lib/react-debug';
 import { useThree, useFrame } from '@react-three/fiber';
 import TrackballModControlsImpl from '~/lib/graphics/TrackballModControlsImpl';
 
@@ -19,7 +19,7 @@ export const TrackballModControls = forwardRef(({ children, ...props }, ref) => 
   }, [ children, controls ]);
 
   // (this is presumably just for static scenes / scenes without a running frameloop)
-  // useEffect(() => {
+  // useEffect(import.meta.url, () => {
   //   controls?.addEventListener('change', invalidate);
 
   //   return () => {
@@ -32,7 +32,7 @@ export const TrackballModControls = forwardRef(({ children, ...props }, ref) => 
     if (controls.enabled) controls.update();
   });
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     set({ controls });
   }, [ controls, set ]);
 

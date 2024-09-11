@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from '~/lib/react-debug';
 import styled, { css } from 'styled-components';
 import { createPortal } from 'react-dom';
 import { PropagateLoader as Loader } from 'react-spinners';
@@ -315,7 +315,7 @@ export const FundingFlow = ({ totalPrice, onClose, onFunded }) => {
   const [debug, setDebug] = useState(0);
 
   // TODO: technically could wait to start polling until page is focused again
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     // if (waiting && !debug) {
     //   setTimeout(() => {
     //     console.log('hack', startingBalance.current, wallet.tokenBalances); // tokenBalances
@@ -335,7 +335,7 @@ export const FundingFlow = ({ totalPrice, onClose, onFunded }) => {
     }
   }, [waiting, !!wallet, debug]);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     // if there is an actual increase in currency of a token (i.e. not just an
     // increase in value b/c we don't want a trigger on exchange rate changes)
     if (waiting && startingBalance.current) {
@@ -368,7 +368,7 @@ export const FundingFlow = ({ totalPrice, onClose, onFunded }) => {
     }
   }, [debug, waiting, wallet?.tokenBalances])
 
-  const [walletBalance, fundsNeeded] = useMemo(
+  const [walletBalance, fundsNeeded] = useMemo(import.meta.url, 
     () => {
       if (!wallet) return [];
       const balance = wallet.combinedBalance;
@@ -382,7 +382,7 @@ export const FundingFlow = ({ totalPrice, onClose, onFunded }) => {
     [priceHelper, totalPrice, wallet]
   );
 
-  const suggestedAmounts = useMemo(() => {
+  const suggestedAmounts = useMemo(import.meta.url, () => {
     if (!fundsNeeded) return [10e6, 25e6, 50e6];
 
     const needed = Math.ceil(fundsNeeded.to(TOKEN.USDC));
@@ -394,7 +394,7 @@ export const FundingFlow = ({ totalPrice, onClose, onFunded }) => {
   }, [fundsNeeded]);
 
   const to = useRef();
-  const onRampHover = useCallback((which) => (e) => {
+  const onRampHover = useCallback(import.meta.url, (which) => (e) => {
     if (to.current) clearTimeout(to.current);
     if (which) {
       setHoveredRampButton(e.target);
@@ -406,7 +406,7 @@ export const FundingFlow = ({ totalPrice, onClose, onFunded }) => {
   }, []);
 
   const [rampPurchase, setRampPurchase] = useState();
-  const checkRampPurchase = useCallback(async (purchase) => {
+  const checkRampPurchase = useCallback(import.meta.url, async (purchase) => {
     try {
       const response = await fetch(
         `https://api.${RAMP_PREPEND}ramp.network/api/host-api/purchase/${purchase.id}?secret=${purchase.purchaseViewToken}`,
@@ -433,14 +433,14 @@ export const FundingFlow = ({ totalPrice, onClose, onFunded }) => {
       console.error('Error fetching purchase info:', error);
     }
   }, []);
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (rampPurchase) {
       const i = setInterval(() => { checkRampPurchase(rampPurchase); }, 5000);
       return () => clearInterval(i);
     }
   }, [checkRampPurchase, rampPurchase])
   
-  const onClickCC = useCallback((amount) => () => {
+  const onClickCC = useCallback(import.meta.url, (amount) => () => {
     fireTrackingEvent('funding_start', { externalId: accountAddress });
     setRamping(true);
     setRampPurchase();
@@ -472,7 +472,7 @@ export const FundingFlow = ({ totalPrice, onClose, onFunded }) => {
   }, [accountAddress]);
 
   const [layerswapUrl, setLayerswapUrl] = useState();
-  const onClickLayerswap = useCallback(() => {
+  const onClickLayerswap = useCallback(import.meta.url, () => {
     let amount;
     if (fundsNeeded) {
       const swapAmount = fundsNeeded.clone();
@@ -497,14 +497,14 @@ export const FundingFlow = ({ totalPrice, onClose, onFunded }) => {
     );
   }, [accountAddress, fundsNeeded]);
 
-  const onClickStarkgate = useCallback(() => {
+  const onClickStarkgate = useCallback(import.meta.url, () => {
     const url = `https://${areChainsEqual('SN_SEPOLIA', chainId) ? 'sepolia.' : ''}starkgate.starknet.io/`;
 
     window.open(url, '_blank');
     setWaiting(true);
   }, []);
 
-  const onFaucetError = useCallback(() => {
+  const onFaucetError = useCallback(import.meta.url, () => {
     createAlert({
       type: 'GenericAlert',
       data: { content: 'Faucet request failed, please try again later.' },
@@ -514,7 +514,7 @@ export const FundingFlow = ({ totalPrice, onClose, onFunded }) => {
     onClose();
   }, [onClose]);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     // error: clear ramp purchase + close funding dialog
     if (RAMP_PURCHASE_STATUS[rampPurchase?.status]?.isError) {
       // fire error

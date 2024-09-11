@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo } from '~/lib/react-debug';
 import { Crewmate, Ship, Time } from '@influenceth/sdk';
 
 import useCrewContext from './useCrewContext';
@@ -14,11 +14,11 @@ const useTravelSolutionIsValid = () => {
   const { data: ship } = useShip(shipId);
 
   const travelSolution = useStore(s => s.asteroids.travelSolution);
-  const exhaustBonus = useMemo(() => {
+  const exhaustBonus = useMemo(import.meta.url, () => {
     return getCrewAbilityBonuses(Crewmate.ABILITY_IDS.PROPELLANT_EXHAUST_VELOCITY, crew);
   }, [crew]);
 
-  return useMemo(() => {
+  return useMemo(import.meta.url, () => {
     if (!travelSolution) return false;
     if (travelSolution._isSimulation) return !travelSolution._isSimulationInvalid;
 

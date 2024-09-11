@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo } from '~/lib/react-debug';
 import { Crewmate } from '@influenceth/sdk';
 
 import useCrewContext from '~/hooks/useCrewContext';
@@ -14,7 +14,7 @@ const useActionCrew = (currentAction) => {
   // best-effort fallback (so we'll only load if crew.Location is not set)
   const { data: liveStation } = useEntity(_cachedData?.crew?.Location ? null : _cachedData?.station?.entity);
 
-  return useMemo(() => {
+  return useMemo(import.meta.url, () => {
     if (_cachedData) {
       // rebuild pseudo-crew from cached data
       const c = {

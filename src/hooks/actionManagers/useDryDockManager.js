@@ -1,4 +1,4 @@
-import { useCallback, useContext, useMemo } from 'react';
+import { useCallback, useContext, useMemo } from '~/lib/react-debug';
 import { DryDock, Entity, Permission } from '@influenceth/sdk';
 
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
@@ -15,17 +15,17 @@ const useDryDockManager = (lotId, slot = 1) => {
   const { data: lot } = useLot(lotId);
   const { data: actionItems } = useUnresolvedActivities(lot?.building);
 
-  const payload = useMemo(() => ({
+  const payload = useMemo(import.meta.url, () => ({
     dry_dock: { id: lot?.building?.id, label: Entity.IDS.BUILDING },
     dry_dock_slot: slot,
     caller_crew: { id: crew?.id, label: Entity.IDS.CREW }
   }), [lot?.building, crew?.id, slot]);
 
-  const slotDryDock = useMemo(() => lot?.building?.DryDocks?.find((e) => e.slot === slot), [lot?.building, slot]);
+  const slotDryDock = useMemo(import.meta.url, () => lot?.building?.DryDocks?.find((e) => e.slot === slot), [lot?.building, slot]);
 
   // status flow
   // READY > ASSEMBLING > READY_TO_FINISH > FINISHING
-  const [currentAssembly, assemblyStatus, actionStage] = useMemo(() => {
+  const [currentAssembly, assemblyStatus, actionStage] = useMemo(import.meta.url, () => {
     let current = {
       _cachedData: null,
       _isAccessible: false,
@@ -87,7 +87,7 @@ const useDryDockManager = (lotId, slot = 1) => {
     ];
   }, [actionItems, blockTime, getPendingTx, getStatus, payload, slotDryDock?.status]);
 
-  const startShipAssembly = useCallback((shipType, origin, originSlot, leaseDetails) => {
+  const startShipAssembly = useCallback(import.meta.url, (shipType, origin, originSlot, leaseDetails) => {
     execute(
       leaseDetails ? 'LeaseAssembleShipStart' : 'AssembleShipStart',
       {
@@ -103,7 +103,7 @@ const useDryDockManager = (lotId, slot = 1) => {
     )
   }, [payload]);
 
-  const finishShipAssembly = useCallback((destination) => {
+  const finishShipAssembly = useCallback(import.meta.url, (destination) => {
     execute(
       'AssembleShipFinish', 
       {

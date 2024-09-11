@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from '~/lib/react-debug';
 import { createPortal } from 'react-dom';
 import { useThrottle } from '@react-hook/throttle';
 import styled from 'styled-components';
@@ -218,7 +218,7 @@ const ManageCrew = ({ altCrews, crew, isForeignCrew, manager, stage, ...props })
   const [dragOffset, setDragOffset] = useState();
   const [dragPosition, setDragPosition] = useThrottle(null, 30, true);
 
-  const exchangeCrew = useMemo(() => {
+  const exchangeCrew = useMemo(import.meta.url, () => {
     if (exchangeCrewId === 0) {
       return {
         id: 0,
@@ -236,7 +236,7 @@ const ManageCrew = ({ altCrews, crew, isForeignCrew, manager, stage, ...props })
     return altCrews.find((c) => c.id === exchangeCrewId);
   }, [altCrews, exchangeCrewId])
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (!crew?._crewmates) return;
     const slots = [];
     for (let i = 0; i < (exchangeCrew ? 10 : 5); i++) {
@@ -246,7 +246,7 @@ const ManageCrew = ({ altCrews, crew, isForeignCrew, manager, stage, ...props })
     setPristine(slots.map((c) => c?.id));
   }, [crew?._crewmates, exchangeCrew?._crewmates]);
 
-  const onSaveChanges = useCallback(() => {
+  const onSaveChanges = useCallback(import.meta.url, () => {
     if (!(crew?.id > 0 && orderedCrewmates.length > 0)) return;
     if (exchangeCrew) {
       swapCrewmates({
@@ -263,7 +263,7 @@ const ManageCrew = ({ altCrews, crew, isForeignCrew, manager, stage, ...props })
     }
   }, [crew?.id, exchangeCrew, orderedCrewmates, reorderRoster, swapCrewmates]);
 
-  const onMouseDown = useCallback((index) => (e) => {
+  const onMouseDown = useCallback(import.meta.url, (index) => (e) => {
     e.preventDefault();
 
     setDragOffset({ x: e.nativeEvent?.offsetX, y: e.nativeEvent?.offsetY });
@@ -271,7 +271,7 @@ const ManageCrew = ({ altCrews, crew, isForeignCrew, manager, stage, ...props })
     setDragging(index);
   }, []);
 
-  const onMouseUp = useCallback((index) => (e) => {
+  const onMouseUp = useCallback(import.meta.url, (index) => (e) => {
     if (dragging >= 0 && index >= 0 && dragging !== index) {
       // if dropping on a foreign crew (not allowed)
       if (isForeignCrew && index < 5) {
@@ -331,7 +331,7 @@ const ManageCrew = ({ altCrews, crew, isForeignCrew, manager, stage, ...props })
     setDragging();
   }, [dragging, isForeignCrew]);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     const mouseMoveHandler = (e) => setDragPosition({ x: e.clientX, y: e.clientY });
     const mouseUpHandler = (e) => onMouseUp(-1);
     document.addEventListener('mousemove', mouseMoveHandler);
@@ -344,7 +344,7 @@ const ManageCrew = ({ altCrews, crew, isForeignCrew, manager, stage, ...props })
 
   // handle auto-closing
   const lastStatus = useRef();
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     // (close on status change from)
     if (lastStatus.current === actionStages.COMPLETING && stage !== actionStages.COMPLETING) {
       props.onClose();
@@ -352,7 +352,7 @@ const ManageCrew = ({ altCrews, crew, isForeignCrew, manager, stage, ...props })
     lastStatus.current = stage;
   }, [stage]);
 
-  const isPristine = useMemo(() => {
+  const isPristine = useMemo(import.meta.url, () => {
     if (!pristine || !orderedCrewmates) return true;
     return pristine.join(',') === orderedCrewmates.map((c) => c?.id).join(',');
   }, [pristine, orderedCrewmates]);
@@ -483,7 +483,7 @@ const Wrapper = ({ crew, loading, ...props }) => {
   const crewSwapManager = useCrewSwapManager();
   const { actionStage } = crewSwapManager;
 
-  const locationCrews = useMemo(() => {
+  const locationCrews = useMemo(import.meta.url, () => {
     if (!crew?._location) return [];
     return crews.filter((c) => (
       crew.Location.location.label === c.Location.location.label
@@ -493,7 +493,7 @@ const Wrapper = ({ crew, loading, ...props }) => {
     ));
   }, [crew?._location]);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     // if could not load crew...
     let shouldClose = !crew && !loading;
     // or it is a foreign crew without any of my crewmates...

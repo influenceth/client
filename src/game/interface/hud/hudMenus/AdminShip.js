@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo } from '~/lib/react-debug';
 import styled from 'styled-components';
 import { Entity, Permission } from '@influenceth/sdk';
 
@@ -22,7 +22,7 @@ const AdminShip = ({}) => {
   const { data: zoomShip } = useShip(zoomShipId);
   const { data: lot } = useLot(lotId);
 
-  const ship = useMemo(() => zoomShipId ? zoomShip : lot?.surfaceShip, [lot, zoomShip, zoomShipId]);
+  const ship = useMemo(import.meta.url, () => zoomShipId ? zoomShip : lot?.surfaceShip, [lot, zoomShip, zoomShipId]);
   const { data: controller } = useCrew(ship?.Control?.controller?.id);
 
   return (

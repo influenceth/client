@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo } from '~/lib/react-debug';
 import useSession from '~/hooks/useSession';
 import useStore from '~/hooks/useStore';
 
@@ -7,7 +7,7 @@ const useSimulationState = () => {
   const simulationEnabled = useStore(s => s.simulationEnabled);
   const simulationState = useStore(s => s.simulation);
   
-  return useMemo(
+  return useMemo(import.meta.url, 
     () => !accountAddress && simulationEnabled ? simulationState : null,
     [accountAddress, simulationEnabled, simulationState]
   );

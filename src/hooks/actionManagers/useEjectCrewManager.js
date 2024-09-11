@@ -1,4 +1,4 @@
-import { useCallback, useContext, useMemo } from 'react';
+import { useCallback, useContext, useMemo } from '~/lib/react-debug';
 import { Entity } from '@influenceth/sdk';
 
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
@@ -16,7 +16,7 @@ const useEjectCrewManager = (originEntity) => {
   const { data: origin } = useEntity(originEntity);
   const { data: originCrews } = useStationedCrews(origin);
 
-  const currentEjections = useMemo(() => {
+  const currentEjections = useMemo(import.meta.url, () => {
     return pendingTransactions
       .filter((tx) => {
         if (tx.key === 'EjectCrew') {
@@ -25,7 +25,7 @@ const useEjectCrewManager = (originEntity) => {
       });
   }, [originCrews, pendingTransactions]);
 
-  const ejectCrew = useCallback(
+  const ejectCrew = useCallback(import.meta.url, 
     (id) => {
       return execute(
         'EjectCrew',

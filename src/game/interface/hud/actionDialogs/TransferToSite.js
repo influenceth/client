@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from '~/lib/react-debug';
 import { Asteroid, Crewmate, Entity, Inventory, Lot, Permission, Product, Time } from '@influenceth/sdk';
 
 import { ForwardIcon, InventoryIcon, TransferToSiteIcon } from '~/components/Icons';
@@ -37,12 +37,12 @@ const TransferToSite = ({ asteroid, lot: destinationLot, deliveryManager, stage,
   const { currentDeliveryActions, startDelivery } = deliveryManager;
   const { crew, crewCan } = useCrewContext();
 
-  const crewTravelBonus = useMemo(() => {
+  const crewTravelBonus = useMemo(import.meta.url, () => {
     if (!crew) return {};
     return getCrewAbilityBonuses(Crewmate.ABILITY_IDS.HOPPER_TRANSPORT_TIME, crew) || {};
   }, [crew]);
 
-  const crewDistBonus = useMemo(() => {
+  const crewDistBonus = useMemo(import.meta.url, () => {
     if (!crew) return {};
     return getCrewAbilityBonuses(Crewmate.ABILITY_IDS.FREE_TRANSPORT_DISTANCE, crew) || {};
   }, [crew]);
@@ -52,31 +52,31 @@ const TransferToSite = ({ asteroid, lot: destinationLot, deliveryManager, stage,
   const [selectedItems, setSelectedItems] = useState(props.preselect?.selectedItems || {});
 
   // get destination and destinationInventory
-  const destination = useMemo(() => ({
+  const destination = useMemo(import.meta.url, () => ({
     id: destinationLot?.building?.id,
     label: Entity.IDS.BUILDING,
     lotIndex: Lot.toIndex(destinationLot?.id),
     slot: destinationLot?.building?.Inventories.find((i) => i.status === Inventory.STATUSES.AVAILABLE)?.slot
   }), [destinationLot]);
-  const destinationInventory = useMemo(() => (destinationLot?.building?.Inventories || []).find((i) => i.slot === destination?.slot), [destinationLot, destination?.slot]);
+  const destinationInventory = useMemo(import.meta.url, () => (destinationLot?.building?.Inventories || []).find((i) => i.slot === destination?.slot), [destinationLot, destination?.slot]);
 
   // get originLot and originInventory
   const [origin, setOrigin] = useState();
-  const originLotId = useMemo(() => Lot.toId(asteroid?.id, origin?.lotIndex), [asteroid?.id, origin?.lotIndex]);
+  const originLotId = useMemo(import.meta.url, () => Lot.toId(asteroid?.id, origin?.lotIndex), [asteroid?.id, origin?.lotIndex]);
   const { data: originLot } = useLot(originLotId);
-  const originEntity = useMemo(() => {
+  const originEntity = useMemo(import.meta.url, () => {
     if (!originLot || !origin) return null;
     if (origin.label === Entity.IDS.SHIP) return originLot.ships.find((s) => s.id === origin.id);
     return originLot.building;
   }, [originLot, origin]);
-  const originInventory = useMemo(() => (originEntity?.Inventories || []).find((i) => i.slot === origin?.slot), [originEntity, origin]);
+  const originInventory = useMemo(import.meta.url, () => (originEntity?.Inventories || []).find((i) => i.slot === origin?.slot), [originEntity, origin]);
 
-  const buildingRequirements = useMemo(
+  const buildingRequirements = useMemo(import.meta.url, 
     () => getBuildingRequirements(destinationLot?.building, currentDeliveryActions),
     [destinationLot?.building, currentDeliveryActions]
   );
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (stage === actionStage.NOT_STARTED) {
       const validated = Object.keys(selectedItems).reduce((acc, product) => {
         // cap selectedItems to originInventory contents and adjusted building requirements
@@ -91,13 +91,13 @@ const TransferToSite = ({ asteroid, lot: destinationLot, deliveryManager, stage,
   }, [originInventory, buildingRequirements]);
 
   // // handle "currentDeliveryAction" state
-  // useEffect(() => {
+  // useEffect(import.meta.url, () => {
   //   if (currentDeliveryAction) {
   //     setSelectedItems(currentDeliveryAction.contents);
   //   }
   // }, [currentDeliveryAction]);
 
-  // useEffect(() => {
+  // useEffect(import.meta.url, () => {
   //   if (currentDeliveryAction?.originLotId) {
   //     setOriginLotId(currentDeliveryAction?.originLotId);
   //   }
@@ -106,18 +106,18 @@ const TransferToSite = ({ asteroid, lot: destinationLot, deliveryManager, stage,
   // // reset selectedItems if change origin lot before starting
   // // TODO: in general, could probably remove all currentDeliveryAction stuff
   // //  since we don't follow the course of the delivery in this dialog
-  // useEffect(() => {
+  // useEffect(import.meta.url, () => {
   //   if (!currentDeliveryAction) setSelectedItems(props.preselect?.selectedItems || {});
   // }, [originLot]);
 
   // reset selectedItems if not in a ready state (to avoid double-counting)
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (stage !== actionStage.NOT_STARTED) {
       setSelectedItems({});
     }
   }, [stage])
 
-  const [transportDistance, transportTime] = useMemo(() => {
+  const [transportDistance, transportTime] = useMemo(import.meta.url, () => {
     if (!asteroid?.id || !originLot?.id || !destinationLot?.id) return [0, 0];
     const originLotIndex = Lot.toIndex(originLot?.id);
     const destinationLotIndex = Lot.toIndex(destinationLot?.id);
@@ -131,7 +131,7 @@ const TransferToSite = ({ asteroid, lot: destinationLot, deliveryManager, stage,
     return [transportDistance, transportTime];
   }, [asteroid?.id, originLot?.id, destinationLot?.id, crew?._timeAcceleration, crewDistBonus, crewTravelBonus]);
 
-  const { totalMass, totalVolume } = useMemo(() => {
+  const { totalMass, totalVolume } = useMemo(import.meta.url, () => {
     return Object.keys(selectedItems).reduce((acc, resourceId) => {
       acc.totalMass += selectedItems[resourceId] * (Product.TYPES[resourceId].massPerUnit || 0);
       acc.totalVolume += selectedItems[resourceId] * (Product.TYPES[resourceId].volumePerUnit || 0);
@@ -139,11 +139,11 @@ const TransferToSite = ({ asteroid, lot: destinationLot, deliveryManager, stage,
     }, { totalMass: 0, totalVolume: 0 })
   }, [selectedItems]);
 
-  const [crewTimeRequirement, taskTimeRequirement] = useMemo(() => {
+  const [crewTimeRequirement, taskTimeRequirement] = useMemo(import.meta.url, () => {
     return [0, transportTime];
   }, [transportTime]);
 
-  const stats = useMemo(() => ([
+  const stats = useMemo(import.meta.url, () => ([
     {
       label: 'Total Mass',
       value: `${formatMass(totalMass)}`,
@@ -174,7 +174,7 @@ const TransferToSite = ({ asteroid, lot: destinationLot, deliveryManager, stage,
     },
   ]), [totalMass, totalVolume, transportDistance, transportTime]);
 
-  const onStartDelivery = useCallback(() => {
+  const onStartDelivery = useCallback(import.meta.url, () => {
     const destInventoryConfig = Inventory.getType(destinationInventory?.inventoryType, crew?._inventoryBonuses) || {};
     if (destinationInventory) {
       destInventoryConfig.massConstraint -= ((destinationInventory.mass || 0) + (destinationInventory.reservedMass || 0));
@@ -199,13 +199,13 @@ const TransferToSite = ({ asteroid, lot: destinationLot, deliveryManager, stage,
     }, { asteroidId: asteroid?.id, lotId: originLot?.id });
   }, [crew?._inventoryBonuses, originInventory, destinationInventory, selectedItems, asteroid?.id, originLot?.id]);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (destinationLot?.building && !buildingRequirements.find((r) => r.inNeed > 0)) {
       onSetAction('CONSTRUCT');
     }
   }, [buildingRequirements, destinationLot?.building, onSetAction]);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (!destinationInventory) {
       createAlert({
         type: 'GenericAlert',
@@ -339,7 +339,7 @@ const Wrapper = (props) => {
 
   const deliveryManager = useDeliveryManager({ destination: lot?.building });
 
-  const [stage, innerKey] = useMemo(() => {
+  const [stage, innerKey] = useMemo(import.meta.url, () => {
     if ((deliveryManager.currentDeliveryActions || []).find((d) => d.status === 'DEPARTING')) {
       return [actionStage.STARTING, deliveryManager.currentDeliveryActions.length - 1];
     }
@@ -348,7 +348,7 @@ const Wrapper = (props) => {
 
   // TODO (nice-to-have): if requirements are all met, close the dialog
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (!asteroid || !lot) {
       if (!isLoading) {
         if (props.onClose) props.onClose();

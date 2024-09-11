@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from '~/lib/react-debug';
 
 import useStore from '~/hooks/useStore';
 import useAssetSearch from './useAssetSearch';
@@ -12,7 +12,7 @@ const usePagedAssets = (assetType) => {
   const sort = useStore(s => s.assetSearch[assetType].sort || []);
   const setSort = useStore(s => s.dispatchSortUpdated(assetType));
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     setPage(1);
   }, [filters, sort]);
 

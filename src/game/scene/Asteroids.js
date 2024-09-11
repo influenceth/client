@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState, useMemo } from 'react';
+import { useCallback, useEffect, useRef, useState, useMemo } from '~/lib/react-debug';
 import styled from 'styled-components';
 import { AxesHelper, Color, Vector3 } from 'three';
 import { useThrottleCallback } from '@react-hook/throttle';
@@ -86,7 +86,7 @@ const Asteroids = () => {
   const selectDestination = useStore(s => s.dispatchDestinationSelected);
   const dispatchSwapOriginDestination = useStore(s => s.dispatchSwapOriginDestination);
 
-  const isDefaultSearch = useMemo(() => isAssetSearchMatchingDefault('asteroidsMapped'), [filters]);
+  const isDefaultSearch = useMemo(import.meta.url, () => isAssetSearchMatchingDefault('asteroidsMapped'), [filters]);
 
   const { processInBackground } = useWebWorker();
 
@@ -111,11 +111,11 @@ const Asteroids = () => {
   const isUpdating = useRef(false);
   const asteroidsGeom = useRef();
 
-  const asteroids = useMemo(() => {
+  const asteroids = useMemo(import.meta.url, () => {
     return asteroidSearch?.hits?.length > 0 ? asteroidSearch.hits : [];
   }, [asteroidSearch?.hits]);
 
-  const assetedAsteroids = useMemo(() => {
+  const assetedAsteroids = useMemo(import.meta.url, () => {
     const asseted = {};
     (controlledAsteroids || []).forEach((a) => {
       if (!asseted[a.id]) asseted[a.id] = { asteroid: a };
@@ -146,7 +146,7 @@ const Asteroids = () => {
   // Update state when asteroids from server, origin, or destination change
   const isZoomedIn = zoomStatus === 'in';
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     const newMappedAsteroids = asteroids ? cloneDeep(asteroids) : [];
 
     // in default search, append watchlist and owned as needed
@@ -186,7 +186,7 @@ const Asteroids = () => {
   }, [ asteroids, origin, destination, assetedAsteroids, watchlist, isZoomedIn ]);
 
   // Responds to hover changes in the store which could be fired from the HUD
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (!hovered || hovered === originId || hovered === destinationId) {
       setHoveredPos(null);
       return;
@@ -209,7 +209,7 @@ const Asteroids = () => {
   //  managing trigger for this in a useFrame loop (rather than listening for coarseTime update),
   //  and setting geometry attributes directly, rather than through state... could potentially do
   //  fewer updates / only update on coarseTime when zoomed in
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (coarseTime && asteroidsWorkerPayload && !isUpdating.current) {
       isUpdating.current = true;
       processInBackground(
@@ -228,7 +228,7 @@ const Asteroids = () => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [coarseTime, asteroidsWorkerPayload])
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     // Check that we have data, positions are processed, and they're in sync
     if (mappedAsteroids.length * 3 === positions.length) {
       if (originId) {
@@ -248,7 +248,7 @@ const Asteroids = () => {
   }, [ mappedAsteroids, positions, originId, destinationId ]);
 
   // Update colors
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     const newColors = mappedAsteroids.map(a => {
       if (highlightConfig) return highlighters[highlightConfig.field](a, highlightConfig);
       return [ 1, 1, 1 ];
@@ -258,13 +258,13 @@ const Asteroids = () => {
   }, [ mappedAsteroids, highlightConfig ]);
 
   // re-computeBoundingSphere on geometry change
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (asteroidsGeom.current) {
       asteroidsGeom.current.computeBoundingSphere();
     }
   }, [positions]);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (!cameraNeedsReorientation || zoomStatus !== 'out' || !controls?.object?.position) return;
 
     dispatchReorientCamera();
@@ -290,7 +290,7 @@ const Asteroids = () => {
   }, [cameraNeedsReorientation]);
 
   // mouse event handlers
-  const onClick = useCallback((e) => {
+  const onClick = useCallback(import.meta.url, (e) => {
     e.stopPropagation();
     const index = e.intersections.sort((a, b) => a.distanceToRay - b.distanceToRay)[0].index;
     if (mappedAsteroids[index]) {
@@ -305,7 +305,7 @@ const Asteroids = () => {
     }
   }, [mappedAsteroids, destinationId, travelMode]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const onContextClick = useCallback((e) => {
+  const onContextClick = useCallback(import.meta.url, (e) => {
     e.stopPropagation();
     const index = e.intersections.sort((a, b) => a.distanceToRay - b.distanceToRay)[0].index;
 
@@ -326,7 +326,7 @@ const Asteroids = () => {
     unhoverAsteroid();
   }, 30);  // eslint-disable-line react-hooks/exhaustive-deps
 
-  const { assetPositions, assetPositionsById, watchlistPositions } = useMemo(() => {
+  const { assetPositions, assetPositionsById, watchlistPositions } = useMemo(import.meta.url, () => {
     const assetPositions = [];
     const assetPositionsById = {};
     const watchlistPositions = [];
@@ -349,7 +349,7 @@ const Asteroids = () => {
     }
   }, [origin, positions, watchlist]); // don't update when mappedAsteroids updated (wait for positions update)
 
-  const [originToDestination, originToDestinationDistance, originToDestinationHalfway] = useMemo(() => {
+  const [originToDestination, originToDestinationDistance, originToDestinationHalfway] = useMemo(import.meta.url, () => {
     if (originPos && destinationPos) {
       const o = new Vector3(originPos[0], originPos[1], originPos[2]);
       const d = new Vector3(destinationPos[0], destinationPos[1], destinationPos[2]);
@@ -371,7 +371,7 @@ const Asteroids = () => {
 
   const diamondMarker = useTexture(`${process.env.PUBLIC_URL}/textures/asteroids/solid_diamond.png`);
 
-  const billboardedAsteroids = useMemo(() => {
+  const billboardedAsteroids = useMemo(import.meta.url, () => {
     const b = {};
     if (origin && originPos) {
       b[origin.id] = {

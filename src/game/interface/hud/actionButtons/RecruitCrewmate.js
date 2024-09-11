@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo } from '~/lib/react-debug';
 import { useHistory } from 'react-router-dom';
 import { Building, Permission } from '@influenceth/sdk';
 
@@ -18,7 +18,7 @@ const RecruitCrewmate = ({ asteroid, blockTime, crew, lot, simulation, _disabled
 
   const createAlert = useStore(s => s.dispatchAlertLogged);
 
-  const [tooltipExtra, recruitToCrew, clickWarning] = useMemo(() => {
+  const [tooltipExtra, recruitToCrew, clickWarning] = useMemo(import.meta.url, () => {
     let tip = '';
     let ontoCrew = 0;
     let warning = '';
@@ -47,7 +47,7 @@ const RecruitCrewmate = ({ asteroid, blockTime, crew, lot, simulation, _disabled
   }, [crew, lot]);
 
 
-  const handleClick = useCallback(() => {
+  const handleClick = useCallback(import.meta.url, () => {
     if (clickWarning) {
       createAlert({
         type: 'GenericAlert',
@@ -58,9 +58,9 @@ const RecruitCrewmate = ({ asteroid, blockTime, crew, lot, simulation, _disabled
     history.push(`/recruit/${recruitToCrew || 0}/${lot?.building?.id}`)
   }, [recruitToCrew, clickWarning, lot?.building?.id]);
 
-  const pendingCrewmate = useMemo(getPendingCrewmate, [getPendingCrewmate]);
+  const pendingCrewmate = useMemo(import.meta.url, getPendingCrewmate, [getPendingCrewmate]);
 
-  const disabledReason = useMemo(() => {
+  const disabledReason = useMemo(import.meta.url, () => {
     if (_disabled) return 'loading...';
     if (pendingCrewmate) return 'recruiting...';
     if (simulation) return 'simulation restricted';

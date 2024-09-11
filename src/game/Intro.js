@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from '~/lib/react-debug';
 import { createPortal } from 'react-dom';
 import Lottie from 'lottie-react';
 import styled from 'styled-components';
@@ -25,12 +25,12 @@ const Intro = () => {
   const [hiding, setHiding] = useState(false);
   const [paused, setPaused] = useState(true);
 
-  const onReady = useCallback(() => {
+  const onReady = useCallback(import.meta.url, () => {
     setPaused(true);
     setTimeout(() => setPaused(false), 1000);
   }, []);
 
-  const onComplete = useCallback(() => {
+  const onComplete = useCallback(import.meta.url, () => {
     setHiding(true); // (so they fade back out)
     gsap.to(container.current, {
       delay: 1,
@@ -41,7 +41,7 @@ const Intro = () => {
     });
   }, []);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (paused) lottieRef.current.pause();
     else lottieRef.current.play();
   }, [paused]);

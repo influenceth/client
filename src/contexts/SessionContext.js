@@ -1,4 +1,4 @@
-import { createContext, useCallback, useEffect, useRef, useMemo, useState } from 'react';
+import { createContext, useCallback, useEffect, useRef, useMemo, useState } from '~/lib/react-debug';
 import { useQueryClient } from 'react-query';
 import { isExpired } from 'react-jwt';
 import { num, RpcProvider, WalletAccount, shortString } from 'starknet';
@@ -84,8 +84,8 @@ export function SessionProvider({ children }) {
   const [isBlockMissing, setIsBlockMissing] = useState(false);
   const [error, setError] = useState();
 
-  const authenticated = useMemo(() => status === STATUSES.AUTHENTICATED, [status]);
-  const provider = useMemo(() => {
+  const authenticated = useMemo(import.meta.url, () => status === STATUSES.AUTHENTICATED, [status]);
+  const provider = useMemo(import.meta.url, () => {
     let nodeUrl = process.env.REACT_APP_STARKNET_PROVIDER;
 
     if (process.env.REACT_APP_STARKNET_PROVIDER_BACKUP && Math.random() > 0.5) {
@@ -96,7 +96,7 @@ export function SessionProvider({ children }) {
   }, []);
 
   // Login entry point, starts by connecting to wallet provider
-  const connect = useCallback(async (auto = false, enabledConnectors = { webWallet: true, argentX: true, braavos: true, argentMobile: true }) => {
+  const connect = useCallback(import.meta.url, async (auto = false, enabledConnectors = { webWallet: true, argentX: true, braavos: true, argentMobile: true }) => {
     if (currentSession?.walletId) {
       localStorage.setItem('starknetLastConnectedWallet', currentSession.walletId);
       auto = true;
@@ -187,20 +187,20 @@ export function SessionProvider({ children }) {
   }, [currentSession, sessions]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Disconnect from the wallet provider and suspend session (don't fully logout)
-  const disconnect = useCallback(() => {
+  const disconnect = useCallback(import.meta.url, () => {
     dispatchSessionSuspended();
     setStatus(STATUSES.DISCONNECTED);
   }, [dispatchSessionSuspended]);
 
   // End / delete session, disconnect wallet and forget last wallet provider (full reset)
-  const logout = useCallback(() => {
+  const logout = useCallback(import.meta.url, () => {
     dispatchSessionEnded();
     setStatus(STATUSES.DISCONNECTED);
     if (window.starknet) starknetDisconnect({ clearLastWallet: true });
   }, [ dispatchSessionEnded ]);
 
   // While connecting or connected, listen for network changes from extension
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     const onAccountsChanged = (e) => {
       const eventAccount = Address.toStandard(Array.isArray(e) ? e[0] : e);
 
@@ -244,7 +244,7 @@ export function SessionProvider({ children }) {
 
   // Determines whether the wallet should use sessions based on user settings and wallet id
   // useSessions: (null = default, true, false)
-  const shouldUseSessionKeys = useCallback(async (skipSettingsCheck = false) => {
+  const shouldUseSessionKeys = useCallback(import.meta.url, async (skipSettingsCheck = false) => {
     const setting = skipSettingsCheck || gameplay.useSessions;
 
     // explicitly disabled
@@ -270,7 +270,7 @@ export function SessionProvider({ children }) {
   }, [connectedAccount, gameplay.useSessions, provider]);
 
   // Checks the account contract do determine if it's deployed on-chain yet
-  const checkDeployed = useCallback(async () => {
+  const checkDeployed = useCallback(import.meta.url, async () => {
     try {
       await provider.getClassAt(connectedAccount); // if this throws, the contract is not deployed
       return true;
@@ -281,7 +281,7 @@ export function SessionProvider({ children }) {
   }, [connectedAccount, provider]);
 
   // Authenticate with a signed message against the API and create a new session
-  const authenticate = useCallback(async ({ isUpgradeInsecure = false, isUpgradeSessionKey = false } = {}) => {
+  const authenticate = useCallback(import.meta.url, async ({ isUpgradeInsecure = false, isUpgradeSessionKey = false } = {}) => {
     const newSession = {};
 
     // Check if the account contract has been deployed yet and should use sessions
@@ -384,12 +384,12 @@ export function SessionProvider({ children }) {
     logout
   ]);
 
-  const upgradeInsecureSession = useCallback(() => {
+  const upgradeInsecureSession = useCallback(import.meta.url, () => {
     if (currentSession && !currentSession.isDeployed) return authenticate({ isUpgradeInsecure: true });
   }, [authenticate, currentSession]);
 
   // Resumes a current session or starts a new one
-  const resumeOrAuthenticate = useCallback(async () => {
+  const resumeOrAuthenticate = useCallback(import.meta.url, async () => {
     // If somehow we've lost wallet connection, disconnect
     if (!connectedAccount || !walletAccount) {
       disconnect();
@@ -410,13 +410,13 @@ export function SessionProvider({ children }) {
   }, [authenticate, connectedAccount, walletAccount, sessions, disconnect, dispatchSessionStarted]);
 
   // Upgrades a current session to use a session key
-  const upgradeToSessionKey = useCallback(async () => {
+  const upgradeToSessionKey = useCallback(import.meta.url, async () => {
     if (currentSession?.isDeployed && !currentSession?.sessionRequest) {
       return authenticate({ isUpgradeSessionKey: true });
     }
   }, [authenticate, currentSession, gameplay.useSessions]);
 
-  const createSessionAccount = useCallback(async () => {
+  const createSessionAccount = useCallback(import.meta.url, async () => {
     const offchainSessionAccount = await buildSessionAccount({
       accountSessionSignature: currentSession.sessionSignature,
       sessionRequest: currentSession.sessionRequest,
@@ -431,7 +431,7 @@ export function SessionProvider({ children }) {
   }, [currentSession, provider]);
 
   // Start a session with the Argent Web Wallet
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (!currentSession?.isDeployed) return;
     if (authenticated && gameplay.useSessions !== false && currentSession.sessionSignature) {
       createSessionAccount();
@@ -439,12 +439,12 @@ export function SessionProvider({ children }) {
   }, [authenticated, currentSession, gameplay.useSessions]);
 
   // End session and disconnect wallet if session expires
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (currentSession.token && isExpired(currentSession.token)) logout();
   }, [currentSession, logout]);
 
   // Connect / auth flow manager
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     // console.log(Object.keys(STATUSES).find(key => STATUSES[key] === status));
     if (status === STATUSES.DISCONNECTED) {
       if (currentSession?.walletId) {
@@ -464,7 +464,7 @@ export function SessionProvider({ children }) {
   }, [currentSession, status]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Catch errors and display in an alert
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (error) {
       createAlert({
         type: 'GenericAlert',
@@ -479,7 +479,7 @@ export function SessionProvider({ children }) {
   }, [error, createAlert, logout]);
 
   const [isFeeAbstractionCompatible, setIsFeeAbstractionCompatible] = useState();
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (currentSession?.isDeployed) {
       gasless.fetchAccountCompatibility(
         currentSession.accountAddress,
@@ -493,7 +493,7 @@ export function SessionProvider({ children }) {
     }
   }, [currentSession.accountAddress, currentSession?.isDeployed]);
 
-  const payGasWithSwayIfPossible = useMemo(() => {
+  const payGasWithSwayIfPossible = useMemo(import.meta.url, () => {
     // check if we should use fee abstraction (is set to use sway or is set to default + using webwallet)
     if (gameplay.feeToken === 'SWAY' || (!gameplay.feeToken && currentSession?.walletId === 'argentWebWallet')) {
       return !!isFeeAbstractionCompatible;
@@ -506,7 +506,7 @@ export function SessionProvider({ children }) {
   ]);
 
   // Retrieves an outside execution call and signs it
-  const getOutsideExecutionData = useCallback(async (calldata, gasTokenAddress, maxGasTokenAmount, canUseSessionKey) => {
+  const getOutsideExecutionData = useCallback(import.meta.url, async (calldata, gasTokenAddress, maxGasTokenAmount, canUseSessionKey) => {
     let typedData = await gasless.fetchBuildTypedData(
       currentSession.accountAddress,
       calldata,
@@ -545,7 +545,7 @@ export function SessionProvider({ children }) {
   // Block management -------------------------------------------------------------------------------------------------
 
   // If using devnet, put "create block" on a timer since otherwise, blocks will not be advancing in the background
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (process.env.REACT_APP_IS_DEVNET) {
       let blockInterval = setInterval(() => { api.createDevnetBlock(); }, 15e3);
       return () => {
@@ -555,13 +555,13 @@ export function SessionProvider({ children }) {
   }, []);
 
   // Argent is slow to put together it's final "starknet" object, so we check explicitly for getBlock method
-  const canCheckBlock = useMemo(() => {
+  const canCheckBlock = useMemo(import.meta.url, () => {
     return status >= STATUSES.CONNECTED && !!provider?.getBlock;
   }, [provider?.getBlock, status]);
 
   // Initialize block number and block time
   const lastBlockNumberTime = useRef(0);
-  const initializeBlockData = useCallback(async () => {
+  const initializeBlockData = useCallback(import.meta.url, async () => {
     if (!canCheckBlock) return;
     try {
       const block = await provider.getBlock('pending');
@@ -590,10 +590,10 @@ export function SessionProvider({ children }) {
       console.error('failed to init block data', e)
     }
   }, [canCheckBlock, provider]);
-  useEffect(() => { initializeBlockData(); }, [initializeBlockData]);
+  useEffect(import.meta.url, () => { initializeBlockData(); }, [initializeBlockData]);
 
   const reattempts = useRef();
-  const capturePendingBlockTimestampUpdate = useCallback(async () => {
+  const capturePendingBlockTimestampUpdate = useCallback(import.meta.url, async () => {
     if (!provider) return;
 
     reattempts.current++;
@@ -616,7 +616,7 @@ export function SessionProvider({ children }) {
   // get pending block time on every new block
   // TODO: if no crew, then we won't receive websockets, and blockNumber will not get updated
   //  (i.e. for logged out users) -- does that matter?
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (blockNumber > lastBlockNumberTime.current) {
       reattempts.current = 0;
       capturePendingBlockTimestampUpdate();
@@ -624,7 +624,7 @@ export function SessionProvider({ children }) {
   }, [blockNumber, capturePendingBlockTimestampUpdate]);
 
   // reset any cached, but time-dependent queries
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     [
       [ 'orderList' ],
       [ 'inventoryOrders' ],
@@ -636,12 +636,12 @@ export function SessionProvider({ children }) {
   }, [blockTime]);
 
   const [promptLogin, setPromptLogin] = useState();
-  const login = useCallback(async () => {
+  const login = useCallback(import.meta.url, async () => {
     if ([STATUSES.AUTHENTICATING, STATUSES.AUTHENTICATED].includes(status)) return;
     setPromptLogin(true);
   }, [authenticated, connect]);
 
-  const handleLoginPrompt = useCallback((choice) => {
+  const handleLoginPrompt = useCallback(import.meta.url, (choice) => {
     setPromptLogin(false);
     if (choice === false) {
       connect(); // show all wallets

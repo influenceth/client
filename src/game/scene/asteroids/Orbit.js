@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState } from 'react';
+import { useRef, useEffect, useState } from '~/lib/react-debug';
 import { useFrame } from '@react-three/fiber';
 import { AdalianOrbit } from '@influenceth/sdk';
 import { cloneDeep } from 'lodash';
@@ -24,7 +24,7 @@ const Orbit = ({ asteroid, color, opacityMult = 1, staticOpacity }) => {
     uCol: { type: 'c', value: orbitColors.main },
   });
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     const orbit = new AdalianOrbit(asteroid.Orbit, { units: 'km' });
     let newPositions = [];
     orbit.getSmoothOrbit(360).forEach(p => {
@@ -34,11 +34,11 @@ const Orbit = ({ asteroid, color, opacityMult = 1, staticOpacity }) => {
     setPositions(new Float32Array(newPositions));
   }, [ asteroid ]);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     uniforms.current.uCol.value = (color && orbitColors[color]) || orbitColors.main;
   }, [color]);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     uniforms.current.uAlpha.value = Math.min(1, initialUniforms.uAlpha.value * opacityMult);
     uniforms.current.uAlphaMin.value = Math.min(1, initialUniforms.uAlphaMin.value * opacityMult);
   }, [opacityMult]);

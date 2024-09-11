@@ -1,4 +1,4 @@
-import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useContext, useEffect, useMemo, useRef, useState } from '~/lib/react-debug';
 import styled from 'styled-components';
 import { Asteroid, Building, Crew, Crewmate, Entity, Inventory, Lot, Permission, Process, Product, Time } from '@influenceth/sdk';
 
@@ -242,7 +242,7 @@ export const ProductMarketSummary = ({
   const [sort, setSort] = useState(['_dynamicUnitPrice', 'asc']);
   const [sortField, sortDirection] = sort;
 
-  const getRowProps = useCallback((row) => ({
+  const getRowProps = useCallback(import.meta.url, (row) => ({
     onClick: () => {
       onSelected(row.buildingId);
     },
@@ -252,7 +252,7 @@ export const ProductMarketSummary = ({
   }), [onSelected, productId, selected]);
 
   // NOTE: this augments resourceMarketplaces, but updates less often
-  const dynamicMarketplaces = useMemo(() => {
+  const dynamicMarketplaces = useMemo(import.meta.url, () => {
     return Object.values(resourceMarketplaces).map((m) => {
       const row = { ...m };
       const remainingToSource = selectionSummary.needed || targetAmount;
@@ -276,7 +276,7 @@ export const ProductMarketSummary = ({
     });
   }, [resourceMarketplaces, selectionSummary, targetAmount]);
 
-  const handleSort = useCallback((field) => () => {
+  const handleSort = useCallback(import.meta.url, (field) => () => {
     if (!field) return;
 
     let updatedSortField = sortField;
@@ -294,7 +294,7 @@ export const ProductMarketSummary = ({
     ]);
   }, [sortDirection, sortField]);
 
-  const sortedMarketplaces = useMemo(() => {
+  const sortedMarketplaces = useMemo(import.meta.url, () => {
     return (dynamicMarketplaces || [])
       .sort((a, b) => (sortDirection === 'asc' ? 1 : -1) * (a[sortField] < b[sortField] ? 1 : -1));
   }, [dynamicMarketplaces, sortField, sortDirection]);
@@ -322,19 +322,19 @@ const SellingList = ({ asteroid, origin, originSlot, initialSelection, preselect
   const [selected, setSelected] = useState(initialSelection || {});
 
   const { data: exchanges, dataUpdatedAt: exchangesUpdatedAt } = useAsteroidBuildings(asteroid?.id, 'Exchange', Permission.IDS.SELL);
-  const exchangesById = useMemo(() => {
+  const exchangesById = useMemo(import.meta.url, () => {
     return (exchanges || []).reduce((acc, cur) => {
       acc[cur.id] = cur;
       return acc;
     }, {});
   }, [exchangesUpdatedAt])
   const { data: originLot } = useLot(locationsArrToObj(origin?.Location?.locations || []).lotId);
-  const originInventory = useMemo(() => origin?.Inventories.find((i) => i.slot === originSlot), [origin, originSlot]);
+  const originInventory = useMemo(import.meta.url, () => origin?.Inventories.find((i) => i.slot === originSlot), [origin, originSlot]);
 
   const [targets, setTargets] = useState(Object.keys(preselect?.selectedItems || {}).map((k) => ({ productId: k, amount: preselect.selectedItems[k] })));
 
   // derive shopping list from selected site
-  const [sellingList, productIds] = useMemo(() => {
+  const [sellingList, productIds] = useMemo(import.meta.url, () => {
     const list = targets.map(({ productId, amount }) => ({ product: Product.TYPES[productId], amount }));
     return [list, list.map((p) => p.product.i)];
   }, [targets]);
@@ -349,7 +349,7 @@ const SellingList = ({ asteroid, origin, originSlot, initialSelection, preselect
   useInterval(() => { refetchResourceMarketplaces(); }, 60e3); // keep things loosely fresh
 
   // crew bonuses related to market buys and transport
-  const crewBonuses = useMemo(() => {
+  const crewBonuses = useMemo(import.meta.url, () => {
     if (!crew) return {};
 
     const abilities = getCrewAbilityBonuses([
@@ -364,7 +364,7 @@ const SellingList = ({ asteroid, origin, originSlot, initialSelection, preselect
     }
   }, [crew]);
 
-  const selectionSummary = useMemo(() => {
+  const selectionSummary = useMemo(import.meta.url, () => {
     return productIds.reduce((acc, productId) => {
       const targetAmount = sellingList.find((l) => l.product.i === productId)?.amount || 0;
 
@@ -419,7 +419,7 @@ const SellingList = ({ asteroid, origin, originSlot, initialSelection, preselect
     }, {});
   }, [asteroid?.id, crew?._timeAcceleration, crewBonuses, originLot?.id, selected, sellingList]);
 
-  const { totalPrice, totalMass, totalVolume, taskTimeRequirement, exchangeTally, allFills } = useMemo(() => {
+  const { totalPrice, totalMass, totalVolume, taskTimeRequirement, exchangeTally, allFills } = useMemo(import.meta.url, () => {
     return Object.keys(selectionSummary).reduce((acc, k) => {
       const s = selectionSummary[k];
       return {
@@ -440,7 +440,7 @@ const SellingList = ({ asteroid, origin, originSlot, initialSelection, preselect
     });
   }, [selectionSummary]);
 
-  const handleSelected = useCallback((productId) => (buildingId) => {
+  const handleSelected = useCallback(import.meta.url, (productId) => (buildingId) => {
     setSelected((old) => {
       const s = { ...old };
       if (!s[productId]) s[productId] = [];
@@ -461,7 +461,7 @@ const SellingList = ({ asteroid, origin, originSlot, initialSelection, preselect
     });
   }, [selectionSummary]);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     Object.keys(selected || {}).forEach((productId) => {
       selected[productId].forEach((buildingId) => {
         // deselect building if no longer available due to change in market conditions
@@ -478,7 +478,7 @@ const SellingList = ({ asteroid, origin, originSlot, initialSelection, preselect
   }, [resourceMarketplacesUpdatedAt, selected])
 
   const [selling, setSelling] = useState();
-  const handleSell = useCallback(async () => {
+  const handleSell = useCallback(import.meta.url, async () => {
     // TODO: do syncronous refetch and return if significant change (i.e. > 2% change in price or anything that was satisfied is now unsatisfied)
     setSelling(true);
     try {
@@ -534,16 +534,16 @@ const SellingList = ({ asteroid, origin, originSlot, initialSelection, preselect
 
   }, [allFills, crew?.id, origin, originLot?.id, originSlot, exchangesUpdatedAt, execute]);
 
-  const handleProductClick = useCallback((productId) => () => {
+  const handleProductClick = useCallback(import.meta.url, (productId) => () => {
     setOpenProductId((p) => p === productId ? null : productId);
   }, []);
 
-  const sellingListSaleTally = useMemo(() => {
+  const sellingListSaleTally = useMemo(import.meta.url, () => {
     return (pendingTransactions || []).filter((tx) => tx.key === 'EscrowWithdrawalAndFillBuyOrders' && tx.meta?.originLotId === originLot?.id);
   }, [originLot?.id, pendingTransactions]);
 
   // if sellingListSaleTally on this lot changes while in `selling` mode, close dialog
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (selling && props.onClose) {
       props.onClose();
     }
@@ -697,13 +697,13 @@ const Wrapper = (props) => {
   const { asteroid, lot, isLoading } = useAsteroidAndLot(props);
   const actionManager = { actionStage: actionStage.NOT_STARTED };
 
-  const [origin, originSlot] = useMemo(() => {
+  const [origin, originSlot] = useMemo(import.meta.url, () => {
     const origin = props.origin || lot?.building;
     const originSlot = props.originSlot || origin?.Inventories.find((i) => i.status === Inventory.STATUSES.AVAILABLE)?.slot;
     return [origin, originSlot];
   }, [lot?.building, props.origin, props.originSlot]);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (!asteroid || !lot || !origin || !originSlot) {
       if (!isLoading) {
         if (props.onClose) props.onClose();

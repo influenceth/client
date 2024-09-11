@@ -14,7 +14,7 @@ import { renderDummyAsteroid } from '~/game/scene/asteroid/helpers/utils';
 import constants from '~/lib/constants';
 import exportGLTF from '~/lib/graphics/exportGLTF';
 import useWebWorker from '~/hooks/useWebWorker';
-import { useCallback, useState } from 'react';
+import { useCallback, useState } from '~/lib/react-debug';
 import { nativeBool, reactBool } from '~/lib/utils';
 import styled from 'styled-components';
 import CrewIndicator from '~/components/CrewIndicator';
@@ -40,7 +40,7 @@ const AdminAsteroid = ({}) => {
 
   const [exportingModel, setExportingModel] = useState(false);
 
-  const download3dModel = useCallback(() => {
+  const download3dModel = useCallback(import.meta.url, () => {
     if (exportingModel || !asteroid) return;
     setExportingModel(true);
     renderDummyAsteroid(asteroid, constants.MODEL_EXPORT_RESOLUTION, webWorkerPool, (asteroidModel, dispose) => {

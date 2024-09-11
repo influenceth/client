@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState } from '~/lib/react-debug';
 import styled from 'styled-components';
 
 import AsteroidsImage from '~/assets/images/sales/asteroids.png';
@@ -162,7 +162,7 @@ const SkuSelector = ({ onSelect }) => {
   const { data: priceConstants } = usePriceConstants();
   const packs = useStarterPackPricing();
 
-  const paneMeta = useMemo(() => {
+  const paneMeta = useMemo(import.meta.url, () => {
     const asteroidExtra = {};
 
     const remaining = asteroidSale ? (Number(asteroidSale.limit) - Number(asteroidSale.volume)) : 0;
@@ -226,7 +226,7 @@ const Store = () => {
 
   const initialSubpage = useStore(s => s.launcherSubpage);
 
-  const initialSelection = useMemo(() => {
+  const initialSelection = useMemo(import.meta.url, () => {
     const linkedSelectionIndex = Object.keys(storeAssets).indexOf(initialSubpage);
     return linkedSelectionIndex >= 0 ? linkedSelectionIndex : undefined;
   }, [initialSubpage]);
@@ -234,7 +234,7 @@ const Store = () => {
   const [selection, setSelection] = useState(initialSelection);
   const isSelected = selection !== undefined;
 
-  const panes = useMemo(() => {
+  const panes = useMemo(import.meta.url, () => {
     return Object.keys(storeAssets).map((k) => ({
       label: storeAssets[k],
       pane: <SKU asset={k} onBack={() => setSelection()} />,

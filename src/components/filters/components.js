@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from '~/lib/react-debug';
 import styled from 'styled-components';
 import { RiPaintFill as HighlightIcon } from 'react-icons/ri';
 
@@ -132,13 +132,13 @@ export const SearchMenu = ({
   const updateHighlight = useStore(s => s.dispatchHighlightUpdated(assetType));
   const isAssetSearchFilterMatchingDefault = useStore(s => s.isAssetSearchFilterMatchingDefault);
 
-  const fieldHighlight = useMemo(() => highlight && highlight.field === highlightFieldName, [highlight, highlightFieldName]);
+  const fieldHighlight = useMemo(import.meta.url, () => highlight && highlight.field === highlightFieldName, [highlight, highlightFieldName]);
 
-  const filterIsOn = useMemo(() => {
+  const filterIsOn = useMemo(import.meta.url, () => {
     return !isAssetSearchFilterMatchingDefault(assetType, fieldName);
   }, [assetType, fieldName, filters[fieldName]]);
 
-  const toggleHighlight = useCallback((e) => {
+  const toggleHighlight = useCallback(import.meta.url, (e) => {
     e.stopPropagation();
     if (fieldHighlight) {
       updateHighlight();
@@ -149,12 +149,12 @@ export const SearchMenu = ({
     }
   }, [highlightFieldName, fieldHighlight, highlightColorMap, highlightColorRange, highlightMetadata]);
 
-  const resetFilter = useCallback((e) => {
+  const resetFilter = useCallback(import.meta.url, (e) => {
     e.stopPropagation();
     dispatchFilterReset(assetType, fieldName);
   }, [assetType, dispatchFilterReset, fieldName]);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (fieldHighlight) {
       if (highlightColorMap) {
         updateHighlight({ field: highlightFieldName, colorMap: highlightColorMap, ...(highlightMetadata || {}) });

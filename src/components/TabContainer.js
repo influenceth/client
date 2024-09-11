@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useState } from '~/lib/react-debug';
 import styled from 'styled-components';
 
 import useStore from '~/hooks/useStore';
@@ -118,7 +118,7 @@ const TabContainer = ({
   const active = controller?.active || _active;
   const setActive = controller?.setActive || _setActive;
 
-  const onClick = useCallback((i) => () => {
+  const onClick = useCallback(import.meta.url, (i) => () => {
     if (tabs[i].disabled) {
       playSound('failure');
     } else {

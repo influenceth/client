@@ -1,4 +1,4 @@
-import { useCallback, useContext, useMemo } from 'react';
+import { useCallback, useContext, useMemo } from '~/lib/react-debug';
 import { Entity } from '@influenceth/sdk';
 
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
@@ -11,9 +11,9 @@ const useShipDockingManager = (shipId) => {
   const { crew } = useCrewContext();
   const { data: ship } = useShip(shipId);
 
-  const caller_crew = useMemo(() => ({ id: crew?.id, label: Entity.IDS.CREW }), [crew?.id]);
+  const caller_crew = useMemo(import.meta.url, () => ({ id: crew?.id, label: Entity.IDS.CREW }), [crew?.id]);
 
-  const undockShip = useCallback((hopperAssisted) => {
+  const undockShip = useCallback(import.meta.url, (hopperAssisted) => {
     execute(
       'UndockShip',
       {
@@ -28,7 +28,7 @@ const useShipDockingManager = (shipId) => {
     );
   }, [caller_crew, ship]);
 
-  const dockShip = useCallback((destination, hopperAssisted, destLotId) => {
+  const dockShip = useCallback(import.meta.url, (destination, hopperAssisted, destLotId) => {
     execute(
       'DockShip',
       {
@@ -44,12 +44,12 @@ const useShipDockingManager = (shipId) => {
     );
   }, [caller_crew]);
 
-  const currentDockingAction = useMemo(
+  const currentDockingAction = useMemo(import.meta.url, 
     () => getPendingTx ? getPendingTx('DockShip', { caller_crew }) : null
     [caller_crew, getPendingTx]
   );
 
-  const currentUndockingAction = useMemo(
+  const currentUndockingAction = useMemo(import.meta.url, 
     () => getPendingTx ? getPendingTx('UndockShip', { caller_crew }) : null,
     [caller_crew, getPendingTx]
   );

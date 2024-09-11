@@ -5,7 +5,7 @@ import useSession from '~/hooks/useSession';
 import useCrewContext from '~/hooks/useCrewContext';
 import api from '~/lib/api';
 import { useQuery } from 'react-query';
-import { useMemo } from 'react';
+import { useMemo } from '~/lib/react-debug';
 import { entitiesCacheKey } from '~/lib/cacheKey';
 
 export const statuses = [
@@ -18,9 +18,9 @@ const useWalletBuildings = () => {
   const { accountAddress } = useSession();
   const { crews, loading: crewsLoading } = useCrewContext();
 
-  const controllerIds = useMemo(() => (crews || []).map((c) => c.id), [crews]);
+  const controllerIds = useMemo(import.meta.url, () => (crews || []).map((c) => c.id), [crews]);
 
-  const query = useMemo(() => {
+  const query = useMemo(import.meta.url, () => {
     if (!accountAddress || crewsLoading) return null;
 
     try {

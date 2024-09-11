@@ -1,4 +1,4 @@
-import { useContext, useEffect, useMemo, useState } from 'react';
+import { useContext, useEffect, useMemo, useState } from '~/lib/react-debug';
 import { useQueryClient, QueryClientProvider } from 'react-query';
 import { Object3D, Vector3 } from 'three';
 import { Canvas, useThree } from '@react-three/fiber';
@@ -51,12 +51,12 @@ const WrappedScene = () => {
   const zoomStatus = useStore(s => s.asteroids.zoomStatus);
 
   // if three is started with frameloop == 'never', clock is not set to autoStart, so we need to set it
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (clock && !clock.autoStart) clock.autoStart = true;
   }, []);
 
   // reset to "zoomed out" control settings if zoomed out to belt view
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (!!controls && (zoomStatus === 'zooming-out' || zoomStatus === 'out')) {
       controls.maxDistance = 10 * constants.AU;
       controls.minDistance = 0.3 * constants.AU;
@@ -100,9 +100,9 @@ const Scene = () => {
   const statsOn = useStore(s => s.graphics.stats);
 
   const [contextLost, setContextLost] = useState(false);
-  const canvasStyle = useMemo(() => (contextLost ? { opacity: 0, pointerEvents: 'none' } : { zIndex: 0 }), [contextLost]);
+  const canvasStyle = useMemo(import.meta.url, () => (contextLost ? { opacity: 0, pointerEvents: 'none' } : { zIndex: 0 }), [contextLost]);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (!zoomedFrom) {
       setZoomedFrom({
         scene: new Vector3(0, 0, 0),
@@ -115,7 +115,7 @@ const Scene = () => {
 
   const { assetType, overrides } = useContext(DevToolContext);
 
-  const [postprocessingEnabled, bloomParams] = useMemo(() => {
+  const [postprocessingEnabled, bloomParams] = useMemo(import.meta.url, () => {
     const defaults = visualConfigs.scene;
     const o = assetType === 'scene' ? overrides : {};
     return [
@@ -131,7 +131,7 @@ const Scene = () => {
     ];
   }, [overrides]);
 
-  const frameloop = useMemo(() => canvasStack?.length === 0 ? 'always' : 'never', [canvasStack]);
+  const frameloop = useMemo(import.meta.url, () => canvasStack?.length === 0 ? 'always' : 'never', [canvasStack]);
 
   return (
     <StyledContainer>

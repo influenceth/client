@@ -1,9 +1,9 @@
-import { useCallback, useState, } from 'react';
+import { useCallback, useState, } from '~/lib/react-debug';
 
 const MarketplaceLink = ({ assetType, chain, children, id }) => {
   const [referenceEl, setReferenceEl] = useState();
 
-  const handleMarketplaceClick = useCallback(() => {
+  const handleMarketplaceClick = useCallback(import.meta.url, () => {
     let url;
 
     // Ethereum > OpenSea

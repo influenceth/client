@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from '~/lib/react-debug';
 import styled from 'styled-components';
 import { Tooltip } from 'react-tooltip';
 
@@ -274,7 +274,7 @@ const ListViewComponent = ({ assetType, onAssetTypeChange, onParamsApplied, para
   const [disabledColumns, setDisabledColumns] = useState([]);
   const [filtersOpen, setFiltersOpen] = useState();
 
-  const onCopyLink = useCallback(() => {
+  const onCopyLink = useCallback(import.meta.url, () => {
     try {
       const { origin, pathname } = window.location || {};
       navigator.clipboard.writeText(`${origin}${pathname}?filters=${JSON.stringify(filters)}&sort=${JSON.stringify(sort)}`);
@@ -288,7 +288,7 @@ const ListViewComponent = ({ assetType, onAssetTypeChange, onParamsApplied, para
     }
   }, [filters, sort]);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     try {
       if (params?.filters) updateFilters(JSON.parse(params?.filters));
       if (params?.sort) setSort(JSON.parse(params?.sort));
@@ -298,7 +298,7 @@ const ListViewComponent = ({ assetType, onAssetTypeChange, onParamsApplied, para
     }
   }, [params])
 
-  const onToggleColumns = useCallback((col) => () => {
+  const onToggleColumns = useCallback(import.meta.url, (col) => () => {
     setDisabledColumns((colKeys) => {
       if (colKeys.find((k) => k === col.key)) {
         return colKeys.filter((k) => k !== col.key);
@@ -307,15 +307,15 @@ const ListViewComponent = ({ assetType, onAssetTypeChange, onParamsApplied, para
     });
   }, []);
 
-  const onToggleFilters = useCallback(() => {
+  const onToggleFilters = useCallback(import.meta.url, () => {
     setFiltersOpen((o) => !o);
   }, []);
 
-  const onClickFilters = useCallback(() => {
+  const onClickFilters = useCallback(import.meta.url, () => {
     setFiltersOpen(true);
   }, []);
 
-  const handleSort = useCallback((field, options = {}) => () => {
+  const handleSort = useCallback(import.meta.url, (field, options = {}) => () => {
     if (!field) return;
 
     let updatedSortField = sortField;
@@ -330,27 +330,27 @@ const ListViewComponent = ({ assetType, onAssetTypeChange, onParamsApplied, para
     setSort([updatedSortField, updatedSortDirection, options]);
   }, [sortDirection, sortField, sortOptions]);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (query?.data?.length === 0) setPage(1);
   }, [ query?.data, setPage ]);
 
   // on asset type change
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     setDisabledColumns([]);
     setPage(1);
   }, [assetType, setPage]);
 
-  const enabledColumns = useMemo(() => {
+  const enabledColumns = useMemo(import.meta.url, () => {
     return columns.filter((c) => !disabledColumns.includes(c.key));
   }, [columns, disabledColumns]);
 
-  const hideableColumns = useMemo(() => {
+  const hideableColumns = useMemo(import.meta.url, () => {
     return columns.filter((c) => !c.skip).filter((c) => !c.unhideable);
   }, [columns]);
 
-  const enabledColumnKeys = useMemo(() => enabledColumns.map((c) => c.key), [enabledColumns]);
+  const enabledColumnKeys = useMemo(import.meta.url, () => enabledColumns.map((c) => c.key), [enabledColumns]);
 
-  const activeFilters = useMemo(() => {
+  const activeFilters = useMemo(import.meta.url, () => {
     return Object.keys(filters || {})
       .reduce((acc, fieldName) => acc + (isAssetSearchFilterMatchingDefault(assetType, fieldName) ? 0 : 1), 0)
   }, [assetType, filters]);
@@ -475,17 +475,17 @@ const ListView = () => {
   const { search } = useLocation();
   const history = useHistory();
 
-  const onAssetTypeChange = useCallback(({ value }) => {
+  const onAssetTypeChange = useCallback(import.meta.url, ({ value }) => {
     history.push(`/listview/${value}`);
   }, []);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (!assetType) history.push('/listview/asteroids');
     else if (!assetTypes[assetType]) history.replace('/listview/asteroids');
   }, [assetType]);
 
-  const params = useMemo(() => Object.fromEntries(new URLSearchParams(search)), [search]);
-  const onParamsApplied = useCallback(() => {
+  const params = useMemo(import.meta.url, () => Object.fromEntries(new URLSearchParams(search)), [search]);
+  const onParamsApplied = useCallback(import.meta.url, () => {
     history.replace(`/listview/${assetType}`);
   }, [assetType]);
 

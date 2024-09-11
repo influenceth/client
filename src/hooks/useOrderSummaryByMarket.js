@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo } from '~/lib/react-debug';
 import { useQuery } from 'react-query';
 
 import useAsteroidBuildings from '~/hooks/useAsteroidBuildings';
@@ -14,7 +14,7 @@ const useOrderSummaryByExchange = (asteroidId, product) => {
   );
 
   const isLoading = isLoadingBuildings || isLoadingOrders;
-  return useMemo(() => {
+  return useMemo(import.meta.url, () => {
     if (isLoading) return { data: undefined, isLoading: true };
     return {
       data: exchanges

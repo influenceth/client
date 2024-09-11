@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef } from '~/lib/react-debug';
 import { useFrame, useThree } from '@react-three/fiber';
 import { MeshBasicMaterial, ShaderMaterial, Vector2, WebGLRenderTarget, FloatType, RGBAFormat, SRGBColorSpace, ACESFilmicToneMapping } from 'three';
 
@@ -107,15 +107,15 @@ const Postprocessor = ({ enabled, bloomParams = defaultBloomParams }) => {
     }
   }
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     renderer.toneMapping = bloomParams?.toneMapping === undefined ? ACESFilmicToneMapping : bloomParams?.toneMapping;
   }, [bloomParams?.toneMapping]);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     renderer.toneMappingExposure = bloomParams?.toneMappingExposure || 1;
   }, [bloomParams?.toneMappingExposure]);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     renderer.setPixelRatio(pixelRatio);
     const renderScene = new RenderPass(scene, camera);
 

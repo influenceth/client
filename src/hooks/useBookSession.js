@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from '~/lib/react-debug';
 import cloneDeep from 'lodash/cloneDeep'
 
 import useBookTokens from '~/hooks/useBookTokens';
@@ -66,7 +66,7 @@ const useBookSession = (crewId, crewmateId) => {
 
   const [book, setBook] = useState();
 
-  const [bookId, crewmate] = useMemo(() => {
+  const [bookId, crewmate] = useMemo(import.meta.url, () => {
     // if creating a completely new crewmate, will be an adalian
     const adalianRecruit = adalianRecruits.find((a) => a.id === crewmateId);
     if (adalianRecruit || crewmateId === 0) return [bookIds.ADALIAN_RECRUITMENT, adalianRecruit || null];
@@ -86,7 +86,7 @@ const useBookSession = (crewId, crewmateId) => {
 
   const { bookTokens, isLoading: bookTokensLoading } = useBookTokens(bookId);
 
-  const error = useMemo(() => {
+  const error = useMemo(import.meta.url, () => {
     // validate crewmate (must have crewmate if non-zero id, crewmate must be uninitialized if present)
     if ((crewmateId > 0 && !crewmate) || (crewmate && crewmate.Crewmate?.status > 0)) return 'Invalid params!';
     return null;
@@ -97,11 +97,11 @@ const useBookSession = (crewId, crewmateId) => {
   const dispatchCrewAssignmentPathUndo = useStore(s => s.dispatchCrewAssignmentPathUndo);
   const dispatchCrewAssignmentRestart = useStore(s => s.dispatchCrewAssignmentRestart);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     fetchBook(bookId).then(setBook);
   }, [bookId]);
 
-  const { bookSession, storySession } = useMemo(() => {
+  const { bookSession, storySession } = useMemo(import.meta.url, () => {
     // console.log({ book, crewIsLoading, crewmateId, crewmate });
     if (!book) return {};
     if (bookTokensLoading) return {};
@@ -225,11 +225,11 @@ const useBookSession = (crewId, crewmateId) => {
     };
   }, [book, bookTokens, crewmate, crewmateId, crewIsLoading, sessionData]);
 
-  const choosePath = useCallback((pathId) => {
+  const choosePath = useCallback(import.meta.url, (pathId) => {
     dispatchCrewAssignmentPathSelection(crewId, crewmateId, bookSession?.currentStoryId, pathId);
   }, [crewId, crewmateId, bookSession?.currentStoryId]);
 
-  const undoPath = useCallback(() => {
+  const undoPath = useCallback(import.meta.url, () => {
     if (bookSession.currentStoryIndex > 0 && storySession.history.length === 0) {
       const previousStoryIndex = book.findIndex((s) => s.id === bookSession?.currentStoryId) - 1;
       if (previousStoryIndex >= 0) {
@@ -240,11 +240,11 @@ const useBookSession = (crewId, crewmateId) => {
     }
   }, [crewId, crewmateId, book, bookSession, storySession]);
 
-  const restart = useCallback(() => {
+  const restart = useCallback(import.meta.url, () => {
     dispatchCrewAssignmentRestart(crewId, crewmateId);
   }, [crewId, crewmateId]);
 
-  return useMemo(() => ({
+  return useMemo(import.meta.url, () => ({
     book,
     bookError: error,
     bookSession,

@@ -5,7 +5,7 @@ import CrewClassIcon from '~/components/CrewClassIcon';
 import CrewTraitIcon from '~/components/CrewTraitIcon';
 import DataReadout from '~/components/DataReadout';
 import MouseoverInfoPane from './MouseoverInfoPane';
-import { useMemo } from 'react';
+import { useMemo } from '~/lib/react-debug';
 import formatters from '~/lib/formatters';
 import AddressLink from './AddressLink';
 
@@ -66,7 +66,7 @@ const NotMine = styled.span`
 `;
 
 const CrewmateInfoPane = ({ crewmate, cssWhenVisible, referenceEl, showOwner, visible, ...props }) => {
-  const traits = useMemo(() => Crewmate.getCombinedTraits(crewmate.Crewmate), [crewmate]);
+  const traits = useMemo(import.meta.url, () => Crewmate.getCombinedTraits(crewmate.Crewmate), [crewmate]);
 
   if (!crewmate) return null;
   return (

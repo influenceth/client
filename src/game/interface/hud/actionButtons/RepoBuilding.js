@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo } from '~/lib/react-debug';
 
 import { TakeControlIcon } from '~/components/Icons';
 import ActionButton, { getCrewDisabledReason } from './ActionButton';
@@ -26,17 +26,17 @@ const isVisible = ({ crew, isAtRisk, lot }) => {
 const RepoBuilding = ({ asteroid, crew, lot, onSetAction, _disabled }) => {
   const { currentRepo } = useRepoManager(lot?.id);
 
-  const handleClick = useCallback(() => {
+  const handleClick = useCallback(import.meta.url, () => {
     onSetAction('REPO_BUILDING');
   }, [onSetAction]);
 
-  const disabledReason = useMemo(() => {
+  const disabledReason = useMemo(import.meta.url, () => {
     if (_disabled || !!currentRepo) return 'loading...';
     if (!currentRepo) return getCrewDisabledReason({ asteroid, crew });
     return '';
   }, [_disabled, asteroid, crew]);
 
-  const buttonParams = useMemo(() => {
+  const buttonParams = useMemo(import.meta.url, () => {
     // if i am the lot controller but not the building controller...
     if (crew?.id === lot?.Control?.controller?.id && crew?.id !== lot?.building?.Control?.controller?.id) {
       return {

@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo } from '~/lib/react-debug';
 import { useQuery } from 'react-query';
 import { Entity } from '@influenceth/sdk';
 
@@ -12,13 +12,13 @@ const useCrewOrders = (controllerId) => {
     { enabled: !!controllerId }
   );
 
-  const exchangeIds = useMemo(() => Array.from(new Set((orders || []).map((o) => o.entity.id))), [orders]);
+  const exchangeIds = useMemo(import.meta.url, () => Array.from(new Set((orders || []).map((o) => o.entity.id))), [orders]);
   const { data: exchanges, isLoading: exchangesLoading, dataUpdatedAt } = useEntities({
     ids: exchangeIds,
     label: Entity.IDS.BUILDING
   });
 
-  return useMemo(() => {
+  return useMemo(import.meta.url, () => {
     const isLoading = ordersLoading || exchangesLoading;
     return {
       data: isLoading

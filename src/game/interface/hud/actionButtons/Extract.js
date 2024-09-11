@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo } from '~/lib/react-debug';
 import { Deposit, Permission } from '@influenceth/sdk';
 
 import { CoreSampleIcon, ExtractionIcon } from '~/components/Icons';
@@ -27,17 +27,17 @@ const Extract = ({ onSetAction, asteroid, blockTime, crew, lot, preselect, simul
   const { currentExtraction, extractionStatus } = useExtractionManager(lot?.id);
   const setCoachmarkRef = useCoachmarkRefSetter();
 
-  const handleClick = useCallback(() => {
+  const handleClick = useCallback(import.meta.url, () => {
     onSetAction('EXTRACT_RESOURCE', { preselect });
   }, [onSetAction, preselect]);
 
-  const prepaidLeaseConfig = useMemo(() => {
+  const prepaidLeaseConfig = useMemo(import.meta.url, () => {
     return getProcessorLeaseConfig(lot?.building, Permission.IDS.EXTRACT_RESOURCES, crew, blockTime);
   }, [blockTime, crew, lot?.building])
 
   // badge shows full count of *useable* core samples of crew
   // TODO: this should ideally also check for pending use of samples (i.e. in core sample improvement)
-  const myUsableSamples = useMemo(() => {
+  const myUsableSamples = useMemo(import.meta.url, () => {
     // if no access to use extractor, then 0 usable samples
     if (!crewCan(Permission.IDS.EXTRACT_RESOURCES, lot?.building) && !prepaidLeaseConfig) return 0;
     
@@ -55,7 +55,7 @@ const Extract = ({ onSetAction, asteroid, blockTime, crew, lot, preselect, simul
   // const attention = !_disabled && (extractionStatus === 'READY_TO_FINISH' || (myUsableSamples?.length > 0) && extractionStatus === 'READY');
   const attention = !_disabled && (simulation || extractionStatus === 'READY_TO_FINISH');
   const badge = ((extractionStatus === 'READY' && !preselect) ? myUsableSamples?.length : 0);
-  let disabledReason = useMemo(() => {
+  let disabledReason = useMemo(import.meta.url, () => {
     if (_disabled) return 'loading...';
     if (extractionStatus === 'READY') {
       const crewDisabledReason = getCrewDisabledReason({

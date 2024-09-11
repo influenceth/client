@@ -3,7 +3,7 @@ import { Building, Deposit, DryDock, Entity, Extractor, Inventory, Lot, Order, P
 
 import useSimulationState from '~/hooks/useSimulationState';
 import SIMULATION_CONFIG from './simulationConfig';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from '~/lib/react-debug';
 import { entitiesCacheKey } from '~/lib/cacheKey';
 import { entityToAgreements } from '~/lib/utils';
 import { statuses as walletBuildingStatuses } from '~/hooks/useWalletBuildings';
@@ -100,19 +100,19 @@ const MockDataItem = ({ overwrite }) => {
   const { dataUpdatedAt } = useQuery(overwrite.queryKey, () => {}, { enabled: false, staleTime: Infinity });
 
   // if new overwrite, always overwrite
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     setOverwriteAt((dataUpdatedAt || 0) + 0.5);
   }, [overwrite]);
 
   // if new dataUpdatedAt, always overwrite UNLESS caused by the most recent overwrite
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (dataUpdatedAt !== overwrittenAt) {
       setOverwriteAt((dataUpdatedAt || 0) + 0.5);
     }
   }, [dataUpdatedAt]);
 
   // transform and overwrite data
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     const { queryKey, transformer } = overwrite;
     const transformedData = transformer(queryClient.getQueryData(queryKey));
     if (transformedData !== undefined) {
@@ -132,7 +132,7 @@ const MockDataManager = () => {
   const queryClient = useQueryClient();
   const simulation = useSimulationState();
 
-  const overwrites = useMemo(() => {
+  const overwrites = useMemo(import.meta.url, () => {
     const myCrewEntity = Entity.formatEntity({ id: SIMULATION_CONFIG.crewId, label: Entity.IDS.CREW });
 
     const configs = [];
@@ -484,7 +484,7 @@ const MockDataManager = () => {
   }, [simulation]);
 
   // on unmount, refetch all overwrites
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     return () => {
       overwrites.forEach(({ queryKey }) => {
         queryClient.invalidateQueries({ queryKey, refetchType: 'active' });
@@ -511,7 +511,7 @@ const MockDataManager = () => {
   // entitiesCacheKey(Entity.IDS.DEPOSIT, { controllerId, isDepleted: false }),
 
   // deliveries
-  // const cacheKey = useMemo(() => {
+  // const cacheKey = useMemo(import.meta.url, () => {
   //   const k = {};
   //   if (destination) k.destination = safeEntityId(destination);
   //   if (origin) k.origin = safeEntityId(origin);

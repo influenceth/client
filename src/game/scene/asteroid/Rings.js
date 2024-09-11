@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from '~/lib/react-debug';
 import {
   Color,
   Vector3,
@@ -15,7 +15,7 @@ const Rings = (props) => {
   const [ geometry, setGeometry ] = useState();
   const [ texture, setTexture ] = useState();
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     const size = 512;
     const data = new Uint8Array(size * size * 4); // 1 by 256 pixels
     const variation = config.ringsVariation;

@@ -1,4 +1,4 @@
-import { useCallback, useRef } from 'react';
+import { useCallback, useRef } from '~/lib/react-debug';
 
 import useStore from '~/hooks/useStore';
 import { InputBlock, SearchMenu } from './components';
@@ -14,17 +14,17 @@ const NameFilter = ({ assetType, filters, onChange, isListView }) => {
 
   const selectAsteroidId = useStore((s) => s.dispatchOriginSelected);
 
-  const handleChange = useCallback((e) => {
+  const handleChange = useCallback(import.meta.url, (e) => {
     onChange({ [fieldName]: e.currentTarget.value });
   }, [onChange]);
 
-  const handleById = useCallback(() => {
+  const handleById = useCallback(import.meta.url, () => {
     if (asteroidId.current.value) {
       selectAsteroidId(asteroidId.current.value);
     }
   }, []);
 
-  const handleKeydown = useCallback((e) => {
+  const handleKeydown = useCallback(import.meta.url, (e) => {
     if (['Enter', 'Tab'].includes(e.key)) {
       handleById();
     }

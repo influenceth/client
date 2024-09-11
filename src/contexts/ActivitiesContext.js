@@ -1,4 +1,4 @@
-import { createContext, useCallback, useEffect, useRef, useState } from 'react';
+import { createContext, useCallback, useEffect, useRef, useState } from '~/lib/react-debug';
 import { useQueryClient } from 'react-query';
 import { isEqual, uniq } from 'lodash';
 import { Entity } from '@influenceth/sdk';
@@ -62,13 +62,13 @@ export function ActivitiesProvider({ children }) {
   const pendingBatchActivities = useRef([]);
   const pendingTimeout = useRef();
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (simulation) {
       setActivities(simulation?.activities || []);
     }
   }, [simulation?.activities])
 
-  // useEffect(() => {
+  // useEffect(import.meta.url, () => {
   //   const onKeydown = (e) => {
   //     if (e.shiftKey && e.which === 32) {
   //       const events = [
@@ -109,7 +109,7 @@ export function ActivitiesProvider({ children }) {
   // }, []);
 
   const debugInvalidation = false;
-  const handleActivities = useCallback((newActivities, skipInvalidations) => {
+  const handleActivities = useCallback(import.meta.url, (newActivities, skipInvalidations) => {
     // return;
 
     // prep activities, then handle
@@ -298,7 +298,7 @@ export function ActivitiesProvider({ children }) {
   }, [crew, getActivityConfig, pendingTransactions, refreshReadyAt]);
 
   // try to process WS activities grouped by block
-  const processPendingWSBatch = useCallback(async () => {
+  const processPendingWSBatch = useCallback(import.meta.url, async () => {
     if (pendingTimeout.current) {
       clearTimeout(pendingTimeout.current);
       pendingTimeout.current = null;
@@ -315,7 +315,7 @@ export function ActivitiesProvider({ children }) {
 
   const [disconnected, setDisconnected] = useState();
   const [stale, setStale] = useState();
-  const onWSConnection = useCallback((isOpen) => {
+  const onWSConnection = useCallback(import.meta.url, (isOpen) => {
     if (isOpen && stale) {
       queryClient.resetQueries();
       setStale(false);
@@ -323,7 +323,7 @@ export function ActivitiesProvider({ children }) {
     setDisconnected(!isOpen);
   }, [stale]);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     // if disconnected for more than X seconds, set state to `stale`. this will refetch
     // everything once the connection is restored. any value of X is technically imperfect
     // here, but it also seems excessive to reset state on any microsecond disconnection
@@ -334,7 +334,7 @@ export function ActivitiesProvider({ children }) {
     }
   }, [disconnected]);
 
-  const onWSMessage = useCallback((message) => {
+  const onWSMessage = useCallback(import.meta.url, (message) => {
     if (process.env.NODE_ENV !== 'production') console.log('onWSMessage (activities)', message);
     const { type, body } = message;
     if (ignoreEventTypes.includes(type)) return;
@@ -347,9 +347,7 @@ export function ActivitiesProvider({ children }) {
       else if (blockNumber > 0 && body.previous > 0 && body.previous > blockNumber) {
         console.log(`Missed a block! (new: ${body.blockNumber}, server prev: ${body.previous}, local prev: ${blockNumber})`);
 
-        if (process.env.NODE_ENV !== 'production') {
-          window.alert('Missed a block!');
-        }
+        // if (process.env.NODE_ENV !== 'production') window.alert('Missed a block!');
         setIsBlockMissing(true);
       }
 
@@ -368,7 +366,7 @@ export function ActivitiesProvider({ children }) {
   }, [blockNumber, blockNumberIsProvisional, processPendingWSBatch]);
 
   const isFirstLoad = useRef(true); // (i.e. this is not a crew switch)
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (!wsReady) return;
     if (!token) return;
 

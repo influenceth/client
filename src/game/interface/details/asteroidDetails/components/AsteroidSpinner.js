@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef } from '~/lib/react-debug';
 import {
   CircleGeometry,
   Mesh,
@@ -15,11 +15,11 @@ const AsteroidSpinner = () => {
   const meshRef = useRef();
   const initialTime = useRef(Date.now());
 
-  const pixelDensity = useMemo(() => {
+  const pixelDensity = useMemo(import.meta.url, () => {
     return gl.getPixelRatio() || 1;   // or viewport.dpr?
   }, []);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     const geometry = new CircleGeometry(1.2, 120);
     const material = new ShaderMaterial({
       transparent: true,

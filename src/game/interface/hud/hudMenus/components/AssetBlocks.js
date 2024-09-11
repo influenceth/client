@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo } from '~/lib/react-debug';
 import styled, { keyframes } from 'styled-components';
 import { Asteroid, Building, Dock, Entity, Inventory, Permission, Station } from '@influenceth/sdk';
 
@@ -202,7 +202,7 @@ const getBuildingIcon = (buildingType) => {
 export const AgreementBlock = ({ agreement, onSelectCrew, selectedCrew, setRef }) => {
   const blockTime = useBlockTime();
 
-  const location = useMemo(() => locationsArrToObj(agreement.Location?.locations || [agreement.Location?.locations]), []);
+  const location = useMemo(import.meta.url, () => locationsArrToObj(agreement.Location?.locations || [agreement.Location?.locations]), []);
 
   const onLotLink = useLotLink((
     agreement.label === Entity.IDS.LOT
@@ -219,7 +219,7 @@ export const AgreementBlock = ({ agreement, onSelectCrew, selectedCrew, setRef }
     : {}
   );
 
-  const [icon, name, onLink] = useMemo(() => {
+  const [icon, name, onLink] = useMemo(import.meta.url, () => {
     if (agreement.label === Entity.IDS.BUILDING) {
       return [
         getBuildingIcon(agreement.Building?.buildingType),
@@ -243,7 +243,7 @@ export const AgreementBlock = ({ agreement, onSelectCrew, selectedCrew, setRef }
     }
   }, [agreement, onLotLink, onShipLink]);
 
-  const [status, progress, progressColor] = useMemo(() => {
+  const [status, progress, progressColor] = useMemo(import.meta.url, () => {
     if (agreement._agreement._type === Permission.POLICY_IDS.PREPAID) { // TODO: factor in noticeTime?
       const timeRemaining = agreement._agreement.endTime - blockTime;
       if (timeRemaining > 0) {
@@ -262,7 +262,7 @@ export const AgreementBlock = ({ agreement, onSelectCrew, selectedCrew, setRef }
     ];
   }, [blockTime]);
 
-  const onClick = useCallback(() => {
+  const onClick = useCallback(import.meta.url, () => {
     onLink();
     onSelectCrew(agreement.Control?.controller?.id, agreement._agreement.permitted?.id);
   }, [onLink, onSelectCrew, agreement]);
@@ -291,7 +291,7 @@ export const AgreementBlock = ({ agreement, onSelectCrew, selectedCrew, setRef }
 };
 
 export const AsteroidBlock = ({ asteroid, onClick, onRenderReady, selectedCrew, showRender }) => {
-  const rarity = useMemo(() => {
+  const rarity = useMemo(import.meta.url, () => {
     if ([Asteroid.SCAN_STATUSES.SURFACE_SCANNED, Asteroid.SCAN_STATUSES.RESOURCE_SCANNED].includes(asteroid.Celestial.scanStatus)) {
       return Asteroid.Entity.getRarity(asteroid);
     }
@@ -329,7 +329,7 @@ export const BuildingBlock = ({ building, onSelectCrew, selectedCrew, setRef }) 
   const { currentProcess } = useProcessManager(buildingLoc?.lotId, building.Processors?.[0]?.slot);
   const { currentConstructionAction } = useConstructionManager(buildingLoc?.lotId);
 
-  const [progress, progressColor] = useMemo(() => {
+  const [progress, progressColor] = useMemo(import.meta.url, () => {
     if (building?.Building?.status === Building.CONSTRUCTION_STATUSES.OPERATIONAL) {
       if (Building.TYPES[building?.Building?.buildingType]?.category === Building.CATEGORIES.STORAGE) {
         const inventory = (building.Inventories || []).find((i) => i.status === Inventory.STATUSES.AVAILABLE);
@@ -389,7 +389,7 @@ export const BuildingBlock = ({ building, onSelectCrew, selectedCrew, setRef }) 
     return [0];
   }, [building, selectedCrew?._inventoryBonuses, syncedTime]);
 
-  const status = useMemo(() => {
+  const status = useMemo(import.meta.url, () => {
     if (building?.Building?.status === Building.CONSTRUCTION_STATUSES.OPERATIONAL) {
       if (building?.Building?.buildingType === Building.IDS.EXTRACTOR && building?.Extractors?.[0]?.status > 0) {
         return 'Extracting';
@@ -414,7 +414,7 @@ export const BuildingBlock = ({ building, onSelectCrew, selectedCrew, setRef }) 
     return `${Building.CONSTRUCTION_STATUS_LABELS[building?.Building?.status || 0]}`;
   }, [building, progress, syncedTime]);
 
-  const onClick = useCallback(() => {
+  const onClick = useCallback(import.meta.url, () => {
     onClickBuilding();
     onSelectCrew(building.Control?.controller?.id);
   }, [onClickBuilding, onSelectCrew, building?.Control?.controller?.id, buildingLoc?.lotId]);
@@ -444,9 +444,9 @@ export const BuildingBlock = ({ building, onSelectCrew, selectedCrew, setRef }) 
 
 export const ShipBlock = ({ ship, onSelectCrew, selectedCrew, setRef }) => {
   const onClickShip = useShipLink({ shipId: ship.id, zoomToShip: true });
-  const location = useMemo(() => locationsArrToObj(ship.Location?.locations || []));
+  const location = useMemo(import.meta.url, () => locationsArrToObj(ship.Location?.locations || []));
 
-  const status = useMemo(() => {
+  const status = useMemo(import.meta.url, () => {
     if (location?.buildingId) return 'Docked';
     if (location?.lotIndex) return 'Landed';
     if (!location?.lotIndex && ship.Ship?.transitDestination) return 'In Flight';
@@ -454,7 +454,7 @@ export const ShipBlock = ({ ship, onSelectCrew, selectedCrew, setRef }) => {
     return '';
   }, [location, ship.Ship?.transitDestination]);
 
-  const onClick = useCallback(() => {
+  const onClick = useCallback(import.meta.url, () => {
     onClickShip();
     onSelectCrew(ship.Control?.controller?.id);
   }, [onClickShip, onSelectCrew, ship?.Control?.controller?.id]);

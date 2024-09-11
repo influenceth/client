@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo } from '~/lib/react-debug';
 import { Inventory } from '@influenceth/sdk';
 
 import { UnplanBuildingIcon } from '~/components/Icons';
@@ -18,16 +18,16 @@ const isVisible = ({ constructionStatus, crew, lot }) => {
 
 const UnplanBuilding = ({ asteroid, crew, lot, onSetAction, _disabled }) => {
   const { constructionStatus } = useConstructionManager(lot?.id);
-  const handleClick = useCallback(() => {
+  const handleClick = useCallback(import.meta.url, () => {
     onSetAction('UNPLAN_BUILDING');
   }, [onSetAction]);
 
-  const siteEmpty = useMemo(() => {
+  const siteEmpty = useMemo(import.meta.url, () => {
     const inv = (lot?.building?.Inventories || []).find((i) => Inventory.TYPES[i.inventoryType].category === Inventory.CATEGORIES.SITE);
     return ((inv?.mass + inv?.reservedMass) === 0);
   }, [lot?.building]);
 
-  const disabledReason = useMemo(() => {
+  const disabledReason = useMemo(import.meta.url, () => {
     if (_disabled) return 'loading...';
     if (!siteEmpty) return 'not empty';
     return getCrewDisabledReason({ asteroid, crew, requireReady: false });

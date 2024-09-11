@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from '~/lib/react-debug';
 import { useQuery, useQueryClient } from 'react-query';
 import { Building, Permission } from '@influenceth/sdk';
 import cloneDeep from 'lodash/cloneDeep';
@@ -72,7 +72,7 @@ export function ActionItemProvider({ children }) {
   );
 
   const { data: crewBuildings, isLoading: plannedBuildingsLoading, dataUpdatedAt: plansUpdatedAt } = useCrewBuildings();
-  const plannedBuildings = useMemo(() => {
+  const plannedBuildings = useMemo(import.meta.url, () => {
     return crewBuildings
       ? (crewBuildings || []).filter((a) => a.Building?.status === Building.CONSTRUCTION_STATUSES.PLANNED)
       : undefined;
@@ -89,7 +89,7 @@ export function ActionItemProvider({ children }) {
   const [agreementItems, setAgreementItems] = useState([]);
   const [plannedItems, setPlannedItems] = useState([]);
 
-  const randomEventItems = useMemo(() => {
+  const randomEventItems = useMemo(import.meta.url, () => {
     if (crew?._actionTypeTriggered) {
       if (!(pendingTransactions || []).find((tx) => tx.key === 'ResolveRandomEvent')) {
         return [crew?._actionTypeTriggered];
@@ -98,7 +98,7 @@ export function ActionItemProvider({ children }) {
     return [];
   }, [crew?._actionTypeTriggered, pendingTransactions]);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     (actionItems || [])
 
       // find all events that are lease-per-process events... return the agreements that match
@@ -133,7 +133,7 @@ export function ActionItemProvider({ children }) {
       });
   }, [actionItems, crewAgreements, perProcessLeases]);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (!blockTime) return;
 
     const sequencedItems = (actionItems || [])
@@ -225,7 +225,7 @@ export function ActionItemProvider({ children }) {
     );
   }, [actionItems, busyActivity, crew, crew?._ready, crewAgreements, plannedBuildings, blockTime, itemsUpdatedAt, plansUpdatedAt]);
 
-  const allVisibleItems = useMemo(() => {
+  const allVisibleItems = useMemo(import.meta.url, () => {
     if (!authenticated) return [];
 
     // return the readyItems whose "finishing transaction" is not already pending
@@ -295,7 +295,7 @@ export function ActionItemProvider({ children }) {
 
   // if there is data for all types (i.e. we know loaded successfully), clean out all
   // hidden keys that no longer exist to minimize long-term state bloat
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (allVisibleItems?.length > 0 && actionItems?.length > 0 && crewAgreements?.length > 0 && plannedBuildings?.length > 0) {
       hiddenActionItems.forEach((key) => {
         if (!allVisibleItems.find((i) => i.uniqueKey === key)) {
@@ -309,7 +309,7 @@ export function ActionItemProvider({ children }) {
   //  for not yet ready to finish, set new timers based on time remaining
 
   // without memoizing, triggers as if new value on every syncedTime update
-  const contextValue = useMemo(() => ({
+  const contextValue = useMemo(import.meta.url, () => ({
     allVisibleItems,
     pendingTransactions,
     failedTransactions,
@@ -350,7 +350,7 @@ export function ActionItemProvider({ children }) {
 
   // const { events } = useEvents();
   // const [readyTally, setReadyTally] = useState(0);
-  // const actionItemz = useMemo(() => {
+  // const actionItemz = useMemo(import.meta.url, () => {
   //   if (!events) return;
 
   //   const openItems = [];
@@ -392,7 +392,7 @@ export function ActionItemProvider({ children }) {
   // // TODO: this timer should technically be in service worker so can use push notifications if window is not focused
   // // only need to watch one timer because will re-fetch all actionItemz when it passes
   // const nextTimer = useRef();
-  // useEffect(() => {
+  // useEffect(import.meta.url, () => {
   //   actionItemz.forEach((ai) => {
   //     if (!ai.isReady && !nextTimer.current) {
   //       const readyIn = (ai.returnValues.finishTime - syncedTime) + 5;

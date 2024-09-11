@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from '~/lib/react-debug';
 import styled from 'styled-components';
 import { Time } from '@influenceth/sdk';
 
@@ -91,19 +91,19 @@ const TimeController = ({ open }) => {
   const [ isPaused, setIsPaused ] = useState(false);
   const [ speedSetting, setSpeedSetting ] = useState(0);
 
-  const pause = useCallback(() => {
+  const pause = useCallback(import.meta.url, () => {
     setIsPaused(true);
     setSpeedSetting(0);
     dispatchTimeOverride(getTime(), 0);
   }, [dispatchTimeOverride, getTime]);
 
-  const reset = useCallback(() => {
+  const reset = useCallback(import.meta.url, () => {
     setIsPaused(false);
     setSpeedSetting(0);
     dispatchTimeOverride();
   }, [dispatchTimeOverride]);
 
-  const changeSpeed = useCallback((direction) => {
+  const changeSpeed = useCallback(import.meta.url, (direction) => {
     const newSpeed = speeds[Math.abs(speedSetting + direction)];
     if (Number.isFinite(newSpeed)) {
       setIsPaused(false);
@@ -111,7 +111,7 @@ const TimeController = ({ open }) => {
     }
   }, [speedSetting]);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     // if speedSetting is zero and timeOverride is already non-set, don't override
     // otherwise (there is a timeOverride and speedSetting changes), update override
     if (speedSetting !== 0 || timeOverride) {
@@ -121,12 +121,12 @@ const TimeController = ({ open }) => {
     }
   }, [ speedSetting ]);  // eslint-disable-line react-hooks/exhaustive-deps
 
-  const displaySpeed = useMemo(() => {
+  const displaySpeed = useMemo(import.meta.url, () => {
     if (isPaused) return '0';
     return speeds[Math.abs(speedSetting)].toLocaleString();
   }, [isPaused, speedSetting]);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (!open && timeOverride) {
       reset();
     }
@@ -190,11 +190,11 @@ const TimeControls = () => {
   const timeOverride = useStore(s => s.timeOverride);
 
   const [open, setOpen] = useState(false);
-  const toggleOpen = useCallback((e) => {
+  const toggleOpen = useCallback(import.meta.url, (e) => {
     setOpen((o) => !o);
   }, []);
 
-  const displayTime = useMemo(() => {
+  const displayTime = useMemo(import.meta.url, () => {
     if (!coarseTime || isLoading) return '';
     return Time.fromOrbitADays(coarseTime, TIME_ACCELERATION || Time.DEFAULT_TIME_ACCELERATION)
       .toGameClockADays()

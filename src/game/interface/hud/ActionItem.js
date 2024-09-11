@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo } from '~/lib/react-debug';
 import { useHistory } from 'react-router-dom';
 import styled, { css, keyframes } from 'styled-components';
 import BarLoader from 'react-spinners/BarLoader';
@@ -215,7 +215,7 @@ const ActionItem = ({ data, getActivityConfig }) => {
   const type = data?.type;
 
   // TODO: can probably clean up the `formatted` structure
-  const item = useMemo(() => {
+  const item = useMemo(import.meta.url, () => {
     return formatActionItem(
       data,
       !['randomEvent', 'plan', 'agreement', 'pending'].includes(data.type) ? getActivityConfig(data)?.actionItem : {}
@@ -231,7 +231,7 @@ const ActionItem = ({ data, getActivityConfig }) => {
     resourceId: resourceMap?.active ? item.resourceId : undefined,  // only open resourcemap if a resourcemap is open
   });
 
-  const onClick = useCallback(() => {
+  const onClick = useCallback(import.meta.url, () => {
     if (item.asteroidId) {
       goToAction();
     }
@@ -280,13 +280,13 @@ const ActionItem = ({ data, getActivityConfig }) => {
     zoomStatus,
   ]);
 
-  const onDismiss = useCallback((e) => {
+  const onDismiss = useCallback(import.meta.url, (e) => {
     e.stopPropagation();
     dismissFailedTx(item._timestamp);
     return false;
   }, [item]);
 
-  const handleToggleHide = useCallback((key) => (e) => {
+  const handleToggleHide = useCallback(import.meta.url, (key) => (e) => {
     e.stopPropagation();
     dispatchToggleHideActionItem(key);
   }, []);

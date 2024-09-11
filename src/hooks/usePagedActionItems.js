@@ -1,4 +1,4 @@
-import { useContext, useEffect, useMemo, useState } from 'react';
+import { useContext, useEffect, useMemo, useState } from '~/lib/react-debug';
 
 import ActionItemContext from '~/contexts/ActionItemContext';
 import { formatActionItem } from '~/lib/actionItem';
@@ -24,11 +24,11 @@ const usePagedActionItems = () => {
   const sort = useStore(s => s.assetSearch[assetType].sort || []);
   const setSort = useStore(s => s.dispatchSortUpdated(assetType));
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     setPage(1);
   }, [filters, sort]);
 
-  const { hits, total } = useMemo(() => {
+  const { hits, total } = useMemo(import.meta.url, () => {
     const filteredItems = allItems
       .map((item) => formatActionItem(item, getActivityConfig(item)?.actionItem))
       .filter((item) => {

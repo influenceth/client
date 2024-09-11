@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo } from '~/lib/react-debug';
 import { useHistory } from 'react-router';
 import { Asteroid } from '@influenceth/sdk';
 
@@ -20,7 +20,7 @@ const ScanAsteroid = ({ asteroid, _disabled }) => {
   const { scanStatus, scanType } = useScanManager(asteroid);
   const { crew, isLaunched } = useCrewContext();
 
-  const { disabledReason, label, flags, handleClick } = useMemo(() => {
+  const { disabledReason, label, flags, handleClick } = useMemo(import.meta.url, () => {
     let flags = {
       attention: undefined,
       disabled: _disabled,

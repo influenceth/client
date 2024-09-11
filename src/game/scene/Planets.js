@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef } from '~/lib/react-debug';
 import { AdditiveBlending, Float32BufferAttribute } from 'three';
 import { useTexture } from '@react-three/drei';
 import { Planet } from '@influenceth/sdk';
@@ -21,7 +21,7 @@ const Planets = () => {
   const geometry = useRef();
 
   // Listen for changes to planets data or global time and update planet positions
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (planets && coarseTime && !isUpdating.current) {
       isUpdating.current = true;
       processInBackground(

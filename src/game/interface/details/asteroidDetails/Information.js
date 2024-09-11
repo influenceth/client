@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from '~/lib/react-debug';
 import styled from 'styled-components';
 import { Asteroid, Entity, Name } from '@influenceth/sdk';
 
@@ -281,9 +281,9 @@ const AsteroidInformation = ({ abundances, asteroid, isManager, isOwner }) => {
   const [newName, setNewName] = useState('');
   const [openNameChangeForm, setOpenNameChangeForm] = useState(false);
 
-  const viewingAs = useMemo(() => ({ id: Number(asteroid?.id), label: Entity.IDS.ASTEROID }), [asteroid?.id]);
+  const viewingAs = useMemo(import.meta.url, () => ({ id: Number(asteroid?.id), label: Entity.IDS.ASTEROID }), [asteroid?.id]);
 
-  const download3dModel = useCallback(() => {
+  const download3dModel = useCallback(import.meta.url, () => {
     if (exportingModel || !asteroid) return;
     setExportingModel(true);
     renderDummyAsteroid(asteroid, constants.MODEL_EXPORT_RESOLUTION, webWorkerPool, (asteroidModel, dispose) => {
@@ -297,30 +297,30 @@ const AsteroidInformation = ({ abundances, asteroid, isManager, isOwner }) => {
   }, [asteroid, exportingModel, webWorkerPool]);
 
   // on asteroid change, reset name input field on asteroid change
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     setNewName('');
     setOpenNameChangeForm(false);
   }, [asteroid.Name?.name]);
 
-  const attemptUpdateAsteroidName = useCallback(async () => {
+  const attemptUpdateAsteroidName = useCallback(import.meta.url, async () => {
     if (await isNameValid(newName, asteroid?.id)) {
       changeName(newName);
     }
   }, [changeName, isNameValid, newName, asteroid?.id]);
 
-  const price = useMemo(() => {
+  const price = useMemo(import.meta.url, () => {
     if (!asteroid || !priceConstants) return 0;
     const lots = Asteroid.getSurfaceArea(undefined, asteroid.Celestial.radius);
     return asteroidPrice(lots, priceConstants);
   }, [asteroid, priceConstants]);
 
-  const sufficientFunds = useMemo(() => {
+  const sufficientFunds = useMemo(import.meta.url, () => {
     if (!price || !priceConstants || !walletBalances) return false;
     const balance = safeBigInt(walletBalances?.combinedBalance?.to(priceConstants.ASTEROID_PURCHASE_TOKEN));
     return price <= balance;
   }, [price, priceConstants, walletBalances]);
 
-  const attemptBuyAsteroid = useCallback(async () => {
+  const attemptBuyAsteroid = useCallback(import.meta.url, async () => {
     const limited = await checkForLimit();
     if (limited) return;
 

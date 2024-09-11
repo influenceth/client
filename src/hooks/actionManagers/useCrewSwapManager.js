@@ -1,4 +1,4 @@
-import { useCallback, useContext, useMemo } from 'react';
+import { useCallback, useContext, useMemo } from '~/lib/react-debug';
 import { Entity } from '@influenceth/sdk';
 
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
@@ -9,14 +9,14 @@ const useCrewSwapManager = (props) => {
   const { crew } = useCrewContext();
   const { execute, getPendingTx } = useContext(ChainTransactionContext);
 
-  const reorderRoster = useCallback(({ crewId, newRoster }) => {
+  const reorderRoster = useCallback(import.meta.url, ({ crewId, newRoster }) => {
     execute('ArrangeCrew', {
       composition: newRoster,
       caller_crew: { id: crewId, label: Entity.IDS.CREW },
     })
   }, []);
 
-  const swapCrewmates = useCallback(({ crewId1, newRoster1, crewId2, newRoster2 }) => {
+  const swapCrewmates = useCallback(import.meta.url, ({ crewId1, newRoster1, crewId2, newRoster2 }) => {
     execute('ExchangeCrew', {
       crew1: { id: crewId1, label: Entity.IDS.CREW },
       comp1: newRoster1,
@@ -25,7 +25,7 @@ const useCrewSwapManager = (props) => {
     })
   }, []);
 
-  const getPendingChange = useCallback(
+  const getPendingChange = useCallback(import.meta.url, 
     () => {
       return getPendingTx('ArrangeCrew', { caller_crew: { id: crew?.id, label: Entity.IDS.CREW } })
         || getPendingTx('ExchangeCrew', {});
@@ -33,7 +33,7 @@ const useCrewSwapManager = (props) => {
     [crew?.id, getPendingTx]
   );
 
-  const actionStage = useMemo(() => {
+  const actionStage = useMemo(import.meta.url, () => {
     return getPendingChange() ? actionStages.COMPLETING : actionStages.NOT_STARTED
   }, [getPendingChange]);
 

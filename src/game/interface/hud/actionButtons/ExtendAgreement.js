@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo } from '~/lib/react-debug';
 
 import { ExtendAgreementIcon } from '~/components/Icons';
 import ActionButton from './ActionButton';
@@ -12,11 +12,11 @@ const ExtendAgreement = ({ entity, permission, onSetAction, _disabled }) => {
   const { pendingChange, currentAgreement } = useAgreementManager(entity, permission);
   const simulationEnabled = useSimulationEnabled();
   
-  const handleClick = useCallback(() => {
+  const handleClick = useCallback(import.meta.url, () => {
     onSetAction('EXTEND_AGREEMENT', { entity, permission });
   }, [entity, permission]);
 
-  const disabledReason = useMemo(() => {
+  const disabledReason = useMemo(import.meta.url, () => {
     if (_disabled) return 'loading...';
     if (pendingChange) return 'updating...';
     if (currentAgreement?.noticeTime > 0) return 'notice given';

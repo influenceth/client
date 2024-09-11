@@ -1,4 +1,4 @@
-import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { useCallback, useContext, useEffect, useMemo, useState } from '~/lib/react-debug';
 import { lambert } from '@influenceth/astro';
 import { GM_ADALIA, AdalianOrbit, Crewmate, Entity, Ship, Time } from '@influenceth/sdk';
 import { Vector3 } from 'three';
@@ -26,12 +26,12 @@ const useShipTravelManager = (shipId) => {
 
   const [currentTravelSolution, setCurrentTravelSolution] = useState();
 
-  const caller_crew = useMemo(() => {
+  const caller_crew = useMemo(import.meta.url, () => {
     return ship?.label === Entity.IDS.CREW ? ship : ship?.Control?.controller;
   }, [ship?.Control?.controller?.id]);
 
   // READY > DEPARTING > IN_FLIGHT > READY_TO_ARRIVE > ARRIVING
-  const [currentTravelAction, status, stage] = useMemo(() => {
+  const [currentTravelAction, status, stage] = useMemo(import.meta.url, () => {
     let current = {
       _cachedData: null,
       _isAccessible: true,
@@ -96,15 +96,15 @@ const useShipTravelManager = (shipId) => {
 
   const shipConfig = Ship.TYPES[ship?.Ship?.shipType];
 
-  const cargoInv = useMemo(() => {
+  const cargoInv = useMemo(import.meta.url, () => {
     return (ship?.Inventories || []).find(i => i.slot === shipConfig?.cargoSlot);
   }, [ship, shipConfig?.cargoSlot]);
 
-  const propellantInv = useMemo(() => {
+  const propellantInv = useMemo(import.meta.url, () => {
     return (ship?.Inventories || []).find(i => i.slot === shipConfig?.propellantSlot);
   }, [ship, shipConfig?.propellantSlot]);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     setCurrentTravelSolution();
     if (!origin || !destination || !propellantInv || !currentTravelAction) return;
 
@@ -187,7 +187,7 @@ const useShipTravelManager = (shipId) => {
     shipUpdatedAt
   ]);
 
-  const depart = useCallback(() => {
+  const depart = useCallback(import.meta.url, () => {
     const {
       v1,
       v2,
@@ -256,7 +256,7 @@ const useShipTravelManager = (shipId) => {
     );
   }, [caller_crew, destination, proposedTravelSolution, shipId]);
 
-  const arrive = useCallback(() => {
+  const arrive = useCallback(import.meta.url, () => {
     execute(
       'TransitBetweenFinish',
       {

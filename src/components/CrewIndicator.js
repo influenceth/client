@@ -4,7 +4,7 @@ import useCrewContext from '~/hooks/useCrewContext';
 import theme from '~/theme';
 import { CrewCaptainCardFramed } from './CrewmateCardFramed';
 import useCrew from '~/hooks/useCrew';
-import { useMemo } from 'react';
+import { useMemo } from '~/lib/react-debug';
 
 const CrewLabel = styled.div`
   align-self: center;
@@ -54,7 +54,7 @@ const CrewmateCards = styled.div`
 const CrewIndicator = ({ cardWidth = 60, crew: inputCrew, noCrewText, flip, label = 'Owned by' }) => {
   const { crew: myCrew } = useCrewContext();
   const { data: fetchedCrew } = useCrew(inputCrew?.id);  // (probably already fetched...)
-  const crew = useMemo(() => fetchedCrew || inputCrew, [inputCrew, fetchedCrew]);
+  const crew = useMemo(import.meta.url, () => fetchedCrew || inputCrew, [inputCrew, fetchedCrew]);
   return (
     <CrewmateCards flip={flip}>
       <CrewCaptainCardFramed

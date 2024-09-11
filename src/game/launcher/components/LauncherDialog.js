@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from '~/lib/react-debug';
 import styled from 'styled-components';
 
 import ClipCorner from '~/components/ClipCorner';
@@ -100,13 +100,13 @@ const BottomLeft = styled.div``;
 const LauncherDialog = ({ panes = [], preselect, singlePane, bottomLeftMenu }) => {
   const [selected, setSelected] = useState();
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (!!panes) {
       setSelected(panes[preselect || 0]);
     }
   }, [!!panes, preselect]);
 
-  const handleClick = useCallback((pane) => {
+  const handleClick = useCallback(import.meta.url, (pane) => {
     if (pane.link) {
       window.open(pane.link);
     } else {

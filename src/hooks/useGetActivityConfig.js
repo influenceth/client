@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo } from '~/lib/react-debug';
 import { useQueryClient } from 'react-query';
 
 import useCrewContext from '~/hooks/useCrewContext';
@@ -66,7 +66,7 @@ const getActivityConfig = (queryClient, defaultViewingAs) => (activity, override
 const useGetActivityConfig = () => {
   const queryClient = useQueryClient();
   const { crew } = useCrewContext();
-  return useMemo(() => getActivityConfig(queryClient, { id: crew?.id, label: crew?.label, uuid: crew?.uuid }), [crew?.id, queryClient]);
+  return useMemo(import.meta.url, () => getActivityConfig(queryClient, { id: crew?.id, label: crew?.label, uuid: crew?.uuid }), [crew?.id, queryClient]);
 }
 
 export default useGetActivityConfig;

@@ -1,4 +1,4 @@
-import { useCallback, useContext } from 'react';
+import { useCallback, useContext } from '~/lib/react-debug';
 import styled from 'styled-components';
 
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
@@ -41,7 +41,7 @@ const Content = styled.div`
 const ClaimPrepareReward = ({ asteroid, onClose }) => {
   const { execute } = useContext(ChainTransactionContext);
 
-  const handleClaim = useCallback(async () => {
+  const handleClaim = useCallback(import.meta.url, async () => {
     if (asteroid?.AsteroidProof?.used) {
       await execute('ClaimPrepareForLaunchReward', { asteroid });
     } else {

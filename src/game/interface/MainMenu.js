@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from '~/lib/react-debug';
 import { useLocation, useHistory } from 'react-router-dom';
 import styled from 'styled-components';
 import { MdFullscreen as FullscreenIcon, MdFullscreenExit as ExitFullscreenIcon } from 'react-icons/md';
@@ -128,21 +128,21 @@ const MainMenu = () => {
 
   // TODO: genesis book deprecation vvv
   // const { crew, crewmateMap } = useCrewContext();
-  // const hasGenesisCrewmate = useMemo(() => {
+  // const hasGenesisCrewmate = useMemo(import.meta.url, () => {
   //   return crew && crew?._crewmates && crewmateMap && crew._crewmates.find((i) => [1,2,3].includes(crewmateMap[i]?.coll));
   // }, [crew?._crewmates, crewmateMap]); // eslint-disable-line react-hooks/exhaustive-deps
   // ^^^
 
   // const [ showMenu, setShowMenu ] = useState(!isMobile);
 
-  // const openSection = useCallback((section) => {
+  // const openSection = useCallback(import.meta.url, (section) => {
   //   // activateSection(section);
   //   // TODO: ... this used to reference outliner, but outliner is gone
   //   playSound('effects.click');
   //   if (isMobile) setShowMenu(false);
   // }, [isMobile]);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (screenfull.isEnabled) {
       screenfull.on('change', () => {
         setFullscreen(screenfull.isEnabled && screenfull.isFullscreen);
@@ -150,7 +150,7 @@ const MainMenu = () => {
     }
   }, []);
 
-  const { backLabel, onClickBack } = useMemo(() => {
+  const { backLabel, onClickBack } = useMemo(import.meta.url, () => {
     if (location.pathname.includes('/model/resource')) {
       return {
         backLabel: 'Exit',

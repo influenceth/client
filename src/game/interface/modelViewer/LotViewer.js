@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from '~/lib/react-debug';
 import { Building } from '@influenceth/sdk';
 
 import useLot from '~/hooks/useLot';
@@ -16,7 +16,7 @@ const LotViewer = () => {
   const [pendingSound, setPendingSound] = useState(null);
 
   // Play chatter after a delay, clear timeout if scene changes
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (zoomScene?.type === 'LOT' && lot?.building?.Building?.buildingType > 0) {
       const id = setTimeout(() => playSound(`buildingChatter.${lot?.building?.Building?.buildingType}`), 5000);
       setPendingSound(id);
@@ -27,7 +27,7 @@ const LotViewer = () => {
     }
   }, [zoomScene, lot]);
 
-  const modelUrl = useMemo(() => {
+  const modelUrl = useMemo(import.meta.url, () => {
     if (zoomScene?.overrides?.buildingType) {
       return getBuildingModel(zoomScene.overrides.buildingType);
     }

@@ -1,4 +1,4 @@
-import { forwardRef, useCallback, useMemo, useState } from 'react';
+import { forwardRef, useCallback, useMemo, useState } from '~/lib/react-debug';
 import ReactDOMServer from 'react-dom/server';
 import styled, { css, keyframes } from 'styled-components';
 import { Permission } from '@influenceth/sdk';
@@ -346,7 +346,7 @@ const ActionButtonComponent = forwardRef(({
 
   const [isHovering, setIsHovering] = useState();
 
-  const [flags, labelAddendum] = useMemo(() => {
+  const [flags, labelAddendum] = useMemo(import.meta.url, () => {
     const f = rawFlags || {};
     let l = rawLabelAddendum;
     if (!enablePrelaunch && !isLaunched) {
@@ -356,11 +356,11 @@ const ActionButtonComponent = forwardRef(({
     return [f, l];
   }, [enablePrelaunch, isLaunched, rawFlags, rawLabelAddendum]);
 
-  const _onClick = useCallback(() => {
+  const _onClick = useCallback(import.meta.url, () => {
     if (!flags?.disabled && onClick) onClick();
   }, [flags?.disabled, onClick]);
 
-  const handleHover = useCallback((e) => {
+  const handleHover = useCallback(import.meta.url, (e) => {
     if (e.type === 'mouseenter') setIsHovering(true);
     else if (e.type === 'mouseleave') {
       setTimeout(() => {
@@ -369,7 +369,7 @@ const ActionButtonComponent = forwardRef(({
     }
   }, []);
 
-  const safeFlags = useMemo(() => {
+  const safeFlags = useMemo(import.meta.url, () => {
     return Object.keys(flags).reduce((acc, k) => {
       if (k === 'badge') acc[k] = flags[k];
       else acc[k] = k === 'disabled' ? nativeBool(flags[k]) : reactBool(flags[k]);
@@ -377,7 +377,7 @@ const ActionButtonComponent = forwardRef(({
     }, {})
   }, [flags]);
 
-  const tooltipContent = useMemo(() => {
+  const tooltipContent = useMemo(import.meta.url, () => {
     try {
       return ReactDOMServer.renderToStaticMarkup(
         <TooltipContents>

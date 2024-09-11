@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useState } from '~/lib/react-debug';
 import styled, { css, keyframes } from 'styled-components';
 import { Asteroid, Entity } from '@influenceth/sdk';
 
@@ -94,7 +94,7 @@ const AsteroidGraphic = ({ asteroid, defaultLastRow, ...compositionProps }) => {
 
   const [ready, setReady] = useState();
 
-  const onReady = useCallback(() => {
+  const onReady = useCallback(import.meta.url, () => {
     setReady(true);
   }, []);
 

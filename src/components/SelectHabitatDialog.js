@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo } from '~/lib/react-debug';
 import styled from 'styled-components';
 import { Building, Entity } from '@influenceth/sdk'
 
@@ -87,10 +87,10 @@ const fromEntityFormat = (loc) => {
 const SelectHabitatDialog = ({ onAccept, onReject }) => {
   const randomAssignment = 1;// TODO: should not be hardcoded
   const { data: habitat } = useBuilding(randomAssignment);
-  const habitatLocation = useMemo(() => fromEntityFormat(habitat?.Location?.location), [habitat])
+  const habitatLocation = useMemo(import.meta.url, () => fromEntityFormat(habitat?.Location?.location), [habitat])
   const { data: asteroid } = useAsteroid(habitatLocation?.asteroidId);
 
-  const onSelectHabitat = useCallback((choice) => () => {
+  const onSelectHabitat = useCallback(import.meta.url, (choice) => () => {
     if (choice.id === 1) return onAccept(randomAssignment);
     return onReject();
   }, [randomAssignment]);

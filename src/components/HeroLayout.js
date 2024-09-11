@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from '~/lib/react-debug';
 import styled, { keyframes } from 'styled-components';
 
 import Button from '~/components/ButtonAlt';
@@ -166,11 +166,11 @@ const HeroLayout = ({
 }) => {
   const [imageLoaded, setImageLoaded] = useState();
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     setImageLoaded();
   }, [coverImage]);
 
-  const onImageLoaded = useCallback(() => {
+  const onImageLoaded = useCallback(import.meta.url, () => {
     setImageLoaded(coverImage);
   }, [coverImage]);
 

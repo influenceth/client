@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from '~/lib/react-debug';
 import { Asteroid, Crewmate, Dock, Entity, Inventory, Lot, Permission, Product, Ship, Time } from '@influenceth/sdk';
 
 import { LandShipIcon, RouteIcon, ShipIcon, WarningOutlineIcon } from '~/components/Icons';
@@ -52,7 +52,7 @@ const LandShip = ({ asteroid, manager, ship, stage, ...props }) => {
     || undefined;
   const { data: destinationLot, isLoading: destLotLoading } = useLot(destinationLotId);
 
-  const [hopperBonus, distBonus, exhaustBonus] = useMemo(() => {
+  const [hopperBonus, distBonus, exhaustBonus] = useMemo(import.meta.url, () => {
     if (!crew) return {};
     const bonusIds = [
       Crewmate.ABILITY_IDS.HOPPER_TRANSPORT_TIME,
@@ -64,12 +64,12 @@ const LandShip = ({ asteroid, manager, ship, stage, ...props }) => {
     return bonusIds.map((id) => abilities[id] || {});
   }, [crew]);
 
-  const groundDelay = useMemo(() => {
+  const groundDelay = useMemo(import.meta.url, () => {
     const delay = destinationLot?.building ? Dock.Entity.getGroundDelay(destinationLot.building) : 0;
     return Time.toRealDuration(delay, crew?._timeAcceleration);
   }, [crew?._timeAcceleration, destinationLot?.building]);
 
-  const [escapeVelocity, propellantRequirement, poweredTime, tugTime] = useMemo(() => {
+  const [escapeVelocity, propellantRequirement, poweredTime, tugTime] = useMemo(import.meta.url, () => {
     const escapeVelocity = Asteroid.Entity.getEscapeVelocity(asteroid) * 1000;
     const propellantRequired = Ship.Entity.getPropellantRequirement(ship, escapeVelocity, exhaustBonus.totalBonus);
     const destinationLotIndex = destinationLot ? Lot.toIndex(destinationLot?.id) : 1;
@@ -84,7 +84,7 @@ const LandShip = ({ asteroid, manager, ship, stage, ...props }) => {
     ];
   }, [asteroid, destinationLot?.id, distBonus, hopperBonus, powered, exhaustBonus, ship]);
 
-  const [propellantLoaded, deltaVLoaded] = useMemo(() => {
+  const [propellantLoaded, deltaVLoaded] = useMemo(import.meta.url, () => {
     if (!ship) return 0;
     const shipConfig = Ship.TYPES[ship.Ship.shipType];
     const propellantMass = (ship.Inventories || []).find((inv) => inv.slot === shipConfig.propellantSlot)?.mass || 0;
@@ -95,15 +95,15 @@ const LandShip = ({ asteroid, manager, ship, stage, ...props }) => {
     ];
   }, [ship]);
 
-  const launchTime = useMemo(() => {
+  const launchTime = useMemo(import.meta.url, () => {
     return groundDelay + (powered ? poweredTime : tugTime);
   }, [groundDelay, powered, poweredTime, tugTime]);
 
-  const [crewTimeRequirement, taskTimeRequirement] = useMemo(() => {
+  const [crewTimeRequirement, taskTimeRequirement] = useMemo(import.meta.url, () => {
     return [ launchTime, launchTime ];
   }, [launchTime]);
 
-  const stats = useMemo(() => ([
+  const stats = useMemo(import.meta.url, () => ([
     {
       label: 'Time until Docked',
       value: formatTimer(launchTime),
@@ -145,7 +145,7 @@ const LandShip = ({ asteroid, manager, ship, stage, ...props }) => {
     },
   ]), [escapeVelocity, hopperBonus, launchTime, exhaustBonus, propellantRequirement, ship]);
 
-  const onLand = useCallback(() => {
+  const onLand = useCallback(import.meta.url, () => {
     if (!destinationLot) return;
     dockShip(
       destinationLot.building || { label: Entity.IDS.LOT, id: destinationLot.id },
@@ -156,7 +156,7 @@ const LandShip = ({ asteroid, manager, ship, stage, ...props }) => {
 
   // handle auto-closing
   const lastStatus = useRef();
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     // (close on status change from)
     if (lastStatus.current && stage !== lastStatus.current) {
       props.onClose();
@@ -301,7 +301,7 @@ const Wrapper = (props) => {
 
   const isLoading = shipIsLoading || asteroidIsLoading;
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (!asteroid || !ship) {
       if (!isLoading) {
         if (props.onClose) props.onClose();

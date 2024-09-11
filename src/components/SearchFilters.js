@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo } from '~/lib/react-debug';
 import { Asteroid, Building, Crewmate, Permission, Product } from '@influenceth/sdk';
 
 import useStore from '~/hooks/useStore';
@@ -180,7 +180,7 @@ const SearchFilters = ({ assetType, highlighting, isListView = false }) => {
   const filters = useStore(s => s.assetSearch[assetType].filters);
   const updateFilters = useStore(s => s.dispatchFiltersUpdated(assetType));
 
-  const onFiltersChange = useCallback((update) => {
+  const onFiltersChange = useCallback(import.meta.url, (update) => {
     const newFilters = {...(filters || {})};
     Object.keys(update).forEach((k) => {
       if (update[k] === undefined) {
@@ -192,14 +192,14 @@ const SearchFilters = ({ assetType, highlighting, isListView = false }) => {
     updateFilters(newFilters);
   }, [filters, updateFilters]);
 
-  const filterProps = useMemo(() => ({
+  const filterProps = useMemo(import.meta.url, () => ({
     assetType,
     filters,
     onChange: onFiltersChange,
     isListView
   }), [assetType, filters, highlighting, onFiltersChange, isListView]);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     // for most types, default filter to asteroid if one is selected
     if (['buildings','coresamples','leases','lots'].includes(assetType)) {
       onFiltersChange({ asteroid: asteroidId });

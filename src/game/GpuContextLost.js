@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect } from '~/lib/react-debug';
 import { useThree } from '@react-three/fiber';
 import styled from 'styled-components';
 
@@ -31,7 +31,7 @@ const GpuContextLostContainer = styled.div`
 export const GpuContextLostReporter = ({ setContextLost }) => {
   const { gl } = useThree();
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (!gl?.domElement) return;
     const onEvent = (e) => {
       setContextLost(e.type === 'webglcontextlost');
@@ -45,7 +45,7 @@ export const GpuContextLostReporter = ({ setContextLost }) => {
   }, []);
 
   // // TODO: vvv for debugging
-  // useEffect(() => {
+  // useEffect(import.meta.url, () => {
   //   setTimeout(() => {
   //     const x = gl.getContext().getExtension('WEBGL_lose_context');
   //     console.log('losing...');
@@ -64,7 +64,7 @@ export const GpuContextLostReporter = ({ setContextLost }) => {
 export const GpuContextLostMessage = () => {
   const dispatchLauncherPage = useStore(s => s.dispatchLauncherPage);
 
-  const openHelpChannel = useCallback(() => {
+  const openHelpChannel = useCallback(import.meta.url, () => {
     window.open(process.env.REACT_APP_HELP_URL || 'https://discord.gg/influenceth', '_blank');
   }, []);
 

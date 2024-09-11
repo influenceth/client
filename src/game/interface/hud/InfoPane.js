@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from '~/lib/react-debug';
 import { useHistory } from 'react-router-dom';
 import styled, { css, keyframes } from 'styled-components';
 import { Asteroid, Building, Crewmate, Entity } from '@influenceth/sdk';
@@ -269,7 +269,7 @@ const CaptainCard = ({ crewId }) => {
   const simulation = useSimulationState();
 
   // onclick should open up crew profile
-  const onClick = useCallback(() => {
+  const onClick = useCallback(import.meta.url, () => {
     if (!crewId) return;
     history.push(`/crew/${crewId}`);
   }, [crewId, !simulation]);
@@ -363,7 +363,7 @@ const InfoPane = () => {
 
   const onMouseEvent = (e) => setHover(e.type === 'mouseenter');
 
-  const onClickPane = useCallback(() => {
+  const onClickPane = useCallback(import.meta.url, () => {
     // open lot
     if (asteroidId && lotId && zoomStatus === 'in') {
       dispatchZoomScene({ type: 'LOT' });
@@ -378,7 +378,7 @@ const InfoPane = () => {
     }
   }, [asteroidId, lotId, zoomStatus, lot?.building]);
 
-  const onClosePane = useCallback((e) => {
+  const onClosePane = useCallback(import.meta.url, (e) => {
     e.stopPropagation();
 
     // deselect lot
@@ -394,7 +394,7 @@ const InfoPane = () => {
   }, [asteroidId, lotId, zoomStatus]);
 
   // Control sounds for buildings
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     let soundName;
     if (lot?.building) soundName = Building.TYPES[lot?.building?.Building?.buildingType]?.name?.toLowerCase();
 
@@ -410,7 +410,7 @@ const InfoPane = () => {
     }
   }, [lot?.building?.id, stopSound, playSound, currentSound]);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     setHover(false);
   }, [asteroidId, lotId, zoomStatus, zoomScene]);
 
@@ -422,7 +422,7 @@ const InfoPane = () => {
     hoverSubtitle,
     thumbnail,
     thumbVisible,
-  } = useMemo(() => {
+  } = useMemo(import.meta.url, () => {
     const pane = {};
 
     if (zoomStatus === 'out' && zoomScene?.type === 'SHIP') {

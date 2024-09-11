@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo } from '~/lib/react-debug';
 import styled from 'styled-components';
 import { Crew, Inventory, Ship, Time } from '@influenceth/sdk';
 
@@ -273,7 +273,7 @@ const SolutionLabels = ({ center, emode, lastFedAt, mousePos, shipParams }) => {
     invalid: insufficientPropellant,
     usedPropellant,
     tof
-  } = useMemo(() => {
+  } = useMemo(import.meta.url, () => {
     if (!travelSolution) return {};
 
     return {
@@ -285,7 +285,7 @@ const SolutionLabels = ({ center, emode, lastFedAt, mousePos, shipParams }) => {
     }
   }, [coarseTime, travelSolution]); // TODO: coarseTime dependency?
 
-  const [currentFood, usedFood] = useMemo(() => {
+  const [currentFood, usedFood] = useMemo(import.meta.url, () => {
     if (emode || !lastFedAt || !travelSolution?.arrivalTime) return [100, 100];
     const currentFood = Math.round(100 * Crew.getCurrentFoodRatio((coarseTime - lastFedAt) * 86400, crew?._foodBonuses?.consumption));
     const arrivalFood = Math.round(100 * Crew.getCurrentFoodRatio((travelSolution?.arrivalTime - lastFedAt) * 86400, crew?._foodBonuses?.consumption));
@@ -296,7 +296,7 @@ const SolutionLabels = ({ center, emode, lastFedAt, mousePos, shipParams }) => {
   }, [coarseTime, crew?._foodBonuses?.consumption, emode, lastFedAt, travelSolution?.arrivalTime]);
 
   // only report the >100% values if they are within the ship/crew's capabilities
-  const [maxReportableFood, maxReportablePropellant] = useMemo(() => {
+  const [maxReportableFood, maxReportablePropellant] = useMemo(import.meta.url, () => {
     if (!shipParams || !travelSolution) return [100, 100];
     const shipConfig = Ship.TYPES[shipParams.Ship.shipType];
     const propInv = shipParams.Inventories.find((i) => i.slot === shipConfig.propellantSlot);

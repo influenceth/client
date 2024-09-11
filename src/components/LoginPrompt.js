@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState } from '~/lib/react-debug';
 import { createPortal } from 'react-dom';
 import styled, { css, keyframes } from 'styled-components';
 import { ArgentXIcon, BraavosIcon } from './Icons';
@@ -164,7 +164,7 @@ const configs = {
 const LoginPrompt = ({ onClick, target }) => {
   const lastConnectedWalletId = useStore(s => s.lastConnectedWalletId);
 
-  const conf = useMemo(() => configs[lastConnectedWalletId] || configs.webWallet, [lastConnectedWalletId]);
+  const conf = useMemo(import.meta.url, () => configs[lastConnectedWalletId] || configs.webWallet, [lastConnectedWalletId]);
 
   return createPortal(
     (

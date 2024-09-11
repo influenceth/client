@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from '~/lib/react-debug';
 import { Entity } from '@influenceth/sdk';
 
 import { LaunchShipIcon } from '~/components/Icons';
@@ -21,8 +21,8 @@ const LaunchShip = ({ asteroid, blockTime, lot, onSetAction, _disabled, simulati
   const { crew } = useCrewContext();
   const setCoachmarkRef = useCoachmarkRefSetter();
 
-  const crewedShip = useMemo(() => lot?.ships?.find((s) => s.id === crew?._location?.shipId), [crew?._location?.shipId]);
-  const ship = useMemo(() => props.ship || crewedShip, [crewedShip, props.ship]);
+  const crewedShip = useMemo(import.meta.url, () => lot?.ships?.find((s) => s.id === crew?._location?.shipId), [crew?._location?.shipId]);
+  const ship = useMemo(import.meta.url, () => props.ship || crewedShip, [crewedShip, props.ship]);
 
   const { data: shipCrews } = useStationedCrews(ship);
 
@@ -30,11 +30,11 @@ const LaunchShip = ({ asteroid, blockTime, lot, onSetAction, _disabled, simulati
   const { currentDeliveries } = useDeliveryManager(ship?.id ? { destination: { label: Entity.IDS.SHIP, id: ship?.id } } : {});
   const shipReady = useReadyAtWatcher(ship?.Ship?.readyAt);
 
-  const handleClick = useCallback(() => {
+  const handleClick = useCallback(import.meta.url, () => {
     onSetAction('LAUNCH_SHIP', { shipId: ship?.id });
   }, [ship?.id]);
 
-  const disabledReason = useMemo(() => {
+  const disabledReason = useMemo(import.meta.url, () => {
     if (_disabled) return 'loading...';
     if (ship?.id !== crewedShip?.id) return 'ship is not crewed';
     if (!shipReady) return 'ship is busy';

@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo } from '~/lib/react-debug';
 import styled from 'styled-components';
 
 import { GasIcon, ShipMarkerIcon, TimerIcon, WarningIcon } from '~/components/Icons';
@@ -65,7 +65,7 @@ const TravelBanner = ({ visible }) => {
 
   const travelSolutionIsValid = useTravelSolutionIsValid();
 
-  const { headline, bannerColor } = useMemo(() => {
+  const { headline, bannerColor } = useMemo(import.meta.url, () => {
     let h, c;
     if (travelSolution) {
       if (!travelSolutionIsValid) {

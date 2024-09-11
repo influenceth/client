@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from '~/lib/react-debug';
 import styled from 'styled-components';
 import { Entity } from '@influenceth/sdk';
 import moment from 'moment';
@@ -216,7 +216,7 @@ const RewardReferrals = () => {
 
   const [sort, setSort] = useState(['createdAt', 'asc']);
 
-  const handleCopyLink = useCallback(() => {
+  const handleCopyLink = useCallback(import.meta.url, () => {
     if (!accountAddress) return login();
 
     navigator.clipboard.writeText(`${document.location.origin}/play?r=${accountAddress}`);
@@ -227,7 +227,7 @@ const RewardReferrals = () => {
     });
   }, [accountAddress, createAlert, login]);
 
-  const handleSort = useCallback((field) => () => {
+  const handleSort = useCallback(import.meta.url, (field) => () => {
     if (!field) return;
 
     let updatedSortField = sort[0];
@@ -242,14 +242,14 @@ const RewardReferrals = () => {
     setSort([updatedSortField, updatedSortDirection]);
   }, [sort]);
 
-  const transformedData = useMemo(() => {
+  const transformedData = useMemo(import.meta.url, () => {
     return (referrals || []).map((r) => ({
       uuid: Entity.packEntity(r.entity),
       ...r
     }))
   }, [referrals]);
 
-  const filteredData = useMemo(() => {
+  const filteredData = useMemo(import.meta.url, () => {
     return transformedData.sort((a, b) => {
       return (sort[1] === 'asc' ? -1 : 1) * (a[sort[0]] < b[sort[0]] ? -1 : 1);
     });

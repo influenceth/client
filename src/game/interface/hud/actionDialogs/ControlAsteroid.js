@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef } from '~/lib/react-debug';
 import styled from 'styled-components';
 import { Asteroid } from '@influenceth/sdk';
 
@@ -51,7 +51,7 @@ const ControlAsteroid = ({ asteroid, controlManager, stage, ...props }) => {
 
   // handle auto-closing
   const lastStatus = useRef();
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (lastStatus.current && stage !== lastStatus.current) {
       props.onClose();
     }
@@ -120,7 +120,7 @@ const Wrapper = (props) => {
   const { data: asteroid, isLoading } = useAsteroid(asteroidId);
   const controlManager = useControlAsteroid(asteroidId);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (!asteroid && !isLoading) {
       if (props.onClose) props.onClose();
     } else if (controlManager.alreadyControlled) {
@@ -128,7 +128,7 @@ const Wrapper = (props) => {
     }
   }, [asteroid, controlManager, isLoading]);
 
-  const stage = useMemo(() => controlManager.takingControl ? actionStage.COMPLETING : actionStage.NOT_STARTED, [controlManager.takingControl]);
+  const stage = useMemo(import.meta.url, () => controlManager.takingControl ? actionStage.COMPLETING : actionStage.NOT_STARTED, [controlManager.takingControl]);
 
   return (
     <ActionDialogInner

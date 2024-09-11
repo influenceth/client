@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo } from '~/lib/react-debug';
 import styled from 'styled-components';
 import { Crew, Time } from '@influenceth/sdk';
 
@@ -30,7 +30,7 @@ const LiveFoodStatus = ({ crew, fontSize, onClick, ...props }) => {
   const blockTime = useBlockTime();
   const { data: TIME_ACCELERATION } = useConstants('TIME_ACCELERATION');
 
-  const [percentage, isRationing] = useMemo(() => {
+  const [percentage, isRationing] = useMemo(import.meta.url, () => {
     const lastFedAgo = Time.toGameDuration(blockTime - (crew?.Crew?.lastFed || 0), parseInt(TIME_ACCELERATION) || 1);
     return (blockTime > 0 && typeof lastFedAgo === 'number')
       ? [

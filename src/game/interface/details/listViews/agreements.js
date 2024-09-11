@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo } from '~/lib/react-debug';
 import theme from '~/theme';
 import styled from 'styled-components';
 import { Entity, Permission } from '@influenceth/sdk';
@@ -66,7 +66,7 @@ const My = styled.span`
 const Progress = ({ start, finish, overrideColor }) => {
   const blockTime = useBlockTime();
 
-  const [progress, timeRemaining] = useMemo(() => ([
+  const [progress, timeRemaining] = useMemo(import.meta.url, () => ([
     100 * (Date.now() / 1000 - start) / (finish - start),
     formatTimer(finish - (Date.now() / 1000), 2)
   ]), [blockTime, start, finish])
@@ -85,7 +85,7 @@ const useColumns = () => {
   const { props: actionProps } = useActionButtons();
   const blockTime = useBlockTime();
 
-  return useMemo(() => {
+  return useMemo(import.meta.url, () => {
     const columns = [
       {
         key: 'expandedIcon',

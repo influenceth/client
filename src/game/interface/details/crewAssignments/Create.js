@@ -1,4 +1,4 @@
-import React, { Fragment, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import React, { Fragment, useCallback, useContext, useEffect, useMemo, useRef, useState } from '~/lib/react-debug';
 import { useHistory } from 'react-router-dom';
 import styled, { css, keyframes } from 'styled-components';
 import { Crewmate, Entity, Name } from '@influenceth/sdk';
@@ -748,7 +748,7 @@ const MouseoverInfoContent = ({ title, description }) => (
 const ClassSelector = ({ classObjects, crewmate, onUpdateClass, onClose }) => {
   const [hovered, setHovered] = useState();
 
-  const classDisplay = useMemo(() => classObjects[hovered || crewmate?.Crewmate?.class], [hovered, crewmate?.Crewmate?.class])
+  const classDisplay = useMemo(import.meta.url, () => classObjects[hovered || crewmate?.Crewmate?.class], [hovered, crewmate?.Crewmate?.class])
 
   return (
     <MouseoverContent>
@@ -787,7 +787,7 @@ const ClassSelector = ({ classObjects, crewmate, onUpdateClass, onClose }) => {
 const TraitSelector = ({ crewmate, currentTraits, onUpdateTraits, onClose, traitIndex }) => {
   const changeTrait = currentTraits[traitIndex];
   const priorTraits = currentTraits.slice(0, traitIndex).map((t) => t.id);
-  const options = useMemo(() => {
+  const options = useMemo(import.meta.url, () => {
     return Crewmate.nextTraits(
       crewmate.Crewmate.coll,
       crewmate.Crewmate.class,
@@ -797,11 +797,11 @@ const TraitSelector = ({ crewmate, currentTraits, onUpdateTraits, onClose, trait
 
   const [hovered, setHovered] = useState();
 
-  const onSelect = useCallback((newTrait) => {
+  const onSelect = useCallback(import.meta.url, (newTrait) => {
     onUpdateTraits(changeTrait?.id === newTrait ? currentTraits.map((t) => t.id) : [...priorTraits, newTrait]);
   }, [changeTrait, priorTraits]);
 
-  const traitDisplay = useMemo(() => Crewmate.TRAITS[hovered || changeTrait?.id], [hovered, changeTrait])
+  const traitDisplay = useMemo(import.meta.url, () => Crewmate.TRAITS[hovered || changeTrait?.id], [hovered, changeTrait])
 
   return (
     <MouseoverContent>
@@ -870,18 +870,18 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
   const [finalizing, setFinalizing] = useState();
   const [name, setName] = useState('');
 
-  const mappedCrewmate = useMemo(() => crewmateMap?.[crewmateId] || null, [crewmateMap, crewmateId]);
+  const mappedCrewmate = useMemo(import.meta.url, () => crewmateMap?.[crewmateId] || null, [crewmateMap, crewmateId]);
 
-  const finalized = useMemo(() => mappedCrewmate?.Crewmate?.status > 0, [mappedCrewmate]);
+  const finalized = useMemo(import.meta.url, () => mappedCrewmate?.Crewmate?.status > 0, [mappedCrewmate]);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (!bookSession && !pendingCrewmate && !mappedCrewmate) {
       history.push(onCloseDestination);
     }
   }, [bookSession, pendingCrewmate, mappedCrewmate]);
 
   // derive crewmate-structured crewmate based on selections
-  const crewmate = useMemo(() => {
+  const crewmate = useMemo(import.meta.url, () => {
     // if already finalized, return final version
     if (finalized) return mappedCrewmate;
 
@@ -995,21 +995,21 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
     bookSession
   ]);
 
-  const traitTally = useMemo(() => {
+  const traitTally = useMemo(import.meta.url, () => {
     if (crewmate?.Crewmate?.coll === Crewmate.COLLECTION_IDS.ADALIAN) return 4;
     if (crewmate?.Crewmate?.coll) return 8;
     return 0;
   }, [crewmate?.Crewmate?.coll]);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (isPurchasingPack) setPackPromptDismissed(true);
   }, [isPurchasingPack]);
 
-  const isPackPurchaseIsProcessing = useMemo(() => {
+  const isPackPurchaseIsProcessing = useMemo(import.meta.url, () => {
     return !!(pendingTransactions || []).find(tx => tx.key === 'PurchaseStarterPack');
   }, [pendingTransactions]);
 
-  const shouldPromptForPack = useMemo(() => {
+  const shouldPromptForPack = useMemo(import.meta.url, () => {
     // always show prompt while processing (so can see "loading")
     if (isPurchasingPack || isPackPurchaseIsProcessing) return true;
     
@@ -1020,7 +1020,7 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
   // init appearance options as desired
   const originalSimulationState = useStore(s => s.simulation);
   const [namePrepopped, setNamePrepopped] = useState();
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (crewmate && safeBigInt(crewmate.Crewmate?.appearance) === 0n && appearanceOptions?.length === 0) {
       if (originalSimulationState?.crewmate?.appearance) {
         const { clothes, ...unpacked } = Crewmate.unpackAppearance(originalSimulationState?.crewmate?.appearance);
@@ -1033,7 +1033,7 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
     }
   }, [!!crewmate, appearanceOptions?.length, originalSimulationState]);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (crewmate && !crewmate.Name?.name) {
       if (originalSimulationState?.crewmate?.name) {
         setName(originalSimulationState.crewmate.name);
@@ -1045,12 +1045,12 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
   }, [!!crewmate, originalSimulationState]);
 
   // handle finalizing
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (crewmate?._finalizing || crewmate?.Crewmate?.status > 0) setFinalizing(true);
   }, [crewmate?._finalizing, crewmate?.Crewmate?.status]);
 
   // handle finalized
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (finalized) {
       setFinalizing(false);
 
@@ -1061,7 +1061,7 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
     }
   }, [ crewmateId, finalized, mappedCrewmate ]);
 
-  // const shareOnTwitter = useCallback(() => {
+  // const shareOnTwitter = useCallback(import.meta.url, () => {
   //   // TODO: ...
   //   const params = new URLSearchParams({
   //     text: [
@@ -1076,30 +1076,30 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
   //   window.open(`https://twitter.com/intent/tweet?${params.toString()}`, '_blank');
   // }, [account]);
 
-  // const handleFinish = useCallback(() => {
+  // const handleFinish = useCallback(import.meta.url, () => {
   //   history.push(onCloseDestination);
   // }, [history]);
 
-  const handleNameChange = useCallback((newName) => {
+  const handleNameChange = useCallback(import.meta.url, (newName) => {
     setName(newName);
   }, []);
 
-  const rerollAppearance = useCallback(async () => {
+  const rerollAppearance = useCallback(import.meta.url, async () => {
     setAppearanceOptions((prevValue) => {
       setAppearanceSelection((prevValue || []).length);
       return [...(prevValue || []), getRandomAdalianAppearance()]
     });
   }, []);
 
-  const rollBackAppearance = useCallback(() => {
+  const rollBackAppearance = useCallback(import.meta.url, () => {
     setAppearanceSelection(Math.max(0, appearanceSelection - 1));
   }, [appearanceSelection]);
 
-  const rollForwardAppearance = useCallback(() => {
+  const rollForwardAppearance = useCallback(import.meta.url, () => {
     setAppearanceSelection(Math.min(appearanceOptions.length - 1, appearanceSelection + 1));
   }, [appearanceOptions.length, appearanceSelection]);
 
-  const rerollTraits = useCallback(async () => {
+  const rerollTraits = useCallback(import.meta.url, async () => {
     const c = cloneDeep(crewmate);
     if (!c?.Crewmate?.coll) return;
 
@@ -1124,7 +1124,7 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
     setSelectedTraits(traits);
   }, [crewmate?.Crewmate?.class, selectedTraits, traitTally]);
 
-  const confirmFinalize = useCallback(async () => {
+  const confirmFinalize = useCallback(import.meta.url, async () => {
     if (simulationEnabled) {
       dispatchSimulationState('crewmate', { id: SIMULATION_CONFIG.crewmateId, name, appearance: crewmate?.Crewmate?.appearance });
       history.push('/');
@@ -1138,17 +1138,17 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
     }
   }, [isNameValid, name, crewmate?.id, crewmate?._canRename, crewmate?.Crewmate?.appearance, crewmate?.Name?.name, simulationEnabled]);
 
-  const finalize = useCallback(() => {
+  const finalize = useCallback(import.meta.url, () => {
     setConfirming(false);
     purchaseAndOrInitializeCrewmate({ crewmate });
   }, [crewmate, purchaseAndOrInitializeCrewmate]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const handleBack = useCallback(() => {
+  const handleBack = useCallback(import.meta.url, () => {
     history.push(simulationEnabled ? '/' : backLocation);
   }, [backLocation, simulationEnabled]);
 
   // // show "complete" page (instead of "create") for non-recruitment assignments
-  // useEffect(() => {
+  // useEffect(import.meta.url, () => {
   //   if (bookSession && !bookSession.isMintingStory) {
   //     history.push(`/crew-assignment/${crewmateId}/complete`);
   //   }
@@ -1156,7 +1156,7 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
 
   // place mouseovers after animation complete
   const [animationComplete, setAnimationComplete] = useState();
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (!!crewmate) {
       const to = setTimeout(() => {
         setAnimationComplete(true);
@@ -1167,7 +1167,7 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
     }
   }, [!!crewmate]);
 
-  const onUpdateClass = useCallback((newClass) => {
+  const onUpdateClass = useCallback(import.meta.url, (newClass) => {
     if (selectedClass !== newClass) {
       setSelectedTraits([]);
     }
@@ -1175,16 +1175,16 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
     setToggling();
   }, [selectedClass]);
 
-  const onUpdateTraits = useCallback((newTraits) => {
+  const onUpdateTraits = useCallback(import.meta.url, (newTraits) => {
     setSelectedTraits(newTraits);
     setToggling();
   }, []);
 
-  const traitObjects = useMemo(() => {
+  const traitObjects = useMemo(import.meta.url, () => {
     return (selectedTraits || []).map((id) => ({ id, ...Crewmate.TRAITS[id] }));
   }, [selectedTraits]);
 
-  const classObjects = useMemo(() => {
+  const classObjects = useMemo(import.meta.url, () => {
     return Object.values(Crewmate.CLASS_IDS).reduce((acc, id) => ({
       ...acc,
       [id]: {
@@ -1197,7 +1197,7 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
     }), {});
   }, []);
 
-  const recruitTally = useMemo(() => {
+  const recruitTally = useMemo(import.meta.url, () => {
     if (crewmate?.Crewmate?.coll === Crewmate.COLLECTION_IDS.ADALIAN) return adalianRecruits?.length || 0;
     return 0;
   }, [adalianRecruits, crewmate?.Crewmate?.coll]);
@@ -1206,7 +1206,7 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
 
   const [checkingName, setCheckingName] = useState(false);
   const [nameError, setNameError] = useState(null);
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (!crewmate?._canRename) return;  // only check for name validity if can rename
 
     setNameError('');
@@ -1229,7 +1229,7 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
     }
   }, [name, crewmate?.id, crewmate?._canRename, isNameValid]);
 
-  const readyForSubmission = useMemo(() => {
+  const readyForSubmission = useMemo(import.meta.url, () => {
     if (!name) return false;
     if (simulationEnabled) return true;
     if (!selectedClass) return false;
@@ -1237,7 +1237,7 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
     return true;
   }, [name, selectedClass, selectedTraits?.length, traitTally, simulationEnabled]);
 
-  const confirmationProps = useMemo(() => {
+  const confirmationProps = useMemo(import.meta.url, () => {
     if (crewmate?.id) {
       return {
         onConfirm: finalize,
@@ -1678,17 +1678,17 @@ const Wrapper = ({ backLocation, crewId, crewmateId, locationId }) => {
 
   const dispatchCrewAssignmentRestart = useStore((s) => s.dispatchCrewAssignmentRestart);
 
-  const coverImage = useMemo(() => getBookCompletionImage(book), [book]);
+  const coverImage = useMemo(import.meta.url, () => getBookCompletionImage(book), [book]);
 
   // for recruit of crewmateId 0, things get weird when completed
   const finalizing = useRef();
-  const pendingCrewmate = useMemo(() => getPendingCrewmate(), [getPendingCrewmate]);
-  useEffect(() => {
+  const pendingCrewmate = useMemo(import.meta.url, () => getPendingCrewmate(), [getPendingCrewmate]);
+  useEffect(import.meta.url, () => {
     if (pendingCrewmate) finalizing.current = true;
       // TODO (enhancement): set a timeout? what if crewmateMap is already updated?
   }, [ pendingCrewmate ]);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (finalizing.current) {
       if (crewId === 0 || crewmateId === 0) {
         if (crews && crewmateMap) {

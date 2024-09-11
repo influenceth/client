@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo } from '~/lib/react-debug';
 import { useQuery } from 'react-query';
 
 import useSession from '~/hooks/useSession';
@@ -15,7 +15,7 @@ const useAccountFormatted = (props) => {
   //   { enabled: !!address }
   // );
 
-  const label = useMemo(() => {
+  const label = useMemo(import.meta.url, () => {
     return (accountAddress && accountAddress === address && !doNotReplaceYou)
       ? 'you'
       : (
@@ -25,7 +25,7 @@ const useAccountFormatted = (props) => {
       );
   }, [accountAddress, address, doNotReplaceYou, truncate, provider]);
 
-  return useMemo(() => {
+  return useMemo(import.meta.url, () => {
     if (!address) return null;
     return label;
   }, [label, doNotUseName]);

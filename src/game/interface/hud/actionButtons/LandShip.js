@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo } from '~/lib/react-debug';
 import { Asteroid, Dock, Permission, Ship } from '@influenceth/sdk';
 
 import { LandShipIcon } from '~/components/Icons';
@@ -24,7 +24,7 @@ const LandShip = ({ asteroid, lot, onSetAction, _disabled }) => {
   const { data: crewedShip } = useShip(crew?._location?.shipId)
   const ready = useReadyAtWatcher(crewedShip?.Ship?.readyAt);
 
-  const handleClick = useCallback(() => {
+  const handleClick = useCallback(import.meta.url, () => {
     onSetAction(
       'LAND_SHIP',
       {
@@ -34,7 +34,7 @@ const LandShip = ({ asteroid, lot, onSetAction, _disabled }) => {
     );
   }, [crew?._location.shipId, lot?.id]);
 
-  const disabledReason = useMemo(() => {
+  const disabledReason = useMemo(import.meta.url, () => {
     if (_disabled) return 'loading...';
     if (!crewedShip) return 'ship is not crewed';
     if (!ready) return 'ship is not ready'; // in flight or stuck in port traffic

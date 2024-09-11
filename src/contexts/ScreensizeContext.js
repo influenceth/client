@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo } from '~/lib/react-debug';
 import { useThrottle } from '@react-hook/throttle';
 
 import theme from '~/theme';
@@ -9,7 +9,7 @@ export function ScreensizeProvider({ children }) {
   const [ height, setHeight ] = useThrottle(window.innerHeight, 30, true);
   const [ width, setWidth ] = useThrottle(window.innerWidth, 30, true);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     const updateSize = () => {
       setHeight(window.innerHeight);
       setWidth(window.innerWidth);
@@ -18,7 +18,7 @@ export function ScreensizeProvider({ children }) {
     return () => window.removeEventListener('resize', updateSize);
   }, []);
 
-  const contextValue = useMemo(() => ({
+  const contextValue = useMemo(import.meta.url, () => ({
     height, 
     width,
     isMobile: width <= theme.breakpoints.mobile,

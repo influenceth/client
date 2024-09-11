@@ -1,4 +1,4 @@
-import { useCallback, useContext, useMemo } from 'react';
+import { useCallback, useContext, useMemo } from '~/lib/react-debug';
 import { Entity, Permission } from '@influenceth/sdk';
 import { cloneDeep } from 'lodash';
 
@@ -13,7 +13,7 @@ const useAgreementManager = (target, permission, agreementPath) => {
   const { execute, getPendingTx } = useContext(ChainTransactionContext);
   const { currentPolicy } = usePolicyManager(target, permission);
 
-  const currentAgreement = useMemo(() => {
+  const currentAgreement = useMemo(import.meta.url, () => {
     const agreement = (currentPolicy?.agreements || []).find((a) => {
       if (agreementPath) return getAgreementPath(target, permission, a.permitted) === agreementPath;
       return (
@@ -36,7 +36,7 @@ const useAgreementManager = (target, permission, agreementPath) => {
     return null;
   }, [agreementPath, crew?.id, currentPolicy, target, permission]);
 
-  const payload = useMemo(() => ({
+  const payload = useMemo(import.meta.url, () => ({
     target: { id: target?.id, label: target?.label },
     permission,
     // NOTE: this does not currently support account-level `permitted` values because that is
@@ -45,12 +45,12 @@ const useAgreementManager = (target, permission, agreementPath) => {
     caller_crew: { id: crew?.id, label: Entity.IDS.CREW },
   }), [crew?.id, currentAgreement, target, permission]);
 
-  const meta = useMemo(() => ({
+  const meta = useMemo(import.meta.url, () => ({
     lotId: target?.Location?.locations?.find((l) => l.label === Entity.IDS.LOT)?.id,
     shipId: target?.label === Entity.IDS.SHIP ? target?.id : undefined,
   }), [target]);
 
-  const enterAgreement = useCallback((details = {}) => {
+  const enterAgreement = useCallback(import.meta.url, (details = {}) => {
     const agreementSystem = currentPolicy.policyType === Permission.POLICY_IDS.PREPAID
       ? 'AcceptPrepaidAgreement'
       : 'AcceptContractAgreement';
@@ -62,7 +62,7 @@ const useAgreementManager = (target, permission, agreementPath) => {
     );
   }, [currentPolicy, meta, payload]);
 
-  const extendAgreement = useCallback((details = {}) => {
+  const extendAgreement = useCallback(import.meta.url, (details = {}) => {
     const { term, ...params } = details;
     execute(
       'ExtendPrepaidAgreement',
@@ -71,7 +71,7 @@ const useAgreementManager = (target, permission, agreementPath) => {
     );
   }, [meta, payload]);
 
-  const cancelAgreement = useCallback((params = {}) => {
+  const cancelAgreement = useCallback(import.meta.url, (params = {}) => {
     execute(
       'CancelPrepaidAgreement',
       { agreementPath, ...params, ...payload },
@@ -79,7 +79,7 @@ const useAgreementManager = (target, permission, agreementPath) => {
     );
   }, [agreementPath]);
 
-  const pendingChange = useMemo(
+  const pendingChange = useMemo(import.meta.url, 
     () => {
       if (getPendingTx) {
         return getPendingTx('AcceptPrepaidAgreement', { ...payload })

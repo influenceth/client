@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from '~/lib/react-debug';
 
 import useStore from '~/hooks/useStore';
 
@@ -37,7 +37,7 @@ export function DevToolProvider({ children }) {
   const [starStrength, setStarStrength] = useState();
 
   // reset most overrides on change of asset type
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     setBackground();
     setBackgroundOverrideName();
     setBackgroundStrength();
@@ -64,7 +64,7 @@ export function DevToolProvider({ children }) {
     setTrackCamera();
   }, [assetType]);
 
-  const contextValue = useMemo(() => ({
+  const contextValue = useMemo(import.meta.url, () => ({
     assetType,
     overrides: showDevTools ? {
       modelUrl,

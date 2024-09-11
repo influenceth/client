@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo } from '~/lib/react-debug';
 
 import { EjectMyCrewIcon } from '~/components/Icons';
 import ActionButton, { getCrewDisabledReason } from './ActionButton';
@@ -22,15 +22,15 @@ const isVisible = ({ crew, building, ship }) => {
 // (can eject self from ship or building, whether own it or not)
 const EjectCrew = ({ crew, ship, onSetAction, _disabled }) => {
   const { currentEjections } = useEjectCrewManager(crew?.Location?.location);
-  const handleClick = useCallback(() => {
+  const handleClick = useCallback(import.meta.url, () => {
     onSetAction('EJECT_CREW');
   }, [onSetAction]);
 
-  const currentEjection = useMemo(() => {
+  const currentEjection = useMemo(import.meta.url, () => {
     return currentEjections?.find((e) => e.vars.ejected_crew.id === crew?.id);
   }, [currentEjections, crew?.id]);
 
-  const disabledReason = useMemo(() => {
+  const disabledReason = useMemo(import.meta.url, () => {
     if (_disabled) return 'loading...';
     if (ship?.Ship?.emergencyAt > 0) return 'emergency mode';
     return getCrewDisabledReason({ crew });

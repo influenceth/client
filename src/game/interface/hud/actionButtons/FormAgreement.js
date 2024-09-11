@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo } from '~/lib/react-debug';
 import { Permission } from '@influenceth/sdk';
 
 import { FormAgreementIcon, FormLotAgreementIcon } from '~/components/Icons';
@@ -15,11 +15,11 @@ const FormAgreement = ({ entity, permission, _disabled }) => {
   
   const onSetAction = useStore(s => s.dispatchActionDialog);
 
-  const handleClick = useCallback(() => {
+  const handleClick = useCallback(import.meta.url, () => {
     onSetAction('FORM_AGREEMENT', { entity, permission });
   }, [entity, permission]);
 
-  const disabledReason = useMemo(() => {
+  const disabledReason = useMemo(import.meta.url, () => {
     // if (_disabled) return 'loading...';
     if (pendingChange) return 'updating...';
     if (simulationEnabled) return 'simulation restricted';

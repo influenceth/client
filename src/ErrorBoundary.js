@@ -1,4 +1,4 @@
-import { Component } from 'react';
+import { Component } from '~/lib/react-debug';
 import styled from 'styled-components';
 
 import errorImageSrc from '~/assets/images/hopper.png';

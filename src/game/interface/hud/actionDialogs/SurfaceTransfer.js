@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from '~/lib/react-debug';
 import { Asteroid, Crewmate, Entity, Inventory, Lot, Permission, Product, Time } from '@influenceth/sdk';
 import styled from 'styled-components';
 
@@ -72,18 +72,18 @@ const SurfaceTransfer = ({
   const createAlert = useStore(s => s.dispatchAlertLogged);
 
   const { startDelivery, finishDelivery, packageDelivery, acceptDelivery, cancelDelivery } = deliveryManager;
-  const currentDelivery = useMemo(() => currentDeliveryAction?.action, [currentDeliveryAction]);
+  const currentDelivery = useMemo(import.meta.url, () => currentDeliveryAction?.action, [currentDeliveryAction]);
   const crew = useActionCrew(currentDelivery);
   const { data: currentDeliveryCallerCrew } = useHydratedCrew(currentDelivery?.callerCrew?.id);
   const { crewCan } = useCrewContext();
   const blockTime = useBlockTime();
 
-  const crewTravelBonus = useMemo(() => {
+  const crewTravelBonus = useMemo(import.meta.url, () => {
     if (!crew) return {};
     return getCrewAbilityBonuses(Crewmate.ABILITY_IDS.HOPPER_TRANSPORT_TIME, crew) || {};
   }, [crew]);
 
-  const crewDistBonus = useMemo(() => {
+  const crewDistBonus = useMemo(import.meta.url, () => {
     if (!crew) return {};
     return getCrewAbilityBonuses(Crewmate.ABILITY_IDS.FREE_TRANSPORT_DISTANCE, crew) || {};
   }, [crew]);
@@ -98,7 +98,7 @@ const SurfaceTransfer = ({
 
   const [destinationSelection, setDestinationSelection] = useState();
   const [originSelection, setOriginSelection] = useState();
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (fixedDestination) {
       const availInvs = (fixedDestination.Inventories || []).filter((i) => i.status === Inventory.STATUSES.AVAILABLE);
       setDestinationSelection({
@@ -127,30 +127,30 @@ const SurfaceTransfer = ({
   }, [currentDelivery, fixedDestination, fixedOrigin]);
 
   const { data: origin } = useEntity(originSelection ? { id: originSelection.id, label: originSelection.label } : undefined);
-  const originLotId = useMemo(() => origin && locationsArrToObj(origin?.Location?.locations || []).lotId, [origin]);
+  const originLotId = useMemo(import.meta.url, () => origin && locationsArrToObj(origin?.Location?.locations || []).lotId, [origin]);
   const { data: originLot } = useLot(originLotId);
-  const originInventory = useMemo(() => (origin?.Inventories || []).find((i) => i.slot === originSelection?.slot), [origin, originSelection]);
+  const originInventory = useMemo(import.meta.url, () => (origin?.Inventories || []).find((i) => i.slot === originSelection?.slot), [origin, originSelection]);
   const { data: originController } = useCrew(origin?.Control?.controller?.id);
-  const originInventoryTally = useMemo(() => (origin?.Inventories || []).filter((i) => i.status === Inventory.STATUSES.AVAILABLE).length, [origin]);
-  const originProductIds = useMemo(() => {
+  const originInventoryTally = useMemo(import.meta.url, () => (origin?.Inventories || []).filter((i) => i.status === Inventory.STATUSES.AVAILABLE).length, [origin]);
+  const originProductIds = useMemo(import.meta.url, () => {
     const invConfig = Inventory.TYPES[originInventory?.inventoryType] || {};
     return invConfig?.productConstraints ? Object.keys(invConfig?.productConstraints) : null;
   }, [originInventory]);
 
   const { data: destination } = useEntity(destinationSelection ? { id: destinationSelection.id, label: destinationSelection.label } : undefined);
-  const destinationLotId = useMemo(() => destination && locationsArrToObj(destination?.Location?.locations || []).lotId, [destination]);
+  const destinationLotId = useMemo(import.meta.url, () => destination && locationsArrToObj(destination?.Location?.locations || []).lotId, [destination]);
   const { data: destinationLot } = useLot(destinationLotId);
-  const destinationInventory = useMemo(() => (destination?.Inventories || []).find((i) => i.slot === destinationSelection?.slot), [destination, destinationSelection]);
+  const destinationInventory = useMemo(import.meta.url, () => (destination?.Inventories || []).find((i) => i.slot === destinationSelection?.slot), [destination, destinationSelection]);
   const { data: destinationController } = useCrew(destination?.Control?.controller?.id);
-  const destinationInventoryTally = useMemo(() => (destination?.Inventories || []).filter((i) => i.status === Inventory.STATUSES.AVAILABLE).length, [destination]);
+  const destinationInventoryTally = useMemo(import.meta.url, () => (destination?.Inventories || []).filter((i) => i.status === Inventory.STATUSES.AVAILABLE).length, [destination]);
   const destDeliveryManager = useDeliveryManager({ destination, destinationSlot: destinationSelection?.slot });
-  const destinationProductIds = useMemo(() => {
+  const destinationProductIds = useMemo(import.meta.url, () => {
     const invConfig = Inventory.TYPES[destinationInventory?.inventoryType] || {};
     return invConfig?.productConstraints ? Object.keys(invConfig?.productConstraints) : null;
   }, [destinationInventory]);
 
   // When a new origin inventory is selected, reset the selected items
-  const onOriginSelect = useCallback((selection) => {
+  const onOriginSelect = useCallback(import.meta.url, (selection) => {
     const { id, label, slot } = originSelection || {};
     if (id !== selection.id || label !== selection.label || slot !== selection.slot) {
       setOriginSelection(selection);
@@ -158,25 +158,25 @@ const SurfaceTransfer = ({
     }
   }, [originSelection]);
 
-  const onDestinationSelect = useCallback((selection) => {
+  const onDestinationSelect = useCallback(import.meta.url, (selection) => {
     const { id, label, slot } = destinationSelection || {};
     if (id !== selection.id || label !== selection.label || slot !== selection.slot) {
       setDestinationSelection(selection);
     }
   }, [destinationSelection]);
 
-  const onSwayChange = useCallback((value) => {
+  const onSwayChange = useCallback(import.meta.url, (value) => {
     setSway(value ? parseInt(value) : '');
   }, []);
 
   // handle "currentDeliveryAction" state
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (currentDelivery) {
       setSelectedItems(currentDelivery.contents.reduce((acc, item) => ({ ...acc, [item.product]: item.amount }), {}));
     }
   }, [currentDelivery]);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (stage === actionStage.NOT_STARTED && originInventory) {
       const destInvConfig = (Inventory.getType(destinationInventory?.inventoryType, crew?._inventoryBonuses) || {});
       const destInvConstraints = destInvConfig.productConstraints;
@@ -215,7 +215,7 @@ const SurfaceTransfer = ({
     }
   }, [crew?._inventoryBonuses, originInventory, destinationInventory, destDeliveryManager.currentDeliveryActions]);
 
-  const [transportDistance, transportTime] = useMemo(() => {
+  const [transportDistance, transportTime] = useMemo(import.meta.url, () => {
     if (!asteroid?.id || !originLot?.id || !destinationLot?.id) return [0, 0];
     const originLotIndex = Lot.toIndex(originLot?.id);
     const destinationLotIndex = Lot.toIndex(destinationLot?.id);
@@ -229,7 +229,7 @@ const SurfaceTransfer = ({
     return [transportDistance, transportTime];
   }, [asteroid?.id, originLot?.id, destinationLot?.id, crewDistBonus, crewTravelBonus, crew?._timeAcceleration]);
 
-  const { totalMass, totalVolume } = useMemo(() => {
+  const { totalMass, totalVolume } = useMemo(import.meta.url, () => {
     return Object.keys(selectedItems).reduce((acc, resourceId) => {
       acc.totalMass += selectedItems[resourceId] * Product.TYPES[resourceId].massPerUnit;
       acc.totalVolume += selectedItems[resourceId] * Product.TYPES[resourceId].volumePerUnit;
@@ -237,22 +237,22 @@ const SurfaceTransfer = ({
     }, { totalMass: 0, totalVolume: 0 })
   }, [selectedItems]);
 
-  const currentCrewIsSender = useMemo(() => {
+  const currentCrewIsSender = useMemo(import.meta.url, () => {
     if (currentDelivery) return currentCrew?.id === currentDelivery.callerCrew?.id;
     return true;
   }, [currentCrew, currentDelivery]);
 
-  const currentCrewHasOriginPerms = useMemo(() => {
+  const currentCrewHasOriginPerms = useMemo(import.meta.url, () => {
     if (origin) return currentCrewCan(Permission.IDS.REMOVE_PRODUCTS, origin);
     return true;
   }, [currentCrewCan, origin]);
 
-  const currentCrewHasDestinationPerms = useMemo(() => {
+  const currentCrewHasDestinationPerms = useMemo(import.meta.url, () => {
     if (destination) return currentCrewCan(Permission.IDS.ADD_PRODUCTS, destination);
     return true;
   }, [currentCrewCan, destination]);
 
-  const senderHasDestPerm = useMemo(() => {
+  const senderHasDestPerm = useMemo(import.meta.url, () => {
     if (!destination) return true;
     if (currentDelivery) {
       if (currentDeliveryCallerCrew && destination) {
@@ -263,9 +263,9 @@ const SurfaceTransfer = ({
     return crewCan(Permission.IDS.ADD_PRODUCTS, destination);
   }, [blockTime, crew, currentDelivery, currentDeliveryCallerCrew, destination]);
 
-  const isP2P = useMemo(() => currentDelivery?.isProposal || !senderHasDestPerm, [currentDelivery?.isProposal, senderHasDestPerm]);
+  const isP2P = useMemo(import.meta.url, () => currentDelivery?.isProposal || !senderHasDestPerm, [currentDelivery?.isProposal, senderHasDestPerm]);
 
-  const stats = useMemo(() => ([
+  const stats = useMemo(import.meta.url, () => ([
     {
       label: 'Task Duration',
       value: formatTimer(transportTime),
@@ -296,7 +296,7 @@ const SurfaceTransfer = ({
     },
   ]), [totalMass, totalVolume, transportDistance, transportTime]);
 
-  const willBeOverCapacity = useMemo(() => {
+  const willBeOverCapacity = useMemo(import.meta.url, () => {
     if (![actionStage.NOT_STARTED, actionStage.STARTING].includes(stage)) return false;
 
     const destInventoryConfig = Inventory.getType(destinationInventory?.inventoryType, crew?._inventoryBonuses) || {};
@@ -307,7 +307,7 @@ const SurfaceTransfer = ({
     return (totalMass > destInventoryConfig.massConstraint) || (totalVolume > destInventoryConfig.volumeConstraint);
   }, [crew?._inventoryBonuses, destinationInventory, stage, totalMass, totalVolume]);
 
-  const onStartDelivery = useCallback(() => {
+  const onStartDelivery = useCallback(import.meta.url, () => {
     if (willBeOverCapacity) {
       const destInventoryConfig = Inventory.getType(destinationInventory?.inventoryType, crew?._inventoryBonuses) || {};
       createAlert({
@@ -329,28 +329,28 @@ const SurfaceTransfer = ({
     }, { asteroidId: asteroid?.id, lotId: originLot?.id });
   }, [crew?._inventoryBonuses, packageDelivery, startDelivery, originInventory, destinationInventory, selectedItems, sway, isP2P, senderHasDestPerm, asteroid?.id, originLot?.id, willBeOverCapacity]);
 
-  const onFinishDelivery = useCallback(() => {
+  const onFinishDelivery = useCallback(import.meta.url, () => {
     finishDelivery(deliveryId, {
       asteroidId: asteroid?.id,
       lotId: destinationLot?.id,
     });
   }, [finishDelivery, deliveryId, asteroid?.id, destinationLot?.id]);
 
-  const onCancelDelivery = useCallback(() => {
+  const onCancelDelivery = useCallback(import.meta.url, () => {
     cancelDelivery(deliveryId, {
       asteroidId: asteroid?.id,
       lotId: destinationLot?.id,
     });
   }, [cancelDelivery, deliveryId, asteroid?.id, destinationLot?.id]);
 
-  const onAcceptDelivery = useCallback(() => {
+  const onAcceptDelivery = useCallback(import.meta.url, () => {
     acceptDelivery(deliveryId, {
       asteroidId: asteroid?.id,
       lotId: destinationLot?.id,
     });
   }, [acceptDelivery, deliveryId, asteroid?.id, destinationLot?.id]);
 
-  const actionDetails = useMemo(() => {
+  const actionDetails = useMemo(import.meta.url, () => {
     let overrideColor = undefined;
     let status = undefined;
     if (stage === actionStage.NOT_STARTED || ['READY','PACKAGED'].includes(currentDeliveryAction?.status)) {
@@ -370,7 +370,7 @@ const SurfaceTransfer = ({
     return { overrideColor, status, stage };
   }, [crew, currentCrewHasOriginPerms, currentDeliveryAction?.status, destination, isP2P, stage]);
 
-  const finalizeActions = useMemo(() => {
+  const finalizeActions = useMemo(import.meta.url, () => {
     if (currentDeliveryAction?.status === 'PACKAGED') {
       if (currentCrewHasDestinationPerms) {
         return {
@@ -669,7 +669,7 @@ const Wrapper = (props) => {
   //  - origin (from sendFrom button) +- originSlot
   //  - destination (from sendTo button) +- destinationSlot
   // TODO: test from actionItem, hud action button, inventory menu action button
-  const deliveryManagerQuery = useMemo(() => {
+  const deliveryManagerQuery = useMemo(import.meta.url, () => {
     if (deliveryId) return { deliveryId };
     if (txHash) return { txHash };
     if (destination) return { destination, destinationSlot };
@@ -678,7 +678,7 @@ const Wrapper = (props) => {
   }, [deliveryId, destination, destinationSlot, origin, originSlot, txHash])
   const deliveryManager = useDeliveryManager(deliveryManagerQuery);
 
-  const currentDeliveryAction = useMemo(() => {
+  const currentDeliveryAction = useMemo(import.meta.url, () => {
     return (deliveryManager.currentDeliveryActions || []).find((d) => {
       if (deliveryId) return d.action.deliveryId === deliveryId
       if (txHash) return d.action.txHash === txHash;
@@ -689,7 +689,7 @@ const Wrapper = (props) => {
   const { data: originEntity, isLoading: originLoading } = useEntity(currentDeliveryAction?.action?.origin || props.origin);
   const { data: destEntity, isLoading: destLoading } = useEntity(currentDeliveryAction?.action?.dest || props.destination);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (!props.onClose) return;
     if (!asteroid && !isLoading) props.onClose();
     if (origin && !originEntity && !originLoading) props.onClose();
@@ -700,7 +700,7 @@ const Wrapper = (props) => {
 
   // handle auto-closing on any status change
   const lastStatus = useRef();
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (stage !== 'READY_TO_FINISH') {
       if (lastStatus.current && stage !== lastStatus.current) {
         if (props.onClose) props.onClose();

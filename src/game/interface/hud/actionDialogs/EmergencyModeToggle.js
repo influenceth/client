@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from '~/lib/react-debug';
 import styled from 'styled-components';
 import { Inventory, Product, Ship } from '@influenceth/sdk';
 
@@ -54,25 +54,25 @@ const EmergencyModeToggle = ({ asteroid, lot, manager, ship, stage, ...props }) 
   const { crew } = useCrewContext();
 
   const { data: shipCrews } = useStationedCrews(ship);
-  const shipPassengerCrews = useMemo(() => (shipCrews || []).filter((c) => c.id !== crew?.id), [shipCrews]);
+  const shipPassengerCrews = useMemo(import.meta.url, () => (shipCrews || []).filter((c) => c.id !== crew?.id), [shipCrews]);
 
-  const inEmergencyMode = useMemo(() => {
+  const inEmergencyMode = useMemo(import.meta.url, () => {
     if (manager.isActivating) return false;
     if (manager.isDeactivating) return true;
     return ship?.Ship?.emergencyAt > 0;
   }, [manager, ship]);
 
-  const cargoInventory = useMemo(() => {
+  const cargoInventory = useMemo(import.meta.url, () => {
     const shipConfig = Ship.TYPES[ship.Ship.shipType];
     return ship.Inventories.find((i) => i.slot === shipConfig.cargoSlot);
   }, [ship]);
 
-  const propellantInventory = useMemo(() => {
+  const propellantInventory = useMemo(import.meta.url, () => {
     const shipConfig = Ship.TYPES[ship.Ship.shipType];
     return ship.Inventories.find((i) => i.slot === shipConfig.propellantSlot);
   }, [ship]);
 
-  const propellantJettisoned = useMemo(() => {
+  const propellantJettisoned = useMemo(import.meta.url, () => {
     if (inEmergencyMode) {  // if exiting emergency mode, jettison up to 10% of max propellant
       const shipConfig = Ship.TYPES[ship.Ship.shipType];
       const maxProp = shipConfig.emergencyPropellantCap * Inventory.getType(propellantInventory.inventoryType, crew?._inventoryBonuses)?.massConstraint;
@@ -81,7 +81,7 @@ const EmergencyModeToggle = ({ asteroid, lot, manager, ship, stage, ...props }) 
     return 0;
   }, [crew?._inventoryBonuses, inEmergencyMode, propellantInventory, ship]);
 
-  const stats = useMemo(() => ([
+  const stats = useMemo(import.meta.url, () => ([
     {
       label: 'Cargo Mass Jettisoned',
       value: formatMass(inEmergencyMode ? 0 : cargoInventory.mass),
@@ -104,7 +104,7 @@ const EmergencyModeToggle = ({ asteroid, lot, manager, ship, stage, ...props }) 
     },
   ]), [cargoInventory, inEmergencyMode, propellantInventory]);
 
-  const onToggle = useCallback(() => {
+  const onToggle = useCallback(import.meta.url, () => {
     if (inEmergencyMode) {
       deactivateEmergencyMode();
     } else {
@@ -114,7 +114,7 @@ const EmergencyModeToggle = ({ asteroid, lot, manager, ship, stage, ...props }) 
 
   // handle auto-closing
   const lastStatus = useRef();
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     // (close on status change from)
     if (lastStatus.current && actionStage !== lastStatus.current) {
       props.onClose();
@@ -122,7 +122,7 @@ const EmergencyModeToggle = ({ asteroid, lot, manager, ship, stage, ...props }) 
     lastStatus.current = actionStage;
   }, [actionStage]);
 
-  const actionDetails = useMemo(() => {
+  const actionDetails = useMemo(import.meta.url, () => {
     const icon = inEmergencyMode ? <EmergencyModeExitIcon /> : <EmergencyModeEnterIcon />;
     const label = `${inEmergencyMode ? 'Exit' : 'Enter'} Emergency Mode`;
     const status = stage === actionStages.NOT_STARTED
@@ -131,7 +131,7 @@ const EmergencyModeToggle = ({ asteroid, lot, manager, ship, stage, ...props }) 
     return { icon, label, status };
   }, [ship, stage]);
 
-  const warnings = useMemo(() => {
+  const warnings = useMemo(import.meta.url, () => {
     const w = [];
     const shipConfig = Ship.TYPES[ship.Ship.shipType];
     if (inEmergencyMode) {
@@ -230,7 +230,7 @@ const Wrapper = (props) => {
   const { actionStage } = manager;
 
   const isLoading = asteroidIsLoading || lotIsLoading || shipIsLoading;
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (!asteroid || !ship) {
       if (!isLoading) {
         if (props.onClose) props.onClose();

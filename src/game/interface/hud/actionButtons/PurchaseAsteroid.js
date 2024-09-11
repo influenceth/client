@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo } from '~/lib/react-debug';
 import { useHistory } from 'react-router-dom';
 import { Entity } from '@influenceth/sdk';
 
@@ -17,11 +17,11 @@ const PurchaseAsteroid = ({ asteroid, _disabled }) => {
   const { buying } = useBuyAsteroid(Number(asteroid?.id));
   const saleIsActive = useSale(Entity.IDS.ASTEROID);
 
-  const handleClick = useCallback(() => {
+  const handleClick = useCallback(import.meta.url, () => {
     history.push(`/asteroids/${asteroid?.id}`);
   }, [asteroid?.id]);
 
-  let disabledReason = useMemo(() => {
+  let disabledReason = useMemo(import.meta.url, () => {
     if (_disabled) return 'loading...';
     if (!saleIsActive) return 'sale is currently closed';
   }, [_disabled, saleIsActive]);

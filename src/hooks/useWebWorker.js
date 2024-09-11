@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo } from '~/lib/react-debug';
 
 import Worker from 'worker-loader!../worker'; // eslint-disable-line
 
@@ -110,7 +110,7 @@ const totalWorkers = (navigator?.hardwareConcurrency || 4) - 1; // CPUs minus 1
 const workerThreadPool = new WorkerThreadPool(totalWorkers);
 
 const useWebWorker = () => {
-  return useMemo(() => ({
+  return useMemo(import.meta.url, () => ({
     broadcast: (message) => workerThreadPool.broadcast(message),
     processInBackground: (message, callback, transfer) => workerThreadPool.addToQueue(message, callback, transfer),
     cancelBackgroundProcesses: (filterFunc) => workerThreadPool.removeFromQueue(filterFunc)

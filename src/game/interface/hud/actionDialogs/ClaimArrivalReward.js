@@ -1,4 +1,4 @@
-import { useCallback, useContext, useMemo } from 'react';
+import { useCallback, useContext, useMemo } from '~/lib/react-debug';
 import styled from 'styled-components';
 import { Entity } from '@influenceth/sdk';
 
@@ -42,14 +42,14 @@ const Content = styled.div`
 const ClaimArrivalReward = ({ asteroid, crew, onClose }) => {
   const { execute } = useContext(ChainTransactionContext);
 
-  const payload = useMemo(() => {
+  const payload = useMemo(import.meta.url, () => {
     return {
       asteroid: { id: asteroid?.id, label: Entity.IDS.ASTEROID },
       caller_crew: { id: crew?.id, label: Entity.IDS.CREW }
     };
   }, [asteroid?.id, crew?.id]);
 
-  const handleClaim = useCallback(async () => {
+  const handleClaim = useCallback(import.meta.url, async () => {
     await execute('ClaimArrivalReward', payload);
     onClose();
   }, [payload]);

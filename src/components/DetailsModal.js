@@ -6,7 +6,7 @@ import IconButton from '~/components/IconButton';
 import { CloseIcon } from '~/components/Icons';
 import ClipCorner from './ClipCorner';
 import theme from '~/theme';
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from '~/lib/react-debug';
 import useCoachmarkRefSetter from '~/hooks/useCoachmarkRefSetter';
 import { COACHMARK_IDS } from '~/contexts/CoachmarkContext';
 
@@ -142,7 +142,7 @@ const Details = (props) => {
 
   // bc can go from details to details page, explicitly reset tooltip so doesn't linger after transition
   const [showTooltip, setShowTooltip] = useState();
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     setShowTooltip(false);
     const timeoutId = setTimeout(() => { setShowTooltip(true); }, 0);
     return () => clearTimeout(timeoutId);

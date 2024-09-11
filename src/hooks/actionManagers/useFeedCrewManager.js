@@ -1,4 +1,4 @@
-import { useCallback, useContext, useMemo } from 'react';
+import { useCallback, useContext, useMemo } from '~/lib/react-debug';
 import { Entity } from '@influenceth/sdk';
 
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
@@ -9,9 +9,9 @@ const useFeedCrewManager = () => {
   const { crew, isLoading } = useCrewContext();
   const { execute, getPendingTx } = useContext(ChainTransactionContext);
 
-  const caller_crew = useMemo(() => ({ id: crew?.id, label: Entity.IDS.CREW }), [crew?.id]);
+  const caller_crew = useMemo(import.meta.url, () => ({ id: crew?.id, label: Entity.IDS.CREW }), [crew?.id]);
 
-  const feedCrew = useCallback(
+  const feedCrew = useCallback(import.meta.url, 
     ({ origin, originSlot, amount, _orderPath, ...fillProps }) => {
       if (_orderPath) {
         execute('ResupplyFoodFromExchange', {
@@ -39,7 +39,7 @@ const useFeedCrewManager = () => {
     [execute, caller_crew]
   );
 
-  const currentFeeding = useMemo(
+  const currentFeeding = useMemo(import.meta.url, 
     () => {
       if (getPendingTx) {
         return getPendingTx('ResupplyFood', { caller_crew })

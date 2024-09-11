@@ -1,4 +1,4 @@
-import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { useCallback, useContext, useEffect, useMemo, useState } from '~/lib/react-debug';
 import styled from 'styled-components';
 import { Building, Crewmate, Process } from '@influenceth/sdk';
 import cloneDeep from 'lodash/cloneDeep';
@@ -155,7 +155,7 @@ export const useStarterPackPricing = () => {
   const priceHelper = usePriceHelper();
   const { data: wallet } = useWalletPurchasableBalances();
 
-  const adalianPrice = useMemo(() => {
+  const adalianPrice = useMemo(import.meta.url, () => {
     if (!priceConstants) return priceHelper.from(0);
     return priceHelper.from(priceConstants?.ADALIAN_PURCHASE_PRICE, priceConstants?.ADALIAN_PURCHASE_TOKEN);
   }, [priceConstants]);
@@ -166,7 +166,7 @@ export const useStarterPackPricing = () => {
   } = useShoppingListData(1, 0, uniqueProductIds);
 
   // TODO: could just add adv building difference to basic to avoid repeating all those calcs for shared buildings
-  const getMarketCostForBuildingList = useCallback((buildingIds) => {
+  const getMarketCostForBuildingList = useCallback(import.meta.url, (buildingIds) => {
     if (!resourceMarketplaces) return 0;
 
     // get instance of resourceMarketplaces that we can be destructive with
@@ -239,22 +239,22 @@ export const useStarterPackPricing = () => {
     return allOrders.reduce((acc, o) => acc + o.cost, 0);
   }, [resourceMarketplacesUpdatedAt]);
 
-  const introPackSwayMin = useMemo(() => {
+  const introPackSwayMin = useMemo(import.meta.url, () => {
     const marketCost = getMarketCostForBuildingList(introBuildings);
     return (1 + MARKET_BUFFER) * marketCost;
   }, [getMarketCostForBuildingList]);
 
-  const basicPackSwayMin = useMemo(() => {
+  const basicPackSwayMin = useMemo(import.meta.url, () => {
     const marketCost = getMarketCostForBuildingList(basicBuildings);
     return (1 + MARKET_BUFFER) * marketCost;
   }, [getMarketCostForBuildingList]);
 
-  const advPackSwayMin = useMemo(() => {
+  const advPackSwayMin = useMemo(import.meta.url, () => {
     const marketCost = getMarketCostForBuildingList(advBuildings);
     return (1 + MARKET_BUFFER) * marketCost;
   }, [getMarketCostForBuildingList]);
 
-  return useMemo(() => {
+  return useMemo(import.meta.url, () => {
     const introMinPrice = priceHelper.from(introPackPriceUSD * TOKEN_SCALE[TOKEN.USDC], TOKEN.USDC);
     const introMinSwayValue = priceHelper.from(introPackSwayMin * TOKEN_SCALE[TOKEN.SWAY], TOKEN.SWAY);
     const introCrewmatesValue = priceHelper.from(introPackCrewmates * adalianPrice.usdcValue, TOKEN.USDC);
@@ -339,7 +339,7 @@ export const useStarterPacks = () => {
 
   const createAlert = useStore(s => s.dispatchAlertLogged);
 
-  return useMemo(() => {
+  return useMemo(import.meta.url, () => {
     const onPurchase = (which) => async (onIsPurchasing) => {
       const pack = starterPacks[which];
       const totalPrice = pack.price;
@@ -414,11 +414,11 @@ const PurchasePackButton = ({ pack }) => {
 
   const [isPurchasing, setIsPurchasing] = useState();
 
-  const isPurchasingStarterPack = useMemo(() => {
+  const isPurchasingStarterPack = useMemo(import.meta.url, () => {
     return isPurchasing || (pendingTransactions || []).find(tx => tx.key === 'PurchaseStarterPack');
   }, [pendingTransactions]);
 
-  const onPurchase = useCallback(() => {
+  const onPurchase = useCallback(import.meta.url, () => {
     pack.onPurchase((which) => setIsPurchasing(which));
   }, [pack]);
 
@@ -444,7 +444,7 @@ const StarterPackWrapper = ({ children, pack, ...props }) => {
 
   const [isFunding, setIsFunding] = useState();
   const [isFunded, setIsFunded] = useState();
-  const onClick = useCallback(() => {
+  const onClick = useCallback(import.meta.url, () => {
     if (props.asButton) {
       if (pack.price.usdcValue > wallet?.combinedBalance?.to(TOKEN.USDC)) {
         setIsFunding({
@@ -459,7 +459,7 @@ const StarterPackWrapper = ({ children, pack, ...props }) => {
   }, [props.asButton, pack.price, wallet?.combinedBalance]);
 
   // pull pack.onPurchase out of onClick (so can be re-memoized after wallet balance updates before called)
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (isFunded) {
       pack.onPurchase(props.onIsPurchasing);
       setIsFunded();

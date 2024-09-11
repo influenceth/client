@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from '~/lib/react-debug';
 import styled from 'styled-components';
 
 import IconButton from '~/components/IconButton';
@@ -114,7 +114,7 @@ const DraggableModal = ({ draggableId, ...props }) => {
 
   const draggable = useRef();
 
-  const handleMouseDown = useCallback((e) => {
+  const handleMouseDown = useCallback(import.meta.url, (e) => {
     dispatchDraggableToFront(draggableId);
     setDraggingFrom({
       x: e.nativeEvent.offsetX,
@@ -122,7 +122,7 @@ const DraggableModal = ({ draggableId, ...props }) => {
     });
   }, [dispatchDraggableToFront, draggableId]);
 
-  const handleMouseUp = useCallback(() => {
+  const handleMouseUp = useCallback(import.meta.url, () => {
     if (!!draggingFrom) {
       setDraggingFrom();
       if (tmpPosition) {
@@ -132,7 +132,7 @@ const DraggableModal = ({ draggableId, ...props }) => {
     }
   }, [dispatchDraggableMoved, draggingFrom, draggableId, tmpPosition]);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (!!draggingFrom) {
       document.onmousemove = (e) => {
         setTmpPosition({

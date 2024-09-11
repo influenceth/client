@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from '~/lib/react-debug';
 import styled from 'styled-components';
 import moment from 'moment';
 import LoadingAnimation from 'react-spinners/PropagateLoader';
@@ -146,7 +146,7 @@ const RemainingChars = styled.div`
 
 const AnnotationItem = ({ annotation }) => {
   const { data: content, isLoading } = useAnnotationContent(annotation);
-  const ago = useMemo(() => {
+  const ago = useMemo(import.meta.url, () => {
     if (!annotation.createdAt) return 'a long time ago';
     const m = moment(new Date(annotation.createdAt));
     return m.fromNow();
@@ -176,18 +176,18 @@ const AddAnnotationItem = ({ activity }) => {
 
   const [annotation, setAnnotation] = useState();
 
-  const handleChange = useCallback(async (e) => {
+  const handleChange = useCallback(import.meta.url, async (e) => {
     setAnnotation(e.currentTarget.value || '');
     resizeOnKeydown(95)(e);
   }, []);
 
-  const saveNewAnnotation = useCallback(async () => {
+  const saveNewAnnotation = useCallback(import.meta.url, async () => {
     if (isValidAnnotation(annotation)) {
       saveAnnotation(annotation);
     }
   }, [annotation]);
 
-  const remaining = useMemo(() => maxAnnotationLength - (annotation?.length || 0), [annotation?.length]);
+  const remaining = useMemo(import.meta.url, () => maxAnnotationLength - (annotation?.length || 0), [annotation?.length]);
 
   return (
     <ItemWrapper>
@@ -252,13 +252,13 @@ const EntityActivityLog = ({ entity, viewingAs }) => {
   const getActivityConfig = useGetActivityConfig();
   const { data: activities } = useActivities(entity);
 
-  const activityRows = useMemo(() => {
+  const activityRows = useMemo(import.meta.url, () => {
     return (activities || [])
       .map((a) => ({ ...a, _logContent: getActivityConfig(a, viewingAs)?.logContent }))
       .filter((a) => !!a._logContent);
   }, [activities, getActivityConfig, viewingAs]);
 
-  const columns = useMemo(() => {
+  const columns = useMemo(import.meta.url, () => {
     return [
       {
         key: 'createdAt',

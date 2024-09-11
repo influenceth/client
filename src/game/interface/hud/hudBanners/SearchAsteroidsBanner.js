@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo } from '~/lib/react-debug';
 import styled from 'styled-components';
 
 import Dropdown from '~/components/Dropdown';
@@ -66,21 +66,21 @@ const SearchAsteroidsBanner = ({ visible }) => {
   const sort = useStore(s => s.assetSearch[assetType].sort);
   const updateSort = useStore(s => s.dispatchSortUpdated(assetType));
 
-  const toggleSortOrder = useCallback(() => {
+  const toggleSortOrder = useCallback(import.meta.url, () => {
     updateSort([sort[0], sort[1] === 'asc' ? 'desc' : 'asc']);
   }, [sort]);
 
-  const updateSortOrder = useCallback((option) => {
+  const updateSortOrder = useCallback(import.meta.url, (option) => {
     updateSort([option.value || 'Celestial.radius', 'desc']);
   }, [sort]);
 
-  const sortOptions = useMemo(() => {
+  const sortOptions = useMemo(import.meta.url, () => {
     return columns
       .filter((c) => c.sortField && !['owner','spectralType'].includes(c.sortField))  // TODO: ecs refactor
       .map((c) => ({ label: c.label, value: c.sortField, icon: c.icon }));
   }, [columns]);
 
-  const data = useMemo(() => {
+  const data = useMemo(import.meta.url, () => {
     const total = assetSearch?.total;
     const showing = assetSearch?.hits?.length || 0;
     return { total, showing };

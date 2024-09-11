@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from '~/lib/react-debug';
 import { AmbientLight, Color, DirectionalLight } from 'three';
 import { Canvas, useThree } from '@react-three/fiber';
 
@@ -14,7 +14,7 @@ const RenderedAsteroid = ({ asteroid, brightness = 1, varyDistance = false, onRe
   const { camera, gl, scene } = useThree();
   const disposeFunc = useRef();
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (asteroid?.id && webWorkerPool) {
       renderDummyAsteroid(asteroid, asteroid.id < 25 ? 64 : 32, webWorkerPool, (asteroidModel, dispose) => {
         asteroidModel.traverse(function (node) {
@@ -90,16 +90,16 @@ const RenderedAsteroidInCanvas = ({ onReady, ...props }) => {
   // TODO: in general, it might be wise to keep track of all webgl contexts at the app-level and block 
   //  any components that require a canvas until the contexts are freed up (this will be a user-specific
   //  limit, but maybe 4-5 simultaneous contexts max would be safe?)
-  const onReadyInternal = useCallback(() => {
+  const onReadyInternal = useCallback(import.meta.url, () => {
     if (canvas.current) setImageSrc(canvas.current.toDataURL());
     if (onReady) onReady();
   }, [onReady]);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     setImageSrc(null);
   }, [props.asteroid?.id, props.brightness, props.varyDistance])
 
-  const style = useMemo(() => ({ width: '100%', height: '100%', ...(props.style || {}) }), [props.style]);
+  const style = useMemo(import.meta.url, () => ({ width: '100%', height: '100%', ...(props.style || {}) }), [props.style]);
 
   return imageSrc
     ? <img src={imageSrc} style={style} />

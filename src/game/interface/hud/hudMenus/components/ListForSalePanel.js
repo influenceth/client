@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from '~/lib/react-debug';
 import styled from 'styled-components';
 
 import { RadioCheckedIcon, RadioUncheckedIcon, WarningIcon } from '~/components/Icons';
@@ -39,21 +39,21 @@ export const ListForSaleInner = ({ forSaleWarning, isSaving, onCancel, onSave, o
   const [forSale, setForSale] = useState(originalPrice > 0);
   const [price, setPrice] = useState(originalPrice || 0);
 
-  const isDirty = useMemo(() => (originalPrice !== (forSale ? price : 0)), [forSale, originalPrice, price]);
+  const isDirty = useMemo(import.meta.url, () => (originalPrice !== (forSale ? price : 0)), [forSale, originalPrice, price]);
 
-  const isIncomplete = useMemo(() => (forSale && !(price > 0)), [forSale, price]);
+  const isIncomplete = useMemo(import.meta.url, () => (forSale && !(price > 0)), [forSale, price]);
 
-  const onUpdatePrice = useCallback((e) => {
+  const onUpdatePrice = useCallback(import.meta.url, (e) => {
     setPrice((e.currentTarget.value ? parseInt(e.currentTarget.value) : '') || '');
   }, []);
 
-  const cancelForSale = useCallback(() => {
+  const cancelForSale = useCallback(import.meta.url, () => {
     setForSale(originalPrice > 0);
     setPrice(originalPrice);
     if (onCancel) onCancel();
   }, [originalPrice]);
 
-  const saveForSale = useCallback(() => {
+  const saveForSale = useCallback(import.meta.url, () => {
     onSave(forSale ? price : 0);
   }, [onSave, forSale, price]);
 
@@ -109,9 +109,9 @@ export const ListForSaleInner = ({ forSaleWarning, isSaving, onCancel, onSave, o
 const ListForSalePanel = ({ entity, forSaleWarning }) => {
   const { updateListing, isPendingUpdate } = useNftSaleManager(entity);
 
-  const originalPrice = useMemo(() => (entity?.Nft?.price || 0) / 1e6, [entity?.Nft?.price]);
+  const originalPrice = useMemo(import.meta.url, () => (entity?.Nft?.price || 0) / 1e6, [entity?.Nft?.price]);
 
-  const config = useMemo(() => {
+  const config = useMemo(import.meta.url, () => {
     return {
       color: originalPrice ? theme.colors.brightMain : theme.colors.red
     };

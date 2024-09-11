@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from '~/lib/react-debug';
 import styled from 'styled-components';
 import screenfull from 'screenfull';
 import { FiCheckSquare as CheckedIcon, FiSquare as UncheckedIcon } from 'react-icons/fi';
@@ -144,7 +144,7 @@ const GraphicsPane = () => {
   const [ localFOV, setLocalFOV ] = useState(graphics.fov);
   const [ fullscreen, setFullscreen ] = useState(screenfull.isEnabled && screenfull.isFullscreen);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (screenfull.isEnabled) {
       screenfull.on('change', () => {
         setFullscreen(screenfull.isEnabled && screenfull.isFullscreen);
@@ -156,7 +156,7 @@ const GraphicsPane = () => {
     setAutodetect(!graphics.autodetect, gpuInfo);
   };
 
-  const pixelRatioOptions = useMemo(() => {
+  const pixelRatioOptions = useMemo(import.meta.url, () => {
     const options = new Set();
 
     // add device settings and current selection always
@@ -358,7 +358,7 @@ const GameplayPane = () => {
   const dispatchUseSessionsSet = useStore(s => s.dispatchUseSessionsSet);
   const dispatchFeeTokenSet = useStore(s => s.dispatchFeeTokenSet);
 
-  const tutorialIsDisabled = useMemo(() => {
+  const tutorialIsDisabled = useMemo(import.meta.url, () => {
     if (gameplay.dismissTutorial) {
       return true;
     } else if (crewTutorials?.[crew?.id]?.dismissed) {
@@ -367,7 +367,7 @@ const GameplayPane = () => {
     return false;
   }, [crew, crewTutorials, gameplay.dismissTutorial]);
 
-  const toggleTutorialDisabled = useCallback((which) => {
+  const toggleTutorialDisabled = useCallback(import.meta.url, (which) => {
     // disable setting only (i.e. not crew-specific)
     if (which) {
       dispatchTutorialDisabled(true);
@@ -381,7 +381,7 @@ const GameplayPane = () => {
     }
   }, [crew, crewTutorials, gameplay.dismissTutorial]);
 
-  const toggleSessionKeys = useCallback(async (which) => {
+  const toggleSessionKeys = useCallback(import.meta.url, async (which) => {
     dispatchUseSessionsSet(which);
     if (which !== false && !starknetSession && await shouldUseSessionKeys(true)) upgradeToSessionKey();
   }, [starknetSession, upgradeToSessionKey]);

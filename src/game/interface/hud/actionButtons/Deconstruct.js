@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo } from '~/lib/react-debug';
 import { Inventory } from '@influenceth/sdk';
 
 import { DeconstructIcon } from '~/components/Icons';
@@ -19,11 +19,11 @@ const isVisible = ({ constructionStatus, building, crew, ship }) => {
 const Deconstruct = ({ asteroid, crew, lot, onSetAction, _disabled }) => {
   const { constructionStatus } = useConstructionManager(lot?.id);
 
-  const handleClick = useCallback(() => {
+  const handleClick = useCallback(import.meta.url, () => {
     onSetAction('DECONSTRUCT');
   }, [onSetAction]);
 
-  const disabledReason = useMemo(() => {
+  const disabledReason = useMemo(import.meta.url, () => {
     if (_disabled) return 'loading...';
 
     if (

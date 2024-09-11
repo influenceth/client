@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo } from '~/lib/react-debug';
 import styled from 'styled-components';
 
 import Button from '~/components/ButtonAlt';
@@ -25,16 +25,16 @@ const SearchFilterTray = ({ assetType, handleClickFilters }) => {
   const isAssetSearchMatchingDefault = useStore(s => s.isAssetSearchMatchingDefault);
   const isAssetSearchFilterMatchingDefault = useStore(s => s.isAssetSearchFilterMatchingDefault);
 
-  const onClear = useCallback(() => {
+  const onClear = useCallback(import.meta.url, () => {
     resetFilters();
   }, []);
 
-  const onClickFilters = useCallback((e) => {
+  const onClickFilters = useCallback(import.meta.url, (e) => {
     if (handleClickFilters) handleClickFilters(e);
   }, [handleClickFilters]);
 
-  const isDefaultSearch = useMemo(() => isAssetSearchMatchingDefault(assetType), [assetType, filters]);
-  const activeFilters = useMemo(() => {
+  const isDefaultSearch = useMemo(import.meta.url, () => isAssetSearchMatchingDefault(assetType), [assetType, filters]);
+  const activeFilters = useMemo(import.meta.url, () => {
     return Object.keys(filters || {})
       .reduce((acc, fieldName) => acc + (isAssetSearchFilterMatchingDefault(assetType, fieldName) ? 0 : 1), 0)
   }, [assetType, filters]);

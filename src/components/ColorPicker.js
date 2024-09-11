@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useState } from '~/lib/react-debug';
 import styled from 'styled-components';
 import { CompactPicker } from 'react-color';
 import IconButton from './IconButton';
@@ -65,22 +65,22 @@ const ColorPicker = ({ onChange, initialColor, ...restProps}) => {
     ],
   });
 
-  const handleChangeComplete = useCallback((newColor) => {
+  const handleChangeComplete = useCallback(import.meta.url, (newColor) => {
     setColor(newColor.hex);
     if (onChange) onChange(newColor.hex);
   }, [onChange]);
 
-  const onClickAway = useCallback((e) => {
+  const onClickAway = useCallback(import.meta.url, (e) => {
     e.stopPropagation();
     setOpen((o) => !o);
   }, []);
 
-  const onClick = useCallback((e) => {
+  const onClick = useCallback(import.meta.url, (e) => {
     e.stopPropagation();
     setOpen(true);
   }, []);
 
-  const stopProp = useCallback((e) => {
+  const stopProp = useCallback(import.meta.url, (e) => {
     e.stopPropagation();
   }, []);
 

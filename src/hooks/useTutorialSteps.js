@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo } from '~/lib/react-debug';
 import { FaYoutube as YoutubeIcon } from 'react-icons/fa';
 import { Building, Permission, Inventory, Product } from '@influenceth/sdk';
 
@@ -44,7 +44,7 @@ const VideoLink = styled.div`
 `;
 
 const TutorialVideoLink = ({ link }) => {
-  const onClick = useCallback(() => {
+  const onClick = useCallback(import.meta.url, () => {
     window.open(link, '_blank');
   }, [link]);
   return (
@@ -68,14 +68,14 @@ const useTutorialSteps = () => {
   const dispatchDismissCrewTutorial = useStore(s => s.dispatchDismissCrewTutorial);
   const dispatchDismissCrewTutorialStep = useStore(s => s.dispatchDismissCrewTutorialStep);
 
-  const dismissedTutorialSteps = useMemo(() => {
+  const dismissedTutorialSteps = useMemo(import.meta.url, () => {
     const dismissed = new Set();
     (crewTutorial?.dismissedSteps || []).forEach((s) => dismissed.add(s));
     (uncrewTutorial?.dismissedSteps || []).forEach((s) => dismissed.add(s));
     return Array.from(dismissed);
   }, [crewTutorial?.dismissedSteps, uncrewTutorial?.dismissedSteps]);
 
-  const tutorialSteps = useMemo(() => {
+  const tutorialSteps = useMemo(import.meta.url, () => {
     if (loading) return [];
 
     const lotLease = crewAgreements?.find((a) => a.permission === Permission.IDS.USE_LOT);
@@ -318,7 +318,7 @@ const useTutorialSteps = () => {
     ];
   }, [crew, crewDeposits, loading, crewAgreements, crewBuildings]);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     tutorialSteps.forEach((s) => {
       if (s.postcondition && !dismissedTutorialSteps.includes(s.key)) {
         // if postcondition is true (and not dismissed), then dismiss
@@ -328,7 +328,7 @@ const useTutorialSteps = () => {
     });
   }, [crew?.id, dismissedTutorialSteps, tutorialSteps]);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (!loading) {
       if (Object.keys(tutorialSteps).length === dismissedTutorialSteps?.length) {
         dispatchDismissCrewTutorial(crew?.id, true);
@@ -336,7 +336,7 @@ const useTutorialSteps = () => {
     }
   }, [crew?.id, dispatchDismissCrewTutorial, dismissedTutorialSteps, loading])
 
-  return useMemo(() => {
+  return useMemo(import.meta.url, () => {
     return tutorialSteps.filter((s) => {
       return s.precondition && !dismissedTutorialSteps.includes((s.key))
     })

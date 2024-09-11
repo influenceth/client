@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from '~/lib/react-debug';
 import { useQueryClient } from 'react-query';
 import { Building, Entity, Lot } from '@influenceth/sdk';
 
@@ -30,14 +30,14 @@ const useMappedAsteroidLots = (i) => {
 
   // get all leased lots from the server
   const { data: leasedLots, isLoading: leasedLotsLoading, dataUpdatedAt: dataUpdatedAt1 } = useWalletLeasedLots(i);
-  const [lotLeasedMap, leasedTally] = useMemo(() => ([
+  const [lotLeasedMap, leasedTally] = useMemo(import.meta.url, () => ([
     (leasedLots || []).reduce((acc, d) => ({ ...acc, [Lot.toIndex(d.id)]: true }), {}),
     leasedLots?.length || 0
   ]), [leasedLots, dataUpdatedAt1]);
 
   // get all occupied-by-me buildings from the server
   const { data: crewLots, isLoading: crewLotsLoading, dataUpdatedAt: dataUpdatedAt2 } = useAsteroidCrewBuildings(i);
-  const myOccupationMap = useMemo(() => {
+  const myOccupationMap = useMemo(import.meta.url, () => {
     if (crewLotsLoading) return null;
     return (crewLots || []).reduce((acc, p) => {
       const _locations = locationsArrToObj(p?.Location?.locations || []);
@@ -50,7 +50,7 @@ const useMappedAsteroidLots = (i) => {
 
   // get all occupied-by-me ships from the server
   const { data: crewShips, isLoading: crewShipsLoading, dataUpdatedAt: dataUpdatedAt3 } = useCrewShips();
-  const myShipMap = useMemo(() => {
+  const myShipMap = useMemo(import.meta.url, () => {
     if (crewShipsLoading) return null;
     return (crewShips || []).reduce((acc, p) => {
       const _locations = locationsArrToObj(p?.Location?.locations || []);
@@ -62,12 +62,12 @@ const useMappedAsteroidLots = (i) => {
   }, [crewShips, crewShipsLoading, dataUpdatedAt3]);
 
   // determine if search is on or not
-  const searchIsOn = useMemo(() => {
+  const searchIsOn = useMemo(import.meta.url, () => {
     return openHudMenu === 'ASTEROID_MAP_SEARCH' || !isAssetSearchMatchingDefault('lotsMapped');
   }, [openHudMenu, mappedLotSearch]);
 
   // init highlight config helpers
-  const { highlightValueMap, highlightColorMap } = useMemo(() => {
+  const { highlightValueMap, highlightColorMap } = useMemo(import.meta.url, () => {
     let colorMap;
     let valueMap = {};
     if (highlightConfig) {
@@ -88,7 +88,7 @@ const useMappedAsteroidLots = (i) => {
   }, [highlightConfig, searchIsOn]);
 
   // create "search results" test function
-  const isFilterMatch = useCallback((unpacked) => {
+  const isFilterMatch = useCallback(import.meta.url, (unpacked) => {
     const filters = mappedLotSearch?.filters || {};
     if (searchIsOn) {
       if (filters.category && !filters.category.includes(unpacked.category.toString())) return false;
@@ -104,7 +104,7 @@ const useMappedAsteroidLots = (i) => {
 
   // build sparse array of search results
   // TODO (enhancement): should send this to a worker if possible
-  const [lotResultMap, lotUseMap, lotColorMap, lotUseTallies, resultTally] = useMemo(() => {
+  const [lotResultMap, lotUseMap, lotColorMap, lotUseTallies, resultTally] = useMemo(import.meta.url, () => {
     const lotResult = {};
     const lotColor = {};
     const lotUse = {};
@@ -168,11 +168,11 @@ const useMappedAsteroidLots = (i) => {
     return [lotResult, lotUse, lotColor, lotUseTallies, resultTally];
   }, [lotData, lotDataUpdatedAt, myOccupationMap, myShipMap, isFilterMatch, highlightValueMap, rebuildTally]);
 
-  const refetch = useCallback(() => {
+  const refetch = useCallback(import.meta.url, () => {
     setRebuildTally((t) => t + 1);
   }, [])
 
-  const processEvent = useCallback(async (eventType, body) => {
+  const processEvent = useCallback(import.meta.url, async (eventType, body) => {
     console.log('processEvent', eventType, body);
 
     let asteroidId, lotIndex, buildingCategory;
@@ -245,7 +245,7 @@ const useMappedAsteroidLots = (i) => {
 
   const isLoading = lotDataLoading || leasedLotsLoading || crewLotsLoading;
 
-  return useMemo(() => {
+  return useMemo(import.meta.url, () => {
     return {
       data: {
         lotUseTallies,

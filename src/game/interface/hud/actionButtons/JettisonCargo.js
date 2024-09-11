@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo } from '~/lib/react-debug';
 import { Inventory, Permission } from '@influenceth/sdk';
 
 import { JettisonCargoIcon } from '~/components/Icons';
@@ -13,14 +13,14 @@ const isVisible = ({ crew, lot, ship }) => false;
 };*/
 
 const JettisonCargo = ({ asteroid, blockTime, crew, lot, ship, onSetAction, dialogProps = {}, _disabled, _disabledReason }) => {
-  const origin = useMemo(() => ship || lot?.surfaceShip || lot?.building, [ship, lot]);
+  const origin = useMemo(import.meta.url, () => ship || lot?.surfaceShip || lot?.building, [ship, lot]);
   const { currentJettison } = useJettisonCargoManager(origin);
 
-  const handleClick = useCallback(() => {
+  const handleClick = useCallback(import.meta.url, () => {
     onSetAction('JETTISON_CARGO', { origin, ...dialogProps });
   }, [dialogProps, origin]);
 
-  const disabledReason = useMemo(() => {
+  const disabledReason = useMemo(import.meta.url, () => {
     if (_disabledReason) return _disabledReason;
     if (_disabled) return 'loading...';
     if (currentJettison) return 'jettisoning...';

@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from '~/lib/react-debug';
 import styled from 'styled-components';
 
 import theme, { hexToRGB } from '~/theme';
@@ -31,7 +31,7 @@ const QuantaInput = styled.input`
 const PartialSelectMenu = ({ maxSelectable, onChange, onClose, resource, selected }) => {
   const fieldRef = useRef();
 
-  const onBlur = useCallback(() => {
+  const onBlur = useCallback(import.meta.url, () => {
     let useValue = parseInt(fieldRef.current.value) || 0;
     if (useValue < 0) useValue = 0;
     if (useValue > maxSelectable) useValue = maxSelectable;
@@ -39,14 +39,14 @@ const PartialSelectMenu = ({ maxSelectable, onChange, onClose, resource, selecte
     onClose();
   }, []);
 
-  const onKeyDown = useCallback((e) => {
+  const onKeyDown = useCallback(import.meta.url, (e) => {
     if (e.key === 'Enter' || e.key === 'Tab' || e.key === 'Escape') {
       e.preventDefault();
       onBlur();
     }
   }, []);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (fieldRef.current) {
       fieldRef.current.value = selected || 0;
       fieldRef.current.select();
@@ -69,7 +69,7 @@ const PartialSelectMenu = ({ maxSelectable, onChange, onClose, resource, selecte
 };
 
 const ResourceSelection = ({ item, onSelectItem }) => {
-  const props = useMemo(() => {
+  const props = useMemo(import.meta.url, () => {
     const config = {};
     if (item.selected > 0) {
       config.badgeColor = theme.colors.brightMain;
@@ -96,7 +96,7 @@ const ResourceSelection = ({ item, onSelectItem }) => {
     return config;
   }, [item]);
 
-  const onToggleAll = useCallback(() => {
+  const onToggleAll = useCallback(import.meta.url, () => {
     if (item.selected > 0) onSelectItem(0);
     else onSelectItem(item.maxSelectable);
   }, [item]);

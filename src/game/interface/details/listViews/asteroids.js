@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo } from '~/lib/react-debug';
 import styled from 'styled-components';
 import { Address, Asteroid } from '@influenceth/sdk';
 import { constants } from '@influenceth/astro';
@@ -47,7 +47,7 @@ const useColumns = () => {
   const watchAsteroid = useWatchAsteroid();
   const unWatchAsteroid = useUnWatchAsteroid();
 
-  const toggleWatchlist = useCallback((id) => () => {
+  const toggleWatchlist = useCallback(import.meta.url, (id) => () => {
     if (watchlistIds.includes(id)) {
       unWatchAsteroid.mutate(id);
     } else {
@@ -55,7 +55,7 @@ const useColumns = () => {
     }
   }, [watchlistIds]);
 
-  return useMemo(() => {
+  return useMemo(import.meta.url, () => {
     const columns = [
       {
         key: 'my',

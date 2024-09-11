@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect } from '~/lib/react-debug';
 import styled from 'styled-components';
 import { Tooltip } from 'react-tooltip';
 import { Switch, Route, Redirect } from 'react-router-dom';
@@ -90,7 +90,7 @@ const Interface = () => {
   const dispatchToggleInterface = useStore(s => s.dispatchToggleInterface);
   const dispatchToggleDevTools = useStore(s => s.dispatchToggleDevTools);
 
-  const handleInterfaceShortcut = useCallback((e) => {
+  const handleInterfaceShortcut = useCallback(import.meta.url, (e) => {
     // ctrl+-
     if (e.ctrlKey && e.which === 189) dispatchLauncherPage(launcherPage ? undefined : 'play');
     // ctrl+1
@@ -112,7 +112,7 @@ const Interface = () => {
     if (e.ctrlKey && e.which === 220) dispatchReorientCamera(true);
   }, [dispatchToggleInterface, dispatchToggleDevTools, dispatchRecenterCamera, dispatchReorientCamera, launcherPage]);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     document.addEventListener('keyup', handleInterfaceShortcut);
     return () => {
       document.removeEventListener('keyup', handleInterfaceShortcut);
@@ -121,7 +121,7 @@ const Interface = () => {
 
   // TODO: _launcher vvv
   const { create, destroy } = useControlledAlert();
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (!isLaunched) {
       const alertId = create({
         icon: <span style={{ color: theme.colors.success }}><PurchaseAsteroidIcon /></span>,

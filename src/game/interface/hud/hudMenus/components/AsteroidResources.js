@@ -1,4 +1,4 @@
-import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
+import { Fragment, useCallback, useEffect, useMemo, useState } from '~/lib/react-debug';
 import styled from 'styled-components';
 import { Asteroid } from '@influenceth/sdk';
 
@@ -106,7 +106,7 @@ const AsteroidResources = ({ onClose }) => {
   const resourceMap = useStore(s => s.asteroids.resourceMap);
   const coachmarks = useStore(s => s.coachmarks);
 
-  const onClick = useCallback((i) => () => {
+  const onClick = useCallback(import.meta.url, (i) => () => {
     if (resourceMap.active && resourceMap.selected === Number(i)) {
       dispatchResourceMapSelect();
     } else {
@@ -116,7 +116,7 @@ const AsteroidResources = ({ onClose }) => {
   }, [resourceMap]);
 
   // default to most abundant emissive map when panel is opened...
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (!resourceMap.active && groupAbundances.length > 0) {
       if (!resourceMap.selected) {
         dispatchResourceMapSelect(groupAbundances[0].resources[0].id);
@@ -125,8 +125,8 @@ const AsteroidResources = ({ onClose }) => {
     }
   }, []);
 
-  const unpackedBonuses = useMemo(() => (asteroid && Asteroid.Entity.getBonuses(asteroid)) || [], [asteroid]);
-  const nonzeroBonuses = useMemo(() => unpackedBonuses.filter((b) => b.level > 0), [unpackedBonuses]);
+  const unpackedBonuses = useMemo(import.meta.url, () => (asteroid && Asteroid.Entity.getBonuses(asteroid)) || [], [asteroid]);
+  const nonzeroBonuses = useMemo(import.meta.url, () => unpackedBonuses.filter((b) => b.level > 0), [unpackedBonuses]);
 
   return (
     <Scrollable>

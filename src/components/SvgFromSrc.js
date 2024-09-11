@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from '~/lib/react-debug';
 import styled from 'styled-components';
 
 const SvgWrapper = styled.span`
@@ -11,7 +11,7 @@ const SvgFromSrc = ({ src }) => {
   //const [isLoaded, setIsLoaded] = useState(false);
   //const [isErrored, setIsErrored] = useState(false);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
       fetch(src)
         .then(res => res.text())
         .then(setSvg)

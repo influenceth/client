@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from '~/lib/react-debug';
 import { useHistory, useParams } from 'react-router-dom';
 import styled from 'styled-components';
 
@@ -332,7 +332,7 @@ const CrewAssignments = () => {
   const [selectedStory, setSelectedStory] = useState();
 
   // TODO: genesis book deprecation vvv
-  const eligibleCrew = useMemo(() => {
+  const eligibleCrew = useMemo(import.meta.url, () => {
     if (crew && crewmateMap) {
       const eligible = crew._crewmates
         .filter((i) => [1,2,3].includes(crewmateMap[i]?.crewCollection))
@@ -344,7 +344,7 @@ const CrewAssignments = () => {
   }, [crew, crewmateMap]); // eslint-disable-line react-hooks/exhaustive-deps
   // ^^^
 
-  const selectStory = useCallback((story) => () => {
+  const selectStory = useCallback(import.meta.url, (story) => () => {
     if (story) {
       playSound('click');
       setSelectedStory(story);
@@ -354,7 +354,7 @@ const CrewAssignments = () => {
     }
   }, [playSound]);
 
-  const selectCrewmate = useCallback((crewId) => async () => {
+  const selectCrewmate = useCallback(import.meta.url, (crewId) => async () => {
     if (bookReady && selectedStory) {
       const crewStatus = selectedStory.crewStatuses[crewId];
       if (crewStatus && !['notReady', 'loading'].includes(crewStatus)) {
@@ -386,7 +386,7 @@ const CrewAssignments = () => {
     playSound('failure');
   }, [bookId, bookReady, createStorySession, history, playSound, selectedStory]);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (book && eligibleCrew) {
       let firstIncompleteStory = null;
       let initialSelectedStory = null;
@@ -458,7 +458,7 @@ const CrewAssignments = () => {
     }
   }, [book, eligibleCrew, initialSelectedId]);
 
-  const togglePart = useCallback((partId) => () => {
+  const togglePart = useCallback(import.meta.url, (partId) => () => {
     playSound('click');
     if (collapsedParts.includes(partId)) {
       setCollapsedParts(

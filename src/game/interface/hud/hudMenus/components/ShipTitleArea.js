@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo } from '~/lib/react-debug';
 import { Entity, Ship } from '@influenceth/sdk';
 
 import { LocationIcon } from '~/components/Icons';
@@ -7,7 +7,7 @@ import EntityName from '~/components/EntityName';
 import TitleArea from '../components/TitleArea';
 
 const ShipTitleArea = ({ ship }) => {
-  const locations = useMemo(() => {
+  const locations = useMemo(import.meta.url, () => {
     if (!ship?.Location?.locations) return [];
     const asteroidEntity = ship.Location.locations.find((l) => l.label === Entity.IDS.ASTEROID);
     if (asteroidEntity) {

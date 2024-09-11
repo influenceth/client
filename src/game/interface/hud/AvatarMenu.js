@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from '~/lib/react-debug';
 import { useHistory } from 'react-router-dom';
 import styled, { css, keyframes } from 'styled-components';
 
@@ -200,7 +200,7 @@ const AvatarMenu = () => {
   
   const [ffTarget, setFFTarget] = useState();
 
-  const silhouetteOverlay = useMemo(() => {
+  const silhouetteOverlay = useMemo(import.meta.url, () => {
     if (!captain) {
       return {
         alwaysOn: ['icon'],
@@ -214,7 +214,7 @@ const AvatarMenu = () => {
     return null;
   }, [captain]);
 
-  const onClick = useCallback((crewmateId) => () => {
+  const onClick = useCallback(import.meta.url, (crewmateId) => () => {
     if (simulation) {
       if (!crewmateId || (crewmateId === SIMULATION_CONFIG.crewmateId)) {
         // TODO: should/could link back to simulation crewmate
@@ -228,7 +228,7 @@ const AvatarMenu = () => {
     return history.push('/crew');
   }, [simulation, simulationActions]);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     const { canFastForward, crewReadyAt, taskReadyAt } = simulation || {};
     if (!ffTarget) {
       if (canFastForward && (crewReadyAt || taskReadyAt)) {

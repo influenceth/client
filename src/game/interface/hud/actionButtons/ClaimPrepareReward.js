@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo } from '~/lib/react-debug';
 import { Address } from '@influenceth/sdk';
 
 import { ClaimRewardIcon } from '~/components/Icons';
@@ -11,11 +11,11 @@ const isVisible = ({ account, asteroid }) => {
 };
 
 const ClaimPrepareReward = ({ asteroid, onSetAction, _disabled }) => {
-  const handleClick = useCallback(() => {
+  const handleClick = useCallback(import.meta.url, () => {
     onSetAction('CLAIM_PREPARE_REWARD', { asteroid });
   }, [onSetAction]);
 
-  const disabledReason = useMemo(() => {
+  const disabledReason = useMemo(import.meta.url, () => {
     if (_disabled) return 'loading...';
   }, [_disabled]);
 

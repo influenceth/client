@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from '~/lib/react-debug';
 import styled from 'styled-components';
 import { ReactNotifications, Store as notify } from 'react-notifications-component';
 import 'react-notifications-component/dist/theme.css';
@@ -155,7 +155,7 @@ const getOptions = ({ level, duration, hideCloseIcon, onRemoval, width }) => {
 }
 
 export const useControlledAlert = () => {
-  const create = useCallback((alertData) => {
+  const create = useCallback(import.meta.url, (alertData) => {
     return send(
       <AlertWrapper>
         <Icon>
@@ -169,7 +169,7 @@ export const useControlledAlert = () => {
     );
   }, []);
 
-  const destroy = useCallback((id) => {
+  const destroy = useCallback(import.meta.url, (id) => {
     return notify.removeNotification(id);
   }, []);
 
@@ -183,7 +183,7 @@ const Alerts = () => {
 
   const stacks = useRef({});
 
-  const collapseStack = useCallback((stackId) => {
+  const collapseStack = useCallback(import.meta.url, (stackId) => {
     if (!stacks.current[stackId]) stacks.current[stackId] = {};
     
     if (stacks.current[stackId].messageId && stacks.current[stackId].endTime > Date.now()) {
@@ -195,7 +195,7 @@ const Alerts = () => {
     }
   }, []);
 
-  const updateStack = useCallback((stackId, newMessageId, duration) => {
+  const updateStack = useCallback(import.meta.url, (stackId, newMessageId, duration) => {
     stacks.current[stackId] = {
       messageId: newMessageId,
       endTime: Date.now() + duration,
@@ -203,7 +203,7 @@ const Alerts = () => {
     };
   }, []);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (alerts?.length === 0) return;
     alerts.filter(a => !a.notified).forEach(a => {
       const { type, data, level, duration } = a;

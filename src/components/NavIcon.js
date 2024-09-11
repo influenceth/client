@@ -1,4 +1,4 @@
-import React from 'react';
+import React from '~/lib/react-debug';
 import styled, { css, keyframes } from 'styled-components';
 
 const innerDiamondDimensionDefault = 20;

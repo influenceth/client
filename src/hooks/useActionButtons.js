@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo } from '~/lib/react-debug';
 import { Ship } from '@influenceth/sdk';
 import cloneDeep from 'lodash/cloneDeep';
 
@@ -138,7 +138,7 @@ const useActionButtons = () => {
   // actionable ship
   // NOTE: this does not handle escape pod... these are only for real ships, and that is
   //  expected for the action buttons in their current state
-  const targetShip = useMemo(() => {
+  const targetShip = useMemo(import.meta.url, () => {
     let ship = null;
 
     // if zoomed to ship
@@ -166,7 +166,7 @@ const useActionButtons = () => {
   }, [zoomedToShip, crewedShip, lot, crew?.id]);
 
   // TODO: should this be useMemo?
-  const actions = useMemo(() => {
+  const actions = useMemo(import.meta.url, () => {
     if (asteroidIsLoading || lotIsLoading || crewedShipIsLoading || zoomedShipIsLoading) return [];
     return Object.keys(actionButtons)
       .filter((k) => !actionButtons[k].isVisible || actionButtons[k].isVisible({

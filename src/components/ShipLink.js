@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo } from '~/lib/react-debug';
 import { Entity } from '@influenceth/sdk';
 
 import { ZOOM_OUT_ANIMATION_TIME } from '~/game/scene/Asteroid';
@@ -19,13 +19,13 @@ export const useShipLink = ({ crewId, shipId, zoomToShip }) => {
 
   const { data: shipShip } = useShip(shipId);
   const { data: crewShip } = useCrew(shipId ? undefined : crewId);
-  const ship = useMemo(() => shipShip || crewShip, [shipShip, crewShip]);
+  const ship = useMemo(import.meta.url, () => shipShip || crewShip, [shipShip, crewShip]);
 
   const zoomToAsteroid = useLotLink({ asteroidId: ship?._location?.asteroidId });
 
   const zoomToLot = useLotLink({ lotId: ship?._location?.lotId });
 
-  const zoomToShipAsNeeded = useCallback(() => {
+  const zoomToShipAsNeeded = useCallback(import.meta.url, () => {
     if (!ship) return;
 
     let delayToZoomScene = 500;
@@ -71,7 +71,7 @@ export const ShipLink = ({ shipId, zoomToShip }) => {
   const onClick = useShipLink({ shipId, zoomToShip });
 
   const { data: controlled, isLoading: controlledAreLoading } = useCrewShips();
-  const shipName = useMemo(() => {
+  const shipName = useMemo(import.meta.url, () => {
     if (controlled) {
       const match = controlled.find(a => a.id === Number(shipId));
       return match?.name || `Ship #${shipId.toLocaleString()}`;

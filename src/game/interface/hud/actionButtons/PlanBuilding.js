@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from '~/lib/react-debug';
 import { Permission } from '@influenceth/sdk';
 
 import { PlanBuildingIcon } from '~/components/Icons';
@@ -24,11 +24,11 @@ const isVisible = ({ constructionStatus, crew, lot, ship }) => {
 const PlanBuilding = ({ asteroid, blockTime, crew, lot, onSetAction, simulation, simulationActions, _disabled }) => {
   const { constructionStatus } = useConstructionManager(lot?.id);
   const setCoachmarkRef = useCoachmarkRefSetter();
-  const handleClick = useCallback(() => {
+  const handleClick = useCallback(import.meta.url, () => {
     onSetAction('PLAN_BUILDING');
   }, [onSetAction]);
 
-  const disabledReason = useMemo(() => {
+  const disabledReason = useMemo(import.meta.url, () => {
     const isControlledByMe = crew && lot && Permission.isPermitted(crew, Permission.IDS.USE_LOT, lot, blockTime);
 
     if (_disabled) return 'loading...';

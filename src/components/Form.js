@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState } from '~/lib/react-debug';
 import styled, { css } from 'styled-components';
 import { Tooltip } from 'react-tooltip';
 import LoadingAnimation from 'react-spinners/BarLoader';

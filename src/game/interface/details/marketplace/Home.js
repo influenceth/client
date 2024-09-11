@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from '~/lib/react-debug';
 import styled from 'styled-components';
 import Ticker from 'react-ticker';
 import { Product } from '@influenceth/sdk';
@@ -294,18 +294,18 @@ const MarketplaceHome = ({ asteroid, listings, mode, setMode, orderTally, onSele
 
   const setCoachmarkRef = useCoachmarkRefSetter();
   const coachmarkHelperProduct = useStore(s => s.coachmarks?.[COACHMARK_IDS.asteroidMarketsHelper]);
-  const setCoachmarkHelperRef = useMemo(() => setCoachmarkRef(COACHMARK_IDS.asteroidMarketsHelper), [setCoachmarkRef]);
+  const setCoachmarkHelperRef = useMemo(import.meta.url, () => setCoachmarkRef(COACHMARK_IDS.asteroidMarketsHelper), [setCoachmarkRef]);
 
   const options = [
     { value: 'liquidity', label: 'Liquidity' },
     { value: 'alphabetical', label: 'Alphabetical'}
   ];
 
-  const tickerEnabled = useMemo(() => {
+  const tickerEnabled = useMemo(import.meta.url, () => {
     return !marketplace;
   }, [!!marketplace]);
 
-  const tickerListings = useMemo(() => {
+  const tickerListings = useMemo(import.meta.url, () => {
     if (!tickerEnabled) return [];
 
     return listings
@@ -319,7 +319,7 @@ const MarketplaceHome = ({ asteroid, listings, mode, setMode, orderTally, onSele
       .slice(0, 10);
   }, [tickerEnabled, listings, mode]);
 
-  const [ filteredCount, filteredListings ] = useMemo(() => {
+  const [ filteredCount, filteredListings ] = useMemo(import.meta.url, () => {
     const filtered = listings
       .filter(({ product }) => {
         return nameFilter.length === 0 ||
@@ -335,7 +335,7 @@ const MarketplaceHome = ({ asteroid, listings, mode, setMode, orderTally, onSele
 
   // unclear why this is required, but if no timeout, then ticker just renders a "0"
   const [tickerReady, setTickerReady] = useState(false);
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (!!tickerListings?.length) {
       setTimeout(() => {
         setTickerReady(true);
@@ -343,11 +343,11 @@ const MarketplaceHome = ({ asteroid, listings, mode, setMode, orderTally, onSele
     }
   }, [!!tickerListings?.length]);
 
-  const coachmarkHelperProductIsOnPage = useMemo(() => {
+  const coachmarkHelperProductIsOnPage = useMemo(import.meta.url, () => {
     return !!filteredListings.find((l) => l.product === coachmarkHelperProduct);
   }, [coachmarkHelperProduct, filteredListings]);
 
-  const handleNameFilterFocus = useCallback((e) => {
+  const handleNameFilterFocus = useCallback(import.meta.url, (e) => {
     if (coachmarkHelperProduct && !coachmarkHelperProductIsOnPage && !nameFilter) {
       setNameFilter(`${(Product.TYPES[coachmarkHelperProduct].name || '').toLowerCase()}`);
     }

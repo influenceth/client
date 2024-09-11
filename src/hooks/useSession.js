@@ -1,4 +1,4 @@
-import { useContext, useMemo } from 'react';
+import { useContext, useMemo } from '~/lib/react-debug';
 
 import SessionContext from '~/contexts/SessionContext';
 import SIMULATION_CONFIG from '~/simulation/simulationConfig';
@@ -12,7 +12,7 @@ const useSession = (includeSimulationOverrides = true) => {
   const simulationEnabled = useStore(s => s.simulationEnabled);
   const simulationState = useStore(s => s.simulation);
 
-  const [simulationOverrides, overrideBlockTime] = useMemo(() => {
+  const [simulationOverrides, overrideBlockTime] = useMemo(import.meta.url, () => {
     if (includeSimulationOverrides && simulationEnabled && !context?.accountAddress) {
       return [
         simulationState,
@@ -22,7 +22,7 @@ const useSession = (includeSimulationOverrides = true) => {
     return [null, null];
   }, [context?.accountAddress, includeSimulationOverrides, simulationEnabled, simulationState]);
 
-  return useMemo(() => {
+  return useMemo(import.meta.url, () => {
     if (simulationOverrides) {
       return {
         ...context,

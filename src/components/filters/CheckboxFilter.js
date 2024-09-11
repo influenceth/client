@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from '~/lib/react-debug';
 import styled from 'styled-components';
 import { FiCheckSquare as CheckedIcon, FiSquare as UncheckedIcon } from 'react-icons/fi';
 
@@ -34,14 +34,14 @@ const CheckboxFilter = ({
   const highlight = useStore(s => s.assetSearch[assetType].highlight);
   const fieldHighlight = highlight && highlight.field === highlightFieldName;
   
-  const initialValues = useMemo(() => {
+  const initialValues = useMemo(import.meta.url, () => {
     return options.reduce((acc, { key, initialValue }) => ({ ...acc, [key]: initialValue }), {});
   }, [options]);
   
   const [ types, setTypes ] = useState({ ...initialValues });
   const [highlightColors, setHighlightColors] = useState({ ...(fieldHighlight?.colorMap || defaultColorMap) });
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     const newTypes = ({ ...initialValues });
     if (filters[fieldName] !== undefined) {
       const filterArr = filters[fieldName];
@@ -52,7 +52,7 @@ const CheckboxFilter = ({
     setTypes(newTypes);
   }, [filters[fieldName]]);
 
-  const onClick = useCallback((k) => (e) => {
+  const onClick = useCallback(import.meta.url, (k) => (e) => {
     e.stopPropagation();
     const newTypes = {
       ...types,
@@ -61,18 +61,18 @@ const CheckboxFilter = ({
     onChange({ [fieldName]: Object.keys(newTypes).filter((k) => newTypes[k]) });
   }, [onChange, types]);
 
-  const toggleAllMode = useMemo(() => {
+  const toggleAllMode = useMemo(import.meta.url, () => {
     let selectedTally = (filters[fieldName] !== undefined)
       ? filters[fieldName].length
       : options.length;
     return selectedTally < options.length / 2;
   }, [filters[fieldName]])
 
-  const toggleAll = useCallback(() => {
+  const toggleAll = useCallback(import.meta.url, () => {
     onChange({ [fieldName]: toggleAllMode ? Object.keys(types) : [] });
   }, [toggleAllMode, fieldName]);
 
-  const toggleAllLabel = useMemo(() => {
+  const toggleAllLabel = useMemo(import.meta.url, () => {
     if (options.length > 3) {
       return toggleAllMode ? 'Select All' : 'Deselect All';
     }

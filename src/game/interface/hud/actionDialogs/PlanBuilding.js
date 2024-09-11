@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from '~/lib/react-debug';
 import styled from 'styled-components';
 import { Building, Crewmate, Lot, Permission } from '@influenceth/sdk';
 
@@ -44,19 +44,19 @@ const PlanBuilding = ({ asteroid, lot, constructionManager, stage, ...props }) =
 
   const [buildingType, setBuildingType] = useState();
 
-  const crewTravelBonus = useMemo(() => {
+  const crewTravelBonus = useMemo(import.meta.url, () => {
     if (!crew) return {};
     return getCrewAbilityBonuses(Crewmate.ABILITY_IDS.HOPPER_TRANSPORT_TIME, crew) || {};
   }, [crew]);
 
-  const crewDistBonus = useMemo(() => {
+  const crewDistBonus = useMemo(import.meta.url, () => {
     if (!crew) return {};
     return getCrewAbilityBonuses(Crewmate.ABILITY_IDS.FREE_TRANSPORT_DISTANCE, crew) || {};
   }, [crew]);
 
-  const lotIsControlled = useMemo(() => crewCan(Permission.IDS.USE_LOT, lot), [crewCan, lot]);
+  const lotIsControlled = useMemo(import.meta.url, () => crewCan(Permission.IDS.USE_LOT, lot), [crewCan, lot]);
 
-  const { totalTime: crewTravelTime, tripDetails } = useMemo(() => {
+  const { totalTime: crewTravelTime, tripDetails } = useMemo(import.meta.url, () => {
     if (!asteroid?.id || !crew?._location?.lotId || !lot?.id) return {};
     if (lotIsControlled) return { totalTime: 0, tripDetails: null };
     const crewLotIndex = Lot.toIndex(crew?._location?.lotId);
@@ -66,12 +66,12 @@ const PlanBuilding = ({ asteroid, lot, constructionManager, stage, ...props }) =
     ], crew?._timeAcceleration);
   }, [asteroid?.id, lot, crew?._location?.lotId, crew?._timeAcceleration, crewTravelBonus, crewDistBonus, lotIsControlled]);
 
-  const [crewTimeRequirement, taskTimeRequirement] = useMemo(() => {
+  const [crewTimeRequirement, taskTimeRequirement] = useMemo(import.meta.url, () => {
     if (!tripDetails) return [];
     return [crewTravelTime, 0];
   }, [crewTravelTime, tripDetails]);
 
-  const stats = useMemo(() => {
+  const stats = useMemo(import.meta.url, () => {
     if (!asteroid?.id || !lot?.id) return [];
     const taskTime = 0;
     return [
@@ -96,7 +96,7 @@ const PlanBuilding = ({ asteroid, lot, constructionManager, stage, ...props }) =
     ];
   }, [crewTravelTime, tripDetails]);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (currentConstructionAction?.buildingType) setBuildingType(currentConstructionAction.buildingType)
   }, [currentConstructionAction?.buildingType]);
 
@@ -106,7 +106,7 @@ const PlanBuilding = ({ asteroid, lot, constructionManager, stage, ...props }) =
     setSiteSelectorOpen();
   }
 
-  const buildingRequirements = useMemo(() => getBuildingRequirements({ Building: { buildingType } }), [buildingType]);
+  const buildingRequirements = useMemo(import.meta.url, () => getBuildingRequirements({ Building: { buildingType } }), [buildingType]);
 
   return (
     <>
@@ -209,7 +209,7 @@ const Wrapper = (props) => {
   const simulationEnabled = useSimulationEnabled();
   const simulation = useSimulationState();
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (!asteroid || !lot) {
       if (!isLoading) {
         if (props.onClose) props.onClose();
@@ -218,7 +218,7 @@ const Wrapper = (props) => {
   }, [asteroid, lot, isLoading]);
 
   // stay in this window until PLANNED, then swap to CONSTRUCT
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (!['READY_TO_PLAN', 'PLANNING'].includes(constructionManager.constructionStatus)) {
       if (simulationEnabled && !simulation?.canFastForward) {
         if (props.onClose) props.onClose();

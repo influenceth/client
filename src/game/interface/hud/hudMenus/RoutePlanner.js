@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from '~/lib/react-debug';
 import styled from 'styled-components';
 import { Crew, Crewmate, Entity, Inventory, Ship, Time } from '@influenceth/sdk';
 
@@ -233,14 +233,14 @@ const RoutePlanner = () => {
   const [ship, setShip] = useState();
 
   // TODO: should this use baseTime instead?
-  const crewFoodSupplies = useMemo(() => {
+  const crewFoodSupplies = useMemo(import.meta.url, () => {
     if (!crew) return 100;
     const realTime = Time.fromOrbitADays(coarseTime, TIME_ACCELERATION).toDate().getTime() / 1000;
     const lastFedAgo = Time.toGameDuration(realTime - (crew?.Crew?.lastFed || 0), parseInt(TIME_ACCELERATION));
     return lastFedAgo > 0 ? Math.round(100 * Crew.getCurrentFoodRatio(lastFedAgo, crew._foodBonuses?.consumption)) : 100;
   }, [coarseTime, crew?.Crew?.lastFed]);
 
-  const shipList = useMemo(() => {
+  const shipList = useMemo(import.meta.url, () => {
     const escapeModule = crew?.Ship?.emergencyAt > 0 ? [ Object.assign({ _simulated: false }, crew ) ] : [];
     if (crewIsLoading || myShipsLoading) return [];
 
@@ -282,7 +282,7 @@ const RoutePlanner = () => {
   }, [crewIsLoading, crew?._location?.shipId, myShips, myShipsLoading, originId]);
 
   // select default
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (shipList.length > 0 && !ship) {
       if (!!crew) {
         setShip(shipList[0]);
@@ -292,11 +292,11 @@ const RoutePlanner = () => {
     }
   }, [!!crew, crewIsLoading, shipList, ship]);
 
-  const toggleEmode = useCallback(() => {
+  const toggleEmode = useCallback(import.meta.url, () => {
     setEmode((e) => !e);
   }, []);
 
-  const shipConfig = useMemo(() => {
+  const shipConfig = useMemo(import.meta.url, () => {
     if (!ship) return null;
 
     const shipTypeConfig = Ship.TYPES[ship.Ship.shipType];
@@ -320,21 +320,21 @@ const RoutePlanner = () => {
     return config;
   }, [crew?._inventoryBonuses, emode, ship]);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (!shipConfig) return;
     setCargoMass(shipConfig.initialCargoMass);
     setPropellantMass(shipConfig.initialPropellantMass);
     setFoodSupplies((shipConfig.emode || ship?._simulated) ? 100 : crewFoodSupplies);
   }, [shipConfig, ship]);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (!ship?._simulated) {
       setFoodSupplies(crewFoodSupplies);
     }
   }, [crewFoodSupplies, ship]);
 
   // if no crew, assume this is tutorial simulation (so minimize cargo, maximize propellant and food)
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (!crew && !crewIsLoading && !!shipConfig) {
       setCargoMass(0);
       setPropellantMass(shipConfig.maxPropellantMass);
@@ -342,23 +342,23 @@ const RoutePlanner = () => {
     }
   }, [crew, crewIsLoading, shipConfig]);
 
-  const onSetCargoMass = useCallback((amount) => {
+  const onSetCargoMass = useCallback(import.meta.url, (amount) => {
     const parsed = parseInt(amount * 1_000_000) || 0;
     setCargoMass(Math.max(0, Math.min(shipConfig?.maxCargoMass, Math.floor(parsed))));
   }, [shipConfig]);
 
-  const onSetPropellantMass = useCallback((amount) => {
+  const onSetPropellantMass = useCallback(import.meta.url, (amount) => {
     const parsed = parseInt(amount * 1_000_000) || 0;
     setPropellantMass(Math.max(0, Math.min(shipConfig?.maxPropellantMass, Math.floor(parsed))));
   }, [shipConfig]);
 
-  const onSetFoodSupplies = useCallback((amount) => {
+  const onSetFoodSupplies = useCallback(import.meta.url, (amount) => {
     const parsed = parseInt(amount) || 0;
     setFoodSupplies(Math.max(0, Math.min(100, Math.floor(parsed))));
   }, [shipConfig]);
 
-  const exhaustBonus = useMemo(() => getCrewAbilityBonuses(Crewmate.ABILITY_IDS.PROPELLANT_EXHAUST_VELOCITY, crew), [crew]);
-  const shipParams = useMemo(() => {
+  const exhaustBonus = useMemo(import.meta.url, () => getCrewAbilityBonuses(Crewmate.ABILITY_IDS.PROPELLANT_EXHAUST_VELOCITY, crew), [crew]);
+  const shipParams = useMemo(import.meta.url, () => {
     if (!ship) return 0;
     const variantMod = 1 + (Ship.Entity.getVariant(ship)?.exhaustVelocityModifier || 0);
     const exhaustVelocity = (Ship.TYPES[ship.Ship.shipType]?.exhaustVelocity * exhaustBonus?.totalBonus) * variantMod || 0;
@@ -376,7 +376,7 @@ const RoutePlanner = () => {
     };
   }, [ship, cargoMass, propellantMass, exhaustBonus]);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     dispatchReorientCamera(true);
 
     return () => {
@@ -389,21 +389,21 @@ const RoutePlanner = () => {
   //  - use was fast-forwarding and is no longer
   //  - travel-solution was just cleared because no longer valid
   const isFastForwarding = (Math.abs(timeOverride?.speed) > 1);
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (!baseTime || ((coarseTime - baseTime) / baseTime > 0.05)) {
       setBaseTime(coarseTime);
     }
   }, [coarseTime, TIME_ACCELERATION]);
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (!isFastForwarding) setBaseTime(coarseTime);
   }, [isFastForwarding]);
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (travelSolution?.departureTime && travelSolution?.departureTime < coarseTime) {
       setBaseTime(coarseTime);
     }
   }, [coarseTime, travelSolution?.departureTime]);
 
-  const { originPath, destinationPath } = useMemo(() => {
+  const { originPath, destinationPath } = useMemo(import.meta.url, () => {
     if (!origin || !destination || !baseTime) return {};
     // TODO: could do each of these in a worker as well
     //  (might as well move to porkchop at that point)
@@ -429,7 +429,7 @@ const RoutePlanner = () => {
     return paths;
   }, [baseTime, origin, destination]);
 
-  const lastFedAt = useMemo(() => {
+  const lastFedAt = useMemo(import.meta.url, () => {
     return baseTime - Crew.getTimeSinceFed(foodSupplies / 100, crew?._foodBonuses?.consumption) / 86400;
   }, [baseTime, crew, foodSupplies]);
 

@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo } from '~/lib/react-debug';
 
 import useCrewContext from '~/hooks/useCrewContext';
 import { useSwayBalance } from '~/hooks/useWalletTokenBalance';
@@ -10,14 +10,14 @@ const useBookTokens = (bookId) => {
   const { captain, isLoading: crewIsLoading } = useCrewContext();
   const { data: dispatcherBalance, isLoading: swayIsLoading } = useSwayBalance(process.env.REACT_APP_STARKNET_DISPATCHER);
 
-  const swayAmount = useMemo(() => {
+  const swayAmount = useMemo(import.meta.url, () => {
     if (swayIsLoading) return null;
     const scaledSwayBalance = (dispatcherBalance || 0n) / safeBigInt(TOKEN_SCALE[TOKEN.SWAY]);
     const SWAY_AMOUNT = 30000; // TODO: find better way to get the sway amount (it will change every so often)
     return parseInt(Math.min(SWAY_AMOUNT, Math.floor(Number(scaledSwayBalance) / 1000)));
   }, [dispatcherBalance, swayIsLoading]);
 
-  const bookTokens = useMemo(() => {
+  const bookTokens = useMemo(import.meta.url, () => {
     switch (bookId) {
       case 'random-1.json': {
         return {
@@ -72,7 +72,7 @@ const useBookTokens = (bookId) => {
     }
   }, [bookId, captain, swayAmount]);
 
-  return useMemo(() => ({
+  return useMemo(import.meta.url, () => ({
     bookTokens,
     isLoading: crewIsLoading || (dispatcherBalance === null)
   }), [bookTokens, crewIsLoading, dispatcherBalance]);

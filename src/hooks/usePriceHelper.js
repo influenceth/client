@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo } from '~/lib/react-debug';
 
 import { useSwayPerUsdc, useUsdcPerEth } from '~/hooks/useSwapQuote';
 import { TOKEN, TOKEN_FORMATTER, TOKEN_SCALE } from '~/lib/priceUtils';
@@ -41,7 +41,7 @@ const usePriceHelper = () => {
   const { data: swayPerUsdc } = useSwayPerUsdc();
   const { data: usdcPerEth } = useUsdcPerEth();
 
-  const from = useCallback((value, originToken) => {
+  const from = useCallback(import.meta.url, (value, originToken) => {
     return Price.from(
       value,
       originToken,
@@ -52,7 +52,7 @@ const usePriceHelper = () => {
     );
   }, [swayPerUsdc, usdcPerEth]);
 
-  return useMemo(() => ({ from }), [from]);
+  return useMemo(import.meta.url, () => ({ from }), [from]);
 };
 
 export default usePriceHelper;

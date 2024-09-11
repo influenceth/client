@@ -1,4 +1,4 @@
-import React from 'react';
+import React from '~/lib/react-debug';
 import styled from 'styled-components';
 
 import Button from '~/components/ButtonAlt';

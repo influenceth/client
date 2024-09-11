@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from '~/lib/react-debug';
 import { Asteroid, Crew, Crewmate, Lot, Permission, Product, Time } from '@influenceth/sdk';
 import styled from 'styled-components';
 
@@ -99,12 +99,12 @@ const FeedCrew = ({
   const { crew, crewCan } = useCrewContext();
   const blockTime = useBlockTime();
 
-  const crewTravelBonus = useMemo(() => {
+  const crewTravelBonus = useMemo(import.meta.url, () => {
     if (!crew) return {};
     return getCrewAbilityBonuses(Crewmate.ABILITY_IDS.HOPPER_TRANSPORT_TIME, crew) || {};
   }, [crew]);
 
-  const crewDistBonus = useMemo(() => {
+  const crewDistBonus = useMemo(import.meta.url, () => {
     if (!crew) return {};
     return getCrewAbilityBonuses(Crewmate.ABILITY_IDS.FREE_TRANSPORT_DISTANCE, crew) || {};
   }, [crew]);
@@ -134,29 +134,29 @@ const FeedCrew = ({
     }) || undefined
   );
 
-  const originId = useMemo(() => {
+  const originId = useMemo(import.meta.url, () => {
     if (exchangeSelection) return exchangeSelection.entity;
     if (inventorySelection) return { id: inventorySelection.id, label: inventorySelection.label };
     return undefined;
   }, [exchangeSelection, inventorySelection]);
   const { data: origin } = useEntity(originId);
-  const originLotId = useMemo(() => origin && locationsArrToObj(origin?.Location?.locations || []).lotId, [origin]);
+  const originLotId = useMemo(import.meta.url, () => origin && locationsArrToObj(origin?.Location?.locations || []).lotId, [origin]);
   const { data: originLot } = useLot(originLotId);
-  const originInventory = useMemo(() => (origin?.Inventories || []).find((i) => i.slot === inventorySelection?.slot), [origin, inventorySelection]);
+  const originInventory = useMemo(import.meta.url, () => (origin?.Inventories || []).find((i) => i.slot === inventorySelection?.slot), [origin, inventorySelection]);
 
   // handle "currentFeeding" state (or selectedItems for exchanges)
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (currentFeeding) {
       setSelectedItems({ [Product.IDS.FOOD]: currentFeeding.vars?.food || 0 });
     }
   }, [currentFeeding]);
 
-  const handleExchangeSelection = useCallback((selection) => {
+  const handleExchangeSelection = useCallback(import.meta.url, (selection) => {
     setExchangeSelection(selection);
     setSelectedItems(selection ? { [Product.IDS.FOOD]: selection?.fillAmount || 0 } : {});
   }, []);
 
-  const [transportDistance, transportTime] = useMemo(() => {
+  const [transportDistance, transportTime] = useMemo(import.meta.url, () => {
     if (!asteroid?.id || !originLot?.id) return [0, 0];
     const originLotIndex = Lot.toIndex(originLot?.id);
     const destinationLotIndex = crew?._location?.lotIndex;
@@ -170,7 +170,7 @@ const FeedCrew = ({
     return [transportDistance, transportTime];
   }, [asteroid?.id, originLot?.id, crewTravelBonus, crewDistBonus, crew?._location?.lotIndex, crew?._timeAcceleration]);
 
-  const { totalMass, totalVolume } = useMemo(() => {
+  const { totalMass, totalVolume } = useMemo(import.meta.url, () => {
     return Object.keys(selectedItems).reduce((acc, resourceId) => {
       acc.totalMass += selectedItems[resourceId] * Product.TYPES[resourceId].massPerUnit;
       acc.totalVolume += selectedItems[resourceId] * Product.TYPES[resourceId].volumePerUnit;
@@ -178,14 +178,14 @@ const FeedCrew = ({
     }, { totalMass: 0, totalVolume: 0 })
   }, [selectedItems]);
 
-  const [crewTimeRequirement, taskTimeRequirement] = useMemo(() => {
+  const [crewTimeRequirement, taskTimeRequirement] = useMemo(import.meta.url, () => {
     return [
       transportTime,
       0
     ];
   }, [transportTime]);
 
-  const stats = useMemo(() => ([
+  const stats = useMemo(import.meta.url, () => ([
     {
       label: 'Task Duration',
       value: formatTimer(transportTime),
@@ -216,7 +216,7 @@ const FeedCrew = ({
     },
   ]), [totalMass, totalVolume, transportDistance, transportTime]);
 
-  const onClear = useCallback(() => {
+  const onClear = useCallback(import.meta.url, () => {
     setExchangeSelection();
     setInventorySelection();
     setSelectedItems({});
@@ -225,7 +225,7 @@ const FeedCrew = ({
   const { data: exchangeOwnerCrew } = useCrew(exchangeSelection ? origin?.Control?.controller?.id : undefined);
   const { data: sellerCrew } = useCrew(exchangeSelection?.crew?.id);
 
-  const onStartFeedingFromExchange = useCallback(() => {
+  const onStartFeedingFromExchange = useCallback(import.meta.url, () => {
     feedCrew({
       ...exchangeSelection,
       sellerAccount: sellerCrew?.Crew?.delegatedTo,
@@ -233,7 +233,7 @@ const FeedCrew = ({
     });
   }, [exchangeSelection, exchangeOwnerCrew, sellerCrew]);
   
-  const onStartFeedingFromInventory = useCallback(() => {
+  const onStartFeedingFromInventory = useCallback(import.meta.url, () => {
     feedCrew({
       origin,
       originSlot: originInventory?.slot,
@@ -241,12 +241,12 @@ const FeedCrew = ({
     });
   }, [origin, originInventory, selectedItems]);
 
-  const onStartFeeding = useCallback(() => {
+  const onStartFeeding = useCallback(import.meta.url, () => {
     if (exchangeSelection) onStartFeedingFromExchange();
     else onStartFeedingFromInventory();
   }, [exchangeSelection, onStartFeedingFromExchange, onStartFeedingFromInventory]);
 
-  const foodStats = useMemo(() => {
+  const foodStats = useMemo(import.meta.url, () => {
     const maxFood = (crew?._crewmates?.length || 1) * Crew.CREWMATE_FOOD_PER_YEAR;
     const timeSinceFed = Time.toGameDuration(blockTime - (crew?.Crew?.lastFed || 0), crew?._timeAcceleration);
     const currentFood = Math.floor(maxFood * Crew.getCurrentFoodRatio(timeSinceFed, crew._foodBonuses?.consumption)); // floor to quanta
@@ -271,7 +271,7 @@ const FeedCrew = ({
     }
   }, [crew?._crewmates, crew?.Crew?.lastFed, crew?._timeAcceleration, blockTime, selectedItems]);
 
-  const disabled = useMemo(() => {
+  const disabled = useMemo(import.meta.url, () => {
     if (!origin) return true;
     if (totalMass === 0) return true;
     if (inventorySelection) return !crewCan(Permission.IDS.REMOVE_PRODUCTS, origin);
@@ -485,7 +485,7 @@ const Wrapper = (props) => {
 
   // handle auto-closing on any status change
   const lastStatus = useRef();
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (lastStatus.current && stage !== lastStatus.current) {
       props.onClose();
     }

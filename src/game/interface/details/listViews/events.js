@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo } from '~/lib/react-debug';
 import styled from 'styled-components';
 import moment from 'moment';
 
@@ -36,7 +36,7 @@ const useColumns = () => {
   const { accountAddress } = useSession();
   const { crew } = useCrewContext();
 
-  return useMemo(() => {
+  return useMemo(import.meta.url, () => {
     const columns = [
       {
         key: 'icon',

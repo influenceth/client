@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect } from '~/lib/react-debug';
 import { useHistory, useParams } from 'react-router-dom';
 
 import SelectHabitatDialog from '~/components/SelectHabitatDialog';
@@ -22,23 +22,23 @@ const RecruitCrewmate = () => {
   // - if crewId > 0, crewId is not full
   // - if locationId > 0, locationId is a habitat
 
-  const onSelectAssignedHabitat = useCallback((locationId) => {
+  const onSelectAssignedHabitat = useCallback(import.meta.url, (locationId) => {
     history.push(`/recruit/0/${locationId}/`)
   }, []);
 
-  const onRejectAssignedHabitat = useCallback(() => {
+  const onRejectAssignedHabitat = useCallback(import.meta.url, () => {
     history.push('/');
   }, []);
 
-  const onSelectCrewmate = useCallback((crewmateId) => {
+  const onSelectCrewmate = useCallback(import.meta.url, (crewmateId) => {
     history.push(`/recruit/${crewId}/${locationId}/${crewmateId}`);
   }, [crewId, locationId]);
 
-  const onFinishAssignment = useCallback(() => {
+  const onFinishAssignment = useCallback(import.meta.url, () => {
     history.push(`/recruit/${crewId}/${locationId}/${crewmateId}/create`);
   }, [crewId, locationId, crewmateId]);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (!authenticated) history.push('/');
     // Select a random habitat out of the first 100
     const habitat = process.env.REACT_APP_DEPLOYMENT === 'production' ? Math.ceil(Math.random() * 100) : 1;

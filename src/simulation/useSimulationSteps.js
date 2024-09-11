@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from '~/lib/react-debug';
 import { Building, Crewmate, Entity, Inventory, Permission, Process, Processor, Product, Ship } from '@influenceth/sdk';
 import { useHistory } from 'react-router-dom';
 import { BiTransfer as TransferIcon } from 'react-icons/bi';
@@ -80,14 +80,14 @@ const useSimulationSteps = () => {
   const [transitioning, setTransitioning] = useState();
   const isTransitioning = !!transitioning;
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     // (returns unlisten, so can just return directly to useEffect)
     return history.listen((location) => setLocationPath(location.pathname));
   }, [history]);
 
   const resetAsteroidFilters = () => dispatchFiltersReset('asteroids');
   
-  const advance = useCallback(() => {
+  const advance = useCallback(import.meta.url, () => {
     // track that step was completed
     fireTrackingEvent('simulation', { step: simulation.step });
 
@@ -103,7 +103,7 @@ const useSimulationSteps = () => {
     }, 0);
   }, [dispatchSimulationStep, simulation?.step]);
 
-  const simulationSteps = useMemo(() => {
+  const simulationSteps = useMemo(import.meta.url, () => {
 
     // selectLot
     let selectedLotIsLeasable = false;
@@ -1086,7 +1086,7 @@ const useSimulationSteps = () => {
   ]);
 
   // cleanse selected step index
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (!isLoading) {
       if (simulation.step === undefined || simulation.step < 0) {// || simulation.step > simulationSteps.length - 1) {
         dispatchSimulationStep(0);
@@ -1096,19 +1096,19 @@ const useSimulationSteps = () => {
 
   // load step object from step index
   const previousStep = useRef({});
-  const currentStep = useMemo(() => {
+  const currentStep = useMemo(import.meta.url, () => {
     // TODO: use named index instead of numbers
     return isLoading ? previousStep.current : simulationSteps[simulation.step];
   }, [simulationSteps, simulation.step]);
   previousStep.current = currentStep;
 
-  const isFastForwarding = useMemo(
+  const isFastForwarding = useMemo(import.meta.url, 
     () => simulation?.canFastForward && (simulation?.crewReadyAt || simulation?.taskReadyAt) > 0,
     [simulation?.canFastForward, simulation?.crewReadyAt, simulation?.taskReadyAt]
   );
 
   // autoadvance if ready to autoadvance (wait for fastforwarding as necessary)
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (currentStep?.shouldAdvance && currentStep.shouldAdvance()) {
       if (!isFastForwarding || !simulation?.canFastForward) {
         advance();
@@ -1117,14 +1117,14 @@ const useSimulationSteps = () => {
   }, [advance, currentStep, simulation?.canFastForward, isFastForwarding]);
 
   // if new step, run initialize()
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (currentStep?.initialize) {
       currentStep.initialize();
     }
   }, [simulation.step]);
 
   // dispatch coachmark config
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     let currentCoachmarks = {};
     if (!isFastForwarding) {
       if (currentStep && pendingTransactions.length === 0) {
@@ -1142,21 +1142,21 @@ const useSimulationSteps = () => {
   }, [currentStep?.coachmarks, isFastForwarding, pendingTransactions]);
 
   // derive and dispatch enabled-action config
-  const enabledActions = useMemo(() => {
+  const enabledActions = useMemo(import.meta.url, () => {
     if (isFastForwarding) return [];
     return Object.keys(currentStep?.enabledActions || {}).filter((id) => {
       return !!currentStep?.enabledActions[id]
     });
   }, [currentStep?.enabledActions, isFastForwarding]);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     dispatchSimulationActions(enabledActions);
     return () => {
       dispatchSimulationActions([]);
     }
   }, [enabledActions]);
 
-  return useMemo(() => ({
+  return useMemo(import.meta.url, () => ({
     currentStepIndex: simulation?.step,
     currentStep,
     isLastStep: simulation?.step === simulationSteps?.length - 1,

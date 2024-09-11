@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from '~/lib/react-debug';
 
 import { FormLotAgreementIcon } from '~/components/Icons';
 import useAgreementManager from '~/hooks/actionManagers/useAgreementManager';
@@ -24,11 +24,11 @@ const FormLotLeaseAgreement = ({ lot, permission, simulation, simulationActions,
   
   const onSetAction = useStore(s => s.dispatchActionDialog);
 
-  const handleClick = useCallback(() => {
+  const handleClick = useCallback(import.meta.url, () => {
     onSetAction('FORM_AGREEMENT', { entity: lot, permission: Permission.IDS.USE_LOT });
   }, [lot, permission]);
 
-  const disabledReason = useMemo(() => {
+  const disabledReason = useMemo(import.meta.url, () => {
     if (_disabled) return 'loading...';
     if (pendingChange) return 'updating...';
     if (simulation) {

@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo } from '~/lib/react-debug';
 import { Entity, Lot } from '@influenceth/sdk';
 
 import useStore from '~/hooks/useStore';
@@ -21,7 +21,7 @@ export const useLotLink = ({ asteroidId: optAsteroidId, lotId: optLotId, resourc
   const currentZoomScene = useStore(s => s.asteroids.zoomScene);
   const zoomStatus = useStore(s => s.asteroids.zoomStatus);
 
-  const [ asteroidId, lotId ] = useMemo(() => {
+  const [ asteroidId, lotId ] = useMemo(import.meta.url, () => {
     if (!optAsteroidId && optLotId) {
       const loc = Lot.toPosition(optLotId);
       return [loc.asteroidId, optLotId];
@@ -29,14 +29,14 @@ export const useLotLink = ({ asteroidId: optAsteroidId, lotId: optLotId, resourc
     return [optAsteroidId, optLotId];
   }, [optAsteroidId, optLotId]);
 
-  const selectResourceMapAsNeeded = useCallback(() => {
+  const selectResourceMapAsNeeded = useCallback(import.meta.url, () => {
     if (resourceId) {
       dispatchResourceMapSelect(resourceId);
       dispatchResourceMapToggle(true);
     }
   }, [resourceId, dispatchResourceMapSelect, dispatchResourceMapToggle, dispatchHudMenuOpened, openHudMenu]);
 
-  const zoomToLotAsNeeded = useCallback(() => {
+  const zoomToLotAsNeeded = useCallback(import.meta.url, () => {
     // if zoomToLot !== current zoomToLot, do something
     if (!!zoomToLot !== (currentZoomScene?.type === 'LOT')) {
       dispatchZoomScene(zoomToLot ? { type: 'LOT' } : null);
@@ -50,7 +50,7 @@ export const useLotLink = ({ asteroidId: optAsteroidId, lotId: optLotId, resourc
     }
   }, [zoomToLot, currentZoomScene, dispatchZoomScene, dispatchHudMenuOpened]);
 
-  const onClickFunction = useCallback(() => {
+  const onClickFunction = useCallback(import.meta.url, () => {
     // if already zoomed into asteroid, just select lot and select resource map
     if (asteroidId === origin && zoomStatus === 'in') {
       dispatchLotSelected(lotId);
@@ -86,7 +86,7 @@ export const useLotLink = ({ asteroidId: optAsteroidId, lotId: optLotId, resourc
 }
 
 export const LotLink = ({ asteroidId: optAsteroidId, lotId: optLotId, resourceId, zoomToLot }) => {
-  const [ asteroidId, lotId ] = useMemo(() => {
+  const [ asteroidId, lotId ] = useMemo(import.meta.url, () => {
     if (!optAsteroidId && optLotId) {
       const loc = Lot.toPosition(optLotId);
       return [loc.asteroidId, optLotId];
@@ -99,7 +99,7 @@ export const LotLink = ({ asteroidId: optAsteroidId, lotId: optLotId, resourceId
   // NOTE: this should only tries grabbing the name from owned asteroids to save a load...
   // (will fallback to loading name if it is not an owned asteroid)
   const { data: owned, isLoading: ownedAreLoading } = useWalletAsteroids();
-  const asteroidName = useMemo(() => {
+  const asteroidName = useMemo(import.meta.url, () => {
     if (owned) {
       const match = owned.find(a => a.id === Number(asteroidId));
       if (match) {

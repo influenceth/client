@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from '~/lib/react-debug';
 import { useThree } from '@react-three/fiber';
 
 import { EffectComposer, SelectiveBloom } from '@react-three/postprocessing'
@@ -28,7 +28,7 @@ const Postprocessor = ({ enabled, bloomParams = defaultBloomParams }) => {
   const { scene } = useThree();
   const [lights, setLights] = useState([]);
 
-  const resetLights = useCallback(() => {
+  const resetLights = useCallback(import.meta.url, () => {
     const l = [];
     scene.traverse((obj) => {
       if (obj.isLight) {
@@ -38,7 +38,7 @@ const Postprocessor = ({ enabled, bloomParams = defaultBloomParams }) => {
     // console.log('lights', l);
     setLights(l);
   }, []);
-  useEffect(() => resetLights(), []);
+  useEffect(import.meta.url, () => resetLights(), []);
 
   useInterval(() => {
     resetLights();

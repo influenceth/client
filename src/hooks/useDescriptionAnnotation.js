@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo } from '~/lib/react-debug';
 
 import useEarliestActivity from '~/hooks/useEarliestActivity';
 import useEntity from '~/hooks/useEntity';
@@ -11,7 +11,7 @@ const useDescriptionAnnotation = (entityId) => {
   const { data: earliest, isLoading: activityIsLoading } = useEarliestActivity(entityId);
   const { data: entity, isLoading: entityIsLoading } = useEntity(entityId);
   
-  return useMemo(() => {
+  return useMemo(import.meta.url, () => {
     if (activityIsLoading || entityIsLoading) return { data: undefined, isLoading: true };
     const annotations = earliest?._virtuals?.eventAnnotations || [];
     const preferred = annotations?.filter((a) => a.crew === entity?.Control?.controller?.id);

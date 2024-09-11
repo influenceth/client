@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from '~/lib/react-debug';
 import styled from 'styled-components';
 
 import useStore from '~/hooks/useStore';
@@ -30,10 +30,10 @@ const RangeFilter = ({
 }) => {
   const highlight = useStore(s => s.assetSearch[assetType].highlight);
   const fieldHighlight = highlight && highlight.field === highlightFieldName;
-  const looseCleansingMax = useMemo(() => 10 ** Math.ceil(Math.log10(rangeLimits.max)) - step, []);
+  const looseCleansingMax = useMemo(import.meta.url, () => 10 ** Math.ceil(Math.log10(rangeLimits.max)) - step, []);
 
-  const toDisplayFormat = useCallback((x) => displayFormatter ? displayFormatter(x) : x, [displayFormatter]);
-  const toSearchFormat = useCallback((x) => searchFormatter ? searchFormatter(x) : x, [searchFormatter]);
+  const toDisplayFormat = useCallback(import.meta.url, (x) => displayFormatter ? displayFormatter(x) : x, [displayFormatter]);
+  const toSearchFormat = useCallback(import.meta.url, (x) => searchFormatter ? searchFormatter(x) : x, [searchFormatter]);
 
   const [ focus, setFocus ] = useState();
   const [ valueMin, setValueMin ] = useState(initialValues.min);
@@ -41,7 +41,7 @@ const RangeFilter = ({
   const [ colorFrom, setColorFrom ] = useState(highlightColorMinMax?.min);
   const [ colorTo, setColorTo ] = useState(highlightColorMinMax?.max);
 
-  const handleRangeChange = useCallback((k) => (e) => {
+  const handleRangeChange = useCallback(import.meta.url, (k) => (e) => {
     let cleansedValue = e.currentTarget.value.toString().length > 0
       ? Math.max(rangeLimits.min, Math.min(e.currentTarget.value, rangeLimits.max))
       : '';
@@ -69,21 +69,21 @@ const RangeFilter = ({
     }
   }, [filters, onChange, toSearchFormat]);
 
-  const handleFocusChange = useCallback((k) => (e) => {
+  const handleFocusChange = useCallback(import.meta.url, (k) => (e) => {
     setFocus(e.type === 'focus' ? k : null);
   }, []);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (focus !== fieldNames.min)
       setValueMin(toDisplayFormat(filters[fieldNames.min]) || initialValues.min);
   }, [filters && filters[fieldNames.min], focus, toDisplayFormat]);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (focus !== fieldNames.max)
       setValueMax(toDisplayFormat(filters[fieldNames.max]) || initialValues.max);
   }, [filters && filters[fieldNames.max], focus, toDisplayFormat]);
 
-  const highlightColorRange = useMemo(() => ({
+  const highlightColorRange = useMemo(import.meta.url, () => ({
     min: toSearchFormat(valueMin || rangeLimits.min),
     max: toSearchFormat(valueMax || rangeLimits.max),
     from: colorFrom,

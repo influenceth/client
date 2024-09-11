@@ -1,4 +1,4 @@
-import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useContext, useEffect, useMemo, useRef, useState } from '~/lib/react-debug';
 import { useFrame, useThree } from '@react-three/fiber';
 import { ACESFilmicToneMapping, AxesHelper, CameraHelper, Color, DirectionalLight, DirectionalLightHelper, Quaternion, Vector3 } from 'three';
 import gsap from 'gsap';
@@ -161,7 +161,7 @@ const AsteroidComponent = () => {
 
   const { assetType, overrides } = useContext(DevToolContext);
 
-  const [STAR_COLOR, STAR_INTENSITY_ADJ, DARKLIGHT_COLOR, DARKLIGHT_INTENSITY] = useMemo(() => {
+  const [STAR_COLOR, STAR_INTENSITY_ADJ, DARKLIGHT_COLOR, DARKLIGHT_INTENSITY] = useMemo(import.meta.url, () => {
     const defaults = visualConfigs.scene;
     const o = assetType === 'scene' ? overrides : {};
     return [
@@ -172,12 +172,12 @@ const AsteroidComponent = () => {
     ];
   }, [assetType, overrides]);
 
-  const selectedLot = useMemo(() => Lot.toPosition(lotId), [lotId]);
+  const selectedLot = useMemo(import.meta.url, () => Lot.toPosition(lotId), [lotId]);
 
   const { data: asteroidData } = useAsteroid(origin);
   const { data: ships } = useAsteroidShips(origin);
 
-  const shipsInOrbitTally = useMemo(() => {
+  const shipsInOrbitTally = useMemo(import.meta.url, () => {
     return (ships || []).filter((ship) => {
       return ship.Location.location.label === Entity.IDS.ASTEROID && !ship.Ship.transitDestination && ship.Ship.status === Ship.STATUSES.AVAILABLE;
     }).length;
@@ -213,26 +213,26 @@ const AsteroidComponent = () => {
   const forceUpdate = useRef(0);
   const lastUpdateStart = useRef(0);
 
-  const maxStretch = useMemo(
+  const maxStretch = useMemo(import.meta.url, 
     () => config?.stretch ? Math.max(config.stretch.x, config.stretch.y, config.stretch.z) : 1,
     [config?.stretch]
   );
-  // const minStretch = useMemo(
+  // const minStretch = useMemo(import.meta.url, 
   //   () => config?.stretch ? Math.min(config.stretch.x, config.stretch.y, config.stretch.z) : 1,
   //   [config?.stretch]
   // );
 
   // scaleHelper helps define outmost telemetry lines and initial zoom
   // to help convey relative scale of asteroids
-  const SCALE_HELPER = useMemo(() => {
+  const SCALE_HELPER = useMemo(import.meta.url, () => {
     return 360000 * Math.sqrt(config?.radius / 376000) / config?.radius;
   }, [config?.radius]);
 
-  const INITIAL_ZOOM = useMemo(() => {
+  const INITIAL_ZOOM = useMemo(import.meta.url, () => {
     return Math.max(INITIAL_ZOOM_MIN, 1.5 * SCALE_HELPER * config?.radius);
   }, [config?.radius, SCALE_HELPER]);
 
-  const initialOrientation = useMemo(() => {
+  const initialOrientation = useMemo(import.meta.url, () => {
     if (!(controls && config?.radius && zoomedFrom?.position)) return null;
 
     // zoom to the point on the equator closest to the camera
@@ -273,15 +273,15 @@ const AsteroidComponent = () => {
     };
   }, [cinematicInitialPosition, !controls, config?.radius, prevAsteroidPosition, zoomedFrom?.position]);
 
-  const ringsPresent = useMemo(() => !!config?.ringsPresent, [config?.ringsPresent]);
-  const surfaceDistance = useMemo(
+  const ringsPresent = useMemo(import.meta.url, () => !!config?.ringsPresent, [config?.ringsPresent]);
+  const surfaceDistance = useMemo(import.meta.url, 
     () => (MIN_FRUSTUM_AT_SURFACE / 2) / Math.tan((controls?.object?.fov / 2) * (Math.PI / 180)),
     [controls?.object?.fov]
   );
 
-  const frustumHeightMult = useMemo(() => 2 * Math.tan((controls?.object?.fov / 2) * (Math.PI / 180)), [controls?.object?.fov]);
+  const frustumHeightMult = useMemo(import.meta.url, () => 2 * Math.tan((controls?.object?.fov / 2) * (Math.PI / 180)), [controls?.object?.fov]);
 
-  const disposeGeometry = useCallback(() => {
+  const disposeGeometry = useCallback(import.meta.url, () => {
     if (geometry.current && quadtreeRef.current) {
       geometry.current.groups.forEach((g) => {
         quadtreeRef.current.remove(g);
@@ -293,7 +293,7 @@ const AsteroidComponent = () => {
     }
   }, []);
 
-  const disposeLight = useCallback(() => {
+  const disposeLight = useCallback(import.meta.url, () => {
     if (group.current && light.current) {
       group.current.remove(light.current);
     }
@@ -311,7 +311,7 @@ const AsteroidComponent = () => {
     }
   }, []);
 
-  const onUnload = useCallback(() => {
+  const onUnload = useCallback(import.meta.url, () => {
     setConfig();
     setTerrainInitialized();
     asteroidOrbit.current = null;
@@ -324,7 +324,7 @@ const AsteroidComponent = () => {
     disposeGeometry();
   }, [disposeLight, disposeGeometry]);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     // if origin changed, zoom into new asteroid
     if (asteroidId.current && asteroidId.current !== origin) {
       if (zoomStatus === 'in') {
@@ -339,14 +339,14 @@ const AsteroidComponent = () => {
     dispatchLotsLoading(origin); // initialize lot loader
   }, [origin]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (zoomStatus !== 'in') {
       setZoomedIntoAsteroidId();
     }
   }, [zoomStatus]);
 
   // Update texture generation config when new asteroid data is available
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     // when asteroidData is loaded for selected asteroid...
     if (asteroidData && asteroidData.id === origin) {
 
@@ -375,24 +375,24 @@ const AsteroidComponent = () => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ asteroidData ]);
 
-  const defaultLightIntensity = useMemo(() => {
+  const defaultLightIntensity = useMemo(import.meta.url, () => {
     if (!position.current || !config?.radius) return 0;
     return Math.max(0.175, STAR_INTENSITY_ADJ * constants.STAR_INTENSITY / (new Vector3(...position.current).length() / constants.AU));
   }, [config?.radius, STAR_INTENSITY_ADJ]);
 
   // turn down the sun while in resource mode
-  const currentLightIntensity = useMemo(() => {
+  const currentLightIntensity = useMemo(import.meta.url, () => {
     return (resourceMap?.active && resourceMap?.selected) ? Math.min(0.175, defaultLightIntensity) : defaultLightIntensity;
   }, [defaultLightIntensity, resourceMap]);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (light.current && light.current.intensity !== currentLightIntensity) {
       gsap.timeline().to(light.current, { intensity: currentLightIntensity, ease: 'power4.out', duration: LIGHT_ANIMATION_TIME / 1e3 });
     }
   }, [currentLightIntensity]);
 
   // Configures the light component once the geometry is created
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (!(config?.radius && config?.stretch && geometry.current && quadtreeRef.current && position.current)) return;
 
     // calculate intended shadow mode
@@ -463,16 +463,16 @@ const AsteroidComponent = () => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [config, ringsPresent, shadowMode, shadowSize, textureSize, surfaceDistance]);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (light.current) light.current.color = new Color().setStyle(STAR_COLOR);
   }, [STAR_COLOR]);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (darkLight.current) darkLight.current.color = new Color().setStyle(DARKLIGHT_COLOR);
   }, [DARKLIGHT_COLOR]);
 
   // Zooms the camera to the correct location
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (zoomStatus === 'zooming-in' && !prevAsteroidPosition && controls) {
       // console.log('set zoomedfrom');
       setZoomedFrom({
@@ -484,7 +484,7 @@ const AsteroidComponent = () => {
   }, [zoomStatus]);
 
   const shouldZoomIn = zoomStatus === 'zooming-in' && controls && config?.radius;
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (!shouldZoomIn || !initialOrientation || !config) return;
     if (!group.current || !position.current) return;
 
@@ -529,7 +529,7 @@ const AsteroidComponent = () => {
   }, [ shouldZoomIn, !initialOrientation ]);
 
   const shouldFinishZoomIn = zoomStatus === 'in' && controls && config?.radius;
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (!shouldFinishZoomIn || !initialOrientation) return;
 
     const panTo = new Vector3(...position.current);
@@ -561,7 +561,7 @@ const AsteroidComponent = () => {
 
   // Handle zooming back out
   const shouldZoomOut = zoomStatus === 'zooming-out' && zoomedFrom && controls;
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (!shouldZoomOut) return;
 
     controls.minDistance = 0;
@@ -589,14 +589,14 @@ const AsteroidComponent = () => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ shouldZoomOut ]);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (!cameraAltitude || !frustumHeightMult) return;
     const frustumWidth = cameraAltitude * frustumHeightMult * window.innerWidth / window.innerHeight;
     const thetaAcrossScreen = frustumWidth / controls.object.position.length();
     controls.rotateSpeed = Math.min(1.5, 1.5 * thetaAcrossScreen / 2);
   }, [cameraAltitude, frustumHeightMult]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const getClosestChunk = useCallback((cameraPosition) => {
+  const getClosestChunk = useCallback(import.meta.url, (cameraPosition) => {
     if (!geometry.current?.chunks) return null;
     const [closestChunk] = Object.values(geometry.current.chunks).reduce((acc, c) => {
       const distance = c.sphereCenter.distanceTo(cameraPosition);
@@ -605,7 +605,7 @@ const AsteroidComponent = () => {
     return closestChunk;
   }, []);
 
-  const getMinDistance = useCallback((closestChunk) => {
+  const getMinDistance = useCallback(import.meta.url, (closestChunk) => {
     return Math.min(
       config?.radius * MIN_ZOOM_DEFAULT,  // for smallest asteroids to match legacy (where this > min surface distance)
       closestChunk.sphereCenterHeight + surfaceDistance
@@ -619,7 +619,7 @@ const AsteroidComponent = () => {
   // NOTE: raycasting technically *might* be more accurate here, but it's way less performant
   //       (3ms+ for just closest mesh... if all quadtree children, closer to 20ms)
   const applyingZoomLimits = useRef(0);
-  const applyZoomLimits = useCallback((cameraPosition) => {
+  const applyZoomLimits = useCallback(import.meta.url, (cameraPosition) => {
     if (!config?.radius) return;
     applyingZoomLimits.current = true;
     setTimeout(() => {
@@ -651,7 +651,7 @@ const AsteroidComponent = () => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [surfaceDistance, config?.radius, controls?.minDistance]);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     const resourceMapActive = resourceMap?.active;
     const resourceMapId = resourceMap?.selected;
 
@@ -687,7 +687,7 @@ const AsteroidComponent = () => {
     }
   }, [resourceMap, terrainInitialized, !asteroidData?.Celestial?.abundances]);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (geometry.current && terrainUpdateNeeded) {
       // vvv BENCHMARK 2ms (zoomed-out), 4-20ms+ (zoomed-in)
       lastUpdateStart.current = Date.now();
@@ -701,7 +701,7 @@ const AsteroidComponent = () => {
   // NOTE: to stop / start chunk splitting with shift+space, can
   //  uncomment below and the "disableChunks" line above
   // const disableChunks = useRef();
-  // useEffect(() => {
+  // useEffect(import.meta.url, () => {
   //   const onKeydown = (e) => {
   //     if (e.shiftKey && e.which === 32) {
   //       disableChunks.current = !disableChunks.current;
@@ -714,7 +714,7 @@ const AsteroidComponent = () => {
   // }, []);
 
   // const ddd = useRef();
-  // useEffect(() => {
+  // useEffect(import.meta.url, () => {
   //   if (!config?.radius) return;
   //   const onKeydown = (e) => {
   //     if (e.shiftKey && e.which === 32) {
@@ -761,19 +761,19 @@ const AsteroidComponent = () => {
   // }, [controls, config?.radius]);
 
   const [dramaticZoom, setDramaticZoom] = useState();
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     setDramaticZoom(true);
   }, [origin]);
 
   const [cameraRecenterTimestamp, setCameraRecenterTimestamp] = useState(0);
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (cameraNeedsRecenter) {
       dispatchRecenterCamera();
       setCameraRecenterTimestamp(Date.now())
     }
   }, [cameraNeedsRecenter]);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (cameraNeedsHighAltitude && config?.radius && zoomStatus === 'in' && !automatingCamera.current) {
       const newPosition = new Vector3(...controls.object.position);
       newPosition.setLength(config.radius * 1.5);
@@ -796,7 +796,7 @@ const AsteroidComponent = () => {
   const [debugTrajectory, setDebugTrajectory] = useState([]);
 
   const automatingCamera = useRef();
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (selectedLot?.lotIndex > 0 && zoomedIntoAsteroidId === selectedLot?.asteroidId && config?.radiusNominal && zoomStatus === 'in') {
       const lotTally = Asteroid.getSurfaceArea(selectedLot?.asteroidId);
       if (lotTally < selectedLot.lotIndex) { dispatchLotSelected(); return; }
@@ -953,7 +953,7 @@ const AsteroidComponent = () => {
     }
   }, [cameraRecenterTimestamp, zoomedIntoAsteroidId, origin, selectedLot, config?.radiusNominal, zoomStatus]);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (!cameraNeedsReorientation || zoomStatus !== 'in') return;
     dispatchReorientCamera();
     gsap.timeline().to(controls.object.up, { ...rotationAxis.current.clone(), ease: 'slow.out' });

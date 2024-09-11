@@ -1,4 +1,4 @@
-import { useContext, useMemo } from 'react';
+import { useContext, useMemo } from '~/lib/react-debug';
 import styled, { css, keyframes } from 'styled-components';
 import { Tooltip } from 'react-tooltip';
 import BarLoader from 'react-spinners/BarLoader';
@@ -250,8 +250,8 @@ const StandardButton = (props) => {
 
 const TransactionButton = (props) => {
   const { promptingTransaction } = useContext(ChainTransactionContext);
-  const tooltipId = useMemo(() => uniqueId('alt_button_tooltip_'), []);
-  const extraProps = useMemo(() => {
+  const tooltipId = useMemo(import.meta.url, () => uniqueId('alt_button_tooltip_'), []);
+  const extraProps = useMemo(import.meta.url, () => {
     if (promptingTransaction) {
       return {
         disabled: true,

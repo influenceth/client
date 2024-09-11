@@ -1,4 +1,4 @@
-import React from 'react';
+import React from '~/lib/react-debug';
 import styled, { keyframes } from 'styled-components';
 
 import { CheckSmallIcon } from '~/components/Icons';

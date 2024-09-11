@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from '~/lib/react-debug';
 
 import useStore from '~/hooks/useStore';
 import useWebsocket from '~/hooks/useWebsocket';
@@ -18,11 +18,11 @@ const ChatListener = () => {
   
   // for debug:
   // const dispatchClearChatHistory = useStore(s => s.dispatchClearChatHistory);
-  // useEffect(() => {
+  // useEffect(import.meta.url, () => {
   //   dispatchClearChatHistory();
   // }, [])
 
-  // useEffect(() => {
+  // useEffect(import.meta.url, () => {
   //   const i = setInterval(() => {
   //     dispatchChatMessage({
   //       asteroidId: 1,
@@ -34,11 +34,11 @@ const ChatListener = () => {
   // }, []);
 
   const [disconnected, setDisconnected] = useState();
-  const handleWSConnection = useCallback((isOpen) => {
+  const handleWSConnection = useCallback(import.meta.url, (isOpen) => {
     setDisconnected(!isOpen);
   }, []);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (disconnected) {
       const to = setTimeout(() => {
         dispatchChatDisconnectedMessage();
@@ -49,7 +49,7 @@ const ChatListener = () => {
     }
   }, [disconnected]);
 
-  const handleWSMessage = useCallback((message) => {
+  const handleWSMessage = useCallback(import.meta.url, (message) => {
     if (process.env.NODE_ENV !== 'production') console.log('onWSMessage (chat)', message);
 
     const { type, body, message: errorMessage } = message;
@@ -69,7 +69,7 @@ const ChatListener = () => {
     }
   }, [dispatchChatMessage]);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (wsReady) {
       const connectionRegId = registerConnectionHandler(handleWSConnection);
       const messageRegId = registerMessageHandler(handleWSMessage);

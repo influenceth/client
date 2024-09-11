@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo } from '~/lib/react-debug';
 import { Entity, Permission } from '@influenceth/sdk';
 
 import { EjectPassengersIcon } from '~/components/Icons';
@@ -24,7 +24,7 @@ const isVisible = ({ crew, building, ship }) => {
 // NOTE: this is "eject guest(s)"
 // (can eject guests from ship or building i control)
 const EjectGuestCrew = ({ asteroid, blockTime, crew, lot, ship, onSetAction, dialogProps = {}, _disabled }) => {
-  const [station, entityId] = useMemo(() => {
+  const [station, entityId] = useMemo(import.meta.url, () => {
     const station = ship || lot?.building;
     const entityId = { id: station.id, label: station.label };
     return [station, entityId];
@@ -32,22 +32,22 @@ const EjectGuestCrew = ({ asteroid, blockTime, crew, lot, ship, onSetAction, dia
 
   const { currentEjections } = useEjectCrewManager(entityId);
   const { data: allStationedCrews } = useStationedCrews(entityId);
-  const allGuestCrews = useMemo(() => (allStationedCrews || []).filter((c) => c.id !== crew?.id), [allStationedCrews, crew?.id]);
+  const allGuestCrews = useMemo(import.meta.url, () => (allStationedCrews || []).filter((c) => c.id !== crew?.id), [allStationedCrews, crew?.id]);
 
-  const handleClick = useCallback(() => {
+  const handleClick = useCallback(import.meta.url, () => {
     onSetAction('EJECT_GUEST_CREW', { origin: station, ...dialogProps });
   }, [station, onSetAction, dialogProps]);
 
-  const activeEjections = useMemo(() => {
+  const activeEjections = useMemo(import.meta.url, () => {
     return currentEjections?.filter((e) => e.vars.ejected_crew.id === crew?.id);
   }, [currentEjections, crew?.id]);
 
   // Differentiate between a Habitat and a ship
-  const actionLabel = useMemo(() => {
+  const actionLabel = useMemo(import.meta.url, () => {
     return `Force Eject ${entityId?.label === Entity.IDS.SHIP ? 'Passenger' : 'Resident'} Crew`;
   }, [entityId]);
 
-  const disabledReason = useMemo(() => {
+  const disabledReason = useMemo(import.meta.url, () => {
     if (_disabled) return 'loading...';
     if (allGuestCrews?.length === 0) return 'no guests';
     if (station) {

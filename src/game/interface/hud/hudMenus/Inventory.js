@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from '~/lib/react-debug';
 import { createPortal } from 'react-dom';
 import styled, { css } from 'styled-components';
 import { usePopper } from 'react-popper';
@@ -292,13 +292,13 @@ const LotInventory = () => {
 
   const zoomShipId = zoomScene?.type === 'SHIP' ? zoomScene.shipId : null;
   const { data: zoomShip } = useShip(zoomShipId);
-  const ship = useMemo(() => zoomShipId ? zoomShip : lot?.surfaceShip, [lot?.surfaceShip, zoomShip, zoomShipId]);
+  const ship = useMemo(import.meta.url, () => zoomShipId ? zoomShip : lot?.surfaceShip, [lot?.surfaceShip, zoomShip, zoomShipId]);
 
-  const entity = useMemo(() => ship || lot?.building, [lot, ship]);
+  const entity = useMemo(import.meta.url, () => ship || lot?.building, [lot, ship]);
 
   const { crew, crewCan } = useCrewContext();
 
-  const inventories = useMemo(() => {
+  const inventories = useMemo(import.meta.url, () => {
     return (entity?.Inventories || [])
       .filter((i) => i.status === Inventory.STATUSES.AVAILABLE)
       .map((i) => ({
@@ -319,7 +319,7 @@ const LotInventory = () => {
 
   const resourceItemRefs = useRef([]);
 
-  const [canAddProducts, canRemoveProducts] = useMemo(
+  const [canAddProducts, canRemoveProducts] = useMemo(import.meta.url, 
     () => ([
       crewCan(Permission.IDS.ADD_PRODUCTS, entity),
       crewCan(Permission.IDS.REMOVE_PRODUCTS, entity),
@@ -328,13 +328,13 @@ const LotInventory = () => {
   );
 
   // default slot
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (inventorySlot === null) {
       setInventorySlot(inventories?.[0]?.slot || null);
     }
   }, [inventories]);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     setSelectedItems({}); // clear selected items when switching inventories
   }, [entity?.uuid, inventorySlot])
 
@@ -345,7 +345,7 @@ const LotInventory = () => {
   );
 
   // get selected inventory
-  const inventory = useMemo(
+  const inventory = useMemo(import.meta.url, 
     () => inventories.find((i) => i.slot === inventorySlot),
     [inventories, inventorySlot]
   );
@@ -363,7 +363,7 @@ const LotInventory = () => {
     maxVolume,
     pctVolume,
     pctOrReservedVolume
-  } = useMemo(() => {
+  } = useMemo(import.meta.url, () => {
     if (!inventory) {
       return {
         usedMass: 0,
@@ -414,11 +414,11 @@ const LotInventory = () => {
     };
   }, [crew?._inventoryBonuses, inventory]);
 
-  const toggleVolumeDisplay = useCallback(() => {
+  const toggleVolumeDisplay = useCallback(import.meta.url, () => {
     setDisplayVolumes((d) => !d);
   }, []);
 
-  const sortedResources = useMemo(() => {
+  const sortedResources = useMemo(import.meta.url, () => {
     if (!inventory?.contentsObj) return [];
     return Object.keys(inventory.contentsObj).sort((a, b) => {
       if (order === 'Mass') return inventory.contentsObj[a] * Product.TYPES[a].massPerUnit > inventory.contentsObj[b] * Product.TYPES[b].massPerUnit ? -1 : 1;
@@ -427,9 +427,9 @@ const LotInventory = () => {
     });
   }, [inventory?.contentsObj, order]);
 
-  const isIncomingDelivery = useMemo(() => incomingDeliveries?.length > 0, [incomingDeliveries]);
+  const isIncomingDelivery = useMemo(import.meta.url, () => incomingDeliveries?.length > 0, [incomingDeliveries]);
 
-  const handleSelected = useCallback((resourceId, newTotal) => {
+  const handleSelected = useCallback(import.meta.url, (resourceId, newTotal) => {
     setSelectedItems((s) => {
       const newS = { ...s };
       if (newTotal === 0) {
@@ -441,20 +441,20 @@ const LotInventory = () => {
     });
   }, []);
 
-  const splitStack = useCallback((resourceId) => (e) => {
+  const splitStack = useCallback(import.meta.url, (resourceId) => (e) => {
     e.stopPropagation();
     setSplittingResourceId(resourceId);
     setAmount(selectedItems[resourceId] || inventory?.contentsObj[resourceId] || 0);
   }, [selectedItems, inventory?.contentsObj]);
 
-  const onChangeAmount = useCallback((e) => {
+  const onChangeAmount = useCallback(import.meta.url, (e) => {
     let newValue = parseInt(e.target.value.replace(/^0+/g, '').replace(/[^0-9]/g, ''));
     if (!(newValue > -1)) newValue = 0;
     if (newValue > e.target.max) newValue = e.target.max;
     setAmount(newValue);
   }, []);
 
-  const onKeyDown = useCallback((e) => {
+  const onKeyDown = useCallback(import.meta.url, (e) => {
     if (['Enter', 'Tab'].includes(e.key) && e.currentTarget.value) {
       handleSelected(splittingResourceId, amount);
       setFocused(false);
@@ -462,17 +462,17 @@ const LotInventory = () => {
     }
   }, [amount, splittingResourceId]);
 
-  const onInventoryScroll = useCallback(() => {
+  const onInventoryScroll = useCallback(import.meta.url, () => {
     setSplittingResourceId();
   }, []);
 
-  const onMouseLeave = useCallback(() => {
+  const onMouseLeave = useCallback(import.meta.url, () => {
     if (!focused) {
       setSplittingResourceId();
     }
   }, [focused]);
 
-  const onFocusAmount = useCallback((e) => {
+  const onFocusAmount = useCallback(import.meta.url, (e) => {
     if (e.type === 'focus') {
       setFocused(true);
     } else {
@@ -481,11 +481,11 @@ const LotInventory = () => {
     }
   }, []);
 
-  const isAllSelected = useMemo(() => {
+  const isAllSelected = useMemo(import.meta.url, () => {
     return Object.keys(selectedItems).length === sortedResources.length;
   }, [selectedItems, sortedResources]);
 
-  const toggleAll = useCallback(() => {
+  const toggleAll = useCallback(import.meta.url, () => {
     setSelectedItems((s) => {
       if (isAllSelected) return {};
       return sortedResources.reduce((acc, resourceId) => {
@@ -499,11 +499,11 @@ const LotInventory = () => {
   // TODO: maybe should deselect all whenever sendfrom, sellfrom, or jettison dialogs opened
   // TODO: probably should optimistically update item amounts from pending txs
   //       of sendfrom, sellfrom, or jettison...
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     setSelectedItems({});
   }, [inventory?.contentsObj])
 
-  const trayLabel = useMemo(() => {
+  const trayLabel = useMemo(import.meta.url, () => {
     const selectedTally = Object.keys(selectedItems).length;
     if (selectedTally > 0) {
       const [totalMass, totalVolume] = Object.keys(selectedItems).reduce((acc, resourceId) => {
@@ -516,7 +516,7 @@ const LotInventory = () => {
     return null;
   }, [selectedItems]);
 
-  const removalDisabledReason = useMemo(() => {
+  const removalDisabledReason = useMemo(import.meta.url, () => {
     if (!canRemoveProducts) return 'access restricted';
     if (Object.keys(selectedItems).length === 0) return 'nothing selected';
     return '';

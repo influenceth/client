@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from '~/lib/react-debug';
 import styled, { keyframes } from 'styled-components';
 
 import { CrewBusyIcon, CrewIdleIcon, RandomEventIcon } from '~/components/AnimatedIcons';
@@ -96,7 +96,7 @@ const LiveReadyStatus = ({ crew, ...props }) => {
 
   const [crewIsBusy, setCrewIsBusy] = useState(false);
   const [waitingOnBlock, setWaitingOnBlock] = useState(false);
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     const readyAtMS = (crew?.Crew?.readyAt || 0) * 1e3;
     if (readyAtMS > Date.now()) {
       setCrewIsBusy(true);
@@ -109,11 +109,11 @@ const LiveReadyStatus = ({ crew, ...props }) => {
     }
   }, [crew?.Crew?.readyAt]);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     setWaitingOnBlock(blockTime < (crew?.Crew?.readyAt || 0));
   }, [blockTime, crew?.Crew?.readyAt]);
 
-  const scheduleEnd = useMemo(() => blockTime + CREW_SCHEDULE_BUFFER, [blockTime, CREW_SCHEDULE_BUFFER]);
+  const scheduleEnd = useMemo(import.meta.url, () => blockTime + CREW_SCHEDULE_BUFFER, [blockTime, CREW_SCHEDULE_BUFFER]);
 
   if (!crew || !blockTime) return null;
   if (crew._actionTypeTriggered?.pendingEvent) {

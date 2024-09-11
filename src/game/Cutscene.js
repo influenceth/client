@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from '~/lib/react-debug';
 import ReactPlayer from 'react-player/lazy';
 import styled from 'styled-components';
 import BrightButton from '~/components/BrightButton';
@@ -45,28 +45,28 @@ const Cutscene = () => {
   const [hiding, setHiding] = useState(true);
   const [highlightButtons, setHighlightButtons] = useState(true);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     setHiding(false);
   }, []);
 
-  const onComplete = useCallback(() => {
+  const onComplete = useCallback(import.meta.url, () => {
     setHiding(true);
     setTimeout(() => {
       dispatchCutscene();
     }, cutsceneHideTime);
   }, [dispatchCutscene]);
 
-  const onError = useCallback((err) => {
+  const onError = useCallback(import.meta.url, (err) => {
     console.error(err);
     onComplete();
   }, [onComplete]);
 
-  const onSkip = useCallback(() => {
+  const onSkip = useCallback(import.meta.url, () => {
     onComplete();
   }, [onComplete]);
 
   // onload, set buttons to show up in 8 seconds
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     const to = setTimeout(() => {
       setHighlightButtons(false);
     }, 8000);

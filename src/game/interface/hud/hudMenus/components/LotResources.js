@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from '~/lib/react-debug';
 import styled from 'styled-components';
 import { Asteroid, Building, Deposit, Lot, Product } from '@influenceth/sdk';
 
@@ -230,9 +230,9 @@ const SaleDetails = ({ isMine, sample }) => {
   const { updateListing, isPendingUpdate } = useDepositSaleManager(sample);
   const [editing, setEditing] = useState();
   
-  const originalPrice = useMemo(() => (sample?.PrivateSale?.amount || 0) / 1e6, [sample?.PrivateSale?.amount]);
+  const originalPrice = useMemo(import.meta.url, () => (sample?.PrivateSale?.amount || 0) / 1e6, [sample?.PrivateSale?.amount]);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     setEditing(false);
   }, [originalPrice])
 
@@ -275,16 +275,16 @@ const DepositSection = ({ deposits = [], selected, onSelect, title, type }) => {
 
   const [showAll, setShowAll] = useState(true);
   
-  const onClickSample = useCallback((id) => () => {
+  const onClickSample = useCallback(import.meta.url, (id) => () => {
     onSelect({ type, id });
     dispatchResourceMapToggle(false); // TODO: instead of turning off the resource map, should this change it the resource of the selected sample?
   }, [onSelect, type]);
 
-  const usedDepositsExist = useMemo(() => {
+  const usedDepositsExist = useMemo(import.meta.url, () => {
     return !!deposits.find((d) => d.Deposit.remainingYield !== d.Deposit.initialYield);
   }, [deposits]);
 
-  const samples = useMemo(() => {
+  const samples = useMemo(import.meta.url, () => {
     if (showAll) return deposits;
     return deposits.filter((d) => d.Deposit.remainingYield === d.Deposit.initialYield);
   }, [deposits, showAll]);
@@ -360,7 +360,7 @@ const LotResources = () => {
   const { props: actionProps } = useActionButtons();
   const { crew } = useCrewContext();
   const lotId = useStore(s => s.asteroids.lot);
-  const asteroidId = useMemo(() => Lot.toPosition(lotId)?.asteroidId, [lotId]);
+  const asteroidId = useMemo(import.meta.url, () => Lot.toPosition(lotId)?.asteroidId, [lotId]);
 
   const { data: asteroid } = useAsteroid(asteroidId);
   const { data: lot } = useLot(lotId);
@@ -374,14 +374,14 @@ const LotResources = () => {
   const [showAllAbundances, setShowAllAbundances] = useState();
 
   // if there is an active resource map, select that resource
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (resourceMap.active && resourceMap.selected) {
       setSelected({ type: 'resource', id: resourceMap.selected });
     }
   }, []);
 
   // get lot abundance
-  const lotAbundances = useMemo(() => {
+  const lotAbundances = useMemo(import.meta.url, () => {
     if (!(asteroid && lotId)) return [];
 
     // TODO: do this in worker? takes about 200ms on decent cpu
@@ -400,14 +400,14 @@ const LotResources = () => {
       .sort((a, b) => b.abundance - a.abundance);
   }, [asteroid, lotId]);
 
-  const onClickResource = useCallback((id) => () => {
+  const onClickResource = useCallback(import.meta.url, (id) => () => {
     setSelected({ type: 'resource', id });
 
     dispatchResourceMapSelect(id);
     dispatchResourceMapToggle(true);
   }, []);
 
-  const [showAbundances, abundancesTruncated] = useMemo(() => {
+  const [showAbundances, abundancesTruncated] = useMemo(import.meta.url, () => {
     if (showAllAbundances || lotAbundances.length < 8) {
       return [lotAbundances, false];
     } else {
@@ -415,21 +415,21 @@ const LotResources = () => {
     }
   }, [lotAbundances, showAllAbundances]);
 
-  const selectedResource = useMemo(() => {
+  const selectedResource = useMemo(import.meta.url, () => {
     if (selected && selected.type === 'resource') {
       return Product.TYPES[selected.id];
     }
     return null;
   }, [selected]);
 
-  const selectedSample = useMemo(() => {
+  const selectedSample = useMemo(import.meta.url, () => {
     if (selected && selected.type !== 'resource') {
       return (lot?.deposits || []).find((s) => selected.id === s.id);
     }
     return null;
   }, [lot?.deposits, selected]);
 
-  const extraSampleParams = useMemo(() => {
+  const extraSampleParams = useMemo(import.meta.url, () => {
     const params = {};
     if (selectedSample?.id) {
       params.improveSample = { ...selectedSample };
@@ -439,7 +439,7 @@ const LotResources = () => {
     return params;
   }, [currentSamplingActions, selectedResource, selectedSample]);
 
-  const extraExtractParams = useMemo(() => {
+  const extraExtractParams = useMemo(import.meta.url, () => {
     const params = {};
     if (!currentExtraction) {
       if (selectedSample) {
@@ -452,7 +452,7 @@ const LotResources = () => {
     return params;
   }, [currentExtraction, selectedSample]);
 
-  const [ownedSamples, forSaleSamples] = useMemo(() => ([
+  const [ownedSamples, forSaleSamples] = useMemo(import.meta.url, () => ([
     (lot?.deposits || []).filter((s) => s.Control.controller.id === crew?.id && (!s.Deposit.initialYield || s.Deposit.remainingYield > 0)).sort(sampleSort),
     (lot?.deposits || []).filter((s) => s.PrivateSale?.amount > 0 && (!s.Deposit.initialYield || s.Deposit.remainingYield > 0)).sort(sampleSort),
   ]), [crew?.id, lot?.deposits]);

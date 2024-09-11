@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo } from '~/lib/react-debug';
 import styled from 'styled-components';
 import { displayTimeFractionDigits } from '~/lib/utils';
 
@@ -43,7 +43,7 @@ const BlurCircle = styled.circle`
 `;
 
 const TimeIcon = ({ time, motionBlur, ...props }) => {
-  const position = useMemo(() => {
+  const position = useMemo(import.meta.url, () => {
     const t = parseInt(time.substr(-displayTimeFractionDigits)) / Math.pow(10, displayTimeFractionDigits);
     if (isNaN(t)) return { x: -100, y: -100 };
     const theta = 2 * Math.PI * t;

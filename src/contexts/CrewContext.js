@@ -1,4 +1,4 @@
-import { createContext, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { createContext, useCallback, useEffect, useMemo, useRef, useState } from '~/lib/react-debug';
 import { useQuery, useQueryClient } from 'react-query';
 import { Crewmate, Entity, Inventory, Permission, Ship, System } from '@influenceth/sdk';
 
@@ -35,17 +35,17 @@ export function CrewProvider({ children }) {
   const dispatchCrewSelected = useStore(s => s.dispatchCrewSelected);
 
   const { data: constants, isLoading: constantsLoading } = useConstants(['CREW_SCHEDULE_BUFFER','TIME_ACCELERATION']);
-  const [CREW_SCHEDULE_BUFFER, TIME_ACCELERATION] = useMemo(() => {
+  const [CREW_SCHEDULE_BUFFER, TIME_ACCELERATION] = useMemo(import.meta.url, () => {
     if (!constants) return [];
     return [constants.CREW_SCHEDULE_BUFFER, constants.TIME_ACCELERATION];
   }, [constants]);
 
-  const ownedCrewsQueryKey = useMemo(
+  const ownedCrewsQueryKey = useMemo(import.meta.url, 
     () => entitiesCacheKey(Entity.IDS.CREW, { owner: accountAddress }),
     [accountAddress]
   );
 
-  const simulationCrew = useMemo(() => {
+  const simulationCrew = useMemo(import.meta.url, () => {
     if (!simulationState) return null;
 
     // TODO: put in SIMULATION_CONFIG?
@@ -102,9 +102,9 @@ export function CrewProvider({ children }) {
     () => api.getOwnedCrews(accountAddress),
     { enabled: !!token }
   );
-  const rawCrews = useMemo(() => simulationCrew ? [simulationCrew] : realRawCrews, [simulationCrew, rawCrewsUpdatedAt]);
+  const rawCrews = useMemo(import.meta.url, () => simulationCrew ? [simulationCrew] : realRawCrews, [simulationCrew, rawCrewsUpdatedAt]);
 
-  const combinedCrewRoster = useMemo(
+  const combinedCrewRoster = useMemo(import.meta.url, 
     () => (rawCrews || []).reduce((acc, c) => [...acc, ...c.Crew.roster], []),
     [rawCrews, rawCrewsUpdatedAt]
   );
@@ -120,7 +120,7 @@ export function CrewProvider({ children }) {
     { enabled: !!token }
   );
 
-  const [adalianRecruits, arvadianRecruits] = useMemo(() => {
+  const [adalianRecruits, arvadianRecruits] = useMemo(import.meta.url, () => {
     if (!myOwnedCrewmates) return [[], []];
     const allRecruits = myOwnedCrewmates.filter((c) => !c.Control?.controller?.id);
     return [
@@ -133,7 +133,7 @@ export function CrewProvider({ children }) {
     ];
   }, [myOwnedCrewmates]);
 
-  const crewmateMap = useMemo(() => {
+  const crewmateMap = useMemo(import.meta.url, () => {
     if (!crewsLoading && !crewmatesLoading && !myOwnedCrewmatesLoading) {
       const map = {};
       (myCrewCrewmates || []).forEach((crewmate) => {
@@ -164,10 +164,10 @@ export function CrewProvider({ children }) {
 
   // NOTE: this covers all queries' loading states because crewmateMap is
   // null while any of those are true
-  const crewsAndCrewmatesReady = useMemo(() => !!crewmateMap && TIME_ACCELERATION, [crewmateMap, TIME_ACCELERATION]);
+  const crewsAndCrewmatesReady = useMemo(import.meta.url, () => !!crewmateMap && TIME_ACCELERATION, [crewmateMap, TIME_ACCELERATION]);
 
   // update crews' _ready value
-  const crews = useMemo(() => {
+  const crews = useMemo(import.meta.url, () => {
     if (!crewsAndCrewmatesReady || !rawCrews) return [];
     return rawCrews.map((c) => {
       if (!!crewmateMap) {
@@ -208,7 +208,7 @@ export function CrewProvider({ children }) {
     })
   }, [blockTime, crewmateMap, crewsAndCrewmatesReady, CREW_SCHEDULE_BUFFER, rawCrews, rawCrewsUpdatedAt]);
 
-  const selectedCrew = useMemo(() => {
+  const selectedCrew = useMemo(import.meta.url, () => {
     if (crews && crews.length > 0) {
       if (selectedCrewId) {
         const previouslySelected = crews.find((crew) => crew.id === selectedCrewId);
@@ -223,8 +223,8 @@ export function CrewProvider({ children }) {
   const { data: selectedCrewLocation } = useEntity(selectedCrew ? { ...selectedCrew.Location.location } : undefined);
 
   const [actionTypeTriggered, setActionTypeTriggered] = useState(false);
-  useEffect(() => setActionTypeTriggered(false), [selectedCrew?.id]); // recheck random event status on crew change
-  useEffect(() => {
+  useEffect(import.meta.url, () => setActionTypeTriggered(false), [selectedCrew?.id]); // recheck random event status on crew change
+  useEffect(import.meta.url, () => {
     if (!actionTypeTriggered) {
       // TODO: actionRound tmp fix
       if (selectedCrew?.Crew?.actionType && selectedCrew.Crew.actionRound) {// && (selectedCrew.Crew.actionRound + RandomEvent.MIN_ROUNDS) <= blockNumber) {
@@ -268,7 +268,7 @@ export function CrewProvider({ children }) {
   }, [actionTypeTriggered, selectedCrew?.Crew?.actionType, selectedCrew?.Crew?.actionRound, provider]);
 
   // add final data to selected crew
-  const finalSelectedCrew = useMemo(() => {
+  const finalSelectedCrew = useMemo(import.meta.url, () => {
     if (!selectedCrew) return null;
     return {
       ...selectedCrew,
@@ -282,14 +282,14 @@ export function CrewProvider({ children }) {
   }, [actionTypeTriggered, selectedCrew, selectedCrew?._ready, selectedCrewLocation, CREW_SCHEDULE_BUFFER, TIME_ACCELERATION]);
 
   // return all pending transactions that are specific to this crew AND those that are not specific to any crew
-  const pendingTransactions = useMemo(() => {
+  const pendingTransactions = useMemo(import.meta.url, () => {
     if (!selectedCrew?.id) {
       return (allPendingTransactions || []).filter((tx) => !tx.vars?.caller_crew?.id);
     }
     return (allPendingTransactions || []).filter((tx) => !tx.vars?.caller_crew?.id || (tx.vars.caller_crew.id === selectedCrew.id));
   }, [allPendingTransactions, selectedCrew?.id])
 
-  const refreshReadyAt = useCallback(async () => {
+  const refreshReadyAt = useCallback(import.meta.url, async () => {
     const updatedCrew = await api.getEntityById({ label: Entity.IDS.CREW, id: selectedCrewId, components: ['Crew'] });
     if (updatedCrew) {
       queryClient.setQueryData(ownedCrewsQueryKey, (prevRawCrews = []) => {
@@ -314,18 +314,18 @@ export function CrewProvider({ children }) {
   }, [ownedCrewsQueryKey, selectedCrewId]);
 
   // make sure a default-selected crew makes it into state (if logged in)
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (authenticated && crewsAndCrewmatesReady && selectedCrew?.id !== selectedCrew) {
       dispatchCrewSelected(selectedCrew?.id || undefined);
     }
   }, [authenticated, crewsAndCrewmatesReady, selectedCrew]);
 
-  const captain = useMemo(() => {
+  const captain = useMemo(import.meta.url, () => {
     if (simulationState && !simulationState.crewmate) return null;
     return selectedCrew?._crewmates?.[0] || null;
   }, [crewmateMap, selectedCrew, simulationState]);
 
-  const crewCan = useCallback(
+  const crewCan = useCallback(import.meta.url, 
     (permission, hydratedTarget) => (finalSelectedCrew && hydratedTarget)
       ? Permission.isPermitted(finalSelectedCrew, permission, hydratedTarget, blockTime)
       : false,
@@ -333,7 +333,7 @@ export function CrewProvider({ children }) {
   );
 
   const isBlurred = useRef(false);
-  const onBlur = useCallback(() => {
+  const onBlur = useCallback(import.meta.url, () => {
     isBlurred.current = true;
   }, []);
 
@@ -347,7 +347,7 @@ export function CrewProvider({ children }) {
   //       probably also want to reload
   // TODO: when first create crew, should probably reload all queries since they were not being updated
   //       in the time before crew creation
-  const onFocus = useCallback(() => {
+  const onFocus = useCallback(import.meta.url, () => {
     if (isBlurred.current) {
       isBlurred.current = false;
 
@@ -360,7 +360,7 @@ export function CrewProvider({ children }) {
     }
   }, [isBlockMissing]);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (!!finalSelectedCrew) {
       window.addEventListener('blur', onBlur);
       window.addEventListener('focus', onFocus);
@@ -373,7 +373,7 @@ export function CrewProvider({ children }) {
 
   // handle game launch (on a timeout rather than blocktime)
   const [gameIsLaunched, setGameIsLaunched] = useState(openAccessJSTime < Date.now());
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     const msUntilLaunch = openAccessJSTime - Date.now();
     if (msUntilLaunch > 0) {
       setGameIsLaunched(false);

@@ -1,4 +1,4 @@
-import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { useCallback, useContext, useEffect, useMemo, useState } from '~/lib/react-debug';
 import { Link } from 'react-router-dom';
 import styled from 'styled-components';
 
@@ -295,7 +295,7 @@ const ActionItems = () => {
   const [confirmingTutorialDismissal, setConfirmingTutorialDismissal] = useState();
   const [displayItems, setDisplayItems] = useState();
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (displayItems) {
       // TODO: maybe this should show new ones while transitioning out old ones?
       // set to transition state
@@ -320,24 +320,24 @@ const ActionItems = () => {
   const [selectedFilter, setSelectedFilter] = useState('all');
   const [lastClick, setLastClick] = useState();
 
-  const onClickFilter = useCallback((filter) => (e) => {
+  const onClickFilter = useCallback(import.meta.url, (filter) => (e) => {
     e.stopPropagation();
     setSelectedFilter(filter);
     setLastClick(Date.now());
   }, []);
 
-  const onUnhideAll = useCallback(() => {
+  const onUnhideAll = useCallback(import.meta.url, () => {
     dispatchUnhideAllActionItems();
     setSelectedFilter('all');
     setLastClick(Date.now());
   }, []);
 
-  const isFinishingAll = useMemo(
+  const isFinishingAll = useMemo(import.meta.url, 
     () => getStatus('FinishAllReady') === 'pending',
     [getStatus]
   );
 
-  const autoFinishCalls = useMemo(() => {
+  const autoFinishCalls = useMemo(import.meta.url, () => {
     return allItems
       .map((a) => {
         if (a.type === 'ready') {
@@ -351,12 +351,12 @@ const ActionItems = () => {
       .filter((a) => !!a);
   }, [allItems, crew, getActivityConfig]);
 
-  const onFinishAll = useCallback(() => {
+  const onFinishAll = useCallback(import.meta.url, () => {
     if (isFinishingAll) return;
     execute('FinishAllReady', { finishCalls: autoFinishCalls });
   }, [autoFinishCalls, execute, isFinishingAll]);
 
-  const tallies = useMemo(() => {
+  const tallies = useMemo(import.meta.url, () => {
     return (displayItems || []).reduce(
       (acc, cur) => {
         if (!cur.hidden) {
@@ -377,7 +377,7 @@ const ActionItems = () => {
     )
   }, [displayItems]);
 
-  const filteredDisplayItems = useMemo(() => {
+  const filteredDisplayItems = useMemo(import.meta.url, () => {
     let filter;
     if (selectedFilter === 'all') filter = (i) => !i.hidden;
     if (selectedFilter === 'ready') filter = (i) => !i.hidden && ['failed', 'randomEvent', 'ready'].includes(i.type);
@@ -387,7 +387,7 @@ const ActionItems = () => {
     return (displayItems || []).filter(filter);
   }, [displayItems, selectedFilter]);
 
-  const filteredDisplayCategories = useMemo(() => {
+  const filteredDisplayCategories = useMemo(import.meta.url, () => {
     const categorized = {};
     filteredDisplayItems.forEach((i) => {
       if (!categorized[i.category]) {
@@ -401,7 +401,7 @@ const ActionItems = () => {
     return Object.values(categorized);
   }, [filteredDisplayItems]);
 
-  const onConfirmTutorialDismissal = useCallback(() => {
+  const onConfirmTutorialDismissal = useCallback(import.meta.url, () => {
     dispatchDismissCrewTutorial(crew?.id, true);
     setConfirmingTutorialDismissal();
   }, [crew?.id]);

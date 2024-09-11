@@ -1,7 +1,7 @@
 import formatters from '~/lib/formatters';
 import { LocationIcon, ShipIcon } from './Icons';
 import styled from 'styled-components';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo } from '~/lib/react-debug';
 import EntityName from './EntityName';
 import useHydratedLocation from '~/hooks/useHydratedLocation';
 
@@ -50,28 +50,28 @@ const Wrapper = styled.div`
 const CrewLocationCompactLabel = ({ alignLeft, crew, noClick, zoomedToAsteroid, ...props }) => {
   const { asteroid, building, lotIndex, onLink, ship } = useHydratedLocation(crew?._location, crew?.id);
 
-  const genericLabel = useMemo(() => {
+  const genericLabel = useMemo(import.meta.url, () => {
     if (asteroid) return formatters.asteroidName(asteroid);
     if (ship) return <EntityName {...ship.Ship?.transitDestination || {}} />;
     if (crew?.Ship?.transitDestination) return <EntityName {...crew.Ship?.transitDestination || {}} />;
     return '';
   }, [asteroid, crew, ship]);
 
-  const specificLabel = useMemo(() => {
+  const specificLabel = useMemo(import.meta.url, () => {
     if (!crew) return '';
     if (ship) return formatters.shipName(ship);
     if (building) return formatters.buildingName(building);
     return 'Escape Module';
   }, [!crew, ship, building]);
 
-  const status = useMemo(() => {
+  const status = useMemo(import.meta.url, () => {
     if (ship && building) return 'Docked';
     if (!lotIndex && (ship || crew).Ship?.transitDestination) return 'In Flight';
     if (!lotIndex && !(ship || crew).Ship?.transitDestination) return 'In Orbit';
     return '';
   }, [building, crew, lotIndex, ship]);
 
-  const handleClick = useCallback((e) => {
+  const handleClick = useCallback(import.meta.url, (e) => {
     e.stopPropagation();
     onLink();
   }, [onLink]);

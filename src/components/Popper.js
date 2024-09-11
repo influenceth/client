@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from '~/lib/react-debug';
 import styled from 'styled-components';
 import { VscListUnordered as PopperIcon } from 'react-icons/vsc';
 import { createPortal } from 'react-dom';
@@ -64,7 +64,7 @@ export const PoppableContent = ({ children, ignoreClickAway, open, onClose, titl
 
   const contentRef = useRef();
   const initialPosition = useRef();
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (contentRef.current && open) {
       if (!initialPosition.current) {
         initialPosition.current = {
@@ -114,16 +114,16 @@ export const PoppableContent = ({ children, ignoreClickAway, open, onClose, titl
 const Poppable = ({ children, closeOnChange, closeOnClickAway = true, disabled, label, title, ...styleProps }) => {
   const [open, setOpen] = useState(false);
 
-  const handleToggle = useCallback(() => {
+  const handleToggle = useCallback(import.meta.url, () => {
     if (!disabled)
     setOpen((o) => !o);
   }, [disabled]);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     setOpen(false);
   }, [disabled]);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (open) setOpen(false);
   }, [closeOnChange]);
 

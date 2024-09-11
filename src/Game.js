@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from '~/lib/react-debug';
 import styled from 'styled-components';
 import { ThemeProvider, createGlobalStyle } from 'styled-components';
 import { BrowserRouter as Router, Switch, Route, useHistory } from 'react-router-dom';
@@ -72,7 +72,7 @@ const LauncherRedirect = () => {
   const dispatchLauncherPage = useStore(s => s.dispatchLauncherPage);
 
   // redirect to launcher if initial load and trying to link to /launcher/*
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     const parts = history.location.pathname.split('/').slice(1);
     const deeplink = parts[0] === 'launcher';
     if (deeplink || !DISABLE_LAUNCHER_LANDING) {
@@ -88,7 +88,7 @@ const LauncherRedirect = () => {
 
   // redirect to launcher if was logged in and is now logged out (and not already on launcher)
   const wasLoggedIn = useRef(false);
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (authenticated) {
       wasLoggedIn.current = true;
     } else {
@@ -114,12 +114,12 @@ const Game = () => {
   const [ loadingMessage, setLoadingMessage ] = useState('Initializing');
 
   // Initialize tag manager
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     initializeTagManager();
   }, []);
 
   const autodetectNeedsInit = graphics?.autodetect === undefined;
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (!gpuInfo) return;
 
     if (!gpuInfo.isMobile) {
@@ -144,7 +144,7 @@ const Game = () => {
     }
   }, [ gpuInfo, createAlert, dispatchGpuInfo, autodetectNeedsInit ]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (updateNeeded) {
       createAlert({
         type: 'App_Updated',
@@ -156,7 +156,7 @@ const Game = () => {
     }
   }, [createAlert, updateNeeded, onUpdateVersion]);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (isInstalling) {
       const messages = [
         'Correcting for gravitational anomalies',

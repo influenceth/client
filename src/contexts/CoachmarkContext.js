@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from '~/lib/react-debug';
 import { createPortal } from 'react-dom';
 
 import FullscreenAttention, { delay } from '~/components/FullscreenAttention';
@@ -52,7 +52,7 @@ const CoachmarkComponent = ({ refEl }) => {
 
   // give the ref element time to "animate in" in case
   // that is something it does
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     const to = setTimeout(() => {
       const boundingRect = refEl && refEl.getBoundingClientRect();
       setRect(boundingRect);
@@ -70,7 +70,7 @@ const CoachmarkComponent = ({ refEl }) => {
   }, delay);
 
   // update the position as needed if rect or screen changes
-  const position = useMemo(() => {
+  const position = useMemo(import.meta.url, () => {
     if (!rect) return null;
     return {
       top: rect.top,
@@ -100,11 +100,11 @@ export function CoachmarkProvider({ children }) {
   const [disabled, setDisabled] = useState(true);
   const [refEls, setRefEls] = useState({});
 
-  const activeCoachmarkKey = useMemo(() => {
+  const activeCoachmarkKey = useMemo(import.meta.url, () => {
     return Object.keys(coachmarks).find((k) => !!coachmarks[k] && !!refEls[k]);
   }, [coachmarks, refEls]);
 
-  const register = useCallback((label) => (r) => {
+  const register = useCallback(import.meta.url, (label) => (r) => {
     setRefEls((prev) => {
       let updated = { ...prev };
       if (r) updated[label] = r;
@@ -114,7 +114,7 @@ export function CoachmarkProvider({ children }) {
   }, []);
 
   // delay coachmark display on new tutorial step (to encourage reading)
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     setDisabled(true);
     const to = setTimeout(() => {
       setDisabled(false);
@@ -122,7 +122,7 @@ export function CoachmarkProvider({ children }) {
     return () => clearTimeout(to);
   }, [simulation?.step])
 
-  const contextValue = useMemo(() => ({
+  const contextValue = useMemo(import.meta.url, () => ({
     activeCoachmarkKey,
     register
   }), [activeCoachmarkKey, register]);

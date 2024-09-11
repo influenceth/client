@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback } from '~/lib/react-debug';
 import { Time } from '@influenceth/sdk';
 
 import useConstants from '~/hooks/useConstants';
@@ -8,7 +8,7 @@ const useGetTime = () => {
   const timeOverride = useStore(s => s.timeOverride);
   const { data: TIME_ACCELERATION } = useConstants('TIME_ACCELERATION');
 
-  return useCallback((overrideNow) => {
+  return useCallback(import.meta.url, (overrideNow) => {
     const now = overrideNow || Date.now();
     let preciseTime = timeOverride?.anchor || Time.fromUnixMilliseconds(now, TIME_ACCELERATION).toOrbitADays();
 

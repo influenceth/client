@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from '~/lib/react-debug';
 import { useQueryClient } from 'react-query';
 
 import { TOKEN, TOKEN_SCALE } from '~/lib/priceUtils';
@@ -17,13 +17,13 @@ const EthFaucetButton = ({ onError, onProcessing, onSuccess }) => {
 
   const [requestingEth, setRequestingEth] = useState();
 
-  const ethEnabled = useMemo(() => {
+  const ethEnabled = useMemo(import.meta.url, () => {
     if (!faucetInfo) return false;
     const lastClaimed = faucetInfo.ETH.lastClaimed || 0;
     return Date.now() > (Date.parse(lastClaimed) + 23.5 * 3600e3);
   }, [faucetInfo]);
 
-  const requestEth = useCallback(async () => {
+  const requestEth = useCallback(import.meta.url, async () => {
     setRequestingEth(true);
 
     try {
@@ -44,7 +44,7 @@ const EthFaucetButton = ({ onError, onProcessing, onSuccess }) => {
     queryClient.invalidateQueries({ queryKey: ['walletBalance', 'eth'] });
   }, [provider]);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (onProcessing) onProcessing(requestingEth);
   }, [onProcessing, requestingEth]);
 

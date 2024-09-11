@@ -3,7 +3,7 @@ import ResourceRequirement from '~/components/ResourceRequirement';
 import { getBuildingRequirements } from '../actionDialogs/components';
 import useDeliveryManager from '~/hooks/actionManagers/useDeliveryManager';
 
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo } from '~/lib/react-debug';
 import styled from 'styled-components';
 import { Building, Ship, Product } from '@influenceth/sdk';
 import moment from 'moment';
@@ -53,7 +53,7 @@ const ItemsList = styled.div`
 `;
 
 const ConstructionMaterialsGrid = ({ building }) => {
-  const items = useMemo(() => {
+  const items = useMemo(import.meta.url, () => {
     return getBuildingRequirements(building).map((item) => ({
       i: Number(item.i), 
       numerator: item.totalRequired,
@@ -90,13 +90,13 @@ const LotInfo = () => {
   const dispatchZoomScene = useStore(s => s.dispatchZoomScene);
   const zoomScene = useStore(s => s.asteroids.zoomScene);
 
-  const gracePeriodPretty = useMemo(() => {
+  const gracePeriodPretty = useMemo(import.meta.url, () => {
     return moment(Date.now() - Building.GRACE_PERIOD * 1e3).fromNow(true)
   }, []);
 
   const isZoomedToLot = zoomScene?.type === 'LOT';
 
-  const toggleZoomScene = useCallback(() => {
+  const toggleZoomScene = useCallback(import.meta.url, () => {
     dispatchZoomScene(isZoomedToLot ? null : { type: 'LOT', lotId: lot?.id });
   }, [isZoomedToLot, lot?.id]);
 

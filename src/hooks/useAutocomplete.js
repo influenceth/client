@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from '~/lib/react-debug';
 import { useQuery } from 'react-query';
 import { useThrottle } from '@react-hook/throttle';
 import esb from 'elastic-builder';
@@ -32,7 +32,7 @@ const useAutocomplete = (assetType, meta) => {
   const [ searchTerm, setSearchTerm ] = useState('');
   const [ query, setQuery ] = useThrottle({}, 2, true);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (!assetType) return;
     if (searchTerm) {
       const q = esb.requestBodySearch();

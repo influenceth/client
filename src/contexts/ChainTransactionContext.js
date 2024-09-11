@@ -1,4 +1,4 @@
-import { createContext, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { createContext, useCallback, useEffect, useMemo, useRef, useState } from '~/lib/react-debug';
 import { Address, Asteroid, Entity, Order, Permission, System } from '@influenceth/sdk';
 import { isEqual, get } from 'lodash';
 import { hash, num, shortString, uint256 } from 'starknet';
@@ -517,7 +517,7 @@ export function ChainTransactionProvider({ children }) {
   const [nonce, setNonce] = useState();
 
   // Sets the nonce initially to allow for some local management
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     const retrieveNonce = async () => {
       const currentNonce = await provider.getNonceForAddress(accountAddress);
       setNonce(safeBigInt(currentNonce));
@@ -527,10 +527,10 @@ export function ChainTransactionProvider({ children }) {
   }, [accountAddress, gameplay.useSessions, isDeployed, nonce, provider, simulationEnabled, starknetSession]);
 
   // Temporary logging for nonces
-  useEffect(() => console.log('NONCE', nonce || null), [nonce]);
+  useEffect(import.meta.url, () => console.log('NONCE', nonce || null), [nonce]);
 
   // autoresolve when actionType is set but actionType was not actually triggered by actionRound
-  const prependEventAutoresolve = useMemo(
+  const prependEventAutoresolve = useMemo(import.meta.url, 
     // TODO: can we check with a read call that this doesn't predict failure before prepending it
     //  (i.e. in case local crew value is stale)? might be more reliable anyway
     //  ... or we could also refetch crew again first
@@ -541,7 +541,7 @@ export function ChainTransactionProvider({ children }) {
     [blockNumber, crew?.Crew?.actionType, crew?.Crew?.actionRound, crew?._actionTypeTriggered]
   );
 
-  const executeWithAccount = useCallback(async (calls) => {
+  const executeWithAccount = useCallback(import.meta.url, async (calls) => {
     // Format calls for proper stringification
     const formattedCalls = calls.map((call) => {
       return { ...call, calldata: call.calldata.map(a => num.toHex(a)) };
@@ -635,7 +635,7 @@ export function ChainTransactionProvider({ children }) {
     walletAccount
   ]);
 
-  const contracts = useMemo(() => {
+  const contracts = useMemo(import.meta.url, () => {
     if (!!walletAccount) {
 
       // include all default systems + any virtuals included in customConfigs
@@ -903,7 +903,7 @@ export function ChainTransactionProvider({ children }) {
     usdcPerEth
   ]);
 
-  const getTxEvent = useCallback((txHash) => {
+  const getTxEvent = useCallback(import.meta.url, (txHash) => {
     const txHashBInt = safeBigInt(txHash);
     return (activities || []).find((a) => a.event?.transactionHash && safeBigInt(a.event?.transactionHash) === txHashBInt)?.event;
   }, [activities?.length]);
@@ -911,14 +911,14 @@ export function ChainTransactionProvider({ children }) {
   const transactionWaiters = useRef([]);
 
   // on logout, clear pending (and failed) transactions
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (!authenticated) dispatchClearTransactionHistory();
   }, [authenticated, dispatchClearTransactionHistory]);
 
   // handle newlyFailedTx in state + effect flow b/c doing directly in catch uses old values
   // of state (i.e. from when the callback was created)
   const [newlyFailedTx, setNewlyFailedTx] = useState();
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (newlyFailedTx) {
       const { err, key, vars, txHash } = newlyFailedTx;
 
@@ -949,7 +949,7 @@ export function ChainTransactionProvider({ children }) {
 
   // on initial load, set provider.waitForTransaction for any pendingTransactions
   // so that we can throw any extension-related or timeout errors needed
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (provider && contracts && pendingTransactions?.length) {
       pendingTransactions.forEach(({ key, vars, txHash }) => {
         // (sanity check) this should not be possible since pendingTransaction should not be created
@@ -988,7 +988,7 @@ export function ChainTransactionProvider({ children }) {
     }
   }, [contracts, pendingTransactions]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     // console.log('trigger activities effect', activities, pendingTransactions);
     if (contracts && pendingTransactions?.length) {
       pendingTransactions.forEach((tx) => {
@@ -1008,7 +1008,7 @@ export function ChainTransactionProvider({ children }) {
   // on every new block, check for reverted tx's
   // TODO: parse revert_reason to be more readible
   // TODO: time out eventually?
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (contracts && pendingTransactions?.length) {
       pendingTransactions.filter((tx) => !tx.txEvent).forEach((tx) => {
         // if it's been X+ seconds since submitted, check if it was reverted
@@ -1036,7 +1036,7 @@ export function ChainTransactionProvider({ children }) {
     }
   }, [blockNumber]);
 
-  const isAccountLocked = useCallback(async () => {
+  const isAccountLocked = useCallback(import.meta.url, async () => {
     // Check that the account isn't locked, and prompt to unlock if it is
     try {
       await walletAccount.walletProvider.request({
@@ -1051,7 +1051,7 @@ export function ChainTransactionProvider({ children }) {
   }, [walletAccount]);
   
 
-  const handleExecutionExeption = useCallback((e, executeCalls, txDetails = {}) => {
+  const handleExecutionExeption = useCallback(import.meta.url, (e, executeCalls, txDetails = {}) => {
     if ((e.message || '').toLowerCase() === 'account not deployed') {
       createAlert({
         type: 'DeployAccount',
@@ -1112,7 +1112,7 @@ export function ChainTransactionProvider({ children }) {
   }, [accountAddress, createAlert, dispatchFailedTransaction, logout]);
 
   // Allows for multiple explicit / manual calls to be executed in a single transaction
-  const executeCalls = useCallback(async (calls) => {
+  const executeCalls = useCallback(import.meta.url, async (calls) => {
     if (!walletAccount) {
       createAlert({
         type: 'GenericAlert',
@@ -1166,7 +1166,7 @@ export function ChainTransactionProvider({ children }) {
   }, [createAlert, executeWithAccount, handleExecutionExeption, isAccountLocked, isDeployed, upgradeInsecureSession, walletAccount])
 
   // Primary execute method for system calls (requires name of system, etc.)
-  const executeSystem = useCallback(async (key, vars, meta = {}) => {
+  const executeSystem = useCallback(import.meta.url, async (key, vars, meta = {}) => {
     if (simulationEnabled) {
       const uuid = `0x${String(performance.now()).replace('.', '')}`;
       dispatchPendingTransaction({
@@ -1227,7 +1227,7 @@ export function ChainTransactionProvider({ children }) {
     setPromptingTransaction(false);
   }, [blockTime, contracts, handleExecutionExeption, walletAccount, simulationEnabled]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const getPendingTx = useCallback((key, vars) => {
+  const getPendingTx = useCallback(import.meta.url, (key, vars) => {
     // simulation will only ever have one concurrent?
     if (simulationEnabled) {
       return pendingTransactions.find((tx) => tx.key === key);
@@ -1250,7 +1250,7 @@ export function ChainTransactionProvider({ children }) {
     return null;
   }, [contracts, pendingTransactions]);
 
-  const getStatus = useCallback((key, vars) => {
+  const getStatus = useCallback(import.meta.url, (key, vars) => {
     return getPendingTx(key, vars) ? 'pending' : 'ready';
   }, [getPendingTx]);
 

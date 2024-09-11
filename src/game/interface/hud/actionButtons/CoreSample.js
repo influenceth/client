@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef } from 'react';
+import { useCallback, useMemo, useRef } from '~/lib/react-debug';
 import { Asteroid, Building, Deposit, Lot, Product } from '@influenceth/sdk';
 
 import { NewCoreSampleIcon, ImproveCoreSampleIcon } from '~/components/Icons';
@@ -38,7 +38,7 @@ const NewCoreSample = ({ asteroid, crew, lot, onSetAction, overrideResourceId, i
 
   const resourceId = overrideResourceId || defaultResourceId;
 
-  const currentSamplingStack = useMemo(() => {
+  const currentSamplingStack = useMemo(import.meta.url, () => {
     return (currentSamplingActions || [])
       .map((sampling) => ({
         label: `${labelDict[sampling.status]} (${Product.TYPES[sampling?.action?.resourceId]?.name})`,
@@ -52,12 +52,12 @@ const NewCoreSample = ({ asteroid, crew, lot, onSetAction, overrideResourceId, i
   }, [currentSamplingActions, onSetAction]);
 
   // get lot abundance
-  const lotAbundance = useMemo(() => {
+  const lotAbundance = useMemo(import.meta.url, () => {
     if (!resourceId || !asteroid?.Celestial?.abundanceSeed || !asteroid.Celestial?.abundances) return 0;
     return Asteroid.Entity.getAbundanceAtLot(asteroid, Lot.toIndex(lot.id), resourceId);
   }, [asteroid, lot, resourceId]);
 
-  const handleClick = useCallback(() => {
+  const handleClick = useCallback(import.meta.url, () => {
     if (improveSample) {
       onSetAction('IMPROVE_CORE_SAMPLE', { preselect: { ...improveSample, sampleId: improveSample.id } });
     } else {
@@ -65,7 +65,7 @@ const NewCoreSample = ({ asteroid, crew, lot, onSetAction, overrideResourceId, i
     }
   }, [improveSample, onSetAction, resourceId]);
 
-  const disabledReason = useMemo(() => {
+  const disabledReason = useMemo(import.meta.url, () => {
     if (_disabled) return 'loading...';
     if (improveSample && improveSample?.Deposit?.status === Deposit.STATUSES.USED) return 'already used';
     if (improveSample && improveSample?.Deposit?.status !== Deposit.STATUSES.SAMPLED) return 'not yet analyzed';
@@ -82,7 +82,7 @@ const NewCoreSample = ({ asteroid, crew, lot, onSetAction, overrideResourceId, i
   if (improveSample) label = 'Improve Core Sample';
   else if (lotAbundance > 0) label += ` (${formatFixed(100 * lotAbundance, 1)}%)`;
 
-  const stackIsImprovement = useMemo(() => {
+  const stackIsImprovement = useMemo(import.meta.url, () => {
     return !currentSamplingActions.find((a) => a.action?.isNew);
   }, [currentSamplingActions]);
 

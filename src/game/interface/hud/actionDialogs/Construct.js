@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from '~/lib/react-debug';
 import styled from 'styled-components';
 import { Building, Crewmate, Lot, Time } from '@influenceth/sdk';
 
@@ -61,7 +61,7 @@ const Construct = ({ asteroid, lot, constructionManager, stage, ...props }) => {
 
   const crew = useActionCrew(currentConstructionAction);
 
-  const [crewTravelBonus, crewDistBonus, constructionBonus] = useMemo(() => {
+  const [crewTravelBonus, crewDistBonus, constructionBonus] = useMemo(import.meta.url, () => {
     const bonusIds = [
       Crewmate.ABILITY_IDS.HOPPER_TRANSPORT_TIME,
       Crewmate.ABILITY_IDS.FREE_TRANSPORT_DISTANCE,
@@ -72,7 +72,7 @@ const Construct = ({ asteroid, lot, constructionManager, stage, ...props }) => {
     return bonusIds.map((id) => abilities[id] || {});
   }, [crew]);
 
-  const { totalTime: crewTravelTime, tripDetails } = useMemo(() => {
+  const { totalTime: crewTravelTime, tripDetails } = useMemo(import.meta.url, () => {
     if (!asteroid?.id || !crew?._location?.lotId || !lot?.id) return {};
     const crewLotIndex = crew?._location?.asteroidId === asteroid.id ? Lot.toIndex(crew?._location?.lotId) : 0;
     return getTripDetails(asteroid.id, crewTravelBonus, crewDistBonus, crewLotIndex, [
@@ -81,7 +81,7 @@ const Construct = ({ asteroid, lot, constructionManager, stage, ...props }) => {
     ], crew?._timeAcceleration);
   }, [asteroid?.id, lot?.id, crew?._location?.lotId, crew?._timeAcceleration, crewTravelBonus, crewDistBonus]);
 
-  const constructionTime = useMemo(() =>
+  const constructionTime = useMemo(import.meta.url, () =>
     Time.toRealDuration(
       lot?.building?.Building?.buildingType
         ? Building.getConstructionTime(lot?.building?.Building?.buildingType, constructionBonus.totalBonus)
@@ -91,14 +91,14 @@ const Construct = ({ asteroid, lot, constructionManager, stage, ...props }) => {
     [lot?.building?.Building?.buildingType, constructionBonus.totalBonus, crew?._timeAcceleration]
   );
 
-  const [crewTimeRequirement, taskTimeRequirement] = useMemo(() => {
+  const [crewTimeRequirement, taskTimeRequirement] = useMemo(import.meta.url, () => {
     return [
       crewTravelTime + constructionTime / 8,
       crewTravelTime / 2 + constructionTime
     ];
   }, [crewTravelTime, constructionTime]);
 
-  const stats = useMemo(() => ([
+  const stats = useMemo(import.meta.url, () => ([
     {
       label: 'Crew Travel',
       value: formatTimer(crewTravelTime),
@@ -127,7 +127,7 @@ const Construct = ({ asteroid, lot, constructionManager, stage, ...props }) => {
     },
   ]), [constructionBonus, constructionTime, crewTravelTime, crewTravelBonus, tripDetails]);
 
-  const status = useMemo(() => {
+  const status = useMemo(import.meta.url, () => {
     if (constructionStatus === 'PLANNED') {
       return 'BEFORE';
     } else if (constructionStatus === 'UNDER_CONSTRUCTION') {
@@ -138,7 +138,7 @@ const Construct = ({ asteroid, lot, constructionManager, stage, ...props }) => {
 
   // handle auto-closing
   const lastStatus = useRef();
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     // (always close on)
     if (['OPERATIONAL'].includes(constructionStatus)) {
       props.onClose();
@@ -152,15 +152,15 @@ const Construct = ({ asteroid, lot, constructionManager, stage, ...props }) => {
     lastStatus.current = constructionStatus;
   }, [constructionStatus]);
 
-  const transferToSite = useCallback(() => {
+  const transferToSite = useCallback(import.meta.url, () => {
     props.onSetAction('TRANSFER_TO_SITE', {});
   }, []);
 
-  const purchaseOnMarket = useCallback(() => {
+  const purchaseOnMarket = useCallback(import.meta.url, () => {
     props.onSetAction('SHOPPING_LIST', {});
   }, []);
 
-  const [buildingRequirements, requirementsMet, waitingOnTransfer] = useMemo(() => {
+  const [buildingRequirements, requirementsMet, waitingOnTransfer] = useMemo(import.meta.url, () => {
     const reqs = getBuildingRequirements(lot?.building, constructionStatus === 'PLANNED' ? currentDeliveryActions : []);
     const met = !reqs.find((req) => req.inNeed > 0);
     const wait = reqs.find((req) => req.inTransit > 0);
@@ -298,7 +298,7 @@ const Wrapper = (props) => {
   const constructionManager = useConstructionManager(lot?.id);
   const { stageByActivity } = constructionManager;
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (!asteroid || !lot) {
       if (!isLoading) {
         if (props.onClose) props.onClose();

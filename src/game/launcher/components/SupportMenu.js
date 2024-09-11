@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback } from '~/lib/react-debug';
 import styled from 'styled-components';
 
 import { ChevronDoubleRightIcon, InfluenceIcon } from '~/components/Icons';
@@ -75,7 +75,7 @@ const SupportWrapper = styled.div`
 `;
 
 const SupportMenu = () => {
-  const goToDiscord = useCallback(() => {
+  const goToDiscord = useCallback(import.meta.url, () => {
     window.open(process.env.REACT_APP_HELP_URL);
   }, []);
   return (

@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo } from '~/lib/react-debug';
 import { Address } from '@influenceth/sdk';
 
 import { MyAssetIcon } from '~/components/Icons';
@@ -11,7 +11,7 @@ import formatters from '~/lib/formatters';
 const useColumns = () => {
   const { accountAddress } = useSession();
 
-  return useMemo(() => {
+  return useMemo(import.meta.url, () => {
     const columns = [
       {
         key: 'my',

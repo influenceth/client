@@ -1,4 +1,4 @@
-import { useCallback, useContext, useMemo } from 'react';
+import { useCallback, useContext, useMemo } from '~/lib/react-debug';
 import { Entity, Extractor, Permission } from '@influenceth/sdk';
 
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
@@ -17,17 +17,17 @@ const useExtractionManager = (lotId, slot = 1) => {
   const { data: lot } = useLot(lotId);
   const { data: actionItems } = useUnresolvedActivities(lot?.building);
 
-  const payload = useMemo(() => ({
+  const payload = useMemo(import.meta.url, () => ({
     extractor: { id: lot?.building?.id, label: Entity.IDS.BUILDING },
     extractor_slot: slot,
     caller_crew: { id: crew?.id, label: Entity.IDS.CREW }
   }), [lot?.building, crew?.id, slot]);
 
-  const slotExtractor = useMemo(() => lot?.building?.Extractors?.find((e) => e.slot === slot), [lot?.building, slot]);
+  const slotExtractor = useMemo(import.meta.url, () => lot?.building?.Extractors?.find((e) => e.slot === slot), [lot?.building, slot]);
 
   // status flow
   // READY > EXTRACTING > READY_TO_FINISH > FINISHING
-  const [currentExtraction, extractionStatus, actionStage] = useMemo(() => {
+  const [currentExtraction, extractionStatus, actionStage] = useMemo(import.meta.url, () => {
     let current = {
       _cachedData: null,
       _isAccessible: false,
@@ -98,7 +98,7 @@ const useExtractionManager = (lotId, slot = 1) => {
     ];
   }, [actionItems, blockTime, crew?.id, crewCan, getPendingTx, getStatus, payload, slotExtractor?.status]);
 
-  const startExtraction = useCallback((amount, deposit, destination, destinationSlot, depositRecipient, lease) => {
+  const startExtraction = useCallback(import.meta.url, (amount, deposit, destination, destinationSlot, depositRecipient, lease) => {
     execute(
       'FlexibleExtractResourceStart',
       {
@@ -120,7 +120,7 @@ const useExtractionManager = (lotId, slot = 1) => {
     )
   }, [payload]);
 
-  const finishExtraction = useCallback(() => {
+  const finishExtraction = useCallback(import.meta.url, () => {
     execute('ExtractResourceFinish', payload, { lotId });
   }, [payload]);
 

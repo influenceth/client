@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from '~/lib/react-debug';
 import { createPortal } from 'react-dom';
 import { useHistory } from 'react-router-dom';
 import styled from 'styled-components';
@@ -109,12 +109,12 @@ const WelcomeSimulation = () => {
   const launcherPage = useStore(s => s.launcherPage);
   const openHudMenu = useStore(s => s.openHudMenu);
   const [locationPath, setLocationPath] = useState();
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     // (returns unlisten, so can just return directly to useEffect)
     return history.listen((location) => setLocationPath(location.pathname));
   }, [history]);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (initialLoad.current) {
       initialLoad.current = false;
     } else if (canAutohide) {
@@ -124,7 +124,7 @@ const WelcomeSimulation = () => {
 
   // we want to unhide the message on step change
   // then we want to hide it on first coachmark change for step (i.e. user has read and is now doing)
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     setIsHidden(false);
     setCanAutohide(false);
     setTimeout(() => {
@@ -132,7 +132,7 @@ const WelcomeSimulation = () => {
     }, 1000);
   }, [currentStepIndex]);
 
-  const handleSkip = useCallback(() => {
+  const handleSkip = useCallback(import.meta.url, () => {
     fireTrackingEvent('simulation', { step: 'skip-to-login' });
             
     // webWallet does not work from localhost...

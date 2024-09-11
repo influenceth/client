@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo } from '~/lib/react-debug';
 import { Lot } from '@influenceth/sdk';
 
 import { useLotLink } from '~/components/LotLink';
@@ -15,7 +15,7 @@ const useHydratedLocation = (location = {}, escapeModuleCrewId) => {
   const { data: building } = useBuilding(location?.buildingId);
   const { data: ship } = useShip(location?.shipId);
 
-  return useMemo(() => {
+  return useMemo(import.meta.url, () => {
     return {
       asteroid,
       building,

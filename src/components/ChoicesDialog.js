@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef } from 'react';
+import React, { useEffect, useMemo, useRef } from '~/lib/react-debug';
 import styled from 'styled-components';
 
 import Button from '~/components/ButtonAlt';
@@ -85,7 +85,7 @@ const ChoicesDialog = ({
   rightButton,
   ...props
 }) => {
-  const rightButtonOverride = useMemo(() => {
+  const rightButtonOverride = useMemo(import.meta.url, () => {
     if (rightButton) return rightButton;
     
     if (!choices || (choices.length === 1 && !choices[0].text)) {
@@ -98,7 +98,7 @@ const ChoicesDialog = ({
   }, [choices, choicelessButton, choicelessInFooter, props.rightButton]);
 
   const contentWrapper = useRef();
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (contentWrapper.current) {
       contentWrapper.current.scrollTop = 0;
     }

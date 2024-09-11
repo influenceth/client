@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from '~/lib/react-debug';
 import styled from 'styled-components';
 import { Asteroid, Crewmate, Deposit, Extractor, Inventory, Lot, Permission, Product, Time } from '@influenceth/sdk';
 import cloneDeep from 'lodash/cloneDeep';
@@ -88,7 +88,7 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
 
   const { data: buildingOwner } = useCrew(lot?.building?.Control?.controller?.id);
 
-  const isPurchase = useMemo(
+  const isPurchase = useMemo(import.meta.url, 
     () => selectedCoreSample && selectedCoreSample?.Control?.controller?.id !== crew?.id,
     [crew?.id, selectedCoreSample?.Control?.controller?.id]
   );
@@ -97,11 +97,11 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
   // get destinationLot and destinationInventory
   const [destinationSelection, setDestinationSelection] = useState();
   const { data: destination } = useEntity(destinationSelection ? { id: destinationSelection.id, label: destinationSelection.label } : undefined);
-  const destinationLotId = useMemo(() => destination && locationsArrToObj(destination?.Location?.locations || []).lotId, [destination]);
+  const destinationLotId = useMemo(import.meta.url, () => destination && locationsArrToObj(destination?.Location?.locations || []).lotId, [destination]);
   const { data: destinationLot } = useLot(destinationLotId);
-  const destinationInventory = useMemo(() => (destination?.Inventories || []).find((i) => i.slot === destinationSelection?.slot), [destination, destinationSelection]);
+  const destinationInventory = useMemo(import.meta.url, () => (destination?.Inventories || []).find((i) => i.slot === destinationSelection?.slot), [destination, destinationSelection]);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     const defaultSelection = props.preselect || currentExtraction;
     if (defaultSelection?.destination) {
       setDestinationSelection({
@@ -113,7 +113,7 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
     }
   }, [currentExtraction?.destination]);
 
-  const [crewTravelBonus, crewDistBonus, extractionBonus] = useMemo(() => {
+  const [crewTravelBonus, crewDistBonus, extractionBonus] = useMemo(import.meta.url, () => {
     const bonusIds = [
       Crewmate.ABILITY_IDS.HOPPER_TRANSPORT_TIME,
       Crewmate.ABILITY_IDS.FREE_TRANSPORT_DISTANCE,
@@ -139,7 +139,7 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
     return bonusIds.map((id) => abilities[id] || {});
   }, [crew, selectedCoreSample?.Deposit?.resource]);
 
-  const usableSamples = useMemo(() => {
+  const usableSamples = useMemo(import.meta.url, () => {
     return (lot?.deposits || []).filter((d) => (
       (d.Control.controller.id === crew?.id || d.PrivateSale?.amount > 0)
       && d.Deposit.remainingYield > 0
@@ -147,7 +147,7 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
     ));
   }, [lot?.deposits, crew?.id]);
 
-  const selectCoreSample = useCallback((sample) => {
+  const selectCoreSample = useCallback(import.meta.url, (sample) => {
     setSelectedCoreSample(sample);
     setAmount(0);
     if (sample) {
@@ -157,7 +157,7 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
     }
   }, []);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     let defaultSelection;
 
     // handle "currentExtraction" state
@@ -183,12 +183,12 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
     }
   }, [currentExtraction, !selectedCoreSample, lot?.deposits, usableSamples]);
 
-  const resource = useMemo(() => {
+  const resource = useMemo(import.meta.url, () => {
     if (!selectedCoreSample) return null;
     return Product.TYPES[selectedCoreSample.Deposit.resource];
   }, [selectedCoreSample]);
 
-  const extractionTime = useMemo(() => {
+  const extractionTime = useMemo(import.meta.url, () => {
     if (!selectedCoreSample) return 0;
     return Time.toRealDuration(
       Extractor.getExtractionTime(
@@ -201,7 +201,7 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
     );
   }, [amount, crew?._timeAcceleration, extractionBonus, resource, selectedCoreSample]);
 
-  const { totalTime: crewTravelTime, tripDetails } = useMemo(() => {
+  const { totalTime: crewTravelTime, tripDetails } = useMemo(import.meta.url, () => {
     if (!asteroid?.id || !crew?._location?.lotId || !lot?.id) return {};
     const crewLotIndex = Lot.toIndex(crew?._location?.lotId);
     return getTripDetails(asteroid.id, crewTravelBonus, crewDistBonus, crewLotIndex, [
@@ -210,7 +210,7 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
     ], crew?._timeAcceleration);
   }, [asteroid?.id, lot?.id, crew?._location?.lotId, crew?._timeAcceleration, crewTravelBonus, crewDistBonus]);
 
-  const [transportDistance, transportTime] = useMemo(() => {
+  const [transportDistance, transportTime] = useMemo(import.meta.url, () => {
     if (!destinationLot?.id) return [];
     return [
       Asteroid.getLotDistance(asteroid?.id, Lot.toIndex(lot?.id), Lot.toIndex(destinationLot?.id)) || 0,
@@ -227,7 +227,7 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
     ];
   }, [asteroid?.id, lot?.id, crew?._timeAcceleration, destinationLot?.id, crewDistBonus, crewTravelBonus]);
 
-  const [crewTimeRequirement, taskTimeRequirement] = useMemo(() => {
+  const [crewTimeRequirement, taskTimeRequirement] = useMemo(import.meta.url, () => {
     const oneWayCrewTravelTime = crewTravelTime / 2;
     return [
       crewTravelTime + extractionTime / 8,
@@ -235,7 +235,7 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
     ];
   }, [crew?._timeAcceleration, extractionTime, crewTravelTime, transportTime]);
 
-  const stats = useMemo(() => ([
+  const stats = useMemo(import.meta.url, () => ([
     {
       label: 'Extraction Mass',
       value: `${formatSampleMass(amount * resource?.massPerUnit || 0)} tonnes`,
@@ -292,11 +292,11 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
     },
   ]), [amount, crewTravelBonus, crewTravelTime, extractionBonus, extractionTime, resource, transportDistance, transportTime]);
 
-  const prepaidLeaseConfig = useMemo(() => {
+  const prepaidLeaseConfig = useMemo(import.meta.url, () => {
     return getProcessorLeaseConfig(lot?.building, Permission.IDS.EXTRACT_RESOURCES, crew, blockTime);
   }, [blockTime, crew, lot?.building]);
 
-  const { leasePayment, desiredLeaseTerm, actualLeaseTerm } = useMemo(() => {
+  const { leasePayment, desiredLeaseTerm, actualLeaseTerm } = useMemo(import.meta.url, () => {
     return getProcessorLeaseSelections(
       prepaidLeaseConfig,
       taskTimeRequirement,
@@ -305,7 +305,7 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
     );
   }, [blockTime, crew?.Crew?.readyAt, prepaidLeaseConfig, taskTimeRequirement]);
 
-  const onStartExtraction = useCallback(() => {
+  const onStartExtraction = useCallback(import.meta.url, () => {
     if (!(amount && selectedCoreSample && destination && destinationInventory)) return;
     if (isPurchase && !depositOwner) return;
     if (leasePayment && !buildingOwner?.Crew?.delegatedTo) return;
@@ -359,7 +359,7 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
 
   // handle auto-closing
   const lastStatus = useRef();
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     // (close on status change from)
     if (['READY', 'READY_TO_FINISH', 'FINISHING'].includes(lastStatus.current)) {
       if (extractionStatus !== lastStatus.current) {
@@ -369,7 +369,7 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
     lastStatus.current = extractionStatus;
   }, [extractionStatus]);
 
-  const [extraDepositProps, extraDepositThumbnailProps] = useMemo(() => {
+  const [extraDepositProps, extraDepositThumbnailProps] = useMemo(import.meta.url, () => {
     if (isPurchase && stage === actionStage.NOT_STARTED) {
       return [
         {
@@ -407,7 +407,7 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
     return [{}, {}];
   }, [depositOwner, selectedCoreSample]);
 
-  const goLabel = useMemo(() => {
+  const goLabel = useMemo(import.meta.url, () => {
     const paymentTotal = (selectedCoreSample?.PrivateSale?.amount || 0) + (leasePayment || 0);
     if (paymentTotal) {
       return (
@@ -631,7 +631,7 @@ const Wrapper = (props) => {
   const extractionManager = useExtractionManager(lot?.id);
   const { actionStage } = extractionManager;
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (!asteroid || !lot) {
       if (!isLoading) {
         if (props.onClose) props.onClose();

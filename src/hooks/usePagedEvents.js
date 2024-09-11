@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from '~/lib/react-debug';
 import { useQueryClient } from 'react-query';
 
 import { hydrateActivities, typesWithLogContent } from '~/lib/activities';
@@ -22,11 +22,11 @@ const usePagedEvents = () => {
   const sort = useStore(s => s.assetSearch[assetType].sort || []);
   const setSort = useStore(s => s.dispatchSortUpdated(assetType));
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     setPage(1);
   }, [filters, sort]);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     setLoading(true);
 
     // TODO (enhancement): if not using any filters, should probably use react-query here...

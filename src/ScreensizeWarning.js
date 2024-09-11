@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState } from '~/lib/react-debug';
 
 import FullpageInterstitial from '~/components/FullpageInterstitial';
 import useScreenSize from '~/hooks/useScreenSize';

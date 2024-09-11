@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo } from '~/lib/react-debug';
 import styled from 'styled-components';
 
 import { SwayIcon } from '~/components/Icons';
@@ -28,7 +28,7 @@ const Wrapper = styled.div`
 const RecruitmentMenu = () => {
   const { data: referrals, isLoading } = useReferrals();
 
-  const [referralsCount, referralsTotal] = useMemo(() => {
+  const [referralsCount, referralsTotal] = useMemo(import.meta.url, () => {
     const referred = new Set();
     let total = 0;
     (referrals || []).forEach((r) => {

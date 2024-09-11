@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo } from '~/lib/react-debug';
 import styled from 'styled-components';
 import { Asteroid, Product } from '@influenceth/sdk';
 
@@ -52,7 +52,7 @@ const SubtitleRow = styled.div`
 `;
 
 const AsteroidTitleArea = ({ asteroid }) => {
-  const resourceCategories = useMemo(() => {
+  const resourceCategories = useMemo(import.meta.url, () => {
     return (Asteroid.SPECTRAL_TYPES[asteroid?.Celestial?.celestialType]?.resources || []).reduce((acc, productId) => {
       const category = Product.TYPES[productId]?.category;
       if (category && !acc.includes(category)) {

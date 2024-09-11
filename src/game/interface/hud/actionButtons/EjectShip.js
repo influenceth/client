@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo } from '~/lib/react-debug';
 import { Permission } from '@influenceth/sdk';
 
 import { LaunchShipIcon } from '~/components/Icons';
@@ -23,13 +23,13 @@ const isVisible = ({ crew, building, lot, ship }) => {
 
 const EjectShip = ({ asteroid, blockTime, crew, lot, ship, onSetAction, _disabled }) => {
   const { currentUndockingAction } = useShipDockingManager(ship?.id);
-  const handleClick = useCallback(() => {
+  const handleClick = useCallback(import.meta.url, () => {
     onSetAction('LAUNCH_SHIP', { shipId: ship?.id });
   }, [onSetAction, ship?.id]);
 
   const { data: shipController } = useHydratedCrew(ship?.Control?.controller?.id);
 
-  const disabledReason = useMemo(() => {
+  const disabledReason = useMemo(import.meta.url, () => {
     if (_disabled) return 'loading...';
     if (lot?.building) {
       // cannot force eject if ship has permission to be there

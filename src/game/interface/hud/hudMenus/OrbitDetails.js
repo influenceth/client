@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from '~/lib/react-debug';
 import styled from 'styled-components';
 import { Entity, Ship } from '@influenceth/sdk';
 
@@ -151,23 +151,23 @@ const DockDetails = ({ onClose }) => {
 
   const { data: asteroidShips } = useAsteroidShips(asteroidId);
   
-  const ships = useMemo(() => {
+  const ships = useMemo(import.meta.url, () => {
     return (asteroidShips || []).filter((s) => (s.Location?.location?.label === Entity.IDS.ASTEROID) && !s.Ship.transitDestination);
   }, [asteroidShips]);
 
   const [nameFilter, setNameFilter] = useState('');
   const [selectedShipId, setSelectedShipId] = useState();
-  const selectedShip = useMemo(() => ships?.find((s) => s.id === selectedShipId), [ships, selectedShipId]);
+  const selectedShip = useMemo(import.meta.url, () => ships?.find((s) => s.id === selectedShipId), [ships, selectedShipId]);
 
-  const onFilterChange = useCallback((e) => {
+  const onFilterChange = useCallback(import.meta.url, (e) => {
     setNameFilter(e.target.value || '');
   }, []);
 
-  const zoomIn = useCallback(() => {
+  const zoomIn = useCallback(import.meta.url, () => {
     dispatchZoomScene({ type: 'SHIP', shipId: selectedShipId });
   }, [selectedShipId]);
 
-  const filteredShips = useMemo(() => {
+  const filteredShips = useMemo(import.meta.url, () => {
     return (ships || []).filter((s) => {
       return formatters.shipName(s).toLowerCase().includes(nameFilter.toLowerCase())
     })

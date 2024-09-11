@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo } from '~/lib/react-debug';
 
 import { EmergencyModeEnterIcon, EmergencyModeExitIcon } from '~/components/Icons';
 import useShip from '~/hooks/useShip';
@@ -26,11 +26,11 @@ const EmergencyModeToggle = ({ crew, onSetAction, _disabled }) => {
   const { data: crewedShip } = useShip(crew?._location?.shipId);
   const ready = useReadyAtWatcher(crewedShip?.Ship?.readyAt);
 
-  const handleClick = useCallback(() => {
+  const handleClick = useCallback(import.meta.url, () => {
     onSetAction('EMERGENCY_MODE_TOGGLE');
   }, [onSetAction]);
 
-  const disabledReason = useMemo(() => {
+  const disabledReason = useMemo(import.meta.url, () => {
     if (_disabled) return 'loading...';
     if (!crewedShip) return 'ship is not crewed';
     if (crewedShip?._location.lotId || crewedShip?._location.spaceId) return 'must be in orbit';

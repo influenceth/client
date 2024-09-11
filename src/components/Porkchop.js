@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from '~/lib/react-debug';
 import styled from 'styled-components';
 import { lambert } from '@influenceth/astro';
 import { GM_ADALIA } from '@influenceth/sdk';
@@ -150,12 +150,12 @@ const Porkchop = ({
   const canvasRef = useRef();
   const runRef = useRef();
 
-  const setCanvasRef = useCallback((canvas) => {
+  const setCanvasRef = useCallback(import.meta.url, (canvas) => {
     canvasRef.current = canvas;
     setCanvasRefIsSet(true);
   }, []);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (!canvasRefIsSet) return;
     if (!originPath || !destinationPath) return;
     setLoading(true);
@@ -259,11 +259,11 @@ const Porkchop = ({
     }
   }, [canvasRefIsSet, lastFedAt, originPath, destinationPath, shipParams]);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (!travelSolution) setSelectionPos();
   }, [travelSolution])
 
-  const getMouseData = useCallback((e) => {
+  const getMouseData = useCallback(import.meta.url, (e) => {
     const data = {
       x: Math.max(0, Math.min(e.nativeEvent.offsetX / size, 1)),
       y: Math.max(0, Math.min(e.nativeEvent.offsetY / size, 1)),
@@ -281,7 +281,7 @@ const Porkchop = ({
     return data;
   }, [baseTime, nowTime, size]);
 
-  const handleClick = useCallback(async (e) => {
+  const handleClick = useCallback(import.meta.url, async (e) => {
     const mouseData = getMouseData(e);
     setSelectionPos(mouseData);
     setMousePos();
@@ -344,7 +344,7 @@ const Porkchop = ({
     });
   }, [emode, originPath, destinationPath, lastFedAt, shipParams]);
 
-  const handleMouseMove = useCallback((e) => {
+  const handleMouseMove = useCallback(import.meta.url, (e) => {
     if (loading) return;
     if (e.type === 'mousemove') {
       setMousePos(getMouseData(e));

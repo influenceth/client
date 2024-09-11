@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from '~/lib/react-debug';
 
 const useServiceWorker = () => {
   // no service worker in dev mode, so don't default to "installing" in that case
@@ -6,7 +6,7 @@ const useServiceWorker = () => {
   const [updateNeeded, setUpdateNeeded] = useState(false);
   const refreshing = useRef(false);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if ('serviceWorker' in navigator) {
 
       // if there is a controller change (i.e. if new serviceworker becomes active),
@@ -75,7 +75,7 @@ const useServiceWorker = () => {
   return {
     isInstalling,
     updateNeeded,
-    onUpdateVersion: useCallback(() => {
+    onUpdateVersion: useCallback(import.meta.url, () => {
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker.getRegistration().then((registration) => {
           if (registration && registration.waiting) {

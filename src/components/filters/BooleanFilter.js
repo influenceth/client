@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from '~/lib/react-debug';
 import { FiCheckSquare as CheckedIcon, FiSquare as UncheckedIcon } from 'react-icons/fi';
 
 import { CheckboxButton, CheckboxRow, SearchMenu } from './components';
@@ -6,7 +6,7 @@ import { CheckboxButton, CheckboxRow, SearchMenu } from './components';
 const BooleanFilter = ({ assetType, filters, onChange, title, label, fieldName, initialValue }) => {
   const [ value, setValue ] = useState(!!initialValue);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (filters[fieldName] !== undefined) {
       setValue(filters[fieldName]);
     } else {
@@ -14,7 +14,7 @@ const BooleanFilter = ({ assetType, filters, onChange, title, label, fieldName, 
     }
   }, [filters[fieldName], initialValue]);
 
-  const onClick = useCallback((e) => {
+  const onClick = useCallback(import.meta.url, (e) => {
     onChange({ [fieldName]: !value });
   }, [fieldName, onChange, value]);
 

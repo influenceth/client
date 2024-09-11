@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from '~/lib/react-debug';
 import { createPortal } from 'react-dom';
 import { usePopper } from 'react-popper';
 import styled from 'styled-components';
@@ -60,7 +60,7 @@ const Dropdown = ({
   options: rawOptions,
   ...styleProps
 }) => {
-  const [isObjArr, options] = useMemo(() => {
+  const [isObjArr, options] = useMemo(import.meta.url, () => {
     if (typeof (rawOptions || [])[0] === 'object') {
       return [true, [...rawOptions]];
     }
@@ -86,12 +86,12 @@ const Dropdown = ({
     ],
   });
 
-  const handleToggle = useCallback(() => {
+  const handleToggle = useCallback(import.meta.url, () => {
     if (!disabled)
     setOpen((o) => !o);
   }, [disabled]);
 
-  const handleSelection = useCallback((option) => () => {
+  const handleSelection = useCallback(import.meta.url, (option) => () => {
     if (option[valueKey] !== selected[valueKey]) {
       onChange(isObjArr ? option : option[valueKey]);
     }
@@ -99,18 +99,18 @@ const Dropdown = ({
     setOpen(false);
   }, [onChange, selected]);
 
-  const handleMouseEnter = useCallback(() => {
+  const handleMouseEnter = useCallback(import.meta.url, () => {
     if (closeTimer.current) {
       clearTimeout(closeTimer.current);
     }
   }, []);
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     return () => {
       if (closeTimer.current) clearTimeout(closeTimer.current);
     }
   }, []);
 
-  const handleMouseLeave = useCallback(() => {
+  const handleMouseLeave = useCallback(import.meta.url, () => {
     closeTimer.current = setTimeout(() => {
       setOpen(false);
     }, 500);
@@ -118,13 +118,13 @@ const Dropdown = ({
 
   // if initialSelection changes, assume that should be my new value
   // (but don't call onChange since obviously changed from elsewhere)
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     setSelected(
       (initialSelection && options.find((o) => o[valueKey] === initialSelection)) || options[0]
     );
   }, [initialSelection, options?.length]);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     setOpen(false);
   }, [disabled]);
 

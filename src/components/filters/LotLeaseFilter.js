@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from '~/lib/react-debug';
 
 import useStore from '~/hooks/useStore';
 import ColorPicker from '~/components/ColorPicker';
@@ -33,7 +33,7 @@ const LotLeaseFilter = ({ assetType, filters, onChange }) => {
   const [types, setTypes] = useState(initialValues);
   const [highlightColors, setHighlightColors] = useState({ ...(fieldHighlight?.colorMap || defaultColorMap) });
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     const newTypes = ({ ...initialValues });
     if (filters[fieldName] && filters[fieldName].length > 0) {
       const filterArr = filters[fieldName];
@@ -44,7 +44,7 @@ const LotLeaseFilter = ({ assetType, filters, onChange }) => {
     setTypes(newTypes);
   }, [filters[fieldName]]);
 
-  const onClick = useCallback((k) => (e) => {
+  const onClick = useCallback(import.meta.url, (k) => (e) => {
     e.stopPropagation();
     onChange({ [fieldName]: k });
   }, [onChange]);

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef } from '~/lib/react-debug';
 import Lottie from 'lottie-react';
 
 import CrewBusy from '~/assets/icons/animated/CrewBusy.json';
@@ -9,7 +9,7 @@ import Ready from '~/assets/icons/animated/Ready.json';
 
 const LottieIcon = ({ animation, isPaused = false, size = '1em' }) => {
   const lottieRef = useRef();
-  const style = useMemo(() => ({
+  const style = useMemo(import.meta.url, () => ({
     alignItems: 'center',
     display: 'flex',
     height: size,
@@ -17,7 +17,7 @@ const LottieIcon = ({ animation, isPaused = false, size = '1em' }) => {
     width: size,
   }), [size]);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (isPaused) lottieRef.current.pause();
     else lottieRef.current.play();
   }, [isPaused]);

@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback } from '~/lib/react-debug';
 import styled from 'styled-components';
 
 import { PreviousIcon, NextIcon, BeginningIcon } from '~/components/Icons';
@@ -14,9 +14,9 @@ const StyledPagination = styled.div`
 
 const Pagination = (props) => {
   const { currentPage, rowsPerPage, rowCount, onChangePage } = props;
-  const handlePrevious = useCallback(() => onChangePage(currentPage - 1), [ currentPage, onChangePage ]);
-  const handleNext = useCallback(() => onChangePage(currentPage + 1), [ currentPage, onChangePage ]);
-  const handleFirst = useCallback(() => onChangePage(1), [ onChangePage ]);
+  const handlePrevious = useCallback(import.meta.url, () => onChangePage(currentPage - 1), [ currentPage, onChangePage ]);
+  const handleNext = useCallback(import.meta.url, () => onChangePage(currentPage + 1), [ currentPage, onChangePage ]);
+  const handleFirst = useCallback(import.meta.url, () => onChangePage(1), [ onChangePage ]);
 
   return (
     <StyledPagination className={props.className}>

@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo } from '~/lib/react-debug';
 import { Inventory, Permission } from '@influenceth/sdk';
 
 import { MultiSellIcon } from '~/components/Icons';
@@ -10,16 +10,16 @@ const isVisible = ({ crew, lot, ship }) => false;
 
 const MultiSell = ({ asteroid, blockTime, crew, lot, ship, onSetAction, dialogProps = {}, _disabled, _disabledReason }) => {
   const { pendingTransactions } = useCrewContext();
-  const origin = useMemo(() => ship || lot?.surfaceShip || lot?.building, [ship, lot]);
-  const pendingAction = useMemo(() => {
+  const origin = useMemo(import.meta.url, () => ship || lot?.surfaceShip || lot?.building, [ship, lot]);
+  const pendingAction = useMemo(import.meta.url, () => {
     return !!(pendingTransactions || []).find((tx) => tx.key === 'EscrowWithdrawalAndFillBuyOrders' && tx.meta?.originLotId === lot?.id);
   }, [lot?.id, pendingTransactions]);
 
-  const handleClick = useCallback(() => {
+  const handleClick = useCallback(import.meta.url, () => {
     onSetAction('SELLING_LIST', { origin, ...dialogProps }); // originSlot (if not set, use primary)
   }, [dialogProps, origin]);
 
-  const disabledReason = useMemo(() => {
+  const disabledReason = useMemo(import.meta.url, () => {
     if (_disabledReason) return _disabledReason;
     if (_disabled) return 'loading...';
     if (pendingAction) return 'transacting...';

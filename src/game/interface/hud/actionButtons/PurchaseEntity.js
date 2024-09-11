@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo } from '~/lib/react-debug';
 import { Address } from '@influenceth/sdk';
 
 import { PurchaseEntityIcon } from '~/components/Icons';
@@ -14,11 +14,11 @@ const isVisible = ({ account, ship }) => {
 const PurchaseEntity = ({ ship, onSetAction, _disabled }) => {
   const { isPendingPurchase } = useNftSaleManager(ship);
 
-  const handleClick = useCallback(() => {
+  const handleClick = useCallback(import.meta.url, () => {
     onSetAction('PURCHASE_ENTITY', { entity: ship });
   }, []);
 
-  let disabledReason = useMemo(() => {
+  let disabledReason = useMemo(import.meta.url, () => {
     if (_disabled || isPendingPurchase) return 'loading...';
   }, [_disabled, isPendingPurchase]);
 

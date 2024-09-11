@@ -1,4 +1,4 @@
-import { useCallback, useContext } from 'react';
+import { useCallback, useContext } from '~/lib/react-debug';
 import { Crewmate, Entity } from '@influenceth/sdk';
 
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
@@ -9,16 +9,16 @@ const useCrewManager = () => {
   const { accountAddress } = useSession();
   const { execute, getPendingTx } = useContext(ChainTransactionContext);
 
-  const changeActiveCrew = useCallback(
+  const changeActiveCrew = useCallback(import.meta.url, 
     (params) => execute('SET_ACTIVE_CREW', params),
     [execute]
   );
-  const getPendingActiveCrewChange = useCallback(
+  const getPendingActiveCrewChange = useCallback(import.meta.url, 
     (params) => getPendingTx('SET_ACTIVE_CREW', params),
     [getPendingTx]
   );
 
-  const purchaseCredits = useCallback((tally) => {
+  const purchaseCredits = useCallback(import.meta.url, (tally) => {
     for (let i = 0; i < tally; i++) fireTrackingEvent('purchase', {
       category: 'purchase',
       currency: 'USD',
@@ -32,11 +32,11 @@ const useCrewManager = () => {
     execute('BulkPurchaseAdalians', { collection: Crewmate.COLLECTION_IDS.ADALIAN, tally });
   }, [accountAddress, execute]);
 
-  const getPendingCreditPurchase = useCallback(() => {
+  const getPendingCreditPurchase = useCallback(import.meta.url, () => {
     return getPendingTx('BulkPurchaseAdalians', {});
   }, [getPendingTx]);
 
-  const purchaseAndOrInitializeCrewmate = useCallback(
+  const purchaseAndOrInitializeCrewmate = useCallback(import.meta.url, 
     ({ crewmate }) => {
       if (crewmate.Crewmate.coll !== Crewmate.COLLECTION_IDS.ADALIAN) {
         execute('InitializeArvadian', {
@@ -80,7 +80,7 @@ const useCrewManager = () => {
     [accountAddress, execute]
   );
 
-  const getPendingCrewmate = useCallback(
+  const getPendingCrewmate = useCallback(import.meta.url, 
     () => getPendingTx('InitializeArvadian', {}) || getPendingTx('RecruitAdalian', {}),
     [getPendingTx]
   );

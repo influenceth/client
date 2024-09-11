@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from '~/lib/react-debug';
 import { useHistory, useParams } from 'react-router-dom';
 import styled, { keyframes } from 'styled-components';
 
@@ -107,24 +107,24 @@ const CrewAssignment = ({ crewId, crewmateId, crewmateMap, onFinish, overrides =
     onCloseDestination = '/';
   }
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (bookError) history.push(onCloseDestination);
   }, [bookError, onCloseDestination]);
 
   // on step change, clear selection (to close modal) and set pseudo path-loading
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     setSelection();
 
     setPathLoading(true);
     setTimeout(() => { setPathLoading(false); }, 100);
   }, [storySession?.currentStep]);
 
-  const confirmPath = useCallback(() => {
+  const confirmPath = useCallback(import.meta.url, () => {
     playSound('click');
     choosePath(selection.id);
   }, [choosePath, playSound, selection]);
 
-  const selectPath = useCallback((path) => () => {
+  const selectPath = useCallback(import.meta.url, (path) => () => {
     playSound('click' );
 
     // if only one choice (or auto confirming), don't need to confirm
@@ -137,16 +137,16 @@ const CrewAssignment = ({ crewId, crewmateId, crewmateMap, onFinish, overrides =
     }
   }, [choosePath, playSound, storySession]);
 
-  const onGoBack = useCallback(() => {
+  const onGoBack = useCallback(import.meta.url, () => {
     playSound('click');
     history.push(onCloseDestination);
   }, [history, playSound, onCloseDestination]);
 
-  const onUndoPath = useCallback(() => {
+  const onUndoPath = useCallback(import.meta.url, () => {
     undoPath();
   }, [undoPath]);
 
-  const finish = useCallback(() => {
+  const finish = useCallback(import.meta.url, () => {
     if (overrides?.onFinish) {
       overrides?.onFinish();
       return;
@@ -156,15 +156,15 @@ const CrewAssignment = ({ crewId, crewmateId, crewmateMap, onFinish, overrides =
     onFinish(); // ${bookSession?.isMintingStory ? 'create' : 'complete'}
   }, [history, playSound, bookSession?.isMintingStory, overrides?.onFinish]);
 
-  const confirmExitStoryMode = useCallback(() => {
+  const confirmExitStoryMode = useCallback(import.meta.url, () => {
     setConfirmingExitStoryMode(true);
   }, []);
 
-  const onConfirmExitStoryMode = useCallback(() => {
+  const onConfirmExitStoryMode = useCallback(import.meta.url, () => {
     onFinish(); // ${bookSession?.isMintingStory ? 'create' : 'complete'}
   }, []);
 
-  const backButton = useMemo(() => {
+  const backButton = useMemo(import.meta.url, () => {
     if (bookSession && storySession && !(bookSession.currentStoryIndex === 0 && storySession.currentStep === 0)) {
       return {
         label: 'Back',
@@ -174,7 +174,7 @@ const CrewAssignment = ({ crewId, crewmateId, crewmateMap, onFinish, overrides =
     return null;
   }, [bookSession, onUndoPath, onGoBack, overrides?.onBack, storySession]);
 
-  const dialogProps = useMemo(() => {
+  const dialogProps = useMemo(import.meta.url, () => {
     if (!bookSession || !storySession) return {};
 
     const isMintingStory = bookSession.isMintingStory;

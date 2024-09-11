@@ -1,4 +1,4 @@
-import { useCallback, useContext, useMemo } from 'react';
+import { useCallback, useContext, useMemo } from '~/lib/react-debug';
 import { Entity } from '@influenceth/sdk';
 
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
@@ -10,12 +10,12 @@ const useMarketplaceAdmin = (buildingId) => {
   const { execute, getStatus } = useContext(ChainTransactionContext);
   const { data: building } = useEntity({ id: buildingId, label: Entity.IDS.BUILDING });
 
-  const payload = useMemo(() => ({
+  const payload = useMemo(import.meta.url, () => ({
     exchange: { id: buildingId, label: Entity.IDS.BUILDING },
     caller_crew: { id: crew?.id, label: Entity.IDS.CREW }
   }), [crew?.id, buildingId]);
 
-  const changeSettings = useCallback(
+  const changeSettings = useCallback(import.meta.url, 
     ({ makerFee, takerFee, allowedProducts }) => execute(
       'ConfigureExchange',
       {
@@ -31,7 +31,7 @@ const useMarketplaceAdmin = (buildingId) => {
     [building, execute, payload]
   );
 
-  const status = useMemo(
+  const status = useMemo(import.meta.url, 
     () => getStatus('ConfigureExchange', { ...payload }),
     [getStatus, payload]
   );

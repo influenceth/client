@@ -1,4 +1,4 @@
-import { useCallback, useContext, useMemo } from 'react';
+import { useCallback, useContext, useMemo } from '~/lib/react-debug';
 import { Entity } from '@influenceth/sdk';
 
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
@@ -13,7 +13,7 @@ const useRepoManager = (lotId) => {
   const { isAtRisk } = useConstructionManager(lotId);
   const { data: lot } = useLot(lotId);
 
-  const takeoverType = useMemo(() => {
+  const takeoverType = useMemo(import.meta.url, () => {
     // if i'm not in control of the building...
     if (crew?.id !== lot?.building?.Control?.controller?.id) {
       // ... but i am in control of the lot, then i can takeover from squatter
@@ -24,17 +24,17 @@ const useRepoManager = (lotId) => {
     return null;
   }, [crew?.id, isAtRisk, lot?.building?.Control?.controller?.id, lot?.Control?.controller?.id]);
 
-  const payload = useMemo(() => ({
+  const payload = useMemo(import.meta.url, () => ({
     building: { id: lot?.building?.id, label: Entity.IDS.BUILDING },
     caller_crew: { id: crew?.id, label: Entity.IDS.CREW }
   }), [crew?.id, lot?.building?.id]);
 
-  const repoBuilding = useCallback(
+  const repoBuilding = useCallback(import.meta.url, 
     () => execute('RepossessBuilding', payload, { lotId }),
     [execute, lotId, payload]
   );
 
-  const currentRepo = useMemo(
+  const currentRepo = useMemo(import.meta.url, 
     () => getPendingTx ? getPendingTx('RepossessBuilding', payload) : null,
     [getPendingTx, payload]
   );

@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo } from '~/lib/react-debug';
 
 import { BecomeAdminIcon } from '~/components/Icons';
 import useAsteroid from '~/hooks/useAsteroid';
@@ -14,11 +14,11 @@ const isVisible = ({ account, asteroid, lot, crew, zoomScene }) => {
 const ControlAsteroid = ({ asteroid, onSetAction, _disabled }) => {
   const { takingControl } = useControlAsteroid(asteroid?.id);
 
-  const handleClick = useCallback(() => {
+  const handleClick = useCallback(import.meta.url, () => {
     onSetAction('CONTROL_ASTEROID');
   }, [asteroid?.id]);
 
-  const disabledReason = useMemo(() => {
+  const disabledReason = useMemo(import.meta.url, () => {
     if (_disabled) return 'loading...';
     if (takingControl) return 'updating...';
     return '';

@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo } from '~/lib/react-debug';
 
 import useStore from '~/hooks/useStore';
 import SearchAsteroidsBanner from './hudBanners/SearchAsteroidsBanner';
@@ -14,7 +14,7 @@ const SceneBanner = () => {
   const openHudMenu = useStore(s => s.openHudMenu);
   const isAssetSearchMatchingDefault = useStore(s => s.isAssetSearchMatchingDefault);
   
-  const { searchAsteroids, searchLots, travel } = useMemo(() => ({
+  const { searchAsteroids, searchLots, travel } = useMemo(import.meta.url, () => ({
     searchAsteroids: {
       enabled: zoomStatus === 'out',
       visible: openHudMenu === 'BELT_MAP_SEARCH' || !isAssetSearchMatchingDefault('asteroidsMapped')

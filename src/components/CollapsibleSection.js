@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from '~/lib/react-debug';
 import styled, { css, keyframes } from 'styled-components';
 
 import { CollapsedIcon } from '~/components/Icons';
@@ -94,17 +94,17 @@ const CollapsibleSection = ({
   ...props
 }) => {
   const [collapsed, setCollapsed] = useState(!!initiallyClosed);
-  const toggleCollapse = useCallback(() => {
+  const toggleCollapse = useCallback(import.meta.url, () => {
     setCollapsed((c) => !c);
   }, []);
 
   const hasLoaded = useRef();
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (forceClose) setCollapsed(true);
   }, [forceClose]);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (hasLoaded.current) {
       setCollapsed(false);
     } else {

@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo } from '~/lib/react-debug';
 // import styled from 'styled-components';
 
 import useStore from '~/hooks/useStore';
@@ -9,7 +9,7 @@ import SearchFilters from '~/components/SearchFilters';
 const SearchMap = ({ assetType }) => {
   const assetSearch = useStore(s => s.assetSearch[assetType]);
   const isAssetSearchMatchingDefault = useStore(s => s.isAssetSearchMatchingDefault);
-  const isDefaultSearch = useMemo(() => isAssetSearchMatchingDefault(assetType), [assetType, assetSearch]);
+  const isDefaultSearch = useMemo(import.meta.url, () => isAssetSearchMatchingDefault(assetType), [assetType, assetSearch]);
   return (
     <>
       <Scrollable hasTray={!isDefaultSearch}>

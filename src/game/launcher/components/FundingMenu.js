@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from '~/lib/react-debug';
 import ReactDOMServer from 'react-dom/server';
 import styled from 'styled-components';
 
@@ -149,16 +149,16 @@ const FundingMenu = () => {
 
   const [isFunding, setIsFunding] = useState();
 
-  const handleFunding = useCallback(() => {
+  const handleFunding = useCallback(import.meta.url, () => {
     if (!accountAddress) return login();
     setIsFunding(true);
   }, [accountAddress, login]);
 
-  const reloadBalance = useCallback(() => {
+  const reloadBalance = useCallback(import.meta.url, () => {
     refetch();
   }, [refetch]);
 
-  const tooltipContent = useMemo(() => ReactDOMServer.renderToStaticMarkup(
+  const tooltipContent = useMemo(import.meta.url, () => ReactDOMServer.renderToStaticMarkup(
     <Subtotals>
       {Object.keys(wallet?.tokenBalances || {}).map((tokenAddress) => {
         const balance = priceHelper.from(wallet.tokenBalances[tokenAddress], tokenAddress);

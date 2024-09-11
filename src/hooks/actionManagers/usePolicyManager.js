@@ -1,4 +1,4 @@
-import { useCallback, useContext, useMemo } from 'react';
+import { useCallback, useContext, useMemo } from '~/lib/react-debug';
 import { Address, Entity, Permission } from '@influenceth/sdk';
 
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
@@ -11,24 +11,24 @@ const usePolicyManager = (target, permission) => {
   const { crew } = useCrewContext();
   const { execute, getStatus } = useContext(ChainTransactionContext);
 
-  const payload = useMemo(() => ({
+  const payload = useMemo(import.meta.url, () => ({
     target: { id: target?.id, label: target?.label },
     permission,
     caller_crew: { id: crew?.id, label: Entity.IDS.CREW },
   }), [crew?.id, target, permission]);
 
-  const meta = useMemo(() => ({
+  const meta = useMemo(import.meta.url, () => ({
     asteroidId: target?.label === Entity.IDS.ASTEROID ? target?.id : undefined,
     lotId: (target?.Location?.locations || []).find((l) => l?.label === Entity.IDS.LOT)?.id,
     shipId: target?.label === Entity.IDS.SHIP ? target?.id : undefined,
   }), [target]);
 
   // using json to avoid unnecessary re-renders
-  const policyJSON = useMemo(() => {
+  const policyJSON = useMemo(import.meta.url, () => {
     return JSON.stringify(Permission.getPolicyDetails(target, crew, blockTime)[permission]);
   }, [blockTime, crew, target, permission]);
 
-  const currentPolicy = useMemo(() => {
+  const currentPolicy = useMemo(import.meta.url, () => {
     if (!target) return undefined;
     if (!policyJSON) return undefined;
     const pol = JSON.parse(policyJSON);
@@ -46,7 +46,7 @@ const usePolicyManager = (target, permission) => {
     return pol;
   }, [policyJSON]);
 
-  const updateAllowlists = useCallback((newAllowlist, newAccountAllowlist) => {
+  const updateAllowlists = useCallback(import.meta.url, (newAllowlist, newAccountAllowlist) => {
     execute(
       'UpdateAllowlists',
       {
@@ -60,7 +60,7 @@ const usePolicyManager = (target, permission) => {
     );
   }, [currentPolicy?.allowlist, currentPolicy?.accountAllowlist, meta, payload]);
 
-  const updatePolicy = useCallback(
+  const updatePolicy = useCallback(import.meta.url, 
     (newPolicyType, newPolicyDetails) => {
       const params = {
         ...payload,
@@ -86,11 +86,11 @@ const usePolicyManager = (target, permission) => {
     [currentPolicy, meta, payload]
   );
 
-  const allowlistChangePending = useMemo(
+  const allowlistChangePending = useMemo(import.meta.url, 
     () => (getStatus ? getStatus('updateAllowlists', { ...payload }) : 'ready') === 'pending',
     [payload, getStatus]
   );
-  const policyChangePending = useMemo(
+  const policyChangePending = useMemo(import.meta.url, 
     () => (getStatus ? getStatus('UpdatePolicy', { ...payload }) : 'ready') === 'pending',
     [payload, getStatus]
   );

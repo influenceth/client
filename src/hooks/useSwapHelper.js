@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo } from '~/lib/react-debug';
 import { fetchBuildExecuteTransaction } from '@avnu/avnu-sdk';
 
 import useStore from '~/hooks/useStore';
@@ -17,7 +17,7 @@ const useSwapHelper = () => {
   const priceHelper = usePriceHelper();
   const preferredUiCurrency = useStore(s => s.getPreferredUiCurrency());
 
-  const buildMultiswapFromSellAmount = useCallback(async (sellAmountUSDC, targetToken, allowableSlippage = 0.1) => {
+  const buildMultiswapFromSellAmount = useCallback(import.meta.url, async (sellAmountUSDC, targetToken, allowableSlippage = 0.1) => {
     const swappableTokens = Object.keys(wallet?.tokenBalances).filter((t) => t !== targetToken);
     swappableTokens.sort((a) => a === preferredUiCurrency ? -1 : 1);
     
@@ -59,7 +59,7 @@ const useSwapHelper = () => {
     return calls;
   }, [wallet]);
 
-  return useMemo(
+  return useMemo(import.meta.url, 
     () => ({ buildMultiswapFromSellAmount }),
     [buildMultiswapFromSellAmount]
   );

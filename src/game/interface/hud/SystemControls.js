@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from '~/lib/react-debug';
 import styled from 'styled-components';
 import { FaCaretRight } from 'react-icons/fa';
 
@@ -164,20 +164,20 @@ const SystemControls = () => {
 
   const [showAuthedButton, setShowAuthedButton] = useState(!(authenticated && launcherPage));
 
-  const totalRecruitCredits = useMemo(() => (adalianRecruits?.length + arvadianRecruits?.length), [adalianRecruits, arvadianRecruits])
+  const totalRecruitCredits = useMemo(import.meta.url, () => (adalianRecruits?.length + arvadianRecruits?.length), [adalianRecruits, arvadianRecruits])
   const formattedAccount = useAccountFormatted({ address: accountAddress, truncate: true, doNotReplaceYou: true });
 
-  const onToggleLauncher = useCallback(() => {
+  const onToggleLauncher = useCallback(import.meta.url, () => {
     if (launcherPage) dispatchLauncherPage();
     else dispatchLauncherPage('play');
   }, [launcherPage]);
 
   // (just used for animation in/out of auth button)
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     setTimeout(() => { setShowAuthedButton(authenticated && launcherPage); }, 0);
   }, [authenticated, !launcherPage]);
 
-  const onCopyWalletAddress = useCallback(() => {
+  const onCopyWalletAddress = useCallback(import.meta.url, () => {
     try {
       navigator.clipboard.writeText(`${accountAddress}`);
       createAlert({

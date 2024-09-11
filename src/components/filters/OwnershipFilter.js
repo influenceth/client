@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from '~/lib/react-debug';
 import { Address } from '@influenceth/sdk';
 
 import useSession from '~/hooks/useSession';
@@ -43,7 +43,7 @@ const OwnershipFilter = ({ assetType, filters, onChange }) => {
 
   const addressInput = useRef();
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     const newTypes = { ...initialValues };
     if (['unowned', 'owned'].includes(filters[fieldName])) {
       newTypes[filters[fieldName]] = true;
@@ -68,7 +68,7 @@ const OwnershipFilter = ({ assetType, filters, onChange }) => {
     setTypes(newTypes);
   }, [filters[fieldName]]);
 
-  const onClick = useCallback((k) => (e) => {
+  const onClick = useCallback(import.meta.url, (k) => (e) => {
     e.stopPropagation();
     let value = k;
     if (k === 'ownedByMe' && accountAddress && Address.toStandard(accountAddress)) {
@@ -91,7 +91,7 @@ const OwnershipFilter = ({ assetType, filters, onChange }) => {
     onChange({ [fieldName]: value });
   }, [accountAddress, onChange, ownedByAddress]);
 
-  const handleEvent = useCallback((e) => {
+  const handleEvent = useCallback(import.meta.url, (e) => {
     if (e.type === 'blur' || e.key === 'Enter' || e.key === 'Tab') {
       let validatedValue = e.currentTarget.value && e.currentTarget.value !== '0' && Address.toStandard(e.currentTarget.value);
       if (validatedValue) {
@@ -108,11 +108,11 @@ const OwnershipFilter = ({ assetType, filters, onChange }) => {
     }
   }, [onChange, types]);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (addressInput.current) addressInput.current.value = ownedByAddress;
   }, [ownedByAddress]);
 
-  const highlightMetadata = useMemo(() => ({ myAddress: accountAddress, address: ownedByAddress }), [accountAddress, ownedByAddress]);
+  const highlightMetadata = useMemo(import.meta.url, () => ({ myAddress: accountAddress, address: ownedByAddress }), [accountAddress, ownedByAddress]);
 
   return (
     <SearchMenu

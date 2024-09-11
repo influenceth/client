@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef } from '~/lib/react-debug';
 import { Color, Vector3 } from 'three';
 import { useThree, useFrame } from '@react-three/fiber';
 import { useTexture } from '@react-three/drei';
@@ -32,7 +32,7 @@ const Star = () => {
   const { camera } = useThree();
 
   // Update lensflare elements with textures after loaded
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     config.forEach((c, i) => {
       lensflareElements[i].texture = textures[c[0]];
     });

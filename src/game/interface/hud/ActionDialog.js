@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo } from '~/lib/react-debug';
 import styled, { keyframes } from 'styled-components';
 import { PuffLoader } from 'react-spinners';
 import { Tooltip } from 'react-tooltip';
@@ -153,13 +153,13 @@ theming[actionStage.COMPLETED].label = 'Results';
 
 export const useAsteroidAndLot = (props = {}) => {
   const lotId = useStore(s => props.lotId || s.asteroids.lot);
-  const lotAsteroidId = useMemo(() => Lot.toPosition(lotId)?.asteroidId, [lotId]);
+  const lotAsteroidId = useMemo(import.meta.url, () => Lot.toPosition(lotId)?.asteroidId, [lotId]);
 
   const { data: asteroid, isLoading: asteroidIsLoading } = useAsteroid(props.asteroidId || lotAsteroidId);
   const { data: lot, isLoading: lotIsLoading } = useLot(lotId);
 
   // close dialog if cannot load asteroid and lot
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (!asteroid || !lot) {
       if (!asteroidIsLoading && !lotIsLoading) {
         if (props.onClose) props.onClose();
@@ -215,13 +215,13 @@ export const ActionDialogInner = ({ actionImage, children, isLoading, stage }) =
 const ActionDialog = ({ type, params }) => {
   const setAction = useStore(s => s.dispatchActionDialog);
 
-  const allProps = useMemo(() => ({
+  const allProps = useMemo(import.meta.url, () => ({
     ...params,
     onSetAction: setAction,
     onClose: () => setAction(),
   }), [params, setAction]);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     const onKeyUp = (e) => {
       if (e.key === 'Escape') setAction();
     };

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from '~/lib/react-debug';
 import { useHistory, useParams } from 'react-router-dom';
 import styled, { css } from 'styled-components';
 import { Address, Crewmate, Entity, Time } from '@influenceth/sdk';
@@ -329,15 +329,15 @@ const CrewmateDetails = ({ crewmateId, crewmate, isOwnedCrewmate }) => {
 
   const { data: TIME_ACCELERATION } = useConstants('TIME_ACCELERATION');
 
-  const viewingAs = useMemo(() => ({ id: crewmateId, label: Entity.IDS.CREWMATE }), [crewmateId]);
+  const viewingAs = useMemo(import.meta.url, () => ({ id: crewmateId, label: Entity.IDS.CREWMATE }), [crewmateId]);
 
-  const onBackToCrew = useCallback(() => {
+  const onBackToCrew = useCallback(import.meta.url, () => {
     if (crewmate?.Control?.controller.id) {
       history.push(`/crew/${crewmate?.Control?.controller.id}`);
     }
   }, [crewmate]);
 
-  const formationDate = useMemo(() => {
+  const formationDate = useMemo(import.meta.url, () => {
     if (earliestLoading) return '...';
     if (!earliestActivity) return 'Unknown';
     return `${Time.fromUnixSeconds(earliestActivity?.event?.timestamp, TIME_ACCELERATION).toGameClockADays(true)} SA`;
@@ -451,7 +451,7 @@ const Wrapper = () => {
 
   const createAlert = useStore(s => s.dispatchAlertLogged);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     // if id is specified...
     if (i) {
       // ...return to / with error if crew not found

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef } from '~/lib/react-debug';
 import styled from 'styled-components';
 import { Building, Inventory } from '@influenceth/sdk';
 
@@ -40,14 +40,14 @@ const UnplanBuilding = ({ asteroid, lot, constructionManager, stage, ...props })
   const { currentConstructionAction, constructionStatus, unplanConstruction } = useConstructionManager(lot?.id);
   const { crew } = useCrewContext();
 
-  const siteEmpty = useMemo(() => {
+  const siteEmpty = useMemo(import.meta.url, () => {
     const inv = (lot?.building?.Inventories || []).find((i) => Inventory.TYPES[i.inventoryType].category === Inventory.CATEGORIES.SITE);
     return ((inv?.mass + inv?.reservedMass) === 0);
   }, [lot?.building]);
 
   // handle auto-closing
   const lastStatus = useRef();
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     // (always close if not in planned or canceling state)
     if (!['PLANNED', 'CANCELING'].includes(constructionStatus)) {
       props.onClose();
@@ -116,7 +116,7 @@ const Wrapper = (props) => {
   const constructionManager = useConstructionManager(lot?.id);
   const { stageByActivity } = constructionManager;
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (!asteroid || !lot) {
       if (!isLoading) {
         if (props.onClose) props.onClose();

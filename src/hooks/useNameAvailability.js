@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback } from '~/lib/react-debug';
 import { Entity, Name } from '@influenceth/sdk';
 
 import api from '~/lib/api';
@@ -7,7 +7,7 @@ import useStore from './useStore';
 const useNameAvailability = (entity) => {
   const createAlert = useStore(s => s.dispatchAlertLogged);
 
-  const getNameAvailability = useCallback(async (name, entityId, skipCollisionCheck = false, returnType = 'alert') => {
+  const getNameAvailability = useCallback(import.meta.url, async (name, entityId, skipCollisionCheck = false, returnType = 'alert') => {
     try {
       let nameError = null;
 

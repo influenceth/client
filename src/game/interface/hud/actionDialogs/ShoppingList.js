@@ -1,4 +1,4 @@
-import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useContext, useEffect, useMemo, useRef, useState } from '~/lib/react-debug';
 import styled from 'styled-components';
 import { Asteroid, Building, Crew, Crewmate, Entity, Inventory, Lot, Permission, Process, Product, Time } from '@influenceth/sdk';
 
@@ -241,7 +241,7 @@ export const ProductMarketSummary = ({
   const [sort, setSort] = useState(['_dynamicUnitPrice', 'desc']);
   const [sortField, sortDirection] = sort;
 
-  const getRowProps = useCallback((row) => ({
+  const getRowProps = useCallback(import.meta.url, (row) => ({
     onClick: () => {
       onSelected(row.buildingId);
     },
@@ -251,7 +251,7 @@ export const ProductMarketSummary = ({
   }), [onSelected, productId, selected]);
 
   // NOTE: this augments resourceMarketplaces, but updates less often
-  const dynamicMarketplaces = useMemo(() => {
+  const dynamicMarketplaces = useMemo(import.meta.url, () => {
     return Object.values(resourceMarketplaces).map((m) => {
       const row = { ...m };
       const remainingToSource = selectionSummary.needed || targetAmount;
@@ -275,7 +275,7 @@ export const ProductMarketSummary = ({
     });
   }, [resourceMarketplaces, selectionSummary, targetAmount]);
 
-  const handleSort = useCallback((field) => () => {
+  const handleSort = useCallback(import.meta.url, (field) => () => {
     if (!field) return;
 
     let updatedSortField = sortField;
@@ -293,7 +293,7 @@ export const ProductMarketSummary = ({
     ]);
   }, [sortDirection, sortField]);
 
-  const sortedMarketplaces = useMemo(() => {
+  const sortedMarketplaces = useMemo(import.meta.url, () => {
     return (dynamicMarketplaces || [])
       .sort((a, b) => (sortDirection === 'asc' ? 1 : -1) * (a[sortField] < b[sortField] ? 1 : -1));
   }, [dynamicMarketplaces, sortField, sortDirection]);
@@ -324,25 +324,25 @@ const ShoppingList = ({ asteroid, destination, destinationSlot, stage, ...props 
   const [selected, setSelected] = useState({});
 
   const { data: exchanges, dataUpdatedAt: exchangesUpdatedAt } = useAsteroidBuildings(asteroid?.id, 'Exchange', Permission.IDS.BUY);
-  const exchangesById = useMemo(() => {
+  const exchangesById = useMemo(import.meta.url, () => {
     return (exchanges || []).reduce((acc, cur) => {
       acc[cur.id] = cur;
       return acc;
     }, {});
   }, [exchangesUpdatedAt])
   const { data: destinationLot } = useLot(locationsArrToObj(destination?.Location?.locations || []).lotId);
-  const destinationInventory = useMemo(() => destination?.Inventories.find((i) => i.slot === destinationSlot), [destination, destinationSlot]);
+  const destinationInventory = useMemo(import.meta.url, () => destination?.Inventories.find((i) => i.slot === destinationSlot), [destination, destinationSlot]);
 
   const { currentDeliveryActions } = useDeliveryManager({ destination, destinationSlot });
 
   const [processId, setProcessId] = useState();
   const [processSelectorOpen, setProcessSelectorOpen] = useState(false);
-  const recipe = useMemo(() => Process.TYPES[processId], [processId]);
+  const recipe = useMemo(import.meta.url, () => Process.TYPES[processId], [processId]);
   const [recipeTally, setRecipeTally] = useState(1);
   const [isAdditive, setIsAdditive] = useState(false);
 
   const isInSiteMode = destination?.Building?.status === Building.CONSTRUCTION_STATUSES.PLANNED;
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (isInSiteMode && destination?.Building?.buildingType) {
       const constructionProcessId = Object.values(Process.IDS).find((id) => Process.TYPES[id].name === `${Building.TYPES[destination.Building.buildingType].name} Construction`);
       if (constructionProcessId) {
@@ -357,13 +357,13 @@ const ShoppingList = ({ asteroid, destination, destinationSlot, stage, ...props 
   }, [isInSiteMode, destination?.Building, props.onClose])
 
   // derive targets from selected recipe
-  const totalTargets = useMemo(() => {
+  const totalTargets = useMemo(import.meta.url, () => {
     if (!recipe) return [];
     return getRecipeRequirements(recipe.inputs, destinationInventory, recipeTally, currentDeliveryActions);
   }, [currentDeliveryActions, destinationInventory, recipe, recipeTally]);
 
   // convert targets into shopping list
-  const [shoppingList, productIds] = useMemo(() => {
+  const [shoppingList, productIds] = useMemo(import.meta.url, () => {
     const list = totalTargets
       .filter((req) => (isAdditive ? req.inNeed : req.totalRequired) > 0)
       .map((req) => ({
@@ -383,7 +383,7 @@ const ShoppingList = ({ asteroid, destination, destinationSlot, stage, ...props 
   useInterval(() => { refetchResourceMarketplaces(); }, 60e3); // keep things loosely fresh
 
   // crew bonuses related to market buys and transport
-  const crewBonuses = useMemo(() => {
+  const crewBonuses = useMemo(import.meta.url, () => {
     if (!crew) return {};
 
     const abilities = getCrewAbilityBonuses([
@@ -398,7 +398,7 @@ const ShoppingList = ({ asteroid, destination, destinationSlot, stage, ...props 
     }
   }, [crew]);
 
-  const selectionSummary = useMemo(() => {
+  const selectionSummary = useMemo(import.meta.url, () => {
     return productIds.reduce((acc, productId) => {
       const targetAmount = shoppingList.find((l) => l.product.i === productId)?.amount || 0;
 
@@ -453,7 +453,7 @@ const ShoppingList = ({ asteroid, destination, destinationSlot, stage, ...props 
     }, {});
   }, [asteroid?.id, crew?._timeAcceleration, crewBonuses, destinationLot?.id, selected, shoppingList]);
 
-  const { totalPrice, totalMass, totalVolume, taskTimeRequirement, exchangeTally, allFills } = useMemo(() => {
+  const { totalPrice, totalMass, totalVolume, taskTimeRequirement, exchangeTally, allFills } = useMemo(import.meta.url, () => {
     return Object.keys(selectionSummary).reduce((acc, k) => {
       const s = selectionSummary[k];
       return {
@@ -474,16 +474,16 @@ const ShoppingList = ({ asteroid, destination, destinationSlot, stage, ...props 
     });
   }, [selectionSummary]);
 
-  const insufficientSway = useMemo(() => totalPrice * TOKEN_SCALE[TOKEN.SWAY] > swayBalance, [totalPrice, swayBalance]);
+  const insufficientSway = useMemo(import.meta.url, () => totalPrice * TOKEN_SCALE[TOKEN.SWAY] > swayBalance, [totalPrice, swayBalance]);
 
-  const invConfig = useMemo(() => {
+  const invConfig = useMemo(import.meta.url, () => {
     if (destinationInventory) {
       return Inventory.getType(destinationInventory.inventoryType, crew?._inventoryBonuses);
     }
     return null;
   }, [destinationInventory, crew?._inventoryBonuses]);
 
-  const [targetMass, targetVolume] = useMemo(() => {
+  const [targetMass, targetVolume] = useMemo(import.meta.url, () => {
     return shoppingList.reduce((acc, { product, amount }) => {
       acc[0] += amount * product.massPerUnit;
       acc[1] += amount * product.volumePerUnit;
@@ -491,7 +491,7 @@ const ShoppingList = ({ asteroid, destination, destinationSlot, stage, ...props 
     }, [0, 0]);
   }, [shoppingList]);
 
-  const insufficientCapacity = useMemo(() => {
+  const insufficientCapacity = useMemo(import.meta.url, () => {
     const massConstraint = invConfig?.massConstraint - (destinationInventory?.mass + destinationInventory?.reservedMass);
     const volumeConstraint = invConfig?.volumeConstraint - (destinationInventory?.volume + destinationInventory?.reservedVolume);
 
@@ -507,7 +507,7 @@ const ShoppingList = ({ asteroid, destination, destinationSlot, stage, ...props 
     totalVolume
   ]);
 
-  const inventoryConstrained = useMemo(() => {
+  const inventoryConstrained = useMemo(import.meta.url, () => {
     if (invConfig.productConstraints) {
       const allowed = Object.keys(invConfig.productConstraints);
       if (Object.keys(selectionSummary).find((k) => selectionSummary[k].totalFilled > 0 && !allowed.includes(k))) return 'error';
@@ -522,7 +522,7 @@ const ShoppingList = ({ asteroid, destination, destinationSlot, stage, ...props 
     totalVolume
   ]);
 
-  const handleSelected = useCallback((productId) => (buildingId) => {
+  const handleSelected = useCallback(import.meta.url, (productId) => (buildingId) => {
     setSelected((old) => {
       const s = { ...old };
       if (!s[productId]) s[productId] = [];
@@ -543,7 +543,7 @@ const ShoppingList = ({ asteroid, destination, destinationSlot, stage, ...props 
     });
   }, [selectionSummary]);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     Object.keys(selected || {}).forEach((productId) => {
       selected[productId].forEach((buildingId) => {
         // deselect building if no longer available due to change in market conditions
@@ -560,7 +560,7 @@ const ShoppingList = ({ asteroid, destination, destinationSlot, stage, ...props 
   }, [resourceMarketplacesUpdatedAt, selected])
 
   const [purchasing, setPurchasing] = useState();
-  const handlePurchase = useCallback(async () => {
+  const handlePurchase = useCallback(import.meta.url, async () => {
     // TODO: do syncronous refetch and return if significant change (i.e. > 2% change in price or anything that was satisfied is now unsatisfied)
     setPurchasing(true);
     try {
@@ -619,20 +619,20 @@ const ShoppingList = ({ asteroid, destination, destinationSlot, stage, ...props 
 
   }, [allFills, crew?.id, destination, destinationLot?.id, destinationSlot, exchangesUpdatedAt, execute]);
 
-  const handleProductClick = useCallback((productId) => () => {
+  const handleProductClick = useCallback(import.meta.url, (productId) => () => {
     setOpenProductId((p) => p === productId ? null : productId);
   }, []);
 
-  const goToSwayStore = useCallback(() => {
+  const goToSwayStore = useCallback(import.meta.url, () => {
     dispatchLauncherPage('store', 'sway');
   }, []);
 
-  const shoppingListPurchaseTally = useMemo(() => {
+  const shoppingListPurchaseTally = useMemo(import.meta.url, () => {
     return (pendingTransactions || []).filter((tx) => tx.key === 'BulkFillSellOrder' && tx.meta?.destinationLotId === destinationLot?.id);
   }, [destinationLot?.id, pendingTransactions]);
 
   // if shoppingListPurchaseTally on this lot changes while in `purchasing` mode, close dialog
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (purchasing && props.onClose) {
       props.onClose();
     }
@@ -864,13 +864,13 @@ const Wrapper = (props) => {
   const { asteroid, lot, isLoading } = useAsteroidAndLot(props);
   const actionManager = { actionStage: actionStage.NOT_STARTED };
 
-  const [destination, destinationSlot] = useMemo(() => {
+  const [destination, destinationSlot] = useMemo(import.meta.url, () => {
     const destination = props.destination || lot?.building;
     const destinationSlot = props.destinationSlot || destination?.Inventories.find((i) => i.status === Inventory.STATUSES.AVAILABLE)?.slot;
     return [destination, destinationSlot];
   }, [lot?.building, props.destination, props.destinationSlot]);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (!asteroid || !lot || !destination || !destinationSlot) {
       if (!isLoading) {
         if (props.onClose) props.onClose();

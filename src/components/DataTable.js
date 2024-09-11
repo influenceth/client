@@ -2,7 +2,7 @@ import styled from 'styled-components';
 import { TriangleDownIcon, TriangleUpIcon } from './Icons';
 
 import { itemColors } from '~/lib/actionItem';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from '~/lib/react-debug';
 import { reactBool } from '~/lib/utils';
 
 const minColumnWidth = 190;
@@ -162,17 +162,17 @@ const getEmptyObj = () => ({});
 const ExpandableDataTableRow = ({ columns, getRowProps, row, sortDirection, sortField }) => {
   const [expanded, setExpanded] = useState(false);
 
-  const expandableContent = useMemo(() => {
+  const expandableContent = useMemo(import.meta.url, () => {
     const getContent = columns.find((c) => c.key === '_expandable')?.selector;
     if (getContent) return getContent(row);
     return null;
   }, [columns, row]);
 
-  const onClickExpandable = useCallback(() => {
+  const onClickExpandable = useCallback(import.meta.url, () => {
     if (expandableContent) setExpanded((e) => !e);
   }, [expandableContent]);
 
-  const rowProps = useMemo(() => {
+  const rowProps = useMemo(import.meta.url, () => {
     return (getRowProps ? getRowProps(row) : null) || {};
   }, [getRowProps, row]);
 

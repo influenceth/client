@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from '~/lib/react-debug';
 import styled from 'styled-components';
 import { Asteroid, Crewmate, Inventory, Lot, Order, Permission, Product, Time } from '@influenceth/sdk';
 
@@ -220,7 +220,7 @@ const MarketplaceOrder = ({
   const { crew, crewCan } = useCrewContext();
   const { data: orders, refetch } = useOrderList(exchange?.id, resourceId);
 
-  const [buyOrders, sellOrders] = useMemo(() => ([
+  const [buyOrders, sellOrders] = useMemo(import.meta.url, () => ([
     (orders || []).filter((o) => o.orderType === Order.IDS.LIMIT_BUY),
     (orders || []).filter((o) => o.orderType === Order.IDS.LIMIT_SELL),
   ]), [orders]);
@@ -231,12 +231,12 @@ const MarketplaceOrder = ({
   const currentDestinationLot = {};
   const currentOriginLot = {};
   // const { data: destination } = useEntity(destinationSelection ? { id: destinationSelection.id, label: destinationSelection.label } : undefined);
-  // const destinationLotId = useMemo(() => destination && locationsArrToObj(destination?.Location?.locations || []).lotId, [destination]);
+  // const destinationLotId = useMemo(import.meta.url, () => destination && locationsArrToObj(destination?.Location?.locations || []).lotId, [destination]);
   // const { data: destinationLot } = useLot(destinationLotId);
-  // const destinationInventory = useMemo(() => (destination?.Inventories || []).find((i) => i.slot === destinationSelection?.slot), [destination, destinationSelection]);
+  // const destinationInventory = useMemo(import.meta.url, () => (destination?.Inventories || []).find((i) => i.slot === destinationSelection?.slot), [destination, destinationSelection]);
   // const { data: destinationController } = useCrew(destination?.Control?.controller?.id);
 
-  const [hopperTransportBonus, distBonus, feeReductionBonus] = useMemo(() => {
+  const [hopperTransportBonus, distBonus, feeReductionBonus] = useMemo(import.meta.url, () => {
     if (!crew) return [];
 
     const bonusIds = [
@@ -249,13 +249,13 @@ const MarketplaceOrder = ({
     return bonusIds.map((id) => abilities[id] || {});
   }, [crew]);
 
-  const feeEnforcementBonus = useMemo(() => {
+  const feeEnforcementBonus = useMemo(import.meta.url, () => {
     if (!exchangeController) return {};
     return getCrewAbilityBonuses(Crewmate.ABILITY_IDS.MARKETPLACE_FEE_ENFORCEMENT, exchangeController) || {};
   }, [exchangeController]);
 
-  const quantityToUnits = useCallback((quantity) => resource.isAtomic ? quantity : (quantity / 1000 * resource.massPerUnit), [resource]);
-  const unitsToQuantity = useCallback((units) => resource.isAtomic ? units : (1000 * units / resource.massPerUnit), [resource]);
+  const quantityToUnits = useCallback(import.meta.url, (quantity) => resource.isAtomic ? quantity : (quantity / 1000 * resource.massPerUnit), [resource]);
+  const unitsToQuantity = useCallback(import.meta.url, (units) => resource.isAtomic ? units : (1000 * units / resource.massPerUnit), [resource]);
 
   const [limitPrice, setLimitPrice] = useState(preselect?.limitPrice);
   const [quantity, setQuantity] = useState(unitsToQuantity(preselect?.quantity));
@@ -268,11 +268,11 @@ const MarketplaceOrder = ({
     }) || undefined
   );
   const { data: storage } = useEntity(storageSelection ? { id: storageSelection.id, label: storageSelection.label } : undefined);
-  const storageLotId = useMemo(() => storage && locationsArrToObj(storage?.Location?.locations || []).lotId, [storage]);
+  const storageLotId = useMemo(import.meta.url, () => storage && locationsArrToObj(storage?.Location?.locations || []).lotId, [storage]);
   const { data: storageLot } = useLot(storageLotId);
-  const storageInventory = useMemo(() => (storage?.Inventories || []).find((i) => i.slot === storageSelection?.slot), [storage, storageSelection]);
+  const storageInventory = useMemo(import.meta.url, () => (storage?.Inventories || []).find((i) => i.slot === storageSelection?.slot), [storage, storageSelection]);
 
-  const { totalTime: crewTravelTime, tripDetails } = useMemo(() => {
+  const { totalTime: crewTravelTime, tripDetails } = useMemo(import.meta.url, () => {
     if (!asteroid?.id || !crew?._location?.lotId || !lot?.id) return {};
     return getTripDetails(asteroid.id, hopperTransportBonus, distBonus, crew?._location?.lotIndex, [
       { label: 'Travel to Marketplace', lotIndex: Lot.toIndex(lot.id) },
@@ -280,7 +280,7 @@ const MarketplaceOrder = ({
     ], crew?._timeAcceleration);
   }, [asteroid?.id, lot?.id, crew?._location?.lotId, crew?._timeAcceleration, hopperTransportBonus, distBonus]);
 
-  const [transportDistance, transportTime] = useMemo(() => {
+  const [transportDistance, transportTime] = useMemo(import.meta.url, () => {
     if (!asteroid?.id || !exchange?.id || !storageLot?.id) return [0, 0];
     const exchangeLotIndex = Lot.toIndex(exchange?.Location?.location?.id);
     const storageLotIndex = Lot.toIndex(storageLot?.id);
@@ -294,7 +294,7 @@ const MarketplaceOrder = ({
     return [transportDistance, transportTime];
   }, [asteroid?.id, distBonus, exchange?.id, storageLot?.id, hopperTransportBonus, crew?._timeAcceleration]);
 
-  const [crewTimeRequirement, taskTimeRequirement] = useMemo(() => {
+  const [crewTimeRequirement, taskTimeRequirement] = useMemo(import.meta.url, () => {
     let crewTime = 0;
     let taskTime = 0;
 
@@ -324,7 +324,7 @@ const MarketplaceOrder = ({
     return [crewTime, taskTime];
   }, [transportTime, crewTravelTime, type]);
 
-  const [totalMarketPrice, avgMarketPrice, averagedOrderTally, marketFills] = useMemo(() => {
+  const [totalMarketPrice, avgMarketPrice, averagedOrderTally, marketFills] = useMemo(import.meta.url, () => {
     const orders = [].concat(mode === 'buy' ? sellOrders : buyOrders);
     const marketFills = ordersToFills(
       mode,
@@ -344,13 +344,13 @@ const MarketplaceOrder = ({
     return [total, total / quantity, totalOrders, marketFills];
   }, [buyOrders, exchange, feeEnforcementBonus, feeReductionBonus, mode, quantity, sellOrders, type]);
 
-  const totalLimitPrice = useMemo(() => {
+  const totalLimitPrice = useMemo(import.meta.url, () => {
     return (limitPrice || 0) * quantity;
   }, [limitPrice, quantity]);
 
   // maker = limit order
   // taker = market order
-  const feeRate = useMemo(
+  const feeRate = useMemo(import.meta.url, 
     () => (
       cancellationMakerFee || Order.adjustedFee(
         exchange?.Exchange?.[type === 'market' ? 'takerFee' : 'makerFee'],
@@ -361,11 +361,11 @@ const MarketplaceOrder = ({
     [exchange, feeEnforcementBonus, feeReductionBonus, type]
   );
 
-  const feeTotal = useMemo(() => {
+  const feeTotal = useMemo(import.meta.url, () => {
     return Math.floor(1e6 * feeRate * (type === 'market' ? totalMarketPrice : totalLimitPrice)) / 1e6;
   }, [feeRate, totalLimitPrice, totalMarketPrice, type]);
 
-  const stats = useMemo(() => {
+  const stats = useMemo(import.meta.url, () => {
     const baseFeeRate = exchange?.Exchange?.[type === 'limit' ? 'makerFee' : 'takerFee'] / Order.FEE_SCALE;
     return [
       (isCancellation
@@ -431,7 +431,7 @@ const MarketplaceOrder = ({
   }, [feeTotal, quantity, transportTime, crewTravelTime, hopperTransportBonus, resourceId]);
 
   // handle "currentOrder" state
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (currentOrder) {
       // TODO: make selections
     }
@@ -441,15 +441,15 @@ const MarketplaceOrder = ({
 
   const [tooltipVisible, setTooltipVisible] = useState();
 
-  const totalForBuy = useMemo(() => {
+  const totalForBuy = useMemo(import.meta.url, () => {
     return (buyOrders || []).reduce((acc, cur) => acc + cur.amount, 0);
   }, [buyOrders]);
 
-  const totalForSale = useMemo(() => {
+  const totalForSale = useMemo(import.meta.url, () => {
     return (sellOrders || []).reduce((acc, cur) => acc + cur.amount, 0);
   }, [sellOrders]);
 
-  const onSubmitOrder = useCallback(() => {
+  const onSubmitOrder = useCallback(import.meta.url, () => {
     if (isCancellation) {
       if (mode === 'buy') {
         cancelBuyOrder({
@@ -513,7 +513,7 @@ const MarketplaceOrder = ({
 
   // handle auto-closing
   const lastStatus = useRef();
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     // (close on status change from)
     if (lastStatus.current && orderStatus !== lastStatus.current) {
       props.onClose();
@@ -521,7 +521,7 @@ const MarketplaceOrder = ({
     lastStatus.current = orderStatus;
   }, [orderStatus]);
 
-  const handleChangeQuantity = useCallback((e) => {
+  const handleChangeQuantity = useCallback(import.meta.url, (e) => {
     let input = parseInt(e.currentTarget.value) || 0;
     if (input && type === 'market') {
       if (mode === 'buy') input = Math.max(0, Math.min(input, totalForSale));
@@ -531,11 +531,11 @@ const MarketplaceOrder = ({
     setQuantity(input);
   }, [mode, totalForSale, totalForBuy, type]);
 
-  const handleChangeLimitPrice = useCallback((e) => {
+  const handleChangeLimitPrice = useCallback(import.meta.url, (e) => {
     setLimitPrice(Number(e.currentTarget.value));
   }, []);
 
-  const matchBestLimitOrder = useCallback((e) => {
+  const matchBestLimitOrder = useCallback(import.meta.url, (e) => {
     if (mode === 'buy') {
       setLimitPrice(buyOrders[0]?.price || sellOrders[sellOrders.length - 1].price);
     } else {
@@ -543,11 +543,11 @@ const MarketplaceOrder = ({
     }
   }, [mode, buyOrders, sellOrders]);
 
-  const handleOrderRefresh = useCallback(() => {
+  const handleOrderRefresh = useCallback(import.meta.url, () => {
     refetch();
   }, [refetch]);
 
-  const [competingOrderTally, betterOrderTally, bestOrderPrice] = useMemo(() => {
+  const [competingOrderTally, betterOrderTally, bestOrderPrice] = useMemo(import.meta.url, () => {
     if (mode === 'buy') {
       return [
         buyOrders.length,
@@ -562,7 +562,7 @@ const MarketplaceOrder = ({
     ];
   }, [buyOrders, mode, sellOrders, limitPrice]);
 
-  const exceedsOtherSide = useMemo(() => {
+  const exceedsOtherSide = useMemo(import.meta.url, () => {
     if (type === 'limit') {
       if (mode === 'buy') {
         return limitPrice > sellOrders?.[sellOrders?.length - 1]?.price;
@@ -573,12 +573,12 @@ const MarketplaceOrder = ({
     return false;
   }, [mode, type, limitPrice, buyOrders, sellOrders]);
 
-  const total = useMemo(() => {
+  const total = useMemo(import.meta.url, () => {
     let sum = type === 'limit' ? totalLimitPrice : totalMarketPrice;
     return sum + (mode === 'buy' ? feeTotal : -feeTotal);
   }, [feeTotal, mode, totalLimitPrice, totalMarketPrice, type]);
 
-  const dialogAction = useMemo(() => {
+  const dialogAction = useMemo(import.meta.url, () => {
     let a = {};
     if (type === 'market' && mode === 'buy') {
       a.icon = <MarketBuyIcon />;
@@ -600,7 +600,7 @@ const MarketplaceOrder = ({
     return a;
   }, [mode, type, isCancellation]);
 
-  const goLabel = useMemo(() => {
+  const goLabel = useMemo(import.meta.url, () => {
     if (isCancellation) return `Cancel Order`;
     if (type === 'market' && mode === 'buy') return `Market Buy`;
     if (type === 'market' && mode === 'sell') return `Market Sell`;
@@ -608,11 +608,11 @@ const MarketplaceOrder = ({
     if (type === 'limit' && mode === 'sell') return `Limit Sell`;
   }, [type, isCancellation]);
 
-  const amountInInventory = useMemo(() => {
+  const amountInInventory = useMemo(import.meta.url, () => {
     return (storageInventory?.contents || []).find((c) => Number(c.product) === Number(resourceId))?.amount || 0;
   }, [storageInventory, resourceId]);
 
-  const insufficientAssets = useMemo(() => {
+  const insufficientAssets = useMemo(import.meta.url, () => {
     if (isCancellation) return false;
     if (mode === 'buy') {
       return total > safeBigInt(swayBalance) / safeBigInt(TOKEN_SCALE[TOKEN.SWAY]);
@@ -621,7 +621,7 @@ const MarketplaceOrder = ({
     }
   }, [isCancellation, mode, quantity, amountInInventory, swayBalance, total]);
 
-  const insufficientCapacity = useMemo(() => {
+  const insufficientCapacity = useMemo(import.meta.url, () => {
     if (mode === 'buy' && storageInventory) {
       const buyUnits = quantityToUnits(quantity);
       const buyMass = buyUnits * resource.massPerUnit;
@@ -637,7 +637,7 @@ const MarketplaceOrder = ({
     return false;
   }, [amountInInventory, crew?._inventoryBonuses, mode, quantity, storageInventory]);
 
-  const isPermitted = useMemo(() => {
+  const isPermitted = useMemo(import.meta.url, () => {
     let perm = 0;
     if (isCancellation) return true;
     if (type === 'limit' && mode === 'buy') perm = Permission.IDS.LIMIT_BUY;
@@ -905,7 +905,7 @@ const Wrapper = (props) => {
   const pendingOrder = manager.getPendingOrder(props.mode, props.type, { exchange, product: props.resourceId });
   const actionStage = pendingOrder ? actionStages.STARTING : actionStages.NOT_STARTED;
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (!asteroid || !lot) {
       if (!isLoading) {
         if (props.onClose) props.onClose();
@@ -914,7 +914,7 @@ const Wrapper = (props) => {
   }, [asteroid, lot, isLoading]);
 
   const lastStatus = useRef();
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (lastStatus.current && actionStage !== lastStatus.current) {
       if (props.onClose) props.onClose();
     }

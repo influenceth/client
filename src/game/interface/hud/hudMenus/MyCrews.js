@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from '~/lib/react-debug';
 import styled, { keyframes } from 'styled-components';
 import { useHistory } from 'react-router-dom';
 import { Entity } from '@influenceth/sdk';
@@ -38,7 +38,7 @@ const UncontrolledCrewBlock = ({ crewId, crewmateIds }) => {
   const { data: crew } = useHydratedCrew(crewId);
   const history = useHistory();
 
-  const onClick = useCallback(() => {
+  const onClick = useCallback(import.meta.url, () => {
     history.push(`/crew/${crewId}`);
     dispatchLauncherPage();
   }, [crewId]);
@@ -64,15 +64,15 @@ const MyCrews = () => {
   const { crew, crews, crewmateMap, selectCrew } = useCrewContext();
   const [searchFilter, setSearchFilter] = useState('');
 
-  const filteredCrews = useMemo(() => {
+  const filteredCrews = useMemo(import.meta.url, () => {
     if (!searchFilter) return crews;
     return crews.filter((c) => (c.Name?.name || '').toLowerCase().includes(searchFilter.toLowerCase()));
   }, [crews, searchFilter]);
 
-  const nonEmptyCrews = useMemo(() => filteredCrews.filter((c) => c.Crew.roster.length > 0), [filteredCrews]);
-  const emptyCrews = useMemo(() => filteredCrews.filter((c) => c.Crew.roster.length === 0), [filteredCrews]);
+  const nonEmptyCrews = useMemo(import.meta.url, () => filteredCrews.filter((c) => c.Crew.roster.length > 0), [filteredCrews]);
+  const emptyCrews = useMemo(import.meta.url, () => filteredCrews.filter((c) => c.Crew.roster.length === 0), [filteredCrews]);
 
-  const nonEmptyCrewsByLocation = useMemo(() => {
+  const nonEmptyCrewsByLocation = useMemo(import.meta.url, () => {
     return nonEmptyCrews.reduce((acc, cur) => {
       const asteroidId = locationsArrToObj(cur.Location.locations)?.asteroidId || '_';
       const locationKey = JSON.stringify(locationsArrToObj(cur.Location.locations));
@@ -84,7 +84,7 @@ const MyCrews = () => {
     }, {});
   }, [nonEmptyCrews]);
 
-  const uncontrolledCrewIds = useMemo(() => {
+  const uncontrolledCrewIds = useMemo(import.meta.url, () => {
     return Object.keys(crewmateMap || {})
       .filter((id) => !crews.find((c) => c.id === crewmateMap[id].Control?.controller?.id))
       .reduce((acc, crewmateId) => {
@@ -96,7 +96,7 @@ const MyCrews = () => {
       }, {});
   }, [crewmateMap]);
 
-  const asteroidContainerHeights = useMemo(() => {
+  const asteroidContainerHeights = useMemo(import.meta.url, () => {
     return Object.keys(nonEmptyCrewsByLocation || {}).reduce((acc, asteroidId) => {
       const asteroidCrewTally = nonEmptyCrewsByLocation[asteroidId].tally;
       const asteroidLocationTally = Object.keys(nonEmptyCrewsByLocation[asteroidId].locations).length;

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from '~/lib/react-debug';
 import styled from 'styled-components';
 import { Asteroid, Building, Crewmate, Entity, Lot, Permission, Product, Ship, Time } from '@influenceth/sdk';
 
@@ -72,12 +72,12 @@ const AssembleShip = ({ asteroid, lot, dryDockManager, stage, ...props }) => {
 
   const [selectedOrigin, setSelectedOrigin] = useState(currentAssembly ? { ...currentAssembly?.origin, slot: currentAssembly?.originSlot } : undefined);
   const { data: origin } = useEntity(selectedOrigin);
-  const originLotId = useMemo(() => origin && locationsArrToObj(origin?.Location?.locations || []).lotId, [origin]);
-  const originLotIndex = useMemo(() => Lot.toIndex(originLotId), [originLotId]);
+  const originLotId = useMemo(import.meta.url, () => origin && locationsArrToObj(origin?.Location?.locations || []).lotId, [origin]);
+  const originLotIndex = useMemo(import.meta.url, () => Lot.toIndex(originLotId), [originLotId]);
   const { data: originLot } = useLot(originLotId);
   const originSlot = selectedOrigin?.slot;
   // TODO: is both below and above needed? just using below in other Process action dialogs...
-  const originInventory = useMemo(() => (origin?.Inventories || []).find((i) => i.slot === selectedOrigin?.slot), [origin, selectedOrigin?.slot]);
+  const originInventory = useMemo(import.meta.url, () => (origin?.Inventories || []).find((i) => i.slot === selectedOrigin?.slot), [origin, selectedOrigin?.slot]);
 
   const { data: currentDestinationEntity } = useEntity(currentAssembly?.destination ? { ...currentAssembly.destination } : undefined);
   const [selectedDestinationIndex, setSelectedDestinationIndex] = useState();
@@ -91,7 +91,7 @@ const AssembleShip = ({ asteroid, lot, dryDockManager, stage, ...props }) => {
   const [originSelectorOpen, setOriginSelectorOpen] = useState(false);
   const [processSelectorOpen, setProcessSelectorOpen] = useState(false);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (currentDestinationEntity) {
       setSelectedDestinationIndex(
         Lot.toIndex(currentDestinationEntity?.Location?.locations?.find((l) => l.label === Entity.IDS.LOT)?.lotId)
@@ -106,7 +106,7 @@ const AssembleShip = ({ asteroid, lot, dryDockManager, stage, ...props }) => {
   const shipConfig = shipType ? Ship.getType(shipType) : null;
   const shipConstruction = shipType ? Ship.getConstructionType(shipType) : null;
 
-  const [crewTravelBonus, crewDistBonus, assemblyTimeBonus] = useMemo(() => {
+  const [crewTravelBonus, crewDistBonus, assemblyTimeBonus] = useMemo(import.meta.url, () => {
     const bonusIds = [
       Crewmate.ABILITY_IDS.HOPPER_TRANSPORT_TIME,
       Crewmate.ABILITY_IDS.FREE_TRANSPORT_DISTANCE,
@@ -116,7 +116,7 @@ const AssembleShip = ({ asteroid, lot, dryDockManager, stage, ...props }) => {
     return bonusIds.map((id) => abilities[id] || {});
   }, [crew]);
 
-  const [assemblyTime, setupTime] = useMemo(() => {
+  const [assemblyTime, setupTime] = useMemo(import.meta.url, () => {
     if (!shipConstruction) return [0, 0];
     return [
       Time.toRealDuration(shipConstruction?.constructionTime / assemblyTimeBonus.totalBonus, crew?._timeAcceleration),
@@ -124,7 +124,7 @@ const AssembleShip = ({ asteroid, lot, dryDockManager, stage, ...props }) => {
     ];
   }, [amount, crew?._timeAcceleration, assemblyTimeBonus, shipConstruction]);
 
-  const { totalTime: crewTravelTime, tripDetails } = useMemo(() => {
+  const { totalTime: crewTravelTime, tripDetails } = useMemo(import.meta.url, () => {
     if (!asteroid?.id || !crew?._location?.lotId || !lot?.id) return {};
     const crewLotIndex = Lot.toIndex(crew?._location?.lotId);
     return getTripDetails(asteroid.id, crewTravelBonus, crewDistBonus, crewLotIndex, [
@@ -133,7 +133,7 @@ const AssembleShip = ({ asteroid, lot, dryDockManager, stage, ...props }) => {
     ], crew?._timeAcceleration);
   }, [asteroid?.id, lot?.id, crew?._location?.lotId, crew?._timeAcceleration, crewTravelBonus, crewDistBonus]);
 
-  const [inputTransportDistance, inputTransportTime] = useMemo(() => {
+  const [inputTransportDistance, inputTransportTime] = useMemo(import.meta.url, () => {
     if (!originLot?.id) return [];
     return [
       Asteroid.getLotDistance(asteroid?.id, Lot.toIndex(originLot?.id), Lot.toIndex(lot?.id)) || 0,
@@ -150,7 +150,7 @@ const AssembleShip = ({ asteroid, lot, dryDockManager, stage, ...props }) => {
     ];
   }, [asteroid?.id, lot?.id, crew?._timeAcceleration, originLot?.id, crewDistBonus, crewTravelBonus]);
 
-  const [outputTransportDistance, outputTransportTime] = useMemo(() => {
+  const [outputTransportDistance, outputTransportTime] = useMemo(import.meta.url, () => {
     if (!lot?.id || !destinationLot?.id) return [];
     return [
       Asteroid.getLotDistance(asteroid?.id, Lot.toIndex(lot?.id), Lot.toIndex(destinationLot?.id)) || 0,
@@ -167,7 +167,7 @@ const AssembleShip = ({ asteroid, lot, dryDockManager, stage, ...props }) => {
     ];
   }, [asteroid?.id, lot?.id, crew?._timeAcceleration, destinationLot?.id, crewDistBonus, crewTravelBonus]);
 
-  const [inputArr, inputMass, inputVolume] = useMemo(() => {
+  const [inputArr, inputMass, inputVolume] = useMemo(import.meta.url, () => {
     if (!process || !amount) return [[], 0, 0, [], 0, 0];
     const inputArr = Object.keys(process?.inputs || {}).map(Number);
     return [
@@ -177,7 +177,7 @@ const AssembleShip = ({ asteroid, lot, dryDockManager, stage, ...props }) => {
     ];
   }, [process]);
 
-  const [crewTimeRequirement, taskTimeRequirement] = useMemo(() => {
+  const [crewTimeRequirement, taskTimeRequirement] = useMemo(import.meta.url, () => {
     const onewayCrewTravelTime = crewTravelTime / 2;
     return [
       Math.max(onewayCrewTravelTime, inputTransportTime) + (setupTime + assemblyTime) / 8 + onewayCrewTravelTime,
@@ -185,7 +185,7 @@ const AssembleShip = ({ asteroid, lot, dryDockManager, stage, ...props }) => {
     ];
   }, [crewTravelTime, inputTransportTime, setupTime, assemblyTime]);
 
-  const stats = useMemo(() => ([
+  const stats = useMemo(import.meta.url, () => ([
     {
       label: 'Crew Travel',
       value: formatTimer(crewTravelTime),
@@ -232,11 +232,11 @@ const AssembleShip = ({ asteroid, lot, dryDockManager, stage, ...props }) => {
     },
   ]), [assemblyTime, assemblyTimeBonus, crewTravelTime, crewTravelBonus, tripDetails, inputTransportDistance, inputTransportTime]);
 
-  const prepaidLeaseConfig = useMemo(() => {
+  const prepaidLeaseConfig = useMemo(import.meta.url, () => {
     return getProcessorLeaseConfig(lot?.building, Permission.IDS.ASSEMBLE_SHIP, crew, blockTime);
   }, [blockTime, crew, lot?.building]);
 
-  const { leasePayment, desiredLeaseTerm, actualLeaseTerm } = useMemo(() => {
+  const { leasePayment, desiredLeaseTerm, actualLeaseTerm } = useMemo(import.meta.url, () => {
     return getProcessorLeaseSelections(
       prepaidLeaseConfig,
       taskTimeRequirement,
@@ -245,7 +245,7 @@ const AssembleShip = ({ asteroid, lot, dryDockManager, stage, ...props }) => {
     );
   }, [blockTime, crew?.Crew?.readyAt, prepaidLeaseConfig, taskTimeRequirement]);
 
-  const onStart = useCallback(() => {
+  const onStart = useCallback(import.meta.url, () => {
     if (leasePayment && !buildingOwner?.Crew?.delegatedTo) return;
     startShipAssembly(
       shipType,
@@ -266,13 +266,13 @@ const AssembleShip = ({ asteroid, lot, dryDockManager, stage, ...props }) => {
     originSlot
   ]);
 
-  const onFinish = useCallback(() => {
+  const onFinish = useCallback(import.meta.url, () => {
     finishShipAssembly(destination);
   }, [destination]);
 
   // handle auto-closing
   const lastStatus = useRef();
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     // (close on status change from)
     if (['READY', 'READY_TO_FINISH', 'FINISHING'].includes(lastStatus.current)) {
       if (assemblyStatus !== lastStatus.current) {
@@ -282,13 +282,13 @@ const AssembleShip = ({ asteroid, lot, dryDockManager, stage, ...props }) => {
     lastStatus.current = assemblyStatus;
   }, [assemblyStatus]);
 
-  const isOriginSufficient = useMemo(() => {
+  const isOriginSufficient = useMemo(import.meta.url, () => {
     if (!originInventory) return false;
     const sourceContentObj = (originInventory?.contents || []).reduce((acc, cur) => ({ ...acc, [cur.product]: cur.amount }), {});
     return !inputArr.find((i) => (sourceContentObj[i] || 0) < process.inputs[i]);
   }, [inputArr, originInventory?.contents, process]);
 
-  const goLabel = useMemo(() => {
+  const goLabel = useMemo(import.meta.url, () => {
     if (leasePayment) {
       return (
         <PurchaseButtonInner>
@@ -545,7 +545,7 @@ const Wrapper = (props) => {
   const dryDockManager = useDryDockManager(lot?.id);
   const { actionStage } = dryDockManager;
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (!asteroid || !lot) {
       if (!isLoading) {
         if (props.onClose) props.onClose();

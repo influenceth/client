@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from '~/lib/react-debug';
 import { Entity, Permission, Time } from '@influenceth/sdk';
 import styled from 'styled-components';
 import Clipboard from 'react-clipboard.js';
@@ -158,7 +158,7 @@ const FormAgreement = ({
   // NOTE: this flow is only relevant to prepaid and contract policy types now, so no account-permitted stuff here yet
   const { data: permitted } = useCrew(currentAgreement?.permitted?.id);
 
-  const maxTerm = useMemo(() => {
+  const maxTerm = useMemo(import.meta.url, () => {
     const now = Math.floor(Date.now() / 1000);
     if (isExtension && currentAgreement?.endTime > now) {
       return 365 - secondsToDays(Math.max(0, currentAgreement?.endTime - currentAgreement?.startTime));
@@ -166,9 +166,9 @@ const FormAgreement = ({
     return 365;
   }, [currentAgreement, isExtension]);
 
-  const maxTermFloored = useMemo(() => Math.floor(maxTerm * 10) / 10, [maxTerm]);
+  const maxTermFloored = useMemo(import.meta.url, () => Math.floor(maxTerm * 10) / 10, [maxTerm]);
 
-  const minTerm = useMemo(() => {
+  const minTerm = useMemo(import.meta.url, () => {
     return (isExtension) ? 1 : currentPolicy?.policyDetails?.initialTerm || 0
   }, [currentPolicy]);
 
@@ -178,11 +178,11 @@ const FormAgreement = ({
       : (isExtension ? Math.min(maxTermFloored, 30) : (currentPolicy?.policyDetails?.initialTerm || 0))
   );
 
-  const remainingPeriod = useMemo(() => currentAgreement?.endTime - blockTime, [blockTime, currentAgreement?.endTime]);
-  const refundablePeriod = useMemo(() => Math.max(0, remainingPeriod - monthsToSeconds(currentAgreement?.noticePeriod)), [currentAgreement?.noticePeriod, remainingPeriod]);
-  const refundableAmount = useMemo(() => refundablePeriod * (currentAgreement?.rate_swayPerSec || 0), [currentAgreement?.rate_swayPerSec, refundablePeriod]);
+  const remainingPeriod = useMemo(import.meta.url, () => currentAgreement?.endTime - blockTime, [blockTime, currentAgreement?.endTime]);
+  const refundablePeriod = useMemo(import.meta.url, () => Math.max(0, remainingPeriod - monthsToSeconds(currentAgreement?.noticePeriod)), [currentAgreement?.noticePeriod, remainingPeriod]);
+  const refundableAmount = useMemo(import.meta.url, () => refundablePeriod * (currentAgreement?.rate_swayPerSec || 0), [currentAgreement?.rate_swayPerSec, refundablePeriod]);
 
-  const stats = useMemo(() => {
+  const stats = useMemo(import.meta.url, () => {
     if (isTermination) {
       return [
         {
@@ -216,18 +216,18 @@ const FormAgreement = ({
     return [];
   }, [crew, currentAgreement, currentPolicy, initialPeriod, isExtension, isTermination, remainingPeriod]);
 
-  const totalLeaseCost = useMemo(() => {
+  const totalLeaseCost = useMemo(import.meta.url, () => {
     return (initialPeriod || 0) * 24 * (currentPolicy?.policyDetails?.rate || 0);
   }, [initialPeriod, currentPolicy]);
 
-  const insufficientAssets = useMemo(
+  const insufficientAssets = useMemo(import.meta.url, 
     () => safeBigInt(Math.ceil(isTermination ? refundableAmount : totalLeaseCost)) > swayBalance,
     [swayBalance, refundableAmount, totalLeaseCost, isTermination]
   );
 
   const [eligible, setEligible] = useState(false);
   const [eligibilityLoading, setEligibilityLoading] = useState(false);
-  const updateContractEligibility = useCallback(async () => {
+  const updateContractEligibility = useCallback(import.meta.url, async () => {
     if (!provider) return;
     if (!currentPolicy?.policyDetails?.contract) return;
     try {
@@ -248,11 +248,11 @@ const FormAgreement = ({
     setEligibilityLoading(false);
   }, [crew?.id, crew?.label, currentPolicy?.policyDetails?.contract, entity, permission, provider]);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     updateContractEligibility()
   }, [updateContractEligibility]);
 
-  const handleCopyAddress = useCallback(() => {
+  const handleCopyAddress = useCallback(import.meta.url, () => {
     createAlert({
       type: 'ClipboardAlert',
       data: { content: 'Contract address copied to clipboard.' },
@@ -260,20 +260,20 @@ const FormAgreement = ({
     });
   }, [createAlert]);
 
-  const handlePeriodChange = useCallback((e) => {
+  const handlePeriodChange = useCallback(import.meta.url, (e) => {
     if (e.currentTarget.value === '') return setInitialPeriod('');
     const parsed = numeral(e.currentTarget.value);
     if (!parsed) return setInitialPeriod(e.currentTarget.value);
     setInitialPeriod(parsed.value());
   }, []);
 
-  const handlePeriodBlur = useCallback((e) => {
+  const handlePeriodBlur = useCallback(import.meta.url, (e) => {
     if (e.currentTarget.value === '') return setInitialPeriod('');
     const parsed = numeral(e.currentTarget.value);
     setInitialPeriod(numeral(Math.max(minTerm, Math.min(parsed.value(), maxTerm))).format('0.00'));
   }, [currentPolicy?.policyDetails?.initialTerm, maxTerm]);
 
-  const onEnterAgreement = useCallback(() => {
+  const onEnterAgreement = useCallback(import.meta.url, () => {
     const recipient = controller?.Crew?.delegatedTo;
     // TODO: should these conversions be in useAgreementManager?
     const term = daysToSeconds(initialPeriod);
@@ -281,7 +281,7 @@ const FormAgreement = ({
     enterAgreement({ recipient, term, termPrice });
   }, [controller?.Crew?.delegatedTo, enterAgreement, initialPeriod, totalLeaseCost]);
 
-  const onExtendAgreement = useCallback(() => {
+  const onExtendAgreement = useCallback(import.meta.url, () => {
     const recipient = controller?.Crew?.delegatedTo;
     // TODO: should these conversions be in useAgreementManager?
     const term = Math.round(daysToSeconds(initialPeriod));
@@ -289,21 +289,21 @@ const FormAgreement = ({
     extendAgreement({ recipient, term, termPrice });
   }, [controller?.Crew?.delegatedTo, extendAgreement, initialPeriod, totalLeaseCost]);
 
-  const onTerminateAgreement = useCallback(() => {
+  const onTerminateAgreement = useCallback(import.meta.url, () => {
     cancelAgreement({
       recipient: permitted?.Crew?.delegatedTo,
       refundAmount: Math.ceil(refundableAmount * TOKEN_SCALE[TOKEN.SWAY])
     })
   }, [cancelAgreement, permitted, refundableAmount]);
 
-  const alertScheme = useMemo(() => {
+  const alertScheme = useMemo(import.meta.url, () => {
     if (currentPolicy?.policyType === Permission.POLICY_IDS.CONTRACT) {
       if (!eligibilityLoading) return eligible ? 'success' : 'error';
     }
     return ''
   }, [currentPolicy, eligibilityLoading, eligible]);
 
-  const actionDetails = useMemo(() => {
+  const actionDetails = useMemo(import.meta.url, () => {
     const policyType = currentPolicy?.policyType;
     if (isTermination) {
       return {
@@ -334,7 +334,7 @@ const FormAgreement = ({
     }
   }, [currentAgreement?.noticePeriod, currentPolicy?.policyType, entity, isExtension, isTermination, onEnterAgreement, onExtendAgreement, onTerminateAgreement, stage]);
 
-  const disableGo = useMemo(() => {
+  const disableGo = useMemo(import.meta.url, () => {
     if (insufficientAssets) return true;
     if (isTermination && currentAgreement?._canGiveNoticeStart > blockTime) return true;
     if (initialPeriod === '' || initialPeriod <= 0) return true;
@@ -603,7 +603,7 @@ const Wrapper = ({ entity: entityId, permission, isExtension, agreementPath, ...
 
   // handle auto-closing on any status change
   const lastStatus = useRef();
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (lastStatus.current && stage !== lastStatus.current) {
       props.onClose();
     }
@@ -612,7 +612,7 @@ const Wrapper = ({ entity: entityId, permission, isExtension, agreementPath, ...
     }
   }, [stage, props]);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (!entityIsLoading && !entity) {
       props.onClose();
     }

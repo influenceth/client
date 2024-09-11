@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef } from '~/lib/react-debug';
 import { Asteroid, Building, Entity, Lot, Process, Product, Ship, Time } from '@influenceth/sdk';
 import { camelCase, cloneDeep } from 'lodash';
 
@@ -29,7 +29,7 @@ const MockTransactionManager = () => {
 
   const createAlert = useStore(s => s.dispatchAlertLogged);
 
-  const simulateResultingEvent = useCallback((tx) => {
+  const simulateResultingEvent = useCallback(import.meta.url, (tx) => {
     // let activities = [];
     let activityResolutions = [];
     let events = [];
@@ -534,7 +534,7 @@ const MockTransactionManager = () => {
   }, [simulation, crew]);
 
   const processed = useRef([]);
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     pendingTransactions.forEach((tx) => {
       if (!processed.current.includes(tx.txHash)) {
         processed.current.push(tx.txHash);

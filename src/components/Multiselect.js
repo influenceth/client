@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from '~/lib/react-debug';
 import { createPortal } from 'react-dom';
 import { usePopper } from 'react-popper';
 import styled from 'styled-components';
@@ -61,7 +61,7 @@ const Multiselect = ({
   valueKey = 'key',
   ...styleProps
 }) => {
-  const [isObjArr, options] = useMemo(() => {
+  const [isObjArr, options] = useMemo(import.meta.url, () => {
     if (typeof (rawOptions || [])[0] === 'object') {
       return [true, [...rawOptions]];
     }
@@ -86,29 +86,29 @@ const Multiselect = ({
     ],
   });
 
-  const handleToggle = useCallback(() => {
+  const handleToggle = useCallback(import.meta.url, () => {
     if (!disabled)
     setOpen((o) => !o);
   }, [disabled]);
 
-  const handleMouseEnter = useCallback(() => {
+  const handleMouseEnter = useCallback(import.meta.url, () => {
     if (closeTimer.current) {
       clearTimeout(closeTimer.current);
     }
   }, []);
 
-  const handleMouseLeave = useCallback(() => {
+  const handleMouseLeave = useCallback(import.meta.url, () => {
     closeTimer.current = setTimeout(() => {
       setOpen(false);
     }, 500);
   }, []);
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     return () => {
       if (closeTimer.current) clearTimeout(closeTimer.current);
     }
   }, []);
   
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     setOpen(false);
   }, [disabled]);
 

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from '~/lib/react-debug';
 import { Crew, Crewmate, Ship } from '@influenceth/sdk';
 
 import { LaunchShipIcon, RouteIcon, ShipIcon, WarningOutlineIcon } from '~/components/Icons';
@@ -44,7 +44,7 @@ const EvictShip = ({ asteroid, lot, manager, stage, ...props }) => {
   const [tab, setTab] = useState(0);
   const ship = Ship.TYPES[1];  // TODO
 
-  const stats = useMemo(() => ([
+  const stats = useMemo(import.meta.url, () => ([
     {
       label: 'Propellant Used',
       value: `0 tonnes`,
@@ -88,13 +88,13 @@ const EvictShip = ({ asteroid, lot, manager, stage, ...props }) => {
     },
   ]), []);
 
-  const onLaunch = useCallback(() => {
+  const onLaunch = useCallback(import.meta.url, () => {
     startLaunch();
   }, []);
 
   // handle auto-closing
   const lastStatus = useRef();
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     // (close on status change from)
     if (['READY', 'READY_TO_FINISH', 'FINISHING'].includes(lastStatus.current)) {
       if (launchStatus !== lastStatus.current) {
@@ -227,7 +227,7 @@ const Wrapper = (props) => {
   const manager = {};
   const actionStage = actionStages.NOT_STARTED;
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (!asteroid || !lot) {
       if (!isLoading) {
         if (props.onClose) props.onClose();

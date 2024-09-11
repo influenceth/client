@@ -1,4 +1,4 @@
-import { useCallback, useContext, useMemo } from 'react';
+import { useCallback, useContext, useMemo } from '~/lib/react-debug';
 import { Asteroid } from '@influenceth/sdk';
 
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
@@ -12,7 +12,7 @@ const useScanManager = (asteroid) => {
   const { execute, getStatus } = useContext(ChainTransactionContext);
   const { crew } = useCrewContext();
 
-  const { scanType, startSystem, finishSystem, payload } = useMemo(() => {
+  const { scanType, startSystem, finishSystem, payload } = useMemo(import.meta.url, () => {
     const scanType = asteroid?.Celestial?.scanStatus < Asteroid.SCAN_STATUSES.SURFACE_SCANNED ? 'SURFACE' : 'RESOURCE';
     const startSystem = scanType === 'RESOURCE' ? 'ScanResourcesStart' : (asteroid?.AsteroidProof?.used ? 'ScanSurfaceStart' : 'InitializeAndStartSurfaceScan');
     return {
@@ -26,7 +26,7 @@ const useScanManager = (asteroid) => {
     };
   }, [asteroid, crew]);
 
-  const scanStatus = useMemo(() => {
+  const scanStatus = useMemo(import.meta.url, () => {
     if (asteroid?.Celestial) {
       if (scanType === 'SURFACE' && asteroid.Celestial?.scanStatus === Asteroid.SCAN_STATUSES.SURFACE_SCANNED) {
         return 'FINISHED';
@@ -51,12 +51,12 @@ const useScanManager = (asteroid) => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ asteroid, blockTime, getStatus, startSystem, finishSystem, payload, readyItems, scanType ]);
 
-  const startAsteroidScan = useCallback(
+  const startAsteroidScan = useCallback(import.meta.url, 
     () => execute(startSystem, payload),
     [execute, startSystem, payload]
   );
 
-  const finalizeAsteroidScan = useCallback(
+  const finalizeAsteroidScan = useCallback(import.meta.url, 
     () => execute(finishSystem, payload),
     [execute, finishSystem, payload]
   );

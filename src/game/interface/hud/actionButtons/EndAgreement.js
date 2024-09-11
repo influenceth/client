@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo } from '~/lib/react-debug';
 
 import { CancelAgreementIcon, GiveNoticeIcon } from '~/components/Icons';
 import useAgreementManager from '~/hooks/actionManagers/useAgreementManager';
@@ -15,11 +15,11 @@ const EndAgreement = ({ blockTime, entity, permission, agreementPath, _disabled 
   
   const onSetAction = useStore(s => s.dispatchActionDialog);
 
-  const handleClick = useCallback(() => {
+  const handleClick = useCallback(import.meta.url, () => {
     onSetAction('END_AGREEMENT', { entity, permission, agreementPath });
   }, [entity, permission]);
 
-  const disabledReason = useMemo(() => {
+  const disabledReason = useMemo(import.meta.url, () => {
     if (_disabled) return 'loading...';
     if (pendingChange) return 'updating...';
     if (currentAgreement?.noticeTime > 0) return 'notice already given';

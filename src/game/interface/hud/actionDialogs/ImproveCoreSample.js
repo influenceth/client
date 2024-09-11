@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from '~/lib/react-debug';
 import { Asteroid, Crewmate, Deposit, Lot, Product, Time } from '@influenceth/sdk';
 
 import { CoreSampleIcon, ImproveCoreSampleIcon, ResourceIcon, SwayIcon, WarningIcon } from '~/components/Icons';
@@ -80,7 +80,7 @@ const ImproveCoreSample = ({ asteroid, lot, coreSampleManager, currentSamplingAc
   const dispatchResourceMapSelect = useStore(s => s.dispatchResourceMapSelect);
   const resourceMap = useStore(s => s.asteroids.resourceMap);
 
-  const prepop = useMemo(() => ({
+  const prepop = useMemo(import.meta.url, () => ({
     sampleId: currentSamplingAction?.sampleId || props.preselect?.sampleId,
     resourceId: currentSamplingAction?.resourceId || props.preselect?.resourceId,
     origin: currentSamplingAction?.origin ? { ...currentSamplingAction.origin } : props.preselect?.origin,
@@ -94,7 +94,7 @@ const ImproveCoreSample = ({ asteroid, lot, coreSampleManager, currentSamplingAc
   const [sampleSelectorOpen, setSampleSelectorOpen] = useState(false);
   const [sourceSelectorOpen, setSourceSelectorOpen] = useState(false);
 
-  const improvableSamples = useMemo(() => {
+  const improvableSamples = useMemo(import.meta.url, () => {
     return (lot?.deposits || [])
       .filter((c) => (
         (c.id === currentSamplingAction?.sampleId)
@@ -107,7 +107,7 @@ const ImproveCoreSample = ({ asteroid, lot, coreSampleManager, currentSamplingAc
       .map((c) => ({ ...c, tonnage: c.Deposit.initialYield * Product.TYPES[c.Deposit.resource].massPerUnit }));
   }, [lot?.deposits]);
 
-  const [selectedSample, resourceId, initialYieldTonnage] = useMemo(() => {
+  const [selectedSample, resourceId, initialYieldTonnage] = useMemo(import.meta.url, () => {
     const selected = (improvableSamples || []).find((s) => s.id === sampleId);
     const initialYield = selected?.Deposit.initialYield || 0;
     const initialYieldTonnage = initialYield * (Product.TYPES[selected?.Deposit.resource]?.massPerUnit || 0);
@@ -118,7 +118,7 @@ const ImproveCoreSample = ({ asteroid, lot, coreSampleManager, currentSamplingAc
     ];
   }, [improvableSamples, sampleId]);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (currentSamplingAction?.sampleId) {
       setSampleId(currentSamplingAction.sampleId);
     } else {
@@ -142,23 +142,23 @@ const ImproveCoreSample = ({ asteroid, lot, coreSampleManager, currentSamplingAc
     }
   }, [currentSamplingAction, originEntity, improvableSamples, prepop.sampleId]);
 
-  const lotAbundance = useMemo(() => {
+  const lotAbundance = useMemo(import.meta.url, () => {
     if (!resourceId || !asteroid?.Celestial?.abundances || !lot?.id) return 0;
     return Asteroid.Entity.getAbundanceAtLot(asteroid, Lot.toIndex(lot.id), resourceId);
   }, [asteroid, lot, resourceId]);
 
-  const originalYield = useMemo(() => selectedSample?.Deposit?.initialYield, [selectedSample?.id]); // only update on id change
-  const originalTonnage = useMemo(() => originalYield ? originalYield * Product.TYPES[selectedSample?.Deposit.resource]?.massPerUnit : 0, [selectedSample, originalYield]);
+  const originalYield = useMemo(import.meta.url, () => selectedSample?.Deposit?.initialYield, [selectedSample?.id]); // only update on id change
+  const originalTonnage = useMemo(import.meta.url, () => originalYield ? originalYield * Product.TYPES[selectedSample?.Deposit.resource]?.massPerUnit : 0, [selectedSample, originalYield]);
 
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     // if open to a different resource map, switch... if a resource map is not open, don't open one
     if (resourceId && resourceMap?.active && resourceMap.selected !== resourceId) {
       dispatchResourceMapSelect(resourceId);
     }
   }, [resourceId, resourceMap]);
 
-  const [crewTravelBonus, crewDistBonus, sampleQualityBonus, sampleTimeBonus] = useMemo(() => {
+  const [crewTravelBonus, crewDistBonus, sampleQualityBonus, sampleTimeBonus] = useMemo(import.meta.url, () => {
     const bonusIds = [
       Crewmate.ABILITY_IDS.HOPPER_TRANSPORT_TIME,
       Crewmate.ABILITY_IDS.FREE_TRANSPORT_DISTANCE,
@@ -170,7 +170,7 @@ const ImproveCoreSample = ({ asteroid, lot, coreSampleManager, currentSamplingAc
     return bonusIds.map((id) => abilities[id] || {});
   }, [crew]);
 
-  const { totalTime: crewTravelTime, tripDetails } = useMemo(() => {
+  const { totalTime: crewTravelTime, tripDetails } = useMemo(import.meta.url, () => {
     if (!asteroid?.id || !crew?._location?.lotId || !lot?.id) return {};
     const crewLotIndex = Lot.toIndex(crew?._location?.lotId);
     return getTripDetails(asteroid.id, crewTravelBonus, crewDistBonus, crewLotIndex, [
@@ -179,14 +179,14 @@ const ImproveCoreSample = ({ asteroid, lot, coreSampleManager, currentSamplingAc
     ], crew?._timeAcceleration);
   }, [asteroid?.id, lot?.id, crew?._location?.lotId, crew?._timeAcceleration, crewTravelBonus, crewDistBonus]);
 
-  const [sampleBounds, sampleTime] = useMemo(() => {
+  const [sampleBounds, sampleTime] = useMemo(import.meta.url, () => {
     return [
       lotAbundance ? Deposit.getSampleBounds(lotAbundance, originalYield * 1e3, sampleQualityBonus.totalBonus) : null,
       Time.toRealDuration(Deposit.getSampleTime(sampleTimeBonus.totalBonus), crew?._timeAcceleration)
     ];
   }, [lotAbundance, originalYield, sampleQualityBonus, sampleTimeBonus, crew?._timeAcceleration]);
 
-  const [crewTimeRequirement, taskTimeRequirement] = useMemo(() => {
+  const [crewTimeRequirement, taskTimeRequirement] = useMemo(import.meta.url, () => {
     if (!asteroid?.id || !crew?._location?.lotId || !lot?.id || !drillSource?.lotIndex) return [];
     const oneWayCrewTravelTime = crewTravelTime / 2;
     const drillTravelTime = Time.toRealDuration(
@@ -205,7 +205,7 @@ const ImproveCoreSample = ({ asteroid, lot, coreSampleManager, currentSamplingAc
     ];
   }, [asteroid?.id, crew?._location?.lotId, crew?._timeAcceleration, drillSource?.lotIndex, lot?.id, crewDistBonus, crewTravelBonus]);
 
-  const stats = useMemo(() => ([
+  const stats = useMemo(import.meta.url, () => ([
     {
       label: 'Crew Travel',
       value: formatTimer(crewTravelTime),
@@ -260,7 +260,7 @@ const ImproveCoreSample = ({ asteroid, lot, coreSampleManager, currentSamplingAc
 
   // handle auto-closing
   const miniStatus = useRef();
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     let newMiniStatus = 1;
     if (currentSamplingAction) newMiniStatus = 2;
     if (currentSamplingAction?.sampleId) newMiniStatus = 3;
@@ -273,20 +273,20 @@ const ImproveCoreSample = ({ asteroid, lot, coreSampleManager, currentSamplingAc
     miniStatus.current = newMiniStatus;
   }, [currentSamplingAction]);
 
-  const isPurchase = useMemo(
+  const isPurchase = useMemo(import.meta.url, 
     () => selectedSample && selectedSample?.Control?.controller?.id !== crew?.id,
     [crew?.id, selectedSample?.Control?.controller?.id]
   );
 
   const { data: depositOwner } = useCrew(isPurchase ? selectedSample?.Control?.controller?.id : null);
 
-  const onImprove = useCallback(() => {
+  const onImprove = useCallback(import.meta.url, () => {
     if (isPurchase && !depositOwner) return;
 
     startImproving(selectedSample?.id, drillSource, depositOwner);
   }, [startImproving, selectedSample, drillSource, isPurchase, depositOwner]);
 
-  const onFinish = useCallback(() => {
+  const onFinish = useCallback(import.meta.url, () => {
     finishSampling(currentSamplingAction?.sampleId)
   }, [finishSampling, currentSamplingAction]);
 
@@ -460,13 +460,13 @@ const Wrapper = (props) => {
   const coreSampleManager = useCoreSampleManager(lot?.id);
   const { currentSamplingActions, completedSamplingActions } = coreSampleManager;
 
-  const currentSamplingAction = useMemo(() => {
+  const currentSamplingAction = useMemo(import.meta.url, () => {
     const sampleId = props.sampleId || props.preselect?.id;
     return currentSamplingActions.find((c) => c.action?.sampleId === sampleId)
       || completedSamplingActions.find((c) => c.action?.sampleId === sampleId);
   }, [completedSamplingActions, currentSamplingActions, props.sampleId]);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (!asteroid || !lot) {
       if (!isLoading) {
         if (props.onClose) props.onClose();

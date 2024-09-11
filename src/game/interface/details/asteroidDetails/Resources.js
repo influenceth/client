@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from '~/lib/react-debug';
 import { useHistory, useParams } from 'react-router-dom';
 import styled from 'styled-components';
 import { Tooltip } from 'react-tooltip';
@@ -411,7 +411,7 @@ const ResourceDetails = ({ abundances, asteroid, isManager }) => {
   const [selected, setSelected] = useState();
   const [hover, setHover] = useState();
 
-  const handleClick = useCallback((categoryIndex) => () => {
+  const handleClick = useCallback(import.meta.url, (categoryIndex) => () => {
     const toBeSelected = categoryIndex >= 0 ? abundances[categoryIndex] : null;
     setSelected(toBeSelected);
     setHover(null);
@@ -419,17 +419,17 @@ const ResourceDetails = ({ abundances, asteroid, isManager }) => {
     history.replace(`/asteroids/${asteroid.id}/resources${toBeSelected ? `/${toBeSelected.categoryKey}` : ``}`);
   }, [abundances, asteroid.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const handleHover = useCallback((category, isHovering) => () => {
+  const handleHover = useCallback(import.meta.url, (category, isHovering) => () => {
     setHover(isHovering ? category : null);
   }, []);
 
-  const goToResourceViewer = useCallback((resource) => (e) => {
+  const goToResourceViewer = useCallback(import.meta.url, (resource) => (e) => {
     e.stopPropagation();
     history.push(`/model/resource/${resource.name}?back=${encodeURIComponent(history.location.pathname)}`)
     return false;
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const goToResourceMap = useCallback((resource) => (e) => {
+  const goToResourceMap = useCallback(import.meta.url, (resource) => (e) => {
     e.stopPropagation();
     selectOrigin(asteroid.id);
     if (zoomStatus !== 'in') updateZoomStatus('zooming-in');
@@ -444,7 +444,7 @@ const ResourceDetails = ({ abundances, asteroid, isManager }) => {
     setInfoPaneAnchor(which ? e.target : null);
   };
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (abundances?.length > 0 && initialCategory) {
       const a = abundances.find((a) => a.categoryKey === initialCategory);
       if (a) {
@@ -454,8 +454,8 @@ const ResourceDetails = ({ abundances, asteroid, isManager }) => {
     }
   }, [abundances?.length, initialCategory]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const unpackedBonuses = useMemo(() => Asteroid.Entity.getBonuses(asteroid) || [], [asteroid]);
-  const nonzeroBonuses = useMemo(() => unpackedBonuses.filter((b) => b.level > 0), [unpackedBonuses]);
+  const unpackedBonuses = useMemo(import.meta.url, () => Asteroid.Entity.getBonuses(asteroid) || [], [asteroid]);
+  const nonzeroBonuses = useMemo(import.meta.url, () => unpackedBonuses.filter((b) => b.level > 0), [unpackedBonuses]);
 
   return (
     <Wrapper>

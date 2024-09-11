@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo } from '~/lib/react-debug';
 import { useQuery, useQueryClient,  } from 'react-query';
 import { Entity, Lot, Permission, Ship } from '@influenceth/sdk';
 
@@ -25,7 +25,7 @@ const useLot = (rawLotId) => {
   const queryClient = useQueryClient();
 
   // console.log('lotId', typeof lotId, lotId, lotId ? Entity.formatEntity({ id: lotId, label: Entity.IDS.LOT }) : null)
-  const lotEntity = useMemo(() => lotId ? Entity.formatEntity({ id: lotId, label: Entity.IDS.LOT }) : null, [lotId]);
+  const lotEntity = useMemo(import.meta.url, () => lotId ? Entity.formatEntity({ id: lotId, label: Entity.IDS.LOT }) : null, [lotId]);
   // console.log('lotId', { lotId, lotEntity });
 
   const { data: lot, isLoading: lotIsLoading, dataUpdatedAt: lUpdatedAt } = useEntity(lotId ? { id: lotId, label: Entity.IDS.LOT } : undefined);
@@ -72,7 +72,7 @@ const useLot = (rawLotId) => {
 
   const isLoading = lotEntity?.uuid && (lotIsLoading || lotDataIsLoading || asteroidLoading || buildingsLoading || depositsLoading || shipsLoading);
   const objArrDataUpdatedAt = Math.max(bUpdatedAt, dUpdatedAt, lUpdatedAt, sUpdatedAt);
-  const data = useMemo(() => {
+  const data = useMemo(import.meta.url, () => {
     if (isLoading || !lotEntity?.uuid) return undefined;
 
     const { asteroidId, lotIndex } = Lot.toPosition(lotId) || {};
@@ -125,7 +125,7 @@ const useLot = (rawLotId) => {
     };
   }, [lotEntity?.uuid, isLoading, asteroid, blockTime, buildings, deposits, ships, objArrDataUpdatedAt]);
 
-  return useMemo(() => ({ data, isLoading }), [data, isLoading]);
+  return useMemo(import.meta.url, () => ({ data, isLoading }), [data, isLoading]);
 };
 
 export default useLot;

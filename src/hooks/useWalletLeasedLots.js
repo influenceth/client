@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo } from '~/lib/react-debug';
 import { Permission } from '@influenceth/sdk';
 
 import useCrewContext from '~/hooks/useCrewContext';
@@ -10,12 +10,12 @@ const useWalletLeasedLots = (asteroidId, enabled = true) => {
   const { crews, loading: crewsLoading } = useCrewContext();
   const { data, isLoading: dataLoading } = useWalletAgreements();
 
-  const crewIds = useMemo(() => {
+  const crewIds = useMemo(import.meta.url, () => {
     if (crewsLoading) return [];
     return (crews || []).map((c) => c.id);
   }, [crews, crewsLoading]);
 
-  return useMemo(() => {
+  return useMemo(import.meta.url, () => {
     return {
       data: enabled && data
         ? data?.filter((a) => (

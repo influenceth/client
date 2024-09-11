@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from '~/lib/react-debug';
 import { Ship } from '@influenceth/sdk';
 
 import useShip from '~/hooks/useShip';
@@ -16,7 +16,7 @@ const ShipViewer = () => {
   const [pendingSound, setPendingSound] = useState(null);
 
   // Play ship thruster loop
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (zoomScene?.type === 'SHIP') {
       const id = setTimeout(() => playSound('ship'));
       setPendingSound(id);
@@ -29,7 +29,7 @@ const ShipViewer = () => {
     }
   }, [zoomScene]);
 
-  const modelUrl = useMemo(() => {
+  const modelUrl = useMemo(import.meta.url, () => {
     return getShipModel(
       zoomScene?.shipId ? ship?.Ship?.shipType : Ship.IDS.ESCAPE_MODULE,
       ship?.Ship?.variant

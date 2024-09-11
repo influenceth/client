@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from '~/lib/react-debug';
 import { Asteroid, Building, Crewmate, Permission, Ship, Station, Time } from '@influenceth/sdk';
 
 import { EjectMyCrewIcon, EjectPassengersIcon, WarningIcon, WarningOutlineIcon } from '~/components/Icons';
@@ -51,10 +51,10 @@ const EjectCrew = ({ asteroid, origin, originLot, stationedCrews, manager, stage
 
   const myCrewIsTarget = targetCrew?.id === crew?.id;
 
-  const hopperBonus = useMemo(() => getCrewAbilityBonuses(Crewmate.ABILITY_IDS.HOPPER_TRANSPORT_TIME, crew), [crew]);
-  const distBonus = useMemo(() => getCrewAbilityBonuses(Crewmate.ABILITY_IDS.FREE_TRANSPORT_DISTANCE, crew), [crew]);
+  const hopperBonus = useMemo(import.meta.url, () => getCrewAbilityBonuses(Crewmate.ABILITY_IDS.HOPPER_TRANSPORT_TIME, crew), [crew]);
+  const distBonus = useMemo(import.meta.url, () => getCrewAbilityBonuses(Crewmate.ABILITY_IDS.FREE_TRANSPORT_DISTANCE, crew), [crew]);
 
-  const ejectionTime = useMemo(() => {
+  const ejectionTime = useMemo(import.meta.url, () => {
     // if from surface
     if (originLot) {
       const travelTime = Asteroid.getLotTravelTime(asteroid?.id, originLot.index, 0, hopperBonus.totalBonus, distBonus.totalBonus);
@@ -71,7 +71,7 @@ const EjectCrew = ({ asteroid, origin, originLot, stationedCrews, manager, stage
     return 0;
   }, [asteroid, blockTime, crew?._timeAcceleration, distBonus, hopperBonus, originLot, origin?.Ship?.transitArrival]);
 
-  const stats = useMemo(() => ([
+  const stats = useMemo(import.meta.url, () => ([
     ejectionTime > 0 && {
       label: 'Time to Orbit',
       value: formatTimer(ejectionTime),
@@ -91,7 +91,7 @@ const EjectCrew = ({ asteroid, origin, originLot, stationedCrews, manager, stage
     },
   ]), [targetCrew]);
 
-  const crewHasPermission = useCallback((c) => {
+  const crewHasPermission = useCallback(import.meta.url, (c) => {
     if (c && origin) {
       const perm = Permission.getPolicyDetails(origin, c, blockTime)[Permission.IDS.STATION_CREW];
       if (perm && (perm.crewStatus === 'controller' || perm.crewStatus === 'granted')) {
@@ -101,15 +101,15 @@ const EjectCrew = ({ asteroid, origin, originLot, stationedCrews, manager, stage
     return false;
   }, [blockTime, origin]);
 
-  const targetCrewHasPermission = useMemo(() => crewHasPermission(targetCrew), [origin, targetCrew]);
+  const targetCrewHasPermission = useMemo(import.meta.url, () => crewHasPermission(targetCrew), [origin, targetCrew]);
 
-  const onEject = useCallback(() => {
+  const onEject = useCallback(import.meta.url, () => {
     ejectCrew(targetCrewId);
   }, [targetCrewId]);
 
   // handle auto-closing
   const lastStatus = useRef();
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     // (close on status change from)
     if (lastStatus.current && ejectionStatus !== lastStatus.current) {
       props.onClose();
@@ -117,7 +117,7 @@ const EjectCrew = ({ asteroid, origin, originLot, stationedCrews, manager, stage
     lastStatus.current = ejectionStatus;
   }, [ejectionStatus]);
 
-  const actionDetails = useMemo(() => {
+  const actionDetails = useMemo(import.meta.url, () => {
     const icon = myCrewIsTarget ? <EjectMyCrewIcon /> : <EjectPassengersIcon />;
     const label = myCrewIsTarget ? 'Eject My Crew' : 'Force Eject Crew';
     const status = stage === actionStages.NOT_STARTED
@@ -126,7 +126,7 @@ const EjectCrew = ({ asteroid, origin, originLot, stationedCrews, manager, stage
     return { icon, label, status };
   }, [myCrewIsTarget, origin, stage]);
 
-  const allowAction = useMemo(() => {
+  const allowAction = useMemo(import.meta.url, () => {
     if (targetCrew) {
       // can eject if ejecting self OR the crew does not have permission to be there
       if (myCrewIsTarget || !targetCrewHasPermission) return true;
@@ -275,10 +275,10 @@ const Wrapper = (props) => {
   const { crew } = useCrewContext();
 
   // NOTE: use props.origin for guests
-  const originEntity = useMemo(() => props.origin || crew?.Location?.location, [crew?.Location?.location, props.origin]);
+  const originEntity = useMemo(import.meta.url, () => props.origin || crew?.Location?.location, [crew?.Location?.location, props.origin]);
   const { data: allStationedCrews } = useStationedCrews(originEntity);
   const { data: origin, isLoading: entityIsLoading } = useEntity(originEntity);
-  const originLocation = useMemo(() => locationsArrToObj(origin?.Location?.locations || []), [origin]);
+  const originLocation = useMemo(import.meta.url, () => locationsArrToObj(origin?.Location?.locations || []), [origin]);
 
   // asteroid is origin's asteroid OR destination asteroid (if origin is ship in flight)
   const { data: asteroid, isLoading: asteroidIsLoading } = useAsteroid(originLocation?.asteroidId || origin?.Ship?.transitDestination?.id);
@@ -287,7 +287,7 @@ const Wrapper = (props) => {
   const ejectCrewManager = useEjectCrewManager(origin);
 
   // ejection is weird, so create a psuedo manager to make it seem more normal
-  const manager = useMemo(() => {
+  const manager = useMemo(import.meta.url, () => {
     const currentEjection = ejectCrewManager.currentEjections?.[0];  // TODO: ...
     return {
       ejectCrew: ejectCrewManager.ejectCrew,
@@ -297,7 +297,7 @@ const Wrapper = (props) => {
   }, [ejectCrewManager]);
 
   const isLoading = entityIsLoading || asteroidIsLoading || lotIsLoading;
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (!origin) {
       if (!isLoading) {
         if (props.onClose) props.onClose();

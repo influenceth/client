@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from '~/lib/react-debug';
 import { useHistory } from 'react-router-dom';
 import { Tooltip } from 'react-tooltip';
 import styled from 'styled-components';
@@ -281,7 +281,7 @@ const HudMenu = () => {
   const { data: asteroid } = useAsteroid(asteroidId);
   const { data: lot } = useLot(lotId);
   const { data: zoomShip } = useShip(zoomScene?.type === 'SHIP' && zoomScene.shipId);
-  const ship = useMemo(() => zoomScene?.type === 'SHIP' ? zoomShip : lot?.surfaceShip, [lot, zoomShip, zoomScene]);
+  const ship = useMemo(import.meta.url, () => zoomScene?.type === 'SHIP' ? zoomShip : lot?.surfaceShip, [lot, zoomShip, zoomScene]);
   const { data: marketplaces } = useAsteroidBuildings(asteroidId, 'Exchange');
 
   const chatHistory = useStore(s => s.chatHistory);
@@ -290,7 +290,7 @@ const HudMenu = () => {
   const [open, setOpen] = useState();
   const [hidden, setHidden] = useState();
 
-  const handleButtonClick = useCallback((selected, onOpen, hideInsteadOfClose) => {
+  const handleButtonClick = useCallback(import.meta.url, (selected, onOpen, hideInsteadOfClose) => {
 
     // clicking button of already-open --> close
     if (openHudMenu === selected) {
@@ -318,7 +318,7 @@ const HudMenu = () => {
     setHidden(false);
   }, [open, openHudMenu]);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     // TODO: refactor this now that organization changed...
     if (openHudMenu) {
       const category = openHudMenu.split('_').shift();
@@ -329,32 +329,32 @@ const HudMenu = () => {
     }
   }, [dispatchHudMenuOpened, zoomScene, zoomStatus]);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     // if just zoomed in and resourcemap is active, then open asteroid resources
     if (zoomStatus === 'in' && !zoomScene && resourceMap.active) {
       dispatchHudMenuOpened('RESOURCES');
     }
   }, [zoomStatus, zoomScene])
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     setOpen(!!openHudMenu);
   }, [openHudMenu]);
 
-  const asteroidFilterTally = useMemo(() => {
+  const asteroidFilterTally = useMemo(import.meta.url, () => {
     return Object.keys(asteroidFilters || {})
       .reduce((acc, fieldName) => acc + (isAssetSearchFilterMatchingDefault('asteroidsMapped', fieldName) ? 0 : 1), 0)
   }, [asteroidFilters]);
 
-  const lotFilterTally = useMemo(() => {
+  const lotFilterTally = useMemo(import.meta.url, () => {
     return Object.keys(lotFilters || {})
       .reduce((acc, fieldName) => acc + (isAssetSearchFilterMatchingDefault('lotsMapped', fieldName) ? 0 : 1), 0)
   }, [lotFilters]);
 
-  const unreadChatTally = useMemo(() => {
+  const unreadChatTally = useMemo(import.meta.url, () => {
     return chatHistory.filter((c) => c.asteroidId === asteroidId && c.unread)?.length;
   }, [asteroidId, chatHistory]);
 
-  const [menuButtons, pageButtons] = useMemo(() => {
+  const [menuButtons, pageButtons] = useMemo(import.meta.url, () => {
     const menuButtons = [];
     const pageButtons = [];
 
@@ -657,18 +657,18 @@ const HudMenu = () => {
     zoomScene
   ]);
 
-  const { label, onDetailClick, detailType, Component, componentProps, hideInsteadOfClose, noClose, noDetail } = useMemo(() => {
+  const { label, onDetailClick, detailType, Component, componentProps, hideInsteadOfClose, noClose, noDetail } = useMemo(import.meta.url, () => {
     return menuButtons.find((b) => b.key === openHudMenu) || {};
   }, [menuButtons, openHudMenu]);
 
-  const [visibleMenuButtons, visibleUniversalButtons, visiblePageButtons] = useMemo(() => ([
+  const [visibleMenuButtons, visibleUniversalButtons, visiblePageButtons] = useMemo(import.meta.url, () => ([
     menuButtons.filter((b) => b.isVisible && !b.isUniversal && (!b.requireLogin || authenticated)),
     menuButtons.filter((b) => b.isVisible && b.isUniversal && (!b.requireLogin || authenticated)),
     pageButtons.filter((b) => b.isVisible && (!b.requireLogin || authenticated)),
   ]), [authenticated, menuButtons, pageButtons]);
 
   // if open hud menu is no longer visible (or if get logged out and "requireLogin" menu), close
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (openHudMenu) {
       const openMenuConfig = menuButtons.find((b) => b.key === openHudMenu);
       if (!openMenuConfig?.isVisible || (openMenuConfig?.requireLogin && !authenticated)) {

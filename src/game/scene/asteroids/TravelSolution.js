@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from '~/lib/react-debug';
 import styled from 'styled-components';
 import { useFrame } from '@react-three/fiber';
 import { Html } from '@react-three/drei';
@@ -79,13 +79,13 @@ const TravelSolution = ({}) => {
   const travelSolution = useStore(s => s.asteroids.travelSolution);
   const dispatchTravelSolution = useStore(s => s.dispatchTravelSolution);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (!baseTime || !timeOverride?.speed || Math.abs(timeOverride.speed) <= 1) {
       setBaseTime(coarseTime);
     }
   }, [coarseTime, timeOverride?.speed]);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (!travelSolution) return;
 
     const exhaustBonus = getCrewAbilityBonuses(Crewmate.ABILITY_IDS.PROPELLANT_EXHAUST_VELOCITY, crew);
@@ -113,7 +113,7 @@ const TravelSolution = ({}) => {
     }
   }, [baseTime, crew, destinationId, originId, timeOverride, travelSolution]);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (!travelSolution || !destination || !origin) {
       setPrearrival();
       setPredeparture();
@@ -202,7 +202,7 @@ const TravelSolution = ({}) => {
     uniforms.current.uDash.value = true;
   }, [baseTime, travelSolution]);
 
-  const formattedTrajectoryLength = useMemo(() => {
+  const formattedTrajectoryLength = useMemo(import.meta.url, () => {
     if (!trajectoryLength) return '';
     return formatBeltDistance(trajectoryLength);
   }, [trajectoryLength]);

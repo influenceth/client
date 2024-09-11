@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from '~/lib/react-debug';
 import { Crewmate, Inventory, Product, Ship, Time } from '@influenceth/sdk';
 
 import { EmergencyModeCollectIcon } from '~/components/Icons';
@@ -16,11 +16,11 @@ const isVisible = ({ crew, ship }) => {
 const EmergencyModeCollect = ({ crew, onSetAction, _disabled }) => {
   const { data: maybeShip } = useShip(crew?._location?.shipId);
 
-  const ship = useMemo(() => {
+  const ship = useMemo(import.meta.url, () => {
     return (!maybeShip && crew?.Ship?.emergencyAt > 0) ? crew : maybeShip;
   }, [maybeShip]);
 
-  const handleClick = useCallback(() => {
+  const handleClick = useCallback(import.meta.url, () => {
     onSetAction('EMERGENCY_MODE_COLLECT');
   }, [onSetAction]);
 
@@ -29,7 +29,7 @@ const EmergencyModeCollect = ({ crew, onSetAction, _disabled }) => {
   const {
     hasCollectedMax,
     finishTime,
-  } = useMemo(() => {
+  } = useMemo(import.meta.url, () => {
     const shipConfig = Ship.TYPES[ship.Ship.shipType];
     const propellantInventory = ship.Inventories.find((i) => i.slot === shipConfig.propellantSlot);
     const propellantInventoryConfig = Inventory.getType(propellantInventory.inventoryType, crew?._inventoryBonuses);
@@ -44,7 +44,7 @@ const EmergencyModeCollect = ({ crew, onSetAction, _disabled }) => {
     };
   }, [crew, resourceId, ship]);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     const now = Date.now() / 1000;
     if (finishTime > now) {
       setHasGeneratedMax(false);
@@ -57,7 +57,7 @@ const EmergencyModeCollect = ({ crew, onSetAction, _disabled }) => {
     }
   }, [finishTime]);
 
-  const disabledReason = useMemo(() => {
+  const disabledReason = useMemo(import.meta.url, () => {
     if (_disabled) return 'loading...';
     if (!ship) return 'ship is not crewed';
     if (ship.Ship?.transitDestination) return 'ship is in flight';

@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo } from '~/lib/react-debug';
 import { Address, Asteroid } from '@influenceth/sdk';
 
 import { ClaimRewardIcon } from '~/components/Icons';
@@ -11,11 +11,11 @@ const isVisible = ({ account, asteroid, crew }) => {
 };
 
 const ClaimArrivalReward = ({ asteroid, crew, onSetAction, _disabled }) => {
-  const handleClick = useCallback(() => {
+  const handleClick = useCallback(import.meta.url, () => {
     onSetAction('CLAIM_ARRIVAL_REWARD', { asteroid, crew});
   }, [onSetAction]);
 
-  const disabledReason = useMemo(() => {
+  const disabledReason = useMemo(import.meta.url, () => {
     if (_disabled) return 'loading...';
     if (asteroid?.Celestial?.scanStatus < Asteroid.SCAN_STATUSES.SURFACE_SCANNED) return 'asteroid un-scanned';
     return getCrewDisabledReason({ asteroid, crew, requireAsteroid: false, requireSurface: false });

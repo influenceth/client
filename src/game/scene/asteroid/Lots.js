@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from '~/lib/react-debug';
 import { useFrame, useThree } from '@react-three/fiber';
 import { useTexture } from '@react-three/drei';
 import {
@@ -92,7 +92,7 @@ const Lots = ({ attachTo: overrideAttachTo, asteroidId, axis, cameraAltitude, ca
   const { registerMessageHandler, unregisterMessageHandler, wsReady } = useWebsocket();
   const { processInBackground } = useWebWorker();
 
-  const attachTo = useMemo(() => overrideAttachTo || scene, [overrideAttachTo, scene]);
+  const attachTo = useMemo(import.meta.url, () => overrideAttachTo || scene, [overrideAttachTo, scene]);
 
   const textureQuality = useStore(s => s.graphics.textureQuality);
   const lotId = useStore(s => s.asteroids.lot);
@@ -100,9 +100,9 @@ const Lots = ({ attachTo: overrideAttachTo, asteroidId, axis, cameraAltitude, ca
   const dispatchLotSelected = useStore(s => s.dispatchLotSelected);
   const dispatchSearchResults = useStore(s => s.dispatchLotsMappedSearchResults);
 
-  const selectedLotIndex = useMemo(() => Lot.toIndex(lotId), [lotId]);
+  const selectedLotIndex = useMemo(import.meta.url, () => Lot.toIndex(lotId), [lotId]);
   const { data: lotDetails } = useLot(lotId);
-  const deliveryEndpoint = useMemo(() => lotDetails?.building || lotDetails?.surfaceShip, [lotDetails]);
+  const deliveryEndpoint = useMemo(import.meta.url, () => lotDetails?.building || lotDetails?.surfaceShip, [lotDetails]);
   const { data: outboundDeliveries } = useDeliveries({ origin: deliveryEndpoint, status: Delivery.STATUSES.SENT });
   const { data: inboundDeliveries } = useDeliveries({ destination: deliveryEndpoint, status: Delivery.STATUSES.SENT });
 
@@ -122,7 +122,7 @@ const Lots = ({ attachTo: overrideAttachTo, asteroidId, axis, cameraAltitude, ca
 
   const textures = useTexture(lotUseTextures);
 
-  const texturesLoaded = useMemo(() => {
+  const texturesLoaded = useMemo(import.meta.url, () => {
     return Object.keys(textures) > 0;
   }, [textures]);
 
@@ -146,12 +146,12 @@ const Lots = ({ attachTo: overrideAttachTo, asteroidId, axis, cameraAltitude, ca
   const mouseIsOut = useRef(false);
   const clickStatus = useRef();
 
-  const PLOT_WIDTH = useMemo(() => Math.min(125, config?.radius / 25), [config?.radius]);
-  const BUILDING_RADIUS = useMemo(() => 0.375 * PLOT_WIDTH, [PLOT_WIDTH]);
-  const PIP_RADIUS = useMemo(() => 0.25 * PLOT_WIDTH, [PLOT_WIDTH]);
+  const PLOT_WIDTH = useMemo(import.meta.url, () => Math.min(125, config?.radius / 25), [config?.radius]);
+  const BUILDING_RADIUS = useMemo(import.meta.url, () => 0.375 * PLOT_WIDTH, [PLOT_WIDTH]);
+  const PIP_RADIUS = useMemo(import.meta.url, () => 0.25 * PLOT_WIDTH, [PLOT_WIDTH]);
   const RETICULE_WIDTH = 5 * PLOT_WIDTH;
 
-  const chunkyAltitude = useMemo(() => Math.round(cameraAltitude / 500) * 500, [cameraAltitude]);
+  const chunkyAltitude = useMemo(import.meta.url, () => Math.round(cameraAltitude / 500) * 500, [cameraAltitude]);
 
   // NOTE: for every dependency on `lotDataMap`, should also include `lastLotUpdate` so react triggers it
   //  (it seems react does not handle sparse arrays very well for equality checks)
@@ -174,27 +174,27 @@ const Lots = ({ attachTo: overrideAttachTo, asteroidId, axis, cameraAltitude, ca
     refetch: refetchLots
   } = useMappedAsteroidLots(asteroidId);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     dispatchSearchResults({ total: resultTally, isLoading });
   }, [resultTally, isLoading])
 
-  const lotTally = useMemo(() => Asteroid.getSurfaceArea(asteroidId), [asteroidId]);
-  const regionTally = useMemo(() => lotTally <= MAX_LOTS_RENDERED ? 1 : Asteroid.getLotRegionTally(lotTally), [lotTally]);
-  const visibleLotTally = useMemo(() => Math.min(MAX_MESH_INSTANCES, lotTally), [lotTally]);
-  const visibleLeasedTally = useMemo(() => Math.min(MAX_LEASE_INSTANCES, leasedTally), [leasedTally]);
-  const visibleResultTally = useMemo(() => Math.min(MAX_MESH_INSTANCES, resultTally), [resultTally]);
+  const lotTally = useMemo(import.meta.url, () => Asteroid.getSurfaceArea(asteroidId), [asteroidId]);
+  const regionTally = useMemo(import.meta.url, () => lotTally <= MAX_LOTS_RENDERED ? 1 : Asteroid.getLotRegionTally(lotTally), [lotTally]);
+  const visibleLotTally = useMemo(import.meta.url, () => Math.min(MAX_MESH_INSTANCES, lotTally), [lotTally]);
+  const visibleLeasedTally = useMemo(import.meta.url, () => Math.min(MAX_LEASE_INSTANCES, leasedTally), [leasedTally]);
+  const visibleResultTally = useMemo(import.meta.url, () => Math.min(MAX_MESH_INSTANCES, resultTally), [resultTally]);
 
   // if just navigated to asteroid and lots already loaded, refetch
   // (b/c might have missed ws updates while on a different asteroid)
   // TODO: probably technically need to capture allLotsReloading alongside lastLotUpdate in dependency arrays
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (Object.values(lotResultMap).length > 0) refetchLots();
   }, []);
 
   // position lots and bucket into regions (as needed)
   // BATCHED region bucketing is really only helpful for largest couple asteroids
   // NOTE: this just runs once when lots is initial populated
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     const {
       ringsMinMax, ringsPresent, ringsVariation, rotationSpeed,
       ...prunedConfig
@@ -274,7 +274,7 @@ const Lots = ({ attachTo: overrideAttachTo, asteroidId, axis, cameraAltitude, ca
 
   //  before declaring the lots "loaded" initially
   // run this when lots changes (after its initial run through the effect that follows this one)
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (lotResultMap && lotsByRegion.current?.length && positionsReady) {
       const results = [];
       Object.keys(lotsByRegion.current).forEach((region) => {
@@ -285,7 +285,7 @@ const Lots = ({ attachTo: overrideAttachTo, asteroidId, axis, cameraAltitude, ca
     }
   }, [lotResultMap, lastLotUpdate, positionsReady]);
 
-  const handleWSMessage = useCallback((message) => {
+  const handleWSMessage = useCallback(import.meta.url, (message) => {
     if (process.env.NODE_ENV !== 'production') console.log('onWSMessage (lots)', message);
     const { type: eventType, body } = message;
 
@@ -337,7 +337,7 @@ const Lots = ({ attachTo: overrideAttachTo, asteroidId, axis, cameraAltitude, ca
 
   }, [processEvent]);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (token && wsReady) {
       const regId = registerMessageHandler(handleWSMessage, `Asteroid::${asteroidId}`);
       return () => {
@@ -360,7 +360,7 @@ const Lots = ({ attachTo: overrideAttachTo, asteroidId, axis, cameraAltitude, ca
 
   // listen for click events
   // NOTE: if just use onclick, then fires on drag events too :(
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     const onMouseEvent = function (e) {
       if (e.type === 'pointerdown') {
         clickStatus.current = new Vector2(e.clientX, e.clientY);
@@ -389,7 +389,7 @@ const Lots = ({ attachTo: overrideAttachTo, asteroidId, axis, cameraAltitude, ca
   }, []);
 
   // Instantiate (invisible) mouseable mesh (behind all pips)
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (!visibleLotTally) return;
 
     const mouseableGeometry = new CircleGeometry(MOUSEABLE_WIDTH, 6);
@@ -413,7 +413,7 @@ const Lots = ({ attachTo: overrideAttachTo, asteroidId, axis, cameraAltitude, ca
   }, [attachTo, visibleLotTally]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Lot meshes
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (!visibleResultTally && texturesLoaded) return;
 
     const materialOpts = {
@@ -454,7 +454,7 @@ const Lots = ({ attachTo: overrideAttachTo, asteroidId, axis, cameraAltitude, ca
   }, [attachTo, visibleResultTally, texturesLoaded, lotUseTallies]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Create mesh for my leases
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (!visibleLeasedTally) return;
 
     const leasedLotGeometry = new CircleGeometry(PLOT_WIDTH * 2.6, 32);
@@ -480,7 +480,7 @@ const Lots = ({ attachTo: overrideAttachTo, asteroidId, axis, cameraAltitude, ca
   }, [attachTo, visibleLeasedTally, PLOT_WIDTH]);
 
   // instantiate mouse mesh
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     mouseHoverMesh.current = new Mesh(
       new PlaneGeometry(RETICULE_WIDTH, RETICULE_WIDTH),
       new MeshBasicMaterial({
@@ -503,7 +503,7 @@ const Lots = ({ attachTo: overrideAttachTo, asteroidId, axis, cameraAltitude, ca
   }, [attachTo]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Instantiate selection mesh
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     selectionMesh.current = new Mesh(
       new PlaneGeometry(RETICULE_WIDTH, RETICULE_WIDTH),
       new MeshBasicMaterial({
@@ -524,8 +524,8 @@ const Lots = ({ attachTo: overrideAttachTo, asteroidId, axis, cameraAltitude, ca
     };
   }, [attachTo]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const lotScale = useMemo(() => Math.max(1, Math.sqrt(cameraAltitude / 10000)), [cameraAltitude]);
-  const lotsReady = useMemo(() => {
+  const lotScale = useMemo(import.meta.url, () => Math.max(1, Math.sqrt(cameraAltitude / 10000)), [cameraAltitude]);
+  const lotsReady = useMemo(import.meta.url, () => {
     return !isLoading &&
       !!lotResultMap &&
       meshesInitialized &&
@@ -541,7 +541,7 @@ const Lots = ({ attachTo: overrideAttachTo, asteroidId, axis, cameraAltitude, ca
     resultsByRegion
   ]);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (!lotsReady) return;
 
     try {
@@ -694,7 +694,7 @@ const Lots = ({ attachTo: overrideAttachTo, asteroidId, axis, cameraAltitude, ca
     resultsByRegion
   ]);
 
-  const highlightLot = useCallback((lotIndex) => {
+  const highlightLot = useCallback(import.meta.url, (lotIndex) => {
     if (!attachTo) return;
 
     highlighted.current = null;
@@ -725,13 +725,13 @@ const Lots = ({ attachTo: overrideAttachTo, asteroidId, axis, cameraAltitude, ca
   }, [attachTo?.quaternion, selectedLotIndex]);
 
   // Calculates the control point for the delivery bezier curve
-  const calculateControlPoint = useCallback((origin, dest, distance, frac = 0.5) => {
+  const calculateControlPoint = useCallback(import.meta.url, (origin, dest, distance, frac = 0.5) => {
     const ratio = 1 + Math.pow(distance / config.radius, 2);
     return origin.clone().lerp(dest, frac).multiplyScalar(Math.min(ratio, 3.5));
   }, [config]);
 
   // Handle turning on and off delivery arcs when a lot is selected
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     const newDeliveries = [];
     const material = new ShaderMaterial({
       uniforms: deliveryUniforms.current,
@@ -808,7 +808,7 @@ const Lots = ({ attachTo: overrideAttachTo, asteroidId, axis, cameraAltitude, ca
   }, [attachTo, selectedLotIndex, deliveryEndpoint, inboundDeliveries, outboundDeliveries]);
 
   const selectionAnimationTime = useRef(0);
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (!attachTo) return;
 
     if (selectionMesh.current && positions.current && positionsReady && selectedLotIndex) {
@@ -839,7 +839,7 @@ const Lots = ({ attachTo: overrideAttachTo, asteroidId, axis, cameraAltitude, ca
   // when camera angle changes, sort all regions by closest, then display
   // up to max lots (ordered by region proximity)
   //  NOTE: attempted to throttle this and wasn't catching any calculations even on huge, so pulled it out
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (cameraNormalized?.string && regionTally > 1) {
       processInBackground(
         {
@@ -859,12 +859,12 @@ const Lots = ({ attachTo: overrideAttachTo, asteroidId, axis, cameraAltitude, ca
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cameraNormalized?.string, regionsByDistance?.length, regionTally]);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (!lastClick) return;
     dispatchLotSelected(Lot.toId(asteroidId, highlighted.current));
   }, [lastClick]);
 
-  const mouseThrottleTime = useMemo(() => MOUSE_THROTTLE_TIME / (TIME_ACCELERATION / 24), [TIME_ACCELERATION]);
+  const mouseThrottleTime = useMemo(import.meta.url, () => MOUSE_THROTTLE_TIME / (TIME_ACCELERATION / 24), [TIME_ACCELERATION]);
 
   useFrame((state, delta) => {
     selectionAnimationTime.current = (selectionAnimationTime.current || 0) + delta;

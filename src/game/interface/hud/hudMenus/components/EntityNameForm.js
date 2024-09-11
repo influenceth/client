@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from '~/lib/react-debug';
 import styled from 'styled-components';
 
 import UncontrolledTextInput from '~/components/TextInputUncontrolled';
@@ -20,18 +20,18 @@ const EntityNameForm = ({ entity, label, originalName, skipCollisionCheck = fals
 
   const [error, setError] = useState();
   const [name, setName] = useState();
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (!name) setName(originalName)
   }, [originalName])
 
-  const handleNameChange = useCallback(async (e) => {
+  const handleNameChange = useCallback(import.meta.url, async (e) => {
     const val = e.currentTarget.value || '';
     setName(val);
     const err = await isNameValid(val, entity.id, skipCollisionCheck, 'string');
     setError(typeof err === 'string' ? err : false);
   }, [entity?.id]);
 
-  const saveNameChange = useCallback(async () => {
+  const saveNameChange = useCallback(import.meta.url, async () => {
     if (await isNameValid(name, entity?.id)) {
       changeName(name);
 

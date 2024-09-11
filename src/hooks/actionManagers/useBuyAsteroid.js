@@ -1,4 +1,4 @@
-import { useCallback, useContext, useMemo } from 'react';
+import { useCallback, useContext, useMemo } from '~/lib/react-debug';
 import { Entity } from '@influenceth/sdk';
 
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
@@ -17,7 +17,7 @@ const useBuyAsteroid = (id) => {
 
   const system = asteroid?.AsteroidProof?.used ? 'PurchaseAsteroid' : 'InitializeAndPurchaseAsteroid';
 
-  const buyAsteroid = useCallback(() => {
+  const buyAsteroid = useCallback(import.meta.url, () => {
     // caller_crew is optional here b/c may not exist yet
     return execute(
       system,
@@ -28,7 +28,7 @@ const useBuyAsteroid = (id) => {
     );
   }, [execute, system, asteroid, crew]);
 
-  const checkForLimit = useCallback(async () => {
+  const checkForLimit = useCallback(import.meta.url, async () => {
     const saleData = (await api.getAsteroidSale()) || {}; // jit check
     const currentPeriod = Math.floor(blockTime / 1000 / 1000000);
     const volume = Number(saleData.volume) || 0;
@@ -61,7 +61,7 @@ const useBuyAsteroid = (id) => {
     return false;
   }, []);
 
-  const status = useMemo(
+  const status = useMemo(import.meta.url, 
     () => getStatus(system, { asteroid }),
     [getStatus, system, asteroid]
   );

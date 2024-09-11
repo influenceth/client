@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from '~/lib/react-debug';
 import styled from 'styled-components';
 import moment from 'moment';
 import { Lot, Order, Product } from '@influenceth/sdk';
@@ -95,7 +95,7 @@ const MarketplaceOpenOrders = ({ asteroid, orders, marketplace = null, marketpla
   const onSetAction = useStore(s => s.dispatchActionDialog);
   const simulationEnabled = useSimulationEnabled();
 
-  const onCancelOrder = useCallback((order) => {
+  const onCancelOrder = useCallback(import.meta.url, (order) => {
     onSetAction('MARKETPLACE_ORDER', {
       exchange: order?.marketplace,
       asteroidId: asteroid?.id,
@@ -115,7 +115,7 @@ const MarketplaceOpenOrders = ({ asteroid, orders, marketplace = null, marketpla
      });
   }, []);
 
-  const handleSort = useCallback((field) => () => {
+  const handleSort = useCallback(import.meta.url, (field) => () => {
     if (!field) return;
 
     let updatedSortField = sortField;
@@ -133,7 +133,7 @@ const MarketplaceOpenOrders = ({ asteroid, orders, marketplace = null, marketpla
     ]);
   }, [sortDirection, sortField]);
 
-  const sortedOrders = useMemo(() => {
+  const sortedOrders = useMemo(import.meta.url, () => {
     return (orders || [])
       .map((o) => ({
         ...o,
@@ -161,7 +161,7 @@ const MarketplaceOpenOrders = ({ asteroid, orders, marketplace = null, marketpla
     );
   }
 
-  const columns = useMemo(() => {
+  const columns = useMemo(import.meta.url, () => {
     const c = [
       {
         key: 'orderType',

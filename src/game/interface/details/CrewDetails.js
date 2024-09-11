@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from '~/lib/react-debug';
 import { useHistory, useParams } from 'react-router-dom';
 import styled, { css } from 'styled-components';
 import { Address, Building, Entity, Name, Time } from '@influenceth/sdk';
@@ -264,31 +264,31 @@ const CrewDetails = ({ crewId, crew, isMyCrew, isDelegatedCrew, isOwnedCrew, sel
   const [hovered, setHovered] = useState();
   const [newName, setNewName] = useState(crew.Name?.name || '');
 
-  const viewingAs = useMemo(() => ({ id: crewId, label: Entity.IDS.CREW }), [crewId]);
-  const hasMyCrewmates = useMemo(() => {
+  const viewingAs = useMemo(import.meta.url, () => ({ id: crewId, label: Entity.IDS.CREW }), [crewId]);
+  const hasMyCrewmates = useMemo(import.meta.url, () => {
     return crew._crewmates.filter((c) => accountAddress && Address.areEqual(accountAddress, c.Nft?.owner))?.length;
   }, [accountAddress, crew._crewmates]);
 
   // reset
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (editing) setNewName(crew.Name?.name || '');
   }, [editing]);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (changingName) setEditing(false);
   }, [changingName])
 
-  const saveName = useCallback(async () => {
+  const saveName = useCallback(import.meta.url, async () => {
     if (await isNameValid(newName, crew?.id)) {
       changeName(newName);
     }
   }, [newName, crew?.id]);
 
-  const onClickCrewmate = useCallback((crewmate) => () => {
+  const onClickCrewmate = useCallback(import.meta.url, (crewmate) => () => {
     history.push(`/crewmate/${crewmate.id}`);
   }, []);
 
-  const onClickRecruit = useCallback(() => {
+  const onClickRecruit = useCallback(import.meta.url, () => {
     if (hydratedLocation?.building?.Building?.buildingType === Building.IDS.HABITAT) {
       history.push(`/recruit/${crew.id}/${hydratedLocation.building.id}`);
     } else {
@@ -301,12 +301,12 @@ const CrewDetails = ({ crewId, crew, isMyCrew, isDelegatedCrew, isOwnedCrew, sel
     }
   }, [crew, hydratedLocation?.building]);
 
-  const onClickLocation = useCallback(() => {
+  const onClickLocation = useCallback(import.meta.url, () => {
     hydratedLocation.onLink();
     history.push('/');
   }, [hydratedLocation]);
 
-  const formationDate = useMemo(() => {
+  const formationDate = useMemo(import.meta.url, () => {
     if (earliestLoading) return '...';
     if (!earliestActivity) return 'Unknown';
     return `${Time.fromUnixSeconds(earliestActivity?.event?.timestamp, TIME_ACCELERATION).toGameClockADays(true)} SA`;
@@ -316,7 +316,7 @@ const CrewDetails = ({ crewId, crew, isMyCrew, isDelegatedCrew, isOwnedCrew, sel
   // TODO: was this just debug? remove?
   const ready = true;
   // const [ready, setReady] = useState();
-  // useEffect(() => {
+  // useEffect(import.meta.url, () => {
   //   setTimeout(() => setReady(true), 1000);
   // }, []);
 
@@ -529,7 +529,7 @@ const Wrapper = () => {
 
   const createAlert = useStore(s => s.dispatchAlertLogged);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     // if id is specified...
     if (i) {
       // ...return to / with error if crew not found

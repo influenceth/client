@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo } from '~/lib/react-debug';
 import { useQuery } from 'react-query';
 import { Entity } from '@influenceth/sdk';
 
@@ -17,7 +17,7 @@ const useWatchlist = () => {
     { enabled: !!token }
   );
 
-  const ids = useMemo(() => {
+  const ids = useMemo(import.meta.url, () => {
     if (watchlist.data) return watchlist.data.map(w => w.id);
     return [];
   }, [watchlist.data, watchlist.dataUpdatedAt]);

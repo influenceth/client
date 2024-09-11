@@ -1,10 +1,10 @@
-import { useMemo } from 'react';
+import { useMemo } from '~/lib/react-debug';
 import { Asteroid, Product } from '@influenceth/sdk';
 
 import { keyify } from '~/lib/utils';
 
 const useAsteroidAbundances = (asteroid) => {
-  const data = useMemo(() => {
+  const data = useMemo(import.meta.url, () => {
     if (asteroid?.Celestial?.scanStatus === Asteroid.SCAN_STATUSES.RESOURCE_SCANNED) {
       const categories = {};
       const abundances = Asteroid.Entity.getAbundances(asteroid);

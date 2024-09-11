@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from '~/lib/react-debug';
 import { useTexture } from '@react-three/drei';
 import { AdditiveBlending, Color, DoubleSide, Vector2 } from 'three';
 import { useFrame } from '@react-three/fiber';
@@ -39,11 +39,11 @@ const Marker = (props) => {
     `${process.env.PUBLIC_URL}/textures/marker.png`
   ]);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     reticuleTexture.center = new Vector2(0.5, 0.5);
   }, [reticuleTexture]);
 
-  const { outerProps, innerProps, showInner, showReticule } = useMemo(() => {
+  const { outerProps, innerProps, showInner, showReticule } = useMemo(import.meta.url, () => {
     const x = {
       outerProps: { size: 35 },
       innerProps: { color: orbitColors.white, size: 10 },
@@ -114,7 +114,7 @@ const Marker = (props) => {
     return x;
   }, [travelSolution]);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (asteroidPos && asteroidPos.length > 0) {
       const newPoints = new Float32Array(2 * 3);
       newPoints.set(asteroidPos);

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from '~/lib/react-debug';
 import { Asteroid, Crewmate, Entity, Inventory, Lot, Permission, Product, Time } from '@influenceth/sdk';
 import styled from 'styled-components';
 
@@ -65,7 +65,7 @@ const JettisonCargo = ({
   const [originSelectorOpen, setOriginSelectorOpen] = useState(false);
 
   const [originSelection, setOriginSelection] = useState();
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (!fixedOrigin) return;
     const availInvs = (fixedOrigin.Inventories || []).filter((i) => i.status === Inventory.STATUSES.AVAILABLE);
     setOriginSelection({
@@ -80,13 +80,13 @@ const JettisonCargo = ({
   }, [currentJettison, fixedOrigin]);
 
   const { data: origin } = useEntity(originSelection ? { id: originSelection.id, label: originSelection.label } : undefined);
-  const originLotId = useMemo(() => origin && locationsArrToObj(origin?.Location?.locations || []).lotId, [origin]);
+  const originLotId = useMemo(import.meta.url, () => origin && locationsArrToObj(origin?.Location?.locations || []).lotId, [origin]);
   const { data: originLot } = useLot(originLotId);
-  const originInventory = useMemo(() => (origin?.Inventories || []).find((i) => i.slot === originSelection?.slot), [origin, originSelection]);
-  const originInventoryTally = useMemo(() => (origin?.Inventories || []).filter((i) => i.status === Inventory.STATUSES.AVAILABLE).length, [origin]);
+  const originInventory = useMemo(import.meta.url, () => (origin?.Inventories || []).find((i) => i.slot === originSelection?.slot), [origin, originSelection]);
+  const originInventoryTally = useMemo(import.meta.url, () => (origin?.Inventories || []).filter((i) => i.status === Inventory.STATUSES.AVAILABLE).length, [origin]);
 
   // When a new origin inventory is selected, reset the selected items
-  const onOriginSelect = useCallback((selection) => {
+  const onOriginSelect = useCallback(import.meta.url, (selection) => {
     const { id, label, slot } = originSelection || {};
     if (id !== selection.id || label !== selection.label || slot !== selection.slot) {
       setOriginSelection(selection);
@@ -95,13 +95,13 @@ const JettisonCargo = ({
   }, [originSelection]);
 
   // handle "currentDeliveryAction" state
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (currentJettison) {
       setSelectedItems(currentJettison.vars.products.reduce((acc, item) => ({ ...acc, [item.product]: item.amount }), {}));
     }
   }, [currentJettison]);
 
-  const { totalMass, totalVolume } = useMemo(() => {
+  const { totalMass, totalVolume } = useMemo(import.meta.url, () => {
     return Object.keys(selectedItems).reduce((acc, resourceId) => {
       acc.totalMass += selectedItems[resourceId] * Product.TYPES[resourceId].massPerUnit;
       acc.totalVolume += selectedItems[resourceId] * Product.TYPES[resourceId].volumePerUnit;
@@ -109,7 +109,7 @@ const JettisonCargo = ({
     }, { totalMass: 0, totalVolume: 0 })
   }, [selectedItems]);
 
-  const stats = useMemo(() => ([
+  const stats = useMemo(import.meta.url, () => ([
     {
       label: 'Deleted Mass',
       value: `${formatMass(totalMass)}`,
@@ -122,7 +122,7 @@ const JettisonCargo = ({
     },
   ]), [totalMass, totalVolume]);
 
-  const onJettison = useCallback(() => {
+  const onJettison = useCallback(import.meta.url, () => {
     jettisonCargo(
       originInventory?.slot,
       selectedItems,
@@ -276,7 +276,7 @@ const Wrapper = (props) => {
 
   const { data: originEntity, isLoading: originLoading } = useEntity(jettisonManager.currentJettison?.vars?.origin || props.origin);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (!props.onClose) return;
     if (!asteroid && !isLoading) props.onClose();
     if (origin && !originEntity && !originLoading) props.onClose();
@@ -284,7 +284,7 @@ const Wrapper = (props) => {
 
   // handle auto-closing on any status change
   const lastStatus = useRef();
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (lastStatus.current && jettisonManager.actionStage !== lastStatus.current) {
       if (props.onClose) props.onClose();
     }

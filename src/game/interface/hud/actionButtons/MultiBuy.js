@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo } from '~/lib/react-debug';
 import { Permission } from '@influenceth/sdk';
 
 import { MultiBuyIcon } from '~/components/Icons';
@@ -8,14 +8,14 @@ import ActionButton, { getCrewDisabledReason } from './ActionButton';
 const isVisible = () => false;
 
 const MultiBuy = ({ asteroid, blockTime, crew, lot, ship, onSetAction, dialogProps = {}, _disabled, _disabledReason }) => {
-  const destination = useMemo(() => ship || lot?.surfaceShip || lot?.building, [ship, lot]);
+  const destination = useMemo(import.meta.url, () => ship || lot?.surfaceShip || lot?.building, [ship, lot]);
   const { pendingAction } = useMarketplaceManager(destination.id);
 
-  const handleClick = useCallback(() => {
+  const handleClick = useCallback(import.meta.url, () => {
     onSetAction('SHOPPING_LIST', { destination, ...dialogProps }); // TODO: destinationSlot (if not set, use primary)
   }, [destination, dialogProps]);
 
-  const disabledReason = useMemo(() => {
+  const disabledReason = useMemo(import.meta.url, () => {
     if (_disabledReason) return _disabledReason;
     if (_disabled) return 'loading...';
     if (pendingAction) return 'transacting...';

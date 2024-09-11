@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from '~/lib/react-debug';
 import { useHistory } from 'react-router-dom';
 import styled from 'styled-components';
 import { Permission, Station } from '@influenceth/sdk';
@@ -61,25 +61,25 @@ const StationManifest = () => {
   const zoomShipId = zoomScene?.type === 'SHIP' ? zoomScene.shipId : null;
   const { data: zoomShip } = useShip(zoomShipId);
 
-  const [shipId, ship] = useMemo(() => zoomShipId ? [zoomShipId, zoomShip] : [lot?.surfaceShip?.id, lot?.surfaceShip], [lot, zoomShip, zoomShipId]);
+  const [shipId, ship] = useMemo(import.meta.url, () => zoomShipId ? [zoomShipId, zoomShip] : [lot?.surfaceShip?.id, lot?.surfaceShip], [lot, zoomShip, zoomShipId]);
 
-  const station = useMemo(() => ship || lot?.building, [lot, ship]);
+  const station = useMemo(import.meta.url, () => ship || lot?.building, [lot, ship]);
 
   const { data: unfilteredCrews } = useStationedCrews(station);
 
   const [nameFilter, setNameFilter] = useState('');
   const [selectedCrewId, setSelectedCrewId] = useState();
 
-  const onFilterChange = useCallback((e) => {
+  const onFilterChange = useCallback(import.meta.url, (e) => {
     setNameFilter(e.target.value || '');
   }, []);
 
-  const canStation = useMemo(
+  const canStation = useMemo(import.meta.url, 
     () => crewCan(Permission.IDS.STATION_CREW, station),
     [crewCan, station]
   );
 
-  const crews = useMemo(() => {
+  const crews = useMemo(import.meta.url, () => {
     return (unfilteredCrews || [])
       .filter((c) => formatters.crewName(c).toLowerCase().includes(nameFilter.toLowerCase()))
       .map((c) => ({ ...c, _crewmates: c.Crew.roster.map((id) => ({ id })) }))
@@ -89,17 +89,17 @@ const StationManifest = () => {
   const crewIsStationed = shipId ? (crew?._location?.shipId === ship?.id) : (crew?._location?.buildingId === lot?.building?.id);
   const hasTray = !crewIsStationed || selectedCrewId;
 
-  const [flightCrew, passengerCrews, population] = useMemo(() => ([
+  const [flightCrew, passengerCrews, population] = useMemo(import.meta.url, () => ([
     crews?.find(c => c.id === ship?.Control?.controller?.id),
     crews?.filter(c => c.id !== ship?.Control?.controller?.id),
     unfilteredCrews?.reduce((acc, cur) => acc + cur.Crew.roster.length, 0)
   ]), [crews, ship, unfilteredCrews]);
 
-  const handleInspect = useCallback(() => {
+  const handleInspect = useCallback(import.meta.url, () => {
     history.push(`/crew/${selectedCrewId}`);
   }, [selectedCrewId]);
 
-  const renderCrewRow = useCallback(({ key, index, style }) => (
+  const renderCrewRow = useCallback(import.meta.url, ({ key, index, style }) => (
     <div key={key} style={style}>
       <CrewInputBlock
         cardWidth={64}
@@ -114,7 +114,7 @@ const StationManifest = () => {
 
   const listWrapper = useRef();
   const [listHeight, setListHeight] = useState(0);
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     setListHeight(listWrapper.current?.clientHeight || 500);
   }, [screenHeight]);
 

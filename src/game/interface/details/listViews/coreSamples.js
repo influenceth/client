@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo } from '~/lib/react-debug';
 import { Entity, Lot, Product } from '@influenceth/sdk';
 
 import { MyAssetIcon } from '~/components/Icons';
@@ -11,7 +11,7 @@ const useColumns = () => {
   const { accountAddress } = useSession();
   const { crew } = useCrewContext();
 
-  return useMemo(() => {
+  return useMemo(import.meta.url, () => {
     const columns = [
       {
         key: 'my',

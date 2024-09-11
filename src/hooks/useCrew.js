@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo } from '~/lib/react-debug';
 import { Entity } from '@influenceth/sdk';
 
 import useEntity from '~/hooks/useEntity';
@@ -11,7 +11,7 @@ const useCrew = (id) => {
 
   const blockTime = useBlockTime();
   const response = useEntity({ label: Entity.IDS.CREW, id });
-  return useMemo(() => {
+  return useMemo(import.meta.url, () => {
     if (response?.data) {
       // lastFed to launch
       if (openAccessJSTime) {

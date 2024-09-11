@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo } from '~/lib/react-debug';
 
 import { asteroidPrice } from '~/lib/priceUtils';
 import usePriceConstants from '~/hooks/usePriceConstants';
@@ -28,7 +28,7 @@ const UserPrice = ({ price, priceToken, format }) => {
 export const AsteroidUserPrice = ({ lots = 0n, format = true }) => {
   const { data: priceConstants } = usePriceConstants();
 
-  const price = useMemo(() => {
+  const price = useMemo(import.meta.url, () => {
     return asteroidPrice(lots, priceConstants);
   }, [lots, priceConstants]);
 

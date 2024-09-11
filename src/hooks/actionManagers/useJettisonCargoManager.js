@@ -1,4 +1,4 @@
-import { useCallback, useContext, useMemo } from 'react';
+import { useCallback, useContext, useMemo } from '~/lib/react-debug';
 import { Entity } from '@influenceth/sdk';
 
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
@@ -9,12 +9,12 @@ const useJettisonCargoManager = (origin) => {
   const { crew, isLoading } = useCrewContext();
   const { execute, getPendingTx } = useContext(ChainTransactionContext);
 
-  const payload = useMemo(() => ({
+  const payload = useMemo(import.meta.url, () => ({
     origin: { id: origin?.id, label: origin?.label },
     caller_crew: { id: crew?.id, label: Entity.IDS.CREW }
   }), [crew?.id, origin])
 
-  const jettisonCargo = useCallback(
+  const jettisonCargo = useCallback(import.meta.url, 
     (originSlot, products, meta) => {
       if (payload.origin?.id && payload.caller_crew?.id) {
         execute('DumpDelivery', {
@@ -27,7 +27,7 @@ const useJettisonCargoManager = (origin) => {
     [payload]
   );
 
-  const currentJettison = useMemo(
+  const currentJettison = useMemo(import.meta.url, 
     () => getPendingTx ? getPendingTx('DumpDelivery', { ...payload }) : null,
     [getPendingTx, payload]
   );

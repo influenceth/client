@@ -4,7 +4,7 @@ import { Entity, Lot } from '@influenceth/sdk';
 import { useLotLink } from '~/components/LotLink';
 import { useShipLink } from '~/components/ShipLink';
 import useEntity from '~/hooks/useEntity';
-import { useEffect } from 'react';
+import { useEffect } from '~/lib/react-debug';
 import useShip from '~/hooks/useShip';
 
 export const LotDeepLink = () => {
@@ -12,7 +12,7 @@ export const LotDeepLink = () => {
   const { id } = useParams();
   const onLink = useLotLink({ lotId: id });
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     history.replace('/'); // cleanup url
     if (id) {
       onLink();
@@ -29,7 +29,7 @@ export const ShipDeepLink = () => {
   const { isLoading } = useShip({ label: Entity.IDS.SHIP, id }); // this is to ensure we wait until useShipLink is ready
   const onLink = useShipLink({ shipId: id, zoomToShip: true });
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (isLoading) return;
 
     history.replace('/'); // cleanup url
@@ -47,7 +47,7 @@ export const BuildingDeepLink = () => {
   const { data: building, isLoading } = useEntity({ label: Entity.IDS.BUILDING, id });
   const onLink = useLotLink({ lotId: building?.Location?.location?.id, zoomToLot: true });
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (isLoading) return;
 
     history.replace('/'); // cleanup url

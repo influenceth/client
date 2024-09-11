@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef } from '~/lib/react-debug';
 import { AdalianOrbit } from '@influenceth/sdk';
 
 import theme from '~/theme';
@@ -8,7 +8,7 @@ const Orbit = (props) => {
   const zoomStatus = useStore(s => s.asteroids.zoomStatus);
   const geometry = useRef();
 
-  const positions = useMemo(() => {
+  const positions = useMemo(import.meta.url, () => {
     const vertices = [];
     const orbit = new AdalianOrbit(props.planet, { units: 'km' });
     orbit.getSmoothOrbit(360).forEach(p => {
@@ -19,7 +19,7 @@ const Orbit = (props) => {
   }, [props.planet]);
 
   // re-computeBoundingSphere on geometry change
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (geometry.current) {
       geometry.current.computeBoundingSphere();
     }

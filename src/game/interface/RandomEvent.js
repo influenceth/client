@@ -1,4 +1,4 @@
-import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { useCallback, useContext, useEffect, useMemo, useState } from '~/lib/react-debug';
 import { useHistory } from 'react-router-dom';
 import { RandomEvent } from '@influenceth/sdk';
 
@@ -67,24 +67,24 @@ const RandomEventAssignment = () => {
   const { bookTokens } = useBookTokens(bookIds[`RANDOM_${randomEvent}`]);
   const [finishing, setFinishing] = useState(false);
 
-  const isPending = useMemo(
+  const isPending = useMemo(import.meta.url, 
     () => (pendingTransactions || []).find((tx) => tx.key === 'ResolveRandomEvent'),
     [pendingTransactions]
   );
 
-  const onAccept = useCallback((choice) => {
+  const onAccept = useCallback(import.meta.url, (choice) => {
     execute('ResolveRandomEvent', { choice, caller_crew: { id: crew?.id, label: crew?.label } });
   }, [crew, execute]);
 
-  const onFinishAssignment = useCallback(() => {
+  const onFinishAssignment = useCallback(import.meta.url, () => {
     setFinishing(true);
   }, [randomEvent]);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (!randomEvent) history.push('/');
   }, [randomEvent]);
 
-  const overrides = useMemo(() => {
+  const overrides = useMemo(import.meta.url, () => {
     if (finishing || isPending) {
       return {
         content: <SwayResult {...bookTokens} />,

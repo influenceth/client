@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from '~/lib/react-debug';
 import styled from 'styled-components';
 import Loader from 'react-spinners/PuffLoader';
 
@@ -118,7 +118,7 @@ const YoutubeFeed = ({ playlistId, title }) => {
   const [loading, setLoading] = useState();
   const [videos, setVideos] = useState();
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     setVideos();
 
     if (playlistId) {
@@ -137,13 +137,13 @@ const YoutubeFeed = ({ playlistId, title }) => {
     }
   }, [playlistId]);
 
-  const onClickOwner = useCallback((v) => {
+  const onClickOwner = useCallback(import.meta.url, (v) => {
     if (v.snippet?.videoOwnerChannelId) {
       window.open(`https://www.youtube.com/channel/${v.snippet?.videoOwnerChannelId}`);
     }
   }, []);
 
-  const onClickVideo = useCallback((v) => {
+  const onClickVideo = useCallback(import.meta.url, (v) => {
     if (v.snippet?.resourceId?.videoId) {
       window.open(`http://youtube.com/watch?v=${v.snippet?.resourceId?.videoId}&list=${playlistId}`)
     }

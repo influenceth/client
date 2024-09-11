@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from '~/lib/react-debug';
 import styled from 'styled-components';
 import { Building, Entity, Permission, Ship } from '@influenceth/sdk';
 import Loader from 'react-spinners/PuffLoader';
@@ -103,11 +103,11 @@ const AsteroidBlocks = ({ asteroids, onSelectCrew, selectedCrew }) => {
 
   const [rendersReady, setRendersReady] = useState(0);
 
-  const onRenderReady = useCallback(() => {
+  const onRenderReady = useCallback(import.meta.url, () => {
     setRendersReady((r) => r + 1);
   }, []);
 
-  const onClick = useCallback((asteroid) => () => {
+  const onClick = useCallback(import.meta.url, (asteroid) => () => {
     if (origin === asteroid?.id) {
       updateZoomStatus('zooming-in');
     } else {
@@ -191,7 +191,7 @@ const MyAssets = () => {
   const [autoselectMode, setAutoselectMode] = useState(!!launcherPage);
   const [allCrewsMode, setAllCrewsMode] = useState(!!launcherPage);
 
-  const onClickCrewAsset = useCallback((crewId, fallbackCrewId) => {
+  const onClickCrewAsset = useCallback(import.meta.url, (crewId, fallbackCrewId) => {
     // if in autoselect mode, switch to crewId (IF it is my crew)
     if (autoselectMode) {
       const autoselectCrew = crews.find((c) => c.id === crewId)
@@ -205,7 +205,7 @@ const MyAssets = () => {
     dispatchLauncherPage();
   }, [autoselectMode, crew, crews]);
 
-  const [agreements, agreementTally] = useMemo(() => {
+  const [agreements, agreementTally] = useMemo(import.meta.url, () => {
     const paths = [];
     const deduped = (walletAgreementsWithDupes || []).filter((a) => {
       if (paths.includes(a._agreement._path)) return false;
@@ -245,7 +245,7 @@ const MyAssets = () => {
     return [groups, ungrouped.length];
   }, [walletAgreementsWithDupes, allAsteroidsMode, allCrewsMode]);
 
-  const [asteroids, asteroidTally] = useMemo(() => {
+  const [asteroids, asteroidTally] = useMemo(import.meta.url, () => {
     const a = (walletAsteroids || [])
       .filter((a) => {
         if (allAsteroidsMode || a.id === origin) {
@@ -268,7 +268,7 @@ const MyAssets = () => {
     return [a, a.length, 1];
   }, [walletAsteroids, allAsteroidsMode, allCrewsMode]);
 
-  const [buildings, buildingTally] = useMemo(() => {
+  const [buildings, buildingTally] = useMemo(import.meta.url, () => {
     const ungrouped = (walletBuildings || [])
       .filter((a) => {
         const asteroidId = (a.Location?.locations || []).find((l) => l.label === Entity.IDS.ASTEROID)?.id;
@@ -294,7 +294,7 @@ const MyAssets = () => {
     return [groups, ungrouped.length];
   }, [walletBuildings, allAsteroidsMode, allCrewsMode]);
 
-  const [ships, shipTally] = useMemo(() => {
+  const [ships, shipTally] = useMemo(import.meta.url, () => {
     const ungrouped = (walletShips || [])
       .filter((a) => {
         const asteroidId = (a.Location?.locations || []).find((l) => l.label === Entity.IDS.ASTEROID)?.id

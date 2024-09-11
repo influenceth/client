@@ -1,4 +1,4 @@
-import { useCallback, useContext, useMemo } from 'react';
+import { useCallback, useContext, useMemo } from '~/lib/react-debug';
 import { Delivery, Entity, Permission } from '@influenceth/sdk';
 
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
@@ -34,7 +34,7 @@ const useDeliveryManager = ({ destination, destinationSlot, origin, originSlot, 
   const { data: destActionItems } = useUnresolvedActivities(destination || deliveryById?.Delivery?.destination);
   const { data: origActionItems } = useUnresolvedActivities(origin || deliveryById?.Delivery?.origin);
 
-  const actionItems = useMemo(() => {
+  const actionItems = useMemo(import.meta.url, () => {
     const deliveryIds = [];
     return [
       ...(destActionItems || []),
@@ -49,7 +49,7 @@ const useDeliveryManager = ({ destination, destinationSlot, origin, originSlot, 
     }, [])
   }, [destActionItems, origActionItems]);
 
-  const [deliveries, isLoading] = useMemo(() => {
+  const [deliveries, isLoading] = useMemo(import.meta.url, () => {
     if (deliveryId) {
       return [
         deliveryIsLoading
@@ -64,11 +64,11 @@ const useDeliveryManager = ({ destination, destinationSlot, origin, originSlot, 
     ];
   }, [deliveryId, deliveryById, deliveryIsLoading, deliveriesByLoc, deliveriesIsLoading]);
 
-  const payload = useMemo(() => ({
+  const payload = useMemo(import.meta.url, () => ({
     caller_crew: { id: crew?.id, label: Entity.IDS.CREW }
   }), [crew?.id]);
 
-  const pendingDeliveries = useMemo(() => {
+  const pendingDeliveries = useMemo(import.meta.url, () => {
     return pendingTransactions.filter(({ key, vars, ...pendingProps }) => (txHash && txHash === pendingProps.txHash) || (
       (key === 'SendDelivery' || key === 'PackageDelivery')
       && (
@@ -80,7 +80,7 @@ const useDeliveryManager = ({ destination, destinationSlot, origin, originSlot, 
     ));
   }, [destination, destinationSlot, origin, originSlot, pendingTransactions, txHash]);
 
-  const [currentDeliveries, currentDeliveriesVersion] = useMemo(() => {
+  const [currentDeliveries, currentDeliveriesVersion] = useMemo(import.meta.url, () => {
     const active = [...(deliveries || [])];
     // TODO: filter by crew
     // TODO: filter by incomplete
@@ -202,7 +202,7 @@ const useDeliveryManager = ({ destination, destinationSlot, origin, originSlot, 
     return [allDeliveries, Date.now()];
   }, [actionItems, blockTime, crew?.id, crewCan, deliveries, pendingDeliveries, getStatus, payload]);
 
-  const acceptDelivery = useCallback((selectedDeliveryId, meta) => {
+  const acceptDelivery = useCallback(import.meta.url, (selectedDeliveryId, meta) => {
     const delivery = currentDeliveries.find((d) => d.action.deliveryId === (selectedDeliveryId || deliveryId));
     if (!delivery?.action) return;
     execute(
@@ -217,7 +217,7 @@ const useDeliveryManager = ({ destination, destinationSlot, origin, originSlot, 
     );
   }, [currentDeliveries, payload]);
 
-  const cancelDelivery = useCallback((selectedDeliveryId, meta) => {
+  const cancelDelivery = useCallback(import.meta.url, (selectedDeliveryId, meta) => {
     execute(
       'CancelDelivery',
       {
@@ -228,7 +228,7 @@ const useDeliveryManager = ({ destination, destinationSlot, origin, originSlot, 
     );
   }, [payload]);
 
-  const packageDelivery = useCallback(({ origin, originSlot, destination, destinationSlot, contents, price }, meta) => {
+  const packageDelivery = useCallback(import.meta.url, ({ origin, originSlot, destination, destinationSlot, contents, price }, meta) => {
     execute(
       'PackageDelivery',
       {
@@ -244,7 +244,7 @@ const useDeliveryManager = ({ destination, destinationSlot, origin, originSlot, 
     );
   }, [payload]);
 
-  const startDelivery = useCallback(({ origin, originSlot, destination, destinationSlot, contents }, meta) => {
+  const startDelivery = useCallback(import.meta.url, ({ origin, originSlot, destination, destinationSlot, contents }, meta) => {
     execute(
       'SendDelivery',
       {
@@ -259,7 +259,7 @@ const useDeliveryManager = ({ destination, destinationSlot, origin, originSlot, 
     );
   }, [payload]);
 
-  const finishDelivery = useCallback((selectedDeliveryId, meta) => {
+  const finishDelivery = useCallback(import.meta.url, (selectedDeliveryId, meta) => {
     execute(
       'ReceiveDelivery',
       {

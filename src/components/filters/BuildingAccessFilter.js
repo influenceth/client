@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from '~/lib/react-debug';
 import { Address } from '@influenceth/sdk';
 
 import { RadioCheckedIcon, RadioUncheckedIcon } from '~/components/Icons';
@@ -27,7 +27,7 @@ const BuildingAccessFilter = ({ assetType, filters, onChange }) => {
   const [types, setTypes] = useState(initialValues);
   console.log({ 'types': types });
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     const newTypes = ({ ...initialValues });
     if (filters[fieldName] && filters[fieldName].length > 0) {
       const filterArr = filters[fieldName];
@@ -44,7 +44,7 @@ const BuildingAccessFilter = ({ assetType, filters, onChange }) => {
     setTypes(newTypes);
   }, [filters[fieldName]]);
 
-  const onClick = useCallback((k) => (e) => {
+  const onClick = useCallback(import.meta.url, (k) => (e) => {
     e.stopPropagation();
     if (k === 'granted') {
       onChange({ [fieldName]: [crew?.id, crew?.Crew?.delegatedTo] });

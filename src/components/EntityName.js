@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo } from '~/lib/react-debug';
 import { Asteroid, Entity } from '@influenceth/sdk';
 
 import formatters from '~/lib/formatters';
@@ -17,7 +17,7 @@ const formatterByLabel = {
 const EntityName = ({ id, label, forceBaseName }) => {
   const { data: entity, isLoading } = useEntity(label === Entity.IDS.SPACE ? null : { label, id });
 
-  const name = useMemo(() => {
+  const name = useMemo(import.meta.url, () => {
     if (isLoading) return '...';
     if (forceBaseName && entity) {
       if (label === Entity.IDS.ASTEROID) return Asteroid.Entity.getBaseName(entity);

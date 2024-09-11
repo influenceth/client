@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect } from '~/lib/react-debug';
 import { useHistory, useParams } from 'react-router-dom';
 import { css } from 'styled-components';
 import { Address } from '@influenceth/sdk';
@@ -44,7 +44,7 @@ const AsteroidDetails = () => {
   const dispatchOriginSelected = useStore(s => s.dispatchOriginSelected);
 
   // Force the asteroid to load into the origin if coming direct from URL
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (i) dispatchOriginSelected(Number(i));
   }, [ i, dispatchOriginSelected ]);
 

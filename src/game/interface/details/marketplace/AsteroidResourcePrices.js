@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from '~/lib/react-debug';
 import { useHistory } from 'react-router-dom';
 import styled from 'styled-components';
 import { Asteroid, Entity, Lot, Permission } from '@influenceth/sdk';
@@ -178,10 +178,10 @@ const AsteroidResourcePrices = ({ asteroid, mode, resource }) => {
 
   const { data: orderSummary } = useOrderSummaryByExchange(asteroid.id, resource.i);
 
-  const marketPlaceIds = useMemo(() => Array.from(new Set((orderSummary || []).map((o) => o.marketplace.id))), [orderSummary]);
+  const marketPlaceIds = useMemo(import.meta.url, () => Array.from(new Set((orderSummary || []).map((o) => o.marketplace.id))), [orderSummary]);
   const { data: resourceMarketplaceEntities, isLoading: marketplacesLoading } = useEntities({ ids: marketPlaceIds, label: Entity.IDS.BUILDING });
 
-  const isPermitted = useCallback(({ exchange, mode, type, isCancellation }) => {
+  const isPermitted = useCallback(import.meta.url, ({ exchange, mode, type, isCancellation }) => {
     if (isCancellation) return true;
 
     let perm = 0;
@@ -192,7 +192,7 @@ const AsteroidResourcePrices = ({ asteroid, mode, resource }) => {
     return crewCan(perm, exchange);
   }, [crewCan]);
 
-  const resourceMarketplaces = useMemo(() => {
+  const resourceMarketplaces = useMemo(import.meta.url, () => {
     if (!orderSummary) return [];
     const transformedOrders = orderSummary.map((o) => {
       const exchange = resourceMarketplaceEntities?.find((mp) => mp.id === o.marketplace.id);
@@ -244,11 +244,11 @@ const AsteroidResourcePrices = ({ asteroid, mode, resource }) => {
     return transformedOrders;
   }, [asteroid.id, coachmarkHelperProduct, crew, orderSummary, simulationEnabled, simulationActions, resourceMarketplaceEntities]);
 
-  const selectedSupply = useMemo(() => {
+  const selectedSupply = useMemo(import.meta.url, () => {
     return resourceMarketplaces.find((m) => m.lotId === selected)?.supply || 0;
   }, [selected]);
 
-  const handleSort = useCallback((field) => () => {
+  const handleSort = useCallback(import.meta.url, (field) => () => {
     if (!field) return;
 
     let updatedSortField = sortField;
@@ -267,7 +267,7 @@ const AsteroidResourcePrices = ({ asteroid, mode, resource }) => {
     ]);
   }, [sortDirection, sortField]);
 
-  const sortedMarketplaces = useMemo(() => {
+  const sortedMarketplaces = useMemo(import.meta.url, () => {
     const fieldSortOrder = (a, b) => {
       if (a[sortField] < b[sortField]) {
         return sortDirection === 'asc' ? -1 : 1;
@@ -294,7 +294,7 @@ const AsteroidResourcePrices = ({ asteroid, mode, resource }) => {
     });
   }, [resourceMarketplaces, sortField, sortDirection]);
 
-  const columns = useMemo(() => {
+  const columns = useMemo(import.meta.url, () => {
     const c = [
       {
         key: 'marketplaceName',
@@ -446,7 +446,7 @@ const AsteroidResourcePrices = ({ asteroid, mode, resource }) => {
     return c;
   }, [asteroid, crew, marketplacesLoading, resource]);
 
-  const getRowProps = useCallback((row) => {
+  const getRowProps = useCallback(import.meta.url, (row) => {
     return {
       onClick: () => {
         setSelected(row.lotId);
@@ -455,11 +455,11 @@ const AsteroidResourcePrices = ({ asteroid, mode, resource }) => {
     }
   }, [selected]);
 
-  const onViewMarketplace = useCallback(() => {
+  const onViewMarketplace = useCallback(import.meta.url, () => {
     history.push(`/marketplace/${asteroid.id}/${Lot.toIndex(selected)}/${resource.i}?back=all`);
   }, [asteroid, resource, selected]);
 
-  const [ totalSupply, totalDemand, medianPrice ] = useMemo(() => {
+  const [ totalSupply, totalDemand, medianPrice ] = useMemo(import.meta.url, () => {
     let s = 0, d = 0, m = 0;
     if (resourceMarketplaces.length > 0) {
       resourceMarketplaces.forEach((m) => {

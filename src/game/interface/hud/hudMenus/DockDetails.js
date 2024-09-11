@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from '~/lib/react-debug';
 import styled from 'styled-components';
 import { Dock, Ship } from '@influenceth/sdk';
 
@@ -155,17 +155,17 @@ const DockDetails = ({ onClose }) => {
 
   const [nameFilter, setNameFilter] = useState('');
   const [selectedShipId, setSelectedShipId] = useState();
-  const selectedShip = useMemo(() => lot?.ships?.find((s) => s.id === selectedShipId), [lot?.ships, selectedShipId]);
+  const selectedShip = useMemo(import.meta.url, () => lot?.ships?.find((s) => s.id === selectedShipId), [lot?.ships, selectedShipId]);
 
-  const onFilterChange = useCallback((e) => {
+  const onFilterChange = useCallback(import.meta.url, (e) => {
     setNameFilter(e.target.value || '');
   }, []);
 
-  const zoomIn = useCallback(() => {
+  const zoomIn = useCallback(import.meta.url, () => {
     dispatchZoomScene({ type: 'SHIP', shipId: selectedShipId });
   }, [selectedShipId]);
 
-  const filteredShips = useMemo(() => {
+  const filteredShips = useMemo(import.meta.url, () => {
     return (lot?.ships || []).filter((s) => {
       return formatters.shipName(s).toLowerCase().includes(nameFilter.toLowerCase())
     })

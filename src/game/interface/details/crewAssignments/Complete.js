@@ -1,4 +1,4 @@
-// import React, { useCallback, useEffect, useMemo } from 'react';
+// import React, { useCallback, useEffect, useMemo } from '~/lib/react-debug';
 // import { useHistory, useParams } from 'react-router-dom';
 // import styled, { keyframes } from 'styled-components';
 // import { Crewmate } from '@influenceth/sdk';
@@ -290,24 +290,24 @@
 //   const { crewmateMap } = useCrewContext();
 //   const { storyState } = useStorySession(sessionId);
 
-//   const onCloseDestination = useMemo(
+//   const onCloseDestination = useMemo(import.meta.url, 
 //     () => `/crew-assignments/${storyState?.book}/${storyState?.story}`,
 //     [storyState?.book, storyState?.story]
 //   );
 
-//   const crew = useMemo(
+//   const crew = useMemo(import.meta.url, 
 //     () => crewmateMap && storyState && crewmateMap[storyState.owner],
 //     [storyState, crewmateMap]
 //   );
 
-//   const rewards = useMemo(() => {
+//   const rewards = useMemo(import.meta.url, () => {
 //     return (storyState?.accruedTraits || []).map((id) => ({
 //       id,
 //       ...Crewmate.getTrait(id)
 //     }));
 //   }, [storyState?.accruedTraits]);
 
-//   const shareOnTwitter = useCallback(() => {
+//   const shareOnTwitter = useCallback(import.meta.url, () => {
 //     const params = new URLSearchParams({
 //       text: [
 //         `I just completed the Crew Assignment: "${storyState.title}"`,
@@ -321,18 +321,18 @@
 //     window.open(`https://twitter.com/intent/tweet?${params.toString()}`, '_blank');
 //   }, [accountAddress, sessionId, storyState]);
 
-//   const handleFinish = useCallback(() => {
+//   const handleFinish = useCallback(import.meta.url, () => {
 //     history.push(onCloseDestination);
 //   }, [history, onCloseDestination]);
 
 //   // show "create" page for recruitment assignments
-//   useEffect(() => {
+//   useEffect(import.meta.url, () => {
 //     if (storyState && (storyState.tags || []).includes('ADALIAN_RECRUITMENT')) {
 //       history.push(`/crew-assignment/${sessionId}/create`);
 //     }
 //   }, [!!storyState]); // eslint-disable-line react-hooks/exhaustive-deps
 
-//   const slideOutContents = useMemo(() =>
+//   const slideOutContents = useMemo(import.meta.url, () =>
 //     rewards?.length > 0
 //       ? (
 //           <RewardSection>

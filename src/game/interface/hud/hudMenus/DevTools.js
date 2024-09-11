@@ -1,4 +1,4 @@
-import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useContext, useEffect, useMemo, useRef, useState } from '~/lib/react-debug';
 import styled from 'styled-components';
 import { NoToneMapping } from 'three';
 import { Building, Product, Ship } from '@influenceth/sdk';
@@ -77,7 +77,7 @@ const reader = new FileReader();
 const DevTools = () => {
   const { assetType, overrides, ...setters } = useContext(DevToolContext);
 
-  const [defaultSettings, settings] = useMemo(() => {
+  const [defaultSettings, settings] = useMemo(import.meta.url, () => {
     if (!assetType) return [{}, {}];
 
     const defaults = assetType === 'scene' ? visualConfigs.scene : visualConfigs.modelViewer[assetType];
@@ -100,13 +100,13 @@ const DevTools = () => {
   const [modelSelection, setModelSelection] = useState();
   const [modelOverride, setModelOverride] = useState();
 
-  const assets = useMemo(() => {
+  const assets = useMemo(import.meta.url, () => {
     if (assetType === 'building') return Object.keys(Building.TYPES).map((i) => ({ ...Building.TYPES[i], modelUrl: getBuildingModel(i) }));
     if (assetType === 'resource') return Object.keys(Product.TYPES).map((i) => ({ ...Product.TYPES[i], modelUrl: getProductModel(i) }));
     if (assetType === 'ship') return Object.keys(Ship.TYPES).map((i) => ({ ...Ship.TYPES[i], modelUrl: getShipModel(i) }));
   }, [assetType]);
   
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     setCategories();
     setCategory();
     if (assets) {
@@ -119,7 +119,7 @@ const DevTools = () => {
     }
   }, [assetType]);
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     if (!!assets) {
       const bAssets = assets
         .filter((a) => (a.category || '') === category)
@@ -131,20 +131,20 @@ const DevTools = () => {
     }
   }, [assetType, category]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     setters.setModelUrl(modelOverride?.url || modelSelection?.modelUrl);
   }, [modelOverride, modelSelection]);
 
-  const selectModel = useCallback((m) => {
+  const selectModel = useCallback(import.meta.url, (m) => {
     setModelSelection(m);
   }, []);
 
-  const handleUploadClick = useCallback((which) => () => {
+  const handleUploadClick = useCallback(import.meta.url, (which) => () => {
     uploadType.current = which;
     fileInput.current.click();
   }, []);
 
-  const handleFile = useCallback((e) => {
+  const handleFile = useCallback(import.meta.url, (e) => {
     const file = e.target.files[0];
     if (uploadType.current === 'model' && file.name.match(/\.(gltf|glb)$/i)) {
       setIsLoading(true);
@@ -174,7 +174,7 @@ const DevTools = () => {
     }
   }, []);
 
-  const removeOverride = useCallback((which) => () => {
+  const removeOverride = useCallback(import.meta.url, (which) => () => {
     if (which === 'model') {
       setModelOverride();
     } else if (which === 'bg') {
@@ -186,11 +186,11 @@ const DevTools = () => {
     }
   }, []);
 
-  const toggleSetting = useCallback((setter) => {
+  const toggleSetting = useCallback(import.meta.url, (setter) => {
     setter((s) => !s);
   }, []);
 
-  const onChangeToneMapping = useCallback((selection) => {
+  const onChangeToneMapping = useCallback(import.meta.url, (selection) => {
     setters.setToneMapping(selection?.value);
     // if (selection?.value === NoToneMapping) {
     //   setters.setToneMappingExposure();
@@ -199,7 +199,7 @@ const DevTools = () => {
 
   // (make sure form values all get reset on asset change)
   const [resetting, setResetting] = useState();
-  useEffect(() => {
+  useEffect(import.meta.url, () => {
     setResetting(true);
     setTimeout(() => {
       setResetting(false);
