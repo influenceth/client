@@ -3,7 +3,7 @@ import styled from 'styled-components';
 import { Building, Crewmate, Process } from '@influenceth/sdk';
 import cloneDeep from 'lodash/cloneDeep';
 
-import { CheckIcon, MyAssetIcon } from '~/components/Icons';
+import { CheckIcon, MyAssetDoubleIcon, MyAssetIcon, MyAssetsIcon, MyAssetTripleIcon } from '~/components/Icons';
 import useStore from '~/hooks/useStore';
 import NavIcon from '~/components/NavIcon';
 import theme from '~/theme';
@@ -114,6 +114,7 @@ const PackChecks = styled.div`
 const Flair = styled.div`
   background: ${p => p.color || p.theme.colors.main};
   clip-path: polygon(0 0, 100% 0, 0 100%);
+  font-size: 22px;
   height: 44px;
   left: 0;
   padding: 2px 3px;
@@ -483,7 +484,7 @@ export const IntroStarterPack = (props) => {
   return (
     <StarterPackWrapper color="green" pack={pack} {...props}>
       <h2>
-        <Flair color={theme.colors.glowGreen}>
+        <Flair color={theme.colors.glowGreen} style={{ fontSize: '19px' }}>
           <MyAssetIcon />
         </Flair>
         {pack.name}
@@ -552,7 +553,7 @@ export const BasicStarterPack = (props) => {
     <StarterPackWrapper pack={pack} {...props}>
       <h2>
         <Flair color={theme.colors.main}>
-          <MyAssetIcon />
+          <MyAssetDoubleIcon />
         </Flair>
         {pack.name}
       </h2>
@@ -620,7 +621,7 @@ export const AdvancedStarterPack = (props) => {
     <StarterPackWrapper color="purple" pack={pack} {...props}>
       <h2>
         <Flair color={theme.colors.txButton}>
-          <MyAssetIcon />
+          <MyAssetTripleIcon />
         </Flair>
         {pack.name}
       </h2>

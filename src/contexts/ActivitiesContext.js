@@ -347,9 +347,7 @@ export function ActivitiesProvider({ children }) {
       else if (blockNumber > 0 && body.previous > 0 && body.previous > blockNumber) {
         console.log(`Missed a block! (new: ${body.blockNumber}, server prev: ${body.previous}, local prev: ${blockNumber})`);
 
-        if (process.env.NODE_ENV !== 'production') {
-          window.alert('Missed a block!');
-        }
+        // if (process.env.NODE_ENV !== 'production') window.alert('Missed a block!');
         setIsBlockMissing(true);
       }
 

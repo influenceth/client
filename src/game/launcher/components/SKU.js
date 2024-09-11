@@ -75,8 +75,8 @@ const purchaseFormWidth = 290;
 const StarterPacksOuter = styled.div`
   display: flex;
   flex-direction: row;
-  height: 375px;
-  margin-top: -210px;
+  height: ${p => p.extraLine ? 406 : 380}px;
+  margin-top: -${p => p.extraLine ? 233 : 210}px;
   width: 100%;
   & > div {
     flex: 1;
@@ -426,9 +426,10 @@ const CrewmateSKU = ({ onUpdatePurchase, onPurchasing }) => {
 
 // TODO: wrap in launch feature flag
 const StarterPackSKU = () => {
+  const { data: wallet } = useWalletPurchasableBalances();
   return (
     <Wrapper>
-      <StarterPacksOuter>
+      <StarterPacksOuter extraLine={wallet?.shouldMaintainEthGasReserve}>
         <IntroStarterPack />
         <span style={{ width: purchaseFormMargin }} />
         <BasicStarterPack style={{ position: 'relative', top: -32 }} />
