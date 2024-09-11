@@ -60,6 +60,7 @@ const orange = '#ff984f';
 const yellow = '#ffd94f';
 const red = '#ff564d';
 const darkRed = '#ee4036';
+const lightRed = '#f18361';
 
 const theme = {
   colors: {
@@ -119,7 +120,8 @@ const theme = {
     lightPurple,  
     backgroundPurple: '#10103d',
 
-    red, 
+    red,
+    lightRed,
     darkRed, 
     backgroundRed: '#853430',
 
