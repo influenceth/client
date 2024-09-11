@@ -1,18 +1,17 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import styled, { keyframes } from 'styled-components';
 import { useHistory } from 'react-router-dom';
 import { Entity } from '@influenceth/sdk';
 
 import useCrewContext from '~/hooks/useCrewContext';
 import { HudMenuCollapsibleSection, Scrollable } from './components/components';
-import useHydratedLocation from '~/hooks/useHydratedLocation';
 import { CrewInputBlock } from '../actionDialogs/components';
 import { locationsArrToObj } from '~/lib/utils';
-import CrewLocationLabel from '~/components/CrewLocationLabel';
 import useStore from '~/hooks/useStore';
 import useHydratedCrew from '~/hooks/useHydratedCrew';
 import { WarningIcon } from '~/components/Icons';
 import EntityName from '~/components/EntityName';
+import TextInput from '~/components/TextInputUncontrolled';
 
 const defaultBlockStyle = { marginBottom: 8, width: '100%' };
 
@@ -63,9 +62,15 @@ const locationExtraMargin = 5;
 
 const MyCrews = () => {
   const { crew, crews, crewmateMap, selectCrew } = useCrewContext();
-  
-  const nonEmptyCrews = useMemo(() => crews.filter((c) => c.Crew.roster.length > 0), [crews]);
-  const emptyCrews = useMemo(() => crews.filter((c) => c.Crew.roster.length === 0), [crews]);
+  const [searchFilter, setSearchFilter] = useState('');
+
+  const filteredCrews = useMemo(() => {
+    if (!searchFilter) return crews;
+    return crews.filter((c) => (c.Name?.name || '').toLowerCase().includes(searchFilter.toLowerCase()));
+  }, [crews, searchFilter]);
+
+  const nonEmptyCrews = useMemo(() => filteredCrews.filter((c) => c.Crew.roster.length > 0), [filteredCrews]);
+  const emptyCrews = useMemo(() => filteredCrews.filter((c) => c.Crew.roster.length === 0), [filteredCrews]);
 
   const nonEmptyCrewsByLocation = useMemo(() => {
     return nonEmptyCrews.reduce((acc, cur) => {
@@ -102,6 +107,13 @@ const MyCrews = () => {
 
   return (
     <Scrollable>
+      <TextInput
+        autoFocus
+        onChange={(e) => setSearchFilter(e.target.value)}
+        placeholder="Filter by Crew..."
+        value={searchFilter || ''}
+        width={185}
+        style={{ marginTop: '10px' }} />
       {Object.keys(nonEmptyCrewsByLocation || {}).map((asteroidId) => (
         <HudMenuCollapsibleSection
           key={asteroidId}
@@ -137,19 +149,17 @@ const MyCrews = () => {
       {Object.keys(uncontrolledCrewIds)?.length > 0 && (
         <HudMenuCollapsibleSection
           titleText={<AttnTitle><WarningIcon /> <span>Recoverable Crewmates</span></AttnTitle>}
-          titleLabel={`${Object.keys(uncontrolledCrewIds)?.length} Crew${Object.keys(uncontrolledCrewIds)?.length === 1 ? '' : 's'}`}
-          collapsed>
+          titleLabel={`${Object.keys(uncontrolledCrewIds)?.length} Crew${Object.keys(uncontrolledCrewIds)?.length === 1 ? '' : 's'}`}>
           {Object.keys(uncontrolledCrewIds || {}).map((crewId) => (
             <UncontrolledCrewBlock key={crewId} crewId={crewId} crewmateIds={uncontrolledCrewIds[crewId]} />
           ))}
         </HudMenuCollapsibleSection>
       )}
-      
+
       {emptyCrews.length > 0 && (
         <HudMenuCollapsibleSection
           titleText="Empty Crews"
-          titleLabel={`${emptyCrews?.length} Crew${emptyCrews?.length === 1 ? '' : 's'}`}
-          collapsed>
+          titleLabel={`${emptyCrews?.length} Crew${emptyCrews?.length === 1 ? '' : 's'}`}>
           {emptyCrews.map((emptyCrew) => {
             return (
               <CrewInputBlock
