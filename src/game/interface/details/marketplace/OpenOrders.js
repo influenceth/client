@@ -106,6 +106,7 @@ const MarketplaceOpenOrders = ({ asteroid, orders, marketplace = null, marketpla
       isCancellation: true,
       cancellationMakerFee: order.orderType === Order.IDS.LIMIT_BUY ? order.makerFee : undefined,
       preselect: {
+        crew: order.crew,
         limitPrice: order.price,
         quantity: order.amount,
         storage: order.storage,
