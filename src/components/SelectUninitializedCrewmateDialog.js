@@ -45,12 +45,12 @@ const CardWrapper = styled.div`
   width: 100%;
 `;
 const CardOuter = styled.div`
-  background: rgba(${p => p.theme.colors.mainRGB}, 0.15);
-  border: 1px solid rgba(${p => p.theme.colors.mainRGB}, 0.3);
+  background: black;
+  border: 1px solid rgba(${p => p.theme.colors.mainRGB}, 0.5);
   display: inline-block;
   margin-left: 15px;
   opacity: 0.7;
-  padding: 10px;
+  padding: 6px;
   transition: background 250ms ease, border 250ms ease, opacity 250ms ease;;
   width: ${cardWidth}px;
 
