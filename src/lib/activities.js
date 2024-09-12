@@ -79,8 +79,9 @@ const getComponentNames = (entity) => {
 }
 
 const getApplicablePermissions = (entity) => {
+  if (!entity) return [];
   return Object.keys(Permission.TYPES)
-    .filter((id) => Permission.TYPES[id].isApplicable(entity))
+    .filter((id) =>Permission.TYPES[id].isApplicable(entity))
     .map((id) => id)
 }
 

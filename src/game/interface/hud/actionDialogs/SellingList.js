@@ -8,7 +8,7 @@ import {
   InventoryIcon,
   MarketBuyIcon,
   MarketplaceBuildingIcon,
-  MarketSellIcon,
+  MultiSellIcon,
   SwayIcon,
   UncheckedIcon,
   WarningIcon,
@@ -553,7 +553,7 @@ const SellingList = ({ asteroid, origin, originSlot, initialSelection, preselect
     <>
       <ActionDialogHeader
         action={{
-          icon: <MarketSellIcon />,
+          icon: <MultiSellIcon />,
           label: 'Market Sell Multiple',
         }}
         actionCrew={crew}

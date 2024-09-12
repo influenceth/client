@@ -45,8 +45,10 @@ const main = '#36a7cd';
 const brightMain = '#57d5ff';
 const darkMain = '#1c5063';
 const success = '#00fff0';
+const successDark = '#00a299';
 
 const green = '#88e675';
+const glowGreen = '#59b366';
 const darkGreen = '#59b366';
 const gray = '#bbbbbb';
 const teal = '#69ebf4';
@@ -70,6 +72,7 @@ const theme = {
     backgroundMain: '#0e2933',
 
     badge: '#287d97',
+    backgroundGray: '#505050',
     mobileBackground: '#181818',
     disabledBackground: '#666666',
     inputBackground: '#0d2933',
@@ -89,14 +92,16 @@ const theme = {
 
     success,
     successRGB: hexToRGB(success),
+    successDark,
+    successDarkRGB: hexToRGB(successDark),
     backgroundSuccess: '#00403c',
 
     inFlight: lightOrange,
     sell: '#57d5ff',
     buy: '#88e675',
-    sequence: '#2f85dc',
-    sequenceLight: '#98c4ec',
-    sequenceDark: '#1e558c',
+    sequence: '#0069c5',
+    sequenceLight: '#a3c9ea',
+    sequenceDark: '#002b52',
     
     warning: orange,
     error: red,
@@ -124,6 +129,7 @@ const theme = {
     backgroundOrange: '#593f24',
 
     green, 
+    glowGreen,
     darkGreen,
     backgroundGreen: '#002624',
 

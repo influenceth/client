@@ -4,7 +4,7 @@ import usePriceConstants from './usePriceConstants';
 
 const useSale = (type) => {
   const { data: priceConstants, isLoading } = usePriceConstants();
-  if (!isLoading) {
+  if (!isLoading && priceConstants) {
     if (type === Entity.IDS.ASTEROID) {
       return !!(priceConstants.ASTEROID_PURCHASE_BASE_PRICE && priceConstants.ASTEROID_PURCHASE_LOT_PRICE && priceConstants.ASTEROID_PURCHASE_TOKEN);
     } else if (type === Entity.IDS.CREWMATE) {

@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from 'react-query';
-import { Building } from '@influenceth/sdk';
+import { Building, Permission } from '@influenceth/sdk';
 import cloneDeep from 'lodash/cloneDeep';
 
 import { CrewBusyIcon } from '~/components/AnimatedIcons';
@@ -17,6 +17,7 @@ import SIMULATION_CONFIG from '~/simulation/simulationConfig';
 
 const ActionItemContext = React.createContext();
 
+// TODO: should this be in getActivityConfig?
 const sequenceableSystems = [
   'ConstructionStarted',
   'MaterialProcessingStarted',
@@ -24,6 +25,22 @@ const sequenceableSystems = [
   'SamplingDepositStarted',
   'ShipAssemblyStarted'
 ];
+
+// TODO: should this be in getActivityConfig?
+const leaseAndProcessEvents = {
+  MaterialProcessingStarted: {
+    entityKey: 'processor',
+    permission: Permission.IDS.RUN_PROCESS
+  },
+  ResourceExtractionStarted: {
+    entityKey: 'extractor',
+    permission: Permission.IDS.EXTRACT_RESOURCES
+  },
+  ShipAssemblyStarted: {
+    entityKey: 'dryDock',
+    permission: Permission.IDS.ASSEMBLE_SHIP
+  }
+};
 
 export function ActionItemProvider({ children }) {
   const { authenticated, blockTime } = useSession();
@@ -38,7 +55,7 @@ export function ActionItemProvider({ children }) {
     [ 'actionItems', crewId ],
     async () => {
       const activities = await api.getCrewActionItems(crewId);
-      
+
       // add startTime to all for consistency
       activities.forEach((a) => {
         if (sequenceableSystems.includes(a.event.name)) {
@@ -64,6 +81,8 @@ export function ActionItemProvider({ children }) {
   const failedTransactions = useStore(s => s.failedTransactions);
   const hiddenActionItems = useStore(s => s.hiddenActionItems);
   const dispatchToggleHideActionItem = useStore(s => s.dispatchToggleHideActionItem);
+  const perProcessLeases = useStore(s => s.perProcessLeases);
+  const dispatchPerProcessLease = useStore(s => s.dispatchPerProcessLease);
   const [readyItems, setReadyItems] = useState([]);
   const [unreadyItems, setUnreadyItems] = useState([]);
   const [unstartedItems, setUnstartedItems] = useState([]);
@@ -78,6 +97,41 @@ export function ActionItemProvider({ children }) {
     }
     return [];
   }, [crew?._actionTypeTriggered, pendingTransactions]);
+
+  useEffect(() => {
+    (actionItems || [])
+
+      // find all events that are lease-per-process events... return the agreements that match
+      .reduce((acc, { event }) => {
+        const config = leaseAndProcessEvents[event.name];
+        if (!config) return acc;
+
+        const agreements = (crewAgreements || []).filter((a) => {
+          if (a.label === event.returnValues[config.entityKey].label && a.id === event.returnValues[config.entityKey].id) {
+            if (a._agreement?.permission === config.permission) {
+              // if agreement end and finishTime end are within buffer of each other, assume this is the agreement
+              if (Math.abs(a._agreement.endTime - event.returnValues.finishTime) < 300) {
+                return true;
+              }
+            }
+          }
+          return false;
+        });
+
+        return [...acc, ...agreements];
+      }, [])
+
+      // walk through the lease-per-process agreements and add the keys to the store
+      // (to exclude from the visible action items when expiring)
+      .forEach((a) => {
+        if (!(perProcessLeases || []).find((l) => l.key === a.key)) {
+          dispatchPerProcessLease({
+            key: a.key,
+            endTime: a._agreement.endTime
+          });
+        }
+      });
+  }, [actionItems, crewAgreements, perProcessLeases]);
 
   useEffect(() => {
     if (!blockTime) return;
@@ -193,6 +247,11 @@ export function ActionItemProvider({ children }) {
     });
 
     const visibleAgreementItems = (agreementItems || []).filter((item) => {
+      // exclude per-process leases
+      if ((perProcessLeases || []).find((l) => l.key === item.key)) {
+        return false;
+      }
+      // exclude those being changed by pending transaction (pending tx will be visible)
       if (pendingTransactions) {
         return !pendingTransactions.find((tx) => (
           ['AcceptPrepaidAgreement', 'ExtendPrepaidAgreement'].includes(tx.key)
@@ -225,6 +284,7 @@ export function ActionItemProvider({ children }) {
     getActivityConfig,
     hiddenActionItems,
     pendingTransactions,
+    perProcessLeases,
     plannedItems,
     randomEventItems,
     readyItems,
@@ -243,7 +303,7 @@ export function ActionItemProvider({ children }) {
         }
       })
     }
-  }, [actionItems, allVisibleItems, crewAgreements, hiddenActionItems, plannedBuildings, itemsUpdatedAt, plansUpdatedAt])
+  }, [actionItems, allVisibleItems, crewAgreements, hiddenActionItems, plannedBuildings, itemsUpdatedAt, plansUpdatedAt]);
 
   // TODO: clear timers in the serviceworker
   //  for not yet ready to finish, set new timers based on time remaining

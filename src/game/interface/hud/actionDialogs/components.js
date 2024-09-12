@@ -64,7 +64,8 @@ import {
   CaretIcon,
   ShipIcon,
   BuildingIcon,
-  ConstructIcon
+  ConstructIcon,
+  InfoIcon
 } from '~/components/Icons';
 import LiveTimer from '~/components/LiveTimer';
 import MouseoverInfoPane from '~/components/MouseoverInfoPane';
@@ -108,6 +109,8 @@ import PageLoader from '~/components/PageLoader';
 import Monospace from '~/components/Monospace';
 import { OrderAlert, TotalSway } from './MarketplaceOrder';
 import { ProductMarketSummary } from './ShoppingList';
+import ThumbnailBottomBanner from '~/components/ThumbnailBottomBanner';
+import ThumbnailIconBadge from '~/components/ThumbnailIconBadge';
 
 const SECTION_WIDTH = 780;
 
@@ -369,39 +372,40 @@ export const SublabelBanner = styled.div`
 const IconAndLabel = styled.div`
   display: flex;
   flex: 1;
+  align-items: center;
 `;
 const IconContainer = styled.div`
   font-size: 48px;
   padding: 0 10px;
 `;
 const pillColors = {
-  crew: { bg: 'main', color: 'brightMain' },
+  crew: { bg: 'backgroundGray', color: 'secondaryText' },
   delay: { bg: 'sequence', color: 'sequenceLight' },
-  total: { bg: 'success', color: 'success' },
+  total: { bg: 'successDark', color: 'success' },
 };
 const TimePillComponent = styled.div`
   align-items: center;
-  background: rgba(${p => hexToRGB(p.theme.colors[pillColors[p.type].bg])}, 0.4);
+  background: rgba(${p => hexToRGB(p.theme.colors[pillColors[p.type].bg])}, 0.5);
   border-radius: 20px;
   color: white;
   display: flex;
-  margin-left: 4px;
+  margin-top: 4px;
   padding: 3px 12px;
-  text-align: center;
   text-transform: none;
+  font-weight: 400;
   & > label {
     color: ${p => p.theme.colors[pillColors[p.type].color]};
     margin-right: 6px;
-    text-transform: uppercase;
+    flex: 1;
   }
   & > svg {
     color: ${p => p.theme.colors[pillColors[p.type].color]};
-    opacity: 0.7;
     margin-right: 4px;
   }
 `;
 const LabelContainer = styled.div`
   flex: 1;
+  width: 75%;
   text-transform: uppercase;
   h1 {
     align-items: flex-end;
@@ -413,14 +417,12 @@ const LabelContainer = styled.div`
     line-height: 36px;
     margin: 0;
   }
+  & h2 {
+    font-size: 18px;
+    flex: 1;
+    margin: 6px 0 0;
+  }
   & > div {
-    align-items: center;
-    display: flex;
-    h2 {
-      font-size: 18px;
-      flex: 1;
-      margin: 6px 0 0;
-    }
     ${TimePillComponent} {
       margin-top: 3px;
     }
@@ -3479,7 +3481,22 @@ export const LotShipImage = ({ shipType, iconBadge, iconBadgeColor, iconOverlay,
   );
 };
 
-export const BuildingImage = ({ buildingType, error, iconOverlay, iconOverlayColor, iconBorderColor, inventory, inventoryBonuses, inventories, showInventoryStatusForType, style, unfinished }) => {
+export const BuildingImage = ({
+  bottomBanner,
+  buildingType,
+  error,
+  iconBadge,
+  iconBadgeCorner,
+  iconOverlay,
+  iconOverlayColor,
+  iconBorderColor,
+  inventory,
+  inventoryBonuses,
+  inventories,
+  showInventoryStatusForType,
+  style,
+  unfinished
+}) => {
   const buildingAsset = Building.TYPES[buildingType];
   if (!buildingAsset) return null;
 
@@ -3488,7 +3505,7 @@ export const BuildingImage = ({ buildingType, error, iconOverlay, iconOverlayCol
   return (
     <BuildingThumbnailWrapper outlineColor={iconBorderColor} style={style}>
       <ResourceImage src={getBuildingIcon(buildingAsset.i, 'w150', unfinished)} />
-      {inventory !== false && capacity && (
+      {inventory !== false && (capacity?.mass?.max || capacity?.mass?.volume) && (
         <>
           <InventoryLabel overloaded={error}>
             {formatFixed(100 * (capacity[closerLimit].reserved + capacity[closerLimit].used) / capacity[closerLimit].max, 1)}% {/*closerLimit === 'volume' ? `m³` : `t`*/}
@@ -3500,7 +3517,9 @@ export const BuildingImage = ({ buildingType, error, iconOverlay, iconOverlayCol
             secondaryProgress={(capacity[closerLimit].reserved + capacity[closerLimit].used) / capacity[closerLimit].max} />
         </>
       )}
+      {iconBadge !== undefined && <ThumbnailIconBadge iconBadgeCorner={iconBadgeCorner}>{iconBadge}</ThumbnailIconBadge>}
       {iconOverlay && <ThumbnailOverlay color={iconOverlayColor}>{iconOverlay}</ThumbnailOverlay>}
+      {bottomBanner && <ThumbnailBottomBanner>{bottomBanner}</ThumbnailBottomBanner>}
       <ClipCorner dimension={10} color={iconBorderColor} />
     </BuildingThumbnailWrapper>
   );
@@ -3669,17 +3688,17 @@ const TimePill = ({ children, type }) => {
         <TimerInfoBody>
           {type === 'delay' && (
             <>
-              <b>Scheduled Wait:</b> Time until my crew initiates this action, if other actions have been scheduled ahead of it. The maximum waiting period is 24h.
+              <b><ScheduleFullIcon /> Crew Delay: </b>This crew has other scheduled tasks, and must wait before starting this one. The delay period equals the sum of the  all previously scheduled actions crew presence requirements. Crews may schedule additional actions as long as their total delay period does not exceed <b>24 hours</b>.
             </>
           )}
           {type === 'crew' && (
             <>
-              <b>Crew Ready In:</b> Time until all my crew's current and scheduled actions are finished.
+              <b><CrewIcon /> Crew Ready In: </b>Time until this crew becomes idle again, after performing all actions on their schedule including this one. Some actions cannot be scheduled and require a fully idle crew to start.
             </>
           )}
           {type === 'total' && (
             <>
-              <b>Action Ready In:</b> Time until the action outcome is finalized (The crew performing the action will often be ready sooner.)
+              <b><AlertIcon /> Action Finishes In: </b>Time until this action's outcome is ready to be finalized. Process actions require a crew to be present for <b>1/8th</b> of the process duration, so the acting crew will often return to station and become available before the action itself finishes.
             </>
           )}
         </TimerInfoBody>
@@ -3710,34 +3729,69 @@ export const ActionDialogHeader = ({ action, actionCrew, crewAvailableTime, dela
           <IconContainer>{action.icon}</IconContainer>
           <LabelContainer>
             <h1>{action.label}</h1>
-            <div>
-              <h2>{action.status || theming[stage]?.label}</h2>
-              {delayUntil !== undefined && (
-                <LiveTimer target={delayUntil} maxPrecision={2}>
-                  {(formattedTime, isTimer) => {
-                    const pills = [];
-                    if (isTimer) {
-                      pills.push(<TimePill key="delay" type="delay"><ScheduleFullIcon /><label>Wait</label> {formattedTime}</TimePill>);
-                    }
-                    if (crewAvailableTime !== undefined) {
-                      const delayDuration = isTimer ? (delayUntil - Math.floor(Date.now() / 1000)) : 0;
-                      pills.push(<TimePill key="crew" type="crew"><CrewBusyIcon isPaused /> {formatTimer(delayDuration + crewAvailableTime, 2)}</TimePill>)
-                    }
-                    return pills;
-                  }}
-                </LiveTimer>
-              )}
-              {delayUntil === undefined && crewAvailableTime !== undefined && <TimePill type="crew"><CrewBusyIcon isPaused /> {formatTimer(crewAvailableTime, 2)}</TimePill>}
-              {taskCompleteTime !== undefined && <TimePill type="total"><AlertIcon /> {formatTimer(taskCompleteTime, 2)}</TimePill>}
-            </div>
+            <h2>{action.status || theming[stage]?.label}</h2>
           </LabelContainer>
+          <div>
+            {delayUntil !== undefined && (
+              <LiveTimer target={delayUntil} maxPrecision={2}>
+                {(formattedTime, isTimer) => {
+                  const pills = [];
+                  const delayDuration = isTimer ? (delayUntil - Math.floor(Date.now() / 1000)) : 0;
+                  if (isTimer) {
+                    pills.push(<TimePill key="delay" type="delay"><ScheduleFullIcon /><label>Delay</label> {formattedTime}</TimePill>);
+                  }
+                  if (!(crewAvailableTime !== crewAvailableTime) && crewAvailableTime !== undefined && crewAvailableTime !== 0) {
+                    pills.push(<TimePill key="crew" type="crew"><CrewIcon isPaused /><label>Crew</label> {formatTimer(delayDuration + crewAvailableTime, 2)}</TimePill>)
+                  }
+                  if (!(taskCompleteTime !== taskCompleteTime) && taskCompleteTime !== undefined) {
+                    pills.push(<TimePill key="total" type="total"><AlertIcon /><label>Finishes</label> {formatTimer(delayDuration + taskCompleteTime, 2)}</TimePill>)
+                  }
+                  return pills;
+                }}
+              </LiveTimer>
+            )}
+            {delayUntil === undefined && !(crewAvailableTime !== crewAvailableTime) && crewAvailableTime !== 0 && crewAvailableTime !== undefined && 
+              <TimePill type="crew"><CrewIcon isPaused /><label>Crew</label> {formatTimer(crewAvailableTime, 2)}</TimePill>
+            }
+            {delayUntil === undefined && !(taskCompleteTime !== taskCompleteTime) && taskCompleteTime !== undefined && 
+              <TimePill type="total"><AlertIcon /><label>Finishes</label> {formatTimer(taskCompleteTime, 2)}</TimePill>
+            }
+          </div>
         </IconAndLabel>
       </Header>
     </>
   );
 };
 
-export const FlexSectionInputBlock = ({ bodyStyle, children, disabled, image, innerBodyStyle, isSelected, label, onClick, setRef, style = {}, sublabel, title, titleDetails, tooltip, ...props }) => {
+export const LeaseDetailsLabel = styled.div`
+  color: ${p => p.theme.colors.success};
+  font-size: 14px;
+`;
+
+export const LeaseInfoIcon = () => (
+  <div style={{ position: 'absolute', top: 5, right: 5, fontSize: 24, opacity: 0.5 }}>
+    <InfoIcon />
+  </div>
+);
+
+export const FlexSectionInputBlock = ({
+  addChildren,
+  bodyStyle,
+  children,
+  disabled,
+  image,
+  innerBodyStyle,
+  isSelected,
+  label,
+  onClick,
+  setRef,
+  style = {},
+  sublabel,
+  title,
+  titleDetails,
+  tooltip,
+  ...props
+}) => {
   const refEl = useRef();
 
   const [hovered, setHovered] = useState();
@@ -3775,6 +3829,7 @@ export const FlexSectionInputBlock = ({ bodyStyle, children, disabled, image, in
               </label>
             </ThumbnailWithData>
           )}
+          {addChildren}
           <ClipCorner dimension={sectionBodyCornerSize} />
         </FlexSectionInputBody>
       </FlexSectionInputContainer>
@@ -4264,8 +4319,8 @@ export const RecipeSlider = ({ amount, disabled, increment = 0.001, processingTi
 
     // round to nearest increment
     cleansed = numeral(Math.floor(cleansed.value() / increment) * increment);
-
-    setAmount(cleansed.value());
+  
+    setAmount(Number(cleansed.format(`${increment}`)));
   }, [increment, min, max]);
 
   const onChangeInput = useCallback((e) => {
@@ -4294,7 +4349,7 @@ export const RecipeSlider = ({ amount, disabled, increment = 0.001, processingTi
                 <SliderTextInput
                   type="number"
                   disabled={disabled}
-                  step={0.001}
+                  step={increment}
                   value={amount}
                   onChange={onChangeInput}
                   onBlur={onFocusEvent}
@@ -4302,7 +4357,7 @@ export const RecipeSlider = ({ amount, disabled, increment = 0.001, processingTi
                   style={{ marginTop: -2 }} />
               )
                 : (
-                  <b>{amount.toLocaleString(undefined, { minimumFractionDigits: increment % 1 === 0 ? 0 : 3 })}</b>
+                  <b>{amount.toLocaleString()}</b>
                 )
               }
               {' '}
@@ -5225,7 +5280,9 @@ export const ActionDialogFooter = ({
             <>
               <Button
                 loading={reactBool(buttonsLoading)}
-                onClick={onClose}>Cancel</Button>
+                onClick={onClose}>
+                Cancel
+              </Button>
               {waitForCrewReady && !allowedOrLaunched && <CrewNotLaunchedButton />}
               {waitForCrewReady && allowedOrLaunched && !isReady && <CrewBusyButton isSequenceable={isSequenceable} />}
               {(!waitForCrewReady || (isReady && allowedOrLaunched)) && (
@@ -5233,7 +5290,9 @@ export const ActionDialogFooter = ({
                   disabled={nativeBool(disabled)}
                   isTransaction
                   loading={reactBool(buttonsLoading)}
-                  onClick={onGo}>{goLabel}</Button>
+                  onClick={onGo}>
+                  {goLabel}
+                </Button>
               )}
             </>
           )
@@ -5565,6 +5624,48 @@ export const TravelBonusTooltip = ({ bonus, totalTime, tripDetails, ...props }) 
   />
 );
 
+export const LeaseTooltip = ({ desiredTerm, initialTerm, permId, rate }) => {
+  return (
+    <Bonuses>
+      <BonusesHeader>Lease Details</BonusesHeader>
+      <BonusesSection>
+        <table>
+          <tbody>
+            <tr>
+              <th>Permission</th>
+              <td>{Permission.TYPES[permId].name}</td>
+            </tr>
+            <tr>
+              <th>Policy Type</th>
+              <td>Prepaid Lease</td>
+            </tr>
+            <tr><td colspan="2" style={{ borderBottom: '1px solid #333', height: 0 }} /></tr>
+            <tr>
+              <th>Requested Time</th>
+              <td>{formatFixed(desiredTerm / 3600, 3)} hr</td>
+            </tr>
+            <tr>
+              <th>Minimum Time</th>
+              <td style={desiredTerm < initialTerm ? { color: theme.colors.warning } : {}}>
+                {desiredTerm < initialTerm && <WarningIcon />}
+                <span style={{ marginLeft: 4 }}>{formatFixed(initialTerm / 3600, 3)} hr</span>
+              </td>
+            </tr>
+            <tr>
+              <th>Lease Rate</th>
+              <td><SwayIcon /> {formatPrice(rate / TOKEN_SCALE[TOKEN.SWAY])} / hr</td>
+            </tr>
+            <tr><td colspan="2" style={{ borderBottom: '1px solid #333', height: 0 }} /></tr>
+            <tr>
+              <th>Total Lease Cost</th>
+              <td><SwayIcon /> {formatPrice((rate / TOKEN_SCALE[TOKEN.SWAY]) * Math.max(desiredTerm, initialTerm) / 3600)}</td>
+            </tr>
+          </tbody>
+        </table>
+      </BonusesSection>
+    </Bonuses>
+  );
+};
 
 //
 // utils

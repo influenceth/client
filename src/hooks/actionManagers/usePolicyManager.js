@@ -23,22 +23,28 @@ const usePolicyManager = (target, permission) => {
     shipId: target?.label === Entity.IDS.SHIP ? target?.id : undefined,
   }), [target]);
 
+  // using json to avoid unnecessary re-renders
+  const policyJSON = useMemo(() => {
+    return JSON.stringify(Permission.getPolicyDetails(target, crew, blockTime)[permission]);
+  }, [blockTime, crew, target, permission]);
+
   const currentPolicy = useMemo(() => {
     if (!target) return undefined;
-    const pol = Permission.getPolicyDetails(target, crew, blockTime)[permission];
+    if (!policyJSON) return undefined;
+    const pol = JSON.parse(policyJSON);
 
     if (pol?.policyDetails && pol.policyType === Permission.POLICY_IDS.CONTRACT) pol.policyDetails.contract = pol.policyDetails.address;
     if (pol?.policyDetails && pol.policyType === Permission.POLICY_IDS.PREPAID) {
       // stored in microsway per hour, UI in sway/mo
       pol.policyDetails.rate = Number(safeBigInt(pol.policyDetails.rate)) / 1e6;
       // stored in seconds, UI in months
-      pol.policyDetails.initialTerm = secondsToDays(pol.policyDetails.initialTerm);
+      pol.policyDetails.initialTerm = secondsToDays(pol.policyDetails.initialTerm || 0);
       // stored in seconds, UI in months
-      pol.policyDetails.noticePeriod = secondsToDays(pol.policyDetails.noticePeriod);
+      pol.policyDetails.noticePeriod = secondsToDays(pol.policyDetails.noticePeriod || 0);
     };
 
     return pol;
-  }, [blockTime, crew, target, permission]);
+  }, [policyJSON]);
 
   const updateAllowlists = useCallback((newAllowlist, newAccountAllowlist) => {
     execute(

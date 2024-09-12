@@ -27,9 +27,10 @@ export const MarketplacePermissionsIcon = ({ permissions = {}, ...props }) => {
       data-tooltip-place="top-start"
       data-tooltip-html={`
         <div style="width: 200px">
+        <div style= "display: flex; height: 20px; margin-tp: 4px; margin-bottom: 2px; border-bottom:1px solid rgba(255, 255, 255, 0.25)">Marketplace Permissions</div>
           ${permissions.map((key, value) => `
-            <div style="display: flex">
-              <div style="flex-grow: 1">${key}:</div>
+            <div style="display: flex; margin-top: 4px">
+              <div style="color: #a0a0a0; flex-grow: 1">${key}</div>
               <div style="color: ${(value) ? 'green' : 'red'}">${value ? 'Permitted' : 'Restricted'}</div>
             </div>
           `).join('\n')}

@@ -36,6 +36,7 @@ import Button from '~/components/ButtonAlt';
 import useBlockTime from '~/hooks/useBlockTime';
 import useLot from '~/hooks/useLot';
 import useAsteroid from '~/hooks/useAsteroid';
+import { TOKEN, TOKEN_SCALE } from '~/lib/priceUtils';
 
 const FormSection = styled.div`
   margin-top: 12px;
@@ -276,7 +277,7 @@ const FormAgreement = ({
     const recipient = controller?.Crew?.delegatedTo;
     // TODO: should these conversions be in useAgreementManager?
     const term = daysToSeconds(initialPeriod);
-    const termPrice = Math.ceil(totalLeaseCost * 1e6);
+    const termPrice = Math.ceil(totalLeaseCost * TOKEN_SCALE[TOKEN.SWAY]);
     enterAgreement({ recipient, term, termPrice });
   }, [controller?.Crew?.delegatedTo, enterAgreement, initialPeriod, totalLeaseCost]);
 
@@ -284,14 +285,14 @@ const FormAgreement = ({
     const recipient = controller?.Crew?.delegatedTo;
     // TODO: should these conversions be in useAgreementManager?
     const term = Math.round(daysToSeconds(initialPeriod));
-    const termPrice = Math.round(totalLeaseCost * 1e6);
+    const termPrice = Math.round(totalLeaseCost * TOKEN_SCALE[TOKEN.SWAY]);
     extendAgreement({ recipient, term, termPrice });
   }, [controller?.Crew?.delegatedTo, extendAgreement, initialPeriod, totalLeaseCost]);
 
   const onTerminateAgreement = useCallback(() => {
     cancelAgreement({
       recipient: permitted?.Crew?.delegatedTo,
-      refundAmount: Math.ceil(refundableAmount * 1e6)
+      refundAmount: Math.ceil(refundableAmount * TOKEN_SCALE[TOKEN.SWAY])
     })
   }, [cancelAgreement, permitted, refundableAmount]);
 

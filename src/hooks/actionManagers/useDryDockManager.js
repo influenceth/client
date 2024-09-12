@@ -70,7 +70,7 @@ const useDryDockManager = (lotId, slot = 1) => {
         stage = current.startTime > blockTime ? actionStages.SCHEDULED : actionStages.IN_PROGRESS;
       }
     } else {
-      const startTx = getPendingTx('AssembleShipStart', payload);
+      const startTx = getPendingTx('LeaseAndAssembleShipStart', payload) || getPendingTx('AssembleShipStart', payload);
       if (startTx) {
         current.origin = startTx.vars.origin;
         current.originSlot = startTx.vars.origin_slot;
@@ -87,14 +87,15 @@ const useDryDockManager = (lotId, slot = 1) => {
     ];
   }, [actionItems, blockTime, getPendingTx, getStatus, payload, slotDryDock?.status]);
 
-  const startShipAssembly = useCallback((shipType, origin, originSlot) => {
+  const startShipAssembly = useCallback((shipType, origin, originSlot, leaseDetails) => {
     execute(
-      'AssembleShipStart',
+      leaseDetails ? 'LeaseAssembleShipStart' : 'AssembleShipStart',
       {
         ...payload,
         ship_type: shipType,
         origin: { id: origin.id, label: origin.label },
-        origin_slot: originSlot
+        origin_slot: originSlot,
+        lease: leaseDetails
       },
       {
         lotId

@@ -1,12 +1,13 @@
 import { useCallback, useMemo } from 'react';
 import { Deposit, Permission } from '@influenceth/sdk';
 
-import { ExtractionIcon } from '~/components/Icons';
+import { CoreSampleIcon, ExtractionIcon } from '~/components/Icons';
 import useExtractionManager from '~/hooks/actionManagers/useExtractionManager';
 import ActionButton, { getCrewDisabledReason } from './ActionButton';
 import useCrewContext from '~/hooks/useCrewContext';
 import useCoachmarkRefSetter from '~/hooks/useCoachmarkRefSetter';
 import { COACHMARK_IDS } from '~/contexts/CoachmarkContext';
+import { getProcessorLeaseConfig } from '~/lib/utils';
 
 const labelDict = {
   READY: 'Extract Resource',
@@ -30,11 +31,15 @@ const Extract = ({ onSetAction, asteroid, blockTime, crew, lot, preselect, simul
     onSetAction('EXTRACT_RESOURCE', { preselect });
   }, [onSetAction, preselect]);
 
+  const prepaidLeaseConfig = useMemo(() => {
+    return getProcessorLeaseConfig(lot?.building, Permission.IDS.EXTRACT_RESOURCES, crew, blockTime);
+  }, [blockTime, crew, lot?.building])
+
   // badge shows full count of *useable* core samples of crew
   // TODO: this should ideally also check for pending use of samples (i.e. in core sample improvement)
   const myUsableSamples = useMemo(() => {
     // if no access to use extractor, then 0 usable samples
-    if (!crewCan(Permission.IDS.EXTRACT_RESOURCES, lot?.building)) return 0;
+    if (!crewCan(Permission.IDS.EXTRACT_RESOURCES, lot?.building) && !prepaidLeaseConfig) return 0;
     
     // else, samples are usable if i control them or they are for sale
     return (lot?.deposits || []).filter((c) => (
@@ -45,7 +50,7 @@ const Extract = ({ onSetAction, asteroid, blockTime, crew, lot, preselect, simul
         || (c.PrivateSale?.amount > 0)
       )
     ));
-  }, [lot?.deposits, crew?.id]);
+  }, [prepaidLeaseConfig, lot?.deposits, crew?.id]);
 
   // const attention = !_disabled && (extractionStatus === 'READY_TO_FINISH' || (myUsableSamples?.length > 0) && extractionStatus === 'READY');
   const attention = !_disabled && (simulation || extractionStatus === 'READY_TO_FINISH');
@@ -59,6 +64,7 @@ const Extract = ({ onSetAction, asteroid, blockTime, crew, lot, preselect, simul
         crew,
         isSequenceable: true,
         isAllowedInSimulation: simulationActions.includes('Extract'),
+        prepaidLeaseConfig,
         permission: Permission.IDS.EXTRACT_RESOURCES,
         permissionTarget: lot?.building
       });
@@ -67,7 +73,7 @@ const Extract = ({ onSetAction, asteroid, blockTime, crew, lot, preselect, simul
     } else if (!currentExtraction?._isAccessible) {
       return 'in use';
     }
-  }, [_disabled, blockTime, crew, currentExtraction, extractionStatus, lot?.building, simulationActions, myUsableSamples?.length]);
+  }, [_disabled, blockTime, crew, currentExtraction, extractionStatus, prepaidLeaseConfig, lot?.building, simulationActions, myUsableSamples?.length]);
   
   const loading = ['EXTRACTING', 'FINISHING'].includes(extractionStatus);
   return (
@@ -76,7 +82,7 @@ const Extract = ({ onSetAction, asteroid, blockTime, crew, lot, preselect, simul
       label={`${labelDict[extractionStatus]}`}
       labelAddendum={disabledReason}
       flags={{
-        badge,
+        badge: badge > 0 ? <><CoreSampleIcon /><span style={{ marginRight: 4 }}>{badge}</span></> : null,
         disabled: disabledReason,
         attention: !disabledReason && attention,
         loading,
@@ -84,7 +90,9 @@ const Extract = ({ onSetAction, asteroid, blockTime, crew, lot, preselect, simul
       }}
       icon={<ExtractionIcon />}
       onClick={handleClick}
-      sequenceMode={!crew?._ready && extractionStatus === 'READY'} />
+      prepaidLeaseConfig={prepaidLeaseConfig}
+      sequenceDelay={!crew?._ready && extractionStatus === 'READY' ? crew?.Crew?.readyAt : null}
+      badgeProps={{ isWide: true, overrideColor: '#a97c4f' }} />
   );
 };
 

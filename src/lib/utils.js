@@ -198,6 +198,32 @@ export const esbPermissionQuery = (crewId, crewDelegatedTo, permissionId) => {
   ])
 };
 
+export const esbAnyPermissionQuery = (crewId, crewDelegatedTo) => {
+  return esb.boolQuery().should([
+    esb.termQuery('Control.controller.id', crewId),
+    esb.nestedQuery()
+      .path('PublicPolicies')
+      .query(esb.termQuery('PublicPolicies.public', true)),
+    esb.nestedQuery()
+      .path('PrepaidAgreements')
+      .query(
+        esb.boolQuery().must([
+          esb.termQuery('PrepaidAgreements.permitted.id', crewId),
+          esb.rangeQuery('PrepaidAgreements.endTime').gt(Math.floor(Date.now() / 1000))
+        ])
+      ),
+    esb.nestedQuery()
+      .path('ContractAgreements')
+      .query(esb.termQuery('ContractAgreements.permitted.id', crewId)),
+    esb.nestedQuery()
+      .path('WhitelistAgreements')
+      .query(esb.termQuery('WhitelistAgreements.permitted.id', crewId)),
+    esb.nestedQuery()
+      .path('WhitelistAccountAgreements')
+      .query(esb.termQuery('WhitelistAccountAgreements.permitted', crewDelegatedTo))
+  ])
+};
+
 export const getProcessorProps = (processorType) => {
   switch (processorType) {
     case Processor.IDS.REFINERY: return { label: 'Refine Materials', typeLabel: 'Refinery', icon: <RefineIcon /> };
@@ -324,7 +350,7 @@ export const ordersToFills = (mode, orders, amountToFill, takerFee, feeReduction
     .every((order) => {
       // if order depleted, skip over but keep going
       if (order.amount === 0) return true;
-      
+
       const { amount, price } = order;
       const levelAmount = Math.min(needed, amount);
       const levelValue = Math.round(1e6 * levelAmount * price) / 1e6;
@@ -364,3 +390,34 @@ export const safeBigInt = (unsafe) => {
 export const openAccessJSTime = `${process.env.REACT_APP_CHAIN_ID}` === `0x534e5f4d41494e` ? 1719495000e3 : 0;
 export const displayTimeFractionDigits = 2;
 export const maxAnnotationLength = 750;
+
+export const isProcessingPermission = (permission) => [
+  Permission.IDS.RUN_PROCESS,
+  Permission.IDS.EXTRACT_RESOURCES,
+  Permission.IDS.ASSEMBLE_SHIP
+].includes(permission);
+
+export const getProcessorLeaseConfig = (permissionTarget, permission, crew, blockTime) => {
+  if (isProcessingPermission(permission)) {
+    if (crew && !Permission.isPermitted(crew, permission, permissionTarget, blockTime)) {
+      const processingPolicy = Permission.getPolicyDetails(permissionTarget)?.[permission];
+      if (processingPolicy?.policyType === Permission.POLICY_IDS.PREPAID) {
+        return processingPolicy.policyDetails;
+      }
+    }
+  }
+  return null;
+};
+
+export const getProcessorLeaseSelections = (leaseConfig, taskDuration, crewReadyAt, blockTime) => {
+  let leasePayment = 0;
+  let desiredLeaseTerm = 0;
+  let actualLeaseTerm = 0;
+  if (leaseConfig) {
+    const startTime = Math.max(crewReadyAt, blockTime);
+    desiredLeaseTerm = Math.ceil((startTime + taskDuration) - blockTime);
+    actualLeaseTerm = Math.max(desiredLeaseTerm, leaseConfig.initialTerm);
+    leasePayment = Math.ceil(leaseConfig.rate * (actualLeaseTerm / 3600));
+  }
+  return { leasePayment, desiredLeaseTerm, actualLeaseTerm };
+};

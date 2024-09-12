@@ -546,6 +546,7 @@ const formatAsTx = (item) => {
       break;
     }
 
+    case 'LeaseAndAssembleShipStart': 
     case 'AssembleShipStart': {
       formatted.icon = <ShipIcon />;
       formatted.label = `Assemble ${Ship.TYPES[item.vars.ship_type]?.name || 'Ship'}`;
@@ -682,7 +683,7 @@ const formatAsTx = (item) => {
       break;
     }
 
-    case 'PurchaseDepositAndExtractResource':
+    case 'FlexibleExtractResourceStart':
     case 'ExtractResourceStart': {
       formatted.icon = <ExtractionIcon />;
       formatted.label = `${Product.TYPES[item.meta?.resourceId]?.name || 'Resource'} Extraction`;
@@ -707,6 +708,7 @@ const formatAsTx = (item) => {
       break;
     }
 
+    case 'LeaseAndProcessProductsStart':
     case 'ProcessProductsStart': {
       const process = Process.TYPES[item.vars?.process];
       const processorProps = getProcessorProps(process?.processorType);
@@ -1053,7 +1055,7 @@ export const itemColors = {
   randomEvent: '232, 211, 117',
   ready: hexToRGB('#00fff0'),
   unready: theme.colors.brightMainRGB,
-  unstarted: hexToRGB(theme.colors.sequence),
+  unstarted: hexToRGB(theme.colors.sequenceLight),
   plan: hexToRGB(theme.colors.lightOrange),
   agreement: hexToRGB(theme.colors.orange),
   _expired: hexToRGB(theme.colors.red)

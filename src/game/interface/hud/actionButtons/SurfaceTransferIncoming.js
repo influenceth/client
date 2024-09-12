@@ -53,6 +53,7 @@ const SurfaceTransferIncoming = ({ asteroid, blockTime, crew, lot, ship, onSetAc
                 isCancellation: true,
                 cancellationMakerFee: order.makerFee,
                 preselect: {
+                  crew: order.crew,
                   limitPrice: order.price,
                   quantity: order.amount,
                   storage: order.storage,

@@ -353,7 +353,9 @@ export function CrewProvider({ children }) {
 
       // reload if explicitly missed a block and window has returned to focus
       if (isBlockMissing) {
-        window.location.reload();
+        // window.location.reload();
+        console.log('block was missed, invalidating all queries...');
+        queryClient.invalidateQueries({}, { cancelRefetch: false});
       }
     }
   }, [isBlockMissing]);

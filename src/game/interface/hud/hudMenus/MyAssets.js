@@ -245,8 +245,6 @@ const MyAssets = () => {
     return [groups, ungrouped.length];
   }, [walletAgreementsWithDupes, allAsteroidsMode, allCrewsMode]);
 
-  // console.log('debug: MyAssets, agreements: ', agreements);
-
   const [asteroids, asteroidTally] = useMemo(() => {
     const a = (walletAsteroids || [])
       .filter((a) => {

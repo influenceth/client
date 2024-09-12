@@ -79,7 +79,6 @@ const NewCoreSample = ({ asteroid, crew, lot, onSetAction, overrideResourceId, i
   }, [_disabled, asteroid, crew, currentSamplingActions, improveSample, simulationActions]);
 
   let label = labelDict.READY;
-  if (!crew?._ready) label = `Schedule Next: ${label}`;
   if (improveSample) label = 'Improve Core Sample';
   else if (lotAbundance > 0) label += ` (${formatFixed(100 * lotAbundance, 1)}%)`;
 
@@ -113,7 +112,7 @@ const NewCoreSample = ({ asteroid, crew, lot, onSetAction, overrideResourceId, i
           }}
           icon={improveSample ? <ImproveCoreSampleIcon /> : <NewCoreSampleIcon />}
           onClick={handleClick}
-          sequenceMode={!crew?._ready || currentSamplingStack.length > 0} />
+          sequenceDelay={(!crew?._ready || currentSamplingStack.length > 0) ? crew?.Crew?.readyAt : null} />
       )}
     </>
   );

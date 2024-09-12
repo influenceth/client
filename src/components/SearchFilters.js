@@ -11,6 +11,7 @@ import LotIdFilter from './filters/LotIdFilter';
 import LotOccupiedFilter from './filters/LotOccupiedFilter';
 import LotLeaseFilter from './filters/LotLeaseFilter';
 import BooleanFilter from './filters/BooleanFilter';
+import BuildingAccessFilter from './filters/BuildingAccessFilter';
 import CheckboxFilter from './filters/CheckboxFilter';
 import RangeFilter from './filters/RangeFilter';
 import SurfaceAreaFilter from './filters/SurfaceAreaFilter';
@@ -306,6 +307,8 @@ const SearchFilters = ({ assetType, highlighting, isListView = false }) => {
           fieldName="type"
           options={buildingTypeOptions}
           title="Type" />
+
+        <BuildingAccessFilter {...filterProps} />
       </>
     );
   }

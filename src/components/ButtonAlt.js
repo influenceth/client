@@ -6,8 +6,9 @@ import { uniqueId } from 'lodash';
 
 import useStore from '~/hooks/useStore';
 import Badge from '~/components/Badge';
-import theme, { getContrastText, hexToRGB } from '~/theme';
+import PurchaseButtonInner from '~/components/PurchaseButtonInner';
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
+import theme, { getContrastText, hexToRGB } from '~/theme';
 
 export const bgOpacity = 0.1;
 export const bgOpacityHover = 0.25;
@@ -113,6 +114,9 @@ export const StyledButton = styled.button`
       }
       & > svg {
         stroke: ${p.theme.colors.disabledText};
+      }
+      ${PurchaseButtonInner} > span {
+        opacity: 0.5;
       }
     `
     : `

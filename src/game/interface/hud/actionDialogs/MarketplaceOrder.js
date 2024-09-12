@@ -225,6 +225,8 @@ const MarketplaceOrder = ({
     (orders || []).filter((o) => o.orderType === Order.IDS.LIMIT_SELL),
   ]), [orders]);
 
+  const { data: orderCrew } = useHydratedCrew(preselect?.crew?.id);
+
   // TODO: ...
   const currentDestinationLot = {};
   const currentOriginLot = {};
@@ -649,7 +651,7 @@ const MarketplaceOrder = ({
     <>
       <ActionDialogHeader
         action={dialogAction}
-        actionCrew={crew}
+        actionCrew={orderCrew}
         location={{ asteroid, lot }}
         crewAvailableTime={crewTimeRequirement}
         taskCompleteTime={taskTimeRequirement}
@@ -863,6 +865,7 @@ const MarketplaceOrder = ({
 
       <ActionDialogFooter
         disabled={
+          (isCancellation && orderCrew?.id !== crew?.id) ||
           !isCancellation && (
             !storageSelection || !quantity || !total
             || exceedsOtherSide || insufficientAssets || insufficientCapacity

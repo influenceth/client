@@ -10,10 +10,12 @@ import {
   AssembleIcon,
   InventoryIcon,
   LocationIcon,
-  ManufactureIcon
+  ManufactureIcon,
+  SwayIcon,
+  AgreementIcon
 } from '~/components/Icons';
 import useCrewContext from '~/hooks/useCrewContext';
-import { reactBool, formatTimer, locationsArrToObj, getCrewAbilityBonuses, formatFixed } from '~/lib/utils';
+import { reactBool, formatTimer, locationsArrToObj, getCrewAbilityBonuses, formatFixed, getProcessorLeaseConfig, getProcessorLeaseSelections } from '~/lib/utils';
 
 import {
   ActionDialogFooter,
@@ -37,7 +39,10 @@ import {
   ProcessInputOutputSection,
   formatVolume,
   ProgressBarSection,
-  ProcessSelectionBlock
+  ProcessSelectionBlock,
+  LeaseTooltip,
+  LeaseDetailsLabel,
+  LeaseInfoIcon
 } from './components';
 import useLot from '~/hooks/useLot';
 import { ActionDialogInner, useAsteroidAndLot } from '../ActionDialog';
@@ -46,6 +51,11 @@ import useProcessManager from '~/hooks/actionManagers/useProcessManager';
 import useEntity from '~/hooks/useEntity';
 import formatters from '~/lib/formatters';
 import useActionCrew from '~/hooks/useActionCrew';
+import useBlockTime from '~/hooks/useBlockTime';
+import useCrew from '~/hooks/useCrew';
+import theme from '~/theme';
+import PurchaseButtonInner from '~/components/PurchaseButtonInner';
+import { TOKEN, TOKEN_SCALE } from '~/lib/priceUtils';
 
 const SECTION_WIDTH = 1150;
 
@@ -56,7 +66,10 @@ const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...pro
     [lot?.building, processorSlot]
   );
   const crew = useActionCrew(currentProcess);
+  const blockTime = useBlockTime();
   const { crewCan } = useCrewContext();
+
+  const { data: buildingOwner } = useCrew(lot?.building?.Control?.controller?.id);
 
   const [selectedOrigin, setSelectedOrigin] = useState(currentProcess ? { ...currentProcess?.origin, slot: currentProcess?.originSlot } : undefined);
   const { data: origin } = useEntity(selectedOrigin);
@@ -81,15 +94,14 @@ const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...pro
 
   const process = Process.TYPES[processId];
 
-  const recipeStepSize = useMemo(() => {
+  const { recipeStepSize } = useMemo(() => {
     if (process) {
-      return Object.keys(process.outputs).reduce((acc, i) => {
-        const outputStep = Product.TYPES[i].isAtomic ? 1 : 0.001;
-        return Math.max(acc, outputStep);
-      }, 0.001);
+      const placesAfterDecimal = Math.ceil(Math.log10(Math.max(...Object.values(process.outputs))));
+      const recipeStepSize = 1 / Math.pow(10, placesAfterDecimal);
+      return { placesAfterDecimal, recipeStepSize };
     }
 
-    return 0.001;
+    return { placesAfterDecimal: 3, recipeStepSize: 0.001 };
   }, [process]);
 
   useEffect(() => {
@@ -285,12 +297,25 @@ const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...pro
     setupTime,
     tripDetails
   ]);
+  const prepaidLeaseConfig = useMemo(() => {
+    return getProcessorLeaseConfig(lot?.building, Permission.IDS.RUN_PROCESS, crew, blockTime);
+  }, [blockTime, crew, lot?.building]);
+
+  const { leasePayment, desiredLeaseTerm, actualLeaseTerm } = useMemo(() => {
+    return getProcessorLeaseSelections(
+      prepaidLeaseConfig,
+      taskTimeRequirement,
+      crew?.Crew?.readyAt,
+      blockTime
+    );
+  }, [blockTime, crew?.Crew?.readyAt, prepaidLeaseConfig, taskTimeRequirement]);
 
   const onFinishProcess = useCallback(() => {
     finishProcess();
   }, [finishProcess]);
 
   const onStartProcess = useCallback(() => {
+    if (leasePayment && !buildingOwner?.Crew?.delegatedTo) return;
     startProcess({
       processId,
       primaryOutputId: primaryOutput,
@@ -298,10 +323,22 @@ const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...pro
       origin,
       originSlot: originInventory?.slot,
       destination,
-      destinationSlot: destinationInventory?.slot
+      destinationSlot: destinationInventory?.slot,
+      leaseDetails: leasePayment > 0 && {
+        recipient: buildingOwner.Crew.delegatedTo,
+        term: actualLeaseTerm,
+        termPrice: leasePayment,
+      }
     });
   }, [
-    amount, destination, destinationInventory, processId, origin, originInventory, primaryOutput
+    amount,
+    destination,
+    destinationInventory,
+    leasePayment,
+    origin,
+    originInventory,
+    primaryOutput,
+    processId
   ]);
 
   // handle auto-closing
@@ -362,13 +399,27 @@ const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...pro
     return [{}, ''];
   }, [processor.processorType]);
 
+  const goLabel = useMemo(() => {
+    if (leasePayment) {
+      return (
+        <PurchaseButtonInner>
+          <label>Lease & Begin</label>
+          <span style={{ marginLeft: 10 }}>
+            <SwayIcon /> {Math.round(leasePayment / TOKEN_SCALE[TOKEN.SWAY]).toLocaleString()}
+          </span>
+        </PurchaseButtonInner>
+      );
+    }
+    return `Begin`;
+  }, [leasePayment]);
+
   return (
     <>
       <ActionDialogHeader
         action={headerAction}
         actionCrew={crew}
         location={{ asteroid, lot }}
-        delayUntil={currentProcess?.startTime || crew?.Crew?.readyUntil}
+        delayUntil={currentProcess?.startTime || crew?.Crew?.readyAt}
         crewAvailableTime={crewTimeRequirement}
         taskCompleteTime={taskTimeRequirement}
         onClose={props.onClose}
@@ -379,8 +430,28 @@ const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...pro
         <FlexSection style={{ marginBottom: 32, width: SECTION_WIDTH }}>
           <LotInputBlock
             title={`${gerund} Location`}
+            titleDetails={prepaidLeaseConfig && <LeaseDetailsLabel>Lease Required</LeaseDetailsLabel>}
             lot={lot}
             disabled={stage !== actionStages.NOT_STARTED}
+            imageProps={prepaidLeaseConfig && {
+              bottomBanner: leasePayment > 0 && (
+                <>
+                  <SwayIcon />
+                  {formatFixed(leasePayment / 1e6, 1)}
+                </> 
+              ),
+              iconBadge: <AgreementIcon />,
+              iconBadgeCorner: theme.colors.successDark
+            }}
+            tooltip={prepaidLeaseConfig && (
+              <LeaseTooltip
+                desiredTerm={desiredLeaseTerm}
+                permId={Permission.IDS.RUN_PROCESS}
+                {...prepaidLeaseConfig}
+              />
+            )}
+            addChildren={prepaidLeaseConfig && <LeaseInfoIcon />}
+            bodyStyle={prepaidLeaseConfig && { background: `rgba(${theme.colors.successDarkRGB}, 0.2)` }}
             style={{ flex: '0 0 30%' }}
           />
 
@@ -535,11 +606,10 @@ const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...pro
             && originInventory
             && isOriginSufficient
             && destinationInventory
-            && crewCan(Permission.IDS.RUN_PROCESS, lot.building
-            )
+            && (crewCan(Permission.IDS.RUN_PROCESS, lot.building) || leasePayment > 0)
           )
         }
-        goLabel="Begin"
+        goLabel={goLabel}
         onGo={onStartProcess}
         finalizeLabel="Finish"
         isSequenceable

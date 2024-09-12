@@ -76,7 +76,7 @@ const useProcessManager = (lotId, slot) => {
         stage = current.startTime > blockTime ? actionStages.SCHEDULED : actionStages.IN_PROGRESS;
       }
     } else {
-      const startTx = getPendingTx('ProcessProductsStart', payload);
+      const startTx = getPendingTx('LeaseAndProcessProductsStart', payload) || getPendingTx('ProcessProductsStart', payload);
       if (startTx) {
         current.destination = startTx.vars.destination;
         current.destinationSlot = startTx.vars.destination_slot;
@@ -98,9 +98,9 @@ const useProcessManager = (lotId, slot) => {
     ];
   }, [actionItems, blockTime, crew?.id, crewCan, getPendingTx, getStatus, payload, processor?.status]);
 
-  const startProcess = useCallback(({ processId, primaryOutputId, recipeTally, origin, originSlot, destination, destinationSlot }) => {
+  const startProcess = useCallback(({ processId, primaryOutputId, recipeTally, origin, originSlot, destination, destinationSlot, leaseDetails }) => {
     execute(
-      'ProcessProductsStart',
+      leaseDetails ? 'LeaseAndProcessProductsStart' : 'ProcessProductsStart',
       {
         ...payload,
         process: processId,
@@ -109,7 +109,8 @@ const useProcessManager = (lotId, slot) => {
         origin: { id: origin.id, label: origin.label },
         origin_slot: originSlot,
         destination: { id: destination.id, label: destination.label },
-        destination_slot: destinationSlot
+        destination_slot: destinationSlot,
+        lease: leaseDetails
       },
       {
         lotId,

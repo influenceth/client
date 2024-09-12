@@ -109,23 +109,17 @@ const IconWrapper = styled.div`
 `;
 
 const SelectedMarketplace = styled.div`
-  & > div:first-child {
-    align-items: center;
-    display: flex;
+& label {
+    text-align: right;
+    color: white;
+    display: block;
+    font-size: 24px;
     margin-bottom: 12px;
   }
   & > div:last-child {
-    text-align: right;
-    & label {
-      color: white;
-      display: block;
-      font-size: 20px;
-      margin-bottom: 4px;
-    }
-    & span {
-      color: ${p => p.theme.colors.green};
-      font-size: 18px;
-    }
+    align-items: center;
+    display: flex;
+    margin-bottom: 4px;
   }
 `;
 const MarketplaceImage = styled.div`
@@ -147,15 +141,22 @@ const PseudoFooterButton = styled(Button)`
 `;
 
 const Empty = styled.span`
-  opacity: 0.33;
-  text-transform: uppercase;
+  opacity: 0.5;
+`;
+
+const Demand = styled.span`
+  color: ${theme.colors.main};
+`;
+
+const Supply = styled.span`
+  color: ${theme.colors.green};
 `;
 
 const MarketplaceName = styled.span`
   color: ${p => {
-    if (p.acesss === 'full') return p.theme.colors.white;
-    if (p.access === 'limited') return p.theme.colors.yellow;
-    if (p.access === 'none') return p.theme.colors.red;
+    if (p.crew && p.acesss === 'full') return p.theme.colors.white;
+    if (p.crew && p.access === 'limited') return p.theme.colors.yellow;
+    if (p.crew && p.access === 'none') return p.theme.colors.red;
   }};
 `;
 
@@ -164,10 +165,7 @@ const AsteroidResourcePrices = ({ asteroid, mode, resource }) => {
 
   const { crew, crewCan } = useCrewContext();
   const [selected, setSelected] = useState();
-  const [sort, setSort] = useState([
-    `${mode === 'sell' ? 'buy' : 'sell'}Price`,
-    mode === 'sell' ? 'asc' : 'desc'
-  ]);
+  const [sort, setSort] = useState(['sellPrice', 'asc']);
   const [sortField, sortDirection] = sort;
 
   const setCoachmarkRef = useCoachmarkRefSetter();
@@ -255,6 +253,7 @@ const AsteroidResourcePrices = ({ asteroid, mode, resource }) => {
 
     let updatedSortField = sortField;
     let updatedSortDirection = sortDirection;
+
     if (field === sortField) {
       updatedSortDirection = sortDirection === 'desc' ? 'asc' : 'desc';
     } else {
@@ -269,8 +268,30 @@ const AsteroidResourcePrices = ({ asteroid, mode, resource }) => {
   }, [sortDirection, sortField]);
 
   const sortedMarketplaces = useMemo(() => {
-    return (resourceMarketplaces || [])
-      .sort((a, b) => (sortDirection === 'asc' ? 1 : -1) * (a[sortField] < b[sortField] ? 1 : -1));
+    const fieldSortOrder = (a, b) => {
+      if (a[sortField] < b[sortField]) {
+        return sortDirection === 'asc' ? -1 : 1;
+      } else if (a[sortField] > b[sortField]) {
+        return sortDirection === 'asc' ? 1 : -1;
+      } else {
+        return 0;
+      }
+    };
+
+    return (resourceMarketplaces || []).sort((a,b) => {
+      if (['supply', 'sellPrice'].includes(sortField)) {
+        if (a.supply > 0 && b.supply === 0) return -1;
+        if (b.supply > 0 && a.supply === 0) return 1;
+        return fieldSortOrder(a, b);
+      } else if (['demand', 'buyPrice'].includes(sortField)) {
+        if (a.demand > 0 && b.demand === 0) return -1;
+        if (b.demand > 0 && a.demand === 0) return 1;
+        return fieldSortOrder(a, b);
+      } else {
+        // Marketplace or Distance sort
+        return fieldSortOrder(a, b);
+      }
+    });
   }, [resourceMarketplaces, sortField, sortDirection]);
 
   const columns = useMemo(() => {
@@ -286,14 +307,18 @@ const AsteroidResourcePrices = ({ asteroid, mode, resource }) => {
               asteroidId={asteroid.id}
               lotId={row.lotId}
               data-tooltip-id="detailsTooltip" />
-            <MarketplaceName access={marketplacesLoading ? 'full' : row.permissions.accessLevel()}>{row.marketplaceName}</MarketplaceName>
-            {!marketplacesLoading && (
-              <MarketplacePermissionsIcon
-                style={{ marginLeft: 6 }}
-                permissions={row.permissions}
-                data-tooltip-id={"detailsTooltip"}
-              />
-            )}
+            <MarketplaceName
+              access={marketplacesLoading ? 'full' : row.permissions.accessLevel()}
+              crew>
+              {row.marketplaceName}
+              {!marketplacesLoading && (!crew || row.permissions.accessLevel() === 'full') || (
+                <MarketplacePermissionsIcon
+                  style={{ marginLeft: 6, fontSize:'140%'}}
+                  permissions={row.permissions}
+                  data-tooltip-id={"detailsTooltip"}
+                />
+              )}
+            </MarketplaceName>
           </>
         ),
       },
@@ -303,6 +328,7 @@ const AsteroidResourcePrices = ({ asteroid, mode, resource }) => {
         sortField: 'supply',
         selector: row => (
           <>
+            {row.supply === 0 ||
             <IconLink
               style={{ marginRight: 6 }}
               onClick={() => history.push(`/marketplace/${asteroid.id}/${Lot.toIndex(row.lotId)}/${resource.i}?back=all&mode=buy`)}
@@ -310,9 +336,10 @@ const AsteroidResourcePrices = ({ asteroid, mode, resource }) => {
               data-tooltip-id="detailsTooltip">
               <MarketplaceBuildingIcon />
             </IconLink>
+            }
             {row.supply === 0
-              ? <Empty>—</Empty>
-              : formatResourceAmount(row.supply, resource.i)
+              ? <Empty>None</Empty>
+              : <Supply>{formatResourceAmount(row.supply, resource.i)}</Supply>
             }
           </>
         )
@@ -325,7 +352,7 @@ const AsteroidResourcePrices = ({ asteroid, mode, resource }) => {
           <>
             {row.sellPrice === 0
               ? <Empty>—</Empty>
-              : (<><IconWrapper><SwayIcon /></IconWrapper> {formatPrice(row.sellPrice, { fixedPrecision: 4 })}</>)
+              : <><IconWrapper><SwayIcon /></IconWrapper> {formatPrice(row.sellPrice, { fixedPrecision: 4 })}</>
             }
           </>
         )
@@ -336,6 +363,7 @@ const AsteroidResourcePrices = ({ asteroid, mode, resource }) => {
         sortField: 'demand',
         selector: row => (
           <>
+            {row.demand === 0 ||
             <IconLink
               style={{ marginRight: 6 }}
               onClick={() => history.push(`/marketplace/${asteroid.id}/${Lot.toIndex(row.lotId)}/${resource.i}?back=all&mode=sell`)}
@@ -343,9 +371,10 @@ const AsteroidResourcePrices = ({ asteroid, mode, resource }) => {
               data-tooltip-id="detailsTooltip">
               <MarketplaceBuildingIcon />
             </IconLink>
+            }
             {row.demand === 0
-              ? <Empty>—</Empty>
-              : formatResourceAmount(row.demand, resource.i)
+              ? <Empty>None</Empty>
+              : <Demand>{formatResourceAmount(row.demand, resource.i)}</Demand>
             }
           </>
         )
@@ -363,46 +392,43 @@ const AsteroidResourcePrices = ({ asteroid, mode, resource }) => {
           </>
         )
       },
-      // TODO: add distanceAway, calculate from crew's current position (if logged in and on asteroid surface)
-      // TODO: maker fee / taker fee? which one is relevant here?
       {
         key: 'makerFee',
-        label: 'Maker Fee',
+        label: 'Fees',
         sortField: 'makerFee',
-        selector: row => `${(row.makerFee / 100).toFixed(2)}%`,
+        selector: row => (
+          <>
+            <span
+              permissions={row.permissions}
+              data-tooltip-id={"detailsTooltip"}
+              data-tooltip-place="top"
+              data-tooltip-html={`
+                <div style="width: 200px">
+                    <div style= "display: flex; height: 20px; margin-bottom: 2px; border-bottom:1px solid rgba(255, 255, 255, 0.25)">Maker Fees</div>
+                    <div style="display: flex; margin-top: 4px">
+                      <div style="color: #a0a0a0; flex-grow: 1">Limit Orders</div>
+                      <div>${(row.makerFee / 100)}%</div>
+                    </div>
+                    <div style= "display: flex; height: 20px; margin-top: 8px; margin-bottom: 2px; border-bottom:1px solid rgba(255, 255, 255, 0.25)">Taker Fees</div>
+                    <div style="display: flex; margin-top: 4px">
+                      <div style="color: #a0a0a0; flex-grow: 1">Market Orders</div>
+                      <div>${(row.takerFee / 100)}%</div>
+                    </div>
+                </div>
+              `}>
+            {row.makerFee === row.takerFee && row.makerFee === 0
+              ? <Empty>None</Empty>
+              : row.makerFee != row.takerFee
+                ? <>{row.takerFee === 0
+                  ? <>{(row.makerFee / 100)}% / 0%</>
+                  : <>None / {(row.takerFee / 100)}%</>
+                }</>
+                : <>{(row.makerFee / 100)}%</>
+            }
+            </span>
+          </>
+        )
       },
-      {
-        key: 'takerFee',
-        label: 'Taker Fee',
-        sortField: 'takerFee',
-        selector: row => `${(row.takerFee / 100).toFixed(2)}%`,
-      },
-      // {
-      //   key: 'lotId',
-      //   label: 'Lot ID',
-      //   sortField: 'lotId',
-      //   selector: row => (
-      //     <>
-      //       <LocationLink
-      //         asteroidId={asteroid.id}
-      //         lotId={row.lotId}
-      //         zoomToLot
-      //         data-tooltip-id="detailsTooltip" />
-      //       <span>{formatters.lotName(row.lotId)}</span>
-      //     </>
-      //   )
-      // },
-      // {
-      //   key: 'centerPrice',
-      //   label: 'Center Price',
-      //   sortField: 'centerPrice',
-      //   selector: row => (
-      //     <>
-      //       <IconWrapper><SwayIcon /></IconWrapper>
-      //       {formatPrice(row.centerPrice, { fixedPrecision: 4 })}
-      //     </>
-      //   )
-      // },
       {
         key: 'permissions',
         label: 'permissions',
@@ -441,12 +467,14 @@ const AsteroidResourcePrices = ({ asteroid, mode, resource }) => {
         d += m.demand;
       });
 
-      if (resourceMarketplaces.length % 2 === 1) {
-        m = resourceMarketplaces[(resourceMarketplaces.length / 2) - 0.5].centerPrice;
+      const nonzeroCenterMarkets = resourceMarketplaces.filter((n) => n.centerPrice != 0);
+      nonzeroCenterMarkets.sort((a, b) => a.centerPrice - b.centerPrice);
+      if (nonzeroCenterMarkets.length % 2 === 1) {
+        m = nonzeroCenterMarkets[(nonzeroCenterMarkets.length / 2) - 0.5].centerPrice;
       } else {
         m = (
-          resourceMarketplaces[(resourceMarketplaces.length / 2) - 1].centerPrice
-          + resourceMarketplaces[(resourceMarketplaces.length / 2)].centerPrice
+          nonzeroCenterMarkets[(nonzeroCenterMarkets.length / 2) - 1].centerPrice
+          + nonzeroCenterMarkets[(nonzeroCenterMarkets.length / 2)].centerPrice
         ) / 2;
       }
     }
@@ -476,23 +504,20 @@ const AsteroidResourcePrices = ({ asteroid, mode, resource }) => {
               </div>
             </MarketSummary>
             <MarketPrice>
-              <label>Median Price:</label> <SwayIcon />{formatPrice(medianPrice, { fixedPrecision: 4 })}<label>/{resource.isAtomic ? 'unit' : 'kg'}</label>
+              <label>Median Center Price:</label> <SwayIcon />{formatPrice(medianPrice, { fixedPrecision: 4 })}<label>/{resource.isAtomic ? 'unit' : 'kg'}</label>
             </MarketPrice>
           </div>
         </div>
 
         {selectedLot && (
           <SelectedMarketplace>
+          <label>{formatters.buildingName(selectedLot.building)}</label>
             <div>
               {marketplaceOwner && <CrewIndicator crew={marketplaceOwner} flip label="Managed by" />}
               <MarketplaceImage>
                 <img src={getBuildingIcon(8, 'w400')} />
                 <ClipCorner dimension={10} color="#333" />
               </MarketplaceImage>
-            </div>
-            <div>
-              <label>{formatters.buildingName(selectedLot.building)}</label>
-              <span>{formatResourceAmount(selectedSupply, resource.i)} available</span>
             </div>
           </SelectedMarketplace>
         )}
