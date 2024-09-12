@@ -525,7 +525,7 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
                 bottomBanner: leasePayment > 0 && (
                   <>
                     <SwayIcon />
-                    {formatFixed(leasePayment / 1e6, 1)}
+                    {formatFixed(leasePayment / 1e6, 0)}
                   </>
                 ),
                 iconBadge: <AgreementIcon />,
