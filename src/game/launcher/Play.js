@@ -54,16 +54,13 @@ const StatusRow = styled.div`
 `;
 const CaptainWrapper = styled.div``;
 const CrewmatesWrapper = styled.div`
-  margin-top: 20px;
-  width: 100%;
-  border-top: ${p => p.crew._crewmates.length > 1 ? `1px solid ${theme.colors.mainBorder}` : `0px transparent`};
+  border-top: 1px solid ${p => p.theme.colors.mainBorder};
   display: flex;
   flex-direction: row;
-  justify-content: center;
-  & > *:not(:first-child) {
-    margin-left: 8px;
-  }
+  justify-content: space-around;
+  margin-top: 20px;
   padding: 20px 12px 20px;
+  width: 100%;
 `;
 
 const Play = () => {
@@ -91,13 +88,12 @@ const Play = () => {
       <CaptainWrapper>
         {/* TODO: would be nice to shrink this portrait to accomadate view height without scrolling */}
         <CrewmateCardFramed
-          isCaptain={true}
           borderColor={theme.colors.darkMain}
           crewmate={crew._crewmates[0]}
-          crewId={crew.id}
+          isCaptain
           width={captainWidth} />
       </CaptainWrapper>
-      <CrewmatesWrapper crew={crew}>
+      <CrewmatesWrapper>
         {[1,2,3,4].map((i) => {
           if (crew._crewmates[i]) {
             return (
@@ -110,6 +106,7 @@ const Play = () => {
                 width={crewmateWidth} />
             );
           }
+          return <EmptyCrewmateCardFramed key={i} width={crewmateWidth} hideHeader />;
         })}
       </CrewmatesWrapper>
     </Wrapper>

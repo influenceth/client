@@ -51,20 +51,14 @@ const CardImage = styled(CardLayer)`
 
 const Card = styled.div`
   background-color: rgba(20, 20, 20, 0.75);
-  ${p => (!p.showClassInHeader && p.crewmateClass)
-    ? `background: linear-gradient(
-        to bottom,
-        rgba(30, 30, 30, 0) 0%,
-        rgba(${p.classLabel ? `${p.theme.colors.classes.rgb[p.classLabel]}, 0.5` : `30, 30, 30, 1`}) 75%,
-        rgba(${p.classLabel ? `${p.theme.colors.classes.rgb[p.classLabel]}, 0.2` : `30, 30, 30, 1`}) 100%
-      );`
-    : `background: linear-gradient(
-        to bottom,
-        rgba(30, 30, 30, 0) 0%,
-        rgba(${p.classLabel ? `${p.theme.colors.classes.rgb[p.classLabel]}, 0.4` : `30, 30, 30, 1`}) 75%,
-        rgba(${p.classLabel ? `${p.theme.colors.classes.rgb[p.classLabel]}, 0.1` : `30, 30, 30, 1`}) 100%
-      );`
-  }
+  ${p => p.hasOverlay ? '' : `
+    background: linear-gradient(
+      to bottom,
+      rgba(30, 30, 30, 0) 0%,
+      rgba(${p.classLabel ? `${p.theme.colors.classes.rgb[p.classLabel]}, ${p.showClassInHeader ? 0.4 : 0.5}` : `30, 30, 30, 1`}) 75%,
+      rgba(${p.classLabel ? `${p.theme.colors.classes.rgb[p.classLabel]}, ${p.showClassInHeader ? 0.1 : 0.2}` : `30, 30, 30, 1`}) 100%
+    );
+  `}
   cursor: ${p => p.clickable && p.theme.cursors.active};
   font-size: ${p => p.fontSize || p.theme.fontSizes.detailText};
   padding-top: 137.5%;
@@ -175,7 +169,7 @@ const AbstractCard = ({ imageUrl, onClick, overlay, ...props }) => {
       hasOverlay={!!overlay}
       classLabel={props.crewmateClass ? Crewmate.getClass(props.crewmateClass)?.name : undefined}
       {...props}>
-      {!imageLoaded && <LoadingAnimation color={'white'} css={loadingCss} />}
+      {imageLoaded ? null : <LoadingAnimation color={'white'} css={loadingCss} />}
       <CardImage visible={imageLoaded} applyMask={!overlay && !props.hideMask}>
         <img
           ref={watchImageLoad}
@@ -188,7 +182,7 @@ const AbstractCard = ({ imageUrl, onClick, overlay, ...props }) => {
           <CrewClassIcon crewClass={props.crewmateClass} />{' '}
           {!props.hideNameInHeader && props.crewmateName}
         </CrewName>
-        {props.showCollectionInHeader && props.crewmateColl && (
+        {props.showCollectionInHeader && props.crewmateColl ? (
           <DataReadout style={{
             fontSize: '0.68em',
             ...(props.showClassInHeader
@@ -201,12 +195,12 @@ const AbstractCard = ({ imageUrl, onClick, overlay, ...props }) => {
             }}>
             {Crewmate.getCollection(props.crewmateColl)?.name}
           </DataReadout>
-        )}
-        {props.showClassInHeader && props.crewmateClass && (
+        ) : null}
+        {props.showClassInHeader && props.crewmateClass ? (
           <DataReadout style={{ fontSize: '0.9em', opacity: 0.7 }}>
             {Crewmate.getClass(props.crewmateClass)?.name}
           </DataReadout>
-        )}
+        ) : null}
       </CardHeader>
       {!overlay && (
         <CardFooter>
