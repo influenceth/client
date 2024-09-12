@@ -39,7 +39,7 @@ export const useLotLink = ({ asteroidId: optAsteroidId, lotId: optLotId, resourc
   const zoomToLotAsNeeded = useCallback(() => {
     // if zoomToLot !== current zoomToLot, do something
     if (!!zoomToLot !== (currentZoomScene?.type === 'LOT')) {
-      dispatchZoomScene(zoomToLot ? { type: 'LOT' } : null);
+      // dispatchZoomScene(zoomToLot ? { type: 'LOT' } : null); // (trying to downplay this)
 
       // if this is not just a boolean, it is assumed to be a hudmenu to open upon arrival
       if (zoomToLot && (zoomToLot !== true)) {
