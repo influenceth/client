@@ -46,7 +46,7 @@ const CardImage = styled(CardLayer)`
     width: 100%;
   }
 
-  ${p => p.applyMask ? `mask-image: linear-gradient(to bottom, black 75%, transparent 90%);` : ''}
+  ${p => p.applyMask ? `mask-image: linear-gradient(to bottom, black 75%, transparent 100%);` : ''}
 `;
 
 const Card = styled.div`
@@ -54,15 +54,15 @@ const Card = styled.div`
   ${p => (!p.showClassInHeader && p.crewmateClass)
     ? `background: linear-gradient(
         to bottom,
-        rgba(30, 30, 30, 0) 10%,
-        rgba(${p.classLabel ? `${p.theme.colors.classes.rgb[p.classLabel]}, 0.3` : `30, 30, 30, 1`}) 60%,
-        rgba(${p.classLabel ? `${p.theme.colors.classes.rgb[p.classLabel]}, 0.7` : `30, 30, 30, 1`}) 100%
+        rgba(30, 30, 30, 0) 0%,
+        rgba(${p.classLabel ? `${p.theme.colors.classes.rgb[p.classLabel]}, 0.5` : `30, 30, 30, 1`}) 75%,
+        rgba(${p.classLabel ? `${p.theme.colors.classes.rgb[p.classLabel]}, 0.2` : `30, 30, 30, 1`}) 100%
       );`
     : `background: linear-gradient(
         to bottom,
-        rgba(0, 0, 0, 0) 10%,
-        rgba(${p.classLabel ? `${p.theme.colors.classes.rgb[p.classLabel]}, 0.5` : `30, 30, 30, 1`}) 60%,
-        rgba(0, 0, 0, 1) 100%
+        rgba(30, 30, 30, 0) 0%,
+        rgba(${p.classLabel ? `${p.theme.colors.classes.rgb[p.classLabel]}, 0.4` : `30, 30, 30, 1`}) 75%,
+        rgba(${p.classLabel ? `${p.theme.colors.classes.rgb[p.classLabel]}, 0.1` : `30, 30, 30, 1`}) 100%
       );`
   }
   cursor: ${p => p.clickable && p.theme.cursors.active};
