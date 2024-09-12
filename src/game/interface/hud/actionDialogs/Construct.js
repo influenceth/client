@@ -203,7 +203,7 @@ const Construct = ({ asteroid, lot, constructionManager, stage, ...props }) => {
               {/* TODO: disable both buttons if needs are met by incoming deliveries */}
               <MultiSourceWrapper>
                 <Button onClick={transferToSite}>
-                  <TransferToSiteIcon /> <span>Transfer from Inventories</span>
+                  <TransferToSiteIcon /> <span>Transfer from Inventory</span>
                 </Button>
 
                 {/* TODO: disable if no marketplaces exist */}
