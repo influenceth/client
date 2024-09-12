@@ -5,7 +5,6 @@ import cloneDeep from 'lodash/cloneDeep';
 
 import { CrewCaptainCardFramed } from '~/components/CrewmateCardFramed';
 import { AgreementIcon, CoreSampleIcon, ExtractionIcon, InfoIcon, InventoryIcon, LocationIcon, ResourceIcon, SwayIcon, SwayMonochromeIcon, WarningIcon } from '~/components/Icons';
-import PurchaseButtonInner from '~/components/PurchaseButtonInner';
 import ResourceThumbnail from '~/components/ResourceThumbnail';
 import useActionCrew from '~/hooks/useActionCrew';
 import useBlockTime from '~/hooks/useBlockTime';
@@ -17,7 +16,6 @@ import useLot from '~/hooks/useLot';
 import useStore from '~/hooks/useStore';
 import actionStage from '~/lib/actionStages';
 import formatters from '~/lib/formatters';
-import { TOKEN, TOKEN_SCALE } from '~/lib/priceUtils';
 import { reactBool, formatTimer, locationsArrToObj, getCrewAbilityBonuses, formatFixed, keyify, getProcessorLeaseConfig, getProcessorLeaseSelections } from '~/lib/utils';
 import theme from '~/theme';
 import { ActionDialogInner, theming, useAsteroidAndLot } from '../ActionDialog';
@@ -407,27 +405,13 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
     return [{}, {}];
   }, [depositOwner, selectedCoreSample]);
 
-  const goLabel = useMemo(() => {
+  const [ goLabel, goLabelPrice ] = useMemo(() => {
     const paymentTotal = (selectedCoreSample?.PrivateSale?.amount || 0) + (leasePayment || 0);
-    if (paymentTotal) {
-      return (
-        <PurchaseButtonInner>
-          <label>
-            {isPurchase && leasePayment
-              ? `Purchase, Lease, & Extract`
-              : (isPurchase
-                ? `Purchase & Extract`
-                : `Lease & Extract`
-              )
-            }
-          </label>
-          <span style={{ marginLeft: 10 }}>
-            <SwayIcon /> {Math.round(paymentTotal / TOKEN_SCALE[TOKEN.SWAY]).toLocaleString()}
-          </span>
-        </PurchaseButtonInner>
-      );
-    }
-    return `Extract`;
+    let label = `Extract`;
+    if (isPurchase && leasePayment) label = `Purchase, Lease, & Extract`;
+    else if (isPurchase) label = `Purchase & Extract`;
+    else if (leasePayment) label = `Lease & Extract`;
+    return [label, paymentTotal];
   }, [isPurchase, leasePayment])
 
   return (
@@ -590,6 +574,7 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
           )
         }
         goLabel={goLabel}
+        goLabelPrice={goLabelPrice}
         onGo={onStartExtraction}
         finalizeLabel="Complete"
         isSequenceable

@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import styled from 'styled-components';
 import { Asteroid, Crewmate, Lot, Permission, Process, Processor, Product, Time } from '@influenceth/sdk';
 
 import {
@@ -54,8 +53,6 @@ import useActionCrew from '~/hooks/useActionCrew';
 import useBlockTime from '~/hooks/useBlockTime';
 import useCrew from '~/hooks/useCrew';
 import theme from '~/theme';
-import PurchaseButtonInner from '~/components/PurchaseButtonInner';
-import { TOKEN, TOKEN_SCALE } from '~/lib/priceUtils';
 
 const SECTION_WIDTH = 1150;
 
@@ -399,20 +396,6 @@ const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...pro
     return [{}, ''];
   }, [processor.processorType]);
 
-  const goLabel = useMemo(() => {
-    if (leasePayment) {
-      return (
-        <PurchaseButtonInner>
-          <label>Lease & Begin</label>
-          <span style={{ marginLeft: 10 }}>
-            <SwayIcon /> {Math.round(leasePayment / TOKEN_SCALE[TOKEN.SWAY]).toLocaleString()}
-          </span>
-        </PurchaseButtonInner>
-      );
-    }
-    return `Begin`;
-  }, [leasePayment]);
-
   return (
     <>
       <ActionDialogHeader
@@ -609,7 +592,8 @@ const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...pro
             && (crewCan(Permission.IDS.RUN_PROCESS, lot.building) || leasePayment > 0)
           )
         }
-        goLabel={goLabel}
+        goLabel={`${leasePayment ? 'Lease & ' : ''}Begin`}
+        goLabelPrice={leasePayment}
         onGo={onStartProcess}
         finalizeLabel="Finish"
         isSequenceable

@@ -111,6 +111,7 @@ import { OrderAlert, TotalSway } from './MarketplaceOrder';
 import { ProductMarketSummary } from './ShoppingList';
 import ThumbnailBottomBanner from '~/components/ThumbnailBottomBanner';
 import ThumbnailIconBadge from '~/components/ThumbnailIconBadge';
+import PurchaseButtonInner from '~/components/PurchaseButtonInner';
 
 const SECTION_WIDTH = 780;
 
@@ -5230,6 +5231,7 @@ export const ActionDialogFooter = ({
   disabled,
   finalizeLabel,
   goLabel,
+  goLabelPrice,
   isSequenceable = false,
   requireLaunched = true,
   onClose,
@@ -5291,7 +5293,17 @@ export const ActionDialogFooter = ({
                   isTransaction
                   loading={reactBool(buttonsLoading)}
                   onClick={onGo}>
-                  {goLabel}
+                  {goLabelPrice > 0
+                    ? (
+                      <PurchaseButtonInner>
+                        <label>{goLabel}</label>
+                        <span style={{ marginLeft: 10 }}>
+                          <SwayIcon /> {Math.round(goLabelPrice / TOKEN_SCALE[TOKEN.SWAY]).toLocaleString()}
+                        </span>
+                      </PurchaseButtonInner>
+                    )
+                    : goLabel
+                  }
                 </Button>
               )}
             </>

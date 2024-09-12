@@ -377,7 +377,6 @@ const FeedCrew = ({
             <FlexSection style={{ alignItems: 'flex-start' }}>
               <FlexSectionBlock
                 title={`${exchangeSelection ? 'Purchase' : 'Transfer'} Food`}
-                titleDetails={exchangeSelection && <><SwayIcon /> {((exchangeSelection.fillPaymentTotal || 0) / TOKEN_SCALE[TOKEN.SWAY]).toLocaleString(undefined, { maximumFractionDigits: 0 })}</>}
                 style={{ alignSelf: 'stretch', marginBottom: 56 }}
                 bodyStyle={{ padding: 0 }}>
                 <ItemSelectionSection
@@ -507,7 +506,8 @@ const FeedCrew = ({
       <ActionDialogFooter
         disabled={disabled}
         finalizeLabel="Complete"
-        goLabel="Transfer"
+        goLabel={`${exchangeSelection?.fillPaymentTotal > 0 ? 'Purchase & ' : ''}Transfer`}
+        goLabelPrice={exchangeSelection?.fillPaymentTotal}
         onGo={onStartFeeding}
         stage={stage}
         waitForCrewReady
