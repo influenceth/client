@@ -299,6 +299,17 @@ const FeedCrew = ({
     }
   }, [crew?._crewmates, crew?.Crew?.lastFed, crew?._timeAcceleration, blockTime, selectedItems]);
 
+  // select max food available
+  useEffect(() => {
+    if (originInventory) {
+      const inferredAmount = Math.min(
+        originInventory.contents.find((c) => c.product === Product.IDS.FOOD)?.amount || 0,
+        foodStats.maxFood - foodStats.currentFood
+      );
+      setSelectedItems({ [Product.IDS.FOOD]: inferredAmount });
+    }
+  }, [originInventory]);
+
   const disabled = useMemo(() => {
     if (!origin) return true;
     if (totalMass === 0) return true;
