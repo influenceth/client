@@ -30,9 +30,12 @@ import useSimulationEnabled from '~/hooks/useSimulationEnabled';
 const borderColor = `rgba(255, 255, 255, 0.15)`;
 const DataBlock = styled.div``;
 const Desc = styled.div`
-  color: ${p => p.theme.colors.main};
-  font-size: 90%;
+  align-items: center;
+  display: flex;
+  flex-direction: row;
+  font-size: 14px;
   height: 38px;
+  text-align: center;
 `;
 
 const EditBlock = styled.div`
@@ -58,14 +61,18 @@ const Section = styled.div`
 `;
 
 const PolicySelector = styled.div`
-  & > h3 {
+  & > label {
     font-size: 13px;
+    color: white;
+    opacity: 0.5;
     margin: 0;
+    display: block;
+    padding: 2px 0 4px;
   }
   & > div {
     display: flex;
     flex-direction: row;
-    padding: 8px 0 0;
+    padding: 2px 0 0;
   }
 `;
 
@@ -74,12 +81,14 @@ const Policy = styled.div`
   display: flex;
   flex: 1;
   flex-direction: row;
+  margin-top: 4px;
+  font-size: 14px;
   & > svg {
+    font-size: 130%;
     margin-right: 4px;
   }
   ${p => p.isSelected
     ? `
-
       & > svg:not(:first-child) {
         display: none;
       }
@@ -127,9 +136,9 @@ const PrepaidInputBlock = styled(InputBlock)`
 
 const Toggle = styled.div``;
 const PayAsYouGoLabel = styled.div`
+  margin-top: 4px;
   align-items: flex-end;
   display: flex;
-  flex-direction: row;
   ${Toggle} {
     align-items: center;
     color: #CCC;
@@ -137,6 +146,7 @@ const PayAsYouGoLabel = styled.div`
     display: flex;
     opacity: 0.7;
     & > svg {
+      font-size: 130%;
       color: ${p => p.on ? p.theme.colors.main : 'white'};
     }
     & > span {
@@ -189,10 +199,10 @@ const PermSummaryWarning = styled(PermSummary)`
 
 const getPolicyColor = (policyType) => {
   switch (Number(policyType)) {
-    case Permission.POLICY_IDS.PRIVATE: return theme.colors.red;
+    case Permission.POLICY_IDS.PRIVATE: return theme.colors.lightRed;
     case Permission.POLICY_IDS.PUBLIC: return theme.colors.green;
-    case Permission.POLICY_IDS.PREPAID: return '#70cad0';
-    case Permission.POLICY_IDS.CONTRACT: return '#8687c1';
+    case Permission.POLICY_IDS.PREPAID: return theme.colors.success;
+    case Permission.POLICY_IDS.CONTRACT: return theme.colors.lightPurple;
     default: return '#666666';
   }
 }
@@ -352,7 +362,7 @@ const PolicyPanel = ({ editable = false, entity, permission }) => {
     if (editing === 'allowlist') {
       return {
         name: 'Allowlist',
-        color: '#225e75',
+        color: `${theme.colors.brightMain}`,
         description: `The permission is granted to individually listed crews or all crews of any listed wallets.`,
       };
     }
@@ -403,96 +413,87 @@ const PolicyPanel = ({ editable = false, entity, permission }) => {
       {editing && (
         <>
           <Section>
-            <Desc>{config.description}</Desc>
+            <Desc style={{ color: config.color }}>{config.description}</Desc>
           </Section>
 
           {editing === 'allowlist' && (
-            <>
-              <Section>
-                <Autocomplete
-                  allowCustomInput
-                  assetType="crews"
-                  disabled={nativeBool(saving)}
-                  excludeFunc={allowlistExclude}
-                  onSelect={allowlistAdd}
-                  placeholder="Search Crew or Paste Wallet Address"
-                  width={300}
-                />
-                <Allowlist>
-                  {(accountAllowlist || []).map((a) => (
-                    <AllowCrew key={a}>
-                      <label><AddressLink address={a} doNotReplaceYou truncate /></label>
-                      <span>Wallet</span>
-                      <IconButton
-                        borderless
-                        disabled={nativeBool(saving)}
-                        onClick={() => allowlistRemove(a)}>
-                        <CloseIcon />
-                      </IconButton>
-                    </AllowCrew>
-                  ))}
-                  {(allowlist || []).map((a) => (
-                    <AllowCrew key={a.id}>
-                      <label>{a?.Crew ? formatters.crewName(a) : <EntityName {...a} />}</label>
-                      <span>Crew #{a.id.toLocaleString()}</span>
-                      <IconButton
-                        borderless
-                        disabled={nativeBool(saving)}
-                        onClick={() => allowlistRemove(a)}>
-                        <CloseIcon />
-                      </IconButton>
-                    </AllowCrew>
-                  ))}
-                </Allowlist>
-              </Section>
-            </>
+            <Section>
+              <Autocomplete
+                allowCustomInput
+                assetType="crews"
+                disabled={nativeBool(saving)}
+                excludeFunc={allowlistExclude}
+                onSelect={allowlistAdd}
+                placeholder="Search Crew or Paste Wallet Address"
+                width={300}
+              />
+              <Allowlist>
+                {(accountAllowlist || []).map((a) => (
+                  <AllowCrew key={a}>
+                    <label><AddressLink address={a} doNotReplaceYou truncate /></label>
+                    <span>Wallet</span>
+                    <IconButton
+                      borderless
+                      disabled={nativeBool(saving)}
+                      onClick={() => allowlistRemove(a)}>
+                      <CloseIcon />
+                    </IconButton>
+                  </AllowCrew>
+                ))}
+                {(allowlist || []).map((a) => (
+                  <AllowCrew key={a.id}>
+                    <label>{a?.Crew ? formatters.crewName(a) : <EntityName {...a} />}</label>
+                    <span>Crew #{a.id.toLocaleString()}</span>
+                    <IconButton
+                      borderless
+                      disabled={nativeBool(saving)}
+                      onClick={() => allowlistRemove(a)}>
+                      <CloseIcon />
+                    </IconButton>
+                  </AllowCrew>
+                ))}
+              </Allowlist>
+            </Section>
           )}
 
           {editing === 'policy' && (
             <>
               <Section>
                 <PolicySelector>
-                  <h3>Policy Type</h3>
-                  <div>
-                    <Policy
-                      onClick={saving ? null : () => setPolicyType(Permission.POLICY_IDS.PRIVATE)}
-                      isSelected={policyType === Permission.POLICY_IDS.PRIVATE}>
-                      <RadioCheckedIcon /><RadioUncheckedIcon /> {Permission.POLICY_TYPES[Permission.POLICY_IDS.PRIVATE].name}
-                    </Policy>
-                    <Policy
-                      onClick={saving ? null : () => setPolicyType(Permission.POLICY_IDS.PREPAID)}
-                      isSelected={policyType === Permission.POLICY_IDS.PREPAID}>
-                      <RadioCheckedIcon /><RadioUncheckedIcon /> {Permission.POLICY_TYPES[Permission.POLICY_IDS.PREPAID].name}
-                    </Policy>
-                  </div>
-                  <div>
-                    <Policy
-                      onClick={(saving || entity?.label === Entity.IDS.ASTEROID) ? null : () => setPolicyType(Permission.POLICY_IDS.PUBLIC)}
-                      disabled={nativeBool(entity?.label === Entity.IDS.ASTEROID)}
-                      isSelected={policyType === Permission.POLICY_IDS.PUBLIC}>
-                      <RadioCheckedIcon /><RadioUncheckedIcon /> {Permission.POLICY_TYPES[Permission.POLICY_IDS.PUBLIC].name}
-                    </Policy>
-                    <Policy
-                      onClick={saving ? null : () => setPolicyType(Permission.POLICY_IDS.CONTRACT)}
-                      isSelected={policyType === Permission.POLICY_IDS.CONTRACT}>
-                      <RadioCheckedIcon /><RadioUncheckedIcon /> {Permission.POLICY_TYPES[Permission.POLICY_IDS.CONTRACT].name}
-                    </Policy>
-                  </div>
+                  <label>Policy Type</label>
+                  <Policy
+                    onClick={saving ? null : () => setPolicyType(Permission.POLICY_IDS.PRIVATE)}
+                    isSelected={policyType === Permission.POLICY_IDS.PRIVATE}>
+                    <RadioCheckedIcon /><RadioUncheckedIcon /> {Permission.POLICY_TYPES[Permission.POLICY_IDS.PRIVATE].name}
+                  </Policy>
+                  <Policy
+                    onClick={saving ? null : () => setPolicyType(Permission.POLICY_IDS.PREPAID)}
+                    isSelected={policyType === Permission.POLICY_IDS.PREPAID}>
+                    <RadioCheckedIcon /><RadioUncheckedIcon /> {Permission.POLICY_TYPES[Permission.POLICY_IDS.PREPAID].name}
+                  </Policy>
+                  <Policy
+                    onClick={(saving || entity?.label === Entity.IDS.ASTEROID) ? null : () => setPolicyType(Permission.POLICY_IDS.PUBLIC)}
+                    disabled={nativeBool(entity?.label === Entity.IDS.ASTEROID)}
+                    isSelected={policyType === Permission.POLICY_IDS.PUBLIC}>
+                    <RadioCheckedIcon /><RadioUncheckedIcon /> {Permission.POLICY_TYPES[Permission.POLICY_IDS.PUBLIC].name}
+                  </Policy>
+                  <Policy
+                    onClick={saving ? null : () => setPolicyType(Permission.POLICY_IDS.CONTRACT)}
+                    isSelected={policyType === Permission.POLICY_IDS.CONTRACT}>
+                    <RadioCheckedIcon /><RadioUncheckedIcon /> {Permission.POLICY_TYPES[Permission.POLICY_IDS.CONTRACT].name}
+                  </Policy>
                 </PolicySelector>
               </Section>
               {policyType === Permission.POLICY_IDS.PREPAID && (
-                <>
+                <Section>
                   <PrepaidInputBlock>
+                    <label>Price</label>
                     <PayAsYouGoLabel on={reactBool(isPayAsYouGo)}>
-                      <div>Price</div>
                       {isProcessingPermission(permission) && (
-                        <>
-                          <div style={{ flex: 1 }} />
-                          <Toggle onClick={toggleIsPayAsYouGo}>
-                            {isPayAsYouGo ? <CheckedIcon /> : <UncheckedIcon />}
-                            <span>Pay as You Go</span>
-                          </Toggle>
-                        </>
+                        <Toggle onClick={toggleIsPayAsYouGo}>
+                          {isPayAsYouGo ? <CheckedIcon /> : <UncheckedIcon />}
+                          <span>Pay as You Go</span>
+                        </Toggle>
                       )}
                     </PayAsYouGoLabel>
                     <div>
@@ -503,7 +504,7 @@ const PolicyPanel = ({ editable = false, entity, permission }) => {
                         step={1}
                         type="number"
                         value={`${details.rate * 24}`} />
-                      <span>SWAY per day (IRL)</span>
+                      <span>SWAY / day</span>
                     </div>
                   </PrepaidInputBlock>
                   
@@ -520,7 +521,7 @@ const PolicyPanel = ({ editable = false, entity, permission }) => {
                             step={1}
                             type="number"
                             value={`${details.initialTerm}`} />
-                          <span>days (IRL)</span>
+                          <span>days</span>
                         </div>
                       </PrepaidInputBlock>
                       <PrepaidInputBlock>
@@ -534,15 +535,15 @@ const PolicyPanel = ({ editable = false, entity, permission }) => {
                             step={1}
                             type="number"
                             value={`${details.noticePeriod}`} />
-                          <span>days (IRL)</span>
+                          <span>days</span>
                         </div>
                       </PrepaidInputBlock>
                     </>
                   )}
-                </>
+                </Section>
               )}
               {policyType === Permission.POLICY_IDS.CONTRACT && (
-                <>
+                <Section>
                   <InputBlock>
                     <label>Contract Address</label>
                     <div>
@@ -554,7 +555,7 @@ const PolicyPanel = ({ editable = false, entity, permission }) => {
                         value={details.contract || ''} />
                     </div>
                   </InputBlock>
-                </>
+                </Section>
               )}
             </>
           )}
