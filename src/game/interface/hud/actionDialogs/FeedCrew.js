@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Asteroid, Crew, Crewmate, Lot, Permission, Product, Time } from '@influenceth/sdk';
 import styled from 'styled-components';
 
-import { AddRationsIcon, ForwardIcon, InventoryIcon, RouteIcon, SwayIcon } from '~/components/Icons';
+import { AddRationsIcon, ForwardIcon, InventoryIcon, RouteIcon, SwayIcon, WarningIcon, StopwatchIcon, FoodIcon } from '~/components/Icons';
 import useCrewContext from '~/hooks/useCrewContext';
 import useLot from '~/hooks/useLot';
 import { reactBool, formatTimer, locationsArrToObj, getCrewAbilityBonuses, formatFixed } from '~/lib/utils';
@@ -42,22 +42,8 @@ import useBlockTime from '~/hooks/useBlockTime';
 import { TOKEN, TOKEN_SCALE } from '~/lib/priceUtils';
 import useCrew from '~/hooks/useCrew';
 
-const PseudoStatRow = styled.div`
-  align-items: center;
-  display: flex;
-  justify-content: space-between;
-  padding: 5px 0;
-  & > label {
-    flex: 1;
-  }
-  & > span {
-    color: white;
-    font-weight: bold;
-    white-space: nowrap;
-  }
-`;
-
 const UnderLabel = styled.span`
+  color: ${p => p.theme.colors.secondaryText};
   overflow: hidden;
   text-align: center;
   width: 25%;
@@ -68,9 +54,40 @@ const UnderLabel = styled.span`
   &:last-child {
     text-align: right;
   }
+  & > b {
+    color: white;
+    font-weight: normal;
+  }
 `;
 
-const FoodMiniBar = ({ addingFood, barColor, deltaValue, maxFood, postValue }) => (
+const RationingPenalty = styled.div`
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  margin: 4px 0 8px;
+  color: white;
+  font-size: 14px;
+  & > label {
+    flex: 1;
+  }
+  & > span {
+    font-weight: bold;
+    white-space: nowrap;
+  }
+  & > svg {
+    font-size: 16px;
+    margin-right: 6px;
+  }
+`;
+
+const TimeUntilRationing = styled(RationingPenalty)`
+  & > svg {
+    margin-right: 4px;
+    font-size: 18px;
+  }
+`;
+
+const FoodMiniBar = ({ currentFood, addingFood, barColor, deltaValue, maxFood, postValue }) => (
   <MiniBarChart
     color={barColor}
     label="Food Capacity"
@@ -81,9 +98,11 @@ const FoodMiniBar = ({ addingFood, barColor, deltaValue, maxFood, postValue }) =
     deltaValue={deltaValue}
     underLabels={(
       <>
-        <UnderLabel style={{ color: barColor }}>{deltaValue < 0 ? '-' : '+'}{formatResourceMass(addingFood, Product.IDS.FOOD)}</UnderLabel>
-        <UnderLabel style={{ color: theme.colors.warning }}>50%</UnderLabel>
-        <UnderLabel style={{ color: 'white' }}>{formatResourceMass(maxFood, Product.IDS.FOOD)}</UnderLabel>
+        <UnderLabel style={{ color: barColor }}>
+          {formatResourceMass(currentFood + (addingFood || 0), Product.IDS.FOOD)}
+        </UnderLabel>
+        <UnderLabel>50%</UnderLabel>
+        <UnderLabel>Max: <b>{formatResourceMass(maxFood, Product.IDS.FOOD)}</b></UnderLabel>
       </>
     )}
   />
@@ -249,27 +268,47 @@ const FeedCrew = ({
   const foodStats = useMemo(() => {
     const maxFood = (crew?._crewmates?.length || 1) * Crew.CREWMATE_FOOD_PER_YEAR;
     const timeSinceFed = Time.toGameDuration(blockTime - (crew?.Crew?.lastFed || 0), crew?._timeAcceleration);
-    const currentFood = Math.floor(maxFood * Crew.getCurrentFoodRatio(timeSinceFed, crew._foodBonuses?.consumption)); // floor to quanta
+    const currentFood = maxFood * Crew.getCurrentFoodRatio(timeSinceFed, crew._foodBonuses?.consumption);
+
     const addingFood = selectedItems[Product.IDS.FOOD] || 0;
-    const postValue = (currentFood + addingFood) / maxFood;
-    const postTimeSinceFed = Crew.getTimeSinceFed((currentFood + addingFood) / maxFood, crew._foodBonuses?.consumption);
-    const rationingTimeSinceFed = Crew.getTimeSinceFed(0.5, crew._foodBonuses?.consumption);
+    const postFoodTotal = currentFood + addingFood;
+    const postRatio = postFoodTotal / maxFood;
+    const postTimeSinceFed = Crew.getTimeSinceFed(postRatio, crew._foodBonuses?.consumption);
     const rationingPenalty = 1 - Crew.getFoodMultiplier(postTimeSinceFed, crew._foodBonuses?.consumption, crew._foodBonuses?.rationing);
+
+    const sampleMult = 300; // sample hourly rate over this period (i.e. 5 minutes)
+    const postFoodRateSampleTotal = maxFood * Crew.getCurrentFoodRatio(postTimeSinceFed + Time.toGameDuration(sampleMult, crew?._timeAcceleration), crew._foodBonuses?.consumption);
+    const crewConsumptionRate = (postFoodTotal - postFoodRateSampleTotal) * (3600 / sampleMult);
+
+    const rationingTimeSinceFed = Crew.getTimeSinceFed(0.5, crew._foodBonuses?.consumption);
+    const outOfFoodTimeSinceFed = Crew.getTimeSinceFed(0, crew._foodBonuses?.consumption);
     const timeUntilRationing = Time.toRealDuration(Math.max(0, rationingTimeSinceFed - postTimeSinceFed));
-    const barColor = postValue >= 0.5 ? theme.colors.green : theme.colors.warning;
-    const deltaValue = addingFood / maxFood;
+    const timeUntilOutOfFood = Time.toRealDuration(Math.max(0, outOfFoodTimeSinceFed - postTimeSinceFed));
 
     return {
       addingFood,
-      barColor,
-      currentFood,
-      deltaValue,
+      barColor: postRatio >= 0.5 ? theme.colors.green : theme.colors.warning,
+      currentFood: Math.floor(currentFood), // floor to quanta
+      deltaValue: addingFood / maxFood,
       maxFood,
-      postValue,
+      postValue: postRatio,
       rationingPenalty,
-      timeUntilRationing
+      timeUntilRationing,
+      timeUntilOutOfFood,
+      crewConsumptionRate
     }
   }, [crew?._crewmates, crew?.Crew?.lastFed, crew?._timeAcceleration, blockTime, selectedItems]);
+
+  // select max food available
+  useEffect(() => {
+    if (originInventory) {
+      const inferredAmount = Math.min(
+        originInventory.contents.find((c) => c.product === Product.IDS.FOOD)?.amount || 0,
+        foodStats.maxFood - foodStats.currentFood
+      );
+      setSelectedItems({ [Product.IDS.FOOD]: inferredAmount });
+    }
+  }, [originInventory]);
 
   const disabled = useMemo(() => {
     if (!origin) return true;
@@ -309,7 +348,7 @@ const FeedCrew = ({
           <MultiSourceInputBlock
             crew={crew}
             disabled={stage !== actionStages.NOT_STARTED}
-            isSelected={stage === actionStages.NOT_STARTED}
+            isSelected={stage === actionStages.NOT_STARTED && (exchangeSelection || inventorySelection)}
             exchangeSelection={exchangeSelection}
             inventorySelection={inventorySelection}
             onClear={onClear}
@@ -333,15 +372,13 @@ const FeedCrew = ({
             crew={crew}
             title="To Crew" />
         </FlexSection>
-
         {tab === 0 && (
           <>
             <FlexSection style={{ alignItems: 'flex-start' }}>
               <FlexSectionBlock
-                title={`Items to ${exchangeSelection ? 'Purchase' : 'Transfer'}`}
-                titleDetails={exchangeSelection && <><SwayIcon /> {((exchangeSelection.fillPaymentTotal || 0) / TOKEN_SCALE[TOKEN.SWAY]).toLocaleString(undefined, { maximumFractionDigits: 0 })}</>}
+                title={`${exchangeSelection ? 'Purchase' : 'Transfer'} Food`}
                 style={{ alignSelf: 'stretch', marginBottom: 56 }}
-                bodyStyle={{ height: '100%', padding: 0 }}>
+                bodyStyle={{ padding: 0 }}>
                 <ItemSelectionSection
                   columns={3}
                   label="Transfer Food"
@@ -349,7 +386,7 @@ const FeedCrew = ({
                   minCells={0}
                   onClick={inventorySelection && stage === actionStages.NOT_STARTED && origin ? (() => setTransferSelectorOpen(true)) : undefined}
                   stage={stage}
-                  style={{ height: '100%' }}
+                  style={{ height: '130px' }}
                   unwrapped />
               </FlexSectionBlock>
 
@@ -358,27 +395,73 @@ const FeedCrew = ({
               <div style={{ alignSelf: 'flex-start', paddingTop: 10, width: '50%' }}>
                 <FoodMiniBar {...foodStats} />
 
-                <hr style={{ margin: '15px 0', opacity: 0.2 }} />
+                <div style={{ borderBottom: '1px solid #333', margin: '20px 0 12px' }} />
 
-                <PseudoStatRow>
+                <RationingPenalty
+                  style={{ color: foodStats.rationingPenalty > 0 ? theme.colors.warning : theme.colors.green}} 
+                  data-tooltip-id="actionDialogTooltip"
+                  data-tooltip-place="left"
+                  data-tooltip-html={`
+                    <div style="width: 350px">
+                      <label style="font-size: 14px; text-transform: uppercase; font-weight: bold; display: flex; margin-top: 8px; margin-bottom: 12px">
+                        Rationing Penalty
+                      </label>
+                      <div style="display: flex; border-bottom:1px solid rgba(255, 255, 255, 0.25)"></div>  
+                      <div style="margin-top: 8px; margin-bottom: 8px">
+                        Crews begin <span style="font-weight: bold">Rationing</span> when 50% of their food is depleted.<br></br>
+                        Rationing Crews perform all actions with an efficiency penalty that begins at <span style="font-weight: bold">0%</span> and increases to <span style="font-weight: bold">75%</span> when they are completely out of food.
+                      </div>
+                      ${crew._foodBonuses?.rationing === 1 ? '' : `
+                        <div style="display: flex; border-bottom:1px solid rgba(255, 255, 255, 0.25)"></div>
+                        <div style="align-items: center; display: flex; justify-content: space-between; margin-top: 8px; margin-bottom: 8px">
+                          <label>Rationing Penalty Multiplier (Bonus)</label>
+                          <span>x ${formatFixed(crew._foodBonuses.rationing, 2)}</span>
+                        </div>
+                      `}
+                    </div>
+                  `}>
+                  {foodStats.rationingPenalty > 0 ? <WarningIcon /> : <FoodIcon />}
                   <label>Rationing Penalty</label>
-                  <span style={{ color: foodStats.rationingPenalty > 0 ? theme.colors.red : theme.colors.green }}>{formatFixed(100 * (foodStats.rationingPenalty || 0), 1)}%</span>
-                </PseudoStatRow>
-                <PseudoStatRow>
-                  <label>Time Until Rationing</label>
-                  <span>{formatTimer(foodStats.timeUntilRationing)}</span>
-                </PseudoStatRow>
-
-                <WarningAlert severity="warning" style={{ marginBottom: 20 }}>
-                  <div style={{ alignSelf: 'flex-start' }}><AddRationsIcon /></div>
-                  <div>
-                    A crew must start <i>Rationing</i> when 50% of their food is depleted.
-                    <br/><br/>
-                    Rationing Crews perform all actions with an efficiency penalty that
-                    begins at <i>0%</i> and increases to <i>75%</i> when they are completely
-                    out of food.
-                  </div>
-                </WarningAlert>
+                  <span>{formatFixed(100 * foodStats.rationingPenalty, 1)}%</span>
+                </RationingPenalty>
+                <TimeUntilRationing 
+                  style={{ color: foodStats.timeUntilRationing > 0 ? theme.colors.brightMain : theme.colors.red }}
+                  data-tooltip-id="actionDialogTooltip"
+                  data-tooltip-place="left"
+                  data-tooltip-html={`
+                    <div style="width: 350px">
+                      <label style="font-size: 14px; text-transform: uppercase; font-weight: bold; display: flex; margin-top: 8px; margin-bottom: 12px">
+                        Food Consumption
+                      </label>
+                      <div style="display: flex; border-bottom:1px solid rgba(255, 255, 255, 0.25)"></div>  
+                      <div style="align-items: center; display: flex; justify-content: space-between; margin-top: 8px; margin-bottom: 8px">
+                        <label>${foodStats.timeUntilRationing > 0 ? 'Consumption Rate' : 'Consumption Rate (Rationing)'}</label>
+                        <span>${formatFixed(foodStats.crewConsumptionRate, 1)} kg / hour</span>
+                      </div>
+                      ${crew._foodBonuses?.consumption === 1 ? '' : `
+                        <div style="align-items: center; display: flex; justify-content: space-between; margin-top: 8px; margin-bottom: 8px">
+                          <label>Consumption Rate Multiplier (Bonus)</label>
+                          <span>x ${formatFixed(1 / crew._foodBonuses.consumption, 2)}</span>
+                        </div>
+                      `}
+                    </div>
+                  `}>
+                  <StopwatchIcon />
+                  {foodStats.timeUntilRationing > 0 
+                    ? (
+                      <>
+                        <label>Time Until Rationing</label>
+                        <span>{formatTimer(foodStats.timeUntilRationing, 3)}</span>
+                      </>
+                    )
+                    : (
+                      <>
+                        <label>Time Until Out of Food</label>
+                        <span>{formatTimer(foodStats.timeUntilOutOfFood, 3)}</span>
+                      </>
+                    )
+                  }
+                </TimeUntilRationing>
               </div>
 
             </FlexSection>
@@ -423,7 +506,8 @@ const FeedCrew = ({
       <ActionDialogFooter
         disabled={disabled}
         finalizeLabel="Complete"
-        goLabel="Transfer"
+        goLabel={`${exchangeSelection?.fillPaymentTotal > 0 ? 'Purchase & ' : ''}Transfer`}
+        goLabelPrice={exchangeSelection?.fillPaymentTotal}
         onGo={onStartFeeding}
         stage={stage}
         waitForCrewReady

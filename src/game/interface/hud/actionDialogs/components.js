@@ -111,6 +111,7 @@ import { OrderAlert, TotalSway } from './MarketplaceOrder';
 import { ProductMarketSummary } from './ShoppingList';
 import ThumbnailBottomBanner from '~/components/ThumbnailBottomBanner';
 import ThumbnailIconBadge from '~/components/ThumbnailIconBadge';
+import PurchaseButtonInner from '~/components/PurchaseButtonInner';
 
 const SECTION_WIDTH = 780;
 
@@ -974,14 +975,14 @@ const InvSelectionTableWrapper = styled.div`
   }
 `;
 
-export const MultiSourceWrapper = styled(AssetBlock).attrs({ isSelected: true })`
+export const MultiSourceWrapper = styled(AssetBlock)`
   align-items: center;
   align-self: stretch;
   border: 0;
   display: flex;
   flex-direction: column;
   justify-content: space-evenly;
-  padding: 0 15px;
+  padding: 0 10px;
   width: 50%;
   & > button {
     width: 100%;
@@ -4786,7 +4787,7 @@ export const MultiSourceInputBlock = ({
   if (offerExchanges && !exchangeSelection && !inventorySelection) {
     return (
       <FlexSectionInputBlock bodyStyle={{ height: 104, padding: 0 }} {...props}>
-        <MultiSourceWrapper style={{ height: 104, width: '100%' }}>
+        <MultiSourceWrapper style={{ height: 104, width: '100%' }} isSelected={false}>
           <Button onClick={onClickInventory}>
             <TransferToSiteIcon /> <span>Transfer from Inventory</span>
           </Button>
@@ -5230,6 +5231,7 @@ export const ActionDialogFooter = ({
   disabled,
   finalizeLabel,
   goLabel,
+  goLabelPrice,
   isSequenceable = false,
   requireLaunched = true,
   onClose,
@@ -5291,7 +5293,17 @@ export const ActionDialogFooter = ({
                   isTransaction
                   loading={reactBool(buttonsLoading)}
                   onClick={onGo}>
-                  {goLabel}
+                  {goLabelPrice > 0
+                    ? (
+                      <PurchaseButtonInner>
+                        <label>{goLabel}</label>
+                        <span style={{ marginLeft: 10 }}>
+                          <SwayIcon /> {Math.round(goLabelPrice / TOKEN_SCALE[TOKEN.SWAY]).toLocaleString()}
+                        </span>
+                      </PurchaseButtonInner>
+                    )
+                    : goLabel
+                  }
                 </Button>
               )}
             </>

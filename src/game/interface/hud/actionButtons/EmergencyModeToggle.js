@@ -1,4 +1,5 @@
 import { useCallback, useMemo } from 'react';
+import { Crew, Time } from '@influenceth/sdk';
 
 import { EmergencyModeEnterIcon, EmergencyModeExitIcon } from '~/components/Icons';
 import useShip from '~/hooks/useShip';
@@ -6,7 +7,7 @@ import useShipEmergencyManager from '~/hooks/actionManagers/useShipEmergencyMana
 import ActionButton, { getCrewDisabledReason } from './ActionButton';
 import useReadyAtWatcher from '~/hooks/useReadyAtWatcher';
 
-const isVisible = ({ crew, crewedShip, ship }) => {
+const isVisible = ({ blockTime, crew, crewedShip, ship }) => {
   if (!crew || !crewedShip || !ship) return false; // not on a ship
   if (crewedShip.Control?.controller?.id !== crew.id) return false; // not piloting a ship
   if (crew && ship && crew._location.shipId === ship.id) {
@@ -14,7 +15,11 @@ const isVisible = ({ crew, crewedShip, ship }) => {
     if (ship.Ship.emergencyAt > 0) return true;
 
     // hide if food is not low
-    if (crew?._foodBonuses >= 1) return false;
+    if (blockTime > 0 && crew) {
+      const lastFedAgo = Time.toGameDuration(blockTime - (crew.Crew?.lastFed || 0), parseInt(crew._timeAcceleration) || 1);
+      const foodRatio = Crew.getCurrentFoodRatio(lastFedAgo, crew._foodBonuses?.consumption);
+      if (foodRatio > 0.5) return false;
+    }
 
     return true;
   }

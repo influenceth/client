@@ -1,8 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import styled from 'styled-components';
 import { Asteroid, Building, Crewmate, Entity, Lot, Permission, Product, Ship, Time } from '@influenceth/sdk';
 
-import { CaretIcon, CloseIcon, ForwardIcon, AssembleShipIcon, ProductionIcon, InventoryIcon, LocationIcon, SwayIcon, AgreementIcon } from '~/components/Icons';
+import { ForwardIcon, AssembleShipIcon, InventoryIcon, LocationIcon, SwayIcon, AgreementIcon } from '~/components/Icons';
 import useCrewContext from '~/hooks/useCrewContext';
 import { reactBool, formatTimer, locationsArrToObj, getCrewAbilityBonuses, formatFixed, getProcessorLeaseSelections, getProcessorLeaseConfig } from '~/lib/utils';
 
@@ -14,8 +13,6 @@ import {
   FlexSection,
   FlexSectionSpacer,
   FlexSectionBlock,
-  FlexSectionInputBody,
-  sectionBodyCornerSize,
   RecipeSlider,
   TransferDistanceDetails,
   ProcessInputSquareSection,
@@ -46,8 +43,6 @@ import formatters from '~/lib/formatters';
 import useActionCrew from '~/hooks/useActionCrew';
 import useBlockTime from '~/hooks/useBlockTime';
 import useCrew from '~/hooks/useCrew';
-import PurchaseButtonInner from '~/components/PurchaseButtonInner';
-import { TOKEN, TOKEN_SCALE } from '~/lib/priceUtils';
 
 const SECTION_WIDTH = 1046;
 
@@ -288,20 +283,6 @@ const AssembleShip = ({ asteroid, lot, dryDockManager, stage, ...props }) => {
     return !inputArr.find((i) => (sourceContentObj[i] || 0) < process.inputs[i]);
   }, [inputArr, originInventory?.contents, process]);
 
-  const goLabel = useMemo(() => {
-    if (leasePayment) {
-      return (
-        <PurchaseButtonInner>
-          <label>Lease & Begin Assembly</label>
-          <span style={{ marginLeft: 10 }}>
-            <SwayIcon /> {Math.round(leasePayment / TOKEN_SCALE[TOKEN.SWAY]).toLocaleString()}
-          </span>
-        </PurchaseButtonInner>
-      );
-    }
-    return `Begin Assembly`;
-  }, [leasePayment]);
-
   return (
     <>
       <ActionDialogHeader
@@ -495,7 +476,8 @@ const AssembleShip = ({ asteroid, lot, dryDockManager, stage, ...props }) => {
         finalizeLabel="Deliver Ship"
         isSequenceable
         onFinalize={onFinish}
-        goLabel={goLabel}
+        goLabel={`${leasePayment ? 'Lease & ' : ''}Begin Assembly`}
+        goLabelPrice={leasePayment}
         onGo={onStart}
         stage={stage}
         wide
