@@ -30,8 +30,12 @@ import useSimulationEnabled from '~/hooks/useSimulationEnabled';
 const borderColor = `rgba(255, 255, 255, 0.15)`;
 const DataBlock = styled.div``;
 const Desc = styled.div`
+  align-items: center;
+  display: flex;
+  flex-direction: row;
   font-size: 14px;
   height: 38px;
+  text-align: center;
 `;
 
 const EditBlock = styled.div`
@@ -85,7 +89,6 @@ const Policy = styled.div`
   }
   ${p => p.isSelected
     ? `
-
       & > svg:not(:first-child) {
         display: none;
       }
@@ -410,49 +413,47 @@ const PolicyPanel = ({ editable = false, entity, permission }) => {
       {editing && (
         <>
           <Section>
-            <Desc style={{color: `${config.color}`}}>{config.description}</Desc>
+            <Desc style={{ color: config.color }}>{config.description}</Desc>
           </Section>
 
           {editing === 'allowlist' && (
-            <>
-              <Section>
-                <Autocomplete
-                  allowCustomInput
-                  assetType="crews"
-                  disabled={nativeBool(saving)}
-                  excludeFunc={allowlistExclude}
-                  onSelect={allowlistAdd}
-                  placeholder="Search Crew or Paste Wallet Address"
-                  width={300}
-                />
-                <Allowlist>
-                  {(accountAllowlist || []).map((a) => (
-                    <AllowCrew key={a}>
-                      <label><AddressLink address={a} doNotReplaceYou truncate /></label>
-                      <span>Wallet</span>
-                      <IconButton
-                        borderless
-                        disabled={nativeBool(saving)}
-                        onClick={() => allowlistRemove(a)}>
-                        <CloseIcon />
-                      </IconButton>
-                    </AllowCrew>
-                  ))}
-                  {(allowlist || []).map((a) => (
-                    <AllowCrew key={a.id}>
-                      <label>{a?.Crew ? formatters.crewName(a) : <EntityName {...a} />}</label>
-                      <span>Crew #{a.id.toLocaleString()}</span>
-                      <IconButton
-                        borderless
-                        disabled={nativeBool(saving)}
-                        onClick={() => allowlistRemove(a)}>
-                        <CloseIcon />
-                      </IconButton>
-                    </AllowCrew>
-                  ))}
-                </Allowlist>
-              </Section>
-            </>
+            <Section>
+              <Autocomplete
+                allowCustomInput
+                assetType="crews"
+                disabled={nativeBool(saving)}
+                excludeFunc={allowlistExclude}
+                onSelect={allowlistAdd}
+                placeholder="Search Crew or Paste Wallet Address"
+                width={300}
+              />
+              <Allowlist>
+                {(accountAllowlist || []).map((a) => (
+                  <AllowCrew key={a}>
+                    <label><AddressLink address={a} doNotReplaceYou truncate /></label>
+                    <span>Wallet</span>
+                    <IconButton
+                      borderless
+                      disabled={nativeBool(saving)}
+                      onClick={() => allowlistRemove(a)}>
+                      <CloseIcon />
+                    </IconButton>
+                  </AllowCrew>
+                ))}
+                {(allowlist || []).map((a) => (
+                  <AllowCrew key={a.id}>
+                    <label>{a?.Crew ? formatters.crewName(a) : <EntityName {...a} />}</label>
+                    <span>Crew #{a.id.toLocaleString()}</span>
+                    <IconButton
+                      borderless
+                      disabled={nativeBool(saving)}
+                      onClick={() => allowlistRemove(a)}>
+                      <CloseIcon />
+                    </IconButton>
+                  </AllowCrew>
+                ))}
+              </Allowlist>
+            </Section>
           )}
 
           {editing === 'policy' && (
