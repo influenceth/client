@@ -3766,6 +3766,13 @@ export const ActionDialogHeader = ({ action, actionCrew, crewAvailableTime, dela
 export const LeaseDetailsLabel = styled.div`
   color: ${p => p.theme.colors.success};
   font-size: 14px;
+  text-transform: uppercase;
+`;
+
+export const BuyingLabel = styled.div`
+  color: ${p => p.theme.colors.brightMain};
+  font-size: 14px;
+  text-transform: uppercase;
 `;
 
 export const LeaseInfoIcon = () => (

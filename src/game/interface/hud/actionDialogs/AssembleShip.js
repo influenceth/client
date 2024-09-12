@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import styled from 'styled-components';
 import { Asteroid, Building, Crewmate, Entity, Lot, Permission, Product, Ship, Time } from '@influenceth/sdk';
+import { CrewCaptainCardFramed } from '~/components/CrewmateCardFramed';
 
 import { CaretIcon, CloseIcon, ForwardIcon, AssembleShipIcon, ProductionIcon, InventoryIcon, LocationIcon, SwayIcon, AgreementIcon } from '~/components/Icons';
 import useCrewContext from '~/hooks/useCrewContext';
@@ -324,7 +325,7 @@ const AssembleShip = ({ asteroid, lot, dryDockManager, stage, ...props }) => {
           <LotInputBlock
             lot={lot}
             title="Assembly Location"
-            titleDetails={prepaidLeaseConfig && <LeaseDetailsLabel>Lease Required</LeaseDetailsLabel>}
+            titleDetails={prepaidLeaseConfig && <LeaseDetailsLabel>Leasing</LeaseDetailsLabel>}
             disabled={stage !== actionStages.NOT_STARTED}
             imageProps={prepaidLeaseConfig && {
               bottomBanner: leasePayment > 0 && (
@@ -333,6 +334,7 @@ const AssembleShip = ({ asteroid, lot, dryDockManager, stage, ...props }) => {
                   {formatFixed(leasePayment / 1e6, 1)}
                 </> 
               ),
+              iconBorderColor: `rgba(${theme.colors.successDarkRGB}, 0.5)`,
               iconBadge: <AgreementIcon />,
               iconBadgeCorner: theme.colors.successDark
             }}
@@ -343,8 +345,18 @@ const AssembleShip = ({ asteroid, lot, dryDockManager, stage, ...props }) => {
                 {...prepaidLeaseConfig}
               />
             )}
-            addChildren={prepaidLeaseConfig && <LeaseInfoIcon />}
-            bodyStyle={prepaidLeaseConfig && { background: `rgba(${theme.colors.successDarkRGB}, 0.2)` }}
+            addChildren={
+              <div
+                style={{ position: 'absolute', top: 5, right: 5, zIndex: 1 }}>
+                <CrewCaptainCardFramed
+                  borderColor={`rgba(${theme.colors.mainRGB}, 0.5)`}
+                  crewId={lot?.building?.Control?.controller?.id}
+                  lessPadding
+                  noAnimation
+                  width={36} />
+              </div>
+            }
+            bodyStyle={prepaidLeaseConfig && { background: `rgba(${theme.colors.successDarkRGB}, 0.1)` }}
             style={{ width: 350 }}
           />
 

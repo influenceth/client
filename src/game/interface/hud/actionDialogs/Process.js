@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import styled from 'styled-components';
 import { Asteroid, Crewmate, Lot, Permission, Process, Processor, Product, Time } from '@influenceth/sdk';
+import { CrewCaptainCardFramed } from '~/components/CrewmateCardFramed';
 
 import {
   BackIcon,
@@ -430,7 +431,7 @@ const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...pro
         <FlexSection style={{ marginBottom: 32, width: SECTION_WIDTH }}>
           <LotInputBlock
             title={`${gerund} Location`}
-            titleDetails={prepaidLeaseConfig && <LeaseDetailsLabel>Lease Required</LeaseDetailsLabel>}
+            titleDetails={prepaidLeaseConfig && <LeaseDetailsLabel>Leasing</LeaseDetailsLabel>}
             lot={lot}
             disabled={stage !== actionStages.NOT_STARTED}
             imageProps={prepaidLeaseConfig && {
@@ -440,6 +441,7 @@ const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...pro
                   {formatFixed(leasePayment / 1e6, 1)}
                 </> 
               ),
+              iconBorderColor: `rgba(${theme.colors.successDarkRGB}, 0.5)`,
               iconBadge: <AgreementIcon />,
               iconBadgeCorner: theme.colors.successDark
             }}
@@ -450,8 +452,18 @@ const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...pro
                 {...prepaidLeaseConfig}
               />
             )}
-            addChildren={prepaidLeaseConfig && <LeaseInfoIcon />}
-            bodyStyle={prepaidLeaseConfig && { background: `rgba(${theme.colors.successDarkRGB}, 0.2)` }}
+            addChildren={
+              <div
+                style={{ position: 'absolute', top: 5, right: 5, zIndex: 1 }}>
+                <CrewCaptainCardFramed
+                  borderColor={`rgba(${theme.colors.mainRGB}, 0.5)`}
+                  crewId={lot?.building?.Control?.controller?.id}
+                  lessPadding
+                  noAnimation
+                  width={36} />
+              </div>
+            }
+            bodyStyle={prepaidLeaseConfig && { background: `rgba(${theme.colors.successDarkRGB}, 0.1)` }}
             style={{ flex: '0 0 30%' }}
           />
 

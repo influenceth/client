@@ -50,10 +50,12 @@ import {
   BuildingInputBlock,
   LeaseTooltip,
   LeaseDetailsLabel,
+  BuyingLabel,
   LeaseInfoIcon
 } from './components';
 
 const SampleAmount = styled.span`
+  color: ${p => p.theme.colors.depositSize};
   & > span {
     margin: 0 2px;
     &:last-child {
@@ -399,8 +401,6 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
         },
         {
           bottomBanner: <><SwayIcon /> {formatFixed(selectedCoreSample.PrivateSale?.amount / 1e6, 1)}</>,
-          iconBadge: <SwayMonochromeIcon />,
-          iconBadgeCorner: theme.colors.orange
         }
       ];
     }
@@ -450,14 +450,18 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
         <FlexSection>
           <FlexSectionInputBlock
             title="Deposit"
+            titleDetails={(isPurchase && stage === actionStage.NOT_STARTED) ? <BuyingLabel>Buying</BuyingLabel> : ''}
             image={
               resource
                 ? (
                   <ResourceThumbnail
                     resource={resource}
                     tooltipContainer={null}
-                    iconBadge={<CoreSampleIcon />}
-                    iconBadgeCorner={theme.colors.resources[keyify(resource.category)]}
+                    //iconWatermark={<CoreSampleIcon />}
+                    //watermarkColor={theme.colors.resources[keyify(resource.category)]}
+                    //iconBadge={<CoreSampleIcon />}
+                    //iconBadgeColor={theme.colors.resources[keyify(resource.category)]}
+                    //iconBadgeCorner={theme.colors.resources[keyify(resource.category)]}
                     {...extraDepositThumbnailProps} />
                 )
                 : <EmptyResourceImage iconOverride={<CoreSampleIcon />} />
@@ -484,7 +488,7 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
                       </SublabelBanner>
                     )
                 )
-                : 'Deposit'
+                : 'Sampled Deposit'
             }
             {...extraDepositProps} />
 
@@ -518,10 +522,12 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
 
             <BuildingInputBlock
               title="Extraction Location"
-              titleDetails={<LeaseDetailsLabel>Lease Required</LeaseDetailsLabel>}
-              bodyStyle={{ background: `rgba(${theme.colors.successDarkRGB}, 0.2)` }}
+              titleDetails={<LeaseDetailsLabel>Leasing</LeaseDetailsLabel>}
+              bodyStyle={{ background: `rgba(${theme.colors.successDarkRGB}, 0.1)` }}
+              isSelected={stage === actionStage.NOT_STARTED}
               building={lot?.building}
               imageProps={{
+                iconBorderColor: `rgba(${theme.colors.successDarkRGB}, 0.5)`,
                 bottomBanner: leasePayment > 0 && (
                   <>
                     <SwayIcon />
@@ -538,11 +544,22 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
                   {...prepaidLeaseConfig}
                 />
               )}
-              addChildren={<LeaseInfoIcon />} />
+              addChildren={
+                <div
+                  style={{ position: 'absolute', top: 5, right: 5, zIndex: 1 }}>
+                  <CrewCaptainCardFramed
+                    borderColor={`rgba(${theme.colors.mainRGB}, 0.5)`}
+                    crewId={lot?.building?.Control?.controller?.id}
+                    lessPadding
+                    noAnimation
+                    width={36} />
+                </div>
+              }
+              />
 
             <FlexSectionSpacer />
 
-            <FlexSectionInputBlock />
+            <FlexSectionInputBlock style={{opacity: 0}} />
 
           </FlexSection>
         )}

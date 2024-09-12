@@ -6,10 +6,10 @@ const ThumbnailIconBadge = styled.div`
   position: absolute;
   top: 0px;
 
-  ${p => p.iconBadgeCorner && `
+  ${p => p.iconBadgeCorner 
+    ?`
       & > svg {
         color: white !important;
-        filter: drop-shadow(0px 0px 1px black);
         position: relative;
         top: -2px;
         z-index: 1;
@@ -23,6 +23,15 @@ const ThumbnailIconBadge = styled.div`
         position: absolute;
         width: 0px;
         z-index: 0;
+      }
+    `
+    :`
+      & > svg {
+        color: ${p.iconBadgeColor} !important;
+        position: relative;
+        top: 0px;
+        right: -2px;
+        z-index: 1;
       }
     `
   };
