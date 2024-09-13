@@ -398,7 +398,7 @@ export const BuildingBlock = ({ building, onSelectCrew, selectedCrew, setRef }) 
         return 'Processing';
 
       } else if (
-        building?.Building?.buildingType === Building.CATEGORIES.STORAGE
+        Building.TYPES[building?.Building?.buildingType]?.category === Building.CATEGORIES.STORAGE
         || [Building.IDS.SPACEPORT, Building.IDS.HABITAT].includes(building?.Building?.buildingType)
       ) {
         return `${formatFixed(100 * progress, 1)}% Full`
