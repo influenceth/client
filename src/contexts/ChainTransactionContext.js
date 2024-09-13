@@ -1083,7 +1083,7 @@ export function ChainTransactionProvider({ children }) {
     // TODO: in Braavos, is "Execute failed" a generic error? in that case, we should still show
     // (and it will just be annoying that it shows a failure on declines)
     // console.log('failed', e);
-    if (!['User abort', 'User rejected', 'Execute failed', 'Timeout'].includes(e?.message) && txDetails) {
+    if (!/USER_REFUSED_OP|User abort|User rejected|Execute failed|Timeout/.test(e?.message) && txDetails) {
       dispatchFailedTransaction({
         ...txDetails,
         txHash: null,
