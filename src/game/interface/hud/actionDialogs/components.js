@@ -4340,9 +4340,6 @@ export const RecipeSlider = ({ amount, disabled, increment = 0.001, processingTi
 
     // apply min / single increment
     if (cleansed.value() < min) cleansed = numeral(Math.max(min, increment));
-
-    // round to nearest increment
-    cleansed = numeral(Math.floor(cleansed.value() / increment) * increment);
   
     setAmount(Number(cleansed.format(`${increment}`)));
   }, [increment, min, max]);
