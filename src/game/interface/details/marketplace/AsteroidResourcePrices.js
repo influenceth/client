@@ -461,13 +461,15 @@ const AsteroidResourcePrices = ({ asteroid, mode, resource }) => {
 
   const [ totalSupply, totalDemand, medianPrice ] = useMemo(() => {
     let s = 0, d = 0, m = 0;
-    if (resourceMarketplaces.length > 0) {
-      resourceMarketplaces.forEach((m) => {
-        s += m.supply;
-        d += m.demand;
-      });
 
-      const nonzeroCenterMarkets = resourceMarketplaces.filter((n) => n.centerPrice != 0);
+    const nonzeroCenterMarkets = (resourceMarketplaces || []).filter((n) => {
+      s += m.supply;
+      d += m.demand;
+
+      return n.centerPrice != 0;
+    });
+
+    if (nonzeroCenterMarkets.length > 0) {
       nonzeroCenterMarkets.sort((a, b) => a.centerPrice - b.centerPrice);
       if (nonzeroCenterMarkets.length % 2 === 1) {
         m = nonzeroCenterMarkets[(nonzeroCenterMarkets.length / 2) - 0.5].centerPrice;
