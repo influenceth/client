@@ -35,7 +35,8 @@ import {
   ProcessSelectionBlock,
   LeaseTooltip,
   LeaseDetailsLabel,
-  LeaseInfoIcon
+  LeaseInfoIcon,
+  AssetSellerIndicator
 } from './components';
 import useLot from '~/hooks/useLot';
 import { ActionDialogInner, useAsteroidAndLot } from '../ActionDialog';
@@ -325,7 +326,7 @@ const AssembleShip = ({ asteroid, lot, dryDockManager, stage, ...props }) => {
           <LotInputBlock
             lot={lot}
             title="Assembly Location"
-            titleDetails={prepaidLeaseConfig && <LeaseDetailsLabel>Leasing</LeaseDetailsLabel>}
+            titleDetails={prepaidLeaseConfig && <LeaseDetailsLabel />}
             disabled={stage !== actionStages.NOT_STARTED}
             imageProps={prepaidLeaseConfig && {
               bottomBanner: leasePayment > 0 && (
@@ -345,17 +346,7 @@ const AssembleShip = ({ asteroid, lot, dryDockManager, stage, ...props }) => {
                 {...prepaidLeaseConfig}
               />
             )}
-            addChildren={
-              <div
-                style={{ position: 'absolute', top: 5, right: 5, zIndex: 1 }}>
-                <CrewCaptainCardFramed
-                  borderColor={`rgba(${theme.colors.mainRGB}, 0.5)`}
-                  crewId={lot?.building?.Control?.controller?.id}
-                  lessPadding
-                  noAnimation
-                  width={36} />
-              </div>
-            }
+            addChildren={prepaidLeaseConfig && <AssetSellerIndicator crewId={lot?.building?.Control?.controller?.id} />}
             bodyStyle={prepaidLeaseConfig && { background: `rgba(${theme.colors.successDarkRGB}, 0.1)` }}
             style={{ width: 350 }}
           />

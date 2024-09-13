@@ -50,8 +50,9 @@ import {
   BuildingInputBlock,
   LeaseTooltip,
   LeaseDetailsLabel,
-  BuyingLabel,
-  LeaseInfoIcon
+  BuyingDetailsLabel,
+  LeaseInfoIcon,
+  AssetSellerIndicator
 } from './components';
 
 const SampleAmount = styled.span`
@@ -376,18 +377,11 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
       return [
         {
           addChildren: (
-            <div
+            <AssetSellerIndicator
+              crewId={selectedCoreSample?.Control?.controller?.id}
               data-tooltip-place="top"
               data-tooltip-content={`Deposit Sold by ${depositOwner?.Name?.name || `Crew #${selectedCoreSample?.Control?.controller?.id}`}`}
-              data-tooltip-id="actionDialogTooltip"
-              style={{ position: 'absolute', top: 5, right: 5, zIndex: 1 }}>
-              <CrewCaptainCardFramed
-                borderColor={`rgba(${theme.colors.mainRGB}, 0.5)`}
-                crewId={selectedCoreSample?.Control?.controller?.id}
-                lessPadding
-                noAnimation
-                width={36} />
-            </div>
+              data-tooltip-id="actionDialogTooltip" />
           ),
           tooltip: (
             <Warning>
@@ -450,18 +444,13 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
         <FlexSection>
           <FlexSectionInputBlock
             title="Deposit"
-            titleDetails={(isPurchase && stage === actionStage.NOT_STARTED) ? <BuyingLabel>Buying</BuyingLabel> : ''}
+            titleDetails={(isPurchase && stage === actionStage.NOT_STARTED) ? <BuyingDetailsLabel /> : ''}
             image={
               resource
                 ? (
                   <ResourceThumbnail
                     resource={resource}
                     tooltipContainer={null}
-                    //iconWatermark={<CoreSampleIcon />}
-                    //watermarkColor={theme.colors.resources[keyify(resource.category)]}
-                    //iconBadge={<CoreSampleIcon />}
-                    //iconBadgeColor={theme.colors.resources[keyify(resource.category)]}
-                    //iconBadgeCorner={theme.colors.resources[keyify(resource.category)]}
                     {...extraDepositThumbnailProps} />
                 )
                 : <EmptyResourceImage iconOverride={<CoreSampleIcon />} />
@@ -522,7 +511,7 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
 
             <BuildingInputBlock
               title="Extraction Location"
-              titleDetails={<LeaseDetailsLabel>Leasing</LeaseDetailsLabel>}
+              titleDetails={<LeaseDetailsLabel />}
               bodyStyle={{ background: `rgba(${theme.colors.successDarkRGB}, 0.1)` }}
               isSelected={stage === actionStage.NOT_STARTED}
               building={lot?.building}
@@ -544,22 +533,12 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
                   {...prepaidLeaseConfig}
                 />
               )}
-              addChildren={
-                <div
-                  style={{ position: 'absolute', top: 5, right: 5, zIndex: 1 }}>
-                  <CrewCaptainCardFramed
-                    borderColor={`rgba(${theme.colors.mainRGB}, 0.5)`}
-                    crewId={lot?.building?.Control?.controller?.id}
-                    lessPadding
-                    noAnimation
-                    width={36} />
-                </div>
-              }
-              />
+              addChildren={<AssetSellerIndicator crewId={lot?.building?.Control?.controller?.id} />}
+            />
 
             <FlexSectionSpacer />
 
-            <FlexSectionInputBlock style={{opacity: 0}} />
+            <FlexSectionInputBlock style={{ opacity: 0 }} />
 
           </FlexSection>
         )}

@@ -6,35 +6,24 @@ const ThumbnailIconBadge = styled.div`
   position: absolute;
   top: 0px;
 
-  ${p => p.iconBadgeCorner 
-    ?`
-      & > svg {
-        color: white !important;
-        position: relative;
-        top: -2px;
-        z-index: 1;
-      }
-      &:before {
-        border: 15px solid ${p.iconBadgeCorner};
-        border-bottom-color: transparent;
-        border-right-color: transparent;
-        content: "";
-        height: 0px;
-        position: absolute;
-        width: 0px;
-        z-index: 0;
-      }
-    `
-    :`
-      & > svg {
-        color: ${p.iconBadgeColor} !important;
-        position: relative;
-        top: 0px;
-        right: -2px;
-        z-index: 1;
-      }
-    `
-  };
+  ${p => p.iconBadgeCorner && `
+    & > svg {
+      color: white !important;
+      position: relative;
+      top: -2px;
+      z-index: 1;
+    }
+    &:before {
+      border: 15px solid ${p.iconBadgeCorner};
+      border-bottom-color: transparent;
+      border-right-color: transparent;
+      content: "";
+      height: 0px;
+      position: absolute;
+      width: 0px;
+      z-index: 0;
+    }
+  `}
 `;
 
 export default ThumbnailIconBadge;

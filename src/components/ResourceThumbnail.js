@@ -208,7 +208,7 @@ const UpperRightBadge = styled.div`
 `;
 
 const BottomBanner = styled(ThumbnailBottomBanner)`
-  background: ${p => `rgba(${hexToRGB(p.theme.colors.main)}, 0.65)`};
+  background: ${p => `rgba(${p.theme.colors.mainRGB}, 0.65)`};
 `;
 
 const Menu = ({ children }) => {

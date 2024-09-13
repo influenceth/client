@@ -82,7 +82,7 @@ const Extract = ({ onSetAction, asteroid, blockTime, crew, lot, preselect, simul
       label={`${labelDict[extractionStatus]}`}
       labelAddendum={disabledReason}
       flags={{
-        badge: badge > 0 ? <><span style={{ marginRight: 3, marginLeft: 3 }}>{badge}</span></> : null,
+        badge,
         disabled: disabledReason,
         attention: !disabledReason && attention,
         loading,
