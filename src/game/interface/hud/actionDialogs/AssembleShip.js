@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Asteroid, Building, Crewmate, Entity, Lot, Permission, Product, Ship, Time } from '@influenceth/sdk';
+import { CrewCaptainCardFramed } from '~/components/CrewmateCardFramed';
 
 import { ForwardIcon, AssembleShipIcon, InventoryIcon, LocationIcon, SwayIcon, AgreementIcon } from '~/components/Icons';
 import useCrewContext from '~/hooks/useCrewContext';
@@ -31,7 +32,8 @@ import {
   ProcessSelectionBlock,
   LeaseTooltip,
   LeaseDetailsLabel,
-  LeaseInfoIcon
+  LeaseInfoIcon,
+  AssetSellerIndicator
 } from './components';
 import useLot from '~/hooks/useLot';
 import { ActionDialogInner, useAsteroidAndLot } from '../ActionDialog';
@@ -305,7 +307,7 @@ const AssembleShip = ({ asteroid, lot, dryDockManager, stage, ...props }) => {
           <LotInputBlock
             lot={lot}
             title="Assembly Location"
-            titleDetails={prepaidLeaseConfig && <LeaseDetailsLabel>Lease Required</LeaseDetailsLabel>}
+            titleDetails={prepaidLeaseConfig && <LeaseDetailsLabel />}
             disabled={stage !== actionStages.NOT_STARTED}
             imageProps={prepaidLeaseConfig && {
               bottomBanner: leasePayment > 0 && (
@@ -314,6 +316,7 @@ const AssembleShip = ({ asteroid, lot, dryDockManager, stage, ...props }) => {
                   {formatFixed(leasePayment / 1e6, 1)}
                 </> 
               ),
+              iconBorderColor: `rgba(${theme.colors.successDarkRGB}, 0.5)`,
               iconBadge: <AgreementIcon />,
               iconBadgeCorner: theme.colors.successDark
             }}
@@ -324,8 +327,8 @@ const AssembleShip = ({ asteroid, lot, dryDockManager, stage, ...props }) => {
                 {...prepaidLeaseConfig}
               />
             )}
-            addChildren={prepaidLeaseConfig && <LeaseInfoIcon />}
-            bodyStyle={prepaidLeaseConfig && { background: `rgba(${theme.colors.successDarkRGB}, 0.2)` }}
+            addChildren={prepaidLeaseConfig && <AssetSellerIndicator crewId={lot?.building?.Control?.controller?.id} />}
+            bodyStyle={prepaidLeaseConfig && { background: `rgba(${theme.colors.successDarkRGB}, 0.1)` }}
             style={{ width: 350 }}
           />
 

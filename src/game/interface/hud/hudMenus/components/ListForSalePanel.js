@@ -23,7 +23,7 @@ const Warning = styled.div`
   font-size: 85%;
   margin-top: 10px;
   & svg {
-    color: ${p => p.theme.colors.red};
+    color: ${p => p.theme.colors.red} !important;
     flex: 0 0 30px;
     font-size: 20px;
     margin-right: 4px;

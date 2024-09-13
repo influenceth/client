@@ -26,7 +26,7 @@ import { List } from 'react-virtualized';
 import AsteroidRendering from '~/components/AsteroidRendering';
 import Button from '~/components/ButtonAlt';
 import ClipCorner from '~/components/ClipCorner';
-import CrewmateCardFramed from '~/components/CrewmateCardFramed';
+import CrewmateCardFramed, { CrewCaptainCardFramed } from '~/components/CrewmateCardFramed';
 import CrewIndicator from '~/components/CrewIndicator';
 import CrewLocationLabel from '~/components/CrewLocationLabel';
 import Dialog from '~/components/Dialog';
@@ -3767,7 +3767,30 @@ export const ActionDialogHeader = ({ action, actionCrew, crewAvailableTime, dela
 export const LeaseDetailsLabel = styled.div`
   color: ${p => p.theme.colors.success};
   font-size: 14px;
+  text-transform: uppercase;
+  &:before {
+    content: "Leasing";
+  }
 `;
+
+export const BuyingDetailsLabel = styled(LeaseDetailsLabel)`
+  color: ${p => p.theme.colors.brightMain};
+  &:before {
+    content: "Buying";
+  }
+`;
+
+export const AssetSellerIndicator = ({ crewId, ...props }) => {
+  return (
+    <div style={{ position: 'absolute', top: 5, right: 5, zIndex: 1 }} {...props}>
+      <CrewCaptainCardFramed
+        borderColor={`rgba(${theme.colors.mainRGB}, 0.5)`}
+        crewId={crewId}
+        lessPadding
+        width={36} />
+    </div>
+  );
+}
 
 export const LeaseInfoIcon = () => (
   <div style={{ position: 'absolute', top: 5, right: 5, fontSize: 24, opacity: 0.5 }}>

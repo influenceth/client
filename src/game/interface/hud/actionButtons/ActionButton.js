@@ -74,7 +74,7 @@ const BubbleBadge = styled.span`
   top: -8px;
   right: -6px;
   height: 20px;
-  ${p => p.isWide ? 'padding: 0 3px;' : 'width: 20px;'}
+  ${p => p.isWide ? 'padding: 0 6px;' : 'width: 20px;'}
   z-index: 1;
 `;
 

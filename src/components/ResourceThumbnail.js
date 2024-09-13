@@ -208,7 +208,7 @@ const UpperRightBadge = styled.div`
 `;
 
 const BottomBanner = styled(ThumbnailBottomBanner)`
-  background: rgba(${p => p.theme.colors.successDarkRGB}, 0.65);
+  background: ${p => `rgba(${p.theme.colors.mainRGB}, 0.65)`};
 `;
 
 const Menu = ({ children }) => {
@@ -241,6 +241,7 @@ const Menu = ({ children }) => {
   deficit,
   iconBadge,
   iconBadgeCorner,
+  iconBadgeColor,
   menu,
   outlineColor,
   outlineStyle,
@@ -275,7 +276,7 @@ const Menu = ({ children }) => {
       <ResourceImage contain={props.contain} src={getProductIcon(resource.i, parseInt(size) > 125 ? 'w400' : 'w125')} />
       <ClipCorner dimension={10} color={outlineColor || defaultBorderColor} />
       {badge !== undefined && <ResourceBadge badge={badge} badgeDenominator={badgeDenominator} />}
-      {iconBadge !== undefined && <ThumbnailIconBadge iconBadgeCorner={iconBadgeCorner}>{iconBadge}</ThumbnailIconBadge>}
+      {iconBadge !== undefined && <ThumbnailIconBadge iconBadgeCorner={iconBadgeCorner} iconBadgeColor={iconBadgeColor}>{iconBadge}</ThumbnailIconBadge>}
       {progress !== undefined && <ResourceProgress progress={progress} />}
       {overlayStripes !== undefined && <AnimatedStripes />}
       {overlayIcon && <ThumbnailCorner color={badgeColor}>{overlayIcon}</ThumbnailCorner>}

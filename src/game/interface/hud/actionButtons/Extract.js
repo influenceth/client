@@ -1,7 +1,7 @@
 import { useCallback, useMemo } from 'react';
 import { Deposit, Permission } from '@influenceth/sdk';
 
-import { CoreSampleIcon, ExtractionIcon } from '~/components/Icons';
+import { CoreSampleIcon, ResourceIcon, ExtractionIcon } from '~/components/Icons';
 import useExtractionManager from '~/hooks/actionManagers/useExtractionManager';
 import ActionButton, { getCrewDisabledReason } from './ActionButton';
 import useCrewContext from '~/hooks/useCrewContext';
@@ -82,7 +82,7 @@ const Extract = ({ onSetAction, asteroid, blockTime, crew, lot, preselect, simul
       label={`${labelDict[extractionStatus]}`}
       labelAddendum={disabledReason}
       flags={{
-        badge: badge > 0 ? <><CoreSampleIcon /><span style={{ marginRight: 4 }}>{badge}</span></> : null,
+        badge,
         disabled: disabledReason,
         attention: !disabledReason && attention,
         loading,
