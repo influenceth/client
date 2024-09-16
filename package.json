@@ -81,7 +81,6 @@
     "test": "react-app-rewired test",
     "eject": "react-scripts eject",
     "heroku-prebuild": "node ./prebuild.js",
-    "heroku-cleanup": "./cache_bust.sh",
     "postinstall": "patch-package"
   },
   "eslintConfig": {

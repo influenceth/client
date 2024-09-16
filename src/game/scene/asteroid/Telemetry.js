@@ -524,15 +524,17 @@ const Telemetry = ({
     if (trajectory.current) group.current.add(trajectory.current);
 
     return () => {
-      if (accessGroup.current) group.current.remove(accessGroup.current);
-      if (equatorCircle.current) group.current.remove(equatorCircle.current);
-      if (helper.current) group.current.remove(helper.current);
-      if (inclinationCircle.current) group.current.remove(inclinationCircle.current);
-      if (rotationalMarkersGroup.current) group.current.remove(rotationalMarkersGroup.current);
-      if (planarCircle.current) group.current.remove(planarCircle.current);
-      if (rotationalAxis.current) group.current.remove(rotationalAxis.current);
-      if (shipGroup.current) group.current.remove(shipGroup.current);
-      if (trajectory.current) group.current.remove(trajectory.current);
+      if (group.current) {
+        if (accessGroup.current) group.current.remove(accessGroup.current);
+        if (equatorCircle.current) group.current.remove(equatorCircle.current);
+        if (helper.current) group.current.remove(helper.current);
+        if (inclinationCircle.current) group.current.remove(inclinationCircle.current);
+        if (rotationalMarkersGroup.current) group.current.remove(rotationalMarkersGroup.current);
+        if (planarCircle.current) group.current.remove(planarCircle.current);
+        if (rotationalAxis.current) group.current.remove(rotationalAxis.current);
+        if (shipGroup.current) group.current.remove(shipGroup.current);
+        if (trajectory.current) group.current.remove(trajectory.current);
+      }
     };
   }, [radius]); // eslint-disable-line react-hooks/exhaustive-deps
 

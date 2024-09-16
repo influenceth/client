@@ -960,7 +960,7 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
     }
 
     // get appearance
-    if (safeBigInt(c.Crewmate.appearance) === 0n) {
+    if (safeBigInt(c.Crewmate.appearance || 0n) === 0n) {
       if (appearanceOptions.length) {
         const { clothesOffset, ...appearance } = appearanceOptions[appearanceSelection];
         c.Crewmate.appearance = Crewmate.packAppearance({
@@ -1012,7 +1012,7 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
   const shouldPromptForPack = useMemo(() => {
     // always show prompt while processing (so can see "loading")
     if (isPurchasingPack || isPackPurchaseIsProcessing) return true;
-    
+
     // else, show prompt when no sway and not using a credit (if not already dismissed)
     return !(swayBalance > 0n || !!crewmate?.id) && !packPromptDismissed;
   }, [!!crewmate?.id, isPurchasingPack, packPromptDismissed, pendingTransactions, swayBalance]);
@@ -1021,7 +1021,7 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
   const originalSimulationState = useStore(s => s.simulation);
   const [namePrepopped, setNamePrepopped] = useState();
   useEffect(() => {
-    if (crewmate && safeBigInt(crewmate.Crewmate?.appearance) === 0n && appearanceOptions?.length === 0) {
+    if (crewmate && safeBigInt(crewmate.Crewmate?.appearance || 0n) === 0n && appearanceOptions?.length === 0) {
       if (originalSimulationState?.crewmate?.appearance) {
         const { clothes, ...unpacked } = Crewmate.unpackAppearance(originalSimulationState?.crewmate?.appearance);
         unpacked.clothesOffset = 31 + Math.ceil(Math.random() * 2);
@@ -1244,7 +1244,7 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
         confirmText: "Confirm"
       }
     }
-    
+
     const price = priceHelper.from(priceConstants.ADALIAN_PURCHASE_PRICE, priceConstants.ADALIAN_PURCHASE_TOKEN);
     if (price.usdcValue > wallet?.combinedBalance?.to(TOKEN.USDC)) {
       // if (process.env.REACT_APP_CHAIN_ID === '0x534e5f5345504f4c4941' && ethClaimEnabled) {
