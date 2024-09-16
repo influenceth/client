@@ -4,6 +4,7 @@ import { Building, Permission } from '@influenceth/sdk';
 
 import { RecruitCrewmateIcon } from '~/components/Icons';  // TODO: sergey's
 import useCrewManager from '~/hooks/actionManagers/useCrewManager';
+import useSession from '~/hooks/useSession';
 import useStore from '~/hooks/useStore';
 import { reactBool } from '~/lib/utils';
 import ActionButton, { getCrewDisabledReason } from './ActionButton';
@@ -15,6 +16,7 @@ const isVisible = ({ account, building }) => {
 const RecruitCrewmate = ({ asteroid, blockTime, crew, lot, simulation, _disabled }) => {
   const { getPendingCrewmate } = useCrewManager();
   const history = useHistory();
+  const { accountAddress } = useSession();
 
   const createAlert = useStore(s => s.dispatchAlertLogged);
 
@@ -69,7 +71,9 @@ const RecruitCrewmate = ({ asteroid, blockTime, crew, lot, simulation, _disabled
     if (recruitToCrew === 0) {
       const policy = Permission.getPolicyDetails(lot?.building)[Permission.IDS.RECRUIT_CREWMATE];
       if (policy.policyType === Permission.POLICY_IDS.PUBLIC) return '';
+      if (policy.accountAllowlist.includes(accountAddress)) return '';
     }
+
     // else, check for crew permission
     return getCrewDisabledReason({
       asteroid,
@@ -79,7 +83,7 @@ const RecruitCrewmate = ({ asteroid, blockTime, crew, lot, simulation, _disabled
       permissionTarget: lot?.building,
       requireReady: false
     });
-  }, [asteroid, blockTime, crew, lot?.building, pendingCrewmate, recruitToCrew]);
+  }, [accountAddress, asteroid, blockTime, crew, lot?.building, pendingCrewmate, recruitToCrew]);
 
   // TODO: attention always?
   return (
