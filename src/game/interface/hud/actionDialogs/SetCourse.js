@@ -251,12 +251,15 @@ const SetCourse = ({ origin, destination, manager, ship, stage, travelSolution, 
     }
   }, [propellantMassLoaded, exhaustBonus, ship]);
 
-  const [crewTimeRequirement, taskTimeRequirement] = useMemo(() => {
-    const timeRequirement = currentTravelAction
-      ? currentTravelAction.finishTime - currentTravelAction.startTime
-      : Time.toRealDuration(arrivingIn * 86400, crew?._timeAcceleration);
-    return [timeRequirement, timeRequirement];
-  }, [currentTravelAction, arrivingIn, crew?._timeAcceleration]);
+  const travelTime = useMemo(() => {
+    if (currentTravelAction) {
+      return currentTravelAction.finishTime - currentTravelAction.startTime;
+    }
+    return [
+      [Math.max(0, travelSolution.departureTime - coarseTime), 'Wait for Scheduled Departure'],
+      [travelSolution.arrivalTime - travelSolution.departureTime, 'Time in Flight']
+    ];
+  }, [coarseTime, currentTravelAction, travelSolution]);
 
   const stats = useMemo(() => ([
     {
@@ -359,8 +362,8 @@ const SetCourse = ({ origin, destination, manager, ship, stage, travelSolution, 
         }}
         actionCrew={crew}
         location={{ asteroid: origin, ship }}
-        crewAvailableTime={crewTimeRequirement}
-        taskCompleteTime={taskTimeRequirement}
+        crewAvailableTime={travelTime}
+        taskCompleteTime={travelTime}
         onClose={props.onClose}
         overrideColor={stage === actionStages.NOT_STARTED ? theme.colors.main : undefined}
         stage={stage} />

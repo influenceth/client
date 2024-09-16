@@ -89,10 +89,6 @@ const StationCrew = ({ asteroid, destination: rawDestination, lot, origin: rawOr
     ];
   }, [asteroid?.id, origin?.id, destination?.id, crewDistBonus, crewTravelBonus, crew?._timeAcceleration]);
 
-  const [crewTimeRequirement, taskTimeRequirement] = useMemo(() => {
-    return [ travelTime, 0 ];
-  }, [travelTime]);
-
   const stats = useMemo(() => ([
     {
       label: 'Travel Time',
@@ -151,8 +147,7 @@ const StationCrew = ({ asteroid, destination: rawDestination, lot, origin: rawOr
       <ActionDialogHeader
         action={actionDetails}
         actionCrew={crew}
-        crewAvailableTime={crewTimeRequirement}
-        taskCompleteTime={taskTimeRequirement}
+        crewAvailableTime={travelTime}
         location={{
           asteroid,
           lot,

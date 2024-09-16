@@ -139,10 +139,6 @@ const TransferToSite = ({ asteroid, lot: destinationLot, deliveryManager, stage,
     }, { totalMass: 0, totalVolume: 0 })
   }, [selectedItems]);
 
-  const [crewTimeRequirement, taskTimeRequirement] = useMemo(() => {
-    return [0, transportTime];
-  }, [transportTime]);
-
   const stats = useMemo(() => ([
     {
       label: 'Total Mass',
@@ -226,8 +222,7 @@ const TransferToSite = ({ asteroid, lot: destinationLot, deliveryManager, stage,
         }}
         actionCrew={crew}
         location={{ asteroid, lot: destinationLot }}
-        crewAvailableTime={crewTimeRequirement}
-        taskCompleteTime={taskTimeRequirement}
+        taskCompleteTime={transportTime}
         onClose={props.onClose}
         stage={stage} />
 

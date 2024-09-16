@@ -346,8 +346,6 @@ const FormAgreement = ({
         action={actionDetails}
         actionCrew={crew}
         location={location}
-        crewAvailableTime={0}
-        taskCompleteTime={0}
         onClose={props.onClose}
         overrideColor={stage === actionStages.NOT_STARTED ? theme.colors.main : undefined}
         stage={stage} />

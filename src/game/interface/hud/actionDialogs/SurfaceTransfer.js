@@ -403,7 +403,6 @@ const SurfaceTransfer = ({
         }}
         actionCrew={crew}
         location={{ asteroid, lot: originLot }}
-        crewAvailableTime={0}
         onClose={props.onClose}
         overrideColor={actionDetails.overrideColor}
         taskCompleteTime={transportTime}

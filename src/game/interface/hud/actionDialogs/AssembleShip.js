@@ -175,10 +175,20 @@ const AssembleShip = ({ asteroid, lot, dryDockManager, stage, ...props }) => {
   }, [process]);
 
   const [crewTimeRequirement, taskTimeRequirement] = useMemo(() => {
-    const onewayCrewTravelTime = crewTravelTime / 2;
+    const oneWayCrewTravelTime = crewTravelTime / 2;
     return [
-      Math.max(onewayCrewTravelTime, inputTransportTime) + (setupTime + assemblyTime) / 8 + onewayCrewTravelTime,
-      Math.max(onewayCrewTravelTime, inputTransportTime) + setupTime + assemblyTime
+      [
+        [oneWayCrewTravelTime, 'Travel to Shipyard'],
+        inputTransportTime > oneWayCrewTravelTime ? [inputTransportTime - oneWayCrewTravelTime, 'Delay for Input Arrival'] : null,
+        [(setupTime + assemblyTime) / 8, 'On-site Crew Labor'],
+        [oneWayCrewTravelTime, 'Return to Station'],
+      ],
+      [
+        [inputTransportTime, 'Transport Input Materials to Shipyard'],
+        oneWayCrewTravelTime > inputTransportTime ? [oneWayCrewTravelTime - inputTransportTime, 'Delay for Crew Arrival'] : null,
+        [setupTime, 'Prepare for Ship Assembly'],
+        [assemblyTime, 'Assemble Ship'],
+      ]
     ];
   }, [crewTravelTime, inputTransportTime, setupTime, assemblyTime]);
 

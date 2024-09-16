@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Asteroid, Crewmate, Lot, Permission, Process, Processor, Product, Time } from '@influenceth/sdk';
-import { CrewCaptainCardFramed } from '~/components/CrewmateCardFramed';
+import { Asteroid, Building, Crewmate, Lot, Permission, Process, Processor, Product, Time } from '@influenceth/sdk';
 
 import {
   BackIcon,
@@ -220,12 +219,24 @@ const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...pro
   }, [process, amount, primaryOutput, secondaryOutputsBonus]);
 
   const [crewTimeRequirement, taskTimeRequirement] = useMemo(() => {
-    const onewayCrewTravelTime = crewTravelTime / 2;
+    const buildingType = Building.TYPES[lot?.building?.Building?.buildingType]?.name;
+    const oneWayCrewTravelTime = crewTravelTime / 2;
     return [
-      Math.max(onewayCrewTravelTime, inputTransportTime) + (setupTime + processingTime) / 8 + onewayCrewTravelTime,
-      Math.max(onewayCrewTravelTime, inputTransportTime) + setupTime + processingTime + outputTransportTime
+      [
+        [oneWayCrewTravelTime, `Travel to ${buildingType}`],
+        inputTransportTime > oneWayCrewTravelTime ? [inputTransportTime - oneWayCrewTravelTime, 'Delay for Input Arrival'] : null,
+        [(setupTime + processingTime) / 8, 'On-site Crew Labor'],
+        [oneWayCrewTravelTime, 'Return to Station'],
+      ],
+      [
+        [inputTransportTime, `Transport Input Materials to ${buildingType}`],
+        oneWayCrewTravelTime > inputTransportTime ? [oneWayCrewTravelTime - inputTransportTime, 'Delay for Crew Arrival'] : null,
+        [setupTime, 'Setup for Process'],
+        [processingTime, 'Run Process'],
+        [outputTransportTime, 'Transport Output Materials']
+      ]
     ];
-  }, [crewTravelTime, inputTransportTime, setupTime, processingTime, outputTransportTime]);
+  }, [crewTravelTime, inputTransportTime, lot?.building?.Building?.buildingType, setupTime, processingTime, outputTransportTime]);
 
   const stats = useMemo(() => ([
     {

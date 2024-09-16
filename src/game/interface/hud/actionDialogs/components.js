@@ -2260,10 +2260,10 @@ export const ProcessSelectionDialog = ({ initialSelection, onClose, forceProcess
                       <label>{Object.keys(inputs).length}</label>
                       <div>
                         {Object.keys(inputs).map((resourceId, i) => (
-                          <>
+                          <Fragment key={resourceId}>
                             {i === 9 && <br />}
-                            <ResourceThumbnail key={resourceId} resource={Product.TYPES[resourceId]} size="45px" tooltipContainer="selectionDialogTooltip" />
-                          </>
+                            <ResourceThumbnail resource={Product.TYPES[resourceId]} size="45px" tooltipContainer="selectionDialogTooltip" />
+                          </Fragment>
                         ))}
                       </div>
                     </InputOutputTableCell>
@@ -3674,7 +3674,25 @@ const TimerInfoBody = styled.div`
   }
 `;
 
-const TimePill = ({ children, type }) => {
+const TimerDetails = styled.div`
+  border-top: 1px solid #333;
+  margin-top: 15px;
+  padding-top: 15px;
+  & > div {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 5px;
+    & > span {
+      color: ${p => p.theme.colors.brightMain};
+      font-weight: bold;
+    }
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+`;
+
+const TimePill = ({ children, type, details }) => {
   const [hovered, setHovered] = useState();
   const [refEl, setRefEl] = useState();
   return (
@@ -3689,18 +3707,40 @@ const TimePill = ({ children, type }) => {
         <TimerInfoBody>
           {type === 'delay' && (
             <>
-              <b><ScheduleFullIcon /> Crew Delay: </b>This crew has other scheduled tasks, and must wait before starting this one. The delay period equals the sum of the  all previously scheduled actions crew presence requirements. Crews may schedule additional actions as long as their total delay period does not exceed <b>24 hours</b>.
+              <b><ScheduleFullIcon /> Crew Delay: </b>
+              This crew has other scheduled tasks, and must wait before starting this one.
+              The delay period equals the sum of the all previously scheduled actions crew
+              presence requirements. Crews may schedule additional actions as long as their
+              total delay period does not exceed <b>24 hours</b>.
             </>
           )}
           {type === 'crew' && (
             <>
-              <b><CrewIcon /> Crew Ready In: </b>Time until this crew becomes idle again, after performing all actions on their schedule including this one. Some actions cannot be scheduled and require a fully idle crew to start.
+              <b><CrewIcon /> Crew Ready In: </b>Time until this crew becomes available again, 
+              after performing all actions on their schedule including this one. Some actions 
+              cannot be scheduled and require a fully idle crew to start.
             </>
           )}
           {type === 'total' && (
             <>
-              <b><AlertIcon /> Action Finishes In: </b>Time until this action's outcome is ready to be finalized. Process actions require a crew to be present for <b>1/8th</b> of the process duration, so the acting crew will often return to station and become available before the action itself finishes.
+              <b><AlertIcon /> Action Finishes In: </b>Time until this action's outcome is 
+              ready to be finalized. Process actions require a crew to be present for <b>1/8th </b>
+              of the process duration, so the acting crew will often return to station and become 
+              available before the action itself finishes.
             </>
+          )}
+          {details?.length > 0 && (
+            <TimerDetails>
+              {details.filter((row) => !!row).map(([time, label]) => (
+                <div key={label}>
+                  <label>{label}</label>
+                  {time === undefined
+                    ? <span style={{ color: '#444' }}>TBD</span>
+                    : <span>{formatTimer(time)}</span>
+                  }
+                </div>
+              ))}
+            </TimerDetails>
           )}
         </TimerInfoBody>
       </MouseoverInfoPane>
@@ -3709,6 +3749,26 @@ const TimePill = ({ children, type }) => {
 };
 
 export const ActionDialogHeader = ({ action, actionCrew, crewAvailableTime, delayUntil, location, onClose, overrideColor, stage, taskCompleteTime, wide }) => {
+  const [totalCrewTime, crewTimingDetails] = useMemo(() => {
+    if (Array.isArray(crewAvailableTime)) {
+      return [
+        crewAvailableTime.reduce((acc, cur) => acc + (cur?.[0] || 0), 0),
+        crewAvailableTime
+      ];
+    }
+    return [crewAvailableTime || 0, []];
+  }, [delayUntil, crewAvailableTime]);
+  
+  const [totalTaskTime, taskTimingDetails] = useMemo(() => {
+    if (Array.isArray(taskCompleteTime)) {
+      return [
+        taskCompleteTime.reduce((acc, cur) => acc + (cur?.[0] || 0), 0),
+        taskCompleteTime
+      ];
+    }
+    return [taskCompleteTime || 0, []];
+  }, [delayUntil, taskCompleteTime]);
+
   const simulationEnabled = useSimulationEnabled();
   return (
     <>
@@ -3739,24 +3799,40 @@ export const ActionDialogHeader = ({ action, actionCrew, crewAvailableTime, dela
                   const pills = [];
                   const delayDuration = isTimer ? (delayUntil - Math.floor(Date.now() / 1000)) : 0;
                   if (isTimer) {
-                    pills.push(<TimePill key="delay" type="delay"><ScheduleFullIcon /><label>Delay</label> {formattedTime}</TimePill>);
+                    pills.push(
+                      <TimePill key="delay" type="delay">
+                        <ScheduleFullIcon /><label>Delay</label> {formattedTime}
+                      </TimePill>
+                    );
                   }
-                  if (!(crewAvailableTime !== crewAvailableTime) && crewAvailableTime !== undefined && crewAvailableTime !== 0) {
-                    pills.push(<TimePill key="crew" type="crew"><CrewIcon isPaused /><label>Crew</label> {formatTimer(delayDuration + crewAvailableTime, 2)}</TimePill>)
+                  if (totalCrewTime > 0) {
+                    pills.push(
+                      <TimePill key="crew" type="crew" details={isTimer && crewTimingDetails ? [[delayDuration, 'Crew Unavailable'], ...crewTimingDetails] : crewTimingDetails}>
+                        <CrewIcon isPaused /><label>Crew</label> {formatTimer(delayDuration + totalCrewTime, 2)}
+                      </TimePill>
+                    );
                   }
-                  if (!(taskCompleteTime !== taskCompleteTime) && taskCompleteTime !== undefined) {
-                    pills.push(<TimePill key="total" type="total"><AlertIcon /><label>Finishes</label> {formatTimer(delayDuration + taskCompleteTime, 2)}</TimePill>)
+                  if (totalTaskTime > 0) {
+                    pills.push(
+                      <TimePill key="total" type="total" details={isTimer && taskTimingDetails ? [[delayDuration, 'Crew Unavailable'], ...taskTimingDetails] : taskTimingDetails}>
+                        <AlertIcon /><label>Action</label> {formatTimer(delayDuration + totalTaskTime, 2)}
+                      </TimePill>
+                    )
                   }
                   return pills;
                 }}
               </LiveTimer>
             )}
-            {delayUntil === undefined && !(crewAvailableTime !== crewAvailableTime) && crewAvailableTime !== 0 && crewAvailableTime !== undefined && 
-              <TimePill type="crew"><CrewIcon isPaused /><label>Crew</label> {formatTimer(crewAvailableTime, 2)}</TimePill>
-            }
-            {delayUntil === undefined && !(taskCompleteTime !== taskCompleteTime) && taskCompleteTime !== undefined && 
-              <TimePill type="total"><AlertIcon /><label>Finishes</label> {formatTimer(taskCompleteTime, 2)}</TimePill>
-            }
+            {delayUntil === undefined && totalCrewTime > 0 && (
+              <TimePill type="crew" details={crewTimingDetails}>
+                <CrewIcon isPaused /><label>Crew</label> {formatTimer(totalCrewTime, 2)}
+              </TimePill>
+            )}
+            {delayUntil === undefined && totalTaskTime > 0 && (
+              <TimePill type="total" details={taskTimingDetails}>
+                <AlertIcon /><label>Action</label> {formatTimer(totalTaskTime, 2)}
+              </TimePill>
+            )}
           </div>
         </IconAndLabel>
       </Header>
@@ -5671,7 +5747,7 @@ export const LeaseTooltip = ({ desiredTerm, initialTerm, permId, rate }) => {
               <th>Policy Type</th>
               <td>Prepaid Lease</td>
             </tr>
-            <tr><td colspan="2" style={{ borderBottom: '1px solid #333', height: 0 }} /></tr>
+            <tr><td colSpan="2" style={{ borderBottom: '1px solid #333', height: 0 }} /></tr>
             <tr>
               <th>Requested Time</th>
               <td>{formatFixed(desiredTerm / 3600, 3)} hr</td>
@@ -5687,7 +5763,7 @@ export const LeaseTooltip = ({ desiredTerm, initialTerm, permId, rate }) => {
               <th>Lease Rate</th>
               <td><SwayIcon /> {formatPrice(rate / TOKEN_SCALE[TOKEN.SWAY])} / hr</td>
             </tr>
-            <tr><td colspan="2" style={{ borderBottom: '1px solid #333', height: 0 }} /></tr>
+            <tr><td colSpan="2" style={{ borderBottom: '1px solid #333', height: 0 }} /></tr>
             <tr>
               <th>Total Lease Cost</th>
               <td><SwayIcon /> {formatPrice((rate / TOKEN_SCALE[TOKEN.SWAY]) * Math.max(desiredTerm, initialTerm) / 3600)}</td>

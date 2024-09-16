@@ -648,7 +648,6 @@ const ShoppingList = ({ asteroid, destination, destinationSlot, stage, ...props 
         }}
         actionCrew={crew}
         location={{ asteroid, lot: destinationLot }}
-        crewAvailableTime={0}
         taskCompleteTime={taskTimeRequirement}
         onClose={props.onClose}
         stage={stage} />

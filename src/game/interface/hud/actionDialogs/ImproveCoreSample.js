@@ -199,9 +199,19 @@ const ImproveCoreSample = ({ asteroid, lot, coreSampleManager, currentSamplingAc
       ),
       crew?._timeAcceleration
     );
+
     return [
-      Math.max(oneWayCrewTravelTime, drillTravelTime) + sampleTime + oneWayCrewTravelTime,
-      Math.max(oneWayCrewTravelTime, drillTravelTime) + sampleTime
+      [
+        [oneWayCrewTravelTime, 'Travel to Site'],
+        drillTravelTime > oneWayCrewTravelTime ? [drillTravelTime - oneWayCrewTravelTime, 'Delay for Core Drill Arrival'] : null,
+        [sampleTime, 'Perform Core Sample'],
+        [oneWayCrewTravelTime, 'Return to Station'],
+      ],
+      [
+        [drillTravelTime, 'Core Drill Delivery'],
+        oneWayCrewTravelTime > drillTravelTime ? [oneWayCrewTravelTime - drillTravelTime, 'Delay for Crew Arrival'] : null,
+        [sampleTime, 'Perform Core Sample'],
+      ]
     ];
   }, [asteroid?.id, crew?._location?.lotId, crew?._timeAcceleration, drillSource?.lotIndex, lot?.id, crewDistBonus, crewTravelBonus]);
 

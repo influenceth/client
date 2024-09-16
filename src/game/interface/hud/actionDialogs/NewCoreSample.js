@@ -148,13 +148,27 @@ const NewCoreSample = ({ asteroid, lot, coreSampleManager, currentSamplingAction
     const oneWayCrewTravelTime = crewTravelTime / 2;
     const drillTravelTime = Time.toRealDuration(
       Asteroid.getLotTravelTime(
-        asteroid.id, drillSource?.lotIndex, Lot.toIndex(lot.id), crewTravelBonus.totalBonus, crewDistBonus.totalBonus
+        asteroid.id,
+        drillSource?.lotIndex,
+        Lot.toIndex(lot.id),
+        crewTravelBonus.totalBonus,
+        crewDistBonus.totalBonus
       ),
       crew?._timeAcceleration
     );
+
     return [
-      Math.max(oneWayCrewTravelTime, drillTravelTime) + sampleTime + oneWayCrewTravelTime,
-      Math.max(oneWayCrewTravelTime, drillTravelTime) + sampleTime
+      [
+        [oneWayCrewTravelTime, 'Travel to Site'],
+        drillTravelTime > oneWayCrewTravelTime ? [drillTravelTime - oneWayCrewTravelTime, 'Delay for Core Drill Arrival'] : null,
+        [sampleTime, 'Perform Core Sample'],
+        [oneWayCrewTravelTime, 'Return to Station'],
+      ],
+      [
+        [drillTravelTime, 'Core Drill Delivery'],
+        oneWayCrewTravelTime > drillTravelTime ? [oneWayCrewTravelTime - drillTravelTime, 'Delay for Crew Arrival'] : null,
+        [sampleTime, 'Perform Core Sample'],
+      ]
     ];
   }, [asteroid?.id, crew?._location?.lotId, crew?._timeAcceleration, drillSource?.lotIndex, lot?.id, crewDistBonus, crewTravelBonus]);
 

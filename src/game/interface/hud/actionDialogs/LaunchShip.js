@@ -108,11 +108,14 @@ const LaunchShip = ({ asteroid, originLot, manager, ship, shipCrews, stage, ...p
     ];
   }, [ship]);
 
-  const launchTime = useMemo(() => groundDelay + (powered ? poweredTime : tugTime), [groundDelay, powered, poweredTime, tugTime]);
-
-  const [crewTimeRequirement, taskTimeRequirement] = useMemo(() => {
-    return [ launchTime, launchTime ];
-  }, [launchTime]);
+  const launchTimeDetails = useMemo(() => ([
+    [groundDelay, 'Ground Delay'],
+    powered ? [poweredTime, 'Powered Landing'] : [tugTime, 'Tug to Surface'],
+  ]), [groundDelay, powered, poweredTime, tugTime]);
+  
+  const launchTime = useMemo(() => {
+    return launchTimeDetails.reduce((acc, cur) => acc + cur[0], 0);
+  }, [launchTimeDetails]);
 
   const stats = useMemo(() => ([
     {
@@ -190,8 +193,8 @@ const LaunchShip = ({ asteroid, originLot, manager, ship, shipCrews, stage, ...p
         }}
         actionCrew={crew}
         location={{ asteroid, lot: originLot, ship }}
-        crewAvailableTime={crewTimeRequirement}
-        taskCompleteTime={taskTimeRequirement}
+        crewAvailableTime={launchTimeDetails}
+        taskCompleteTime={launchTimeDetails}
         onClose={props.onClose}
         overrideColor={stage === actionStages.NOT_STARTED ? (isForceLaunch ? theme.colors.red : theme.colors.main) : undefined}
         stage={stage} />

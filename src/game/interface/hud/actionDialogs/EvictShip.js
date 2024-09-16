@@ -114,8 +114,6 @@ const EvictShip = ({ asteroid, lot, manager, stage, ...props }) => {
         }}
         actionCrew={crew}
         location={{ asteroid, lot, ship }}
-        crewAvailableTime={0}
-        taskCompleteTime={0}
         onClose={props.onClose}
         overrideColor={stage === actionStages.NOT_STARTED ? theme.colors.error : undefined}
         stage={stage} />

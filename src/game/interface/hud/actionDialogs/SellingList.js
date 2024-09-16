@@ -558,7 +558,6 @@ const SellingList = ({ asteroid, origin, originSlot, initialSelection, preselect
         }}
         actionCrew={crew}
         location={{ asteroid, lot: originLot }}
-        crewAvailableTime={0}
         taskCompleteTime={taskTimeRequirement}
         onClose={props.onClose}
         stage={stage} />
