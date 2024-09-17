@@ -24,7 +24,8 @@ import {
   CrewSelectionDialog,
   TimeBonusTooltip,
   getBonusDirection,
-  ProgressBarSection
+  ProgressBarSection,
+  formatTimeRequirements
 } from './components';
 import useEjectCrewManager from '~/hooks/actionManagers/useEjectCrewManager';
 import useAsteroid from '~/hooks/useAsteroid';
@@ -134,16 +135,18 @@ const EjectCrew = ({ asteroid, origin, originLot, stationedCrews, manager, stage
     return false;
   }, [myCrewIsTarget, targetCrew, targetCrewHasPermission]);
 
+  const timeRequirement = useMemo(() => formatTimeRequirements(myCrewIsTarget ? ejectionTime : 0), [myCrewIsTarget, ejectionTime])
+
   return (
     <>
       <ActionDialogHeader
         action={actionDetails}
         actionCrew={crew}
-        crewAvailableTime={myCrewIsTarget ? ejectionTime : 0}
+        crewAvailableTime={timeRequirement}
+        taskCompleteTime={timeRequirement}
         location={{ asteroid, lot: originLot, ship: origin.Ship ? origin : undefined }}
         onClose={props.onClose}
         overrideColor={stage === actionStages.NOT_STARTED ? (myCrewIsTarget ? theme.colors.main : theme.colors.red) : undefined}
-        taskCompleteTime={myCrewIsTarget ? ejectionTime : 0}
         stage={stage} />
 
       <ActionDialogBody>

@@ -21,7 +21,8 @@ import {
   FlexSection,
   getBuildingRequirements,
   LotInputBlock,
-  MaterialBonusTooltip
+  MaterialBonusTooltip,
+  formatTimeRequirements
 } from './components';
 import { ActionDialogInner, useAsteroidAndLot } from '../ActionDialog';
 import actionStage from '~/lib/actionStages';
@@ -47,11 +48,11 @@ const Deconstruct = ({ asteroid, lot, constructionManager, stage, ...props }) =>
 
   const crewTimeRequirement = useMemo(() => {
     const oneWayCrewTravelTime = crewTravelTime / 2;
-    return [
+    return formatTimeRequirements([
       [oneWayCrewTravelTime, 'Travel to Site'],
       [0, 'Initiate Deconstruction'],
       [oneWayCrewTravelTime, 'Return to Station'],
-    ];
+    ]);
   }, [crewTravelTime]);
 
   const stats = useMemo(() => [

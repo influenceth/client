@@ -40,7 +40,8 @@ import {
   TimeBonusTooltip,
   getTripDetails,
   FeeBonusTooltip,
-  formatResourceAmount
+  formatResourceAmount,
+  formatTimeRequirements
 } from './components';
 import { TOKEN, TOKEN_SCALE } from '~/lib/priceUtils';
 
@@ -305,7 +306,7 @@ const MarketplaceOrder = ({
           [
             [transportTime, 'Product Transport Time']
           ]
-        ]
+        ].map(formatTimeRequirements);
       }
 
     // LIMIT BUY: crew is traveling to marketplace to setup the order... no goods transported
@@ -323,7 +324,7 @@ const MarketplaceOrder = ({
           [goodsToMarketplaceTime, 'Product Transport Time'],
           oneWayCrewTravelTime > goodsToMarketplaceTime ? [oneWayCrewTravelTime - goodsToMarketplaceTime, 'Delay for Crew Arrival'] : null,
         ]
-      ];
+      ].map(formatTimeRequirements);
 
     // MARKET BUY: no crew travel; delivery started from marketplace to my storage
     // MARKET SELL: no crew travel; delivery started from my storage through exchange to filled orders' storages
@@ -334,7 +335,7 @@ const MarketplaceOrder = ({
         [
           [transportTime, 'Product Transport Time']
         ]
-      ]
+      ].map(formatTimeRequirements);
     }
 
     return [];

@@ -30,7 +30,8 @@ import {
   InventorySelectionDialog,
   Section,
   SectionTitle,
-  SectionBody
+  SectionBody,
+  formatTimeRequirements
 } from './components';
 import { ActionDialogInner, theming, useAsteroidAndLot } from '../ActionDialog';
 import useEntity from '~/hooks/useEntity';
@@ -212,7 +213,7 @@ const ImproveCoreSample = ({ asteroid, lot, coreSampleManager, currentSamplingAc
         oneWayCrewTravelTime > drillTravelTime ? [oneWayCrewTravelTime - drillTravelTime, 'Delay for Crew Arrival'] : null,
         [sampleTime, 'Perform Core Sample'],
       ]
-    ];
+    ].map(formatTimeRequirements);
   }, [asteroid?.id, crew?._location?.lotId, crew?._timeAcceleration, drillSource?.lotIndex, lot?.id, crewDistBonus, crewTravelBonus]);
 
   const stats = useMemo(() => ([
@@ -417,7 +418,7 @@ const ImproveCoreSample = ({ asteroid, lot, coreSampleManager, currentSamplingAc
             startTime={currentSamplingAction?.startTime}
             stage={stage}
             title="Progress"
-            totalTime={taskTimeRequirement}
+            totalTime={taskTimeRequirement.total}
           />
         )}
 

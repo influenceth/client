@@ -31,6 +31,7 @@ import {
   formatResourceMass,
   MultiSourceInputBlock,
   OrderSelectionDialog,
+  formatTimeRequirements,
 } from './components';
 import { ActionDialogInner } from '../ActionDialog';
 import actionStages from '~/lib/actionStages';
@@ -197,12 +198,7 @@ const FeedCrew = ({
     }, { totalMass: 0, totalVolume: 0 })
   }, [selectedItems]);
 
-  const [crewTimeRequirement, taskTimeRequirement] = useMemo(() => {
-    return [
-      transportTime,
-      0
-    ];
-  }, [transportTime]);
+  const crewTimeRequirement = useMemo(() => formatTimeRequirements(transportTime), [transportTime]);
 
   const stats = useMemo(() => ([
     {
@@ -329,7 +325,6 @@ const FeedCrew = ({
         actionCrew={crew}
         location={{ asteroid, lot: originLot }}
         crewAvailableTime={crewTimeRequirement}
-        taskCompleteTime={taskTimeRequirement}
         onClose={props.onClose}
         overrideColor={stage === actionStages.NOT_STARTED ? theme.colors.main : undefined}
         stage={stage} />

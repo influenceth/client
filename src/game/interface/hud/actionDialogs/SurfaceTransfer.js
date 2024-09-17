@@ -32,7 +32,8 @@ import {
   WarningAlert,
   SwayInputBlockInner,
   InventorySelectionDialog,
-  InventoryInputBlock
+  InventoryInputBlock,
+  formatTimeRequirements
 } from './components';
 import { ActionDialogInner, useAsteroidAndLot } from '../ActionDialog';
 import useCrew from '~/hooks/useCrew';
@@ -226,7 +227,7 @@ const SurfaceTransfer = ({
       ),
       crew?._timeAcceleration
     );
-    return [transportDistance, transportTime];
+    return [transportDistance, formatTimeRequirements(transportTime)];
   }, [asteroid?.id, originLot?.id, destinationLot?.id, crewDistBonus, crewTravelBonus, crew?._timeAcceleration]);
 
   const { totalMass, totalVolume } = useMemo(() => {
@@ -268,14 +269,14 @@ const SurfaceTransfer = ({
   const stats = useMemo(() => ([
     {
       label: 'Task Duration',
-      value: formatTimer(transportTime),
+      value: formatTimer(transportTime.total),
       direction: getBonusDirection(crewTravelBonus),
       isTimeStat: true,
       tooltip: (
         <TimeBonusTooltip
           bonus={crewTravelBonus}
           title="Transport Time"
-          totalTime={transportTime}
+          totalTime={transportTime.total}
           crewRequired="start" />
       )
     },
@@ -294,7 +295,7 @@ const SurfaceTransfer = ({
       value: `${formatVolume(totalVolume)}`,
       direction: 0
     },
-  ]), [totalMass, totalVolume, transportDistance, transportTime]);
+  ]), [totalMass, totalVolume, transportDistance, transportTime.total]);
 
   const willBeOverCapacity = useMemo(() => {
     if (![actionStage.NOT_STARTED, actionStage.STARTING].includes(stage)) return false;
@@ -555,7 +556,7 @@ const SurfaceTransfer = ({
                 startTime={currentDelivery?.startTime}
                 stage={stage}
                 title="Progress"
-                totalTime={transportTime}
+                totalTime={transportTime.total}
               />
             )}
           </>

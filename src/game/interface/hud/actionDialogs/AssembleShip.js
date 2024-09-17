@@ -33,7 +33,8 @@ import {
   LeaseTooltip,
   LeaseDetailsLabel,
   LeaseInfoIcon,
-  AssetSellerIndicator
+  AssetSellerIndicator,
+  formatTimeRequirements
 } from './components';
 import useLot from '~/hooks/useLot';
 import { ActionDialogInner, useAsteroidAndLot } from '../ActionDialog';
@@ -189,7 +190,7 @@ const AssembleShip = ({ asteroid, lot, dryDockManager, stage, ...props }) => {
         [setupTime, 'Prepare for Ship Assembly'],
         [assemblyTime, 'Assemble Ship'],
       ]
-    ];
+    ].map(formatTimeRequirements);
   }, [crewTravelTime, inputTransportTime, setupTime, assemblyTime]);
 
   const stats = useMemo(() => ([
@@ -246,11 +247,11 @@ const AssembleShip = ({ asteroid, lot, dryDockManager, stage, ...props }) => {
   const { leasePayment, desiredLeaseTerm, actualLeaseTerm } = useMemo(() => {
     return getProcessorLeaseSelections(
       prepaidLeaseConfig,
-      taskTimeRequirement,
+      taskTimeRequirement.total,
       crew?.Crew?.readyAt,
       blockTime
     );
-  }, [blockTime, crew?.Crew?.readyAt, prepaidLeaseConfig, taskTimeRequirement]);
+  }, [blockTime, crew?.Crew?.readyAt, prepaidLeaseConfig, taskTimeRequirement.total]);
 
   const onStart = useCallback(() => {
     if (leasePayment && !buildingOwner?.Crew?.delegatedTo) return;
@@ -459,7 +460,7 @@ const AssembleShip = ({ asteroid, lot, dryDockManager, stage, ...props }) => {
             startTime={currentAssembly?.startTime}
             stage={stage}
             title="Progress"
-            totalTime={taskTimeRequirement}
+            totalTime={taskTimeRequirement.total}
             width="100%"
           />
         )}

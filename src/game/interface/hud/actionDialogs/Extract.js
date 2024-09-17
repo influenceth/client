@@ -50,7 +50,8 @@ import {
   LeaseDetailsLabel,
   BuyingDetailsLabel,
   LeaseInfoIcon,
-  AssetSellerIndicator
+  AssetSellerIndicator,
+  formatTimeRequirements
 } from './components';
 
 const SampleAmount = styled.span`
@@ -241,7 +242,7 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
         [extractionTime, 'Resource Extraction'],
         [transportTime, 'Transport Output to Destination'],
       ]
-    ];
+    ].map(formatTimeRequirements);
   }, [crew?._timeAcceleration, extractionTime, crewTravelTime, transportTime]);
 
   const stats = useMemo(() => ([
@@ -308,11 +309,11 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
   const { leasePayment, desiredLeaseTerm, actualLeaseTerm } = useMemo(() => {
     return getProcessorLeaseSelections(
       prepaidLeaseConfig,
-      taskTimeRequirement,
+      taskTimeRequirement.total,
       crew?.Crew?.readyAt,
       blockTime
     );
-  }, [blockTime, crew?.Crew?.readyAt, prepaidLeaseConfig, taskTimeRequirement]);
+  }, [blockTime, crew?.Crew?.readyAt, prepaidLeaseConfig, taskTimeRequirement.total]);
 
   const onStartExtraction = useCallback(() => {
     if (!(amount && selectedCoreSample && destination && destinationInventory)) return;

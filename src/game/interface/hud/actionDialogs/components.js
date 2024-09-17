@@ -3661,7 +3661,7 @@ const mouseoverPaneProps = (visible) => ({
     pointer-events: ${visible ? 'auto' : 'none'};
     width: 400px;
   `,
-  placement: 'top',
+  placement: 'left',
   visible
 });
 
@@ -3749,26 +3749,6 @@ const TimePill = ({ children, type, details }) => {
 };
 
 export const ActionDialogHeader = ({ action, actionCrew, crewAvailableTime, delayUntil, location, onClose, overrideColor, stage, taskCompleteTime, wide }) => {
-  const [totalCrewTime, crewTimingDetails] = useMemo(() => {
-    if (Array.isArray(crewAvailableTime)) {
-      return [
-        crewAvailableTime.reduce((acc, cur) => acc + (cur?.[0] || 0), 0),
-        crewAvailableTime
-      ];
-    }
-    return [crewAvailableTime || 0, []];
-  }, [delayUntil, crewAvailableTime]);
-  
-  const [totalTaskTime, taskTimingDetails] = useMemo(() => {
-    if (Array.isArray(taskCompleteTime)) {
-      return [
-        taskCompleteTime.reduce((acc, cur) => acc + (cur?.[0] || 0), 0),
-        taskCompleteTime
-      ];
-    }
-    return [taskCompleteTime || 0, []];
-  }, [delayUntil, taskCompleteTime]);
-
   const simulationEnabled = useSimulationEnabled();
   return (
     <>
@@ -3805,17 +3785,17 @@ export const ActionDialogHeader = ({ action, actionCrew, crewAvailableTime, dela
                       </TimePill>
                     );
                   }
-                  if (totalCrewTime > 0) {
+                  if (crewAvailableTime?.total > 0) {
                     pills.push(
-                      <TimePill key="crew" type="crew" details={isTimer && crewTimingDetails ? [[delayDuration, 'Crew Unavailable'], ...crewTimingDetails] : crewTimingDetails}>
-                        <CrewIcon isPaused /><label>Crew</label> {formatTimer(delayDuration + totalCrewTime, 2)}
+                      <TimePill key="crew" type="crew" details={isTimer && crewAvailableTime.details ? [[delayDuration, 'Crew Unavailable'], ...crewAvailableTime.details] : crewAvailableTime.details}>
+                        <CrewIcon isPaused /><label>Crew</label> {formatTimer(delayDuration + crewAvailableTime.total, 2)}
                       </TimePill>
                     );
                   }
-                  if (totalTaskTime > 0) {
+                  if (taskCompleteTime?.total > 0) {
                     pills.push(
-                      <TimePill key="total" type="total" details={isTimer && taskTimingDetails ? [[delayDuration, 'Crew Unavailable'], ...taskTimingDetails] : taskTimingDetails}>
-                        <AlertIcon /><label>Action</label> {formatTimer(delayDuration + totalTaskTime, 2)}
+                      <TimePill key="total" type="total" details={isTimer && taskCompleteTime.details ? [[delayDuration, 'Crew Unavailable'], ...taskCompleteTime.details] : taskCompleteTime.details}>
+                        <AlertIcon /><label>Action</label> {formatTimer(delayDuration + taskCompleteTime.total, 2)}
                       </TimePill>
                     )
                   }
@@ -3823,14 +3803,14 @@ export const ActionDialogHeader = ({ action, actionCrew, crewAvailableTime, dela
                 }}
               </LiveTimer>
             )}
-            {delayUntil === undefined && totalCrewTime > 0 && (
-              <TimePill type="crew" details={crewTimingDetails}>
-                <CrewIcon isPaused /><label>Crew</label> {formatTimer(totalCrewTime, 2)}
+            {delayUntil === undefined && crewAvailableTime?.total > 0 && (
+              <TimePill type="crew" details={crewAvailableTime.details}>
+                <CrewIcon isPaused /><label>Crew</label> {formatTimer(crewAvailableTime.total, 2)}
               </TimePill>
             )}
-            {delayUntil === undefined && totalTaskTime > 0 && (
-              <TimePill type="total" details={taskTimingDetails}>
-                <AlertIcon /><label>Action</label> {formatTimer(totalTaskTime, 2)}
+            {delayUntil === undefined && taskCompleteTime?.total > 0 && (
+              <TimePill type="total" details={taskCompleteTime.details}>
+                <AlertIcon /><label>Action</label> {formatTimer(taskCompleteTime.total, 2)}
               </TimePill>
             )}
           </div>
@@ -6001,3 +5981,16 @@ export const formatShipStatus = (ship) => {
   console.warn('Unknown ship status', ship)
   return '';
 }
+
+export const formatTimeRequirements = (details) => {
+  if (Array.isArray(details)) {
+    return {
+      total: details.reduce((acc, cur) => acc + (cur?.[0] || 0), 0),
+      details
+    };
+  }
+  return {
+    total: details || 0,
+    details: []
+  };
+};

@@ -42,7 +42,8 @@ import {
   LeaseTooltip,
   LeaseDetailsLabel,
   LeaseInfoIcon,
-  AssetSellerIndicator
+  AssetSellerIndicator,
+  formatTimeRequirements
 } from './components';
 import useLot from '~/hooks/useLot';
 import { ActionDialogInner, useAsteroidAndLot } from '../ActionDialog';
@@ -235,7 +236,7 @@ const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...pro
         [processingTime, 'Run Process'],
         [outputTransportTime, 'Transport Output Materials']
       ]
-    ];
+    ].map(formatTimeRequirements);
   }, [crewTravelTime, inputTransportTime, lot?.building?.Building?.buildingType, setupTime, processingTime, outputTransportTime]);
 
   const stats = useMemo(() => ([
@@ -314,11 +315,11 @@ const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...pro
   const { leasePayment, desiredLeaseTerm, actualLeaseTerm } = useMemo(() => {
     return getProcessorLeaseSelections(
       prepaidLeaseConfig,
-      taskTimeRequirement,
+      taskTimeRequirement.total,
       crew?.Crew?.readyAt,
       blockTime
     );
-  }, [blockTime, crew?.Crew?.readyAt, prepaidLeaseConfig, taskTimeRequirement]);
+  }, [blockTime, crew?.Crew?.readyAt, prepaidLeaseConfig, taskTimeRequirement.total]);
 
   const onFinishProcess = useCallback(() => {
     finishProcess();
@@ -581,7 +582,7 @@ const ProcessIO = ({ asteroid, lot, processorSlot, processManager, stage, ...pro
             startTime={currentProcess?.startTime}
             stage={stage}
             title="Progress"
-            totalTime={taskTimeRequirement}
+            totalTime={taskTimeRequirement.total}
             width="100%"
           />
         )}

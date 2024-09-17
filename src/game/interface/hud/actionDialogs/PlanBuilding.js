@@ -27,7 +27,8 @@ import {
   ActionDialogBody,
   getBuildingRequirements,
   getTripDetails,
-  LotControlWarning
+  LotControlWarning,
+  formatTimeRequirements
 } from './components';
 import actionStage from '~/lib/actionStages';
 import useSimulationState from '~/hooks/useSimulationState';
@@ -68,11 +69,11 @@ const PlanBuilding = ({ asteroid, lot, constructionManager, stage, ...props }) =
 
   const crewTimeRequirement = useMemo(() => {
     const oneWayCrewTravelTime = crewTravelTime / 2;
-    return [
+    return formatTimeRequirements([
       [oneWayCrewTravelTime, 'Travel to Site'],
       [0, 'Initiate Building Plan'],
       [oneWayCrewTravelTime, 'Return to Station']
-    ];
+    ]);
   }, [crewTravelTime]);
 
   const stats = useMemo(() => {

@@ -28,7 +28,8 @@ import {
   LotInputBlock,
   getTripDetails,
   LotControlWarning,
-  MultiSourceWrapper
+  MultiSourceWrapper,
+  formatTimeRequirements
 } from './components';
 import actionStage from '~/lib/actionStages';
 import useDeliveryManager from '~/hooks/actionManagers/useDeliveryManager';
@@ -103,7 +104,7 @@ const Construct = ({ asteroid, lot, constructionManager, stage, ...props }) => {
         [oneWayCrewTravelTime, 'Await Crew Arrival'],
         [constructionTime, 'Building Construction'],
       ]
-    ];
+    ].map(formatTimeRequirements);
   }, [crewTravelTime, constructionTime]);
 
   const stats = useMemo(() => ([

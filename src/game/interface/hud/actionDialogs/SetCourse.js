@@ -41,6 +41,7 @@ import {
   ShipInputBlock,
   MaterialBonusTooltip,
   getBonusDirection,
+  formatTimeRequirements,
 } from './components';
 const Banner = styled.div`
   align-items: center;
@@ -253,12 +254,12 @@ const SetCourse = ({ origin, destination, manager, ship, stage, travelSolution, 
 
   const travelTime = useMemo(() => {
     if (currentTravelAction) {
-      return currentTravelAction.finishTime - currentTravelAction.startTime;
+      return formatTimeRequirements(currentTravelAction.finishTime - currentTravelAction.startTime);
     }
-    return [
+    return formatTimeRequirements([
       [Math.max(0, travelSolution.departureTime - coarseTime), 'Wait for Scheduled Departure'],
       [travelSolution.arrivalTime - travelSolution.departureTime, 'Time in Flight']
-    ];
+    ]);
   }, [coarseTime, currentTravelAction, travelSolution]);
 
   const stats = useMemo(() => ([

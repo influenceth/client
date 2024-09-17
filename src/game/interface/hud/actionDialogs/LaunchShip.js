@@ -22,7 +22,8 @@ import {
   PropulsionTypeSection,
   LotInputBlock,
   formatMass,
-  MaterialBonusTooltip
+  MaterialBonusTooltip,
+  formatTimeRequirements
 } from './components';
 import useLot from '~/hooks/useLot';
 import useStore from '~/hooks/useStore';
@@ -108,26 +109,24 @@ const LaunchShip = ({ asteroid, originLot, manager, ship, shipCrews, stage, ...p
     ];
   }, [ship]);
 
-  const launchTimeDetails = useMemo(() => ([
-    [groundDelay, 'Ground Delay'],
-    powered ? [poweredTime, 'Powered Landing'] : [tugTime, 'Tug to Surface'],
-  ]), [groundDelay, powered, poweredTime, tugTime]);
-  
   const launchTime = useMemo(() => {
-    return launchTimeDetails.reduce((acc, cur) => acc + cur[0], 0);
-  }, [launchTimeDetails]);
+    return formatTimeRequirements([
+      [groundDelay, 'Ground Delay'],
+      powered ? [poweredTime, 'Powered Launch'] : [tugTime, 'Tug to Orbit'],
+    ]);
+  }, [groundDelay, powered, poweredTime, tugTime]);
 
   const stats = useMemo(() => ([
     {
       label: 'Time until Orbit',
-      value: formatTimer(launchTime),
-      direction: launchTime > 0 ? getBonusDirection(hopperBonus) : 0,
+      value: formatTimer(launchTime.total),
+      direction: launchTime.total > 0 ? getBonusDirection(hopperBonus) : 0,
       isTimeStat: true,
-      tooltip: hopperBonus.totalBonus !== 1 && launchTime > 0 && (
+      tooltip: hopperBonus.totalBonus !== 1 && launchTime.total > 0 && (
         <TimeBonusTooltip
           bonus={hopperBonus}
           title="Time until Orbit"
-          totalTime={launchTime}
+          totalTime={launchTime.total}
           crewRequired="duration" />
       )
     },
@@ -157,7 +156,7 @@ const LaunchShip = ({ asteroid, originLot, manager, ship, shipCrews, stage, ...p
       ),
       direction: 0,
     },
-  ]), [escapeVelocity, hopperBonus, launchTime, exhaustBonus, propellantRequirement, ship]);
+  ]), [escapeVelocity, hopperBonus, launchTime.total, exhaustBonus, propellantRequirement, ship]);
 
   const onLaunch = useCallback(() => {
     undockShip(!powered);
@@ -193,8 +192,8 @@ const LaunchShip = ({ asteroid, originLot, manager, ship, shipCrews, stage, ...p
         }}
         actionCrew={crew}
         location={{ asteroid, lot: originLot, ship }}
-        crewAvailableTime={launchTimeDetails}
-        taskCompleteTime={launchTimeDetails}
+        crewAvailableTime={launchTime}
+        taskCompleteTime={launchTime}
         onClose={props.onClose}
         overrideColor={stage === actionStages.NOT_STARTED ? (isForceLaunch ? theme.colors.red : theme.colors.main) : undefined}
         stage={stage} />

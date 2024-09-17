@@ -25,7 +25,8 @@ import {
   TransferSelectionDialog,
   LotInputBlock,
   InventorySelectionDialog,
-  InventoryInputBlock
+  InventoryInputBlock,
+  formatTimeRequirements
 } from './components';
 import { ActionDialogInner, useAsteroidAndLot } from '../ActionDialog';
 import actionStage from '~/lib/actionStages';
@@ -128,7 +129,7 @@ const TransferToSite = ({ asteroid, lot: destinationLot, deliveryManager, stage,
       ),
       crew?._timeAcceleration
     );
-    return [transportDistance, transportTime];
+    return [transportDistance, formatTimeRequirements(transportTime)];
   }, [asteroid?.id, originLot?.id, destinationLot?.id, crew?._timeAcceleration, crewDistBonus, crewTravelBonus]);
 
   const { totalMass, totalVolume } = useMemo(() => {
@@ -157,18 +158,18 @@ const TransferToSite = ({ asteroid, lot: destinationLot, deliveryManager, stage,
     },
     {
       label: 'Transport Time',
-      value: formatTimer(transportTime),
+      value: formatTimer(transportTime.total),
       direction: getBonusDirection(crewTravelBonus),
       isTimeStat: true,
       tooltip: (
         <TimeBonusTooltip
           bonus={crewTravelBonus}
           title="Transport Time"
-          totalTime={transportTime}
+          totalTime={transportTime.total}
           crewRequired="start" />
       )
     },
-  ]), [totalMass, totalVolume, transportDistance, transportTime]);
+  ]), [totalMass, totalVolume, transportDistance, transportTime.total]);
 
   const onStartDelivery = useCallback(() => {
     const destInventoryConfig = Inventory.getType(destinationInventory?.inventoryType, crew?._inventoryBonuses) || {};
@@ -279,7 +280,7 @@ const TransferToSite = ({ asteroid, lot: destinationLot, deliveryManager, stage,
             startTime={currentDeliveryAction?.startTime}
             stage={stage}
             title="Progress"
-            totalTime={transportTime}
+            totalTime={transportTime.total}
           />
         )}
         */}
