@@ -400,13 +400,13 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
   }, [depositOwner, selectedCoreSample]);
 
   const [ goLabel, goLabelPrice ] = useMemo(() => {
-    const paymentTotal = (selectedCoreSample?.PrivateSale?.amount || 0) + (leasePayment || 0);
     let label = `Extract`;
+    const paymentTotal = (isPurchase) ? (selectedCoreSample?.PrivateSale?.amount || 0) + (leasePayment || 0) : 0;
     if (isPurchase && leasePayment) label = `Purchase, Lease, & Extract`;
     else if (isPurchase) label = `Purchase & Extract`;
     else if (leasePayment) label = `Lease & Extract`;
     return [label, paymentTotal];
-  }, [isPurchase, leasePayment])
+  }, [isPurchase, leasePayment]);
 
   return (
     <>
