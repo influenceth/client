@@ -509,7 +509,7 @@ const ResourceDetails = ({ abundances, asteroid, isManager }) => {
                           at short-range.
                           <br/><br/>
                           <span style={crew._location?.asteroidId !== asteroid.id ? { color: theme.colors.error } : {}}>
-                            Your crew must be in orbit or on the surface of the asteroid.
+                            Your crew must be in orbit to the asteroid.
                           </span>
                         </p>
                       )}
