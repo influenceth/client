@@ -229,6 +229,18 @@ const SetCourse = ({ origin, destination, manager, ship, stage, travelSolution, 
     return Math.max(0, travelSolution.departureTime - coarseTime) * 86400;
   }, [coarseTime, travelSolution]);
 
+  const tof = useMemo(() => {
+    return Math.max(0, travelSolution.arrivalTime - travelSolution.departureTime) * 86400
+  }, [travelSolution]);
+
+  const realWorldDelay = useMemo(() => {
+    return Time.toRealDuration(delay, crew._timeAcceleration);
+  }, [crew?._timeAcceleration, delay]);
+
+  const realWorldTof = useMemo(() => {
+    return Time.toRealDuration(tof, crew._timeAcceleration);
+  }, [crew?._timeAcceleration, tof]);
+
   const arrivingIn = useMemo(() => {
     return Math.max(0, travelSolution.arrivalTime - coarseTime);
   }, [coarseTime, travelSolution]);
@@ -257,10 +269,10 @@ const SetCourse = ({ origin, destination, manager, ship, stage, travelSolution, 
       return formatTimeRequirements(currentTravelAction.finishTime - currentTravelAction.startTime);
     }
     return formatTimeRequirements([
-      [Math.max(0, travelSolution.departureTime - coarseTime), 'Wait for Scheduled Departure'],
-      [travelSolution.arrivalTime - travelSolution.departureTime, 'Time in Flight']
+      [realWorldDelay, 'Wait for Scheduled Departure'],
+      [realWorldTof, 'Time in Flight']
     ]);
-  }, [coarseTime, currentTravelAction, travelSolution]);
+  }, [currentTravelAction, realWorldDelay, realWorldTof]);
 
   const stats = useMemo(() => ([
     {
@@ -402,7 +414,7 @@ const SetCourse = ({ origin, destination, manager, ship, stage, travelSolution, 
                     <label>
                       <RotatedShipMarkerIcon />
                       <span>
-                        {formatTimer(86400 * Time.toRealDuration(travelSolution.arrivalTime - travelSolution.departureTime, crew?._timeAcceleration), 2)}
+                        {formatTimer(realWorldTof, 2)}
                       </span>
                     </label>
                     <Dashes flip />
@@ -429,9 +441,9 @@ const SetCourse = ({ origin, destination, manager, ship, stage, travelSolution, 
                   <div>
                     <label>Departure Delay</label>
                     <span>
-                      {delay > 300
-                        ? <b><WarningOutlineIcon /> {formatTimer(delay, 2)}</b>
-                        : <>{formatTimer(delay, 2)}</>}
+                      {realWorldDelay > 300
+                        ? <b><WarningOutlineIcon /> {formatTimer(realWorldDelay, 2)}</b>
+                        : <>{formatTimer(realWorldDelay, 2)}</>}
                     </span>
                   </div>
                 )}
