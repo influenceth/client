@@ -309,11 +309,11 @@ const Extract = ({ asteroid, lot, extractionManager, stage, ...props }) => {
   const { leasePayment, desiredLeaseTerm, actualLeaseTerm } = useMemo(() => {
     return getProcessorLeaseSelections(
       prepaidLeaseConfig,
-      taskTimeRequirement.total,
+      taskTimeRequirement?.total || 0,
       crew?.Crew?.readyAt,
       blockTime
     );
-  }, [blockTime, crew?.Crew?.readyAt, prepaidLeaseConfig, taskTimeRequirement.total]);
+  }, [blockTime, crew?.Crew?.readyAt, prepaidLeaseConfig, taskTimeRequirement?.total]);
 
   const onStartExtraction = useCallback(() => {
     if (!(amount && selectedCoreSample && destination && destinationInventory)) return;
