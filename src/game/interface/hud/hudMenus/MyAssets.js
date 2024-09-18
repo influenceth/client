@@ -187,9 +187,9 @@ const MyAssets = () => {
   const dispatchLauncherPage = useStore((s) => s.dispatchLauncherPage);
 
   // default to wide-aperture of assets from launcher menu
-  const [allAsteroidsMode, setAllAsteroidsMode] = useState(!!launcherPage || !origin);
+  const [allAsteroidsMode, setAllAsteroidsMode] = useState(true);
   const [autoselectMode, setAutoselectMode] = useState(!!launcherPage);
-  const [allCrewsMode, setAllCrewsMode] = useState(!!launcherPage);
+  const [allCrewsMode, setAllCrewsMode] = useState(true);
 
   const onClickCrewAsset = useCallback((crewId, fallbackCrewId) => {
     // if in autoselect mode, switch to crewId (IF it is my crew)
@@ -358,6 +358,27 @@ const MyAssets = () => {
 
       <Contents>
         <Scrollable>
+
+          <GroupedAssets
+            title="Buildings"
+            groupedAssets={buildings}
+            assetTally={buildingTally}
+            isLoading={buildingsLoading}
+            itemGetter={(building) => {
+              const coachmarked = coachmarks[COACHMARK_IDS.hudMenuMyAssetsBuilding] === building.id;
+              return (
+                <BuildingBlock
+                  key={building.id}
+                  onSelectCrew={onClickCrewAsset}
+                  selectedCrew={crew}
+                  building={building}
+                  setRef={coachmarked ? setCoachmarkRef(COACHMARK_IDS.hudMenuMyAssetsBuilding) : undefined}
+                />
+              );
+            }}
+            itemHeight={55}
+            singleGroupMode={!allAsteroidsMode} />
+
           <HudMenuCollapsibleSection
             titleText={<>Asteroids{asteroidsLoading && <LoadingMessage />}</>}
             titleLabel={`${asteroidTally} Asset${asteroidTally === 1 ? '' : 's'}`}
@@ -387,26 +408,6 @@ const MyAssets = () => {
               );
             }}
             itemHeight={85}
-            singleGroupMode={!allAsteroidsMode} />
-
-          <GroupedAssets
-            title="Buildings"
-            groupedAssets={buildings}
-            assetTally={buildingTally}
-            isLoading={buildingsLoading}
-            itemGetter={(building) => {
-              const coachmarked = coachmarks[COACHMARK_IDS.hudMenuMyAssetsBuilding] === building.id;
-              return (
-                <BuildingBlock
-                  key={building.id}
-                  onSelectCrew={onClickCrewAsset}
-                  selectedCrew={crew}
-                  building={building}
-                  setRef={coachmarked ? setCoachmarkRef(COACHMARK_IDS.hudMenuMyAssetsBuilding) : undefined}
-                />
-              );
-            }}
-            itemHeight={55}
             singleGroupMode={!allAsteroidsMode} />
 
           <GroupedAssets
