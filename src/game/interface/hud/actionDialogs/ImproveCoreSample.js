@@ -188,7 +188,7 @@ const ImproveCoreSample = ({ asteroid, lot, coreSampleManager, currentSamplingAc
   }, [lotAbundance, originalYield, sampleQualityBonus, sampleTimeBonus, crew?._timeAcceleration]);
 
   const [crewTimeRequirement, taskTimeRequirement] = useMemo(() => {
-    if (!asteroid?.id || !crew?._location?.lotId || !lot?.id || !drillSource?.lotIndex) return [];
+    if (!asteroid?.id || !crew?._location?.lotId || !lot?.id || !drillSource?.lotIndex) return [].map(formatTimeRequirements);
     const oneWayCrewTravelTime = crewTravelTime / 2;
     const drillTravelTime = Time.toRealDuration(
       Asteroid.getLotTravelTime(
