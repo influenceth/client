@@ -321,7 +321,7 @@ const NewCoreSample = ({ asteroid, lot, coreSampleManager, currentSamplingAction
             startTime={currentSamplingAction?.startTime}
             stage={stage}
             title="Progress"
-            totalTime={taskTimeRequirement.total}
+            totalTime={taskTimeRequirement?.total || 0}
           />
         )}
 
