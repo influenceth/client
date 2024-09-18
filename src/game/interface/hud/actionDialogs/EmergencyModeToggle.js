@@ -54,7 +54,6 @@ const EmergencyModeToggle = ({ asteroid, lot, manager, ship, stage, ...props }) 
   const { crew } = useCrewContext();
 
   const { data: shipCrews } = useStationedCrews(ship);
-  console.log('debug, shipCrews: ', shipCrews);
   const shipPassengerCrews = useMemo(() => (shipCrews || []).filter((c) =>( c.id !== crew?.id && c.Crew?.roster?.length > 0)), [shipCrews]);
 
   const inEmergencyMode = useMemo(() => {
