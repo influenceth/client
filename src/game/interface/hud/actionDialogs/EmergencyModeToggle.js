@@ -162,11 +162,9 @@ const EmergencyModeToggle = ({ asteroid, lot, manager, ship, stage, ...props }) 
       <ActionDialogHeader
         action={actionDetails}
         actionCrew={crew}
-        crewAvailableTime={0}
         location={{ asteroid, lot, ship }}
         onClose={props.onClose}
         overrideColor={stage === actionStages.NOT_STARTED ? theme.colors.orange : undefined}
-        taskCompleteTime={0}
         stage={stage} />
 
       <ActionDialogBody>

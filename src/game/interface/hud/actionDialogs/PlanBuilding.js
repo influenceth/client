@@ -27,7 +27,8 @@ import {
   ActionDialogBody,
   getBuildingRequirements,
   getTripDetails,
-  LotControlWarning
+  LotControlWarning,
+  formatTimeRequirements
 } from './components';
 import actionStage from '~/lib/actionStages';
 import useSimulationState from '~/hooks/useSimulationState';
@@ -66,10 +67,14 @@ const PlanBuilding = ({ asteroid, lot, constructionManager, stage, ...props }) =
     ], crew?._timeAcceleration);
   }, [asteroid?.id, lot, crew?._location?.lotId, crew?._timeAcceleration, crewTravelBonus, crewDistBonus, lotIsControlled]);
 
-  const [crewTimeRequirement, taskTimeRequirement] = useMemo(() => {
-    if (!tripDetails) return [];
-    return [crewTravelTime, 0];
-  }, [crewTravelTime, tripDetails]);
+  const crewTimeRequirement = useMemo(() => {
+    const oneWayCrewTravelTime = crewTravelTime / 2;
+    return formatTimeRequirements([
+      [oneWayCrewTravelTime, 'Travel to Site'],
+      [0, 'Initiate Building Plan'],
+      [oneWayCrewTravelTime, 'Return to Station']
+    ]);
+  }, [crewTravelTime]);
 
   const stats = useMemo(() => {
     if (!asteroid?.id || !lot?.id) return [];
@@ -118,7 +123,6 @@ const PlanBuilding = ({ asteroid, lot, constructionManager, stage, ...props }) =
         actionCrew={crew}
         location={{ asteroid, lot }}
         crewAvailableTime={crewTimeRequirement}
-        taskCompleteTime={taskTimeRequirement}
         onClose={props.onClose}
         stage={stage} />
 

@@ -63,8 +63,6 @@ const RepoBuilding = ({ asteroid, lot, actionManager, stage, ...props }) => {
   const { crew } = useCrewContext();
   const { data: delinquentController } = useCrew(lot?.building?.Control?.controller?.id);
 
-  const [crewTimeRequirement, taskTimeRequirement] = useMemo(() => ([0, 0]), []);
-
   const stats = useMemo(() => ([]), []);
 
   // TODO: if repo construction site, go to "construct" dialog after
@@ -88,8 +86,6 @@ const RepoBuilding = ({ asteroid, lot, actionManager, stage, ...props }) => {
         overrideColor={stage === actionStage.NOT_STARTED ? theme.colors.error : undefined}
         actionCrew={crew}
         location={{ asteroid, lot }}
-        crewAvailableTime={crewTimeRequirement}
-        taskCompleteTime={taskTimeRequirement}
         onClose={props.onClose}
         stage={stage} />
 

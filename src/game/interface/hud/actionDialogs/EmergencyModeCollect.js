@@ -165,11 +165,9 @@ const EmergencyModeCollect = ({ asteroid, lot, manager, ship, stage, ...props })
           status: stage === actionStages.NOT_STARTED ? 'Emergency Generation Active' : undefined
         }}
         actionCrew={crew}
-        crewAvailableTime={0}
         location={{ asteroid, lot, ship }}
         onClose={props.onClose}
         overrideColor={stage === actionStages.NOT_STARTED ? theme.colors.orange : undefined}
-        taskCompleteTime={0}
         stage={stage} />
 
       <ActionDialogBody>

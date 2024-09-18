@@ -33,7 +33,8 @@ import {
   LeaseTooltip,
   LeaseDetailsLabel,
   LeaseInfoIcon,
-  AssetSellerIndicator
+  AssetSellerIndicator,
+  formatTimeRequirements
 } from './components';
 import useLot from '~/hooks/useLot';
 import { ActionDialogInner, useAsteroidAndLot } from '../ActionDialog';
@@ -175,11 +176,21 @@ const AssembleShip = ({ asteroid, lot, dryDockManager, stage, ...props }) => {
   }, [process]);
 
   const [crewTimeRequirement, taskTimeRequirement] = useMemo(() => {
-    const onewayCrewTravelTime = crewTravelTime / 2;
+    const oneWayCrewTravelTime = crewTravelTime / 2;
     return [
-      Math.max(onewayCrewTravelTime, inputTransportTime) + (setupTime + assemblyTime) / 8 + onewayCrewTravelTime,
-      Math.max(onewayCrewTravelTime, inputTransportTime) + setupTime + assemblyTime
-    ];
+      [
+        [oneWayCrewTravelTime, 'Travel to Shipyard'],
+        inputTransportTime > oneWayCrewTravelTime ? [inputTransportTime - oneWayCrewTravelTime, 'Delay for Input Arrival'] : null,
+        [(setupTime + assemblyTime) / 8, 'On-site Crew Labor'],
+        [oneWayCrewTravelTime, 'Return to Station'],
+      ],
+      [
+        [inputTransportTime, 'Transport Input Materials to Shipyard'],
+        oneWayCrewTravelTime > inputTransportTime ? [oneWayCrewTravelTime - inputTransportTime, 'Delay for Crew Arrival'] : null,
+        [setupTime, 'Prepare for Ship Assembly'],
+        [assemblyTime, 'Assemble Ship'],
+      ]
+    ].map(formatTimeRequirements);
   }, [crewTravelTime, inputTransportTime, setupTime, assemblyTime]);
 
   const stats = useMemo(() => ([
@@ -236,11 +247,11 @@ const AssembleShip = ({ asteroid, lot, dryDockManager, stage, ...props }) => {
   const { leasePayment, desiredLeaseTerm, actualLeaseTerm } = useMemo(() => {
     return getProcessorLeaseSelections(
       prepaidLeaseConfig,
-      taskTimeRequirement,
+      taskTimeRequirement.total,
       crew?.Crew?.readyAt,
       blockTime
     );
-  }, [blockTime, crew?.Crew?.readyAt, prepaidLeaseConfig, taskTimeRequirement]);
+  }, [blockTime, crew?.Crew?.readyAt, prepaidLeaseConfig, taskTimeRequirement.total]);
 
   const onStart = useCallback(() => {
     if (leasePayment && !buildingOwner?.Crew?.delegatedTo) return;
@@ -449,7 +460,7 @@ const AssembleShip = ({ asteroid, lot, dryDockManager, stage, ...props }) => {
             startTime={currentAssembly?.startTime}
             stage={stage}
             title="Progress"
-            totalTime={taskTimeRequirement}
+            totalTime={taskTimeRequirement.total}
             width="100%"
           />
         )}

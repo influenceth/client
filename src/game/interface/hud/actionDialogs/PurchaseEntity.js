@@ -63,9 +63,7 @@ const PurchaseEntity = ({ asteroid, lot, entity, actionManager, stage, ...props 
         }}
         actionCrew={crew}
         location={{ asteroid, lot, ship: entity }}
-        crewAvailableTime={0}
         onClose={props.onClose}
-        taskCompleteTime={0}
         stage={stage} />
 
       <ActionDialogBody style={{ paddingBottom: 15 }}>

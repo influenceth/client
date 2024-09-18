@@ -142,8 +142,6 @@ const JettisonCargo = ({
         location={{ asteroid, lot: originLot }}
         onClose={props.onClose}
         overrideColor={stage === actionStage.NOT_STARTED ? theme.colors.error : undefined}
-        crewAvailableTime={0}
-        taskCompleteTime={0}
         stage={stage} />
 
       <ActionDialogBody>

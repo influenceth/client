@@ -367,8 +367,6 @@ const ManageCrew = ({ altCrews, crew, isForeignCrew, manager, stage, ...props })
         }}
         actionCrew={crew}
         location={hydratedLocation}
-        crewAvailableTime={0}
-        taskCompleteTime={0}
         onClose={props.onClose}
         overrideColor={stage === actionStages.NOT_STARTED ? theme.colors.main : undefined}
         stage={stage} />

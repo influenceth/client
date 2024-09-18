@@ -40,7 +40,8 @@ import {
   TimeBonusTooltip,
   getTripDetails,
   FeeBonusTooltip,
-  formatResourceAmount
+  formatResourceAmount,
+  formatTimeRequirements
 } from './components';
 import { TOKEN, TOKEN_SCALE } from '~/lib/priceUtils';
 
@@ -295,33 +296,49 @@ const MarketplaceOrder = ({
   }, [asteroid?.id, distBonus, exchange?.id, storageLot?.id, hopperTransportBonus, crew?._timeAcceleration]);
 
   const [crewTimeRequirement, taskTimeRequirement] = useMemo(() => {
-    let crewTime = 0;
-    let taskTime = 0;
 
     // CANCEL BUY: no crew or good movement required (goods will stay in origin inv)
     // CANCEL SELL: no crew movement required, but need listed goods returned to my inv
     if (isCancellation) {
       if (mode === 'sell') {
-        taskTime = transportTime;
+        return [
+          0,
+          [
+            [transportTime, 'Product Transport Time']
+          ]
+        ].map(formatTimeRequirements);
       }
 
     // LIMIT BUY: crew is traveling to marketplace to setup the order... no goods transported
     // LIMIT SELL: crew AND goods are traveling to marketplace to setup the order
     } else if (type === 'limit') {
-      const crewToMarketplaceTime = crewTravelTime / 2;
+      const oneWayCrewTravelTime = crewTravelTime / 2;
       const goodsToMarketplaceTime = mode === 'buy' ? 0 : transportTime;
-      const orderReadyTime = Math.max(crewToMarketplaceTime, goodsToMarketplaceTime);
-      crewTime = orderReadyTime + crewToMarketplaceTime;
-      taskTime = orderReadyTime;
+      return [
+        [
+          [oneWayCrewTravelTime, 'Travel to Marketplace'],
+          goodsToMarketplaceTime > oneWayCrewTravelTime ? [goodsToMarketplaceTime - oneWayCrewTravelTime, 'Delay for Product Arrival'] : null,
+          [oneWayCrewTravelTime, 'Return to Station']
+        ],
+        [
+          [goodsToMarketplaceTime, 'Product Transport Time'],
+          oneWayCrewTravelTime > goodsToMarketplaceTime ? [oneWayCrewTravelTime - goodsToMarketplaceTime, 'Delay for Crew Arrival'] : null,
+        ]
+      ].map(formatTimeRequirements);
 
     // MARKET BUY: no crew travel; delivery started from marketplace to my storage
     // MARKET SELL: no crew travel; delivery started from my storage through exchange to filled orders' storages
     //  (however, these are not deliveries I need to worry about as seller, so my taskTime functionally 0)
     } else if (type === 'market' && mode === 'buy') {
-      taskTime = transportTime;
+      return [
+        0,
+        [
+          [transportTime, 'Product Transport Time']
+        ]
+      ].map(formatTimeRequirements);
     }
 
-    return [crewTime, taskTime];
+    return [];
   }, [transportTime, crewTravelTime, type]);
 
   const [totalMarketPrice, avgMarketPrice, averagedOrderTally, marketFills] = useMemo(() => {

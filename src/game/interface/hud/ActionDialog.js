@@ -21,7 +21,6 @@ import ControlShip from './actionDialogs/ControlShip';
 import EmergencyModeCollect from './actionDialogs/EmergencyModeCollect';
 import EmergencyModeToggle from './actionDialogs/EmergencyModeToggle';
 import EjectCrew from './actionDialogs/EjectCrew';
-import EvictShip from './actionDialogs/EvictShip';
 import Extract from './actionDialogs/Extract';
 import FeedCrew from './actionDialogs/FeedCrew';
 import FormAgreement from './actionDialogs/FormAgreement';
@@ -248,7 +247,6 @@ const ActionDialog = ({ type, params }) => {
         {type === 'EMERGENCY_MODE_COLLECT' && <EmergencyModeCollect {...allProps} />}
         {type === 'EMERGENCY_MODE_TOGGLE' && <EmergencyModeToggle {...allProps} />}
         {type === 'END_AGREEMENT' && <FormAgreement {...allProps} isTermination />}
-        {type === 'EVICT_SHIP' && <EvictShip {...allProps} />}
         {type === 'EXTRACT_RESOURCE' && <Extract {...allProps} />}
         {type === 'FEED_CREW' && <FeedCrew {...allProps} />}
         {type === 'FORM_AGREEMENT' && <FormAgreement {...allProps} />}

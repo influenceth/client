@@ -33,7 +33,8 @@ import {
   SectionTitle,
   Section,
   EmptyResourceImage,
-  SectionTitleRight
+  SectionTitleRight,
+  formatTimeRequirements
 } from './components';
 import actionStage from '~/lib/actionStages';
 import useDeliveryManager from '~/hooks/actionManagers/useDeliveryManager';
@@ -453,14 +454,14 @@ const ShoppingList = ({ asteroid, destination, destinationSlot, stage, ...props 
     }, {});
   }, [asteroid?.id, crew?._timeAcceleration, crewBonuses, destinationLot?.id, selected, shoppingList]);
 
-  const { totalPrice, totalMass, totalVolume, taskTimeRequirement, exchangeTally, allFills } = useMemo(() => {
+  const { totalPrice, totalMass, totalVolume, taskTimeTotal, exchangeTally, allFills } = useMemo(() => {
     return Object.keys(selectionSummary).reduce((acc, k) => {
       const s = selectionSummary[k];
       return {
         totalPrice: acc.totalPrice + (s.totalPrice || 0),
         totalMass: acc.totalMass + (s.totalFilled || 0) * Product.TYPES[k].massPerUnit,
         totalVolume: acc.totalVolume + (s.totalFilled || 0) * Product.TYPES[k].volumePerUnit,
-        taskTimeRequirement: Math.max(acc.taskTimeRequirement, s.maxTravelTime),
+        taskTimeTotal: Math.max(acc.taskTimeTotal, s.maxTravelTime),
         exchangeTally: acc.exchangeTally + Object.keys(s.amounts)?.length,
         allFills: [...acc.allFills, ...s.fills],
       };
@@ -468,11 +469,13 @@ const ShoppingList = ({ asteroid, destination, destinationSlot, stage, ...props 
       totalPrice: 0,
       totalMass: 0,
       totalVolume: 0,
-      taskTimeRequirement: 0,
+      taskTimeTotal: 0,
       exchangeTally: 0,
       allFills: []
     });
   }, [selectionSummary]);
+
+  const taskTimeRequirement = useMemo(() => formatTimeRequirements(taskTimeTotal), [taskTimeTotal]);
 
   const insufficientSway = useMemo(() => totalPrice * TOKEN_SCALE[TOKEN.SWAY] > swayBalance, [totalPrice, swayBalance]);
 
@@ -648,7 +651,6 @@ const ShoppingList = ({ asteroid, destination, destinationSlot, stage, ...props 
         }}
         actionCrew={crew}
         location={{ asteroid, lot: destinationLot }}
-        crewAvailableTime={0}
         taskCompleteTime={taskTimeRequirement}
         onClose={props.onClose}
         stage={stage} />

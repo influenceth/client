@@ -41,6 +41,7 @@ import {
   ShipInputBlock,
   MaterialBonusTooltip,
   getBonusDirection,
+  formatTimeRequirements,
 } from './components';
 const Banner = styled.div`
   align-items: center;
@@ -228,6 +229,18 @@ const SetCourse = ({ origin, destination, manager, ship, stage, travelSolution, 
     return Math.max(0, travelSolution.departureTime - coarseTime) * 86400;
   }, [coarseTime, travelSolution]);
 
+  const tof = useMemo(() => {
+    return Math.max(0, travelSolution.arrivalTime - travelSolution.departureTime) * 86400
+  }, [travelSolution]);
+
+  const realWorldDelay = useMemo(() => {
+    return Time.toRealDuration(delay, crew._timeAcceleration);
+  }, [crew?._timeAcceleration, delay]);
+
+  const realWorldTof = useMemo(() => {
+    return Time.toRealDuration(tof, crew._timeAcceleration);
+  }, [crew?._timeAcceleration, tof]);
+
   const arrivingIn = useMemo(() => {
     return Math.max(0, travelSolution.arrivalTime - coarseTime);
   }, [coarseTime, travelSolution]);
@@ -251,12 +264,15 @@ const SetCourse = ({ origin, destination, manager, ship, stage, travelSolution, 
     }
   }, [propellantMassLoaded, exhaustBonus, ship]);
 
-  const [crewTimeRequirement, taskTimeRequirement] = useMemo(() => {
-    const timeRequirement = currentTravelAction
-      ? currentTravelAction.finishTime - currentTravelAction.startTime
-      : Time.toRealDuration(arrivingIn * 86400, crew?._timeAcceleration);
-    return [timeRequirement, timeRequirement];
-  }, [currentTravelAction, arrivingIn, crew?._timeAcceleration]);
+  const travelTime = useMemo(() => {
+    if (currentTravelAction) {
+      return formatTimeRequirements(currentTravelAction.finishTime - currentTravelAction.startTime);
+    }
+    return formatTimeRequirements([
+      [realWorldDelay, 'Wait for Scheduled Departure'],
+      [realWorldTof, 'Time in Flight']
+    ]);
+  }, [currentTravelAction, realWorldDelay, realWorldTof]);
 
   const stats = useMemo(() => ([
     {
@@ -359,8 +375,8 @@ const SetCourse = ({ origin, destination, manager, ship, stage, travelSolution, 
         }}
         actionCrew={crew}
         location={{ asteroid: origin, ship }}
-        crewAvailableTime={crewTimeRequirement}
-        taskCompleteTime={taskTimeRequirement}
+        crewAvailableTime={travelTime}
+        taskCompleteTime={travelTime}
         onClose={props.onClose}
         overrideColor={stage === actionStages.NOT_STARTED ? theme.colors.main : undefined}
         stage={stage} />
@@ -398,7 +414,7 @@ const SetCourse = ({ origin, destination, manager, ship, stage, travelSolution, 
                     <label>
                       <RotatedShipMarkerIcon />
                       <span>
-                        {formatTimer(86400 * Time.toRealDuration(travelSolution.arrivalTime - travelSolution.departureTime, crew?._timeAcceleration), 2)}
+                        {formatTimer(realWorldTof, 2)}
                       </span>
                     </label>
                     <Dashes flip />
@@ -425,9 +441,9 @@ const SetCourse = ({ origin, destination, manager, ship, stage, travelSolution, 
                   <div>
                     <label>Departure Delay</label>
                     <span>
-                      {delay > 300
-                        ? <b><WarningOutlineIcon /> {formatTimer(delay, 2)}</b>
-                        : <>{formatTimer(delay, 2)}</>}
+                      {realWorldDelay > 300
+                        ? <b><WarningOutlineIcon /> {formatTimer(realWorldDelay, 2)}</b>
+                        : <>{formatTimer(realWorldDelay, 2)}</>}
                     </span>
                   </div>
                 )}

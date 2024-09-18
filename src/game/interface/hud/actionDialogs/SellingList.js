@@ -419,14 +419,13 @@ const SellingList = ({ asteroid, origin, originSlot, initialSelection, preselect
     }, {});
   }, [asteroid?.id, crew?._timeAcceleration, crewBonuses, originLot?.id, selected, sellingList]);
 
-  const { totalPrice, totalMass, totalVolume, taskTimeRequirement, exchangeTally, allFills } = useMemo(() => {
+  const { totalPrice, totalMass, totalVolume, exchangeTally, allFills } = useMemo(() => {
     return Object.keys(selectionSummary).reduce((acc, k) => {
       const s = selectionSummary[k];
       return {
         totalPrice: acc.totalPrice + (s.totalPrice || 0),
         totalMass: acc.totalMass + (s.totalFilled || 0) * Product.TYPES[k].massPerUnit,
         totalVolume: acc.totalVolume + (s.totalFilled || 0) * Product.TYPES[k].volumePerUnit,
-        taskTimeRequirement: 0, // there is transport time, but my crew doesn't have to wait on it... Math.max(acc.taskTimeRequirement, s.maxTravelTime),
         exchangeTally: acc.exchangeTally + Object.keys(s.amounts)?.length,
         allFills: [...acc.allFills, ...s.fills],
       };
@@ -434,7 +433,6 @@ const SellingList = ({ asteroid, origin, originSlot, initialSelection, preselect
       totalPrice: 0,
       totalMass: 0,
       totalVolume: 0,
-      taskTimeRequirement: 0,
       exchangeTally: 0,
       allFills: []
     });
@@ -558,8 +556,6 @@ const SellingList = ({ asteroid, origin, originSlot, initialSelection, preselect
         }}
         actionCrew={crew}
         location={{ asteroid, lot: originLot }}
-        crewAvailableTime={0}
-        taskCompleteTime={taskTimeRequirement}
         onClose={props.onClose}
         stage={stage} />
 

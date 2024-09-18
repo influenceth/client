@@ -21,7 +21,8 @@ import {
   ShipInputBlock,
   LotInputBlock,
   getBonusDirection,
-  TimeBonusTooltip
+  TimeBonusTooltip,
+  formatTimeRequirements
 } from './components';
 import useLot from '~/hooks/useLot';
 import useStore from '~/hooks/useStore';
@@ -76,34 +77,32 @@ const StationCrew = ({ asteroid, destination: rawDestination, lot, origin: rawOr
     if (!origin._location || !destination._location) return [0, 0];
     return [
       Asteroid.getLotDistance(asteroid?.id, origin._location.lotIndex || 0, destination._location.lotIndex || 0),
-      Time.toRealDuration(
-        Asteroid.getLotTravelTime(
-          asteroid?.id,
-          origin._location.lotIndex || 0,
-          destination._location.lotIndex || 0,
-          crewTravelBonus.totalBonus,
-          crewDistBonus.totalBonus
-        ),
-        crew?._timeAcceleration
+      formatTimeRequirements(
+        Time.toRealDuration(
+          Asteroid.getLotTravelTime(
+            asteroid?.id,
+            origin._location.lotIndex || 0,
+            destination._location.lotIndex || 0,
+            crewTravelBonus.totalBonus,
+            crewDistBonus.totalBonus
+          ),
+          crew?._timeAcceleration
+        )
       )
     ];
   }, [asteroid?.id, origin?.id, destination?.id, crewDistBonus, crewTravelBonus, crew?._timeAcceleration]);
 
-  const [crewTimeRequirement, taskTimeRequirement] = useMemo(() => {
-    return [ travelTime, 0 ];
-  }, [travelTime]);
-
   const stats = useMemo(() => ([
     {
       label: 'Travel Time',
-      value: formatTimer(travelTime),
+      value: formatTimer(travelTime.total),
       direction: getBonusDirection(crewTravelBonus),
       isTimeStat: true,
       tooltip: (
         <TimeBonusTooltip
           bonus={crewTravelBonus}
           title="Transport Time"
-          totalTime={travelTime}
+          totalTime={travelTime.total}
           crewRequired="start" />
       )
     },
@@ -112,7 +111,7 @@ const StationCrew = ({ asteroid, destination: rawDestination, lot, origin: rawOr
       value: crew?._crewmates?.length || 0,
       direction: 0,
     },
-  ]), [crewTravelBonus, travelTime]);
+  ]), [crewTravelBonus, travelTime.total]);
 
   const onStation = useCallback(() => {
     stationCrew();
@@ -151,8 +150,7 @@ const StationCrew = ({ asteroid, destination: rawDestination, lot, origin: rawOr
       <ActionDialogHeader
         action={actionDetails}
         actionCrew={crew}
-        crewAvailableTime={crewTimeRequirement}
-        taskCompleteTime={taskTimeRequirement}
+        crewAvailableTime={travelTime}
         location={{
           asteroid,
           lot,

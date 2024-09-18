@@ -73,9 +73,7 @@ const UnplanBuilding = ({ asteroid, lot, constructionManager, stage, ...props })
         }}
         actionCrew={crew}
         location={{ asteroid, lot }}
-        crewAvailableTime={0}
         onClose={props.onClose}
-        taskCompleteTime={0}
         stage={stage} />
 
       <ActionDialogBody style={{ paddingBottom: 15 }}>
