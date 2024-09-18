@@ -107,14 +107,14 @@ const LandShip = ({ asteroid, manager, ship, stage, ...props }) => {
   const stats = useMemo(() => ([
     {
       label: 'Time until Docked',
-      value: formatTimer(launchTime.total),
-      direction: launchTime.total > 0 ? getBonusDirection(hopperBonus) : 0,
+      value: formatTimer(launchTime?.total || 0),
+      direction: launchTime?.total > 0 ? getBonusDirection(hopperBonus) : 0,
       isTimeStat: true,
-      tooltip: hopperBonus.totalBonus !== 1 && launchTime.total > 0 && (
+      tooltip: hopperBonus.totalBonus !== 1 && launchTime?.total > 0 && (
         <TimeBonusTooltip
           bonus={hopperBonus}
           title="Time until Docked"
-          totalTime={launchTime.total}
+          totalTime={launchTime?.total || 0}
           crewRequired="duration" />
       )
     },
@@ -144,7 +144,7 @@ const LandShip = ({ asteroid, manager, ship, stage, ...props }) => {
       ),
       direction: 0,
     },
-  ]), [escapeVelocity, hopperBonus, launchTime.total, exhaustBonus, propellantRequirement, ship]);
+  ]), [escapeVelocity, hopperBonus, launchTime?.total, exhaustBonus, propellantRequirement, ship]);
 
   const onLand = useCallback(() => {
     if (!destinationLot) return;

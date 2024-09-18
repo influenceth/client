@@ -158,18 +158,18 @@ const TransferToSite = ({ asteroid, lot: destinationLot, deliveryManager, stage,
     },
     {
       label: 'Transport Time',
-      value: formatTimer(transportTime.total),
+      value: formatTimer(transportTime?.total || 0),
       direction: getBonusDirection(crewTravelBonus),
       isTimeStat: true,
       tooltip: (
         <TimeBonusTooltip
           bonus={crewTravelBonus}
           title="Transport Time"
-          totalTime={transportTime.total}
+          totalTime={transportTime?.total || 0}
           crewRequired="start" />
       )
     },
-  ]), [totalMass, totalVolume, transportDistance, transportTime.total]);
+  ]), [totalMass, totalVolume, transportDistance, transportTime?.total]);
 
   const onStartDelivery = useCallback(() => {
     const destInventoryConfig = Inventory.getType(destinationInventory?.inventoryType, crew?._inventoryBonuses) || {};
