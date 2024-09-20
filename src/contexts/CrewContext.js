@@ -25,7 +25,7 @@ const simulationNftConfig = {
 const CrewContext = createContext();
 
 export function CrewProvider({ children }) {
-  const { accountAddress, authenticated, blockTime, provider, token, isBlockMissing } = useSession();
+  const { accountAddress, authenticated, blockNumber, blockTime, provider, token, isBlockMissing } = useSession();
   const simulationState = useSimulationState();
 
   const queryClient = useQueryClient();
