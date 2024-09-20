@@ -62,7 +62,9 @@ const uniqueProductIds = Array.from(
   ])
 );
 
-const packUI = {
+export const barebonesCrewmateAppearance = '0x1200010000000000041';
+
+export const packUI = {
   intro: {
     checkMarks: [
       `${introPackCrewmates}x Crewmate${introPackCrewmates === 1 ? '' : 's'} to perform game tasks (Recommended Miner and Engineer)`,
@@ -70,7 +72,7 @@ const packUI = {
     ],
     color: theme.colors.glowGreen,
     colorLabel: 'green',
-    crewmateAppearance: '0x1200010000000000041',
+    crewmateAppearance: barebonesCrewmateAppearance,
     flavorText: 'A pair of hands and a plan are all you need to get going in the Belt!',
     flairIcon: <MyAssetIcon />,
     name: 'Explorer',
@@ -193,6 +195,7 @@ const FlairCard = styled.div`
   position: absolute;
   top: 5px;
   z-index: 1;
+  filter: drop-shadow(2px 2px 6px black);
 `;
 
 const useStarterPackPricing = () => {
@@ -593,7 +596,7 @@ export const StarterPack = ({
 const StarterPackSKU = () => {
   return (
     <div>
-      <SKUTitle>Starter Packs</SKUTitle>
+      <SKUTitle>Buy Starter Packs</SKUTitle>
       <StarterPacksOuter>
         <StarterPack packLabel="intro" />
         <span style={{ width: 15 }} />

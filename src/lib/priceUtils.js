@@ -34,9 +34,9 @@ export const TOKEN_FORMATTER = {
   [TOKEN.SWAY]: (rawValue, format) => {
     const value = parseInt(rawValue);
     switch (format) {
-      case TOKEN_FORMAT.FULL: return <><SwayIcon /> {(value / TOKEN_SCALE[TOKEN.USDC]).toLocaleString()}</>
+      case TOKEN_FORMAT.FULL: return <><SwayIcon />{(value / TOKEN_SCALE[TOKEN.USDC]).toLocaleString()}</>
       case TOKEN_FORMAT.VERBOSE: return <>{(value / TOKEN_SCALE[TOKEN.SWAY]).toLocaleString(undefined, { maximumFractionDigits: 0 })} SWAY</>;
-      default: return <><SwayIcon /> {(value / TOKEN_SCALE[TOKEN.SWAY]).toLocaleString(undefined, { maximumFractionDigits: 0 })}</>;
+      default: return <><SwayIcon />{(value / TOKEN_SCALE[TOKEN.SWAY]).toLocaleString(undefined, { maximumFractionDigits: 0 })}</>;
     }
   },
   [TOKEN.USDC]: (rawValue, format) => {

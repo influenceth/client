@@ -19,6 +19,7 @@ import UserPrice from '~/components/UserPrice';
 import BrightButton from '~/components/BrightButton';
 import SKUButton from './components/SKUButton';
 import SKUHighlight from './components/SKUHighlight';
+import SKUInputRow from './components/SKUInputRow';
 
 const Wrapper = styled.div`
   align-items: flex-end;
@@ -73,20 +74,6 @@ const PreselectRow = styled.div`
 const SwayExchangeRows = styled.div`
   padding-bottom: 20px;
 
-  & > div {
-    border: 1px solid rgba(${p => p.theme.colors.mainRGB}, 0.5);
-    margin: 6px 0;
-    padding: 6px;
-
-    input {
-      background: rgba(0, 0, 0, 0.6);
-      border-color: transparent;
-      font-size: 105%;
-      height: 32px;
-      width: 100%;
-    }
-  }
-
   & > footer {
     color: #777;
     text-align: right;
@@ -97,11 +84,9 @@ const SwayExchangeRows = styled.div`
   }
 `;
 
-const noop = () => {};
-
 const preselectableUSDC = [5, 25, 50, 100];
 
-const SwaySKU = ({ onUpdatePurchase = noop, onPurchasing = noop }) => {
+const SwaySKU = () => {
   const { accountAddress, login, provider } = useSession();
   const { executeCalls } = useContext(ChainTransactionContext);
   const priceHelper = usePriceHelper();
@@ -205,17 +190,12 @@ const SwaySKU = ({ onUpdatePurchase = noop, onPurchasing = noop }) => {
   }, [
     accountAddress,
     executeCalls,
-    onUpdatePurchase,
     preferredUiCurrency,
     priceHelper,
     queryClient,
     usdc,
     wallet
   ]);
-
-  useEffect(() => {
-    onPurchasing(isProcessing);
-  }, [isProcessing, onPurchasing]);
 
   return (
     <Wrapper>
@@ -254,22 +234,21 @@ const SwaySKU = ({ onUpdatePurchase = noop, onPurchasing = noop }) => {
             <h4>or Specify Amount</h4>
 
             {preferredUiCurrency === TOKEN.USDC && (
-              <div>
+              <SKUInputRow>
                 <TextInputWrapper rightLabel="USD">
                   <UncontrolledTextInput
                     min={0.01}
                     disabled={reactBool(isProcessing)}
                     onChange={(e) => handleUsdcChange(e.currentTarget.value)}
-                    rightLabel="USD"
                     step={0.01}
                     type="number"
                     value={usdc || ''} />
                 </TextInputWrapper>
-              </div>
+              </SKUInputRow>
             )}
 
             {preferredUiCurrency === TOKEN.ETH && (
-              <div>
+              <SKUInputRow>
                 <TextInputWrapper rightLabel="ETH">
                   <UncontrolledTextInput
                     min={0.00001}
@@ -279,10 +258,10 @@ const SwaySKU = ({ onUpdatePurchase = noop, onPurchasing = noop }) => {
                     type="number"
                     value={eth || ''} />
                 </TextInputWrapper>
-              </div>
+              </SKUInputRow>
             )}
 
-            <div>
+            <SKUInputRow>
               <TextInputWrapper rightLabel="SWAY">
                 <UncontrolledTextInput
                   min={1}
@@ -292,7 +271,7 @@ const SwaySKU = ({ onUpdatePurchase = noop, onPurchasing = noop }) => {
                   type="number"
                   value={sway || ''} />
               </TextInputWrapper>
-            </div>
+            </SKUInputRow>
 
             <footer>Powered by <b>AVNU</b></footer>
           </SwayExchangeRows>
