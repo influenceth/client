@@ -1,6 +1,8 @@
 import { useCallback, useMemo, useState } from 'react';
 import { useQueryClient } from 'react-query';
 import styled from 'styled-components';
+import BrightButton from '~/components/BrightButton';
+import { PuffLoader } from 'react-spinners';
 
 import Button from '~/components/ButtonAlt';
 import { SwayIcon } from '~/components/Icons';
@@ -12,7 +14,7 @@ import api from '~/lib/api';
 import { nativeBool, reactBool } from '~/lib/utils';
 import theme from '~/theme';
 
-const SwayFaucetButton = () => {
+const SwayFaucetButton = ({ noLabel }) => {
   const queryClient = useQueryClient();
   const { data: faucetInfo, isLoading: faucetInfoLoading } = useFaucetInfo();
   const { accountAddress, login, provider } = useSession();
@@ -59,21 +61,20 @@ const SwayFaucetButton = () => {
   }, [accountAddress, login, provider]);
 
   return (
-    <Button
-      color={theme.colors.success}
-      contrastColor={theme.colors.disabledBackground}
-      background={`rgba(${theme.colors.successRGB}, 0.1)`}
+    <BrightButton
       onClick={requestSway}
-      disabled={nativeBool((accountAddress && !swayEnabled) || requestingSway || faucetInfoLoading)}
-      loading={reactBool(requestingSway || faucetInfoLoading)}
-      style={{ marginRight: 10 }}>
-      <PurchaseButtonInner>
-        <label>SWAY Faucet (Daily)</label>
-        <span style={{ marginLeft: 10 }}>
-          +<SwayIcon />{Number(400000).toLocaleString()}
-        </span>
-      </PurchaseButtonInner>
-    </Button>
+      disabled={nativeBool((accountAddress && !swayEnabled) || requestingSway || faucetInfoLoading)}>
+      {!noLabel && <label>SWAY Faucet (Daily)</label>}
+      <span style={noLabel ? {} : { textAlign: 'right' }}>
+        {(requestingSway || faucetInfoLoading)
+          ? <span style={{ alignItems: 'center', display: 'inline-flex', width: 24, height: 24 }}><PuffLoader size="20px" color="white" /></span>
+          : (
+            <span style={{ marginLeft: 10 }}>
+              +<SwayIcon />{Number(400000).toLocaleString()}
+            </span>
+          )}
+      </span>
+    </BrightButton>
   );
 }
 

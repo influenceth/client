@@ -60,13 +60,17 @@ const SKULayout = ({
 
   return (
     <div style={{ display: 'flex', flexDirection: 'row', height: '100%', position: 'relative' }}>
-      <InvisibleImage src={coverImage} onError={onImageLoaded} onLoad={onImageLoaded} />
-      <CoverImage
-        src={imageLoaded}
-        center={coverImageCenter}
-        ready={coverImage === imageLoaded} />
+      {coverImage && (
+        <>
+          <InvisibleImage src={coverImage} onError={onImageLoaded} onLoad={onImageLoaded} />
+          <CoverImage
+            src={imageLoaded}
+            center={coverImageCenter}
+            ready={coverImage === imageLoaded} />
+        </>
+      )}
       <Body>
-        {imageLoaded ? children : <div style={{ justifySelf: 'center' }}><Loader /></div>}
+        {imageLoaded || !coverImage ? children : <div style={{ justifySelf: 'center' }}><Loader /></div>}
       </Body>
     </div>
   );
