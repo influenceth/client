@@ -13,9 +13,9 @@ const Rule = styled.div`
   margin: 10px 0 15px;
 `;
 
-const SKUTitle = ({ children }) => (
+const SKUTitle = ({ children, ...props }) => (
   <>
-    <Title>{children}</Title>
+    <Title {...props}>{children}</Title>
     <Rule />
   </>
 )
