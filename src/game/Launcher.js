@@ -71,12 +71,12 @@ const Nav = styled.div`
 
 const Icon = styled.div``;
 
-const regularHeight = 42;
-const selectedHeight = 56;
+const externalItemHeight = 42;
+const mainItemHeight = 56;
 
 const NavItemBg = styled.div`
   position: absolute;
-  height: ${selectedHeight}px;
+  height: ${mainItemHeight}px;
   background: linear-gradient(to right, rgba(${p => p.theme.colors.mainRGB}, 0.25) 0%, transparent 100%);
 `;
 
@@ -93,7 +93,7 @@ const NavItem = styled.div`
   cursor: ${p => p.selected ? p.theme.cursors.default : p.theme.cursors.active};
   display: flex;
   flex-direction: row;
-  height: ${p => p.isExternal ? regularHeight : selectedHeight}px;
+  height: ${p => p.isExternal ? externalItemHeight : mainItemHeight}px;
   font-size: ${p => p.selected ? 26 : 18}px;
   line-height: 0;
   margin-left: -25px;
@@ -118,7 +118,7 @@ const NavItem = styled.div`
 
   & ${NavItemStripe} {
     opacity: ${p => p.selected ? 1 : 0};
-    height: ${p => p.selected ? selectedHeight : 0}px;
+    height: ${p => p.selected ? mainItemHeight : 0}px;
   }
 
   & svg {
@@ -152,7 +152,7 @@ const NavItem = styled.div`
   &:hover {
     color: white;
     ${NavItemStripe} {
-      height: ${p => p.selected ? selectedHeight : selectedHeight}px;
+      height: ${mainItemHeight}px;
       opacity: 1;
       transition: height 250ms ease
     }
