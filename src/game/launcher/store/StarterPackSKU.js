@@ -1,4 +1,4 @@
-import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import styled from 'styled-components';
 import { Building, Crewmate, Process } from '@influenceth/sdk';
 import cloneDeep from 'lodash/cloneDeep';
@@ -371,97 +371,29 @@ const useStarterPackPricing = () => {
   }, [adalianPrice, advPackSwayMin, basicPackSwayMin, introPackSwayMin, priceConstants, priceHelper]);
 };
 
-const useStarterPacks = () => {
-  const { execute } = useContext(ChainTransactionContext);
-  const { data: ethBalance } = useEthBalance();
-  const priceHelper = usePriceHelper();
-  const { buildMultiswapFromSellAmount } = useSwapHelper();
-  const starterPacks = useStarterPackPricing();
-  const { accountAddress } = useSession();
-
-  const createAlert = useStore(s => s.dispatchAlertLogged);
-
-  return useMemo(() => {
-    const onPurchase = (which) => async (onIsPurchasing) => {
-      const pack = starterPacks[which];
-      const totalPrice = pack.price;
-      const crewmateTally = pack.crewmates;
-      const purchaseEth_usd = pack.ethValue.to(TOKEN.USDC);
-      const purchaseSway_usd = pack.swayValue.to(TOKEN.USDC);
-
-      if (onIsPurchasing) onIsPurchasing(true);
-
-      let ethSwapCalls = await buildMultiswapFromSellAmount(purchaseEth_usd, TOKEN.ETH);
-      // this means has no usdc (likely) OR illiquid swap (unlikely)... we'll assume the former.
-      // can still allow the transaction to go through as long as has enough ETH to cover the
-      // cost (and subsequent swaps will not leave without any gas buffer)
-      if (ethSwapCalls === false) {
-        if (priceHelper.from(ethBalance, TOKEN.ETH).to(TOKEN.USDC) >= totalPrice.usdcValue) {
-          ethSwapCalls = [];
-        } else {
-          createAlert({
-            type: 'GenericAlert',
-            data: { content: 'Insufficient ETH or USDC/ETH swap liquidity!' },
-            level: 'warning',
-            duration: 5000
-          });
-          if (onIsPurchasing) onIsPurchasing(false);
-          return;
-        }
-      }
-      const swaySwapCalls = await buildMultiswapFromSellAmount(purchaseSway_usd, TOKEN.SWAY);
-      if (swaySwapCalls === false) {
-        createAlert({
-          type: 'GenericAlert',
-          data: { content: 'Insufficient SWAY swap liquidity!' },
-          level: 'warning',
-          duration: 5000
-        });
-        if (onIsPurchasing) onIsPurchasing(false);
-        return;
-      }
-
-      fireTrackingEvent('purchase', {
-        category: 'purchase',
-        currency: 'USD',
-        externalId: accountAddress,
-        value: Number(crewmateTally) * 5,
-        items: [{
-          item_name: `starter_pack_${which}`
-        }]
-      });
-
-      await execute('PurchaseStarterPack', {
-        collection: Crewmate.COLLECTION_IDS.ADALIAN,
-        crewmateTally,
-        swapCalls: [ ...ethSwapCalls, ...swaySwapCalls ]
-      });
-
-      if (onIsPurchasing) onIsPurchasing(false);
-    };
-
-    // attach onPurchase to each
-    return Object.keys(starterPacks).reduce((acc, k) => {
-      acc[k] = {
-        ...starterPacks[k],
-        onPurchase: onPurchase(k)
-      };
-      return acc;
-    }, {});
-  }, [accountAddress, buildMultiswapFromSellAmount, ethBalance, execute, priceHelper, starterPacks]);
-};
-
 export const StarterPack = ({
   packLabel,
   shouldMaintainEthGasReserve = false,
   ...props
 }) => {
+  const { execute } = useContext(ChainTransactionContext);
+  const { data: ethBalanceSource } = useEthBalance();
+  const priceHelper = usePriceHelper();
+  const { buildMultiswapFromSellAmount } = useSwapHelper();
+  const packs = useStarterPackPricing();
+  const { accountAddress } = useSession();
+
+  // have to do it this way because purchase function is memoized before funding event
+  const ethBalanceRef = useRef();
+  ethBalanceRef.current = ethBalanceSource;
+
   const { pendingTransactions } = useCrewContext();
   const { fundingPrompt, onVerifyFunds } = useFundingFlow();
 
   const [isPurchasing, setIsPurchasing] = useState();
-  
-  const packs = useStarterPacks();
+
+  const createAlert = useStore(s => s.dispatchAlertLogged);
+
   const { pack, color, colorLabel, checkMarks, crewmateAppearance, flairIcon, flavorText, name } = useMemo(() => ({
     pack: packs[packLabel],
     ...packUI[packLabel]
@@ -470,13 +402,75 @@ export const StarterPack = ({
   const isPurchasingStarterPack = useMemo(() => {
     return isPurchasing || (pendingTransactions || []).find(tx => tx.key === 'PurchaseStarterPack');
   }, [isPurchasing, pendingTransactions]);
+  
+  const onPurchase = useCallback(async (setIsPurchasing) => {
+    const totalPrice = pack.price;
+    const crewmateTally = pack.crewmates;
+    const purchaseEth_usd = pack.ethValue.to(TOKEN.USDC);
+    const purchaseSway_usd = pack.swayValue.to(TOKEN.USDC);
+
+    if (setIsPurchasing) setIsPurchasing(true);
+
+    let ethSwapCalls = await buildMultiswapFromSellAmount(purchaseEth_usd, TOKEN.ETH);
+    // this means has no usdc (likely) OR illiquid swap (unlikely)... we'll assume the former.
+    // can still allow the transaction to go through as long as has enough ETH to cover the
+    // cost (and subsequent swaps will not leave without any gas buffer)
+    if (ethSwapCalls === false) {
+      if (priceHelper.from(ethBalanceRef.current, TOKEN.ETH).to(TOKEN.USDC) >= totalPrice.usdcValue) {
+        ethSwapCalls = [];
+      } else {
+        createAlert({
+          type: 'GenericAlert',
+          data: { content: 'Insufficient ETH or USDC/ETH swap liquidity!' },
+          level: 'warning',
+          duration: 5000
+        });
+        if (setIsPurchasing) setIsPurchasing(false);
+        return;
+      }
+    }
+    const swaySwapCalls = await buildMultiswapFromSellAmount(purchaseSway_usd, TOKEN.SWAY);
+    if (swaySwapCalls === false) {
+      createAlert({
+        type: 'GenericAlert',
+        data: { content: 'Insufficient SWAY swap liquidity!' },
+        level: 'warning',
+        duration: 5000
+      });
+      if (setIsPurchasing) setIsPurchasing(false);
+      return;
+    }
+
+    fireTrackingEvent('purchase', {
+      category: 'purchase',
+      currency: 'USD',
+      externalId: accountAddress,
+      value: Number(crewmateTally) * 5,
+      items: [{
+        item_name: `starter_pack_${packLabel}`
+      }]
+    });
+
+    await execute('PurchaseStarterPack', {
+      collection: Crewmate.COLLECTION_IDS.ADALIAN,
+      crewmateTally,
+      swapCalls: [ ...ethSwapCalls, ...swaySwapCalls ]
+    });
+
+    if (setIsPurchasing) setIsPurchasing(false);
+  }, [accountAddress, buildMultiswapFromSellAmount, execute, pack, priceHelper]);
 
   const onClick = useCallback(() => {
     onVerifyFunds(
       pack.price,
-      () => pack.onPurchase((which) => setIsPurchasing(which))
+      () => onPurchase((which) => {
+        setIsPurchasing(which);
+        if (props.setIsPurchasing) {
+          props.setIsPurchasing(which);
+        }
+      })
     )
-  }, [onVerifyFunds, pack]);
+  }, [onVerifyFunds, onPurchase, packLabel, pack.price, props.setIsPurchasing]);
 
   // NOTE: for tinkering...
   // const overwriteAppearance = useMemo(() => Crewmate.packAppearance({

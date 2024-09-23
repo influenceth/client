@@ -7,6 +7,16 @@ import { safeBigInt } from '~/lib/utils';
 import UserPrice from './UserPrice';
 
 const SwayPrice = ({ price, priceToken, format }) => {
+  return (
+    <UserPrice
+      price={price}
+      priceToken={priceToken}
+      format={format}
+    />
+  );
+
+  // TODO: remove above, use below once we are going to start using sway pricing
+
   const priceHelper = usePriceHelper();
 
   if (!priceToken) return <>-</>;

@@ -1625,9 +1625,9 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
               </p>
               <Selector><div>Select</div></Selector>
               <div style={{ color: 'white', display: 'flex', flexDirection: 'row', marginBottom: 20 }}>
-                <StarterPack packLabel="intro" asButton onIsPurchasing={setIsPurchasingPack} style={{ marginRight: 15 }} />
-                <StarterPack packLabel="basic" asButton onIsPurchasing={setIsPurchasingPack} style={{ marginRight: 15 }} />
-                <StarterPack packLabel="advanced" asButton onIsPurchasing={setIsPurchasingPack} />
+                <StarterPack packLabel="intro" asButton setIsPurchasing={setIsPurchasingPack} style={{ marginRight: 15 }} />
+                <StarterPack packLabel="basic" asButton setIsPurchasing={setIsPurchasingPack} style={{ marginRight: 15 }} />
+                <StarterPack packLabel="advanced" asButton setIsPurchasing={setIsPurchasingPack} />
               </div>
             </PromptBody>
           )}

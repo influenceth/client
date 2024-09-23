@@ -12,7 +12,6 @@ import LauncherDialog from './components/LauncherDialog';
 import AsteroidSKU from './store/AsteroidSKU';
 import CrewmateSKU from './store/CrewmateSKU';
 import FaucetSKU from './store/FaucetSKU';
-import FundingFlow from './store/FundingFlow';
 import StarterPackSKU from './store/StarterPackSKU';
 import SwaySKU from './store/SwaySKU';
 import SKULayout from './store/components/SKULayout';
@@ -41,8 +40,6 @@ const Store = () => {
 
   const initialSubpage = useStore(s => s.launcherSubpage);
 
-  const [fundingPurchase, setFundingPurchase] = useState();
-
   const initialSelection = useMemo(() => {
     // use specified starting page, or default (starter packs for new users, sway for existing)
     let selectionKey = initialSubpage || (!!crew ? 'sway' : 'packs');
@@ -54,24 +51,15 @@ const Store = () => {
     return Object.keys(storeAssets).map((asset) => ({
       label: storeAssets[asset],
       pane: (
-        <>
-          <div style={{ height: '100%' }}>
-            <SKULayout coverImage={coverImages[asset]}>
-              {asset === 'asteroids' && <AsteroidSKU />}
-              {asset === 'crewmates' && <CrewmateSKU />}
-              {asset === 'packs' && <StarterPackSKU />}
-              {asset === 'sway' && <SwaySKU />}
-              {asset === 'faucets' && <FaucetSKU />}
-            </SKULayout>
-          </div>
-
-          {fundingPurchase && (
-            <FundingFlow
-              totalPrice={fundingPurchase.totalPrice}
-              onClose={() => setFundingPurchase()}
-              onFunded={fundingPurchase.onPurchase} />
-          )}
-        </>
+        <div style={{ height: '100%' }}>
+          <SKULayout coverImage={coverImages[asset]}>
+            {asset === 'asteroids' && <AsteroidSKU />}
+            {asset === 'crewmates' && <CrewmateSKU />}
+            {asset === 'packs' && <StarterPackSKU />}
+            {asset === 'sway' && <SwaySKU />}
+            {asset === 'faucets' && <FaucetSKU />}
+          </SKULayout>
+        </div>
       ),
     }))
   }, []);

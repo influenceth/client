@@ -1,4 +1,4 @@
-import { useCallback, useContext, useEffect, useState } from 'react';
+import { Fragment, useCallback, useContext, useEffect, useState } from 'react';
 import { useQueryClient } from 'react-query';
 import styled from 'styled-components';
 
@@ -213,17 +213,21 @@ const SwaySKU = () => {
         <h3>Sway Packages</h3>
         <div style={{ padding: '0 10px' }}>
           <PreselectRow>
-            {preselectableUSDC.map((amount) => (
-              <Button
-                key={amount}
-                active={amount === usdc}
-                lessTransparent
-                onClick={() => handlePreselect(amount)}>
-                <UserPrice
-                  price={amount * TOKEN_SCALE[TOKEN.USDC]}
-                  priceToken={TOKEN.USDC}
-                  format={TOKEN_FORMAT.SHORT} />
-              </Button>
+            {preselectableUSDC.map((amount, i) => (
+              <Fragment key={amount}>
+                {/* for width, smallest package for ETH users is skipped */}
+                {!(preferredUiCurrency === TOKEN.ETH && i === 0) && (
+                  <Button
+                    active={amount === usdc}
+                    lessTransparent
+                    onClick={() => handlePreselect(amount)}>
+                    <UserPrice
+                      price={amount * TOKEN_SCALE[TOKEN.USDC]}
+                      priceToken={TOKEN.USDC}
+                      format={TOKEN_FORMAT.SHORT} />
+                  </Button>
+                )}
+              </Fragment>
             ))}
           </PreselectRow>
 

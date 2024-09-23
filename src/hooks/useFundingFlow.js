@@ -33,11 +33,13 @@ const useFundWrapper = () => {
 
   useEffect(() => {
     if (isFunded && onFunded.current) {
-      onFunded.current();
+      setTimeout(() => {
+        onFunded.current();
 
-      // cleanup
-      onFunded.current = null;
-      setIsFunded();
+        // cleanup
+        onFunded.current = null;
+        setIsFunded();
+      }, 100);
     }
   }, [isFunded]);
 
