@@ -13,7 +13,7 @@ import BrightButton from '~/components/BrightButton';
 const EthFaucetButton = ({ onError, onProcessing, onSuccess, noLabel }) => {
   const queryClient = useQueryClient();
   const { data: faucetInfo, isLoading: faucetInfoLoading } = useFaucetInfo();
-  const { provider } = useSession();
+  const { accountAddress, login, provider } = useSession();
 
   const [requestingEth, setRequestingEth] = useState();
 
@@ -24,6 +24,8 @@ const EthFaucetButton = ({ onError, onProcessing, onSuccess, noLabel }) => {
   }, [faucetInfo]);
 
   const requestEth = useCallback(async () => {
+    if (!accountAddress) return login();
+    
     setRequestingEth(true);
 
     try {
@@ -48,7 +50,7 @@ const EthFaucetButton = ({ onError, onProcessing, onSuccess, noLabel }) => {
     if (onProcessing) onProcessing(requestingEth);
   }, [onProcessing, requestingEth]);
 
-  const disabled = !ethEnabled || requestingEth || faucetInfoLoading;
+  const disabled = (accountAddress && !ethEnabled) || requestingEth || faucetInfoLoading;
   return (
     <BrightButton
       onClick={requestEth}

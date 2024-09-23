@@ -5,9 +5,9 @@ import { Crewmate } from '@influenceth/sdk';
 import UncontrolledTextInput, { TextInputWrapper } from '~/components/TextInputUncontrolled';
 import { nativeBool, safeBigInt } from '~/lib/utils';
 import useCrewManager from '~/hooks/actionManagers/useCrewManager';
+import useFundingFlow from '~/hooks/useFundingFlow';
 import usePriceConstants from '~/hooks/usePriceConstants';
 import usePriceHelper from '~/hooks/usePriceHelper';
-import UserPrice from '~/components/UserPrice';
 import { PurchaseForm, PurchaseFormRows } from './components/PurchaseForm';
 import SKUTitle from './components/SKUTitle';
 import AdalianFlourish from '~/components/AdalianFlourish';
@@ -87,10 +87,11 @@ const cleanseCrewmates = (x) => {
 
 const CrewmateSKU = () => {
   const { purchaseCredits, getPendingCreditPurchase } = useCrewManager();
+  const { fundingPrompt, onVerifyFunds } = useFundingFlow();
   const { data: priceConstants } = usePriceConstants();
   const priceHelper = usePriceHelper();
-  const [quantity, setQuantity] = useState(1);
 
+  const [quantity, setQuantity] = useState(1);
   const [isPurchasing, setIsPurchasing] = useState(false);
 
   useEffect(() => {
@@ -103,7 +104,7 @@ const CrewmateSKU = () => {
       safeBigInt(cleanQuantity) * priceConstants?.ADALIAN_PURCHASE_PRICE,
       priceConstants?.ADALIAN_PURCHASE_TOKEN
     );
-  }, [quantity, priceConstants, priceHelper])
+  }, [quantity, priceConstants, priceHelper]);
 
   const onPurchase = useCallback(async () => {
     setIsPurchasing(true);
@@ -114,6 +115,13 @@ const CrewmateSKU = () => {
     }
     setIsPurchasing(false);
   }, [quantity]);
+
+  const onClick = useCallback(() => {
+    onVerifyFunds(
+      totalPrice,
+      onPurchase
+    )
+  }, [onPurchase, onVerifyFunds, totalPrice]);
 
   return (
     <Wrapper>
@@ -194,12 +202,13 @@ const CrewmateSKU = () => {
           <SKUButton
             isPurchasing={isPurchasing}
             isSway
-            onClick={onPurchase}
+            onClick={onClick}
             usdcPrice={totalPrice.usdcValue}
             style={{ width: '100%' }}
           />
         </Body>
       </CrewmatePurchaseForm>
+      {fundingPrompt}
     </Wrapper>
   );
 };

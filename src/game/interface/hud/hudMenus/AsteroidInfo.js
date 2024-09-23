@@ -21,6 +21,8 @@ import AsteroidTitleArea from './components/AsteroidTitleArea';
 import PolicyPanels from './components/PolicyPanels';
 import useDescriptionAnnotation from '~/hooks/useDescriptionAnnotation';
 import useAnnotationContent from '~/hooks/useAnnotationContent';
+import { AsteroidSwayPrice } from '~/components/SwayPrice';
+import { TOKEN_FORMAT } from '~/lib/priceUtils';
 
 const Description = styled.div`
   color: ${p => p.theme.colors.main};
@@ -139,8 +141,10 @@ const AsteroidInfo = ({ onClose }) => {
             <InfoRow>
               <WalletIcon />
               <label>Price</label>
-              <span style={{ color: theme.colors.main }}>
-                <AsteroidUserPrice lots={Asteroid.getSurfaceArea(undefined, asteroid.Celestial.radius)} />
+              <span>
+                <AsteroidSwayPrice
+                  lots={Asteroid.getSurfaceArea(undefined, asteroid.Celestial.radius)}
+                  format={TOKEN_FORMAT.SHORT} />
               </span>
             </InfoRow>
           )}

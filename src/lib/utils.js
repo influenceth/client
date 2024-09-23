@@ -400,7 +400,7 @@ export const safeBigInt = (unsafe) => {
   try {
     return BigInt(Number(unsafe));
   } catch (e) {
-    console.error(`safeBigInt warning: "${unsafe}" will be rounded`);
+    console.warn(`safeBigInt warning: "${unsafe}" will be rounded`);
   }
   
   try {

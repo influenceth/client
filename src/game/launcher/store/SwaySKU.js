@@ -2,21 +2,20 @@ import { useCallback, useContext, useEffect, useState } from 'react';
 import { useQueryClient } from 'react-query';
 import styled from 'styled-components';
 
-import { ChevronRightIcon, EthIcon, SwayIcon } from '~/components/Icons';
+import { SwayIcon } from '~/components/Icons';
 import UncontrolledTextInput, { TextInputWrapper } from '~/components/TextInputUncontrolled';
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
+import useFundingFlow from '~/hooks/useFundingFlow';
 import usePriceHelper from '~/hooks/usePriceHelper';
 import useSession from '~/hooks/useSession';
 import useStore from '~/hooks/useStore';
 import useSwapHelper from '~/hooks/useSwapHelper';
-import useWalletPurchasableBalances from '~/hooks/useWalletPurchasableBalances';
 import { TOKEN, TOKEN_FORMAT, TOKEN_SCALE } from '~/lib/priceUtils';
 import { cleanseTxHash, fireTrackingEvent, nativeBool, reactBool, roundToPlaces } from '~/lib/utils';
 import { PurchaseForm, PurchaseFormRows } from './components/PurchaseForm';
 import SKUTitle from './components/SKUTitle';
 import Button from '~/components/ButtonPill';
 import UserPrice from '~/components/UserPrice';
-import BrightButton from '~/components/BrightButton';
 import SKUButton from './components/SKUButton';
 import SKUHighlight from './components/SKUHighlight';
 import SKUInputRow from './components/SKUInputRow';
@@ -87,12 +86,12 @@ const SwayExchangeRows = styled.div`
 const preselectableUSDC = [5, 25, 50, 100];
 
 const SwaySKU = () => {
-  const { accountAddress, login, provider } = useSession();
+  const { accountAddress, provider } = useSession();
   const { executeCalls } = useContext(ChainTransactionContext);
+  const { fundingPrompt, onVerifyFunds } = useFundingFlow();
   const priceHelper = usePriceHelper();
   const { buildMultiswapFromSellAmount } = useSwapHelper();
   const queryClient = useQueryClient();
-  const { data: wallet } = useWalletPurchasableBalances();
 
   const createAlert = useStore(s => s.dispatchAlertLogged);
   const preferredUiCurrency = useStore(s => s.getPreferredUiCurrency());
@@ -139,18 +138,9 @@ const SwaySKU = () => {
   }, []);
 
   const onPurchase = useCallback(async () => {
-    if (!accountAddress) return login();
-
-    const unscaledUSDC = (usdc || 0) * TOKEN_SCALE[TOKEN.USDC];
-    const totalWalletUSD = wallet.combinedBalance?.to(TOKEN.USDC);
-    if (totalWalletUSD <= unscaledUSDC) {
-      // setFundingPurchase({}); // TODO: need to fill in funding info
-      return;
-    }
-
     setIsProcessing(true);
 
-    console.log('unscaledUSDC', unscaledUSDC);
+    const unscaledUSDC = (usdc || 0) * TOKEN_SCALE[TOKEN.USDC];
     const multiswapCalls = await buildMultiswapFromSellAmount(unscaledUSDC, TOKEN.SWAY);
     if (!(multiswapCalls?.length > 0)) {
       setIsProcessing(false);
@@ -189,13 +179,20 @@ const SwaySKU = () => {
     }
   }, [
     accountAddress,
+    buildMultiswapFromSellAmount,
     executeCalls,
     preferredUiCurrency,
     priceHelper,
     queryClient,
-    usdc,
-    wallet
+    usdc
   ]);
+
+  const onClick = useCallback(() => {
+    onVerifyFunds(
+      priceHelper.from(usdc * TOKEN_SCALE[TOKEN.USDC], TOKEN.USDC),
+      onPurchase
+    )
+  }, [onPurchase, onVerifyFunds, usdc]);
 
   return (
     <Wrapper>
@@ -285,12 +282,13 @@ const SwaySKU = () => {
 
           <SKUButton
             isPurchasing={isProcessing}
-            onClick={onPurchase}
+            onClick={onClick}
             usdcPrice={usdc * TOKEN_SCALE[TOKEN.USDC]}
             style={{ width: '100%' }}
           />
         </div>
       </PurchaseForm>
+      {fundingPrompt}
     </Wrapper>
   );
 };

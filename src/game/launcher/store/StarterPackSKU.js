@@ -3,13 +3,12 @@ import styled from 'styled-components';
 import { Building, Crewmate, Process } from '@influenceth/sdk';
 import cloneDeep from 'lodash/cloneDeep';
 
-import BrightButton from '~/components/BrightButton';
 import CrewmateCardFramed from '~/components/CrewmateCardFramed';
-import { CheckIcon, ChevronRightIcon, CrewmateCreditIcon, MyAssetDoubleIcon, MyAssetIcon, MyAssetTripleIcon, SwayIcon } from '~/components/Icons';
-import NavIcon from '~/components/NavIcon';
+import { CheckIcon, CrewmateCreditIcon, MyAssetDoubleIcon, MyAssetIcon, MyAssetTripleIcon, SwayIcon } from '~/components/Icons';
 import UserPrice from '~/components/UserPrice';
 import ChainTransactionContext from '~/contexts/ChainTransactionContext';
 import useCrewContext from '~/hooks/useCrewContext';
+import useFundingFlow from '~/hooks/useFundingFlow';
 import usePriceConstants from '~/hooks/usePriceConstants';
 import usePriceHelper from '~/hooks/usePriceHelper';
 import useSession from '~/hooks/useSession';
@@ -19,11 +18,9 @@ import useSwapHelper from '~/hooks/useSwapHelper';
 import useWalletPurchasableBalances, { GAS_BUFFER_VALUE_USDC } from '~/hooks/useWalletPurchasableBalances';
 import { useEthBalance } from '~/hooks/useWalletTokenBalance';
 import { TOKEN, TOKEN_FORMAT, TOKEN_SCALE } from '~/lib/priceUtils';
-import { fireTrackingEvent, nativeBool, ordersToFills, reactBool } from '~/lib/utils';
+import { fireTrackingEvent, ordersToFills } from '~/lib/utils';
 import theme, { hexToRGB } from '~/theme';
 import { PurchaseForm } from './components/PurchaseForm';
-import FundingFlow from './FundingFlow';
-import SKULayout from './components/SKULayout';
 import SKUTitle from './components/SKUTitle';
 import SKUButton from './components/SKUButton';
 import SKUHighlight from './components/SKUHighlight';
@@ -454,76 +451,32 @@ const useStarterPacks = () => {
   }, [accountAddress, buildMultiswapFromSellAmount, ethBalance, execute, priceHelper, starterPacks]);
 };
 
-const PurchasePackButton = ({ pack }) => {
-  const { pendingTransactions } = useCrewContext();
-
-  const [isPurchasing, setIsPurchasing] = useState();
-
-  const isPurchasingStarterPack = useMemo(() => {
-    return isPurchasing || (pendingTransactions || []).find(tx => tx.key === 'PurchaseStarterPack');
-  }, [isPurchasing, pendingTransactions]);
-
-  const onPurchase = useCallback(() => {
-    pack.onPurchase((which) => setIsPurchasing(which));
-  }, [pack]);
-
-  return (
-    <SKUButton
-      isPurchasing={isPurchasingStarterPack}
-      onClick={onPurchase}
-      usdcPrice={pack.price.usdcValue}
-    />
-  );
-}
-
-// TODO: consider moving isFunding to higher level context with single reference
-const StarterPackWrapper = ({ children, pack, ...props }) => {
-  const { data: wallet } = useWalletPurchasableBalances();
-
-  const [isFunding, setIsFunding] = useState();
-  const [isFunded, setIsFunded] = useState();
-  const onClick = useCallback(() => {
-    if (props.asButton) {
-      if (pack.price.usdcValue > wallet?.combinedBalance?.to(TOKEN.USDC)) {
-        setIsFunding({
-          totalPrice: pack.price,
-          onClose: () => setIsFunding(),
-          onFunded: () => setIsFunded(true)
-        });
-      } else {
-        setIsFunded(true);
-      }
-    }
-  }, [props.asButton, pack.price, wallet?.combinedBalance]);
-
-  // pull pack.onPurchase out of onClick (so can be re-memoized after wallet balance updates before called)
-  useEffect(() => {
-    if (isFunded) {
-      pack.onPurchase(props.onIsPurchasing);
-      setIsFunded();
-    }
-  }, [isFunded, pack.onPurchase])
-
-  return (
-    <>
-      <StarterPackPurchaseForm {...props} onClick={onClick}>
-        {children}
-      </StarterPackPurchaseForm>
-      {isFunding && <FundingFlow {...isFunding} />}
-    </>
-  );
-};
-
 export const StarterPack = ({
   packLabel,
   shouldMaintainEthGasReserve = false,
   ...props
 }) => {
+  const { pendingTransactions } = useCrewContext();
+  const { fundingPrompt, onVerifyFunds } = useFundingFlow();
+
+  const [isPurchasing, setIsPurchasing] = useState();
+  
   const packs = useStarterPacks();
   const { pack, color, colorLabel, checkMarks, crewmateAppearance, flairIcon, flavorText, name } = useMemo(() => ({
     pack: packs[packLabel],
     ...packUI[packLabel]
   }), [packLabel]);
+
+  const isPurchasingStarterPack = useMemo(() => {
+    return isPurchasing || (pendingTransactions || []).find(tx => tx.key === 'PurchaseStarterPack');
+  }, [isPurchasing, pendingTransactions]);
+
+  const onClick = useCallback(() => {
+    onVerifyFunds(
+      pack.price,
+      () => pack.onPurchase((which) => setIsPurchasing(which))
+    )
+  }, [onVerifyFunds, pack]);
 
   // NOTE: for tinkering...
   // const overwriteAppearance = useMemo(() => Crewmate.packAppearance({
@@ -536,59 +489,72 @@ export const StarterPack = ({
   // }
 
   return (
-    <StarterPackWrapper color={colorLabel} pack={pack} {...props}>
-      <h2>
-        <Flair color={color} style={packLabel === 'intro' ? { fontSize: '19px' } : {}}>{flairIcon}</Flair>
-        <FlairCard>
-          <CrewmateCardFramed
-            isCaptain
-            CrewmateCardProps={{
-              gradientRGB: hexToRGB(color),
-              useExplicitAppearance: true
-            }}
-            crewmate={{
-              Crewmate: {
-                appearance: crewmateAppearance,
-                class: 0,
-                coll: Crewmate.COLLECTION_IDS.ADALIAN,
-              }
-            }}
-            width={85} />
-        </FlairCard>
-        {name}
-      </h2>
-      <PackWrapper>
-        <PackFlavor color={color} smaller={props.asButton}>{flavorText}</PackFlavor>
-        <PackContents color={color}>
-          <SKUHighlight color={color}>
-            <SwayIcon />
-            <span>{pack.swayFormatted}</span>
-          </SKUHighlight>
-          <SKUHighlight color={color}>
-            <CrewmateCreditIcon />
-            <span style={{ marginLeft: 8 }}>{pack.crewmates} Crewmate{pack.crewmates === 1 ? '' : 's'}</span>
-          </SKUHighlight>
-          {shouldMaintainEthGasReserve && (
+    <>
+      <StarterPackPurchaseForm
+        color={colorLabel}
+        onClick={props.asButton ? onClick : undefined}
+        pack={pack}
+        {...props}>
+        <h2>
+          <Flair color={color} style={packLabel === 'intro' ? { fontSize: '19px' } : {}}>{flairIcon}</Flair>
+          <FlairCard>
+            <CrewmateCardFramed
+              isCaptain
+              CrewmateCardProps={{
+                gradientRGB: hexToRGB(color),
+                useExplicitAppearance: true
+              }}
+              crewmate={{
+                Crewmate: {
+                  appearance: crewmateAppearance,
+                  class: 0,
+                  coll: Crewmate.COLLECTION_IDS.ADALIAN,
+                }
+              }}
+              width={85} />
+          </FlairCard>
+          {name}
+        </h2>
+        <PackWrapper>
+          <PackFlavor color={color} smaller={props.asButton}>{flavorText}</PackFlavor>
+          <PackContents color={color}>
             <SKUHighlight color={color}>
-              <UserPrice
-                price={pack.ethValue.usdcValue}
-                priceToken={TOKEN.USDC}
-                format={TOKEN_FORMAT.SHORT} />
+              <SwayIcon />
+              <span>{pack.swayFormatted}</span>
             </SKUHighlight>
-          )}
-        </PackContents>
-        <PackChecks color={color}>
-          {checkMarks.map((checkText, i) => (
-            <div key={i}>
-              <span><CheckIcon /></span>
-              <label>{checkText}</label>
-            </div>
-          ))}
-        </PackChecks>
-      </PackWrapper>
+            <SKUHighlight color={color}>
+              <CrewmateCreditIcon />
+              <span style={{ marginLeft: 8 }}>{pack.crewmates} Crewmate{pack.crewmates === 1 ? '' : 's'}</span>
+            </SKUHighlight>
+            {shouldMaintainEthGasReserve && (
+              <SKUHighlight color={color}>
+                <UserPrice
+                  price={pack.ethValue.usdcValue}
+                  priceToken={TOKEN.USDC}
+                  format={TOKEN_FORMAT.SHORT} />
+              </SKUHighlight>
+            )}
+          </PackContents>
+          <PackChecks color={color}>
+            {checkMarks.map((checkText, i) => (
+              <div key={i}>
+                <span><CheckIcon /></span>
+                <label>{checkText}</label>
+              </div>
+            ))}
+          </PackChecks>
+        </PackWrapper>
 
-      {!props.asButton && <PurchasePackButton pack={pack} />}
-    </StarterPackWrapper>
+        {!props.asButton && (
+          <SKUButton
+            isPurchasing={isPurchasingStarterPack}
+            onClick={onClick}
+            usdcPrice={pack.price.usdcValue}
+          />
+        )}
+      </StarterPackPurchaseForm>
+      {fundingPrompt}
+    </>
   );
 };
 
