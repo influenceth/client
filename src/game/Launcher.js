@@ -75,6 +75,7 @@ const externalItemHeight = 42;
 const mainItemHeight = 56;
 
 const NavItemBg = styled.div`
+  z-index: -1;
   position: absolute;
   height: ${mainItemHeight}px;
   background: linear-gradient(to right, rgba(${p => p.theme.colors.mainRGB}, 0.25) 0%, transparent 100%);
