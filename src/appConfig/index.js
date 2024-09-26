@@ -10,6 +10,7 @@ import productionConfig from './production.json';
 // - any value can be overridden by an environment variable... for example, to overwrite 
 //  'Api.ClientId.layerswap', you would set `REACT_APP_API_CLIENTID_LAYERSWAP` in your env
 
+console.log('process.env.NODE_ENV', process.env.NODE_ENV, process.env);
 
 function flattenObject(obj, parentKey = '', result = {}) {
   return reduce(obj, (res, value, key) => {
