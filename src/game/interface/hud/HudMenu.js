@@ -600,7 +600,7 @@ const HudMenu = () => {
         }
       );
 
-      if (appConfig.get('enableDevTools') && showDevTools) {
+      if (appConfig.get('App.enableDevTools') && showDevTools) {
         menuButtons.push({
           key: 'DEV_TOOLS',
           label: 'Dev Tools',

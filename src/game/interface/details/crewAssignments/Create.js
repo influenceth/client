@@ -1558,7 +1558,7 @@ const CrewAssignmentCreate = ({ backLocation, bookSession, coverImage, crewId, c
 
                 {/*
                 <RecruitSection>
-                  {!appConfig.get('hideSocial') && (
+                  {!appConfig.get('App.hideSocial') && (
                     <TwitterButton onClick={shareOnTwitter}>
                       <span>Share on Twitter</span>
                       <TwitterIcon />

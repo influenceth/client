@@ -207,7 +207,7 @@ const DevTools = () => {
     }, 100);
   }, [assetType]);
 
-  if (!appConfig.get('enableDevTools') || resetting) return null;
+  if (!appConfig.get('App.enableDevTools') || resetting) return null;
   return (
     <Scrollable>
       <HudMenuCollapsibleSection titleText="Viewer">
