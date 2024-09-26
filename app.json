@@ -6,123 +6,24 @@
     }
   ],
   "env": {
-    "REACT_APP_DEPLOYMENT": {
-      "description": "The specific deployment tag for the client (i.e. prerelease, production, etc.)",
-      "required": true
-    },
-    "REACT_APP_API_URL": {
-      "description": "Base URL of the Influence API server, does not include trailing slash",
-      "required": true
-    },
-    "REACT_APP_IMAGES_URL": {
-      "description": "Base URL of the Influence images server, does not include trailing slash",
-      "required": true
-    },
-    "REACT_APP_BRIDGE_URL": {
-      "description": "Base URL of the Influence L1/L2 bridge",
-      "required": true
-    },
-    "REACT_APP_ETHEREUM_NFT_MARKET_URL": {
-      "description": "Base URL for Ethereum NFT marketplace. Does not include trailing slash",
-      "required": true
-    },
-    "REACT_APP_STARKNET_NFT_MARKET_URL": {
-      "description": "Base URL for Starknet NFT marketplace. Does not include trailing slash",
-      "required": true
-    },
-    "REACT_APP_CHAIN_ID": {
-      "description": "Chain ID for Starknet (i.e. 0x534e5f474f45524c49 for Testnet)",
-      "required": true
-    },
-    "REACT_APP_STARKNET_NETWORK": {
-      "description": "Base URL for Starknet network.",
-      "required": true
-    },
-    "REACT_APP_ETHEREUM_EXPLORER_URL": {
-      "description": "Base URL for Ethereum block explorer. Does not include trailing slash",
-      "required": true
-    },
-    "REACT_APP_STARKNET_EXPLORER_URL": {
-      "description": "Base URL for Starknet block explorer. Does not include trailing slash",
-      "required": true
-    },
-    "REACT_APP_ERC20_TOKEN_ADDRESS": {
-      "description": "Address of ERC20 token for network.",
-      "required": true
-    },
-    "REACT_APP_STARKNET_DISPATCHER": {
-      "required": true
-    },
-    "REACT_APP_STARKNET_ESCROW": {
-      "required": true
-    },
-    "REACT_APP_STARKNET_ASTEROID_TOKEN": {
-      "required": true
-    },
-    "REACT_APP_STARKNET_CREWMATE_TOKEN": {
-      "required": true
-    },
-    "REACT_APP_STARKNET_SHIP_TOKEN": {
-      "required": true
-    },
-    "REACT_APP_CONTRACT_ASTEROID_TOKEN": {
-      "description": "Address of Asteroid token on L1",
-      "required": true
-    },
-    "REACT_APP_CONTRACT_CREWMATE_TOKEN": {
-      "description": "Address of Crewmate token on L1",
-      "required": true
-    },
-    "REACT_APP_CONTRACT_CREWMATE_TOKEN_V2": {
-      "description": "Address of Crewmate v2 token on L1",
-      "required": true
-    },
-    "REACT_APP_ENABLE_DEV_TOOLS": {
+    "REACT_APP_API_CLIENTID_GTM": {
+      "description": "Google Tag Manager ID (optional)",
       "required": false
     },
-    "REACT_APP_HIDE_SOCIAL": {
+    "REACT_APP_API_CLIENTID_GOOGLE": {
+      "description": "Google API Key (optional)",
       "required": false
     },
-    "REACT_APP_CLOUDFRONT_IMAGE_URL": {
-      "required": true
-    },
-    "REACT_APP_CLOUDFRONT_OTHER_URL": {
-      "required": true
-    },
-    "REACT_APP_CLOUDFRONT_BUCKET": {
-      "required": true
-    },
-    "REACT_APP_HELP_URL": {
+    "REACT_APP_API_CLIENTID_LAYERSWAP": {
+      "description": "Layerswap Client ID (optional)",
       "required": false
     },
-    "REACT_APP_LAYERSWAP_CLIENT_ID": {
+    "REACT_APP_API_CLIENTID_RAMP": {
+      "description": "Ramp API Key (optional)",
       "required": false
     },
-    "REACT_APP_RAMP_API_KEY": {
-      "required": false
-    },
-    "REACT_APP_ARGENT_WEB_WALLET_URL": {
-      "required": false
-    },
-    "REACT_APP_STARKNET_SWAY_TOKEN": {
-      "required": true
-    },
-    "REACT_APP_AVNU_API_URL": {
-      "required": false
-    },
-    "REACT_APP_IPFS_URL": {
-      "required": true
-    },
-    "REACT_APP_GOOGLE_API_KEY": {
-      "required": true
-    },
-    "REACT_APP_SOCIAL_QUESTS_URL": {
-      "required": false
-    },
-    "REACT_APP_COLONIZATION_MISSIONS_URL": {
-      "required": false
-    },
-    "REACT_APP_COMMUNITY_MISSIONS_URL": {
+    "REACT_APP_STARKNET_PROVIDER": {
+      "description": "Custom Starknet rpc provider (optional)",
       "required": false
     }
   }
